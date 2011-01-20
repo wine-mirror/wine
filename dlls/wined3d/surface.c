@@ -4712,7 +4712,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetClipper,
     IWineD3DBaseSurfaceImpl_GetClipper,
     /* Internal use: */
-    IWineD3DBaseSurfaceImpl_GetData,
     IWineD3DSurfaceImpl_SetFormat,
     IWineD3DSurfaceImpl_PrivateSetup,
     IWineD3DSurfaceImpl_GetImplType,

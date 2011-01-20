@@ -5469,7 +5469,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     update_w = src_rect ? src_rect->right - src_rect->left : src_w;
     update_h = src_rect ? src_rect->bottom - src_rect->top : src_h;
 
-    data = IWineD3DSurface_GetData(src_surface);
+    data = src_impl->resource.allocatedMemory;
     if (!data) ERR("Source surface has no allocated memory, but should be a sysmem surface.\n");
 
     ENTER_GL();

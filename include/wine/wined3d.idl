@@ -2462,8 +2462,6 @@ interface IWineD3DSurface : IWineD3DResource
     HRESULT GetClipper(
         [out] IWineD3DClipper **clipper
     );
-    const void *GetData(
-    );
     HRESULT SetFormat(
         [in] enum wined3d_format_id format_id
     );

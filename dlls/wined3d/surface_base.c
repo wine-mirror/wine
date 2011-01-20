@@ -1885,17 +1885,3 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
 
     return WINED3D_OK;
 }
-
-/* TODO: think about moving this down to resource? */
-const void *WINAPI IWineD3DBaseSurfaceImpl_GetData(IWineD3DSurface *iface)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-
-    /* This should only be called for sysmem textures, it may be a good idea
-     * to extend this to all pools at some point in the future  */
-    if (This->resource.pool != WINED3DPOOL_SYSTEMMEM)
-    {
-        FIXME("(%p) Attempting to get system memory for a non-system memory texture\n", iface);
-    }
-    return This->resource.allocatedMemory;
-}
