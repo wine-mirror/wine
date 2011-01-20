@@ -191,10 +191,8 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_QueryInterface(IDirect3DDevice3 *iface,
-                                           REFIID riid,
-                                           void **obj)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_QueryInterface(IDirect3DDevice3 *iface, REFIID riid,
+        void **obj)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obj);
 
@@ -240,8 +238,7 @@ IDirect3DDeviceImpl_7_AddRef(IDirect3DDevice7 *iface)
     return ref;
 }
 
-static ULONG WINAPI
-Thunk_IDirect3DDeviceImpl_3_AddRef(IDirect3DDevice3 *iface)
+static ULONG WINAPI IDirect3DDeviceImpl_3_AddRef(IDirect3DDevice3 *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -386,8 +383,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
     return ref;
 }
 
-static ULONG WINAPI
-Thunk_IDirect3DDeviceImpl_3_Release(IDirect3DDevice3 *iface)
+static ULONG WINAPI IDirect3DDeviceImpl_3_Release(IDirect3DDevice3 *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -1201,10 +1197,8 @@ IDirect3DDeviceImpl_7_EnumTextureFormats_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_EnumTextureFormats(IDirect3DDevice3 *iface,
-                                               LPD3DENUMPIXELFORMATSCALLBACK Callback,
-                                               void *Arg)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_EnumTextureFormats(IDirect3DDevice3 *iface,
+        LPD3DENUMPIXELFORMATSCALLBACK Callback, void *Arg)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
 
@@ -1569,8 +1563,7 @@ IDirect3DDeviceImpl_7_BeginScene_FPUPreserve(IDirect3DDevice7 *iface)
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_BeginScene(IDirect3DDevice3 *iface)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_BeginScene(IDirect3DDevice3 *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -1639,8 +1632,7 @@ IDirect3DDeviceImpl_7_EndScene_FPUPreserve(IDirect3DDevice7 *iface)
     return hr;
 }
 
-static HRESULT WINAPI DECLSPEC_HOTPATCH
-Thunk_IDirect3DDeviceImpl_3_EndScene(IDirect3DDevice3 *iface)
+static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDeviceImpl_3_EndScene(IDirect3DDevice3 *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -1939,10 +1931,8 @@ IDirect3DDeviceImpl_7_SetRenderTarget_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_SetRenderTarget(IDirect3DDevice3 *iface,
-                                            IDirectDrawSurface4 *NewRenderTarget,
-                                            DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_SetRenderTarget(IDirect3DDevice3 *iface,
+        IDirectDrawSurface4 *NewRenderTarget, DWORD Flags)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
     IDirectDrawSurfaceImpl *Target = (IDirectDrawSurfaceImpl *)NewRenderTarget;
@@ -1999,9 +1989,8 @@ IDirect3DDeviceImpl_7_GetRenderTarget(IDirect3DDevice7 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_GetRenderTarget(IDirect3DDevice3 *iface,
-                                            IDirectDrawSurface4 **RenderTarget)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_GetRenderTarget(IDirect3DDevice3 *iface,
+        IDirectDrawSurface4 **RenderTarget)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
     HRESULT hr;
@@ -3218,10 +3207,8 @@ IDirect3DDeviceImpl_7_SetTransform_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_SetTransform(IDirect3DDevice3 *iface,
-                                         D3DTRANSFORMSTATETYPE TransformStateType,
-                                         D3DMATRIX *D3DMatrix)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_SetTransform(IDirect3DDevice3 *iface,
+        D3DTRANSFORMSTATETYPE TransformStateType, D3DMATRIX *D3DMatrix)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
 
@@ -3310,10 +3297,8 @@ IDirect3DDeviceImpl_7_GetTransform_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_GetTransform(IDirect3DDevice3 *iface,
-                                         D3DTRANSFORMSTATETYPE TransformStateType,
-                                         D3DMATRIX *D3DMatrix)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_GetTransform(IDirect3DDevice3 *iface,
+        D3DTRANSFORMSTATETYPE TransformStateType, D3DMATRIX *D3DMatrix)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
 
@@ -3402,10 +3387,8 @@ IDirect3DDeviceImpl_7_MultiplyTransform_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_MultiplyTransform(IDirect3DDevice3 *iface,
-                                              D3DTRANSFORMSTATETYPE TransformStateType,
-                                              D3DMATRIX *D3DMatrix)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_MultiplyTransform(IDirect3DDevice3 *iface,
+        D3DTRANSFORMSTATETYPE TransformStateType, D3DMATRIX *D3DMatrix)
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
 
@@ -3511,13 +3494,9 @@ IDirect3DDeviceImpl_7_DrawPrimitive_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_DrawPrimitive(IDirect3DDevice3 *iface,
-                                          D3DPRIMITIVETYPE PrimitiveType,
-                                          DWORD VertexType,
-                                          void *Vertices,
-                                          DWORD VertexCount,
-                                          DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_DrawPrimitive(IDirect3DDevice3 *iface,
+        D3DPRIMITIVETYPE PrimitiveType, DWORD VertexType, void *Vertices, DWORD VertexCount,
+        DWORD Flags)
 {
     TRACE("iface %p, primitive_type %#x, FVF %#x, vertices %p, vertex_count %u, flags %#x.\n",
             iface, PrimitiveType, VertexType, Vertices, VertexCount, Flags);
@@ -3639,15 +3618,9 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitive_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitive(IDirect3DDevice3 *iface,
-                                                 D3DPRIMITIVETYPE PrimitiveType,
-                                                 DWORD VertexType,
-                                                 void *Vertices,
-                                                 DWORD VertexCount,
-                                                 WORD *Indices,
-                                                 DWORD IndexCount,
-                                                 DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_DrawIndexedPrimitive(IDirect3DDevice3 *iface,
+        D3DPRIMITIVETYPE PrimitiveType, DWORD VertexType, void *Vertices, DWORD VertexCount,
+        WORD *Indices, DWORD IndexCount, DWORD Flags)
 {
     TRACE("iface %p, primitive_type %#x, FVF %#x, vertices %p, vertex_count %u, indices %p, index_count %u, flags %#x.\n",
             iface, PrimitiveType, VertexType, Vertices, VertexCount, Indices, IndexCount, Flags);
@@ -3708,9 +3681,8 @@ IDirect3DDeviceImpl_7_SetClipStatus(IDirect3DDevice7 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_SetClipStatus(IDirect3DDevice3 *iface,
-                                          D3DCLIPSTATUS *ClipStatus)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_SetClipStatus(IDirect3DDevice3 *iface,
+        D3DCLIPSTATUS *ClipStatus)
 {
     TRACE("iface %p, clip_status %p.\n", iface, ClipStatus);
 
@@ -3748,9 +3720,8 @@ IDirect3DDeviceImpl_7_GetClipStatus(IDirect3DDevice7 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_GetClipStatus(IDirect3DDevice3 *iface,
-                                          D3DCLIPSTATUS *ClipStatus)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_GetClipStatus(IDirect3DDevice3 *iface,
+        D3DCLIPSTATUS *ClipStatus)
 {
     TRACE("iface %p, clip_status %p.\n", iface, ClipStatus);
 
@@ -3895,13 +3866,9 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_DrawPrimitiveStrided(IDirect3DDevice3 *iface,
-                                                 D3DPRIMITIVETYPE PrimitiveType,
-                                                 DWORD VertexType,
-                                                 D3DDRAWPRIMITIVESTRIDEDDATA *D3DDrawPrimStrideData,
-                                                 DWORD VertexCount,
-                                                 DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_DrawPrimitiveStrided(IDirect3DDevice3 *iface,
+        D3DPRIMITIVETYPE PrimitiveType, DWORD VertexType,
+        D3DDRAWPRIMITIVESTRIDEDDATA *D3DDrawPrimStrideData, DWORD VertexCount, DWORD Flags)
 {
     TRACE("iface %p, primitive_type %#x, FVF %#x, strided_data %p, vertex_count %u, flags %#x.\n",
             iface, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Flags);
@@ -4043,15 +4010,10 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveStrided_FPUPreserve(IDirect3DDevice7 *
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveStrided(IDirect3DDevice3 *iface,
-                                                        D3DPRIMITIVETYPE PrimitiveType,
-                                                        DWORD VertexType,
-                                                        D3DDRAWPRIMITIVESTRIDEDDATA *D3DDrawPrimStrideData,
-                                                        DWORD VertexCount,
-                                                        WORD *Indices,
-                                                        DWORD IndexCount,
-                                                        DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_DrawIndexedPrimitiveStrided(IDirect3DDevice3 *iface,
+        D3DPRIMITIVETYPE PrimitiveType, DWORD VertexType,
+        D3DDRAWPRIMITIVESTRIDEDDATA *D3DDrawPrimStrideData, DWORD VertexCount, WORD *Indices,
+        DWORD IndexCount, DWORD Flags)
 {
     TRACE("iface %p, primitive_type %#x, FVF %#x, strided_data %p, vertex_count %u, indices %p, index_count %u, flags %#x.\n",
             iface, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Indices, IndexCount, Flags);
@@ -4162,13 +4124,9 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_DrawPrimitiveVB(IDirect3DDevice3 *iface,
-                                            D3DPRIMITIVETYPE PrimitiveType,
-                                            IDirect3DVertexBuffer *D3DVertexBuf,
-                                            DWORD StartVertex,
-                                            DWORD NumVertices,
-                                            DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_DrawPrimitiveVB(IDirect3DDevice3 *iface,
+        D3DPRIMITIVETYPE PrimitiveType, IDirect3DVertexBuffer *D3DVertexBuf, DWORD StartVertex,
+        DWORD NumVertices, DWORD Flags)
 {
     IDirect3DVertexBufferImpl *vb = D3DVertexBuf ? vb_from_vb1(D3DVertexBuf) : NULL;
 
@@ -4341,13 +4299,9 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB_FPUPreserve(IDirect3DDevice7 *iface
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(IDirect3DDevice3 *iface,
-                                                   D3DPRIMITIVETYPE PrimitiveType,
-                                                   IDirect3DVertexBuffer *D3DVertexBuf,
-                                                   WORD *Indices,
-                                                   DWORD IndexCount,
-                                                   DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB(IDirect3DDevice3 *iface,
+        D3DPRIMITIVETYPE PrimitiveType, IDirect3DVertexBuffer *D3DVertexBuf, WORD *Indices,
+        DWORD IndexCount, DWORD Flags)
 {
     IDirect3DVertexBufferImpl *VB = vb_from_vb1(D3DVertexBuf);
 
@@ -4469,13 +4423,8 @@ IDirect3DDeviceImpl_7_ComputeSphereVisibility(IDirect3DDevice7 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_ComputeSphereVisibility(IDirect3DDevice3 *iface,
-                                                    D3DVECTOR *Centers,
-                                                    D3DVALUE *Radii,
-                                                    DWORD NumSpheres,
-                                                    DWORD Flags,
-                                                    DWORD *ReturnValues)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_ComputeSphereVisibility(IDirect3DDevice3 *iface,
+        D3DVECTOR *Centers, D3DVALUE *Radii, DWORD NumSpheres, DWORD Flags, DWORD *ReturnValues)
 {
     TRACE("iface %p, centers %p, radii %p, sphere_count %u, flags %#x, return_values %p.\n",
             iface, Centers, Radii, NumSpheres, Flags, ReturnValues);
@@ -4558,10 +4507,8 @@ IDirect3DDeviceImpl_7_GetTexture_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_GetTexture(IDirect3DDevice3 *iface,
-                                       DWORD Stage,
-                                       IDirect3DTexture2 **Texture2)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_GetTexture(IDirect3DDevice3 *iface, DWORD Stage,
+        IDirect3DTexture2 **Texture2)
 {
     HRESULT ret;
     IDirectDrawSurface7 *ret_val;
@@ -4851,11 +4798,8 @@ IDirect3DDeviceImpl_7_GetTextureStageState_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_GetTextureStageState(IDirect3DDevice3 *iface,
-                                                 DWORD Stage,
-                                                 D3DTEXTURESTAGESTATETYPE TexStageStateType,
-                                                 DWORD *State)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_GetTextureStageState(IDirect3DDevice3 *iface,
+        DWORD Stage, D3DTEXTURESTAGESTATETYPE TexStageStateType, DWORD *State)
 {
     TRACE("iface %p, stage %u, state %#x, value %p.\n",
             iface, Stage, TexStageStateType, State);
@@ -4988,11 +4932,8 @@ IDirect3DDeviceImpl_7_SetTextureStageState_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_SetTextureStageState(IDirect3DDevice3 *iface,
-                                                 DWORD Stage,
-                                                 D3DTEXTURESTAGESTATETYPE TexStageStateType,
-                                                 DWORD State)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_SetTextureStageState(IDirect3DDevice3 *iface,
+        DWORD Stage, D3DTEXTURESTAGESTATETYPE TexStageStateType, DWORD State)
 {
     TRACE("iface %p, stage %u, state %#x, value %#x.\n",
             iface, Stage, TexStageStateType, State);
@@ -5055,9 +4996,7 @@ IDirect3DDeviceImpl_7_ValidateDevice_FPUPreserve(IDirect3DDevice7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_3_ValidateDevice(IDirect3DDevice3 *iface,
-                                           DWORD *Passes)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_ValidateDevice(IDirect3DDevice3 *iface, DWORD *Passes)
 {
     TRACE("iface %p, pass_count %p.\n", iface, Passes);
 
@@ -6710,23 +6649,23 @@ static const struct IDirect3DDevice7Vtbl d3d_device7_fpu_preserve_vtbl =
 static const struct IDirect3DDevice3Vtbl d3d_device3_vtbl =
 {
     /*** IUnknown Methods ***/
-    Thunk_IDirect3DDeviceImpl_3_QueryInterface,
-    Thunk_IDirect3DDeviceImpl_3_AddRef,
-    Thunk_IDirect3DDeviceImpl_3_Release,
+    IDirect3DDeviceImpl_3_QueryInterface,
+    IDirect3DDeviceImpl_3_AddRef,
+    IDirect3DDeviceImpl_3_Release,
     /*** IDirect3DDevice3 ***/
     IDirect3DDeviceImpl_3_GetCaps,
     IDirect3DDeviceImpl_3_GetStats,
     IDirect3DDeviceImpl_3_AddViewport,
     IDirect3DDeviceImpl_3_DeleteViewport,
     IDirect3DDeviceImpl_3_NextViewport,
-    Thunk_IDirect3DDeviceImpl_3_EnumTextureFormats,
-    Thunk_IDirect3DDeviceImpl_3_BeginScene,
-    Thunk_IDirect3DDeviceImpl_3_EndScene,
+    IDirect3DDeviceImpl_3_EnumTextureFormats,
+    IDirect3DDeviceImpl_3_BeginScene,
+    IDirect3DDeviceImpl_3_EndScene,
     IDirect3DDeviceImpl_3_GetDirect3D,
     IDirect3DDeviceImpl_3_SetCurrentViewport,
     IDirect3DDeviceImpl_3_GetCurrentViewport,
-    Thunk_IDirect3DDeviceImpl_3_SetRenderTarget,
-    Thunk_IDirect3DDeviceImpl_3_GetRenderTarget,
+    IDirect3DDeviceImpl_3_SetRenderTarget,
+    IDirect3DDeviceImpl_3_GetRenderTarget,
     IDirect3DDeviceImpl_3_Begin,
     IDirect3DDeviceImpl_3_BeginIndexed,
     IDirect3DDeviceImpl_3_Vertex,
@@ -6736,23 +6675,23 @@ static const struct IDirect3DDevice3Vtbl d3d_device3_vtbl =
     IDirect3DDeviceImpl_3_SetRenderState,
     IDirect3DDeviceImpl_3_GetLightState,
     IDirect3DDeviceImpl_3_SetLightState,
-    Thunk_IDirect3DDeviceImpl_3_SetTransform,
-    Thunk_IDirect3DDeviceImpl_3_GetTransform,
-    Thunk_IDirect3DDeviceImpl_3_MultiplyTransform,
-    Thunk_IDirect3DDeviceImpl_3_DrawPrimitive,
-    Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitive,
-    Thunk_IDirect3DDeviceImpl_3_SetClipStatus,
-    Thunk_IDirect3DDeviceImpl_3_GetClipStatus,
-    Thunk_IDirect3DDeviceImpl_3_DrawPrimitiveStrided,
-    Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveStrided,
-    Thunk_IDirect3DDeviceImpl_3_DrawPrimitiveVB,
-    Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB,
-    Thunk_IDirect3DDeviceImpl_3_ComputeSphereVisibility,
-    Thunk_IDirect3DDeviceImpl_3_GetTexture,
+    IDirect3DDeviceImpl_3_SetTransform,
+    IDirect3DDeviceImpl_3_GetTransform,
+    IDirect3DDeviceImpl_3_MultiplyTransform,
+    IDirect3DDeviceImpl_3_DrawPrimitive,
+    IDirect3DDeviceImpl_3_DrawIndexedPrimitive,
+    IDirect3DDeviceImpl_3_SetClipStatus,
+    IDirect3DDeviceImpl_3_GetClipStatus,
+    IDirect3DDeviceImpl_3_DrawPrimitiveStrided,
+    IDirect3DDeviceImpl_3_DrawIndexedPrimitiveStrided,
+    IDirect3DDeviceImpl_3_DrawPrimitiveVB,
+    IDirect3DDeviceImpl_3_DrawIndexedPrimitiveVB,
+    IDirect3DDeviceImpl_3_ComputeSphereVisibility,
+    IDirect3DDeviceImpl_3_GetTexture,
     IDirect3DDeviceImpl_3_SetTexture,
-    Thunk_IDirect3DDeviceImpl_3_GetTextureStageState,
-    Thunk_IDirect3DDeviceImpl_3_SetTextureStageState,
-    Thunk_IDirect3DDeviceImpl_3_ValidateDevice
+    IDirect3DDeviceImpl_3_GetTextureStageState,
+    IDirect3DDeviceImpl_3_SetTextureStageState,
+    IDirect3DDeviceImpl_3_ValidateDevice
 };
 
 static const struct IDirect3DDevice2Vtbl d3d_device2_vtbl =
