@@ -761,10 +761,9 @@ static void TB_OnClick(HWND hWnd, DWORD dwID)
     }
 }
 
-static void TB_AddButton(TBBUTTON *pButtons, DWORD dwIndex, DWORD dwID)
+static void TB_AddButton(TBBUTTON *pButtons, DWORD dwIndex, DWORD dwID, DWORD dwBitmap)
 {
-    /* FIXME: Load the correct button bitmaps */
-    pButtons[dwIndex].iBitmap = STD_PRINT;
+    pButtons[dwIndex].iBitmap = dwBitmap;
     pButtons[dwIndex].idCommand = dwID;
     pButtons[dwIndex].fsState = TBSTATE_ENABLED;
     pButtons[dwIndex].fsStyle = BTNS_BUTTON;
@@ -774,12 +773,22 @@ static void TB_AddButton(TBBUTTON *pButtons, DWORD dwIndex, DWORD dwID)
 
 static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dwButtonFlags, LPDWORD pdwNumButtons)
 {
+    HWND hToolbar = pHHInfo->WinType.hwndToolBar;
+    int nHistBitmaps = 0, nStdBitmaps = 0;
+    TBADDBITMAP tbAB;
+
+    tbAB.hInst = HINST_COMMCTRL;
+    tbAB.nID = IDB_HIST_LARGE_COLOR;
+    nHistBitmaps = SendMessageW(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&tbAB);
+    tbAB.nID = IDB_STD_LARGE_COLOR;
+    nStdBitmaps = SendMessageW(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&tbAB);
+
     *pdwNumButtons = 0;
 
     if (dwButtonFlags & HHWIN_BUTTON_EXPAND)
     {
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_EXPAND);
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_CONTRACT);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_EXPAND, nHistBitmaps + HIST_VIEWTREE);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_CONTRACT, nHistBitmaps + HIST_VIEWTREE);
 
         if (pHHInfo->WinType.fNotExpanded)
             pButtons[1].fsState |= TBSTATE_HIDDEN;
@@ -788,43 +797,44 @@ static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dw
     }
 
     if (dwButtonFlags & HHWIN_BUTTON_BACK)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_BACK);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_BACK, nHistBitmaps + HIST_BACK);
 
     if (dwButtonFlags & HHWIN_BUTTON_FORWARD)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_FORWARD);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_FORWARD, nHistBitmaps + HIST_FORWARD);
 
+    /* FIXME: Load the correct button bitmaps */
     if (dwButtonFlags & HHWIN_BUTTON_STOP)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_STOP);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_STOP, nStdBitmaps + STD_PRINT);
 
     if (dwButtonFlags & HHWIN_BUTTON_REFRESH)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_REFRESH);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_REFRESH, nStdBitmaps + STD_PRINT);
 
     if (dwButtonFlags & HHWIN_BUTTON_HOME)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_HOME);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_HOME, nStdBitmaps + STD_PRINT);
 
     if (dwButtonFlags & HHWIN_BUTTON_SYNC)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_SYNC);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_SYNC, nStdBitmaps + STD_PRINT);
 
     if (dwButtonFlags & HHWIN_BUTTON_OPTIONS)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_OPTIONS);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_OPTIONS, nStdBitmaps + STD_PRINT);
 
     if (dwButtonFlags & HHWIN_BUTTON_PRINT)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_PRINT);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_PRINT, nStdBitmaps + STD_PRINT);
 
     if (dwButtonFlags & HHWIN_BUTTON_JUMP1)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_JUMP1);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_JUMP1, nStdBitmaps + STD_PRINT);
 
     if (dwButtonFlags & HHWIN_BUTTON_JUMP2)
-        TB_AddButton(pButtons,(*pdwNumButtons)++, IDTB_JUMP2);
+        TB_AddButton(pButtons,(*pdwNumButtons)++, IDTB_JUMP2, nStdBitmaps + STD_PRINT);
 
     if (dwButtonFlags & HHWIN_BUTTON_ZOOM)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_ZOOM);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_ZOOM, nStdBitmaps + STD_PRINT);
 
     if (dwButtonFlags & HHWIN_BUTTON_TOC_NEXT)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_TOC_NEXT);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_TOC_NEXT, nStdBitmaps + STD_PRINT);
 
     if (dwButtonFlags & HHWIN_BUTTON_TOC_PREV)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_TOC_PREV);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_TOC_PREV, nStdBitmaps + STD_PRINT);
 }
 
 static BOOL HH_AddToolbar(HHInfo *pHHInfo)
@@ -833,7 +843,6 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
     HWND hwndParent = pHHInfo->WinType.hwndHelp;
     DWORD toolbarFlags;
     TBBUTTON buttons[IDTB_TOC_PREV - IDTB_EXPAND];
-    TBADDBITMAP tbAB;
     DWORD dwStyles, dwExStyles;
     DWORD dwNumButtons, dwIndex;
 
@@ -841,8 +850,6 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
         toolbarFlags = pHHInfo->WinType.fsToolBarFlags;
     else
         toolbarFlags = HHWIN_DEF_BUTTONS;
-
-    TB_AddButtonsFromFlags(pHHInfo, buttons, toolbarFlags, &dwNumButtons);
 
     dwStyles = WS_CHILDWINDOW | WS_VISIBLE | TBSTYLE_FLAT |
                TBSTYLE_WRAPABLE | TBSTYLE_TOOLTIPS | CCS_NODIVIDER;
@@ -853,15 +860,13 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
                                hhctrl_hinstance, NULL);
     if (!hToolbar)
         return FALSE;
+    pHHInfo->WinType.hwndToolBar = hToolbar;
 
     SendMessageW(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(ICON_SIZE, ICON_SIZE));
     SendMessageW(hToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
     SendMessageW(hToolbar, WM_SETFONT, (WPARAM)pHHInfo->hFont, TRUE);
 
-    /* FIXME: Load correct icons for all buttons */
-    tbAB.hInst = HINST_COMMCTRL;
-    tbAB.nID = IDB_STD_LARGE_COLOR;
-    SendMessageW(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&tbAB);
+    TB_AddButtonsFromFlags(pHHInfo, buttons, toolbarFlags, &dwNumButtons);
 
     for (dwIndex = 0; dwIndex < dwNumButtons; dwIndex++)
     {
@@ -877,7 +882,6 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
     SendMessageW(hToolbar, TB_AUTOSIZE, 0, 0);
     ShowWindow(hToolbar, SW_SHOW);
 
-    pHHInfo->WinType.hwndToolBar = hToolbar;
     return TRUE;
 }
 
