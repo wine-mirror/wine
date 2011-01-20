@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"PO-Revision-Date: 2011-01-20 17:53+01:00\n"
+"Last-Translator: Anders Jonsson <anders.jonsson@norsjonet.se>\n"
 "Language-Team: none\n"
 "Language: Swedish\n"
 "MIME-Version: 1.0\n"
@@ -154,13 +154,8 @@ msgid "Document Folders"
 msgstr "Dokumentmappar"
 
 #: comdlg32.rc:31 shell32.rc:187
-#, fuzzy
 msgid "My Documents"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Mina dokument\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Mina Dokument"
+msgstr "Mina dokument"
 
 #: comdlg32.rc:32
 msgid "My Favorites"
@@ -179,13 +174,8 @@ msgid "Fonts"
 msgstr "Typsnitt"
 
 #: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
-#, fuzzy
 msgid "My Computer"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Min dator\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Den här datorn"
+msgstr "Den här datorn"
 
 #: comdlg32.rc:41
 msgid "System Folders"
@@ -388,13 +378,8 @@ msgid "Cannot find the printer."
 msgstr "Kan inte hitta skrivare."
 
 #: comdlg32.rc:80 progman.rc:78
-#, fuzzy
 msgid "Out of memory."
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"För lite minne.\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Slut på minne."
+msgstr "För lite minne."
 
 #: comdlg32.rc:81
 msgid "An error occurred."
@@ -437,13 +422,8 @@ msgid "Open File"
 msgstr "Öppna fil"
 
 #: comdlg32.rc:93 oleview.rc:95
-#, fuzzy
 msgid "Ready"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Klar\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Redo"
+msgstr "Klar"
 
 #: comdlg32.rc:94
 msgid "Paused; "
@@ -1110,48 +1090,28 @@ msgid "Embedded Windows System Component Verification"
 msgstr "Verifiering av inbäddad Windows-systemkomponent"
 
 #: crypt32.rc:153 cryptui.rc:140
-#, fuzzy
 msgid "Key Pack Licenses"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Key Pack Licenses\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Licenser för nyckelpaket"
+msgstr "Licenser för nyckelpaket"
 
 #: crypt32.rc:154 cryptui.rc:141
-#, fuzzy
 msgid "License Server Verification"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Licensserververifikation\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Verifiering av licensserver"
+msgstr "Verifiering av licensserver"
 
 #: crypt32.rc:155 cryptui.rc:143
 msgid "Smart Card Logon"
 msgstr "Smart Card-inloggning"
 
 #: crypt32.rc:156 cryptui.rc:139
-#, fuzzy
 msgid "Digital Rights"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Digitala rättigher\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Digitala rättigheter"
+msgstr "Digitala rättigheter"
 
 #: crypt32.rc:157 cryptui.rc:135
 msgid "Qualified Subordination"
 msgstr "Kvalificerad underordning"
 
 #: crypt32.rc:158 cryptui.rc:136
-#, fuzzy
 msgid "Key Recovery"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Nyckelåterskapande\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Nyckelåterställning"
+msgstr "Nyckelåterställning"
 
 #: crypt32.rc:159 cryptui.rc:137
 msgid "Document Signing"
@@ -1166,13 +1126,8 @@ msgid "File Recovery"
 msgstr "Filåterskapande"
 
 #: crypt32.rc:162 cryptui.rc:134
-#, fuzzy
 msgid "Root List Signer"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Rotlistesignerare\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Signerare av rotlista"
+msgstr "Signerare av rotlista"
 
 #: crypt32.rc:163
 msgid "All application policies"
@@ -1183,13 +1138,8 @@ msgid "Directory Service Email Replication"
 msgstr "Kopiering av e-post från katalogtjänster"
 
 #: crypt32.rc:165 cryptui.rc:142
-#, fuzzy
 msgid "Certificate Request Agent"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Certifikatförfrågningsagent\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Agent för certifikatförfrågningar"
+msgstr "Agent för certifikatförfrågningar"
 
 #: crypt32.rc:166 cryptui.rc:138
 msgid "Lifetime Signing"
@@ -1456,14 +1406,12 @@ msgid "Signature CA"
 msgstr "Signature CA"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
-msgstr "Certifikatpolicyer"
+msgstr "Certifikatpolicy"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
-msgstr "Authority Key Identifier"
+msgstr "Policy-identifierare: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -1479,21 +1427,19 @@ msgstr ""
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Meddelandereferens"
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
-msgstr "Organisation"
+msgstr "Organisation="
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
-msgstr "Serienummer för certifikat="
+msgstr "Meddelandenummer="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Meddelandetext"
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2077,23 +2023,16 @@ msgid "&Back"
 msgstr "&Bakåt"
 
 #: hhctrl.rc:72
-#, fuzzy
 msgid "&Forward"
-msgstr "Framåt"
+msgstr "&Framåt"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgid "&Home"
-msgstr "Hem"
+msgstr "&Hem"
 
 #: hhctrl.rc:74
-#, fuzzy
 msgid "&Stop"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Stoppa\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Stopp"
+msgstr "&Stopp"
 
 #: hhctrl.rc:75 shdoclc.rc:56
 msgid "&Refresh"
@@ -2101,7 +2040,7 @@ msgstr "Upp&datera"
 
 #: hhctrl.rc:76 winefile.rc:38
 msgid "&Print..."
-msgstr "&Skriv ut..."
+msgstr "Skriv &ut..."
 
 #: hhctrl.rc:28 notepad.rc:58 progman.rc:53
 msgid "&Contents"
@@ -2136,13 +2075,8 @@ msgid "Hide"
 msgstr "Dölj"
 
 #: hhctrl.rc:41 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
-#, fuzzy
 msgid "Stop"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Stoppa\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Stopp"
+msgstr "Stopp"
 
 #: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
 msgid "Refresh"
@@ -2222,7 +2156,7 @@ msgstr "IDTB_TOC_PREV"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr ""
+msgstr "Cinepak videokodek"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -2953,13 +2887,8 @@ msgid "Set as &Desktop Item"
 msgstr "Använd som &skrivbordsobjekt"
 
 #: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
-#, fuzzy
 msgid "Select &All"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Markera allt\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Markera &alla"
+msgstr "&Markera allt"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
 #: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
@@ -2987,13 +2916,8 @@ msgid "Pr&int"
 msgstr "Skriv &ut"
 
 #: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
-#, fuzzy
 msgid "&Properties"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Egenskaper\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"E&genskaper"
+msgstr "&Egenskaper"
 
 #: shdoclc.rc:62
 msgid "Image"
@@ -3045,13 +2969,8 @@ msgstr "Använd som &skrivbordsobjekt..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
 #: user32.rc:44 wordpad.rc:101
-#, fuzzy
 msgid "Cu&t"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Klipp ut\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Klipp &ut"
+msgstr "Klipp &ut"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
 #: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
@@ -3087,13 +3006,8 @@ msgid "Table"
 msgstr "Tabell"
 
 #: shdoclc.rc:103 shell32.rc:82
-#, fuzzy
 msgid "&Select"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Markera\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Välj"
+msgstr "&Markera"
 
 #: shdoclc.rc:105
 msgid "&Cell"
@@ -3124,22 +3038,12 @@ msgid "1DSite Select"
 msgstr "1DSite Select"
 
 #: shdoclc.rc:120 shell32.rc:61
-#, fuzzy
 msgid "Paste"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"K&listra in\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Klistra in"
+msgstr "Klistra in"
 
 #: shdoclc.rc:122 winhlp32.rc:31
-#, fuzzy
 msgid "&Print"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Skriv &ut\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Skriv ut"
+msgstr "Skriv &ut"
 
 #: shdoclc.rc:126
 msgid "Anchor"
@@ -3324,13 +3228,8 @@ msgid "&File"
 msgstr "&Arkiv"
 
 #: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
-#, fuzzy
 msgid "&New"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Nytt\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Ny"
+msgstr "&Ny"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
@@ -3341,13 +3240,8 @@ msgid "&Open..."
 msgstr "&Öppna..."
 
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-#, fuzzy
 msgid "Save &as..."
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Spara s&om...\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"S&para som..."
+msgstr "Spara s&om..."
 
 #: shdocvw.rc:35
 msgid "Print &format..."
@@ -3358,26 +3252,16 @@ msgid "Pr&int..."
 msgstr "Skriv &ut..."
 
 #: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w..."
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Förhandsgranskning...\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Förhandsgranska..."
+msgstr "&Förhandsgranskning..."
 
 #: shdocvw.rc:39
 msgid "&Properties..."
 msgstr "&Egenskaper..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
-#, fuzzy
 msgid "&Close"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Stäng\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Stä&ng"
+msgstr "St&äng"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
 #: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
@@ -3401,13 +3285,8 @@ msgid "&Favorites"
 msgstr "&Favoriter"
 
 #: shdocvw.rc:52 regedit.rc:75
-#, fuzzy
 msgid "&Add to Favorites..."
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Lägg till favoriter...\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Lägg till i favoriter..."
+msgstr "&Lägg till i favoriter..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
 #: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
@@ -3424,13 +3303,8 @@ msgstr "Adress"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
 #: taskmgr.rc:111 taskmgr.rc:253
-#, fuzzy
 msgid "Lar&ge Icons"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"S&tora ikoner\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Stora ikoner"
+msgstr "S&tora ikoner"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
 #: taskmgr.rc:112 taskmgr.rc:254
@@ -3512,13 +3386,8 @@ msgstr "&Byt namn"
 
 #: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Avsluta\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"A&vsluta"
+msgstr "A&vsluta"
 
 #: shell32.rc:115
 msgid "&About Control Panel..."
@@ -3537,13 +3406,8 @@ msgid "Modified"
 msgstr "Ändrad"
 
 #: shell32.rc:126 winefile.rc:167
-#, fuzzy
 msgid "Attributes"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Attribut\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Egenskaper"
+msgstr "Attribut"
 
 #: shell32.rc:128
 msgid "Size available"
@@ -3960,7 +3824,7 @@ msgstr "Ma&ximera"
 
 #: user32.rc:33
 msgid "&Close\tAlt-F4"
-msgstr "&Avsluta\tAlt-F4"
+msgstr "A&vsluta\tAlt-F4"
 
 #: user32.rc:35
 msgid "&About Wine..."
@@ -4852,13 +4716,8 @@ msgid "Digi&tal"
 msgstr "Digi&tal"
 
 #: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
-#, fuzzy
 msgid "&Font..."
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Typsnitt...\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Font..."
+msgstr "T&ypsnitt..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -5695,26 +5554,16 @@ msgid "&New\tCtrl+N"
 msgstr "&Ny\tCtrl+N"
 
 #: notepad.rc:28 wordpad.rc:29
-#, fuzzy
 msgid "&Open...\tCtrl+O"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Ö&ppna...\tCtrl+O\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Öppna...\tCtrl+O"
+msgstr "&Öppna...\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
 msgstr "&Spara\tCtrl+S"
 
 #: notepad.rc:32 wordpad.rc:33
-#, fuzzy
 msgid "&Print...\tCtrl+P"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Skriv ut...\tCtrl+P\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Skriv &ut...\tCtrl+P"
+msgstr "Skriv &ut...\tCtrl+P"
 
 #: notepad.rc:33 wordpad.rc:35
 msgid "Page Se&tup..."
@@ -5725,13 +5574,8 @@ msgid "P&rinter Setup..."
 msgstr "Skrivar&konfiguration..."
 
 #: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
-#, fuzzy
 msgid "&Edit"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"R&edigera\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Redigera"
+msgstr "R&edigera"
 
 #: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
@@ -5760,7 +5604,7 @@ msgstr "Markera &allt"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
-msgstr "&Tid/Datum\tF5"
+msgstr "Tid/Dat&um\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
@@ -5768,11 +5612,11 @@ msgstr "&Dela långa meningar"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "Sök..."
+msgstr "&Sök...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
-msgstr "&Sök nästa\tF3"
+msgstr "Sök &nästa\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
@@ -5974,22 +5818,12 @@ msgid "&Hidden component categories"
 msgstr "&Dolda komponentkategorier"
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
-#, fuzzy
 msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Verktygsfält\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Verk&tygslist"
+msgstr "&Verktygsfält"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:102
-#, fuzzy
 msgid "&Status Bar"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"St&atusfält\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Statuslist"
+msgstr "St&atusfält"
 
 #: oleview.rc:67 regedit.rc:71 winefile.rc:127
 msgid "&Refresh\tF5"
@@ -6024,7 +5858,6 @@ msgid "version 1.0"
 msgstr "version 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 msgstr "TypeLib-filer (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
@@ -6219,35 +6052,20 @@ msgid "E&xit Windows..."
 msgstr "A&vsluta Windows..."
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
-#, fuzzy
 msgid "&Options"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"A&lternativ\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Inställningar"
+msgstr "&Inställningar"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
 msgstr "Ordna &automatiskt"
 
 #: progman.rc:43 winefile.rc:107
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Minimera vid start\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Minimera vid körning"
+msgstr "&Minimera vid start"
 
 #: progman.rc:44 winefile.rc:108
-#, fuzzy
 msgid "&Save settings on exit"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Spara ändringar vid &stängning\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Spara ändringar vid stängning"
+msgstr "&Spara ändringar vid stängning"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
@@ -6255,7 +6073,7 @@ msgstr "&Fönster"
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
-msgstr "&Överlappande\tShift+F5"
+msgstr "Över&lappande\tShift+F5"
 
 #: progman.rc:48
 msgid "&Side by side\tShift+F4"
@@ -6271,7 +6089,7 @@ msgstr "&Guide"
 
 #: progman.rc:59
 msgid "&About Wine"
-msgstr "&om Wine"
+msgstr "&Om Wine"
 
 #: progman.rc:65
 msgid "Program Manager"
@@ -6290,13 +6108,8 @@ msgid "Delete program `%s' ?"
 msgstr "Ta bort programmet '%s'?"
 
 #: progman.rc:72 winhlp32.rc:97
-#, fuzzy
 msgid "Not implemented"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Ej implementerat\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Inte implementerat"
+msgstr "Ej implementerat"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
@@ -6418,7 +6231,7 @@ msgstr "&Koppla ner från Nätverksregister..."
 
 #: regedit.rc:39
 msgid "&Print\tCtrl+P"
-msgstr "&Skriv ut\tCtrl+P"
+msgstr "Skriv &ut\tCtrl+P"
 
 #: regedit.rc:45 regedit.rc:90
 msgid "&Modify"
@@ -6458,33 +6271,23 @@ msgstr "&Sök\tCtrl+F"
 
 #: regedit.rc:63
 msgid "Find Ne&xt\tF3"
-msgstr "Sök &Nästa\tF3"
+msgstr "Sök Näst&a\tF3"
 
 #: regedit.rc:67
 msgid "Status &Bar"
 msgstr "&Statusrad"
 
 #: regedit.rc:69 winefile.rc:81
-#, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"De&la\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Dela upp"
+msgstr "&Dela upp"
 
 #: regedit.rc:76
 msgid "&Remove Favorite..."
 msgstr "&Ta bort favorit..."
 
 #: regedit.rc:80 winefile.rc:131
-#, fuzzy
 msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Hjälpavsnitt\tF1\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"Ämnen i &hjälp\tF1"
+msgstr "Ämnen i &hjälp\tF1"
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
@@ -6541,12 +6344,10 @@ msgid "Export Registry File"
 msgstr "Exportera registerfil"
 
 #: regedit.rc:199
-#, fuzzy
 msgid "Registry files (*.reg)"
 msgstr "Registerfiler (*.reg)"
 
 #: regedit.rc:200
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x-/NT4-registerfiler (REGEDIT4)"
 
@@ -6864,7 +6665,7 @@ msgstr "&Ny aktivitet (Kör...)"
 
 #: taskmgr.rc:39
 msgid "E&xit Task Manager"
-msgstr "&Avsluta Aktivitetshanteraren"
+msgstr "A&vsluta Aktivitetshanteraren"
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
@@ -6880,7 +6681,7 @@ msgstr "&Visa 16-bitarsaktiviteter"
 
 #: taskmgr.rc:54
 msgid "&Refresh Now"
-msgstr "Upp&datera nu"
+msgstr "Uppd&atera nu"
 
 #: taskmgr.rc:55
 msgid "&Update Speed"
@@ -7984,7 +7785,7 @@ msgstr "&Egenskaper...\tAlt+Enter"
 
 #: winefile.rc:34
 msgid "C&ompress..."
-msgstr "&Komprimera..."
+msgstr "K&omprimera..."
 
 #: winefile.rc:35
 msgid "Dec&ompress..."
@@ -8000,7 +7801,7 @@ msgstr "Associera..."
 
 #: winefile.rc:41
 msgid "Cr&eate Directory..."
-msgstr "Skapa mapp..."
+msgstr "Sk&apa mapp..."
 
 #: winefile.rc:42
 msgid "Searc&h..."
@@ -8011,13 +7812,8 @@ msgid "&Select Files..."
 msgstr "&Välj filer..."
 
 #: winefile.rc:46 winemine.rc:44
-#, fuzzy
 msgid "E&xit\tAlt+X"
-msgstr ""
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"A&vsluta\tAlt+X\n"
-"#-#-#-#-#  sv.po (Wine)  #-#-#-#-#\n"
-"&Avsluta\tAlt+X"
+msgstr "A&vsluta\tAlt+X"
 
 #: winefile.rc:52
 msgid "&Disk"
@@ -8037,11 +7833,11 @@ msgstr "&Formatera disk..."
 
 #: winefile.rc:58
 msgid "Connect &Network Drive"
-msgstr "Anslut &nätverksenhet"
+msgstr "&Anslut nätverksenhet"
 
 #: winefile.rc:59
 msgid "&Disconnect Network Drive"
-msgstr "&Koppla ifrån nätverksenhet"
+msgstr "Koppla &ifrån nätverksenhet"
 
 #: winefile.rc:61
 msgid "Share as..."
@@ -8053,7 +7849,7 @@ msgstr "&Ta bort utdelning..."
 
 #: winefile.rc:64
 msgid "&Select Drive..."
-msgstr "&Välj enhet..."
+msgstr "V&älj enhet..."
 
 #: winefile.rc:67
 msgid "Di&rectories"
@@ -8068,13 +7864,12 @@ msgid "Expand &Tree\t*"
 msgstr "Utöka &träd\t*"
 
 #: winefile.rc:70
-#, fuzzy
 msgid "Expand &all\tCtrl+*"
 msgstr "Utöka &alla\tCtrl+*"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
-msgstr "Kollapsa &träd\t-"
+msgstr "&Kollapsa träd\t-"
 
 #: winefile.rc:73
 msgid "&Mark Children"
@@ -8118,7 +7913,7 @@ msgstr "Sortera efter st&orlek"
 
 #: winefile.rc:90
 msgid "Sort by &Date"
-msgstr "Sortera efter &datum"
+msgstr "Sortera efter dat&um"
 
 #: winefile.rc:92
 msgid "Filter by &..."
@@ -8138,7 +7933,7 @@ msgstr "&Enhetsfält"
 
 #: winefile.rc:104
 msgid "F&ull Screen\tCtrl+Shift+S"
-msgstr "H&elskärm\tCtrl+Shift+S"
+msgstr "&Helskärm\tCtrl+Shift+S"
 
 #: winefile.rc:112
 msgid "&Security"
@@ -8178,7 +7973,7 @@ msgstr "Ordna &symboler"
 
 #: winefile.rc:132
 msgid "Help &Search...\tF1"
-msgstr "Hjälp &sök...\tF1"
+msgstr "&Sök i hjälp...\tF1"
 
 #: winefile.rc:133
 msgid "&Using Help\tF1"
@@ -8274,7 +8069,7 @@ msgstr "An&passad..."
 
 #: winemine.rc:46
 msgid "&Info"
-msgstr "&Info"
+msgstr "Inf&o"
 
 #: winemine.rc:47
 msgid "&Fastest Times..."
@@ -8306,7 +8101,7 @@ msgstr "&Kopiera..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
-msgstr "&Kommentera..."
+msgstr "K&ommentera..."
 
 #: winhlp32.rc:41
 msgid "&Bookmark"
