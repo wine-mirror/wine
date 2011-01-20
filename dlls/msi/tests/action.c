@@ -5830,6 +5830,18 @@ static void test_publish_assemblies(void)
         "<assemblyIdentity type=\"win32\" name=\"Wine.Win32.Local.Assembly\" "
         "version=\"1.0.0.0\" publicKeyToken=\"abcdef0123456789\" "
         "processorArchitecture=\"x86\"/>";
+    static const char classes_path_dotnet[] =
+        "Installer\\Assemblies\\Global";
+    static const char classes_path_dotnet_local[] =
+        "Installer\\Assemblies\\C:|Program Files|msitest|application_dotnet.txt";
+    static const char classes_path_dotnet_local_wow64[] =
+        "Installer\\Assemblies\\C:|Program Files (x86)|msitest|application_dotnet.txt";
+    static const char classes_path_win32[] =
+        "Installer\\Win32Assemblies\\Global";
+    static const char classes_path_win32_local[] =
+        "Installer\\Win32Assemblies\\C:|Program Files|msitest|application_win32.txt";
+    static const char classes_path_win32_local_wow64[] =
+        "Installer\\Win32Assemblies\\C:|Program Files (x86)|msitest|application_win32.txt";
     static const char path_dotnet[] =
         "Software\\Microsoft\\Installer\\Assemblies\\Global";
     static const char path_dotnet_local[] =
@@ -5919,17 +5931,85 @@ static void test_publish_assemblies(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyA(HKEY_CURRENT_USER, path_dotnet, &hkey);
-    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    ok(res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND, "got %d\n", res);
+    if (res == ERROR_SUCCESS)
+    {
+        res = RegDeleteValueA(hkey, name_dotnet);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+        RegCloseKey(hkey);
+    }
 
     path = (is_wow64 || is_64bit) ? path_dotnet_local_wow64 : path_dotnet_local;
     res = RegOpenKeyA(HKEY_CURRENT_USER, path, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     res = RegOpenKeyA(HKEY_CURRENT_USER, path_win32, &hkey);
-    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+    ok(res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND, "got %d\n", res);
+    if (res == ERROR_SUCCESS)
+    {
+        res = RegDeleteValueA(hkey, name_win32);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+        RegCloseKey(hkey);
+    }
 
     path = (is_wow64 || is_64bit) ? path_win32_local_wow64 : path_win32_local;
     res = RegOpenKeyA(HKEY_CURRENT_USER, path, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    r = MsiInstallProductA(msifile, "ALLUSERS=1");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    todo_wine {
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, classes_path_dotnet, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(hkey, name_dotnet, "rcHQPHq?CA@Uv-XqMI1e>Z'q,T*76M@=YEg6My?~]");
+    RegCloseKey(hkey);
+
+    path = (is_wow64 || is_64bit) ? classes_path_dotnet_local_wow64 : classes_path_dotnet_local;
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(hkey, name_dotnet_local, "rcHQPHq?CA@Uv-XqMI1e>LF,8A?0d.AW@vcZ$Cgox");
+    RegCloseKey(hkey);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, classes_path_win32, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(hkey, name_win32, "rcHQPHq?CA@Uv-XqMI1e>}NJjwR'%D9v1p!v{WV(%");
+    RegCloseKey(hkey);
+
+    path = (is_wow64 || is_64bit) ? classes_path_win32_local_wow64 : classes_path_win32_local;
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    CHECK_REG_STR(hkey, name_win32_local, "rcHQPHq?CA@Uv-XqMI1e>C)Uvlj*53A)u(QQ9=)X!");
+    RegCloseKey(hkey);
+    }
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, classes_path_dotnet, &hkey);
+    ok(res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND, "got %d\n", res);
+    if (res == ERROR_SUCCESS)
+    {
+        res = RegDeleteValueA(hkey, name_dotnet);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+        RegCloseKey(hkey);
+    }
+
+    path = (is_wow64 || is_64bit) ? classes_path_dotnet_local_wow64 : classes_path_dotnet_local;
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, classes_path_win32, &hkey);
+    ok(res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND, "got %d\n", res);
+    if (res == ERROR_SUCCESS)
+    {
+        res = RegDeleteValueA(hkey, name_win32);
+        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
+        RegCloseKey(hkey);
+    }
+
+    path = (is_wow64 || is_64bit) ? classes_path_win32_local_wow64 : classes_path_win32_local;
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
 done:
