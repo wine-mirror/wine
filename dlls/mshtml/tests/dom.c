@@ -2909,6 +2909,7 @@ static IHTMLElement *_test_create_elem(unsigned line, IHTMLDocument2 *doc, const
     hres = IHTMLDocument2_createElement(doc, tmp, &elem);
     ok_(__FILE__,line) (hres == S_OK, "createElement failed: %08x\n", hres);
     ok_(__FILE__,line) (elem != NULL, "elem == NULL\n");
+    SysFreeString(tmp);
 
     return elem;
 }
@@ -2927,6 +2928,7 @@ static IHTMLDOMNode *_test_create_text(unsigned line, IHTMLDocument2 *doc, const
     tmp = a2bstr(text);
     hres = IHTMLDocument3_createTextNode(doc3, tmp, &node);
     IHTMLDocument3_Release(doc3);
+    SysFreeString(tmp);
     ok_(__FILE__,line) (hres == S_OK, "createElement failed: %08x\n", hres);
     ok_(__FILE__,line) (node != NULL, "node == NULL\n");
 

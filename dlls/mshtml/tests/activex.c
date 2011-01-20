@@ -471,6 +471,7 @@ static HRESULT WINAPI PersistPropertyBag_Load(IPersistPropertyBag *face, IProper
     ok(hres == S_OK, "Read failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
     ok(!strcmp_wa(V_BSTR(&v), "3"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    SysFreeString(V_BSTR(&v));
 
     V_VT(&v) = VT_I4;
     V_I4(&v) = 0xdeadbeef;

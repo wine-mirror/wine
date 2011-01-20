@@ -986,6 +986,7 @@ static HRESULT WINAPI iframe_onreadystatechange(IDispatchEx *iface, DISPID id, L
     else
         ok(0, "unexpected state %s\n", wine_dbgstr_w(str));
 
+    SysFreeString(str);
     IHTMLDocument2_Release(iframe_doc);
     IHTMLFrameBase2_Release(iframe);
     return S_OK;
