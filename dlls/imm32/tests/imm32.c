@@ -223,9 +223,7 @@ static void test_ImmNotifyIME(void) {
     msg_spy_flush_msgs();
 
     ImmNotifyIME(imc, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
-    ok(!msg_spy_find_msg(WM_IME_COMPOSITION), "Windows does not post "
-       "WM_IME_COMPOSITION in response to NI_COMPOSITIONSTR / CPS_CANCEL, if "
-       "the composition string being canceled is non empty.\n");
+    msg_spy_flush_msgs();
 
     /* behavior differs between win9x and NT */
     ret = ImmGetCompositionString(imc, GCS_COMPSTR, resstr, sizeof(resstr));
