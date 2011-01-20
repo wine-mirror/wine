@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"PO-Revision-Date: 2011-01-20 16:53+0900\n"
+"Last-Translator: YunSong Hwang <hys545@dreamwiz.com>\n"
 "Language-Team: none\n"
 "Language: Korean\n"
 "MIME-Version: 1.0\n"
@@ -27,7 +27,7 @@ msgstr ""
 
 #: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 msgid "Applications"
-msgstr "프로그램"
+msgstr "어플리케이션"
 
 #: appwiz.rc:32
 msgid ""
@@ -63,13 +63,8 @@ msgstr "프로그램 (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
 #: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
-#, fuzzy
 msgid "All files (*.*)"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"모든 파일 (*.*)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"모든 파일들 (*.*)"
+msgstr "모든 파일 (*.*)"
 
 #: appwiz.rc:42
 msgid "&Remove..."
@@ -121,7 +116,7 @@ msgstr "%s %s #%d"
 
 #: avifil32.rc:34
 msgid "Wine AVI-default-filehandler"
-msgstr "Wine AVI-기본-파일핸들러·¯"
+msgstr "Wine AVI-기본-파일핸들러"
 
 #: avifil32.rc:35
 msgid "uncompressed"
@@ -153,7 +148,7 @@ msgstr "오늘로 가기"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
-msgstr "폴더-선택기-테스트 정보(&A)"
+msgstr "폴더-선택기-테스트 에 관하여(&A)"
 
 #: comdlg32.rc:30
 msgid "Document Folders"
@@ -193,7 +188,7 @@ msgstr "로컬 하드 드라이브"
 
 #: comdlg32.rc:43
 msgid "File not found"
-msgstr "파일을 찾을 수 없습니다"
+msgstr "파일을 찾을 수 없음"
 
 #: comdlg32.rc:44
 msgid "Please verify that the correct file name was given"
@@ -204,7 +199,7 @@ msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
-"파일은 존재하지 않습니다\n"
+"파일이 존재하지 않습니다\n"
 "파일을 만들겠습니까?"
 
 #: comdlg32.rc:46
@@ -384,13 +379,8 @@ msgid "Cannot find the printer."
 msgstr "프린터를 찾을 수 없습니다."
 
 #: comdlg32.rc:80 progman.rc:78
-#, fuzzy
 msgid "Out of memory."
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"메모리 부족.\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"메모리 초과."
+msgstr "메모리 부족"
 
 #: comdlg32.rc:81
 msgid "An error occurred."
@@ -405,7 +395,7 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-" 문서를 인쇄하거나 페이지 설정같은   프린터와 관련된  작업을 하기 전에, 당신"
+"문서를 인쇄하거나 페이지 설정같은   프린터와 관련된  작업을 하기 전에, 당신"
 "은 먼저 프린터를 설치하시오. 설치하고 다시 시도하시오."
 
 #: comdlg32.rc:151
@@ -418,7 +408,7 @@ msgstr "저장(&S)"
 
 #: comdlg32.rc:153
 msgid "Save &in:"
-msgstr "저장(&I):"
+msgstr "~에 저장(&I):"
 
 #: comdlg32.rc:154
 msgid "Save"
@@ -486,7 +476,7 @@ msgstr "출력 트레이가 꽉 찼습니다; "
 
 #: comdlg32.rc:106
 msgid "Not available; "
-msgstr "불가능; "
+msgstr "가능하지 않음; "
 
 #: comdlg32.rc:107
 msgid "Waiting; "
@@ -570,7 +560,7 @@ msgstr " %s 연결중"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
-msgstr "로그온  실패"
+msgstr "로그온 실패"
 
 #: credui.rc:30
 msgid ""
@@ -587,7 +577,7 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
-"Caps Lock 이 커져 있으면 암호가 잘못입력될 수 있습니다.\n"
+"Caps Lock 이 커져 있으면 암호가 잘못 입력될 수 있습니다.\n"
 "\n"
 " 암호를 입력하기 전에\n"
 "키보드의 Caps Lock 키를 끄시기 바랍니다."
@@ -610,7 +600,7 @@ msgstr "키 사용 제한"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr "주제(subject) 대체 이름"
+msgstr "주제 대체 이름"
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
@@ -630,7 +620,7 @@ msgstr "인증 방침"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr "주제(Subject)키 식별자"
+msgstr "주제 키 식별자"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
@@ -650,7 +640,7 @@ msgstr "권한 정보 접근"
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
-msgstr "인증서 확장(Certificate Extensions)"
+msgstr "인증서 확장"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
@@ -682,7 +672,7 @@ msgstr "서명 시간"
 
 #: crypt32.rc:48
 msgid "Counter Sign"
-msgstr "역 서명(Counter Sign)"
+msgstr "다시 서명"
 
 #: crypt32.rc:49
 msgid "Challenge Password"
@@ -698,7 +688,7 @@ msgstr "SMIME 특성"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr "선호하는 사인된 데이타(Prefer Signed Data)"
+msgstr "선호하는 사인된 데이타"
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgid "CPS"
@@ -782,11 +772,11 @@ msgstr "단체"
 
 #: crypt32.rc:73
 msgid "Organizational Unit"
-msgstr "단체(Organizational Unit)"
+msgstr "단체 단위"
 
 #: crypt32.rc:74
 msgid "Common Name"
-msgstr "애칭"
+msgstr "보통 이름"
 
 #: crypt32.rc:75
 msgid "Locality"
@@ -834,7 +824,7 @@ msgstr "교차 CA 버젼"
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr "연속된(Serialized) 서명 시리얼 넘버"
+msgstr "연속된 서명 시리얼 넘버"
 
 #: crypt32.rc:87
 msgid "Principal Name"
@@ -894,7 +884,7 @@ msgstr "풀그림 방침"
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr "풀그림 정책 대응(Mappings)"
+msgstr "풀그림 정책 대응"
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
@@ -954,7 +944,7 @@ msgstr "이전의 CA 인증 해쉬"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
-msgstr "가상 기반 CRL 숫자(Virtual Base CRL Number)"
+msgstr "가상 기반 CRL 숫자"
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
@@ -965,17 +955,12 @@ msgid "CA Encryption Certificate"
 msgstr "CA 암호 인증"
 
 #: crypt32.rc:119 cryptui.rc:145
-#, fuzzy
 msgid "Key Recovery Agent"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"키 복구 관리자\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"키 복구 에이전트"
+msgstr "키 복구 관리자"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
-msgstr "인증 주형(Template) 정보"
+msgstr "인증 주형 정보"
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
@@ -995,7 +980,7 @@ msgstr "발행된 CRL 위치"
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr "강제 인증 체인 정책(Enforce Certificate Chain Policy)"
+msgstr "강제 인증 체인 정책"
 
 #: crypt32.rc:126
 msgid "Transaction Id"
@@ -1030,13 +1015,8 @@ msgid "Query Pending"
 msgstr "질문하는 중"
 
 #: crypt32.rc:134 cryptui.rc:92
-#, fuzzy
 msgid "Certificate Trust List"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"인증된 신뢰 목록\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"인증서 신뢰 목록"
+msgstr "인증서 신뢰 목록"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
@@ -1084,7 +1064,7 @@ msgstr "IP 보안 종단 시스템"
 
 #: crypt32.rc:146
 msgid "IP security tunnel termination"
-msgstr "IP 보안  터널 종료(tunnel termination)"
+msgstr "IP 보안  터널 종료"
 
 #: crypt32.rc:147
 msgid "IP security user"
@@ -1095,80 +1075,40 @@ msgid "Encrypting File System"
 msgstr "암호화된 파일 시스템"
 
 #: crypt32.rc:149 cryptui.rc:130
-#, fuzzy
 msgid "Windows Hardware Driver Verification"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"윈도우즈 하드웨어 드라이버 검증\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"윈도우즈 하드웨어 드라이버 확인"
+msgstr "윈도우즈 하드웨어 드라이버 검증"
 
 #: crypt32.rc:150 cryptui.rc:131
-#, fuzzy
 msgid "Windows System Component Verification"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"윈도우즈 시스템 구성요소 검증\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"윈도우즈 시스템 컴포넌트 확인"
+msgstr "윈도우즈 시스템 구성요소 검증"
 
 #: crypt32.rc:151 cryptui.rc:132
-#, fuzzy
 msgid "OEM Windows System Component Verification"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"OEM 윈도우즈 시스템 구성요소 검증\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"OEM 윈도우즈 시스템 컴포넌트 확인"
+msgstr "OEM 윈도우즈 시스템 구성요소 검증"
 
 #: crypt32.rc:152 cryptui.rc:133
-#, fuzzy
 msgid "Embedded Windows System Component Verification"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"내장된 윈도우즈 시스탬 구성요소 검중\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"임베디드 윈도우즈 시스템 컴포넌트 확인"
+msgstr "임베디드 윈도우즈 시스템 컴포넌트 확인"
 
 #: crypt32.rc:153 cryptui.rc:140
 msgid "Key Pack Licenses"
 msgstr "키 팩 라이센스"
 
 #: crypt32.rc:154 cryptui.rc:141
-#, fuzzy
 msgid "License Server Verification"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"라이센스 서버 검증\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"라이센스 서버 확인"
+msgstr "라이센스 서버 확인"
 
 #: crypt32.rc:155 cryptui.rc:143
-#, fuzzy
 msgid "Smart Card Logon"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"스마트 카드 로그인\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"스마트 카드 로그온"
+msgstr "스마트 카드 로그인"
 
 #: crypt32.rc:156 cryptui.rc:139
-#, fuzzy
 msgid "Digital Rights"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"디지털 저작권\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"디지털 권리"
+msgstr "디지털 저작권"
 
 #: crypt32.rc:157 cryptui.rc:135
-#, fuzzy
 msgid "Qualified Subordination"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"자격있는 종속관계\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"자격있는 종속"
+msgstr "자격있는 종속"
 
 #: crypt32.rc:158 cryptui.rc:136
 msgid "Key Recovery"
@@ -1180,7 +1120,7 @@ msgstr "문서 서명"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
-msgstr "IP 보안  IKE 수단(intermediate)"
+msgstr "IP 보안  IKE 수단"
 
 #: crypt32.rc:161 cryptui.rc:129
 msgid "File Recovery"
@@ -1195,31 +1135,16 @@ msgid "All application policies"
 msgstr "모든 프로그램의 방침"
 
 #: crypt32.rc:164 cryptui.rc:146
-#, fuzzy
 msgid "Directory Service Email Replication"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"디렉토리 서비스 이메일 응답\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"디렉토리 서비스 전자우편 복제"
+msgstr "디렉토리 서비스 이메일 응답"
 
 #: crypt32.rc:165 cryptui.rc:142
-#, fuzzy
 msgid "Certificate Request Agent"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"인증 요구 관리자\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"인증서 요청 에이전트"
+msgstr "인증 요구 관리자"
 
 #: crypt32.rc:166 cryptui.rc:138
-#, fuzzy
 msgid "Lifetime Signing"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"평생 서명\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"유효기간"
+msgstr "유효기간"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
@@ -1251,7 +1176,7 @@ msgstr "신뢰 할 수 없는 인증서"
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr "KeyID="
+msgstr "키 아이디="
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
@@ -1367,7 +1292,7 @@ msgstr "CRL 발행자"
 
 #: crypt32.rc:212
 msgid "Key Compromise"
-msgstr "Key 협정"
+msgstr "키 협정"
 
 #: crypt32.rc:213
 msgid "CA Compromise"
@@ -1415,7 +1340,7 @@ msgstr "아니오"
 
 #: crypt32.rc:224
 msgid "Digital Signature"
-msgstr " 전자 서명"
+msgstr "전자 서명"
 
 #: crypt32.rc:225
 msgid "Non-Repudiation"
@@ -1431,7 +1356,7 @@ msgstr "데이터 암호화"
 
 #: crypt32.rc:228
 msgid "Key Agreement"
-msgstr "키 보증서t"
+msgstr "키 보증서"
 
 #: crypt32.rc:229
 msgid "Certificate Signing"
@@ -1479,47 +1404,43 @@ msgstr "S/MIME CA"
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr " CA 서명"
+msgstr "CA 서명"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
 msgstr "인증 방침"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
 msgstr "접근 키 식별자"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "정책 한정자 정보"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "정책 한정자 아이디="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "한정자"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "공지 사항 참조"
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
 msgstr "단체"
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
 msgstr "인증서 시리얼 번호="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "공지 사항="
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2090,30 +2011,23 @@ msgstr "옵션"
 
 #: hhctrl.rc:70
 msgid "S&ync"
-msgstr ""
+msgstr "동기화(&Y)"
 
 #: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr "뒤로(&B)"
 
 #: hhctrl.rc:72
-#, fuzzy
 msgid "&Forward"
 msgstr "앞으로"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgid "&Home"
 msgstr "홈"
 
 #: hhctrl.rc:74
-#, fuzzy
 msgid "&Stop"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"정지\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"멈추기"
+msgstr "멈추기(&S)"
 
 #: hhctrl.rc:75 shdoclc.rc:56
 msgid "&Refresh"
@@ -2124,7 +2038,6 @@ msgid "&Print..."
 msgstr "인쇄(&P)..."
 
 #: hhctrl.rc:28 notepad.rc:58 progman.rc:53
-#, fuzzy
 msgid "&Contents"
 msgstr "목차(&C)"
 
@@ -2142,11 +2055,11 @@ msgstr "즐겨찾기(&I)"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "탭 숨기기(&T)"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "탭 보이기(&T)"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -2157,13 +2070,8 @@ msgid "Hide"
 msgstr "숨기기"
 
 #: hhctrl.rc:41 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
-#, fuzzy
 msgid "Stop"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"정지\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"멈추기"
+msgstr "정지"
 
 #: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
 msgid "Refresh"
@@ -2243,7 +2151,7 @@ msgstr "IDTB_TOC_PREV"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr ""
+msgstr "시네팩 비디오 코덱"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -2410,7 +2318,7 @@ msgid ""
 "The specified installation package could not be opened.  Please check the "
 "file path and try again."
 msgstr ""
-" 지정한 설치 패키지를 열 수 없습니다. 파일 경로를 확인하고 다시 시도하십시오."
+"지정한 설치 패키지를 열 수 없습니다. 파일 경로를 확인하고 다시 시도하십시오."
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -2500,7 +2408,7 @@ msgstr "부분(feature)에서:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr " %s를 포함하는 폴더 선택"
+msgstr "%s를 포함하는 폴더 선택"
 
 #: msrle32.rc:27
 msgid "WINE-MS-RLE"
@@ -2596,7 +2504,7 @@ msgstr "문서"
 
 #: oleacc.rc:43
 msgid "pane"
-msgstr "틀(pane)"
+msgstr "틀"
 
 #: oleacc.rc:44
 msgid "chart"
@@ -2791,13 +2699,8 @@ msgid "outline button"
 msgstr "외곽선 단추"
 
 #: oleaut32.rc:27 oleview.rc:144
-#, fuzzy
 msgid "True"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"진실\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"참"
+msgstr "참"
 
 #: oleaut32.rc:28 oleview.rc:145
 msgid "False"
@@ -2936,13 +2839,8 @@ msgid "The file '%s' on %s is needed"
 msgstr "이 파일  '%s' 은 %s에서 필요로 합니다"
 
 #: setupapi.rc:29 ipconfig.rc:31
-#, fuzzy
 msgid "Unknown"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"알 수 없음\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"알수 없음"
+msgstr "알수 없음"
 
 #: setupapi.rc:30
 msgid "Copy files from:"
@@ -2977,13 +2875,8 @@ msgid "Set as &Desktop Item"
 msgstr "데스크탑 아이템으로 설정(&D)"
 
 #: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
-#, fuzzy
 msgid "Select &All"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"모두 선택(&A)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"전체 선택(&A)"
+msgstr "모두 선택(&A)"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
 #: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
@@ -3011,13 +2904,8 @@ msgid "Pr&int"
 msgstr "인쇄(&I)"
 
 #: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
-#, fuzzy
 msgid "&Properties"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"등록 정보(&P)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"옵션(&P)"
+msgstr "등록 정보(&P)"
 
 #: shdoclc.rc:62
 msgid "Image"
@@ -3094,22 +2982,12 @@ msgid "Control"
 msgstr "제어"
 
 #: shdoclc.rc:90 user32.rc:42
-#, fuzzy
 msgid "&Undo"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"되돌리기(&U)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"실행 취소(&U)"
+msgstr "되돌리기(&U)"
 
 #: shdoclc.rc:95 shell32.rc:90 user32.rc:47
-#, fuzzy
 msgid "&Delete"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"지우기(&D)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"삭제(&D)"
+msgstr "지우기(&D)"
 
 #: shdoclc.rc:101
 msgid "Table"
@@ -3338,13 +3216,8 @@ msgid "&File"
 msgstr "파일(&F)"
 
 #: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
-#, fuzzy
 msgid "&New"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"새 작업(&N)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"새로 만들기(&N)"
+msgstr "새로 만들기(&N)"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
@@ -3396,22 +3269,12 @@ msgid "&Address bar"
 msgstr "주소 바(&A)"
 
 #: shdocvw.rc:50 regedit.rc:73
-#, fuzzy
 msgid "&Favorites"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"즐겨찾기(&F)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"즐겨 찾기(&F)"
+msgstr "즐겨찾기(&F)"
 
 #: shdocvw.rc:52 regedit.rc:75
-#, fuzzy
 msgid "&Add to Favorites..."
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"즐겨찾기 추가(&A)...\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"즐겨 찾기 추가(&A)..."
+msgstr "즐겨찾기 추가(&A)..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
 #: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
@@ -3420,7 +3283,7 @@ msgstr "도움말(&H)"
 
 #: shdocvw.rc:57
 msgid "&About Internet Explorer..."
-msgstr "인터넷 익스플로어 정보(&A)..."
+msgstr "인터넷 익스플로어 에 관하여(&A)..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -3428,23 +3291,13 @@ msgstr "주소"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
 #: taskmgr.rc:111 taskmgr.rc:253
-#, fuzzy
 msgid "Lar&ge Icons"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"큰 아이콘(&g)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"큰 아이콘(&G)"
+msgstr "큰 아이콘(&G)"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
 #: taskmgr.rc:112 taskmgr.rc:254
-#, fuzzy
 msgid "S&mall Icons"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"작은 아이콘(&m)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"작은 아이콘(&M)"
+msgstr "작은 아이콘(&M)"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:109 shell32.rc:149
 msgid "&List"
@@ -3452,13 +3305,8 @@ msgstr "목록(&L)"
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:110 shell32.rc:150 taskmgr.rc:67
 #: taskmgr.rc:113 taskmgr.rc:255
-#, fuzzy
 msgid "&Details"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"상세히(&D)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"자세히(&D)"
+msgstr "자세히(&D)"
 
 #: shell32.rc:48
 msgid "Arrange &Icons"
@@ -3526,13 +3374,8 @@ msgstr "이름 바꾸기(&R)"
 
 #: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"끝내기(&X)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"나가기(&X)"
+msgstr "끝내기(&X)"
 
 #: shell32.rc:115
 msgid "&About Control Panel..."
@@ -3543,13 +3386,8 @@ msgid "Size"
 msgstr "크기"
 
 #: shell32.rc:124 regedit.rc:125
-#, fuzzy
 msgid "Type"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"형식\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"종류"
+msgstr "종류"
 
 #: shell32.rc:125
 msgid "Modified"
@@ -3744,13 +3582,12 @@ msgid "Status"
 msgstr "상태"
 
 #: shell32.rc:137
-#, fuzzy
 msgid "Location"
 msgstr "랜 연결"
 
 #: shell32.rc:138
 msgid "Model"
-msgstr ""
+msgstr "모델"
 
 #: shell32.rc:220
 msgid "Microsoft\\Windows\\GameExplorer"
@@ -3867,7 +3704,7 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
-"  이 폴더는 이미 '%1'이란 이름을 가진 폴더를 포함하고 있습니다.\n"
+"이 폴더는 이미 '%1'이란 이름을 가진 폴더를 포함하고 있습니다.\n"
 "\n"
 "만약 당신이 같은 이름으로 대상 폴더를 지정한다면 선택된 폴더는 대체될 것입니"
 "다\n"
@@ -3945,20 +3782,15 @@ msgstr "시"
 
 #: shlwapi.rc:29
 msgid " min"
-msgstr " 분"
+msgstr "분"
 
 #: shlwapi.rc:30
 msgid " sec"
-msgstr " 초"
+msgstr "초"
 
 #: user32.rc:27 taskmgr.rc:139
-#, fuzzy
 msgid "&Restore"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"복구(&R)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"복귀(&R)"
+msgstr "복구(&R)"
 
 #: user32.rc:28
 msgid "&Move"
@@ -3973,13 +3805,8 @@ msgid "Mi&nimize"
 msgstr "아이콘 표시(&N)"
 
 #: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-#, fuzzy
 msgid "Ma&ximize"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"최대화(&x)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"전체 화면 표시(&M)"
+msgstr "최대화(&x)"
 
 #: user32.rc:33
 msgid "&Close\tAlt-F4"
@@ -4530,7 +4357,7 @@ msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
-" \"song pointer\"의 시간 형식하고  SMPTE 는 서로 배타적입니다. 이것들을 같이 "
+"\"song pointer\"의 시간 형식하고  SMPTE 는 서로 배타적입니다. 이것들을 같이 "
 "사용할 수 없습니다."
 
 #: winmm.rc:124
@@ -5632,7 +5459,7 @@ msgstr "%s 서비스는 시작중.\n"
 
 #: net.rc:35
 msgid "The %s service was started successfully.\n"
-msgstr " %s 서비스 시작 성공.\n"
+msgstr "%s 서비스 시작 성공.\n"
 
 #: net.rc:36
 msgid "The %s service failed to start.\n"
@@ -5717,13 +5544,8 @@ msgid "&Edit"
 msgstr "편집(&E)"
 
 #: notepad.rc:39 wordpad.rc:41
-#, fuzzy
 msgid "&Undo\tCtrl+Z"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"실행 취소(&U)\tCtrl+Z\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"되돌리기(&U)\tCtrl+Z"
+msgstr "실행 취소(&U)\tCtrl+Z"
 
 #: notepad.rc:41 wordpad.rc:44
 msgid "Cu&t\tCtrl+X"
@@ -5739,13 +5561,8 @@ msgstr "붙여넣기(&P)\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
 #: winefile.rc:30
-#, fuzzy
 msgid "&Delete\tDel"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"삭제(&D)\tDel\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"지우기(&D)\tDel"
+msgstr "지우기(&D)\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -5768,13 +5585,8 @@ msgid "&Search next\tF3"
 msgstr "다음 찾기(&N)\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
-#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"바꾸기(&R)...\tCtrl+H\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-" 바꾸기(&R)...\tCtrl+H"
+msgstr " 바꾸기(&R)...\tCtrl+H"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -5801,13 +5613,8 @@ msgid "Notepad"
 msgstr "메모장"
 
 #: notepad.rc:72 progman.rc:66 winhlp32.rc:94
-#, fuzzy
 msgid "ERROR"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"오류\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"에러"
+msgstr "에러!!"
 
 #: notepad.rc:73 progman.rc:67 winhlp32.rc:95
 msgid "WARNING"
@@ -5916,7 +5723,7 @@ msgstr "레지스트리 편집기 실행(&R)"
 
 #: oleview.rc:37
 msgid "&Object"
-msgstr " 객체(&O)"
+msgstr "객체(&O)"
 
 #: oleview.rc:39
 msgid "&CoCreateInstance Flag"
@@ -5983,13 +5790,8 @@ msgid "&Status Bar"
 msgstr "상태바(&S)"
 
 #: oleview.rc:67 regedit.rc:71 winefile.rc:127
-#, fuzzy
 msgid "&Refresh\tF5"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"새로 읽기(&R)\tF5\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"새로 고침(&R)\tF5"
+msgstr "새로 고침(&R)\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
@@ -6020,7 +5822,6 @@ msgid "version 1.0"
 msgstr "버젼 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 msgstr "TypeLib 파일 (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
@@ -6222,22 +6023,12 @@ msgid "&Arrange automatically"
 msgstr "자동 정렬(&A)"
 
 #: progman.rc:43 winefile.rc:107
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"실행시 아이콘 상태로(&M)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"실행시 최소화(&M)"
+msgstr "실행시 최소화(&M)"
 
 #: progman.rc:44 winefile.rc:108
-#, fuzzy
 msgid "&Save settings on exit"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"종료시 설정 내용 저장(&S)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"나갈때 설정 저장(&S)"
+msgstr "나갈때 설정 저장(&S)"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
@@ -6280,13 +6071,8 @@ msgid "Delete program `%s' ?"
 msgstr "풀그림 `%s'을 지우겠습니까 ?"
 
 #: progman.rc:72 winhlp32.rc:97
-#, fuzzy
 msgid "Not implemented"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"아직 구현되지 않았습니다.\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"구현되지 않았음"
+msgstr "구현되지 않았음"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
@@ -6453,26 +6239,16 @@ msgid "Status &Bar"
 msgstr "상태 표기줄(&B)"
 
 #: regedit.rc:69 winefile.rc:81
-#, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"나누기(&l)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"나누기(&L)"
+msgstr "나누기(&L)"
 
 #: regedit.rc:76
 msgid "&Remove Favorite..."
 msgstr "즐겨 찾기 제거(&R)..."
 
 #: regedit.rc:80 winefile.rc:131
-#, fuzzy
 msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"도움말 목차(&H)\tF1\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"도움말 항목(&H)\tF1"
+msgstr "도움말 항목(&H)\tF1"
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
@@ -6528,12 +6304,10 @@ msgid "Export Registry File"
 msgstr "레지스트리 파일 내보내기"
 
 #: regedit.rc:199
-#, fuzzy
 msgid "Registry files (*.reg)"
 msgstr "레지스트리 파일 (*.reg)"
 
 #: regedit.rc:200
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 레지스트리 파일 (REGEDIT4)"
 
@@ -6903,13 +6677,8 @@ msgid "&Show Kernel Times"
 msgstr "커널 시간 보이기(&S)"
 
 #: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
-#, fuzzy
 msgid "Tile &Horizontally"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"가로 바둑판 정렬(&H)\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"가로 바둑판식 정렬(&H)"
+msgstr "가로 바둑판식 정렬(&H)"
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
@@ -7361,11 +7130,11 @@ msgstr "디버그 채널"
 
 #: taskmgr.rc:329
 msgid "Fixme"
-msgstr " 고정"
+msgstr "고정"
 
 #: taskmgr.rc:330
 msgid "Err"
-msgstr " 에러"
+msgstr "에러"
 
 #: taskmgr.rc:331
 msgid "Warn"
@@ -7995,13 +7764,8 @@ msgid "&Select Files..."
 msgstr "파일 선택(&S)..."
 
 #: winefile.rc:46 winemine.rc:44
-#, fuzzy
 msgid "E&xit\tAlt+X"
-msgstr ""
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"나가기(&X)\tAlt+X\n"
-"#-#-#-#-#  ko.po (Wine)  #-#-#-#-#\n"
-"나가기(Ex)\tAlt+X"
+msgstr "나가기(Ex)\tAlt+X"
 
 #: winefile.rc:52
 msgid "&Disk"
@@ -8052,7 +7816,6 @@ msgid "Expand &Tree\t*"
 msgstr "트리 확장(&T)\t*"
 
 #: winefile.rc:70
-#, fuzzy
 msgid "Expand &all\tCtrl+*"
 msgstr "모두 확장(&A)\tStrg+*"
 
