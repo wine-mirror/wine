@@ -106,7 +106,7 @@ static void store_reg( CONTEXT *context, BYTE regmodrm, const BYTE *addr, int lo
 static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
                                    int long_addr, int segprefix, int *len )
 {
-    int mod, rm, base = 0, index = 0, ss = 0, seg = 0, off;
+    int mod, rm, base = 0, index = 0, ss = 0, off;
 
 #define GET_VAL(val,type) \
     { *val = *(type *)instr; instr += sizeof(type); *len += sizeof(type); }
@@ -154,14 +154,14 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
 
         switch(rm)
         {
-        case 0: base = context->Eax; seg = context->SegDs; break;
-        case 1: base = context->Ecx; seg = context->SegDs; break;
-        case 2: base = context->Edx; seg = context->SegDs; break;
-        case 3: base = context->Ebx; seg = context->SegDs; break;
-        case 4: base = context->Esp; seg = context->SegSs; break;
-        case 5: base = context->Ebp; seg = context->SegSs; break;
-        case 6: base = context->Esi; seg = context->SegDs; break;
-        case 7: base = context->Edi; seg = context->SegDs; break;
+        case 0: base = context->Eax; break;
+        case 1: base = context->Ecx; break;
+        case 2: base = context->Edx; break;
+        case 3: base = context->Ebx; break;
+        case 4: base = context->Esp; break;
+        case 5: base = context->Ebp; break;
+        case 6: base = context->Esi; break;
+        case 7: base = context->Edi; break;
         }
         switch (mod)
         {
@@ -169,7 +169,6 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
             if (rm == 5)  /* special case: ds:(disp32) */
             {
                 GET_VAL( &base, DWORD );
-                seg = context->SegDs;
             }
             break;
 
@@ -190,35 +189,27 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
         {
         case 0:  /* ds:(bx,si) */
             base = LOWORD(context->Ebx) + LOWORD(context->Esi);
-            seg  = context->SegDs;
             break;
         case 1:  /* ds:(bx,di) */
             base = LOWORD(context->Ebx) + LOWORD(context->Edi);
-            seg  = context->SegDs;
             break;
         case 2:  /* ss:(bp,si) */
             base = LOWORD(context->Ebp) + LOWORD(context->Esi);
-            seg  = context->SegSs;
             break;
         case 3:  /* ss:(bp,di) */
             base = LOWORD(context->Ebp) + LOWORD(context->Edi);
-            seg  = context->SegSs;
             break;
         case 4:  /* ds:(si) */
             base = LOWORD(context->Esi);
-            seg  = context->SegDs;
             break;
         case 5:  /* ds:(di) */
             base = LOWORD(context->Edi);
-            seg  = context->SegDs;
             break;
         case 6:  /* ss:(bp) */
             base = LOWORD(context->Ebp);
-            seg  = context->SegSs;
             break;
         case 7:  /* ds:(bx) */
             base = LOWORD(context->Ebx);
-            seg  = context->SegDs;
             break;
         }
 
@@ -228,7 +219,6 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
             if (rm == 6)  /* special case: ds:(disp16) */
             {
                 GET_VAL( &base, WORD );
-                seg  = context->SegDs;
             }
             break;
 
@@ -244,8 +234,6 @@ static BYTE *INSTR_GetOperandAddr( CONTEXT *context, BYTE *instr,
         }
         base &= 0xffff;
     }
-    if (segprefix != -1) seg = segprefix;
-
     /* FIXME: we assume that all segments have a base of 0 */
     return (BYTE *)(base + (index << ss));
 #undef GET_VAL
