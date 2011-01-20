@@ -211,10 +211,8 @@ Thunk_IDirect3DDeviceImpl_2_QueryInterface(IDirect3DDevice2 *iface,
     return IDirect3DDevice7_QueryInterface((IDirect3DDevice7 *)device_from_device2(iface), riid, obj);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_QueryInterface(IDirect3DDevice *iface,
-                                           REFIID riid,
-                                           void **obp)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_QueryInterface(IDirect3DDevice *iface, REFIID riid,
+        void **obp)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obp);
 
@@ -260,8 +258,7 @@ Thunk_IDirect3DDeviceImpl_2_AddRef(IDirect3DDevice2 *iface)
     return IDirect3DDevice7_AddRef((IDirect3DDevice7 *)device_from_device2(iface));
 }
 
-static ULONG WINAPI
-Thunk_IDirect3DDeviceImpl_1_AddRef(IDirect3DDevice *iface)
+static ULONG WINAPI IDirect3DDeviceImpl_1_AddRef(IDirect3DDevice *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -408,8 +405,7 @@ Thunk_IDirect3DDeviceImpl_2_Release(IDirect3DDevice2 *iface)
     return IDirect3DDevice7_Release((IDirect3DDevice7 *)device_from_device2(iface));
 }
 
-static ULONG WINAPI
-Thunk_IDirect3DDeviceImpl_1_Release(IDirect3DDevice *iface)
+static ULONG WINAPI IDirect3DDeviceImpl_1_Release(IDirect3DDevice *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -541,10 +537,8 @@ Thunk_IDirect3DDeviceImpl_2_GetCaps(IDirect3DDevice2 *iface,
     return IDirect3DDevice3_GetCaps((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, D3DHWDevDesc, D3DHELDevDesc);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_GetCaps(IDirect3DDevice *iface,
-                                    D3DDEVICEDESC *D3DHWDevDesc,
-                                    D3DDEVICEDESC *D3DHELDevDesc)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_GetCaps(IDirect3DDevice *iface,
+        D3DDEVICEDESC *D3DHWDevDesc, D3DDEVICEDESC *D3DHELDevDesc)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
     TRACE("iface %p, hw_desc %p, hel_desc %p.\n", iface, D3DHWDevDesc, D3DHELDevDesc);
@@ -589,10 +583,8 @@ IDirect3DDeviceImpl_2_SwapTextureHandles(IDirect3DDevice2 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_SwapTextureHandles(IDirect3DDevice *iface,
-                                               IDirect3DTexture *D3DTex1,
-                                               IDirect3DTexture *D3DTex2)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_SwapTextureHandles(IDirect3DDevice *iface,
+        IDirect3DTexture *D3DTex1, IDirect3DTexture *D3DTex2)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
     IDirectDrawSurfaceImpl *surf1 = surface_from_texture1(D3DTex1);
@@ -653,9 +645,7 @@ Thunk_IDirect3DDeviceImpl_2_GetStats(IDirect3DDevice2 *iface,
     return IDirect3DDevice3_GetStats((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, Stats);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_GetStats(IDirect3DDevice *iface,
-                                     D3DSTATS *Stats)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_GetStats(IDirect3DDevice *iface, D3DSTATS *Stats)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
 
@@ -813,9 +803,8 @@ Thunk_IDirect3DDeviceImpl_2_AddViewport(IDirect3DDevice2 *iface,
     return IDirect3DDevice3_AddViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, (IDirect3DViewport3 *)vp);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_AddViewport(IDirect3DDevice *iface,
-                                        IDirect3DViewport *Direct3DViewport)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_AddViewport(IDirect3DDevice *iface,
+        IDirect3DViewport *Direct3DViewport)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
     IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)Direct3DViewport;
@@ -883,9 +872,8 @@ Thunk_IDirect3DDeviceImpl_2_DeleteViewport(IDirect3DDevice2 *iface,
     return IDirect3DDevice3_DeleteViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, (IDirect3DViewport3 *)vp);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_DeleteViewport(IDirect3DDevice *iface,
-                                           IDirect3DViewport *Direct3DViewport)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_DeleteViewport(IDirect3DDevice *iface,
+        IDirect3DViewport *Direct3DViewport)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
     IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)Direct3DViewport;
@@ -987,11 +975,8 @@ Thunk_IDirect3DDeviceImpl_2_NextViewport(IDirect3DDevice2 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_NextViewport(IDirect3DDevice *iface,
-                                         IDirect3DViewport *Viewport,
-                                         IDirect3DViewport **lplpDirect3DViewport,
-                                         DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_NextViewport(IDirect3DDevice *iface,
+        IDirect3DViewport *Viewport, IDirect3DViewport **lplpDirect3DViewport, DWORD Flags)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
     IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)Viewport;
@@ -1332,10 +1317,8 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_EnumTextureFormats(IDirect3DDevice *iface,
-                                               LPD3DENUMTEXTUREFORMATSCALLBACK Callback,
-                                               void *Arg)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_EnumTextureFormats(IDirect3DDevice *iface,
+        LPD3DENUMTEXTUREFORMATSCALLBACK Callback, void *Arg)
 {
     IDirect3DDeviceImpl *This = device_from_device1(iface);
 
@@ -1615,8 +1598,7 @@ Thunk_IDirect3DDeviceImpl_2_BeginScene(IDirect3DDevice2 *iface)
     return IDirect3DDevice7_BeginScene((IDirect3DDevice7 *)device_from_device2(iface));
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_1_BeginScene(IDirect3DDevice *iface)
+static HRESULT WINAPI IDirect3DDeviceImpl_1_BeginScene(IDirect3DDevice *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -1687,8 +1669,7 @@ Thunk_IDirect3DDeviceImpl_2_EndScene(IDirect3DDevice2 *iface)
     return IDirect3DDevice7_EndScene((IDirect3DDevice7 *)device_from_device2(iface));
 }
 
-static HRESULT WINAPI DECLSPEC_HOTPATCH
-Thunk_IDirect3DDeviceImpl_1_EndScene(IDirect3DDevice *iface)
+static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDeviceImpl_1_EndScene(IDirect3DDevice *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -6875,28 +6856,28 @@ static const struct IDirect3DDevice2Vtbl d3d_device2_vtbl =
 static const struct IDirect3DDeviceVtbl d3d_device1_vtbl =
 {
     /*** IUnknown Methods ***/
-    Thunk_IDirect3DDeviceImpl_1_QueryInterface,
-    Thunk_IDirect3DDeviceImpl_1_AddRef,
-    Thunk_IDirect3DDeviceImpl_1_Release,
+    IDirect3DDeviceImpl_1_QueryInterface,
+    IDirect3DDeviceImpl_1_AddRef,
+    IDirect3DDeviceImpl_1_Release,
     /*** IDirect3DDevice1 ***/
     IDirect3DDeviceImpl_1_Initialize,
-    Thunk_IDirect3DDeviceImpl_1_GetCaps,
-    Thunk_IDirect3DDeviceImpl_1_SwapTextureHandles,
+    IDirect3DDeviceImpl_1_GetCaps,
+    IDirect3DDeviceImpl_1_SwapTextureHandles,
     IDirect3DDeviceImpl_1_CreateExecuteBuffer,
-    Thunk_IDirect3DDeviceImpl_1_GetStats,
+    IDirect3DDeviceImpl_1_GetStats,
     IDirect3DDeviceImpl_1_Execute,
-    Thunk_IDirect3DDeviceImpl_1_AddViewport,
-    Thunk_IDirect3DDeviceImpl_1_DeleteViewport,
-    Thunk_IDirect3DDeviceImpl_1_NextViewport,
+    IDirect3DDeviceImpl_1_AddViewport,
+    IDirect3DDeviceImpl_1_DeleteViewport,
+    IDirect3DDeviceImpl_1_NextViewport,
     IDirect3DDeviceImpl_1_Pick,
     IDirect3DDeviceImpl_1_GetPickRecords,
-    Thunk_IDirect3DDeviceImpl_1_EnumTextureFormats,
+    IDirect3DDeviceImpl_1_EnumTextureFormats,
     IDirect3DDeviceImpl_1_CreateMatrix,
     IDirect3DDeviceImpl_1_SetMatrix,
     IDirect3DDeviceImpl_1_GetMatrix,
     IDirect3DDeviceImpl_1_DeleteMatrix,
-    Thunk_IDirect3DDeviceImpl_1_BeginScene,
-    Thunk_IDirect3DDeviceImpl_1_EndScene,
+    IDirect3DDeviceImpl_1_BeginScene,
+    IDirect3DDeviceImpl_1_EndScene,
     IDirect3DDeviceImpl_1_GetDirect3D
 };
 
