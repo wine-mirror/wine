@@ -118,6 +118,7 @@ HGLOBALLockBytesImpl16_Construct(HGLOBAL16 hGlobal,
       VTENT(SetSize);
       VTENT(LockRegion);
       VTENT(UnlockRegion);
+      VTENT(Stat);
 #undef VTENT
       msegvt16 = MapLS( &vt16 );
   }
