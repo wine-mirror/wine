@@ -39,11 +39,32 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 typedef struct {
     IShellDispatch IShellDispatch_iface;
     LONG ref;
+    ITypeInfo *iTypeInfo;
 } ShellDispatch;
 
 static inline ShellDispatch *impl_from_IShellDispatch(IShellDispatch *iface)
 {
     return CONTAINING_RECORD(iface, ShellDispatch, IShellDispatch_iface);
+}
+
+static HRESULT load_type_info(REFGUID guid, ITypeInfo **pptinfo)
+{
+    ITypeLib *typelib;
+    HRESULT ret;
+
+    ret = LoadRegTypeLib(&LIBID_Shell32, 1, 0, LOCALE_SYSTEM_DEFAULT, &typelib);
+    if (FAILED(ret))
+    {
+        ERR("LoadRegTypeLib failed: %08x\n", ret);
+        return ret;
+    }
+
+    ret = ITypeLib_GetTypeInfoOfGuid(typelib, guid, pptinfo);
+    ITypeLib_Release(typelib);
+    if (FAILED(ret))
+        ERR("failed to load ITypeInfo\n");
+
+    return ret;
 }
 
 static HRESULT WINAPI ShellDispatch_QueryInterface(IShellDispatch *iface,
@@ -87,34 +108,43 @@ static ULONG WINAPI ShellDispatch_Release(IShellDispatch *iface)
     TRACE("(%p), new refcount=%i\n", iface, ref);
 
     if (!ref)
+    {
+        ITypeInfo_Release(This->iTypeInfo);
         HeapFree(GetProcessHeap(), 0, This);
+    }
     return ref;
 }
 
 static HRESULT WINAPI ShellDispatch_GetTypeInfoCount(IShellDispatch *iface,
         UINT *pctinfo)
 {
-    FIXME("(%p,%p)\n", iface, pctinfo);
+    TRACE("(%p,%p)\n", iface, pctinfo);
 
-    return E_NOTIMPL;
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI ShellDispatch_GetTypeInfo(IShellDispatch *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
-    FIXME("(%p,%u,%d,%p)\n", iface, iTInfo, lcid, ppTInfo);
+    ShellDispatch *This = impl_from_IShellDispatch(iface);
 
-    *ppTInfo = NULL;
-    return E_NOTIMPL;
+    TRACE("(%p,%u,%d,%p)\n", iface, iTInfo, lcid, ppTInfo);
+
+    ITypeInfo_AddRef(This->iTypeInfo);
+    *ppTInfo = This->iTypeInfo;
+    return S_OK;
 }
 
 static HRESULT WINAPI ShellDispatch_GetIDsOfNames(IShellDispatch *iface,
         REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    FIXME("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
+    ShellDispatch *This = impl_from_IShellDispatch(iface);
+
+    TRACE("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
             rgDispId);
 
-    return E_NOTIMPL;
+    return ITypeInfo_GetIDsOfNames(This->iTypeInfo, rgszNames, cNames, rgDispId);
 }
 
 static HRESULT WINAPI ShellDispatch_Invoke(IShellDispatch *iface,
@@ -122,10 +152,13 @@ static HRESULT WINAPI ShellDispatch_Invoke(IShellDispatch *iface,
         DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo,
         UINT *puArgErr)
 {
-    FIXME("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
+    ShellDispatch *This = impl_from_IShellDispatch(iface);
+
+    TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    return E_NOTIMPL;
+    return ITypeInfo_Invoke(This->iTypeInfo, This, dispIdMember, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI ShellDispatch_get_Application(IShellDispatch *iface,
@@ -349,6 +382,13 @@ HRESULT WINAPI IShellDispatch_Constructor(IUnknown *pUnkOuter, REFIID riid,
     if (!This) return E_OUTOFMEMORY;
     This->IShellDispatch_iface.lpVtbl = &ShellDispatch_Vtbl;
     This->ref = 1;
+
+    ret = load_type_info(&IID_IShellDispatch, &This->iTypeInfo);
+    if (FAILED(ret))
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return ret;
+    }
 
     ret = ShellDispatch_QueryInterface(&This->IShellDispatch_iface, riid, ppv);
     ShellDispatch_Release(&This->IShellDispatch_iface);
