@@ -201,10 +201,8 @@ Thunk_IDirect3DDeviceImpl_3_QueryInterface(IDirect3DDevice3 *iface,
     return IDirect3DDevice7_QueryInterface((IDirect3DDevice7 *)device_from_device3(iface), riid, obj);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_QueryInterface(IDirect3DDevice2 *iface,
-                                           REFIID riid,
-                                           void **obj)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_QueryInterface(IDirect3DDevice2 *iface, REFIID riid,
+        void **obj)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obj);
 
@@ -250,8 +248,7 @@ Thunk_IDirect3DDeviceImpl_3_AddRef(IDirect3DDevice3 *iface)
     return IDirect3DDevice7_AddRef((IDirect3DDevice7 *)device_from_device3(iface));
 }
 
-static ULONG WINAPI
-Thunk_IDirect3DDeviceImpl_2_AddRef(IDirect3DDevice2 *iface)
+static ULONG WINAPI IDirect3DDeviceImpl_2_AddRef(IDirect3DDevice2 *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -397,8 +394,7 @@ Thunk_IDirect3DDeviceImpl_3_Release(IDirect3DDevice3 *iface)
     return IDirect3DDevice7_Release((IDirect3DDevice7 *)device_from_device3(iface));
 }
 
-static ULONG WINAPI
-Thunk_IDirect3DDeviceImpl_2_Release(IDirect3DDevice2 *iface)
+static ULONG WINAPI IDirect3DDeviceImpl_2_Release(IDirect3DDevice2 *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -527,10 +523,8 @@ IDirect3DDeviceImpl_3_GetCaps(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_GetCaps(IDirect3DDevice2 *iface,
-                                    D3DDEVICEDESC *D3DHWDevDesc,
-                                    D3DDEVICEDESC *D3DHELDevDesc)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_GetCaps(IDirect3DDevice2 *iface,
+        D3DDEVICEDESC *D3DHWDevDesc, D3DDEVICEDESC *D3DHELDevDesc)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
     TRACE("iface %p, hw_desc %p, hel_desc %p.\n", iface, D3DHWDevDesc, D3DHELDevDesc);
@@ -634,9 +628,7 @@ IDirect3DDeviceImpl_3_GetStats(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_GetStats(IDirect3DDevice2 *iface,
-                                     D3DSTATS *Stats)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_GetStats(IDirect3DDevice2 *iface, D3DSTATS *Stats)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -791,9 +783,8 @@ IDirect3DDeviceImpl_3_AddViewport(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_AddViewport(IDirect3DDevice2 *iface,
-                                        IDirect3DViewport2 *Direct3DViewport2)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_AddViewport(IDirect3DDevice2 *iface,
+        IDirect3DViewport2 *Direct3DViewport2)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
     IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)Direct3DViewport2;
@@ -860,9 +851,8 @@ IDirect3DDeviceImpl_3_DeleteViewport(IDirect3DDevice3 *iface,
     return DDERR_INVALIDPARAMS;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_DeleteViewport(IDirect3DDevice2 *iface,
-                                           IDirect3DViewport2 *Direct3DViewport2)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_DeleteViewport(IDirect3DDevice2 *iface,
+        IDirect3DViewport2 *Direct3DViewport2)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
     IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)Direct3DViewport2;
@@ -955,11 +945,8 @@ IDirect3DDeviceImpl_3_NextViewport(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_NextViewport(IDirect3DDevice2 *iface,
-                                         IDirect3DViewport2 *Viewport2,
-                                         IDirect3DViewport2 **lplpDirect3DViewport2,
-                                         DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_NextViewport(IDirect3DDevice2 *iface,
+        IDirect3DViewport2 *Viewport2, IDirect3DViewport2 **lplpDirect3DViewport2, DWORD Flags)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
     IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)Viewport2;
@@ -1590,8 +1577,7 @@ Thunk_IDirect3DDeviceImpl_3_BeginScene(IDirect3DDevice3 *iface)
     return IDirect3DDevice7_BeginScene((IDirect3DDevice7 *)device_from_device3(iface));
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_BeginScene(IDirect3DDevice2 *iface)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_BeginScene(IDirect3DDevice2 *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -1661,8 +1647,7 @@ Thunk_IDirect3DDeviceImpl_3_EndScene(IDirect3DDevice3 *iface)
     return IDirect3DDevice7_EndScene((IDirect3DDevice7 *)device_from_device3(iface));
 }
 
-static HRESULT WINAPI DECLSPEC_HOTPATCH
-Thunk_IDirect3DDeviceImpl_2_EndScene(IDirect3DDevice2 *iface)
+static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDeviceImpl_2_EndScene(IDirect3DDevice2 *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -1811,9 +1796,8 @@ IDirect3DDeviceImpl_3_SetCurrentViewport(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_SetCurrentViewport(IDirect3DDevice2 *iface,
-                                               IDirect3DViewport2 *Direct3DViewport2)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_SetCurrentViewport(IDirect3DDevice2 *iface,
+        IDirect3DViewport2 *Direct3DViewport2)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
     IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)Direct3DViewport2;
@@ -1862,9 +1846,8 @@ IDirect3DDeviceImpl_3_GetCurrentViewport(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_GetCurrentViewport(IDirect3DDevice2 *iface,
-                                               IDirect3DViewport2 **Direct3DViewport2)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_GetCurrentViewport(IDirect3DDevice2 *iface,
+        IDirect3DViewport2 **Direct3DViewport2)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
     HRESULT hr;
@@ -1969,10 +1952,8 @@ Thunk_IDirect3DDeviceImpl_3_SetRenderTarget(IDirect3DDevice3 *iface,
     return IDirect3DDevice7_SetRenderTarget((IDirect3DDevice7 *)This, (IDirectDrawSurface7 *)Target, Flags);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_SetRenderTarget(IDirect3DDevice2 *iface,
-                                            IDirectDrawSurface *NewRenderTarget,
-                                            DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_SetRenderTarget(IDirect3DDevice2 *iface,
+        IDirectDrawSurface *NewRenderTarget, DWORD Flags)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
     IDirectDrawSurfaceImpl *Target = (IDirectDrawSurfaceImpl *)NewRenderTarget;
@@ -2032,9 +2013,8 @@ Thunk_IDirect3DDeviceImpl_3_GetRenderTarget(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_GetRenderTarget(IDirect3DDevice2 *iface,
-                                            IDirectDrawSurface **RenderTarget)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_GetRenderTarget(IDirect3DDevice2 *iface,
+        IDirectDrawSurface **RenderTarget)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
     HRESULT hr;
@@ -2088,11 +2068,8 @@ IDirect3DDeviceImpl_3_Begin(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_Begin(IDirect3DDevice2 *iface,
-                                  D3DPRIMITIVETYPE d3dpt,
-                                  D3DVERTEXTYPE dwVertexTypeDesc,
-                                  DWORD dwFlags)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_Begin(IDirect3DDevice2 *iface, D3DPRIMITIVETYPE d3dpt,
+        D3DVERTEXTYPE dwVertexTypeDesc, DWORD dwFlags)
 {
     DWORD FVF;
     IDirect3DDeviceImpl *This = device_from_device2(iface);
@@ -2147,13 +2124,9 @@ IDirect3DDeviceImpl_3_BeginIndexed(IDirect3DDevice3 *iface,
 }
 
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_BeginIndexed(IDirect3DDevice2 *iface,
-                                         D3DPRIMITIVETYPE d3dptPrimitiveType,
-                                         D3DVERTEXTYPE d3dvtVertexType,
-                                         void *lpvVertices,
-                                         DWORD dwNumVertices,
-                                         DWORD dwFlags)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_BeginIndexed(IDirect3DDevice2 *iface,
+        D3DPRIMITIVETYPE d3dptPrimitiveType, D3DVERTEXTYPE d3dvtVertexType,
+        void *lpvVertices, DWORD dwNumVertices, DWORD dwFlags)
 {
     DWORD FVF;
     IDirect3DDeviceImpl *This = device_from_device2(iface);
@@ -2223,9 +2196,7 @@ IDirect3DDeviceImpl_3_Vertex(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_Vertex(IDirect3DDevice2 *iface,
-                                   void *lpVertexType)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_Vertex(IDirect3DDevice2 *iface, void *lpVertexType)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -2256,9 +2227,7 @@ IDirect3DDeviceImpl_3_Index(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_Index(IDirect3DDevice2 *iface,
-                                  WORD wVertexIndex)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_Index(IDirect3DDevice2 *iface, WORD wVertexIndex)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -2297,9 +2266,7 @@ IDirect3DDeviceImpl_3_End(IDirect3DDevice3 *iface,
             This->vertex_type, This->vertex_buffer, This->nb_vertices, This->render_flags);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_End(IDirect3DDevice2 *iface,
-                                DWORD dwFlags)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_End(IDirect3DDevice2 *iface, DWORD dwFlags)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -2603,10 +2570,8 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
     }
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_GetRenderState(IDirect3DDevice2 *iface,
-                                           D3DRENDERSTATETYPE dwRenderStateType,
-                                           DWORD *lpdwRenderState)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_GetRenderState(IDirect3DDevice2 *iface,
+        D3DRENDERSTATETYPE dwRenderStateType, DWORD *lpdwRenderState)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -2958,10 +2923,8 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_SetRenderState(IDirect3DDevice2 *iface,
-                                           D3DRENDERSTATETYPE RenderStateType,
-                                           DWORD Value)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_SetRenderState(IDirect3DDevice2 *iface,
+        D3DRENDERSTATETYPE RenderStateType, DWORD Value)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -3075,10 +3038,8 @@ IDirect3DDeviceImpl_3_SetLightState(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_SetLightState(IDirect3DDevice2 *iface,
-                                          D3DLIGHTSTATETYPE LightStateType,
-                                          DWORD Value)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_SetLightState(IDirect3DDevice2 *iface,
+        D3DLIGHTSTATETYPE LightStateType, DWORD Value)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -3171,10 +3132,8 @@ IDirect3DDeviceImpl_3_GetLightState(IDirect3DDevice3 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_GetLightState(IDirect3DDevice2 *iface,
-                                          D3DLIGHTSTATETYPE LightStateType,
-                                          DWORD *Value)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_GetLightState(IDirect3DDevice2 *iface,
+        D3DLIGHTSTATETYPE LightStateType, DWORD *Value)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -3271,10 +3230,8 @@ Thunk_IDirect3DDeviceImpl_3_SetTransform(IDirect3DDevice3 *iface,
     return IDirect3DDevice7_SetTransform((IDirect3DDevice7 *)This, TransformStateType, D3DMatrix);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_SetTransform(IDirect3DDevice2 *iface,
-                                         D3DTRANSFORMSTATETYPE TransformStateType,
-                                         D3DMATRIX *D3DMatrix)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_SetTransform(IDirect3DDevice2 *iface,
+        D3DTRANSFORMSTATETYPE TransformStateType, D3DMATRIX *D3DMatrix)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -3365,10 +3322,8 @@ Thunk_IDirect3DDeviceImpl_3_GetTransform(IDirect3DDevice3 *iface,
     return IDirect3DDevice7_GetTransform((IDirect3DDevice7 *)This, TransformStateType, D3DMatrix);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_GetTransform(IDirect3DDevice2 *iface,
-                                         D3DTRANSFORMSTATETYPE TransformStateType,
-                                         D3DMATRIX *D3DMatrix)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_GetTransform(IDirect3DDevice2 *iface,
+        D3DTRANSFORMSTATETYPE TransformStateType, D3DMATRIX *D3DMatrix)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -3459,10 +3414,8 @@ Thunk_IDirect3DDeviceImpl_3_MultiplyTransform(IDirect3DDevice3 *iface,
     return IDirect3DDevice7_MultiplyTransform((IDirect3DDevice7 *)This, TransformStateType, D3DMatrix);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_MultiplyTransform(IDirect3DDevice2 *iface,
-                                              D3DTRANSFORMSTATETYPE TransformStateType,
-                                              D3DMATRIX *D3DMatrix)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_MultiplyTransform(IDirect3DDevice2 *iface,
+        D3DTRANSFORMSTATETYPE TransformStateType, D3DMATRIX *D3DMatrix)
 {
     IDirect3DDeviceImpl *This = device_from_device2(iface);
 
@@ -3573,13 +3526,9 @@ Thunk_IDirect3DDeviceImpl_3_DrawPrimitive(IDirect3DDevice3 *iface,
             PrimitiveType, VertexType, Vertices, VertexCount, Flags);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_DrawPrimitive(IDirect3DDevice2 *iface,
-                                          D3DPRIMITIVETYPE PrimitiveType,
-                                          D3DVERTEXTYPE VertexType,
-                                          void *Vertices,
-                                          DWORD VertexCount,
-                                          DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_DrawPrimitive(IDirect3DDevice2 *iface,
+        D3DPRIMITIVETYPE PrimitiveType, D3DVERTEXTYPE VertexType, void *Vertices,
+        DWORD VertexCount, DWORD Flags)
 {
     DWORD FVF;
 
@@ -3707,15 +3656,9 @@ Thunk_IDirect3DDeviceImpl_3_DrawIndexedPrimitive(IDirect3DDevice3 *iface,
             PrimitiveType, VertexType, Vertices, VertexCount, Indices, IndexCount, Flags);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_DrawIndexedPrimitive(IDirect3DDevice2 *iface,
-                                                 D3DPRIMITIVETYPE PrimitiveType,
-                                                 D3DVERTEXTYPE VertexType,
-                                                 void *Vertices,
-                                                 DWORD VertexCount,
-                                                 WORD *Indices,
-                                                 DWORD IndexCount,
-                                                 DWORD Flags)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_DrawIndexedPrimitive(IDirect3DDevice2 *iface,
+        D3DPRIMITIVETYPE PrimitiveType, D3DVERTEXTYPE VertexType, void *Vertices,
+        DWORD VertexCount, WORD *Indices, DWORD IndexCount, DWORD Flags)
 {
     DWORD FVF;
 
@@ -3774,9 +3717,8 @@ Thunk_IDirect3DDeviceImpl_3_SetClipStatus(IDirect3DDevice3 *iface,
     return IDirect3DDevice7_SetClipStatus((IDirect3DDevice7 *)device_from_device3(iface), ClipStatus);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_SetClipStatus(IDirect3DDevice2 *iface,
-                                          D3DCLIPSTATUS *ClipStatus)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_SetClipStatus(IDirect3DDevice2 *iface,
+        D3DCLIPSTATUS *ClipStatus)
 {
     TRACE("iface %p, clip_status %p.\n", iface, ClipStatus);
 
@@ -3815,9 +3757,8 @@ Thunk_IDirect3DDeviceImpl_3_GetClipStatus(IDirect3DDevice3 *iface,
     return IDirect3DDevice7_GetClipStatus((IDirect3DDevice7 *)device_from_device3(iface), ClipStatus);
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DDeviceImpl_2_GetClipStatus(IDirect3DDevice2 *iface,
-                                          D3DCLIPSTATUS *ClipStatus)
+static HRESULT WINAPI IDirect3DDeviceImpl_2_GetClipStatus(IDirect3DDevice2 *iface,
+        D3DCLIPSTATUS *ClipStatus)
 {
     TRACE("iface %p, clip_status %p.\n", iface, ClipStatus);
 
@@ -6817,40 +6758,40 @@ static const struct IDirect3DDevice3Vtbl d3d_device3_vtbl =
 static const struct IDirect3DDevice2Vtbl d3d_device2_vtbl =
 {
     /*** IUnknown Methods ***/
-    Thunk_IDirect3DDeviceImpl_2_QueryInterface,
-    Thunk_IDirect3DDeviceImpl_2_AddRef,
-    Thunk_IDirect3DDeviceImpl_2_Release,
+    IDirect3DDeviceImpl_2_QueryInterface,
+    IDirect3DDeviceImpl_2_AddRef,
+    IDirect3DDeviceImpl_2_Release,
     /*** IDirect3DDevice2 ***/
-    Thunk_IDirect3DDeviceImpl_2_GetCaps,
+    IDirect3DDeviceImpl_2_GetCaps,
     IDirect3DDeviceImpl_2_SwapTextureHandles,
-    Thunk_IDirect3DDeviceImpl_2_GetStats,
-    Thunk_IDirect3DDeviceImpl_2_AddViewport,
-    Thunk_IDirect3DDeviceImpl_2_DeleteViewport,
-    Thunk_IDirect3DDeviceImpl_2_NextViewport,
+    IDirect3DDeviceImpl_2_GetStats,
+    IDirect3DDeviceImpl_2_AddViewport,
+    IDirect3DDeviceImpl_2_DeleteViewport,
+    IDirect3DDeviceImpl_2_NextViewport,
     IDirect3DDeviceImpl_2_EnumTextureFormats,
-    Thunk_IDirect3DDeviceImpl_2_BeginScene,
-    Thunk_IDirect3DDeviceImpl_2_EndScene,
+    IDirect3DDeviceImpl_2_BeginScene,
+    IDirect3DDeviceImpl_2_EndScene,
     IDirect3DDeviceImpl_2_GetDirect3D,
-    Thunk_IDirect3DDeviceImpl_2_SetCurrentViewport,
-    Thunk_IDirect3DDeviceImpl_2_GetCurrentViewport,
-    Thunk_IDirect3DDeviceImpl_2_SetRenderTarget,
-    Thunk_IDirect3DDeviceImpl_2_GetRenderTarget,
-    Thunk_IDirect3DDeviceImpl_2_Begin,
-    Thunk_IDirect3DDeviceImpl_2_BeginIndexed,
-    Thunk_IDirect3DDeviceImpl_2_Vertex,
-    Thunk_IDirect3DDeviceImpl_2_Index,
-    Thunk_IDirect3DDeviceImpl_2_End,
-    Thunk_IDirect3DDeviceImpl_2_GetRenderState,
-    Thunk_IDirect3DDeviceImpl_2_SetRenderState,
-    Thunk_IDirect3DDeviceImpl_2_GetLightState,
-    Thunk_IDirect3DDeviceImpl_2_SetLightState,
-    Thunk_IDirect3DDeviceImpl_2_SetTransform,
-    Thunk_IDirect3DDeviceImpl_2_GetTransform,
-    Thunk_IDirect3DDeviceImpl_2_MultiplyTransform,
-    Thunk_IDirect3DDeviceImpl_2_DrawPrimitive,
-    Thunk_IDirect3DDeviceImpl_2_DrawIndexedPrimitive,
-    Thunk_IDirect3DDeviceImpl_2_SetClipStatus,
-    Thunk_IDirect3DDeviceImpl_2_GetClipStatus
+    IDirect3DDeviceImpl_2_SetCurrentViewport,
+    IDirect3DDeviceImpl_2_GetCurrentViewport,
+    IDirect3DDeviceImpl_2_SetRenderTarget,
+    IDirect3DDeviceImpl_2_GetRenderTarget,
+    IDirect3DDeviceImpl_2_Begin,
+    IDirect3DDeviceImpl_2_BeginIndexed,
+    IDirect3DDeviceImpl_2_Vertex,
+    IDirect3DDeviceImpl_2_Index,
+    IDirect3DDeviceImpl_2_End,
+    IDirect3DDeviceImpl_2_GetRenderState,
+    IDirect3DDeviceImpl_2_SetRenderState,
+    IDirect3DDeviceImpl_2_GetLightState,
+    IDirect3DDeviceImpl_2_SetLightState,
+    IDirect3DDeviceImpl_2_SetTransform,
+    IDirect3DDeviceImpl_2_GetTransform,
+    IDirect3DDeviceImpl_2_MultiplyTransform,
+    IDirect3DDeviceImpl_2_DrawPrimitive,
+    IDirect3DDeviceImpl_2_DrawIndexedPrimitive,
+    IDirect3DDeviceImpl_2_SetClipStatus,
+    IDirect3DDeviceImpl_2_GetClipStatus
 };
 
 static const struct IDirect3DDeviceVtbl d3d_device1_vtbl =
