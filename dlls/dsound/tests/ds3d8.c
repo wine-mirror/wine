@@ -30,6 +30,8 @@
 #include "wine/test.h"
 #include "dsound.h"
 #include "mmreg.h"
+#include "ks.h"
+#include "ksmedia.h"
 #include "dsound_test.h"
 
 static HRESULT (WINAPI *pDirectSoundEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
@@ -181,6 +183,7 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
     DSBCAPS dsbcaps;
     WAVEFORMATEX wfx,wfx2;
     DWORD size,status,freq;
+    BOOL ieee = FALSE;
     int ref;
 
     /* DSOUND: Error: Invalid caps pointer */
@@ -214,10 +217,12 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
 
     if (size == sizeof(WAVEFORMATEX)) {
         rc=IDirectSoundBuffer_GetFormat(*dsbo,&wfx,size,NULL);
+        ieee = (wfx.wFormatTag == WAVE_FORMAT_IEEE_FLOAT);
     } else if (size == sizeof(WAVEFORMATEXTENSIBLE)) {
         WAVEFORMATEXTENSIBLE wfxe;
         rc=IDirectSoundBuffer_GetFormat(*dsbo,(WAVEFORMATEX*)&wfxe,size,NULL);
         wfx = wfxe.Format;
+        ieee = IsEqualGUID(&wfxe.SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
     }
     ok(rc==DS_OK,"IDirectSoundBuffer_GetFormat() failed: %08x\n", rc);
     if (rc==DS_OK && winetest_debug > 1) {
@@ -447,7 +452,7 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
         ok(rc==DSERR_INVALIDPARAM, "IDirectSoundBuffer_Lock() should have "
            "returned DSERR_INVALIDPARAM, returned %08x\n", rc);
 
-        state.wave=wave_generate_la(&wfx,duration,&state.wave_len,FALSE);
+        state.wave=wave_generate_la(&wfx,duration,&state.wave_len,ieee);
 
         state.dsbo=*dsbo;
         state.wfx=&wfx;
