@@ -101,22 +101,22 @@ HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *info)
 
 /*************************************************************************
  * Implement the ExplorerFrame class factory
- *
- * (Taken from shdocvw/factory.c; based on implementation in
- *  ddraw/main.c)
  */
-
-#define FACTORY(x) ((IClassFactory*) &(x)->lpClassFactoryVtbl)
 
 typedef struct
 {
-    const IClassFactoryVtbl *lpClassFactoryVtbl;
+    IClassFactory IClassFactory_iface;
     HRESULT (*cf)(IUnknown*, REFIID, void**);
     LONG ref;
 } IClassFactoryImpl;
 
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
+
 /*************************************************************************
- * EFCF_QueryInterface (IUnknown)
+ * EFCF_QueryInterface
  */
 static HRESULT WINAPI EFCF_QueryInterface(IClassFactory* iface,
                                           REFIID riid, void **ppobj)
@@ -140,7 +140,7 @@ static HRESULT WINAPI EFCF_QueryInterface(IClassFactory* iface,
 }
 
 /*************************************************************************
- * EFCF_AddRef (IUnknown)
+ * EFCF_AddRef
  */
 static ULONG WINAPI EFCF_AddRef(IClassFactory *iface)
 {
@@ -150,7 +150,7 @@ static ULONG WINAPI EFCF_AddRef(IClassFactory *iface)
 }
 
 /*************************************************************************
- * EFCF_Release (IUnknown)
+ * EFCF_Release
  */
 static ULONG WINAPI EFCF_Release(IClassFactory *iface)
 {
@@ -165,7 +165,7 @@ static ULONG WINAPI EFCF_Release(IClassFactory *iface)
 static HRESULT WINAPI EFCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
                                           REFIID riid, void **ppobj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     return This->cf(pOuter, riid, ppobj);
 }
 
@@ -198,12 +198,12 @@ static const IClassFactoryVtbl EFCF_Vtbl =
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    static IClassFactoryImpl NSTCClassFactory = {&EFCF_Vtbl, NamespaceTreeControl_Constructor};
+    static IClassFactoryImpl NSTCClassFactory = {{&EFCF_Vtbl}, NamespaceTreeControl_Constructor};
 
     TRACE("%s, %s, %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
     if(IsEqualGUID(&CLSID_NamespaceTreeControl, rclsid))
-        return IClassFactory_QueryInterface(FACTORY(&NSTCClassFactory), riid, ppv);
+        return IClassFactory_QueryInterface(&NSTCClassFactory.IClassFactory_iface, riid, ppv);
 
     return CLASS_E_CLASSNOTAVAILABLE;
 }
