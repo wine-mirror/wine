@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"PO-Revision-Date: 2011-01-20 17:16+0200\n"
+"Last-Translator: Yaron Shahrabani <sh.yaron@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Hebrew\n"
 "MIME-Version: 1.0\n"
@@ -273,13 +273,8 @@ msgid "Black"
 msgstr "שחור"
 
 #: comdlg32.rc:132 wordpad.rc:115
-#, fuzzy
 msgid "Maroon"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"אדום כהה\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"אדום עז"
+msgstr "אדום עז"
 
 #: comdlg32.rc:133 wordpad.rc:116
 msgid "Green"
@@ -298,26 +293,16 @@ msgid "Purple"
 msgstr "סגול"
 
 #: comdlg32.rc:137 wordpad.rc:120
-#, fuzzy
 msgid "Teal"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"כחול ים\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"טורקיז"
+msgstr "כחול ים"
 
 #: comdlg32.rc:138 wordpad.rc:121
 msgid "Gray"
 msgstr "אפור"
 
 #: comdlg32.rc:139 wordpad.rc:122
-#, fuzzy
 msgid "Silver"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"כסף\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"כסוף"
+msgstr "כסוף"
 
 #: comdlg32.rc:140 wordpad.rc:123
 msgid "Red"
@@ -1125,9 +1110,8 @@ msgid "Smart Card Logon"
 msgstr ""
 
 #: crypt32.rc:156 cryptui.rc:139
-#, fuzzy
 msgid "Digital Rights"
-msgstr "&דיגיטלי"
+msgstr "זכויות דיגיטליות"
 
 #: crypt32.rc:157 cryptui.rc:135
 msgid "Qualified Subordination"
@@ -1299,7 +1283,7 @@ msgstr ""
 
 #: crypt32.rc:208
 msgid "Full Name"
-msgstr ""
+msgstr "שם מלא"
 
 #: crypt32.rc:209
 msgid "RDN Name"
@@ -1355,15 +1339,15 @@ msgstr ""
 
 #: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
-msgstr ""
+msgstr "כן"
 
 #: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 ipconfig.rc:45
 msgid "No"
-msgstr ""
+msgstr "לא"
 
 #: crypt32.rc:224
 msgid "Digital Signature"
-msgstr ""
+msgstr "חתימה דיגיטלית"
 
 #: crypt32.rc:225
 msgid "Non-Repudiation"
@@ -1467,12 +1451,11 @@ msgstr ""
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
-msgstr ""
+msgstr "אישור"
 
 #: cryptui.rc:28
-#, fuzzy
 msgid "Certificate Information"
-msgstr "מידע"
+msgstr "פרטי האישור"
 
 #: cryptui.rc:29
 msgid ""
@@ -1491,9 +1474,8 @@ msgid "This certificate could not be validated to a trusted root certificate."
 msgstr ""
 
 #: cryptui.rc:32
-#, fuzzy
 msgid "This certificate's issuer could not be found."
-msgstr "'%s' לא נמצא."
+msgstr "לא ניתן למצוא את המנפיק של אישור זה."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
@@ -1513,11 +1495,11 @@ msgstr ""
 
 #: cryptui.rc:37
 msgid "Valid from "
-msgstr ""
+msgstr "תקף מהתאריך"
 
 #: cryptui.rc:38
 msgid " to "
-msgstr ""
+msgstr " עד "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
@@ -1533,23 +1515,23 @@ msgstr ""
 
 #: cryptui.rc:42
 msgid "This certificate was revoked by its issuer."
-msgstr ""
+msgstr "האישור נשלל על ידי מנפיקו."
 
 #: cryptui.rc:43
 msgid "This certificate is OK."
-msgstr ""
+msgstr "אישור זה תקין."
 
 #: cryptui.rc:44
 msgid "Field"
-msgstr ""
+msgstr "שדה"
 
 #: cryptui.rc:45
 msgid "Value"
-msgstr ""
+msgstr "ערך"
 
 #: cryptui.rc:46 cryptui.rc:99 cryptui.rc:105
 msgid "<All>"
-msgstr ""
+msgstr "<הכול>"
 
 #: cryptui.rc:47
 msgid "Version 1 Fields Only"
@@ -1564,47 +1546,40 @@ msgid "Critical Extensions Only"
 msgstr ""
 
 #: cryptui.rc:50
-#, fuzzy
 msgid "Properties Only"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&מאפיינים\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"מ&אפיינים"
+msgstr "מאפיינים בלבד"
 
 #: cryptui.rc:52
 msgid "Serial number"
-msgstr ""
+msgstr "מספר סידורי"
 
 #: cryptui.rc:53
 msgid "Issuer"
-msgstr ""
+msgstr "מנפיק"
 
 #: cryptui.rc:54
 msgid "Valid from"
 msgstr ""
 
 #: cryptui.rc:55
-#, fuzzy
 msgid "Valid to"
-msgstr "אפשרות שגויה"
+msgstr "תקף עד"
 
 #: cryptui.rc:56
-#, fuzzy
 msgid "Subject"
-msgstr "עצמי USER"
+msgstr "נופק עבור"
 
 #: cryptui.rc:57
 msgid "Public key"
-msgstr ""
+msgstr "מפתח ציבורי"
 
 #: cryptui.rc:58
 msgid "%s (%d bits)"
-msgstr ""
+msgstr "%s (%d סיביות)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr ""
+msgstr "גיבוב SHA1"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
@@ -1619,9 +1594,8 @@ msgid "Description"
 msgstr "תיאור"
 
 #: cryptui.rc:63
-#, fuzzy
 msgid "Certificate Properties"
-msgstr "מאפייני ה&תא"
+msgstr "מאפייני האישור"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
@@ -1669,7 +1643,7 @@ msgstr ""
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr ""
+msgstr "תעודת X.509‏ (‎*.cer; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
@@ -1700,9 +1674,8 @@ msgid "The file format is not recognized.  Please select another file."
 msgstr ""
 
 #: cryptui.rc:83
-#, fuzzy
 msgid "Could not open "
-msgstr "לא ניתן לפתוח את הקובץ."
+msgstr "לא ניתן לפתוח"
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -1725,9 +1698,8 @@ msgid "File"
 msgstr "קובץ"
 
 #: cryptui.rc:89
-#, fuzzy
 msgid "Content"
-msgstr "&תכנים"
+msgstr "תוכן"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
@@ -1759,28 +1731,23 @@ msgstr ""
 
 #: cryptui.rc:101
 msgid "Issued To"
-msgstr ""
+msgstr "הונפק לטובת"
 
 #: cryptui.rc:102
 msgid "Issued By"
-msgstr ""
+msgstr "הונפק על ידי"
 
 #: cryptui.rc:103
 msgid "Expiration Date"
-msgstr ""
+msgstr "תאריך התפוגה"
 
 #: cryptui.rc:104
 msgid "Friendly Name"
-msgstr ""
+msgstr "שם ידידותי"
 
 #: cryptui.rc:106 cryptui.rc:120
-#, fuzzy
 msgid "<None>"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"None\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"ללא"
+msgstr "ללא"
 
 #: cryptui.rc:107
 msgid ""
@@ -1860,7 +1827,7 @@ msgstr ""
 
 #: cryptui.rc:119
 msgid "Certificates"
-msgstr ""
+msgstr "אישורים"
 
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
@@ -1905,9 +1872,8 @@ msgid "Certificate Export Wizard"
 msgstr ""
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "&עיצוב"
+msgstr "מבנה היצוא"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -1946,9 +1912,8 @@ msgid "Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "&עיצוב"
+msgstr "מבנה הקובץ"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -1978,11 +1943,11 @@ msgstr ""
 
 #: cryptui.rc:169
 msgid "Enter Password"
-msgstr ""
+msgstr "נא להזין ססמה"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
-msgstr ""
+msgstr "ניתן להגן על מפתח פרטי בססמה."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
@@ -2018,31 +1983,23 @@ msgstr "אפשרויות"
 
 #: hhctrl.rc:70
 msgid "S&ync"
-msgstr ""
+msgstr "&סנכרון"
 
 #: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
-#, fuzzy
 msgid "&Back"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"ח&זרה\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&חזרה"
+msgstr "ח&זרה"
 
 #: hhctrl.rc:72
-#, fuzzy
 msgid "&Forward"
-msgstr "קדימה"
+msgstr "ק&דימה"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgid "&Home"
-msgstr "דף הבית"
+msgstr "&עמוד הבית"
 
 #: hhctrl.rc:74
-#, fuzzy
 msgid "&Stop"
-msgstr "עצירה"
+msgstr "ע&צירה"
 
 #: hhctrl.rc:75 shdoclc.rc:56
 msgid "&Refresh"
@@ -2070,11 +2027,11 @@ msgstr "מו&עדפים"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "הסת&רת הלשוניות"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "ה&צגת הלשוניות"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -2166,7 +2123,7 @@ msgstr "IDTB_TOC_PREV"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr ""
+msgstr "מקודד הווידאו Cinepak"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -2206,7 +2163,7 @@ msgstr ""
 
 #: jscript.rc:32
 msgid "Syntax error"
-msgstr ""
+msgstr "שגיאת תחביר"
 
 #: jscript.rc:33
 msgid "Expected ';'"
@@ -2250,7 +2207,7 @@ msgstr ""
 
 #: jscript.rc:43
 msgid "'|' is undefined"
-msgstr ""
+msgstr "'|' אינו מוגדר"
 
 #: jscript.rc:44
 msgid "Boolean object expected"
@@ -2420,27 +2377,24 @@ msgid "MS-CRAM"
 msgstr ""
 
 #: msvidc32.rc:26
-#, fuzzy
 msgid "Wine Video 1 video codec"
-msgstr "מקודד הווידאו Wine MS-RLE"
+msgstr "מקודד הווידאו Video 1 של Wine"
 
 #: oleacc.rc:27
 msgid "unknown object"
 msgstr ""
 
 #: oleacc.rc:28
-#, fuzzy
 msgid "title bar"
-msgstr "&ללא שורת כותרת"
+msgstr "שורת כותרת"
 
 #: oleacc.rc:29
 msgid "menu bar"
 msgstr ""
 
 #: oleacc.rc:30
-#, fuzzy
 msgid "scroll bar"
-msgstr "גלילה לכאן"
+msgstr "סרגל גלילה"
 
 #: oleacc.rc:31
 msgid "grip"
@@ -2463,9 +2417,8 @@ msgid "alert"
 msgstr ""
 
 #: oleacc.rc:36
-#, fuzzy
 msgid "window"
-msgstr "&חלון"
+msgstr "חלון"
 
 #: oleacc.rc:37
 msgid "client"
@@ -2484,12 +2437,10 @@ msgid "tool tip"
 msgstr ""
 
 #: oleacc.rc:41
-#, fuzzy
 msgid "application"
-msgstr "יישומים"
+msgstr "יישום"
 
 #: oleacc.rc:42
-#, fuzzy
 msgid "document"
 msgstr "מסמך"
 
@@ -2514,7 +2465,6 @@ msgid "grouping"
 msgstr ""
 
 #: oleacc.rc:48
-#, fuzzy
 msgid "separator"
 msgstr "מפריד"
 
@@ -2523,14 +2473,12 @@ msgid "tool bar"
 msgstr ""
 
 #: oleacc.rc:50
-#, fuzzy
 msgid "status bar"
-msgstr "&שורת מצב"
+msgstr "שורת מצב"
 
 #: oleacc.rc:51
-#, fuzzy
 msgid "table"
-msgstr "Table"
+msgstr "טבלה"
 
 #: oleacc.rc:52
 msgid "column header"
@@ -2541,9 +2489,8 @@ msgid "row header"
 msgstr ""
 
 #: oleacc.rc:54
-#, fuzzy
 msgid "column"
-msgstr "&עמודה"
+msgstr "עמודה"
 
 #: oleacc.rc:55
 msgid "row"
@@ -2562,9 +2509,8 @@ msgid "help balloon"
 msgstr ""
 
 #: oleacc.rc:59
-#, fuzzy
 msgid "character"
-msgstr "עיצוב ה&תווים"
+msgstr "תו"
 
 #: oleacc.rc:60
 msgid "list"
@@ -2587,9 +2533,8 @@ msgid "page tab"
 msgstr ""
 
 #: oleacc.rc:65
-#, fuzzy
 msgid "property page"
-msgstr "העמוד הבא"
+msgstr "עמוד מאפיין"
 
 #: oleacc.rc:66
 msgid "indicator"
@@ -2600,14 +2545,12 @@ msgid "graphic"
 msgstr ""
 
 #: oleacc.rc:68
-#, fuzzy
 msgid "static text"
-msgstr "טקסט עשיר"
+msgstr "טקסט סטטי"
 
 #: oleacc.rc:69
-#, fuzzy
 msgid "text"
-msgstr "&קבלת טקסט"
+msgstr "טקסט"
 
 #: oleacc.rc:70
 msgid "push button"
@@ -2630,9 +2573,8 @@ msgid "drop down"
 msgstr ""
 
 #: oleacc.rc:75
-#, fuzzy
 msgid "progress bar"
-msgstr "סרגל ה&כתובות"
+msgstr "סרגל התקדמות"
 
 #: oleacc.rc:76
 msgid "dial"
@@ -2655,9 +2597,8 @@ msgid "diagram"
 msgstr ""
 
 #: oleacc.rc:81
-#, fuzzy
 msgid "animation"
-msgstr "מידע"
+msgstr "הנפשה"
 
 #: oleacc.rc:82
 msgid "equation"
@@ -2684,7 +2625,6 @@ msgid "page tab list"
 msgstr ""
 
 #: oleacc.rc:88
-#, fuzzy
 msgid "clock"
 msgstr "שעון"
 
@@ -2850,13 +2790,8 @@ msgid "Type the path where the file is located, and then click OK."
 msgstr "נא להזין את נתיב מיקום הקבצים ואז ללחוץ על אישור."
 
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
-#, fuzzy
 msgid "Default"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"Default\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"בררת מחדל"
+msgstr "בררת מחדל"
 
 #: shdoclc.rc:39
 msgid "F&orward"
@@ -2879,13 +2814,8 @@ msgid "Set as &Desktop Item"
 msgstr "הגדרה כפריט &שולחן עבודה"
 
 #: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
-#, fuzzy
 msgid "Select &All"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"ב&חירת הכול\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"בחירת ה&כול"
+msgstr "בחירת ה&כול"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
 #: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
@@ -2913,13 +2843,8 @@ msgid "Pr&int"
 msgstr "ה&דפסה"
 
 #: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
-#, fuzzy
 msgid "&Properties"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&מאפיינים\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"מ&אפיינים"
+msgstr "מ&אפיינים"
 
 #: shdoclc.rc:62
 msgid "Image"
@@ -2971,13 +2896,8 @@ msgstr "הגדרה כ&פריט שולחן העבודה..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
 #: user32.rc:44 wordpad.rc:101
-#, fuzzy
 msgid "Cu&t"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"ג&זירה\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&גזירה"
+msgstr "ג&זירה"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
 #: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
@@ -3005,13 +2925,8 @@ msgid "&Undo"
 msgstr "&ביטול"
 
 #: shdoclc.rc:95 shell32.rc:90 user32.rc:47
-#, fuzzy
 msgid "&Delete"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&מחיקה\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"מ&חיקה"
+msgstr "מ&חיקה"
 
 #: shdoclc.rc:101
 msgid "Table"
@@ -3054,13 +2969,8 @@ msgid "Paste"
 msgstr "הדבקה"
 
 #: shdoclc.rc:122 winhlp32.rc:31
-#, fuzzy
 msgid "&Print"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"הד&פסה\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"ה&דפסה"
+msgstr "הדפ&סה"
 
 #: shdoclc.rc:126
 msgid "Anchor"
@@ -3245,13 +3155,8 @@ msgid "&File"
 msgstr "&קובץ"
 
 #: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
-#, fuzzy
 msgid "&New"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&חדש\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"ח&דש"
+msgstr "חד&ש"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
@@ -3274,13 +3179,8 @@ msgid "Pr&int..."
 msgstr "ה&דפסה..."
 
 #: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w..."
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"הצגה &לפני הדפסה...\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"תצוגה מ&קדימה להדפסה..."
+msgstr "הצגה &לפני הדפסה..."
 
 #: shdocvw.rc:39
 msgid "&Properties..."
@@ -3312,13 +3212,8 @@ msgid "&Favorites"
 msgstr "&מועדפים"
 
 #: shdocvw.rc:52 regedit.rc:75
-#, fuzzy
 msgid "&Add to Favorites..."
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"הו&ספה למועדפים...\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"הוס&פה למועדפים..."
+msgstr "הו&ספה למועדפים…"
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
 #: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
@@ -3413,13 +3308,8 @@ msgid "Create &Link"
 msgstr "&יצירת קישור"
 
 #: shell32.rc:91 regedit.rc:94
-#, fuzzy
 msgid "&Rename"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&שינוי שם\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"שי&נוי שם"
+msgstr "&שינוי שם"
 
 #: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
@@ -3443,13 +3333,8 @@ msgid "Modified"
 msgstr "תאריך השינוי"
 
 #: shell32.rc:126 winefile.rc:167
-#, fuzzy
 msgid "Attributes"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"מאפיינים\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"תכונות"
+msgstr "מאפיינים"
 
 #: shell32.rc:128
 msgid "Size available"
@@ -3632,13 +3517,8 @@ msgid "Downloads"
 msgstr "הורדות"
 
 #: shell32.rc:136 taskmgr.rc:327
-#, fuzzy
 msgid "Status"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"צמצב\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"מצב"
+msgstr "מצב"
 
 #: shell32.rc:137
 msgid "Location"
@@ -3812,8 +3692,8 @@ msgstr ""
 "הפחות כללי של  GNU כפי שפורסם על ידי מוסד התכנה החופשית; או גרסה 2.1 של "
 "הרישיון או (לבחירתך) כל גרסה עדכנית יותר.\n"
 "\n"
-" Wine מופצת בתקווה שתביא תועלת, אך ללא כל אחריות; אפילו לא מרומזת למטרות, ‎"
-"מסחר או התאמה לצרכים מסוימים. נא לעיין בתנאי הרישיון הציבורי הפחות כללי של "
+" Wine מופצת בתקווה שתביא תועלת, אך ללא כל אחריות; אפילו לא מרומזת למטרות,"
+" ‎מסחר או התאמה לצרכים מסוימים. נא לעיין בתנאי הרישיון הציבורי הפחות כללי של "
 "GNU לפרטים נוספים.\n"
 "\n"
 "ל־Wine אמור היה להיות מצורף עותק של הרישיון הציבורי הפחות כללי של GNU; במידה "
@@ -4406,9 +4286,8 @@ msgid "Success"
 msgstr ""
 
 #: wldap32.rc:28
-#, fuzzy
 msgid "Operations Error"
-msgstr "אפשרויות"
+msgstr "שגיאה בפעולות"
 
 #: wldap32.rc:29
 msgid "Protocol Error"
@@ -4511,9 +4390,8 @@ msgid "Invalid Credentials"
 msgstr ""
 
 #: wldap32.rc:77
-#, fuzzy
 msgid "Insufficient Rights"
-msgstr "&דיגיטלי"
+msgstr "אין די הרשאות"
 
 #: wldap32.rc:78
 msgid "Busy"
@@ -4576,19 +4454,16 @@ msgid "Other"
 msgstr ""
 
 #: wldap32.rc:108
-#, fuzzy
 msgid "Server Down"
-msgstr "גלילה למטה"
+msgstr "השרת מושבת"
 
 #: wldap32.rc:109
-#, fuzzy
 msgid "Local Error"
-msgstr "פתחה מקומית"
+msgstr "שגיאה מקומית"
 
 #: wldap32.rc:110
-#, fuzzy
 msgid "Encoding Error"
-msgstr "&קידוד"
+msgstr "שגיאת קידוד"
 
 #: wldap32.rc:111
 msgid "Decoding Error"
@@ -4599,9 +4474,8 @@ msgid "Timeout"
 msgstr ""
 
 #: wldap32.rc:113
-#, fuzzy
 msgid "Auth Unknown"
-msgstr "Context Unknown"
+msgstr "האימות בלתי מוכר"
 
 #: wldap32.rc:114
 msgid "Filter Error"
@@ -4689,7 +4563,7 @@ msgstr "שעון"
 
 #: cmd.rc:30
 msgid "ATTRIB shows or changes DOS file attributes.\n"
-msgstr ""
+msgstr "ATTRIB shows or changes DOS file attributes.\n"
 
 #: cmd.rc:38
 msgid ""
@@ -4701,40 +4575,49 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
+"CALL <batchfilename> is used within a batch file to execute commands\n"
+"from another batch file. When the batch file exits, control returns to\n"
+"the file which called it. The CALL command may supply parameters to the\n"
+"called procedure.\n"
+"\n"
+"Changes to default directory, environment variables etc made within a\n"
+"called procedure are inherited by the caller.\n"
 
 #: cmd.rc:41
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
+"CD <dir> is the short version of CHDIR. It changes the current\n"
+"default directory.\n"
 
 #: cmd.rc:42
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr ""
+msgstr "CHDIR <dir> changes the current default directory.\n"
 
 #: cmd.rc:44
 msgid "CLS clears the console screen.\n"
-msgstr ""
+msgstr "CLS clears the console screen.\n"
 
 #: cmd.rc:46
 msgid "COPY <filename> copies a file.\n"
-msgstr ""
+msgstr "COPY <filename> copies a file.\n"
 
 #: cmd.rc:47
 msgid "CTTY changes the input/output device.\n"
-msgstr ""
+msgstr "CTTY changes the input/output device.\n"
 
 #: cmd.rc:48
 msgid "DATE shows or changes the system date.\n"
-msgstr ""
+msgstr "DATE shows or changes the system date.\n"
 
 #: cmd.rc:49
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr ""
+msgstr "DEL <filename> deletes a file or set of files.\n"
 
 #: cmd.rc:50
 msgid "DIR lists the contents of a directory.\n"
-msgstr ""
+msgstr "DIR lists the contents of a directory.\n"
 
 #: cmd.rc:60
 msgid ""
@@ -4747,10 +4630,18 @@ msgid ""
 "default). The ECHO OFF command can be prevented from displaying by\n"
 "preceding it with an @ sign.\n"
 msgstr ""
+"ECHO <string> displays <string> on the current terminal device.\n"
+"\n"
+"ECHO ON causes all subsequent commands in a batch file to be displayed\n"
+"on the terminal device before they are executed.\n"
+"\n"
+"ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
+"default). The ECHO OFF command can be prevented from displaying by\n"
+"preceding it with an @ sign.\n"
 
 #: cmd.rc:62
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr ""
+msgstr "ERASE <filename> deletes a file or set of files.\n"
 
 #: cmd.rc:70
 msgid ""
@@ -4761,6 +4652,12 @@ msgid ""
 "The requirement to double the % sign when using FOR in a batch file does\n"
 "not exist in wine's cmd.\n"
 msgstr ""
+"The FOR command is used to execute a command for each of a set of files.\n"
+"\n"
+"Syntax: FOR %variable IN (set) DO command\n"
+"\n"
+"The requirement to double the % sign when using FOR in a batch file does\n"
+"not exist in wine's cmd.\n"
 
 #: cmd.rc:82
 msgid ""
@@ -4775,12 +4672,24 @@ msgid ""
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
+"The GOTO command transfers execution to another statement within a\n"
+"batch file.\n"
+"\n"
+"The label which is the target of a GOTO may be up to 255 characters\n"
+"long but may not include spaces (this is different from other operating\n"
+"systems). If two or more identical labels exist in a batch file the\n"
+"first one will always be executed. Attempting to GOTO a nonexistent\n"
+"label terminates the batch file execution.\n"
+"\n"
+"GOTO has no effect when used interactively.\n"
 
 #: cmd.rc:85
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
 msgstr ""
+"HELP <command> shows brief help details on a topic.\n"
+"HELP without an argument shows all CMD built-in commands.\n"
 
 #: cmd.rc:95
 msgid ""
@@ -4793,6 +4702,14 @@ msgid ""
 "In the second form of the command, string1 and string2 must be in double\n"
 "quotes. The comparison is not case-sensitive.\n"
 msgstr ""
+"IF is used to conditionally execute a command.\n"
+"\n"
+"Syntax:\tIF [NOT] EXIST filename command\n"
+"IF [NOT] string1==string2 command\n"
+"IF [NOT] ERRORLEVEL number command\n"
+"\n"
+"In the second form of the command, string1 and string2 must be in double\n"
+"quotes. The comparison is not case-sensitive.\n"
 
 #: cmd.rc:101
 msgid ""
@@ -4802,14 +4719,19 @@ msgid ""
 "The command will prompt you for the new volume label for the given drive.\n"
 "You can display the disk volume label with the VOL command.\n"
 msgstr ""
+"LABEL is used to set a disk volume label.\n"
+"\n"
+"Syntax: LABEL [drive:]\n"
+"The command will prompt you for the new volume label for the given drive.\n"
+"You can display the disk volume label with the VOL command.\n"
 
 #: cmd.rc:104
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr ""
+msgstr "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 
 #: cmd.rc:105
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr ""
+msgstr "MKDIR <name> creates a subdirectory.\n"
 
 #: cmd.rc:112
 msgid ""
@@ -4821,6 +4743,13 @@ msgid ""
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
+"MOVE relocates a file or directory to a new point within the file system.\n"
+"\n"
+"If the item being moved is a directory then all the files and "
+"subdirectories\n"
+"below the item are moved as well.\n"
+"\n"
+"MOVE fails if the old and new locations are on different DOS drive letters.\n"
 
 #: cmd.rc:123
 msgid ""
@@ -4834,6 +4763,15 @@ msgid ""
 "variable, for example:\n"
 "PATH %PATH%;c:\\temp\n"
 msgstr ""
+"PATH displays or changes the cmd search path.\n"
+"\n"
+"Entering PATH will display the current PATH setting (initially taken\n"
+"from the registry). To change the setting follow the\n"
+"PATH command with the new value.\n"
+"\n"
+"It is also possible to modify the PATH by using the PATH environment\n"
+"variable, for example:\n"
+"PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:129
 msgid ""
@@ -4842,6 +4780,10 @@ msgid ""
 "batch files to allow the user to read the output of a previous command\n"
 "before it scrolls off the screen.\n"
 msgstr ""
+"PAUSE displays a message on the screen 'Press Return key to continue'\n"
+"and waits for the user to press the Return key. It is mainly useful in\n"
+"batch files to allow the user to read the output of a previous command\n"
+"before it scrolls off the screen.\n"
 
 #: cmd.rc:150
 msgid ""
@@ -4865,28 +4807,49 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
 msgstr ""
+"PROMPT sets the command-line prompt.\n"
+"\n"
+"The string following the PROMPT command (and the space immediately after)\n"
+"appears at the beginning of the line when cmd is waiting for input.\n"
+"\n"
+"The following character strings have the special meaning shown:\n"
+"\n"
+"$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n"
+"$d    Current date        $e    Escape              $g    > sign\n"
+"$l    < sign              $n    Current drive       $p    Current path\n"
+"$q    Equal sign          $t    Current time        $v    cmd version\n"
+"\n"
+"Note that entering the PROMPT command without a prompt-string resets the\n"
+"prompt to the default, which is the current directory (which includes the\n"
+"current drive letter) followed by a greater-than (>) sign.\n"
+"(like a command PROMPT $p$g).\n"
+"\n"
+"The prompt can also be changed by altering the PROMPT environment variable,\n"
+"so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
 
 #: cmd.rc:154
 msgid ""
 "A command line beginning REM (followed by a space) performs no\n"
 "action, and can therefore be used as a comment in a batch file.\n"
 msgstr ""
+"A command line beginning REM (followed by a space) performs no\n"
+"action, and can therefore be used as a comment in a batch file.\n"
 
 #: cmd.rc:157
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr ""
+msgstr "REN <filename> is the short version of RENAME. It renames a file.\n"
 
 #: cmd.rc:158
 msgid "RENAME <filename> renames a file\n"
-msgstr ""
+msgstr "RENAME <filename> renames a file\n"
 
 #: cmd.rc:160
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr ""
+msgstr "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 
 #: cmd.rc:161
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr ""
+msgstr "RMDIR <dir> deletes a subdirectory.\n"
 
 #: cmd.rc:179
 msgid ""
@@ -4907,6 +4870,22 @@ msgid ""
 "many more values than in a native Win32 implementation. Note that it is\n"
 "not possible to affect the operating system environment from within cmd.\n"
 msgstr ""
+"SET displays or changes the cmd environment variables.\n"
+"\n"
+"SET without parameters shows all of the current environment.\n"
+"\n"
+"To create or modify an environment variable the syntax is:\n"
+"\n"
+"SET <variable>=<value>\n"
+"\n"
+"where <variable> and <value> are character strings. There must be no\n"
+"spaces before the equals sign, nor can the variable name\n"
+"have embedded spaces.\n"
+"\n"
+"Under Wine, the environment of the underlying operating system is\n"
+"included into the Win32 environment, there will generally therefore be\n"
+"many more values than in a native Win32 implementation. Note that it is\n"
+"not possible to affect the operating system environment from within cmd.\n"
 
 #: cmd.rc:184
 msgid ""
@@ -4914,20 +4893,25 @@ msgid ""
 "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
 "if called from the command line.\n"
 msgstr ""
+"SHIFT is used in a batch file to remove one parameter from the head of\n"
+"the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
+"if called from the command line.\n"
 
 #: cmd.rc:186
 msgid "TIME sets or shows the current system time.\n"
-msgstr ""
+msgstr "TIME sets or shows the current system time.\n"
 
 #: cmd.rc:188
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
-msgstr ""
+msgstr "Sets the window title for the cmd window, syntax TITLE [string]\n"
 
 #: cmd.rc:192
 msgid ""
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
 "if redirected). No check is made that the file is readable text.\n"
 msgstr ""
+"TYPE <filename> copies <filename> to the console device (or elsewhere\n"
+"if redirected). No check is made that the file is readable text.\n"
 
 #: cmd.rc:201
 msgid ""
@@ -4939,30 +4923,41 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
+"VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
+"\n"
+"VERIFY ON\tSet the flag\n"
+"VERIFY OFF\tClear the flag\n"
+"VERIFY\t\tDisplays ON or OFF as appropriate.\n"
+"\n"
+"The verify flag has no function in Wine.\n"
 
 #: cmd.rc:204
 msgid "VER displays the version of cmd you are running\n"
-msgstr ""
+msgstr "VER displays the version of cmd you are running\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr ""
+msgstr "VOL shows the volume label of a disk device.\n"
 
 #: cmd.rc:209
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
+"PUSHD <directoryname> saves the current directory onto a\n"
+"stack, and then changes the current directory to the supplied one.\n"
 
 #: cmd.rc:212
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 msgstr ""
+"POPD changes current directory to the last one saved with\n"
+"PUSHD.\n"
 
 #: cmd.rc:214
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr ""
+msgstr "MORE displays output of files or piped input in pages.\n"
 
 #: cmd.rc:218
 msgid ""
@@ -4970,12 +4965,17 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE displays a text and waits, until the User\n"
+"presses an allowed Key from a selectable list.\n"
+"CHOICE is mainly used to build a menu selection in a batch file.\n"
 
 #: cmd.rc:222
 msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
+"EXIT terminates the current command session and returns\n"
+"to the operating system or shell from which you invoked cmd.\n"
 
 #: cmd.rc:253
 msgid ""
@@ -5011,119 +5011,152 @@ msgid ""
 "\n"
 "Enter HELP <command> for further information on any of the above commands\n"
 msgstr ""
+"CMD built-in commands are:\n"
+"ATTRIB\t\tShow or change DOS file attributes\n"
+"CALL\t\tInvoke a batch file from inside another\n"
+"CD (CHDIR)\tChange current default directory\n"
+"CHOICE\t\tWait for an keypress from a selectable list\n"
+"CLS\t\tClear the console screen\n"
+"COPY\t\tCopy file\n"
+"CTTY\t\tChange input/output device\n"
+"DATE\t\tShow or change the system date\n"
+"DEL (ERASE)\tDelete a file or set of files\n"
+"DIR\t\tList the contents of a directory\n"
+"ECHO\t\tCopy text directly to the console output\n"
+"HELP\t\tShow brief help details on a topic\n"
+"MD (MKDIR)\tCreate a subdirectory\n"
+"MORE\t\tDisplay output in pages\n"
+"MOVE\t\tMove a file, set of files or directory tree\n"
+"PATH\t\tSet or show the search path\n"
+"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
+"PROMPT\t\tChange the command prompt\n"
+"PUSHD\t\tChanges to a new directory, saving the current one\n"
+"REN (RENAME)\tRename a file\n"
+"RD (RMDIR)\tDelete a subdirectory\n"
+"SET\t\tSet or show environment variables\n"
+"TIME\t\tSet or show the current system time\n"
+"TITLE\t\tSet the window title for the CMD session\n"
+"TYPE\t\tType the contents of a text file\n"
+"VER\t\tShow the current version of CMD\n"
+"VOL\t\tShow the volume label of a disk device\n"
+"EXIT\t\tClose down CMD\n"
+"\n"
+"Enter HELP <command> for further information on any of the above commands\n"
 
 #: cmd.rc:255
 msgid "Are you sure"
-msgstr ""
+msgstr "Are you sure"
 
 #: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
-msgstr ""
+msgstr "Y"
 
 #: cmd.rc:257 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
-msgstr ""
+msgstr "N"
 
 #: cmd.rc:258
 msgid "File association missing for extension %s\n"
-msgstr ""
+msgstr "File association missing for extension %s\n"
 
 #: cmd.rc:259
 msgid "No open command associated with file type '%s'\n"
-msgstr ""
+msgstr "No open command associated with file type '%s'\n"
 
 #: cmd.rc:260
 msgid "Overwrite %s"
-msgstr ""
+msgstr "Overwrite %s"
 
 #: cmd.rc:261
 msgid "More..."
-msgstr ""
+msgstr "More..."
 
 #: cmd.rc:262
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr ""
+msgstr "Line in Batch processing possibly truncated. Using:\n"
 
 #: cmd.rc:263
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
+"Not Yet Implemented\n"
+"\n"
 
 #: cmd.rc:264
 msgid "Argument missing\n"
-msgstr ""
+msgstr "Argument missing\n"
 
 #: cmd.rc:265
 msgid "Syntax error\n"
-msgstr ""
+msgstr "Syntax error\n"
 
 #: cmd.rc:266
 msgid "%s : File Not Found\n"
-msgstr ""
+msgstr "%s : File Not Found\n"
 
 #: cmd.rc:267
 msgid "No help available for %s\n"
-msgstr ""
+msgstr "No help available for %s\n"
 
 #: cmd.rc:268
 msgid "Target to GOTO not found\n"
-msgstr ""
+msgstr "Target to GOTO not found\n"
 
 #: cmd.rc:269
 msgid "Current Date is %s\n"
-msgstr ""
+msgstr "Current Date is %s\n"
 
 #: cmd.rc:270
 msgid "Current Time is %s\n"
-msgstr ""
+msgstr "Current Time is %s\n"
 
 #: cmd.rc:271
 msgid "Enter new date: "
-msgstr ""
+msgstr "Enter new date: "
 
 #: cmd.rc:272
 msgid "Enter new time: "
-msgstr ""
+msgstr "Enter new time: "
 
 #: cmd.rc:273
 msgid "Environment variable %s not defined\n"
-msgstr ""
+msgstr "Environment variable %s not defined\n"
 
 #: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
-msgstr ""
+msgstr "Failed to open '%s'\n"
 
 #: cmd.rc:275
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr ""
+msgstr "Cannot call batch label outside of a batch script\n"
 
 #: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
-msgstr ""
+msgstr "A"
 
 #: cmd.rc:277
 msgid "%s, Delete"
-msgstr ""
+msgstr "%s, Delete"
 
 #: cmd.rc:278
 msgid "Echo is %s\n"
-msgstr ""
+msgstr "Echo is %s\n"
 
 #: cmd.rc:279
 msgid "Verify is %s\n"
-msgstr ""
+msgstr "Verify is %s\n"
 
 #: cmd.rc:280
 msgid "Verify must be ON or OFF\n"
-msgstr ""
+msgstr "Verify must be ON or OFF\n"
 
 #: cmd.rc:281
 msgid "Parameter error\n"
-msgstr ""
+msgstr "Parameter error\n"
 
 #: cmd.rc:282
 msgid ""
@@ -5131,96 +5164,101 @@ msgid ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 msgstr ""
+"Volume in drive %c is %s\n"
+"Volume Serial Number is %04x-%04x\n"
+"\n"
 
 #: cmd.rc:283
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr ""
+msgstr "Volume label (11 characters, ENTER for none)?"
 
 #: cmd.rc:284
 msgid "PATH not found\n"
-msgstr ""
+msgstr "PATH not found\n"
 
 #: cmd.rc:285
 msgid "Press Return key to continue: "
-msgstr ""
+msgstr "Press Return key to continue: "
 
 #: cmd.rc:286
 msgid "Wine Command Prompt"
-msgstr ""
+msgstr "Wine Command Prompt"
 
 #: cmd.rc:287
 msgid ""
 "CMD Version %s\n"
 "\n"
 msgstr ""
+"CMD Version %s\n"
+"\n"
 
 #: cmd.rc:288
 msgid "More? "
-msgstr ""
+msgstr "More? "
 
 #: cmd.rc:289
 msgid "The input line is too long.\n"
-msgstr ""
+msgstr "The input line is too long.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr ""
+msgstr "Usage: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr ""
+msgstr "Error: Unknown or invalid command line parameters specified\n"
 
 #: ipconfig.rc:29
 msgid "%s adapter %s\n"
-msgstr ""
+msgstr "%s adapter %s\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
+msgstr "Ethernet"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
+msgstr "Connection-specific DNS suffix"
 
 #: ipconfig.rc:34
 msgid "Hostname"
-msgstr ""
+msgstr "Hostname"
 
 #: ipconfig.rc:35
 msgid "Node type"
-msgstr ""
+msgstr "Node type"
 
 #: ipconfig.rc:36
 msgid "Broadcast"
-msgstr ""
+msgstr "Broadcast"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr ""
+msgstr "Peer-to-peer"
 
 #: ipconfig.rc:38
 msgid "Mixed"
-msgstr ""
+msgstr "Mixed"
 
 #: ipconfig.rc:39
 msgid "Hybrid"
-msgstr ""
+msgstr "Hybrid"
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
+msgstr "IP routing enabled"
 
 #: ipconfig.rc:42
 msgid "Physical address"
-msgstr ""
+msgstr "Physical address"
 
 #: ipconfig.rc:43
 msgid "DHCP enabled"
-msgstr ""
+msgstr "DHCP enabled"
 
 #: ipconfig.rc:46
 msgid "Default gateway"
-msgstr ""
+msgstr "Default gateway"
 
 #: net.rc:27
 msgid ""
@@ -5228,54 +5266,57 @@ msgid ""
 "\n"
 "NET [ HELP | START | STOP | USE ]\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
 
 #: net.rc:28
 msgid "Specify service name to start.\n"
-msgstr ""
+msgstr "Specify service name to start.\n"
 
 #: net.rc:29
 msgid "Specify service name to stop.\n"
-msgstr ""
+msgstr "Specify service name to stop.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
-msgstr ""
+msgstr "Stopping dependent service: %s\n"
 
 #: net.rc:31
 msgid "Could not stop service %s\n"
-msgstr ""
+msgstr "Could not stop service %s\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
-msgstr ""
+msgstr "Could not get handle to service control manager.\n"
 
 #: net.rc:33
 msgid "Could not get handle to service.\n"
-msgstr ""
+msgstr "Could not get handle to service.\n"
 
 #: net.rc:34
 msgid "The %s service is starting.\n"
-msgstr ""
+msgstr "The %s service is starting.\n"
 
 #: net.rc:35
 msgid "The %s service was started successfully.\n"
-msgstr ""
+msgstr "The %s service was started successfully.\n"
 
 #: net.rc:36
 msgid "The %s service failed to start.\n"
-msgstr ""
+msgstr "The %s service failed to start.\n"
 
 #: net.rc:37
 msgid "The %s service is stopping.\n"
-msgstr ""
+msgstr "The %s service is stopping.\n"
 
 #: net.rc:38
 msgid "The %s service was stopped successfully.\n"
-msgstr ""
+msgstr "The %s service was stopped successfully.\n"
 
 #: net.rc:39
 msgid "The %s service failed to stop.\n"
-msgstr ""
+msgstr "The %s service failed to stop.\n"
 
 #: net.rc:40
 msgid ""
@@ -5288,10 +5329,18 @@ msgid ""
 "   Commands available are:\n"
 "   NET HELP    NET START    NET STOP    NET USE\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"NET HELP command\n"
+"    -or-\n"
+"NET command /HELP\n"
+"\n"
+"   Commands available are:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
 
 #: net.rc:42
 msgid "There are no entries in the list.\n"
-msgstr ""
+msgstr "There are no entries in the list.\n"
 
 #: net.rc:43
 msgid ""
@@ -5299,10 +5348,13 @@ msgid ""
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
+"\n"
+"Status  Local   Remote\n"
+"---------------------------------------------------------------\n"
 
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
-msgstr ""
+msgstr "%s      %S      %S      Open resources: %lu\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -5329,26 +5381,16 @@ msgid "P&rinter Setup..."
 msgstr "הגדרות מ&דפסת..."
 
 #: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
-#, fuzzy
 msgid "&Edit"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"ע&ריכה\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&עריכה"
+msgstr "&עריכה"
 
 #: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
 msgstr "&ביטול\tCtrl+Z"
 
 #: notepad.rc:41 wordpad.rc:44
-#, fuzzy
 msgid "Cu&t\tCtrl+X"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"ג&זירה\tCtrl+X\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&גזירה\tCtrl+X"
+msgstr "ג&זירה\tCtrl+X"
 
 #: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
@@ -5384,13 +5426,8 @@ msgid "&Search next\tF3"
 msgstr "חיפוש ה&בא\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
-#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"החל&פה...\tCtrl+H\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"הח&לפה...\tCtrl+H"
+msgstr "החל&פה...\tCtrl+H"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -5585,22 +5622,12 @@ msgid "&Hidden component categories"
 msgstr "קטגוריות רכיבים מו&סתרות"
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
-#, fuzzy
 msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&סרגל הכלים\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&סרגל כלים"
+msgstr "סרגל &כלים"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:102
-#, fuzzy
 msgid "&Status Bar"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&שורת המצב\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"שורת מ&צב"
+msgstr "שורת מ&צב"
 
 #: oleview.rc:67 regedit.rc:71 winefile.rc:127
 msgid "&Refresh\tF5"
@@ -5635,9 +5662,8 @@ msgid "version 1.0"
 msgstr "גרסה 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
-msgstr "קובצי TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)‏"
+msgstr "קובצי TypeLib‏ (‎*.tlb;*.olb;*.dll;*.ocx;*.exe)‏"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -5841,13 +5867,8 @@ msgid "&Minimize on run"
 msgstr "מ&זעור עם ההפעלה"
 
 #: progman.rc:44 winefile.rc:108
-#, fuzzy
 msgid "&Save settings on exit"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&שמירת ההגדרות עם היציאה\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&שמירת השינויים ביציאה"
+msgstr "&שמירת ההגדרות עם היציאה"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
@@ -5890,13 +5911,8 @@ msgid "Delete program `%s' ?"
 msgstr "Delete program `%s' ?"
 
 #: progman.rc:72 winhlp32.rc:97
-#, fuzzy
 msgid "Not implemented"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"Not implemented\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"לא מוטמע"
+msgstr "לא מוטמע"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
@@ -5953,41 +5969,48 @@ msgid ""
 "REG [ ADD | DELETE | QUERY ]\n"
 "REG command /?\n"
 msgstr ""
+"The syntax of this command is:\n"
+"\n"
+"REG [ ADD | DELETE | QUERY ]\n"
+"REG command /?\n"
 
 #: reg.rc:28
 msgid ""
 "REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
 "f]\n"
 msgstr ""
+"REG ADD key_name [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
+"f]\n"
 
 #: reg.rc:29
 msgid "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
-msgstr ""
+msgstr "REG DELETE key_name [/v value_name | /ve | /va] [/f]\n"
 
 #: reg.rc:30
 msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
-msgstr ""
+msgstr "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 
 #: reg.rc:31
 msgid "The operation completed successfully\n"
-msgstr ""
+msgstr "The operation completed successfully\n"
 
 #: reg.rc:32
 msgid "Error: Invalid key name\n"
-msgstr ""
+msgstr "Error: Invalid key name\n"
 
 #: reg.rc:33
 msgid "Error: Invalid command line parameters\n"
-msgstr ""
+msgstr "Error: Invalid command line parameters\n"
 
 #: reg.rc:34
 msgid "Error: Unable to add keys to remote machine\n"
-msgstr ""
+msgstr "Error: Unable to add keys to remote machine\n"
 
 #: reg.rc:35
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
+"Error: The system was unable to find the specified registry key or value\n"
 
 #: regedit.rc:31
 msgid "&Registry"
@@ -6066,13 +6089,8 @@ msgid "&Remove Favorite..."
 msgstr "ה&סרת מועדף..."
 
 #: regedit.rc:80 winefile.rc:131
-#, fuzzy
 msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"&נושאי העזרה\tF1\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"נושאי הע&זרה\tF1"
+msgstr "נושאי הע&זרה\tF1"
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
@@ -6128,14 +6146,12 @@ msgid "Export Registry File"
 msgstr "יצוא קובץ רישום מערכת"
 
 #: regedit.rc:199
-#, fuzzy
 msgid "Registry files (*.reg)"
-msgstr "קובצי רישום מערכת (*.reg)"
+msgstr "קובצי רישום מערכת (‎*.reg)"
 
 #: regedit.rc:200
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr "קובצי רישום מערכת שלWin9x/NT4 (REGEDIT4)"
+msgstr "קובצי רישום מערכת של Win9x/NT4‏ (REGEDIT4)"
 
 #: regedit.rc:207
 msgid "(Default)"
@@ -6312,6 +6328,26 @@ msgid ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 msgstr ""
+"Start a program, or open a document in the program normally used for files "
+"with that suffix.\n"
+"Usage:\n"
+"start [options] program_filename [...]\n"
+"start [options] document_filename\n"
+"\n"
+"Options:\n"
+"/M[inimized] Start the program minimized.\n"
+"/MAX[imized] Start the program maximized.\n"
+"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
+"/W[ait]      Wait for started program to finish, then exit with its exit "
+"code.\n"
+"/Unix        Use a Unix filename and start the file like windows explorer.\n"
+"/ProgIDOpen  Open a document using the following progID.\n"
+"/L           Show end-user license.\n"
+"\n"
+"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
+"Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
+"This is free software, and you are welcome to redistribute it\n"
+"under certain conditions; run 'start /L' for details.\n"
 
 #: start.rc:63
 msgid ""
@@ -6332,6 +6368,22 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
+"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
+"This program is free software; you can redistribute it and/or\n"
+"modify it under the terms of the GNU Lesser Public License\n"
+"as published by the Free Software Foundation; either version 2.1\n"
+"of the License, or (at your option) any later version.\n"
+"\n"
+"This program is distributed in the hope that it will be useful,\n"
+"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"GNU Lesser Public License for more details.\n"
+"\n"
+"You should have received a copy of the GNU Lesser Public License\n"
+"along with this program; if not, write to the Free Software\n"
+"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
+"\n"
+"See the COPYING.LIB file for license information.\n"
 
 #: start.rc:65
 msgid ""
@@ -6339,67 +6391,71 @@ msgid ""
 "specified file.\n"
 "ShellExecuteEx failed"
 msgstr ""
+"Application could not be started, or no application associated with the "
+"specified file.\n"
+"ShellExecuteEx failed"
 
 #: start.rc:67
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr ""
+msgstr "Could not translate the specified Unix filename to a DOS filename."
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr ""
+msgstr "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr ""
+msgstr "Error: Unknown or invalid command line option specified.\n"
 
 #: taskkill.rc:29
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr ""
+msgstr "Error: Invalid command line parameter specified.\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr ""
+msgstr "Error: One of options /im or /pid must be specified.\n"
 
 #: taskkill.rc:31
 msgid "Error: Option %s expects a command line parameter.\n"
-msgstr ""
+msgstr "Error: Option %s expects a command line parameter.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr ""
+msgstr "Error: Options /im and /pid are mutually exclusive.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %u.\n"
-msgstr ""
+msgstr "Close message sent to top-level windows of process with PID %u.\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 msgstr ""
+"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %u was forcibly terminated.\n"
-msgstr ""
+msgstr "Process with PID %u was forcibly terminated.\n"
 
 #: taskkill.rc:36
 msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
-msgstr ""
+msgstr "Process \"%s\" with PID %u was forcibly terminated.\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%s\".\n"
-msgstr ""
+msgstr "Error: Could not find process \"%s\".\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr ""
+msgstr "Error: Unable to enumerate the process list.\n"
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%s\".\n"
-msgstr ""
+msgstr "Error: Unable to terminate process \"%s\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr ""
+msgstr "Error: Process self-termination is not permitted.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:109
 msgid "&New Task (Run...)"
@@ -6466,13 +6522,8 @@ msgid "&Show Kernel Times"
 msgstr "הצגת זמני ה&קרנל"
 
 #: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
-#, fuzzy
 msgid "Tile &Horizontally"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"פריסה או&פקית\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"פריסה &אנכית"
+msgstr "פריסה או&פקית"
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
@@ -6980,43 +7031,47 @@ msgstr "מציג קובצי על רגיל"
 #: winecfg.rc:32
 #, fuzzy
 msgid "Configure"
-msgstr "שגיאת תצוגה"
+msgstr "תצורה"
 
 #: winecfg.rc:39
 #, fuzzy
 msgid "Libraries"
-msgstr "ספריות סוג"
+msgstr "ספריות"
 
 #: winecfg.rc:40
 #, fuzzy
 msgid "Drives"
-msgstr "סרגל הכוננים"
+msgstr "כוננים"
 
 #: winecfg.rc:41
+#, fuzzy
 msgid "Select the unix target directory, please."
-msgstr ""
+msgstr "נא לבחור את תיקיית היעד בלינוקס בבקשה."
 
 #: winecfg.rc:43
 #, fuzzy
 msgid "Show &Advanced"
-msgstr "מת&קדמים"
+msgstr "הצגת אפשרויות מ&תקדמות"
 
 #: winecfg.rc:42
 #, fuzzy
 msgid "Hide &Advanced"
-msgstr "מת&קדמים"
+msgstr "ה&סתרת האפשרויות המתקדמות"
 
 #: winecfg.rc:44
+#, fuzzy
 msgid "(No Theme)"
-msgstr ""
+msgstr "(אין ערכת נושא)"
 
 #: winecfg.rc:45
+#, fuzzy
 msgid "Graphics"
-msgstr ""
+msgstr "גרפיקה"
 
 #: winecfg.rc:46
+#, fuzzy
 msgid "Desktop Integration"
-msgstr ""
+msgstr "שילוב בשולחן העבודה"
 
 #: winecfg.rc:47
 #, fuzzy
@@ -7026,31 +7081,32 @@ msgstr "שמע"
 #: winecfg.rc:48
 #, fuzzy
 msgid "About"
-msgstr "על &אודות"
+msgstr "על אודות"
 
 #: winecfg.rc:49
 #, fuzzy
 msgid "Wine configuration"
-msgstr "&תצורת המערכת..."
+msgstr "תצורת Wine"
 
 #: winecfg.rc:51
+#, fuzzy
 msgid "Theme files (*.msstyles; *.theme)"
-msgstr ""
+msgstr "קובצי ערכות נושא (‎*.msstyles; *.theme)"
 
 #: winecfg.rc:52
 #, fuzzy
 msgid "Select a theme file"
-msgstr "לא ניתן לשמור את הקובץ."
+msgstr "נא לבחור בקובץ ערכת נושא"
 
 #: winecfg.rc:54
 #, fuzzy
 msgid "Folder"
-msgstr "תיקייה חדשה"
+msgstr "תיקייה"
 
 #: winecfg.rc:55
 #, fuzzy
 msgid "Links to"
-msgstr "קישורים"
+msgstr "קישורים אל"
 
 #: winecfg.rc:50
 #, fuzzy
@@ -7074,24 +7130,29 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:61
+#, fuzzy
 msgid "Warning: system library"
-msgstr ""
+msgstr "אזהרה: ספריית מערכת"
 
 #: winecfg.rc:62
+#, fuzzy
 msgid "native"
-msgstr ""
+msgstr "טבעי"
 
 #: winecfg.rc:63
+#, fuzzy
 msgid "builtin"
-msgstr ""
+msgstr "מובנה"
 
 #: winecfg.rc:64
+#, fuzzy
 msgid "native, builtin"
-msgstr ""
+msgstr "טבעי, מובנה"
 
 #: winecfg.rc:65
+#, fuzzy
 msgid "builtin, native"
-msgstr ""
+msgstr "מובנה, טבעי"
 
 #: winecfg.rc:66
 #, fuzzy
@@ -7106,162 +7167,198 @@ msgstr "תצורה - הגדרות בררת המחדל"
 #: winecfg.rc:68
 #, fuzzy
 msgid "Wine Programs (*.exe,*.exe.so)"
-msgstr "תכניות (*.exe)"
+msgstr "תכניות Wine‏ (‎*.exe,*.exe.so)"
 
 #: winecfg.rc:69
 #, fuzzy
 msgid "Use global settings"
-msgstr "תצורה - הגדרות בררת המחדל"
+msgstr "שימוש בהגדרות גלובליות"
 
 #: winecfg.rc:70
+#, fuzzy
 msgid "Select an executable file"
-msgstr ""
+msgstr "נא לבחור בקובץ הפעלה"
 
 #: winecfg.rc:75
+#, fuzzy
 msgid "Hardware"
-msgstr ""
+msgstr "חומרה"
 
 #: winecfg.rc:81
 #, fuzzy
 msgid "Autodetect"
-msgstr "אוטומטי"
+msgstr "זיהוי אוטומטי"
 
 #: winecfg.rc:82
+#, fuzzy
 msgid "Local hard disk"
-msgstr ""
+msgstr "כונן קשיח מקומי"
 
 #: winecfg.rc:83
+#, fuzzy
 msgid "Network share"
-msgstr ""
+msgstr "שיתוף רשת"
 
 #: winecfg.rc:84
+#, fuzzy
 msgid "Floppy disk"
-msgstr ""
+msgstr "כונן תקליטונים"
 
 #: winecfg.rc:85
+#, fuzzy
 msgid "CD-ROM"
-msgstr ""
+msgstr "כונן תקליטורים"
 
 #: winecfg.rc:86
+#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26"
 msgstr ""
+"לא ניתן להוסיף עוד כוננים.\n"
+"\n"
+"לכל כונן חייבת להיות אות בין A ל־Z, לכן לא יתכנו יותר מ־26"
 
 #: winecfg.rc:87
 #, fuzzy
 msgid "System drive"
-msgstr "תהליך חוסר פעילות המערכת"
+msgstr "כונן מערכת"
 
 #: winecfg.rc:88
+#, fuzzy
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed remember to recreate it!"
 msgstr ""
+"האם אכן ברצונך למחוק את כונן C?\n"
+"\n"
+"רוב היישומים מצפים שכונן C יהיה קיים והם עלולים לקרוס אם הוא לא קיים. אם "
+"בחירתך תהיה להמשיך רצוי לזכור ליצור אותו שוב!"
 
 #: winecfg.rc:89
+#, fuzzy
 msgid "Letter"
-msgstr ""
+msgstr "אות"
 
 #: winecfg.rc:90
+#, fuzzy
 msgid "Drive Mapping"
-msgstr ""
+msgstr "מיפוי כוננים"
 
 #: winecfg.rc:91
+#, fuzzy
 msgid ""
 "You don't have a drive C. This is not so great.\n"
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
+"אין לך כונן C. זה מצב די בעייתי.\n"
+"\n"
+"מומלץ שלא לשכוח ללחוץ על 'הוספה' בלשונית הכוננים כדי ליצור אחד כזה!\n"
 
 #: winecfg.rc:96
+#, fuzzy
 msgid "Full"
-msgstr ""
+msgstr "מלא"
 
 #: winecfg.rc:97
 #, fuzzy
 msgid "Standard"
-msgstr "סרגל הכלים ה&רגיל"
+msgstr "רגיל"
 
 #: winecfg.rc:98
+#, fuzzy
 msgid "Basic"
-msgstr ""
+msgstr "בסיסי"
 
 #: winecfg.rc:99
 #, fuzzy
 msgid "Emulation"
-msgstr "מידע"
+msgstr "הדמיה"
 
 #: winecfg.rc:100
 #, fuzzy
 msgid "ALSA Driver"
-msgstr "סרגל הכוננים"
+msgstr "מנהל התקן ALSA"
 
 #: winecfg.rc:101
+#, fuzzy
 msgid "EsounD Driver"
-msgstr ""
+msgstr "מנהל התקן EsounD"
 
 #: winecfg.rc:102
 #, fuzzy
 msgid "OSS Driver"
-msgstr "סרגל הכוננים"
+msgstr "מנהל התקן OSS"
 
 #: winecfg.rc:103
 #, fuzzy
 msgid "JACK Driver"
-msgstr "סרגל הכוננים"
+msgstr "מנהל התקן JACK"
 
 #: winecfg.rc:104
 #, fuzzy
 msgid "NAS Driver"
-msgstr "סרגל הכוננים"
+msgstr "מנהל התקן NAS"
 
 #: winecfg.rc:105
+#, fuzzy
 msgid "CoreAudio Driver"
-msgstr ""
+msgstr "מנהל התקן CoreAudio"
 
 #: winecfg.rc:106
 #, fuzzy
 msgid "Couldn't open %s!"
-msgstr "לא ניתן לפתוח את הקובץ."
+msgstr "לא ניתן לפתוח את %s!"
 
 #: winecfg.rc:107
+#, fuzzy
 msgid "Sound Drivers"
-msgstr ""
+msgstr "מנהלי התקני שמע"
 
 #: winecfg.rc:108
+#, fuzzy
 msgid "Wave Out Devices"
-msgstr ""
+msgstr "התקני פלט Wave"
 
 #: winecfg.rc:109
+#, fuzzy
 msgid "Wave In Devices"
-msgstr ""
+msgstr "התקני קלט Wave"
 
 #: winecfg.rc:110
+#, fuzzy
 msgid "MIDI Out Devices"
-msgstr ""
+msgstr "התקני פלט MIDI"
 
 #: winecfg.rc:111
+#, fuzzy
 msgid "MIDI In Devices"
-msgstr ""
+msgstr "התקני קלט MIDI"
 
 #: winecfg.rc:112
+#, fuzzy
 msgid "Aux Devices"
-msgstr ""
+msgstr "התקנים חיצוניים"
 
 #: winecfg.rc:113
+#, fuzzy
 msgid "Mixer Devices"
-msgstr ""
+msgstr "התקני ערבול"
 
 #: winecfg.rc:114
+#, fuzzy
 msgid ""
 "Found driver in registry that is not available!\n"
 "\n"
 "Remove '%s' from registry?"
 msgstr ""
+"נמצא מנהל התקן ברישום המערכת שאינו זמין!\n"
+"\n"
+"האם למחוק את '%s' מרישום המערכת?"
 
 #: winecfg.rc:115
 #, fuzzy
@@ -7271,143 +7368,157 @@ msgstr "אזהרה"
 #: winecfg.rc:120
 #, fuzzy
 msgid "Controls Background"
-msgstr "הע&תקת הרקע"
+msgstr "רקע הפקדים"
 
 #: winecfg.rc:121
 #, fuzzy
 msgid "Controls Text"
-msgstr "Control"
+msgstr "טקסט הפקדים"
 
 #: winecfg.rc:123
 #, fuzzy
 msgid "Menu Background"
-msgstr "ר&קע"
+msgstr "רקע התפריט"
 
 #: winecfg.rc:124
 #, fuzzy
 msgid "Menu Text"
-msgstr "טקסט"
+msgstr "טקסט בתפריט"
 
 #: winecfg.rc:125
 #, fuzzy
 msgid "Scrollbar"
-msgstr "גלילה לכאן"
+msgstr "סרגל גלילה"
 
 #: winecfg.rc:126
 #, fuzzy
 msgid "Selection Background"
-msgstr "הגדרה &כרקע"
+msgstr "רקע הבחירה"
 
 #: winecfg.rc:127
 #, fuzzy
 msgid "Selection Text"
-msgstr "פרטי ה&בחירה"
+msgstr "טקסט הבחירה"
 
 #: winecfg.rc:128
 #, fuzzy
 msgid "ToolTip Background"
-msgstr "הע&תקת הרקע"
+msgstr "רקע חלונית העצה"
 
 #: winecfg.rc:129
+#, fuzzy
 msgid "ToolTip Text"
-msgstr ""
+msgstr "טקסט חלונית עצה"
 
 #: winecfg.rc:130
 #, fuzzy
 msgid "Window Background"
-msgstr "הע&תקת הרקע"
+msgstr "רקע החלון"
 
 #: winecfg.rc:131
 #, fuzzy
 msgid "Window Text"
-msgstr "&חלון"
+msgstr "טקסט בחלון"
 
 #: winecfg.rc:132
 #, fuzzy
 msgid "Active Title Bar"
-msgstr "&ללא שורת כותרת"
+msgstr "כותרת החלון הפעיל"
 
 #: winecfg.rc:133
+#, fuzzy
 msgid "Active Title Text"
-msgstr ""
+msgstr "טקסט בכותרת של פעיל"
 
 #: winecfg.rc:134
+#, fuzzy
 msgid "Inactive Title Bar"
-msgstr ""
+msgstr "סרגל כותרת של בלתי פעיל"
 
 #: winecfg.rc:135
+#, fuzzy
 msgid "Inactive Title Text"
-msgstr ""
+msgstr "טקסט כותרת של בלתי פעיל"
 
 #: winecfg.rc:136
+#, fuzzy
 msgid "Message Box Text"
-msgstr ""
+msgstr "טקסט בתיבת הודעות"
 
 #: winecfg.rc:137
 #, fuzzy
 msgid "Application Workspace"
-msgstr "יישומים"
+msgstr "מרחב היישומים"
 
 #: winecfg.rc:138
 #, fuzzy
 msgid "Window Frame"
-msgstr "&חלון"
+msgstr "מסגרת החלון"
 
 #: winecfg.rc:139
+#, fuzzy
 msgid "Active Border"
-msgstr ""
+msgstr "מסגרת של פעיל"
 
 #: winecfg.rc:140
+#, fuzzy
 msgid "Inactive Border"
-msgstr ""
+msgstr "מסגרת של בלתי פעיל"
 
 #: winecfg.rc:141
 #, fuzzy
 msgid "Controls Shadow"
-msgstr "לוח הבקרה"
+msgstr "הצללת הפקדים"
 
 #: winecfg.rc:142
 #, fuzzy
 msgid "Gray Text"
-msgstr "אפור"
+msgstr "טקסט אפור"
 
 #: winecfg.rc:143
+#, fuzzy
 msgid "Controls Highlight"
-msgstr ""
+msgstr "הדגשת פקדים"
 
 #: winecfg.rc:144
 #, fuzzy
 msgid "Controls Dark Shadow"
-msgstr "שליטה בערוצי ניפוי השגיאות"
+msgstr "הפקדים בהצללה כהה"
 
 #: winecfg.rc:145
 #, fuzzy
 msgid "Controls Light"
-msgstr "Control"
+msgstr "פקדים בהירים"
 
 #: winecfg.rc:146
+#, fuzzy
 msgid "Controls Alternate Background"
-msgstr ""
+msgstr "צבע רקע הפקדים משתנה"
 
 #: winecfg.rc:147
+#, fuzzy
 msgid "Hot Tracked Item"
-msgstr ""
+msgstr "פריט במעקב חם"
 
 #: winecfg.rc:148
+#, fuzzy
 msgid "Active Title Bar Gradient"
-msgstr ""
+msgstr "מדרג שורת כותרת של חלון פעיל"
 
 #: winecfg.rc:149
+#, fuzzy
 msgid "Inactive Title Bar Gradient"
-msgstr ""
+msgstr "מדרג שורת כותרת של חלון בלתי פעיל"
 
 #: winecfg.rc:150
+#, fuzzy
 msgid "Menu Highlight"
-msgstr ""
+msgstr "הדגשה בתפריט"
 
 #: winecfg.rc:151
+#, fuzzy
 msgid "Menu Bar"
-msgstr ""
+msgstr "סרגל תפריטים"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"
@@ -7631,9 +7742,8 @@ msgid "Expand &Tree\t*"
 msgstr "הר&חבת העץ\t*"
 
 #: winefile.rc:70
-#, fuzzy
 msgid "Expand &all\tCtrl+*"
-msgstr "הרחבת ה&כול\tStrg+*"
+msgstr "הרחבת ה&כול\tCtrl+*"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
@@ -8241,23 +8351,23 @@ msgstr "הפעלת הכתבן נכשלה"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr ""
+msgstr "Invalid number of parameters - Use xcopy /? for help\n"
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
-msgstr ""
+msgstr "Invalid parameter '%s' -  Use xcopy /? for help\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
-msgstr ""
+msgstr "Press <enter> to begin copying\n"
 
 #: xcopy.rc:30
 msgid "%d file(s) would be copied\n"
-msgstr ""
+msgstr "%d file(s) would be copied\n"
 
 #: xcopy.rc:31
 msgid "%d file(s) copied\n"
-msgstr ""
+msgstr "%d file(s) copied\n"
 
 #: xcopy.rc:34
 msgid ""
@@ -8265,32 +8375,35 @@ msgid ""
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
+"Is '%s' a filename or directory\n"
+"on the target?\n"
+"(F - File, D - Directory)\n"
 
 #: xcopy.rc:35
 msgid "%s? (Yes|No)\n"
-msgstr ""
+msgstr "%s? (Yes|No)\n"
 
 #: xcopy.rc:36
 msgid "Overwrite %s? (Yes|No|All)\n"
-msgstr ""
+msgstr "Overwrite %s? (Yes|No|All)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%s' to '%s' failed with r/c %d\n"
-msgstr ""
+msgstr "Copying of '%s' to '%s' failed with r/c %d\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%s'\n"
-msgstr ""
+msgstr "Failed during reading of '%s'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
 msgid "F"
-msgstr ""
+msgstr "F"
 
 #: xcopy.rc:44
 msgctxt "Directory key"
 msgid "D"
-msgstr ""
+msgstr "D"
 
 #: xcopy.rc:77
 msgid ""
@@ -8327,3 +8440,35 @@ msgid ""
 "\t\tthan source\n"
 "\n"
 msgstr ""
+"XCOPY - Copies source files or directory trees to a destination\n"
+"\n"
+"Syntax:\n"
+"XCOPY source [dest] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
+"\t     [/R] [/H] [/C] [/P] [/A] [/M] [/E] [/D] [/Y] [/-Y]\n"
+"\n"
+"Where:\n"
+"\n"
+"[/I]  Assume directory if destination does not exist and copying two or\n"
+"\tmore files\n"
+"[/S]  Copy directories and subdirectories\n"
+"[/E]  Copy directories and subdirectories, including any empty ones\n"
+"[/Q]  Do not list names during copy, ie quiet.\n"
+"[/F]  Show full source and destination names during copy\n"
+"[/L]  Simulate operation, showing names which would be copied\n"
+"[/W]  Prompts before beginning the copy operation\n"
+"[/T]  Creates empty directory structure but does not copy files\n"
+"[/Y]  Suppress prompting when overwriting files\n"
+"[/-Y] Enable prompting when overwriting files\n"
+"[/P]  Prompts on each source file before copying\n"
+"[/N]  Copy using short names\n"
+"[/U]  Copy only files which already exist in destination\n"
+"[/R]  Overwrite any read only files\n"
+"[/H]  Include hidden and system files in the copy\n"
+"[/C]  Continue even if an error occurs during the copy\n"
+"[/A]  Only copy files with archive attribute set\n"
+"[/M]  Only copy files with archive attribute set, removes\n"
+"\tarchive attribute\n"
+"[/D | /D:m-d-y] Copy new files or those modified after the supplied date.\n"
+"\t\tIf no date is supplied, only copy if destination is older\n"
+"\t\tthan source\n"
+"\n"
