@@ -487,6 +487,36 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
     }
 }
 
+static INT brush_can_fill_pixels(GpBrush *brush)
+{
+    switch (brush->bt)
+    {
+    case BrushTypeSolidColor:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
+    DWORD *argb_pixels, GpRect *fill_area, UINT cdwStride)
+{
+    switch (brush->bt)
+    {
+    case BrushTypeSolidColor:
+    {
+        int x, y;
+        GpSolidFill *fill = (GpSolidFill*)brush;
+        for (x=0; x<fill_area->Width; x++)
+            for (y=0; y<fill_area->Height; y++)
+                argb_pixels[x + y*cdwStride] = fill->color;
+        return Ok;
+    }
+    default:
+        return NotImplemented;
+    }
+}
+
 /* GdipDrawPie/GdipFillPie helper function */
 static void draw_pie(GpGraphics *graphics, REAL x, REAL y, REAL width,
     REAL height, REAL startAngle, REAL sweepAngle)
@@ -3321,13 +3351,122 @@ static GpStatus GDI32_GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     return Ok;
 }
 
+static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
+    GpRegion* region)
+{
+    GpStatus stat;
+    GpRegion *temp_region;
+    GpMatrix *world_to_device, *identity;
+    GpRectF graphics_bounds;
+    UINT scans_count, i;
+    INT dummy;
+    GpRect *scans;
+    DWORD *pixel_data;
+
+    if (!brush_can_fill_pixels(brush))
+        return NotImplemented;
+
+    stat = get_graphics_bounds(graphics, &graphics_bounds);
+
+    if (stat == Ok)
+        stat = GdipCloneRegion(region, &temp_region);
+
+    if (stat == Ok)
+    {
+        stat = get_graphics_transform(graphics, CoordinateSpaceDevice,
+            CoordinateSpaceWorld, &world_to_device);
+
+        if (stat == Ok)
+        {
+            stat = GdipTransformRegion(temp_region, world_to_device);
+
+            GdipDeleteMatrix(world_to_device);
+        }
+
+        if (stat == Ok)
+            stat = GdipCombineRegionRect(temp_region, &graphics_bounds, CombineModeIntersect);
+
+        if (stat == Ok)
+            stat = GdipCreateMatrix(&identity);
+
+        if (stat == Ok)
+        {
+            stat = GdipGetRegionScansCount(temp_region, &scans_count, identity);
+
+            if (stat == Ok && scans_count != 0)
+            {
+                scans = GdipAlloc(sizeof(*scans) * scans_count);
+                if (!scans)
+                    stat = OutOfMemory;
+
+                if (stat == Ok)
+                {
+                    stat = GdipGetRegionScansI(temp_region, scans, &dummy, identity);
+
+                    if (stat != Ok)
+                        GdipFree(scans);
+                }
+            }
+
+            GdipDeleteMatrix(identity);
+        }
+
+        GdipDeleteRegion(temp_region);
+    }
+
+    if (stat == Ok && scans_count == 0)
+        return Ok;
+
+    if (stat == Ok)
+    {
+        UINT max_size=0;
+
+        for (i=0; i<scans_count; i++)
+        {
+            UINT size = scans[i].Width * scans[i].Height;
+
+            if (size > max_size)
+                max_size = size;
+        }
+
+        pixel_data = GdipAlloc(sizeof(*pixel_data) * max_size);
+        if (!pixel_data)
+            stat = OutOfMemory;
+
+        if (stat == Ok)
+        {
+            for (i=0; i<scans_count; i++)
+            {
+                stat = brush_fill_pixels(graphics, brush, pixel_data, &scans[i],
+                    scans[i].Width);
+
+                if (stat == Ok)
+                {
+                    stat = alpha_blend_pixels(graphics, scans[i].X, scans[i].Y,
+                        (BYTE*)pixel_data, scans[i].Width, scans[i].Height,
+                        scans[i].Width * 4);
+                }
+
+                if (stat != Ok)
+                    break;
+            }
+
+            GdipFree(pixel_data);
+        }
+
+        GdipFree(scans);
+    }
+
+    return stat;
+}
+
 /*****************************************************************************
  * GdipFillRegion [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
         GpRegion* region)
 {
-    GpStatus stat;
+    GpStatus stat = NotImplemented;
 
     TRACE("(%p, %p, %p)\n", graphics, brush, region);
 
@@ -3337,11 +3476,18 @@ GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     if(graphics->busy)
         return ObjectBusy;
 
-    stat = GDI32_GdipFillRegion(graphics, brush, region);
+    if (!graphics->image)
+        stat = GDI32_GdipFillRegion(graphics, brush, region);
+
+    if (stat == NotImplemented)
+        stat = SOFTWARE_GdipFillRegion(graphics, brush, region);
+
+    if (stat == NotImplemented && graphics->image)
+        stat = GDI32_GdipFillRegion(graphics, brush, region);
 
     if (stat == NotImplemented)
     {
-        FIXME("partially implemented\n");
+        FIXME("not implemented for brushtype %i\n", brush->bt);
         stat = Ok;
     }
 
