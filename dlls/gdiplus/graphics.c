@@ -492,6 +492,7 @@ static INT brush_can_fill_pixels(GpBrush *brush)
     switch (brush->bt)
     {
     case BrushTypeSolidColor:
+    case BrushTypeHatchFill:
         return 1;
     default:
         return 0;
@@ -510,6 +511,32 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         for (x=0; x<fill_area->Width; x++)
             for (y=0; y<fill_area->Height; y++)
                 argb_pixels[x + y*cdwStride] = fill->color;
+        return Ok;
+    }
+    case BrushTypeHatchFill:
+    {
+        int x, y;
+        GpHatch *fill = (GpHatch*)brush;
+        const char *hatch_data;
+
+        if (get_hatch_data(fill->hatchstyle, &hatch_data) != Ok)
+            return NotImplemented;
+
+        for (x=0; x<fill_area->Width; x++)
+            for (y=0; y<fill_area->Height; y++)
+            {
+                int hx, hy;
+
+                /* FIXME: Account for the rendering origin */
+                hx = (x + fill_area->X) % 8;
+                hy = (y + fill_area->Y) % 8;
+
+                if ((hatch_data[7-hy] & (0x80 >> hx)) != 0)
+                    argb_pixels[x + y*cdwStride] = fill->forecol;
+                else
+                    argb_pixels[x + y*cdwStride] = fill->backcol;
+            }
+
         return Ok;
     }
     default:

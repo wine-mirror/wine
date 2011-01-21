@@ -219,6 +219,17 @@ static const char HatchBrushes[][8] = {
     { 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0xff }, /* HatchStyleDarkHorizontal */
 };
 
+GpStatus get_hatch_data(HatchStyle hatchstyle, const char **result)
+{
+    if (hatchstyle < sizeof(HatchBrushes) / sizeof(HatchBrushes[0]))
+    {
+        *result = HatchBrushes[hatchstyle];
+        return Ok;
+    }
+    else
+        return NotImplemented;
+}
+
 /******************************************************************************
  * GdipCreateHatchBrush [GDIPLUS.@]
  */
