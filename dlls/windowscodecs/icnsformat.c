@@ -68,7 +68,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
-#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
+#if defined(HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H) && \
+    MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4
 
 typedef struct IcnsEncoder {
     IWICBitmapEncoder IWICBitmapEncoder_iface;
@@ -752,7 +753,8 @@ HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     return ret;
 }
 
-#else /* !defined(HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H) */
+#else /* !defined(HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H) ||
+         MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4 */
 
 HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 {
