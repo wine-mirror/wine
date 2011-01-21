@@ -87,18 +87,30 @@ static void test_StreamOnMemory(void)
 
     LargeInt.u.HighPart = 1;
     LargeInt.u.LowPart = 0;
+    uNewPos.u.HighPart = 0xdeadbeef;
+    uNewPos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(pStream, LargeInt, STREAM_SEEK_SET, &uNewPos);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW), "Seek returned with %#x, expected %#x\n", hr, HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW));
+    ok(uNewPos.u.HighPart == 0xdeadbeef && uNewPos.u.LowPart == 0xdeadbeef, "Seek cursor initialized to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0xdeadbeef, 0xdeadbeef);
+    hr = IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
     LargeInt.QuadPart = sizeof(Memory) + 10;
+    uNewPos.u.HighPart = 0xdeadbeef;
+    uNewPos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(pStream, LargeInt, STREAM_SEEK_SET, &uNewPos);
     ok(hr == E_INVALIDARG, "Seek returned with %#x, expected %#x\n", hr, E_INVALIDARG);
+    ok(uNewPos.u.HighPart == 0xdeadbeef && uNewPos.u.LowPart == 0xdeadbeef, "Seek cursor initialized to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0xdeadbeef, 0xdeadbeef);
+    hr = IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
     LargeInt.QuadPart = 1;
+    uNewPos.u.HighPart = 0xdeadbeef;
+    uNewPos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(pStream, LargeInt, STREAM_SEEK_END, &uNewPos);
     ok(hr == E_INVALIDARG, "Seek returned with %#x, expected %#x\n", hr, E_INVALIDARG);
+    ok(uNewPos.u.HighPart == 0xdeadbeef && uNewPos.u.LowPart == 0xdeadbeef, "Seek cursor initialized to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0xdeadbeef, 0xdeadbeef);
+    hr = IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
     LargeInt.QuadPart = -1;
@@ -108,10 +120,14 @@ static void test_StreamOnMemory(void)
 
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, &uNewPos); /* reset seek pointer */
     LargeInt.QuadPart = -(LONGLONG)sizeof(Memory) - 5;
+    uNewPos.u.HighPart = 0xdeadbeef;
+    uNewPos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(pStream, LargeInt, STREAM_SEEK_END, &uNewPos);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW),
        "Seek returned with %#x, expected %#x\n", hr, HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW));
-    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "bSeek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0); /* remains unchanged */
+    ok(uNewPos.u.HighPart == 0xdeadbeef && uNewPos.u.LowPart == 0xdeadbeef, "Seek cursor initialized to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0xdeadbeef, 0xdeadbeef);
+    hr = IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
+    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0); /* remains unchanged */
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, NULL);
 
 
@@ -190,23 +206,26 @@ static void test_StreamOnMemory(void)
     hr = IWICStream_Write(pStream, MemBuf, 0, &uBytesWritten);
     ok(hr == S_OK, "Read returned with %#x, expected %#x\n", hr, S_OK);
 
+    uBytesWritten = 0xdeadbeef;
     hr = IWICStream_Write(pStream, NULL, 3, &uBytesWritten);
     ok(hr == E_INVALIDARG, "Write returned with %#x, expected %#x\n", hr, E_INVALIDARG);
-    ok(uBytesWritten == 0, "Wrote %u bytes, expected %u\n", uBytesWritten, 0);
+    ok(uBytesWritten == 0xdeadbeef, "Expected uBytesWritten to be unchanged, got %u\n", uBytesWritten);
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
+    uBytesWritten = 0xdeadbeef;
     hr = IWICStream_Write(pStream, NULL, 0, &uBytesWritten);
     ok(hr == E_INVALIDARG, "Write returned with %#x, expected %#x\n", hr, E_INVALIDARG);
-    ok(uBytesWritten == 0, "Wrote %u bytes, expected %u\n", uBytesWritten, 0);
+    ok(uBytesWritten == 0xdeadbeef, "Expected uBytesWritten to be unchanged, got %u\n", uBytesWritten);
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
+    uBytesWritten = 0xdeadbeef;
     hr = IWICStream_Write(pStream, CmpMem, sizeof(Memory) + 10, &uBytesWritten);
     ok(hr == STG_E_MEDIUMFULL, "Write returned with %#x, expected %#x\n", hr, STG_E_MEDIUMFULL);
-    ok(uBytesWritten == 0, "Wrote %u bytes, expected %u\n", uBytesWritten, 0);
+    ok(uBytesWritten == 0xdeadbeef, "Expected uBytesWritten to be unchanged, got %u\n", uBytesWritten);
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
-    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == uBytesWritten, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, uBytesWritten);
+    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
     IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_SET, NULL);
 
 
@@ -383,18 +402,30 @@ static void test_StreamOnStreamRange(void)
 
     LargeInt.u.HighPart = 1;
     LargeInt.u.LowPart = 0;
+    uNewPos.u.HighPart = 0xdeadbeef;
+    uNewPos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(pSubStream, LargeInt, STREAM_SEEK_SET, &uNewPos);
     ok(hr == WINCODEC_ERR_VALUEOUTOFRANGE, "Seek returned with %#x, expected %#x\n", hr, WINCODEC_ERR_VALUEOUTOFRANGE);
+    ok(uNewPos.u.HighPart == 0xdeadbeef && uNewPos.u.LowPart == 0xdeadbeef, "Seek cursor initialized to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0xdeadbeef, 0xdeadbeef);
+    hr = IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
     LargeInt.QuadPart = 30;
+    uNewPos.u.HighPart = 0xdeadbeef;
+    uNewPos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(pSubStream, LargeInt, STREAM_SEEK_SET, &uNewPos);
     ok(hr == WINCODEC_ERR_VALUEOUTOFRANGE, "Seek returned with %#x, expected %#x\n", hr, WINCODEC_ERR_VALUEOUTOFRANGE);
+    ok(uNewPos.u.HighPart == 0xdeadbeef && uNewPos.u.LowPart == 0xdeadbeef, "Seek cursor initialized to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0xdeadbeef, 0xdeadbeef);
+    hr = IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
     LargeInt.QuadPart = 1;
+    uNewPos.u.HighPart = 0xdeadbeef;
+    uNewPos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(pSubStream, LargeInt, STREAM_SEEK_END, &uNewPos);
     ok(hr == WINCODEC_ERR_VALUEOUTOFRANGE, "Seek returned with %#x, expected %#x\n", hr, WINCODEC_ERR_VALUEOUTOFRANGE);
+    ok(uNewPos.u.HighPart == 0xdeadbeef && uNewPos.u.LowPart == 0xdeadbeef, "Seek cursor initialized to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0xdeadbeef, 0xdeadbeef);
+    hr = IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
     LargeInt.QuadPart = -1;
@@ -404,10 +435,14 @@ static void test_StreamOnStreamRange(void)
 
     IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_SET, &uNewPos); /* reset seek pointer */
     LargeInt.QuadPart = -25;
+    uNewPos.u.HighPart = 0xdeadbeef;
+    uNewPos.u.LowPart = 0xdeadbeef;
     hr = IWICStream_Seek(pSubStream, LargeInt, STREAM_SEEK_END, &uNewPos);
     ok(hr == WINCODEC_ERR_VALUEOUTOFRANGE,
        "Seek returned with %#x, expected %#x\n", hr, HRESULT_FROM_WIN32(ERROR_ARITHMETIC_OVERFLOW));
-    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "bSeek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0); /* remains unchanged */
+    ok(uNewPos.u.HighPart == 0xdeadbeef && uNewPos.u.LowPart == 0xdeadbeef, "Seek cursor initialized to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0xdeadbeef, 0xdeadbeef);
+    hr = IWICStream_Seek(pStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
+    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0); /* remains unchanged */
     IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_SET, NULL);
 
 
@@ -442,14 +477,18 @@ static void test_StreamOnStreamRange(void)
     }
 
     IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_SET, NULL);
+    uBytesRead = 0xdeadbeef;
     hr = IWICStream_Read(pSubStream, NULL, 1, &uBytesRead);    /* destination buffer = NULL */
     ok(hr == E_INVALIDARG, "Read returned with %#x, expected %#x\n", hr, E_INVALIDARG);
+    ok(uBytesRead == 0xdeadbeef, "Expected uBytesRead to be unchanged, got %u\n", uBytesRead);
 
     hr = IWICStream_Read(pSubStream, MemBuf, 0, &uBytesRead);    /* read 0 bytes */
     ok(hr == S_OK, "Read returned with %#x, expected %#x\n", hr, S_OK);
 
+    uBytesRead = 0xdeadbeef;
     hr = IWICStream_Read(pSubStream, NULL, 0, &uBytesRead);
     ok(hr == E_INVALIDARG, "Read returned with %#x, expected %#x\n", hr, E_INVALIDARG);
+    ok(uBytesRead == 0xdeadbeef, "Expected uBytesRead to be unchanged, got %u\n", uBytesRead);
 
     hr = IWICStream_Read(pSubStream, NULL, 0, NULL);
     ok(hr == E_INVALIDARG, "Read returned with %#x, expected %#x\n", hr, E_INVALIDARG);
@@ -487,15 +526,17 @@ static void test_StreamOnStreamRange(void)
     hr = IWICStream_Write(pSubStream, MemBuf, 0, &uBytesWritten);
     ok(hr == S_OK, "Read returned with %#x, expected %#x\n", hr, S_OK);
 
+    uBytesWritten = 0xdeadbeef;
     hr = IWICStream_Write(pSubStream, NULL, 3, &uBytesWritten);
     ok(hr == E_INVALIDARG, "Write returned with %#x, expected %#x\n", hr, E_INVALIDARG);
-    ok(uBytesWritten == 0, "Wrote %u bytes, expected %u\n", uBytesWritten, 0);
+    ok(uBytesWritten == 0xdeadbeef, "Expected uBytesWritten to be unchanged, got %u\n", uBytesWritten);
     IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
+    uBytesWritten = 0xdeadbeef;
     hr = IWICStream_Write(pSubStream, NULL, 0, &uBytesWritten);
     ok(hr == E_INVALIDARG, "Write returned with %#x, expected %#x\n", hr, E_INVALIDARG);
-    ok(uBytesWritten == 0, "Wrote %u bytes, expected %u\n", uBytesWritten, 0);
+    ok(uBytesWritten == 0xdeadbeef, "Expected uBytesWritten to be unchanged, got %u\n", uBytesWritten);
     IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
     ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
@@ -626,12 +667,12 @@ static void test_StreamOnStreamRange(void)
     }
 
     IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_SET, NULL);
-    uBytesWritten = 0;
+    uBytesWritten = 0xdeadbeef;
     hr = IWICStream_Write(pSubStream, CmpMem, 32, &uBytesWritten);
     ok(hr == STG_E_MEDIUMFULL, "Write returned with %#x, expected %#x\n", hr, STG_E_MEDIUMFULL);
-    ok(uBytesWritten == 0, "Wrote %u bytes, expected %u\n", uBytesWritten, 0);
+    ok(uBytesWritten == 0xdeadbeef, "Expected uBytesWritten to be unchanged, got %u\n", uBytesWritten);
     IWICStream_Seek(pSubStream, LargeNull, STREAM_SEEK_CUR, &uNewPos);
-    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == uBytesWritten, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, uBytesWritten);
+    ok(uNewPos.u.HighPart == 0 && uNewPos.u.LowPart == 0, "Seek cursor moved to position (%u;%u), expected (%u;%u)\n", uNewPos.u.HighPart, uNewPos.u.LowPart, 0, 0);
 
 
     IWICStream_Release(pSubStream);

@@ -371,7 +371,7 @@ static HRESULT WINAPI StreamOnStreamRange_Read(IStream *iface,
         This->pos.QuadPart += uBytesRead;
     LeaveCriticalSection(&This->lock);
 
-    if (pcbRead) *pcbRead = uBytesRead;
+    if (SUCCEEDED(hr) && pcbRead) *pcbRead = uBytesRead;
 
     return hr;
 }
@@ -414,7 +414,7 @@ static HRESULT WINAPI StreamOnStreamRange_Write(IStream *iface,
         This->pos.QuadPart += uBytesWritten;
     LeaveCriticalSection(&This->lock);
 
-    if (pcbWritten) *pcbWritten = uBytesWritten;
+    if (SUCCEEDED(hr) && pcbWritten) *pcbWritten = uBytesWritten;
 
     return hr;
 }
