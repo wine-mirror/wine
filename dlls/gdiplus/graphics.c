@@ -147,6 +147,9 @@ static void restore_dc(GpGraphics *graphics, INT state)
     RestoreDC(graphics->hdc, state);
 }
 
+static GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
+        GpCoordinateSpace src_space, GpMatrix **matrix);
+
 /* This helper applies all the changes that the points listed in ptf need in
  * order to be drawn on the device context.  In the end, this should include at
  * least:
@@ -4909,25 +4912,13 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace dst_space,
-                                        GpCoordinateSpace src_space, GpPointF *points, INT count)
+static GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_space,
+        GpCoordinateSpace src_space, GpMatrix **matrix)
 {
-    GpMatrix *matrix;
-    GpStatus stat;
+    GpStatus stat = GdipCreateMatrix(matrix);
     REAL unitscale;
 
-    if(!graphics || !points || count <= 0)
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
-    TRACE("(%p, %d, %d, %p, %d)\n", graphics, dst_space, src_space, points, count);
-
-    if (src_space == dst_space) return Ok;
-
-    stat = GdipCreateMatrix(&matrix);
-    if (stat == Ok)
+    if (dst_space != src_space && stat == Ok)
     {
         unitscale = convert_unit(graphics_res(graphics), graphics->unit);
 
@@ -4938,12 +4929,12 @@ GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace 
         switch (src_space)
         {
         case CoordinateSpaceWorld:
-            GdipMultiplyMatrix(matrix, graphics->worldtrans, MatrixOrderAppend);
+            GdipMultiplyMatrix(*matrix, graphics->worldtrans, MatrixOrderAppend);
             break;
         case CoordinateSpacePage:
             break;
         case CoordinateSpaceDevice:
-            GdipScaleMatrix(matrix, 1.0/unitscale, 1.0/unitscale, MatrixOrderAppend);
+            GdipScaleMatrix(*matrix, 1.0/unitscale, 1.0/unitscale, MatrixOrderAppend);
             break;
         }
 
@@ -4958,7 +4949,7 @@ GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace 
                 {
                     stat = GdipInvertMatrix(inverted_transform);
                     if (stat == Ok)
-                        GdipMultiplyMatrix(matrix, inverted_transform, MatrixOrderAppend);
+                        GdipMultiplyMatrix(*matrix, inverted_transform, MatrixOrderAppend);
                     GdipDeleteMatrix(inverted_transform);
                 }
                 break;
@@ -4966,12 +4957,34 @@ GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace 
         case CoordinateSpacePage:
             break;
         case CoordinateSpaceDevice:
-            GdipScaleMatrix(matrix, unitscale, unitscale, MatrixOrderAppend);
+            GdipScaleMatrix(*matrix, unitscale, unitscale, MatrixOrderAppend);
             break;
         }
+    }
+    return stat;
+}
 
-        if (stat == Ok)
-            stat = GdipTransformMatrixPoints(matrix, points, count);
+GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace dst_space,
+                                        GpCoordinateSpace src_space, GpPointF *points, INT count)
+{
+    GpMatrix *matrix;
+    GpStatus stat;
+
+    if(!graphics || !points || count <= 0)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    TRACE("(%p, %d, %d, %p, %d)\n", graphics, dst_space, src_space, points, count);
+
+    if (src_space == dst_space) return Ok;
+
+    stat = get_graphics_transform(graphics, dst_space, src_space, &matrix);
+
+    if (stat == Ok)
+    {
+        stat = GdipTransformMatrixPoints(matrix, points, count);
 
         GdipDeleteMatrix(matrix);
     }
