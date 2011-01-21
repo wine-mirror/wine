@@ -3646,28 +3646,19 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                 (dwFlags & COWAIT_ALERTABLE) ? TRUE : FALSE);
         }
 
-        if (res < WAIT_OBJECT_0 + cHandles)
+        switch (res)
         {
-            /* handle signaled, store index */
-            *lpdwindex = (res - WAIT_OBJECT_0);
-            break;
-        }
-        else if (res == WAIT_TIMEOUT)
-        {
+        case WAIT_TIMEOUT:
             hr = RPC_S_CALLPENDING;
             break;
-        }
-        else if (res == WAIT_IO_COMPLETION)
-        {
-            *lpdwindex = WAIT_IO_COMPLETION;
+        case WAIT_FAILED:
+            hr = HRESULT_FROM_WIN32( GetLastError() );
+            break;
+        default:
+            *lpdwindex = res;
             break;
         }
-        else
-        {
-            ERR("Unexpected wait termination: %d, %d\n", res, GetLastError());
-            hr = E_UNEXPECTED;
-            break;
-        }
+        break;
     }
     TRACE("-- 0x%08x\n", hr);
     return hr;
