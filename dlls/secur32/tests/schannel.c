@@ -747,7 +747,7 @@ static void test_communication(void)
     ok(status == SEC_E_OK, "DecryptMessage failed: %08x\n", status);
     ok(buffers[0].pBuffers[0].BufferType == SECBUFFER_STREAM_HEADER, "Expected first buffer to be SECBUFFER_STREAM_HEADER\n");
     ok(buffers[0].pBuffers[1].BufferType == SECBUFFER_DATA, "Expected second buffer to be SECBUFFER_DATA\n");
-    ok(buffers[0].pBuffers[2].BufferType == SECBUFFER_STREAM_TRAILER, "Expected first buffer to be SECBUFFER_STREAM_TRAILER\n");
+    ok(buffers[0].pBuffers[2].BufferType == SECBUFFER_STREAM_TRAILER, "Expected third buffer to be SECBUFFER_STREAM_TRAILER\n");
 
     data = buffers[0].pBuffers[1].pvBuffer;
     data[buffers[0].pBuffers[1].cbBuffer] = 0;
