@@ -3282,30 +3282,16 @@ GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics *graphics, GpBrush *brush, GD
     return ret;
 }
 
-/*****************************************************************************
- * GdipFillRegion [GDIPLUS.@]
- */
-GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
-        GpRegion* region)
+static GpStatus GDI32_GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
+    GpRegion* region)
 {
     INT save_state;
     GpStatus status;
     HRGN hrgn;
     RECT rc;
 
-    TRACE("(%p, %p, %p)\n", graphics, brush, region);
-
-    if (!(graphics && brush && region))
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
     if(!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
+        return NotImplemented;
 
     status = GdipGetRegionHRgn(region, graphics, &hrgn);
     if(status != Ok)
@@ -3330,6 +3316,33 @@ GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     DeleteObject(hrgn);
 
     return Ok;
+}
+
+/*****************************************************************************
+ * GdipFillRegion [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
+        GpRegion* region)
+{
+    GpStatus stat;
+
+    TRACE("(%p, %p, %p)\n", graphics, brush, region);
+
+    if (!(graphics && brush && region))
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    stat = GDI32_GdipFillRegion(graphics, brush, region);
+
+    if (stat == NotImplemented)
+    {
+        FIXME("partially implemented\n");
+        stat = Ok;
+    }
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipFlush(GpGraphics *graphics, GpFlushIntention intention)
