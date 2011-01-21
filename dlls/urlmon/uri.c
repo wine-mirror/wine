@@ -350,6 +350,11 @@ static inline BOOL is_path_delim(WCHAR val) {
     return (!val || val == '#' || val == '?');
 }
 
+static inline BOOL is_slash(WCHAR c)
+{
+    return c == '/' || c == '\\';
+}
+
 static BOOL is_default_port(URL_SCHEME scheme, DWORD port) {
     DWORD i;
 
@@ -727,8 +732,6 @@ static void find_domain_name(const WCHAR *host, DWORD host_len,
 /* Removes the dot segments from a hierarchical URIs path component. This
  * function performs the removal in place.
  *
- * This is a modified version of Qt's QUrl function "removeDotsFromPath".
- *
  * This function returns the new length of the path string.
  */
 static DWORD remove_dot_segments(WCHAR *path, DWORD path_len) {
@@ -738,48 +741,46 @@ static DWORD remove_dot_segments(WCHAR *path, DWORD path_len) {
     DWORD len;
 
     while(in < end) {
-        /* A.  if the input buffer begins with a prefix of "/./" or "/.",
-         *     where "." is a complete path segment, then replace that
-         *     prefix with "/" in the input buffer; otherwise,
+        /* Move the first path segment in the input buffer to the end of
+         * the output buffer, and any subsequent characters up to, including
+         * the next "/" character (if any) or the end of the input buffer.
          */
-        if(in <= end - 3 && in[0] == '/' && in[1] == '.' && in[2] == '/') {
-            in += 2;
-            continue;
-        } else if(in == end - 2 && in[0] == '/' && in[1] == '.') {
-            *out++ = '/';
-            in += 2;
-            break;
-        }
-
-        /* B.  if the input buffer begins with a prefix of "/../" or "/..",
-         *     where ".." is a complete path segment, then replace that
-         *     prefix with "/" in the input buffer and remove the last
-         *     segment and its preceding "/" (if any) from the output
-         *     buffer; otherwise,
-         */
-        if(in <= end - 4 && in[0] == '/' && in[1] == '.' && in[2] == '.' && in[3] == '/') {
-            while(out > path && *(--out) != '/');
-
-            in += 3;
-            continue;
-        } else if(in == end - 3 && in[0] == '/' && in[1] == '.' && in[2] == '.') {
-            while(out > path && *(--out) != '/');
-
-            if(*out == '/')
-                ++out;
-
-            in += 3;
-            break;
-        }
-
-        /* C.  move the first path segment in the input buffer to the end of
-         *     the output buffer, including the initial "/" character (if
-         *     any) and any subsequent characters up to, but not including,
-         *     the next "/" character or the end of the input buffer.
-         */
-        *out++ = *in++;
-        while(in < end && *in != '/')
+        while(in < end && !is_slash(*in))
             *out++ = *in++;
+        if(in == end)
+            break;
+        *out++ = *in++;
+
+        while(in < end) {
+            if(*in != '.')
+                break;
+
+            /* Handle ending "/." */
+            if(in + 1 == end) {
+                ++in;
+                break;
+            }
+
+            /* Handle "/./" */
+            if(is_slash(in[1])) {
+                in += 2;
+                continue;
+            }
+
+            /* If we don't have "/../" or ending "/.." */
+            if(in[1] != '.' || (in + 2 != end && !is_slash(in[2])))
+                break;
+
+            /* Find the slash preceding out pointer and move out pointer to it */
+            if(out > path+1 && is_slash(*--out))
+                --out;
+            while(out > path && !is_slash(*(--out)));
+            if(is_slash(*out))
+                ++out;
+            in += 2;
+            if(in != end)
+                ++in;
+        }
     }
 
     len = out - path;
