@@ -3655,6 +3655,11 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
             hr = RPC_S_CALLPENDING;
             break;
         }
+        else if (res == WAIT_IO_COMPLETION)
+        {
+            *lpdwindex = WAIT_IO_COMPLETION;
+            break;
+        }
         else
         {
             ERR("Unexpected wait termination: %d, %d\n", res, GetLastError());
