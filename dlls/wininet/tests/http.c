@@ -151,6 +151,24 @@ static const test_data_t test_data[] = {
 
 static INTERNET_STATUS_CALLBACK (WINAPI *pInternetSetStatusCallbackA)(HINTERNET ,INTERNET_STATUS_CALLBACK);
 
+static BOOL proxy_active(void)
+{
+    HKEY internet_settings;
+    DWORD proxy_enable;
+    DWORD size;
+
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
+                      0, KEY_QUERY_VALUE, &internet_settings) != ERROR_SUCCESS)
+        return FALSE;
+
+    size = sizeof(DWORD);
+    if (RegQueryValueExA(internet_settings, "ProxyEnable", NULL, NULL, (LPBYTE) &proxy_enable, &size) != ERROR_SUCCESS)
+        proxy_enable = 0;
+
+    RegCloseKey(internet_settings);
+
+    return proxy_enable != 0;
+}
 
 static VOID WINAPI callback(
      HINTERNET hInternet,
@@ -424,8 +442,16 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     }
     if (first_connection_to_test_url)
     {
-        CHECK_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
-        CHECK_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+        if (! proxy_active())
+        {
+            CHECK_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+            CHECK_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+        }
+        else
+        {
+            CLEAR_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
+            CLEAR_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
+        }
     }
     else todo_wine
     {
@@ -638,8 +664,10 @@ static void InternetReadFile_chunked_test(void)
     res = HttpQueryInfoA(hor,HTTP_QUERY_TRANSFER_ENCODING,buffer,&length,0x0);
     buffer[length]=0;
     trace("Option TRANSFER_ENCODING -> %i  %s\n",res,buffer);
-    ok( res, "Failed to get TRANSFER_ENCODING option, error %u\n", GetLastError() );
-    ok( !strcmp( buffer, "chunked" ), "Wrong transfer encoding '%s'\n", buffer );
+    ok( res || ( proxy_active() && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND ),
+        "Failed to get TRANSFER_ENCODING option, error %u\n", GetLastError() );
+    ok( !strcmp( buffer, "chunked" ) || ( ! res && proxy_active() && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND ),
+        "Wrong transfer encoding '%s'\n", buffer );
 
     SetLastError( 0xdeadbeef );
     length = 16;
@@ -1048,7 +1076,7 @@ static void HttpSendRequestEx_test(void)
     szBuffer[dwBytesRead] = 0;
 
     ok(dwBytesRead == 13,"Read %u bytes instead of 13\n",dwBytesRead);
-    ok(strncmp(szBuffer,"mode => Test\n",dwBytesRead)==0,"Got string %s\n",szBuffer);
+    ok(strncmp(szBuffer,"mode => Test\n",dwBytesRead)==0 || broken(proxy_active()),"Got string %s\n",szBuffer);
 
     ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
 done:
@@ -2613,7 +2641,7 @@ static void test_secure_connection(void)
     INTERNET_CERTIFICATE_INFOW *certificate_structW = NULL;
     BOOL ret;
 
-    ses = InternetOpen("Gizmo5", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ses = InternetOpen("Gizmo5", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     ok(ses != NULL, "InternetOpen failed\n");
 
     con = InternetConnect(ses, "testbot.winehq.org",
@@ -2697,7 +2725,7 @@ static void test_secure_connection(void)
     InternetCloseHandle(ses);
 
     /* Repeating the tests with the W functions has the same result: */
-    ses = InternetOpenW(gizmo5, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ses = InternetOpenW(gizmo5, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     ok(ses != NULL, "InternetOpen failed\n");
 
     con = InternetConnectW(ses, testbot,
@@ -2788,7 +2816,7 @@ static void test_user_agent_header(void)
     char buffer[64];
     BOOL ret;
 
-    ses = InternetOpen("Gizmo5", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ses = InternetOpen("Gizmo5", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     ok(ses != NULL, "InternetOpen failed\n");
 
     con = InternetConnect(ses, "test.winehq.org", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
@@ -3040,8 +3068,8 @@ static const struct notification async_send_request_ex_test[] =
     { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, 0 },
     { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, 0 },
     { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1, 0, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, 1, 0, 1 },
     { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, 1 },
     { http_send_request_ex,  INTERNET_STATUS_CONNECTED_TO_SERVER, 1 },
     { http_send_request_ex,  INTERNET_STATUS_SENDING_REQUEST, 1 },
@@ -3052,8 +3080,10 @@ static const struct notification async_send_request_ex_test[] =
     { http_end_request,      INTERNET_STATUS_RECEIVING_RESPONSE, 1 },
     { http_end_request,      INTERNET_STATUS_RESPONSE_RECEIVED, 1 },
     { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, 1 },
-    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, 1 },
-    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, 1 }
+    { internet_close_handle, INTERNET_STATUS_CLOSING_CONNECTION, 0, 0, 1 },
+    { internet_close_handle, INTERNET_STATUS_CONNECTION_CLOSED, 0, 0, 1 },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, }
 };
 
 static void test_async_HttpSendRequestEx(void)
