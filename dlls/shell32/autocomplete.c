@@ -121,33 +121,27 @@ static void create_listbox(IAutoCompleteImpl *This)
 HRESULT WINAPI IAutoComplete_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
 {
     IAutoCompleteImpl *lpac;
+    HRESULT hr;
 
     if (pUnkOuter && !IsEqualIID (riid, &IID_IUnknown))
-	return CLASS_E_NOAGGREGATION;
+        return CLASS_E_NOAGGREGATION;
 
     lpac = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAutoCompleteImpl));
-    if (!lpac) 
-	return E_OUTOFMEMORY;
+    if (!lpac)
+        return E_OUTOFMEMORY;
 
     lpac->ref = 1;
     lpac->lpVtbl = &acvt;
     lpac->lpDropDownVtbl = &acdropdownvt;
     lpac->enabled = TRUE;
-    lpac->enumstr = NULL;
     lpac->options = ACO_AUTOAPPEND;
-    lpac->wpOrigEditProc = NULL;
-    lpac->hwndListBox = NULL;
-    lpac->txtbackup = NULL;
-    lpac->quickComplete = NULL;
-    
-    if (FAILED (IUnknown_QueryInterface (_IUnknown_ (lpac), riid, ppv))) {
-	IUnknown_Release (_IUnknown_ (lpac));
-	return E_NOINTERFACE;
-    }
-    
+
+    hr = IUnknown_QueryInterface(_IUnknown_ (lpac), riid, ppv);
+    IUnknown_Release(_IUnknown_ (lpac));
+
     TRACE("-- (%p)->\n",lpac);
 
-    return S_OK;
+    return hr;
 }
 
 /**************************************************************************
