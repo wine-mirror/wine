@@ -37,19 +37,14 @@
  */
 #define REG_FILE_HEX_LINE_LEN   (2 + 25 * 3)
 
-static const CHAR *reg_class_names[] = {
-                                     "HKEY_LOCAL_MACHINE", "HKEY_USERS", "HKEY_CLASSES_ROOT",
-                                     "HKEY_CURRENT_CONFIG", "HKEY_CURRENT_USER", "HKEY_DYN_DATA"
-                                 };
-
-#define REG_CLASS_NUMBER (sizeof(reg_class_names) / sizeof(reg_class_names[0]))
-
 extern const WCHAR* reg_class_namesW[];
 
-static HKEY reg_class_keys[REG_CLASS_NUMBER] = {
+static HKEY reg_class_keys[] = {
             HKEY_LOCAL_MACHINE, HKEY_USERS, HKEY_CLASSES_ROOT,
             HKEY_CURRENT_CONFIG, HKEY_CURRENT_USER, HKEY_DYN_DATA
         };
+
+#define REG_CLASS_NUMBER (sizeof(reg_class_keys) / sizeof(reg_class_keys[0]))
 
 /* return values */
 #define NOT_ENOUGH_MEMORY     1
