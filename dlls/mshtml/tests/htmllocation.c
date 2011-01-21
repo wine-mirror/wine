@@ -131,6 +131,7 @@ static void test_href(IHTMLLocation *loc, const struct location_test *test)
         ok(str_eq_wa(str, test->href),
                 "%s: expected retrieved href to be L\"%s\", was: %s\n",
                 test->name, test->href, wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_protocol(IHTMLLocation *loc, const struct location_test *test)
@@ -149,6 +150,7 @@ static void test_protocol(IHTMLLocation *loc, const struct location_test *test)
         ok(str_eq_wa(str, test->protocol),
                 "%s: expected retrieved protocol to be L\"%s\", was: %s\n",
                 test->name, test->protocol, wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_host(IHTMLLocation *loc, const struct location_test *test)
@@ -167,6 +169,7 @@ static void test_host(IHTMLLocation *loc, const struct location_test *test)
         ok(str_eq_wa(str, test->host),
                 "%s: expected retrieved host to be L\"%s\", was: %s\n",
                 test->name, test->host, wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_hostname(IHTMLLocation *loc, const struct location_test *test)
@@ -185,6 +188,7 @@ static void test_hostname(IHTMLLocation *loc, const struct location_test *test)
         ok(str_eq_wa(str, test->hostname),
                 "%s: expected retrieved hostname to be L\"%s\", was: %s\n",
                 test->name, test->hostname, wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_port(IHTMLLocation *loc, const struct location_test *test)
@@ -203,6 +207,7 @@ static void test_port(IHTMLLocation *loc, const struct location_test *test)
         ok(str_eq_wa(str, test->port),
                 "%s: expected retrieved port to be L\"%s\", was: %s\n",
                 test->name, test->port, wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_pathname(IHTMLLocation *loc, const struct location_test *test)
@@ -221,6 +226,7 @@ static void test_pathname(IHTMLLocation *loc, const struct location_test *test)
         ok(str_eq_wa(str, test->pathname),
                 "%s: expected retrieved pathname to be L\"%s\", was: %s\n",
                 test->name, test->pathname, wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_search(IHTMLLocation *loc, const struct location_test *test)
@@ -239,6 +245,7 @@ static void test_search(IHTMLLocation *loc, const struct location_test *test)
         ok(str_eq_wa(str, test->search),
                 "%s: expected retrieved search to be L\"%s\", was: %s\n",
                 test->name, test->search, wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_hash(IHTMLLocation *loc, const struct location_test *test)
@@ -257,6 +264,7 @@ static void test_hash(IHTMLLocation *loc, const struct location_test *test)
         ok(str_eq_wa(str, test->hash),
                 "%s: expected retrieved hash to be L\"%s\", was: %s\n",
                 test->name, test->hash, wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void perform_test(const struct location_test* test)
