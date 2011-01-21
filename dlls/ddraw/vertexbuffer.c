@@ -82,10 +82,8 @@ IDirect3DVertexBufferImpl_QueryInterface(IDirect3DVertexBuffer7 *iface,
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DVertexBufferImpl_1_QueryInterface(IDirect3DVertexBuffer *iface,
-                                                 REFIID riid,
-                                                 void **obj)
+static HRESULT WINAPI IDirect3DVertexBufferImpl_1_QueryInterface(IDirect3DVertexBuffer *iface,
+        REFIID riid, void **obj)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obj);
 
@@ -112,8 +110,7 @@ IDirect3DVertexBufferImpl_AddRef(IDirect3DVertexBuffer7 *iface)
     return ref;
 }
 
-static ULONG WINAPI
-Thunk_IDirect3DVertexBufferImpl_1_AddRef(IDirect3DVertexBuffer *iface)
+static ULONG WINAPI IDirect3DVertexBufferImpl_1_AddRef(IDirect3DVertexBuffer *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -176,8 +173,7 @@ IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
     return ref;
 }
 
-static ULONG WINAPI
-Thunk_IDirect3DVertexBufferImpl_1_Release(IDirect3DVertexBuffer *iface)
+static ULONG WINAPI IDirect3DVertexBufferImpl_1_Release(IDirect3DVertexBuffer *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -242,11 +238,8 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DVertexBufferImpl_1_Lock(IDirect3DVertexBuffer *iface,
-                                       DWORD Flags,
-                                       void **Data,
-                                       DWORD *Size)
+static HRESULT WINAPI IDirect3DVertexBufferImpl_1_Lock(IDirect3DVertexBuffer *iface, DWORD Flags,
+        void **Data, DWORD *Size)
 {
     TRACE("iface %p, flags %#x, data %p, data_size %p.\n", iface, Flags, Data, Size);
 
@@ -276,8 +269,7 @@ IDirect3DVertexBufferImpl_Unlock(IDirect3DVertexBuffer7 *iface)
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DVertexBufferImpl_1_Unlock(IDirect3DVertexBuffer *iface)
+static HRESULT WINAPI IDirect3DVertexBufferImpl_1_Unlock(IDirect3DVertexBuffer *iface)
 {
     TRACE("iface %p.\n", iface);
 
@@ -379,15 +371,9 @@ IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DVertexBufferImpl_1_ProcessVertices(IDirect3DVertexBuffer *iface,
-                                                  DWORD VertexOp,
-                                                  DWORD DestIndex,
-                                                  DWORD Count,
-                                                  IDirect3DVertexBuffer *SrcBuffer,
-                                                  DWORD SrcIndex,
-                                                  IDirect3DDevice3 *D3DDevice,
-                                                  DWORD Flags)
+static HRESULT WINAPI IDirect3DVertexBufferImpl_1_ProcessVertices(IDirect3DVertexBuffer *iface,
+        DWORD VertexOp, DWORD DestIndex, DWORD Count, IDirect3DVertexBuffer *SrcBuffer,
+        DWORD SrcIndex, IDirect3DDevice3 *D3DDevice, DWORD Flags)
 {
     IDirect3DVertexBufferImpl *Src = SrcBuffer ? vb_from_vb1(SrcBuffer) : NULL;
     IDirect3DDeviceImpl *D3D = D3DDevice ? device_from_device3(D3DDevice) : NULL;
@@ -435,9 +421,8 @@ IDirect3DVertexBufferImpl_GetVertexBufferDesc(IDirect3DVertexBuffer7 *iface,
     return D3D_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc(IDirect3DVertexBuffer *iface,
-                                                      D3DVERTEXBUFFERDESC *Desc)
+static HRESULT WINAPI IDirect3DVertexBufferImpl_1_GetVertexBufferDesc(IDirect3DVertexBuffer *iface,
+        D3DVERTEXBUFFERDESC *Desc)
 {
     TRACE("iface %p, desc %p.\n", iface, Desc);
 
@@ -484,10 +469,8 @@ IDirect3DVertexBufferImpl_Optimize(IDirect3DVertexBuffer7 *iface,
     return DD_OK;
 }
 
-static HRESULT WINAPI
-Thunk_IDirect3DVertexBufferImpl_1_Optimize(IDirect3DVertexBuffer *iface,
-                                           IDirect3DDevice3 *D3DDevice,
-                                           DWORD Flags)
+static HRESULT WINAPI IDirect3DVertexBufferImpl_1_Optimize(IDirect3DVertexBuffer *iface,
+        IDirect3DDevice3 *D3DDevice, DWORD Flags)
 {
     IDirect3DDeviceImpl *D3D = D3DDevice ? device_from_device3(D3DDevice) : NULL;
 
@@ -558,15 +541,15 @@ static const struct IDirect3DVertexBuffer7Vtbl d3d_vertex_buffer7_vtbl =
 static const struct IDirect3DVertexBufferVtbl d3d_vertex_buffer1_vtbl =
 {
     /*** IUnknown Methods ***/
-    Thunk_IDirect3DVertexBufferImpl_1_QueryInterface,
-    Thunk_IDirect3DVertexBufferImpl_1_AddRef,
-    Thunk_IDirect3DVertexBufferImpl_1_Release,
+    IDirect3DVertexBufferImpl_1_QueryInterface,
+    IDirect3DVertexBufferImpl_1_AddRef,
+    IDirect3DVertexBufferImpl_1_Release,
     /*** IDirect3DVertexBuffer Methods ***/
-    Thunk_IDirect3DVertexBufferImpl_1_Lock,
-    Thunk_IDirect3DVertexBufferImpl_1_Unlock,
-    Thunk_IDirect3DVertexBufferImpl_1_ProcessVertices,
-    Thunk_IDirect3DVertexBufferImpl_1_GetVertexBufferDesc,
-    Thunk_IDirect3DVertexBufferImpl_1_Optimize
+    IDirect3DVertexBufferImpl_1_Lock,
+    IDirect3DVertexBufferImpl_1_Unlock,
+    IDirect3DVertexBufferImpl_1_ProcessVertices,
+    IDirect3DVertexBufferImpl_1_GetVertexBufferDesc,
+    IDirect3DVertexBufferImpl_1_Optimize
 };
 
 HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
