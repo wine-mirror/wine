@@ -256,6 +256,15 @@ static ARGB blend_colors(ARGB start, ARGB end, REAL position)
 {
     ARGB result=0;
     ARGB i;
+    INT a1, a2, a3;
+
+    a1 = (start >> 24) & 0xff;
+    a2 = (end >> 24) & 0xff;
+
+    a3 = (int)(a1*(1.0f - position)+a2*(position));
+
+    result |= a3 << 24;
+
     for (i=0xff; i<=0xff0000; i = i << 8)
         result |= (int)((start&i)*(1.0f - position)+(end&i)*(position))&i;
     return result;
@@ -493,6 +502,7 @@ static INT brush_can_fill_pixels(GpBrush *brush)
     {
     case BrushTypeSolidColor:
     case BrushTypeHatchFill:
+    case BrushTypeLinearGradient:
         return 1;
     default:
         return 0;
@@ -538,6 +548,66 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
             }
 
         return Ok;
+    }
+    case BrushTypeLinearGradient:
+    {
+        GpLineGradient *fill = (GpLineGradient*)brush;
+        GpPointF draw_points[3], line_points[3];
+        GpStatus stat;
+        static const GpRectF box_1 = { 0.0, 0.0, 1.0, 1.0 };
+        GpMatrix *world_to_gradient; /* FIXME: Store this in the brush? */
+        int x, y;
+
+        draw_points[0].X = fill_area->X;
+        draw_points[0].Y = fill_area->Y;
+        draw_points[1].X = fill_area->X+1;
+        draw_points[1].Y = fill_area->Y;
+        draw_points[2].X = fill_area->X;
+        draw_points[2].Y = fill_area->Y+1;
+
+        /* Transform the points to a co-ordinate space where X is the point's
+         * position in the gradient, 0.0 being the start point and 1.0 the
+         * end point. */
+        stat = GdipTransformPoints(graphics, CoordinateSpaceWorld,
+            CoordinateSpaceDevice, draw_points, 3);
+
+        if (stat == Ok)
+        {
+            line_points[0] = fill->startpoint;
+            line_points[1] = fill->endpoint;
+            line_points[2].X = fill->startpoint.X + (fill->startpoint.Y - fill->endpoint.Y);
+            line_points[2].Y = fill->startpoint.Y + (fill->endpoint.X - fill->startpoint.X);
+
+            stat = GdipCreateMatrix3(&box_1, line_points, &world_to_gradient);
+        }
+
+        if (stat == Ok)
+        {
+            stat = GdipInvertMatrix(world_to_gradient);
+
+            if (stat == Ok)
+                stat = GdipTransformMatrixPoints(world_to_gradient, draw_points, 3);
+
+            GdipDeleteMatrix(world_to_gradient);
+        }
+
+        if (stat == Ok)
+        {
+            REAL x_delta = draw_points[1].X - draw_points[0].X;
+            REAL y_delta = draw_points[2].X - draw_points[0].X;
+
+            for (y=0; y<fill_area->Height; y++)
+            {
+                for (x=0; x<fill_area->Width; x++)
+                {
+                    REAL pos = draw_points[0].X + x * x_delta + y * y_delta;
+
+                    argb_pixels[x + y*cdwStride] = blend_line_gradient(fill, pos);
+                }
+            }
+        }
+
+        return stat;
     }
     default:
         return NotImplemented;
