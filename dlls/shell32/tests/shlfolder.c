@@ -2784,9 +2784,10 @@ static void test_ShellItemCompare(void)
     hr = IShellFolder_BindToObject(psf_desktop, pidl_cwd, NULL, &IID_IShellFolder, (void**)&psf_current);
     ok(SUCCEEDED(hr), "BindToObject returned %x\n", hr);
     IShellFolder_Release(psf_desktop);
+    ILFree(pidl_cwd);
 
     /* Generate ShellItems for the files */
-    ZeroMemory(&psi, sizeof(IShellItem*)*9);
+    memset(&psi, 0, sizeof(psi));
     failed = FALSE;
     for(i = 0; i < 9; i++)
     {
@@ -4443,6 +4444,7 @@ static void test_SHChangeNotify(void)
     SHChangeNotifyDeregister(notifyID);
     DestroyWindow(wnd);
 
+    ILFree((LPITEMIDLIST)entries[0].pidl);
     br = RemoveDirectoryA(root_dirA);
     ok(br == TRUE, "RemoveDirectory failed: %d\n", GetLastError());
 }
