@@ -1099,6 +1099,7 @@ static void test_typelibmarshal(void)
     ok(V_VT(&varresult) == VT_BSTR, "Return value should be of type BSTR instead of %d\n", V_VT(&varresult));
     ok(!lstrcmpW(V_BSTR(&varresult), szTestTest), "Return value should have been \"TestTest\" instead of %s\n", wine_dbgstr_w(V_BSTR(&varresult)));
     VariantClear(&varresult);
+    SysFreeString(bstr);
 
     /* call SetOleColor with large negative VT_I4 param */
     VariantInit(&vararg[0]);

@@ -219,9 +219,11 @@ static void check_for_VT_INT_PTR(void)
     bound.lLbound	= 0;
     a = SafeArrayCreate(VT_INT_PTR, 1, &bound);
     if (a) {
+        HRESULT hres;
         trace("VT_INT_PTR is supported\n");
         HAVE_OLEAUT32_INT_PTR = TRUE;
-        SafeArrayDestroy(a);
+        hres = SafeArrayDestroy(a);
+        ok(hres == S_OK, "got 0x%08x\n", hres);
     }
     else {
         trace("VT_INT_PTR is not supported\n");
@@ -944,7 +946,8 @@ test_LockUnlock_Vector:
           bVector ? "vector " : "\n", count, hres);
     }
 
-    SafeArrayDestroy(sa);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
   }
 
   if (bVector == FALSE && pSafeArrayCreateVector)
@@ -1079,7 +1082,8 @@ static void test_SafeArrayGetPutElement(void)
       }
     }
   }
-  SafeArrayDestroy(sa);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
 }
 
 static void test_SafeArrayGetPutElement_BSTR(void)
@@ -1113,7 +1117,8 @@ static void test_SafeArrayGetPutElement_BSTR(void)
   ok(hres == S_OK, "Failed to get bstr element at hres 0x%x\n", hres);
   if (hres == S_OK)
     ok(SysStringLen(value) == SysStringLen(gotvalue), "Got len %d instead of %d\n", SysStringLen(gotvalue), SysStringLen(value));
-  SafeArrayDestroy(sa);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   SysFreeString(value);
   SysFreeString(gotvalue);
 }
@@ -1174,7 +1179,8 @@ static void test_SafeArrayGetPutElement_IUnknown(void)
   ok(hres == S_OK, "Failed to get bstr element at hres 0x%x\n", hres);
   if (hres == S_OK)
     ok(value == gotvalue, "Got %p instead of %p\n", gotvalue, value);
-  SafeArrayDestroy(sa);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(tunk_xref == 2,"Failed to decrement refcount of iface.\n");
 }
 
@@ -1208,7 +1214,8 @@ static void test_SafeArrayRedim_IUnknown(void)
   hres = SafeArrayRedim(sa, &sab);
   ok(hres == S_OK, "Failed to shrink array hres 0x%x\n", hres);
   ok(tunk_xref == 1, "Failed to decrement refcount\n");
-  SafeArrayDestroy(sa);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
 }
 
 static void test_SafeArrayGetPutElement_VARIANT(void)
@@ -1248,7 +1255,8 @@ static void test_SafeArrayGetPutElement_VARIANT(void)
     if (V_VT(&value) == V_VT(&gotvalue))
         ok(V_I4(&value) == V_I4(&gotvalue), "Got %d instead of %d\n", V_I4(&value), V_VT(&gotvalue));
   }
-  SafeArrayDestroy(sa);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
 }
 
 
@@ -1323,7 +1331,8 @@ static void test_SafeArrayCopyData(void)
   ok(hres == E_INVALIDARG, "Smaller copy last dimension hres 0x%x\n", hres);
   sacopy->rgsabound[3].cElements += 1;
 
-  SafeArrayDestroy(sacopy);
+  hres = SafeArrayDestroy(sacopy);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   sacopy = NULL;
   hres = pSafeArrayCopyData(sa, sacopy);
   ok(hres == E_INVALIDARG, "->Null copy hres 0x%x\n", hres);
@@ -1335,10 +1344,12 @@ static void test_SafeArrayCopyData(void)
     ok(SafeArrayGetElemsize(sa) == SafeArrayGetElemsize(sacopy),"elemsize wrong\n");
     ok(SafeArrayGetDim(sa) == SafeArrayGetDim(sacopy),"dimensions wrong\n");
     ok(!memcmp(sa->pvData, sacopy->pvData, size * sizeof(int)), "compared different\n");
-    SafeArrayDestroy(sacopy);
+    hres = SafeArrayDestroy(sacopy);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
   }
 
-  SafeArrayDestroy(sa);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
 }
 
 static void test_SafeArrayCreateEx(void)
@@ -1391,7 +1402,8 @@ static void test_SafeArrayCreateEx(void)
         ok(hres == S_OK && IsEqualGUID(&guid, &IID_IUnknown), "Set bad IID\n");
       }
     }
-    SafeArrayDestroy(sa);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
   }
 
   sa = pSafeArrayCreateEx(VT_DISPATCH, 1, sab, NULL);
@@ -1409,7 +1421,8 @@ static void test_SafeArrayCreateEx(void)
         ok(IsEqualGUID(&guid, &IID_IDispatch), "CreateEx (NULL) bad IID\n");
       }
     }
-    SafeArrayDestroy(sa);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
   }
 
   sa = pSafeArrayCreateEx(VT_UNKNOWN, 1, sab, NULL);
@@ -1427,7 +1440,8 @@ static void test_SafeArrayCreateEx(void)
         ok(IsEqualGUID(&guid, &IID_IUnknown), "CreateEx (NULL-Unk) bad IID\n");
       }
     }
-    SafeArrayDestroy(sa);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
   }
 
   /* VT_RECORD failure case */
@@ -1446,7 +1460,8 @@ static void test_SafeArrayCreateEx(void)
   if (sa)
   {
     ok(sa->cbElements == RECORD_SIZE_FAIL, "Altered size to %d\n", sa->cbElements);
-    SafeArrayDestroy(sa);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
     ok(iRec->clearCalled == sab[0].cElements, "Destroy->Clear called %d times\n", iRec->clearCalled);
   }
 
@@ -1473,13 +1488,19 @@ static void test_SafeArrayCreateEx(void)
 
     ok(sa->cbElements == RECORD_SIZE,"Elemsize is %d\n", sa->cbElements);
 
-    SafeArrayDestroy(sa);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
     ok(iRec->sizeCalled == 1, "Destroy->GetSize called %d times\n", iRec->sizeCalled);
     ok(iRec->clearCalled == sab[0].cElements, "Destroy->Clear called %d times\n", iRec->clearCalled);
     ok(iRec->ref == START_REF_COUNT, "Wrong iRec refcount %d\n", iRec->ref);
   }
   else
-    SafeArrayDestroy(sa);
+  {
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+  }
+
+  IRecordInfo_Release(&iRec->IRecordInfo_iface);
 }
 
 static void test_SafeArrayClear(void)
@@ -1518,7 +1539,8 @@ static void test_SafeArrayClear(void)
   hres = VariantClear(&v);
   ok(hres == DISP_E_BADVARTYPE, "VariantClear: hres 0x%x\n", hres);
 
-  SafeArrayDestroy(sa);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
 }
 
 static void test_SafeArrayCopy(void)
@@ -1554,8 +1576,10 @@ static void test_SafeArrayCopy(void)
      "VariantCopy: hres 0x%x, Type %d\n", hres, V_VT(&vDst));
   ok(V_ARRAY(&vDst) != sa, "VariantClear: Performed shallow copy\n");
 
-  SafeArrayDestroy(V_ARRAY(&vSrc));
-  SafeArrayDestroy(V_ARRAY(&vDst));
+  hres = SafeArrayDestroy(V_ARRAY(&vSrc));
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = SafeArrayDestroy(V_ARRAY(&vDst));
+  ok(hres == S_OK, "got 0x%08x\n", hres);
 
   hres = SafeArrayAllocDescriptor(1, &sa);
   ok(hres == S_OK, "SafeArrayAllocDescriptor failed with error 0x%08x\n", hres);
@@ -1568,8 +1592,10 @@ static void test_SafeArrayCopy(void)
   hres = SafeArrayCopy(sa, &sa2);
   ok(hres == S_OK, "SafeArrayCopy failed with error 0x%08x\n", hres);
 
-  SafeArrayDestroy(sa2);
-  SafeArrayDestroy(sa);
+  hres = SafeArrayDestroy(sa2);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
 }
 
 #define MKARRAY(low,num,typ) sab.lLbound = low; sab.cElements = num; \
@@ -1605,7 +1631,8 @@ static void test_SafeArrayChangeTypeEx(void)
   }
 
   /* VT_VECTOR|VT_UI1 -> VT_BSTR */
-  SafeArrayDestroy(sa);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   if (pSafeArrayCreateVector)
   {
     sa = pSafeArrayCreateVector(VT_UI1, 0, strlen(szHello)+1);
@@ -1640,7 +1667,15 @@ static void test_SafeArrayChangeTypeEx(void)
     if (vt == VT_UI1)
       continue;
 
-    MKARRAYCONT(0,1,vt);
+    sab.lLbound = 0;
+    sab.cElements = 1;
+    sa = SafeArrayCreate(vt, 1, &sab);
+    if (!sa) continue;
+
+    V_VT(&v) = VT_ARRAY|vt;
+    V_ARRAY(&v) = sa;
+    VariantInit(&v2);
+
     hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_BSTR);
     ok(hres != S_OK, "CTE VT_ARRAY|VT %d->BSTR succeeded\n", vt);
     VariantClear(&v2);
@@ -1663,7 +1698,8 @@ static void test_SafeArrayChangeTypeEx(void)
     ok(hres == DISP_E_TYPEMISMATCH, "CTE VT_ARRAY|VT_UI1->VT_ARRAY|VT_I1 returned %x\n", hres);
 
     /* But can change to the same array type */
-    SafeArrayDestroy(sa);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
     sa = pSafeArrayCreateVector(VT_UI1, 0, 1);
     ok(sa != NULL, "CreateVector() failed.\n");
     if (!sa)
@@ -1672,7 +1708,8 @@ static void test_SafeArrayChangeTypeEx(void)
     V_ARRAY(&v) = sa;
     hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_ARRAY|VT_UI1);
     ok(hres == S_OK, "CTE VT_ARRAY|VT_UI1->VT_ARRAY|VT_UI1 returned %x\n", hres);
-    SafeArrayDestroy(sa);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
     VariantClear(&v2);
   }
 

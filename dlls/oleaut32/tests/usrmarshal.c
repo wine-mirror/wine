@@ -256,6 +256,7 @@ static void test_marshal_LPSAFEARRAY(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     next = LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
     ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
+    ok(lpsa->cLocks == 7, "got lock count %u\n", lpsa->cLocks);
 
     check_safearray(buffer, lpsa);
 
@@ -268,12 +269,14 @@ static void test_marshal_LPSAFEARRAY(void)
         SafeArrayGetVartype(lpsa, &vt);
         SafeArrayGetVartype(lpsa2, &vt2);
         ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
+        todo_wine ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
         init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
         LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
     lpsa->cLocks = 0;
-    SafeArrayDestroy(lpsa);
+    hr = SafeArrayDestroy(lpsa);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* use two dimensions */
     sab[0].lLbound = 5;
@@ -300,6 +303,7 @@ static void test_marshal_LPSAFEARRAY(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     next = LPSAFEARRAY_UserMarshal(&umcb.Flags, buffer, &lpsa);
     ok(next - buffer == expected, "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
+    ok(lpsa->cLocks == 7, "got lock count %u\n", lpsa->cLocks);
 
     check_safearray(buffer, lpsa);
 
@@ -312,12 +316,14 @@ static void test_marshal_LPSAFEARRAY(void)
         SafeArrayGetVartype(lpsa, &vt);
         SafeArrayGetVartype(lpsa2, &vt2);
         ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
+        todo_wine ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
         init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
         LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
     lpsa->cLocks = 0;
-    SafeArrayDestroy(lpsa);
+    hr = SafeArrayDestroy(lpsa);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* test NULL safe array */
     lpsa = NULL;
@@ -371,7 +377,8 @@ static void test_marshal_LPSAFEARRAY(void)
 
     HeapFree(GetProcessHeap(), 0, buffer);
     lpsa->cLocks = 0;
-    SafeArrayDestroy(lpsa);
+    hr = SafeArrayDestroy(lpsa);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* VARTYPE-less arrays can be marshaled if cbElements is 1,2,4 or 8 as type SF_In */
     hr = SafeArrayAllocDescriptor(1, &lpsa);
@@ -398,8 +405,10 @@ static void test_marshal_LPSAFEARRAY(void)
             "Marshaled %u bytes, expected %u\n", (ULONG) (next - buffer), expected);
     check_safearray(buffer, lpsa);
     HeapFree(GetProcessHeap(), 0, buffer);
-    SafeArrayDestroyData(lpsa);
-    SafeArrayDestroyDescriptor(lpsa);
+    hr = SafeArrayDestroyData(lpsa);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = SafeArrayDestroyDescriptor(lpsa);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* Test an array of VT_BSTR */
     sab[0].lLbound = 3;
@@ -479,7 +488,8 @@ static void test_marshal_LPSAFEARRAY(void)
     }
 
     HeapFree(GetProcessHeap(), 0, buffer);
-    SafeArrayDestroy(lpsa);
+    hr = SafeArrayDestroy(lpsa);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* VARTYPE-less arrays with FADF_VARIANT */
     hr = SafeArrayAllocDescriptor(1, &lpsa);
@@ -509,8 +519,10 @@ static void test_marshal_LPSAFEARRAY(void)
     lpsa->cbElements = 16;  /* VARIANT wire size */
     check_safearray(buffer, lpsa);
     HeapFree(GetProcessHeap(), 0, buffer);
-    SafeArrayDestroyData(lpsa);
-    SafeArrayDestroyDescriptor(lpsa);
+    hr = SafeArrayDestroyData(lpsa);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = SafeArrayDestroyDescriptor(lpsa);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 }
 
 static void check_bstr(void *buffer, BSTR b)
@@ -765,6 +777,7 @@ static void test_marshal_VARIANT(void)
     DECIMAL dec, dec2;
     HeapUnknown *heap_unknown;
     DWORD expected;
+    HRESULT hr;
 
     stubMsg.RpcMsg = &rpcMsg;
 
@@ -1394,7 +1407,8 @@ static void test_marshal_VARIANT(void)
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
     HeapFree(GetProcessHeap(), 0, oldbuffer);
-    SafeArrayDestroy(lpsa);
+    hr = SafeArrayDestroy(lpsa);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /*** VARIANT BYREF ***/
     VariantInit(&v);
