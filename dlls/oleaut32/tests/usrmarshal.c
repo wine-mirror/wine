@@ -269,7 +269,7 @@ static void test_marshal_LPSAFEARRAY(void)
         SafeArrayGetVartype(lpsa, &vt);
         SafeArrayGetVartype(lpsa2, &vt2);
         ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
-        todo_wine ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
+        ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
         init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
         LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     }
@@ -316,7 +316,7 @@ static void test_marshal_LPSAFEARRAY(void)
         SafeArrayGetVartype(lpsa, &vt);
         SafeArrayGetVartype(lpsa2, &vt2);
         ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
-        todo_wine ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
+        ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
         init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
         LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
     }

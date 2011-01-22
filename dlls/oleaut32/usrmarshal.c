@@ -1085,7 +1085,7 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *B
     (*ppsa)->fFeatures |= (wiresa->fFeatures & ~(FADF_AUTOSETFLAGS));
     /* FIXME: there should be a limit on how large wiresa->cbElements can be */
     (*ppsa)->cbElements = elem_mem_size(wiresa, sftype);
-    (*ppsa)->cLocks = LOWORD(wiresa->cLocks);
+    (*ppsa)->cLocks = 0;
 
     /* SafeArrayCreateEx allocates the data for us, but
      * SafeArrayAllocDescriptor doesn't */
