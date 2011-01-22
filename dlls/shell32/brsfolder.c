@@ -229,6 +229,7 @@ static void InitializeTreeView( browse_info *info )
         if (FAILED(hr)) {
             WARN("SHGetDesktopFolder failed! hr = %08x\n", hr);
             ILFree(pidlChild);
+            ILFree(pidlParent);
             return;
         }
         hr = IShellFolder_BindToObject(lpsfDesktop, pidlParent, 0, &IID_IShellFolder, (LPVOID*)&lpsfParent);
@@ -238,6 +239,7 @@ static void InitializeTreeView( browse_info *info )
     if (FAILED(hr)) {
         WARN("Could not bind to parent shell folder! hr = %08x\n", hr);
         ILFree(pidlChild);
+        ILFree(pidlParent);
         return;
     }
 
@@ -252,6 +254,7 @@ static void InitializeTreeView( browse_info *info )
         WARN("Could not bind to root shell folder! hr = %08x\n", hr);
         IShellFolder_Release(lpsfParent);
         ILFree(pidlChild);
+        ILFree(pidlParent);
         return;
     }
 
@@ -262,6 +265,7 @@ static void InitializeTreeView( browse_info *info )
         IShellFolder_Release(lpsfParent);
         IShellFolder_Release(lpsfRoot);
         ILFree(pidlChild);
+        ILFree(pidlParent);
         return;
     }
 
@@ -271,6 +275,7 @@ static void InitializeTreeView( browse_info *info )
     SendMessageW( info->hwndTreeView, TVM_EXPAND, TVE_EXPAND, (LPARAM)item );
 
     ILFree(pidlChild);
+    ILFree(pidlParent);
     IShellFolder_Release(lpsfRoot);
     IShellFolder_Release(lpsfParent);
 }
