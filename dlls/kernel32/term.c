@@ -21,6 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #ifdef HAVE_NCURSES_H
 # include <ncurses.h>
 #elif defined(HAVE_CURSES_H)
