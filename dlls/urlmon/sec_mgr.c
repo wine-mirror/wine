@@ -221,9 +221,9 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
 
 static HRESULT open_zone_key(HKEY parent_key, DWORD zone, HKEY *hkey)
 {
-    static const WCHAR wszFormat[] = {'%','s','%','l','d',0};
+    static const WCHAR wszFormat[] = {'%','s','%','u',0};
 
-    WCHAR key_name[sizeof(wszZonesKey)/sizeof(WCHAR)+8];
+    WCHAR key_name[sizeof(wszZonesKey)/sizeof(WCHAR)+12];
     DWORD res;
 
     wsprintfW(key_name, wszFormat, wszZonesKey, zone);
