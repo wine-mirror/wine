@@ -828,6 +828,7 @@ static HRESULT WINAPI domcdata_splitText(
                 {
                     IXMLDOMCDATASection_deleteData(iface, 0, offset);
                     hr = IXMLDOMNode_appendChild(parent, (IXMLDOMNode*)*txtNode, NULL);
+                    IXMLDOMNode_Release(parent);
                 }
             }
             SysFreeString(data);
