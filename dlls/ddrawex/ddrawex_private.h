@@ -56,7 +56,7 @@ void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out);
  ******************************************************************************/
 typedef struct
 {
-    const IDirectDrawVtbl *IDirectDraw_Vtbl;
+    IDirectDraw IDirectDraw_iface;
     const IDirectDraw2Vtbl *IDirectDraw2_Vtbl;
     const IDirectDraw3Vtbl *IDirectDraw3_Vtbl;
     const IDirectDraw4Vtbl *IDirectDraw4_Vtbl;
