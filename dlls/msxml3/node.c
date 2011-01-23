@@ -534,8 +534,8 @@ static inline xmlChar* trim_whitespace(xmlChar* str)
     while (*ret && isspace(*ret))
         ++ret;
     len = xmlStrlen(ret);
-    while (isspace(ret[len-1]))
-        --len;
+    if (len)
+        while (isspace(ret[len-1])) --len;
 
     ret = xmlStrndup(ret, len);
     xmlFree(str);
