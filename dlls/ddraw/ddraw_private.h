@@ -439,17 +439,6 @@ struct IDirectDrawPaletteImpl
 HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
         IDirectDrawImpl *ddraw, DWORD flags, PALETTEENTRY *entries) DECLSPEC_HIDDEN;
 
-/******************************************************************************
- * DirectDraw ClassFactory implementation - incomplete
- ******************************************************************************/
-typedef struct
-{
-    const IClassFactoryVtbl *lpVtbl;
-
-    LONG ref;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID iid, LPVOID *ppObj);
-} IClassFactoryImpl;
-
 /* Helper structures */
 struct object_creation_info
 {

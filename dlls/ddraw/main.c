@@ -528,6 +528,23 @@ static const struct object_creation_info object_creation[] =
     { &CLSID_DirectDrawClipper, CF_CreateDirectDrawClipper }
 };
 
+
+/******************************************************************************
+ * DirectDraw ClassFactory implementation
+ ******************************************************************************/
+typedef struct
+{
+    IClassFactory IClassFactory_iface;
+
+    LONG ref;
+    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID iid, LPVOID *ppObj);
+} IClassFactoryImpl;
+
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
+
 /*******************************************************************************
  * IDirectDrawClassFactory::QueryInterface
  *
@@ -542,12 +559,10 @@ static const struct object_creation_info object_creation[] =
  *    Failure: E_NOINTERFACE
  *
  *******************************************************************************/
-static HRESULT WINAPI
-IDirectDrawClassFactoryImpl_QueryInterface(IClassFactory *iface,
-                    REFIID riid,
-                    void **obj)
+static HRESULT WINAPI IDirectDrawClassFactoryImpl_QueryInterface(IClassFactory *iface, REFIID riid,
+        void **obj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obj);
 
@@ -572,10 +587,9 @@ IDirectDrawClassFactoryImpl_QueryInterface(IClassFactory *iface,
  *  The new refcount
  *
  *******************************************************************************/
-static ULONG WINAPI
-IDirectDrawClassFactoryImpl_AddRef(IClassFactory *iface)
+static ULONG WINAPI IDirectDrawClassFactoryImpl_AddRef(IClassFactory *iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("%p increasing refcount to %u.\n", This, ref);
@@ -593,10 +607,9 @@ IDirectDrawClassFactoryImpl_AddRef(IClassFactory *iface)
  *  The new refcount
  *
  *******************************************************************************/
-static ULONG WINAPI
-IDirectDrawClassFactoryImpl_Release(IClassFactory *iface)
+static ULONG WINAPI IDirectDrawClassFactoryImpl_Release(IClassFactory *iface)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p decreasing refcount to %u.\n", This, ref);
@@ -620,13 +633,10 @@ IDirectDrawClassFactoryImpl_Release(IClassFactory *iface)
  *  ???
  *
  *******************************************************************************/
-static HRESULT WINAPI
-IDirectDrawClassFactoryImpl_CreateInstance(IClassFactory *iface,
-                                           IUnknown *UnkOuter,
-                                           REFIID riid,
-                                           void **obj)
+static HRESULT WINAPI IDirectDrawClassFactoryImpl_CreateInstance(IClassFactory *iface,
+        IUnknown *UnkOuter, REFIID riid, void **obj)
 {
-    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
     TRACE("iface %p, outer_unknown %p, riid %s, object %p.\n",
             iface, UnkOuter, debugstr_guid(riid), obj);
@@ -709,7 +719,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     factory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*factory));
     if (factory == NULL) return E_OUTOFMEMORY;
 
-    factory->lpVtbl = &IClassFactory_Vtbl;
+    factory->IClassFactory_iface.lpVtbl = &IClassFactory_Vtbl;
     factory->ref = 1;
 
     factory->pfnCreateInstance = object_creation[i].pfnCreateInstance;
