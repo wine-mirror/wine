@@ -59,7 +59,7 @@ typedef struct
     IDirectDraw IDirectDraw_iface;
     IDirectDraw2 IDirectDraw2_iface;
     IDirectDraw3 IDirectDraw3_iface;
-    const IDirectDraw4Vtbl *IDirectDraw4_Vtbl;
+    IDirectDraw4 IDirectDraw4_iface;
     LONG ref;
 
     /* The interface we're forwarding to */
