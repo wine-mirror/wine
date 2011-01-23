@@ -83,6 +83,20 @@ struct stat {
   time_t st_ctime;
 };
 
+struct _stat32 {
+  _dev_t st_dev;
+  _ino_t st_ino;
+  unsigned short st_mode;
+  short st_nlink;
+  short st_uid;
+  short st_gid;
+  _dev_t st_rdev;
+  _off_t st_size;
+  __time32_t st_atime;
+  __time32_t st_mtime;
+  __time32_t st_ctime;
+};
+
 struct _stat32i64 {
   _dev_t st_dev;
   _ino_t st_ino;
@@ -146,6 +160,8 @@ extern "C" {
 
 int __cdecl _fstat(int,struct _stat*);
 int __cdecl _stat(const char*,struct _stat*);
+int __cdecl _fstat32(int, struct _stat32*);
+int __cdecl _stat32(const char*, struct _stat32*);
 int __cdecl _fstati64(int,struct _stati64*);
 int __cdecl _stati64(const char*,struct _stati64*);
 int __cdecl _fstat64(int,struct _stat64*);
@@ -155,6 +171,7 @@ int __cdecl _umask(int);
 #ifndef _WSTAT_DEFINED
 #define _WSTAT_DEFINED
 int __cdecl _wstat(const wchar_t*,struct _stat*);
+int __cdecl _wstat32(const wchar_t*, struct _stat32*);
 int __cdecl _wstati64(const wchar_t*,struct _stati64*);
 int __cdecl _wstat64(const wchar_t*,struct _stat64*);
 #endif /* _WSTAT_DEFINED */

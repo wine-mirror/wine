@@ -484,7 +484,7 @@
 @ cdecl _fseeki64(ptr int64 long) msvcrt._fseeki64
 @ stub _fseeki64_nolock
 @ cdecl _fsopen(str str long) msvcrt._fsopen
-@ stub _fstat32
+@ cdecl _fstat32(long ptr)
 @ stub _fstat32i64
 @ cdecl _fstat64(long ptr) msvcrt._fstat64
 @ cdecl _fstat64i32(long ptr)
@@ -963,7 +963,7 @@
 @ stub _sprintf_s_l
 @ varargs _sscanf_l(str str ptr) msvcrt._sscanf_l
 @ varargs _sscanf_s_l(str str ptr) msvcrt._sscanf_s_l
-@ stub _stat32
+@ cdecl _stat32(str ptr)
 @ stub _stat32i64
 @ cdecl _stat64(str ptr) msvcrt._stat64
 @ cdecl _stat64i32(str ptr)
@@ -1233,7 +1233,7 @@
 @ cdecl _wspawnvpe(long wstr ptr ptr) msvcrt._wspawnvpe
 @ cdecl _wsplitpath(wstr ptr ptr ptr ptr) msvcrt._wsplitpath
 @ cdecl _wsplitpath_s(wstr ptr long ptr long ptr long ptr long) msvcrt._wsplitpath_s
-@ stub _wstat32
+@ cdecl _wstat32(wstr ptr)
 @ stub _wstat32i64
 @ cdecl _wstat64(wstr ptr) msvcrt._wstat64
 @ cdecl _wstat64i32(wstr ptr)

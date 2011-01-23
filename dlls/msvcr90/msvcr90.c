@@ -31,6 +31,24 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcr90);
 
 /*********************************************************************
+ *  msvcr90_stat64_to_stat32 [internal]
+ */
+static void msvcr90_stat64_to_stat32(const struct _stat64 *buf64, struct _stat32 *buf)
+{
+    buf->st_dev   = buf64->st_dev;
+    buf->st_ino   = buf64->st_ino;
+    buf->st_mode  = buf64->st_mode;
+    buf->st_nlink = buf64->st_nlink;
+    buf->st_uid   = buf64->st_uid;
+    buf->st_gid   = buf64->st_gid;
+    buf->st_rdev  = buf64->st_rdev;
+    buf->st_size  = buf64->st_size;
+    buf->st_atime = buf64->st_atime;
+    buf->st_mtime = buf64->st_mtime;
+    buf->st_ctime = buf64->st_ctime;
+}
+
+/*********************************************************************
  *  DllMain (MSVCR90.@)
  */
 BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
@@ -133,6 +151,48 @@ void* CDECL _recalloc(void* mem, size_t num, size_t size)
     if(size>old_size)
         memset((BYTE*)mem+old_size, 0, size-old_size);
     return ret;
+}
+
+/*********************************************************************
+ *  _fstat32 (MSVCR90.@)
+ */
+int CDECL _fstat32(int fd, struct _stat32* buf)
+{
+  int ret;
+  struct _stat64 buf64;
+
+  ret = _fstat64(fd, &buf64);
+  if (!ret)
+      msvcr90_stat64_to_stat32(&buf64, buf);
+  return ret;
+}
+
+/*********************************************************************
+ *  _stat32 (MSVCR90.@)
+ */
+int CDECL _stat32(const char *path, struct _stat32* buf)
+{
+  int ret;
+  struct _stat64 buf64;
+
+  ret = _stat64(path, &buf64);
+  if (!ret)
+      msvcr90_stat64_to_stat32(&buf64, buf);
+  return ret;
+}
+
+/*********************************************************************
+ *  _wstat32 (MSVCR90.@)
+ */
+int CDECL _wstat32(const wchar_t *path, struct _stat32* buf)
+{
+  int ret;
+  struct _stat64 buf64;
+
+  ret = _wstat64(path, &buf64);
+  if (!ret)
+      msvcr90_stat64_to_stat32(&buf64, buf);
+  return ret;
 }
 
 /*********************************************************************
