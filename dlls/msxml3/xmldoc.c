@@ -237,7 +237,7 @@ static HRESULT WINAPI xmldoc_get_URL(IXMLDocument *iface, BSTR *p)
 }
 
 typedef struct {
-    const struct IBindStatusCallbackVtbl *lpVtbl;
+    IBindStatusCallback IBindStatusCallback_iface;
 } bsc;
 
 static HRESULT WINAPI bsc_QueryInterface(
@@ -352,7 +352,7 @@ static const struct IBindStatusCallbackVtbl bsc_vtbl =
     bsc_OnObjectAvailable
 };
 
-static bsc xmldoc_bsc = { &bsc_vtbl };
+static bsc xmldoc_bsc = { { &bsc_vtbl } };
 
 static HRESULT WINAPI xmldoc_put_URL(IXMLDocument *iface, BSTR p)
 {
@@ -392,7 +392,7 @@ static HRESULT WINAPI xmldoc_put_URL(IXMLDocument *iface, BSTR p)
     if (FAILED(hr))
         return hr;
 
-    CreateAsyncBindCtx(0, (IBindStatusCallback *)&xmldoc_bsc, 0, &bctx);
+    CreateAsyncBindCtx(0, &xmldoc_bsc.IBindStatusCallback_iface, 0, &bctx);
 
     hr = IMoniker_BindToStorage(moniker, bctx, NULL, &IID_IStream, (LPVOID *)&stream);
     IBindCtx_Release(bctx);
