@@ -31,11 +31,7 @@
 
 extern LONG dll_ref;
 
-typedef struct
-{
-    const IClassFactoryVtbl *lpVtbl;
-    LONG ref;
-} ClassFactoryImpl;
+typedef struct ClassFactoryImpl ClassFactoryImpl;
 extern ClassFactoryImpl MSTASK_ClassFactory;
 
 typedef struct
