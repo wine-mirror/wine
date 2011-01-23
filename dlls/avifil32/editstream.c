@@ -50,75 +50,6 @@ typedef struct _EditStreamTable {
 #define EditStreamEnd(This,streamNr) ((This)->pStreams[streamNr].dwStart + \
                                       (This)->pStreams[streamNr].dwLength)
 
-/***********************************************************************/
-
-static HRESULT WINAPI IAVIEditStream_fnQueryInterface(IAVIEditStream*iface,REFIID refiid,LPVOID *obj);
-static ULONG   WINAPI IAVIEditStream_fnAddRef(IAVIEditStream*iface);
-static ULONG   WINAPI IAVIEditStream_fnRelease(IAVIEditStream*iface);
-static HRESULT WINAPI IAVIEditStream_fnCut(IAVIEditStream*iface,LONG*plStart,
-                                           LONG*plLength,PAVISTREAM*ppResult);
-static HRESULT WINAPI IAVIEditStream_fnCopy(IAVIEditStream*iface,LONG*plStart,
-                                            LONG*plLength,PAVISTREAM*ppResult);
-static HRESULT WINAPI IAVIEditStream_fnPaste(IAVIEditStream*iface,LONG*plStart,
-                                             LONG*plLength,PAVISTREAM pSource,
-                                             LONG lStart,LONG lEnd);
-static HRESULT WINAPI IAVIEditStream_fnClone(IAVIEditStream*iface,
-                                             PAVISTREAM*ppResult);
-static HRESULT WINAPI IAVIEditStream_fnSetInfo(IAVIEditStream*iface,
-                                               LPAVISTREAMINFOW asi,LONG size);
-
-static const struct IAVIEditStreamVtbl ieditstream = {
-  IAVIEditStream_fnQueryInterface,
-  IAVIEditStream_fnAddRef,
-  IAVIEditStream_fnRelease,
-  IAVIEditStream_fnCut,
-  IAVIEditStream_fnCopy,
-  IAVIEditStream_fnPaste,
-  IAVIEditStream_fnClone,
-  IAVIEditStream_fnSetInfo
-};
-
-static HRESULT WINAPI IEditAVIStream_fnQueryInterface(IAVIStream*iface,REFIID refiid,LPVOID*obj);
-static ULONG   WINAPI IEditAVIStream_fnAddRef(IAVIStream*iface);
-static ULONG   WINAPI IEditAVIStream_fnRelease(IAVIStream*iface);
-static HRESULT WINAPI IEditAVIStream_fnCreate(IAVIStream*iface,LPARAM lParam1,LPARAM lParam2);
-static HRESULT WINAPI IEditAVIStream_fnInfo(IAVIStream*iface,AVISTREAMINFOW *psi,LONG size);
-static LONG    WINAPI IEditAVIStream_fnFindSample(IAVIStream*iface,LONG pos,
-                                                  LONG flags);
-static HRESULT WINAPI IEditAVIStream_fnReadFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG*formatsize);
-static HRESULT WINAPI IEditAVIStream_fnSetFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG formatsize);
-static HRESULT WINAPI IEditAVIStream_fnRead(IAVIStream*iface,LONG start,
-                                            LONG samples,LPVOID buffer,
-                                            LONG buffersize,LONG*bytesread,
-                                            LONG*samplesread);
-static HRESULT WINAPI IEditAVIStream_fnWrite(IAVIStream*iface,LONG start,
-                                             LONG samples,LPVOID buffer,
-                                             LONG buffersize,DWORD flags,
-                                             LONG*sampwritten,LONG*byteswritten);
-static HRESULT WINAPI IEditAVIStream_fnDelete(IAVIStream*iface,LONG start,LONG samples);
-static HRESULT WINAPI IEditAVIStream_fnReadData(IAVIStream*iface,DWORD fcc,
-                                                LPVOID lp,LONG *lpread);
-static HRESULT WINAPI IEditAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,
-                                                 LPVOID lp,LONG size);
-static HRESULT WINAPI IEditAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
-
-static const struct IAVIStreamVtbl ieditstast = {
-  IEditAVIStream_fnQueryInterface,
-  IEditAVIStream_fnAddRef,
-  IEditAVIStream_fnRelease,
-  IEditAVIStream_fnCreate,
-  IEditAVIStream_fnInfo,
-  IEditAVIStream_fnFindSample,
-  IEditAVIStream_fnReadFormat,
-  IEditAVIStream_fnSetFormat,
-  IEditAVIStream_fnRead,
-  IEditAVIStream_fnWrite,
-  IEditAVIStream_fnDelete,
-  IEditAVIStream_fnReadData,
-  IEditAVIStream_fnWriteData,
-  IEditAVIStream_fnSetInfo
-};
-
 typedef struct _IAVIEditStreamImpl IAVIEditStreamImpl;
 
 struct _IAVIEditStreamImpl {
@@ -150,23 +81,6 @@ static inline IAVIEditStreamImpl *impl_from_IAVIStream(IAVIStream *iface)
 }
 
 /***********************************************************************/
-
-PAVIEDITSTREAM AVIFILE_CreateEditStream(PAVISTREAM pstream)
-{
-  IAVIEditStreamImpl *pedit = NULL;
-
-  pedit = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAVIEditStreamImpl));
-  if (pedit == NULL)
-    return NULL;
-
-  pedit->IAVIEditStream_iface.lpVtbl = &ieditstream;
-  pedit->IAVIStream_iface.lpVtbl = &ieditstast;
-  pedit->ref = 1;
-
-  IAVIStream_Create(&pedit->IAVIStream_iface, (LPARAM)pstream, 0);
-
-  return (PAVIEDITSTREAM)pedit;
-}
 
 static HRESULT AVIFILE_FindStreamInTable(IAVIEditStreamImpl* const This,
 					 DWORD pos,PAVISTREAM *ppStream,
@@ -749,6 +663,17 @@ static HRESULT WINAPI IAVIEditStream_fnSetInfo(IAVIEditStream*iface,
   return AVIERR_OK;
 }
 
+static const struct IAVIEditStreamVtbl ieditstream = {
+  IAVIEditStream_fnQueryInterface,
+  IAVIEditStream_fnAddRef,
+  IAVIEditStream_fnRelease,
+  IAVIEditStream_fnCut,
+  IAVIEditStream_fnCopy,
+  IAVIEditStream_fnPaste,
+  IAVIEditStream_fnClone,
+  IAVIEditStream_fnSetInfo
+};
+
 static HRESULT WINAPI IEditAVIStream_fnQueryInterface(IAVIStream*iface,
                                                       REFIID refiid,LPVOID*obj)
 {
@@ -1062,4 +987,38 @@ static HRESULT WINAPI IEditAVIStream_fnSetInfo(IAVIStream*iface,
   TRACE("(%p,%p,%d)\n",iface,info,len);
 
   return IAVIEditStream_SetInfo(&This->IAVIEditStream_iface,info,len);
+}
+
+static const struct IAVIStreamVtbl ieditstast = {
+  IEditAVIStream_fnQueryInterface,
+  IEditAVIStream_fnAddRef,
+  IEditAVIStream_fnRelease,
+  IEditAVIStream_fnCreate,
+  IEditAVIStream_fnInfo,
+  IEditAVIStream_fnFindSample,
+  IEditAVIStream_fnReadFormat,
+  IEditAVIStream_fnSetFormat,
+  IEditAVIStream_fnRead,
+  IEditAVIStream_fnWrite,
+  IEditAVIStream_fnDelete,
+  IEditAVIStream_fnReadData,
+  IEditAVIStream_fnWriteData,
+  IEditAVIStream_fnSetInfo
+};
+
+PAVIEDITSTREAM AVIFILE_CreateEditStream(PAVISTREAM pstream)
+{
+  IAVIEditStreamImpl *pedit = NULL;
+
+  pedit = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAVIEditStreamImpl));
+  if (pedit == NULL)
+    return NULL;
+
+  pedit->IAVIEditStream_iface.lpVtbl = &ieditstream;
+  pedit->IAVIStream_iface.lpVtbl = &ieditstast;
+  pedit->ref = 1;
+
+  IAVIStream_Create(&pedit->IAVIStream_iface, (LPARAM)pstream, 0);
+
+  return (PAVIEDITSTREAM)pedit;
 }
