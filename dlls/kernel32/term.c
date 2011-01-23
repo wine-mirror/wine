@@ -31,7 +31,9 @@
 #undef KEY_EVENT
 #undef MOUSE_MOVED
 
+#if defined(HAVE_CURSES_H) || defined(HAVE_NCURSES_H)
 #include <term.h>
+#endif
 
 #include <windef.h>
 #include <winbase.h>
