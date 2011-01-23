@@ -34,12 +34,6 @@ extern LONG dll_ref;
 typedef struct ClassFactoryImpl ClassFactoryImpl;
 extern ClassFactoryImpl MSTASK_ClassFactory;
 
-typedef struct
-{
-    const ITaskTriggerVtbl *lpVtbl;
-    LONG ref;
-    TASK_TRIGGER triggerCond;
-} TaskTriggerImpl;
 extern HRESULT TaskTriggerConstructor(LPVOID *ppObj);
 
 typedef struct
