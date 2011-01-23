@@ -560,82 +560,63 @@ static unsigned short get_joystick_index(REFGUID guid)
     return MAX_JOYDEV;
 }
 
-static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
+static HRESULT joydev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPVOID *pdev, int unicode)
 {
     unsigned short index;
 
+    TRACE("%p %s %s %p %i\n", dinput, debugstr_guid(rguid), debugstr_guid(riid), pdev, unicode);
     find_joydevs();
+    *pdev = NULL;
 
     if ((index = get_joystick_index(rguid)) < MAX_JOYDEV &&
         have_joydevs && index < have_joydevs)
     {
-        if ((riid == NULL) ||
-            IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
-            IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
-            IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
-            IsEqualGUID(&IID_IDirectInputDevice8A, riid))
-        {
-            JoystickImpl *This = alloc_device(rguid, dinput, index);
-            TRACE("Created a Joystick device (%p)\n", This);
+        JoystickImpl *This;
 
-            if (!This)
-            {
-                ERR("out of memory\n");
-                *pdev = NULL;
-                return DIERR_OUTOFMEMORY;
-            }
-            *pdev = (IDirectInputDeviceA*) &This->generic.base.IDirectInputDevice8A_iface;
-            return DI_OK;
+        if (riid == NULL)
+            ;/* nothing */
+        else if (IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice8A, riid))
+        {
+            unicode = 0;
+        }
+        else if (IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice8W, riid))
+        {
+            unicode = 1;
+        }
+        else
+        {
+            WARN("no interface\n");
+            return DIERR_NOINTERFACE;
         }
 
-        WARN("no interface\n");
-        return DIERR_NOINTERFACE;
+        This = alloc_device(rguid, dinput, index);
+        TRACE("Created a Joystick device (%p)\n", This);
+
+        if (!This) return DIERR_OUTOFMEMORY;
+
+        if (unicode)
+            *pdev = &This->generic.base.IDirectInputDevice8W_iface;
+        else
+            *pdev = &This->generic.base.IDirectInputDevice8A_iface;
+
+        return DI_OK;
     }
 
     return DIERR_DEVICENOTREG;
 }
 
-
-static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEW* pdev)
-{
-    unsigned short index;
-
-    find_joydevs();
-
-    if ((index = get_joystick_index(rguid)) < MAX_JOYDEV &&
-        have_joydevs && index < have_joydevs)
-    {
-        if ((riid == NULL) ||
-            IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
-            IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
-            IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
-            IsEqualGUID(&IID_IDirectInputDevice8W, riid))
-        {
-            JoystickImpl *This = alloc_device(rguid, dinput, index);
-            TRACE("Created a Joystick device (%p)\n", This);
-
-            if (!This)
-            {
-                ERR("out of memory\n");
-                return DIERR_OUTOFMEMORY;
-            }
-            *pdev = (IDirectInputDeviceW*) &This->generic.base.IDirectInputDevice8W_iface;
-            return DI_OK;
-        }
-        WARN("no interface\n");
-        return DIERR_NOINTERFACE;
-    }
-
-    WARN("invalid device GUID\n");
-    return DIERR_DEVICENOTREG;
-}
 
 const struct dinput_device joystick_linuxinput_device = {
   "Wine Linux-input joystick driver",
   joydev_enum_deviceA,
   joydev_enum_deviceW,
-  joydev_create_deviceA,
-  joydev_create_deviceW
+  joydev_create_device
 };
 
 /******************************************************************************
@@ -1454,7 +1435,6 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 
 const struct dinput_device joystick_linuxinput_device = {
   "Wine Linux-input joystick driver",
-  NULL,
   NULL,
   NULL,
   NULL

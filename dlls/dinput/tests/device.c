@@ -109,6 +109,8 @@ static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
         ok(hr == DI_OK, "Acquire() failed: %08x\n", hr);
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
         ok(hr == DIERR_ACQUIRED, "SetProperty() returned: %08x\n", hr);
+        hr = IDirectInputDevice_Unacquire(device);
+        ok(hr == DI_OK, "Unacquire() failed: %08x\n", hr);
     }
 }
 
@@ -121,7 +123,7 @@ struct enum_data
 static BOOL CALLBACK enum_devices(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
     struct enum_data *data = pvRef;
-    LPDIRECTINPUTDEVICE device;
+    LPDIRECTINPUTDEVICE device, obj = NULL;
     HRESULT hr;
 
     hr = IDirectInput_GetDeviceStatus(data->pDI, &lpddi->guidInstance);
@@ -131,8 +133,19 @@ static BOOL CALLBACK enum_devices(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
     {
         hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, &device, NULL);
         ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
-        trace("Testing device \"%s\"\n", lpddi->tszInstanceName);
-        test_object_info(device, data->hwnd);
+        trace("Testing device %p \"%s\"\n", device, lpddi->tszInstanceName);
+
+        hr = IUnknown_QueryInterface(device, &IID_IDirectInputDevice2A, (LPVOID*)&obj);
+        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice7A) failed: %08x\n", hr);
+        test_object_info(obj, data->hwnd);
+        if (obj) IUnknown_Release(obj);
+        obj = NULL;
+
+        hr = IUnknown_QueryInterface(device, &IID_IDirectInputDevice2W, (LPVOID*)&obj);
+        ok(SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputDevice7W) failed: %08x\n", hr);
+        test_object_info(obj, data->hwnd);
+        if (obj) IUnknown_Release(obj);
+
         IUnknown_Release(device);
     }
     return DIENUM_CONTINUE;
@@ -141,19 +154,26 @@ static BOOL CALLBACK enum_devices(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 static void device_tests(void)
 {
     HRESULT hr;
-    LPDIRECTINPUT pDI = NULL;
+    LPDIRECTINPUT pDI = NULL, obj = NULL;
     HINSTANCE hInstance = GetModuleHandle(NULL);
     HWND hwnd;
     struct enum_data data;
 
-    hr = DirectInputCreate(hInstance, DIRECTINPUT_VERSION, &pDI, NULL);
-    if (hr == DIERR_OLDDIRECTINPUTVERSION)
+    hr = CoCreateInstance(&CLSID_DirectInput, 0, 1, &IID_IDirectInput2A, (LPVOID*)&pDI);
+    if (hr == DIERR_OLDDIRECTINPUTVERSION || hr == DIERR_DEVICENOTREG)
     {
         skip("Tests require a newer dinput version\n");
         return;
     }
     ok(SUCCEEDED(hr), "DirectInputCreate() failed: %08x\n", hr);
     if (FAILED(hr)) return;
+
+    hr = IDirectInput_Initialize(pDI, hInstance, DIRECTINPUT_VERSION);
+    ok(SUCCEEDED(hr), "Initialize() failed: %08x\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IUnknown_QueryInterface(pDI, &IID_IDirectInput2W, (LPVOID*)&obj);
+    ok(SUCCEEDED(hr), "QueryInterface(IDirectInput7W) failed: %08x\n", hr);
 
     hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
                         10, 10, 200, 200, NULL, NULL, NULL, NULL);
@@ -181,6 +201,7 @@ static void device_tests(void)
 
         DestroyWindow(hwnd);
     }
+    if (obj) IUnknown_Release(obj);
     if (pDI) IUnknown_Release(pDI);
 }
 

@@ -270,60 +270,59 @@ failed:
 }
 
 
-static HRESULT keyboarddev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
+static HRESULT keyboarddev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPVOID *pdev, int unicode)
 {
-  if ((IsEqualGUID(&GUID_SysKeyboard,rguid)) ||          /* Generic Keyboard */
-      (IsEqualGUID(&DInput_Wine_Keyboard_GUID,rguid))) { /* Wine Keyboard */
-    if ((riid == NULL) ||
-	IsEqualGUID(&IID_IDirectInputDeviceA,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
+    TRACE("%p %s %s %p %i\n", dinput, debugstr_guid(rguid), debugstr_guid(riid), pdev, unicode);
+    *pdev = NULL;
 
-      SysKeyboardImpl *This = alloc_device(rguid, dinput);
-      if (!This) {
-        *pdev = NULL;
-        return DIERR_OUTOFMEMORY;
-      }
-      *pdev = (IDirectInputDeviceA*) &This->base.IDirectInputDevice8A_iface;
-      TRACE("Creating a Keyboard device (%p)\n", *pdev);
-      return DI_OK;
-    } else
-      return DIERR_NOINTERFACE;
-  }
-  return DIERR_DEVICENOTREG;
-}
+    if (IsEqualGUID(&GUID_SysKeyboard, rguid) ||        /* Generic Keyboard */
+        IsEqualGUID(&DInput_Wine_Keyboard_GUID, rguid)) /* Wine Keyboard */
+    {
+        SysKeyboardImpl *This;
 
-static HRESULT keyboarddev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEW* pdev)
-{
-  if ((IsEqualGUID(&GUID_SysKeyboard,rguid)) ||          /* Generic Keyboard */
-      (IsEqualGUID(&DInput_Wine_Keyboard_GUID,rguid))) { /* Wine Keyboard */
-    if ((riid == NULL) ||
-	IsEqualGUID(&IID_IDirectInputDeviceW,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice2W,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice7W,riid) ||
-	IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
+        if (riid == NULL)
+            ;/* nothing */
+        else if (IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice8A, riid))
+        {
+            unicode = 0;
+        }
+        else if (IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice8W, riid))
+        {
+            unicode = 1;
+        }
+        else
+        {
+            WARN("no interface\n");
+            return DIERR_NOINTERFACE;
+        }
 
-      SysKeyboardImpl *This = alloc_device(rguid, dinput);
-      if (!This) {
-        *pdev = NULL;
-        return DIERR_OUTOFMEMORY;
-      }
-      *pdev = (IDirectInputDeviceW*) &This->base.IDirectInputDevice8W_iface;
-      TRACE("Creating a Keyboard device (%p)\n", *pdev);
-      return DI_OK;
-    } else
-      return DIERR_NOINTERFACE;
-  }
-  return DIERR_DEVICENOTREG;
+        This = alloc_device(rguid, dinput);
+        TRACE("Created a Keyboard device (%p)\n", This);
+
+        if (!This) return DIERR_OUTOFMEMORY;
+
+        if (unicode)
+            *pdev = &This->base.IDirectInputDevice8W_iface;
+        else
+            *pdev = &This->base.IDirectInputDevice8A_iface;
+
+        return DI_OK;
+    }
+
+    return DIERR_DEVICENOTREG;
 }
 
 const struct dinput_device keyboard_device = {
   "Wine keyboard driver",
   keyboarddev_enum_deviceA,
   keyboarddev_enum_deviceW,
-  keyboarddev_create_deviceA,
-  keyboarddev_create_deviceW
+  keyboarddev_create_device
 };
 
 static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, DWORD len, LPVOID ptr)

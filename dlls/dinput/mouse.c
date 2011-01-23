@@ -256,55 +256,51 @@ failed:
     return NULL;
 }
 
-static HRESULT mousedev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
+static HRESULT mousedev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPVOID *pdev, int unicode)
 {
-    if ((IsEqualGUID(&GUID_SysMouse,rguid)) ||             /* Generic Mouse */
-	(IsEqualGUID(&DInput_Wine_Mouse_GUID,rguid))) { /* Wine Mouse */
-	if ((riid == NULL) ||
-	    IsEqualGUID(&IID_IDirectInputDeviceA,riid) ||
-	    IsEqualGUID(&IID_IDirectInputDevice2A,riid) ||
-	    IsEqualGUID(&IID_IDirectInputDevice7A,riid) ||
-	    IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
+    TRACE("%p %s %s %p %i\n", dinput, debugstr_guid(rguid), debugstr_guid(riid), pdev, unicode);
+    *pdev = NULL;
 
-            SysMouseImpl* This = alloc_device(rguid, dinput);
-            TRACE("Created a Mouse device (%p)\n", This);
+    if (IsEqualGUID(&GUID_SysMouse, rguid) ||        /* Generic Mouse */
+        IsEqualGUID(&DInput_Wine_Mouse_GUID, rguid)) /* Wine Mouse */
+    {
+        SysMouseImpl *This;
 
-            if (!This) {
-                *pdev = NULL;
-                return DIERR_OUTOFMEMORY;
-            }
-            *pdev = (IDirectInputDeviceA*) &This->base.IDirectInputDevice8A_iface;
-	    return DI_OK;
-	} else
-	    return DIERR_NOINTERFACE;
+        if (riid == NULL)
+            ;/* nothing */
+        else if (IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice8A, riid))
+        {
+            unicode = 0;
+        }
+        else if (IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice8W, riid))
+        {
+            unicode = 1;
+        }
+        else
+        {
+            WARN("no interface\n");
+            return DIERR_NOINTERFACE;
+        }
+
+        This = alloc_device(rguid, dinput);
+        TRACE("Created a Mouse device (%p)\n", This);
+
+        if (!This) return DIERR_OUTOFMEMORY;
+
+        if (unicode)
+            *pdev = &This->base.IDirectInputDevice8W_iface;
+        else
+            *pdev = &This->base.IDirectInputDevice8A_iface;
+
+        return DI_OK;
     }
-    
-    return DIERR_DEVICENOTREG;
-}
 
-static HRESULT mousedev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEW* pdev)
-{
-    if ((IsEqualGUID(&GUID_SysMouse,rguid)) ||             /* Generic Mouse */
-	(IsEqualGUID(&DInput_Wine_Mouse_GUID,rguid))) { /* Wine Mouse */
-	if ((riid == NULL) ||
-	    IsEqualGUID(&IID_IDirectInputDeviceW,riid) ||
-	    IsEqualGUID(&IID_IDirectInputDevice2W,riid) ||
-	    IsEqualGUID(&IID_IDirectInputDevice7W,riid) ||
-	    IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
-
-            SysMouseImpl* This = alloc_device(rguid, dinput);
-            TRACE("Created a Mouse device (%p)\n", This);
-
-            if (!This) {
-                *pdev = NULL;
-                return DIERR_OUTOFMEMORY;
-            }
-            *pdev = (IDirectInputDeviceW*) &This->base.IDirectInputDevice8W_iface;
-	    return DI_OK;
-	} else
-	    return DIERR_NOINTERFACE;
-    }
-    
     return DIERR_DEVICENOTREG;
 }
 
@@ -312,8 +308,7 @@ const struct dinput_device mouse_device = {
     "Wine mouse driver",
     mousedev_enum_deviceA,
     mousedev_enum_deviceW,
-    mousedev_create_deviceA,
-    mousedev_create_deviceW
+    mousedev_create_device
 };
 
 /******************************************************************************

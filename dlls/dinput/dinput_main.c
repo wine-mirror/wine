@@ -504,8 +504,8 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
   for (i = 0; i < NB_DINPUT_DEVICES; i++) {
     HRESULT ret;
 
-    if (!dinput_devices[i]->create_deviceA) continue;
-    if ((ret = dinput_devices[i]->create_deviceA(This, rguid, riid, (LPDIRECTINPUTDEVICEA*) pvOut)) == DI_OK)
+    if (!dinput_devices[i]->create_device) continue;
+    if ((ret = dinput_devices[i]->create_device(This, rguid, riid, pvOut, 0)) == DI_OK)
       return DI_OK;
 
     if (ret == DIERR_NOINTERFACE)
@@ -535,8 +535,8 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, R
   for (i = 0; i < NB_DINPUT_DEVICES; i++) {
     HRESULT ret;
 
-    if (!dinput_devices[i]->create_deviceW) continue;
-    if ((ret = dinput_devices[i]->create_deviceW(This, rguid, riid, (LPDIRECTINPUTDEVICEW*) pvOut)) == DI_OK)
+    if (!dinput_devices[i]->create_device) continue;
+    if ((ret = dinput_devices[i]->create_device(This, rguid, riid, pvOut, 1)) == DI_OK)
       return DI_OK;
 
     if (ret == DIERR_NOINTERFACE)

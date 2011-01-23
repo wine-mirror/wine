@@ -878,12 +878,12 @@ static unsigned short get_joystick_index(REFGUID guid)
     return 0xffff;
 }
 
-static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEA* pdev)
+static HRESULT joydev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPVOID *pdev, int unicode)
 {
     unsigned short index;
     int joystick_devices_count;
 
-    TRACE("%p %s %p %p\n",dinput, debugstr_guid(rguid), riid, pdev);
+    TRACE("%p %s %s %p %i\n", dinput, debugstr_guid(rguid), debugstr_guid(riid), pdev, unicode);
     *pdev = NULL;
 
     if ((joystick_devices_count = find_joystick_devices()) == 0)
@@ -892,57 +892,41 @@ static HRESULT joydev_create_deviceA(IDirectInputImpl *dinput, REFGUID rguid, RE
     if ((index = get_joystick_index(rguid)) < 0xffff &&
         joystick_devices_count && index < joystick_devices_count)
     {
-        if ((riid == NULL) ||
-        IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
-        IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
-        IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
-        IsEqualGUID(&IID_IDirectInputDevice8A, riid))
-        {
-            JoystickImpl *This;
-            HRESULT hr = alloc_device(rguid, dinput, &This, index);
+        JoystickImpl *This;
+        HRESULT hr;
 
-            *pdev = (LPDIRECTINPUTDEVICEA)(This ? &This->generic.base.IDirectInputDevice8A_iface : NULL);
-            return hr;
+        if (riid == NULL)
+            ;/* nothing */
+        else if (IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice8A, riid))
+        {
+            unicode = 0;
+        }
+        else if (IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
+                 IsEqualGUID(&IID_IDirectInputDevice8W, riid))
+        {
+            unicode = 1;
+        }
+        else
+        {
+            WARN("no interface\n");
+            return DIERR_NOINTERFACE;
         }
 
-        WARN("no interface\n");
-        return DIERR_NOINTERFACE;
+        hr = alloc_device(rguid, dinput, &This, index);
+        if (!This) return hr;
+
+        if (unicode)
+            *pdev = &This->generic.base.IDirectInputDevice8W_iface;
+        else
+            *pdev = &This->generic.base.IDirectInputDevice8A_iface;
+        return hr;
     }
 
-    return DIERR_DEVICENOTREG;
-}
-
-static HRESULT joydev_create_deviceW(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPDIRECTINPUTDEVICEW* pdev)
-{
-    unsigned short index;
-    int joystick_devices_count;
-
-    TRACE("%p %s %p %p\n",dinput, debugstr_guid(rguid), riid, pdev);
-    *pdev = NULL;
-
-    if ((joystick_devices_count = find_joystick_devices()) == 0)
-        return DIERR_DEVICENOTREG;
-
-    if ((index = get_joystick_index(rguid)) < 0xffff &&
-        joystick_devices_count && index < joystick_devices_count)
-    {
-        if ((riid == NULL) ||
-        IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
-        IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
-        IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
-        IsEqualGUID(&IID_IDirectInputDevice8W, riid))
-        {
-            JoystickImpl *This;
-            HRESULT hr = alloc_device(rguid, dinput, &This, index);
-
-            *pdev = (LPDIRECTINPUTDEVICEW)(This ? &This->generic.base.IDirectInputDevice8W_iface : NULL);
-            return hr;
-        }
-        WARN("no interface\n");
-        return DIERR_NOINTERFACE;
-    }
-
-    WARN("invalid device GUID %s\n",debugstr_guid(rguid));
     return DIERR_DEVICENOTREG;
 }
 
@@ -950,8 +934,7 @@ const struct dinput_device joystick_osx_device = {
   "Wine OS X joystick driver",
   joydev_enum_deviceA,
   joydev_enum_deviceW,
-  joydev_create_deviceA,
-  joydev_create_deviceW
+  joydev_create_device
 };
 
 static const IDirectInputDevice8AVtbl JoystickAvt =
@@ -1030,7 +1013,6 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 
 const struct dinput_device joystick_osx_device = {
   "Wine OS X joystick driver",
-  NULL,
   NULL,
   NULL,
   NULL
