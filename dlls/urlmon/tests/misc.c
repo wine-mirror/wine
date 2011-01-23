@@ -1183,6 +1183,7 @@ static void test_CopyStgMedium(void)
     ok(dst.u.lpszFileName && dst.u.lpszFileName != fileW, "lpszFileName=%p\n", dst.u.lpszFileName);
     ok(!lstrcmpW(dst.u.lpszFileName, fileW), "wrong file name\n");
     ok(!dst.pUnkForRelease, "pUnkForRelease=%p, expected NULL\n", dst.pUnkForRelease);
+    ReleaseStgMedium(&dst);
 
     hres = pCopyStgMedium(&src, NULL);
     ok(hres == E_POINTER, "CopyStgMedium failed: %08x, expected E_POINTER\n", hres);
