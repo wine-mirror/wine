@@ -856,7 +856,7 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
         LOAD_LIBRARY_REQUIRE_SIGNED_TARGET;
 
     if( flags & unsupported_flags)
-        FIXME("unsupported flag(s) used (flags: 0x%08x)\n", flags & ~unsupported_flags);
+        FIXME("unsupported flag(s) used (flags: 0x%08x)\n", flags);
 
     load_path = MODULE_get_dll_load_path( flags & LOAD_WITH_ALTERED_SEARCH_PATH ? libname->Buffer : NULL );
 
