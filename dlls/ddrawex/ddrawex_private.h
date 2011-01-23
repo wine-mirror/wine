@@ -58,7 +58,7 @@ typedef struct
 {
     IDirectDraw IDirectDraw_iface;
     IDirectDraw2 IDirectDraw2_iface;
-    const IDirectDraw3Vtbl *IDirectDraw3_Vtbl;
+    IDirectDraw3 IDirectDraw3_iface;
     const IDirectDraw4Vtbl *IDirectDraw4_Vtbl;
     LONG ref;
 
