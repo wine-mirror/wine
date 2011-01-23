@@ -44,15 +44,6 @@ DECLARE_INTERFACE_(IDirectDrawFactory, IUnknown)
 #endif
 
 
-/******************************************************************************
- * DirectDrawFactory implementation
- ******************************************************************************/
-typedef struct
-{
-    const IDirectDrawFactoryVtbl *lpVtbl;
-    LONG ref;
-} IDirectDrawFactoryImpl;
-
 HRESULT WINAPI IDirectDrawFactoryImpl_CreateDirectDraw(IDirectDrawFactory* iface,
     GUID * pGUID, HWND hWnd, DWORD dwCoopLevelFlags, DWORD dwReserved, IUnknown *pUnkOuter,
     IDirectDraw **ppDirectDraw);

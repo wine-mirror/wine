@@ -150,16 +150,28 @@ static const IClassFactoryVtbl IClassFactory_Vtbl =
 };
 
 
+/******************************************************************************
+ * DirectDrawFactory implementation
+ ******************************************************************************/
+typedef struct
+{
+    IDirectDrawFactory IDirectDrawFactory_iface;
+    LONG ref;
+} IDirectDrawFactoryImpl;
+
+static inline IDirectDrawFactoryImpl *impl_from_IDirectDrawFactory(IDirectDrawFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectDrawFactoryImpl, IDirectDrawFactory_iface);
+}
+
 /*******************************************************************************
  * IDirectDrawFactory::QueryInterface
  *
  *******************************************************************************/
-static HRESULT WINAPI
-IDirectDrawFactoryImpl_QueryInterface(IDirectDrawFactory *iface,
-                    REFIID riid,
-                    void **obj)
+static HRESULT WINAPI IDirectDrawFactoryImpl_QueryInterface(IDirectDrawFactory *iface, REFIID riid,
+        void **obj)
 {
-    IDirectDrawFactoryImpl *This = (IDirectDrawFactoryImpl*) iface;
+    IDirectDrawFactoryImpl *This = impl_from_IDirectDrawFactory(iface);
 
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), obj);
 
@@ -179,10 +191,9 @@ IDirectDrawFactoryImpl_QueryInterface(IDirectDrawFactory *iface,
  * IDirectDrawFactory::AddRef
  *
  *******************************************************************************/
-static ULONG WINAPI
-IDirectDrawFactoryImpl_AddRef(IDirectDrawFactory *iface)
+static ULONG WINAPI IDirectDrawFactoryImpl_AddRef(IDirectDrawFactory *iface)
 {
-    IDirectDrawFactoryImpl *This = (IDirectDrawFactoryImpl*) iface;
+    IDirectDrawFactoryImpl *This = impl_from_IDirectDrawFactory(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p)->() incrementing from %d.\n", This, ref - 1);
@@ -194,11 +205,11 @@ IDirectDrawFactoryImpl_AddRef(IDirectDrawFactory *iface)
  * IDirectDrawFactory::Release
  *
  *******************************************************************************/
-static ULONG WINAPI
-IDirectDrawFactoryImpl_Release(IDirectDrawFactory *iface)
+static ULONG WINAPI IDirectDrawFactoryImpl_Release(IDirectDrawFactory *iface)
 {
-    IDirectDrawFactoryImpl *This = (IDirectDrawFactoryImpl*) iface;
+    IDirectDrawFactoryImpl *This = impl_from_IDirectDrawFactory(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
+
     TRACE("(%p)->() decrementing from %d.\n", This, ref+1);
 
     if (ref == 0)
@@ -255,9 +266,9 @@ CreateDirectDrawFactory(IUnknown* UnkOuter, REFIID iid, void **obj)
         return E_OUTOFMEMORY;
     }
 
-    This->lpVtbl = &IDirectDrawFactory_Vtbl;
+    This->IDirectDrawFactory_iface.lpVtbl = &IDirectDrawFactory_Vtbl;
 
-    hr = IDirectDrawFactory_QueryInterface((IDirectDrawFactory *)This, iid,  obj);
+    hr = IDirectDrawFactory_QueryInterface(&This->IDirectDrawFactory_iface, iid,  obj);
 
     if (FAILED(hr))
         HeapFree(GetProcessHeap(), 0, This);
