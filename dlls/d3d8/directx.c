@@ -37,10 +37,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
-/* IDirect3D IUnknown parts follow: */
+static inline IDirect3D8Impl *impl_from_IDirect3D8(IDirect3D8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3D8Impl, IDirect3D8_iface);
+}
+
 static HRESULT WINAPI IDirect3D8Impl_QueryInterface(LPDIRECT3D8 iface, REFIID riid,LPVOID *ppobj)
 {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
 
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
 
@@ -56,8 +60,9 @@ static HRESULT WINAPI IDirect3D8Impl_QueryInterface(LPDIRECT3D8 iface, REFIID ri
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirect3D8Impl_AddRef(LPDIRECT3D8 iface) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static ULONG WINAPI IDirect3D8Impl_AddRef(LPDIRECT3D8 iface)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, ref);
@@ -65,8 +70,9 @@ static ULONG WINAPI IDirect3D8Impl_AddRef(LPDIRECT3D8 iface) {
     return ref;
 }
 
-static ULONG WINAPI IDirect3D8Impl_Release(LPDIRECT3D8 iface) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static ULONG WINAPI IDirect3D8Impl_Release(LPDIRECT3D8 iface)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, ref);
@@ -84,9 +90,10 @@ static ULONG WINAPI IDirect3D8Impl_Release(LPDIRECT3D8 iface) {
     return ref;
 }
 
-/* IDirect3D8 Interface follow: */
-static HRESULT WINAPI IDirect3D8Impl_RegisterSoftwareDevice (LPDIRECT3D8 iface, void* pInitializeFunction) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static HRESULT WINAPI IDirect3D8Impl_RegisterSoftwareDevice(LPDIRECT3D8 iface,
+        void* pInitializeFunction)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HRESULT hr;
 
     TRACE("iface %p, init_function %p.\n", iface, pInitializeFunction);
@@ -98,8 +105,9 @@ static HRESULT WINAPI IDirect3D8Impl_RegisterSoftwareDevice (LPDIRECT3D8 iface, 
     return hr;
 }
 
-static UINT WINAPI IDirect3D8Impl_GetAdapterCount (LPDIRECT3D8 iface) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static UINT WINAPI IDirect3D8Impl_GetAdapterCount(LPDIRECT3D8 iface)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HRESULT hr;
 
     TRACE("iface %p.\n", iface);
@@ -111,10 +119,10 @@ static UINT WINAPI IDirect3D8Impl_GetAdapterCount (LPDIRECT3D8 iface) {
     return hr;
 }
 
-static HRESULT WINAPI IDirect3D8Impl_GetAdapterIdentifier(LPDIRECT3D8 iface,
-        UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER8 *pIdentifier)
+static HRESULT WINAPI IDirect3D8Impl_GetAdapterIdentifier(LPDIRECT3D8 iface, UINT Adapter,
+        DWORD Flags, D3DADAPTER_IDENTIFIER8 *pIdentifier)
 {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     WINED3DADAPTER_IDENTIFIER adapter_id;
     HRESULT hr;
 
@@ -143,8 +151,9 @@ static HRESULT WINAPI IDirect3D8Impl_GetAdapterIdentifier(LPDIRECT3D8 iface,
     return hr;
 }
 
-static UINT WINAPI IDirect3D8Impl_GetAdapterModeCount (LPDIRECT3D8 iface,UINT Adapter) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static UINT WINAPI IDirect3D8Impl_GetAdapterModeCount(LPDIRECT3D8 iface,UINT Adapter)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HRESULT hr;
 
     TRACE("iface %p, adapter %u.\n", iface, Adapter);
@@ -156,8 +165,10 @@ static UINT WINAPI IDirect3D8Impl_GetAdapterModeCount (LPDIRECT3D8 iface,UINT Ad
     return hr;
 }
 
-static HRESULT WINAPI IDirect3D8Impl_EnumAdapterModes (LPDIRECT3D8 iface, UINT Adapter, UINT Mode, D3DDISPLAYMODE* pMode) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static HRESULT WINAPI IDirect3D8Impl_EnumAdapterModes(LPDIRECT3D8 iface, UINT Adapter, UINT Mode,
+        D3DDISPLAYMODE* pMode)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, mode_idx %u, mode %p.\n",
@@ -172,8 +183,10 @@ static HRESULT WINAPI IDirect3D8Impl_EnumAdapterModes (LPDIRECT3D8 iface, UINT A
     return hr;
 }
 
-static HRESULT WINAPI IDirect3D8Impl_GetAdapterDisplayMode (LPDIRECT3D8 iface, UINT Adapter, D3DDISPLAYMODE* pMode) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static HRESULT WINAPI IDirect3D8Impl_GetAdapterDisplayMode(LPDIRECT3D8 iface, UINT Adapter,
+        D3DDISPLAYMODE* pMode)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, mode %p.\n",
@@ -188,10 +201,10 @@ static HRESULT WINAPI IDirect3D8Impl_GetAdapterDisplayMode (LPDIRECT3D8 iface, U
     return hr;
 }
 
-static HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 iface,
-                                                            UINT Adapter, D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat,
-                                                            D3DFORMAT BackBufferFormat, BOOL Windowed) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static HRESULT WINAPI IDirect3D8Impl_CheckDeviceType(LPDIRECT3D8 iface, UINT Adapter,
+        D3DDEVTYPE CheckType, D3DFORMAT DisplayFormat, D3DFORMAT BackBufferFormat, BOOL Windowed)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, display_format %#x, backbuffer_format %#x, windowed %#x.\n",
@@ -205,10 +218,11 @@ static HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceType            (LPDIRECT3D8 i
     return hr;
 }
 
-static HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 iface,
-                                                            UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat,
-                                                            DWORD Usage, D3DRESOURCETYPE RType, D3DFORMAT CheckFormat) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static HRESULT WINAPI IDirect3D8Impl_CheckDeviceFormat(LPDIRECT3D8 iface, UINT Adapter,
+        D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat, DWORD Usage, D3DRESOURCETYPE RType,
+        D3DFORMAT CheckFormat)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HRESULT hr;
     WINED3DRESOURCETYPE WineD3DRType;
 
@@ -243,9 +257,10 @@ static HRESULT  WINAPI  IDirect3D8Impl_CheckDeviceFormat          (LPDIRECT3D8 i
 }
 
 static HRESULT WINAPI IDirect3D8Impl_CheckDeviceMultiSampleType(IDirect3D8 *iface, UINT Adapter,
-        D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat, BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType)
+        D3DDEVTYPE DeviceType, D3DFORMAT SurfaceFormat, BOOL Windowed,
+        D3DMULTISAMPLE_TYPE MultiSampleType)
 {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, format %#x, windowed %#x, multisample_type %#x.\n",
@@ -259,10 +274,11 @@ static HRESULT WINAPI IDirect3D8Impl_CheckDeviceMultiSampleType(IDirect3D8 *ifac
     return hr;
 }
 
-static HRESULT WINAPI IDirect3D8Impl_CheckDepthStencilMatch(IDirect3D8 *iface, UINT Adapter, D3DDEVTYPE DeviceType,
-        D3DFORMAT AdapterFormat, D3DFORMAT RenderTargetFormat, D3DFORMAT DepthStencilFormat)
+static HRESULT WINAPI IDirect3D8Impl_CheckDepthStencilMatch(IDirect3D8 *iface, UINT Adapter,
+        D3DDEVTYPE DeviceType, D3DFORMAT AdapterFormat, D3DFORMAT RenderTargetFormat,
+        D3DFORMAT DepthStencilFormat)
 {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, device_type %#x, adapter_format %#x, rt_format %#x, ds_format %#x.\n",
@@ -291,8 +307,10 @@ void fixup_caps(WINED3DCAPS *caps)
     caps->StencilCaps &= ~WINED3DSTENCILCAPS_TWOSIDED;
 }
 
-static HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS8* pCaps) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter,
+        D3DDEVTYPE DeviceType, D3DCAPS8* pCaps)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HRESULT hrc = D3D_OK;
     WINED3DCAPS *pWineCaps;
 
@@ -318,8 +336,9 @@ static HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Ada
     return hrc;
 }
 
-static HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT Adapter) {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+static HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT Adapter)
+{
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     HMONITOR ret;
 
     TRACE("iface %p, adapter %u.\n", iface, Adapter);
@@ -331,10 +350,11 @@ static HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT
     return ret;
 }
 
-static HRESULT WINAPI IDirect3D8Impl_CreateDevice(IDirect3D8 *iface, UINT adapter, D3DDEVTYPE device_type,
-        HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters, IDirect3DDevice8 **device)
+static HRESULT WINAPI IDirect3D8Impl_CreateDevice(IDirect3D8 *iface, UINT adapter,
+        D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters,
+        IDirect3DDevice8 **device)
 {
-    IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
+    IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
     IDirect3DDevice8Impl *object;
     HRESULT hr;
 

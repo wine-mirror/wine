@@ -132,12 +132,11 @@ extern const IDirect3D8Vtbl Direct3D8_Vtbl DECLSPEC_HIDDEN;
  */
 struct IDirect3D8Impl
 {
-    /* IUnknown fields */
-    const IDirect3D8Vtbl   *lpVtbl;
-    LONG                    ref;
+    IDirect3D8 IDirect3D8_iface;
+    LONG       ref;
 
     /* The WineD3D device */
-    IWineD3D               *WineD3D;
+    IWineD3D   *WineD3D;
 };
 
 /*****************************************************************************
