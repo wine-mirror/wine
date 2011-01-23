@@ -43,16 +43,6 @@ DECLARE_INTERFACE_(IDirectDrawFactory, IUnknown)
 #define IDirectDrawFactory_DirectDrawEnumerate(p,a,b)  (p)->lpVtbl->_DirectDrawEnumerate(p,a,b)
 #endif
 
-/******************************************************************************
- * DirectDraw ClassFactory implementation - incomplete
- ******************************************************************************/
-typedef struct
-{
-    const IClassFactoryVtbl *lpVtbl;
-    LONG ref;
-    HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID iid, LPVOID *ppObj);
-} IClassFactoryImpl;
-
 
 /******************************************************************************
  * DirectDrawFactory implementation
