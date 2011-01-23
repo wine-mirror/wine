@@ -50,7 +50,7 @@ static IDirectDrawImpl *impl_from_IDirectDraw3(IDirectDraw3 *iface)
     return CONTAINING_RECORD(iface, IDirectDrawImpl, IDirectDraw3_iface);
 }
 
-static IDirectDrawImpl *impl_from_dd4(IDirectDraw4 *iface)
+static IDirectDrawImpl *impl_from_IDirectDraw4(IDirectDraw4 *iface)
 {
     return (IDirectDrawImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawImpl, IDirectDraw4_Vtbl));
 }
@@ -62,12 +62,10 @@ static IDirectDraw4 *dd4_from_impl(IDirectDrawImpl *This)
 /******************************************************************************
  * IDirectDraw4 -> ddraw.dll wrappers
  ******************************************************************************/
-static HRESULT WINAPI
-IDirectDraw4Impl_QueryInterface(IDirectDraw4 *iface,
-                                REFIID refiid,
-                                void **obj)
+static HRESULT WINAPI IDirectDraw4Impl_QueryInterface(IDirectDraw4 *iface, REFIID refiid,
+        void **obj)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
 
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(refiid), obj);
     *obj = NULL;
@@ -148,10 +146,9 @@ static HRESULT WINAPI IDirectDrawImpl_QueryInterface(IDirectDraw *iface, REFIID 
     return IDirectDraw4_QueryInterface(dd4_from_impl(This), refiid, obj);
 }
 
-static ULONG WINAPI
-IDirectDraw4Impl_AddRef(IDirectDraw4 *iface)
+static ULONG WINAPI IDirectDraw4Impl_AddRef(IDirectDraw4 *iface)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) : incrementing refcount from %u.\n", This, ref - 1);
@@ -180,10 +177,9 @@ static ULONG WINAPI IDirectDrawImpl_AddRef(IDirectDraw *iface)
     return IDirectDraw4_AddRef(dd4_from_impl(This));
 }
 
-static ULONG WINAPI
-IDirectDraw4Impl_Release(IDirectDraw4 *iface)
+static ULONG WINAPI IDirectDraw4Impl_Release(IDirectDraw4 *iface)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) : decrementing refcount to %u.\n", This, ref);
@@ -218,10 +214,9 @@ static ULONG WINAPI IDirectDrawImpl_Release(IDirectDraw *iface)
     return IDirectDraw4_Release(dd4_from_impl(This));
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_Compact(IDirectDraw4 *iface)
+static HRESULT WINAPI IDirectDraw4Impl_Compact(IDirectDraw4 *iface)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)\n", This);
 
     return IDirectDraw4_Compact(This->parent);
@@ -248,13 +243,10 @@ static HRESULT WINAPI IDirectDrawImpl_Compact(IDirectDraw *iface)
     return IDirectDraw4_Compact(dd4_from_impl(This));
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_CreateClipper(IDirectDraw4 *iface,
-                               DWORD Flags,
-                               IDirectDrawClipper **clipper,
-                               IUnknown *UnkOuter)
+static HRESULT WINAPI IDirectDraw4Impl_CreateClipper(IDirectDraw4 *iface, DWORD Flags,
+        IDirectDrawClipper **clipper, IUnknown *UnkOuter)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(0x%08x, %p, %p)\n", This, Flags, clipper, UnkOuter);
 
     if(UnkOuter != NULL)
@@ -290,14 +282,10 @@ static HRESULT WINAPI IDirectDrawImpl_CreateClipper(IDirectDraw *iface, DWORD Fl
     return IDirectDraw4_CreateClipper(dd4_from_impl(This), Flags, clipper, UnkOuter);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_CreatePalette(IDirectDraw4 *iface,
-                               DWORD Flags,
-                               PALETTEENTRY *ColorTable,
-                               IDirectDrawPalette **Palette,
-                               IUnknown *UnkOuter)
+static HRESULT WINAPI IDirectDraw4Impl_CreatePalette(IDirectDraw4 *iface, DWORD Flags,
+        PALETTEENTRY *ColorTable, IDirectDrawPalette **Palette, IUnknown *UnkOuter)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)(0x%08x,%p,%p,%p)\n", This, Flags, ColorTable, Palette, UnkOuter);
 
     if(UnkOuter != NULL)
@@ -333,13 +321,10 @@ static HRESULT WINAPI IDirectDrawImpl_CreatePalette(IDirectDraw *iface, DWORD Fl
     return IDirectDraw4_CreatePalette(dd4_from_impl(This), Flags, ColorTable, Palette, UnkOuter);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_CreateSurface(IDirectDraw4 *iface,
-                               DDSURFACEDESC2 *DDSD,
-                               IDirectDrawSurface4 **Surf,
-                               IUnknown *UnkOuter)
+static HRESULT WINAPI IDirectDraw4Impl_CreateSurface(IDirectDraw4 *iface, DDSURFACEDESC2 *DDSD,
+        IDirectDrawSurface4 **Surf, IUnknown *UnkOuter)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     HRESULT hr;
     const DWORD perm_dc_flags = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
     BOOL permanent_dc;
@@ -471,12 +456,10 @@ static HRESULT WINAPI IDirectDrawImpl_CreateSurface(IDirectDraw *iface, DDSURFAC
     return IDirectDraw3_CreateSurface(&This->IDirectDraw3_iface, DDSD, Surf, UnkOuter);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_DuplicateSurface(IDirectDraw4 *iface,
-                                  IDirectDrawSurface4 *src,
-                                  IDirectDrawSurface4 **dst)
+static HRESULT WINAPI IDirectDraw4Impl_DuplicateSurface(IDirectDraw4 *iface,
+        IDirectDrawSurface4 *src, IDirectDrawSurface4 **dst)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     FIXME("(%p)->(%p,%p). Create a wrapper surface\n", This, src, dst);
 
     return IDirectDraw4_DuplicateSurface(This->parent, dds_get_inner(src), dst);
@@ -521,14 +504,10 @@ static HRESULT WINAPI IDirectDrawImpl_DuplicateSurface(IDirectDraw *iface, IDire
     return IDirectDraw3_DuplicateSurface(&This->IDirectDraw3_iface, src, dst);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_EnumDisplayModes(IDirectDraw4 *iface,
-                                  DWORD Flags,
-                                  DDSURFACEDESC2 *DDSD,
-                                  void *Context,
-                                  LPDDENUMMODESCALLBACK2 cb)
+static HRESULT WINAPI IDirectDraw4Impl_EnumDisplayModes(IDirectDraw4 *iface, DWORD Flags,
+        DDSURFACEDESC2 *DDSD, void *Context, LPDDENUMMODESCALLBACK2 cb)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(0x%08x,%p,%p,%p)\n", This, Flags, DDSD, Context, cb);
 
     return IDirectDraw4_EnumDisplayModes(This->parent, Flags, DDSD, Context, cb);
@@ -597,14 +576,10 @@ enum_surfaces_wrapper(IDirectDrawSurface4 *surf4, DDSURFACEDESC2 *ddsd2, void *v
     return ctx->orig_cb(outer, ddsd2, ctx->orig_ctx);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_EnumSurfaces(IDirectDraw4 *iface,
-                              DWORD Flags,
-                              DDSURFACEDESC2 *DDSD,
-                              void *Context,
-                              LPDDENUMSURFACESCALLBACK2 Callback)
+static HRESULT WINAPI IDirectDraw4Impl_EnumSurfaces(IDirectDraw4 *iface, DWORD Flags,
+        DDSURFACEDESC2 *DDSD, void *Context, LPDDENUMSURFACESCALLBACK2 Callback)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     struct enumsurfaces4_ctx ctx;
     TRACE("(%p)->(0x%08x,%p,%p,%p)\n", This, Flags, DDSD, Context, Callback);
 
@@ -665,10 +640,9 @@ static HRESULT WINAPI IDirectDrawImpl_EnumSurfaces(IDirectDraw *iface, DWORD Fla
     return IDirectDraw3_EnumSurfaces(&This->IDirectDraw3_iface, Flags, DDSD, Context, Callback);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_FlipToGDISurface(IDirectDraw4 *iface)
+static HRESULT WINAPI IDirectDraw4Impl_FlipToGDISurface(IDirectDraw4 *iface)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)\n", This);
 
     return IDirectDraw4_FlipToGDISurface(This->parent);
@@ -695,12 +669,10 @@ static HRESULT WINAPI IDirectDrawImpl_FlipToGDISurface(IDirectDraw *iface)
     return IDirectDraw4_FlipToGDISurface(dd4_from_impl(This));
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_GetCaps(IDirectDraw4 *iface,
-                         DDCAPS *DriverCaps,
-                         DDCAPS *HELCaps)
+static HRESULT WINAPI IDirectDraw4Impl_GetCaps(IDirectDraw4 *iface, DDCAPS *DriverCaps,
+        DDCAPS *HELCaps)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%p,%p)\n", This, DriverCaps, HELCaps);
     return IDirectDraw4_GetCaps(This->parent, DriverCaps, HELCaps);
 }
@@ -729,11 +701,9 @@ static HRESULT WINAPI IDirectDrawImpl_GetCaps(IDirectDraw *iface, DDCAPS *Driver
     return IDirectDraw4_GetCaps(dd4_from_impl(This), DriverCaps, HELCaps);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_GetDisplayMode(IDirectDraw4 *iface,
-                                DDSURFACEDESC2 *DDSD)
+static HRESULT WINAPI IDirectDraw4Impl_GetDisplayMode(IDirectDraw4 *iface, DDSURFACEDESC2 *DDSD)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%p)\n", This, DDSD);
     return IDirectDraw4_GetDisplayMode(This->parent, DDSD);
 }
@@ -764,12 +734,10 @@ static HRESULT WINAPI IDirectDrawImpl_GetDisplayMode(IDirectDraw *iface, DDSURFA
     return IDirectDraw3_GetDisplayMode(&This->IDirectDraw3_iface, DDSD);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_GetFourCCCodes(IDirectDraw4 *iface,
-                                DWORD *NumCodes,
-                                DWORD *Codes)
+static HRESULT WINAPI IDirectDraw4Impl_GetFourCCCodes(IDirectDraw4 *iface, DWORD *NumCodes,
+        DWORD *Codes)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%p, %p):\n", This, NumCodes, Codes);
     return IDirectDraw4_GetFourCCCodes(This->parent, NumCodes, Codes);
 }
@@ -798,11 +766,10 @@ static HRESULT WINAPI IDirectDrawImpl_GetFourCCCodes(IDirectDraw *iface, DWORD *
     return IDirectDraw4_GetFourCCCodes(dd4_from_impl(This), NumCodes, Codes);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_GetGDISurface(IDirectDraw4 *iface,
-                               IDirectDrawSurface4 **GDISurface)
+static HRESULT WINAPI IDirectDraw4Impl_GetGDISurface(IDirectDraw4 *iface,
+        IDirectDrawSurface4 **GDISurface)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     IDirectDrawSurface4 *inner = NULL;
     HRESULT hr;
     TRACE("(%p)->(%p)\n", This, GDISurface);
@@ -857,11 +824,9 @@ static HRESULT WINAPI IDirectDrawImpl_GetGDISurface(IDirectDraw *iface,
     return IDirectDraw3_GetGDISurface(&This->IDirectDraw3_iface, GDISurface);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_GetMonitorFrequency(IDirectDraw4 *iface,
-                                     DWORD *Freq)
+static HRESULT WINAPI IDirectDraw4Impl_GetMonitorFrequency(IDirectDraw4 *iface, DWORD *Freq)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%p)\n", This, Freq);
     return IDirectDraw4_GetMonitorFrequency(This->parent, Freq);
 }
@@ -887,11 +852,9 @@ static HRESULT WINAPI IDirectDrawImpl_GetMonitorFrequency(IDirectDraw *iface, DW
     return IDirectDraw4_GetMonitorFrequency(dd4_from_impl(This), Freq);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_GetScanLine(IDirectDraw4 *iface,
-                             DWORD *Scanline)
+static HRESULT WINAPI IDirectDraw4Impl_GetScanLine(IDirectDraw4 *iface, DWORD *Scanline)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%p)\n", This, Scanline);
     return IDirectDraw4_GetScanLine(This->parent, Scanline);
 }
@@ -917,11 +880,9 @@ static HRESULT WINAPI IDirectDrawImpl_GetScanLine(IDirectDraw *iface, DWORD *Sca
     return IDirectDraw4_GetScanLine(dd4_from_impl(This), Scanline);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_GetVerticalBlankStatus(IDirectDraw4 *iface,
-                                        BOOL *status)
+static HRESULT WINAPI IDirectDraw4Impl_GetVerticalBlankStatus(IDirectDraw4 *iface, BOOL *status)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%p)\n", This, status);
     return IDirectDraw4_GetVerticalBlankStatus(This->parent, status);
 }
@@ -947,11 +908,9 @@ static HRESULT WINAPI IDirectDrawImpl_GetVerticalBlankStatus(IDirectDraw *iface,
     return IDirectDraw4_GetVerticalBlankStatus(dd4_from_impl(This), status);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_Initialize(IDirectDraw4 *iface,
-                            GUID *Guid)
+static HRESULT WINAPI IDirectDraw4Impl_Initialize(IDirectDraw4 *iface, GUID *Guid)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%s)\n", This, debugstr_guid(Guid));
     return IDirectDraw4_Initialize(This->parent, Guid);
 }
@@ -977,10 +936,9 @@ static HRESULT WINAPI IDirectDrawImpl_Initialize(IDirectDraw *iface, GUID *Guid)
     return IDirectDraw4_Initialize(dd4_from_impl(This), Guid);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_RestoreDisplayMode(IDirectDraw4 *iface)
+static HRESULT WINAPI IDirectDraw4Impl_RestoreDisplayMode(IDirectDraw4 *iface)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)\n", This);
     return IDirectDraw4_RestoreDisplayMode(This->parent);
 }
@@ -1006,12 +964,10 @@ static HRESULT WINAPI IDirectDrawImpl_RestoreDisplayMode(IDirectDraw *iface)
     return IDirectDraw4_RestoreDisplayMode(dd4_from_impl(This));
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_SetCooperativeLevel(IDirectDraw4 *iface,
-                                     HWND hwnd,
-                                     DWORD cooplevel)
+static HRESULT WINAPI IDirectDraw4Impl_SetCooperativeLevel(IDirectDraw4 *iface, HWND hwnd,
+        DWORD cooplevel)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%p, 0x%08x)\n", This, hwnd, cooplevel);
     return IDirectDraw4_SetCooperativeLevel(This->parent, hwnd, cooplevel);
 }
@@ -1040,15 +996,10 @@ static HRESULT WINAPI IDirectDrawImpl_SetCooperativeLevel(IDirectDraw *iface, HW
     return IDirectDraw4_SetCooperativeLevel(dd4_from_impl(This), hwnd, cooplevel);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_SetDisplayMode(IDirectDraw4 *iface,
-                                DWORD Width,
-                                DWORD Height,
-                                DWORD BPP,
-                                DWORD RefreshRate,
-                                DWORD Flags)
+static HRESULT WINAPI IDirectDraw4Impl_SetDisplayMode(IDirectDraw4 *iface, DWORD Width,
+        DWORD Height, DWORD BPP, DWORD RefreshRate, DWORD Flags)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%u, %u, %u, %u, 0x%08x)\n", This, Width, Height, BPP, RefreshRate, Flags);
     return IDirectDraw4_SetDisplayMode(This->parent, Width, Height, BPP, RefreshRate, Flags);
 }
@@ -1077,12 +1028,10 @@ static HRESULT WINAPI IDirectDrawImpl_SetDisplayMode(IDirectDraw *iface, DWORD W
     return IDirectDraw3_SetDisplayMode(dd4_from_impl(This), Width, Height, BPP, 0, 0);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_WaitForVerticalBlank(IDirectDraw4 *iface,
-                                      DWORD Flags,
-                                      HANDLE h)
+static HRESULT WINAPI IDirectDraw4Impl_WaitForVerticalBlank(IDirectDraw4 *iface, DWORD Flags,
+        HANDLE h)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(0x%08x, %p)\n", This, Flags, h);
     return IDirectDraw4_WaitForVerticalBlank(This->parent, Flags, h);
 }
@@ -1111,13 +1060,10 @@ static HRESULT WINAPI IDirectDrawImpl_WaitForVerticalBlank(IDirectDraw *iface, D
     return IDirectDraw4_WaitForVerticalBlank(dd4_from_impl(This), Flags, h);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_GetAvailableVidMem(IDirectDraw4 *iface,
-                                    DDSCAPS2 *Caps,
-                                    DWORD *total,
-                                    DWORD *free)
+static HRESULT WINAPI IDirectDraw4Impl_GetAvailableVidMem(IDirectDraw4 *iface, DDSCAPS2 *Caps,
+        DWORD *total, DWORD *free)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%p, %p, %p)\n", This, Caps, total, free);
     return IDirectDraw4_GetAvailableVidMem(This->parent, Caps, total, free);
 }
@@ -1144,12 +1090,10 @@ static HRESULT WINAPI IDirectDraw2Impl_GetAvailableVidMem(IDirectDraw2 *iface, D
     return IDirectDraw4_GetAvailableVidMem(dd4_from_impl(This), &caps2, total, free);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_GetSurfaceFromDC(IDirectDraw4 *iface,
-                                  HDC hdc,
-                                  IDirectDrawSurface4 **Surface)
+static HRESULT WINAPI IDirectDraw4Impl_GetSurfaceFromDC(IDirectDraw4 *iface, HDC hdc,
+        IDirectDrawSurface4 **Surface)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     HRESULT hr;
     TRACE("(%p)->(%p, %p)\n", This, hdc, Surface);
     hr = IDirectDraw4_GetSurfaceFromDC(This->parent,hdc, Surface);
@@ -1189,28 +1133,24 @@ static HRESULT WINAPI IDirectDraw3Impl_GetSurfaceFromDC(IDirectDraw3 *iface, HDC
     return hr;
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_RestoreAllSurfaces(IDirectDraw4 *iface)
+static HRESULT WINAPI IDirectDraw4Impl_RestoreAllSurfaces(IDirectDraw4 *iface)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)\n", This);
     return IDirectDraw4_RestoreAllSurfaces(This->parent);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_TestCooperativeLevel(IDirectDraw4 *iface)
+static HRESULT WINAPI IDirectDraw4Impl_TestCooperativeLevel(IDirectDraw4 *iface)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)\n", This);
     return IDirectDraw4_TestCooperativeLevel(This->parent);
 }
 
-static HRESULT WINAPI
-IDirectDraw4Impl_GetDeviceIdentifier(IDirectDraw4 *iface,
-                                     DDDEVICEIDENTIFIER *DDDI,
-                                     DWORD Flags)
+static HRESULT WINAPI IDirectDraw4Impl_GetDeviceIdentifier(IDirectDraw4 *iface,
+        DDDEVICEIDENTIFIER *DDDI, DWORD Flags)
 {
-    IDirectDrawImpl *This = impl_from_dd4(iface);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(iface);
     TRACE("(%p)->(%p,0x%08x)\n", This, DDDI, Flags);
     return IDirectDraw4_GetDeviceIdentifier(This->parent, DDDI, Flags);
 }
@@ -1391,6 +1331,6 @@ err:
 
 IDirectDraw4 *dd_get_inner(IDirectDraw4 *outer)
 {
-    IDirectDrawImpl *This = impl_from_dd4(outer);
+    IDirectDrawImpl *This = impl_from_IDirectDraw4(outer);
     return This->parent;
 }
