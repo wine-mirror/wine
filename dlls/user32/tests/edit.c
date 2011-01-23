@@ -837,9 +837,14 @@ static void test_edit_control_3(void)
 {
     HWND hWnd;
     HWND hParent;
-    int len;
+    HDC hDC;
+    int len, dpi;
     static const char *str = "this is a long string.";
     static const char *str2 = "this is a long string.\r\nthis is a long string.\r\nthis is a long string.\r\nthis is a long string.";
+
+    hDC = GetDC(NULL);
+    dpi = GetDeviceCaps(hDC, LOGPIXELSY);
+    ReleaseDC(NULL, hDC);
 
     trace("EDIT: Test notifications\n");
 
@@ -947,7 +952,7 @@ static void test_edit_control_3(void)
               "EDIT",
               NULL,
               ES_MULTILINE,
-              10, 10, 50, 50,
+              10, 10, (50 * dpi) / 96, (50 * dpi) / 96,
               hParent, NULL, NULL, NULL);
     assert(hWnd);
 
@@ -992,7 +997,7 @@ static void test_edit_control_3(void)
               "EDIT",
               NULL,
               ES_MULTILINE | ES_AUTOHSCROLL,
-              10, 10, 50, 50,
+              10, 10, (50 * dpi) / 96, (50 * dpi) / 96,
               hParent, NULL, NULL, NULL);
     assert(hWnd);
 
@@ -1527,6 +1532,7 @@ static void test_margins_font_change(void)
     ok(HIWORD(margins) == HIWORD(font_margins), "got %d\n", HIWORD(margins)); 
 
     SendMessageA(hwEdit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO,EC_USEFONTINFO));
+    SendMessageA(hwEdit, WM_SETFONT, (WPARAM)hfont, 0);
     margins = SendMessage(hwEdit, EM_GETMARGINS, 0, 0);
     ok(LOWORD(margins) == LOWORD(font_margins), "got %d\n", LOWORD(margins));
     ok(HIWORD(margins) == HIWORD(font_margins), "got %d\n", HIWORD(margins)); 
@@ -2212,9 +2218,15 @@ static void test_fontsize(void)
 {
     HWND hwEdit;
     HFONT hfont;
+    HDC hDC;
     LOGFONT lf;
     LONG r;
     char szLocalString[MAXLEN];
+    int dpi;
+
+    hDC = GetDC(NULL);
+    dpi = GetDeviceCaps(hDC, LOGPIXELSY);
+    ReleaseDC(NULL, hDC);
 
     memset(&lf,0,sizeof(LOGFONTA));
     strcpy(lf.lfFaceName,"Arial");
@@ -2224,7 +2236,8 @@ static void test_fontsize(void)
 
     trace("EDIT: Oversized font (Multi line)\n");
     hwEdit= CreateWindow("EDIT", NULL, ES_MULTILINE|ES_AUTOHSCROLL,
-                           0, 0, 150, 50, NULL, NULL, hinst, NULL);
+                           0, 0, (150 * dpi) / 96, (50 * dpi) / 96, NULL, NULL,
+                           hinst, NULL);
 
     SendMessage(hwEdit,WM_SETFONT,(WPARAM)hfont,0);
 
