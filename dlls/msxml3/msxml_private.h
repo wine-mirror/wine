@@ -240,15 +240,10 @@ extern void set_xpathmode(xmlDocPtr doc, BOOL xpath);
 typedef struct _xmlnode
 {
     DispatchEx dispex;
-    const struct IXMLDOMNodeVtbl *lpVtbl;
+    IXMLDOMNode IXMLDOMNode_iface;
     IXMLDOMNode *iface;
     xmlNodePtr node;
 } xmlnode;
-
-static inline IXMLDOMNode *IXMLDOMNode_from_impl(xmlnode *This)
-{
-    return (IXMLDOMNode*)&This->lpVtbl;
-}
 
 extern void init_xmlnode(xmlnode*,xmlNodePtr,IXMLDOMNode*,dispex_static_data_t*);
 extern void destroy_xmlnode(xmlnode*);

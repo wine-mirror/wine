@@ -329,7 +329,7 @@ static HRESULT WINAPI domattr_removeChild(
     IXMLDOMNode* domNode, IXMLDOMNode** oldNode)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_removeChild( IXMLDOMNode_from_impl(&This->node), domNode, oldNode );
+    return IXMLDOMNode_removeChild( &This->node.IXMLDOMNode_iface, domNode, oldNode );
 }
 
 static HRESULT WINAPI domattr_appendChild(
@@ -337,7 +337,7 @@ static HRESULT WINAPI domattr_appendChild(
     IXMLDOMNode* newNode, IXMLDOMNode** outNewNode)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_appendChild( IXMLDOMNode_from_impl(&This->node), newNode, outNewNode );
+    return IXMLDOMNode_appendChild( &This->node.IXMLDOMNode_iface, newNode, outNewNode );
 }
 
 static HRESULT WINAPI domattr_hasChildNodes(
@@ -345,7 +345,7 @@ static HRESULT WINAPI domattr_hasChildNodes(
     VARIANT_BOOL* pbool)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_hasChildNodes( IXMLDOMNode_from_impl(&This->node), pbool );
+    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
 }
 
 static HRESULT WINAPI domattr_get_ownerDocument(
@@ -353,7 +353,7 @@ static HRESULT WINAPI domattr_get_ownerDocument(
     IXMLDOMDocument** domDocument)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_ownerDocument( IXMLDOMNode_from_impl(&This->node), domDocument );
+    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
 }
 
 static HRESULT WINAPI domattr_cloneNode(
@@ -382,7 +382,7 @@ static HRESULT WINAPI domattr_get_text(
     BSTR* p)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_text( IXMLDOMNode_from_impl(&This->node), p );
+    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
 }
 
 static HRESULT WINAPI domattr_put_text(
@@ -470,7 +470,7 @@ static HRESULT WINAPI domattr_transformNode(
     IXMLDOMNode* domNode, BSTR* p)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_transformNode( IXMLDOMNode_from_impl(&This->node), domNode, p );
+    return IXMLDOMNode_transformNode( &This->node.IXMLDOMNode_iface, domNode, p );
 }
 
 static HRESULT WINAPI domattr_selectNodes(
@@ -478,7 +478,7 @@ static HRESULT WINAPI domattr_selectNodes(
     BSTR p, IXMLDOMNodeList** outList)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_selectNodes( IXMLDOMNode_from_impl(&This->node), p, outList );
+    return IXMLDOMNode_selectNodes( &This->node.IXMLDOMNode_iface, p, outList );
 }
 
 static HRESULT WINAPI domattr_selectSingleNode(
@@ -486,7 +486,7 @@ static HRESULT WINAPI domattr_selectSingleNode(
     BSTR p, IXMLDOMNode** outNode)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_selectSingleNode( IXMLDOMNode_from_impl(&This->node), p, outNode );
+    return IXMLDOMNode_selectSingleNode( &This->node.IXMLDOMNode_iface, p, outNode );
 }
 
 static HRESULT WINAPI domattr_get_parsed(

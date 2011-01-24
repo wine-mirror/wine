@@ -337,7 +337,7 @@ static HRESULT WINAPI domfrag_removeChild(
     IXMLDOMNode* domNode, IXMLDOMNode** oldNode)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_removeChild( IXMLDOMNode_from_impl(&This->node), domNode, oldNode );
+    return IXMLDOMNode_removeChild( &This->node.IXMLDOMNode_iface, domNode, oldNode );
 }
 
 static HRESULT WINAPI domfrag_appendChild(
@@ -345,7 +345,7 @@ static HRESULT WINAPI domfrag_appendChild(
     IXMLDOMNode* newNode, IXMLDOMNode** outNewNode)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_appendChild( IXMLDOMNode_from_impl(&This->node), newNode, outNewNode );
+    return IXMLDOMNode_appendChild( &This->node.IXMLDOMNode_iface, newNode, outNewNode );
 }
 
 static HRESULT WINAPI domfrag_hasChildNodes(
@@ -353,7 +353,7 @@ static HRESULT WINAPI domfrag_hasChildNodes(
     VARIANT_BOOL* pbool)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_hasChildNodes( IXMLDOMNode_from_impl(&This->node), pbool );
+    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
 }
 
 static HRESULT WINAPI domfrag_get_ownerDocument(
@@ -361,7 +361,7 @@ static HRESULT WINAPI domfrag_get_ownerDocument(
     IXMLDOMDocument** domDocument)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_ownerDocument( IXMLDOMNode_from_impl(&This->node), domDocument );
+    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
 }
 
 static HRESULT WINAPI domfrag_cloneNode(
@@ -390,7 +390,7 @@ static HRESULT WINAPI domfrag_get_text(
     BSTR* p)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_text( IXMLDOMNode_from_impl(&This->node), p );
+    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
 }
 
 static HRESULT WINAPI domfrag_put_text(
@@ -478,7 +478,7 @@ static HRESULT WINAPI domfrag_transformNode(
     IXMLDOMNode* domNode, BSTR* p)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_transformNode( IXMLDOMNode_from_impl(&This->node), domNode, p );
+    return IXMLDOMNode_transformNode( &This->node.IXMLDOMNode_iface, domNode, p );
 }
 
 static HRESULT WINAPI domfrag_selectNodes(
@@ -486,7 +486,7 @@ static HRESULT WINAPI domfrag_selectNodes(
     BSTR p, IXMLDOMNodeList** outList)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_selectNodes( IXMLDOMNode_from_impl(&This->node), p, outList );
+    return IXMLDOMNode_selectNodes( &This->node.IXMLDOMNode_iface, p, outList );
 }
 
 static HRESULT WINAPI domfrag_selectSingleNode(
@@ -494,7 +494,7 @@ static HRESULT WINAPI domfrag_selectSingleNode(
     BSTR p, IXMLDOMNode** outNode)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_selectSingleNode( IXMLDOMNode_from_impl(&This->node), p, outNode );
+    return IXMLDOMNode_selectSingleNode( &This->node.IXMLDOMNode_iface, p, outNode );
 }
 
 static HRESULT WINAPI domfrag_get_parsed(

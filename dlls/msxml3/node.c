@@ -107,7 +107,7 @@ xmlnode *get_node_obj(IXMLDOMNode *node)
 
 static inline xmlnode *impl_from_IXMLDOMNode( IXMLDOMNode *iface )
 {
-    return (xmlnode *)((char*)iface - FIELD_OFFSET(xmlnode, lpVtbl));
+    return CONTAINING_RECORD(iface, xmlnode, IXMLDOMNode_iface);
 }
 
 HRESULT node_get_nodeName(xmlnode *This, BSTR *name)
@@ -1183,7 +1183,7 @@ void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispe
     if(node)
         xmldoc_add_ref( node->doc );
 
-    This->lpVtbl = &xmlnode_vtbl;
+    This->IXMLDOMNode_iface.lpVtbl = &xmlnode_vtbl;
     This->node = node;
     This->iface = node_iface;
 
@@ -1494,7 +1494,7 @@ static HRESULT WINAPI unknode_removeChild(
     IXMLDOMNode* domNode, IXMLDOMNode** oldNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_removeChild( IXMLDOMNode_from_impl(&This->node), domNode, oldNode );
+    return IXMLDOMNode_removeChild( &This->node.IXMLDOMNode_iface, domNode, oldNode );
 }
 
 static HRESULT WINAPI unknode_appendChild(
@@ -1502,7 +1502,7 @@ static HRESULT WINAPI unknode_appendChild(
     IXMLDOMNode* newNode, IXMLDOMNode** outNewNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_appendChild( IXMLDOMNode_from_impl(&This->node), newNode, outNewNode );
+    return IXMLDOMNode_appendChild( &This->node.IXMLDOMNode_iface, newNode, outNewNode );
 }
 
 static HRESULT WINAPI unknode_hasChildNodes(
@@ -1510,7 +1510,7 @@ static HRESULT WINAPI unknode_hasChildNodes(
     VARIANT_BOOL* pbool)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_hasChildNodes( IXMLDOMNode_from_impl(&This->node), pbool );
+    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
 }
 
 static HRESULT WINAPI unknode_get_ownerDocument(
@@ -1518,7 +1518,7 @@ static HRESULT WINAPI unknode_get_ownerDocument(
     IXMLDOMDocument** domDocument)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_ownerDocument( IXMLDOMNode_from_impl(&This->node), domDocument );
+    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
 }
 
 static HRESULT WINAPI unknode_cloneNode(
@@ -1526,7 +1526,7 @@ static HRESULT WINAPI unknode_cloneNode(
     VARIANT_BOOL pbool, IXMLDOMNode** outNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_cloneNode( IXMLDOMNode_from_impl(&This->node), pbool, outNode );
+    return IXMLDOMNode_cloneNode( &This->node.IXMLDOMNode_iface, pbool, outNode );
 }
 
 static HRESULT WINAPI unknode_get_nodeTypeString(
@@ -1545,7 +1545,7 @@ static HRESULT WINAPI unknode_get_text(
     BSTR* p)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_text( IXMLDOMNode_from_impl(&This->node), p );
+    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
 }
 
 static HRESULT WINAPI unknode_put_text(
@@ -1553,7 +1553,7 @@ static HRESULT WINAPI unknode_put_text(
     BSTR p)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_put_text( IXMLDOMNode_from_impl(&This->node), p );
+    return IXMLDOMNode_put_text( &This->node.IXMLDOMNode_iface, p );
 }
 
 static HRESULT WINAPI unknode_get_specified(
@@ -1598,7 +1598,7 @@ static HRESULT WINAPI unknode_get_dataType(
     VARIANT* var1)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_dataType( IXMLDOMNode_from_impl(&This->node), var1 );
+    return IXMLDOMNode_get_dataType( &This->node.IXMLDOMNode_iface, var1 );
 }
 
 static HRESULT WINAPI unknode_put_dataType(
@@ -1631,7 +1631,7 @@ static HRESULT WINAPI unknode_transformNode(
     IXMLDOMNode* domNode, BSTR* p)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_transformNode( IXMLDOMNode_from_impl(&This->node), domNode, p );
+    return IXMLDOMNode_transformNode( &This->node.IXMLDOMNode_iface, domNode, p );
 }
 
 static HRESULT WINAPI unknode_selectNodes(
@@ -1639,7 +1639,7 @@ static HRESULT WINAPI unknode_selectNodes(
     BSTR p, IXMLDOMNodeList** outList)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_selectNodes( IXMLDOMNode_from_impl(&This->node), p, outList );
+    return IXMLDOMNode_selectNodes( &This->node.IXMLDOMNode_iface, p, outList );
 }
 
 static HRESULT WINAPI unknode_selectSingleNode(
@@ -1647,7 +1647,7 @@ static HRESULT WINAPI unknode_selectSingleNode(
     BSTR p, IXMLDOMNode** outNode)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_selectSingleNode( IXMLDOMNode_from_impl(&This->node), p, outNode );
+    return IXMLDOMNode_selectSingleNode( &This->node.IXMLDOMNode_iface, p, outNode );
 }
 
 static HRESULT WINAPI unknode_get_parsed(
@@ -1674,7 +1674,7 @@ static HRESULT WINAPI unknode_get_prefix(
     BSTR* p)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_prefix( IXMLDOMNode_from_impl(&This->node), p );
+    return IXMLDOMNode_get_prefix( &This->node.IXMLDOMNode_iface, p );
 }
 
 static HRESULT WINAPI unknode_get_baseName(
@@ -1682,7 +1682,7 @@ static HRESULT WINAPI unknode_get_baseName(
     BSTR* p)
 {
     unknode *This = impl_from_unkIXMLDOMNode( iface );
-    return IXMLDOMNode_get_baseName( IXMLDOMNode_from_impl(&This->node), p );
+    return IXMLDOMNode_get_baseName( &This->node.IXMLDOMNode_iface, p );
 }
 
 static HRESULT WINAPI unknode_transformNodeToObject(
