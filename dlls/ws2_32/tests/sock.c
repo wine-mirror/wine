@@ -2848,10 +2848,8 @@ static void test_send(void)
 
     bytes_sent = 0;
     ret = WSASend(dst, &buf, 1, &bytes_sent, 0, &ov, NULL);
-    todo_wine ok((ret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING) || broken(bytes_sent == buflen),
+    ok((ret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING) || broken(bytes_sent == buflen),
        "Failed to start overlapped send %d - %d - %d/%d\n", ret, WSAGetLastError(), bytes_sent, buflen);
-    if ( (ret != SOCKET_ERROR || GetLastError() != ERROR_IO_PENDING) && bytes_sent < buflen )
-        goto end;
 
     /* don't check for completion yet, we may need to drain the buffer while still sending */
     set_blocking(src, FALSE);

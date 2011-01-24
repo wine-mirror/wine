@@ -1806,7 +1806,11 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
 
         if (result >= 0)
         {
-            status = STATUS_SUCCESS;
+            if (wsa->first_iovec < wsa->n_iovecs)
+                status = STATUS_PENDING;
+            else
+                status = STATUS_SUCCESS;
+
             iosb->Information += result;
         }
         else if (errno == EINTR || errno == EAGAIN)
@@ -3906,10 +3910,10 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         wsa->completion_func = lpCompletionRoutine;
         release_sock_fd( s, fd );
 
-        if (n == -1)
+        if (n == -1 || n < totalLength)
         {
             iosb->u.Status = STATUS_PENDING;
-            iosb->Information = 0;
+            iosb->Information = n == -1 ? 0 : n;
 
             SERVER_START_REQ( register_async )
             {
