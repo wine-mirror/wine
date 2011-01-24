@@ -96,6 +96,7 @@ my @ignores = (
     "*/*/tests/testlist.c",
     "include/config.h",
     "include/stamp-h",
+    "msg.pot",
     "programs/winetest/*_test.exe",
     "programs/winetest/*_test.rc",
     "programs/winetest/build.nfo",
@@ -424,6 +425,7 @@ sub update_makefiles(@)
                 die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.dll";
             }
             my $implib = $make{"IMPORTLIB"} || "";
+            push @flags, "mc" if defined $make{"MC_SRCS"};
             push @flags, "po" if defined $make{"PO_SRCS"};
             push @flags, "implib" if $implib;
             push @flags, "staticimplib" if defined($make{"IMPLIB_SRCS"});
@@ -444,6 +446,7 @@ sub update_makefiles(@)
             {
                 die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.exe";
             }
+            push @flags, "mc" if defined $make{"MC_SRCS"};
             push @flags, "po" if defined $make{"PO_SRCS"};
             push @flags, "install" unless $dont_install{$name};
             push @flags, "installbin" if $bin_install{$name};

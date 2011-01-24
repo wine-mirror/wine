@@ -26,7 +26,8 @@ IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=
 
 CLEAN_FILES   = *.o *.a *.so *.ln *.res *.fake *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej *.flc core
 CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:%=dlldata.c) \
-                $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) $(PO_SRCS:%=rsrc.pot)
+                $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) \
+                $(PO_SRCS:%=rsrc.pot) $(MC_SRCS:%=msg.pot)
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) \
        $(IDL_R_SRCS:.idl=_r.res) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
@@ -59,7 +60,7 @@ filter: dummy
 	$(FLEX) $(LEXFLAGS) -o$@ $<
 
 .mc.res:
-	$(LDPATH) $(WMC) -U -O res -o $@ $<
+	$(LDPATH) $(WMC) -U -O res -P $(top_srcdir)/po -o $@ $<
 
 .rc.res:
 	$(LDPATH) $(WRC) $(RCFLAGS) -o $@ $<
@@ -176,12 +177,15 @@ install install-lib install-dev uninstall::
 
 # Rules for resources
 
-all: @MAINTAINER_MODE@ $(PO_SRCS:%=rsrc.pot)
+all: @MAINTAINER_MODE@ $(PO_SRCS:%=rsrc.pot) $(MC_SRCS:%=msg.pot)
 
 rsrc.pot: $(WRC)
 	$(LDPATH) $(WRC) $(RCFLAGS) -O pot -o $@ $(PO_SRCS)
 
-$(MC_SRCS:.mc=.res): $(WMC)
+msg.pot: $(WMC)
+	$(LDPATH) $(WMC) -O pot -o $@ $(MC_SRCS)
+
+$(MC_SRCS:.mc=.res): $(WMC) $(ALL_PO_FILES)
 $(RC_SRCS:.rc=.res): $(WRC)
 $(PO_SRCS:.rc=.res): $(ALL_PO_FILES)
 

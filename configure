@@ -14529,11 +14529,20 @@ install-lib:: $ac_dir/Makefile __builddeps__
 uninstall manpages htmlpages sgmlpages xmlpages:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) \$@"
 
-        if test "x$enable_maintainer_mode" = xyes && wine_fn_has_flag po $ac_flags
+        if test "x$enable_maintainer_mode" = xyes
         then
-            wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
-            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+            if wine_fn_has_flag mc $ac_flags
+            then
+                wine_fn_append_file ALL_POT_FILES $ac_dir/msg.pot
+                wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/msg.pot: $ac_dir"
+            fi
+            if wine_fn_has_flag po $ac_flags
+            then
+                wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
+                wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_dir/rsrc.pot: $ac_dir"
+            fi
         fi
 fi
 
@@ -14610,11 +14619,20 @@ else
 $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)"
 
-    if test "x$enable_maintainer_mode" = xyes && wine_fn_has_flag po $ac_flags
+    if test "x$enable_maintainer_mode" = xyes
     then
-        wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
-        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+        if wine_fn_has_flag mc $ac_flags
+        then
+            wine_fn_append_file ALL_POT_FILES $ac_dir/msg.pot
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/msg.pot: $ac_dir"
+        fi
+        if wine_fn_has_flag po $ac_flags
+        then
+            wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_dir/rsrc.pot: $ac_dir"
+        fi
     fi
 
     wine_fn_has_flag install $ac_flags || return
@@ -15004,7 +15022,7 @@ wine_fn_config_dll itss enable_itss
 wine_fn_config_test dlls/itss/tests itss_test
 wine_fn_config_dll jscript enable_jscript po
 wine_fn_config_test dlls/jscript/tests jscript_test
-wine_fn_config_dll kernel32 enable_kernel32 implib
+wine_fn_config_dll kernel32 enable_kernel32 mc,implib
 wine_fn_config_test dlls/kernel32/tests kernel32_test
 wine_fn_config_dll keyboard.drv16 enable_win16
 wine_fn_config_dll krnl386.exe16 enable_win16 implib kernel

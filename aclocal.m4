@@ -269,11 +269,20 @@ install-lib:: $ac_dir/Makefile __builddeps__
 uninstall manpages htmlpages sgmlpages xmlpages:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) \$[@]"
 
-        if test "x$enable_maintainer_mode" = xyes && wine_fn_has_flag po $ac_flags
+        if test "x$enable_maintainer_mode" = xyes
         then
-            wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
-            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+            if wine_fn_has_flag mc $ac_flags
+            then
+                wine_fn_append_file ALL_POT_FILES $ac_dir/msg.pot
+                wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/msg.pot: $ac_dir"
+            fi
+            if wine_fn_has_flag po $ac_flags
+            then
+                wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
+                wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_dir/rsrc.pot: $ac_dir"
+            fi
         fi])
 
     if wine_fn_has_flag staticimplib $ac_flags
@@ -346,11 +355,20 @@ wine_fn_config_program ()
 $ac_dir: $ac_dir/Makefile __builddeps__ dummy
 	@cd $ac_dir && \$(MAKE)"
 
-    if test "x$enable_maintainer_mode" = xyes && wine_fn_has_flag po $ac_flags
+    if test "x$enable_maintainer_mode" = xyes
     then
-        wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
-        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+        if wine_fn_has_flag mc $ac_flags
+        then
+            wine_fn_append_file ALL_POT_FILES $ac_dir/msg.pot
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/msg.pot: $ac_dir"
+        fi
+        if wine_fn_has_flag po $ac_flags
+        then
+            wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
+            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_dir/rsrc.pot: $ac_dir"
+        fi
     fi
 
     wine_fn_has_flag install $ac_flags || return

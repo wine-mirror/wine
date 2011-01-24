@@ -251,6 +251,7 @@ loader/wine-installed
 loader/wine-preloader
 loader/wine64
 loader/wine64-preloader
+msg.pot
 programs/Makeprog.rules
 programs/rpcss/epm.h
 programs/rpcss/epm_s.c
