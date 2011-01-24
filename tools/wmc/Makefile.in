@@ -1,11 +1,12 @@
-DEFS      = -D__WINESRC__ $(EXTRADEFS)
-
+DEFS     = -D__WINESRC__ $(EXTRADEFS)
 PROGRAMS = wmc$(EXEEXT) wmc-installed
 MANPAGE  = wmc.man
+ALL_LIBS = @LIBGETTEXTPO@ $(LIBWINE) $(LIBPORT)
 
 C_SRCS = \
 	lang.c \
 	mcl.c \
+	po.c \
 	utils.c \
 	wmc.c \
 	write.c
@@ -19,10 +20,10 @@ all: $(PROGRAMS)
 @MAKE_RULES@
 
 wmc$(EXEEXT): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_LOCAL)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
 
 wmc-installed: $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(LDRPATH_INSTALL)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
 install:: wmc-installed $(DESTDIR)$(bindir)
 	$(INSTALL_PROGRAM) wmc-installed $(DESTDIR)$(bindir)/wmc$(EXEEXT)

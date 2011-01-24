@@ -48,7 +48,7 @@ static const char usage[] =
 	"   -H file     Write headerfile to file (default is inputfile.h)\n"
 	"   -i          Inline messagetable(s)\n"
 	"   -o file     Output to file (default is inputfile.rc)\n"
-	"   -O fmt      Set output format (rc, res)\n"
+	"   -O fmt      Set output format (rc, res, pot)\n"
 	"   -u          Inputfile is in unicode\n"
 	"   -U          Output unicode messagetable(s)\n"
 	"   -v          Show supported codepages and languages\n"
@@ -121,7 +121,8 @@ FILE *yyin;
 static enum
 {
     FORMAT_RC,
-    FORMAT_RES
+    FORMAT_RES,
+    FORMAT_POT
 } output_format;
 
 int getopt (int argc, char *const *argv, const char *optstring);
@@ -221,6 +222,7 @@ int main(int argc,char *argv[])
 		case 'O':
 			if (!strcmp( optarg, "rc" )) output_format = FORMAT_RC;
 			else if (!strcmp( optarg, "res" )) output_format = FORMAT_RES;
+			else if (!strcmp( optarg, "pot" )) output_format = FORMAT_POT;
 			else
                         {
                             fprintf(stderr, "Output format must be rc or res\n" );
@@ -318,6 +320,9 @@ int main(int argc,char *argv[])
             break;
         case FORMAT_RES:
             write_res_file( output_name );
+            break;
+        case FORMAT_POT:
+            write_pot_file( output_name );
             break;
         }
 	output_name = NULL;

@@ -49,8 +49,8 @@ wrc(1).
 Output to \fIfile\fR. Default is \fIinputfile.rc\fR.
 .TP
 .BI \-O\  format
-Set the output format. Supported formats are \fBrc\fR (the default)
-and \fBres\fR.
+Set the output format. Supported formats are \fBrc\fR (the default),
+\fBres\fR, and \fBpot\fR.
 .TP
 .B \-u
 Assume that the inputfile is in unicode.
