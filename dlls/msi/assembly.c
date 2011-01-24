@@ -128,58 +128,31 @@ MSIRECORD *get_assembly_record( MSIPACKAGE *package, const WCHAR *comp )
 
 struct assembly_name
 {
-    WCHAR *type;
-    WCHAR *name;
-    WCHAR *version;
-    WCHAR *culture;
-    WCHAR *token;
-    WCHAR *arch;
+    UINT    count;
+    UINT    index;
+    WCHAR **attrs;
 };
 
 static UINT get_assembly_name_attribute( MSIRECORD *rec, LPVOID param )
 {
-    static const WCHAR typeW[] = {'t','y','p','e',0};
+    static const WCHAR fmtW[] = {'%','s','=','"','%','s','"',0};
     static const WCHAR nameW[] = {'n','a','m','e',0};
-    static const WCHAR versionW[] = {'v','e','r','s','i','o','n',0};
-    static const WCHAR cultureW[] = {'c','u','l','t','u','r','e',0};
-    static const WCHAR tokenW[] = {'p','u','b','l','i','c','K','e','y','T','o','k','e','n',0};
-    static const WCHAR archW[] = {'p','r','o','c','e','s','s','o','r','A','r','c','h','i','t','e','c','t','u','r','e',0};
     struct assembly_name *name = param;
     const WCHAR *attr = MSI_RecordGetString( rec, 2 );
-    WCHAR *value = msi_dup_record_field( rec, 3 );
+    const WCHAR *value = MSI_RecordGetString( rec, 3 );
+    int len = strlenW( fmtW ) + strlenW( attr ) + strlenW( value );
 
-    if (!strcmpiW( attr, typeW ))
-        name->type = value;
-    else if (!strcmpiW( attr, nameW ))
-        name->name = value;
-    else if (!strcmpiW( attr, versionW ))
-        name->version = value;
-    else if (!strcmpiW( attr, cultureW ))
-        name->culture = value;
-    else if (!strcmpiW( attr, tokenW ))
-        name->token = value;
-    else if (!strcmpiW( attr, archW ))
-        name->arch = value;
-    else
-        msi_free( value );
+    if (!(name->attrs[name->index] = msi_alloc( len * sizeof(WCHAR) )))
+        return ERROR_OUTOFMEMORY;
 
+    if (!strcmpiW( attr, nameW )) strcpyW( name->attrs[name->index++], value );
+    else sprintfW( name->attrs[name->index++], fmtW, attr, value );
     return ERROR_SUCCESS;
 }
 
 static WCHAR *get_assembly_display_name( MSIDATABASE *db, const WCHAR *comp, MSIASSEMBLY *assembly )
 {
-    static const WCHAR fmt_netW[] = {
-        '%','s',',',' ','v','e','r','s','i','o','n','=','%','s',',',' ',
-        'c','u','l','t','u','r','e','=','%','s',',',' ',
-        'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','%','s',0};
-    static const WCHAR fmt_sxsW[] = {
-        '%','s',',',' ','v','e','r','s','i','o','n','=','%','s',',',' ',
-        'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','%','s',',',' ',
-        'p','r','o','c','e','s','s','o','r','A','r','c','h','i','t','e','c','t','u','r','e','=','%','s',0};
-    static const WCHAR fmt_sxs_localW[] = {
-        '%','s',',',' ','v','e','r','s','i','o','n','=','%','s',',',' ',
-        'c','u','l','t','u','r','e','=','%','s',',',' ',
-        'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','%','s',0};
+    static const WCHAR commaW[] = {',',0};
     static const WCHAR queryW[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         '`','M','s','i','A','s','s','e','m','b','l','y','N','a','m','e','`',' ',
@@ -188,75 +161,42 @@ static WCHAR *get_assembly_display_name( MSIDATABASE *db, const WCHAR *comp, MSI
     struct assembly_name name;
     WCHAR *display_name = NULL;
     MSIQUERY *view;
+    UINT i, r;
     int len;
-    UINT r;
-
-    memset( &name, 0, sizeof(name) );
 
     r = MSI_OpenQuery( db, &view, queryW, comp );
     if (r != ERROR_SUCCESS)
         return NULL;
 
-    MSI_IterateRecords( view, NULL, get_assembly_name_attribute, &name );
-    msiobj_release( &view->hdr );
+    name.count = 0;
+    name.index = 0;
+    name.attrs = NULL;
+    MSI_IterateRecords( view, &name.count, NULL, NULL );
+    if (!name.count) goto done;
 
-    if (assembly->attributes == msidbAssemblyAttributesWin32)
+    name.attrs = msi_alloc( name.count * sizeof(WCHAR *) );
+    if (!name.attrs) goto done;
+
+    MSI_IterateRecords( view, NULL, get_assembly_name_attribute, &name );
+
+    len = 0;
+    for (i = 0; i < name.count; i++) len += strlenW( name.attrs[i] ) + 1;
+
+    display_name = msi_alloc( (len + 1) * sizeof(WCHAR) );
+    if (display_name)
     {
-        if (!assembly->application)
+        display_name[0] = 0;
+        for (i = 0; i < name.count; i++)
         {
-            if (!name.type || !name.name || !name.version || !name.token || !name.arch)
-            {
-                WARN("invalid global win32 assembly name\n");
-                goto done;
-            }
-            len = strlenW( fmt_sxsW );
-            len += strlenW( name.name );
-            len += strlenW( name.version );
-            len += strlenW( name.token );
-            len += strlenW( name.arch );
-            if (!(display_name = msi_alloc( len * sizeof(WCHAR) ))) goto done;
-            sprintfW( display_name, fmt_sxsW, name.name, name.version, name.token, name.arch );
+            strcatW( display_name, name.attrs[i] );
+            if (i < name.count - 1) strcatW( display_name, commaW );
         }
-        else
-        {
-            if (!name.name || !name.version || !name.culture || !name.token)
-            {
-                WARN("invalid local win32 assembly name\n");
-                goto done;
-            }
-            len = strlenW( fmt_sxs_localW );
-            len += strlenW( name.name );
-            len += strlenW( name.version );
-            len += strlenW( name.culture );
-            len += strlenW( name.token );
-            if (!(display_name = msi_alloc( len * sizeof(WCHAR) ))) goto done;
-            sprintfW( display_name, fmt_sxs_localW, name.name, name.version, name.culture, name.token );
-        }
-    }
-    else
-    {
-        if (!name.name || !name.version || !name.culture || !name.token)
-        {
-            WARN("invalid assembly name\n");
-            goto done;
-        }
-        len = strlenW( fmt_netW );
-        len += strlenW( name.name );
-        len += strlenW( name.version );
-        len += strlenW( name.culture );
-        len += strlenW( name.token );
-        if (!(display_name = msi_alloc( len * sizeof(WCHAR) ))) goto done;
-        sprintfW( display_name, fmt_netW, name.name, name.version, name.culture, name.token );
     }
 
 done:
-    msi_free( name.type );
-    msi_free( name.name );
-    msi_free( name.version );
-    msi_free( name.culture );
-    msi_free( name.token );
-    msi_free( name.arch );
-
+    msiobj_release( &view->hdr );
+    for (i = 0; i < name.count; i++) msi_free( name.attrs[i] );
+    msi_free( name.attrs );
     return display_name;
 }
 
