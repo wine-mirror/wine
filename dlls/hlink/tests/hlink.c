@@ -1065,6 +1065,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(hres == S_OK, "IHlink_SetMonikerReference failed: 0x%08x\n", hres);
 
     hres = IHlink_GetMonikerReference(hlink, HLINKGETREF_DEFAULT, &found_trgt, &found_loc);
+    ok(hres == S_OK, "IHlink_GetMonikerReference failed: 0x%08x\n", hres);
     ok(found_trgt == dummy, "Found target should've been %p, was: %p\n", dummy, found_trgt);
     ok(lstrcmpW(found_loc, two) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(two), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
@@ -1075,6 +1076,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(hres == S_OK, "IHlink_SetMonikerReference failed: 0x%08x\n", hres);
 
     hres = IHlink_GetMonikerReference(hlink, HLINKGETREF_DEFAULT, &found_trgt, &found_loc);
+    ok(hres == S_OK, "IHlink_GetMonikerReference failed: 0x%08x\n", hres);
     ok(found_trgt == dummy2, "Found target should've been %p, was: %p\n", dummy2, found_trgt);
     ok(lstrcmpW(found_loc, two) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(two), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
@@ -1085,6 +1087,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(hres == S_OK, "IHlink_SetMonikerReference failed: 0x%08x\n", hres);
 
     hres = IHlink_GetMonikerReference(hlink, HLINKGETREF_DEFAULT, &found_trgt, &found_loc);
+    ok(hres == S_OK, "IHlink_GetMonikerReference failed: 0x%08x\n", hres);
     ok(found_trgt == dummy, "Found target should've been %p, was: %p\n", dummy, found_trgt);
     ok(lstrcmpW(found_loc, one) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
@@ -1095,6 +1098,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(hres == E_INVALIDARG, "IHlink_SetMonikerReference should've failed with E_INVALIDARG (0x%08x), failed with 0x%08x\n", E_INVALIDARG, hres);
 
     hres = IHlink_GetMonikerReference(hlink, HLINKGETREF_DEFAULT, &found_trgt, &found_loc);
+    ok(hres == S_OK, "IHlink_GetMonikerReference failed: 0x%08x\n", hres);
     ok(found_trgt == dummy, "Found target should've been %p, was: %p\n", dummy, found_trgt);
     ok(lstrcmpW(found_loc, one) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
@@ -1106,6 +1110,7 @@ static void test_HlinkGetSetMonikerReference(void)
     if (0) ok(hres == 12, "IHlink_SetMonikerReference should've failed with 0x%08x, failed with 0x%08x\n", 12, hres);
 
     hres = IHlink_GetMonikerReference(hlink, HLINKGETREF_DEFAULT, &found_trgt, &found_loc);
+    ok(hres == S_OK, "IHlink_GetMonikerReference failed: 0x%08x\n", hres);
     ok(found_trgt == dummy, "Found target should've been %p, was: %p\n", dummy, found_trgt);
     ok(lstrcmpW(found_loc, one) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
@@ -1116,6 +1121,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(hres == S_OK, "IHlink_SetMonikerReference failed: 0x%08x\n", hres);
 
     hres = IHlink_GetMonikerReference(hlink, HLINKGETREF_DEFAULT, &found_trgt, &found_loc);
+    ok(hres == S_OK, "IHlink_GetMonikerReference failed: 0x%08x\n", hres);
     ok(found_trgt == dummy2, "Found target should've been %p, was: %p\n", dummy2, found_trgt);
     ok(lstrcmpW(found_loc, one) == 0, "Found location should've been %s, was: %s\n", wine_dbgstr_w(one), wine_dbgstr_w(found_loc));
     IMoniker_Release(found_trgt);
@@ -1126,6 +1132,7 @@ static void test_HlinkGetSetMonikerReference(void)
     ok(hres == S_OK, "IHlink_SetMonikerReference failed: 0x%08x\n", hres);
 
     hres = IHlink_GetMonikerReference(hlink, HLINKGETREF_DEFAULT, &found_trgt, &found_loc);
+    ok(hres == S_OK, "IHlink_GetMonikerReference failed: 0x%08x\n", hres);
     ok(found_trgt == NULL, "Found target should've been %p, was: %p\n", NULL, found_trgt);
     ok(found_loc == NULL, "Found location should've been %s, was: %s\n", wine_dbgstr_w(NULL), wine_dbgstr_w(found_loc));
     if(found_trgt)
