@@ -11233,8 +11233,9 @@ static void fp_special_test(IDirect3DDevice9 *device)
         const char *name;
         const DWORD *ops;
         DWORD size;
-        D3DCOLOR color1;
-        D3DCOLOR color2;
+        D3DCOLOR r600;
+        D3DCOLOR nv40;
+        D3DCOLOR nv50;
     }
     vs_body[] =
     {
@@ -11248,26 +11249,15 @@ static void fp_special_test(IDirect3DDevice9 *device)
          * component, but here 0.0 also results in 0x00. The actual value is
          * written to the blue component.
          *
-         * There are at least two different ways for D3D implementations to
-         * handle this. AMD seems to stick mostly to the D3D documentation,
-         * and doesn't generate floating point specials in the first place.
-         * Note that that doesn't just apply to functions like rcp and rsq,
-         * but also basic mul, add, etc. nVidia seems to generate infinities,
-         * but then clamp them before sending them to the interpolators. In
-         * OpenGL these aren't clamped, and interpolating them generates NANs
-         * in the fragment shader, unless flat shading is used (essentially
-         * replicating the values instead of interpolating them).
-         *
-         * I can't currently explain the nVidia results for pow and nrm.
-         * They're not specials in the vertex shader, but look like -INF in
-         * the pixel shader. */
-        {"log",     vs_log,     sizeof(vs_log),     0x00000000 /* -FLT_MAX */,  0x00ff0000 /* clamp(-INF) */},
-        {"pow",     vs_pow,     sizeof(vs_pow),     0x000000ff /* +FLT_MAX */,  0x0000ff00 /* ???         */},
-        {"nrm",     vs_nrm,     sizeof(vs_nrm),     0x00ff0000 /*  0.0     */,  0x0000ff00 /* ???         */},
-        {"rcp1",    vs_rcp1,    sizeof(vs_rcp1),    0x000000ff /* +FLT_MAX */,  0x00ff00ff /* clamp(+INF) */},
-        {"rcp2",    vs_rcp2,    sizeof(vs_rcp2),    0x00000000 /* -FLT_MAX */,  0x00ff0000 /* clamp(-INF) */},
-        {"rsq1",    vs_rsq1,    sizeof(vs_rsq1),    0x000000ff /* +FLT_MAX */,  0x00ff00ff /* clamp(+INF) */},
-        {"rsq2",    vs_rsq2,    sizeof(vs_rsq2),    0x000000ff /* +FLT_MAX */,  0x00ff00ff /* clamp(+INF) */},
+         * There are considerable differences between graphics cards in how
+         * these are handled, but pow and nrm never generate INF or NAN. */
+        {"log",     vs_log,     sizeof(vs_log),     0x00000000, 0x00ff0000, 0x00ff7f00},
+        {"pow",     vs_pow,     sizeof(vs_pow),     0x000000ff, 0x0000ff00, 0x000000ff},
+        {"nrm",     vs_nrm,     sizeof(vs_nrm),     0x00ff0000, 0x0000ff00, 0x00ff0000},
+        {"rcp1",    vs_rcp1,    sizeof(vs_rcp1),    0x000000ff, 0x00ff00ff, 0x00ff7f00},
+        {"rcp2",    vs_rcp2,    sizeof(vs_rcp2),    0x00000000, 0x00ff0000, 0x00ff7f00},
+        {"rsq1",    vs_rsq1,    sizeof(vs_rsq1),    0x000000ff, 0x00ff00ff, 0x00ff7f00},
+        {"rsq2",    vs_rsq2,    sizeof(vs_rsq2),    0x000000ff, 0x00ff00ff, 0x00ff7f00},
     };
 
     static const DWORD ps_code[] =
@@ -11371,9 +11361,11 @@ static void fp_special_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
         color = getPixelColor(device, 320, 240);
-        ok(color_match(color, vs_body[i].color1, 1) || color_match(color, vs_body[i].color2, 1),
-                "Expected color 0x%08x or 0x%08x for instruction \"%s\", got 0x%08x.\n",
-                vs_body[i].color1, vs_body[i].color2, vs_body[i].name, color);
+        ok(color_match(color, vs_body[i].r600, 1)
+                || color_match(color, vs_body[i].nv40, 1)
+                || color_match(color, vs_body[i].nv50, 1),
+                "Expected color 0x%08x, 0x%08x or 0x%08x for instruction \"%s\", got 0x%08x.\n",
+                vs_body[i].r600, vs_body[i].nv40, vs_body[i].nv50, vs_body[i].name, color);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
