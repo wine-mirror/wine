@@ -2793,14 +2793,24 @@ static void test_send(void)
     HANDLE hThread = NULL;
     const int buflen = 1024*1024;
     char *buffer = NULL;
-    int ret;
-    DWORD id;
+    int ret, i, zero = 0;
+    WSABUF buf;
+    OVERLAPPED ov;
+    BOOL bret;
+    DWORD id, bytes_sent, dwRet;
+
+    memset(&ov, 0, sizeof(ov));
 
     if (tcp_socketpair(&src, &dst) != 0)
     {
         ok(0, "creating socket pair failed, skipping test\n");
         return;
     }
+
+    set_blocking(dst, FALSE);
+    /* force disable buffering so we can get a pending overlapped request */
+    ret = setsockopt(dst, SOL_SOCKET, SO_SNDBUF, (char *) &zero, sizeof(zero));
+    ok(!ret, "setsockopt SO_SNDBUF failed: %d - %d\n", ret, GetLastError());
 
     hThread = CreateThread(NULL, 0, drain_socket_thread, &dst, 0, &id);
     if (hThread == NULL)
@@ -2809,11 +2819,17 @@ static void test_send(void)
         goto end;
     }
 
-    buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buflen);
+    buffer = HeapAlloc(GetProcessHeap(), 0, buflen);
     if (buffer == NULL)
     {
         ok(0, "HeapAlloc failed, error %d\n", GetLastError());
         goto end;
+    }
+
+    /* fill the buffer with some nonsense */
+    for (i = 0; i < buflen; ++i)
+    {
+        buffer[i] = (char) i;
     }
 
     ret = send(src, buffer, buflen, 0);
@@ -2822,6 +2838,51 @@ static void test_send(void)
     else
         ok(0, "send failed, error %d\n", WSAGetLastError());
 
+    buf.buf = buffer;
+    buf.len = buflen;
+
+    ov.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
+    if (!ov.hEvent)
+        goto end;
+
+    bytes_sent = 0;
+    ret = WSASend(dst, &buf, 1, &bytes_sent, 0, &ov, NULL);
+    todo_wine ok((ret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING) || broken(bytes_sent == buflen),
+       "Failed to start overlapped send %d - %d - %d/%d\n", ret, WSAGetLastError(), bytes_sent, buflen);
+    if ( (ret != SOCKET_ERROR || GetLastError() != ERROR_IO_PENDING) && bytes_sent < buflen )
+        goto end;
+
+    /* don't check for completion yet, we may need to drain the buffer while still sending */
+    set_blocking(src, FALSE);
+    for (i = 0; i < buflen; ++i)
+    {
+        int j = 0;
+
+        ret = recv(src, buffer, 1, 0);
+        while (ret == SOCKET_ERROR && GetLastError() == WSAEWOULDBLOCK && j < 100)
+        {
+            j++;
+            Sleep(50);
+            ret = recv(src, buffer, 1, 0);
+        }
+
+        ok(ret == 1, "Failed to receive data %d - %d (got %d/%d)\n", ret, GetLastError(), i, buflen);
+        if (ret != 1)
+            break;
+
+        ok(buffer[0] == (char) i, "Received bad data at position %d\n", i);
+    }
+
+    dwRet = WaitForSingleObject(ov.hEvent, 1000);
+    ok(dwRet == WAIT_OBJECT_0, "Failed to wait for recv message: %d - %d\n", dwRet, GetLastError());
+    if (dwRet == WAIT_OBJECT_0)
+    {
+        bret = GetOverlappedResult((HANDLE)dst, &ov, &bytes_sent, FALSE);
+        ok((bret && bytes_sent == buflen) || broken(!bret && GetLastError() == ERROR_IO_INCOMPLETE) /* win9x */,
+           "Got %d instead of %d (%d - %d)\n", bytes_sent, buflen, bret, GetLastError());
+    }
+
 end:
     if (src != INVALID_SOCKET)
         closesocket(src);
@@ -2829,6 +2890,8 @@ end:
         closesocket(dst);
     if (hThread != NULL)
         CloseHandle(hThread);
+    if (ov.hEvent)
+        CloseHandle(ov.hEvent);
     HeapFree(GetProcessHeap(), 0, buffer);
 }
 
