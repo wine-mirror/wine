@@ -1725,6 +1725,7 @@ static int WS2_send( int fd, struct ws2_async *wsa )
 {
     struct msghdr hdr;
     union generic_unix_sockaddr unix_addr;
+    int n, ret;
 
     hdr.msg_name = NULL;
     hdr.msg_namelen = 0;
@@ -1768,7 +1769,19 @@ static int WS2_send( int fd, struct ws2_async *wsa )
     hdr.msg_flags = 0;
 #endif
 
-    return sendmsg(fd, &hdr, wsa->flags);
+    ret = sendmsg(fd, &hdr, wsa->flags);
+    if (ret >= 0)
+    {
+        n = ret;
+        while (wsa->first_iovec < wsa->n_iovecs && wsa->iovec[wsa->first_iovec].iov_len <= n)
+            n -= wsa->iovec[wsa->first_iovec++].iov_len;
+        if (wsa->first_iovec < wsa->n_iovecs)
+        {
+            wsa->iovec[wsa->first_iovec].iov_base = (char*)wsa->iovec[wsa->first_iovec].iov_base + n;
+            wsa->iovec[wsa->first_iovec].iov_len -= n;
+        }
+    }
+    return ret;
 }
 
 /***********************************************************************
@@ -3942,22 +3955,12 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
          * sending blocks until the entire buffer is sent. */
         DWORD timeout_start = GetTickCount();
 
-        *lpNumberOfBytesSent = 0;
+        *lpNumberOfBytesSent = n == -1 ? 0 : n;
 
-        while (wsa->first_iovec < dwBufferCount)
+        while (wsa->first_iovec < wsa->n_iovecs)
         {
             struct pollfd pfd;
             int timeout = GET_SNDTIMEO(fd);
-
-            if (n >= 0)
-            {
-                *lpNumberOfBytesSent += n;
-                while (wsa->first_iovec < dwBufferCount && wsa->iovec[wsa->first_iovec].iov_len <= n)
-                    n -= wsa->iovec[wsa->first_iovec++].iov_len;
-                if (wsa->first_iovec >= dwBufferCount) break;
-                wsa->iovec[wsa->first_iovec].iov_base = (char*)wsa->iovec[wsa->first_iovec].iov_base + n;
-                wsa->iovec[wsa->first_iovec].iov_len -= n;
-            }
 
             if (timeout != -1)
             {
@@ -3980,6 +3983,9 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 err = wsaErrno();
                 goto error;
             }
+
+            if (n >= 0)
+                *lpNumberOfBytesSent += n;
         }
     }
     else  /* non-blocking */
