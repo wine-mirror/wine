@@ -2091,6 +2091,7 @@ struct wined3d_subresource_container
 struct wined3d_surface_ops
 {
     void (*surface_realize_palette)(struct IWineD3DSurfaceImpl *surface);
+    HRESULT (*surface_draw_overlay)(struct IWineD3DSurfaceImpl *surface);
 };
 
 /*****************************************************************************

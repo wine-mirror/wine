@@ -386,9 +386,32 @@ static void surface_realize_palette(IWineD3DSurfaceImpl *surface)
         surface_load_location(surface, SFLAG_INDRAWABLE, NULL);
 }
 
+static HRESULT surface_draw_overlay(IWineD3DSurfaceImpl *surface)
+{
+    HRESULT hr;
+
+    /* If there's no destination surface there is nothing to do. */
+    if (!surface->overlay_dest)
+        return WINED3D_OK;
+
+    /* Blt calls ModifyLocation on the dest surface, which in turn calls
+     * DrawOverlay to update the overlay. Prevent an endless recursion. */
+    if (surface->overlay_dest->flags & SFLAG_INOVERLAYDRAW)
+        return WINED3D_OK;
+
+    surface->overlay_dest->flags |= SFLAG_INOVERLAYDRAW;
+    hr = IWineD3DSurface_Blt((IWineD3DSurface *)surface->overlay_dest,
+            &surface->overlay_destrect, (IWineD3DSurface *)surface, &surface->overlay_srcrect,
+            WINEDDBLT_WAIT, NULL, WINED3DTEXF_LINEAR);
+    surface->overlay_dest->flags &= ~SFLAG_INOVERLAYDRAW;
+
+    return hr;
+}
+
 static const struct wined3d_surface_ops surface_ops =
 {
     surface_realize_palette,
+    surface_draw_overlay,
 };
 
 HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
@@ -2070,9 +2093,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
     memset(&This->lockedRect, 0, sizeof(RECT));
 
     /* Overlays have to be redrawn manually after changes with the GL implementation */
-    if(This->overlay_dest) {
-        IWineD3DSurface_DrawOverlay(iface);
-    }
+    if (This->overlay_dest)
+        This->surface_ops->surface_draw_overlay(This);
+
     return WINED3D_OK;
 }
 
@@ -2775,11 +2798,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
         flip_surface(This, (IWineD3DSurfaceImpl *) override);
 
         /* Update the overlay if it is visible */
-        if(This->overlay_dest) {
-            return IWineD3DSurface_DrawOverlay((IWineD3DSurface *) This);
-        } else {
+        if (This->overlay_dest)
+            return This->surface_ops->surface_draw_overlay(This);
+        else
             return WINED3D_OK;
-        }
     }
 
     if(override) {
@@ -4306,7 +4328,7 @@ void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL pers
         {
             LIST_FOR_EACH_ENTRY(overlay, &surface->overlays, IWineD3DSurfaceImpl, overlay_entry)
             {
-                IWineD3DSurface_DrawOverlay((IWineD3DSurface *)overlay);
+                overlay->surface_ops->surface_draw_overlay(overlay);
             }
         }
     }
@@ -4641,27 +4663,6 @@ static WINED3DSURFTYPE WINAPI IWineD3DSurfaceImpl_GetImplType(IWineD3DSurface *i
     return SURFACE_OPENGL;
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_DrawOverlay(IWineD3DSurface *iface) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    HRESULT hr;
-
-    /* If there's no destination surface there is nothing to do */
-    if(!This->overlay_dest) return WINED3D_OK;
-
-    /* Blt calls ModifyLocation on the dest surface, which in turn calls DrawOverlay to
-     * update the overlay. Prevent an endless recursion. */
-    if (This->overlay_dest->flags & SFLAG_INOVERLAYDRAW)
-        return WINED3D_OK;
-
-    This->overlay_dest->flags |= SFLAG_INOVERLAYDRAW;
-    hr = IWineD3DSurfaceImpl_Blt((IWineD3DSurface *)This->overlay_dest,
-            &This->overlay_destrect, iface, &This->overlay_srcrect,
-            WINEDDBLT_WAIT, NULL, WINED3DTEXF_LINEAR);
-    This->overlay_dest->flags &= ~SFLAG_INOVERLAYDRAW;
-
-    return hr;
-}
-
 BOOL surface_is_offscreen(IWineD3DSurfaceImpl *surface)
 {
     IWineD3DSwapChainImpl *swapchain = surface->container.u.swapchain;
@@ -4721,7 +4722,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_SetFormat,
     IWineD3DSurfaceImpl_PrivateSetup,
     IWineD3DSurfaceImpl_GetImplType,
-    IWineD3DSurfaceImpl_DrawOverlay
 };
 
 static HRESULT ffp_blit_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }

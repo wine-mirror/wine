@@ -357,7 +357,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface
     This->overlay_destrect.right = X + w;
     This->overlay_destrect.bottom = Y + h;
 
-    IWineD3DSurface_DrawOverlay(iface);
+    This->surface_ops->surface_draw_overlay(This);
 
     return WINED3D_OK;
 }
@@ -462,7 +462,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, con
         This->overlay_dest = NULL;
     }
 
-    IWineD3DSurface_DrawOverlay(iface);
+    This->surface_ops->surface_draw_overlay(This);
 
     return WINED3D_OK;
 }

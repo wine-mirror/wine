@@ -2467,8 +2467,6 @@ interface IWineD3DSurface : IWineD3DResource
     );
     WINED3DSURFTYPE GetImplType(
     );
-    HRESULT DrawOverlay(
-    );
 }
 
 [

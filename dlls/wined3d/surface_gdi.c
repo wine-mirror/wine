@@ -95,9 +95,16 @@ static void gdi_surface_realize_palette(IWineD3DSurfaceImpl *surface)
     }
 }
 
+static HRESULT gdi_surface_draw_overlay(IWineD3DSurfaceImpl *surface)
+{
+    FIXME("GDI surfaces can't draw overlays yet.\n");
+    return E_FAIL;
+}
+
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_realize_palette,
+    gdi_surface_draw_overlay,
 };
 
 /*****************************************************************************
@@ -439,11 +446,6 @@ static WINED3DSURFTYPE WINAPI IWineGDISurfaceImpl_GetImplType(IWineD3DSurface *i
     return SURFACE_GDI;
 }
 
-static HRESULT WINAPI IWineGDISurfaceImpl_DrawOverlay(IWineD3DSurface *iface) {
-    FIXME("GDI surfaces can't draw overlays yet\n");
-    return E_FAIL;
-}
-
 /* FIXME: This vtable should not use any IWineD3DSurface* implementation functions,
  * only IWineD3DBaseSurface and IWineGDISurface ones.
  */
@@ -491,5 +493,4 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetFormat,
     IWineGDISurfaceImpl_PrivateSetup,
     IWineGDISurfaceImpl_GetImplType,
-    IWineGDISurfaceImpl_DrawOverlay
 };
