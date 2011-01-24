@@ -2314,16 +2314,18 @@ static void shader_glsl_nrm(const struct wined3d_shader_instruction *ins)
     mask_size = shader_glsl_get_write_mask_size(write_mask);
     shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src_param);
 
-    shader_addline(buffer, "tmp0.x = length(%s);\n", src_param.param_str);
+    shader_addline(buffer, "tmp0.x = dot(%s, %s);\n",
+            src_param.param_str, src_param.param_str);
     shader_glsl_append_dst(buffer, ins);
+
     if (mask_size > 1)
     {
-        shader_addline(buffer, "tmp0.x == 0.0 ? vec%u(0.0) : (%s / tmp0.x));\n",
+        shader_addline(buffer, "tmp0.x == 0.0 ? vec%u(0.0) : (%s * inversesqrt(tmp0.x)));\n",
                 mask_size, src_param.param_str);
     }
     else
     {
-        shader_addline(buffer, "tmp0.x == 0.0 ? 0.0 : (%s / tmp0.x));\n",
+        shader_addline(buffer, "tmp0.x == 0.0 ? 0.0 : (%s * inversesqrt(tmp0.x)));\n",
                 src_param.param_str);
     }
 }
