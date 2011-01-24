@@ -1823,8 +1823,9 @@ static void test_basic_request(int port, const char *verb, const char *url)
 
     count = 0;
     memset(buffer, 0, sizeof buffer);
+    SetLastError(0xdeadbeef);
     r = InternetReadFile(hr, buffer, sizeof buffer, &count);
-    ok(r, "InternetReadFile failed\n");
+    ok(r, "InternetReadFile failed %u\n", GetLastError());
     ok(count == sizeof page1 - 1, "count was wrong\n");
     ok(!memcmp(buffer, page1, sizeof page1), "http data wrong\n");
 
