@@ -138,7 +138,6 @@ void *xmalloc(size_t size)
     void *res;
 
     assert(size > 0);
-    assert(size < 102400);
     res = malloc(size);
     if(res == NULL)
     {
@@ -154,7 +153,6 @@ void *xrealloc(void *p, size_t size)
     void *res;
 
     assert(size > 0);
-    assert(size < 102400);
     res = realloc(p, size);
     if(res == NULL)
     {
@@ -170,6 +168,25 @@ char *xstrdup(const char *str)
 	assert(str != NULL);
 	s = xmalloc(strlen(str)+1);
 	return strcpy(s, str);
+}
+
+char *strmake( const char* fmt, ... )
+{
+    int n;
+    size_t size = 100;
+    va_list ap;
+
+    for (;;)
+    {
+        char *p = xmalloc( size );
+        va_start( ap, fmt );
+        n = vsnprintf( p, size, fmt, ap );
+        va_end( ap );
+        if (n == -1) size *= 2;
+        else if ((size_t)n >= size) size = n + 1;
+        else return p;
+        free( p );
+    }
 }
 
 int unistrlen(const WCHAR *s)

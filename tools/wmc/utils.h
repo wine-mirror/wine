@@ -33,6 +33,7 @@ char *xstrdup(const char *str);
 #define __attribute__(X)
 #endif
 
+char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
 int mcy_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int xyyerror(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int mcy_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
