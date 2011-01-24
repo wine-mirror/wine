@@ -1195,13 +1195,13 @@ void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispe
 
 typedef struct {
     xmlnode node;
-    const IXMLDOMNodeVtbl *lpVtbl;
+    IXMLDOMNode IXMLDOMNode_iface;
     LONG ref;
 } unknode;
 
-static inline unknode *impl_from_unkIXMLDOMNode(IXMLDOMNode *iface)
+static inline unknode *unknode_from_IXMLDOMNode(IXMLDOMNode *iface)
 {
-    return (unknode *)((char*)iface - FIELD_OFFSET(unknode, lpVtbl));
+    return CONTAINING_RECORD(iface, unknode, IXMLDOMNode_iface);
 }
 
 static HRESULT WINAPI unknode_QueryInterface(
@@ -1209,7 +1209,7 @@ static HRESULT WINAPI unknode_QueryInterface(
     REFIID riid,
     void** ppvObject )
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
@@ -1217,7 +1217,7 @@ static HRESULT WINAPI unknode_QueryInterface(
         *ppvObject = iface;
     }else if (IsEqualGUID( riid, &IID_IDispatch) ||
               IsEqualGUID( riid, &IID_IXMLDOMNode)) {
-        *ppvObject = &This->lpVtbl;
+        *ppvObject = &This->IXMLDOMNode_iface;
     }else if(node_query_interface(&This->node, riid, ppvObject)) {
         return *ppvObject ? S_OK : E_NOINTERFACE;
     }else  {
@@ -1233,7 +1233,7 @@ static HRESULT WINAPI unknode_QueryInterface(
 static ULONG WINAPI unknode_AddRef(
     IXMLDOMNode *iface )
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     return InterlockedIncrement(&This->ref);
 }
@@ -1241,7 +1241,7 @@ static ULONG WINAPI unknode_AddRef(
 static ULONG WINAPI unknode_Release(
     IXMLDOMNode *iface )
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     LONG ref;
 
     ref = InterlockedDecrement( &This->ref );
@@ -1257,7 +1257,7 @@ static HRESULT WINAPI unknode_GetTypeInfoCount(
     IXMLDOMNode *iface,
     UINT* pctinfo )
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     TRACE("(%p)->(%p)\n", This, pctinfo);
 
@@ -1272,7 +1272,7 @@ static HRESULT WINAPI unknode_GetTypeInfo(
     LCID lcid,
     ITypeInfo** ppTInfo )
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
@@ -1290,7 +1290,7 @@ static HRESULT WINAPI unknode_GetIDsOfNames(
     LCID lcid,
     DISPID* rgDispId )
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     ITypeInfo *typeinfo;
     HRESULT hr;
@@ -1322,7 +1322,7 @@ static HRESULT WINAPI unknode_Invoke(
     EXCEPINFO* pExcepInfo,
     UINT* puArgErr )
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     ITypeInfo *typeinfo;
     HRESULT hr;
 
@@ -1332,7 +1332,7 @@ static HRESULT WINAPI unknode_Invoke(
     hr = get_typeinfo(IXMLDOMNode_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMNode_iface, dispIdMember, wFlags, pDispParams,
                 pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
@@ -1344,7 +1344,7 @@ static HRESULT WINAPI unknode_get_nodeName(
     IXMLDOMNode *iface,
     BSTR* p )
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     FIXME("(%p)->(%p)\n", This, p);
 
@@ -1355,7 +1355,7 @@ static HRESULT WINAPI unknode_get_nodeValue(
     IXMLDOMNode *iface,
     VARIANT* value)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     FIXME("(%p)->(%p)\n", This, value);
 
@@ -1370,7 +1370,7 @@ static HRESULT WINAPI unknode_put_nodeValue(
     IXMLDOMNode *iface,
     VARIANT value)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     FIXME("(%p)->(v%d)\n", This, V_VT(&value));
     return E_FAIL;
 }
@@ -1379,7 +1379,7 @@ static HRESULT WINAPI unknode_get_nodeType(
     IXMLDOMNode *iface,
     DOMNodeType* domNodeType )
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     FIXME("(%p)->(%p)\n", This, domNodeType);
 
@@ -1391,7 +1391,7 @@ static HRESULT WINAPI unknode_get_parentNode(
     IXMLDOMNode *iface,
     IXMLDOMNode** parent )
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     FIXME("(%p)->(%p)\n", This, parent);
     if (!parent) return E_INVALIDARG;
     *parent = NULL;
@@ -1402,7 +1402,7 @@ static HRESULT WINAPI unknode_get_childNodes(
     IXMLDOMNode *iface,
     IXMLDOMNodeList** outList)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     TRACE("(%p)->(%p)\n", This, outList);
 
@@ -1413,7 +1413,7 @@ static HRESULT WINAPI unknode_get_firstChild(
     IXMLDOMNode *iface,
     IXMLDOMNode** domNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     TRACE("(%p)->(%p)\n", This, domNode);
 
@@ -1424,7 +1424,7 @@ static HRESULT WINAPI unknode_get_lastChild(
     IXMLDOMNode *iface,
     IXMLDOMNode** domNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     TRACE("(%p)->(%p)\n", This, domNode);
 
@@ -1435,7 +1435,7 @@ static HRESULT WINAPI unknode_get_previousSibling(
     IXMLDOMNode *iface,
     IXMLDOMNode** domNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     TRACE("(%p)->(%p)\n", This, domNode);
 
@@ -1446,7 +1446,7 @@ static HRESULT WINAPI unknode_get_nextSibling(
     IXMLDOMNode *iface,
     IXMLDOMNode** domNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     TRACE("(%p)->(%p)\n", This, domNode);
 
@@ -1457,7 +1457,7 @@ static HRESULT WINAPI unknode_get_attributes(
     IXMLDOMNode *iface,
     IXMLDOMNamedNodeMap** attributeMap)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     FIXME("(%p)->(%p)\n", This, attributeMap);
 
@@ -1469,7 +1469,7 @@ static HRESULT WINAPI unknode_insertBefore(
     IXMLDOMNode* newNode, VARIANT refChild,
     IXMLDOMNode** outOldNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     FIXME("(%p)->(%p x%d %p)\n", This, newNode, V_VT(&refChild), outOldNode);
 
@@ -1482,7 +1482,7 @@ static HRESULT WINAPI unknode_replaceChild(
     IXMLDOMNode* oldNode,
     IXMLDOMNode** outOldNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     FIXME("(%p)->(%p %p %p)\n", This, newNode, oldNode, outOldNode);
 
@@ -1493,7 +1493,7 @@ static HRESULT WINAPI unknode_removeChild(
     IXMLDOMNode *iface,
     IXMLDOMNode* domNode, IXMLDOMNode** oldNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_removeChild( &This->node.IXMLDOMNode_iface, domNode, oldNode );
 }
 
@@ -1501,7 +1501,7 @@ static HRESULT WINAPI unknode_appendChild(
     IXMLDOMNode *iface,
     IXMLDOMNode* newNode, IXMLDOMNode** outNewNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_appendChild( &This->node.IXMLDOMNode_iface, newNode, outNewNode );
 }
 
@@ -1509,7 +1509,7 @@ static HRESULT WINAPI unknode_hasChildNodes(
     IXMLDOMNode *iface,
     VARIANT_BOOL* pbool)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
 }
 
@@ -1517,7 +1517,7 @@ static HRESULT WINAPI unknode_get_ownerDocument(
     IXMLDOMNode *iface,
     IXMLDOMDocument** domDocument)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
 }
 
@@ -1525,7 +1525,7 @@ static HRESULT WINAPI unknode_cloneNode(
     IXMLDOMNode *iface,
     VARIANT_BOOL pbool, IXMLDOMNode** outNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_cloneNode( &This->node.IXMLDOMNode_iface, pbool, outNode );
 }
 
@@ -1533,7 +1533,7 @@ static HRESULT WINAPI unknode_get_nodeTypeString(
     IXMLDOMNode *iface,
     BSTR* p)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     FIXME("(%p)->(%p)\n", This, p);
 
@@ -1544,7 +1544,7 @@ static HRESULT WINAPI unknode_get_text(
     IXMLDOMNode *iface,
     BSTR* p)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
 }
 
@@ -1552,7 +1552,7 @@ static HRESULT WINAPI unknode_put_text(
     IXMLDOMNode *iface,
     BSTR p)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_put_text( &This->node.IXMLDOMNode_iface, p );
 }
 
@@ -1560,7 +1560,7 @@ static HRESULT WINAPI unknode_get_specified(
     IXMLDOMNode *iface,
     VARIANT_BOOL* isSpecified)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     FIXME("(%p)->(%p) stub!\n", This, isSpecified);
     *isSpecified = VARIANT_TRUE;
     return S_OK;
@@ -1570,7 +1570,7 @@ static HRESULT WINAPI unknode_get_definition(
     IXMLDOMNode *iface,
     IXMLDOMNode** definitionNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     FIXME("(%p)->(%p)\n", This, definitionNode);
     return E_NOTIMPL;
 }
@@ -1579,7 +1579,7 @@ static HRESULT WINAPI unknode_get_nodeTypedValue(
     IXMLDOMNode *iface,
     VARIANT* var1)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     FIXME("(%p)->(%p)\n", This, var1);
     return return_null_var(var1);
 }
@@ -1588,7 +1588,7 @@ static HRESULT WINAPI unknode_put_nodeTypedValue(
     IXMLDOMNode *iface,
     VARIANT typedValue)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     FIXME("(%p)->(%s)\n", This, debugstr_variant(&typedValue));
     return E_NOTIMPL;
 }
@@ -1597,7 +1597,7 @@ static HRESULT WINAPI unknode_get_dataType(
     IXMLDOMNode *iface,
     VARIANT* var1)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_get_dataType( &This->node.IXMLDOMNode_iface, var1 );
 }
 
@@ -1605,7 +1605,7 @@ static HRESULT WINAPI unknode_put_dataType(
     IXMLDOMNode *iface,
     BSTR p)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     FIXME("(%p)->(%s)\n", This, debugstr_w(p));
 
@@ -1619,7 +1619,7 @@ static HRESULT WINAPI unknode_get_xml(
     IXMLDOMNode *iface,
     BSTR* p)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
 
     FIXME("(%p)->(%p)\n", This, p);
 
@@ -1630,7 +1630,7 @@ static HRESULT WINAPI unknode_transformNode(
     IXMLDOMNode *iface,
     IXMLDOMNode* domNode, BSTR* p)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_transformNode( &This->node.IXMLDOMNode_iface, domNode, p );
 }
 
@@ -1638,7 +1638,7 @@ static HRESULT WINAPI unknode_selectNodes(
     IXMLDOMNode *iface,
     BSTR p, IXMLDOMNodeList** outList)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_selectNodes( &This->node.IXMLDOMNode_iface, p, outList );
 }
 
@@ -1646,7 +1646,7 @@ static HRESULT WINAPI unknode_selectSingleNode(
     IXMLDOMNode *iface,
     BSTR p, IXMLDOMNode** outNode)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_selectSingleNode( &This->node.IXMLDOMNode_iface, p, outNode );
 }
 
@@ -1654,7 +1654,7 @@ static HRESULT WINAPI unknode_get_parsed(
     IXMLDOMNode *iface,
     VARIANT_BOOL* isParsed)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     FIXME("(%p)->(%p) stub!\n", This, isParsed);
     *isParsed = VARIANT_TRUE;
     return S_OK;
@@ -1664,7 +1664,7 @@ static HRESULT WINAPI unknode_get_namespaceURI(
     IXMLDOMNode *iface,
     BSTR* p)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     TRACE("(%p)->(%p)\n", This, p);
     return node_get_namespaceURI(&This->node, p);
 }
@@ -1673,7 +1673,7 @@ static HRESULT WINAPI unknode_get_prefix(
     IXMLDOMNode *iface,
     BSTR* p)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_get_prefix( &This->node.IXMLDOMNode_iface, p );
 }
 
@@ -1681,7 +1681,7 @@ static HRESULT WINAPI unknode_get_baseName(
     IXMLDOMNode *iface,
     BSTR* p)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     return IXMLDOMNode_get_baseName( &This->node.IXMLDOMNode_iface, p );
 }
 
@@ -1689,7 +1689,7 @@ static HRESULT WINAPI unknode_transformNodeToObject(
     IXMLDOMNode *iface,
     IXMLDOMNode* domNode, VARIANT var1)
 {
-    unknode *This = impl_from_unkIXMLDOMNode( iface );
+    unknode *This = unknode_from_IXMLDOMNode( iface );
     FIXME("(%p)->(%p %s)\n", This, domNode, debugstr_variant(&var1));
     return E_NOTIMPL;
 }
@@ -1792,10 +1792,10 @@ IXMLDOMNode *create_node( xmlNodePtr node )
         if(!new_node)
             return NULL;
 
-        new_node->lpVtbl = &unknode_vtbl;
+        new_node->IXMLDOMNode_iface.lpVtbl = &unknode_vtbl;
         new_node->ref = 1;
-        init_xmlnode(&new_node->node, node, (IXMLDOMNode*)&new_node->lpVtbl, NULL);
-        pUnk = (IUnknown*)&new_node->lpVtbl;
+        init_xmlnode(&new_node->node, node, &new_node->IXMLDOMNode_iface, NULL);
+        pUnk = (IUnknown*)&new_node->IXMLDOMNode_iface;
     }
     }
 
