@@ -388,18 +388,18 @@ static void sock_poll_event( struct fd *fd, int event )
 
     if (sock->state & FD_CONNECT)
     {
-        /* connecting */
-        if (event & POLLOUT)
+        if (event & (POLLERR|POLLHUP))
+        {
+            /* we didn't get connected? */
+            sock->state &= ~FD_CONNECT;
+            event &= ~POLLOUT;
+            error = sock_error( fd );
+        }
+        else if (event & POLLOUT)
         {
             /* we got connected */
             sock->state |= FD_WINE_CONNECTED|FD_READ|FD_WRITE;
             sock->state &= ~FD_CONNECT;
-        }
-        else if (event & (POLLERR|POLLHUP))
-        {
-            /* we didn't get connected? */
-            sock->state &= ~FD_CONNECT;
-            error = sock_error( fd );
         }
     }
     else if (sock->state & FD_WINE_LISTENING)

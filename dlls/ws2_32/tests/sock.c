@@ -4026,7 +4026,7 @@ static void test_ConnectEx(void)
     closesocket(listener);
     listener = INVALID_SOCKET;
 
-    address.sin_port = 1;
+    address.sin_port = htons(1);
 
     bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
     ok(bret == FALSE && GetLastError(), "ConnectEx to bad destination failed: "
