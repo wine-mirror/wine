@@ -73,6 +73,8 @@ typedef struct lanmsg {
 	int		cp;		/* Codepage of message */
 	WCHAR		*msg;		/* Message text */
 	int		len;		/* Message length including trailing '\0' */
+	const char	*file;		/* File location for definition */
+	int		line;
 } lanmsg_t;
 
 typedef struct msg {

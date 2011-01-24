@@ -441,6 +441,8 @@ static lanmsg_t *new_lanmsg(lan_cp_t *lcp, WCHAR *msg)
 	lmp->cp  = lcp->codepage;
 	lmp->msg = msg;
 	lmp->len = unistrlen(msg) + 1;	/* Include termination */
+	lmp->file = input_name;
+	lmp->line = line_number;
 	if(lmp->len > 4096)
 		mcy_warning("Message exceptionally long; might be a missing termination\n");
 	return lmp;
@@ -522,7 +524,7 @@ static void test_id(int id)
 
 static int check_languages(node_t *head)
 {
-	static const char err_missing[] = "Missing definition for language 0x%x; MessageID %d, facility 0x%x, severity 0x%x";
+	static const char err_missing[] = "Missing definition for language 0x%x; MessageID %d, facility 0x%x, severity 0x%x\n";
 	node_t *ndp;
 	int nm = 0;
 	msg_t *msg = NULL;
