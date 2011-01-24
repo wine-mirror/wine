@@ -788,7 +788,6 @@ static const KeyEntry StdKeyMap[] =
     {/*BACK*/0x08,	WCEL_DeletePrevChar 	},
     {/*RETURN*/0x0d,	WCEL_Done		},
     {/*DEL*/127,	WCEL_DeleteCurrChar 	},
-    {/*VK_INSERT*/0x2d, WCEL_ToggleInsert 	},
     {	0,		NULL			}
 };
 
@@ -850,6 +849,7 @@ static const KeyEntry EmacsStdKeyMap[] =
     {/*VK_RIGHT*/0x27,	WCEL_MoveRight 		},
     {/*VK_LEFT*/ 0x25,	WCEL_MoveLeft 		},
     {/*VK_DEL*/  0x2e,  WCEL_DeleteCurrChar     },
+    {/*VK_INSERT*/0x2d, WCEL_ToggleInsert 	},
     {	0,		NULL 			}
 };
 
