@@ -1101,8 +1101,9 @@ static enum read_console_input_return bare_console_fetch_input(HANDLE handle, in
 {
     enum read_console_input_return      ret;
     char                                input[8];
+    WCHAR                               inputw[8];
     int                                 i;
-    size_t                              idx = 0;
+    size_t                              idx = 0, idxw;
     unsigned                            numEvent;
     INPUT_RECORD                        ir[8];
     DWORD                               written;
@@ -1157,12 +1158,21 @@ static enum read_console_input_return bare_console_fetch_input(HANDLE handle, in
                 break;
             case -1:
                 /* we haven't found the string into key-db, push full input string into server */
-                for (i = 0; i < idx; i++)
+                idxw = MultiByteToWideChar(CP_UNIXCP, 0, input, idx, inputw, sizeof(inputw) / sizeof(inputw[0]));
+
+                /* we cannot translate yet... likely we need more chars (wait max 1/2s for next char) */
+                if (idxw == 0)
                 {
-                    numEvent = TERM_FillSimpleChar(input[i], ir);
+                    timeout = 500;
+                    next_char = TRUE;
+                    break;
+                }
+                for (i = 0; i < idxw; i++)
+                {
+                    numEvent = TERM_FillSimpleChar(inputw[i], ir);
                     WriteConsoleInputW(handle, ir, numEvent, &written);
                 }
-                ret = idx == 0 ? rci_timeout : rci_gotone;
+                ret = rci_gotone;
                 break;
             default:
                 /* we got a transformation from key-db... push this into server */

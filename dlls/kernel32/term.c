@@ -87,11 +87,10 @@ static inline void init_complex_char(INPUT_RECORD* ir, BOOL down, WORD vk, WORD 
  *		TERM_FillSimpleChar
  *
  */
-unsigned TERM_FillSimpleChar(unsigned real_inchar, INPUT_RECORD* ir)
+unsigned TERM_FillSimpleChar(WCHAR real_inchar, INPUT_RECORD* ir)
 {
     unsigned            vk;
-    unsigned            inchar;
-    char                ch;
+    WCHAR               inchar;
     unsigned            numEvent = 0;
     DWORD               cks = 0;
 
@@ -110,8 +109,7 @@ unsigned TERM_FillSimpleChar(unsigned real_inchar, INPUT_RECORD* ir)
         inchar = real_inchar;
         break;
     }
-    if ((inchar & ~0xFF) != 0) FIXME("What a char (%u)\n", inchar);
-    vk = vkkeyscan_table[inchar];
+    vk = (inchar < 256) ? vkkeyscan_table[inchar] : 0;
     if (vk & 0x0100)
         init_complex_char(&ir[numEvent++], 1, 0x2a, 0x10, SHIFT_PRESSED);
     if ((vk & 0x0200) || (unsigned char)real_inchar <= 26)
@@ -132,8 +130,7 @@ unsigned TERM_FillSimpleChar(unsigned real_inchar, INPUT_RECORD* ir)
     ir[numEvent].Event.KeyEvent.wVirtualKeyCode = vk;
     ir[numEvent].Event.KeyEvent.wVirtualScanCode = mapvkey_0[vk & 0x00ff]; /* VirtualKeyCodes to ScanCode */
 
-    ch = inchar;
-    MultiByteToWideChar(CP_UNIXCP, 0, &ch, 1, &ir[numEvent].Event.KeyEvent.uChar.UnicodeChar, 1);
+    ir[numEvent].Event.KeyEvent.uChar.UnicodeChar = inchar;
     ir[numEvent + 1] = ir[numEvent];
     ir[numEvent + 1].Event.KeyEvent.bKeyDown = 0;
 
