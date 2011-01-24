@@ -3174,31 +3174,29 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
                   const struct elf_thunk_area* thunks,
                   struct image_file_map* fmap)
 {
-    dwarf2_section_t    section[section_max];
+    dwarf2_section_t    eh_frame, section[section_max];
     dwarf2_traverse_context_t   mod_ctx;
     struct image_section_map    debug_sect, debug_str_sect, debug_abbrev_sect,
-                                debug_line_sect, debug_ranges_sect;
+                                debug_line_sect, debug_ranges_sect, eh_frame_sect;
     BOOL                ret = TRUE;
     struct module_format* dwarf2_modfmt;
 
-    if (!dwarf2_init_section(&section[section_debug],  fmap, ".debug_info", &debug_sect))
-        /* no Dwarf debug info here */
-        return FALSE;
-
+    dwarf2_init_section(&eh_frame,                fmap, ".eh_frame",     &eh_frame_sect);
+    dwarf2_init_section(&section[section_debug],  fmap, ".debug_info",   &debug_sect);
     dwarf2_init_section(&section[section_abbrev], fmap, ".debug_abbrev", &debug_abbrev_sect);
     dwarf2_init_section(&section[section_string], fmap, ".debug_str",    &debug_str_sect);
     dwarf2_init_section(&section[section_line],   fmap, ".debug_line",   &debug_line_sect);
     dwarf2_init_section(&section[section_ranges], fmap, ".debug_ranges", &debug_ranges_sect);
 
-    if (section[section_debug].address == IMAGE_NO_MAP ||
-        section[section_abbrev].address == IMAGE_NO_MAP ||
-        section[section_string].address == IMAGE_NO_MAP)
+    /* to do anything useful we need either .eh_frame or .debug_info */
+    if ((!eh_frame.address || eh_frame.address == IMAGE_NO_MAP) &&
+        (!section[section_debug].address || section[section_debug].address == IMAGE_NO_MAP))
     {
         ret = FALSE;
         goto leave;
     }
 
-    if (fmap->modtype == DMT_ELF)
+    if (fmap->modtype == DMT_ELF && debug_sect.fmap)
     {
         /* debug info might have a different base address than .so file
          * when elf file is prelinked after splitting off debug info
@@ -3232,7 +3230,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
      */
     dwarf2_init_section(&dwarf2_modfmt->u.dwarf2_info->debug_loc,   fmap, ".debug_loc",   NULL);
     dwarf2_init_section(&dwarf2_modfmt->u.dwarf2_info->debug_frame, fmap, ".debug_frame", NULL);
-    dwarf2_init_section(&dwarf2_modfmt->u.dwarf2_info->eh_frame,    fmap, ".eh_frame",    NULL);
+    dwarf2_modfmt->u.dwarf2_info->eh_frame = eh_frame;
 
     while (mod_ctx.data < mod_ctx.end_data)
     {
@@ -3252,6 +3250,7 @@ leave:
     image_unmap_section(&debug_str_sect);
     image_unmap_section(&debug_line_sect);
     image_unmap_section(&debug_ranges_sect);
+    if (!ret) image_unmap_section(&eh_frame_sect);
 
     return ret;
 }
