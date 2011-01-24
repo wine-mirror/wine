@@ -163,10 +163,11 @@ static HRESULT  WINAPI IWineD3DPaletteImpl_SetEntries(IWineD3DPalette *iface,
 
     LIST_FOR_EACH_ENTRY(res, &This->device->resources, IWineD3DResourceImpl, resource.resource_list_entry)
     {
-        if(IWineD3DResource_GetType((IWineD3DResource *) res) == WINED3DRTYPE_SURFACE) {
-            IWineD3DSurfaceImpl *impl = (IWineD3DSurfaceImpl *) res;
-            if(impl->palette == This)
-                IWineD3DSurface_RealizePalette((IWineD3DSurface *) res);
+        if (IWineD3DResource_GetType((IWineD3DResource *)res) == WINED3DRTYPE_SURFACE)
+        {
+            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)res;
+            if (surface->palette == This)
+                surface->surface_ops->surface_realize_palette(surface);
         }
     }
 

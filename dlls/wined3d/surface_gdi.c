@@ -57,6 +57,49 @@ void surface_gdi_cleanup(IWineD3DSurfaceImpl *This)
     resource_cleanup((IWineD3DResourceImpl *)This);
 }
 
+static void gdi_surface_realize_palette(IWineD3DSurfaceImpl *surface)
+{
+    IWineD3DPaletteImpl *palette = surface->palette;
+
+    TRACE("surface %p.\n", surface);
+
+    if (!palette) return;
+
+    if (surface->flags & SFLAG_DIBSECTION)
+    {
+        RGBQUAD col[256];
+        unsigned int i;
+
+        TRACE("Updating the DC's palette.\n");
+
+        for (i = 0; i < 256; ++i)
+        {
+            col[i].rgbRed   = palette->palents[i].peRed;
+            col[i].rgbGreen = palette->palents[i].peGreen;
+            col[i].rgbBlue  = palette->palents[i].peBlue;
+            col[i].rgbReserved = 0;
+        }
+        SetDIBColorTable(surface->hDC, 0, 256, col);
+    }
+
+    /* Update the image because of the palette change. Some games like e.g.
+     * Red Alert call SetEntries a lot to implement fading. */
+    /* Tell the swapchain to update the screen. */
+    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+    {
+        IWineD3DSwapChainImpl *swapchain = surface->container.u.swapchain;
+        if (surface == swapchain->front_buffer)
+        {
+            x11_copy_to_screen(swapchain, NULL);
+        }
+    }
+}
+
+static const struct wined3d_surface_ops gdi_surface_ops =
+{
+    gdi_surface_realize_palette,
+};
+
 /*****************************************************************************
  * IWineD3DSurface::Release, GDI version
  *
@@ -290,42 +333,6 @@ static HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineGDISurfaceImpl_RealizePalette(IWineD3DSurface *iface) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    RGBQUAD col[256];
-    IWineD3DPaletteImpl *pal = This->palette;
-    unsigned int n;
-    TRACE("(%p)\n", This);
-
-    if (!pal) return WINED3D_OK;
-
-    if (This->flags & SFLAG_DIBSECTION)
-    {
-        TRACE("(%p): Updating the hdc's palette\n", This);
-        for (n=0; n<256; n++) {
-            col[n].rgbRed   = pal->palents[n].peRed;
-            col[n].rgbGreen = pal->palents[n].peGreen;
-            col[n].rgbBlue  = pal->palents[n].peBlue;
-            col[n].rgbReserved = 0;
-        }
-        SetDIBColorTable(This->hDC, 0, 256, col);
-    }
-
-    /* Update the image because of the palette change. Some games like e.g Red Alert
-       call SetEntries a lot to implement fading. */
-    /* Tell the swapchain to update the screen */
-    if (This->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-    {
-        IWineD3DSwapChainImpl *swapchain = This->container.u.swapchain;
-        if (This == swapchain->front_buffer)
-        {
-            x11_copy_to_screen(swapchain, NULL);
-        }
-    }
-
-    return WINED3D_OK;
-}
-
 /*****************************************************************************
  * IWineD3DSurface::PrivateSetup, GDI version
  *
@@ -348,6 +355,8 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     HRESULT hr;
+
+    This->surface_ops = &gdi_surface_ops;
 
     if(This->resource.usage & WINED3DUSAGE_OVERLAY)
     {
@@ -469,7 +478,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_BltFast,
     IWineD3DBaseSurfaceImpl_GetPalette,
     IWineD3DBaseSurfaceImpl_SetPalette,
-    IWineGDISurfaceImpl_RealizePalette,
     IWineD3DBaseSurfaceImpl_SetColorKey,
     IWineD3DBaseSurfaceImpl_GetPitch,
     IWineGDISurfaceImpl_SetMem,

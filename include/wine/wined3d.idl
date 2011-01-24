@@ -2426,8 +2426,6 @@ interface IWineD3DSurface : IWineD3DResource
     HRESULT SetPalette(
         [in] IWineD3DPalette *palette
     );
-    HRESULT RealizePalette(
-    );
     HRESULT SetColorKey(
         [in] DWORD flags,
         [in] const WINEDDCOLORKEY *color_key

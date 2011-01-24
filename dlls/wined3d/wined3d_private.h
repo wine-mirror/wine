@@ -2088,6 +2088,11 @@ struct wined3d_subresource_container
     } u;
 };
 
+struct wined3d_surface_ops
+{
+    void (*surface_realize_palette)(struct IWineD3DSurfaceImpl *surface);
+};
+
 /*****************************************************************************
  * IWineD3DSurface implementation structure
  */
@@ -2098,6 +2103,7 @@ struct IWineD3DSurfaceImpl
     IWineD3DResourceClass     resource;
 
     /* IWineD3DSurface fields */
+    const struct wined3d_surface_ops *surface_ops;
     struct wined3d_subresource_container container;
     WINED3DSURFACET_DESC      currentDesc;
     IWineD3DPaletteImpl       *palette; /* D3D7 style palette handling */

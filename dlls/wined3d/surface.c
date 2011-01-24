@@ -333,6 +333,64 @@ void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, 
     }
 }
 
+static void surface_realize_palette(IWineD3DSurfaceImpl *surface)
+{
+    IWineD3DPaletteImpl *palette = surface->palette;
+
+    TRACE("surface %p.\n", surface);
+
+    if (!palette) return;
+
+    if (surface->resource.format->id == WINED3DFMT_P8_UINT
+            || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
+    {
+        if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
+        {
+            /* Make sure the texture is up to date. This call doesn't do
+             * anything if the texture is already up to date. */
+            surface_load_location(surface, SFLAG_INTEXTURE, NULL);
+
+            /* We want to force a palette refresh, so mark the drawable as not being up to date */
+            surface_modify_location(surface, SFLAG_INDRAWABLE, FALSE);
+        }
+        else
+        {
+            if (!(surface->flags & SFLAG_INSYSMEM))
+            {
+                TRACE("Palette changed with surface that does not have an up to date system memory copy.\n");
+                surface_load_location(surface, SFLAG_INSYSMEM, NULL);
+            }
+            surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+        }
+    }
+
+    if (surface->flags & SFLAG_DIBSECTION)
+    {
+        RGBQUAD col[256];
+        unsigned int i;
+
+        TRACE("Updating the DC's palette.\n");
+
+        for (i = 0; i < 256; ++i)
+        {
+            col[i].rgbRed   = palette->palents[i].peRed;
+            col[i].rgbGreen = palette->palents[i].peGreen;
+            col[i].rgbBlue  = palette->palents[i].peBlue;
+            col[i].rgbReserved = 0;
+        }
+        SetDIBColorTable(surface->hDC, 0, 256, col);
+    }
+
+    /* Propagate the changes to the drawable when we have a palette. */
+    if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
+        surface_load_location(surface, SFLAG_INDRAWABLE, NULL);
+}
+
+static const struct wined3d_surface_ops surface_ops =
+{
+    surface_realize_palette,
+};
+
 HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
         UINT width, UINT height, UINT level, BOOL lockable, BOOL discard, WINED3DMULTISAMPLE_TYPE multisample_type,
         UINT multisample_quality, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
@@ -3896,64 +3954,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD 
     return IWineD3DBaseSurfaceImpl_BltFast(iface, dstx, dsty, src_surface, rsrc, trans);
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    RGBQUAD col[256];
-    IWineD3DPaletteImpl *pal = This->palette;
-    unsigned int n;
-    TRACE("(%p)\n", This);
-
-    if (!pal) return WINED3D_OK;
-
-    if (This->resource.format->id == WINED3DFMT_P8_UINT
-            || This->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
-    {
-        if (This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-        {
-            /* Make sure the texture is up to date. This call doesn't do
-             * anything if the texture is already up to date. */
-            surface_load_location(This, SFLAG_INTEXTURE, NULL);
-
-            /* We want to force a palette refresh, so mark the drawable as not being up to date */
-            surface_modify_location(This, SFLAG_INDRAWABLE, FALSE);
-        }
-        else
-        {
-            if (!(This->flags & SFLAG_INSYSMEM))
-            {
-                TRACE("Palette changed with surface that does not have an up to date system memory copy.\n");
-                surface_load_location(This, SFLAG_INSYSMEM, NULL);
-            }
-            TRACE("Dirtifying surface\n");
-            surface_modify_location(This, SFLAG_INSYSMEM, TRUE);
-        }
-    }
-
-    if (This->flags & SFLAG_DIBSECTION)
-    {
-        TRACE("(%p): Updating the hdc's palette\n", This);
-        for (n=0; n<256; n++) {
-            col[n].rgbRed   = pal->palents[n].peRed;
-            col[n].rgbGreen = pal->palents[n].peGreen;
-            col[n].rgbBlue  = pal->palents[n].peBlue;
-            col[n].rgbReserved = 0;
-        }
-        SetDIBColorTable(This->hDC, 0, 256, col);
-    }
-
-    /* Propagate the changes to the drawable when we have a palette. */
-    if (This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-        surface_load_location(This, SFLAG_INDRAWABLE, NULL);
-
-    return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     /** Check against the maximum texture sizes supported by the video card **/
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
     unsigned int pow2Width, pow2Height;
+
+    This->surface_ops = &surface_ops;
 
     This->texture_name = 0;
     This->texture_target = GL_TEXTURE_2D;
@@ -4701,7 +4708,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_BltFast,
     IWineD3DBaseSurfaceImpl_GetPalette,
     IWineD3DBaseSurfaceImpl_SetPalette,
-    IWineD3DSurfaceImpl_RealizePalette,
     IWineD3DBaseSurfaceImpl_SetColorKey,
     IWineD3DBaseSurfaceImpl_GetPitch,
     IWineD3DSurfaceImpl_SetMem,

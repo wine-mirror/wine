@@ -237,9 +237,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD
         if (This->resource.usage & WINED3DUSAGE_RENDERTARGET)
             PalImpl->flags |= WINEDDPCAPS_PRIMARYSURFACE;
 
-        return IWineD3DSurface_RealizePalette(iface);
+        This->surface_ops->surface_realize_palette(This);
     }
-    else return WINED3D_OK;
+
+    return WINED3D_OK;
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD flags, const WINEDDCOLORKEY *CKey)
