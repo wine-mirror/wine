@@ -35,9 +35,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddrawex);
  ******************************************************************************/
 static IDirectDrawSurfaceImpl *impl_from_dds3(IDirectDrawSurface3 *iface)
 {
-    if(!iface) return NULL;
     return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirectDrawSurface3_Vtbl));
 }
+
+static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface);
+
 static IDirectDrawSurface3 *dds3_from_impl(IDirectDrawSurfaceImpl *This)
 {
     if(!This) return NULL;
@@ -179,7 +181,7 @@ IDirectDrawSurface3Impl_AddAttachedSurface(IDirectDrawSurface3 *iface,
                                            IDirectDrawSurface3 *Attach_iface)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
-    IDirectDrawSurfaceImpl *attach = impl_from_dds3(Attach_iface);
+    IDirectDrawSurfaceImpl *attach = unsafe_impl_from_IDirectDrawSurface3(Attach_iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, attach);
     return IDirectDrawSurface4_AddAttachedSurface(dds4_from_impl(This), dds4_from_impl(attach));
 }
@@ -226,7 +228,7 @@ IDirectDrawSurface3Impl_Blt(IDirectDrawSurface3 *iface,
                             DDBLTFX *DDBltFx)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
-    IDirectDrawSurfaceImpl *Src = impl_from_dds3(SrcSurface);
+    IDirectDrawSurfaceImpl *Src = unsafe_impl_from_IDirectDrawSurface3(SrcSurface);
     TRACE("(%p)->(%p,%p,%p,0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, DestRect, Src, SrcRect, Flags, DDBltFx);
     return IDirectDrawSurface4_Blt(dds4_from_impl(This), DestRect, dds4_from_impl(Src),
                                    SrcRect, Flags, DDBltFx);
@@ -278,7 +280,7 @@ IDirectDrawSurface3Impl_BltFast(IDirectDrawSurface3 *iface,
                                 DWORD trans)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
-    IDirectDrawSurfaceImpl *Src = impl_from_dds3(Source);
+    IDirectDrawSurfaceImpl *Src = unsafe_impl_from_IDirectDrawSurface3(Source);
     TRACE("(%p)->(%u,%u,%p,%p,0x%08x): Thunking to IDirectDrawSurface4\n", This, dstx, dsty, Src, rsrc, trans);
     return IDirectDrawSurface4_BltFast(dds4_from_impl(This), dstx, dsty, dds4_from_impl(Src),
                                        rsrc, trans);
@@ -302,7 +304,7 @@ IDirectDrawSurface3Impl_DeleteAttachedSurface(IDirectDrawSurface3 *iface,
                                               IDirectDrawSurface3 *Attach)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
-    IDirectDrawSurfaceImpl *Att = impl_from_dds3(Attach);
+    IDirectDrawSurfaceImpl *Att = unsafe_impl_from_IDirectDrawSurface3(Attach);
     TRACE("(%p)->(0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, Flags, Att);
     return IDirectDrawSurface4_DeleteAttachedSurface(dds4_from_impl(This), Flags,
                                                      dds4_from_impl(Att));
@@ -421,7 +423,7 @@ IDirectDrawSurface3Impl_Flip(IDirectDrawSurface3 *iface,
                              DWORD Flags)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
-    IDirectDrawSurfaceImpl *Dest = impl_from_dds3(DestOverride);
+    IDirectDrawSurfaceImpl *Dest = unsafe_impl_from_IDirectDrawSurface3(DestOverride);
     TRACE("(%p)->(%p,0x%08x): Thunking to IDirectDrawSurface4\n", This, Dest, Flags);
     return IDirectDrawSurface4_Flip(dds4_from_impl(This), dds4_from_impl(Dest), Flags);
 }
@@ -940,7 +942,7 @@ IDirectDrawSurface3Impl_UpdateOverlay(IDirectDrawSurface3 *iface,
                                       LPDDOVERLAYFX FX)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
-    IDirectDrawSurfaceImpl *Dst = impl_from_dds3(DstSurface);
+    IDirectDrawSurfaceImpl *Dst = unsafe_impl_from_IDirectDrawSurface3(DstSurface);
     TRACE("(%p)->(%p,%p,%p,0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, SrcRect, Dst, DstRect, Flags, FX);
     return IDirectDrawSurface4_UpdateOverlay(dds4_from_impl(This), SrcRect, dds4_from_impl(Dst),
                                              DstRect, Flags, FX);
@@ -981,7 +983,7 @@ IDirectDrawSurface3Impl_UpdateOverlayZOrder(IDirectDrawSurface3 *iface,
                                             IDirectDrawSurface3 *DDSRef)
 {
     IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
-    IDirectDrawSurfaceImpl *Ref = impl_from_dds3(DDSRef);
+    IDirectDrawSurfaceImpl *Ref = unsafe_impl_from_IDirectDrawSurface3(DDSRef);
     TRACE("(%p)->(0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, Flags, Ref);
     return IDirectDrawSurface4_UpdateOverlayZOrder(dds4_from_impl(This), Flags, dds4_from_impl(Ref));
 }
@@ -1238,6 +1240,13 @@ const IDirectDrawSurface4Vtbl IDirectDrawSurface4_Vtbl =
     IDirectDrawSurface4Impl_GetUniquenessValue,
     IDirectDrawSurface4Impl_ChangeUniquenessValue,
 };
+
+static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
+{
+    if (!iface) return NULL;
+    if (iface->lpVtbl != &IDirectDrawSurface3_Vtbl) return NULL;
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_Vtbl);
+}
 
 /* dds_get_outer
  *
