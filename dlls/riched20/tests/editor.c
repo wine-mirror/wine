@@ -520,11 +520,13 @@ static void test_EM_SCROLLCARET(void)
 static void test_EM_POSFROMCHAR(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
-  int i;
+  int i, expected;
   LRESULT result;
   unsigned int height = 0;
   int xpos = 0;
   POINTL pt;
+  LOCALESIGNATURE sig;
+  BOOL rtl;
   static const char text[] = "aa\n"
       "this is a long line of text that should be longer than the "
       "control's width\n"
@@ -534,6 +536,10 @@ static void test_EM_POSFROMCHAR(void)
       "ff\n"
       "gg\n"
       "hh\n";
+
+  rtl = (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_FONTSIGNATURE,
+                        (LPSTR) &sig, sizeof(LOCALESIGNATURE)) &&
+         (sig.lsUsb[3] & 0x08000000) != 0);
 
   /* Fill the control to lines to ensure that most of them are offscreen */
   for (i = 0; i < 50; i++)
@@ -586,7 +592,8 @@ static void test_EM_POSFROMCHAR(void)
   /* Testing position way past end of text */
   result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, 55 * 16, 0);
   ok(HIWORD(result) == 50 * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", HIWORD(result), 50 * height);
-  ok(LOWORD(result) == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+  expected = (rtl ? 8 : 1);
+  ok(LOWORD(result) == expected, "EM_POSFROMCHAR reports x=%d, expected %d\n", LOWORD(result), expected);
 
   /* Testing that vertical scrolling does, in fact, have an effect on EM_POSFROMCHAR */
   SendMessage(hwndRichEdit, EM_SCROLL, SB_LINEDOWN, 0); /* line down */
@@ -608,7 +615,8 @@ static void test_EM_POSFROMCHAR(void)
   /* Testing position way past end of text */
   result = SendMessage(hwndRichEdit, EM_POSFROMCHAR, 55 * 16, 0);
   ok(HIWORD(result) == (50 - 1) * height, "EM_POSFROMCHAR reports y=%d, expected %d\n", HIWORD(result), (50 - 1) * height);
-  ok(LOWORD(result) == xpos, "EM_POSFROMCHAR reports x=%d, expected 1\n", LOWORD(result));
+  expected = (rtl ? 8 : 1);
+  ok(LOWORD(result) == expected, "EM_POSFROMCHAR reports x=%d, expected %d\n", LOWORD(result), expected);
 
   /* Testing that horizontal scrolling does, in fact, have an effect on EM_POSFROMCHAR */
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
@@ -636,7 +644,7 @@ static void test_EM_POSFROMCHAR(void)
   SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt,
               SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0));
   ok(pt.x > xpos, "pt.x = %d\n", pt.x);
-  xpos = pt.x;
+  xpos = (rtl ? pt.x + 7 : pt.x);
   SendMessage(hwndRichEdit, EM_POSFROMCHAR, (WPARAM)&pt,
               SendMessage(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0)+1);
   ok(pt.x == xpos, "pt.x = %d\n", pt.x);
@@ -666,6 +674,12 @@ static void test_EM_SETCHARFORMAT(void)
   };
   int i;
   CHARRANGE cr;
+  LOCALESIGNATURE sig;
+  BOOL rtl;
+
+  rtl = (GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_FONTSIGNATURE,
+                        (LPSTR) &sig, sizeof(LOCALESIGNATURE)) &&
+         (sig.lsUsb[3] & 0x08000000) != 0);
 
   /* Invalid flags, CHARFORMAT2 structure blanked out */
   memset(&cf2, 0, sizeof(cf2));
@@ -764,8 +778,13 @@ static void test_EM_SETCHARFORMAT(void)
   ok(rc == 0, "Text marked as modified, expected not modified!\n");
   rc = SendMessage(hwndRichEdit, EM_SETCHARFORMAT, 0, (LPARAM) &cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
-  rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
-  ok(rc == 0, "Text marked as modified, expected not modified!\n");
+  if (! rtl)
+  {
+    rc = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
+    ok(rc == 0, "Text marked as modified, expected not modified!\n");
+  }
+  else
+    skip("RTL language found\n");
 
   /* wParam==SCF_SELECTION sets modify if nonempty selection */
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
@@ -6086,7 +6105,7 @@ static void test_EM_CHARFROMPOS(void)
     todo_wine ok(result == 33, "expected character index of 33 but got %d\n", result);
 
     point.x = 1000;
-    point.y = 40;
+    point.y = 36;
     result = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
     todo_wine ok(result == 39, "expected character index of 39 but got %d\n", result);
 
