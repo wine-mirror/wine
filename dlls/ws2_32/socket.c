@@ -1807,6 +1807,7 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
         if (result >= 0)
         {
             status = STATUS_SUCCESS;
+            iosb->Information += result;
         }
         else if (errno == EINTR || errno == EAGAIN)
         {
@@ -1815,14 +1816,12 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
         else
         {
             status = wsaErrStatus();
-            result = 0;
         }
         break;
     }
     if (status != STATUS_PENDING)
     {
         iosb->u.Status = status;
-        iosb->Information = result;
         *apc = ws2_async_apc;
     }
     return status;
