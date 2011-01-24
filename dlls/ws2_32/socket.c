@@ -1793,26 +1793,16 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
 
         if (result >= 0)
         {
-            int totalLength = 0;
-            unsigned int i;
             status = STATUS_SUCCESS;
-            for (i = 0; i < wsa->n_iovecs; i++)
-                totalLength += wsa->iovec[i].iov_len;
-            if (result < totalLength)
-                _enable_event( wsa->hSocket, FD_WRITE, 0, 0 );
+        }
+        else if (errno == EINTR || errno == EAGAIN)
+        {
+            status = STATUS_PENDING;
         }
         else
         {
-            if (errno == EINTR || errno == EAGAIN)
-            {
-                status = STATUS_PENDING;
-                _enable_event( wsa->hSocket, FD_WRITE, 0, 0 );
-            }
-            else
-            {
-                status = wsaErrStatus();
-                result = 0;
-            }
+            status = wsaErrStatus();
+            result = 0;
         }
         break;
     }
@@ -3921,6 +3911,10 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 err = wine_server_call( req );
             }
             SERVER_END_REQ;
+
+            /* Enable the event only after starting the async. The server will deliver it as soon as
+               the async is done. */
+            _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
 
             if (err != STATUS_PENDING) HeapFree( GetProcessHeap(), 0, wsa );
             WSASetLastError( NtStatusToWSAError( err ));
