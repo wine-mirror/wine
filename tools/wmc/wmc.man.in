@@ -52,6 +52,12 @@ Output to \fIfile\fR. Default is \fIinputfile.rc\fR.
 Set the output format. Supported formats are \fBrc\fR (the default),
 \fBres\fR, and \fBpot\fR.
 .TP
+.BI \-P\  directory
+Enable the generation of resource translations based on po files
+loaded from the specified directory. That directory must follow the
+gettext convention, in particular in must contain one .po file for
+each language, and a LINGUAS file listing the available languages.
+.TP
 .B \-u
 Assume that the inputfile is in unicode.
 .TP

@@ -49,6 +49,7 @@ static const char usage[] =
 	"   -i          Inline messagetable(s)\n"
 	"   -o file     Output to file (default is inputfile.rc)\n"
 	"   -O fmt      Set output format (rc, res, pot)\n"
+	"   -P dir      Directory where to find po files\n"
 	"   -u          Inputfile is in unicode\n"
 	"   -U          Output unicode messagetable(s)\n"
 	"   -v          Show supported codepages and languages\n"
@@ -103,6 +104,8 @@ int rcinline = 0;
  * Debugging flag (-D option)
  */
 static int dodebug = 0;
+
+static char *po_dir;
 
 char *output_name = NULL;	/* The name given by the -o option */
 char *input_name = NULL;	/* The name given on the command-line */
@@ -173,7 +176,7 @@ int main(int argc,char *argv[])
 			strcat(cmdline, " ");
 	}
 
-	while((optc = getopt(argc, argv, "B:cdDhH:io:O:p:uUvVW")) != EOF)
+	while((optc = getopt(argc, argv, "B:cdDhH:io:O:P:uUvVW")) != EOF)
 	{
 		switch(optc)
 		{
@@ -228,6 +231,9 @@ int main(int argc,char *argv[])
                             fprintf(stderr, "Output format must be rc or res\n" );
                             lose++;
                         }
+                        break;
+		case 'P':
+			po_dir = xstrdup( optarg );
                         break;
 		case 'u':
 			unicodein = 1;
@@ -319,6 +325,7 @@ int main(int argc,char *argv[])
 		write_bin_files();
             break;
         case FORMAT_RES:
+            if (po_dir) add_translations( po_dir );
             write_res_file( output_name );
             break;
         case FORMAT_POT:

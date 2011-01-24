@@ -620,7 +620,7 @@ void write_res_file( const char *name )
         put_dword( 0 );             /* DataVersion */
         put_word( 0x30 );           /* Memory options */
         put_word( lbp->lan );       /* Language */
-        put_dword( 0 );             /* Version */
+        put_dword( lbp->version );  /* Version */
         put_dword( 0 );             /* Characteristics */
 
         output_bin_data( lbp );

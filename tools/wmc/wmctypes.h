@@ -117,6 +117,7 @@ typedef struct lan_blk {
 	struct lan_blk	*next;		/* Linkage for languages */
 	struct lan_blk	*prev;
 	int		lan;		/* The language of this block */
+	int		version;	/* The resource version for auto-translated resources */
 	block_t		*blks;		/* Array of blocks for this language */
 	int		nblk;		/* Nr of blocks in array */
 } lan_blk_t;

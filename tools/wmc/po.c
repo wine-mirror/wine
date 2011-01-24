@@ -435,11 +435,152 @@ void write_pot_file( const char *outname )
     po_file_free( po );
 }
 
+static lan_blk_t *new_top, *new_tail;
+
+static lanmsg_t *translate_string( po_file_t po, lanmsg_t *str, int lang, int *found )
+{
+    po_message_t msg;
+    po_message_iterator_t iterator;
+    lanmsg_t *new;
+    const char *transl;
+    int res;
+    char *buffer, *msgid, *context;
+
+    if (str->len <= 1 || !(buffer = convert_msgid_ascii( str, 0 ))) return str;
+
+    msgid = buffer;
+    context = get_message_context( &msgid );
+    msg = find_message( po, msgid, context, &iterator );
+    po_message_iterator_free( iterator );
+
+    if (msg && !po_message_is_fuzzy( msg ))
+    {
+        transl = po_message_msgstr( msg );
+        if (!transl[0]) transl = msgid;  /* ignore empty strings */
+        else (*found)++;
+    }
+    else transl = msgid;
+
+    new = xmalloc( sizeof(*new) );
+    new->lan  = lang;
+    new->cp   = 0;  /* FIXME */
+    new->file = str->file;
+    new->line = str->line;
+    new->len  = wine_utf8_mbstowcs( 0, transl, strlen(transl) + 1, NULL, 0 );
+    new->msg  = xmalloc( new->len * sizeof(WCHAR) );
+    res = wine_utf8_mbstowcs( MB_ERR_INVALID_CHARS, transl, strlen(transl) + 1, new->msg, new->len );
+    if (res == -2)
+        error( "Invalid utf-8 character in string '%s'\n", transl );
+    free( buffer );
+    return new;
+}
+
+static void translate_block( po_file_t po, block_t *blk, block_t *new, int lang, int *found )
+{
+    int i;
+
+    new->idlo = blk->idlo;
+    new->idhi = blk->idhi;
+    new->size = 0;
+    new->msgs = xmalloc( blk->nmsg * sizeof(*new->msgs) );
+    new->nmsg = blk->nmsg;
+    for (i = 0; i < blk->nmsg; i++)
+    {
+        new->msgs[i] = translate_string( po, blk->msgs[i], lang, found );
+        new->size += ((2 * new->msgs[i]->len + 3) & ~3) + 4;
+    }
+}
+
+static void translate_messages( po_file_t po, int lang )
+{
+    int i, found;
+    lan_blk_t *lbp, *new;
+
+    for (lbp = lanblockhead; lbp; lbp = lbp->next)
+    {
+        if (!is_english( lbp->lan )) continue;
+        found = 0;
+        new = xmalloc( sizeof(*new) );
+        /* English "translations" take precedence over the original contents */
+        new->version = is_english( lang ) ? 1 : -1;
+        new->lan = lang;
+        new->blks = xmalloc( lbp->nblk * sizeof(*new->blks) );
+        new->nblk = lbp->nblk;
+
+        for (i = 0; i < lbp->nblk; i++)
+            translate_block( po, &lbp->blks[i], &new->blks[i], lang, &found );
+        if (found)
+        {
+            if (new_tail) new_tail->next = new;
+            else new_top = new;
+            new->prev = new_tail;
+            new_tail = new;
+        }
+        else
+        {
+            free( new->blks );
+            free( new );
+        }
+    }
+}
+
+void add_translations( const char *po_dir )
+{
+    lan_blk_t *lbp;
+    po_file_t po;
+    char buffer[256];
+    char *p, *tok, *name;
+    unsigned int i;
+    FILE *f;
+
+    /* first check if we have English resources to translate */
+    for (lbp = lanblockhead; lbp; lbp = lbp->next) if (is_english( lbp->lan )) break;
+    if (!lbp) return;
+
+    new_top = new_tail = NULL;
+
+    name = strmake( "%s/LINGUAS", po_dir );
+    if (!(f = fopen( name, "r" ))) return;
+    free( name );
+    while (fgets( buffer, sizeof(buffer), f ))
+    {
+        if ((p = strchr( buffer, '#' ))) *p = 0;
+        for (tok = strtok( buffer, " \t\r\n" ); tok; tok = strtok( NULL, " \t\r\n" ))
+        {
+            for (i = 0; i < sizeof(languages)/sizeof(languages[0]); i++)
+                if (!strcmp( tok, languages[i].name )) break;
+
+            if (i == sizeof(languages)/sizeof(languages[0]))
+                error( "unknown language '%s'\n", tok );
+
+            name = strmake( "%s/%s.po", po_dir, tok );
+            if (!(po = po_file_read( name, &po_xerror_handler )))
+                error( "cannot load po file for language '%s'\n", tok );
+            translate_messages( po, MAKELANGID(languages[i].id, languages[i].sub) );
+            po_file_free( po );
+            free( name );
+        }
+    }
+    fclose( f );
+
+    /* prepend the translated messages to the global list */
+    if (new_tail)
+    {
+        new_tail->next = lanblockhead;
+        lanblockhead->prev = new_tail;
+        lanblockhead = new_top;
+    }
+}
+
 #else  /* HAVE_LIBGETTEXTPO */
 
 void write_pot_file( const char *outname )
 {
     error( "PO files not supported in this wmc build\n" );
+}
+
+void add_translations( const char *po_dir )
+{
 }
 
 #endif
