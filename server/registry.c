@@ -331,7 +331,9 @@ static unsigned int key_map_access( struct object *obj, unsigned int access )
     if (access & GENERIC_WRITE)   access |= KEY_WRITE;
     if (access & GENERIC_EXECUTE) access |= KEY_EXECUTE;
     if (access & GENERIC_ALL)     access |= KEY_ALL_ACCESS;
-    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+    /* filter the WOW64 masks, as they aren't real access bits */
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL |
+                      KEY_WOW64_64KEY | KEY_WOW64_32KEY);
 }
 
 /* close the notification associated with a handle */
