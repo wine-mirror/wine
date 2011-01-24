@@ -24,6 +24,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "msipriv.h"
@@ -318,20 +319,250 @@ UINT install_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
     return ERROR_SUCCESS;
 }
 
+static WCHAR *build_local_assembly_path( const WCHAR *filename )
+{
+    UINT i;
+    WCHAR *ret;
+
+    if (!(ret = msi_alloc( (strlenW( filename ) + 1) * sizeof(WCHAR) )))
+        return NULL;
+
+    for (i = 0; filename[i]; i++)
+    {
+        if (filename[i] == '\\' || filename[i] == '/') ret[i] = '|';
+        else ret[i] = filename[i];
+    }
+    ret[i] = 0;
+    return ret;
+}
+
+static LONG open_assemblies_key( UINT context, BOOL win32, HKEY *hkey )
+{
+    static const WCHAR path_win32[] =
+        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+          'I','n','s','t','a','l','l','e','r','\\','W','i','n','3','2','A','s','s','e','m','b','l','i','e','s','\\',0};
+    static const WCHAR path_dotnet[] =
+        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+         'I','n','s','t','a','l','l','e','r','\\','A','s','s','e','m','b','l','i','e','s','\\',0};
+    static const WCHAR classes_path_win32[] =
+        {'I','n','s','t','a','l','l','e','r','\\','W','i','n','3','2','A','s','s','e','m','b','l','i','e','s','\\',0};
+    static const WCHAR classes_path_dotnet[] =
+        {'I','n','s','t','a','l','l','e','r','\\','A','s','s','e','m','b','l','i','e','s','\\',0};
+    HKEY root;
+    const WCHAR *path;
+
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+    {
+        root = HKEY_CLASSES_ROOT;
+        if (win32) path = classes_path_win32;
+        else path = classes_path_dotnet;
+    }
+    else
+    {
+        root = HKEY_CURRENT_USER;
+        if (win32) path = path_win32;
+        else path = path_dotnet;
+    }
+    return RegCreateKeyW( root, path, hkey );
+}
+
+static LONG open_local_assembly_key( UINT context, BOOL win32, const WCHAR *filename, HKEY *hkey )
+{
+    LONG res;
+    HKEY root;
+    WCHAR *path;
+
+    if (!(path = build_local_assembly_path( filename )))
+        return ERROR_OUTOFMEMORY;
+
+    if ((res = open_assemblies_key( context, win32, &root )))
+    {
+        msi_free( path );
+        return res;
+    }
+    res = RegCreateKeyW( root, path, hkey );
+    RegCloseKey( root );
+    msi_free( path );
+    return res;
+}
+
+static LONG delete_local_assembly_key( UINT context, BOOL win32, const WCHAR *filename )
+{
+    LONG res;
+    HKEY root;
+    WCHAR *path;
+
+    if (!(path = build_local_assembly_path( filename )))
+        return ERROR_OUTOFMEMORY;
+
+    if ((res = open_assemblies_key( context, win32, &root )))
+    {
+        msi_free( path );
+        return res;
+    }
+    res = RegDeleteKeyW( root, path );
+    RegCloseKey( root );
+    msi_free( path );
+    return res;
+}
+
+static LONG open_global_assembly_key( UINT context, BOOL win32, HKEY *hkey )
+{
+    static const WCHAR path_win32[] =
+        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+         'I','n','s','t','a','l','l','e','r','\\','W','i','n','3','2','A','s','s','e','m','b','l','i','e','s','\\',
+         'G','l','o','b','a','l',0};
+    static const WCHAR path_dotnet[] =
+        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+         'I','n','s','t','a','l','l','e','r','\\','A','s','s','e','m','b','l','i','e','s','\\',
+         'G','l','o','b','a','l',0};
+    static const WCHAR classes_path_win32[] =
+        {'I','n','s','t','a','l','l','e','r','\\','W','i','n','3','2','A','s','s','e','m','b','l','i','e','s','\\',
+         'G','l','o','b','a','l',0};
+    static const WCHAR classes_path_dotnet[] =
+        {'I','n','s','t','a','l','l','e','r','\\','A','s','s','e','m','b','l','i','e','s','\\','G','l','o','b','a','l',0};
+    HKEY root;
+    const WCHAR *path;
+
+    if (context == MSIINSTALLCONTEXT_MACHINE)
+    {
+        root = HKEY_CLASSES_ROOT;
+        if (win32) path = classes_path_win32;
+        else path = classes_path_dotnet;
+    }
+    else
+    {
+        root = HKEY_CURRENT_USER;
+        if (win32) path = path_win32;
+        else path = path_dotnet;
+    }
+    return RegCreateKeyW( root, path, hkey );
+}
+
 UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
 {
-    MSIRECORD *uirow;
     MSICOMPONENT *comp;
 
     LIST_FOR_EACH_ENTRY(comp, &package->components, MSICOMPONENT, entry)
     {
-        if (!comp->assembly || !comp->Enabled)
-            continue;
+        LONG res;
+        HKEY hkey;
+        GUID guid;
+        DWORD size;
+        WCHAR buffer[43];
+        MSIRECORD *uirow;
+        MSIASSEMBLY *assembly = comp->assembly;
+        BOOL win32;
 
-        /* FIXME: write assembly registry values */
+        if (!assembly || !comp->ComponentId) continue;
+
+        if (!comp->Enabled)
+        {
+            TRACE("component is disabled: %s\n", debugstr_w(comp->Component));
+            continue;
+        }
+
+        if (comp->ActionRequest != INSTALLSTATE_LOCAL)
+        {
+            TRACE("Component not scheduled for installation: %s\n", debugstr_w(comp->Component));
+            comp->Action = comp->Installed;
+            continue;
+        }
+        comp->Action = INSTALLSTATE_LOCAL;
+
+        TRACE("publishing %s\n", debugstr_w(comp->Component));
+
+        CLSIDFromString( package->ProductCode, &guid );
+        encode_base85_guid( &guid, buffer );
+        buffer[20] = '>';
+        CLSIDFromString( comp->ComponentId, &guid );
+        encode_base85_guid( &guid, buffer + 21 );
+        buffer[42] = 0;
+
+        win32 = assembly->attributes & msidbAssemblyAttributesWin32;
+        if (assembly->application)
+        {
+            MSIFILE *file = get_loaded_file( package, assembly->application );
+            if ((res = open_local_assembly_key( package->Context, win32, file->TargetPath, &hkey )))
+            {
+                WARN("failed to open local assembly key %d\n", res);
+                return ERROR_FUNCTION_FAILED;
+            }
+        }
+        else
+        {
+            if ((res = open_global_assembly_key( package->Context, win32, &hkey )))
+            {
+                WARN("failed to open global assembly key %d\n", res);
+                return ERROR_FUNCTION_FAILED;
+            }
+        }
+        size = sizeof(buffer);
+        if ((res = RegSetValueExW( hkey, assembly->display_name, 0, REG_MULTI_SZ, (const BYTE *)buffer, size )))
+        {
+            WARN("failed to set assembly value %d\n", res);
+        }
+        RegCloseKey( hkey );
 
         uirow = MSI_CreateRecord( 2 );
-        MSI_RecordSetStringW( uirow, 2, comp->assembly->display_name );
+        MSI_RecordSetStringW( uirow, 2, assembly->display_name );
+        ui_actiondata( package, szMsiPublishAssemblies, uirow );
+        msiobj_release( &uirow->hdr );
+    }
+    return ERROR_SUCCESS;
+}
+
+UINT ACTION_MsiUnpublishAssemblies( MSIPACKAGE *package )
+{
+    MSICOMPONENT *comp;
+
+    LIST_FOR_EACH_ENTRY(comp, &package->components, MSICOMPONENT, entry)
+    {
+        LONG res;
+        MSIRECORD *uirow;
+        MSIASSEMBLY *assembly = comp->assembly;
+        BOOL win32;
+
+        if (!assembly || !comp->ComponentId) continue;
+
+        if (!comp->Enabled)
+        {
+            TRACE("component is disabled: %s\n", debugstr_w(comp->Component));
+            continue;
+        }
+
+        if (comp->ActionRequest != INSTALLSTATE_ABSENT)
+        {
+            TRACE("Component not scheduled for removal: %s\n", debugstr_w(comp->Component));
+            comp->Action = comp->Installed;
+            continue;
+        }
+        comp->Action = INSTALLSTATE_ABSENT;
+
+        TRACE("unpublishing %s\n", debugstr_w(comp->Component));
+
+        win32 = assembly->attributes & msidbAssemblyAttributesWin32;
+        if (assembly->application)
+        {
+            MSIFILE *file = get_loaded_file( package, assembly->application );
+            if ((res = delete_local_assembly_key( package->Context, win32, file->TargetPath )))
+                WARN("failed to delete local assembly key %d\n", res);
+        }
+        else
+        {
+            HKEY hkey;
+            if ((res = open_global_assembly_key( package->Context, win32, &hkey )))
+                WARN("failed to delete global assembly key %d\n", res);
+            else
+            {
+                if ((res = RegDeleteValueW( hkey, assembly->display_name )))
+                    WARN("failed to delete global assembly value %d\n", res);
+                RegCloseKey( hkey );
+            }
+        }
+
+        uirow = MSI_CreateRecord( 2 );
+        MSI_RecordSetStringW( uirow, 2, assembly->display_name );
         ui_actiondata( package, szMsiPublishAssemblies, uirow );
         msiobj_release( &uirow->hdr );
     }

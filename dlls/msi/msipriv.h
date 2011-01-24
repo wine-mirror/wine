@@ -922,6 +922,7 @@ extern UINT ACTION_UnregisterFonts(MSIPACKAGE *package);
 extern UINT ACTION_UnregisterMIMEInfo(MSIPACKAGE *package);
 extern UINT ACTION_UnregisterProgIdInfo(MSIPACKAGE *package);
 extern UINT ACTION_MsiPublishAssemblies(MSIPACKAGE *package);
+extern UINT ACTION_MsiUnpublishAssemblies(MSIPACKAGE *package);
 
 /* Helpers */
 extern DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data );

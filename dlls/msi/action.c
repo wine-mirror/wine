@@ -7172,13 +7172,6 @@ static UINT ACTION_IsolateComponents( MSIPACKAGE *package )
     return msi_unimplemented_action_stub( package, "IsolateComponents", table );
 }
 
-static UINT ACTION_MsiUnpublishAssemblies( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = {
-        'M','s','i','A','s','s','e','m','b','l','y',0 };
-    return msi_unimplemented_action_stub( package, "MsiUnpublishAssemblies", table );
-}
-
 static UINT ACTION_RMCCPSearch( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'C','C','P','S','e','a','r','c','h',0 };
