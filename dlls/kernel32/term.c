@@ -320,10 +320,15 @@ static BOOL TERM_BuildKeyDB(void)
     return TRUE;
 }
 
+static BOOL TERM_init_done /* = FALSE */;
+
 BOOL TERM_Init(void)
 {
+    /* if we're not attached to a tty, don't fire the curses support */
+    if (!isatty(0) || !isatty(1)) return FALSE;
     if (!TERM_bind_libcurses()) return FALSE;
     if (setupterm(NULL, 1 /* really ?? */, NULL) == -1) return FALSE;
+    TERM_init_done = TRUE;
     TERM_BuildKeyDB();
     /* set application key mode */
     putp(tigetstr("smkx"));
@@ -332,8 +337,11 @@ BOOL TERM_Init(void)
 
 BOOL TERM_Exit(void)
 {
-    /* put back the cursor key mode */
-    putp(tigetstr("rmkx"));
+    if (TERM_init_done)
+    {
+        /* put back the cursor key mode */
+        putp(tigetstr("rmkx"));
+    }
     return TRUE;
 }
 
