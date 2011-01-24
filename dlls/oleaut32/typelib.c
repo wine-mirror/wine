@@ -5030,6 +5030,7 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
                 VariantClear(&elemdesc->u.paramdesc.pparamdescex->varDefaultValue);
                 heap_free(elemdesc->u.paramdesc.pparamdescex);
             }
+            TLB_FreeCustData(pFInfo->pParamDesc[i].pCustData);
             SysFreeString(pFInfo->pParamDesc[i].Name);
         }
         heap_free(pFInfo->funcdesc.lprgelemdescParam);
@@ -5052,6 +5053,7 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
         }
         TLB_FreeCustData(pVInfo->pCustData);
         SysFreeString(pVInfo->Name);
+        SysFreeString(pVInfo->HelpString);
         pVInfoNext = pVInfo->next;
         heap_free(pVInfo);
     }
