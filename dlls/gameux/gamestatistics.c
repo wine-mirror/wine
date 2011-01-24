@@ -564,11 +564,12 @@ static HRESULT GAMEUX_loadStatisticsFromFile(struct GAMEUX_STATS *data)
                                     }
 
                                     if(SUCCEEDED(hr))
+                                    {
                                         lstrcpynW(data->categories[i].stats[j].sValue, V_BSTR(&vValue), MAX_VALUE_LENGTH);
-
-                                    TRACE("  statistic %d name %s value %s\n", j,
-                                            debugstr_w(data->categories[i].stats[j].sName),
-                                            debugstr_w(data->categories[i].stats[j].sValue));
+                                        TRACE("statistic %d name %s value %s\n", j,
+                                              debugstr_w(data->categories[i].stats[j].sName),
+                                              debugstr_w(data->categories[i].stats[j].sValue));
+                                    }
                                     IXMLDOMElement_Release(statisticElement);
                                 }
 
