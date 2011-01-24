@@ -28,6 +28,7 @@
 #include "winreg.h"
 #include "winsvc.h"
 #include "winerror.h"
+#include "aclapi.h"
 
 static HKEY hkey_main;
 static DWORD GLE;
@@ -850,6 +851,14 @@ static void test_reg_open_key(void)
     DWORD ret = 0;
     HKEY hkResult = NULL;
     HKEY hkPreserve = NULL;
+    HKEY hkRoot64 = NULL;
+    HKEY hkRoot32 = NULL;
+    BOOL bRet;
+    SID_IDENTIFIER_AUTHORITY sid_authority = {SECURITY_WORLD_SID_AUTHORITY};
+    PSID world_sid;
+    EXPLICIT_ACCESSA access;
+    PACL key_acl;
+    SECURITY_DESCRIPTOR *sd;
 
     /* successful open */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkResult);
@@ -953,12 +962,98 @@ static void test_reg_open_key(void)
     ok((ret == ERROR_SUCCESS && hkResult != NULL) || broken(ret == ERROR_ACCESS_DENIED /* NT4, win2k */),
         "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
     RegCloseKey(hkResult);
+
+    /* Try using WOW64 flags when opening a key with a DACL set to verify that
+     * the registry access check is performed correctly. Redirection isn't
+     * being tested, so the tests don't care about whether the process is
+     * running under WOW64. */
+    if (!pIsWow64Process)
+    {
+        win_skip("WOW64 flags are not recognized\n");
+        return;
+    }
+
+    ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
+                          KEY_WOW64_32KEY | KEY_ALL_ACCESS, NULL, &hkRoot32, NULL);
+    ok(ret == ERROR_SUCCESS && hkRoot32 != NULL,
+       "RegCreateKeyEx with KEY_WOW64_32KEY failed (err=%u)\n", ret);
+
+    ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
+                          KEY_WOW64_64KEY | KEY_ALL_ACCESS, NULL, &hkRoot64, NULL);
+    ok(ret == ERROR_SUCCESS && hkRoot64 != NULL,
+       "RegCreateKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
+
+    bRet = AllocateAndInitializeSid(&sid_authority, 1, SECURITY_WORLD_RID,
+                                    0, 0, 0, 0, 0, 0, 0, &world_sid);
+    ok(bRet == TRUE,
+       "Expected AllocateAndInitializeSid to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+
+    access.grfAccessPermissions = GENERIC_ALL | STANDARD_RIGHTS_ALL;
+    access.grfAccessMode = SET_ACCESS;
+    access.grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
+    access.Trustee.pMultipleTrustee = NULL;
+    access.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    access.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+    access.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+    access.Trustee.ptstrName = (char *)world_sid;
+
+    ret = SetEntriesInAclA(1, &access, NULL, &key_acl);
+    ok(ret == ERROR_SUCCESS,
+       "Expected SetEntriesInAclA to return ERROR_SUCCESS, got %u, last error %u\n", ret, GetLastError());
+
+    sd = HeapAlloc(GetProcessHeap(), 0, SECURITY_DESCRIPTOR_MIN_LENGTH);
+    bRet = InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
+    ok(bRet == TRUE,
+       "Expected InitializeSecurityDescriptor to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+
+    bRet = SetSecurityDescriptorDacl(sd, TRUE, key_acl, FALSE);
+    ok(bRet == TRUE,
+       "Expected SetSecurityDescriptorDacl to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+
+    /* The "sanctioned" methods of setting a registry ACL aren't implemented in Wine. */
+    bRet = SetKernelObjectSecurity(hkRoot64, DACL_SECURITY_INFORMATION, sd);
+    ok(bRet == TRUE,
+       "Expected SetKernelObjectSecurity to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+
+    bRet = SetKernelObjectSecurity(hkRoot32, DACL_SECURITY_INFORMATION, sd);
+    ok(bRet == TRUE,
+       "Expected SetKernelObjectSecurity to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+
+    hkResult = NULL;
+    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, KEY_WOW64_64KEY | KEY_READ, &hkResult);
+    ok(ret == ERROR_SUCCESS && hkResult != NULL,
+       "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
+    RegCloseKey(hkResult);
+
+    hkResult = NULL;
+    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, KEY_WOW64_32KEY | KEY_READ, &hkResult);
+    ok(ret == ERROR_SUCCESS && hkResult != NULL,
+       "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%u)\n", ret);
+    RegCloseKey(hkResult);
+
+    HeapFree(GetProcessHeap(), 0, sd);
+    LocalFree(key_acl);
+    FreeSid(world_sid);
+    RegDeleteKeyA(hkRoot64, "");
+    RegCloseKey(hkRoot64);
+    RegDeleteKeyA(hkRoot32, "");
+    RegCloseKey(hkRoot32);
 }
 
 static void test_reg_create_key(void)
 {
     LONG ret;
     HKEY hkey1, hkey2;
+    HKEY hkRoot64 = NULL;
+    HKEY hkRoot32 = NULL;
+    DWORD dwRet;
+    BOOL bRet;
+    SID_IDENTIFIER_AUTHORITY sid_authority = {SECURITY_WORLD_SID_AUTHORITY};
+    PSID world_sid;
+    EXPLICIT_ACCESSA access;
+    PACL key_acl;
+    SECURITY_DESCRIPTOR *sd;
+
     ret = RegCreateKeyExA(hkey_main, "Subkey1", 0, NULL, 0, KEY_NOTIFY, NULL, &hkey1, NULL);
     ok(!ret, "RegCreateKeyExA failed with error %d\n", ret);
     /* should succeed: all versions of Windows ignore the access rights
@@ -1014,6 +1109,84 @@ static void test_reg_create_key(void)
     ok((ret == ERROR_SUCCESS && hkey1 != NULL) || broken(ret == ERROR_ACCESS_DENIED /* NT4, win2k */),
         "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
     RegCloseKey(hkey1);
+
+    /* Try using WOW64 flags when opening a key with a DACL set to verify that
+     * the registry access check is performed correctly. Redirection isn't
+     * being tested, so the tests don't care about whether the process is
+     * running under WOW64. */
+    if (!pIsWow64Process)
+    {
+        win_skip("WOW64 flags are not recognized\n");
+        return;
+    }
+
+    ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
+                          KEY_WOW64_32KEY | KEY_ALL_ACCESS, NULL, &hkRoot32, NULL);
+    ok(ret == ERROR_SUCCESS && hkRoot32 != NULL,
+       "RegCreateKeyEx with KEY_WOW64_32KEY failed (err=%d)\n", ret);
+
+    ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
+                          KEY_WOW64_64KEY | KEY_ALL_ACCESS, NULL, &hkRoot64, NULL);
+    ok(ret == ERROR_SUCCESS && hkRoot64 != NULL,
+       "RegCreateKeyEx with KEY_WOW64_64KEY failed (err=%d)\n", ret);
+
+    bRet = AllocateAndInitializeSid(&sid_authority, 1, SECURITY_WORLD_RID,
+                                    0, 0, 0, 0, 0, 0, 0, &world_sid);
+    ok(bRet == TRUE,
+       "Expected AllocateAndInitializeSid to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+
+    access.grfAccessPermissions = GENERIC_ALL | STANDARD_RIGHTS_ALL;
+    access.grfAccessMode = SET_ACCESS;
+    access.grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
+    access.Trustee.pMultipleTrustee = NULL;
+    access.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+    access.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+    access.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+    access.Trustee.ptstrName = (char *)world_sid;
+
+    dwRet = SetEntriesInAclA(1, &access, NULL, &key_acl);
+    ok(ret == ERROR_SUCCESS,
+       "Expected SetEntriesInAclA to return ERROR_SUCCESS, got %u, last error %u\n", dwRet, GetLastError());
+
+    sd = HeapAlloc(GetProcessHeap(), 0, SECURITY_DESCRIPTOR_MIN_LENGTH);
+    bRet = InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
+    ok(bRet == TRUE,
+       "Expected InitializeSecurityDescriptor to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+
+    bRet = SetSecurityDescriptorDacl(sd, TRUE, key_acl, FALSE);
+    ok(bRet == TRUE,
+       "Expected SetSecurityDescriptorDacl to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+
+    /* The "sanctioned" methods of setting a registry ACL aren't implemented in Wine. */
+    bRet = SetKernelObjectSecurity(hkRoot64, DACL_SECURITY_INFORMATION, sd);
+    ok(bRet == TRUE,
+       "Expected SetKernelObjectSecurity to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+
+    bRet = SetKernelObjectSecurity(hkRoot32, DACL_SECURITY_INFORMATION, sd);
+    ok(bRet == TRUE,
+       "Expected SetKernelObjectSecurity to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+
+    hkey1 = NULL;
+    ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
+                          KEY_WOW64_64KEY | KEY_READ, NULL, &hkey1, NULL);
+    ok(ret == ERROR_SUCCESS && hkey1 != NULL,
+       "RegOpenKeyEx with KEY_WOW64_64KEY failed (err=%u)\n", ret);
+    RegCloseKey(hkey1);
+
+    hkey1 = NULL;
+    ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
+                          KEY_WOW64_32KEY | KEY_READ, NULL, &hkey1, NULL);
+    ok(ret == ERROR_SUCCESS && hkey1 != NULL,
+       "RegOpenKeyEx with KEY_WOW64_32KEY failed (err=%u)\n", ret);
+    RegCloseKey(hkey1);
+
+    HeapFree(GetProcessHeap(), 0, sd);
+    LocalFree(key_acl);
+    FreeSid(world_sid);
+    RegDeleteKeyA(hkRoot64, "");
+    RegCloseKey(hkRoot64);
+    RegDeleteKeyA(hkRoot32, "");
+    RegCloseKey(hkRoot32);
 }
 
 static void test_reg_close_key(void)
