@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddrawex);
 /******************************************************************************
  * Helper functions for COM management
  ******************************************************************************/
-static IDirectDrawSurfaceImpl *impl_from_dds3(IDirectDrawSurface3 *iface)
+static IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
 {
     return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirectDrawSurface3_Vtbl));
 }
@@ -111,12 +111,10 @@ IDirectDrawSurface4Impl_QueryInterface(IDirectDrawSurface4 *iface,
     return E_NOINTERFACE;
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_QueryInterface(IDirectDrawSurface3 *iface,
-                                       REFIID riid,
-                                       void **obj)
+static HRESULT WINAPI IDirectDrawSurface3Impl_QueryInterface(IDirectDrawSurface3 *iface,
+        REFIID riid, void **obj)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%s,%p): Thunking to IDirectDrawSurface4\n",This,debugstr_guid(riid),obj);
     return IDirectDrawSurface4_QueryInterface(dds4_from_impl(This), riid, obj);
 }
@@ -132,10 +130,9 @@ IDirectDrawSurface4Impl_AddRef(IDirectDrawSurface4 *iface)
     return ref;
 }
 
-static ULONG WINAPI
-IDirectDrawSurface3Impl_AddRef(IDirectDrawSurface3 *iface)
+static ULONG WINAPI IDirectDrawSurface3Impl_AddRef(IDirectDrawSurface3 *iface)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p): Thunking to IDirectDrawSurface4\n", This);
     return IDirectDrawSurface4_AddRef(dds4_from_impl(This));
 }
@@ -158,10 +155,9 @@ IDirectDrawSurface4Impl_Release(IDirectDrawSurface4 *iface)
     return ref;
 }
 
-static ULONG WINAPI
-IDirectDrawSurface3Impl_Release(IDirectDrawSurface3 *iface)
+static ULONG WINAPI IDirectDrawSurface3Impl_Release(IDirectDrawSurface3 *iface)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p): Thunking to IDirectDrawSurface4\n", This);
     return IDirectDrawSurface4_Release(dds4_from_impl(This));
 }
@@ -176,11 +172,10 @@ IDirectDrawSurface4Impl_AddAttachedSurface(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_AddAttachedSurface(This->parent, attach->parent);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_AddAttachedSurface(IDirectDrawSurface3 *iface,
-                                           IDirectDrawSurface3 *Attach_iface)
+static HRESULT WINAPI IDirectDrawSurface3Impl_AddAttachedSurface(IDirectDrawSurface3 *iface,
+        IDirectDrawSurface3 *Attach_iface)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurfaceImpl *attach = unsafe_impl_from_IDirectDrawSurface3(Attach_iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, attach);
     return IDirectDrawSurface4_AddAttachedSurface(dds4_from_impl(This), dds4_from_impl(attach));
@@ -195,11 +190,10 @@ IDirectDrawSurface4Impl_AddOverlayDirtyRect(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_AddOverlayDirtyRect(This->parent, Rect);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_AddOverlayDirtyRect(IDirectDrawSurface3 *iface,
-                                            RECT *Rect)
+static HRESULT WINAPI IDirectDrawSurface3Impl_AddOverlayDirtyRect(IDirectDrawSurface3 *iface,
+        RECT *Rect)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, Rect);
     return IDirectDrawSurface4_AddOverlayDirtyRect(dds4_from_impl(This), Rect);
 }
@@ -219,15 +213,10 @@ IDirectDrawSurface4Impl_Blt(IDirectDrawSurface4 *iface,
                                    SrcRect, Flags, DDBltFx);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_Blt(IDirectDrawSurface3 *iface,
-                            RECT *DestRect,
-                            IDirectDrawSurface3 *SrcSurface,
-                            RECT *SrcRect,
-                            DWORD Flags,
-                            DDBLTFX *DDBltFx)
+static HRESULT WINAPI IDirectDrawSurface3Impl_Blt(IDirectDrawSurface3 *iface, RECT *DestRect,
+        IDirectDrawSurface3 *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurfaceImpl *Src = unsafe_impl_from_IDirectDrawSurface3(SrcSurface);
     TRACE("(%p)->(%p,%p,%p,0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, DestRect, Src, SrcRect, Flags, DDBltFx);
     return IDirectDrawSurface4_Blt(dds4_from_impl(This), DestRect, dds4_from_impl(Src),
@@ -245,13 +234,10 @@ IDirectDrawSurface4Impl_BltBatch(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_BltBatch(This->parent, Batch, Count, Flags);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_BltBatch(IDirectDrawSurface3 *iface,
-                                 DDBLTBATCH *Batch,
-                                 DWORD Count,
-                                 DWORD Flags)
+static HRESULT WINAPI IDirectDrawSurface3Impl_BltBatch(IDirectDrawSurface3 *iface,
+        DDBLTBATCH *Batch, DWORD Count, DWORD Flags)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p,%u,0x%08x): Thunking to IDirectDrawSurface4\n", This, Batch, Count, Flags);
     return IDirectDrawSurface4_BltBatch(dds4_from_impl(This), Batch, Count, Flags);
 }
@@ -271,15 +257,10 @@ IDirectDrawSurface4Impl_BltFast(IDirectDrawSurface4 *iface,
                                        rsrc, trans);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_BltFast(IDirectDrawSurface3 *iface,
-                                DWORD dstx,
-                                DWORD dsty,
-                                IDirectDrawSurface3 *Source,
-                                RECT *rsrc,
-                                DWORD trans)
+static HRESULT WINAPI IDirectDrawSurface3Impl_BltFast(IDirectDrawSurface3 *iface, DWORD dstx,
+        DWORD dsty, IDirectDrawSurface3 *Source, RECT *rsrc, DWORD trans)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurfaceImpl *Src = unsafe_impl_from_IDirectDrawSurface3(Source);
     TRACE("(%p)->(%u,%u,%p,%p,0x%08x): Thunking to IDirectDrawSurface4\n", This, dstx, dsty, Src, rsrc, trans);
     return IDirectDrawSurface4_BltFast(dds4_from_impl(This), dstx, dsty, dds4_from_impl(Src),
@@ -298,12 +279,10 @@ IDirectDrawSurface4Impl_DeleteAttachedSurface(IDirectDrawSurface4 *iface,
                                                      Att ? Att->parent : NULL);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_DeleteAttachedSurface(IDirectDrawSurface3 *iface,
-                                              DWORD Flags,
-                                              IDirectDrawSurface3 *Attach)
+static HRESULT WINAPI IDirectDrawSurface3Impl_DeleteAttachedSurface(IDirectDrawSurface3 *iface,
+        DWORD Flags, IDirectDrawSurface3 *Attach)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurfaceImpl *Att = unsafe_impl_from_IDirectDrawSurface3(Attach);
     TRACE("(%p)->(0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, Flags, Att);
     return IDirectDrawSurface4_DeleteAttachedSurface(dds4_from_impl(This), Flags,
@@ -362,12 +341,10 @@ enumsurfaces_thunk_cb(IDirectDrawSurface4 *surf, DDSURFACEDESC2 *desc2, void *vc
     return ctx->orig_cb((IDirectDrawSurface *) dds3_from_impl(This), &desc, ctx->orig_ctx);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_EnumAttachedSurfaces(IDirectDrawSurface3 *iface,
-                                             void *context,
-                                             LPDDENUMSURFACESCALLBACK cb)
+static HRESULT WINAPI IDirectDrawSurface3Impl_EnumAttachedSurfaces(IDirectDrawSurface3 *iface,
+        void *context, LPDDENUMSURFACESCALLBACK cb)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     struct enumsurfaces_thunk ctx;
     TRACE("(%p)->(%p,%p): Thunking to IDirectDraw4\n", This, context, cb);
 
@@ -391,13 +368,10 @@ IDirectDrawSurface4Impl_EnumOverlayZOrders(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_EnumOverlayZOrders(This->parent, Flags, &ctx, enumsurfaces_wrap_cb);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_EnumOverlayZOrders(IDirectDrawSurface3 *iface,
-                                           DWORD Flags,
-                                           void *context,
-                                           LPDDENUMSURFACESCALLBACK cb)
+static HRESULT WINAPI IDirectDrawSurface3Impl_EnumOverlayZOrders(IDirectDrawSurface3 *iface,
+        DWORD Flags, void *context, LPDDENUMSURFACESCALLBACK cb)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     struct enumsurfaces_thunk ctx;
     TRACE("(%p)->(0x%08x,%p,%p): Thunking to IDirectDraw4\n", This, Flags, context, cb);
 
@@ -417,12 +391,10 @@ IDirectDrawSurface4Impl_Flip(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_Flip(This->parent, Dest ? Dest->parent : NULL, Flags);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_Flip(IDirectDrawSurface3 *iface,
-                             IDirectDrawSurface3 *DestOverride,
-                             DWORD Flags)
+static HRESULT WINAPI IDirectDrawSurface3Impl_Flip(IDirectDrawSurface3 *iface,
+        IDirectDrawSurface3 *DestOverride, DWORD Flags)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurfaceImpl *Dest = unsafe_impl_from_IDirectDrawSurface3(DestOverride);
     TRACE("(%p)->(%p,0x%08x): Thunking to IDirectDrawSurface4\n", This, Dest, Flags);
     return IDirectDrawSurface4_Flip(dds4_from_impl(This), dds4_from_impl(Dest), Flags);
@@ -452,12 +424,10 @@ IDirectDrawSurface4Impl_GetAttachedSurface(IDirectDrawSurface4 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetAttachedSurface(IDirectDrawSurface3 *iface,
-                                           DDSCAPS *Caps,
-                                           IDirectDrawSurface3 **Surface)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetAttachedSurface(IDirectDrawSurface3 *iface,
+        DDSCAPS *Caps, IDirectDrawSurface3 **Surface)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurface4 *surf4;
     DDSCAPS2 caps2;
     HRESULT hr;
@@ -487,11 +457,9 @@ IDirectDrawSurface4Impl_GetBltStatus(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_GetBltStatus(This->parent, Flags);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetBltStatus(IDirectDrawSurface3 *iface,
-                                     DWORD Flags)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetBltStatus(IDirectDrawSurface3 *iface, DWORD Flags)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(0x%08x): Thunking to IDirectDrawSurface4\n", This, Flags);
     return IDirectDrawSurface4_GetBltStatus(dds4_from_impl(This), Flags);
 }
@@ -505,11 +473,9 @@ IDirectDrawSurface4Impl_GetCaps(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_GetCaps(This->parent, Caps);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetCaps(IDirectDrawSurface3 *iface,
-                                DDSCAPS *Caps)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetCaps(IDirectDrawSurface3 *iface, DDSCAPS *Caps)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     DDSCAPS2 caps2;
     HRESULT hr;
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, Caps);
@@ -530,11 +496,10 @@ IDirectDrawSurface4Impl_GetClipper(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_GetClipper(This->parent, Clipper);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetClipper(IDirectDrawSurface3 *iface,
-                                   IDirectDrawClipper **Clipper)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetClipper(IDirectDrawSurface3 *iface,
+        IDirectDrawClipper **Clipper)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, Clipper);
     return IDirectDrawSurface4_GetClipper(dds4_from_impl(This), Clipper);
 }
@@ -549,12 +514,10 @@ IDirectDrawSurface4Impl_GetColorKey(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_GetColorKey(This->parent, Flags, CKey);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetColorKey(IDirectDrawSurface3 *iface,
-                                    DWORD Flags,
-                                    DDCOLORKEY *CKey)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetColorKey(IDirectDrawSurface3 *iface, DWORD Flags,
+        DDCOLORKEY *CKey)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, Flags, CKey);
     return IDirectDrawSurface4_GetColorKey(dds4_from_impl(This), Flags, CKey);
 }
@@ -577,11 +540,9 @@ IDirectDrawSurface4Impl_GetDC(IDirectDrawSurface4 *iface,
     }
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetDC(IDirectDrawSurface3 *iface,
-                             HDC *hdc)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetDC(IDirectDrawSurface3 *iface, HDC *hdc)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, hdc);
     return IDirectDrawSurface4_GetDC(dds4_from_impl(This), hdc);
 }
@@ -595,11 +556,9 @@ IDirectDrawSurface4Impl_GetFlipStatus(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_GetFlipStatus(This->parent, Flags);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetFlipStatus(IDirectDrawSurface3 *iface,
-                                      DWORD Flags)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetFlipStatus(IDirectDrawSurface3 *iface, DWORD Flags)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(0x%08x): Thunking to IDirectDrawSurface4\n", This, Flags);
     return IDirectDrawSurface4_GetFlipStatus(dds4_from_impl(This), Flags);
 }
@@ -614,12 +573,10 @@ IDirectDrawSurface4Impl_GetOverlayPosition(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_GetOverlayPosition(This->parent, X, Y);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetOverlayPosition(IDirectDrawSurface3 *iface,
-                                           LONG *X,
-                                           LONG *Y)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetOverlayPosition(IDirectDrawSurface3 *iface,
+        LONG *X, LONG *Y)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p,%p): Thunking to IDirectDrawSurface4\n", This, X, Y);
     return IDirectDrawSurface4_GetOverlayPosition(dds4_from_impl(This), X, Y);
 }
@@ -633,11 +590,10 @@ IDirectDrawSurface4Impl_GetPalette(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_GetPalette(This->parent, Pal);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetPalette(IDirectDrawSurface3 *iface,
-                                   IDirectDrawPalette **Pal)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetPalette(IDirectDrawSurface3 *iface,
+        IDirectDrawPalette **Pal)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, Pal);
     return IDirectDrawSurface4_GetPalette(dds4_from_impl(This), Pal);
 }
@@ -651,11 +607,10 @@ IDirectDrawSurface4Impl_GetPixelFormat(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_GetPixelFormat(This->parent, PixelFormat);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetPixelFormat(IDirectDrawSurface3 *iface,
-                                       DDPIXELFORMAT *PixelFormat)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetPixelFormat(IDirectDrawSurface3 *iface,
+        DDPIXELFORMAT *PixelFormat)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, PixelFormat);
     return IDirectDrawSurface4_GetPixelFormat(dds4_from_impl(This), PixelFormat);
 }
@@ -678,11 +633,10 @@ IDirectDrawSurface4Impl_GetSurfaceDesc(IDirectDrawSurface4 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetSurfaceDesc(IDirectDrawSurface3 *iface,
-                                       DDSURFACEDESC *DDSD)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetSurfaceDesc(IDirectDrawSurface3 *iface,
+        DDSURFACEDESC *DDSD)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     DDSURFACEDESC2 ddsd2;
     HRESULT hr;
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, DDSD);
@@ -715,12 +669,10 @@ IDirectDrawSurface4Impl_Initialize(IDirectDrawSurface4 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_Initialize(IDirectDrawSurface3 *iface,
-                                   IDirectDraw *DD,
-                                   DDSURFACEDESC *DDSD)
+static HRESULT WINAPI IDirectDrawSurface3Impl_Initialize(IDirectDrawSurface3 *iface,
+        IDirectDraw *DD, DDSURFACEDESC *DDSD)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     DDSURFACEDESC2 ddsd2;
     TRACE("(%p)->(%p,%p): Thunking to IDirectDrawSurface4\n", This, DD, DDSD);
     DDSD_to_DDSD2(DDSD, &ddsd2);
@@ -735,10 +687,9 @@ IDirectDrawSurface4Impl_IsLost(IDirectDrawSurface4 *iface)
     return IDirectDrawSurface4_IsLost(This->parent);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_IsLost(IDirectDrawSurface3 *iface)
+static HRESULT WINAPI IDirectDrawSurface3Impl_IsLost(IDirectDrawSurface3 *iface)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p): Thunking to IDirectDrawSurface4\n", This);
     return IDirectDrawSurface4_IsLost(dds4_from_impl(This));
 }
@@ -764,14 +715,10 @@ IDirectDrawSurface4Impl_Lock(IDirectDrawSurface4 *iface,
     return hr;
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_Lock(IDirectDrawSurface3 *iface,
-                             RECT *Rect,
-                             DDSURFACEDESC *DDSD,
-                             DWORD Flags,
-                             HANDLE h)
+static HRESULT WINAPI IDirectDrawSurface3Impl_Lock(IDirectDrawSurface3 *iface, RECT *Rect,
+        DDSURFACEDESC *DDSD, DWORD Flags, HANDLE h)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     DDSURFACEDESC2 ddsd2;
     HRESULT hr;
     TRACE("(%p)->(%p,%p,0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, Rect, DDSD, Flags, h);
@@ -799,11 +746,9 @@ IDirectDrawSurface4Impl_ReleaseDC(IDirectDrawSurface4 *iface,
     }
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_ReleaseDC(IDirectDrawSurface3 *iface,
-                                  HDC hdc)
+static HRESULT WINAPI IDirectDrawSurface3Impl_ReleaseDC(IDirectDrawSurface3 *iface, HDC hdc)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, hdc);
     return IDirectDrawSurface4_ReleaseDC(dds4_from_impl(This), hdc);
 }
@@ -816,10 +761,9 @@ IDirectDrawSurface4Impl_Restore(IDirectDrawSurface4 *iface)
     return IDirectDrawSurface4_Restore(This->parent);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_Restore(IDirectDrawSurface3 *iface)
+static HRESULT WINAPI IDirectDrawSurface3Impl_Restore(IDirectDrawSurface3 *iface)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p): Thunking to IDirectDrawSurface4\n", This);
     return IDirectDrawSurface4_Restore(dds4_from_impl(This));
 }
@@ -833,11 +777,10 @@ IDirectDrawSurface4Impl_SetClipper(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_SetClipper(This->parent, Clipper);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_SetClipper(IDirectDrawSurface3 *iface,
-                                   IDirectDrawClipper *Clipper)
+static HRESULT WINAPI IDirectDrawSurface3Impl_SetClipper(IDirectDrawSurface3 *iface,
+        IDirectDrawClipper *Clipper)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, Clipper);
     return IDirectDrawSurface4_SetClipper(dds4_from_impl(This), Clipper);
 }
@@ -852,12 +795,10 @@ IDirectDrawSurface4Impl_SetColorKey(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_SetColorKey(This->parent, Flags, CKey);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_SetColorKey(IDirectDrawSurface3 *iface,
-                                    DWORD Flags,
-                                    DDCOLORKEY *CKey)
+static HRESULT WINAPI IDirectDrawSurface3Impl_SetColorKey(IDirectDrawSurface3 *iface, DWORD Flags,
+        DDCOLORKEY *CKey)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, Flags, CKey);
     return IDirectDrawSurface4_SetColorKey(dds4_from_impl(This), Flags, CKey);
 }
@@ -872,12 +813,10 @@ IDirectDrawSurface4Impl_SetOverlayPosition(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_SetOverlayPosition(This->parent, X, Y);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_SetOverlayPosition(IDirectDrawSurface3 *iface,
-                                           LONG X,
-                                           LONG Y)
+static HRESULT WINAPI IDirectDrawSurface3Impl_SetOverlayPosition(IDirectDrawSurface3 *iface,
+        LONG X, LONG Y)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%u,%u): Thunking to IDirectDrawSurface4\n", This, X, Y);
     return IDirectDrawSurface4_SetOverlayPosition(dds4_from_impl(This), X, Y);
 }
@@ -891,11 +830,10 @@ IDirectDrawSurface4Impl_SetPalette(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_SetPalette(This->parent, Pal);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_SetPalette(IDirectDrawSurface3 *iface,
-                                   IDirectDrawPalette *Pal)
+static HRESULT WINAPI IDirectDrawSurface3Impl_SetPalette(IDirectDrawSurface3 *iface,
+        IDirectDrawPalette *Pal)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, Pal);
     return IDirectDrawSurface4_SetPalette(dds4_from_impl(This), Pal);
 }
@@ -909,11 +847,9 @@ IDirectDrawSurface4Impl_Unlock(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_Unlock(This->parent, pRect);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_Unlock(IDirectDrawSurface3 *iface,
-                               void *data)
+static HRESULT WINAPI IDirectDrawSurface3Impl_Unlock(IDirectDrawSurface3 *iface, void *data)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%p): Thunking to IDirectDrawSurface4\n", This, data);
     return IDirectDrawSurface4_Unlock(dds4_from_impl(This), NULL);
 }
@@ -933,15 +869,11 @@ IDirectDrawSurface4Impl_UpdateOverlay(IDirectDrawSurface4 *iface,
                                              DstRect, Flags, FX);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_UpdateOverlay(IDirectDrawSurface3 *iface,
-                                      LPRECT SrcRect,
-                                      IDirectDrawSurface3 *DstSurface,
-                                      LPRECT DstRect,
-                                      DWORD Flags,
-                                      LPDDOVERLAYFX FX)
+static HRESULT WINAPI IDirectDrawSurface3Impl_UpdateOverlay(IDirectDrawSurface3 *iface,
+        LPRECT SrcRect, IDirectDrawSurface3 *DstSurface, LPRECT DstRect, DWORD Flags,
+        LPDDOVERLAYFX FX)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurfaceImpl *Dst = unsafe_impl_from_IDirectDrawSurface3(DstSurface);
     TRACE("(%p)->(%p,%p,%p,0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, SrcRect, Dst, DstRect, Flags, FX);
     return IDirectDrawSurface4_UpdateOverlay(dds4_from_impl(This), SrcRect, dds4_from_impl(Dst),
@@ -957,11 +889,10 @@ IDirectDrawSurface4Impl_UpdateOverlayDisplay(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_UpdateOverlayDisplay(This->parent, Flags);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_UpdateOverlayDisplay(IDirectDrawSurface3 *iface,
-                                             DWORD Flags)
+static HRESULT WINAPI IDirectDrawSurface3Impl_UpdateOverlayDisplay(IDirectDrawSurface3 *iface,
+        DWORD Flags)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(0x%08x): Thunking to IDirectDrawSurface4\n", This, Flags);
     return IDirectDrawSurface4_UpdateOverlayDisplay(dds4_from_impl(This), Flags);
 }
@@ -977,12 +908,10 @@ IDirectDrawSurface4Impl_UpdateOverlayZOrder(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_UpdateOverlayZOrder(This->parent, Flags, Ref ? Ref->parent : NULL);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_UpdateOverlayZOrder(IDirectDrawSurface3 *iface,
-                                            DWORD Flags,
-                                            IDirectDrawSurface3 *DDSRef)
+static HRESULT WINAPI IDirectDrawSurface3Impl_UpdateOverlayZOrder(IDirectDrawSurface3 *iface,
+        DWORD Flags, IDirectDrawSurface3 *DDSRef)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurfaceImpl *Ref = unsafe_impl_from_IDirectDrawSurface3(DDSRef);
     TRACE("(%p)->(0x%08x,%p): Thunking to IDirectDrawSurface4\n", This, Flags, Ref);
     return IDirectDrawSurface4_UpdateOverlayZOrder(dds4_from_impl(This), Flags, dds4_from_impl(Ref));
@@ -1001,11 +930,9 @@ IDirectDrawSurface4Impl_GetDDInterface(IDirectDrawSurface4 *iface,
     return E_FAIL;
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_GetDDInterface(IDirectDrawSurface3 *iface,
-                                       void **DD)
+static HRESULT WINAPI IDirectDrawSurface3Impl_GetDDInterface(IDirectDrawSurface3 *iface, void **DD)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     FIXME("(%p)->(%p)\n", This, DD);
     /* A thunk it pretty pointless because of the same reason relaying to ddraw.dll works badly
      */
@@ -1022,11 +949,9 @@ IDirectDrawSurface4Impl_PageLock(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_PageLock(This->parent, Flags);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_PageLock(IDirectDrawSurface3 *iface,
-                                 DWORD Flags)
+static HRESULT WINAPI IDirectDrawSurface3Impl_PageLock(IDirectDrawSurface3 *iface, DWORD Flags)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%x): Thunking to IDirectDrawSurface4\n", iface, Flags);
     return IDirectDrawSurface4_PageLock(dds4_from_impl(This), Flags);
 }
@@ -1040,11 +965,9 @@ IDirectDrawSurface4Impl_PageUnlock(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_PageUnlock(This->parent, Flags);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_PageUnlock(IDirectDrawSurface3 *iface,
-                                   DWORD Flags)
+static HRESULT WINAPI IDirectDrawSurface3Impl_PageUnlock(IDirectDrawSurface3 *iface, DWORD Flags)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     TRACE("(%p)->(%x): Thunking to IDirectDrawSurface4\n", iface, Flags);
     return IDirectDrawSurface4_PageUnlock(dds4_from_impl(This), Flags);
 }
@@ -1059,12 +982,10 @@ IDirectDrawSurface4Impl_SetSurfaceDesc(IDirectDrawSurface4 *iface,
     return IDirectDrawSurface4_SetSurfaceDesc(This->parent, DDSD, Flags);
 }
 
-static HRESULT WINAPI
-IDirectDrawSurface3Impl_SetSurfaceDesc(IDirectDrawSurface3 *iface,
-                                       DDSURFACEDESC *DDSD,
-                                       DWORD Flags)
+static HRESULT WINAPI IDirectDrawSurface3Impl_SetSurfaceDesc(IDirectDrawSurface3 *iface,
+        DDSURFACEDESC *DDSD, DWORD Flags)
 {
-    IDirectDrawSurfaceImpl *This = impl_from_dds3(iface);
+    IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     DDSURFACEDESC2 ddsd;
     TRACE("(%p)->(%p,0x%08x): Thunking to IDirectDrawSurface4\n", This, DDSD, Flags);
 
