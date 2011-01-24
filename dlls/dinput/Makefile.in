@@ -1,7 +1,7 @@
 MODULE    = dinput.dll
 IMPORTLIB = dinput
 IMPORTS   = dxguid uuid ole32 user32 advapi32
-EXTRALIBS = @CARBONLIB@ @IOKITLIB@
+EXTRALIBS = @IOKITLIB@
 
 C_SRCS = \
 	data_formats.c \

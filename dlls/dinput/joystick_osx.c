@@ -23,23 +23,7 @@
 #include "config.h"
 #include "wine/port.h"
 
-#if defined(HAVE_CARBON_CARBON_H) && defined(HAVE_IOKIT_HID_IOHIDLIB_H)
-#define LoadResource __carbon_LoadResource
-#define CompareString __carbon_CompareString
-#define GetCurrentThread __carbon_GetCurrentThread
-#define GetCurrentProcess __carbon_GetCurrentProcess
-#define AnimatePalette __carbon_AnimatePalette
-#define EqualRgn __carbon_EqualRgn
-#define FillRgn __carbon_FillRgn
-#define FrameRgn __carbon_FrameRgn
-#define GetPixel __carbon_GetPixel
-#define InvertRgn __carbon_InvertRgn
-#define LineTo __carbon_LineTo
-#define OffsetRgn __carbon_OffsetRgn
-#define PaintRgn __carbon_PaintRgn
-#define Polygon __carbon_Polygon
-#define ResizePalette __carbon_ResizePalette
-#define SetRectRgn __carbon_SetRectRgn
+#if defined(HAVE_IOKIT_HID_IOHIDLIB_H)
 #define ULONG __carbon_ULONG
 #define E_INVALIDARG __carbon_E_INVALIDARG
 #define E_OUTOFMEMORY __carbon_E_OUTOFMEMORY
@@ -60,26 +44,7 @@
 #define MAKE_HRESULT __carbon_MAKE_HRESULT
 #define HRESULT __carbon_HRESULT
 #define STDMETHODCALLTYPE __carbon_STDMETHODCALLTYPE
-#include <Carbon/Carbon.h>
 #include <IOKit/hid/IOHIDLib.h>
-#undef LoadResource
-#undef CompareString
-#undef GetCurrentThread
-#undef _CDECL
-#undef DPRINTF
-#undef GetCurrentProcess
-#undef AnimatePalette
-#undef EqualRgn
-#undef FillRgn
-#undef FrameRgn
-#undef GetPixel
-#undef InvertRgn
-#undef LineTo
-#undef OffsetRgn
-#undef PaintRgn
-#undef Polygon
-#undef ResizePalette
-#undef SetRectRgn
 #undef ULONG
 #undef E_INVALIDARG
 #undef E_OUTOFMEMORY
@@ -100,7 +65,7 @@
 #undef MAKE_HRESULT
 #undef HRESULT
 #undef STDMETHODCALLTYPE
-#endif /* HAVE_CARBON_CARBON_H */
+#endif /* HAVE_IOKIT_HID_IOHIDLIB_H */
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
