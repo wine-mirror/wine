@@ -74,7 +74,7 @@ IDirectDraw4 *dd_get_inner(IDirectDraw4 *outer);
  ******************************************************************************/
 typedef struct
 {
-    const IDirectDrawSurface3Vtbl *IDirectDrawSurface3_Vtbl;
+    IDirectDrawSurface3 IDirectDrawSurface3_iface;
     const IDirectDrawSurface4Vtbl *IDirectDrawSurface4_Vtbl;
     LONG ref;
 

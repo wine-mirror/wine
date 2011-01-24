@@ -35,16 +35,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddrawex);
  ******************************************************************************/
 static IDirectDrawSurfaceImpl *impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface)
 {
-    return (IDirectDrawSurfaceImpl *)((char*)iface - FIELD_OFFSET(IDirectDrawSurfaceImpl, IDirectDrawSurface3_Vtbl));
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
 }
 
 static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface);
-
-static IDirectDrawSurface3 *dds3_from_impl(IDirectDrawSurfaceImpl *This)
-{
-    if(!This) return NULL;
-    return (IDirectDrawSurface3 *) &This->IDirectDrawSurface3_Vtbl;
-}
 
 static IDirectDrawSurfaceImpl *impl_from_dds4(IDirectDrawSurface4 *iface)
 {
@@ -83,8 +77,8 @@ IDirectDrawSurface4Impl_QueryInterface(IDirectDrawSurface4 *iface,
           || IsEqualGUID(riid, &IID_IDirectDrawSurface2)
           || IsEqualGUID(riid, &IID_IDirectDrawSurface) )
     {
-        *obj = dds3_from_impl(This);
-        IDirectDrawSurface3_AddRef((IDirectDrawSurface3 *) *obj);
+        *obj = &This->IDirectDrawSurface3_iface;
+        IDirectDrawSurface3_AddRef(&This->IDirectDrawSurface3_iface);
         TRACE("(%p) returning IDirectDrawSurface3 interface at %p\n", This, *obj);
         return S_OK;
     }
@@ -335,10 +329,11 @@ enumsurfaces_thunk_cb(IDirectDrawSurface4 *surf, DDSURFACEDESC2 *desc2, void *vc
     DDSURFACEDESC desc;
 
     TRACE("Thunking back to IDirectDrawSurface3\n");
-    IDirectDrawSurface3_AddRef(dds3_from_impl(This));
+    IDirectDrawSurface3_AddRef(&This->IDirectDrawSurface3_iface);
     IDirectDrawSurface3_Release(surf);
     DDSD2_to_DDSD(desc2, &desc);
-    return ctx->orig_cb((IDirectDrawSurface *) dds3_from_impl(This), &desc, ctx->orig_ctx);
+    return ctx->orig_cb((IDirectDrawSurface *)&This->IDirectDrawSurface3_iface, &desc,
+            ctx->orig_ctx);
 }
 
 static HRESULT WINAPI IDirectDrawSurface3Impl_EnumAttachedSurfaces(IDirectDrawSurface3 *iface,
@@ -1166,7 +1161,7 @@ static IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawS
 {
     if (!iface) return NULL;
     if (iface->lpVtbl != &IDirectDrawSurface3_Vtbl) return NULL;
-    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_Vtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawSurface3_iface);
 }
 
 /* dds_get_outer
@@ -1197,7 +1192,7 @@ IDirectDrawSurface4 *dds_get_outer(IDirectDrawSurface4 *inner)
         TRACE("Creating new ddrawex surface wrapper for surface %p\n", inner);
         impl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*impl));
         impl->ref = 1;
-        impl->IDirectDrawSurface3_Vtbl = &IDirectDrawSurface3_Vtbl;
+        impl->IDirectDrawSurface3_iface.lpVtbl = &IDirectDrawSurface3_Vtbl;
         impl->IDirectDrawSurface4_Vtbl = &IDirectDrawSurface4_Vtbl;
         IDirectDrawSurface4_AddRef(inner);
         impl->parent = inner;
