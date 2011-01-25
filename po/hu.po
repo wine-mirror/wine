@@ -2197,7 +2197,7 @@ msgstr "IDTB_TOC_PREV"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr ""
+msgstr "Cinepak Video kodek"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
