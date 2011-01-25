@@ -179,6 +179,7 @@ static BOOL X11DRV_CLIPBOARD_SynthesizeData(UINT wFormatID);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedFormat(Display *display, LPWINE_CLIPDATA lpData);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedDIB(Display *display);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedBitmap(Display *display);
+static BOOL X11DRV_CLIPBOARD_RenderSynthesizedEnhMetaFile(Display *display);
 static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *event, BOOL bIsMultiple );
 
 /* Clipboard formats
@@ -887,12 +888,15 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedFormat(Display *display, LPWINE_CL
                     break;
 
                 case CF_ENHMETAFILE:
+                    bret = X11DRV_CLIPBOARD_RenderSynthesizedEnhMetaFile( display );
+                    break;
+
                 case CF_METAFILEPICT:
-		    FIXME("Synthesizing wFormatID(0x%08x) not implemented\n", wFormatID);
+                    FIXME("Synthesizing CF_METAFILEPICT not implemented\n");
                     break;
 
                 default:
-		    FIXME("Called to synthesize unknown format\n");
+                    FIXME("Called to synthesize unknown format 0x%08x\n", wFormatID);
                     break;
             }
         }
@@ -1084,6 +1088,53 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedBitmap(Display *display)
     }
 
     return bret;
+}
+
+
+/**************************************************************************
+ *                      X11DRV_CLIPBOARD_RenderSynthesizedEnhMetaFile
+ */
+static BOOL X11DRV_CLIPBOARD_RenderSynthesizedEnhMetaFile(Display *display)
+{
+    LPWINE_CLIPDATA lpSource = NULL;
+
+    TRACE("\n");
+
+    if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_ENHMETAFILE)) && lpSource->hData)
+        return TRUE;
+    /* If we have a MF pict and it's not synthesized or it has been rendered */
+    else if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_METAFILEPICT)) &&
+        (!(lpSource->wFlags & CF_FLAG_SYNTHESIZED) || lpSource->hData))
+    {
+        /* Render source if required */
+        if (lpSource->hData || X11DRV_CLIPBOARD_RenderFormat(display, lpSource))
+        {
+            METAFILEPICT *pmfp;
+            HENHMETAFILE hData = NULL;
+
+            pmfp = GlobalLock(lpSource->hData);
+            if (pmfp)
+            {
+                UINT size_mf_bits = GetMetaFileBitsEx(pmfp->hMF, 0, NULL);
+                void *mf_bits = HeapAlloc(GetProcessHeap(), 0, size_mf_bits);
+                if (mf_bits)
+                {
+                    GetMetaFileBitsEx(pmfp->hMF, size_mf_bits, mf_bits);
+                    hData = SetWinMetaFileBits(size_mf_bits, mf_bits, NULL, pmfp);
+                    HeapFree(GetProcessHeap(), 0, mf_bits);
+                }
+                GlobalUnlock(lpSource->hData);
+            }
+
+            if (hData)
+            {
+                X11DRV_CLIPBOARD_InsertClipboardData(CF_ENHMETAFILE, hData, 0, NULL, TRUE);
+                return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
 }
 
 
