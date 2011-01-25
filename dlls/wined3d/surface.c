@@ -431,6 +431,46 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
         multisample_quality = 0;
     }
 
+    /* Quick lockable sanity check.
+     * TODO: remove this after surfaces, usage and lockability have been debugged properly
+     * this function is too deep to need to care about things like this.
+     * Levels need to be checked too, since they all affect what can be done. */
+    switch (pool)
+    {
+        case WINED3DPOOL_SCRATCH:
+            if(!lockable)
+            {
+                FIXME("Called with a pool of SCRATCH and a lockable of FALSE "
+                        "which are mutually exclusive, setting lockable to TRUE.\n");
+                lockable = TRUE;
+            }
+            break;
+
+        case WINED3DPOOL_SYSTEMMEM:
+            if (!lockable)
+                FIXME("Called with a pool of SYSTEMMEM and a lockable of FALSE, this is acceptable but unexpected.\n");
+            break;
+
+        case WINED3DPOOL_MANAGED:
+            if (usage & WINED3DUSAGE_DYNAMIC)
+                FIXME("Called with a pool of MANAGED and a usage of DYNAMIC which are mutually exclusive.\n");
+            break;
+
+        case WINED3DPOOL_DEFAULT:
+            if (lockable && !(usage & (WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
+                WARN("Creating a lockable surface with a POOL of DEFAULT, that doesn't specify DYNAMIC usage.\n");
+            break;
+
+        default:
+            FIXME("Unknown pool %#x.\n", pool);
+            break;
+    };
+
+    if (usage & WINED3DUSAGE_RENDERTARGET && pool != WINED3DPOOL_DEFAULT)
+    {
+        FIXME("Trying to create a render target that isn't in the default pool.\n");
+    }
+
     /* FIXME: Check that the format is supported by the device. */
 
     resource_size = wined3d_format_calculate_size(format, alignment, width, height);
@@ -476,46 +516,6 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     surface->flags = SFLAG_NORMCOORD; /* Default to normalized coords. */
     if (discard) surface->flags |= SFLAG_DISCARD;
     if (lockable || format_id == WINED3DFMT_D16_LOCKABLE) surface->flags |= SFLAG_LOCKABLE;
-
-    /* Quick lockable sanity check.
-     * TODO: remove this after surfaces, usage and lockability have been debugged properly
-     * this function is too deep to need to care about things like this.
-     * Levels need to be checked too, since they all affect what can be done. */
-    switch (pool)
-    {
-        case WINED3DPOOL_SCRATCH:
-            if(!lockable)
-            {
-                FIXME("Called with a pool of SCRATCH and a lockable of FALSE "
-                        "which are mutually exclusive, setting lockable to TRUE.\n");
-                lockable = TRUE;
-            }
-            break;
-
-        case WINED3DPOOL_SYSTEMMEM:
-            if (!lockable)
-                FIXME("Called with a pool of SYSTEMMEM and a lockable of FALSE, this is acceptable but unexpected.\n");
-            break;
-
-        case WINED3DPOOL_MANAGED:
-            if (usage & WINED3DUSAGE_DYNAMIC)
-                FIXME("Called with a pool of MANAGED and a usage of DYNAMIC which are mutually exclusive.\n");
-            break;
-
-        case WINED3DPOOL_DEFAULT:
-            if (lockable && !(usage & (WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
-                WARN("Creating a lockable surface with a POOL of DEFAULT, that doesn't specify DYNAMIC usage.\n");
-            break;
-
-        default:
-            FIXME("Unknown pool %#x.\n", pool);
-            break;
-    };
-
-    if (usage & WINED3DUSAGE_RENDERTARGET && pool != WINED3DPOOL_DEFAULT)
-    {
-        FIXME("Trying to create a render target that isn't in the default pool.\n");
-    }
 
     /* Mark the texture as dirty so that it gets loaded first time around. */
     surface_add_dirty_rect(surface, NULL);
