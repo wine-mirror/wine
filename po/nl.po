@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"PO-Revision-Date: 2011-01-25 15:28+0100\n"
+"Last-Translator: Sven Baars <sven.wine@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Dutch\n"
 "MIME-Version: 1.0\n"
@@ -175,13 +175,8 @@ msgid "Fonts"
 msgstr "Lettertype"
 
 #: comdlg32.rc:36 shell32.rc:142 regedit.rc:206
-#, fuzzy
 msgid "My Computer"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Mijn Computer\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Deze Computer"
+msgstr "Deze Computer"
 
 #: comdlg32.rc:41
 msgid "System Folders"
@@ -383,13 +378,8 @@ msgid "Cannot find the printer."
 msgstr "De printer werd niet gevonden"
 
 #: comdlg32.rc:80 progman.rc:78
-#, fuzzy
 msgid "Out of memory."
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Geen geheugen beschikbaar.\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Er was onvoldoende geheugen beschikbaar"
+msgstr "Onvoldoende geheugen beschikbaar"
 
 #: comdlg32.rc:81
 msgid "An error occurred."
@@ -413,13 +403,8 @@ msgid "Select a font size between %d and %d points."
 msgstr "Selecteer een lettertype tussen %d en %d punten."
 
 #: comdlg32.rc:152 shdocvw.rc:32
-#, fuzzy
 msgid "&Save"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Op&slaan\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Opslaan"
+msgstr "Op&slaan"
 
 #: comdlg32.rc:153
 msgid "Save &in:"
@@ -438,13 +423,8 @@ msgid "Open File"
 msgstr "Open bestand"
 
 #: comdlg32.rc:93 oleview.rc:95
-#, fuzzy
 msgid "Ready"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Gereed\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Klaar"
+msgstr "Gereed"
 
 #: comdlg32.rc:94
 msgid "Paused; "
@@ -567,13 +547,8 @@ msgid "mm"
 msgstr "mm"
 
 #: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
-#, fuzzy
 msgid "Print"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Afdrukken\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Printen"
+msgstr "Afdrukken"
 
 #: credui.rc:27
 msgid "Connect to %s"
@@ -677,7 +652,7 @@ msgstr "Wel of Geen Vertrouwen"
 
 #: crypt32.rc:43
 msgid "Email Address"
-msgstr "Email Adres"
+msgstr "E-mailadres"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
@@ -980,13 +955,8 @@ msgid "CA Encryption Certificate"
 msgstr "CA Coderings Certificaat"
 
 #: crypt32.rc:119 cryptui.rc:145
-#, fuzzy
 msgid "Key Recovery Agent"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Sleutel Herstel Agent\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Sleutel herstel agent"
+msgstr "Sleutel Herstel Agent"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
@@ -1045,13 +1015,8 @@ msgid "Query Pending"
 msgstr "Verzoek in behandeling"
 
 #: crypt32.rc:134 cryptui.rc:92
-#, fuzzy
 msgid "Certificate Trust List"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Certificaat Vertrouwenslijst\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Certificaat vertrouwenslijst"
+msgstr "Certificaat Vertrouwenslijst"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
@@ -1079,7 +1044,7 @@ msgstr "Code Ondertekenen"
 
 #: crypt32.rc:141
 msgid "Secure Email"
-msgstr "Beveiligde Email"
+msgstr "Beveiligde e-mail"
 
 #: crypt32.rc:142
 msgid "Time Stamping"
@@ -1114,142 +1079,72 @@ msgid "Windows Hardware Driver Verification"
 msgstr "Windows Hardware Driver Verificatie"
 
 #: crypt32.rc:150 cryptui.rc:131
-#, fuzzy
 msgid "Windows System Component Verification"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Windows Systeem Component Verificatie\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Windows System Component Verificatie"
+msgstr "Windows Systeem Component Verificatie"
 
 #: crypt32.rc:151 cryptui.rc:132
 msgid "OEM Windows System Component Verification"
 msgstr "OEM Windows Systeem Component Verificatie"
 
 #: crypt32.rc:152 cryptui.rc:133
-#, fuzzy
 msgid "Embedded Windows System Component Verification"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Ingebed Windows Systeem Componenten Verificatie\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Ingebed Windows Systeem Component Verificatie"
+msgstr "Ingebed Windows Systeem Component Verificatie"
 
 #: crypt32.rc:153 cryptui.rc:140
-#, fuzzy
 msgid "Key Pack Licenses"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Sleutel Verzameling Licenties\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Sleutelbos licenties"
+msgstr "Sleutelbos-licenties"
 
 #: crypt32.rc:154 cryptui.rc:141
-#, fuzzy
 msgid "License Server Verification"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Licentie Server Verificatie\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Licentieserver verificatie"
+msgstr "Licentieserver verificatie"
 
 #: crypt32.rc:155 cryptui.rc:143
-#, fuzzy
 msgid "Smart Card Logon"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Smart Card Aanmelden\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Smartcard aanloggen"
+msgstr "Smart Card Aanmelden"
 
 #: crypt32.rc:156 cryptui.rc:139
-#, fuzzy
 msgid "Digital Rights"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Digitale Rechten\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Digitale rechten"
+msgstr "Digitale rechten"
 
 #: crypt32.rc:157 cryptui.rc:135
-#, fuzzy
 msgid "Qualified Subordination"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Gekwalificeerde Ondergeschiktheid\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Gekwalificeerde ondergeschiktheid"
+msgstr "Gekwalificeerde ondergeschiktheid"
 
 #: crypt32.rc:158 cryptui.rc:136
-#, fuzzy
 msgid "Key Recovery"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Sleutel Herstellen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Sleutel herstellen"
+msgstr "Sleutel herstellen"
 
 #: crypt32.rc:159 cryptui.rc:137
-#, fuzzy
 msgid "Document Signing"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Document Ondertekenen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Document ondertekening"
+msgstr "Document-ondertekening"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
 msgstr "IP beveiliging IKE tussenpersoon"
 
 #: crypt32.rc:161 cryptui.rc:129
-#, fuzzy
 msgid "File Recovery"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Bestand Herstellen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Bestandsherstel"
+msgstr "Bestandsherstel"
 
 #: crypt32.rc:162 cryptui.rc:134
-#, fuzzy
 msgid "Root List Signer"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Basis Lijst Ondertekenaar\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Basislijst Ondertekenaar"
+msgstr "Basislijst Ondertekenaar"
 
 #: crypt32.rc:163
 msgid "All application policies"
 msgstr "Alle applicaties beleid"
 
 #: crypt32.rc:164 cryptui.rc:146
-#, fuzzy
 msgid "Directory Service Email Replication"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Directory Service Email Replicatie\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Directory service email replicatie"
+msgstr "Directory service e-mail replicatie"
 
 #: crypt32.rc:165 cryptui.rc:142
-#, fuzzy
 msgid "Certificate Request Agent"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Certificaat Verzoek Agent\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Certificaatverzoek agent"
+msgstr "Certificaat Verzoek Agent"
 
 #: crypt32.rc:166 cryptui.rc:138
-#, fuzzy
 msgid "Lifetime Signing"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Levensduur Ondertekenen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Levenslang ondertekenen"
+msgstr "Levenslang ondertekenen"
 
 #: crypt32.rc:167
 msgid "All issuance policies"
@@ -1297,7 +1192,7 @@ msgstr "Andere naam="
 
 #: crypt32.rc:186
 msgid "Email Address="
-msgstr "Email Adres="
+msgstr "E-mailadres="
 
 #: crypt32.rc:187
 msgid "DNS Name="
@@ -1512,44 +1407,40 @@ msgid "Signature CA"
 msgstr "Handtekening CA"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
-msgstr "Certificaat Beleid"
+msgstr "Certificaatbeleid"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
 msgstr "Autoriteits Sleutel Identificatie nummer"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Beleid kwalificator informatie"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Beleid kwalificator Id="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Kwalificator"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Verklaring referentie"
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
-msgstr "Organisatie"
+msgstr "Organisatie="
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
-msgstr "Certificaat serienummer="
+msgstr "Verklaringsnummer="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Verklaring tekst="
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2128,40 +2019,28 @@ msgid "Default MidiOut Device"
 msgstr "Standaardapparaat MidiOut"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
-#, fuzzy
 msgid "Options"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Instellingen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Opties"
+msgstr "Instellingen"
 
 #: hhctrl.rc:70
 msgid "S&ync"
-msgstr ""
+msgstr "S&ynchroniseer"
 
 #: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr "&Terug"
 
 #: hhctrl.rc:72
-#, fuzzy
 msgid "&Forward"
-msgstr "Vooruit"
+msgstr "&Vooruit"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgid "&Home"
-msgstr "Startpagina"
+msgstr "Start&pagina"
 
 #: hhctrl.rc:74
-#, fuzzy
 msgid "&Stop"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Stop\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Stoppen"
+msgstr "&Stop"
 
 #: hhctrl.rc:75 shdoclc.rc:56
 msgid "&Refresh"
@@ -2172,7 +2051,6 @@ msgid "&Print..."
 msgstr "Af&drukken..."
 
 #: hhctrl.rc:28 notepad.rc:58 progman.rc:53
-#, fuzzy
 msgid "&Contents"
 msgstr "Help-onder&werpen"
 
@@ -2190,11 +2068,11 @@ msgstr "&Favorieten"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "Verberg &Tabs"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "Toon &Tabs"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -2205,22 +2083,12 @@ msgid "Hide"
 msgstr "Verbergen"
 
 #: hhctrl.rc:41 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
-#, fuzzy
 msgid "Stop"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Stop\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Stoppen"
+msgstr "Stop"
 
 #: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
-#, fuzzy
 msgid "Refresh"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Actualiseren\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Vernieuwen"
+msgstr "Vernieuwen"
 
 #: hhctrl.rc:43 shdocvw.rc:63
 msgid "Back"
@@ -5367,13 +5235,8 @@ msgid "The username could not be found\n"
 msgstr "Gebruikersnaam niet gevonden\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
-#, fuzzy
 msgid "Local Port"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Lokale Poort\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Lokale aansluiting"
+msgstr "Lokale poort"
 
 #: localspl.rc:29
 msgid "Local Monitor"
@@ -6097,13 +5960,8 @@ msgid "&Undo"
 msgstr "&Ongedaan maken"
 
 #: shdoclc.rc:95 shell32.rc:90 user32.rc:47
-#, fuzzy
 msgid "&Delete"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Verwijderen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Ver&wijderen"
+msgstr "Ver&wijderen"
 
 #: shdoclc.rc:101
 msgid "Table"
@@ -6142,13 +6000,8 @@ msgid "1DSite Select"
 msgstr "1DPaginakeuze"
 
 #: shdoclc.rc:120 shell32.rc:61
-#, fuzzy
 msgid "Paste"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Plakken\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Plakken"
+msgstr "Plakken"
 
 #: shdoclc.rc:122 winhlp32.rc:31
 msgid "&Print"
@@ -6369,13 +6222,8 @@ msgid "&Properties..."
 msgstr "&Eigenschappen..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
-#, fuzzy
 msgid "&Close"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Sluiten\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Afsluiten"
+msgstr "&Afsluiten"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
 #: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
@@ -6399,13 +6247,8 @@ msgid "&Favorites"
 msgstr "&Favorieten"
 
 #: shdocvw.rc:52 regedit.rc:75
-#, fuzzy
 msgid "&Add to Favorites..."
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Toevoegen aan Favorieten...\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Toevoegen aan favorieten..."
+msgstr "&Toevoegen aan favorieten..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
 #: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
@@ -6500,13 +6343,8 @@ msgid "Create &Link"
 msgstr "Maak sne&lkoppeling"
 
 #: shell32.rc:91 regedit.rc:94
-#, fuzzy
 msgid "&Rename"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Hernoemen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Naam wijzigen"
+msgstr "&Hernoemen"
 
 #: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
@@ -6566,13 +6404,8 @@ msgid "Select"
 msgstr "Selecteren"
 
 #: shell32.rc:152 oleview.rc:99
-#, fuzzy
 msgid "Open"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Openen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Open"
+msgstr "Openen"
 
 #: shell32.rc:173
 msgid "Restart"
@@ -6937,13 +6770,8 @@ msgid " sec"
 msgstr " sec"
 
 #: user32.rc:27 taskmgr.rc:139
-#, fuzzy
 msgid "&Restore"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Herstellen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Vorig formaat"
+msgstr "&Herstellen"
 
 #: user32.rc:28
 msgid "&Move"
@@ -6958,13 +6786,8 @@ msgid "Mi&nimize"
 msgstr "Mi&nimaliseren"
 
 #: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-#, fuzzy
 msgid "Ma&ximize"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Ma&xmimaliseren\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Maximaliseren"
+msgstr "Ma&ximaliseren"
 
 #: user32.rc:33
 msgid "&Close\tAlt-F4"
@@ -7880,13 +7703,8 @@ msgid "Digi&tal"
 msgstr "&Digitaal"
 
 #: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
-#, fuzzy
 msgid "&Font..."
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Lettertype...\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Lettertype instellen..."
+msgstr "&Lettertype..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -8738,13 +8556,8 @@ msgid "&Open...\tCtrl+O"
 msgstr "&Openen...\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
-#, fuzzy
 msgid "&Save\tCtrl+S"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"O&pslaan\tCtrl+S\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Op&slaan\tCtrl+S"
+msgstr "Op&slaan\tCtrl+S"
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
@@ -8759,13 +8572,8 @@ msgid "P&rinter Setup..."
 msgstr "Printerins&tellingen..."
 
 #: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
-#, fuzzy
 msgid "&Edit"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Be&werken\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Bewerken"
+msgstr "Be&werken"
 
 #: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
@@ -8785,13 +8593,8 @@ msgstr "&Plakken\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
 #: winefile.rc:30
-#, fuzzy
 msgid "&Delete\tDel"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Verwijderen\tDel\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Ver&wijderen\tDel"
+msgstr "Ver&wijderen\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -8814,13 +8617,8 @@ msgid "&Search next\tF3"
 msgstr "V&olgende zoeken\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
-#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Vervangen...\tCtrl+H\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Ve&rvangen...\tCtrl+H"
+msgstr "&Vervangen...\tCtrl+H"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -9018,31 +8816,16 @@ msgid "&Hidden component categories"
 msgstr "Ver&borgen componentcategorieën"
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
-#, fuzzy
 msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Gereedschapsbalk\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Taakbalk"
+msgstr "&Gereedschapsbalk"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:102
-#, fuzzy
 msgid "&Status Bar"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"S&tatusbalk\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Statusbalk"
+msgstr "&Statusbalk"
 
 #: oleview.rc:67 regedit.rc:71 winefile.rc:127
-#, fuzzy
 msgid "&Refresh\tF5"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Vernieuwen\tF5\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Verversen\tF5"
+msgstr "&Vernieuwen\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
@@ -9073,7 +8856,6 @@ msgid "version 1.0"
 msgstr "versie 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 msgstr "TypeLib bestanden (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
@@ -9250,13 +9032,8 @@ msgid "O&pen\tEnter"
 msgstr "&Openen\tEnter"
 
 #: progman.rc:32 winefile.rc:27
-#, fuzzy
 msgid "&Move...\tF7"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Ve&rplaatsen...\tF7\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Verplaatsen...\tF7"
+msgstr "&Verplaatsen...\tF7"
 
 #: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
@@ -9283,13 +9060,8 @@ msgid "&Arrange automatically"
 msgstr "&Automatisch rangschikken"
 
 #: progman.rc:43 winefile.rc:107
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Geminimaliseerd uitvoeren\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Ge&minimaliseerd starten"
+msgstr "Ge&minimaliseerd starten"
 
 #: progman.rc:44 winefile.rc:108
 msgid "&Save settings on exit"
@@ -9509,26 +9281,16 @@ msgid "Status &Bar"
 msgstr "&Statusbalk"
 
 #: regedit.rc:69 winefile.rc:81
-#, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"Sp&litsen\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"S&plitsen"
+msgstr "Sp&litsen"
 
 #: regedit.rc:76
 msgid "&Remove Favorite..."
 msgstr "&Verwijderen uit favorieten..."
 
 #: regedit.rc:80 winefile.rc:131
-#, fuzzy
 msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Help-onderwerpen\tF1\n"
-"#-#-#-#-#  nl.po (Wine)  #-#-#-#-#\n"
-"&Help-onderwerpen"
+msgstr "&Help-onderwerpen\tF1"
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
@@ -9585,14 +9347,12 @@ msgid "Export Registry File"
 msgstr "Registerbestand exporteren"
 
 #: regedit.rc:199
-#, fuzzy
 msgid "Registry files (*.reg)"
-msgstr "Register Bestanden (*.reg)"
+msgstr "Registerbestanden (*.reg)"
 
 #: regedit.rc:200
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr "Win9x/NT4 Register Bestanden (REGEDIT4)"
+msgstr "Win9x/NT4 Registerbestanden (REGEDIT4)"
 
 #: regedit.rc:207
 msgid "(Default)"
@@ -11122,7 +10882,6 @@ msgid "Expand &Tree\t*"
 msgstr "&Uitklappen\t*"
 
 #: winefile.rc:70
-#, fuzzy
 msgid "Expand &all\tCtrl+*"
 msgstr "&Alles uitklappen\tCtrl+*"
 
