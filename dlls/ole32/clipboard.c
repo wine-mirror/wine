@@ -478,6 +478,62 @@ static HRESULT dup_global_mem( HGLOBAL src, DWORD flags, HGLOBAL *dst )
     return S_OK;
 }
 
+/***********************************************************************
+ *                    dup_metafilepict
+ *
+ * Helper function to duplicate a handle to a METAFILEPICT, and the
+ * contained HMETAFILE.
+ */
+static HRESULT dup_metafilepict(HGLOBAL src, HGLOBAL *pdest)
+{
+    HRESULT hr;
+    HGLOBAL dest;
+    METAFILEPICT *dest_ptr;
+
+    *pdest = NULL;
+
+    /* Copy the METAFILEPICT structure. */
+    hr = dup_global_mem(src, GMEM_DDESHARE|GMEM_MOVEABLE, &dest);
+    if (FAILED(hr)) return hr;
+
+    dest_ptr = GlobalLock(dest);
+    if (!dest_ptr) return E_FAIL;
+
+    /* Give the new METAFILEPICT a separate HMETAFILE. */
+    dest_ptr->hMF = CopyMetaFileW(dest_ptr->hMF, NULL);
+    if (dest_ptr->hMF)
+    {
+       GlobalUnlock(dest);
+       *pdest = dest;
+       return S_OK;
+    }
+    else
+    {
+       GlobalUnlock(dest);
+       GlobalFree(dest);
+       return E_FAIL;
+    }
+}
+
+/***********************************************************************
+ *                    free_metafilepict
+ *
+ * Helper function to GlobalFree a handle to a METAFILEPICT, and also
+ * free the contained HMETAFILE.
+ */
+static void free_metafilepict(HGLOBAL src)
+{
+    METAFILEPICT *src_ptr;
+
+    src_ptr = GlobalLock(src);
+    if (src_ptr)
+    {
+        DeleteMetaFile(src_ptr->hMF);
+        GlobalUnlock(src);
+    }
+    GlobalFree(src);
+}
+
 /************************************************************
  *              render_embed_source_hack
  *
@@ -744,6 +800,9 @@ static HRESULT get_data_from_global(IDataObject *data, FORMATETC *fmt, HGLOBAL *
     return hr;
 }
 
+/***************************************************************************
+ *         get_data_from_enhmetafile
+ */
 static HRESULT get_data_from_enhmetafile(IDataObject *data, FORMATETC *fmt, HGLOBAL *mem)
 {
     HENHMETAFILE copy;
@@ -762,6 +821,34 @@ static HRESULT get_data_from_enhmetafile(IDataObject *data, FORMATETC *fmt, HGLO
     copy = CopyEnhMetaFileW(med.u.hEnhMetaFile, NULL);
     if(copy) *mem = (HGLOBAL)copy;
     else hr = E_FAIL;
+
+    ReleaseStgMedium(&med);
+
+    return hr;
+}
+
+/***************************************************************************
+ *         get_data_from_metafilepict
+ */
+static HRESULT get_data_from_metafilepict(IDataObject *data, FORMATETC *fmt, HGLOBAL *mem)
+{
+    HGLOBAL copy;
+    HRESULT hr;
+    FORMATETC mem_fmt;
+    STGMEDIUM med;
+
+    *mem = NULL;
+
+    mem_fmt = *fmt;
+    mem_fmt.tymed = TYMED_MFPICT;
+
+    hr = IDataObject_GetData(data, &mem_fmt, &med);
+    if(FAILED(hr)) return hr;
+
+    hr = dup_metafilepict(med.u.hMetaFilePict, &copy);
+    if(FAILED(hr)) return hr;
+
+    *mem = copy;
 
     ReleaseStgMedium(&med);
 
@@ -801,6 +888,11 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
     {
         hr = get_data_from_enhmetafile(data, fmt, &clip_data);
     }
+    else if(fmt->tymed & TYMED_MFPICT)
+    {
+        /* Returns global handle to METAFILEPICT, containing a copied HMETAFILE */
+        hr = get_data_from_metafilepict(data, fmt, &clip_data);
+    }
     else
     {
         FIXME("Unhandled tymed %x\n", fmt->tymed);
@@ -812,7 +904,10 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
         if ( !SetClipboardData(fmt->cfFormat, clip_data) )
         {
             WARN("() : Failed to set rendered clipboard data into clipboard!\n");
-            GlobalFree(clip_data);
+            if(fmt->tymed & TYMED_MFPICT)
+                free_metafilepict(clip_data);
+            else
+                GlobalFree(clip_data);
             hr = CLIPBRD_E_CANT_SET;
         }
     }
