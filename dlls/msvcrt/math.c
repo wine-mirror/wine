@@ -835,13 +835,34 @@ unsigned int CDECL _statusfp(void)
  */
 unsigned int CDECL _clearfp(void)
 {
-  unsigned int retVal = _statusfp();
-#if defined(__GNUC__) && defined(__i386__)
-  __asm__ __volatile__( "fnclex" );
+    unsigned int flags = 0;
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+    unsigned long fpword;
+
+    __asm__ __volatile__( "fnstsw %0; fnclex" : "=m" (fpword) );
+    if (fpword & 0x1)  flags |= MSVCRT__SW_INVALID;
+    if (fpword & 0x2)  flags |= MSVCRT__SW_DENORMAL;
+    if (fpword & 0x4)  flags |= MSVCRT__SW_ZERODIVIDE;
+    if (fpword & 0x8)  flags |= MSVCRT__SW_OVERFLOW;
+    if (fpword & 0x10) flags |= MSVCRT__SW_UNDERFLOW;
+    if (fpword & 0x20) flags |= MSVCRT__SW_INEXACT;
+
+    if (sse2_supported)
+    {
+        __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
+        if (fpword & 0x1)  flags |= MSVCRT__SW_INVALID;
+        if (fpword & 0x2)  flags |= MSVCRT__SW_DENORMAL;
+        if (fpword & 0x4)  flags |= MSVCRT__SW_ZERODIVIDE;
+        if (fpword & 0x8)  flags |= MSVCRT__SW_OVERFLOW;
+        if (fpword & 0x10) flags |= MSVCRT__SW_UNDERFLOW;
+        if (fpword & 0x20) flags |= MSVCRT__SW_INEXACT;
+        fpword &= ~0x3f;
+        __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
+    }
 #else
-  FIXME(":Not Implemented\n");
+    FIXME( "not implemented\n" );
 #endif
-  return retVal;
+    return flags;
 }
 
 /*********************************************************************
