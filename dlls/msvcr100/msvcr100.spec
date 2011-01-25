@@ -386,7 +386,7 @@
 @ extern __argv msvcrt.__argv
 @ extern __badioinfo msvcrt.__badioinfo
 @ cdecl __clean_type_info_names_internal(ptr) msvcr90.__clean_type_info_names_internal
-@ stub __control87_2
+@ cdecl -arch=i386 __control87_2(long long ptr ptr) msvcrt.__control87_2
 @ stub __create_locale
 @ cdecl __crtCompareStringA(long long str long str long) msvcrt.__crtCompareStringA
 @ cdecl __crtCompareStringW(long long wstr long wstr long) msvcrt.__crtCompareStringW

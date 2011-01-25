@@ -166,6 +166,7 @@ extern char* __cdecl __unDNameEx(char *,const char*,int,malloc_func_t,free_func_
 extern void msvcrt_init_mt_locks(void);
 extern void msvcrt_free_mt_locks(void);
 
+extern void msvcrt_init_math(void);
 extern void msvcrt_init_io(void);
 extern void msvcrt_free_io(void);
 extern void msvcrt_init_console(void);

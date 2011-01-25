@@ -97,6 +97,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         msvcrt_free_tls_mem();
         return FALSE;
     }
+    msvcrt_init_math();
     msvcrt_init_io();
     msvcrt_init_console();
     msvcrt_init_args();

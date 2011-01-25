@@ -51,13 +51,21 @@ typedef int (CDECL *MSVCRT_matherr_func)(struct MSVCRT__exception *);
 
 static MSVCRT_matherr_func MSVCRT_default_matherr_func = NULL;
 
+static BOOL sse2_supported;
+static BOOL sse2_enabled;
+
+void msvcrt_init_math(void)
+{
+    sse2_supported = sse2_enabled = IsProcessorFeaturePresent( PF_XMMI64_INSTRUCTIONS_AVAILABLE );
+}
+
 /*********************************************************************
  *      _set_SSE2_enable (MSVCRT.@)
  */
 int CDECL MSVCRT__set_SSE2_enable(int flag)
 {
-    FIXME("(%x) stub\n", flag);
-    return flag;
+    sse2_enabled = flag && sse2_supported;
+    return sse2_enabled;
 }
 
 #ifdef __x86_64__
@@ -835,72 +843,157 @@ double CDECL _chgsign(double num)
 }
 
 /*********************************************************************
+ *		__control87_2 (MSVCRT.@)
+ *
+ * Not exported by native msvcrt, added in msvcr80.
+ */
+#if defined(__i386__) || defined(__x86_64__)
+int CDECL __control87_2( unsigned int newval, unsigned int mask,
+                         unsigned int *x86_cw, unsigned int *sse2_cw )
+{
+#ifdef __GNUC__
+    unsigned long fpword;
+    unsigned int flags;
+
+    if (x86_cw)
+    {
+        __asm__ __volatile__( "fstcw %0" : "=m" (fpword) );
+
+        /* Convert into mask constants */
+        flags = 0;
+        if (fpword & 0x1)  flags |= MSVCRT__EM_INVALID;
+        if (fpword & 0x2)  flags |= MSVCRT__EM_DENORMAL;
+        if (fpword & 0x4)  flags |= MSVCRT__EM_ZERODIVIDE;
+        if (fpword & 0x8)  flags |= MSVCRT__EM_OVERFLOW;
+        if (fpword & 0x10) flags |= MSVCRT__EM_UNDERFLOW;
+        if (fpword & 0x20) flags |= MSVCRT__EM_INEXACT;
+        switch (fpword & 0xc00)
+        {
+        case 0xc00: flags |= MSVCRT__RC_UP|MSVCRT__RC_DOWN; break;
+        case 0x800: flags |= MSVCRT__RC_UP; break;
+        case 0x400: flags |= MSVCRT__RC_DOWN; break;
+        }
+        switch (fpword & 0x300)
+        {
+        case 0x0:   flags |= MSVCRT__PC_24; break;
+        case 0x200: flags |= MSVCRT__PC_53; break;
+        case 0x300: flags |= MSVCRT__PC_64; break;
+        }
+        if (fpword & 0x1000) flags |= MSVCRT__IC_AFFINE;
+
+        TRACE( "x86 flags=%08x newval=%08x mask=%08x\n", flags, newval, mask );
+        if (mask)
+        {
+            flags = (flags & ~mask) | (newval & mask);
+
+            /* Convert (masked) value back to fp word */
+            fpword = 0;
+            if (flags & MSVCRT__EM_INVALID)    fpword |= 0x1;
+            if (flags & MSVCRT__EM_DENORMAL)   fpword |= 0x2;
+            if (flags & MSVCRT__EM_ZERODIVIDE) fpword |= 0x4;
+            if (flags & MSVCRT__EM_OVERFLOW)   fpword |= 0x8;
+            if (flags & MSVCRT__EM_UNDERFLOW)  fpword |= 0x10;
+            if (flags & MSVCRT__EM_INEXACT)    fpword |= 0x20;
+            switch (flags & MSVCRT__MCW_RC)
+            {
+            case MSVCRT__RC_UP|MSVCRT__RC_DOWN: fpword |= 0xc00; break;
+            case MSVCRT__RC_UP:                 fpword |= 0x800; break;
+            case MSVCRT__RC_DOWN:               fpword |= 0x400; break;
+            }
+            switch (flags & MSVCRT__MCW_PC)
+            {
+            case MSVCRT__PC_64: fpword |= 0x300; break;
+            case MSVCRT__PC_53: fpword |= 0x200; break;
+            case MSVCRT__PC_24: fpword |= 0x0; break;
+            }
+            if (flags & MSVCRT__IC_AFFINE) fpword |= 0x1000;
+
+            __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
+        }
+        *x86_cw = flags;
+    }
+
+    if (!sse2_cw) return 1;
+
+    if (sse2_supported)
+    {
+        __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
+
+        /* Convert into mask constants */
+        flags = 0;
+        if (fpword & 0x80)   flags |= MSVCRT__EM_INVALID;
+        if (fpword & 0x100)  flags |= MSVCRT__EM_DENORMAL;
+        if (fpword & 0x200)  flags |= MSVCRT__EM_ZERODIVIDE;
+        if (fpword & 0x400)  flags |= MSVCRT__EM_OVERFLOW;
+        if (fpword & 0x800)  flags |= MSVCRT__EM_UNDERFLOW;
+        if (fpword & 0x1000) flags |= MSVCRT__EM_INEXACT;
+        switch (fpword & 0x6000)
+        {
+        case 0x6000: flags |= MSVCRT__RC_UP|MSVCRT__RC_DOWN; break;
+        case 0x4000: flags |= MSVCRT__RC_UP; break;
+        case 0x2000: flags |= MSVCRT__RC_DOWN; break;
+        }
+        switch (fpword & 0x8040)
+        {
+        case 0x0040: flags |= MSVCRT__DN_FLUSH_OPERANDS_SAVE_RESULTS; break;
+        case 0x8000: flags |= MSVCRT__DN_SAVE_OPERANDS_FLUSH_RESULTS; break;
+        case 0x8040: flags |= MSVCRT__DN_FLUSH; break;
+        }
+
+        TRACE( "sse2 flags=%08x newval=%08x mask=%08x\n", flags, newval, mask );
+        if (mask)
+        {
+            flags = (flags & ~mask) | (newval & mask);
+
+            /* Convert (masked) value back to fp word */
+            fpword = 0;
+            if (flags & MSVCRT__EM_INVALID)    fpword |= 0x80;
+            if (flags & MSVCRT__EM_DENORMAL)   fpword |= 0x100;
+            if (flags & MSVCRT__EM_ZERODIVIDE) fpword |= 0x200;
+            if (flags & MSVCRT__EM_OVERFLOW)   fpword |= 0x400;
+            if (flags & MSVCRT__EM_UNDERFLOW)  fpword |= 0x800;
+            if (flags & MSVCRT__EM_INEXACT)    fpword |= 0x1000;
+            switch (flags & MSVCRT__MCW_RC)
+            {
+            case MSVCRT__RC_UP|MSVCRT__RC_DOWN: fpword |= 0x6000; break;
+            case MSVCRT__RC_UP:                 fpword |= 0x4000; break;
+            case MSVCRT__RC_DOWN:               fpword |= 0x2000; break;
+            }
+            switch (flags & MSVCRT__MCW_DN)
+            {
+            case MSVCRT__DN_FLUSH_OPERANDS_SAVE_RESULTS: fpword |= 0x0040; break;
+            case MSVCRT__DN_SAVE_OPERANDS_FLUSH_RESULTS: fpword |= 0x8000; break;
+            case MSVCRT__DN_FLUSH:                       fpword |= 0x8040; break;
+            }
+            __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
+        }
+        *sse2_cw = flags;
+    }
+    else *sse2_cw = 0;
+
+    return 1;
+#else
+    FIXME( "not implemented\n" );
+    return 0;
+#endif
+}
+#endif
+
+/*********************************************************************
  *		_control87 (MSVCRT.@)
  */
 unsigned int CDECL _control87(unsigned int newval, unsigned int mask)
 {
-#if defined(__GNUC__) && defined(__i386__)
-  unsigned int fpword = 0;
-  unsigned int flags = 0;
+#if defined(__i386__) || defined(__x86_64__)
+    unsigned int x86_cw, sse2_cw;
 
-  TRACE("(%08x, %08x): Called\n", newval, mask);
+    __control87_2( newval, mask, &x86_cw, &sse2_cw );
 
-  /* Get fp control word */
-  __asm__ __volatile__( "fstcw %0" : "=m" (fpword) : );
-
-  TRACE("Control word before : %08x\n", fpword);
-
-  /* Convert into mask constants */
-  if (fpword & 0x1)  flags |= MSVCRT__EM_INVALID;
-  if (fpword & 0x2)  flags |= MSVCRT__EM_DENORMAL;
-  if (fpword & 0x4)  flags |= MSVCRT__EM_ZERODIVIDE;
-  if (fpword & 0x8)  flags |= MSVCRT__EM_OVERFLOW;
-  if (fpword & 0x10) flags |= MSVCRT__EM_UNDERFLOW;
-  if (fpword & 0x20) flags |= MSVCRT__EM_INEXACT;
-  switch(fpword & 0xC00) {
-  case 0xC00: flags |= MSVCRT__RC_UP|MSVCRT__RC_DOWN; break;
-  case 0x800: flags |= MSVCRT__RC_UP; break;
-  case 0x400: flags |= MSVCRT__RC_DOWN; break;
-  }
-  switch(fpword & 0x300) {
-  case 0x0:   flags |= MSVCRT__PC_24; break;
-  case 0x200: flags |= MSVCRT__PC_53; break;
-  case 0x300: flags |= MSVCRT__PC_64; break;
-  }
-  if (fpword & 0x1000) flags |= MSVCRT__IC_AFFINE;
-
-  /* Mask with parameters */
-  flags = (flags & ~mask) | (newval & mask);
-
-  /* Convert (masked) value back to fp word */
-  fpword = 0;
-  if (flags & MSVCRT__EM_INVALID)    fpword |= 0x1;
-  if (flags & MSVCRT__EM_DENORMAL)   fpword |= 0x2;
-  if (flags & MSVCRT__EM_ZERODIVIDE) fpword |= 0x4;
-  if (flags & MSVCRT__EM_OVERFLOW)   fpword |= 0x8;
-  if (flags & MSVCRT__EM_UNDERFLOW)  fpword |= 0x10;
-  if (flags & MSVCRT__EM_INEXACT)    fpword |= 0x20;
-  switch(flags & (MSVCRT__RC_UP | MSVCRT__RC_DOWN)) {
-  case MSVCRT__RC_UP|MSVCRT__RC_DOWN: fpword |= 0xC00; break;
-  case MSVCRT__RC_UP:          fpword |= 0x800; break;
-  case MSVCRT__RC_DOWN:        fpword |= 0x400; break;
-  }
-  switch (flags & (MSVCRT__PC_24 | MSVCRT__PC_53)) {
-  case MSVCRT__PC_64: fpword |= 0x300; break;
-  case MSVCRT__PC_53: fpword |= 0x200; break;
-  case MSVCRT__PC_24: fpword |= 0x0; break;
-  }
-  if (flags & MSVCRT__IC_AFFINE) fpword |= 0x1000;
-
-  TRACE("Control word after  : %08x\n", fpword);
-
-  /* Put fp control word */
-  __asm__ __volatile__( "fldcw %0" : : "m" (fpword) );
-
-  return flags;
+    if ((x86_cw ^ sse2_cw) & (MSVCRT__MCW_EM | MSVCRT__MCW_RC)) x86_cw |= MSVCRT__EM_AMBIGUOUS;
+    return x86_cw;
 #else
-  FIXME(":Not Implemented!\n");
-  return 0;
+    FIXME( "not implemented\n" );
+    return 0;
 #endif
 }
 

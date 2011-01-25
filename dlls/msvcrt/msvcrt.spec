@@ -1475,14 +1475,15 @@
 @ varargs wscanf_s(wstr) MSVCRT_wscanf_s
 
 # Functions not exported in native dll:
-@ cdecl _set_abort_behavior(long long) MSVCRT__set_abort_behavior
-@ cdecl _get_invalid_parameter_handler()
-@ cdecl _set_invalid_parameter_handler(ptr)
-@ cdecl _create_locale(long str) MSVCRT__create_locale
-@ cdecl _free_locale(ptr) MSVCRT__free_locale
-@ cdecl _configthreadlocale(long)
-@ cdecl _wcstod_l(wstr ptr) MSVCRT__wcstod_l
 @ cdecl ___mb_cur_max_l_func(ptr)
-@ cdecl _set_purecall_handler(ptr)
+@ cdecl -arch=i386 __control87_2(long long ptr ptr)
+@ cdecl _configthreadlocale(long)
+@ cdecl _create_locale(long str) MSVCRT__create_locale
 @ cdecl _dupenv_s(ptr ptr str)
+@ cdecl _free_locale(ptr) MSVCRT__free_locale
+@ cdecl _get_invalid_parameter_handler()
+@ cdecl _set_abort_behavior(long long) MSVCRT__set_abort_behavior
+@ cdecl _set_invalid_parameter_handler(ptr)
+@ cdecl _set_purecall_handler(ptr)
+@ cdecl _wcstod_l(wstr ptr) MSVCRT__wcstod_l
 @ cdecl _wdupenv_s(ptr ptr str)
