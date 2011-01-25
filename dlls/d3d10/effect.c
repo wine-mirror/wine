@@ -915,7 +915,6 @@ static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr
     {
         case D3D10_EOO_VALUE:
             TRACE("Copy variable values\n");
-            hr = E_FAIL;
 
             switch (o->type)
             {
