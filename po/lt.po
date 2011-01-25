@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-01-14 21:21+0300\n"
+"PO-Revision-Date: 2011-01-25 20:33+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@gmail.com>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -2019,26 +2019,23 @@ msgstr "Parinktys"
 
 #: hhctrl.rc:70
 msgid "S&ync"
-msgstr ""
+msgstr "S&inchronizuoti"
 
 #: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr "&Atgal"
 
 #: hhctrl.rc:72
-#, fuzzy
 msgid "&Forward"
-msgstr "Pirmyn"
+msgstr "&Pirmyn"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgid "&Home"
-msgstr "Į pradžią"
+msgstr "Į p&radžią"
 
 #: hhctrl.rc:74
-#, fuzzy
 msgid "&Stop"
-msgstr "Stabdyti"
+msgstr "&Stabdyti"
 
 #: hhctrl.rc:75 shdoclc.rc:56
 msgid "&Refresh"
@@ -2066,11 +2063,11 @@ msgstr "&Adresynas"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "Slėpti &korteles"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "Rodyti &korteles"
 
 #: hhctrl.rc:39
 msgid "Show"
