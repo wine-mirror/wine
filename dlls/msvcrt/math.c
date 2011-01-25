@@ -1111,10 +1111,16 @@ int CDECL _finite(double num)
  */
 void CDECL _fpreset(void)
 {
-#if defined(__GNUC__) && defined(__i386__)
-  __asm__ __volatile__( "fninit" );
+#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+    const unsigned int x86_cw = 0x27f;
+    __asm__ __volatile__( "fninit; fldcw %0" : : "m" (x86_cw) );
+    if (sse2_supported)
+    {
+        const unsigned long sse2_cw = 0x1f80;
+        __asm__ __volatile__( "ldmxcsr %0" : : "m" (sse2_cw) );
+    }
 #else
-  FIXME(":Not Implemented!\n");
+    FIXME( "not implemented\n" );
 #endif
 }
 
