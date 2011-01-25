@@ -232,10 +232,6 @@ static HRESULT WINAPI IDirect3DSurface9Impl_GetContainer(LPDIRECT3DSURFACE9 ifac
 
     if (!This->container) return E_NOINTERFACE;
 
-    if (!ppContainer) {
-        ERR("Called without a valid ppContainer\n");
-    }
-
     res = IUnknown_QueryInterface(This->container, riid, ppContainer);
 
     TRACE("Returning ppContainer %p, *ppContainer %p\n", ppContainer, *ppContainer);
