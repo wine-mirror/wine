@@ -768,25 +768,66 @@ void CDECL MSVCRT___setusermatherr(MSVCRT_matherr_func func)
 }
 
 /**********************************************************************
+ *		_statusfp2 (MSVCRT.@)
+ *
+ * Not exported by native msvcrt, added in msvcr80.
+ */
+#if defined(__i386__) || defined(__x86_64__)
+void CDECL _statusfp2( unsigned int *x86_sw, unsigned int *sse2_sw )
+{
+#ifdef __GNUC__
+    unsigned int flags;
+    unsigned long fpword;
+
+    if (x86_sw)
+    {
+        __asm__ __volatile__( "fstsw %0" : "=m" (fpword) );
+        flags = 0;
+        if (fpword & 0x1)  flags |= MSVCRT__SW_INVALID;
+        if (fpword & 0x2)  flags |= MSVCRT__SW_DENORMAL;
+        if (fpword & 0x4)  flags |= MSVCRT__SW_ZERODIVIDE;
+        if (fpword & 0x8)  flags |= MSVCRT__SW_OVERFLOW;
+        if (fpword & 0x10) flags |= MSVCRT__SW_UNDERFLOW;
+        if (fpword & 0x20) flags |= MSVCRT__SW_INEXACT;
+        *x86_sw = flags;
+    }
+
+    if (!sse2_sw) return;
+
+    if (sse2_supported)
+    {
+        __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
+        flags = 0;
+        if (fpword & 0x1)  flags |= MSVCRT__SW_INVALID;
+        if (fpword & 0x2)  flags |= MSVCRT__SW_DENORMAL;
+        if (fpword & 0x4)  flags |= MSVCRT__SW_ZERODIVIDE;
+        if (fpword & 0x8)  flags |= MSVCRT__SW_OVERFLOW;
+        if (fpword & 0x10) flags |= MSVCRT__SW_UNDERFLOW;
+        if (fpword & 0x20) flags |= MSVCRT__SW_INEXACT;
+        *sse2_sw = flags;
+    }
+    else *sse2_sw = 0;
+#else
+    FIXME( "not implemented\n" );
+#endif
+}
+#endif
+
+/**********************************************************************
  *		_statusfp (MSVCRT.@)
  */
 unsigned int CDECL _statusfp(void)
 {
-   unsigned int retVal = 0;
-#if defined(__GNUC__) && defined(__i386__)
-  unsigned int fpword;
+#if defined(__i386__) || defined(__x86_64__)
+    unsigned int x86_sw, sse2_sw;
 
-  __asm__ __volatile__( "fstsw %0" : "=m" (fpword) : );
-  if (fpword & 0x1)  retVal |= MSVCRT__SW_INVALID;
-  if (fpword & 0x2)  retVal |= MSVCRT__SW_DENORMAL;
-  if (fpword & 0x4)  retVal |= MSVCRT__SW_ZERODIVIDE;
-  if (fpword & 0x8)  retVal |= MSVCRT__SW_OVERFLOW;
-  if (fpword & 0x10) retVal |= MSVCRT__SW_UNDERFLOW;
-  if (fpword & 0x20) retVal |= MSVCRT__SW_INEXACT;
+    _statusfp2( &x86_sw, &sse2_sw );
+    /* FIXME: there's no definition for ambiguous status, just return all status bits for now */
+    return x86_sw | sse2_sw;
 #else
-  FIXME(":Not implemented!\n");
+    FIXME( "not implemented\n" );
+    return 0;
 #endif
-  return retVal;
 }
 
 /*********************************************************************

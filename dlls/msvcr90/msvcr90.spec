@@ -968,7 +968,7 @@
 @ cdecl _stat64(str ptr) msvcrt._stat64
 @ cdecl _stat64i32(str ptr)
 @ cdecl _statusfp() msvcrt._statusfp
-@ stub _statusfp2
+@ cdecl -arch=i386 _statusfp2(ptr ptr) msvcrt._statusfp2
 @ stub _strcoll_l
 @ cdecl _strdate(ptr) msvcrt._strdate
 @ cdecl _strdate_s(ptr long) msvcrt._strdate_s
