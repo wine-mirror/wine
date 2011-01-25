@@ -375,6 +375,7 @@ static BOOL CALLBACK EnumJoysticks(
         {
             DWORD effect_status;
             struct DIPROPDWORD diprop_word;
+            GUID guid = {0};
 
             hr = IDirectInputEffect_Initialize(effect, hInstance, data->version,
                                                &GUID_ConstantForce);
@@ -429,6 +430,9 @@ static BOOL CALLBACK EnumJoysticks(
             hr = IDirectInputEffect_GetEffectStatus(effect, &effect_status);
             ok(hr==DI_OK,"IDirectInputEffect_GetEffectStatus() failed: %08x\n", hr);
             todo_wine ok(effect_status!=0,"IDirectInputEffect_GetEffectStatus() reported effect as stopped\n");
+            hr = IDirectInputEffect_GetEffectGuid(effect, &guid);
+            ok(hr==DI_OK,"IDirectInputEffect_GetEffectGuid() failed: %08x\n", hr);
+            ok(IsEqualGUID(&GUID_ConstantForce, &guid), "Wrong guid returned\n");
 
             /* Check autocenter status
              * State: initialy stopped

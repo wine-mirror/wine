@@ -289,8 +289,8 @@ static HRESULT WINAPI LinuxInputEffectImpl_GetEffectGuid(
 
     TRACE("(this=%p,%p)\n", This, pguid);
 
-    pguid = &This->guid;
-    
+    *pguid = This->guid;
+
     return DI_OK;
 }
 
