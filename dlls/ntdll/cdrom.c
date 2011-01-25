@@ -1121,6 +1121,10 @@ static NTSTATUS CDROM_Verify(int dev, int fd)
         return STATUS_SUCCESS;
     else
         return STATUS_NO_MEDIA_IN_DEVICE;
+#elif defined(__APPLE__)
+	/* At this point, we know that we have media, because in Mac OS X, the
+	 * device file is only created when media is present. */
+	return STATUS_SUCCESS;
 #else
     FIXME("not supported on this O/S\n");
     return STATUS_NOT_SUPPORTED;
