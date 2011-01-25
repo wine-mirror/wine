@@ -164,10 +164,6 @@ static HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface,
 
     if (!This->container) return E_NOINTERFACE;
 
-    if (!ppContainer) {
-        ERR("Called without a valid ppContainer.\n");
-    }
-
     res = IUnknown_QueryInterface(This->container, riid, ppContainer);
 
     TRACE("Returning ppContainer %p, *ppContainer %p\n", ppContainer, *ppContainer);
