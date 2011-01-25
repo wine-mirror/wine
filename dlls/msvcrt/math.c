@@ -1068,6 +1068,14 @@ unsigned int CDECL _controlfp(unsigned int newval, unsigned int mask)
 }
 
 /*********************************************************************
+ *		_set_controlfp (MSVCRT.@)
+ */
+void CDECL _set_controlfp( unsigned int newval, unsigned int mask )
+{
+    _controlfp( newval, mask );
+}
+
+/*********************************************************************
  *              _controlfp_s (MSVCRT.@)
  */
 int CDECL _controlfp_s(unsigned int *cur, unsigned int newval, unsigned int mask)

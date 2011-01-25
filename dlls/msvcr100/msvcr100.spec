@@ -1069,7 +1069,7 @@
 @ stdcall -i386 _seh_longjmp_unwind(ptr) msvcrt._seh_longjmp_unwind
 @ cdecl _set_SSE2_enable(long) msvcrt._set_SSE2_enable
 @ cdecl _set_abort_behavior(long long) msvcrt._set_abort_behavior
-@ stub _set_controlfp
+@ cdecl _set_controlfp(long long) msvcrt._set_controlfp
 @ cdecl _set_doserrno(long) msvcrt._set_doserrno
 @ cdecl _set_errno(long) msvcrt._set_errno
 @ cdecl _set_error_mode(long) msvcrt._set_error_mode
