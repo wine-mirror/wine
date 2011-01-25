@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #define COBJMACROS
+#define CONST_VTABLE
 #include "wine/test.h"
 
 #include <d3d9types.h>
@@ -1480,7 +1481,7 @@ static const struct ID3DIncludeVtbl D3DInclude_Vtbl =
 };
 
 struct D3DIncludeImpl {
-    const ID3DIncludeVtbl *lpVtbl;
+    ID3DInclude ID3DInclude_iface;
 };
 
 static void assembleshader_test(void) {
@@ -1542,10 +1543,9 @@ static void assembleshader_test(void) {
     /* D3DInclude test */
     shader = NULL;
     messages = NULL;
-    include.lpVtbl = &D3DInclude_Vtbl;
-    hr = D3DAssemble(testshader, strlen(testshader), NULL,
-                     NULL, (LPD3DINCLUDE)&include, D3DCOMPILE_SKIP_VALIDATION,
-                     &shader, &messages);
+    include.ID3DInclude_iface.lpVtbl = &D3DInclude_Vtbl;
+    hr = D3DAssemble(testshader, strlen(testshader), NULL, NULL, &include.ID3DInclude_iface,
+                     D3DCOMPILE_SKIP_VALIDATION, &shader, &messages);
     ok(hr == S_OK, "D3DInclude test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
     if(messages) {
         trace("D3DAssemble messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
@@ -1634,9 +1634,9 @@ static void d3dpreprocess_test(void)
     /* pInclude test */
     shader = NULL;
     messages = NULL;
-    include.lpVtbl = &D3DInclude_Vtbl;
-    hr = D3DPreprocess(testshader, strlen(testshader), NULL,
-            NULL, (ID3DInclude *)&include, &shader, &messages);
+    include.ID3DInclude_iface.lpVtbl = &D3DInclude_Vtbl;
+    hr = D3DPreprocess(testshader, strlen(testshader), NULL, NULL, &include.ID3DInclude_iface,
+                       &shader, &messages);
     ok(hr == S_OK, "pInclude test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
     if (messages)
     {
@@ -1648,8 +1648,8 @@ static void d3dpreprocess_test(void)
     /* recursive #include test */
     shader = NULL;
     messages = NULL;
-    hr = D3DPreprocess(testshader2, strlen(testshader2), NULL,
-            NULL, (ID3DInclude *)&include, &shader, &messages);
+    hr = D3DPreprocess(testshader2, strlen(testshader2), NULL, NULL, &include.ID3DInclude_iface,
+                       &shader, &messages);
     ok(hr == S_OK, "D3DPreprocess test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
     if (messages)
     {
