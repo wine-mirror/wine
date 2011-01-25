@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #define COBJMACROS
+#define CONST_VTABLE
 #include "wine/test.h"
 
 #include <d3dx9.h>
@@ -87,7 +88,7 @@ static const struct ID3DXIncludeVtbl D3DXInclude_Vtbl = {
 };
 
 struct D3DXIncludeImpl {
-    const ID3DXIncludeVtbl *lpVtbl;
+    ID3DXInclude ID3DXInclude_iface;
 };
 
 static void assembleshader_test(void) {
@@ -172,10 +173,9 @@ static void assembleshader_test(void) {
     /* pInclude test */
     shader = NULL;
     messages = NULL;
-    include.lpVtbl = &D3DXInclude_Vtbl;
-    hr = D3DXAssembleShader(testshader, strlen(testshader),
-                            NULL, (LPD3DXINCLUDE)&include, D3DXSHADER_SKIPVALIDATION,
-                            &shader, &messages);
+    include.ID3DXInclude_iface.lpVtbl = &D3DXInclude_Vtbl;
+    hr = D3DXAssembleShader(testshader, strlen(testshader), NULL, &include.ID3DXInclude_iface,
+                            D3DXSHADER_SKIPVALIDATION, &shader, &messages);
     ok(hr == D3D_OK, "pInclude test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
     if(messages) {
         trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
@@ -199,9 +199,8 @@ static void assembleshader_test(void) {
     /* recursive #include test */
     shader = NULL;
     messages = NULL;
-    hr = D3DXAssembleShader(testshader2, strlen(testshader2),
-                            NULL, (LPD3DXINCLUDE)&include, D3DXSHADER_SKIPVALIDATION,
-                            &shader, &messages);
+    hr = D3DXAssembleShader(testshader2, strlen(testshader2), NULL, &include.ID3DXInclude_iface,
+                            D3DXSHADER_SKIPVALIDATION, &shader, &messages);
     ok(hr == D3D_OK, "D3DXAssembleShader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
     if(messages) {
         trace("recursive D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
@@ -229,9 +228,8 @@ static void assembleshader_test(void) {
         /* D3DXAssembleShaderFromFile + pInclude test */
         shader = NULL;
         messages = NULL;
-        hr = D3DXAssembleShaderFromFileA("shader.vsh",
-                                         NULL, (LPD3DXINCLUDE)&include, D3DXSHADER_SKIPVALIDATION,
-                                         &shader, &messages);
+        hr = D3DXAssembleShaderFromFileA("shader.vsh", NULL, &include.ID3DXInclude_iface,
+                                         D3DXSHADER_SKIPVALIDATION, &shader, &messages);
         ok(hr == D3D_OK, "D3DXAssembleShaderFromFile + pInclude test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
         if(messages) {
             trace("D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
@@ -351,7 +349,7 @@ static void d3dxpreprocess_test(void) {
     HRESULT hr;
     LPD3DXBUFFER shader, messages;
     HRESULT shader_vsh_res;
-    struct D3DXIncludeImpl include = {&D3DXInclude_Vtbl};
+    struct D3DXIncludeImpl include = {{&D3DXInclude_Vtbl}};
 
     shader_vsh_res = create_file("shader.vsh", testshader, sizeof(testshader) - 1);
     if(SUCCEEDED(shader_vsh_res)) {
@@ -391,8 +389,7 @@ static void d3dxpreprocess_test(void) {
         /* D3DXPreprocessShaderFromFile + pInclude test */
         shader = NULL;
         messages = NULL;
-        hr = D3DXPreprocessShaderFromFileA("shader.vsh",
-                                           NULL, (LPD3DXINCLUDE)&include,
+        hr = D3DXPreprocessShaderFromFileA("shader.vsh", NULL, &include.ID3DXInclude_iface,
                                            &shader, &messages);
         ok(hr == D3D_OK, "D3DXPreprocessShaderFromFile + pInclude test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
         if(messages) {
