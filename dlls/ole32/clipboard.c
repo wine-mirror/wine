@@ -534,6 +534,36 @@ static void free_metafilepict(HGLOBAL src)
     GlobalFree(src);
 }
 
+/***********************************************************************
+ *                    dup_bitmap
+ *
+ * Helper function to duplicate an HBITMAP.
+ */
+static HRESULT dup_bitmap(HBITMAP src, HBITMAP *pdest)
+{
+    HDC src_dc;
+    HGDIOBJ orig_src_bitmap;
+    BITMAP bm;
+    HBITMAP dest;
+
+    src_dc = CreateCompatibleDC(NULL);
+    orig_src_bitmap = SelectObject(src_dc, src);
+    GetObjectW(src, sizeof bm, &bm);
+    dest = CreateCompatibleBitmap(src_dc, bm.bmWidth, bm.bmHeight);
+    if (dest)
+    {
+        HDC dest_dc = CreateCompatibleDC(NULL);
+        HGDIOBJ orig_dest_bitmap = SelectObject(dest_dc, dest);
+        BitBlt(dest_dc, 0, 0, bm.bmWidth, bm.bmHeight, src_dc, 0, 0, SRCCOPY);
+        SelectObject(dest_dc, orig_dest_bitmap);
+        DeleteDC(dest_dc);
+    }
+    SelectObject(src_dc, orig_src_bitmap);
+    DeleteDC(src_dc);
+    *pdest = dest;
+    return dest ? S_OK : E_FAIL;
+}
+
 /************************************************************
  *              render_embed_source_hack
  *
@@ -855,6 +885,37 @@ static HRESULT get_data_from_metafilepict(IDataObject *data, FORMATETC *fmt, HGL
     return hr;
 }
 
+/***************************************************************************
+ *         get_data_from_bitmap
+ *
+ * Returns bitmap in an HBITMAP.
+ */
+static HRESULT get_data_from_bitmap(IDataObject *data, FORMATETC *fmt, HBITMAP *hbm)
+{
+    HBITMAP copy;
+    HRESULT hr;
+    FORMATETC mem_fmt;
+    STGMEDIUM med;
+
+    *hbm = NULL;
+
+    mem_fmt = *fmt;
+    mem_fmt.tymed = TYMED_GDI;
+
+    hr = IDataObject_GetData(data, &mem_fmt, &med);
+    if(FAILED(hr)) return hr;
+
+    hr = dup_bitmap(med.u.hBitmap, &copy);
+    if(FAILED(hr)) return hr;
+
+    if(hbm) *hbm = copy;
+    else hr = E_FAIL;
+
+    ReleaseStgMedium(&med);
+
+    return hr;
+}
+
 /***********************************************************************
  *                render_format
  *
@@ -863,7 +924,7 @@ static HRESULT get_data_from_metafilepict(IDataObject *data, FORMATETC *fmt, HGL
  */
 static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
 {
-    HGLOBAL clip_data = NULL;
+    HANDLE clip_data = NULL;  /* HGLOBAL unless otherwise specified */
     HRESULT hr;
 
     /* Embed source hack */
@@ -893,6 +954,11 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
         /* Returns global handle to METAFILEPICT, containing a copied HMETAFILE */
         hr = get_data_from_metafilepict(data, fmt, &clip_data);
     }
+    else if(fmt->tymed & TYMED_GDI)
+    {
+        /* Returns HBITMAP not HGLOBAL */
+        hr = get_data_from_bitmap(data, fmt, (HBITMAP *)&clip_data);
+    }
     else
     {
         FIXME("Unhandled tymed %x\n", fmt->tymed);
@@ -906,6 +972,8 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
             WARN("() : Failed to set rendered clipboard data into clipboard!\n");
             if(fmt->tymed & TYMED_MFPICT)
                 free_metafilepict(clip_data);
+            else if(fmt->tymed & TYMED_GDI)
+                DeleteObject(clip_data);
             else
                 GlobalFree(clip_data);
             hr = CLIPBRD_E_CANT_SET;
