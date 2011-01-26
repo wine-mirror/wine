@@ -2536,6 +2536,20 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return ret;
         }
 
+        case WS_SO_CONNECT_TIME:
+        {
+            static int pretendtime = 0;
+
+            if (!pretendtime) FIXME("WS_SO_CONNECT_TIME - faking results\n");
+            if (!optlen || *optlen < sizeof(DWORD) || !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            *(DWORD*)optval = pretendtime++;
+            *optlen = sizeof(DWORD);
+            return ret;
+        }
         /* As mentioned in setsockopt, Windows ignores this, so we
          * always return true here */
         case WS_SO_DONTROUTE:
