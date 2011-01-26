@@ -591,7 +591,12 @@ void drawPrimitive(IWineD3DDeviceImpl *device, UINT index_count, UINT StartIdx, 
         return;
     }
 
-    context_apply_draw_state(context, device);
+    if (!context_apply_draw_state(context, device))
+    {
+        context_release(context);
+        WARN("Unable to apply draw state, skipping draw.\n");
+        return;
+    }
 
     if (device->depth_stencil)
     {

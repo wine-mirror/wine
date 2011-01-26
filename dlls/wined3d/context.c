@@ -2053,12 +2053,32 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
     SetupForBlit(device, context);
 }
 
+static BOOL context_validate_rt_config(UINT rt_count,
+        IWineD3DSurfaceImpl **rts, IWineD3DSurfaceImpl *ds)
+{
+    unsigned int i;
+
+    if (ds) return TRUE;
+
+    for (i = 0; i < rt_count; ++i)
+    {
+        if (rts[i]) return TRUE;
+    }
+
+    WARN("Invalid render target config, need at least one attachment.\n");
+    return FALSE;
+}
+
 /* Context activation is done by the caller. */
-void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device,
+BOOL context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device,
         UINT rt_count, IWineD3DSurfaceImpl **rts, IWineD3DSurfaceImpl *depth_stencil)
 {
     const struct StateEntry *state_table = device->StateTable;
     UINT i;
+
+    if (!context_validate_rt_config(rt_count, rts, depth_stencil))
+        return FALSE;
+
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
@@ -2108,13 +2128,19 @@ void context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), state_table);
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE), state_table);
     Context_MarkStateDirty(context, STATE_SCISSORRECT, state_table);
+
+    return TRUE;
 }
 
 /* Context activation is done by the caller. */
-void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
+BOOL context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
 {
     const struct StateEntry *state_table = device->StateTable;
     unsigned int i;
+
+    if (!context_validate_rt_config(context->gl_info->limits.buffers,
+            device->render_targets, device->depth_stencil))
+        return FALSE;
 
     /* Preload resources before FBO setup. Texture preload in particular may
      * result in changes to the current FBO, due to using e.g. FBO blits for
@@ -2166,6 +2192,8 @@ void context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
     LEAVE_GL();
     context->numDirtyEntries = 0; /* This makes the whole list clean */
     context->last_was_blit = FALSE;
+
+    return TRUE;
 }
 
 static void context_setup_target(IWineD3DDeviceImpl *device,

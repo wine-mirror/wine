@@ -686,7 +686,12 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
         return WINED3D_OK;
     }
 
-    context_apply_clear_state(context, device, rt_count, rts, depth_stencil);
+    if (!context_apply_clear_state(context, device, rt_count, rts, depth_stencil))
+    {
+        context_release(context);
+        WARN("Failed to apply clear state, skipping clear.\n");
+        return WINED3D_OK;
+    }
 
     target->get_drawable_size(context, &drawable_width, &drawable_height);
 
