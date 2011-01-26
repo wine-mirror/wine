@@ -1764,4 +1764,235 @@ void _safe_fprem1(void)
   TRACE("(): stub\n");
 }
 
+/***********************************************************************
+ *		__libm_sse2_acos   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_acos(void)
+{
+    double d;
+    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
+    d = acos( d );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_acosf   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_acosf(void)
+{
+    float f;
+    __asm__ __volatile__( "movd %%xmm0,%0" : "=g" (f) );
+    f = acosf( f );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_asin   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_asin(void)
+{
+    double d;
+    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
+    d = asin( d );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_asinf   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_asinf(void)
+{
+    float f;
+    __asm__ __volatile__( "movd %%xmm0,%0" : "=g" (f) );
+    f = asinf( f );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_atan   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_atan(void)
+{
+    double d;
+    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
+    d = atan( d );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_atan2   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_atan2(void)
+{
+    double d1, d2;
+    __asm__ __volatile__( "movq %%xmm0,%0; movq %%xmm1,%1 " : "=m" (d1), "=m" (d2) );
+    d1 = atan2( d1, d2 );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d1) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_atanf   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_atanf(void)
+{
+    float f;
+    __asm__ __volatile__( "movd %%xmm0,%0" : "=g" (f) );
+    f = atanf( f );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_cos   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_cos(void)
+{
+    double d;
+    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
+    d = cos( d );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_cosf   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_cosf(void)
+{
+    float f;
+    __asm__ __volatile__( "movd %%xmm0,%0" : "=g" (f) );
+    f = cosf( f );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_exp   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_exp(void)
+{
+    double d;
+    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
+    d = exp( d );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_expf   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_expf(void)
+{
+    float f;
+    __asm__ __volatile__( "movd %%xmm0,%0" : "=g" (f) );
+    f = expf( f );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_log   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_log(void)
+{
+    double d;
+    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
+    d = log( d );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_log10   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_log10(void)
+{
+    double d;
+    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
+    d = log10( d );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_log10f   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_log10f(void)
+{
+    float f;
+    __asm__ __volatile__( "movd %%xmm0,%0" : "=g" (f) );
+    f = log10f( f );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_logf   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_logf(void)
+{
+    float f;
+    __asm__ __volatile__( "movd %%xmm0,%0" : "=g" (f) );
+    f = logf( f );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_pow   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_pow(void)
+{
+    double d1, d2;
+    __asm__ __volatile__( "movq %%xmm0,%0; movq %%xmm1,%1 " : "=m" (d1), "=m" (d2) );
+    d1 = pow( d1, d2 );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d1) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_powf   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_powf(void)
+{
+    float f1, f2;
+    __asm__ __volatile__( "movd %%xmm0,%0; movd %%xmm1,%1" : "=g" (f1), "=g" (f2) );
+    f1 = powf( f1, f2 );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f1) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_sin   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_sin(void)
+{
+    double d;
+    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
+    d = sin( d );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_sinf   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_sinf(void)
+{
+    float f;
+    __asm__ __volatile__( "movd %%xmm0,%0" : "=g" (f) );
+    f = sinf( f );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_tan   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_tan(void)
+{
+    double d;
+    __asm__ __volatile__( "movq %%xmm0,%0" : "=m" (d) );
+    d = tan( d );
+    __asm__ __volatile__( "movq %0,%%xmm0" : : "m" (d) );
+}
+
+/***********************************************************************
+ *		__libm_sse2_tanf   (MSVCRT.@)
+ */
+void __cdecl __libm_sse2_tanf(void)
+{
+    float f;
+    __asm__ __volatile__( "movd %%xmm0,%0" : "=g" (f) );
+    f = tanf( f );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
+}
+
 #endif  /* __i386__ */

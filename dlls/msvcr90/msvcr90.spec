@@ -228,27 +228,27 @@
 @ extern __lc_handle msvcrt.__lc_handle
 @ stub __lconv
 @ cdecl __lconv_init() msvcrt.__lconv_init
-@ stub __libm_sse2_acos
-@ stub __libm_sse2_acosf
-@ stub __libm_sse2_asin
-@ stub __libm_sse2_asinf
-@ stub __libm_sse2_atan
-@ stub __libm_sse2_atan2
-@ stub __libm_sse2_atanf
-@ stub __libm_sse2_cos
-@ stub __libm_sse2_cosf
-@ stub __libm_sse2_exp
-@ stub __libm_sse2_expf
-@ stub __libm_sse2_log
-@ stub __libm_sse2_log10
-@ stub __libm_sse2_log10f
-@ stub __libm_sse2_logf
-@ stub __libm_sse2_pow
-@ stub __libm_sse2_powf
-@ stub __libm_sse2_sin
-@ stub __libm_sse2_sinf
-@ stub __libm_sse2_tan
-@ stub __libm_sse2_tanf
+@ cdecl -arch=i386 __libm_sse2_acos() msvcrt.__libm_sse2_acos
+@ cdecl -arch=i386 __libm_sse2_acosf() msvcrt.__libm_sse2_acosf
+@ cdecl -arch=i386 __libm_sse2_asin() msvcrt.__libm_sse2_asin
+@ cdecl -arch=i386 __libm_sse2_asinf() msvcrt.__libm_sse2_asinf
+@ cdecl -arch=i386 __libm_sse2_atan() msvcrt.__libm_sse2_atan
+@ cdecl -arch=i386 __libm_sse2_atan2() msvcrt.__libm_sse2_atan2
+@ cdecl -arch=i386 __libm_sse2_atanf() msvcrt.__libm_sse2_atanf
+@ cdecl -arch=i386 __libm_sse2_cos() msvcrt.__libm_sse2_cos
+@ cdecl -arch=i386 __libm_sse2_cosf() msvcrt.__libm_sse2_cosf
+@ cdecl -arch=i386 __libm_sse2_exp() msvcrt.__libm_sse2_exp
+@ cdecl -arch=i386 __libm_sse2_expf() msvcrt.__libm_sse2_expf
+@ cdecl -arch=i386 __libm_sse2_log() msvcrt.__libm_sse2_log
+@ cdecl -arch=i386 __libm_sse2_log10() msvcrt.__libm_sse2_log10
+@ cdecl -arch=i386 __libm_sse2_log10f() msvcrt.__libm_sse2_log10f
+@ cdecl -arch=i386 __libm_sse2_logf() msvcrt.__libm_sse2_logf
+@ cdecl -arch=i386 __libm_sse2_pow() msvcrt.__libm_sse2_pow
+@ cdecl -arch=i386 __libm_sse2_powf() msvcrt.__libm_sse2_powf
+@ cdecl -arch=i386 __libm_sse2_sin() msvcrt.__libm_sse2_sin
+@ cdecl -arch=i386 __libm_sse2_sinf() msvcrt.__libm_sse2_sinf
+@ cdecl -arch=i386 __libm_sse2_tan() msvcrt.__libm_sse2_tan
+@ cdecl -arch=i386 __libm_sse2_tanf() msvcrt.__libm_sse2_tanf
 @ extern __mb_cur_max msvcrt.__mb_cur_max
 @ cdecl -arch=i386 __p___argc() msvcrt.__p___argc
 @ cdecl -arch=i386 __p___argv() msvcrt.__p___argv
