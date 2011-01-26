@@ -887,7 +887,7 @@
 # stub _snwscanf_s
 # stub _snwscanf_s_l
 @ varargs _sopen(str long long) MSVCRT__sopen
-# stub _sopen_s
+@ cdecl _sopen_s(ptr str long long long) MSVCRT__sopen_s
 @ varargs _spawnl(long str str)
 @ varargs _spawnle(long str str)
 @ varargs _spawnlp(long str str)

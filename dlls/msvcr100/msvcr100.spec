@@ -1106,7 +1106,7 @@
 @ stub _snwscanf_s
 @ stub _snwscanf_s_l
 @ varargs _sopen(str long long) msvcrt._sopen
-@ stub _sopen_s
+@ cdecl _sopen_s(ptr str long long long) msvcrt._sopen_s
 @ varargs _spawnl(long str str) msvcrt._spawnl
 @ varargs _spawnle(long str str) msvcrt._spawnle
 @ varargs _spawnlp(long str str) msvcrt._spawnlp

@@ -20,6 +20,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <fcntl.h>
+#include <share.h>
+#include <sys/stat.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -70,6 +73,7 @@ static void (__cdecl *p_qsort_s)(void *, size_t, size_t, int (__cdecl *)(void *,
 static int (__cdecl *p_controlfp_s)(unsigned int *, unsigned int, unsigned int);
 static int (__cdecl *p_atoflt)(_CRT_FLOAT *, char *);
 static unsigned int (__cdecl *p_set_abort_behavior)(unsigned int, unsigned int);
+static int (__cdecl *p_sopen_s)(int*, const char*, int, int, int);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
@@ -705,6 +709,21 @@ static void test__set_abort_behavior(void)
     p_set_abort_behavior(_WRITE_ABORT_MSG | _CALL_REPORTFAULT, 0xffffffff);
 }
 
+static void test_sopen_s(void)
+{
+    int ret, fd;
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_sopen_s(NULL, "test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
+    ok(ret == EINVAL, "got %d, expected EINVAL\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    fd = 0xdead;
+    ret = p_sopen_s(&fd, "test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
+    ok(ret == ENOENT, "got %d, expected ENOENT\n", ret);
+    ok(fd == -1, "got %d\n", fd);
+}
+
 START_TEST(msvcr90)
 {
     HMODULE hcrt;
@@ -738,6 +757,7 @@ START_TEST(msvcr90)
     p_controlfp_s = (void *) GetProcAddress(hcrt, "_controlfp_s");
     p_atoflt = (void* )GetProcAddress(hcrt, "_atoflt");
     p_set_abort_behavior = (void *) GetProcAddress(hcrt, "_set_abort_behavior");
+    p_sopen_s = (void*) GetProcAddress(hcrt, "_sopen_s");
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
@@ -752,4 +772,5 @@ START_TEST(msvcr90)
     test_controlfp_s();
     test__atoflt();
     test__set_abort_behavior();
+    test_sopen_s();
 }
