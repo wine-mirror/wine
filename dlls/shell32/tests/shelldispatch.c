@@ -118,7 +118,9 @@ static void test_namespace(void)
                 r = pSHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL,
                  SHGFP_TYPE_CURRENT, path);
                 ok(r == S_OK, "SHGetFolderPath failed: %08x\n", r);
-                p = PathFindFileNameW(path);
+                p = path + lstrlenW(path);
+                while (path < p && *(p - 1) != '\\')
+                    p--;
                 ok(!lstrcmpW(title, p), "expected %s, got %s\n",
                  wine_dbgstr_w(p), wine_dbgstr_w(title));
             }
