@@ -266,7 +266,7 @@ static const struct ID3DXIncludeVtbl D3DXInclude_Vtbl = {
 };
 
 struct D3DXIncludeImpl {
-    const ID3DXIncludeVtbl *lpVtbl;
+    ID3DXInclude ID3DXInclude_iface;
 };
 
 HRESULT WINAPI D3DXAssembleShaderFromFileA(LPCSTR filename,
@@ -310,8 +310,8 @@ HRESULT WINAPI D3DXAssembleShaderFromFileW(LPCWSTR filename,
 
     if(!include)
     {
-        includefromfile.lpVtbl = &D3DXInclude_Vtbl;
-        include = (LPD3DXINCLUDE)&includefromfile;
+        includefromfile.ID3DXInclude_iface.lpVtbl = &D3DXInclude_Vtbl;
+        include = &includefromfile.ID3DXInclude_iface;
     }
 
     hr = D3DXAssembleShader(buffer, len, defines, include, flags,
@@ -433,8 +433,8 @@ HRESULT WINAPI D3DXCompileShaderFromFileW(LPCWSTR filename,
 
     if (!include)
     {
-        includefromfile.lpVtbl = &D3DXInclude_Vtbl;
-        include = (LPD3DXINCLUDE)&includefromfile;
+        includefromfile.ID3DXInclude_iface.lpVtbl = &D3DXInclude_Vtbl;
+        include = &includefromfile.ID3DXInclude_iface;
     }
 
     filename_len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
@@ -557,8 +557,8 @@ HRESULT WINAPI D3DXPreprocessShaderFromFileW(LPCWSTR filename,
 
     if (!include)
     {
-        includefromfile.lpVtbl = &D3DXInclude_Vtbl;
-        include = (LPD3DXINCLUDE)&includefromfile;
+        includefromfile.ID3DXInclude_iface.lpVtbl = &D3DXInclude_Vtbl;
+        include = &includefromfile.ID3DXInclude_iface;
     }
 
     hr = D3DPreprocess(buffer, len, NULL,
