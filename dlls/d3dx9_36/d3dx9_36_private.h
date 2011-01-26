@@ -50,21 +50,6 @@ HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer,
 const PixelFormatDesc *get_format_info(D3DFORMAT format);
 const PixelFormatDesc *get_format_info_idx(int idx);
 
-/* ID3DXFont */
-typedef struct ID3DXFontImpl
-{
-    /* IUnknown fields */
-    const ID3DXFontVtbl *lpVtbl;
-    LONG ref;
-
-    /* ID3DXFont fields */
-    IDirect3DDevice9 *device;
-    D3DXFONT_DESCW desc;
-
-    HDC hdc;
-    HFONT hfont;
-} ID3DXFontImpl;
-
 /* ID3DXMatrixStack */
 typedef struct ID3DXMatrixStackImpl
 {
