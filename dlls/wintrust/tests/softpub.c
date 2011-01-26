@@ -484,6 +484,7 @@ static void testCertTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
             CertFreeCertificateContext(cert);
         }
     }
+    funcs->pfnFree(data.padwTrustStepErrors);
 }
 
 static void test_provider_funcs(void)
