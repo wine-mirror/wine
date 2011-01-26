@@ -74,6 +74,7 @@ static int (__cdecl *p_controlfp_s)(unsigned int *, unsigned int, unsigned int);
 static int (__cdecl *p_atoflt)(_CRT_FLOAT *, char *);
 static unsigned int (__cdecl *p_set_abort_behavior)(unsigned int, unsigned int);
 static int (__cdecl *p_sopen_s)(int*, const char*, int, int, int);
+static int (__cdecl *p_wsopen_s)(int*, const wchar_t*, int, int, int);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
@@ -709,9 +710,15 @@ static void test__set_abort_behavior(void)
     p_set_abort_behavior(_WRITE_ABORT_MSG | _CALL_REPORTFAULT, 0xffffffff);
 }
 
-static void test_sopen_s(void)
+static void test__sopen_s(void)
 {
     int ret, fd;
+
+    if(!p_sopen_s)
+    {
+        win_skip("_sopen_s not found\n");
+        return;
+    }
 
     SET_EXPECT(invalid_parameter_handler);
     ret = p_sopen_s(NULL, "test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
@@ -720,6 +727,28 @@ static void test_sopen_s(void)
 
     fd = 0xdead;
     ret = p_sopen_s(&fd, "test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
+    ok(ret == ENOENT, "got %d, expected ENOENT\n", ret);
+    ok(fd == -1, "got %d\n", fd);
+}
+
+static void test__wsopen_s(void)
+{
+    wchar_t testW[] = {'t','e','s','t',0};
+    int ret, fd;
+
+    if(!p_wsopen_s)
+    {
+        win_skip("_wsopen_s not found\n");
+        return;
+    }
+
+    SET_EXPECT(invalid_parameter_handler);
+    ret = p_wsopen_s(NULL, testW, _O_RDONLY, _SH_DENYNO, _S_IREAD);
+    ok(ret == EINVAL, "got %d, expected EINVAL\n", ret);
+    CHECK_CALLED(invalid_parameter_handler);
+
+    fd = 0xdead;
+    ret = p_wsopen_s(&fd, testW, _O_RDONLY, _SH_DENYNO, _S_IREAD);
     ok(ret == ENOENT, "got %d, expected ENOENT\n", ret);
     ok(fd == -1, "got %d\n", fd);
 }
@@ -758,6 +787,7 @@ START_TEST(msvcr90)
     p_atoflt = (void* )GetProcAddress(hcrt, "_atoflt");
     p_set_abort_behavior = (void *) GetProcAddress(hcrt, "_set_abort_behavior");
     p_sopen_s = (void*) GetProcAddress(hcrt, "_sopen_s");
+    p_wsopen_s = (void*) GetProcAddress(hcrt, "_wsopen_s");
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
@@ -772,5 +802,6 @@ START_TEST(msvcr90)
     test_controlfp_s();
     test__atoflt();
     test__set_abort_behavior();
-    test_sopen_s();
+    test__sopen_s();
+    test__wsopen_s();
 }

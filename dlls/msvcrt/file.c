@@ -1632,22 +1632,27 @@ int CDECL MSVCRT__sopen( const char *path, int oflags, int shflags, ... )
 }
 
 /*********************************************************************
- *              _wsopen (MSVCRT.@)
+ *              _wsopen_s (MSVCRT.@)
  */
-int CDECL MSVCRT__wsopen( const MSVCRT_wchar_t* path, int oflags, int shflags, ... )
+int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int shflags, int pmode )
 {
-  __ms_va_list ap;
-  int pmode;
   DWORD access = 0, creation = 0, attrib;
-  DWORD sharing;
-  int wxflag = 0, fd;
-  HANDLE hand;
   SECURITY_ATTRIBUTES sa;
+  DWORD sharing;
+  int wxflag;
+  HANDLE hand;
 
+  TRACE("fd*: %p :file (%s) oflags: 0x%04x shflags: 0x%04x pmode: 0x%04x\n",
+        fd, debugstr_w(path), oflags, shflags, pmode);
 
-  TRACE(":file (%s) oflags: 0x%04x shflags: 0x%04x\n",
-        debugstr_w(path), oflags, shflags);
+  if (!fd)
+  {
+    MSVCRT_INVALID_PMT("null out fd pointer");
+    *MSVCRT__errno() = MSVCRT_EINVAL;
+    return MSVCRT_EINVAL;
+  }
 
+  *fd = -1;
   wxflag = split_oflags(oflags);
   switch (oflags & (MSVCRT__O_RDONLY | MSVCRT__O_WRONLY | MSVCRT__O_RDWR))
   {
@@ -1658,10 +1663,6 @@ int CDECL MSVCRT__wsopen( const MSVCRT_wchar_t* path, int oflags, int shflags, .
 
   if (oflags & MSVCRT__O_CREAT)
   {
-    __ms_va_start(ap, shflags);
-    pmode = va_arg(ap, int);
-    __ms_va_end(ap);
-
     if(pmode & ~(MSVCRT__S_IREAD | MSVCRT__S_IWRITE))
       FIXME(": pmode 0x%04x ignored\n", pmode);
     else
@@ -1698,7 +1699,7 @@ int CDECL MSVCRT__wsopen( const MSVCRT_wchar_t* path, int oflags, int shflags, .
       break;
     default:
       ERR( "Unhandled shflags 0x%x\n", shflags );
-      return -1;
+      return MSVCRT_EINVAL;
   }
   attrib = FILE_ATTRIBUTE_NORMAL;
 
@@ -1718,12 +1719,36 @@ int CDECL MSVCRT__wsopen( const MSVCRT_wchar_t* path, int oflags, int shflags, .
   if (hand == INVALID_HANDLE_VALUE)  {
     WARN(":failed-last error (%d)\n",GetLastError());
     msvcrt_set_errno(GetLastError());
-    return -1;
+    msvcrt_set_errno(GetLastError());
+    return *MSVCRT__errno();
   }
 
-  fd = msvcrt_alloc_fd(hand, wxflag);
+  *fd = msvcrt_alloc_fd(hand, wxflag);
 
-  TRACE(":fd (%d) handle (%p)\n",fd, hand);
+  TRACE(":fd (%d) handle (%p)\n", *fd, hand);
+  return 0;
+}
+
+/*********************************************************************
+ *              _wsopen (MSVCRT.@)
+ */
+int CDECL MSVCRT__wsopen( const MSVCRT_wchar_t *path, int oflags, int shflags, ... )
+{
+  int pmode;
+  int fd;
+
+  if (oflags & MSVCRT__O_CREAT)
+  {
+    __ms_va_list ap;
+
+    __ms_va_start(ap, shflags);
+    pmode = va_arg(ap, int);
+    __ms_va_end(ap);
+  }
+  else
+    pmode = 0;
+
+  MSVCRT__wsopen_s(&fd, path, oflags, shflags, pmode);
   return fd;
 }
 

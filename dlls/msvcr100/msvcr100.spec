@@ -1382,7 +1382,7 @@
 @ cdecl _wsearchenv_s(wstr wstr ptr long) msvcrt._wsearchenv_s
 @ cdecl _wsetlocale(long wstr) msvcrt._wsetlocale
 @ varargs _wsopen(wstr long long) msvcrt._wsopen
-@ stub _wsopen_s
+@ cdecl _wsopen_s(ptr wstr long long long) msvcrt._wsopen_s
 @ varargs _wspawnl(long wstr wstr) msvcrt._wspawnl
 @ varargs _wspawnle(long wstr wstr) msvcrt._wspawnle
 @ varargs _wspawnlp(long wstr wstr) msvcrt._wspawnlp
