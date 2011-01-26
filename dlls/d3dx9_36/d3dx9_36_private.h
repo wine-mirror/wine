@@ -50,24 +50,6 @@ HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer,
 const PixelFormatDesc *get_format_info(D3DFORMAT format);
 const PixelFormatDesc *get_format_info_idx(int idx);
 
-/* ID3DXMesh */
-typedef struct ID3DXMeshImpl
-{
-    /* IUnknown fields */
-    const ID3DXMeshVtbl *lpVtbl;
-    LONG ref;
-
-    /* ID3DXMesh fields */
-    DWORD numfaces;
-    DWORD numvertices;
-    DWORD options;
-    DWORD fvf;
-    IDirect3DDevice9 *device;
-    IDirect3DVertexDeclaration9 *vertex_declaration;
-    IDirect3DVertexBuffer9 *vertex_buffer;
-    IDirect3DIndexBuffer9 *index_buffer;
-} ID3DXMeshImpl;
-
 /*ID3DXSprite */
 typedef struct _SPRITE {
     LPDIRECT3DTEXTURE9 texture;

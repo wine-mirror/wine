@@ -33,10 +33,29 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
-/*** IUnknown methods ***/
+typedef struct ID3DXMeshImpl
+{
+    ID3DXMesh ID3DXMesh_iface;
+    LONG ref;
+
+    DWORD numfaces;
+    DWORD numvertices;
+    DWORD options;
+    DWORD fvf;
+    IDirect3DDevice9 *device;
+    IDirect3DVertexDeclaration9 *vertex_declaration;
+    IDirect3DVertexBuffer9 *vertex_buffer;
+    IDirect3DIndexBuffer9 *index_buffer;
+} ID3DXMeshImpl;
+
+static inline ID3DXMeshImpl *impl_from_ID3DXMesh(ID3DXMesh *iface)
+{
+    return CONTAINING_RECORD(iface, ID3DXMeshImpl, ID3DXMesh_iface);
+}
+
 static HRESULT WINAPI ID3DXMeshImpl_QueryInterface(ID3DXMesh *iface, REFIID riid, LPVOID *object)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), object);
 
@@ -56,7 +75,7 @@ static HRESULT WINAPI ID3DXMeshImpl_QueryInterface(ID3DXMesh *iface, REFIID riid
 
 static ULONG WINAPI ID3DXMeshImpl_AddRef(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)->(): AddRef from %d\n", This, This->ref);
 
@@ -65,7 +84,7 @@ static ULONG WINAPI ID3DXMeshImpl_AddRef(ID3DXMesh *iface)
 
 static ULONG WINAPI ID3DXMeshImpl_Release(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(): Release from %d\n", This, ref + 1);
@@ -85,7 +104,7 @@ static ULONG WINAPI ID3DXMeshImpl_Release(ID3DXMesh *iface)
 /*** ID3DXBaseMesh ***/
 static HRESULT WINAPI ID3DXMeshImpl_DrawSubset(ID3DXMesh *iface, DWORD attrib_id)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%u): stub\n", This, attrib_id);
 
@@ -94,7 +113,7 @@ static HRESULT WINAPI ID3DXMeshImpl_DrawSubset(ID3DXMesh *iface, DWORD attrib_id
 
 static DWORD WINAPI ID3DXMeshImpl_GetNumFaces(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)\n", This);
 
@@ -103,7 +122,7 @@ static DWORD WINAPI ID3DXMeshImpl_GetNumFaces(ID3DXMesh *iface)
 
 static DWORD WINAPI ID3DXMeshImpl_GetNumVertices(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)\n", This);
 
@@ -112,7 +131,7 @@ static DWORD WINAPI ID3DXMeshImpl_GetNumVertices(ID3DXMesh *iface)
 
 static DWORD WINAPI ID3DXMeshImpl_GetFVF(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)\n", This);
 
@@ -121,7 +140,7 @@ static DWORD WINAPI ID3DXMeshImpl_GetFVF(ID3DXMesh *iface)
 
 static HRESULT WINAPI ID3DXMeshImpl_GetDeclaration(ID3DXMesh *iface, D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE])
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
     UINT numelements;
 
     TRACE("(%p)\n", This);
@@ -135,7 +154,7 @@ static HRESULT WINAPI ID3DXMeshImpl_GetDeclaration(ID3DXMesh *iface, D3DVERTEXEL
 
 static DWORD WINAPI ID3DXMeshImpl_GetNumBytesPerVertex(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p): stub\n", This);
 
@@ -144,7 +163,7 @@ static DWORD WINAPI ID3DXMeshImpl_GetNumBytesPerVertex(ID3DXMesh *iface)
 
 static DWORD WINAPI ID3DXMeshImpl_GetOptions(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)\n", This);
 
@@ -153,7 +172,7 @@ static DWORD WINAPI ID3DXMeshImpl_GetOptions(ID3DXMesh *iface)
 
 static HRESULT WINAPI ID3DXMeshImpl_GetDevice(ID3DXMesh *iface, LPDIRECT3DDEVICE9 *device)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)->(%p)\n", This, device);
 
@@ -166,7 +185,7 @@ static HRESULT WINAPI ID3DXMeshImpl_GetDevice(ID3DXMesh *iface, LPDIRECT3DDEVICE
 
 static HRESULT WINAPI ID3DXMeshImpl_CloneMeshFVF(ID3DXMesh *iface, DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, LPD3DXMESH *clone_mesh)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%u,%u,%p,%p): stub\n", This, options, fvf, device, clone_mesh);
 
@@ -176,7 +195,7 @@ static HRESULT WINAPI ID3DXMeshImpl_CloneMeshFVF(ID3DXMesh *iface, DWORD options
 static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(ID3DXMesh *iface, DWORD options, CONST D3DVERTEXELEMENT9 *declaration, LPDIRECT3DDEVICE9 device,
                                               LPD3DXMESH *clone_mesh)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%u,%p,%p,%p): stub\n", This, options, declaration, device, clone_mesh);
 
@@ -185,7 +204,7 @@ static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(ID3DXMesh *iface, DWORD options, C
 
 static HRESULT WINAPI ID3DXMeshImpl_GetVertexBuffer(ID3DXMesh *iface, LPDIRECT3DVERTEXBUFFER9 *vertex_buffer)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)->(%p)\n", This, vertex_buffer);
 
@@ -198,7 +217,7 @@ static HRESULT WINAPI ID3DXMeshImpl_GetVertexBuffer(ID3DXMesh *iface, LPDIRECT3D
 
 static HRESULT WINAPI ID3DXMeshImpl_GetIndexBuffer(ID3DXMesh *iface, LPDIRECT3DINDEXBUFFER9 *index_buffer)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)->(%p)\n", This, index_buffer);
 
@@ -211,7 +230,7 @@ static HRESULT WINAPI ID3DXMeshImpl_GetIndexBuffer(ID3DXMesh *iface, LPDIRECT3DI
 
 static HRESULT WINAPI ID3DXMeshImpl_LockVertexBuffer(ID3DXMesh *iface, DWORD flags, LPVOID *data)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)->(%u,%p)\n", This, flags, data);
 
@@ -220,7 +239,7 @@ static HRESULT WINAPI ID3DXMeshImpl_LockVertexBuffer(ID3DXMesh *iface, DWORD fla
 
 static HRESULT WINAPI ID3DXMeshImpl_UnlockVertexBuffer(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)\n", This);
 
@@ -229,7 +248,7 @@ static HRESULT WINAPI ID3DXMeshImpl_UnlockVertexBuffer(ID3DXMesh *iface)
 
 static HRESULT WINAPI ID3DXMeshImpl_LockIndexBuffer(ID3DXMesh *iface, DWORD flags, LPVOID *data)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)->(%u,%p)\n", This, flags, data);
 
@@ -238,7 +257,7 @@ static HRESULT WINAPI ID3DXMeshImpl_LockIndexBuffer(ID3DXMesh *iface, DWORD flag
 
 static HRESULT WINAPI ID3DXMeshImpl_UnlockIndexBuffer(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     TRACE("(%p)\n", This);
 
@@ -247,7 +266,7 @@ static HRESULT WINAPI ID3DXMeshImpl_UnlockIndexBuffer(ID3DXMesh *iface)
 
 static HRESULT WINAPI ID3DXMeshImpl_GetAttributeTable(ID3DXMesh *iface, D3DXATTRIBUTERANGE *attrib_table, DWORD *attrib_table_size)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%p,%p): stub\n", This, attrib_table, attrib_table_size);
 
@@ -256,7 +275,7 @@ static HRESULT WINAPI ID3DXMeshImpl_GetAttributeTable(ID3DXMesh *iface, D3DXATTR
 
 static HRESULT WINAPI ID3DXMeshImpl_ConvertPointRepsToAdjacency(ID3DXMesh *iface, CONST DWORD *point_reps, DWORD *adjacency)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%p,%p): stub\n", This, point_reps, adjacency);
 
@@ -265,7 +284,7 @@ static HRESULT WINAPI ID3DXMeshImpl_ConvertPointRepsToAdjacency(ID3DXMesh *iface
 
 static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface, CONST DWORD *adjacency, DWORD *point_reps)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%p,%p): stub\n", This, adjacency, point_reps);
 
@@ -274,7 +293,7 @@ static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface
 
 static HRESULT WINAPI ID3DXMeshImpl_GenerateAdjacency(ID3DXMesh *iface, FLOAT epsilon, DWORD *adjacency)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%f,%p): stub\n", This, epsilon, adjacency);
 
@@ -283,7 +302,7 @@ static HRESULT WINAPI ID3DXMeshImpl_GenerateAdjacency(ID3DXMesh *iface, FLOAT ep
 
 static HRESULT WINAPI ID3DXMeshImpl_UpdateSemantics(ID3DXMesh *iface, D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE])
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%p): stub\n", This, declaration);
 
@@ -293,7 +312,7 @@ static HRESULT WINAPI ID3DXMeshImpl_UpdateSemantics(ID3DXMesh *iface, D3DVERTEXE
 /*** ID3DXMesh ***/
 static HRESULT WINAPI ID3DXMeshImpl_LockAttributeBuffer(ID3DXMesh *iface, DWORD flags, DWORD **data)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%u,%p): stub\n", This, flags, data);
 
@@ -302,7 +321,7 @@ static HRESULT WINAPI ID3DXMeshImpl_LockAttributeBuffer(ID3DXMesh *iface, DWORD 
 
 static HRESULT WINAPI ID3DXMeshImpl_UnlockAttributeBuffer(ID3DXMesh *iface)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p): stub\n", This);
 
@@ -312,7 +331,7 @@ static HRESULT WINAPI ID3DXMeshImpl_UnlockAttributeBuffer(ID3DXMesh *iface)
 static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, CONST DWORD *adjacency_in, DWORD *adjacency_out,
                                              DWORD *face_remap, LPD3DXBUFFER *vertex_remap, LPD3DXMESH *opt_mesh)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%u,%p,%p,%p,%p,%p): stub\n", This, flags, adjacency_in, adjacency_out, face_remap, vertex_remap, opt_mesh);
 
@@ -322,7 +341,7 @@ static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, CONS
 static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flags, CONST DWORD *adjacency_in, DWORD *adjacency_out,
                                                     DWORD *face_remap, LPD3DXBUFFER *vertex_remap)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%u,%p,%p,%p,%p): stub\n", This, flags, adjacency_in, adjacency_out, face_remap, vertex_remap);
 
@@ -331,7 +350,7 @@ static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flag
 
 static HRESULT WINAPI ID3DXMeshImpl_SetAttributeTable(ID3DXMesh *iface, CONST D3DXATTRIBUTERANGE *attrib_table, DWORD attrib_table_size)
 {
-    ID3DXMeshImpl *This = (ID3DXMeshImpl *)iface;
+    ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
     FIXME("(%p)->(%p,%u): stub\n", This, attrib_table, attrib_table_size);
 
@@ -1019,7 +1038,7 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
         *mesh = NULL;
         return E_OUTOFMEMORY;
     }
-    object->lpVtbl = &D3DXMesh_Vtbl;
+    object->ID3DXMesh_iface.lpVtbl = &D3DXMesh_Vtbl;
     object->ref = 1;
 
     object->numfaces = numfaces;
@@ -1033,7 +1052,7 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     object->vertex_buffer = vertex_buffer;
     object->index_buffer = index_buffer;
 
-    *mesh = (ID3DXMesh*)object;
+    *mesh = &object->ID3DXMesh_iface;
 
     return D3D_OK;
 }
