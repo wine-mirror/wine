@@ -5382,3 +5382,15 @@ cleanup:
     GdipDeleteRegion(rgn);
     return stat;
 }
+
+GpStatus WINGDIPAPI GdipGetHemfFromMetafile(GpMetafile *metafile, HENHMETAFILE *hEmf)
+{
+    FIXME("(%p,%p): stub\n", metafile, hEmf);
+
+    if (!metafile || !hEmf)
+        return InvalidParameter;
+
+    *hEmf = NULL;
+
+    return NotImplemented;
+}

@@ -278,7 +278,7 @@
 @ stdcall GdipGetHatchBackgroundColor(ptr ptr)
 @ stdcall GdipGetHatchForegroundColor(ptr ptr)
 @ stdcall GdipGetHatchStyle(ptr ptr)
-@ stub GdipGetHemfFromMetafile
+@ stdcall GdipGetHemfFromMetafile(ptr ptr)
 @ stub GdipGetImageAttributesAdjustedPalette
 @ stdcall GdipGetImageBounds(ptr ptr ptr)
 @ stdcall GdipGetImageDecoders(long long ptr)
