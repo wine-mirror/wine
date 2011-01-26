@@ -2772,8 +2772,8 @@ static void call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *
 /*******************************************************************
  *		RtlUnwindEx (NTDLL.@)
  */
-void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD *rec,
-                         ULONG64 retval, CONTEXT *orig_context, UNWIND_HISTORY_TABLE *table )
+void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec,
+                         PVOID retval, CONTEXT *orig_context, UNWIND_HISTORY_TABLE *table )
 {
     EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
     EXCEPTION_RECORD record;
@@ -2796,7 +2796,7 @@ void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD 
 
     rec->ExceptionFlags |= EH_UNWINDING | (end_frame ? 0 : EH_EXIT_UNWIND);
 
-    TRACE( "code=%x flags=%x end_frame=%lx target_ip=%lx rip=%016lx\n",
+    TRACE( "code=%x flags=%x end_frame=%p target_ip=%p rip=%016lx\n",
            rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip, orig_context->Rip );
     TRACE(" rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
           orig_context->Rax, orig_context->Rbx, orig_context->Rcx, orig_context->Rdx );
@@ -2809,11 +2809,11 @@ void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD 
 
     context = *orig_context;
     dispatch.EstablisherFrame = context.Rsp;
-    dispatch.TargetIp         = target_ip;
+    dispatch.TargetIp         = (ULONG64)target_ip;
     dispatch.ContextRecord    = &context;
     dispatch.HistoryTable     = table;
 
-    while (dispatch.EstablisherFrame != end_frame)
+    while (dispatch.EstablisherFrame != (ULONG64)end_frame)
     {
         new_context = context;
 
@@ -2899,30 +2899,30 @@ void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD 
 
         if (dispatch.LanguageHandler)
         {
-            if (end_frame && (dispatch.EstablisherFrame > end_frame))
+            if (end_frame && (dispatch.EstablisherFrame > (ULONG64)end_frame))
             {
-                ERR( "invalid end frame %lx/%lx\n", dispatch.EstablisherFrame, end_frame );
+                ERR( "invalid end frame %lx/%p\n", dispatch.EstablisherFrame, end_frame );
                 raise_status( STATUS_INVALID_UNWIND_TARGET, rec );
             }
             call_unwind_handler( rec, &dispatch );
         }
         else  /* hack: call builtin handlers registered in the tib list */
         {
-            while ((ULONG64)teb_frame < new_context.Rsp && (ULONG64)teb_frame < end_frame)
+            while ((ULONG64)teb_frame < new_context.Rsp && (ULONG64)teb_frame < (ULONG64)end_frame)
             {
                 TRACE( "found builtin frame %p handler %p\n", teb_frame, teb_frame->Handler );
                 dispatch.EstablisherFrame = (ULONG64)teb_frame;
                 call_teb_unwind_handler( rec, &dispatch, teb_frame );
                 teb_frame = __wine_pop_frame( teb_frame );
             }
-            if ((ULONG64)teb_frame == end_frame && end_frame < new_context.Rsp) break;
+            if ((ULONG64)teb_frame == (ULONG64)end_frame && (ULONG64)end_frame < new_context.Rsp) break;
             dispatch.EstablisherFrame = new_context.Rsp;
         }
 
         context = new_context;
     }
-    context.Rax = retval;
-    context.Rip = target_ip;
+    context.Rax = (ULONG64)retval;
+    context.Rip = (ULONG64)target_ip;
     TRACE( "returning to %lx stack %lx\n", context.Rip, context.Rsp );
     set_cpu_context( &context );
 }
@@ -2931,8 +2931,8 @@ void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD 
 /*******************************************************************
  *		RtlUnwind (NTDLL.@)
  */
-void WINAPI __regs_RtlUnwind( ULONG64 frame, ULONG64 target_ip, EXCEPTION_RECORD *rec,
-                              ULONG64 retval, CONTEXT *context )
+void WINAPI __regs_RtlUnwind( void *frame, void *target_ip, EXCEPTION_RECORD *rec,
+                              void *retval, CONTEXT *context )
 {
     RtlUnwindEx( frame, target_ip, rec, retval, context, NULL );
 }
@@ -2982,7 +2982,7 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
                 }
             }
             TRACE( "unwinding to target %lx\n", dispatch->ImageBase + table->ScopeRecord[i].JumpTarget );
-            RtlUnwindEx( frame, dispatch->ImageBase + table->ScopeRecord[i].JumpTarget,
+            RtlUnwindEx( (void *)frame, (char *)dispatch->ImageBase + table->ScopeRecord[i].JumpTarget,
                          rec, 0, context, dispatch->HistoryTable );
         }
     }
