@@ -31,9 +31,47 @@ typedef struct _SPRITEVERTEX {
     D3DXVECTOR2 tex;
 } SPRITEVERTEX;
 
-static HRESULT WINAPI ID3DXSpriteImpl_QueryInterface(LPD3DXSPRITE iface, REFIID riid, LPVOID *object)
+typedef struct _SPRITE {
+    IDirect3DTexture9 *texture;
+    UINT texw, texh;
+    RECT rect;
+    D3DXVECTOR3 center;
+    D3DXVECTOR3 pos;
+    D3DCOLOR color;
+    D3DXMATRIX transform;
+} SPRITE;
+
+typedef struct ID3DXSpriteImpl
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSprite ID3DXSprite_iface;
+    LONG ref;
+
+    IDirect3DDevice9 *device;
+    IDirect3DVertexDeclaration9 *vdecl;
+    IDirect3DStateBlock9 *stateblock;
+    D3DXMATRIX transform;
+    D3DXMATRIX view;
+    DWORD flags;
+    BOOL ready;
+
+    /* Store the relevant caps to prevent multiple GetDeviceCaps calls */
+    DWORD texfilter_caps;
+    DWORD maxanisotropy;
+    DWORD alphacmp_caps;
+
+    SPRITE *sprites;
+    int sprite_count;      /* number of sprites to be drawn */
+    int allocated_sprites; /* number of (pre-)allocated sprites */
+} ID3DXSpriteImpl;
+
+static inline ID3DXSpriteImpl *impl_from_ID3DXSprite(ID3DXSprite *iface)
+{
+    return CONTAINING_RECORD(iface, ID3DXSpriteImpl, ID3DXSprite_iface);
+}
+
+static HRESULT WINAPI ID3DXSpriteImpl_QueryInterface(ID3DXSprite *iface, REFIID riid, void **object)
+{
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
 
     TRACE("(%p): QueryInterface from %s\n", This, debugstr_guid(riid));
     if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ID3DXSprite)) {
@@ -45,17 +83,17 @@ static HRESULT WINAPI ID3DXSpriteImpl_QueryInterface(LPD3DXSPRITE iface, REFIID 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI ID3DXSpriteImpl_AddRef(LPD3DXSPRITE iface)
+static ULONG WINAPI ID3DXSpriteImpl_AddRef(ID3DXSprite *iface)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     ULONG ref=InterlockedIncrement(&This->ref);
     TRACE("(%p)->(): AddRef from %d\n", This, ref-1);
     return ref;
 }
 
-static ULONG WINAPI ID3DXSpriteImpl_Release(LPD3DXSPRITE iface)
+static ULONG WINAPI ID3DXSpriteImpl_Release(ID3DXSprite *iface)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     ULONG ref=InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(): ReleaseRef to %d\n", This, ref);
@@ -77,9 +115,9 @@ static ULONG WINAPI ID3DXSpriteImpl_Release(LPD3DXSPRITE iface)
     return ref;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_GetDevice(LPD3DXSPRITE iface, LPDIRECT3DDEVICE9 *device)
+static HRESULT WINAPI ID3DXSpriteImpl_GetDevice(ID3DXSprite *iface, LPDIRECT3DDEVICE9 *device)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
 
     TRACE("(%p)->(%p): relay\n", This, device);
 
@@ -90,9 +128,9 @@ static HRESULT WINAPI ID3DXSpriteImpl_GetDevice(LPD3DXSPRITE iface, LPDIRECT3DDE
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_GetTransform(LPD3DXSPRITE iface, D3DXMATRIX *transform)
+static HRESULT WINAPI ID3DXSpriteImpl_GetTransform(ID3DXSprite *iface, D3DXMATRIX *transform)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
 
     TRACE("(%p)->(%p)\n", This, transform);
 
@@ -102,9 +140,9 @@ static HRESULT WINAPI ID3DXSpriteImpl_GetTransform(LPD3DXSPRITE iface, D3DXMATRI
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_SetTransform(LPD3DXSPRITE iface, CONST D3DXMATRIX *transform)
+static HRESULT WINAPI ID3DXSpriteImpl_SetTransform(ID3DXSprite *iface, CONST D3DXMATRIX *transform)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
 
     TRACE("(%p)->(%p)\n", This, transform);
 
@@ -114,16 +152,18 @@ static HRESULT WINAPI ID3DXSpriteImpl_SetTransform(LPD3DXSPRITE iface, CONST D3D
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewRH(LPD3DXSPRITE iface, CONST D3DXMATRIX *world, CONST D3DXMATRIX *view)
+static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewRH(ID3DXSprite *iface, CONST D3DXMATRIX *world,
+        CONST D3DXMATRIX *view)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     FIXME("(%p)->(%p, %p): stub\n", This, world, view);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewLH(LPD3DXSPRITE iface, CONST D3DXMATRIX *world, CONST D3DXMATRIX *view)
+static HRESULT WINAPI ID3DXSpriteImpl_SetWorldViewLH(ID3DXSprite *iface, CONST D3DXMATRIX *world,
+        CONST D3DXMATRIX *view)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     FIXME("(%p)->(%p, %p): stub\n", This, world, view);
     return E_NOTIMPL;
 }
@@ -210,9 +250,9 @@ static void set_states(ID3DXSpriteImpl *object)
     IDirect3DDevice9_SetTransform(object->device, D3DTS_PROJECTION, &mat);
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_Begin(LPD3DXSPRITE iface, DWORD flags)
+static HRESULT WINAPI ID3DXSpriteImpl_Begin(ID3DXSprite *iface, DWORD flags)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     HRESULT hr;
     TRACE("(%p): relay\n", This);
 
@@ -273,10 +313,10 @@ D3DXSPRITE_SORT_TEXTURE: sort by texture (so that it doesn't change too often)
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_Draw(LPD3DXSPRITE iface, LPDIRECT3DTEXTURE9 texture, CONST RECT *rect, CONST D3DXVECTOR3 *center,
-                                           CONST D3DXVECTOR3 *position, D3DCOLOR color)
+static HRESULT WINAPI ID3DXSpriteImpl_Draw(ID3DXSprite *iface, LPDIRECT3DTEXTURE9 texture,
+        CONST RECT *rect, CONST D3DXVECTOR3 *center, CONST D3DXVECTOR3 *position, D3DCOLOR color)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     D3DSURFACE_DESC texdesc;
 
     TRACE("(%p)->(%p, %p, %p, %p, %#x): relay\n", This, texture, rect, center, position, color);
@@ -334,9 +374,9 @@ static HRESULT WINAPI ID3DXSpriteImpl_Draw(LPD3DXSPRITE iface, LPDIRECT3DTEXTURE
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_Flush(LPD3DXSPRITE iface)
+static HRESULT WINAPI ID3DXSpriteImpl_Flush(ID3DXSprite *iface)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     SPRITEVERTEX *vertices;
     int i, count=0, start;
     TRACE("(%p)->(): relay\n", This);
@@ -407,9 +447,9 @@ static HRESULT WINAPI ID3DXSpriteImpl_Flush(LPD3DXSPRITE iface)
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_End(LPD3DXSPRITE iface)
+static HRESULT WINAPI ID3DXSpriteImpl_End(ID3DXSprite *iface)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
 
     TRACE("(%p)->(): relay\n", This);
 
@@ -425,9 +465,9 @@ static HRESULT WINAPI ID3DXSpriteImpl_End(LPD3DXSPRITE iface)
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_OnLostDevice(LPD3DXSPRITE iface)
+static HRESULT WINAPI ID3DXSpriteImpl_OnLostDevice(ID3DXSprite *iface)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
 
     TRACE("(%p)->()\n", This);
 
@@ -442,9 +482,9 @@ static HRESULT WINAPI ID3DXSpriteImpl_OnLostDevice(LPD3DXSPRITE iface)
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXSpriteImpl_OnResetDevice(LPD3DXSPRITE iface)
+static HRESULT WINAPI ID3DXSpriteImpl_OnResetDevice(ID3DXSprite *iface)
 {
-    ID3DXSpriteImpl *This=(ID3DXSpriteImpl*)iface;
+    ID3DXSpriteImpl *This = impl_from_ID3DXSprite(iface);
     int i;
 
     TRACE("(%p)->()\n", This);
@@ -498,7 +538,7 @@ HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite)
         *sprite=NULL;
         return E_OUTOFMEMORY;
     }
-    object->lpVtbl=&D3DXSprite_Vtbl;
+    object->ID3DXSprite_iface.lpVtbl = &D3DXSprite_Vtbl;
     object->ref=1;
     object->device=device;
     IUnknown_AddRef(device);
@@ -514,11 +554,11 @@ HRESULT WINAPI D3DXCreateSprite(LPDIRECT3DDEVICE9 device, LPD3DXSPRITE *sprite)
     object->maxanisotropy=caps.MaxAnisotropy;
     object->alphacmp_caps=caps.AlphaCmpCaps;
 
-    ID3DXSprite_OnResetDevice((ID3DXSprite*)object);
+    ID3DXSprite_OnResetDevice(&object->ID3DXSprite_iface);
 
     object->sprites=NULL;
     object->allocated_sprites=0;
-    *sprite=(ID3DXSprite*)object;
+    *sprite=&object->ID3DXSprite_iface;
 
     return D3D_OK;
 }

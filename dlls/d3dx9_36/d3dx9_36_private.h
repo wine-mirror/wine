@@ -50,40 +50,4 @@ HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer,
 const PixelFormatDesc *get_format_info(D3DFORMAT format);
 const PixelFormatDesc *get_format_info_idx(int idx);
 
-/*ID3DXSprite */
-typedef struct _SPRITE {
-    LPDIRECT3DTEXTURE9 texture;
-    UINT texw, texh;
-    RECT rect;
-    D3DXVECTOR3 center;
-    D3DXVECTOR3 pos;
-    D3DCOLOR color;
-    D3DXMATRIX transform;
-} SPRITE;
-
-typedef struct ID3DXSpriteImpl
-{
-    /* IUnknown fields */
-    const ID3DXSpriteVtbl *lpVtbl;
-    LONG ref;
-
-    /* ID3DXSprite fields */
-    IDirect3DDevice9 *device;
-    IDirect3DVertexDeclaration9 *vdecl;
-    IDirect3DStateBlock9 *stateblock;
-    D3DXMATRIX transform;
-    D3DXMATRIX view;
-    DWORD flags;
-    BOOL ready;
-
-    /* Store the relevant caps to prevent multiple GetDeviceCaps calls */
-    DWORD texfilter_caps;
-    DWORD maxanisotropy;
-    DWORD alphacmp_caps;
-
-    SPRITE *sprites;
-    int sprite_count;      /* number of sprites to be drawn */
-    int allocated_sprites; /* number of (pre-)allocated sprites */
-} ID3DXSpriteImpl;
-
 #endif /* __WINE_D3DX9_36_PRIVATE_H */
