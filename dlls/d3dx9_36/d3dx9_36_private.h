@@ -50,19 +50,6 @@ HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer,
 const PixelFormatDesc *get_format_info(D3DFORMAT format);
 const PixelFormatDesc *get_format_info_idx(int idx);
 
-/* ID3DXMatrixStack */
-typedef struct ID3DXMatrixStackImpl
-{
-  /* IUnknown fields */
-  const ID3DXMatrixStackVtbl *lpVtbl;
-  LONG                   ref;
-
-  /* ID3DXMatrixStack fields */
-  unsigned int current;
-  unsigned int stack_size;
-  D3DXMATRIX *stack;
-} ID3DXMatrixStackImpl;
-
 /* ID3DXMesh */
 typedef struct ID3DXMeshImpl
 {
