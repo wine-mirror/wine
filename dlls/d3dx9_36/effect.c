@@ -926,21 +926,26 @@ HRESULT WINAPI D3DXCreateEffectCompiler(LPCSTR srcdata,
 static const struct ID3DXEffectPoolVtbl ID3DXEffectPool_Vtbl;
 
 typedef struct ID3DXEffectPoolImpl {
-    const ID3DXEffectPoolVtbl *lpVtbl;
+    ID3DXEffectPool ID3DXEffectPool_iface;
     LONG ref;
 } ID3DXEffectPoolImpl;
+
+static inline ID3DXEffectPoolImpl *impl_from_ID3DXEffectPool(ID3DXEffectPool *iface)
+{
+    return CONTAINING_RECORD(iface, ID3DXEffectPoolImpl, ID3DXEffectPool_iface);
+}
 
 /*** IUnknown methods ***/
 static HRESULT WINAPI ID3DXEffectPoolImpl_QueryInterface(ID3DXEffectPool* iface, REFIID riid, void** object)
 {
-    ID3DXEffectPoolImpl *This = (ID3DXEffectPoolImpl *)iface;
+    ID3DXEffectPoolImpl *This = impl_from_ID3DXEffectPool(iface);
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
         IsEqualGUID(riid, &IID_ID3DXEffectPool))
     {
-        This->lpVtbl->AddRef(iface);
+        This->ID3DXEffectPool_iface.lpVtbl->AddRef(iface);
         *object = This;
         return S_OK;
     }
@@ -952,7 +957,7 @@ static HRESULT WINAPI ID3DXEffectPoolImpl_QueryInterface(ID3DXEffectPool* iface,
 
 static ULONG WINAPI ID3DXEffectPoolImpl_AddRef(ID3DXEffectPool* iface)
 {
-    ID3DXEffectPoolImpl *This = (ID3DXEffectPoolImpl *)iface;
+    ID3DXEffectPoolImpl *This = impl_from_ID3DXEffectPool(iface);
 
     TRACE("(%p)->(): AddRef from %u\n", This, This->ref);
 
@@ -961,7 +966,7 @@ static ULONG WINAPI ID3DXEffectPoolImpl_AddRef(ID3DXEffectPool* iface)
 
 static ULONG WINAPI ID3DXEffectPoolImpl_Release(ID3DXEffectPool* iface)
 {
-    ID3DXEffectPoolImpl *This = (ID3DXEffectPoolImpl *)iface;
+    ID3DXEffectPoolImpl *This = impl_from_ID3DXEffectPool(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p)->(): Release from %u\n", This, ref + 1);
@@ -996,10 +1001,10 @@ HRESULT WINAPI D3DXCreateEffectPool(LPD3DXEFFECTPOOL* pool)
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &ID3DXEffectPool_Vtbl;
+    object->ID3DXEffectPool_iface.lpVtbl = &ID3DXEffectPool_Vtbl;
     object->ref = 1;
 
-    *pool = (LPD3DXEFFECTPOOL)object;
+    *pool = &object->ID3DXEffectPool_iface;
 
     return S_OK;
 }
