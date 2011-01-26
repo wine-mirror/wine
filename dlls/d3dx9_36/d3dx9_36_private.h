@@ -50,21 +50,6 @@ HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer,
 const PixelFormatDesc *get_format_info(D3DFORMAT format);
 const PixelFormatDesc *get_format_info_idx(int idx);
 
-extern const ID3DXBufferVtbl D3DXBuffer_Vtbl;
-
-/* ID3DXBUFFER */
-typedef struct ID3DXBufferImpl
-{
-    /* IUnknown fields */
-    const ID3DXBufferVtbl *lpVtbl;
-    LONG           ref;
-
-    /* ID3DXBuffer fields */
-    DWORD         *buffer;
-    DWORD          bufferSize;
-} ID3DXBufferImpl;
-
-
 /* ID3DXFont */
 typedef struct ID3DXFontImpl
 {
