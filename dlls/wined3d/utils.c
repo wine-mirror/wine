@@ -133,6 +133,7 @@ static const struct StaticPixelFormatDesc formats[] =
     {WINED3DFMT_INTZ,                       0x0,        0x0,        0x0,        0x0,        4,      24,     8},
     {WINED3DFMT_NVHU,                       0x0,        0x0,        0x0,        0x0,        2,      0,      0},
     {WINED3DFMT_NVHS,                       0x0,        0x0,        0x0,        0x0,        2,      0,      0},
+    {WINED3DFMT_NULL,                       0xff000000, 0x000000ff, 0x0000ff00, 0x00ff0000, 4,      0,      0},
 };
 
 struct wined3d_format_base_flags
@@ -158,6 +159,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_G8R8_G8B8,          WINED3DFMT_FLAG_FOURCC},
     {WINED3DFMT_R8G8_B8G8,          WINED3DFMT_FLAG_FOURCC},
     {WINED3DFMT_INTZ,               WINED3DFMT_FLAG_FOURCC},
+    {WINED3DFMT_NULL,               WINED3DFMT_FLAG_FOURCC},
     {WINED3DFMT_P8_UINT,            WINED3DFMT_FLAG_GETDC},
     {WINED3DFMT_B8G8R8_UNORM,       WINED3DFMT_FLAG_GETDC},
     {WINED3DFMT_B8G8R8A8_UNORM,     WINED3DFMT_FLAG_GETDC},
@@ -867,6 +869,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_DEPTH_STENCIL,           GL_UNSIGNED_INT_24_8,             0,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_DEPTH
             | WINED3DFMT_FLAG_STENCIL,
+            ARB_FRAMEBUFFER_OBJECT,     NULL},
+    {WINED3DFMT_NULL,                   GL_RGBA8,                         GL_RGBA8,                               0,
+            GL_RGBA,                    GL_UNSIGNED_INT_8_8_8_8_REV,      0,
+            WINED3DFMT_FLAG_RENDERTARGET,
             ARB_FRAMEBUFFER_OBJECT,     NULL},
 };
 
@@ -1740,6 +1746,7 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
         FMT_TO_STR(WINED3DFMT_B8G8R8A8_UNORM);
         FMT_TO_STR(WINED3DFMT_B8G8R8X8_UNORM);
         FMT_TO_STR(WINED3DFMT_INTZ);
+        FMT_TO_STR(WINED3DFMT_NULL);
 #undef FMT_TO_STR
         default:
         {

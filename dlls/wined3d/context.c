@@ -271,7 +271,7 @@ static void context_attach_surface_fbo(const struct wined3d_context *context,
 
     TRACE("Attach surface %p to %u\n", surface, idx);
 
-    if (surface)
+    if (surface && surface->resource.format->id != WINED3DFMT_NULL)
     {
         switch (location)
         {
@@ -1932,7 +1932,7 @@ static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_
 
             for (i = 0; i < gl_info->limits.buffers; ++i)
             {
-                if (i < rt_count && rts[i])
+                if (i < rt_count && rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL)
                     context->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
                 else
                     context->draw_buffers[i] = GL_NONE;
@@ -2062,7 +2062,8 @@ static BOOL context_validate_rt_config(UINT rt_count,
 
     for (i = 0; i < rt_count; ++i)
     {
-        if (rts[i]) return TRUE;
+        if (rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL)
+            return TRUE;
     }
 
     WARN("Invalid render target config, need at least one attachment.\n");

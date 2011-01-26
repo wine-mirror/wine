@@ -3470,6 +3470,11 @@ static BOOL CheckTextureCapability(struct wined3d_adapter *adapter, const struct
             TRACE_(d3d_caps)("[FAILED]\n");
             return FALSE;
 
+        case WINED3DFMT_NULL:
+            if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
+                return TRUE;
+            return FALSE;
+
         case WINED3DFMT_UNKNOWN:
             return FALSE;
 
