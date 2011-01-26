@@ -1553,7 +1553,7 @@ UINT WINAPI GetOutlineTextMetricsW(
     return ret;
 }
 
-static LPSTR FONT_GetCharsByRangeA(UINT firstChar, UINT lastChar, PINT pByteLen)
+static LPSTR FONT_GetCharsByRangeA(HDC hdc, UINT firstChar, UINT lastChar, PINT pByteLen)
 {
     INT i, count = lastChar - firstChar + 1;
     UINT c;
@@ -1561,6 +1561,22 @@ static LPSTR FONT_GetCharsByRangeA(UINT firstChar, UINT lastChar, PINT pByteLen)
 
     if (count <= 0)
         return NULL;
+
+    switch (GdiGetCodePage(hdc))
+    {
+    case 932:
+    case 936:
+    case 949:
+    case 950:
+    case 1361:
+        if (lastChar > 0xffff)
+            return NULL;
+        break;
+    default:
+        if (lastChar > 0xff)
+            return NULL;
+        break;
+    }
 
     str = HeapAlloc(GetProcessHeap(), 0, count * 2 + 1);
     if (str == NULL)
@@ -1620,7 +1636,7 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
     LPWSTR wstr;
     BOOL ret = TRUE;
 
-    str = FONT_GetCharsByRangeA(firstChar, lastChar, &i);
+    str = FONT_GetCharsByRangeA(hdc, firstChar, lastChar, &i);
     if(str == NULL)
         return FALSE;
 
@@ -2324,7 +2340,7 @@ BOOL WINAPI GetCharABCWidthsA(HDC hdc, UINT firstChar, UINT lastChar,
     LPWSTR wstr;
     BOOL ret = TRUE;
 
-    str = FONT_GetCharsByRangeA(firstChar, lastChar, &i);
+    str = FONT_GetCharsByRangeA(hdc, firstChar, lastChar, &i);
     if (str == NULL)
         return FALSE;
 
@@ -3010,7 +3026,7 @@ BOOL WINAPI GetCharABCWidthsFloatA( HDC hdc, UINT first, UINT last, LPABCFLOAT a
     LPWSTR wstr;
     BOOL ret = TRUE;
 
-    str = FONT_GetCharsByRangeA(first, last, &i);
+    str = FONT_GetCharsByRangeA(hdc, first, last, &i);
     if (str == NULL)
         return FALSE;
 

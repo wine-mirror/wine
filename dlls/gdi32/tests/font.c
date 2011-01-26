@@ -1011,39 +1011,30 @@ static void test_GetCharABCWidths(void)
         ok(ret == c[i].r[0], "GetCharABCWidthsA should have %s\n", c[i].r[0] ? "succeeded" : "failed");
 
         ret = pGetCharABCWidthsA(hdc, 0x100, 0x100, abc);
-        todo_wine
         ok(ret == c[i].r[1], "GetCharABCWidthsA should have %s\n", c[i].r[1] ? "succeeded" : "failed");
 
         ret = pGetCharABCWidthsA(hdc, 0xff, 0x100, a);
-        todo_wine
         ok(ret == c[i].r[2], "GetCharABCWidthsA should have %s\n", c[i].r[2] ? "succeeded" : "failed");
 
         ret = pGetCharABCWidthsA(hdc, 0xffff, 0xffff, abc);
-        todo_wine
         ok(ret == c[i].r[3], "GetCharABCWidthsA should have %s\n", c[i].r[3] ? "succeeded" : "failed");
 
         ret = pGetCharABCWidthsA(hdc, 0x10000, 0x10000, abc);
-        todo_wine
         ok(ret == c[i].r[4], "GetCharABCWidthsA should have %s\n", c[i].r[4] ? "succeeded" : "failed");
 
         ret = pGetCharABCWidthsA(hdc, 0xffff, 0x10000, a);
-        todo_wine
         ok(ret == c[i].r[5], "GetCharABCWidthsA should have %s\n", c[i].r[5] ? "succeeded" : "failed");
 
         ret = pGetCharABCWidthsA(hdc, 0xffffff, 0xffffff, abc);
-        todo_wine
         ok(ret == c[i].r[6], "GetCharABCWidthsA should have %s\n", c[i].r[6] ? "succeeded" : "failed");
 
         ret = pGetCharABCWidthsA(hdc, 0x1000000, 0x1000000, abc);
-        todo_wine
         ok(ret == c[i].r[7], "GetCharABCWidthsA should have %s\n", c[i].r[7] ? "succeeded" : "failed");
 
         ret = pGetCharABCWidthsA(hdc, 0xffffff, 0x1000000, a);
-        todo_wine
         ok(ret == c[i].r[8], "GetCharABCWidthsA should have %s\n", c[i].r[8] ? "succeeded" : "failed");
 
         ret = pGetCharABCWidthsA(hdc, 0xffffffff, 0xffffffff, abc);
-        todo_wine
         ok(ret == c[i].r[9], "GetCharABCWidthsA should have %s\n", c[i].r[9] ? "succeeded" : "failed");
 
         hfont = SelectObject(hdc, hfont);
