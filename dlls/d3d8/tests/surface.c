@@ -56,6 +56,8 @@ static IDirect3DDevice8 *init_d3d8(HMODULE d3d8_handle)
     present_parameters.hDeviceWindow = create_window();
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
     present_parameters.BackBufferFormat = d3ddm.Format;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
 
     hr = IDirect3D8_CreateDevice(d3d8_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
             NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
@@ -334,6 +336,81 @@ static void test_surface_dimensions(IDirect3DDevice8 *device)
     if (SUCCEEDED(hr)) IDirect3DSurface8_Release(surface);
 }
 
+static void test_surface_format_null(IDirect3DDevice8 *device)
+{
+    static const D3DFORMAT D3DFMT_NULL = MAKEFOURCC('N','U','L','L');
+    IDirect3DTexture8 *texture;
+    IDirect3DSurface8 *surface;
+    IDirect3DSurface8 *rt, *ds;
+    D3DLOCKED_RECT locked_rect;
+    D3DSURFACE_DESC desc;
+    IDirect3D8 *d3d;
+    HRESULT hr;
+
+    IDirect3DDevice8_GetDirect3D(device, &d3d);
+
+    hr = IDirect3D8_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            D3DUSAGE_RENDERTARGET,  D3DRTYPE_SURFACE, D3DFMT_NULL);
+    if (hr != D3D_OK)
+    {
+        skip("No D3DFMT_NULL support, skipping test.\n");
+        IDirect3D8_Release(d3d);
+        return;
+    }
+
+    hr = IDirect3D8_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            D3DUSAGE_RENDERTARGET,  D3DRTYPE_TEXTURE, D3DFMT_NULL);
+    ok(hr == D3D_OK, "D3DFMT_NULL should be supported for render target textures, hr %#x.\n", hr);
+
+    hr = IDirect3D8_CheckDepthStencilMatch(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            D3DFMT_NULL, D3DFMT_D24S8);
+    ok(SUCCEEDED(hr), "Depth stencil match failed for D3DFMT_NULL, hr %#x.\n", hr);
+
+    IDirect3D8_Release(d3d);
+
+    hr = IDirect3DDevice8_CreateRenderTarget(device, 128, 128, D3DFMT_NULL,
+            D3DMULTISAMPLE_NONE, TRUE, &surface);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get original render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &ds);
+    ok(SUCCEEDED(hr), "Failed to get original depth/stencil, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00000000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, rt, ds);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    IDirect3DSurface8_Release(rt);
+    IDirect3DSurface8_Release(ds);
+
+    hr = IDirect3DSurface8_GetDesc(surface, &desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(desc.Width == 128, "Expected width 128, got %u.\n", desc.Width);
+    ok(desc.Height == 128, "Expected height 128, got %u.\n", desc.Height);
+
+    hr = IDirect3DSurface8_LockRect(surface, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    ok(locked_rect.Pitch, "Expected non-zero pitch, got %u.\n", locked_rect.Pitch);
+    ok(!!locked_rect.pBits, "Expected non-NULL pBits, got %p.\n", locked_rect.pBits);
+
+    hr = IDirect3DSurface8_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    IDirect3DSurface8_Release(surface);
+
+    hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 0, D3DUSAGE_RENDERTARGET,
+            D3DFMT_NULL, D3DPOOL_DEFAULT, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    IDirect3DTexture8_Release(texture);
+}
+
 START_TEST(surface)
 {
     HMODULE d3d8_handle;
@@ -355,6 +432,7 @@ START_TEST(surface)
     test_lockrect_invalid(device_ptr);
     test_private_data(device_ptr);
     test_surface_dimensions(device_ptr);
+    test_surface_format_null(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left\n", refcount);
