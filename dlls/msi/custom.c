@@ -1184,13 +1184,13 @@ static DWORD ACTION_CallScript( const GUID *guid )
 {
     msi_custom_action_info *info;
     MSIHANDLE hPackage;
-    UINT r = ERROR_FUNCTION_FAILED;
+    UINT r;
 
     info = find_action_by_guid( guid );
     if (!info)
     {
         ERR("failed to find action %s\n", debugstr_guid( guid) );
-        return r;
+        return ERROR_FUNCTION_FAILED;
     }
 
     TRACE("function %s, script %s\n", debugstr_w( info->target ), debugstr_w( info->source ) );
@@ -1199,13 +1199,13 @@ static DWORD ACTION_CallScript( const GUID *guid )
     if (hPackage)
     {
         r = call_script( hPackage, info->type, info->source, info->target, info->action );
+        TRACE("script returned %u\n", r);
         MsiCloseHandle( hPackage );
     }
     else
         ERR("failed to create handle for %p\n", info->package );
 
     release_custom_action_data( info );
-
     return S_OK;
 }
 
