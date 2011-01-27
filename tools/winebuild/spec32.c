@@ -55,6 +55,8 @@ static inline int needs_relay( const ORDDEF *odp )
     if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL && odp->type != TYPE_THISCALL) return 0;
     /* skip norelay and forward entry points */
     if (odp->flags & (FLAG_NORELAY|FLAG_FORWARD)) return 0;
+    /* skip register entry points on x86_64 */
+    if (target_cpu == CPU_x86_64 && (odp->flags & FLAG_REGISTER)) return 0;
     return 1;
 }
 
@@ -206,7 +208,7 @@ static void output_relay_debug( DLLSPEC *spec )
             output( "\tleaq 40(%%rsp),%%r8\n" );
             output( "\tmovq $%u,%%rdx\n", (flags << 24) | (args << 16) | (i - spec->base) );
             output( "\tleaq .L__wine_spec_relay_descr(%%rip),%%rcx\n" );
-            output( "\tcallq *%u(%%rcx)\n", (odp->flags & FLAG_REGISTER) ? 16 : 8 );
+            output( "\tcallq *8(%%rcx)\n" );
             output( "\taddq $40,%%rsp\n" );
             output( "\t.cfi_adjust_cfa_offset -40\n" );
             output( "\tret\n" );
