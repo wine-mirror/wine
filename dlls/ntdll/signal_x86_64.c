@@ -1459,12 +1459,56 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)
  */
-void WINAPI __regs_RtlCaptureContext( CONTEXT *context, CONTEXT *regs )
-{
-    *context = *regs;
-}
-DEFINE_REGS_ENTRYPOINT( RtlCaptureContext, 1 )
-
+__ASM_GLOBAL_FUNC( RtlCaptureContext,
+                   "pushfq\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   "movl $0x001000f,0x30(%rcx)\n\t" /* context->ContextFlags */
+                   "stmxcsr 0x34(%rcx)\n\t"         /* context->MxCsr */
+                   "movw %cs,0x38(%rcx)\n\t"        /* context->SegCs */
+                   "movw %ds,0x3a(%rcx)\n\t"        /* context->SegDs */
+                   "movw %es,0x3c(%rcx)\n\t"        /* context->SegEs */
+                   "movw %fs,0x3e(%rcx)\n\t"        /* context->SegFs */
+                   "movw %gs,0x40(%rcx)\n\t"        /* context->SegGs */
+                   "movw %ss,0x42(%rcx)\n\t"        /* context->SegSs */
+                   "popq 0x44(%rcx)\n\t"            /* context->Eflags */
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   "movq %rax,0x78(%rcx)\n\t"       /* context->Rax */
+                   "movq %rcx,0x80(%rcx)\n\t"       /* context->Rcx */
+                   "movq %rdx,0x88(%rcx)\n\t"       /* context->Rdx */
+                   "movq %rbx,0x90(%rcx)\n\t"       /* context->Rbx */
+                   "leaq 8(%rsp),%rax\n\t"
+                   "movq %rax,0x98(%rcx)\n\t"       /* context->Rsp */
+                   "movq %rbp,0xa0(%rcx)\n\t"       /* context->Rbp */
+                   "movq %rsi,0xa8(%rcx)\n\t"       /* context->Rsi */
+                   "movq %rdi,0xb0(%rcx)\n\t"       /* context->Rdi */
+                   "movq %r8,0xb8(%rcx)\n\t"        /* context->R8 */
+                   "movq %r9,0xc0(%rcx)\n\t"        /* context->R9 */
+                   "movq %r10,0xc8(%rcx)\n\t"       /* context->R10 */
+                   "movq %r11,0xd0(%rcx)\n\t"       /* context->R11 */
+                   "movq %r12,0xd8(%rcx)\n\t"       /* context->R12 */
+                   "movq %r13,0xe0(%rcx)\n\t"       /* context->R13 */
+                   "movq %r14,0xe8(%rcx)\n\t"       /* context->R14 */
+                   "movq %r15,0xf0(%rcx)\n\t"       /* context->R15 */
+                   "movq (%rsp),%rax\n\t"
+                   "movq %rax,0xf8(%rcx)\n\t"       /* context->Rip */
+                   "fxsave 0x100(%rcx)\n\t"         /* context->FtlSave */
+                   "movdqa %xmm0,0x1a0(%rcx)\n\t"   /* context->Xmm0 */
+                   "movdqa %xmm1,0x1b0(%rcx)\n\t"   /* context->Xmm1 */
+                   "movdqa %xmm2,0x1c0(%rcx)\n\t"   /* context->Xmm2 */
+                   "movdqa %xmm3,0x1d0(%rcx)\n\t"   /* context->Xmm3 */
+                   "movdqa %xmm4,0x1e0(%rcx)\n\t"   /* context->Xmm4 */
+                   "movdqa %xmm5,0x1f0(%rcx)\n\t"   /* context->Xmm5 */
+                   "movdqa %xmm6,0x200(%rcx)\n\t"   /* context->Xmm6 */
+                   "movdqa %xmm7,0x210(%rcx)\n\t"   /* context->Xmm7 */
+                   "movdqa %xmm8,0x220(%rcx)\n\t"   /* context->Xmm8 */
+                   "movdqa %xmm9,0x230(%rcx)\n\t"   /* context->Xmm9 */
+                   "movdqa %xmm10,0x240(%rcx)\n\t"  /* context->Xmm10 */
+                   "movdqa %xmm11,0x250(%rcx)\n\t"  /* context->Xmm11 */
+                   "movdqa %xmm12,0x260(%rcx)\n\t"  /* context->Xmm12 */
+                   "movdqa %xmm13,0x270(%rcx)\n\t"  /* context->Xmm13 */
+                   "movdqa %xmm14,0x280(%rcx)\n\t"  /* context->Xmm14 */
+                   "movdqa %xmm15,0x290(%rcx)\n\t"  /* context->Xmm15 */
+                   "ret" );
 
 /***********************************************************************
  *           set_cpu_context
