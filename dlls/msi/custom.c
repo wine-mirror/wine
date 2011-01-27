@@ -236,7 +236,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
             }
             else if (type & msidbCustomActionTypeRollback)
             {
-                FIXME("Deferring rollback only action... rollbacks not supported yet\n");
+                FIXME("Deferring rollback only action\n");
                 schedule_action(package, ROLLBACK_SCRIPT, deferred);
             }
             else
@@ -273,6 +273,12 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
                 msi_set_property(package->db, szCustomActionData, szEmpty);
 
             msi_free(actiondata);
+        }
+        if (type & msidbCustomActionTypeRollback)
+        {
+            FIXME("Rollbacks not supported yet\n");
+            rc = ERROR_SUCCESS;
+            goto end;
         }
     }
     else if (!check_execution_scheduling_options(package,action,type))
