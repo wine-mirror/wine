@@ -2783,6 +2783,8 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     NTSTATUS status;
     DWORD size;
 
+    RtlCaptureContext( orig_context );
+
     /* build an exception record, if we do not have one */
     if (!rec)
     {
@@ -2931,12 +2933,11 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
 /*******************************************************************
  *		RtlUnwind (NTDLL.@)
  */
-void WINAPI __regs_RtlUnwind( void *frame, void *target_ip, EXCEPTION_RECORD *rec,
-                              void *retval, CONTEXT *context )
+void WINAPI RtlUnwind( void *frame, void *target_ip, EXCEPTION_RECORD *rec, void *retval )
 {
-    RtlUnwindEx( frame, target_ip, rec, retval, context, NULL );
+    CONTEXT context;
+    RtlUnwindEx( frame, target_ip, rec, retval, &context, NULL );
 }
-DEFINE_REGS_ENTRYPOINT( RtlUnwind, 4 )
 
 
 /*******************************************************************
