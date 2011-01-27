@@ -108,3 +108,4 @@ HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
 #define ATTR_FIX_PX      1
 #define ATTR_FIX_URL     2
 #define ATTR_STR_TO_INT  4
+#define ATTR_HEX_INT     8

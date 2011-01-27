@@ -351,8 +351,12 @@ HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, 
 
         static const WCHAR format[] = {'%','d',0};
         static const WCHAR px_format[] = {'%','d','p','x',0};
+        static const WCHAR hex_format[] = {'#','%','0','6','x',0};
 
-        wsprintfW(str, flags&ATTR_FIX_PX ? px_format : format, V_I4(value));
+        if(flags & ATTR_HEX_INT)
+            wsprintfW(str, hex_format, V_I4(value));
+        else
+            wsprintfW(str, flags&ATTR_FIX_PX ? px_format : format, V_I4(value));
         return set_nsstyle_attr(nsstyle, sid, str, flags & ~ATTR_FIX_PX);
     }
     default:
@@ -1537,8 +1541,10 @@ static HRESULT WINAPI HTMLStyle_get_borderColor(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_borderTopColor(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+
+    return set_nsstyle_attr_var(This->nsstyle, STYLEID_BORDER_TOP_COLOR, &v, ATTR_HEX_INT);
 }
 
 static HRESULT WINAPI HTMLStyle_get_borderTopColor(IHTMLStyle *iface, VARIANT *p)
