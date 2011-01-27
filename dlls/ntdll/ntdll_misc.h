@@ -242,14 +242,6 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
                        ".byte 0x6a," #args "\n\t" /* pushl $args */     \
                        "call " __ASM_NAME("__wine_call_from_regs") "\n\t" \
                        "ret $(4*" #args ")" ) /* fake ret to make copy protections happy */
-#elif defined(__x86_64__)
-#define DEFINE_REGS_ENTRYPOINT( name, args ) \
-    __ASM_GLOBAL_FUNC( name, \
-                       "movq %rcx,8(%rsp)\n\t"  \
-                       "movq %rdx,16(%rsp)\n\t" \
-                       "movq $" #args ",%rcx\n\t" \
-                       "leaq " __ASM_NAME("__regs_") #name "(%rip),%rdx\n\t" \
-                       "call " __ASM_NAME("__wine_call_from_regs"))
 #endif
 
 #endif

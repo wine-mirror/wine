@@ -509,71 +509,10 @@ DEFINE_REGS_ENTRYPOINT( relay_call_regs, 4 )
 
 #else  /* __i386__ */
 
-void WINAPI __regs_relay_call_regs( struct relay_descr *descr, INT_PTR idx,
-                                    INT_PTR *stack, CONTEXT *context )
+void WINAPI relay_call_regs( struct relay_descr *descr, INT_PTR idx, INT_PTR *stack )
 {
-    WORD ordinal = LOWORD(idx);
-    BYTE nb_args = LOBYTE(HIWORD(idx));
-    struct relay_private_data *data = descr->private;
-    struct relay_entry_point *entry_point = data->entry_points + ordinal;
-    BYTE *orig_func = entry_point->orig_func;
-    INT_PTR *args = stack + 1;
-    INT_PTR args_copy[32];
-
-    /* restore the context to what it was before the relay thunk */
-    context->Rip = stack[0];
-    context->Rsp = (INT_PTR)args;
-
-    if (TRACE_ON(relay))
-    {
-        if (entry_point->name)
-            DPRINTF( "%04x:Call %s.%s(", GetCurrentThreadId(), data->dllname, entry_point->name );
-        else
-            DPRINTF( "%04x:Call %s.%u(", GetCurrentThreadId(), data->dllname, data->base + ordinal );
-        RELAY_PrintArgs( args, nb_args, descr->arg_types[ordinal] );
-        DPRINTF( ") ret=%08lx\n", context->Rip );
-
-        DPRINTF( "%04x: rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
-                 GetCurrentThreadId(), context->Rax, context->Rbx, context->Rcx, context->Rdx,
-                 context->Rsi, context->Rdi, context->Rbp, context->Rsp );
-        DPRINTF( "%04x:  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
-                 GetCurrentThreadId(), context->R8, context->R9, context->R10, context->R11,
-                 context->R12, context->R13, context->R14, context->R15 );
-
-        assert( orig_func[17] == 0x48 /* leaq */ );
-        assert( orig_func[18] == 0x8d );
-        assert( orig_func[19] == 0x15 );
-        assert( orig_func[24] == 0xe8 /* call */ );
-    }
-
-    /* now call the real function */
-
-    memcpy( args_copy, args, nb_args * sizeof(args[0]) );
-    args_copy[nb_args++] = (INT_PTR)context;  /* append context argument */
-
-    call_entry_point( orig_func + 24 + *(int *)(orig_func + 20), nb_args, args_copy, 0 );
-
-
-    if (TRACE_ON(relay))
-    {
-        if (entry_point->name)
-            DPRINTF( "%04x:Ret  %s.%s() retval=%08lx ret=%08lx\n",
-                     GetCurrentThreadId(), data->dllname, entry_point->name,
-                     context->Rax, context->Rip );
-        else
-            DPRINTF( "%04x:Ret  %s.%u() retval=%08lx ret=%08lx\n",
-                     GetCurrentThreadId(), data->dllname, data->base + ordinal,
-                     context->Rax, context->Rip );
-        DPRINTF( "%04x:  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
-                 GetCurrentThreadId(), context->Rax, context->Rbx, context->Rcx, context->Rdx,
-                 context->Rsi, context->Rdi, context->Rbp, context->Rsp );
-        DPRINTF( "%04x:  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
-                 GetCurrentThreadId(), context->R8, context->R9, context->R10, context->R11,
-                 context->R12, context->R13, context->R14, context->R15 );
-    }
+    assert(0);  /* should never be called */
 }
-extern void WINAPI relay_call_regs(void);
-DEFINE_REGS_ENTRYPOINT( relay_call_regs, 3 )
 
 #endif  /* __i386__ */
 
