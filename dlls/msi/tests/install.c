@@ -5535,6 +5535,8 @@ static void process_pending_renames(HKEY hkey)
     BOOL found = FALSE;
 
     ret = RegQueryValueExA(hkey, rename_ops, NULL, NULL, NULL, &size);
+    ok(!ret, "RegQueryValueExA failed %d\n", ret);
+
     buf = HeapAlloc(GetProcessHeap(), 0, size + 1);
     buf2ptr = buf2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size + 1);
 
