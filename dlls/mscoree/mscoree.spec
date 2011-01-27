@@ -43,7 +43,7 @@
 @ stdcall GetCORSystemDirectory(ptr long ptr)
 @ stdcall GetCORVersion(ptr long ptr)
 @ stub GetCompileInfo
-@ stub GetFileVersion
+@ stdcall GetFileVersion(wstr ptr long ptr)
 @ stub GetHashFromAssemblyFile
 @ stub GetHashFromAssemblyFileW
 @ stub GetHashFromBlob

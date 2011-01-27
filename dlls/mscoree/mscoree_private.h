@@ -28,6 +28,9 @@ extern char *WtoA(LPCWSTR wstr);
 
 extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj);
 
+extern HRESULT WINAPI CLRMetaHost_GetVersionFromFile(ICLRMetaHost* iface,
+    LPCWSTR pwzFilePath, LPWSTR pwzBuffer, DWORD *pcchBuffer);
+
 typedef struct tagASSEMBLY ASSEMBLY;
 
 HRESULT assembly_create(ASSEMBLY **out, LPCWSTR file);

@@ -963,7 +963,7 @@ static HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
     return CLR_E_SHIM_RUNTIME;
 }
 
-static HRESULT WINAPI CLRMetaHost_GetVersionFromFile(ICLRMetaHost* iface,
+HRESULT WINAPI CLRMetaHost_GetVersionFromFile(ICLRMetaHost* iface,
     LPCWSTR pwzFilePath, LPWSTR pwzBuffer, DWORD *pcchBuffer)
 {
     ASSEMBLY *assembly;

@@ -250,6 +250,17 @@ HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWST
     return ret;
 }
 
+HRESULT WINAPI GetFileVersion(LPCWSTR szFilename, LPWSTR szBuffer, DWORD cchBuffer, DWORD *dwLength)
+{
+    TRACE("(%s, %p, %d, %p)\n", debugstr_w(szFilename), szBuffer, cchBuffer, dwLength);
+
+    if (!szFilename || !dwLength)
+        return E_POINTER;
+
+    *dwLength = cchBuffer;
+    return CLRMetaHost_GetVersionFromFile(0, szFilename, szBuffer, dwLength);
+}
+
 HRESULT WINAPI LoadLibraryShim( LPCWSTR szDllName, LPCWSTR szVersion, LPVOID pvReserved, HMODULE * phModDll)
 {
     HRESULT ret=S_OK;
