@@ -682,13 +682,13 @@ static void test_load_save(void)
     check_lnk(lnkfile, &desc, 0x0);
 
     /* Test omitting .exe from an absolute path */
-    p=strrchr(mypath, '.');
+    p=strrchr(realpath, '.');
     if (p)
         *p='\0';
 
     desc.description="absolute path without .exe";
     desc.workdir=mydir;
-    desc.path=mypath;
+    desc.path=realpath;
     desc.pidl=NULL;
     desc.arguments="/option1 /option2 \"Some string\"";
     desc.showcmd=SW_SHOWNORMAL;
@@ -696,7 +696,7 @@ static void test_load_save(void)
     desc.icon_id=0;
     desc.hotkey=0x1234;
     create_lnk(lnkfile, &desc, 0);
-    desc.path = realpath;
+    strcat(realpath, ".exe");
     check_lnk(lnkfile, &desc, 0x4);
 
     /* Overwrite the existing lnk file and test link to a command on the path */
