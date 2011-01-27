@@ -328,11 +328,15 @@ static UINT WHERE_evaluate( MSIWHEREVIEW *wv, UINT row,
     {
     case EXPR_COL_NUMBER:
         r = wv->table->ops->fetch_int( wv->table, row, cond->u.col_number, &tval );
+        if( r != ERROR_SUCCESS )
+            return r;
         *val = tval - 0x8000;
         return ERROR_SUCCESS;
 
     case EXPR_COL_NUMBER32:
         r = wv->table->ops->fetch_int( wv->table, row, cond->u.col_number, &tval );
+        if( r != ERROR_SUCCESS )
+            return r;
         *val = tval - 0x80000000;
         return r;
 
