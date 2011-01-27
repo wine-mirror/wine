@@ -1130,6 +1130,12 @@ UINT WINAPI MsiSourceListAddSourceExW( LPCWSTR szProduct, LPCWSTR szUserSid,
         RegCloseKey(sourcekey);
         return ERROR_FUNCTION_FAILED;
     }
+    if (rc != ERROR_SUCCESS)
+    {
+        ERR("can't open subkey %u\n", rc);
+        RegCloseKey(sourcekey);
+        return rc;
+    }
 
     postfix = (dwOptions & MSISOURCETYPE_NETWORK) ? szBackSlash : szForwardSlash;
     if (szSource[lstrlenW(szSource) - 1] == *postfix)
