@@ -3964,12 +3964,6 @@ DirectDrawCreateClipper(DWORD Flags,
         return CLASS_E_NOAGGREGATION;
     }
 
-    if (!LoadWineD3D())
-    {
-        LeaveCriticalSection(&ddraw_cs);
-        return DDERR_NODIRECTDRAWSUPPORT;
-    }
-
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                      sizeof(IDirectDrawClipperImpl));
     if (object == NULL)
@@ -6016,13 +6010,7 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     ddraw->orig_width = GetSystemMetrics(SM_CXSCREEN);
     ddraw->orig_height = GetSystemMetrics(SM_CYSCREEN);
 
-    if (!LoadWineD3D())
-    {
-        ERR("Failed to load wined3d - broken OpenGL setup?\n");
-        return DDERR_NODIRECTDRAWSUPPORT;
-    }
-
-    ddraw->wineD3D = pWineDirect3DCreate(7, &ddraw->IDirectDraw7_iface);
+    ddraw->wineD3D = WineDirect3DCreate(7, &ddraw->IDirectDraw7_iface);
     if (!ddraw->wineD3D)
     {
         WARN("Failed to create a wined3d object.\n");

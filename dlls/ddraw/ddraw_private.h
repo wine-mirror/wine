@@ -187,10 +187,6 @@ IWineD3DVertexDeclaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf) DEC
 /* The default surface type */
 extern WINED3DSURFTYPE DefaultSurfaceType DECLSPEC_HIDDEN;
 
-extern typeof(WineDirect3DCreateClipper) *pWineDirect3DCreateClipper DECLSPEC_HIDDEN;
-extern typeof(WineDirect3DCreate) *pWineDirect3DCreate DECLSPEC_HIDDEN;
-
-
 /*****************************************************************************
  * IDirectDrawSurface implementation structure
  *****************************************************************************/

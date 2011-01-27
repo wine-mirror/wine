@@ -1,6 +1,6 @@
 MODULE    = ddraw.dll
 IMPORTLIB = ddraw
-IMPORTS   = dxguid uuid ole32 user32 gdi32 advapi32
+IMPORTS   = dxguid uuid wined3d user32 gdi32 advapi32
 
 C_SRCS = \
 	clipper.c \

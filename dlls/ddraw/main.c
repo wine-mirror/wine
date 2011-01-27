@@ -39,9 +39,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 /* The configured default surface */
 WINED3DSURFTYPE DefaultSurfaceType = SURFACE_UNKNOWN;
 
-typeof(WineDirect3DCreateClipper) *pWineDirect3DCreateClipper DECLSPEC_HIDDEN;
-typeof(WineDirect3DCreate) *pWineDirect3DCreate DECLSPEC_HIDDEN;
-
 /* DDraw list and critical section */
 static struct list global_ddraw_list = LIST_INIT(global_ddraw_list);
 
@@ -168,31 +165,6 @@ void *ddraw_get_object(struct ddraw_handle_table *t, DWORD handle, enum ddraw_ha
     }
 
     return entry->object;
-}
-
-/*
- * Helper Function for DDRAW_Create and DirectDrawCreateClipper for
- * lazy loading of the Wine D3D driver.
- *
- * Returns
- *  TRUE on success
- *  FALSE on failure.
- */
-
-BOOL LoadWineD3D(void)
-{
-    static HMODULE hWineD3D = (HMODULE) -1;
-    if (hWineD3D == (HMODULE) -1)
-    {
-        hWineD3D = LoadLibraryA("wined3d");
-        if (hWineD3D)
-        {
-            pWineDirect3DCreate = (typeof(WineDirect3DCreate) *)GetProcAddress(hWineD3D, "WineDirect3DCreate");
-            pWineDirect3DCreateClipper = (typeof(WineDirect3DCreateClipper) *) GetProcAddress(hWineD3D, "WineDirect3DCreateClipper");
-            return TRUE;
-        }
-    }
-    return hWineD3D != NULL;
 }
 
 /***********************************************************************
