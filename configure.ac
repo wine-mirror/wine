@@ -3009,7 +3009,7 @@ then
 ALL_POT_FILES =$ALL_POT_FILES
 all: \$(ALL_PO_FILES)
 \$(ALL_PO_FILES): \$(srcdir)/po/wine.pot
-	msgmerge -U -q --backup=none \$[@] \$(srcdir)/po/wine.pot && touch \$[@]
+	msgmerge -q \$[@] \$(srcdir)/po/wine.pot | msgattrib --no-obsolete -o \$[@].new && mv \$[@].new \$[@]
 \$(srcdir)/po/wine.pot: \$(ALL_POT_FILES)
 	msgcat -o \$[@] \$(ALL_POT_FILES)])
 fi
