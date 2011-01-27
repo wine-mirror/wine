@@ -766,7 +766,8 @@ static UINT read_table_int(BYTE *const *data, UINT row, UINT col, UINT bytes)
 static UINT save_table( MSIDATABASE *db, const MSITABLE *t, UINT bytes_per_strref )
 {
     BYTE *rawdata = NULL;
-    UINT rawsize, r, i, j, row_size, row_count;
+    UINT rawsize, i, j, row_size, row_count;
+    UINT r = ERROR_FUNCTION_FAILED;
 
     /* Nothing to do for non-persistent tables */
     if( t->persistent == MSICONDITION_FALSE )
@@ -816,7 +817,6 @@ static UINT save_table( MSIDATABASE *db, const MSITABLE *t, UINT bytes_per_strre
                 if (id > 1 << bytes_per_strref * 8)
                 {
                     ERR("string id %u out of range\n", id);
-                    r = ERROR_FUNCTION_FAILED;
                     goto err;
                 }
             }
