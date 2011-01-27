@@ -92,6 +92,7 @@ task.\nClose one or more applications to increase the amount of free memory."
 
 STRING_UNICODE_LE,     "Unicode (UTF-16)"
 STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
+STRING_UTF8,           "Unicode (UTF-8)"
 
 STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
 This file contains Unicode characters which will be lost if\n\

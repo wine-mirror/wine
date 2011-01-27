@@ -8337,7 +8337,12 @@ msgstr "يونيكود (UTF-16)"
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "يونيكود (UTF-16 Big Endian)"
 
-#: notepad.rc:101
+#: notepad.rc:95
+#, fuzzy
+msgid "Unicode (UTF-8)"
+msgstr "يونيكود (UTF-16)"
+
+#: notepad.rc:102
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
