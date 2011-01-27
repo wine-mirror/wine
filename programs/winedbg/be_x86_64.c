@@ -73,6 +73,8 @@ static void be_x86_64_single_step(CONTEXT* ctx, unsigned enable)
 static void be_x86_64_print_context(HANDLE hThread, const CONTEXT* ctx,
                                     int all_regs)
 {
+    static const char mxcsr_flags[16][4] = { "IE", "DE", "ZE", "OE", "UE", "PE", "DAZ", "IM",
+                                             "DM", "ZM", "OM", "UM", "PM", "R-", "R+", "FZ" };
     static const char flags[] = "aVR-N--ODITSZ-A-P-C";
     char buf[33];
     int i;
@@ -92,7 +94,86 @@ static void be_x86_64_print_context(HANDLE hThread, const CONTEXT* ctx,
     dbg_printf(" r11:%016lx r12:%016lx r13:%016lx r14:%016lx r15:%016lx\n",
                ctx->R11, ctx->R12, ctx->R13, ctx->R14, ctx->R15 );
 
-    if (all_regs) dbg_printf( "Floating point x86_64 dump not implemented\n" );
+    if (!all_regs) return;
+
+    dbg_printf("  cs:%04x  ds:%04x  es:%04x  fs:%04x  gs:%04x  ss:%04x\n",
+               ctx->SegCs, ctx->SegDs, ctx->SegEs, ctx->SegFs, ctx->SegGs, ctx->SegSs );
+
+    dbg_printf("Debug:\n");
+    dbg_printf(" dr0:%016lx dr1:%016lx dr2:%016lx dr3:%016lx\n",
+               ctx->Dr0, ctx->Dr1, ctx->Dr2, ctx->Dr3 );
+    dbg_printf(" dr6:%016lx dr7:%016lx\n", ctx->Dr6, ctx->Dr7 );
+
+    dbg_printf("Floating point:\n");
+    dbg_printf(" flcw:%04x ", LOWORD(ctx->u.FltSave.ControlWord));
+    dbg_printf(" fltw:%04x ", LOWORD(ctx->u.FltSave.TagWord));
+    dbg_printf(" flsw:%04x", LOWORD(ctx->u.FltSave.StatusWord));
+
+    dbg_printf("(cc:%d%d%d%d", (ctx->u.FltSave.StatusWord & 0x00004000) >> 14,
+               (ctx->u.FltSave.StatusWord & 0x00000400) >> 10,
+               (ctx->u.FltSave.StatusWord & 0x00000200) >> 9,
+               (ctx->u.FltSave.StatusWord & 0x00000100) >> 8);
+
+    dbg_printf(" top:%01x", (unsigned int) (ctx->u.FltSave.StatusWord & 0x00003800) >> 11);
+
+    if (ctx->u.FltSave.StatusWord & 0x00000001)     /* Invalid Fl OP */
+    {
+       if (ctx->u.FltSave.StatusWord & 0x00000040)  /* Stack Fault */
+       {
+          if (ctx->u.FltSave.StatusWord & 0x00000200) /* C1 says Overflow */
+             dbg_printf(" #IE(Stack Overflow)");
+          else
+             dbg_printf(" #IE(Stack Underflow)");     /* Underflow */
+       }
+       else  dbg_printf(" #IE(Arithmetic error)");    /* Invalid Fl OP */
+    }
+    if (ctx->u.FltSave.StatusWord & 0x00000002) dbg_printf(" #DE"); /* Denormalised OP */
+    if (ctx->u.FltSave.StatusWord & 0x00000004) dbg_printf(" #ZE"); /* Zero Divide */
+    if (ctx->u.FltSave.StatusWord & 0x00000008) dbg_printf(" #OE"); /* Overflow */
+    if (ctx->u.FltSave.StatusWord & 0x00000010) dbg_printf(" #UE"); /* Underflow */
+    if (ctx->u.FltSave.StatusWord & 0x00000020) dbg_printf(" #PE"); /* Precision error */
+    if (ctx->u.FltSave.StatusWord & 0x00000040)
+       if (!(ctx->u.FltSave.StatusWord & 0x00000001))
+           dbg_printf(" #SE");                 /* Stack Fault (don't think this can occur) */
+    if (ctx->u.FltSave.StatusWord & 0x00000080) dbg_printf(" #ES"); /* Error Summary */
+    if (ctx->u.FltSave.StatusWord & 0x00008000) dbg_printf(" #FB"); /* FPU Busy */
+    dbg_printf(")\n");
+    dbg_printf(" flerr:%04x:%08x   fldata:%04x:%08x\n",
+               ctx->u.FltSave.ErrorSelector, ctx->u.FltSave.ErrorOffset,
+               ctx->u.FltSave.DataSelector, ctx->u.FltSave.DataOffset );
+
+    for (i = 0; i < 4; i++)
+    {
+        long double st;
+        memcpy(&st, &ctx->u.FltSave.FloatRegisters[i * 10], 10);
+        dbg_printf(" st%u:%-16Lg ", i, st);
+    }
+    dbg_printf("\n");
+    for (i = 4; i < 8; i++)
+    {
+        long double st;
+        memcpy(&st, &ctx->u.FltSave.FloatRegisters[i * 10], 10);
+        dbg_printf(" st%u:%-16Lg ", i, st);
+    }
+    dbg_printf("\n");
+
+    dbg_printf(" mxcsr: %04x (", ctx->u.FltSave.MxCsr );
+    for (i = 0; i < 16; i++)
+        if (ctx->u.FltSave.MxCsr & (1 << i)) dbg_printf( " %s", mxcsr_flags[i] );
+    dbg_printf(" )\n");
+
+    for (i = 0; i < 16; i++)
+    {
+        dbg_printf( " %sxmm%u: uint=%016lx%016lx", (i > 9) ? "" : " ", i,
+                    ctx->u.FltSave.XmmRegisters[i].High, ctx->u.FltSave.XmmRegisters[i].Low );
+        dbg_printf( " double={%g; %g}", *(double *)&ctx->u.FltSave.XmmRegisters[i].Low,
+                    *(double *)&ctx->u.FltSave.XmmRegisters[i].High );
+        dbg_printf( " float={%g; %g; %g; %g}\n",
+                    (double)*((float *)&ctx->u.FltSave.XmmRegisters[i] + 0),
+                    (double)*((float *)&ctx->u.FltSave.XmmRegisters[i] + 1),
+                    (double)*((float *)&ctx->u.FltSave.XmmRegisters[i] + 2),
+                    (double)*((float *)&ctx->u.FltSave.XmmRegisters[i] + 3) );
+    }
 }
 
 static void be_x86_64_print_segment_info(HANDLE hThread, const CONTEXT* ctx)
