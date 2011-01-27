@@ -951,12 +951,12 @@ Read/WriteProcessMemory partially completed
 MessageId=300
 SymbolicName=ERROR_OPLOCK_NOT_GRANTED
 Language=ENU
-ERROR_OPLOCK_NOT_GRANTED
+The oplock wasn't granted
 .
 MessageId=301
 SymbolicName=ERROR_INVALID_OPLOCK_PROTOCOL
 Language=ENU
-ERROR_INVALID_OPLOCK_PROTOCOL
+Invalid oplock message received
 .
 MessageId=317
 SymbolicName=ERROR_MR_MID_NOT_FOUND
@@ -1066,7 +1066,7 @@ Invalid key
 MessageId=1011
 SymbolicName=ERROR_CANTOPEN
 Language=ENU
-ERROR_CANTOPEN
+Can't open registry key
 .
 MessageId=1012
 SymbolicName=ERROR_CANTREAD
@@ -1271,22 +1271,22 @@ Different service account
 MessageId=1080
 SymbolicName=ERROR_CANNOT_DETECT_DRIVER_FAILURE
 Language=ENU
-ERROR_CANNOT_DETECT_DRIVER_FAILURE
+Driver failure cannot be detected
 .
 MessageId=1081
 SymbolicName=ERROR_CANNOT_DETECT_PROCESS_ABORT
 Language=ENU
-ERROR_CANNOT_DETECT_PROCESS_ABORT
+Process abort cannot be detected
 .
 MessageId=1082
 SymbolicName=ERROR_NO_RECOVERY_PROGRAM
 Language=ENU
-ERROR_NO_RECOVERY_PROGRAM
+No recovery program for service
 .
 MessageId=1083
 SymbolicName=ERROR_SERVICE_NOT_IN_EXE
 Language=ENU
-ERROR_SERVICE_NOT_IN_EXE
+Service not implemented by exe
 .
 MessageId=1100
 SymbolicName=ERROR_END_OF_MEDIA
@@ -1511,117 +1511,117 @@ DLL not found
 MessageId=1158
 SymbolicName=ERROR_NO_MORE_USER_HANDLES
 Language=ENU
-ERROR_NO_MORE_USER_HANDLES
+Out of user handles
 .
 MessageId=1159
 SymbolicName=ERROR_MESSAGE_SYNC_ONLY
 Language=ENU
-ERROR_MESSAGE_SYNC_ONLY
+Message can only be used in synchronous calls
 .
 MessageId=1160
 SymbolicName=ERROR_SOURCE_ELEMENT_EMPTY
 Language=ENU
-ERROR_SOURCE_ELEMENT_EMPTY
+The source element is empty
 .
 MessageId=1161
 SymbolicName=ERROR_DESTINATION_ELEMENT_FULL
 Language=ENU
-ERROR_DESTINATION_ELEMENT_FULL
+The destination element is full
 .
 MessageId=1162
 SymbolicName=ERROR_ILLEGAL_ELEMENT_ADDRESS
 Language=ENU
-ERROR_ILLEGAL_ELEMENT_ADDRESS
+The element address is invalid
 .
 MessageId=1163
 SymbolicName=ERROR_MAGAZINE_NOT_PRESENT
 Language=ENU
-ERROR_MAGAZINE_NOT_PRESENT
+The magazine is not present
 .
 MessageId=1164
 SymbolicName=ERROR_DEVICE_REINITIALIZATION_NEEDED
 Language=ENU
-ERROR_DEVICE_REINITIALIZATION_NEEDED
+The device needs reinitialization
 .
 MessageId=1165
 SymbolicName=ERROR_DEVICE_REQUIRES_CLEANING
 Language=ENU
-ERROR_DEVICE_REQUIRES_CLEANING
+The device requires cleaning
 .
 MessageId=1166
 SymbolicName=ERROR_DEVICE_DOOR_OPEN
 Language=ENU
-ERROR_DEVICE_DOOR_OPEN
+The device door is open
 .
 MessageId=1167
 SymbolicName=ERROR_DEVICE_NOT_CONNECTED
 Language=ENU
-ERROR_DEVICE_NOT_CONNECTED
+The device is not connected
 .
 MessageId=1168
 SymbolicName=ERROR_NOT_FOUND
 Language=ENU
-ERROR_NOT_FOUND
+Element not found
 .
 MessageId=1169
 SymbolicName=ERROR_NO_MATCH
 Language=ENU
-ERROR_NO_MATCH
+No match found
 .
 MessageId=1170
 SymbolicName=ERROR_SET_NOT_FOUND
 Language=ENU
-ERROR_SET_NOT_FOUND
+Property set not found
 .
 MessageId=1171
 SymbolicName=ERROR_POINT_NOT_FOUND
 Language=ENU
-ERROR_POINT_NOT_FOUND
+Point not found
 .
 MessageId=1172
 SymbolicName=ERROR_NO_TRACKING_SERVICE
 Language=ENU
-ERROR_NO_TRACKING_SERVICE
+No running tracking service
 .
 MessageId=1173
 SymbolicName=ERROR_NO_VOLUME_ID
 Language=ENU
-ERROR_NO_VOLUME_ID
+No such volume ID
 .
 MessageId=1175
 SymbolicName=ERROR_UNABLE_TO_REMOVE_REPLACED
 Language=ENU
-ERROR_UNABLE_TO_REMOVE_REPLACED
+Unable to remove the file to be replaced
 .
 MessageId=1176
 SymbolicName=ERROR_UNABLE_TO_MOVE_REPLACEMENT
 Language=ENU
-ERROR_UNABLE_TO_MOVE_REPLACEMENT
+Unable to move the replacement file into place
 .
 MessageId=1177
 SymbolicName=ERROR_UNABLE_TO_MOVE_REPLACEMENT_2
 Language=ENU
-ERROR_UNABLE_TO_MOVE_REPLACEMENT_2
+Moving the replacement file failed
 .
 MessageId=1178
 SymbolicName=ERROR_JOURNAL_DELETE_IN_PROGRESS
 Language=ENU
-ERROR_JOURNAL_DELETE_IN_PROGRESS
+The journal is being deleted
 .
 MessageId=1179
 SymbolicName=ERROR_JOURNAL_NOT_ACTIVE
 Language=ENU
-ERROR_JOURNAL_NOT_ACTIVE
+The journal is not active
 .
 MessageId=1180
 SymbolicName=ERROR_POTENTIAL_FILE_FOUND
 Language=ENU
-ERROR_POTENTIAL_FILE_FOUND
+Potential matching file found
 .
 MessageId=1181
 SymbolicName=ERROR_JOURNAL_ENTRY_DELETED
 Language=ENU
-ERROR_JOURNAL_ENTRY_DELETED
+The journal entry was deleted
 .
 MessageId=1200
 SymbolicName=ERROR_BAD_DEVICE
@@ -1871,32 +1871,32 @@ No more local devices
 MessageId=1249
 SymbolicName=ERROR_NO_SUCH_SITE
 Language=ENU
-ERROR_NO_SUCH_SITE
+The site does not exist
 .
 MessageId=1250
 SymbolicName=ERROR_DOMAIN_CONTROLLER_EXISTS
 Language=ENU
-ERROR_DOMAIN_CONTROLLER_EXISTS
+The domain controller already exists
 .
 MessageId=1251
 SymbolicName=ERROR_ONLY_IF_CONNECTED
 Language=ENU
-ERROR_ONLY_IF_CONNECTED
+Supported only when connected
 .
 MessageId=1252
 SymbolicName=ERROR_OVERRIDE_NOCHANGES
 Language=ENU
-ERROR_OVERRIDE_NOCHANGES
+Perform operation even when nothing changed
 .
 MessageId=1253
 SymbolicName=ERROR_BAD_USER_PROFILE
 Language=ENU
-ERROR_BAD_USER_PROFILE
+The user profile is invalid
 .
 MessageId=1254
 SymbolicName=ERROR_NOT_SUPPORTED_ON_SBS
 Language=ENU
-ERROR_NOT_SUPPORTED_ON_SBS
+Not supported on Small Business Server
 .
 MessageId=1300
 SymbolicName=ERROR_NOT_ALL_ASSIGNED
@@ -2376,17 +2376,17 @@ Licence quota exceeded
 MessageId=1396
 SymbolicName=ERROR_WRONG_TARGET_NAME
 Language=ENU
-ERROR_WRONG_TARGET_NAME
+Wrong target name
 .
 MessageId=1397
 SymbolicName=ERROR_MUTUAL_AUTH_FAILED
 Language=ENU
-ERROR_MUTUAL_AUTH_FAILED
+Mutual authentication failed
 .
 MessageId=1398
 SymbolicName=ERROR_TIME_SKEW
 Language=ENU
-ERROR_TIME_SKEW
+Time skew between client and server
 .
 MessageId=1400
 SymbolicName=ERROR_INVALID_WINDOW_HANDLE
@@ -2676,27 +2676,27 @@ Menu item not found
 MessageId=1457
 SymbolicName=ERROR_INVALID_KEYBOARD_HANDLE
 Language=ENU
-ERROR_INVALID_KEYBOARD_HANDLE
+Invalid keyboard handle
 .
 MessageId=1458
 SymbolicName=ERROR_HOOK_TYPE_NOT_ALLOWED
 Language=ENU
-ERROR_HOOK_TYPE_NOT_ALLOWED
+Hook type not allowed
 .
 MessageId=1459
 SymbolicName=ERROR_REQUIRES_INTERACTIVE_WINDOWSTATION
 Language=ENU
-ERROR_REQUIRES_INTERACTIVE_WINDOWSTATION
+Interactive window station required
 .
 MessageId=1460
 SymbolicName=ERROR_TIMEOUT
 Language=ENU
-ERROR_TIMEOUT
+Timeout
 .
 MessageId=1461
 SymbolicName=ERROR_INVALID_MONITOR_HANDLE
 Language=ENU
-ERROR_INVALID_MONITOR_HANDLE
+Invalid monitor handle
 .
 MessageId=1500
 SymbolicName=ERROR_EVENTLOG_FILE_CORRUPT
@@ -2721,207 +2721,207 @@ Event log file changed
 MessageId=1601
 SymbolicName=ERROR_INSTALL_SERVICE_FAILURE
 Language=ENU
-ERROR_INSTALL_SERVICE_FAILURE
+Installer service failed.
 .
 MessageId=1602
 SymbolicName=ERROR_INSTALL_USEREXIT
 Language=ENU
-ERROR_INSTALL_USEREXIT
+Installation aborted by user
 .
 MessageId=1603
 SymbolicName=ERROR_INSTALL_FAILURE
 Language=ENU
-ERROR_INSTALL_FAILURE
+Installation failure
 .
 MessageId=1604
 SymbolicName=ERROR_INSTALL_SUSPEND
 Language=ENU
-ERROR_INSTALL_SUSPEND
+Installation suspended
 .
 MessageId=1605
 SymbolicName=ERROR_UNKNOWN_PRODUCT
 Language=ENU
-ERROR_UNKNOWN_PRODUCT
+Unknown product
 .
 MessageId=1606
 SymbolicName=ERROR_UNKNOWN_FEATURE
 Language=ENU
-ERROR_UNKNOWN_FEATURE
+Unknown feature
 .
 MessageId=1607
 SymbolicName=ERROR_UNKNOWN_COMPONENT
 Language=ENU
-ERROR_UNKNOWN_COMPONENT
+Unknown component
 .
 MessageId=1608
 SymbolicName=ERROR_UNKNOWN_PROPERTY
 Language=ENU
-ERROR_UNKNOWN_PROPERTY
+Unknonw property
 .
 MessageId=1609
 SymbolicName=ERROR_INVALID_HANDLE_STATE
 Language=ENU
-ERROR_INVALID_HANDLE_STATE
+Invalid handle state
 .
 MessageId=1610
 SymbolicName=ERROR_BAD_CONFIGURATION
 Language=ENU
-ERROR_BAD_CONFIGURATION
+Bad configuration
 .
 MessageId=1611
 SymbolicName=ERROR_INDEX_ABSENT
 Language=ENU
-ERROR_INDEX_ABSENT
+Index is missing
 .
 MessageId=1612
 SymbolicName=ERROR_INSTALL_SOURCE_ABSENT
 Language=ENU
-ERROR_INSTALL_SOURCE_ABSENT
+Installation source is missing
 .
 MessageId=1613
 SymbolicName=ERROR_INSTALL_PACKAGE_VERSION
 Language=ENU
-ERROR_INSTALL_PACKAGE_VERSION
+Wrong installation package version
 .
 MessageId=1614
 SymbolicName=ERROR_PRODUCT_UNINSTALLED
 Language=ENU
-ERROR_PRODUCT_UNINSTALLED
+Product uninstalled
 .
 MessageId=1615
 SymbolicName=ERROR_BAD_QUERY_SYNTAX
 Language=ENU
-ERROR_BAD_QUERY_SYNTAX
+Invalid query syntax
 .
 MessageId=1616
 SymbolicName=ERROR_INVALID_FIELD
 Language=ENU
-ERROR_INVALID_FIELD
+Invalid field
 .
 MessageId=1617
 SymbolicName=ERROR_DEVICE_REMOVED
 Language=ENU
-ERROR_DEVICE_REMOVED
+Device removed
 .
 MessageId=1618
 SymbolicName=ERROR_INSTALL_ALREADY_RUNNING
 Language=ENU
-ERROR_INSTALL_ALREADY_RUNNING
+Installation already running
 .
 MessageId=1619
 SymbolicName=ERROR_INSTALL_PACKAGE_OPEN_FAILED
 Language=ENU
-ERROR_INSTALL_PACKAGE_OPEN_FAILED
+Installation package failed to open
 .
 MessageId=1620
 SymbolicName=ERROR_INSTALL_PACKAGE_INVALID
 Language=ENU
-ERROR_INSTALL_PACKAGE_INVALID
+Installation package is invalid
 .
 MessageId=1621
 SymbolicName=ERROR_INSTALL_UI_FAILURE
 Language=ENU
-ERROR_INSTALL_UI_FAILURE
+Installer user interface failed
 .
 MessageId=1622
 SymbolicName=ERROR_INSTALL_LOG_FAILURE
 Language=ENU
-ERROR_INSTALL_LOG_FAILURE
+Failed to open installation log file
 .
 MessageId=1623
 SymbolicName=ERROR_INSTALL_LANGUAGE_UNSUPPORTED
 Language=ENU
-ERROR_INSTALL_LANGUAGE_UNSUPPORTED
+Installation language not supported
 .
 MessageId=1624
 SymbolicName=ERROR_INSTALL_TRANSFORM_FAILURE
 Language=ENU
-ERROR_INSTALL_TRANSFORM_FAILURE
+Installation transform failed to apply
 .
 MessageId=1625
 SymbolicName=ERROR_INSTALL_PACKAGE_REJECTED
 Language=ENU
-ERROR_INSTALL_PACKAGE_REJECTED
+Installation package rejected
 .
 MessageId=1626
 SymbolicName=ERROR_FUNCTION_NOT_CALLED
 Language=ENU
-ERROR_FUNCTION_NOT_CALLED
+Function could not be called
 .
 MessageId=1627
 SymbolicName=ERROR_FUNCTION_FAILED
 Language=ENU
-ERROR_FUNCTION_FAILED
+Function failed
 .
 MessageId=1628
 SymbolicName=ERROR_INVALID_TABLE
 Language=ENU
-ERROR_INVALID_TABLE
+Invalid table
 .
 MessageId=1629
 SymbolicName=ERROR_DATATYPE_MISMATCH
 Language=ENU
-ERROR_DATATYPE_MISMATCH
+Data type mismatch
 .
 MessageId=1630
 SymbolicName=ERROR_UNSUPPORTED_TYPE
 Language=ENU
-ERROR_UNSUPPORTED_TYPE
+Unsupported type
 .
 MessageId=1631
 SymbolicName=ERROR_CREATE_FAILED
 Language=ENU
-ERROR_CREATE_FAILED
+Creation failed
 .
 MessageId=1632
 SymbolicName=ERROR_INSTALL_TEMP_UNWRITABLE
 Language=ENU
-ERROR_INSTALL_TEMP_UNWRITABLE
+Temporary directory not writable
 .
 MessageId=1633
 SymbolicName=ERROR_INSTALL_PLATFORM_UNSUPPORTED
 Language=ENU
-ERROR_INSTALL_PLATFORM_UNSUPPORTED
+Installation platform not supported
 .
 MessageId=1634
 SymbolicName=ERROR_INSTALL_NOTUSED
 Language=ENU
-ERROR_INSTALL_NOTUSED
+Installer not used
 .
 MessageId=1635
 SymbolicName=ERROR_PATCH_PACKAGE_OPEN_FAILED
 Language=ENU
-ERROR_PATCH_PACKAGE_OPEN_FAILED
+Failed to open the patch package
 .
 MessageId=1636
 SymbolicName=ERROR_PATCH_PACKAGE_INVALID
 Language=ENU
-ERROR_PATCH_PACKAGE_INVALID
+Invalid patch package
 .
 MessageId=1637
 SymbolicName=ERROR_PATCH_PACKAGE_UNSUPPORTED
 Language=ENU
-ERROR_PATCH_PACKAGE_UNSUPPORTED
+Unsupported patch package
 .
 MessageId=1638
 SymbolicName=ERROR_PRODUCT_VERSION
 Language=ENU
-ERROR_PRODUCT_VERSION
+Another version is installed
 .
 MessageId=1639
 SymbolicName=ERROR_INVALID_COMMAND_LINE
 Language=ENU
-ERROR_INVALID_COMMAND_LINE
+Invalid command line
 .
 MessageId=1640
 SymbolicName=ERROR_INSTALL_REMOTE_DISALLOWED
 Language=ENU
-ERROR_INSTALL_REMOTE_DISALLOWED
+Remote installation not allowed
 .
 MessageId=1641
 SymbolicName=ERROR_SUCCESS_REBOOT_INITIATED
 Language=ENU
-ERROR_SUCCESS_REBOOT_INITIATED
+Reboot initiated after successful install
 .
 MessageId=1700
 SymbolicName=RPC_S_INVALID_STRING_BINDING
@@ -3641,92 +3641,92 @@ Invalid driver
 MessageId=1912
 SymbolicName=OR_INVALID_SET
 Language=ENU
-OR_INVALID_SET
+Invalid object resolver set
 .
 MessageId=1913
 SymbolicName=RPC_S_SEND_INCOMPLETE
 Language=ENU
-RPC_S_SEND_INCOMPLETE
+Incomplete RPC send
 .
 MessageId=1914
 SymbolicName=RPC_S_INVALID_ASYNC_HANDLE
 Language=ENU
-RPC_S_INVALID_ASYNC_HANDLE
+Invalid asynchronous RPC handle
 .
 MessageId=1915
 SymbolicName=RPC_S_INVALID_ASYNC_CALL
 Language=ENU
-RPC_S_INVALID_ASYNC_CALL
+Invalid asynchronous RPC call
 .
 MessageId=1916
 SymbolicName=RPC_X_PIPE_CLOSED
 Language=ENU
-RPC_X_PIPE_CLOSED
+RPC pipe closed
 .
 MessageId=1917
 SymbolicName=RPC_X_PIPE_DISCIPLINE_ERROR
 Language=ENU
-RPC_X_PIPE_DISCIPLINE_ERROR
+Discipline error on RPC pipe
 .
 MessageId=1918
 SymbolicName=RPC_X_PIPE_EMPTY
 Language=ENU
-RPC_X_PIPE_EMPTY
+No data on RPC pipe
 .
 MessageId=1919
 SymbolicName=ERROR_NO_SITENAME
 Language=ENU
-ERROR_NO_SITENAME
+No site name available
 .
 MessageId=1920
 SymbolicName=ERROR_CANT_ACCESS_FILE
 Language=ENU
-ERROR_CANT_ACCESS_FILE
+The file cannot be accessed
 .
 MessageId=1921
 SymbolicName=ERROR_CANT_RESOLVE_FILENAME
 Language=ENU
-ERROR_CANT_RESOLVE_FILENAME
+The filename cannot be resolved
 .
 MessageId=1922
 SymbolicName=RPC_S_ENTRY_TYPE_MISMATCH
 Language=ENU
-RPC_S_ENTRY_TYPE_MISMATCH
+RPC entry type mismatch
 .
 MessageId=1923
 SymbolicName=RPC_S_NOT_ALL_OBJS_EXPORTED
 Language=ENU
-RPC_S_NOT_ALL_OBJS_EXPORTED
+Not all objects could be exported
 .
 MessageId=1924
 SymbolicName=RPC_S_INTERFACE_NOT_EXPORTED
 Language=ENU
-RPC_S_INTERFACE_NOT_EXPORTED
+The interface could not be exported
 .
 MessageId=1925
 SymbolicName=RPC_S_PROFILE_NOT_ADDED
 Language=ENU
-RPC_S_PROFILE_NOT_ADDED
+The profile could not be added
 .
 MessageId=1926
 SymbolicName=RPC_S_PRF_ELT_NOT_ADDED
 Language=ENU
-RPC_S_PRF_ELT_NOT_ADDED
+The profile element could not be added
 .
 MessageId=1927
 SymbolicName=RPC_S_PRF_ELT_NOT_REMOVED
 Language=ENU
-RPC_S_PRF_ELT_NOT_REMOVED
+The profile element could not be removed
 .
 MessageId=1928
 SymbolicName=RPC_S_GRP_ELT_NOT_ADDED
 Language=ENU
-RPC_S_GRP_ELT_NOT_ADDED
+The group element could not be added
 .
 MessageId=1929
 SymbolicName=RPC_S_GRP_ELT_NOT_REMOVED
 Language=ENU
-RPC_S_GRP_ELT_NOT_REMOVED
+The group element could not be removed
 .
 MessageId=2221
 SymbolicName=NERR_UserNotFound

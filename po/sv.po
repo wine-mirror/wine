@@ -3007,12 +3007,13 @@ msgid "Read/WriteProcessMemory partially completed\n"
 msgstr "Read/WriteProcessMemory delvis fullbordat\n"
 
 #: winerror.mc:956
-msgid "ERROR_OPLOCK_NOT_GRANTED\n"
-msgstr "ERROR_OPLOCK_NOT_GRANTED\n"
+msgid "The oplock wasn't granted\n"
+msgstr ""
 
 #: winerror.mc:961
-msgid "ERROR_INVALID_OPLOCK_PROTOCOL\n"
-msgstr "ERROR_INVALID_OPLOCK_PROTOCOL\n"
+#, fuzzy
+msgid "Invalid oplock message received\n"
+msgstr "Ogiltigt meddelandenamn\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -3099,8 +3100,9 @@ msgid "Invalid key\n"
 msgstr "Ogiltig nyckel\n"
 
 #: winerror.mc:1071
-msgid "ERROR_CANTOPEN\n"
-msgstr "ERROR_CANTOPEN\n"
+#, fuzzy
+msgid "Can't open registry key\n"
+msgstr "Kan inte läsa registernyckel\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key\n"
@@ -3263,20 +3265,22 @@ msgid "Different service account\n"
 msgstr "Annat tjänstkonto\n"
 
 #: winerror.mc:1276
-msgid "ERROR_CANNOT_DETECT_DRIVER_FAILURE\n"
-msgstr "ERROR_CANNOT_DETECT_DRIVER_FAILURE\n"
+msgid "Driver failure cannot be detected\n"
+msgstr ""
 
 #: winerror.mc:1281
-msgid "ERROR_CANNOT_DETECT_PROCESS_ABORT\n"
-msgstr "ERROR_CANNOT_DETECT_PROCESS_ABORT\n"
+#, fuzzy
+msgid "Process abort cannot be detected\n"
+msgstr "Processen avbröts\n"
 
 #: winerror.mc:1286
-msgid "ERROR_NO_RECOVERY_PROGRAM\n"
-msgstr "ERROR_NO_RECOVERY_PROGRAM\n"
+msgid "No recovery program for service\n"
+msgstr ""
 
 #: winerror.mc:1291
-msgid "ERROR_SERVICE_NOT_IN_EXE\n"
-msgstr "ERROR_SERVICE_NOT_IN_EXE\n"
+#, fuzzy
+msgid "Service not implemented by exe\n"
+msgstr "Utskrift ej implementerat."
 
 #: winerror.mc:1296
 msgid "End of media\n"
@@ -3455,96 +3459,110 @@ msgid "DLL not found\n"
 msgstr "DLL hittades inte\n"
 
 #: winerror.mc:1516
-msgid "ERROR_NO_MORE_USER_HANDLES\n"
-msgstr "ERROR_NO_MORE_USER_HANDLES\n"
+#, fuzzy
+msgid "Out of user handles\n"
+msgstr "Inga fler sökreferenser\n"
 
 #: winerror.mc:1521
-msgid "ERROR_MESSAGE_SYNC_ONLY\n"
-msgstr "ERROR_MESSAGE_SYNC_ONLY\n"
+msgid "Message can only be used in synchronous calls\n"
+msgstr ""
 
 #: winerror.mc:1526
-msgid "ERROR_SOURCE_ELEMENT_EMPTY\n"
-msgstr "ERROR_SOURCE_ELEMENT_EMPTY\n"
+msgid "The source element is empty\n"
+msgstr ""
 
 #: winerror.mc:1531
-msgid "ERROR_DESTINATION_ELEMENT_FULL\n"
-msgstr "ERROR_DESTINATION_ELEMENT_FULL\n"
+#, fuzzy
+msgid "The destination element is full\n"
+msgstr "Operation slutfördes utan problem\n"
 
 #: winerror.mc:1536
-msgid "ERROR_ILLEGAL_ELEMENT_ADDRESS\n"
-msgstr "ERROR_ILLEGAL_ELEMENT_ADDRESS\n"
+#, fuzzy
+msgid "The element address is invalid\n"
+msgstr "Angiven handle för enheten är ogiltig."
 
 #: winerror.mc:1541
-msgid "ERROR_MAGAZINE_NOT_PRESENT\n"
-msgstr "ERROR_MAGAZINE_NOT_PRESENT\n"
+msgid "The magazine is not present\n"
+msgstr ""
 
 #: winerror.mc:1546
-msgid "ERROR_DEVICE_REINITIALIZATION_NEEDED\n"
-msgstr "ERROR_DEVICE_REINITIALIZATION_NEEDED\n"
+msgid "The device needs reinitialization\n"
+msgstr ""
 
 #: winerror.mc:1551
-msgid "ERROR_DEVICE_REQUIRES_CLEANING\n"
-msgstr "ERROR_DEVICE_REQUIRES_CLEANING\n"
+#, fuzzy
+msgid "The device requires cleaning\n"
+msgstr "Tjänsten %s startar.\n"
 
 #: winerror.mc:1556
-msgid "ERROR_DEVICE_DOOR_OPEN\n"
-msgstr "ERROR_DEVICE_DOOR_OPEN\n"
+#, fuzzy
+msgid "The device door is open\n"
+msgstr "Skrivardörren är öppen; "
 
 #: winerror.mc:1561
-msgid "ERROR_DEVICE_NOT_CONNECTED\n"
-msgstr "ERROR_DEVICE_NOT_CONNECTED\n"
+#, fuzzy
+msgid "The device is not connected\n"
+msgstr "Pipa ej ansluten\n"
 
 #: winerror.mc:1566
-msgid "ERROR_NOT_FOUND\n"
-msgstr "ERROR_NOT_FOUND\n"
+#, fuzzy
+msgid "Element not found\n"
+msgstr "Posten hittades inte\n"
 
 #: winerror.mc:1571
-msgid "ERROR_NO_MATCH\n"
-msgstr "ERROR_NO_MATCH\n"
+#, fuzzy
+msgid "No match found\n"
+msgstr "Sökvägen hittades inte\n"
 
 #: winerror.mc:1576
-msgid "ERROR_SET_NOT_FOUND\n"
-msgstr "ERROR_SET_NOT_FOUND\n"
+#, fuzzy
+msgid "Property set not found\n"
+msgstr "Proceduren hittades inte\n"
 
 #: winerror.mc:1581
-msgid "ERROR_POINT_NOT_FOUND\n"
-msgstr "ERROR_POINT_NOT_FOUND\n"
+#, fuzzy
+msgid "Point not found\n"
+msgstr "Sökvägen hittades inte\n"
 
 #: winerror.mc:1586
-msgid "ERROR_NO_TRACKING_SERVICE\n"
-msgstr "ERROR_NO_TRACKING_SERVICE\n"
+#, fuzzy
+msgid "No running tracking service\n"
+msgstr "Okänd auktoriseringstjänst\n"
 
 #: winerror.mc:1591
-msgid "ERROR_NO_VOLUME_ID\n"
-msgstr "ERROR_NO_VOLUME_ID\n"
+#, fuzzy
+msgid "No such volume ID\n"
+msgstr "Ingen sådan användare\n"
 
 #: winerror.mc:1596
-msgid "ERROR_UNABLE_TO_REMOVE_REPLACED\n"
-msgstr "ERROR_UNABLE_TO_REMOVE_REPLACED\n"
+msgid "Unable to remove the file to be replaced\n"
+msgstr ""
 
 #: winerror.mc:1601
-msgid "ERROR_UNABLE_TO_MOVE_REPLACEMENT\n"
-msgstr "ERROR_UNABLE_TO_MOVE_REPLACEMENT\n"
+msgid "Unable to move the replacement file into place\n"
+msgstr ""
 
 #: winerror.mc:1606
-msgid "ERROR_UNABLE_TO_MOVE_REPLACEMENT_2\n"
-msgstr "ERROR_UNABLE_TO_MOVE_REPLACEMENT_2\n"
+msgid "Moving the replacement file failed\n"
+msgstr ""
 
 #: winerror.mc:1611
-msgid "ERROR_JOURNAL_DELETE_IN_PROGRESS\n"
-msgstr "ERROR_JOURNAL_DELETE_IN_PROGRESS\n"
+#, fuzzy
+msgid "The journal is being deleted\n"
+msgstr "Nätverksnamn borttaget\n"
 
 #: winerror.mc:1616
-msgid "ERROR_JOURNAL_NOT_ACTIVE\n"
-msgstr "ERROR_JOURNAL_NOT_ACTIVE\n"
+#, fuzzy
+msgid "The journal is not active\n"
+msgstr "Tjänst ej aktiv\n"
 
 #: winerror.mc:1621
-msgid "ERROR_POTENTIAL_FILE_FOUND\n"
-msgstr "ERROR_POTENTIAL_FILE_FOUND\n"
+msgid "Potential matching file found\n"
+msgstr ""
 
 #: winerror.mc:1626
-msgid "ERROR_JOURNAL_ENTRY_DELETED\n"
-msgstr "ERROR_JOURNAL_ENTRY_DELETED\n"
+msgid "The journal entry was deleted\n"
+msgstr ""
 
 #: winerror.mc:1631
 msgid "Invalid device name\n"
@@ -3739,28 +3757,32 @@ msgid "No more local devices\n"
 msgstr "Inga fler lokala enheter\n"
 
 #: winerror.mc:1876
-msgid "ERROR_NO_SUCH_SITE\n"
-msgstr "ERROR_NO_SUCH_SITE\n"
+#, fuzzy
+msgid "The site does not exist\n"
+msgstr "Enheten existerar inte\n"
 
 #: winerror.mc:1881
-msgid "ERROR_DOMAIN_CONTROLLER_EXISTS\n"
-msgstr "ERROR_DOMAIN_CONTROLLER_EXISTS\n"
+#, fuzzy
+msgid "The domain controller already exists\n"
+msgstr "Domänen existerar redan\n"
 
 #: winerror.mc:1886
-msgid "ERROR_ONLY_IF_CONNECTED\n"
-msgstr "ERROR_ONLY_IF_CONNECTED\n"
+#, fuzzy
+msgid "Supported only when connected\n"
+msgstr "Pipa ej ansluten\n"
 
 #: winerror.mc:1891
-msgid "ERROR_OVERRIDE_NOCHANGES\n"
-msgstr "ERROR_OVERRIDE_NOCHANGES\n"
+msgid "Perform operation even when nothing changed\n"
+msgstr ""
 
 #: winerror.mc:1896
-msgid "ERROR_BAD_USER_PROFILE\n"
-msgstr "ERROR_BAD_USER_PROFILE\n"
+#, fuzzy
+msgid "The user profile is invalid\n"
+msgstr "Angiven handle för enheten är ogiltig."
 
 #: winerror.mc:1901
-msgid "ERROR_NOT_SUPPORTED_ON_SBS\n"
-msgstr "ERROR_NOT_SUPPORTED_ON_SBS\n"
+msgid "Not supported on Small Business Server\n"
+msgstr ""
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned\n"
@@ -4139,16 +4161,18 @@ msgid "Licence quota exceeded\n"
 msgstr "Licenskvot överskriden\n"
 
 #: winerror.mc:2381
-msgid "ERROR_WRONG_TARGET_NAME\n"
-msgstr "ERROR_WRONG_TARGET_NAME\n"
+#, fuzzy
+msgid "Wrong target name\n"
+msgstr "Inget postnamn\n"
 
 #: winerror.mc:2386
-msgid "ERROR_MUTUAL_AUTH_FAILED\n"
-msgstr "ERROR_MUTUAL_AUTH_FAILED\n"
+#, fuzzy
+msgid "Mutual authentication failed\n"
+msgstr "Okänd autentiseringsidentitet\n"
 
 #: winerror.mc:2391
-msgid "ERROR_TIME_SKEW\n"
-msgstr "ERROR_TIME_SKEW\n"
+msgid "Time skew between client and server\n"
+msgstr ""
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
@@ -4379,24 +4403,28 @@ msgid "Menu item not found\n"
 msgstr "Menypost ej funnen\n"
 
 #: winerror.mc:2681
-msgid "ERROR_INVALID_KEYBOARD_HANDLE\n"
-msgstr "ERROR_INVALID_KEYBOARD_HANDLE\n"
+#, fuzzy
+msgid "Invalid keyboard handle\n"
+msgstr "Ogiltig målreferens\n"
 
 #: winerror.mc:2686
-msgid "ERROR_HOOK_TYPE_NOT_ALLOWED\n"
-msgstr "ERROR_HOOK_TYPE_NOT_ALLOWED\n"
+#, fuzzy
+msgid "Hook type not allowed\n"
+msgstr "Inloggningstypen beviljades inte\n"
 
 #: winerror.mc:2691
-msgid "ERROR_REQUIRES_INTERACTIVE_WINDOWSTATION\n"
-msgstr "ERROR_REQUIRES_INTERACTIVE_WINDOWSTATION\n"
+msgid "Interactive window station required\n"
+msgstr ""
 
 #: winerror.mc:2696
-msgid "ERROR_TIMEOUT\n"
-msgstr "ERROR_TIMEOUT\n"
+#, fuzzy
+msgid "Timeout\n"
+msgstr "Tidsgräns överstigen"
 
 #: winerror.mc:2701
-msgid "ERROR_INVALID_MONITOR_HANDLE\n"
-msgstr "ERROR_INVALID_MONITOR_HANDLE\n"
+#, fuzzy
+msgid "Invalid monitor handle\n"
+msgstr "Ogiltig menyreferens\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4415,168 +4443,201 @@ msgid "Event log file changed\n"
 msgstr "Händelseloggfil ändrad\n"
 
 #: winerror.mc:2726
-msgid "ERROR_INSTALL_SERVICE_FAILURE\n"
-msgstr "ERROR_INSTALL_SERVICE_FAILURE\n"
+#, fuzzy
+msgid "Installer service failed.\n"
+msgstr "Ogiltigt tjänstnamn\n"
 
 #: winerror.mc:2731
-msgid "ERROR_INSTALL_USEREXIT\n"
-msgstr "ERROR_INSTALL_USEREXIT\n"
+#, fuzzy
+msgid "Installation aborted by user\n"
+msgstr "Installationsprogram"
 
 #: winerror.mc:2736
-msgid "ERROR_INSTALL_FAILURE\n"
-msgstr "ERROR_INSTALL_FAILURE\n"
+#, fuzzy
+msgid "Installation failure\n"
+msgstr "Partitionsfel\n"
 
 #: winerror.mc:2741
-msgid "ERROR_INSTALL_SUSPEND\n"
-msgstr "ERROR_INSTALL_SUSPEND\n"
+#, fuzzy
+msgid "Installation suspended\n"
+msgstr "Installationsprogram"
 
 #: winerror.mc:2746
-msgid "ERROR_UNKNOWN_PRODUCT\n"
-msgstr "ERROR_UNKNOWN_PRODUCT\n"
+#, fuzzy
+msgid "Unknown product\n"
+msgstr "Okänd port\n"
 
 #: winerror.mc:2751
-msgid "ERROR_UNKNOWN_FEATURE\n"
-msgstr "ERROR_UNKNOWN_FEATURE\n"
+#, fuzzy
+msgid "Unknown feature\n"
+msgstr "Okänd egenskap i '%s'"
 
 #: winerror.mc:2756
-msgid "ERROR_UNKNOWN_COMPONENT\n"
-msgstr "ERROR_UNKNOWN_COMPONENT\n"
+#, fuzzy
+msgid "Unknown component\n"
+msgstr "Okänd port\n"
 
 #: winerror.mc:2761
-msgid "ERROR_UNKNOWN_PROPERTY\n"
-msgstr "ERROR_UNKNOWN_PROPERTY\n"
+#, fuzzy
+msgid "Unknonw property\n"
+msgstr "Okänd port\n"
 
 #: winerror.mc:2766
-msgid "ERROR_INVALID_HANDLE_STATE\n"
-msgstr "ERROR_INVALID_HANDLE_STATE\n"
+#, fuzzy
+msgid "Invalid handle state\n"
+msgstr "Ogiltig referens\n"
 
 #: winerror.mc:2771
-msgid "ERROR_BAD_CONFIGURATION\n"
-msgstr "ERROR_BAD_CONFIGURATION\n"
+#, fuzzy
+msgid "Bad configuration\n"
+msgstr "Konfiguration av Wine"
 
 #: winerror.mc:2776
-msgid "ERROR_INDEX_ABSENT\n"
-msgstr "ERROR_INDEX_ABSENT\n"
+msgid "Index is missing\n"
+msgstr ""
 
 #: winerror.mc:2781
-msgid "ERROR_INSTALL_SOURCE_ABSENT\n"
-msgstr "ERROR_INSTALL_SOURCE_ABSENT\n"
+#, fuzzy
+msgid "Installation source is missing\n"
+msgstr "installationskälla för funktion saknar"
 
 #: winerror.mc:2786
-msgid "ERROR_INSTALL_PACKAGE_VERSION\n"
-msgstr "ERROR_INSTALL_PACKAGE_VERSION\n"
+#, fuzzy
+msgid "Wrong installation package version\n"
+msgstr "Fel serialiserande paketversion\n"
 
 #: winerror.mc:2791
-msgid "ERROR_PRODUCT_UNINSTALLED\n"
-msgstr "ERROR_PRODUCT_UNINSTALLED\n"
+#, fuzzy
+msgid "Product uninstalled\n"
+msgstr "Hook-procedur inte installerad\n"
 
 #: winerror.mc:2796
-msgid "ERROR_BAD_QUERY_SYNTAX\n"
-msgstr "ERROR_BAD_QUERY_SYNTAX\n"
+#, fuzzy
+msgid "Invalid query syntax\n"
+msgstr "Ogiltigt namnsyntax\n"
 
 #: winerror.mc:2801
-msgid "ERROR_INVALID_FIELD\n"
-msgstr "ERROR_INVALID_FIELD\n"
+#, fuzzy
+msgid "Invalid field\n"
+msgstr "Ogiltig tid\n"
 
 #: winerror.mc:2806
-msgid "ERROR_DEVICE_REMOVED\n"
-msgstr "ERROR_DEVICE_REMOVED\n"
+#, fuzzy
+msgid "Device removed\n"
+msgstr "Enhet redan ihågkommen\n"
 
 #: winerror.mc:2811
-msgid "ERROR_INSTALL_ALREADY_RUNNING\n"
-msgstr "ERROR_INSTALL_ALREADY_RUNNING\n"
+#, fuzzy
+msgid "Installation already running\n"
+msgstr "Tjänsten körs redan\n"
 
 #: winerror.mc:2816
-msgid "ERROR_INSTALL_PACKAGE_OPEN_FAILED\n"
-msgstr "ERROR_INSTALL_PACKAGE_OPEN_FAILED\n"
+msgid "Installation package failed to open\n"
+msgstr ""
 
 #: winerror.mc:2821
-msgid "ERROR_INSTALL_PACKAGE_INVALID\n"
-msgstr "ERROR_INSTALL_PACKAGE_INVALID\n"
+#, fuzzy
+msgid "Installation package is invalid\n"
+msgstr "Installationsprogram"
 
 #: winerror.mc:2826
-msgid "ERROR_INSTALL_UI_FAILURE\n"
-msgstr "ERROR_INSTALL_UI_FAILURE\n"
+msgid "Installer user interface failed\n"
+msgstr ""
 
 #: winerror.mc:2831
-msgid "ERROR_INSTALL_LOG_FAILURE\n"
-msgstr "ERROR_INSTALL_LOG_FAILURE\n"
+msgid "Failed to open installation log file\n"
+msgstr ""
 
 #: winerror.mc:2836
-msgid "ERROR_INSTALL_LANGUAGE_UNSUPPORTED\n"
-msgstr "ERROR_INSTALL_LANGUAGE_UNSUPPORTED\n"
+#, fuzzy
+msgid "Installation language not supported\n"
+msgstr "Operationen stöds inte\n"
 
 #: winerror.mc:2841
-msgid "ERROR_INSTALL_TRANSFORM_FAILURE\n"
-msgstr "ERROR_INSTALL_TRANSFORM_FAILURE\n"
+msgid "Installation transform failed to apply\n"
+msgstr ""
 
 #: winerror.mc:2846
-msgid "ERROR_INSTALL_PACKAGE_REJECTED\n"
-msgstr "ERROR_INSTALL_PACKAGE_REJECTED\n"
+#, fuzzy
+msgid "Installation package rejected\n"
+msgstr "Installationsprogram"
 
 #: winerror.mc:2851
-msgid "ERROR_FUNCTION_NOT_CALLED\n"
-msgstr "ERROR_FUNCTION_NOT_CALLED\n"
+#, fuzzy
+msgid "Function could not be called\n"
+msgstr "Gränsen för högsta antal anslutningar har nåtts\n"
 
 #: winerror.mc:2856
-msgid "ERROR_FUNCTION_FAILED\n"
-msgstr "ERROR_FUNCTION_FAILED\n"
+#, fuzzy
+msgid "Function failed\n"
+msgstr "Funktion förväntades"
 
 #: winerror.mc:2861
-msgid "ERROR_INVALID_TABLE\n"
-msgstr "ERROR_INVALID_TABLE\n"
+#, fuzzy
+msgid "Invalid table\n"
+msgstr "Ogiltig tagg\n"
 
 #: winerror.mc:2866
-msgid "ERROR_DATATYPE_MISMATCH\n"
-msgstr "ERROR_DATATYPE_MISMATCH\n"
+#, fuzzy
+msgid "Data type mismatch\n"
+msgstr "Arkitekturerna misstämmer\n"
 
-#: winerror.mc:2871
-msgid "ERROR_UNSUPPORTED_TYPE\n"
-msgstr "ERROR_UNSUPPORTED_TYPE\n"
+#: winerror.mc:2871 winerror.mc:3081
+msgid "Unsupported type\n"
+msgstr "Ej stödd typ\n"
 
 #: winerror.mc:2876
-msgid "ERROR_CREATE_FAILED\n"
-msgstr "ERROR_CREATE_FAILED\n"
+#, fuzzy
+msgid "Creation failed\n"
+msgstr "Kunde inte öppna\n"
 
 #: winerror.mc:2881
-msgid "ERROR_INSTALL_TEMP_UNWRITABLE\n"
-msgstr "ERROR_INSTALL_TEMP_UNWRITABLE\n"
+#, fuzzy
+msgid "Temporary directory not writable\n"
+msgstr "Fil eller katalog korrupt\n"
 
 #: winerror.mc:2886
-msgid "ERROR_INSTALL_PLATFORM_UNSUPPORTED\n"
-msgstr "ERROR_INSTALL_PLATFORM_UNSUPPORTED\n"
+#, fuzzy
+msgid "Installation platform not supported\n"
+msgstr "Operationen stöds inte\n"
 
 #: winerror.mc:2891
-msgid "ERROR_INSTALL_NOTUSED\n"
-msgstr "ERROR_INSTALL_NOTUSED\n"
+#, fuzzy
+msgid "Installer not used\n"
+msgstr "Gränssnitt hittades inte\n"
 
 #: winerror.mc:2896
-msgid "ERROR_PATCH_PACKAGE_OPEN_FAILED\n"
-msgstr "ERROR_PATCH_PACKAGE_OPEN_FAILED\n"
+#, fuzzy
+msgid "Failed to open the patch package\n"
+msgstr "Misslyckades med att öppna '%s'\n"
 
 #: winerror.mc:2901
-msgid "ERROR_PATCH_PACKAGE_INVALID\n"
-msgstr "ERROR_PATCH_PACKAGE_INVALID\n"
+#, fuzzy
+msgid "Invalid patch package\n"
+msgstr "Ogiltig tagg\n"
 
 #: winerror.mc:2906
-msgid "ERROR_PATCH_PACKAGE_UNSUPPORTED\n"
-msgstr "ERROR_PATCH_PACKAGE_UNSUPPORTED\n"
+#, fuzzy
+msgid "Unsupported patch package\n"
+msgstr "Ej stödd typ\n"
 
 #: winerror.mc:2911
-msgid "ERROR_PRODUCT_VERSION\n"
-msgstr "ERROR_PRODUCT_VERSION\n"
+#, fuzzy
+msgid "Another version is installed\n"
+msgstr "Skrivardrivrutin redan installerad\n"
 
 #: winerror.mc:2916
-msgid "ERROR_INVALID_COMMAND_LINE\n"
-msgstr "ERROR_INVALID_COMMAND_LINE\n"
+#, fuzzy
+msgid "Invalid command line\n"
+msgstr "Ogiltigt GW-kommando\n"
 
 #: winerror.mc:2921
-msgid "ERROR_INSTALL_REMOTE_DISALLOWED\n"
-msgstr "ERROR_INSTALL_REMOTE_DISALLOWED\n"
+msgid "Remote installation not allowed\n"
+msgstr ""
 
 #: winerror.mc:2926
-msgid "ERROR_SUCCESS_REBOOT_INITIATED\n"
-msgstr "ERROR_SUCCESS_REBOOT_INITIATED\n"
+msgid "Reboot initiated after successful install\n"
+msgstr ""
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
@@ -4697,10 +4758,6 @@ msgstr "RPC-protokollfel\n"
 #: winerror.mc:3076
 msgid "Unsupported transfer syntax\n"
 msgstr "Ej stött överföringssyntax\n"
-
-#: winerror.mc:3081
-msgid "Unsupported type\n"
-msgstr "Ej stödd typ\n"
 
 #: winerror.mc:3086
 msgid "Invalid tag\n"
@@ -5151,76 +5208,92 @@ msgid "Invalid driver\n"
 msgstr "Ogiltig drivrutin\n"
 
 #: winerror.mc:3646
-msgid "OR_INVALID_SET\n"
-msgstr "OR_INVALID_SET\n"
+#, fuzzy
+msgid "Invalid object resolver set\n"
+msgstr "Ogiltigt objekt\n"
 
 #: winerror.mc:3651
-msgid "RPC_S_SEND_INCOMPLETE\n"
-msgstr "RPC_S_SEND_INCOMPLETE\n"
+#, fuzzy
+msgid "Incomplete RPC send\n"
+msgstr "Inkomplett namn\n"
 
 #: winerror.mc:3656
-msgid "RPC_S_INVALID_ASYNC_HANDLE\n"
-msgstr "RPC_S_INVALID_ASYNC_HANDLE\n"
+#, fuzzy
+msgid "Invalid asynchronous RPC handle\n"
+msgstr "Ogiltig hookreferens\n"
 
 #: winerror.mc:3661
-msgid "RPC_S_INVALID_ASYNC_CALL\n"
-msgstr "RPC_S_INVALID_ASYNC_CALL\n"
+#, fuzzy
+msgid "Invalid asynchronous RPC call\n"
+msgstr "Ogiltig hookreferens\n"
 
 #: winerror.mc:3666
-msgid "RPC_X_PIPE_CLOSED\n"
-msgstr "RPC_X_PIPE_CLOSED\n"
+#, fuzzy
+msgid "RPC pipe closed\n"
+msgstr "Pipa stängd\n"
 
 #: winerror.mc:3671
-msgid "RPC_X_PIPE_DISCIPLINE_ERROR\n"
-msgstr "RPC_X_PIPE_DISCIPLINE_ERROR\n"
+msgid "Discipline error on RPC pipe\n"
+msgstr ""
 
 #: winerror.mc:3676
-msgid "RPC_X_PIPE_EMPTY\n"
-msgstr "RPC_X_PIPE_EMPTY\n"
+#, fuzzy
+msgid "No data on RPC pipe\n"
+msgstr "Inte ett RPC-fel\n"
 
 #: winerror.mc:3681
-msgid "ERROR_NO_SITENAME\n"
-msgstr "ERROR_NO_SITENAME\n"
+#, fuzzy
+msgid "No site name available\n"
+msgstr "Ingen säkerhetskontext tillgänglig\n"
 
 #: winerror.mc:3686
-msgid "ERROR_CANT_ACCESS_FILE\n"
-msgstr "ERROR_CANT_ACCESS_FILE\n"
+msgid "The file cannot be accessed\n"
+msgstr ""
 
 #: winerror.mc:3691
-msgid "ERROR_CANT_RESOLVE_FILENAME\n"
-msgstr "ERROR_CANT_RESOLVE_FILENAME\n"
+#, fuzzy
+msgid "The filename cannot be resolved\n"
+msgstr "Användarnamnet kunde inte hittas\n"
 
 #: winerror.mc:3696
-msgid "RPC_S_ENTRY_TYPE_MISMATCH\n"
-msgstr "RPC_S_ENTRY_TYPE_MISMATCH\n"
+#, fuzzy
+msgid "RPC entry type mismatch\n"
+msgstr "Arkitekturerna misstämmer\n"
 
 #: winerror.mc:3701
-msgid "RPC_S_NOT_ALL_OBJS_EXPORTED\n"
-msgstr "RPC_S_NOT_ALL_OBJS_EXPORTED\n"
+#, fuzzy
+msgid "Not all objects could be exported\n"
+msgstr "Alla objekt avexporterades inte\n"
 
 #: winerror.mc:3706
-msgid "RPC_S_INTERFACE_NOT_EXPORTED\n"
-msgstr "RPC_S_INTERFACE_NOT_EXPORTED\n"
+#, fuzzy
+msgid "The interface could not be exported\n"
+msgstr "Användarnamnet kunde inte hittas\n"
 
 #: winerror.mc:3711
-msgid "RPC_S_PROFILE_NOT_ADDED\n"
-msgstr "RPC_S_PROFILE_NOT_ADDED\n"
+#, fuzzy
+msgid "The profile could not be added\n"
+msgstr "Användarnamnet kunde inte hittas\n"
 
 #: winerror.mc:3716
-msgid "RPC_S_PRF_ELT_NOT_ADDED\n"
-msgstr "RPC_S_PRF_ELT_NOT_ADDED\n"
+#, fuzzy
+msgid "The profile element could not be added\n"
+msgstr "Användarnamnet kunde inte hittas\n"
 
 #: winerror.mc:3721
-msgid "RPC_S_PRF_ELT_NOT_REMOVED\n"
-msgstr "RPC_S_PRF_ELT_NOT_REMOVED\n"
+#, fuzzy
+msgid "The profile element could not be removed\n"
+msgstr "Användarnamnet kunde inte hittas\n"
 
 #: winerror.mc:3726
-msgid "RPC_S_GRP_ELT_NOT_ADDED\n"
-msgstr "RPC_S_GRP_ELT_NOT_ADDED\n"
+#, fuzzy
+msgid "The group element could not be added\n"
+msgstr "Användarnamnet kunde inte hittas\n"
 
 #: winerror.mc:3731
-msgid "RPC_S_GRP_ELT_NOT_REMOVED\n"
-msgstr "RPC_S_GRP_ELT_NOT_REMOVED\n"
+#, fuzzy
+msgid "The group element could not be removed\n"
+msgstr "Användarnamnet kunde inte hittas\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found\n"

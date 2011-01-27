@@ -2943,12 +2943,12 @@ msgid "Read/WriteProcessMemory partially completed\n"
 msgstr "Read/WriteProcessMemory partially completed\n"
 
 #: winerror.mc:956
-msgid "ERROR_OPLOCK_NOT_GRANTED\n"
-msgstr "ERROR_OPLOCK_NOT_GRANTED\n"
+msgid "The oplock wasn't granted\n"
+msgstr ""
 
 #: winerror.mc:961
-msgid "ERROR_INVALID_OPLOCK_PROTOCOL\n"
-msgstr "ERROR_INVALID_OPLOCK_PROTOCOL\n"
+msgid "Invalid oplock message received\n"
+msgstr "Invalid oplock message received\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -3035,8 +3035,8 @@ msgid "Invalid key\n"
 msgstr "Invalid key\n"
 
 #: winerror.mc:1071
-msgid "ERROR_CANTOPEN\n"
-msgstr "ERROR_CANTOPEN\n"
+msgid "Can't open registry key\n"
+msgstr "Can't open registry key\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key\n"
@@ -3199,20 +3199,20 @@ msgid "Different service account\n"
 msgstr "Different service account\n"
 
 #: winerror.mc:1276
-msgid "ERROR_CANNOT_DETECT_DRIVER_FAILURE\n"
-msgstr "ERROR_CANNOT_DETECT_DRIVER_FAILURE\n"
+msgid "Driver failure cannot be detected\n"
+msgstr ""
 
 #: winerror.mc:1281
-msgid "ERROR_CANNOT_DETECT_PROCESS_ABORT\n"
-msgstr "ERROR_CANNOT_DETECT_PROCESS_ABORT\n"
+msgid "Process abort cannot be detected\n"
+msgstr "Process abort cannot be detected\n"
 
 #: winerror.mc:1286
-msgid "ERROR_NO_RECOVERY_PROGRAM\n"
-msgstr "ERROR_NO_RECOVERY_PROGRAM\n"
+msgid "No recovery program for service\n"
+msgstr ""
 
 #: winerror.mc:1291
-msgid "ERROR_SERVICE_NOT_IN_EXE\n"
-msgstr "ERROR_SERVICE_NOT_IN_EXE\n"
+msgid "Service not implemented by exe\n"
+msgstr "Service not implemented by exe\n"
 
 #: winerror.mc:1296
 msgid "End of media\n"
@@ -3391,95 +3391,95 @@ msgid "DLL not found\n"
 msgstr "DLL not found\n"
 
 #: winerror.mc:1516
-msgid "ERROR_NO_MORE_USER_HANDLES\n"
-msgstr ""
+msgid "Out of user handles\n"
+msgstr "Out of user handles\n"
 
 #: winerror.mc:1521
-msgid "ERROR_MESSAGE_SYNC_ONLY\n"
+msgid "Message can only be used in synchronous calls\n"
 msgstr ""
 
 #: winerror.mc:1526
-msgid "ERROR_SOURCE_ELEMENT_EMPTY\n"
+msgid "The source element is empty\n"
 msgstr ""
 
 #: winerror.mc:1531
-msgid "ERROR_DESTINATION_ELEMENT_FULL\n"
-msgstr ""
+msgid "The destination element is full\n"
+msgstr "The destination element is full\n"
 
 #: winerror.mc:1536
-msgid "ERROR_ILLEGAL_ELEMENT_ADDRESS\n"
-msgstr ""
+msgid "The element address is invalid\n"
+msgstr "The element address is invalid\n"
 
 #: winerror.mc:1541
-msgid "ERROR_MAGAZINE_NOT_PRESENT\n"
+msgid "The magazine is not present\n"
 msgstr ""
 
 #: winerror.mc:1546
-msgid "ERROR_DEVICE_REINITIALIZATION_NEEDED\n"
+msgid "The device needs reinitialization\n"
 msgstr ""
 
 #: winerror.mc:1551
-msgid "ERROR_DEVICE_REQUIRES_CLEANING\n"
-msgstr ""
+msgid "The device requires cleaning\n"
+msgstr "The device requires cleaning\n"
 
 #: winerror.mc:1556
-msgid "ERROR_DEVICE_DOOR_OPEN\n"
-msgstr ""
+msgid "The device door is open\n"
+msgstr "The device door is open\n"
 
 #: winerror.mc:1561
-msgid "ERROR_DEVICE_NOT_CONNECTED\n"
-msgstr ""
+msgid "The device is not connected\n"
+msgstr "The device is not connected\n"
 
 #: winerror.mc:1566
-msgid "ERROR_NOT_FOUND\n"
-msgstr ""
+msgid "Element not found\n"
+msgstr "Element not found\n"
 
 #: winerror.mc:1571
-msgid "ERROR_NO_MATCH\n"
-msgstr ""
+msgid "No match found\n"
+msgstr "No match found\n"
 
 #: winerror.mc:1576
-msgid "ERROR_SET_NOT_FOUND\n"
-msgstr ""
+msgid "Property set not found\n"
+msgstr "Property set not found\n"
 
 #: winerror.mc:1581
-msgid "ERROR_POINT_NOT_FOUND\n"
-msgstr ""
+msgid "Point not found\n"
+msgstr "Point not found\n"
 
 #: winerror.mc:1586
-msgid "ERROR_NO_TRACKING_SERVICE\n"
-msgstr ""
+msgid "No running tracking service\n"
+msgstr "No running tracking service\n"
 
 #: winerror.mc:1591
-msgid "ERROR_NO_VOLUME_ID\n"
-msgstr ""
+msgid "No such volume ID\n"
+msgstr "No such volume ID\n"
 
 #: winerror.mc:1596
-msgid "ERROR_UNABLE_TO_REMOVE_REPLACED\n"
+msgid "Unable to remove the file to be replaced\n"
 msgstr ""
 
 #: winerror.mc:1601
-msgid "ERROR_UNABLE_TO_MOVE_REPLACEMENT\n"
+msgid "Unable to move the replacement file into place\n"
 msgstr ""
 
 #: winerror.mc:1606
-msgid "ERROR_UNABLE_TO_MOVE_REPLACEMENT_2\n"
+msgid "Moving the replacement file failed\n"
 msgstr ""
 
 #: winerror.mc:1611
-msgid "ERROR_JOURNAL_DELETE_IN_PROGRESS\n"
-msgstr ""
+msgid "The journal is being deleted\n"
+msgstr "The journal is being deleted\n"
 
 #: winerror.mc:1616
-msgid "ERROR_JOURNAL_NOT_ACTIVE\n"
-msgstr ""
+msgid "The journal is not active\n"
+msgstr "The journal is not active\n"
 
 #: winerror.mc:1621
-msgid "ERROR_POTENTIAL_FILE_FOUND\n"
+msgid "Potential matching file found\n"
 msgstr ""
 
 #: winerror.mc:1626
-msgid "ERROR_JOURNAL_ENTRY_DELETED\n"
+msgid "The journal entry was deleted\n"
 msgstr ""
 
 #: winerror.mc:1631
@@ -3675,27 +3675,27 @@ msgid "No more local devices\n"
 msgstr "No more local devices\n"
 
 #: winerror.mc:1876
-msgid "ERROR_NO_SUCH_SITE\n"
-msgstr ""
+msgid "The site does not exist\n"
+msgstr "The site does not exist\n"
 
 #: winerror.mc:1881
-msgid "ERROR_DOMAIN_CONTROLLER_EXISTS\n"
-msgstr ""
+msgid "The domain controller already exists\n"
+msgstr "The domain controller already exists\n"
 
 #: winerror.mc:1886
-msgid "ERROR_ONLY_IF_CONNECTED\n"
-msgstr ""
+msgid "Supported only when connected\n"
+msgstr "Supported only when connected\n"
 
 #: winerror.mc:1891
-msgid "ERROR_OVERRIDE_NOCHANGES\n"
+msgid "Perform operation even when nothing changed\n"
 msgstr ""
 
 #: winerror.mc:1896
-msgid "ERROR_BAD_USER_PROFILE\n"
-msgstr ""
+msgid "The user profile is invalid\n"
+msgstr "The user profile is invalid\n"
 
 #: winerror.mc:1901
-msgid "ERROR_NOT_SUPPORTED_ON_SBS\n"
+msgid "Not supported on Small Business Server\n"
 msgstr ""
 
 #: winerror.mc:1906
@@ -4075,15 +4075,15 @@ msgid "Licence quota exceeded\n"
 msgstr "Licence quota exceeded\n"
 
 #: winerror.mc:2381
-msgid "ERROR_WRONG_TARGET_NAME\n"
-msgstr ""
+msgid "Wrong target name\n"
+msgstr "Wrong target name\n"
 
 #: winerror.mc:2386
-msgid "ERROR_MUTUAL_AUTH_FAILED\n"
-msgstr ""
+msgid "Mutual authentication failed\n"
+msgstr "Mutual authentication failed\n"
 
 #: winerror.mc:2391
-msgid "ERROR_TIME_SKEW\n"
+msgid "Time skew between client and server\n"
 msgstr ""
 
 #: winerror.mc:2396
@@ -4315,24 +4315,24 @@ msgid "Menu item not found\n"
 msgstr "Menu item not found\n"
 
 #: winerror.mc:2681
-msgid "ERROR_INVALID_KEYBOARD_HANDLE\n"
-msgstr ""
+msgid "Invalid keyboard handle\n"
+msgstr "Invalid keyboard handle\n"
 
 #: winerror.mc:2686
-msgid "ERROR_HOOK_TYPE_NOT_ALLOWED\n"
-msgstr ""
+msgid "Hook type not allowed\n"
+msgstr "Hook type not allowed\n"
 
 #: winerror.mc:2691
-msgid "ERROR_REQUIRES_INTERACTIVE_WINDOWSTATION\n"
+msgid "Interactive window station required\n"
 msgstr ""
 
 #: winerror.mc:2696
-msgid "ERROR_TIMEOUT\n"
-msgstr ""
+msgid "Timeout\n"
+msgstr "Timeout\n"
 
 #: winerror.mc:2701
-msgid "ERROR_INVALID_MONITOR_HANDLE\n"
-msgstr ""
+msgid "Invalid monitor handle\n"
+msgstr "Invalid monitor handle\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4351,167 +4351,167 @@ msgid "Event log file changed\n"
 msgstr "Event log file changed\n"
 
 #: winerror.mc:2726
-msgid "ERROR_INSTALL_SERVICE_FAILURE\n"
-msgstr ""
+msgid "Installer service failed.\n"
+msgstr "Installer service failed.\n"
 
 #: winerror.mc:2731
-msgid "ERROR_INSTALL_USEREXIT\n"
-msgstr ""
+msgid "Installation aborted by user\n"
+msgstr "Installation aborted by user\n"
 
 #: winerror.mc:2736
-msgid "ERROR_INSTALL_FAILURE\n"
-msgstr ""
+msgid "Installation failure\n"
+msgstr "Installation failure\n"
 
 #: winerror.mc:2741
-msgid "ERROR_INSTALL_SUSPEND\n"
+msgid "Installation suspended\n"
 msgstr ""
 
 #: winerror.mc:2746
-msgid "ERROR_UNKNOWN_PRODUCT\n"
-msgstr ""
+msgid "Unknown product\n"
+msgstr "Unknown product\n"
 
 #: winerror.mc:2751
-msgid "ERROR_UNKNOWN_FEATURE\n"
-msgstr ""
+msgid "Unknown feature\n"
+msgstr "Unknown feature\n"
 
 #: winerror.mc:2756
-msgid "ERROR_UNKNOWN_COMPONENT\n"
-msgstr ""
+msgid "Unknown component\n"
+msgstr "Unknown component\n"
 
 #: winerror.mc:2761
-msgid "ERROR_UNKNOWN_PROPERTY\n"
-msgstr ""
+msgid "Unknonw property\n"
+msgstr "Unknonw property\n"
 
 #: winerror.mc:2766
-msgid "ERROR_INVALID_HANDLE_STATE\n"
-msgstr ""
+msgid "Invalid handle state\n"
+msgstr "Invalid handle state\n"
 
 #: winerror.mc:2771
-msgid "ERROR_BAD_CONFIGURATION\n"
-msgstr ""
+msgid "Bad configuration\n"
+msgstr "Bad configuration\n"
 
 #: winerror.mc:2776
-msgid "ERROR_INDEX_ABSENT\n"
+msgid "Index is missing\n"
 msgstr ""
 
 #: winerror.mc:2781
-msgid "ERROR_INSTALL_SOURCE_ABSENT\n"
-msgstr ""
+msgid "Installation source is missing\n"
+msgstr "Installation source is missing\n"
 
 #: winerror.mc:2786
-msgid "ERROR_INSTALL_PACKAGE_VERSION\n"
-msgstr ""
+msgid "Wrong installation package version\n"
+msgstr "Wrong installation package version\n"
 
 #: winerror.mc:2791
-msgid "ERROR_PRODUCT_UNINSTALLED\n"
-msgstr ""
+msgid "Product uninstalled\n"
+msgstr "Product uninstalled\n"
 
 #: winerror.mc:2796
-msgid "ERROR_BAD_QUERY_SYNTAX\n"
-msgstr ""
+msgid "Invalid query syntax\n"
+msgstr "Invalid query syntax\n"
 
 #: winerror.mc:2801
-msgid "ERROR_INVALID_FIELD\n"
-msgstr ""
+msgid "Invalid field\n"
+msgstr "Invalid field\n"
 
 #: winerror.mc:2806
-msgid "ERROR_DEVICE_REMOVED\n"
-msgstr ""
+msgid "Device removed\n"
+msgstr "Device removed\n"
 
 #: winerror.mc:2811
-msgid "ERROR_INSTALL_ALREADY_RUNNING\n"
-msgstr ""
+msgid "Installation already running\n"
+msgstr "Installation already running\n"
 
 #: winerror.mc:2816
-msgid "ERROR_INSTALL_PACKAGE_OPEN_FAILED\n"
+msgid "Installation package failed to open\n"
 msgstr ""
 
 #: winerror.mc:2821
-msgid "ERROR_INSTALL_PACKAGE_INVALID\n"
+msgid "Installation package is invalid\n"
 msgstr ""
 
 #: winerror.mc:2826
-msgid "ERROR_INSTALL_UI_FAILURE\n"
+msgid "Installer user interface failed\n"
 msgstr ""
 
 #: winerror.mc:2831
-msgid "ERROR_INSTALL_LOG_FAILURE\n"
+msgid "Failed to open installation log file\n"
 msgstr ""
 
 #: winerror.mc:2836
-msgid "ERROR_INSTALL_LANGUAGE_UNSUPPORTED\n"
-msgstr ""
+msgid "Installation language not supported\n"
+msgstr "Installation language not supported\n"
 
 #: winerror.mc:2841
-msgid "ERROR_INSTALL_TRANSFORM_FAILURE\n"
+msgid "Installation transform failed to apply\n"
 msgstr ""
 
 #: winerror.mc:2846
-msgid "ERROR_INSTALL_PACKAGE_REJECTED\n"
+msgid "Installation package rejected\n"
 msgstr ""
 
 #: winerror.mc:2851
-msgid "ERROR_FUNCTION_NOT_CALLED\n"
-msgstr ""
+msgid "Function could not be called\n"
+msgstr "Function could not be called\n"
 
 #: winerror.mc:2856
-msgid "ERROR_FUNCTION_FAILED\n"
-msgstr ""
+msgid "Function failed\n"
+msgstr "Function failed\n"
 
 #: winerror.mc:2861
-msgid "ERROR_INVALID_TABLE\n"
-msgstr ""
+msgid "Invalid table\n"
+msgstr "Invalid table\n"
 
 #: winerror.mc:2866
-msgid "ERROR_DATATYPE_MISMATCH\n"
-msgstr ""
+msgid "Data type mismatch\n"
+msgstr "Data type mismatch\n"
 
-#: winerror.mc:2871
-msgid "ERROR_UNSUPPORTED_TYPE\n"
-msgstr ""
+#: winerror.mc:2871 winerror.mc:3081
+msgid "Unsupported type\n"
+msgstr "Unsupported type\n"
 
 #: winerror.mc:2876
-msgid "ERROR_CREATE_FAILED\n"
-msgstr ""
+msgid "Creation failed\n"
+msgstr "Creation failed\n"
 
 #: winerror.mc:2881
-msgid "ERROR_INSTALL_TEMP_UNWRITABLE\n"
-msgstr ""
+msgid "Temporary directory not writable\n"
+msgstr "Temporary directory not writable\n"
 
 #: winerror.mc:2886
-msgid "ERROR_INSTALL_PLATFORM_UNSUPPORTED\n"
-msgstr ""
+msgid "Installation platform not supported\n"
+msgstr "Installation platform not supported\n"
 
 #: winerror.mc:2891
-msgid "ERROR_INSTALL_NOTUSED\n"
-msgstr ""
+msgid "Installer not used\n"
+msgstr "Installer not used\n"
 
 #: winerror.mc:2896
-msgid "ERROR_PATCH_PACKAGE_OPEN_FAILED\n"
-msgstr ""
+msgid "Failed to open the patch package\n"
+msgstr "Failed to open the patch package\n"
 
 #: winerror.mc:2901
-msgid "ERROR_PATCH_PACKAGE_INVALID\n"
-msgstr ""
+msgid "Invalid patch package\n"
+msgstr "Invalid patch package\n"
 
 #: winerror.mc:2906
-msgid "ERROR_PATCH_PACKAGE_UNSUPPORTED\n"
-msgstr ""
+msgid "Unsupported patch package\n"
+msgstr "Unsupported patch package\n"
 
 #: winerror.mc:2911
-msgid "ERROR_PRODUCT_VERSION\n"
-msgstr ""
+msgid "Another version is installed\n"
+msgstr "Another version is installed\n"
 
 #: winerror.mc:2916
-msgid "ERROR_INVALID_COMMAND_LINE\n"
-msgstr ""
+msgid "Invalid command line\n"
+msgstr "Invalid command line\n"
 
 #: winerror.mc:2921
-msgid "ERROR_INSTALL_REMOTE_DISALLOWED\n"
+msgid "Remote installation not allowed\n"
 msgstr ""
 
 #: winerror.mc:2926
-msgid "ERROR_SUCCESS_REBOOT_INITIATED\n"
+msgid "Reboot initiated after successful install\n"
 msgstr ""
 
 #: winerror.mc:2931
@@ -4633,10 +4633,6 @@ msgstr "RPC protocol error\n"
 #: winerror.mc:3076
 msgid "Unsupported transfer syntax\n"
 msgstr "Unsupported transfer syntax\n"
-
-#: winerror.mc:3081
-msgid "Unsupported type\n"
-msgstr "Unsupported type\n"
 
 #: winerror.mc:3086
 msgid "Invalid tag\n"
@@ -5087,76 +5083,76 @@ msgid "Invalid driver\n"
 msgstr "Invalid driver\n"
 
 #: winerror.mc:3646
-msgid "OR_INVALID_SET\n"
-msgstr ""
+msgid "Invalid object resolver set\n"
+msgstr "Invalid object resolver set\n"
 
 #: winerror.mc:3651
-msgid "RPC_S_SEND_INCOMPLETE\n"
-msgstr ""
+msgid "Incomplete RPC send\n"
+msgstr "Incomplete RPC send\n"
 
 #: winerror.mc:3656
-msgid "RPC_S_INVALID_ASYNC_HANDLE\n"
-msgstr ""
+msgid "Invalid asynchronous RPC handle\n"
+msgstr "Invalid asynchronous RPC handle\n"
 
 #: winerror.mc:3661
-msgid "RPC_S_INVALID_ASYNC_CALL\n"
-msgstr ""
+msgid "Invalid asynchronous RPC call\n"
+msgstr "Invalid asynchronous RPC call\n"
 
 #: winerror.mc:3666
-msgid "RPC_X_PIPE_CLOSED\n"
-msgstr ""
+msgid "RPC pipe closed\n"
+msgstr "RPC pipe closed\n"
 
 #: winerror.mc:3671
-msgid "RPC_X_PIPE_DISCIPLINE_ERROR\n"
+msgid "Discipline error on RPC pipe\n"
 msgstr ""
 
 #: winerror.mc:3676
-msgid "RPC_X_PIPE_EMPTY\n"
-msgstr ""
+msgid "No data on RPC pipe\n"
+msgstr "No data on RPC pipe\n"
 
 #: winerror.mc:3681
-msgid "ERROR_NO_SITENAME\n"
-msgstr ""
+msgid "No site name available\n"
+msgstr "No site name available\n"
 
 #: winerror.mc:3686
-msgid "ERROR_CANT_ACCESS_FILE\n"
+msgid "The file cannot be accessed\n"
 msgstr ""
 
 #: winerror.mc:3691
-msgid "ERROR_CANT_RESOLVE_FILENAME\n"
-msgstr ""
+msgid "The filename cannot be resolved\n"
+msgstr "The filename cannot be resolved\n"
 
 #: winerror.mc:3696
-msgid "RPC_S_ENTRY_TYPE_MISMATCH\n"
-msgstr ""
+msgid "RPC entry type mismatch\n"
+msgstr "RPC entry type mismatch\n"
 
 #: winerror.mc:3701
-msgid "RPC_S_NOT_ALL_OBJS_EXPORTED\n"
-msgstr ""
+msgid "Not all objects could be exported\n"
+msgstr "Not all objects could be exported\n"
 
 #: winerror.mc:3706
-msgid "RPC_S_INTERFACE_NOT_EXPORTED\n"
-msgstr ""
+msgid "The interface could not be exported\n"
+msgstr "The interface could not be exported\n"
 
 #: winerror.mc:3711
-msgid "RPC_S_PROFILE_NOT_ADDED\n"
-msgstr ""
+msgid "The profile could not be added\n"
+msgstr "The profile could not be added\n"
 
 #: winerror.mc:3716
-msgid "RPC_S_PRF_ELT_NOT_ADDED\n"
-msgstr ""
+msgid "The profile element could not be added\n"
+msgstr "The profile element could not be added\n"
 
 #: winerror.mc:3721
-msgid "RPC_S_PRF_ELT_NOT_REMOVED\n"
-msgstr ""
+msgid "The profile element could not be removed\n"
+msgstr "The profile element could not be removed\n"
 
 #: winerror.mc:3726
-msgid "RPC_S_GRP_ELT_NOT_ADDED\n"
-msgstr ""
+msgid "The group element could not be added\n"
+msgstr "The group element could not be added\n"
 
 #: winerror.mc:3731
-msgid "RPC_S_GRP_ELT_NOT_REMOVED\n"
-msgstr ""
+msgid "The group element could not be removed\n"
+msgstr "The group element could not be removed\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found\n"
