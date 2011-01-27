@@ -384,8 +384,11 @@ statement:
 
 typedecl:
 	  enumdef
+	| tENUM aIDENTIFIER                     { $$ = type_new_enum($2, FALSE, NULL); }
 	| structdef
+	| tSTRUCT aIDENTIFIER                   { $$ = type_new_struct($2, FALSE, NULL); }
 	| uniondef
+	| tUNION aIDENTIFIER                    { $$ = type_new_nonencapsulated_union($2, FALSE, NULL); }
 	| attributes enumdef                    { $$ = $2; $$->attrs = check_enum_attrs($1); }
 	| attributes structdef                  { $$ = $2; $$->attrs = check_struct_attrs($1); }
 	| attributes uniondef                   { $$ = $2; $$->attrs = check_union_attrs($1); }
