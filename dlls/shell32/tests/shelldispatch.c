@@ -83,7 +83,9 @@ static void test_namespace(void)
     V_I4(&var) = ssfPROGRAMFILES;
     r = IShellDispatch_NameSpace(sd, var, &folder);
     todo_wine
-    ok(r == S_OK, "IShellDispatch::NameSpace failed: %08x\n", r);
+    ok(r == S_OK ||
+     broken(r == S_FALSE), /* NT4 */
+     "IShellDispatch::NameSpace failed: %08x\n", r);
     if (r == S_OK)
     {
         r = Folder_get_Title(folder, &title);
