@@ -295,6 +295,7 @@ static void test_redirect( void )
 
     setup_test( &info, winhttp_send_request, __LINE__ );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
+    ok(ret, "failed to send request %u\n", GetLastError());
 
     setup_test( &info, winhttp_receive_response, __LINE__ );
     ret = WinHttpReceiveResponse( req, NULL );
