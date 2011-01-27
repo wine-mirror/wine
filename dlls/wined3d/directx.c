@@ -1600,6 +1600,10 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
             {"HD 5770", CARD_ATI_RADEON_HD5700},    /* Radeon EG JUNIPER XT */
             {"HD 5750", CARD_ATI_RADEON_HD5700},    /* Radeon EG JUNIPER LE */
             {"HD 5700", CARD_ATI_RADEON_HD5700},    /* Radeon EG JUNIPER HD57xx generic renderer string */
+            {"HD 5670", CARD_ATI_RADEON_HD5600},    /* Radeon EG REDWOOD XT */
+            {"HD 5570", CARD_ATI_RADEON_HD5600},    /* Radeon EG REDWOOD PRO mapped to HD5600 series */
+            {"HD 5550", CARD_ATI_RADEON_HD5600},    /* Radeon EG REDWOOD LE mapped to HD5600 series */
+            {"HD 5450", CARD_ATI_RADEON_HD5400},    /* Radeon EG CEDAR PRO */
             /* R700 */
             {"HD 4890", CARD_ATI_RADEON_HD4800},    /* Radeon RV790 */
             {"HD 4870", CARD_ATI_RADEON_HD4800},    /* Radeon RV770 */
