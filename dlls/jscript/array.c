@@ -133,6 +133,9 @@ static HRESULT Array_length(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISP
         HRESULT hres;
 
         hres = to_number(ctx, get_arg(dp, 0), ei, &num);
+        if(FAILED(hres))
+            return hres;
+
         if(V_VT(&num) == VT_I4)
             len = V_I4(&num);
         else

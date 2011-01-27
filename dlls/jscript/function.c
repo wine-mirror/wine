@@ -441,7 +441,8 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DI
         }
     }
 
-    hres = call_function(ctx, function, this_obj, &args, retv, ei, caller);
+    if(SUCCEEDED(hres))
+       hres = call_function(ctx, function, this_obj, &args, retv, ei, caller);
 
     if(this_obj)
         IDispatch_Release(this_obj);

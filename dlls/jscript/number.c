@@ -150,7 +150,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
 
         if(exp) {
             if(log_radix==0)
-                buf[idx++] = '\0';
+                buf[idx] = 0;
             else {
                 static const WCHAR formatW[] = {'(','e','%','c','%','d',')',0};
                 WCHAR ch;

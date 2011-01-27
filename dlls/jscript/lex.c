@@ -249,7 +249,6 @@ static BOOL unescape(WCHAR *str)
         }
 
         p++;
-        c = 0;
 
         switch(*p) {
         case '\'':

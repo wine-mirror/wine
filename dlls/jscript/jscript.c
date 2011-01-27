@@ -522,7 +522,8 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
     item->flags = dwFlags;
     item->name = heap_strdupW(pstrName);
     if(!item->name) {
-        IDispatch_Release(disp);
+        if(disp)
+            IDispatch_Release(disp);
         heap_free(item);
         return E_OUTOFMEMORY;
     }

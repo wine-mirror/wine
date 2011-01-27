@@ -2415,7 +2415,7 @@ static HRESULT typeof_exprval(script_ctx_t *ctx, exprval_t *exprval, jsexcept_t 
     }
 
     VariantClear(&val);
-    return S_OK;
+    return hres;
 }
 
 HRESULT typeof_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
