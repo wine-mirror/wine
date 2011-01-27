@@ -5870,6 +5870,7 @@ static void test_publish_assemblies(void)
     LONG res;
     HKEY hkey;
     const char *path;
+    int access;
 
     if (is_process_limited())
     {
@@ -5957,24 +5958,31 @@ static void test_publish_assemblies(void)
     r = MsiInstallProductA(msifile, "ALLUSERS=1");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    res = RegOpenKeyA(HKEY_CLASSES_ROOT, classes_path_dotnet, &hkey);
+    access = KEY_QUERY_VALUE;
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, classes_path_dotnet, 0, access, &hkey);
+    if (res == ERROR_FILE_NOT_FOUND && is_wow64) /* Vista WOW64 */
+    {
+        trace("Using 64-bit registry view for HKCR\\Installer\n");
+        access = KEY_QUERY_VALUE | KEY_WOW64_64KEY;
+        res = RegOpenKeyExA(HKEY_CLASSES_ROOT, classes_path_dotnet, 0, access, &hkey);
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     CHECK_REG_STR(hkey, name_dotnet, "rcHQPHq?CA@Uv-XqMI1e>Z'q,T*76M@=YEg6My?~]");
     RegCloseKey(hkey);
 
     path = (is_wow64 || is_64bit) ? classes_path_dotnet_local_wow64 : classes_path_dotnet_local;
-    res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, path, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     CHECK_REG_STR(hkey, name_dotnet_local, "rcHQPHq?CA@Uv-XqMI1e>LF,8A?0d.AW@vcZ$Cgox");
     RegCloseKey(hkey);
 
-    res = RegOpenKeyA(HKEY_CLASSES_ROOT, classes_path_win32, &hkey);
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, classes_path_win32, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     CHECK_REG_STR(hkey, name_win32, "rcHQPHq?CA@Uv-XqMI1e>}NJjwR'%D9v1p!v{WV(%");
     RegCloseKey(hkey);
 
     path = (is_wow64 || is_64bit) ? classes_path_win32_local_wow64 : classes_path_win32_local;
-    res = RegOpenKeyA(HKEY_CLASSES_ROOT, path, &hkey);
+    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, path, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     CHECK_REG_STR(hkey, name_win32_local, "rcHQPHq?CA@Uv-XqMI1e>C)Uvlj*53A)u(QQ9=)X!");
     RegCloseKey(hkey);
