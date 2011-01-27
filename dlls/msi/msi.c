@@ -306,7 +306,7 @@ static UINT get_patch_product_codes( LPCWSTR szPatchPackage, WCHAR ***product_co
     UINT r, type;
     DWORD size;
     static WCHAR empty[] = {0};
-    WCHAR *codes;
+    WCHAR *codes = NULL;
 
     r = MsiOpenDatabaseW( szPatchPackage, MSIDBOPEN_READONLY, &patch );
     if (r != ERROR_SUCCESS)
