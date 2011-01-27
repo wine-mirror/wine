@@ -3098,7 +3098,22 @@ void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
     status = raise_exception( rec, context, TRUE );
     if (status != STATUS_SUCCESS) raise_status( status, rec );
 }
-DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
+__ASM_GLOBAL_FUNC( RtlRaiseException,
+                   "movq %rcx,8(%rsp)\n\t"
+                   "sub $0x4f8,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 0x4f8\n\t")
+                   "leaq 0x20(%rsp),%rcx\n\t"
+                   "call " __ASM_NAME("RtlCaptureContext") "\n\t"
+                   "leaq 0x20(%rsp),%rdx\n\t"   /* context pointer */
+                   "movq 0x4f8(%rsp),%rax\n\t"  /* return address */
+                   "movq %rax,0xf8(%rdx)\n\t"   /* context->Rip */
+                   "leaq 0x500(%rsp),%rax\n\t"  /* orig stack pointer */
+                   "movq %rax,0x98(%rdx)\n\t"   /* context->Rsp */
+                   "movq (%rax),%rcx\n\t"       /* original first parameter */
+                   "movq %rcx,0x80(%rdx)\n\t"   /* context->Rcx */
+                   "call " __ASM_NAME("__regs_RtlRaiseException") "\n\t"
+                   "leaq 0x20(%rsp),%rdi\n\t"   /* context pointer */
+                   "call " __ASM_NAME("set_cpu_context") /* does not return */ );
 
 
 /*************************************************************************
