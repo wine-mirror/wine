@@ -498,7 +498,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_GetSwapChain(IDirec
     wined3d_mutex_lock();
     hr = IWineD3DDevice_GetSwapChain(((IDirect3DDevice9Impl *)iface)->WineD3DDevice,
             swapchain_idx, &wined3d_swapchain);
-    if (SUCCEEDED(hr) && swapchain)
+    if (SUCCEEDED(hr) && wined3d_swapchain)
     {
        *swapchain = IWineD3DSwapChain_GetParent(wined3d_swapchain);
        IDirect3DSwapChain9_AddRef(*swapchain);
