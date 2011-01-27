@@ -2204,6 +2204,7 @@ static void test_msiimport(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_NAMES, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     count = MsiRecordGetFieldCount(rec);
     ok(count == 9, "Expected 9, got %d\n", count);
     ok(check_record(rec, 1, "FirstPrimaryColumn"), "Expected FirstPrimaryColumn\n");
@@ -2218,6 +2219,7 @@ static void test_msiimport(void)
     MsiCloseHandle(rec);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_TYPES, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     count = MsiRecordGetFieldCount(rec);
     ok(count == 9, "Expected 9, got %d\n", count);
     ok(check_record(rec, 1, "s255"), "Expected s255\n");
@@ -2263,6 +2265,7 @@ static void test_msiimport(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_NAMES, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     count = MsiRecordGetFieldCount(rec);
     ok(count == 2, "Expected 2, got %d\n", count);
     ok(check_record(rec, 1, "PrimaryOne"), "Expected PrimaryOne\n");
@@ -2271,6 +2274,7 @@ static void test_msiimport(void)
     MsiCloseHandle(rec);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_TYPES, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     count = MsiRecordGetFieldCount(rec);
     ok(count == 2, "Expected 2, got %d\n", count);
     ok(check_record(rec, 1, "s255"), "Expected s255\n");
@@ -2310,6 +2314,7 @@ static void test_msiimport(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_NAMES, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     count = MsiRecordGetFieldCount(rec);
     ok(count == 6, "Expected 6, got %d\n", count);
     ok(check_record(rec, 1, "A"), "Expected A\n");
@@ -2321,6 +2326,7 @@ static void test_msiimport(void)
     MsiCloseHandle(rec);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_TYPES, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     count = MsiRecordGetFieldCount(rec);
     ok(count == 6, "Expected 6, got %d\n", count);
     ok(check_record(rec, 1, "s72"), "Expected s72\n");
@@ -2932,6 +2938,7 @@ static MSIHANDLE create_package_db(LPCSTR filename)
     ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
 
     res = set_summary_info(hdb);
+    ok( res == ERROR_SUCCESS , "Failed to set summary info\n" );
 
     res = create_directory_table(hdb);
     ok( res == ERROR_SUCCESS , "Failed to create directory table\n" );
@@ -4217,6 +4224,7 @@ static void test_integers(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_NAMES, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     count = MsiRecordGetFieldCount(rec);
     ok(count == 8, "Expected 8, got %d\n", count);
     ok(check_record(rec, 1, "one"), "Expected one\n");
@@ -4230,6 +4238,7 @@ static void test_integers(void)
     MsiCloseHandle(rec);
 
     r = MsiViewGetColumnInfo(view, MSICOLINFO_TYPES, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     count = MsiRecordGetFieldCount(rec);
     ok(count == 8, "Expected 8, got %d\n", count);
     ok(check_record(rec, 1, "I2"), "Expected I2\n");
@@ -8059,10 +8068,12 @@ static void test_dbmerge(void)
 
     size = MAX_PATH;
     r = MsiRecordGetString(hrec, 1, buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(buf, "Table"), "Expected \"Table\", got \"%s\"\n", buf);
 
     size = MAX_PATH;
     r = MsiRecordGetString(hrec, 2, buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(buf, "NumRowMergeConflicts"),
        "Expected \"NumRowMergeConflicts\", got \"%s\"\n", buf);
 
@@ -8073,10 +8084,12 @@ static void test_dbmerge(void)
 
     size = MAX_PATH;
     r = MsiRecordGetString(hrec, 1, buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(buf, "s255"), "Expected \"s255\", got \"%s\"\n", buf);
 
     size = MAX_PATH;
     r = MsiRecordGetString(hrec, 2, buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(buf, "i2"), "Expected \"i2\", got \"%s\"\n", buf);
 
     MsiCloseHandle(hrec);
@@ -8914,6 +8927,7 @@ static void test_columnorder(void)
 
     query = "SELECT * FROM `Z`";
     r = do_query(hdb, query, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiRecordGetInteger(rec, 1);
     ok(r == 2, "Expected 2, got %d\n", r);
