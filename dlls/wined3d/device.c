@@ -2218,6 +2218,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
         }
     }
 
+    for (i = 1; i < gl_info->limits.buffers; ++i)
+    {
+        IWineD3DDevice_SetRenderTarget(iface, i, NULL, FALSE);
+    }
+
     TRACE("Releasing the render target at %p\n", This->render_targets[0]);
     IWineD3DSurface_Release((IWineD3DSurface *)This->render_targets[0]);
 
