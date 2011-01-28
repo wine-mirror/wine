@@ -876,9 +876,8 @@ static HRESULT get_data_from_metafilepict(IDataObject *data, FORMATETC *fmt, HGL
     if(FAILED(hr)) return hr;
 
     hr = dup_metafilepict(med.u.hMetaFilePict, &copy);
-    if(FAILED(hr)) return hr;
 
-    *mem = copy;
+    if(SUCCEEDED(hr)) *mem = copy;
 
     ReleaseStgMedium(&med);
 
@@ -906,10 +905,8 @@ static HRESULT get_data_from_bitmap(IDataObject *data, FORMATETC *fmt, HBITMAP *
     if(FAILED(hr)) return hr;
 
     hr = dup_bitmap(med.u.hBitmap, &copy);
-    if(FAILED(hr)) return hr;
 
-    if(hbm) *hbm = copy;
-    else hr = E_FAIL;
+    if(SUCCEEDED(hr)) *hbm = copy;
 
     ReleaseStgMedium(&med);
 
