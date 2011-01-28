@@ -52,7 +52,6 @@
 #define WINED3D_QUIRK_NV_CLIP_BROKEN            0x00000010
 #define WINED3D_QUIRK_FBO_TEX_UPDATE            0x00000020
 
-typedef struct wined3d_stateblock IWineD3DStateBlockImpl;
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
@@ -1124,7 +1123,7 @@ struct wined3d_context
     GLuint                  dummy_arbfp_prog;
 };
 
-typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *ctx);
+typedef void (*APPLYSTATEFUNC)(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *ctx);
 
 struct StateEntry
 {
@@ -1606,7 +1605,7 @@ struct ffp_frag_desc
 extern const struct wine_rb_functions wined3d_ffp_frag_program_rb_functions DECLSPEC_HIDDEN;
 extern const struct wined3d_parent_ops wined3d_null_parent_ops DECLSPEC_HIDDEN;
 
-void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_settings *settings,
+void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_settings *settings,
         BOOL ignore_textype) DECLSPEC_HIDDEN;
 const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *fragment_shaders,
         const struct ffp_frag_settings *settings) DECLSPEC_HIDDEN;
@@ -1699,8 +1698,8 @@ struct IWineD3DDeviceImpl
     unsigned char           surface_alignment; /* Line Alignment of surfaces                      */
 
     /* State block related */
-    IWineD3DStateBlockImpl *stateBlock;
-    IWineD3DStateBlockImpl *updateStateBlock;
+    struct wined3d_stateblock *stateBlock;
+    struct wined3d_stateblock *updateStateBlock;
 
     /* Internal use fields  */
     WINED3DDEVICE_CREATION_PARAMETERS createParms;
@@ -2343,10 +2342,6 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWine
         const WINED3DVERTEXELEMENT *elements, UINT element_count,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IWineD3DStateBlock implementation structure
- */
-
 /* Internal state Block for Begin/End/Capture/Create/Apply info  */
 /*   Note: Very long winded but gl Lists are not flexible enough */
 /*   to resolve everything we need, so doing it manually for now */
@@ -2434,10 +2429,7 @@ struct wined3d_state
 
 struct wined3d_stateblock
 {
-    /* IUnknown fields */
     LONG                      ref;     /* Note: Ref counting not required */
-
-    /* IWineD3DStateBlock information */
     IWineD3DDeviceImpl *device;
     WINED3DSTATEBLOCKTYPE     blockType;
 
@@ -2468,12 +2460,12 @@ struct wined3d_stateblock
     unsigned int              num_contained_sampler_states;
 };
 
-HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock,
+HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
         IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type) DECLSPEC_HIDDEN;
-void stateblock_init_contained_states(IWineD3DStateBlockImpl *object) DECLSPEC_HIDDEN;
-void stateblock_init_default_state(IWineD3DStateBlockImpl *stateblock) DECLSPEC_HIDDEN;
+void stateblock_init_contained_states(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
+void stateblock_init_default_state(struct wined3d_stateblock *stateblock) DECLSPEC_HIDDEN;
 
-static inline void stateblock_apply_state(DWORD state, IWineD3DStateBlockImpl *stateblock,
+static inline void stateblock_apply_state(DWORD state, struct wined3d_stateblock *stateblock,
         struct wined3d_context *context)
 {
     const struct StateEntry *statetable = stateblock->device->StateTable;
@@ -2689,19 +2681,19 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords,
         BOOL transformed, enum wined3d_format_id coordtype, BOOL ffp_can_disable_proj) DECLSPEC_HIDDEN;
 void texture_activate_dimensions(IWineD3DBaseTextureImpl *texture,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock,
+void sampler_texdim(DWORD state, struct wined3d_stateblock *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
-void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock,
+void tex_alphaop(DWORD state, struct wined3d_stateblock *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
-void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock,
+void apply_pixelshader(DWORD state, struct wined3d_stateblock *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
-void state_fogcolor(DWORD state, IWineD3DStateBlockImpl *stateblock,
+void state_fogcolor(DWORD state, struct wined3d_stateblock *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
-void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock,
+void state_fogdensity(DWORD state, struct wined3d_stateblock *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
-void state_fogstartend(DWORD state, IWineD3DStateBlockImpl *stateblock,
+void state_fogstartend(DWORD state, struct wined3d_stateblock *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
-void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock,
+void state_fog_fragpart(DWORD state, struct wined3d_stateblock *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 BOOL getColorBits(const struct wined3d_format *format,

@@ -100,10 +100,10 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface,
             iface, back_buffer_idx, type, back_buffer);
 
     /* Return invalid if there is no backbuffer array, otherwise it will
-     * crash when ddraw is used (there swapchain->back_buffers is always NULL).
-     * We need this because this function is called from
-     * IWineD3DStateBlockImpl_InitStartupStateBlock() to get the default
-     * scissorrect dimensions. */
+     * crash when ddraw is used (there swapchain->back_buffers is always
+     * NULL). We need this because this function is called from
+     * stateblock_init_default_state() to get the default scissorrect
+     * dimensions. */
     if (!swapchain->back_buffers || back_buffer_idx >= swapchain->presentParms.BackBufferCount)
     {
         WARN("Invalid back buffer index.\n");

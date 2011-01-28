@@ -731,7 +731,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     IWineD3DDeviceImpl *device = context->swapchain->device;
-    IWineD3DStateBlockImpl* stateBlock = device->stateBlock;
+    struct wined3d_stateblock *stateBlock = device->stateBlock;
     struct shader_glsl_priv *priv = device->shader_priv;
     float position_fixup[4];
 

@@ -191,7 +191,7 @@ static const DWORD vertex_states_sampler[] =
 /* Allocates the correct amount of space for pixel and vertex shader constants,
  * along with their set/changed flags on the given stateblock object
  */
-static HRESULT stateblock_allocate_shader_constants(IWineD3DStateBlockImpl *object)
+static HRESULT stateblock_allocate_shader_constants(struct wined3d_stateblock *object)
 {
     IWineD3DDeviceImpl *device = object->device;
 
@@ -327,7 +327,7 @@ static void stateblock_savedstates_set_vertex(SAVEDSTATES *states, const DWORD n
     memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * num_constants);
 }
 
-void stateblock_init_contained_states(IWineD3DStateBlockImpl *stateblock)
+void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
 {
     IWineD3DDeviceImpl *device = stateblock->device;
     unsigned int i, j;
@@ -439,7 +439,7 @@ void stateblock_init_contained_states(IWineD3DStateBlockImpl *stateblock)
     }
 }
 
-static void stateblock_init_lights(IWineD3DStateBlockImpl *stateblock, struct list *light_map)
+static void stateblock_init_lights(struct wined3d_stateblock *stateblock, struct list *light_map)
 {
     unsigned int i;
 
@@ -1066,7 +1066,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     return WINED3D_OK;
 }
 
-void stateblock_init_default_state(IWineD3DStateBlockImpl *stateblock)
+void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
 {
     IWineD3DDeviceImpl *device = stateblock->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -1317,7 +1317,7 @@ void stateblock_init_default_state(IWineD3DStateBlockImpl *stateblock)
     TRACE("Done.\n");
 }
 
-HRESULT stateblock_init(IWineD3DStateBlockImpl *stateblock, IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type)
+HRESULT stateblock_init(struct wined3d_stateblock *stateblock, IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type)
 {
     unsigned int i;
     HRESULT hr;

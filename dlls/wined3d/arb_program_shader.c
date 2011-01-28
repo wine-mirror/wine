@@ -621,7 +621,7 @@ static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *g
 static void shader_arb_load_constants(const struct wined3d_context *context, char usePixelShader, char useVertexShader)
 {
     IWineD3DDeviceImpl *device = context->swapchain->device;
-    IWineD3DStateBlockImpl* stateBlock = device->stateBlock;
+    struct wined3d_stateblock *stateBlock = device->stateBlock;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_arb_priv *priv = device->shader_priv;
 
@@ -5579,7 +5579,8 @@ static void arbfp_get_caps(const struct wined3d_gl_info *gl_info, struct fragmen
     caps->MaxSimultaneousTextures = min(gl_info->limits.fragment_samplers, 8);
 }
 
-static void state_texfactor_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void state_texfactor_arbfp(DWORD state_id,
+        struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
@@ -5604,7 +5605,7 @@ static void state_texfactor_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateb
 }
 
 static void state_arb_specularenable(DWORD state_id,
-        IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+        struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
@@ -5635,7 +5636,7 @@ static void state_arb_specularenable(DWORD state_id,
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col)");
 }
 
-static void set_bumpmat_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void set_bumpmat_arbfp(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -5673,7 +5674,8 @@ static void set_bumpmat_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateblock
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_BUMPMAT(stage), &mat[0][0])");
 }
 
-static void tex_bumpenvlum_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void tex_bumpenvlum_arbfp(DWORD state_id,
+        struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -5925,7 +5927,7 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
     }
 }
 
-static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWineD3DStateBlockImpl *stateblock)
+static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, struct wined3d_stateblock *stateblock)
 {
     const struct wined3d_gl_info *gl_info = &stateblock->device->adapter->gl_info;
     unsigned int stage;
@@ -6202,7 +6204,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     return ret;
 }
 
-static void fragment_prog_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void fragment_prog_arbfp(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
@@ -6300,7 +6302,7 @@ static void fragment_prog_arbfp(DWORD state_id, IWineD3DStateBlockImpl *stateblo
  * is that changing the fog start and fog end(which links to FOGENABLE in vertex) results in the
  * fragment_prog_arbfp function being called because FOGENABLE is dirty, which calls this function here
  */
-static void state_arbfp_fog(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void state_arbfp_fog(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_state *state = &stateblock->state;
     enum fogsource new_source;
@@ -6335,11 +6337,10 @@ static void state_arbfp_fog(DWORD state_id, IWineD3DStateBlockImpl *stateblock, 
     }
 }
 
-static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void textransform(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    if(!isStateDirty(context, STATE_PIXELSHADER)) {
+    if (!isStateDirty(context, STATE_PIXELSHADER))
         fragment_prog_arbfp(state, stateblock, context);
-    }
 }
 
 static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {

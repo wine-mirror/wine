@@ -456,7 +456,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
 }
 
 
-static void nvrc_colorop(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void nvrc_colorop(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     BOOL tex_used = stateblock->device->fixed_function_usage_map & (1 << stage);
@@ -566,7 +566,7 @@ static void nvrc_colorop(DWORD state_id, IWineD3DStateBlockImpl *stateblock, str
     }
 }
 
-static void nvts_texdim(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void nvts_texdim(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     DWORD sampler = state_id - STATE_SAMPLER(0);
     DWORD mapped_stage = stateblock->device->texUnitMap[sampler];
@@ -583,7 +583,7 @@ static void nvts_texdim(DWORD state_id, IWineD3DStateBlockImpl *stateblock, stru
     nvts_activate_dimensions(state, sampler, context);
 }
 
-static void nvts_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void nvts_bumpenvmat(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     DWORD mapped_stage = stateblock->device->texUnitMap[stage + 1];
@@ -612,7 +612,7 @@ static void nvts_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, str
     }
 }
 
-static void nvrc_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void nvrc_texfactor(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float col[4];

@@ -796,7 +796,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
     return ret;
 }
 
-static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void set_tex_op_atifs(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     IWineD3DDeviceImpl *This = stateblock->device;
@@ -845,7 +845,7 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, st
     GL_EXTCALL(glBindFragmentShaderATI(desc->shader));
 }
 
-static void state_texfactor_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void state_texfactor_atifs(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float col[4];
@@ -855,7 +855,7 @@ static void state_texfactor_atifs(DWORD state, IWineD3DStateBlockImpl *statebloc
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col)");
 }
 
-static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void set_bumpmat(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -880,14 +880,14 @@ static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), mat)");
 }
 
-static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void textransform(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    if(!isStateDirty(context, STATE_PIXELSHADER)) {
+    if (!isStateDirty(context, STATE_PIXELSHADER))
         set_tex_op_atifs(state, stateblock, context);
-    }
 }
 
-static void atifs_apply_pixelshader(DWORD state_id, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void atifs_apply_pixelshader(DWORD state_id,
+        struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_state *state = &stateblock->state;
     IWineD3DDeviceImpl *device = stateblock->device;
@@ -913,7 +913,7 @@ static void atifs_apply_pixelshader(DWORD state_id, IWineD3DStateBlockImpl *stat
     }
 }
 
-static void atifs_srgbwriteenable(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+static void atifs_srgbwriteenable(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     if (stateblock->state.render_states[WINED3DRS_SRGBWRITEENABLE])
         WARN("sRGB writes are not supported by this fragment pipe.\n");

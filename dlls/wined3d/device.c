@@ -560,7 +560,7 @@ void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *c
 
 void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect)
 {
-    IWineD3DStateBlockImpl *stateblock = device->stateBlock;
+    struct wined3d_stateblock *stateblock = device->stateBlock;
     WINED3DVIEWPORT *vp = &stateblock->state.viewport;
 
     SetRect(rect, vp->X, vp->Y, vp->X + vp->Width, vp->Y + vp->Height);
@@ -1010,7 +1010,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice *iface,
         WINED3DSTATEBLOCKTYPE type, struct wined3d_stateblock **stateblock)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DStateBlockImpl *object;
+    struct wined3d_stateblock *object;
     HRESULT hr;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -4651,7 +4651,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface)
     if (FAILED(hr)) return hr;
 
     wined3d_stateblock_decref(This->updateStateBlock);
-    This->updateStateBlock = (IWineD3DStateBlockImpl *)stateblock;
+    This->updateStateBlock = stateblock;
     This->isRecordingState = TRUE;
 
     TRACE("(%p) recording stateblock %p\n", This, stateblock);
@@ -4663,7 +4663,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface,
         struct wined3d_stateblock **stateblock)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DStateBlockImpl *object = This->updateStateBlock;
+    struct wined3d_stateblock *object = This->updateStateBlock;
 
     TRACE("iface %p, stateblock %p.\n", iface, stateblock);
 

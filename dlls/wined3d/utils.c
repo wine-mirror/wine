@@ -2720,7 +2720,8 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
     return size;
 }
 
-void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_settings *settings, BOOL ignore_textype) {
+void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_settings *settings, BOOL ignore_textype)
+{
 #define ARG1 0x01
 #define ARG2 0x02
 #define ARG0 0x04
@@ -3095,7 +3096,7 @@ void texture_activate_dimensions(IWineD3DBaseTextureImpl *texture, const struct 
 }
 
 /* GL locking is done by the caller (state handler) */
-void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+void sampler_texdim(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     DWORD sampler = state - STATE_SAMPLER(0);
     DWORD mapped_stage = stateblock->device->texUnitMap[sampler];
