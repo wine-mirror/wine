@@ -568,6 +568,8 @@ struct MSVCRT__stat64 {
 #define MSVCRT__USEDENTRY      1
 
 #define MSVCRT__OUT_TO_DEFAULT 0
+#define MSVCRT__OUT_TO_STDERR  1
+#define MSVCRT__OUT_TO_MSGBOX  2
 #define MSVCRT__REPORT_ERRMODE 3
 
 /* ASCII char classification table - binary compatible */
