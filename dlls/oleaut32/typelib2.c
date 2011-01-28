@@ -3313,6 +3313,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
                     }
 
                     (*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex->cBytes = sizeof(PARAMDESCEX);
+                    VariantInit(&(*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
                     hres = ctl2_decode_variant(This->typelib, typedata[hdr_len + i],
                             &(*ppFuncDesc)->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
                     if (FAILED(hres)) {
@@ -3749,7 +3750,11 @@ static void WINAPI ITypeInfo2_fnReleaseFuncDesc(
             if (pFuncDesc->lprgelemdescParam[i].tdesc.vt != VT_USERDEFINED)
                 release_typedesc(pFuncDesc->lprgelemdescParam[i].tdesc.u.lptdesc);
 
-            heap_free(pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex);
+            if (pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex)
+            {
+                VariantClear(&pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
+                heap_free(pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex);
+            }
         }
         heap_free(pFuncDesc->lprgelemdescParam);
     }
