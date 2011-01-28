@@ -2112,6 +2112,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     const struct wined3d_gl_info *gl_info;
+    struct IWineD3DSurfaceImpl *surface;
     struct wined3d_context *context;
     int sampler;
     UINT i;
@@ -2200,21 +2201,32 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     /* Release the buffers (with sanity checks)*/
     if (This->onscreen_depth_stencil)
     {
-        IWineD3DSurface_Release((IWineD3DSurface *)This->onscreen_depth_stencil);
+        surface = This->onscreen_depth_stencil;
         This->onscreen_depth_stencil = NULL;
+        IWineD3DSurface_Release((IWineD3DSurface *)surface);
     }
 
     if (This->depth_stencil)
     {
-        IWineD3DSurfaceImpl *ds = This->depth_stencil;
+        surface = This->depth_stencil;
 
-        TRACE("Releasing depth/stencil buffer %p.\n", ds);
+        TRACE("Releasing depth/stencil buffer %p.\n", surface);
 
         This->depth_stencil = NULL;
-        if (IWineD3DSurface_Release((IWineD3DSurface *)ds)
-                && ds != This->auto_depth_stencil)
+        if (IWineD3DSurface_Release((IWineD3DSurface *)surface)
+                && surface != This->auto_depth_stencil)
         {
-            ERR("Something is still holding a reference to depth/stencil buffer %p.\n", ds);
+            ERR("Something is still holding a reference to depth/stencil buffer %p.\n", surface);
+        }
+    }
+
+    if (This->auto_depth_stencil)
+    {
+        surface = This->auto_depth_stencil;
+        This->auto_depth_stencil = NULL;
+        if (IWineD3DSurface_Release((IWineD3DSurface *)surface))
+        {
+            FIXME("(%p) Something's still holding the auto depth stencil buffer\n", This);
         }
     }
 
@@ -2223,20 +2235,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
         IWineD3DDevice_SetRenderTarget(iface, i, NULL, FALSE);
     }
 
-    TRACE("Releasing the render target at %p\n", This->render_targets[0]);
-    IWineD3DSurface_Release((IWineD3DSurface *)This->render_targets[0]);
-
-    TRACE("Setting rendertarget to NULL\n");
+    surface = This->render_targets[0];
+    TRACE("Setting rendertarget 0 to NULL\n");
     This->render_targets[0] = NULL;
-
-    if (This->auto_depth_stencil)
-    {
-        if (IWineD3DSurface_Release((IWineD3DSurface *)This->auto_depth_stencil))
-        {
-            FIXME("(%p) Something's still holding the auto depth stencil buffer\n", This);
-        }
-        This->auto_depth_stencil = NULL;
-    }
+    TRACE("Releasing the render target at %p\n", surface);
+    IWineD3DSurface_Release((IWineD3DSurface *)surface);
 
     context_release(context);
 
