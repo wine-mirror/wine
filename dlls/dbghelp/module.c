@@ -108,23 +108,39 @@ void module_set_module(struct module* module, const WCHAR* name)
 
 const WCHAR *get_wine_loader_name(void)
 {
+    static const int is_win64 = sizeof(void *) > sizeof(int); /* FIXME: should depend on target process */
     static const WCHAR wineW[] = {'w','i','n','e',0};
+    static const WCHAR suffixW[] = {'6','4',0};
     static const WCHAR *loader;
-    const char *ptr;
 
     if (!loader)
     {
+        WCHAR *p, *buffer;
+        const char *ptr;
+
         /* All binaries are loaded with WINELOADER (if run from tree) or by the
          * main executable
          */
         if ((ptr = getenv("WINELOADER")))
         {
-            DWORD len = MultiByteToWideChar( CP_UNIXCP, 0, ptr, -1, NULL, 0 );
-            WCHAR *buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+            DWORD len = 2 + MultiByteToWideChar( CP_UNIXCP, 0, ptr, -1, NULL, 0 );
+            buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
             MultiByteToWideChar( CP_UNIXCP, 0, ptr, -1, buffer, len );
-            loader = buffer;
         }
-        else loader = wineW;
+        else
+        {
+            buffer = HeapAlloc( GetProcessHeap(), 0, sizeof(wineW) + 2 * sizeof(WCHAR) );
+            strcpyW( buffer, wineW );
+        }
+        p = buffer + strlenW( buffer ) - strlenW( suffixW );
+        if (p > buffer && !strcmpW( p, suffixW ))
+        {
+            if (!is_win64) *p = 0;
+        }
+        else if (is_win64) strcatW( buffer, suffixW );
+
+        TRACE( "returning %s\n", debugstr_w(buffer) );
+        loader = buffer;
     }
     return loader;
 }
