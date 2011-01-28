@@ -356,7 +356,7 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
     if (!DoCloseFile())
 	return;
 
-    hFile = CreateFileW(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
+    hFile = CreateFileW(szFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if(hFile == INVALID_HANDLE_VALUE)
     {
