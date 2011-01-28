@@ -53,7 +53,6 @@
 #define WINED3D_QUIRK_FBO_TEX_UPDATE            0x00000020
 
 typedef struct wined3d_stateblock IWineD3DStateBlockImpl;
-typedef struct wined3d_stateblock IWineD3DStateBlock;
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;

@@ -1007,7 +1007,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice *iface,
-        WINED3DSTATEBLOCKTYPE type, IWineD3DStateBlock **stateblock)
+        WINED3DSTATEBLOCKTYPE type, struct wined3d_stateblock **stateblock)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
@@ -1029,7 +1029,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice *iface,
     }
 
     TRACE("Created stateblock %p.\n", object);
-    *stateblock = (IWineD3DStateBlock *)object;
+    *stateblock = object;
 
     return WINED3D_OK;
 }
@@ -1886,7 +1886,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     if(!This->adapter->opengl) return WINED3DERR_INVALIDCALL;
 
     TRACE("(%p) : Creating stateblock\n", This);
-    hr = IWineD3DDevice_CreateStateBlock(iface, WINED3DSBT_INIT, (IWineD3DStateBlock **)&This->stateBlock);
+    hr = IWineD3DDevice_CreateStateBlock(iface, WINED3DSBT_INIT, &This->stateBlock);
     if (FAILED(hr))
     {
         WARN("Failed to create stateblock\n");
@@ -4637,9 +4637,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, U
  * Stateblock related functions
  *****/
 
-static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) {
+static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DStateBlock *stateblock;
+    struct wined3d_stateblock *stateblock;
     HRESULT hr;
 
     TRACE("(%p)\n", This);
@@ -4658,24 +4659,29 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IWineD3DStateBlock** ppStateBlock) {
+static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface,
+        struct wined3d_stateblock **stateblock)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object = This->updateStateBlock;
 
+    TRACE("iface %p, stateblock %p.\n", iface, stateblock);
+
     if (!This->isRecordingState) {
         WARN("(%p) not recording! returning error\n", This);
-        *ppStateBlock = NULL;
+        *stateblock = NULL;
         return WINED3DERR_INVALIDCALL;
     }
 
     stateblock_init_contained_states(object);
 
-    *ppStateBlock = (IWineD3DStateBlock*) object;
+    *stateblock = object;
     This->isRecordingState = FALSE;
     This->updateStateBlock = This->stateBlock;
     wined3d_stateblock_incref(This->updateStateBlock);
-    /* IWineD3DStateBlock_AddRef(*ppStateBlock); don't need to do this, since we should really just release UpdateStateBlock first */
-    TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, *ppStateBlock);
+
+    TRACE("Returning stateblock %p.\n", *stateblock);
+
     return WINED3D_OK;
 }
 
@@ -6521,7 +6527,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
     }
 
     /* Note: No parent needed for initial internal stateblock */
-    hr = IWineD3DDevice_CreateStateBlock(iface, WINED3DSBT_INIT, (IWineD3DStateBlock **)&This->stateBlock);
+    hr = IWineD3DDevice_CreateStateBlock(iface, WINED3DSBT_INIT, &This->stateBlock);
     if (FAILED(hr)) ERR("Resetting the stateblock failed with error 0x%08x\n", hr);
     else TRACE("Created stateblock %p\n", This->stateBlock);
     This->updateStateBlock = This->stateBlock;
