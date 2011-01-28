@@ -625,6 +625,72 @@ static void test_midiStream(UINT udev, HWND hwnd)
     }
 }
 
+static BOOL scan_subkeys(HKEY parent, const LPCSTR *sub_keys)
+{
+    char name[64];
+    DWORD index = 0;
+    DWORD name_len = sizeof(name);
+    BOOL found_vmware = FALSE;
+
+    if (sub_keys[0] == NULL)
+    {
+       /* We're at the deepest level, check "Identifier" value now */
+       char *test;
+       if (RegQueryValueExA(parent, "Identifier", NULL, NULL, (LPBYTE) name, &name_len) != ERROR_SUCCESS)
+           return FALSE;
+       for (test = name; test < name + lstrlenA(name) - 6 && ! found_vmware; test++)
+       {
+           char c = test[6];
+           test[6] = '\0';
+           found_vmware = (lstrcmpiA(test, "VMware") == 0);
+           test[6] = c;
+       }
+       return found_vmware;
+    }
+
+    while (RegEnumKeyExA(parent, index, name, &name_len, NULL, NULL, NULL, NULL) == ERROR_SUCCESS &&
+           ! found_vmware) {
+        char c = name[lstrlenA(sub_keys[0])];
+        name[lstrlenA(sub_keys[0])] = '\0';
+        if (lstrcmpiA(name, sub_keys[0]) == 0) {
+            HKEY sub_key;
+            name[lstrlenA(sub_keys[0])] = c;
+            if (RegOpenKeyExA(parent, name, 0, KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE, &sub_key) == ERROR_SUCCESS) {
+                found_vmware = scan_subkeys(sub_key, sub_keys + 1);
+                RegCloseKey(sub_key);
+            }
+        }
+
+        name_len = sizeof(name);
+        index++;
+    }
+
+    return found_vmware;
+}
+
+/*
+ * Usual method to detect whether running inside a VMware virtual machine involves direct port I/O requiring
+ * some assembly and an exception handler. Can't do that in Wine tests. Alternative method of querying WMI
+ * is not available on NT4. So instead we look at the device map and check the Identifier value in the
+ * registry keys HKLM\HARDWARE\DEVICEMAP\SCSI\Scsi Port x\Scsi Bus x\Target Id x\Logical Unit Id x (where
+ * x is some number). If the Identifier value contains the string "VMware" we assume running in a VMware VM.
+ */
+static BOOL on_vmware(void)
+{
+    static const LPCSTR sub_keys[] = { "Scsi Port ", "Scsi Bus ", "Target Id ", "Logical Unit Id ", NULL };
+    HKEY scsi;
+    BOOL found_vmware = FALSE;
+
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\Scsi", 0, KEY_ENUMERATE_SUB_KEYS, &scsi) != ERROR_SUCCESS)
+        return FALSE;
+
+    found_vmware = scan_subkeys(scsi, sub_keys);
+
+    RegCloseKey(scsi);
+
+    return found_vmware;
+}
+
 static void test_midi_outfns(HWND hwnd)
 {
     HMIDIOUT hm;
@@ -662,11 +728,17 @@ static void test_midi_outfns(HWND hwnd)
     test_midi_mci(hwnd);
 
     for (udev=0; udev < ndevs; udev++) {
-        trace("** Testing device %d\n", udev);
-        test_midiOut_device(udev, hwnd);
-        Sleep(800); /* Let the synth rest */
-        test_midiStream(udev, hwnd);
-        Sleep(800);
+        MIDIOUTCAPSA capsA;
+        rc = midiOutGetDevCapsA(udev, &capsA, sizeof(capsA));
+        if (rc || strcmp(capsA.szPname, "Creative Sound Blaster MPU-401") != 0 || ! on_vmware()) {
+            trace("** Testing device %d\n", udev);
+            test_midiOut_device(udev, hwnd);
+            Sleep(800); /* Let the synth rest */
+            test_midiStream(udev, hwnd);
+            Sleep(800);
+        }
+        else
+            win_skip("Skipping this device on VMware, driver problem\n");
     }
     trace("** Testing MIDI mapper\n");
     test_midiOut_device(MIDIMAPPER, hwnd);
