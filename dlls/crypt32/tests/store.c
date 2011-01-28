@@ -1844,7 +1844,7 @@ static void testCertOpenSystemStore(void)
     if (store)
         CertCloseStore(store, 0);
     /* Delete it so other tests succeed next time around */
-    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
+    CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
      CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_DELETE_FLAG, BogusW);
     RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
 }
