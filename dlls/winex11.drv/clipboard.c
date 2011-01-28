@@ -1546,7 +1546,6 @@ static HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lp
     *lpBytes = j; /* Number of bytes in string */
 
 done:
-    HeapFree(GetProcessHeap(), 0, text);
     GlobalUnlock(lpData->hData);
 
     return lpstr;
