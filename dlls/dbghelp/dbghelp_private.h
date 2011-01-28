@@ -528,7 +528,6 @@ extern BOOL         macho_synchronize_module_list(struct process* pcs);
 /* module.c */
 extern const WCHAR      S_ElfW[];
 extern const WCHAR      S_WineLoaderW[];
-extern const WCHAR      S_WineW[];
 extern const WCHAR      S_SlashW[];
 
 extern struct module*
@@ -555,6 +554,7 @@ extern void         module_reset_debug_info(struct module* module);
 extern BOOL         module_remove(struct process* pcs,
                                   struct module* module);
 extern void         module_set_module(struct module* module, const WCHAR* name);
+extern const WCHAR *get_wine_loader_name(void);
 
 /* msc.c */
 extern BOOL         pe_load_debug_directory(const struct process* pcs,

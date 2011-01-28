@@ -1274,25 +1274,7 @@ BOOL    macho_synchronize_module_list(struct process* pcs)
  */
 static BOOL macho_search_loader(struct process* pcs, struct macho_info* macho_info)
 {
-    BOOL                ret;
-    const char*         ptr;
-
-    TRACE("(%p/%p, %p)\n", pcs, pcs->handle, macho_info);
-
-    /* All binaries are loaded with WINELOADER (if run from tree) or by the
-     * main executable
-     */
-    if ((ptr = getenv("WINELOADER")))
-    {
-        WCHAR   tmp[MAX_PATH];
-        MultiByteToWideChar(CP_UNIXCP, 0, ptr, -1, tmp, sizeof(tmp) / sizeof(WCHAR));
-        ret = macho_search_and_load_file(pcs, tmp, 0, macho_info);
-    }
-    else
-    {
-        ret = macho_search_and_load_file(pcs, S_WineW, 0, macho_info);
-    }
-    return ret;
+    return macho_search_and_load_file(pcs, get_wine_loader_name(), 0, macho_info);
 }
 
 /******************************************************************

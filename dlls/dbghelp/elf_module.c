@@ -1458,23 +1458,7 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
  */
 static BOOL elf_search_loader(struct process* pcs, struct elf_info* elf_info)
 {
-    BOOL                ret;
-    const char*         ptr;
-
-    /* All binaries are loaded with WINELOADER (if run from tree) or by the
-     * main executable
-     */
-    if ((ptr = getenv("WINELOADER")))
-    {
-        WCHAR   tmp[MAX_PATH];
-        MultiByteToWideChar(CP_ACP, 0, ptr, -1, tmp, sizeof(tmp) / sizeof(WCHAR));
-        ret = elf_search_and_load_file(pcs, tmp, 0, 0, elf_info);
-    }
-    else
-    {
-        ret = elf_search_and_load_file(pcs, S_WineW, 0, 0, elf_info);
-    }
-    return ret;
+    return elf_search_and_load_file(pcs, get_wine_loader_name(), 0, 0, elf_info);
 }
 
 /******************************************************************

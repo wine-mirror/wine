@@ -38,7 +38,6 @@ static const WCHAR S_DotSoW[]       = {'.','s','o','\0'};
 static const WCHAR S_DotDylibW[]    = {'.','d','y','l','i','b','\0'};
 static const WCHAR S_DotPdbW[]      = {'.','p','d','b','\0'};
 static const WCHAR S_DotDbgW[]      = {'.','d','b','g','\0'};
-const WCHAR        S_WineW[]        = {'w','i','n','e',0};
 const WCHAR        S_SlashW[]       = {'/','\0'};
 
 static const WCHAR S_AcmW[] = {'.','a','c','m','\0'};
@@ -78,6 +77,7 @@ static const WCHAR* get_filename(const WCHAR* name, const WCHAR* endptr)
 
 static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
 {
+    const WCHAR *loader = get_wine_loader_name();
     const WCHAR *ptr, *endptr;
     size_t      len, l;
 
@@ -87,7 +87,7 @@ static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
     out[len] = '\0';
     if (len > 4 && (l = match_ext(out, len)))
         out[len - l] = '\0';
-    else if (len > 4 && !strcmpiW(out + len - 4, S_WineW))
+    else if (len > strlenW(loader) && !strcmpiW(out + len - strlenW(loader), loader))
         lstrcpynW(out, S_WineLoaderW, size);
     else
     {
@@ -104,6 +104,29 @@ void module_set_module(struct module* module, const WCHAR* name)
     WideCharToMultiByte(CP_ACP, 0, module->module.ModuleName, -1,
                         module->module_name, sizeof(module->module_name),
                         NULL, NULL);
+}
+
+const WCHAR *get_wine_loader_name(void)
+{
+    static const WCHAR wineW[] = {'w','i','n','e',0};
+    static const WCHAR *loader;
+    const char *ptr;
+
+    if (!loader)
+    {
+        /* All binaries are loaded with WINELOADER (if run from tree) or by the
+         * main executable
+         */
+        if ((ptr = getenv("WINELOADER")))
+        {
+            DWORD len = MultiByteToWideChar( CP_UNIXCP, 0, ptr, -1, NULL, 0 );
+            WCHAR *buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+            MultiByteToWideChar( CP_UNIXCP, 0, ptr, -1, buffer, len );
+            loader = buffer;
+        }
+        else loader = wineW;
+    }
+    return loader;
 }
 
 static const char*      get_module_type(enum module_type type, BOOL virtual)
@@ -417,7 +440,8 @@ static BOOL module_is_container_loaded(const struct process* pcs,
  */
 enum module_type module_get_type_by_name(const WCHAR* name)
 {
-    int len = strlenW(name);
+    int loader_len, len = strlenW(name);
+    const WCHAR *loader;
 
     /* Skip all version extensions (.[digits]) regex: "(\.\d+)*$" */
     do
@@ -452,7 +476,10 @@ enum module_type module_get_type_by_name(const WCHAR* name)
         return DMT_DBG;
 
     /* wine is also a native module (Mach-O on Mac OS X, ELF elsewhere) */
-    if (((len > 4 && name[len - 5] == '/') || len == 4) && !strcmpiW(name + len - 4, S_WineW))
+    loader = get_wine_loader_name();
+    loader_len = strlenW( loader );
+    if ((len == loader_len || (len > loader_len && name[len - loader_len - 1] == '/')) &&
+        !strcmpiW(name + len - loader_len, loader))
     {
 #ifdef __APPLE__
         return DMT_MACHO;
