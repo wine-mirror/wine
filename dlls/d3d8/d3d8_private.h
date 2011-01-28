@@ -178,18 +178,18 @@ struct IDirect3DDevice8Impl
 {
     /* IUnknown fields */
     IDirect3DDevice8        IDirect3DDevice8_iface;
-    const IWineD3DDeviceParentVtbl *device_parent_vtbl;
-    LONG                         ref;
+    IWineD3DDeviceParent    IWineD3DDeviceParent_iface;
+    LONG                    ref;
 /* But what about baseVertexIndex in state blocks? hmm... it may be a better idea to pass this to wined3d */
-    IWineD3DDevice               *WineD3DDevice;
-    struct d3d8_handle_table handle_table;
+    IWineD3DDevice         *WineD3DDevice;
+    struct                  d3d8_handle_table handle_table;
 
     /* FVF management */
     struct FvfToDecl       *decls;
     UINT                    numConvertedDecls, declArraySize;
 
     /* Avoids recursion with nested ReleaseRef to 0 */
-    BOOL                          inDestruction;
+    BOOL                    inDestruction;
 };
 
 HRESULT device_init(IDirect3DDevice8Impl *device, IWineD3D *wined3d, UINT adapter,
