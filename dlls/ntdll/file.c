@@ -1290,11 +1290,11 @@ static void ignore_server_ioctl_struct_holes (ULONG code, const void *in_buffer,
 #ifdef VALGRIND_MAKE_MEM_DEFINED
 # define IGNORE_STRUCT_HOLE(buf, size, t, f1, f2) \
     do { \
-        if ((size) >= FIELD_OFFSET(t, f2) && \
-            FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1) < FIELD_OFFSET(t, f2)) \
-            VALGRIND_MAKE_MEM_DEFINED( \
-                (const char *)(buf) + FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1), \
-                FIELD_OFFSET(t, f2) - FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1)); \
+        if (FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1) < FIELD_OFFSET(t, f2)) \
+            if ((size) >= FIELD_OFFSET(t, f2)) \
+                VALGRIND_MAKE_MEM_DEFINED( \
+                    (const char *)(buf) + FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1), \
+                    FIELD_OFFSET(t, f2) - FIELD_OFFSET(t, f1) + sizeof(((t *)0)->f1)); \
     } while (0)
 
     switch (code)
