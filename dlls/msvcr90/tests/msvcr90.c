@@ -75,6 +75,9 @@ static int (__cdecl *p_atoflt)(_CRT_FLOAT *, char *);
 static unsigned int (__cdecl *p_set_abort_behavior)(unsigned int, unsigned int);
 static int (__cdecl *p_sopen_s)(int*, const char*, int, int, int);
 static int (__cdecl *p_wsopen_s)(int*, const wchar_t*, int, int, int);
+static void* (__cdecl *p_realloc_crt)(void*, size_t);
+static void* (__cdecl *p_malloc)(size_t);
+static void (__cdecl *p_free)(void*);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
@@ -753,6 +756,36 @@ static void test__wsopen_s(void)
     ok(fd == -1, "got %d\n", fd);
 }
 
+static void test__realloc_crt(void)
+{
+    void *mem;
+
+    if(!p_realloc_crt)
+    {
+        win_skip("_realloc_crt not found\n");
+        return;
+    }
+
+if (0)
+{
+    /* crashes on some systems starting Vista */
+    mem = p_realloc_crt(NULL, 10);
+}
+
+    mem = p_malloc(10);
+    ok(mem != NULL, "memory not allocated\n");
+
+    mem = p_realloc_crt(mem, 20);
+    ok(mem != NULL, "memory not reallocated\n");
+
+    mem = p_realloc_crt(mem, 0);
+    ok(mem == NULL, "memory not freed\n");
+
+    mem = p_realloc_crt(NULL, 0);
+    ok(mem != NULL, "memory not (re)allocated for size 0\n");
+    p_free(mem);
+}
+
 START_TEST(msvcr90)
 {
     HMODULE hcrt;
@@ -788,6 +821,9 @@ START_TEST(msvcr90)
     p_set_abort_behavior = (void *) GetProcAddress(hcrt, "_set_abort_behavior");
     p_sopen_s = (void*) GetProcAddress(hcrt, "_sopen_s");
     p_wsopen_s = (void*) GetProcAddress(hcrt, "_wsopen_s");
+    p_realloc_crt = (void*) GetProcAddress(hcrt, "_realloc_crt");
+    p_malloc = (void*) GetProcAddress(hcrt, "malloc");
+    p_free = (void*)GetProcAddress(hcrt, "free");
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
@@ -804,4 +840,5 @@ START_TEST(msvcr90)
     test__set_abort_behavior();
     test__sopen_s();
     test__wsopen_s();
+    test__realloc_crt();
 }

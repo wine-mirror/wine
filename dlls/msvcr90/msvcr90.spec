@@ -876,7 +876,7 @@
 @ cdecl _putws(wstr) msvcrt._putws
 @ stub _pwctype
 @ cdecl _read(long ptr long) msvcrt._read
-@ stub _realloc_crt
+@ cdecl _realloc_crt(ptr long) msvcrt.realloc
 @ cdecl _recalloc(ptr long long)
 @ stub _recalloc_crt
 @ stub _resetstkoflw
