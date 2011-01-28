@@ -26,6 +26,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
 #include <unistd.h>
 
 #include "ntstatus.h"
@@ -161,13 +164,47 @@ static int grow_file( int unix_fd, file_pos_t new_size )
     return 0;
 }
 
+/* check if the current directory allows exec mappings */
+static int check_current_dir_for_exec(void)
+{
+    int fd;
+    char tmpfn[] = "anonmap.XXXXXX";
+    void *ret = MAP_FAILED;
+
+    fd = mkstemps( tmpfn, 0 );
+    if (fd == -1) return 0;
+    if (grow_file( fd, 1 ))
+    {
+        ret = mmap( NULL, get_page_size(), PROT_READ | PROT_EXEC, MAP_PRIVATE, fd, 0 );
+        if (ret != MAP_FAILED) munmap( ret, get_page_size() );
+    }
+    close( fd );
+    unlink( tmpfn );
+    return (ret != MAP_FAILED);
+}
+
 /* create a temp file for anonymous mappings */
 static int create_temp_file( file_pos_t size )
 {
-    char tmpfn[16];
+    static int temp_dir_fd = -1;
+    char tmpfn[] = "anonmap.XXXXXX";
     int fd;
 
-    sprintf( tmpfn, "anonmap.XXXXXX" );  /* create it in the server directory */
+    if (temp_dir_fd == -1)
+    {
+        temp_dir_fd = server_dir_fd;
+        if (!check_current_dir_for_exec())
+        {
+            /* the server dir is noexec, try the config dir instead */
+            fchdir( config_dir_fd );
+            if (check_current_dir_for_exec())
+                temp_dir_fd = config_dir_fd;
+            else  /* neither works, fall back to server dir */
+                fchdir( server_dir_fd );
+        }
+    }
+    else if (temp_dir_fd != server_dir_fd) fchdir( temp_dir_fd );
+
     fd = mkstemps( tmpfn, 0 );
     if (fd != -1)
     {
@@ -179,6 +216,8 @@ static int create_temp_file( file_pos_t size )
         unlink( tmpfn );
     }
     else file_set_error();
+
+    if (temp_dir_fd != server_dir_fd) fchdir( server_dir_fd );
     return fd;
 }
 
