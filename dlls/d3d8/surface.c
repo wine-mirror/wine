@@ -311,7 +311,7 @@ HRESULT surface_init(IDirect3DSurface8Impl *surface, IDirect3DDevice8Impl *devic
         return hr;
     }
 
-    surface->parentDevice = (IDirect3DDevice8 *)device;
+    surface->parentDevice = &device->IDirect3DDevice8_iface;
     IUnknown_AddRef(surface->parentDevice);
 
     return D3D_OK;

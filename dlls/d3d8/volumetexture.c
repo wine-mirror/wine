@@ -370,7 +370,7 @@ HRESULT volumetexture_init(IDirect3DVolumeTexture8Impl *texture, IDirect3DDevice
         return hr;
     }
 
-    texture->parentDevice = (IDirect3DDevice8 *)device;
+    texture->parentDevice = &device->IDirect3DDevice8_iface;
     IDirect3DDevice8_AddRef(texture->parentDevice);
 
     return D3D_OK;

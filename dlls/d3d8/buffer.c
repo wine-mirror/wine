@@ -277,7 +277,7 @@ HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, IDirect3DDevice8Im
         return hr;
     }
 
-    buffer->parentDevice = (IDirect3DDevice8 *)device;
+    buffer->parentDevice = &device->IDirect3DDevice8_iface;
     IUnknown_AddRef(buffer->parentDevice);
 
     return D3D_OK;
@@ -538,7 +538,7 @@ HRESULT indexbuffer_init(IDirect3DIndexBuffer8Impl *buffer, IDirect3DDevice8Impl
         return hr;
     }
 
-    buffer->parentDevice = (IDirect3DDevice8 *)device;
+    buffer->parentDevice = &device->IDirect3DDevice8_iface;
     IUnknown_AddRef(buffer->parentDevice);
 
     return D3D_OK;

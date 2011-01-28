@@ -177,7 +177,7 @@ struct FvfToDecl
 struct IDirect3DDevice8Impl
 {
     /* IUnknown fields */
-    const IDirect3DDevice8Vtbl   *lpVtbl;
+    IDirect3DDevice8        IDirect3DDevice8_iface;
     const IWineD3DDeviceParentVtbl *device_parent_vtbl;
     LONG                         ref;
 /* But what about baseVertexIndex in state blocks? hmm... it may be a better idea to pass this to wined3d */

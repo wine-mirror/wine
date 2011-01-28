@@ -377,7 +377,7 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(IDirect3D8 *iface, UINT adapte
     }
 
     TRACE("Created device %p.\n", object);
-    *device = (IDirect3DDevice8 *)object;
+    *device = &object->IDirect3DDevice8_iface;
 
     return D3D_OK;
 }

@@ -166,7 +166,7 @@ HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl 
         return hr;
     }
 
-    swapchain->parentDevice = (IDirect3DDevice8 *)device;
+    swapchain->parentDevice = &device->IDirect3DDevice8_iface;
     IDirect3DDevice8_AddRef(swapchain->parentDevice);
 
     return D3D_OK;
