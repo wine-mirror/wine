@@ -1401,7 +1401,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_BeginStateBlock(IDirect3DDevice8 *ifa
 static HRESULT WINAPI IDirect3DDevice8Impl_EndStateBlock(IDirect3DDevice8 *iface, DWORD *pToken)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DStateBlock *stateblock;
+    struct wined3d_stateblock *stateblock;
     HRESULT hr;
 
     TRACE("iface %p, token %p.\n", iface, pToken);
@@ -1424,7 +1424,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_EndStateBlock(IDirect3DDevice8 *iface
     {
         ERR("Failed to create a handle\n");
         wined3d_mutex_lock();
-        IWineD3DStateBlock_Release(stateblock);
+        wined3d_stateblock_decref(stateblock);
         wined3d_mutex_unlock();
         return E_FAIL;
     }
@@ -1437,8 +1437,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_EndStateBlock(IDirect3DDevice8 *iface
 
 static HRESULT WINAPI IDirect3DDevice8Impl_ApplyStateBlock(IDirect3DDevice8 *iface, DWORD Token)
 {
-    IDirect3DDevice8Impl     *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DStateBlock *stateblock;
+    IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
+    struct wined3d_stateblock *stateblock;
     HRESULT hr;
 
     TRACE("iface %p, token %#x.\n", iface, Token);
@@ -1453,7 +1453,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ApplyStateBlock(IDirect3DDevice8 *ifa
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
     }
-    hr = IWineD3DStateBlock_Apply(stateblock);
+    hr = wined3d_stateblock_apply(stateblock);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1462,7 +1462,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ApplyStateBlock(IDirect3DDevice8 *ifa
 static HRESULT WINAPI IDirect3DDevice8Impl_CaptureStateBlock(IDirect3DDevice8 *iface, DWORD Token)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DStateBlock *stateblock;
+    struct wined3d_stateblock *stateblock;
     HRESULT hr;
 
     TRACE("iface %p, token %#x.\n", iface, Token);
@@ -1475,7 +1475,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CaptureStateBlock(IDirect3DDevice8 *i
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
     }
-    hr = IWineD3DStateBlock_Capture(stateblock);
+    hr = wined3d_stateblock_capture(stateblock);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1484,7 +1484,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CaptureStateBlock(IDirect3DDevice8 *i
 static HRESULT WINAPI IDirect3DDevice8Impl_DeleteStateBlock(IDirect3DDevice8 *iface, DWORD Token)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DStateBlock *stateblock;
+    struct wined3d_stateblock *stateblock;
 
     TRACE("iface %p, token %#x.\n", iface, Token);
 
@@ -1498,7 +1498,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeleteStateBlock(IDirect3DDevice8 *if
         return D3DERR_INVALIDCALL;
     }
 
-    if (IWineD3DStateBlock_Release((IUnknown *)stateblock))
+    if (wined3d_stateblock_decref(stateblock))
     {
         ERR("Stateblock %p has references left, this shouldn't happen.\n", stateblock);
     }
@@ -1511,7 +1511,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateStateBlock(IDirect3DDevice8 *if
         D3DSTATEBLOCKTYPE Type, DWORD *handle)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DStateBlock *stateblock;
+    struct wined3d_stateblock *stateblock;
     HRESULT hr;
 
     TRACE("iface %p, type %#x, handle %p.\n", iface, Type, handle);
@@ -1540,7 +1540,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateStateBlock(IDirect3DDevice8 *if
     {
         ERR("Failed to allocate a handle.\n");
         wined3d_mutex_lock();
-        IWineD3DStateBlock_Release(stateblock);
+        wined3d_stateblock_decref(stateblock);
         wined3d_mutex_unlock();
         return E_FAIL;
     }

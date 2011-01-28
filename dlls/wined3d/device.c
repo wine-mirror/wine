@@ -1894,7 +1894,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     }
     TRACE("(%p) : Created stateblock (%p)\n", This, This->stateBlock);
     This->updateStateBlock = This->stateBlock;
-    IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)This->updateStateBlock);
+    wined3d_stateblock_incref(This->updateStateBlock);
 
     This->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(*This->render_targets) * gl_info->limits.buffers);
@@ -2052,8 +2052,9 @@ err_out:
     if(swapchain) {
         IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
     }
-    if(This->stateBlock) {
-        IWineD3DStateBlock_Release((IWineD3DStateBlock *) This->stateBlock);
+    if (This->stateBlock)
+    {
+        wined3d_stateblock_decref(This->stateBlock);
         This->stateBlock = NULL;
     }
     if (This->blit_priv) {
@@ -2175,22 +2176,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     }
 
     /* Release the update stateblock */
-    if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
-        if(This->updateStateBlock != This->stateBlock)
-            FIXME("(%p) Something's still holding the Update stateblock\n",This);
+    if (wined3d_stateblock_decref(This->updateStateBlock))
+    {
+        if (This->updateStateBlock != This->stateBlock)
+            FIXME("Something's still holding the update stateblock.\n");
     }
     This->updateStateBlock = NULL;
 
-    { /* because were not doing proper internal refcounts releasing the primary state block
-        causes recursion with the extra checks in ResourceReleased, to avoid this we have
-        to set this->stateBlock = NULL; first */
-        IWineD3DStateBlock *stateBlock = (IWineD3DStateBlock *)This->stateBlock;
+    {
+        struct wined3d_stateblock *stateblock = This->stateBlock;
         This->stateBlock = NULL;
 
         /* Release the stateblock */
-        if(IWineD3DStateBlock_Release(stateBlock) > 0){
-            FIXME("(%p) Something's still holding the Update stateblock\n",This);
-        }
+        if (wined3d_stateblock_decref(stateblock))
+            FIXME("Something's still holding the stateblock.\n");
     }
 
     /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
@@ -4650,7 +4649,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) 
     hr = IWineD3DDeviceImpl_CreateStateBlock(iface, WINED3DSBT_RECORDED, &stateblock);
     if (FAILED(hr)) return hr;
 
-    IWineD3DStateBlock_Release((IWineD3DStateBlock*)This->updateStateBlock);
+    wined3d_stateblock_decref(This->updateStateBlock);
     This->updateStateBlock = (IWineD3DStateBlockImpl *)stateblock;
     This->isRecordingState = TRUE;
 
@@ -4674,7 +4673,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndStateBlock(IWineD3DDevice *iface, IW
     *ppStateBlock = (IWineD3DStateBlock*) object;
     This->isRecordingState = FALSE;
     This->updateStateBlock = This->stateBlock;
-    IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)This->updateStateBlock);
+    wined3d_stateblock_incref(This->updateStateBlock);
     /* IWineD3DStateBlock_AddRef(*ppStateBlock); don't need to do this, since we should really just release UpdateStateBlock first */
     TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, *ppStateBlock);
     return WINED3D_OK;
@@ -6404,8 +6403,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
         IWineD3DDevice_SetDepthStencilSurface(iface, NULL);
 
     TRACE("Resetting stateblock\n");
-    IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock);
-    IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
+    wined3d_stateblock_decref(This->updateStateBlock);
+    wined3d_stateblock_decref(This->stateBlock);
 
     delete_opengl_contexts(This, swapchain);
 
@@ -6526,7 +6525,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
     if (FAILED(hr)) ERR("Resetting the stateblock failed with error 0x%08x\n", hr);
     else TRACE("Created stateblock %p\n", This->stateBlock);
     This->updateStateBlock = This->stateBlock;
-    IWineD3DStateBlock_AddRef((IWineD3DStateBlock *)This->updateStateBlock);
+    wined3d_stateblock_incref(This->updateStateBlock);
 
     stateblock_init_default_state(This->stateBlock);
 

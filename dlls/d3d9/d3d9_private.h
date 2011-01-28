@@ -411,14 +411,14 @@ typedef struct  IDirect3DStateBlock9Impl {
     LONG                    ref;
 
     /* IDirect3DStateBlock9 fields */
-    IWineD3DStateBlock     *wineD3DStateBlock;
+    struct wined3d_stateblock *wined3d_stateblock;
 
     /* Parent reference */
     LPDIRECT3DDEVICE9EX       parentDevice;
 } IDirect3DStateBlock9Impl;
 
 HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, IDirect3DDevice9Impl *device,
-        D3DSTATEBLOCKTYPE type, IWineD3DStateBlock *wined3d_stateblock) DECLSPEC_HIDDEN;
+        D3DSTATEBLOCKTYPE type, struct wined3d_stateblock *wined3d_stateblock) DECLSPEC_HIDDEN;
 
 /* --------------------------- */
 /* IDirect3DVertexDeclaration9 */

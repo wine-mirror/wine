@@ -5484,7 +5484,7 @@ IDirect3DDeviceImpl_7_EndStateBlock(IDirect3DDevice7 *iface,
                                     DWORD *BlockHandle)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IWineD3DStateBlock *wined3d_sb;
+    struct wined3d_stateblock *wined3d_sb;
     HRESULT hr;
     DWORD h;
 
@@ -5511,7 +5511,7 @@ IDirect3DDeviceImpl_7_EndStateBlock(IDirect3DDevice7 *iface,
     if (h == DDRAW_INVALID_HANDLE)
     {
         ERR("Failed to allocate a stateblock handle.\n");
-        IWineD3DStateBlock_Release(wined3d_sb);
+        wined3d_stateblock_decref(wined3d_sb);
         LeaveCriticalSection(&ddraw_cs);
         *BlockHandle = 0;
         return DDERR_OUTOFMEMORY;
@@ -5617,7 +5617,7 @@ IDirect3DDeviceImpl_7_ApplyStateBlock(IDirect3DDevice7 *iface,
                                       DWORD BlockHandle)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IWineD3DStateBlock *wined3d_sb;
+    struct wined3d_stateblock *wined3d_sb;
     HRESULT hr;
 
     TRACE("iface %p, stateblock %#x.\n", iface, BlockHandle);
@@ -5632,7 +5632,7 @@ IDirect3DDeviceImpl_7_ApplyStateBlock(IDirect3DDevice7 *iface,
         return D3DERR_INVALIDSTATEBLOCK;
     }
 
-    hr = IWineD3DStateBlock_Apply(wined3d_sb);
+    hr = wined3d_stateblock_apply(wined3d_sb);
     LeaveCriticalSection(&ddraw_cs);
 
     return hr_ddraw_from_wined3d(hr);
@@ -5680,7 +5680,7 @@ IDirect3DDeviceImpl_7_CaptureStateBlock(IDirect3DDevice7 *iface,
                                         DWORD BlockHandle)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IWineD3DStateBlock *wined3d_sb;
+    struct wined3d_stateblock *wined3d_sb;
     HRESULT hr;
 
     TRACE("iface %p, stateblock %#x.\n", iface, BlockHandle);
@@ -5695,7 +5695,7 @@ IDirect3DDeviceImpl_7_CaptureStateBlock(IDirect3DDevice7 *iface,
         return D3DERR_INVALIDSTATEBLOCK;
     }
 
-    hr = IWineD3DStateBlock_Capture(wined3d_sb);
+    hr = wined3d_stateblock_capture(wined3d_sb);
     LeaveCriticalSection(&ddraw_cs);
     return hr_ddraw_from_wined3d(hr);
 }
@@ -5741,7 +5741,7 @@ IDirect3DDeviceImpl_7_DeleteStateBlock(IDirect3DDevice7 *iface,
                                        DWORD BlockHandle)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IWineD3DStateBlock *wined3d_sb;
+    struct wined3d_stateblock *wined3d_sb;
     ULONG ref;
 
     TRACE("iface %p, stateblock %#x.\n", iface, BlockHandle);
@@ -5756,7 +5756,7 @@ IDirect3DDeviceImpl_7_DeleteStateBlock(IDirect3DDevice7 *iface,
         return D3DERR_INVALIDSTATEBLOCK;
     }
 
-    if ((ref = IWineD3DStateBlock_Release(wined3d_sb)))
+    if ((ref = wined3d_stateblock_decref(wined3d_sb)))
     {
         ERR("Something is still holding stateblock %p (refcount %u).\n", wined3d_sb, ref);
     }
@@ -5808,7 +5808,7 @@ IDirect3DDeviceImpl_7_CreateStateBlock(IDirect3DDevice7 *iface,
                                        DWORD *BlockHandle)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IWineD3DStateBlock *wined3d_sb;
+    struct wined3d_stateblock *wined3d_sb;
     HRESULT hr;
     DWORD h;
 
@@ -5840,7 +5840,7 @@ IDirect3DDeviceImpl_7_CreateStateBlock(IDirect3DDevice7 *iface,
     if (h == DDRAW_INVALID_HANDLE)
     {
         ERR("Failed to allocate stateblock handle.\n");
-        IWineD3DStateBlock_Release(wined3d_sb);
+        wined3d_stateblock_decref(wined3d_sb);
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_OUTOFMEMORY;
     }

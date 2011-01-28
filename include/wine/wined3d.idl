@@ -2110,6 +2110,7 @@ interface IWineD3DSurface;
 interface IWineD3DVolume;
 interface IWineD3DSwapChain;
 interface IWineD3DDevice;
+struct wined3d_stateblock;
 
 [
     object,
@@ -2614,19 +2615,6 @@ interface IWineD3DVertexDeclaration : IWineD3DBase
 [
     object,
     local,
-    uuid(83b073ce-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DStateBlock : IUnknown
-{
-    HRESULT Capture(
-    );
-    HRESULT Apply(
-    );
-}
-
-[
-    object,
-    local,
     uuid(905ddbac-6f30-11d9-c687-00046142c14f)
 ]
 interface IWineD3DQuery : IUnknown
@@ -2790,7 +2778,7 @@ interface IWineD3DDevice : IUnknown
     );
     HRESULT CreateStateBlock(
         [in] WINED3DSTATEBLOCKTYPE type,
-        [out] IWineD3DStateBlock **stateblock
+        [out] struct wined3d_stateblock **stateblock
     );
     HRESULT CreateSurface(
         [in] UINT width,
@@ -3245,7 +3233,7 @@ interface IWineD3DDevice : IUnknown
     HRESULT BeginStateBlock(
     );
     HRESULT EndStateBlock(
-        [out] IWineD3DStateBlock **stateblock
+        [out] struct wined3d_stateblock **stateblock
     );
     HRESULT BeginScene(
     );
@@ -3365,3 +3353,8 @@ IWineD3D * __stdcall WineDirect3DCreate(UINT dxVersion, void *parent);
 IWineD3DClipper * __stdcall WineDirect3DCreateClipper(void);
 void __stdcall wined3d_mutex_lock(void);
 void __stdcall wined3d_mutex_unlock(void);
+
+HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock);
+HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);
+ULONG __cdecl wined3d_stateblock_decref(struct wined3d_stateblock *stateblock);
+ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);

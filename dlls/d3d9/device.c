@@ -1533,7 +1533,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_BeginStateBlock(IDirect3DDevice9Ex *i
 static HRESULT WINAPI IDirect3DDevice9Impl_EndStateBlock(IDirect3DDevice9Ex *iface, IDirect3DStateBlock9 **stateblock)
 {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    IWineD3DStateBlock *wined3d_stateblock;
+    struct wined3d_stateblock *wined3d_stateblock;
     IDirect3DStateBlock9Impl *object;
     HRESULT hr;
 
@@ -1553,7 +1553,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_EndStateBlock(IDirect3DDevice9Ex *ifa
     {
         ERR("Failed to allocate stateblock memory.\n");
         wined3d_mutex_lock();
-        IWineD3DStateBlock_Release(wined3d_stateblock);
+        wined3d_stateblock_decref(wined3d_stateblock);
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
     }
@@ -1563,7 +1563,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_EndStateBlock(IDirect3DDevice9Ex *ifa
     {
         WARN("Failed to initialize stateblock, hr %#x.\n", hr);
         wined3d_mutex_lock();
-        IWineD3DStateBlock_Release(wined3d_stateblock);
+        wined3d_stateblock_decref(wined3d_stateblock);
         wined3d_mutex_unlock();
         HeapFree(GetProcessHeap(), 0, object);
         return hr;

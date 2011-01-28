@@ -60,7 +60,7 @@ static ULONG WINAPI IDirect3DStateBlock9Impl_Release(LPDIRECT3DSTATEBLOCK9 iface
 
     if (ref == 0) {
         wined3d_mutex_lock();
-        IWineD3DStateBlock_Release(This->wineD3DStateBlock);
+        wined3d_stateblock_decref(This->wined3d_stateblock);
         wined3d_mutex_unlock();
 
         IDirect3DDevice9Ex_Release(This->parentDevice);
@@ -91,7 +91,7 @@ static HRESULT WINAPI IDirect3DStateBlock9Impl_Capture(LPDIRECT3DSTATEBLOCK9 ifa
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = IWineD3DStateBlock_Capture(This->wineD3DStateBlock);
+    hr = wined3d_stateblock_capture(This->wined3d_stateblock);
     wined3d_mutex_unlock();
 
     return hr;
@@ -104,7 +104,7 @@ static HRESULT WINAPI IDirect3DStateBlock9Impl_Apply(LPDIRECT3DSTATEBLOCK9 iface
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = IWineD3DStateBlock_Apply(This->wineD3DStateBlock);
+    hr = wined3d_stateblock_apply(This->wined3d_stateblock);
     wined3d_mutex_unlock();
 
     return hr;
@@ -124,7 +124,7 @@ static const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl =
 };
 
 HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, IDirect3DDevice9Impl *device,
-        D3DSTATEBLOCKTYPE type, IWineD3DStateBlock *wined3d_stateblock)
+        D3DSTATEBLOCKTYPE type, struct wined3d_stateblock *wined3d_stateblock)
 {
     HRESULT hr;
 
@@ -133,13 +133,13 @@ HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, IDirect3DDevice9Im
 
     if (wined3d_stateblock)
     {
-        stateblock->wineD3DStateBlock = wined3d_stateblock;
+        stateblock->wined3d_stateblock = wined3d_stateblock;
     }
     else
     {
         wined3d_mutex_lock();
         hr = IWineD3DDevice_CreateStateBlock(device->WineD3DDevice,
-                (WINED3DSTATEBLOCKTYPE)type, &stateblock->wineD3DStateBlock);
+                (WINED3DSTATEBLOCKTYPE)type, &stateblock->wined3d_stateblock);
         wined3d_mutex_unlock();
         if (FAILED(hr))
         {
