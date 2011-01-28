@@ -216,6 +216,7 @@ static void test_synthesized(void)
     HENHMETAFILE emf;
     BOOL r;
     UINT cf;
+    HANDLE data;
 
     htext = create_text();
     emf = create_emf();
@@ -235,15 +236,21 @@ static void test_synthesized(void)
     ok(r, "gle %d\n", GetLastError());
     cf = EnumClipboardFormats(0);
     ok(cf == CF_TEXT, "cf %08x\n", cf);
+    data = GetClipboardData(cf);
+    ok(data != NULL, "couldn't get data, cf %08x\n", cf);
 
     cf = EnumClipboardFormats(cf);
     ok(cf == CF_ENHMETAFILE, "cf %08x\n", cf);
+    data = GetClipboardData(cf);
+    ok(data != NULL, "couldn't get data, cf %08x\n", cf);
 
     cf = EnumClipboardFormats(cf);
     todo_wine ok(cf == CF_LOCALE, "cf %08x\n", cf);
     if(cf == CF_LOCALE)
         cf = EnumClipboardFormats(cf);
     ok(cf == CF_OEMTEXT, "cf %08x\n", cf);
+    data = GetClipboardData(cf);
+    ok(data != NULL, "couldn't get data, cf %08x\n", cf);
 
     cf = EnumClipboardFormats(cf);
     ok(cf == CF_UNICODETEXT ||
@@ -253,6 +260,8 @@ static void test_synthesized(void)
     if(cf == CF_UNICODETEXT)
         cf = EnumClipboardFormats(cf);
     ok(cf == CF_METAFILEPICT, "cf %08x\n", cf);
+    data = GetClipboardData(cf);
+    todo_wine ok(data != NULL, "couldn't get data, cf %08x\n", cf);
 
     cf = EnumClipboardFormats(cf);
     ok(cf == 0, "cf %08x\n", cf);
