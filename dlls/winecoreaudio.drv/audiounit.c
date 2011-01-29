@@ -24,7 +24,9 @@
 
 #define ULONG CoreFoundation_ULONG
 #define HRESULT CoreFoundation_HRESULT
+#ifndef HAVE_AUDIOUNIT_AUDIOCOMPONENT_H
 #include <CoreServices/CoreServices.h>
+#endif
 #include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioToolbox.h>
 #undef ULONG
@@ -34,6 +36,28 @@
 #undef STDMETHODCALLTYPE
 #include "coreaudio.h"
 #include "wine/debug.h"
+
+#ifndef HAVE_AUDIOUNIT_AUDIOCOMPONENT_H
+/* Define new AudioComponent Manager functions for compatibility's sake */
+typedef Component AudioComponent;
+typedef ComponentDescription AudioComponentDescription;
+typedef ComponentInstance AudioComponentInstance;
+
+static inline AudioComponent AudioComponentFindNext(AudioComponent ac, AudioComponentDescription *desc)
+{
+    return FindNextComponent(ac, desc);
+}
+
+static inline OSStatus AudioComponentInstanceNew(AudioComponent ac, AudioComponentInstance *aci)
+{
+    return OpenAComponent(ac, aci);
+}
+
+static inline OSStatus AudioComponentInstanceDispose(AudioComponentInstance aci)
+{
+    return CloseComponent(aci);
+}
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 WINE_DECLARE_DEBUG_CHANNEL(midi);
@@ -68,8 +92,8 @@ extern OSStatus CoreAudio_wiAudioUnitIOProc(void *inRefCon,
 int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au)
 {
     OSStatus err;
-    Component comp;
-    ComponentDescription desc;
+    AudioComponent comp;
+    AudioComponentDescription desc;
     AURenderCallbackStruct callbackStruct;
 
     TRACE("\n");
@@ -80,11 +104,11 @@ int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au)
     desc.componentFlags = 0;
     desc.componentFlagsMask = 0;
 
-    comp = FindNextComponent(NULL, &desc);
+    comp = AudioComponentFindNext(NULL, &desc);
     if (comp == NULL)
         return 0;
     
-    err = OpenAComponent(comp, au);
+    err = AudioComponentInstanceNew(comp, au);
     if (err != noErr || *au == NULL)
         return 0;
         
@@ -102,7 +126,7 @@ int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au)
 
 int AudioUnit_CloseAudioUnit(AudioUnit au)
 {
-    OSStatus err = CloseComponent(au);
+    OSStatus err = AudioComponentInstanceDispose(au);
     return (err == noErr);
 }
 
@@ -198,8 +222,8 @@ int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
         UInt32* outFrameCount)
 {
     OSStatus                    err = noErr;
-    ComponentDescription        description;
-    Component                   component;
+    AudioComponentDescription   description;
+    AudioComponent              component;
     AudioUnit                   au;
     UInt32                      param;
     AURenderCallbackStruct      callback;
@@ -220,17 +244,17 @@ int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
     description.componentFlags          = 0;
     description.componentFlagsMask      = 0;
 
-    component = FindNextComponent(NULL, &description);
+    component = AudioComponentFindNext(NULL, &description);
     if (!component)
     {
-        ERR("FindNextComponent(kAudioUnitSubType_HALOutput) failed\n");
+        ERR("AudioComponentFindNext(kAudioUnitSubType_HALOutput) failed\n");
         return 0;
     }
 
-    err = OpenAComponent(component, &au);
+    err = AudioComponentInstanceNew(component, &au);
     if (err != noErr || au == NULL)
     {
-        ERR("OpenAComponent failed: %08lx\n", err);
+        ERR("AudioComponentInstanceNew failed: %08lx\n", err);
         return 0;
     }
 
@@ -343,7 +367,7 @@ int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
 
 error:
     if (au)
-        CloseComponent(au);
+        AudioComponentInstanceDispose(au);
     return 0;
 }
 
@@ -353,7 +377,7 @@ error:
 int SynthUnit_CreateDefaultSynthUnit(AUGraph *graph, AudioUnit *synth)
 {
     OSStatus err;
-    ComponentDescription desc;
+    AudioComponentDescription desc;
     AUNode synthNode;
     AUNode outNode;
 

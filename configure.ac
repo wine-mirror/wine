@@ -371,6 +371,7 @@ AC_CHECK_HEADERS(\
 	ApplicationServices/ApplicationServices.h \
 	AudioToolbox/AudioConverter.h \
 	AudioUnit/AudioUnit.h \
+	AudioUnit/AudioComponent.h \
 	CL/cl.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
@@ -711,8 +712,13 @@ case $host_os in
     fi
     if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
     then
-        dnl CoreServices needed by AudioUnit
-        AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
+        if test "$ac_cv_header_AudioUnit_AudioComponent_h" = "yes"
+        then
+            AC_SUBST(COREAUDIO,"-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI")
+        else
+            dnl CoreServices needed by AudioUnit
+            AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
+        fi
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then

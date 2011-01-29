@@ -40,6 +40,9 @@
 /* Define to 1 if you have the <AudioToolbox/AudioConverter.h> header file. */
 #undef HAVE_AUDIOTOOLBOX_AUDIOCONVERTER_H
 
+/* Define to 1 if you have the <AudioUnit/AudioComponent.h> header file. */
+#undef HAVE_AUDIOUNIT_AUDIOCOMPONENT_H
+
 /* Define to 1 if you have the <AudioUnit/AudioUnit.h> header file. */
 #undef HAVE_AUDIOUNIT_AUDIOUNIT_H
 
