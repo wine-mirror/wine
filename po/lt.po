@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-01-25 20:33+0300\n"
+"PO-Revision-Date: 2011-01-29 17:28+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@gmail.com>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -3011,12 +3011,11 @@ msgstr "Funkcija skaityti/rašyti proceso atmintį dalinai baigta\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted\n"
-msgstr ""
+msgstr "Nesutikta su oportunistiniu užblokavimu\n"
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received\n"
-msgstr "Neteisingas pranešimo vardas\n"
+msgstr "Gautas neteisingas oportunistinio užblokavimo pranešimas\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -3103,9 +3102,8 @@ msgid "Invalid key\n"
 msgstr "Neteisingas raktas\n"
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key\n"
-msgstr "Nepavyko perskaityti registro rakto\n"
+msgstr "Nepavyko atverti registro rakto\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key\n"
@@ -3271,21 +3269,19 @@ msgstr "Kita tarnybos paskyra\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected\n"
-msgstr ""
+msgstr "Tvarkyklės klaida negali būti aptikta\n"
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected\n"
-msgstr "Procesas nutrauktas\n"
+msgstr "Proceso nutraukimas negali būti aptiktas\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service\n"
-msgstr ""
+msgstr "Nėra atkūrimo programos tarnybai\n"
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe\n"
-msgstr "Spausdinimas nerealizuotas"
+msgstr "Tarnyba nerealizuota vykdomajame faile\n"
 
 #: winerror.mc:1296
 msgid "End of media\n"
@@ -3464,110 +3460,96 @@ msgid "DLL not found\n"
 msgstr "DLL nerastas\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles\n"
-msgstr "Daugiau nebėra paieškos rodyklių\n"
+msgstr "Trūksta naudotojo rodyklių\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
-msgstr ""
+msgstr "Pranešimas gali būti naudojamas tik sinchroniniuose kreipiniuose\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty\n"
-msgstr ""
+msgstr "Šaltinio elementas tuščias\n"
 
 #: winerror.mc:1531
-#, fuzzy
 msgid "The destination element is full\n"
-msgstr "Operacija sėkmingai įvykdyta\n"
+msgstr "Paskirties elementas pilnas\n"
 
 #: winerror.mc:1536
-#, fuzzy
 msgid "The element address is invalid\n"
-msgstr "Nurodyta įrenginio rodyklė yra netinkama."
+msgstr "Elemento adresas netinkamas\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present\n"
-msgstr ""
+msgstr "Dėtuvės nėra\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
-msgstr ""
+msgstr "Įrenginiui reikalingas pakartotinis inicijavimas\n"
 
 #: winerror.mc:1551
-#, fuzzy
 msgid "The device requires cleaning\n"
-msgstr "Tarnyba %s yra paleidžiama.\n"
+msgstr "Įrenginiui reikalingas valymas\n"
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open\n"
-msgstr "Spausdintuvo durelės atidarytos; "
+msgstr "Įrenginio durelės atidarytos\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected\n"
-msgstr "Kanalas neprijungtas\n"
+msgstr "Įrenginys neprijungtas\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found\n"
-msgstr "Įrašas nerastas\n"
+msgstr "Elementas nerastas\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found\n"
-msgstr "Kelias nerastas\n"
+msgstr "Atitiktis nerasta\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found\n"
-msgstr "Nerasta procedūra\n"
+msgstr "Savybių aibė nerasta\n"
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found\n"
-msgstr "Kelias nerastas\n"
+msgstr "Taškas nerastas\n"
 
 #: winerror.mc:1586
-#, fuzzy
 msgid "No running tracking service\n"
-msgstr "Nežinoma prieigos teisių tarnyba\n"
+msgstr "Nėra vykdomos stebėjimo tarnybos\n"
 
 #: winerror.mc:1591
-#, fuzzy
 msgid "No such volume ID\n"
-msgstr "Nėra tokio naudotojo\n"
+msgstr "Nėra tokio tomo identifikatoriaus\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced\n"
-msgstr ""
+msgstr "Nepavyko pašalinti keičiamo failo\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place\n"
-msgstr ""
+msgstr "Nepavyko perkelti pakeitimo failo į vietą\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed\n"
-msgstr ""
+msgstr "Pakeitimo failo perkėlimas nepavyko\n"
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted\n"
-msgstr "Tinklo vardas pašalintas\n"
+msgstr "Žurnalas yra šalinamas\n"
 
 #: winerror.mc:1616
-#, fuzzy
 msgid "The journal is not active\n"
-msgstr "Tarnyba neaktyvi\n"
+msgstr "Žurnalas neaktyvus\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found\n"
-msgstr ""
+msgstr "Rastas galimas atitinkantis failas\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted\n"
-msgstr ""
+msgstr "Žurnalo įrašas buvo pašalintas\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name\n"
@@ -3762,32 +3744,28 @@ msgid "No more local devices\n"
 msgstr "Nėra daugiau vietinių įrenginių\n"
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist\n"
-msgstr "Įrenginys neegzistuoja\n"
+msgstr "Tinklavietė neegzistuoja\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists\n"
-msgstr "Sritis jau egzistuoja\n"
+msgstr "Srities valdiklis jau egzistuoja\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected\n"
-msgstr "Kanalas neprijungtas\n"
+msgstr "Palaikoma tik kai prijungta\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed\n"
-msgstr ""
+msgstr "Vykdyti operaciją, net jei niekas nepasikeitė\n"
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid\n"
-msgstr "Nurodyta įrenginio rodyklė yra netinkama."
+msgstr "Naudotojo profilis yra netinkamas."
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
-msgstr ""
+msgstr "„Small Business Server“ sistema nepalaikoma\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned\n"
@@ -4166,18 +4144,16 @@ msgid "Licence quota exceeded\n"
 msgstr "Viršyta licencijų kvota\n"
 
 #: winerror.mc:2381
-#, fuzzy
 msgid "Wrong target name\n"
-msgstr "Nėra įrašo vardo\n"
+msgstr "Neteisingas paskirties vardas\n"
 
 #: winerror.mc:2386
-#, fuzzy
 msgid "Mutual authentication failed\n"
-msgstr "Neteisinga tapatumo nustatymo tapatybė\n"
+msgstr "Rankinis tapatumo nustatymas nepavyko\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server\n"
-msgstr ""
+msgstr "Laiko nukrypimas tarp kliento ir serverio\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
@@ -4408,28 +4384,24 @@ msgid "Menu item not found\n"
 msgstr "Meniu elementas nerastas\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle\n"
-msgstr "Neteisinga tikslo rodyklė\n"
+msgstr "Neteisinga klaviatūros rodyklė\n"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr "Nesutikta su prisijungimo tipu\n"
+msgstr "Hook tipas neleidžiamas\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
-msgstr ""
+msgstr "Reikalinga interaktyvi lango vieta\n"
 
 #: winerror.mc:2696
-#, fuzzy
 msgid "Timeout\n"
-msgstr "Baigėsi laikas"
+msgstr "Baigėsi laikas\n"
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle\n"
-msgstr "Klaidinga meniu rodyklė\n"
+msgstr "Klaidinga monitoriaus rodyklė\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4448,201 +4420,168 @@ msgid "Event log file changed\n"
 msgstr "Įvykių žurnalo failas pasikeitė\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "Neteisingas tarnybos vardas\n"
+msgstr "Diegimo programos tarnybos klaida\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user\n"
-msgstr "Diegimo programos"
+msgstr "Įdiegimas nutrauktas naudotojo\n"
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure\n"
-msgstr "Disko skaidinio klaida\n"
+msgstr "Įdiegimo klaida\n"
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended\n"
-msgstr "Diegimo programos"
+msgstr "Įdiegimas atidėtas\n"
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product\n"
-msgstr "Nežinomas prievadas\n"
+msgstr "Nežinomas produktas\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature\n"
-msgstr "Nežinoma %s funkcija"
+msgstr "Nežinoma funkcija\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component\n"
-msgstr "Nežinomas prievadas\n"
+msgstr "Nežinomas komponentas\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknonw property\n"
-msgstr "Nežinomas prievadas\n"
+msgstr "Nežinoma savybė\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state\n"
-msgstr "Neteisinga rodyklė\n"
+msgstr "Neteisinga rodyklės būsena\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration\n"
-msgstr "Wine konfigūravimas"
+msgstr "Bloga konfigūracija\n"
 
 #: winerror.mc:2776
 msgid "Index is missing\n"
-msgstr ""
+msgstr "Trūksta indekso\n"
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing\n"
-msgstr "trūksta diegimo šaltinio komponentui"
+msgstr "Trūksta įdiegimo šaltinio\n"
 
 #: winerror.mc:2786
-#, fuzzy
 msgid "Wrong installation package version\n"
-msgstr "Neteisinga sekų išdėstymo paketo versija\n"
+msgstr "Neteisinga įdiegimo paketo versija\n"
 
 #: winerror.mc:2791
-#, fuzzy
 msgid "Product uninstalled\n"
-msgstr "Hook procedūra neįdiegta\n"
+msgstr "Produktas pašalintas\n"
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax\n"
-msgstr "Neteisinga vardo sintaksė\n"
+msgstr "Neteisinga užklausos sintaksė\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field\n"
 msgstr "Neteisingas laikas\n"
 
 #: winerror.mc:2806
-#, fuzzy
 msgid "Device removed\n"
-msgstr "Įrenginys jau atsimintas\n"
+msgstr "Įrenginys pašalintas\n"
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running\n"
-msgstr "Tarnyba jau vykdoma\n"
+msgstr "Įdiegimas jau vykdomas\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr ""
+msgstr "Nepavyko atverti įdiegimo paketo\n"
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid\n"
-msgstr "Diegimo programos"
+msgstr "Įdiegimo paketas netinkamas\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
-msgstr ""
+msgstr "Diegimo programos naudotojo sąsajos klaida\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"
-msgstr ""
+msgstr "Nepavyko atverti įdiegimo žurnalo failo\n"
 
 #: winerror.mc:2836
-#, fuzzy
 msgid "Installation language not supported\n"
-msgstr "Operacija nepalaikoma\n"
+msgstr "Įdiegimo kalba nepalaikoma\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
-msgstr ""
+msgstr "Nepavyko pritaikyti įdiegimo transformacijos\n"
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected\n"
-msgstr "Diegimo programos"
+msgstr "Įdiegimo paketas atmestas\n"
 
 #: winerror.mc:2851
-#, fuzzy
 msgid "Function could not be called\n"
-msgstr "Pasiekta sujungimų kiekio riba\n"
+msgstr "Nepavyko iškviesti funkcijos\n"
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed\n"
-msgstr "Tikėtasi funkcijos"
+msgstr "Funkcija nepavyko\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table\n"
-msgstr "Neteisinga žymė\n"
+msgstr "Neteisinga lentelė\n"
 
 #: winerror.mc:2866
-#, fuzzy
 msgid "Data type mismatch\n"
-msgstr "Neatitinka kompiuterio tipas\n"
+msgstr "Duomenų tipo neatitikimas\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type\n"
 msgstr "Nepalaikomas tipas\n"
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed\n"
-msgstr "Nepavyko atverti\n"
+msgstr "Nepavyko sukurti\n"
 
 #: winerror.mc:2881
-#, fuzzy
 msgid "Temporary directory not writable\n"
-msgstr "Failas ar katalogas pažeisti\n"
+msgstr "Į laikinajį katalogą negalima rašyti\n"
 
 #: winerror.mc:2886
-#, fuzzy
 msgid "Installation platform not supported\n"
-msgstr "Operacija nepalaikoma\n"
+msgstr "Įdiegimo platforma nepalaikoma\n"
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used\n"
-msgstr "Sąsaja nerasta\n"
+msgstr "Diegimo programa nenaudojama\n"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr "Nepavyko atverti „%s“\n"
+msgstr "Nepavyko atverti pataisų paketo\n"
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package\n"
-msgstr "Neteisinga žymė\n"
+msgstr "Neteisingas pataisų paketas\n"
 
 #: winerror.mc:2906
-#, fuzzy
 msgid "Unsupported patch package\n"
-msgstr "Nepalaikomas tipas\n"
+msgstr "Nepalaikomas pataisų paketas\n"
 
 #: winerror.mc:2911
-#, fuzzy
 msgid "Another version is installed\n"
-msgstr "Spausdintuvo tvarkyklė jau įdiegta\n"
+msgstr "Kita versija jau įdiegta\n"
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line\n"
-msgstr "Neteisinga GW komanda\n"
+msgstr "Neteisinga komandos eilutė\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
-msgstr ""
+msgstr "Nuotolinis įdiegimas neleidžiamas\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install\n"
-msgstr ""
+msgstr "Inicijuotas paleidimas iš naujo po sėkmingo įdiegimo\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
@@ -5213,92 +5152,76 @@ msgid "Invalid driver\n"
 msgstr "Neteisinga tvarkyklė\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "Neteisingas objektas\n"
+msgstr "Nustatytas neteisingas objektų nustatymas\n"
 
 #: winerror.mc:3651
-#, fuzzy
 msgid "Incomplete RPC send\n"
-msgstr "Nevisas vardas\n"
+msgstr "Išsiųstas nevisas RPC\n"
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle\n"
-msgstr "Neteisinga hook rodyklė\n"
+msgstr "Neteisinga asinchroninio RPC rodyklė\n"
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call\n"
-msgstr "Neteisinga hook rodyklė\n"
+msgstr "Neteisinga asinchroninio RPC kvietimas\n"
 
 #: winerror.mc:3666
-#, fuzzy
 msgid "RPC pipe closed\n"
-msgstr "Kanalas užvertas\n"
+msgstr "RPC kanalas užvertas\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
-msgstr ""
+msgstr "Disciplinos klaida RPC kanale\n"
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr "Ne RPC klaida\n"
+msgstr "Nėra duomenų RPC kanale\n"
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available\n"
-msgstr "Nėra saugumo konteksto\n"
+msgstr "Nėra tinklavietės vardo\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed\n"
-msgstr ""
+msgstr "Nėra prieigos prie failo\n"
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved\n"
-msgstr "Naudotojo vardas nerastas\n"
+msgstr "Nepavyko nustatyti failo vardo\n"
 
 #: winerror.mc:3696
-#, fuzzy
 msgid "RPC entry type mismatch\n"
-msgstr "Neatitinka kompiuterio tipas\n"
+msgstr "RPC įrašo tipo neatitikimas\n"
 
 #: winerror.mc:3701
-#, fuzzy
 msgid "Not all objects could be exported\n"
-msgstr "Ne visi objektai importuoti\n"
+msgstr "Ne visi objektai eksportuoti\n"
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported\n"
-msgstr "Naudotojo vardas nerastas\n"
+msgstr "Sąsaja neeksportuota\n"
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added\n"
-msgstr "Naudotojo vardas nerastas\n"
+msgstr "Profilis nepridėtas\n"
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added\n"
-msgstr "Naudotojo vardas nerastas\n"
+msgstr "Profilio elementas nepridėtas\n"
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed\n"
-msgstr "Naudotojo vardas nerastas\n"
+msgstr "Profilio elementas nepašalintas\n"
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added\n"
-msgstr "Naudotojo vardas nerastas\n"
+msgstr "Grupės elementas nepridėtas\n"
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed\n"
-msgstr "Naudotojo vardas nerastas\n"
+msgstr "Grupės elementas nepašalintas\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found\n"
