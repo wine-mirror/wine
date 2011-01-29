@@ -336,6 +336,13 @@ static struct dbkey_pair*       TERM_dbkey;
 static unsigned                 TERM_dbkey_size;
 static unsigned                 TERM_dbkey_index;
 
+static int  TERM_dbkey_cmp(const void* p1, const void* p2)
+{
+    const struct dbkey_pair*  kp1 = p1;
+    const struct dbkey_pair*  kp2 = p2;
+    return strcmp(kp1->string, kp2->string);
+}
+
 static BOOL TERM_AddKeyDescr(const char* string, struct dbkey_descr* descr)
 {
     if (!string || string == (const char*)-1) return TRUE;
@@ -363,7 +370,7 @@ static BOOL TERM_AddKeyDescr(const char* string, struct dbkey_descr* descr)
 
 static BOOL TERM_BuildKeyDB(void)
 {
-    unsigned i, len;
+    unsigned i, j, len;
     struct dbkey_descr descr;
     char tmp[64];
 
@@ -388,6 +395,17 @@ static BOOL TERM_BuildKeyDB(void)
 #undef X
         }
     }
+    for (i = 0; i < TERM_dbkey_index; i++)
+    {
+        for (j = 0; j < TERM_dbkey_index; j++)
+        {
+            if (i != j &&
+                TERM_dbkey[i].string_len >= TERM_dbkey[j].string_len &&
+                !memcmp(TERM_dbkey[i].string, TERM_dbkey[j].string, TERM_dbkey[j].string_len))
+                FIXME("substring %d/%s %d/%s\n", i, TERM_dbkey[i].string, j, TERM_dbkey[j].string);
+        }
+    }
+    qsort(TERM_dbkey, TERM_dbkey_index, sizeof(TERM_dbkey[0]), TERM_dbkey_cmp);
     return TRUE;
 }
 
@@ -419,27 +437,30 @@ BOOL TERM_Exit(void)
 /* -1 not found, 0 cannot decide, > 0 found */
 int TERM_FillInputRecord(const char* in, size_t len, INPUT_RECORD* ir)
 {
-    unsigned            i;
-    struct dbkey_descr* found = NULL;
+    int low = 0, high = TERM_dbkey_index - 1, mid, res;
+    struct dbkey_descr* found;
 
-    for (i = 0; i < TERM_dbkey_index; i++)
+    while (low <= high)
     {
-        if (!memcmp(TERM_dbkey[i].string, in, len))
+        mid = low + (high - low) / 2;
+        res = memcmp(in, TERM_dbkey[mid].string, len);
+        if (!res)
         {
-            if (len < TERM_dbkey[i].string_len) return 0;
-            if (found) return 0;
-            found = &TERM_dbkey[i].descr;
+            if (len < TERM_dbkey[mid].string_len) return 0;
+            found = &TERM_dbkey[mid].descr;
+            switch (found->kind)
+            {
+            case dbk_simple:
+                return TERM_FillSimpleChar(found->p1, ir);
+            case dbk_complex:
+                init_complex_char(&ir[0], 1, found->p1, found->p2, ENHANCED_KEY | found->p3);
+                init_complex_char(&ir[1], 0, found->p1, found->p2, ENHANCED_KEY | found->p3);
+                return 2;
+            }
+            return -1;
         }
-    }
-    if (!found) return -1;
-    switch (found->kind)
-    {
-    case dbk_simple:
-        return TERM_FillSimpleChar(found->p1, ir);
-    case dbk_complex:
-        init_complex_char(&ir[0], 1, found->p1, found->p2, ENHANCED_KEY | found->p3);
-        init_complex_char(&ir[1], 0, found->p1, found->p2, ENHANCED_KEY | found->p3);
-        return 2;
+        else if (res < 0) high = mid - 1;
+        else low = mid + 1;
     }
     return -1;
 }
