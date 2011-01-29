@@ -486,27 +486,44 @@ BOOL CoreAudio_GetDevCaps (void)
     OSStatus status;
     UInt32 propertySize;
     AudioDeviceID devId = CoreAudio_DefaultDevice.outputDeviceID;
+    AudioObjectPropertyAddress propertyAddress;
     
-    char name[MAXPNAMELEN];
+    CFStringRef name;
+    CFRange range;
     
-    propertySize = MAXPNAMELEN;
-    status = AudioDeviceGetProperty(devId, 0 , FALSE, kAudioDevicePropertyDeviceName, &propertySize, name);
+    propertySize = sizeof(name);
+    propertyAddress.mSelector = kAudioObjectPropertyName;
+    propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
+    propertyAddress.mElement = kAudioObjectPropertyElementMaster;
+    status = AudioObjectGetPropertyData(devId, &propertyAddress, 0, NULL, &propertySize, &name);
     if (status) {
-        ERR("AudioHardwareGetProperty for kAudioDevicePropertyDeviceName return %s\n", wine_dbgstr_fourcc(status));
+        ERR("AudioObjectGetPropertyData for kAudioObjectPropertyName return %s\n", wine_dbgstr_fourcc(status));
         return FALSE;
     }
     
-    memcpy(CoreAudio_DefaultDevice.ds_desc.szDesc, name, sizeof(name));
+    CFStringGetCString(name, CoreAudio_DefaultDevice.ds_desc.szDesc,
+                       sizeof(CoreAudio_DefaultDevice.ds_desc.szDesc),
+                       kCFStringEncodingUTF8);
     strcpy(CoreAudio_DefaultDevice.ds_desc.szDrvname, "winecoreaudio.drv");
-    MultiByteToWideChar(CP_UNIXCP, 0, name, sizeof(name),
-                        CoreAudio_DefaultDevice.out_caps.szPname, 
-                        sizeof(CoreAudio_DefaultDevice.out_caps.szPname) / sizeof(WCHAR));
-    memcpy(CoreAudio_DefaultDevice.dev_name, name, 32);
+    range = CFRangeMake(0, min(sizeof(CoreAudio_DefaultDevice.out_caps.szPname) / sizeof(WCHAR) - 1, CFStringGetLength(name)));
+    CFStringGetCharacters(name, range, CoreAudio_DefaultDevice.out_caps.szPname);
+    CoreAudio_DefaultDevice.out_caps.szPname[range.length] = 0;
+    CFStringGetCString(name, CoreAudio_DefaultDevice.dev_name, 32, kCFStringEncodingUTF8);
+    CFRelease(name);
     
     propertySize = sizeof(CoreAudio_DefaultDevice.streamDescription);
-    status = AudioDeviceGetProperty(devId, 0, FALSE , kAudioDevicePropertyStreamFormat, &propertySize, &CoreAudio_DefaultDevice.streamDescription);
+    /* FIXME: kAudioDevicePropertyStreamFormat is deprecated. We're
+     * "supposed" to get an AudioStream object from the AudioDevice,
+     * then query it for the format with kAudioStreamPropertyVirtualFormat.
+     * Apple says that this is for our own good, because this property
+     * "has been shown to lead to programming mistakes by clients when
+     * working with devices with multiple streams." Only one problem:
+     * which stream? For now, just query the device.
+     */
+    propertyAddress.mSelector = kAudioDevicePropertyStreamFormat;
+    status = AudioObjectGetPropertyData(devId, &propertyAddress, 0, NULL, &propertySize, &CoreAudio_DefaultDevice.streamDescription);
     if (status != noErr) {
-        ERR("AudioHardwareGetProperty for kAudioDevicePropertyStreamFormat return %s\n", wine_dbgstr_fourcc(status));
+        ERR("AudioObjectGetPropertyData for kAudioDevicePropertyStreamFormat return %s\n", wine_dbgstr_fourcc(status));
         return FALSE;
     }
     
@@ -549,6 +566,7 @@ LONG CoreAudio_WaveInit(void)
 {
     OSStatus status;
     UInt32 propertySize;
+    AudioObjectPropertyAddress propertyAddress;
     int i;
     CFStringRef  messageThreadPortName;
     CFMessagePortRef port_ReceiveInMessageThread;
@@ -557,19 +575,23 @@ LONG CoreAudio_WaveInit(void)
     TRACE("()\n");
     
     /* number of sound cards */
-    AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &propertySize, NULL);
+    propertyAddress.mSelector = kAudioHardwarePropertyDevices;
+    propertyAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propertyAddress.mElement = kAudioObjectPropertyElementMaster;
+    AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &propertySize);
     propertySize /= sizeof(AudioDeviceID);
     TRACE("sound cards : %lu\n", propertySize);
     
     /* Get the output device */
     propertySize = sizeof(CoreAudio_DefaultDevice.outputDeviceID);
-    status = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &propertySize, &CoreAudio_DefaultDevice.outputDeviceID);
+    propertyAddress.mSelector = kAudioHardwarePropertyDefaultOutputDevice;
+    status = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &propertySize, &CoreAudio_DefaultDevice.outputDeviceID);
     if (status) {
-        ERR("AudioHardwareGetProperty return %s for kAudioHardwarePropertyDefaultOutputDevice\n", wine_dbgstr_fourcc(status));
+        ERR("AudioObjectGetPropertyData return %s for kAudioHardwarePropertyDefaultOutputDevice\n", wine_dbgstr_fourcc(status));
         return DRV_FAILURE;
     }
     if (CoreAudio_DefaultDevice.outputDeviceID == kAudioDeviceUnknown) {
-        ERR("AudioHardwareGetProperty: CoreAudio_DefaultDevice.outputDeviceID == kAudioDeviceUnknown\n");
+        ERR("AudioObjectGetPropertyData: CoreAudio_DefaultDevice.outputDeviceID == kAudioDeviceUnknown\n");
         return DRV_FAILURE;
     }
     
