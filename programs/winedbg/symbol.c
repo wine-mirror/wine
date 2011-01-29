@@ -130,6 +130,50 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
         lvalue->cookie = DLV_TARGET;
         lvalue->addr.Offset = base + sym->Address;
     }
+    else if (sym->Flags & SYMFLAG_TLSREL)
+    {
+        PROCESS_BASIC_INFORMATION pbi;
+        THREAD_BASIC_INFORMATION  tbi;
+        DWORD_PTR                 addr;
+        PEB                       peb;
+        PEB_LDR_DATA              ldr_data;
+        PLIST_ENTRY               head, current;
+        LDR_MODULE                ldr_module;
+        unsigned                  tlsindex = -1;
+
+        if (NtQueryInformationProcess(dbg_curr_process->handle, ProcessBasicInformation,
+                                      &pbi, sizeof(pbi), NULL) ||
+            NtQueryInformationThread(dbg_curr_thread->handle, ThreadBasicInformation,
+                                     &tbi, sizeof(tbi), NULL))
+        {
+        tls_error:
+            if (buffer) snprintf(buffer, sz, "Cannot read TLS address\n");
+            return FALSE;
+        }
+        addr = (DWORD_PTR)&(((TEB*)tbi.TebBaseAddress)->ThreadLocalStoragePointer);
+        if (!dbg_read_memory((void*)addr, &addr, sizeof(addr)) ||
+            !dbg_read_memory(pbi.PebBaseAddress, &peb, sizeof(peb)) ||
+            !dbg_read_memory(peb.LdrData, &ldr_data, sizeof(ldr_data)))
+            goto tls_error;
+        current = ldr_data.InLoadOrderModuleList.Flink;
+        head = &((PEB_LDR_DATA*)peb.LdrData)->InLoadOrderModuleList;
+        do
+        {
+            if (!dbg_read_memory(CONTAINING_RECORD(current, LDR_MODULE, InLoadOrderModuleList),
+                                 &ldr_module, sizeof(ldr_module))) goto tls_error;
+            if ((DWORD_PTR)ldr_module.BaseAddress == sym->ModBase)
+            {
+                tlsindex = ldr_module.TlsIndex;
+                break;
+            }
+            current = ldr_module.InLoadOrderModuleList.Flink;
+        } while (current != head);
+
+        addr += tlsindex * sizeof(DWORD_PTR);
+        if (!dbg_read_memory((void*)addr, &addr, sizeof(addr))) goto tls_error;
+        lvalue->cookie = DLV_TARGET;
+        lvalue->addr.Offset = addr + sym->Address;
+    }
     else
     {
         lvalue->cookie = DLV_TARGET;
@@ -177,10 +221,11 @@ static BOOL CALLBACK sgv_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
                    sgv->name, NUMDBGV);
         return FALSE;
     }
-    WINE_TRACE("==> %s %s%s%s%s%s%s%s\n", 
-               sym->Name, 
+    WINE_TRACE("==> %s %s%s%s%s%s%s%s%s\n",
+               sym->Name,
                (sym->Flags & SYMFLAG_FUNCTION) ? "func " : "",
                (sym->Flags & SYMFLAG_FRAMEREL) ? "framerel " : "",
+               (sym->Flags & SYMFLAG_TLSREL) ? "tlsrel " : "",
                (sym->Flags & SYMFLAG_REGISTER) ? "register " : "",
                (sym->Flags & SYMFLAG_REGREL) ? "regrel " : "",
                (sym->Flags & SYMFLAG_PARAMETER) ? "param " : "",
