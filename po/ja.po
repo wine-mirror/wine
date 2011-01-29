@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"PO-Revision-Date: 2011-01-23 23:02+0900\n"
+"Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
 "MIME-Version: 1.0\n"
@@ -63,13 +63,8 @@ msgstr "プログラム(*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
 #: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
-#, fuzzy
 msgid "All files (*.*)"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"全てのファイル (*.*)\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"すべてのファイル (*.*)"
+msgstr "すべてのファイル (*.*)"
 
 #: appwiz.rc:42
 msgid "&Remove..."
@@ -92,6 +87,8 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+"ダウンロードしたファイルのチェックサムが異なります。ファイルが破損しているた"
+"め、インストールを中止します。"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -158,13 +155,8 @@ msgid "Document Folders"
 msgstr "ドキュメント フォルダ"
 
 #: comdlg32.rc:31 shell32.rc:187
-#, fuzzy
 msgid "My Documents"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"My Documents\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"マイ ドキュメント"
+msgstr "My Documents"
 
 #: comdlg32.rc:32
 msgid "My Favorites"
@@ -176,7 +168,7 @@ msgstr "システム パス"
 
 #: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
 msgid "Desktop"
-msgstr "デスクトップ"
+msgstr "Desktop"
 
 #: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
 msgid "Fonts"
@@ -371,7 +363,7 @@ msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"部数がプリンタがサポートしているを超えています。\n"
+"部数がプリンタがサポートしている範囲を超えています。\n"
 "1 から %d までの値を入力してください。"
 
 #: comdlg32.rc:77
@@ -432,13 +424,8 @@ msgid "Open File"
 msgstr "ファイルを開く"
 
 #: comdlg32.rc:93 oleview.rc:95
-#, fuzzy
 msgid "Ready"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"待機中\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"準備完了"
+msgstr "待機中"
 
 #: comdlg32.rc:94
 msgid "Paused; "
@@ -1132,13 +1119,8 @@ msgid "IP security IKE intermediate"
 msgstr "IPsec IKE 中間"
 
 #: crypt32.rc:161 cryptui.rc:129
-#, fuzzy
 msgid "File Recovery"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"ファイル回復\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"ファイルの回復"
+msgstr "ファイルの回復"
 
 #: crypt32.rc:162 cryptui.rc:134
 msgid "Root List Signer"
@@ -1605,13 +1587,8 @@ msgid "Friendly name"
 msgstr "フレンドリ名"
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
-#, fuzzy
 msgid "Description"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"解説\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"説明"
+msgstr "説明"
 
 #: cryptui.rc:63
 msgid "Certificate Properties"
@@ -2032,30 +2009,23 @@ msgstr "オプション"
 
 #: hhctrl.rc:70
 msgid "S&ync"
-msgstr ""
+msgstr "同期(&Y)"
 
 #: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
 msgid "&Back"
 msgstr "戻る(&B)"
 
 #: hhctrl.rc:72
-#, fuzzy
 msgid "&Forward"
-msgstr "進む"
+msgstr "進む(&F)"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgid "&Home"
-msgstr "ホーム"
+msgstr "ホーム(&H)"
 
 #: hhctrl.rc:74
-#, fuzzy
 msgid "&Stop"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"中止\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"停止"
+msgstr "中止(&S)"
 
 #: hhctrl.rc:75 shdoclc.rc:56
 msgid "&Refresh"
@@ -2083,11 +2053,11 @@ msgstr "お気に入り(&I)"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "タブを隠す(&T)"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "タブを表示(&T)"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -2098,13 +2068,8 @@ msgid "Hide"
 msgstr "非表示"
 
 #: hhctrl.rc:41 shdoclc.rc:170 shdoclc.rc:194 shdocvw.rc:65
-#, fuzzy
 msgid "Stop"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"中止\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"停止"
+msgstr "中止"
 
 #: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
 msgid "Refresh"
@@ -5931,13 +5896,8 @@ msgid "Set as &Desktop Item"
 msgstr "デスクトップ項目として設定(&D)"
 
 #: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
-#, fuzzy
 msgid "Select &All"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"すべて選択(&A)\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"選択(&A)"
+msgstr "すべて選択(&A)"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
 #: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
@@ -6285,7 +6245,6 @@ msgid "&Window"
 msgstr "ウィンドウ(&W)"
 
 #: shdocvw.rc:31
-#, fuzzy
 msgid "&Open..."
 msgstr "開く(&O)"
 
@@ -6294,21 +6253,18 @@ msgid "Save &as..."
 msgstr "名前を付けて保存(&A)..."
 
 #: shdocvw.rc:35
-#, fuzzy
 msgid "Print &format..."
-msgstr "印刷..."
+msgstr "印刷フォーマット(&F)..."
 
 #: shdocvw.rc:36
-#, fuzzy
 msgid "Pr&int..."
-msgstr "印刷..."
+msgstr "印刷(&I)..."
 
 #: shdocvw.rc:37 wordpad.rc:34
 msgid "Print previe&w..."
 msgstr "印刷プレビュー(&W)..."
 
 #: shdocvw.rc:39
-#, fuzzy
 msgid "&Properties..."
 msgstr "プロパティ(&P)"
 
@@ -6322,19 +6278,16 @@ msgid "&View"
 msgstr "表示(&V)"
 
 #: shdocvw.rc:44
-#, fuzzy
 msgid "&Toolbars"
 msgstr "ツールバー(&T)"
 
 #: shdocvw.rc:46
-#, fuzzy
 msgid "&Standard bar"
 msgstr "ステータス バー(&S)"
 
 #: shdocvw.rc:47
-#, fuzzy
 msgid "&Address bar"
-msgstr "IP Address="
+msgstr "アドレス バー(&A)"
 
 #: shdocvw.rc:50 regedit.rc:73
 msgid "&Favorites"
@@ -6350,34 +6303,22 @@ msgid "&Help"
 msgstr "ヘルプ(&H)"
 
 #: shdocvw.rc:57
-#, fuzzy
 msgid "&About Internet Explorer..."
-msgstr "Wine インターネット エクスプローラ"
+msgstr "インターネット エクスプローラについて(&A)..."
 
 #: shdocvw.rc:73
-#, fuzzy
 msgid "Address"
-msgstr "IP Address="
+msgstr "アドレス"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
 #: taskmgr.rc:111 taskmgr.rc:253
-#, fuzzy
 msgid "Lar&ge Icons"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"大アイコン(&G)\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"大きいアイコン(&G)"
+msgstr "大きいアイコン(&G)"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
 #: taskmgr.rc:112 taskmgr.rc:254
-#, fuzzy
 msgid "S&mall Icons"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"小アイコン(&M)\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"小さいアイコン(&M)"
+msgstr "小さいアイコン(&M)"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:109 shell32.rc:149
 msgid "&List"
@@ -6454,13 +6395,8 @@ msgstr "名前の変更(&R)"
 
 #: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"終了(&X)\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"終了(&x)"
+msgstr "終了(&X)"
 
 #: shell32.rc:115
 msgid "&About Control Panel..."
@@ -6471,13 +6407,8 @@ msgid "Size"
 msgstr "サイズ"
 
 #: shell32.rc:124 regedit.rc:125
-#, fuzzy
 msgid "Type"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"ファイルの種類\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"タイプ"
+msgstr "型"
 
 #: shell32.rc:125
 msgid "Modified"
@@ -6652,13 +6583,8 @@ msgid "Contacts"
 msgstr "Contacts"
 
 #: shell32.rc:216 winefile.rc:166
-#, fuzzy
 msgid "Links"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"リンク\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"Links"
+msgstr "Links"
 
 #: shell32.rc:217
 msgid "Pictures\\Slide Shows"
@@ -6900,13 +6826,8 @@ msgid "Mi&nimize"
 msgstr "アイコン化(&N)"
 
 #: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-#, fuzzy
 msgid "Ma&ximize"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"最大化(&X)\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"最大表示(&X)"
+msgstr "最大化(&X)"
 
 #: user32.rc:33
 msgid "&Close\tAlt-F4"
@@ -6933,18 +6854,17 @@ msgid "The certificate is issued by an unknown or untrusted publisher."
 msgstr ""
 
 #: wininet.rc:27
-#, fuzzy
 msgid "The date on the certificate is invalid."
-msgstr "注意: この証明書の秘密鍵はエクスポートできません。"
+msgstr "証明書の日付が無効です。"
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
-msgstr ""
+msgstr "証明書の名前がサイト名と一致しません。"
 
 #: wininet.rc:29
 msgid ""
 "There is at least one unspecified security problem with this certificate."
-msgstr ""
+msgstr "この証明書には特定できないセキュリティ問題があります。"
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -7558,257 +7478,243 @@ msgstr "出力ファイルを作成できませんでした。"
 
 #: wldap32.rc:27
 msgid "Success"
-msgstr ""
+msgstr "成功"
 
 #: wldap32.rc:28
-#, fuzzy
 msgid "Operations Error"
-msgstr "Operation Ceased"
+msgstr "操作エラー"
 
 #: wldap32.rc:29
 msgid "Protocol Error"
-msgstr ""
+msgstr "プロトコル エラー"
 
 #: wldap32.rc:30
 msgid "Time Limit Exceeded"
-msgstr ""
+msgstr "時間制限を超過"
 
 #: wldap32.rc:31
 msgid "Size Limit Exceeded"
-msgstr ""
+msgstr "サイズ制限を超過"
 
 #: wldap32.rc:32
 msgid "Compare False"
-msgstr ""
+msgstr "比較結果 False"
 
 #: wldap32.rc:33
 msgid "Compare True"
-msgstr ""
+msgstr "比較結果 True"
 
 #: wldap32.rc:34
 msgid "Authentication Method Not Supported"
-msgstr ""
+msgstr "認証方法が未サポート"
 
 #: wldap32.rc:35
-#, fuzzy
 msgid "Strong Authentication Required"
-msgstr "サーバ認証"
+msgstr "強力な認証が必要"
 
 #: wldap32.rc:36
 msgid "Referral (v2)"
-msgstr ""
+msgstr "紹介 (v2)"
 
 #: wldap32.rc:37
 msgid "Referral"
-msgstr ""
+msgstr "紹介"
 
 #: wldap32.rc:38
 msgid "Administration Limit Exceeded"
-msgstr ""
+msgstr "管理制限を超過"
 
 #: wldap32.rc:39
-#, fuzzy
 msgid "Unavailable Critical Extension"
-msgstr "証明書の拡張"
+msgstr "必須拡張が利用不可"
 
 #: wldap32.rc:40
 msgid "Confidentiality Required"
-msgstr ""
+msgstr "機密性が必要"
 
 #: wldap32.rc:43
-#, fuzzy
 msgid "No Such Attribute"
-msgstr "鍵の属性"
+msgstr "該当属性なし"
 
 #: wldap32.rc:44
-#, fuzzy
 msgid "Undefined Type"
-msgstr "内容の種類"
+msgstr "未定義の型"
 
 #: wldap32.rc:45
 msgid "Inappropriate Matching"
-msgstr ""
+msgstr "一致方法が不適切"
 
 #: wldap32.rc:46
 msgid "Constraint Violation"
-msgstr ""
+msgstr "制約に違反"
 
 #: wldap32.rc:47
 msgid "Attribute Or Value Exists"
-msgstr ""
+msgstr "属性または値は存在"
 
 #: wldap32.rc:48
 msgid "Invalid Syntax"
-msgstr ""
+msgstr "構文が無効"
 
 #: wldap32.rc:59
 msgid "No Such Object"
-msgstr ""
+msgstr "該当オブジェクトなし"
 
 #: wldap32.rc:60
 msgid "Alias Problem"
-msgstr ""
+msgstr "エイリアスの問題"
 
 #: wldap32.rc:61
 msgid "Invalid DN Syntax"
-msgstr ""
+msgstr "識別名(DN)の構文が無効"
 
 #: wldap32.rc:62
 msgid "Is Leaf"
-msgstr ""
+msgstr "リーフです"
 
 #: wldap32.rc:63
 msgid "Alias Dereference Problem"
-msgstr ""
+msgstr "エイリアスの逆参照に問題"
 
 #: wldap32.rc:75
-#, fuzzy
 msgid "Inappropriate Authentication"
-msgstr "サーバ認証"
+msgstr "認証が不適切"
 
 #: wldap32.rc:76
 msgid "Invalid Credentials"
-msgstr ""
+msgstr "資格情報が無効"
 
 #: wldap32.rc:77
-#, fuzzy
 msgid "Insufficient Rights"
-msgstr "デジタル著作権管理"
+msgstr "権限が不十分"
 
 #: wldap32.rc:78
 msgid "Busy"
-msgstr ""
+msgstr "ビジー状態"
 
 #: wldap32.rc:79
-#, fuzzy
 msgid "Unavailable"
-msgstr "Available"
+msgstr "利用不可"
 
 #: wldap32.rc:80
 msgid "Unwilling To Perform"
-msgstr ""
+msgstr "実行したがらない"
 
 #: wldap32.rc:81
 msgid "Loop Detected"
-msgstr ""
+msgstr "ループを検出"
 
 #: wldap32.rc:87
 msgid "Sort Control Missing"
-msgstr ""
+msgstr "ソート コントロールがない"
 
 #: wldap32.rc:88
 msgid "Index range error"
-msgstr ""
+msgstr "インデックス範囲エラー"
 
 #: wldap32.rc:91
 msgid "Naming Violation"
-msgstr ""
+msgstr "名前付け違反"
 
 #: wldap32.rc:92
 msgid "Object Class Violation"
-msgstr ""
+msgstr "オブジェクト クラス違反"
 
 #: wldap32.rc:93
 msgid "Not allowed on Non-leaf"
-msgstr ""
+msgstr "非リーフでは不許可"
 
 #: wldap32.rc:94
 msgid "Not allowed on RDN"
-msgstr ""
+msgstr "相対識別名(RDN)では不許可"
 
 #: wldap32.rc:95
 msgid "Already Exists"
-msgstr ""
+msgstr "すでに存在"
 
 #: wldap32.rc:96
 msgid "No Object Class Mods"
-msgstr ""
+msgstr "オブジェクト クラス変更不可"
 
 #: wldap32.rc:97
 msgid "Results Too Large"
-msgstr ""
+msgstr "結果が大きすぎる"
 
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
-msgstr ""
+msgstr "複数のディレクトリ サービス エージェント(DSA)に影響"
 
 #: wldap32.rc:107
-#, fuzzy
 msgid "Other"
-msgstr "Other Name="
+msgstr "その他"
 
 #: wldap32.rc:108
-#, fuzzy
 msgid "Server Down"
-msgstr "下にスクロール"
+msgstr "サーバ ダウン"
 
 #: wldap32.rc:109
-#, fuzzy
 msgid "Local Error"
-msgstr "ローカル ポート"
+msgstr "ローカル エラー"
 
 #: wldap32.rc:110
-#, fuzzy
 msgid "Encoding Error"
-msgstr "エンコード(&E)"
+msgstr "エンコード エラー"
 
 #: wldap32.rc:111
 msgid "Decoding Error"
-msgstr ""
+msgstr "デコード エラー"
 
 #: wldap32.rc:112
 msgid "Timeout"
-msgstr ""
+msgstr "時間切れ"
 
 #: wldap32.rc:113
-#, fuzzy
 msgid "Auth Unknown"
-msgstr "Context Unknown"
+msgstr "認証不明"
 
 #: wldap32.rc:114
 msgid "Filter Error"
-msgstr ""
+msgstr "フィルタ エラー"
 
 #: wldap32.rc:115
 msgid "User Cancelled"
-msgstr ""
+msgstr "ユーザがキャンセル"
 
 #: wldap32.rc:116
-#, fuzzy
 msgid "Parameter Error"
-msgstr "Parameter error\n"
+msgstr "パラメータ エラー"
 
 #: wldap32.rc:117
 msgid "No Memory"
-msgstr ""
+msgstr "メモリ不足"
 
 #: wldap32.rc:118
 msgid "Can't connect to the LDAP server"
-msgstr ""
+msgstr "LDAPサーバに接続できません"
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr ""
+msgstr "操作はこのバージョンのLDAPプロトコルでサポートされていません"
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
-msgstr ""
+msgstr "指定されたコントロールはメッセージ中に見つかりませんでした"
 
 #: wldap32.rc:121
 msgid "No result present in message"
-msgstr ""
+msgstr "メッセージ中に結果がありません"
 
 #: wldap32.rc:122
 msgid "More results returned"
-msgstr ""
+msgstr "さらに結果が返されました"
 
 #: wldap32.rc:123
 msgid "Loop while handling referrals"
-msgstr ""
+msgstr "紹介の取り扱い中にループです"
 
 #: wldap32.rc:124
 msgid "Referral hop limit exceeded"
-msgstr ""
+msgstr "紹介のホップ数が限界を超えました"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -8637,13 +8543,8 @@ msgid "&Open...\tCtrl+O"
 msgstr "開く(&O)...\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
-#, fuzzy
 msgid "&Save\tCtrl+S"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"保存(&S)\tCtrl+S\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"上書き保存(&S)\tCtrl+S"
+msgstr "保存(&S)\tCtrl+S"
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
@@ -8703,13 +8604,8 @@ msgid "&Search next\tF3"
 msgstr "次を検索(&S)\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
-#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"置き換える(&R)...\tCtrl+H\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"置換(&R)...\tCtrl+H"
+msgstr "置換(&R)...\tCtrl+H"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -8908,31 +8804,16 @@ msgid "&Hidden component categories"
 msgstr "隠されたコンポーネントのカテゴリ(&H)"
 
 #: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
-#, fuzzy
 msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"ツールバー(&T)\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"ツール バー(&T)"
+msgstr "ツール バー(&T)"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:102
-#, fuzzy
 msgid "&Status Bar"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"ステータスバー(&S)\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"ステータス バー(&S)"
+msgstr "ステータス バー(&S)"
 
 #: oleview.rc:67 regedit.rc:71 winefile.rc:127
-#, fuzzy
 msgid "&Refresh\tF5"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"更新(&R)\tF5\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"リフレッシュ(&R)\tF5"
+msgstr "更新(&R)\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
@@ -8963,7 +8844,6 @@ msgid "version 1.0"
 msgstr "バージョン 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 msgstr "TypeLib ファイル (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
@@ -9130,11 +9010,11 @@ msgstr "種類でタイプ情報を分類します"
 
 #: progman.rc:30
 msgid "&New..."
-msgstr ""
+msgstr "新規作成(&N)..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
-msgstr ""
+msgstr "開く(&O)\tEnter"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
@@ -9146,15 +9026,15 @@ msgstr "コピー(&C)...\tF8"
 
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
-msgstr ""
+msgstr "属性(&A)...\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
-msgstr ""
+msgstr "実行(&E)..."
 
 #: progman.rc:39
 msgid "E&xit Windows..."
-msgstr ""
+msgstr "Windowsの終了(&X)..."
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
@@ -9162,11 +9042,11 @@ msgstr "オプション(&O)"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
-msgstr ""
+msgstr "自動整列(&A)"
 
 #: progman.rc:43 winefile.rc:107
 msgid "&Minimize on run"
-msgstr "&Minimize on run"
+msgstr "実行時に最小化(&M)"
 
 #: progman.rc:44 winefile.rc:108
 msgid "&Save settings on exit"
@@ -9178,92 +9058,91 @@ msgstr "ウィンドウ(&W)"
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
-msgstr ""
+msgstr "重ねて表示(&O)\tShift+F5"
 
 #: progman.rc:48
 msgid "&Side by side\tShift+F4"
-msgstr ""
+msgstr "並べて表示(&S)\tShift+F4"
 
 #: progman.rc:49
 msgid "&Arrange Icons"
-msgstr ""
+msgstr "アイコンの並び替え(&A)"
 
 #: progman.rc:57
 msgid "&Tutorial"
-msgstr ""
+msgstr "チュートリアル(&T)"
 
 #: progman.rc:59
-#, fuzzy
 msgid "&About Wine"
-msgstr "メモ帳について(&A)"
+msgstr "Wineについて(&A)"
 
 #: progman.rc:65
 msgid "Program Manager"
-msgstr ""
+msgstr "プログラム マネージャ"
 
 #: progman.rc:69
-#, fuzzy
 msgid "Delete"
-msgstr "削除(&D)"
+msgstr "削除"
 
 #: progman.rc:70
 msgid "Delete group `%s' ?"
-msgstr ""
+msgstr "グループ `%s' を削除しますか?"
 
 #: progman.rc:71
 msgid "Delete program `%s' ?"
-msgstr ""
+msgstr "プログラム `%s' を削除しますか?"
 
 #: progman.rc:72 winhlp32.rc:97
 msgid "Not implemented"
-msgstr "非実装"
+msgstr "未実装"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
-msgstr ""
+msgstr "`%s' の読み込み中にエラー。"
 
 #: progman.rc:74
 msgid "Error writing `%s'."
-msgstr ""
+msgstr "`%s' の書き込み中にエラー。"
 
 #: progman.rc:77
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
+"グループ ファイル `%s' を開けません。\n"
+"続行しますか?"
 
 #: progman.rc:79
-#, fuzzy
 msgid "Help not available."
-msgstr "Not Available"
+msgstr "ヘルプは使えません。"
 
 #: progman.rc:80
 msgid "Unknown feature in %s"
-msgstr ""
+msgstr "%s に不明な機能"
 
 #: progman.rc:81
 msgid "File `%s' exists. Not overwritten."
-msgstr ""
+msgstr "`%s' が存在します。上書きしません。"
 
 #: progman.rc:82
 msgid "Save group as `%s to prevent overwriting original files."
-msgstr ""
+msgstr "元のファイルを上書きしないため、グループを `%s' として保存しました。"
 
 #: progman.rc:85
 msgid "Programs"
-msgstr ""
+msgstr "プログラム"
 
 #: progman.rc:86
 msgid "Libraries (*.dll)"
-msgstr ""
+msgstr "ライブラリ (*.dll)"
 
 #: progman.rc:87
 msgid "Icon files"
-msgstr ""
+msgstr "アイコン ファイル"
 
 #: progman.rc:88
 msgid "Icons (*.ico)"
-msgstr ""
+msgstr "アイコン (*.ico)"
 
 #: reg.rc:27
 msgid ""
@@ -9382,26 +9261,16 @@ msgid "Status &Bar"
 msgstr "ステータスバー(&B)"
 
 #: regedit.rc:69 winefile.rc:81
-#, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"分割(&L)\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"分割(&l)"
+msgstr "分割(&L)"
 
 #: regedit.rc:76
 msgid "&Remove Favorite..."
 msgstr "お気に入りから削除(&R)..."
 
 #: regedit.rc:80 winefile.rc:131
-#, fuzzy
 msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"ヘルプ トピック(&H)\tF1\n"
-"#-#-#-#-#  ja.po (Wine)  #-#-#-#-#\n"
-"ヘルプ(&H)\tF1"
+msgstr "ヘルプ(&H)\tF1"
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
@@ -9425,7 +9294,7 @@ msgstr "値とキーを編集するコマンド"
 
 #: regedit.rc:138
 msgid "Contains commands for customising the registry window"
-msgstr "レジストリウィンドウをカスタマイズするコマンド"
+msgstr "レジストリ ウィンドウをカスタマイズするコマンド"
 
 #: regedit.rc:139
 msgid "Contains commands for accessing frequently used keys"
@@ -9450,19 +9319,17 @@ msgstr "レジストリエディタ"
 
 #: regedit.rc:197
 msgid "Import Registry File"
-msgstr "レジストリ ファイルのインポート"
+msgstr "レジストリファイルのインポート"
 
 #: regedit.rc:198
 msgid "Export Registry File"
-msgstr "レジストリ ファイルのエクスポート"
+msgstr "レジストリファイルのエクスポート"
 
 #: regedit.rc:199
-#, fuzzy
 msgid "Registry files (*.reg)"
 msgstr "登録ファイル (*.reg)"
 
 #: regedit.rc:200
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 登録ファイル (REGEDIT4)"
 
@@ -9476,11 +9343,11 @@ msgstr "(値の設定なし)"
 
 #: regedit.rc:209
 msgid "(cannot display value)"
-msgstr "(cannot display value)"
+msgstr "(値を表示できません)"
 
 #: regedit.rc:210
 msgid "(unknown %d)"
-msgstr "(unknown %d)"
+msgstr "(不明 %d)"
 
 #: regedit.rc:166
 msgid "Quits the registry editor"
@@ -9715,65 +9582,65 @@ msgstr "指定された Unix ファイル名を DOS ファイル名に変換で�
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr ""
+msgstr "使い方: taskkill [/?] [/f] [/im プロセス名 | /pid プロセスID]\n"
 
 #: taskkill.rc:28
-#, fuzzy
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "エラー: コマンド ライン引数が無効です\n"
+msgstr "エラー: 不明または無効なコマンド ライン オプションが指定されました。\n"
 
 #: taskkill.rc:29
-#, fuzzy
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "エラー: コマンド ライン引数が無効です\n"
+msgstr "エラー: 無効なコマンド ライン パラメータが指定されました。\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr ""
+"エラー: /im または /pid のオプションのうち、1 つを必ず指定してください。\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %s expects a command line parameter.\n"
-msgstr "エラー: コマンド ライン引数が無効です\n"
+msgstr "エラー: %s オプションにはコマンド ライン パラメータが必要です。\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr ""
+msgstr "エラー: /im と /pid のオプションは同時に指定できません。\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %u.\n"
 msgstr ""
+"クローズ メッセージがプロセス(PID %u)のトップレベル ウィンドウに送られまし"
+"た。\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 msgstr ""
+"クローズ メッセージがプロセス(%s, PID %u)のトップレベル ウィンドウに送られま"
+"した。\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %u was forcibly terminated.\n"
-msgstr ""
+msgstr "プロセス(PID %u)は強制的に終了されました。\n"
 
 #: taskkill.rc:36
 msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
-msgstr ""
+msgstr "プロセス(%s, PID %u)は強制的に終了されました。\n"
 
 #: taskkill.rc:37
 msgid "Error: Could not find process \"%s\".\n"
-msgstr ""
+msgstr "エラー: プロセス(%s)が見つかりません。\n"
 
 #: taskkill.rc:38
-#, fuzzy
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "エラー: リモート マシンにキーを追加できませんでした\n"
+msgstr "エラー: プロセスの一覧を列挙できません。\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%s\".\n"
-msgstr "エラー: リモート マシンにキーを追加できませんでした\n"
+msgstr "エラー: プロセス(%s)を終了できません。\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr ""
+msgstr "エラー: このプロセス自身を終了させることはできません。\n"
 
 #: taskmgr.rc:37 taskmgr.rc:109
 msgid "&New Task (Run...)"
@@ -10975,9 +10842,8 @@ msgid "Expand &Tree\t*"
 msgstr "ツリーを展開(&T)\t*"
 
 #: winefile.rc:70
-#, fuzzy
 msgid "Expand &all\tCtrl+*"
-msgstr "すべてを展開(&A)\tStrg+*"
+msgstr "すべてを展開(&A)\tCtrl+*"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
