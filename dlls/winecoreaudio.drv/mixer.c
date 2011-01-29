@@ -214,11 +214,14 @@ static BOOL DeviceHasMute(AudioDeviceID deviceID, Boolean isInput)
 {
     Boolean writable = false;
     OSStatus err = noErr;
-    err = AudioDeviceGetPropertyInfo(deviceID, 0, isInput, kAudioDevicePropertyMute, NULL, NULL);
-    if (err == noErr)
+    AudioObjectPropertyAddress propertyAddress;
+    propertyAddress.mSelector = kAudioDevicePropertyMute;
+    propertyAddress.mScope = isInput ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
+    propertyAddress.mElement = 0;
+    if (AudioObjectHasProperty(deviceID, &propertyAddress))
     {
         /* check if we can set it */
-        err = AudioDeviceGetPropertyInfo(deviceID, 0, isInput, kAudioDevicePropertyMute, NULL, &writable);
+        err = AudioObjectIsPropertySettable(deviceID, &propertyAddress, &writable);
         if (err == noErr)
             return writable;
     }
@@ -233,16 +236,21 @@ static BOOL MIX_LineGetVolume(DWORD lineID, DWORD channels, Float32 *left, Float
     MixerLine *line = &mixer.lines[lineID];
     UInt32 size = sizeof(Float32);
     OSStatus err = noErr;
+    AudioObjectPropertyAddress address;
     *left = *right = 0.0;
 
-    err = AudioDeviceGetProperty(line->deviceID, 1, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, &size, left);
+    address.mSelector = kAudioDevicePropertyVolumeScalar;
+    address.mScope = IsInput(line->direction) ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
+    address.mElement = 1;
+    err = AudioObjectGetPropertyData(line->deviceID, &address, 0, NULL, &size, left);
     if (err != noErr)
         return FALSE;
 
     if (channels == 2)
     {
         size = sizeof(Float32);
-        err = AudioDeviceGetProperty(line->deviceID, 2, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, &size, right);
+        address.mElement = 2;
+        err = AudioObjectGetPropertyData(line->deviceID, &address, 0, NULL, &size, right);
         if (err != noErr)
             return FALSE;
     }
@@ -257,7 +265,11 @@ static BOOL MIX_LineGetMute(DWORD lineID, BOOL *muted)
     UInt32 size = sizeof(UInt32);
     UInt32 val = 0;
     OSStatus err = noErr;
-    err = AudioDeviceGetProperty(line->deviceID, 0, IsInput(line->direction), kAudioDevicePropertyMute, &size, &val);
+    AudioObjectPropertyAddress address;
+    address.mSelector = kAudioDevicePropertyMute;
+    address.mScope = IsInput(line->direction) ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
+    address.mElement = 0;
+    err = AudioObjectGetPropertyData(line->deviceID, &address, 0, NULL, &size, &val);
     *muted = val;
 
     return (err == noErr);
@@ -270,28 +282,36 @@ static BOOL MIX_LineSetVolume(DWORD lineID, DWORD channels, Float32 left, Float3
 {
     MixerLine *line = &mixer.lines[lineID];
     UInt32 size = sizeof(Float32);
+    AudioObjectPropertyAddress address;
     OSStatus err = noErr;
     TRACE("lineID %d channels %d left %f right %f\n", lineID, channels, left, right);
 
+    address.mSelector = kAudioDevicePropertyVolumeScalar;
+    address.mScope = IsInput(line->direction) ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
     if (channels == 2)
     {
-        err = AudioDeviceSetProperty(line->deviceID, NULL, 1, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, size, &left);
+        address.mElement = 1;
+        err = AudioObjectSetPropertyData(line->deviceID, &address, 0, NULL, size, &left);
         if (err != noErr)
             return FALSE;
 
-        err = AudioDeviceSetProperty(line->deviceID, NULL, 2, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, size, &right);
+        address.mElement = 2;
+        err = AudioObjectSetPropertyData(line->deviceID, &address, 0, NULL, size, &right);
     }
     else
     {
         /*
             FIXME Using master channel failed ?? return kAudioHardwareUnknownPropertyError
-            err = AudioDeviceSetProperty(line->deviceID, NULL, 0, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, size, &left);
+            address.mElement = 0;
+            err = AudioObjectSetPropertyData(line->deviceID, &address, 0, NULL, size, &left);
         */
         right = left;
-        err = AudioDeviceSetProperty(line->deviceID, NULL, 1, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, size, &left);
+        address.mElement = 1;
+        err = AudioObjectSetPropertyData(line->deviceID, &address, 0, NULL, size, &left);
         if (err != noErr)
             return FALSE;
-        err = AudioDeviceSetProperty(line->deviceID, NULL, 2, IsInput(line->direction), kAudioDevicePropertyVolumeScalar, size, &right);
+        address.mElement = 2;
+        err = AudioObjectSetPropertyData(line->deviceID, &address, 0, NULL, size, &right);
     }
     return (err == noErr);
 }
@@ -301,9 +321,13 @@ static BOOL MIX_LineSetMute(DWORD lineID, BOOL mute)
     MixerLine *line = &mixer.lines[lineID];
     UInt32 val = mute;
     UInt32 size = sizeof(UInt32);
+    AudioObjectPropertyAddress address;
     OSStatus err = noErr;
 
-    err = AudioDeviceSetProperty(line->deviceID, 0, 0, IsInput(line->direction), kAudioDevicePropertyMute, size, &val);
+    address.mSelector = kAudioDevicePropertyMute;
+    address.mScope = IsInput(line->direction) ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
+    address.mElement = 0;
+    err = AudioObjectSetPropertyData(line->deviceID, &address, 0, 0, size, &val);
     return (err == noErr);
 }
 
@@ -345,18 +369,22 @@ LONG CoreAudio_MixerInit(void)
 {
     OSStatus status;
     UInt32 propertySize;
+    AudioObjectPropertyAddress propertyAddress;
     AudioDeviceID *deviceArray = NULL;
-    char name[MAXPNAMELEN];
+    CFStringRef name;
     int i;
     int numLines;
 
     AudioStreamBasicDescription streamDescription;
 
     /* Find number of lines */
-    status = AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &propertySize, NULL);
+    propertyAddress.mSelector = kAudioHardwarePropertyDevices;
+    propertyAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propertyAddress.mElement = kAudioObjectPropertyElementMaster;
+    status = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &propertySize);
     if (status)
     {
-        ERR("AudioHardwareGetPropertyInfo for kAudioHardwarePropertyDevices return %s\n", wine_dbgstr_fourcc(status));
+        ERR("AudioObjectGetPropertyDataSize for kAudioHardwarePropertyDevices return %s\n", wine_dbgstr_fourcc(status));
         return DRV_FAILURE;
     }
 
@@ -382,41 +410,45 @@ LONG CoreAudio_MixerInit(void)
     deviceArray = HeapAlloc(GetProcessHeap(), 0, sizeof(AudioDeviceID) * numLines);
 
     propertySize = sizeof(AudioDeviceID) * numLines;
-    status = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &propertySize, deviceArray);
+    status = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &propertySize, deviceArray);
     if (status)
     {
-        ERR("AudioHardwareGetProperty for kAudioHardwarePropertyDevices return %s\n", wine_dbgstr_fourcc(status));
+        ERR("AudioObjectGetPropertyData for kAudioHardwarePropertyDevices return %s\n", wine_dbgstr_fourcc(status));
         goto error;
     }
 
     for (i = 0; i < numLines; i++)
     {
-        Boolean write;
         MixerLine *line = &mixer.lines[i];
 
         line->deviceID = deviceArray[i];
 
-        propertySize = MAXPNAMELEN;
-        status = AudioDeviceGetProperty(line->deviceID, 0 , FALSE, kAudioDevicePropertyDeviceName, &propertySize, name);
+        propertySize = sizeof(CFStringRef);
+        propertyAddress.mSelector = kAudioObjectPropertyName;
+        propertyAddress.mScope = kAudioObjectPropertyScopeGlobal;
+        propertyAddress.mElement = kAudioObjectPropertyElementMaster;
+        status = AudioObjectGetPropertyData(line->deviceID, &propertyAddress, 0, NULL, &propertySize, &name);
         if (status) {
-            ERR("AudioHardwareGetProperty for kAudioDevicePropertyDeviceName return %s\n", wine_dbgstr_fourcc(status));
+            ERR("AudioObjectGetPropertyData for kAudioObjectPropertyName return %s\n", wine_dbgstr_fourcc(status));
             goto error;
         }
 
-        line->name = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, strlen(name) + 1);
+        line->name = HeapAlloc(GetProcessHeap(), 0, CFStringGetLength(name) + 1);
         if (!line->name)
             goto error;
 
-        memcpy(line->name, name, strlen(name));
+        CFStringGetCString(name, line->name, CFStringGetLength(name) + 1, kCFStringEncodingUTF8);
 
         line->componentType = DeviceComponentType(line->name);
 
         /* check for directions */
         /* Output ? */
         propertySize = sizeof(UInt32);
-	status = AudioDeviceGetPropertyInfo(line->deviceID, 0, FALSE, kAudioDevicePropertyStreams, &propertySize, &write );
+        propertyAddress.mSelector = kAudioDevicePropertyStreams;
+        propertyAddress.mScope = kAudioDevicePropertyScopeOutput;
+	status = AudioObjectGetPropertyDataSize(line->deviceID, &propertyAddress, 0, NULL, &propertySize);
         if (status) {
-            ERR("AudioDeviceGetPropertyInfo for kAudioDevicePropertyDataSource return %s\n", wine_dbgstr_fourcc(status));
+            ERR("AudioObjectGetPropertyDataSize for kAudioDevicePropertyStreams return %s\n", wine_dbgstr_fourcc(status));
             goto error;
         }
 
@@ -426,9 +458,10 @@ LONG CoreAudio_MixerInit(void)
 
             /* Check the number of channel for the stream */
             propertySize = sizeof(streamDescription);
-            status = AudioDeviceGetProperty(line->deviceID, 0, FALSE , kAudioDevicePropertyStreamFormat, &propertySize, &streamDescription);
+            propertyAddress.mSelector = kAudioDevicePropertyStreamFormat;
+            status = AudioObjectGetPropertyData(line->deviceID, &propertyAddress, 0, NULL, &propertySize, &streamDescription);
             if (status != noErr) {
-                ERR("AudioHardwareGetProperty for kAudioDevicePropertyStreamFormat return %s\n", wine_dbgstr_fourcc(status));
+                ERR("AudioObjectGetPropertyData for kAudioDevicePropertyStreamFormat return %s\n", wine_dbgstr_fourcc(status));
                 goto error;
             }
             line->numChannels = streamDescription.mChannelsPerFrame;
@@ -437,9 +470,10 @@ LONG CoreAudio_MixerInit(void)
         {
             /* Input ? */
             propertySize = sizeof(UInt32);
-            status = AudioDeviceGetPropertyInfo(line->deviceID, 0, TRUE, kAudioDevicePropertyStreams, &propertySize, &write );
+            propertyAddress.mScope = kAudioDevicePropertyScopeInput;
+            status = AudioObjectGetPropertyDataSize(line->deviceID, &propertyAddress, 0, NULL, &propertySize);
             if (status) {
-                ERR("AudioDeviceGetPropertyInfo for kAudioDevicePropertyStreams return %s\n", wine_dbgstr_fourcc(status));
+                ERR("AudioObjectGetPropertyDataSize for kAudioDevicePropertyStreams return %s\n", wine_dbgstr_fourcc(status));
                 goto error;
             }
             if ( (propertySize / sizeof(AudioStreamID)) != 0)
@@ -448,9 +482,10 @@ LONG CoreAudio_MixerInit(void)
 
                 /* Check the number of channel for the stream */
                 propertySize = sizeof(streamDescription);
-                status = AudioDeviceGetProperty(line->deviceID, 0, TRUE, kAudioDevicePropertyStreamFormat, &propertySize, &streamDescription);
+                propertyAddress.mSelector = kAudioDevicePropertyStreamFormat;
+                status = AudioObjectGetPropertyData(line->deviceID, &propertyAddress, 0, NULL, &propertySize, &streamDescription);
                 if (status != noErr) {
-                    ERR("AudioHardwareGetProperty for kAudioDevicePropertyStreamFormat return %s\n", wine_dbgstr_fourcc(status));
+                    ERR("AudioObjectGetPropertyData for kAudioDevicePropertyStreamFormat return %s\n", wine_dbgstr_fourcc(status));
                     goto error;
                 }
                 line->numChannels = streamDescription.mChannelsPerFrame;
