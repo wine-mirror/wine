@@ -1611,6 +1611,7 @@ static void test_basics(void)
     ok(hr == E_POINTER, "Got 0x%08x\n", hr);
 
     psi = (void*)0xdeadbeef;
+    pt.x = pt.y = 0;
     hr = INameSpaceTreeControl_HitTest(pnstc, &pt, &psi);
     ok(hr == S_FALSE, "Got 0x%08x\n", hr);
     ok(psi == NULL, "Got psi %p\n", psi);
@@ -1621,7 +1622,6 @@ static void test_basics(void)
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     process_msgs();
 
-    pt.x = pt.y = 0;
     hr = INameSpaceTreeControl_HitTest(pnstc, &pt, &psi);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
     if(SUCCEEDED(hr))
