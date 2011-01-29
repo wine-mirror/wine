@@ -364,7 +364,7 @@ static po_message_t find_message( po_file_t po, const char *msgid, const char *m
     {
         if (strcmp( po_message_msgid( msg ), msgid )) continue;
         if (!msgctxt) break;
-        if (!(context = po_message_msgctxt( msg ))) break;
+        if (!(context = po_message_msgctxt( msg ))) continue;
         if (!strcmp( context, msgctxt )) break;
     }
     return msg;
