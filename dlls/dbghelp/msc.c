@@ -1523,17 +1523,16 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
                                          struct symt_compiland* compiland,
                                          const char* name,
                                          unsigned segment, unsigned offset,
-                                         unsigned symtype, BOOL is_local, BOOL force)
+                                         unsigned symtype, BOOL is_local, BOOL in_tls, BOOL force)
 {
     if (name && *name)
     {
-        unsigned long   address = codeview_get_address(msc_dbg, segment, offset);
         struct location loc;
 
-        loc.kind = loc_absolute;
+        loc.kind = in_tls ? loc_tlsrel : loc_absolute;
         loc.reg = 0;
-        loc.offset = address;
-        if (force || !symt_find_nearest(msc_dbg->module, address))
+        loc.offset = in_tls ? offset : codeview_get_address(msc_dbg, segment, offset);
+        if (force || in_tls || !symt_find_nearest(msc_dbg->module, loc.offset))
         {
             symt_new_global_variable(msc_dbg->module, compiland,
                                      name, is_local, loc, 0,
@@ -1576,21 +1575,44 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             if (do_globals)
                 codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v1.p_name),
                                       sym->data_v1.segment, sym->data_v1.offset, sym->data_v1.symtype,
-                                      sym->generic.id == S_LDATA_V1, TRUE);
+                                      sym->generic.id == S_LDATA_V1, FALSE, TRUE);
 	    break;
 	case S_GDATA_V2:
 	case S_LDATA_V2:
             if (do_globals)
                 codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v2.p_name),
                                       sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype,
-                                      sym->generic.id == S_LDATA_V2, TRUE);
+                                      sym->generic.id == S_LDATA_V2, FALSE, TRUE);
 	    break;
 	case S_GDATA_V3:
 	case S_LDATA_V3:
             if (do_globals)
                 codeview_add_variable(msc_dbg, compiland, sym->data_v3.name,
                                       sym->data_v3.segment, sym->data_v3.offset, sym->data_v3.symtype,
-                                      sym->generic.id == S_LDATA_V3, TRUE);
+                                      sym->generic.id == S_LDATA_V3, FALSE, TRUE);
+	    break;
+
+        /* variables with thread storage */
+	case S_GTHREAD_V1:
+	case S_LTHREAD_V1:
+            if (do_globals)
+                codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->thread_v1.p_name),
+                                      sym->thread_v1.segment, sym->thread_v1.offset, sym->thread_v1.symtype,
+                                      sym->generic.id == S_LTHREAD_V1, TRUE, TRUE);
+	    break;
+	case S_GTHREAD_V2:
+	case S_LTHREAD_V2:
+            if (do_globals)
+                codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->thread_v2.p_name),
+                                      sym->thread_v2.segment, sym->thread_v2.offset, sym->thread_v2.symtype,
+                                      sym->generic.id == S_LTHREAD_V2, TRUE, TRUE);
+	    break;
+	case S_GTHREAD_V3:
+	case S_LTHREAD_V3:
+            if (do_globals)
+                codeview_add_variable(msc_dbg, compiland, sym->thread_v3.name,
+                                      sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype,
+                                      sym->generic.id == S_LTHREAD_V3, TRUE, TRUE);
 	    break;
 
         /* Public symbols */
@@ -2026,20 +2048,41 @@ static int codeview_snarf_public(const struct msc_debug_info* msc_dbg, const BYT
 	case S_LDATA_V1:
             codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v1.p_name),
                                   sym->data_v1.segment, sym->data_v1.offset, sym->data_v1.symtype,
-                                  sym->generic.id == S_LDATA_V1, FALSE);
+                                  sym->generic.id == S_LDATA_V1, FALSE, FALSE);
 	    break;
 	case S_GDATA_V2:
 	case S_LDATA_V2:
             codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->data_v2.p_name),
                                   sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype,
-                                  sym->generic.id == S_LDATA_V2, FALSE);
+                                  sym->generic.id == S_LDATA_V2, FALSE, FALSE);
 	    break;
 	case S_GDATA_V3:
 	case S_LDATA_V3:
             codeview_add_variable(msc_dbg, compiland, sym->data_v3.name,
                                   sym->data_v3.segment, sym->data_v3.offset, sym->data_v3.symtype,
-                                  sym->generic.id == S_LDATA_V3, FALSE);
+                                  sym->generic.id == S_LDATA_V3, FALSE, FALSE);
 	    break;
+
+        /* variables with thread storage */
+	case S_GTHREAD_V1:
+	case S_LTHREAD_V1:
+            codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->thread_v1.p_name),
+                                  sym->thread_v1.segment, sym->thread_v1.offset, sym->thread_v1.symtype,
+                                  sym->generic.id == S_LTHREAD_V1, TRUE, FALSE);
+	    break;
+	case S_GTHREAD_V2:
+	case S_LTHREAD_V2:
+            codeview_add_variable(msc_dbg, compiland, terminate_string(&sym->thread_v2.p_name),
+                                  sym->thread_v2.segment, sym->thread_v2.offset, sym->thread_v2.symtype,
+                                  sym->generic.id == S_LTHREAD_V2, TRUE, FALSE);
+	    break;
+	case S_GTHREAD_V3:
+	case S_LTHREAD_V3:
+            codeview_add_variable(msc_dbg, compiland, sym->thread_v3.name,
+                                  sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype,
+                                  sym->generic.id == S_LTHREAD_V3, TRUE, FALSE);
+	    break;
+
         /*
          * These are special, in that they are always followed by an
          * additional length-prefixed string which is *not* included
