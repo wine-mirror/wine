@@ -1554,6 +1554,36 @@ union codeview_symbol
         short int               id;
         unsigned int            offset;
         unsigned short          segment;
+        unsigned short          symtype;
+        struct p_string         p_name;
+    } thread_v1;
+
+    struct
+    {
+        short int               len;
+        short int               id;
+        unsigned int            symtype;
+        unsigned int            offset;
+        unsigned short          segment;
+        struct p_string         p_name;
+    } thread_v2;
+
+    struct
+    {
+        short int               len;
+        short int               id;
+        unsigned int            symtype;
+        unsigned int            offset;
+        unsigned short          segment;
+        char                    name[1];
+    } thread_v3;
+
+    struct
+    {
+        short int               len;
+        short int               id;
+        unsigned int            offset;
+        unsigned short          segment;
     } ssearch_v1;
 
     struct
@@ -1646,6 +1676,8 @@ union codeview_symbol
 #define S_LPROC_V3      0x110F
 #define S_GPROC_V3      0x1110
 #define S_REGREL_V3     0x1111
+#define S_LTHREAD_V3    0x1112
+#define S_GTHREAD_V3    0x1113
 #define S_MSTOOL_V3     0x1116  /* compiler command line options and build information */
 #define S_PUB_FUNC1_V3  0x1125  /* didn't get the difference between the two */
 #define S_PUB_FUNC2_V3  0x1127

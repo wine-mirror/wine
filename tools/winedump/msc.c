@@ -1352,6 +1352,29 @@ int codeview_dump_symbols(const void* root, unsigned long size)
                    *(const unsigned*)((const char*)sym + 4), (const char*)sym + 8);
             break;
 
+        case S_LTHREAD_V1:
+        case S_GTHREAD_V1:
+            printf("\tS-Thread %s Var V1 '%s' seg=%04x offset=%08x type=%x\n",
+                   sym->generic.id == S_LTHREAD_V1 ? "global" : "local",
+                   p_string(&sym->thread_v1.p_name),
+                   sym->thread_v1.segment, sym->thread_v1.offset, sym->thread_v1.symtype);
+            break;
+
+        case S_LTHREAD_V2:
+        case S_GTHREAD_V2:
+            printf("\tS-Thread %s Var V2 '%s' seg=%04x offset=%08x type=%x\n",
+                   sym->generic.id == S_LTHREAD_V2 ? "global" : "local",
+                   p_string(&sym->thread_v2.p_name),
+                   sym->thread_v2.segment, sym->thread_v2.offset, sym->thread_v2.symtype);
+            break;
+
+        case S_LTHREAD_V3:
+        case S_GTHREAD_V3:
+            printf("\tS-Thread %s Var V3 '%s' seg=%04x offset=%08x type=%x\n",
+                   sym->generic.id == S_LTHREAD_V3 ? "global" : "local", sym->thread_v3.name,
+                   sym->thread_v3.segment, sym->thread_v3.offset, sym->thread_v3.symtype);
+            break;
+
         default:
             printf(">>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
             dump_data((const void*)sym, sym->generic.len + 2, "  ");
