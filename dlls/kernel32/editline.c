@@ -639,6 +639,16 @@ static void WCEL_KillToEndOfLine(WCEL_Context* ctx)
     WCEL_DeleteString(ctx, ctx->ofs, ctx->len);
 }
 
+static void WCEL_KillFromBegOfLine(WCEL_Context* ctx)
+{
+    if (ctx->ofs)
+    {
+        WCEL_SaveYank(ctx, 0, ctx->ofs);
+        WCEL_DeleteString(ctx, 0, ctx->ofs);
+        ctx->ofs = 0;
+    }
+}
+
 static void WCEL_KillMarkedZone(WCEL_Context* ctx)
 {
     unsigned beg, end;
@@ -883,6 +893,7 @@ static const KeyEntry Win32KeyMapCtrl[] =
     {/*VK_LEFT*/ 0x25, 	WCEL_MoveToLeftWord 	},
     {/*VK_RIGHT*/0x27,	WCEL_MoveToRightWord	},
     {/*VK_END*/  0x23,	WCEL_KillToEndOfLine	},
+    {/*VK_HOME*/ 0x24,	WCEL_KillFromBegOfLine	},
     {	0,		NULL 			}
 };
 
