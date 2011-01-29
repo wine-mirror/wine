@@ -400,7 +400,7 @@
 # stub _expand_dbg
 @ cdecl _fcloseall() MSVCRT__fcloseall
 @ cdecl _fcvt(double long ptr ptr)
-# stub _fcvt_s
+@ cdecl _fcvt_s(ptr long double long ptr ptr)
 @ cdecl _fdopen(long str) MSVCRT__fdopen
 @ cdecl _fgetchar()
 @ cdecl _fgetwchar()

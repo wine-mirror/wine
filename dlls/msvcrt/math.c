@@ -1423,6 +1423,95 @@ char * CDECL _fcvt( double number, int ndigits, int *decpt, int *sign )
 }
 
 /***********************************************************************
+ *		_fcvt_s  (MSVCRT.@)
+ */
+int CDECL _fcvt_s(char* outbuffer, MSVCRT_size_t size, double number, int ndigits, int *decpt, int *sign)
+{
+    int stop, dec1, dec2;
+    char *ptr1, *ptr2, *first;
+    char buf[80]; /* ought to be enough */
+
+    if (!outbuffer || !decpt || !sign || size == 0)
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    if (number < 0)
+    {
+	*sign = 1;
+	number = -number;
+    } else *sign = 0;
+
+    snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
+    ptr1 = buf;
+    ptr2 = outbuffer;
+    first = NULL;
+    dec1 = 0;
+    dec2 = 0;
+
+    /* For numbers below the requested resolution, work out where
+       the decimal point will be rather than finding it in the string */
+    if (number < 1.0 && number > 0.0) {
+	dec2 = log10(number + 1e-10);
+	if (-dec2 <= ndigits) dec2 = 0;
+    }
+
+    /* If requested digits is zero or less, we will need to truncate
+     * the returned string */
+    if (ndigits < 1) {
+	stop = strlen(buf) + ndigits;
+    } else {
+	stop = strlen(buf);
+    }
+
+    while (*ptr1 == '0') ptr1++; /* Skip leading zeroes */
+    while (*ptr1 != '\0' && *ptr1 != '.') {
+	if (!first) first = ptr2;
+	if ((ptr1 - buf) < stop) {
+	    if (size > 1) {
+                *ptr2++ = *ptr1++;
+                size--;
+            }
+	} else {
+	    ptr1++;
+	}
+	dec1++;
+    }
+
+    if (ndigits > 0) {
+	ptr1++;
+	if (!first) {
+	    while (*ptr1 == '0') { /* Process leading zeroes */
+                if (number == 0.0 && size > 1) {
+                    *ptr2++ = '0';
+                    size--;
+                }
+                ptr1++;
+		dec1--;
+	    }
+	}
+	while (*ptr1 != '\0') {
+	    if (!first) first = ptr2;
+	    if (size > 1) {
+                *ptr2++ = *ptr1++;
+                size--;
+            }
+	}
+    }
+
+    *ptr2 = '\0';
+
+    /* We never found a non-zero digit, then our number is either
+     * smaller than the requested precision, or 0.0 */
+    if (!first && (number <= 0.0))
+        dec1 = 0;
+
+    *decpt = dec2 ? dec2 : dec1;
+    return 0;
+}
+
+/***********************************************************************
  *		_gcvt  (MSVCRT.@)
  */
 char * CDECL _gcvt( double number, int ndigit, char *buff )

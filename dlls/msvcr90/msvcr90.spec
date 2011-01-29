@@ -439,7 +439,7 @@
 @ stub _fclose_nolock
 @ cdecl _fcloseall() msvcrt._fcloseall
 @ cdecl _fcvt(double long ptr ptr) msvcrt._fcvt
-@ stub _fcvt_s
+@ cdecl _fcvt_s(ptr long double long ptr ptr) msvcrt._fcvt_s
 @ cdecl _fdopen(long str) msvcrt._fdopen
 @ stub _fflush_nolock
 @ cdecl _fgetchar() msvcrt._fgetchar
