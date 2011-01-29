@@ -223,6 +223,7 @@ struct dbkey_descr
 struct dbkey_pair
 {
     const char*         string;
+    unsigned            string_len;
     struct dbkey_descr  descr;
 };
 
@@ -300,8 +301,9 @@ static BOOL TERM_AddKeyDescr(const char* string, struct dbkey_descr* descr)
         TERM_dbkey = new;
         TERM_dbkey_size *= 2;
     }
-    TERM_dbkey[TERM_dbkey_index].string = string;
-    TERM_dbkey[TERM_dbkey_index].descr  = *descr;
+    TERM_dbkey[TERM_dbkey_index].string     = string;
+    TERM_dbkey[TERM_dbkey_index].string_len = strlen(string);
+    TERM_dbkey[TERM_dbkey_index].descr      = *descr;
     TERM_dbkey_index++;
     return TRUE;
 }
@@ -352,7 +354,7 @@ int TERM_FillInputRecord(const char* in, size_t len, INPUT_RECORD* ir)
     {
         if (!memcmp(TERM_dbkey[i].string, in, len))
         {
-            if (len < strlen(TERM_dbkey[i].string)) return 0;
+            if (len < TERM_dbkey[i].string_len) return 0;
             if (found) return 0;
             found = &TERM_dbkey[i].descr;
         }
