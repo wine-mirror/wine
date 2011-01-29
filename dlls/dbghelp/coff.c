@@ -342,6 +342,8 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             coff_sym->SectionNumber > 0)
 	{
             DWORD base = msc_dbg->sectp[coff_sym->SectionNumber - 1].VirtualAddress;
+            struct location loc;
+
             /*
              * Similar to above, but for the case of data symbols.
              * These aren't treated as entrypoints.
@@ -356,9 +358,11 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             /*
              * Now we need to figure out which file this guy belongs to.
              */
+            loc.kind = loc_absolute;
+            loc.reg = 0;
+            loc.offset = msc_dbg->module->module.BaseOfImage + base + coff_sym->Value;
             symt_new_global_variable(msc_dbg->module, NULL, nampnt, TRUE /* FIXME */,
-                                     msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
-                                     0 /* FIXME */, NULL /* FIXME */);
+                                     loc, 0 /* FIXME */, NULL /* FIXME */);
             i += naux;
             continue;
 	}

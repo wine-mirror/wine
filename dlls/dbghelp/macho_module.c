@@ -818,8 +818,13 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
             }
             else
             {
+                struct location loc;
+
+                loc.kind = loc_absolute;
+                loc.reg = 0;
+                loc.offset = ste->addr;
                 symt_new_global_variable(module, ste->compiland, ste->ht_elt.name,
-                    !ste->is_global, ste->addr, 0, NULL);
+                                         !ste->is_global, loc, 0, NULL);
             }
 
             ste->used = 1;

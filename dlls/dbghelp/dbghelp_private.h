@@ -125,6 +125,7 @@ enum location_kind {loc_error,          /* reg is the error code */
                     loc_absolute,       /* offset is the location */
                     loc_register,       /* reg is the location */
                     loc_regrel,         /* [reg+offset] is the location */
+                    loc_tlsrel,         /* offset is the address of the TLS index */
                     loc_user,           /* value is debug information dependent,
                                            reg & offset can be used ad libidem */
 };
@@ -182,8 +183,9 @@ struct symt_data
     union                                       /* depends on kind */
     {
         /* DataIs{Global, FileStatic}:
-         *      loc.kind is loc_absolute
-         *      loc.offset is address
+         *      with loc.kind
+         *              loc_absolute    loc.offset is address
+         *              loc_tlsrel      loc.offset is TLS index address
          * DataIs{Local,Param}:
          *      with loc.kind
          *              loc_absolute    not supported
@@ -634,7 +636,7 @@ extern struct symt_data*
                     symt_new_global_variable(struct module* module, 
                                              struct symt_compiland* parent,
                                              const char* name, unsigned is_static,
-                                             unsigned long addr, unsigned long size, 
+                                             struct location loc, unsigned long size,
                                              struct symt* type);
 extern struct symt_function*
                     symt_new_function(struct module* module,

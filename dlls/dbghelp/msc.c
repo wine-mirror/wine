@@ -1528,11 +1528,15 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
     if (name && *name)
     {
         unsigned long   address = codeview_get_address(msc_dbg, segment, offset);
+        struct location loc;
 
+        loc.kind = loc_absolute;
+        loc.reg = 0;
+        loc.offset = address;
         if (force || !symt_find_nearest(msc_dbg->module, address))
         {
             symt_new_global_variable(msc_dbg->module, compiland,
-                                     name, is_local, address, 0,
+                                     name, is_local, loc, 0,
                                      codeview_get_type(symtype, FALSE));
         }
     }

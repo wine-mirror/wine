@@ -376,6 +376,7 @@ static BOOL pe_locate_with_coff_symbol_table(struct module* module)
                 sym = GET_ENTRY(ptr, struct symt_data, hash_elt);
                 if (sym->symt.tag == SymTagData &&
                     (sym->kind == DataIsGlobal || sym->kind == DataIsFileStatic) &&
+                    sym->u.var.kind == loc_absolute &&
                     !strcmp(sym->hash_elt.name, name))
                 {
                     TRACE("Changing absolute address for %d.%s: %lx -> %s\n",

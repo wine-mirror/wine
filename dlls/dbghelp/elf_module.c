@@ -668,7 +668,8 @@ static void elf_finish_stabs_info(struct module* module, const struct hash_table
             {
             case DataIsGlobal:
             case DataIsFileStatic:
-                if (((struct symt_data*)sym)->u.var.offset != elf_info->elf_addr)
+                if (((struct symt_data*)sym)->u.var.kind != loc_absolute ||
+                    ((struct symt_data*)sym)->u.var.offset != elf_info->elf_addr)
                     break;
                 symp = elf_lookup_symtab(module, symtab, sym->hash_elt.name, 
                                          ((struct symt_data*)sym)->container);
@@ -728,6 +729,7 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
         else
         {
             ULONG64     ref_addr;
+            struct location loc;
 
             symt = symt_find_nearest(module, addr);
             if (symt && !symt_get_info(module, &symt->symt, TI_GET_ADDRESS, &ref_addr))
@@ -745,9 +747,12 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
                                       addr, ste->symp->st_size, NULL);
                     break;
                 case STT_OBJECT:
+                    loc.kind = loc_absolute;
+                    loc.reg = 0;
+                    loc.offset = addr;
                     symt_new_global_variable(module, ste->compiland, ste->ht_elt.name,
                                              ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL,
-                                             addr, ste->symp->st_size, NULL);
+                                             loc, ste->symp->st_size, NULL);
                     break;
                 default:
                     FIXME("Shouldn't happen\n");

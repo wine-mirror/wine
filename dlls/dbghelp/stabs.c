@@ -1381,17 +1381,21 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
              * With a.out or mingw, they actually do make some amount of sense.
              */
             stab_strcpy(symname, sizeof(symname), ptr);
+            loc.kind = loc_absolute;
+            loc.reg = 0;
+            loc.offset = load_offset + stab_ptr->n_value;
             symt_new_global_variable(module, compiland, symname, TRUE /* FIXME */,
-                                     load_offset + stab_ptr->n_value, 0,
-                                     stabs_parse_type(ptr));
+                                     loc, 0, stabs_parse_type(ptr));
             break;
         case N_LCSYM:
         case N_STSYM:
             /* These are static symbols and BSS symbols. */
             stab_strcpy(symname, sizeof(symname), ptr);
+            loc.kind = loc_absolute;
+            loc.reg = 0;
+            loc.offset = load_offset + stab_ptr->n_value;
             symt_new_global_variable(module, compiland, symname, TRUE /* FIXME */,
-                                     load_offset + stab_ptr->n_value, 0,
-                                     stabs_parse_type(ptr));
+                                     loc, 0, stabs_parse_type(ptr));
             break;
         case N_LBRAC:
             if (curr_func)

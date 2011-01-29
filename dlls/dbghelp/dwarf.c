@@ -1486,10 +1486,10 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             /* FIXME: we don't handle its scope yet */
             if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_external, &ext))
                 ext.u.uvalue = 0;
+            loc.offset += subpgm->ctx->load_offset;
             symt_new_global_variable(subpgm->ctx->module, subpgm->compiland,
                                      name.u.string, !ext.u.uvalue,
-                                     subpgm->ctx->load_offset + loc.offset,
-                                     0, param_type);
+                                     loc, 0, param_type);
             break;
         default:
             subpgm->non_computed_variable = TRUE;

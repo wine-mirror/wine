@@ -334,15 +334,15 @@ struct symt_public* symt_new_public(struct module* module,
 struct symt_data* symt_new_global_variable(struct module* module, 
                                            struct symt_compiland* compiland, 
                                            const char* name, unsigned is_static,
-                                           unsigned long addr, unsigned long size,
+                                           struct location loc, unsigned long size,
                                            struct symt* type)
 {
     struct symt_data*   sym;
     struct symt**       p;
     DWORD64             tsz;
 
-    TRACE_(dbghelp_symt)("Adding global symbol %s:%s @%lx %p\n",
-                         debugstr_w(module->module.ModuleName), name, addr, type);
+    TRACE_(dbghelp_symt)("Adding global symbol %s:%s %d@%lx %p\n",
+                         debugstr_w(module->module.ModuleName), name, loc.kind, loc.offset, type);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag      = SymTagData;
@@ -350,7 +350,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
         sym->kind          = is_static ? DataIsFileStatic : DataIsGlobal;
         sym->container     = compiland ? &compiland->symt : NULL;
         sym->type          = type;
-        sym->u.var.offset  = addr;
+        sym->u.var         = loc;
         if (type && size && symt_get_info(module, type, TI_GET_LENGTH, &tsz))
         {
             if (tsz != size)
@@ -736,8 +736,19 @@ static void symt_fill_sym_info(struct module_pair* pair,
                 break;
             case DataIsGlobal:
             case DataIsFileStatic:
-                symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
-                sym_info->Register = 0;
+                switch (data->u.var.kind)
+                {
+                case loc_tlsrel:
+                    sym_info->Flags |= SYMFLAG_TLSREL;
+                    /* fall through */
+                case loc_absolute:
+                    symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
+                    sym_info->Register = 0;
+                    break;
+                default:
+                    FIXME("Shouldn't happen (kind=%d), debug reader backend is broken\n", data->u.var.kind);
+                    assert(0);
+                }
                 break;
             case DataIsConstant:
                 sym_info->Flags |= SYMFLAG_VALUEPRESENT;
