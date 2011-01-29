@@ -1571,7 +1571,10 @@ HRESULT WINAPI IUnknown_ProfferService(IUnknown *lpUnknown, REFGUID service, ISe
         if (pService)
             hr = IProfferService_ProfferService(proffer, service, pService, pCookie);
         else
+        {
             hr = IProfferService_RevokeService(proffer, *pCookie);
+            *pCookie = 0;
+        }
 
         IProfferService_Release(proffer);
     }

@@ -2362,6 +2362,7 @@ static ULONG WINAPI IProfferServiceImpl_Release(IProfferService *iface)
 static HRESULT WINAPI IProfferServiceImpl_ProfferService(IProfferService *iface,
     REFGUID service, IServiceProvider *pService, DWORD *pCookie)
 {
+    *pCookie = 0xdeadbeef;
     add_call(&trace_got, 3, service, pService, pCookie, 0, 0);
     return S_OK;
 }
@@ -2419,8 +2420,10 @@ static void test_IUnknown_ProfferService(void)
     add_call(&trace_expected, 3, &dummy_serviceid, provider, &cookie, 0, 0);
 
     init_call_trace(&trace_got);
+    cookie = 0;
     hr = pIUnknown_ProfferService((IUnknown*)proff, &dummy_serviceid, provider, &cookie);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cookie == 0xdeadbeef, "got %x\n", cookie);
 
     ok_trace(&trace_expected, &trace_got);
     free_call_trace(&trace_got);
@@ -2434,8 +2437,10 @@ static void test_IUnknown_ProfferService(void)
     add_call(&trace_expected, 4, (void*)(DWORD_PTR)cookie, 0, 0, 0, 0);
 
     init_call_trace(&trace_got);
+    ok(cookie != 0, "got %x\n", cookie);
     hr = pIUnknown_ProfferService((IUnknown*)proff, &dummy_serviceid, 0, &cookie);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(cookie == 0, "got %x\n", cookie);
     ok_trace(&trace_expected, &trace_got);
     free_call_trace(&trace_got);
     free_call_trace(&trace_expected);
