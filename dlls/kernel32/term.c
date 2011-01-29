@@ -22,6 +22,7 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <stdlib.h>
 #ifdef HAVE_NCURSES_H
 # include <ncurses.h>
 #elif defined(HAVE_CURSES_H)
@@ -220,47 +221,40 @@ struct dbkey_descr
     DWORD_PTR   p3;
 };
 
-struct dbkey_pair
+struct dbkey_init
 {
-    const char*         string;
-    unsigned            string_len;
+    const char*         string_normal;
+    const char*         string_xterm;
     struct dbkey_descr  descr;
 };
 
-static struct dbkey_pair TERM_dbkey_init[] = {
-    {"kcud1", {dbk_complex, 0x50, 0x28, 0}},
-    {"kcuu1", {dbk_complex, 0x48, 0x26, 0}},
-    {"kcub1", {dbk_complex, 0x4b, 0x25, 0}},
-    {"kcuf1", {dbk_complex, 0x4d, 0x27, 0}},
-    {"khome", {dbk_complex, 0x47, 0x24, 0}},
-    {"kbs",   {dbk_simple,  0x7f, 0x00, 0}},
-    {"kf1",   {dbk_complex, 0x3b, 0x70, 0}},
-    {"kf2",   {dbk_complex, 0x3c, 0x71, 0}},
-    {"kf3",   {dbk_complex, 0x3d, 0x72, 0}},
-    {"kf4",   {dbk_complex, 0x3e, 0x73, 0}},
-    {"kf5",   {dbk_complex, 0x3f, 0x74, 0}},
-    {"kf6",   {dbk_complex, 0x40, 0x75, 0}},
-    {"kf7",   {dbk_complex, 0x41, 0x76, 0}},
-    {"kf8",   {dbk_complex, 0x42, 0x77, 0}},
-    {"kf9",   {dbk_complex, 0x43, 0x78, 0}},
-    {"kf10",  {dbk_complex, 0x44, 0x79, 0}},
-    {"kf11",  {dbk_complex, 0xd9, 0x7a, 0}},
-    {"kf12",  {dbk_complex, 0xda, 0x7b, 0}},
-    {"kdch1", {dbk_complex, 0x53, 0x2e, 0}},
-    {"kich1", {dbk_complex, 0x52, 0x2d, 0}},
-    {"knp",   {dbk_complex, 0x51, 0x22, 0}},
-    {"kpp",   {dbk_complex, 0x49, 0x21, 0}},
-    {"kcbt",  {dbk_simple,  0x09, 0x00, SHIFT_PRESSED}},
+static struct dbkey_init TERM_dbkey_init[] = {
+    {"kcud1", "kDN",  {dbk_complex, 0x50, 0x28, 0}},
+    {"kcuu1", "kUP",  {dbk_complex, 0x48, 0x26, 0}},
+    {"kcub1", "kLFT", {dbk_complex, 0x4b, 0x25, 0}},
+    {"kcuf1", "kRIT", {dbk_complex, 0x4d, 0x27, 0}},
+    {"khome", "kHOM", {dbk_complex, 0x47, 0x24, 0}},
+    {"kbs",   NULL,   {dbk_simple,  0x7f, 0x00, 0}},
+    {"kf1",   NULL,   {dbk_complex, 0x3b, 0x70, 0}},
+    {"kf2",   NULL,   {dbk_complex, 0x3c, 0x71, 0}},
+    {"kf3",   NULL,   {dbk_complex, 0x3d, 0x72, 0}},
+    {"kf4",   NULL,   {dbk_complex, 0x3e, 0x73, 0}},
+    {"kf5",   NULL,   {dbk_complex, 0x3f, 0x74, 0}},
+    {"kf6",   NULL,   {dbk_complex, 0x40, 0x75, 0}},
+    {"kf7",   NULL,   {dbk_complex, 0x41, 0x76, 0}},
+    {"kf8",   NULL,   {dbk_complex, 0x42, 0x77, 0}},
+    {"kf9",   NULL,   {dbk_complex, 0x43, 0x78, 0}},
+    {"kf10",  NULL,   {dbk_complex, 0x44, 0x79, 0}},
+    {"kf11",  NULL,   {dbk_complex, 0xd9, 0x7a, 0}},
+    {"kf12",  NULL,   {dbk_complex, 0xda, 0x7b, 0}},
+    {"kdch1", "kDC",  {dbk_complex, 0x53, 0x2e, 0}},
+    {"kich1", "kIC",  {dbk_complex, 0x52, 0x2d, 0}},
+    {"knp",   "kNXT", {dbk_complex, 0x51, 0x22, 0}},
+    {"kpp",   "kPRV", {dbk_complex, 0x49, 0x21, 0}},
+    {"kcbt",  NULL,   {dbk_simple,  0x09, 0x00, SHIFT_PRESSED}},
+    {"kend",  "kEND", {dbk_complex, 0x4f, 0x23, 0}},
 
-    {"kend",  {dbk_complex, 0x4f, 0x23, 0}},
     /* {"kmous", NULL, }, */
-    {"kDC",   {dbk_complex, 0x53, 0x2e, SHIFT_PRESSED}},
-    {"kEND",  {dbk_complex, 0x4f, 0x23, SHIFT_PRESSED}},
-    {"kHOM",  {dbk_complex, 0x47, 0x24, SHIFT_PRESSED}},
-    {"kIC",   {dbk_complex, 0x52, 0x2d, SHIFT_PRESSED}},
-    {"kLFT",  {dbk_complex, 0x4b, 0x25, SHIFT_PRESSED}},
-    {"kRIT",  {dbk_complex, 0x4d, 0x27, SHIFT_PRESSED}},
-
     /* Still some keys to manage:
        KEY_DL           KEY_IL          KEY_EIC         KEY_CLEAR               KEY_EOS
        KEY_EOL          KEY_SF          KEY_SR          KEY_STAB                KEY_CTAB
@@ -279,13 +273,20 @@ static struct dbkey_pair TERM_dbkey_init[] = {
     */
 };
 
+struct dbkey_pair
+{
+    const char*         string;
+    unsigned            string_len;
+    struct dbkey_descr  descr;
+};
+
 static struct dbkey_pair*       TERM_dbkey;
 static unsigned                 TERM_dbkey_size;
 static unsigned                 TERM_dbkey_index;
 
 static BOOL TERM_AddKeyDescr(const char* string, struct dbkey_descr* descr)
 {
-    if (!string) return FALSE;
+    if (!string || string == (const char*)-1) return TRUE;
     if (!TERM_dbkey)
     {
         TERM_dbkey_size = 32;
@@ -310,11 +311,30 @@ static BOOL TERM_AddKeyDescr(const char* string, struct dbkey_descr* descr)
 
 static BOOL TERM_BuildKeyDB(void)
 {
-    unsigned i;
+    unsigned i, len;
+    struct dbkey_descr descr;
+    char tmp[64];
+
     for (i = 0; i < sizeof(TERM_dbkey_init) / sizeof(TERM_dbkey_init[0]); i++)
     {
-        if (!TERM_AddKeyDescr(tigetstr(TERM_dbkey_init[i].string), &TERM_dbkey_init[i].descr))
+        if (!TERM_AddKeyDescr(tigetstr(TERM_dbkey_init[i].string_normal), &TERM_dbkey_init[i].descr))
             return FALSE;
+        if (TERM_dbkey_init[i].string_xterm)
+        {
+            descr = TERM_dbkey_init[i].descr;
+            strcpy(tmp, TERM_dbkey_init[i].string_xterm);
+            len = strlen(tmp);
+            tmp[len + 1] = '\0';
+#define X(v, f) do { tmp[len] = v; descr.p3 = (f); if (!TERM_AddKeyDescr(tigetstr(tmp), &descr)) return FALSE; } while (0)
+            X('\0', SHIFT_PRESSED);
+            X('3',  LEFT_ALT_PRESSED);
+            X('4',  SHIFT_PRESSED | LEFT_ALT_PRESSED);
+            X('5',  LEFT_CTRL_PRESSED);
+            X('6',  LEFT_CTRL_PRESSED|SHIFT_PRESSED);
+            X('7',  LEFT_CTRL_PRESSED|LEFT_ALT_PRESSED);
+            X('8',  LEFT_CTRL_PRESSED|LEFT_ALT_PRESSED|SHIFT_PRESSED);
+#undef X
+        }
     }
     return TRUE;
 }
