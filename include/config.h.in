@@ -52,6 +52,9 @@
 /* Define to 1 if you have the <audio/soundlib.h> header file. */
 #undef HAVE_AUDIO_SOUNDLIB_H
 
+/* Define to 1 if you have the `AUGraphAddNode' function. */
+#undef HAVE_AUGRAPHADDNODE
+
 /* Define to 1 if you have the <capi20.h> header file. */
 #undef HAVE_CAPI20_H
 

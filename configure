@@ -6535,6 +6535,20 @@ fi
                         COREAUDIO="-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI"
 
         fi
+                ac_save_LIBS="$LIBS"
+        LIBS="$LIBS $COREAUDIO"
+        for ac_func in AUGraphAddNode
+do :
+  ac_fn_c_check_func "$LINENO" "AUGraphAddNode" "ac_cv_func_AUGraphAddNode"
+if test "x$ac_cv_func_AUGraphAddNode" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_AUGRAPHADDNODE 1
+_ACEOF
+
+fi
+done
+
+        LIBS="$ac_save_LIBS"
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then

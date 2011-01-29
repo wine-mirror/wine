@@ -59,6 +59,18 @@ static inline OSStatus AudioComponentInstanceDispose(AudioComponentInstance aci)
 }
 #endif
 
+#ifndef HAVE_AUGRAPHADDNODE
+static inline OSStatus AUGraphAddNode(AUGraph graph, const AudioComponentDescription *desc, AUNode *node)
+{
+    return AUGraphNewNode(graph, desc, 0, NULL, node);
+}
+
+static inline OSStatus AUGraphNodeInfo(AUGraph graph, AUNode node, AudioComponentDescription *desc, AudioUnit *au)
+{
+    return AUGraphGetNodeInfo(graph, node, desc, 0, NULL, au);
+}
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 WINE_DECLARE_DEBUG_CHANNEL(midi);
 
@@ -194,11 +206,15 @@ int AudioUnit_GetInputDeviceSampleRate(void)
 {
     AudioDeviceID               defaultInputDevice;
     UInt32                      param;
+    AudioObjectPropertyAddress  propertyAddress;
     Float64                     sampleRate;
     OSStatus                    err;
 
     param = sizeof(defaultInputDevice);
-    err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &param, &defaultInputDevice);
+    propertyAddress.mSelector = kAudioHardwarePropertyDefaultInputDevice;
+    propertyAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propertyAddress.mElement = kAudioObjectPropertyElementMaster;
+    err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &param, &defaultInputDevice);
     if (err != noErr || defaultInputDevice == kAudioDeviceUnknown)
     {
         ERR("Couldn't get the default audio input device ID: %08lx\n", err);
@@ -206,7 +222,9 @@ int AudioUnit_GetInputDeviceSampleRate(void)
     }
 
     param = sizeof(sampleRate);
-    err = AudioDeviceGetProperty(defaultInputDevice, 0, 1, kAudioDevicePropertyNominalSampleRate, &param, &sampleRate);
+    propertyAddress.mSelector = kAudioDevicePropertyNominalSampleRate;
+    propertyAddress.mScope = kAudioDevicePropertyScopeInput;
+    err = AudioObjectGetPropertyData(defaultInputDevice, &propertyAddress, 0, NULL, &param, &sampleRate);
     if (err != noErr)
     {
         ERR("Couldn't get the device sample rate: %08lx\n", err);
@@ -226,6 +244,7 @@ int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
     AudioComponent              component;
     AudioUnit                   au;
     UInt32                      param;
+    AudioObjectPropertyAddress  propertyAddress;
     AURenderCallbackStruct      callback;
     AudioDeviceID               defaultInputDevice;
     AudioStreamBasicDescription desiredFormat;
@@ -291,7 +310,10 @@ int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
 
     /* Find the default input device */
     param = sizeof(defaultInputDevice);
-    err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &param, &defaultInputDevice);
+    propertyAddress.mSelector = kAudioHardwarePropertyDefaultInputDevice;
+    propertyAddress.mScope = kAudioObjectPropertyScopeGlobal;
+    propertyAddress.mElement = kAudioObjectPropertyElementMaster;
+    err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &param, &defaultInputDevice);
     if (err != noErr || defaultInputDevice == kAudioDeviceUnknown)
     {
         ERR("Couldn't get the default audio device ID: %08lx\n", err);
@@ -396,10 +418,10 @@ int SynthUnit_CreateDefaultSynthUnit(AUGraph *graph, AudioUnit *synth)
     desc.componentType = kAudioUnitType_MusicDevice;
     desc.componentSubType = kAudioUnitSubType_DLSSynth;
 
-    err = AUGraphNewNode(*graph, &desc, 0, NULL, &synthNode);
+    err = AUGraphAddNode(*graph, &desc, &synthNode);
     if (err != noErr)
     {
-        ERR_(midi)("AUGraphNewNode cannot create synthNode : %s\n", wine_dbgstr_fourcc(err));
+        ERR_(midi)("AUGraphAddNode cannot create synthNode : %s\n", wine_dbgstr_fourcc(err));
         return 0;
     }
 
@@ -407,10 +429,10 @@ int SynthUnit_CreateDefaultSynthUnit(AUGraph *graph, AudioUnit *synth)
     desc.componentType = kAudioUnitType_Output;
     desc.componentSubType = kAudioUnitSubType_DefaultOutput;
 
-    err = AUGraphNewNode(*graph, &desc, 0, NULL, &outNode);
+    err = AUGraphAddNode(*graph, &desc, &outNode);
     if (err != noErr)
     {
-        ERR_(midi)("AUGraphNewNode cannot create outNode %s\n", wine_dbgstr_fourcc(err));
+        ERR_(midi)("AUGraphAddNode cannot create outNode %s\n", wine_dbgstr_fourcc(err));
         return 0;
     }
 
@@ -430,10 +452,10 @@ int SynthUnit_CreateDefaultSynthUnit(AUGraph *graph, AudioUnit *synth)
     }
 
     /* Get the synth unit */
-    err = AUGraphGetNodeInfo(*graph, synthNode, 0, 0, 0, synth);
+    err = AUGraphNodeInfo(*graph, synthNode, 0, synth);
     if (err != noErr)
     {
-        ERR_(midi)("AUGraphGetNodeInfo return %s\n", wine_dbgstr_fourcc(err));
+        ERR_(midi)("AUGraphNodeInfo return %s\n", wine_dbgstr_fourcc(err));
         return 0;
     }
 

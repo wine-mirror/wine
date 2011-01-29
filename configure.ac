@@ -719,6 +719,11 @@ case $host_os in
             dnl CoreServices needed by AudioUnit
             AC_SUBST(COREAUDIO,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
         fi
+        dnl Check for the AUGraphAddNode function
+        ac_save_LIBS="$LIBS"
+        LIBS="$LIBS $COREAUDIO"
+        AC_CHECK_FUNCS(AUGraphAddNode)
+        LIBS="$ac_save_LIBS"
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then
