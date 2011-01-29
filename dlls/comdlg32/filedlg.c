@@ -2491,8 +2491,8 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
             else if ( fodInfos->defext ) /* attach the default file extension*/
                 filterExt = fodInfos->defext;
 
-            /* If extension is .*, ignore it */
-            if (filterExt[0] != '*')
+            /* If extension contains a glob, ignore it */
+            if ( filterExt && !strchrW(filterExt, '*') && !strchrW(filterExt, '?') )
             {
                 /* Attach the dot*/
                 lstrcatW(lpstrPathAndFile, szwDot);

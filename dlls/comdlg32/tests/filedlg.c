@@ -1052,6 +1052,15 @@ static UINT_PTR WINAPI test_extension_wndproc(HWND dlg, UINT msg, WPARAM wParam,
     return FALSE;
 }
 
+static const char *defext_filters[] = {
+    "TestFilter (*.pt*)\0*.pt*\0",
+    "TestFilter (*.ab?)\0*.ab?\0",
+    "TestFilter (*.*)\0*.*\0",
+    NULL    /* is a test, not an endmark! */
+};
+
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+
 static void test_extension(void)
 {
     OPENFILENAME ofn = { sizeof(OPENFILENAME)};
@@ -1059,11 +1068,12 @@ static void test_extension(void)
     char curdir[MAX_PATH];
     char *filename_ptr;
     const char *test_file_name = "deadbeef";
+    const char **cur_filter;
     DWORD ret;
-    BOOL cdret;
+    BOOL boolret;
 
-    cdret = GetCurrentDirectoryA(sizeof(curdir), curdir);
-    ok(cdret, "Failed to get current dir err %d\n", GetLastError());
+    boolret = GetCurrentDirectoryA(sizeof(curdir), curdir);
+    ok(boolret, "Failed to get current dir err %d\n", GetLastError());
 
     /* Ignore .* extension */
     ofn.lStructSize = sizeof(ofn);
@@ -1075,16 +1085,22 @@ static void test_extension(void)
     ofn.lpstrInitialDir = curdir;
     ofn.lpfnHook = test_extension_wndproc;
     ofn.nFileExtension = 0;
-    ofn.lpstrFilter = "All Files (*.*)\0*.*\0";
-    strcpy(filename, test_file_name);
 
-    ret = GetSaveFileNameA(&ofn);
-    filename_ptr = ofn.lpstrFile + strlen( ofn.lpstrFile ) - strlen( test_file_name );
-    ok(1 == ret, "expected 1, got %d\n", ret);
-    ok(strlen(ofn.lpstrFile) >= strlen(test_file_name), "Filename %s is too short\n", ofn.lpstrFile );
-    ok( strcmp(filename_ptr, test_file_name) == 0,
-        "Filename is %s, expected %s\n", filename_ptr, test_file_name );
+    for (cur_filter = defext_filters; cur_filter < defext_filters + ARRAY_SIZE(defext_filters); cur_filter++) {
+        ofn.lpstrFilter = *cur_filter;
+        strcpy(filename, test_file_name);
+        boolret = GetSaveFileNameA(&ofn);
+        ok(boolret, "expected true\n");
+        ret = CommDlgExtendedError();
+        ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+        filename_ptr = ofn.lpstrFile + strlen( ofn.lpstrFile ) - strlen( test_file_name );
+        ok( strlen(ofn.lpstrFile) >= strlen(test_file_name), "Filename %s is too short\n", ofn.lpstrFile );
+        ok( strcmp(filename_ptr, test_file_name) == 0,
+            "Filename is %s, expected %s\n", filename_ptr, test_file_name );
+    }
 }
+
+#undef ARRAY_SIZE
 
 START_TEST(filedlg)
 {
