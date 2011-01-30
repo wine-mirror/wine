@@ -255,25 +255,31 @@ START_TEST(query)
     {
         IDirect3D9            *pD3d = NULL;
         HWND                  hwnd = NULL;
+        WNDCLASS wc = {0};
+        wc.lpfnWndProc = DefWindowProc;
+        wc.lpszClassName = "d3d9_test_wc";
+        RegisterClass(&wc);
 
         pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
         if(!pD3d)
         {
             skip("Failed to create Direct3D9 object, not running tests\n");
-            return;
+            goto out;
         }
-        hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+        hwnd = CreateWindow( wc.lpszClassName, "d3d9_test",
+                WS_SYSMENU | WS_POPUP, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
         if(!hwnd)
         {
             skip("Failed to create window\n");
-            IDirect3D9_Release(pD3d);
-            return;
+            goto out;
         }
 
         test_query_support(pD3d, hwnd);
         test_occlusion_query_states(pD3d, hwnd);
 
-        DestroyWindow(hwnd);
-        IDirect3D9_Release(pD3d);
+        out:
+        if(pD3d) IDirect3D9_Release(pD3d);
+        if(hwnd) DestroyWindow(hwnd);
+        UnregisterClassA(wc.lpszClassName, GetModuleHandleA(NULL));
     }
 }
