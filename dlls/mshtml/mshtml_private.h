@@ -586,13 +586,6 @@ struct HTMLFrameBase {
     nsIDOMHTMLIFrameElement *nsiframe;
 };
 
-typedef struct _mutation_queue_t {
-    DWORD type;
-    nsISupports *nsiface;
-
-    struct _mutation_queue_t *next;
-} mutation_queue_t;
-
 typedef struct nsDocumentEventListener nsDocumentEventListener;
 
 struct HTMLDocumentNode {
@@ -602,7 +595,6 @@ struct HTMLDocumentNode {
     IInternetHostSecurityManager IInternetHostSecurityManager_iface;
 
     nsIDocumentObserver          nsIDocumentObserver_iface;
-    nsIRunnable                  nsIRunnable_iface;
 
     LONG ref;
 
@@ -617,8 +609,6 @@ struct HTMLDocumentNode {
     BOOL *event_vector;
 
     BOOL skip_mutation_notif;
-    mutation_queue_t *mutation_queue;
-    mutation_queue_t *mutation_queue_tail;
 
     struct list bindings;
     struct list selection_list;

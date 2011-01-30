@@ -21,7 +21,7 @@ document.write("<script>"
 
 len = document.getElementsByTagName('script').length;
 external.todo_wine_ok(len === 2, "script col length = " + len);
-external.todo_wine_ok(executed, "writen script not executed");
+ok(executed, "writen script not executed");
 
 external.reportSuccess();
 </script>
