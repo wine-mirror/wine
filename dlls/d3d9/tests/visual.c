@@ -10394,9 +10394,15 @@ static void viewport_test(IDirect3DDevice9 *device) {
      * TODO: Test Width < surface.width, but X + Width > surface.width
      * TODO: Test Width < surface.width, what happens with the height?
      *
-     * Note that Windows 7 rejects MinZ / MaxZ outside [0;1], but accepts Width
-     * and Height fields bigger than the framebuffer. However, it later refuses
-     * to draw.
+     * The expected behavior is that the viewport behaves like the "default"
+     * viewport with X = Y = 0, Width = surface_width, Height = surface_height,
+     * MinZ = 0.0, MaxZ = 1.0.
+     *
+     * Starting with Windows 7 the behavior among driver versions is not
+     * consistent. The SetViewport call is accepted on all drivers. Some
+     * drivers(older nvidia ones) refuse to draw and return an error. Newer
+     * nvidia drivers draw, but use the actual values in the viewport and only
+     * display the upper left part on the surface.
      */
     memset(&vp, 0, sizeof(vp));
     vp.X = 0;
@@ -10430,10 +10436,10 @@ static void viewport_test(IDirect3DDevice9 *device) {
         color = getPixelColor(device, 158, 122);
         ok(color == 0x00ff0000, "viewport test: (158,122) has color %08x\n", color);
         color = getPixelColor(device, 162, 122);
-        ok(color == 0x00ffffff, "viewport test: (162,122) has color %08x\n", color);
+        ok(color == 0x00ffffff || broken(color == 0x00ff0000), "viewport test: (162,122) has color %08x\n", color);
 
         color = getPixelColor(device, 478, 358);
-        ok(color == 0x00ffffff, "viewport test: (478,358 has color %08x\n", color);
+        ok(color == 0x00ffffff || broken(color == 0x00ff0000), "viewport test: (478,358 has color %08x\n", color);
         color = getPixelColor(device, 482, 358);
         ok(color == 0x00ff0000, "viewport test: (482,358) has color %08x\n", color);
         color = getPixelColor(device, 478, 362);
