@@ -9713,6 +9713,17 @@ static void yuv_color_test(IDirect3DDevice9 *device) {
              * differently, so we need a max diff of 16
              */
             color = getPixelColor(device, 40, 240);
+
+            /* Newer versions of the Nvidia Windows driver mix up the U and V channels, breaking all the tests
+             * where U != V. Skip the entire test if this bug in this case
+             */
+            if (broken(test_data[i].in == 0xff000000 && color == 0x00008800 && format == D3DFMT_UYVY))
+            {
+                skip("Nvidia channel confusion bug detected, skipping YUV tests\n");
+                IDirect3DSurface9_Release(surface);
+                goto out;
+            }
+
             ok(color_match(color, ref_color_left, 18),
                "Input 0x%08x: Got color 0x%08x for pixel 1/1, expected 0x%08x, format %s\n",
                test_data[i].in, color, ref_color_left, fmt_string);
@@ -9725,6 +9736,8 @@ static void yuv_color_test(IDirect3DDevice9 *device) {
         }
         IDirect3DSurface9_Release(surface);
     }
+
+out:
     IDirect3DSurface9_Release(target);
     IDirect3D9_Release(d3d);
 }
