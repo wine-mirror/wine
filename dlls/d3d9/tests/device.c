@@ -166,7 +166,7 @@ static void test_mipmap_levels(void)
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!pD3d || !hwnd) goto cleanup;
 
@@ -213,7 +213,7 @@ static void test_checkdevicemultisampletype(void)
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!pD3d || !hwnd) goto cleanup;
 
@@ -275,7 +275,7 @@ static void test_swapchain(void)
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!pD3d || !hwnd) goto cleanup;
 
@@ -460,7 +460,7 @@ static void test_refcount(void)
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!pD3d || !hwnd) goto cleanup;
 
@@ -773,7 +773,7 @@ static void test_cursor(void)
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!pD3d || !hwnd) goto cleanup;
 
@@ -866,7 +866,7 @@ static void test_reset(void)
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!pD3d || !hwnd) goto cleanup;
 
@@ -1332,7 +1332,7 @@ static void test_scene(void)
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!pD3d || !hwnd) goto cleanup;
 
@@ -1489,7 +1489,7 @@ static void test_limits(void)
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!pD3d || !hwnd) goto cleanup;
 
@@ -1561,7 +1561,7 @@ static void test_depthstenciltest(void)
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!pD3d || !hwnd) goto cleanup;
 
@@ -1740,7 +1740,7 @@ static void test_draw_indexed(void)
     HWND hwnd;
     void *ptr;
 
-    hwnd = CreateWindow("static", "d3d9_test",
+    hwnd = CreateWindow("d3d9_test_wc", "d3d9_test",
             0, 0, 0, 10, 10, 0, 0, 0, 0);
     if (!hwnd)
     {
@@ -1862,7 +1862,7 @@ static void test_null_stream(void)
 
     d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!d3d9 || !hwnd) goto cleanup;
 
@@ -1946,7 +1946,7 @@ static void test_lights(void)
 
     d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!d3d9 || !hwnd) goto cleanup;
 
@@ -2011,7 +2011,7 @@ static void test_set_stream_source(void)
 
     d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
-    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    hwnd = CreateWindow( "d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
     ok(hwnd != NULL, "Failed to create window\n");
     if (!d3d9 || !hwnd) goto cleanup;
 
@@ -2227,13 +2227,8 @@ static void test_scissor_size(void)
         IDirect3DDevice9 *device_ptr = 0;
         D3DPRESENT_PARAMETERS present_parameters;
         HRESULT hr;
-        WNDCLASS wc = {0};
         HWND hwnd = 0;
         RECT scissorrect;
-
-        wc.lpfnWndProc = DefWindowProc;
-        wc.lpszClassName = "d3d9_test_wc";
-        RegisterClass(&wc);
 
         hwnd = CreateWindow("d3d9_test_wc", "d3d9_test",
                         WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, scts[i].winx, scts[i].winy, 0, 0, 0, 0);
@@ -2309,7 +2304,7 @@ static void test_multi_device(void)
     ok(d3d9 != NULL, "Failed to create a d3d9 object.\n");
     if (!d3d9) goto fail;
 
-    hwnd1 = CreateWindow("static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    hwnd1 = CreateWindow("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL);
     ok(hwnd1 != NULL, "Failed to create a window.\n");
     if (!hwnd1) goto fail;
 
@@ -2331,7 +2326,7 @@ static void test_multi_device(void)
     ok(d3d9 != NULL, "Failed to create a d3d9 object.\n");
     if (!d3d9) goto fail;
 
-    hwnd2 = CreateWindow("static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    hwnd2 = CreateWindow("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL);
     ok(hwnd2 != NULL, "Failed to create a window.\n");
     if (!hwnd2) goto fail;
 
@@ -2835,7 +2830,7 @@ static void test_fpu_setup(void)
     ok(!!d3d9, "Failed to create a d3d9 object.\n");
     if (!d3d9) return;
 
-    window = CreateWindowA("static", "d3d9_test", WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
     ok(!!window, "Failed to create a window.\n");
     if (!window) goto done;
 
@@ -2887,10 +2882,16 @@ done:
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
+    WNDCLASS wc = {0};
+
+    wc.lpfnWndProc = DefWindowProc;
+    wc.lpszClassName = "d3d9_test_wc";
+    RegisterClass(&wc);
+
     if (!d3d9_handle)
     {
         skip("Could not load d3d9.dll\n");
-        return;
+        goto out;
     }
 
     pDirect3DCreate9 = (void *)GetProcAddress( d3d9_handle, "Direct3DCreate9" );
@@ -2901,7 +2902,7 @@ START_TEST(device)
         if(!d3d9)
         {
             skip("could not create D3D9 object\n");
-            return;
+            goto out;
         }
         IDirect3D9_Release(d3d9);
 
@@ -2926,4 +2927,7 @@ START_TEST(device)
         test_wndproc();
         test_wndproc_windowed();
     }
+
+out:
+    UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
