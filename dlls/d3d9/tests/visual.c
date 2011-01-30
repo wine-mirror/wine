@@ -490,6 +490,16 @@ static void clear_test(IDirect3DDevice9 *device)
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
+    /* Hack to work around a nvidia windows driver bug. The clear below is supposed to
+     * clear the red quad in the top left part of the render target. For some reason it
+     * doesn't work if the clear color is 0xffffffff on some versions of the Nvidia Windows
+     * driver(tested on 8.17.12.5896, Win7). A clear with a different color works around
+     * this bug and fixes the clear with the white color. Even 0xfeffffff works, but let's
+     * pick some obvious value
+     */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xdeadbabe, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
+
     /* Test how the viewport affects clears */
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
@@ -625,6 +635,10 @@ static void clear_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
+
+    /* Same nvidia windows driver trouble with white clears as earlier in the same test */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xdeadbeef, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
