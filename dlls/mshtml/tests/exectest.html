@@ -1,0 +1,32 @@
+<html>
+<body>
+Script execution test
+<div id="b1"></div>
+<div id="b2"></div>
+<div id="b3"></div>
+<script>
+function ok(b, msg) {
+    return external.ok(b, msg);
+}
+
+var executed = false;
+var len = document.getElementsByTagName('div').length;
+ok(len === 3, "init length = " + len);
+
+document.write("<script>"
+    + "var len = document.getElementsByTagName('div').length;"
+    + "external.todo_wine_ok(len === 3, 'unexpected length ' + len);"
+    + "executed = true;"
+    + "<" + "/script>");
+
+len = document.getElementsByTagName('script').length;
+external.todo_wine_ok(len === 2, "script col length = " + len);
+external.todo_wine_ok(executed, "writen script not executed");
+
+external.reportSuccess();
+</script>
+<div id="a1"></div>
+<div id="a2"></div>
+<div id="b3"></div>
+</body>
+</html>
