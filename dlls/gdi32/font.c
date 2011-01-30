@@ -1987,7 +1987,16 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                 rc.right = x + width.x;
                 rc.top = y - tm.tmAscent;
                 rc.bottom = y + tm.tmDescent;
-                dc->funcs->pExtTextOut(dc->physDev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL);
+
+                if(flags & ETO_CLIPPED)
+                {
+                    rc.left = max(lprect->left, rc.left);
+                    rc.right = min(lprect->right, rc.right);
+                    rc.top = max(lprect->top, rc.top);
+                    rc.bottom = min(lprect->bottom, rc.bottom);
+                }
+                if(rc.left < rc.right && rc.top < rc.bottom)
+                    dc->funcs->pExtTextOut(dc->physDev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL);
             }
         }
     }
