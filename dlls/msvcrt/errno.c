@@ -407,35 +407,6 @@ MSVCRT_wchar_t* CDECL __wcserror(const MSVCRT_wchar_t* str)
 }
 
 /******************************************************************************
- *		_set_error_mode (MSVCRT.@)
- *
- * Set the error mode, which describes where the C run-time writes error
- * messages.
- *
- * PARAMS
- *   mode - the new error mode
- *
- * RETURNS
- *   The old error mode.
- *
- * TODO
- *  This function does not have a proper implementation; the error mode is
- *  never used.
- */
-int CDECL _set_error_mode(int mode)
-{
-  static int current_mode = MSVCRT__OUT_TO_DEFAULT;
-
-  const int old = current_mode;
-  if ( MSVCRT__REPORT_ERRMODE != mode ) {
-    current_mode = mode;
-    FIXME("dummy implementation (old mode: %d, new mode: %d)\n",
-          old, mode);
-  }
-  return old;
-}
-
-/******************************************************************************
  *		_seterrormode (MSVCRT.@)
  */
 void CDECL _seterrormode(int mode)
