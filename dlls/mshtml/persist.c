@@ -257,6 +257,9 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
 
     if(SUCCEEDED(hres))
     {
+        remove_target_tasks(This->task_magic);
+        abort_document_bindings(This->doc_node);
+
         hres = load_nsuri(This->window, nsuri, bscallback, LOAD_INITIAL_DOCUMENT_URI);
         nsISupports_Release((nsISupports*)nsuri); /* FIXME */
         if(SUCCEEDED(hres))
