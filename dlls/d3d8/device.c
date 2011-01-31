@@ -2873,7 +2873,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
 
     *volume = object->wineD3DVolume;
     IWineD3DVolume_AddRef(*volume);
-    IDirect3DVolume8_Release((IDirect3DVolume8 *)object);
+    IDirect3DVolume8_Release(&object->IDirect3DVolume8_iface);
 
     object->container = superior;
     object->forwardReference = superior;

@@ -204,18 +204,17 @@ HRESULT device_init(IDirect3DDevice8Impl *device, IWineD3D *wined3d, UINT adapte
  */
 struct IDirect3DVolume8Impl
 {
-    /* IUnknown fields */
-    const IDirect3DVolume8Vtbl *lpVtbl;
-    LONG                        ref;
+    IDirect3DVolume8    IDirect3DVolume8_iface;
+    LONG                ref;
 
     /* IDirect3DVolume8 fields */
-    IWineD3DVolume             *wineD3DVolume;
+    IWineD3DVolume     *wineD3DVolume;
 
     /* The volume container */
-    IUnknown                    *container;
+    IUnknown           *container;
 
     /* If set forward refcounting to this object */
-    IUnknown                    *forwardReference;
+    IUnknown           *forwardReference;
 };
 
 HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, UINT width, UINT height,
