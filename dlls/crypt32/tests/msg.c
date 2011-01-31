@@ -3618,8 +3618,8 @@ static void test_msg_get_and_verify_signer(void)
     /* Crash */
     if (0)
     {
-        ret = CryptMsgGetAndVerifySigner(NULL, 0, NULL, 0, NULL, NULL);
-        ret = CryptMsgGetAndVerifySigner(NULL, 0, NULL, 0, NULL, &signerIndex);
+        CryptMsgGetAndVerifySigner(NULL, 0, NULL, 0, NULL, NULL);
+        CryptMsgGetAndVerifySigner(NULL, 0, NULL, 0, NULL, &signerIndex);
     }
 
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);

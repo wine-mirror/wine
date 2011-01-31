@@ -93,7 +93,7 @@ static void test_findExtension(void)
     {
         /* crashes */
         SetLastError(0xdeadbeef);
-        ret = CertFindExtension(NULL, 1, NULL);
+        CertFindExtension(NULL, 1, NULL);
         /* returns NULL, last error is ERROR_INVALID_PARAMETER
          * crashes on Vista
          */
