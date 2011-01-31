@@ -86,10 +86,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
 /* Maximum wait time for selection notify */
-#define SELECTION_RETRIES 500  /* wait for .1 seconds */
+#define SELECTION_RETRIES 500  /* wait for .5 seconds */
 #define SELECTION_WAIT    1000 /* us */
-/* Minimum seconds that must lapse between owner queries */
-#define OWNERQUERYLAPSETIME 1
 
 /* Selection masks */
 #define S_NOSELECTION    0
