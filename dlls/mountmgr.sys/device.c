@@ -896,6 +896,16 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_CDROM_READ_TOC:
         irp->IoStatus.u.Status = STATUS_INVALID_DEVICE_REQUEST;
         break;
+    case 0x560000:
+    {
+        DWORD len = min( 32, irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+
+        FIXME( "returning zero-filled buffer for ioctl 0x560000\n" );
+        memset( irp->MdlAddress->StartVa, 0, len );
+        irp->IoStatus.Information = len;
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        break;
+    }
     default:
         FIXME( "unsupported ioctl %x\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
