@@ -230,14 +230,14 @@ HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, 
 struct IDirect3DSwapChain8Impl
 {
     /* IUnknown fields */
-    const IDirect3DSwapChain8Vtbl *lpVtbl;
-    LONG                           ref;
+    IDirect3DSwapChain8 IDirect3DSwapChain8_iface;
+    LONG                ref;
 
     /* IDirect3DSwapChain8 fields */
-    IWineD3DSwapChain             *wineD3DSwapChain;
+    IWineD3DSwapChain  *wineD3DSwapChain;
 
     /* Parent reference */
-    LPDIRECT3DDEVICE8              parentDevice;
+    IDirect3DDevice8   *parentDevice;
 };
 
 HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl *device,

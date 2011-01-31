@@ -23,10 +23,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
-/* IDirect3DSwapChain IUnknown parts follow: */
-static HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN8 iface, REFIID riid, LPVOID* ppobj)
+static inline IDirect3DSwapChain8Impl *impl_from_IDirect3DSwapChain8(IDirect3DSwapChain8 *iface)
 {
-    IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
+    return CONTAINING_RECORD(iface, IDirect3DSwapChain8Impl, IDirect3DSwapChain8_iface);
+}
+
+static HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(IDirect3DSwapChain8 *iface,
+        REFIID riid, void **ppobj)
+{
+    IDirect3DSwapChain8Impl *This = impl_from_IDirect3DSwapChain8(iface);
 
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
 
@@ -42,8 +47,9 @@ static HRESULT WINAPI IDirect3DSwapChain8Impl_QueryInterface(LPDIRECT3DSWAPCHAIN
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirect3DSwapChain8Impl_AddRef(LPDIRECT3DSWAPCHAIN8 iface) {
-    IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
+static ULONG WINAPI IDirect3DSwapChain8Impl_AddRef(IDirect3DSwapChain8 *iface)
+{
+    IDirect3DSwapChain8Impl *This = impl_from_IDirect3DSwapChain8(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, ref);
@@ -51,8 +57,9 @@ static ULONG WINAPI IDirect3DSwapChain8Impl_AddRef(LPDIRECT3DSWAPCHAIN8 iface) {
     return ref;
 }
 
-static ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) {
-    IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
+static ULONG WINAPI IDirect3DSwapChain8Impl_Release(IDirect3DSwapChain8 *iface)
+{
+    IDirect3DSwapChain8Impl *This = impl_from_IDirect3DSwapChain8(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, ref);
@@ -68,9 +75,11 @@ static ULONG WINAPI IDirect3DSwapChain8Impl_Release(LPDIRECT3DSWAPCHAIN8 iface) 
     return ref;
 }
 
-/* IDirect3DSwapChain8 parts follow: */
-static HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface, CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion) {
-    IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
+static HRESULT WINAPI IDirect3DSwapChain8Impl_Present(IDirect3DSwapChain8 *iface,
+        const RECT *pSourceRect, const RECT *pDestRect, HWND hDestWindowOverride,
+        const RGNDATA *pDirtyRegion)
+{
+    IDirect3DSwapChain8Impl *This = impl_from_IDirect3DSwapChain8(iface);
     HRESULT hr;
 
     TRACE("iface %p, src_rect %p, dst_rect %p, dst_window_override %p, dirty_region %p.\n",
@@ -86,7 +95,7 @@ static HRESULT WINAPI IDirect3DSwapChain8Impl_Present(LPDIRECT3DSWAPCHAIN8 iface
 static HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(IDirect3DSwapChain8 *iface,
         UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8 **ppBackBuffer)
 {
-    IDirect3DSwapChain8Impl *This = (IDirect3DSwapChain8Impl *)iface;
+    IDirect3DSwapChain8Impl *This = impl_from_IDirect3DSwapChain8(iface);
     IWineD3DSurface *mySurface = NULL;
     HRESULT hr;
 
@@ -123,7 +132,7 @@ HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl 
     HRESULT hr;
 
     swapchain->ref = 1;
-    swapchain->lpVtbl = &Direct3DSwapChain8_Vtbl;
+    swapchain->IDirect3DSwapChain8_iface.lpVtbl = &Direct3DSwapChain8_Vtbl;
 
     wined3d_parameters.BackBufferWidth = present_parameters->BackBufferWidth;
     wined3d_parameters.BackBufferHeight = present_parameters->BackBufferHeight;

@@ -547,7 +547,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateAdditionalSwapChain(IDirect3DDe
     }
 
     TRACE("Created swapchain %p.\n", object);
-    *swapchain = (IDirect3DSwapChain8 *)object;
+    *swapchain = &object->IDirect3DSwapChain8_iface;
 
     return D3D_OK;
 }
