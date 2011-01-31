@@ -654,6 +654,7 @@ static void color_fill_test(IDirect3DDevice9 *device)
     {
         fill_color = 0x112233;
         hr = IDirect3DDevice9_ColorFill(device, backbuffer, NULL, fill_color);
+        ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
         color = getPixelColor(device, 0, 0);
         ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
@@ -668,6 +669,7 @@ static void color_fill_test(IDirect3DDevice9 *device)
     {
         fill_color = 0x445566;
         hr = IDirect3DDevice9_ColorFill(device, rt_surface, NULL, fill_color);
+        ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
         color = getPixelColorFromSurface(rt_surface, 0, 0);
         ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
@@ -683,6 +685,7 @@ static void color_fill_test(IDirect3DDevice9 *device)
     {
         fill_color = 0x778899;
         hr = IDirect3DDevice9_ColorFill(device, offscreen_surface, NULL, fill_color);
+        ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
         color = getPixelColorFromSurface(offscreen_surface, 0, 0);
         ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
