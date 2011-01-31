@@ -1171,6 +1171,7 @@ static void testSystemStore(void)
     /* Now check whether deleting is allowed */
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
      CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_DELETE_FLAG, BogusW);
+    ok(!store, "Didn't expect a store to be returned when deleting\n");
     RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
 }
 
@@ -2243,6 +2244,8 @@ static void testAddCertificateLink(void)
         if (buf)
         {
             ret = CertSerializeCertificateStoreElement(linked, 0, buf, &size);
+            ok(ret, "CertSerializeCertificateStoreElement failed: %08x\n",
+             GetLastError());
             /* The serialized linked certificate is identical to the serialized
              * original certificate.
              */

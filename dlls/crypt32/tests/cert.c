@@ -1514,6 +1514,7 @@ static void testGetIssuerCert(void)
     /* With only the child certificate, no issuer will be found */
     ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
      chain7_1, sizeof(chain7_1), CERT_STORE_ADD_ALWAYS, &child);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n", GetLastError());
     parent = CertGetIssuerCertificateFromStore(store, child, NULL, &flags);
     ok(parent == NULL, "Expected no issuer\n");
     /* Adding an issuer allows one (and only one) issuer to be found */

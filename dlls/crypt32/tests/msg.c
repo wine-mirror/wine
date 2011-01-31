@@ -3253,6 +3253,7 @@ static void test_msg_control(void)
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
     }
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     /* or after an update. */
     for (i = 1; !old_crypt32 && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
     {
