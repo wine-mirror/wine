@@ -109,7 +109,6 @@ typedef struct IDirect3DCubeTexture8Impl IDirect3DCubeTexture8Impl;
 typedef struct IDirect3DIndexBuffer8Impl IDirect3DIndexBuffer8Impl;
 typedef struct IDirect3DSurface8Impl IDirect3DSurface8Impl;
 typedef struct IDirect3DSwapChain8Impl IDirect3DSwapChain8Impl;
-typedef struct IDirect3DResource8Impl IDirect3DResource8Impl;
 typedef struct IDirect3DVolume8Impl IDirect3DVolume8Impl;
 typedef struct IDirect3DVertexBuffer8Impl IDirect3DVertexBuffer8Impl;
 typedef struct IDirect3DVertexShader8Impl IDirect3DVertexShader8Impl;
@@ -272,16 +271,6 @@ struct IDirect3DSurface8Impl
 HRESULT surface_init(IDirect3DSurface8Impl *surface, IDirect3DDevice8Impl *device,
         UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
         DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality) DECLSPEC_HIDDEN;
-
-struct IDirect3DResource8Impl
-{
-    /* IUnknown fields */
-    const IDirect3DResource8Vtbl *lpVtbl;
-    LONG                          ref;
-
-    /* IDirect3DResource8 fields */
-    IWineD3DResource             *wineD3DResource;
-};
 
 /* ---------------------- */
 /* IDirect3DVertexBuffer8 */
