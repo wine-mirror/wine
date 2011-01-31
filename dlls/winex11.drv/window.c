@@ -1600,7 +1600,7 @@ static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect
     RECT dst_rect = *new_rect;
     HDC hdc_src, hdc_dst;
     INT code;
-    HRGN rgn = 0;
+    HRGN rgn;
     HWND parent = 0;
 
     if (!data->whole_window)
@@ -1619,6 +1619,9 @@ static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect
         hdc_src = hdc_dst = GetDCEx( data->hwnd, 0, DCX_CACHE );
     }
 
+    rgn = CreateRectRgnIndirect( &dst_rect );
+    SelectClipRgn( hdc_dst, rgn );
+    DeleteObject( rgn );
     ExcludeUpdateRgn( hdc_dst, data->hwnd );
 
     code = X11DRV_START_EXPOSURES;
@@ -1631,6 +1634,7 @@ static void move_window_bits( struct x11drv_win_data *data, const RECT *old_rect
             dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top,
             hdc_src, src_rect.left, src_rect.top, SRCCOPY );
 
+    rgn = 0;
     code = X11DRV_END_EXPOSURES;
     ExtEscape( hdc_dst, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, sizeof(rgn), (LPSTR)&rgn );
 
