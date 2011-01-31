@@ -20,6 +20,7 @@
 
 #include "wine/test.h"
 #include "winbase.h"
+#include "winioctl.h"
 #include <stdio.h>
 
 static HINSTANCE hdll;
@@ -509,7 +510,7 @@ static void test_enum_vols(void)
     pFindVolumeClose( hFind );
 }
 
-static void test_ioctl_560000(void)
+static void test_disk_extents(void)
 {
     BOOL ret;
     DWORD size;
@@ -523,10 +524,11 @@ static void test_ioctl_560000(void)
         return;
     }
     size = 0;
-    ret = DeviceIoControl( handle, 0x560000, &data, sizeof(data), &data, sizeof(data), &size, NULL );
+    ret = DeviceIoControl( handle, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, &data,
+                           sizeof(data), &data, sizeof(data), &size, NULL );
     if (!ret && GetLastError() == ERROR_INVALID_FUNCTION)
     {
-        win_skip("ioctl 0x560000 not supported\n");
+        win_skip("IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS not supported\n");
         CloseHandle( handle );
         return;
     }
@@ -555,5 +557,5 @@ START_TEST(volume)
     test_GetLogicalDriveStringsW();
     test_GetVolumeInformationA();
     test_enum_vols();
-    test_ioctl_560000();
+    test_disk_extents();
 }
