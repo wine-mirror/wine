@@ -509,6 +509,32 @@ static void test_enum_vols(void)
     pFindVolumeClose( hFind );
 }
 
+static void test_ioctl_560000(void)
+{
+    BOOL ret;
+    DWORD size;
+    HANDLE handle;
+    static DWORD data[16];
+
+    handle = CreateFileA( "\\\\.\\c:", GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        win_skip("can't open c: drive %u\n", GetLastError());
+        return;
+    }
+    size = 0;
+    ret = DeviceIoControl( handle, 0x560000, &data, sizeof(data), &data, sizeof(data), &size, NULL );
+    if (!ret && GetLastError() == ERROR_INVALID_FUNCTION)
+    {
+        win_skip("ioctl 0x560000 not supported\n");
+        CloseHandle( handle );
+        return;
+    }
+    ok(ret, "DeviceIoControl failed %u\n", GetLastError());
+    ok(size == 32, "expected 32, got %u\n", size);
+    CloseHandle( handle );
+}
+
 START_TEST(volume)
 {
     hdll = GetModuleHandleA("kernel32.dll");
@@ -529,4 +555,5 @@ START_TEST(volume)
     test_GetLogicalDriveStringsW();
     test_GetVolumeInformationA();
     test_enum_vols();
+    test_ioctl_560000();
 }
