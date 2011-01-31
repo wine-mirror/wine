@@ -87,11 +87,11 @@ static unsigned source_find(const char* name)
  */
 unsigned source_new(struct module* module, const char* base, const char* name)
 {
-    unsigned    ret;
+    unsigned    ret = -1;
     const char* full;
     char*       tmp = NULL;
 
-    if (!name) return (unsigned)-1;
+    if (!name) return ret;
     if (!base || *name == '/')
         full = name;
     else
@@ -99,7 +99,7 @@ unsigned source_new(struct module* module, const char* base, const char* name)
         unsigned bsz = strlen(base);
 
         tmp = HeapAlloc(GetProcessHeap(), 0, bsz + 1 + strlen(name) + 1);
-        if (!tmp) return (unsigned)-1;
+        if (!tmp) return ret;
         full = tmp;
         strcpy(tmp, base);
         if (tmp[bsz - 1] != '/') tmp[bsz++] = '/';
