@@ -4563,7 +4563,7 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
     if (!blt_pshader)
     {
         FIXME("tex_type %#x not supported\n", tex_type);
-        tex_type = tex_2d;
+        return 0;
     }
 
     vshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
