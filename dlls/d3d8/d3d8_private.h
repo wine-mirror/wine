@@ -370,15 +370,14 @@ HRESULT cubetexture_init(IDirect3DCubeTexture8Impl *texture, IDirect3DDevice8Imp
  */
 struct IDirect3DTexture8Impl
 {
-    /* IUnknown fields */
-    const IDirect3DTexture8Vtbl *lpVtbl;
-    LONG                   ref;
+    IDirect3DTexture8   IDirect3DTexture8_iface;
+    LONG                ref;
 
     /* IDirect3DResourc8 fields */
-    IWineD3DTexture             *wineD3DTexture;
+    IWineD3DTexture    *wineD3DTexture;
 
     /* Parent reference */
-    LPDIRECT3DDEVICE8            parentDevice;
+    IDirect3DDevice8   *parentDevice;
 };
 
 HRESULT texture_init(IDirect3DTexture8Impl *texture, IDirect3DDevice8Impl *device,

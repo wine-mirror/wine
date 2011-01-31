@@ -24,8 +24,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
 /* IDirect3DTexture8 IUnknown parts follow: */
-static HRESULT WINAPI IDirect3DTexture8Impl_QueryInterface(LPDIRECT3DTEXTURE8 iface, REFIID riid, LPVOID *ppobj) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static inline IDirect3DTexture8Impl *impl_from_IDirect3DTexture8(IDirect3DTexture8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DTexture8Impl, IDirect3DTexture8_iface);
+}
+
+static HRESULT WINAPI IDirect3DTexture8Impl_QueryInterface(IDirect3DTexture8 *iface, REFIID riid,
+        void **ppobj)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
 
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
 
@@ -43,8 +50,9 @@ static HRESULT WINAPI IDirect3DTexture8Impl_QueryInterface(LPDIRECT3DTEXTURE8 if
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirect3DTexture8Impl_AddRef(LPDIRECT3DTEXTURE8 iface) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static ULONG WINAPI IDirect3DTexture8Impl_AddRef(IDirect3DTexture8 *iface)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, ref);
@@ -60,8 +68,9 @@ static ULONG WINAPI IDirect3DTexture8Impl_AddRef(LPDIRECT3DTEXTURE8 iface) {
     return ref;
 }
 
-static ULONG WINAPI IDirect3DTexture8Impl_Release(LPDIRECT3DTEXTURE8 iface) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static ULONG WINAPI IDirect3DTexture8Impl_Release(IDirect3DTexture8 *iface)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, ref);
@@ -80,9 +89,10 @@ static ULONG WINAPI IDirect3DTexture8Impl_Release(LPDIRECT3DTEXTURE8 iface) {
 }
 
 /* IDirect3DTexture8 IDirect3DResource8 Interface follow: */
-static HRESULT WINAPI IDirect3DTexture8Impl_GetDevice(IDirect3DTexture8 *iface, IDirect3DDevice8 **device)
+static HRESULT WINAPI IDirect3DTexture8Impl_GetDevice(IDirect3DTexture8 *iface,
+        IDirect3DDevice8 **device)
 {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
@@ -94,8 +104,10 @@ static HRESULT WINAPI IDirect3DTexture8Impl_GetDevice(IDirect3DTexture8 *iface, 
     return D3D_OK;
 }
 
-static HRESULT WINAPI IDirect3DTexture8Impl_SetPrivateData(LPDIRECT3DTEXTURE8 iface, REFGUID refguid, CONST void *pData, DWORD SizeOfData, DWORD Flags) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static HRESULT WINAPI IDirect3DTexture8Impl_SetPrivateData(IDirect3DTexture8 *iface,
+        REFGUID refguid, const void *pData, DWORD SizeOfData, DWORD Flags)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
@@ -108,8 +120,10 @@ static HRESULT WINAPI IDirect3DTexture8Impl_SetPrivateData(LPDIRECT3DTEXTURE8 if
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DTexture8Impl_GetPrivateData(LPDIRECT3DTEXTURE8 iface, REFGUID refguid, void *pData, DWORD* pSizeOfData) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static HRESULT WINAPI IDirect3DTexture8Impl_GetPrivateData(IDirect3DTexture8 *iface,
+        REFGUID refguid, void *pData, DWORD *pSizeOfData)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %p.\n",
@@ -122,8 +136,10 @@ static HRESULT WINAPI IDirect3DTexture8Impl_GetPrivateData(LPDIRECT3DTEXTURE8 if
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DTexture8Impl_FreePrivateData(LPDIRECT3DTEXTURE8 iface, REFGUID refguid) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static HRESULT WINAPI IDirect3DTexture8Impl_FreePrivateData(IDirect3DTexture8 *iface,
+        REFGUID refguid)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     HRESULT hr;
 
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(refguid));
@@ -135,8 +151,9 @@ static HRESULT WINAPI IDirect3DTexture8Impl_FreePrivateData(LPDIRECT3DTEXTURE8 i
     return hr;
 }
 
-static DWORD WINAPI IDirect3DTexture8Impl_SetPriority(LPDIRECT3DTEXTURE8 iface, DWORD PriorityNew) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static DWORD WINAPI IDirect3DTexture8Impl_SetPriority(IDirect3DTexture8 *iface, DWORD PriorityNew)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     DWORD ret;
 
     TRACE("iface %p, priority %u.\n", iface, PriorityNew);
@@ -148,8 +165,9 @@ static DWORD WINAPI IDirect3DTexture8Impl_SetPriority(LPDIRECT3DTEXTURE8 iface, 
     return ret;
 }
 
-static DWORD WINAPI IDirect3DTexture8Impl_GetPriority(LPDIRECT3DTEXTURE8 iface) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static DWORD WINAPI IDirect3DTexture8Impl_GetPriority(IDirect3DTexture8 *iface)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     DWORD ret;
 
     TRACE("iface %p.\n", iface);
@@ -161,8 +179,9 @@ static DWORD WINAPI IDirect3DTexture8Impl_GetPriority(LPDIRECT3DTEXTURE8 iface) 
     return ret;
 }
 
-static void WINAPI IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static void WINAPI IDirect3DTexture8Impl_PreLoad(IDirect3DTexture8 *iface)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
 
     TRACE("iface %p.\n", iface);
 
@@ -171,8 +190,9 @@ static void WINAPI IDirect3DTexture8Impl_PreLoad(LPDIRECT3DTEXTURE8 iface) {
     wined3d_mutex_unlock();
 }
 
-static D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(LPDIRECT3DTEXTURE8 iface) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(IDirect3DTexture8 *iface)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     D3DRESOURCETYPE type;
 
     TRACE("iface %p.\n", iface);
@@ -185,8 +205,9 @@ static D3DRESOURCETYPE WINAPI IDirect3DTexture8Impl_GetType(LPDIRECT3DTEXTURE8 i
 }
 
 /* IDirect3DTexture8 IDirect3DBaseTexture8 Interface follow: */
-static DWORD WINAPI IDirect3DTexture8Impl_SetLOD(LPDIRECT3DTEXTURE8 iface, DWORD LODNew) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static DWORD WINAPI IDirect3DTexture8Impl_SetLOD(IDirect3DTexture8 *iface, DWORD LODNew)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     DWORD ret;
 
     TRACE("iface %p, lod %u.\n", iface, LODNew);
@@ -198,8 +219,9 @@ static DWORD WINAPI IDirect3DTexture8Impl_SetLOD(LPDIRECT3DTEXTURE8 iface, DWORD
     return ret;
 }
 
-static DWORD WINAPI IDirect3DTexture8Impl_GetLOD(LPDIRECT3DTEXTURE8 iface) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static DWORD WINAPI IDirect3DTexture8Impl_GetLOD(IDirect3DTexture8 *iface)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     DWORD ret;
 
     TRACE("iface %p.\n", iface);
@@ -211,8 +233,9 @@ static DWORD WINAPI IDirect3DTexture8Impl_GetLOD(LPDIRECT3DTEXTURE8 iface) {
     return ret;
 }
 
-static DWORD WINAPI IDirect3DTexture8Impl_GetLevelCount(LPDIRECT3DTEXTURE8 iface) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static DWORD WINAPI IDirect3DTexture8Impl_GetLevelCount(IDirect3DTexture8 *iface)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     DWORD ret;
 
     TRACE("iface %p.\n", iface);
@@ -225,8 +248,10 @@ static DWORD WINAPI IDirect3DTexture8Impl_GetLevelCount(LPDIRECT3DTEXTURE8 iface
 }
 
 /* IDirect3DTexture8 Interface follow: */
-static HRESULT WINAPI IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 iface, UINT Level, D3DSURFACE_DESC *pDesc) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static HRESULT WINAPI IDirect3DTexture8Impl_GetLevelDesc(IDirect3DTexture8 *iface, UINT Level,
+        D3DSURFACE_DESC *pDesc)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     WINED3DSURFACE_DESC wined3ddesc;
     HRESULT hr;
 
@@ -254,7 +279,7 @@ static HRESULT WINAPI IDirect3DTexture8Impl_GetLevelDesc(LPDIRECT3DTEXTURE8 ifac
 static HRESULT WINAPI IDirect3DTexture8Impl_GetSurfaceLevel(IDirect3DTexture8 *iface,
         UINT Level, IDirect3DSurface8 **ppSurfaceLevel)
 {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     IWineD3DSurface *mySurface = NULL;
     HRESULT hr;
 
@@ -273,8 +298,10 @@ static HRESULT WINAPI IDirect3DTexture8Impl_GetSurfaceLevel(IDirect3DTexture8 *i
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DTexture8Impl_LockRect(LPDIRECT3DTEXTURE8 iface, UINT Level, D3DLOCKED_RECT *pLockedRect, CONST RECT *pRect, DWORD Flags) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static HRESULT WINAPI IDirect3DTexture8Impl_LockRect(IDirect3DTexture8 *iface, UINT Level,
+        D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     HRESULT hr;
 
     TRACE("iface %p, level %u, locked_rect %p, rect %p, flags %#x.\n",
@@ -287,8 +314,9 @@ static HRESULT WINAPI IDirect3DTexture8Impl_LockRect(LPDIRECT3DTEXTURE8 iface, U
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DTexture8Impl_UnlockRect(LPDIRECT3DTEXTURE8 iface, UINT Level) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static HRESULT WINAPI IDirect3DTexture8Impl_UnlockRect(IDirect3DTexture8 *iface, UINT Level)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     HRESULT hr;
 
     TRACE("iface %p, level %u.\n", iface, Level);
@@ -300,8 +328,10 @@ static HRESULT WINAPI IDirect3DTexture8Impl_UnlockRect(LPDIRECT3DTEXTURE8 iface,
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DTexture8Impl_AddDirtyRect(LPDIRECT3DTEXTURE8 iface, CONST RECT *pDirtyRect) {
-    IDirect3DTexture8Impl *This = (IDirect3DTexture8Impl *)iface;
+static HRESULT WINAPI IDirect3DTexture8Impl_AddDirtyRect(IDirect3DTexture8 *iface,
+        const RECT *pDirtyRect)
+{
+    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
     HRESULT hr;
 
     TRACE("iface %p, dirty_rect %p.\n", iface, pDirtyRect);
@@ -355,7 +385,7 @@ HRESULT texture_init(IDirect3DTexture8Impl *texture, IDirect3DDevice8Impl *devic
 {
     HRESULT hr;
 
-    texture->lpVtbl = &Direct3DTexture8_Vtbl;
+    texture->IDirect3DTexture8_iface.lpVtbl = &Direct3DTexture8_Vtbl;
     texture->ref = 1;
 
     wined3d_mutex_lock();
