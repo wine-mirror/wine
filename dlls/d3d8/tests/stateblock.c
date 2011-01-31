@@ -1820,7 +1820,7 @@ static void resource_test_cleanup(IDirect3DDevice8 *device, struct state_test *t
 
     for (i = 0; i < arg->tex_count; ++i)
     {
-        hr = IDirect3DBaseTexture8_Release(ctx->test_data_all.tex[i]);
+        IDirect3DBaseTexture8_Release(ctx->test_data_all.tex[i]);
     }
 
     HeapFree(GetProcessHeap(), 0, ctx->default_data.vb);
