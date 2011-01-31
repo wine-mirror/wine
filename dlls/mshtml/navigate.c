@@ -300,6 +300,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
         if(This->binding)
             IBinding_Release(This->binding);
         list_remove(&This->entry);
+        list_init(&This->entry);
         heap_free(This->headers);
 
         This->vtbl->destroy(This);
@@ -367,6 +368,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
     }
 
     list_remove(&This->entry);
+    list_init(&This->entry);
     This->doc = NULL;
 
     return hres;
@@ -1088,6 +1090,8 @@ static void stop_request_proc(task_t *_task)
 
     TRACE("(%p)\n", task->bsc);
 
+    list_remove(&task->bsc->bsc.entry);
+    list_init(&task->bsc->bsc.entry);
     on_stop_nsrequest(task->bsc, S_OK);
     IBindStatusCallback_Release(&task->bsc->bsc.IBindStatusCallback_iface);
 }
@@ -1326,13 +1330,21 @@ HRESULT async_start_doc_binding(HTMLWindow *window, nsChannelBSC *bscallback)
 
 void abort_document_bindings(HTMLDocumentNode *doc)
 {
-    BSCallback *iter;
+    BSCallback *iter, *next;
 
-    LIST_FOR_EACH_ENTRY(iter, &doc->bindings, BSCallback, entry) {
+    LIST_FOR_EACH_ENTRY_SAFE(iter, next, &doc->bindings, BSCallback, entry) {
+        if(iter->doc)
+            remove_target_tasks(iter->doc->basedoc.task_magic);
+
         if(iter->binding)
             IBinding_Abort(iter->binding);
+        else {
+            list_remove(&iter->entry);
+            list_init(&iter->entry);
+            iter->vtbl->stop_binding(iter, S_OK);
+        }
+
         iter->doc = NULL;
-        list_remove(&iter->entry);
     }
 }
 
@@ -1349,6 +1361,7 @@ HRESULT channelbsc_load_stream(nsChannelBSC *bscallback, IStream *stream)
     if(!bscallback->nschannel->content_type)
         return E_OUTOFMEMORY;
 
+    list_add_head(&bscallback->bsc.doc->bindings, &bscallback->bsc.entry);
     if(stream)
         hres = read_stream_data(bscallback, stream);
     if(SUCCEEDED(hres))
