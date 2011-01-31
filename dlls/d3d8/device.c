@@ -770,7 +770,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateCubeTexture(IDirect3DDevice8 *i
     }
 
     TRACE("Created cube texture %p.\n", object);
-    *texture = (IDirect3DCubeTexture8 *)object;
+    *texture = &object->IDirect3DCubeTexture8_iface;
 
     return hr;
 }
