@@ -666,7 +666,11 @@ NTSTATUS add_volume( const char *udi, const char *device, const char *mount_poin
 
     EnterCriticalSection( &device_section );
     LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
-        if (volume->udi && !strcmp( udi, volume->udi )) goto found;
+        if (volume->udi && !strcmp( udi, volume->udi ))
+        {
+            grab_volume( volume );
+            goto found;
+        }
 
     /* udi not found, search for a non-dynamic volume */
     if ((volume = find_matching_volume( udi, device, mount_point, type ))) set_volume_udi( volume, udi );
