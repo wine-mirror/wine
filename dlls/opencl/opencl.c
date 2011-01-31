@@ -53,10 +53,10 @@ cl_int WINAPI wine_clGetPlatformIDs(cl_uint num_entries, cl_platform_id *platfor
 }
 
 cl_int WINAPI wine_clGetPlatformInfo(cl_platform_id platform, cl_platform_info param_name,
-                                     size_t param_value_size, void * param_value, size_t * param_value_size_ret)
+                                     SIZE_T param_value_size, void * param_value, size_t * param_value_size_ret)
 {
     cl_int ret;
-    TRACE("(%p, 0x%x, %d, %p, %p)\n", platform, param_name, param_value_size, param_value, param_value_size_ret);
+    TRACE("(%p, 0x%x, %ld, %p, %p)\n", platform, param_name, param_value_size, param_value, param_value_size_ret);
 
     /* Hide all extensions.
      * TODO: Add individual extension support as needed.
@@ -83,7 +83,7 @@ cl_int WINAPI wine_clGetPlatformInfo(cl_platform_id platform, cl_platform_info p
         ret = clGetPlatformInfo(platform, param_name, param_value_size, param_value, param_value_size_ret);
     }
 
-    TRACE("(%p, 0x%x, %d, %p, %p)=%d\n", platform, param_name, param_value_size, param_value, param_value_size_ret, ret);
+    TRACE("(%p, 0x%x, %ld, %p, %p)=%d\n", platform, param_name, param_value_size, param_value, param_value_size_ret, ret);
     return ret;
 }
 
@@ -102,10 +102,10 @@ cl_int WINAPI wine_clGetDeviceIDs(cl_platform_id platform, cl_device_type device
 }
 
 cl_int WINAPI wine_clGetDeviceInfo(cl_device_id device, cl_device_info param_name,
-                                   size_t param_value_size, void * param_value, size_t * param_value_size_ret)
+                                   SIZE_T param_value_size, void * param_value, size_t * param_value_size_ret)
 {
     cl_int ret;
-    TRACE("(%p, 0x%x, %d, %p, %p)\n",device, param_name, param_value_size, param_value, param_value_size_ret);
+    TRACE("(%p, 0x%x, %ld, %p, %p)\n",device, param_name, param_value_size, param_value, param_value_size_ret);
 
     /* Hide all extensions.
      * TODO: Add individual extension support as needed.
@@ -139,7 +139,7 @@ cl_int WINAPI wine_clGetDeviceInfo(cl_device_id device, cl_device_info param_nam
         *caps &= ~CL_EXEC_NATIVE_KERNEL;
     }
 
-    TRACE("(%p, 0x%x, %d, %p, %p)=%d\n",device, param_name, param_value_size, param_value, param_value_size_ret, ret);
+    TRACE("(%p, 0x%x, %ld, %p, %p)=%d\n",device, param_name, param_value_size, param_value, param_value_size_ret, ret);
     return ret;
 }
 
@@ -156,7 +156,7 @@ typedef struct
 static void context_fn_notify(const char *errinfo, const void *private_info, size_t cb, void *user_data)
 {
     CONTEXT_CALLBACK *ccb;
-    TRACE("(%s, %p, %d, %p)\n", errinfo, private_info, cb, user_data);
+    TRACE("(%s, %p, %ld, %p)\n", errinfo, private_info, (SIZE_T)cb, user_data);
     ccb = (CONTEXT_CALLBACK *) user_data;
     if(ccb->pfn_notify) ccb->pfn_notify(errinfo, private_info, cb, ccb->user_data);
     TRACE("Callback COMPLETED\n");
@@ -223,12 +223,12 @@ cl_int WINAPI wine_clReleaseContext(cl_context context)
 }
 
 cl_int WINAPI wine_clGetContextInfo(cl_context context, cl_context_info param_name,
-                                    size_t param_value_size, void * param_value, size_t * param_value_size_ret)
+                                    SIZE_T param_value_size, void * param_value, size_t * param_value_size_ret)
 {
     cl_int ret;
-    TRACE("(%p, 0x%x, %d, %p, %p)\n", context, param_name, param_value_size, param_value, param_value_size_ret);
+    TRACE("(%p, 0x%x, %ld, %p, %p)\n", context, param_name, param_value_size, param_value, param_value_size_ret);
     ret = clGetContextInfo(context, param_name, param_value_size, param_value, param_value_size_ret);
-    TRACE("(%p, 0x%x, %d, %p, %p)=%d\n", context, param_name, param_value_size, param_value, param_value_size_ret, ret);
+    TRACE("(%p, 0x%x, %ld, %p, %p)=%d\n", context, param_name, param_value_size, param_value, param_value_size_ret, ret);
     return ret;
 }
 
@@ -265,10 +265,10 @@ cl_int WINAPI wine_clReleaseCommandQueue(cl_command_queue command_queue)
 }
 
 cl_int WINAPI wine_clGetCommandQueueInfo(cl_command_queue command_queue, cl_command_queue_info param_name,
-                                         size_t param_value_size, void * param_value, size_t * param_value_size_ret)
+                                         SIZE_T param_value_size, void * param_value, size_t * param_value_size_ret)
 {
     cl_int ret;
-    TRACE("%p, %d, %d, %p, %p\n", command_queue, param_name, param_value_size, param_value, param_value_size_ret);
+    TRACE("%p, %d, %ld, %p, %p\n", command_queue, param_name, param_value_size, param_value, param_value_size_ret);
     ret = clGetCommandQueueInfo(command_queue, param_name, param_value_size, param_value, param_value_size_ret);
     return ret;
 }
@@ -672,14 +672,14 @@ cl_int WINAPI wine_clEnqueueCopyBuffer(cl_command_queue command_queue, cl_mem sr
 
 cl_int WINAPI wine_clEnqueueReadImage(cl_command_queue command_queue, cl_mem image, cl_bool blocking_read,
                                       const size_t * origin, const size_t * region,
-                                      size_t row_pitch, size_t slice_pitch, void * ptr,
+                                      SIZE_T row_pitch, SIZE_T slice_pitch, void * ptr,
                                       cl_uint num_events_in_wait_list, const cl_event * event_wait_list, cl_event * event)
 {
     cl_int ret;
-    TRACE("(%p, %p, %d, %p, %p, %d, %d, %p, %d, %p, %p)\n", command_queue, image, blocking_read,
+    TRACE("(%p, %p, %d, %p, %p, %ld, %ld, %p, %d, %p, %p)\n", command_queue, image, blocking_read,
           origin, region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event);
     ret = clEnqueueReadImage(command_queue, image, blocking_read, origin, region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event);
-    TRACE("(%p, %p, %d, %p, %p, %d, %d, %p, %d, %p, %p)=%d\n", command_queue, image, blocking_read,
+    TRACE("(%p, %p, %d, %p, %p, %ld, %ld, %p, %d, %p, %p)=%d\n", command_queue, image, blocking_read,
           origin, region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event, ret);
     return ret;
 }
