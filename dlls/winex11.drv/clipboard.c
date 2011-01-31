@@ -1060,21 +1060,23 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedBitmap(Display *display)
         if (lpSource->hData || X11DRV_CLIPBOARD_RenderFormat(display, lpSource))
         {
             HDC hdc;
-            HBITMAP hData;
+            HBITMAP hData = NULL;
             unsigned int offset;
             LPBITMAPINFOHEADER lpbmih;
 
             hdc = GetDC(NULL);
             lpbmih = GlobalLock(lpSource->hData);
+            if (lpbmih)
+            {
+                offset = sizeof(BITMAPINFOHEADER)
+                      + ((lpbmih->biBitCount <= 8) ? (sizeof(RGBQUAD) *
+                        (1 << lpbmih->biBitCount)) : 0);
 
-            offset = sizeof(BITMAPINFOHEADER)
-                  + ((lpbmih->biBitCount <= 8) ? (sizeof(RGBQUAD) *
-                    (1 << lpbmih->biBitCount)) : 0);
+                hData = CreateDIBitmap(hdc, lpbmih, CBM_INIT, (LPBYTE)lpbmih +
+                    offset, (LPBITMAPINFO) lpbmih, DIB_RGB_COLORS);
 
-            hData = CreateDIBitmap(hdc, lpbmih, CBM_INIT, (LPBYTE)lpbmih +
-                offset, (LPBITMAPINFO) lpbmih, DIB_RGB_COLORS);
-
-            GlobalUnlock(lpSource->hData);
+                GlobalUnlock(lpSource->hData);
+            }
             ReleaseDC(NULL, hdc);
 
             if (hData)
