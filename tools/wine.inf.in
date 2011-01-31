@@ -127,16 +127,19 @@ AddReg=\
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
 AddService=TermService,0,TerminalServices
+AddService=PlugPlay,0,PlugPlayService
 
 [DefaultInstall.NT.Services]
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
 AddService=TermService,0,TerminalServices
+AddService=PlugPlay,0,PlugPlayService
 
 [DefaultInstall.ntamd64.Services]
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
 AddService=TermService,0,TerminalServices
+AddService=PlugPlay,0,PlugPlayService
 
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
@@ -3007,6 +3010,14 @@ DisplayName="Terminal Services"
 ServiceBinary="%11%\termsv.exe"
 ServiceType=32
 StartType=3
+ErrorControl=1
+
+[PlugPlayService]
+Description="Enables automatic configuration of devices"
+DisplayName="Plug and Play Service"
+ServiceBinary="%11%\plugplay.exe"
+ServiceType=32
+StartType=2
 ErrorControl=1
 
 [Services]
