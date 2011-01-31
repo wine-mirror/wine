@@ -2433,14 +2433,16 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
     while (skip--)
     {
         if (((void *)frame < NtCurrentTeb()->Tib.StackLimit) ||
-            ((void *)(frame + 1) >= NtCurrentTeb()->Tib.StackBase)) return 0;
+            ((void *)(frame + 1) >= NtCurrentTeb()->Tib.StackBase) ||
+            ((ULONG_PTR)frame & 3)) return 0;
         frame = (ULONG *)*frame;
     }
 
     for (i = 0; i < count; i++)
     {
         if (((void *)frame < NtCurrentTeb()->Tib.StackLimit) ||
-            ((void *)(frame + 1) >= NtCurrentTeb()->Tib.StackBase)) break;
+            ((void *)(frame + 1) >= NtCurrentTeb()->Tib.StackBase) ||
+            ((ULONG_PTR)frame & 3)) break;
         buffer[i] = (void *)frame[1];
         if (hash) *hash += frame[1];
         frame = (ULONG *)*frame;
