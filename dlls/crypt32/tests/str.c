@@ -523,37 +523,49 @@ static void test_CertNameToStrA(void)
     blob.pbData = encodedSingleQuotedCN;
     blob.cbData = sizeof(encodedSingleQuotedCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN='1'", FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "'1'", FALSE);
     blob.pbData = encodedSpacedCN;
     blob.cbData = sizeof(encodedSpacedCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\" 1 \"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\" 1 \"", FALSE);
     blob.pbData = encodedQuotedCN;
     blob.cbData = sizeof(encodedQuotedCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"\"\"1\"\"\"",
      FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"\"\"1\"\"\"",
+     FALSE);
     blob.pbData = encodedMultipleAttrCN;
     blob.cbData = sizeof(encodedMultipleAttrCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"1+2\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"1+2\"", FALSE);
     blob.pbData = encodedCommaCN;
     blob.cbData = sizeof(encodedCommaCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a,b\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"a,b\"", FALSE);
     blob.pbData = encodedEqualCN;
     blob.cbData = sizeof(encodedEqualCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a=b\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"a=b\"", FALSE);
     blob.pbData = encodedLessThanCN;
     blob.cbData = sizeof(encodedLessThanCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"<\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"<\"", FALSE);
     blob.pbData = encodedGreaterThanCN;
     blob.cbData = sizeof(encodedGreaterThanCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\">\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\">\"", FALSE);
     blob.pbData = encodedHashCN;
     blob.cbData = sizeof(encodedHashCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"#\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"#\"", FALSE);
     blob.pbData = encodedSemiCN;
     blob.cbData = sizeof(encodedSemiCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\";\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\";\"", FALSE);
     blob.pbData = encodedNewlineCN;
     blob.cbData = sizeof(encodedNewlineCN);
     test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a\nb\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"a\nb\"", FALSE);
 }
 
 static void test_NameToStrConversionW(PCERT_NAME_BLOB pName, DWORD dwStrType,
@@ -587,16 +599,27 @@ static void test_NameToStrConversionW(PCERT_NAME_BLOB pName, DWORD dwStrType,
 
 static const WCHAR simpleCN_W[] = { 'C','N','=','1',0 };
 static const WCHAR singledQuotedCN_W[] = { 'C','N','=','\'','1','\'',0 };
+static const WCHAR simpleSingleQuotedCN_W[] = { '\'','1','\'',0 };
 static const WCHAR spacedCN_W[] = { 'C','N','=','"',' ','1',' ','"',0 };
+static const WCHAR simpleSpacedCN_W[] = { '"',' ','1',' ','"',0 };
 static const WCHAR quotedCN_W[] = { 'C','N','=','"','"','"','1','"','"','"',0 };
+static const WCHAR simpleQuotedCN_W[] = { '"','"','"','1','"','"','"',0 };
 static const WCHAR multipleAttrCN_W[] = { 'C','N','=','"','1','+','2','"',0 };
+static const WCHAR simpleMultipleAttrCN_W[] = { '"','1','+','2','"',0 };
 static const WCHAR commaCN_W[] = { 'C','N','=','"','a',',','b','"',0 };
+static const WCHAR simpleCommaCN_W[] = { '"','a',',','b','"',0 };
 static const WCHAR equalCN_W[] = { 'C','N','=','"','a','=','b','"',0 };
+static const WCHAR simpleEqualCN_W[] = { '"','a','=','b','"',0 };
 static const WCHAR lessThanCN_W[] = { 'C','N','=','"','<','"',0 };
+static const WCHAR simpleLessThanCN_W[] = { '"','<','"',0 };
 static const WCHAR greaterThanCN_W[] = { 'C','N','=','"','>','"',0 };
+static const WCHAR simpleGreaterThanCN_W[] = { '"','>','"',0 };
 static const WCHAR hashCN_W[] = { 'C','N','=','"','#','"',0 };
+static const WCHAR simpleHashCN_W[] = { '"','#','"',0 };
 static const WCHAR semiCN_W[] = { 'C','N','=','"',';','"',0 };
+static const WCHAR simpleSemiCN_W[] = { '"',';','"',0 };
 static const WCHAR newlineCN_W[] = { 'C','N','=','"','a','\n','b','"',0 };
+static const WCHAR simpleNewlineCN_W[] = { '"','a','\n','b','"',0 };
 
 static void test_CertNameToStrW(void)
 {
@@ -662,39 +685,61 @@ static void test_CertNameToStrW(void)
     blob.cbData = sizeof(encodedSingleQuotedCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, singledQuotedCN_W,
      FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR,
+     simpleSingleQuotedCN_W, FALSE);
     blob.pbData = encodedSpacedCN;
     blob.cbData = sizeof(encodedSpacedCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, spacedCN_W, FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, simpleSpacedCN_W,
+     FALSE);
     blob.pbData = encodedQuotedCN;
     blob.cbData = sizeof(encodedQuotedCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, quotedCN_W,
+     FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, simpleQuotedCN_W,
      FALSE);
     blob.pbData = encodedMultipleAttrCN;
     blob.cbData = sizeof(encodedMultipleAttrCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, multipleAttrCN_W,
      FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR,
+     simpleMultipleAttrCN_W, FALSE);
     blob.pbData = encodedCommaCN;
     blob.cbData = sizeof(encodedCommaCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, commaCN_W, FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, simpleCommaCN_W,
+     FALSE);
     blob.pbData = encodedEqualCN;
     blob.cbData = sizeof(encodedEqualCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, equalCN_W, FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, simpleEqualCN_W,
+     FALSE);
     blob.pbData = encodedLessThanCN;
     blob.cbData = sizeof(encodedLessThanCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, lessThanCN_W, FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, simpleLessThanCN_W,
+     FALSE);
     blob.pbData = encodedGreaterThanCN;
     blob.cbData = sizeof(encodedGreaterThanCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, greaterThanCN_W,
      FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR,
+     simpleGreaterThanCN_W, FALSE);
     blob.pbData = encodedHashCN;
     blob.cbData = sizeof(encodedHashCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, hashCN_W, FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, simpleHashCN_W,
+     FALSE);
     blob.pbData = encodedSemiCN;
     blob.cbData = sizeof(encodedSemiCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, semiCN_W, FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, simpleSemiCN_W,
+     FALSE);
     blob.pbData = encodedNewlineCN;
     blob.cbData = sizeof(encodedNewlineCN);
     test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, newlineCN_W, FALSE);
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, simpleNewlineCN_W,
+     FALSE);
 }
 
 struct StrToNameA
