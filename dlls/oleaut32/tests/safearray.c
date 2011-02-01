@@ -111,7 +111,12 @@ static ULONG CALLBACK IRecordInfoImpl_AddRef(IRecordInfo *iface)
 static ULONG CALLBACK IRecordInfoImpl_Release(IRecordInfo *iface)
 {
   IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
-  return InterlockedDecrement(&This->ref);
+  ULONG ref = InterlockedDecrement(&This->ref);
+
+  if (!ref)
+      HeapFree(GetProcessHeap(), 0, This);
+
+  return ref;
 }
 
 static BOOL fail_GetSize; /* Whether to fail the GetSize call */
@@ -1463,6 +1468,7 @@ static void test_SafeArrayCreateEx(void)
     hres = SafeArrayDestroy(sa);
     ok(hres == S_OK, "got 0x%08x\n", hres);
     ok(iRec->clearCalled == sab[0].cElements, "Destroy->Clear called %d times\n", iRec->clearCalled);
+    ok(iRec->ref == START_REF_COUNT, "got %d, expected %d\n", iRec->ref, START_REF_COUNT);
   }
 
   /* Test VT_RECORD array */
@@ -1662,7 +1668,7 @@ static void test_SafeArrayChangeTypeEx(void)
   }
 
   /* To/from BSTR only works with arrays of VT_UI1 */
-  for (vt = 0; vt <= VT_CLSID; vt++)
+  for (vt = VT_EMPTY; vt <= VT_CLSID; vt++)
   {
     if (vt == VT_UI1)
       continue;
