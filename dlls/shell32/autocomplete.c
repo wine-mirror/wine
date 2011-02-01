@@ -203,18 +203,16 @@ static ULONG WINAPI IAutoComplete2_fnRelease(
 {
     IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
-    
+
     TRACE("(%p)->(%u)\n", This, refCount + 1);
 
     if (!refCount) {
-	TRACE(" destroying IAutoComplete(%p)\n",This);
+        TRACE("destroying IAutoComplete(%p)\n", This);
         HeapFree(GetProcessHeap(), 0, This->quickComplete);
         HeapFree(GetProcessHeap(), 0, This->txtbackup);
-	if (This->hwndListBox)
-	    DestroyWindow(This->hwndListBox);
-	if (This->enumstr)
-	    IEnumString_Release(This->enumstr);
-	HeapFree(GetProcessHeap(), 0, This);
+        if (This->enumstr)
+            IEnumString_Release(This->enumstr);
+        HeapFree(GetProcessHeap(), 0, This);
     }
     return refCount;
 }
@@ -275,6 +273,8 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
     This->initialized = TRUE;
     This->hwndEdit = hwndEdit;
     This->wpOrigEditProc = (WNDPROC) SetWindowLongPtrW( hwndEdit, GWLP_WNDPROC, (LONG_PTR) ACEditSubclassProc);
+    /* Keep at least one reference to the object until the edit window is destroyed. */
+    IAutoComplete2_AddRef((IAutoComplete2 *)This);
     SetPropW( hwndEdit, autocomplete_propertyW, This );
 
     if (This->options & ACO_AUTOSUGGEST)
@@ -631,7 +631,12 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 	{
 	    WNDPROC proc = This->wpOrigEditProc;
 
+	    RemovePropW(hwnd, autocomplete_propertyW);
+	    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (LONG_PTR)proc);
 	    This->hwndEdit = NULL;
+	    if (This->hwndListBox)
+		    DestroyWindow(This->hwndListBox);
+	    IAutoComplete2_Release((IAutoComplete2 *)This);
 	    return CallWindowProcW(proc, hwnd, uMsg, wParam, lParam);
 	}
 	default:
