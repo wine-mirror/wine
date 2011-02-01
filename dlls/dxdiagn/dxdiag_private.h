@@ -62,9 +62,9 @@ typedef struct IDxDiagContainerImpl_SubContainer {
 } IDxDiagContainerImpl_SubContainer;
 
 typedef struct IDxDiagContainerImpl_Property {
-  LPWSTR vName;
-  VARIANT v;
-  struct IDxDiagContainerImpl_Property* next;
+  struct list entry;
+  WCHAR *propName;
+  VARIANT vProp;
 } IDxDiagContainerImpl_Property;
 
 
@@ -76,7 +76,7 @@ struct IDxDiagContainerImpl {
   const IDxDiagContainerVtbl *lpVtbl;
   LONG        ref;
   /* IDxDiagContainer fields */
-  IDxDiagContainerImpl_Property* properties;
+  struct list properties;
   struct list subContainers;
   DWORD nProperties;
   DWORD nSubContainers;

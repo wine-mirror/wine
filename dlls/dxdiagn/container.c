@@ -184,7 +184,7 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfProps(PDXDIAGCONTAINER ifa
 
 static HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface, DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
-  IDxDiagContainerImpl_Property* p = NULL;
+  IDxDiagContainerImpl_Property *p;
   DWORD i = 0;
 
   TRACE("(%p, %u, %p, %u)\n", iface, dwIndex, pwszPropName, cchPropName);
@@ -193,24 +193,24 @@ static HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface,
     return E_INVALIDARG;
   }
 
-  p = This->properties;
-  while (NULL != p) {
+  LIST_FOR_EACH_ENTRY(p, &This->properties, IDxDiagContainerImpl_Property, entry)
+  {
     if (dwIndex == i) {
-      TRACE("Found property name %s, copying string\n", debugstr_w(p->vName));
-      lstrcpynW(pwszPropName, p->vName, cchPropName);
-      return (cchPropName <= strlenW(p->vName)) ?
+      TRACE("Found property name %s, copying string\n", debugstr_w(p->propName));
+      lstrcpynW(pwszPropName, p->propName, cchPropName);
+      return (cchPropName <= strlenW(p->propName)) ?
               DXDIAG_E_INSUFFICIENT_BUFFER : S_OK;
     }
-    p = p->next;
     ++i;
   }
+
   TRACE("Failed to find property name at specified index\n");
   return E_INVALIDARG;
 }
 
 static HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pvarProp) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
-  IDxDiagContainerImpl_Property* p = NULL;
+  IDxDiagContainerImpl_Property *p;
 
   TRACE("(%p, %s, %p)\n", iface, debugstr_w(pwszPropName), pvarProp);
 
@@ -218,24 +218,23 @@ static HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWS
     return E_INVALIDARG;
   }
 
-  p = This->properties;
-  while (NULL != p) {
-    if (0 == lstrcmpW(p->vName, pwszPropName)) {
+  LIST_FOR_EACH_ENTRY(p, &This->properties, IDxDiagContainerImpl_Property, entry)
+  {
+    if (0 == lstrcmpW(p->propName, pwszPropName)) {
       HRESULT hr = VariantClear(pvarProp);
       if (hr == DISP_E_ARRAYISLOCKED || hr == DISP_E_BADVARTYPE)
         VariantInit(pvarProp);
 
-      return VariantCopy(pvarProp, &p->v);
+      return VariantCopy(pvarProp, &p->vProp);
     }
-    p = p->next;
   }
+
   return E_INVALIDARG;
 }
 
 HRESULT WINAPI IDxDiagContainerImpl_AddProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pVarProp) {
   IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
-  IDxDiagContainerImpl_Property* p = NULL;
-  IDxDiagContainerImpl_Property* pNew = NULL;
+  IDxDiagContainerImpl_Property *pNew;
 
   TRACE("(%p, %s, %p)\n", iface, debugstr_w(pwszPropName), pVarProp);
 
@@ -247,25 +246,17 @@ HRESULT WINAPI IDxDiagContainerImpl_AddProp(PDXDIAGCONTAINER iface, LPCWSTR pwsz
   if (NULL == pNew) {
     return E_OUTOFMEMORY;
   }
-  VariantInit(&pNew->v);
-  VariantCopy(&pNew->v, pVarProp);
-  pNew->vName = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pwszPropName) + 1) * sizeof(WCHAR));
-  if (NULL == pNew->vName) {
+
+  pNew->propName = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pwszPropName) + 1) * sizeof(WCHAR));
+  if (NULL == pNew->propName) {
     HeapFree(GetProcessHeap(), 0, pNew);
     return E_OUTOFMEMORY;
   }
-  lstrcpyW(pNew->vName, pwszPropName);
-  pNew->next = NULL;
+  lstrcpyW(pNew->propName, pwszPropName);
+  VariantInit(&pNew->vProp);
+  VariantCopy(&pNew->vProp, pVarProp);
 
-  p = This->properties;
-  if (NULL == p) {
-    This->properties = pNew;
-  } else {
-    while (NULL != p->next) {
-      p = p->next;
-    }
-    p->next = pNew;
-  }
+  list_add_tail(&This->properties, &pNew->entry);
   ++This->nProperties;
   return S_OK;
 }
@@ -324,6 +315,7 @@ HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, LPVOID *ppobj) {
   }
   container->lpVtbl = &DxDiagContainer_Vtbl;
   container->ref = 0; /* will be inited with QueryInterface */
+  list_init(&container->properties);
   list_init(&container->subContainers);
   return IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)container, riid, ppobj);
 }
