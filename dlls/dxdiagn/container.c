@@ -244,13 +244,17 @@ HRESULT WINAPI IDxDiagContainerImpl_AddProp(PDXDIAGCONTAINER iface, LPCWSTR pwsz
     return E_INVALIDARG;
   }
 
-  pNew =  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDxDiagContainerImpl_Property));
+  pNew = HeapAlloc(GetProcessHeap(), 0, sizeof(IDxDiagContainerImpl_Property));
   if (NULL == pNew) {
     return E_OUTOFMEMORY;
   }
   VariantInit(&pNew->v);
   VariantCopy(&pNew->v, pVarProp);
-  pNew->vName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (lstrlenW(pwszPropName) + 1) * sizeof(WCHAR));
+  pNew->vName = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pwszPropName) + 1) * sizeof(WCHAR));
+  if (NULL == pNew->vName) {
+    HeapFree(GetProcessHeap(), 0, pNew);
+    return E_OUTOFMEMORY;
+  }
   lstrcpyW(pNew->vName, pwszPropName);
   pNew->next = NULL;
 
@@ -278,12 +282,16 @@ HRESULT WINAPI IDxDiagContainerImpl_AddChildContainer(PDXDIAGCONTAINER iface, LP
     return E_INVALIDARG;
   }
 
-  pNew =  HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDxDiagContainerImpl_SubContainer));
+  pNew = HeapAlloc(GetProcessHeap(), 0, sizeof(IDxDiagContainerImpl_SubContainer));
   if (NULL == pNew) {
     return E_OUTOFMEMORY;
   }
   pNew->pCont = pSubCont;
-  pNew->contName = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (lstrlenW(pszContName) + 1) * sizeof(WCHAR));
+  pNew->contName = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pszContName) + 1) * sizeof(WCHAR));
+  if (NULL == pNew->contName) {
+    HeapFree(GetProcessHeap(), 0, pNew)
+    return E_OUTOFMEMORY;
+  }
   lstrcpyW(pNew->contName, pszContName);
   pNew->next = NULL;
 
