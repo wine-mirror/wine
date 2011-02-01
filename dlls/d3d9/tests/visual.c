@@ -11207,6 +11207,138 @@ static void shadow_test(IDirect3DDevice9 *device)
     IDirect3D9_Release(d3d9);
 }
 
+static void clip_planes(IDirect3DDevice9 *device, const char *test_name)
+{
+    const struct vertex quad1[] =
+    {
+        {-1.0f, -1.0f, 0.0f, 0xfff9e814},
+        { 1.0f, -1.0f, 0.0f, 0xfff9e814},
+        {-1.0f,  1.0f, 0.0f, 0xfff9e814},
+        { 1.0f,  1.0f, 0.0f, 0xfff9e814},
+    };
+    const struct vertex quad2[] =
+    {
+        {-1.0f, -1.0f, 0.0f, 0xff002b7f},
+        { 1.0f, -1.0f, 0.0f, 0xff002b7f},
+        {-1.0f,  1.0f, 0.0f, 0xff002b7f},
+        { 1.0f,  1.0f, 0.0f, 0xff002b7f},
+    };
+    D3DCOLOR color;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 1.0, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPLANEENABLE, 0);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(*quad1));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPLANEENABLE, 0x1);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(*quad2));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 1, 240);
+    ok(color_match(color, 0x00002b7f, 1), "%s test: color 0x%08x.\n", test_name, color);
+    color = getPixelColor(device, 638, 240);
+    ok(color_match(color, 0x00002b7f, 1), "%s test: color 0x%08x.\n", test_name, color);
+
+    color = getPixelColor(device, 1, 241);
+    ok(color_match(color, 0x00f9e814, 1), "%s test: color 0x%08x.\n", test_name, color);
+    color = getPixelColor(device, 638, 241);
+    ok(color_match(color, 0x00f9e814, 1), "%s test: color 0x%08x.\n", test_name, color);
+}
+
+static void clip_planes_test(IDirect3DDevice9 *device)
+{
+    const float plane0[4] = {0.0f, 1.0f, 0.0f, 0.5f / 480.0f}; /* a quarter-pixel offset */
+
+    const DWORD shader_code[] = {
+        0xfffe0200, /* vs_2_0 */
+        0x0200001f, 0x80000000, 0x900f0000, /* dcl_position v0 */
+        0x0200001f, 0x8000000a, 0x900f0001, /* dcl_color0 v1 */
+        0x02000001, 0xc00f0000, 0x90e40000, /* mov oPos, v0 */
+        0x02000001, 0xd00f0000, 0x90e40001, /* mov oD0, v1 */
+        0x0000ffff /* end */
+    };
+    IDirect3DVertexShader9 *shader;
+
+    IDirect3DTexture9 *offscreen = NULL;
+    IDirect3DSurface9 *offscreen_surface, *original_rt;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &original_rt);
+    ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPING, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+
+    IDirect3DDevice9_SetClipPlane(device, 0, plane0);
+
+    clip_planes(device, "Onscreen FFP");
+
+    hr = IDirect3DDevice9_CreateTexture(device, 640, 480, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &offscreen, NULL);
+    ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(offscreen, 0, &offscreen_surface);
+    ok(SUCCEEDED(hr), "GetSurfaceLevel failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, offscreen_surface);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed, hr=%08x\n", hr);
+
+    clip_planes(device, "Offscreen FFP");
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %08x\n", hr);
+    IDirect3DDevice9_SetVertexShader(device, shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %08x\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed, hr=%08x\n", hr);
+
+    clip_planes(device, "Onscreen vertex shader");
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, offscreen_surface);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed, hr=%08x\n", hr);
+
+    clip_planes(device, "Offscreen vertex shader");
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPLANEENABLE, 0);
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    IDirect3DVertexShader9_Release(shader);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed, hr=%08x\n", hr);
+    IDirect3DSurface9_Release(original_rt);
+    if (offscreen)
+    {
+        IDirect3DSurface9_Release(offscreen_surface);
+        IDirect3DTexture9_Release(offscreen);
+    }
+}
+
 static void fp_special_test(IDirect3DDevice9 *device)
 {
     static const DWORD vs_header[] =
@@ -11694,6 +11826,7 @@ START_TEST(visual)
     fp_special_test(device_ptr);
     depth_bounds_test(device_ptr);
     srgbwrite_format_test(device_ptr);
+    clip_planes_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
