@@ -1143,22 +1143,32 @@ static void test_wcsrchr(void)
        "wcsrchr should have returned NULL\n");
 }
 
-static __cdecl int intcomparefunc(const void *a, const void*b)
+static __cdecl int intcomparefunc(const void *a, const void *b)
 {
-	ok (a != b, "must never get the same pointer\n");
-	return (*(int*)a) - (*(int*)b);
+    const int *p = a, *q = b;
+
+    ok (a != b, "must never get the same pointer\n");
+
+    return *p - *q;
 }
 
-static __cdecl int charcomparefunc(const void *a, const void*b)
+static __cdecl int charcomparefunc(const void *a, const void *b)
 {
-	ok (a != b, "must never get the same pointer\n");
-	return (*(char*)a) - (*(char*)b);
+    const char *p = a, *q = b;
+
+    ok (a != b, "must never get the same pointer\n");
+
+    return *p - *q;
 }
 
-static __cdecl int strcomparefunc(const void *a, const void*b)
+static __cdecl int strcomparefunc(const void *a, const void *b)
 {
-	ok (a != b, "must never get the same pointer\n");
-	return lstrcmpA(*(char**)a,*(char**)b);
+    const char * const *p = a;
+    const char * const *q = b;
+
+    ok (a != b, "must never get the same pointer\n");
+
+    return lstrcmpA(*p, *q);
 }
 
 static void test_qsort(void)
