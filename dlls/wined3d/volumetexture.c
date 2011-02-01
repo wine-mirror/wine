@@ -85,7 +85,7 @@ static void volumetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3D
     texture->baseTexture.texture_rgb.dirty = FALSE;
 }
 
-const struct wined3d_texture_ops volumetexture_ops =
+static const struct wined3d_texture_ops volumetexture_ops =
 {
     volumetexture_bind,
     volumetexture_preload,
