@@ -82,7 +82,9 @@ typedef struct
 static const IAutoComplete2Vtbl acvt;
 static const IAutoCompleteDropDownVtbl acdropdownvt;
 
-
+static const WCHAR autocomplete_propertyW[] = {'W','i','n','e',' ','A','u','t','o',
+                                               'c','o','m','p','l','e','t','e',' ',
+                                               'c','o','n','t','r','o','l',0};
 /*
   converts This to an interface pointer
 */
@@ -273,7 +275,7 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
     This->initialized = TRUE;
     This->hwndEdit = hwndEdit;
     This->wpOrigEditProc = (WNDPROC) SetWindowLongPtrW( hwndEdit, GWLP_WNDPROC, (LONG_PTR) ACEditSubclassProc);
-    SetWindowLongPtrW( hwndEdit, GWLP_USERDATA, (LONG_PTR)This);
+    SetPropW( hwndEdit, autocomplete_propertyW, This );
 
     if (This->options & ACO_AUTOSUGGEST)
         create_listbox(This);
@@ -464,7 +466,7 @@ static const IAutoCompleteDropDownVtbl acdropdownvt =
  */
 static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    IAutoCompleteImpl *This = (IAutoCompleteImpl *)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+    IAutoCompleteImpl *This = GetPropW(hwnd, autocomplete_propertyW);
     LPOLESTR strs;
     HRESULT hr;
     WCHAR hwndText[255];
