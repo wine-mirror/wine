@@ -156,7 +156,7 @@ LPWSTR encode_streamname(BOOL bTable, LPCWSTR in)
 
     if( !bTable )
         count = lstrlenW( in )+2;
-    out = msi_alloc( count*sizeof(WCHAR) );
+    if (!(out = msi_alloc( count*sizeof(WCHAR) ))) return NULL;
     p = out;
 
     if( bTable )
