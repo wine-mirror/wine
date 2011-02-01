@@ -3798,24 +3798,17 @@ static void clipplane(DWORD state_id, struct wined3d_stateblock *stateblock, str
         return;
     }
 
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+
     /* Clip Plane settings are affected by the model view in OpenGL, the View transform in direct3d */
     if (!use_vs(state))
-    {
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
         glLoadMatrixf(&state->transforms[WINED3DTS_VIEW].u.m[0][0]);
-    }
     else
-    {
         /* with vertex shaders, clip planes are not transformed in direct3d,
          * in OpenGL they are still transformed by the model view.
-         * Use this to swap the y coordinate if necessary
          */
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
         glLoadIdentity();
-        if (context->render_offscreen) glScalef(1.0f, -1.0f, 1.0f);
-    }
 
     TRACE("Clipplane [%.8e, %.8e, %.8e, %.8e]\n",
             state->clip_planes[index][0],

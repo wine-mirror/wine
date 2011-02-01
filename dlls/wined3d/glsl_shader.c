@@ -4079,9 +4079,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     shader_addline(buffer, "#version 120\n");
 
     if (gl_info->supported[EXT_GPU_SHADER4])
-    {
         shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
-    }
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
@@ -4100,11 +4098,14 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
      * the fog frag coord is thrown away. If the fog frag coord is used, but not written by
      * the shader, it is set to 0.0(fully fogged, since start = 1.0, end = 0.0)
      */
-    if(args->fog_src == VS_FOG_Z) {
+    if (args->fog_src == VS_FOG_Z)
         shader_addline(buffer, "gl_FogFragCoord = gl_Position.z;\n");
-    } else if (!reg_maps->fog) {
+    else if (!reg_maps->fog)
         shader_addline(buffer, "gl_FogFragCoord = 0.0;\n");
-    }
+
+    /* We always store the clipplanes without y inversion */
+    if (args->clip_enabled)
+        shader_addline(buffer, "gl_ClipVertex = gl_Position;\n");
 
     /* Write the final position.
      *
@@ -4115,9 +4116,6 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
      */
     shader_addline(buffer, "gl_Position.y = gl_Position.y * posFixup.y;\n");
     shader_addline(buffer, "gl_Position.xy += posFixup.zw * gl_Position.ww;\n");
-    if(args->clip_enabled) {
-        shader_addline(buffer, "gl_ClipVertex = gl_Position;\n");
-    }
 
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
      *

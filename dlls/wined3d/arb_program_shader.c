@@ -3111,35 +3111,24 @@ static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
      * the fog frag coord is thrown away. If the fog frag coord is used, but not written by
      * the shader, it is set to 0.0(fully fogged, since start = 1.0, end = 0.0)
      */
-    if(args->super.fog_src == VS_FOG_Z) {
+    if (args->super.fog_src == VS_FOG_Z)
         shader_addline(buffer, "MOV result.fogcoord, TMP_OUT.z;\n");
-    } else if (!reg_maps->fog) {
-        /* posFixup.x is always 1.0, so we can savely use it */
+    else if (!reg_maps->fog)
+        /* posFixup.x is always 1.0, so we can safely use it */
         shader_addline(buffer, "ADD result.fogcoord, posFixup.x, -posFixup.x;\n");
-    }
 
-    /* Write the final position.
-     *
-     * OpenGL coordinates specify the center of the pixel while d3d coords specify
-     * the corner. The offsets are stored in z and w in posFixup. posFixup.y contains
-     * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
-     * contains 1.0 to allow a mad, but arb vs swizzles are too restricted for that.
-     */
-    shader_addline(buffer, "MUL TA, posFixup, TMP_OUT.w;\n");
-    shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
-    shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
-
-    if(use_nv_clip(gl_info) && priv_ctx->target_version >= NV2)
+    /* Clipplanes are always stored without y inversion */
+    if (use_nv_clip(gl_info) && priv_ctx->target_version >= NV2)
     {
-        if(args->super.clip_enabled)
+        if (args->super.clip_enabled)
         {
-            for(i = 0; i < priv_ctx->vs_clipplanes; i++)
+            for (i = 0; i < priv_ctx->vs_clipplanes; i++)
             {
                 shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
             }
         }
     }
-    else if(args->clip.boolclip.clip_texcoord)
+    else if (args->clip.boolclip.clip_texcoord)
     {
         unsigned int cur_clip = 0;
         char component[4] = {'x', 'y', 'z', 'w'};
@@ -3147,13 +3136,13 @@ static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
 
         for (i = 0; i < gl_info->limits.clipplanes; ++i)
         {
-            if(args->clip.boolclip.clipplane_mask & (1 << i))
+            if (args->clip.boolclip.clipplane_mask & (1 << i))
             {
                 shader_addline(buffer, "DP4 TA.%c, TMP_OUT, state.clip[%u].plane;\n",
                                component[cur_clip++], i);
             }
         }
-        switch(cur_clip)
+        switch (cur_clip)
         {
             case 0:
                 shader_addline(buffer, "MOV TA, %s;\n", zero);
@@ -3172,6 +3161,17 @@ static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
                        args->clip.boolclip.clip_texcoord - 1);
     }
 
+    /* Write the final position.
+     *
+     * OpenGL coordinates specify the center of the pixel while d3d coords specify
+     * the corner. The offsets are stored in z and w in posFixup. posFixup.y contains
+     * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
+     * contains 1.0 to allow a mad, but arb vs swizzles are too restricted for that.
+     */
+    shader_addline(buffer, "MUL TA, posFixup, TMP_OUT.w;\n");
+    shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
+    shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
+
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
      * and the glsl equivalent
      */
@@ -3179,7 +3179,9 @@ static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
     {
         const char *two = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_TWO);
         shader_addline(buffer, "MAD TMP_OUT.z, TMP_OUT.z, %s, -TMP_OUT.w;\n", two);
-    } else {
+    }
+    else
+    {
         shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, TMP_OUT.z;\n");
         shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, -TMP_OUT.w;\n");
     }
