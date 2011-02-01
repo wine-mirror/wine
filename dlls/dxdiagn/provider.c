@@ -756,70 +756,58 @@ out_show_filters:
 }
 
 static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont) {
-  HRESULT hr = S_OK;
   static const WCHAR DxDiag_SystemInfo[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','I','n','f','o',0};
-  static const WCHAR DxDiag_SystemDevices[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','D','e','v','i','c','e','s',0};
-  static const WCHAR DxDiag_LogicalDisks[] = {'D','x','D','i','a','g','_','L','o','g','i','c','a','l','D','i','s','k','s',0};
-  static const WCHAR DxDiag_DirectXFiles[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','X','F','i','l','e','s',0};
   static const WCHAR DxDiag_DisplayDevices[] = {'D','x','D','i','a','g','_','D','i','s','p','l','a','y','D','e','v','i','c','e','s',0};
   static const WCHAR DxDiag_DirectSound[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','S','o','u','n','d',0};
   static const WCHAR DxDiag_DirectMusic[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','M','u','s','i','c',0};
   static const WCHAR DxDiag_DirectInput[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','I','n','p','u','t',0};
   static const WCHAR DxDiag_DirectPlay[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','P','l','a','y',0};
+  static const WCHAR DxDiag_SystemDevices[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','D','e','v','i','c','e','s',0};
+  static const WCHAR DxDiag_DirectXFiles[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','X','F','i','l','e','s',0};
   static const WCHAR DxDiag_DirectShowFilters[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','S','h','o','w','F','i','l','t','e','r','s',0};
-  IDxDiagContainer* pSubCont = NULL;
-  
+  static const WCHAR DxDiag_LogicalDisks[] = {'D','x','D','i','a','g','_','L','o','g','i','c','a','l','D','i','s','k','s',0};
+
+  static const struct
+  {
+    const WCHAR *name;
+    HRESULT (*initfunc)(IDxDiagContainer*);
+  } containers[] =
+  {
+    {DxDiag_SystemInfo,        DXDiag_InitDXDiagSystemInfoContainer},
+    {DxDiag_DisplayDevices,    DXDiag_InitDXDiagDisplayContainer},
+    {DxDiag_DirectSound,       DXDiag_InitDXDiagDirectSoundContainer},
+    {DxDiag_DirectMusic,       DXDiag_InitDXDiagDirectMusicContainer},
+    {DxDiag_DirectInput,       DXDiag_InitDXDiagDirectInputContainer},
+    {DxDiag_DirectPlay,        DXDiag_InitDXDiagDirectPlayContainer},
+    {DxDiag_SystemDevices,     DXDiag_InitDXDiagSystemDevicesContainer},
+    {DxDiag_DirectXFiles,      DXDiag_InitDXDiagDirectXFilesContainer},
+    {DxDiag_DirectShowFilters, DXDiag_InitDXDiagDirectShowFiltersContainer},
+    {DxDiag_LogicalDisks,      DXDiag_InitDXDiagLogicalDisksContainer},
+  };
+
+  size_t index;
+
   TRACE("(%p)\n", pRootCont);
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = DXDiag_InitDXDiagSystemInfoContainer(pSubCont);
-  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_SystemInfo, pSubCont);
+  for (index = 0; index < sizeof(containers)/sizeof(containers[0]); index++)
+  {
+    IDxDiagContainer* pSubCont;
+    HRESULT hr;
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = DXDiag_InitDXDiagSystemDevicesContainer(pSubCont);
-  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_SystemDevices, pSubCont);
+    hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
+    if (FAILED(hr))
+      return hr;
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = DXDiag_InitDXDiagLogicalDisksContainer(pSubCont);
-  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_LogicalDisks, pSubCont);
+    hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, containers[index].name, pSubCont);
+    if (FAILED(hr))
+    {
+      IDxDiagContainer_Release(pSubCont);
+      return hr;
+    }
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = DXDiag_InitDXDiagDirectXFilesContainer(pSubCont);
-  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_DirectXFiles, pSubCont);
+    /* The return value is ignored for now. */
+    containers[index].initfunc(pSubCont);
+  }
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = DXDiag_InitDXDiagDisplayContainer(pSubCont);
-  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_DisplayDevices, pSubCont);
-
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = DXDiag_InitDXDiagDirectSoundContainer(pSubCont);
-  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_DirectSound, pSubCont);
-
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = DXDiag_InitDXDiagDirectMusicContainer(pSubCont);
-  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_DirectMusic, pSubCont);
-
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = DXDiag_InitDXDiagDirectInputContainer(pSubCont);
-  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_DirectInput, pSubCont);
-
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = DXDiag_InitDXDiagDirectPlayContainer(pSubCont);
-  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_DirectPlay, pSubCont);
-
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
-  if (FAILED(hr)) { return hr; }
-  hr = DXDiag_InitDXDiagDirectShowFiltersContainer(pSubCont);
-  hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, DxDiag_DirectShowFilters, pSubCont);
-
-  return hr;
+  return S_OK;
 }
