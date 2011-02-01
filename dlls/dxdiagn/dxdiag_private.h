@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 
+#include "wine/list.h"
 #include "dxdiag.h"
 
 /* DXDiag Interfaces: */
@@ -55,9 +56,9 @@ struct IDxDiagProviderImpl {
 /* ---------------- */
 
 typedef struct IDxDiagContainerImpl_SubContainer {
-  IDxDiagContainer* pCont;
-  WCHAR* contName;
-  struct IDxDiagContainerImpl_SubContainer* next;
+  struct list entry;
+  WCHAR *contName;
+  IDxDiagContainer *pCont;
 } IDxDiagContainerImpl_SubContainer;
 
 typedef struct IDxDiagContainerImpl_Property {
@@ -75,8 +76,8 @@ struct IDxDiagContainerImpl {
   const IDxDiagContainerVtbl *lpVtbl;
   LONG        ref;
   /* IDxDiagContainer fields */
-  IDxDiagContainerImpl_Property* properties;  
-  IDxDiagContainerImpl_SubContainer* subContainers;
+  IDxDiagContainerImpl_Property* properties;
+  struct list subContainers;
   DWORD nProperties;
   DWORD nSubContainers;
 };
