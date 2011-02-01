@@ -107,21 +107,24 @@ static HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDI
 }
 
 static HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDiagContainer** ppInstance) {
-  HRESULT hr = S_OK;
+  HRESULT hr;
   IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
+  IDxDiagContainer *root;
+
   TRACE("(%p,%p)\n", iface, ppInstance);
 
   if (FALSE == This->init) {
     return CO_E_NOTINITIALIZED;
   }
-  if (NULL == This->pRootContainer) {
-    hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &This->pRootContainer);
-    if (FAILED(hr)) {
-      return hr;
-    }
-    hr = DXDiag_InitRootDXDiagContainer(This->pRootContainer);
+
+  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void **)&root);
+  if (FAILED(hr)) {
+    return hr;
   }
-  return IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)This->pRootContainer, &IID_IDxDiagContainer, (void**) ppInstance);
+
+  DXDiag_InitRootDXDiagContainer(root);
+
+  return IDxDiagContainerImpl_QueryInterface(root, &IID_IDxDiagContainer, (void **)ppInstance);
 }
 
 static const IDxDiagProviderVtbl DxDiagProvider_Vtbl =

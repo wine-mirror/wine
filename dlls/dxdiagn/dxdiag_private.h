@@ -48,7 +48,6 @@ struct IDxDiagProviderImpl {
   /* IDxDiagProvider fields */
   BOOL        init;
   DXDIAG_INIT_PARAMS params;
-  IDxDiagContainer* pRootContainer;
 };
 
 /* ---------------- */

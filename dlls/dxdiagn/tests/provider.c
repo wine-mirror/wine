@@ -94,7 +94,7 @@ static void test_GetRootContainer(void)
 {
     HRESULT hr;
     IDxDiagProvider *pddp;
-    IDxDiagContainer *pddc;
+    IDxDiagContainer *pddc, *pddc2;
     DXDIAG_INIT_PARAMS params;
 
     hr = CoCreateInstance(&CLSID_DxDiagProvider, NULL, CLSCTX_INPROC_SERVER,
@@ -140,6 +140,13 @@ static void test_GetRootContainer(void)
     hr = IDxDiagProvider_GetRootContainer(pddp, &pddc);
     ok(hr == S_OK, "Expected IDxDiagProvider::GetRootContainer to return S_OK, got %x\n", hr);
 
+    /* IDxDiagProvider::GetRootContainer creates new instances of the root
+     * container rather than maintain a static root container. */
+    hr = IDxDiagProvider_GetRootContainer(pddp, &pddc2);
+    ok(hr == S_OK, "Expected IDxDiagProvider::GetRootContainer to return S_OK, got %x\n", hr);
+    ok(pddc != pddc2, "Expected the two pointers (%p vs. %p) to be unequal\n", pddc, pddc2);
+
+    IDxDiagContainer_Release(pddc2);
     IDxDiagContainer_Release(pddc);
     IDxDiagProvider_Release(pddp);
 }
