@@ -548,6 +548,16 @@ static inline TEB *get_current_teb(void)
 
 
 /*******************************************************************
+ *         is_valid_frame
+ */
+static inline BOOL is_valid_frame( void *frame )
+{
+    if ((ULONG_PTR)frame & 3) return FALSE;
+    return (frame >= NtCurrentTeb()->Tib.StackLimit &&
+            (void **)frame < (void **)NtCurrentTeb()->Tib.StackBase - 1);
+}
+
+/*******************************************************************
  *         raise_handler
  *
  * Handler for exceptions happening inside a handler.
@@ -594,9 +604,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
     while (frame != (EXCEPTION_REGISTRATION_RECORD*)~0UL)
     {
         /* Check frame address */
-        if (((void*)frame < NtCurrentTeb()->Tib.StackLimit) ||
-            ((void*)(frame+1) > NtCurrentTeb()->Tib.StackBase) ||
-            (ULONG_PTR)frame & 3)
+        if (!is_valid_frame( frame ))
         {
             rec->ExceptionFlags |= EH_STACK_INVALID;
             break;
@@ -2381,10 +2389,7 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID ta
         if (pEndFrame && (frame > pEndFrame))
             raise_status( STATUS_INVALID_UNWIND_TARGET, pRecord );
 
-        if (((void*)frame < NtCurrentTeb()->Tib.StackLimit) ||
-            ((void*)(frame+1) > NtCurrentTeb()->Tib.StackBase) ||
-            (UINT_PTR)frame & 3)
-            raise_status( STATUS_BAD_STACK, pRecord );
+        if (!is_valid_frame( frame )) raise_status( STATUS_BAD_STACK, pRecord );
 
         /* Call handler */
         TRACE( "calling handler at %p code=%x flags=%x\n",
@@ -2453,17 +2458,13 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 
     while (skip--)
     {
-        if (((void *)frame < NtCurrentTeb()->Tib.StackLimit) ||
-            ((void *)(frame + 1) >= NtCurrentTeb()->Tib.StackBase) ||
-            ((ULONG_PTR)frame & 3)) return 0;
+        if (!is_valid_frame( frame )) return 0;
         frame = (ULONG *)*frame;
     }
 
     for (i = 0; i < count; i++)
     {
-        if (((void *)frame < NtCurrentTeb()->Tib.StackLimit) ||
-            ((void *)(frame + 1) >= NtCurrentTeb()->Tib.StackBase) ||
-            ((ULONG_PTR)frame & 3)) break;
+        if (!is_valid_frame( frame )) break;
         buffer[i] = (void *)frame[1];
         if (hash) *hash += frame[1];
         frame = (ULONG *)*frame;
