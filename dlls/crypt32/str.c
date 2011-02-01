@@ -29,6 +29,133 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
+ LPSTR psz, DWORD csz)
+{
+    DWORD ret = 0, len;
+
+    TRACE("(%d, %p, %p, %d)\n", dwValueType, pValue, psz, csz);
+
+    switch (dwValueType)
+    {
+    case CERT_RDN_ANY_TYPE:
+        break;
+    case CERT_RDN_NUMERIC_STRING:
+    case CERT_RDN_PRINTABLE_STRING:
+    case CERT_RDN_TELETEX_STRING:
+    case CERT_RDN_VIDEOTEX_STRING:
+    case CERT_RDN_IA5_STRING:
+    case CERT_RDN_GRAPHIC_STRING:
+    case CERT_RDN_VISIBLE_STRING:
+    case CERT_RDN_GENERAL_STRING:
+        len = pValue->cbData;
+        if (!psz || !csz)
+            ret = len;
+        else
+        {
+            DWORD chars = min(len, csz - 1);
+
+            if (chars)
+            {
+                memcpy(psz, pValue->pbData, chars);
+                ret += chars;
+                csz -= chars;
+            }
+        }
+        break;
+    case CERT_RDN_BMP_STRING:
+    case CERT_RDN_UTF8_STRING:
+        len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pValue->pbData,
+         pValue->cbData / sizeof(WCHAR), NULL, 0, NULL, NULL);
+        if (!psz || !csz)
+            ret = len;
+        else
+        {
+            DWORD chars = min(pValue->cbData / sizeof(WCHAR), csz - 1);
+
+            if (chars)
+            {
+                ret = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pValue->pbData,
+                 chars, psz, csz - 1, NULL, NULL);
+                csz -= ret;
+            }
+        }
+        break;
+    default:
+        FIXME("string type %d unimplemented\n", dwValueType);
+    }
+    if (psz && csz)
+    {
+        *(psz + ret) = '\0';
+        csz--;
+        ret++;
+    }
+    else
+        ret++;
+    TRACE("returning %d (%s)\n", ret, debugstr_a(psz));
+    return ret;
+}
+
+DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
+ LPWSTR psz, DWORD csz)
+{
+    DWORD ret = 0, len, i, strLen;
+
+    TRACE("(%d, %p, %p, %d)\n", dwValueType, pValue, psz, csz);
+
+    switch (dwValueType)
+    {
+    case CERT_RDN_ANY_TYPE:
+        break;
+    case CERT_RDN_NUMERIC_STRING:
+    case CERT_RDN_PRINTABLE_STRING:
+    case CERT_RDN_TELETEX_STRING:
+    case CERT_RDN_VIDEOTEX_STRING:
+    case CERT_RDN_IA5_STRING:
+    case CERT_RDN_GRAPHIC_STRING:
+    case CERT_RDN_VISIBLE_STRING:
+    case CERT_RDN_GENERAL_STRING:
+        len = pValue->cbData;
+        if (!psz || !csz)
+            ret = len;
+        else
+        {
+            WCHAR *ptr = psz;
+
+            for (i = 0; i < pValue->cbData && ptr - psz < csz; ptr++, i++)
+                *ptr = pValue->pbData[i];
+            ret = ptr - psz;
+        }
+        break;
+    case CERT_RDN_BMP_STRING:
+    case CERT_RDN_UTF8_STRING:
+        strLen = len = pValue->cbData / sizeof(WCHAR);
+        if (!psz || !csz)
+            ret = len;
+        else
+        {
+            WCHAR *ptr = psz;
+
+            for (i = 0; i < strLen && ptr - psz < csz; ptr++, i++)
+                *ptr = ((LPCWSTR)pValue->pbData)[i];
+            ret = ptr - psz;
+        }
+        break;
+    default:
+        FIXME("string type %d unimplemented\n", dwValueType);
+    }
+    if (psz && csz)
+    {
+        *(psz + ret) = '\0';
+        csz--;
+        ret++;
+    }
+    else
+        ret++;
+    TRACE("returning %d (%s)\n", ret, debugstr_w(psz));
+    return ret;
+}
+
 static inline BOOL is_quotable_char(char c)
 {
     switch(c)
@@ -48,8 +175,8 @@ static inline BOOL is_quotable_char(char c)
     }
 }
 
-DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
- LPSTR psz, DWORD csz)
+static DWORD quote_rdn_value_to_str_a(DWORD dwValueType,
+ PCERT_RDN_VALUE_BLOB pValue, LPSTR psz, DWORD csz)
 {
     DWORD ret = 0, len, i;
     BOOL needsQuotes = FALSE;
@@ -157,8 +284,8 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     return ret;
 }
 
-DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
- LPWSTR psz, DWORD csz)
+static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
+ PCERT_RDN_VALUE_BLOB pValue, LPWSTR psz, DWORD csz)
 {
     DWORD ret = 0, len, i, strLen;
     BOOL needsQuotes = FALSE;
@@ -358,7 +485,7 @@ DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
                      psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
                 }
-                chars = CertRDNValueToStrA(
+                chars = quote_rdn_value_to_str_a(
                  rdn->rgRDNAttr[j].dwValueType,
                  &rdn->rgRDNAttr[j].Value, psz ? psz + ret : NULL,
                  psz ? csz - ret : 0);
@@ -537,7 +664,7 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
                      psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
                 }
-                chars = CertRDNValueToStrW(
+                chars = quote_rdn_value_to_str_w(
                  rdn->rgRDNAttr[j].dwValueType,
                  &rdn->rgRDNAttr[j].Value, psz ? psz + ret : NULL,
                  psz ? csz - ret : 0);
