@@ -80,7 +80,7 @@ wined3d_settings_t wined3d_settings =
 /* Do not call while under the GL lock. */
 struct wined3d * CDECL wined3d_create(UINT version, void *parent)
 {
-    IWineD3DImpl *object;
+    struct wined3d *object;
     HRESULT hr;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -100,7 +100,7 @@ struct wined3d * CDECL wined3d_create(UINT version, void *parent)
 
     TRACE("Created wined3d object %p for d3d%d support.\n", object, version);
 
-    return (IWineD3D *)object;
+    return object;
 }
 
 static DWORD get_config_key(HKEY defkey, HKEY appkey, const char *name, char *buffer, DWORD size)

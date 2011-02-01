@@ -59,8 +59,6 @@ typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 struct IWineD3DResourceImpl;
-typedef struct wined3d IWineD3DImpl;
-typedef struct wined3d IWineD3D;
 
 /* Texture format fixups */
 
@@ -1622,7 +1620,7 @@ struct wined3d
     struct wined3d_adapter adapters[1];
 };
 
-HRESULT wined3d_init(IWineD3DImpl *wined3d, UINT version, void *parent) DECLSPEC_HIDDEN;
+HRESULT wined3d_init(struct wined3d *wined3d, UINT version, void *parent) DECLSPEC_HIDDEN;
 BOOL wined3d_register_window(HWND window, struct IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
 void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
 
@@ -1642,7 +1640,7 @@ struct IWineD3DDeviceImpl
 
     /* WineD3D Information  */
     IWineD3DDeviceParent   *device_parent;
-    IWineD3D *wined3d;
+    struct wined3d *wined3d;
     struct wined3d_adapter *adapter;
 
     /* Window styles to restore when switching fullscreen mode */
@@ -1770,7 +1768,7 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
 BOOL device_context_add(IWineD3DDeviceImpl *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect) DECLSPEC_HIDDEN;
-HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
+HRESULT device_init(IWineD3DDeviceImpl *device, struct wined3d *wined3d,
         UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
         IWineD3DDeviceParent *device_parent) DECLSPEC_HIDDEN;
 void device_preload_textures(IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;

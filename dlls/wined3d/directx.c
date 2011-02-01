@@ -4983,7 +4983,7 @@ static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
 }
 
 /* Do not call while under the GL lock. */
-static BOOL InitAdapters(IWineD3DImpl *This)
+static BOOL InitAdapters(struct wined3d *wined3d)
 {
     static HMODULE mod_gl;
     BOOL ret;
@@ -5040,7 +5040,7 @@ static BOOL InitAdapters(IWineD3DImpl *This)
 
     /* For now only one default adapter */
     {
-        struct wined3d_adapter *adapter = &This->adapters[0];
+        struct wined3d_adapter *adapter = &wined3d->adapters[0];
         const struct wined3d_gl_info *gl_info = &adapter->gl_info;
         struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
         int iPixelFormat;
@@ -5246,30 +5246,29 @@ static BOOL InitAdapters(IWineD3DImpl *This)
         fillGLAttribFuncs(&adapter->gl_info);
         adapter->opengl = TRUE;
     }
-    This->adapter_count = 1;
-    TRACE("%u adapters successfully initialized\n", This->adapter_count);
+    wined3d->adapter_count = 1;
+    TRACE("%u adapters successfully initialized.\n", wined3d->adapter_count);
 
     return TRUE;
 
 nogl_adapter:
     /* Initialize an adapter for ddraw-only memory counting */
-    memset(This->adapters, 0, sizeof(This->adapters));
-    This->adapters[0].ordinal = 0;
-    This->adapters[0].opengl = FALSE;
-    This->adapters[0].monitorPoint.x = -1;
-    This->adapters[0].monitorPoint.y = -1;
+    memset(wined3d->adapters, 0, sizeof(wined3d->adapters));
+    wined3d->adapters[0].ordinal = 0;
+    wined3d->adapters[0].opengl = FALSE;
+    wined3d->adapters[0].monitorPoint.x = -1;
+    wined3d->adapters[0].monitorPoint.y = -1;
 
-    This->adapters[0].driver_info.name = "Display";
-    This->adapters[0].driver_info.description = "WineD3D DirectDraw Emulation";
-    if(wined3d_settings.emulated_textureram) {
-        This->adapters[0].TextureRam = wined3d_settings.emulated_textureram;
-    } else {
-        This->adapters[0].TextureRam = 8 * 1024 * 1024; /* This is plenty for a DDraw-only card */
-    }
+    wined3d->adapters[0].driver_info.name = "Display";
+    wined3d->adapters[0].driver_info.description = "WineD3D DirectDraw Emulation";
+    if (wined3d_settings.emulated_textureram)
+        wined3d->adapters[0].TextureRam = wined3d_settings.emulated_textureram;
+    else
+        wined3d->adapters[0].TextureRam = 8 * 1024 * 1024; /* This is plenty for a DDraw-only card */
 
-    initPixelFormatsNoGL(&This->adapters[0].gl_info);
+    initPixelFormatsNoGL(&wined3d->adapters[0].gl_info);
 
-    This->adapter_count = 1;
+    wined3d->adapter_count = 1;
     return FALSE;
 }
 
@@ -5281,7 +5280,7 @@ const struct wined3d_parent_ops wined3d_null_parent_ops =
 };
 
 /* Do not call while under the GL lock. */
-HRESULT wined3d_init(IWineD3DImpl *wined3d, UINT version, void *parent)
+HRESULT wined3d_init(struct wined3d *wined3d, UINT version, void *parent)
 {
     wined3d->dxVersion = version;
     wined3d->ref = 1;

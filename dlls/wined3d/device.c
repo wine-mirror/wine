@@ -6928,7 +6928,7 @@ static const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_RestoreFullscreenWindow,
 };
 
-HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
+HRESULT device_init(IWineD3DDeviceImpl *device, struct wined3d *wined3d,
         UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
         IWineD3DDeviceParent *device_parent)
 {
@@ -6942,7 +6942,7 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
 
     device->lpVtbl = &IWineD3DDevice_Vtbl;
     device->ref = 1;
-    device->wined3d = (IWineD3D *)wined3d;
+    device->wined3d = wined3d;
     wined3d_incref(device->wined3d);
     device->adapter = wined3d->adapter_count ? adapter : NULL;
     device->device_parent = device_parent;

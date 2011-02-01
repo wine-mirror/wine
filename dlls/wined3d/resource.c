@@ -210,7 +210,7 @@ HRESULT resource_get_private_data(struct IWineD3DResourceImpl *resource, REFGUID
     if (d->flags & WINED3DSPD_IUNKNOWN)
     {
         *(IUnknown **)data = d->ptr.object;
-        if (((IWineD3DImpl *)resource->resource.device->wined3d)->dxVersion != 7)
+        if (resource->resource.device->wined3d->dxVersion != 7)
         {
             /* D3D8 and D3D9 addref the private data, DDraw does not. This
              * can't be handled in ddraw because it doesn't know if the
