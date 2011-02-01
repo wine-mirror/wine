@@ -1,0 +1,8 @@
+MODULE    = winemsibuilder.exe
+APPMODE   = -mconsole -municode
+IMPORTS   = msi ole32
+EXTRADEFS = -DWINE_NO_UNICODE_MACROS
+
+C_SRCS = main.c
+
+@MAKE_PROG_RULES@
