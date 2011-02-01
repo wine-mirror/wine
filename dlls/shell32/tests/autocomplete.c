@@ -55,6 +55,7 @@ static IAutoComplete *test_init(void)
     if (r == REGDB_E_CLASSNOTREG)
     {
         win_skip("CLSID_ACLMulti is not registered\n");
+        IAutoComplete_Release(ac);
         return NULL;
     }
     ok(r == S_OK, "no IID_IACList (0x%08x)\n", r);
