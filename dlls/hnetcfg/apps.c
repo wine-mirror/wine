@@ -262,7 +262,7 @@ static HRESULT WINAPI fw_app_put_Enabled(
     fw_app *This = impl_from_INetFwAuthorizedApplication( iface );
 
     FIXME("%p, %d\n", This, enabled);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const struct INetFwAuthorizedApplicationVtbl fw_app_vtbl =
