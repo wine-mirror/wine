@@ -100,6 +100,33 @@ typedef struct _SCOPE_TABLE
 } SCOPE_TABLE, *PSCOPE_TABLE;
 
 
+/* layering violation: the setjmp buffer is defined in msvcrt, but used by RtlUnwindEx */
+struct MSVCRT_JUMP_BUFFER
+{
+    ULONG64 Frame;
+    ULONG64 Rbx;
+    ULONG64 Rsp;
+    ULONG64 Rbp;
+    ULONG64 Rsi;
+    ULONG64 Rdi;
+    ULONG64 R12;
+    ULONG64 R13;
+    ULONG64 R14;
+    ULONG64 R15;
+    ULONG64 Rip;
+    ULONG64 Spare;
+    M128A   Xmm6;
+    M128A   Xmm7;
+    M128A   Xmm8;
+    M128A   Xmm9;
+    M128A   Xmm10;
+    M128A   Xmm11;
+    M128A   Xmm12;
+    M128A   Xmm13;
+    M128A   Xmm14;
+    M128A   Xmm15;
+};
+
 /***********************************************************************
  * signal context platform-specific definitions
  */
@@ -3007,6 +3034,31 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
         }
 
         context = new_context;
+    }
+
+    if (rec->ExceptionCode == STATUS_LONGJUMP && rec->NumberParameters >= 1)
+    {
+        struct MSVCRT_JUMP_BUFFER *jmp = (struct MSVCRT_JUMP_BUFFER *)rec->ExceptionInformation[0];
+        context.Rbx       = jmp->Rbx;
+        context.Rsp       = jmp->Rsp;
+        context.Rbp       = jmp->Rbp;
+        context.Rsi       = jmp->Rsi;
+        context.Rdi       = jmp->Rdi;
+        context.R12       = jmp->R12;
+        context.R13       = jmp->R13;
+        context.R14       = jmp->R14;
+        context.R15       = jmp->R15;
+        context.Rip       = jmp->Rip;
+        context.u.s.Xmm6  = jmp->Xmm6;
+        context.u.s.Xmm7  = jmp->Xmm7;
+        context.u.s.Xmm8  = jmp->Xmm8;
+        context.u.s.Xmm9  = jmp->Xmm9;
+        context.u.s.Xmm10 = jmp->Xmm10;
+        context.u.s.Xmm11 = jmp->Xmm11;
+        context.u.s.Xmm12 = jmp->Xmm12;
+        context.u.s.Xmm13 = jmp->Xmm13;
+        context.u.s.Xmm14 = jmp->Xmm14;
+        context.u.s.Xmm15 = jmp->Xmm15;
     }
     context.Rax = (ULONG64)retval;
     context.Rip = (ULONG64)target_ip;
