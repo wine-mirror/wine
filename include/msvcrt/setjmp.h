@@ -95,7 +95,7 @@ extern "C" {
 #endif
 
 int __cdecl _setjmp(jmp_buf);
-int __cdecl longjmp(jmp_buf,int);
+void __cdecl longjmp(jmp_buf,int);
 
 #ifdef __cplusplus
 }

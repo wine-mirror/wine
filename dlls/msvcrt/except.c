@@ -473,7 +473,7 @@ int CDECL __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, 
 /*********************************************************************
  *		longjmp (MSVCRT.@)
  */
-int CDECL MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
+void CDECL MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval)
 {
     unsigned long cur_frame = 0;
 
