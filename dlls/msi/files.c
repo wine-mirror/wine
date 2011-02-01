@@ -1048,9 +1048,11 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         }
 
         TRACE("removing %s\n", debugstr_w(file->File) );
+
+        SetFileAttributesW( file->TargetPath, FILE_ATTRIBUTE_NORMAL );
         if (!DeleteFileW( file->TargetPath ))
         {
-            WARN("failed to delete %s\n",  debugstr_w(file->TargetPath));
+            WARN("failed to delete %s (%u)\n",  debugstr_w(file->TargetPath), GetLastError());
         }
         /* FIXME: check persistence for each directory */
         else if (r && (dir = strdupW( file->TargetPath )))
