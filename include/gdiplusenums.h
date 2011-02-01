@@ -734,7 +734,7 @@ typedef enum StringTrimming StringTrimming;
 typedef enum FontStyle FontStyle;
 typedef enum StringFormatFlags StringFormatFlags;
 typedef enum HotkeyPrefix HotkeyPrefix;
-typedef enum PenAlignment GpPenAlignment;
+typedef enum PenAlignment PenAlignment;
 typedef enum PaletteFlags PaletteFlags;
 typedef enum ImageCodecFlags ImageCodecFlags;
 typedef enum CombineMode CombineMode;

@@ -199,6 +199,31 @@ public:
     INT Height;
 };
 
+class CharacterRange
+{
+public:
+    CharacterRange()
+    {
+        First = Length = 0;
+    }
+
+    CharacterRange(INT first, INT length)
+    {
+        First = first;
+        Length = length;
+    }
+
+    CharacterRange& operator=(const CharacterRange& rhs)
+    {
+        First = rhs.First;
+        Length = rhs.Length;
+        return *this;
+    }
+public:
+    INT First;
+    INT Length;
+};
+
 #else /* end of c++ typedefs */
 
 typedef struct Point
