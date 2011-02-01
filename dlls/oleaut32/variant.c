@@ -652,7 +652,7 @@ HRESULT VARIANT_ClearInd(VARIANTARG *pVarg)
  */
 HRESULT WINAPI VariantClear(VARIANTARG* pVarg)
 {
-  HRESULT hres = S_OK;
+  HRESULT hres;
 
   TRACE("(%p->(%s%s))\n", pVarg, debugstr_VT(pVarg), debugstr_VF(pVarg));
 
@@ -664,8 +664,7 @@ HRESULT WINAPI VariantClear(VARIANTARG* pVarg)
     {
       if (V_ISARRAY(pVarg) || V_VT(pVarg) == VT_SAFEARRAY)
       {
-        if (V_ARRAY(pVarg))
-          hres = SafeArrayDestroy(V_ARRAY(pVarg));
+        hres = SafeArrayDestroy(V_ARRAY(pVarg));
       }
       else if (V_VT(pVarg) == VT_BSTR)
       {

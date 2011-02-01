@@ -1683,9 +1683,18 @@ static void test_SafeArrayChangeTypeEx(void)
     VariantInit(&v2);
 
     hres = VariantChangeTypeEx(&v2, &v, 0, 0, VT_BSTR);
-    ok(hres != S_OK, "CTE VT_ARRAY|VT %d->BSTR succeeded\n", vt);
+    if (vt == VT_INT_PTR || vt == VT_UINT_PTR)
+    {
+        ok(hres == DISP_E_BADVARTYPE, "expected DISP_E_BADVARTYPE, got 0x%08x\n", hres);
+        SafeArrayDestroy(sa);
+    }
+    else
+    {
+        ok(hres == DISP_E_TYPEMISMATCH, "got 0x%08x for vt=%d, instead of DISP_E_TYPEMISMATCH\n", hres, vt);
+        hres = VariantClear(&v);
+        ok(hres == S_OK, "expected S_OK, got 0x%08x\n", hres);
+    }
     VariantClear(&v2);
-    VariantClear(&v);
   }
 
   /* Can't change an array of one type into array of another type , even
