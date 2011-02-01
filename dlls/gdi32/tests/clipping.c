@@ -353,9 +353,110 @@ static void test_GetClipRgn(void)
     ReleaseDC(NULL, hdc);
 }
 
+static void test_memory_dc_clipping(void)
+{
+    HDC hdc;
+    HRGN hrgn, hrgn_empty;
+    HBITMAP hbmp;
+    RECT rc;
+    int ret;
+
+    hdc = CreateCompatibleDC(0);
+    hrgn_empty = CreateRectRgn(0, 0, 0, 0);
+    hrgn = CreateRectRgn(0, 0, 0, 0);
+    hbmp = CreateCompatibleBitmap(hdc, 100, 100);
+
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+
+    ret = ExtSelectClipRgn(hdc, hrgn_empty, RGN_DIFF);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+    ok(rc.left == 0 && rc.top == 0 && rc.right == 1 && rc.bottom == 1,
+       "expected 0,0-1,1, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+
+    ret = ExtSelectClipRgn(hdc, 0, RGN_COPY);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+
+    SelectObject(hdc, hbmp);
+
+    ret = ExtSelectClipRgn(hdc, hrgn_empty, RGN_DIFF);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+    ok(rc.left == 0 && rc.top == 0 && rc.right == 100 && rc.bottom == 100,
+       "expected 0,0-100,100, got %d,%d-%d,%d\n", rc.left, rc.top, rc.right, rc.bottom);
+
+    DeleteDC(hdc);
+    DeleteObject(hrgn);
+    DeleteObject(hrgn_empty);
+    DeleteObject(hbmp);
+}
+
+static void test_window_dc_clipping(void)
+{
+    HDC hdc;
+    HRGN hrgn, hrgn_empty;
+    HWND hwnd;
+    RECT rc;
+    int ret, screen_width, screen_height;
+
+    screen_width = GetSystemMetrics(SM_CXSCREEN);
+    screen_height = GetSystemMetrics(SM_CYSCREEN);
+
+    trace("screen resolution %d x %d\n", screen_width, screen_height);
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
+                           -100, -100, screen_width * 2, screen_height * 2, 0, 0, 0, NULL);
+    hdc = GetWindowDC(0);
+    hrgn_empty = CreateRectRgn(0, 0, 0, 0);
+    hrgn = CreateRectRgn(0, 0, 0, 0);
+
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+
+    ret = ExtSelectClipRgn(hdc, hrgn_empty, RGN_DIFF);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 1, "expected 1, got %d\n", ret);
+
+    ret = GetRgnBox(hrgn, &rc);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+    ok(rc.left == 0 && rc.top == 0 && rc.right == screen_width && rc.bottom == screen_height,
+       "expected 0,0-%d,%d, got %d,%d-%d,%d\n", screen_width, screen_height,
+        rc.left, rc.top, rc.right, rc.bottom);
+
+    ret = ExtSelectClipRgn(hdc, 0, RGN_COPY);
+    ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
+
+    ret = GetClipRgn(hdc, hrgn);
+    ok(ret == 0, "expected 0, got %d\n", ret);
+
+    DeleteDC(hdc);
+    DeleteObject(hrgn);
+    DeleteObject(hrgn_empty);
+    DestroyWindow(hwnd);
+}
+
+
 START_TEST(clipping)
 {
     test_GetRandomRgn();
     test_ExtCreateRegion();
     test_GetClipRgn();
+    test_memory_dc_clipping();
+    test_window_dc_clipping();
 }
