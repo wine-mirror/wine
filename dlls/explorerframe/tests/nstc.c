@@ -811,7 +811,6 @@ static void test_basics(void)
         }
         ILFree(pidl_desktop);
     }
-    ok(psidesktop != psidesktop2, "psidesktop == psidesktop2\n");
     IShellFolder_Release(psfdesktop);
 
     if(FAILED(hr))
@@ -819,6 +818,8 @@ static void test_basics(void)
         win_skip("Test setup failed.\n");
         return;
     }
+
+    ok(psidesktop != psidesktop2, "psidesktop == psidesktop2\n");
 
     CreateFilesFolders();
     GetCurrentDirectoryW(MAX_PATH, curdirW);
