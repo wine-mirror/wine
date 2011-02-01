@@ -78,7 +78,7 @@ wined3d_settings_t wined3d_settings =
 };
 
 /* Do not call while under the GL lock. */
-IWineD3D * WINAPI WineDirect3DCreate(UINT version, void *parent)
+struct wined3d * CDECL wined3d_create(UINT version, void *parent)
 {
     IWineD3DImpl *object;
     HRESULT hr;

@@ -133,9 +133,7 @@ struct IDirect3D8Impl
 {
     IDirect3D8 IDirect3D8_iface;
     LONG       ref;
-
-    /* The WineD3D device */
-    IWineD3D   *WineD3D;
+    struct wined3d *WineD3D;
 };
 
 /*****************************************************************************
@@ -191,7 +189,7 @@ struct IDirect3DDevice8Impl
     BOOL                    inDestruction;
 };
 
-HRESULT device_init(IDirect3DDevice8Impl *device, IWineD3D *wined3d, UINT adapter,
+HRESULT device_init(IDirect3DDevice8Impl *device, struct wined3d *wined3d, UINT adapter,
         D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters) DECLSPEC_HIDDEN;
 
 /* ---------------- */

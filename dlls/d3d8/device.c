@@ -382,7 +382,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ResourceManagerDiscardBytes(IDirect3D
 static HRESULT WINAPI IDirect3DDevice8Impl_GetDirect3D(IDirect3DDevice8 *iface, IDirect3D8 **ppD3D8)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3D *pWineD3D;
+    struct wined3d *wined3d;
     HRESULT hr;
 
     TRACE("iface %p, d3d8 %p.\n", iface, ppD3D8);
@@ -392,12 +392,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDirect3D(IDirect3DDevice8 *iface, 
     }
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_GetDirect3D(This->WineD3DDevice, &pWineD3D);
-    if (SUCCEEDED(hr) && pWineD3D)
+    hr = IWineD3DDevice_GetDirect3D(This->WineD3DDevice, &wined3d);
+    if (SUCCEEDED(hr) && wined3d)
     {
-        *ppD3D8 = IWineD3D_GetParent(pWineD3D);
+        *ppD3D8 = wined3d_get_parent(wined3d);
         IDirect3D8_AddRef(*ppD3D8);
-        IWineD3D_Release(pWineD3D);
+        wined3d_decref(wined3d);
     }
     else
     {
@@ -2966,7 +2966,7 @@ static void setup_fpu(void)
 #endif
 }
 
-HRESULT device_init(IDirect3DDevice8Impl *device, IWineD3D *wined3d, UINT adapter,
+HRESULT device_init(IDirect3DDevice8Impl *device, struct wined3d *wined3d, UINT adapter,
         D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters)
 {
     WINED3DPRESENT_PARAMETERS wined3d_parameters;
@@ -2987,7 +2987,7 @@ HRESULT device_init(IDirect3DDevice8Impl *device, IWineD3D *wined3d, UINT adapte
     if (!(flags & D3DCREATE_FPU_PRESERVE)) setup_fpu();
 
     wined3d_mutex_lock();
-    hr = IWineD3D_CreateDevice(wined3d, adapter, device_type, focus_window, flags,
+    hr = wined3d_device_create(wined3d, adapter, device_type, focus_window, flags,
             &device->IWineD3DDeviceParent_iface, &device->WineD3DDevice);
     if (FAILED(hr))
     {

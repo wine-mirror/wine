@@ -119,7 +119,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
 {
     struct dxgi_output *This = (struct dxgi_output *)iface;
     enum wined3d_format_id wined3d_format;
-    IWineD3D *wined3d;
+    struct wined3d *wined3d;
     UINT i;
 
     TRACE("iface %p, format %s, flags %#x, mode_count %p, desc %p.\n",
@@ -131,8 +131,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
     if (!desc)
     {
         EnterCriticalSection(&dxgi_cs);
-        *mode_count = IWineD3D_GetAdapterModeCount(wined3d, This->adapter->ordinal, wined3d_format);
-        IWineD3D_Release(wined3d);
+        *mode_count = wined3d_get_adapter_mode_count(wined3d, This->adapter->ordinal, wined3d_format);
+        wined3d_decref(wined3d);
         LeaveCriticalSection(&dxgi_cs);
 
         return S_OK;
@@ -144,11 +144,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
         WINED3DDISPLAYMODE mode;
         HRESULT hr;
 
-        hr = IWineD3D_EnumAdapterModes(wined3d, This->adapter->ordinal, wined3d_format, i, &mode);
+        hr = wined3d_enum_adapter_modes(wined3d, This->adapter->ordinal, wined3d_format, i, &mode);
         if (FAILED(hr))
         {
             WARN("EnumAdapterModes failed, hr %#x.\n", hr);
-            IWineD3D_Release(wined3d);
+            wined3d_decref(wined3d);
             LeaveCriticalSection(&dxgi_cs);
             return hr;
         }
@@ -161,7 +161,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
         desc[i].ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED; /* FIXME */
         desc[i].Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
     }
-    IWineD3D_Release(wined3d);
+    wined3d_decref(wined3d);
     LeaveCriticalSection(&dxgi_cs);
 
     return S_OK;

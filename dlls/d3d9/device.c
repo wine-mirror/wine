@@ -323,10 +323,11 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_EvictManagedResources(LPDIRECT3DDEV
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DDevice9Impl_GetDirect3D(LPDIRECT3DDEVICE9EX iface, IDirect3D9** ppD3D9) {
+static HRESULT WINAPI IDirect3DDevice9Impl_GetDirect3D(IDirect3DDevice9Ex *iface, IDirect3D9 **ppD3D9)
+{
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    struct wined3d *wined3d;
     HRESULT hr = D3D_OK;
-    IWineD3D* pWineD3D;
 
     TRACE("iface %p, d3d9 %p.\n", iface, ppD3D9);
 
@@ -335,13 +336,15 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetDirect3D(LPDIRECT3DDEVICE9EX iface
     }
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_GetDirect3D(This->WineD3DDevice, &pWineD3D);
-    if (hr == D3D_OK && pWineD3D != NULL)
+    hr = IWineD3DDevice_GetDirect3D(This->WineD3DDevice, &wined3d);
+    if (hr == D3D_OK && wined3d)
     {
-        *ppD3D9 = IWineD3D_GetParent(pWineD3D);
+        *ppD3D9 = wined3d_get_parent(wined3d);
         IDirect3D9_AddRef(*ppD3D9);
-        IWineD3D_Release(pWineD3D);
-    } else {
+        wined3d_decref(wined3d);
+    }
+    else
+    {
         FIXME("Call to IWineD3DDevice_GetDirect3D failed\n");
         *ppD3D9 = NULL;
     }
@@ -3251,7 +3254,7 @@ static void setup_fpu(void)
 #endif
 }
 
-HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapter, D3DDEVTYPE device_type,
+HRESULT device_init(IDirect3DDevice9Impl *device, struct wined3d *wined3d, UINT adapter, D3DDEVTYPE device_type,
         HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode)
 {
     WINED3DPRESENT_PARAMETERS *wined3d_parameters;
@@ -3268,7 +3271,7 @@ HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapte
     if (!(flags & D3DCREATE_FPU_PRESERVE)) setup_fpu();
 
     wined3d_mutex_lock();
-    hr = IWineD3D_CreateDevice(wined3d, adapter, device_type, focus_window, flags,
+    hr = wined3d_device_create(wined3d, adapter, device_type, focus_window, flags,
             (IWineD3DDeviceParent *)&device->device_parent_vtbl, &device->WineD3DDevice);
     if (FAILED(hr))
     {
@@ -3281,7 +3284,7 @@ HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapte
     {
         WINED3DCAPS caps;
 
-        IWineD3D_GetDeviceCaps(wined3d, adapter, device_type, &caps);
+        wined3d_get_device_caps(wined3d, adapter, device_type, &caps);
         count = caps.NumberOfAdaptersInGroup;
     }
 

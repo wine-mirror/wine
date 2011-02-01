@@ -454,7 +454,7 @@ static void ddraw_destroy(IDirectDrawImpl *This)
 
     /* Release the attached WineD3D stuff */
     IWineD3DDevice_Release(This->wineD3DDevice);
-    IWineD3D_Release(This->wineD3D);
+    wined3d_decref(This->wineD3D);
 
     /* Now free the object */
     HeapFree(GetProcessHeap(), 0, This);
@@ -714,7 +714,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         {
             WINED3DDISPLAYMODE display_mode;
 
-            IWineD3D_GetAdapterDisplayMode(This->wineD3D, WINED3DADAPTER_DEFAULT, &display_mode);
+            wined3d_get_adapter_display_mode(This->wineD3D, WINED3DADAPTER_DEFAULT, &display_mode);
             IWineD3DDevice_SetupFullscreenWindow(This->wineD3DDevice, hwnd, display_mode.Width, display_mode.Height);
         }
     }
@@ -1364,20 +1364,15 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
 
     if(type == SURFACE_UNKNOWN) type = SURFACE_GDI;
 
-    for(i = 0; i < (sizeof(formats) / sizeof(formats[0])); i++) {
-        hr = IWineD3D_CheckDeviceFormat(This->wineD3D,
-                                        WINED3DADAPTER_DEFAULT,
-                                        WINED3DDEVTYPE_HAL,
-                                        d3ddm.Format /* AdapterFormat */,
-                                        0 /* usage */,
-                                        WINED3DRTYPE_SURFACE,
-                                        formats[i],
-                                        type);
-        if(SUCCEEDED(hr)) {
-            if(count < outsize) {
+    for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); ++i)
+    {
+        hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, WINED3DDEVTYPE_HAL,
+                d3ddm.Format, 0, WINED3DRTYPE_SURFACE, formats[i], type);
+        if (SUCCEEDED(hr))
+        {
+            if (count < outsize)
                 Codes[count] = formats[i];
-            }
-            count++;
+            ++count;
         }
     }
     if(NumCodes) {
@@ -2145,11 +2140,8 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
         }
 
         modenum = 0;
-        while(IWineD3D_EnumAdapterModes(This->wineD3D,
-                                        WINED3DADAPTER_DEFAULT,
-                                        checkFormatList[fmt],
-                                        modenum++,
-                                        &mode) == WINED3D_OK)
+        while (wined3d_enum_adapter_modes(This->wineD3D, WINED3DADAPTER_DEFAULT,
+                checkFormatList[fmt], modenum++, &mode) == WINED3D_OK)
         {
             if(DDSD)
             {
@@ -5027,7 +5019,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
 
     for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
     {
-        hr = IWineD3D_CheckDeviceFormat(This->wineD3D, WINED3DADAPTER_DEFAULT, type, d3ddm.Format,
+        hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, type, d3ddm.Format,
                 WINED3DUSAGE_DEPTHSTENCIL, WINED3DRTYPE_SURFACE, formats[i], SURFACE_OPENGL);
         if (SUCCEEDED(hr))
         {
@@ -5111,7 +5103,7 @@ static HRESULT WINAPI d3d3_EvictManagedTextures(IDirect3D3 *iface)
  *  D3D_OK on success, or the return value of IWineD3D::GetCaps
  *
  *****************************************************************************/
-HRESULT IDirect3DImpl_GetCaps(IWineD3D *wined3d, D3DDEVICEDESC *desc1, D3DDEVICEDESC7 *desc7)
+HRESULT IDirect3DImpl_GetCaps(const struct wined3d *wined3d, D3DDEVICEDESC *desc1, D3DDEVICEDESC7 *desc7)
 {
     WINED3DCAPS wined3d_caps;
     HRESULT hr;
@@ -5121,7 +5113,7 @@ HRESULT IDirect3DImpl_GetCaps(IWineD3D *wined3d, D3DDEVICEDESC *desc1, D3DDEVICE
     memset(&wined3d_caps, 0, sizeof(wined3d_caps));
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3D_GetDeviceCaps(wined3d, 0, WINED3DDEVTYPE_HAL, &wined3d_caps);
+    hr = wined3d_get_device_caps(wined3d, 0, WINED3DDEVTYPE_HAL, &wined3d_caps);
     LeaveCriticalSection(&ddraw_cs);
     if (FAILED(hr))
     {
@@ -6010,19 +6002,19 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     ddraw->orig_width = GetSystemMetrics(SM_CXSCREEN);
     ddraw->orig_height = GetSystemMetrics(SM_CYSCREEN);
 
-    ddraw->wineD3D = WineDirect3DCreate(7, &ddraw->IDirectDraw7_iface);
+    ddraw->wineD3D = wined3d_create(7, &ddraw->IDirectDraw7_iface);
     if (!ddraw->wineD3D)
     {
         WARN("Failed to create a wined3d object.\n");
         return E_OUTOFMEMORY;
     }
 
-    hr = IWineD3D_CreateDevice(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, device_type, NULL, 0,
+    hr = wined3d_device_create(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, device_type, NULL, 0,
             (IWineD3DDeviceParent *)&ddraw->device_parent_vtbl, &ddraw->wineD3DDevice);
     if (FAILED(hr))
     {
         WARN("Failed to create a wined3d device, hr %#x.\n", hr);
-        IWineD3D_Release(ddraw->wineD3D);
+        wined3d_decref(ddraw->wineD3D);
         return hr;
     }
 

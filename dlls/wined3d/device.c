@@ -882,7 +882,7 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         if (This->hardwareCursor) DestroyCursor(This->hardwareCursor);
         This->haveHardwareCursor = FALSE;
 
-        IWineD3D_Release(This->wined3d);
+        wined3d_decref(This->wined3d);
         This->wined3d = NULL;
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("Freed device  %p\n", This);
@@ -2359,12 +2359,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice *iface, IWineD3D **ppD3D) {
-   IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-   *ppD3D = This->wined3d;
-   TRACE("Returning %p.\n", *ppD3D);
-   IWineD3D_AddRef(*ppD3D);
-   return WINED3D_OK;
+static HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice *iface, struct wined3d **wined3d)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+
+    TRACE("iface %p, wined3d %p.\n", iface, wined3d);
+
+    *wined3d = device->wined3d;
+    wined3d_incref(*wined3d);
+
+    TRACE("Returning %p.\n", *wined3d);
+
+    return WINED3D_OK;
 }
 
 static UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *iface) {
@@ -4596,10 +4602,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UI
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetDeviceCaps(IWineD3DDevice *iface, WINED3DCAPS* pCaps) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WARN("(%p) : stub, calling idirect3d for now\n", This);
-    return IWineD3D_GetDeviceCaps(This->wined3d, This->adapter->ordinal, This->devType, pCaps);
+static HRESULT WINAPI IWineD3DDeviceImpl_GetDeviceCaps(IWineD3DDevice *iface, WINED3DCAPS *caps)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+
+    TRACE("iface %p, caps %p.\n", iface, caps);
+
+    return wined3d_get_device_caps(device->wined3d, device->adapter->ordinal, device->devType, caps);
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain, WINED3DDISPLAYMODE* pMode) {
@@ -6180,17 +6189,16 @@ static BOOL is_display_mode_supported(IWineD3DDeviceImpl *This, const WINED3DPRE
     if(!pp->BackBufferWidth) return TRUE;
     if(!pp->BackBufferHeight) return TRUE;
 
-    count = IWineD3D_GetAdapterModeCount(This->wined3d, This->adapter->ordinal, WINED3DFMT_UNKNOWN);
-    for(i = 0; i < count; i++) {
+    count = wined3d_get_adapter_mode_count(This->wined3d, This->adapter->ordinal, WINED3DFMT_UNKNOWN);
+    for (i = 0; i < count; ++i)
+    {
         memset(&m, 0, sizeof(m));
-        hr = IWineD3D_EnumAdapterModes(This->wined3d, This->adapter->ordinal, WINED3DFMT_UNKNOWN, i, &m);
-        if(FAILED(hr)) {
-            ERR("EnumAdapterModes failed\n");
-        }
-        if(m.Width == pp->BackBufferWidth && m.Height == pp->BackBufferHeight) {
-            /* Mode found, it is supported */
+        hr = wined3d_enum_adapter_modes(This->wined3d, This->adapter->ordinal, WINED3DFMT_UNKNOWN, i, &m);
+        if (FAILED(hr))
+            ERR("Failed to enumerate adapter mode.\n");
+        if (m.Width == pp->BackBufferWidth && m.Height == pp->BackBufferHeight)
+            /* Mode found, it is supported. */
             return TRUE;
-        }
     }
     /* Mode not found -> not supported */
     return FALSE;
@@ -6935,7 +6943,7 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     device->lpVtbl = &IWineD3DDevice_Vtbl;
     device->ref = 1;
     device->wined3d = (IWineD3D *)wined3d;
-    IWineD3D_AddRef(device->wined3d);
+    wined3d_incref(device->wined3d);
     device->adapter = wined3d->adapter_count ? adapter : NULL;
     device->device_parent = device_parent;
     list_init(&device->resources);
@@ -6944,11 +6952,11 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
     device->surface_alignment = wined3d->dxVersion == 7 ? DDRAW_PITCH_ALIGNMENT : D3D8_PITCH_ALIGNMENT;
 
     /* Get the initial screen setup for ddraw. */
-    hr = IWineD3D_GetAdapterDisplayMode((IWineD3D *)wined3d, adapter_idx, &mode);
+    hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &mode);
     if (FAILED(hr))
     {
         ERR("Failed to get the adapter's display mode, hr %#x.\n", hr);
-        IWineD3D_Release(device->wined3d);
+        wined3d_decref(device->wined3d);
         return hr;
     }
     device->ddraw_width = mode.Width;
@@ -6986,7 +6994,7 @@ HRESULT device_init(IWineD3DDeviceImpl *device, IWineD3DImpl *wined3d,
         if (FAILED(hr))
         {
             ERR("Failed to compile state table, hr %#x.\n", hr);
-            IWineD3D_Release(device->wined3d);
+            wined3d_decref(device->wined3d);
             return hr;
         }
     }

@@ -540,7 +540,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
     swapchain->win_handle = window;
     swapchain->device_window = window;
 
-    IWineD3D_GetAdapterDisplayMode(device->wined3d, adapter->ordinal, &mode);
+    wined3d_get_adapter_display_mode(device->wined3d, adapter->ordinal, &mode);
     swapchain->orig_width = mode.Width;
     swapchain->orig_height = mode.Height;
     swapchain->orig_fmt = mode.Format;

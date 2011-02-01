@@ -1114,15 +1114,9 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
 
     for (i = 0; i < sizeof(FormatList) / sizeof(*FormatList); ++i)
     {
-        hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
-                                        WINED3DADAPTER_DEFAULT,
-                                        WINED3DDEVTYPE_HAL,
-                                        mode.Format,
-                                        0 /* Usage */,
-                                        WINED3DRTYPE_TEXTURE,
-                                        FormatList[i],
-                                        SURFACE_OPENGL);
-        if(hr == D3D_OK)
+        hr = wined3d_check_device_format(This->ddraw->wineD3D, WINED3DADAPTER_DEFAULT, WINED3DDEVTYPE_HAL,
+                mode.Format, 0, WINED3DRTYPE_TEXTURE, FormatList[i], SURFACE_OPENGL);
+        if (hr == D3D_OK)
         {
             DDPIXELFORMAT pformat;
 
@@ -1143,15 +1137,10 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
 
     for (i = 0; i < sizeof(BumpFormatList) / sizeof(*BumpFormatList); ++i)
     {
-        hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
-                                        WINED3DADAPTER_DEFAULT,
-                                        WINED3DDEVTYPE_HAL,
-                                        mode.Format,
-                                        WINED3DUSAGE_QUERY_LEGACYBUMPMAP,
-                                        WINED3DRTYPE_TEXTURE,
-                                        BumpFormatList[i],
-                                        SURFACE_OPENGL);
-        if(hr == D3D_OK)
+        hr = wined3d_check_device_format(This->ddraw->wineD3D, WINED3DADAPTER_DEFAULT,
+                WINED3DDEVTYPE_HAL, mode.Format, WINED3DUSAGE_QUERY_LEGACYBUMPMAP,
+                WINED3DRTYPE_TEXTURE, BumpFormatList[i], SURFACE_OPENGL);
+        if (hr == D3D_OK)
         {
             DDPIXELFORMAT pformat;
 
@@ -1264,15 +1253,9 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
 
     for (i = 0; i < sizeof(FormatList) / sizeof(*FormatList); ++i)
     {
-        hr = IWineD3D_CheckDeviceFormat(This->ddraw->wineD3D,
-                                        0 /* Adapter */,
-                                        WINED3DDEVTYPE_HAL,
-                                        mode.Format,
-                                        0 /* Usage */,
-                                        WINED3DRTYPE_TEXTURE,
-                                        FormatList[i],
-                                        SURFACE_OPENGL);
-        if(hr == D3D_OK)
+        hr = wined3d_check_device_format(This->ddraw->wineD3D, 0, WINED3DDEVTYPE_HAL,
+                mode.Format, 0, WINED3DRTYPE_TEXTURE, FormatList[i], SURFACE_OPENGL);
+        if (hr == D3D_OK)
         {
             DDSURFACEDESC sdesc;
 

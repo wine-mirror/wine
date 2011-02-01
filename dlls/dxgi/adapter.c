@@ -135,7 +135,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IWineDXGIAdapter *iface, D
     struct dxgi_adapter *This = (struct dxgi_adapter *)iface;
     WINED3DADAPTER_IDENTIFIER adapter_id;
     char description[128];
-    IWineD3D *wined3d;
+    struct wined3d *wined3d;
     HRESULT hr;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
@@ -149,8 +149,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IWineDXGIAdapter *iface, D
     adapter_id.device_name_size = 0;
 
     EnterCriticalSection(&dxgi_cs);
-    hr = IWineD3D_GetAdapterIdentifier(wined3d, This->ordinal, 0, &adapter_id);
-    IWineD3D_Release(wined3d);
+    hr = wined3d_get_adapter_identifier(wined3d, This->ordinal, 0, &adapter_id);
+    wined3d_decref(wined3d);
     LeaveCriticalSection(&dxgi_cs);
 
     if (SUCCEEDED(hr))

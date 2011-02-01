@@ -111,7 +111,7 @@ struct IDirectDrawImpl
     LONG                    ref7, ref4, ref2, ref3, ref1, numIfaces;
 
     /* WineD3D linkage */
-    IWineD3D                *wineD3D;
+    struct wined3d *wineD3D;
     IWineD3DDevice          *wineD3DDevice;
     BOOL                    d3d_initialized;
 
@@ -368,7 +368,8 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw,
 extern const GUID IID_D3DDEVICE_WineD3D DECLSPEC_HIDDEN;
 
 /* Helper functions */
-HRESULT IDirect3DImpl_GetCaps(IWineD3D *WineD3D, D3DDEVICEDESC *Desc123, D3DDEVICEDESC7 *Desc7) DECLSPEC_HIDDEN;
+HRESULT IDirect3DImpl_GetCaps(const struct wined3d *wined3d,
+        D3DDEVICEDESC *Desc123, D3DDEVICEDESC7 *Desc7) DECLSPEC_HIDDEN;
 WINED3DZBUFFERTYPE IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This) DECLSPEC_HIDDEN;
 
 static inline IDirect3DDeviceImpl *device_from_device1(IDirect3DDevice *iface)

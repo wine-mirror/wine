@@ -72,7 +72,7 @@ static ULONG WINAPI IDirect3D9Impl_Release(LPDIRECT3D9EX iface) {
 
     if (ref == 0) {
         wined3d_mutex_lock();
-        IWineD3D_Release(This->WineD3D);
+        wined3d_decref(This->WineD3D);
         wined3d_mutex_unlock();
 
         HeapFree(GetProcessHeap(), 0, This);
@@ -89,7 +89,7 @@ static HRESULT  WINAPI  IDirect3D9Impl_RegisterSoftwareDevice(LPDIRECT3D9EX ifac
     TRACE("iface %p, init_function %p.\n", iface, pInitializeFunction);
 
     wined3d_mutex_lock();
-    hr = IWineD3D_RegisterSoftwareDevice(This->WineD3D, pInitializeFunction);
+    hr = wined3d_register_software_device(This->WineD3D, pInitializeFunction);
     wined3d_mutex_unlock();
 
     return hr;
@@ -102,7 +102,7 @@ static UINT     WINAPI  IDirect3D9Impl_GetAdapterCount(LPDIRECT3D9EX iface) {
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = IWineD3D_GetAdapterCount(This->WineD3D);
+    hr = wined3d_get_adapter_count(This->WineD3D);
     wined3d_mutex_unlock();
 
     return hr;
@@ -124,7 +124,7 @@ static HRESULT WINAPI IDirect3D9Impl_GetAdapterIdentifier(LPDIRECT3D9EX iface, U
     adapter_id.device_name_size = sizeof(pIdentifier->DeviceName);
 
     wined3d_mutex_lock();
-    hr = IWineD3D_GetAdapterIdentifier(This->WineD3D, Adapter, Flags, &adapter_id);
+    hr = wined3d_get_adapter_identifier(This->WineD3D, Adapter, Flags, &adapter_id);
     wined3d_mutex_unlock();
 
     pIdentifier->DriverVersion = adapter_id.driver_version;
@@ -150,7 +150,7 @@ static UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(LPDIRECT3D9EX iface, UINT 
     }
 
     wined3d_mutex_lock();
-    hr = IWineD3D_GetAdapterModeCount(This->WineD3D, Adapter, wined3dformat_from_d3dformat(Format));
+    hr = wined3d_get_adapter_mode_count(This->WineD3D, Adapter, wined3dformat_from_d3dformat(Format));
     wined3d_mutex_unlock();
 
     return hr;
@@ -169,7 +169,7 @@ static HRESULT WINAPI IDirect3D9Impl_EnumAdapterModes(LPDIRECT3D9EX iface, UINT 
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    hr = IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, wined3dformat_from_d3dformat(Format),
+    hr = wined3d_enum_adapter_modes(This->WineD3D, Adapter, wined3dformat_from_d3dformat(Format),
             Mode, (WINED3DDISPLAYMODE *) pMode);
     wined3d_mutex_unlock();
 
@@ -185,7 +185,7 @@ static HRESULT WINAPI IDirect3D9Impl_GetAdapterDisplayMode(LPDIRECT3D9EX iface, 
     TRACE("iface %p, adapter %u, mode %p.\n", iface, Adapter, pMode);
 
     wined3d_mutex_lock();
-    hr = IWineD3D_GetAdapterDisplayMode(This->WineD3D, Adapter, (WINED3DDISPLAYMODE *) pMode);
+    hr = wined3d_get_adapter_display_mode(This->WineD3D, Adapter, (WINED3DDISPLAYMODE *)pMode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);
@@ -203,7 +203,7 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceType(IDirect3D9Ex *iface, UINT A
             iface, Adapter, CheckType, DisplayFormat, BackBufferFormat, Windowed);
 
     wined3d_mutex_lock();
-    hr = IWineD3D_CheckDeviceType(This->WineD3D, Adapter, CheckType, wined3dformat_from_d3dformat(DisplayFormat),
+    hr = wined3d_check_device_type(This->WineD3D, Adapter, CheckType, wined3dformat_from_d3dformat(DisplayFormat),
             wined3dformat_from_d3dformat(BackBufferFormat), Windowed);
     wined3d_mutex_unlock();
 
@@ -244,7 +244,7 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormat(IDirect3D9Ex *iface, UINT
     }
 
     wined3d_mutex_lock();
-    hr = IWineD3D_CheckDeviceFormat(This->WineD3D, Adapter, DeviceType, wined3dformat_from_d3dformat(AdapterFormat),
+    hr = wined3d_check_device_format(This->WineD3D, Adapter, DeviceType, wined3dformat_from_d3dformat(AdapterFormat),
             Usage, WineD3DRType, wined3dformat_from_d3dformat(CheckFormat), SURFACE_OPENGL);
     wined3d_mutex_unlock();
 
@@ -262,7 +262,7 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceMultiSampleType(IDirect3D9Ex *if
             iface, Adapter, DeviceType, SurfaceFormat, Windowed, MultiSampleType, pQualityLevels);
 
     wined3d_mutex_lock();
-    hr = IWineD3D_CheckDeviceMultiSampleType(This->WineD3D, Adapter, DeviceType,
+    hr = wined3d_check_device_multisample_type(This->WineD3D, Adapter, DeviceType,
             wined3dformat_from_d3dformat(SurfaceFormat), Windowed, MultiSampleType, pQualityLevels);
     wined3d_mutex_unlock();
 
@@ -279,7 +279,7 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDepthStencilMatch(IDirect3D9Ex *iface,
             iface, Adapter, DeviceType, AdapterFormat, RenderTargetFormat, DepthStencilFormat);
 
     wined3d_mutex_lock();
-    hr = IWineD3D_CheckDepthStencilMatch(This->WineD3D, Adapter, DeviceType,
+    hr = wined3d_check_depth_stencil_match(This->WineD3D, Adapter, DeviceType,
             wined3dformat_from_d3dformat(AdapterFormat), wined3dformat_from_d3dformat(RenderTargetFormat),
             wined3dformat_from_d3dformat(DepthStencilFormat));
     wined3d_mutex_unlock();
@@ -295,7 +295,7 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormatConversion(LPDIRECT3D9EX i
             iface, Adapter, DeviceType, SourceFormat, TargetFormat);
 
     wined3d_mutex_lock();
-    hr = IWineD3D_CheckDeviceFormatConversion(This->WineD3D, Adapter, DeviceType,
+    hr = wined3d_check_device_format_conversion(This->WineD3D, Adapter, DeviceType,
             wined3dformat_from_d3dformat(SourceFormat), wined3dformat_from_d3dformat(TargetFormat));
     wined3d_mutex_unlock();
 
@@ -379,7 +379,7 @@ static HRESULT WINAPI IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9EX iface, UINT Ada
     memset(pCaps, 0, sizeof(*pCaps));
 
     wined3d_mutex_lock();
-    hrc = IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, pWineCaps);
+    hrc = wined3d_get_device_caps(This->WineD3D, Adapter, DeviceType, pWineCaps);
     wined3d_mutex_unlock();
 
     WINECAPSTOD3D9CAPS(pCaps, pWineCaps)
@@ -401,7 +401,7 @@ static HMONITOR WINAPI IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9EX iface, UIN
     TRACE("iface %p, adapter %u.\n", iface, Adapter);
 
     wined3d_mutex_lock();
-    ret = IWineD3D_GetAdapterMonitor(This->WineD3D, Adapter);
+    ret = wined3d_get_adapter_monitor(This->WineD3D, Adapter);
     wined3d_mutex_unlock();
 
     return ret;
@@ -510,7 +510,7 @@ static HRESULT WINAPI IDirect3D9ExImpl_GetAdapterLUID(IDirect3D9Ex *iface, UINT 
     adapter_id.device_name_size = 0;
 
     wined3d_mutex_lock();
-    hr = IWineD3D_GetAdapterIdentifier(This->WineD3D, adapter, 0, &adapter_id);
+    hr = wined3d_get_adapter_identifier(This->WineD3D, adapter, 0, &adapter_id);
     wined3d_mutex_unlock();
 
     memcpy(luid, &adapter_id.adapter_luid, sizeof(*luid));

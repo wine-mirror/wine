@@ -2110,6 +2110,7 @@ interface IWineD3DSurface;
 interface IWineD3DVolume;
 interface IWineD3DSwapChain;
 interface IWineD3DDevice;
+struct wined3d;
 struct wined3d_stateblock;
 
 [
@@ -2183,92 +2184,6 @@ typedef HRESULT (__stdcall *D3DCB_ENUMRESOURCES)(IWineD3DResource *resource, voi
 interface IWineD3DBase : IUnknown
 {
     void *GetParent(
-    );
-}
-
-[
-    object,
-    local,
-    uuid(108f9c44-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3D : IWineD3DBase
-{
-    UINT GetAdapterCount(
-    );
-    HRESULT RegisterSoftwareDevice(
-        [in] void *pInitializeFunction
-    );
-    HMONITOR GetAdapterMonitor(
-        [in] UINT adapter_idx
-    );
-    UINT GetAdapterModeCount(
-        [in] UINT adapter_idx,
-        [in] enum wined3d_format_id format_id
-    );
-    HRESULT EnumAdapterModes(
-        [in] UINT adapter_idx,
-        [in] enum wined3d_format_id format_id,
-        [in] UINT mode_idx,
-        [out] WINED3DDISPLAYMODE *mode
-    );
-    HRESULT GetAdapterDisplayMode(
-        [in] UINT adapter_idx,
-        [out] WINED3DDISPLAYMODE *mode
-    );
-    HRESULT GetAdapterIdentifier(
-        [in] UINT adapter_idx,
-        [in] DWORD flags,
-        [out] WINED3DADAPTER_IDENTIFIER *identifier
-    );
-    HRESULT CheckDeviceMultiSampleType(
-        [in] UINT adapter_idx,
-        [in] WINED3DDEVTYPE device_type,
-        [in] enum wined3d_format_id surface_format_id,
-        [in] BOOL windowed,
-        [in] WINED3DMULTISAMPLE_TYPE multisample_type,
-        [out] DWORD *quality_levels
-    );
-    HRESULT CheckDepthStencilMatch(
-        [in] UINT adapter_idx,
-        [in] WINED3DDEVTYPE device_type,
-        [in] enum wined3d_format_id adapter_format_id,
-        [in] enum wined3d_format_id render_target_format_id,
-        [in] enum wined3d_format_id depth_stencil_format_id
-    );
-    HRESULT CheckDeviceType(
-        [in] UINT adapter_idx,
-        [in] WINED3DDEVTYPE device_type,
-        [in] enum wined3d_format_id display_format_id,
-        [in] enum wined3d_format_id backbuffer_format_id,
-        [in] BOOL windowed
-    );
-    HRESULT CheckDeviceFormat(
-        [in] UINT adaper_idx,
-        [in] WINED3DDEVTYPE device_type,
-        [in] enum wined3d_format_id adapter_format_id,
-        [in] DWORD usage,
-        [in] WINED3DRESOURCETYPE resource_type,
-        [in] enum wined3d_format_id check_format,
-        [in] WINED3DSURFTYPE surface_type
-    );
-    HRESULT CheckDeviceFormatConversion(
-        [in] UINT adapter_idx,
-        [in] WINED3DDEVTYPE device_type,
-        [in] enum wined3d_format_id source_format_id,
-        [in] enum wined3d_format_id target_format_id
-    );
-    HRESULT GetDeviceCaps(
-        [in] UINT adapter_idx,
-        [in] WINED3DDEVTYPE device_type,
-        [out] WINED3DCAPS *caps
-    );
-    HRESULT CreateDevice(
-        [in] UINT adapter_idx,
-        [in] WINED3DDEVTYPE device_type,
-        [in] HWND focus_window,
-        [in] DWORD behaviour_flags,
-        [in] IWineD3DDeviceParent *device_parent,
-        [out] IWineD3DDevice **device
     );
 }
 
@@ -2926,7 +2841,7 @@ interface IWineD3DDevice : IUnknown
         [out] WINED3DCAPS *caps
     );
     HRESULT GetDirect3D(
-        [out] IWineD3D** d3d
+        [out] struct wined3d **d3d
     );
     HRESULT GetDisplayMode(
         [in] UINT swapchain_idx,
@@ -3349,10 +3264,47 @@ interface IWineD3DDevice : IUnknown
     );
 }
 
-IWineD3D * __stdcall WineDirect3DCreate(UINT dxVersion, void *parent);
 IWineD3DClipper * __stdcall WineDirect3DCreateClipper(void);
 void __stdcall wined3d_mutex_lock(void);
 void __stdcall wined3d_mutex_unlock(void);
+
+HRESULT __cdecl wined3d_check_depth_stencil_match(const struct wined3d *wined3d, UINT adapter_idx,
+        WINED3DDEVTYPE device_type, enum wined3d_format_id adapter_format_id,
+        enum wined3d_format_id render_target_format_id, enum wined3d_format_id depth_stencil_format_id);
+HRESULT __cdecl wined3d_check_device_format(const struct wined3d *wined3d, UINT adaper_idx,
+        WINED3DDEVTYPE device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
+        WINED3DRESOURCETYPE resource_type, enum wined3d_format_id check_format_id,
+        WINED3DSURFTYPE surface_type);
+HRESULT __cdecl wined3d_check_device_format_conversion(const struct wined3d *wined3d, UINT adapter_idx,
+        WINED3DDEVTYPE device_type, enum wined3d_format_id source_format_id,
+        enum wined3d_format_id target_format_id);
+HRESULT __cdecl wined3d_check_device_multisample_type(const struct wined3d *wined3d, UINT adapter_idx,
+        WINED3DDEVTYPE device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
+        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD *quality_levels);
+HRESULT __cdecl wined3d_check_device_type(const struct wined3d *wined3d, UINT adapter_idx,
+        WINED3DDEVTYPE device_type, enum wined3d_format_id display_format_id,
+        enum wined3d_format_id backbuffer_format_id, BOOL windowed);
+struct wined3d * __cdecl wined3d_create(UINT dxVersion, void *parent);
+ULONG __cdecl wined3d_decref(struct wined3d *wined3d);
+HRESULT __cdecl wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT adapter_idx,
+        enum wined3d_format_id format_id, UINT mode_idx, WINED3DDISPLAYMODE *mode);
+UINT __cdecl wined3d_get_adapter_count(const struct wined3d *wined3d);
+HRESULT __cdecl wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UINT adapter_idx,
+        WINED3DDISPLAYMODE *mode);
+HRESULT __cdecl wined3d_get_adapter_identifier(const struct wined3d *wined3d, UINT adapter_idx,
+        DWORD flags, WINED3DADAPTER_IDENTIFIER *identifier);
+UINT __cdecl wined3d_get_adapter_mode_count(const struct wined3d *wined3d,
+        UINT adapter_idx, enum wined3d_format_id format_id);
+HMONITOR __cdecl wined3d_get_adapter_monitor(const struct wined3d *wined3d, UINT adapter_idx);
+HRESULT __cdecl wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapter_idx,
+        WINED3DDEVTYPE device_type, WINED3DCAPS *caps);
+void * __cdecl wined3d_get_parent(const struct wined3d *wined3d);
+ULONG __cdecl wined3d_incref(struct wined3d *wined3d);
+HRESULT __cdecl wined3d_register_software_device(struct wined3d *wined3d, void *init_function);
+
+HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx,
+        WINED3DDEVTYPE device_type, HWND focus_window, DWORD behaviour_flags,
+        IWineD3DDeviceParent *device_parent, IWineD3DDevice **device);
 
 HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);

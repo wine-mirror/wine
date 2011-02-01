@@ -149,8 +149,7 @@ typedef struct IDirect3D9Impl
     const IDirect3D9ExVtbl   *lpVtbl;
     LONG                    ref;
 
-    /* The WineD3D device */
-    IWineD3D               *WineD3D;
+    struct wined3d *WineD3D;
 
     /* Created via Direct3DCreate9Ex? Can QI extended interfaces */
     BOOL                    extended;
@@ -180,7 +179,7 @@ typedef struct IDirect3DDevice9Impl
     BOOL                          notreset;
 } IDirect3DDevice9Impl;
 
-HRESULT device_init(IDirect3DDevice9Impl *device, IWineD3D *wined3d, UINT adapter, D3DDEVTYPE device_type,
+HRESULT device_init(IDirect3DDevice9Impl *device, struct wined3d *wined3d, UINT adapter, D3DDEVTYPE device_type,
         HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode) DECLSPEC_HIDDEN;
 
 /*****************************************************************************

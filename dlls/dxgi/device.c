@@ -340,7 +340,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     IWineD3DDeviceParent *wined3d_device_parent;
     IWineDXGIAdapter *wine_adapter;
     UINT adapter_ordinal;
-    IWineD3D *wined3d;
+    struct wined3d *wined3d;
     void *layer_base;
     HRESULT hr;
 
@@ -370,7 +370,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     {
         WARN("This is not the adapter we're looking for, returning %#x.\n", hr);
         EnterCriticalSection(&dxgi_cs);
-        IWineD3D_Release(wined3d);
+        wined3d_decref(wined3d);
         LeaveCriticalSection(&dxgi_cs);
         goto fail;
     }
@@ -386,10 +386,10 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 
     FIXME("Ignoring adapter type.\n");
     EnterCriticalSection(&dxgi_cs);
-    hr = IWineD3D_CreateDevice(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, NULL, 0,
+    hr = wined3d_device_create(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, NULL, 0,
             wined3d_device_parent, &device->wined3d_device);
     IWineD3DDeviceParent_Release(wined3d_device_parent);
-    IWineD3D_Release(wined3d);
+    wined3d_decref(wined3d);
     LeaveCriticalSection(&dxgi_cs);
     if (FAILED(hr))
     {

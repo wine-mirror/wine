@@ -59,6 +59,8 @@ typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 struct IWineD3DResourceImpl;
+typedef struct wined3d IWineD3DImpl;
+typedef struct wined3d IWineD3D;
 
 /* Texture format fixups */
 
@@ -1611,22 +1613,14 @@ const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *frag
         const struct ffp_frag_settings *settings) DECLSPEC_HIDDEN;
 void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *desc) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IWineD3D implementation structure
- */
-typedef struct IWineD3DImpl
+struct wined3d
 {
-    /* IUnknown fields */
-    const IWineD3DVtbl     *lpVtbl;
-    LONG                    ref;     /* Note: Ref counting not required */
-
-    /* WineD3D Information */
+    LONG ref;
     void *parent;
-    UINT                    dxVersion;
-
+    UINT dxVersion;
     UINT adapter_count;
     struct wined3d_adapter adapters[1];
-} IWineD3DImpl;
+};
 
 HRESULT wined3d_init(IWineD3DImpl *wined3d, UINT version, void *parent) DECLSPEC_HIDDEN;
 BOOL wined3d_register_window(HWND window, struct IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
