@@ -306,6 +306,36 @@ struct MSVCRT___JUMP_BUFFER {
     unsigned long UnwindFunc;
     unsigned long UnwindData[6];
 };
+#elif defined(__x86_64__)
+struct MSVCRT__SETJMP_FLOAT128
+{
+    unsigned __int64 DECLSPEC_ALIGN(16) Part[2];
+};
+struct MSVCRT___JUMP_BUFFER
+{
+    unsigned __int64 Frame;
+    unsigned __int64 Rbx;
+    unsigned __int64 Rsp;
+    unsigned __int64 Rbp;
+    unsigned __int64 Rsi;
+    unsigned __int64 Rdi;
+    unsigned __int64 R12;
+    unsigned __int64 R13;
+    unsigned __int64 R14;
+    unsigned __int64 R15;
+    unsigned __int64 Rip;
+    unsigned __int64 Spare;
+    struct MSVCRT__SETJMP_FLOAT128 Xmm6;
+    struct MSVCRT__SETJMP_FLOAT128 Xmm7;
+    struct MSVCRT__SETJMP_FLOAT128 Xmm8;
+    struct MSVCRT__SETJMP_FLOAT128 Xmm9;
+    struct MSVCRT__SETJMP_FLOAT128 Xmm10;
+    struct MSVCRT__SETJMP_FLOAT128 Xmm11;
+    struct MSVCRT__SETJMP_FLOAT128 Xmm12;
+    struct MSVCRT__SETJMP_FLOAT128 Xmm13;
+    struct MSVCRT__SETJMP_FLOAT128 Xmm14;
+    struct MSVCRT__SETJMP_FLOAT128 Xmm15;
+};
 #endif /* __i386__ */
 
 struct MSVCRT__diskfree_t {

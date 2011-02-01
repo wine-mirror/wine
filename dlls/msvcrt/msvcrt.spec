@@ -1314,7 +1314,7 @@
 @ cdecl log10(double) MSVCRT_log10
 @ cdecl -arch=x86_64 logf(float) MSVCRT_logf
 @ cdecl -arch=x86_64 log10f(float) MSVCRT_log10f
-@ cdecl -i386 longjmp(ptr long) MSVCRT_longjmp
+@ cdecl -arch=i386,x86_64 longjmp(ptr long) MSVCRT_longjmp
 @ cdecl malloc(long) MSVCRT_malloc
 @ cdecl mblen(ptr long) MSVCRT_mblen
 # stub mbrlen
