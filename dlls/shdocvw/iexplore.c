@@ -173,7 +173,7 @@ static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
     HANDLE findhandle;
     WIN32_FIND_DATAW finddata;
     IUniformResourceLocatorW* urlobj;
-    IPersistFile* urlfile;
+    IPersistFile* urlfile = NULL;
     HRESULT res;
 
     lstrcpyW(path, dir);
