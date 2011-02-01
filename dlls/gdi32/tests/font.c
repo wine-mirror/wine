@@ -922,18 +922,36 @@ static void test_GetCharABCWidths(void)
     DWORD nb;
     static const struct
     {
+        UINT first;
+        UINT last;
+    } range[] =
+    {
+        {0xff, 0xff},
+        {0x100, 0x100},
+        {0xff, 0x100},
+        {0x1ff, 0xff00},
+        {0xffff, 0xffff},
+        {0x10000, 0x10000},
+        {0xffff, 0x10000},
+        {0xffffff, 0xffffff},
+        {0x1000000, 0x1000000},
+        {0xffffff, 0x1000000},
+        {0xffffffff, 0xffffffff}
+    };
+    static const struct
+    {
         UINT cs;
         UINT a;
         UINT w;
-        BOOL r[10];
+        BOOL r[sizeof range / sizeof range[0]];
     } c[] =
     {
         {ANSI_CHARSET, 0x30, 0x30, {TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
-        {SHIFTJIS_CHARSET, 0x82a0, 0x3042, {TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
-        {HANGEUL_CHARSET, 0x8141, 0xac02, {TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
-        {JOHAB_CHARSET, 0x8446, 0x3135, {TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
-        {GB2312_CHARSET, 0x8141, 0x4e04, {TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
-        {CHINESEBIG5_CHARSET, 0xa142, 0x3001, {TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}}
+        {SHIFTJIS_CHARSET, 0x82a0, 0x3042, {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
+        {HANGEUL_CHARSET, 0x8141, 0xac02, {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
+        {JOHAB_CHARSET, 0x8446, 0x3135, {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
+        {GB2312_CHARSET, 0x8141, 0x4e04, {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
+        {CHINESEBIG5_CHARSET, 0xa142, 0x3001, {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}}
     };
     UINT i;
 
@@ -979,7 +997,7 @@ static void test_GetCharABCWidths(void)
     {
         ABC a[2], w[2];
         ABC full[256];
-        UINT code = 0x41;
+        UINT code = 0x41, j;
 
         lf.lfFaceName[0] = '\0';
         lf.lfCharSet = c[i].cs;
@@ -1007,35 +1025,12 @@ static void test_GetCharABCWidths(void)
         ok(memcmp(&a[0], &full[code], sizeof(ABC)) == 0,
            "GetCharABCWidthsA info should match. codepage = %u\n", c[i].cs);
 
-        ret = pGetCharABCWidthsA(hdc, 0xff, 0xff, abc);
-        ok(ret == c[i].r[0], "GetCharABCWidthsA should have %s\n", c[i].r[0] ? "succeeded" : "failed");
-
-        ret = pGetCharABCWidthsA(hdc, 0x100, 0x100, abc);
-        ok(ret == c[i].r[1], "GetCharABCWidthsA should have %s\n", c[i].r[1] ? "succeeded" : "failed");
-
-        ret = pGetCharABCWidthsA(hdc, 0xff, 0x100, a);
-        ok(ret == c[i].r[2], "GetCharABCWidthsA should have %s\n", c[i].r[2] ? "succeeded" : "failed");
-
-        ret = pGetCharABCWidthsA(hdc, 0xffff, 0xffff, abc);
-        ok(ret == c[i].r[3], "GetCharABCWidthsA should have %s\n", c[i].r[3] ? "succeeded" : "failed");
-
-        ret = pGetCharABCWidthsA(hdc, 0x10000, 0x10000, abc);
-        ok(ret == c[i].r[4], "GetCharABCWidthsA should have %s\n", c[i].r[4] ? "succeeded" : "failed");
-
-        ret = pGetCharABCWidthsA(hdc, 0xffff, 0x10000, a);
-        ok(ret == c[i].r[5], "GetCharABCWidthsA should have %s\n", c[i].r[5] ? "succeeded" : "failed");
-
-        ret = pGetCharABCWidthsA(hdc, 0xffffff, 0xffffff, abc);
-        ok(ret == c[i].r[6], "GetCharABCWidthsA should have %s\n", c[i].r[6] ? "succeeded" : "failed");
-
-        ret = pGetCharABCWidthsA(hdc, 0x1000000, 0x1000000, abc);
-        ok(ret == c[i].r[7], "GetCharABCWidthsA should have %s\n", c[i].r[7] ? "succeeded" : "failed");
-
-        ret = pGetCharABCWidthsA(hdc, 0xffffff, 0x1000000, a);
-        ok(ret == c[i].r[8], "GetCharABCWidthsA should have %s\n", c[i].r[8] ? "succeeded" : "failed");
-
-        ret = pGetCharABCWidthsA(hdc, 0xffffffff, 0xffffffff, abc);
-        ok(ret == c[i].r[9], "GetCharABCWidthsA should have %s\n", c[i].r[9] ? "succeeded" : "failed");
+        for (j = 0; j < sizeof range / sizeof range[0]; ++j)
+        {
+            ret = pGetCharABCWidthsA(hdc, range[j].first, range[j].last, full);
+            ok(ret == c[i].r[j], "GetCharABCWidthsA %x - %x should have %s\n",
+               range[j].first, range[j].last, c[i].r[j] ? "succeeded" : "failed");
+        }
 
         hfont = SelectObject(hdc, hfont);
         DeleteObject(hfont);

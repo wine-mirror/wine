@@ -1571,6 +1571,8 @@ static LPSTR FONT_GetCharsByRangeA(HDC hdc, UINT firstChar, UINT lastChar, PINT 
     case 1361:
         if (lastChar > 0xffff)
             return NULL;
+        if ((firstChar ^ lastChar) > 0xff)
+            return NULL;
         break;
     default:
         if (lastChar > 0xff)
