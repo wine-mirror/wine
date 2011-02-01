@@ -435,7 +435,7 @@
 # @ stub RtlAssert2
 @ stdcall RtlAssert(ptr ptr long long)
 # @ stub RtlCancelTimer
-@ stdcall -register RtlCaptureContext(ptr)
+@ stdcall -norelay RtlCaptureContext(ptr)
 @ stdcall RtlCaptureStackBackTrace(long long ptr ptr)
 # @ stub RtlCaptureStackContext
 @ stdcall RtlCharToInteger(ptr long ptr)

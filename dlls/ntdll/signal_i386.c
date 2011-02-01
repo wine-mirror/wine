@@ -1151,13 +1151,34 @@ static inline void restore_context( const CONTEXT *context, SIGCONTEXT *sigconte
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)
  */
-void WINAPI __regs_RtlCaptureContext( CONTEXT *context, CONTEXT *regs )
-{
-    *context = *regs;
-    if (fpux_support) save_fpux( context );
-    else save_fpu( context );
-}
-DEFINE_REGS_ENTRYPOINT( RtlCaptureContext, 1 )
+__ASM_STDCALL_FUNC( RtlCaptureContext, 4,
+                    "pushl %eax\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    "movl 8(%esp),%eax\n\t"    /* context */
+                    "movl $0x10007,(%eax)\n\t" /* context->ContextFlags */
+                    "movw %gs,0x8c(%eax)\n\t"  /* context->SegGs */
+                    "movw %fs,0x90(%eax)\n\t"  /* context->SegFs */
+                    "movw %es,0x94(%eax)\n\t"  /* context->SegEs */
+                    "movw %ds,0x98(%eax)\n\t"  /* context->SegDs */
+                    "movl %edi,0x9c(%eax)\n\t" /* context->Edi */
+                    "movl %esi,0xa0(%eax)\n\t" /* context->Esi */
+                    "movl %ebx,0xa4(%eax)\n\t" /* context->Ebx */
+                    "movl %edx,0xa8(%eax)\n\t" /* context->Edx */
+                    "movl %ecx,0xac(%eax)\n\t" /* context->Ecx */
+                    "movl %ebp,0xb4(%eax)\n\t" /* context->Ebp */
+                    "movl 4(%esp),%edx\n\t"
+                    "movl %edx,0xb8(%eax)\n\t" /* context->Eip */
+                    "movw %cs,0xbc(%eax)\n\t"  /* context->SegCs */
+                    "pushfl\n\t"
+                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                    "popl 0xc0(%eax)\n\t"      /* context->EFlags */
+                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                    "leal 8(%esp),%edx\n\t"
+                    "movl %edx,0xc4(%eax)\n\t" /* context->Esp */
+                    "movw %ss,0xc8(%eax)\n\t"  /* context->SegSs */
+                    "popl 0xb0(%eax)\n\t"      /* context->Eax */
+                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                    "ret $4" )
 
 
 /***********************************************************************
