@@ -847,7 +847,7 @@ static void add_fs_cache( dev_t dev, fsid_t fsid, BOOLEAN case_sensitive )
         }
 
     /* Cache is out of space, warn */
-    if (once++)
+    if (!once++)
         WARN( "FS cache is out of space, expect performance problems\n" );
 }
 
