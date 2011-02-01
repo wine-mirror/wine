@@ -11447,14 +11447,17 @@ static void srgbwrite_format_test(IDirect3DDevice9 *device)
 
     for(i = 0; i < (sizeof(formats) / sizeof(*formats)); i++)
     {
+        if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, formats[i].fmt)))
+        {
+            skip("Format %s not supported as render target, skipping test.\n",
+                    formats[i].name);
+            continue;
+        }
+
         hr = IDirect3DDevice9_CreateTexture(device, 8, 8, 1, D3DUSAGE_RENDERTARGET, formats[i].fmt,
                                             D3DPOOL_DEFAULT, &texture, NULL);
         ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
-        if(FAILED(hr))
-        {
-            trace("Tex create failed\n");
-            continue;
-        }
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff0000, 0.0f, 0);
         ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
 
