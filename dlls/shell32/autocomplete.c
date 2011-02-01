@@ -67,7 +67,8 @@ typedef struct
     const IAutoComplete2Vtbl  *lpVtbl;
     const IAutoCompleteDropDownVtbl *lpDropDownVtbl;
     LONG ref;
-    BOOL  enabled;
+    BOOL initialized;
+    BOOL enabled;
     HWND hwndEdit;
     HWND hwndListBox;
     WNDPROC wpOrigEditProc;
@@ -246,21 +247,31 @@ static HRESULT WINAPI IAutoComplete2_fnInit(
 {
     IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
 
-    TRACE("(%p)->(0x%08lx, %p, %s, %s)\n", 
-	  This, (long)hwndEdit, punkACL, debugstr_w(pwzsRegKeyPath), debugstr_w(pwszQuickComplete));
+    TRACE("(%p)->(%p, %p, %s, %s)\n",
+	  This, hwndEdit, punkACL, debugstr_w(pwzsRegKeyPath), debugstr_w(pwszQuickComplete));
 
     if (This->options & ACO_SEARCH) FIXME(" ACO_SEARCH not supported\n");
     if (This->options & ACO_FILTERPREFIXES) FIXME(" ACO_FILTERPREFIXES not supported\n");
     if (This->options & ACO_USETAB) FIXME(" ACO_USETAB not supported\n");
     if (This->options & ACO_RTLREADING) FIXME(" ACO_RTLREADING not supported\n");
 
-    This->hwndEdit = hwndEdit;
+    if (!hwndEdit || !punkACL)
+        return E_INVALIDARG;
 
-    if (FAILED (IUnknown_QueryInterface (punkACL, &IID_IEnumString, (LPVOID*)&This->enumstr))) {
-	TRACE("No IEnumString interface\n");
-	return  E_NOINTERFACE;
+    if (This->initialized)
+    {
+        WARN("Autocompletion object is already initialized\n");
+        /* This->hwndEdit is set to NULL when the edit window is destroyed. */
+        return This->hwndEdit ? E_FAIL : E_UNEXPECTED;
     }
 
+    if (FAILED (IUnknown_QueryInterface (punkACL, &IID_IEnumString, (LPVOID*)&This->enumstr))) {
+        WARN("No IEnumString interface\n");
+        return E_NOINTERFACE;
+    }
+
+    This->initialized = TRUE;
+    This->hwndEdit = hwndEdit;
     This->wpOrigEditProc = (WNDPROC) SetWindowLongPtrW( hwndEdit, GWLP_WNDPROC, (LONG_PTR) ACEditSubclassProc);
     SetWindowLongPtrW( hwndEdit, GWLP_USERDATA, (LONG_PTR)This);
 
@@ -613,7 +624,14 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 		}
 	    }
 	    
-	    break; 
+	    break;
+	case WM_DESTROY:
+	{
+	    WNDPROC proc = This->wpOrigEditProc;
+
+	    This->hwndEdit = NULL;
+	    return CallWindowProcW(proc, hwnd, uMsg, wParam, lParam);
+	}
 	default:
 	    return CallWindowProcW(This->wpOrigEditProc, hwnd, uMsg, wParam, lParam);
 	    
