@@ -462,25 +462,35 @@ static void test_wcsncat_s(void)
 }
 
 /* Based on dlls/ntdll/tests/string.c */
-static __cdecl int intcomparefunc(void *context, const void *a, const void*b)
+static __cdecl int intcomparefunc(void *context, const void *a, const void *b)
 {
+    const int *p = a, *q = b;
+
     ok (a != b, "must never get the same pointer\n");
     ++*(int *) context;
-    return (*(int*)a) - (*(int*)b);
+
+    return *p - *q;
 }
 
-static __cdecl int charcomparefunc(void *context, const void *a, const void*b)
+static __cdecl int charcomparefunc(void *context, const void *a, const void *b)
 {
+    const char *p = a, *q = b;
+
     ok (a != b, "must never get the same pointer\n");
     ++*(int *) context;
-    return (*(char*)a) - (*(char*)b);
+
+    return *p - *q;
 }
 
-static __cdecl int strcomparefunc(void *context, const void *a, const void*b)
+static __cdecl int strcomparefunc(void *context, const void *a, const void *b)
 {
+    const char * const *p = a;
+    const char * const *q = b;
+
     ok (a != b, "must never get the same pointer\n");
     ++*(int *) context;
-    return lstrcmpA(*(char**)a,*(char**)b);
+
+    return lstrcmpA(*p, *q);
 }
 
 static void test_qsort_s(void)
