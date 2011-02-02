@@ -840,6 +840,11 @@ static void joy_polldev(LPDIRECTINPUTDEVICE8A iface)
 	    /* there is nothing to do */
 	    break;
 #endif
+#ifdef EV_MSC
+        case EV_MSC:
+            /* Ignore */
+            break;
+#endif
 	default:
 	    FIXME("joystick cannot handle type %d event (code %d)\n",ie.type,ie.code);
 	    break;
