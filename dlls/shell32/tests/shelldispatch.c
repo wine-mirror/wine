@@ -150,10 +150,8 @@ static void test_namespace(void)
             if (r == S_OK)
             {
                 r = FolderItem_get_Path(item, &item_path);
-                todo_wine
                 ok(r == S_OK, "FolderItem::get_Path failed: %08x\n", r);
                 if (pSHGetFolderPathW)
-                    todo_wine
                     ok(!lstrcmpW(item_path, path), "expected %s, got %s\n",
                      wine_dbgstr_w(path), wine_dbgstr_w(item_path));
                 SysFreeString(item_path);
@@ -239,10 +237,8 @@ static void test_namespace(void)
             if (r == S_OK)
             {
                 r = FolderItem_get_Path(item, &item_path);
-                todo_wine
                 ok(r == S_OK, "FolderItem::get_Path failed: %08x\n", r);
                 if (long_pathW)
-                    todo_wine
                     ok(!lstrcmpW(item_path, long_pathW),
                      "expected %s, got %s\n", wine_dbgstr_w(long_pathW),
                      wine_dbgstr_w(item_path));
@@ -284,10 +280,8 @@ static void test_namespace(void)
                 if (r == S_OK)
                 {
                     r = FolderItem_get_Path(item, &item_path);
-                    todo_wine
                     ok(r == S_OK, "FolderItem::get_Path failed: %08x\n", r);
                     if (long_pathW)
-                        todo_wine
                         ok(!lstrcmpW(item_path, long_pathW),
                          "expected %s, got %s\n", wine_dbgstr_w(long_pathW),
                          wine_dbgstr_w(item_path));
