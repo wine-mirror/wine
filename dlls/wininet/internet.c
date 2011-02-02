@@ -117,13 +117,18 @@ static const WCHAR szInternetSettings[] =
 static const WCHAR szProxyServer[] = { 'P','r','o','x','y','S','e','r','v','e','r', 0 };
 static const WCHAR szProxyEnable[] = { 'P','r','o','x','y','E','n','a','b','l','e', 0 };
 
-DWORD alloc_handle( object_header_t *info, HINTERNET *ret )
+void *alloc_object(object_header_t *parent, const object_vtbl_t *vtbl, size_t size)
 {
-    object_header_t **p;
     UINT_PTR handle = 0, num;
-    DWORD res = ERROR_SUCCESS;
+    object_header_t *ret;
+    object_header_t **p;
+    BOOL res = TRUE;
 
-    list_init( &info->children );
+    ret = heap_alloc_zero(size);
+    if(!ret)
+        return NULL;
+
+    list_init(&ret->children);
 
     EnterCriticalSection( &WININET_cs );
 
@@ -135,7 +140,7 @@ DWORD alloc_handle( object_header_t *info, HINTERNET *ret )
             handle_table_size = num;
             next_handle = 1;
         }else {
-            res = ERROR_OUTOFMEMORY;
+            res = FALSE;
         }
     }else if(next_handle == handle_table_size) {
         num = handle_table_size * 2;
@@ -144,25 +149,38 @@ DWORD alloc_handle( object_header_t *info, HINTERNET *ret )
             handle_table = p;
             handle_table_size = num;
         }else {
-            res = ERROR_OUTOFMEMORY;
+            res = FALSE;
         }
     }
 
-    if(res == ERROR_SUCCESS) {
+    if(res) {
         handle = next_handle;
         if(handle_table[handle])
             ERR("handle isn't free but should be\n");
-        handle_table[handle] = WININET_AddRef( info );
+        handle_table[handle] = ret;
+        ret->valid_handle = TRUE;
 
         while(handle_table[next_handle] && next_handle < handle_table_size)
             next_handle++;
     }
-    
+
     LeaveCriticalSection( &WININET_cs );
 
-    info->hInternet = *ret = (HINTERNET)handle;
-    info->valid_handle = res == ERROR_SUCCESS;
-    return res;
+    if(!res) {
+        heap_free(ret);
+        return NULL;
+    }
+
+    ret->vtbl = vtbl;
+    ret->refs = 1;
+    ret->hInternet = (HINTERNET)handle;
+
+    if(parent) {
+        ret->lpfnStatusCB = parent->lpfnStatusCB;
+        ret->dwInternalFlags = parent->dwInternalFlags & INET_CALLBACKW;
+    }
+
+    return ret;
 }
 
 object_header_t *WININET_AddRef( object_header_t *info )
@@ -827,8 +845,6 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags)
 {
     appinfo_t *lpwai = NULL;
-    HINTERNET handle = NULL;
-    DWORD res;
 
     if (TRACE_ON(wininet)) {
 #define FE(x) { x, #x }
@@ -858,28 +874,17 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
-    lpwai = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(appinfo_t));
-    if (NULL == lpwai)
-    {
-        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
-	goto lend;
+    lpwai = alloc_object(NULL, &APPINFOVtbl, sizeof(appinfo_t));
+    if (!lpwai) {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return NULL;
     }
 
     lpwai->hdr.htype = WH_HINIT;
-    lpwai->hdr.vtbl = &APPINFOVtbl;
     lpwai->hdr.dwFlags = dwFlags;
-    lpwai->hdr.refs = 1;
     lpwai->dwAccessType = dwAccessType;
     lpwai->lpszProxyUsername = NULL;
     lpwai->lpszProxyPassword = NULL;
-
-    res = alloc_handle(&lpwai->hdr, &handle);
-    if(res != ERROR_SUCCESS)
-    {
-        HeapFree( GetProcessHeap(), 0, lpwai );
-        INTERNET_SetLastError(res);
-	goto lend;
-    }
 
     lpwai->lpszAgent = heap_strdupW(lpszAgent);
     if(dwAccessType == INTERNET_OPEN_TYPE_PRECONFIG)
@@ -888,13 +893,9 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
         lpwai->lpszProxy = heap_strdupW(lpszProxy);
     lpwai->lpszProxyBypass = heap_strdupW(lpszProxyBypass);
 
-lend:
-    if( lpwai )
-        WININET_Release( &lpwai->hdr );
-
     TRACE("returning %p\n", lpwai);
 
-    return handle;
+    return lpwai->hdr.hInternet;
 }
 
 

@@ -2567,7 +2567,6 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *lpwhs,
     appinfo_t *hIC = NULL;
     http_request_t *lpwhr;
     LPWSTR lpszHostName = NULL;
-    HINTERNET handle = NULL;
     static const WCHAR szHostForm[] = {'%','s',':','%','u',0};
     DWORD len, res;
 
@@ -2576,20 +2575,15 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *lpwhs,
     assert( lpwhs->hdr.htype == WH_HHTTPSESSION );
     hIC = lpwhs->lpAppInfo;
 
-    lpwhr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(http_request_t));
-    if (NULL == lpwhr)
-    {
-        res = ERROR_OUTOFMEMORY;
-        goto lend;
-    }
+    lpwhr = alloc_object(&lpwhs->hdr, &HTTPREQVtbl, sizeof(http_request_t));
+    if(!lpwhr)
+        return ERROR_OUTOFMEMORY;
+
     lpwhr->hdr.htype = WH_HHTTPREQ;
-    lpwhr->hdr.vtbl = &HTTPREQVtbl;
     lpwhr->hdr.dwFlags = dwFlags;
     lpwhr->hdr.dwContext = dwContext;
-    lpwhr->hdr.refs = 1;
-    lpwhr->hdr.lpfnStatusCB = lpwhs->hdr.lpfnStatusCB;
-    lpwhr->hdr.dwInternalFlags = lpwhs->hdr.dwInternalFlags & INET_CALLBACKW;
     lpwhr->dwContentLength = ~0u;
+
     InitializeCriticalSection( &lpwhr->read_section );
 
     WININET_AddRef( &lpwhs->hdr );
@@ -2604,16 +2598,8 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *lpwhs,
         goto lend;
     }
 
-    res = alloc_handle(&lpwhr->hdr, &handle);
-    if (res != ERROR_SUCCESS)
-        goto lend;
-
     if ((res = NETCON_init(&lpwhr->netConnection, dwFlags & INTERNET_FLAG_SECURE)) != ERROR_SUCCESS)
-    {
-        InternetCloseHandle( handle );
-        handle = NULL;
         goto lend;
-    }
 
     if (lpszObjectName && *lpszObjectName) {
         HRESULT rc;
@@ -2681,17 +2667,21 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *lpwhs,
         HTTP_DealWithProxy( hIC, lpwhs, lpwhr );
 
     INTERNET_SendCallback(&lpwhs->hdr, dwContext,
-                          INTERNET_STATUS_HANDLE_CREATED, &handle,
-                          sizeof(handle));
+                          INTERNET_STATUS_HANDLE_CREATED, &lpwhr->hdr.hInternet,
+                          sizeof(HINTERNET));
 
 lend:
-    HeapFree(GetProcessHeap(), 0, lpszHostName);
-    if( lpwhr )
-        WININET_Release( &lpwhr->hdr );
+    TRACE("<-- %u (%p)\n", res, lpwhr);
 
-    TRACE("<-- %p (%p)\n", handle, lpwhr);
-    *ret = handle;
-    return res;
+    HeapFree(GetProcessHeap(), 0, lpszHostName);
+    if(res != ERROR_SUCCESS) {
+        WININET_Release( &lpwhr->hdr );
+        *ret = NULL;
+        return res;
+    }
+
+    *ret = lpwhr->hdr.hInternet;
+    return ERROR_SUCCESS;
 }
 
 /***********************************************************************
@@ -4440,8 +4430,6 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         DWORD dwInternalFlags, HINTERNET *ret)
 {
     http_session_t *lpwhs = NULL;
-    HINTERNET handle = NULL;
-    DWORD res;
 
     TRACE("-->\n");
 
@@ -4450,7 +4438,7 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
 
     assert( hIC->hdr.htype == WH_HINIT );
 
-    lpwhs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(http_session_t));
+    lpwhs = alloc_object(&hIC->hdr, &HTTPSESSIONVtbl, sizeof(http_session_t));
     if (!lpwhs)
         return ERROR_OUTOFMEMORY;
 
@@ -4459,23 +4447,13 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     */
 
     lpwhs->hdr.htype = WH_HHTTPSESSION;
-    lpwhs->hdr.vtbl = &HTTPSESSIONVtbl;
     lpwhs->hdr.dwFlags = dwFlags;
     lpwhs->hdr.dwContext = dwContext;
-    lpwhs->hdr.dwInternalFlags = dwInternalFlags | (hIC->hdr.dwInternalFlags & INET_CALLBACKW);
-    lpwhs->hdr.refs = 1;
-    lpwhs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
+    lpwhs->hdr.dwInternalFlags |= dwInternalFlags;
 
     WININET_AddRef( &hIC->hdr );
     lpwhs->lpAppInfo = hIC;
     list_add_head( &hIC->hdr.children, &lpwhs->hdr.entry );
-
-    res = alloc_handle(&lpwhs->hdr, &handle);
-    if (res != ERROR_SUCCESS)
-    {
-        ERR("Failed to alloc handle\n");
-        goto lerror;
-    }
 
     if(hIC->lpszProxy && hIC->dwAccessType == INTERNET_OPEN_TYPE_PROXY) {
         if(hIC->lpszProxyBypass)
@@ -4494,24 +4472,19 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     if (!(lpwhs->hdr.dwInternalFlags & INET_OPENURL))
     {
         INTERNET_SendCallback(&hIC->hdr, dwContext,
-                              INTERNET_STATUS_HANDLE_CREATED, &handle,
-                              sizeof(handle));
+                              INTERNET_STATUS_HANDLE_CREATED, &lpwhs->hdr.hInternet,
+                              sizeof(HINTERNET));
     }
-
-lerror:
-    if( lpwhs )
-        WININET_Release( &lpwhs->hdr );
 
 /*
  * an INTERNET_STATUS_REQUEST_COMPLETE is NOT sent here as per my tests on
  * windows
  */
 
-    TRACE("%p --> %p (%p)\n", hIC, handle, lpwhs);
+    TRACE("%p --> %p\n", hIC, lpwhs);
 
-    if(res == ERROR_SUCCESS)
-        *ret = handle;
-    return res;
+    *ret = lpwhs->hdr.hInternet;
+    return ERROR_SUCCESS;
 }
 
 

@@ -435,7 +435,7 @@ typedef struct WORKREQ
 
 } WORKREQUEST, *LPWORKREQUEST;
 
-DWORD alloc_handle( object_header_t*, HINTERNET*);
+void *alloc_object(object_header_t*,const object_vtbl_t*,size_t);
 object_header_t *get_handle_object( HINTERNET hinternet );
 object_header_t *WININET_AddRef( object_header_t *info );
 BOOL WININET_Release( object_header_t *info );
