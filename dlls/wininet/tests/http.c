@@ -3178,6 +3178,74 @@ static void test_async_HttpSendRequestEx(void)
     CloseHandle( info.wait );
 }
 
+static HINTERNET closetest_session, closetest_req, closetest_conn;
+static BOOL closetest_closed;
+
+static void WINAPI closetest_callback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus,
+     LPVOID lpvStatusInformation, DWORD dwStatusInformationLength)
+{
+    DWORD len, type;
+    BOOL res;
+
+    trace("closetest_callback %p: %d\n", hInternet, dwInternetStatus);
+
+    ok(hInternet == closetest_session || hInternet == closetest_conn || hInternet == closetest_req,
+       "Unexpected hInternet %p\n", hInternet);
+    if(!closetest_closed)
+        return;
+
+    len = sizeof(type);
+    res = InternetQueryOptionA(closetest_req, INTERNET_OPTION_HANDLE_TYPE, &type, &len);
+    ok(!res && GetLastError() == ERROR_INVALID_HANDLE,
+       "InternetQueryOptionA(%p INTERNET_OPTION_HANDLE_TYPE) failed: %x %u, expected TRUE ERROR_INVALID_HANDLE\n",
+       closetest_req, res, GetLastError());
+}
+
+static void test_InternetCloseHandle(void)
+{
+    DWORD len, flags;
+    BOOL res;
+
+    closetest_session = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, INTERNET_FLAG_ASYNC);
+    ok(closetest_session != NULL,"InternetOpen failed with error %u\n", GetLastError());
+
+    pInternetSetStatusCallbackA(closetest_session, closetest_callback);
+
+    closetest_conn = InternetConnectA(closetest_session, "source.winehq.org", INTERNET_INVALID_PORT_NUMBER,
+            NULL, NULL, INTERNET_SERVICE_HTTP, 0x0, 0xdeadbeef);
+    ok(closetest_conn != NULL,"InternetConnect failed with error %u\n", GetLastError());
+
+    closetest_req = HttpOpenRequestA(closetest_conn, "GET", "winegecko.php", NULL, NULL, NULL,
+            INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE, 0xdeadbead);
+
+    res = HttpSendRequestA(closetest_req, NULL, -1, NULL, 0);
+    ok(!res && (GetLastError() == ERROR_IO_PENDING),
+       "Asynchronous HttpSendRequest NOT returning 0 with error ERROR_IO_PENDING\n");
+
+    len = sizeof(flags);
+    res = InternetQueryOptionA(closetest_req, INTERNET_OPTION_REQUEST_FLAGS, &flags, &len);
+    ok(res, "InternetQueryOptionA(%p INTERNET_OPTION_URL) failed: %u\n", closetest_req, GetLastError());
+
+    res = InternetCloseHandle(closetest_session);
+    ok(res, "InternetCloseHandle failed: %u\n", GetLastError());
+    closetest_closed = TRUE;
+    trace("Closed session handle\n");
+
+    res = InternetCloseHandle(closetest_conn);
+    ok(!res && GetLastError() == ERROR_INVALID_HANDLE, "InternetCloseConnection(conn) failed: %x %u\n",
+       res, GetLastError());
+
+    res = InternetCloseHandle(closetest_req);
+    ok(!res && GetLastError() == ERROR_INVALID_HANDLE, "InternetCloseConnection(req) failed: %x %u\n",
+       res, GetLastError());
+
+    len = sizeof(flags);
+    res = InternetQueryOptionA(closetest_req, INTERNET_OPTION_REQUEST_FLAGS, &flags, &len);
+    ok(!res && GetLastError() == ERROR_INVALID_HANDLE,
+       "InternetQueryOptionA(%p INTERNET_OPTION_URL) failed: %x %u, expected TRUE ERROR_INVALID_HANDLE\n",
+       closetest_req, res, GetLastError());
+}
+
 #define STATUS_STRING(status) \
     memcpy(status_string[status], #status, sizeof(CHAR) * \
            (strlen(#status) < MAX_STATUS_NAME ? \
@@ -3232,6 +3300,7 @@ START_TEST(http)
     pInternetSetStatusCallbackA = (void*)GetProcAddress(hdll, "InternetSetStatusCallbackA");
 
     init_status_tests();
+    test_InternetCloseHandle();
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[0]);
     InternetReadFile_test(0, &test_data[0]);
     first_connection_to_test_url = TRUE;
