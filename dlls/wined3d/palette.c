@@ -158,7 +158,7 @@ void * CDECL wined3d_palette_get_parent(const struct wined3d_palette *palette)
     return palette->parent;
 }
 
-HRESULT wined3d_palette_init(IWineD3DPaletteImpl *palette, IWineD3DDeviceImpl *device,
+HRESULT wined3d_palette_init(struct wined3d_palette *palette, IWineD3DDeviceImpl *device,
         DWORD flags, const PALETTEENTRY *entries, void *parent)
 {
     HRESULT hr;

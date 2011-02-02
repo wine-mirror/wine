@@ -59,7 +59,7 @@ void surface_gdi_cleanup(IWineD3DSurfaceImpl *This)
 
 static void gdi_surface_realize_palette(IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DPaletteImpl *palette = surface->palette;
+    struct wined3d_palette *palette = surface->palette;
 
     TRACE("surface %p.\n", surface);
 

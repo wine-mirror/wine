@@ -1609,14 +1609,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DWORD flags,
-        const PALETTEENTRY *PalEnt, void *parent, IWineD3DPalette **Palette)
+        const PALETTEENTRY *entries, void *parent, struct wined3d_palette **palette)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DPaletteImpl *object;
+    struct wined3d_palette *object;
     HRESULT hr;
 
     TRACE("iface %p, flags %#x, entries %p, palette %p, parent %p.\n",
-            iface, flags, PalEnt, Palette, parent);
+            iface, flags, entries, palette, parent);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1625,7 +1625,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DW
         return E_OUTOFMEMORY;
     }
 
-    hr = wined3d_palette_init(object, This, flags, PalEnt, parent);
+    hr = wined3d_palette_init(object, This, flags, entries, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize palette, hr %#x.\n", hr);
@@ -1634,7 +1634,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DW
     }
 
     TRACE("Created palette %p.\n", object);
-    *Palette = (IWineD3DPalette *)object;
+    *palette = object;
 
     return WINED3D_OK;
 }

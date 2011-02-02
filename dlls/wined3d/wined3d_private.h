@@ -58,8 +58,6 @@ typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 struct IWineD3DResourceImpl;
-typedef struct wined3d_palette IWineD3DPaletteImpl;
-typedef struct wined3d_palette IWineD3DPalette;
 
 /* Texture format fixups */
 
@@ -2099,7 +2097,7 @@ struct IWineD3DSurfaceImpl
     const struct wined3d_surface_ops *surface_ops;
     struct wined3d_subresource_container container;
     WINED3DSURFACET_DESC      currentDesc;
-    IWineD3DPaletteImpl       *palette; /* D3D7 style palette handling */
+    struct wined3d_palette *palette; /* D3D7 style palette handling */
     PALETTEENTRY              *palette9; /* D3D8/9 style palette handling */
 
     DWORD flags;
@@ -2199,8 +2197,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWOR
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD flags) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_IsLost(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_Restore(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD3DPalette **Pal) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPalette *Pal) DECLSPEC_HIDDEN;
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface,
+        struct wined3d_palette **Pal) DECLSPEC_HIDDEN;
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface,
+        struct wined3d_palette *Pal) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface,
         DWORD flags, const WINEDDCOLORKEY *CKey) DECLSPEC_HIDDEN;
 DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
@@ -2957,7 +2957,7 @@ struct wined3d_palette
     DWORD flags;
 };
 
-HRESULT wined3d_palette_init(IWineD3DPaletteImpl *palette, IWineD3DDeviceImpl *device,
+HRESULT wined3d_palette_init(struct wined3d_palette *palette, IWineD3DDeviceImpl *device,
         DWORD flags, const PALETTEENTRY *entries, void *parent) DECLSPEC_HIDDEN;
 
 /* DirectDraw utility functions */

@@ -335,7 +335,7 @@ void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, 
 
 static void surface_realize_palette(IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DPaletteImpl *palette = surface->palette;
+    struct wined3d_palette *palette = surface->palette;
 
     TRACE("surface %p.\n", surface);
 
@@ -2371,7 +2371,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck,
 void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *This, BYTE table[256][4], BOOL colorkey)
 {
     IWineD3DDeviceImpl *device = This->resource.device;
-    IWineD3DPaletteImpl *pal = This->palette;
+    struct wined3d_palette *pal = This->palette;
     BOOL index_in_alpha = FALSE;
     unsigned int i;
 

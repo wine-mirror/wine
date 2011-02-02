@@ -216,12 +216,14 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Restore(IWineD3DSurface *iface) {
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD3DPalette *Pal) {
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, struct wined3d_palette *palette)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    IWineD3DPaletteImpl *PalImpl = (IWineD3DPaletteImpl *) Pal;
-    TRACE("(%p)->(%p)\n", This, Pal);
 
-    if(This->palette == PalImpl) {
+    TRACE("iface %p, palette %p.\n", iface, palette);
+
+    if (This->palette == palette)
+    {
         TRACE("Nop palette change\n");
         return WINED3D_OK;
     }
@@ -230,12 +232,12 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, IWineD
         if (This->resource.usage & WINED3DUSAGE_RENDERTARGET)
             This->palette->flags &= ~WINEDDPCAPS_PRIMARYSURFACE;
 
-    This->palette = PalImpl;
+    This->palette = palette;
 
-    if (PalImpl)
+    if (palette)
     {
         if (This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-            PalImpl->flags |= WINEDDPCAPS_PRIMARYSURFACE;
+            palette->flags |= WINEDDPCAPS_PRIMARYSURFACE;
 
         This->surface_ops->surface_realize_palette(This);
     }
@@ -306,11 +308,14 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface, DWORD
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD3DPalette **Pal) {
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface, struct wined3d_palette **palette)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    TRACE("(%p)->(%p)\n", This, Pal);
 
-    *Pal = (IWineD3DPalette *) This->palette;
+    TRACE("iface %p, palette %p.\n", iface, palette);
+
+    *palette = This->palette;
+
     return WINED3D_OK;
 }
 
