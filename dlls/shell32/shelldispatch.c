@@ -391,6 +391,7 @@ static HRESULT Folder_Constructor(VARIANT *dir, Folder **ppsdf)
     ret = VariantCopy(&This->dir, dir);
     if (FAILED(ret))
     {
+        ITypeInfo_Release(This->iTypeInfo);
         HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
     }
