@@ -146,7 +146,6 @@ static void test_namespace(void)
         if (r == S_OK)
         {
             r = Folder2_get_Self(folder2, &item);
-            todo_wine
             ok(r == S_OK, "Folder::get_Self failed: %08x\n", r);
             if (r == S_OK)
             {
@@ -180,7 +179,6 @@ static void test_namespace(void)
         if (r == S_OK)
         {
             r = Folder2_get_Self(folder2, &item);
-            todo_wine
             ok(r == S_OK, "Folder::get_Self failed: %08x\n", r);
             if (r == S_OK)
             {
@@ -237,7 +235,6 @@ static void test_namespace(void)
         if (r == S_OK)
         {
             r = Folder2_get_Self(folder2, &item);
-            todo_wine
             ok(r == S_OK, "Folder::get_Self failed: %08x\n", r);
             if (r == S_OK)
             {
@@ -283,7 +280,6 @@ static void test_namespace(void)
             if (r == S_OK)
             {
                 r = Folder2_get_Self(folder2, &item);
-                todo_wine
                 ok(r == S_OK, "Folder::get_Self failed: %08x\n", r);
                 if (r == S_OK)
                 {
