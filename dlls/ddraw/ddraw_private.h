@@ -90,7 +90,7 @@ extern DWORD force_refresh_rate DECLSPEC_HIDDEN;
 struct FvfToDecl
 {
     DWORD fvf;
-    IWineD3DVertexDeclaration *decl;
+    struct wined3d_vertex_declaration *decl;
 };
 
 struct IDirectDrawImpl
@@ -182,7 +182,7 @@ void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS *pIn, DDSCAPS2 *pOut) DECLSPEC_H
 void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2 *pIn, DDDEVICEIDENTIFIER *pOut) DECLSPEC_HIDDEN;
 HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf,
         DDSURFACEDESC2 *desc, void *Context) DECLSPEC_HIDDEN;
-IWineD3DVertexDeclaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf) DECLSPEC_HIDDEN;
+struct wined3d_vertex_declaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf) DECLSPEC_HIDDEN;
 
 /* The default surface type */
 extern WINED3DSURFTYPE DefaultSurfaceType DECLSPEC_HIDDEN;
@@ -579,7 +579,7 @@ struct IDirect3DVertexBufferImpl
 
     /*** WineD3D and ddraw links ***/
     IWineD3DBuffer *wineD3DVertexBuffer;
-    IWineD3DVertexDeclaration *wineD3DVertexDeclaration;
+    struct wined3d_vertex_declaration *wineD3DVertexDeclaration;
     IDirectDrawImpl *ddraw;
 
     /*** Storage for D3D7 specific things ***/

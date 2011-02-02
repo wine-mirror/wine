@@ -1,6 +1,6 @@
 MODULE    = d3d10core.dll
 IMPORTLIB = d3d10core
-IMPORTS   = dxguid uuid dxgi
+IMPORTS   = dxguid uuid dxgi wined3d
 
 C_SRCS = \
 	async.c \

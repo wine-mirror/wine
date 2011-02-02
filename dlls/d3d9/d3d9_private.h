@@ -435,7 +435,7 @@ typedef struct IDirect3DVertexDeclaration9Impl {
   UINT element_count;
 
   /* IDirect3DVertexDeclaration9 fields */
-  IWineD3DVertexDeclaration *wineD3DVertexDeclaration;
+  struct wined3d_vertex_declaration *wineD3DVertexDeclaration;
   DWORD convFVF;
 
   /* Parent reference */

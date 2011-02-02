@@ -2063,7 +2063,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShader(IDirect3DDevice8 *ifa
 static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShader(IDirect3DDevice8 *iface, DWORD *ppShader)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DVertexDeclaration *wined3d_declaration;
+    struct wined3d_vertex_declaration *wined3d_declaration;
     IDirect3DVertexDeclaration8 *d3d8_declaration;
     HRESULT hr;
 
@@ -2086,8 +2086,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShader(IDirect3DDevice8 *ifa
         return D3D_OK;
     }
 
-    d3d8_declaration = IWineD3DVertexDeclaration_GetParent(wined3d_declaration);
-    IWineD3DVertexDeclaration_Release(wined3d_declaration);
+    d3d8_declaration = wined3d_vertex_declaration_get_parent(wined3d_declaration);
+    wined3d_vertex_declaration_decref(wined3d_declaration);
     wined3d_mutex_unlock();
     *ppShader = ((IDirect3DVertexDeclaration8Impl *)d3d8_declaration)->shader_handle;
 

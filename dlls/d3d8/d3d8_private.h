@@ -438,7 +438,7 @@ typedef struct {
     DWORD *elements;
     DWORD elements_size; /* Size of elements, in bytes */
 
-    IWineD3DVertexDeclaration *wined3d_vertex_declaration;
+    struct wined3d_vertex_declaration *wined3d_vertex_declaration;
     DWORD shader_handle;
 } IDirect3DVertexDeclaration8Impl;
 

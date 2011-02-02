@@ -59,6 +59,8 @@ typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 struct IWineD3DResourceImpl;
+typedef struct wined3d_vertex_declaration IWineD3DVertexDeclaration;
+typedef struct wined3d_vertex_declaration IWineD3DVertexDeclarationImpl;
 
 /* Texture format fixups */
 
@@ -2296,10 +2298,6 @@ void d3dfmt_p8_init_palette(IWineD3DSurfaceImpl *surface, BYTE table[256][4], BO
 
 BOOL palette9_changed(IWineD3DSurfaceImpl *This) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IWineD3DVertexDeclaration implementation structure
- */
-
 struct wined3d_vertex_declaration_element
 {
     const struct wined3d_format *format;
@@ -2312,11 +2310,9 @@ struct wined3d_vertex_declaration_element
     BYTE usage_idx;
 };
 
-typedef struct IWineD3DVertexDeclarationImpl {
-    /* IUnknown  Information */
-    const IWineD3DVertexDeclarationVtbl *lpVtbl;
-    LONG                    ref;
-
+struct wined3d_vertex_declaration
+{
+    LONG ref;
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
     IWineD3DDeviceImpl *device;
@@ -2328,7 +2324,7 @@ typedef struct IWineD3DVertexDeclarationImpl {
     UINT                    num_streams;
     BOOL                    position_transformed;
     BOOL                    half_float_conv_needed;
-} IWineD3DVertexDeclarationImpl;
+};
 
 HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWineD3DDeviceImpl *device,
         const WINED3DVERTEXELEMENT *elements, UINT element_count,

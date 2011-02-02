@@ -131,7 +131,7 @@ static ULONG STDMETHODCALLTYPE d3d10_input_layout_AddRef(ID3D10InputLayout *ifac
 
     if (refcount == 1)
     {
-        IWineD3DVertexDeclaration_AddRef(This->wined3d_decl);
+        wined3d_vertex_declaration_incref(This->wined3d_decl);
     }
 
     return refcount;
@@ -146,7 +146,7 @@ static ULONG STDMETHODCALLTYPE d3d10_input_layout_Release(ID3D10InputLayout *ifa
 
     if (!refcount)
     {
-        IWineD3DVertexDeclaration_Release(This->wined3d_decl);
+        wined3d_vertex_declaration_decref(This->wined3d_decl);
     }
 
     return refcount;

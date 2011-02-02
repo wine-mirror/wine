@@ -37,53 +37,36 @@ static void dump_wined3dvertexelement(const WINED3DVERTEXELEMENT *element) {
     TRACE("  usage_idx: %u\n", element->usage_idx);
 }
 
-/* *******************************************
-   IWineD3DVertexDeclaration IUnknown parts follow
-   ******************************************* */
-static HRESULT WINAPI IWineD3DVertexDeclarationImpl_QueryInterface(IWineD3DVertexDeclaration *iface, REFIID riid, LPVOID *ppobj)
+ULONG CDECL wined3d_vertex_declaration_incref(struct wined3d_vertex_declaration *declaration)
 {
-    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IWineD3DBase)
-        || IsEqualGUID(riid, &IID_IWineD3DVertexDeclaration)){
-        IUnknown_AddRef(iface);
-        *ppobj = This;
-        return S_OK;
-    }
-    *ppobj = NULL;
-    return E_NOINTERFACE;
+    ULONG refcount = InterlockedIncrement(&declaration->ref);
+
+    TRACE("%p increasing refcount to %u.\n", declaration, refcount);
+
+    return refcount;
 }
 
-static ULONG WINAPI IWineD3DVertexDeclarationImpl_AddRef(IWineD3DVertexDeclaration *iface) {
-    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %d\n", This, This->ref);
-    return InterlockedIncrement(&This->ref);
-}
+ULONG CDECL wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration *declaration)
+{
+    ULONG refcount = InterlockedDecrement(&declaration->ref);
 
-static ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclaration *iface) {
-    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    ULONG ref;
-    TRACE("(%p) : Releasing from %d\n", This, This->ref);
-    ref = InterlockedDecrement(&This->ref);
-    if (!ref)
+    TRACE("%p decreasing refcount to %u.\n", declaration, refcount);
+
+    if (!refcount)
     {
-        HeapFree(GetProcessHeap(), 0, This->elements);
-        This->parent_ops->wined3d_object_destroyed(This->parent);
-        HeapFree(GetProcessHeap(), 0, This);
+        HeapFree(GetProcessHeap(), 0, declaration->elements);
+        declaration->parent_ops->wined3d_object_destroyed(declaration->parent);
+        HeapFree(GetProcessHeap(), 0, declaration);
     }
-    return ref;
+
+    return refcount;
 }
 
-/* *******************************************
-   IWineD3DVertexDeclaration parts follow
-   ******************************************* */
-
-static void * WINAPI IWineD3DVertexDeclarationImpl_GetParent(IWineD3DVertexDeclaration *iface)
+void * CDECL wined3d_vertex_declaration_get_parent(const struct wined3d_vertex_declaration *declaration)
 {
-    TRACE("iface %p.\n", iface);
+    TRACE("declaration %p.\n", declaration);
 
-    return ((IWineD3DVertexDeclarationImpl *)iface)->parent;
+    return declaration->parent;
 }
 
 static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
@@ -174,16 +157,6 @@ static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
     }
 }
 
-static const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl =
-{
-    /* IUnknown */
-    IWineD3DVertexDeclarationImpl_QueryInterface,
-    IWineD3DVertexDeclarationImpl_AddRef,
-    IWineD3DVertexDeclarationImpl_Release,
-    /* IWineD3DVertexDeclaration */
-    IWineD3DVertexDeclarationImpl_GetParent,
-};
-
 HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWineD3DDeviceImpl *device,
         const WINED3DVERTEXELEMENT *elements, UINT element_count,
         void *parent, const struct wined3d_parent_ops *parent_ops)
@@ -200,7 +173,6 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWine
         }
     }
 
-    declaration->lpVtbl = &IWineD3DVertexDeclaration_Vtbl;
     declaration->ref = 1;
     declaration->parent = parent;
     declaration->parent_ops = parent_ops;

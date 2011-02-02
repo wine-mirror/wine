@@ -163,7 +163,7 @@ IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
             IWineD3DBuffer_Release(curVB); /* For the GetStreamSource */
         }
 
-        IWineD3DVertexDeclaration_Release(This->wineD3DVertexDeclaration);
+        wined3d_vertex_declaration_decref(This->wineD3DVertexDeclaration);
         IWineD3DBuffer_Release(This->wineD3DVertexBuffer);
         LeaveCriticalSection(&ddraw_cs);
         HeapFree(GetProcessHeap(), 0, This);
@@ -595,7 +595,7 @@ HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
 
         return DDERR_INVALIDPARAMS;
     }
-    IWineD3DVertexDeclaration_AddRef(buffer->wineD3DVertexDeclaration);
+    wined3d_vertex_declaration_incref(buffer->wineD3DVertexDeclaration);
 
     LeaveCriticalSection(&ddraw_cs);
 

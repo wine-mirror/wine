@@ -2112,6 +2112,7 @@ interface IWineD3DSwapChain;
 interface IWineD3DDevice;
 struct wined3d;
 struct wined3d_stateblock;
+struct wined3d_vertex_declaration;
 
 [
     object,
@@ -2521,15 +2522,6 @@ interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 [
     object,
     local,
-    uuid(7cd55be6-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DVertexDeclaration : IWineD3DBase
-{
-}
-
-[
-    object,
-    local,
     uuid(905ddbac-6f30-11d9-c687-00046142c14f)
 ]
 interface IWineD3DQuery : IUnknown
@@ -2775,13 +2767,13 @@ interface IWineD3DDevice : IUnknown
         [in] UINT element_count,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DVertexDeclaration **declaration
+        [out] struct wined3d_vertex_declaration **declaration
     );
     HRESULT CreateVertexDeclarationFromFVF(
         [in] DWORD fvf,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DVertexDeclaration **declaration
+        [out] struct wined3d_vertex_declaration **declaration
     );
     HRESULT CreateVertexShader(
         [in] const DWORD *function,
@@ -3083,10 +3075,10 @@ interface IWineD3DDevice : IUnknown
         [out] WINED3DMATRIX *matrix
     );
     HRESULT SetVertexDeclaration(
-        [in] IWineD3DVertexDeclaration *declaration
+        [in] struct wined3d_vertex_declaration *declaration
     );
     HRESULT GetVertexDeclaration(
-        [out] IWineD3DVertexDeclaration **declaration
+        [out] struct wined3d_vertex_declaration **declaration
     );
     HRESULT SetVertexShader(
         [in] IWineD3DVertexShader *shader
@@ -3141,7 +3133,7 @@ interface IWineD3DDevice : IUnknown
         [in] UINT dst_idx,
         [in] UINT vertex_count,
         [in] IWineD3DBuffer *dest_buffer,
-        [in] IWineD3DVertexDeclaration *declaration,
+        [in] struct wined3d_vertex_declaration *declaration,
         [in] DWORD flags,
         [in] DWORD DestFVF
     );
@@ -3310,3 +3302,7 @@ HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateb
 HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_stateblock_decref(struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
+
+ULONG __cdecl wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration *declaration);
+void * __cdecl wined3d_vertex_declaration_get_parent(const struct wined3d_vertex_declaration *declaration);
+ULONG __cdecl wined3d_vertex_declaration_incref(struct wined3d_vertex_declaration *declaration);

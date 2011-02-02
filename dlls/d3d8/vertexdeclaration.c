@@ -53,7 +53,7 @@ static ULONG WINAPI IDirect3DVertexDeclaration8Impl_AddRef(IDirect3DVertexDeclar
     if (ref_count == 1)
     {
         wined3d_mutex_lock();
-        IWineD3DVertexDeclaration_AddRef(This->wined3d_vertex_declaration);
+        wined3d_vertex_declaration_incref(This->wined3d_vertex_declaration);
         wined3d_mutex_unlock();
     }
 
@@ -69,7 +69,7 @@ static ULONG WINAPI IDirect3DVertexDeclaration8Impl_Release(IDirect3DVertexDecla
 
     if (!ref_count) {
         wined3d_mutex_lock();
-        IWineD3DVertexDeclaration_Release(This->wined3d_vertex_declaration);
+        wined3d_vertex_declaration_decref(This->wined3d_vertex_declaration);
         wined3d_mutex_unlock();
     }
 

@@ -18,11 +18,15 @@
 @ cdecl wined3d_get_device_caps(ptr long long ptr)
 @ cdecl wined3d_get_parent(ptr)
 @ cdecl wined3d_incref(ptr)
-@ cdecl wined3d_register_software_device(ptr ptr);
+@ cdecl wined3d_register_software_device(ptr ptr)
 
-@ cdecl wined3d_device_create(ptr long long ptr long ptr ptr);
+@ cdecl wined3d_device_create(ptr long long ptr long ptr ptr)
 
 @ cdecl wined3d_stateblock_apply(ptr)
 @ cdecl wined3d_stateblock_capture(ptr)
 @ cdecl wined3d_stateblock_decref(ptr)
 @ cdecl wined3d_stateblock_incref(ptr)
+
+@ cdecl wined3d_vertex_declaration_decref(ptr)
+@ cdecl wined3d_vertex_declaration_get_parent(ptr)
+@ cdecl wined3d_vertex_declaration_incref(ptr)

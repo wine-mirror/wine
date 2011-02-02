@@ -3296,8 +3296,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* if
 
     TRACE("(%p) : pDecl=%p\n", This, pDecl);
 
-    if (pDecl) IWineD3DVertexDeclaration_AddRef(pDecl);
-    if (oldDecl) IWineD3DVertexDeclaration_Release(oldDecl);
+    if (pDecl)
+        wined3d_vertex_declaration_incref(pDecl);
+    if (oldDecl)
+        wined3d_vertex_declaration_decref(oldDecl);
 
     This->updateStateBlock->state.vertex_declaration = (IWineD3DVertexDeclarationImpl *)pDecl;
     This->updateStateBlock->changed.vertexDecl = TRUE;
@@ -3321,7 +3323,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* if
     TRACE("(%p) : ppDecl=%p\n", This, ppDecl);
 
     *ppDecl = (IWineD3DVertexDeclaration *)This->stateBlock->state.vertex_declaration;
-    if (*ppDecl) IWineD3DVertexDeclaration_AddRef(*ppDecl);
+    if (*ppDecl)
+        wined3d_vertex_declaration_incref(*ppDecl);
+
     return WINED3D_OK;
 }
 

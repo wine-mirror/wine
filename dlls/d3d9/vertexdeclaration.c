@@ -222,7 +222,7 @@ static ULONG WINAPI IDirect3DVertexDeclaration9Impl_AddRef(LPDIRECT3DVERTEXDECLA
         if (!This->convFVF)
         {
             wined3d_mutex_lock();
-            IWineD3DVertexDeclaration_AddRef(This->wineD3DVertexDeclaration);
+            wined3d_vertex_declaration_incref(This->wineD3DVertexDeclaration);
             wined3d_mutex_unlock();
         }
     }
@@ -239,7 +239,7 @@ void IDirect3DVertexDeclaration9Impl_Destroy(LPDIRECT3DVERTEXDECLARATION9 iface)
     }
 
     wined3d_mutex_lock();
-    IWineD3DVertexDeclaration_Release(This->wineD3DVertexDeclaration);
+    wined3d_vertex_declaration_decref(This->wineD3DVertexDeclaration);
     wined3d_mutex_unlock();
 }
 

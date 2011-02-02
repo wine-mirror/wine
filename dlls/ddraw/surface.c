@@ -366,9 +366,9 @@ static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
                 IWineD3DDevice_SetIndexBuffer(ddraw->wineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
                 IWineD3DDevice_SetDepthStencilSurface(ddraw->wineD3DDevice, NULL);
                 IWineD3DDevice_SetVertexDeclaration(ddraw->wineD3DDevice, NULL);
-                for(i = 0; i < ddraw->numConvertedDecls; i++)
+                for (i = 0; i < ddraw->numConvertedDecls; ++i)
                 {
-                    IWineD3DVertexDeclaration_Release(ddraw->decls[i].decl);
+                    wined3d_vertex_declaration_decref(ddraw->decls[i].decl);
                 }
                 HeapFree(GetProcessHeap(), 0, ddraw->decls);
                 ddraw->numConvertedDecls = 0;

@@ -5638,14 +5638,13 @@ static const struct IDirect3DVtbl d3d1_vtbl =
  *  fvf: Fvf to find the decl for
  *
  * Returns:
- *  NULL in case of an error, the IWineD3DVertexDeclaration interface for the
- *  fvf otherwise.
+ *  NULL in case of an error, the vertex declaration for the FVF otherwise.
  *
  *****************************************************************************/
-IWineD3DVertexDeclaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf)
+struct wined3d_vertex_declaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf)
 {
+    struct wined3d_vertex_declaration *pDecl = NULL;
     HRESULT hr;
-    IWineD3DVertexDeclaration* pDecl = NULL;
     int p, low, high; /* deliberately signed */
     struct FvfToDecl *convertedDecls = This->decls;
 
@@ -5675,9 +5674,9 @@ IWineD3DVertexDeclaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD fvf)
         int grow = max(This->declArraySize / 2, 8);
         convertedDecls = HeapReAlloc(GetProcessHeap(), 0, convertedDecls,
                                      sizeof(convertedDecls[0]) * (This->numConvertedDecls + grow));
-        if(!convertedDecls) {
-            /* This will destroy it */
-            IWineD3DVertexDeclaration_Release(pDecl);
+        if (!convertedDecls)
+        {
+            wined3d_vertex_declaration_decref(pDecl);
             return NULL;
         }
         This->decls = convertedDecls;

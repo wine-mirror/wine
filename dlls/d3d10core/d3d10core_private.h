@@ -156,7 +156,7 @@ struct d3d10_input_layout
     const struct ID3D10InputLayoutVtbl *vtbl;
     LONG refcount;
 
-    IWineD3DVertexDeclaration *wined3d_decl;
+    struct wined3d_vertex_declaration *wined3d_decl;
 };
 
 HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_device *device,
