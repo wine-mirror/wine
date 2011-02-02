@@ -4038,12 +4038,15 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                 case TGT_ENUM:
                 case TGT_POINTER:
                 case TGT_RANGE:
+                case TGT_IFACE_POINTER:
                     print_file(file, indent, "%s_W%u = 0;\n", local_var_prefix, i);
+                    break;
+                case TGT_USER_TYPE:
+                    print_file(file, indent, "memset(&%s_W%u, 0, sizeof(%s_W%u));\n",
+                               local_var_prefix, i, local_var_prefix, i);
                     break;
                 case TGT_STRUCT:
                 case TGT_UNION:
-                case TGT_USER_TYPE:
-                case TGT_IFACE_POINTER:
                 case TGT_ARRAY:
                 case TGT_CTXT_HANDLE:
                 case TGT_CTXT_HANDLE_POINTER:
