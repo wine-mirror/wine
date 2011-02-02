@@ -986,6 +986,33 @@ done:
     return ret;
 }
 
+static BOOL has_persistent_dir( MSIPACKAGE *package, MSICOMPONENT *comp )
+{
+    MSIQUERY *view;
+    UINT r = ERROR_FUNCTION_FAILED;
+
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','C','r','e','a','t','e','F','o','l','d','e','r','`',' ','W','H','E','R','E',' ',
+        '`','C','o','m','p','o','n','e','n','t','_','`',' ','=','\'','%','s','\'',' ','A','N','D',' ',
+        '`','D','i','r','e','c','t','o','r','y','_','`',' ','=','\'','%','s','\'',0};
+
+    if (!MSI_OpenQuery( package->db, &view, query, comp->Component, comp->Directory ))
+    {
+        if (!MSI_ViewExecute( view, NULL ))
+        {
+            MSIRECORD *rec;
+            if (!(r = MSI_ViewFetch( view, &rec )))
+            {
+                TRACE("directory %s is persistent\n", debugstr_w(comp->Directory));
+                msiobj_release( &rec->hdr );
+            }
+        }
+        msiobj_release( &view->hdr );
+    }
+    return (r == ERROR_SUCCESS);
+}
+
 UINT ACTION_RemoveFiles( MSIPACKAGE *package )
 {
     MSIQUERY *view;
@@ -995,9 +1022,6 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         '`','R','e','m','o','v','e','F','i','l','e','`',0};
-    static const WCHAR folder_query[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-        '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0};
 
     r = MSI_DatabaseOpenViewW(package->db, query, &view);
     if (r == ERROR_SUCCESS)
@@ -1005,10 +1029,6 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         MSI_IterateRecords(view, NULL, ITERATE_RemoveFiles, package);
         msiobj_release(&view->hdr);
     }
-
-    r = MSI_DatabaseOpenViewW(package->db, folder_query, &view);
-    if (r == ERROR_SUCCESS)
-        msiobj_release(&view->hdr);
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
@@ -1054,12 +1074,14 @@ UINT ACTION_RemoveFiles( MSIPACKAGE *package )
         {
             WARN("failed to delete %s (%u)\n",  debugstr_w(file->TargetPath), GetLastError());
         }
-        /* FIXME: check persistence for each directory */
-        else if (r && (dir = strdupW( file->TargetPath )))
+        else if (!has_persistent_dir( package, file->Component ))
         {
-            if ((p = strrchrW( dir, '\\' ))) *p = 0;
-            RemoveDirectoryW( dir );
-            msi_free( dir );
+            if ((dir = strdupW( file->TargetPath )))
+            {
+                if ((p = strrchrW( dir, '\\' ))) *p = 0;
+                RemoveDirectoryW( dir );
+                msi_free( dir );
+            }
         }
         file->state = msifs_missing;
 
