@@ -991,7 +991,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
 
     if (stateblock->changed.vertexDecl && stateblock->state.vertex_declaration)
     {
-        IWineD3DDevice_SetVertexDeclaration(device, (IWineD3DVertexDeclaration *)stateblock->state.vertex_declaration);
+        IWineD3DDevice_SetVertexDeclaration(device, stateblock->state.vertex_declaration);
     }
 
     if (stateblock->changed.material)

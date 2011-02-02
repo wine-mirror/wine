@@ -177,7 +177,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup)
 {
     /* We need to deal with frequency data! */
-    IWineD3DVertexDeclarationImpl *declaration = This->stateBlock->state.vertex_declaration;
+    struct wined3d_vertex_declaration *declaration = This->stateBlock->state.vertex_declaration;
     unsigned int i;
 
     stream_info->use_map = 0;
@@ -1325,14 +1325,14 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, U
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice *iface,
         const WINED3DVERTEXELEMENT *elements, UINT element_count, void *parent,
-        const struct wined3d_parent_ops *parent_ops, IWineD3DVertexDeclaration **declaration)
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_vertex_declaration **declaration)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexDeclarationImpl *object = NULL;
+    struct wined3d_vertex_declaration *object;
     HRESULT hr;
 
-    TRACE("iface %p, declaration %p, parent %p, elements %p, element_count %u.\n",
-            iface, declaration, parent, elements, element_count);
+    TRACE("iface %p, elements %p, element_count %u, parent %p, parent_ops %p, declaration %p.\n",
+            iface, elements, element_count, parent, parent_ops, declaration);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if(!object)
@@ -1350,7 +1350,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice 
     }
 
     TRACE("Created vertex declaration %p.\n", object);
-    *declaration = (IWineD3DVertexDeclaration *)object;
+    *declaration = object;
 
     return WINED3D_OK;
 }
@@ -1494,14 +1494,15 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3DDevice *iface,
         DWORD fvf, void *parent, const struct wined3d_parent_ops *parent_ops,
-        IWineD3DVertexDeclaration **declaration)
+        struct wined3d_vertex_declaration **declaration)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     WINED3DVERTEXELEMENT *elements;
     unsigned int size;
     DWORD hr;
 
-    TRACE("iface %p, declaration %p, parent %p, fvf %#x.\n", iface, declaration, parent, fvf);
+    TRACE("iface %p, fvf %#x, parent %p, parent_ops %p, declaration %p.\n",
+            iface, fvf, parent, parent_ops, declaration);
 
     size = ConvertFvfToDeclaration(This, fvf, &elements);
     if (size == ~0U) return E_OUTOFMEMORY;
@@ -3290,18 +3291,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetScissorRect(IWineD3DDevice *iface, R
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration* pDecl) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice *iface,
+        struct wined3d_vertex_declaration *pDecl)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DVertexDeclaration *oldDecl = (IWineD3DVertexDeclaration *)This->updateStateBlock->state.vertex_declaration;
+    struct wined3d_vertex_declaration *oldDecl = This->updateStateBlock->state.vertex_declaration;
 
-    TRACE("(%p) : pDecl=%p\n", This, pDecl);
+    TRACE("iface %p, declaration %p.\n", iface, pDecl);
 
     if (pDecl)
         wined3d_vertex_declaration_incref(pDecl);
     if (oldDecl)
         wined3d_vertex_declaration_decref(oldDecl);
 
-    This->updateStateBlock->state.vertex_declaration = (IWineD3DVertexDeclarationImpl *)pDecl;
+    This->updateStateBlock->state.vertex_declaration = pDecl;
     This->updateStateBlock->changed.vertexDecl = TRUE;
 
     if (This->isRecordingState) {
@@ -3317,12 +3320,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* if
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration** ppDecl) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice *iface,
+        struct wined3d_vertex_declaration **ppDecl)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    TRACE("(%p) : ppDecl=%p\n", This, ppDecl);
+    TRACE("iface %p, declaration %p.\n", iface, ppDecl);
 
-    *ppDecl = (IWineD3DVertexDeclaration *)This->stateBlock->state.vertex_declaration;
+    *ppDecl = This->stateBlock->state.vertex_declaration;
     if (*ppDecl)
         wined3d_vertex_declaration_incref(*ppDecl);
 
@@ -4266,7 +4271,7 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
 
 /* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex,
-        UINT VertexCount, IWineD3DBuffer *pDestBuffer, IWineD3DVertexDeclaration *pVertexDecl, DWORD flags,
+        UINT VertexCount, IWineD3DBuffer *pDestBuffer, struct wined3d_vertex_declaration *pVertexDecl, DWORD flags,
         DWORD DestFVF)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;

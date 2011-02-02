@@ -157,7 +157,7 @@ static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
     }
 }
 
-HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWineD3DDeviceImpl *device,
+HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declaration, IWineD3DDeviceImpl *device,
         const WINED3DVERTEXELEMENT *elements, UINT element_count,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {

@@ -59,8 +59,6 @@ typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 struct IWineD3DResourceImpl;
-typedef struct wined3d_vertex_declaration IWineD3DVertexDeclaration;
-typedef struct wined3d_vertex_declaration IWineD3DVertexDeclarationImpl;
 
 /* Texture format fixups */
 
@@ -2326,8 +2324,8 @@ struct wined3d_vertex_declaration
     BOOL                    half_float_conv_needed;
 };
 
-HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *declaration, IWineD3DDeviceImpl *device,
-        const WINED3DVERTEXELEMENT *elements, UINT element_count,
+HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declaration,
+        IWineD3DDeviceImpl *device, const WINED3DVERTEXELEMENT *elements, UINT element_count,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 /* Internal state Block for Begin/End/Capture/Create/Apply info  */
@@ -2375,7 +2373,7 @@ struct wined3d_stream_state
 
 struct wined3d_state
 {
-    IWineD3DVertexDeclarationImpl *vertex_declaration;
+    struct wined3d_vertex_declaration *vertex_declaration;
     struct wined3d_stream_state streams[MAX_STREAMS + 1 /* tesselated pseudo-stream */];
     BOOL user_stream;
     struct wined3d_buffer *index_buffer;
