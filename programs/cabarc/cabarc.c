@@ -69,6 +69,7 @@ static int opt_recurse;
 static int opt_preserve_paths;
 static int opt_reserve_space;
 static int opt_verbose;
+static WCHAR *opt_dest_dir;
 static WCHAR **opt_files;
 
 static void * CDECL cab_alloc( ULONG size )
@@ -258,6 +259,194 @@ static INT_PTR CDECL fci_get_open_info( char *name, USHORT *date, USHORT *time,
     return (INT_PTR)handle;
 }
 
+static INT_PTR CDECL fdi_open( char *file, int oflag, int pmode )
+{
+    int err;
+    return fci_open( file, oflag, pmode, &err, NULL );
+}
+
+static UINT CDECL fdi_read( INT_PTR hf, void *pv, UINT cb )
+{
+    int err;
+    return fci_read( hf, pv, cb, &err, NULL );
+}
+
+static UINT CDECL fdi_write( INT_PTR hf, void *pv, UINT cb )
+{
+    int err;
+    return fci_write( hf, pv, cb, &err, NULL );
+}
+
+static int CDECL fdi_close( INT_PTR hf )
+{
+    int err;
+    return fci_close( hf, &err, NULL );
+}
+
+static LONG CDECL fdi_lseek( INT_PTR hf, LONG dist, int whence )
+{
+    int err;
+    return fci_lseek( hf, dist, whence, &err, NULL );
+}
+
+
+/* create directories leading to a given file */
+static void create_directories( const WCHAR *name )
+{
+    WCHAR *path, *p;
+
+    /* create the directory/directories */
+    path = cab_alloc( (strlenW(name) + 1) * sizeof(WCHAR) );
+    strcpyW(path, name);
+
+    p = strchrW(path, '\\');
+    while (p != NULL)
+    {
+        *p = 0;
+        if (!CreateDirectoryW( path, NULL ))
+            WINE_TRACE("Couldn't create directory %s - error: %d\n", wine_dbgstr_w(path), GetLastError());
+        *p = '\\';
+        p = strchrW(p+1, '\\');
+    }
+    cab_free( path );
+}
+
+/* check if file name matches against one of the files specification */
+static BOOL match_files( const WCHAR *name )
+{
+    int i;
+
+    if (!*opt_files) return TRUE;
+    for (i = 0; opt_files[i]; i++)
+    {
+        unsigned int len = strlenW( opt_files[i] );
+        /* FIXME: do smarter matching, and wildcards */
+        if (!len) continue;
+        if (strncmpiW( name, opt_files[i], len )) continue;
+        if (opt_files[i][len - 1] == '\\' || !name[len] || name[len] == '\\') return TRUE;
+    }
+    return FALSE;
+}
+
+static INT_PTR CDECL list_notify( FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin )
+{
+    WCHAR *nameW;
+
+    switch (fdint)
+    {
+    case fdintCABINET_INFO:
+        return 0;
+    case fdintCOPY_FILE:
+        nameW = strdupAtoW( (pfdin->attribs & _A_NAME_IS_UTF) ? CP_UTF8 : CP_ACP, pfdin->psz1 );
+        if (match_files( nameW ))
+        {
+            char *nameU = strdupWtoA( CP_UNIXCP, nameW );
+            if (opt_verbose)
+            {
+                char attrs[] = "rxash";
+                if (!(pfdin->attribs & _A_RDONLY)) attrs[0] = '-';
+                if (!(pfdin->attribs & _A_EXEC))   attrs[1] = '-';
+                if (!(pfdin->attribs & _A_ARCH))   attrs[2] = '-';
+                if (!(pfdin->attribs & _A_SYSTEM)) attrs[3] = '-';
+                if (!(pfdin->attribs & _A_HIDDEN)) attrs[4] = '-';
+                printf( " %s %9u  %04u/%02u/%02u %02u:%02u:%02u  ", attrs, pfdin->cb,
+                        (pfdin->date >> 9) + 1980, (pfdin->date >> 5) & 0x0f, pfdin->date & 0x1f,
+                        pfdin->time >> 11, (pfdin->time >> 5) & 0x3f, (pfdin->time & 0x1f) * 2 );
+            }
+            printf( "%s\n", nameU );
+            cab_free( nameU );
+        }
+        cab_free( nameW );
+        return 0;
+    default:
+        WINE_FIXME( "Unexpected notification type %d.\n", fdint );
+        return 0;
+    }
+}
+
+static int list_cabinet( char *cab_dir, char *cab_file )
+{
+    ERF erf;
+    int ret = 0;
+    HFDI fdi = FDICreate( cab_alloc, cab_free, fdi_open, fdi_read,
+                          fdi_write, fdi_close, fdi_lseek, cpuUNKNOWN, &erf );
+
+    if (!FDICopy( fdi, cab_file, cab_dir, 0, list_notify, NULL, NULL )) ret = GetLastError();
+    FDIDestroy( fdi );
+    return ret;
+}
+
+static INT_PTR CDECL extract_notify( FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin )
+{
+    WCHAR *file, *nameW, *path = NULL;
+    INT_PTR ret;
+
+    switch (fdint)
+    {
+    case fdintCABINET_INFO:
+        return 0;
+
+    case fdintCOPY_FILE:
+        nameW = strdupAtoW( (pfdin->attribs & _A_NAME_IS_UTF) ? CP_UTF8 : CP_ACP, pfdin->psz1 );
+        if (opt_preserve_paths)
+        {
+            file = nameW;
+            while (*file == '\\') file++;  /* remove leading backslashes */
+        }
+        else
+        {
+            if ((file = strrchrW( nameW, '\\' ))) file++;
+            else file = nameW;
+        }
+
+        if (opt_dest_dir)
+        {
+            path = cab_alloc( (strlenW(opt_dest_dir) + strlenW(file) + 1) * sizeof(WCHAR) );
+            strcpyW( path, opt_dest_dir );
+            strcatW( path, file );
+        }
+        else path = file;
+
+        if (match_files( file ))
+        {
+            if (opt_verbose)
+            {
+                char *nameU = strdupWtoA( CP_UNIXCP, path );
+                printf( "extracting %s\n", nameU );
+                cab_free( nameU );
+            }
+            create_directories( path );
+            /* FIXME: check for existing file and overwrite mode */
+            ret = (INT_PTR)CreateFileW( path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                        NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+        }
+        else ret = 0;
+
+        cab_free( nameW );
+        if (path != file) cab_free( path );
+        return ret;
+
+    case fdintCLOSE_FILE_INFO:
+        CloseHandle( (HANDLE)pfdin->hf );
+        return 0;
+
+    default:
+        WINE_FIXME( "Unexpected notification type %d.\n", fdint );
+        return 0;
+    }
+}
+
+static int extract_cabinet( char *cab_dir, char *cab_file )
+{
+    ERF erf;
+    int ret = 0;
+    HFDI fdi = FDICreate( cab_alloc, cab_free, fdi_open, fdi_read,
+                          fdi_write, fdi_close, fdi_lseek, cpuUNKNOWN, &erf );
+
+    if (!FDICopy( fdi, cab_file, cab_dir, 0, extract_notify, NULL, NULL )) ret = GetLastError();
+    FDIDestroy( fdi );
+    return ret;
+}
 
 static BOOL add_file( HFCI fci, WCHAR *name )
 {
@@ -468,15 +657,22 @@ int wmain( int argc, WCHAR *argv[] )
     {
     case 'l':
     case 'L':
-        WINE_FIXME( "list not implemented\n" );
-        return 1;
+        return list_cabinet( buffer, file_part );
     case 'n':
     case 'N':
         return new_cabinet( buffer, file_part );
     case 'x':
     case 'X':
-        WINE_FIXME( "extraction not implemented\n" );
-        return 1;
+        if (argc > 1)  /* check for destination dir as last argument */
+        {
+            WCHAR *last = argv[argc - 1];
+            if (last[0] && last[strlenW(last) - 1] == '\\')
+            {
+                opt_dest_dir = last;
+                argv[--argc] = NULL;
+            }
+        }
+        return extract_cabinet( buffer, file_part );
     default:
         usage();
         return 1;
