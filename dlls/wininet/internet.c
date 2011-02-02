@@ -161,6 +161,7 @@ DWORD alloc_handle( object_header_t *info, HINTERNET *ret )
     LeaveCriticalSection( &WININET_cs );
 
     info->hInternet = *ret = (HINTERNET)handle;
+    info->valid_handle = res == ERROR_SUCCESS;
     return res;
 }
 
@@ -178,7 +179,7 @@ object_header_t *get_handle_object( HINTERNET hinternet )
 
     EnterCriticalSection( &WININET_cs );
 
-    if(handle > 0 && handle < handle_table_size && handle_table[handle])
+    if(handle > 0 && handle < handle_table_size && handle_table[handle] && handle_table[handle]->valid_handle)
         info = WININET_AddRef(handle_table[handle]);
 
     LeaveCriticalSection( &WININET_cs );
@@ -188,12 +189,31 @@ object_header_t *get_handle_object( HINTERNET hinternet )
     return info;
 }
 
+static void invalidate_handle(object_header_t *info)
+{
+    object_header_t *child, *next;
+
+    if(!info->valid_handle)
+        return;
+    info->valid_handle = FALSE;
+
+    /* Free all children as native does */
+    LIST_FOR_EACH_ENTRY_SAFE( child, next, &info->children, object_header_t, entry )
+    {
+        TRACE("invalidating child handle %p for parent %p\n", child->hInternet, info);
+        invalidate_handle( child );
+    }
+
+    WININET_Release(info);
+}
+
 BOOL WININET_Release( object_header_t *info )
 {
     ULONG refs = InterlockedDecrement(&info->refs);
     TRACE( "object %p refcount = %d\n", info, refs );
     if( !refs )
     {
+        invalidate_handle(info);
         if ( info->vtbl->CloseConnection )
         {
             TRACE( "closing connection %p\n", info);
@@ -211,49 +231,20 @@ BOOL WININET_Release( object_header_t *info )
         if ( info->htype != WH_HINIT )
             list_remove( &info->entry );
         info->vtbl->Destroy( info );
+
+        if(info->hInternet) {
+            UINT_PTR handle = (UINT_PTR)info->hInternet;
+
+            EnterCriticalSection( &WININET_cs );
+
+            handle_table[handle] = NULL;
+            if(next_handle > handle)
+                next_handle = handle;
+
+            LeaveCriticalSection( &WININET_cs );
+        }
     }
     return TRUE;
-}
-
-static void invalidate_handle( HINTERNET hinternet )
-{
-    UINT_PTR handle = (UINT_PTR) hinternet;
-    object_header_t *info = NULL, *child, *next;
-
-    EnterCriticalSection( &WININET_cs );
-
-    if(handle && handle < handle_table_size)
-    {
-        if(handle_table[handle]) {
-            info = handle_table[handle];
-            TRACE( "destroying handle %ld for object %p\n", handle+1, info);
-            handle_table[handle] = NULL;
-        }
-    }
-
-    LeaveCriticalSection( &WININET_cs );
-
-    /* As on native when the equivalent of WININET_Release is called, the handle
-     * is already invalid, but if a new handle is created at this time it does
-     * not yet get assigned the freed handle number */
-    if( info )
-    {
-        /* Free all children as native does */
-        LIST_FOR_EACH_ENTRY_SAFE( child, next, &info->children, object_header_t, entry )
-        {
-            TRACE( "freeing child handle %ld for parent handle %ld\n",
-                   (UINT_PTR)child->hInternet, handle+1);
-            invalidate_handle( child->hInternet );
-        }
-        WININET_Release( info );
-    }
-
-    EnterCriticalSection( &WININET_cs );
-
-    if(next_handle > handle && !handle_table[handle])
-        next_handle = handle;
-
-    LeaveCriticalSection( &WININET_cs );
 }
 
 /***********************************************************************
@@ -1277,19 +1268,18 @@ BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
  */
 BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 {
-    object_header_t *lpwh;
+    object_header_t *obj;
     
-    TRACE("%p\n",hInternet);
+    TRACE("%p\n", hInternet);
 
-    lpwh = get_handle_object( hInternet );
-    if (NULL == lpwh)
-    {
-        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
+    obj = get_handle_object( hInternet );
+    if (!obj) {
+        SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    WININET_Release( lpwh );
-    invalidate_handle( hInternet );
+    invalidate_handle(obj);
+    WININET_Release(obj);
 
     return TRUE;
 }

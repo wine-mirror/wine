@@ -204,6 +204,7 @@ struct _object_header_t
     WH_TYPE htype;
     const object_vtbl_t *vtbl;
     HINTERNET hInternet;
+    BOOL valid_handle;
     DWORD  dwFlags;
     DWORD_PTR dwContext;
     DWORD  dwError;
