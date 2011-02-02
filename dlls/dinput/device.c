@@ -906,6 +906,9 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface,
             TRACE("buffersize = %d\n", pd->dwData);
             break;
         }
+        case (DWORD_PTR) DIPROP_VIDPID:
+            FIXME("DIPROP_VIDPID not implemented\n");
+            return DIERR_UNSUPPORTED;
         default:
             FIXME("Unknown property %s\n", debugstr_guid(rguid));
             return DIERR_INVALIDPARAM;
