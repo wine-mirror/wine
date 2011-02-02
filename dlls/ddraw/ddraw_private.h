@@ -426,8 +426,7 @@ struct IDirectDrawPaletteImpl
     const IDirectDrawPaletteVtbl *lpVtbl;
     LONG ref;
 
-    /* WineD3D uplink */
-    IWineD3DPalette           *wineD3DPalette;
+    struct wined3d_palette *wineD3DPalette;
 
     /* IDirectDrawPalette fields */
     IUnknown                  *ifaceToRelease;

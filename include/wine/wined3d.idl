@@ -2111,6 +2111,7 @@ interface IWineD3DVolume;
 interface IWineD3DSwapChain;
 interface IWineD3DDevice;
 struct wined3d;
+struct wined3d_palette;
 struct wined3d_stateblock;
 struct wined3d_vertex_declaration;
 
@@ -2237,30 +2238,6 @@ interface IWineD3DRendertargetView : IWineD3DBase
 [
     object,
     local,
-    uuid(f756720c-32b9-4439-b5a3-1d6c97037d9e)
-]
-interface IWineD3DPalette : IWineD3DBase
-{
-    HRESULT GetEntries(
-        [in] DWORD flags,
-        [in] DWORD start,
-        [in] DWORD count,
-        [out] PALETTEENTRY *entries
-    );
-    HRESULT GetCaps(
-        [out] DWORD *caps
-    );
-    HRESULT SetEntries(
-        [in] DWORD flags,
-        [in] DWORD start,
-        [in] DWORD count,
-        [in] const PALETTEENTRY *entries
-    );
-}
-
-[
-    object,
-    local,
     uuid(8f2bceb1-d338-488c-ab7f-0ec980bf5d2d)
 ]
 interface IWineD3DClipper : IUnknown
@@ -2339,10 +2316,10 @@ interface IWineD3DSurface : IWineD3DResource
         [in] DWORD trans
     );
     HRESULT GetPalette(
-        [out] IWineD3DPalette **palette
+        [out] struct wined3d_palette **palette
     );
     HRESULT SetPalette(
-        [in] IWineD3DPalette *palette
+        [in] struct wined3d_palette *palette
     );
     HRESULT SetColorKey(
         [in] DWORD flags,
@@ -2800,7 +2777,7 @@ interface IWineD3DDevice : IUnknown
         [in] DWORD flags,
         [in] const PALETTEENTRY *palette_entry,
         [in] void *parent,
-        [out] IWineD3DPalette **palette
+        [out] struct wined3d_palette **palette
     );
     HRESULT Init3D(
         [in] WINED3DPRESENT_PARAMETERS *present_parameters
@@ -3297,6 +3274,15 @@ HRESULT __cdecl wined3d_register_software_device(struct wined3d *wined3d, void *
 HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx,
         WINED3DDEVTYPE device_type, HWND focus_window, DWORD behaviour_flags,
         IWineD3DDeviceParent *device_parent, IWineD3DDevice **device);
+
+ULONG __cdecl wined3d_palette_decref(struct wined3d_palette *palette);
+HRESULT __cdecl wined3d_palette_get_entries(const struct wined3d_palette *palette,
+        DWORD flags, DWORD start, DWORD count, PALETTEENTRY *entries);
+DWORD __cdecl wined3d_palette_get_flags(const struct wined3d_palette *palette);
+void * __cdecl wined3d_palette_get_parent(const struct wined3d_palette *palette);
+ULONG __cdecl wined3d_palette_incref(struct wined3d_palette *palette);
+HRESULT __cdecl wined3d_palette_set_entries(struct wined3d_palette *palette,
+        DWORD flags, DWORD start, DWORD count, const PALETTEENTRY *entries);
 
 HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);

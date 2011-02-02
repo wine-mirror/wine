@@ -53,12 +53,13 @@
 #define WINED3D_QUIRK_FBO_TEX_UPDATE            0x00000020
 
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
-typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 struct IWineD3DResourceImpl;
+typedef struct wined3d_palette IWineD3DPaletteImpl;
+typedef struct wined3d_palette IWineD3DPalette;
 
 /* Texture format fixups */
 
@@ -2941,18 +2942,12 @@ static const float srgb_pow = 0.41666f;
 static const float srgb_mul_high = 1.055f;
 static const float srgb_sub_high = 0.055f;
 
-/*****************************************************************************
- * IWineD3DPalette implementation structure
- */
-struct IWineD3DPaletteImpl {
-    /* IUnknown parts */
-    const IWineD3DPaletteVtbl  *lpVtbl;
-    LONG                       ref;
-
+struct wined3d_palette
+{
+    LONG ref;
     void *parent;
     IWineD3DDeviceImpl *device;
 
-    /* IWineD3DPalette */
     HPALETTE                   hpal;
     WORD                       palVersion;     /*|               */
     WORD                       palNumEntries;  /*|  LOGPALETTE   */

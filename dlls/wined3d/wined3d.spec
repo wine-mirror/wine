@@ -22,6 +22,13 @@
 
 @ cdecl wined3d_device_create(ptr long long ptr long ptr ptr)
 
+@ cdecl wined3d_palette_decref(ptr)
+@ cdecl wined3d_palette_get_entries(ptr long long long ptr)
+@ cdecl wined3d_palette_get_flags(ptr)
+@ cdecl wined3d_palette_get_parent(ptr)
+@ cdecl wined3d_palette_incref(ptr)
+@ cdecl wined3d_palette_set_entries(ptr long long long ptr)
+
 @ cdecl wined3d_stateblock_apply(ptr)
 @ cdecl wined3d_stateblock_capture(ptr)
 @ cdecl wined3d_stateblock_decref(ptr)

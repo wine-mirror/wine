@@ -2717,7 +2717,7 @@ static HRESULT WINAPI ddraw_surface3_SetSurfaceDesc(IDirectDrawSurface3 *iface,
 static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDirectDrawPalette **Pal)
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
-    IWineD3DPalette *wPal;
+    struct wined3d_palette *wined3d_palette;
     HRESULT hr;
 
     TRACE("iface %p, palette %p.\n", iface, Pal);
@@ -2726,16 +2726,16 @@ static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDir
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_GetPalette(This->WineD3DSurface, &wPal);
-    if(hr != DD_OK)
+    hr = IWineD3DSurface_GetPalette(This->WineD3DSurface, &wined3d_palette);
+    if (FAILED(hr))
     {
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
 
-    if(wPal)
+    if (wined3d_palette)
     {
-        *Pal = IWineD3DPalette_GetParent(wPal);
+        *Pal = wined3d_palette_get_parent(wined3d_palette);
         IDirectDrawPalette_AddRef(*Pal);
     }
     else
@@ -3227,7 +3227,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
 
     for (;;)
     {
-        IWineD3DPalette *wined3d_dst_pal, *wined3d_src_pal;
+        struct wined3d_palette *wined3d_dst_pal, *wined3d_src_pal;
         IDirectDrawPalette *dst_pal = NULL, *src_pal = NULL;
         DDSURFACEDESC *src_desc, *dst_desc;
 
@@ -3245,7 +3245,8 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             LeaveCriticalSection(&ddraw_cs);
             return D3DERR_TEXTURE_LOAD_FAILED;
         }
-        if (wined3d_dst_pal) dst_pal = IWineD3DPalette_GetParent(wined3d_dst_pal);
+        if (wined3d_dst_pal)
+            dst_pal = wined3d_palette_get_parent(wined3d_dst_pal);
 
         hr = IWineD3DSurface_GetPalette(src_surface->WineD3DSurface, &wined3d_src_pal);
         if (FAILED(hr))
@@ -3254,7 +3255,8 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             LeaveCriticalSection(&ddraw_cs);
             return D3DERR_TEXTURE_LOAD_FAILED;
         }
-        if (wined3d_src_pal) src_pal = IWineD3DPalette_GetParent(wined3d_src_pal);
+        if (wined3d_src_pal)
+            src_pal = wined3d_palette_get_parent(wined3d_src_pal);
 
         if (src_pal)
         {
