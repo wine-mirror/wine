@@ -149,7 +149,7 @@ static INT_PTR CDECL sc_cb_open(char *pszFile, int oflag, int pmode)
     ioflag |= GENERIC_WRITE;
     break;
   case _O_RDWR:
-    ioflag |= GENERIC_READ & GENERIC_WRITE;
+    ioflag |= GENERIC_READ | GENERIC_WRITE;
     break;
   case _O_WRONLY | _O_RDWR: /* hmmm.. */
     ERR("_O_WRONLY & _O_RDWR in oflag?\n");
