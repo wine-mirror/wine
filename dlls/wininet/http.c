@@ -1066,7 +1066,7 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
     if (!lpszHeader) 
       return TRUE;
 
-    lpwhr = (http_request_t*) WININET_GetObject( hHttpRequest );
+    lpwhr = (http_request_t*) get_handle_object( hHttpRequest );
     if (lpwhr && lpwhr->hdr.htype == WH_HHTTPREQ)
         res = HTTP_HttpAddRequestHeadersW( lpwhr, lpszHeader, dwHeaderLength, dwModifier );
     if( lpwhr )
@@ -2604,12 +2604,9 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *lpwhs,
         goto lend;
     }
 
-    handle = WININET_AllocHandle( &lpwhr->hdr );
-    if (NULL == handle)
-    {
-        res = ERROR_OUTOFMEMORY;
+    res = alloc_handle(&lpwhr->hdr, &handle);
+    if (res != ERROR_SUCCESS)
         goto lend;
-    }
 
     if ((res = NETCON_init(&lpwhr->netConnection, dwFlags & INTERNET_FLAG_SECURE)) != ERROR_SUCCESS)
     {
@@ -2727,7 +2724,7 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
             TRACE("\taccept type: %s\n",debugstr_w(lpszAcceptTypes[i]));
     }
 
-    lpwhs = (http_session_t*) WININET_GetObject( hHttpSession );
+    lpwhs = (http_session_t*) get_handle_object( hHttpSession );
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
         res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
@@ -3174,7 +3171,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	TRACE("\n");
     }
     
-    lpwhr = (http_request_t*) WININET_GetObject( hHttpRequest );
+    lpwhr = (http_request_t*) get_handle_object( hHttpRequest );
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
@@ -4045,7 +4042,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
         return FALSE;
     }
 
-    lpwhr = (http_request_t*) WININET_GetObject( hRequest );
+    lpwhr = (http_request_t*) get_handle_object( hRequest );
 
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
@@ -4160,7 +4157,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
     TRACE("(%p, %p, %p, %08x, %08lx)\n", hRequest, lpBuffersIn,
             lpBuffersOut, dwFlags, dwContext);
 
-    lpwhr = (http_request_t*) WININET_GetObject( hRequest );
+    lpwhr = (http_request_t*) get_handle_object( hRequest );
 
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
@@ -4259,7 +4256,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     TRACE("%p, %s, %i, %p, %i)\n", hHttpRequest,
             debugstr_wn(lpszHeaders, dwHeaderLength), dwHeaderLength, lpOptional, dwOptionalLength);
 
-    lpwhr = (http_request_t*) WININET_GetObject( hHttpRequest );
+    lpwhr = (http_request_t*) get_handle_object( hHttpRequest );
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
@@ -4444,7 +4441,7 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
 {
     http_session_t *lpwhs = NULL;
     HINTERNET handle = NULL;
-    DWORD res = ERROR_SUCCESS;
+    DWORD res;
 
     TRACE("-->\n");
 
@@ -4473,11 +4470,10 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     lpwhs->lpAppInfo = hIC;
     list_add_head( &hIC->hdr.children, &lpwhs->hdr.entry );
 
-    handle = WININET_AllocHandle( &lpwhs->hdr );
-    if (NULL == handle)
+    res = alloc_handle(&lpwhs->hdr, &handle);
+    if (res != ERROR_SUCCESS)
     {
         ERR("Failed to alloc handle\n");
-        res = ERROR_OUTOFMEMORY;
         goto lerror;
     }
 

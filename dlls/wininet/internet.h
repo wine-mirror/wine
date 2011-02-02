@@ -58,6 +58,31 @@ typedef struct
     DWORD security_flags;
 } WININET_NETCONNECTION;
 
+static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline void * __WINE_ALLOC_SIZE(2) heap_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
+static inline void * __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
 static inline LPWSTR heap_strdupW(LPCWSTR str)
 {
     LPWSTR ret = NULL;
@@ -409,11 +434,10 @@ typedef struct WORKREQ
 
 } WORKREQUEST, *LPWORKREQUEST;
 
-HINTERNET WININET_AllocHandle( object_header_t *info );
-object_header_t *WININET_GetObject( HINTERNET hinternet );
+DWORD alloc_handle( object_header_t*, HINTERNET*);
+object_header_t *get_handle_object( HINTERNET hinternet );
 object_header_t *WININET_AddRef( object_header_t *info );
 BOOL WININET_Release( object_header_t *info );
-BOOL WININET_FreeHandle( HINTERNET hinternet );
 
 DWORD INET_QueryOption( object_header_t *, DWORD, void *, DWORD *, BOOL );
 

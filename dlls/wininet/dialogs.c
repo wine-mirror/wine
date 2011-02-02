@@ -70,7 +70,7 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     BOOL ret = FALSE;
     LPWSTR p;
 
-    lpwhr = (http_request_t*) WININET_GetObject( hRequest );
+    lpwhr = (http_request_t*) get_handle_object( hRequest );
     if (NULL == lpwhr)
         return FALSE;
 
@@ -107,7 +107,7 @@ static BOOL WININET_GetServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     http_session_t *lpwhs = NULL;
     BOOL ret = FALSE;
 
-    lpwhr = (http_request_t*) WININET_GetObject( hRequest );
+    lpwhr = (http_request_t*) get_handle_object( hRequest );
     if (NULL == lpwhr)
         return FALSE;
 
@@ -246,7 +246,7 @@ static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
     BOOL ret = FALSE;
     LPWSTR p, q;
 
-    lpwhr = (http_request_t*) WININET_GetObject( hRequest );
+    lpwhr = (http_request_t*) get_handle_object( hRequest );
     if( !lpwhr )
         return FALSE;
 

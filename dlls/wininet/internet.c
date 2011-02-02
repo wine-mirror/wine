@@ -90,8 +90,6 @@ typedef struct
 static DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
 HMODULE WININET_hModule;
 
-#define HANDLE_CHUNK_SIZE 0x10
-
 static CRITICAL_SECTION WININET_cs;
 static CRITICAL_SECTION_DEBUG WININET_cs_debug = 
 {
@@ -101,9 +99,9 @@ static CRITICAL_SECTION_DEBUG WININET_cs_debug =
 };
 static CRITICAL_SECTION WININET_cs = { &WININET_cs_debug, -1, 0, 0, 0, 0 };
 
-static object_header_t **WININET_Handles;
-static UINT_PTR WININET_dwNextHandle;
-static UINT_PTR WININET_dwMaxHandles;
+static object_header_t **handle_table;
+static UINT_PTR next_handle;
+static UINT_PTR handle_table_size;
 
 typedef struct
 {
@@ -119,48 +117,51 @@ static const WCHAR szInternetSettings[] =
 static const WCHAR szProxyServer[] = { 'P','r','o','x','y','S','e','r','v','e','r', 0 };
 static const WCHAR szProxyEnable[] = { 'P','r','o','x','y','E','n','a','b','l','e', 0 };
 
-HINTERNET WININET_AllocHandle( object_header_t *info )
+DWORD alloc_handle( object_header_t *info, HINTERNET *ret )
 {
     object_header_t **p;
     UINT_PTR handle = 0, num;
+    DWORD res = ERROR_SUCCESS;
 
     list_init( &info->children );
 
     EnterCriticalSection( &WININET_cs );
-    if( !WININET_dwMaxHandles )
-    {
-        num = HANDLE_CHUNK_SIZE;
-        p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                   sizeof (*WININET_Handles)* num);
-        if( !p )
-            goto end;
-        WININET_Handles = p;
-        WININET_dwMaxHandles = num;
-    }
-    if( WININET_dwMaxHandles == WININET_dwNextHandle )
-    {
-        num = WININET_dwMaxHandles + HANDLE_CHUNK_SIZE;
-        p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                   WININET_Handles, sizeof (*WININET_Handles)* num);
-        if( !p )
-            goto end;
-        WININET_Handles = p;
-        WININET_dwMaxHandles = num;
+
+    if(!handle_table_size) {
+        num = 16;
+        p = heap_alloc_zero(sizeof(handle_table[0]) * num);
+        if(p) {
+            handle_table = p;
+            handle_table_size = num;
+            next_handle = 1;
+        }else {
+            res = ERROR_OUTOFMEMORY;
+        }
+    }else if(next_handle == handle_table_size) {
+        num = handle_table_size * 2;
+        p = heap_realloc_zero(handle_table, sizeof(handle_table[0]) * num);
+        if(p) {
+            handle_table = p;
+            handle_table_size = num;
+        }else {
+            res = ERROR_OUTOFMEMORY;
+        }
     }
 
-    handle = WININET_dwNextHandle;
-    if( WININET_Handles[handle] )
-        ERR("handle isn't free but should be\n");
-    WININET_Handles[handle] = WININET_AddRef( info );
+    if(res == ERROR_SUCCESS) {
+        handle = next_handle;
+        if(handle_table[handle])
+            ERR("handle isn't free but should be\n");
+        handle_table[handle] = WININET_AddRef( info );
 
-    while( WININET_Handles[WININET_dwNextHandle] && 
-           (WININET_dwNextHandle < WININET_dwMaxHandles ) )
-        WININET_dwNextHandle++;
+        while(handle_table[next_handle] && next_handle < handle_table_size)
+            next_handle++;
+    }
     
-end:
     LeaveCriticalSection( &WININET_cs );
 
-    return info->hInternet = (HINTERNET) (handle+1);
+    info->hInternet = *ret = (HINTERNET)handle;
+    return res;
 }
 
 object_header_t *WININET_AddRef( object_header_t *info )
@@ -170,16 +171,15 @@ object_header_t *WININET_AddRef( object_header_t *info )
     return info;
 }
 
-object_header_t *WININET_GetObject( HINTERNET hinternet )
+object_header_t *get_handle_object( HINTERNET hinternet )
 {
     object_header_t *info = NULL;
     UINT_PTR handle = (UINT_PTR) hinternet;
 
     EnterCriticalSection( &WININET_cs );
 
-    if( (handle > 0) && ( handle <= WININET_dwMaxHandles ) && 
-        WININET_Handles[handle-1] )
-        info = WININET_AddRef( WININET_Handles[handle-1] );
+    if(handle > 0 && handle < handle_table_size && handle_table[handle])
+        info = WININET_AddRef(handle_table[handle]);
 
     LeaveCriticalSection( &WININET_cs );
 
@@ -215,23 +215,19 @@ BOOL WININET_Release( object_header_t *info )
     return TRUE;
 }
 
-BOOL WININET_FreeHandle( HINTERNET hinternet )
+static void invalidate_handle( HINTERNET hinternet )
 {
-    BOOL ret = FALSE;
     UINT_PTR handle = (UINT_PTR) hinternet;
     object_header_t *info = NULL, *child, *next;
 
     EnterCriticalSection( &WININET_cs );
 
-    if( (handle > 0) && ( handle <= WININET_dwMaxHandles ) )
+    if(handle && handle < handle_table_size)
     {
-        handle--;
-        if( WININET_Handles[handle] )
-        {
-            info = WININET_Handles[handle];
+        if(handle_table[handle]) {
+            info = handle_table[handle];
             TRACE( "destroying handle %ld for object %p\n", handle+1, info);
-            WININET_Handles[handle] = NULL;
-            ret = TRUE;
+            handle_table[handle] = NULL;
         }
     }
 
@@ -247,19 +243,17 @@ BOOL WININET_FreeHandle( HINTERNET hinternet )
         {
             TRACE( "freeing child handle %ld for parent handle %ld\n",
                    (UINT_PTR)child->hInternet, handle+1);
-            WININET_FreeHandle( child->hInternet );
+            invalidate_handle( child->hInternet );
         }
         WININET_Release( info );
     }
 
     EnterCriticalSection( &WININET_cs );
 
-    if( WININET_dwNextHandle > handle && !WININET_Handles[handle] )
-        WININET_dwNextHandle = handle;
+    if(next_handle > handle && !handle_table[handle])
+        next_handle = handle;
 
     LeaveCriticalSection( &WININET_cs );
-
-    return ret;
 }
 
 /***********************************************************************
@@ -843,6 +837,7 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
 {
     appinfo_t *lpwai = NULL;
     HINTERNET handle = NULL;
+    DWORD res;
 
     if (TRACE_ON(wininet)) {
 #define FE(x) { x, #x }
@@ -887,11 +882,11 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     lpwai->lpszProxyUsername = NULL;
     lpwai->lpszProxyPassword = NULL;
 
-    handle = WININET_AllocHandle( &lpwai->hdr );
-    if( !handle )
+    res = alloc_handle(&lpwai->hdr, &handle);
+    if(res != ERROR_SUCCESS)
     {
         HeapFree( GetProcessHeap(), 0, lpwai );
-        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        INTERNET_SetLastError(res);
 	goto lend;
     }
 
@@ -1142,7 +1137,7 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
         return NULL;
     }
 
-    hIC = (appinfo_t*)WININET_GetObject( hInternet );
+    hIC = (appinfo_t*)get_handle_object( hInternet );
     if ( (hIC == NULL) || (hIC->hdr.htype != WH_HINIT) )
     {
         res = ERROR_INVALID_HANDLE;
@@ -1249,7 +1244,7 @@ BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
 
     TRACE("\n");
 
-    hdr = WININET_GetObject(hFind);
+    hdr = get_handle_object(hFind);
     if(!hdr) {
         WARN("Invalid handle\n");
         SetLastError(ERROR_INVALID_HANDLE);
@@ -1286,7 +1281,7 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
     
     TRACE("%p\n",hInternet);
 
-    lpwh = WININET_GetObject( hInternet );
+    lpwh = get_handle_object( hInternet );
     if (NULL == lpwh)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -1294,7 +1289,7 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
     }
 
     WININET_Release( lpwh );
-    WININET_FreeHandle( hInternet );
+    invalidate_handle( hInternet );
 
     return TRUE;
 }
@@ -2023,7 +2018,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
 
     TRACE("%p\n", hInternet);
 
-    if (!(lpwh = WININET_GetObject(hInternet)))
+    if (!(lpwh = get_handle_object(hInternet)))
         return INTERNET_INVALID_STATUS_CALLBACK;
 
     retVal = set_status_callback(lpwh, lpfnIntCB, FALSE);
@@ -2051,7 +2046,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
 
     TRACE("%p\n", hInternet);
 
-    if (!(lpwh = WININET_GetObject(hInternet)))
+    if (!(lpwh = get_handle_object(hInternet)))
         return INTERNET_INVALID_STATUS_CALLBACK;
 
     retVal = set_status_callback(lpwh, lpfnIntCB, TRUE);
@@ -2088,7 +2083,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer,
 
     TRACE("(%p %p %d %p)\n", hFile, lpBuffer, dwNumOfBytesToWrite, lpdwNumOfBytesWritten);
 
-    lpwh = WININET_GetObject( hFile );
+    lpwh = get_handle_object( hFile );
     if (!lpwh) {
         WARN("Invalid handle\n");
         SetLastError(ERROR_INVALID_HANDLE);
@@ -2128,7 +2123,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
 
     TRACE("%p %p %d %p\n", hFile, lpBuffer, dwNumOfBytesToRead, pdwNumOfBytesRead);
 
-    hdr = WININET_GetObject(hFile);
+    hdr = get_handle_object(hFile);
     if (!hdr) {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -2182,7 +2177,7 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
 
     TRACE("(%p %p 0x%x 0x%lx)\n", hFile, lpBuffersOut, dwFlags, dwContext);
 
-    hdr = WININET_GetObject(hFile);
+    hdr = get_handle_object(hFile);
     if (!hdr) {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -2214,7 +2209,7 @@ BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
 
     TRACE("(%p %p 0x%x 0x%lx)\n", hFile, lpBuffer, dwFlags, dwContext);
 
-    hdr = WININET_GetObject(hFile);
+    hdr = get_handle_object(hFile);
     if (!hdr) {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -2440,7 +2435,7 @@ BOOL WINAPI InternetQueryOptionW(HINTERNET hInternet, DWORD dwOption,
     TRACE("%p %d %p %p\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
 
     if(hInternet) {
-        hdr = WININET_GetObject(hInternet);
+        hdr = get_handle_object(hInternet);
         if (hdr) {
             res = hdr->vtbl->QueryOption(hdr, dwOption, lpBuffer, lpdwBufferLength, TRUE);
             WININET_Release(hdr);
@@ -2473,7 +2468,7 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
     TRACE("%p %d %p %p\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
 
     if(hInternet) {
-        hdr = WININET_GetObject(hInternet);
+        hdr = get_handle_object(hInternet);
         if (hdr) {
             res = hdr->vtbl->QueryOption(hdr, dwOption, lpBuffer, lpdwBufferLength, FALSE);
             WININET_Release(hdr);
@@ -2506,7 +2501,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 
     TRACE("(%p %d %p %d)\n", hInternet, dwOption, lpBuffer, dwBufferLength);
 
-    lpwhh = (object_header_t*) WININET_GetObject( hInternet );
+    lpwhh = (object_header_t*) get_handle_object( hInternet );
     if(lpwhh && lpwhh->vtbl->SetOption) {
         DWORD res;
 
@@ -2764,7 +2759,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
         {
         object_header_t *lpwh;
 
-        if (!(lpwh = WININET_GetObject(hInternet)))
+        if (!(lpwh = get_handle_object(hInternet)))
         {
             INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
             return FALSE;
@@ -3379,7 +3374,7 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
         goto lend;
     }
 
-    hIC = (appinfo_t*)WININET_GetObject( hInternet );
+    hIC = (appinfo_t*)get_handle_object( hInternet );
     if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT) {
 	SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
  	goto lend;
@@ -3679,7 +3674,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
 
     TRACE("(%p %p %x %lx)\n", hFile, lpdwNumberOfBytesAvailble, dwFlags, dwContext);
 
-    hdr = WININET_GetObject( hFile );
+    hdr = get_handle_object( hFile );
     if (!hdr) {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;

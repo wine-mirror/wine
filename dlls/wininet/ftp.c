@@ -288,7 +288,7 @@ BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
         return FALSE;
     }
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hConnect );
+    lpwfs = (ftp_session_t*) get_handle_object( hConnect );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -470,7 +470,7 @@ BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
         goto lend;
     }
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hConnect );
+    lpwfs = (ftp_session_t*) get_handle_object( hConnect );
     if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -610,7 +610,7 @@ BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hConnect );
+    lpwfs = (ftp_session_t*) get_handle_object( hConnect );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -766,7 +766,7 @@ HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
     appinfo_t *hIC = NULL;
     HINTERNET r = NULL;
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hConnect );
+    lpwfs = (ftp_session_t*) get_handle_object( hConnect );
     if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -964,7 +964,7 @@ BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDir
 
     TRACE("%p %p %p\n", hFtpSession, lpszCurrentDirectory, lpdwCurrentDirectory);
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hFtpSession );
+    lpwfs = (ftp_session_t*) get_handle_object( hFtpSession );
     if (NULL == lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -1327,6 +1327,7 @@ static HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
     ftp_file_t *lpwh = NULL;
     appinfo_t *hIC = NULL;
     HINTERNET handle = NULL;
+    DWORD res = ERROR_SUCCESS;
 
     TRACE("\n");
 
@@ -1364,8 +1365,8 @@ static HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
         lpwh->lpFtpSession = lpwfs;
         list_add_head( &lpwfs->hdr.children, &lpwh->hdr.entry );
 	
-        handle = WININET_AllocHandle( &lpwh->hdr );
-        if( !handle )
+        res = alloc_handle(&lpwh->hdr, &handle);
+        if (res != ERROR_SUCCESS)
             goto lend;
 
 	/* Indicate that a download is currently in progress */
@@ -1440,6 +1441,8 @@ lend:
     if( lpwh )
         WININET_Release( &lpwh->hdr );
 
+    if(res != ERROR_SUCCESS)
+        INTERNET_SetLastError(res);
     return handle;
 }
 
@@ -1501,7 +1504,7 @@ HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
     TRACE("(%p,%s,0x%08x,0x%08x,0x%08lx)\n", hFtpSession,
         debugstr_w(lpszFileName), fdwAccess, dwFlags, dwContext);
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hFtpSession );
+    lpwfs = (ftp_session_t*) get_handle_object( hFtpSession );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -1624,7 +1627,7 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
         return FALSE;
     }
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hInternet );
+    lpwfs = (ftp_session_t*) get_handle_object( hInternet );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -1818,7 +1821,7 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hFtpSession );
+    lpwfs = (ftp_session_t*) get_handle_object( hFtpSession );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -1963,7 +1966,7 @@ BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hFtpSession );
+    lpwfs = (ftp_session_t*) get_handle_object( hFtpSession );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -2113,7 +2116,7 @@ BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszD
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hFtpSession );
+    lpwfs = (ftp_session_t*) get_handle_object( hFtpSession );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -2279,7 +2282,7 @@ BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
         return FALSE;
     }
 
-    lpwfs = (ftp_session_t*) WININET_GetObject( hConnect );
+    lpwfs = (ftp_session_t*) get_handle_object( hConnect );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -2451,6 +2454,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     ftp_session_t *lpwfs = NULL;
     HINTERNET handle = NULL;
     char szaddr[INET_ADDRSTRLEN];
+    DWORD res;
 
     TRACE("%p  Server(%s) Port(%d) User(%s) Paswd(%s)\n",
 	    hIC, debugstr_w(lpszServerName),
@@ -2492,11 +2496,11 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     lpwfs->lpAppInfo = hIC;
     list_add_head( &hIC->hdr.children, &lpwfs->hdr.entry );
 
-    handle = WININET_AllocHandle( &lpwfs->hdr );
-    if( !handle )
+    res = alloc_handle(&lpwfs->hdr, &handle);
+    if(res != ERROR_SUCCESS)
     {
         ERR("Failed to alloc handle\n");
-        INTERNET_SetLastError(ERROR_OUTOFMEMORY);
+        INTERNET_SetLastError(res);
         goto lerror;
     }
 
@@ -2604,7 +2608,7 @@ lerror:
 
     if (!bSuccess && handle)
     {
-        WININET_FreeHandle( handle );
+        InternetCloseHandle(handle);
         handle = NULL;
     }
 
@@ -3531,6 +3535,7 @@ static HINTERNET FTP_ReceiveFileList(ftp_session_t *lpwfs, INT nSocket, LPCWSTR 
     LPFILEPROPERTIESW lpafp = NULL;
     LPWININETFTPFINDNEXTW lpwfn = NULL;
     HINTERNET handle = 0;
+    DWORD res;
 
     TRACE("(%p,%d,%s,%p,%08lx)\n", lpwfs, nSocket, debugstr_w(lpszSearchFile), lpFindFileData, dwContext);
 
@@ -3555,7 +3560,9 @@ static HINTERNET FTP_ReceiveFileList(ftp_session_t *lpwfs, INT nSocket, LPCWSTR 
             lpwfn->lpFtpSession = lpwfs;
             list_add_head( &lpwfs->hdr.children, &lpwfn->hdr.entry );
 
-            handle = WININET_AllocHandle( &lpwfn->hdr );
+            res = alloc_handle(&lpwfn->hdr, &handle);
+            if(res != ERROR_SUCCESS)
+                SetLastError(res);
         }
     }
 
