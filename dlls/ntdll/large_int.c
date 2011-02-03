@@ -531,7 +531,7 @@ NTSTATUS WINAPI RtlInt64ToUnicodeString(
  *
  * PARAMS
  *  a [I] Initial number.
- *  b [I] Number to multiply a by.
+ *  b [I] Number to divide a by.
  *
  * RETURNS
  *  The dividend of a and b.
@@ -585,7 +585,7 @@ LONGLONG WINAPI _allrem( LONGLONG a, LONGLONG b )
  *
  * PARAMS
  *  a [I] Initial number.
- *  b [I] Number to multiply a by.
+ *  b [I] Number to divide a by.
  *
  * RETURNS
  *  The dividend of a and b.
