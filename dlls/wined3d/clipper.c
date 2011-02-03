@@ -145,17 +145,18 @@ HRESULT CDECL wined3d_clipper_is_clip_list_changed(const struct wined3d_clipper 
 
 struct wined3d_clipper * CDECL wined3d_clipper_create(void)
 {
-    IWineD3DClipperImpl *obj;
+    struct wined3d_clipper *clipper;
 
     TRACE("\n");
 
-    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
-    if(!obj)
+    clipper = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*clipper));
+    if (!clipper)
     {
         ERR("Out of memory when trying to allocate a WineD3D Clipper\n");
         return NULL;
     }
 
-    wined3d_clipper_incref(obj);
-    return (IWineD3DClipper *) obj;
+    wined3d_clipper_incref(clipper);
+
+    return clipper;
 }

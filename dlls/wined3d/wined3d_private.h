@@ -58,8 +58,6 @@ typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 struct IWineD3DResourceImpl;
-typedef struct wined3d_clipper IWineD3DClipperImpl;
-typedef struct wined3d_clipper IWineD3DClipper;
 
 /* Texture format fixups */
 
@@ -2208,8 +2206,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *ifac
         DWORD flags, IWineD3DSurface *Ref) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, const RECT *SrcRect,
         IWineD3DSurface *DstSurface, const RECT *DstRect, DWORD flags, const WINEDDOVERLAYFX *FX) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetClipper(IWineD3DSurface *iface, IWineD3DClipper *clipper) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DClipper **clipper) DECLSPEC_HIDDEN;
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetClipper(IWineD3DSurface *iface,
+        struct wined3d_clipper *clipper) DECLSPEC_HIDDEN;
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface,
+        struct wined3d_clipper **clipper) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface,
         enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
 HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) DECLSPEC_HIDDEN;

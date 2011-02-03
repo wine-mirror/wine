@@ -472,21 +472,24 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, con
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetClipper(IWineD3DSurface *iface, IWineD3DClipper *clipper)
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetClipper(IWineD3DSurface *iface, struct wined3d_clipper *clipper)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    TRACE("(%p)->(%p)\n", This, clipper);
 
-    This->clipper = (IWineD3DClipperImpl *)clipper;
+    TRACE("iface %p, clipper %p.\n", iface, clipper);
+
+    This->clipper = clipper;
+
     return WINED3D_OK;
 }
 
-HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD3DClipper **clipper)
+HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, struct wined3d_clipper **clipper)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    TRACE("(%p)->(%p)\n", This, clipper);
 
-    *clipper = (IWineD3DClipper *)This->clipper;
+    TRACE("iface %p, clipper %p.\n", iface, clipper);
+
+    *clipper = This->clipper;
     if (*clipper)
         wined3d_clipper_incref(*clipper);
 
