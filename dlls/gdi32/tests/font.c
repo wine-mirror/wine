@@ -3096,10 +3096,25 @@ todo_wine
 static void test_GetGlyphOutline(void)
 {
     HDC hdc;
-    GLYPHMETRICS gm;
+    GLYPHMETRICS gm, gm2;
     LOGFONTA lf;
     HFONT hfont, old_hfont;
-    INT ret;
+    INT ret, ret2;
+    static const struct
+    {
+        UINT cs;
+        UINT a;
+        UINT w;
+    } c[] =
+    {
+        {ANSI_CHARSET, 0x30, 0x30},
+        {SHIFTJIS_CHARSET, 0x82a0, 0x3042},
+        {HANGEUL_CHARSET, 0x8141, 0xac02},
+        {JOHAB_CHARSET, 0x8446, 0x3135},
+        {GB2312_CHARSET, 0x8141, 0x4e04},
+        {CHINESEBIG5_CHARSET, 0xa142, 0x3001}
+    };
+    UINT i;
 
     if (!is_truetype_font_installed("Tahoma"))
     {
@@ -3163,6 +3178,33 @@ static void test_GetGlyphOutline(void)
 
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
+
+    for (i = 0; i < sizeof c / sizeof c[0]; ++i)
+    {
+        lf.lfFaceName[0] = '\0';
+        lf.lfCharSet = c[i].cs;
+        lf.lfPitchAndFamily = 0;
+        if (EnumFontFamiliesEx(hdc, &lf, create_font_proc, (LPARAM)&hfont, 0))
+        {
+            skip("TrueType font for charset %u is not installed\n", c[i].cs);
+            continue;
+        }
+
+        old_hfont = SelectObject(hdc, hfont);
+
+        ret = GetGlyphOutlineA(hdc, 0x8041, GGO_BITMAP, &gm, 0, NULL, &mat);
+        ret2 = GetGlyphOutlineA(hdc, 0x41, GGO_BITMAP, &gm2, 0, NULL, &mat);
+        todo_wine
+        ok(ret == ret2 && memcmp(&gm, &gm2, sizeof gm) == 0, "%d %d\n", ret, ret2);
+
+        ret = GetGlyphOutlineA(hdc, c[i].a, GGO_BITMAP, &gm, 0, NULL, &mat);
+        ret2 = GetGlyphOutlineW(hdc, c[i].w, GGO_BITMAP, &gm2, 0, NULL, &mat);
+        ok(ret == ret2 && memcmp(&gm, &gm2, sizeof gm) == 0, "%d %d\n", ret, ret2);
+
+        hfont = SelectObject(hdc, old_hfont);
+        DeleteObject(hfont);
+    }
+
     DeleteDC(hdc);
 }
 
