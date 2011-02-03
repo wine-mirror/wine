@@ -58,6 +58,8 @@ typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 struct IWineD3DResourceImpl;
+typedef struct wined3d_query IWineD3DQueryImpl;
+typedef struct wined3d_query IWineD3DQuery;
 
 /* Texture format fixups */
 
@@ -2468,31 +2470,22 @@ enum query_state {
     QUERY_BUILDING
 };
 
-struct IWineD3DQueryImpl;
-
 struct wined3d_query_ops
 {
-    HRESULT (*query_get_data)(struct IWineD3DQueryImpl *query, void *data, DWORD data_size, DWORD flags);
-    HRESULT (*query_issue)(struct IWineD3DQueryImpl *query, DWORD flags);
+    HRESULT (*query_get_data)(struct wined3d_query *query, void *data, DWORD data_size, DWORD flags);
+    HRESULT (*query_issue)(struct wined3d_query *query, DWORD flags);
 };
 
-/*****************************************************************************
- * IWineD3DQueryImpl implementation structure (extends IUnknown)
- */
-typedef struct IWineD3DQueryImpl
+struct wined3d_query
 {
-    const IWineD3DQueryVtbl  *lpVtbl;
-    LONG                      ref;     /* Note: Ref counting not required */
-
+    LONG ref;
     const struct wined3d_query_ops *query_ops;
     IWineD3DDeviceImpl *device;
-
-    /* IWineD3DQuery fields */
     enum query_state         state;
     WINED3DQUERYTYPE         type;
     DWORD data_size;
     void                     *extendedData;
-} IWineD3DQueryImpl;
+};
 
 HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device, WINED3DQUERYTYPE type) DECLSPEC_HIDDEN;
 

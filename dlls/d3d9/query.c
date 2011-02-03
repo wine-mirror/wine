@@ -60,7 +60,7 @@ static ULONG WINAPI IDirect3DQuery9Impl_Release(LPDIRECT3DQUERY9 iface) {
 
     if (ref == 0) {
         wined3d_mutex_lock();
-        IWineD3DQuery_Release(This->wineD3DQuery);
+        wined3d_query_decref(This->wineD3DQuery);
         wined3d_mutex_unlock();
 
         IDirect3DDevice9Ex_Release(This->parentDevice);
@@ -91,7 +91,7 @@ static D3DQUERYTYPE WINAPI IDirect3DQuery9Impl_GetType(LPDIRECT3DQUERY9 iface) {
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = IWineD3DQuery_GetType(This->wineD3DQuery);
+    hr = wined3d_query_get_type(This->wineD3DQuery);
     wined3d_mutex_unlock();
 
     return hr;
@@ -104,7 +104,7 @@ static DWORD WINAPI IDirect3DQuery9Impl_GetDataSize(LPDIRECT3DQUERY9 iface) {
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    ret = IWineD3DQuery_GetDataSize(This->wineD3DQuery);
+    ret = wined3d_query_get_data_size(This->wineD3DQuery);
     wined3d_mutex_unlock();
 
     return ret;
@@ -117,7 +117,7 @@ static HRESULT WINAPI IDirect3DQuery9Impl_Issue(LPDIRECT3DQUERY9 iface, DWORD dw
     TRACE("iface %p, flags %#x.\n", iface, dwIssueFlags);
 
     wined3d_mutex_lock();
-    hr = IWineD3DQuery_Issue(This->wineD3DQuery, dwIssueFlags);
+    hr = wined3d_query_issue(This->wineD3DQuery, dwIssueFlags);
     wined3d_mutex_unlock();
 
     return hr;
@@ -131,7 +131,7 @@ static HRESULT WINAPI IDirect3DQuery9Impl_GetData(LPDIRECT3DQUERY9 iface, void* 
             iface, pData, dwSize, dwGetDataFlags);
 
     wined3d_mutex_lock();
-    hr = IWineD3DQuery_GetData(This->wineD3DQuery, pData, dwSize, dwGetDataFlags);
+    hr = wined3d_query_get_data(This->wineD3DQuery, pData, dwSize, dwGetDataFlags);
     wined3d_mutex_unlock();
 
     return hr;

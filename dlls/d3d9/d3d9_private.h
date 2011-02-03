@@ -506,7 +506,7 @@ typedef struct IDirect3DQuery9Impl {
     LONG                 ref;
 
     /* IDirect3DQuery9 fields */
-    IWineD3DQuery       *wineD3DQuery;
+    struct wined3d_query *wineD3DQuery;
 
     /* Parent reference */
     LPDIRECT3DDEVICE9EX    parentDevice;

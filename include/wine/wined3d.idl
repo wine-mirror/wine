@@ -2113,6 +2113,7 @@ interface IWineD3DDevice;
 struct wined3d;
 struct wined3d_clipper;
 struct wined3d_palette;
+struct wined3d_query;
 struct wined3d_stateblock;
 struct wined3d_vertex_declaration;
 
@@ -2472,27 +2473,6 @@ interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 [
     object,
     local,
-    uuid(905ddbac-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DQuery : IUnknown
-{
-    HRESULT GetData(
-        [out] void *data,
-        [in] DWORD data_size,
-        [in] DWORD flags
-    );
-    DWORD GetDataSize(
-    );
-    WINED3DQUERYTYPE GetType(
-    );
-    HRESULT Issue(
-        DWORD flags
-    );
-}
-
-[
-    object,
-    local,
     uuid(34d01b10-6f30-11d9-c687-00046142c14f)
 ]
 interface IWineD3DSwapChain : IWineD3DBase
@@ -2704,7 +2684,7 @@ interface IWineD3DDevice : IUnknown
     );
     HRESULT CreateQuery(
         [in] WINED3DQUERYTYPE type,
-        [out] IWineD3DQuery **query
+        [out] struct wined3d_query **query
     );
     HRESULT CreateSwapChain(
         [in] WINED3DPRESENT_PARAMETERS *present_parameters,
@@ -3265,6 +3245,13 @@ void * __cdecl wined3d_palette_get_parent(const struct wined3d_palette *palette)
 ULONG __cdecl wined3d_palette_incref(struct wined3d_palette *palette);
 HRESULT __cdecl wined3d_palette_set_entries(struct wined3d_palette *palette,
         DWORD flags, DWORD start, DWORD count, const PALETTEENTRY *entries);
+
+ULONG __cdecl wined3d_query_decref(struct wined3d_query *query);
+HRESULT __cdecl wined3d_query_get_data(struct wined3d_query *query, void *data, UINT data_size, DWORD flags);
+UINT __cdecl wined3d_query_get_data_size(const struct wined3d_query *query);
+WINED3DQUERYTYPE __cdecl wined3d_query_get_type(const struct wined3d_query *query);
+ULONG __cdecl wined3d_query_incref(struct wined3d_query *query);
+HRESULT __cdecl wined3d_query_issue(struct wined3d_query *query, DWORD flags);
 
 HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);

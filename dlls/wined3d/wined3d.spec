@@ -37,6 +37,13 @@
 @ cdecl wined3d_palette_incref(ptr)
 @ cdecl wined3d_palette_set_entries(ptr long long long ptr)
 
+@ cdecl wined3d_query_decref(ptr)
+@ cdecl wined3d_query_get_data(ptr ptr long long)
+@ cdecl wined3d_query_get_data_size(ptr)
+@ cdecl wined3d_query_get_type(ptr)
+@ cdecl wined3d_query_incref(ptr)
+@ cdecl wined3d_query_issue(ptr long)
+
 @ cdecl wined3d_stateblock_apply(ptr)
 @ cdecl wined3d_stateblock_capture(ptr)
 @ cdecl wined3d_stateblock_decref(ptr)
