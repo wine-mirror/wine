@@ -2495,16 +2495,15 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
                                  LPGLYPHMETRICS lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    LPWSTR p = NULL;
-    DWORD ret;
-    UINT c;
-
     if (!lpmat2) return GDI_ERROR;
 
     if(!(fuFormat & GGO_GLYPH_INDEX)) {
+        UINT cp;
         int len;
         char mbchs[2];
-        if(uChar > 0xff) { /* but, 2 bytes character only */
+
+        cp = GdiGetCodePage(hdc);
+        if (IsDBCSLeadByteEx(cp, uChar >> 8)) {
             len = 2;
             mbchs[0] = (uChar & 0xff00) >> 8;
             mbchs[1] = (uChar & 0xff);
@@ -2512,14 +2511,11 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
             len = 1;
             mbchs[0] = (uChar & 0xff);
         }
-        p = FONT_mbtowc(hdc, mbchs, len, NULL, NULL);
-	c = p[0];
-    } else
-        c = uChar;
-    ret = GetGlyphOutlineW(hdc, c, fuFormat, lpgm, cbBuffer, lpBuffer,
-			   lpmat2);
-    HeapFree(GetProcessHeap(), 0, p);
-    return ret;
+        MultiByteToWideChar(cp, 0, mbchs, len, (LPWSTR)&uChar, 1);
+    }
+
+    return GetGlyphOutlineW(hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer,
+                            lpmat2);
 }
 
 /***********************************************************************
