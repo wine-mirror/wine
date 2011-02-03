@@ -1654,16 +1654,34 @@ static nsresult NSAPI nsURI_GetSpec(nsIURL *iface, nsACString *aSpec)
 static nsresult NSAPI nsURI_SetSpec(nsIURL *iface, const nsACString *aSpec)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    const char *speca;
+    WCHAR *spec;
+    IUri *uri;
+    HRESULT hres;
 
-    TRACE("(%p)->(%p)\n", This, debugstr_nsacstr(aSpec));
+    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aSpec));
 
-    if(This->nsuri) {
-        invalidate_uri(This);
-        return nsIURI_SetSpec(This->nsuri, aSpec);
+    nsACString_GetData(aSpec, &speca);
+    spec = heap_strdupAtoW(speca);
+    if(!spec)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    hres = CreateUri(spec, 0, 0, &uri);
+    heap_free(spec);
+    if(FAILED(hres)) {
+        WARN("CreateUri failed: %08x\n", hres);
+        return NS_ERROR_FAILURE;
     }
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    invalidate_uri(This);
+    if(This->uri_builder) {
+        IUriBuilder_Release(This->uri_builder);
+        This->uri_builder = NULL;
+    }
+
+    This->uri = uri;
+    sync_wine_url(This);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_GetPrePath(nsIURL *iface, nsACString *aPrePath)
