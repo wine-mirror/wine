@@ -411,7 +411,7 @@ struct IDirectDrawClipperImpl
     const IDirectDrawClipperVtbl *lpVtbl;
     LONG ref;
 
-    IWineD3DClipper           *wineD3DClipper;
+    struct wined3d_clipper *wineD3DClipper;
     BOOL initialized;
 };
 

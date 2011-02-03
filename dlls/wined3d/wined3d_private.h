@@ -58,6 +58,8 @@ typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 struct IWineD3DResourceImpl;
+typedef struct wined3d_clipper IWineD3DClipperImpl;
+typedef struct wined3d_clipper IWineD3DClipper;
 
 /* Texture format fixups */
 
@@ -2049,16 +2051,12 @@ struct fbo_entry
     GLuint id;
 };
 
-/*****************************************************************************
- * IWineD3DClipp implementation structure
- */
-typedef struct IWineD3DClipperImpl
+struct wined3d_clipper
 {
-    const IWineD3DClipperVtbl *lpVtbl;
     LONG ref;
 
     HWND hWnd;
-} IWineD3DClipperImpl;
+};
 
 enum wined3d_container_type
 {
@@ -2138,7 +2136,7 @@ struct IWineD3DSurfaceImpl
     SIZE ds_current_size;
 
     /* DirectDraw clippers */
-    struct IWineD3DClipperImpl *clipper;
+    struct wined3d_clipper *clipper;
 
     /* DirectDraw Overlay handling */
     RECT                      overlay_srcrect;

@@ -2516,11 +2516,11 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
 {
     IDirectDrawSurfaceImpl *surfImpl = (IDirectDrawSurfaceImpl *)surf;
     IDirectDrawImpl *This = surfImpl->ddraw;
+    struct wined3d_clipper *clipper = NULL;
     IWineD3DSurface *wineD3DSurface;
     IWineD3DSwapChain *swapchain;
     void *parent;
     HRESULT hr;
-    IWineD3DClipper *clipper = NULL;
 
     WINED3DSURFACE_DESC     Desc;
     enum wined3d_format_id Format;
@@ -2593,10 +2593,9 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
 
     surfImpl->ImplType = This->ImplType;
 
-    if(clipper)
-    {
-        IWineD3DClipper_Release(clipper);
-    }
+    if (clipper)
+        wined3d_clipper_decref(clipper);
+
     return DDENUMRET_OK;
 }
 

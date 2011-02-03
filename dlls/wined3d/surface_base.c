@@ -488,7 +488,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, IWineD
 
     *clipper = (IWineD3DClipper *)This->clipper;
     if (*clipper)
-        IWineD3DClipper_AddRef(*clipper);
+        wined3d_clipper_incref(*clipper);
 
     return WINED3D_OK;
 }

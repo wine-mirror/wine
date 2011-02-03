@@ -1,4 +1,3 @@
-@ stdcall WineDirect3DCreateClipper()
 @ stdcall wined3d_mutex_lock()
 @ stdcall wined3d_mutex_unlock()
 
@@ -19,6 +18,15 @@
 @ cdecl wined3d_get_parent(ptr)
 @ cdecl wined3d_incref(ptr)
 @ cdecl wined3d_register_software_device(ptr ptr)
+
+@ cdecl wined3d_clipper_create()
+@ cdecl wined3d_clipper_decref(ptr)
+@ cdecl wined3d_clipper_get_clip_list(ptr ptr ptr ptr)
+@ cdecl wined3d_clipper_get_window(ptr ptr)
+@ cdecl wined3d_clipper_incref(ptr)
+@ cdecl wined3d_clipper_is_clip_list_changed(ptr ptr)
+@ cdecl wined3d_clipper_set_clip_list(ptr ptr long)
+@ cdecl wined3d_clipper_set_window(ptr long ptr)
 
 @ cdecl wined3d_device_create(ptr long long ptr long ptr ptr)
 

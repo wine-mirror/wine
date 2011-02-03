@@ -2111,6 +2111,7 @@ interface IWineD3DVolume;
 interface IWineD3DSwapChain;
 interface IWineD3DDevice;
 struct wined3d;
+struct wined3d_clipper;
 struct wined3d_palette;
 struct wined3d_stateblock;
 struct wined3d_vertex_declaration;
@@ -2238,34 +2239,6 @@ interface IWineD3DRendertargetView : IWineD3DBase
 [
     object,
     local,
-    uuid(8f2bceb1-d338-488c-ab7f-0ec980bf5d2d)
-]
-interface IWineD3DClipper : IUnknown
-{
-    HRESULT GetClipList(
-        [in] const RECT *rect,
-        [out] RGNDATA *clip_list,
-        [in, out] DWORD *clip_list_size
-    );
-    HRESULT GetHWnd(
-        [out] HWND *hwnd
-    );
-    HRESULT IsClipListChanged(
-        [out] BOOL *changed
-    );
-    HRESULT SetClipList(
-        [in] const RGNDATA *clip_list,
-        [in] DWORD flags
-    );
-    HRESULT SetHWnd(
-        [in] DWORD flags,
-        [in] HWND hwnd
-    );
-}
-
-[
-    object,
-    local,
     uuid(37cd5526-6f30-11d9-c687-00046142c14f)
 ]
 interface IWineD3DSurface : IWineD3DResource
@@ -2350,10 +2323,10 @@ interface IWineD3DSurface : IWineD3DResource
         [in] const WINEDDOVERLAYFX *fx
     );
     HRESULT SetClipper(
-        [in] IWineD3DClipper *clipper
+        [in] struct wined3d_clipper *clipper
     );
     HRESULT GetClipper(
-        [out] IWineD3DClipper **clipper
+        [out] struct wined3d_clipper **clipper
     );
     HRESULT SetFormat(
         [in] enum wined3d_format_id format_id
@@ -3233,7 +3206,6 @@ interface IWineD3DDevice : IUnknown
     );
 }
 
-IWineD3DClipper * __stdcall WineDirect3DCreateClipper(void);
 void __stdcall wined3d_mutex_lock(void);
 void __stdcall wined3d_mutex_unlock(void);
 
@@ -3270,6 +3242,16 @@ HRESULT __cdecl wined3d_get_device_caps(const struct wined3d *wined3d, UINT adap
 void * __cdecl wined3d_get_parent(const struct wined3d *wined3d);
 ULONG __cdecl wined3d_incref(struct wined3d *wined3d);
 HRESULT __cdecl wined3d_register_software_device(struct wined3d *wined3d, void *init_function);
+
+struct wined3d_clipper * __cdecl wined3d_clipper_create(void);
+ULONG __cdecl wined3d_clipper_decref(struct wined3d_clipper *clipper);
+HRESULT __cdecl wined3d_clipper_get_clip_list(const struct wined3d_clipper *clipper,
+        const RECT *rect, RGNDATA *clip_list, DWORD *clip_list_size);
+HRESULT __cdecl wined3d_clipper_get_window(const struct wined3d_clipper *clipper, HWND *hwnd);
+ULONG __cdecl wined3d_clipper_incref(struct wined3d_clipper *clipper);
+HRESULT __cdecl wined3d_clipper_is_clip_list_changed(const struct wined3d_clipper *clipper, BOOL *changed);
+HRESULT __cdecl wined3d_clipper_set_clip_list(struct wined3d_clipper *clipper, const RGNDATA *clip_list, DWORD flags);
+HRESULT __cdecl wined3d_clipper_set_window(struct wined3d_clipper *clipper, DWORD flags, HWND hwnd);
 
 HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx,
         WINED3DDEVTYPE device_type, HWND focus_window, DWORD behaviour_flags,
