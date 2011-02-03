@@ -58,8 +58,6 @@ typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 struct IWineD3DResourceImpl;
-typedef struct wined3d_query IWineD3DQueryImpl;
-typedef struct wined3d_query IWineD3DQuery;
 
 /* Texture format fixups */
 
@@ -2487,7 +2485,7 @@ struct wined3d_query
     void                     *extendedData;
 };
 
-HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device, WINED3DQUERYTYPE type) DECLSPEC_HIDDEN;
+HRESULT query_init(struct wined3d_query *query, IWineD3DDeviceImpl *device, WINED3DQUERYTYPE type) DECLSPEC_HIDDEN;
 
 /* IWineD3DBuffer */
 

@@ -1236,10 +1236,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface,
-        WINED3DQUERYTYPE type, IWineD3DQuery **query)
+        WINED3DQUERYTYPE type, struct wined3d_query **query)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DQueryImpl *object;
+    struct wined3d_query *object;
     HRESULT hr;
 
     TRACE("iface %p, type %#x, query %p.\n", iface, type, query);
@@ -1260,7 +1260,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface,
     }
 
     TRACE("Created query %p.\n", object);
-    *query = (IWineD3DQuery *)object;
+    *query = object;
 
     return WINED3D_OK;
 }

@@ -370,7 +370,7 @@ static HRESULT wined3d_occlusion_query_ops_get_data(struct wined3d_query *query,
     return res;
 }
 
-static HRESULT wined3d_event_query_ops_get_data(IWineD3DQueryImpl *query,
+static HRESULT wined3d_event_query_ops_get_data(struct wined3d_query *query,
         void *pData, DWORD dwSize, DWORD flags)
 {
     struct wined3d_event_query *event_query = query->extendedData;
@@ -547,7 +547,7 @@ static const struct wined3d_query_ops occlusion_query_ops =
     wined3d_occlusion_query_ops_issue,
 };
 
-HRESULT query_init(IWineD3DQueryImpl *query, IWineD3DDeviceImpl *device, WINED3DQUERYTYPE type)
+HRESULT query_init(struct wined3d_query *query, IWineD3DDeviceImpl *device, WINED3DQUERYTYPE type)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
