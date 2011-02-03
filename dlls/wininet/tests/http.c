@@ -62,14 +62,14 @@ static BOOL first_connection_to_test_url = TRUE;
         if (!expect[status] && !optional[status] && wine_allow[status]) \
         { \
             todo_wine ok(expect[status], "unexpected status %d (%s)\n", status, \
-                         status < MAX_INTERNET_STATUS && status_string[status][0] != 0 ? \
+                         status < MAX_INTERNET_STATUS && status_string[status] ? \
                          status_string[status] : "unknown");            \
             wine_allow[status]--; \
         } \
         else \
         { \
             ok(expect[status] || optional[status], "unexpected status %d (%s)\n", status,   \
-               status < MAX_INTERNET_STATUS && status_string[status][0] != 0 ? \
+               status < MAX_INTERNET_STATUS && status_string[status] ? \
                status_string[status] : "unknown");                      \
             if (expect[status]) expect[status]--; \
             else optional[status]--; \
@@ -86,7 +86,7 @@ static BOOL first_connection_to_test_url = TRUE;
     do { \
         ok(notified[status] + optional[status] == (num), \
            "expected status %d (%s) %d times, received %d times\n", \
-           status, status < MAX_INTERNET_STATUS && status_string[status][0] != 0 ? \
+           status, status < MAX_INTERNET_STATUS && status_string[status] ? \
            status_string[status] : "unknown", (num), notified[status]); \
         CLEAR_NOTIFIED(status);                                         \
     }while(0)
@@ -98,10 +98,9 @@ static BOOL first_connection_to_test_url = TRUE;
     CHECK_NOTIFIED2(status, 0)
 
 #define MAX_INTERNET_STATUS (INTERNET_STATUS_COOKIE_HISTORY+1)
-#define MAX_STATUS_NAME 50
 static int expect[MAX_INTERNET_STATUS], optional[MAX_INTERNET_STATUS],
     wine_allow[MAX_INTERNET_STATUS], notified[MAX_INTERNET_STATUS];
-static CHAR status_string[MAX_INTERNET_STATUS][MAX_STATUS_NAME];
+static const char *status_string[MAX_INTERNET_STATUS];
 
 static HANDLE hCompleteEvent;
 
@@ -3246,11 +3245,6 @@ static void test_InternetCloseHandle(void)
        closetest_req, res, GetLastError());
 }
 
-#define STATUS_STRING(status) \
-    memcpy(status_string[status], #status, sizeof(CHAR) * \
-           (strlen(#status) < MAX_STATUS_NAME ? \
-            strlen(#status) : \
-            MAX_STATUS_NAME - 1))
 static void init_status_tests(void)
 {
     memset(expect, 0, sizeof(expect));
@@ -3258,6 +3252,8 @@ static void init_status_tests(void)
     memset(wine_allow, 0, sizeof(wine_allow));
     memset(notified, 0, sizeof(notified));
     memset(status_string, 0, sizeof(status_string));
+
+#define STATUS_STRING(status) status_string[status] = #status
     STATUS_STRING(INTERNET_STATUS_RESOLVING_NAME);
     STATUS_STRING(INTERNET_STATUS_NAME_RESOLVED);
     STATUS_STRING(INTERNET_STATUS_CONNECTING_TO_SERVER);
@@ -3284,8 +3280,8 @@ static void init_status_tests(void)
     STATUS_STRING(INTERNET_STATUS_P3P_HEADER);
     STATUS_STRING(INTERNET_STATUS_P3P_POLICYREF);
     STATUS_STRING(INTERNET_STATUS_COOKIE_HISTORY);
-}
 #undef STATUS_STRING
+}
 
 START_TEST(http)
 {
