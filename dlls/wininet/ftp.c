@@ -1127,8 +1127,6 @@ static void FTPFILE_Destroy(object_header_t *hdr)
     if (nResCode > 0 && nResCode != 226) WARN("server reports failed transfer\n");
 
     WININET_Release(&lpwh->lpFtpSession->hdr);
-
-    HeapFree(GetProcessHeap(), 0, lpwh);
 }
 
 static DWORD FTPFILE_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
@@ -2346,7 +2344,6 @@ static void FTPSESSION_Destroy(object_header_t *hdr)
     HeapFree(GetProcessHeap(), 0, lpwfs->lpszPassword);
     HeapFree(GetProcessHeap(), 0, lpwfs->lpszUserName);
     HeapFree(GetProcessHeap(), 0, lpwfs->servername);
-    HeapFree(GetProcessHeap(), 0, lpwfs);
 }
 
 static void FTPSESSION_CloseConnection(object_header_t *hdr)
@@ -3399,7 +3396,6 @@ static void FTPFINDNEXT_Destroy(object_header_t *hdr)
     }
 
     HeapFree(GetProcessHeap(), 0, lpwfn->lpafp);
-    HeapFree(GetProcessHeap(), 0, lpwfn);
 }
 
 static DWORD FTPFINDNEXT_FindNextFileProc(WININETFTPFINDNEXTW *find, LPVOID data)

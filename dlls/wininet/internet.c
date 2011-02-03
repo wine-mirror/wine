@@ -261,6 +261,8 @@ BOOL WININET_Release( object_header_t *info )
 
             LeaveCriticalSection( &WININET_cs );
         }
+
+        heap_free(info);
     }
     return TRUE;
 }
@@ -684,7 +686,6 @@ static VOID APPINFO_Destroy(object_header_t *hdr)
     HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyBypass);
     HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyUsername);
     HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyPassword);
-    HeapFree(GetProcessHeap(), 0, lpwai);
 }
 
 static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)

@@ -1601,7 +1601,6 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
 #endif
 
     HeapFree(GetProcessHeap(), 0, lpwhr->pCustHeaders);
-    HeapFree(GetProcessHeap(), 0, lpwhr);
 }
 
 static void HTTPREQ_CloseConnection(object_header_t *hdr)
@@ -4358,7 +4357,6 @@ static void HTTPSESSION_Destroy(object_header_t *hdr)
     HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
     HeapFree(GetProcessHeap(), 0, lpwhs->lpszPassword);
     HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
-    HeapFree(GetProcessHeap(), 0, lpwhs);
 }
 
 static DWORD HTTPSESSION_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
