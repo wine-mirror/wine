@@ -2467,6 +2467,15 @@ enum query_state {
     QUERY_SIGNALLED,
     QUERY_BUILDING
 };
+
+struct IWineD3DQueryImpl;
+
+struct wined3d_query_ops
+{
+    HRESULT (*query_get_data)(struct IWineD3DQueryImpl *query, void *data, DWORD data_size, DWORD flags);
+    HRESULT (*query_issue)(struct IWineD3DQueryImpl *query, DWORD flags);
+};
+
 /*****************************************************************************
  * IWineD3DQueryImpl implementation structure (extends IUnknown)
  */
@@ -2475,12 +2484,13 @@ typedef struct IWineD3DQueryImpl
     const IWineD3DQueryVtbl  *lpVtbl;
     LONG                      ref;     /* Note: Ref counting not required */
 
+    const struct wined3d_query_ops *query_ops;
     IWineD3DDeviceImpl *device;
 
     /* IWineD3DQuery fields */
     enum query_state         state;
     WINED3DQUERYTYPE         type;
-    /* TODO: Think about using a IUnknown instead of a void* */
+    DWORD data_size;
     void                     *extendedData;
 } IWineD3DQueryImpl;
 
