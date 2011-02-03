@@ -1520,8 +1520,12 @@ static unsigned int write_nonsimple_pointer(FILE *file, const attr_list_t *attrs
     if (out_attr && !in_attr && pointer_type == RPC_FC_RP)
         flags |= RPC_FC_P_ONSTACK;
 
-    if (is_ptr(type) && is_declptr(type_pointer_get_ref(type)))
-        flags |= RPC_FC_P_DEREF;
+    if (is_ptr(type))
+    {
+        type_t *ref = type_pointer_get_ref(type);
+        if(is_declptr(ref) && !is_user_type(ref))
+            flags |= RPC_FC_P_DEREF;
+    }
 
     print_file(file, 2, "0x%x, 0x%x,\t\t/* %s",
                pointer_type,
