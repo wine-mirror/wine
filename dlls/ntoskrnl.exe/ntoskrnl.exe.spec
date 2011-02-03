@@ -381,7 +381,7 @@
 @ stub IoGetCurrentProcess
 @ stub IoGetDeviceAttachmentBaseRef
 @ stub IoGetDeviceInterfaceAlias
-@ stub IoGetDeviceInterfaces
+@ stdcall IoGetDeviceInterfaces(ptr ptr long ptr)
 @ stdcall IoGetDeviceObjectPointer(ptr long ptr ptr)
 @ stdcall IoGetDeviceProperty(ptr long long ptr ptr)
 @ stub IoGetDeviceToVerify

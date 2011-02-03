@@ -622,6 +622,19 @@ NTSTATUS WINAPI IoDeleteSymbolicLink( UNICODE_STRING *name )
 
 
 /***********************************************************************
+ *           IoGetDeviceInterfaces   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoGetDeviceInterfaces( CONST GUID *InterfaceClassGuid,
+                                       PDEVICE_OBJECT PhysicalDeviceObject,
+                                       ULONG Flags, PWSTR *SymbolicLinkList )
+{
+    FIXME( "stub: %s %p %x %p\n", debugstr_guid(InterfaceClassGuid),
+           PhysicalDeviceObject, Flags, SymbolicLinkList );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           IoGetDeviceObjectPointer   (NTOSKRNL.EXE.@)
  */
 NTSTATUS  WINAPI IoGetDeviceObjectPointer( UNICODE_STRING *name, ACCESS_MASK access, PFILE_OBJECT *file, PDEVICE_OBJECT *device )
