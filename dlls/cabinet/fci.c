@@ -249,8 +249,9 @@ HFCI __cdecl FCICreate(
     return FALSE;
   }
 
-  p_fci_internal->handleCFDATA1 = PFCI_OPEN(hfci,
-    p_fci_internal->szFileNameCFDATA1, 34050, 384, &err, pv);
+  p_fci_internal->handleCFDATA1 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFDATA1,
+                                            _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
+                                            _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFDATA1==0){
     fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
     return FALSE;
@@ -268,8 +269,9 @@ HFCI __cdecl FCICreate(
     fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
     return FALSE;
   }
-  p_fci_internal->handleCFFILE1 = PFCI_OPEN(hfci,
-    p_fci_internal->szFileNameCFFILE1, 34050, 384, &err, pv);
+  p_fci_internal->handleCFFILE1 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFFILE1,
+                                            _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
+                                            _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFFILE1==0){
     fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
     return FALSE;
@@ -287,8 +289,9 @@ HFCI __cdecl FCICreate(
     fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
     return FALSE;
   }
-  p_fci_internal->handleCFDATA2 = PFCI_OPEN(hfci,
-    p_fci_internal->szFileNameCFDATA2, 34050, 384, &err, pv);
+  p_fci_internal->handleCFDATA2 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFDATA2,
+                                            _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
+                                            _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFDATA2==0){
     fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
     return FALSE;
@@ -306,8 +309,9 @@ HFCI __cdecl FCICreate(
     fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
     return FALSE;
   }
-  p_fci_internal->handleCFFILE2 = PFCI_OPEN(hfci,
-    p_fci_internal->szFileNameCFFILE2, 34050, 384, &err, pv);
+  p_fci_internal->handleCFFILE2 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFFILE2,
+                                            _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
+                                            _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFFILE2==0){
     fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
     return FALSE;
@@ -325,8 +329,9 @@ HFCI __cdecl FCICreate(
     fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
     return FALSE;
   }
-  p_fci_internal->handleCFFOLDER = PFCI_OPEN(hfci,
-    p_fci_internal->szFileNameCFFOLDER, 34050, 384, &err, pv);
+  p_fci_internal->handleCFFOLDER = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFFOLDER,
+                                             _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
+                                             _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFFOLDER==0) {
     fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE);
     return FALSE;
@@ -1250,8 +1255,8 @@ static BOOL fci_flush_folder(
     fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
     return FALSE;
   }
-  handleCFDATA1new = PFCI_OPEN(hfci,szFileNameCFDATA1new,34050,384,&err,
-    p_fci_internal->pv);
+  handleCFDATA1new = PFCI_OPEN(hfci,szFileNameCFDATA1new, _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
+                               _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
   if(handleCFDATA1new==0){
     fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
     return FALSE;
@@ -1274,8 +1279,8 @@ static BOOL fci_flush_folder(
     /* TODO error handling of err */
     return FALSE;
   }
-  handleCFFILE1new = PFCI_OPEN(hfci,szFileNameCFFILE1new,34050,384,&err,
-    p_fci_internal->pv);
+  handleCFFILE1new = PFCI_OPEN(hfci,szFileNameCFFILE1new, _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
+                               _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
   if(handleCFFILE1new==0){
     fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
     return FALSE;
@@ -1679,8 +1684,8 @@ static BOOL fci_flush_cabinet(
   }
 
   /* create the cabinet */
-  handleCABINET = PFCI_OPEN(hfci, szFileNameCABINET,
-    33538, 384, &err, p_fci_internal->pv );
+  handleCABINET = PFCI_OPEN(hfci, szFileNameCABINET, _O_RDWR | _O_CREAT | _O_TRUNC | _O_BINARY,
+                            _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv );
   if(handleCABINET==0){
     fci_set_error( FCIERR_CAB_FILE, ERROR_OPEN_FAILED, TRUE );
     return FALSE;
@@ -2108,8 +2113,9 @@ static BOOL fci_flush_cabinet(
     fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
     return FALSE;
   }
-  p_fci_internal->handleCFDATA2 = PFCI_OPEN(hfci,
-    p_fci_internal->szFileNameCFDATA2, 34050, 384, &err, p_fci_internal->pv);
+  p_fci_internal->handleCFDATA2 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFDATA2,
+                                            _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
+                                            _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
   /* check handle */
   if(p_fci_internal->handleCFDATA2==0){
     fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
@@ -2130,8 +2136,9 @@ static BOOL fci_flush_cabinet(
     fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
     return FALSE;
   }
-  p_fci_internal->handleCFFILE2 = PFCI_OPEN(hfci,
-    p_fci_internal->szFileNameCFFILE2, 34050, 384, &err, p_fci_internal->pv);
+  p_fci_internal->handleCFFILE2 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFFILE2,
+                                            _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
+                                            _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
   /* check handle */
   if(p_fci_internal->handleCFFILE2==0){
     fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE);
@@ -2151,8 +2158,9 @@ static BOOL fci_flush_cabinet(
     fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
     return FALSE;
   }
-  p_fci_internal->handleCFFOLDER = PFCI_OPEN(hfci,
-    p_fci_internal->szFileNameCFFOLDER, 34050, 384, &err, p_fci_internal->pv);
+  p_fci_internal->handleCFFOLDER = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFFOLDER,
+                                             _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
+                                             _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
   /* check handle */
   if(p_fci_internal->handleCFFOLDER==0){
     fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
