@@ -50,6 +50,7 @@ static HANDLE (WINAPI *pAddFontMemResourceEx)(PVOID, DWORD, PVOID, DWORD *);
 static BOOL  (WINAPI *pRemoveFontMemResourceEx)(HANDLE);
 
 static HMODULE hgdi32 = 0;
+static const MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
 
 static void init(void)
 {
@@ -410,7 +411,6 @@ static void test_outline_font(void)
     INT width_orig, height_orig, lfWidth;
     XFORM xform;
     GLYPHMETRICS gm;
-    MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
     MAT2 mat2 = { {0x8000,0}, {0,0}, {0,0}, {0x8000,0} };
     POINT pt;
     INT ret;
@@ -2175,7 +2175,6 @@ static void test_negative_width(HDC hdc, const LOGFONTA *lf)
     GLYPHMETRICS gm1, gm2;
     LOGFONTA lf2 = *lf;
     WORD idx;
-    MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
 
     if(!pGetGlyphIndicesA)
         return;
@@ -3096,7 +3095,6 @@ todo_wine
 
 static void test_GetGlyphOutline(void)
 {
-    MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
     HDC hdc;
     GLYPHMETRICS gm;
     LOGFONTA lf;
