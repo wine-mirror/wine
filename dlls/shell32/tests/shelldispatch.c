@@ -30,29 +30,39 @@
 static HRESULT (WINAPI *pSHGetFolderPathW)(HWND, int, HANDLE, DWORD, LPWSTR);
 static HRESULT (WINAPI *pSHGetNameFromIDList)(PCIDLIST_ABSOLUTE,SIGDN,PWSTR*);
 static HRESULT (WINAPI *pSHGetSpecialFolderLocation)(HWND, int, LPITEMIDLIST *);
+static DWORD (WINAPI *pGetLongPathNameW)(LPCWSTR, LPWSTR, DWORD);
 
 static void init_function_pointers(void)
 {
-    HMODULE hmod;
+    HMODULE hshell32, hkernel32;
 
-    hmod = GetModuleHandleA("shell32.dll");
-    pSHGetFolderPathW = (void*)GetProcAddress(hmod, "SHGetFolderPathW");
-    pSHGetNameFromIDList = (void*)GetProcAddress(hmod, "SHGetNameFromIDList");
-    pSHGetSpecialFolderLocation = (void*)GetProcAddress(hmod,
+    hshell32 = GetModuleHandleA("shell32.dll");
+    hkernel32 = GetModuleHandleA("kernel32.dll");
+    pSHGetFolderPathW = (void*)GetProcAddress(hshell32, "SHGetFolderPathW");
+    pSHGetNameFromIDList = (void*)GetProcAddress(hshell32, "SHGetNameFromIDList");
+    pSHGetSpecialFolderLocation = (void*)GetProcAddress(hshell32,
      "SHGetSpecialFolderLocation");
+    pGetLongPathNameW = (void*)GetProcAddress(hkernel32, "GetLongPathNameW");
 }
 
 static void test_namespace(void)
 {
     static const WCHAR winetestW[] = {'w','i','n','e','t','e','s','t',0};
     static const WCHAR backslashW[] = {'\\',0};
+    static const WCHAR clsidW[] = {
+        ':',':','{','6','4','5','F','F','0','4','0','-','5','0','8','1','-',
+                    '1','0','1','B','-','9','F','0','8','-',
+                    '0','0','A','A','0','0','2','F','9','5','4','E','}',0};
 
     static WCHAR tempW[MAX_PATH], curW[MAX_PATH];
+    WCHAR *long_pathW = NULL;
     HRESULT r;
     IShellDispatch *sd;
     Folder *folder;
+    Folder2 *folder2;
+    FolderItem *item;
     VARIANT var;
-    BSTR title;
+    BSTR title, item_path;
     int len;
 
     r = CoCreateInstance(&CLSID_Shell, NULL, CLSCTX_INPROC_SERVER,
@@ -86,6 +96,14 @@ static void test_namespace(void)
      "IShellDispatch::NameSpace failed: %08x\n", r);
     if (r == S_OK)
     {
+        static WCHAR path[MAX_PATH];
+
+        if (pSHGetFolderPathW)
+        {
+            r = pSHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL,
+             SHGFP_TYPE_CURRENT, path);
+            ok(r == S_OK, "SHGetFolderPath failed: %08x\n", r);
+        }
         r = Folder_get_Title(folder, &title);
         todo_wine
         ok(r == S_OK, "Folder::get_Title failed: %08x\n", r);
@@ -112,12 +130,8 @@ static void test_namespace(void)
             }
             else if (pSHGetFolderPathW)
             {
-                static WCHAR path[MAX_PATH];
                 WCHAR *p;
 
-                r = pSHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL,
-                 SHGFP_TYPE_CURRENT, path);
-                ok(r == S_OK, "SHGetFolderPath failed: %08x\n", r);
                 p = path + lstrlenW(path);
                 while (path < p && *(p - 1) != '\\')
                     p--;
@@ -126,6 +140,58 @@ static void test_namespace(void)
             }
             else skip("skipping Folder::get_Title test\n");
             SysFreeString(title);
+        }
+        r = Folder_QueryInterface(folder, &IID_Folder2, (LPVOID*)&folder2);
+        ok(r == S_OK, "Folder::QueryInterface failed: %08x\n", r);
+        if (r == S_OK)
+        {
+            r = Folder2_get_Self(folder2, &item);
+            todo_wine
+            ok(r == S_OK, "Folder::get_Self failed: %08x\n", r);
+            if (r == S_OK)
+            {
+                r = FolderItem_get_Path(item, &item_path);
+                todo_wine
+                ok(r == S_OK, "FolderItem::get_Path failed: %08x\n", r);
+                if (pSHGetFolderPathW)
+                    todo_wine
+                    ok(!lstrcmpW(item_path, path), "expected %s, got %s\n",
+                     wine_dbgstr_w(path), wine_dbgstr_w(item_path));
+                SysFreeString(item_path);
+                FolderItem_Release(item);
+            }
+            Folder2_Release(folder2);
+        }
+        Folder_Release(folder);
+    }
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = ssfBITBUCKET;
+    r = IShellDispatch_NameSpace(sd, var, &folder);
+    ok(r == S_OK ||
+     broken(r == S_FALSE), /* NT4 */
+     "IShellDispatch::NameSpace failed: %08x\n", r);
+    if (r == S_OK)
+    {
+        r = Folder_QueryInterface(folder, &IID_Folder2, (LPVOID*)&folder2);
+        ok(r == S_OK, "Folder::QueryInterface failed: %08x\n", r);
+        if (r == S_OK)
+        {
+            r = Folder2_get_Self(folder2, &item);
+            todo_wine
+            ok(r == S_OK, "Folder::get_Self failed: %08x\n", r);
+            if (r == S_OK)
+            {
+                r = FolderItem_get_Path(item, &item_path);
+                todo_wine
+                ok(r == S_OK, "FolderItem::get_Path failed: %08x\n", r);
+                todo_wine
+                ok(!lstrcmpW(item_path, clsidW), "expected %s, got %s\n",
+                 wine_dbgstr_w(clsidW), wine_dbgstr_w(item_path));
+                SysFreeString(item_path);
+                FolderItem_Release(item);
+            }
+            Folder2_Release(folder2);
         }
         Folder_Release(folder);
     }
@@ -141,6 +207,13 @@ static void test_namespace(void)
     SysFreeString(V_BSTR(&var));
 
     GetFullPathNameW(winetestW, MAX_PATH, tempW, NULL);
+    if (pGetLongPathNameW)
+    {
+        len = pGetLongPathNameW(tempW, NULL, 0);
+        long_pathW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (long_pathW)
+            pGetLongPathNameW(tempW, long_pathW, len);
+    }
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(tempW);
     r = IShellDispatch_NameSpace(sd, var, &folder);
@@ -154,6 +227,28 @@ static void test_namespace(void)
             ok(!lstrcmpW(title, winetestW), "bad title: %s\n",
              wine_dbgstr_w(title));
             SysFreeString(title);
+        }
+        r = Folder_QueryInterface(folder, &IID_Folder2, (LPVOID*)&folder2);
+        ok(r == S_OK, "Folder::QueryInterface failed: %08x\n", r);
+        if (r == S_OK)
+        {
+            r = Folder2_get_Self(folder2, &item);
+            todo_wine
+            ok(r == S_OK, "Folder::get_Self failed: %08x\n", r);
+            if (r == S_OK)
+            {
+                r = FolderItem_get_Path(item, &item_path);
+                todo_wine
+                ok(r == S_OK, "FolderItem::get_Path failed: %08x\n", r);
+                if (long_pathW)
+                    todo_wine
+                    ok(!lstrcmpW(item_path, long_pathW),
+                     "expected %s, got %s\n", wine_dbgstr_w(long_pathW),
+                     wine_dbgstr_w(item_path));
+                SysFreeString(item_path);
+                FolderItem_Release(item);
+            }
+            Folder2_Release(folder2);
         }
         Folder_Release(folder);
     }
@@ -177,11 +272,34 @@ static void test_namespace(void)
                  wine_dbgstr_w(title));
                 SysFreeString(title);
             }
+            r = Folder_QueryInterface(folder, &IID_Folder2, (LPVOID*)&folder2);
+            ok(r == S_OK, "Folder::QueryInterface failed: %08x\n", r);
+            if (r == S_OK)
+            {
+                r = Folder2_get_Self(folder2, &item);
+                todo_wine
+                ok(r == S_OK, "Folder::get_Self failed: %08x\n", r);
+                if (r == S_OK)
+                {
+                    r = FolderItem_get_Path(item, &item_path);
+                    todo_wine
+                    ok(r == S_OK, "FolderItem::get_Path failed: %08x\n", r);
+                    if (long_pathW)
+                        todo_wine
+                        ok(!lstrcmpW(item_path, long_pathW),
+                         "expected %s, got %s\n", wine_dbgstr_w(long_pathW),
+                         wine_dbgstr_w(item_path));
+                    SysFreeString(item_path);
+                    FolderItem_Release(item);
+                }
+                Folder2_Release(folder2);
+            }
             Folder_Release(folder);
         }
         SysFreeString(V_BSTR(&var));
     }
 
+    HeapFree(GetProcessHeap(), 0, long_pathW);
     RemoveDirectoryW(winetestW);
     SetCurrentDirectoryW(curW);
     IShellDispatch_Release(sd);
