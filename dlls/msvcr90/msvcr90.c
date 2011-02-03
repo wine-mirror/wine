@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
 #include <stdarg.h>
 
 #include "stdlib.h"
@@ -29,6 +30,46 @@
 #include "sys/stat.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcr90);
+
+#ifdef __i386__  /* thiscall functions are i386-specific */
+
+#define THISCALL(func) __thiscall_ ## func
+#define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
+#define __thiscall __stdcall
+#define DEFINE_THISCALL_WRAPPER(func,args) \
+    extern void THISCALL(func)(void); \
+    __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
+                      "popl %eax\n\t" \
+                      "pushl %ecx\n\t" \
+                      "pushl %eax\n\t" \
+                      "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
+
+#else /* __i386__ */
+
+#define THISCALL(func) func
+#define THISCALL_NAME(func) __ASM_NAME(#func)
+#define __thiscall __cdecl
+#define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
+
+#endif /* __i386__ */
+
+struct __type_info_node
+{
+    void *memPtr;
+    struct __type_info_node* next;
+};
+
+typedef struct __type_info
+{
+  const void *vtable;
+  char       *name;        /* Unmangled name, allocated lazily */
+  char        mangled[32]; /* Variable length, but we declare it large enough for static RTTI */
+} type_info;
+
+typedef void* (*__cdecl malloc_func_t)(size_t);
+typedef void  (*__cdecl free_func_t)(void*);
+
+extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,unsigned short int);
 
 /*********************************************************************
  *  msvcr90_stat64_to_stat32 [internal]
@@ -259,4 +300,41 @@ int CDECL _wstat64i32(const wchar_t *path, struct _stat64i32 *buf)
 int CDECL _atoflt( _CRT_FLOAT *value, char *str )
 {
     return _atoflt_l( value, str, NULL );
+}
+
+/*********************************************************************
+ * ?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z (MSVCR90.@)
+ */
+DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_name_internal_method,8)
+const char * __thiscall MSVCRT_type_info_name_internal_method(type_info * _this, struct __type_info_node *node)
+{
+    static int once;
+
+    if (node && !once++) FIXME("type_info_node parameter ignored\n");
+
+    if (!_this->name)
+    {
+      /* Create and set the demangled name */
+      /* Nota: mangled name in type_info struct always start with a '.', while
+       * it isn't valid for mangled name.
+       * Is this '.' really part of the mangled name, or has it some other meaning ?
+       */
+      char* name = __unDName(0, _this->mangled + 1, 0, malloc, free, 0x2800);
+      if (name)
+      {
+        unsigned int len = strlen(name);
+
+        /* It seems _unDName may leave blanks at the end of the demangled name */
+        while (len && name[--len] == ' ')
+          name[len] = '\0';
+
+        if (InterlockedCompareExchangePointer((void**)&_this->name, name, NULL))
+        {
+          /* Another thread set this member since we checked above - use it */
+          free(name);
+        }
+      }
+    }
+    TRACE("(%p) returning %s\n", _this, _this->name);
+    return _this->name;
 }

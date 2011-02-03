@@ -79,6 +79,17 @@ static void* (__cdecl *p_realloc_crt)(void*, size_t);
 static void* (__cdecl *p_malloc)(size_t);
 static void (__cdecl *p_free)(void*);
 
+/* type info */
+typedef struct __type_info
+{
+  void *vtable;
+  char *name;
+  char  mangled[16];
+} type_info;
+
+static char* (WINAPI *p_type_info_name_internal_method)(type_info*);
+static void  (WINAPI *ptype_info_dtor)(type_info*);
+
 static void* (WINAPI *pEncodePointer)(void *);
 
 static int cb_called[4];
@@ -90,6 +101,62 @@ static inline int almost_equal_f(float f1, float f2)
 }
 
 /* ########## */
+
+/* thiscall emulation */
+/* Emulate a __thiscall */
+#ifdef _MSC_VER
+static inline void* do_call_func1(void *func, void *_this)
+{
+  volatile void* retval = 0;
+  __asm
+  {
+    push ecx
+    mov ecx, _this
+    call func
+    mov retval, eax
+    pop ecx
+  }
+  return (void*)retval;
+}
+
+static inline void* do_call_func2(void *func, void *_this, const void* arg)
+{
+  volatile void* retval = 0;
+  __asm
+  {
+    push ecx
+    push arg
+    mov ecx, _this
+    call func
+    mov retval, eax
+    pop ecx
+  }
+  return (void*)retval;
+}
+#else
+static void* do_call_func1(void *func, void *_this)
+{
+  void *ret, *dummy;
+  __asm__ __volatile__ ("call *%2"
+                        : "=a" (ret), "=c" (dummy)
+                        : "g" (func), "1" (_this)
+                        : "edx", "memory" );
+  return ret;
+}
+
+static void* do_call_func2(void *func, void *_this, const void* arg)
+{
+  void *ret, *dummy;
+  __asm__ __volatile__ ("pushl %3\n\tcall *%2"
+                        : "=a" (ret), "=c" (dummy)
+                        : "r" (func), "r" (arg), "1" (_this)
+                        : "edx", "memory" );
+  return ret;
+}
+#endif
+
+#define call_func1(x,y)   do_call_func1((void*)x,(void*)y)
+#define call_func2(x,y,z) do_call_func2((void*)x,(void*)y,(void*)z)
 
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
@@ -796,6 +863,43 @@ if (0)
     p_free(mem);
 }
 
+#ifdef __i386__
+
+struct __type_info_node {
+    void *memPtr;
+    struct __type_info_node* next;
+};
+
+static void test_typeinfo(void)
+{
+    static type_info t1 = { NULL, NULL,{'.','?','A','V','t','e','s','t','1','@','@',0,0,0,0,0 } };
+    struct __type_info_node node;
+    char *name;
+
+    if (!p_type_info_name_internal_method)
+    {
+        win_skip("public: char const * __thiscall type_info::_name_internal_method(struct \
+                  __type_info_node *)const not supported\n");
+        return;
+    }
+
+    /* name */
+    t1.name = NULL;
+    node.memPtr = NULL;
+    node.next = NULL;
+    name = call_func2(p_type_info_name_internal_method, &t1, &node);
+    ok(name != NULL, "got %p\n", name);
+    ok(name && t1.name && !strcmp(name, t1.name), "bad name '%s' for t1\n", name);
+
+    ok(t1.name && !strcmp(t1.name, "class test1"), "demangled to '%s' for t1\n", t1.name);
+    call_func1(ptype_info_dtor, &t1);
+}
+#else
+static void test_typeinfo(void)
+{
+}
+#endif
+
 START_TEST(msvcr90)
 {
     HMODULE hcrt;
@@ -834,6 +938,9 @@ START_TEST(msvcr90)
     p_realloc_crt = (void*) GetProcAddress(hcrt, "_realloc_crt");
     p_malloc = (void*) GetProcAddress(hcrt, "malloc");
     p_free = (void*)GetProcAddress(hcrt, "free");
+    p_type_info_name_internal_method = (void*)GetProcAddress(hcrt,
+      "?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z");
+    ptype_info_dtor = (void*)GetProcAddress(hcrt, "??1type_info@@UAE@XZ");
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
@@ -851,4 +958,5 @@ START_TEST(msvcr90)
     test__sopen_s();
     test__wsopen_s();
     test__realloc_crt();
+    test_typeinfo();
 }
