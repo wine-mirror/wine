@@ -1850,14 +1850,9 @@ static nsresult NSAPI nsURI_SetHostPort(nsIURL *iface, const nsACString *aHostPo
 {
     nsWineURI *This = impl_from_nsIURL(iface);
 
-    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aHostPort));
+    WARN("(%p)->(%s)\n", This, debugstr_nsacstr(aHostPort));
 
-    if(This->nsuri) {
-        invalidate_uri(This);
-        return nsIURI_SetHostPort(This->nsuri, aHostPort);
-    }
-
-    FIXME("default action not implemented\n");
+    /* Not implemented by Gecko */
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -2159,14 +2154,9 @@ static nsresult NSAPI nsURL_SetParam(nsIURL *iface, const nsACString *aParam)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
 
-    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aParam));
+    WARN("(%p)->(%s)\n", This, debugstr_nsacstr(aParam));
 
-    if(This->nsurl) {
-        invalidate_uri(This);
-        return nsIURL_SetParam(This->nsurl, aParam);
-    }
-
-    FIXME("default action not implemented\n");
+    /* Not implemented by Gecko */
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -2274,14 +2264,9 @@ static nsresult NSAPI nsURL_SetDirectory(nsIURL *iface, const nsACString *aDirec
 {
     nsWineURI *This = impl_from_nsIURL(iface);
 
-    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aDirectory));
+    WARN("(%p)->(%s)\n", This, debugstr_nsacstr(aDirectory));
 
-    if(This->nsurl) {
-        invalidate_uri(This);
-        return nsIURL_SetDirectory(This->nsurl, aDirectory);
-    }
-
-    FIXME("default action not implemented\n");
+    /* Not implemented by Gecko */
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
