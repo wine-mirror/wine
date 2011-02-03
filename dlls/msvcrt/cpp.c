@@ -611,7 +611,6 @@ const char * __thiscall MSVCRT_type_info_name(type_info * _this)
      */
     char* name = __unDName(0, _this->mangled + 1, 0,
                            MSVCRT_malloc, MSVCRT_free, 0x2800);
-
     if (name)
     {
       unsigned int len = strlen(name);
@@ -620,17 +619,11 @@ const char * __thiscall MSVCRT_type_info_name(type_info * _this)
       while (len && name[--len] == ' ')
         name[len] = '\0';
 
-      _mlock(_EXIT_LOCK2);
-
-      if (_this->name)
+      if (InterlockedCompareExchangePointer((void**)&_this->name, name, NULL))
       {
         /* Another thread set this member since we checked above - use it */
         MSVCRT_free(name);
       }
-      else
-        _this->name = name;
-
-      _munlock(_EXIT_LOCK2);
     }
   }
   TRACE("(%p) returning %s\n", _this, _this->name);
