@@ -5479,6 +5479,24 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_put_borderRightColor(style, vDefault);
     ok(hres == S_OK, "putborderRightColorr: %08x\n", hres);
 
+    /* borderBottomColor */
+    hres = IHTMLStyle_get_borderBottomColor(style, &vDefault);
+    ok(hres == S_OK, "get_borderBottomColor: %08x\n", hres);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("cyan");
+    hres = IHTMLStyle_put_borderBottomColor(style, v);
+    ok(hres == S_OK, "put_borderBottomColor: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_borderBottomColor(style, &v);
+    ok(hres == S_OK, "get_borderBottomColor: %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "cyan"), "expected cyan = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLStyle_put_borderBottomColor(style, vDefault);
+    ok(hres == S_OK, "put_borderBottomColor: %08x\n", hres);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
