@@ -309,58 +309,6 @@ typedef struct cds_forward {
 /* _Int as in "Internal" fyi */
 
 typedef struct {
-  unsigned int     FCI_Intmagic;
-  PERF perf;
-  PFNFCIFILEPLACED   fileplaced;
-  PFNFCIALLOC        alloc;
-  PFNFCIFREE         free;
-  PFNFCIOPEN         open;
-  PFNFCIREAD         read;
-  PFNFCIWRITE        write;
-  PFNFCICLOSE        close;
-  PFNFCISEEK         seek;
-  PFNFCIDELETE       delete;
-  PFNFCIGETTEMPFILE  gettemp;
-  PCCAB              pccab;
-  BOOL               fPrevCab;
-  BOOL               fNextCab;
-  BOOL               fSplitFolder;
-  cab_ULONG          statusFolderCopied;
-  cab_ULONG          statusFolderTotal;
-  BOOL               fGetNextCabInVain;
-  void               *pv;
-  char szPrevCab[CB_MAX_CABINET_NAME];    /* previous cabinet name */
-  char szPrevDisk[CB_MAX_DISK_NAME];      /* disk name of previous cabinet */
-  CCAB               oldCCAB;
-  char*              data_in;  /* uncompressed data blocks */
-  cab_UWORD          cdata_in;
-  char*              data_out; /* compressed data blocks */
-  ULONG              cCompressedBytesInFolder;
-  cab_UWORD          cFolders;
-  cab_UWORD          cFiles;
-  cab_ULONG          cDataBlocks;
-  cab_ULONG          cbFileRemainer; /* uncompressed, yet to be written data */
-               /* of spanned file of a spanning folder of a spanning cabinet */
-  char               szFileNameCFDATA1[CB_MAX_FILENAME];
-  int                handleCFDATA1;
-  char               szFileNameCFFILE1[CB_MAX_FILENAME];
-  int                handleCFFILE1;
-  char               szFileNameCFDATA2[CB_MAX_FILENAME];
-  int                handleCFDATA2;
-  char               szFileNameCFFILE2[CB_MAX_FILENAME];
-  int                handleCFFILE2;
-  char               szFileNameCFFOLDER[CB_MAX_FILENAME];
-  int                handleCFFOLDER;
-  cab_ULONG          sizeFileCFDATA1;
-  cab_ULONG          sizeFileCFFILE1;
-  cab_ULONG          sizeFileCFDATA2;
-  cab_ULONG          sizeFileCFFILE2;
-  cab_ULONG          sizeFileCFFOLDER;
-  BOOL               fNewPrevious;
-  cab_ULONG          estimatedCabinetSize;
-} FCI_Int, *PFCI_Int;
-
-typedef struct {
   unsigned int FDI_Intmagic;
   PFNALLOC pfnalloc;
   PFNFREE  pfnfree;
@@ -384,7 +332,6 @@ typedef struct {
 #define PFDI_CLOSE(hfdi, hf)              ((*PFDI_INT(hfdi)->pfnclose) (hf))
 #define PFDI_SEEK(hfdi, hf, dist, type)   ((*PFDI_INT(hfdi)->pfnseek)  (hf, dist, type))
 
-#define FCI_INT_MAGIC 0xfcfcfc05
 #define FDI_INT_MAGIC 0xfdfdfd05
 
 #define REALLY_IS_FDI(hfdi) ( \

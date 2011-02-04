@@ -102,6 +102,61 @@ typedef struct {
 } CFDATA;
 
 
+typedef struct
+{
+  unsigned int       magic;
+  PERF perf;
+  PFNFCIFILEPLACED   fileplaced;
+  PFNFCIALLOC        alloc;
+  PFNFCIFREE         free;
+  PFNFCIOPEN         open;
+  PFNFCIREAD         read;
+  PFNFCIWRITE        write;
+  PFNFCICLOSE        close;
+  PFNFCISEEK         seek;
+  PFNFCIDELETE       delete;
+  PFNFCIGETTEMPFILE  gettemp;
+  PCCAB              pccab;
+  BOOL               fPrevCab;
+  BOOL               fNextCab;
+  BOOL               fSplitFolder;
+  cab_ULONG          statusFolderCopied;
+  cab_ULONG          statusFolderTotal;
+  BOOL               fGetNextCabInVain;
+  void               *pv;
+  char szPrevCab[CB_MAX_CABINET_NAME];    /* previous cabinet name */
+  char szPrevDisk[CB_MAX_DISK_NAME];      /* disk name of previous cabinet */
+  CCAB               oldCCAB;
+  char*              data_in;  /* uncompressed data blocks */
+  cab_UWORD          cdata_in;
+  char*              data_out; /* compressed data blocks */
+  ULONG              cCompressedBytesInFolder;
+  cab_UWORD          cFolders;
+  cab_UWORD          cFiles;
+  cab_ULONG          cDataBlocks;
+  cab_ULONG          cbFileRemainer; /* uncompressed, yet to be written data */
+               /* of spanned file of a spanning folder of a spanning cabinet */
+  char               szFileNameCFDATA1[CB_MAX_FILENAME];
+  int                handleCFDATA1;
+  char               szFileNameCFFILE1[CB_MAX_FILENAME];
+  int                handleCFFILE1;
+  char               szFileNameCFDATA2[CB_MAX_FILENAME];
+  int                handleCFDATA2;
+  char               szFileNameCFFILE2[CB_MAX_FILENAME];
+  int                handleCFFILE2;
+  char               szFileNameCFFOLDER[CB_MAX_FILENAME];
+  int                handleCFFOLDER;
+  cab_ULONG          sizeFileCFDATA1;
+  cab_ULONG          sizeFileCFFILE1;
+  cab_ULONG          sizeFileCFDATA2;
+  cab_ULONG          sizeFileCFFILE2;
+  cab_ULONG          sizeFileCFFOLDER;
+  BOOL               fNewPrevious;
+  cab_ULONG          estimatedCabinetSize;
+} FCI_Int;
+
+#define FCI_INT_MAGIC 0xfcfcfc05
+
 static void set_error( FCI_Int *fci, int oper, int err )
 {
     fci->perf->erfOper = oper;
@@ -114,7 +169,7 @@ static FCI_Int *get_fci_ptr( HFCI hfci )
 {
     FCI_Int *fci= (FCI_Int *)hfci;
 
-    if (!fci || !fci->FCI_Intmagic == FCI_INT_MAGIC)
+    if (!fci || !fci->magic == FCI_INT_MAGIC)
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
@@ -209,7 +264,7 @@ HFCI __cdecl FCICreate(
     return NULL;
   }
 
-  p_fci_internal->FCI_Intmagic = FCI_INT_MAGIC;
+  p_fci_internal->magic = FCI_INT_MAGIC;
   p_fci_internal->perf = perf;
   p_fci_internal->fileplaced = pfnfiledest;
   p_fci_internal->alloc = pfnalloc;
@@ -2827,7 +2882,7 @@ BOOL __cdecl FCIDestroy(HFCI hfci)
 
     /* before hfci can be removed all temporary files must be closed */
     /* and deleted */
-    p_fci_internal->FCI_Intmagic = 0;
+    p_fci_internal->magic = 0;
 
     p_fci_internal->close( p_fci_internal->handleCFDATA1,&err,p_fci_internal->pv);
     /* TODO error handling of err */
