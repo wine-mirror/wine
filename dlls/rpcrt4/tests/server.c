@@ -562,6 +562,16 @@ s_hash_bstr(bstr_t b)
 }
 
 void
+s_get_a_bstr(bstr_t *b)
+{
+  bstr_t bstr;
+  short str[] = {5, 'W', 'i', 'n', 'e', 0};
+  bstr = HeapAlloc(GetProcessHeap(), 0, sizeof(str));
+  memcpy(bstr, str, sizeof(str));
+  *b = bstr + 1;
+}
+
+void
 s_get_name(name_t *name)
 {
   const char bossman[] = "Jeremy White";
@@ -1119,7 +1129,7 @@ pointer_tests(void)
   puints_t pus;
   cpuints_t cpus;
   short bstr_data[] = { 5, 'H', 'e', 'l', 'l', 'o' };
-  bstr_t bstr = &bstr_data[1];
+  bstr_t bstr = &bstr_data[1], bstr2;
   name_t name;
   void *buffer;
   int *pa2;
@@ -1166,6 +1176,12 @@ pointer_tests(void)
   ok(sum_pcarr(pa, 4) == 10, "RPC sum_pcarr\n");
 
   ok(hash_bstr(bstr) == s_hash_bstr(bstr), "RPC hash_bstr_data\n");
+
+  get_a_bstr(&bstr);
+  s_get_a_bstr(&bstr2);
+  ok(!lstrcmpW((LPCWSTR)bstr, (LPCWSTR)bstr2), "bstr mismatch\n");
+  HeapFree(GetProcessHeap(), 0, bstr - 1);
+  HeapFree(GetProcessHeap(), 0, bstr2 - 1);
 
   free_list(list);
 

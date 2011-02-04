@@ -311,7 +311,7 @@ cpp_quote("#endif")
   typedef [unique] user_bstr_t *wire_bstr_t;
   typedef [wire_marshal(wire_bstr_t)] short *bstr_t;
   unsigned hash_bstr(bstr_t s);
-
+  void get_a_bstr([out]bstr_t *s);
   typedef struct
   {
     [string, size_is(size)] char *name;
