@@ -1571,6 +1571,7 @@ static void test_dde_aw_transaction( BOOL client_unicode, BOOL server_unicode )
     CONVINFO info;
     HDDEDATA hdata;
     BOOL conv_unicode = client_unicode;
+    BOOL got;
     static char test_cmd[] = "test dde command";
 
     if (!(hwnd_server = create_dde_server( server_unicode ))) return;
@@ -1709,7 +1710,8 @@ todo_wine {
         ok(err == DMLERR_NOTPROCESSED, "DdeClientTransaction returned error %x\n", err);
     }
 
-    ok(DdeDisconnect(hconv), "DdeDisconnect error %x\n", DdeGetLastError(dde_inst));
+    got = DdeDisconnect(hconv);
+    ok(got, "DdeDisconnect error %x\n", DdeGetLastError(dde_inst));
 
     info.cb = sizeof(info);
     ret = DdeQueryConvInfo(hconv, QID_SYNC, &info);
@@ -1719,7 +1721,8 @@ todo_wine {
     ok(err == DMLERR_INVALIDPARAMETER, "wrong dde error %x\n", err);
 }
 
-    ok(DdeFreeStringHandle(dde_inst, hsz_server), "DdeFreeStringHandle error %x\n", DdeGetLastError(dde_inst));
+    got = DdeFreeStringHandle(dde_inst, hsz_server);
+    ok(got, "DdeFreeStringHandle error %x\n", DdeGetLastError(dde_inst));
 
     /* This call hangs on win2k SP4 and XP SP1.
     DdeUninitialize(dde_inst);*/

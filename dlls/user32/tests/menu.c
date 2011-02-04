@@ -660,6 +660,7 @@ static void test_menu_bmp_and_string(void)
     MENUINFO mi= {sizeof(MENUINFO)};
     MENUITEMINFOA mii= {sizeof(MENUITEMINFOA)};
     int count, szidx, txtidx, bmpidx, hassub, mnuopt, ispop;
+    BOOL got;
 
     if( !pGetMenuInfo)
     {
@@ -681,12 +682,14 @@ static void test_menu_bmp_and_string(void)
     ok( hsysmenu != NULL, "GetSystemMenu failed with error %d\n", GetLastError());
     mi.fMask = MIM_STYLE;
     mi.dwStyle = 0;
-    ok( pGetMenuInfo( hsysmenu, &mi), "GetMenuInfo failed gle=%d\n", GetLastError());
+    got = pGetMenuInfo( hsysmenu, &mi);
+    ok( got, "GetMenuInfo failed gle=%d\n", GetLastError());
     ok( MNS_CHECKORBMP == mi.dwStyle, "System Menu Style is %08x, without the bit %08x\n",
         mi.dwStyle, MNS_CHECKORBMP);
     mii.fMask = MIIM_BITMAP;
     mii.hbmpItem = NULL;
-    ok( GetMenuItemInfoA( hsysmenu, SC_CLOSE, FALSE, &mii), "GetMenuItemInfoA failed gle=%d\n", GetLastError());
+    got = GetMenuItemInfoA( hsysmenu, SC_CLOSE, FALSE, &mii);
+    ok( got, "GetMenuItemInfoA failed gle=%d\n", GetLastError());
     ok( HBMMENU_POPUP_CLOSE == mii.hbmpItem, "Item info did not get the right hbitmap: got %p  expected %p\n",
         mii.hbmpItem, HBMMENU_POPUP_CLOSE);
 
