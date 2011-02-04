@@ -309,7 +309,7 @@ typedef struct cds_forward {
 /* _Int as in "Internal" fyi */
 
 typedef struct {
-  unsigned int FDI_Intmagic;
+  unsigned int magic;
   PFNALLOC pfnalloc;
   PFNFREE  pfnfree;
   PFNOPEN  pfnopen;
@@ -320,23 +320,16 @@ typedef struct {
   PERF     perf;
 } FDI_Int, *PFDI_Int;
 
-/* cast an HFDI into a PFDI_Int */
-#define PFDI_INT(hfdi) ((PFDI_Int)(hfdi))
-
 /* quickie pfdi method invokers */
-#define PFDI_ALLOC(hfdi, size)            ((*PFDI_INT(hfdi)->pfnalloc) (size))
-#define PFDI_FREE(hfdi, ptr)              ((*PFDI_INT(hfdi)->pfnfree)  (ptr))
-#define PFDI_OPEN(hfdi, file, flag, mode) ((*PFDI_INT(hfdi)->pfnopen)  (file, flag, mode))
-#define PFDI_READ(hfdi, hf, pv, cb)       ((*PFDI_INT(hfdi)->pfnread)  (hf, pv, cb))
-#define PFDI_WRITE(hfdi, hf, pv, cb)      ((*PFDI_INT(hfdi)->pfnwrite) (hf, pv, cb))
-#define PFDI_CLOSE(hfdi, hf)              ((*PFDI_INT(hfdi)->pfnclose) (hf))
-#define PFDI_SEEK(hfdi, hf, dist, type)   ((*PFDI_INT(hfdi)->pfnseek)  (hf, dist, type))
+#define PFDI_ALLOC(fdi, size)            (fdi->pfnalloc (size))
+#define PFDI_FREE(fdi, ptr)              (fdi->pfnfree  (ptr))
+#define PFDI_OPEN(fdi, file, flag, mode) (fdi->pfnopen  (file, flag, mode))
+#define PFDI_READ(fdi, hf, pv, cb)       (fdi->pfnread  (hf, pv, cb))
+#define PFDI_WRITE(fdi, hf, pv, cb)      (fdi->pfnwrite (hf, pv, cb))
+#define PFDI_CLOSE(fdi, hf)              (fdi->pfnclose (hf))
+#define PFDI_SEEK(fdi, hf, dist, type)   (fdi->pfnseek  (hf, dist, type))
 
 #define FDI_INT_MAGIC 0xfdfdfd05
-
-#define REALLY_IS_FDI(hfdi) ( \
-  ((hfdi) != NULL) && \
-  (PFDI_INT(hfdi)->FDI_Intmagic == FDI_INT_MAGIC) )
 
 /*
  * the rest of these are somewhat kludgy macros which are shared between fdi.c
