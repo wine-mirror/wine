@@ -311,16 +311,16 @@ typedef struct cds_forward {
 typedef struct {
   unsigned int     FCI_Intmagic;
   PERF perf;
-  PFNFCIFILEPLACED   pfnfiledest;
-  PFNFCIALLOC        pfnalloc;
-  PFNFCIFREE         pfnfree;
-  PFNFCIOPEN         pfnopen;
-  PFNFCIREAD         pfnread;
-  PFNFCIWRITE        pfnwrite;
-  PFNFCICLOSE        pfnclose;
-  PFNFCISEEK         pfnseek;
-  PFNFCIDELETE       pfndelete;
-  PFNFCIGETTEMPFILE  pfnfcigtf;
+  PFNFCIFILEPLACED   fileplaced;
+  PFNFCIALLOC        alloc;
+  PFNFCIFREE         free;
+  PFNFCIOPEN         open;
+  PFNFCIREAD         read;
+  PFNFCIWRITE        write;
+  PFNFCICLOSE        close;
+  PFNFCISEEK         seek;
+  PFNFCIDELETE       delete;
+  PFNFCIGETTEMPFILE  gettemp;
   PCCAB              pccab;
   BOOL               fPrevCab;
   BOOL               fNextCab;
@@ -377,18 +377,6 @@ typedef struct {
 
 /* cast an HFDI into a PFDI_Int */
 #define PFDI_INT(hfdi) ((PFDI_Int)(hfdi))
-
-/* quick pfci method invokers */
-#define PFCI_ALLOC(hfdi, size)            ((*PFCI_INT(hfdi)->pfnalloc) (size))
-#define PFCI_FREE(hfdi, ptr)              ((*PFCI_INT(hfdi)->pfnfree)  (ptr))
-#define PFCI_GETTEMPFILE(hfci,name,length) ((*PFCI_INT(hfci)->pfnfcigtf)(name,length,PFCI_INT(hfci)->pv))
-#define PFCI_DELETE(hfci,name,err,pv)      ((*PFCI_INT(hfci)->pfndelete)(name,err,pv))
-#define PFCI_OPEN(hfci,name,oflag,pmode,err,pv) ((*PFCI_INT(hfci)->pfnopen)(name,oflag,pmode,err,pv))
-#define PFCI_READ(hfci,hf,memory,cb,err,pv)((*PFCI_INT(hfci)->pfnread)(hf,memory,cb,err,pv))
-#define PFCI_WRITE(hfci,hf,memory,cb,err,pv)  ((*PFCI_INT(hfci)->pfnwrite)(hf,memory,cb,err,pv))
-#define PFCI_CLOSE(hfci,hf,err,pv)         ((*PFCI_INT(hfci)->pfnclose)(hf,err,pv))
-#define PFCI_SEEK(hfci,hf,dist,seektype,err,pv)((*PFCI_INT(hfci)->pfnseek)(hf,dist,seektype,err,pv))
-#define PFCI_FILEPLACED(hfci,pccab,name,cb,cont,pv)((*PFCI_INT(hfci)->pfnfiledest)(pccab,name,cb,cont,pv))
 
 /* quickie pfdi method invokers */
 #define PFDI_ALLOC(hfdi, size)            ((*PFDI_INT(hfdi)->pfnalloc) (size))
