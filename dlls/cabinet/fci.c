@@ -57,13 +57,6 @@ There is still some work to be done:
 #endif
 
 
-#define fci_set_error(A,B,C) do {      \
-    p_fci_internal->perf->erfOper = A; \
-    p_fci_internal->perf->erfType = B; \
-    p_fci_internal->perf->fError =  C; \
-    if (B) SetLastError(B); } while(0)
-
-
 typedef struct {
   cab_UBYTE signature[4]; /* !CAB for unfinished cabinets else MSCF */
   cab_ULONG reserved1;
@@ -108,6 +101,14 @@ typedef struct {
   /* compressed data */
 } CFDATA;
 
+
+static void set_error( FCI_Int *fci, int oper, int err )
+{
+    fci->perf->erfOper = oper;
+    fci->perf->erfType = err;
+    fci->perf->fError = TRUE;
+    if (err) SetLastError( err );
+}
 
 /***********************************************************************
  *		FCICreate (CABINET.10)
@@ -240,12 +241,12 @@ HFCI __cdecl FCICreate(
   /* CFDATA */
   if( !PFCI_GETTEMPFILE(hfci,p_fci_internal->szFileNameCFDATA1,
       CB_MAX_FILENAME)) {
-    fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
     return FALSE;
   }
   /* safety */
   if ( strlen(p_fci_internal->szFileNameCFDATA1) >= CB_MAX_FILENAME ) {
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     return FALSE;
   }
 
@@ -253,7 +254,7 @@ HFCI __cdecl FCICreate(
                                             _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
                                             _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFDATA1==0){
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
   /* TODO error checking of err */
@@ -261,19 +262,19 @@ HFCI __cdecl FCICreate(
   /* array of all CFFILE in a folder */
   if( !PFCI_GETTEMPFILE(hfci,p_fci_internal->szFileNameCFFILE1,
       CB_MAX_FILENAME)) {
-    fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
     return FALSE;
   }
   /* safety */
   if ( strlen(p_fci_internal->szFileNameCFFILE1) >= CB_MAX_FILENAME ) {
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     return FALSE;
   }
   p_fci_internal->handleCFFILE1 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFFILE1,
                                             _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
                                             _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFFILE1==0){
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
   /* TODO error checking of err */
@@ -281,19 +282,19 @@ HFCI __cdecl FCICreate(
   /* CFDATA with checksum and ready to be copied into cabinet */
   if( !PFCI_GETTEMPFILE(hfci,p_fci_internal->szFileNameCFDATA2,
       CB_MAX_FILENAME)) {
-    fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE);
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
     return FALSE;
   }
   /* safety */
   if ( strlen(p_fci_internal->szFileNameCFDATA2) >= CB_MAX_FILENAME ) {
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     return FALSE;
   }
   p_fci_internal->handleCFDATA2 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFDATA2,
                                             _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
                                             _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFDATA2==0){
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
   /* TODO error checking of err */
@@ -301,19 +302,19 @@ HFCI __cdecl FCICreate(
   /* array of all CFFILE in a folder, ready to be copied into cabinet */
   if( !PFCI_GETTEMPFILE(hfci,p_fci_internal->szFileNameCFFILE2,
       CB_MAX_FILENAME)) {
-    fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
     return FALSE;
   }
   /* safety */
   if ( strlen(p_fci_internal->szFileNameCFFILE2) >= CB_MAX_FILENAME ) {
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     return FALSE;
   }
   p_fci_internal->handleCFFILE2 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFFILE2,
                                             _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
                                             _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFFILE2==0){
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
   /* TODO error checking of err */
@@ -321,19 +322,19 @@ HFCI __cdecl FCICreate(
   /* array of all CFFILE in a folder, ready to be copied into cabinet */
   if( !PFCI_GETTEMPFILE(hfci,p_fci_internal->szFileNameCFFOLDER,
       CB_MAX_FILENAME)) {
-    fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
     return FALSE;
   }
   /* safety */
   if ( strlen(p_fci_internal->szFileNameCFFOLDER) >= CB_MAX_FILENAME ) {
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     return FALSE;
   }
   p_fci_internal->handleCFFOLDER = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFFOLDER,
                                              _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
                                              _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFFOLDER==0) {
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE);
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
 
@@ -374,7 +375,7 @@ static BOOL fci_flush_data_block (HFCI hfci, int* err,
   if( PFCI_WRITE(hfci, p_fci_internal->handleCFDATA1, /* file handle */
       cfdata, sizeof(*cfdata), err, p_fci_internal->pv)
       != sizeof(*cfdata) ) {
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -388,7 +389,7 @@ static BOOL fci_flush_data_block (HFCI hfci, int* err,
   /* Reserved areas are used seldom besides that... */
   if (cbReserveCFData!=0) {
     if(!(reserved = PFCI_ALLOC(hfci, cbReserveCFData))) {
-      fci_set_error( FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY, TRUE );
+      set_error( p_fci_internal, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
       return FALSE;
     }
     for(i=0;i<cbReserveCFData;) {
@@ -399,7 +400,7 @@ static BOOL fci_flush_data_block (HFCI hfci, int* err,
         cbReserveCFData, /* number of bytes to copy */
         err, p_fci_internal->pv) != cbReserveCFData ) {
       PFCI_FREE(hfci, reserved);
-      fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err PFCI_FREE(hfci, reserved)*/
@@ -413,7 +414,7 @@ static BOOL fci_flush_data_block (HFCI hfci, int* err,
       p_fci_internal->data_out, /* memory buffer */
       cfdata->cbData, /* number of bytes to copy */
       err, p_fci_internal->pv) != cfdata->cbData) {
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -427,7 +428,7 @@ static BOOL fci_flush_data_block (HFCI hfci, int* err,
   /* report status with pfnfcis about uncompressed and compressed file data */
   if( (*pfnfcis)(statusFile, cfdata->cbData, cfdata->cbUncomp,
       p_fci_internal->pv) == -1) {
-    fci_set_error( FCIERR_USER_ABORT, 0, TRUE );
+    set_error( p_fci_internal, FCIERR_USER_ABORT, 0 );
     return FALSE;
   }
 
@@ -495,7 +496,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
     if( p_fci_internal->fNextCab ) {
       if( split_block ) {
         /* internal error should never happen */
-        fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+        set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
         return FALSE;
       }
     }
@@ -541,7 +542,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
       if (read_result!=sizeof(CFDATA)+cbReserveCFData) {
         if (read_result==0) break; /* ALL DATA has been copied */
         /* read error */
-        fci_set_error( FCIERR_NONE, ERROR_READ_FAULT, TRUE );
+        set_error( p_fci_internal, FCIERR_NONE, ERROR_READ_FAULT );
         return FALSE;
       }
       /* TODO error handling of err */
@@ -554,7 +555,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
           pcfdata->cbData /* number of bytes to copy */,
           err, p_fci_internal->pv) != pcfdata->cbData ) {
         /* read error */
-        fci_set_error( FCIERR_NONE, ERROR_READ_FAULT, TRUE );
+        set_error( p_fci_internal, FCIERR_NONE, ERROR_READ_FAULT );
         return FALSE;
       }
       /* TODO error handling of err */
@@ -632,7 +633,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
       /* This should never happen !!! */
       if (pcfdata->cbData==0) {
         /* set error */
-        fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+        set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
         return FALSE;
       }
 
@@ -654,7 +655,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
           buffer, /* memory buffer */
           sizeof(CFDATA)+cbReserveCFData, /* number of bytes to copy */
           err, p_fci_internal->pv) != sizeof(CFDATA)+cbReserveCFData ) {
-         fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+         set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
          return FALSE;
       }
       /* TODO error handling of err */
@@ -671,7 +672,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
           p_fci_internal->data_out, /* memory buffer */
           pcfdata->cbData, /* number of bytes to copy */
           err, p_fci_internal->pv) != pcfdata->cbData) {
-        fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+        set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
         return FALSE;
       }
       /* TODO error handling of err */
@@ -687,7 +688,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
       /* copy all CFDATA structures from handleCFDATA1 to handleCFDATA1new */
         if (p_fci_internal->fNextCab==FALSE ) {
           /* internal error */
-          fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+          set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
           return FALSE;
         }
 
@@ -705,7 +706,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
             buffer, /* memory buffer */
             sizeof(CFDATA)+cbReserveCFData, /* number of bytes to copy */
             err, p_fci_internal->pv) != sizeof(CFDATA)+cbReserveCFData ) {
-          fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+          set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
           return FALSE;
         }
         /* TODO error handling of err don't forget PFCI_FREE(hfci, reserved) */
@@ -718,7 +719,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
                                                 /* to last part of split data */
             pcfdata->cbData, /* number of bytes to copy */
             err, p_fci_internal->pv) != pcfdata->cbData) {
-          fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+          set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
           return FALSE;
         }
         /* TODO error handling of err */
@@ -735,7 +736,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
           p_fci_internal->statusFolderCopied, /*cfdata.cbData(+previous ones)*/
           p_fci_internal->statusFolderTotal, /* total folder size */
           p_fci_internal->pv) == -1) {
-        fci_set_error( FCIERR_USER_ABORT, 0, TRUE );
+        set_error( p_fci_internal, FCIERR_USER_ABORT, 0 );
         return FALSE;
       }
     }
@@ -746,7 +747,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
                                /* abused one (just search for "abused" )*/
       if (p_fci_internal->fNextCab==FALSE ) {
         /* internal error */
-        fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+        set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
         return FALSE;
       }
       /* copy all CFDATA structures from handleCFDATA1 to handleCFDATA1new */
@@ -759,7 +760,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
         if (read_result!=sizeof(CFDATA)+cbReserveCFData) {
           if (read_result==0) break; /* ALL DATA has been copied */
           /* read error */
-          fci_set_error(FCIERR_NONE, ERROR_READ_FAULT, TRUE );
+          set_error( p_fci_internal,FCIERR_NONE, ERROR_READ_FAULT );
           return FALSE;
         }
         /* TODO error handling of err */
@@ -772,7 +773,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
             pcfdata->cbData /* number of bytes to copy */,
             err, p_fci_internal->pv) != pcfdata->cbData ) {
           /* read error */
-          fci_set_error( FCIERR_NONE, ERROR_READ_FAULT, TRUE);
+          set_error( p_fci_internal, FCIERR_NONE, ERROR_READ_FAULT );
           return FALSE;
         }
         /* TODO error handling of err don't forget PFCI_FREE(hfci, reserved) */
@@ -782,7 +783,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
             buffer, /* memory buffer */
             sizeof(CFDATA)+cbReserveCFData, /* number of bytes to copy */
             err, p_fci_internal->pv) != sizeof(CFDATA)+cbReserveCFData ) {
-          fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+          set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
           return FALSE;
         }
         /* TODO error handling of err don't forget PFCI_FREE(hfci, reserved) */
@@ -794,7 +795,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
             p_fci_internal->data_out, /* memory buffer */
             pcfdata->cbData, /* number of bytes to copy */
             err, p_fci_internal->pv) != pcfdata->cbData) {
-          fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+          set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
           return FALSE;
         }
         /* TODO error handling of err */
@@ -807,7 +808,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
             p_fci_internal->statusFolderCopied,/*cfdata.cbData(+previous ones)*/
             p_fci_internal->statusFolderTotal, /* total folder size */
             p_fci_internal->pv) == -1) {
-          fci_set_error( FCIERR_USER_ABORT, 0, TRUE );
+          set_error( p_fci_internal, FCIERR_USER_ABORT, 0 );
           return FALSE;
         }
 
@@ -848,7 +849,7 @@ static BOOL fci_flushfolder_copy_cffolder(HFCI hfci, int* err, UINT cbReserveCFF
       &cffolder, /* memory buffer */
       sizeof(cffolder), /* number of bytes to copy */
       err, p_fci_internal->pv) != sizeof(cffolder) ) {
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -858,7 +859,7 @@ static BOOL fci_flushfolder_copy_cffolder(HFCI hfci, int* err, UINT cbReserveCFF
   /* add optional reserved area */
   if (cbReserveCFFolder!=0) {
     if(!(reserved = PFCI_ALLOC(hfci, cbReserveCFFolder))) {
-      fci_set_error( FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY, TRUE );
+      set_error( p_fci_internal, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
       return FALSE;
     }
     for(i=0;i<cbReserveCFFolder;) {
@@ -869,7 +870,7 @@ static BOOL fci_flushfolder_copy_cffolder(HFCI hfci, int* err, UINT cbReserveCFF
         cbReserveCFFolder, /* number of bytes to copy */
         err, p_fci_internal->pv) != cbReserveCFFolder ) {
       PFCI_FREE(hfci, reserved);
-      fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -899,7 +900,7 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
   if( PFCI_SEEK(hfci,p_fci_internal->handleCFFILE1,0,SEEK_SET,err,
     p_fci_internal->pv) !=0 ) {
     /* wrong return value */
-    fci_set_error( FCIERR_NONE, ERROR_SEEK, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_SEEK );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -915,7 +916,7 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
     if( read_result != sizeof(cffile) ) {
       if( read_result == 0 ) break; /* ALL CFFILE structures have been copied */
       /* read error */
-      fci_set_error( FCIERR_NONE, ERROR_READ_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_READ_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -931,7 +932,7 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
         CB_MAX_FILENAME, /* number of bytes to copy */
         err, p_fci_internal->pv) <2) {
       /* read error */
-      fci_set_error( FCIERR_NONE, ERROR_READ_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_READ_FAULT );
       return FALSE;
     }
     /* TODO maybe other checks of read_result */
@@ -940,7 +941,7 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
     /* safety */
     if( strlen(p_fci_internal->data_out)>=CB_MAX_FILENAME ) {
       /* set error code internal error */
-      fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
       return FALSE;
     }
 
@@ -954,7 +955,7 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
         p_fci_internal->pv)
         != seek) {
       /* wrong return value */
-      fci_set_error( FCIERR_NONE, ERROR_SEEK, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_SEEK );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -982,14 +983,14 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
         p_fci_internal->fPrevCab==FALSE ) {
       /* THIS MAY NEVER HAPPEN */
       /* set error code */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
     if( cffile.iFolder==cffileCONTINUED_PREV_AND_NEXT ||
         cffile.iFolder==cffileCONTINUED_TO_NEXT ) {
       /* THIS MAY NEVER HAPPEN */
       /* set error code */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
     if( may_be_prev && cffile.iFolder!=cffileCONTINUED_FROM_PREV ) {
@@ -998,7 +999,7 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
     if( cffile.iFolder==cffileCONTINUED_FROM_PREV && may_be_prev==FALSE ) {
       /* THIS MAY NEVER HAPPEN */
       /* set error code */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
     if( cffile.iFolder!=cffileCONTINUED_FROM_PREV ) {
@@ -1039,7 +1040,7 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
         &cffile, /* memory buffer */
         sizeof(cffile), /* number of bytes to copy */
         err, p_fci_internal->pv) != sizeof(cffile) ) {
-      fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1059,7 +1060,7 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
         p_fci_internal->data_out, /* memory buffer */
         strlen(p_fci_internal->data_out)+1, /* number of bytes to copy */
         err, p_fci_internal->pv) != strlen(p_fci_internal->data_out)+1 ) {
-      fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1092,7 +1093,7 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
           &cffile, /* memory buffer */
           sizeof(cffile), /* number of bytes to copy */
           err, p_fci_internal->pv) != sizeof(cffile) ) {
-        fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+        set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
         return FALSE;
       }
       /* TODO error handling of err */
@@ -1103,7 +1104,7 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
           p_fci_internal->data_out, /* memory buffer */
           strlen(p_fci_internal->data_out)+1, /* number of bytes to copy */
           err, p_fci_internal->pv) != strlen(p_fci_internal->data_out)+1 ) {
-        fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+        set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
         return FALSE;
       }
       /* TODO error handling of err */
@@ -1146,14 +1147,14 @@ static BOOL fci_flush_folder(
   }
 
   if ((!pfnfcignc) || (!pfnfcis)) {
-    fci_set_error( FCIERR_NONE, ERROR_BAD_ARGUMENTS, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_BAD_ARGUMENTS );
     return FALSE;
   }
 
   if( p_fci_internal->fGetNextCabInVain &&
       p_fci_internal->fNextCab ){
     /* internal error */
-    fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
     return FALSE;
   }
 
@@ -1162,7 +1163,7 @@ static BOOL fci_flush_folder(
   if( p_fci_internal->sizeFileCFFILE1 == 0 ) {
     if ( p_fci_internal->sizeFileCFDATA1 != 0 ) {
       /* error handling */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
     return TRUE;
@@ -1170,7 +1171,7 @@ static BOOL fci_flush_folder(
 
   if (p_fci_internal->data_in==NULL || p_fci_internal->data_out==NULL ) {
     /* error handling */
-    fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
     return FALSE;
   }
 
@@ -1241,24 +1242,24 @@ static BOOL fci_flush_folder(
   if( (*pfnfcis)(statusFolder, p_fci_internal->statusFolderCopied,
       p_fci_internal->statusFolderTotal, /* TODO total folder size */
       p_fci_internal->pv) == -1) {
-    fci_set_error( FCIERR_USER_ABORT, 0, TRUE );
+    set_error( p_fci_internal, FCIERR_USER_ABORT, 0 );
     return FALSE;
   }
 
   /* get a new temp file */
   if(!PFCI_GETTEMPFILE(hfci,szFileNameCFDATA1new,CB_MAX_FILENAME)) {
-    fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
     return FALSE;
   }
   /* safety */
   if ( strlen(szFileNameCFDATA1new) >= CB_MAX_FILENAME ) {
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     return FALSE;
   }
   handleCFDATA1new = PFCI_OPEN(hfci,szFileNameCFDATA1new, _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
                                _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
   if(handleCFDATA1new==0){
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -1267,14 +1268,14 @@ static BOOL fci_flush_folder(
 
   /* get a new temp file */
   if(!PFCI_GETTEMPFILE(hfci,szFileNameCFFILE1new,CB_MAX_FILENAME)) {
-    fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
     PFCI_CLOSE(hfci,handleCFDATA1new,&err,p_fci_internal->pv);
     /* TODO error handling of err */
     return FALSE;
   }
   /* safety */
   if ( strlen(szFileNameCFFILE1new) >= CB_MAX_FILENAME ) {
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     PFCI_CLOSE(hfci,handleCFDATA1new,&err,p_fci_internal->pv);
     /* TODO error handling of err */
     return FALSE;
@@ -1282,7 +1283,7 @@ static BOOL fci_flush_folder(
   handleCFFILE1new = PFCI_OPEN(hfci,szFileNameCFFILE1new, _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
                                _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
   if(handleCFFILE1new==0){
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -1345,7 +1346,7 @@ static BOOL fci_flush_folder(
         p_fci_internal->estimatedCabinetSize, /* estimated size of cab */
         p_fci_internal->pv)) {
       /* error handling */
-      fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
       PFCI_CLOSE(hfci,handleCFDATA1new,&err,p_fci_internal->pv);
       /* TODO error handling of err */
       PFCI_CLOSE(hfci,handleCFFILE1new,&err,p_fci_internal->pv);
@@ -1403,7 +1404,7 @@ static BOOL fci_flush_folder(
     /* this should never happen */
     if (p_fci_internal->fNextCab) {
       /* internal error */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
   }
@@ -1412,7 +1413,7 @@ static BOOL fci_flush_folder(
   if( PFCI_SEEK(hfci,p_fci_internal->handleCFDATA1,0,SEEK_SET,&err,
     p_fci_internal->pv) !=0 ) {
     /* wrong return value */
-    fci_set_error( FCIERR_NONE, ERROR_SEEK, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_SEEK );
     PFCI_CLOSE(hfci,handleCFDATA1new,&err,p_fci_internal->pv);
     /* TODO error handling of err */
     PFCI_CLOSE(hfci,handleCFFILE1new,&err,p_fci_internal->pv);
@@ -1425,7 +1426,7 @@ static BOOL fci_flush_folder(
   sizeFileCFDATA2old = p_fci_internal->sizeFileCFDATA2;
 
   if(!(reserved = PFCI_ALLOC(hfci, cbReserveCFData+sizeof(CFDATA)))) {
-    fci_set_error( FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY, TRUE );
+    set_error( p_fci_internal, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
     PFCI_CLOSE(hfci,handleCFDATA1new,&err,p_fci_internal->pv);
     /* TODO error handling of err */
     PFCI_CLOSE(hfci,handleCFFILE1new,&err,p_fci_internal->pv);
@@ -1557,7 +1558,7 @@ static BOOL fci_flush_cabinet(
      ) )
   {
       /* error */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
   }
 
@@ -1569,7 +1570,7 @@ static BOOL fci_flush_cabinet(
     if (strlen(p_fci_internal->oldCCAB.szCabPath)>=CB_MAX_CAB_PATH ||
         strlen(p_fci_internal->oldCCAB.szCab)>=CB_MAX_CABINET_NAME) {
       /* set error */
-      fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
       return FALSE;
     }
     /* get the full name of the cabinet */
@@ -1584,7 +1585,7 @@ static BOOL fci_flush_cabinet(
     if (strlen(p_fci_internal->pccab->szCabPath)>=CB_MAX_CAB_PATH ||
         strlen(p_fci_internal->pccab->szCab)>=CB_MAX_CABINET_NAME) {
       /* set error */
-      fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
       return FALSE;
     }
     /* get the full name of the cabinet */
@@ -1637,7 +1638,7 @@ static BOOL fci_flush_cabinet(
       )
     )
   {
-    fci_set_error( FCIERR_NONE, ERROR_MORE_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_MORE_DATA );
     return FALSE;
   }
 
@@ -1687,7 +1688,7 @@ static BOOL fci_flush_cabinet(
   handleCABINET = PFCI_OPEN(hfci, szFileNameCABINET, _O_RDWR | _O_CREAT | _O_TRUNC | _O_BINARY,
                             _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv );
   if(handleCABINET==0){
-    fci_set_error( FCIERR_CAB_FILE, ERROR_OPEN_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
   /* TODO error checking of err */
@@ -1710,7 +1711,7 @@ static BOOL fci_flush_cabinet(
       sizeof(cfheader), /* number of bytes to copy */
       &err, p_fci_internal->pv) != sizeof(cfheader) ) {
     /* write error */
-    fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+    set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -1747,7 +1748,7 @@ static BOOL fci_flush_cabinet(
         sizeof(cfreserved), /* number of bytes to copy */
         &err, p_fci_internal->pv) != sizeof(cfreserved) ) {
       /* write error */
-      fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1759,7 +1760,7 @@ static BOOL fci_flush_cabinet(
   /* add optional reserved area */
   if (cbReserveCFHeader!=0) {
     if(!(reserved = PFCI_ALLOC(hfci, cbReserveCFHeader))) {
-      fci_set_error( FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY, TRUE );
+      set_error( p_fci_internal, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
       return FALSE;
     }
     for(i=0;i<cbReserveCFHeader;) {
@@ -1771,7 +1772,7 @@ static BOOL fci_flush_cabinet(
         &err, p_fci_internal->pv) != cbReserveCFHeader ) {
       PFCI_FREE(hfci, reserved);
       /* write error */
-      fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1784,7 +1785,7 @@ static BOOL fci_flush_cabinet(
         strlen(p_fci_internal->szPrevCab)+1, /* number of bytes to copy */
         &err, p_fci_internal->pv) != strlen(p_fci_internal->szPrevCab)+1 ) {
       /* write error */
-      fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1794,7 +1795,7 @@ static BOOL fci_flush_cabinet(
         strlen(p_fci_internal->szPrevDisk)+1, /* number of bytes to copy */
         &err, p_fci_internal->pv) != strlen(p_fci_internal->szPrevDisk)+1 ) {
       /* write error */
-      fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1806,7 +1807,7 @@ static BOOL fci_flush_cabinet(
         strlen(p_fci_internal->pccab->szCab)+1, /* number of bytes to copy */
         &err, p_fci_internal->pv) != strlen(p_fci_internal->pccab->szCab)+1 ) {
       /* write error */
-      fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1816,7 +1817,7 @@ static BOOL fci_flush_cabinet(
         strlen(p_fci_internal->pccab->szDisk)+1, /* number of bytes to copy */
         &err, p_fci_internal->pv) != strlen(p_fci_internal->pccab->szDisk)+1 ) {
       /* write error */
-      fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1826,7 +1827,7 @@ static BOOL fci_flush_cabinet(
   if( PFCI_SEEK(hfci,p_fci_internal->handleCFFOLDER,
       0, SEEK_SET, &err, p_fci_internal->pv) != 0 ) {
     /* wrong return value */
-    fci_set_error( FCIERR_NONE, ERROR_SEEK, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_SEEK );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -1842,7 +1843,7 @@ static BOOL fci_flush_cabinet(
     if( read_result != sizeof(cffolder) ) {
       if( read_result == 0 ) break;/*ALL CFFOLDER structures have been copied*/
       /* read error */
-      fci_set_error( FCIERR_NONE, ERROR_READ_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_READ_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1896,7 +1897,7 @@ static BOOL fci_flush_cabinet(
         sizeof(cffolder), /* number of bytes to copy */
         &err, p_fci_internal->pv) != sizeof(cffolder) ) {
       /* write error */
-      fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1913,7 +1914,7 @@ static BOOL fci_flush_cabinet(
     /* Reserved areas are used seldom besides that... */
     if (cbReserveCFFolder!=0) {
       if(!(reserved = PFCI_ALLOC(hfci, cbReserveCFFolder))) {
-        fci_set_error( FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY, TRUE );
+        set_error( p_fci_internal, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
       }
 
@@ -1923,7 +1924,7 @@ static BOOL fci_flush_cabinet(
           &err, p_fci_internal->pv) != cbReserveCFFolder ) {
         PFCI_FREE(hfci, reserved);
         /* read error */
-        fci_set_error( FCIERR_NONE, ERROR_READ_FAULT, TRUE );
+        set_error( p_fci_internal, FCIERR_NONE, ERROR_READ_FAULT );
         return FALSE;
       }
       /* TODO error handling of err */
@@ -1934,7 +1935,7 @@ static BOOL fci_flush_cabinet(
           &err, p_fci_internal->pv) != cbReserveCFFolder ) {
         PFCI_FREE(hfci, reserved);
         /* write error */
-        fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+        set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
         return FALSE;
       }
       /* TODO error handling of err */
@@ -1948,7 +1949,7 @@ static BOOL fci_flush_cabinet(
   if( PFCI_SEEK(hfci,p_fci_internal->handleCFFILE2,
       0, SEEK_SET, &err, p_fci_internal->pv) != 0 ) {
     /* wrong return value */
-    fci_set_error( FCIERR_NONE, ERROR_SEEK, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_SEEK );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -1971,7 +1972,7 @@ static BOOL fci_flush_cabinet(
         read_result, /* number of bytes to copy */
         &err, p_fci_internal->pv) != read_result ) {
       /* write error */
-      fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -1989,7 +1990,7 @@ static BOOL fci_flush_cabinet(
         p_fci_internal->statusFolderCopied, /* length of copied blocks */
         p_fci_internal->statusFolderTotal, /* total size of folder */
         p_fci_internal->pv) == -1) {
-      fci_set_error( FCIERR_USER_ABORT, 0, TRUE );
+      set_error( p_fci_internal, FCIERR_USER_ABORT, 0 );
       return FALSE;
     }
 
@@ -1999,7 +2000,7 @@ static BOOL fci_flush_cabinet(
   if( PFCI_SEEK(hfci,p_fci_internal->handleCFDATA2,
       0, SEEK_SET, &err, p_fci_internal->pv) != 0 ) {
     /* wrong return value */
-    fci_set_error( FCIERR_NONE, ERROR_SEEK, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_SEEK );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -2027,7 +2028,7 @@ static BOOL fci_flush_cabinet(
         read_result, /* number of bytes to copy */
         &err, p_fci_internal->pv) != read_result ) {
       /* write error */
-      fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
       return FALSE;
     }
     /* TODO error handling of err */
@@ -2039,7 +2040,7 @@ static BOOL fci_flush_cabinet(
         p_fci_internal->statusFolderTotal, /* total size of folder */
         p_fci_internal->pv) == -1) {
       /* set error code and abort */
-      fci_set_error( FCIERR_USER_ABORT, 0, TRUE );
+      set_error( p_fci_internal, FCIERR_USER_ABORT, 0 );
       return FALSE;
     }
   } /* END OF while */
@@ -2048,7 +2049,7 @@ static BOOL fci_flush_cabinet(
   if( PFCI_SEEK(hfci, handleCABINET,
       0, SEEK_SET, &err, p_fci_internal->pv) != 0 ) {
     /* wrong return value */
-    fci_set_error( FCIERR_NONE, ERROR_SEEK, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_SEEK );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -2060,7 +2061,7 @@ static BOOL fci_flush_cabinet(
       4, /* number of bytes to copy */
       &err, p_fci_internal->pv) != 4 ) {
     /* wrtie error */
-    fci_set_error( FCIERR_CAB_FILE, ERROR_WRITE_FAULT, TRUE );
+    set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -2104,13 +2105,13 @@ static BOOL fci_flush_cabinet(
   if( !PFCI_GETTEMPFILE(hfci, p_fci_internal->szFileNameCFDATA2,
       CB_MAX_FILENAME)) {
     /* error handling */
-    fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
     return FALSE;
   }
   /* safety */
   if ( strlen(p_fci_internal->szFileNameCFDATA2) >= CB_MAX_FILENAME ) {
     /* set error code and abort */
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     return FALSE;
   }
   p_fci_internal->handleCFDATA2 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFDATA2,
@@ -2118,7 +2119,7 @@ static BOOL fci_flush_cabinet(
                                             _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
   /* check handle */
   if(p_fci_internal->handleCFDATA2==0){
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
   /* TODO error checking of err */
@@ -2127,13 +2128,13 @@ static BOOL fci_flush_cabinet(
   if( !PFCI_GETTEMPFILE(hfci,p_fci_internal->szFileNameCFFILE2,
       CB_MAX_FILENAME)) {
     /* error handling */
-    fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
     return FALSE;
   }
   /* safety */
   if ( strlen(p_fci_internal->szFileNameCFFILE2) >= CB_MAX_FILENAME ) {
     /* set error code and abort */
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     return FALSE;
   }
   p_fci_internal->handleCFFILE2 = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFFILE2,
@@ -2141,7 +2142,7 @@ static BOOL fci_flush_cabinet(
                                             _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
   /* check handle */
   if(p_fci_internal->handleCFFILE2==0){
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE);
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
   /* TODO error checking of err */
@@ -2149,13 +2150,13 @@ static BOOL fci_flush_cabinet(
   /* array of all CFFILE in a folder, ready to be copied into cabinet */
   if (!PFCI_GETTEMPFILE(hfci,p_fci_internal->szFileNameCFFOLDER,CB_MAX_FILENAME)) {
     /* error handling */
-    fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
     return FALSE;
   }
   /* safety */
   if ( strlen(p_fci_internal->szFileNameCFFOLDER) >= CB_MAX_FILENAME ) {
     /* set error code and abort */
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     return FALSE;
   }
   p_fci_internal->handleCFFOLDER = PFCI_OPEN(hfci, p_fci_internal->szFileNameCFFOLDER,
@@ -2163,7 +2164,7 @@ static BOOL fci_flush_cabinet(
                                              _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
   /* check handle */
   if(p_fci_internal->handleCFFOLDER==0){
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_OPEN_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
   /* TODO error checking of err */
@@ -2189,7 +2190,7 @@ static BOOL fci_flush_cabinet(
     if (p_fci_internal->sizeFileCFFILE1==0 && p_fci_internal->sizeFileCFDATA1!=0) {
       /* THIS CAN NEVER HAPPEN */
       /* set error code */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
 
@@ -2261,7 +2262,7 @@ static BOOL fci_flush_cabinet(
           p_fci_internal->estimatedCabinetSize, /* estimated size of cab */
           p_fci_internal->pv)) {
         /* error handling */
-        fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+        set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
         return FALSE;
       }
       /* Skip a few lines of code. This is caught by the next if. */
@@ -2303,7 +2304,7 @@ static BOOL fci_flush_cabinet(
     if( p_fci_internal->sizeFileCFFILE1>0 || p_fci_internal->sizeFileCFDATA1) {
       /* THIS MAY NEVER HAPPEN */
       /* set error structures */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
   }
@@ -2369,7 +2370,7 @@ BOOL __cdecl FCIAddFile(
 
   if ((!pszSourceFile) || (!pszFileName) || (!pfnfcignc) || (!pfnfcis) ||
       (!pfnfcigoi) || strlen(pszFileName)>=CB_MAX_FILENAME) {
-    fci_set_error( FCIERR_NONE, ERROR_BAD_ARGUMENTS, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_BAD_ARGUMENTS );
     return FALSE;
   }
 
@@ -2377,13 +2378,13 @@ BOOL __cdecl FCIAddFile(
 
   if(p_fci_internal->fGetNextCabInVain && p_fci_internal->fNextCab) {
     /* internal error */
-    fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
     return FALSE;
   }
 
   if(p_fci_internal->fNextCab) {
     /* internal error */
-    fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
     return FALSE;
   }
 
@@ -2397,21 +2398,21 @@ BOOL __cdecl FCIAddFile(
   if (p_fci_internal->data_in==NULL) {
     if (p_fci_internal->cdata_in!=0) {
       /* error handling */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
     if (p_fci_internal->data_out!=NULL) {
       /* error handling */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
     if(!(p_fci_internal->data_in = PFCI_ALLOC(hfci,CB_MAX_CHUNK))) {
-      fci_set_error( FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY, TRUE );
+      set_error( p_fci_internal, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
       return FALSE;
     }
     if (p_fci_internal->data_out==NULL) {
       if(!(p_fci_internal->data_out = PFCI_ALLOC(hfci, 2 * CB_MAX_CHUNK))){
-        fci_set_error( FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY, TRUE );
+        set_error( p_fci_internal, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
       }
     }
@@ -2420,7 +2421,7 @@ BOOL __cdecl FCIAddFile(
   if (p_fci_internal->data_out==NULL) {
     PFCI_FREE(hfci,p_fci_internal->data_in);
     /* error handling */
-    fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
     return FALSE;
   }
 
@@ -2433,7 +2434,7 @@ BOOL __cdecl FCIAddFile(
     &(cffile.attribs), &err, p_fci_internal->pv);
   /* check file_handle */
   if(file_handle==0){
-    fci_set_error( FCIERR_OPEN_SRC, ERROR_OPEN_FAILED, TRUE );
+    set_error( p_fci_internal, FCIERR_OPEN_SRC, ERROR_OPEN_FAILED );
   }
   /* TODO error handling of err */
 
@@ -2494,7 +2495,7 @@ BOOL __cdecl FCIAddFile(
         p_fci_internal->estimatedCabinetSize, /* estimated size of cab */
         p_fci_internal->pv)) {
       /* error handling */
-      fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
       return FALSE;
     }
     /* Skip a few lines of code. This is caught by the next if. */
@@ -2506,7 +2507,7 @@ BOOL __cdecl FCIAddFile(
   ) {
     /* THIS CAN NEVER HAPPEN */
     /* set error code */
-    fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
     return FALSE;
   }
 
@@ -2525,7 +2526,7 @@ BOOL __cdecl FCIAddFile(
   if( p_fci_internal->fNextCab ) {
     /* THIS MAY NEVER HAPPEN */
     /* set error code */
-    fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
     return FALSE;
   }
 
@@ -2533,7 +2534,7 @@ BOOL __cdecl FCIAddFile(
   while (!FALSE) {
     if (p_fci_internal->cdata_in > CAB_BLOCKMAX) {
       /* internal error */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
 
@@ -2553,7 +2554,7 @@ BOOL __cdecl FCIAddFile(
 
     if ( p_fci_internal->cdata_in > CAB_BLOCKMAX ) {
       /* report internal error */
-      fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
       return FALSE;
     }
     /* write a whole block */
@@ -2571,7 +2572,7 @@ BOOL __cdecl FCIAddFile(
   if( PFCI_WRITE(hfci, p_fci_internal->handleCFFILE1, /* file handle */
       &cffile, sizeof(cffile),&err, p_fci_internal->pv) != sizeof(cffile) ) {
     /* write error */
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -2582,14 +2583,14 @@ BOOL __cdecl FCIAddFile(
   if (strlen(pszFileName)>=CB_MAX_FILENAME) {
     /* IMPOSSIBLE */
     /* set error code */
-    fci_set_error( FCIERR_NONE, ERROR_INVALID_DATA, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
     return FALSE;
   }
   if( PFCI_WRITE(hfci, p_fci_internal->handleCFFILE1, /* file handle */
       pszFileName, strlen(pszFileName)+1, &err, p_fci_internal->pv)
       != strlen(pszFileName)+1 ) {
     /* write error */
-    fci_set_error( FCIERR_TEMP_FILE, ERROR_WRITE_FAULT, TRUE );
+    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
     return FALSE;
   }
   /* TODO error handling of err */
@@ -2661,7 +2662,7 @@ BOOL __cdecl FCIAddFile(
         p_fci_internal->estimatedCabinetSize,/* estimated size of cab */
         p_fci_internal->pv)) {
       /* error handling */
-      fci_set_error( FCIERR_NONE, ERROR_FUNCTION_FAILED, TRUE );
+      set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
       return FALSE;
     }
     /* Skip a few lines of code. This is caught by the next if. */
@@ -2672,7 +2673,7 @@ BOOL __cdecl FCIAddFile(
       p_fci_internal->fNextCab
   ) {
     /* THIS CAN NEVER HAPPEN */
-    fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
     return FALSE;
   }
 
@@ -2692,7 +2693,7 @@ BOOL __cdecl FCIAddFile(
   if( p_fci_internal->fNextCab ) {
     /* THIS MAY NEVER HAPPEN */
     /* set error code */
-    fci_set_error( FCIERR_NONE, ERROR_GEN_FAILURE, TRUE );
+    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
     return FALSE;
   }
 
