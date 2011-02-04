@@ -858,7 +858,6 @@ HANDLE WINAPI CryptCATOpen(LPWSTR pwszFileName, DWORD fdwOpenFlags, HCRYPTPROV h
         return INVALID_HANDLE_VALUE;
     }
 
-    if (!dwPublicVersion) dwPublicVersion = 0x00000100;
     if (!dwEncodingType)  dwEncodingType  = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
 
     if (fdwOpenFlags & CRYPTCAT_OPEN_ALWAYS)    flags |= OPEN_ALWAYS;
