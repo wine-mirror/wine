@@ -605,7 +605,7 @@ const char * __thiscall MSVCRT_type_info_name(type_info * _this)
   if (!_this->name)
   {
     /* Create and set the demangled name */
-    /* Nota: mangled name in type_info struct always start with a '.', while
+    /* Note: mangled name in type_info struct always starts with a '.', while
      * it isn't valid for mangled name.
      * Is this '.' really part of the mangled name, or has it some other meaning ?
      */
