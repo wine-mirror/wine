@@ -809,6 +809,7 @@ void signal_init_process(void)
     if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
 #endif
 
+#ifdef __sun__
     /* 'ta 6' tells the kernel to synthesize any unaligned accesses this 
        process makes, instead of just signalling an error and terminating
        the process.  wine-devel did not reach a conclusion on whether
@@ -816,6 +817,7 @@ void signal_init_process(void)
        because it could obscure problems in user code */
     __asm__("ta 6"); /* 6 == ST_FIX_ALIGN defined in sys/trap.h */
     return;
+#endif
 
  error:
     perror("sigaction");
