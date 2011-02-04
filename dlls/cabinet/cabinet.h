@@ -372,9 +372,6 @@ typedef struct {
   PERF     perf;
 } FDI_Int, *PFDI_Int;
 
-/* cast an HFCI into a PFCI_Int */
-#define PFCI_INT(hfci) ((PFCI_Int)(hfci))
-
 /* cast an HFDI into a PFDI_Int */
 #define PFDI_INT(hfdi) ((PFDI_Int)(hfdi))
 
@@ -389,10 +386,6 @@ typedef struct {
 
 #define FCI_INT_MAGIC 0xfcfcfc05
 #define FDI_INT_MAGIC 0xfdfdfd05
-
-#define REALLY_IS_FCI(hfci) ( \
-  ((hfci) != NULL) && \
-  (PFCI_INT(hfci)->FCI_Intmagic == FCI_INT_MAGIC) )
 
 #define REALLY_IS_FDI(hfdi) ( \
   ((hfdi) != NULL) && \
