@@ -1199,6 +1199,7 @@ static void test_reg_close_key(void)
      * hkHandle remains changed after call to RegCloseKey
      */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkHandle);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
     ret = RegCloseKey(hkHandle);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
 
