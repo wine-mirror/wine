@@ -735,8 +735,8 @@ static HRESULT WINAPI HTMLCurrentStyle_get_borderWidth(IHTMLCurrentStyle *iface,
 static HRESULT WINAPI HTMLCurrentStyle_get_padding(IHTMLCurrentStyle *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_nsstyle_attr(This->nsstyle, STYLEID_PADDING, p);
 }
 
 static HRESULT WINAPI HTMLCurrentStyle_get_margin(IHTMLCurrentStyle *iface, BSTR *p)

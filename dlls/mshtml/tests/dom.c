@@ -3995,6 +3995,10 @@ static void test_current_style(IHTMLCurrentStyle *current_style)
     ok(hres == S_OK, "get_margin failed: %08x\n", hres);
     SysFreeString(str);
 
+    hres = IHTMLCurrentStyle_get_padding(current_style, &str);
+    ok(hres == S_OK, "get_padding failed: %08x\n", hres);
+    SysFreeString(str);
+
     hres = IHTMLCurrentStyle_get_fontWeight(current_style, &v);
     ok(hres == S_OK, "get_fontWeight failed: %08x\n", hres);
     ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
