@@ -919,7 +919,6 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   }
 
   if (pointer_needs_unmarshaling) {
-    unsigned char *base_ptr_val = *pPointer;
     unsigned char **current_ptr = pPointer;
     if (pStubMsg->IsClient) {
       TRACE("client\n");
@@ -932,7 +931,7 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       if (!fMustAlloc) {
         if (pSrcPointer) {
           TRACE("setting *pPointer to %p\n", pSrcPointer);
-          *pPointer = base_ptr_val = pSrcPointer;
+          *pPointer = pSrcPointer;
         } else
           fMustAlloc = TRUE;
       }
@@ -945,7 +944,6 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
       if (attr & RPC_FC_P_DEREF) {
         fMustAlloc = TRUE;
       } else {
-        base_ptr_val = NULL;
         *current_ptr = NULL;
       }
     }
@@ -955,7 +953,7 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     if (attr & RPC_FC_P_DEREF) {
       if (fMustAlloc) {
-        base_ptr_val = NdrAllocate(pStubMsg, sizeof(void *));
+        unsigned char *base_ptr_val = NdrAllocate(pStubMsg, sizeof(void *));
         *pPointer = base_ptr_val;
         current_ptr = (unsigned char **)base_ptr_val;
       } else
