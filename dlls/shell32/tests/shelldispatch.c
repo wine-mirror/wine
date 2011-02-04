@@ -174,7 +174,9 @@ static void test_namespace(void)
     if (r == S_OK)
     {
         r = Folder_QueryInterface(folder, &IID_Folder2, (LPVOID*)&folder2);
-        ok(r == S_OK, "Folder::QueryInterface failed: %08x\n", r);
+        ok(r == S_OK ||
+         broken(r == E_NOINTERFACE), /* NT4 */
+         "Folder::QueryInterface failed: %08x\n", r);
         if (r == S_OK)
         {
             r = Folder2_get_Self(folder2, &item);
@@ -229,7 +231,9 @@ static void test_namespace(void)
             SysFreeString(title);
         }
         r = Folder_QueryInterface(folder, &IID_Folder2, (LPVOID*)&folder2);
-        ok(r == S_OK, "Folder::QueryInterface failed: %08x\n", r);
+        ok(r == S_OK ||
+         broken(r == E_NOINTERFACE), /* NT4 */
+         "Folder::QueryInterface failed: %08x\n", r);
         if (r == S_OK)
         {
             r = Folder2_get_Self(folder2, &item);
@@ -273,7 +277,9 @@ static void test_namespace(void)
                 SysFreeString(title);
             }
             r = Folder_QueryInterface(folder, &IID_Folder2, (LPVOID*)&folder2);
-            ok(r == S_OK, "Folder::QueryInterface failed: %08x\n", r);
+            ok(r == S_OK ||
+             broken(r == E_NOINTERFACE), /* NT4 */
+             "Folder::QueryInterface failed: %08x\n", r);
             if (r == S_OK)
             {
                 r = Folder2_get_Self(folder2, &item);
