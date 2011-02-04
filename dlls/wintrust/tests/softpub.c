@@ -378,6 +378,7 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         {
             fileInfo.pgKnownSubject = (GUID *)0xdeadbeef;
             ret = funcs->pfnObjectTrust(&data);
+            ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
         }
         funcs->pfnFree(data.padwTrustStepErrors);
     }
@@ -447,6 +448,8 @@ static void testCertTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
             WINTRUST_DATA wintrust_data = { 0 };
 
             ret = funcs->pfnAddCert2Chain(&data, 0, FALSE, 0, cert);
+            ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+
             /* If pWintrustData isn't set, crashes attempting to access
              * pWintrustData->fdwRevocationChecks
              */
