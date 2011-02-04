@@ -211,6 +211,7 @@ static void test_SystemFunction003(void)
 
     memset(output, 0, sizeof output);
     r = pSystemFunction002(data, key, output);
+    ok(r == STATUS_SUCCESS, "function failed\n");
 
     ok( !memcmp(exp2, output, sizeof output), "decrypted message wrong\n");
 }
@@ -284,16 +285,19 @@ static void test_SystemFunction004(void)
 
     memset(output, 0, sizeof output);
     r = pSystemFunction002(out.Buffer, key.Buffer, output);
+    ok(r == STATUS_SUCCESS, "function failed\n");
 
     ok(((unsigned int*)output)[0] == in.Length, "crypted length wrong\n");
     ok(((unsigned int*)output)[1] == 1, "crypted value wrong\n");
 
     memset(output, 0, sizeof output);
     r = pSystemFunction002(out.Buffer+8, key.Buffer, output);
+    ok(r == STATUS_SUCCESS, "function failed\n");
     ok(!memcmp(output, inbuf, sizeof output), "crypted data wrong\n");
 
     memset(output, 0, sizeof output);
     r = pSystemFunction002(out.Buffer+16, key.Buffer, output);
+    ok(r == STATUS_SUCCESS, "function failed\n");
     ok(!memcmp(output, inbuf, sizeof output), "crypted data wrong\n");
 }
 
@@ -494,12 +498,6 @@ static void test_memcmpfunc(memcmpfunc fn)
     {
         win_skip("function is not available\n");
         return;
-    }
-
-    if (0)
-    {
-        /* crashes */
-        r = fn(NULL, NULL);
     }
 
     memset(arg1, 0, sizeof arg1);
