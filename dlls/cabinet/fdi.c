@@ -110,6 +110,21 @@ typedef struct {
    cab_UBYTE block_resv;
 } MORE_ISCAB_INFO, *PMORE_ISCAB_INFO;
 
+typedef struct
+{
+  unsigned int magic;
+  PFNALLOC     alloc;
+  PFNFREE      free;
+  PFNOPEN      open;
+  PFNREAD      read;
+  PFNWRITE     write;
+  PFNCLOSE     close;
+  PFNSEEK      seek;
+  PERF         perf;
+} FDI_Int;
+
+#define FDI_INT_MAGIC 0xfdfdfd05
+
 /*
  * ugh, well, this ended up being pretty damn silly...
  * now that I've conceded to build equivalent structures to struct cab.*,
@@ -148,6 +163,26 @@ typedef struct fdi_cds_fwd {
   struct fdi_cds_fwd *next;
 } fdi_decomp_state;
 
+#define ZIPNEEDBITS(n) {while(k<(n)){cab_LONG c=*(ZIP(inpos)++);\
+    b|=((cab_ULONG)c)<<k;k+=8;}}
+#define ZIPDUMPBITS(n) {b>>=(n);k-=(n);}
+
+/* endian-neutral reading of little-endian data */
+#define EndGetI32(a)  ((((a)[3])<<24)|(((a)[2])<<16)|(((a)[1])<<8)|((a)[0]))
+#define EndGetI16(a)  ((((a)[1])<<8)|((a)[0]))
+
+#define CAB(x) (decomp_state->x)
+#define ZIP(x) (decomp_state->methods.zip.x)
+#define QTM(x) (decomp_state->methods.qtm.x)
+#define LZX(x) (decomp_state->methods.lzx.x)
+#define DECR_OK           (0)
+#define DECR_DATAFORMAT   (1)
+#define DECR_ILLEGALDATA  (2)
+#define DECR_NOMEMORY     (3)
+#define DECR_CHECKSUM     (4)
+#define DECR_INPUT        (5)
+#define DECR_OUTPUT       (6)
+#define DECR_USERABORT    (7)
 
 static void set_error( FDI_Int *fdi, int oper, int err )
 {
