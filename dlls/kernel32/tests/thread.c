@@ -944,7 +944,8 @@ static void test_SetThreadContext(void)
         ctx.Esp -= 2 * sizeof(int *);
         ctx.Eip = (DWORD)set_test_val;
         SetLastError(0xdeadbeef);
-        ok( SetThreadContext( thread, &ctx ), "SetThreadContext failed : (%d)\n", GetLastError() );
+        ret = SetThreadContext( thread, &ctx );
+        ok( ret, "SetThreadContext failed : (%d)\n", GetLastError() );
     }
 
     SetLastError(0xdeadbeef);
