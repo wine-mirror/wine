@@ -148,6 +148,15 @@ typedef struct fdi_cds_fwd {
   struct fdi_cds_fwd *next;
 } fdi_decomp_state;
 
+
+static void set_error( FDI_Int *fdi, int oper, int err )
+{
+    fdi->perf->erfOper = oper;
+    fdi->perf->erfType = err;
+    fdi->perf->fError = TRUE;
+    if (err) SetLastError( err );
+}
+
 /****************************************************************
  * QTMupdatemodel (internal)
  */
@@ -521,11 +530,7 @@ static BOOL FDI_read_entries(
   base_offset = FDI_getoffset(hfdi, hf);
 
   if (PFDI_SEEK(hfdi, hf, 0, SEEK_END) == -1) {
-    if (pmii) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
-    }
+    if (pmii) set_error( PFDI_INT(hfdi), FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
 
@@ -533,31 +538,19 @@ static BOOL FDI_read_entries(
 
   if ((cabsize == -1) || (base_offset == -1) || 
       ( PFDI_SEEK(hfdi, hf, base_offset, SEEK_SET) == -1 )) {
-    if (pmii) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
-    }
+    if (pmii) set_error( PFDI_INT(hfdi), FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
 
   /* read in the CFHEADER */
   if (PFDI_READ(hfdi, hf, buf, cfhead_SIZEOF) != cfhead_SIZEOF) {
-    if (pmii) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
-    }
+    if (pmii) set_error( PFDI_INT(hfdi), FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
   
   /* check basic MSCF signature */
   if (EndGetI32(buf+cfhead_Signature) != 0x4643534d) {
-    if (pmii) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
-    }
+    if (pmii) set_error( PFDI_INT(hfdi), FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
 
@@ -566,11 +559,7 @@ static BOOL FDI_read_entries(
   if (num_folders == 0) {
     /* PONDERME: is this really invalid? */
     WARN("weird cabinet detect failure: no folders in cabinet\n");
-    if (pmii) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
-    }
+    if (pmii) set_error( PFDI_INT(hfdi), FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
 
@@ -579,11 +568,7 @@ static BOOL FDI_read_entries(
   if (num_files == 0) {
     /* PONDERME: is this really invalid? */
     WARN("weird cabinet detect failure: no files in cabinet\n");
-    if (pmii) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NOT_A_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
-    }
+    if (pmii) set_error( PFDI_INT(hfdi), FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
 
@@ -598,11 +583,7 @@ static BOOL FDI_read_entries(
       (buf[cfhead_MajorVersion] == 1 && buf[cfhead_MinorVersion] > 3))
   {
     WARN("cabinet format version > 1.3\n");
-    if (pmii) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_UNKNOWN_CABINET_VERSION;
-      PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
-      PFDI_INT(hfdi)->perf->fError = TRUE;
-    }
+    if (pmii) set_error( PFDI_INT(hfdi), FDIERROR_UNKNOWN_CABINET_VERSION, 0 /* ? */ );
     return FALSE;
   }
 
@@ -613,11 +594,7 @@ static BOOL FDI_read_entries(
   if (flags & cfheadRESERVE_PRESENT) {
     if (PFDI_READ(hfdi, hf, buf, cfheadext_SIZEOF) != cfheadext_SIZEOF) {
       ERR("bunk reserve-sizes?\n");
-      if (pmii) {
-        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-        PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
-        PFDI_INT(hfdi)->perf->fError = TRUE;
-      }
+      if (pmii) set_error( PFDI_INT(hfdi), FDIERROR_CORRUPT_CABINET, 0 /* ? */ );
       return FALSE;
     }
 
@@ -635,11 +612,7 @@ static BOOL FDI_read_entries(
     /* skip the reserved header */
     if ((header_resv) && (PFDI_SEEK(hfdi, hf, header_resv, SEEK_CUR) == -1)) {
       ERR("seek failure: header_resv\n");
-      if (pmii) {
-        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-        PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
-        PFDI_INT(hfdi)->perf->fError = TRUE;
-      }
+      if (pmii) set_error( PFDI_INT(hfdi), FDIERROR_CORRUPT_CABINET, 0 /* ? */ );
       return FALSE;
     }
   }
@@ -647,11 +620,7 @@ static BOOL FDI_read_entries(
   if (flags & cfheadPREV_CABINET) {
     prevname = FDI_read_string(hfdi, hf, cabsize);
     if (!prevname) {
-      if (pmii) {
-        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-        PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
-        PFDI_INT(hfdi)->perf->fError = TRUE;
-      }
+      if (pmii) set_error( PFDI_INT(hfdi), FDIERROR_CORRUPT_CABINET, 0 /* ? */ );
       return FALSE;
     } else
       if (pmii)
@@ -676,9 +645,7 @@ static BOOL FDI_read_entries(
         if (pmii->prevname) PFDI_FREE(hfdi, prevname);
         if (pmii->previnfo) PFDI_FREE(hfdi, previnfo);
       }
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0; /* ? */
-      PFDI_INT(hfdi)->perf->fError = TRUE;
+      set_error( PFDI_INT(hfdi), FDIERROR_CORRUPT_CABINET, 0 /* ? */ );
       return FALSE;
     } else
       if (pmii)
@@ -751,18 +718,12 @@ BOOL __cdecl FDIIsCabinet(
 
   if (!hf) {
     ERR("(!hf)!\n");
-    /* PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
-    PFDI_INT(hfdi)->perf->erfType = ERROR_INVALID_HANDLE;
-    PFDI_INT(hfdi)->perf->fError = TRUE; */
     SetLastError(ERROR_INVALID_HANDLE);
     return FALSE;
   }
 
   if (!pfdici) {
     ERR("(!pfdici)!\n");
-    /* PFDI_INT(hfdi)->perf->erfOper = FDIERROR_NONE;
-    PFDI_INT(hfdi)->perf->erfType = ERROR_BAD_ARGUMENTS;
-    PFDI_INT(hfdi)->perf->fError = TRUE; */
     SetLastError(ERROR_BAD_ARGUMENTS);
     return FALSE;
   }
@@ -2520,10 +2481,7 @@ BOOL __cdecl FDICopy(
   if ((pathlen + filenamelen + 3) > MAX_PATH) {
     ERR("MAX_PATH exceeded.\n");
     PFDI_FREE(hfdi, decomp_state);
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
-    PFDI_INT(hfdi)->perf->erfType = ERROR_FILE_NOT_FOUND;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
-    SetLastError(ERROR_FILE_NOT_FOUND);
+    set_error( PFDI_INT(hfdi), FDIERROR_CABINET_NOT_FOUND, ERROR_FILE_NOT_FOUND );
     return FALSE;
   }
 
@@ -2542,8 +2500,7 @@ BOOL __cdecl FDICopy(
   cabhf = PFDI_OPEN(hfdi, fullpath, _O_RDONLY|_O_BINARY, _S_IREAD | _S_IWRITE);
   if (cabhf == -1) {
     PFDI_FREE(hfdi, decomp_state);
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    set_error( PFDI_INT(hfdi), FDIERROR_CABINET_NOT_FOUND, 0 );
     SetLastError(ERROR_FILE_NOT_FOUND);
     return FALSE;
   }
@@ -2551,10 +2508,7 @@ BOOL __cdecl FDICopy(
   if (cabhf == 0) {
     ERR("PFDI_OPEN returned zero for %s.\n", fullpath);
     PFDI_FREE(hfdi, decomp_state);
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CABINET_NOT_FOUND;
-    PFDI_INT(hfdi)->perf->erfType = ERROR_FILE_NOT_FOUND;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
-    SetLastError(ERROR_FILE_NOT_FOUND);
+    set_error( PFDI_INT(hfdi), FDIERROR_CABINET_NOT_FOUND, ERROR_FILE_NOT_FOUND );
     return FALSE;
   }
 
@@ -2576,9 +2530,7 @@ BOOL __cdecl FDICopy(
   fdin.psz3 = pszCabPath;
 
   if (((*pfnfdin)(fdintCABINET_INFO, &fdin))) {
-    PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
-    PFDI_INT(hfdi)->perf->erfType = 0;
-    PFDI_INT(hfdi)->perf->fError = TRUE;
+    set_error( PFDI_INT(hfdi), FDIERROR_USER_ABORT, 0 );
     goto bail_and_fail;
   }
 
@@ -2589,9 +2541,7 @@ BOOL __cdecl FDICopy(
   /* read folders */
   for (i = 0; i < fdici.cFolders; i++) {
     if (PFDI_READ(hfdi, cabhf, buf, cffold_SIZEOF) != cffold_SIZEOF) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
+      set_error( PFDI_INT(hfdi), FDIERROR_CORRUPT_CABINET, 0 );
       goto bail_and_fail;
     }
 
@@ -2601,10 +2551,7 @@ BOOL __cdecl FDICopy(
     fol = PFDI_ALLOC(hfdi, sizeof(struct fdi_folder));
     if (!fol) {
       ERR("out of memory!\n");
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
-      PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
-      SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+      set_error( PFDI_INT(hfdi), FDIERROR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
       goto bail_and_fail;
     }
     ZeroMemory(fol, sizeof(struct fdi_folder));
@@ -2622,19 +2569,14 @@ BOOL __cdecl FDICopy(
   /* read files */
   for (i = 0; i < fdici.cFiles; i++) {
     if (PFDI_READ(hfdi, cabhf, buf, cffile_SIZEOF) != cffile_SIZEOF) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
+      set_error( PFDI_INT(hfdi), FDIERROR_CORRUPT_CABINET, 0 );
       goto bail_and_fail;
     }
 
     file = PFDI_ALLOC(hfdi, sizeof(struct fdi_file));
     if (!file) { 
       ERR("out of memory!\n"); 
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
-      PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
-      SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+      set_error( PFDI_INT(hfdi), FDIERROR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
       goto bail_and_fail;
     }
     ZeroMemory(file, sizeof(struct fdi_file));
@@ -2649,9 +2591,7 @@ BOOL __cdecl FDICopy(
     file->filename = FDI_read_string(hfdi, cabhf, fdici.cbCabinet);
 
     if (!file->filename) {
-      PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-      PFDI_INT(hfdi)->perf->erfType = 0;
-      PFDI_INT(hfdi)->perf->fError = TRUE;
+      set_error( PFDI_INT(hfdi), FDIERROR_CORRUPT_CABINET, 0 );
       goto bail_and_fail;
     }
 
@@ -2717,9 +2657,7 @@ BOOL __cdecl FDICopy(
       fdin.psz3 = (CAB(mii).previnfo) ? CAB(mii).previnfo : &emptystring;
 
       if (((*pfnfdin)(fdintPARTIAL_FILE, &fdin))) {
-        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
-        PFDI_INT(hfdi)->perf->erfType = 0;
-        PFDI_INT(hfdi)->perf->fError = TRUE;
+        set_error( PFDI_INT(hfdi), FDIERROR_USER_ABORT, 0 );
         goto bail_and_fail;
       }
       /* I don't think we are supposed to decompress partial files.  This prevents it. */
@@ -2736,9 +2674,7 @@ BOOL __cdecl FDICopy(
       fdin.time = file->time;
       fdin.attribs = file->attribs;
       if ((filehf = ((*pfnfdin)(fdintCOPY_FILE, &fdin))) == -1) {
-        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
-        PFDI_INT(hfdi)->perf->erfType = 0;
-        PFDI_INT(hfdi)->perf->fError = TRUE;
+        set_error( PFDI_INT(hfdi), FDIERROR_USER_ABORT, 0 );
         filehf = 0;
         goto bail_and_fail;
       }
@@ -2824,15 +2760,10 @@ BOOL __cdecl FDICopy(
         case DECR_OK:
           break;
         case DECR_NOMEMORY:
-          PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
-          PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
-          PFDI_INT(hfdi)->perf->fError = TRUE;
-          SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+          set_error( PFDI_INT(hfdi), FDIERROR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
           goto bail_and_fail;
         default:
-          PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-          PFDI_INT(hfdi)->perf->erfOper = 0;
-          PFDI_INT(hfdi)->perf->fError = TRUE;
+          set_error( PFDI_INT(hfdi), FDIERROR_CORRUPT_CABINET, 0 );
           goto bail_and_fail;
       }
 
@@ -2842,20 +2773,13 @@ BOOL __cdecl FDICopy(
           case DECR_OK:
             break;
           case DECR_USERABORT:
-            PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
-            PFDI_INT(hfdi)->perf->erfType = 0;
-            PFDI_INT(hfdi)->perf->fError = TRUE;
+            set_error( PFDI_INT(hfdi), FDIERROR_USER_ABORT, 0 );
             goto bail_and_fail;
           case DECR_NOMEMORY:
-            PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
-            PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
-            PFDI_INT(hfdi)->perf->fError = TRUE;
-            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            set_error( PFDI_INT(hfdi), FDIERROR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
             goto bail_and_fail;
           default:
-            PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-            PFDI_INT(hfdi)->perf->erfOper = 0;
-            PFDI_INT(hfdi)->perf->fError = TRUE;
+            set_error( PFDI_INT(hfdi), FDIERROR_CORRUPT_CABINET, 0 );
             goto bail_and_fail;
         }
         CAB(offset) = file->offset;
@@ -2881,20 +2805,13 @@ BOOL __cdecl FDICopy(
         case DECR_OK:
           break;
         case DECR_USERABORT:
-          PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
-          PFDI_INT(hfdi)->perf->erfType = 0;
-          PFDI_INT(hfdi)->perf->fError = TRUE;
+          set_error( PFDI_INT(hfdi), FDIERROR_USER_ABORT, 0 );
           goto bail_and_fail;
         case DECR_NOMEMORY:
-          PFDI_INT(hfdi)->perf->erfOper = FDIERROR_ALLOC_FAIL;
-          PFDI_INT(hfdi)->perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
-          PFDI_INT(hfdi)->perf->fError = TRUE;
-          SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+          set_error( PFDI_INT(hfdi), FDIERROR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
           goto bail_and_fail;
         default:
-          PFDI_INT(hfdi)->perf->erfOper = FDIERROR_CORRUPT_CABINET;
-          PFDI_INT(hfdi)->perf->erfOper = 0;
-          PFDI_INT(hfdi)->perf->fError = TRUE;
+          set_error( PFDI_INT(hfdi), FDIERROR_CORRUPT_CABINET, 0 );
           goto bail_and_fail;
       }
     }
