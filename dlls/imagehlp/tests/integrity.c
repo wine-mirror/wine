@@ -202,7 +202,8 @@ static void test_get_certificate(char *cert_data, int index)
         return;
     }
 
-    ok(ret = pImageGetCertificateData(hFile, index, cert, &cert_len), "Unable to retrieve certificate; err=%x\n", GetLastError());
+    ret = pImageGetCertificateData(hFile, index, cert, &cert_len);
+    ok(ret, "Unable to retrieve certificate; err=%x\n", GetLastError());
     ok(memcmp(cert->bCertificate, cert_data, cert_len - sizeof(WIN_CERTIFICATE)) == 0, "Certificate retrieved did not match original\n");
 
     HeapFree(GetProcessHeap(), 0, cert);
