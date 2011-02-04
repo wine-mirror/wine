@@ -616,6 +616,7 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     /* Set the attributes so we can delete the file */
     attrs = FILE_ATTRIBUTE_NORMAL;
     ret = SetFileAttributesA(tmpfile, attrs);
+    ok(ret, "SetFileAttributesA failed %u\n", GetLastError());
     DeleteFileA(tmpfile);
 }
 
@@ -784,7 +785,7 @@ static void test_create_catalog_file(void)
 
     /* Only enumerate the members */
     trace("Only members\n");
-    attrcount = membercount = 0;
+    membercount = 0;
     catcdf = pCryptCATCDFOpen(cdffileW, NULL);
 
     catmember = NULL;
