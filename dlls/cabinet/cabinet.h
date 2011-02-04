@@ -310,24 +310,15 @@ typedef struct cds_forward {
 
 typedef struct {
   unsigned int magic;
-  PFNALLOC pfnalloc;
-  PFNFREE  pfnfree;
-  PFNOPEN  pfnopen;
-  PFNREAD  pfnread;
-  PFNWRITE pfnwrite;
-  PFNCLOSE pfnclose;
-  PFNSEEK  pfnseek;
-  PERF     perf;
-} FDI_Int, *PFDI_Int;
-
-/* quickie pfdi method invokers */
-#define PFDI_ALLOC(fdi, size)            (fdi->pfnalloc (size))
-#define PFDI_FREE(fdi, ptr)              (fdi->pfnfree  (ptr))
-#define PFDI_OPEN(fdi, file, flag, mode) (fdi->pfnopen  (file, flag, mode))
-#define PFDI_READ(fdi, hf, pv, cb)       (fdi->pfnread  (hf, pv, cb))
-#define PFDI_WRITE(fdi, hf, pv, cb)      (fdi->pfnwrite (hf, pv, cb))
-#define PFDI_CLOSE(fdi, hf)              (fdi->pfnclose (hf))
-#define PFDI_SEEK(fdi, hf, dist, type)   (fdi->pfnseek  (hf, dist, type))
+  PFNALLOC     alloc;
+  PFNFREE      free;
+  PFNOPEN      open;
+  PFNREAD      read;
+  PFNWRITE     write;
+  PFNCLOSE     close;
+  PFNSEEK      seek;
+  PERF         perf;
+} FDI_Int;
 
 #define FDI_INT_MAGIC 0xfdfdfd05
 

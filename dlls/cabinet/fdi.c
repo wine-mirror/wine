@@ -409,13 +409,13 @@ HFDI __cdecl FDICreate(
   }
 
   fdi->magic = FDI_INT_MAGIC;
-  fdi->pfnalloc = pfnalloc;
-  fdi->pfnfree = pfnfree;
-  fdi->pfnopen = pfnopen;
-  fdi->pfnread = pfnread;
-  fdi->pfnwrite = pfnwrite;
-  fdi->pfnclose = pfnclose;
-  fdi->pfnseek = pfnseek;
+  fdi->alloc = pfnalloc;
+  fdi->free  = pfnfree;
+  fdi->open  = pfnopen;
+  fdi->read  = pfnread;
+  fdi->write = pfnwrite;
+  fdi->close = pfnclose;
+  fdi->seek  = pfnseek;
   /* no-brainer: we ignore the cpu type; this is only used
      for the 16-bit versions in Windows anyhow... */
   fdi->perf = perf;
@@ -428,9 +428,9 @@ HFDI __cdecl FDICreate(
  *
  * returns the file pointer position of a file handle.
  */
-static long FDI_getoffset(FDI_Int *fdi, INT_PTR hf)
+static LONG FDI_getoffset(FDI_Int *fdi, INT_PTR hf)
 {
-  return PFDI_SEEK(fdi, hf, 0L, SEEK_CUR);
+  return fdi->seek(hf, 0, SEEK_CUR);
 }
 
 /**********************************************************************
@@ -451,8 +451,8 @@ static char *FDI_read_string(FDI_Int *fdi, INT_PTR hf, long cabsize)
 
   do {
     if (len > maxlen) len = maxlen;
-    if (!(buf = PFDI_ALLOC(fdi, len))) break;
-    if (!PFDI_READ(fdi, hf, buf, len)) break;
+    if (!(buf = fdi->alloc(len))) break;
+    if (!fdi->read(hf, buf, len)) break;
 
     /* search for a null terminator in what we've just read */
     for (i=0; i < len; i++) {
@@ -467,8 +467,8 @@ static char *FDI_read_string(FDI_Int *fdi, INT_PTR hf, long cabsize)
       /* The buffer is too small for the string. Reset the file to the point
        * were we started, free the buffer and increase the size for the next try
        */
-      PFDI_SEEK(fdi, hf, base, SEEK_SET);
-      PFDI_FREE(fdi, buf);
+      fdi->seek(hf, base, SEEK_SET);
+      fdi->free(buf);
       buf = NULL;
       len *= 2;
     }
@@ -476,14 +476,14 @@ static char *FDI_read_string(FDI_Int *fdi, INT_PTR hf, long cabsize)
 
   if (!ok) {
     if (buf)
-      PFDI_FREE(fdi, buf);
+      fdi->free(buf);
     else
       ERR("out of memory!\n");
     return NULL;
   }
 
   /* otherwise, set the stream to just after the string and return */
-  PFDI_SEEK(fdi, hf, base + strlen((char *)buf) + 1, SEEK_SET);
+  fdi->seek(hf, base + strlen((char *)buf) + 1, SEEK_SET);
 
   return (char *) buf;
 }
@@ -541,7 +541,7 @@ static BOOL FDI_read_entries(
   /* get basic offset & size info */
   base_offset = FDI_getoffset(fdi, hf);
 
-  if (PFDI_SEEK(fdi, hf, 0, SEEK_END) == -1) {
+  if (fdi->seek(hf, 0, SEEK_END) == -1) {
     if (pmii) set_error( fdi, FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
@@ -549,13 +549,13 @@ static BOOL FDI_read_entries(
   cabsize = FDI_getoffset(fdi, hf);
 
   if ((cabsize == -1) || (base_offset == -1) || 
-      ( PFDI_SEEK(fdi, hf, base_offset, SEEK_SET) == -1 )) {
+      ( fdi->seek(hf, base_offset, SEEK_SET) == -1 )) {
     if (pmii) set_error( fdi, FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
 
   /* read in the CFHEADER */
-  if (PFDI_READ(fdi, hf, buf, cfhead_SIZEOF) != cfhead_SIZEOF) {
+  if (fdi->read(hf, buf, cfhead_SIZEOF) != cfhead_SIZEOF) {
     if (pmii) set_error( fdi, FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
@@ -604,7 +604,7 @@ static BOOL FDI_read_entries(
 
   /* read the reserved-sizes part of header, if present */
   if (flags & cfheadRESERVE_PRESENT) {
-    if (PFDI_READ(fdi, hf, buf, cfheadext_SIZEOF) != cfheadext_SIZEOF) {
+    if (fdi->read(hf, buf, cfheadext_SIZEOF) != cfheadext_SIZEOF) {
       ERR("bunk reserve-sizes?\n");
       if (pmii) set_error( fdi, FDIERROR_CORRUPT_CABINET, 0 /* ? */ );
       return FALSE;
@@ -622,7 +622,7 @@ static BOOL FDI_read_entries(
     }
 
     /* skip the reserved header */
-    if ((header_resv) && (PFDI_SEEK(fdi, hf, header_resv, SEEK_CUR) == -1)) {
+    if ((header_resv) && (fdi->seek(hf, header_resv, SEEK_CUR) == -1)) {
       ERR("seek failure: header_resv\n");
       if (pmii) set_error( fdi, FDIERROR_CORRUPT_CABINET, 0 /* ? */ );
       return FALSE;
@@ -638,13 +638,13 @@ static BOOL FDI_read_entries(
       if (pmii)
         pmii->prevname = prevname;
       else
-        PFDI_FREE(fdi, prevname);
+        fdi->free(prevname);
     previnfo = FDI_read_string(fdi, hf, cabsize);
     if (previnfo) {
       if (pmii) 
         pmii->previnfo = previnfo;
       else
-        PFDI_FREE(fdi, previnfo);
+        fdi->free(previnfo);
     }
   }
 
@@ -654,8 +654,8 @@ static BOOL FDI_read_entries(
     nextname = FDI_read_string(fdi, hf, cabsize);
     if (!nextname) {
       if ((flags & cfheadPREV_CABINET) && pmii) {
-        if (pmii->prevname) PFDI_FREE(fdi, prevname);
-        if (pmii->previnfo) PFDI_FREE(fdi, previnfo);
+        if (pmii->prevname) fdi->free(prevname);
+        if (pmii->previnfo) fdi->free(previnfo);
       }
       set_error( fdi, FDIERROR_CORRUPT_CABINET, 0 /* ? */ );
       return FALSE;
@@ -663,13 +663,13 @@ static BOOL FDI_read_entries(
       if (pmii)
         pmii->nextname = nextname;
       else
-        PFDI_FREE(fdi, nextname);
+        fdi->free(nextname);
     nextinfo = FDI_read_string(fdi, hf, cabsize);
     if (nextinfo) {
       if (pmii)
         pmii->nextinfo = nextinfo;
       else
-        PFDI_FREE(fdi, nextinfo);
+        fdi->free(nextinfo);
     }
   }
 
@@ -775,11 +775,11 @@ static int QTMfdi_init(int window, int level, fdi_decomp_state *decomp_state) {
   /* if a previously allocated window is big enough, keep it    */
   if (window < 10 || window > 21) return DECR_DATAFORMAT;
   if (QTM(actual_size) < wndsize) {
-    if (QTM(window)) PFDI_FREE(CAB(fdi), QTM(window));
+    if (QTM(window)) CAB(fdi)->free(QTM(window));
     QTM(window) = NULL;
   }
   if (!QTM(window)) {
-    if (!(QTM(window) = PFDI_ALLOC(CAB(fdi), wndsize))) return DECR_NOMEMORY;
+    if (!(QTM(window) = CAB(fdi)->alloc(wndsize))) return DECR_NOMEMORY;
     QTM(actual_size) = wndsize;
   }
   QTM(window_size) = wndsize;
@@ -839,11 +839,11 @@ static int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
   /* if a previously allocated window is big enough, keep it     */
   if (window < 15 || window > 21) return DECR_DATAFORMAT;
   if (LZX(actual_size) < wndsize) {
-    if (LZX(window)) PFDI_FREE(CAB(fdi), LZX(window));
+    if (LZX(window)) CAB(fdi)->free(LZX(window));
     LZX(window) = NULL;
   }
   if (!LZX(window)) {
-    if (!(LZX(window) = PFDI_ALLOC(CAB(fdi), wndsize))) return DECR_NOMEMORY;
+    if (!(LZX(window) = CAB(fdi)->alloc(wndsize))) return DECR_NOMEMORY;
     LZX(actual_size) = wndsize;
   }
   LZX(window_size) = wndsize;
@@ -899,7 +899,7 @@ static void fdi_Ziphuft_free(FDI_Int *fdi, struct Ziphuft *t)
   while (p != NULL)
   {
     q = (--p)->v.t;
-    PFDI_FREE(fdi, p);
+    fdi->free(p);
     p = q;
   } 
 }
@@ -1025,7 +1025,7 @@ struct Ziphuft **t, cab_LONG *m, fdi_decomp_state *decomp_state)
         l[h] = j;               /* set table size in stack */
 
         /* allocate and link in new table */
-        if (!(q = PFDI_ALLOC(CAB(fdi), (z + 1)*sizeof(struct Ziphuft))))
+        if (!(q = CAB(fdi)->alloc((z + 1)*sizeof(struct Ziphuft))))
         {
           if(h)
             fdi_Ziphuft_free(CAB(fdi), ZIP(u)[0]);
@@ -1984,7 +1984,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
 
     /* if cando != 0 */
     if (cando && savemode)
-      PFDI_WRITE(CAB(fdi), CAB(filehf), CAB(outpos), cando);
+      CAB(fdi)->write(CAB(filehf), CAB(outpos), cando);
 
     CAB(outpos) += cando;
     CAB(outlen) -= cando;
@@ -1996,10 +1996,10 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
     inlen = outlen = 0;
     while (outlen == 0) {
       /* read the block header, skip the reserved part */
-      if (PFDI_READ(CAB(fdi), cab->cabhf, buf, cfdata_SIZEOF) != cfdata_SIZEOF)
+      if (CAB(fdi)->read(cab->cabhf, buf, cfdata_SIZEOF) != cfdata_SIZEOF)
         return DECR_INPUT;
 
-      if (PFDI_SEEK(CAB(fdi), cab->cabhf, cab->mii.block_resv, SEEK_CUR) == -1)
+      if (CAB(fdi)->seek(cab->cabhf, cab->mii.block_resv, SEEK_CUR) == -1)
         return DECR_INPUT;
 
       /* we shouldn't get blocks over CAB_INPUTMAX in size */
@@ -2007,7 +2007,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
       len = EndGetI16(buf+cfdata_CompressedSize);
       inlen += len;
       if (inlen > CAB_INPUTMAX) return DECR_INPUT;
-      if (PFDI_READ(CAB(fdi), cab->cabhf, data, len) != len)
+      if (CAB(fdi)->read(cab->cabhf, data, len) != len)
         return DECR_INPUT;
 
       /* clear two bytes after read-in data */
@@ -2040,7 +2040,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
         if (!(cab->next)) {
           if (!cab->mii.hasnext) return DECR_INPUT;
 
-          if (!((cab->next = PFDI_ALLOC(CAB(fdi), sizeof(fdi_decomp_state)))))
+          if (!((cab->next = CAB(fdi)->alloc(sizeof(fdi_decomp_state)))))
             return DECR_NOMEMORY;
         
           ZeroMemory(cab->next, sizeof(fdi_decomp_state));
@@ -2088,7 +2088,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
             TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
         
             /* try to get a handle to the cabfile */
-            cabhf = PFDI_OPEN(CAB(fdi), fullpath, _O_RDONLY|_O_BINARY, _S_IREAD | _S_IWRITE);
+            cabhf = CAB(fdi)->open(fullpath, _O_RDONLY|_O_BINARY, _S_IREAD | _S_IWRITE);
             if (cabhf == -1) {
               /* no file.  allow the user to try again */
               fdin.fdie = FDIERROR_CABINET_NOT_FOUND;
@@ -2106,7 +2106,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
             /* check if it's really a cabfile. Note that this doesn't implement the bug */
             if (!FDI_read_entries(CAB(fdi), cabhf, &fdici, &(cab->next->mii))) {
               WARN("FDIIsCabinet failed.\n");
-              PFDI_CLOSE(CAB(fdi), cabhf);
+              CAB(fdi)->close(cabhf);
               fdin.fdie = FDIERROR_NOT_A_CABINET;
               if (((*pfnfdin)(fdintNEXT_CABINET, &fdin))) return DECR_USERABORT;
               continue;
@@ -2114,7 +2114,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
 
             if ((fdici.setID != cab->setID) || (fdici.iCabinet != (cab->iCabinet + 1))) {
               WARN("Wrong Cabinet.\n");
-              PFDI_CLOSE(CAB(fdi), cabhf);
+              CAB(fdi)->close(cabhf);
               fdin.fdie = FDIERROR_WRONG_CABINET;
               if (((*pfnfdin)(fdintNEXT_CABINET, &fdin))) return DECR_USERABORT;
               continue;
@@ -2146,13 +2146,13 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
 
           /* read folders */
           for (i = 0; i < fdici.cFolders; i++) {
-            if (PFDI_READ(CAB(fdi), cab->cabhf, buf2, cffold_SIZEOF) != cffold_SIZEOF)
+            if (CAB(fdi)->read(cab->cabhf, buf2, cffold_SIZEOF) != cffold_SIZEOF)
               return DECR_INPUT;
 
             if (cab->mii.folder_resv > 0)
-              PFDI_SEEK(CAB(fdi), cab->cabhf, cab->mii.folder_resv, SEEK_CUR);
+              CAB(fdi)->seek(cab->cabhf, cab->mii.folder_resv, SEEK_CUR);
 
-            fol = PFDI_ALLOC(CAB(fdi), sizeof(struct fdi_folder));
+            fol = CAB(fdi)->alloc(sizeof(struct fdi_folder));
             if (!fol) {
               ERR("out of memory!\n");
               return DECR_NOMEMORY;
@@ -2171,10 +2171,10 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
         
           /* read files */
           for (i = 0; i < fdici.cFiles; i++) {
-            if (PFDI_READ(CAB(fdi), cab->cabhf, buf2, cffile_SIZEOF) != cffile_SIZEOF)
+            if (CAB(fdi)->read(cab->cabhf, buf2, cffile_SIZEOF) != cffile_SIZEOF)
               return DECR_INPUT;
 
-            file = PFDI_ALLOC(CAB(fdi), sizeof(struct fdi_file));
+            file = CAB(fdi)->alloc(sizeof(struct fdi_file));
             if (!file) {
               ERR("out of memory!\n"); 
               return DECR_NOMEMORY;
@@ -2208,7 +2208,7 @@ static int fdi_decomp(const struct fdi_file *fi, int savemode, fdi_decomp_state 
             /* check to ensure a real match */
             if (lstrcmpiA(fi->filename, file->filename) == 0) {
               success = TRUE;
-              if (PFDI_SEEK(CAB(fdi), cab->cabhf, cab->firstfol->offset, SEEK_SET) == -1)
+              if (CAB(fdi)->seek(cab->cabhf, cab->firstfol->offset, SEEK_SET) == -1)
                 return DECR_INPUT;
               break;
             }
@@ -2236,13 +2236,13 @@ static void free_decompression_temps(FDI_Int *fdi, const struct fdi_folder *fol,
   switch (fol->comp_type & cffoldCOMPTYPE_MASK) {
   case cffoldCOMPTYPE_LZX:
     if (LZX(window)) {
-      PFDI_FREE(fdi, LZX(window));
+      fdi->free(LZX(window));
       LZX(window) = NULL;
     }
     break;
   case cffoldCOMPTYPE_QUANTUM:
     if (QTM(window)) {
-      PFDI_FREE(fdi, QTM(window));
+      fdi->free(QTM(window));
       QTM(window) = NULL;
     }
     break;
@@ -2256,28 +2256,28 @@ static void free_decompression_mem(FDI_Int *fdi,
   while (decomp_state) {
     fdi_decomp_state *prev_fds;
 
-    PFDI_CLOSE(fdi, CAB(cabhf));
+    fdi->close(CAB(cabhf));
 
     /* free the storage remembered by mii */
-    if (CAB(mii).nextname) PFDI_FREE(fdi, CAB(mii).nextname);
-    if (CAB(mii).nextinfo) PFDI_FREE(fdi, CAB(mii).nextinfo);
-    if (CAB(mii).prevname) PFDI_FREE(fdi, CAB(mii).prevname);
-    if (CAB(mii).previnfo) PFDI_FREE(fdi, CAB(mii).previnfo);
+    if (CAB(mii).nextname) fdi->free(CAB(mii).nextname);
+    if (CAB(mii).nextinfo) fdi->free(CAB(mii).nextinfo);
+    if (CAB(mii).prevname) fdi->free(CAB(mii).prevname);
+    if (CAB(mii).previnfo) fdi->free(CAB(mii).previnfo);
 
     while (CAB(firstfol)) {
       fol = CAB(firstfol);
       CAB(firstfol) = CAB(firstfol)->next;
-      PFDI_FREE(fdi, fol);
+      fdi->free(fol);
     }
     while (CAB(firstfile)) {
       file = CAB(firstfile);
-      if (file->filename) PFDI_FREE(fdi, file->filename);
+      if (file->filename) fdi->free(file->filename);
       CAB(firstfile) = CAB(firstfile)->next;
-      PFDI_FREE(fdi, file);
+      fdi->free(file);
     }
     prev_fds = decomp_state;
     decomp_state = CAB(next);
-    PFDI_FREE(fdi, prev_fds);
+    fdi->free(prev_fds);
   }
 }
 
@@ -2474,7 +2474,7 @@ BOOL __cdecl FDICopy(
 
   if (!fdi) return FALSE;
 
-  if (!(decomp_state = PFDI_ALLOC(fdi, sizeof(fdi_decomp_state))))
+  if (!(decomp_state = fdi->alloc(sizeof(fdi_decomp_state))))
   {
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);
       return FALSE;
@@ -2487,7 +2487,7 @@ BOOL __cdecl FDICopy(
   /* slight overestimation here to save CPU cycles in the developer's brain */
   if ((pathlen + filenamelen + 3) > MAX_PATH) {
     ERR("MAX_PATH exceeded.\n");
-    PFDI_FREE(fdi, decomp_state);
+    fdi->free(decomp_state);
     set_error( fdi, FDIERROR_CABINET_NOT_FOUND, ERROR_FILE_NOT_FOUND );
     return FALSE;
   }
@@ -2504,9 +2504,9 @@ BOOL __cdecl FDICopy(
   TRACE("full cab path/file name: %s\n", debugstr_a(fullpath));
 
   /* get a handle to the cabfile */
-  cabhf = PFDI_OPEN(fdi, fullpath, _O_RDONLY|_O_BINARY, _S_IREAD | _S_IWRITE);
+  cabhf = fdi->open(fullpath, _O_RDONLY|_O_BINARY, _S_IREAD | _S_IWRITE);
   if (cabhf == -1) {
-    PFDI_FREE(fdi, decomp_state);
+    fdi->free(decomp_state);
     set_error( fdi, FDIERROR_CABINET_NOT_FOUND, 0 );
     SetLastError(ERROR_FILE_NOT_FOUND);
     return FALSE;
@@ -2514,7 +2514,7 @@ BOOL __cdecl FDICopy(
 
   if (cabhf == 0) {
     ERR("PFDI_OPEN returned zero for %s.\n", fullpath);
-    PFDI_FREE(fdi, decomp_state);
+    fdi->free(decomp_state);
     set_error( fdi, FDIERROR_CABINET_NOT_FOUND, ERROR_FILE_NOT_FOUND );
     return FALSE;
   }
@@ -2522,8 +2522,8 @@ BOOL __cdecl FDICopy(
   /* check if it's really a cabfile. Note that this doesn't implement the bug */
   if (!FDI_read_entries(fdi, cabhf, &fdici, &(CAB(mii)))) {
     ERR("FDIIsCabinet failed.\n");
-    PFDI_FREE(fdi, decomp_state);
-    PFDI_CLOSE(fdi, cabhf);
+    fdi->free(decomp_state);
+    fdi->close(cabhf);
     return FALSE;
   }
    
@@ -2547,15 +2547,15 @@ BOOL __cdecl FDICopy(
 
   /* read folders */
   for (i = 0; i < fdici.cFolders; i++) {
-    if (PFDI_READ(fdi, cabhf, buf, cffold_SIZEOF) != cffold_SIZEOF) {
+    if (fdi->read(cabhf, buf, cffold_SIZEOF) != cffold_SIZEOF) {
       set_error( fdi, FDIERROR_CORRUPT_CABINET, 0 );
       goto bail_and_fail;
     }
 
     if (CAB(mii).folder_resv > 0)
-      PFDI_SEEK(fdi, cabhf, CAB(mii).folder_resv, SEEK_CUR);
+      fdi->seek(cabhf, CAB(mii).folder_resv, SEEK_CUR);
 
-    fol = PFDI_ALLOC(fdi, sizeof(struct fdi_folder));
+    fol = fdi->alloc(sizeof(struct fdi_folder));
     if (!fol) {
       ERR("out of memory!\n");
       set_error( fdi, FDIERROR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
@@ -2575,12 +2575,12 @@ BOOL __cdecl FDICopy(
 
   /* read files */
   for (i = 0; i < fdici.cFiles; i++) {
-    if (PFDI_READ(fdi, cabhf, buf, cffile_SIZEOF) != cffile_SIZEOF) {
+    if (fdi->read(cabhf, buf, cffile_SIZEOF) != cffile_SIZEOF) {
       set_error( fdi, FDIERROR_CORRUPT_CABINET, 0 );
       goto bail_and_fail;
     }
 
-    file = PFDI_ALLOC(fdi, sizeof(struct fdi_file));
+    file = fdi->alloc(sizeof(struct fdi_file));
     if (!file) { 
       ERR("out of memory!\n"); 
       set_error( fdi, FDIERROR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
@@ -2723,20 +2723,20 @@ BOOL __cdecl FDICopy(
         switch (ct2) {
         case cffoldCOMPTYPE_LZX:
           if (LZX(window)) {
-            PFDI_FREE(fdi, LZX(window));
+            fdi->free(LZX(window));
             LZX(window) = NULL;
           }
           break;
         case cffoldCOMPTYPE_QUANTUM:
           if (QTM(window)) {
-            PFDI_FREE(fdi, QTM(window));
+            fdi->free(QTM(window));
             QTM(window) = NULL;
           }
           break;
         }
 
         CAB(decomp_cab) = NULL;
-        PFDI_SEEK(CAB(fdi), CAB(cabhf), fol->offset, SEEK_SET);
+        CAB(fdi)->seek(CAB(cabhf), fol->offset, SEEK_SET);
         CAB(offset) = 0;
         CAB(outlen) = 0;
 
@@ -2833,7 +2833,7 @@ BOOL __cdecl FDICopy(
 
   if (fol) free_decompression_temps(fdi, fol, decomp_state);
 
-  if (filehf) PFDI_CLOSE(fdi, filehf);
+  if (filehf) fdi->close(filehf);
 
   free_decompression_mem(fdi, decomp_state, file);
 
@@ -2860,7 +2860,7 @@ BOOL __cdecl FDIDestroy(HFDI hfdi)
     TRACE("(hfdi == ^%p)\n", hfdi);
     if (!fdi) return FALSE;
     fdi->magic = 0; /* paranoia */
-    PFDI_FREE(fdi, fdi); /* confusing, but correct */
+    fdi->free(fdi);
     return TRUE;
 }
 
