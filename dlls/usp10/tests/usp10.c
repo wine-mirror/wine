@@ -467,6 +467,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     /* This test determines that the pointer returned by ScriptGetProperties is valid
      * by checking a known value in the table                                                */
     hr = ScriptGetProperties(&ppSp, &iMaxProps);
+    ok(hr == S_OK, "ScriptGetProperties failed: 0x%08x\n", hr);
     trace("number of script properties %d\n", iMaxProps);
     ok (iMaxProps > 0, "Number of scripts returned should not be 0\n");
     if  (iMaxProps > 0)
@@ -489,7 +490,6 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
      * ie. ScriptItemize has succeeded and that pItem has been set                            */
     cInChars = 5;
-    cMaxItems = 255;
     if (hr == 0) {
         psc = NULL;                                   /* must be null on first call           */
         cChars = cInChars;
@@ -556,7 +556,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
                  ok (hr == 0, "ScriptPlace should return 0 not (%08x)\n", hr);
              }
         }
-        hr = ScriptFreeCache( &psc);
+        ScriptFreeCache( &psc);
         ok (!psc, "psc is not null after ScriptFreeCache\n");
 
     }
@@ -696,7 +696,7 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     ok (cnt == cInChars, "Translation not correct. WCHAR %d - %04x != %04x\n",
                          cnt, pwOutGlyphs[cnt], pwOutGlyphs3[cnt]);
 
-    hr = ScriptFreeCache( &psc);
+    ScriptFreeCache( &psc);
     ok (!psc, "psc is not null after ScriptFreeCache\n");
 
     cInChars = cChars = 4;
@@ -727,7 +727,7 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     ok(pwOutGlyphs3[7] == pwOutGlyphs2[7], "glyph not mirrored correctly\n");
     ok(pwOutGlyphs3[8] == pwOutGlyphs2[8], "glyph not mirrored correctly\n");
 
-    hr = ScriptFreeCache( &psc);
+    ScriptFreeCache( &psc);
     ok (!psc, "psc is not null after ScriptFreeCache\n");
 }
 
@@ -842,7 +842,6 @@ static void test_ScriptTextOut(HDC hdc)
     if (hr == 0) {
         psc = NULL;                                   /* must be null on first call           */
         cChars = cInChars;
-        cMaxGlyphs = cInChars;
         cMaxGlyphs = 256;
         hr = ScriptShape(hdc, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
@@ -958,11 +957,9 @@ static void test_ScriptTextOut2(HDC hdc)
     /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
      * ie. ScriptItemize has succeeded and that pItem has been set                            */
     cInChars = 5;
-    cMaxItems = 255;
     if (hr == 0) {
         psc = NULL;                                   /* must be null on first call           */
         cChars = cInChars;
-        cMaxGlyphs = cInChars;
         cMaxGlyphs = 256;
         hr = ScriptShape(hdc2, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
@@ -1036,11 +1033,9 @@ static void test_ScriptTextOut3(HDC hdc)
     /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
      * ie. ScriptItemize has succeeded and that pItem has been set                            */
     cInChars = 2;
-    cMaxItems = 255;
     if (hr == 0) {
         psc = NULL;                                   /* must be null on first call           */
         cChars = cInChars;
-        cMaxGlyphs = cInChars;
         cMaxGlyphs = 256;
         hr = ScriptShape(hdc, &psc, TestItem1, cChars,
                          cMaxGlyphs, &pItem[0].a,
@@ -1427,6 +1422,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
             /* having a leading rtl character seems to confuse usp */
             /* this looks to be a windows bug we should emulate */
             hr = ScriptStringCPtoX(ssa, 0, TRUE, &X);
+            ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
             X--;
             hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
             ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
@@ -1437,6 +1433,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
         else
         {
             hr = ScriptStringCPtoX(ssa, 0, FALSE, &X);
+            ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
             X--;
             hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
             ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
@@ -1447,9 +1444,15 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
 
         /* Check beyond the end boundary of the whole string */
         if (rtl[String_len-1])
+        {
             hr = ScriptStringCPtoX(ssa, String_len-1, FALSE, &X);
+            ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
+        }
         else
+        {
             hr = ScriptStringCPtoX(ssa, String_len-1, TRUE, &X);
+            ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
+        }
         X++;
         hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
         ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
