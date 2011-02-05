@@ -47,7 +47,7 @@ static DWORD CALLBACK NotificationThread(LPVOID arg)
 
     if (status == WAIT_OBJECT_0 ) {
         notified = TRUE;
-        ret = FindNextChangeNotification(change);
+        FindNextChangeNotification(change);
     }
 
     ret = FindCloseChangeNotification(change);
