@@ -357,6 +357,7 @@ static void test_retrieveObjectByUrl(void)
     cert = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, NULL);
+    ok(ret, "CryptRetrieveObjectByUrlA failed: %d\n", GetLastError());
     ok(cert && cert != (PCCERT_CONTEXT)0xdeadbeef, "Expected a cert\n");
     if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(cert);
@@ -560,7 +561,7 @@ static void test_verifyRevocation(void)
     if (0)
     {
         /* Crash */
-        ret = pCertVerifyRevocation(0, 0, 0, NULL, 0, NULL, NULL);
+        pCertVerifyRevocation(0, 0, 0, NULL, 0, NULL, NULL);
     }
     SetLastError(0xdeadbeef);
     ret = pCertVerifyRevocation(0, 0, 0, NULL, 0, NULL, &status);
