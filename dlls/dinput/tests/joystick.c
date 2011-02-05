@@ -489,6 +489,7 @@ static BOOL CALLBACK EnumJoysticks(
             hr = IDirectInputDevice_Acquire(pJoystick);
             ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
             hr = IDirectInputDevice2_GetProperty(pJoystick, DIPROP_AUTOCENTER, &diprop_word.diph);
+            ok(hr==DI_OK,"IDirectInputDevice2_GetProperty() failed: %08x\n", hr);
 
             /* Device gain (DIPROP_FFGAIN).
              * From MSDN:
