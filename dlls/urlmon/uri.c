@@ -1017,7 +1017,6 @@ static BOOL ipv6_to_number(const ipv6_address *address, USHORT number[8]) {
     if(!already_passed_elision && address->elision) {
         for(i = 0; i < address->elision_size; i+=2)
             number[cur_component++] = 0;
-        already_passed_elision = TRUE;
     }
 
     if(address->ipv4) {
@@ -3443,7 +3442,7 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
     INT len;
 
     uri->canon_uri = NULL;
-    len = uri->canon_size = uri->canon_len = 0;
+    uri->canon_size = uri->canon_len = 0;
 
     TRACE("(%p %p %x): beginning to canonicalize URI %s.\n", data, uri, flags, debugstr_w(data->uri));
 
