@@ -1536,9 +1536,10 @@ GpStatus WINGDIPAPI GdipAddPathRectangle(GpPath *path, REAL x, REAL y,
 
 fail:
     /* reverting */
-    GdipDeletePath(path);
-    GdipClonePath(backup, &path);
-    GdipDeletePath(backup);
+    GdipFree(path->pathdata.Points);
+    GdipFree(path->pathdata.Types);
+    memcpy(path, backup, sizeof(*path));
+    GdipFree(backup);
 
     return retstat;
 }
@@ -1581,9 +1582,10 @@ GpStatus WINGDIPAPI GdipAddPathRectangles(GpPath *path, GDIPCONST GpRectF *rects
 
 fail:
     /* reverting */
-    GdipDeletePath(path);
-    GdipClonePath(backup, &path);
-    GdipDeletePath(backup);
+    GdipFree(path->pathdata.Points);
+    GdipFree(path->pathdata.Types);
+    memcpy(path, backup, sizeof(*path));
+    GdipFree(backup);
 
     return retstat;
 }
