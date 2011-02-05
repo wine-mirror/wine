@@ -766,6 +766,7 @@ static void test_images(void)
     memset(&r1, 0, sizeof r1);
     r1.left = LVIR_ICON;
     r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM) &r1);
+    expect(1, r);
 
     r = SendMessage(hwnd, LVM_DELETEALLITEMS, 0, 0);
     ok(r == TRUE, "should not fail\n");
@@ -778,6 +779,7 @@ static void test_images(void)
     memset(&r2, 0, sizeof r2);
     r2.left = LVIR_ICON;
     r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM) &r2);
+    expect(1, r);
 
     ok(!memcmp(&r1, &r2, sizeof r1), "rectangle should be the same\n");
 
@@ -811,6 +813,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0xfccc, "state %x\n", item.state);
 
     /* Don't set LVIF_STATE */
@@ -827,6 +830,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0, "state %x\n", item.state);
 
     r = SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
@@ -837,6 +841,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     if (item.state != 0x1ccc)
     {
         win_skip("LVS_EX_CHECKBOXES style is unavailable. Skipping.\n");
@@ -856,6 +861,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0x1000, "state %x\n", item.state);
 
     /* Add a further item this time specifying a state and still its state goes to 0x1000 */
@@ -871,6 +877,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0x1aaa, "state %x\n", item.state);
 
     /* Set an item's state to checked */
@@ -879,11 +886,13 @@ static void test_checkboxes(void)
     item.stateMask = 0xf000;
     item.state = 0x2000;
     r = SendMessage(hwnd, LVM_SETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
 
     item.iItem = 3;
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0x2aaa, "state %x\n", item.state);
 
     /* Check that only the bits we asked for are returned,
@@ -894,6 +903,7 @@ static void test_checkboxes(void)
     item.stateMask = 0xf000;
     item.state = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0x2000, "state %x\n", item.state);
 
     /* Set the style again and check that doesn't change an item's state */
@@ -904,6 +914,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0x2aaa, "state %x\n", item.state);
 
     /* Unsetting the checkbox extended style doesn't change an item's state */
@@ -914,6 +925,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0x2aaa, "state %x\n", item.state);
 
     /* Now setting the style again will change an item's state */
@@ -924,6 +936,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0x1aaa, "state %x\n", item.state);
 
     /* Toggle checkbox tests (bug 9934) */
@@ -940,6 +953,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0x1aab, "state %x\n", item.state);
 
     r = SendMessage(hwnd, WM_KEYDOWN, VK_SPACE, 0);
@@ -951,6 +965,7 @@ static void test_checkboxes(void)
     item.mask = LVIF_STATE;
     item.stateMask = 0xffff;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    expect(1, r);
     ok(item.state == 0x2aab, "state %x\n", item.state);
 
     r = SendMessage(hwnd, WM_KEYDOWN, VK_SPACE, 0);
@@ -3028,6 +3043,7 @@ static void test_hittest(void)
     memset(&bounds, 0, sizeof(bounds));
     bounds.left = LVIR_BOUNDS;
     r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&bounds);
+    expect(1, r);
     ok(bounds.bottom - bounds.top > 0, "Expected non zero item height\n");
     ok(bounds.right - bounds.left > 0, "Expected non zero item width\n");
     r = SendMessage(hwnd, LVM_GETITEMSPACING, TRUE, 0);
