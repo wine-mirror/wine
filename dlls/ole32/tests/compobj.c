@@ -870,7 +870,7 @@ static void test_CoRegisterClassObject(void)
 
     /* crashes with at least win9x DCOM! */
     if (0)
-        hr = CoRevokeClassObject(cookie);
+        CoRevokeClassObject(cookie);
 
     CoUninitialize();
 }
