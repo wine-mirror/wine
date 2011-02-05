@@ -671,6 +671,8 @@ static HRESULT WINAPI IcoDecoder_GetFrame(IWICBitmapDecoder *iface,
 
     LeaveCriticalSection(&This->lock);
 
+    IStream_Release(substream);
+
     return S_OK;
 
 fail:
