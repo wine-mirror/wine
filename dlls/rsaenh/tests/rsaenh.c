@@ -1248,6 +1248,7 @@ static void test_rc2(void)
         dwKeyLen = 1025;
         SetLastError(0xdeadbeef);
         result = CryptSetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (LPBYTE)&dwKeyLen, 0);
+        ok(!result, "CryptSetKeyParam failed: %08x\n", GetLastError());
 
         dwLen = sizeof(dwKeyLen);
         CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
@@ -2483,6 +2484,7 @@ static void test_rsa_round_trip(void)
     exportedKey = HeapAlloc(GetProcessHeap(), 0, keyLen);
     result = CryptExportKey(keyExchangeKey, 0, PRIVATEKEYBLOB, 0, exportedKey,
                             &keyLen);
+    ok(result, "CryptExportKey failed: %08x\n", GetLastError());
     /* destroy the key... */
     CryptDestroyKey(keyExchangeKey);
     CryptDestroyKey(signKey);
@@ -2922,22 +2924,23 @@ static void test_key_initialization(void)
     {
         result = CryptAcquireContext(&prov1, szContainer, szProvider, PROV_RSA_FULL,
                                      CRYPT_NEWKEYSET);
-        ok(result, "%08x\n", GetLastError());
+        ok(result, "CryptAcquireContext failed: %08x\n", GetLastError());
     }
     dwLen = (DWORD)sizeof(abPlainPrivateKey);
     result = CryptImportKey(prov1, abPlainPrivateKey, dwLen, 0, 0, &hKeyExchangeKey);
+    ok(result, "CryptImportKey failed: %08x\n", GetLastError());
 
     dwLen = (DWORD)sizeof(abSessionKey);
     result = CryptImportKey(prov1, abSessionKey, dwLen, hKeyExchangeKey, 0, &hSessionKey);
-    ok(result, "%08x\n", GetLastError());
+    ok(result, "CryptImportKey failed: %08x\n", GetLastError());
 
     /* Once the key has been imported, subsequently acquiring a context with
      * the same name will allow retrieving the key.
      */
     result = CryptAcquireContext(&prov2, szContainer, szProvider, PROV_RSA_FULL, 0);
-    ok(result, "%08x\n", GetLastError());
+    ok(result, "CryptAcquireContext failed: %08x\n", GetLastError());
     result = CryptGetUserKey(prov2, AT_KEYEXCHANGE, &hKey);
-    ok(result, "%08x\n", GetLastError());
+    ok(result, "CryptGetUserKey failed: %08x\n", GetLastError());
     if (result) CryptDestroyKey(hKey);
     CryptReleaseContext(prov2, 0);
 
