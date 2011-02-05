@@ -1448,7 +1448,7 @@ static char **build_envp( const WCHAR *envW )
 static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHAR *env,
                           const char *newdir, DWORD flags, STARTUPINFOW *startup )
 {
-    int fd[2], stdin_fd = -1, stdout_fd = -1;
+    int fd[2], stdin_fd = -1, stdout_fd = -1, stderr_fd = -1;
     int pid, err;
     char **argv, **envp;
 
@@ -1469,25 +1469,30 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
 
     if (!(flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS)))
     {
-        HANDLE hstdin, hstdout;
+        HANDLE hstdin, hstdout, hstderr;
 
         if (startup->dwFlags & STARTF_USESTDHANDLES)
         {
             hstdin = startup->hStdInput;
             hstdout = startup->hStdOutput;
+            hstderr = startup->hStdError;
         }
         else
         {
             hstdin = GetStdHandle(STD_INPUT_HANDLE);
             hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
+            hstderr = GetStdHandle(STD_ERROR_HANDLE);
         }
 
         if (is_console_handle( hstdin ))
             hstdin = wine_server_ptr_handle( console_handle_unmap( hstdin ));
         if (is_console_handle( hstdout ))
             hstdout = wine_server_ptr_handle( console_handle_unmap( hstdout ));
+        if (is_console_handle( hstderr ))
+            hstderr = wine_server_ptr_handle( console_handle_unmap( hstderr ));
         wine_server_handle_to_fd( hstdin, FILE_READ_DATA, &stdin_fd, NULL );
         wine_server_handle_to_fd( hstdout, FILE_WRITE_DATA, &stdout_fd, NULL );
+        wine_server_handle_to_fd( hstderr, FILE_WRITE_DATA, &stderr_fd, NULL );
     }
 
     argv = build_argv( cmdline, 0 );
@@ -1526,6 +1531,11 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
                 dup2( stdout_fd, 1 );
                 close( stdout_fd );
             }
+            if (stderr_fd != -1)
+            {
+                dup2( stderr_fd, 2 );
+                close( stderr_fd );
+            }
         }
 
         /* Reset signals that we previously set to SIG_IGN */
@@ -1543,6 +1553,7 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
     HeapFree( GetProcessHeap(), 0, envp );
     if (stdin_fd != -1) close( stdin_fd );
     if (stdout_fd != -1) close( stdout_fd );
+    if (stderr_fd != -1) close( stderr_fd );
     close( fd[1] );
     if ((pid != -1) && (read( fd[0], &err, sizeof(err) ) > 0))  /* exec failed */
     {
