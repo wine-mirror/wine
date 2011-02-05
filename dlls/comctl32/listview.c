@@ -5084,8 +5084,6 @@ enddraw:
 static DWORD LISTVIEW_ApproximateViewRect(const LISTVIEW_INFO *infoPtr, INT nItemCount,
                                             WORD wWidth, WORD wHeight)
 {
-  INT nItemCountPerColumn = 1;
-  INT nColumnCount = 0;
   DWORD dwViewRect = 0;
 
   if (nItemCount == -1)
@@ -5093,6 +5091,9 @@ static DWORD LISTVIEW_ApproximateViewRect(const LISTVIEW_INFO *infoPtr, INT nIte
 
   if (infoPtr->uView == LV_VIEW_LIST)
   {
+    INT nItemCountPerColumn = 1;
+    INT nColumnCount = 0;
+
     if (wHeight == 0xFFFF)
     {
       /* use current height */
@@ -5152,9 +5153,6 @@ static DWORD LISTVIEW_ApproximateViewRect(const LISTVIEW_INFO *infoPtr, INT nIte
 
     nItemWidth = infoPtr->iconSpacing.cx;
     nItemHeight = infoPtr->iconSpacing.cy;
-
-    if (nItemCount == -1)
-      nItemCount = infoPtr->nItemCount;
 
     if (wWidth == 0xffff)
       wWidth = infoPtr->rcList.right - infoPtr->rcList.left;
