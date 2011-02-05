@@ -6,7 +6,7 @@
  * Copyright 2000 Jason Mawdsley
  * Copyright 2001 CodeWeavers Inc.
  * Copyright 2002 Dimitrie O. Paun
- * Copyright 2009, 2010 Nikolay Sivov
+ * Copyright 2009-2011 Nikolay Sivov
  * Copyright 2009 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -617,7 +617,7 @@ static const char* debugscrollinfo(const SCROLLINFO *pScrollInfo)
     if (pScrollInfo->fMask & SIF_TRACKPOS)
 	len = snprintf(buf, size, "nTrackPos=%d, ", pScrollInfo->nTrackPos);
     else len = 0;
-    if (len == -1) goto end; buf += len; size -= len;
+    if (len == -1) goto end; buf += len;
     goto undo;
 end:
     buf = text + strlen(text);
@@ -662,7 +662,7 @@ static const char* debuglvitem_t(const LVITEMW *lpLVItem, BOOL isW)
     if (lpLVItem->mask & LVIF_INDENT)
 	len = snprintf(buf, size, "iIndent=%d, ", lpLVItem->iIndent);
     else len = 0;
-    if (len == -1) goto end; buf += len; size -= len;
+    if (len == -1) goto end; buf += len;
     goto undo;
 end:
     buf = text + strlen(text);
@@ -702,7 +702,7 @@ static const char* debuglvcolumn_t(const LVCOLUMNW *lpColumn, BOOL isW)
     if (lpColumn->mask & LVCF_ORDER)
 	len = snprintf(buf, size, "iOrder=%d, ", lpColumn->iOrder);
     else len = 0;
-    if (len == -1) goto end; buf += len; size -= len;
+    if (len == -1) goto end; buf += len;
     goto undo;
 end:
     buf = text + strlen(text);
