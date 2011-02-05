@@ -1084,8 +1084,8 @@ static void test_basics(void)
     if(0)
     {
         /* Crashes under Windows 7 */
-        hr = INameSpaceTreeControl_AppendRoot(pnstc, NULL, SHCONTF_FOLDERS, 0, NULL);
-        hr = INameSpaceTreeControl_InsertRoot(pnstc, 0, NULL, SHCONTF_FOLDERS, 0, NULL);
+        INameSpaceTreeControl_AppendRoot(pnstc, NULL, SHCONTF_FOLDERS, 0, NULL);
+        INameSpaceTreeControl_InsertRoot(pnstc, 0, NULL, SHCONTF_FOLDERS, 0, NULL);
     }
 
     /* Note the usage of psidesktop and psidesktop2 */
@@ -1132,7 +1132,7 @@ static void test_basics(void)
     if(0)
     {
         /* Crashes on native. */
-        hr = INameSpaceTreeControl_GetRootItems(pnstc, NULL);
+        INameSpaceTreeControl_GetRootItems(pnstc, NULL);
     }
 
     hr = INameSpaceTreeControl_GetRootItems(pnstc, &psia);
@@ -1360,7 +1360,7 @@ static void test_basics(void)
     if(0)
     {
         /* Crashes under Windows 7 */
-        hr = INameSpaceTreeControl_GetSelectedItems(pnstc, NULL);
+        INameSpaceTreeControl_GetSelectedItems(pnstc, NULL);
     }
 
     psia = (void*)0xdeadbeef;
@@ -1550,9 +1550,9 @@ static void test_basics(void)
     if(0)
     {
         /* Crashes under win 7 */
-        hr = INameSpaceTreeControl_GetItemRect(pnstc, NULL, NULL);
-        hr = INameSpaceTreeControl_GetItemRect(pnstc, psitestdir, NULL);
-        hr = INameSpaceTreeControl_GetItemRect(pnstc, NULL, &rc);
+        INameSpaceTreeControl_GetItemRect(pnstc, NULL, NULL);
+        INameSpaceTreeControl_GetItemRect(pnstc, psitestdir, NULL);
+        INameSpaceTreeControl_GetItemRect(pnstc, NULL, &rc);
     }
 
     hr = INameSpaceTreeControl_GetItemRect(pnstc, psitestdir, &rc);
@@ -1690,10 +1690,10 @@ static void test_basics(void)
     if(0)
     {
         /* Crashes under Windows 7 */
-        hr = INameSpaceTreeControl_GetItemCustomState(pnstc, NULL, NULL);
-        hr = INameSpaceTreeControl_GetItemCustomState(pnstc, NULL, &cbstate);
-        hr = INameSpaceTreeControl_GetItemCustomState(pnstc, psitestdir, NULL);
-        hr = INameSpaceTreeControl_SetItemCustomState(pnstc, NULL, 0);
+        INameSpaceTreeControl_GetItemCustomState(pnstc, NULL, NULL);
+        INameSpaceTreeControl_GetItemCustomState(pnstc, NULL, &cbstate);
+        INameSpaceTreeControl_GetItemCustomState(pnstc, psitestdir, NULL);
+        INameSpaceTreeControl_SetItemCustomState(pnstc, NULL, 0);
     }
 
     hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir,
@@ -1807,9 +1807,9 @@ static void test_events(void)
     if(0)
     {
         /* Crashes native */
-        hr = INameSpaceTreeControl_TreeAdvise(pnstc, NULL, NULL);
-        hr = INameSpaceTreeControl_TreeAdvise(pnstc, NULL, &cookie1);
-        hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce, NULL);
+        INameSpaceTreeControl_TreeAdvise(pnstc, NULL, NULL);
+        INameSpaceTreeControl_TreeAdvise(pnstc, NULL, &cookie1);
+        INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce, NULL);
     }
 
     /* TreeAdvise in NameSpaceTreeController seems to support only one
@@ -2044,12 +2044,12 @@ static void test_events(void)
     if(0)
     {
         /* Crashes on Windows 7 */
-        hr = INameSpaceTreeControl_SetItemState(pnstc, NULL, 0, 0);
-        hr = INameSpaceTreeControl_GetItemState(pnstc, NULL, 0, NULL);
-        hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0, NULL);
-        hr = INameSpaceTreeControl_GetItemState(pnstc, NULL, 0, &itemstate);
-        hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0, NULL);
-        hr = INameSpaceTreeControl_GetItemState(pnstc, NULL, 0, &itemstate);
+        INameSpaceTreeControl_SetItemState(pnstc, NULL, 0, 0);
+        INameSpaceTreeControl_GetItemState(pnstc, NULL, 0, NULL);
+        INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0, NULL);
+        INameSpaceTreeControl_GetItemState(pnstc, NULL, 0, &itemstate);
+        INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0, NULL);
+        INameSpaceTreeControl_GetItemState(pnstc, NULL, 0, &itemstate);
     }
 
     itemstate = 0xDEADBEEF;
@@ -2302,7 +2302,7 @@ static void test_events(void)
     if(0)
     {
         /* Crashes on Windows 7 */
-        hr = INameSpaceTreeControl_EnsureItemVisible(pnstc, NULL);
+        INameSpaceTreeControl_EnsureItemVisible(pnstc, NULL);
     }
 
     hr = INameSpaceTreeControl_EnsureItemVisible(pnstc, psidesktop);
