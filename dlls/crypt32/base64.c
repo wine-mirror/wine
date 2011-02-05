@@ -498,14 +498,13 @@ static inline BYTE decodeBase64Byte(int c)
 static LONG decodeBase64Block(const char *in_buf, int in_len,
  const char **nextBlock, PBYTE out_buf, DWORD *out_len)
 {
-    int len = in_len, i;
+    int len = in_len;
     const char *d = in_buf;
     int  ip0, ip1, ip2, ip3;
 
     if (len < 4)
         return ERROR_INVALID_DATA;
 
-    i = 0;
     if (d[2] == '=')
     {
         if ((ip0 = decodeBase64Byte(d[0])) > 63)
@@ -514,8 +513,8 @@ static LONG decodeBase64Block(const char *in_buf, int in_len,
             return ERROR_INVALID_DATA;
 
         if (out_buf)
-            out_buf[i] = (ip0 << 2) | (ip1 >> 4);
-        i++;
+            out_buf[0] = (ip0 << 2) | (ip1 >> 4);
+        *out_len = 1;
     }
     else if (d[3] == '=')
     {
@@ -528,10 +527,10 @@ static LONG decodeBase64Block(const char *in_buf, int in_len,
 
         if (out_buf)
         {
-            out_buf[i + 0] = (ip0 << 2) | (ip1 >> 4);
-            out_buf[i + 1] = (ip1 << 4) | (ip2 >> 2);
+            out_buf[0] = (ip0 << 2) | (ip1 >> 4);
+            out_buf[1] = (ip1 << 4) | (ip2 >> 2);
         }
-        i += 2;
+        *out_len = 2;
     }
     else
     {
@@ -546,11 +545,11 @@ static LONG decodeBase64Block(const char *in_buf, int in_len,
 
         if (out_buf)
         {
-            out_buf[i + 0] = (ip0 << 2) | (ip1 >> 4);
-            out_buf[i + 1] = (ip1 << 4) | (ip2 >> 2);
-            out_buf[i + 2] = (ip2 << 6) |  ip3;
+            out_buf[0] = (ip0 << 2) | (ip1 >> 4);
+            out_buf[1] = (ip1 << 4) | (ip2 >> 2);
+            out_buf[2] = (ip2 << 6) |  ip3;
         }
-        i += 3;
+        *out_len = 3;
     }
     if (len >= 6 && d[4] == '\r' && d[5] == '\n')
         *nextBlock = d + 6;
@@ -560,7 +559,6 @@ static LONG decodeBase64Block(const char *in_buf, int in_len,
         *nextBlock = d + 4;
     else
         *nextBlock = NULL;
-    *out_len = i;
     return ERROR_SUCCESS;
 }
 
