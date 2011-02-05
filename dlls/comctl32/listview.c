@@ -1813,8 +1813,6 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
         infoPtr->charCode = charCode;
         infoPtr->szSearchParam[0] = charCode;
         infoPtr->nSearchParamLength = 1;
-        /* redundant with the 1 char string */
-        charCode = 0;
     }
 
     /* and search from the current position */
@@ -3256,7 +3254,7 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
 	/* case 5: fully internal */
 	else
 	{
-	    RANGE tmprgn = *chkrgn, *newrgn;
+	    RANGE *newrgn;
 
 	    if (!(newrgn = Alloc(sizeof(RANGE)))) goto fail;
 	    newrgn->lower = chkrgn->lower;
@@ -3267,7 +3265,6 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
 		Free(newrgn);
 		goto fail;
 	    }
-	    chkrgn = &tmprgn;
 	    break;
 	}
 
