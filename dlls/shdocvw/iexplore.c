@@ -868,7 +868,7 @@ static BOOL create_ie_window(LPCSTR cmdline)
 
 static ULONG open_dde_url(WCHAR *dde_url)
 {
-    InternetExplorer *ie, *iter;
+    InternetExplorer *ie = NULL, *iter;
     WCHAR *url, *url_end;
     VARIANT urlv;
     HRESULT hres;
