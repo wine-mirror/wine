@@ -1359,6 +1359,7 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( N_SESSIONS-2, callbackData.dwCounter1 );
 
     /* Doesn't list private */
@@ -1367,6 +1368,7 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( N_SESSIONS-1, callbackData.dwCounter1 );
 
     /* Doesn't list full, no new, no join, private, protected */
@@ -1374,6 +1376,7 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( N_SESSIONS-5, callbackData.dwCounter1 );
 
     /* Like with DPENUMSESSIONS_AVAILABLE */
@@ -1381,6 +1384,7 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( N_SESSIONS-5, callbackData.dwCounter1 );
 
     /* Doesn't list full, no new, no join, private */
@@ -1388,6 +1392,7 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( N_SESSIONS-4, callbackData.dwCounter1 );
 
 
@@ -1396,6 +1401,7 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( N_SESSIONS-4, callbackData.dwCounter1 ); /* Read cache of last
                                                        sync enumeration */
 
@@ -1403,12 +1409,14 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 ); /* Stop enumeration */
 
     callbackData.dwFlags = DPENUMSESSIONS_ASYNC;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 ); /* Start enumeration */
 
     Sleep(500); /* Give time to fill the cache */
@@ -1417,12 +1425,14 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( N_SESSIONS-5, callbackData.dwCounter1 ); /* Retrieve results */
 
     callbackData.dwFlags = DPENUMSESSIONS_STOPASYNC;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 ); /* Stop enumeration */
 
 
@@ -1445,12 +1455,14 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 ); /* Both sessions automatically
                                             set DPSESSION_PASSWORDREQUIRED */
 
@@ -1471,6 +1483,7 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 ); /* Without password,
                                             the flag is ignored */
 
@@ -1491,12 +1504,14 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
 
     /* - Listing with incorrect password */
@@ -1505,12 +1520,14 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 0, callbackData.dwCounter1 );
 
     callbackData.dwFlags = DPENUMSESSIONS_PASSWORDREQUIRED;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 );
 
     /* - Listing with  correct password */
@@ -1518,6 +1535,7 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 );
 
 
@@ -1526,6 +1544,7 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 ); /* Read cache of last sync enumeration,
                                             even private sessions */
 
@@ -1556,12 +1575,14 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 ); /* Only one of the sessions */
 
     dpsd.guidApplication = appGuid;
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 1, callbackData.dwCounter1 ); /* The other session */
     /* FIXME:
        For some reason, if we enum 1st with appGuid and 2nd with appGuid2,
@@ -1571,6 +1592,7 @@ static void test_EnumSessions(void)
     callbackData.dwCounter1 = -1;
     hr = IDirectPlayX_EnumSessions( pDP, &dpsd, 0, EnumSessions_cb,
                                     &callbackData, callbackData.dwFlags );
+    checkHR( DP_OK, hr );
     check( 2, callbackData.dwCounter1 ); /* Both sessions */
 
     for (i=4; i<=5; i++)
@@ -2460,7 +2482,7 @@ static void test_PlayerName(void)
 
     /* Regular operation */
     hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], &playerName, 0 );
-
+    checkHR( DP_OK, hr );
     dwDataSize = 1024;
     hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
     checkHR( DP_OK, hr );
@@ -2470,7 +2492,7 @@ static void test_PlayerName(void)
     check( 0,                            ((LPDPNAME)lpData)->dwFlags );
 
     hr = IDirectPlayX_SetPlayerName( pDP[0], dpid[0], NULL, 0 );
-
+    checkHR( DP_OK, hr );
     dwDataSize = 1024;
     hr = IDirectPlayX_GetPlayerName( pDP[0], dpid[0], lpData, &dwDataSize );
     checkHR( DP_OK, hr );
@@ -5359,6 +5381,7 @@ static void test_Receive(void)
     {
         hr = IDirectPlayX_Receive( pDP, &idFrom, &idTo, DPRECEIVE_PEEK,
                                    lpData, &dwDataSize );
+        checkHR( DP_OK, hr );
         checkStr( message, (LPSTR) lpData );
     }
 
