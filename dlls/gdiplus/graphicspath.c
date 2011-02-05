@@ -1507,7 +1507,7 @@ GpStatus WINGDIPAPI GdipAddPathRectangle(GpPath *path, REAL x, REAL y,
 
     TRACE("(%p, %.2f, %.2f, %.2f, %.2f)\n", path, x, y, width, height);
 
-    if(!path || width < 0.0 || height < 0.0)
+    if(!path)
         return InvalidParameter;
 
     /* make a backup copy of path data */
