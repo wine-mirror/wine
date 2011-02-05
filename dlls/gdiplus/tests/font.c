@@ -254,6 +254,7 @@ static void test_fontfamily_properties (void)
         ok(result == 1854, "Expected 1854, got %d\n", result);
         result = 0;
         stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
+        expect(Ok, stat);
         ok(result == 434, "Expected 434, got %d\n", result);
         GdipDeleteFontFamily(FontFamily);
     }
@@ -277,6 +278,7 @@ static void test_fontfamily_properties (void)
         ok(result == 1825, "Expected 1825, got %d\n", result);
         result = 0;
         stat = GdipGetCellDescent(FontFamily, FontStyleRegular, &result);
+        expect(Ok, stat);
         ok(result == 443, "Expected 443 got %d\n", result);
         GdipDeleteFontFamily(FontFamily);
     }
