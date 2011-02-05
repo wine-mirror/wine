@@ -1136,6 +1136,7 @@ static void test_GetGlyphIndices(void)
     lf.lfCharSet = ANSI_CHARSET;
 
     hfont = CreateFontIndirectA(&lf);
+    ok(hfont != 0, "CreateFontIndirectEx failed\n");
     ok(GetTextMetrics(hdc, &textm), "GetTextMetric failed\n");
     if (textm.tmCharSet == ANSI_CHARSET)
     {
