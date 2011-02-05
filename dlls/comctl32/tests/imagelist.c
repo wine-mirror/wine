@@ -751,7 +751,6 @@ static INT DIB_GetWidthBytes( int width, int bpp )
 	case 32: words = width; break;
 
         default:
-            words=0;
             trace("Unknown depth %d, please report.\n", bpp );
             assert(0);
             break;
@@ -1616,7 +1615,7 @@ static void test_IImageList_Draw(void)
 if (0)
 {
     /* crashes on native */
-    hr = IImageList_Draw(imgl, NULL);
+    IImageList_Draw(imgl, NULL);
 }
 
     memset(&imldp, 0, sizeof (imldp));
@@ -1691,8 +1690,8 @@ static void test_IImageList_Merge(void)
 if (0)
 {
     /* null cases that crash on native */
-    hr = IImageList_Merge(imgl1, -1, NULL, 0, 0, 0, &IID_IImageList, (void**)&merge);
-    hr = IImageList_Merge(imgl1, -1, (IUnknown*) imgl2, 0, 0, 0, &IID_IImageList, NULL);
+    IImageList_Merge(imgl1, -1, NULL, 0, 0, 0, &IID_IImageList, (void**)&merge);
+    IImageList_Merge(imgl1, -1, (IUnknown*) imgl2, 0, 0, 0, &IID_IImageList, NULL);
 }
 
     /* If himl1 has no images, merge still succeeds */
@@ -1805,7 +1804,7 @@ static void test_IImageList_Clone(void)
 if (0)
 {
     /* crashes on native */
-    hr = IImageList_Clone(imgl, &IID_IImageList, NULL);
+    IImageList_Clone(imgl, &IID_IImageList, NULL);
 }
 
     hr = IImageList_Clone(imgl, &IID_IImageList, (void**)&imgl2);
@@ -1829,7 +1828,7 @@ static void test_IImageList_GetBkColor(void)
 if (0)
 {
     /* crashes on native */
-    hr = IImageList_GetBkColor(imgl, NULL);
+    IImageList_GetBkColor(imgl, NULL);
 }
 
     hr = IImageList_GetBkColor(imgl, &color);
@@ -1851,7 +1850,7 @@ static void test_IImageList_SetBkColor(void)
 if (0)
 {
     /* crashes on native */
-    hr = IImageList_SetBkColor(imgl, RGB(0, 0, 0), NULL);
+    IImageList_SetBkColor(imgl, RGB(0, 0, 0), NULL);
 }
 
     hr = IImageList_SetBkColor(imgl, CLR_NONE, &color);
@@ -1881,7 +1880,7 @@ static void test_IImageList_GetImageCount(void)
 if (0)
 {
     /* crashes on native */
-    hr = IImageList_GetImageCount(imgl, NULL);
+    IImageList_GetImageCount(imgl, NULL);
 }
 
     count = -1;
