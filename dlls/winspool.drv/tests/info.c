@@ -372,6 +372,7 @@ static void test_AddMonitor(void)
     mi2a.pEnvironment = entry->env;
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
+    ok(res, "AddMonitor error %d\n", GetLastError());
     /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_PRIVILEGE_NOT_HELD */
     }
 
@@ -1937,6 +1938,7 @@ static void test_SetDefaultPrinter(void)
     org_value[0] = '\0';
     SetLastError(MAGIC_DEAD);
     res = GetProfileStringA("windows", "device", NULL, org_value, size);
+    ok(res, "GetProfileString error %d\n", GetLastError());
 
     /* first part: with the default Printer */
     SetLastError(MAGIC_DEAD);
@@ -2011,11 +2013,13 @@ static void test_SetDefaultPrinter(void)
 
     /* restore the original value */
     res = pSetDefaultPrinterA(default_printer);          /* the nice way */
+    ok(res, "SetDefaultPrinter error %d\n", GetLastError());
     WriteProfileStringA("windows", "device", org_value); /* the old way */
 
     buffer[0] = '\0';
     SetLastError(MAGIC_DEAD);
     res = GetProfileStringA("windows", "device", NULL, buffer, size);
+    ok(res, "GetProfileString error %d\n", GetLastError());
     ok(!lstrcmpA(org_value, buffer), "'%s' (expected '%s')\n", buffer, org_value);
 
 }
@@ -2305,6 +2309,7 @@ static void test_GetPrinter(void)
         {
             DWORD double_needed;
             ret = pGetPrinterW(hprn, level, NULL, 0, &double_needed);
+            ok(!ret, "level %d: GetPrinter error %d\n", level, GetLastError());
             ok(double_needed == needed, "level %d: GetPrinterA returned different size %d than GetPrinterW (%d)\n", level, needed, double_needed);
         }
 
@@ -2313,6 +2318,7 @@ static void test_GetPrinter(void)
         SetLastError(0xdeadbeef);
         filled = -1;
         ret = GetPrinter(hprn, level, buf, needed, &filled);
+        ok(ret, "level %d: GetPrinter error %d\n", level, GetLastError());
         ok(needed == filled, "needed %d != filled %d\n", needed, filled);
 
         if (level == 2)
@@ -2540,6 +2546,7 @@ static void test_GetPrinterDriver(void)
         {
             DWORD double_needed;
             ret = pGetPrinterDriverW(hprn, NULL, level, NULL, 0, &double_needed);
+            ok(!ret, "level %d: GetPrinterDriver error %d\n", level, GetLastError());
             ok(double_needed == needed, "GetPrinterDriverA returned different size %d than GetPrinterDriverW (%d)\n", needed, double_needed);
         }
 
