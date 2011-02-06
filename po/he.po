@@ -1,13 +1,13 @@
 # Hebrew translations for Wine
-#
+# Yaron Shahrabani <sh.yaron@gmail.com>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-01-20 17:16+0200\n"
+"PO-Revision-Date: 2011-02-07 10:16-0600\n"
 "Last-Translator: Yaron Shahrabani <sh.yaron@gmail.com>\n"
-"Language-Team: none\n"
+"Language-Team: Gezer (Hebrew)\n"
 "Language: Hebrew\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -58,7 +58,7 @@ msgstr "תכניות התקנה"
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
-msgstr "תכניות (*.exe)"
+msgstr "תכניות (‎*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
 #: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
@@ -85,7 +85,7 @@ msgstr "התקנה..."
 msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
-msgstr ""
+msgstr "סכום בדיקה בלתי צפוי של הקובץ שהתקבל. התקנת הקובץ הפגום מתבטלת."
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -128,13 +128,8 @@ msgid "Separator"
 msgstr "מפריד"
 
 #: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
-#, fuzzy
 msgid "None"
-msgstr ""
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"None\n"
-"#-#-#-#-#  he.po (Wine)  #-#-#-#-#\n"
-"ללא"
+msgstr "ללא"
 
 #: comctl32.rc:28 wordpad.rc:169
 msgid "Close"
@@ -1503,11 +1498,11 @@ msgstr " עד "
 
 #: cryptui.rc:39
 msgid "This certificate has an invalid signature."
-msgstr ""
+msgstr "לאישור זה יש חתימה בלתי תקנית."
 
 #: cryptui.rc:40
 msgid "This certificate has expired or is not yet valid."
-msgstr ""
+msgstr "אישור זה פג או שאינו תקף עוד."
 
 #: cryptui.rc:41
 msgid "This certificate's validity period exceeds that of its issuer."
@@ -1539,11 +1534,11 @@ msgstr ""
 
 #: cryptui.rc:48
 msgid "Extensions Only"
-msgstr ""
+msgstr "הרחבות בלבד"
 
 #: cryptui.rc:49
 msgid "Critical Extensions Only"
-msgstr ""
+msgstr "הרחבות קריטיות בלבד"
 
 #: cryptui.rc:50
 msgid "Properties Only"
@@ -1559,7 +1554,7 @@ msgstr "מנפיק"
 
 #: cryptui.rc:54
 msgid "Valid from"
-msgstr ""
+msgstr "מקף מהתאריך"
 
 #: cryptui.rc:55
 msgid "Valid to"
@@ -1583,11 +1578,11 @@ msgstr "גיבוב SHA1"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
-msgstr ""
+msgstr "שימוש במפתח מורחב (מאפיין)"
 
 #: cryptui.rc:61
 msgid "Friendly name"
-msgstr ""
+msgstr "שם ידידותי"
 
 #: cryptui.rc:62 shell32.rc:239 ipconfig.rc:41
 msgid "Description"
@@ -1599,11 +1594,11 @@ msgstr "מאפייני האישור"
 
 #: cryptui.rc:64
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr ""
+msgstr "נא להזין OID בצורה 1.2.3.4"
 
 #: cryptui.rc:65
 msgid "The OID you entered already exists."
-msgstr ""
+msgstr "ה־OID שהזנת כבר קיים."
 
 #: cryptui.rc:66
 msgid "Select Certificate Store"
@@ -1625,11 +1620,11 @@ msgstr ""
 
 #: cryptui.rc:70
 msgid "File to Import"
-msgstr ""
+msgstr "קובץ ליבוא"
 
 #: cryptui.rc:71
 msgid "Specify the file you want to import."
-msgstr ""
+msgstr "נא לציין את הקובץ אותו ברצונך לייבא."
 
 #: cryptui.rc:72 cryptui.rc:95
 msgid "Certificate Store"
@@ -1679,7 +1674,7 @@ msgstr "לא ניתן לפתוח"
 
 #: cryptui.rc:84
 msgid "Determined by the program"
-msgstr ""
+msgstr "יימצא על ידי התכנית"
 
 #: cryptui.rc:85
 msgid "Please select a store"
@@ -1719,7 +1714,7 @@ msgstr ""
 
 #: cryptui.rc:97
 msgid "The import failed."
-msgstr ""
+msgstr "היבוא נכשל."
 
 #: cryptui.rc:98
 msgid "Arial"
@@ -1727,7 +1722,7 @@ msgstr ""
 
 #: cryptui.rc:100
 msgid "<Advanced Purposes>"
-msgstr ""
+msgstr "<מטרות מתקדמות>"
 
 #: cryptui.rc:101
 msgid "Issued To"
@@ -1747,7 +1742,7 @@ msgstr "שם ידידותי"
 
 #: cryptui.rc:106 cryptui.rc:120
 msgid "<None>"
-msgstr "ללא"
+msgstr "<ללא>"
 
 #: cryptui.rc:107
 msgid ""
@@ -1917,29 +1912,29 @@ msgstr "מבנה הקובץ"
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
-msgstr ""
+msgstr "הכללת כל האישורים שבתיקיית האישורים"
 
 #: cryptui.rc:162
 msgid "Export keys"
-msgstr ""
+msgstr "יצוא מפתחות"
 
 #: cryptui.rc:165
 msgid "The export was successful."
-msgstr ""
+msgstr "היצוא הצליח."
 
 #: cryptui.rc:166
 msgid "The export failed."
-msgstr ""
+msgstr "היצוא נכשל."
 
 #: cryptui.rc:167
 msgid "Export Private Key"
-msgstr ""
+msgstr "יצוא מפתח פרטי"
 
 #: cryptui.rc:168
 msgid ""
 "The certificate contains a private key which may be exported along with the "
 "certificate."
-msgstr ""
+msgstr "האישור מכיל מפתח פרטי שניתן לייצא אותו בנוסף לאישור."
 
 #: cryptui.rc:169
 msgid "Enter Password"
@@ -1951,31 +1946,35 @@ msgstr "ניתן להגן על מפתח פרטי בססמה."
 
 #: cryptui.rc:171
 msgid "The passwords do not match."
-msgstr ""
+msgstr "הססמאות אינן תואמות."
 
 #: cryptui.rc:172
 msgid "Note: The private key for this certificate could not be opened."
-msgstr ""
+msgstr "לתשומת לבך: לא ניתן לפתוח את המפתח הפרטי לאישור זה."
 
 #: cryptui.rc:173
 msgid "Note: The private  key for this certificate is not exportable."
-msgstr ""
+msgstr "לתשומת לבך: המפתח הפרטי לאישור זה אינו ניתן ליצוא."
 
 #: devenum.rc:32
+#, fuzzy
 msgid "Default DirectSound"
-msgstr ""
+msgstr "DirectSound כבררת מחדל"
 
 #: devenum.rc:33
+#, fuzzy
 msgid "DirectSound: %s"
-msgstr ""
+msgstr "DirectSound: %s"
 
 #: devenum.rc:34
+#, fuzzy
 msgid "Default WaveOut Device"
-msgstr ""
+msgstr "התקן ה־WaveOut כבררת מחדל"
 
 #: devenum.rc:35
+#, fuzzy
 msgid "Default MidiOut Device"
-msgstr ""
+msgstr "התקן ה־MidiOut כבררת מחדל"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
@@ -2134,8 +2133,9 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "הגדרת דפדפן האינטרנט של Wine והגדרות שקשורות בו"
 
 #: jscript.rc:25
+#, fuzzy
 msgid "Error converting object to primitive type"
-msgstr ""
+msgstr "שגיאה בהמרת הפריט לטיפוס פרימיטיבי"
 
 #: jscript.rc:26
 msgid "Invalid procedure call or argument"
@@ -2238,8 +2238,9 @@ msgid "Array object expected"
 msgstr ""
 
 #: winerror.mc:26
+#, fuzzy
 msgid "Success\n"
-msgstr ""
+msgstr "הצלחה\n"
 
 #: winerror.mc:31
 #, fuzzy
@@ -2270,9 +2271,8 @@ msgid "Invalid handle\n"
 msgstr "אפשרות שגויה"
 
 #: winerror.mc:61
-#, fuzzy
 msgid "Memory trashed\n"
-msgstr "צג הזיכרון"
+msgstr ""
 
 #: winerror.mc:66
 #, fuzzy
@@ -5520,6 +5520,35 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
+"Windows Installer %s\n"
+"\n"
+"Usage:\n"
+"msiexec command {required parameter} [optional parameter]\n"
+"\n"
+"Install a product:\n"
+"\t/i {package|productcode} [property]\n"
+"\t/package {package|productcode} [property]\n"
+"\t/a package [property]\n"
+"Repair an installation:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"Uninstall a product:\n"
+"\t/uninstall {package|productcode} [property]\n"
+"\t/x {package|productcode} [property]\n"
+"Advertise a product:\n"
+"\t/j[u|m] package [/t transform] [/g languageid]\n"
+"Apply a patch:\n"
+"\t/p patchpackage [property]\n"
+"\t/p patchpackage /a package [property]\n"
+"Log and UI Modifiers for above commands:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"Register MSI Service:\n"
+"\t/y\n"
+"Unregister MSI Service:\n"
+"\t/z\n"
+"Display this help:\n"
+"\t/help\n"
+"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
@@ -5839,11 +5868,11 @@ msgstr "שקר"
 
 #: oleaut32.rc:31
 msgid "On"
-msgstr ""
+msgstr "פעיל"
 
 #: oleaut32.rc:32
 msgid "Off"
-msgstr ""
+msgstr "כבוי"
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
@@ -7472,7 +7501,7 @@ msgstr "לא ניתן ליצור את קובץ הפלט."
 
 #: wldap32.rc:27
 msgid "Success"
-msgstr ""
+msgstr "הצלחה"
 
 #: wldap32.rc:28
 msgid "Operations Error"
@@ -7576,7 +7605,7 @@ msgstr ""
 
 #: wldap32.rc:76
 msgid "Invalid Credentials"
-msgstr ""
+msgstr "פרטי הזיהוי שגויים"
 
 #: wldap32.rc:77
 msgid "Insufficient Rights"
@@ -7584,7 +7613,7 @@ msgstr "אין די הרשאות"
 
 #: wldap32.rc:78
 msgid "Busy"
-msgstr ""
+msgstr "עסוק"
 
 #: wldap32.rc:79
 msgid "Unavailable"
@@ -7620,11 +7649,11 @@ msgstr ""
 
 #: wldap32.rc:94
 msgid "Not allowed on RDN"
-msgstr ""
+msgstr "אינו מורשה ב־RDN"
 
 #: wldap32.rc:95
 msgid "Already Exists"
-msgstr ""
+msgstr "כבר קיים"
 
 #: wldap32.rc:96
 msgid "No Object Class Mods"
@@ -7632,15 +7661,15 @@ msgstr ""
 
 #: wldap32.rc:97
 msgid "Results Too Large"
-msgstr ""
+msgstr "התוצאות גדולות מדי"
 
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
-msgstr ""
+msgstr "משפיע על מספר DSA"
 
 #: wldap32.rc:107
 msgid "Other"
-msgstr ""
+msgstr "אחר"
 
 #: wldap32.rc:108
 msgid "Server Down"
@@ -7656,11 +7685,11 @@ msgstr "שגיאת קידוד"
 
 #: wldap32.rc:111
 msgid "Decoding Error"
-msgstr ""
+msgstr "שגיאת פענוח"
 
 #: wldap32.rc:112
 msgid "Timeout"
-msgstr ""
+msgstr "תם זמן ההמתנה"
 
 #: wldap32.rc:113
 msgid "Auth Unknown"
@@ -7668,47 +7697,47 @@ msgstr "האימות בלתי מוכר"
 
 #: wldap32.rc:114
 msgid "Filter Error"
-msgstr ""
+msgstr "שגיאת מסנן"
 
 #: wldap32.rc:115
 msgid "User Cancelled"
-msgstr ""
+msgstr "המשתמש ביטל"
 
 #: wldap32.rc:116
 msgid "Parameter Error"
-msgstr ""
+msgstr "שגיאת משתנה"
 
 #: wldap32.rc:117
 msgid "No Memory"
-msgstr ""
+msgstr "ין זיכרון"
 
 #: wldap32.rc:118
 msgid "Can't connect to the LDAP server"
-msgstr ""
+msgstr "לא ניתן להתחבר לשרת ה־LDAP"
 
 #: wldap32.rc:119
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr ""
+msgstr "הפעולה לא נתמכת על ידי גרסה זו של פרוטוקול ה־LDAP"
 
 #: wldap32.rc:120
 msgid "Specified control was not found in message"
-msgstr ""
+msgstr "הפקד שצוין לא נמצא בהודעה"
 
 #: wldap32.rc:121
 msgid "No result present in message"
-msgstr ""
+msgstr "אין הודעות הזמינות בהודעה"
 
 #: wldap32.rc:122
 msgid "More results returned"
-msgstr ""
+msgstr "הוחזרו תוצאות נוספות"
 
 #: wldap32.rc:123
 msgid "Loop while handling referrals"
-msgstr ""
+msgstr "לולאה בעת טיפול בהפניות"
 
 #: wldap32.rc:124
 msgid "Referral hop limit exceeded"
-msgstr ""
+msgstr "מגבלת הקפצת ההפניות בחריגה"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -8660,7 +8689,7 @@ msgstr "ללא שם"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"
-msgstr "קובצי טקסט (*.txt)"
+msgstr "קובצי טקסט (‎*.txt)"
 
 #: notepad.rc:82
 msgid ""
@@ -8719,9 +8748,8 @@ msgid "Unicode (UTF-16 big-endian)"
 msgstr "יוניקוד (UTF-16 big-endian)"
 
 #: notepad.rc:95
-#, fuzzy
 msgid "Unicode (UTF-8)"
-msgstr "יוניקוד (UTF-16)"
+msgstr "יוניקוד (UTF-8)"
 
 #: notepad.rc:102
 msgid ""
@@ -8994,7 +9022,7 @@ msgstr "CoGetClassObject נכשל."
 
 #: oleview.rc:143
 msgid "Unknown error"
-msgstr "שגיאה בלתי ידוע"
+msgstr "שגיאה בלתי ידועה"
 
 #: oleview.rc:146
 msgid "bytes"
@@ -9010,7 +9038,7 @@ msgstr "מנשקים שהתקבלו בירושה"
 
 #: oleview.rc:124
 msgid "Save as an .IDL or .H file"
-msgstr "שמירה כקובץ .IDL או קובץ .H"
+msgstr "שמירה כקובץ ‎.IDL או קובץ ‎.H"
 
 #: oleview.rc:125
 msgid "Close window"
@@ -9881,7 +9909,7 @@ msgstr "הצגת נושאי העזרה של מנהל המשימות"
 
 #: taskmgr.rc:213
 msgid "Displays program information, version number, and copyright"
-msgstr "Displays program information, version number, and copyright"
+msgstr "מציג את מפרטי התכנית, מספר הגרסה ואת זכויות היוצרים"
 
 #: taskmgr.rc:214
 msgid "Exits the Task Manager application"
@@ -10308,6 +10336,7 @@ msgid "Wine configuration for %s"
 msgstr "שגיאת תצוגה"
 
 #: winecfg.rc:53
+#, fuzzy
 msgid ""
 "There is no audio driver currently specified in the registry.\n"
 "\n"
@@ -10316,12 +10345,21 @@ msgid ""
 "\n"
 "You must click Apply for the selection to take effect."
 msgstr ""
+"אין מנהל התקן שמע המוגדר ברישום המערכת נכון לעכשיו.\n"
+"\n"
+"נבחר עבורך מנהל ההתקן המומלץ.\n"
+"ניתן להשתמש במנהל התקן זה או לבחור במנהל התקן אחר אם יש כזה זמין.\n"
+"\n"
+"עליך ללחוץ על החלה כדי שהבחירה תיכנס לתוקף."
 
 #: winecfg.rc:60
+#, fuzzy
 msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
 msgstr ""
+"שינוי תהליך הטעינה של ספרייה זו אינו מומלץ.\n"
+"האם אכן ברצונך לעשות זאת?"
 
 #: winecfg.rc:61
 #, fuzzy
@@ -10905,7 +10943,7 @@ msgstr "&פרמוט הכונן..."
 
 #: winefile.rc:58
 msgid "Connect &Network Drive"
-msgstr "התחבר לכונן &רשת"
+msgstr "התחברות לכונן &רשת"
 
 #: winefile.rc:59
 msgid "&Disconnect Network Drive"
@@ -10957,7 +10995,7 @@ msgstr "עץ &בלבד"
 
 #: winefile.rc:79
 msgid "Directory &Only"
-msgstr "Directory &Only"
+msgstr "תיקיות ב&לבד"
 
 #: winefile.rc:83
 msgid "&Name"
@@ -11029,7 +11067,7 @@ msgstr "&חלון חדש"
 
 #: winefile.rc:120
 msgid "Cascading\tCtrl+F5"
-msgstr "Cascading\tCtrl+F5"
+msgstr "דירוג\tCtrl+F5"
 
 #: winefile.rc:122
 msgid "Tile &Vertically\tCtrl+F4"
@@ -11041,7 +11079,7 @@ msgstr "סידור אוטומטי"
 
 #: winefile.rc:126
 msgid "Arrange &Symbols"
-msgstr "Arrange &Symbols"
+msgstr "סידור ה&סמלים"
 
 #: winefile.rc:132
 msgid "Help &Search...\tF1"
@@ -11253,7 +11291,7 @@ msgstr "מ&פתח"
 
 #: winhlp32.rc:103
 msgid "Help files (*.hlp)"
-msgstr "קובצי עזרה (*.hlp)"
+msgstr "קובצי עזרה (‎*.hlp)"
 
 #: winhlp32.rc:104
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
@@ -11389,15 +11427,15 @@ msgstr "כל המסמכים (*.*)"
 
 #: wordpad.rc:137
 msgid "Text documents (*.txt)"
-msgstr "מסמכי טקסט (*.txt)"
+msgstr "מסמכי טקסט (‎*.txt)"
 
 #: wordpad.rc:138
 msgid "Unicode text document (*.txt)"
-msgstr "מסמך טקסט יוניקוד (*.txt)"
+msgstr "מסמך טקסט יוניקוד (‎*.txt)"
 
 #: wordpad.rc:139
 msgid "Rich text format (*.rtf)"
-msgstr "מבנה טקסט עשיר (*.rtf)"
+msgstr "מבנה טקסט עשיר (‎*.rtf)"
 
 #: wordpad.rc:140
 msgid "Rich text document"
@@ -11413,7 +11451,7 @@ msgstr "מסמך טקסט יוניקוד"
 
 #: wordpad.rc:143
 msgid "Printer files (*.PRN)"
-msgstr "קובצי מדפסת (*.PRN)"
+msgstr "קובצי מדפסת (‎*.PRN)"
 
 #: wordpad.rc:148
 msgid "Left"
