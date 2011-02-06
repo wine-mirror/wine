@@ -232,11 +232,7 @@ static void test_EditStreamSetInfo(void)
     hres = CreateEditableStream(&stream, NULL);
     ok(hres == AVIERR_OK, "got 0x%08X, expected AVIERR_OK\n", hres);
 
-
-    if(0)    /* Crashing - first parameter not checked */
-        hres = EditStreamSetInfo(NULL, &info, sizeof(AVISTREAMINFO) );
-
-             /* Size parameter is somehow checked (notice the crash with size=-1 below) */
+    /* Size parameter is somehow checked (notice the crash with size=-1 below) */
     hres = EditStreamSetInfo(stream, NULL, 0);
     ok( hres == AVIERR_BADSIZE, "got 0x%08X, expected AVIERR_BADSIZE\n", hres);
 
@@ -244,11 +240,14 @@ static void test_EditStreamSetInfo(void)
     ok( hres == AVIERR_BADSIZE, "got 0x%08X, expected AVIERR_BADSIZE\n", hres);
 
     if(0)
-    {        /* Crashing - second parameter not checked */
-        hres = EditStreamSetInfo(stream, NULL, sizeof(AVISTREAMINFO) );
+    {   
+        /* Crashing - first parameter not checked */
+        EditStreamSetInfo(NULL, &info, sizeof(AVISTREAMINFO) );
 
-        hres = EditStreamSetInfo(stream, NULL, -1);
-        ok( hres == AVIERR_BADSIZE, "got 0x%08X, expected AVIERR_BADSIZE\n", hres);
+        /* Crashing - second parameter not checked */
+        EditStreamSetInfo(stream, NULL, sizeof(AVISTREAMINFO) );
+
+        EditStreamSetInfo(stream, NULL, -1);
     }
 
     hres = AVIStreamInfo(stream, &info, sizeof(AVISTREAMINFO) );
