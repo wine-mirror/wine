@@ -908,3 +908,9 @@ NET_API_STATUS WINAPI NetUseAdd(LMSTR servername, DWORD level, LPBYTE bufptr, LP
     FIXME("%s %d %p %p stub\n", debugstr_w(servername), level, bufptr, parm_err);
     return NERR_Success;
 }
+
+NET_API_STATUS WINAPI NetUseDel(LMSTR servername, LMSTR usename, DWORD forcecond)
+{
+    FIXME("%s %s %d stub\n", debugstr_w(servername), debugstr_w(usename), forcecond);
+    return NERR_Success;
+}
