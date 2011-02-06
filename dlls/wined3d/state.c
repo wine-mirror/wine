@@ -4132,7 +4132,6 @@ static void loadNumberedArrays(struct wined3d_stateblock *stateblock,
     GLuint curVBO = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0U : 0;
     int i;
     struct wined3d_buffer *vb;
-    DWORD_PTR shift_index;
 
     /* Default to no instancing */
     stateblock->device->instancedDraw = FALSE;
@@ -4172,31 +4171,12 @@ static void loadNumberedArrays(struct wined3d_stateblock *stateblock,
              * curVBO will be 0. If there is a vertex buffer but no vbo we
              * won't be load converted attributes anyway. */
             vb = stream->buffer;
-            if (curVBO && vb->conversion_shift)
-            {
-                TRACE("Loading attribute from shifted buffer\n");
-                TRACE("Attrib %d has original stride %d, new stride %d\n",
-                        i, stream_info->elements[i].stride, vb->conversion_stride);
-                TRACE("Original offset %p, additional offset 0x%08x\n",
-                        stream_info->elements[i].data, vb->conversion_shift[(DWORD_PTR)stream_info->elements[i].data]);
-                TRACE("Opengl type %#x\n", stream_info->elements[i].format->gl_vtx_type);
-                shift_index = ((DWORD_PTR)stream_info->elements[i].data + stream->offset);
-                shift_index = shift_index % stream_info->elements[i].stride;
-                GL_EXTCALL(glVertexAttribPointerARB(i, stream_info->elements[i].format->gl_vtx_format,
-                        stream_info->elements[i].format->gl_vtx_type,
-                        stream_info->elements[i].format->gl_normalized,
-                        vb->conversion_stride, stream_info->elements[i].data + vb->conversion_shift[shift_index]
-                        + stateblock->state.load_base_vertex_index * stream_info->elements[i].stride
-                        + stream->offset));
-
-            } else {
-                GL_EXTCALL(glVertexAttribPointerARB(i, stream_info->elements[i].format->gl_vtx_format,
-                        stream_info->elements[i].format->gl_vtx_type,
-                        stream_info->elements[i].format->gl_normalized,
-                        stream_info->elements[i].stride, stream_info->elements[i].data
-                        + stateblock->state.load_base_vertex_index * stream_info->elements[i].stride
-                        + stream->offset));
-            }
+            GL_EXTCALL(glVertexAttribPointerARB(i, stream_info->elements[i].format->gl_vtx_format,
+                    stream_info->elements[i].format->gl_vtx_type,
+                    stream_info->elements[i].format->gl_normalized,
+                    stream_info->elements[i].stride, stream_info->elements[i].data
+                    + stateblock->state.load_base_vertex_index * stream_info->elements[i].stride
+                    + stream->offset));
 
             if (!(context->numbered_array_mask & (1 << i)))
             {

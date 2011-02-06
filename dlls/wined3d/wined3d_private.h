@@ -2451,7 +2451,6 @@ enum wined3d_buffer_conversion_type
     CONV_NONE,
     CONV_D3DCOLOR,
     CONV_POSITIONT,
-    CONV_FLOAT16_2, /* Also handles FLOAT16_4 */
 };
 
 struct wined3d_map_range
@@ -2493,8 +2492,6 @@ struct wined3d_buffer
     UINT stride;                                            /* 0 if no conversion */
     UINT conversion_stride;                                 /* 0 if no shifted conversion */
     enum wined3d_buffer_conversion_type *conversion_map;    /* NULL if no conversion */
-    /* Extra load offsets, for FLOAT16 conversion */
-    UINT *conversion_shift;                                 /* NULL if no shifted conversion */
 };
 
 static inline struct wined3d_buffer *buffer_from_resource(struct wined3d_resource *resource)
