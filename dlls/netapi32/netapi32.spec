@@ -172,7 +172,7 @@
 @ stub NetScheduleJobGetInfo
 @ stub NetServerComputerNameAdd
 @ stub NetServerComputerNameDel
-@ stub NetServerDiskEnum
+@ stdcall NetServerDiskEnum(wstr long ptr long ptr ptr ptr)
 @ stdcall NetServerEnum(wstr long ptr long ptr ptr long wstr ptr)
 @ stdcall NetServerEnumEx(wstr long ptr long ptr ptr long wstr wstr)
 @ stdcall NetServerGetInfo(wstr long ptr)
