@@ -70,6 +70,7 @@ DEFINE_EXPECT(iframe_onreadystatechange_interactive);
 DEFINE_EXPECT(iframe_onreadystatechange_complete);
 DEFINE_EXPECT(iframedoc_onreadystatechange);
 DEFINE_EXPECT(img_onload);
+DEFINE_EXPECT(input_onfocus);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -99,6 +100,9 @@ static const char readystate_doc_str[] =
 
 static const char img_doc_str[] =
     "<html><body><img id=\"imgid\"></img></body></html>";
+
+static const char input_doc_str[] =
+    "<html><body><input id=\"inputid\"></input></body></html>";    
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -906,6 +910,17 @@ static HRESULT WINAPI img_onload(IDispatchEx *iface, DISPID id, LCID lcid, WORD 
 
 EVENT_HANDLER_FUNC_OBJ(img_onload);
 
+static HRESULT WINAPI input_onfocus(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(input_onfocus);
+    test_event_args(&DIID_DispHTMLInputElement, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("INPUT");
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(input_onfocus);
+
 static HRESULT WINAPI iframedoc_onreadystatechange(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -1143,9 +1158,17 @@ static IDispatchEx div_onclick_disp = { &div_onclick_dispVtbl };
 static void pump_msgs(BOOL *b)
 {
     MSG msg;
-    while(!*b && GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+
+    if(b) {
+        while(!*b && GetMessageW(&msg, NULL, 0, 0)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }else {
+        while(!b && PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
     }
 }
 
@@ -1434,6 +1457,58 @@ static void test_imgload(IHTMLDocument2 *doc)
     CHECK_CALLED(img_onload);
 
     IHTMLImgElement_Release(img);
+}
+
+static void test_focus(IHTMLDocument2 *doc)
+{
+    IHTMLElement2 *elem2;
+    IHTMLElement *elem;
+    VARIANT v;
+    HRESULT hres;
+
+    elem = get_elem_id(doc, "inputid");
+    elem2 = get_elem2_iface((IUnknown*)elem);
+    IHTMLElement_Release(elem);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLElement2_get_onfocus(elem2, &v);
+    ok(hres == S_OK, "get_onfocus failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_NULL, "V_VT(onfocus) = %d\n", V_VT(&v));
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&input_onfocus_obj;
+    hres = IHTMLElement2_put_onfocus(elem2, v);
+    ok(hres == S_OK, "put_onfocus failed: %08x\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLElement2_get_onfocus(elem2, &v);
+    ok(hres == S_OK, "get_onfocus failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(onfocus) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == (IDispatch*)&input_onfocus_obj, "V_DISPATCH(onfocus) != onfocusFunc\n");
+    VariantClear(&v);
+
+    if(!winetest_interactive)
+        ShowWindow(container_hwnd, SW_SHOW);
+
+    SetFocus(NULL);
+    ok(!IsChild(container_hwnd, GetFocus()), "focus belongs to document window\n");
+
+    hres = IHTMLWindow2_focus(window);
+    ok(hres == S_OK, "focus failed: %08x\n", hres);
+
+    ok(IsChild(container_hwnd, GetFocus()), "focus does not belong to document window\n");
+    pump_msgs(NULL);
+
+    SET_EXPECT(input_onfocus);
+    hres = IHTMLElement2_focus(elem2);
+    pump_msgs(NULL);
+    CHECK_CALLED(input_onfocus);
+    ok(hres == S_OK, "focus failed: %08x\n", hres);
+
+    if(!winetest_interactive)
+        ShowWindow(container_hwnd, SW_HIDE);
+
+    IHTMLElement2_Release(elem2);
 }
 
 static void test_timeout(IHTMLDocument2 *doc)
@@ -2076,6 +2151,7 @@ START_TEST(events)
     run_test(click_doc_str, test_onclick);
     run_test(readystate_doc_str, test_onreadystatechange);
     run_test(img_doc_str, test_imgload);
+    run_test(input_doc_str, test_focus);
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
