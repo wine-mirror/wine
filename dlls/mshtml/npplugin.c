@@ -154,7 +154,7 @@ static BOOL parse_classid(const PRUnichar *classid, CLSID *clsid)
 
     static const PRUnichar clsidW[] = {'c','l','s','i','d',':'};
 
-    if(strncmpW(classid, clsidW, sizeof(clsidW)/sizeof(WCHAR)))
+    if(strncmpiW(classid, clsidW, sizeof(clsidW)/sizeof(WCHAR)))
         return FALSE;
 
     ptr = classid + sizeof(clsidW)/sizeof(WCHAR);
