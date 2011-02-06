@@ -1074,8 +1074,12 @@ static HRESULT WINAPI HTMLWindow2_get_Option(IHTMLWindow2 *iface, IHTMLOptionEle
 static HRESULT WINAPI HTMLWindow2_focus(IHTMLWindow2 *iface)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->()\n", This);
+
+    if(This->doc_obj)
+        SetFocus(This->doc_obj->hwnd);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_closed(IHTMLWindow2 *iface, VARIANT_BOOL *p)
