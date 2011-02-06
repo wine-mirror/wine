@@ -1294,7 +1294,6 @@ static void Direct3D1Test(void)
 
     memset(desc.lpData, 0, 128);
     instr = desc.lpData;
-    idx = 0;
 
     instr->bOpcode = D3DOP_TRIANGLE;
     instr->bSize = sizeof(D3DOP_TRIANGLE);
@@ -3684,6 +3683,7 @@ static void BackBuffer3DCreateSurfaceTest(void)
     memset(&ddcaps, 0, sizeof(ddcaps));
     ddcaps.dwSize = sizeof(DDCAPS);
     hr = IDirectDraw_GetCaps(DirectDraw1, &ddcaps, NULL);
+    ok(SUCCEEDED(hr), "DirectDraw_GetCaps failed: 0x%08x\n", hr);
     if (!(ddcaps.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
     {
         skip("DDraw reported no VIDEOMEMORY cap. Broken video driver? Skipping surface caps tests.\n");
