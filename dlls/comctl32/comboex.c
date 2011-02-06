@@ -1693,7 +1693,7 @@ static LRESULT COMBOEX_WindowPosChanging (const COMBOEX_INFO *infoPtr, WINDOWPOS
     height =   (cb_wrect.bottom-cb_wrect.top)
 	     + (cbx_wrect.bottom-cbx_wrect.top)
              - (cbx_crect.bottom-cbx_crect.top);
-    if (wp->cy < height) wp->cy = height;
+    wp->cy = height;
     if (infoPtr->hwndEdit) {
 	COMBOEX_AdjustEditPos (infoPtr);
 	InvalidateRect (infoPtr->hwndCombo, 0, TRUE);

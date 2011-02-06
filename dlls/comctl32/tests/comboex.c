@@ -380,6 +380,53 @@ static void test_CB_GETLBTEXT(void)
     DestroyWindow(hCombo);
 }
 
+static void test_WM_WINDOWPOSCHANGING(void)
+{
+    HWND hCombo;
+    WINDOWPOS wp;
+    RECT rect;
+    int combo_height;
+    int ret;
+
+    hCombo = createComboEx(WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN);
+    ok(hCombo != NULL, "createComboEx failed\n");
+    ret = GetWindowRect(hCombo, &rect);
+    ok(ret, "GetWindowRect failed\n");
+    combo_height = rect.bottom - rect.top;
+    ok(combo_height > 0, "wrong combo height\n");
+
+    /* Test height > combo_height */
+    wp.x = rect.left;
+    wp.y = rect.top;
+    wp.cx = (rect.right - rect.left);
+    wp.cy = combo_height * 2;
+    wp.flags = 0;
+    wp.hwnd = hCombo;
+    wp.hwndInsertAfter = NULL;
+
+    ret = SendMessageA(hCombo, WM_WINDOWPOSCHANGING, 0, (LPARAM)&wp);
+    ok(ret == 0, "expected 0, got %x", ret);
+    ok(wp.cy == combo_height,
+            "Expected height %d, got %d\n", combo_height, wp.cy);
+
+    /* Test height < combo_height */
+    wp.x = rect.left;
+    wp.y = rect.top;
+    wp.cx = (rect.right - rect.left);
+    wp.cy = combo_height / 2;
+    wp.flags = 0;
+    wp.hwnd = hCombo;
+    wp.hwndInsertAfter = NULL;
+
+    ret = SendMessageA(hCombo, WM_WINDOWPOSCHANGING, 0, (LPARAM)&wp);
+    ok(ret == 0, "expected 0, got %x", ret);
+    ok(wp.cy == combo_height,
+            "Expected height %d, got %d\n", combo_height, wp.cy);
+
+    ret = DestroyWindow(hCombo);
+    ok(ret, "DestroyWindow failed\n");
+}
+
 static LRESULT CALLBACK ComboExTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
@@ -528,6 +575,7 @@ START_TEST(comboex)
     test_comboboxex();
     test_WM_LBUTTONDOWN();
     test_CB_GETLBTEXT();
+    test_WM_WINDOWPOSCHANGING();
     test_comboboxex_subclass();
     test_get_set_item();
 
