@@ -25,6 +25,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
+enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE
+{
+    D3DCOMPILER_SIGNATURE_ELEMENT_SIZE6 = 6,
+    D3DCOMPILER_SIGNATURE_ELEMENT_SIZE7 = 7,
+};
+
 static BOOL copy_name(const char *ptr, char **name)
 {
     size_t name_len;
@@ -538,15 +544,34 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
     return S_OK;
 }
 
-HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, const char *data, DWORD data_size)
+HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, struct dxbc_section *section)
 {
     D3D11_SIGNATURE_PARAMETER_DESC *d;
     unsigned int string_data_offset;
     unsigned int string_data_size;
-    const char *ptr = data;
+    const char *ptr = section->data;
     char *string_data;
     unsigned int i;
     DWORD count;
+    enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE element_size;
+
+    switch (section->tag)
+    {
+        case TAG_OSG5:
+            element_size = D3DCOMPILER_SIGNATURE_ELEMENT_SIZE7;
+            break;
+
+        case TAG_ISGN:
+        case TAG_OSGN:
+        case TAG_PCSG:
+            element_size = D3DCOMPILER_SIGNATURE_ELEMENT_SIZE6;
+            break;
+
+        default:
+            FIXME("Unhandled section %s!\n", debugstr_an((const char *)&section->tag, 4));
+            element_size = D3DCOMPILER_SIGNATURE_ELEMENT_SIZE6;
+            break;
+    }
 
     read_dword(&ptr, &count);
     TRACE("%u elements\n", count);
@@ -560,9 +585,10 @@ HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, cons
         return E_OUTOFMEMORY;
     }
 
-    /* 2 DWORDs for the header, 6 for each element. */
-    string_data_offset = 2 * sizeof(DWORD) + count * 6 * sizeof(DWORD);
-    string_data_size = data_size - string_data_offset;
+    /* 2 DWORDs for the header, element_size for each element. */
+    string_data_offset = 2 * sizeof(DWORD) + count * element_size * sizeof(DWORD);
+    string_data_size = section->data_size - string_data_offset;
+
     string_data = HeapAlloc(GetProcessHeap(), 0, string_data_size);
     if (!string_data)
     {
@@ -570,15 +596,21 @@ HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, cons
         HeapFree(GetProcessHeap(), 0, d);
         return E_OUTOFMEMORY;
     }
-    memcpy(string_data, data + string_data_offset, string_data_size);
+    memcpy(string_data, section->data + string_data_offset, string_data_size);
 
     for (i = 0; i < count; ++i)
     {
         UINT name_offset;
         DWORD mask;
 
-        /* todo: Parse stream in shaderblobs v5 (dx11) */
-        d[i].Stream = 0;
+        if (element_size == D3DCOMPILER_SIGNATURE_ELEMENT_SIZE7)
+        {
+            read_dword(&ptr, &d[i].Stream);
+        }
+        else
+        {
+            d[i].Stream = 0;
+        }
 
         read_dword(&ptr, &name_offset);
         d[i].SemanticName = string_data + (name_offset - string_data_offset);
@@ -675,7 +707,7 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                     goto err_out;
                 }
 
-                hr = d3dcompiler_parse_signature(reflection->isgn, section->data, section->data_size);
+                hr = d3dcompiler_parse_signature(reflection->isgn, section);
                 if (FAILED(hr))
                 {
                     WARN("Failed to parse section ISGN.\n");
@@ -683,6 +715,7 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                 }
                 break;
 
+            case TAG_OSG5:
             case TAG_OSGN:
                 reflection->osgn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*reflection->osgn));
                 if (!reflection->osgn)
@@ -692,7 +725,7 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                     goto err_out;
                 }
 
-                hr = d3dcompiler_parse_signature(reflection->osgn, section->data, section->data_size);
+                hr = d3dcompiler_parse_signature(reflection->osgn, section);
                 if (FAILED(hr))
                 {
                     WARN("Failed to parse section OSGN.\n");
@@ -709,7 +742,7 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                     goto err_out;
                 }
 
-                hr = d3dcompiler_parse_signature(reflection->pcsg, section->data, section->data_size);
+                hr = d3dcompiler_parse_signature(reflection->pcsg, section);
                 if (FAILED(hr))
                 {
                     WARN("Failed to parse section PCSG.\n");
