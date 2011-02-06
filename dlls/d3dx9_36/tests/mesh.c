@@ -1434,7 +1434,6 @@ static BOOL compute_sphere(struct mesh *mesh, FLOAT radius, UINT slices, UINT st
 
     vertex = 0;
     face = 0;
-    stack = 0;
 
     mesh->vertices[vertex].normal.x = 0.0f;
     mesh->vertices[vertex].normal.y = 0.0f;
@@ -1663,7 +1662,6 @@ static BOOL compute_cylinder(struct mesh *mesh, FLOAT radius1, FLOAT radius2, FL
 
     vertex = 0;
     face = 0;
-    stack = 0;
 
     delta_radius = radius1 - radius2;
     radius = radius1;
