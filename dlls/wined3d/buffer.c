@@ -1002,7 +1002,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
          * changes it every minute drop the VBO after VB_MAX_DECL_CHANGES minutes. So count draws without
          * decl changes and reset the decl change count after a specific number of them
          */
-        if (buffer_is_fully_dirty(buffer))
+        if (buffer->conversion_map && buffer_is_fully_dirty(buffer))
         {
             ++buffer->full_conversion_count;
             if (buffer->full_conversion_count > VB_MAXFULLCONVERSIONS)
