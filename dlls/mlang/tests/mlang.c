@@ -773,7 +773,6 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
     if (!flags)
     {
 	ok(n == total, "IEnumScript_Next: expected %u, got %u\n", total, n);
-	flags = SCRIPTCONTF_SCRIPT_USER | SCRIPTCONTF_SCRIPT_HIDE | SCRIPTCONTF_SCRIPT_SYSTEM;
     }
 
     total = n;
