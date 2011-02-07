@@ -310,6 +310,9 @@ void pp_del_define(const char *name)
 		return;
 	}
 
+	free( ppp->ident );
+	free( ppp->subst.text );
+	free( ppp->filename );
 	free_pp_entry( ppp, pphash(name) );
 
 	if(pp_status.debug)
