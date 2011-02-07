@@ -11939,6 +11939,23 @@ static void test_sourcedir(void)
     ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
     ok(size == 0, "Expected 0, got %d\n", size);
 
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_DIRECTORY, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, "kiwi"), "Expected \"kiwi\", got \"%s\"\n", path);
+    ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
+
+    /* SOURCEDIR after calling MsiGetSourcePath */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine {
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+    }
+
     r = MsiDoAction(hpkg, "ResolveSource");
     ok(r == ERROR_SUCCESS, "file cost failed\n");
 
