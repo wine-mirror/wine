@@ -163,7 +163,7 @@ static UINT msi_create_directory( MSIPACKAGE *package, const WCHAR *dir )
     MSIFOLDER *folder;
     WCHAR *install_path;
 
-    install_path = resolve_folder( package, dir, FALSE, FALSE, TRUE, &folder );
+    install_path = resolve_target_folder( package, dir, FALSE, TRUE, &folder );
     if (!install_path)
         return ERROR_FUNCTION_FAILED;
 
@@ -690,7 +690,7 @@ static WCHAR *get_duplicate_filename( MSIPACKAGE *package, MSIRECORD *row, const
     {
         const WCHAR *dst_key = MSI_RecordGetString( row, 5 );
 
-        dst_path = resolve_folder( package, dst_key, FALSE, FALSE, TRUE, NULL );
+        dst_path = resolve_target_folder( package, dst_key, FALSE, TRUE, NULL );
         if (!dst_path)
         {
             /* try a property */

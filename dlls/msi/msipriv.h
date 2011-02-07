@@ -931,8 +931,8 @@ extern LPWSTR msi_dup_property( MSIDATABASE *db, LPCWSTR prop );
 extern UINT msi_set_property( MSIDATABASE *, LPCWSTR, LPCWSTR );
 extern UINT msi_get_property( MSIDATABASE *, LPCWSTR, LPWSTR, LPDWORD );
 extern int msi_get_property_int( MSIDATABASE *package, LPCWSTR prop, int def );
-extern LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
-                      BOOL set_prop, BOOL load_prop, MSIFOLDER **folder);
+extern LPWSTR resolve_source_folder(MSIPACKAGE *package, LPCWSTR name, MSIFOLDER **folder);
+extern LPWSTR resolve_target_folder(MSIPACKAGE *package, LPCWSTR name, BOOL set_prop, BOOL load_prop, MSIFOLDER **folder);
 extern LPWSTR resolve_file_source(MSIPACKAGE *package, MSIFILE *file);
 extern void msi_reset_folders( MSIPACKAGE *package, BOOL source );
 extern MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Component );

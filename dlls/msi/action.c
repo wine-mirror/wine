@@ -1189,7 +1189,7 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
     ui_actiondata(package, szCreateFolders, uirow);
     msiobj_release(&uirow->hdr);
 
-    full_path = resolve_folder(package,dir,FALSE,FALSE,TRUE,&folder);
+    full_path = resolve_target_folder( package, dir, FALSE, TRUE, &folder );
     if (!full_path)
     {
         ERR("Unable to resolve folder id %s\n",debugstr_w(dir));
@@ -1264,7 +1264,7 @@ static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
         return ERROR_SUCCESS;
     }
 
-    full_path = resolve_folder( package, dir, FALSE, FALSE, TRUE, &folder );
+    full_path = resolve_target_folder( package, dir, FALSE, TRUE, &folder );
     if (!full_path)
     {
         ERR("Unable to resolve folder id %s\n", debugstr_w(dir));
@@ -2151,10 +2151,9 @@ static UINT ITERATE_CostFinalizeDirectories(MSIRECORD *row, LPVOID param)
     msi_free(f->ResolvedTarget);
     f->ResolvedTarget = NULL;
 
-    /* This helper function now does ALL the work */
-    TRACE("Dir %s ...\n",debugstr_w(name));
-    path = resolve_folder(package,name,FALSE,TRUE,TRUE,NULL);
-    TRACE("resolves to %s\n",debugstr_w(path));
+    TRACE("directory %s ...\n", debugstr_w(name));
+    path = resolve_target_folder( package, name, TRUE, TRUE, NULL );
+    TRACE("resolves to %s\n", debugstr_w(path));
     msi_free(path);
 
     return ERROR_SUCCESS;
@@ -2302,7 +2301,7 @@ static void set_target_path( MSIPACKAGE *package, MSIFILE *file )
     }
     else
     {
-        WCHAR *dir = resolve_folder( package, file->Component->Directory, FALSE, FALSE, TRUE, NULL );
+        WCHAR *dir = resolve_target_folder( package, file->Component->Directory, FALSE, TRUE, NULL );
         file->TargetPath = build_directory_name( 2, dir, file->FileName );
         msi_free( dir );
     }
@@ -3133,7 +3132,7 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, MSICOMPONENT *cmp )
 {
 
     if (!cmp->KeyPath)
-        return resolve_folder(package,cmp->Directory,FALSE,FALSE,TRUE,NULL);
+        return resolve_target_folder( package, cmp->Directory, FALSE, TRUE, NULL );
 
     if (cmp->Attributes & msidbComponentAttributesRegistryKeyPath)
     {
@@ -3551,8 +3550,7 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
 
             helpid = MSI_RecordGetString(row,6);
 
-            if (helpid)
-                help = resolve_folder(package,helpid,FALSE,FALSE,TRUE,NULL);
+            if (helpid) help = resolve_target_folder( package, helpid, FALSE, TRUE, NULL );
             res = RegisterTypeLib(tl_struct.ptLib,tl_struct.path,help);
             msi_free(help);
 
@@ -3686,7 +3684,7 @@ static WCHAR *get_link_file( MSIPACKAGE *package, MSIRECORD *row )
     LPWSTR link_folder, link_file, filename;
 
     directory = MSI_RecordGetString( row, 2 );
-    link_folder = resolve_folder( package, directory, FALSE, FALSE, TRUE, NULL );
+    link_folder = resolve_target_folder( package, directory, FALSE, TRUE, NULL );
 
     /* may be needed because of a bug somewhere else */
     create_full_pathW( link_folder );
@@ -3807,7 +3805,7 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     if (!MSI_RecordIsNull(row,12))
     {
         LPCWSTR wkdir = MSI_RecordGetString(row, 12);
-        path = resolve_folder(package, wkdir, FALSE, FALSE, TRUE, NULL);
+        path = resolve_target_folder( package, wkdir, FALSE, TRUE, NULL );
         if (path)
             IShellLinkW_SetWorkingDirectory(sl, path);
         msi_free(path);
@@ -4340,7 +4338,7 @@ static WCHAR *get_ini_file_name( MSIPACKAGE *package, MSIRECORD *row )
     dirprop = MSI_RecordGetString( row, 3 );
     if (dirprop)
     {
-        folder = resolve_folder( package, dirprop, FALSE, FALSE, TRUE, NULL );
+        folder = resolve_target_folder( package, dirprop, FALSE, TRUE, NULL );
         if (!folder)
             folder = msi_dup_property( package->db, dirprop );
     }

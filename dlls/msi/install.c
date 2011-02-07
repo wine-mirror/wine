@@ -282,7 +282,7 @@ done:
         return r;
     }
 
-    path = resolve_folder( package, szFolder, FALSE, FALSE, TRUE, NULL );
+    path = resolve_target_folder( package, szFolder, FALSE, TRUE, NULL );
     msiobj_release( &package->hdr );
 
     if (!path)
@@ -336,7 +336,7 @@ UINT WINAPI MsiGetTargetPathW( MSIHANDLE hInstall, LPCWSTR szFolder,
 }
 
 /***********************************************************************
- * MsiGetSourcePath   (internal)
+ * MSI_GetSourcePath   (internal)
  */
 static UINT MSI_GetSourcePath( MSIHANDLE hInstall, LPCWSTR szFolder,
                                awstring *szPathBuf, LPDWORD pcchPathBuf )
@@ -413,10 +413,10 @@ done:
         return ERROR_INVALID_PARAMETER;
     }
 
-    path = resolve_folder(package, szFolder, TRUE, FALSE, TRUE, NULL);
+    path = resolve_source_folder( package, szFolder, NULL );
     msiobj_release( &package->hdr );
 
-    TRACE("path = %s\n",debugstr_w(path));
+    TRACE("path = %s\n", debugstr_w(path));
     if (!path)
         return ERROR_DIRECTORY;
 
@@ -512,7 +512,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
            attrib & FILE_ATTRIBUTE_READONLY))
         return ERROR_FUNCTION_FAILED;
 
-    path = resolve_folder(package,szFolder,FALSE,FALSE,FALSE,&folder);
+    path = resolve_target_folder( package, szFolder, FALSE, FALSE, &folder );
     if (!path)
         return ERROR_DIRECTORY;
 
@@ -527,7 +527,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
          */
         msi_free(folder->ResolvedTarget);
         folder->ResolvedTarget = NULL;
-        path2 = resolve_folder(package,szFolder,FALSE,TRUE,FALSE,NULL);
+        path2 = resolve_target_folder( package, szFolder, TRUE, FALSE, NULL );
         msi_free(path2);
     }
     else
@@ -542,7 +542,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
 
         LIST_FOR_EACH_ENTRY( f, &package->folders, MSIFOLDER, entry )
         {
-            path2 = resolve_folder(package, f->Directory, FALSE, TRUE, FALSE, NULL);
+            path2 = resolve_target_folder( package, f->Directory, TRUE, FALSE, NULL );
             msi_free(path2);
         }
 
@@ -554,7 +554,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
             if (!comp->Enabled || (comp->assembly && !comp->assembly->application))
                 continue;
 
-            dir = resolve_folder(package, comp->Directory, FALSE, FALSE, FALSE, NULL);
+            dir = resolve_target_folder( package, comp->Directory, FALSE, FALSE, NULL );
             msi_free(file->TargetPath);
 
             file->TargetPath = build_directory_name(2, dir, file->FileName);

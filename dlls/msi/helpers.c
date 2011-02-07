@@ -232,8 +232,7 @@ LPWSTR resolve_file_source(MSIPACKAGE *package, MSIFILE *file)
     if (file->IsCompressed)
         return NULL;
 
-    p = resolve_folder(package, file->Component->Directory,
-                       TRUE, FALSE, TRUE, NULL);
+    p = resolve_source_folder( package, file->Component->Directory, NULL );
     path = build_directory_name(2, p, file->ShortName);
 
     if (file->LongName &&
@@ -245,25 +244,70 @@ LPWSTR resolve_file_source(MSIPACKAGE *package, MSIFILE *file)
 
     msi_free(p);
 
-    TRACE("file %s source resolves to %s\n", debugstr_w(file->File),
-          debugstr_w(path));
-
+    TRACE("file %s source resolves to %s\n", debugstr_w(file->File), debugstr_w(path));
     return path;
 }
 
-LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source, 
-                      BOOL set_prop, BOOL load_prop, MSIFOLDER **folder)
+LPWSTR resolve_source_folder( MSIPACKAGE *package, LPCWSTR name, MSIFOLDER **folder )
 {
     MSIFOLDER *f;
     LPWSTR p, path = NULL, parent;
 
-    TRACE("Working to resolve %s\n",debugstr_w(name));
-
-    if (!name)
-        return NULL;
+    TRACE("working to resolve %s\n", debugstr_w(name));
 
     if (!strcmpW( name, cszSourceDir ))
         name = cszTargetDir;
+
+    f = get_loaded_folder( package, name );
+    if (!f)
+        return NULL;
+
+    /* special resolving for Target and Source root dir */
+    if (!strcmpW( name, cszTargetDir ))
+    {
+        if (!f->ResolvedSource)
+            f->ResolvedSource = get_source_root( package );
+    }
+
+    if (folder)
+        *folder = f;
+
+    if (f->ResolvedSource)
+    {
+        path = strdupW( f->ResolvedSource );
+        TRACE("   already resolved to %s\n", debugstr_w(path));
+        return path;
+    }
+
+    if (!f->Parent)
+        return path;
+
+    parent = f->Parent;
+    TRACE(" ! parent is %s\n", debugstr_w(parent));
+
+    p = resolve_source_folder( package, parent, NULL );
+
+    if (package->WordCount & msidbSumInfoSourceTypeCompressed)
+        path = get_source_root( package );
+    else if (package->WordCount & msidbSumInfoSourceTypeSFN)
+        path = build_directory_name( 3, p, f->SourceShortPath, NULL );
+    else
+        path = build_directory_name( 3, p, f->SourceLongPath, NULL );
+
+    TRACE("-> %s\n", debugstr_w(path));
+    f->ResolvedSource = strdupW( path );
+    msi_free( p );
+
+    return path;
+}
+
+LPWSTR resolve_target_folder( MSIPACKAGE *package, LPCWSTR name, BOOL set_prop, BOOL load_prop,
+                              MSIFOLDER **folder )
+{
+    MSIFOLDER *f;
+    LPWSTR p, path = NULL, parent;
+
+    TRACE("working to resolve %s\n", debugstr_w(name));
 
     f = get_loaded_folder( package, name );
     if (!f)
@@ -292,39 +336,27 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
 
             f->ResolvedTarget = path;
         }
-
-        if (!f->ResolvedSource)
-            f->ResolvedSource = get_source_root( package );
     }
 
     if (folder)
         *folder = f;
 
-    if (!source && f->ResolvedTarget)
+    if (f->ResolvedTarget)
     {
         path = strdupW( f->ResolvedTarget );
-        TRACE("   already resolved to %s\n",debugstr_w(path));
+        TRACE("   already resolved to %s\n", debugstr_w(path));
         return path;
     }
 
-    if (source && f->ResolvedSource)
-    {
-        path = strdupW( f->ResolvedSource );
-        TRACE("   (source)already resolved to %s\n",debugstr_w(path));
-        return path;
-    }
-
-    if (!source && f->Property)
+    if (f->Property)
     {
         path = build_directory_name( 2, f->Property, NULL );
-
-        TRACE("   internally set to %s\n",debugstr_w(path));
-        if (set_prop)
-            msi_set_property( package->db, name, path );
+        TRACE("   internally set to %s\n", debugstr_w(path));
+        if (set_prop) msi_set_property( package->db, name, path );
         return path;
     }
 
-    if (!source && load_prop && (path = msi_dup_property( package->db, name )))
+    if (load_prop && (path = msi_dup_property( package->db, name )))
     {
         f->ResolvedTarget = strdupW( path );
         TRACE("   property set to %s\n", debugstr_w(path));
@@ -336,35 +368,18 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
 
     parent = f->Parent;
 
-    TRACE(" ! Parent is %s\n", debugstr_w(parent));
+    TRACE(" ! parent is %s\n", debugstr_w(parent));
 
-    p = resolve_folder(package, parent, source, set_prop, load_prop, NULL);
-    if (!source)
-    {
-        TRACE("   TargetDefault = %s\n", debugstr_w(f->TargetDefault));
+    p = resolve_target_folder( package, parent, set_prop, load_prop, NULL );
 
-        path = build_directory_name( 3, p, f->TargetDefault, NULL );
-        clean_spaces_from_path( path );
-        f->ResolvedTarget = strdupW( path );
-        TRACE("target -> %s\n", debugstr_w(path));
-        if (set_prop)
-            msi_set_property( package->db, name, path );
-    }
-    else
-    {
-        path = NULL;
+    TRACE("   TargetDefault = %s\n", debugstr_w(f->TargetDefault));
+    path = build_directory_name( 3, p, f->TargetDefault, NULL );
+    clean_spaces_from_path( path );
+    f->ResolvedTarget = strdupW( path );
 
-        if (package->WordCount & msidbSumInfoSourceTypeCompressed)
-            path = get_source_root( package );
-        else if (package->WordCount & msidbSumInfoSourceTypeSFN)
-            path = build_directory_name( 3, p, f->SourceShortPath, NULL );
-        else
-            path = build_directory_name( 3, p, f->SourceLongPath, NULL );
-
-        TRACE("source -> %s\n", debugstr_w(path));
-        f->ResolvedSource = strdupW( path );
-    }
-    msi_free(p);
+    TRACE("-> %s\n", debugstr_w(path));
+    if (set_prop) msi_set_property( package->db, name, path );
+    msi_free( p );
 
     return path;
 }
