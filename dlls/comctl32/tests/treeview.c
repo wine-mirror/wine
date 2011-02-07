@@ -1425,14 +1425,14 @@ static void test_htreeitem_layout(void)
 
     ins.hParent = hChild;
     ins.hInsertAfter = TVI_FIRST;
-    ins.item.mask = 0;
+    U(ins).item.mask = 0;
     item1 = TreeView_InsertItem(hTree, &ins);
 
     check_item(item1, hChild, 0, 0);
 
     ins.hParent = hRoot;
     ins.hInsertAfter = TVI_FIRST;
-    ins.item.mask = 0;
+    U(ins).item.mask = 0;
     item2 = TreeView_InsertItem(hTree, &ins);
 
     check_item(item2, hRoot, hChild, 0);
