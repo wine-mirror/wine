@@ -1281,6 +1281,7 @@ static void test_object_elem(IHTMLDocument2 *doc)
     CHECK_CALLED(Invoke_SECURITYCTX);
 
     hres = IHTMLObjectElement_QueryInterface(objelem, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
     test_elem_dispex(dispex);
     IDispatchEx_Release(dispex);
 
