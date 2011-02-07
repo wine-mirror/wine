@@ -66,7 +66,7 @@ HRESULT WINAPI D3DXFilterTexture(LPDIRECT3DBASETEXTURE9 texture,
                                  UINT srclevel,
                                  DWORD filter)
 {
-    UINT level = srclevel + 1;
+    UINT level;
     HRESULT hr;
     D3DRESOURCETYPE type;
 
