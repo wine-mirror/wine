@@ -1105,9 +1105,9 @@ static void test_HlinkGetSetMonikerReference(void)
     CoTaskMemFree(found_loc);
 
     /* invalid HLINKSETF flags */
-    hres = IHlink_SetMonikerReference(hlink, 12, dummy2, two);
     /* Windows returns garbage; on 32-bit it returns the flags probably because the compiler happened to store them in %eax at some point */
-    if (0) ok(hres == 12, "IHlink_SetMonikerReference should've failed with 0x%08x, failed with 0x%08x\n", 12, hres);
+    if (0) 
+        IHlink_SetMonikerReference(hlink, 12, dummy2, two);
 
     hres = IHlink_GetMonikerReference(hlink, HLINKGETREF_DEFAULT, &found_trgt, &found_loc);
     ok(hres == S_OK, "IHlink_GetMonikerReference failed: 0x%08x\n", hres);
@@ -1260,12 +1260,12 @@ static void test_HlinkGetSetStringReference(void)
     CoTaskMemFree(fnd_tgt);
     CoTaskMemFree(fnd_loc);
 
-    hres = IHlink_SetStringReference(link, 4, NULL, NULL);
-    /* Windows returns garbage; on 32-bit it returns the flags probably because the compiler happened to store them in %eax at some point */
-    if (0) ok(hres == 4, "IHlink_SetStringReference should have failed with 0x4, instead: 0x%08x\n", hres);
-
-    hres = IHlink_SetStringReference(link, -4, NULL, NULL);
-    if (0) ok(hres == -4, "IHlink_SetStringReference should have failed with 0xFFFFFFFC, instead: 0x%08x\n", hres);
+    if (0)
+    {
+        /* Windows returns garbage; on 32-bit it returns the flags probably because the compiler happened to store them in %eax at some point */
+        IHlink_SetStringReference(link, 4, NULL, NULL);
+        IHlink_SetStringReference(link, -4, NULL, NULL);
+    }
 
     IHlink_Release(link);
 }
@@ -1730,12 +1730,12 @@ static void test_HlinkClone(void)
     hres = HlinkClone(hl, &IID_IHlink, NULL, 0, NULL);
     ok(hres == E_INVALIDARG, "Got wrong failure code: %08x\n", hres);
 
-    if(0){ /* crash on Windows XP */
-        hres = HlinkClone(hl, NULL, NULL, 0, NULL);
-        ok(hres == E_INVALIDARG, "Got wrong failure code: %08x\n", hres);
+    if (0)
+    { 
+        /* crash on Windows XP */
+        HlinkClone(hl, NULL, NULL, 0, NULL);
 
-        hres = HlinkClone(hl, NULL, NULL, 0, (void**)&cloned);
-        ok(hres == E_INVALIDARG, "Got wrong failure code: %08x\n", hres);
+        HlinkClone(hl, NULL, NULL, 0, (void**)&cloned);
     }
 
     hres = HlinkClone(hl, &IID_IHlink, NULL, 0, (void**)&cloned);
