@@ -745,6 +745,7 @@ static void test_CreateAssemblyNameObject(void)
         to_widechar(namestr, "wine, processorArchitecture=AMD64");
         name = NULL;
         hr = pCreateAssemblyNameObject(&name, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
         size = MAX_PATH;
         hr = IAssemblyName_GetDisplayName(name, str, &size, ASM_DISPLAYF_PROCESSORARCHITECTURE);
@@ -758,6 +759,7 @@ static void test_CreateAssemblyNameObject(void)
         to_widechar(namestr, "wine, processorArchitecture=IA64");
         name = NULL;
         hr = pCreateAssemblyNameObject(&name, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
         size = MAX_PATH;
         hr = IAssemblyName_GetDisplayName(name, str, &size, ASM_DISPLAYF_PROCESSORARCHITECTURE);
@@ -771,6 +773,7 @@ static void test_CreateAssemblyNameObject(void)
         to_widechar(namestr, "wine, processorArchitecture=MSIL");
         name = NULL;
         hr = pCreateAssemblyNameObject(&name, namestr, CANOF_PARSE_DISPLAY_NAME, NULL);
+        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
         size = MAX_PATH;
         hr = IAssemblyName_GetDisplayName(name, str, &size, ASM_DISPLAYF_PROCESSORARCHITECTURE);
