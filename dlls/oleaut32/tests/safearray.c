@@ -1590,13 +1590,30 @@ static void test_SafeArrayCopy(void)
   hres = SafeArrayAllocDescriptor(1, &sa);
   ok(hres == S_OK, "SafeArrayAllocDescriptor failed with error 0x%08x\n", hres);
 
+  sa->cbElements = 16;
+  hres = SafeArrayCopy(sa, &sa2);
+  ok(hres == S_OK, "SafeArrayCopy failed with error 0x%08x\n", hres);
+  ok(sa != sa2, "SafeArrayCopy performed shallow copy\n");
+
+  hres = SafeArrayDestroy(sa2);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  sa2 = (void*)0xdeadbeef;
+  hres = SafeArrayCopy(NULL, &sa2);
+  ok(hres == S_OK, "SafeArrayCopy failed with error 0x%08x\n", hres);
+  ok(!sa2, "SafeArrayCopy didn't return NULL for output array\n");
+
+  hres = SafeArrayAllocDescriptor(1, &sa);
+  ok(hres == S_OK, "SafeArrayAllocDescriptor failed with error 0x%08x\n", hres);
+
+  sa2 = (void*)0xdeadbeef;
   hres = SafeArrayCopy(sa, &sa2);
   ok(hres == E_INVALIDARG,
     "SafeArrayCopy with empty array should have failed with error E_INVALIDARG instead of 0x%08x\n",
     hres);
-  sa->cbElements = 16;
-  hres = SafeArrayCopy(sa, &sa2);
-  ok(hres == S_OK, "SafeArrayCopy failed with error 0x%08x\n", hres);
+  ok(!sa2, "SafeArrayCopy didn't return NULL for output array\n");
 
   hres = SafeArrayDestroy(sa2);
   ok(hres == S_OK, "got 0x%08x\n", hres);
