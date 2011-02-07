@@ -208,6 +208,7 @@ static void test_globalness(void)
         BOOL found = FALSE;
 
         hres = IEnumBackgroundCopyJobs_GetCount(enumJobs, &n);
+        ok(hres == S_OK, "GetCount failed: %08x\n", hres);
         for (i = 0; i < n && !found; ++i)
         {
             LPWSTR name;
@@ -219,6 +220,7 @@ static void test_globalness(void)
             IBackgroundCopyJob_Release(job);
         }
         hres = IEnumBackgroundCopyJobs_Release(enumJobs);
+        ok(hres == S_OK, "Release failed: %08x\n", hres);
         ok(found, "Adding a job in another process failed\n");
     }
 
