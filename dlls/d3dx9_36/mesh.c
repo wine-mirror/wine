@@ -511,7 +511,6 @@ HRESULT WINAPI D3DXComputeBoundingSphere(CONST D3DXVECTOR3* pfirstposition, DWOR
     temp.y = 0.0f;
     temp.z = 0.0f;
     temp1 = temp;
-    d = 0.0f;
     *pradius = 0.0f;
 
     for(i=0; i<numvertices; i++)
@@ -1375,7 +1374,6 @@ HRESULT WINAPI D3DXCreateCylinder(LPDIRECT3DDEVICE9 device, FLOAT radius1, FLOAT
 
     vertex = 0;
     face = 0;
-    stack = 0;
 
     delta_radius = radius1 - radius2;
     radius = radius1;
