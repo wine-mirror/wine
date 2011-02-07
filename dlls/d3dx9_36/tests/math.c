@@ -935,7 +935,6 @@ static void D3DXQuaternionTest(void)
     ok(relative_error(angle,  expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
     /* Test if |w|>1.0f */
     expectedvec.x = 1.0f; expectedvec.y = 2.0f; expectedvec.z = 4.0f;
-    expected = 0.0f;
     D3DXQuaternionToAxisAngle(&q,&axis,&angle);
     expect_vec3(expectedvec,axis);
     /* Test the null quaternion */
