@@ -883,7 +883,7 @@ static void test_domdoc( void )
 if (0)
 {
     /* crashes on native */
-    r = IXMLDOMDocument_loadXML( doc, (BSTR)0x1, NULL );
+    IXMLDOMDocument_loadXML( doc, (BSTR)0x1, NULL );
 }
 
     /* try some stupid things */
