@@ -206,13 +206,13 @@ static void *wpp_open_mem(const char *filename, int type)
     {
         if(includes_capacity == 0)
         {
-            includes = HeapAlloc(GetProcessHeap(), 0, INCLUDES_INITIAL_CAPACITY);
+            includes = HeapAlloc(GetProcessHeap(), 0, INCLUDES_INITIAL_CAPACITY * sizeof(*includes));
             if(includes == NULL)
             {
                 ERR("Error allocating memory for the loaded includes structure\n");
                 goto error;
             }
-            includes_capacity = INCLUDES_INITIAL_CAPACITY;
+            includes_capacity = INCLUDES_INITIAL_CAPACITY * sizeof(*includes);
         }
         else
         {
