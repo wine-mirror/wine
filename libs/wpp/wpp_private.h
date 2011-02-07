@@ -204,7 +204,7 @@ char *pp_xstrdup(const char *str);
 pp_entry_t *pplookup(const char *ident);
 int pp_push_define_state(void);
 void pp_pop_define_state(void);
-pp_entry_t *pp_add_define(char *def, char *text);
+pp_entry_t *pp_add_define(const char *def, const char *text);
 pp_entry_t *pp_add_macro(char *ident, marg_t *args[], int nargs, mtext_t *exp);
 void pp_del_define(const char *name);
 void *pp_open_include(const char *name, const char *parent_name, char **newpath);

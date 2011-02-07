@@ -275,7 +275,7 @@ preprocessor
 		}
 		}
 	| tUNDEF tIDENT tNL	{ pp_del_define($2); free($2); }
-	| tDEFINE opt_text tNL	{ pp_add_define($1, $2); }
+	| tDEFINE opt_text tNL	{ pp_add_define($1, $2); free($1); free($2); }
 	| tMACRO res_arg allmargs tMACROEND opt_mtexts tNL	{
 		pp_add_macro($1, macro_args, nmacro_args, $5);
 		}

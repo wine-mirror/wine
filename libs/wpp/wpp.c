@@ -45,7 +45,7 @@ static void add_cmdline_defines(void)
 
     for (def = cmdline_defines; def; def = def->next)
     {
-        if (def->value) pp_add_define( pp_xstrdup(def->name), pp_xstrdup(def->value) );
+        if (def->value) pp_add_define( def->name, def->value );
     }
 }
 
@@ -56,16 +56,16 @@ static void add_special_defines(void)
     char buf[32];
 
     strftime(buf, sizeof(buf), "\"%b %d %Y\"", localtime(&now));
-    pp_add_define( pp_xstrdup("__DATE__"), pp_xstrdup(buf) );
+    pp_add_define( "__DATE__", buf );
 
     strftime(buf, sizeof(buf), "\"%H:%M:%S\"", localtime(&now));
-    pp_add_define( pp_xstrdup("__TIME__"), pp_xstrdup(buf) );
+    pp_add_define( "__TIME__", buf );
 
-    ppp = pp_add_define( pp_xstrdup("__FILE__"), pp_xstrdup("") );
+    ppp = pp_add_define( "__FILE__", "" );
     if(ppp)
         ppp->type = def_special;
 
-    ppp = pp_add_define( pp_xstrdup("__LINE__"), pp_xstrdup("") );
+    ppp = pp_add_define( "__LINE__", "" );
     if(ppp)
         ppp->type = def_special;
 }

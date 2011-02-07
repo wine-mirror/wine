@@ -319,7 +319,7 @@ void pp_del_define(const char *name)
 		printf("Deleted (%s, %d) <%s>\n", pp_status.input, pp_status.line_number, name);
 }
 
-pp_entry_t *pp_add_define(char *def, char *text)
+pp_entry_t *pp_add_define(const char *def, const char *text)
 {
 	int len;
 	char *cptr;
@@ -339,38 +339,45 @@ pp_entry_t *pp_add_define(char *def, char *text)
 	if(!ppp)
 		return NULL;
 	memset( ppp, 0, sizeof(*ppp) );
-	ppp->ident = def;
+	ppp->ident = pp_xstrdup(def);
+	if(!ppp->ident)
+		goto error;
 	ppp->type = def_define;
-	ppp->subst.text = text;
+	ppp->subst.text = text ? pp_xstrdup(text) : NULL;
+	if(text && !ppp->subst.text)
+		goto error;
 	ppp->filename = pp_xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
 	if(!ppp->filename)
-	{
-		free(ppp);
-		return NULL;
-	}
+		goto error;
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
 	ppp->next = pp_def_state->defines[idx];
 	pp_def_state->defines[idx] = ppp;
 	if(ppp->next)
 		ppp->next->prev = ppp;
-	if(text)
+	if(ppp->subst.text)
 	{
 		/* Strip trailing white space from subst text */
-		len = strlen(text);
-		while(len && strchr(" \t\r\n", text[len-1]))
+		len = strlen(ppp->subst.text);
+		while(len && strchr(" \t\r\n", ppp->subst.text[len-1]))
 		{
-			text[--len] = '\0';
+			ppp->subst.text[--len] = '\0';
 		}
 		/* Strip leading white space from subst text */
-		for(cptr = text; *cptr && strchr(" \t\r", *cptr); cptr++)
+		for(cptr = ppp->subst.text; *cptr && strchr(" \t\r", *cptr); cptr++)
 		;
-		if(text != cptr)
-			memmove(text, cptr, strlen(cptr)+1);
+		if(ppp->subst.text != cptr)
+			memmove(ppp->subst.text, cptr, strlen(cptr)+1);
 	}
 	if(pp_status.debug)
-		printf("Added define (%s, %d) <%s> to <%s>\n", pp_status.input, pp_status.line_number, ppp->ident, text ? text : "(null)");
+		printf("Added define (%s, %d) <%s> to <%s>\n", pp_status.input, pp_status.line_number, ppp->ident, ppp->subst.text ? ppp->subst.text : "(null)");
 
 	return ppp;
+
+error:
+	free(ppp->ident);
+	free(ppp->subst.text);
+	free(ppp);
+	return NULL;
 }
 
 pp_entry_t *pp_add_macro(char *id, marg_t *args[], int nargs, mtext_t *exp)
