@@ -61,7 +61,9 @@
     }while(0)
 
 DEFINE_EXPECT(ParseUrl_SECURITY_URL_input);
+DEFINE_EXPECT(ParseUrl_SECURITY_URL_input2);
 DEFINE_EXPECT(ParseUrl_SECURITY_URL_expected);
+DEFINE_EXPECT(ParseUrl_SECURITY_URL_http);
 DEFINE_EXPECT(ParseUrl_SECURITY_DOMAIN_expected);
 
 static HRESULT (WINAPI *pCoInternetCreateSecurityManager)(IServiceProvider *, IInternetSecurityManager**, DWORD);
@@ -93,7 +95,9 @@ static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l
 
 static const WCHAR winetestW[] = {'w','i','n','e','t','e','s','t',0};
 static const WCHAR security_urlW[] = {'w','i','n','e','t','e','s','t',':','t','e','s','t','i','n','g',0};
+static const WCHAR security_url2W[] = {'w','i','n','e','t','e','s','t',':','t','e','s','t','i','n','g','2',0};
 static const WCHAR security_expectedW[] = {'w','i','n','e','t','e','s','t',':','z','i','p',0};
+static const WCHAR winetest_to_httpW[] = {'w','i','n','e','t','e','s','t',':','h',0};
 
 static const BYTE secid1[] = {'f','i','l','e',':',0,0,0,0};
 static const BYTE secid5[] = {'h','t','t','p',':','w','w','w','.','z','o','n','e','3',
@@ -112,6 +116,8 @@ static const GUID CLSID_TestActiveX =
 /* Defined as extern in urlmon.idl, but not exported by uuid.lib */
 const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
     {0x10200490,0xfa38,0x11d0,{0xac,0x0e,0x00,0xa0,0xc9,0xf,0xff,0xc0}};
+
+static int called_securl_http;
 
 static struct secmgr_test {
     LPCWSTR url;
@@ -174,6 +180,8 @@ static void test_SecurityManager(void)
     if(!pCoInternetCreateSecurityManager) {
         return;
     }
+
+    trace("Testing security manager...\n");
 
     hres = pCoInternetCreateSecurityManager(NULL, &secmgr, 0);
     ok(hres == S_OK, "CoInternetCreateSecurityManager failed: %08x\n", hres);
@@ -317,6 +325,8 @@ static void test_url_action(IInternetSecurityManager *secmgr, IInternetZoneManag
 
     if(policy != URLPOLICY_QUERY) {
         if(winetest_interactive || ! is_ie_hardened()) {
+            BOOL expect_parse_call = !called_securl_http;
+
             policy = 0xdeadbeef;
             hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url9, action, (BYTE*)&policy,
                     sizeof(WCHAR), NULL, 0, 0, 0);
@@ -352,6 +362,19 @@ static void test_url_action(IInternetSecurityManager *secmgr, IInternetZoneManag
             else
                 ok(hres == S_OK, "ProcessUrlAction(%x) failed: %08x\n", action, hres);
             ok(policy == 0xdeadbeef, "(%x) policy=%x\n", action, policy);
+
+            policy = 0xdeadbeef;
+            if(expect_parse_call)
+                SET_EXPECT(ParseUrl_SECURITY_URL_http);
+            hres = IInternetSecurityManager_ProcessUrlAction(secmgr, winetest_to_httpW, action, (BYTE*)&policy,
+                    sizeof(DWORD), NULL, 0, 0, 0);
+            if(expect_parse_call)
+                CHECK_CALLED(ParseUrl_SECURITY_URL_http);
+            if(reg_policy == URLPOLICY_DISALLOW)
+                ok(hres == S_FALSE, "ProcessUrlAction(%x) failed: %08x, expected S_FALSE\n", action, hres);
+            else
+                ok(hres == S_OK, "ProcessUrlAction(%x) failed: %08x\n", action, hres);
+            ok(policy == reg_policy, "(%x) policy=%x\n", action, policy);
         }else {
             skip("IE running in Enhanced Security Configuration\n");
         }
@@ -408,6 +431,8 @@ static void test_polices(void)
     IInternetSecurityManager *secmgr = NULL;
     HRESULT hres;
 
+    trace("testing polices...\n");
+
     hres = pCoInternetCreateSecurityManager(NULL, &secmgr, 0);
     ok(hres == S_OK, "CoInternetCreateSecurityManager failed: %08x\n", hres);
     hres = pCoInternetCreateZoneManager(NULL, &zonemgr, 0);
@@ -433,6 +458,8 @@ static void test_CoInternetCreateZoneManager(void)
     IInternetZoneManager *zonemgr = NULL;
     IUnknown *punk = NULL;
     HRESULT hr;
+
+    trace("simple zone manager tests...\n");
 
     hr = pCoInternetCreateZoneManager(NULL, &zonemgr, 0);
     ok(hr == S_OK, "CoInternetCreateZoneManager result: 0x%x\n", hr);
@@ -477,6 +504,8 @@ static void test_CreateZoneEnumerator(void)
     DWORD dwEnum2;
     DWORD dwCount;
     DWORD dwCount2;
+
+    trace("testing zone enumerator...\n");
 
     hr = pCoInternetCreateZoneManager(NULL, &zonemgr, 0);
     ok(hr == S_OK, "CoInternetCreateZoneManager result: 0x%x\n", hr);
@@ -544,6 +573,8 @@ static void test_GetZoneActionPolicy(void)
     HRESULT hres;
     DWORD action = URLACTION_CREDENTIALS_USE; /* Implemented on all IE versions */
 
+    trace("testing GetZoneActionPolixy...\n");
+
     hres = pCoInternetCreateZoneManager(NULL, &zonemgr, 0);
     ok(hres == S_OK, "CoInternetCreateZoneManager failed: %08x\n", hres);
     if(FAILED(hres))
@@ -586,6 +617,8 @@ static void test_GetZoneAt(void)
     DWORD dwCount;
     DWORD dwZone;
     DWORD i;
+
+    trace("testing GetZoneAt...\n");
 
     hr = pCoInternetCreateZoneManager(NULL, &zonemgr, 0);
     ok(hr == S_OK, "CoInternetCreateZoneManager result: 0x%x\n", hr);
@@ -634,6 +667,8 @@ static void test_GetZoneAttributes(void)
     ZONEATTRIBUTES* pZA = (ZONEATTRIBUTES*) buffer;
     HRESULT hr;
     DWORD i;
+
+    trace("testing GetZoneAttributes...\n");
 
     hr = pCoInternetCreateZoneManager(NULL, &zonemgr, 0);
     ok(hr == S_OK, "CoInternetCreateZoneManager result: 0x%x\n", hr);
@@ -688,6 +723,8 @@ static void test_InternetSecurityMarshalling(void)
     IStream *stream;
     HRESULT hres;
 
+    trace("testing marshalling...\n");
+
     hres = pCoInternetCreateSecurityManager(NULL, &secmgr, 0);
     ok(hres == S_OK, "CoInternetCreateSecurityManager failed: %08x\n", hres);
     if(FAILED(hres))
@@ -723,6 +760,8 @@ static void test_InternetGetSecurityUrl(void)
     DWORD i;
     HRESULT hres;
 
+    trace("testing CoInternetGetSecurityUrl...\n");
+
     for(i=0; i<sizeof(in)/sizeof(WCHAR*); i++) {
         hres = pCoInternetGetSecurityUrl(in[i], &sec, PSU_DEFAULT, 0);
         ok(hres == S_OK, "(%d) CoInternetGetSecurityUrl returned: %08x\n", i, hres);
@@ -740,6 +779,17 @@ static void test_InternetGetSecurityUrl(void)
             CoTaskMemFree(sec);
         }
     }
+
+    SET_EXPECT(ParseUrl_SECURITY_URL_input2);
+    SET_EXPECT(ParseUrl_SECURITY_URL_expected);
+    SET_EXPECT(ParseUrl_SECURITY_DOMAIN_expected);
+
+    hres = pCoInternetGetSecurityUrl(security_url2W, &sec, PSU_DEFAULT, 0);
+    ok(hres == S_OK, "CoInternetGetSecurityUrl returned 0x%08x, expected S_OK\n", hres);
+
+    CHECK_CALLED(ParseUrl_SECURITY_URL_input2);
+    CHECK_CALLED(ParseUrl_SECURITY_URL_expected);
+    CHECK_CALLED(ParseUrl_SECURITY_DOMAIN_expected);
 }
 
 static HRESULT WINAPI InternetProtocolInfo_QueryInterface(IInternetProtocolInfo *iface,
@@ -763,39 +813,64 @@ static HRESULT WINAPI InternetProtocolInfo_ParseUrl(IInternetProtocolInfo *iface
         PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
         DWORD *pcchResult, DWORD dwReserved)
 {
+    const WCHAR *ret = NULL;
+
+    ok(pwzResult != NULL, "pwzResult == NULL\n");
+    ok(pcchResult != NULL, "pcchResult == NULL\n");
+    ok(!dwParseFlags, "Expected 0, but got 0x%08x\n", dwParseFlags);
+
     switch(ParseAction) {
     case PARSE_SECURITY_URL:
         if(!strcmp_w(pwzUrl, security_urlW)) {
             CHECK_EXPECT(ParseUrl_SECURITY_URL_input);
-
-            ok(cchResult == lstrlenW(security_urlW)+1, "Got %d\n", cchResult);
-            ok(!dwParseFlags, "Expected 0, but got 0x%08x\n", dwParseFlags);
+            ok(cchResult == lstrlenW(pwzUrl)+1, "Got %d\n", cchResult);
+            ret = security_expectedW;
+        } else if(!strcmp_w(pwzUrl, security_url2W)) {
+            CHECK_EXPECT(ParseUrl_SECURITY_URL_input2);
+            ok(cchResult == lstrlenW(pwzUrl)+1, "Got %d\n", cchResult);
+            ret = security_expectedW;
         } else if(!strcmp_w(pwzUrl, security_expectedW)) {
             CHECK_EXPECT(ParseUrl_SECURITY_URL_expected);
-
-            ok(cchResult == lstrlenW(security_expectedW)+1, "Got %d\n", cchResult);
-            ok(!dwParseFlags, "Expected 0, but got 0x%08x\n", dwParseFlags);
+            ok(cchResult == lstrlenW(pwzUrl)+1, "Got %d\n", cchResult);
+            ret = security_expectedW;
+        } else if(!strcmp_w(pwzUrl, winetest_to_httpW)) {
+            switch(++called_securl_http) {
+            case 1:
+                ok(cchResult == lstrlenW(pwzUrl)+1, "Got %d\n", cchResult);
+                break;
+            case 2:
+                CHECK_EXPECT(ParseUrl_SECURITY_URL_http);
+                ok(cchResult == lstrlenW(url9)+1, "Got %d\n", cchResult);
+                break;
+            default:
+                todo_wine CHECK_EXPECT(ParseUrl_SECURITY_URL_http);
+            }
+            ret = url9;
         } else
             ok(0, "Unexpected call, pwzUrl=%s\n", wine_dbgstr_w(pwzUrl));
 
         break;
     case PARSE_SECURITY_DOMAIN:
+
         CHECK_EXPECT(ParseUrl_SECURITY_DOMAIN_expected);
 
         ok(!strcmp_w(pwzUrl, security_expectedW), "Expected %s but got %s\n",
             wine_dbgstr_w(security_expectedW), wine_dbgstr_w(pwzUrl));
-        ok(!dwParseFlags, "Expected 0, but got 0x%08x\n", dwParseFlags);
-        ok(cchResult == lstrlenW(security_expectedW)+1, "Got %d\n", cchResult);
-
+        ok(cchResult == lstrlenW(pwzUrl)+1, "Got %d\n", cchResult);
+        ret = security_expectedW;
         break;
     default:
         ok(0, "Unexpected call, ParseAction=%d pwzUrl=%s\n", ParseAction,
             wine_dbgstr_w(pwzUrl));
     }
 
-    memcpy(pwzResult, security_expectedW, sizeof(security_expectedW));
-    *pcchResult = lstrlenW(security_expectedW);
+    if(!ret)
+        return E_FAIL;
 
+    *pcchResult = lstrlenW(ret)+1;
+    if(*pcchResult > cchResult)
+        return S_FALSE;
+    memcpy(pwzResult, ret, (*pcchResult+1)*sizeof(WCHAR));
     return S_OK;
 }
 
@@ -938,6 +1013,8 @@ static void test_InternetGetSecurityUrlEx(void)
     DWORD i;
     IUri *uri = NULL, *result = NULL;
 
+    trace("testing CoInternetGetSecurityUrlEx...\n");
+
     hr = pCoInternetGetSecurityUrlEx(NULL, NULL, PSU_DEFAULT, 0);
     ok(hr == E_INVALIDARG, "CoInternetGetSecurityUrlEx returned 0x%08x, expected E_INVALIDARG\n", hr);
 
@@ -1029,15 +1106,13 @@ static void test_InternetGetSecurityUrlEx(void)
 static void test_InternetGetSecurityUrlEx_Pluggable(void)
 {
     HRESULT hr;
-    IUri *uri = NULL;
+    IUri *uri = NULL, *result;
 
-    register_protocols();
+    trace("testing CoInternetGetSecurityUrlEx for plugable protocols...\n");
 
     hr = pCreateUri(security_urlW, 0, 0, &uri);
     ok(hr == S_OK, "CreateUri returned 0x%08x\n", hr);
     if(hr == S_OK) {
-        IUri *result = NULL;
-
         SET_EXPECT(ParseUrl_SECURITY_URL_input);
         SET_EXPECT(ParseUrl_SECURITY_URL_expected);
         SET_EXPECT(ParseUrl_SECURITY_DOMAIN_expected);
@@ -1087,8 +1162,6 @@ static void test_InternetGetSecurityUrlEx_Pluggable(void)
         if(result) IUri_Release(result);
     }
     if(uri) IUri_Release(uri);
-
-    unregister_protocols();
 }
 
 START_TEST(sec_mgr)
@@ -1110,6 +1183,7 @@ START_TEST(sec_mgr)
     }
 
     OleInitialize(NULL);
+    register_protocols();
 
     test_InternetGetSecurityUrl();
 
@@ -1129,5 +1203,6 @@ START_TEST(sec_mgr)
     test_GetZoneAttributes();
     test_InternetSecurityMarshalling();
 
+    unregister_protocols();
     OleUninitialize();
 }
