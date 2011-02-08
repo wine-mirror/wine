@@ -64,6 +64,8 @@ typedef DWORD (WINAPI *GetTcpTableFunc)(PMIB_TCPTABLE,PDWORD,BOOL);
 typedef DWORD (WINAPI *GetUdpTableFunc)(PMIB_UDPTABLE,PDWORD,BOOL);
 typedef DWORD (WINAPI *GetPerAdapterInfoFunc)(ULONG,PIP_PER_ADAPTER_INFO,PULONG);
 typedef DWORD (WINAPI *GetAdaptersAddressesFunc)(ULONG,ULONG,PVOID,PIP_ADAPTER_ADDRESSES,PULONG);
+typedef DWORD (WINAPI *NotifyAddrChangeFunc)(PHANDLE,LPOVERLAPPED);
+typedef BOOL  (WINAPI *CancelIPChangeNotifyFunc)(LPOVERLAPPED);
 
 static GetNumberOfInterfacesFunc gGetNumberOfInterfaces = NULL;
 static GetIpAddrTableFunc gGetIpAddrTable = NULL;
@@ -83,6 +85,8 @@ static GetTcpTableFunc gGetTcpTable = NULL;
 static GetUdpTableFunc gGetUdpTable = NULL;
 static GetPerAdapterInfoFunc gGetPerAdapterInfo = NULL;
 static GetAdaptersAddressesFunc gGetAdaptersAddresses = NULL;
+static NotifyAddrChangeFunc gNotifyAddrChange = NULL;
+static CancelIPChangeNotifyFunc gCancelIPChangeNotify = NULL;
 
 static void loadIPHlpApi(void)
 {
@@ -122,6 +126,10 @@ static void loadIPHlpApi(void)
      hLibrary, "GetUdpTable");
     gGetPerAdapterInfo = (GetPerAdapterInfoFunc)GetProcAddress(hLibrary, "GetPerAdapterInfo");
     gGetAdaptersAddresses = (GetAdaptersAddressesFunc)GetProcAddress(hLibrary, "GetAdaptersAddresses");
+    gNotifyAddrChange = (NotifyAddrChangeFunc)GetProcAddress(
+     hLibrary, "NotifyAddrChange");
+    gCancelIPChangeNotify = (CancelIPChangeNotifyFunc)GetProcAddress(
+     hLibrary, "CancelIPChangeNotify");
   }
 }
 
@@ -144,6 +152,8 @@ static void freeIPHlpApi(void)
     gGetUdpStatistics = NULL;
     gGetTcpTable = NULL;
     gGetUdpTable = NULL;
+    gNotifyAddrChange = NULL;
+    gCancelIPChangeNotify = NULL;
     FreeLibrary(hLibrary);
     hLibrary = NULL;
   }
@@ -796,24 +806,95 @@ static void testGetPerAdapterInfo(void)
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
+static void testNotifyAddrChange(void)
+{
+    DWORD ret, bytes;
+    OVERLAPPED overlapped;
+    HANDLE handle;
+    BOOL success;
+
+    if (!gNotifyAddrChange)
+    {
+        win_skip("NotifyAddrChange not present\n");
+        return;
+    }
+    if (!gCancelIPChangeNotify)
+    {
+        win_skip("CancelIPChangeNotify not present\n");
+        return;
+    }
+
+    handle = NULL;
+    ZeroMemory(&overlapped, sizeof(overlapped));
+    ret = gNotifyAddrChange(&handle, &overlapped);
+    if (ret == ERROR_NOT_SUPPORTED)
+    {
+        win_skip("NotifyAddrChange is not supported\n");
+        return;
+    }
+    ok(ret == ERROR_IO_PENDING, "NotifyAddrChange returned %d, expected ERROR_IO_PENDING\n", ret);
+    ret = GetLastError();
+    todo_wine ok(ret == ERROR_IO_PENDING, "GetLastError returned %d, excepted ERROR_IO_PENDING\n", ret);
+    success = gCancelIPChangeNotify(&overlapped);
+    todo_wine ok(success == TRUE, "CancelIPChangeNotify returned FALSE, expected TRUE\n");
+
+    ZeroMemory(&overlapped, sizeof(overlapped));
+    success = gCancelIPChangeNotify(&overlapped);
+    ok(success == FALSE, "CancelIPChangeNotify returned TRUE, expected FALSE\n");
+
+    handle = NULL;
+    ZeroMemory(&overlapped, sizeof(overlapped));
+    overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ret = gNotifyAddrChange(&handle, &overlapped);
+    ok(ret == ERROR_IO_PENDING, "NotifyAddrChange returned %d, expected ERROR_IO_PENDING\n", ret);
+    todo_wine ok(handle != INVALID_HANDLE_VALUE, "NotifyAddrChange returned invalid file handle\n");
+    success = GetOverlappedResult(handle, &overlapped, &bytes, FALSE);
+    todo_wine ok(success == FALSE, "GetOverlappedResult returned TRUE, excepted FALSE\n");
+    ret = GetLastError();
+    todo_wine ok(ret == ERROR_IO_INCOMPLETE, "GetLastError returned %d, excepted ERROR_IO_INCOMPLETE\n", ret);
+    success = gCancelIPChangeNotify(&overlapped);
+    todo_wine ok(success == TRUE, "CancelIPChangeNotify returned FALSE, expected TRUE\n");
+
+    if (winetest_interactive)
+    {
+        handle = NULL;
+        ZeroMemory(&overlapped, sizeof(overlapped));
+        overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+        trace("Testing asyncronous ipv4 address change notification. Please "
+              "change ipv4 address of one of your network interfaces\n");
+        ret = gNotifyAddrChange(&handle, &overlapped);
+        ok(ret == ERROR_IO_PENDING, "NotifyAddrChange returned %d, expected NO_ERROR\n", ret);
+        success = GetOverlappedResult(handle, &overlapped, &bytes, TRUE);
+        ok(success == TRUE, "GetOverlappedResult returned FALSE, excepted TRUE\n");
+    }
+
+    /* test syncronous functionality */
+    if (winetest_interactive)
+    {
+        trace("Testing syncronous ipv4 address change notification. Please "
+              "change ipv4 address of one of your network interfaces\n");
+        ret = gNotifyAddrChange(NULL, NULL);
+        todo_wine ok(ret == NO_ERROR, "NotifyAddrChange returned %d, expected NO_ERROR\n", ret);
+    }
+}
+
 /*
 still-to-be-tested 2K-onward functions:
 AddIPAddress
-CancelIPChangeNotify
 CreateProxyArpEntry
 DeleteIPAddress
 DeleteProxyArpEntry
 EnableRouter
 FlushIpNetTable
 GetAdapterIndex
-NotifyAddrChange
-NotifyRouteChange
+NotifyRouteChange + CancelIPChangeNotify
 SendARP
 UnenableRouter
 */
 static void testWin2KFunctions(void)
 {
     testGetPerAdapterInfo();
+    testNotifyAddrChange();
 }
 
 static void test_GetAdaptersAddresses(void)
