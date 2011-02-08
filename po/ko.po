@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-01-26 18:50+0900\n"
+"PO-Revision-Date: 2011-02-08 18:50+0900\n"
 "Last-Translator: YunSong Hwang <hys545@dreamwiz.com>\n"
 "Language-Team: none\n"
 "Language: Korean\n"
@@ -3003,12 +3003,11 @@ msgstr "ProcessMemory의 읽기/쓰기가 부분적으로 완료됨\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted\n"
-msgstr ""
+msgstr "oplock이 부여되지 않았음\n"
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received\n"
-msgstr "올바르지 않은 메세지 이름\n"
+msgstr "잘못된 oplock 메시지가 수신\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -3095,9 +3094,8 @@ msgid "Invalid key\n"
 msgstr "올바르지 않은 키\n"
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key\n"
-msgstr "레지스트리 키를 읽을 수 없습니다\n"
+msgstr "레지스트리 키를 열 수 없습니다\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key\n"
@@ -3261,21 +3259,19 @@ msgstr "다른 서비스 계정\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected\n"
-msgstr ""
+msgstr "드라이버 오류를 발견 할 수 없음\n"
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected\n"
-msgstr "프로세스가 취소되었습니다\n"
+msgstr "프로세스 중지를 발견할 수 없음\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service\n"
-msgstr ""
+msgstr "복구한 프로그램이나 서비스가 없음\n"
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe\n"
-msgstr "인쇄는 지원되지 않습니다"
+msgstr "서비스는 EXE 파일에 의해 구현되지 않았음\n"
 
 #: winerror.mc:1296
 msgid "End of media\n"
@@ -3454,110 +3450,96 @@ msgid "DLL not found\n"
 msgstr "DLL 을 찾을 수 업습니다\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles\n"
-msgstr "더 이상 찾기 핸들이 없습니다\n"
+msgstr "사용자 핸들 밖임\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
-msgstr ""
+msgstr "메시지는 오직 동기 호출에만 사용할 수있음\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty\n"
-msgstr ""
+msgstr "소스 요소가 비어 있습니다\n"
 
 #: winerror.mc:1531
-#, fuzzy
 msgid "The destination element is full\n"
-msgstr "작업이 성공적으로 끝났습니다\n"
+msgstr "대상 요소가 가득참\n"
 
 #: winerror.mc:1536
-#, fuzzy
 msgid "The element address is invalid\n"
-msgstr "지정된 장치 핸들은 적합하지 않습니다."
+msgstr "요소의 주소가 잘못되었습니다\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present\n"
-msgstr ""
+msgstr "매거진은 존재하지 않음\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
-msgstr ""
+msgstr "이 장치는 다시 초기화가 필요함\n"
 
 #: winerror.mc:1551
-#, fuzzy
 msgid "The device requires cleaning\n"
-msgstr "%s 서비스는 시작중.\n"
+msgstr "장치는 청소가 필요함\n"
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open\n"
-msgstr "프린터 문이 열려있습니다; "
+msgstr "장치의 문이 열려있음\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected\n"
-msgstr "파이프가 연결되지 않았습니다\n"
+msgstr "장치가 연결되지 않았습니다\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found\n"
-msgstr "엔트리를 찾을 수 업습니다\n"
+msgstr "요소를 찾을 수 없습니다\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found\n"
-msgstr "경로를 찾을 수 없습니다\n"
+msgstr "일치하는 것을 찾을 수 없음\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found\n"
-msgstr "처리절차를 찾을 수 없습니다\n"
+msgstr "속성 세트를 찾을 수 없습니다\n"
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found\n"
-msgstr "경로를 찾을 수 없습니다\n"
+msgstr "포인트를 찾을 수 없습니다\n"
 
 #: winerror.mc:1586
-#, fuzzy
 msgid "No running tracking service\n"
-msgstr "알 수 없는 허가 서비스\n"
+msgstr "추적 서비스가 실행중이 아님\n"
 
 #: winerror.mc:1591
-#, fuzzy
 msgid "No such volume ID\n"
-msgstr "어떤 사용자도 없습니다\n"
+msgstr "볼륨 아이디가 없음\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced\n"
-msgstr ""
+msgstr "바꿀 파일을 지울 수 없음\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place\n"
-msgstr ""
+msgstr "대체 파일을 이 장소로 이동할 수 없음\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed\n"
-msgstr ""
+msgstr "바꿀 파일 이동 작업 실패\n"
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted\n"
-msgstr "네트워크 이름이 지워졌습니다\n"
+msgstr "저널이 지워졌습니다\n"
 
 #: winerror.mc:1616
-#, fuzzy
 msgid "The journal is not active\n"
-msgstr "서비스가 활성화되지 않았습니다\n"
+msgstr "저널이 활성화되지 않았습니다\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found\n"
-msgstr ""
+msgstr "잠재 일치하는 파일을 찾을 수 없음\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted\n"
-msgstr ""
+msgstr "저널 엔트리가 지워짐\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name\n"
@@ -3752,32 +3734,28 @@ msgid "No more local devices\n"
 msgstr "더 이상의 지역 장치가 없음\n"
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist\n"
-msgstr "장치가 존재하지 않습니다\n"
+msgstr "사이트가 존재하지 않습니다\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists\n"
-msgstr "도메인은 이미 존재합니다\n"
+msgstr "도메인 제어기는 이미 존재합니다\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected\n"
-msgstr "파이프가 연결되지 않았습니다\n"
+msgstr "오직 연결될 때만 지원됨\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed\n"
-msgstr ""
+msgstr "작업 수행할 때 아무것도 변경된 것이 없음\n"
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid\n"
-msgstr "지정된 장치 핸들은 적합하지 않습니다."
+msgstr "사용자 프로파일이 적합하지 않음\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
-msgstr ""
+msgstr "Small Business Server는 지원하지 않음\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned\n"
@@ -4156,18 +4134,16 @@ msgid "Licence quota exceeded\n"
 msgstr "라이센스의 할당량을 초과했습니다\n"
 
 #: winerror.mc:2381
-#, fuzzy
 msgid "Wrong target name\n"
-msgstr "엔트리 이름이 없음\n"
+msgstr "잘못된 목표의 이름\n"
 
 #: winerror.mc:2386
-#, fuzzy
 msgid "Mutual authentication failed\n"
-msgstr "올바르지 않은 인증 증명서\n"
+msgstr "상호 인증 실패\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server\n"
-msgstr ""
+msgstr "클라이언트와 서버 사이의 시간 왜곡\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
@@ -4398,28 +4374,24 @@ msgid "Menu item not found\n"
 msgstr "메뉴 아이템을 찾을 수 없습니다\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle\n"
-msgstr "올바르지 않은 타겟 핸들\n"
+msgstr "올바르지 않은 키보드 핸들\n"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr "부여하지 않은 로그온 유형\n"
+msgstr "허용되지 않은 훅 형식\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
-msgstr ""
+msgstr "대화형 윈도우 스테이션이 요구됨\n"
 
 #: winerror.mc:2696
-#, fuzzy
 msgid "Timeout\n"
-msgstr "시간 초과"
+msgstr "시간 초과\n"
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle\n"
-msgstr "올바르지 않은 메뉴 핸들\n"
+msgstr "올바르지 않은 모니터 핸들\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4438,201 +4410,168 @@ msgid "Event log file changed\n"
 msgstr "이벤트 로그 파일이 변경됨\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "올바르지 않은 서비스 이름\n"
+msgstr "설치 서비스가 실패함\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user\n"
-msgstr "설치 프로그램"
+msgstr "설치가 사용자에 위해 취소됨\n"
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure\n"
-msgstr "분할 실패\n"
+msgstr "설치 실패\n"
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended\n"
-msgstr "설치 프로그램"
+msgstr "설치가 일시 중지됨\n"
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product\n"
-msgstr "알 수 없는 포트\n"
+msgstr "알 수 없는 제품\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature\n"
-msgstr "%s의 알수 없는 특징"
+msgstr "알수 없는 특징\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component\n"
-msgstr "알 수 없는 포트\n"
+msgstr "알 수 없는 컴포넌트\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknonw property\n"
-msgstr "알 수 없는 포트\n"
+msgstr "알 수 없는 속성\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state\n"
-msgstr "잘못된 핸들(handle)\n"
+msgstr "잘못된 핸들 상태\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration\n"
-msgstr "Wine 설정"
+msgstr "나쁜 설정\n"
 
 #: winerror.mc:2776
 msgid "Index is missing\n"
-msgstr ""
+msgstr "인덱스가 빠짐\n"
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing\n"
-msgstr "빠진 부분(feature)을 위한 설치 원본"
+msgstr "설치 원본이 빠짐\n"
 
 #: winerror.mc:2786
-#, fuzzy
 msgid "Wrong installation package version\n"
-msgstr "잘못된 연속 패키지 버젼\n"
+msgstr "잘못된 설치 패키지 버젼\n"
 
 #: winerror.mc:2791
-#, fuzzy
 msgid "Product uninstalled\n"
-msgstr "설치되어 있지 않은 후크 프로 시저\n"
+msgstr "제품 제거됨\n"
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax\n"
-msgstr "올바르지 않은 이름 문법\n"
+msgstr "잘못된 쿼리 구문\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field\n"
-msgstr "올바르지 않은 시간\n"
+msgstr "올바르지 않은 필드\n"
 
 #: winerror.mc:2806
-#, fuzzy
 msgid "Device removed\n"
-msgstr "장치는 이미 기억됨\n"
+msgstr "장치가 제거됨\n"
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running\n"
-msgstr "서비스는 이미 실행증입니다\n"
+msgstr "설치 작업은 이미 실행증임\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr ""
+msgstr "설치 패키지 열기 실패\n"
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid\n"
-msgstr "설치 프로그램"
+msgstr "설치 패키지가 올바르지 않음\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
-msgstr ""
+msgstr "설치 프로그램 사용자 인터페이스 실패\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"
-msgstr ""
+msgstr "설치 로그 파일 열기 실패\n"
 
 #: winerror.mc:2836
-#, fuzzy
 msgid "Installation language not supported\n"
-msgstr "이 작업은 지원하지 않습니다\n"
+msgstr "설치 언어를 지원하지 않습니다\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
-msgstr ""
+msgstr "설치 변환 실패가 추가됨\n"
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected\n"
-msgstr "설치 프로그램"
+msgstr "설치 패키지기 거부됨\n"
 
 #: winerror.mc:2851
-#, fuzzy
 msgid "Function could not be called\n"
-msgstr "도달 연결 개수 제한에 도달함\n"
+msgstr "함수를 호출 할 수 없음\n"
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed\n"
-msgstr "함수가 필요합니다"
+msgstr "함수 실패\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table\n"
-msgstr "올바르지 않은 태그\n"
+msgstr "올바르지 않은 테이블\n"
 
 #: winerror.mc:2866
-#, fuzzy
 msgid "Data type mismatch\n"
-msgstr "머신 형식이 맞지 않습니다\n"
+msgstr "데이타 형식이 맞지 않습니다\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type\n"
 msgstr "지원하지 않는 형식\n"
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed\n"
-msgstr "열기 실패하였습니다\n"
+msgstr "만들기 실패함\n"
 
 #: winerror.mc:2881
-#, fuzzy
 msgid "Temporary directory not writable\n"
-msgstr "파일이나 디렉토리가 망가졌습니다\n"
+msgstr "임시 디렉토리에 기록할 수 없음\n"
 
 #: winerror.mc:2886
-#, fuzzy
 msgid "Installation platform not supported\n"
-msgstr "이 작업은 지원하지 않습니다\n"
+msgstr "설치 플랫폼을 지원하지 않음\n"
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used\n"
-msgstr "인터페이스를 찾을 수 없습니다\n"
+msgstr "설치 프로그램이 사용되지 않음\n"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr "'%s' 열기 실패\n"
+msgstr "패치 패키지 열기 실패\n"
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package\n"
-msgstr "올바르지 않은 태그\n"
+msgstr "올바르지 않은 패치 패키지\n"
 
 #: winerror.mc:2906
-#, fuzzy
 msgid "Unsupported patch package\n"
-msgstr "지원하지 않는 형식\n"
+msgstr "지원하지 않는 패치 패키지\n"
 
 #: winerror.mc:2911
-#, fuzzy
 msgid "Another version is installed\n"
-msgstr "프린터 드라이버는 이미 설치되어 있습니다\n"
+msgstr "다른 버젼이 설치되어 있음\n"
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line\n"
-msgstr "올바르지 않은 GW 명령\n"
+msgstr "올바르지 않은 명령 라인\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
-msgstr ""
+msgstr "원격 설치는 허용되지 않음\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install\n"
-msgstr ""
+msgstr "설치가 성공한 후에 스스로 재부팅될 것임\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
@@ -5203,92 +5142,76 @@ msgid "Invalid driver\n"
 msgstr "올바르지 않은 드라이버\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "올바르지 않은 객체\n"
+msgstr "잘못된 객체 확인자 세트\n"
 
 #: winerror.mc:3651
-#, fuzzy
 msgid "Incomplete RPC send\n"
-msgstr "완성되지 않은 이름\n"
+msgstr "불완전 RPC를 보냄\n"
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle\n"
-msgstr "올바르지 않은 hook 핸들\n"
+msgstr "올바르지 않은 비동기식 RPC 핸들\n"
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call\n"
-msgstr "올바르지 않은 hook 핸들\n"
+msgstr "비동기 RPC 호출이 잘못되었습니다\n"
 
 #: winerror.mc:3666
-#, fuzzy
 msgid "RPC pipe closed\n"
-msgstr "파이프가 닫힘\n"
+msgstr "RPC 파이프가 닫힘\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
-msgstr ""
+msgstr "RPC 파이프에 대한 규율 오류\n"
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr "RPC 에러가 아닙\n"
+msgstr "RPC 파이프에 어떠한 데이타도 없음\n"
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available\n"
-msgstr "가능한 보안 컨텍스가 없음\n"
+msgstr "가능한 사이트 이름이 없음\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed\n"
-msgstr ""
+msgstr "이 파일은  접근할 수 없습니다\n"
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved\n"
-msgstr "사용자 이름을 찾을 수 없습니다\n"
+msgstr "파일 이름을 확인 할 수 없음\n"
 
 #: winerror.mc:3696
-#, fuzzy
 msgid "RPC entry type mismatch\n"
-msgstr "머신 형식이 맞지 않습니다\n"
+msgstr "RPC 입력 유형 불일치\n"
 
 #: winerror.mc:3701
-#, fuzzy
 msgid "Not all objects could be exported\n"
-msgstr "모든 객체가 내보내지지 못했습니다\n"
+msgstr "모든 개체를 내보낼 수는 없습니다\n"
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported\n"
-msgstr "사용자 이름을 찾을 수 없습니다\n"
+msgstr "인터페이스를 내보낼 수 없습니다\n"
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added\n"
-msgstr "사용자 이름을 찾을 수 없습니다\n"
+msgstr "프로필을 추가할 수 없습니다\n"
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added\n"
-msgstr "사용자 이름을 찾을 수 없습니다\n"
+msgstr "프로필 요소를 추가할 수 없습니다\n"
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed\n"
-msgstr "사용자 이름을 찾을 수 없습니다\n"
+msgstr "프로필 요소를 제거하지 못했습니다\n"
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added\n"
-msgstr "사용자 이름을 찾을 수 없습니다\n"
+msgstr "그룹 요소를 추가할 수 없습니다\n"
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed\n"
-msgstr "사용자 이름을 찾을 수 없습니다\n"
+msgstr "그룹 요소가 제거되지 않았습니다\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found\n"
@@ -8719,9 +8642,8 @@ msgid "Unicode (UTF-16 big-endian)"
 msgstr "유니코드  (UTF-16 빅-엔디언)"
 
 #: notepad.rc:95
-#, fuzzy
 msgid "Unicode (UTF-8)"
-msgstr "유니코드 (UTF-16)"
+msgstr "유니코드 (UTF-8)"
 
 #: notepad.rc:102
 msgid ""
