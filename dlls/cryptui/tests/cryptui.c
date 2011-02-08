@@ -344,7 +344,7 @@ static void test_crypt_ui_wiz_import(void)
     /* Brings up UI.  Cancelling yields ret = 1. */
     if (0)
     {
-        ret = pCryptUIWizImport(0, 0, NULL, NULL, NULL);
+        pCryptUIWizImport(0, 0, NULL, NULL, NULL);
     }
     SetLastError(0xdeadbeef);
     ret = pCryptUIWizImport(CRYPTUI_WIZ_NO_UI, 0, NULL, NULL, NULL);
