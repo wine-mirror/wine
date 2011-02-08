@@ -864,7 +864,7 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
         size = sizeof(wszFile)/sizeof(WCHAR) + len + 1;
         if(pcchResult)
             *pcchResult = size;
-        if(size >= cchResult)
+        if(size > cchResult)
             return S_FALSE;
 
         memcpy(pwzResult, wszFile, sizeof(wszFile));

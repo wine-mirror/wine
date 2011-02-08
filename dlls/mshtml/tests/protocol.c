@@ -326,7 +326,7 @@ static void test_res_protocol(void)
     ok(hres == S_OK, "Could not get IInternetProtocolInfo interface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
         WCHAR buf[128];
-        DWORD size;
+        DWORD size, expected_size;
         int i;
 
         for(i = PARSE_CANONICALIZE; i <= PARSE_UNESCAPE; i++) {
@@ -342,12 +342,20 @@ static void test_res_protocol(void)
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK, "ParseUrl failed: %08x\n", hres);
         res_sec_url_cmp(buf, size, mshtml_dllW);
+        ok(size == lstrlenW(buf)+1, "size = %d\n", size);
+        expected_size = size;
+
+        hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
+                expected_size, &size, 0);
+        ok(hres == S_OK, "ParseUrl failed: %08x\n", hres);
+        res_sec_url_cmp(buf, size, mshtml_dllW);
+        ok(size == expected_size, "size = %d\n", size);
 
         size = 0;
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, blank_url, PARSE_SECURITY_URL, 0, buf,
                 3, &size, 0);
         ok(hres == S_FALSE, "ParseUrl failed: %08x, expected S_FALSE\n", hres);
-        ok(size, "size=0\n");
+        ok(size == expected_size, "size = %d\n", size);
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url1, PARSE_SECURITY_URL, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
