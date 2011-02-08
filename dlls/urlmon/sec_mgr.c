@@ -150,7 +150,7 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
     DWORD size=0;
     HRESULT hres;
 
-    *zone = -1;
+    *zone = URLZONE_INVALID;
 
     hres = CoInternetGetSecurityUrl(url, &secur_url, PSU_SECURITY_URL_ONLY, 0);
     if(hres != S_OK) {
@@ -193,11 +193,11 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
             case DRIVE_FIXED:
             case DRIVE_CDROM:
             case DRIVE_RAMDISK:
-                *zone = 0;
+                *zone = URLZONE_LOCAL_MACHINE;
                 hres = S_OK;
                 break;
             case DRIVE_REMOTE:
-                *zone = 3;
+                *zone = URLZONE_INTERNET;
                 hres = S_OK;
                 break;
             default:
@@ -206,7 +206,7 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
         }
     }
 
-    if(*zone == -1) {
+    if(*zone == URLZONE_INVALID) {
         WARN("domains are not yet implemented\n");
         hres = get_zone_from_reg(schema, zone);
     }
@@ -495,7 +495,7 @@ static HRESULT WINAPI SecManagerImpl_MapUrlToZone(IInternetSecurityManager *ifac
     }
 
     if(!pwszUrl) {
-        *pdwZone = -1;
+        *pdwZone = URLZONE_INVALID;
         return E_INVALIDARG;
     }
 
