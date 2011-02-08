@@ -2453,6 +2453,20 @@ static void check_wnd_state_(const char *file, int line,
     ok_(file, line)(capture == GetCapture(), "GetCapture() = %p\n", GetCapture());
 }
 
+/* same as above but without capture test */
+#define check_active_state(a,b,c) check_active_state_(__FILE__,__LINE__,a,b,c)
+static void check_active_state_(const char *file, int line,
+                                HWND active, HWND foreground, HWND focus)
+{
+    ok_(file, line)(active == GetActiveWindow(), "GetActiveWindow() = %p\n", GetActiveWindow());
+    /* only check foreground if it belongs to the current thread */
+    /* foreground can be moved to a different app pretty much at any time */
+    if (foreground && GetForegroundWindow() &&
+        GetWindowThreadProcessId(GetForegroundWindow(), NULL) == GetCurrentThreadId())
+        ok_(file, line)(foreground == GetForegroundWindow(), "GetForegroundWindow() = %p\n", GetForegroundWindow());
+    ok_(file, line)(focus == GetFocus(), "GetFocus() = %p\n", GetFocus());
+}
+
 static void test_SetActiveWindow(HWND hwnd)
 {
     HWND hwnd2;
@@ -2706,10 +2720,7 @@ static LRESULT WINAPI button_hook_proc(HWND button, UINT msg, WPARAM wparam, LPA
 
 static void test_capture_1(void)
 {
-    HWND button, capture, oldFocus, oldActive;
-
-    oldFocus = GetFocus();
-    oldActive = GetActiveWindow();
+    HWND button, capture;
 
     capture = GetCapture();
     ok(capture == 0, "GetCapture() = %p\n", capture);
@@ -2727,7 +2738,9 @@ static void test_capture_1(void)
     check_wnd_state(button, 0, button, button);
 
     DestroyWindow(button);
-    check_wnd_state(oldActive, 0, oldFocus, 0);
+    /* old active window test depends on previously executed window
+     * activation tests, and fails under NT4.
+    check_wnd_state(oldActive, 0, oldFocus, 0);*/
 }
 
 static void test_capture_2(void)
@@ -3330,10 +3343,9 @@ static void test_nccalcscroll(HWND parent)
 
 static void test_SetParent(void)
 {
-    BOOL ret;
     HWND desktop = GetDesktopWindow();
     HMENU hMenu;
-    HWND parent, child1, child2, child3, child4, sibling;
+    HWND ret, parent, child1, child2, child3, child4, sibling, popup;
 
     parent = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW,
 			     100, 100, 200, 200, 0, 0, 0, NULL);
@@ -3378,8 +3390,6 @@ static void test_SetParent(void)
 
     if (!is_win9x) /* Win9x doesn't survive this test */
     {
-        HWND ret;
-
         ok(!SetParent(parent, child1), "SetParent should fail\n");
         ok(!SetParent(child2, child3), "SetParent should fail\n");
         ok(SetParent(child1, parent) != 0, "SetParent should not fail\n");
@@ -3425,8 +3435,7 @@ static void test_SetParent(void)
     ok(SetParent(sibling, parent) != 0, "SetParent should not fail\n");
     ok(GetMenu(sibling) == hMenu, "SetParent should not remove menu\n");
 
-    ret = DestroyWindow(parent);
-    ok( ret, "DestroyWindow() error %d\n", GetLastError());
+    ok(DestroyWindow(parent), "DestroyWindow() failed\n");
 
     ok(!IsWindow(parent), "parent still exists\n");
     ok(!IsWindow(sibling), "sibling still exists\n");
@@ -3434,6 +3443,50 @@ static void test_SetParent(void)
     ok(!IsWindow(child2), "child2 still exists\n");
     ok(!IsWindow(child3), "child3 still exists\n");
     ok(!IsWindow(child4), "child4 still exists\n");
+
+    parent = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW,
+			     100, 100, 200, 200, 0, 0, 0, NULL);
+    assert(parent != 0);
+    child1 = CreateWindowExA(0, "static", NULL, WS_CHILD,
+			     0, 0, 50, 50, parent, 0, 0, NULL);
+    assert(child1 != 0);
+    popup = CreateWindowExA(0, "static", NULL, WS_POPUP,
+			     0, 0, 50, 50, 0, 0, 0, NULL);
+    assert(popup != 0);
+
+    trace("parent %p, child %p, popup %p\n", parent, child1, popup);
+
+    check_parents(parent, desktop, 0, 0, 0, parent, parent);
+    check_parents(child1, parent, parent, parent, 0, parent, parent);
+    check_parents(popup, desktop, 0, 0, 0, popup, popup);
+
+    SetFocus(0);
+    SetActiveWindow(0);
+    check_active_state(0, 0, 0);
+
+    ret = SetParent(popup, child1);
+    ok(ret == desktop, "expected %p, got %p\n", desktop, ret);
+    check_parents(popup, child1, child1, 0, 0, parent, popup);
+todo_wine
+    check_active_state(popup, 0, popup);
+
+    SetFocus(0);
+    SetActiveWindow(0);
+    /* NT4 sets active window to 0, other Windows versions
+     * leave the popup an active window.
+    check_active_state(popup, 0, 0); */
+
+todo_wine
+    ok(SetForegroundWindow(popup), "SetForegroundWindow() failed\n");
+    /* NT4 sets focus window to the popup, other Windows versions
+     * leave the focus set to 0.
+    check_active_state(popup, 0, 0); */
+
+    ok(DestroyWindow(parent), "DestroyWindow() failed\n");
+
+    ok(!IsWindow(parent), "parent still exists\n");
+    ok(!IsWindow(child1), "child1 still exists\n");
+    ok(!IsWindow(popup), "popup still exists\n");
 }
 
 static LRESULT WINAPI StyleCheckProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -6343,8 +6396,9 @@ START_TEST(win)
     hhook = SetWindowsHookExA(WH_CBT, cbt_hook_proc, 0, GetCurrentThreadId());
     if (!hhook) win_skip( "Cannot set CBT hook, skipping some tests\n" );
 
-    /* make sure that FindWindow tests are executed first */
+    /* make sure that these tests are executed first */
     test_FindWindowEx();
+    test_SetParent();
 
     hwndMain = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window",
                                WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
@@ -6376,7 +6430,6 @@ START_TEST(win)
 
     test_CreateWindow();
     test_parent_owner();
-    test_SetParent();
     test_enum_thread_windows();
 
     test_mdi();
