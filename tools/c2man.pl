@@ -21,7 +21,7 @@
 #
 # TODO
 #  Consolidate A+W pairs together, and only write one doc, without the suffix
-#  Implement automatic docs fo structs/defines in headers
+#  Implement automatic docs of structs/defines in headers
 #  SGML gurus - feel free to smarten up the SGML.
 #  Add any other relevant information for the dll - imports etc
 #  Should we have a special output mode for WineHQ?
@@ -882,7 +882,7 @@ sub process_comment($)
     $h_file =~ s/\n//;
     if ($h_file eq "")
     {
-      $h_file = "Not defined in a Wine header. The function is either undocumented, or missing from Wine."
+      $h_file = "Not declared in a Wine header. The function is either undocumented, or missing from Wine."
     }
     else
     {
@@ -2265,10 +2265,13 @@ while(defined($_ = shift @ARGV))
       /^L$/  && do { last; };
       /^w$/  && do { @opt_spec_file_list = (@opt_spec_file_list, shift @ARGV); last; };
       s/^I// && do { if ($_ ne ".") {
-                       my $include = $_."/*.h";
-                       $include =~ s/\/\//\//g;
-                       my $have_headers = `ls $include >/dev/null 2>&1`;
-                       if ($? >> 8 == 0) { @opt_header_file_list = (@opt_header_file_list, $include); }
+                       foreach my $include (`find $_ -type d ! -name tests`) {
+                         $include =~ s/\n//;
+                         $include = $include."/*.h";
+                         $include =~ s/\/\//\//g;
+                         my $have_headers = `ls $include >/dev/null 2>&1`;
+                         if ($? >> 8 == 0) { @opt_header_file_list = (@opt_header_file_list, $include); }
+                       };
                      }
                      last;
                    };
