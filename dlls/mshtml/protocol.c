@@ -404,16 +404,17 @@ static HRESULT WINAPI AboutProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, L
         PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
         DWORD* pcchResult, DWORD dwReserved)
 {
-    TRACE("%p)->(%s %08x %08x %p %d %p %d)\n", iface, debugstr_w(pwzUrl), ParseAction,
+    TRACE("%p)->(%s %d %08x %p %d %p %d)\n", iface, debugstr_w(pwzUrl), ParseAction,
             dwParseFlags, pwzResult, cchResult, pcchResult, dwReserved);
 
     if(ParseAction == PARSE_SECURITY_URL) {
-        unsigned int len = strlenW(pwzUrl);
+        unsigned int len = strlenW(pwzUrl)+1;
 
-        if(len >= cchResult)
+        *pcchResult = len;
+        if(len > cchResult)
             return S_FALSE;
 
-        memcpy(pwzResult, pwzUrl, (len+1)*sizeof(WCHAR));
+        memcpy(pwzResult, pwzUrl, len*sizeof(WCHAR));
         return S_OK;
     }
 

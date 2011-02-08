@@ -656,14 +656,17 @@ static void test_about_protocol(void)
         ok(hres == S_OK, "ParseUrl failed: %08x\n", hres);
         ok(!lstrcmpW(about_blank_url, buf), "buf != blank_url\n");
 
+        size = 0xdeadbeef;
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_blank_url, PARSE_SECURITY_URL, 0, buf,
                 3, &size, 0);
         ok(hres == S_FALSE, "ParseUrl failed: %08x, expected S_FALSE\n", hres);
+        ok(size == 12, "size = %d\n", size);
 
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, about_test_url, PARSE_SECURITY_URL, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK, "ParseUrl failed: %08x\n", hres);
         ok(!lstrcmpW(about_test_url, buf), "buf != test_url\n");
+        ok(size == 11, "size = %d\n", size);
 
         size = 0xdeadbeef;
         buf[0] = '?';
