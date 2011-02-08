@@ -219,6 +219,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
         format = floppyW;
         break;
     case DEVICE_CDROM:
+    case DEVICE_DVD:
         format = cdromW;
         break;
     case DEVICE_RAMDISK:
@@ -255,6 +256,11 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
             break;
         case DEVICE_CDROM:
             device->devnum.DeviceType = FILE_DEVICE_CD_ROM;
+            device->devnum.DeviceNumber = i;
+            device->devnum.PartitionNumber = ~0u;
+            break;
+        case DEVICE_DVD:
+            device->devnum.DeviceType = FILE_DEVICE_DVD;
             device->devnum.DeviceNumber = i;
             device->devnum.PartitionNumber = ~0u;
             break;
@@ -541,6 +547,7 @@ static int add_drive( const char *device, enum device_type type )
         last = 2;
         break;
     case DEVICE_CDROM:
+    case DEVICE_DVD:
         first = 3;
         last = 26;
         break;

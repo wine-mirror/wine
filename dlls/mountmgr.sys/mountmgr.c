@@ -293,6 +293,7 @@ static NTSTATUS query_unix_drive( const void *in_buff, SIZE_T insize,
     case DEVICE_HARDDISK_VOL: type = DRIVE_FIXED; break;
     case DEVICE_FLOPPY:       type = DRIVE_REMOVABLE; break;
     case DEVICE_CDROM:        type = DRIVE_CDROM; break;
+    case DEVICE_DVD:          type = DRIVE_CDROM; break;
     case DEVICE_NETWORK:      type = DRIVE_REMOTE; break;
     case DEVICE_RAMDISK:      type = DRIVE_RAMDISK; break;
     }

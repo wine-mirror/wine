@@ -47,6 +47,7 @@ enum device_type
     DEVICE_HARDDISK_VOL,
     DEVICE_FLOPPY,
     DEVICE_CDROM,
+    DEVICE_DVD,
     DEVICE_NETWORK,
     DEVICE_RAMDISK
 };

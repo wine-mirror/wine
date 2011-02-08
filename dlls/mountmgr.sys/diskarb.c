@@ -64,11 +64,15 @@ static void appeared_callback( DADiskRef disk, void *context )
     else
         mount_point[0] = 0;
 
-    if ((ref = CFDictionaryGetValue( dict, CFSTR("DAVolumeKind") )))
+    if ((ref = CFDictionaryGetValue( dict, CFSTR("DAMediaKind") )))
     {
-        if (!CFStringCompare( ref, CFSTR("cd9660"), 0 ) ||
-            !CFStringCompare( ref, CFSTR("udf"), 0 ))
+        if (!CFStringCompare( ref, CFSTR("IOCDMedia"), 0 ))
             type = DEVICE_CDROM;
+        if (!CFStringCompare( ref, CFSTR("IODVDMedia"), 0 ) ||
+            !CFStringCompare( ref, CFSTR("IOBDMedia"), 0 ))
+            type = DEVICE_DVD;
+        if (!CFStringCompare( ref, CFSTR("IOMedia"), 0 ))
+            type = DEVICE_HARDDISK;
     }
 
     TRACE( "got mount notification for '%s' on '%s' uuid %s\n",
