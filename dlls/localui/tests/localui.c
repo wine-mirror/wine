@@ -71,9 +71,10 @@ static PORT_INFO_2W * find_portinfo2(LPWSTR pPort)
 
     if (!pi_buffer) {
         res = EnumPortsW(NULL, 2, NULL, 0, &pi_needed, &pi_numports);
+        ok(!res, "EnumPorts failed: got %d\n", res);
         pi_buffer = HeapAlloc(GetProcessHeap(), 0, pi_needed);
-        SetLastError(0xdeadbeef);
         res = EnumPortsW(NULL, 2, pi_buffer, pi_needed, &pi_needed, &pi_numports);
+        ok(res == 1, "EnumPorts failed: got %d\n", res);
     }
     if (pi_buffer) {
         pi = (PORT_INFO_2W *) pi_buffer;
