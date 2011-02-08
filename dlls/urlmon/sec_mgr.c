@@ -293,59 +293,6 @@ static HRESULT get_action_policy(DWORD zone, DWORD action, BYTE *policy, DWORD s
     return hres;
 }
 
-static HRESULT parse_security_uri(IUri *uri, PSUACTION action, IUri **result) {
-    WCHAR buf1[INTERNET_MAX_URL_LENGTH], buf2[INTERNET_MAX_URL_LENGTH];
-    LPWSTR url, tmp;
-    HRESULT hres;
-    DWORD len = 0;
-    BOOL use_url = FALSE;
-
-    url = buf1;
-    tmp = buf2;
-    *result = NULL;
-
-    hres = IUri_GetPropertyLength(uri, Uri_PROPERTY_ABSOLUTE_URI, &len, 0);
-    if(FAILED(hres))
-        return hres;
-
-    hres = CoInternetParseIUri(uri, PARSE_SECURITY_URL, 0, url, len+1, &len, 0);
-    if(hres == S_OK) {
-        use_url = TRUE;
-        while(TRUE) {
-            hres = CoInternetParseUrl(url, PARSE_SECURITY_URL, 0, tmp, len+1, &len, 0);
-            if(hres != S_OK || !strcmpW(url, tmp))
-                break;
-
-            if(url == buf1) {
-                url = buf2;
-                tmp = buf1;
-            } else {
-                url = buf1;
-                tmp = buf2;
-            }
-        }
-    }
-
-    if(action == PSU_DEFAULT) {
-        if(use_url) {
-            hres = CoInternetParseUrl(url, PARSE_SECURITY_DOMAIN, 0, tmp, len+1, &len, 0);
-            url = tmp;
-        } else {
-            hres = CoInternetParseIUri(uri, PARSE_SECURITY_DOMAIN, 0, url, len+1, &len, 0);
-            if(hres == S_OK)
-                use_url = TRUE;
-        }
-    }
-
-    if(use_url) {
-        hres = CreateUri(url, 0, 0, result);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    return S_OK;
-}
-
 /***********************************************************************
  *           InternetSecurityManager implementation
  *
@@ -1464,42 +1411,44 @@ HRESULT WINAPI CoInternetGetSecurityUrl(LPCWSTR pwzUrl, LPWSTR *ppwzSecUrl, PSUA
  */
 HRESULT WINAPI CoInternetGetSecurityUrlEx(IUri *pUri, IUri **ppSecUri, PSUACTION psuAction, DWORD_PTR dwReserved)
 {
-    HRESULT hres;
-    BSTR secure_uri;
     URL_SCHEME scheme_type;
+    BSTR secure_uri;
+    WCHAR *ret_url;
+    HRESULT hres;
 
     TRACE("(%p,%p,%u,%u)\n", pUri, ppSecUri, psuAction, (DWORD)dwReserved);
 
     if(!pUri || !ppSecUri)
         return E_INVALIDARG;
 
-    /* Try to find the Security url using pluggable protocols first. */
-    hres = parse_security_uri(pUri, psuAction, ppSecUri);
-    if(FAILED(hres) || *ppSecUri)
-        return hres;
-
-    hres = IUri_GetScheme(pUri, (DWORD*)&scheme_type);
-    if(FAILED(hres))
-        return hres;
-
     hres = IUri_GetDisplayUri(pUri, &secure_uri);
     if(FAILED(hres))
         return hres;
 
+    hres = parse_security_url(secure_uri, psuAction, &ret_url);
+    SysFreeString(secure_uri);
+    if(FAILED(hres))
+        return hres;
+
+    hres = CreateUri(ret_url, Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, 0, ppSecUri);
+    if(FAILED(hres)) {
+        CoTaskMemFree(ret_url);
+        return hres;
+    }
+
     /* File URIs have to hierarchical. */
-    if(scheme_type == URL_SCHEME_FILE) {
-        const WCHAR *tmp = secure_uri;
+    hres = IUri_GetScheme(pUri, (DWORD*)&scheme_type);
+    if(SUCCEEDED(hres) && scheme_type == URL_SCHEME_FILE) {
+        const WCHAR *tmp = ret_url;
 
         /* Check and see if a "//" is after the scheme name. */
         tmp += sizeof(fileW)/sizeof(WCHAR);
-        if(*tmp != '/' || *(tmp+1) != '/') {
-            SysFreeString(secure_uri);
-            return E_INVALIDARG;
-        }
+        if(*tmp != '/' || *(tmp+1) != '/')
+            hres = E_INVALIDARG;
     }
 
-    hres = CreateUri(secure_uri, Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, 0, ppSecUri);
-    SysFreeString(secure_uri);
-
+    if(SUCCEEDED(hres))
+        hres = CreateUri(ret_url, Uri_CREATE_ALLOW_IMPLICIT_WILDCARD_SCHEME, 0, ppSecUri);
+    CoTaskMemFree(ret_url);
     return hres;
 }
