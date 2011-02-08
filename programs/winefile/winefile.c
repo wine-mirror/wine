@@ -263,11 +263,14 @@ static inline void choose_font(HWND hwnd)
         LOGFONTW lFont;
 
         HDC hdc = GetDC(hwnd);
+
+        GetObjectW(Globals.hfont, sizeof(LOGFONTW), &lFont);
+
         chFont.lStructSize = sizeof(CHOOSEFONTW);
         chFont.hwndOwner = hwnd;
         chFont.hDC = NULL;
         chFont.lpLogFont = &lFont;
-        chFont.Flags = CF_SCREENFONTS | CF_FORCEFONTEXIST | CF_LIMITSIZE | CF_NOSCRIPTSEL;
+        chFont.Flags = CF_SCREENFONTS | CF_FORCEFONTEXIST | CF_LIMITSIZE | CF_NOSCRIPTSEL | CF_INITTOLOGFONTSTRUCT;
         chFont.rgbColors = RGB(0,0,0);
         chFont.lCustData = 0;
         chFont.lpfnHook = NULL;
