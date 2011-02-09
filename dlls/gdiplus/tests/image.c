@@ -937,6 +937,7 @@ static void test_fromhicon(void)
        expect(Ok, stat);
        expect(ImageTypeBitmap, type);
        stat = GdipGetImagePixelFormat((GpImage*)bitmap, &format);
+       expect(Ok, stat);
        expect(PixelFormat32bppARGB, format);
        /* raw format */
        expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, FALSE);
@@ -973,6 +974,7 @@ static void test_fromhicon(void)
         expect(Ok, stat);
         expect(ImageTypeBitmap, type);
         stat = GdipGetImagePixelFormat((GpImage*)bitmap, &format);
+	expect(Ok, stat);
         expect(PixelFormat32bppARGB, format);
         /* raw format */
         expect_rawformat(&ImageFormatMemoryBMP, (GpImage*)bitmap, __LINE__, FALSE);
