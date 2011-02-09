@@ -871,6 +871,7 @@ static void test_secure_connection(void)
     {
         size = 0;
         ret = WinHttpReadData(req, buffer, sizeof(buffer), &size);
+        ok(ret == TRUE, "WinHttpReadData failed: %u.\n", GetLastError());
         if (!size) break;
     }
 
