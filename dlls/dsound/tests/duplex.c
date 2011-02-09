@@ -93,8 +93,9 @@ static void IDirectSoundFullDuplex_test(LPDIRECTSOUNDFULLDUPLEX dsfdo,
     ok(rc==DS_OK,"IDirectSoundFullDuplex_QueryInterface(IID_IDirectSoundFullDuplex) "
        "failed: %08x\n",rc);
     if (rc==DS_OK) {
-        ok (dsfdo==dsfd, "different interfaces\n");
+        ok(dsfdo==dsfd, "different interfaces\n");
         ref=IDirectSound8_Release(dsfd);
+        ok(ref==1, "IDirectSoundFullDuplex_Release() has %d references, should have 1\n", ref);
     }
 
     ref=IDirectSoundFullDuplex_Release(dsfdo);
