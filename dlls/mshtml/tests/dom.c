@@ -3150,6 +3150,7 @@ static void test_elem_bounding_client_rect(IUnknown *unk)
 
     elem2 = get_elem2_iface(unk);
     hres = IHTMLElement2_getBoundingClientRect(elem2, &rect);
+    ok(hres == S_OK, "getBoundingClientRect failed: %08x\n", hres);
     hres = IHTMLElement2_getBoundingClientRect(elem2, &rect2);
     IHTMLElement2_Release(elem2);
     ok(hres == S_OK, "getBoundingClientRect failed: %08x\n", hres);
@@ -3441,6 +3442,7 @@ static IHTMLTxtRange *test_create_body_range(IHTMLDocument2 *doc)
 
     elem = doc_get_body(doc);
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLBodyElement, (void**)&body);
+    ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
     IHTMLElement_Release(elem);
 
     hres = IHTMLBodyElement_createTextRange(body, &range);
