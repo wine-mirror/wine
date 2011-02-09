@@ -433,6 +433,7 @@ static void test_persiststreaminit(void)
     hr = IXMLDocument_get_root(doc, &element);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     hr = IXMLElement_put_text(element, str);
+    ok(hr == E_NOTIMPL, "Expected E_NOTIMPL, got %08x\n", hr);
     IXMLElement_Release(element);
     SysFreeString(str);
 
