@@ -54,7 +54,7 @@ ME_StreamOutFlush(ME_OutStream *pStream)
   LONG nRemaining = 0;
   EDITSTREAM *stream = pStream->stream;
 
-  do {
+  while (nStart < pStream->pos) {
     TRACE("sending %u bytes\n", pStream->pos - nStart);
     /* Some apps seem not to set *pcb unless a problem arises, relying
       on initial random nWritten value, which is usually >STREAMOUT_BUFFER_SIZE */
@@ -72,7 +72,7 @@ ME_StreamOutFlush(ME_OutStream *pStream)
       return FALSE;
     pStream->written += nWritten;
     nStart += nWritten;
-  } while (nStart < pStream->pos);
+  }
   pStream->pos = 0;
   return TRUE;
 }
