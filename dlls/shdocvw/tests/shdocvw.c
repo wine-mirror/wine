@@ -268,7 +268,7 @@ static void test_ParseURLFromOutsideSourceA(void)
 
         if (0) {
             /* that test crash on native shdocvw */
-            res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, NULL, &dummy);
+            pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, NULL, &dummy);
         }
 
         memset(buffer, '#', sizeof(buffer)-1);
