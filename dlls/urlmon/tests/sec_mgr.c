@@ -482,6 +482,7 @@ static void test_CoInternetCreateZoneManager(void)
         IUnknown_Release(punk);
 
         hr = IInternetZoneManager_QueryInterface(zonemgr, &IID_IInternetZoneManagerEx2, (void **) &punk);
+        ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
         if (punk)
             IUnknown_Release(punk);
         else
@@ -631,7 +632,7 @@ static void test_GetZoneAt(void)
 
     if (0) {
         /* this crashes with native urlmon */
-        hr = IInternetZoneManager_GetZoneAt(zonemgr, dwEnum, 0, NULL);
+        IInternetZoneManager_GetZoneAt(zonemgr, dwEnum, 0, NULL);
     }
 
     dwZone = 0xdeadbeef;
