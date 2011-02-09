@@ -775,6 +775,7 @@ static void test_CreateStub(IPSFactoryBuffer *ppsf)
 
     vtbl = &create_stub_test_fail_vtbl;
     pstub = create_stub(ppsf, &IID_if1, obj, E_NOINTERFACE);
+    ok(pstub == S_OK, "create_stub failed: %u\n", GetLastError());
 
 }
 
@@ -892,6 +893,7 @@ static void test_Connect(IPSFactoryBuffer *ppsf)
 
     obj = (IUnknown*)&new_vtbl;
     r = IRpcStubBuffer_Connect(pstub, obj);
+    ok(r == S_OK, "r %08x\n", r);
     ok(connect_test_base_Connect_called == 1, "connect_test_bsae_Connect called %d times\n",
        connect_test_base_Connect_called);
     ok(connect_test_orig_release_called == 3, "release called %d\n", connect_test_orig_release_called);
