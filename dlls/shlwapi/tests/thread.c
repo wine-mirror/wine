@@ -191,7 +191,7 @@ static void test_SHGetThreadRef(void)
 
     if (0) {
         /* this crash on Windows */
-        hr = pSHGetThreadRef(NULL);
+        pSHGetThreadRef(NULL);
     }
 }
 
