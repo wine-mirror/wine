@@ -3857,9 +3857,11 @@ static void test_CERT_CHAIN_PARA_cbSize(void)
     ret = CertAddEncodedCertificateToStore(store,
      X509_ASN_ENCODING, chain0_0, sizeof(chain0_0),
      CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n", GetLastError());
     ret = CertAddEncodedCertificateToStore(store,
      X509_ASN_ENCODING, chain0_1, sizeof(chain0_1),
      CERT_STORE_ADD_ALWAYS, &cert);
+    ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n", GetLastError());
 
     for (i = 0; i < sizeof(CERT_CHAIN_PARA) + 2; i++)
     {
