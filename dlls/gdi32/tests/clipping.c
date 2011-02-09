@@ -413,8 +413,12 @@ static void test_window_dc_clipping(void)
     RECT rc;
     int ret, screen_width, screen_height;
 
-    screen_width = GetSystemMetrics(SM_CXSCREEN);
-    screen_height = GetSystemMetrics(SM_CYSCREEN);
+    /* Windows versions earlier than Win2k do not support the virtual screen metrics,
+     * so we fall back to the primary screen metrics. */
+    screen_width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    if(!screen_width) screen_width = GetSystemMetrics(SM_CXSCREEN);
+    screen_height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    if(!screen_height) screen_height = GetSystemMetrics(SM_CYSCREEN);
 
     trace("screen resolution %d x %d\n", screen_width, screen_height);
 
