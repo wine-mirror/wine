@@ -968,6 +968,7 @@ static void testSignSeal(void)
     }
 
     sec_status = setupFakeServer(&server, sec_pkg_name);
+    ok(sec_status == SEC_E_OK, "setupFakeServer returned %s\n", getSecError(sec_status));
 
     while(client_stat == SEC_I_CONTINUE_NEEDED && server_stat == SEC_I_CONTINUE_NEEDED)
     {
