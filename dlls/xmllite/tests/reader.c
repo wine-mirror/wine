@@ -354,8 +354,8 @@ static void test_reader_create(void)
     /* crashes native */
     if (0)
     {
-        hr = pCreateXmlReader(&IID_IXmlReader, NULL, NULL);
-        hr = pCreateXmlReader(NULL, (LPVOID*)&reader, NULL);
+        pCreateXmlReader(&IID_IXmlReader, NULL, NULL);
+        pCreateXmlReader(NULL, (LPVOID*)&reader, NULL);
     }
 
     hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
