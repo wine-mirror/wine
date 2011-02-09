@@ -1651,49 +1651,49 @@ HRESULT __RPC_STUB ITypeInfo_Invoke_Stub(
   return E_FAIL;
 }
 
-HRESULT CALLBACK ITypeInfo_GetDocumentation_Proxy(
-    ITypeInfo* This,
-    MEMBERID memid,
-    BSTR* pBstrName,
-    BSTR* pBstrDocString,
-    DWORD* pdwHelpContext,
-    BSTR* pBstrHelpFile)
+HRESULT CALLBACK ITypeInfo_GetDocumentation_Proxy(ITypeInfo *This, MEMBERID memid,
+                                                  BSTR *name, BSTR *doc_string,
+                                                  DWORD *help_context, BSTR *help_file)
 {
-    DWORD help_context;
-    BSTR name, doc_string, help_file;
+    DWORD dummy_help_context, flags = 0;
+    BSTR dummy_name, dummy_doc_string, dummy_help_file;
     HRESULT hr;
-    TRACE("(%p, %08x, %p, %p, %p, %p)\n", This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+    TRACE("(%p, %08x, %p, %p, %p, %p)\n", This, memid, name, doc_string, help_context, help_file);
 
-    /* FIXME: presumably refPtrFlags is supposed to be a bitmask of which ptrs we actually want? */
-    hr = ITypeInfo_RemoteGetDocumentation_Proxy(This, memid, 0, &name, &doc_string, &help_context, &help_file);
-    if(SUCCEEDED(hr))
-    {
-        if(pBstrName) *pBstrName = name;
-        else SysFreeString(name);
+    if(!name) name = &dummy_name;
+    else flags = 1;
 
-        if(pBstrDocString) *pBstrDocString = doc_string;
-        else SysFreeString(doc_string);
+    if(!doc_string) doc_string = &dummy_doc_string;
+    else flags |= 2;
 
-        if(pBstrHelpFile) *pBstrHelpFile = help_file;
-        else SysFreeString(help_file);
+    if(!help_context) help_context = &dummy_help_context;
+    else flags |= 4;
 
-        if(pdwHelpContext) *pdwHelpContext = help_context;
-    }
+    if(!help_file) help_file = &dummy_help_file;
+    else flags |= 8;
+
+    hr = ITypeInfo_RemoteGetDocumentation_Proxy(This, memid, flags, name, doc_string, help_context, help_file);
+
+    /* We don't need to free the dummy BSTRs since the stub ensures that these will be NULLs. */
+
     return hr;
 }
 
-HRESULT __RPC_STUB ITypeInfo_GetDocumentation_Stub(
-    ITypeInfo* This,
-    MEMBERID memid,
-    DWORD refPtrFlags,
-    BSTR* pBstrName,
-    BSTR* pBstrDocString,
-    DWORD* pdwHelpContext,
-    BSTR* pBstrHelpFile)
+HRESULT __RPC_STUB ITypeInfo_GetDocumentation_Stub(ITypeInfo *This, MEMBERID memid,
+                                                   DWORD flags, BSTR *name, BSTR *doc_string,
+                                                   DWORD *help_context, BSTR *help_file)
 {
-    TRACE("(%p, %08x, %08x, %p, %p, %p, %p)\n", This, memid, refPtrFlags, pBstrName, pBstrDocString,
-          pdwHelpContext, pBstrHelpFile);
-    return ITypeInfo_GetDocumentation(This, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+    TRACE("(%p, %08x, %08x, %p, %p, %p, %p)\n", This, memid, flags, name, doc_string, help_context, help_file);
+
+    *name = *doc_string = *help_file = NULL;
+    *help_context = 0;
+
+    if(!(flags & 1)) name = NULL;
+    if(!(flags & 2)) doc_string = NULL;
+    if(!(flags & 4)) help_context = NULL;
+    if(!(flags & 8)) help_file = NULL;
+
+    return ITypeInfo_GetDocumentation(This, memid, name, doc_string, help_context, help_file);
 }
 
 HRESULT CALLBACK ITypeInfo_GetDllEntry_Proxy(
