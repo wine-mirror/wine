@@ -637,6 +637,7 @@ static void test_NtDeleteKey(void)
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&hkey, am, &attr);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
 
     status = pNtDeleteKey(hkey);
     ok(status == STATUS_SUCCESS, "NtDeleteKey Failed: 0x%08x\n", status);
