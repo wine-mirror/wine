@@ -12664,6 +12664,126 @@ static void test_WaitForInputIdle( char *argv0 )
     CloseHandle( thread );
 }
 
+static const struct message WmSetParentSeq_1[] = {
+    { WM_SHOWWINDOW, sent|wparam, 0 },
+    { EVENT_OBJECT_PARENTCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE },
+    { WM_CHILDACTIVATE, sent },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOREDRAW|SWP_NOCLIENTSIZE },
+    { WM_MOVE, sent|defwinproc|wparam, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { 0 }
+};
+
+static const struct message WmSetParentSeq_2[] = {
+    { WM_SHOWWINDOW, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE },
+    { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_ACTIVATE, sent|wparam, 0 },
+    { WM_ACTIVATEAPP, sent|wparam, 0 },
+    { WM_KILLFOCUS, sent|wparam, 0 },
+    { EVENT_OBJECT_PARENTCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE },
+    { HCBT_ACTIVATE, hook },
+    { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_SETFOCUS, sent|defwinproc },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOREDRAW|SWP_NOSIZE|SWP_NOCLIENTSIZE },
+    { WM_MOVE, sent|defwinproc|wparam, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { 0 }
+};
+
+
+static void test_SetParent(void)
+{
+    HWND parent1, parent2, child, popup;
+    RECT rc, rc_old;
+
+    parent1 = CreateWindowEx(0, "TestParentClass", NULL, WS_OVERLAPPEDWINDOW,
+                            100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(parent1 != 0, "Failed to create parent1 window\n");
+
+    parent2 = CreateWindowEx(0, "TestParentClass", NULL, WS_OVERLAPPEDWINDOW,
+                            400, 100, 200, 200, 0, 0, 0, NULL);
+    ok(parent2 != 0, "Failed to create parent2 window\n");
+
+    /* WS_CHILD window */
+    child = CreateWindowEx(0, "TestWindowClass", NULL, WS_CHILD | WS_VISIBLE,
+                           10, 10, 150, 150, parent1, 0, 0, NULL);
+    ok(child != 0, "Failed to create child window\n");
+
+    GetWindowRect(parent1, &rc);
+    trace("parent1 (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+    GetWindowRect(child, &rc_old);
+    MapWindowPoints(0, parent1, (POINT *)&rc_old, 2);
+    trace("child (%d,%d)-(%d,%d)\n", rc_old.left, rc_old.top, rc_old.right, rc_old.bottom);
+
+    flush_sequence();
+
+    SetParent(child, parent2);
+    flush_events();
+    ok_sequence(WmSetParentSeq_1, "SetParent() visible WS_CHILD", TRUE);
+
+    ok(GetWindowLongA(child, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(child), "IsWindowVisible() should return FALSE\n");
+
+    GetWindowRect(parent2, &rc);
+    trace("parent2 (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+    GetWindowRect(child, &rc);
+    MapWindowPoints(0, parent2, (POINT *)&rc, 2);
+    trace("child (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+
+    ok(EqualRect(&rc_old, &rc), "rects do not match (%d,%d-%d,%d) / (%d,%d-%d,%d)\n",
+       rc_old.left, rc_old.top, rc_old.right, rc_old.bottom,
+       rc.left, rc.top, rc.right, rc.bottom );
+
+    /* WS_POPUP window */
+    popup = CreateWindowEx(0, "TestWindowClass", NULL, WS_POPUP | WS_VISIBLE,
+                           20, 20, 100, 100, 0, 0, 0, NULL);
+    ok(popup != 0, "Failed to create popup window\n");
+
+    GetWindowRect(popup, &rc_old);
+    trace("popup (%d,%d)-(%d,%d)\n", rc_old.left, rc_old.top, rc_old.right, rc_old.bottom);
+
+    flush_sequence();
+
+    SetParent(popup, child);
+    flush_events();
+    ok_sequence(WmSetParentSeq_2, "SetParent() visible WS_POPUP", TRUE);
+
+    ok(GetWindowLongA(popup, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(popup), "IsWindowVisible() should return FALSE\n");
+
+    GetWindowRect(child, &rc);
+    trace("parent2 (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+    GetWindowRect(popup, &rc);
+    MapWindowPoints(0, child, (POINT *)&rc, 2);
+    trace("popup (%d,%d)-(%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+
+    ok(EqualRect(&rc_old, &rc), "rects do not match (%d,%d-%d,%d) / (%d,%d-%d,%d)\n",
+       rc_old.left, rc_old.top, rc_old.right, rc_old.bottom,
+       rc.left, rc.top, rc.right, rc.bottom );
+
+    DestroyWindow(popup);
+    DestroyWindow(child);
+    DestroyWindow(parent1);
+    DestroyWindow(parent2);
+
+    flush_sequence();
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -12727,6 +12847,7 @@ START_TEST(msg)
     hEvent_hook = 0;
 #endif
 
+    test_SetParent();
     test_PostMessage();
     test_ShowWindow();
     test_PeekMessage();
