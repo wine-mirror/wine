@@ -734,7 +734,7 @@ static void WINAPI event_client ( client_params *par )
         tmp = WaitForSingleObject ( event, INFINITE );
         ok ( tmp == WAIT_OBJECT_0, "event_client (%x): wait for connect event failed: %d\n", id, tmp );
         err = WSAEnumNetworkEvents ( mem->s, event, &wsa_events );
-        wsa_ok ( err, 0 ==, "event_client (%x): WSAEnumNetworkEvents error: %d\n" );
+        ok ( err == 0, "event_client (%x): WSAEnumNetworkEvents error: %d\n", id, err );
         err = wsa_events.iErrorCode[ FD_CONNECT_BIT ];
         ok ( err == 0, "event_client (%x): connect error: %d\n", id, err );
         if ( err ) goto out;
@@ -755,7 +755,7 @@ static void WINAPI event_client ( client_params *par )
         ok ( err == WAIT_OBJECT_0, "event_client (%x): wait failed\n", id );
 
         err = WSAEnumNetworkEvents ( mem->s, event, &wsa_events );
-        wsa_ok ( err, 0 ==, "event_client (%x): WSAEnumNetworkEvents error: %d\n" );
+        ok( err == 0, "event_client (%x): WSAEnumNetworkEvents error: %d\n", id, err );
 
         if ( wsa_events.lNetworkEvents & FD_WRITE )
         {
@@ -2580,8 +2580,7 @@ static void test_gethostbyname_hack(void)
         }
     }
 
-    he = NULL;
-    he = gethostbyname("nonexistent.winehq.org");
+    gethostbyname("nonexistent.winehq.org");
     /* Don't check for the return value, as some braindead ISPs will kindly
      * resolve nonexistent host names to addresses of the ISP's spam pages. */
 }
@@ -3977,7 +3976,6 @@ static void test_ConnectEx(void)
     acceptor = accept(listener, NULL, NULL);
     if (acceptor != INVALID_SOCKET) {
         closesocket(acceptor);
-        acceptor = INVALID_SOCKET;
     }
 
     buffer[0] = '1';
@@ -4238,7 +4236,6 @@ static void test_AcceptEx(void)
     closesocket(connector);
     connector = INVALID_SOCKET;
     closesocket(acceptor);
-    acceptor = INVALID_SOCKET;
 
     /* Test short reads */
 
@@ -4276,7 +4273,6 @@ static void test_AcceptEx(void)
     closesocket(connector);
     connector = INVALID_SOCKET;
     closesocket(acceptor);
-    acceptor = INVALID_SOCKET;
 
     /* Test CF_DEFER & AcceptEx interaction */
 
@@ -4387,7 +4383,6 @@ static void test_AcceptEx(void)
     closesocket(connector);
     connector = INVALID_SOCKET;
     closesocket(acceptor);
-    acceptor = INVALID_SOCKET;
 
     /* clean up in case of failures */
     while ((acceptor = accept(listener, NULL, NULL)) != INVALID_SOCKET)
@@ -4424,7 +4419,6 @@ static void test_AcceptEx(void)
     ok(bytesReturned == 0, "bytesReturned isn't supposed to be %d\n", bytesReturned);
 
     closesocket(acceptor);
-    acceptor = INVALID_SOCKET;
 
     /* Test closing with pending requests */
 
@@ -4439,7 +4433,6 @@ static void test_AcceptEx(void)
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
 
     closesocket(acceptor);
-    acceptor = INVALID_SOCKET;
 
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
     todo_wine ok(dwret == WAIT_OBJECT_0 || broken(dwret == WAIT_TIMEOUT) /* NT4/2000 */,
@@ -4472,7 +4465,6 @@ static void test_AcceptEx(void)
     ok(dwret == WAIT_TIMEOUT, "Waiting for timeout failed with %d + errno %d\n", dwret, GetLastError());
 
     closesocket(acceptor);
-    acceptor = INVALID_SOCKET;
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
     if (acceptor == INVALID_SOCKET) {
