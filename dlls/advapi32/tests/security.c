@@ -1533,7 +1533,7 @@ static void test_LookupAccountSid(void)
     acc_sizeA = 0;
     dom_sizeA = MAX_PATH;
     accountA[0] = 0;
-    ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
+    LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(acc_sizeA == real_acc_sizeA + 1,
        "LookupAccountSidA() Expected acc_size = %u, got %u\n",
@@ -1542,7 +1542,7 @@ static void test_LookupAccountSid(void)
     /* try a 0 sized account buffer */
     acc_sizeA = 0;
     dom_sizeA = MAX_PATH;
-    ret = LookupAccountSidA(NULL, pUsersSid, NULL, &acc_sizeA, domainA, &dom_sizeA, &use);
+    LookupAccountSidA(NULL, pUsersSid, NULL, &acc_sizeA, domainA, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(acc_sizeA == real_acc_sizeA + 1,
        "LookupAccountSid() Expected acc_size = %u, got %u\n",
@@ -1561,7 +1561,7 @@ static void test_LookupAccountSid(void)
     dom_sizeA = 0;
     acc_sizeA = MAX_PATH;
     accountA[0] = 0;
-    ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
+    LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(dom_sizeA == real_dom_sizeA + 1,
        "LookupAccountSidA() Expected dom_size = %u, got %u\n",
@@ -1570,7 +1570,7 @@ static void test_LookupAccountSid(void)
     /* try a 0 sized domain buffer */
     dom_sizeA = 0;
     acc_sizeA = MAX_PATH;
-    ret = LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, NULL, &dom_sizeA, &use);
+    LookupAccountSidA(NULL, pUsersSid, accountA, &acc_sizeA, NULL, &dom_sizeA, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(dom_sizeA == real_dom_sizeA + 1,
        "LookupAccountSidA() Expected dom_size = %u, got %u\n",
@@ -1604,7 +1604,7 @@ static void test_LookupAccountSid(void)
     acc_sizeW = 0;
     dom_sizeW = MAX_PATH;
     accountW[0] = 0;
-    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
+    LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(acc_sizeW == real_acc_sizeW + 1,
        "LookupAccountSidW() Expected acc_size = %u, got %u\n",
@@ -1613,7 +1613,7 @@ static void test_LookupAccountSid(void)
     /* try a 0 sized account buffer */
     acc_sizeW = 0;
     dom_sizeW = MAX_PATH;
-    ret = LookupAccountSidW(NULL, pUsersSid, NULL, &acc_sizeW, domainW, &dom_sizeW, &use);
+    LookupAccountSidW(NULL, pUsersSid, NULL, &acc_sizeW, domainW, &dom_sizeW, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(acc_sizeW == real_acc_sizeW + 1,
        "LookupAccountSidW() Expected acc_size = %u, got %u\n",
@@ -1632,7 +1632,7 @@ static void test_LookupAccountSid(void)
     dom_sizeW = 0;
     acc_sizeW = MAX_PATH;
     accountW[0] = 0;
-    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
+    LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, domainW, &dom_sizeW, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(dom_sizeW == real_dom_sizeW + 1,
        "LookupAccountSidW() Expected dom_size = %u, got %u\n",
@@ -1641,7 +1641,7 @@ static void test_LookupAccountSid(void)
     /* try a 0 sized domain buffer */
     dom_sizeW = 0;
     acc_sizeW = MAX_PATH;
-    ret = LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, NULL, &dom_sizeW, &use);
+    LookupAccountSidW(NULL, pUsersSid, accountW, &acc_sizeW, NULL, &dom_sizeW, &use);
     /* this can fail or succeed depending on OS version but the size will always be returned */
     ok(dom_sizeW == real_dom_sizeW + 1,
        "LookupAccountSidW() Expected dom_size = %u, got %u\n",
@@ -1662,7 +1662,9 @@ static void test_LookupAccountSid(void)
     /* Test LookupAccountSid with Sid retrieved from token information.
      This assumes this process is running under the account of the current user.*/
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &hToken);
+    ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
     ret = GetTokenInformation(hToken, TokenUser, NULL, 0, &cbti);
+    ok(!ret, "GetTokenInformation failed with error %d\n", GetLastError());
     ptiUser = HeapAlloc(GetProcessHeap(), 0, cbti);
     if (GetTokenInformation(hToken, TokenUser, ptiUser, cbti, &cbti))
     {
@@ -3089,7 +3091,6 @@ static void test_SetSecurityDescriptorControl (PSECURITY_DESCRIPTOR sec)
         GetSecurityDescriptorControl(sec, &test, &dwRevision);
         expect_eq(test, ctrl, int, "%x");
 
-        ctrl = ref;
         setOrClear ^= bitOfInterest;
         SetLastError (0xbebecaca);
         pSetSecurityDescriptorControl (sec, bitOfInterest, setOrClear);
