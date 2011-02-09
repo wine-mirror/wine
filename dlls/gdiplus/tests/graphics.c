@@ -593,6 +593,7 @@ static void test_BeginContainer2(void)
     GdipSetClipRect(graphics, 2, 4, 6, 8, CombineModeReplace);
 
     status = GdipEndContainer(graphics, cont2);
+    expect(Ok, status);
 
     GdipGetClipBounds(graphics, &clip);
     ok(fabs(defClip[0] - clip.X) < 0.0001 &&
@@ -604,6 +605,7 @@ static void test_BeginContainer2(void)
             clip.X, clip.Y, clip.Width, clip.Height);
 
     status = GdipEndContainer(graphics, cont1);
+    expect(Ok, status);
 
     /* nesting */
     status = GdipBeginContainer2(graphics, &cont1);
@@ -1757,6 +1759,7 @@ static void test_get_set_clip(void)
     rect.Height = rect.Width = 100.0;
 
     status = GdipCreateRegionRect(&rect, &clip);
+    expect(Ok, status);
 
     /* NULL arguments */
     status = GdipGetClip(NULL, NULL);
@@ -1878,6 +1881,7 @@ static void test_textcontrast(void)
     status = GdipGetTextContrast(graphics, NULL);
     expect(InvalidParameter, status);
     status = GdipGetTextContrast(graphics, &contrast);
+    expect(Ok, status);
     expect(4, contrast);
 
     GdipDeleteGraphics(graphics);
