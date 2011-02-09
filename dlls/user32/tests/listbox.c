@@ -840,7 +840,6 @@ static void test_listbox_LB_DIR(void)
         memset(pathBuffer, 0, MAX_PATH);
         driveletter = '\0';
         SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
-        p = pathBuffer + strlen(pathBuffer);
         if (sscanf(pathBuffer, "[-%c-]", &driveletter) == 1) {
             ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
         }
@@ -951,7 +950,6 @@ static void test_listbox_LB_DIR(void)
         memset(pathBuffer, 0, MAX_PATH);
         driveletter = '\0';
         SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
-        p = pathBuffer + strlen(pathBuffer);
         if (sscanf(pathBuffer, "[-%c-]", &driveletter) == 1) {
             ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
         } else {
@@ -987,7 +985,6 @@ static void test_listbox_LB_DIR(void)
         memset(pathBuffer, 0, MAX_PATH);
         driveletter = '\0';
         SendMessage(hList, LB_GETTEXT, i, (LPARAM)pathBuffer);
-        p = pathBuffer + strlen(pathBuffer);
         ok (sscanf(pathBuffer, "[-%c-]", &driveletter) == 1, "Element %d (%s) does not fit [-X-]\n", i, pathBuffer);
         ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
     }
@@ -1181,7 +1178,6 @@ static void test_listbox_dlgdir(void)
     for (i = 0; i < itemCount; i++) {
         memset(pathBuffer, 0, MAX_PATH);
         SendMessage(g_listBox, LB_GETTEXT, i, (LPARAM)pathBuffer);
-        p = pathBuffer + strlen(pathBuffer);
         ok( pathBuffer[0] == '[' && pathBuffer[strlen(pathBuffer)-1] == ']',
             "Element %d (%s) does not fit requested [...]\n", i, pathBuffer);
     }
@@ -1321,7 +1317,6 @@ static void test_listbox_dlgdir(void)
         memset(pathBuffer, 0, MAX_PATH);
         driveletter = '\0';
         SendMessage(g_listBox, LB_GETTEXT, i, (LPARAM)pathBuffer);
-        p = pathBuffer + strlen(pathBuffer);
         if (sscanf(pathBuffer, "[-%c-]", &driveletter) == 1) {
             ok( driveletter >= 'a' && driveletter <= 'z', "Drive letter not in range a..z, got ascii %d\n", driveletter);
         } else {
