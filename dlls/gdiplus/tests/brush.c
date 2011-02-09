@@ -311,6 +311,7 @@ static void test_gradientgetrect(void)
     if (status == Ok)
     {
         status = GdipGetMatrixElements(transform, elements);
+        expect(Ok, status);
         expectf(1.0, elements[0]);
         expectf(1.0, elements[1]);
         expectf(-1.0, elements[2]);
@@ -319,6 +320,7 @@ static void test_gradientgetrect(void)
         expectf(-50.50, elements[5]);
     }
     status = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok, status);
     /* vertical gradient */
     pt1.X = pt1.Y = pt2.X = 0.0;
     pt2.Y = 10.0;
@@ -336,6 +338,7 @@ static void test_gradientgetrect(void)
     if (status == Ok)
     {
         status = GdipGetMatrixElements(transform, elements);
+        expect(Ok, status);
         expectf(0.0, elements[0]);
         expectf(1.0, elements[1]);
         expectf(-1.0, elements[2]);
@@ -344,6 +347,7 @@ static void test_gradientgetrect(void)
         expectf(5.0, elements[5]);
     }
     status = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok, status);
     /* horizontal gradient */
     pt1.X = pt1.Y = pt2.Y = 0.0;
     pt2.X = 10.0;
@@ -361,6 +365,7 @@ static void test_gradientgetrect(void)
     if (status == Ok)
     {
         status = GdipGetMatrixElements(transform, elements);
+        expect(Ok, status);
         expectf(1.0, elements[0]);
         expectf(0.0, elements[1]);
         expectf(0.0, elements[2]);
@@ -369,6 +374,7 @@ static void test_gradientgetrect(void)
         expectf(0.0, elements[5]);
     }
     status = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok, status);
     /* slope = -1 */
     pt1.X = pt1.Y = 0.0;
     pt2.X = 20.0;
@@ -387,6 +393,7 @@ static void test_gradientgetrect(void)
     if (status == Ok)
     {
         status = GdipGetMatrixElements(transform, elements);
+        expect(Ok, status);
         expectf(1.0, elements[0]);
         expectf(-1.0, elements[1]);
         expectf(1.0, elements[2]);
@@ -395,6 +402,7 @@ static void test_gradientgetrect(void)
         expectf(10.0, elements[5]);
     }
     status = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok, status);
     /* slope = 1/100 */
     pt1.X = pt1.Y = 0.0;
     pt2.X = 100.0;
@@ -413,6 +421,7 @@ static void test_gradientgetrect(void)
     if (status == Ok)
     {
         status = GdipGetMatrixElements(transform, elements);
+        expect(Ok,status);
         expectf(1.0, elements[0]);
         expectf(0.01, elements[1]);
         expectf(-0.02, elements[2]);
@@ -421,6 +430,7 @@ static void test_gradientgetrect(void)
         /* expectf(-1.0, elements[5]); */
     }
     status = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok,status);
     /* zero height rect */
     rectf.X = rectf.Y = 10.0;
     rectf.Width = 100.0;
@@ -453,6 +463,7 @@ static void test_gradientgetrect(void)
     if (status == Ok)
     {
         status = GdipGetMatrixElements(transform, elements);
+        expect(Ok,status);
         expectf(1.0, elements[0]);
         expectf(0.0, elements[1]);
         expectf(0.0, elements[2]);
@@ -461,6 +472,7 @@ static void test_gradientgetrect(void)
         expectf(0.0, elements[5]);
     }
     status = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok,status);
     /* passing negative Width/Height to LinearGradientModeHorizontal */
     rectf.X = rectf.Y = 10.0;
     rectf.Width = rectf.Height = -100.0;
@@ -479,6 +491,7 @@ static void test_gradientgetrect(void)
     if (status == Ok)
     {
         status = GdipGetMatrixElements(transform, elements);
+        expect(Ok,status);
         expectf(1.0, elements[0]);
         expectf(0.0, elements[1]);
         expectf(0.0, elements[2]);
@@ -487,6 +500,7 @@ static void test_gradientgetrect(void)
         expectf(0.0, elements[5]);
     }
     status = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok,status);
 
     GdipDeleteMatrix(transform);
 }
