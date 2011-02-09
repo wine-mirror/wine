@@ -118,7 +118,7 @@ static void testGetUserNameExA(void)
     }
 
     if (0) /* Crashes on Windows */
-        rc = pGetUserNameExA(NameSamCompatible, NULL, NULL);
+        pGetUserNameExA(NameSamCompatible, NULL, NULL);
 
     size = 0;
     rc = pGetUserNameExA(NameSamCompatible, NULL, &size);
@@ -128,7 +128,7 @@ static void testGetUserNameExA(void)
     if (0) /* Crashes on Windows with big enough size */
     {
         /* Returned size is already big enough */
-        rc = pGetUserNameExA(NameSamCompatible, NULL, &size);
+        pGetUserNameExA(NameSamCompatible, NULL, &size);
     }
 
     size = 0;
@@ -165,7 +165,7 @@ static void testGetUserNameExW(void)
     }
 
     if (0) /* Crashes on Windows */
-        rc = pGetUserNameExW(NameSamCompatible, NULL, NULL);
+        pGetUserNameExW(NameSamCompatible, NULL, NULL);
 
     size = 0;
     rc = pGetUserNameExW(NameSamCompatible, NULL, &size);
@@ -175,7 +175,7 @@ static void testGetUserNameExW(void)
     if (0) /* Crashes on Windows with big enough size */
     {
         /* Returned size is already big enough */
-        rc = pGetUserNameExW(NameSamCompatible, NULL, &size);
+        pGetUserNameExW(NameSamCompatible, NULL, &size);
     }
 
     size = 0;
