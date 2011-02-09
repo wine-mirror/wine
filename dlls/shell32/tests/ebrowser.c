@@ -749,8 +749,8 @@ static void test_initialization(void)
     if(0)
     {
         /* Crashes on Windows 7 */
-        hr = IExplorerBrowser_Initialize(peb, NULL, NULL, NULL);
-        hr = IExplorerBrowser_Initialize(peb, hwnd, NULL, NULL);
+        IExplorerBrowser_Initialize(peb, NULL, NULL, NULL);
+        IExplorerBrowser_Initialize(peb, hwnd, NULL, NULL);
     }
 
     ZeroMemory(&rc, sizeof(RECT));
@@ -1227,7 +1227,7 @@ static void test_Advise(void)
     {
         /* Using unadvise with a previously unadvised cookie results
          * in a crash. */
-        hr = IExplorerBrowser_Unadvise(peb, cookies[5]);
+        IExplorerBrowser_Unadvise(peb, cookies[5]);
     }
 
     /* Remove the rest. */
@@ -1566,7 +1566,7 @@ static void test_GetCurrentView(void)
     if(0)
     {
         /* Crashes under Windows 7 */
-        hr = IExplorerBrowser_GetCurrentView(peb, NULL, NULL);
+        IExplorerBrowser_GetCurrentView(peb, NULL, NULL);
     }
     hr = IExplorerBrowser_GetCurrentView(peb, NULL, (void**)&punk);
     ok(hr == E_FAIL, "Got 0x%08x\n", hr);
