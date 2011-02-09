@@ -143,7 +143,7 @@ static void test_message_from_string_wide(void)
     {
         SetLastError(0xdeadbeef);
         memcpy(out, init_buf, sizeof(init_buf));
-        r = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0,
+        FormatMessageW(FORMAT_MESSAGE_FROM_STRING, NULL, 0,
             0, out, sizeof(out)/sizeof(WCHAR), NULL);
     }
 
@@ -283,6 +283,7 @@ static void test_message_from_string_wide(void)
     r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_14d, 0,
         0, out, sizeof(out)/sizeof(WCHAR), 1);
     ok(!lstrcmpW(s_14d, out), "failed out=%s\n", wine_dbgstr_w(out));
+    ok(r==4,"failed: r=%d\n", r);
 
     /* a single digit, left justified */
     r = doitW(FORMAT_MESSAGE_FROM_STRING, fmt_1_4d, 0,
@@ -466,7 +467,7 @@ static void test_message_from_string(void)
     {
         SetLastError(0xdeadbeef);
         memcpy(out, init_buf, sizeof(init_buf));
-        r = FormatMessageA(FORMAT_MESSAGE_FROM_STRING, NULL, 0,
+        FormatMessageA(FORMAT_MESSAGE_FROM_STRING, NULL, 0,
             0, out, sizeof(out)/sizeof(CHAR), NULL);
     }
 
@@ -1119,10 +1120,7 @@ static void test_message_null_buffer(void)
     if (0) /* crashes on Windows */
     {
         SetLastError(0xdeadbeef);
-        ret = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 256, NULL);
-        error = GetLastError();
-        ok(!ret, "FormatMessageA returned %u\n", ret);
-        trace("last error %u\n", error);
+        FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, 0, 0, NULL, 256, NULL);
     }
 
     SetLastError(0xdeadbeef);
@@ -1296,7 +1294,7 @@ static void test_message_allocate_buffer_wide(void)
     if (0) /* crashes on Windows */
     {
         buf = (WCHAR *)0xdeadbeef;
-        ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+        FormatMessageW(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
                              NULL, 0, 0, (WCHAR *)&buf, 0, NULL);
     }
 
