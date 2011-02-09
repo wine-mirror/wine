@@ -984,6 +984,7 @@ static HRESULT WINAPI iframe_onreadystatechange(IDispatchEx *iface, DISPID id, L
     ok(hres == S_OK, "get_document failed: %08x\n", hres);
 
     hres = IHTMLDocument2_get_readyState(iframe_doc, &str2);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
     ok(!lstrcmpW(str, str2), "unexpected document readyState %s\n", wine_dbgstr_w(str2));
     SysFreeString(str2);
 
