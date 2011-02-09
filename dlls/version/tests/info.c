@@ -341,12 +341,14 @@ static void test_32bit_win(void)
         retvalW = GetFileVersionInfoSizeW( mypathW, &hdlW);
         pVersionInfoW = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, retvalW );
         retW = GetFileVersionInfoW( mypathW, 0, retvalW, pVersionInfoW );
+        ok(retW, "GetFileVersionInfo failed: GetLastError = %u\n", GetLastError());
     }
 
     GetModuleFileNameA(NULL, mypathA, MAX_PATH);
     retvalA = GetFileVersionInfoSizeA( mypathA, &hdlA);
     pVersionInfoA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, retvalA );
     retA = GetFileVersionInfoA( mypathA, 0, retvalA, pVersionInfoA );
+    ok(retA, "GetFileVersionInfo failed: GetLastError = %u\n", GetLastError());
 
     if (is_unicode_enabled)
     { 
