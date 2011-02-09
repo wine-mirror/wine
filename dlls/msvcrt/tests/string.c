@@ -1176,7 +1176,7 @@ static void test__strtod(void)
     ok(almost_equal(d, 0.1e-4736L), "d = %lf\n", d);
 
     errno = 0xdeadbeef;
-    d = strtod(overflow, &end);
+    strtod(overflow, &end);
     ok(errno == ERANGE, "errno = %x\n", errno);
     ok(end == overflow+21, "incorrect end (%d)\n", (int)(end-overflow));
 
