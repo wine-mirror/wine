@@ -595,9 +595,10 @@ static void test_safearray(void)
         ok(hres == E_INVALIDARG,"SafeArraySetIID of non IID capable safearray did not return E_INVALIDARG, but %x\n",hres);
 
         hres = SafeArrayAllocDescriptor(1,&a);
+        ok(hres == S_OK,"SafeArrayAllocDescriptor should return S_OK, but got %x\n",hres);
         ok((a->fFeatures & FADF_HAVEIID) == 0,"newly allocated descriptor with SAAD should not have FADF_HAVEIID\n");
         hres = pSafeArraySetIID(a,&iid);
-        ok(hres == E_INVALIDARG,"SafeArraySetIID of newly allocated descriptor with SAAD should return E_INVALIDARG, but %x\n",hres);
+        ok(hres == E_INVALIDARG,"SafeArraySetIID of newly allocated descriptor with SAAD should return E_INVALIDARG, but got %x\n",hres);
 
         hres = SafeArrayDestroyDescriptor(a);
         ok(hres == S_OK,"SADD failed with hres %x\n",hres);
@@ -609,6 +610,7 @@ static void test_safearray(void)
 	for (i=0;i<sizeof(vttypes)/sizeof(vttypes[0]);i++) {
         a = NULL;
 		hres = pSafeArrayAllocDescriptorEx(vttypes[i].vt,1,&a);
+		ok(hres == S_OK, "SafeArrayAllocDescriptorEx gave hres 0x%x\n", hres);
 		ok(a->fFeatures == vttypes[i].expflags,"SAADE(%d) resulted with flags %x, expected %x\n", vttypes[i].vt, a->fFeatures, vttypes[i].expflags);
 		if (a->fFeatures & FADF_HAVEIID) {
 			hres = pSafeArrayGetIID(a, &iid);
