@@ -1836,7 +1836,6 @@ static void test_DestroyCursor(void)
         ok( ret, "DestroyCursor succeeded\n" );
     else
         ok( !ret, "DestroyCursor succeeded\n" );
-    error = GetLastError();
     ok( GetLastError() == ERROR_INVALID_CURSOR_HANDLE || GetLastError() == 0xdeadbeef,
         "wrong error %u\n", GetLastError() );
 
