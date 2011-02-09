@@ -421,6 +421,8 @@ static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
     if (texture)
     {
         hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+        ok(hr == D3D_OK, "GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(desc.Format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_A8R8G8B8);
 
         ok(desc.Width == 256, "Returned width %d, expected %d\n", desc.Width, 256);
         ok(desc.Height == 256, "Returned height %d, expected %d\n", desc.Height, 256);
@@ -435,6 +437,8 @@ static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
     if (texture)
     {
         hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+        ok(hr == D3D_OK, "GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(desc.Format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_A8R8G8B8);
 
         ok(desc.Width == 1, "Returned width %d, expected %d\n", desc.Width, 1);
         ok(desc.Height == 1, "Returned height %d, expected %d\n", desc.Height, 1);
@@ -456,6 +460,8 @@ static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
         if (texture)
         {
             hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+            ok(hr == D3D_OK, "GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
+            ok(desc.Format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_A8R8G8B8);
 
             /* Conditional NPOT may create a texture with different dimensions, so allow those
                situations instead of returning a fail */
@@ -542,6 +548,7 @@ static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
     if (texture)
     {
         hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+        ok(hr == D3D_OK, "GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
         ok(desc.Format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_A8R8G8B8);
 
         IDirect3DTexture9_Release(texture);
@@ -554,6 +561,7 @@ static void test_D3DXCreateTexture(IDirect3DDevice9 *device)
     if (texture)
     {
         hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+        ok(hr == D3D_OK, "GetLevelDesc returned %#x, expected %#x\n", hr, D3D_OK);
         ok(desc.Format == D3DFMT_A8R8G8B8, "Returned format %u, expected %u\n", desc.Format, D3DFMT_A8R8G8B8);
 
         IDirect3DTexture9_Release(texture);
