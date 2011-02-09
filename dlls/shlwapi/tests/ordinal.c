@@ -1638,7 +1638,7 @@ static void test_SHFormatDateTimeA(void)
 if (0)
 {
     /* crashes on native */
-    ret = pSHFormatDateTimeA(NULL, NULL, NULL, 0);
+    pSHFormatDateTimeA(NULL, NULL, NULL, 0);
 }
 
     GetLocalTime(&st);
@@ -1799,7 +1799,7 @@ static void test_SHFormatDateTimeW(void)
 if (0)
 {
     /* crashes on native */
-    ret = pSHFormatDateTimeW(NULL, NULL, NULL, 0);
+    pSHFormatDateTimeW(NULL, NULL, NULL, 0);
 }
 
     GetLocalTime(&st);
@@ -2630,7 +2630,7 @@ static void test_SHIShellFolder_EnumObjects(void)
 
     if(0){
         /* NULL object crashes on Windows */
-        hres = pSHIShellFolder_EnumObjects(NULL, NULL, 0, NULL);
+        pSHIShellFolder_EnumObjects(NULL, NULL, 0, NULL);
     }
 
     /* SHIShellFolder_EnumObjects doesn't QI the object for IShellFolder */
@@ -2712,9 +2712,9 @@ static void test_SHGetIniString(void)
 
     if(0){
         /* these crash on Windows */
-        ret = pSHGetIniStringW(NULL, NULL, NULL, 0, NULL);
-        ret = pSHGetIniStringW(NULL, AKeyW, out, sizeof(out), TestIniW);
-        ret = pSHGetIniStringW(TestAppW, AKeyW, NULL, sizeof(out), TestIniW);
+        pSHGetIniStringW(NULL, NULL, NULL, 0, NULL);
+        pSHGetIniStringW(NULL, AKeyW, out, sizeof(out), TestIniW);
+        pSHGetIniStringW(TestAppW, AKeyW, NULL, sizeof(out), TestIniW);
     }
 
     ret = pSHGetIniStringW(TestAppW, AKeyW, out, 0, TestIniW);
