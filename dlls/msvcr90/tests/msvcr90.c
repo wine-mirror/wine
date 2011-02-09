@@ -747,9 +747,9 @@ static void test__atoflt(void)
 if (0)
 {
     /* crashes on native */
-    ret = p_atoflt(NULL, NULL);
-    ret = p_atoflt(NULL, (char*)_atoflt_testdata[0].str);
-    ret = p_atoflt(&flt, NULL);
+    p_atoflt(NULL, NULL);
+    p_atoflt(NULL, (char*)_atoflt_testdata[0].str);
+    p_atoflt(&flt, NULL);
 }
 
     while (_atoflt_testdata[i].str)
@@ -846,7 +846,7 @@ static void test__realloc_crt(void)
 if (0)
 {
     /* crashes on some systems starting Vista */
-    mem = p_realloc_crt(NULL, 10);
+    p_realloc_crt(NULL, 10);
 }
 
     mem = p_malloc(10);
