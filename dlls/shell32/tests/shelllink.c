@@ -431,7 +431,7 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
     if (0)
     {
         /* crashes on XP */
-        r = IPersistFile_GetCurFile(pf, NULL);
+        IPersistFile_GetCurFile(pf, NULL);
     }
 
         /* test GetCurFile before ::Save */
@@ -760,6 +760,8 @@ static void test_load_save(void)
     check_lnk(lnkfile, &desc, 0x0);
 
     r=pGetShortPathNameA(mydir, mypath, sizeof(mypath));
+    ok(r<sizeof(mypath), "GetShortPathName failed (%d), err %d\n", r, GetLastError());
+
     strcpy(realpath, mypath);
     strcat(realpath, "\\test.txt");
     strcat(mypath, "\\\\test.txt");
@@ -809,6 +811,7 @@ static void test_load_save(void)
     check_lnk(lnkfile, &desc, 0x4);
 
     r = DeleteFileA(realpath);
+    ok(r, "failed to delete file %s (%d)\n", realpath, GetLastError());
 
     /* FIXME: Also test saving a .lnk pointing to a pidl that cannot be
      * represented as a path.
@@ -885,7 +888,7 @@ static void test_datalink(void)
 if (0)
 {
     /* the following crashes */
-    r = IShellLinkDataList_GetFlags( dl, NULL );
+    IShellLinkDataList_GetFlags( dl, NULL );
 }
 
     flags = 0;
