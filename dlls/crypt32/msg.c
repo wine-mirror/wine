@@ -277,20 +277,15 @@ static BOOL CDataEncodeMsg_Update(HCRYPTMSG hCryptMsg, const BYTE *pbData,
         }
         else
         {
-            msg->base.state = MsgStateFinalized;
-            if (!cbData)
-                SetLastError(E_INVALIDARG);
-            else
-            {
-                CRYPT_DATA_BLOB blob = { cbData, (LPBYTE)pbData };
+            CRYPT_DATA_BLOB blob = { cbData, (LPBYTE)pbData };
 
-                /* non-streamed data messages don't allow non-final updates,
-                 * don't bother checking whether data already exist, they can't.
-                 */
-                ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
-                 &blob, CRYPT_ENCODE_ALLOC_FLAG, NULL, &msg->bare_content,
-                 &msg->bare_content_len);
-            }
+            msg->base.state = MsgStateFinalized;
+            /* non-streamed data messages don't allow non-final updates,
+             * don't bother checking whether data already exist, they can't.
+             */
+            ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_OCTET_STRING,
+             &blob, CRYPT_ENCODE_ALLOC_FLAG, NULL, &msg->bare_content,
+             &msg->bare_content_len);
         }
     }
     return ret;

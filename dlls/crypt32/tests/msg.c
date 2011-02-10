@@ -394,7 +394,6 @@ static void test_data_msg_update(void)
      NULL);
     /* Starting with Vista, can update a message with no data. */
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-    todo_wine
     ok(ret || broken(!ret), "CryptMsgUpdate failed: %08x\n", GetLastError());
     if (ret)
     {
