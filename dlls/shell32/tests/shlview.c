@@ -509,7 +509,7 @@ static void test_IShellView_CreateViewWindow(void)
 if (0)
 {
     /* crashes on native */
-    hr = IShellView_CreateViewWindow(view, NULL, &settings, NULL, NULL, NULL);
+    IShellView_CreateViewWindow(view, NULL, &settings, NULL, NULL, NULL);
 }
 
     settings.ViewMode = FVM_ICON;
@@ -577,14 +577,14 @@ static void test_IFolderView(void)
 if (0)
 {
     /* crashes on Vista and Win2k8 - List not created yet case */
-    hr = IFolderView_GetSpacing(fv, &pt);
+    IFolderView_GetSpacing(fv, &pt);
 
     /* crashes on XP */
-    hr = IFolderView_GetSelectionMarkedItem(fv, NULL);
-    hr = IFolderView_GetFocusedItem(fv, NULL);
+    IFolderView_GetSelectionMarkedItem(fv, NULL);
+    IFolderView_GetFocusedItem(fv, NULL);
 
     /* crashes on Vista+ */
-    hr = IFolderView_Item(fv, 0, NULL);
+    IFolderView_Item(fv, 0, NULL);
 }
 
     browser = IShellBrowserImpl_Construct();
@@ -632,20 +632,17 @@ if (0)
 if (0)
 {
     /* crashes on XP */
-    hr = IFolderView_ItemCount(fv, SVGIO_ALLVIEW, NULL);
+    IFolderView_ItemCount(fv, SVGIO_ALLVIEW, NULL);
 }
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    hr = IFolderView_ItemCount(fv, SVGIO_ALLVIEW, &count);
-    ok(hr == S_OK, "got (0x%08x)\n", hr);
-    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, count ? folderview_itemcount_seq : empty_seq,
-                                  "IFolderView::ItemCount", FALSE);
+    IFolderView_ItemCount(fv, SVGIO_ALLVIEW, &count);
 
     /* IFolderView::GetSelectionMarkedItem */
 if (0)
 {
     /* crashes on XP */
-    hr = IFolderView_GetSelectionMarkedItem(fv, NULL);
+    IFolderView_GetSelectionMarkedItem(fv, NULL);
 }
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -671,8 +668,8 @@ if (0)
 if (0)
 {
     /* crashes on XP */
-    hr = IFolderView_GetFolder(fv, NULL, (void**)&folder);
-    hr = IFolderView_GetFolder(fv, NULL, NULL);
+    IFolderView_GetFolder(fv, NULL, (void**)&folder);
+    IFolderView_GetFolder(fv, NULL, NULL);
 }
 
     hr = IFolderView_GetFolder(fv, &IID_IShellFolder, NULL);
@@ -930,10 +927,10 @@ static void test_GetSetCurrentViewMode(void)
         HWND hwnd_lv;
         UINT count;
 
-        if(0)
+        if (0)
         {
             /* Crashes under Win7/WinXP */
-            hr = IFolderView_GetCurrentViewMode(fview, NULL);
+            IFolderView_GetCurrentViewMode(fview, NULL);
         }
 
         hr = IFolderView_GetCurrentViewMode(fview, &viewmode);
