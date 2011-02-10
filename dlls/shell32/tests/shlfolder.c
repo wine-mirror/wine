@@ -3477,6 +3477,7 @@ static void test_SHCreateShellItemArray(void)
                         {
                             UINT count_sia, i;
                             hr = IShellItemArray_GetCount(psia, &count_sia);
+                            ok(hr == S_OK, "Got 0x%08x\n", hr);
                             ok(count_sia == count, "Counts differ (%d, %d)\n", count, count_sia);
                             for(i = 0; i < count_sia; i++)
                             {
