@@ -425,7 +425,7 @@ static void test_menu_ownerdraw(void)
     MOD_maxid = k-1;
     assert( k <= sizeof(MOD_rc)/sizeof(RECT));
     /* display the menu */
-    ret = TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
+    TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
 
     /* columns have a 4 pixel gap between them */
     ok( MOD_rc[0].right + 4 ==  MOD_rc[2].left,
@@ -449,7 +449,7 @@ static void test_menu_ownerdraw(void)
     leftcol= MOD_rc[0].left;
     ModifyMenu( hmenu, 0, MF_BYCOMMAND| MF_OWNERDRAW| MF_SEPARATOR, 0, 0); 
     /* display the menu */
-    ret = TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
+    TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
     /* left should be 4 pixels less now */
     ok( leftcol == MOD_rc[0].left + 4, 
             "columns should be 4 pixels to the left (actual %d).\n",
@@ -562,13 +562,15 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
         ReleaseDC( hwnd, hdc);
     }
     if(ispop)
-        ret = TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
+        TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
     else {
         ret = SetMenu( hwnd, hmenu);
         ok(ret, "SetMenu failed with error %d\n", GetLastError());
         DrawMenuBar( hwnd);
     }
     ret = GetMenuItemRect( hwnd, hmenu, 0, &rc);
+    ok(ret, "GetMenuItemRect failed with error %d\n", GetLastError());
+
     if (0)  /* comment out menu size checks, behavior is different in almost every Windows version */
             /* the tests should however succeed on win2000, XP and Wine (at least up to 1.1.15) */
             /* with a variety of dpis and desktop font sizes */
@@ -2889,7 +2891,8 @@ static void test_menu_trackpopupmenu(void)
         }
         /* display the menu */
         /* start with an invalid menu handle */
-        gle = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+
         gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;
         ret = MyTrackPopupMenu( Ex, NULL, TPM_RETURNCMD, 100,100, hwnd, NULL);
         gle = GetLastError();
@@ -2905,7 +2908,7 @@ static void test_menu_trackpopupmenu(void)
                 gflag_entermenuloop ? "WM_INITMENULOOP ": "",
                 gflag_initmenu ? "WM_INITMENU": "");
         /* another one but not NULL */
-        gle = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
         gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;
         ret = MyTrackPopupMenu( Ex, (HMENU)hwnd, TPM_RETURNCMD, 100,100, hwnd, NULL);
         gle = GetLastError();
@@ -2921,7 +2924,7 @@ static void test_menu_trackpopupmenu(void)
                 gflag_entermenuloop ? "WM_INITMENULOOP ": "",
                 gflag_initmenu ? "WM_INITMENU": "");
         /* now a somewhat successful call */
-        gle = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
         gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;
         ret = MyTrackPopupMenu( Ex, hmenu, TPM_RETURNCMD, 100,100, hwnd, NULL);
         gle = GetLastError();
@@ -2939,7 +2942,7 @@ static void test_menu_trackpopupmenu(void)
         /* and another */
         ret = AppendMenuA( hmenu, MF_STRING, 1, "winetest");
         ok( ret, "AppendMenA has failed!\n");
-        gle = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
         gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;
         ret = MyTrackPopupMenu( Ex, hmenu, TPM_RETURNCMD, 100,100, hwnd, NULL);
         gle = GetLastError();
@@ -3067,14 +3070,14 @@ static void test_menu_cancelmode(void)
      */
     /* menu owner is top level window */
     g_hwndtosend = hwnd;
-    ret = TrackPopupMenu( menu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
+    TrackPopupMenu( menu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
     todo_wine {
         ok( g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
     }
     ok( g_got_enteridle < 2, "received %d WM_ENTERIDLE messages, should be less than 2\n", g_got_enteridle);
     /* menu owner is child window */
     g_hwndtosend = hwndchild;
-    ret = TrackPopupMenu( menu, TPM_RETURNCMD, 100,100, 0, hwndchild, NULL);
+    TrackPopupMenu( menu, TPM_RETURNCMD, 100,100, 0, hwndchild, NULL);
     todo_wine {
         ok(g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
     }
@@ -3082,7 +3085,7 @@ static void test_menu_cancelmode(void)
     /* now send the WM_CANCELMODE messages to the WRONG window */
     /* those should fail ( to have any effect) */
     g_hwndtosend = hwnd;
-    ret = TrackPopupMenu( menu, TPM_RETURNCMD, 100,100, 0, hwndchild, NULL);
+    TrackPopupMenu( menu, TPM_RETURNCMD, 100,100, 0, hwndchild, NULL);
     ok( g_got_enteridle == 2, "received %d WM_ENTERIDLE messages, should be 2\n", g_got_enteridle);
     /* cleanup */
     DestroyMenu( menu);
@@ -3182,6 +3185,7 @@ static void test_menualign(void)
     if( pGetMenuInfo) {
         mi.fMask = MIM_STYLE;
         ret = pGetMenuInfo( menu, &mi);
+        ok( ret, "GetMenuInfo failed: %d\n", GetLastError());
         ok( menu != NULL, "GetMenuInfo() failed\n");
         ok( 0 == mi.dwStyle, "menuinfo style is %x\n", mi.dwStyle);
     }
