@@ -102,7 +102,6 @@ static void testCreateCRL(void)
     ok(!context && (GLE == CRYPT_E_ASN1_EOD || GLE == OSS_MORE_INPUT),
      "Expected CRYPT_E_ASN1_EOD or OSS_MORE_INPUT, got %08x\n", GLE);
     context = CertCreateCRLContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
-    GLE = GetLastError();
     ok(!context, "Expected failure\n");
     context = CertCreateCRLContext(X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL) - 1);
@@ -205,6 +204,7 @@ static void testAddCRL(void)
     /* Normal cases: a "signed" CRL is okay.. */
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, signedCRL,
      sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
     /* and an unsigned one is too. */
     ret = CertAddEncodedCRLToStore(store, X509_ASN_ENCODING, CRL, sizeof(CRL),
      CERT_STORE_ADD_ALWAYS, NULL);
@@ -477,9 +477,9 @@ static void testFindCRL(void)
     if (0)
     {
         /* Crash or return NULL/STATUS_ACCESS_VIOLATION */
-        context = pCertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_FOR, NULL,
+        pCertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_FOR, NULL,
          NULL);
-        context = pCertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_FOR,
+        pCertFindCRLInStore(store, 0, 0, CRL_FIND_ISSUED_FOR,
          &issuedForPara, NULL);
     }
     /* Test whether the cert matches the CRL in the store */
@@ -906,6 +906,7 @@ static void testCRLProperties(void)
         size = sizeof(hashProperty);
         ret = CertGetCRLContextProperty(context, CERT_HASH_PROP_ID,
          hashProperty, &size);
+        ok(ret, "CertSetCRLContextProperty failed: %08x\n", GetLastError());
         ok(!memcmp(hashProperty, hash, sizeof(hash)), "Unexpected hash\n");
         /* Delete the (bogus) hash, and get the real one */
         ret = CertSetCRLContextProperty(context, CERT_HASH_PROP_ID, 0, NULL);
