@@ -486,10 +486,7 @@ static void test_CurrentDirectoryA(CHAR *origdir, CHAR *newdir)
 */
   if (0)
   {
-    SetLastError( 0xdeadbeef );
-    len = GetCurrentDirectoryA( 42, (LPSTR)(MAX_PATH + 42) );
-    ok( len == 0 && GetLastError() == ERROR_INVALID_PARAMETER,
-        "GetCurrentDirectoryA failed to fail %u err %u\n", len, GetLastError() );
+      GetCurrentDirectoryA( 42, (LPSTR)(MAX_PATH + 42) );
   }
 
 /* SetCurrentDirectoryA shouldn't care whether the string has a
@@ -1241,7 +1238,7 @@ static void test_GetLongPathNameW(void)
 
     /* NULL buffer with length crashes on Windows */
     if (0)
-    length = pGetLongPathNameW(shortpath, NULL, 20);
+        pGetLongPathNameW(shortpath, NULL, 20);
 
     ok(DeleteFileW(shortpath), "Could not delete temporary file\n");
     ok(RemoveDirectoryW(dirpath), "Could not delete temporary directory\n");
@@ -1302,7 +1299,8 @@ static void test_GetSystemDirectory(void)
     total = res;
 
     /* this crashes on XP */
-    if (0) res = GetSystemDirectory(NULL, total);
+    if (0)
+        GetSystemDirectory(NULL, total);
 
     SetLastError(0xdeadbeef);
     res = GetSystemDirectory(NULL, total-1);
@@ -1360,7 +1358,8 @@ static void test_GetWindowsDirectory(void)
 
     total = res;
     /* this crashes on XP */
-    if (0) res = GetWindowsDirectory(NULL, total);
+    if (0)
+        GetWindowsDirectory(NULL, total);
 
     SetLastError(0xdeadbeef);
     res = GetWindowsDirectory(NULL, total-1);
@@ -1415,7 +1414,7 @@ static void test_NeedCurrentDirectoryForExePathA(void)
 
     /* Crashes in Windows */
     if (0)
-        ok(pNeedCurrentDirectoryForExePathA(NULL), "returned FALSE for NULL\n");
+        pNeedCurrentDirectoryForExePathA(NULL);
 
     SetEnvironmentVariableA("NoDefaultCurrentDirectoryInExePath", NULL);
     ok(pNeedCurrentDirectoryForExePathA("."), "returned FALSE for \".\"\n");
@@ -1442,7 +1441,7 @@ static void test_NeedCurrentDirectoryForExePathW(void)
 
     /* Crashes in Windows */
     if (0)
-        ok(pNeedCurrentDirectoryForExePathW(NULL), "returned FALSE for NULL\n");
+        pNeedCurrentDirectoryForExePathW(NULL);
 
     SetEnvironmentVariableA("NoDefaultCurrentDirectoryInExePath", NULL);
     ok(pNeedCurrentDirectoryForExePathW(thispath), "returned FALSE for \".\"\n");
@@ -1595,11 +1594,7 @@ static void test_SearchPathW(void)
 if (0)
 {
     /* NULL filename, crashes on nt4 */
-    SetLastError(0xdeadbeef);
-    ret = pSearchPathW(pathW, NULL, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, &ptrW);
-    ok(ret == 0, "Expected failure, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
+    pSearchPathW(pathW, NULL, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, &ptrW);
 }
 
     /* empty filename */
