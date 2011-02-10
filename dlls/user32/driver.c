@@ -176,7 +176,7 @@ static INT CDECL nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
     return 0;
 }
 
-static HKL CDECL nulldrv_GetKeyboardLayout( DWORD layout )
+static HKL CDECL nulldrv_GetKeyboardLayout( DWORD thread_id )
 {
     return 0;
 }
@@ -529,9 +529,9 @@ static INT CDECL loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size 
     return load_driver()->pGetKeyNameText( lparam, buffer, size );
 }
 
-static HKL CDECL loaderdrv_GetKeyboardLayout( DWORD layout )
+static HKL CDECL loaderdrv_GetKeyboardLayout( DWORD thread_id )
 {
-    return load_driver()->pGetKeyboardLayout( layout );
+    return load_driver()->pGetKeyboardLayout( thread_id );
 }
 
 static BOOL CDECL loaderdrv_GetKeyboardLayoutName( LPWSTR name )

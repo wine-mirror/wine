@@ -688,9 +688,9 @@ UINT WINAPI GetKBCodePage(void)
  *          the language id. This is the way Windows default works.
  *        - the thread identifier (dwLayout) is also ignored.
  */
-HKL WINAPI GetKeyboardLayout(DWORD dwLayout)
+HKL WINAPI GetKeyboardLayout(DWORD thread_id)
 {
-    return USER_Driver->pGetKeyboardLayout(dwLayout);
+    return USER_Driver->pGetKeyboardLayout(thread_id);
 }
 
 /****************************************************************************
