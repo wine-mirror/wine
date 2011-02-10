@@ -1657,6 +1657,7 @@ static void test_default_handler(void)
 
     sizel.cx = sizel.cy = 0;
     hr = IOleObject_SetExtent(pObject, DVASPECT_CONTENT, &sizel);
+    ok(hr == OLE_E_NOTRUNNING, "IOleObject_SetExtent should have returned OLE_E_NOTRUNNING instead of 0x%08x\n", hr);
 
     hr = IOleObject_SetHostNames(pObject, wszHostName, NULL);
     ok_ole_success(hr, "IOleObject_SetHostNames");
