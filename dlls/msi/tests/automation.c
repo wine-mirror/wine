@@ -661,10 +661,10 @@ static void test_dispatch(void)
     /* Test invoking this function (without parameters passed) */
     if (0) /* All of these crash MSI on Windows XP */
     {
-        hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, NULL, NULL, NULL, NULL);
-        hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, NULL, NULL, &excepinfo, NULL);
+        IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, NULL, NULL, NULL, NULL);
+        IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, NULL, NULL, &excepinfo, NULL);
         VariantInit(&varresult);
-        hr = IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, NULL, &varresult, &excepinfo, NULL);
+        IDispatch_Invoke(pInstaller, dispid, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, NULL, &varresult, &excepinfo, NULL);
     }
 
     /* Try with NULL params */
@@ -2289,7 +2289,7 @@ static void test_Installer_Products(BOOL bProductInstalled)
             if (0) /* Crashes on Windows XP */
             {
                 /* IEnumVARIANT::Clone, NULL pointer */
-                hr = IEnumVARIANT_Clone(pEnum, NULL);
+                IEnumVARIANT_Clone(pEnum, NULL);
             }
 
             /* IEnumVARIANT::Clone */
