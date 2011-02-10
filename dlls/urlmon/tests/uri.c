@@ -9182,6 +9182,7 @@ static void test_IUriBuilder_RemoveProperties(void) {
                         BSTR received = NULL;
 
                         hr = IUri_GetAbsoluteUri(result, &received);
+                        ok(hr == S_OK, "Error: Expected S_OK, but got 0x%08x instead.\n", hr);
                         ok(!strcmp_aw(test.expected_uri, received),
                             "Error: Expected %s but got %s instead on test %d.\n",
                             test.expected_uri, wine_dbgstr_w(received), i);
