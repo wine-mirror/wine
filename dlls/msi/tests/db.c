@@ -8702,6 +8702,7 @@ static void test_columnorder(void)
 
     query = "SELECT * FROM `T`";
     r = do_query(hdb, query, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     sz = MAX_PATH;
     lstrcpyA(buf, "kiwi");
