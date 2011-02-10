@@ -70,6 +70,7 @@ struct d3dcompiler_shader_reflection
     ID3D11ShaderReflection ID3D11ShaderReflection_iface;
     LONG refcount;
 
+    DWORD target;
     char *creator;
     UINT flags;
     UINT version;
@@ -106,6 +107,8 @@ struct d3dcompiler_shader_reflection
     struct d3dcompiler_shader_signature *isgn;
     struct d3dcompiler_shader_signature *osgn;
     struct d3dcompiler_shader_signature *pcsg;
+    char *resource_string;
+    D3D11_SHADER_INPUT_BIND_DESC *bound_resources;
 };
 
 /* reflection handling */

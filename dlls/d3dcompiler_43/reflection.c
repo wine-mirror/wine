@@ -85,6 +85,8 @@ static void reflection_cleanup(struct d3dcompiler_shader_reflection *ref)
         HeapFree(GetProcessHeap(), 0, ref->pcsg);
     }
 
+    HeapFree(GetProcessHeap(), 0, ref->bound_resources);
+    HeapFree(GetProcessHeap(), 0, ref->resource_string);
     HeapFree(GetProcessHeap(), 0, ref->creator);
 }
 
@@ -506,42 +508,119 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
 {
     const char *ptr = data;
     DWORD size = data_size >> 2;
-    DWORD offset;
+    DWORD offset, cbuffer_offset, resource_offset, creator_offset;
+    unsigned int i;
+    unsigned int string_data_offset;
+    unsigned int string_data_size;
+    char *string_data = NULL, *creator = NULL;
+    D3D11_SHADER_INPUT_BIND_DESC *bound_resources = NULL;
+    HRESULT hr;
 
     TRACE("Size %u\n", size);
 
     read_dword(&ptr, &r->constant_buffer_count);
     TRACE("Constant buffer count: %u\n", r->constant_buffer_count);
 
-    read_dword(&ptr, &offset);
-    TRACE("Constant buffer offset: %x\n", offset);
+    read_dword(&ptr, &cbuffer_offset);
+    TRACE("Constant buffer offset: %#x\n", cbuffer_offset);
 
     read_dword(&ptr, &r->bound_resource_count);
     TRACE("Bound resource count: %u\n", r->bound_resource_count);
 
-    read_dword(&ptr, &offset);
-    TRACE("Bound resource offset: %x\n", offset);
+    read_dword(&ptr, &resource_offset);
+    TRACE("Bound resource offset: %#x\n", resource_offset);
 
-    skip_dword_unknown(&ptr, 1);
+    read_dword(&ptr, &r->target);
+    TRACE("Target: %#x\n", r->target);
 
     read_dword(&ptr, &r->flags);
     TRACE("Flags: %u\n", r->flags);
 
-    read_dword(&ptr, &offset);
-    TRACE("Creator at offset %#x.\n", offset);
+    read_dword(&ptr, &creator_offset);
+    TRACE("Creator at offset %#x.\n", creator_offset);
 
-    if (!copy_name(data + offset, &r->creator))
+    if (!copy_name(data + creator_offset, &creator))
     {
         ERR("Failed to copy name.\n");
         return E_OUTOFMEMORY;
     }
-    TRACE("Creator: %s.\n", debugstr_a(r->creator));
+    TRACE("Creator: %s.\n", debugstr_a(creator));
 
-    /* todo: Parse D3D11_SHADER_INPUT_BIND_DESC Structure */
+    /* todo: Parse RD11 */
+    if ((r->target & 0x0000ffff) >= 0x500)
+    {
+        skip_dword_unknown(&ptr, 8);
+    }
+
+    if (r->bound_resource_count)
+    {
+        /* 8 for each bind desc */
+        string_data_offset = resource_offset + r->bound_resource_count * 8 * sizeof(DWORD);
+        string_data_size = (cbuffer_offset ? cbuffer_offset : creator_offset) - string_data_offset;
+
+        string_data = HeapAlloc(GetProcessHeap(), 0, string_data_size);
+        if (!string_data)
+        {
+            ERR("Failed to allocate string data memory.\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+        memcpy(string_data, data + string_data_offset, string_data_size);
+
+        bound_resources = HeapAlloc(GetProcessHeap(), 0, r->bound_resource_count * sizeof(*bound_resources));
+        if (!bound_resources)
+        {
+            ERR("Failed to allocate resources memory.\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+
+        ptr = data + resource_offset;
+        for (i = 0; i < r->bound_resource_count; i++)
+        {
+            D3D11_SHADER_INPUT_BIND_DESC *desc = &bound_resources[i];
+
+            read_dword(&ptr, &offset);
+            desc->Name = string_data + (offset - string_data_offset);
+            TRACE("Input bind Name: %s\n", debugstr_a(desc->Name));
+
+            read_dword(&ptr, &desc->Type);
+            TRACE("Input bind Type: %#x\n", desc->Type);
+
+            read_dword(&ptr, &desc->ReturnType);
+            TRACE("Input bind ReturnType: %#x\n", desc->ReturnType);
+
+            read_dword(&ptr, &desc->Dimension);
+            TRACE("Input bind Dimension: %#x\n", desc->Dimension);
+
+            read_dword(&ptr, &desc->NumSamples);
+            TRACE("Input bind NumSamples: %u\n", desc->NumSamples);
+
+            read_dword(&ptr, &desc->BindPoint);
+            TRACE("Input bind BindPoint: %u\n", desc->BindPoint);
+
+            read_dword(&ptr, &desc->BindCount);
+            TRACE("Input bind BindCount: %u\n", desc->BindCount);
+
+            read_dword(&ptr, &desc->uFlags);
+            TRACE("Input bind uFlags: %u\n", desc->uFlags);
+        }
+    }
 
     /* todo: Parse Constant buffers */
 
+    r->creator = creator;
+    r->resource_string = string_data;
+    r->bound_resources = bound_resources;
+
     return S_OK;
+
+err_out:
+    HeapFree(GetProcessHeap(), 0, bound_resources);
+    HeapFree(GetProcessHeap(), 0, string_data);
+    HeapFree(GetProcessHeap(), 0, creator);
+
+    return hr;
 }
 
 HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, struct dxbc_section *section)
