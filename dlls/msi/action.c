@@ -5305,13 +5305,14 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
 {
     MSIPACKAGE *package = param;
     LPCWSTR compgroupid, component, feature, qualifier, text;
-    LPWSTR advertise = NULL, output = NULL;
+    LPWSTR advertise = NULL, output = NULL, existing = NULL, p, q;
     HKEY hkey = NULL;
     UINT rc;
     MSICOMPONENT *comp;
     MSIFEATURE *feat;
     DWORD sz;
     MSIRECORD *uirow;
+    int len;
 
     feature = MSI_RecordGetString(rec, 5);
     feat = get_loaded_feature(package, feature);
@@ -5338,30 +5339,56 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     rc = MSIREG_OpenUserComponentsKey(compgroupid, &hkey, TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
-    
-    text = MSI_RecordGetString(rec,4);
-    advertise = create_component_advertise_string(package, comp, feature);
 
-    sz = strlenW(advertise);
-
+    advertise = create_component_advertise_string( package, comp, feature );
+    text = MSI_RecordGetString( rec, 4 );
     if (text)
-        sz += lstrlenW(text);
+    {
+        p = msi_alloc( (strlenW( advertise ) + strlenW( text ) + 1) * sizeof(WCHAR) );
+        strcpyW( p, advertise );
+        strcatW( p, text );
+        msi_free( advertise );
+        advertise = p;
+    }
+    existing = msi_reg_get_val_str( hkey, qualifier );
 
-    sz+=3;
-    sz *= sizeof(WCHAR);
-           
-    output = msi_alloc_zero(sz);
-    strcpyW(output,advertise);
-    msi_free(advertise);
-
-    if (text)
-        strcatW(output,text);
+    sz = strlenW( advertise ) + 1;
+    if (existing)
+    {
+        for (p = existing; *p; p += len)
+        {
+            len = strlenW( p ) + 1;
+            if (strcmpW( advertise, p )) sz += len;
+        }
+    }
+    if (!(output = msi_alloc( (sz + 1) * sizeof(WCHAR) )))
+    {
+        rc = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+    q = output;
+    if (existing)
+    {
+        for (p = existing; *p; p += len)
+        {
+            len = strlenW( p ) + 1;
+            if (strcmpW( advertise, p ))
+            {
+                memcpy( q, p, len * sizeof(WCHAR) );
+                q += len;
+            }
+        }
+    }
+    strcpyW( q, advertise );
+    q[strlenW( q ) + 1] = 0;
 
     msi_reg_set_val_multi_str( hkey, qualifier, output );
     
 end:
     RegCloseKey(hkey);
-    msi_free(output);
+    msi_free( output );
+    msi_free( advertise );
+    msi_free( existing );
 
     /* the UI chunk */
     uirow = MSI_CreateRecord( 2 );
