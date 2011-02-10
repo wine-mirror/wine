@@ -365,6 +365,8 @@ static BOOL WINAPI nop_stream_output(const void *pvArg, BYTE *pb, DWORD cb,
     return TRUE;
 }
 
+static const BYTE dataEmptyBareContent[] = { 0x04,0x00 };
+
 static void test_data_msg_update(void)
 {
     HCRYPTMSG msg;
@@ -390,20 +392,36 @@ static void test_data_msg_update(void)
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, 0, CMSG_DATA, NULL, NULL,
      NULL);
-    /* Can't update a message with no data */
-    SetLastError(0xdeadbeef);
+    /* Starting with Vista, can update a message with no data. */
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
-    /* This test returns FALSE on XP and earlier but TRUE on Vista, so can't be tested.
-     * GetLastError is either E_INVALIDARG (NT) or unset (9x/Vista), so it doesn't
-     * make sense to test this.
-     */
+    todo_wine
+    ok(ret || broken(!ret), "CryptMsgUpdate failed: %08x\n", GetLastError());
+    if (ret)
+    {
+        DWORD size;
 
-    /* Curiously, a valid update will now fail as well, presumably because of
-     * the last (invalid, but final) update.
-     */
-    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
-    ok(!ret && GetLastError() == CRYPT_E_MSG_ERROR,
-     "Expected CRYPT_E_MSG_ERROR, got %x\n", GetLastError());
+        ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, NULL, &size);
+        ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+        if (ret)
+        {
+            LPBYTE buf = CryptMemAlloc(size);
+
+            if (buf)
+            {
+                ret = CryptMsgGetParam(msg, CMSG_BARE_CONTENT_PARAM, 0, buf,
+                 &size);
+                ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+                if (ret)
+                {
+                    ok(size == sizeof(dataEmptyBareContent),
+                     "unexpected size %d\n", size);
+                    ok(!memcmp(buf, dataEmptyBareContent, size),
+                     "unexpected value\n");
+                }
+                CryptMemFree(buf);
+            }
+        }
+    }
     CryptMsgClose(msg);
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
@@ -510,7 +528,6 @@ static void test_data_msg_get_param(void)
     CryptMsgClose(msg);
 }
 
-static const BYTE dataEmptyBareContent[] = { 0x04,0x00 };
 static const BYTE dataEmptyContent[] = {
 0x30,0x0f,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x01,0xa0,0x02,
 0x04,0x00 };
