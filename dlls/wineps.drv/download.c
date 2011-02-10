@@ -280,17 +280,8 @@ BOOL PSDRV_WriteSetDownloadFont(PSDRV_PDEVICE *physDev)
 
     physDev->font.size.xx = ps_round(ppem * xform.eM11);
     physDev->font.size.xy = ps_round(ppem * xform.eM12);
-    physDev->font.size.yx = ps_round(ppem * xform.eM21);
-    physDev->font.size.yy = ps_round(ppem * xform.eM22);
-
-    switch(GetMapMode(physDev->hdc))
-    {
-    case MM_TEXT:
-    case MM_ISOTROPIC:
-    case MM_ANISOTROPIC:
-        physDev->font.size.yx *= -1;
-        physDev->font.size.yy *= -1;
-    }
+    physDev->font.size.yx = -ps_round(ppem * xform.eM21);
+    physDev->font.size.yy = -ps_round(ppem * xform.eM22);
 
     physDev->font.underlineThickness = potm->otmsUnderscoreSize;
     physDev->font.underlinePosition = potm->otmsUnderscorePosition;
