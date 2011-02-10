@@ -1012,7 +1012,6 @@ static void test_MkParseDisplayName(void)
     hr = IEnumMoniker_QueryInterface(spEM1, &IID_IUnknown, (void*) &lpEM1);
     /* Register a couple of Monikers and check is ok */
     ok(hr==0, "IEnumMoniker_QueryInterface hr %08x %p\n", hr, lpEM1);
-    hr = MK_E_NOOBJECT;
     
     matchCnt = count_moniker_matches(pbc, spEM1);
     trace("Number of matches is %i\n", matchCnt);
@@ -1276,6 +1275,7 @@ static void test_moniker(
     IROTData_Release(rotdata);
   
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
   
     /* Saving */
 
@@ -1456,6 +1456,7 @@ static void test_file_moniker(WCHAR* path)
     ok_ole_success(hr, CreateFileMoniker); 
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
 
     /* Marshal */
     hr = CoMarshalInterface(stream, &IID_IMoniker, (IUnknown *)moniker1, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
