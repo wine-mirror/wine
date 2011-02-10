@@ -469,11 +469,11 @@ static void test_HeapQueryInformation(void)
     if (0) /* crashes under XP */
     {
         size = 0;
-        ret = pHeapQueryInformation(0,
+        pHeapQueryInformation(0,
                                 HeapCompatibilityInformation,
                                 &info, sizeof(info), &size);
         size = 0;
-        ret = pHeapQueryInformation(GetProcessHeap(),
+        pHeapQueryInformation(GetProcessHeap(),
                                 HeapCompatibilityInformation,
                                 NULL, sizeof(info), &size);
     }
