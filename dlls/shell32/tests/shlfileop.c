@@ -2058,6 +2058,7 @@ static void test_sh_create_dir(void)
     ok(ERROR_ALREADY_EXISTS == ret, "SHCreateDirectoryEx should fail to create existing directory, ret = %d\n", ret);
 
     ret = pSHCreateDirectoryExA(NULL, "c:\\testdir3", NULL);
+    ok(ERROR_SUCCESS == ret, "SHCreateDirectoryEx failed to create directory, ret = %d\n", ret);
     ok(file_exists("c:\\testdir3"), "The directory is not created\n");
 }
 
