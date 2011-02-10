@@ -371,26 +371,22 @@ static void test_CList(void)
   inserted = (LPSHLWAPI_CLIST)buff;
   inserted->ulSize = sizeof(SHLWAPI_CLIST) -1;
   inserted->ulId = 33;
-  hRet = pSHLWAPI_20(&list, inserted);
+
   /* The call succeeds but the item is not inserted, except on some early
    * versions which return failure. Wine behaves like later versions.
    */
-  if (0)
-  {
-  ok(hRet == S_OK, "failed bad element size\n");
-  }
+  pSHLWAPI_20(&list, inserted);
+
   inserted = pSHLWAPI_22(list, 33);
   ok(inserted == NULL, "inserted bad element size\n");
 
   inserted = (LPSHLWAPI_CLIST)buff;
   inserted->ulSize = 44;
   inserted->ulId = ~0U;
-  hRet = pSHLWAPI_20(&list, inserted);
+
   /* See comment above, some early versions fail this call */
-  if (0)
-  {
-  ok(hRet == S_OK, "failed adding a container\n");
-  }
+  pSHLWAPI_20(&list, inserted);
+
   item = SHLWAPI_CLIST_items;
 
   /* Look for nonexistent item in populated list */
