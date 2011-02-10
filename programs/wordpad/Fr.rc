@@ -48,7 +48,7 @@ END
 
 IDD_PARAFORMAT DIALOG 30, 20, 200, 110
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-Caption "Format de paragraphe"
+CAPTION "Format de paragraphe"
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX "Indentation", -1, 10, 10, 120, 68
@@ -66,7 +66,7 @@ END
 
 IDD_TABSTOPS DIALOG 30, 20, 200, 110
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-Caption "Tabulations"
+CAPTION "Tabulations"
 FONT 8, "MS SHell DLg"
 BEGIN
     GROUPBOX "Taquets de tabulation", -1, 10, 10, 120, 90
@@ -80,7 +80,7 @@ END
 
 IDD_FORMATOPTS DIALOG 0, 0, 280, 110
 STYLE DS_SYSMODAL
-Caption ""
+CAPTION ""
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX "Passage à la ligne automatique", -1, 10, 10, 140, 85

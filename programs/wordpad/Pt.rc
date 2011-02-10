@@ -49,7 +49,7 @@ END
 
 IDD_PARAFORMAT DIALOG 30, 20, 220, 110
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-Caption "Parágrafo"
+CAPTION "Parágrafo"
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX "Identação", -1, 10, 10, 140, 68
@@ -67,7 +67,7 @@ END
 
 IDD_TABSTOPS DIALOG 30, 20, 200, 110
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-Caption "Tabulações"
+CAPTION "Tabulações"
 FONT 8, "MS SHell DLg"
 BEGIN
     GROUPBOX "Marca de tabulação", -1, 10, 10, 120, 90
@@ -81,7 +81,7 @@ END
 
 IDD_FORMATOPTS DIALOG 0, 0, 280, 110
 STYLE DS_SYSMODAL
-Caption ""
+CAPTION ""
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX "Moldar o texto", -1, 10, 10, 130, 85
