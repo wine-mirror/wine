@@ -2369,7 +2369,7 @@ static void test_SHCreateShellItem(void)
         if(0)
         {
             /* Crashes under windows 7 */
-            ret = pSHCreateItemFromParsingName(NULL, NULL, &IID_IShellItem, NULL);
+            pSHCreateItemFromParsingName(NULL, NULL, &IID_IShellItem, NULL);
         }
 
         shellitem = (void*)0xdeadbeef;
@@ -2411,7 +2411,7 @@ static void test_SHCreateShellItem(void)
         if(0)
         {
             /* Crashes under win7 */
-            ret = pSHCreateItemFromIDList(NULL, &IID_IShellItem, NULL);
+            pSHCreateItemFromIDList(NULL, &IID_IShellItem, NULL);
         }
 
         ret = pSHCreateItemFromIDList(NULL, &IID_IShellItem, (void**)&shellitem);
@@ -2497,7 +2497,7 @@ static void test_SHGetNameFromIDList(void)
     if(0)
     {
         /* Crashes under win7 */
-        hres = pSHGetNameFromIDList(NULL, 0, NULL);
+        pSHGetNameFromIDList(NULL, 0, NULL);
     }
 
     hres = pSHGetNameFromIDList(NULL, 0, &name_string);
@@ -2639,7 +2639,7 @@ static void test_SHGetItemFromDataObject(void)
     if(0)
     {
         /* Crashes under win7 */
-        hres = pSHGetItemFromDataObject(NULL, 0, &IID_IShellItem, NULL);
+        pSHGetItemFromDataObject(NULL, 0, &IID_IShellItem, NULL);
     }
 
     hres = pSHGetItemFromDataObject(NULL, 0, &IID_IShellItem, (void**)&psv);
@@ -2830,9 +2830,9 @@ static void test_ShellItemCompare(void)
     if(0)
     {
         /* Crashes on native (win7, winxp) */
-        hr = IShellItem_Compare(psi_a, NULL, 0, NULL);
-        hr = IShellItem_Compare(psi_a, psi_b, 0, NULL);
-        hr = IShellItem_Compare(psi_a, NULL, 0, &order);
+        IShellItem_Compare(psi_a, NULL, 0, NULL);
+        IShellItem_Compare(psi_a, psi_b, 0, NULL);
+        IShellItem_Compare(psi_a, NULL, 0, &order);
     }
 
     /* Basics */
@@ -3204,9 +3204,9 @@ static void test_SHGetItemFromObject(void)
     if(0)
     {
         /* Crashes with Windows 7 */
-        hres = pSHGetItemFromObject((IUnknown*)psfdesktop, &IID_IUnknown, NULL);
-        hres = pSHGetItemFromObject(NULL, &IID_IUnknown, NULL);
-        hres = pSHGetItemFromObject((IUnknown*)psfdesktop, NULL, (void**)&punk);
+        pSHGetItemFromObject((IUnknown*)psfdesktop, &IID_IUnknown, NULL);
+        pSHGetItemFromObject(NULL, &IID_IUnknown, NULL);
+        pSHGetItemFromObject((IUnknown*)psfdesktop, NULL, (void**)&punk);
     }
 
     hres = pSHGetItemFromObject(NULL, &IID_IUnknown, (void**)&punk);
@@ -3340,7 +3340,7 @@ static void test_SHCreateShellItemArray(void)
             if(0)
             {
                 /* Crashes in Windows 7 */
-                hr = IShellItemArray_GetCount(psia, NULL);
+                IShellItemArray_GetCount(psia, NULL);
             }
 
             IShellItemArray_GetCount(psia, &numitems);
@@ -3384,9 +3384,9 @@ static void test_SHCreateShellItemArray(void)
         if(0)
         {
             /* Crashes under Windows 7 */
-            hr = pSHCreateShellItemArrayFromShellItem(NULL, &IID_IShellItemArray, NULL);
-            hr = pSHCreateShellItemArrayFromShellItem(NULL, &IID_IShellItemArray, (void**)&psia);
-            hr = pSHCreateShellItemArrayFromShellItem(psi, &IID_IShellItemArray, NULL);
+            pSHCreateShellItemArrayFromShellItem(NULL, &IID_IShellItemArray, NULL);
+            pSHCreateShellItemArrayFromShellItem(NULL, &IID_IShellItemArray, (void**)&psia);
+            pSHCreateShellItemArrayFromShellItem(psi, &IID_IShellItemArray, NULL);
         }
 
         hr = pSHCreateItemFromIDList(pidl_testdir, &IID_IShellItem, (void**)&psi);
@@ -3437,7 +3437,7 @@ static void test_SHCreateShellItemArray(void)
         if(0)
         {
             /* Crashes under Windows 7 */
-            hr = pSHCreateShellItemArrayFromDataObject(NULL, &IID_IShellItemArray, NULL);
+            pSHCreateShellItemArrayFromDataObject(NULL, &IID_IShellItemArray, NULL);
         }
         hr = pSHCreateShellItemArrayFromDataObject(NULL, &IID_IShellItemArray, (void**)&psia);
         ok(hr == E_INVALIDARG, "Got 0x%08x\n", hr);
@@ -3548,8 +3548,8 @@ static void test_ShellItemBindToHandler(void)
         if(0)
         {
             /* Crashes under Windows 7 */
-            hr = IShellItem_BindToHandler(psi, NULL, NULL, NULL, NULL);
-            hr = IShellItem_BindToHandler(psi, NULL, &IID_IUnknown, &IID_IUnknown, NULL);
+            IShellItem_BindToHandler(psi, NULL, NULL, NULL, NULL);
+            IShellItem_BindToHandler(psi, NULL, &IID_IUnknown, &IID_IUnknown, NULL);
         }
         hr = IShellItem_BindToHandler(psi, NULL, &IID_IUnknown, &IID_IUnknown, (void**)&punk);
         ok(hr == MK_E_NOOBJECT, "Got 0x%08x\n", hr);
@@ -3702,8 +3702,7 @@ void test_ShellItemGetAttributes(void)
     if(0)
     {
         /* Crashes on native (Win 7) */
-        hr = IShellItem_GetAttributes(psi, 0, NULL);
-        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        IShellItem_GetAttributes(psi, 0, NULL);
     }
 
     /* Test GetAttributes on the desktop folder. */
@@ -3733,9 +3732,9 @@ static void test_SHParseDisplayName(void)
 if (0)
 {
     /* crashes on native */
-    hr = pSHParseDisplayName(NULL, NULL, NULL, 0, NULL);
+    pSHParseDisplayName(NULL, NULL, NULL, 0, NULL);
     nameW[0] = 0;
-    hr = pSHParseDisplayName(nameW, NULL, NULL, 0, NULL);
+    pSHParseDisplayName(nameW, NULL, NULL, 0, NULL);
 }
 
     pidl1 = (LPITEMIDLIST)0xdeadbeef;
@@ -3792,7 +3791,7 @@ static void test_desktop_IPersist(void)
     if (0)
     {
         /* crashes on native */
-        hr = IPersist_GetClassID(persist, NULL);
+        IPersist_GetClassID(persist, NULL);
     }
         memset(&clsid, 0, sizeof(clsid));
         hr = IPersist_GetClassID(persist, &clsid);
