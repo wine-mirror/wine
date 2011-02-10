@@ -1,5 +1,6 @@
 MODULE    = appwiz.cpl
 IMPORTS   = uuid urlmon advpack comctl32 advapi32 shell32 user32 comdlg32
+DELAYIMPORTS = msi
 EXTRADEFS = -DINSTALL_DATADIR="\"$(datadir)\""
 
 C_SRCS = \

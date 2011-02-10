@@ -40,6 +40,7 @@
 #include "wininet.h"
 #include "shellapi.h"
 #include "urlmon.h"
+#include "msi.h"
 
 #include "appwiz.h"
 #include "res.h"
@@ -242,6 +243,46 @@ static BOOL install_cab(LPCWSTR file_name)
     return TRUE;
 }
 
+static BOOL install_msi_file(const WCHAR *file_name)
+{
+    ULONG res;
+
+    res = MsiInstallProductW(file_name, NULL);
+    if(res != ERROR_SUCCESS) {
+        ERR("MsiInstallProduct failed: %u\n", res);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL install_file(const WCHAR *file_name)
+{
+    BYTE magic[4];
+    HANDLE file;
+    DWORD size;
+    BOOL res;
+
+    static const BYTE msi_magic[] = {0xd0,0xcf,0x11,0xe0};
+
+    file = CreateFileW(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+    if(file == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    res = ReadFile(file, magic, sizeof(magic), &size, NULL);
+    CloseHandle(file);
+    if(!res || size != sizeof(magic))
+        return INET_E_DOWNLOAD_FAILURE;
+
+    if(!memcmp(magic, "MSCF", sizeof(magic)))
+        return install_cab(file_name);
+    else if(!memcmp(magic, msi_magic, sizeof(magic)))
+        return install_msi_file(file_name);
+
+    ERR("Unknown file magic\n");
+    return FALSE;
+}
+
 static BOOL install_from_unix_file(const char *file_name)
 {
     LPWSTR dos_file_name;
@@ -276,7 +317,7 @@ static BOOL install_from_unix_file(const char *file_name)
 	MultiByteToWideChar( CP_ACP, 0, file_name, -1, dos_file_name, res);
     }
 
-    ret = install_cab(dos_file_name);
+    ret = install_file(dos_file_name);
 
     heap_free(dos_file_name);
     return ret;
@@ -513,7 +554,7 @@ static DWORD WINAPI download_proc(PVOID arg)
     }
 
     if(sha_check(tmp_file))
-        install_cab(tmp_file);
+        install_file(tmp_file);
     DeleteFileW(tmp_file);
     EndDialog(install_dialog, 0);
     return 0;
