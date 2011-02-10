@@ -1770,26 +1770,33 @@ static nsresult NSAPI nsURI_GetUsername(nsIURL *iface, nsACString *aUsername)
 
     TRACE("(%p)->(%p)\n", This, aUsername);
 
-    if(This->nsuri)
-        return nsIURI_GetUsername(This->nsuri, aUsername);
-
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return get_uri_string(This, Uri_PROPERTY_USER_NAME, aUsername);
 }
 
 static nsresult NSAPI nsURI_SetUsername(nsIURL *iface, const nsACString *aUsername)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    const char *usera;
+    WCHAR *user;
+    HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aUsername));
 
-    if(This->nsuri) {
-        invalidate_uri(This);
-        return nsIURI_SetUsername(This->nsuri, aUsername);
-    }
+    if(!ensure_uri_builder(This))
+        return NS_ERROR_UNEXPECTED;
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsACString_GetData(aUsername, &usera);
+    user = heap_strdupAtoW(usera);
+    if(!user)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    hres = IUriBuilder_SetUserName(This->uri_builder, user);
+    heap_free(user);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
+
+    sync_wine_url(This);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_GetPassword(nsIURL *iface, nsACString *aPassword)
