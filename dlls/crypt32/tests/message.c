@@ -515,6 +515,8 @@ static void test_verify_message_signature(void)
     cbDecoded = 0xdeadbeef;
     ret = CryptVerifyMessageSignature(NULL, 0, NULL, 0, NULL, &cbDecoded,
      NULL);
+    ok(!ret && GetLastError() == E_INVALIDARG,
+     "Expected E_INVALIDARG, got %08x\n", GetLastError());
     ok(cbDecoded == 0, "expected 0, got %08x\n", cbDecoded);
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, NULL, 0, NULL, 0, NULL);
@@ -541,15 +543,24 @@ static void test_verify_message_signature(void)
     /* Check whether cert is set on error */
     cert = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptVerifyMessageSignature(&para, 0, NULL, 0, NULL, 0, &cert);
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
+    GetLastError() == OSS_BAD_ARG /* NT40 */),
+     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     ok(cert == NULL, "Expected NULL cert\n");
     /* Check whether cbDecoded is set on error */
     cbDecoded = 0xdeadbeef;
     ret = CryptVerifyMessageSignature(&para, 0, NULL, 0, NULL, &cbDecoded,
      NULL);
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_EOD ||
+     GetLastError() == OSS_BAD_ARG /* NT40 */),
+     "Expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
     ok(!cbDecoded, "Expected 0\n");
     SetLastError(0xdeadbeef);
     ret = CryptVerifyMessageSignature(&para, 0, dataEmptyBareContent,
      sizeof(dataEmptyBareContent), NULL, 0, NULL);
+    ok(!ret && (GetLastError() == CRYPT_E_ASN1_BADTAG ||
+     GetLastError() == OSS_PDU_MISMATCH /* NT40 */),
+     "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
     ok(GetLastError() == CRYPT_E_ASN1_BADTAG ||
      GetLastError() == OSS_PDU_MISMATCH, /* win9x */
      "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
@@ -679,6 +690,7 @@ static void test_hash_message(void)
     SetLastError(0xdeadbeef);
     ret = CryptHashMessage(&para, FALSE, 2, toHash, hashSize, NULL, NULL, NULL,
      NULL);
+    ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
     /* Try again with a valid encoding type */
     para.dwMsgEncodingType = PKCS_7_ASN_ENCODING;
     SetLastError(0xdeadbeef);
@@ -694,7 +706,7 @@ static void test_hash_message(void)
      */
     if (0)
     {
-        ret = CryptHashMessage(&para, FALSE, 2, NULL, NULL, NULL,
+        CryptHashMessage(&para, FALSE, 2, NULL, NULL, NULL,
          &hashedBlobSize, NULL, NULL);
     }
     /* Passing a valid pointer for the data to hash fails, as the hash
@@ -781,6 +793,7 @@ static void test_hash_message(void)
         SetLastError(0xdeadbeef);
         ret = CryptHashMessage(&para, TRUE, 2, toHash, hashSize, NULL,
          &hashedBlobSize, computedHash, &computedHashSize);
+        ok(ret, "CryptHashMessage failed: 0x%08x\n", GetLastError());
         ok(computedHashSize == sizeof(hashVal),
          "unexpected size of hash value %d\n", computedHashSize);
         ok(!memcmp(computedHash, hashVal, computedHashSize),
