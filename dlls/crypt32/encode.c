@@ -1012,8 +1012,12 @@ static BOOL CRYPT_AsnEncodeUTF8String(const CERT_NAME_VALUE *value,
     LPCWSTR str = (LPCWSTR)value->Value.pbData;
     DWORD bytesNeeded, lenBytes, encodedLen, strLen;
 
-    strLen = value->Value.cbData ? value->Value.cbData / sizeof(WCHAR) :
-     strlenW(str);
+    if (value->Value.cbData)
+        strLen = value->Value.cbData / sizeof(WCHAR);
+    else if (str)
+        strLen = strlenW(str);
+    else
+        strLen = 0;
     encodedLen = WideCharToMultiByte(CP_UTF8, 0, str, strLen, NULL, 0, NULL,
      NULL);
     CRYPT_EncodeLen(encodedLen, NULL, &lenBytes);
@@ -1992,8 +1996,12 @@ static BOOL CRYPT_AsnEncodeUnicodeStringCoerce(const CERT_NAME_VALUE *value,
     LPCWSTR str = (LPCWSTR)value->Value.pbData;
     DWORD bytesNeeded, lenBytes, encodedLen;
 
-    encodedLen = value->Value.cbData ? value->Value.cbData / sizeof(WCHAR) :
-     strlenW(str);
+    if (value->Value.cbData)
+        encodedLen = value->Value.cbData / sizeof(WCHAR);
+    else if (str)
+        encodedLen = strlenW(str);
+    else
+        encodedLen = 0;
     CRYPT_EncodeLen(encodedLen, NULL, &lenBytes);
     bytesNeeded = 1 + lenBytes + encodedLen;
     if (!pbEncoded)
@@ -2025,8 +2033,12 @@ static BOOL CRYPT_AsnEncodeNumericString(const CERT_NAME_VALUE *value,
     LPCWSTR str = (LPCWSTR)value->Value.pbData;
     DWORD bytesNeeded, lenBytes, encodedLen;
 
-    encodedLen = value->Value.cbData ? value->Value.cbData / sizeof(WCHAR) :
-     strlenW(str);
+    if (value->Value.cbData)
+        encodedLen = value->Value.cbData / sizeof(WCHAR);
+    else if (str)
+        encodedLen = strlenW(str);
+    else
+        encodedLen = 0;
     CRYPT_EncodeLen(encodedLen, NULL, &lenBytes);
     bytesNeeded = 1 + lenBytes + encodedLen;
     if (!pbEncoded)
@@ -2079,8 +2091,12 @@ static BOOL CRYPT_AsnEncodePrintableString(const CERT_NAME_VALUE *value,
     LPCWSTR str = (LPCWSTR)value->Value.pbData;
     DWORD bytesNeeded, lenBytes, encodedLen;
 
-    encodedLen = value->Value.cbData ? value->Value.cbData / sizeof(WCHAR) :
-     strlenW(str);
+    if (value->Value.cbData)
+        encodedLen = value->Value.cbData / sizeof(WCHAR);
+    else if (str)
+        encodedLen = strlenW(str);
+    else
+        encodedLen = 0;
     CRYPT_EncodeLen(encodedLen, NULL, &lenBytes);
     bytesNeeded = 1 + lenBytes + encodedLen;
     if (!pbEncoded)
@@ -2126,8 +2142,12 @@ static BOOL CRYPT_AsnEncodeIA5String(const CERT_NAME_VALUE *value,
     LPCWSTR str = (LPCWSTR)value->Value.pbData;
     DWORD bytesNeeded, lenBytes, encodedLen;
 
-    encodedLen = value->Value.cbData ? value->Value.cbData / sizeof(WCHAR) :
-     strlenW(str);
+    if (value->Value.cbData)
+        encodedLen = value->Value.cbData / sizeof(WCHAR);
+    else if (str)
+        encodedLen = strlenW(str);
+    else
+        encodedLen = 0;
     CRYPT_EncodeLen(encodedLen, NULL, &lenBytes);
     bytesNeeded = 1 + lenBytes + encodedLen;
     if (!pbEncoded)
@@ -2174,8 +2194,12 @@ static BOOL CRYPT_AsnEncodeUniversalString(const CERT_NAME_VALUE *value,
     DWORD bytesNeeded, lenBytes, strLen;
 
     /* FIXME: doesn't handle composite characters */
-    strLen = value->Value.cbData ? value->Value.cbData / sizeof(WCHAR) :
-     strlenW(str);
+    if (value->Value.cbData)
+        strLen = value->Value.cbData / sizeof(WCHAR);
+    else if (str)
+        strLen = strlenW(str);
+    else
+        strLen = 0;
     CRYPT_EncodeLen(strLen * 4, NULL, &lenBytes);
     bytesNeeded = 1 + lenBytes + strLen * 4;
     if (!pbEncoded)
