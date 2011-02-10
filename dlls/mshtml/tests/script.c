@@ -1832,6 +1832,7 @@ static void test_nextdispid(IDispatchEx *dispex)
 
     V_VT(&var) = VT_EMPTY;
     hres = dispex_propput(dispex, dyn_id, 0, &var);
+    ok(hres == S_OK, "dispex_propput failed: %08x\n", hres);
 
     while(last_id != dyn_id) {
         hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, last_id, &id);
