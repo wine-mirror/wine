@@ -1857,6 +1857,13 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
             SetLastError(NTE_BAD_KEY);
             return FALSE;
         }
+        if (Algid == CALG_SCHANNEL_MASTER_HASH &&
+            ((!pCryptKey->siSChannelInfo.blobClientRandom.cbData) ||
+             (!pCryptKey->siSChannelInfo.blobServerRandom.cbData)))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
 
         if ((Algid == CALG_TLS1PRF) && (pCryptKey->dwState != RSAENH_KEYSTATE_MASTERKEY)) {
             SetLastError(NTE_BAD_KEY_STATE);

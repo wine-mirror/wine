@@ -2346,22 +2346,8 @@ static void test_schannel_provider(void)
      * random or server random set.
      */
     result = CryptCreateHash(hProv, CALG_SCHANNEL_MASTER_HASH, hMasterSecret, 0, &hMasterHash);
-    todo_wine
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER,
         "expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
-    if (result)
-    {
-        CryptDestroyHash(hMasterHash);
-        /* Reimporting the master secret is necessary under Wine until creating
-         * the hash fails as it should.
-         */
-        CryptDestroyKey(hMasterSecret);
-
-        dwLen = (DWORD)sizeof(abTLS1Master);
-        result = CryptImportKey(hProv, abTLS1Master, dwLen, hRSAKey, 0, &hMasterSecret);
-        ok (result, "%08x\n", GetLastError());
-        if (!result) return;
-    }
 
     /* Setting the TLS1 client and server random parameters, as well as the 
      * MAC and encryption algorithm parameters. */
