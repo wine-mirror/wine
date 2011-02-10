@@ -955,8 +955,6 @@ extern UINT msi_set_last_used_source(LPCWSTR product, LPCWSTR usersid,
                         MSIINSTALLCONTEXT context, DWORD options, LPCWSTR value);
 extern UINT msi_get_local_package_name(LPWSTR path, LPCWSTR suffix);
 extern UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace);
-extern void msi_component_set_state(MSIPACKAGE *, MSICOMPONENT *, INSTALLSTATE);
-extern void msi_feature_set_state(MSIPACKAGE *, MSIFEATURE *, INSTALLSTATE);
 extern MSIASSEMBLY *load_assembly(MSIPACKAGE *, MSICOMPONENT *);
 extern UINT install_assembly(MSIPACKAGE *, MSICOMPONENT *);
 extern WCHAR *font_version_from_file(const WCHAR *);

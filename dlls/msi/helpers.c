@@ -675,7 +675,10 @@ void ACTION_UpdateComponentStates( MSIPACKAGE *package, MSIFEATURE *feature )
             component->Action, component->ActionRequest);
         
         if (newstate == INSTALLSTATE_LOCAL)
-            msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
+        {
+            component->Action = INSTALLSTATE_LOCAL;
+            component->ActionRequest = INSTALLSTATE_LOCAL;
+        }
         else 
         {
             ComponentList *clist;
@@ -683,9 +686,10 @@ void ACTION_UpdateComponentStates( MSIPACKAGE *package, MSIFEATURE *feature )
 
             component->hasLocalFeature = FALSE;
 
-            msi_component_set_state(package, component, newstate);
+            component->Action = newstate;
+            component->ActionRequest = newstate;
 
-            /*if any other feature wants is local we need to set it local*/
+            /* if any other feature wants it local we need to set it local */
             LIST_FOR_EACH_ENTRY( f, &package->features, MSIFEATURE, entry )
             {
                 if ( f->ActionRequest != INSTALLSTATE_LOCAL &&
@@ -706,14 +710,26 @@ void ACTION_UpdateComponentStates( MSIPACKAGE *package, MSIFEATURE *feature )
                         if (component->Attributes & msidbComponentAttributesOptional)
                         {
                             if (f->Attributes & msidbFeatureAttributesFavorSource)
-                                msi_component_set_state(package, component, INSTALLSTATE_SOURCE);
+                            {
+                                component->Action = INSTALLSTATE_SOURCE;
+                                component->ActionRequest = INSTALLSTATE_SOURCE;
+                            }
                             else
-                                msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
+                            {
+                                component->Action = INSTALLSTATE_LOCAL;
+                                component->ActionRequest = INSTALLSTATE_LOCAL;
+                            }
                         }
                         else if (component->Attributes & msidbComponentAttributesSourceOnly)
-                            msi_component_set_state(package, component, INSTALLSTATE_SOURCE);
+                        {
+                            component->Action = INSTALLSTATE_SOURCE;
+                            component->ActionRequest = INSTALLSTATE_SOURCE;
+                        }
                         else
-                            msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
+                        {
+                            component->Action = INSTALLSTATE_LOCAL;
+                            component->ActionRequest = INSTALLSTATE_LOCAL;
+                        }
                     }
                 }
             }

@@ -1163,7 +1163,7 @@ static UINT MSI_SetComponentStateW(MSIPACKAGE *package, LPCWSTR szComponent,
         return ERROR_UNKNOWN_COMPONENT;
 
     if (comp->Enabled)
-        comp->Installed = iState;
+        comp->Action = iState;
 
     return ERROR_SUCCESS;
 }

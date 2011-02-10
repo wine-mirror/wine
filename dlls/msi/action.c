@@ -162,98 +162,6 @@ static const WCHAR szValidateProductID[] =
 static const WCHAR szWriteEnvironmentStrings[] =
     {'W','r','i','t','e','E','n','v','i','r','o','n','m','e','n','t','S','t','r','i','n','g','s',0};
 
-/********************************************************
- * helper functions
- ********************************************************/
-
-void msi_feature_set_state( MSIPACKAGE *package, MSIFEATURE *feature, INSTALLSTATE state )
-{
-    if (!package->ProductCode)
-    {
-        feature->ActionRequest = state;
-        feature->Action = state;
-    }
-    else if (state == INSTALLSTATE_ABSENT)
-    {
-        switch (feature->Installed)
-        {
-            case INSTALLSTATE_ABSENT:
-                feature->ActionRequest = INSTALLSTATE_UNKNOWN;
-                feature->Action = INSTALLSTATE_UNKNOWN;
-                break;
-            default:
-                feature->ActionRequest = state;
-                feature->Action = state;
-        }
-    }
-    else if (state == INSTALLSTATE_SOURCE)
-    {
-        switch (feature->Installed)
-        {
-            case INSTALLSTATE_ABSENT:
-            case INSTALLSTATE_SOURCE:
-                feature->ActionRequest = state;
-                feature->Action = state;
-                break;
-            case INSTALLSTATE_LOCAL:
-                feature->ActionRequest = INSTALLSTATE_LOCAL;
-                feature->Action = INSTALLSTATE_LOCAL;
-                break;
-            default:
-                feature->ActionRequest = INSTALLSTATE_UNKNOWN;
-                feature->Action = INSTALLSTATE_UNKNOWN;
-        }
-    }
-    else
-    {
-        feature->ActionRequest = state;
-        feature->Action = state;
-    }
-}
-
-void msi_component_set_state( MSIPACKAGE *package, MSICOMPONENT *comp, INSTALLSTATE state )
-{
-    if (!package->ProductCode)
-    {
-        comp->ActionRequest = state;
-        comp->Action = state;
-    }
-    else if (state == INSTALLSTATE_ABSENT)
-    {
-        switch (comp->Installed)
-        {
-            case INSTALLSTATE_LOCAL:
-            case INSTALLSTATE_SOURCE:
-            case INSTALLSTATE_DEFAULT:
-                comp->ActionRequest = state;
-                comp->Action = state;
-                break;
-            default:
-                comp->ActionRequest = INSTALLSTATE_UNKNOWN;
-                comp->Action = INSTALLSTATE_UNKNOWN;
-        }
-    }
-    else if (state == INSTALLSTATE_SOURCE)
-    {
-        if (comp->Installed == INSTALLSTATE_ABSENT ||
-            (comp->Installed == INSTALLSTATE_SOURCE && comp->hasLocalFeature))
-        {
-            comp->ActionRequest = state;
-            comp->Action = state;
-        }
-        else
-        {
-            comp->ActionRequest = INSTALLSTATE_UNKNOWN;
-            comp->Action = INSTALLSTATE_UNKNOWN;
-        }
-    }
-    else
-    {
-        comp->ActionRequest = state;
-        comp->Action = state;
-    }
-}
-
 static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
 {
     static const WCHAR Query_t[] = 
@@ -1463,7 +1371,8 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
     feature->Attributes = MSI_RecordGetInteger(row,8);
 
     feature->Installed = INSTALLSTATE_UNKNOWN;
-    msi_feature_set_state(package, feature, INSTALLSTATE_UNKNOWN);
+    feature->Action = INSTALLSTATE_UNKNOWN;
+    feature->ActionRequest = INSTALLSTATE_UNKNOWN;
 
     list_add_tail( &package->features, &feature->entry );
 
@@ -1834,50 +1743,40 @@ static UINT ACTION_FileCost(MSIPACKAGE *package)
 static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
 {
     MSICOMPONENT *comp;
-    INSTALLSTATE state = MsiQueryProductStateW( package->ProductCode );
     UINT r;
 
     LIST_FOR_EACH_ENTRY(comp, &package->components, MSICOMPONENT, entry)
     {
         if (!comp->ComponentId) continue;
 
-        if (state != INSTALLSTATE_LOCAL && state != INSTALLSTATE_DEFAULT)
-            comp->Installed = INSTALLSTATE_ABSENT;
-        else
-        {
+        r = MsiQueryComponentStateW( package->ProductCode, NULL,
+                                     MSIINSTALLCONTEXT_USERMANAGED, comp->ComponentId,
+                                     &comp->Installed );
+        if (r != ERROR_SUCCESS)
             r = MsiQueryComponentStateW( package->ProductCode, NULL,
-                                         MSIINSTALLCONTEXT_USERMANAGED, comp->ComponentId,
+                                         MSIINSTALLCONTEXT_USERUNMANAGED, comp->ComponentId,
                                          &comp->Installed );
-            if (r != ERROR_SUCCESS)
-                r = MsiQueryComponentStateW( package->ProductCode, NULL,
-                                             MSIINSTALLCONTEXT_USERUNMANAGED, comp->ComponentId,
-                                             &comp->Installed );
-            if (r != ERROR_SUCCESS)
-                r = MsiQueryComponentStateW( package->ProductCode, NULL,
-                                             MSIINSTALLCONTEXT_MACHINE, comp->ComponentId,
-                                             &comp->Installed );
-            if (r != ERROR_SUCCESS)
-                comp->Installed = INSTALLSTATE_ABSENT;
-        }
+        if (r != ERROR_SUCCESS)
+            r = MsiQueryComponentStateW( package->ProductCode, NULL,
+                                         MSIINSTALLCONTEXT_MACHINE, comp->ComponentId,
+                                         &comp->Installed );
+        if (r != ERROR_SUCCESS)
+            comp->Installed = INSTALLSTATE_ABSENT;
     }
 }
 
 static void ACTION_GetFeatureInstallStates(MSIPACKAGE *package)
 {
     MSIFEATURE *feature;
-    INSTALLSTATE state;
-
-    state = MsiQueryProductStateW(package->ProductCode);
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if (state != INSTALLSTATE_LOCAL && state != INSTALLSTATE_DEFAULT)
+        INSTALLSTATE state = MsiQueryFeatureStateW( package->ProductCode, feature->Feature );
+
+        if (state == INSTALLSTATE_UNKNOWN || state == INSTALLSTATE_INVALIDARG)
             feature->Installed = INSTALLSTATE_ABSENT;
         else
-        {
-            feature->Installed = MsiQueryFeatureStateW(package->ProductCode,
-                                                       feature->Feature);
-        }
+            feature->Installed = state;
     }
 }
 
@@ -1904,7 +1803,13 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
         if (!strcmpW(property, szReinstall)) state = feature->Installed;
 
         if (!strcmpiW( override, szAll ))
-            msi_feature_set_state(package, feature, state);
+        {
+            if (feature->Installed != state)
+            {
+                feature->Action = state;
+                feature->ActionRequest = state;
+            }
+        }
         else
         {
             LPWSTR ptr = override;
@@ -1917,7 +1822,11 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
                 if ((ptr2 && strlenW(feature->Feature) == len && !strncmpW(ptr, feature->Feature, len))
                     || (!ptr2 && !strcmpW(ptr, feature->Feature)))
                 {
-                    msi_feature_set_state(package, feature, state);
+                    if (feature->Installed != state)
+                    {
+                        feature->Action = state;
+                        feature->ActionRequest = state;
+                    }
                     break;
                 }
                 if (ptr2)
@@ -1931,7 +1840,6 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
         }
     }
     msi_free(override);
-
     return TRUE;
 }
 
@@ -1994,11 +1902,20 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             if (feature->ActionRequest == INSTALLSTATE_UNKNOWN)
             {
                 if (feature->Attributes & msidbFeatureAttributesFavorSource)
-                    msi_feature_set_state(package, feature, INSTALLSTATE_SOURCE);
+                {
+                    feature->Action = INSTALLSTATE_SOURCE;
+                    feature->ActionRequest = INSTALLSTATE_SOURCE;
+                }
                 else if (feature->Attributes & msidbFeatureAttributesFavorAdvertise)
-                    msi_feature_set_state(package, feature, INSTALLSTATE_ADVERTISED);
+                {
+                    feature->Action = INSTALLSTATE_ADVERTISED;
+                    feature->ActionRequest = INSTALLSTATE_ADVERTISED;
+                }
                 else
-                    msi_feature_set_state(package, feature, INSTALLSTATE_LOCAL);
+                {
+                    feature->Action = INSTALLSTATE_LOCAL;
+                    feature->ActionRequest = INSTALLSTATE_LOCAL;
+                }
             }
         }
 
@@ -2010,7 +1927,10 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             if (is_feature_selected( feature, level )) continue;
 
             LIST_FOR_EACH_ENTRY( fl, &feature->Children, FeatureList, entry )
-                msi_feature_set_state(package, fl->feature, INSTALLSTATE_UNKNOWN);
+            {
+                fl->feature->Action = INSTALLSTATE_UNKNOWN;
+                fl->feature->ActionRequest = INSTALLSTATE_UNKNOWN;
+            }
         }
     }
     else /* preselected */
@@ -2021,14 +1941,21 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
             if (feature->ActionRequest == INSTALLSTATE_UNKNOWN)
             {
-                 msi_feature_set_state(package, feature, feature->Installed);
+                if (feature->Installed == INSTALLSTATE_ABSENT)
+                {
+                    feature->Action = INSTALLSTATE_UNKNOWN;
+                    feature->ActionRequest = INSTALLSTATE_UNKNOWN;
+                }
+                else
+                {
+                    feature->Action = feature->Installed;
+                    feature->ActionRequest = feature->Installed;
+                }
             }
         }
     }
 
-    /*
-     * now we want to enable or disable components based on feature
-     */
+    /* now we want to set component state based based on feature state */
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
         ComponentList *cl;
@@ -2045,7 +1972,8 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             if (cl->component->ForceLocalState &&
                 feature->ActionRequest == INSTALLSTATE_SOURCE)
             {
-                msi_feature_set_state(package, feature, INSTALLSTATE_LOCAL);
+                feature->Action = INSTALLSTATE_LOCAL;
+                feature->ActionRequest = INSTALLSTATE_LOCAL;
                 break;
             }
         }
@@ -2090,34 +2018,44 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {
             if ((component->Attributes & msidbComponentAttributesSourceOnly) &&
                  !component->ForceLocalState)
-                msi_component_set_state(package, component, INSTALLSTATE_SOURCE);
+            {
+                component->Action = INSTALLSTATE_SOURCE;
+                component->ActionRequest = INSTALLSTATE_SOURCE;
+            }
             else
-                msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
+            {
+                component->Action = INSTALLSTATE_LOCAL;
+                component->ActionRequest = INSTALLSTATE_LOCAL;
+            }
             continue;
         }
 
         /* if any feature is local, the component must be local too */
         if (component->hasLocalFeature)
         {
-            msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
+            component->Action = INSTALLSTATE_LOCAL;
+            component->ActionRequest = INSTALLSTATE_LOCAL;
             continue;
         }
-
         if (component->hasSourceFeature)
         {
-            msi_component_set_state(package, component, INSTALLSTATE_SOURCE);
+            component->Action = INSTALLSTATE_SOURCE;
+            component->ActionRequest = INSTALLSTATE_SOURCE;
             continue;
         }
-
         if (component->hasAdvertiseFeature)
         {
-            msi_component_set_state(package, component, INSTALLSTATE_ADVERTISED);
+            component->Action = INSTALLSTATE_ADVERTISED;
+            component->ActionRequest = INSTALLSTATE_ADVERTISED;
             continue;
         }
-
         TRACE("nobody wants component %s\n", debugstr_w(component->Component));
-        if (component->anyAbsent)
-            msi_component_set_state(package, component, INSTALLSTATE_ABSENT);
+        if (component->anyAbsent &&
+            (component->Installed == INSTALLSTATE_LOCAL || component->Installed == INSTALLSTATE_SOURCE))
+        {
+            component->Action = INSTALLSTATE_ABSENT;
+            component->ActionRequest = INSTALLSTATE_ABSENT;
+        }
     }
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
@@ -2125,7 +2063,16 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         if (component->ActionRequest == INSTALLSTATE_DEFAULT)
         {
             TRACE("%s was default, setting to local\n", debugstr_w(component->Component));
-            msi_component_set_state(package, component, INSTALLSTATE_LOCAL);
+            component->Action = INSTALLSTATE_LOCAL;
+            component->ActionRequest = INSTALLSTATE_LOCAL;
+        }
+
+        if (component->ActionRequest == INSTALLSTATE_SOURCE &&
+            component->Installed == INSTALLSTATE_SOURCE &&
+            component->hasSourceFeature)
+        {
+            component->Action = INSTALLSTATE_UNKNOWN;
+            component->ActionRequest = INSTALLSTATE_UNKNOWN;
         }
 
         TRACE("Result: Component %s (Installed %d Request %d Action %d)\n",

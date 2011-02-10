@@ -7860,10 +7860,8 @@ static void test_removefiles(void)
     installed = action = 0xdeadbeef;
     r = MsiGetComponentState( hpkg, "hydrogen", &installed, &action );
     ok( r == ERROR_SUCCESS, "failed to get component state %u\n", r );
-    todo_wine {
     ok( installed == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", installed );
-    ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
-    }
+    todo_wine ok( action == INSTALLSTATE_UNKNOWN, "expected INSTALLSTATE_UNKNOWN, got %d\n", action );
 
     r = MsiSetComponentState( hpkg, "helium", INSTALLSTATE_LOCAL );
     ok( r == ERROR_SUCCESS, "failed to set component state: %d\n", r);

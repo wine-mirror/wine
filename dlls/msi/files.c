@@ -888,25 +888,25 @@ static BOOL verify_comp_for_removal(MSICOMPONENT *comp, UINT install_mode)
 {
     INSTALLSTATE request = comp->ActionRequest;
 
-    if (request == INSTALLSTATE_UNKNOWN)
-        return FALSE;
+    /* special case */
+    if (request != INSTALLSTATE_SOURCE &&
+        comp->Attributes & msidbComponentAttributesSourceOnly &&
+        (install_mode == msidbRemoveFileInstallModeOnRemove ||
+         install_mode == msidbRemoveFileInstallModeOnBoth)) return TRUE;
 
-    if (install_mode == msidbRemoveFileInstallModeOnInstall &&
-        (request == INSTALLSTATE_LOCAL || request == INSTALLSTATE_SOURCE))
-        return TRUE;
-
-    if (request == INSTALLSTATE_ABSENT)
+    switch (request)
     {
-        if (!comp->ComponentId)
-            return FALSE;
-
-        if (install_mode == msidbRemoveFileInstallModeOnRemove)
-            return TRUE;
+    case INSTALLSTATE_LOCAL:
+    case INSTALLSTATE_SOURCE:
+        if (install_mode == msidbRemoveFileInstallModeOnInstall ||
+            install_mode == msidbRemoveFileInstallModeOnBoth) return TRUE;
+        break;
+    case INSTALLSTATE_ABSENT:
+        if (install_mode == msidbRemoveFileInstallModeOnRemove ||
+            install_mode == msidbRemoveFileInstallModeOnBoth) return TRUE;
+        break;
+    default: break;
     }
-
-    if (install_mode == msidbRemoveFileInstallModeOnBoth)
-        return TRUE;
-
     return FALSE;
 }
 
@@ -935,7 +935,7 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
 
     if (!verify_comp_for_removal(comp, install_mode))
     {
-        TRACE("Skipping removal due to missing conditions\n");
+        TRACE("Skipping removal due to install mode\n");
         comp->Action = comp->Installed;
         return ERROR_SUCCESS;
     }
