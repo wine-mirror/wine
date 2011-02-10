@@ -2371,7 +2371,6 @@ static void test_schannel_provider(void)
      * succeed before the encryption key algorithm is set.
      */
     result = CryptDeriveKey(hProv, CALG_SCHANNEL_ENC_KEY, hMasterHash, CRYPT_SERVER, &hServerWriteKey);
-    todo_wine
     ok (!result && GetLastError() == NTE_BAD_FLAGS,
         "expected NTE_BAD_FLAGS, got %08x\n", GetLastError());
 

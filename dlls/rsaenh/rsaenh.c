@@ -3923,6 +3923,12 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
             {
                 /* See RFC 2246, chapter 6.3 Key calculation */
                 case CALG_SCHANNEL_ENC_KEY:
+                    if (!pMasterKey->siSChannelInfo.saEncAlg.Algid ||
+                        !pMasterKey->siSChannelInfo.saEncAlg.cBits)
+                    {
+                        SetLastError(NTE_BAD_FLAGS);
+                        return FALSE;
+                    }
                     *phKey = new_key(hProv, pMasterKey->siSChannelInfo.saEncAlg.Algid, 
                                      MAKELONG(LOWORD(dwFlags),pMasterKey->siSChannelInfo.saEncAlg.cBits),
                                      &pCryptKey);
