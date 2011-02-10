@@ -1347,6 +1347,79 @@ static void D3DXCreateMeshFVFTest(void)
     DestroyWindow(wnd);
 }
 
+static void D3DXCreateBoxTest(void)
+{
+    HRESULT hr;
+    HWND wnd;
+    WNDCLASS wc={0};
+    IDirect3D9* d3d;
+    IDirect3DDevice9* device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    ID3DXMesh* box;
+    ID3DXBuffer* ppBuffer;
+
+    wc.lpfnWndProc = DefWindowProcA;
+    wc.lpszClassName = "d3dx9_test_wc";
+    if (!RegisterClass(&wc))
+    {
+        skip("RegisterClass failed\n");
+        return;
+    }
+
+    wnd = CreateWindow("d3dx9_test_wc", "d3dx9_test",
+                        WS_SYSMENU | WS_POPUP , 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(wnd != NULL, "Expected to have a window, received NULL");
+    if (!wnd)
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!d3d)
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    hr = D3DXCreateBuffer(36 * sizeof(DWORD), &ppBuffer);
+    ok(hr==D3D_OK, "Expected D3D_OK, received %#x", hr);
+    if (FAILED(hr)) goto end;
+
+    hr = D3DXCreateBox(device,2.0f,20.0f,4.9f,NULL, &ppBuffer);
+    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+
+    hr = D3DXCreateBox(NULL,22.0f,20.0f,4.9f,&box, &ppBuffer);
+    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+
+    hr = D3DXCreateBox(device,-2.0f,20.0f,4.9f,&box, &ppBuffer);
+    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+
+    hr = D3DXCreateBox(device,22.0f,-20.0f,4.9f,&box, &ppBuffer);
+    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+
+    hr = D3DXCreateBox(device,22.0f,20.0f,-4.9f,&box, &ppBuffer);
+    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+
+end:
+    IDirect3DDevice9_Release(device);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(wnd);
+}
+
 struct sincos_table
 {
     float *sin;
@@ -2037,6 +2110,7 @@ START_TEST(mesh)
     D3DXIntersectTriTest();
     D3DXCreateMeshTest();
     D3DXCreateMeshFVFTest();
+    D3DXCreateBoxTest();
     D3DXCreateSphereTest();
     D3DXCreateCylinderTest();
     test_get_decl_length();
