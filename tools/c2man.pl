@@ -860,7 +860,8 @@ sub process_comment($)
         $tmp =~ s/\n.*//g;
         if ($tmp ne "")
         {
-          $h_file = `basename $tmp`;
+          $h_file = "$tmp";
+          $h_file =~ s|^.*/\./||;
         }
       }
     }
@@ -874,7 +875,8 @@ sub process_comment($)
         $tmp =~ s/\n.*//g;
         if ($tmp ne "")
         {
-          $h_file = `basename $tmp`;
+          $h_file = "$tmp";
+          $h_file =~ s|^.*/\./||;
         }
       }
     }
@@ -886,7 +888,7 @@ sub process_comment($)
     }
     else
     {
-      $h_file = "Defined in \"".$h_file."\".";
+      $h_file = "Declared in \"".$h_file."\".";
     }
   }
 
@@ -1611,6 +1613,7 @@ sub output_api_comment($)
       {
         # Link to the file in WineHQ cvs
         s/^(Implemented in \")(.+?)(\"\.)/$1$2$3 http:\/\/source.winehq.org\/source\/$2/g;
+        s/^(Declared in \")(.+?)(\"\.)/$1$2$3 http:\/\/source.winehq.org\/source\/include\/$2/g;
       }
       # Highlight strings
       s/(\".+?\")/$fmt[2]$1$fmt[3]/g;
@@ -2265,7 +2268,7 @@ while(defined($_ = shift @ARGV))
       /^L$/  && do { last; };
       /^w$/  && do { @opt_spec_file_list = (@opt_spec_file_list, shift @ARGV); last; };
       s/^I// && do { if ($_ ne ".") {
-                       foreach my $include (`find $_ -type d ! -name tests`) {
+                       foreach my $include (`find $_/./ -type d ! -name tests`) {
                          $include =~ s/\n//;
                          $include = $include."/*.h";
                          $include =~ s/\/\//\//g;
