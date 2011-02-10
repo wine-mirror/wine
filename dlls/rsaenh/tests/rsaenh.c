@@ -2339,7 +2339,30 @@ static void test_schannel_provider(void)
     result = CryptImportKey(hProv, abTLS1Master, dwLen, hRSAKey, 0, &hMasterSecret);
     ok (result, "%08x\n", GetLastError());
     if (!result) return;    
-   
+
+    /* Deriving a hash from the master secret. This is due to the CryptoAPI architecture.
+     * (Keys can only be derived from hashes, not from other keys.)
+     * The hash can't be created yet because the key doesn't have the client
+     * random or server random set.
+     */
+    result = CryptCreateHash(hProv, CALG_SCHANNEL_MASTER_HASH, hMasterSecret, 0, &hMasterHash);
+    todo_wine
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER,
+        "expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+    if (result)
+    {
+        CryptDestroyHash(hMasterHash);
+        /* Reimporting the master secret is necessary under Wine until creating
+         * the hash fails as it should.
+         */
+        CryptDestroyKey(hMasterSecret);
+
+        dwLen = (DWORD)sizeof(abTLS1Master);
+        result = CryptImportKey(hProv, abTLS1Master, dwLen, hRSAKey, 0, &hMasterSecret);
+        ok (result, "%08x\n", GetLastError());
+        if (!result) return;
+    }
+
     /* Setting the TLS1 client and server random parameters, as well as the 
      * MAC and encryption algorithm parameters. */
     data_blob.cbData = 33;
@@ -2353,7 +2376,21 @@ static void test_schannel_provider(void)
     result = CryptSetKeyParam(hMasterSecret, KP_SERVER_RANDOM, (BYTE*)&data_blob, 0);
     ok (result, "%08x\n", GetLastError());
     if (!result) return;
-    
+
+    result = CryptCreateHash(hProv, CALG_SCHANNEL_MASTER_HASH, hMasterSecret, 0, &hMasterHash);
+    ok (result, "%08x\n", GetLastError());
+    if (!result) return;
+
+    /* Deriving the server write encryption key from the master hash can't
+     * succeed before the encryption key algorithm is set.
+     */
+    result = CryptDeriveKey(hProv, CALG_SCHANNEL_ENC_KEY, hMasterHash, CRYPT_SERVER, &hServerWriteKey);
+    todo_wine
+    ok (!result && GetLastError() == NTE_BAD_FLAGS,
+        "expected NTE_BAD_FLAGS, got %08x\n", GetLastError());
+
+    CryptDestroyHash(hMasterHash);
+
     saSChannelAlg.dwUse = SCHANNEL_ENC_KEY;
     saSChannelAlg.Algid = CALG_DES;
     saSChannelAlg.cBits = 64;
@@ -2372,8 +2409,6 @@ static void test_schannel_provider(void)
     ok (result, "%08x\n", GetLastError());
     if (!result) return;
 
-    /* Deriving a hash from the master secret. This is due to the CryptoAPI architecture.
-     * (Keys can only be derived from hashes, not from other keys.) */
     result = CryptCreateHash(hProv, CALG_SCHANNEL_MASTER_HASH, hMasterSecret, 0, &hMasterHash);
     ok (result, "%08x\n", GetLastError());
     if (!result) return;
