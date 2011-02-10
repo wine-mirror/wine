@@ -4014,6 +4014,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
 
     if(flags & CLIENTSITE_SETNULL) {
         hres = IOleObject_GetClientSite(oleobj, &clientsite);
+        ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
         if(set_clientsite)
             ok(clientsite == &ClientSite, "clientsite=%p, expected %p\n", clientsite, &ClientSite);
         else
