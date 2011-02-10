@@ -85,8 +85,8 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
-"Неочікувана контрольна сума завантаженого файлу. Скасовую встановлення пошкодженого "
-"файлу."
+"Неочікувана контрольна сума завантаженого файлу. Скасовую встановлення "
+"пошкодженого файлу."
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -6818,8 +6818,7 @@ msgstr "Ім'я сертифікату не збігається з сайтом
 #: wininet.rc:29
 msgid ""
 "There is at least one unspecified security problem with this certificate."
-msgstr ""
-"Існує принаймні одна невизначена проблема безпеки з цим сертифікатом."
+msgstr "Існує принаймні одна невизначена проблема безпеки з цим сертифікатом."
 
 #: winmm.rc:28
 msgid "The specified command was carried out."
@@ -11396,8 +11395,8 @@ msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
-"Ви вибрали збереження у форматі звичайного тексту, що призведе до "
-"втрати всього форматування. Ви дійсно хочете зробити це?"
+"Ви вибрали збереження у форматі звичайного тексту, що призведе до втрати "
+"всього форматування. Ви дійсно хочете зробити це?"
 
 #: wordpad.rc:187
 msgid "Invalid number format"
