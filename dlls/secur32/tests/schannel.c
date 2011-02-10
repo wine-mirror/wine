@@ -253,7 +253,7 @@ static void testAcquireSecurityContext(void)
         ok(st == SEC_E_NO_CREDENTIALS, "Expected SEC_E_NO_CREDENTIALS, got %08x\n", st);
 
         /* Crashes */
-        st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
+        pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
          NULL, NULL, NULL, NULL, NULL, NULL);
     }
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
@@ -299,7 +299,7 @@ static void testAcquireSecurityContext(void)
     {
         /* Crashes with bad paCred pointer */
         schanCred.cCreds = 1;
-        st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
+        pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
          NULL, &schanCred, NULL, NULL, NULL, NULL);
     }
 
@@ -343,6 +343,7 @@ static void testAcquireSecurityContext(void)
         ret = pCertSetCertificateContextProperty(certs[1],
               CERT_KEY_PROV_INFO_PROP_ID, 0, &keyProvInfo);
         schanCred.dwVersion = SCH_CRED_V3;
+        ok(ret, "CertSetCertificateContextProperty failed: %08x\n", GetLastError());
         st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
              NULL, &schanCred, NULL, NULL, &cred, NULL);
         ok(st == SEC_E_UNKNOWN_CREDENTIALS || st == SEC_E_INTERNAL_ERROR /* WinNT */,
@@ -369,7 +370,7 @@ static void testAcquireSecurityContext(void)
         if (0)
         {
             /* Crashes */
-            st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_INBOUND,
+            pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_INBOUND,
              NULL, &schanCred, NULL, NULL, NULL, NULL);
 
             /* Crashes on WinNT */
