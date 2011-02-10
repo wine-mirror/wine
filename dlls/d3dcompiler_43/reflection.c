@@ -296,9 +296,32 @@ static struct ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_sha
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetResourceBindingDescByName(
         ID3D11ShaderReflection *iface, LPCSTR name, D3D11_SHADER_INPUT_BIND_DESC *desc)
 {
-    FIXME("iface %p, name %s, desc %p stub!\n", iface, name, desc);
+    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s, desc %p\n", iface, debugstr_a(name), desc);
+
+    if (!desc || !name)
+    {
+        WARN("Invalid argument specified\n");
+        return E_INVALIDARG;
+    }
+
+    for (i = 0; i < This->bound_resource_count; ++i)
+    {
+        D3D11_SHADER_INPUT_BIND_DESC *d = &This->bound_resources[i];
+
+        if (!strcmp(d->Name, name))
+        {
+            TRACE("Returning D3D11_SHADER_INPUT_BIND_DESC %p.\n", d);
+            *desc = *d;
+            return S_OK;
+        }
+    }
+
+    WARN("Invalid name specified\n");
+
+    return E_INVALIDARG;
 }
 
 static UINT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetMovInstructionCount(
