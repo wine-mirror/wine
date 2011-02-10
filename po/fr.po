@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-02-08 17:30+0100\n"
+"PO-Revision-Date: 2011-02-10 15:38+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -158,9 +158,8 @@ msgid "&About FolderPicker Test"
 msgstr "À propos du sélecteur de répertoires"
 
 #: comdlg32.rc:30
-#, fuzzy
 msgid "Document Folders"
-msgstr "Dossiers documents"
+msgstr "Dossiers Documents"
 
 #: comdlg32.rc:31 shell32.rc:187
 msgid "My Documents"
@@ -840,7 +839,6 @@ msgid "Serialized Signature Serial Number"
 msgstr "Numéro de série de signature sérialisée"
 
 #: crypt32.rc:87
-#, fuzzy
 msgid "Principal Name"
 msgstr "Nom principal"
 
@@ -2631,7 +2629,7 @@ msgstr "Il n'y a plus de descripteurs de recherche\n"
 
 #: winerror.mc:446
 msgid "Invalid target handle\n"
-msgstr "Descripteur de fichier cible non valide\n"
+msgstr "Descripteur de cible non valide\n"
 
 #: winerror.mc:451
 msgid "Invalid IOCTL\n"
@@ -3037,12 +3035,11 @@ msgstr "Read/WriteProcessMemory partiellement effectué\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted\n"
-msgstr ""
+msgstr "Le verrou opportuniste n'a pas été accordé\n"
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received\n"
-msgstr "Nom de message invalide\n"
+msgstr "Message de verrou opportuniste invalide reçu\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -3130,9 +3127,8 @@ msgid "Invalid key\n"
 msgstr "Clé invalide\n"
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key\n"
-msgstr "Ne peut lire la clé du registre\n"
+msgstr "Ne peut accéder à la clé du registre\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key\n"
@@ -3296,26 +3292,22 @@ msgid "Different service account\n"
 msgstr "Nom de compte du service différent\n"
 
 #: winerror.mc:1276
-#, fuzzy
 msgid "Driver failure cannot be detected\n"
-msgstr ""
+msgstr "Impossible de détecter les défaillances de pilotes\n"
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected\n"
-msgstr "Le processus s'est arrêté brutalement\n"
+msgstr "Impossible de détecter les processus terminés anormalement\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service\n"
 msgstr "Aucun programme de récupération pour le service\n"
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe\n"
-msgstr "L'impression n'est pas implémentée"
+msgstr "Le service n'est pas mis en œuvre par l'exécutable\n"
 
 #: winerror.mc:1296
-#, fuzzy
 msgid "End of media\n"
 msgstr "Fin du support\n"
 
@@ -3324,7 +3316,6 @@ msgid "Filemark detected\n"
 msgstr "Marque de fichier détectée\n"
 
 #: winerror.mc:1306
-#, fuzzy
 msgid "Beginning of media\n"
 msgstr "Début du support\n"
 
@@ -3493,9 +3484,8 @@ msgid "DLL not found\n"
 msgstr "DLL non trouvée\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles\n"
-msgstr "Il n'y a plus de descripteurs utilisateurs\n"
+msgstr "Il n'y a plus de descripteurs d'utilisateur\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
@@ -3506,32 +3496,28 @@ msgid "The source element is empty\n"
 msgstr "L'élément source est vide\n"
 
 #: winerror.mc:1531
-#, fuzzy
 msgid "The destination element is full\n"
-msgstr "L'opération s'est terminée avec succès\n"
+msgstr "L'élément destination est rempli\n"
 
 #: winerror.mc:1536
 msgid "The element address is invalid\n"
 msgstr "L'adresse de l'élément est invalide\n"
 
 #: winerror.mc:1541
-#, fuzzy
 msgid "The magazine is not present\n"
-msgstr ""
+msgstr "Le magasin n'est pas présent\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
 msgstr "Le périphérique nécessite une réinitialisation\n"
 
 #: winerror.mc:1551
-#, fuzzy
 msgid "The device requires cleaning\n"
-msgstr "Le service %s démarre.\n"
+msgstr "Le périphérique nécessite un nettoyage\n"
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open\n"
-msgstr "La porte de l'imprimante est ouverte ; "
+msgstr "La porte du périphérique est ouverte\n"
 
 #: winerror.mc:1561
 msgid "The device is not connected\n"
@@ -3542,27 +3528,22 @@ msgid "Element not found\n"
 msgstr "Élément introuvable\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found\n"
 msgstr "Aucune correspondance trouvée\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found\n"
-msgstr "Procédure introuvable\n"
+msgstr "Jeu de propriétés introuvable\n"
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found\n"
-msgstr "Chemin introuvable\n"
+msgstr "Point introuvable\n"
 
 #: winerror.mc:1586
-#, fuzzy
 msgid "No running tracking service\n"
 msgstr "Aucun service de suivi en cours d'exécution\n"
 
 #: winerror.mc:1591
-#, fuzzy
 msgid "No such volume ID\n"
 msgstr "ID de volume inexistant\n"
 
@@ -3571,9 +3552,8 @@ msgid "Unable to remove the file to be replaced\n"
 msgstr "Impossible de supprimer le fichier à remplacer\n"
 
 #: winerror.mc:1601
-#, fuzzy
 msgid "Unable to move the replacement file into place\n"
-msgstr ""
+msgstr "Impossible de déplacer le fichier de remplacement sur place\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed\n"
@@ -3581,16 +3561,15 @@ msgstr "Échec du déplacement du fichier de remplacement\n"
 
 #: winerror.mc:1611
 msgid "The journal is being deleted\n"
-msgstr "Le journal est en cours de suppression\n"
+msgstr "Le journal est en cours d'effacement\n"
 
 #: winerror.mc:1616
 msgid "The journal is not active\n"
 msgstr "Le journal n'est pas actif\n"
 
 #: winerror.mc:1621
-#, fuzzy
 msgid "Potential matching file found\n"
-msgstr ""
+msgstr "Fichier potentiel trouvé\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted\n"
@@ -3789,18 +3768,16 @@ msgid "No more local devices\n"
 msgstr "Il n'y a plus de périphériques locaux\n"
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist\n"
-msgstr "Le périphérique n'existe pas\n"
+msgstr "Le site n'existe pas\n"
 
 #: winerror.mc:1881
 msgid "The domain controller already exists\n"
 msgstr "Le contrôleur de domaine existe déjà\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected\n"
-msgstr "Canal de communication non connecté\n"
+msgstr "Possible uniquement en mode connecté\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed\n"
@@ -3819,7 +3796,6 @@ msgid "Not all privileges assigned\n"
 msgstr "Tous les privilèges n'ont pas été accordés\n"
 
 #: winerror.mc:1911
-#, fuzzy
 msgid "Some security IDs not mapped\n"
 msgstr "Mappage partiel des ID de sécurité\n"
 
@@ -4200,9 +4176,8 @@ msgid "Mutual authentication failed\n"
 msgstr "Échec de l'authentification mutuelle\n"
 
 #: winerror.mc:2391
-#, fuzzy
 msgid "Time skew between client and server\n"
-msgstr ""
+msgstr "Décalage horaire entre le client et le serveur"
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
@@ -4375,7 +4350,7 @@ msgstr "Écran déjà verrouillé\n"
 
 #: winerror.mc:2601
 msgid "Window handles have different parents\n"
-msgstr "Les identificateurs de fenêtres ont des parents distincts\n"
+msgstr "Les descripteurs de fenêtres ont des parents distincts\n"
 
 #: winerror.mc:2606
 msgid "Not a child window\n"
@@ -4452,9 +4427,8 @@ msgid "Interactive window station required\n"
 msgstr ""
 
 #: winerror.mc:2696
-#, fuzzy
 msgid "Timeout\n"
-msgstr "Délai d'attente dépassé"
+msgstr "Délai d'attente expiré\n"
 
 #: winerror.mc:2701
 msgid "Invalid monitor handle\n"
@@ -4559,9 +4533,8 @@ msgid "Installation package is invalid\n"
 msgstr "Programmes d'installation"
 
 #: winerror.mc:2826
-#, fuzzy
 msgid "Installer user interface failed\n"
-msgstr ""
+msgstr "Échec de l'interface utilisateur du programme d'installation\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"
@@ -4572,9 +4545,9 @@ msgid "Installation language not supported\n"
 msgstr "Langue d'installation non prise en charge\n"
 
 #: winerror.mc:2841
-#, fuzzy
 msgid "Installation transform failed to apply\n"
 msgstr ""
+"Le fichier de transformation d'installation n'a pu être appliqué\n"
 
 #: winerror.mc:2846
 #, fuzzy
@@ -4586,14 +4559,12 @@ msgid "Function could not be called\n"
 msgstr "La fonction n'a pu être appelée\n"
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed\n"
-msgstr "Fonction attendue"
+msgstr "La fonction a échoué\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table\n"
-msgstr "Balise invalide\n"
+msgstr "Table invalide\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch\n"
@@ -4604,18 +4575,16 @@ msgid "Unsupported type\n"
 msgstr "Type non pris en charge\n"
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed\n"
-msgstr "Échec lors de l'ouverture\n"
+msgstr "Erreur lors de la création\n"
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable\n"
 msgstr "Répertoire temporaire non accessible en écriture\n"
 
 #: winerror.mc:2886
-#, fuzzy
 msgid "Installation platform not supported\n"
-msgstr "Opération pas prise en charge\n"
+msgstr "Plateforme d'installation non prise en charge\n"
 
 #: winerror.mc:2891
 msgid "Installer not used\n"
@@ -4673,7 +4642,6 @@ msgid "Invalid RPC protocol sequence\n"
 msgstr "Séquence de protocole RPC invalide\n"
 
 #: winerror.mc:2956
-#, fuzzy
 msgid "Invalid string UUID\n"
 msgstr "UUID de chaîne invalide\n"
 
@@ -4931,14 +4899,13 @@ msgstr "Il n'y a plus d'entrées\n"
 
 #: winerror.mc:3281
 msgid "Character translation table open failed\n"
-msgstr "Échec d'ouverture du fichier de table de traduction des caractères\n"
+msgstr "Impossible d'ouvrir la table de conversion de caractères\n"
 
 #: winerror.mc:3286
 msgid "Character translation table file too small\n"
-msgstr "Fichier de table de traduction des caractères trop petit\n"
+msgstr "Fichier de table de conversion de caractères trop petit\n"
 
 #: winerror.mc:3291
-#, fuzzy
 msgid "Null context handle\n"
 msgstr "Descripteur de contexte null\n"
 
@@ -4996,7 +4963,6 @@ msgid "Trusted relationship failure\n"
 msgstr "Échec de la relation d'approbation\n"
 
 #: winerror.mc:3361
-#, fuzzy
 msgid "Trust logon failure\n"
 msgstr "Échec d'approbation lors de la connexion\n"
 
@@ -5126,9 +5092,8 @@ msgid "Unsupported authorisation level\n"
 msgstr "Niveau d'autorisation non pris en charge\n"
 
 #: winerror.mc:3521
-#, fuzzy
 msgid "No principal name registered\n"
-msgstr "Aucun nom principal déclaré\n"
+msgstr "Aucun nom principal enregistré\n"
 
 #: winerror.mc:3526
 msgid "Not an RPC error\n"
@@ -5166,7 +5131,6 @@ msgid "Invalid pipe object\n"
 msgstr "Objet tube incorrect\n"
 
 #: winerror.mc:3566
-#, fuzzy
 msgid "Wrong pipe order\n"
 msgstr "Commande incorrecte sur le tube\n"
 
@@ -5179,7 +5143,6 @@ msgid "Group member not found\n"
 msgstr "Membre de groupe introuvable\n"
 
 #: winerror.mc:3581
-#, fuzzy
 msgid "Can't create endpoint mapper DB\n"
 msgstr ""
 "Impossible de créer la base de données de mappeur de points d'extrémités\n"
@@ -5257,9 +5220,8 @@ msgid "RPC pipe closed\n"
 msgstr "Tube RPC fermé\n"
 
 #: winerror.mc:3671
-#, fuzzy
 msgid "Discipline error on RPC pipe\n"
-msgstr ""
+msgstr "Erreur de discipline sur le tube RPC"
 
 #: winerror.mc:3676
 msgid "No data on RPC pipe\n"
@@ -5274,9 +5236,8 @@ msgid "The file cannot be accessed\n"
 msgstr "Accès impossible au fichier\n"
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved\n"
-msgstr "Nom d'utilisateur introuvable\n"
+msgstr "Impossible de résoudre le nom de fichier\n"
 
 #: winerror.mc:3696
 msgid "RPC entry type mismatch\n"
@@ -7196,13 +7157,12 @@ msgstr ""
 "redémarrant Windows."
 
 #: winmm.rc:75
-#, fuzzy
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
-"Une erreur spécifique au pilote a provoqué sa fermeture. Essayez de relancer "
-"la commande."
+"Défaillance du pilote de périphérique. Le pilote a été fermé. "
+"Accès impossible."
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
@@ -7218,11 +7178,10 @@ msgstr ""
 "périphériques responsables."
 
 #: winmm.rc:78
-#, fuzzy
 msgid "Cannot determine the device type from the given filename extension."
 msgstr ""
-"Impossible de jouer ce fichier. Vérifiez le nom de fichier ou installez un "
-"pilote qui reconnaît ce type de fichier."
+"Impossible de déterminer le type de périphérique à partir de l'extension de "
+"nom de fichier donnée."
 
 #: winmm.rc:79
 msgid "The specified parameter is out of range for the specified command."
@@ -7492,13 +7451,12 @@ msgstr ""
 "en cours n'a été installé."
 
 #: winmm.rc:117
-#, fuzzy
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
 msgstr ""
-"Ce périphérique ne parvient pas à reconnaître le format du fichier actuel. "
-"Sélectionnez un autre périphérique, puis essayez à nouveau."
+"Le périphérique avec lequel vous essayez d'enregistrer ne parvient pas à "
+"reconnaître le format du fichier courant."
 
 #: winmm.rc:122
 msgid ""
@@ -7975,9 +7933,9 @@ msgstr ""
 "\n"
 "Syntaxe : FOR %variable IN (groupe) DO commande\n"
 "\n"
-"Il n'est pas nécessaire de doubler le signe « % » lorsque l'on utilise FOR dans "
+"La nécessité de doubler le signe « % » lorsque l'on utilise FOR dans un "
 "fichier batch\n"
-"le cmd de wine.\n"
+"n'est pas présente dans le cmd de wine.\n"
 
 #: cmd.rc:82
 msgid ""
@@ -8630,7 +8588,6 @@ msgid "Could not get handle to service control manager.\n"
 msgstr "Impossible d'obtenir le gestionnaire de contrôle de service.\n"
 
 #: net.rc:33
-#, fuzzy
 msgid "Could not get handle to service.\n"
 msgstr "Impossible d'obtenir un descripteur du service.\n"
 
@@ -8987,7 +8944,7 @@ msgstr "Enregistrer &sous..."
 
 #: oleview.rc:84
 msgid "&Group by type kind"
-msgstr "&Grouper par type"
+msgstr "&Grouper par catégorie de type"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -9010,9 +8967,8 @@ msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 msgstr "Fichiers TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
 #: oleview.rc:103
-#, fuzzy
 msgid "Bind to file via a File Moniker"
-msgstr "Lier à un fichier à l'aide d'un File Moniker"
+msgstr "Lier à un fichier à l'aide d'un Moniker Fichier"
 
 #: oleview.rc:104
 msgid "Open a TypeLib file and view the contents"
@@ -9176,9 +9132,8 @@ msgid "Close window"
 msgstr "Fermer la fenêtre"
 
 #: oleview.rc:126
-#, fuzzy
 msgid "Group typeinfos by kind"
-msgstr "Grouper les typeinfos par catégorie"
+msgstr "Grouper les informations de type par catégorie"
 
 #: progman.rc:30
 msgid "&New..."
@@ -10108,7 +10063,6 @@ msgid "Switches the focus to the process of the selected task"
 msgstr "Place le focus sur le processus de la tâche sélectionnée"
 
 #: taskmgr.rc:230
-#, fuzzy
 msgid "Restores the Task Manager from its hidden state"
 msgstr "Restaure le gestionnaire des tâches depuis son état caché"
 
@@ -10884,7 +10838,7 @@ msgstr "wineconsole : impossible de déchiffrer l'identifiant d'événement\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole : moteur invalide\n"
+msgstr "wineconsole : moteur de traitement invalide\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
