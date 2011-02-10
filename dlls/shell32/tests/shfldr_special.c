@@ -150,9 +150,9 @@ static void test_printers_folder(void)
 if (0)
 {
     /* crashes on XP */
-    hr = IShellFolder2_GetDetailsOf(folder, NULL, 0, NULL);
-    hr = IShellFolder2_GetDefaultColumnState(folder, 0, NULL);
-    hr = IPersistFolder2_GetCurFolder(pf, NULL);
+    IShellFolder2_GetDetailsOf(folder, NULL, 0, NULL);
+    IShellFolder2_GetDefaultColumnState(folder, 0, NULL);
+    IPersistFolder2_GetCurFolder(pf, NULL);
 }
 
     /* 5 columns defined */
