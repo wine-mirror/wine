@@ -363,8 +363,7 @@ msgstr ""
 
 #: comdlg32.rc:74
 msgid "The number of 'Number of copies' value cannot be empty."
-msgstr ""
-"Le champ « Nombre de copies » ne peut être vide."
+msgstr "Le champ « Nombre de copies » ne peut être vide."
 
 #: comdlg32.rc:76
 msgid ""
@@ -4422,7 +4421,6 @@ msgid "Hook type not allowed\n"
 msgstr "Type d'accès non accordé\n"
 
 #: winerror.mc:2691
-#, fuzzy
 msgid "Interactive window station required\n"
 msgstr ""
 
@@ -4546,8 +4544,7 @@ msgstr "Langue d'installation non prise en charge\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
-msgstr ""
-"Le fichier de transformation d'installation n'a pu être appliqué\n"
+msgstr "Le fichier de transformation d'installation n'a pu être appliqué\n"
 
 #: winerror.mc:2846
 #, fuzzy
@@ -5782,8 +5779,8 @@ msgid ""
 "your document."
 msgstr ""
 "Insère le contenu du presse-papiers dans votre document comme %s. Les "
-"données sont liées au fichier source de sorte que les modifications de "
-"celui-ci seront répercutées dans votre document."
+"données sont liées au fichier source de sorte que les modifications de celui-"
+"ci seront répercutées dans votre document."
 
 #: oledlg.rc:38
 msgid ""
@@ -6714,8 +6711,7 @@ msgstr ""
 
 #: shell32.rc:160
 msgid "Are you sure you want to delete the selected item(s)?"
-msgstr "Voulez-vous réellement supprimer le(s) élément(s) "
-"sélectionné(s) ?"
+msgstr "Voulez-vous réellement supprimer le(s) élément(s) sélectionné(s) ?"
 
 #: shell32.rc:162
 msgid ""
@@ -6907,8 +6903,7 @@ msgstr "Erreur externe non définie."
 #: winmm.rc:30
 msgid "A device ID has been used that is out of range for your system."
 msgstr ""
-"Un identifiant de périphérique hors plage pour votre système a été "
-"utilisé."
+"Un identifiant de périphérique hors plage pour votre système a été utilisé."
 
 #: winmm.rc:31
 msgid "The driver was not enabled."
@@ -7060,8 +7055,8 @@ msgstr ""
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
-msgstr "Le périphérique spécifié n'est pas ouvert ou n'est pas "
-" reconnu par MCI."
+msgstr ""
+"Le périphérique spécifié n'est pas ouvert ou n'est pas  reconnu par MCI."
 
 #: winmm.rc:61
 msgid ""
@@ -7096,8 +7091,8 @@ msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
 msgstr ""
-"La chaîne de caractères de sortie était trop grande pour tenir dans "
-"la mémoire tampon de retour. Augmentez la taille de la mémoire tampon."
+"La chaîne de caractères de sortie était trop grande pour tenir dans la "
+"mémoire tampon de retour. Augmentez la taille de la mémoire tampon."
 
 #: winmm.rc:66
 msgid ""
@@ -7109,8 +7104,7 @@ msgstr ""
 
 #: winmm.rc:67
 msgid "The specified integer is invalid for this command."
-msgstr ""
-"Le nombre entier spécifié n'est pas valide pour cette commande."
+msgstr "Le nombre entier spécifié n'est pas valide pour cette commande."
 
 #: winmm.rc:68
 msgid ""
@@ -7125,8 +7119,8 @@ msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"Le pilote de périphérique présente un problème."
-"Contactez le constructeur du périphérique pour obtenir un nouveau pilote"
+"Le pilote de périphérique présente un problème.Contactez le constructeur du "
+"périphérique pour obtenir un nouveau pilote"
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
@@ -7147,8 +7141,7 @@ msgstr ""
 
 #: winmm.rc:73
 msgid "The device driver is not ready."
-msgstr ""
-"Le pilote de périphérique n'est pas prêt."
+msgstr "Le pilote de périphérique n'est pas prêt."
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
@@ -7161,12 +7154,14 @@ msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
-"Défaillance du pilote de périphérique. Le pilote a été fermé. "
-"Accès impossible."
+"Défaillance du pilote de périphérique. Le pilote a été fermé. Accès "
+"impossible."
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr "Ne peut utiliser « all » comme nom de périphérique spécifique pour cette commande."
+msgstr ""
+"Ne peut utiliser « all » comme nom de périphérique spécifique pour cette "
+"commande."
 
 #: winmm.rc:77
 msgid ""
@@ -7256,8 +7251,7 @@ msgstr ""
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
-msgstr ""
-"Un guillemet fermant manque dans la valeur du paramètre. Ajoutez-le."
+msgstr "Un guillemet fermant manque dans la valeur du paramètre. Ajoutez-le."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
@@ -7269,8 +7263,8 @@ msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
-"Le fichier ne peut pas être lu sur le périphérique MCI spécifié. Le "
-"fichier est endommagé ou son format n'est pas le bon."
+"Le fichier ne peut pas être lu sur le périphérique MCI spécifié. Le fichier "
+"est endommagé ou son format n'est pas le bon."
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
@@ -7310,7 +7304,8 @@ msgid ""
 "the device is closed, and then try again."
 msgstr ""
 "Impossible d'exécuter la commande spécifiée sur un périphérique ouvert "
-"automatiquement. Attendez que le périphérique soit fermé pour essayer à nouveau."
+"automatiquement. Attendez que le périphérique soit fermé pour essayer à "
+"nouveau."
 
 #: winmm.rc:99
 msgid ""
@@ -7324,8 +7319,8 @@ msgstr ""
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
-"Impossible de spécifier des caractères supplémentaires après une "
-"chaîne placée entre guillemets."
+"Impossible de spécifier des caractères supplémentaires après une chaîne "
+"placée entre guillemets."
 
 #: winmm.rc:101
 #, fuzzy
@@ -7333,8 +7328,8 @@ msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
 msgstr ""
-"Ce périphérique n'est pas installé sur le système. Utilisez l'élément Pilotes"
-"dans le Panneau de configuration pour installer le périphérique."
+"Ce périphérique n'est pas installé sur le système. Utilisez l'élément "
+"Pilotesdans le Panneau de configuration pour installer le périphérique."
 
 #: winmm.rc:102
 msgid ""
@@ -7463,8 +7458,8 @@ msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
-"Impossible d'utiliser le format horaire « pointeur de piste » et le "
-"format horaire SMPTE en même temps."
+"Impossible d'utiliser le format horaire « pointeur de piste » et le format "
+"horaire SMPTE en même temps."
 
 #: winmm.rc:124
 msgid ""
@@ -7657,9 +7652,9 @@ msgstr "Problème de déréférencement d'alias"
 msgid "Inappropriate Authentication"
 msgstr "Authentification inappropriée"
 
+# informations d'authentification? d'identification?
 #: wldap32.rc:76
 #, fuzzy
-# informations d'authentification? d'identification?
 msgid "Invalid Credentials"
 msgstr "Autorisations invalides"
 
@@ -7955,7 +7950,8 @@ msgstr ""
 "\n"
 "L'étiquette cible du GOTO a une longueur de maximum 255 caractères\n"
 "mais ne peut inclure d'espaces (à la différence d'autres systèmes\n"
-"d'exploitation). Si deux étiquettes identiques (ou plus) existent dans le même\n"
+"d'exploitation). Si deux étiquettes identiques (ou plus) existent dans le "
+"même\n"
 "fichier, seule la première sera utilisée. Essayer de sauter vers une "
 "étiquette\n"
 "non existante termine l'exécution du fichier batch.\n"
@@ -8120,7 +8116,8 @@ msgstr ""
 
 #: cmd.rc:157
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "REN <fichier> est la version courte de RENAME. Elle renomme un fichier.\n"
+msgstr ""
+"REN <fichier> est la version courte de RENAME. Elle renomme un fichier.\n"
 
 #: cmd.rc:158
 msgid "RENAME <filename> renames a file\n"
@@ -9522,8 +9519,7 @@ msgstr "Copie le nom de la clé sélectionnée vers le presse-papiers"
 #: regedit.rc:175
 msgid "Finds a text string in a key, value or data"
 msgstr ""
-"Recherche une chaîne de caractères dans une clé, une valeur"
-" ou des données"
+"Recherche une chaîne de caractères dans une clé, une valeur ou des données"
 
 #: regedit.rc:176
 msgid "Finds next occurrence of text specified in previous search"
@@ -10337,10 +10333,9 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry ?"
 msgstr ""
-"L'exécution de la commande de désinstallation « %s » a échoué, "
-"peut-être du fait d'un exécutable introuvable.\n"
-"Souhaitez-vous supprimer l'entrée de désinstallation de la base "
-"de registre ?"
+"L'exécution de la commande de désinstallation « %s » a échoué, peut-être du "
+"fait d'un exécutable introuvable.\n"
+"Souhaitez-vous supprimer l'entrée de désinstallation de la base de registre ?"
 
 #: view.rc:33
 #, fuzzy
@@ -10535,8 +10530,8 @@ msgid ""
 msgstr ""
 "Impossible d'ajouter des lecteurs supplémentaires !\n"
 "\n"
-"Chaque lecteur se voit assigner une lettre de A à Z ; vous ne pouvez "
-"donc pas en avoir plus de 26."
+"Chaque lecteur se voit assigner une lettre de A à Z ; vous ne pouvez donc "
+"pas en avoir plus de 26."
 
 #: winecfg.rc:87
 msgid "System drive"
@@ -10551,9 +10546,9 @@ msgid ""
 msgstr ""
 "Êtes-vous sûr de vouloir supprimer le lecteur C ?\n"
 "\n"
-"La plupart des applications Windows présument l'existence de ce lecteur "
-"et ne fonctionneront pas s'il n'existe pas. Si vous continuez, n'oubliez pas "
-"de le recréer !"
+"La plupart des applications Windows présument l'existence de ce lecteur et "
+"ne fonctionneront pas s'il n'existe pas. Si vous continuez, n'oubliez pas de "
+"le recréer !"
 
 #: winecfg.rc:89
 msgid "Letter"
@@ -11330,9 +11325,7 @@ msgstr "Fichiers d'aide (*.hlp)"
 
 #: winhlp32.rc:104
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr ""
-"« %s » introuvable. Souhaitez-vous rechercher ce fichier vous-"
-"même ?"
+msgstr "« %s » introuvable. Souhaitez-vous rechercher ce fichier vous-même ?"
 
 #: winhlp32.rc:105
 msgid "Cannot find a richedit implementation... Aborting"
@@ -11579,8 +11572,8 @@ msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
-"Vous avez choisi d'enregistrer en mode texte, ce qui induit "
-"la perte de tout formatage. Voulez-vous vraiment continuer ?"
+"Vous avez choisi d'enregistrer en mode texte, ce qui induit la perte de tout "
+"formatage. Voulez-vous vraiment continuer ?"
 
 #: wordpad.rc:187
 msgid "Invalid number format"
@@ -11746,7 +11739,7 @@ msgstr ""
 "\tensuite l'attribut\n"
 "[/D | /D:m-d-y] Copier uniquement les nouveaux fichiers, ou ceux modifiés "
 "après la date spécifiée.\n"
-"\t\tSi aucune date n'est fournie, ne copier que si le fichier de "
-"destination est plus ancien\n"
+"\t\tSi aucune date n'est fournie, ne copier que si le fichier de destination "
+"est plus ancien\n"
 "\t\tque le fichier source\n"
 "\n"
