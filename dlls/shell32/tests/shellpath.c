@@ -358,7 +358,7 @@ static void test_parameters(void)
         BOOL ret;
 
         if (0)
-           ret = pSHGetSpecialFolderPathA(NULL, NULL, CSIDL_BITBUCKET, FALSE);
+           pSHGetSpecialFolderPathA(NULL, NULL, CSIDL_BITBUCKET, FALSE);
 
         /* odd but true: calling with a NULL path still succeeds if it's a real
          * dir (on some windows platform).  on winME it generates exception.
