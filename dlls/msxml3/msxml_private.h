@@ -59,6 +59,7 @@ typedef enum tid_t {
     IXMLElement_tid,
     IXMLDocument_tid,
     IXMLHTTPRequest_tid,
+    IXSLTemplate_tid,
     IVBSAXAttributes_tid,
     IVBSAXContentHandler_tid,
     IVBSAXDeclHandler_tid,
@@ -374,11 +375,12 @@ MAKE_FUNCPTR(xsltParseStylesheetDoc);
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
                                              LONG line, LONG linepos, LONG filepos );
-extern HRESULT DOMDocument_create( const GUID *clsid, IUnknown *pUnkOuter, void **ppObj );
-extern HRESULT SchemaCache_create( const GUID *clsid, IUnknown *pUnkOuter, void **ppObj );
-extern HRESULT XMLDocument_create( IUnknown *pUnkOuter, void **pObj );
-extern HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, void **pObj );
-extern HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **pObj);
+extern HRESULT DOMDocument_create(const GUID*, IUnknown*, void**);
+extern HRESULT SchemaCache_create(const GUID*, IUnknown*, void**);
+extern HRESULT XMLDocument_create(IUnknown*, void**);
+extern HRESULT SAXXMLReader_create(IUnknown*, void**);
+extern HRESULT XMLHTTPRequest_create(IUnknown*, void **);
+extern HRESULT XSLTemplate_create(IUnknown*, void**);
 
 static inline const CLSID* DOMDocument_version(MSXML_VERSION v)
 {
