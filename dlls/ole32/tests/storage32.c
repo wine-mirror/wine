@@ -1008,6 +1008,7 @@ static void test_streamenum(void)
         CoTaskMemFree(stat.pwcsName);
 
     r = IEnumSTATSTG_Release(ee);
+    ok(r==S_OK, "EnumSTATSTG_Release failed with error 0x%08x\n", r);
 
     /* second enum... destroy the stream before reading */
     r = IStorage_EnumElements(stg, 0, NULL, 0, &ee);
@@ -1038,6 +1039,7 @@ static void test_streamenum(void)
     ok(r==S_OK, "IStorage->CreateStream failed\n");
 
     r = IStream_Release(stm);
+    ok(r==S_OK, "Stream_Release failed with error 0x%08x\n", r);
 
     count = 0xf00;
     r = IEnumSTATSTG_Next(ee, 1, &stat, &count);
@@ -1054,6 +1056,7 @@ static void test_streamenum(void)
     ok(r==S_OK, "IStorage->CreateStream failed\n");
 
     r = IStream_Release(stm);
+    ok(r==S_OK, "Stream_Release failed with error 0x%08x\n", r);
 
     count = 0xf00;
     r = IEnumSTATSTG_Next(ee, 1, &stat, &count);
@@ -1071,6 +1074,7 @@ static void test_streamenum(void)
     ok(r==S_OK, "IStorage->CreateStream failed\n");
 
     r = IStream_Release(stm);
+    ok(r==S_OK, "Stream_Release failed with error 0x%08x\n", r);
 
     r = IEnumSTATSTG_Reset(ee);
     ok(r==S_OK, "IEnumSTATSTG->Reset failed\n");
@@ -1416,6 +1420,7 @@ static void test_revert(void)
     ok(r==S_OK, "IStorage->CreateStorage failed, hr=%08x\n", r);
 
     r = IStorage_Revert(stg);
+    ok(r==S_OK, "Storage_Revert failed with error 0x%08x\n", r);
 
     /* all open objects become invalid */
     r = IStream_Write(stm, "this shouldn't work\n", 20, NULL);
@@ -2732,6 +2737,7 @@ static void test_toplevel_stat(void)
     ok(r==S_OK, "StgCreateDocfile failed\n");
 
     r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
+    ok(r==S_OK, "Storage_Stat failed with error 0x%08x\n", r);
     ok(!strcmp_ww(stat.pwcsName, filename), "expected %s, got %s\n",
         wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
     CoTaskMemFree(stat.pwcsName);
@@ -2742,6 +2748,7 @@ static void test_toplevel_stat(void)
     ok(r==S_OK, "StgOpenStorage failed with error 0x%08x\n", r);
 
     r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
+    ok(r==S_OK, "Storage_Stat failed with error 0x%08x\n", r);
     ok(!strcmp_ww(stat.pwcsName, filename), "expected %s, got %s\n",
         wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
     CoTaskMemFree(stat.pwcsName);
@@ -2765,6 +2772,7 @@ static void test_toplevel_stat(void)
     ok(r==S_OK, "StgCreateDocfile failed\n");
 
     r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
+    ok(r==S_OK, "Storage_Stat failed with error 0x%08x\n", r);
     ok(!strcmp_ww(stat.pwcsName, filename), "expected %s, got %s\n",
         wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
     CoTaskMemFree(stat.pwcsName);
@@ -2775,6 +2783,7 @@ static void test_toplevel_stat(void)
     ok(r==S_OK, "StgOpenStorage failed with error 0x%08x\n", r);
 
     r = IStorage_Stat( stg, &stat, STATFLAG_DEFAULT );
+    ok(r==S_OK, "Storage_Stat failed with error 0x%08x\n", r);
     ok(!strcmp_ww(stat.pwcsName, filename), "expected %s, got %s\n",
         wine_dbgstr_w(filename), wine_dbgstr_w(stat.pwcsName));
     CoTaskMemFree(stat.pwcsName);
