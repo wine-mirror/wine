@@ -1112,6 +1112,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
@@ -1146,6 +1147,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
@@ -1180,6 +1182,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
@@ -1209,6 +1212,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
@@ -1242,6 +1246,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
@@ -1278,6 +1283,7 @@ if(use_midl_tlb) {
     hr = ITypeInfo_GetRefTypeInfo(pTI, href, &pTI_p);
     ok(hr == S_OK, "hr %08x\n", hr);
     hr = ITypeInfo_GetTypeAttr(pTI_p, &pTA);
+    ok(hr == S_OK, "got %08x\n", hr);
     ok(IsEqualGUID(&pTA->guid, &IID_IDispatch), "guid {%08x-....\n", pTA->guid.Data1);
     ITypeInfo_ReleaseTypeAttr(pTI_p, pTA);
     ITypeInfo_Release(pTI_p);
@@ -2757,6 +2763,8 @@ static void test_create_typelib_lcid(LCID lcid)
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ICreateTypeLib2_SaveAllChanges(tl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
     ICreateTypeLib2_Release(tl);
 
     file = CreateFileA( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
