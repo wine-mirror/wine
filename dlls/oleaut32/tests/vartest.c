@@ -449,7 +449,8 @@ static void test_VariantClear(void)
   IUnknown *punk;
 
   /* Crashes: Native does not test input for NULL, so neither does Wine */
-  if (0) hres = VariantClear(NULL);
+  if (0)
+      VariantClear(NULL);
 
   /* Only the type field is set, to VT_EMPTY */
   V_VT(&v) = VT_UI4;
@@ -2154,7 +2155,6 @@ static void test_VarSub(void)
                 if (rightvt == VT_BSTR)
                     V_BSTR(&right) = rbstr;
                 V_VT(&result) = VT_EMPTY;
-                resvt = VT_ERROR;
 
                 /* All extra flags produce errors */
                 if (ExtraFlags[i] == (VT_VECTOR|VT_BYREF|VT_RESERVED) ||
