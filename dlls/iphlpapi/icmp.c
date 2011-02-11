@@ -153,6 +153,11 @@ HANDLE WINAPI IcmpCreateFile(VOID)
     icmp_t* icp;
 
     int sid=socket(AF_INET,SOCK_RAW,IPPROTO_ICMP);
+    if (sid < 0)
+    {
+        /* Mac OS X supports non-privileged ICMP via SOCK_DGRAM type. */
+        sid=socket(AF_INET,SOCK_DGRAM,IPPROTO_ICMP);
+    }
     if (sid < 0) {
         ERR_(winediag)("Failed to use ICMP (network ping), this requires special permissions.\n");
         SetLastError(ERROR_ACCESS_DENIED);
