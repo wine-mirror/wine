@@ -2101,29 +2101,45 @@ HRESULT __RPC_STUB ITypeLib2_GetLibStatistics_Stub(
   return E_FAIL;
 }
 
-HRESULT CALLBACK ITypeLib2_GetDocumentation2_Proxy(
-    ITypeLib2* This,
-    INT index,
-    LCID lcid,
-    BSTR* pbstrHelpString,
-    DWORD* pdwHelpStringContext,
-    BSTR* pbstrHelpStringDll)
+HRESULT CALLBACK ITypeLib2_GetDocumentation2_Proxy(ITypeLib2 *This, INT index,
+                                                   LCID lcid, BSTR *help_string,
+                                                   DWORD *help_context, BSTR *help_dll)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    DWORD dummy_help_context, flags = 0;
+    BSTR dummy_help_string, dummy_help_dll;
+    HRESULT hr;
+    TRACE("(%p, %d, %08x, %p, %p, %p)\n", This, index, lcid, help_string, help_context, help_dll);
+
+    if(!help_string) help_string = &dummy_help_string;
+    else flags = 1;
+
+    if(!help_context) help_context = &dummy_help_context;
+    else flags |= 2;
+
+    if(!help_dll) help_dll = &dummy_help_dll;
+    else flags |= 4;
+
+    hr = ITypeLib2_RemoteGetDocumentation2_Proxy(This, index, lcid, flags, help_string, help_context, help_dll);
+
+    /* We don't need to free the dummy BSTRs since the stub ensures that these will be NULLs. */
+
+    return hr;
 }
 
-HRESULT __RPC_STUB ITypeLib2_GetDocumentation2_Stub(
-    ITypeLib2* This,
-    INT index,
-    LCID lcid,
-    DWORD refPtrFlags,
-    BSTR* pbstrHelpString,
-    DWORD* pdwHelpStringContext,
-    BSTR* pbstrHelpStringDll)
+HRESULT __RPC_STUB ITypeLib2_GetDocumentation2_Stub(ITypeLib2 *This, INT index, LCID lcid,
+                                                    DWORD flags, BSTR *help_string,
+                                                    DWORD *help_context, BSTR *help_dll)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("(%p, %d, %08x, %08x, %p, %p, %p)\n", This, index, lcid, flags, help_string, help_context, help_dll);
+
+    *help_string = *help_dll = NULL;
+    *help_context = 0;
+
+    if(!(flags & 1)) help_string = NULL;
+    if(!(flags & 2)) help_context = NULL;
+    if(!(flags & 4)) help_dll = NULL;
+
+    return ITypeLib2_GetDocumentation2(This, index, lcid, help_string, help_context, help_dll);
 }
 
 HRESULT CALLBACK IPropertyBag_Read_Proxy(
