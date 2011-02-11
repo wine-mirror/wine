@@ -1001,6 +1001,7 @@ static void test_typelibmarshal(void)
     IKindaEnumWidget_Release(pKEW);
 
     hr = IWidget_QueryInterface(pWidget, &IID_IDispatch, (void **)&pDispatch);
+    ok_ole_success(hr, IWidget_QueryInterface);
 
     /* call put_Name */
     VariantInit(&vararg[0]);
