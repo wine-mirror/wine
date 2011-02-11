@@ -232,6 +232,8 @@ typedef const DSCAPS *LPCDSCAPS;
 #define DSBFREQUENCY_MAX            200000
 #define DSBFREQUENCY_ORIGINAL       0
 
+#define DSBNOTIFICATIONS_MAX        100000U
+
 typedef struct _DSBCAPS
 {
     DWORD	dwSize;
