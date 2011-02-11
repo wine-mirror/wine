@@ -22,6 +22,9 @@
 #include <d3d8.h>
 #include "wine/test.h"
 
+static INT screen_width;
+static INT screen_height;
+
 static IDirect3D8 *(WINAPI *pDirect3DCreate8)(UINT);
 
 static BOOL (WINAPI *pGetCursorInfo)(PCURSORINFO);
@@ -70,8 +73,8 @@ static IDirect3DDevice8 *create_device(IDirect3D8 *d3d8, HWND device_window, HWN
     present_parameters.Windowed = windowed;
     present_parameters.hDeviceWindow = device_window;
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    present_parameters.BackBufferWidth = 640;
-    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferWidth = screen_width;
+    present_parameters.BackBufferHeight = screen_height;
     present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
     present_parameters.EnableAutoDepthStencil = TRUE;
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
@@ -96,8 +99,8 @@ static HRESULT reset_device(IDirect3DDevice8 *device, HWND device_window, BOOL w
     present_parameters.Windowed = windowed;
     present_parameters.hDeviceWindow = device_window;
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    present_parameters.BackBufferWidth = 640;
-    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferWidth = screen_width;
+    present_parameters.BackBufferHeight = screen_height;
     present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
     present_parameters.EnableAutoDepthStencil = TRUE;
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
@@ -785,8 +788,8 @@ static void test_states(void)
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
-    d3dpp.BackBufferWidth  = 640;
-    d3dpp.BackBufferHeight = 480;
+    d3dpp.BackBufferWidth  = screen_width;
+    d3dpp.BackBufferHeight = screen_height;
     d3dpp.BackBufferFormat = d3ddm.Format;
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
@@ -1584,7 +1587,7 @@ static DWORD WINAPI wndproc_thread(void *param)
     BOOL ret;
 
     p->dummy_window = CreateWindowA("d3d8_test_wndproc_wc", "d3d8_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, screen_width, screen_height, 0, 0, 0, 0);
     p->running_in_foreground = SetForegroundWindow(p->dummy_window);
 
     ret = SetEvent(p->window_created);
@@ -1648,9 +1651,9 @@ static void test_wndproc(void)
     ok(!!thread_params.test_finished, "CreateEvent failed, last error %#x.\n", GetLastError());
 
     focus_window = CreateWindowA("d3d8_test_wndproc_wc", "d3d8_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, screen_width, screen_height, 0, 0, 0, 0);
     device_window = CreateWindowA("d3d8_test_wndproc_wc", "d3d8_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, screen_width, screen_height, 0, 0, 0, 0);
     thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
     ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
 
@@ -1792,9 +1795,9 @@ static void test_wndproc_windowed(void)
     ok(!!thread_params.test_finished, "CreateEvent failed, last error %#x.\n", GetLastError());
 
     focus_window = CreateWindowA("d3d8_test_wndproc_wc", "d3d8_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, screen_width, screen_height, 0, 0, 0, 0);
     device_window = CreateWindowA("d3d8_test_wndproc_wc", "d3d8_test",
-            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, screen_width, screen_height, 0, 0, 0, 0);
     thread = CreateThread(NULL, 0, wndproc_thread, &thread_params, 0, &tid);
     ok(!!thread, "Failed to create thread, last error %#x.\n", GetLastError());
 
@@ -1995,7 +1998,7 @@ static void test_fpu_setup(void)
     ok(!!d3d8, "Failed to create a d3d8 object.\n");
     if (!d3d8) return;
 
-    window = CreateWindowA("static", "d3d8_test", WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
+    window = CreateWindowA("static", "d3d8_test", WS_CAPTION, 0, 0, screen_width, screen_height, 0, 0, 0, 0);
     ok(!!window, "Failed to create a window.\n");
     if (!window) goto done;
 
@@ -2133,6 +2136,9 @@ START_TEST(device)
             return;
         }
         IDirect3D8_Release(d3d8);
+
+        screen_width = GetSystemMetrics(SM_CXSCREEN);
+        screen_height = GetSystemMetrics(SM_CYSCREEN);
 
         test_fpu_setup();
         test_display_modes();
