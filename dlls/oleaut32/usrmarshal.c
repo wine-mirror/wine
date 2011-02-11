@@ -1696,29 +1696,47 @@ HRESULT __RPC_STUB ITypeInfo_GetDocumentation_Stub(ITypeInfo *This, MEMBERID mem
     return ITypeInfo_GetDocumentation(This, memid, name, doc_string, help_context, help_file);
 }
 
-HRESULT CALLBACK ITypeInfo_GetDllEntry_Proxy(
-    ITypeInfo* This,
-    MEMBERID memid,
-    INVOKEKIND invKind,
-    BSTR* pBstrDllName,
-    BSTR* pBstrName,
-    WORD* pwOrdinal)
+HRESULT CALLBACK ITypeInfo_GetDllEntry_Proxy(ITypeInfo *This, MEMBERID memid,
+                                             INVOKEKIND invkind, BSTR *dll_name,
+                                             BSTR* name, WORD *ordinal)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    DWORD flags = 0;
+    BSTR dummy_dll_name, dummy_name;
+    WORD dummy_ordinal;
+    HRESULT hr;
+    TRACE("(%p, %08x, %x, %p, %p, %p)\n", This, memid, invkind, dll_name, name, ordinal);
+
+    if(!dll_name) dll_name = &dummy_dll_name;
+    else flags = 1;
+
+    if(!name) name = &dummy_name;
+    else flags |= 2;
+
+    if(!ordinal) ordinal = &dummy_ordinal;
+    else flags |= 4;
+
+    hr = ITypeInfo_RemoteGetDllEntry_Proxy(This, memid, invkind, flags, dll_name, name, ordinal);
+
+    /* We don't need to free the dummy BSTRs since the stub ensures that these will be NULLs. */
+
+    return hr;
 }
 
-HRESULT __RPC_STUB ITypeInfo_GetDllEntry_Stub(
-    ITypeInfo* This,
-    MEMBERID memid,
-    INVOKEKIND invKind,
-    DWORD refPtrFlags,
-    BSTR* pBstrDllName,
-    BSTR* pBstrName,
-    WORD* pwOrdinal)
+HRESULT __RPC_STUB ITypeInfo_GetDllEntry_Stub(ITypeInfo *This, MEMBERID memid,
+                                              INVOKEKIND invkind, DWORD flags,
+                                              BSTR *dll_name, BSTR *name,
+                                              WORD *ordinal)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("(%p, %08x, %x, %p, %p, %p)\n", This, memid, invkind, dll_name, name, ordinal);
+
+    *dll_name = *name = NULL;
+    *ordinal = 0;
+
+    if(!(flags & 1)) dll_name = NULL;
+    if(!(flags & 2)) name = NULL;
+    if(!(flags & 4)) ordinal = NULL;
+
+    return ITypeInfo_GetDllEntry(This, memid, invkind, dll_name, name, ordinal);
 }
 
 HRESULT CALLBACK ITypeInfo_AddressOfMember_Proxy(
