@@ -11956,7 +11956,7 @@ static void test_sourcedir(void)
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
     r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
-    ok(r == ERROR_DIRECTORY, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
     ok(!lstrcmpA(path, "kiwi"), "Expected \"kiwi\", got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected %d, got %d\n", MAX_PATH, size);
 
