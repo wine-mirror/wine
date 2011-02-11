@@ -1,0 +1,59 @@
+/*
+ * Russian resources for the Internet control panel applet
+ *
+ * Copyright 2011 Alexander Lakhin
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
+ */
+
+#include "inetcpl.h"
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+
+/* "General" propsheet */
+IDD_GENERAL DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Общие"
+BEGIN
+
+    GROUPBOX    " Домашняя страница ", IDC_STATIC, 4, 4, 312, 52
+    LTEXT       "Укажите адрес для вашей домашней страницы:",
+                IDC_STATIC, 58, 14, 252, 8
+    EDITTEXT    IDC_HOME_EDIT, 58, 22, 252, 12, WS_VISIBLE | ES_AUTOHSCROLL
+    PUSHBUTTON  "&Текущая страница", IDC_HOME_CURRENT, 58, 36, 80, 14
+    PUSHBUTTON  "&По умолчанию", IDC_HOME_DEFAULT, 144, 36, 80, 14
+    PUSHBUTTON  "Пу&стая страница", IDC_HOME_BLANK, 230, 36, 80, 14
+
+END
+
+/* "Content" propsheet */
+IDD_CONTENT DIALOG  0, 0, 320, 220
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+CAPTION "Содержание"
+BEGIN
+
+    GROUPBOX    " Сертификаты ", IDC_STATIC, 4, 4, 312, 50
+    LTEXT       "Сертификаты используются для идентификации личности, а также для проверки подлинности центров сертификации и издателей.",
+                IDC_STATIC, 58, 14, 252, 18
+    PUSHBUTTON  "Сертификаты...", IDC_CERT, 146, 34, 80, 14
+    PUSHBUTTON	"Издатели...", IDC_CERT_PUBLISHER, 230, 34, 80, 14
+
+END
