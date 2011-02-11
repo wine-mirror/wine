@@ -495,7 +495,7 @@ static void test_OleCreatePictureIndirect(void)
 if (0)
 {
     /* crashes on native */
-    hr = pOleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, NULL);
+    pOleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, NULL);
 }
 
     hr = pOleCreatePictureIndirect(NULL, &IID_IPicture, TRUE, (void**)&pict);
