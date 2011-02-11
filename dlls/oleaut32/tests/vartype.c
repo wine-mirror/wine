@@ -5481,7 +5481,7 @@ static void test_VarBstrCat(void)
 if (0)
 {
     /* Crash */
-    ret = VarBstrCat(NULL, NULL, NULL);
+    VarBstrCat(NULL, NULL, NULL);
 }
 
     /* Concatenation of two NULL strings works */
