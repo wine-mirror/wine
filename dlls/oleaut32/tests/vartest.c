@@ -861,6 +861,7 @@ static void test_VariantCopyInd(void)
   VariantInit(&vDst);
 
   hres = VariantCopyInd(&vDst, &vSrc);
+  ok(hres == S_OK, "VariantCopyInd failed: 0x%08x\n", hres);
   ok(V_VT(&vDst) == VT_UI1 && V_UI1(&vDst) == 0x77,
      "CopyInd(deref): expected dst vt = VT_UI1, val 0x77, got %d|0x%X, 0x%2X\n",
       V_VT(&vDst) & VT_TYPEMASK, V_VT(&vDst) & ~VT_TYPEMASK, V_UI1(&vDst));
@@ -873,6 +874,7 @@ static void test_VariantCopyInd(void)
   VariantInit(&vDst);
 
   hres = VariantCopyInd(&vDst, &vSrc);
+  ok(hres == S_OK, "VariantCopyInd failed: 0x%08x\n", hres);
   ok(V_VT(&vDst) == VT_UI1 && V_UI1(&vDst) == 0x88,
      "CopyInd(deref): expected dst vt = VT_UI1, val 0x77, got %d|0x%X, 0x%2X\n",
       V_VT(&vDst) & VT_TYPEMASK, V_VT(&vDst) & ~VT_TYPEMASK, V_UI1(&vDst));
