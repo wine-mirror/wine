@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-02-07 17:35+0300\n"
+"PO-Revision-Date: 2011-02-11 05:35+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Russian\n"
@@ -1481,11 +1481,11 @@ msgstr "Этот сертификат предназначен для следу
 
 #: cryptui.rc:35
 msgid "Issued to: "
-msgstr "Кому выдан:"
+msgstr "Кому выдан: "
 
 #: cryptui.rc:36
 msgid "Issued by: "
-msgstr "Кем выдан:"
+msgstr "Кем выдан: "
 
 #: cryptui.rc:37
 msgid "Valid from "
@@ -1725,7 +1725,7 @@ msgstr "Arial"
 
 #: cryptui.rc:100
 msgid "<Advanced Purposes>"
-msgstr "<Расширенные назначения>"
+msgstr "<Определяемый набор>"
 
 #: cryptui.rc:101
 msgid "Issued To"
@@ -1973,7 +1973,7 @@ msgstr ""
 
 #: cryptui.rc:169
 msgid "Enter Password"
-msgstr "Введите пароль"
+msgstr "Ввод пароля"
 
 #: cryptui.rc:170
 msgid "You may password-protect a private key."
@@ -6708,9 +6708,8 @@ msgid ""
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
 "Wine является свободным программным обеспечением; вы можете распространять "
-"его и/или модифицировать согласно условиям лицензии GNU LGPL версии 2.1 "
-"(или более поздней по вашему выбору), опубликованной Free Software "
-"Foundation.\n"
+"его и/или модифицировать согласно условиям лицензии GNU LGPL версии 2.1 (или "
+"более поздней по вашему выбору), опубликованной Free Software Foundation.\n"
 "\n"
 "Пакет Wine распространяется в надежде на то, что он окажется полезным вам, "
 "но без КАКИХ-ЛИБО ГАРАНТИЙ; в том числе без неявных ГАРАНТИЙ ТОВАРНОГО "
