@@ -1974,29 +1974,49 @@ HRESULT __RPC_STUB ITypeLib_GetLibAttr_Stub(
     return hr;
 }
 
-HRESULT CALLBACK ITypeLib_GetDocumentation_Proxy(
-    ITypeLib* This,
-    INT index,
-    BSTR* pBstrName,
-    BSTR* pBstrDocString,
-    DWORD* pdwHelpContext,
-    BSTR* pBstrHelpFile)
+HRESULT CALLBACK ITypeLib_GetDocumentation_Proxy(ITypeLib *This, INT index, BSTR *name,
+                                                 BSTR *doc_string, DWORD *help_context,
+                                                 BSTR *help_file)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    DWORD dummy_help_context, flags = 0;
+    BSTR dummy_name, dummy_doc_string, dummy_help_file;
+    HRESULT hr;
+    TRACE("(%p, %d, %p, %p, %p, %p)\n", This, index, name, doc_string, help_context, help_file);
+
+    if(!name) name = &dummy_name;
+    else flags = 1;
+
+    if(!doc_string) doc_string = &dummy_doc_string;
+    else flags |= 2;
+
+    if(!help_context) help_context = &dummy_help_context;
+    else flags |= 4;
+
+    if(!help_file) help_file = &dummy_help_file;
+    else flags |= 8;
+
+    hr = ITypeLib_RemoteGetDocumentation_Proxy(This, index, flags, name, doc_string, help_context, help_file);
+
+    /* We don't need to free the dummy BSTRs since the stub ensures that these will be NULLs. */
+
+    return hr;
 }
 
-HRESULT __RPC_STUB ITypeLib_GetDocumentation_Stub(
-    ITypeLib* This,
-    INT index,
-    DWORD refPtrFlags,
-    BSTR* pBstrName,
-    BSTR* pBstrDocString,
-    DWORD* pdwHelpContext,
-    BSTR* pBstrHelpFile)
+HRESULT __RPC_STUB ITypeLib_GetDocumentation_Stub(ITypeLib *This, INT index, DWORD flags,
+                                                  BSTR *name, BSTR *doc_string,
+                                                  DWORD *help_context, BSTR *help_file)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("(%p, %d, %08x, %p, %p, %p, %p)\n", This, index, flags, name, doc_string, help_context, help_file);
+
+    *name = *doc_string = *help_file = NULL;
+    *help_context = 0;
+
+    if(!(flags & 1)) name = NULL;
+    if(!(flags & 2)) doc_string = NULL;
+    if(!(flags & 4)) help_context = NULL;
+    if(!(flags & 8)) help_file = NULL;
+
+    return ITypeLib_GetDocumentation(This, index, name, doc_string, help_context, help_file);
 }
 
 HRESULT CALLBACK ITypeLib_IsName_Proxy(
