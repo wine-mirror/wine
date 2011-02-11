@@ -1877,29 +1877,46 @@ HRESULT __RPC_STUB ITypeInfo_ReleaseVarDesc_Stub(
 
 /* ITypeInfo2 */
 
-HRESULT CALLBACK ITypeInfo2_GetDocumentation2_Proxy(
-    ITypeInfo2* This,
-    MEMBERID memid,
-    LCID lcid,
-    BSTR* pbstrHelpString,
-    DWORD* pdwHelpStringContext,
-    BSTR* pbstrHelpStringDll)
+HRESULT CALLBACK ITypeInfo2_GetDocumentation2_Proxy(ITypeInfo2 *This, MEMBERID memid,
+                                                    LCID lcid, BSTR *help_string,
+                                                    DWORD *help_context, BSTR *help_dll)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    DWORD dummy_help_context, flags = 0;
+    BSTR dummy_help_string, dummy_help_dll;
+    HRESULT hr;
+    TRACE("(%p, %08x, %08x, %p, %p, %p)\n", This, memid, lcid, help_string, help_context, help_dll);
+
+    if(!help_string) help_string = &dummy_help_string;
+    else flags = 1;
+
+    if(!help_context) help_context = &dummy_help_context;
+    else flags |= 2;
+
+    if(!help_dll) help_dll = &dummy_help_dll;
+    else flags |= 4;
+
+    hr = ITypeInfo2_RemoteGetDocumentation2_Proxy(This, memid, lcid, flags, help_string, help_context, help_dll);
+
+    /* We don't need to free the dummy BSTRs since the stub ensures that these will be NULLs. */
+
+    return hr;
 }
 
-HRESULT __RPC_STUB ITypeInfo2_GetDocumentation2_Stub(
-    ITypeInfo2* This,
-    MEMBERID memid,
-    LCID lcid,
-    DWORD refPtrFlags,
-    BSTR* pbstrHelpString,
-    DWORD* pdwHelpStringContext,
-    BSTR* pbstrHelpStringDll)
+HRESULT __RPC_STUB ITypeInfo2_GetDocumentation2_Stub(ITypeInfo2 *This, MEMBERID memid,
+                                                     LCID lcid, DWORD flags,
+                                                     BSTR *help_string, DWORD *help_context,
+                                                     BSTR *help_dll)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("(%p, %08x, %08x, %08x, %p, %p, %p)\n", This, memid, lcid, flags, help_string, help_context, help_dll);
+
+    *help_string = *help_dll = NULL;
+    *help_context = 0;
+
+    if(!(flags & 1)) help_string = NULL;
+    if(!(flags & 2)) help_context = NULL;
+    if(!(flags & 4)) help_dll = NULL;
+
+    return ITypeInfo2_GetDocumentation2(This, memid, lcid, help_string, help_context, help_dll);
 }
 
 /* ITypeLib */
