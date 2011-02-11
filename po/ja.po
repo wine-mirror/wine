@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-01-23 23:02+0900\n"
+"PO-Revision-Date: 2011-02-11 15:31+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -22,8 +22,8 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
-"新しいソフトウェアをインストールするか、既存のソフトウェアを削除することがで"
-"きます。"
+"新しいソフトウェアをインストールすることや、既存のソフトウェアを削除すること"
+"ができます。"
 
 #: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 msgid "Applications"
@@ -34,8 +34,8 @@ msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"アンインストーラー '%s' を起動することができません。このプログラムに対するア"
-"ンインストール項目をレジストリから削除しますか？"
+"アンインストーラ '%s' を起動することができません。このプログラムに対するアン"
+"インストール項目をレジストリから削除しますか？"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -55,7 +55,7 @@ msgstr "バージョン"
 
 #: appwiz.rc:38
 msgid "Installation programs"
-msgstr "インストールプログラム"
+msgstr "インストール プログラム"
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
@@ -552,23 +552,24 @@ msgid "Print"
 msgstr "印刷"
 
 #: credui.rc:27
-#, fuzzy
 msgid "Connect to %s"
-msgstr "ネットワークドライブに接続(&N)"
+msgstr "%s に接続"
 
 #: credui.rc:28
 msgid "Connecting to %s"
-msgstr ""
+msgstr "%s に接続しています"
 
 #: credui.rc:29
 msgid "Logon unsuccessful"
-msgstr ""
+msgstr "ログオン失敗"
 
 #: credui.rc:30
 msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
+"ユーザ名とパスワードが\n"
+"正しいか確認してください。"
 
 #: credui.rc:32
 msgid ""
@@ -577,10 +578,14 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
+"Caps Lock がオンであるとパスワード誤入力の原因となることがあります。\n"
+"\n"
+"パスワードを入力する前に Caps Lock をオフにするには、\n"
+"キーボードの Caps Lock キーを押してください。"
 
 #: credui.rc:31
 msgid "Caps Lock is On"
-msgstr ""
+msgstr "Caps Lock がオン"
 
 #: crypt32.rc:27
 msgid "Authority Key Identifier"
@@ -1148,7 +1153,7 @@ msgstr "任意のポリシー"
 
 #: crypt32.rc:172
 msgid "Trusted Root Certification Authorities"
-msgstr "信頼するルート認証局"
+msgstr "信頼されたルート認証局"
 
 #: crypt32.rc:173
 msgid "Personal"
@@ -1164,11 +1169,11 @@ msgstr "ほかの人"
 
 #: crypt32.rc:176
 msgid "Trusted Publishers"
-msgstr "信頼する発行元"
+msgstr "信頼された発行元"
 
 #: crypt32.rc:177
 msgid "Untrusted Certificates"
-msgstr "信頼しない証明書"
+msgstr "信頼されない証明書"
 
 #: crypt32.rc:182
 msgid "KeyID="
@@ -1403,44 +1408,40 @@ msgid "Signature CA"
 msgstr "署名認証局"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
-msgstr "証明書ポリシー"
+msgstr "Certificate Policy"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
-msgstr "認証局鍵識別子"
+msgstr "Policy Identifier: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Policy Qualifier Info"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Policy Qualifier Id="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Qualifier"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Notice Reference"
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
-msgstr "Organization"
+msgstr "Organization="
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
-msgstr "Certificate Serial Number="
+msgstr "Notice Number="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Notice Text="
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -1463,12 +1464,12 @@ msgid ""
 "This root certificate is not trusted.  To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"このルート証明書は信頼されていません。信頼するにはシステムの信頼するルート証"
-"明書ストアに追加してください。"
+"このルート証明書は信頼されていません。信頼するにはシステムの信頼されたルート"
+"証明書ストアに追加してください。"
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr "この証明書は信頼するルート証明書として検証できません。"
+msgstr "この証明書は信頼されたルート証明書として検証できません。"
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
@@ -2209,7 +2210,7 @@ msgstr "文字列定数が終端していません"
 
 #: jscript.rc:37
 msgid "Conditional compilation is turned off"
-msgstr ""
+msgstr "条件コンパイルはオフにされています"
 
 #: jscript.rc:40
 msgid "Number expected"
@@ -2935,7 +2936,7 @@ msgstr "パイプはビジーです。\n"
 
 #: winerror.mc:871
 msgid "Pipe closed\n"
-msgstr "パイプはクローズされました。\n"
+msgstr "パイプは閉じられました。\n"
 
 #: winerror.mc:876
 msgid "Pipe not connected\n"
@@ -3003,12 +3004,11 @@ msgstr "ReadProcessMemory または WriteProcessMemory は部分的に完了し�
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted\n"
-msgstr ""
+msgstr "oplock は与えられていません。\n"
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received\n"
-msgstr "メッセージの名前が正しくありません。\n"
+msgstr "無効な oplock メッセージを受け取りました。\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -3095,9 +3095,8 @@ msgid "Invalid key\n"
 msgstr "キーが正しくありません。\n"
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key\n"
-msgstr "レジストリ キーを読み取れません。\n"
+msgstr "レジストリ キーを開けません。\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key\n"
@@ -3261,21 +3260,19 @@ msgstr "サービス アカウントが異なります。\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected\n"
-msgstr ""
+msgstr "ドライバの失敗を検知できません。\n"
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected\n"
-msgstr "プロセスは中断しました。\n"
+msgstr "プロセスの中断を検知できません。\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service\n"
-msgstr ""
+msgstr "サービスに対する回復プログラムがありません。\n"
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe\n"
-msgstr "プリントが実装されていません。"
+msgstr "サービスが実行ファイルに実装されていません。\n"
 
 #: winerror.mc:1296
 msgid "End of media\n"
@@ -3454,110 +3451,96 @@ msgid "DLL not found\n"
 msgstr "DLL が見つかりません。\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles\n"
-msgstr "これ以上の検索ハンドルはありません。\n"
+msgstr "これ以上のユーザ ハンドルがありません。\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
-msgstr ""
+msgstr "メッセージは同期呼び出しでのみ使えます。\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty\n"
-msgstr ""
+msgstr "移動元のエレメントが空です。\n"
 
 #: winerror.mc:1531
-#, fuzzy
 msgid "The destination element is full\n"
-msgstr "操作は正常に完了しました\n"
+msgstr "移動先のエレメントが満杯です。\n"
 
 #: winerror.mc:1536
-#, fuzzy
 msgid "The element address is invalid\n"
-msgstr "無効なデバイスハンドルです。"
+msgstr "エレメント アドレスが正しくありません。\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present\n"
-msgstr ""
+msgstr "マガジンがありません。\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
-msgstr ""
+msgstr "デバイスは再初期化が必要です。\n"
 
 #: winerror.mc:1551
-#, fuzzy
 msgid "The device requires cleaning\n"
-msgstr "デバイスドライバの準備ができていません。"
+msgstr "デバイスはクリーニングが必要です。\n"
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open\n"
-msgstr "プリンタ カバー開放 -"
+msgstr "デバイスのドアが開いています。\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected\n"
-msgstr "パイプは接続されていません。\n"
+msgstr "デバイスは接続されていません。\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found\n"
-msgstr "エントリが見つかりません。\n"
+msgstr "エレメントが見つかりません。\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found\n"
-msgstr "パスが見つかりません。\n"
+msgstr "一致したものが見つかりません。\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found\n"
-msgstr "プロシジャが見つかりません。\n"
+msgstr "プロパティ セットが見つかりません。\n"
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found\n"
-msgstr "パスが見つかりません。\n"
+msgstr "ポイントが見つかりません。\n"
 
 #: winerror.mc:1586
-#, fuzzy
 msgid "No running tracking service\n"
-msgstr "認識できない認証サービスです。\n"
+msgstr "実行中の追跡サービスがありません。\n"
 
 #: winerror.mc:1591
-#, fuzzy
 msgid "No such volume ID\n"
-msgstr "そのようなユーザはありません。\n"
+msgstr "そのようなボリューム ID はありません。\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced\n"
-msgstr ""
+msgstr "置換先のファイルを削除できません。\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place\n"
-msgstr ""
+msgstr "置き換えるファイルを所定位置に移動できません。\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed\n"
-msgstr ""
+msgstr "置き換えるファイルの移動に失敗しました。\n"
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted\n"
-msgstr "ネットワーク名が削除されました。\n"
+msgstr "ジャーナルを削除しています。\n"
 
 #: winerror.mc:1616
-#, fuzzy
 msgid "The journal is not active\n"
-msgstr "サービスはアクティブではありません。\n"
+msgstr "ジャーナルはアクティブではありません。\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found\n"
-msgstr ""
+msgstr "潜在的に一致するファイルが見つかりました。\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted\n"
-msgstr ""
+msgstr "ジャーナル エントリは削除されました。\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name\n"
@@ -3755,32 +3738,28 @@ msgid "No more local devices\n"
 msgstr "これ以上のローカル デバイスはありません。\n"
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist\n"
-msgstr "デバイスが存在しません。\n"
+msgstr "ネットワーク上の場所がありません。\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists\n"
-msgstr "ドメインはすでに存在します。\n"
+msgstr "ドメイン コントローラはすでに存在します。\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected\n"
-msgstr "パイプは接続されていません。\n"
+msgstr "接続中のみサポートされます。\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed\n"
-msgstr ""
+msgstr "変更がないときでも操作を実行してください。\n"
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid\n"
-msgstr "無効なデバイスハンドルです。"
+msgstr "ユーザ プロファイルが正しくありません。\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
-msgstr ""
+msgstr "Small Business Server ではサポートされていません。\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned\n"
@@ -4159,18 +4138,16 @@ msgid "Licence quota exceeded\n"
 msgstr "ライセンス数の制限を超えました。\n"
 
 #: winerror.mc:2381
-#, fuzzy
 msgid "Wrong target name\n"
-msgstr "エントリ名がありません。\n"
+msgstr "ターゲット名が正しくありません。\n"
 
 #: winerror.mc:2386
-#, fuzzy
 msgid "Mutual authentication failed\n"
-msgstr "認識できない認証 ID です。\n"
+msgstr "相互認証に失敗しました。\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server\n"
-msgstr ""
+msgstr "クライアントとサーバの時刻にずれがあります。\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
@@ -4401,27 +4378,24 @@ msgid "Menu item not found\n"
 msgstr "メニュー項目が見つかりません。\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle\n"
-msgstr "対象ハンドルは正しくありません。\n"
+msgstr "キーボード ハンドルは正しくありません。\n"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr "ログオンは許可されていません。\n"
+msgstr "フックの種類は許可されていません。\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
-msgstr ""
+msgstr "対話型ウィンドウ ステーションが必要です。\n"
 
 #: winerror.mc:2696
 msgid "Timeout\n"
-msgstr ""
+msgstr "タイムアウトです。\n"
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle\n"
-msgstr "メニュー ハンドルが正しくありません。\n"
+msgstr "モニタ ハンドルが正しくありません。\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4440,201 +4414,168 @@ msgid "Event log file changed\n"
 msgstr "イベント ログ ファイルが変更されました。\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "サービス名が正しくありません。\n"
+msgstr "インストーラ サービスが失敗しました。\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user\n"
-msgstr "インストールプログラム"
+msgstr "インストールがユーザによって中止されました。\n"
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure\n"
-msgstr "分割に失敗しました。\n"
+msgstr "インストールに失敗しました。\n"
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended\n"
-msgstr "インストールプログラム"
+msgstr "インストールは中断されました。\n"
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product\n"
-msgstr "認識できないポートです。\n"
+msgstr "未知の製品です。\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature\n"
-msgstr "不明"
+msgstr "未知の機能です。\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component\n"
-msgstr "認識できないポートです。\n"
+msgstr "未知のコンポーネントです。\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknonw property\n"
-msgstr "認識できないポートです。\n"
+msgstr "未知のプロパティです。\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state\n"
-msgstr "ハンドルが正しくありません。\n"
+msgstr "ハンドルの状態が正しくありません。\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration\n"
-msgstr "Wine設定"
+msgstr "正しくない設定です。\n"
 
 #: winerror.mc:2776
 msgid "Index is missing\n"
-msgstr ""
+msgstr "インデックスが見つかりません。\n"
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing\n"
-msgstr "インストールプログラム"
+msgstr "インストール ソースが見つかりません。\n"
 
 #: winerror.mc:2786
-#, fuzzy
 msgid "Wrong installation package version\n"
-msgstr "直列化したパッケージのバージョンが間違っています。\n"
+msgstr "インストール パッケージのバージョンが誤っています。\n"
 
 #: winerror.mc:2791
-#, fuzzy
 msgid "Product uninstalled\n"
-msgstr "フック プロシジャは設定されていません。\n"
+msgstr "製品はアンインストールされています。\n"
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax\n"
-msgstr "名前の構文が正しくありません。\n"
+msgstr "問い合わせ構文が正しくありません。\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field\n"
-msgstr "時刻が正しくありません。\n"
+msgstr "フィールドが正しくありません。\n"
 
 #: winerror.mc:2806
-#, fuzzy
 msgid "Device removed\n"
-msgstr "デバイスはすでに記憶されています。\n"
+msgstr "デバイスは取り除かれています。\n"
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running\n"
-msgstr "サービスはすでに実行中です。\n"
+msgstr "インストールはすでに実行中です。\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr ""
+msgstr "インストール パッケージを開くのに失敗しました。\n"
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid\n"
-msgstr "インストールプログラム"
+msgstr "インストール パッケージが正しくありません。\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
-msgstr ""
+msgstr "インストーラ ユーザ インタフェースが失敗しました。\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"
-msgstr ""
+msgstr "インストール ログ ファイルを開くのに失敗しました。\n"
 
 #: winerror.mc:2836
-#, fuzzy
 msgid "Installation language not supported\n"
-msgstr "操作はサポートされていません。\n"
+msgstr "インストール言語はサポートされていません。\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
-msgstr ""
+msgstr "インストール トランスフォームの適用に失敗しました。\n"
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected\n"
-msgstr "インストールプログラム"
+msgstr "インストール パッケージは拒否されました。\n"
 
 #: winerror.mc:2851
-#, fuzzy
 msgid "Function could not be called\n"
-msgstr "接続数の上限に達しました。\n"
+msgstr "関数を呼び出せませんでした。\n"
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed\n"
-msgstr "関数を期待していました"
+msgstr "関数は失敗しました。\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table\n"
-msgstr "タグが正しくありません。\n"
+msgstr "テーブルが正しくありません。\n"
 
 #: winerror.mc:2866
-#, fuzzy
 msgid "Data type mismatch\n"
-msgstr "マシンの種類が一致しません。\n"
+msgstr "データの種類が一致しません。\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type\n"
 msgstr "サポートされていない種類です。\n"
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed\n"
-msgstr "オープン エラーです。\n"
+msgstr "生成に失敗しました。\n"
 
 #: winerror.mc:2881
-#, fuzzy
 msgid "Temporary directory not writable\n"
-msgstr "ファイルかディレクトリが破損しています。\n"
+msgstr "一時ディレクトリが書き込み可能ではありません。\n"
 
 #: winerror.mc:2886
-#, fuzzy
 msgid "Installation platform not supported\n"
-msgstr "操作はサポートされていません。\n"
+msgstr "インストール先システムはサポートされていません。\n"
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used\n"
-msgstr "インタフェースが見つかりません。\n"
+msgstr "インストーラは未使用です。\n"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr "'%s' を開けません\n"
+msgstr "パッチ パッケージを開くのに失敗しました。\n"
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package\n"
-msgstr "タグが正しくありません。\n"
+msgstr "パッチ パッケージが正しくありません。\n"
 
 #: winerror.mc:2906
-#, fuzzy
 msgid "Unsupported patch package\n"
-msgstr "サポートされていない種類です。\n"
+msgstr "サポートされていないパッチ パッケージです。\n"
 
 #: winerror.mc:2911
-#, fuzzy
 msgid "Another version is installed\n"
-msgstr "プリンタ ドライバはすでにインストールされています。\n"
+msgstr "他のバージョンがインストールされています。\n"
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line\n"
-msgstr "GW コマンドが正しくありません。\n"
+msgstr "コマンド ラインが正しくありません。\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
-msgstr ""
+msgstr "遠隔インストールは許可されていません。\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install\n"
-msgstr ""
+msgstr "インストール成功後に再起動を開始しました。\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
@@ -5205,96 +5146,80 @@ msgid "Invalid driver\n"
 msgstr "ドライバが正しくありません。\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "オブジェクトが正しくありません。\n"
+msgstr "オブジェクト リゾルバ セットが正しくありません。\n"
 
 #: winerror.mc:3651
-#, fuzzy
 msgid "Incomplete RPC send\n"
-msgstr "不完全な名前です。\n"
+msgstr "不完全な RPC 送信です。\n"
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle\n"
-msgstr "フック ハンドルが正しくありません。\n"
+msgstr "非同期 RPC ハンドルが正しくありません。\n"
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call\n"
-msgstr "フック ハンドルが正しくありません。\n"
+msgstr "非同期 RPC 呼び出しが正しくありません。\n"
 
 #: winerror.mc:3666
-#, fuzzy
 msgid "RPC pipe closed\n"
-msgstr "パイプはクローズされました。\n"
+msgstr "RPC パイプは閉じられました。\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
-msgstr ""
+msgstr "RPC パイプの制御規則エラー\n"
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr "RPC エラーではありません。\n"
+msgstr "RPC パイプにデータがありません。\n"
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available\n"
-msgstr "セキュリティ コンテキストは利用できません。\n"
+msgstr "利用できるネットワーク上の場所の名前がありません。\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed\n"
-msgstr ""
+msgstr "ネットワーク上の場所にアクセスできません。\n"
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved\n"
-msgstr "ユーザ名は見つけられません。\n"
+msgstr "ファイル名は解決できません。\n"
 
 #: winerror.mc:3696
-#, fuzzy
 msgid "RPC entry type mismatch\n"
-msgstr "マシンの種類が一致しません。\n"
+msgstr "RPC エントリの種類が一致しません。\n"
 
 #: winerror.mc:3701
-#, fuzzy
 msgid "Not all objects could be exported\n"
-msgstr "すべてのオブジェクトがアンエクスポートではありません。\n"
+msgstr "すべてのオブジェクトをエクスポートできませんでした。\n"
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported\n"
-msgstr "ユーザ名は見つけられません。\n"
+msgstr "インタフェースをエクスポートできませんでした。\n"
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added\n"
-msgstr "ユーザ名は見つけられません。\n"
+msgstr "プロファイルを追加できませんでした。\n"
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added\n"
-msgstr "ユーザ名は見つけられません。\n"
+msgstr "プロファイル要素を追加できませんでした。\n"
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed\n"
-msgstr "ユーザ名は見つけられません。\n"
+msgstr "プロファイル要素を削除できませんでした。\n"
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added\n"
-msgstr "ユーザ名は見つけられません。\n"
+msgstr "グループ要素を追加できませんでした。\n"
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed\n"
-msgstr "ユーザ名は見つけられません。\n"
+msgstr "グループ要素を削除できませんでした。\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found\n"
-msgstr "ユーザ名は見つけられません。\n"
+msgstr "ユーザ名を見つけられませんでした。\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
@@ -5351,15 +5276,16 @@ msgid ""
 "The specified installation package could not be opened.  Please check the "
 "file path and try again."
 msgstr ""
+"指定されたインストール パッケージを開けません。ファイル パスを確認し、もう一"
+"度試してください。"
 
 #: msi.rc:28
-#, fuzzy
 msgid "path %s not found"
-msgstr "PATH not found\n"
+msgstr "パス %s が見つかりません"
 
 #: msi.rc:29
 msgid "insert disk %s"
-msgstr ""
+msgstr "ディスク %s を挿入"
 
 #: msi.rc:30
 msgid ""
@@ -5393,26 +5319,55 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
+"Windows インストーラ %s\n"
+"\n"
+"使い方:\n"
+"msiexec コマンド {必須パラメータ} [任意パラメータ]\n"
+"\n"
+"製品のインストール:\n"
+"\t/i {パッケージ|製品コード} [プロパティ]\n"
+"\t/package {パッケージ|製品コード} [プロパティ]\n"
+"\t/a パッケージ [プロパティ]\n"
+"インストールの修復:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {パッケージ|製品コード}\n"
+"製品のアンインストール:\n"
+"\t/uninstall {パッケージ|製品コード} [プロパティ]\n"
+"\t/x {パッケージ|製品コード} [プロパティ]\n"
+"パッケージのアドバタイズ:\n"
+"\t/j[u|m] パッケージ [/t トランスフォーム] [/g 言語ID]\n"
+"パッチの適用:\n"
+"\t/p パッチパッケージ [プロパティ]\n"
+"\t/p パッチパッケージ /a パッケージ [プロパティ]\n"
+"上記コマンドのログと UI の変更:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] ログファイル\n"
+"\t/q{|n|b|r|f|n+|b+|b-}\n"
+"MSI サービスの登録:\n"
+"\t/y\n"
+"MSI サービスの登録解除:\n"
+"\t/z\n"
+"このヘルプの表示:\n"
+"\t/help\n"
+"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr ""
+msgstr "%s を含むフォルダを入力"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr ""
+msgstr "不足機能のインストール ソース"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr ""
+msgstr "不足機能のネットワーク ドライブ"
 
 #: msi.rc:60
 msgid "feature from:"
-msgstr ""
+msgstr "機能の導入元:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr ""
+msgstr "%s を含むフォルダを選択"
 
 #: msrle32.rc:27
 msgid "WINE-MS-RLE"
@@ -5432,7 +5387,7 @@ msgstr ""
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
-msgstr ""
+msgstr "フル フレーム (無圧縮)"
 
 #: msvidc32.rc:25
 msgid "MS-CRAM"
@@ -5444,296 +5399,279 @@ msgstr "Wine ビデオ 1 ビデオコーデック"
 
 #: oleacc.rc:27
 msgid "unknown object"
-msgstr ""
+msgstr "未知のオブジェクト"
 
 #: oleacc.rc:28
-#, fuzzy
 msgid "title bar"
-msgstr "タイトルバーなし(&W)"
+msgstr "タイトル バー"
 
 #: oleacc.rc:29
 msgid "menu bar"
-msgstr ""
+msgstr "メニュー バー"
 
 #: oleacc.rc:30
-#, fuzzy
 msgid "scroll bar"
-msgstr "ここにスクロール"
+msgstr "スクロール バー"
 
 #: oleacc.rc:31
 msgid "grip"
-msgstr ""
+msgstr "グリップ"
 
 #: oleacc.rc:32
 msgid "sound"
-msgstr ""
+msgstr "サウンド"
 
 #: oleacc.rc:33
 msgid "cursor"
-msgstr ""
+msgstr "カーソル"
 
 #: oleacc.rc:34
 msgid "caret"
-msgstr ""
+msgstr "キャレット"
 
 #: oleacc.rc:35
 msgid "alert"
-msgstr ""
+msgstr "警告"
 
 #: oleacc.rc:36
-#, fuzzy
 msgid "window"
-msgstr "ウィンドウ(&W)"
+msgstr "ウィンドウ"
 
 #: oleacc.rc:37
 msgid "client"
-msgstr ""
+msgstr "クライアント"
 
 #: oleacc.rc:38
 msgid "popup menu"
-msgstr ""
+msgstr "ポップアップ メニュー"
 
 #: oleacc.rc:39
 msgid "menu item"
-msgstr ""
+msgstr "メニューの項目"
 
 #: oleacc.rc:40
 msgid "tool tip"
-msgstr ""
+msgstr "ツール チップ"
 
 #: oleacc.rc:41
-#, fuzzy
 msgid "application"
 msgstr "アプリケーション"
 
 #: oleacc.rc:42
-#, fuzzy
 msgid "document"
-msgstr "文書"
+msgstr "ドキュメント"
 
 #: oleacc.rc:43
 msgid "pane"
-msgstr ""
+msgstr "ペイン"
 
 #: oleacc.rc:44
 msgid "chart"
-msgstr ""
+msgstr "グラフ"
 
 #: oleacc.rc:45
 msgid "dialog"
-msgstr ""
+msgstr "ダイアログ"
 
 #: oleacc.rc:46
 msgid "border"
-msgstr ""
+msgstr "境界線"
 
 #: oleacc.rc:47
 msgid "grouping"
-msgstr ""
+msgstr "グループ化"
 
 #: oleacc.rc:48
-#, fuzzy
 msgid "separator"
 msgstr "区切り"
 
 #: oleacc.rc:49
 msgid "tool bar"
-msgstr ""
+msgstr "ツール バー"
 
 #: oleacc.rc:50
-#, fuzzy
 msgid "status bar"
-msgstr "ステータス バー(&S)"
+msgstr "ステータス バー"
 
 #: oleacc.rc:51
-#, fuzzy
 msgid "table"
-msgstr "Table"
+msgstr "テーブル"
 
 #: oleacc.rc:52
 msgid "column header"
-msgstr ""
+msgstr "列見出し"
 
 #: oleacc.rc:53
 msgid "row header"
-msgstr ""
+msgstr "行見出し"
 
 #: oleacc.rc:54
-#, fuzzy
 msgid "column"
-msgstr "列(&C)"
+msgstr "列"
 
 #: oleacc.rc:55
 msgid "row"
-msgstr ""
+msgstr "行"
 
 #: oleacc.rc:56
 msgid "cell"
-msgstr ""
+msgstr "セル"
 
 #: oleacc.rc:57
 msgid "link"
-msgstr ""
+msgstr "リンク"
 
 #: oleacc.rc:58
 msgid "help balloon"
-msgstr ""
+msgstr "ヘルプ バルーン"
 
 #: oleacc.rc:59
-#, fuzzy
 msgid "character"
-msgstr "Character &format"
+msgstr "キャラクター"
 
 #: oleacc.rc:60
 msgid "list"
-msgstr ""
+msgstr "リスト"
 
 #: oleacc.rc:61
 msgid "list item"
-msgstr ""
+msgstr "リスト項目"
 
 #: oleacc.rc:62
 msgid "outline"
-msgstr ""
+msgstr "アウトライン"
 
 #: oleacc.rc:63
 msgid "outline item"
-msgstr ""
+msgstr "アウトライン項目"
 
 #: oleacc.rc:64
 msgid "page tab"
-msgstr ""
+msgstr "ページ タブ"
 
 #: oleacc.rc:65
-#, fuzzy
 msgid "property page"
-msgstr "次のページ"
+msgstr "プロパティ ページ"
 
 #: oleacc.rc:66
 msgid "indicator"
-msgstr ""
+msgstr "インジケータ"
 
 #: oleacc.rc:67
 msgid "graphic"
-msgstr ""
+msgstr "画像"
 
 #: oleacc.rc:68
-#, fuzzy
 msgid "static text"
-msgstr "リッチテキスト"
+msgstr "静的テキスト"
 
 #: oleacc.rc:69
-#, fuzzy
 msgid "text"
-msgstr "&Get text"
+msgstr "テキスト"
 
 #: oleacc.rc:70
 msgid "push button"
-msgstr ""
+msgstr "プッシュ ボタン"
 
 #: oleacc.rc:71
 msgid "check button"
-msgstr ""
+msgstr "チェック ボタン"
 
 #: oleacc.rc:72
 msgid "radio button"
-msgstr ""
+msgstr "ラジオ ボタン"
 
 #: oleacc.rc:73
 msgid "combo box"
-msgstr ""
+msgstr "コンボ ボックス"
 
 #: oleacc.rc:74
 msgid "drop down"
-msgstr ""
+msgstr "ドロップ ダウン"
 
 #: oleacc.rc:75
-#, fuzzy
 msgid "progress bar"
-msgstr "IP Address="
+msgstr "プログレス バー"
 
 #: oleacc.rc:76
 msgid "dial"
-msgstr ""
+msgstr "ダイアル"
 
 #: oleacc.rc:77
 msgid "hot key field"
-msgstr ""
+msgstr "ホット キー領域"
 
 #: oleacc.rc:78
 msgid "slider"
-msgstr ""
+msgstr "スライダ"
 
 #: oleacc.rc:79
 msgid "spin box"
-msgstr ""
+msgstr "スピン ボックス"
 
 #: oleacc.rc:80
 msgid "diagram"
-msgstr ""
+msgstr "図表"
 
 #: oleacc.rc:81
-#, fuzzy
 msgid "animation"
-msgstr "Organization"
+msgstr "アニメーション"
 
 #: oleacc.rc:82
-#, fuzzy
 msgid "equation"
-msgstr "否認防止"
+msgstr "数式"
 
 #: oleacc.rc:83
 msgid "drop down button"
-msgstr ""
+msgstr "ドロップ ダウン ボタン"
 
 #: oleacc.rc:84
 msgid "menu button"
-msgstr ""
+msgstr "メニュー ボタン"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
-msgstr ""
+msgstr "グリッド ドロップ ダウン ボタン"
 
 #: oleacc.rc:86
 msgid "white space"
-msgstr ""
+msgstr "余白"
 
 #: oleacc.rc:87
 msgid "page tab list"
-msgstr ""
+msgstr "ページ タブ リスト"
 
 #: oleacc.rc:88
-#, fuzzy
 msgid "clock"
 msgstr "時計"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr ""
+msgstr "スプリット ボタン"
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
-msgstr ""
+msgstr "IP アドレス"
 
 #: oleacc.rc:91
 msgid "outline button"
-msgstr ""
+msgstr "アウトライン ボタン"
 
 #: oleaut32.rc:27 oleview.rc:144
 msgid "True"
-msgstr ""
+msgstr "真"
 
 #: oleaut32.rc:28 oleview.rc:145
 msgid "False"
-msgstr ""
+msgstr "偽"
 
 #: oleaut32.rc:31
 msgid "On"
-msgstr ""
+msgstr "オン"
 
 #: oleaut32.rc:32
 msgid "Off"
-msgstr ""
+msgstr "オフ"
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
@@ -6851,7 +6789,7 @@ msgstr "LAN 接続"
 
 #: wininet.rc:26
 msgid "The certificate is issued by an unknown or untrusted publisher."
-msgstr ""
+msgstr "証明書の発行元は不明または信頼されていません。"
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
@@ -7758,7 +7696,7 @@ msgstr "時計"
 
 #: cmd.rc:30
 msgid "ATTRIB shows or changes DOS file attributes.\n"
-msgstr "ATTRIBのヘルプ\n"
+msgstr "ATTRIB は DOS ファイル属性を表示または変更します。\n"
 
 #: cmd.rc:38
 msgid ""
@@ -7782,11 +7720,13 @@ msgstr ""
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
-msgstr "CDのヘルプ\n"
+msgstr ""
+"CD <ディレクトリ> は CHDIR の短縮版です。現在のデフォルト ディレクトリ\n"
+"を変更します。\n"
 
 #: cmd.rc:42
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "CHDIRのヘルプ\n"
+msgstr "CHDIR <ディレクトリ> は現在のデフォルト ディレクトリを変更します。\n"
 
 #: cmd.rc:44
 msgid "CLS clears the console screen.\n"
@@ -7794,23 +7734,23 @@ msgstr "CLSはコンソール画面をクリアします\n"
 
 #: cmd.rc:46
 msgid "COPY <filename> copies a file.\n"
-msgstr "COPYのヘルプ\n"
+msgstr "COPY <ファイル名> はファイルをコピーします。\n"
 
 #: cmd.rc:47
 msgid "CTTY changes the input/output device.\n"
-msgstr "CTTYのヘルプ\n"
+msgstr "CTTY は入出力デバイスを変更します。\n"
 
 #: cmd.rc:48
 msgid "DATE shows or changes the system date.\n"
-msgstr "DATEのヘルプ\n"
+msgstr "DATE はシステム日を表示または変更します。\n"
 
 #: cmd.rc:49
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DELのヘルプ\n"
+msgstr "DEL <ファイル名> はファイルやファイル群を削除します。\n"
 
 #: cmd.rc:50
 msgid "DIR lists the contents of a directory.\n"
-msgstr "DIRのヘルプ\n"
+msgstr "DIR はディレクトリの内容を一覧表示します。\n"
 
 #: cmd.rc:60
 msgid ""
@@ -7834,7 +7774,7 @@ msgstr ""
 
 #: cmd.rc:62
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "ERASEのヘルプ\n"
+msgstr "ERASE <ファイル名> はファイルやファイル群を削除します。\n"
 
 #: cmd.rc:70
 msgid ""
@@ -7881,7 +7821,9 @@ msgstr ""
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "HELPのヘルプ\n"
+msgstr ""
+"HELP <コマンド> はトピックに対する簡潔なヘルプの詳細を表示します。\n"
+"引数なしの HELP はすべての CMD 内蔵コマンドを表示します。\n"
 
 #: cmd.rc:95
 msgid ""
@@ -7919,11 +7861,11 @@ msgstr ""
 
 #: cmd.rc:104
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "MDのヘルプ\n"
+msgstr "MD <名前> は MKDIR の短縮版です。サブディレクトリを作成します。\n"
 
 #: cmd.rc:105
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "MKDIRのヘルプ\n"
+msgstr "MKDIR <名前> はサブディレクトリを作成します。\n"
 
 #: cmd.rc:112
 msgid ""
@@ -8030,19 +7972,20 @@ msgstr ""
 
 #: cmd.rc:157
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "RENのヘルプ\n"
+msgstr "REN <ファイル名> は RENAME の短縮版です。ファイルを変名します。\n"
 
 #: cmd.rc:158
 msgid "RENAME <filename> renames a file\n"
-msgstr "RENAMEのヘルプ\n"
+msgstr "RENAME <ファイル名> はファイルを変名します。\n"
 
 #: cmd.rc:160
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "RDのヘルプ\n"
+msgstr ""
+"RD <ディレクトリ> は RMDIR の短縮版です。サブディレクトリを削除します。\n"
 
 #: cmd.rc:161
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "RMDIRのヘルプ\n"
+msgstr "RMDIR <ディレクトリ> はサブディレクトリを削除します。\n"
 
 #: cmd.rc:179
 msgid ""
@@ -8092,7 +8035,7 @@ msgstr ""
 
 #: cmd.rc:186
 msgid "TIME sets or shows the current system time.\n"
-msgstr "TIMEのヘルプ\n"
+msgstr "TIME は現在の時刻を設定または表示します。\n"
 
 #: cmd.rc:188
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
@@ -8132,27 +8075,27 @@ msgstr "VER は動作しているcmdのバージョンを表示します\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOLのヘルプ\n"
+msgstr "VOL はディスク デバイスのボリューム ラベルを表示します。\n"
 
 #: cmd.rc:209
 msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <directoryname> saves the current directory onto a\n"
-"stack, and then changes the current directory to the supplied one.\n"
+"PUSHD <ディレクトリ名> はカレント ディレクトリをスタック上に保存し、カ\n"
+"レント ディレクトリを指定されたディレクトリに変更します。\n"
 
 #: cmd.rc:212
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 msgstr ""
-"POPD changes current directory to the last one saved with\n"
-"PUSHD.\n"
+"POPD は PUSHD で最後に保存されたディレクトリにカレント ディレクトリを変\n"
+"更します。\n"
 
 #: cmd.rc:214
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr "MORE displays output of files or piped input in pages.\n"
+msgstr "MORE はファイルの出力やパイプ化された入力を表示します。\n"
 
 #: cmd.rc:218
 msgid ""
@@ -8160,6 +8103,9 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
+"CHOICE はテキストを表示し、選択可能なりストで許可されたキーをユーザが押\n"
+"すまで待機します。\n"
+"CHOICE は主にバッチ ファイルでメニュー選択を構築するために使われます。\n"
 
 #: cmd.rc:222
 msgid ""
@@ -8207,6 +8153,7 @@ msgstr ""
 "ATTRIB\t\tDOSファイルの属性を表示又は変更\n"
 "CALL\t\t外部のバッチファイルを呼び出し\n"
 "CD (CHDIR)\tカレントディレクトリを変更\n"
+"CHOISE\t\t選択リストのキー入力を待機\n"
 "CLS\t\tコンソール画面をクリア\n"
 "COPY\t\tファイルをコピー\n"
 "CTTY\t\t入力/出力デバイスを変更\n"
@@ -8216,12 +8163,12 @@ msgstr ""
 "ECHO\t\t文字列を直接コンソール出力にコピー\n"
 "HELP\t\tトピックの詳細なヘルプを表示\n"
 "MD (MKDIR)\tサブディレクトリを作成\n"
-"MORE\t\tDisplay output in pages\n"
+"MORE\t\t出力をページ区切りで表示\n"
 "MOVE\t\tファイルまたはディレクトリツリーを移動\n"
 "PATH\t\tパスを表示又は設定\n"
-"POPD\t\tRestores the directory to the last one saved with PUSHD\n"
+"POPD\t\tPUSHDで最後に保存したディレクトリに変更\n"
 "PROMPT\t\tコマンドプロンプトを変更\n"
-"PUSHD\t\tChanges to a new directory, saving the current one\n"
+"PUSHD\t\t現在のディレクトリを保存し、新ディレクトリに変更\n"
 "REN (RENAME)\tファイルをリネーム\n"
 "RD (RMDIR)\tサブディレクトリを削除\n"
 "SET\t\t環境変数を設定又は表示\n"
@@ -8237,7 +8184,7 @@ msgstr ""
 
 #: cmd.rc:255
 msgid "Are you sure"
-msgstr "Are you sure"
+msgstr "よろしいですか"
 
 #: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
@@ -8251,15 +8198,15 @@ msgstr "N"
 
 #: cmd.rc:258
 msgid "File association missing for extension %s\n"
-msgstr "File association missing for extension %s\n"
+msgstr "拡張子 %s に対するファイル関連付けがありません。\n"
 
 #: cmd.rc:259
 msgid "No open command associated with file type '%s'\n"
-msgstr "No open command associated with file type '%s'\n"
+msgstr "ファイル タイプ '%s' に関連付けられた開くコマンドがありません。\n"
 
 #: cmd.rc:260
 msgid "Overwrite %s"
-msgstr "Overwrite %s"
+msgstr "上書き %s"
 
 #: cmd.rc:261
 msgid "More..."
@@ -8267,55 +8214,55 @@ msgstr "More..."
 
 #: cmd.rc:262
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Line in Batch processing possibly truncated. Using:\n"
+msgstr "バッチ処理の行が切り落とされた可能性があります。対象行:\n"
 
 #: cmd.rc:263
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
-"Not Yet Implemented\n"
+"まだ実装されていません\n"
 "\n"
 
 #: cmd.rc:264
 msgid "Argument missing\n"
-msgstr "Argument missing\n"
+msgstr "引数がありません\n"
 
 #: cmd.rc:265
 msgid "Syntax error\n"
-msgstr "Syntax error\n"
+msgstr "文法エラー\n"
 
 #: cmd.rc:266
 msgid "%s : File Not Found\n"
-msgstr "%s : File Not Found\n"
+msgstr "%s : ファイルが見つかりません\n"
 
 #: cmd.rc:267
 msgid "No help available for %s\n"
-msgstr "No help available for %s\n"
+msgstr "%s に対するヘルプはありません\n"
 
 #: cmd.rc:268
 msgid "Target to GOTO not found\n"
-msgstr "Target to GOTO not found\n"
+msgstr "GOTO の対象が見つかりません\n"
 
 #: cmd.rc:269
 msgid "Current Date is %s\n"
-msgstr "Current Date is %s\n"
+msgstr "現在の日付は %s\n"
 
 #: cmd.rc:270
 msgid "Current Time is %s\n"
-msgstr "Current Time is %s\n"
+msgstr "現在の時刻は %s\n"
 
 #: cmd.rc:271
 msgid "Enter new date: "
-msgstr "Enter new date: "
+msgstr "新しい日付を入力してください: "
 
 #: cmd.rc:272
 msgid "Enter new time: "
-msgstr "Enter new time: "
+msgstr "新しい時刻を入力してください: "
 
 #: cmd.rc:273
 msgid "Environment variable %s not defined\n"
-msgstr "Environment variable %s not defined\n"
+msgstr "環境変数 %s は定義されていません\n"
 
 #: cmd.rc:274 xcopy.rc:38
 msgid "Failed to open '%s'\n"
@@ -8323,7 +8270,7 @@ msgstr "'%s' を開けません\n"
 
 #: cmd.rc:275
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Cannot call batch label outside of a batch script\n"
+msgstr "バッチ スクリプトの外からバッチ ラベルを呼び出すことはできません\n"
 
 #: cmd.rc:276 xcopy.rc:42
 msgctxt "All key"
@@ -8332,23 +8279,23 @@ msgstr "A"
 
 #: cmd.rc:277
 msgid "%s, Delete"
-msgstr "%s, Delete"
+msgstr "%s, 削除"
 
 #: cmd.rc:278
 msgid "Echo is %s\n"
-msgstr "Echo is %s\n"
+msgstr "Echo は %s\n"
 
 #: cmd.rc:279
 msgid "Verify is %s\n"
-msgstr "Verify is %s\n"
+msgstr "Verify は %s\n"
 
 #: cmd.rc:280
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify must be ON or OFF\n"
+msgstr "Verify は ON か OFF で指定してください\n"
 
 #: cmd.rc:281
 msgid "Parameter error\n"
-msgstr "Parameter error\n"
+msgstr "パラメータ エラー\n"
 
 #: cmd.rc:282
 msgid ""
@@ -8356,32 +8303,32 @@ msgid ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 msgstr ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
+"ドライブ %c のボリューム ラベルは %s\n"
+"ボリューム シリアル番号は %04x-%04x\n"
 "\n"
 
 #: cmd.rc:283
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Volume label (11 characters, ENTER for none)?"
+msgstr "ボリューム ラベル(半角11文字, ENTER で無指定)?"
 
 #: cmd.rc:284
 msgid "PATH not found\n"
-msgstr "PATH not found\n"
+msgstr "PATH が見つかりません\n"
 
 #: cmd.rc:285
 msgid "Press Return key to continue: "
-msgstr "Press Return key to continue: "
+msgstr "続けるにはリターンキーを押して下さい: "
 
 #: cmd.rc:286
 msgid "Wine Command Prompt"
-msgstr "Wine Command Prompt"
+msgstr "Wine コマンド プロンプト"
 
 #: cmd.rc:287
 msgid ""
 "CMD Version %s\n"
 "\n"
 msgstr ""
-"CMD Version %s\n"
+"CMD バージョン %s\n"
 "\n"
 
 #: cmd.rc:288
@@ -8390,67 +8337,67 @@ msgstr "More? "
 
 #: cmd.rc:289
 msgid "The input line is too long.\n"
-msgstr "The input line is too long.\n"
+msgstr "入力行が長すぎます。\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr ""
+msgstr "使い方: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr ""
+msgstr "エラー: 不明または無効なコマンド ライン パラメータが指定されました\n"
 
 #: ipconfig.rc:29
 msgid "%s adapter %s\n"
-msgstr ""
+msgstr "%s アダプタ %s\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
-msgstr ""
+msgstr "イーサネット"
 
 #: ipconfig.rc:32
 msgid "Connection-specific DNS suffix"
-msgstr ""
+msgstr "接続固有の DNS サフィックス"
 
 #: ipconfig.rc:34
 msgid "Hostname"
-msgstr ""
+msgstr "ホスト名"
 
 #: ipconfig.rc:35
 msgid "Node type"
-msgstr ""
+msgstr "ノード タイプ"
 
 #: ipconfig.rc:36
 msgid "Broadcast"
-msgstr ""
+msgstr "ブロードキャスト"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr ""
+msgstr "ピアツーピア"
 
 #: ipconfig.rc:38
 msgid "Mixed"
-msgstr ""
+msgstr "混合"
 
 #: ipconfig.rc:39
 msgid "Hybrid"
-msgstr ""
+msgstr "ハイブリッド"
 
 #: ipconfig.rc:40
 msgid "IP routing enabled"
-msgstr ""
+msgstr "IP ルーティング 有効"
 
 #: ipconfig.rc:42
 msgid "Physical address"
-msgstr ""
+msgstr "物理アドレス"
 
 #: ipconfig.rc:43
 msgid "DHCP enabled"
-msgstr ""
+msgstr "DHCP 有効"
 
 #: ipconfig.rc:46
 msgid "Default gateway"
-msgstr ""
+msgstr "デフォルト ゲートウェイ"
 
 #: net.rc:27
 msgid ""
@@ -8458,54 +8405,57 @@ msgid ""
 "\n"
 "NET [ HELP | START | STOP | USE ]\n"
 msgstr ""
+"このコマンドの文法:\n"
+"\n"
+"NET [ HELP | START | STOP | USE ]\n"
 
 #: net.rc:28
 msgid "Specify service name to start.\n"
-msgstr ""
+msgstr "開始するサービス名を指定してください。\n"
 
 #: net.rc:29
 msgid "Specify service name to stop.\n"
-msgstr ""
+msgstr "停止するサービス名を指定してください。\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
-msgstr ""
+msgstr "依存するサービスを停止中: %s\n"
 
 #: net.rc:31
 msgid "Could not stop service %s\n"
-msgstr ""
+msgstr "サービス %s を停止できませんでした。\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
-msgstr ""
+msgstr "サービス制御マネージャのハンドルを取得できませんでした。\n"
 
 #: net.rc:33
 msgid "Could not get handle to service.\n"
-msgstr ""
+msgstr "サービスのハンドルを取得できませんでした。\n"
 
 #: net.rc:34
 msgid "The %s service is starting.\n"
-msgstr ""
+msgstr "%s サービスを開始しています。\n"
 
 #: net.rc:35
 msgid "The %s service was started successfully.\n"
-msgstr ""
+msgstr "%s サービスを起動しました。\n"
 
 #: net.rc:36
 msgid "The %s service failed to start.\n"
-msgstr ""
+msgstr "%s サービスの起動に失敗しました。\n"
 
 #: net.rc:37
 msgid "The %s service is stopping.\n"
-msgstr ""
+msgstr "%s サービスを停止中です。\n"
 
 #: net.rc:38
 msgid "The %s service was stopped successfully.\n"
-msgstr ""
+msgstr "%s サービスは停止しました。\n"
 
 #: net.rc:39
 msgid "The %s service failed to stop.\n"
-msgstr ""
+msgstr "%s サービスの停止に失敗しました。\n"
 
 #: net.rc:40
 msgid ""
@@ -8518,10 +8468,18 @@ msgid ""
 "   Commands available are:\n"
 "   NET HELP    NET START    NET STOP    NET USE\n"
 msgstr ""
+"このコマンドの文法:\n"
+"\n"
+"NET HELP コマンド\n"
+"    -or-\n"
+"NET コマンド /HELP\n"
+"\n"
+"   利用可能なコマンド:\n"
+"   NET HELP    NET START    NET STOP    NET USE\n"
 
 #: net.rc:42
 msgid "There are no entries in the list.\n"
-msgstr ""
+msgstr "一覧に項目がありません。\n"
 
 #: net.rc:43
 msgid ""
@@ -8529,10 +8487,13 @@ msgid ""
 "Status  Local   Remote\n"
 "---------------------------------------------------------------\n"
 msgstr ""
+"\n"
+"状態    ローカル リモート\n"
+"---------------------------------------------------------------\n"
 
 #: net.rc:44
 msgid "%s      %S      %S      Open resources: %lu\n"
-msgstr ""
+msgstr "%s      %S       %S      リソース数: %lu\n"
 
 #: notepad.rc:27
 msgid "&New\tCtrl+N"
@@ -8711,9 +8672,8 @@ msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
 #: notepad.rc:95
-#, fuzzy
 msgid "Unicode (UTF-8)"
-msgstr "Unicode (UTF-16)"
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:102
 msgid ""
@@ -10638,75 +10598,73 @@ msgid "Menu Bar"
 msgstr "メニュー バー"
 
 #: wineconsole.rc:26
-#, fuzzy
 msgid "Set &Defaults"
-msgstr "Default"
+msgstr "デフォルト(&D)"
 
 #: wineconsole.rc:28
 msgid "&Mark"
-msgstr ""
+msgstr "範囲選択(&M)"
 
 #: wineconsole.rc:31
-#, fuzzy
 msgid "&Select all"
-msgstr "すべて選択(&A)"
+msgstr "すべて選択(&S)"
 
 #: wineconsole.rc:32
-#, fuzzy
 msgid "Sc&roll"
-msgstr "上にスクロール"
+msgstr "スクロール(&R)"
 
 #: wineconsole.rc:33
-#, fuzzy
 msgid "S&earch"
-msgstr "検索(&S)"
+msgstr "検索(&E)"
 
 #: wineconsole.rc:36
 msgid "Setup - Default settings"
-msgstr ""
+msgstr "セットアップ - 既定の設定"
 
 #: wineconsole.rc:37
 msgid "Setup - Current settings"
-msgstr ""
+msgstr "セットアップ - 現在の設定"
 
 #: wineconsole.rc:38
-#, fuzzy
 msgid "Configuration error"
-msgstr "Operation Ceased"
+msgstr "構成エラー"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr ""
+"スクリーン バッファ サイズはウィンドウ バッファ サイズ以上にしてください。"
 
 #: wineconsole.rc:34
 msgid "Each character is %ld pixels wide on %ld pixels high"
-msgstr ""
+msgstr "それぞれの文字は %ld ピクセルの幅 %ld ピクセルの高さ"
 
 #: wineconsole.rc:35
 msgid "This is a test"
-msgstr ""
+msgstr "This is a test"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr ""
+msgstr "wineconsole: イベント ID を解析できませんでした。\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr ""
+msgstr "wineconsole: バックエンドが正しくありません\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr ""
+msgstr "wineconsole: 認識できないコマンド ライン オプションです\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
-msgstr ""
+msgstr "Wine コンソール内でプログラムを開始\n"
 
 #: wineconsole.rc:45
 msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
+"wineconsole: プログラム %s の開始に失敗しました。\n"
+"コマンドは正しくありません。\n"
 
 #: wineconsole.rc:48
 msgid ""
@@ -10716,6 +10674,11 @@ msgid ""
 "\n"
 "Options:\n"
 msgstr ""
+"\n"
+"使い方:\n"
+"  wineconsole [オプション] <コマンド>\n"
+"\n"
+"オプション:\n"
 
 #: wineconsole.rc:49
 msgid ""
@@ -10724,10 +10687,13 @@ msgid ""
 "                            try to setup the current terminal as a Wine "
 "console\n"
 msgstr ""
+"  --backend={user|curses}  Wine コンソールのバックエンドを選択する。\n"
+"                           user:   新しいウィンドウを生成する。\n"
+"                           curses: 現在の端末を利用する。\n"
 
 #: wineconsole.rc:51
 msgid "  <command>                 The Wine program to launch in the console\n"
-msgstr ""
+msgstr "  <コマンド>                コンソールで開始する Wine プログラム\n"
 
 #: wineconsole.rc:52
 msgid ""
@@ -10737,18 +10703,23 @@ msgid ""
 "Starts the Wine command prompt in a Wine console\n"
 "\n"
 msgstr ""
+"\n"
+"例:\n"
+"  wineconsole cmd\n"
+"Wine コマンド プロンプトを Wine コンソールで開始します\n"
+"\n"
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr ""
+msgstr "Wine プログラム クラッシュ"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
-msgstr ""
+msgstr "内部エラー - 無効なパラメータを受け取りました"
 
 #: winedbg.rc:37
 msgid "(unidentified)"
-msgstr ""
+msgstr "(未識別)"
 
 #: winefile.rc:26
 msgid "&Open\tEnter"
