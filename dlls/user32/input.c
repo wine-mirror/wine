@@ -686,7 +686,7 @@ UINT WINAPI GetKBCodePage(void)
  *
  *        - device handle for keyboard layout defaulted to
  *          the language id. This is the way Windows default works.
- *        - the thread identifier (dwLayout) is also ignored.
+ *        - the thread identifier is also ignored.
  */
 HKL WINAPI GetKeyboardLayout(DWORD thread_id)
 {
