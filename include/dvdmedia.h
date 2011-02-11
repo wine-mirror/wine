@@ -41,4 +41,14 @@ typedef struct tagVIDEOINFOHEADER2 {
     BITMAPINFOHEADER bmiHeader;
 } VIDEOINFOHEADER2;
 
+typedef struct tagMPEG2VIDEOINFO {
+    VIDEOINFOHEADER2 hdr;
+    DWORD dwStartTimeCode;
+    DWORD cbSequenceHeader;
+    DWORD dwProfile;
+    DWORD dwLevel;
+    DWORD dwFlags;
+    DWORD dwSequenceHeader[1];
+} MPEG2VIDEOINFO;
+
 #endif /* __DVDMEDIA_H__ */
