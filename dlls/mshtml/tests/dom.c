@@ -5505,7 +5505,7 @@ static void test_default_style(IHTMLStyle *style)
 
     /* borderLeftColor */
     hres = IHTMLStyle_get_borderLeftColor(style, &vDefault);
-    ok(hres == S_OK, "get_borderBottomColor: %08x\n", hres);
+    ok(hres == S_OK, "get_borderLeftColor: %08x\n", hres);
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("cyan");
