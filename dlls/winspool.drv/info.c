@@ -2614,7 +2614,7 @@ HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
     PRINTER_INFO_2A *piA = (PRINTER_INFO_2A*)pPrinter;
     HANDLE ret;
 
-    TRACE("(%s,%d,%p): stub\n", debugstr_a(pName), Level, pPrinter);
+    TRACE("(%s, %d, %p)\n", debugstr_a(pName), Level, pPrinter);
     if(Level != 2) {
         ERR("Level = %d, unsupported!\n", Level);
 	SetLastError(ERROR_INVALID_LEVEL);
