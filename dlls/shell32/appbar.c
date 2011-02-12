@@ -74,9 +74,36 @@ UINT_PTR WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
 
     UINT_PTR ret = 0;
 
-    TRACE("msg=%d, data={cb=%d, hwnd=%p, callback=%x, edge=%d, rc=%s, lparam=%lx}\n",
-            msg, data->cbSize, data->hWnd, data->uCallbackMessage, data->uEdge,
-            wine_dbgstr_rect(&data->rc), data->lParam);
+    TRACE("msg=%d, data={cb=%d, hwnd=%p}\n", msg, data->cbSize, data->hWnd);
+
+    /* These members are message dependent */
+    switch(msg)
+    {
+    case ABM_NEW:
+        TRACE("callback: %x\n", data->uCallbackMessage);
+        break;
+
+    case ABM_GETAUTOHIDEBAR:
+        TRACE("edge: %d\n", data->uEdge);
+        break;
+
+    case ABM_QUERYPOS:
+    case ABM_SETPOS:
+        TRACE("edge: %d, rc: %s\n", data->uEdge, wine_dbgstr_rect(&data->rc));
+        break;
+
+    case ABM_GETTASKBARPOS:
+        TRACE("rc: %s\n", wine_dbgstr_rect(&data->rc));
+        break;
+
+    case ABM_SETAUTOHIDEBAR:
+        TRACE("edge: %d, lParam: %lx\n", data->uEdge, data->lParam);
+        break;
+
+    default:
+        FIXME("unknown msg: %d\n", msg);
+        break;
+    }
 
     if (data->cbSize < sizeof(APPBARDATA))
     {
