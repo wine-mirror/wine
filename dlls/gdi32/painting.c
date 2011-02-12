@@ -1383,3 +1383,13 @@ BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
 
   return TRUE;
 }
+
+/******************************************************************************
+ *           GdiDrawStream   (GDI32.@)
+ *
+ */
+BOOL WINAPI GdiDrawStream( HDC hdc, ULONG in, void * pvin )
+{
+    FIXME("stub: %p, %d, %p\n", hdc, in, pvin);
+    return FALSE;
+}

@@ -171,7 +171,7 @@
 # @ stub GdiDeleteSpoolFileHandle
 # @ stub GdiDescribePixelFormat
 @ stub GdiDllInitialize
-# @ stub GdiDrawStream
+@ stdcall GdiDrawStream(long long ptr)
 # @ stub GdiEndDocEMF
 # @ stub GdiEndPageEMF
 @ stdcall GdiEntry13()
