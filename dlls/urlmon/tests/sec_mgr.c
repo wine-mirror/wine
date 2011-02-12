@@ -792,6 +792,10 @@ static void test_InternetGetSecurityUrl(void)
     CHECK_CALLED(ParseUrl_SECURITY_URL_input2);
     CHECK_CALLED(ParseUrl_SECURITY_URL_expected);
     CHECK_CALLED(ParseUrl_SECURITY_DOMAIN_expected);
+
+    ok(!lstrcmpW(security_expectedW, sec), "Expected %s but got %s\n",
+       wine_dbgstr_w(security_expectedW), wine_dbgstr_w(sec));
+    CoTaskMemFree(sec);
 }
 
 static HRESULT WINAPI InternetProtocolInfo_QueryInterface(IInternetProtocolInfo *iface,
@@ -872,7 +876,7 @@ static HRESULT WINAPI InternetProtocolInfo_ParseUrl(IInternetProtocolInfo *iface
     *pcchResult = lstrlenW(ret)+1;
     if(*pcchResult > cchResult)
         return S_FALSE;
-    memcpy(pwzResult, ret, (*pcchResult+1)*sizeof(WCHAR));
+    memcpy(pwzResult, ret, (*pcchResult)*sizeof(WCHAR));
     return S_OK;
 }
 
