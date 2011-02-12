@@ -627,12 +627,10 @@ static void* _create_object(const GUID *clsid, const char *name, const IID *iid,
 #define _create(cls) cls, #cls
 
 #define create_document(iid) _create_object(&_create(CLSID_DOMDocument), iid, __LINE__)
-
 #define create_document_version(v, iid) _create_object(&_create(CLSID_DOMDocument ## v), iid, __LINE__)
-
 #define create_cache(iid) _create_object(&_create(CLSID_XMLSchemaCache), iid, __LINE__)
-
 #define create_cache_version(v, iid) _create_object(&_create(CLSID_XMLSchemaCache ## v), iid, __LINE__)
+#define create_xsltemplate(iid) _create_object(&_create(CLSID_XSLTemplate), iid, __LINE__)
 
 static BSTR alloc_str_from_narrow(const char *str)
 {
@@ -7660,6 +7658,76 @@ static void test_get_xml(void)
     free_bstrs();
 }
 
+static void test_xsltemplate(void)
+{
+    IXSLTemplate *template;
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    ULONG ref1, ref2;
+
+    template = create_xsltemplate(&IID_IXSLTemplate);
+    if (!template) return;
+
+    /* works as reset */
+    hr = IXSLTemplate_putref_stylesheet(template, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    b = VARIANT_TRUE;
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_("<a>test</a>"), &b );
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok( b == VARIANT_TRUE, "got %d\n", b);
+
+    /* putref with non-xsl document */
+    hr = IXSLTemplate_putref_stylesheet(template, (IXMLDOMNode*)doc);
+    todo_wine ok(hr == E_FAIL, "got 0x%08x\n", hr);
+
+    b = VARIANT_TRUE;
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_(szTransformSSXML), &b );
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok( b == VARIANT_TRUE, "got %d\n", b);
+
+    /* not a freethreaded document */
+    hr = IXSLTemplate_putref_stylesheet(template, (IXMLDOMNode*)doc);
+    todo_wine ok(hr == E_FAIL, "got 0x%08x\n", hr);
+
+    IXMLDOMDocument_Release(doc);
+
+    hr = CoCreateInstance(&CLSID_FreeThreadedDOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc);
+    if (hr != S_OK)
+    {
+        win_skip("failed to create free threaded document instance: 0x%08x\n", hr);
+        IXSLTemplate_Release(template);
+        return;
+    }
+
+    b = VARIANT_TRUE;
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_(szTransformSSXML), &b );
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok( b == VARIANT_TRUE, "got %d\n", b);
+
+    /* freethreaded document */
+    ref1 = IXMLDOMDocument_AddRef(doc);
+    IXMLDOMDocument_Release(doc);
+    hr = IXSLTemplate_putref_stylesheet(template, (IXMLDOMNode*)doc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ref2 = IXMLDOMDocument_AddRef(doc);
+    IXMLDOMDocument_Release(doc);
+    ok(ref2 > ref1, "got %d\n", ref2);
+
+    /* drop reference */
+    hr = IXSLTemplate_putref_stylesheet(template, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ref2 = IXMLDOMDocument_AddRef(doc);
+    IXMLDOMDocument_Release(doc);
+    ok(ref2 == ref1, "got %d\n", ref2);
+
+    IXMLDOMDocument_Release(doc);
+    IXSLTemplate_Release(template);
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -7724,6 +7792,7 @@ START_TEST(domdoc)
     test_createProcessingInstruction();
     test_put_nodeTypedValue();
     test_get_xml();
+    test_xsltemplate();
 
     CoUninitialize();
 }

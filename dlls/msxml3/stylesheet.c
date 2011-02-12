@@ -41,11 +41,20 @@ typedef struct _xsltemplate
 {
     IXSLTemplate IXSLTemplate_iface;
     LONG ref;
+
+    IXMLDOMNode *node;
 } xsltemplate;
 
 static inline xsltemplate *impl_from_IXSLTemplate( IXSLTemplate *iface )
 {
     return CONTAINING_RECORD(iface, xsltemplate, IXSLTemplate_iface);
+}
+
+static void xsltemplate_set_node( xsltemplate *This, IXMLDOMNode *node )
+{
+    if (This->node) IXMLDOMNode_Release(This->node);
+    This->node = node;
+    if (node) IXMLDOMNode_AddRef(node);
 }
 
 static HRESULT WINAPI xsltemplate_QueryInterface(
@@ -85,7 +94,10 @@ static ULONG WINAPI xsltemplate_Release( IXSLTemplate *iface )
 
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
+    {
+        if (This->node) IXMLDOMNode_Release( This->node );
         heap_free( This );
+    }
 
     return ref;
 }
@@ -166,8 +178,18 @@ static HRESULT WINAPI xsltemplate_putref_stylesheet( IXSLTemplate *iface,
 {
     xsltemplate *This = impl_from_IXSLTemplate( iface );
 
-    FIXME("(%p)->(%p): stub\n", This, node);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, node);
+
+    if (!node)
+    {
+        xsltemplate_set_node(This, NULL);
+        return S_OK;
+    }
+
+    /* FIXME: test for document type */
+    xsltemplate_set_node(This, node);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xsltemplate_get_stylesheet( IXSLTemplate *iface,
@@ -217,6 +239,7 @@ HRESULT XSLTemplate_create(IUnknown *pUnkOuter, void **ppObj)
 
     This->IXSLTemplate_iface.lpVtbl = &xsltemplate_vtbl;
     This->ref = 1;
+    This->node = NULL;
 
     *ppObj = &This->IXSLTemplate_iface;
 
