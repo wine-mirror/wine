@@ -59,6 +59,7 @@ typedef enum tid_t {
     IXMLElement_tid,
     IXMLDocument_tid,
     IXMLHTTPRequest_tid,
+    IXSLProcessor_tid,
     IXSLTemplate_tid,
     IVBSAXAttributes_tid,
     IVBSAXContentHandler_tid,

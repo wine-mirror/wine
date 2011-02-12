@@ -96,6 +96,7 @@ static REFIID tid_ids[] = {
     &IID_IXMLElement,
     &IID_IXMLDOMDocument,
     &IID_IXMLHTTPRequest,
+    &IID_IXSLProcessor,
     &IID_IXSLTemplate,
     &IID_IVBSAXAttributes,
     &IID_IVBSAXContentHandler,

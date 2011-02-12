@@ -7661,6 +7661,7 @@ static void test_get_xml(void)
 static void test_xsltemplate(void)
 {
     IXSLTemplate *template;
+    IXSLProcessor *processor;
     IXMLDOMDocument *doc;
     VARIANT_BOOL b;
     HRESULT hr;
@@ -7716,6 +7717,14 @@ static void test_xsltemplate(void)
     ref2 = IXMLDOMDocument_AddRef(doc);
     IXMLDOMDocument_Release(doc);
     ok(ref2 > ref1, "got %d\n", ref2);
+
+    /* processor */
+    hr = IXSLTemplate_createProcessor(template, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXSLTemplate_createProcessor(template, &processor);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IXSLProcessor_Release(processor);
 
     /* drop reference */
     hr = IXSLTemplate_putref_stylesheet(template, NULL);

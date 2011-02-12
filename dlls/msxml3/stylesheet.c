@@ -45,9 +45,22 @@ typedef struct _xsltemplate
     IXMLDOMNode *node;
 } xsltemplate;
 
+typedef struct _xslprocessor
+{
+    IXSLProcessor IXSLProcessor_iface;
+    LONG ref;
+} xslprocessor;
+
+static HRESULT XSLProcessor_create(IXSLProcessor**);
+
 static inline xsltemplate *impl_from_IXSLTemplate( IXSLTemplate *iface )
 {
     return CONTAINING_RECORD(iface, xsltemplate, IXSLTemplate_iface);
+}
+
+static inline xslprocessor *impl_from_IXSLProcessor( IXSLProcessor *iface )
+{
+    return CONTAINING_RECORD(iface, xslprocessor, IXSLProcessor_iface);
 }
 
 static void xsltemplate_set_node( xsltemplate *This, IXMLDOMNode *node )
@@ -206,8 +219,11 @@ static HRESULT WINAPI xsltemplate_createProcessor( IXSLTemplate *iface,
 {
     xsltemplate *This = impl_from_IXSLTemplate( iface );
 
-    FIXME("(%p)->(%p)\n", This, processor);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, processor);
+
+    if (!processor) return E_INVALIDARG;
+
+    return XSLProcessor_create(processor);
 }
 
 static const struct IXSLTemplateVtbl xsltemplate_vtbl =
@@ -242,6 +258,304 @@ HRESULT XSLTemplate_create(IUnknown *pUnkOuter, void **ppObj)
     This->node = NULL;
 
     *ppObj = &This->IXSLTemplate_iface;
+
+    TRACE("returning iface %p\n", *ppObj);
+
+    return S_OK;
+}
+
+/*** IXSLProcessor ***/
+static HRESULT WINAPI xslprocessor_QueryInterface(
+    IXSLProcessor *iface,
+    REFIID riid,
+    void** ppvObject )
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
+
+    if ( IsEqualGUID( riid, &IID_IXSLProcessor ) ||
+         IsEqualGUID( riid, &IID_IDispatch ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppvObject);
+    return S_OK;
+}
+
+static ULONG WINAPI xslprocessor_AddRef( IXSLProcessor *iface )
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+    return InterlockedIncrement( &This->ref );
+}
+
+static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+    ULONG ref;
+
+    ref = InterlockedDecrement( &This->ref );
+    if ( ref == 0 )
+        heap_free( This );
+
+    return ref;
+}
+
+static HRESULT WINAPI xslprocessor_GetTypeInfoCount( IXSLProcessor *iface, UINT* pctinfo )
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI xslprocessor_GetTypeInfo(
+    IXSLProcessor *iface,
+    UINT iTInfo, LCID lcid,
+    ITypeInfo** ppTInfo )
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+
+    return get_typeinfo(IXSLProcessor_tid, ppTInfo);
+}
+
+static HRESULT WINAPI xslprocessor_GetIDsOfNames(
+    IXSLProcessor *iface,
+    REFIID riid, LPOLESTR* rgszNames,
+    UINT cNames, LCID lcid, DISPID* rgDispId )
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
+          lcid, rgDispId);
+
+    if(!rgszNames || cNames == 0 || !rgDispId)
+        return E_INVALIDARG;
+
+    hr = get_typeinfo(IXSLProcessor_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI xslprocessor_Invoke(
+    IXSLProcessor *iface,
+    DISPID dispIdMember, REFIID riid, LCID lcid,
+    WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult,
+    EXCEPINFO* pExcepInfo, UINT* puArgErr )
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IXSLProcessor_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+       hr = ITypeInfo_Invoke(typeinfo, &This->IXSLProcessor_iface, dispIdMember,
+                wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI xslprocessor_put_input( IXSLProcessor *iface, VARIANT input )
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_get_input( IXSLProcessor *iface, VARIANT *input )
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%p): stub\n", This, input);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_get_ownerTemplate(
+    IXSLProcessor *iface,
+    IXSLTemplate **template)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%p): stub\n", This, template);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_setStartMode(
+    IXSLProcessor *iface,
+    BSTR p,
+    BSTR uri)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%s %s): stub\n", This, wine_dbgstr_w(p), wine_dbgstr_w(uri));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_get_startMode(
+    IXSLProcessor *iface,
+    BSTR *p)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%p): stub\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_get_startModeURI(
+    IXSLProcessor *iface,
+    BSTR *uri)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%p): stub\n", This, uri);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_put_output(
+    IXSLProcessor *iface,
+    VARIANT output)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_get_output(
+    IXSLProcessor *iface,
+    VARIANT *output)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%p): stub\n", This, output);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_transform(
+    IXSLProcessor *iface,
+    VARIANT_BOOL  *pbool)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%p): stub\n", This, pbool);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_reset( IXSLProcessor *iface )
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_get_readyState(
+    IXSLProcessor *iface,
+    LONG *state)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%p): stub\n", This, state);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_addParameter(
+    IXSLProcessor *iface,
+    BSTR p,
+    VARIANT var,
+    BSTR uri)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%s %s): stub\n", This, wine_dbgstr_w(p), wine_dbgstr_w(uri));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_addObject(
+    IXSLProcessor *iface,
+    IDispatch *obj,
+    BSTR uri)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%p %s): stub\n", This, obj, wine_dbgstr_w(uri));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI xslprocessor_get_stylesheet(
+    IXSLProcessor *iface,
+    IXMLDOMNode  **node)
+{
+    xslprocessor *This = impl_from_IXSLProcessor( iface );
+
+    FIXME("(%p)->(%p): stub\n", This, node);
+    return E_NOTIMPL;
+}
+
+static const struct IXSLProcessorVtbl xslprocessor_vtbl =
+{
+    xslprocessor_QueryInterface,
+    xslprocessor_AddRef,
+    xslprocessor_Release,
+    xslprocessor_GetTypeInfoCount,
+    xslprocessor_GetTypeInfo,
+    xslprocessor_GetIDsOfNames,
+    xslprocessor_Invoke,
+
+    xslprocessor_put_input,
+    xslprocessor_get_input,
+    xslprocessor_get_ownerTemplate,
+    xslprocessor_setStartMode,
+    xslprocessor_get_startMode,
+    xslprocessor_get_startModeURI,
+    xslprocessor_put_output,
+    xslprocessor_get_output,
+    xslprocessor_transform,
+    xslprocessor_reset,
+    xslprocessor_get_readyState,
+    xslprocessor_addParameter,
+    xslprocessor_addObject,
+    xslprocessor_get_stylesheet
+};
+
+HRESULT XSLProcessor_create(IXSLProcessor **ppObj)
+{
+    xslprocessor *This;
+
+    TRACE("(%p)\n", ppObj);
+
+    This = heap_alloc( sizeof (*This) );
+    if(!This)
+        return E_OUTOFMEMORY;
+
+    This->IXSLProcessor_iface.lpVtbl = &xslprocessor_vtbl;
+    This->ref = 1;
+
+    *ppObj = &This->IXSLProcessor_iface;
 
     TRACE("returning iface %p\n", *ppObj);
 
