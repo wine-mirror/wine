@@ -1960,23 +1960,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This,
     glRasterPos3i(rect.left, rect.top, 1);
     checkGLcall("glRasterPos3i");
 
-    /* Some drivers(radeon dri, others?) don't like exceptions during
-     * glDrawPixels. If the surface is a DIB section, it might be in GDIMode
-     * after ReleaseDC. Reading it will cause an exception, which x11drv will
-     * catch to put the dib section in InSync mode, which leads to a crash
-     * and a blocked x server on my radeon card.
-     *
-     * The following lines read the dib section so it is put in InSync mode
-     * before glDrawPixels is called and the crash is prevented. There won't
-     * be any interfering gdi accesses, because UnlockRect is called from
-     * ReleaseDC, and the app won't use the dc any more afterwards.
-     */
-    if ((This->flags & SFLAG_DIBSECTION) && !(This->flags & SFLAG_PBO))
-    {
-        volatile BYTE read;
-        read = This->resource.allocatedMemory[0];
-    }
-
     /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
     glPixelStorei(GL_UNPACK_ROW_LENGTH, This->currentDesc.Width);
 
