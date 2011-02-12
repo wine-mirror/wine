@@ -482,7 +482,7 @@ static void test_CoInternetCreateZoneManager(void)
         IUnknown_Release(punk);
 
         hr = IInternetZoneManager_QueryInterface(zonemgr, &IID_IInternetZoneManagerEx2, (void **) &punk);
-        ok(hr == S_OK || broken(hr == ERROR_NOINTERFACE /* some W2K3 */),
+        ok(hr == S_OK || broken(hr == E_NOINTERFACE /* some W2K3 */),
            "got 0x%x (expected S_OK)\n", hr);
         if (punk)
             IUnknown_Release(punk);
