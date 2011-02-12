@@ -753,7 +753,7 @@ static INT DIB_GetWidthBytes( int width, int bpp )
         default:
             trace("Unknown depth %d, please report.\n", bpp );
             assert(0);
-            break;
+            return -1;
     }
     return 4 * words;
 }
