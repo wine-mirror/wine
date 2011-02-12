@@ -1148,7 +1148,7 @@ static void test_delete_focus(HWND parent_wnd)
     DestroyWindow(hTab);
 }
 
-static void test_removeimage(HWND parent_wnd)
+static void test_removeimage(void)
 {
     static const BYTE bits[32];
     HWND hwTab;
@@ -1408,7 +1408,7 @@ START_TEST(tab)
     test_insert_focus(parent_wnd);
     test_delete_focus(parent_wnd);
     test_delete_selection(parent_wnd);
-    test_removeimage(parent_wnd);
+    test_removeimage();
     test_TCM_SETITEMEXTRA(parent_wnd);
     test_TCS_OWNERDRAWFIXED(parent_wnd);
 
