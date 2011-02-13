@@ -563,7 +563,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		{
 			FunctionRegServer = TRUE;
 		}
-		else if (msi_option_equal(argvW[i], "unregserver") || msi_option_equal(argvW[i], "unregister"))
+		else if (msi_option_equal(argvW[i], "unregserver") || msi_option_equal(argvW[i], "unregister")
+			||  msi_option_equal(argvW[i], "unreg"))
 		{
 			FunctionUnregServer = TRUE;
 		}
