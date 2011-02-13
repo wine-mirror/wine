@@ -3845,6 +3845,28 @@ DWORD WINAPI SHGetMachineInfo(DWORD dwFlags)
 }
 
 /*************************************************************************
+ * @    [SHLWAPI.416]
+ *
+ */
+DWORD WINAPI SHWinHelpOnDemandW(HWND hwnd, LPCWSTR helpfile, DWORD flags1, VOID *ptr1, DWORD flags2)
+{
+
+    FIXME("(%p, %s, 0x%x, %p, %d)\n", hwnd, debugstr_w(helpfile), flags1, ptr1, flags2);
+    return 0;
+}
+
+/*************************************************************************
+ * @    [SHLWAPI.417]
+ *
+ */
+DWORD WINAPI SHWinHelpOnDemandA(HWND hwnd, LPCSTR helpfile, DWORD flags1, VOID *ptr1, DWORD flags2)
+{
+
+    FIXME("(%p, %s, 0x%x, %p, %d)\n", hwnd, debugstr_a(helpfile), flags1, ptr1, flags2);
+    return 0;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.418]
  *
  * Function seems to do FreeLibrary plus other things.

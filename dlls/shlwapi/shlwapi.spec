@@ -413,8 +413,8 @@
 413 stdcall -noname SHGetMachineInfo(long)
 414 stub -noname SHHtmlHelpOnDemandW
 415 stub -noname SHHtmlHelpOnDemandA
-416 stub -noname SHWinHelpOnDemandW
-417 stub -noname SHWinHelpOnDemandA
+416 stdcall -noname SHWinHelpOnDemandW(long wstr long ptr long)
+417 stdcall -noname SHWinHelpOnDemandA(long str long ptr long)
 418 stdcall -ordinal MLFreeLibrary(long)
 419 stdcall -noname SHFlushSFCacheWrap()
 420 stub @ # CMemStream::Commit
