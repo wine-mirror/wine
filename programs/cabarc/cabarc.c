@@ -549,6 +549,7 @@ static BOOL add_file_or_directory( HFCI fci, WCHAR *name )
 
 static int new_cabinet( char *cab_dir )
 {
+    static const WCHAR plusW[] = {'+',0};
     WCHAR **file;
     ERF erf;
     BOOL ret = FALSE;
@@ -573,7 +574,12 @@ static int new_cabinet( char *cab_dir )
                      fci_write, fci_close, fci_lseek, fci_delete, fci_get_temp, &cab, NULL );
 
     for (file = opt_files; *file; file++)
-        if (!(ret = add_file_or_directory( fci, *file ))) break;
+    {
+        if (!strcmpW( *file, plusW ))
+            FCIFlushFolder( fci, fci_get_next_cab, fci_status );
+        else
+            if (!(ret = add_file_or_directory( fci, *file ))) break;
+    }
 
     if (ret)
     {
