@@ -516,6 +516,7 @@ static void test_LockBits(void)
     GpRect rect;
     BitmapData bd;
     const INT WIDTH = 10, HEIGHT = 20;
+    ARGB color;
 
     bm = NULL;
     stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
@@ -526,14 +527,32 @@ static void test_LockBits(void)
     rect.Width = 4;
     rect.Height = 5;
 
+    stat = GdipBitmapSetPixel(bm, 2, 3, 0xffc30000);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bm, 2, 8, 0xff480000);
+    expect(Ok, stat);
+
     /* read-only */
     stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
     expect(Ok, stat);
 
     if (stat == Ok) {
+        expect(0xc3, ((BYTE*)bd.Scan0)[2]);
+        expect(0x48, ((BYTE*)bd.Scan0)[2 + bd.Stride * 5]);
+
+        ((char*)bd.Scan0)[2] = 0xff;
+
         stat = GdipBitmapUnlockBits(bm, &bd);
         expect(Ok, stat);
     }
+
+    stat = GdipBitmapGetPixel(bm, 2, 3, &color);
+    expect(Ok, stat);
+    expect(0xffff0000, color);
+
+    stat = GdipBitmapSetPixel(bm, 2, 3, 0xffc30000);
+    expect(Ok, stat);
 
     /* read-only, with NULL rect -> whole bitmap lock */
     stat = GdipBitmapLockBits(bm, NULL, ImageLockModeRead, PixelFormat24bppRGB, &bd);
@@ -542,9 +561,15 @@ static void test_LockBits(void)
     expect(bd.Height, HEIGHT);
 
     if (stat == Ok) {
+        ((char*)bd.Scan0)[2 + 2*3 + 3*bd.Stride] = 0xff;
+
         stat = GdipBitmapUnlockBits(bm, &bd);
         expect(Ok, stat);
     }
+
+    stat = GdipBitmapGetPixel(bm, 2, 3, &color);
+    expect(Ok, stat);
+    expect(0xffff0000, color);
 
     /* read-only, consecutive */
     stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat24bppRGB, &bd);
@@ -568,6 +593,81 @@ static void test_LockBits(void)
 
     stat = GdipBitmapUnlockBits(bm, &bd);
     expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bm);
+    expect(Ok, stat);
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bm, 2, 3, 0xffff0000);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bm, 2, 8, 0xffc30000);
+    expect(Ok, stat);
+
+    /* write, no conversion */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeWrite, PixelFormat24bppRGB, &bd);
+    expect(Ok, stat);
+
+    if (stat == Ok) {
+        /* all bits are readable, inside the rect or not */
+        expect(0xff, ((BYTE*)bd.Scan0)[2]);
+        expect(0xc3, ((BYTE*)bd.Scan0)[2 + bd.Stride * 5]);
+
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    /* read, conversion */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead, PixelFormat32bppARGB, &bd);
+    expect(Ok, stat);
+
+    if (stat == Ok) {
+        expect(0xff, ((BYTE*)bd.Scan0)[2]);
+        if (0)
+            /* Areas outside the rectangle appear to be uninitialized */
+            ok(0xc3 != ((BYTE*)bd.Scan0)[2 + bd.Stride * 5], "original image bits are readable\n");
+
+        ((BYTE*)bd.Scan0)[2] = 0xc3;
+
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    /* writes do not work in read mode if there was a conversion */
+    stat = GdipBitmapGetPixel(bm, 2, 3, &color);
+    expect(Ok, stat);
+    expect(0xffff0000, color);
+
+    /* read/write, conversion */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead|ImageLockModeWrite, PixelFormat32bppARGB, &bd);
+    expect(Ok, stat);
+
+    if (stat == Ok) {
+        expect(0xff, ((BYTE*)bd.Scan0)[2]);
+        if (0)
+            /* Areas outside the rectangle appear to be uninitialized */
+            ok(0xc3 != ((BYTE*)bd.Scan0)[2 + bd.Stride * 5], "original image bits are readable\n");
+
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    /* write, conversion */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeWrite, PixelFormat32bppARGB, &bd);
+    expect(Ok, stat);
+
+    if (stat == Ok) {
+        if (0)
+        {
+            /* This is completely uninitialized. */
+            ok(0xff != ((BYTE*)bd.Scan0)[2], "original image bits are readable\n");
+            ok(0xc3 != ((BYTE*)bd.Scan0)[2 + bd.Stride * 5], "original image bits are readable\n");
+        }
+
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
 
     stat = GdipDisposeImage((GpImage*)bm);
     expect(Ok, stat);
@@ -608,6 +708,10 @@ static void test_LockBits(void)
         stat = GdipBitmapUnlockBits(bm, &bd);
         expect(Ok, stat);
     }
+
+    stat = GdipBitmapGetPixel(bm, 2, 3, &color);
+    expect(Ok, stat);
+    expect(0xffff0000, color);
 
     stat = GdipDisposeImage((GpImage*)bm);
     expect(Ok, stat);
