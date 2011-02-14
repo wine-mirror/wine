@@ -3,6 +3,7 @@
  *
  * Copyright 2002 Patrik Stridvall
  * Copyright 2005 Gerold Jens Wucherpfennig
+ * Copyright 2011 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -105,9 +106,22 @@ typedef struct {
 struct folder
 {
     struct list entry;
+    struct list files_list;
     cab_ULONG   data_start;
     cab_UWORD   data_count;
     cab_UWORD   compression;
+};
+
+struct file
+{
+    struct list entry;
+    cab_ULONG   size;    /* uncompressed size */
+    cab_ULONG   offset;  /* offset in folder */
+    cab_UWORD   folder;  /* index of folder */
+    cab_UWORD   date;
+    cab_UWORD   time;
+    cab_UWORD   attribs;
+    char        name[1];
 };
 
 typedef struct
@@ -146,20 +160,17 @@ typedef struct
                /* of spanned file of a spanning folder of a spanning cabinet */
   char               szFileNameCFDATA1[CB_MAX_FILENAME];
   int                handleCFDATA1;
-  char               szFileNameCFFILE1[CB_MAX_FILENAME];
-  int                handleCFFILE1;
   char               szFileNameCFDATA2[CB_MAX_FILENAME];
   int                handleCFDATA2;
-  char               szFileNameCFFILE2[CB_MAX_FILENAME];
-  int                handleCFFILE2;
   cab_ULONG          sizeFileCFDATA1;
-  cab_ULONG          sizeFileCFFILE1;
   cab_ULONG          sizeFileCFDATA2;
-  cab_ULONG          sizeFileCFFILE2;
   BOOL               fNewPrevious;
   cab_ULONG          estimatedCabinetSize;
   struct list        folders_list;
+  struct list        files_list;
   cab_ULONG          folders_size;
+  cab_ULONG          files_size;
+  cab_ULONG          placed_files_size;
 } FCI_Int;
 
 #define FCI_INT_MAGIC 0xfcfcfc05
@@ -192,6 +203,47 @@ static cab_ULONG get_folder_size( FCI_Int *fci )
         return sizeof(CFFOLDER) + fci->pccab->cbReserveCFFolder;
 }
 
+static struct file *add_file( FCI_Int *fci, const char *filename )
+{
+    unsigned int size = FIELD_OFFSET( struct file, name[strlen(filename) + 1] );
+    struct file *file = fci->alloc( size );
+
+    if (!file)
+    {
+        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
+        return NULL;
+    }
+    file->size    = 0;
+    file->offset  = fci->cDataBlocks * CAB_BLOCKMAX + fci->cdata_in;
+    file->folder  = fci->cFolders;
+    file->date    = 0;
+    file->time    = 0;
+    file->attribs = 0;
+    strcpy( file->name, filename );
+    list_add_tail( &fci->files_list, &file->entry );
+    return file;
+}
+
+static struct file *copy_file( FCI_Int *fci, const struct file *orig )
+{
+    unsigned int size = FIELD_OFFSET( struct file, name[strlen(orig->name) + 1] );
+    struct file *file = fci->alloc( size );
+
+    if (!file)
+    {
+        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
+        return NULL;
+    }
+    memcpy( file, orig, size );
+    return file;
+}
+
+static void free_file( FCI_Int *fci, struct file *file )
+{
+    list_remove( &file->entry );
+    fci->free( file );
+}
+
 static struct folder *add_folder( FCI_Int *fci )
 {
     struct folder *folder = fci->alloc( sizeof(*folder) );
@@ -203,20 +255,32 @@ static struct folder *add_folder( FCI_Int *fci )
     }
     folder->data_start  = fci->sizeFileCFDATA2;
     folder->compression = tcompTYPE_NONE;  /* FIXME */
+    list_init( &folder->files_list );
     list_add_tail( &fci->folders_list, &folder->entry );
     fci->folders_size += get_folder_size( fci );
     fci->cFolders++;
     return folder;
 }
 
+static void free_folder( FCI_Int *fci, struct folder *folder )
+{
+    struct file *file, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( file, next, &folder->files_list, struct file, entry ) free_file( fci, file );
+    list_remove( &folder->entry );
+    fci->free( folder );
+}
+
 /* write all folders to disk and remove them from the list */
-static BOOL write_folders( FCI_Int *fci, INT_PTR handle, cab_ULONG header_size )
+static BOOL write_folders( FCI_Int *fci, INT_PTR handle, cab_ULONG header_size, PFNFCISTATUS status_callback )
 {
     struct folder *folder, *next;
+    struct file *file;
     int err;
     BOOL ret = TRUE;
+    CFFILE *cffile;
     CFFOLDER *cffolder;
-    cab_ULONG folder_size = get_folder_size( fci );
+    cab_ULONG file_size, folder_size = get_folder_size( fci );
 
     if (!(cffolder = fci->alloc( folder_size )))
     {
@@ -225,7 +289,15 @@ static BOOL write_folders( FCI_Int *fci, INT_PTR handle, cab_ULONG header_size )
     }
     memset( cffolder, 0, folder_size );
 
-    LIST_FOR_EACH_ENTRY_SAFE( folder, next, &fci->folders_list, struct folder, entry )
+    if (!(cffile = fci->alloc( sizeof(CFFILE) + CB_MAX_FILENAME )))
+    {
+        fci->free( cffolder );
+        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+
+    /* write the folders */
+    LIST_FOR_EACH_ENTRY( folder, &fci->folders_list, struct folder, entry )
     {
         cffolder->coffCabStart = fci_endian_ulong( folder->data_start + header_size );
         cffolder->cCFData      = fci_endian_uword( folder->data_count );
@@ -236,10 +308,125 @@ static BOOL write_folders( FCI_Int *fci, INT_PTR handle, cab_ULONG header_size )
             ret = FALSE;
             break;
         }
-        list_remove( &folder->entry );
+    }
+
+    /* write all the folders files */
+    LIST_FOR_EACH_ENTRY( folder, &fci->folders_list, struct folder, entry )
+    {
+        LIST_FOR_EACH_ENTRY( file, &folder->files_list, struct file, entry )
+        {
+            cffile->cbFile          = fci_endian_ulong( file->size );
+            cffile->uoffFolderStart = fci_endian_ulong( file->offset );
+            cffile->iFolder         = fci_endian_uword( file->folder );
+            cffile->date            = fci_endian_uword( file->date );
+            cffile->time            = fci_endian_uword( file->time );
+            cffile->attribs         = fci_endian_uword( file->attribs );
+            lstrcpynA( (char *)(cffile + 1), file->name, CB_MAX_FILENAME );
+            file_size = sizeof(CFFILE) + strlen( (char *)(cffile + 1) ) + 1;
+            if (fci->write( handle, cffile, file_size, &err, fci->pv ) != file_size)
+            {
+                set_error( fci, FCIERR_CAB_FILE, err );
+                ret = FALSE;
+                break;
+            }
+            if (!fci->fSplitFolder)
+            {
+                fci->statusFolderCopied = 0;
+                /* TODO TEST THIS further */
+                fci->statusFolderTotal = fci->sizeFileCFDATA2 + fci->placed_files_size;
+            }
+            fci->statusFolderCopied += file_size;
+            /* report status about copied size of folder */
+            if (status_callback( statusFolder, fci->statusFolderCopied,
+                                 fci->statusFolderTotal, fci->pv ) == -1)
+            {
+                set_error( fci, FCIERR_USER_ABORT, 0 );
+                ret = FALSE;
+                break;
+            }
+        }
+    }
+
+    /* cleanup */
+    LIST_FOR_EACH_ENTRY_SAFE( folder, next, &fci->folders_list, struct folder, entry )
+    {
+        free_folder( fci, folder );
     }
     fci->free( cffolder );
+    fci->free( cffile );
     return ret;
+}
+
+/* add all pending files to folder */
+static BOOL add_files_to_folder( FCI_Int *fci, struct folder *folder, cab_ULONG payload )
+{
+    cab_ULONG sizeOfFiles = 0, sizeOfFilesPrev;
+    cab_ULONG cbFileRemainer = 0;
+    struct file *file, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( file, next, &fci->files_list, struct file, entry )
+    {
+        cab_ULONG size = sizeof(CFFILE) + strlen(file->name) + 1;
+
+        /* fnfilfnfildest: placed file on cabinet */
+        if (fci->fNextCab || fci->fGetNextCabInVain)
+            fci->fileplaced( &fci->oldCCAB, file->name, file->size,
+                             (file->folder == cffileCONTINUED_FROM_PREV), fci->pv );
+        else
+            fci->fileplaced( fci->pccab, file->name, file->size,
+                             (file->folder == cffileCONTINUED_FROM_PREV), fci->pv );
+
+        sizeOfFilesPrev = sizeOfFiles;
+        /* set complete size of all processed files */
+        if (file->folder == cffileCONTINUED_FROM_PREV && fci->cbFileRemainer != 0)
+        {
+            sizeOfFiles += fci->cbFileRemainer;
+            fci->cbFileRemainer = 0;
+        }
+        else sizeOfFiles += file->size;
+
+        /* check if spanned file fits into this cabinet folder */
+        if (sizeOfFiles > payload)
+        {
+            if (file->folder == cffileCONTINUED_FROM_PREV)
+                file->folder = cffileCONTINUED_PREV_AND_NEXT;
+            else
+                file->folder = cffileCONTINUED_TO_NEXT;
+        }
+
+        list_remove( &file->entry );
+        list_add_tail( &folder->files_list, &file->entry );
+        fci->placed_files_size += size;
+        fci->cFiles++;
+
+        /* This is only true for files which will be written into the */
+        /* next cabinet of the spanning folder */
+        if (sizeOfFiles > payload)
+        {
+            /* add a copy back onto the list */
+            if (!(file = copy_file( fci, file ))) return FALSE;
+            list_add_before( &next->entry, &file->entry );
+
+            /* Files which data will be partially written into the current cabinet */
+            if (file->folder == cffileCONTINUED_PREV_AND_NEXT || file->folder == cffileCONTINUED_TO_NEXT)
+            {
+                if (sizeOfFilesPrev <= payload)
+                {
+                    /* The size of the uncompressed, data of a spanning file in a */
+                    /* spanning data */
+                    cbFileRemainer = sizeOfFiles - payload;
+                }
+                file->folder = cffileCONTINUED_FROM_PREV;
+            }
+            else file->folder = 0;
+        }
+        else
+        {
+            fci->files_size -= size;
+        }
+    }
+    fci->cbFileRemainer = cbFileRemainer;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -355,15 +542,16 @@ HFCI __cdecl FCICreate(
   p_fci_internal->cFiles = 0;
   p_fci_internal->cDataBlocks = 0;
   p_fci_internal->sizeFileCFDATA1 = 0;
-  p_fci_internal->sizeFileCFFILE1 = 0;
   p_fci_internal->sizeFileCFDATA2 = 0;
-  p_fci_internal->sizeFileCFFILE2 = 0;
   p_fci_internal->fNewPrevious = FALSE;
   p_fci_internal->estimatedCabinetSize = 0;
   p_fci_internal->statusFolderTotal = 0;
   p_fci_internal->folders_size = 0;
+  p_fci_internal->files_size = 0;
+  p_fci_internal->placed_files_size = 0;
 
   list_init( &p_fci_internal->folders_list );
+  list_init( &p_fci_internal->files_list );
 
   memset(&p_fci_internal->oldCCAB, 0, sizeof(CCAB));
   memcpy(p_fci_internal->szPrevCab, pccab->szCab, CB_MAX_CABINET_NAME);
@@ -390,26 +578,6 @@ HFCI __cdecl FCICreate(
   }
   /* TODO error checking of err */
 
-  /* array of all CFFILE in a folder */
-  if( !p_fci_internal->gettemp(p_fci_internal->szFileNameCFFILE1,
-                               CB_MAX_FILENAME, p_fci_internal->pv)) {
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
-    return FALSE;
-  }
-  /* safety */
-  if ( strlen(p_fci_internal->szFileNameCFFILE1) >= CB_MAX_FILENAME ) {
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
-    return FALSE;
-  }
-  p_fci_internal->handleCFFILE1 = p_fci_internal->open( p_fci_internal->szFileNameCFFILE1,
-                                                        _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
-                                                        _S_IREAD | _S_IWRITE, &err, pv);
-  if(p_fci_internal->handleCFFILE1==0){
-    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
-    return FALSE;
-  }
-  /* TODO error checking of err */
-
   /* CFDATA with checksum and ready to be copied into cabinet */
   if( !p_fci_internal->gettemp(p_fci_internal->szFileNameCFDATA2,
                                CB_MAX_FILENAME, p_fci_internal->pv)) {
@@ -425,26 +593,6 @@ HFCI __cdecl FCICreate(
                                                         _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
                                                         _S_IREAD | _S_IWRITE, &err, pv);
   if(p_fci_internal->handleCFDATA2==0){
-    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
-    return FALSE;
-  }
-  /* TODO error checking of err */
-
-  /* array of all CFFILE in a folder, ready to be copied into cabinet */
-  if( !p_fci_internal->gettemp(p_fci_internal->szFileNameCFFILE2,
-                               CB_MAX_FILENAME, p_fci_internal->pv)) {
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
-    return FALSE;
-  }
-  /* safety */
-  if ( strlen(p_fci_internal->szFileNameCFFILE2) >= CB_MAX_FILENAME ) {
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
-    return FALSE;
-  }
-  p_fci_internal->handleCFFILE2 = p_fci_internal->open( p_fci_internal->szFileNameCFFILE2,
-                                                        _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
-                                                        _S_IREAD | _S_IWRITE, &err, pv);
-  if(p_fci_internal->handleCFFILE2==0){
     set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
     return FALSE;
   }
@@ -624,8 +772,8 @@ static BOOL fci_flushfolder_copy_cfdata(FCI_Int *p_fci_internal, char* buffer, U
     /* So don't try to store more data into it */
     if( p_fci_internal->fNextCab &&
         (p_fci_internal->oldCCAB.cb <= sizeof(CFDATA) + cbReserveCFData +
-        p_fci_internal->sizeFileCFFILE1 + p_fci_internal->sizeFileCFDATA2 +
-        p_fci_internal->sizeFileCFFILE2 + p_fci_internal->folders_size +
+        p_fci_internal->files_size + p_fci_internal->sizeFileCFDATA2 +
+        p_fci_internal->placed_files_size + p_fci_internal->folders_size +
         sizeof(CFHEADER) +
         read_result +
         p_fci_internal->oldCCAB.cbReserveCFHeader +
@@ -687,8 +835,8 @@ static BOOL fci_flushfolder_copy_cfdata(FCI_Int *p_fci_internal, char* buffer, U
       if( p_fci_internal->fNextCab &&
           (p_fci_internal->oldCCAB.cb < sizeof(CFDATA) + cbReserveCFData +
           pcfdata->cbData +
-          p_fci_internal->sizeFileCFFILE1 + p_fci_internal->sizeFileCFDATA2 +
-          p_fci_internal->sizeFileCFFILE2 + p_fci_internal->folders_size +
+          p_fci_internal->files_size + p_fci_internal->sizeFileCFDATA2 +
+          p_fci_internal->placed_files_size + p_fci_internal->folders_size +
           sizeof(CFHEADER) +
           read_result +
           p_fci_internal->oldCCAB.cbReserveCFHeader +
@@ -709,8 +857,8 @@ static BOOL fci_flushfolder_copy_cfdata(FCI_Int *p_fci_internal, char* buffer, U
         /* to get it's actual size */
         pcfdata->cbData = p_fci_internal->oldCCAB.cb - (
           sizeof(CFDATA) + cbReserveCFData +
-          p_fci_internal->sizeFileCFFILE1 + p_fci_internal->sizeFileCFDATA2 +
-          p_fci_internal->sizeFileCFFILE2 + p_fci_internal->folders_size +
+          p_fci_internal->files_size + p_fci_internal->sizeFileCFDATA2 +
+          p_fci_internal->placed_files_size + p_fci_internal->folders_size +
           sizeof(CFHEADER) +
           p_fci_internal->oldCCAB.cbReserveCFHeader +
           sizeof(CFFOLDER) + /* set size of new CFFolder entry */
@@ -931,240 +1079,6 @@ static BOOL fci_flushfolder_copy_cfdata(FCI_Int *p_fci_internal, char* buffer, U
 
 
 
-static BOOL fci_flushfolder_copy_cffile(FCI_Int *p_fci_internal, int* err, int handleCFFILE1new,
-  cab_ULONG *psizeFileCFFILE1new, cab_ULONG payload)
-{
-  CFFILE cffile;
-  cab_ULONG read_result;
-  cab_ULONG seek=0;
-  cab_ULONG sizeOfFiles=0, sizeOfFilesPrev;
-  BOOL may_be_prev=TRUE;
-  cab_ULONG cbFileRemainer=0;
-
-  /* set seek of p_fci_internal->handleCFFILE1 to 0 */
-  if( p_fci_internal->seek(p_fci_internal->handleCFFILE1,0,SEEK_SET,err,
-    p_fci_internal->pv) !=0 ) {
-    /* wrong return value */
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_SEEK );
-    return FALSE;
-  }
-  /* TODO error handling of err */
-
-  /* while not all CFFILE structures have been copied do */
-  while(!FALSE) {
-    /* REUSE the variable read_result */
-    /* read data from p_fci_internal->handleCFFILE1 to cffile */
-    read_result = p_fci_internal->read(p_fci_internal->handleCFFILE1/* file handle */,
-      &cffile, /* memory buffer */
-      sizeof(cffile), /* number of bytes to copy */
-      err, p_fci_internal->pv);
-    if( read_result != sizeof(cffile) ) {
-      if( read_result == 0 ) break; /* ALL CFFILE structures have been copied */
-      /* read error */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_READ_FAULT );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-
-    /* Microsoft's(R) CABINET.DLL would do a seek to the current! */
-    /* position. I don't know why so I'll just omit it */
-
-    /* read the filename from p_fci_internal->handleCFFILE1 */
-    /* REUSE the variable read_result AGAIN */
-    /* REUSE the memory buffer PFCI(hfci)->data_out */
-    if( p_fci_internal->read( p_fci_internal->handleCFFILE1 /*file handle*/,
-        p_fci_internal->data_out, /* memory buffer */
-        CB_MAX_FILENAME, /* number of bytes to copy */
-        err, p_fci_internal->pv) <2) {
-      /* read error */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_READ_FAULT );
-      return FALSE;
-    }
-    /* TODO maybe other checks of read_result */
-    /* TODO error handling of err */
-
-    /* safety */
-    if( strlen(p_fci_internal->data_out)>=CB_MAX_FILENAME ) {
-      /* set error code internal error */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
-      return FALSE;
-    }
-
-    seek+=sizeof(cffile) + strlen(p_fci_internal->data_out)+1;
-
-    /* set seek of p_fci_internal->handleCFFILE1 to end of file name */
-    /* i.e. seek to the next CFFILE area */
-    if( p_fci_internal->seek(p_fci_internal->handleCFFILE1,
-        seek, /* seek position*/
-        SEEK_SET ,err,
-        p_fci_internal->pv)
-        != seek) {
-      /* wrong return value */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_SEEK );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-
-    /* fnfilfnfildest: placed file on cabinet */
-    if (p_fci_internal->fNextCab ||
-        p_fci_internal->fGetNextCabInVain) {
-      p_fci_internal->fileplaced( &p_fci_internal->oldCCAB,
-        p_fci_internal->data_out, /* the file name*/
-        cffile.cbFile, /* file size */
-        (cffile.iFolder==cffileCONTINUED_FROM_PREV),
-        p_fci_internal->pv
-      );
-    } else {
-      p_fci_internal->fileplaced( p_fci_internal->pccab,
-        p_fci_internal->data_out, /* the file name*/
-        cffile.cbFile, /* file size */
-        (cffile.iFolder==cffileCONTINUED_FROM_PREV),
-        p_fci_internal->pv
-      );
-    }
-
-    /* Check special iFolder values */
-    if( cffile.iFolder==cffileCONTINUED_FROM_PREV &&
-        p_fci_internal->fPrevCab==FALSE ) {
-      /* THIS MAY NEVER HAPPEN */
-      /* set error code */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
-      return FALSE;
-    }
-    if( cffile.iFolder==cffileCONTINUED_PREV_AND_NEXT ||
-        cffile.iFolder==cffileCONTINUED_TO_NEXT ) {
-      /* THIS MAY NEVER HAPPEN */
-      /* set error code */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
-      return FALSE;
-    }
-    if( may_be_prev && cffile.iFolder!=cffileCONTINUED_FROM_PREV ) {
-      may_be_prev=FALSE;
-    }
-    if( cffile.iFolder==cffileCONTINUED_FROM_PREV && may_be_prev==FALSE ) {
-      /* THIS MAY NEVER HAPPEN */
-      /* set error code */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
-      return FALSE;
-    }
-    if( cffile.iFolder!=cffileCONTINUED_FROM_PREV ) {
-      may_be_prev=FALSE;
-    }
-
-    sizeOfFilesPrev=sizeOfFiles;
-    /* Set complete size of all processed files */
-    if( cffile.iFolder==cffileCONTINUED_FROM_PREV &&
-        p_fci_internal->cbFileRemainer!=0
-    ) {
-      sizeOfFiles+=p_fci_internal->cbFileRemainer;
-      p_fci_internal->cbFileRemainer=0;
-    } else {
-      sizeOfFiles+=cffile.cbFile;
-    }
-
-    /* Check if spanned file fits into this cabinet folder */
-    if( cffile.iFolder==cffileCONTINUED_FROM_PREV && sizeOfFiles>payload ) {
-      cffile.iFolder=cffileCONTINUED_PREV_AND_NEXT;
-    } else
-
-    /* Check if file doesn't fit into this cabinet folder */
-    if( sizeOfFiles>payload ) {
-      cffile.iFolder=cffileCONTINUED_TO_NEXT;
-    }
-
-    /* set little endian */
-    cffile.cbFile=fci_endian_ulong(cffile.cbFile);
-    cffile.uoffFolderStart=fci_endian_ulong(cffile.uoffFolderStart);
-    cffile.iFolder=fci_endian_uword(cffile.iFolder);
-    cffile.date=fci_endian_uword(cffile.date);
-    cffile.time=fci_endian_uword(cffile.time);
-    cffile.attribs=fci_endian_uword(cffile.attribs);
-
-    /* write cffile to p_fci_internal->handleCFFILE2 */
-    if( p_fci_internal->write( p_fci_internal->handleCFFILE2, /* file handle */
-        &cffile, /* memory buffer */
-        sizeof(cffile), /* number of bytes to copy */
-        err, p_fci_internal->pv) != sizeof(cffile) ) {
-      set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-
-    p_fci_internal->sizeFileCFFILE2 += sizeof(cffile);
-
-    /* reset little endian */
-    cffile.cbFile=fci_endian_ulong(cffile.cbFile);
-    cffile.uoffFolderStart=fci_endian_ulong(cffile.uoffFolderStart);
-    cffile.iFolder=fci_endian_uword(cffile.iFolder);
-    cffile.date=fci_endian_uword(cffile.date);
-    cffile.time=fci_endian_uword(cffile.time);
-    cffile.attribs=fci_endian_uword(cffile.attribs);
-
-    /* write file name to p_fci_internal->handleCFFILE2 */
-    if( p_fci_internal->write( p_fci_internal->handleCFFILE2, /* file handle */
-        p_fci_internal->data_out, /* memory buffer */
-        strlen(p_fci_internal->data_out)+1, /* number of bytes to copy */
-        err, p_fci_internal->pv) != strlen(p_fci_internal->data_out)+1 ) {
-      set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-
-    p_fci_internal->sizeFileCFFILE2 += strlen(p_fci_internal->data_out)+1;
-
-    /* cFiles is used to count all files of a cabinet */
-    ++(p_fci_internal->cFiles);
-
-    /* This is only true for files which will be written into the */
-    /* next cabinet of the spanning folder */
-    if( sizeOfFiles>payload ) {
-
-      /* Files which data will be partially written into the current cabinet */
-      if( cffile.iFolder==cffileCONTINUED_PREV_AND_NEXT ||
-          cffile.iFolder==cffileCONTINUED_TO_NEXT
-        ) {
-        if( sizeOfFilesPrev<=payload ) {
-          /* The size of the uncompressed, data of a spanning file in a */
-          /* spanning data */
-          cbFileRemainer=sizeOfFiles-payload;
-        }
-        cffile.iFolder=cffileCONTINUED_FROM_PREV;
-      } else {
-        cffile.iFolder=0;
-      }
-
-      /* write cffile into handleCFFILE1new */
-      if( p_fci_internal->write( handleCFFILE1new, /* file handle */
-          &cffile, /* memory buffer */
-          sizeof(cffile), /* number of bytes to copy */
-          err, p_fci_internal->pv) != sizeof(cffile) ) {
-        set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
-        return FALSE;
-      }
-      /* TODO error handling of err */
-
-      *psizeFileCFFILE1new += sizeof(cffile);
-      /* write name of file into handleCFFILE1new */
-      if( p_fci_internal->write( handleCFFILE1new, /* file handle */
-          p_fci_internal->data_out, /* memory buffer */
-          strlen(p_fci_internal->data_out)+1, /* number of bytes to copy */
-          err, p_fci_internal->pv) != strlen(p_fci_internal->data_out)+1 ) {
-        set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
-        return FALSE;
-      }
-      /* TODO error handling of err */
-
-      *psizeFileCFFILE1new += strlen(p_fci_internal->data_out)+1;
-    }
-
-  } /* END OF while */
-  p_fci_internal->cbFileRemainer=cbFileRemainer;
-  return TRUE;
-} /* end of fci_flushfolder_copy_cffile */
-
-
-
-
 static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
 	BOOL                  fGetNextCab,
 	PFNFCIGETNEXTCABINET  pfnfcignc,
@@ -1178,7 +1092,6 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
   UINT cbReserveCFData, cbReserveCFFolder;
   char* reserved;
   cab_ULONG sizeFileCFDATA1new=0;
-  cab_ULONG sizeFileCFFILE1new=0;
   cab_ULONG payload;
   cab_ULONG read_result;
   struct folder *folder;
@@ -1197,7 +1110,7 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
 
   /* If there was no FCIAddFile or FCIFlushFolder has already been called */
   /* this function will return TRUE */
-  if( p_fci_internal->sizeFileCFFILE1 == 0 ) {
+  if( p_fci_internal->files_size == 0 ) {
     if ( p_fci_internal->sizeFileCFDATA1 != 0 ) {
       /* error handling */
       set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
@@ -1213,7 +1126,7 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
   }
 
   /* FCIFlushFolder has already been called... */
-  if (p_fci_internal->fSplitFolder && p_fci_internal->sizeFileCFFILE2!=0) {
+  if (p_fci_internal->fSplitFolder && p_fci_internal->placed_files_size!=0) {
     return TRUE;
   }
 
@@ -1270,8 +1183,8 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
   }
 
   p_fci_internal->statusFolderTotal = sizeof(CFHEADER)+read_result+
-      sizeof(CFFOLDER) + p_fci_internal->sizeFileCFFILE2+
-      p_fci_internal->sizeFileCFDATA2 + p_fci_internal->sizeFileCFFILE1+
+      sizeof(CFFOLDER) + p_fci_internal->placed_files_size+
+      p_fci_internal->sizeFileCFDATA2 + p_fci_internal->files_size+
       p_fci_internal->sizeFileCFDATA1 + p_fci_internal->folders_size;
   p_fci_internal->statusFolderCopied = 0;
 
@@ -1347,9 +1260,9 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
       strlen(p_fci_internal->szPrevDisk)+1;
   }
   read_result+= sizeof(CFHEADER) + p_fci_internal->sizeFileCFDATA2 +
-    p_fci_internal->sizeFileCFFILE2 + p_fci_internal->folders_size;
+    p_fci_internal->placed_files_size + p_fci_internal->folders_size;
 
-  if(p_fci_internal->sizeFileCFFILE1!=0) {
+  if(p_fci_internal->files_size!=0) {
     read_result+= sizeof(CFFOLDER)+p_fci_internal->pccab->cbReserveCFFolder;
   }
 
@@ -1367,7 +1280,7 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
         (
           p_fci_internal->pccab->cb < read_result +
           p_fci_internal->sizeFileCFDATA1 +
-          p_fci_internal->sizeFileCFFILE1 +
+          p_fci_internal->files_size +
           CB_MAX_CABINET_NAME +   /* next cabinet name */
           CB_MAX_DISK_NAME        /* next disk name */
         ) || fGetNextCab
@@ -1402,7 +1315,7 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
         (
           p_fci_internal->oldCCAB.cb < read_result +
           p_fci_internal->sizeFileCFDATA1 +
-          p_fci_internal->sizeFileCFFILE1 +
+          p_fci_internal->files_size +
           strlen(p_fci_internal->pccab->szCab)+1 +   /* next cabinet name */
           strlen(p_fci_internal->pccab->szDisk)+1    /* next disk name */
         ) || fGetNextCab
@@ -1414,7 +1327,7 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
     /* return FALSE if there is not enough space left*/
     /* this should never happen */
     if (p_fci_internal->oldCCAB.cb <=
-        p_fci_internal->sizeFileCFFILE1 +
+        p_fci_internal->files_size +
         read_result +
         strlen(p_fci_internal->pccab->szCab)+1 + /* next cabinet name */
         strlen(p_fci_internal->pccab->szDisk)+1  /* next disk name */
@@ -1487,8 +1400,8 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
 
   folder->data_count = p_fci_internal->cDataBlocks;
 
-  if(!fci_flushfolder_copy_cffile(p_fci_internal, &err, handleCFFILE1new,
-      &sizeFileCFFILE1new, payload)) {
+  if (!add_files_to_folder( p_fci_internal, folder, payload ))
+  {
     p_fci_internal->close(handleCFDATA1new,&err,p_fci_internal->pv);
     /* TODO error handling of err */
     p_fci_internal->delete(szFileNameCFDATA1new,&err,p_fci_internal->pv);
@@ -1514,21 +1427,6 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
   p_fci_internal->handleCFDATA1 = handleCFDATA1new;
   /* set file size */
   p_fci_internal->sizeFileCFDATA1 = sizeFileCFDATA1new;
-
-  /* close and delete PFCI_INT(hfci)->handleCFFILE1 */
-  p_fci_internal->close(p_fci_internal->handleCFFILE1,&err,p_fci_internal->pv);
-  /* TODO error handling of err */
-  p_fci_internal->delete(p_fci_internal->szFileNameCFFILE1,&err,p_fci_internal->pv);
-  /* TODO error handling of err */
-
-  /* put new CFFILE1 into hfci */
-  memcpy(p_fci_internal->szFileNameCFFILE1,szFileNameCFFILE1new,
-    CB_MAX_FILENAME);
-
-  /* put CFFILE1 file handle */
-  p_fci_internal->handleCFFILE1 = handleCFFILE1new;
-  /* set file size */
-  p_fci_internal->sizeFileCFFILE1 = sizeFileCFFILE1new;
 
   /* reset CFFolder specific information */
   p_fci_internal->cDataBlocks=0;
@@ -1563,7 +1461,7 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
   /* TODO test if fci_flush_cabinet really aborts if there was no FCIAddFile */
 
   /* when FCIFlushCabinet was or FCIAddFile hasn't been called */
-  if( p_fci_internal->sizeFileCFFILE1==0 && fGetNextCab ) {
+  if( p_fci_internal->files_size==0 && fGetNextCab ) {
     returntrue=TRUE;
   }
 
@@ -1576,8 +1474,8 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
 
   if ( (p_fci_internal->fSplitFolder && p_fci_internal->fNextCab==FALSE)||
        (p_fci_internal->folders_size==0 &&
-         (p_fci_internal->sizeFileCFFILE1!=0 ||
-          p_fci_internal->sizeFileCFFILE2!=0 )
+         (p_fci_internal->files_size!=0 ||
+          p_fci_internal->placed_files_size!=0 )
      ) )
   {
       /* error */
@@ -1623,7 +1521,7 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
   cfheader.cbCabinet=   /* size of the cabinet file in bytes */
     sizeof(CFHEADER) +
     p_fci_internal->folders_size +
-    p_fci_internal->sizeFileCFFILE2 +
+    p_fci_internal->placed_files_size +
     p_fci_internal->sizeFileCFDATA2;
 
   if (p_fci_internal->fPrevCab) {
@@ -1668,7 +1566,7 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
 
   cfheader.reserved2=0;
   cfheader.coffFiles=    /* offset to first CFFILE section */
-   cfheader.cbCabinet - p_fci_internal->sizeFileCFFILE2 -
+   cfheader.cbCabinet - p_fci_internal->placed_files_size -
    p_fci_internal->sizeFileCFDATA2;
 
   cfheader.reserved3=0;
@@ -1848,7 +1746,7 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
   }
 
   /* add size of header size of all CFFOLDERs and size of all CFFILEs */
-  header_size = p_fci_internal->sizeFileCFFILE2 + p_fci_internal->folders_size + sizeof(CFHEADER);
+  header_size = p_fci_internal->placed_files_size + p_fci_internal->folders_size + sizeof(CFHEADER);
   if( p_fci_internal->fNextCab || p_fci_internal->fGetNextCabInVain ) {
       header_size+=p_fci_internal->oldCCAB.cbReserveCFHeader;
   } else {
@@ -1881,58 +1779,7 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
       }
   }
 
-  if (!write_folders( p_fci_internal, handleCABINET, header_size )) return FALSE;
-
-  /* set seek of p_fci_internal->handleCFFILE2 to 0 */
-  if( p_fci_internal->seek(p_fci_internal->handleCFFILE2,
-      0, SEEK_SET, &err, p_fci_internal->pv) != 0 ) {
-    /* wrong return value */
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_SEEK );
-    return FALSE;
-  }
-  /* TODO error handling of err */
-
-  /* while not all CFFILE structures have been copied to the cabinet do */
-  if (p_fci_internal->data_out) while(!FALSE) {
-    /* REUSE the variable read_result */
-    /* REUSE the buffer p_fci_internal->data_out AGAIN */
-    /* read a block from p_fci_internal->handleCFFILE2 */
-    read_result = p_fci_internal->read( p_fci_internal->handleCFFILE2 /* handle */,
-        p_fci_internal->data_out, /* memory buffer */
-        CB_MAX_CHUNK, /* number of bytes to copy */
-        &err, p_fci_internal->pv);
-    if( read_result == 0 ) break; /* ALL CFFILE structures have been copied */
-    /* TODO error handling of err */
-
-    /* write the block to the cabinet file */
-    if( p_fci_internal->write( handleCABINET, /* file handle */
-        p_fci_internal->data_out, /* memory buffer */
-        read_result, /* number of bytes to copy */
-        &err, p_fci_internal->pv) != read_result ) {
-      /* write error */
-      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-
-    if (p_fci_internal->fSplitFolder==FALSE) {
-      p_fci_internal->statusFolderCopied = 0;
-      /* TODO TEST THIS further */
-      p_fci_internal->statusFolderTotal = p_fci_internal->sizeFileCFDATA2+
-        p_fci_internal->sizeFileCFFILE2;
-    }
-    p_fci_internal->statusFolderCopied += read_result;
-
-    /* report status with pfnfcis about copied size of folder */
-    if( (*pfnfcis)(statusFolder,
-        p_fci_internal->statusFolderCopied, /* length of copied blocks */
-        p_fci_internal->statusFolderTotal, /* total size of folder */
-        p_fci_internal->pv) == -1) {
-      set_error( p_fci_internal, FCIERR_USER_ABORT, 0 );
-      return FALSE;
-    }
-
-  } /* END OF while */
+  if (!write_folders( p_fci_internal, handleCABINET, header_size, pfnfcis )) return FALSE;
 
   /* set seek of p_fci_internal->handleCFDATA2 to 0 */
   if( p_fci_internal->seek(p_fci_internal->handleCFDATA2,
@@ -2008,31 +1855,18 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
   p_fci_internal->close(handleCABINET,&err,p_fci_internal->pv);
   /* TODO error handling of err */
 
-
-/* COPIED FROM FCIDestroy */
-
   p_fci_internal->close( p_fci_internal->handleCFDATA2,&err,p_fci_internal->pv);
   /* TODO error handling of err */
   p_fci_internal->delete( p_fci_internal->szFileNameCFDATA2, &err,
     p_fci_internal->pv);
   /* TODO error handling of err */
-  p_fci_internal->close( p_fci_internal->handleCFFILE2,&err,p_fci_internal->pv);
-  /* TODO error handling of err */
-  p_fci_internal->delete( p_fci_internal->szFileNameCFFILE2, &err,
-    p_fci_internal->pv);
-  /* TODO error handling of err */
-
-/* END OF copied from FCIDestroy */
 
   /* get 3 temporary files and open them */
   /* write names and handles to hfci */
 
-  p_fci_internal->folders_size = 0;
   p_fci_internal->sizeFileCFDATA2  = 0;
-  p_fci_internal->sizeFileCFFILE2  = 0;
+  p_fci_internal->placed_files_size  = 0;
   p_fci_internal->folders_size = 0;
-
-/* COPIED FROM FCICreate */
 
   /* CFDATA with checksum and ready to be copied into cabinet */
   if( !p_fci_internal->gettemp( p_fci_internal->szFileNameCFDATA2,
@@ -2057,32 +1891,6 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
   }
   /* TODO error checking of err */
 
-  /* array of all CFFILE in a folder, ready to be copied into cabinet */
-  if( !p_fci_internal->gettemp(p_fci_internal->szFileNameCFFILE2,
-                               CB_MAX_FILENAME, p_fci_internal->pv)) {
-    /* error handling */
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_FUNCTION_FAILED );
-    return FALSE;
-  }
-  /* safety */
-  if ( strlen(p_fci_internal->szFileNameCFFILE2) >= CB_MAX_FILENAME ) {
-    /* set error code and abort */
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
-    return FALSE;
-  }
-  p_fci_internal->handleCFFILE2 = p_fci_internal->open( p_fci_internal->szFileNameCFFILE2,
-                                                        _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY,
-                                                        _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv);
-  /* check handle */
-  if(p_fci_internal->handleCFFILE2==0){
-    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_OPEN_FAILED );
-    return FALSE;
-  }
-  /* TODO error checking of err */
-
-/* END OF copied from FCICreate */
-
-
   /* TODO close and delete new files when return FALSE */
 
 
@@ -2098,7 +1906,7 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
   if (p_fci_internal->fNextCab) {
     p_fci_internal->fNextCab=FALSE;
 
-    if (p_fci_internal->sizeFileCFFILE1==0 && p_fci_internal->sizeFileCFDATA1!=0) {
+    if (p_fci_internal->files_size==0 && p_fci_internal->sizeFileCFDATA1!=0) {
       /* THIS CAN NEVER HAPPEN */
       /* set error code */
       set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
@@ -2110,7 +1918,7 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
     /* REUSE the variable read_result */
     if (p_fci_internal->fGetNextCabInVain) {
       read_result=p_fci_internal->oldCCAB.cbReserveCFHeader;
-      if(p_fci_internal->sizeFileCFFILE1!=0) {
+      if(p_fci_internal->files_size!=0) {
         read_result+=p_fci_internal->oldCCAB.cbReserveCFFolder;
       }
       if ( p_fci_internal->oldCCAB.cbReserveCFHeader != 0 ||
@@ -2120,7 +1928,7 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
       }
     } else {
       read_result=p_fci_internal->pccab->cbReserveCFHeader;
-      if(p_fci_internal->sizeFileCFFILE1!=0) {
+      if(p_fci_internal->files_size!=0) {
         read_result+=p_fci_internal->pccab->cbReserveCFFolder;
       }
       if ( p_fci_internal->pccab->cbReserveCFHeader != 0 ||
@@ -2134,8 +1942,8 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
         strlen(p_fci_internal->szPrevDisk)+1;
     }
     read_result+= p_fci_internal->sizeFileCFDATA1 +
-      p_fci_internal->sizeFileCFFILE1 + p_fci_internal->sizeFileCFDATA2 +
-      p_fci_internal->sizeFileCFFILE2 + p_fci_internal->folders_size +
+      p_fci_internal->files_size + p_fci_internal->sizeFileCFDATA2 +
+      p_fci_internal->placed_files_size + p_fci_internal->folders_size +
       sizeof(CFHEADER) +
       sizeof(CFFOLDER); /* set size of new CFFolder entry */
 
@@ -2206,13 +2014,13 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
 
 /* END OF COPIED FROM FCIAddFile and modified */
 
-    if( p_fci_internal->sizeFileCFFILE1>0 ) {
+    if( p_fci_internal->files_size>0 ) {
       if( !fci_flush_folder(p_fci_internal, FALSE, pfnfcignc, pfnfcis) ) return FALSE;
       p_fci_internal->fNewPrevious=TRUE;
     }
   } else {
     p_fci_internal->fNewPrevious=FALSE;
-    if( p_fci_internal->sizeFileCFFILE1>0 || p_fci_internal->sizeFileCFDATA1) {
+    if( p_fci_internal->files_size>0 || p_fci_internal->sizeFileCFDATA1) {
       /* THIS MAY NEVER HAPPEN */
       /* set error structures */
       set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
@@ -2268,9 +2076,9 @@ BOOL __cdecl FCIAddFile(
 	TCOMP                 typeCompress)
 {
   int err;
-  CFFILE cffile;
   cab_ULONG read_result;
   int file_handle;
+  struct file *file;
   FCI_Int *p_fci_internal = get_fci_ptr( hfci );
 
   if (!p_fci_internal) return FALSE;
@@ -2295,11 +2103,7 @@ BOOL __cdecl FCIAddFile(
     return FALSE;
   }
 
-  cffile.cbFile=0; /* size of the to be added file*/
-  /* offset of the uncompressed file in the folder */
-  cffile.uoffFolderStart=p_fci_internal->cDataBlocks*CAB_BLOCKMAX + p_fci_internal->cdata_in;
-  /* number of folder in the cabinet or special 0=first  */
-  cffile.iFolder = p_fci_internal->cFolders;
+  if (!(file = add_file( p_fci_internal, pszFileName ))) return FALSE;
 
   /* allocation of memory */
   if (p_fci_internal->data_in==NULL) {
@@ -2334,18 +2138,15 @@ BOOL __cdecl FCIAddFile(
 
   /* get information about the file */
   /* set defaults in case callback doesn't set one or more fields */
-  cffile.attribs=0;
-  cffile.date=0;
-  cffile.time=0;
-  file_handle=(*pfnfcigoi)(pszSourceFile, &(cffile.date), &(cffile.time),
-    &(cffile.attribs), &err, p_fci_internal->pv);
+  file_handle = pfnfcigoi( pszSourceFile, &file->date, &file->time, &file->attribs,
+                           &err, p_fci_internal->pv );
   /* check file_handle */
   if(file_handle==0){
     set_error( p_fci_internal, FCIERR_OPEN_SRC, ERROR_OPEN_FAILED );
   }
   /* TODO error handling of err */
 
-  if (fExecute) { cffile.attribs |= _A_EXEC; }
+  if (fExecute) { file->attribs |= _A_EXEC; }
 
   /* REUSE the variable read_result */
   if (p_fci_internal->fGetNextCabInVain) {
@@ -2375,8 +2176,8 @@ BOOL __cdecl FCIAddFile(
   }
 
   read_result+= sizeof(CFFILE) + strlen(pszFileName)+1 +
-    p_fci_internal->sizeFileCFFILE1 + p_fci_internal->sizeFileCFDATA2 +
-    p_fci_internal->sizeFileCFFILE2 + p_fci_internal->folders_size +
+    p_fci_internal->files_size + p_fci_internal->sizeFileCFDATA2 +
+    p_fci_internal->placed_files_size + p_fci_internal->folders_size +
     sizeof(CFHEADER) +
     sizeof(CFFOLDER); /* size of new CFFolder entry */
 
@@ -2457,7 +2258,7 @@ BOOL __cdecl FCIAddFile(
     p_fci_internal->cdata_in += read_result;
 
     /* increment the file size */
-    cffile.cbFile += read_result;
+    file->size += read_result;
 
     if ( p_fci_internal->cdata_in > CAB_BLOCKMAX ) {
       /* report internal error */
@@ -2475,34 +2276,7 @@ BOOL __cdecl FCIAddFile(
   p_fci_internal->close(file_handle,&err,p_fci_internal->pv);
   /* TODO error handling of err */
 
-  /* write cffile to p_fci_internal->handleCFFILE1 */
-  if( p_fci_internal->write( p_fci_internal->handleCFFILE1, /* file handle */
-      &cffile, sizeof(cffile),&err, p_fci_internal->pv) != sizeof(cffile) ) {
-    /* write error */
-    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
-    return FALSE;
-  }
-  /* TODO error handling of err */
-
-  p_fci_internal->sizeFileCFFILE1 += sizeof(cffile);
-
-  /* append the name of file */
-  if (strlen(pszFileName)>=CB_MAX_FILENAME) {
-    /* IMPOSSIBLE */
-    /* set error code */
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_INVALID_DATA );
-    return FALSE;
-  }
-  if( p_fci_internal->write( p_fci_internal->handleCFFILE1, /* file handle */
-      pszFileName, strlen(pszFileName)+1, &err, p_fci_internal->pv)
-      != strlen(pszFileName)+1 ) {
-    /* write error */
-    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
-    return FALSE;
-  }
-  /* TODO error handling of err */
-
-  p_fci_internal->sizeFileCFFILE1 += strlen(pszFileName)+1;
+  p_fci_internal->files_size += sizeof(CFFILE) + strlen(pszFileName)+1;
 
   /* REUSE the variable read_result */
   if (p_fci_internal->fGetNextCabInVain ||
@@ -2533,8 +2307,8 @@ BOOL __cdecl FCIAddFile(
       strlen(p_fci_internal->pccab->szDisk)+1;
   }
   read_result+= p_fci_internal->sizeFileCFDATA1 +
-    p_fci_internal->sizeFileCFFILE1 + p_fci_internal->sizeFileCFDATA2 +
-    p_fci_internal->sizeFileCFFILE2 + p_fci_internal->folders_size +
+    p_fci_internal->files_size + p_fci_internal->sizeFileCFDATA2 +
+    p_fci_internal->placed_files_size + p_fci_internal->folders_size +
     sizeof(CFHEADER) +
     sizeof(CFFOLDER); /* set size of new CFFolder entry */
 
@@ -2710,8 +2484,8 @@ BOOL __cdecl FCIFlushCabinet(
 
   if(!fci_flush_cabinet(p_fci_internal,fGetNextCab,pfnfcignc,pfnfcis)) return FALSE;
 
-  while( p_fci_internal->sizeFileCFFILE1>0 ||
-         p_fci_internal->sizeFileCFFILE2>0 ) {
+  while( p_fci_internal->files_size>0 ||
+         p_fci_internal->placed_files_size>0 ) {
     if(!fci_flush_cabinet(p_fci_internal,fGetNextCab,pfnfcignc,pfnfcis)) return FALSE;
   }
 
@@ -2736,6 +2510,7 @@ BOOL __cdecl FCIDestroy(HFCI hfci)
 {
     int err;
     struct folder *folder, *folder_next;
+    struct file *file, *file_next;
     FCI_Int *p_fci_internal = get_fci_ptr( hfci );
 
     if (!p_fci_internal) return FALSE;
@@ -2746,8 +2521,11 @@ BOOL __cdecl FCIDestroy(HFCI hfci)
 
     LIST_FOR_EACH_ENTRY_SAFE( folder, folder_next, &p_fci_internal->folders_list, struct folder, entry )
     {
-        list_remove( &folder->entry );
-        p_fci_internal->free( folder );
+        free_folder( p_fci_internal, folder );
+    }
+    LIST_FOR_EACH_ENTRY_SAFE( file, file_next, &p_fci_internal->files_list, struct file, entry )
+    {
+        free_file( p_fci_internal, file );
     }
 
     p_fci_internal->close( p_fci_internal->handleCFDATA1,&err,p_fci_internal->pv);
@@ -2755,19 +2533,9 @@ BOOL __cdecl FCIDestroy(HFCI hfci)
     p_fci_internal->delete( p_fci_internal->szFileNameCFDATA1, &err,
       p_fci_internal->pv);
     /* TODO error handling of err */
-    p_fci_internal->close( p_fci_internal->handleCFFILE1,&err,p_fci_internal->pv);
-    /* TODO error handling of err */
-    p_fci_internal->delete( p_fci_internal->szFileNameCFFILE1, &err,
-      p_fci_internal->pv);
-    /* TODO error handling of err */
     p_fci_internal->close( p_fci_internal->handleCFDATA2,&err,p_fci_internal->pv);
     /* TODO error handling of err */
     p_fci_internal->delete( p_fci_internal->szFileNameCFDATA2, &err,
-      p_fci_internal->pv);
-    /* TODO error handling of err */
-    p_fci_internal->close( p_fci_internal->handleCFFILE2,&err,p_fci_internal->pv);
-    /* TODO error handling of err */
-    p_fci_internal->delete( p_fci_internal->szFileNameCFFILE2, &err,
       p_fci_internal->pv);
     /* TODO error handling of err */
 
