@@ -3483,6 +3483,101 @@ static void test_AddFontMemResource(void)
     free_font(font);
 }
 
+static INT CALLBACK enum_fonts_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lparam)
+{
+    LOGFONT *lf;
+
+    if (type != TRUETYPE_FONTTYPE) return 1;
+
+    ok(ntm->tmWeight == elf->lfWeight, "expected %d got %d\n", ntm->tmWeight, elf->lfWeight);
+
+    lf = (LOGFONT *)lparam;
+    *lf = *elf;
+    return 0;
+}
+
+static INT CALLBACK enum_all_fonts_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lparam)
+{
+    int ret;
+    LOGFONT *lf;
+
+    if (type != TRUETYPE_FONTTYPE) return 1;
+
+    lf = (LOGFONT *)lparam;
+    ret = strcmp(lf->lfFaceName, elf->lfFaceName);
+    if(ret == 0)
+    {
+        ok(ntm->tmWeight == elf->lfWeight, "expected %d got %d\n", ntm->tmWeight, elf->lfWeight);
+        *lf = *elf;
+        return 0;
+    }
+    return 1;
+}
+
+static void test_EnumFonts(void)
+{
+    int ret;
+    LOGFONT lf;
+    HDC hdc;
+
+    if (!is_truetype_font_installed("Arial"))
+    {
+        skip("Arial is not installed\n");
+        return;
+    }
+
+    /* Windows uses localized font face names, so Arial Bold won't be found */
+    if (PRIMARYLANGID(GetUserDefaultLangID()) != LANG_ENGLISH)
+    {
+        skip("User locale is not English, skipping the test\n");
+        return;
+    }
+
+    hdc = CreateCompatibleDC(0);
+
+    ret = EnumFontFamilies(hdc, "Arial", enum_fonts_proc, (LPARAM)&lf);
+    ok(!ret, "font Arial is not enumerated\n");
+    ret = strcmp(lf.lfFaceName, "Arial");
+    ok(!ret, "expected Arial got %s\n", lf.lfFaceName);
+    ok(lf.lfWeight == FW_NORMAL, "expected FW_NORMAL got %d\n", lf.lfWeight);
+
+    lstrcpy(lf.lfFaceName, "Arial");
+    ret = EnumFontFamilies(hdc, NULL, enum_all_fonts_proc, (LPARAM)&lf);
+    ok(!ret, "font Arial is not enumerated\n");
+    ret = strcmp(lf.lfFaceName, "Arial");
+    ok(!ret, "expected Arial got %s\n", lf.lfFaceName);
+    ok(lf.lfWeight == FW_NORMAL, "expected FW_NORMAL got %d\n", lf.lfWeight);
+
+    ret = EnumFontFamilies(hdc, "Arial Bold", enum_fonts_proc, (LPARAM)&lf);
+    ok(!ret, "font Arial Bold is not enumerated\n");
+    ret = strcmp(lf.lfFaceName, "Arial");
+    ok(!ret, "expected Arial got %s\n", lf.lfFaceName);
+    ok(lf.lfWeight == FW_BOLD, "expected FW_BOLD got %d\n", lf.lfWeight);
+
+    lstrcpy(lf.lfFaceName, "Arial Bold");
+    ret = EnumFontFamilies(hdc, NULL, enum_all_fonts_proc, (LPARAM)&lf);
+    ok(ret, "font Arial Bold should not be enumerated\n");
+
+    ret = EnumFontFamilies(hdc, "Arial Bold Italic", enum_fonts_proc, (LPARAM)&lf);
+    ok(!ret, "font Arial Bold Italic is not enumerated\n");
+    ret = strcmp(lf.lfFaceName, "Arial");
+    ok(!ret, "expected Arial got %s\n", lf.lfFaceName);
+    ok(lf.lfWeight == FW_BOLD, "expected FW_BOLD got %d\n", lf.lfWeight);
+
+    lstrcpy(lf.lfFaceName, "Arial Bold Italic");
+    ret = EnumFontFamilies(hdc, NULL, enum_all_fonts_proc, (LPARAM)&lf);
+    ok(ret, "font Arial Bold Italic should not be enumerated\n");
+
+    ret = EnumFontFamilies(hdc, "Arial Italic Bold", enum_fonts_proc, (LPARAM)&lf);
+    ok(ret, "font Arial Italic Bold  should not be enumerated\n");
+
+    lstrcpy(lf.lfFaceName, "Arial Italic Bold");
+    ret = EnumFontFamilies(hdc, NULL, enum_all_fonts_proc, (LPARAM)&lf);
+    ok(ret, "font Arial Italic Bold should not be enumerated\n");
+
+    DeleteDC(hdc);
+}
+
 START_TEST(font)
 {
     init();
@@ -3504,6 +3599,7 @@ START_TEST(font)
     test_orientation();
     test_height_selection();
     test_AddFontMemResource();
+    test_EnumFonts();
 
     /* On Windows Arial has a lot of default charset aliases such as Arial Cyr,
      * I'd like to avoid them in this test.
