@@ -4055,6 +4055,54 @@ static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
     free_font(font);
 }
 
+static BOOL family_matches(Family *family, const LOGFONTW *lf)
+{
+    struct list *face_elem_ptr;
+
+    if (!strcmpiW(lf->lfFaceName, family->FamilyName)) return TRUE;
+
+    LIST_FOR_EACH(face_elem_ptr, &family->faces)
+    {
+        static const WCHAR spaceW[] = { ' ',0 };
+        WCHAR full_family_name[LF_FULLFACESIZE];
+        Face *face = LIST_ENTRY(face_elem_ptr, Face, entry);
+
+        if (strlenW(family->FamilyName) + strlenW(face->StyleName) + 2 > LF_FULLFACESIZE)
+        {
+            FIXME("Length of %s + %s + 2 is longer than LF_FULLFACESIZE\n",
+                  debugstr_w(family->FamilyName), debugstr_w(face->StyleName));
+            continue;
+        }
+
+        strcpyW(full_family_name, family->FamilyName);
+        strcatW(full_family_name, spaceW);
+        strcatW(full_family_name, face->StyleName);
+        if (!strcmpiW(lf->lfFaceName, full_family_name)) return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL face_matches(Face *face, const LOGFONTW *lf)
+{
+    static const WCHAR spaceW[] = { ' ',0 };
+    WCHAR full_family_name[LF_FULLFACESIZE];
+
+    if (!strcmpiW(lf->lfFaceName, face->family->FamilyName)) return TRUE;
+
+    if (strlenW(face->family->FamilyName) + strlenW(face->StyleName) + 2 > LF_FULLFACESIZE)
+    {
+        FIXME("Length of %s + %s + 2 is longer than LF_FULLFACESIZE\n",
+              debugstr_w(face->family->FamilyName), debugstr_w(face->StyleName));
+        return FALSE;
+    }
+
+    strcpyW(full_family_name, face->family->FamilyName);
+    strcatW(full_family_name, spaceW);
+    strcatW(full_family_name, face->StyleName);
+    return !strcmpiW(lf->lfFaceName, full_family_name);
+}
+
 /*************************************************************
  * WineEngEnumFonts
  *
@@ -4098,9 +4146,12 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
 
         LIST_FOR_EACH(family_elem_ptr, &font_list) {
             family = LIST_ENTRY(family_elem_ptr, Family, entry);
-            if(!strcmpiW(plf->lfFaceName, family->FamilyName)) {
+            if(family_matches(family, plf)) {
                 LIST_FOR_EACH(face_elem_ptr, &family->faces) {
                     face = LIST_ENTRY(face_elem_ptr, Face, entry);
+
+                    if (!face_matches(face, plf)) continue;
+
                     GetEnumStructs(face, &elf, &ntm, &type);
                     for(i = 0; i < 32; i++) {
                         if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
