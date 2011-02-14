@@ -215,7 +215,7 @@ struct GpTexture{
     GpBrush brush;
     GpMatrix *transform;
     GpImage *image;
-    WrapMode wrap;  /* not used yet */
+    GpImageAttributes *imageattributes;
 };
 
 struct GpPath{
