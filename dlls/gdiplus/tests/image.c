@@ -621,6 +621,90 @@ static void test_LockBits(void)
     expect(Ok, stat);
 }
 
+static void test_LockBits_UserBuf(void)
+{
+    GpStatus stat;
+    GpBitmap *bm;
+    GpRect rect;
+    BitmapData bd;
+    const INT WIDTH = 10, HEIGHT = 20;
+    DWORD bits[200];
+    ARGB color;
+
+    bm = NULL;
+    stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat32bppARGB, NULL, &bm);
+    expect(Ok, stat);
+
+    memset(bits, 0xaa, sizeof(bits));
+
+    rect.X = 2;
+    rect.Y = 3;
+    rect.Width = 4;
+    rect.Height = 5;
+
+    bd.Width = 4;
+    bd.Height = 6;
+    bd.Stride = WIDTH * 4;
+    bd.PixelFormat = PixelFormat32bppARGB;
+    bd.Scan0 = &bits[2+3*WIDTH];
+    bd.Reserved = 0xaaaaaaaa;
+
+    /* read-only */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead|ImageLockModeUserInputBuf, PixelFormat32bppARGB, &bd);
+    todo_wine expect(Ok, stat);
+
+    expect(0xaaaaaaaa, bits[0]);
+    todo_wine expect(0, bits[2+3*WIDTH]);
+
+    bits[2+3*WIDTH] = 0xdeadbeef;
+
+    if (stat == Ok) {
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    stat = GdipBitmapGetPixel(bm, 2, 3, &color);
+    expect(Ok, stat);
+    expect(0, color);
+
+    /* write-only */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeWrite|ImageLockModeUserInputBuf, PixelFormat32bppARGB, &bd);
+    todo_wine expect(Ok, stat);
+
+    expect(0xdeadbeef, bits[2+3*WIDTH]);
+    bits[2+3*WIDTH] = 0x12345678;
+
+    if (stat == Ok) {
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    stat = GdipBitmapGetPixel(bm, 2, 3, &color);
+    expect(Ok, stat);
+    todo_wine expect(0x12345678, color);
+
+    bits[2+3*WIDTH] = 0;
+
+    /* read/write */
+    stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead|ImageLockModeWrite|ImageLockModeUserInputBuf, PixelFormat32bppARGB, &bd);
+    todo_wine expect(Ok, stat);
+
+    todo_wine expect(0x12345678, bits[2+3*WIDTH]);
+    bits[2+3*WIDTH] = 0xdeadbeef;
+
+    if (stat == Ok) {
+        stat = GdipBitmapUnlockBits(bm, &bd);
+        expect(Ok, stat);
+    }
+
+    stat = GdipBitmapGetPixel(bm, 2, 3, &color);
+    expect(Ok, stat);
+    todo_wine expect(0xdeadbeef, color);
+
+    stat = GdipDisposeImage((GpImage*)bm);
+    expect(Ok, stat);
+}
+
 static void test_GdipCreateBitmapFromHBITMAP(void)
 {
     GpBitmap* gpbm = NULL;
@@ -2295,6 +2379,7 @@ START_TEST(image)
     test_SavingImages();
     test_encoders();
     test_LockBits();
+    test_LockBits_UserBuf();
     test_GdipCreateBitmapFromHBITMAP();
     test_GdipGetImageFlags();
     test_GdipCloneImage();
