@@ -866,6 +866,8 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
             pCryptKey->dwSaltLen = 0;
         memset(pCryptKey->abKeyValue, 0, sizeof(pCryptKey->abKeyValue));
         memset(pCryptKey->abInitVector, 0, sizeof(pCryptKey->abInitVector));
+        memset(&pCryptKey->siSChannelInfo.saEncAlg, 0, sizeof(pCryptKey->siSChannelInfo.saEncAlg));
+        memset(&pCryptKey->siSChannelInfo.saMACAlg, 0, sizeof(pCryptKey->siSChannelInfo.saMACAlg));
         init_data_blob(&pCryptKey->siSChannelInfo.blobClientRandom);
         init_data_blob(&pCryptKey->siSChannelInfo.blobServerRandom);
         init_data_blob(&pCryptKey->blobHmacKey);
