@@ -63,12 +63,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(cabarc);
 #define _A_ARCH        0x20
 
 /* command-line options */
+static int opt_cabinet_size = CB_MAX_DISK;
 static int opt_cabinet_id;
 static int opt_compression = tcompTYPE_MSZIP;
 static int opt_recurse;
 static int opt_preserve_paths;
 static int opt_reserve_space;
 static int opt_verbose;
+static char *opt_cab_file;
 static WCHAR *opt_dest_dir;
 static WCHAR **opt_files;
 
@@ -104,6 +106,29 @@ static char *strdupWtoA( UINT cp, const WCHAR *str )
             WideCharToMultiByte( cp, 0, str, -1, ret, len, NULL, NULL );
     }
     return ret;
+}
+
+/* format a cabinet name by replacing the '*' wildcard by the cabinet id */
+static BOOL format_cab_name( char *dest, int id, const char *name )
+{
+    const char *num = strchr( name, '*' );
+    int len;
+
+    if (!num)
+    {
+        if (id == 1)
+        {
+            strcpy( dest, name );
+            return TRUE;
+        }
+        WINE_MESSAGE( "cabarc: Cabinet name must contain a '*' character\n" );
+        return FALSE;
+    }
+    len = num - name;
+    memcpy( dest, name, len );
+    len += sprintf( dest + len, "%u", id );
+    lstrcpynA( dest + len, num + 1, CB_MAX_CABINET_NAME - len );
+    return TRUE;
 }
 
 static int CDECL fci_file_placed( CCAB *cab, char *file, LONG size, BOOL continuation, void *ptr )
@@ -219,8 +244,7 @@ static BOOL CDECL fci_get_temp( char *name, int size, void *ptr )
 
 static BOOL CDECL fci_get_next_cab( CCAB *cab, ULONG prev_size, void *ptr )
 {
-    WINE_ERR( "shouldn't happen\n" );
-    return FALSE;
+    return format_cab_name( cab->szCab, cab->iCab, opt_cab_file );
 }
 
 static LONG CDECL fci_status( UINT type, ULONG cb1, ULONG cb2, void *ptr )
@@ -364,14 +388,14 @@ static INT_PTR CDECL list_notify( FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pf
     }
 }
 
-static int list_cabinet( char *cab_dir, char *cab_file )
+static int list_cabinet( char *cab_dir )
 {
     ERF erf;
     int ret = 0;
     HFDI fdi = FDICreate( cab_alloc, cab_free, fdi_open, fdi_read,
                           fdi_write, fdi_close, fdi_lseek, cpuUNKNOWN, &erf );
 
-    if (!FDICopy( fdi, cab_file, cab_dir, 0, list_notify, NULL, NULL )) ret = GetLastError();
+    if (!FDICopy( fdi, opt_cab_file, cab_dir, 0, list_notify, NULL, NULL )) ret = GetLastError();
     FDIDestroy( fdi );
     return ret;
 }
@@ -436,14 +460,14 @@ static INT_PTR CDECL extract_notify( FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION
     }
 }
 
-static int extract_cabinet( char *cab_dir, char *cab_file )
+static int extract_cabinet( char *cab_dir )
 {
     ERF erf;
     int ret = 0;
     HFDI fdi = FDICreate( cab_alloc, cab_free, fdi_open, fdi_read,
                           fdi_write, fdi_close, fdi_lseek, cpuUNKNOWN, &erf );
 
-    if (!FDICopy( fdi, cab_file, cab_dir, 0, extract_notify, NULL, NULL )) ret = GetLastError();
+    if (!FDICopy( fdi, opt_cab_file, cab_dir, 0, extract_notify, NULL, NULL )) ret = GetLastError();
     FDIDestroy( fdi );
     return ret;
 }
@@ -523,7 +547,7 @@ static BOOL add_file_or_directory( HFCI fci, WCHAR *name )
     return add_file( fci, name );
 }
 
-static int new_cabinet( char *cab_dir, char *cab_file )
+static int new_cabinet( char *cab_dir )
 {
     WCHAR **file;
     ERF erf;
@@ -531,7 +555,7 @@ static int new_cabinet( char *cab_dir, char *cab_file )
     HFCI fci;
     CCAB cab;
 
-    cab.cb                = CB_MAX_DISK;
+    cab.cb                = opt_cabinet_size;
     cab.cbFolderThresh    = CB_MAX_DISK;
     cab.cbReserveCFHeader = opt_reserve_space;
     cab.cbReserveCFFolder = 0;
@@ -543,7 +567,7 @@ static int new_cabinet( char *cab_dir, char *cab_file )
 
     strcpy( cab.szCabPath, cab_dir );
     strcat( cab.szCabPath, "\\" );
-    strcpy( cab.szCab, cab_file );
+    format_cab_name( cab.szCab, 1, opt_cab_file );
 
     fci = FCICreate( &erf, fci_file_placed, cab_alloc, cab_free,fci_open, fci_read,
                      fci_write, fci_close, fci_lseek, fci_delete, fci_get_temp, &cab, NULL );
@@ -554,7 +578,7 @@ static int new_cabinet( char *cab_dir, char *cab_file )
     if (ret)
     {
         if (!(ret = FCIFlushCabinet( fci, FALSE, fci_get_next_cab, fci_status )))
-            WINE_MESSAGE( "cabarc: Failed to create cabinet %s\n", wine_dbgstr_a(cab_file) );
+            WINE_MESSAGE( "cabarc: Failed to create cabinet %s\n", wine_dbgstr_a(opt_cab_file) );
     }
     FCIDestroy( fci );
     return !ret;
@@ -569,6 +593,7 @@ static void usage( void )
         "   N   Create a new cabinet\n"
         "   X   Extract files from the cabinet into dest_dir\n"
         "\nOptions:\n"
+        "  -d size  Set maximum disk size\n"
         "  -h       Display this help\n"
         "  -i id    Set cabinet id\n"
         "  -m type  Set compression type (mszip|none)\n"
@@ -592,6 +617,15 @@ int wmain( int argc, WCHAR *argv[] )
     {
         switch (argv[1][1])
         {
+        case 'd':
+            argv++; argc--;
+            opt_cabinet_size = atoiW( argv[1] );
+            if (opt_cabinet_size < 50000)
+            {
+                WINE_MESSAGE( "cabarc: Cabinet size must be at least 50000\n" );
+                return 1;
+            }
+            break;
         case 'h':
             usage();
             return 0;
@@ -652,15 +686,16 @@ int wmain( int argc, WCHAR *argv[] )
         for (p = argv[i]; *p; p++)
             if (*p == '/') *p = '\\';
     opt_files = argv + 1;
+    opt_cab_file = file_part;
 
     switch (*command)
     {
     case 'l':
     case 'L':
-        return list_cabinet( buffer, file_part );
+        return list_cabinet( buffer );
     case 'n':
     case 'N':
-        return new_cabinet( buffer, file_part );
+        return new_cabinet( buffer );
     case 'x':
     case 'X':
         if (argc > 1)  /* check for destination dir as last argument */
@@ -672,7 +707,7 @@ int wmain( int argc, WCHAR *argv[] )
                 argv[--argc] = NULL;
             }
         }
-        return extract_cabinet( buffer, file_part );
+        return extract_cabinet( buffer );
     default:
         usage();
         return 1;
