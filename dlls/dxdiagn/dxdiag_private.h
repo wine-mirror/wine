@@ -34,6 +34,16 @@
 typedef struct IDxDiagProviderImpl  IDxDiagProviderImpl;
 typedef struct IDxDiagContainerImpl IDxDiagContainerImpl;
 
+typedef struct IDxDiagContainerImpl_Container {
+  struct list entry;
+  WCHAR *contName;
+
+  struct list subContainers;
+  DWORD nSubContainers;
+  struct list properties;
+  DWORD nProperties;
+} IDxDiagContainerImpl_Container;
+
 /* ---------------- */
 /* IDxDiagProvider  */
 /* ---------------- */
@@ -48,6 +58,7 @@ struct IDxDiagProviderImpl {
   /* IDxDiagProvider fields */
   BOOL        init;
   DXDIAG_INIT_PARAMS params;
+  IDxDiagContainerImpl_Container *info_root;
 };
 
 /* ---------------- */

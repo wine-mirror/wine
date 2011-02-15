@@ -43,6 +43,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
 static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont, IDxDiagProvider *pProv);
 
+static HRESULT build_information_tree(IDxDiagContainerImpl_Container **pinfo_root);
+static void free_information_tree(IDxDiagContainerImpl_Container *node);
+
 /* IDxDiagProvider IUnknown parts follow: */
 static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID riid, LPVOID *ppobj)
 {
@@ -80,6 +83,7 @@ static ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
     TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
     if (!refCount) {
+        free_information_tree(This->info_root);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -91,6 +95,8 @@ static ULONG WINAPI IDxDiagProviderImpl_Release(PDXDIAGPROVIDER iface) {
 /* IDxDiagProvider Interface follow: */
 static HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDIAG_INIT_PARAMS* pParams) {
     IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
+    HRESULT hr;
+
     TRACE("(%p,%p)\n", iface, pParams);
 
     if (NULL == pParams) {
@@ -99,6 +105,13 @@ static HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDI
     if (pParams->dwSize != sizeof(DXDIAG_INIT_PARAMS) ||
         pParams->dwDxDiagHeaderVersion != DXDIAG_DX9_SDK_VERSION) {
       return E_INVALIDARG;
+    }
+
+    if (!This->info_root)
+    {
+        hr = build_information_tree(&This->info_root);
+        if (FAILED(hr))
+            return hr;
     }
 
     This->init = TRUE;
@@ -813,4 +826,161 @@ static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont, IDxDi
   }
 
   return S_OK;
+}
+
+static void free_information_tree(IDxDiagContainerImpl_Container *node)
+{
+    IDxDiagContainerImpl_Container *ptr, *cursor2;
+
+    if (!node)
+        return;
+
+    HeapFree(GetProcessHeap(), 0, node->contName);
+
+    LIST_FOR_EACH_ENTRY_SAFE(ptr, cursor2, &node->subContainers, IDxDiagContainerImpl_Container, entry)
+    {
+        list_remove(&ptr->entry);
+        free_information_tree(ptr);
+    }
+
+    HeapFree(GetProcessHeap(), 0, node);
+}
+
+static IDxDiagContainerImpl_Container *allocate_information_node(const WCHAR *name)
+{
+    IDxDiagContainerImpl_Container *ret;
+
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
+    if (!ret)
+        return NULL;
+
+    if (name)
+    {
+        ret->contName = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(*name));
+        if (!ret->contName)
+        {
+            HeapFree(GetProcessHeap(), 0, ret);
+            return NULL;
+        }
+        strcpyW(ret->contName, name);
+    }
+
+    list_init(&ret->subContainers);
+    list_init(&ret->properties);
+
+    return ret;
+}
+
+static inline void add_subcontainer(IDxDiagContainerImpl_Container *node, IDxDiagContainerImpl_Container *subCont)
+{
+    list_add_tail(&node->subContainers, &subCont->entry);
+    ++node->nSubContainers;
+}
+
+static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
+{
+    return S_OK;
+}
+
+static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
+{
+    return S_OK;
+}
+
+static HRESULT build_directsound_tree(IDxDiagContainerImpl_Container *node)
+{
+    return S_OK;
+}
+
+static HRESULT build_directmusic_tree(IDxDiagContainerImpl_Container *node)
+{
+    return S_OK;
+}
+
+static HRESULT build_directinput_tree(IDxDiagContainerImpl_Container *node)
+{
+    return S_OK;
+}
+
+static HRESULT build_directplay_tree(IDxDiagContainerImpl_Container *node)
+{
+    return S_OK;
+}
+
+static HRESULT build_systemdevices_tree(IDxDiagContainerImpl_Container *node)
+{
+    return S_OK;
+}
+
+static HRESULT build_directxfiles_tree(IDxDiagContainerImpl_Container *node)
+{
+    return S_OK;
+}
+
+static HRESULT build_directshowfilters_tree(IDxDiagContainerImpl_Container *node)
+{
+    return S_OK;
+}
+
+static HRESULT build_logicaldisks_tree(IDxDiagContainerImpl_Container *node)
+{
+    return S_OK;
+}
+
+static HRESULT build_information_tree(IDxDiagContainerImpl_Container **pinfo_root)
+{
+    static const WCHAR DxDiag_SystemInfo[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','I','n','f','o',0};
+    static const WCHAR DxDiag_DisplayDevices[] = {'D','x','D','i','a','g','_','D','i','s','p','l','a','y','D','e','v','i','c','e','s',0};
+    static const WCHAR DxDiag_DirectSound[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','S','o','u','n','d',0};
+    static const WCHAR DxDiag_DirectMusic[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','M','u','s','i','c',0};
+    static const WCHAR DxDiag_DirectInput[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','I','n','p','u','t',0};
+    static const WCHAR DxDiag_DirectPlay[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','P','l','a','y',0};
+    static const WCHAR DxDiag_SystemDevices[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','D','e','v','i','c','e','s',0};
+    static const WCHAR DxDiag_DirectXFiles[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','X','F','i','l','e','s',0};
+    static const WCHAR DxDiag_DirectShowFilters[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','S','h','o','w','F','i','l','t','e','r','s',0};
+    static const WCHAR DxDiag_LogicalDisks[] = {'D','x','D','i','a','g','_','L','o','g','i','c','a','l','D','i','s','k','s',0};
+
+    static const struct
+    {
+        const WCHAR *name;
+        HRESULT (*initfunc)(IDxDiagContainerImpl_Container *);
+    } root_children[] =
+    {
+        {DxDiag_SystemInfo, build_systeminfo_tree},
+        {DxDiag_DisplayDevices, build_displaydevices_tree},
+        {DxDiag_DirectSound, build_directsound_tree},
+        {DxDiag_DirectMusic, build_directmusic_tree},
+        {DxDiag_DirectInput, build_directinput_tree},
+        {DxDiag_DirectPlay, build_directplay_tree},
+        {DxDiag_SystemDevices, build_systemdevices_tree},
+        {DxDiag_DirectXFiles, build_directxfiles_tree},
+        {DxDiag_DirectShowFilters, build_directshowfilters_tree},
+        {DxDiag_LogicalDisks, build_logicaldisks_tree},
+    };
+
+    IDxDiagContainerImpl_Container *info_root;
+    size_t index;
+
+    info_root = allocate_information_node(NULL);
+    if (!info_root)
+        return E_OUTOFMEMORY;
+
+    for (index = 0; index < sizeof(root_children)/sizeof(root_children[0]); index++)
+    {
+        IDxDiagContainerImpl_Container *node;
+
+        node = allocate_information_node(root_children[index].name);
+        if (!node)
+        {
+            free_information_tree(info_root);
+            return E_OUTOFMEMORY;
+        }
+
+        root_children[index].initfunc(node);
+
+        add_subcontainer(info_root, node);
+    }
+
+    *pinfo_root = info_root;
+    return S_OK;
 }
