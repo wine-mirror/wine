@@ -1417,9 +1417,278 @@ static HRESULT build_directxfiles_tree(IDxDiagContainerImpl_Container *node)
     return S_OK;
 }
 
+static HRESULT read_property_names(IPropertyBag *pPropBag, VARIANT *friendly_name, VARIANT *clsid_name)
+{
+    static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
+    static const WCHAR wszClsidName[] = {'C','L','S','I','D',0};
+
+    HRESULT hr;
+
+    VariantInit(friendly_name);
+    VariantInit(clsid_name);
+
+    hr = IPropertyBag_Read(pPropBag, wszFriendlyName, friendly_name, 0);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IPropertyBag_Read(pPropBag, wszClsidName, clsid_name, 0);
+    if (FAILED(hr))
+    {
+        VariantClear(friendly_name);
+        return hr;
+    }
+
+    return S_OK;
+}
+
+static HRESULT fill_filter_data_information(IDxDiagContainerImpl_Container *subcont, BYTE *pData, ULONG cb)
+{
+    static const WCHAR szVersionW[] = {'s','z','V','e','r','s','i','o','n',0};
+    static const WCHAR dwInputs[] = {'d','w','I','n','p','u','t','s',0};
+    static const WCHAR dwOutputs[] = {'d','w','O','u','t','p','u','t','s',0};
+    static const WCHAR dwMeritW[] = {'d','w','M','e','r','i','t',0};
+    static const WCHAR szVersionFormat[] = {'v','%','d',0};
+
+    HRESULT hr;
+    IFilterMapper2 *pFileMapper = NULL;
+    IAMFilterData *pFilterData = NULL;
+    REGFILTER2 *pRF = NULL;
+    WCHAR bufferW[10];
+    ULONG j;
+    DWORD dwNOutputs = 0;
+    DWORD dwNInputs = 0;
+
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC, &IID_IFilterMapper2,
+                          (void **)&pFileMapper);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IFilterMapper2_QueryInterface(pFileMapper, &IID_IAMFilterData, (void **)&pFilterData);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = IAMFilterData_ParseFilterData(pFilterData, pData, cb, (BYTE **)&pRF);
+    if (FAILED(hr))
+        goto cleanup;
+
+    snprintfW(bufferW, sizeof(bufferW)/sizeof(bufferW[0]), szVersionFormat, pRF->dwVersion);
+    hr = add_bstr_property(subcont, szVersionW, bufferW);
+    if (FAILED(hr))
+        goto cleanup;
+
+    if (pRF->dwVersion == 1)
+    {
+        for (j = 0; j < pRF->u.s.cPins; j++)
+            if (pRF->u.s.rgPins[j].bOutput)
+                dwNOutputs++;
+            else
+                dwNInputs++;
+    }
+    else if (pRF->dwVersion == 2)
+    {
+        for (j = 0; j < pRF->u.s1.cPins2; j++)
+            if (pRF->u.s1.rgPins2[j].dwFlags & REG_PINFLAG_B_OUTPUT)
+                dwNOutputs++;
+            else
+                dwNInputs++;
+    }
+
+    hr = add_ui4_property(subcont, dwInputs, dwNInputs);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = add_ui4_property(subcont, dwOutputs, dwNOutputs);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = add_ui4_property(subcont, dwMeritW, pRF->dwMerit);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = S_OK;
+cleanup:
+    CoTaskMemFree(pRF);
+    if (pFilterData) IAMFilterData_Release(pFilterData);
+    if (pFileMapper) IFilterMapper2_Release(pFileMapper);
+
+    return hr;
+}
+
+static HRESULT fill_filter_container(IDxDiagContainerImpl_Container *subcont, IMoniker *pMoniker)
+{
+    static const WCHAR szName[] = {'s','z','N','a','m','e',0};
+    static const WCHAR ClsidFilterW[] = {'C','l','s','i','d','F','i','l','t','e','r',0};
+    static const WCHAR wszFilterDataName[] = {'F','i','l','t','e','r','D','a','t','a',0};
+
+    HRESULT hr;
+    IPropertyBag *pPropFilterBag = NULL;
+    BYTE *pData;
+    VARIANT friendly_name;
+    VARIANT clsid_name;
+    VARIANT v;
+
+    VariantInit(&friendly_name);
+    VariantInit(&clsid_name);
+    VariantInit(&v);
+
+    hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (void **)&pPropFilterBag);
+    if (FAILED(hr))
+        return hr;
+
+    hr = read_property_names(pPropFilterBag, &friendly_name, &clsid_name);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = add_bstr_property(subcont, szName, V_BSTR(&friendly_name));
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = add_bstr_property(subcont, ClsidFilterW, V_BSTR(&clsid_name));
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = IPropertyBag_Read(pPropFilterBag, wszFilterDataName, &v, NULL);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = SafeArrayAccessData(V_ARRAY(&v), (void **)&pData);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = fill_filter_data_information(subcont, pData, V_ARRAY(&v)->rgsabound->cElements);
+    SafeArrayUnaccessData(V_ARRAY(&v));
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = S_OK;
+cleanup:
+    VariantClear(&v);
+    VariantClear(&clsid_name);
+    VariantClear(&friendly_name);
+    if (pPropFilterBag) IPropertyBag_Release(pPropFilterBag);
+
+    return hr;
+}
+
 static HRESULT build_directshowfilters_tree(IDxDiagContainerImpl_Container *node)
 {
-    return S_OK;
+    static const WCHAR szCatName[] = {'s','z','C','a','t','N','a','m','e',0};
+    static const WCHAR ClsidCatW[] = {'C','l','s','i','d','C','a','t',0};
+    static const WCHAR szIdFormat[] = {'%','d',0};
+
+    HRESULT hr;
+    int i = 0;
+    ICreateDevEnum *pCreateDevEnum;
+    IEnumMoniker *pEmCat = NULL;
+    IMoniker *pMCat = NULL;
+	IEnumMoniker *pEnum = NULL;
+
+    hr = CoCreateInstance(&CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_ICreateDevEnum, (void **)&pCreateDevEnum);
+    if (FAILED(hr))
+        return hr;
+
+    hr = ICreateDevEnum_CreateClassEnumerator(pCreateDevEnum, &CLSID_ActiveMovieCategories, &pEmCat, 0);
+    if (FAILED(hr))
+        goto cleanup;
+
+    while (IEnumMoniker_Next(pEmCat, 1, &pMCat, NULL) == S_OK)
+    {
+        VARIANT vCatName;
+        VARIANT vCatClsid;
+        IPropertyBag *pPropBag;
+        CLSID clsidCat;
+        IMoniker *pMoniker = NULL;
+
+        hr = IMoniker_BindToStorage(pMCat, NULL, NULL, &IID_IPropertyBag, (void **)&pPropBag);
+        if (FAILED(hr))
+        {
+            IMoniker_Release(pMCat);
+            break;
+        }
+
+        hr = read_property_names(pPropBag, &vCatName, &vCatClsid);
+        IPropertyBag_Release(pPropBag);
+        if (FAILED(hr))
+        {
+            IMoniker_Release(pMCat);
+            break;
+        }
+
+        hr = CLSIDFromString(V_BSTR(&vCatClsid), &clsidCat);
+        if (FAILED(hr))
+        {
+            IMoniker_Release(pMCat);
+            VariantClear(&vCatClsid);
+            VariantClear(&vCatName);
+            break;
+        }
+
+        hr = ICreateDevEnum_CreateClassEnumerator(pCreateDevEnum, &clsidCat, &pEnum, 0);
+        if (hr != S_OK)
+        {
+            IMoniker_Release(pMCat);
+            VariantClear(&vCatClsid);
+            VariantClear(&vCatName);
+            continue;
+        }
+
+        while (IEnumMoniker_Next(pEnum, 1, &pMoniker, NULL) == S_OK)
+        {
+            WCHAR bufferW[10];
+            IDxDiagContainerImpl_Container *subcont;
+
+            snprintfW(bufferW, sizeof(bufferW)/sizeof(bufferW[0]), szIdFormat, i);
+            subcont = allocate_information_node(bufferW);
+            if (!subcont)
+            {
+                hr = E_OUTOFMEMORY;
+                IMoniker_Release(pMoniker);
+                break;
+            }
+
+            hr = add_bstr_property(subcont, szCatName, V_BSTR(&vCatName));
+            if (FAILED(hr))
+            {
+                free_information_tree(subcont);
+                IMoniker_Release(pMoniker);
+                break;
+            }
+
+            hr = add_bstr_property(subcont, ClsidCatW, V_BSTR(&vCatClsid));
+            if (FAILED(hr))
+            {
+                free_information_tree(subcont);
+                IMoniker_Release(pMoniker);
+                break;
+            }
+
+            hr = fill_filter_container(subcont, pMoniker);
+            if (FAILED(hr))
+            {
+                free_information_tree(subcont);
+                IMoniker_Release(pMoniker);
+                break;
+            }
+
+            add_subcontainer(node, subcont);
+            i++;
+            IMoniker_Release(pMoniker);
+        }
+
+        IEnumMoniker_Release(pEnum);
+        IMoniker_Release(pMCat);
+        VariantClear(&vCatClsid);
+        VariantClear(&vCatName);
+
+        if (FAILED(hr))
+            break;
+    }
+
+cleanup:
+    if (pEmCat) IEnumMoniker_Release(pEmCat);
+    ICreateDevEnum_Release(pCreateDevEnum);
+    return hr;
 }
 
 static HRESULT build_logicaldisks_tree(IDxDiagContainerImpl_Container *node)
