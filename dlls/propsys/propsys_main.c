@@ -72,6 +72,12 @@ HRESULT WINAPI PSGetPropertyDescription(REFPROPERTYKEY propkey, REFIID riid, voi
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI PSRefreshPropertySchema(void)
+{
+    FIXME("\n");
+    return S_OK;
+}
+
 HRESULT WINAPI PSStringFromPropertyKey(REFPROPERTYKEY pkey, LPWSTR psz, UINT cch)
 {
     static const WCHAR guid_fmtW[] = {'{','%','0','8','X','-','%','0','4','X','-',
