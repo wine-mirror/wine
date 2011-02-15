@@ -311,6 +311,7 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
 
     attr.override_redirect = True;
     attr.colormap = None;
+    attr.border_pixel = 0;
 
     wine_tsx11_lock();
 
@@ -337,7 +338,7 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     if (vis->visual != DefaultVisual( gdi_display, vis->screen ))
         attr.colormap = XCreateColormap( gdi_display, root, vis->visual, AllocNone );
     if ((win = XCreateWindow( gdi_display, root, -1, -1, 1, 1, 0, vis->depth, InputOutput,
-                              vis->visual, CWOverrideRedirect | CWColormap, &attr )))
+                              vis->visual, CWBorderPixel | CWOverrideRedirect | CWColormap, &attr )))
         XMapWindow( gdi_display, win );
     else
         win = root;
