@@ -635,6 +635,9 @@ static HRESULT fill_file_description(IDxDiagContainerImpl_Container *node, const
     UINT uiLength;
     VS_FIXEDFILEINFO *pFileInfo;
 
+    TRACE("Filling container %p for %s in %s\n", node,
+          debugstr_w(szFileName), debugstr_w(szFilePath));
+
     szFile = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * (lstrlenW(szFilePath) +
                                             lstrlenW(szFileName) + 2 /* slash + terminator */));
     if (!szFile)
@@ -679,6 +682,8 @@ static HRESULT fill_file_description(IDxDiagContainerImpl_Container *node, const
                   LOWORD(pFileInfo->dwFileVersionMS),
                   HIWORD(pFileInfo->dwFileVersionLS),
                   LOWORD(pFileInfo->dwFileVersionLS));
+
+        TRACE("Found version as (%s)\n", debugstr_w(szVersion_v));
 
         hr = add_bstr_property(node, szVersion, szVersion_v);
         if (FAILED(hr))
@@ -896,6 +901,9 @@ static HRESULT fill_filter_container(IDxDiagContainerImpl_Container *subcont, IM
     if (FAILED(hr))
         goto cleanup;
 
+    TRACE("Name = %s\n", debugstr_w(V_BSTR(&friendly_name)));
+    TRACE("CLSID = %s\n", debugstr_w(V_BSTR(&clsid_name)));
+
     hr = add_bstr_property(subcont, szName, V_BSTR(&friendly_name));
     if (FAILED(hr))
         goto cleanup;
@@ -989,6 +997,8 @@ static HRESULT build_directshowfilters_tree(IDxDiagContainerImpl_Container *node
             VariantClear(&vCatName);
             continue;
         }
+
+        TRACE("Enumerating class %s\n", debugstr_guid(&clsidCat));
 
         while (IEnumMoniker_Next(pEnum, 1, &pMoniker, NULL) == S_OK)
         {
