@@ -1088,7 +1088,124 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
 
 static HRESULT build_displaydevices_tree(IDxDiagContainerImpl_Container *node)
 {
-    return S_OK;
+    static const WCHAR szDescription[] = {'s','z','D','e','s','c','r','i','p','t','i','o','n',0};
+    static const WCHAR szDeviceName[] = {'s','z','D','e','v','i','c','e','N','a','m','e',0};
+    static const WCHAR szKeyDeviceID[] = {'s','z','K','e','y','D','e','v','i','c','e','I','D',0};
+    static const WCHAR szKeyDeviceKey[] = {'s','z','K','e','y','D','e','v','i','c','e','K','e','y',0};
+    static const WCHAR szVendorId[] = {'s','z','V','e','n','d','o','r','I','d',0};
+    static const WCHAR szDeviceId[] = {'s','z','D','e','v','i','c','e','I','d',0};
+    static const WCHAR szDeviceIdentifier[] = {'s','z','D','e','v','i','c','e','I','d','e','n','t','i','f','i','e','r',0};
+    static const WCHAR dwWidth[] = {'d','w','W','i','d','t','h',0};
+    static const WCHAR dwHeight[] = {'d','w','H','e','i','g','h','t',0};
+    static const WCHAR dwBpp[] = {'d','w','B','p','p',0};
+    static const WCHAR szDisplayMemoryLocalized[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szDisplayMemoryEnglish[] = {'s','z','D','i','s','p','l','a','y','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
+
+    static const WCHAR szAdapterID[] = {'0',0};
+    static const WCHAR szEmpty[] = {0};
+
+    IDxDiagContainerImpl_Container *display_adapter;
+    HRESULT hr;
+    IDirectDraw7 *pDirectDraw;
+    DDSCAPS2 dd_caps;
+    DISPLAY_DEVICEW disp_dev;
+    DDSURFACEDESC2 surface_descr;
+    DWORD tmp;
+    WCHAR buffer[256];
+
+    display_adapter = allocate_information_node(szAdapterID);
+    if (!display_adapter)
+        return E_OUTOFMEMORY;
+
+    add_subcontainer(node, display_adapter);
+
+    disp_dev.cb = sizeof(disp_dev);
+    if (EnumDisplayDevicesW( NULL, 0, &disp_dev, 0 ))
+    {
+        hr = add_bstr_property(display_adapter, szDeviceName, disp_dev.DeviceName);
+        if (FAILED(hr))
+            return hr;
+
+        hr = add_bstr_property(display_adapter, szDescription, disp_dev.DeviceString);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    /* For now, silently ignore a failure from DirectDrawCreateEx. */
+    hr = DirectDrawCreateEx(NULL, (LPVOID *)&pDirectDraw, &IID_IDirectDraw7, NULL);
+    if (FAILED(hr))
+        return S_OK;
+
+    dd_caps.dwCaps = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
+    dd_caps.dwCaps2 = dd_caps.dwCaps3 = dd_caps.dwCaps4 = 0;
+    hr = IDirectDraw7_GetAvailableVidMem(pDirectDraw, &dd_caps, &tmp, NULL);
+    if (SUCCEEDED(hr))
+    {
+        static const WCHAR mem_fmt[] = {'%','.','1','f',' ','M','B',0};
+
+        snprintfW(buffer, sizeof(buffer)/sizeof(buffer[0]), mem_fmt, ((float)tmp) / 1000000.0);
+
+        hr = add_bstr_property(display_adapter, szDisplayMemoryLocalized, buffer);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bstr_property(display_adapter, szDisplayMemoryEnglish, buffer);
+        if (FAILED(hr))
+            goto cleanup;
+    }
+
+    surface_descr.dwSize = sizeof(surface_descr);
+    hr = IDirectDraw7_GetDisplayMode(pDirectDraw, &surface_descr);
+    if (SUCCEEDED(hr))
+    {
+        if (surface_descr.dwFlags & DDSD_WIDTH)
+        {
+            hr = add_ui4_property(display_adapter, dwWidth, surface_descr.dwWidth);
+            if (FAILED(hr))
+                goto cleanup;
+        }
+
+        if (surface_descr.dwFlags & DDSD_HEIGHT)
+        {
+            hr = add_ui4_property(display_adapter, dwHeight, surface_descr.dwHeight);
+            if (FAILED(hr))
+                goto cleanup;
+        }
+
+        if (surface_descr.dwFlags & DDSD_PIXELFORMAT)
+        {
+            hr = add_ui4_property(display_adapter, dwBpp, surface_descr.u4.ddpfPixelFormat.u1.dwRGBBitCount);
+            if (FAILED(hr))
+                goto cleanup;
+        }
+    }
+
+    get_display_device_id(buffer);
+
+    hr = add_bstr_property(display_adapter, szDeviceIdentifier, buffer);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = add_bstr_property(display_adapter, szVendorId, szEmpty);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = add_bstr_property(display_adapter, szDeviceId, szEmpty);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = add_bstr_property(display_adapter, szKeyDeviceKey, szEmpty);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = add_bstr_property(display_adapter, szKeyDeviceID, szEmpty);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = S_OK;
+cleanup:
+    IDirectDraw7_Release(pDirectDraw);
+    return hr;
 }
 
 static HRESULT build_directsound_tree(IDxDiagContainerImpl_Container *node)
