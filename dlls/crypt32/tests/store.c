@@ -2271,6 +2271,8 @@ static void testAddCertificateLink(void)
         {
             ret = CertGetCertificateContextProperty(linked,
              CERT_FRIENDLY_NAME_PROP_ID, buf, &size);
+            ok(ret, "CertGetCertificateContextProperty failed: %08x\n",
+             GetLastError());
             ok(!lstrcmpW((LPCWSTR)buf, WineTestW),
              "unexpected friendly name\n");
             HeapFree(GetProcessHeap(), 0, buf);
