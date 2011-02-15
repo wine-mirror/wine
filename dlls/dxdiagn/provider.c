@@ -41,8 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
-static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont, IDxDiagProvider *pProv);
-
 static HRESULT build_information_tree(IDxDiagContainerImpl_Container **pinfo_root);
 static void free_information_tree(IDxDiagContainerImpl_Container *node);
 
@@ -120,9 +118,7 @@ static HRESULT WINAPI IDxDiagProviderImpl_Initialize(PDXDIAGPROVIDER iface, DXDI
 }
 
 static HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDiagContainer** ppInstance) {
-  HRESULT hr;
   IDxDiagProviderImpl *This = (IDxDiagProviderImpl *)iface;
-  IDxDiagContainer *root;
 
   TRACE("(%p,%p)\n", iface, ppInstance);
 
@@ -130,14 +126,8 @@ static HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface
     return CO_E_NOTINITIALIZED;
   }
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (IDxDiagProvider *)This, (void **)&root);
-  if (FAILED(hr)) {
-    return hr;
-  }
-
-  DXDiag_InitRootDXDiagContainer(root, (IDxDiagProvider *)This);
-
-  return IDxDiagContainerImpl_QueryInterface(root, &IID_IDxDiagContainer, (void **)ppInstance);
+  return DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, This->info_root,
+                                      (IDxDiagProvider *)This, (void **)ppInstance);
 }
 
 static const IDxDiagProviderVtbl DxDiagProvider_Vtbl =
@@ -193,56 +183,6 @@ static void get_display_device_id(WCHAR *szIdentifierBuffer)
         IDirect3D9_Release(pD3d);
     if (d3d9_handle)
         FreeLibrary(d3d9_handle);
-}
-
-static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont, IDxDiagProvider *pProv) {
-  static const WCHAR DxDiag_SystemInfo[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','I','n','f','o',0};
-  static const WCHAR DxDiag_DisplayDevices[] = {'D','x','D','i','a','g','_','D','i','s','p','l','a','y','D','e','v','i','c','e','s',0};
-  static const WCHAR DxDiag_DirectSound[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','S','o','u','n','d',0};
-  static const WCHAR DxDiag_DirectMusic[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','M','u','s','i','c',0};
-  static const WCHAR DxDiag_DirectInput[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','I','n','p','u','t',0};
-  static const WCHAR DxDiag_DirectPlay[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','P','l','a','y',0};
-  static const WCHAR DxDiag_SystemDevices[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','D','e','v','i','c','e','s',0};
-  static const WCHAR DxDiag_DirectXFiles[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','X','F','i','l','e','s',0};
-  static const WCHAR DxDiag_DirectShowFilters[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','S','h','o','w','F','i','l','t','e','r','s',0};
-  static const WCHAR DxDiag_LogicalDisks[] = {'D','x','D','i','a','g','_','L','o','g','i','c','a','l','D','i','s','k','s',0};
-
-  const WCHAR *containers[] =
-  {
-    DxDiag_SystemInfo,
-    DxDiag_DisplayDevices,
-    DxDiag_DirectSound,
-    DxDiag_DirectMusic,
-    DxDiag_DirectInput,
-    DxDiag_DirectPlay,
-    DxDiag_SystemDevices,
-    DxDiag_DirectXFiles,
-    DxDiag_DirectShowFilters,
-    DxDiag_LogicalDisks,
-  };
-
-  size_t index;
-
-  TRACE("(%p)\n", pRootCont);
-
-  for (index = 0; index < sizeof(containers)/sizeof(containers[0]); index++)
-  {
-    IDxDiagContainer* pSubCont;
-    HRESULT hr;
-
-    hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, pProv, (void**) &pSubCont);
-    if (FAILED(hr))
-      return hr;
-
-    hr = IDxDiagContainerImpl_AddChildContainer(pRootCont, containers[index], pSubCont);
-    if (FAILED(hr))
-    {
-      IDxDiagContainer_Release(pSubCont);
-      return hr;
-    }
-  }
-
-  return S_OK;
 }
 
 static void free_property_information(IDxDiagContainerImpl_Property *prop)
