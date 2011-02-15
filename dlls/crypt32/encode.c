@@ -1330,13 +1330,15 @@ static BOOL CRYPT_AsnEncodeRdn(DWORD dwCertEncodingType, const CERT_RDN *rdn,
         ret = TRUE;
         if (rdn->cRDNAttr)
         {
-            setOf.cBlob = rdn->cRDNAttr;
             setOf.rgBlob = CryptMemAlloc(rdn->cRDNAttr *
              sizeof(CRYPT_DER_BLOB));
             if (!setOf.rgBlob)
                 ret = FALSE;
             else
+            {
+                setOf.cBlob = rdn->cRDNAttr;
                 memset(setOf.rgBlob, 0, setOf.cBlob * sizeof(CRYPT_DER_BLOB));
+            }
         }
         for (i = 0; ret && i < rdn->cRDNAttr; i++)
         {
