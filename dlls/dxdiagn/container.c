@@ -65,6 +65,7 @@ static ULONG WINAPI IDxDiagContainerImpl_Release(PDXDIAGCONTAINER iface) {
     TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
 
     if (!refCount) {
+        IDxDiagProvider_Release(This->pProv);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -303,7 +304,7 @@ static const IDxDiagContainerVtbl DxDiagContainer_Vtbl =
 };
 
 
-HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, LPVOID *ppobj) {
+HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, IDxDiagProvider *pProv, LPVOID *ppobj) {
   IDxDiagContainerImpl* container;
 
   TRACE("(%p, %p)\n", debugstr_guid(riid), ppobj);
@@ -315,6 +316,8 @@ HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, LPVOID *ppobj) {
   }
   container->lpVtbl = &DxDiagContainer_Vtbl;
   container->ref = 0; /* will be inited with QueryInterface */
+  container->pProv = pProv;
+  IDxDiagProvider_AddRef(pProv);
   list_init(&container->properties);
   list_init(&container->subContainers);
   return IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)container, riid, ppobj);

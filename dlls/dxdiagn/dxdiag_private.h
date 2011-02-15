@@ -79,6 +79,7 @@ struct IDxDiagContainerImpl {
   struct list subContainers;
   DWORD nProperties;
   DWORD nSubContainers;
+  IDxDiagProvider *pProv;
 };
 
 /* IUnknown: */
@@ -93,7 +94,7 @@ extern HRESULT WINAPI IDxDiagContainerImpl_AddChildContainer(PDXDIAGCONTAINER if
 extern HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 
 /** internal factory */
-extern HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, LPVOID *ppobj);
+extern HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, IDxDiagProvider *, LPVOID *ppobj);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dxdiagn.dll

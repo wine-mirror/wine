@@ -41,7 +41,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
-static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont);
+static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont, IDxDiagProvider *pProv);
 
 /* IDxDiagProvider IUnknown parts follow: */
 static HRESULT WINAPI IDxDiagProviderImpl_QueryInterface(PDXDIAGPROVIDER iface, REFIID riid, LPVOID *ppobj)
@@ -117,12 +117,12 @@ static HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface
     return CO_E_NOTINITIALIZED;
   }
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void **)&root);
+  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (IDxDiagProvider *)This, (void **)&root);
   if (FAILED(hr)) {
     return hr;
   }
 
-  DXDiag_InitRootDXDiagContainer(root);
+  DXDiag_InitRootDXDiagContainer(root, (IDxDiagProvider *)This);
 
   return IDxDiagContainerImpl_QueryInterface(root, &IID_IDxDiagContainer, (void **)ppInstance);
 }
@@ -297,7 +297,7 @@ static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCH
   return hr;
 }
 
-static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont, IDxDiagProvider *pProv) {
   static const WCHAR dwDirectXVersionMajor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','a','j','o','r',0};
   static const WCHAR dwDirectXVersionMinor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','i','n','o','r',0};
   static const WCHAR szDirectXVersionLetter[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','e','t','t','e','r',0};
@@ -348,7 +348,7 @@ static HRESULT DXDiag_InitDXDiagSystemInfoContainer(IDxDiagContainer* pSubCont) 
   return S_OK;
 }
 
-static HRESULT DXDiag_InitDXDiagSystemDevicesContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagSystemDevicesContainer(IDxDiagContainer* pSubCont, IDxDiagProvider *pProv) {
   HRESULT hr = S_OK;
   /*
   static const WCHAR szDescription[] = {'s','z','D','e','s','c','r','i','p','t','i','o','n',0};
@@ -384,7 +384,7 @@ static HRESULT DXDiag_InitDXDiagSystemDevicesContainer(IDxDiagContainer* pSubCon
   return hr;
 }
 
-static HRESULT DXDiag_InitDXDiagLogicalDisksContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagLogicalDisksContainer(IDxDiagContainer* pSubCont, IDxDiagProvider *pProv) {
   HRESULT hr = S_OK;
   /*
   static const WCHAR szDriveLetter[] = {'s','z','D','r','i','v','e','L','e','t','t','e','r',0};
@@ -417,7 +417,7 @@ static HRESULT DXDiag_InitDXDiagLogicalDisksContainer(IDxDiagContainer* pSubCont
   return hr;
 }
 
-static HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont)
+static HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont, IDxDiagProvider *pProv)
 {
     HRESULT hr = S_OK;
     static const WCHAR dlls[][15] =
@@ -456,7 +456,7 @@ static HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont
 
         snprintfW(szFileID, sizeof(szFileID)/sizeof(szFileID[0]), szFormat, i);
 
-        hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pDXFileSubCont);
+        hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, pProv, (void**) &pDXFileSubCont);
         if (FAILED(hr)) continue;
 
         if (FAILED(DXDiag_AddFileDescContainer(pDXFileSubCont, szFilePath, dlls[i])) ||
@@ -469,7 +469,7 @@ static HRESULT DXDiag_InitDXDiagDirectXFilesContainer(IDxDiagContainer* pSubCont
     return hr;
 }
 
-static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont)
+static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont, IDxDiagProvider *pProv)
 {
     static const WCHAR szDescription[] = {'s','z','D','e','s','c','r','i','p','t','i','o','n',0};
     static const WCHAR szDeviceName[] = {'s','z','D','e','v','i','c','e','N','a','m','e',0};
@@ -497,7 +497,7 @@ static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont)
     DWORD                   tmp;
     WCHAR                   buffer[256];
 
-    hr = DXDiag_CreateDXDiagContainer( &IID_IDxDiagContainer, (void**) &pDisplayAdapterSubCont );
+    hr = DXDiag_CreateDXDiagContainer( &IID_IDxDiagContainer, pProv, (void**) &pDisplayAdapterSubCont );
     if (FAILED( hr )) return hr;
     hr = IDxDiagContainerImpl_AddChildContainer( pSubCont, szAdapterID, pDisplayAdapterSubCont );
     if (FAILED( hr )) return hr;
@@ -548,39 +548,39 @@ static HRESULT DXDiag_InitDXDiagDisplayContainer(IDxDiagContainer* pSubCont)
     return hr;
 }
 
-static HRESULT DXDiag_InitDXDiagDirectSoundContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagDirectSoundContainer(IDxDiagContainer* pSubCont, IDxDiagProvider *pProv) {
   HRESULT hr = S_OK;
   static const WCHAR DxDiag_SoundDevices[] = {'D','x','D','i','a','g','_','S','o','u','n','d','D','e','v','i','c','e','s',0};
   static const WCHAR DxDiag_SoundCaptureDevices[] = {'D','x','D','i','a','g','_','S','o','u','n','d','C','a','p','t','u','r','e','D','e','v','i','c','e','s',0};
   IDxDiagContainer* pSubSubCont = NULL;
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubSubCont);
+  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, pProv, (void**) &pSubSubCont);
   if (FAILED(hr)) { return hr; }
   hr = IDxDiagContainerImpl_AddChildContainer(pSubCont, DxDiag_SoundDevices, pSubSubCont);
 
-  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubSubCont);
+  hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, pProv, (void**) &pSubSubCont);
   if (FAILED(hr)) { return hr; }
   hr = IDxDiagContainerImpl_AddChildContainer(pSubCont, DxDiag_SoundCaptureDevices, pSubSubCont);
 
   return hr;
 }
 
-static HRESULT DXDiag_InitDXDiagDirectMusicContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagDirectMusicContainer(IDxDiagContainer* pSubCont, IDxDiagProvider *pProv) {
   HRESULT hr = S_OK;
   return hr;
 }
 
-static HRESULT DXDiag_InitDXDiagDirectInputContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagDirectInputContainer(IDxDiagContainer* pSubCont, IDxDiagProvider *pProv) {
   HRESULT hr = S_OK;
   return hr;
 }
 
-static HRESULT DXDiag_InitDXDiagDirectPlayContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagDirectPlayContainer(IDxDiagContainer* pSubCont, IDxDiagProvider *pProv) {
   HRESULT hr = S_OK;
   return hr;
 }
 
-static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSubCont) {
+static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSubCont, IDxDiagProvider *pProv) {
   HRESULT hr = S_OK;
   static const WCHAR szName[] = {'s','z','N','a','m','e',0};
   static const WCHAR szVersionW[] = {'s','z','V','e','r','s','i','o','n',0};
@@ -667,7 +667,7 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
             IAMFilterData *pFilterData = NULL;
 
             snprintfW(bufferW, sizeof(bufferW)/sizeof(bufferW[0]), szIdFormat, i);
-            if (FAILED(DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pDShowSubCont)) ||
+            if (FAILED(DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, pProv, (void**) &pDShowSubCont)) ||
                 FAILED(IDxDiagContainerImpl_AddChildContainer(pSubCont, bufferW, pDShowSubCont)))
             {
               IPropertyBag_Release(pPropFilterBag);
@@ -758,7 +758,7 @@ out_show_filters:
   return hr;
 }
 
-static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont) {
+static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont, IDxDiagProvider *pProv) {
   static const WCHAR DxDiag_SystemInfo[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','I','n','f','o',0};
   static const WCHAR DxDiag_DisplayDevices[] = {'D','x','D','i','a','g','_','D','i','s','p','l','a','y','D','e','v','i','c','e','s',0};
   static const WCHAR DxDiag_DirectSound[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','S','o','u','n','d',0};
@@ -773,7 +773,7 @@ static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont) {
   static const struct
   {
     const WCHAR *name;
-    HRESULT (*initfunc)(IDxDiagContainer*);
+    HRESULT (*initfunc)(IDxDiagContainer*, IDxDiagProvider*);
   } containers[] =
   {
     {DxDiag_SystemInfo,        DXDiag_InitDXDiagSystemInfoContainer},
@@ -797,7 +797,7 @@ static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont) {
     IDxDiagContainer* pSubCont;
     HRESULT hr;
 
-    hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pSubCont);
+    hr = DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, pProv, (void**) &pSubCont);
     if (FAILED(hr))
       return hr;
 
@@ -809,7 +809,7 @@ static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont) {
     }
 
     /* The return value is ignored for now. */
-    containers[index].initfunc(pSubCont);
+    containers[index].initfunc(pSubCont, pProv);
   }
 
   return S_OK;
