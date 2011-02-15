@@ -1229,10 +1229,7 @@ static void test_ScriptString(HDC hdc)
     int             Charset;
     DWORD           Flags = SSA_GLYPHS;
     int             ReqWidth = 100;
-    SCRIPT_CONTROL  Control;
-    SCRIPT_STATE    State;
     const int       Dx[5] = {10, 10, 10, 10, 10};
-    SCRIPT_TABDEF   Tabdef;
     const BYTE      InClass = 0;
     SCRIPT_STRING_ANALYSIS ssa = NULL;
 
@@ -1251,20 +1248,20 @@ static void test_ScriptString(HDC hdc)
     Charset = -1;     /* this flag indicates unicode input */
     /* Test without hdc to get E_PENDING */
     hr = ScriptStringAnalyse( NULL, teststr, len, Glyphs, Charset, Flags,
-                             ReqWidth, &Control, &State, Dx, &Tabdef,
-                             &InClass, &ssa);
+                              ReqWidth, NULL, NULL, Dx, NULL,
+                              &InClass, &ssa);
     ok(hr == E_PENDING, "ScriptStringAnalyse Stub should return E_PENDING not %08x\n", hr);
 
     /* test with hdc, this should be a valid test  */
     hr = ScriptStringAnalyse( hdc, teststr, len, Glyphs, Charset, Flags,
-                              ReqWidth, &Control, &State, Dx, &Tabdef,
+                              ReqWidth, NULL, NULL, Dx, NULL,
                               &InClass, &ssa);
     ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
     ScriptStringFree(&ssa);
 
     /* test makes sure that a call with a valid pssa still works */
     hr = ScriptStringAnalyse( hdc, teststr, len, Glyphs, Charset, Flags,
-                              ReqWidth, &Control, &State, Dx, &Tabdef,
+                              ReqWidth, NULL, NULL, Dx, NULL,
                               &InClass, &ssa);
     ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
     ok(ssa != NULL, "ScriptStringAnalyse pssa should not be NULL\n");
@@ -1309,9 +1306,6 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
     int             Charset = -1;                       /* unicode                        */
     DWORD           Flags = SSA_GLYPHS;
     int             ReqWidth = 100;
-    SCRIPT_CONTROL  Control;
-    SCRIPT_STATE    State;
-    SCRIPT_TABDEF   Tabdef;
     const BYTE      InClass = 0;
     SCRIPT_STRING_ANALYSIS ssa = NULL;
 
@@ -1326,12 +1320,9 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
      * Here we generate an SCRIPT_STRING_ANALYSIS that will be used as input to the
      * following character positions to X and X to character position functions.
      */
-    memset(&Control, 0, sizeof(SCRIPT_CONTROL));
-    memset(&State, 0, sizeof(SCRIPT_STATE));
-    memset(&Tabdef, 0, sizeof(SCRIPT_TABDEF));
 
     hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,
-                              ReqWidth, &Control, &State, NULL, &Tabdef,
+                              ReqWidth, NULL, NULL, NULL, NULL,
                               &InClass, &ssa);
     ok(hr == S_OK ||
        hr == E_INVALIDARG, /* NT */
@@ -1471,7 +1462,7 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
          * generate an SSA for the subsequent tests.
          */
         hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,
-                                  ReqWidth, &Control, &State, NULL, &Tabdef,
+                                  ReqWidth, NULL, NULL, NULL, NULL,
                                   &InClass, &ssa);
         ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
 
