@@ -34,8 +34,6 @@ typedef struct {
 
     IInternetProtocolEx *protocol;
 
-    BYTE buf[1024*8];
-    DWORD size;
     HANDLE file;
     HRESULT hres;
 
@@ -103,27 +101,11 @@ typedef struct {
     CRITICAL_SECTION section;
 } Binding;
 
-static void fill_stgmed_buffer(stgmed_buf_t *buf)
-{
-    DWORD read = 0;
-
-    if(sizeof(buf->buf) == buf->size)
-        return;
-
-    buf->hres = IInternetProtocol_Read(buf->protocol, buf->buf+buf->size,
-            sizeof(buf->buf)-buf->size, &read);
-    buf->size += read;
-}
-
 static void read_protocol_data(stgmed_buf_t *stgmed_buf)
 {
     BYTE buf[8192];
     DWORD read;
     HRESULT hres;
-
-    fill_stgmed_buffer(stgmed_buf);
-    if(stgmed_buf->size < sizeof(stgmed_buf->buf))
-        return;
 
     do hres = IInternetProtocol_Read(stgmed_buf->protocol, buf, sizeof(buf), &read);
     while(hres == S_OK);
@@ -412,7 +394,6 @@ static stgmed_buf_t *create_stgmed_buf(IInternetProtocolEx *protocol)
 
     ret->IUnknown_iface.lpVtbl = &StgMedUnkVtbl;
     ret->ref = 1;
-    ret->size = 0;
     ret->file = INVALID_HANDLE_VALUE;
     ret->hres = S_OK;
     ret->cache_file = NULL;
@@ -497,49 +478,26 @@ static HRESULT WINAPI ProtocolStream_Read(IStream *iface, void *pv,
                                           ULONG cb, ULONG *pcbRead)
 {
     ProtocolStream *This = impl_from_IStream(iface);
-    DWORD read = 0, pread = 0;
+    DWORD read = 0;
     HRESULT hres;
 
     TRACE("(%p)->(%p %d %p)\n", This, pv, cb, pcbRead);
 
-    if(This->buf->file != INVALID_HANDLE_VALUE) {
-        if (!ReadFile(This->buf->file, pv, cb, &read, NULL))
-            return INET_E_DOWNLOAD_FAILURE;
-
-        if(pcbRead)
-            *pcbRead = read;
-        return read ? S_OK : S_FALSE;
+    if(This->buf->file == INVALID_HANDLE_VALUE) {
+        hres = This->buf->hres = IInternetProtocol_Read(This->buf->protocol, (PBYTE)pv, cb, &read);
+    }else {
+        hres = ReadFile(This->buf->file, pv, cb, &read, NULL) ? S_OK : INET_E_DOWNLOAD_FAILURE;
     }
 
-    if(This->buf->size) {
-        read = cb;
-
-        if(read > This->buf->size)
-            read = This->buf->size;
-
-        memcpy(pv, This->buf->buf, read);
-
-        if(read < This->buf->size)
-            memmove(This->buf->buf, This->buf->buf+read, This->buf->size-read);
-        This->buf->size -= read;
-    }
-
-    if(read == cb) {
-        if (pcbRead)
-            *pcbRead = read;
-        return S_OK;
-    }
-
-    hres = This->buf->hres = IInternetProtocol_Read(This->buf->protocol, (PBYTE)pv+read, cb-read, &pread);
     if (pcbRead)
-        *pcbRead = read + pread;
+        *pcbRead = read;
 
     if(hres == E_PENDING)
         return E_PENDING;
     else if(FAILED(hres))
         FIXME("Read failed: %08x\n", hres);
 
-    return read || pread ? S_OK : S_FALSE;
+    return read ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI ProtocolStream_Write(IStream *iface, const void *pv,
@@ -685,7 +643,7 @@ static HRESULT stgmed_stream_get_result(stgmed_obj_t *obj, DWORD bindf, void **r
     ProtocolStream *stream = (ProtocolStream*)obj;
 
     if(!(bindf & BINDF_ASYNCHRONOUS) && stream->buf->file == INVALID_HANDLE_VALUE
-       && (stream->buf->hres != S_FALSE || stream->buf->size))
+       && stream->buf->hres != S_FALSE)
         return INET_E_DATA_NOT_AVAILABLE;
 
     IStream_AddRef(&stream->IStream_iface);
@@ -1028,7 +986,6 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
         on_progress(This, 0, 0, BINDSTATUS_REDIRECTING, szStatusText);
         break;
     case BINDSTATUS_BEGINDOWNLOADDATA:
-        fill_stgmed_buffer(This->stgmed_buf);
         break;
     case BINDSTATUS_SENDINGREQUEST:
         on_progress(This, 0, 0, BINDSTATUS_SENDINGREQUEST, szStatusText);
@@ -1078,8 +1035,6 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
 
     if(This->stgmed_buf->file != INVALID_HANDLE_VALUE)
         read_protocol_data(This->stgmed_buf);
-    else if(This->download_state == BEFORE_DOWNLOAD)
-        fill_stgmed_buffer(This->stgmed_buf);
 
     if(This->download_state == BEFORE_DOWNLOAD) {
         This->download_state = DOWNLOADING;
