@@ -1559,38 +1559,42 @@ static BOOL WINAPI CRYPT_ExportKeyTrans(
          X509_ASN_ENCODING, &keyInfo, &expKey);
     if (ret)
     {
-        BYTE *keyBlob;
         DWORD size;
 
         ret = CryptExportKey(pContentEncryptInfo->hContentEncryptKey, expKey,
          SIMPLEBLOB, 0, NULL, &size);
-        keyBlob = CryptMemAlloc(size);
-        if (keyBlob)
+        if (ret)
         {
-            ret = CryptExportKey(pContentEncryptInfo->hContentEncryptKey,
-             expKey, SIMPLEBLOB, 0, keyBlob, &size);
-            if (ret)
+            BYTE *keyBlob;
+
+            keyBlob = CryptMemAlloc(size);
+            if (keyBlob)
             {
-                DWORD head = sizeof(BLOBHEADER) + sizeof(ALG_ID);
-
-                pKeyTransEncryptInfo->EncryptedKey.pbData =
-                 CryptMemAlloc(size - head);
-                if (pKeyTransEncryptInfo->EncryptedKey.pbData)
+                ret = CryptExportKey(pContentEncryptInfo->hContentEncryptKey,
+                 expKey, SIMPLEBLOB, 0, keyBlob, &size);
+                if (ret)
                 {
-                    DWORD i, k = 0;
+                    DWORD head = sizeof(BLOBHEADER) + sizeof(ALG_ID);
 
-                    pKeyTransEncryptInfo->EncryptedKey.cbData = size - head;
-                    for (i = size - 1; i >= head; --i, ++k)
-                        pKeyTransEncryptInfo->EncryptedKey.pbData[k] =
-                         keyBlob[i];
+                    pKeyTransEncryptInfo->EncryptedKey.pbData =
+                     CryptMemAlloc(size - head);
+                    if (pKeyTransEncryptInfo->EncryptedKey.pbData)
+                    {
+                        DWORD i, k = 0;
+
+                        pKeyTransEncryptInfo->EncryptedKey.cbData = size - head;
+                        for (i = size - 1; i >= head; --i, ++k)
+                            pKeyTransEncryptInfo->EncryptedKey.pbData[k] =
+                             keyBlob[i];
+                    }
+                    else
+                        ret = FALSE;
                 }
-                else
-                    ret = FALSE;
+                CryptMemFree(keyBlob);
             }
-            CryptMemFree(keyBlob);
+            else
+                ret = FALSE;
         }
-        else
-            ret = FALSE;
         CryptDestroyKey(expKey);
     }
 
