@@ -853,6 +853,8 @@ static void test_hash_msg_get_param(void)
     ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
     ok(size == sizeof(buf), "Unexpected size %d\n", size);
     ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 0, buf, &size);
+    ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
+    ok(size == sizeof(buf), "Unexpected size %d\n", size);
     if (size == sizeof(buf))
         ok(!memcmp(buf, emptyHashParam, size), "Unexpected value\n");
     /* By getting the hash, further updates are not allowed */
