@@ -828,6 +828,13 @@ static HRESULT DXDiag_InitRootDXDiagContainer(IDxDiagContainer* pRootCont, IDxDi
   return S_OK;
 }
 
+static void free_property_information(IDxDiagContainerImpl_Property *prop)
+{
+    VariantClear(&prop->vProp);
+    HeapFree(GetProcessHeap(), 0, prop->propName);
+    HeapFree(GetProcessHeap(), 0, prop);
+}
+
 static void free_information_tree(IDxDiagContainerImpl_Container *node)
 {
     IDxDiagContainerImpl_Container *ptr, *cursor2;
@@ -839,6 +846,14 @@ static void free_information_tree(IDxDiagContainerImpl_Container *node)
 
     LIST_FOR_EACH_ENTRY_SAFE(ptr, cursor2, &node->subContainers, IDxDiagContainerImpl_Container, entry)
     {
+        IDxDiagContainerImpl_Property *prop, *prop_cursor2;
+
+        LIST_FOR_EACH_ENTRY_SAFE(prop, prop_cursor2, &ptr->properties, IDxDiagContainerImpl_Property, entry)
+        {
+            list_remove(&prop->entry);
+            free_property_information(prop);
+        }
+
         list_remove(&ptr->entry);
         free_information_tree(ptr);
     }
@@ -871,14 +886,203 @@ static IDxDiagContainerImpl_Container *allocate_information_node(const WCHAR *na
     return ret;
 }
 
+static IDxDiagContainerImpl_Property *allocate_property_information(const WCHAR *name)
+{
+    IDxDiagContainerImpl_Property *ret;
+
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret));
+    if (!ret)
+        return NULL;
+
+    ret->propName = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(*name));
+    if (!ret->propName)
+    {
+        HeapFree(GetProcessHeap(), 0, ret);
+        return NULL;
+    }
+    strcpyW(ret->propName, name);
+
+    return ret;
+}
+
 static inline void add_subcontainer(IDxDiagContainerImpl_Container *node, IDxDiagContainerImpl_Container *subCont)
 {
     list_add_tail(&node->subContainers, &subCont->entry);
     ++node->nSubContainers;
 }
 
+static inline HRESULT add_bstr_property(IDxDiagContainerImpl_Container *node, const WCHAR *propName, const WCHAR *str)
+{
+    IDxDiagContainerImpl_Property *prop;
+    BSTR bstr;
+
+    prop = allocate_property_information(propName);
+    if (!prop)
+        return E_OUTOFMEMORY;
+
+    bstr = SysAllocString(str);
+    if (!bstr)
+    {
+        free_property_information(prop);
+        return E_OUTOFMEMORY;
+    }
+
+    V_VT(&prop->vProp) = VT_BSTR;
+    V_BSTR(&prop->vProp) = bstr;
+
+    list_add_tail(&node->properties, &prop->entry);
+    ++node->nProperties;
+
+    return S_OK;
+}
+
+static inline HRESULT add_ui4_property(IDxDiagContainerImpl_Container *node, const WCHAR *propName, DWORD data)
+{
+    IDxDiagContainerImpl_Property *prop;
+
+    prop = allocate_property_information(propName);
+    if (!prop)
+        return E_OUTOFMEMORY;
+
+    V_VT(&prop->vProp) = VT_UI4;
+    V_UI4(&prop->vProp) = data;
+
+    list_add_tail(&node->properties, &prop->entry);
+    ++node->nProperties;
+
+    return S_OK;
+}
+
+static inline HRESULT add_bool_property(IDxDiagContainerImpl_Container *node, const WCHAR *propName, BOOL data)
+{
+    IDxDiagContainerImpl_Property *prop;
+
+    prop = allocate_property_information(propName);
+    if (!prop)
+        return E_OUTOFMEMORY;
+
+    V_VT(&prop->vProp) = VT_BOOL;
+    V_BOOL(&prop->vProp) = data;
+
+    list_add_tail(&node->properties, &prop->entry);
+    ++node->nProperties;
+
+    return S_OK;
+}
+
+static inline HRESULT add_ull_as_bstr_property(IDxDiagContainerImpl_Container *node, const WCHAR *propName, ULONGLONG data )
+{
+    IDxDiagContainerImpl_Property *prop;
+
+    prop = allocate_property_information(propName);
+    if (!prop)
+        return E_OUTOFMEMORY;
+
+    V_VT(&prop->vProp) = VT_UI8;
+    V_UI8(&prop->vProp) = data;
+
+    VariantChangeType(&prop->vProp, &prop->vProp, 0, VT_BSTR);
+
+    list_add_tail(&node->properties, &prop->entry);
+    ++node->nProperties;
+
+    return S_OK;
+}
+
 static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
 {
+    static const WCHAR dwDirectXVersionMajor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','a','j','o','r',0};
+    static const WCHAR dwDirectXVersionMinor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','i','n','o','r',0};
+    static const WCHAR szDirectXVersionLetter[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','e','t','t','e','r',0};
+    static const WCHAR szDirectXVersionLetter_v[] = {'c',0};
+    static const WCHAR bDebug[] = {'b','D','e','b','u','g',0};
+    static const WCHAR szDirectXVersionEnglish[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','E','n','g','l','i','s','h',0};
+    static const WCHAR szDirectXVersionEnglish_v[] = {'4','.','0','9','.','0','0','0','0','.','0','9','0','4',0};
+    static const WCHAR szDirectXVersionLongEnglish[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','o','n','g','E','n','g','l','i','s','h',0};
+    static const WCHAR szDirectXVersionLongEnglish_v[] = {'=',' ','"','D','i','r','e','c','t','X',' ','9','.','0','c',' ','(','4','.','0','9','.','0','0','0','0','.','0','9','0','4',')',0};
+    static const WCHAR ullPhysicalMemory[] = {'u','l','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
+    static const WCHAR ullUsedPageFile[]   = {'u','l','l','U','s','e','d','P','a','g','e','F','i','l','e',0};
+    static const WCHAR ullAvailPageFile[]  = {'u','l','l','A','v','a','i','l','P','a','g','e','F','i','l','e',0};
+    static const WCHAR szWindowsDir[] = {'s','z','W','i','n','d','o','w','s','D','i','r',0};
+    static const WCHAR dwOSMajorVersion[] = {'d','w','O','S','M','a','j','o','r','V','e','r','s','i','o','n',0};
+    static const WCHAR dwOSMinorVersion[] = {'d','w','O','S','M','i','n','o','r','V','e','r','s','i','o','n',0};
+    static const WCHAR dwOSBuildNumber[] = {'d','w','O','S','B','u','i','l','d','N','u','m','b','e','r',0};
+    static const WCHAR dwOSPlatformID[] = {'d','w','O','S','P','l','a','t','f','o','r','m','I','D',0};
+    static const WCHAR szCSDVersion[] = {'s','z','C','S','D','V','e','r','s','i','o','n',0};
+
+    HRESULT hr;
+    MEMORYSTATUSEX msex;
+    OSVERSIONINFOW info;
+    WCHAR buffer[MAX_PATH];
+
+    hr = add_ui4_property(node, dwDirectXVersionMajor, 9);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_ui4_property(node, dwDirectXVersionMinor, 0);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bstr_property(node, szDirectXVersionLetter, szDirectXVersionLetter_v);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bstr_property(node, szDirectXVersionEnglish, szDirectXVersionEnglish_v);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bstr_property(node, szDirectXVersionLongEnglish, szDirectXVersionLongEnglish_v);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bool_property(node, bDebug, FALSE);
+    if (FAILED(hr))
+        return hr;
+
+    msex.dwLength = sizeof(msex);
+    GlobalMemoryStatusEx(&msex);
+
+    hr = add_ull_as_bstr_property(node, ullPhysicalMemory, msex.ullTotalPhys);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_ull_as_bstr_property(node, ullUsedPageFile, msex.ullTotalPageFile - msex.ullAvailPageFile);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_ull_as_bstr_property(node, ullAvailPageFile, msex.ullAvailPageFile);
+    if (FAILED(hr))
+        return hr;
+
+    info.dwOSVersionInfoSize = sizeof(info);
+    GetVersionExW(&info);
+
+    hr = add_ui4_property(node, dwOSMajorVersion, info.dwMajorVersion);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_ui4_property(node, dwOSMinorVersion, info.dwMinorVersion);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_ui4_property(node, dwOSBuildNumber, info.dwBuildNumber);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_ui4_property(node, dwOSPlatformID, info.dwPlatformId);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bstr_property(node, szCSDVersion, info.szCSDVersion);
+    if (FAILED(hr))
+        return hr;
+
+    GetWindowsDirectoryW(buffer, MAX_PATH);
+
+    hr = add_bstr_property(node, szWindowsDir, buffer);
+    if (FAILED(hr))
+        return hr;
+
     return S_OK;
 }
 
@@ -968,6 +1172,7 @@ static HRESULT build_information_tree(IDxDiagContainerImpl_Container **pinfo_roo
     for (index = 0; index < sizeof(root_children)/sizeof(root_children[0]); index++)
     {
         IDxDiagContainerImpl_Container *node;
+        HRESULT hr;
 
         node = allocate_information_node(root_children[index].name);
         if (!node)
@@ -976,7 +1181,13 @@ static HRESULT build_information_tree(IDxDiagContainerImpl_Container **pinfo_roo
             return E_OUTOFMEMORY;
         }
 
-        root_children[index].initfunc(node);
+        hr = root_children[index].initfunc(node);
+        if (FAILED(hr))
+        {
+            free_information_tree(node);
+            free_information_tree(info_root);
+            return hr;
+        }
 
         add_subcontainer(info_root, node);
     }
