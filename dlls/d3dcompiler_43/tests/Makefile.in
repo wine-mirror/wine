@@ -4,6 +4,7 @@ IMPORTS   = d3dcompiler d3d9 d3dx9 user32
 C_SRCS = \
 	asm.c \
 	blob.c \
-	hlsl.c
+	hlsl.c \
+	reflection.c
 
 @MAKE_TEST_RULES@
