@@ -947,10 +947,12 @@ static void test_aes(int keylen)
 
     for (i=0; i<sizeof(pbData); i++) pbData[i] = (unsigned char)i;
 
-    /* AES provider doesn't support salt */
+    /* Does AES provider support salt? */
     result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
     ok((!result && GetLastError() == NTE_BAD_KEY) || result /* Win7 */,
        "expected NTE_BAD_KEY, got %08x\n", GetLastError());
+    if (result)
+        ok(!dwLen, "unexpected salt length %d\n", dwLen);
 
     dwLen = 13;
     result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
