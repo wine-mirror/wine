@@ -124,7 +124,7 @@ static void test_verify_detached_message_hash(void)
 
     if (0)
     {
-        ret = CryptVerifyDetachedMessageHash(NULL, NULL, 0, 0, NULL, NULL, NULL,
+        CryptVerifyDetachedMessageHash(NULL, NULL, 0, 0, NULL, NULL, NULL,
          NULL);
     }
     memset(&para, 0, sizeof(para));
