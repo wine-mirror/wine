@@ -128,8 +128,21 @@ HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void 
 {
     struct d3dcompiler_shader_reflection *object;
     HRESULT hr;
+    const DWORD *temp = data;
 
     TRACE("data %p, data_size %lu, riid %s, blob %p\n", data, data_size, debugstr_guid(riid), reflector);
+
+    if (!data || data_size < 32)
+    {
+        WARN("Invalid argument supplied.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (temp[6] != data_size)
+    {
+        WARN("Wrong size supplied.\n");
+        return E_FAIL;
+    }
 
     if (!IsEqualGUID(riid, &IID_ID3D11ShaderReflection))
     {
