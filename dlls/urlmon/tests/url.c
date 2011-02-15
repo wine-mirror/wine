@@ -858,6 +858,11 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_BEGINDOWNLOADDATA, NULL);
         ok(hres == S_OK, "ReportProgress(BINDSTATUS_BEGINDOWNLOADDATA) failed: %08x\n", hres);
         CHECK_CALLED(Read);
+    }else if(!bind_to_object && test_protocol == ABOUT_TEST) {
+        SET_EXPECT(Read);
+        hres = IInternetProtocolSink_ReportData(pOIProtSink, bscf, 13, 13);
+        ok(hres == S_OK, "ReportData failed: %08x\n", hres);
+        CHECK_CALLED(Read);
     }
 
     SET_EXPECT(Terminate);

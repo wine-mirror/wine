@@ -1068,7 +1068,12 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
 
     TRACE("(%p)->(%d %u %u)\n", This, bscf, progress, progress_max);
 
-    if(This->download_state == END_DOWNLOAD || (This->state & (BINDING_STOPPED|BINDING_ABORTED)))
+    if(This->download_state == END_DOWNLOAD || (This->state & BINDING_ABORTED)) {
+        read_protocol_data(This->stgmed_buf);
+        return;
+    }
+
+    if(This->state & BINDING_STOPPED)
         return;
 
     if(This->stgmed_buf->file != INVALID_HANDLE_VALUE)
