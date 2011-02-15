@@ -191,6 +191,10 @@ typedef struct {
     BOOL from_urlmon;
     DWORD pi;
 
+    DWORD bscf;
+    ULONG progress;
+    ULONG progress_max;
+
     DWORD apartment_thread;
     HWND notif_hwnd;
     DWORD continue_call;

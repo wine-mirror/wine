@@ -962,13 +962,17 @@ static void report_progress(BindProtocol *This, ULONG status_code, LPCWSTR statu
     case BINDSTATUS_FINDINGRESOURCE:
     case BINDSTATUS_CONNECTING:
     case BINDSTATUS_REDIRECTING:
-    case BINDSTATUS_BEGINDOWNLOADDATA:
     case BINDSTATUS_SENDINGREQUEST:
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
     case BINDSTATUS_DIRECTBIND:
     case BINDSTATUS_ACCEPTRANGES:
         if(This->protocol_sink)
             IInternetProtocolSink_ReportProgress(This->protocol_sink, status_code, status_text);
+        break;
+
+    case BINDSTATUS_BEGINDOWNLOADDATA:
+        if(This->protocol_sink)
+            IInternetProtocolSink_ReportData(This->protocol_sink, This->bscf, This->progress, This->progress_max);
         break;
 
     case BINDSTATUS_MIMETYPEAVAILABLE:
@@ -1026,6 +1030,10 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSin
 
 static HRESULT report_data(BindProtocol *This, DWORD bscf, ULONG progress, ULONG progress_max)
 {
+    This->bscf = bscf;
+    This->progress = progress;
+    This->progress_max = progress_max;
+
     if(!This->protocol_sink)
         return S_OK;
 

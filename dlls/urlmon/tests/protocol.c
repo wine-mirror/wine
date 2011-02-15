@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2009 Jacek Caban for CodeWeavers
+ * Copyright 2005-2011 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -166,6 +166,7 @@ static enum {
     HTTPS_TEST,
     FTP_TEST,
     MK_TEST,
+    ITS_TEST,
     BIND_TEST
 } tested_protocol;
 
@@ -175,6 +176,7 @@ static const WCHAR protocol_names[][10] = {
     {'h','t','t','p','s',0},
     {'f','t','p',0},
     {'m','k',0},
+    {'i','t','s',0},
     {'t','e','s','t',0}
 };
 
@@ -188,6 +190,7 @@ static const WCHAR binding_urls[][130] = {
      '/','p','u','b','/','o','t','h','e','r',
      '/','w','i','n','e','l','o','g','o','.','x','c','f','.','t','a','r','.','b','z','2',0},
     {'m','k',':','t','e','s','t',0},
+    {'i','t','s',':','t','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0},
     {'t','e','s','t',':','/','/','f','i','l','e','.','h','t','m','l',0}
 };
 
@@ -725,7 +728,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     switch(ulStatusCode) {
     case BINDSTATUS_MIMETYPEAVAILABLE:
         CHECK_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
-        if(tested_protocol != FILE_TEST && !mimefilter_test && (pi & PI_MIMEVERIFICATION)) {
+        if(tested_protocol != FILE_TEST && tested_protocol != ITS_TEST && !mimefilter_test && (pi & PI_MIMEVERIFICATION)) {
             if(!short_read || !direct_read)
                 CHECK_CALLED(Read); /* set in Continue */
             else if(short_read)
@@ -779,7 +782,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         break;
     case BINDSTATUS_SENDINGREQUEST:
         CHECK_EXPECT2(ReportProgress_SENDINGREQUEST);
-        if(tested_protocol == FILE_TEST) {
+        if(tested_protocol == FILE_TEST || tested_protocol == ITS_TEST) {
             ok(szStatusText != NULL, "szStatusText == NULL\n");
             if(szStatusText)
                 ok(!*szStatusText, "wrong szStatusText\n");
@@ -843,16 +846,19 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
     static int rec_depth;
     rec_depth++;
 
-    if(!mimefilter_test && tested_protocol == FILE_TEST) {
+    if(!mimefilter_test && (tested_protocol == FILE_TEST || tested_protocol == ITS_TEST)) {
         CHECK_EXPECT2(ReportData);
 
         ok(ulProgress == ulProgressMax, "ulProgress (%d) != ulProgressMax (%d)\n",
            ulProgress, ulProgressMax);
         ok(ulProgressMax == 13, "ulProgressMax=%d, expected 13\n", ulProgressMax);
         /* BSCF_SKIPDRAINDATAFORFILEURLS added in IE8 */
-        ok((grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION)) ||
-           (grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION | BSCF_SKIPDRAINDATAFORFILEURLS)),
-                "grcfBSCF = %08x\n", grfBSCF);
+        if(tested_protocol == FILE_TEST)
+            ok((grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION)) ||
+               (grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION | BSCF_SKIPDRAINDATAFORFILEURLS)),
+               "grcfBSCF = %08x\n", grfBSCF);
+        else
+            ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_DATAFULLYAVAILABLE), "grcfBSCF = %08x\n", grfBSCF);
     }else if(direct_read) {
         BYTE buf[14096];
         ULONG read;
@@ -1634,12 +1640,20 @@ static void protocol_start(IInternetProtocolSink *pOIProtSink, IInternetBindInfo
     else
         SET_EXPECT(ReportData);
     hres = IInternetProtocolSink_ReportData(pOIProtSink,
-            BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION, 13, 13);
+            BSCF_FIRSTDATANOTIFICATION | (tested_protocol == ITS_TEST ? BSCF_DATAFULLYAVAILABLE : BSCF_LASTDATANOTIFICATION),
+            13, 13);
     ok(hres == S_OK, "ReportData failed: %08x\n", hres);
     if(mimefilter_test)
         CHECK_CALLED(MimeFilter_ReportData);
     else
         CHECK_CALLED(ReportData);
+
+    if(tested_protocol == ITS_TEST) {
+        SET_EXPECT(ReportData);
+        hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_BEGINDOWNLOADDATA, NULL);
+        ok(hres == S_OK, "ReportProgress(BINDSTATUS_BEGINDOWNLOADDATA) failed: %08x\n", hres);
+        CHECK_CALLED(ReportData);
+    }
 
     if(tested_protocol == BIND_TEST) {
         hres = IInternetProtocol_Terminate(binding_protocol, 0);
@@ -3503,6 +3517,8 @@ START_TEST(protocol)
     test_binding(FILE_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT);
     trace("Testing http binding (mime verification, emulate prot)...\n");
     test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT);
+    trace("Testing its binding (mime verification, emulate prot)...\n");
+    test_binding(ITS_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT);
     trace("Testing http binding (mime verification, emulate prot, short read, direct read)...\n");
     test_binding(HTTP_TEST, PI_MIMEVERIFICATION, TEST_EMULATEPROT|TEST_SHORT_READ|TEST_DIRECT_READ);
     trace("Testing file binding (mime verification, emulate prot, mime filter)...\n");
