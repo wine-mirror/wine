@@ -3213,7 +3213,8 @@ static BOOL match_domain_component(LPCWSTR allowed_component, DWORD allowed_len,
                 break;
             }
         }
-        matches = tolowerW(*allowed_ptr) == tolowerW(*server_ptr);
+        if (matches)
+            matches = tolowerW(*allowed_ptr) == tolowerW(*server_ptr);
     }
     if (matches && server_ptr - server_component < server_len)
     {
