@@ -6008,7 +6008,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
                 DWORD new_len = remove_dot_segments(path+offset,path_len-offset);
 
                 if(new_len != path_len) {
-                    WCHAR *tmp = heap_realloc(path, (path_offset+new_len+1)*sizeof(WCHAR));
+                    WCHAR *tmp = heap_realloc(path, (offset+new_len+1)*sizeof(WCHAR));
                     if(!tmp) {
                         heap_free(path);
                         *result = NULL;
