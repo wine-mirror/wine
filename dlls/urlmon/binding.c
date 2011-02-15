@@ -36,7 +36,6 @@ typedef struct {
 
     BYTE buf[1024*8];
     DWORD size;
-    BOOL init;
     HANDLE file;
     HRESULT hres;
 
@@ -114,8 +113,6 @@ static void fill_stgmed_buffer(stgmed_buf_t *buf)
     buf->hres = IInternetProtocol_Read(buf->protocol, buf->buf+buf->size,
             sizeof(buf->buf)-buf->size, &read);
     buf->size += read;
-    if(read > 0)
-        buf->init = TRUE;
 }
 
 static void read_protocol_data(stgmed_buf_t *stgmed_buf)
@@ -416,7 +413,6 @@ static stgmed_buf_t *create_stgmed_buf(IInternetProtocolEx *protocol)
     ret->IUnknown_iface.lpVtbl = &StgMedUnkVtbl;
     ret->ref = 1;
     ret->size = 0;
-    ret->init = FALSE;
     ret->file = INVALID_HANDLE_VALUE;
     ret->hres = S_OK;
     ret->cache_file = NULL;
@@ -1591,7 +1587,7 @@ HRESULT bind_to_storage(IUri *uri, IBindCtx *pbc, REFIID riid, void **ppv)
     if(FAILED(hres))
         return hres;
 
-    if(binding->hres == S_OK && binding->stgmed_buf->init) {
+    if(binding->hres == S_OK && binding->download_state != BEFORE_DOWNLOAD /* FIXME */) {
         if((binding->state & BINDING_STOPPED) && (binding->state & BINDING_LOCKED))
             IInternetProtocolEx_UnlockRequest(&binding->protocol->IInternetProtocolEx_iface);
 
