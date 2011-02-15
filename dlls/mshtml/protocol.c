@@ -217,6 +217,8 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
     BINDINFO bindinfo;
     DWORD grfBINDF = 0;
     LPCWSTR text = NULL;
+    DWORD data_len;
+    BYTE *data;
 
     static const WCHAR html_begin[] = {0xfeff,'<','H','T','M','L','>',0};
     static const WCHAR html_end[] = {'<','/','H','T','M','L','>',0};
@@ -247,9 +249,15 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
             text = NULL;
     }
 
-    This->data_len = sizeof(html_begin)+sizeof(html_end)-sizeof(WCHAR) 
+    data_len = sizeof(html_begin)+sizeof(html_end)-sizeof(WCHAR)
         + (text ? strlenW(text)*sizeof(WCHAR) : 0);
-    This->data = heap_alloc(This->data_len);
+    data = heap_alloc(data_len);
+    if(!data)
+        return E_OUTOFMEMORY;
+
+    heap_free(This->data);
+    This->data = data;
+    This->data_len = data_len;
 
     memcpy(This->data, html_begin, sizeof(html_begin));
     if(text)
