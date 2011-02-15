@@ -1250,8 +1250,170 @@ static HRESULT build_systemdevices_tree(IDxDiagContainerImpl_Container *node)
     return S_OK;
 }
 
+static HRESULT fill_file_description(IDxDiagContainerImpl_Container *node, const WCHAR *szFilePath, const WCHAR *szFileName)
+{
+    static const WCHAR szSlashSep[] = {'\\',0};
+    static const WCHAR szPath[] = {'s','z','P','a','t','h',0};
+    static const WCHAR szName[] = {'s','z','N','a','m','e',0};
+    static const WCHAR szVersion[] = {'s','z','V','e','r','s','i','o','n',0};
+    static const WCHAR szAttributes[] = {'s','z','A','t','t','r','i','b','u','t','e','s',0};
+    static const WCHAR szLanguageEnglish[] = {'s','z','L','a','n','g','u','a','g','e','E','n','g','l','i','s','h',0};
+    static const WCHAR dwFileTimeHigh[] = {'d','w','F','i','l','e','T','i','m','e','H','i','g','h',0};
+    static const WCHAR dwFileTimeLow[] = {'d','w','F','i','l','e','T','i','m','e','L','o','w',0};
+    static const WCHAR bBeta[] = {'b','B','e','t','a',0};
+    static const WCHAR bDebug[] = {'b','D','e','b','u','g',0};
+    static const WCHAR bExists[] = {'b','E','x','i','s','t','s',0};
+
+    /* Values */
+    static const WCHAR szFinal_Retail_v[] = {'F','i','n','a','l',' ','R','e','t','a','i','l',0};
+    static const WCHAR szEnglish_v[] = {'E','n','g','l','i','s','h',0};
+    static const WCHAR szVersionFormat[] = {'%','u','.','%','0','2','u','.','%','0','4','u','.','%','0','4','u',0};
+
+    HRESULT hr;
+    WCHAR *szFile;
+    WCHAR szVersion_v[1024];
+    DWORD retval, hdl;
+    void *pVersionInfo = NULL;
+    BOOL boolret = FALSE;
+    UINT uiLength;
+    VS_FIXEDFILEINFO *pFileInfo;
+
+    szFile = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * (lstrlenW(szFilePath) +
+                                            lstrlenW(szFileName) + 2 /* slash + terminator */));
+    if (!szFile)
+        return E_OUTOFMEMORY;
+
+    lstrcpyW(szFile, szFilePath);
+    lstrcatW(szFile, szSlashSep);
+    lstrcatW(szFile, szFileName);
+
+    retval = GetFileVersionInfoSizeW(szFile, &hdl);
+    if (retval)
+    {
+        pVersionInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, retval);
+        if (!pVersionInfo)
+        {
+            hr = E_OUTOFMEMORY;
+            goto cleanup;
+        }
+
+        if (GetFileVersionInfoW(szFile, 0, retval, pVersionInfo) &&
+            VerQueryValueW(pVersionInfo, szSlashSep, (void **)&pFileInfo, &uiLength))
+            boolret = TRUE;
+    }
+
+    hr = add_bstr_property(node, szPath, szFile);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = add_bstr_property(node, szName, szFileName);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = add_bool_property(node, bExists, boolret);
+    if (FAILED(hr))
+        goto cleanup;
+
+    if (boolret)
+    {
+        snprintfW(szVersion_v, sizeof(szVersion_v)/sizeof(szVersion_v[0]),
+                  szVersionFormat,
+                  HIWORD(pFileInfo->dwFileVersionMS),
+                  LOWORD(pFileInfo->dwFileVersionMS),
+                  HIWORD(pFileInfo->dwFileVersionLS),
+                  LOWORD(pFileInfo->dwFileVersionLS));
+
+        hr = add_bstr_property(node, szVersion, szVersion_v);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bstr_property(node, szAttributes, szFinal_Retail_v);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bstr_property(node, szLanguageEnglish, szEnglish_v);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_ui4_property(node, dwFileTimeHigh, pFileInfo->dwFileDateMS);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_ui4_property(node, dwFileTimeLow, pFileInfo->dwFileDateLS);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bool_property(node, bBeta, ((pFileInfo->dwFileFlags & pFileInfo->dwFileFlagsMask) & VS_FF_PRERELEASE) != 0);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bool_property(node, bDebug, ((pFileInfo->dwFileFlags & pFileInfo->dwFileFlagsMask) & VS_FF_DEBUG) != 0);
+        if (FAILED(hr))
+            goto cleanup;
+    }
+
+    hr = S_OK;
+cleanup:
+    HeapFree(GetProcessHeap(), 0, pVersionInfo);
+    HeapFree(GetProcessHeap(), 0, szFile);
+
+    return hr;
+}
 static HRESULT build_directxfiles_tree(IDxDiagContainerImpl_Container *node)
 {
+    static const WCHAR dlls[][15] =
+    {
+        {'d','3','d','8','.','d','l','l',0},
+        {'d','3','d','9','.','d','l','l',0},
+        {'d','d','r','a','w','.','d','l','l',0},
+        {'d','e','v','e','n','u','m','.','d','l','l',0},
+        {'d','i','n','p','u','t','8','.','d','l','l',0},
+        {'d','i','n','p','u','t','.','d','l','l',0},
+        {'d','m','b','a','n','d','.','d','l','l',0},
+        {'d','m','c','o','m','p','o','s','.','d','l','l',0},
+        {'d','m','i','m','e','.','d','l','l',0},
+        {'d','m','l','o','a','d','e','r','.','d','l','l',0},
+        {'d','m','s','c','r','i','p','t','.','d','l','l',0},
+        {'d','m','s','t','y','l','e','.','d','l','l',0},
+        {'d','m','s','y','n','t','h','.','d','l','l',0},
+        {'d','m','u','s','i','c','.','d','l','l',0},
+        {'d','p','l','a','y','x','.','d','l','l',0},
+        {'d','p','n','e','t','.','d','l','l',0},
+        {'d','s','o','u','n','d','.','d','l','l',0},
+        {'d','s','w','a','v','e','.','d','l','l',0},
+        {'d','x','d','i','a','g','n','.','d','l','l',0},
+        {'q','u','a','r','t','z','.','d','l','l',0}
+    };
+
+    HRESULT hr;
+    WCHAR szFilePath[MAX_PATH];
+    INT i;
+
+    GetSystemDirectoryW(szFilePath, MAX_PATH);
+
+    for (i = 0; i < sizeof(dlls) / sizeof(dlls[0]); i++)
+    {
+        static const WCHAR szFormat[] = {'%','d',0};
+
+        WCHAR szFileID[5];
+        IDxDiagContainerImpl_Container *file_container;
+
+        snprintfW(szFileID, sizeof(szFileID)/sizeof(szFileID[0]), szFormat, i);
+
+        file_container = allocate_information_node(szFileID);
+        if (!file_container)
+            return E_OUTOFMEMORY;
+
+        hr = fill_file_description(file_container, szFilePath, dlls[i]);
+        if (FAILED(hr))
+        {
+            free_information_tree(file_container);
+            continue;
+        }
+
+        add_subcontainer(node, file_container);
+    }
+
     return S_OK;
 }
 
