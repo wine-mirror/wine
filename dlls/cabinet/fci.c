@@ -36,6 +36,7 @@ There is still some work to be done:
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -405,6 +406,108 @@ static BOOL write_folders( FCI_Int *fci, INT_PTR handle, cab_ULONG header_size, 
     fci->free( cffolder );
     fci->free( cffile );
     return ret;
+}
+
+/* write the cabinet file to disk */
+static INT_PTR write_cabinet( FCI_Int *fci, PFNFCISTATUS status_callback )
+{
+    char filename[CB_MAX_CAB_PATH + CB_MAX_CABINET_NAME];
+    int err;
+    INT_PTR handle;
+    cab_UWORD flags = 0;
+    cab_ULONG header_size = get_header_size( fci );
+    CFHEADER *cfheader;
+    char *ptr;
+
+    if (!(cfheader = fci->alloc( header_size )))
+    {
+        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
+        return -1;
+    }
+    memset( cfheader, 0, header_size );
+
+    if (fci->fPrevCab) flags |= cfheadPREV_CABINET;
+    if (fci->fNextCab) flags |= cfheadNEXT_CABINET;
+    if (fci->ccab.cbReserveCFHeader || fci->ccab.cbReserveCFFolder || fci->ccab.cbReserveCFData)
+      flags |= cfheadRESERVE_PRESENT;
+
+    memcpy( cfheader->signature, "!CAB", 4 );
+    cfheader->cbCabinet    = fci_endian_ulong( header_size + fci->folders_size +
+                                               fci->placed_files_size + fci->data2.size );
+    cfheader->coffFiles    = fci_endian_ulong( header_size + fci->folders_size );
+    cfheader->versionMinor = 3;
+    cfheader->versionMajor = 1;
+    cfheader->cFolders     = fci_endian_uword( fci->cFolders );
+    cfheader->cFiles       = fci_endian_uword( fci->cFiles );
+    cfheader->flags        = fci_endian_uword( flags );
+    cfheader->setID        = fci_endian_uword( fci->ccab.setID );
+    cfheader->iCabinet     = fci_endian_uword( fci->ccab.iCab - 1 );
+    ptr = (char *)(cfheader + 1);
+
+    if (flags & cfheadRESERVE_PRESENT)
+    {
+        struct
+        {
+            cab_UWORD cbCFHeader;
+            cab_UBYTE cbCFFolder;
+            cab_UBYTE cbCFData;
+        } *reserve = (void *)ptr;
+
+        reserve->cbCFHeader = fci_endian_uword( fci->ccab.cbReserveCFHeader );
+        reserve->cbCFFolder = fci->ccab.cbReserveCFFolder;
+        reserve->cbCFData   = fci->ccab.cbReserveCFData;
+        ptr = (char *)(reserve + 1);
+    }
+    ptr += fci->ccab.cbReserveCFHeader;
+
+    if (flags & cfheadPREV_CABINET)
+    {
+        strcpy( ptr, fci->szPrevCab );
+        ptr += strlen( ptr ) + 1;
+        strcpy( ptr, fci->szPrevDisk );
+        ptr += strlen( ptr ) + 1;
+    }
+
+    if (flags & cfheadNEXT_CABINET)
+    {
+        strcpy( ptr, fci->pccab->szCab );
+        ptr += strlen( ptr ) + 1;
+        strcpy( ptr, fci->pccab->szDisk );
+        ptr += strlen( ptr ) + 1;
+    }
+
+    assert( ptr - (char *)cfheader == header_size );
+
+    strcpy( filename, fci->ccab.szCabPath );
+    strcat( filename, fci->ccab.szCab );
+
+    if ((handle = fci->open( filename, _O_RDWR | _O_CREAT | _O_TRUNC | _O_BINARY,
+                             _S_IREAD | _S_IWRITE, &err, fci->pv )) == -1)
+    {
+        set_error( fci, FCIERR_CAB_FILE, err );
+        fci->free( cfheader );
+        return -1;
+    }
+
+    if (fci->write( handle, cfheader, header_size, &err, fci->pv ) != header_size)
+    {
+        set_error( fci, FCIERR_CAB_FILE, err );
+        goto failed;
+    }
+
+    /* add size of header size of all CFFOLDERs and size of all CFFILEs */
+    header_size += fci->placed_files_size + fci->folders_size;
+    if (!write_folders( fci, handle, header_size, status_callback )) goto failed;
+
+    /* FIXME: write data blocks here */
+    fci->free( cfheader );
+    return handle;
+
+failed:
+    fci->close( handle, &err, fci->pv );
+    fci->delete( filename, &err, fci->pv );
+    fci->free( cfheader );
+    return -1;
 }
 
 /* add all pending files to folder */
@@ -1263,19 +1366,10 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
 	PFNFCISTATUS          pfnfcis)
 {
   int err;
-  CFHEADER cfheader;
-  struct {
-    cab_UWORD  cbCFHeader;
-    cab_UBYTE  cbCFFolder;
-    cab_UBYTE  cbCFData;
-  } cfreserved;
-  cab_ULONG header_size;
-  cab_ULONG read_result=0;
+  cab_ULONG total_size, read_result=0;
   int handleCABINET;                            /* file handle for cabinet   */
-  char szFileNameCABINET[CB_MAX_CAB_PATH+CB_MAX_CABINET_NAME];/* name buffer */
-  UINT cbReserveCFHeader, cbReserveCFFolder, i;
-  char* reserved;
   BOOL returntrue=FALSE;
+  char signature[] = "MSCF";
 
   /* TODO test if fci_flush_cabinet really aborts if there was no FCIAddFile */
 
@@ -1302,196 +1396,20 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
       return FALSE;
   }
 
-  cbReserveCFFolder=p_fci_internal->ccab.cbReserveCFFolder;
-  cbReserveCFHeader=p_fci_internal->ccab.cbReserveCFHeader;
-  /* get the full name of the cabinet */
-  memcpy(szFileNameCABINET,p_fci_internal->ccab.szCabPath, CB_MAX_CAB_PATH);
-  memcpy(szFileNameCABINET+strlen(szFileNameCABINET), p_fci_internal->ccab.szCab, CB_MAX_CABINET_NAME);
-
-  memcpy(cfheader.signature,"!CAB",4);
-  cfheader.reserved1=0;
-  cfheader.cbCabinet=   /* size of the cabinet file in bytes */
+  total_size =   /* size of the cabinet file in bytes */
     get_header_size( p_fci_internal ) +
     p_fci_internal->folders_size +
     p_fci_internal->placed_files_size +
     p_fci_internal->data2.size;
-
-  if (cfheader.cbCabinet > p_fci_internal->ccab.cb)
+  if (total_size > p_fci_internal->ccab.cb)
   {
     set_error( p_fci_internal, FCIERR_NONE, ERROR_MORE_DATA );
     return FALSE;
   }
 
-
-  cfheader.reserved2=0;
-  cfheader.coffFiles=    /* offset to first CFFILE section */
-   cfheader.cbCabinet - p_fci_internal->placed_files_size -
-   p_fci_internal->data2.size;
-
-  cfheader.reserved3=0;
-  cfheader.versionMinor=3;
-  cfheader.versionMajor=1;
-  /* number of CFFOLDER entries in the cabinet */
-  cfheader.cFolders=p_fci_internal->cFolders;
-  /* number of CFFILE entries in the cabinet */
-  cfheader.cFiles=p_fci_internal->cFiles;
-  cfheader.flags=0;    /* 1=prev cab, 2=next cabinet, 4=reserved sections */
-
-  if( p_fci_internal->fPrevCab ) {
-    cfheader.flags = cfheadPREV_CABINET;
-  }
-
-  if( p_fci_internal->fNextCab ) {
-    cfheader.flags |= cfheadNEXT_CABINET;
-  }
-
-  if( p_fci_internal->ccab.cbReserveCFHeader != 0 ||
-      p_fci_internal->ccab.cbReserveCFFolder != 0 ||
-      p_fci_internal->ccab.cbReserveCFData   != 0 )
-      cfheader.flags |= cfheadRESERVE_PRESENT;
-  cfheader.setID = p_fci_internal->ccab.setID;
-  cfheader.iCabinet = p_fci_internal->ccab.iCab-1;
-
   /* create the cabinet */
-  handleCABINET = p_fci_internal->open( szFileNameCABINET, _O_RDWR | _O_CREAT | _O_TRUNC | _O_BINARY,
-                                        _S_IREAD | _S_IWRITE, &err, p_fci_internal->pv );
-  if(handleCABINET==-1)
-  {
-    set_error( p_fci_internal, FCIERR_CAB_FILE, err );
-    return FALSE;
-  }
-  /* TODO error checking of err */
-
-  /* set little endian */
-  cfheader.reserved1=fci_endian_ulong(cfheader.reserved1);
-  cfheader.cbCabinet=fci_endian_ulong(cfheader.cbCabinet);
-  cfheader.reserved2=fci_endian_ulong(cfheader.reserved2);
-  cfheader.coffFiles=fci_endian_ulong(cfheader.coffFiles);
-  cfheader.reserved3=fci_endian_ulong(cfheader.reserved3);
-  cfheader.cFolders=fci_endian_uword(cfheader.cFolders);
-  cfheader.cFiles=fci_endian_uword(cfheader.cFiles);
-  cfheader.flags=fci_endian_uword(cfheader.flags);
-  cfheader.setID=fci_endian_uword(cfheader.setID);
-  cfheader.iCabinet=fci_endian_uword(cfheader.iCabinet);
-
-  /* write CFHEADER into cabinet file */
-  if( p_fci_internal->write( handleCABINET, /* file handle */
-      &cfheader, /* memory buffer */
-      sizeof(cfheader), /* number of bytes to copy */
-      &err, p_fci_internal->pv) != sizeof(cfheader) ) {
-    /* write error */
-    set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
-    return FALSE;
-  }
-  /* TODO error handling of err */
-
-  /* reset little endian */
-  cfheader.reserved1=fci_endian_ulong(cfheader.reserved1);
-  cfheader.cbCabinet=fci_endian_ulong(cfheader.cbCabinet);
-  cfheader.reserved2=fci_endian_ulong(cfheader.reserved2);
-  cfheader.coffFiles=fci_endian_ulong(cfheader.coffFiles);
-  cfheader.reserved3=fci_endian_ulong(cfheader.reserved3);
-  cfheader.cFolders=fci_endian_uword(cfheader.cFolders);
-  cfheader.cFiles=fci_endian_uword(cfheader.cFiles);
-  cfheader.flags=fci_endian_uword(cfheader.flags);
-  cfheader.setID=fci_endian_uword(cfheader.setID);
-  cfheader.iCabinet=fci_endian_uword(cfheader.iCabinet);
-
-  if( cfheader.flags & cfheadRESERVE_PRESENT ) {
-    /* NOTE: No checks for maximum value overflows as designed by MS!!! */
-    cfreserved.cbCFHeader = cbReserveCFHeader;
-    cfreserved.cbCFFolder = cbReserveCFFolder;
-    cfreserved.cbCFData = p_fci_internal->ccab.cbReserveCFData;
-
-    /* set little endian */
-    cfreserved.cbCFHeader=fci_endian_uword(cfreserved.cbCFHeader);
-
-    /* write reserved info into cabinet file */
-    if( p_fci_internal->write( handleCABINET, /* file handle */
-        &cfreserved, /* memory buffer */
-        sizeof(cfreserved), /* number of bytes to copy */
-        &err, p_fci_internal->pv) != sizeof(cfreserved) ) {
-      /* write error */
-      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-
-    /* reset little endian */
-    cfreserved.cbCFHeader=fci_endian_uword(cfreserved.cbCFHeader);
-  }
-
-  /* add optional reserved area */
-  if (cbReserveCFHeader!=0) {
-    if(!(reserved = p_fci_internal->alloc( cbReserveCFHeader))) {
-      set_error( p_fci_internal, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
-      return FALSE;
-    }
-    for(i=0;i<cbReserveCFHeader;) {
-      reserved[i++]='\0';
-    }
-    if( p_fci_internal->write( handleCABINET, /* file handle */
-        reserved, /* memory buffer */
-        cbReserveCFHeader, /* number of bytes to copy */
-        &err, p_fci_internal->pv) != cbReserveCFHeader ) {
-      p_fci_internal->free(reserved);
-      /* write error */
-      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-    p_fci_internal->free(reserved);
-  }
-
-  if( cfheader.flags & cfheadPREV_CABINET ) {
-    if( p_fci_internal->write( handleCABINET, /* file handle */
-        p_fci_internal->szPrevCab, /* memory buffer */
-        strlen(p_fci_internal->szPrevCab)+1, /* number of bytes to copy */
-        &err, p_fci_internal->pv) != strlen(p_fci_internal->szPrevCab)+1 ) {
-      /* write error */
-      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-
-    if( p_fci_internal->write( handleCABINET, /* file handle */
-        p_fci_internal->szPrevDisk, /* memory buffer */
-        strlen(p_fci_internal->szPrevDisk)+1, /* number of bytes to copy */
-        &err, p_fci_internal->pv) != strlen(p_fci_internal->szPrevDisk)+1 ) {
-      /* write error */
-      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-  }
-
-  if( cfheader.flags & cfheadNEXT_CABINET ) {
-    if( p_fci_internal->write( handleCABINET, /* file handle */
-        p_fci_internal->pccab->szCab, /* memory buffer */
-        strlen(p_fci_internal->pccab->szCab)+1, /* number of bytes to copy */
-        &err, p_fci_internal->pv) != strlen(p_fci_internal->pccab->szCab)+1 ) {
-      /* write error */
-      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-
-    if( p_fci_internal->write( handleCABINET, /* file handle */
-        p_fci_internal->pccab->szDisk, /* memory buffer */
-        strlen(p_fci_internal->pccab->szDisk)+1, /* number of bytes to copy */
-        &err, p_fci_internal->pv) != strlen(p_fci_internal->pccab->szDisk)+1 ) {
-      /* write error */
-      set_error( p_fci_internal, FCIERR_CAB_FILE, ERROR_WRITE_FAULT );
-      return FALSE;
-    }
-    /* TODO error handling of err */
-  }
-
-  /* add size of header size of all CFFOLDERs and size of all CFFILEs */
-  header_size = get_header_size( p_fci_internal ) +
-      p_fci_internal->placed_files_size + p_fci_internal->folders_size;
-
-  if (!write_folders( p_fci_internal, handleCABINET, header_size, pfnfcis )) return FALSE;
+  handleCABINET = write_cabinet( p_fci_internal, pfnfcis );
+  if (handleCABINET == -1) return FALSE;
 
   /* set seek of p_fci_internal->data2.handle to 0 */
   if( p_fci_internal->seek(p_fci_internal->data2.handle,
@@ -1552,9 +1470,8 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
   /* TODO error handling of err */
 
   /* write the signature "MSCF" into the cabinet file */
-  memcpy( cfheader.signature, "MSCF", 4 );
   if( p_fci_internal->write( handleCABINET, /* file handle */
-      &cfheader, /* memory buffer */
+      signature, /* memory buffer */
       4, /* number of bytes to copy */
       &err, p_fci_internal->pv) != 4 ) {
     /* wrtie error */
@@ -1578,7 +1495,7 @@ static BOOL fci_flush_cabinet( FCI_Int *p_fci_internal,
   /* report status with pfnfcis about copied size of folder */
   (*pfnfcis)(statusCabinet,
     p_fci_internal->estimatedCabinetSize, /* estimated cabinet file size */
-    cfheader.cbCabinet /* real cabinet file size */, p_fci_internal->pv);
+    total_size /* real cabinet file size */, p_fci_internal->pv);
 
   p_fci_internal->fPrevCab=TRUE;
   /* The sections szPrevCab and szPrevDisk are not being updated, because */
