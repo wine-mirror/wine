@@ -1210,6 +1210,23 @@ cleanup:
 
 static HRESULT build_directsound_tree(IDxDiagContainerImpl_Container *node)
 {
+    static const WCHAR DxDiag_SoundDevices[] = {'D','x','D','i','a','g','_','S','o','u','n','d','D','e','v','i','c','e','s',0};
+    static const WCHAR DxDiag_SoundCaptureDevices[] = {'D','x','D','i','a','g','_','S','o','u','n','d','C','a','p','t','u','r','e','D','e','v','i','c','e','s',0};
+
+    IDxDiagContainerImpl_Container *cont;
+
+    cont = allocate_information_node(DxDiag_SoundDevices);
+    if (!cont)
+        return E_OUTOFMEMORY;
+
+    add_subcontainer(node, cont);
+
+    cont = allocate_information_node(DxDiag_SoundCaptureDevices);
+    if (!cont)
+        return E_OUTOFMEMORY;
+
+    add_subcontainer(node, cont);
+
     return S_OK;
 }
 
