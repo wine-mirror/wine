@@ -1106,11 +1106,11 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
         return FALSE;
     }
 
-    hover_time = ptme->dwHoverTime;
+    hover_time = (ptme->dwFlags & TME_HOVER) ? ptme->dwHoverTime : HOVER_DEFAULT;
 
-    /* if HOVER_DEFAULT was specified replace this with the systems current value.
+    /* if HOVER_DEFAULT was specified replace this with the system's current value.
      * TME_LEAVE doesn't need to specify hover time so use default */
-    if (hover_time == HOVER_DEFAULT || hover_time == 0 || !(ptme->dwHoverTime&TME_HOVER))
+    if (hover_time == HOVER_DEFAULT || hover_time == 0)
         SystemParametersInfoW(SPI_GETMOUSEHOVERTIME, 0, &hover_time, 0);
 
     GetCursorPos(&pos);
