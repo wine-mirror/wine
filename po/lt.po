@@ -3761,7 +3761,7 @@ msgstr "Vykdyti operaciją, net jei niekas nepasikeitė\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid\n"
-msgstr "Naudotojo profilis yra netinkamas."
+msgstr "Naudotojo profilis yra netinkamas\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"

@@ -4176,7 +4176,7 @@ msgstr "Échec de l'authentification mutuelle\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server\n"
-msgstr "Décalage horaire entre le client et le serveur"
+msgstr "Décalage horaire entre le client et le serveur\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
@@ -4616,7 +4616,7 @@ msgstr "Installation distante non autorisée\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install\n"
-msgstr "Redémarrage initié après une installation réussie"
+msgstr "Redémarrage initié après une installation réussie\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
@@ -5218,7 +5218,7 @@ msgstr "Tube RPC fermé\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
-msgstr "Erreur de discipline sur le tube RPC"
+msgstr "Erreur de discipline sur le tube RPC\n"
 
 #: winerror.mc:3676
 msgid "No data on RPC pipe\n"
