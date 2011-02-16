@@ -63,11 +63,13 @@ static const xmlChar XDR_schema[] = "Schema";
 static const xmlChar XDR_nsURI[] = "urn:schemas-microsoft-com:xml-data";
 static const xmlChar DT_nsURI[] = "urn:schemas-microsoft-com:datatypes";
 
-static xmlChar const*   datatypes_src = NULL;
-static int              datatypes_len = 0;
-static HGLOBAL          datatypes_handle = NULL;
-static HRSRC            datatypes_rsrc = NULL;
-static xmlSchemaPtr     datatypes_schema = NULL;
+static xmlChar const*   datatypes_src;
+static int              datatypes_len;
+static HGLOBAL          datatypes_handle;
+static HRSRC            datatypes_rsrc;
+static xmlSchemaPtr     datatypes_schema;
+
+static const WCHAR      emptyW[] = {0};
 
 /* Supported Types:
  * msxml3 - XDR only
@@ -1057,7 +1059,7 @@ static HRESULT WINAPI schema_cache_Invoke(IXMLDOMSchemaCollection2* iface,
 static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri, VARIANT var)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    xmlChar* name = xmlChar_from_wchar(uri);
+    xmlChar* name = uri ? xmlChar_from_wchar(uri) : xmlChar_from_wchar(emptyW);
     TRACE("(%p)->(%s, var(vt %x))\n", This, debugstr_w(uri), V_VT(&var));
 
     switch (V_VT(&var))
@@ -1158,7 +1160,7 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection2* iface, BSTR uri
     if (!node)
         return E_POINTER;
 
-    name = xmlChar_from_wchar(uri);
+    name = uri ? xmlChar_from_wchar(uri) : xmlChar_from_wchar(emptyW);
     entry = (cache_entry*) xmlHashLookup(This->cache, name);
     heap_free(name);
 
@@ -1173,7 +1175,7 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection2* iface, BSTR uri
 static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection2* iface, BSTR uri)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    xmlChar* name = xmlChar_from_wchar(uri);
+    xmlChar* name = uri ? xmlChar_from_wchar(uri) : xmlChar_from_wchar(emptyW);
     TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(uri));
 
     xmlHashRemoveEntry(This->cache, name, cache_free);

@@ -493,11 +493,14 @@ static void* _create_object(const GUID *clsid, const char *name, const IID *iid,
 
 static void test_schema_refs(void)
 {
+    static const WCHAR emptyW[] = {0};
     IXMLDOMDocument2 *doc;
+    IXMLDOMNode *node;
     IXMLDOMSchemaCollection *cache;
     VARIANT v;
     VARIANT_BOOL b;
     BSTR str;
+    LONG len;
 
     doc = create_document(&IID_IXMLDOMDocument2);
     if (!doc)
@@ -515,6 +518,39 @@ static void test_schema_refs(void)
     ole_check(IXMLDOMDocument2_loadXML(doc, str, &b));
     ok(b == VARIANT_TRUE, "b %04x\n", b);
     SysFreeString(str);
+
+    node = (void*)0xdeadbeef;
+    ole_check(IXMLDOMSchemaCollection_get(cache, NULL, &node));
+    ok(node == NULL, "%p\n", node);
+
+    /* NULL uri pointer, still adds a document */
+    ole_check(IXMLDOMSchemaCollection_add(cache, NULL, _variantdoc_(doc)));
+    len = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache, &len));
+    ok(len == 1, "got %d\n", len);
+    /* read back - empty valid BSTR */
+    str = NULL;
+    ole_check(IXMLDOMSchemaCollection_get_namespaceURI(cache, 0, &str));
+    ok(str && *str == 0, "got %p\n", str);
+    SysFreeString(str);
+
+    node = NULL;
+    ole_check(IXMLDOMSchemaCollection_get(cache, NULL, &node));
+    ok(node != NULL, "%p\n", node);
+    IXMLDOMNode_Release(node);
+
+    node = NULL;
+    str = SysAllocString(emptyW);
+    ole_check(IXMLDOMSchemaCollection_get(cache, str, &node));
+    ok(node != NULL, "%p\n", node);
+    IXMLDOMNode_Release(node);
+    SysFreeString(str);
+
+    /* remove with NULL uri */
+    ole_check(IXMLDOMSchemaCollection_remove(cache, NULL));
+    len = -1;
+    ole_check(IXMLDOMSchemaCollection_get_length(cache, &len));
+    ok(len == 0, "got %d\n", len);
 
     str = SysAllocString(xdr_schema_uri);
     ole_check(IXMLDOMSchemaCollection_add(cache, str, _variantdoc_(doc)));
