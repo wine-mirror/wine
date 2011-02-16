@@ -7724,8 +7724,16 @@ static void test_xsltemplate(void)
     hr = IXSLTemplate_createProcessor(template, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
+    ref = IXSLTemplate_AddRef(template);
+    IXSLTemplate_Release(template);
+    ok(ref == 2, "got %d\n", ref);
+
     hr = IXSLTemplate_createProcessor(template, &processor);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ref = IXSLTemplate_AddRef(template);
+    IXSLTemplate_Release(template);
+    ok(ref == 3, "got %d\n", ref);
 
     /* input no set yet */
     V_VT(&v) = VT_BSTR;
@@ -7755,6 +7763,9 @@ todo_wine {
     ref = IStream_AddRef(stream);
     IStream_Release(stream);
     todo_wine ok(ref == 4, "got %d\n", ref);
+
+    hr = IXSLProcessor_transform(processor, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     /* reset and check stream refcount */
     V_VT(&v) = VT_EMPTY;

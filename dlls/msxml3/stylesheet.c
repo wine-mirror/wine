@@ -50,11 +50,12 @@ typedef struct _xslprocessor
     IXSLProcessor IXSLProcessor_iface;
     LONG ref;
 
+    xsltemplate *stylesheet;
     IXMLDOMNode *input;
     IStream     *output;
 } xslprocessor;
 
-static HRESULT XSLProcessor_create(IXSLProcessor**);
+static HRESULT XSLProcessor_create(xsltemplate*, IXSLProcessor**);
 
 static inline xsltemplate *impl_from_IXSLTemplate( IXSLTemplate *iface )
 {
@@ -226,7 +227,7 @@ static HRESULT WINAPI xsltemplate_createProcessor( IXSLTemplate *iface,
 
     if (!processor) return E_INVALIDARG;
 
-    return XSLProcessor_create(processor);
+    return XSLProcessor_create(This, processor);
 }
 
 static const struct IXSLTemplateVtbl xsltemplate_vtbl =
@@ -308,6 +309,7 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
     {
         if (This->input) IXMLDOMNode_Release(This->input);
         if (This->output) IStream_Release(This->output);
+        IXSLTemplate_Release(&This->stylesheet->IXSLTemplate_iface);
         heap_free( This );
     }
 
@@ -516,12 +518,30 @@ static HRESULT WINAPI xslprocessor_get_output(
 
 static HRESULT WINAPI xslprocessor_transform(
     IXSLProcessor *iface,
-    VARIANT_BOOL  *pbool)
+    VARIANT_BOOL  *ret)
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
+    HRESULT hr;
+    BSTR p;
 
-    FIXME("(%p)->(%p): stub\n", This, pbool);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, ret);
+
+    if (!ret) return E_INVALIDARG;
+
+    hr = IXMLDOMNode_transformNode(This->input, This->stylesheet->node, &p);
+    if (hr == S_OK)
+    {
+        ULONG len = 0;
+
+        /* output to stream */
+        hr = IStream_Write(This->output, p, SysStringByteLen(p), &len);
+        *ret = len == SysStringByteLen(p) ? VARIANT_TRUE : VARIANT_FALSE;
+        SysFreeString(p);
+    }
+    else
+        *ret = VARIANT_FALSE;
+
+    return hr;
 }
 
 static HRESULT WINAPI xslprocessor_reset( IXSLProcessor *iface )
@@ -601,7 +621,7 @@ static const struct IXSLProcessorVtbl xslprocessor_vtbl =
     xslprocessor_get_stylesheet
 };
 
-HRESULT XSLProcessor_create(IXSLProcessor **ppObj)
+HRESULT XSLProcessor_create(xsltemplate *template, IXSLProcessor **ppObj)
 {
     xslprocessor *This;
 
@@ -615,6 +635,8 @@ HRESULT XSLProcessor_create(IXSLProcessor **ppObj)
     This->ref = 1;
     This->input = NULL;
     This->output = NULL;
+    This->stylesheet = template;
+    IXSLTemplate_AddRef(&template->IXSLTemplate_iface);
 
     *ppObj = &This->IXSLProcessor_iface;
 
