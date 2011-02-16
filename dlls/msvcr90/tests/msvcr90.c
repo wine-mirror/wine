@@ -87,7 +87,14 @@ typedef struct __type_info
   char  mangled[16];
 } type_info;
 
-static char* (WINAPI *p_type_info_name_internal_method)(type_info*);
+
+struct __type_info_node
+{
+    void *memPtr;
+    struct __type_info_node* next;
+};
+
+static char* (WINAPI *p_type_info_name_internal_method)(type_info*, struct __type_info_node *);
 static void  (WINAPI *ptype_info_dtor)(type_info*);
 
 static void* (WINAPI *pEncodePointer)(void *);
@@ -104,6 +111,7 @@ static inline int almost_equal_f(float f1, float f2)
 
 /* thiscall emulation */
 /* Emulate a __thiscall */
+#ifdef __i386__
 #ifdef _MSC_VER
 static inline void* do_call_func1(void *func, void *_this)
 {
@@ -155,8 +163,15 @@ static void* do_call_func2(void *func, void *_this, const void* arg)
 }
 #endif
 
-#define call_func1(x,y)   do_call_func1((void*)x,(void*)y)
-#define call_func2(x,y,z) do_call_func2((void*)x,(void*)y,(void*)z)
+#define call_func1(func,_this)   do_call_func1(func,_this)
+#define call_func2(func,_this,a) do_call_func2(func,_this,(const void*)a)
+
+#else
+
+#define call_func1(func,_this) func(_this)
+#define call_func2(func,_this,a) func(_this,a)
+
+#endif /* __i386__ */
 
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
@@ -863,13 +878,6 @@ if (0)
     p_free(mem);
 }
 
-#ifdef __i386__
-
-struct __type_info_node {
-    void *memPtr;
-    struct __type_info_node* next;
-};
-
 static void test_typeinfo(void)
 {
     static type_info t1 = { NULL, NULL,{'.','?','A','V','t','e','s','t','1','@','@',0,0,0,0,0 } };
@@ -894,11 +902,6 @@ static void test_typeinfo(void)
     ok(t1.name && !strcmp(t1.name, "class test1"), "demangled to '%s' for t1\n", t1.name);
     call_func1(ptype_info_dtor, &t1);
 }
-#else
-static void test_typeinfo(void)
-{
-}
-#endif
 
 START_TEST(msvcr90)
 {
@@ -938,9 +941,18 @@ START_TEST(msvcr90)
     p_realloc_crt = (void*) GetProcAddress(hcrt, "_realloc_crt");
     p_malloc = (void*) GetProcAddress(hcrt, "malloc");
     p_free = (void*)GetProcAddress(hcrt, "free");
-    p_type_info_name_internal_method = (void*)GetProcAddress(hcrt,
-      "?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z");
-    ptype_info_dtor = (void*)GetProcAddress(hcrt, "??1type_info@@UAE@XZ");
+    if (sizeof(void *) == 8)
+    {
+        p_type_info_name_internal_method = (void*)GetProcAddress(hcrt,
+                                "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
+        ptype_info_dtor = (void*)GetProcAddress(hcrt, "??1type_info@@UEAA@XZ");
+    }
+    else
+    {
+        p_type_info_name_internal_method = (void*)GetProcAddress(hcrt,
+                                "?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z");
+        ptype_info_dtor = (void*)GetProcAddress(hcrt, "??1type_info@@UAE@XZ");
+    }
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
