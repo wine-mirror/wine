@@ -630,7 +630,7 @@ static void call_continue(PROTOCOLDATA *protocol_data)
     case STATE_STARTDOWNLOADING:
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
             SET_EXPECT(OnResponse);
-            if(tested_protocol == HTTPS_TEST || test_redirect)
+            if(tested_protocol == HTTPS_TEST || test_redirect || test_abort)
                 SET_EXPECT(ReportProgress_ACCEPTRANGES);
             SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
             if(bindf & BINDF_NEEDFILE)
@@ -661,7 +661,7 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             state = STATE_DOWNLOADING;
             if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
                 CHECK_CALLED(OnResponse);
-                if(tested_protocol == HTTPS_TEST)
+                if(tested_protocol == HTTPS_TEST || test_abort)
                     CHECK_CALLED(ReportProgress_ACCEPTRANGES);
                 else if(test_redirect)
                     CLEAR_CALLED(ReportProgress_ACCEPTRANGES);
@@ -2893,6 +2893,8 @@ static void test_http_protocol(void)
     static const WCHAR redirect_url[] =
         {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
          't','e','s','t','r','e','d','i','r','e','c','t',0};
+    static const WCHAR winetest_url[] =
+        {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/','d','a','t','a','/',0};
 
     trace("Testing http protocol (not from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
@@ -2924,7 +2926,7 @@ static void test_http_protocol(void)
     test_http_protocol_url(redirect_url, HTTP_TEST, TEST_REDIRECT, TYMED_NULL);
 
     trace("Testing http protocol abort...\n");
-    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_ABORT, TYMED_NULL);
+    test_http_protocol_url(winetest_url, HTTP_TEST, TEST_ABORT, TYMED_NULL);
 
     test_early_abort(&CLSID_HttpProtocol);
     test_early_abort(&CLSID_HttpSProtocol);
