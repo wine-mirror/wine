@@ -203,9 +203,9 @@ HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, nsChannel
         hres = get_client_disp_property(This->doc_obj->client,
                 DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &offline);
         if(SUCCEEDED(hres)) {
-            if(V_VT(&silent) != VT_BOOL)
-                WARN("V_VT(offline) = %d\n", V_VT(&silent));
-            else if(V_BOOL(&silent))
+            if(V_VT(&offline) != VT_BOOL)
+                WARN("V_VT(offline) = %d\n", V_VT(&offline));
+            else if(V_BOOL(&offline))
                 FIXME("offline == true\n");
         }
     }
