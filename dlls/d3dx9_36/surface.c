@@ -598,6 +598,39 @@ static void init_argb_conversion_info(CONST PixelFormatDesc *srcformat, CONST Pi
     }
 }
 
+static DWORD dword_from_bytes(CONST BYTE *src, UINT bytes_per_pixel)
+{
+    DWORD ret = 0;
+    static BOOL fixme_once;
+
+    if(bytes_per_pixel > sizeof(DWORD)) {
+        if(!fixme_once) {
+            FIXME("Unsupported image: %u bytes per pixel\n", bytes_per_pixel);
+            fixme_once = TRUE;
+        }
+        bytes_per_pixel = sizeof(DWORD);
+    }
+
+    memcpy(&ret, src, bytes_per_pixel);
+    return ret;
+}
+
+static void dword_to_bytes(BYTE *dst, DWORD dword, UINT bytes_per_pixel)
+{
+    static BOOL fixme_once;
+
+    if(bytes_per_pixel > sizeof(DWORD)) {
+        if(!fixme_once++) {
+            FIXME("Unsupported image: %u bytes per pixel\n", bytes_per_pixel);
+            fixme_once = TRUE;
+        }
+        ZeroMemory(dst, bytes_per_pixel);
+        bytes_per_pixel = sizeof(DWORD);
+    }
+
+    memcpy(dst, &dword, bytes_per_pixel);
+}
+
 /************************************************************
  * get_relevant_argb_components
  *
@@ -618,20 +651,21 @@ static void get_relevant_argb_components(CONST struct argb_conversion_info *info
  * Recombines the output of get_relevant_argb_components and converts
  * it to the destination format.
  */
-static void make_argb_color(CONST struct argb_conversion_info *info, CONST DWORD *in, DWORD *out)
+static DWORD make_argb_color(CONST struct argb_conversion_info *info, CONST DWORD *in)
 {
     UINT i;
-    *out = 0;
+    DWORD val = 0;
 
     for(i = 0;i < 4;i++) {
         if(info->process_channel[i]) {
             /* necessary to make sure that e.g. an X4R4G4B4 white maps to an R8G8B8 white instead of 0xf0f0f0 */
             signed int shift;
-            for(shift = info->destshift[i]; shift > info->destformat->shift[i]; shift -= info->srcformat->bits[i]) *out |= in[i] << shift;
-            *out |= (in[i] >> (info->destformat->shift[i] - shift)) << info->destformat->shift[i];
+            for(shift = info->destshift[i]; shift > info->destformat->shift[i]; shift -= info->srcformat->bits[i]) val |= in[i] << shift;
+            val |= (in[i] >> (info->destformat->shift[i] - shift)) << info->destformat->shift[i];
         }
     }
-    *out |= info->channelmask;   /* new channels are set to their maximal value */
+    val |= info->channelmask;   /* new channels are set to their maximal value */
+    return val;
 }
 
 /************************************************************
@@ -668,23 +702,29 @@ static void copy_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
     }
 
     for(y = 0;y < minheight;y++) {
-        const BYTE *srcptr = src + y *  srcpitch;
+        const BYTE *srcptr = src + y * srcpitch;
         BYTE *destptr = dest + y * destpitch;
+        DWORD val = 0;
+
         for(x = 0;x < minwidth;x++) {
             /* extract source color components */
-            if(srcformat->type == FORMAT_ARGB) get_relevant_argb_components(&conv_info, *(const DWORD*)srcptr, channels);
-
-            /* recombine the components */
-            if(destformat->type == FORMAT_ARGB) make_argb_color(&conv_info, channels, (DWORD*)destptr);
-
-            if(colorkey) {
-                get_relevant_argb_components(&ck_conv_info, *(const DWORD*)srcptr, channels);
-                make_argb_color(&ck_conv_info, channels, &pixel);
-                if(pixel == colorkey)
-                    /* make this pixel transparent */
-                    *(DWORD *)destptr &= ~conv_info.destmask[0];
+            if(srcformat->type == FORMAT_ARGB) {
+                pixel = dword_from_bytes(srcptr, srcformat->bytes_per_pixel);
+                get_relevant_argb_components(&conv_info, pixel, channels);
             }
 
+            /* recombine the components */
+            if(destformat->type == FORMAT_ARGB) val = make_argb_color(&conv_info, channels);
+
+            if(colorkey) {
+                get_relevant_argb_components(&ck_conv_info, pixel, channels);
+                pixel = make_argb_color(&ck_conv_info, channels);
+                if(pixel == colorkey)
+                    /* make this pixel transparent */
+                    val &= ~conv_info.destmask[0];
+            }
+
+            dword_to_bytes(destptr, val, destformat->bytes_per_pixel);
             srcptr  +=  srcformat->bytes_per_pixel;
             destptr += destformat->bytes_per_pixel;
         }
@@ -732,21 +772,26 @@ static void point_filter_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsi
 
         for(x = 0;x < destsize.x;x++) {
             const BYTE *srcptr = bufptr + (x * srcsize.x / destsize.x) * srcformat->bytes_per_pixel;
+            DWORD val = 0;
 
             /* extract source color components */
-            if(srcformat->type == FORMAT_ARGB) get_relevant_argb_components(&conv_info, *(const DWORD*)srcptr, channels);
-
-            /* recombine the components */
-            if(destformat->type == FORMAT_ARGB) make_argb_color(&conv_info, channels, (DWORD*)destptr);
-
-            if(colorkey) {
-                get_relevant_argb_components(&ck_conv_info, *(const DWORD*)srcptr, channels);
-                make_argb_color(&ck_conv_info, channels, &pixel);
-                if(pixel == colorkey)
-                    /* make this pixel transparent */
-                    *(DWORD *)destptr &= ~conv_info.destmask[0];
+            if(srcformat->type == FORMAT_ARGB) {
+                pixel = dword_from_bytes(srcptr, srcformat->bytes_per_pixel);
+                get_relevant_argb_components(&conv_info, pixel, channels);
             }
 
+            /* recombine the components */
+            if(destformat->type == FORMAT_ARGB) val = make_argb_color(&conv_info, channels);
+
+            if(colorkey) {
+                get_relevant_argb_components(&ck_conv_info, pixel, channels);
+                pixel = make_argb_color(&ck_conv_info, channels);
+                if(pixel == colorkey)
+                    /* make this pixel transparent */
+                    val &= ~conv_info.destmask[0];
+            }
+
+            dword_to_bytes(destptr, val, destformat->bytes_per_pixel);
             destptr += destformat->bytes_per_pixel;
         }
     }
