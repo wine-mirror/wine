@@ -734,9 +734,16 @@ static void test_wintrust(void)
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
     ok(r == TRUST_E_NOSIGNATURE || r == CRYPT_E_FILE_ERROR,
      "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08x\n", r);
+    wtd.dwStateAction = WTD_STATEACTION_CLOSE;
+    r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    ok(r == S_OK, "WinVerifyTrust failed: %08x\n", r);
+    wtd.dwStateAction = WTD_STATEACTION_VERIFY;
     hr = WinVerifyTrustEx(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
-    ok(hr == TRUST_E_NOSIGNATURE || r == CRYPT_E_FILE_ERROR,
+    ok(hr == TRUST_E_NOSIGNATURE || hr == CRYPT_E_FILE_ERROR,
      "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08x\n", hr);
+    wtd.dwStateAction = WTD_STATEACTION_CLOSE;
+    r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    ok(r == S_OK, "WinVerifyTrust failed: %08x\n", r);
 }
 
 static void test_get_known_usages(void)
