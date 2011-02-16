@@ -49,6 +49,8 @@ typedef struct _xslprocessor
 {
     IXSLProcessor IXSLProcessor_iface;
     LONG ref;
+
+    IXMLDOMNode *input;
 } xslprocessor;
 
 static HRESULT XSLProcessor_create(IXSLProcessor**);
@@ -302,7 +304,10 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
 
     ref = InterlockedDecrement( &This->ref );
     if ( ref == 0 )
+    {
+        if (This->input) IXMLDOMNode_Release(This->input);
         heap_free( This );
+    }
 
     return ref;
 }
@@ -381,9 +386,39 @@ static HRESULT WINAPI xslprocessor_Invoke(
 static HRESULT WINAPI xslprocessor_put_input( IXSLProcessor *iface, VARIANT input )
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
+    IXMLDOMNode *input_node;
+    HRESULT hr;
 
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&input));
+
+    /* try IXMLDOMNode directly first */
+    if (V_VT(&input) == VT_UNKNOWN)
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&input), &IID_IXMLDOMNode, (void**)&input_node);
+    else if (V_VT(&input) == VT_DISPATCH)
+        hr = IDispatch_QueryInterface(V_DISPATCH(&input), &IID_IXMLDOMNode, (void**)&input_node);
+    else
+    {
+        IXMLDOMDocument *doc;
+
+        hr = DOMDocument_create(&CLSID_DOMDocument, NULL, (void**)&doc);
+        if (hr == S_OK)
+        {
+            VARIANT_BOOL b;
+
+            hr = IXMLDOMDocument_load(doc, input, &b);
+            if (hr == S_OK)
+                hr = IXMLDOMDocument_QueryInterface(doc, &IID_IXMLDOMNode, (void**)&input_node);
+            IXMLDOMDocument_Release(doc);
+        }
+    }
+
+    if (hr == S_OK)
+    {
+        if (This->input) IXMLDOMNode_Release(This->input);
+        This->input = input_node;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI xslprocessor_get_input( IXSLProcessor *iface, VARIANT *input )
@@ -554,6 +589,7 @@ HRESULT XSLProcessor_create(IXSLProcessor **ppObj)
 
     This->IXSLProcessor_iface.lpVtbl = &xslprocessor_vtbl;
     This->ref = 1;
+    This->input = NULL;
 
     *ppObj = &This->IXSLProcessor_iface;
 

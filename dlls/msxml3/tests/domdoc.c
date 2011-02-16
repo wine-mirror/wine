@@ -7666,6 +7666,7 @@ static void test_xsltemplate(void)
     VARIANT_BOOL b;
     HRESULT hr;
     ULONG ref1, ref2;
+    VARIANT v;
 
     template = create_xsltemplate(&IID_IXSLTemplate);
     if (!template) return;
@@ -7724,6 +7725,15 @@ static void test_xsltemplate(void)
 
     hr = IXSLTemplate_createProcessor(template, &processor);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* input no set yet */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = NULL;
+    hr = IXSLProcessor_get_input(processor, &v);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&v) == VT_EMPTY, "got %d\n", V_VT(&v));
+}
     IXSLProcessor_Release(processor);
 
     /* drop reference */
