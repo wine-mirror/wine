@@ -51,6 +51,7 @@ typedef struct _xslprocessor
     LONG ref;
 
     IXMLDOMNode *input;
+    IStream     *output;
 } xslprocessor;
 
 static HRESULT XSLProcessor_create(IXSLProcessor**);
@@ -306,6 +307,7 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
     if ( ref == 0 )
     {
         if (This->input) IXMLDOMNode_Release(This->input);
+        if (This->output) IStream_Release(This->output);
         heap_free( This );
     }
 
@@ -475,9 +477,31 @@ static HRESULT WINAPI xslprocessor_put_output(
     VARIANT output)
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
+    IStream *stream;
+    HRESULT hr;
 
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    FIXME("(%p)->(%s): semi-stub\n", This, debugstr_variant(&output));
+
+    switch (V_VT(&output))
+    {
+      case VT_EMPTY:
+        stream = NULL;
+        hr = S_OK;
+        break;
+      case VT_UNKNOWN:
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&output), &IID_IStream, (void**)&stream);
+        break;
+      default:
+        hr = E_FAIL;
+    }
+
+    if (hr == S_OK)
+    {
+        if (This->output) IStream_Release(This->output);
+        This->output = stream;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI xslprocessor_get_output(
@@ -590,6 +614,7 @@ HRESULT XSLProcessor_create(IXSLProcessor **ppObj)
     This->IXSLProcessor_iface.lpVtbl = &xslprocessor_vtbl;
     This->ref = 1;
     This->input = NULL;
+    This->output = NULL;
 
     *ppObj = &This->IXSLProcessor_iface;
 

@@ -7663,9 +7663,10 @@ static void test_xsltemplate(void)
     IXSLTemplate *template;
     IXSLProcessor *processor;
     IXMLDOMDocument *doc;
+    IStream *stream;
     VARIANT_BOOL b;
     HRESULT hr;
-    ULONG ref1, ref2;
+    ULONG ref1, ref2, ref;
     VARIANT v;
 
     template = create_xsltemplate(&IID_IXSLTemplate);
@@ -7734,6 +7735,37 @@ todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&v) == VT_EMPTY, "got %d\n", V_VT(&v));
 }
+
+    /* reset before it was set */
+    V_VT(&v) = VT_EMPTY;
+    hr = IXSLProcessor_put_output(processor, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ref = IStream_AddRef(stream);
+    IStream_Release(stream);
+    ok(ref == 2, "got %d\n", ref);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown*)stream;
+    hr = IXSLProcessor_put_output(processor, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* it seems processor grabs 2 references */
+    ref = IStream_AddRef(stream);
+    IStream_Release(stream);
+    todo_wine ok(ref == 4, "got %d\n", ref);
+
+    /* reset and check stream refcount */
+    V_VT(&v) = VT_EMPTY;
+    hr = IXSLProcessor_put_output(processor, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ref = IStream_AddRef(stream);
+    IStream_Release(stream);
+    ok(ref == 2, "got %d\n", ref);
+
+    IStream_Release(stream);
     IXSLProcessor_Release(processor);
 
     /* drop reference */
