@@ -415,6 +415,7 @@ BOOL TERM_Init(void)
 {
     /* if we're not attached to a tty, don't fire the curses support */
     if (!isatty(0) || !isatty(1)) return FALSE;
+    if (!getenv("TERM")) return FALSE;
     if (!TERM_bind_libcurses()) return FALSE;
     if (setupterm(NULL, 1 /* really ?? */, NULL) == -1) return FALSE;
     TERM_init_done = TRUE;
