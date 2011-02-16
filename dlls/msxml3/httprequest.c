@@ -505,7 +505,8 @@ static HRESULT WINAPI httprequest_QueryInterface(IXMLHTTPRequest *iface, REFIID 
     }
     else
     {
-        FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+        TRACE("Unsupported interface %s\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 
