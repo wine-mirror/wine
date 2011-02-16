@@ -410,8 +410,309 @@ static void test_reflection_desc_vs(void)
     ok(count == 0, "Release failed %u\n", count);
 }
 
+/*
+ * fxc.exe /E PS /Tps_4_1 /Fx
+ */
+#if 0
+Texture2D tex1;
+Texture2D tex2;
+SamplerState sam
+{
+    Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+SamplerComparisonState samc
+{
+    Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = w1;
+    AddressV = Wrap;
+    ComparisonFunc = LESS;
+};
+struct psin
+{
+    uint f : SV_RenderTargetArrayIndex;
+    uint g : SV_InstanceID;
+    uint h : SV_PrimitiveID;
+    float2 uv : TEXCOORD;
+    float4 a : COLOR3;
+    float b : VFACE;
+    float4 c : SV_position;
+    bool d : SV_Coverage;
+    bool e : SV_IsFrontFace;
+};
+struct psout
+{
+    float a : SV_Target1;
+    float b : SV_Depth;
+    float x : SV_Target;
+    bool c : SV_Coverage;
+};
+psout PS(psin p)
+{
+    psout a;
+    float4 x = tex1.Sample(sam, p.uv);
+    x += tex1.SampleCmp(samc, p.uv, 0.3f);
+    if (x.y < 0.1f)
+        x += tex2.SampleCmp(samc, p.uv, 0.4f);
+    else if (x.y < 0.2f)
+        x += tex2.SampleCmp(samc, p.uv, 0.1f);
+    else if (x.y < 0.3f)
+        x += tex2.SampleBias(sam, p.uv, 0.1f);
+    else if (x.y < 0.4f)
+        x += tex2.SampleBias(sam, p.uv, 0.2f);
+    else if (x.y < 0.5f)
+        x += tex2.SampleBias(sam, p.uv, 0.3f);
+    else
+        x += tex2.SampleBias(sam, p.uv, 0.4f);
+    x += tex2.SampleGrad(sam, p.uv, x.xy, x.xy);
+    x += tex2.SampleGrad(sam, p.uv, x.xz, x.xz);
+    x += tex2.SampleGrad(sam, p.uv, x.xz, x.zy);
+    x += tex2.SampleGrad(sam, p.uv, x.xz, x.zw);
+    x += tex2.SampleGrad(sam, p.uv, x.xz, x.wz);
+    a.a = x.y;
+    a.b = x.x;
+    a.x = x.x;
+    a.c = true;
+    return a;
+}
+#endif
+static DWORD test_reflection_desc_ps_blob[] = {
+0x43425844, 0x19e2f325, 0xf1ec39a3, 0x3c5a8b53, 0x5bd5fb65, 0x00000001, 0x000008d0, 0x00000005,
+0x00000034, 0x0000011c, 0x00000254, 0x000002e4, 0x00000854, 0x46454452, 0x000000e0, 0x00000000,
+0x00000000, 0x00000004, 0x0000001c, 0xffff0401, 0x00000100, 0x000000af, 0x0000009c, 0x00000003,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x000000a0, 0x00000003,
+0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000002, 0x000000a5, 0x00000002,
+0x00000005, 0x00000004, 0xffffffff, 0x00000000, 0x00000001, 0x0000000c, 0x000000aa, 0x00000002,
+0x00000005, 0x00000004, 0xffffffff, 0x00000001, 0x00000001, 0x0000000c, 0x006d6173, 0x636d6173,
+0x78657400, 0x65740031, 0x4d003278, 0x6f726369, 0x74666f73, 0x29522820, 0x534c4820, 0x6853204c,
+0x72656461, 0x6d6f4320, 0x656c6970, 0x2e392072, 0x392e3932, 0x332e3235, 0x00313131, 0x4e475349,
+0x00000130, 0x00000008, 0x00000008, 0x000000c8, 0x00000000, 0x00000004, 0x00000001, 0x00000000,
+0x00000001, 0x000000e2, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000002, 0x000000f0,
+0x00000000, 0x00000007, 0x00000001, 0x00000000, 0x00000004, 0x000000ff, 0x00000000, 0x00000009,
+0x00000001, 0x00000000, 0x00000008, 0x0000010e, 0x00000000, 0x00000000, 0x00000003, 0x00000001,
+0x00000303, 0x00000117, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x00000004, 0x0000011d,
+0x00000003, 0x00000000, 0x00000003, 0x00000002, 0x0000000f, 0x00000123, 0x00000000, 0x00000001,
+0x00000003, 0x00000003, 0x0000000f, 0x525f5653, 0x65646e65, 0x72615472, 0x41746567, 0x79617272,
+0x65646e49, 0x56530078, 0x736e495f, 0x636e6174, 0x00444965, 0x505f5653, 0x696d6972, 0x65766974,
+0x53004449, 0x73495f56, 0x6e6f7246, 0x63614674, 0x45540065, 0x4f4f4358, 0x56004452, 0x45434146,
+0x4c4f4300, 0x5300524f, 0x6f705f56, 0x69746973, 0xab006e6f, 0x4e47534f, 0x00000088, 0x00000004,
+0x00000008, 0x00000068, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000e01, 0x00000068,
+0x00000001, 0x00000000, 0x00000003, 0x00000001, 0x00000e01, 0x00000072, 0x00000000, 0x00000000,
+0x00000001, 0xffffffff, 0x00000e01, 0x0000007e, 0x00000000, 0x00000000, 0x00000003, 0xffffffff,
+0x00000e01, 0x545f5653, 0x65677261, 0x56530074, 0x766f435f, 0x67617265, 0x56530065, 0x7065445f,
+0xab006874, 0x52444853, 0x00000568, 0x00000041, 0x0000015a, 0x0100086a, 0x0300005a, 0x00106000,
+0x00000000, 0x0300085a, 0x00106000, 0x00000001, 0x04001858, 0x00107000, 0x00000000, 0x00005555,
+0x04001858, 0x00107000, 0x00000001, 0x00005555, 0x03001062, 0x00101032, 0x00000001, 0x03000065,
+0x00102012, 0x00000000, 0x03000065, 0x00102012, 0x00000001, 0x02000065, 0x0000f000, 0x02000065,
+0x0000c001, 0x02000068, 0x00000003, 0x09000045, 0x001000f2, 0x00000000, 0x00101046, 0x00000001,
+0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0b000046, 0x00100012, 0x00000001, 0x00101046,
+0x00000001, 0x00107006, 0x00000000, 0x00106000, 0x00000001, 0x00004001, 0x3e99999a, 0x07000000,
+0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x00100006, 0x00000001, 0x07000031, 0x00100012,
+0x00000001, 0x0010001a, 0x00000000, 0x00004001, 0x3dcccccd, 0x0304001f, 0x0010000a, 0x00000001,
+0x0b000046, 0x00100012, 0x00000001, 0x00101046, 0x00000001, 0x00107006, 0x00000001, 0x00106000,
+0x00000001, 0x00004001, 0x3ecccccd, 0x07000000, 0x001000f2, 0x00000001, 0x00100e46, 0x00000000,
+0x00100006, 0x00000001, 0x01000012, 0x07000031, 0x00100012, 0x00000002, 0x0010001a, 0x00000000,
+0x00004001, 0x3e4ccccd, 0x0304001f, 0x0010000a, 0x00000002, 0x0b000046, 0x00100012, 0x00000002,
+0x00101046, 0x00000001, 0x00107006, 0x00000001, 0x00106000, 0x00000001, 0x00004001, 0x3dcccccd,
+0x07000000, 0x001000f2, 0x00000001, 0x00100e46, 0x00000000, 0x00100006, 0x00000002, 0x01000012,
+0x07000031, 0x00100012, 0x00000002, 0x0010001a, 0x00000000, 0x00004001, 0x3e99999a, 0x0304001f,
+0x0010000a, 0x00000002, 0x0b00004a, 0x001000f2, 0x00000002, 0x00101046, 0x00000001, 0x00107e46,
+0x00000001, 0x00106000, 0x00000000, 0x00004001, 0x3dcccccd, 0x07000000, 0x001000f2, 0x00000001,
+0x00100e46, 0x00000000, 0x00100e46, 0x00000002, 0x01000012, 0x07000031, 0x00100012, 0x00000002,
+0x0010001a, 0x00000000, 0x00004001, 0x3ecccccd, 0x0304001f, 0x0010000a, 0x00000002, 0x0b00004a,
+0x001000f2, 0x00000002, 0x00101046, 0x00000001, 0x00107e46, 0x00000001, 0x00106000, 0x00000000,
+0x00004001, 0x3e4ccccd, 0x07000000, 0x001000f2, 0x00000001, 0x00100e46, 0x00000000, 0x00100e46,
+0x00000002, 0x01000012, 0x07000031, 0x00100012, 0x00000002, 0x0010001a, 0x00000000, 0x00004001,
+0x3f000000, 0x0304001f, 0x0010000a, 0x00000002, 0x0b00004a, 0x001000f2, 0x00000002, 0x00101046,
+0x00000001, 0x00107e46, 0x00000001, 0x00106000, 0x00000000, 0x00004001, 0x3e99999a, 0x07000000,
+0x001000f2, 0x00000001, 0x00100e46, 0x00000000, 0x00100e46, 0x00000002, 0x01000012, 0x0b00004a,
+0x001000f2, 0x00000002, 0x00101046, 0x00000001, 0x00107e46, 0x00000001, 0x00106000, 0x00000000,
+0x00004001, 0x3ecccccd, 0x07000000, 0x001000f2, 0x00000001, 0x00100e46, 0x00000000, 0x00100e46,
+0x00000002, 0x01000015, 0x01000015, 0x01000015, 0x01000015, 0x01000015, 0x0d000049, 0x001000f2,
+0x00000000, 0x00101046, 0x00000001, 0x00107e46, 0x00000001, 0x00106000, 0x00000000, 0x00100046,
+0x00000001, 0x00100046, 0x00000001, 0x07000000, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000,
+0x00100e46, 0x00000001, 0x0d000049, 0x001000f2, 0x00000001, 0x00101046, 0x00000001, 0x00107e46,
+0x00000001, 0x00106000, 0x00000000, 0x00100086, 0x00000000, 0x00100086, 0x00000000, 0x07000000,
+0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x00100e46, 0x00000001, 0x0d000049, 0x001000f2,
+0x00000001, 0x00101046, 0x00000001, 0x00107e46, 0x00000001, 0x00106000, 0x00000000, 0x00100086,
+0x00000000, 0x00100a66, 0x00000000, 0x07000000, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000,
+0x00100e46, 0x00000001, 0x0d000049, 0x001000f2, 0x00000001, 0x00101046, 0x00000001, 0x00107e46,
+0x00000001, 0x00106000, 0x00000000, 0x00100086, 0x00000000, 0x00100ae6, 0x00000000, 0x07000000,
+0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x00100e46, 0x00000001, 0x0d000049, 0x001000c2,
+0x00000000, 0x00101046, 0x00000001, 0x001074e6, 0x00000001, 0x00106000, 0x00000000, 0x00100086,
+0x00000000, 0x00100fb6, 0x00000000, 0x07000000, 0x00100032, 0x00000000, 0x00100ae6, 0x00000000,
+0x00100046, 0x00000000, 0x05000036, 0x00102012, 0x00000001, 0x0010001a, 0x00000000, 0x04000036,
+0x0000c001, 0x0010000a, 0x00000000, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000,
+0x04000036, 0x0000f001, 0x00004001, 0xffffffff, 0x0100003e, 0x54415453, 0x00000074, 0x00000032,
+0x00000003, 0x00000000, 0x00000005, 0x00000011, 0x00000000, 0x00000000, 0x00000006, 0x00000005,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000003,
+0x00000004, 0x00000005, 0x00000018, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000,
+};
+
+static const D3D11_SIGNATURE_PARAMETER_DESC test_reflection_desc_ps_resultin[] =
+{
+    {"SV_RenderTargetArrayIndex", 0, 0, D3D_NAME_RENDER_TARGET_ARRAY_INDEX, D3D_REGISTER_COMPONENT_UINT32, 0x1, 0x0, 0},
+    {"SV_InstanceID", 0, 0, D3D_NAME_UNDEFINED, D3D_REGISTER_COMPONENT_UINT32, 0x2, 0x0, 0},
+    {"SV_PrimitiveID", 0, 0, D3D_NAME_PRIMITIVE_ID, D3D_REGISTER_COMPONENT_UINT32, 0x4, 0x0, 0},
+    {"SV_IsFrontFace", 0, 0, D3D_NAME_IS_FRONT_FACE, D3D_REGISTER_COMPONENT_UINT32, 0x8, 0x0, 0},
+    {"TEXCOORD", 0, 1, D3D_NAME_UNDEFINED, D3D_REGISTER_COMPONENT_FLOAT32, 0x3, 0x3, 0},
+    {"VFACE", 0, 1, D3D_NAME_UNDEFINED, D3D_REGISTER_COMPONENT_FLOAT32, 0x4, 0x0, 0},
+    {"COLOR", 3, 2, D3D_NAME_UNDEFINED, D3D_REGISTER_COMPONENT_FLOAT32, 0xf, 0x0, 0},
+    {"SV_position", 0, 3, D3D_NAME_POSITION, D3D_REGISTER_COMPONENT_FLOAT32, 0xf, 0x0, 0},
+};
+
+static const D3D11_SIGNATURE_PARAMETER_DESC test_reflection_desc_ps_resultout[] =
+{
+    {"SV_Target", 0, 0, D3D_NAME_TARGET, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0},
+    {"SV_Target", 1, 1, D3D_NAME_TARGET, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0},
+    {"SV_Coverage", 0, 0xffffffff, D3D_NAME_COVERAGE, D3D_REGISTER_COMPONENT_UINT32, 0x1, 0xe, 0},
+    {"SV_Depth", 0, 0xffffffff, D3D_NAME_DEPTH, D3D_REGISTER_COMPONENT_FLOAT32, 0x1, 0xe, 0},
+};
+
+static void test_reflection_desc_ps(void)
+{
+    HRESULT hr;
+    ULONG count;
+    ID3D11ShaderReflection *ref11;
+    D3D11_SHADER_DESC sdesc11 = {0};
+    D3D11_SIGNATURE_PARAMETER_DESC desc = {0};
+    const D3D11_SIGNATURE_PARAMETER_DESC *pdesc;
+    UINT ret;
+    unsigned int i;
+
+    hr = D3DReflect(test_reflection_desc_ps_blob, test_reflection_desc_ps_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    ok(hr == S_OK, "D3DReflect failed %x\n", hr);
+
+    hr = ref11->lpVtbl->GetDesc(ref11, &sdesc11);
+    ok(hr == S_OK, "GetDesc failed %x\n", hr);
+
+    ok(sdesc11.Version == 65, "GetDesc failed, got %u, expected %u\n", sdesc11.Version, 65);
+    ok(strcmp(sdesc11.Creator, (char*) shader_creator) == 0, "GetDesc failed, got \"%s\", expected \"%s\"\n", sdesc11.Creator, (char*)shader_creator);
+    ok(sdesc11.Flags == 256, "GetDesc failed, got %u, expected %u\n", sdesc11.Flags, 256);
+    ok(sdesc11.ConstantBuffers == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.ConstantBuffers, 0);
+    ok(sdesc11.BoundResources == 4, "GetDesc failed, got %u, expected %u\n", sdesc11.BoundResources, 4);
+    ok(sdesc11.InputParameters == 8, "GetDesc failed, got %u, expected %u\n", sdesc11.InputParameters, 8);
+    ok(sdesc11.OutputParameters == 4, "GetDesc failed, got %u, expected %u\n", sdesc11.OutputParameters, 4);
+    ok(sdesc11.InstructionCount == 50, "GetDesc failed, got %u, expected %u\n", sdesc11.InstructionCount, 50);
+    ok(sdesc11.TempRegisterCount == 3, "GetDesc failed, got %u, expected %u\n", sdesc11.TempRegisterCount, 3);
+    ok(sdesc11.TempArrayCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.TempArrayCount, 0);
+    ok(sdesc11.DefCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.DefCount, 0);
+    ok(sdesc11.DclCount == 5, "GetDesc failed, got %u, expected %u\n", sdesc11.DclCount, 5);
+    ok(sdesc11.TextureNormalInstructions == 1, "GetDesc failed, got %u, expected %u\n", sdesc11.TextureNormalInstructions, 1);
+    ok(sdesc11.TextureLoadInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.TextureLoadInstructions, 0);
+    ok(sdesc11.TextureCompInstructions == 3, "GetDesc failed, got %u, expected %u\n", sdesc11.TextureCompInstructions, 3);
+    ok(sdesc11.TextureBiasInstructions == 4, "GetDesc failed, got %u, expected %u\n", sdesc11.TextureBiasInstructions, 4);
+    ok(sdesc11.TextureGradientInstructions == 5, "GetDesc failed, got %u, expected %u\n", sdesc11.TextureGradientInstructions, 5);
+    ok(sdesc11.FloatInstructionCount == 17, "GetDesc failed, got %u, expected %u\n", sdesc11.FloatInstructionCount, 17);
+    ok(sdesc11.IntInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.IntInstructionCount, 0);
+    ok(sdesc11.UintInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.UintInstructionCount, 0);
+    ok(sdesc11.StaticFlowControlCount == 6, "GetDesc failed, got %u, expected %u\n", sdesc11.StaticFlowControlCount, 6);
+    ok(sdesc11.DynamicFlowControlCount == 5, "GetDesc failed, got %u, expected %u\n", sdesc11.DynamicFlowControlCount, 5);
+    ok(sdesc11.MacroInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.MacroInstructionCount, 0);
+    ok(sdesc11.ArrayInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.ArrayInstructionCount, 0);
+    ok(sdesc11.CutInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.CutInstructionCount, 0);
+    ok(sdesc11.EmitInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.EmitInstructionCount, 0);
+    ok(sdesc11.GSOutputTopology == 0, "GetDesc failed, got %x, expected %x\n", sdesc11.GSOutputTopology, 0);
+    ok(sdesc11.GSMaxOutputVertexCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.GSMaxOutputVertexCount, 0);
+    ok(sdesc11.InputPrimitive == 0, "GetDesc failed, got %x, expected %x\n", sdesc11.InputPrimitive, 0);
+    ok(sdesc11.PatchConstantParameters == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.PatchConstantParameters, 0);
+    ok(sdesc11.cGSInstanceCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cGSInstanceCount, 0);
+    ok(sdesc11.cControlPoints == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cControlPoints, 0);
+    ok(sdesc11.HSOutputPrimitive == 0, "GetDesc failed, got %x, expected %x\n", sdesc11.HSOutputPrimitive, 0);
+    ok(sdesc11.HSPartitioning == 0, "GetDesc failed, got %x, expected %x\n", sdesc11.HSPartitioning, 0);
+    ok(sdesc11.TessellatorDomain == 0, "GetDesc failed, got %x, expected %x\n", sdesc11.TessellatorDomain, 0);
+    ok(sdesc11.cBarrierInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cBarrierInstructions, 0);
+    ok(sdesc11.cInterlockedInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cInterlockedInstructions, 0);
+    ok(sdesc11.cTextureStoreInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc11.cTextureStoreInstructions, 0);
+
+    ret = ref11->lpVtbl->GetBitwiseInstructionCount(ref11);
+    ok(ret == 0, "GetBitwiseInstructionCount failed, got %u, expected %u\n", ret, 0);
+
+    ret = ref11->lpVtbl->GetConversionInstructionCount(ref11);
+    ok(ret == 0, "GetConversionInstructionCount failed, got %u, expected %u\n", ret, 0);
+
+    ret = ref11->lpVtbl->GetMovInstructionCount(ref11);
+    ok(ret == 24, "GetMovInstructionCount failed, got %u, expected %u\n", ret, 24);
+
+    ret = ref11->lpVtbl->GetMovcInstructionCount(ref11);
+    ok(ret == 0, "GetMovcInstructionCount failed, got %u, expected %u\n", ret, 0);
+
+    /* check invalid Get*ParameterDesc cases*/
+    hr = ref11->lpVtbl->GetInputParameterDesc(ref11, 0, NULL);
+    ok(hr == E_INVALIDARG, "GetInputParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+
+    hr = ref11->lpVtbl->GetInputParameterDesc(ref11, 0xffffffff, &desc);
+    ok(hr == E_INVALIDARG, "GetInputParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+
+    hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, 0, NULL);
+    ok(hr == E_INVALIDARG, "GetOutputParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+
+    hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, 0xffffffff, &desc);
+    ok(hr == E_INVALIDARG, "GetOutputParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+
+    hr = ref11->lpVtbl->GetPatchConstantParameterDesc(ref11, 0, &desc);
+    ok(hr == E_INVALIDARG, "GetPatchConstantParameterDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
+
+    /* GetIn/OutputParameterDesc */
+    for (i = 0; i < sizeof(test_reflection_desc_ps_resultin)/sizeof(*test_reflection_desc_ps_resultin); ++i)
+    {
+        pdesc = &test_reflection_desc_ps_resultin[i];
+
+        hr = ref11->lpVtbl->GetInputParameterDesc(ref11, i, &desc);
+        ok(hr == S_OK, "GetInputParameterDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+
+        ok(!strcmp(desc.SemanticName, pdesc->SemanticName), "GetInputParameterDesc(%u) SemanticName failed, got \"%s\", expected \"%s\"\n",
+                i, desc.SemanticName, pdesc->SemanticName);
+        ok(desc.SemanticIndex == pdesc->SemanticIndex, "GetInputParameterDesc(%u) SemanticIndex failed, got %u, expected %u\n",
+                i, desc.SemanticIndex, pdesc->SemanticIndex);
+        ok(desc.Register == pdesc->Register, "GetInputParameterDesc(%u) Register failed, got %u, expected %u\n",
+                i, desc.Register, pdesc->Register);
+        ok(desc.SystemValueType == pdesc->SystemValueType, "GetInputParameterDesc(%u) SystemValueType failed, got %x, expected %x\n",
+                i, desc.SystemValueType, pdesc->SystemValueType);
+        ok(desc.ComponentType == pdesc->ComponentType, "GetInputParameterDesc(%u) ComponentType failed, got %x, expected %x\n",
+                i, desc.ComponentType, pdesc->ComponentType);
+        ok(desc.Mask == pdesc->Mask, "GetInputParameterDesc(%u) Mask failed, got %x, expected %x\n",
+                i, desc.Mask, pdesc->Mask);
+        ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetInputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
+                i, desc.ReadWriteMask, pdesc->ReadWriteMask);
+        ok(desc.Stream == pdesc->Stream, "GetInputParameterDesc(%u) Stream failed, got %u, expected %u\n",
+                i, desc.Stream, pdesc->ReadWriteMask);
+    }
+
+    for (i = 0; i < sizeof(test_reflection_desc_ps_resultout)/sizeof(*test_reflection_desc_ps_resultout); ++i)
+    {
+        pdesc = &test_reflection_desc_ps_resultout[i];
+
+        hr = ref11->lpVtbl->GetOutputParameterDesc(ref11, i, &desc);
+        ok(hr == S_OK, "GetOutputParameterDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+
+        ok(!strcmp(desc.SemanticName, pdesc->SemanticName), "GetOutputParameterDesc(%u) SemanticName failed, got \"%s\", expected \"%s\"\n",
+                i, desc.SemanticName, pdesc->SemanticName);
+        ok(desc.SemanticIndex == pdesc->SemanticIndex, "GetOutputParameterDesc(%u) SemanticIndex failed, got %u, expected %u\n",
+                i, desc.SemanticIndex, pdesc->SemanticIndex);
+        ok(desc.Register == pdesc->Register, "GetOutputParameterDesc(%u) Register failed, got %u, expected %u\n",
+                i, desc.Register, pdesc->Register);
+        todo_wine ok(desc.SystemValueType == pdesc->SystemValueType, "GetOutputParameterDesc(%u) SystemValueType failed, got %x, expected %x\n",
+                i, desc.SystemValueType, pdesc->SystemValueType);
+        ok(desc.ComponentType == pdesc->ComponentType, "GetOutputParameterDesc(%u) ComponentType failed, got %x, expected %x\n",
+                i, desc.ComponentType, pdesc->ComponentType);
+        ok(desc.Mask == pdesc->Mask, "GetOutputParameterDesc(%u) Mask failed, got %x, expected %x\n",
+                i, desc.Mask, pdesc->Mask);
+        ok(desc.ReadWriteMask == pdesc->ReadWriteMask, "GetOutputParameterDesc(%u) ReadWriteMask failed, got %x, expected %x\n",
+                i, desc.ReadWriteMask, pdesc->ReadWriteMask);
+        ok(desc.Stream == pdesc->Stream, "GetOutputParameterDesc(%u) Stream failed, got %u, expected %u\n",
+                i, desc.Stream, pdesc->ReadWriteMask);
+    }
+
+    count = ref11->lpVtbl->Release(ref11);
+    ok(count == 0, "Release failed %u\n", count);
+}
+
 START_TEST(reflection)
 {
     test_reflection_references();
     test_reflection_desc_vs();
+    test_reflection_desc_ps();
 }
