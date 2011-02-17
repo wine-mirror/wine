@@ -710,9 +710,170 @@ static void test_reflection_desc_ps(void)
     ok(count == 0, "Release failed %u\n", count);
 }
 
+/*
+ * fxc.exe /E PS /Tps_4_0 /Fx
+ */
+#if 0
+Texture2D tex1;
+SamplerState sam
+{
+    Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = Wrap;
+    AddressV = Wrap;
+};
+cbuffer c1
+{
+    float x;
+    float y[2];
+    int z;
+};
+cbuffer c2
+{
+    float t;
+};
+
+float4 PS(float2 uv : TEXCOORD0) : sv_target
+{
+    float4 q = tex1.Sample(sam, uv);
+    q.x = q.x + x;
+    q.w = q.w + y[0] + y[1] + t;
+    return q;
+}
+#endif
+static DWORD test_reflection_bound_resources_blob[] = {
+0x43425844, 0xe4af0279, 0x690268fc, 0x76bf6a72, 0xe5aff43b, 0x00000001, 0x000003f4, 0x00000005,
+0x00000034, 0x000001e8, 0x0000021c, 0x00000250, 0x00000378, 0x46454452, 0x000001ac, 0x00000002,
+0x000000ac, 0x00000004, 0x0000001c, 0xffff0400, 0x00000100, 0x0000017a, 0x0000009c, 0x00000003,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x000000a0, 0x00000002,
+0x00000005, 0x00000004, 0xffffffff, 0x00000000, 0x00000001, 0x0000000c, 0x000000a5, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x000000a8, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x00000000, 0x006d6173, 0x31786574,
+0x00316300, 0xab003263, 0x000000a5, 0x00000003, 0x000000dc, 0x00000030, 0x00000000, 0x00000000,
+0x000000a8, 0x00000001, 0x00000160, 0x00000010, 0x00000000, 0x00000000, 0x00000124, 0x00000000,
+0x00000004, 0x00000002, 0x00000128, 0x00000000, 0x00000138, 0x00000010, 0x00000014, 0x00000002,
+0x0000013c, 0x00000000, 0x0000014c, 0x00000024, 0x00000004, 0x00000000, 0x00000150, 0x00000000,
+0xabab0078, 0x00030000, 0x00010001, 0x00000000, 0x00000000, 0xabab0079, 0x00030000, 0x00010001,
+0x00000002, 0x00000000, 0xabab007a, 0x00020000, 0x00010001, 0x00000000, 0x00000000, 0x00000178,
+0x00000000, 0x00000004, 0x00000002, 0x00000128, 0x00000000, 0x694d0074, 0x736f7263, 0x2074666f,
+0x20295228, 0x4c534c48, 0x61685320, 0x20726564, 0x706d6f43, 0x72656c69, 0x322e3920, 0x35392e39,
+0x31332e32, 0xab003131, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000,
+0x00000000, 0x00000003, 0x00000000, 0x00000303, 0x43584554, 0x44524f4f, 0xababab00, 0x4e47534f,
+0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+0x0000000f, 0x745f7673, 0x65677261, 0xabab0074, 0x52444853, 0x00000120, 0x00000040, 0x00000048,
+0x04000059, 0x00208e46, 0x00000000, 0x00000003, 0x04000059, 0x00208e46, 0x00000001, 0x00000001,
+0x0300005a, 0x00106000, 0x00000000, 0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x03001062,
+0x00101032, 0x00000000, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x09000045,
+0x001000f2, 0x00000000, 0x00101046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000,
+0x08000000, 0x00100082, 0x00000000, 0x0010003a, 0x00000000, 0x0020800a, 0x00000000, 0x00000001,
+0x08000000, 0x00100082, 0x00000000, 0x0010003a, 0x00000000, 0x0020800a, 0x00000000, 0x00000002,
+0x08000000, 0x00102082, 0x00000000, 0x0010003a, 0x00000000, 0x0020800a, 0x00000001, 0x00000000,
+0x08000000, 0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x0020800a, 0x00000000, 0x00000000,
+0x05000036, 0x00102062, 0x00000000, 0x00100656, 0x00000000, 0x0100003e, 0x54415453, 0x00000074,
+0x00000007, 0x00000001, 0x00000000, 0x00000002, 0x00000004, 0x00000000, 0x00000000, 0x00000001,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+};
+
+static const D3D11_SHADER_INPUT_BIND_DESC test_reflection_bound_resources_result[] =
+{
+    {"sam", D3D_SIT_SAMPLER, 0, 1, 0, 0, D3D_SRV_DIMENSION_UNKNOWN, 0},
+    {"tex1", D3D_SIT_TEXTURE, 0, 1, 12, D3D_RETURN_TYPE_FLOAT, D3D_SRV_DIMENSION_TEXTURE2D, 0xffffffff},
+    {"c1", D3D_SIT_CBUFFER, 0, 1, 0, 0, D3D_SRV_DIMENSION_UNKNOWN, 0},
+    {"c2", D3D_SIT_CBUFFER, 1, 1, 0, 0, D3D_SRV_DIMENSION_UNKNOWN, 0},
+};
+
+static void test_reflection_bound_resources(void)
+{
+    HRESULT hr;
+    ULONG count;
+    ID3D11ShaderReflection *ref11;
+    D3D11_SHADER_INPUT_BIND_DESC desc;
+    const D3D11_SHADER_INPUT_BIND_DESC *pdesc;
+    unsigned int i;
+
+    hr = D3DReflect(test_reflection_bound_resources_blob, test_reflection_bound_resources_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    ok(hr == S_OK, "D3DReflect failed %x\n", hr);
+
+    /* check invalid cases */
+    hr = ref11->lpVtbl->GetResourceBindingDesc(ref11, 0, NULL);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDesc failed %x\n", hr);
+
+    hr = ref11->lpVtbl->GetResourceBindingDesc(ref11, 0xffffffff, &desc);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDesc failed %x\n", hr);
+
+    hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, NULL, &desc);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed %x\n", hr);
+
+    hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, "sam", NULL);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed %x\n", hr);
+
+    hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, "invalid", NULL);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed %x\n", hr);
+
+    hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, "invalid", &desc);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed %x\n", hr);
+
+    /* GetResourceBindingDesc */
+    for (i = 0; i < sizeof(test_reflection_bound_resources_result)/sizeof(*test_reflection_bound_resources_result); ++i)
+    {
+        pdesc = &test_reflection_bound_resources_result[i];
+
+        hr = ref11->lpVtbl->GetResourceBindingDesc(ref11, i, &desc);
+        ok(hr == S_OK, "GetResourceBindingDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+
+        ok(!strcmp(desc.Name, pdesc->Name), "GetResourceBindingDesc(%u) Name failed, got \"%s\", expected \"%s\"\n",
+                i, desc.Name, pdesc->Name);
+        ok(desc.Type == pdesc->Type, "GetResourceBindingDesc(%u) Type failed, got %x, expected %x\n",
+                i, desc.Type, pdesc->Type);
+        ok(desc.BindPoint == pdesc->BindPoint, "GetResourceBindingDesc(%u) BindPoint failed, got %u, expected %u\n",
+                i, desc.BindPoint, pdesc->BindPoint);
+        ok(desc.BindCount == pdesc->BindCount, "GetResourceBindingDesc(%u) BindCount failed, got %u, expected %u\n",
+                i, desc.BindCount, pdesc->BindCount);
+        ok(desc.uFlags == pdesc->uFlags, "GetResourceBindingDesc(%u) uFlags failed, got %u, expected %u\n",
+                i, desc.uFlags, pdesc->uFlags);
+        ok(desc.ReturnType == pdesc->ReturnType, "GetResourceBindingDesc(%u) ReturnType failed, got %x, expected %x\n",
+                i, desc.ReturnType, pdesc->ReturnType);
+        ok(desc.Dimension == pdesc->Dimension, "GetResourceBindingDesc(%u) Dimension failed, got %x, expected %x\n",
+                i, desc.Dimension, pdesc->Dimension);
+        ok(desc.NumSamples == pdesc->NumSamples, "GetResourceBindingDesc(%u) NumSamples failed, got %u, expected %u\n",
+                i, desc.NumSamples, pdesc->NumSamples);
+    }
+
+    /* GetResourceBindingDescByName */
+    for (i = 0; i < sizeof(test_reflection_bound_resources_result)/sizeof(*test_reflection_bound_resources_result); ++i)
+    {
+        pdesc = &test_reflection_bound_resources_result[i];
+
+        hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, pdesc->Name, &desc);
+        ok(hr == S_OK, "GetResourceBindingDescByName(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+
+        ok(!strcmp(desc.Name, pdesc->Name), "GetResourceBindingDescByName(%u) Name failed, got \"%s\", expected \"%s\"\n",
+                i, desc.Name, pdesc->Name);
+        ok(desc.Type == pdesc->Type, "GetResourceBindingDescByName(%u) Type failed, got %x, expected %x\n",
+                i, desc.Type, pdesc->Type);
+        ok(desc.BindPoint == pdesc->BindPoint, "GetResourceBindingDescByName(%u) BindPoint failed, got %u, expected %u\n",
+                i, desc.BindPoint, pdesc->BindPoint);
+        ok(desc.BindCount == pdesc->BindCount, "GetResourceBindingDescByName(%u) BindCount failed, got %u, expected %u\n",
+                i, desc.BindCount, pdesc->BindCount);
+        ok(desc.uFlags == pdesc->uFlags, "GetResourceBindingDescByName(%u) uFlags failed, got %u, expected %u\n",
+                i, desc.uFlags, pdesc->uFlags);
+        ok(desc.ReturnType == pdesc->ReturnType, "GetResourceBindingDescByName(%u) ReturnType failed, got %x, expected %x\n",
+                i, desc.ReturnType, pdesc->ReturnType);
+        ok(desc.Dimension == pdesc->Dimension, "GetResourceBindingDescByName(%u) Dimension failed, got %x, expected %x\n",
+                i, desc.Dimension, pdesc->Dimension);
+        ok(desc.NumSamples == pdesc->NumSamples, "GetResourceBindingDescByName(%u) NumSamples failed, got %u, expected %u\n",
+                i, desc.NumSamples, pdesc->NumSamples);
+    }
+
+    count = ref11->lpVtbl->Release(ref11);
+    ok(count == 0, "Release failed %u\n", count);
+}
+
 START_TEST(reflection)
 {
     test_reflection_references();
     test_reflection_desc_vs();
     test_reflection_desc_ps();
+    test_reflection_bound_resources();
 }
