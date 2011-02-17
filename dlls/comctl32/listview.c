@@ -10129,26 +10129,32 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
 
 /***
  * DESCRIPTION:
- * Handles notifications from header.
+ * Handles notifications.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] nCtrlId : control identifier
- * [I] lpnmh : notification information
+ * [I] lpnmhdr : notification information
  *
  * RETURN:
  * Zero
  */
-static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADERW *lpnmh)
+static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, const NMHDR *lpnmhdr)
 {
     HWND hwndSelf = infoPtr->hwndSelf;
+    const NMHEADERW *lpnmh;
     
-    TRACE("(lpnmh=%p)\n", lpnmh);
+    TRACE("(lpnmhdr=%p)\n", lpnmhdr);
 
-    if (!lpnmh || lpnmh->iItem < 0 || lpnmh->iItem >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return 0;
-    
-    switch (lpnmh->hdr.code)
-    {    
+    if (!lpnmhdr || lpnmhdr->hwndFrom != infoPtr->hwndHeader) return 0;
+
+    /* remember: HDN_LAST < HDN_FIRST */
+    if (lpnmhdr->code > HDN_FIRST || lpnmhdr->code < HDN_LAST) return 0;
+    lpnmh = (const NMHEADERW *)lpnmhdr;
+
+    if (lpnmh->iItem < 0 || lpnmh->iItem >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return 0;
+
+    switch (lpnmhdr->code)
+    {
 	case HDN_TRACKW:
 	case HDN_TRACKA:
 	{
@@ -11456,9 +11462,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_NCPaint(infoPtr, (HRGN)wParam);
 
   case WM_NOTIFY:
-    if (lParam && ((LPNMHDR)lParam)->hwndFrom == infoPtr->hwndHeader)
-        return LISTVIEW_HeaderNotification(infoPtr, (LPNMHEADERW)lParam);
-    else return 0;
+    return LISTVIEW_Notify(infoPtr, (LPNMHDR)lParam);
 
   case WM_NOTIFYFORMAT:
     return LISTVIEW_NotifyFormat(infoPtr, (HWND)wParam, (INT)lParam);
