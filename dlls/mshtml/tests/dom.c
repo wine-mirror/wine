@@ -1168,6 +1168,21 @@ static void _test_anchor_href(unsigned line, IUnknown *unk, const char *exhref)
     _test_disp_value(line, unk, exhref);
 }
 
+#define test_anchor_put_href(a,h) _test_anchor_put_href(__LINE__,a,h)
+static void _test_anchor_put_href(unsigned line, IUnknown *unk, const char *exhref)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(exhref);
+    hres = IHTMLAnchorElement_put_href(anchor, str);
+    ok_(__FILE__,line)(hres == S_OK, "get_href failed: %08x\n", hres);
+    SysFreeString(str);
+
+    _test_disp_value(line, unk, exhref);
+}
+
 #define test_option_text(o,t) _test_option_text(__LINE__,o,t)
 static void _test_option_text(unsigned line, IHTMLOptionElement *option, const char *text)
 {
@@ -6480,6 +6495,14 @@ static void test_elems(IHTMLDocument2 *doc)
 
     elem = get_elem_by_id(doc, "a", TRUE);
     if(elem) {
+        test_anchor_href((IUnknown*)elem, "http://test/");
+
+        /* Change the href */
+        test_anchor_put_href((IUnknown*)elem, "http://test1/");
+        test_anchor_href((IUnknown*)elem, "http://test1/");
+
+        /* Restore the href */
+        test_anchor_put_href((IUnknown*)elem, "http://test/");
         test_anchor_href((IUnknown*)elem, "http://test/");
         IHTMLElement_Release(elem);
     }
