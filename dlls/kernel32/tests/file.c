@@ -178,11 +178,11 @@ static void test__hwrite( void )
     ok( 0 != memory_object, "LocalAlloc fails. (Could be out of memory.)\n" );
 
     contents = LocalLock( memory_object );
+    ok( NULL != contents, "LocalLock whines\n" );
 
     filehandle = _lopen( filename, OF_READ );
 
     contents = LocalLock( memory_object );
-
     ok( NULL != contents, "LocalLock whines\n" );
 
     ok( bytes_written == _hread( filehandle, contents, bytes_written), "read length differ from write length\n" );
@@ -541,11 +541,11 @@ static void test__lwrite( void )
     ok( 0 != memory_object, "LocalAlloc fails, could be out of memory\n" );
 
     contents = LocalLock( memory_object );
+    ok( NULL != contents, "LocalLock whines\n" );
 
     filehandle = _lopen( filename, OF_READ );
 
     contents = LocalLock( memory_object );
-
     ok( NULL != contents, "LocalLock whines\n" );
 
     ok( bytes_written == _hread( filehandle, contents, bytes_written), "read length differ from write length\n" );
@@ -2094,7 +2094,7 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "nul");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s failed\n", buffer2 );
+    ok( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s failed: %d\n", buffer2, err );
     ok( 0 == lstrcmpiA(data.cFileName, "nul"), "wrong name %s\n", data.cFileName );
     ok( FILE_ATTRIBUTE_ARCHIVE == data.dwFileAttributes ||
         FILE_ATTRIBUTE_DEVICE == data.dwFileAttributes /* Win9x */,
@@ -2114,7 +2114,7 @@ static void test_FindFirstFileA(void)
     strcpy(buffer2, "lpt1");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s failed\n", buffer2 );
+    ok( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s failed: %d\n", buffer2, err );
     ok( 0 == lstrcmpiA(data.cFileName, "lpt1"), "wrong name %s\n", data.cFileName );
     ok( FILE_ATTRIBUTE_ARCHIVE == data.dwFileAttributes ||
         FILE_ATTRIBUTE_DEVICE == data.dwFileAttributes /* Win9x */,
