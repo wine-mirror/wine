@@ -3608,8 +3608,11 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources( instance, NULL );
 }
 
-HRESULT WINAPI GetGlobalFontLinkObject(void)
+HRESULT WINAPI GetGlobalFontLinkObject(void **unknown)
 {
-    FIXME("\n");
+    if (!unknown) return E_INVALIDARG;
+
+    FIXME("%p: stub\n", unknown);
+
     return S_FALSE;
 }

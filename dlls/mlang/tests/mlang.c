@@ -1931,6 +1931,23 @@ static void test_IsCodePageInstallable(IMultiLanguage2 *ml2)
     }
 }
 
+static void test_GetGlobalFontLinkObject(void)
+{
+    HRESULT ret;
+    void *unknown;
+
+    ret = GetGlobalFontLinkObject(NULL);
+    ok(ret == E_INVALIDARG, "expected E_INVALIDARG got %#x\n", ret);
+
+    unknown = (void *)0xdeadbeef;
+    ret = GetGlobalFontLinkObject(&unknown);
+todo_wine {
+    ok(ret == S_OK, "expected S_OK got %#x\n", ret);
+    ok(unknown != NULL && unknown != (void *)0xdeadbeef,
+       "GetGlobalFontLinkObject() returned %p\n", unknown);
+    }
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage  *iML = NULL;
@@ -1949,6 +1966,7 @@ START_TEST(mlang)
     test_ConvertINetUnicodeToMultiByte();
     test_JapaneseConversion();
 
+    test_GetGlobalFontLinkObject();
 
     trace("IMultiLanguage\n");
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
