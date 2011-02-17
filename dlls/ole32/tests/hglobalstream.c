@@ -421,6 +421,8 @@ static void test_copyto(void)
     static const LARGE_INTEGER llZero;
     char buffer[15];
 
+    ok_ole_success(hr, "CreateStreamOnHGlobal");
+
     expected_method_list = methods_copyto;
 
     hr = IStream_Write(pStream, szHello, sizeof(szHello), &written);
