@@ -1023,6 +1023,7 @@ static void test_formatrecord(void)
     ok( r == ERROR_SUCCESS, "format failed\n");
 
     r = MsiRecordSetString(hrec, 0, "[]");
+    ok( r == ERROR_SUCCESS, "set string failed\n");
     sz = sizeof buffer;
     r = MsiFormatRecord(0, hrec, buffer, &sz);
     ok( sz == 2, "size wrong\n");
@@ -1964,6 +1965,7 @@ static void test_formatrecord_package(void)
     r = MsiRecordSetString(hrec, 4, "[prop]");
     ok( r == ERROR_SUCCESS, "set string failed\n");
     r = MsiRecordSetString(hrec, 5, "[noprop]");
+    ok( r == ERROR_SUCCESS, "set string failed\n");
     sz = sizeof buffer;
     r = MsiFormatRecord(package, hrec, buffer, &sz);
     ok( r == ERROR_SUCCESS, "format failed with empty buffer (%i)\n",r);
