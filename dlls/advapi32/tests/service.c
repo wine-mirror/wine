@@ -1561,6 +1561,7 @@ static void test_enum_svc(void)
     neededW = 0xdeadbeef;
     ret = pEnumServicesStatusExW(scm_handle, 0, SERVICE_WIN32, SERVICE_STATE_ALL,
                                  NULL, 0, &neededW, &returnedW, NULL, NULL);
+    ok(!ret, "Expected failure\n");
     ok(neededW == needed, "Expected needed buffersize to be the same for A- and W-calls\n");
 
     /* Store the needed bytes */
