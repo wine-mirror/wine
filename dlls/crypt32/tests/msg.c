@@ -1838,6 +1838,7 @@ static void test_signed_msg_encoding(void)
      CMSG_CONTENT_PARAM, signedWithCertWithValidPubKeyEmptyContent,
      sizeof(signedWithCertWithValidPubKeyEmptyContent));
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     check_param("signedWithCertWithValidPubKeyContent", msg,
      CMSG_CONTENT_PARAM, signedWithCertWithValidPubKeyContent,
      sizeof(signedWithCertWithValidPubKeyContent));
@@ -2868,6 +2869,7 @@ static void test_decode_msg_get_param(void)
     ok(!ret && GetLastError() == CRYPT_E_INVALID_MSG_TYPE,
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %x\n", GetLastError());
     ret = CryptMsgUpdate(msg, dataContent, sizeof(dataContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     check_param("data content", msg, CMSG_CONTENT_PARAM, msgData,
      sizeof(msgData));
     CryptMsgClose(msg);
@@ -2885,6 +2887,7 @@ static void test_decode_msg_get_param(void)
     CryptMsgClose(msg);
     msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, NULL);
     ret = CryptMsgUpdate(msg, hashContent, sizeof(hashContent), TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     check_param("hash content", msg, CMSG_CONTENT_PARAM, msgData,
      sizeof(msgData));
     check_param("hash hash data", msg, CMSG_HASH_DATA_PARAM, hashParam,
@@ -2904,6 +2907,7 @@ static void test_decode_msg_get_param(void)
     if (buf)
     {
         ret = CryptMsgGetParam(msg, CMSG_COMPUTED_HASH_PARAM, 1, buf, &size);
+        ok(ret, "CryptMsgGetParam failed: %08x\n", GetLastError());
         ok(size == sizeof(hashParam), "Unexpected size %d\n", size);
         ok(!memcmp(buf, hashParam, size), "Unexpected value\n");
         CryptMemFree(buf);
@@ -3249,6 +3253,7 @@ static void test_msg_control(void)
          "Expected E_INVALIDARG, got %08x\n", GetLastError());
     }
     ret = CryptMsgUpdate(msg, NULL, 0, TRUE);
+    ok(ret, "CryptMsgUpdate failed: %08x\n", GetLastError());
     /* or after an update. */
     for (i = 1; !old_crypt32 && (i <= CMSG_CTRL_ADD_CMS_SIGNER_INFO); i++)
     {
