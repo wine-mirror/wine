@@ -1416,7 +1416,6 @@ static void test_Get_Release_DC(void)
     expect(ObjectBusy, status);
 
     /* try all Graphics calls here */
-    status = Ok;
     status = GdipDrawArc(graphics, pen, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0);
     expect(ObjectBusy, status);
     status = GdipDrawArcI(graphics, pen, 0, 0, 1, 1, 0.0, 0.0);
@@ -1599,6 +1598,7 @@ static void test_Get_Release_DC(void)
     status = GdipGetDpiY(graphics, &r);
     expect(ObjectBusy, status);
     status = GdipMultiplyWorldTransform(graphics, m, MatrixOrderPrepend);
+    expect(ObjectBusy, status);
     status = GdipGetClip(graphics, region);
     expect(ObjectBusy, status);
     status = GdipTransformPoints(graphics, CoordinateSpacePage, CoordinateSpaceWorld, ptf, 5);
