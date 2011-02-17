@@ -61,6 +61,7 @@ struct reqheader
 typedef struct
 {
     IXMLHTTPRequest IXMLHTTPRequest_iface;
+    IObjectWithSite IObjectWithSite_iface;
     LONG ref;
 
     READYSTATE state;
@@ -81,11 +82,19 @@ typedef struct
     /* bind callback */
     BindStatusCallback *bsc;
     LONG status;
+
+    /* IObjectWithSite*/
+    IUnknown *site;
 } httprequest;
 
 static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
 {
     return CONTAINING_RECORD(iface, httprequest, IXMLHTTPRequest_iface);
+}
+
+static inline httprequest *impl_from_IObjectWithSite(IObjectWithSite *iface)
+{
+    return CONTAINING_RECORD(iface, httprequest, IObjectWithSite_iface);
 }
 
 static void httprequest_setreadystate(httprequest *This, READYSTATE state)
@@ -503,6 +512,10 @@ static HRESULT WINAPI httprequest_QueryInterface(IXMLHTTPRequest *iface, REFIID 
     {
         *ppvObject = iface;
     }
+    else if (IsEqualGUID(&IID_IObjectWithSite, riid))
+    {
+        *ppvObject = &This->IObjectWithSite_iface;
+    }
     else
     {
         TRACE("Unsupported interface %s\n", debugstr_guid(riid));
@@ -533,6 +546,9 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
     if ( ref == 0 )
     {
         struct reqheader *header, *header2;
+
+        if (This->site)
+            IUnknown_Release( This->site );
 
         SysFreeString(This->url);
         SysFreeString(This->user);
@@ -992,6 +1008,64 @@ static const struct IXMLHTTPRequestVtbl dimimpl_vtbl =
     httprequest_put_onreadystatechange
 };
 
+/* IObjectWithSite */
+static HRESULT WINAPI
+httprequest_ObjectWithSite_QueryInterface( IObjectWithSite* iface, REFIID riid, void** ppvObject )
+{
+    httprequest *This = impl_from_IObjectWithSite(iface);
+    return IXMLHTTPRequest_QueryInterface( (IXMLHTTPRequest *)This, riid, ppvObject );
+}
+
+static ULONG WINAPI httprequest_ObjectWithSite_AddRef( IObjectWithSite* iface )
+{
+    httprequest *This = impl_from_IObjectWithSite(iface);
+    return IXMLHTTPRequest_AddRef((IXMLHTTPRequest *)This);
+}
+
+static ULONG WINAPI httprequest_ObjectWithSite_Release( IObjectWithSite* iface )
+{
+    httprequest *This = impl_from_IObjectWithSite(iface);
+    return IXMLHTTPRequest_Release((IXMLHTTPRequest *)This);
+}
+
+static HRESULT WINAPI httprequest_ObjectWithSite_GetSite( IObjectWithSite *iface, REFIID iid, void **ppvSite )
+{
+    httprequest *This = impl_from_IObjectWithSite(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid( iid ), ppvSite );
+
+    if ( !This->site )
+        return E_FAIL;
+
+    return IUnknown_QueryInterface( This->site, iid, ppvSite );
+}
+
+static HRESULT WINAPI httprequest_ObjectWithSite_SetSite( IObjectWithSite *iface, IUnknown *punk )
+{
+    httprequest *This = impl_from_IObjectWithSite(iface);
+
+    TRACE("(%p)->(%p)\n", iface, punk);
+
+    if (punk)
+        IUnknown_AddRef( punk );
+
+    if(This->site)
+        IUnknown_Release( This->site );
+
+    This->site = punk;
+
+    return S_OK;
+}
+
+static const IObjectWithSiteVtbl httprequestObjectSite =
+{
+    httprequest_ObjectWithSite_QueryInterface,
+    httprequest_ObjectWithSite_AddRef,
+    httprequest_ObjectWithSite_Release,
+    httprequest_ObjectWithSite_SetSite,
+    httprequest_ObjectWithSite_GetSite
+};
+
 HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
 {
     httprequest *req;
@@ -1004,6 +1078,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
         return E_OUTOFMEMORY;
 
     req->IXMLHTTPRequest_iface.lpVtbl = &dimimpl_vtbl;
+    req->IObjectWithSite_iface.lpVtbl = &httprequestObjectSite;
     req->ref = 1;
 
     req->async = FALSE;
@@ -1017,6 +1092,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     req->status = 0;
     req->reqheader_size = 0;
     list_init(&req->reqheaders);
+    req->site = NULL;
 
     *ppObj = &req->IXMLHTTPRequest_iface;
 

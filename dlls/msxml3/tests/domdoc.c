@@ -3216,6 +3216,7 @@ static void test_XMLHTTP(void)
     static const CHAR xmltestbodyA[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<a>TEST</a>\n";
 
     IXMLHttpRequest *pXMLHttpRequest;
+    IObjectWithSite *pSite;
     BSTR bstrResponse, method, url;
     VARIANT dummy;
     VARIANT async;
@@ -3231,6 +3232,10 @@ static void test_XMLHTTP(void)
         win_skip("IXMLHTTPRequest is not available (0x%08x)\n", hr);
         return;
     }
+
+    hr = IXMLHttpRequest_QueryInterface(pXMLHttpRequest, &IID_IObjectWithSite, (void**)&pSite);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if(hr == S_OK) IObjectWithSite_Release(pSite);
 
     VariantInit(&dummy);
     V_VT(&dummy) = VT_ERROR;
