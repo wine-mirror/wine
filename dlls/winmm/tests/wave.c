@@ -319,7 +319,6 @@ const char * wave_open_flags(DWORD flags)
     if ((flags & WAVE_MAPPED) == WAVE_MAPPED) {
         if (!first) strcat(msg, "|");
         strcat(msg, "WAVE_MAPPED");
-        first = FALSE;
     }
     return msg;
 }
