@@ -1,5 +1,6 @@
 MODULE    = cabinet.dll
 IMPORTLIB = cabinet
+EXTRALIBS = @ZLIB@
 
 C_SRCS = \
 	cabinet_main.c \

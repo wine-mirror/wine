@@ -581,11 +581,9 @@ static void test_FDIIsCabinet(void)
     ok(cabinfo.cFiles == 4, "Expected 4, got %d\n", cabinfo.cFiles);
     ok(cabinfo.cFolders == 1, "Expected 1, got %d\n", cabinfo.cFolders);
     ok(cabinfo.setID == 0xbeef, "Expected 0xbeef, got %d\n", cabinfo.setID);
+    ok(cabinfo.cbCabinet == 182, "Expected 182, got %d\n", cabinfo.cbCabinet);
     todo_wine
-    {
-        ok(cabinfo.cbCabinet == 182, "Expected 182, got %d\n", cabinfo.cbCabinet);
         ok(cabinfo.iCabinet == 0, "Expected 0, got %d\n", cabinfo.iCabinet);
-    }
 
     fdi_close(fd);
     FDIDestroy(hfdi);

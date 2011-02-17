@@ -24,11 +24,9 @@
 
 There is still some work to be done:
 
-- no real compression yet
 - unknown behaviour if files>=2GB or cabinet >=4GB
 - check if the maximum size for a cabinet is too small to store any data
 - call pfnfcignc on exactly the same position as MS FCIAddFile in every case
-- probably check err
 
 */
 
@@ -40,6 +38,9 @@ There is still some work to be done:
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_ZLIB
+# include <zlib.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -166,9 +167,9 @@ typedef struct FCI_Int
   void               *pv;
   char szPrevCab[CB_MAX_CABINET_NAME];    /* previous cabinet name */
   char szPrevDisk[CB_MAX_DISK_NAME];      /* disk name of previous cabinet */
-  char*              data_in;  /* uncompressed data blocks */
+  unsigned char     *data_in;  /* uncompressed data blocks */
   cab_UWORD          cdata_in;
-  char*              data_out; /* compressed data blocks */
+  unsigned char     *data_out; /* compressed data blocks */
   ULONG              cCompressedBytesInFolder;
   cab_UWORD          cFolders;
   cab_UWORD          cFiles;
@@ -945,6 +946,46 @@ static cab_UWORD compress_NONE( FCI_Int *fci )
     return fci->cdata_in;
 }
 
+#ifdef HAVE_ZLIB
+
+static void *zalloc( void *opaque, unsigned int items, unsigned int size )
+{
+    FCI_Int *fci = opaque;
+    return fci->alloc( items * size );
+}
+
+static void zfree( void *opaque, void *ptr )
+{
+    FCI_Int *fci = opaque;
+    return fci->free( ptr );
+}
+
+static cab_UWORD compress_MSZIP( FCI_Int *fci )
+{
+    z_stream stream;
+
+    stream.zalloc = zalloc;
+    stream.zfree  = zfree;
+    stream.opaque = fci;
+    if (deflateInit2( &stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY ) != Z_OK)
+    {
+        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
+        return 0;
+    }
+    stream.next_in   = fci->data_in;
+    stream.avail_in  = fci->cdata_in;
+    stream.next_out  = fci->data_out + 2;
+    stream.avail_out = 2 * CB_MAX_CHUNK - 2;
+    /* insert the signature */
+    fci->data_out[0] = 'C';
+    fci->data_out[1] = 'K';
+    deflate( &stream, Z_FINISH );
+    deflateEnd( &stream );
+    return stream.total_out + 2;
+}
+
+#endif  /* HAVE_ZLIB */
+
 
 /***********************************************************************
  *		FCICreate (CABINET.10)
@@ -1441,6 +1482,12 @@ BOOL __cdecl FCIAddFile(
       if (!FCIFlushFolder( hfci, pfnfcignc, pfnfcis )) return FALSE;
       switch (typeCompress)
       {
+      case tcompTYPE_MSZIP:
+#ifdef HAVE_ZLIB
+          p_fci_internal->compression = tcompTYPE_MSZIP;
+          p_fci_internal->compress    = compress_MSZIP;
+          break;
+#endif
       default:
           FIXME( "compression %x not supported, defaulting to none\n", typeCompress );
           /* fall through */
