@@ -1417,6 +1417,7 @@ static void D3DXCreateBoxTest(void)
 end:
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
+    ID3DXBuffer_Release(ppBuffer);
     DestroyWindow(wnd);
 }
 
