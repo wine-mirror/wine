@@ -200,6 +200,7 @@ static void testMemStore(void)
         if (buf)
         {
             ret = CertSerializeCertificateStoreElement(context, 0, buf, &size);
+            ok(ret, "CertSerializeCertificateStoreElement failed: %08x\n", GetLastError());
             ok(size == sizeof(serializedCert), "Wrong size %d\n", size);
             ok(!memcmp(serializedCert, buf, size),
              "Unexpected serialized cert\n");
@@ -1075,6 +1076,7 @@ static void testSystemRegStore(void)
     /* Now check whether deleting is allowed */
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0,
      CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_DELETE_FLAG, BogusW);
+    ok(!store, "CertOpenStore failed: %08x\n", GetLastError());
     RegDeleteKeyW(HKEY_CURRENT_USER, BogusPathW);
 
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY, 0, 0, 0, NULL);
@@ -2323,6 +2325,7 @@ static void testAddCertificateLink(void)
             /* The serialized linked certificate is identical to the serialized
              * original certificate.
              */
+            ok(ret, "CertSerializeCertificateStoreElement failed: %08x\n", GetLastError());
             ok(size == sizeof(serializedCert), "Wrong size %d\n", size);
             ok(!memcmp(serializedCert, buf, size),
              "Unexpected serialized cert\n");
@@ -2345,6 +2348,7 @@ static void testAddCertificateLink(void)
         {
             ret = CertGetCertificateContextProperty(linked,
              CERT_FRIENDLY_NAME_PROP_ID, buf, &size);
+            ok(ret, "CertGetCertificateContextProperty failed: %08x\n", GetLastError());
             ok(!lstrcmpW((LPCWSTR)buf, WineTestW),
              "unexpected friendly name\n");
             HeapFree(GetProcessHeap(), 0, buf);
