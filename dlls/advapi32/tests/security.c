@@ -1817,6 +1817,7 @@ static void check_wellknown_name(const char* name, WELL_KNOWN_SID_TYPE result)
     sid_size = 0;
     domain_size = 0;
     ret = LookupAccountNameA(NULL, name, NULL, &sid_size, NULL, &domain_size, &sid_use);
+    ok(!ret, " %s Should have failed to lookup account name\n", name);
     psid = HeapAlloc(GetProcessHeap(),0,sid_size);
     domain = HeapAlloc(GetProcessHeap(),0,domain_size);
     ret = LookupAccountNameA(NULL, name, psid, &sid_size, domain, &domain_size, &sid_use);
