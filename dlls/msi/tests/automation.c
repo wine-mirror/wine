@@ -489,7 +489,7 @@ static DISPID get_dispid( IDispatch *disp, const char *name )
     str = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR) );
     if (str)
     {
-        len = MultiByteToWideChar(CP_ACP, 0, name, -1, str, len );
+        MultiByteToWideChar(CP_ACP, 0, name, -1, str, len );
         r = IDispatch_GetIDsOfNames( disp, &IID_NULL, &str, 1, 0, &id );
         HeapFree(GetProcessHeap(), 0, str);
         if (r != S_OK)
@@ -871,7 +871,7 @@ static HRESULT invoke(IDispatch *pDispatch, LPCSTR szName, WORD wFlags, DISPPARA
     len = MultiByteToWideChar(CP_ACP, 0, szName, -1, NULL, 0 );
     name = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR) );
     if (!name) return E_FAIL;
-    len = MultiByteToWideChar(CP_ACP, 0, szName, -1, name, len );
+    MultiByteToWideChar(CP_ACP, 0, szName, -1, name, len );
     hr = IDispatch_GetIDsOfNames(pDispatch, &IID_NULL, &name, 1, LOCALE_USER_DEFAULT, &dispid);
     HeapFree(GetProcessHeap(), 0, name);
     ok(hr == S_OK, "IDispatch::GetIDsOfNames returned 0x%08x\n", hr);
