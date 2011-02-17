@@ -1130,6 +1130,60 @@ static void test_GdipDrawLineI(void)
     ReleaseDC(hwnd, hdc);
 }
 
+static void test_GdipDrawImagePointsRect(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    GpPointF ptf[4];
+    GpBitmap *bm = NULL;
+    BYTE rbmi[sizeof(BITMAPINFOHEADER)];
+    BYTE buff[400];
+    BITMAPINFO *bmi = (BITMAPINFO*)rbmi;
+    HDC hdc = GetDC( hwnd );
+    if (!hdc)
+        return;
+
+    memset(rbmi, 0, sizeof(rbmi));
+    bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi->bmiHeader.biWidth = 10;
+    bmi->bmiHeader.biHeight = 10;
+    bmi->bmiHeader.biPlanes = 1;
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biCompression = BI_RGB;
+    status = GdipCreateBitmapFromGdiDib(bmi, buff, &bm);
+    expect(Ok, status);
+    ok(NULL != bm, "Expected bitmap to be initialized\n");
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ptf[0].X = 0;
+    ptf[0].Y = 0;
+    ptf[1].X = 10;
+    ptf[1].Y = 0;
+    ptf[2].X = 0;
+    ptf[2].Y = 10;
+    ptf[3].X = 10;
+    ptf[3].Y = 10;
+    status = GdipDrawImagePointsRect(graphics, (GpImage*)bm, ptf, 4, 0, 0, 10, 10, UnitPixel, NULL, NULL, NULL);
+    expect(NotImplemented, status);
+    status = GdipDrawImagePointsRect(graphics, (GpImage*)bm, ptf, 2, 0, 0, 10, 10, UnitPixel, NULL, NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipDrawImagePointsRect(graphics, (GpImage*)bm, ptf, 3, 0, 0, 10, 10, UnitPixel, NULL, NULL, NULL);
+    expect(Ok, status);
+    status = GdipDrawImagePointsRect(graphics, NULL, ptf, 3, 0, 0, 10, 10, UnitPixel, NULL, NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipDrawImagePointsRect(graphics, (GpImage*)bm, NULL, 3, 0, 0, 10, 10, UnitPixel, NULL, NULL, NULL);
+    expect(InvalidParameter, status);
+    status = GdipDrawImagePointsRect(graphics, (GpImage*)bm, ptf, 3, 0, 0, 0, 0, UnitPixel, NULL, NULL, NULL);
+    expect(Ok, status);
+    memset(ptf, 0, sizeof(ptf));
+    status = GdipDrawImagePointsRect(graphics, (GpImage*)bm, ptf, 3, 0, 0, 10, 10, UnitPixel, NULL, NULL, NULL);
+    expect(Ok, status);
+
+    GdipDisposeImage((GpImage*)bm);
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(hwnd, hdc);
+}
+
 static void test_GdipDrawLinesI(void)
 {
     GpStatus status;
@@ -1603,6 +1657,7 @@ static void test_Get_Release_DC(void)
     expect(ObjectBusy, status);
     status = GdipTransformPoints(graphics, CoordinateSpacePage, CoordinateSpaceWorld, ptf, 5);
     expect(ObjectBusy, status);
+
     /* try to delete before release */
     status = GdipDeleteGraphics(graphics);
     expect(ObjectBusy, status);
@@ -2998,6 +3053,7 @@ START_TEST(graphics)
     test_GdipDrawCurve3I();
     test_GdipDrawLineI();
     test_GdipDrawLinesI();
+    test_GdipDrawImagePointsRect();
     test_GdipFillClosedCurve();
     test_GdipFillClosedCurveI();
     test_GdipDrawString();

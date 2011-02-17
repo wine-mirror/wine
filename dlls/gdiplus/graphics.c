@@ -2161,6 +2161,9 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
           count, srcx, srcy, srcwidth, srcheight, srcUnit, imageAttributes, callback,
           callbackData);
 
+    if (count > 3)
+        return NotImplemented;
+
     if(!graphics || !image || !points || count != 3)
          return InvalidParameter;
 
@@ -2170,6 +2173,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     memcpy(ptf, points, 3 * sizeof(GpPointF));
     ptf[3].X = ptf[2].X + ptf[1].X - ptf[0].X;
     ptf[3].Y = ptf[2].Y + ptf[1].Y - ptf[0].Y;
+    if (!srcwidth || !srcheight || ptf[3].X == ptf[0].X || ptf[3].Y == ptf[0].Y)
+        return Ok;
     transform_and_round_points(graphics, pti, ptf, 4);
 
     if (image->picture)
