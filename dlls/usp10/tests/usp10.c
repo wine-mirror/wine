@@ -838,7 +838,6 @@ static void test_ScriptTextOut(HDC hdc)
     /* It would appear that we have a valid SCRIPT_ANALYSIS and can continue
      * ie. ScriptItemize has succeeded and that pItem has been set                            */
     cInChars = 5;
-    cMaxItems = 255;
     if (hr == 0) {
         psc = NULL;                                   /* must be null on first call           */
         cChars = cInChars;
