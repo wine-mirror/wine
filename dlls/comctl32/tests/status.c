@@ -369,6 +369,7 @@ static void test_status_control(void)
 
     /* Set the Unicode format */
     r = SendMessage(hWndStatus, SB_SETUNICODEFORMAT, FALSE, 0);
+    expect(FALSE,r);
     r = SendMessage(hWndStatus, SB_GETUNICODEFORMAT, 0, 0);
     expect(FALSE,r);
     r = SendMessage(hWndStatus, SB_SETUNICODEFORMAT, TRUE, 0);
