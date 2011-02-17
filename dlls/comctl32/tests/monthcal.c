@@ -1143,6 +1143,7 @@ static void test_todaylink(void)
     hwnd = create_monthcal_control(0);
 
     res = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r);
+    expect(1, res);
     MoveWindow(hwnd, 0, 0, r.right, r.bottom, FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
