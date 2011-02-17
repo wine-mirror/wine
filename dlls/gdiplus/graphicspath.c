@@ -831,16 +831,187 @@ GpStatus WINGDIPAPI GdipAddPathPolygonI(GpPath *path, GDIPCONST GpPoint *points,
     return status;
 }
 
+static float fromfixedpoint(const FIXED v)
+{
+    float f = ((float)v.fract) / (1<<(sizeof(v.fract)*8));
+    f += v.value;
+    return f;
+}
+
+struct format_string_args
+{
+    GpPath *path;
+    UINT maxY;
+};
+
+static GpStatus format_string_callback(HDC dc,
+    GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
+    INT lineno, const RectF *bounds, void *priv)
+{
+    static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
+    struct format_string_args *args = priv;
+    GpPath *path = args->path;
+    GpStatus status = Ok;
+    float x = bounds->X;
+    float y = bounds->Y;
+    int i;
+
+    for (i = index; i < length; ++i)
+    {
+        GLYPHMETRICS gm;
+        TTPOLYGONHEADER *ph = NULL;
+        char *start;
+        DWORD len, ofs = 0;
+        UINT bb_end;
+        len = GetGlyphOutlineW(dc, string[i], GGO_BEZIER, &gm, 0, NULL, &identity);
+        if (len == GDI_ERROR)
+        {
+            status = GenericError;
+            break;
+        }
+        ph = GdipAlloc(len);
+        start = (char *)ph;
+        if (!ph || !lengthen_path(path, len / sizeof(POINTFX)))
+        {
+            status = OutOfMemory;
+            break;
+        }
+        GetGlyphOutlineW(dc, string[i], GGO_BEZIER, &gm, len, start, &identity);
+        bb_end = gm.gmBlackBoxY + gm.gmptGlyphOrigin.y;
+        if (bb_end + y > args->maxY)
+            args->maxY = bb_end + y;
+
+        ofs = 0;
+        while (ofs < len)
+        {
+            DWORD ofs_start = ofs;
+            ph = (TTPOLYGONHEADER*)&start[ofs];
+            path->pathdata.Types[path->pathdata.Count] = PathPointTypeStart;
+            path->pathdata.Points[path->pathdata.Count].X = x + fromfixedpoint(ph->pfxStart.x);
+            path->pathdata.Points[path->pathdata.Count++].Y = y + bb_end - fromfixedpoint(ph->pfxStart.y);
+            TRACE("Starting at count %i with pos %f, %f)\n", path->pathdata.Count, x, y);
+            ofs += sizeof(*ph);
+            while (ofs - ofs_start < ph->cb)
+            {
+                TTPOLYCURVE *curve = (TTPOLYCURVE*)&start[ofs];
+                int j;
+                ofs += sizeof(TTPOLYCURVE) + (curve->cpfx - 1) * sizeof(POINTFX);
+
+                switch (curve->wType)
+                {
+                case TT_PRIM_LINE:
+                    for (j = 0; j < curve->cpfx; ++j)
+                    {
+                        path->pathdata.Types[path->pathdata.Count] = PathPointTypeLine;
+                        path->pathdata.Points[path->pathdata.Count].X = x + fromfixedpoint(curve->apfx[j].x);
+                        path->pathdata.Points[path->pathdata.Count++].Y = y + bb_end - fromfixedpoint(curve->apfx[j].y);
+                    }
+                    break;
+                case TT_PRIM_CSPLINE:
+                    for (j = 0; j < curve->cpfx; ++j)
+                    {
+                        path->pathdata.Types[path->pathdata.Count] = PathPointTypeBezier;
+                        path->pathdata.Points[path->pathdata.Count].X = x + fromfixedpoint(curve->apfx[j].x);
+                        path->pathdata.Points[path->pathdata.Count++].Y = y + bb_end - fromfixedpoint(curve->apfx[j].y);
+                    }
+                    break;
+                default:
+                    ERR("Unhandled type: %u\n", curve->wType);
+                    status = GenericError;
+                }
+            }
+            path->pathdata.Types[path->pathdata.Count - 1] |= PathPointTypeCloseSubpath;
+        }
+        path->newfigure = TRUE;
+        x += gm.gmCellIncX;
+        y += gm.gmCellIncY;
+
+        GdipFree(ph);
+        if (status != Ok)
+            break;
+    }
+
+    return status;
+}
+
 GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT length, GDIPCONST GpFontFamily* family, INT style, REAL emSize, GDIPCONST RectF* layoutRect, GDIPCONST GpStringFormat* format)
 {
-    FIXME("(%p, %p, %d, %p, %d, %f, %p, %p): stub\n", path, string, length, family, style, emSize, layoutRect, format);
-    return NotImplemented;
+    GpFont *font;
+    GpStatus status;
+    HANDLE hfont;
+    HDC dc;
+    GpPath *backup;
+    struct format_string_args args;
+    int i;
+
+    FIXME("(%p, %s, %d, %p, %d, %f, %p, %p): stub\n", path, debugstr_w(string), length, family, style, emSize, layoutRect, format);
+    if (!path || !string || !family || !emSize || !layoutRect || !format)
+        return InvalidParameter;
+
+    status = GdipCreateFont(family, emSize, style, UnitPixel, &font);
+    if (status != Ok)
+        return status;
+
+    hfont = CreateFontIndirectW(&font->lfw);
+    if (!hfont)
+    {
+        WARN("Failed to create font\n");
+        return GenericError;
+    }
+
+    if ((status = GdipClonePath(path, &backup)) != Ok)
+    {
+        DeleteObject(hfont);
+        return status;
+    }
+
+    dc = CreateCompatibleDC(0);
+    SelectObject(dc, hfont);
+
+    args.path = path;
+    args.maxY = 0;
+    status = gdip_format_string(dc, string, length, NULL, layoutRect, format, format_string_callback, &args);
+
+    DeleteDC(dc);
+    DeleteObject(hfont);
+
+    if (status != Ok) /* free backup */
+    {
+        GdipFree(path->pathdata.Points);
+        GdipFree(path->pathdata.Types);
+        *path = *backup;
+        GdipFree(backup);
+        return status;
+    }
+    if (format && format->vertalign == StringAlignmentCenter && layoutRect->Y + args.maxY < layoutRect->Height)
+    {
+        float inc = layoutRect->Height - args.maxY - layoutRect->Y;
+        inc /= 2;
+        for (i = backup->pathdata.Count; i < path->pathdata.Count; ++i)
+            path->pathdata.Points[i].Y += inc;
+    } else if (format && format->vertalign == StringAlignmentFar) {
+        float inc = layoutRect->Height - args.maxY - layoutRect->Y;
+        for (i = backup->pathdata.Count; i < path->pathdata.Count; ++i)
+            path->pathdata.Points[i].Y += inc;
+    }
+    GdipDeletePath(backup);
+    return status;
 }
 
 GpStatus WINGDIPAPI GdipAddPathStringI(GpPath* path, GDIPCONST WCHAR* string, INT length, GDIPCONST GpFontFamily* family, INT style, REAL emSize, GDIPCONST Rect* layoutRect, GDIPCONST GpStringFormat* format)
 {
-    FIXME("(%p, %p, %d, %p, %d, %f, %p, %p): stub\n", path, string, length, family, style, emSize, layoutRect, format);
-    return NotImplemented;
+    if (layoutRect)
+    {
+        RectF layoutRectF = {
+            (REAL)layoutRect->X,
+            (REAL)layoutRect->Y,
+            (REAL)layoutRect->Width,
+            (REAL)layoutRect->Height
+        };
+        return GdipAddPathString(path, string, length, family, style, emSize, &layoutRectF, format);
+    }
+    return InvalidParameter;
 }
 
 GpStatus WINGDIPAPI GdipClonePath(GpPath* path, GpPath **clone)

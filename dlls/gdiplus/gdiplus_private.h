@@ -397,4 +397,14 @@ struct GpRegion{
     region_element node;
 };
 
+typedef GpStatus (*gdip_format_string_callback)(HDC hdc,
+    GDIPCONST WCHAR *string, INT index, INT length, GDIPCONST GpFont *font,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
+    INT lineno, const RectF *bounds, void *user_data);
+
+GpStatus gdip_format_string(HDC hdc,
+    GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
+    GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
+    gdip_format_string_callback callback, void *user_data);
+
 #endif
