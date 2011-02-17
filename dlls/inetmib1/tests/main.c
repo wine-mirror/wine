@@ -251,7 +251,6 @@ static void testQuery(void)
     vars2[0].value.asnType = 0;
     list.len = 1;
     list.list = vars2;
-    moreData = TRUE;
     noChange = FALSE;
     ret = pQuery(SNMP_PDU_GETNEXT, &list, &error, &index);
     ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
