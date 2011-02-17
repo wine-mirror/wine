@@ -1276,7 +1276,7 @@ static void run_from_res(const char *name)
 
     len = MultiByteToWideChar(CP_ACP, 0, data, size, NULL, 0);
     str = SysAllocStringLen(NULL, len);
-    len = MultiByteToWideChar(CP_ACP, 0, data, size, str, len);
+    MultiByteToWideChar(CP_ACP, 0, data, size, str, len);
 
     SET_EXPECT(global_success_d);
     SET_EXPECT(global_success_i);
