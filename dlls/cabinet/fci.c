@@ -50,6 +50,7 @@ There is still some work to be done:
 #include "wine/list.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(cabinet);
 
 #ifdef WORDS_BIGENDIAN
 #define fci_endian_ulong(x) RtlUlongByteSwap(x)
@@ -119,7 +120,7 @@ struct folder
     struct temp_file data;
     cab_ULONG        data_start;
     cab_UWORD        data_count;
-    cab_UWORD        compression;
+    TCOMP            compression;
 };
 
 struct file
@@ -141,7 +142,7 @@ struct data_block
     cab_UWORD   uncompressed;
 };
 
-typedef struct
+typedef struct FCI_Int
 {
   unsigned int       magic;
   PERF               perf;
@@ -185,6 +186,8 @@ typedef struct
   cab_ULONG          files_size;
   cab_ULONG          placed_files_size;
   cab_ULONG          folders_data_size;
+  TCOMP              compression;
+  cab_UWORD        (*compress)(struct FCI_Int *);
 } FCI_Int;
 
 #define FCI_INT_MAGIC 0xfcfcfc05
@@ -282,6 +285,7 @@ static struct file *add_file( FCI_Int *fci, const char *filename )
     file->attribs = 0;
     strcpy( file->name, filename );
     list_add_tail( &fci->files_list, &file->entry );
+    fci->files_size += sizeof(CFFILE) + strlen(filename) + 1;
     return file;
 }
 
@@ -305,21 +309,92 @@ static void free_file( FCI_Int *fci, struct file *file )
     fci->free( file );
 }
 
-static struct data_block *add_data_block( FCI_Int *fci, cab_UWORD compressed, cab_UWORD uncompressed )
+/* create a new data block for the data in fci->data_in */
+static BOOL add_data_block( FCI_Int *fci, PFNFCISTATUS status_callback )
 {
-    struct data_block *block = fci->alloc( sizeof(*block) );
+    int err;
+    struct data_block *block;
 
-    if (!block)
+    if (!fci->cdata_in) return TRUE;
+
+    if (!(block = fci->alloc( sizeof(*block) )))
     {
         set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
-        return NULL;
+        return FALSE;
     }
-    block->compressed   = compressed;
-    block->uncompressed = uncompressed;
-    list_add_tail( &fci->blocks_list, &block->entry );
-    fci->data.size += sizeof(CFDATA) + fci->ccab.cbReserveCFData + compressed;
+    block->uncompressed = fci->cdata_in;
+    block->compressed   = fci->compress( fci );
+
+    if (fci->write( fci->data.handle, fci->data_out,
+                    block->compressed, &err, fci->pv ) != block->compressed)
+    {
+        set_error( fci, FCIERR_TEMP_FILE, err );
+        fci->free( block );
+        return FALSE;
+    }
+
+    fci->cdata_in = 0;
+    fci->data.size += sizeof(CFDATA) + fci->ccab.cbReserveCFData + block->compressed;
+    fci->cCompressedBytesInFolder += block->compressed;
     fci->cDataBlocks++;
-    return block;
+    list_add_tail( &fci->blocks_list, &block->entry );
+
+    if (status_callback( statusFile, block->compressed, block->uncompressed, fci->pv ) == -1)
+    {
+        set_error( fci, FCIERR_USER_ABORT, 0 );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/* add compressed blocks for all the data that can be read from the file */
+static BOOL add_file_data( FCI_Int *fci, char *sourcefile, char *filename, BOOL execute,
+                           PFNFCIGETOPENINFO get_open_info, PFNFCISTATUS status_callback )
+{
+    int err, len;
+    INT_PTR handle;
+    struct file *file;
+
+    /* make sure we have buffers */
+    if (!fci->data_in && !(fci->data_in = fci->alloc( CB_MAX_CHUNK )))
+    {
+        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+    if (!fci->data_out && !(fci->data_out = fci->alloc( 2 * CB_MAX_CHUNK )))
+    {
+        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+
+    if (!(file = add_file( fci, filename ))) return FALSE;
+
+    handle = get_open_info( sourcefile, &file->date, &file->time, &file->attribs, &err, fci->pv );
+    if (handle == -1)
+    {
+        free_file( fci, file );
+        set_error( fci, FCIERR_OPEN_SRC, err );
+        return FALSE;
+    }
+    if (execute) file->attribs |= _A_EXEC;
+
+    for (;;)
+    {
+        len = fci->read( handle, fci->data_in + fci->cdata_in,
+                         CAB_BLOCKMAX - fci->cdata_in, &err, fci->pv );
+        if (!len) break;
+
+        if (len == -1)
+        {
+            set_error( fci, FCIERR_READ_SRC, err );
+            return FALSE;
+        }
+        file->size += len;
+        fci->cdata_in += len;
+        if (fci->cdata_in == CAB_BLOCKMAX && !add_data_block( fci, status_callback )) return FALSE;
+    }
+    fci->close( handle, &err, fci->pv );
+    return TRUE;
 }
 
 static void free_data_block( FCI_Int *fci, struct data_block *block )
@@ -340,7 +415,7 @@ static struct folder *add_folder( FCI_Int *fci )
     folder->data.handle = -1;
     folder->data_start  = fci->folders_data_size;
     folder->data_count  = 0;
-    folder->compression = tcompTYPE_NONE;  /* FIXME */
+    folder->compression = fci->compression;
     list_init( &folder->files_list );
     list_init( &folder->blocks_list );
     list_add_tail( &fci->folders_list, &folder->entry );
@@ -861,6 +936,13 @@ static BOOL add_files_to_folder( FCI_Int *fci, struct folder *folder, cab_ULONG 
     return TRUE;
 }
 
+static cab_UWORD compress_NONE( FCI_Int *fci )
+{
+    memcpy( fci->data_out, fci->data_in, fci->cdata_in );
+    return fci->cdata_in;
+}
+
+
 /***********************************************************************
  *		FCICreate (CABINET.10)
  *
@@ -981,6 +1063,8 @@ HFCI __cdecl FCICreate(
   p_fci_internal->files_size = 0;
   p_fci_internal->placed_files_size = 0;
   p_fci_internal->folders_data_size = 0;
+  p_fci_internal->compression = tcompTYPE_NONE;
+  p_fci_internal->compress = compress_NONE;
 
   list_init( &p_fci_internal->folders_list );
   list_init( &p_fci_internal->files_list );
@@ -992,48 +1076,6 @@ HFCI __cdecl FCICreate(
   if (!create_temp_file( p_fci_internal, &p_fci_internal->data )) return NULL;
   return (HFCI)p_fci_internal;
 }
-
-
-
-
-
-
-static BOOL fci_flush_data_block (FCI_Int *p_fci_internal, int* err,
-    PFNFCISTATUS pfnfcis) {
-
-  /* attention no checks if there is data available!!! */
-  struct data_block *block;
-
-  /* TODO compress the data of p_fci_internal->data_in */
-  /* and write it to p_fci_internal->data_out */
-  memcpy(p_fci_internal->data_out, p_fci_internal->data_in,
-    p_fci_internal->cdata_in /* number of bytes to copy */);
-
-  if (!(block = add_data_block( p_fci_internal, p_fci_internal->cdata_in, p_fci_internal->cdata_in )))
-      return FALSE;
-
-  /* write p_fci_internal->data_out to p_fci_internal->data.handle */
-  if( p_fci_internal->write( p_fci_internal->data.handle, /* file handle */
-      p_fci_internal->data_out, /* memory buffer */
-      block->compressed, /* number of bytes to copy */
-      err, p_fci_internal->pv) != block->compressed) {
-    set_error( p_fci_internal, FCIERR_TEMP_FILE, ERROR_WRITE_FAULT );
-    return FALSE;
-  }
-  /* TODO error handling of err */
-
-  /* reset the offset */
-  p_fci_internal->cdata_in = 0;
-  p_fci_internal->cCompressedBytesInFolder += block->compressed;
-
-  /* report status with pfnfcis about uncompressed and compressed file data */
-  if( (*pfnfcis)(statusFile, block->compressed, block->uncompressed,
-      p_fci_internal->pv) == -1) {
-    set_error( p_fci_internal, FCIERR_USER_ABORT, 0 );
-    return FALSE;
-  }
-  return TRUE;
-} /* end of fci_flush_data_block */
 
 
 
@@ -1087,12 +1129,8 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
   p_fci_internal->fSplitFolder=FALSE;
 
   /* START of COPY */
-  /* if there is data in p_fci_internal->data_in */
-  if (p_fci_internal->cdata_in!=0) {
+  if (!add_data_block( p_fci_internal, pfnfcis )) return FALSE;
 
-    if( !fci_flush_data_block(p_fci_internal, &err, pfnfcis) ) return FALSE;
-
-  }
   /* reset to get the number of data blocks of this folder which are */
   /* actually in this cabinet ( at least partially ) */
   p_fci_internal->cDataBlocks=0;
@@ -1395,10 +1433,7 @@ BOOL __cdecl FCIAddFile(
 	PFNFCIGETOPENINFO     pfnfcigoi,
 	TCOMP                 typeCompress)
 {
-  int err;
   cab_ULONG read_result;
-  int file_handle;
-  struct file *file;
   FCI_Int *p_fci_internal = get_fci_ptr( hfci );
 
   if (!p_fci_internal) return FALSE;
@@ -1407,6 +1442,21 @@ BOOL __cdecl FCIAddFile(
       (!pfnfcigoi) || strlen(pszFileName)>=CB_MAX_FILENAME) {
     set_error( p_fci_internal, FCIERR_NONE, ERROR_BAD_ARGUMENTS );
     return FALSE;
+  }
+
+  if (typeCompress != p_fci_internal->compression)
+  {
+      if (!FCIFlushFolder( hfci, pfnfcignc, pfnfcis )) return FALSE;
+      switch (typeCompress)
+      {
+      default:
+          FIXME( "compression %x not supported, defaulting to none\n", typeCompress );
+          /* fall through */
+      case tcompTYPE_NONE:
+          p_fci_internal->compression = tcompTYPE_NONE;
+          p_fci_internal->compress    = compress_NONE;
+          break;
+      }
   }
 
   /* TODO check if pszSourceFile??? */
@@ -1422,51 +1472,6 @@ BOOL __cdecl FCIAddFile(
     set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
     return FALSE;
   }
-
-  if (!(file = add_file( p_fci_internal, pszFileName ))) return FALSE;
-
-  /* allocation of memory */
-  if (p_fci_internal->data_in==NULL) {
-    if (p_fci_internal->cdata_in!=0) {
-      /* error handling */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
-      return FALSE;
-    }
-    if (p_fci_internal->data_out!=NULL) {
-      /* error handling */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
-      return FALSE;
-    }
-    if(!(p_fci_internal->data_in = p_fci_internal->alloc(CB_MAX_CHUNK))) {
-      set_error( p_fci_internal, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
-      return FALSE;
-    }
-    if (p_fci_internal->data_out==NULL) {
-      if(!(p_fci_internal->data_out = p_fci_internal->alloc( 2 * CB_MAX_CHUNK))){
-        set_error( p_fci_internal, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
-      }
-    }
-  }
-
-  if (p_fci_internal->data_out==NULL) {
-    p_fci_internal->free(p_fci_internal->data_in);
-    /* error handling */
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
-    return FALSE;
-  }
-
-  /* get information about the file */
-  /* set defaults in case callback doesn't set one or more fields */
-  file_handle = pfnfcigoi( pszSourceFile, &file->date, &file->time, &file->attribs,
-                           &err, p_fci_internal->pv );
-  /* check file_handle */
-  if(file_handle==0){
-    set_error( p_fci_internal, FCIERR_OPEN_SRC, ERROR_OPEN_FAILED );
-  }
-  /* TODO error handling of err */
-
-  if (fExecute) { file->attribs |= _A_EXEC; }
 
   /* REUSE the variable read_result */
   read_result=get_header_size( p_fci_internal ) + p_fci_internal->ccab.cbReserveCFFolder;
@@ -1531,45 +1536,8 @@ BOOL __cdecl FCIAddFile(
     return FALSE;
   }
 
-  /* read the contents of the file blockwise */
-  while (!FALSE) {
-    if (p_fci_internal->cdata_in > CAB_BLOCKMAX) {
-      /* internal error */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
+  if (!add_file_data( p_fci_internal, pszSourceFile, pszFileName, fExecute, pfnfcigoi, pfnfcis ))
       return FALSE;
-    }
-
-    read_result = p_fci_internal->read( file_handle /* file handle */,
-      (p_fci_internal->data_in + p_fci_internal->cdata_in) /* memory buffer */,
-      (CAB_BLOCKMAX - p_fci_internal->cdata_in) /* number of bytes to copy */,
-      &err, p_fci_internal->pv);
-    /* TODO error handling of err */
-
-    if( read_result==0 ) break;
-
-    /* increment the block size */
-    p_fci_internal->cdata_in += read_result;
-
-    /* increment the file size */
-    file->size += read_result;
-
-    if ( p_fci_internal->cdata_in > CAB_BLOCKMAX ) {
-      /* report internal error */
-      set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
-      return FALSE;
-    }
-    /* write a whole block */
-    if ( p_fci_internal->cdata_in == CAB_BLOCKMAX ) {
-
-      if( !fci_flush_data_block(p_fci_internal, &err, pfnfcis) ) return FALSE;
-    }
-  }
-
-  /* close the file from FCIAddFile */
-  p_fci_internal->close(file_handle,&err,p_fci_internal->pv);
-  /* TODO error handling of err */
-
-  p_fci_internal->files_size += sizeof(CFFILE) + strlen(pszFileName)+1;
 
   /* REUSE the variable read_result */
   read_result = get_header_size( p_fci_internal ) + p_fci_internal->ccab.cbReserveCFFolder;
