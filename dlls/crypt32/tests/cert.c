@@ -1834,6 +1834,7 @@ static void testCertSigs(void)
     CryptReleaseContext(csp, 0);
     ret = pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
      CRYPT_DELETEKEYSET);
+    ok(ret, "CryptAcquireContext failed: %08x\n", GetLastError());
 }
 
 static const BYTE md5SignedEmptyCert[] = {
