@@ -11290,7 +11290,9 @@ static void clip_planes_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed, hr=%08x\n", hr);
     hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed, hr=%08x\n", hr);
 
     IDirect3DDevice9_SetClipPlane(device, 0, plane0);
 
@@ -11328,6 +11330,7 @@ static void clip_planes_test(IDirect3DDevice9 *device)
 
     IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPLANEENABLE, 0);
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed, hr=%08x\n", hr);
     IDirect3DVertexShader9_Release(shader);
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed, hr=%08x\n", hr);
