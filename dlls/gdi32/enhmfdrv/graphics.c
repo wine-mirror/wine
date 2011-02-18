@@ -728,6 +728,8 @@ BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     int textHeight = 0;
     int textWidth = 0;
     const UINT textAlign = GetTextAlign(physDev->hdc);
+    const INT graphicsMode = GetGraphicsMode(physDev->hdc);
+    FLOAT exScale, eyScale;
 
     nSize = sizeof(*pemr) + ((count+1) & ~1) * sizeof(WCHAR) + count * sizeof(INT);
 
@@ -735,12 +737,32 @@ BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
            wine_dbgstr_rect(lprect), count, nSize);
     pemr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nSize);
 
+    if (graphicsMode == GM_COMPATIBLE)
+    {
+        const INT horzSize = GetDeviceCaps(physDev->hdc, HORZSIZE);
+        const INT horzRes  = GetDeviceCaps(physDev->hdc, HORZRES);
+        const INT vertSize = GetDeviceCaps(physDev->hdc, VERTSIZE);
+        const INT vertRes  = GetDeviceCaps(physDev->hdc, VERTRES);
+        SIZE wndext, vportext;
+
+        GetViewportExtEx(physDev->hdc, &vportext);
+        GetWindowExtEx(physDev->hdc, &wndext);
+        exScale = 100.0 * ((FLOAT)horzSize  / (FLOAT)horzRes) /
+                          ((FLOAT)wndext.cx / (FLOAT)vportext.cx);
+        eyScale = 100.0 * ((FLOAT)vertSize  / (FLOAT)vertRes) /
+                          ((FLOAT)wndext.cy / (FLOAT)vportext.cy);
+    }
+    else
+    {
+        exScale = 0.0;
+        eyScale = 0.0;
+    }
+
     pemr->emr.iType = EMR_EXTTEXTOUTW;
     pemr->emr.nSize = nSize;
-
-    pemr->iGraphicsMode = GetGraphicsMode(physDev->hdc);
-    pemr->exScale = pemr->eyScale = 1.0; /* FIXME */
-
+    pemr->iGraphicsMode = graphicsMode;
+    pemr->exScale = exScale;
+    pemr->eyScale = eyScale;
     pemr->emrtext.ptlReference.x = x;
     pemr->emrtext.ptlReference.y = y;
     pemr->emrtext.nChars = count;

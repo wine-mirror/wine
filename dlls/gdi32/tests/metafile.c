@@ -264,6 +264,141 @@ static void test_ExtTextOut(void)
     DestroyWindow(hwnd);
 }
 
+struct eto_scale_test_record
+{
+    INT graphics_mode;
+    INT map_mode;
+    double ex_scale;
+    double ey_scale;
+    BOOL processed;
+};
+
+static int CALLBACK eto_scale_enum_proc(HDC hdc, HANDLETABLE *handle_table,
+    const ENHMETARECORD *emr, int n_objs, LPARAM param)
+{
+    struct eto_scale_test_record *test = (struct eto_scale_test_record*)param;
+
+    if (emr->iType == EMR_EXTTEXTOUTW)
+    {
+        const EMREXTTEXTOUTW *pExtTextOutW = (const EMREXTTEXTOUTW *)emr;
+        trace("gm %d, mm %d, scale %f, %f, expected %f, %f\n",
+              test->graphics_mode, test->map_mode,
+              pExtTextOutW->exScale, pExtTextOutW->eyScale,
+              test->ex_scale, test->ey_scale);
+        ok(fabs(test->ex_scale - pExtTextOutW->exScale) < 0.001,
+           "Got exScale %f, expected %f\n", pExtTextOutW->exScale, test->ex_scale);
+        ok(fabs(test->ey_scale - pExtTextOutW->eyScale) < 0.001,
+           "Got eyScale %f, expected %f\n", pExtTextOutW->eyScale, test->ey_scale);
+        test->processed = TRUE;
+    }
+
+    return 1;
+}
+
+static void test_ExtTextOutScale(void)
+{
+    const RECT rc = { 0, 0, 100, 100 };
+    const WCHAR str[] = {'a',0 };
+    struct eto_scale_test_record test;
+    HDC hdcDisplay, hdcMetafile;
+    HENHMETAFILE hMetafile;
+    HWND hwnd;
+    SIZE wndext, vportext;
+    int horzSize, vertSize, horzRes, vertRes;
+    int ret;
+    int i;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP | WS_VISIBLE,
+                           0, 0, 200, 200, 0, 0, 0, NULL);
+    ok(hwnd != 0, "CreateWindowExA failed\n");
+
+    hdcDisplay = GetDC(hwnd);
+    ok(hdcDisplay != 0, "GetDC failed\n");
+
+    horzSize = GetDeviceCaps(hdcDisplay, HORZSIZE);
+    horzRes  = GetDeviceCaps(hdcDisplay, HORZRES);
+    vertSize = GetDeviceCaps(hdcDisplay, VERTSIZE);
+    vertRes  = GetDeviceCaps(hdcDisplay, VERTRES);
+    ok(horzSize && horzRes && vertSize && vertRes, "GetDeviceCaps failed\n");
+
+    for (i = 0; i < 16; i++)
+    {
+        test.graphics_mode = i / 8 + 1;
+        test.map_mode      = i % 8 + 1;
+
+        ret = SetGraphicsMode(hdcDisplay, test.graphics_mode);
+        ok(ret, "SetGraphicsMode failed\n");
+        ret = SetMapMode(hdcDisplay, test.map_mode);
+        ok(ret, "SetMapMode failed\n");
+
+        if ((test.map_mode == MM_ISOTROPIC) || (test.map_mode == MM_ANISOTROPIC))
+        {
+            ret = SetWindowExtEx(hdcDisplay, 1, 1, NULL);
+            ok(ret, "SetWindowExtEx failed\n");
+            ret = SetViewportExtEx(hdcDisplay, -20, -10, NULL);
+            ok(ret, "SetViewportExtEx failed\n");
+        }
+
+        ret = GetViewportExtEx(hdcDisplay, &vportext);
+        ok(ret, "GetViewportExtEx failed\n");
+        ret = GetWindowExtEx(hdcDisplay, &wndext);
+        ok(ret, "GetWindowExtEx failed\n");
+
+        trace("gm %d, mm %d, wnd %d,%d, vp %d,%d horz %d,%d vert %d,%d\n",
+               test.graphics_mode, test.map_mode,
+               wndext.cx, wndext.cy, vportext.cx, vportext.cy,
+               horzSize, horzRes, vertSize, vertRes);
+
+        if (test.graphics_mode == GM_COMPATIBLE)
+        {
+            test.ex_scale = 100.0 * ((FLOAT)horzSize  / (FLOAT)horzRes) /
+                                    ((FLOAT)wndext.cx / (FLOAT)vportext.cx);
+            test.ey_scale = 100.0 * ((FLOAT)vertSize  / (FLOAT)vertRes) /
+                                    ((FLOAT)wndext.cy / (FLOAT)vportext.cy);
+        }
+        else
+        {
+            test.ex_scale = 0.0;
+            test.ey_scale = 0.0;
+        }
+
+        hdcMetafile = CreateEnhMetaFileA(hdcDisplay, NULL, NULL, NULL);
+        ok(hdcMetafile != 0, "CreateEnhMetaFileA failed\n");
+
+        ret = SetGraphicsMode(hdcMetafile, test.graphics_mode);
+        ok(ret, "SetGraphicsMode failed\n");
+        ret = SetMapMode(hdcMetafile, test.map_mode);
+        ok(ret, "SetMapMode failed\n");
+
+        if ((test.map_mode == MM_ISOTROPIC) || (test.map_mode == MM_ANISOTROPIC))
+        {
+            ret = SetWindowExtEx(hdcMetafile, 1, 1, NULL);
+            ok(ret, "SetWindowExtEx failed\n");
+            ret = SetViewportExtEx(hdcMetafile, -20, -10, NULL);
+            ok(ret, "SetViewportExtEx failed\n");
+        }
+
+        ret = ExtTextOutW(hdcMetafile, 0, 0, 0, 0, str, 1, NULL);
+        ok(ret, "ExtTextOutW failed\n");
+
+        hMetafile = CloseEnhMetaFile(hdcMetafile);
+        ok(hMetafile != 0, "CloseEnhMetaFile failed\n");
+
+        test.processed = 0;
+        ret = EnumEnhMetaFile(hdcDisplay, hMetafile, eto_scale_enum_proc, &test, &rc);
+        ok(ret, "EnumEnhMetaFile failed\n");
+        ok(test.processed, "EnumEnhMetaFile couldn't find EMR_EXTTEXTOUTW record\n");
+
+        ret = DeleteEnhMetaFile(hMetafile);
+        ok(ret, "DeleteEnhMetaFile failed\n");
+    }
+
+    ret = ReleaseDC(hwnd, hdcDisplay);
+    ok(ret, "ReleaseDC failed\n");
+    DestroyWindow(hwnd);
+}
+
+
 static void check_dc_state(HDC hdc, int restore_no,
                            int wnd_org_x, int wnd_org_y, int wnd_ext_x, int wnd_ext_y,
                            int vp_org_x, int vp_org_y, int vp_ext_x, int vp_ext_y)
@@ -2748,6 +2883,7 @@ START_TEST(metafile)
 
     /* For enhanced metafiles (enhmfdrv) */
     test_ExtTextOut();
+    test_ExtTextOutScale();
     test_SaveDC();
     test_emf_BitBlt();
 
