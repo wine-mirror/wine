@@ -6743,7 +6743,7 @@ static BOOL LISTVIEW_GetItemExtT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVIte
 
     pszText = lpLVItem->pszText;
     bResult = LISTVIEW_GetItemT(infoPtr, lpLVItem, isW);
-    if (bResult && lpLVItem->pszText != pszText)
+    if (bResult && (lpLVItem->mask & LVIF_TEXT) && lpLVItem->pszText != pszText)
     {
 	if (lpLVItem->pszText != LPSTR_TEXTCALLBACKW)
 	    textcpynT(pszText, isW, lpLVItem->pszText, isW, lpLVItem->cchTextMax);
