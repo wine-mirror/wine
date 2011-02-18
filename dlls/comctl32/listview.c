@@ -865,6 +865,7 @@ static inline void notify_itemactivate(const LISTVIEW_INFO *infoPtr, const LVHIT
       item.mask = LVIF_PARAM|LVIF_STATE;
       item.iItem = htInfo->iItem;
       item.iSubItem = 0;
+      item.stateMask = (UINT)-1;
       if (LISTVIEW_GetItemT(infoPtr, &item, TRUE)) {
 	  nmia.lParam = item.lParam;
  	  nmia.uOldState = item.state;
