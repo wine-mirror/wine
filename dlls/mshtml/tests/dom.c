@@ -1124,6 +1124,36 @@ static void _test_anchor_put_href(unsigned line, IUnknown *unk, const char *exhr
     _test_disp_value(line, unk, exhref);
 }
 
+#define test_anchor_get_target(a,h) _test_anchor_get_target(__LINE__,a,h)
+static void _test_anchor_get_target(unsigned line, IUnknown *unk, const char *target)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLAnchorElement_get_target(anchor, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_target failed: %08x\n", hres);
+    if(target)
+        ok_(__FILE__,line)(!strcmp_wa(str, target), "target = %s, expected %s\n", wine_dbgstr_w(str), target);
+    else
+        ok_(__FILE__,line)(str == NULL, "target = %s, expected NULL\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
+#define test_anchor_put_target(a,h) _test_anchor_put_target(__LINE__,a,h)
+static void _test_anchor_put_target(unsigned line, IUnknown *unk, const char *target)
+{
+    IHTMLAnchorElement *anchor = _get_anchor_iface(line, unk);
+    BSTR str;
+    HRESULT hres;
+
+    str = target ? a2bstr(target) : NULL;
+    hres = IHTMLAnchorElement_put_target(anchor, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_target failed: %08x\n", hres);
+    SysFreeString(str);
+}
+
+
 #define test_option_text(o,t) _test_option_text(__LINE__,o,t)
 static void _test_option_text(unsigned line, IHTMLOptionElement *option, const char *text)
 {
@@ -6585,6 +6615,18 @@ static void test_elems(IHTMLDocument2 *doc)
         /* Restore the href */
         test_anchor_put_href((IUnknown*)elem, "http://test/");
         test_anchor_href((IUnknown*)elem, "http://test/");
+
+        /* target */
+        test_anchor_get_target((IUnknown*)elem, NULL);
+
+        /* Change the target */
+        test_anchor_put_target((IUnknown*)elem, "wine");
+        test_anchor_get_target((IUnknown*)elem, "wine");
+
+        /* Restore the target */
+        test_anchor_put_target((IUnknown*)elem, NULL);
+        test_anchor_get_target((IUnknown*)elem, NULL);
+
         IHTMLElement_Release(elem);
     }
 
