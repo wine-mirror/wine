@@ -751,7 +751,7 @@ msgstr "URL Netscape de renouvellement du certificat"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr "URL Netscape des stratégies d'ACL"
+msgstr "URL Netscape de politique de sécurité d'AC"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
@@ -991,7 +991,7 @@ msgstr "Emplacements des LRC publiées"
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr "Imposer une politique de chaîne de certification"
+msgstr "Imposer une politique de chaîne de certificats"
 
 #: crypt32.rc:126
 msgid "Transaction Id"
@@ -1418,14 +1418,12 @@ msgid "Signature CA"
 msgstr "AC de signature"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
-msgstr "Politiques de certificats"
+msgstr "Politique de certification"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
-msgstr "Identifiant de l'autorité de la clé :"
+msgstr "Identifiant de politique : "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -1440,9 +1438,8 @@ msgid "Qualifier"
 msgstr "Qualificateur"
 
 #: cryptdlg.rc:34
-#, fuzzy
 msgid "Notice Reference"
-msgstr "Référence à l'avis"
+msgstr "Référence de la notice"
 
 #: cryptdlg.rc:35
 msgid "Organization="
@@ -1450,12 +1447,11 @@ msgstr "Organisation ="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
-msgstr "Numéro de série du certificat ="
+msgstr "Numéro de la notice ="
 
 #: cryptdlg.rc:37
-#, fuzzy
 msgid "Notice Text="
-msgstr "Texte de l'avis ="
+msgstr "Texte de la notice ="
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2074,7 +2070,7 @@ msgstr "&Rechercher"
 
 #: hhctrl.rc:31
 msgid "Favor&ites"
-msgstr "&Signets"
+msgstr "&Favoris"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
@@ -4044,7 +4040,7 @@ msgstr "L'ID d'ouverture de session existe déjà\n"
 
 #: winerror.mc:2221
 msgid "Unknown authentication package\n"
-msgstr "Package d'authentification inconnu\n"
+msgstr "Paquet d'authentification inconnu\n"
 
 #: winerror.mc:2226
 msgid "Bad logon session state\n"
@@ -4195,9 +4191,8 @@ msgid "Invalid accelerator table handle\n"
 msgstr "Descripteur de table d'accélérateurs invalide\n"
 
 #: winerror.mc:2416
-#, fuzzy
 msgid "Invalid hook handle\n"
-msgstr "Descripteur de crochet (hook) invalide\n"
+msgstr "Descripteur de point d'entrée invalide\n"
 
 #: winerror.mc:2421
 msgid "Invalid DWP handle\n"
@@ -4284,32 +4279,28 @@ msgid "DC not found\n"
 msgstr "Contexte de périphérique (DC) introuvable\n"
 
 #: winerror.mc:2526
-#, fuzzy
 msgid "Invalid hook filter\n"
-msgstr "Crochet (hook) de filtrage invalide\n"
+msgstr "Point d'entrée de filtrage invalide\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure\n"
 msgstr "Procédure de filtrage invalide\n"
 
 #: winerror.mc:2536
-#, fuzzy
 msgid "Hook procedure needs module handle\n"
-msgstr "La procédure de crochet nécessite un identificateur de module\n"
+msgstr "La procédure accrochée nécessite un descripteur de module\n"
 
 #: winerror.mc:2541
-#, fuzzy
 msgid "Global-only hook procedure\n"
-msgstr "Procédure de crochet globale seulement\n"
+msgstr "Procédure accrochée globale seulement\n"
 
 #: winerror.mc:2546
 msgid "Journal hook already set\n"
-msgstr "Crochet de journal déjà spécifié\n"
+msgstr "Point d'entrée de journal déjà spécifié\n"
 
 #: winerror.mc:2551
-#, fuzzy
 msgid "Hook procedure not installed\n"
-msgstr "Procédure de crochet pas installée\n"
+msgstr "Procédure accrochée pas installée\n"
 
 #: winerror.mc:2556
 msgid "Invalid listbox message\n"
@@ -4416,13 +4407,12 @@ msgid "Invalid keyboard handle\n"
 msgstr "Descripteur de clavier invalide\n"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr "Type d'accès non accordé\n"
+msgstr "Type de point d'entrée non autorisé\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
-msgstr ""
+msgstr "Station de fenêtres interactive requise\n"
 
 #: winerror.mc:2696
 msgid "Timeout\n"
@@ -4497,9 +4487,8 @@ msgid "Installation source is missing\n"
 msgstr "Source d'installation manquante\n"
 
 #: winerror.mc:2786
-#, fuzzy
 msgid "Wrong installation package version\n"
-msgstr "Version incompatible du package de sérialisation\n"
+msgstr "Version incompatible du paquet d'installation\n"
 
 #: winerror.mc:2791
 msgid "Product uninstalled\n"
@@ -4523,12 +4512,11 @@ msgstr "Installation déjà en cours\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr ""
+msgstr "Impossible d'ouvrir le paquet d'installation\n"
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid\n"
-msgstr "Programmes d'installation"
+msgstr "Paquet d'installation invalide\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
@@ -4547,9 +4535,8 @@ msgid "Installation transform failed to apply\n"
 msgstr "Le fichier de transformation d'installation n'a pu être appliqué\n"
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected\n"
-msgstr "Programmes d'installation"
+msgstr "Paquet d'installation rejeté\n"
 
 #: winerror.mc:2851
 msgid "Function could not be called\n"
@@ -4588,19 +4575,16 @@ msgid "Installer not used\n"
 msgstr "Programme d'installation pas utilisé\n"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr "Impossible d'ouvrir « %s »\n"
+msgstr "Impossible d'ouvrir le paquet correctif\n"
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package\n"
-msgstr "Balise invalide\n"
+msgstr "Paquet correctif invalide\n"
 
 #: winerror.mc:2906
-#, fuzzy
 msgid "Unsupported patch package\n"
-msgstr "Type non pris en charge\n"
+msgstr "Paquet correctif non pris en charge\n"
 
 #: winerror.mc:2911
 msgid "Another version is installed\n"
@@ -4931,9 +4915,8 @@ msgid "Byte count too small\n"
 msgstr "Nombre d'octets trop petit\n"
 
 #: winerror.mc:3326
-#, fuzzy
 msgid "Bad stub data\n"
-msgstr "Données de squelette (stub) incorrectes\n"
+msgstr "Données d'ébauche (stub) incorrectes\n"
 
 #: winerror.mc:3331
 msgid "Invalid user buffer\n"
@@ -5101,9 +5084,8 @@ msgid "UUID is local only\n"
 msgstr "UUID valide localement uniquement\n"
 
 #: winerror.mc:3536
-#, fuzzy
 msgid "Security package error\n"
-msgstr "Erreur du package de sécurité\n"
+msgstr "Erreur du paquet de sécurité\n"
 
 #: winerror.mc:3541
 msgid "Thread not cancelled\n"
@@ -5114,14 +5096,12 @@ msgid "Invalid handle operation\n"
 msgstr "Opération invalide sur un descripteur\n"
 
 #: winerror.mc:3551
-#, fuzzy
 msgid "Wrong serialising package version\n"
-msgstr "Version incompatible du package de sérialisation\n"
+msgstr "Version incompatible du paquet de sérialisation\n"
 
 #: winerror.mc:3556
-#, fuzzy
 msgid "Wrong stub version\n"
-msgstr "Mauvaise version de squelette\n"
+msgstr "Version incompatible d'ébauche (stub)\n"
 
 #: winerror.mc:3561
 msgid "Invalid pipe object\n"
@@ -5193,24 +5173,20 @@ msgid "Invalid driver\n"
 msgstr "Pilote invalide\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "Objet invalide\n"
+msgstr "Jeu de solveurs d'objets invalide\n"
 
 #: winerror.mc:3651
-#, fuzzy
 msgid "Incomplete RPC send\n"
-msgstr "Nom incomplet\n"
+msgstr "Données RPC envoyées incomplètes\n"
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle\n"
-msgstr "Descripteur de crochet (hook) invalide\n"
+msgstr "Descripteur RPC asynchrone invalide\n"
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call\n"
-msgstr "Descripteur de crochet (hook) invalide\n"
+msgstr "Appel RPC asynchrone invalide\n"
 
 #: winerror.mc:3666
 msgid "RPC pipe closed\n"
@@ -5386,8 +5362,8 @@ msgstr ""
 "Publier un produit :\n"
 "\t/j[u|m] paquet [/t transformation] [/g id_langue]\n"
 "Appliquer un patch :\n"
-"\t/p paquet_patch [propriété]\n"
-"\t/p paquet_patch /a paquet [propriété]\n"
+"\t/p paquet_correctif [propriété]\n"
+"\t/p paquet_correctif /a paquet [propriété]\n"
 "Modificateurs de journalisation et d'interface utilisateur pour les "
 "commandes ci-dessus :\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] fichier_journal\n"
@@ -5908,7 +5884,7 @@ msgstr "Créer un &raccourci"
 
 #: shdoclc.rc:50
 msgid "Add to &Favorites"
-msgstr "Ajouter aux &Favoris..."
+msgstr "Ajouter aux &favoris..."
 
 #: shdoclc.rc:51
 msgid "&View Source"
@@ -5990,7 +5966,7 @@ msgstr "Copier le r&accourci"
 
 #: shdoclc.rc:82 shdoclc.rc:138 shdoclc.rc:166 shdoclc.rc:191
 msgid "Add to &Favorites..."
-msgstr "Ajouter aux &Favoris..."
+msgstr "Ajouter aux &favoris..."
 
 #: shdoclc.rc:85 shdoclc.rc:141 shdoclc.rc:171 shdoclc.rc:198
 msgid "P&roperties"
@@ -6041,7 +6017,6 @@ msgid "&Table Properties"
 msgstr "Propriétés de la &table"
 
 #: shdoclc.rc:116
-#, fuzzy
 msgid "1DSite Select"
 msgstr "1DSite Select"
 
@@ -6098,77 +6073,65 @@ msgid "Debug"
 msgstr "Déboguage"
 
 #: shdoclc.rc:203
-#, fuzzy
 msgid "Trace Tags"
-msgstr "Trace Tags"
+msgstr "Étiquettes de trace"
 
 #: shdoclc.rc:204
-#, fuzzy
 msgid "Resource Failures"
-msgstr "Resource Failures"
+msgstr "Défaillances de ressources"
 
 #: shdoclc.rc:205
-#, fuzzy
 msgid "Dump Tracking Info"
-msgstr "Dump Tracking Info"
+msgstr "Vider les informations de suivi"
 
+# points d'arrêt ?
 #: shdoclc.rc:206
-#, fuzzy
 msgid "Debug Break"
-msgstr "Debug Break"
+msgstr "Interruption du débogage"
 
 #: shdoclc.rc:207
-#, fuzzy
 msgid "Debug View"
-msgstr "Debug View"
+msgstr "Vue de débogage"
 
 #: shdoclc.rc:208
-#, fuzzy
 msgid "Dump Tree"
-msgstr "Dump Tree"
+msgstr "Vider l'arborescence"
 
 #: shdoclc.rc:209
-#, fuzzy
 msgid "Dump Lines"
-msgstr "Dump Lines"
+msgstr "Vider les lignes"
 
 #: shdoclc.rc:210
-#, fuzzy
 msgid "Dump DisplayTree"
-msgstr "Dump DisplayTree"
+msgstr "Vider l'arbre d'affichage"
 
 #: shdoclc.rc:211
-#, fuzzy
 msgid "Dump FormatCaches"
-msgstr "Dump FormatCaches"
+msgstr "Vider les caches de formats"
 
 #: shdoclc.rc:212
-#, fuzzy
 msgid "Dump LayoutRects"
-msgstr "Dump LayoutRects"
+msgstr "Vider les rectangles de mise en page (LayoutRect)"
 
 #: shdoclc.rc:213
 msgid "Memory Monitor"
 msgstr "Moniteur mémoire"
 
 #: shdoclc.rc:214
-#, fuzzy
 msgid "Performance Meters"
-msgstr "Performance Meters"
+msgstr "Indicateurs de performance"
 
 #: shdoclc.rc:215
 msgid "Save HTML"
 msgstr "Sauvegarder le code HTML"
 
 #: shdoclc.rc:217
-#, fuzzy
 msgid "&Browse View"
-msgstr "&Browse View"
+msgstr "Vue de &navigation"
 
 #: shdoclc.rc:218
-#, fuzzy
 msgid "&Edit View"
-msgstr "&Edit View"
+msgstr "Vue d'&édition"
 
 #: shdoclc.rc:221
 msgid "Vertical Scrollbar"
@@ -6306,7 +6269,6 @@ msgid "&Favorites"
 msgstr "&Favoris"
 
 #: shdocvw.rc:52 regedit.rc:75
-#, fuzzy
 msgid "&Add to Favorites..."
 msgstr "&Ajouter aux favoris..."
 
@@ -6847,13 +6809,8 @@ msgid "Mi&nimize"
 msgstr "Réduct&ion"
 
 #: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-#, fuzzy
 msgid "Ma&ximize"
-msgstr ""
-"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"&Agrandir\n"
-"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"&Agrandissement"
+msgstr "Ma&ximiser"
 
 #: user32.rc:33
 msgid "&Close\tAlt-F4"
@@ -6970,12 +6927,11 @@ msgstr ""
 "Réinitialisez le périphérique ou attendez la fin de la lecture."
 
 #: winmm.rc:44
-#, fuzzy
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"L'en-tête du son n'a pas été préparé. Utilisez la fonction Préparer pour le "
+"L'en-tête WAVE n'a pas été préparé. Utilisez la fonction Préparer pour ce "
 "faire, puis essayez à nouveau."
 
 #: winmm.rc:45
@@ -6991,17 +6947,16 @@ msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"L'en-tête MIDI n'a pas été préparé. Utilisez la fonction Préparer pour le "
+"L'en-tête MIDI n'a pas été préparé. Utilisez la fonction Préparer pour ce "
 "faire, puis essayez à nouveau."
 
 #: winmm.rc:50
-#, fuzzy
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
-"Il n'y a pas d'instrument défini pour un mappeur MIDI. Utiliser l'onglet "
-"MIDI dans Propriétés multimédia pour installer les instruments."
+"Aucune carte MIDI trouvée. Cela peut être dû à un problème de pilote, ou à "
+"un fichier MIDIMAP.CFG corrompu ou absent."
 
 #: winmm.rc:51
 msgid ""
@@ -7012,22 +6967,21 @@ msgstr ""
 "transmission, puis essayez à nouveau."
 
 #: winmm.rc:52
-#, fuzzy
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system. Use MIDI Mapper to edit the setup."
 msgstr ""
-"Le fichier de description d'instrument MIDI (.IDF) n'est pas valide. Pour "
-"plus d'informations, contactez le constructeur de l'instrument."
+"La configuration actuelle du mappeur MIDI fait référence à un périphérique "
+"MIDI non installé sur votre système. Utilisez le mappeur MIDI pour changer "
+"la configuration."
 
 #: winmm.rc:53
-#, fuzzy
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
-"Un appel MIDI non valide dans le mode d'ouverture en cours a été émis. "
-"Ouvrez à nouveau le périphérique en employant le mode correct."
+"La configuration MIDI actuelle est altérée. Copiez le fichier MIDIMAP.CFG "
+"original dans le réportoire Windows SYSTEM, puis réessayez."
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
@@ -7075,12 +7029,11 @@ msgstr ""
 "Cet alias est déjà utilisé par cette application. Utilisez des alias uniques."
 
 #: winmm.rc:63
-#, fuzzy
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
-"Le pilote de périphérique n'a pas pu être chargé. Vérifiez qu'il est "
-"installé correctement."
+"Un problème indétectable est survenu lors du chargement du pilote de "
+"périphérique spécifié."
 
 #: winmm.rc:64
 msgid "No command was specified."
@@ -7323,13 +7276,13 @@ msgstr ""
 "placée entre guillemets."
 
 #: winmm.rc:101
-#, fuzzy
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
 msgstr ""
-"Ce périphérique n'est pas installé sur le système. Utilisez l'élément "
-"Pilotesdans le Panneau de configuration pour installer le périphérique."
+"Le périphérique spécifié n'est pas installé sur le système. Utilisez "
+"l'élément Gestionnaire de périphériques du Panneau de configuration pour "
+"installer le périphérique."
 
 #: winmm.rc:102
 msgid ""
@@ -7470,23 +7423,22 @@ msgstr ""
 "à nouveau."
 
 #: winmm.rc:127
-#, fuzzy
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
 msgstr ""
-"Ce périphérique n'est pas installé. Pour installer un nouveau pilote, double-"
-"cliquez sur l'icône Ajout de périphérique dans le Panneau de configuration."
+"Le périphérique MIDI spécifié n'est pas installé sur le système. Utilisez "
+"l'élément Gestionnaire de périphériques du Panneau de configuration pour "
+"installer un périphérique MIDI."
 
 #: winmm.rc:125
-#, fuzzy
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system. Use the MIDI Mapper option from the Control Panel to edit the "
 "setup."
 msgstr ""
 "La configuration actuelle du mappeur MIDI fait référence à un périphérique "
-"MIDI non installé sur votre système. Utilisez l'option mappeur MIDI dans le "
+"MIDI non installé sur votre système. Utilisez l'entrée Mappeur MIDI dans le "
 "Panneau de Configuration pour changer la configuration."
 
 #: winmm.rc:126
@@ -7506,14 +7458,13 @@ msgid "The system doesn't have a current MIDI port specified."
 msgstr "Le système n'a pas spécifié de port MIDI par défaut."
 
 #: winmm.rc:123
-#, fuzzy
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
 msgstr ""
-"Le système n'a pas de périphériques MIDI installés. Pour installer un "
-"nouveau pilote, double-cliquez sur l'icône Ajout de périphérique dans le "
-"Panneau de configuration."
+"Aucun périphérique MIDI n'est installé sur le système. Utilisez l'élément "
+"Gestionnaire de périphériques du Panneau de configuration pour installer un "
+"pilote MIDI."
 
 #: winmm.rc:118
 msgid "There is no display window."
@@ -9486,7 +9437,7 @@ msgstr "Quitte l'éditeur du registre"
 
 #: regedit.rc:167
 msgid "Adds keys to the favorites list"
-msgstr "Ajoute des clés à la liste des signets"
+msgstr "Ajoute des clés à la liste des favoris"
 
 #: regedit.rc:168
 msgid "Removes keys from the favorites list"
@@ -10181,7 +10132,7 @@ msgstr "Utilisateur"
 
 #: taskmgr.rc:286
 msgid "PF Delta"
-msgstr "Écart déf. pages"
+msgstr "Delta déf. pages"
 
 #: taskmgr.rc:287
 msgid "VM Size"
@@ -10338,7 +10289,6 @@ msgstr ""
 "Souhaitez-vous supprimer l'entrée de désinstallation de la base de registre ?"
 
 #: view.rc:33
-#, fuzzy
 msgid "&Pan"
 msgstr "&Déplacement"
 
