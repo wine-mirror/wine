@@ -1591,8 +1591,9 @@ HRESULT CALLBACK ITypeInfo_GetNames_Proxy(
     UINT cMaxNames,
     UINT* pcNames)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("(%p, %08x, %p, %d, %p)\n", This, memid, rgBstrNames, cMaxNames, pcNames);
+
+    return ITypeInfo_RemoteGetNames_Proxy(This, memid, rgBstrNames, cMaxNames, pcNames);
 }
 
 HRESULT __RPC_STUB ITypeInfo_GetNames_Stub(
@@ -1602,8 +1603,9 @@ HRESULT __RPC_STUB ITypeInfo_GetNames_Stub(
     UINT cMaxNames,
     UINT* pcNames)
 {
-  FIXME("not implemented\n");
-  return E_FAIL;
+    TRACE("(%p, %08x, %p, %d, %p)\n", This, memid, rgBstrNames, cMaxNames, pcNames);
+
+    return ITypeInfo_GetNames(This, memid, rgBstrNames, cMaxNames, pcNames);
 }
 
 HRESULT CALLBACK ITypeInfo_GetIDsOfNames_Proxy(
