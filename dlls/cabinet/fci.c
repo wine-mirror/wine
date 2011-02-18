@@ -165,11 +165,11 @@ typedef struct FCI_Int
   cab_ULONG          statusFolderTotal;
   BOOL               fGetNextCabInVain;
   void               *pv;
-  char szPrevCab[CB_MAX_CABINET_NAME];    /* previous cabinet name */
-  char szPrevDisk[CB_MAX_DISK_NAME];      /* disk name of previous cabinet */
-  unsigned char     *data_in;  /* uncompressed data blocks */
+  char               szPrevCab[CB_MAX_CABINET_NAME]; /* previous cabinet name */
+  char               szPrevDisk[CB_MAX_DISK_NAME];   /* disk name of previous cabinet */
+  unsigned char      data_in[CAB_BLOCKMAX];          /* uncompressed data blocks */
+  unsigned char      data_out[2 * CAB_BLOCKMAX];     /* compressed data blocks */
   cab_UWORD          cdata_in;
-  unsigned char     *data_out; /* compressed data blocks */
   ULONG              cCompressedBytesInFolder;
   cab_UWORD          cFolders;
   cab_UWORD          cFiles;
@@ -357,18 +357,6 @@ static BOOL add_file_data( FCI_Int *fci, char *sourcefile, char *filename, BOOL 
     INT_PTR handle;
     struct file *file;
 
-    /* make sure we have buffers */
-    if (!fci->data_in && !(fci->data_in = fci->alloc( CB_MAX_CHUNK )))
-    {
-        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
-    }
-    if (!fci->data_out && !(fci->data_out = fci->alloc( 2 * CB_MAX_CHUNK )))
-    {
-        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
-    }
-
     if (!(file = add_file( fci, filename ))) return FALSE;
 
     handle = get_open_info( sourcefile, &file->date, &file->time, &file->attribs, &err, fci->pv );
@@ -539,15 +527,9 @@ static BOOL write_folders( FCI_Int *fci, INT_PTR handle, cab_ULONG header_size, 
 {
     struct folder *folder;
     int err;
-    BOOL ret = TRUE;
-    CFFOLDER *cffolder;
+    CFFOLDER *cffolder = (CFFOLDER *)fci->data_out;
     cab_ULONG folder_size = sizeof(CFFOLDER) + fci->ccab.cbReserveCFFolder;
 
-    if (!(cffolder = fci->alloc( folder_size )))
-    {
-        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
-    }
     memset( cffolder, 0, folder_size );
 
     /* write the folders */
@@ -559,13 +541,10 @@ static BOOL write_folders( FCI_Int *fci, INT_PTR handle, cab_ULONG header_size, 
         if (fci->write( handle, cffolder, folder_size, &err, fci->pv ) != folder_size)
         {
             set_error( fci, FCIERR_CAB_FILE, err );
-            ret = FALSE;
-            break;
+            return FALSE;
         }
     }
-
-    fci->free( cffolder );
-    return ret;
+    return TRUE;
 }
 
 /* write all the files to the cabinet file */
@@ -575,14 +554,7 @@ static BOOL write_files( FCI_Int *fci, INT_PTR handle, PFNFCISTATUS status_callb
     struct folder *folder;
     struct file *file;
     int err;
-    BOOL ret = TRUE;
-    CFFILE *cffile;
-
-    if (!(cffile = fci->alloc( sizeof(CFFILE) + CB_MAX_FILENAME )))
-    {
-        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
-    }
+    CFFILE *cffile = (CFFILE *)fci->data_out;
 
     LIST_FOR_EACH_ENTRY( folder, &fci->folders_list, struct folder, entry )
     {
@@ -599,8 +571,7 @@ static BOOL write_files( FCI_Int *fci, INT_PTR handle, PFNFCISTATUS status_callb
             if (fci->write( handle, cffile, file_size, &err, fci->pv ) != file_size)
             {
                 set_error( fci, FCIERR_CAB_FILE, err );
-                ret = FALSE;
-                break;
+                return FALSE;
             }
             if (!fci->fSplitFolder)
             {
@@ -614,14 +585,11 @@ static BOOL write_files( FCI_Int *fci, INT_PTR handle, PFNFCISTATUS status_callb
                                  fci->statusFolderTotal, fci->pv ) == -1)
             {
                 set_error( fci, FCIERR_USER_ABORT, 0 );
-                ret = FALSE;
-                break;
+                return FALSE;
             }
         }
     }
-
-    fci->free( cffile );
-    return ret;
+    return TRUE;
 }
 
 /* write all data blocks to the cabinet file */
@@ -633,8 +601,6 @@ static BOOL write_data_blocks( FCI_Int *fci, INT_PTR handle, PFNFCISTATUS status
     CFDATA *cfdata;
     void *data;
     cab_UWORD header_size;
-
-    if (!fci->data_out) return TRUE;
 
     header_size = sizeof(CFDATA) + fci->ccab.cbReserveCFData;
     cfdata = (CFDATA *)fci->data_out;
@@ -683,16 +649,13 @@ static BOOL write_cabinet( FCI_Int *fci, PFNFCISTATUS status_callback )
     int err;
     char *ptr;
     INT_PTR handle;
-    CFHEADER *cfheader;
+    CFHEADER *cfheader = (CFHEADER *)fci->data_out;
     cab_UWORD flags = 0;
     cab_ULONG header_size = get_header_size( fci );
-    cab_ULONG total_size = header_size + fci->folders_size + fci->placed_files_size + fci->folders_data_size;
+    cab_ULONG total_size = header_size + fci->folders_size +
+                           fci->placed_files_size + fci->folders_data_size;
 
-    if (!(cfheader = fci->alloc( header_size )))
-    {
-        set_error( fci, FCIERR_ALLOC_FAIL, ERROR_NOT_ENOUGH_MEMORY );
-        return FALSE;
-    }
+    assert( header_size <= sizeof(fci->data_out) );
     memset( cfheader, 0, header_size );
 
     if (fci->fPrevCab) flags |= cfheadPREV_CABINET;
@@ -753,7 +716,6 @@ static BOOL write_cabinet( FCI_Int *fci, PFNFCISTATUS status_callback )
                              _S_IREAD | _S_IWRITE, &err, fci->pv )) == -1)
     {
         set_error( fci, FCIERR_CAB_FILE, err );
-        fci->free( cfheader );
         return FALSE;
     }
 
@@ -782,7 +744,6 @@ static BOOL write_cabinet( FCI_Int *fci, PFNFCISTATUS status_callback )
         goto failed;
     }
     fci->close( handle, &err, fci->pv );
-    fci->free( cfheader );
 
     reset_cabinet( fci );
     status_callback( statusCabinet, fci->estimatedCabinetSize, total_size, fci->pv );
@@ -791,7 +752,6 @@ static BOOL write_cabinet( FCI_Int *fci, PFNFCISTATUS status_callback )
 failed:
     fci->close( handle, &err, fci->pv );
     fci->delete( filename, &err, fci->pv );
-    fci->free( cfheader );
     return FALSE;
 }
 
@@ -975,7 +935,7 @@ static cab_UWORD compress_MSZIP( FCI_Int *fci )
     stream.next_in   = fci->data_in;
     stream.avail_in  = fci->cdata_in;
     stream.next_out  = fci->data_out + 2;
-    stream.avail_out = 2 * CB_MAX_CHUNK - 2;
+    stream.avail_out = sizeof(fci->data_out) - 2;
     /* insert the signature */
     fci->data_out[0] = 'C';
     fci->data_out[1] = 'K';
@@ -1092,9 +1052,7 @@ HFCI __cdecl FCICreate(
   p_fci_internal->fSplitFolder = FALSE;
   p_fci_internal->fGetNextCabInVain = FALSE;
   p_fci_internal->pv = pv;
-  p_fci_internal->data_in  = NULL;
   p_fci_internal->cdata_in = 0;
-  p_fci_internal->data_out = NULL;
   p_fci_internal->cCompressedBytesInFolder = 0;
   p_fci_internal->cFolders = 0;
   p_fci_internal->cFiles = 0;
@@ -1154,12 +1112,6 @@ static BOOL fci_flush_folder( FCI_Int *p_fci_internal,
       return FALSE;
     }
     return TRUE;
-  }
-
-  if (p_fci_internal->data_in==NULL || p_fci_internal->data_out==NULL ) {
-    /* error handling */
-    set_error( p_fci_internal, FCIERR_NONE, ERROR_GEN_FAILURE );
-    return FALSE;
   }
 
   /* FCIFlushFolder has already been called... */
@@ -1795,12 +1747,6 @@ BOOL __cdecl FCIDestroy(HFCI hfci)
     }
 
     close_temp_file( p_fci_internal, &p_fci_internal->data );
-
-    /* data in and out buffers have to be removed */
-    if (p_fci_internal->data_in!=NULL)
-      p_fci_internal->free(p_fci_internal->data_in);
-    if (p_fci_internal->data_out!=NULL)
-      p_fci_internal->free(p_fci_internal->data_out);
 
     /* hfci can now be removed */
     p_fci_internal->free(hfci);
