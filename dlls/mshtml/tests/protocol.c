@@ -387,7 +387,7 @@ static void test_res_protocol(void)
 
         if (0)
         {
-        /* Crashes on win9x */
+        /* Crashes on windows */
         size = 0xdeadbeef;
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, NULL, PARSE_DOMAIN, 0, buf,
@@ -688,7 +688,7 @@ static void test_about_protocol(void)
 
         if (0)
         {
-        /* Crashes on win9x */
+        /* Crashes on windows */
         size = 0xdeadbeef;
         buf[0] = '?';
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, NULL, PARSE_DOMAIN, 0, buf,
