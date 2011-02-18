@@ -1441,6 +1441,9 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
 {
     int         ret = STATUS_NOT_SUPPORTED;
     int         io = -1;
+#ifdef __APPLE__
+    dk_cd_read_t cdrd;
+#endif
 
     TRACE("RAW_READ_INFO: DiskOffset=%i,%i SectorCount=%i TrackMode=%i\n buffer=%p len=%i sz=%p\n",
           raw->DiskOffset.u.HighPart, raw->DiskOffset.u.LowPart, raw->SectorCount, raw->TrackMode, buffer, len, sz);
@@ -1510,153 +1513,39 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
         return STATUS_INVALID_PARAMETER;
     }
 #elif defined(__APPLE__)
+    /* Mac OS lets us read multiple parts of the sector at a time.
+     * We can read all the sectors in at once, unlike Linux.
+     */
+    memset(&cdrd, 0, sizeof(cdrd));
+    cdrd.offset = (raw->DiskOffset.QuadPart >> 11) * kCDSectorSizeWhole;
+    cdrd.buffer = buffer;
+    cdrd.bufferLength = raw->SectorCount * kCDSectorSizeWhole;
     switch (raw->TrackMode)
     {
     case YellowMode2:
-    {
-        /* Mac OS, on the other hand, DOES read only one part of the sector
-         * at a time. Therefore, we have to read each part of the sector, in
-         * order, to get the whole raw sector in.
-         * This means that we have to read each sector one at a time, as on
-         * Linux.
-         */
-        dk_cd_read_t cdrd;
-        UInt64 lba = raw->DiskOffset.QuadPart >> 11;
-        PBYTE bp;
-        int i;
-
-        for (i = 0, bp = buffer; i < raw->SectorCount;
-             i++, lba++, bp += kCDSectorSizeWhole)
-        {
-            cdrd.offset = lba * kCDSectorSizeWhole;
-            cdrd.sectorType = kCDSectorTypeMode2;
-
-            /* First, the sync area */
-            cdrd.sectorArea = kCDSectorAreaSync;
-            cdrd.buffer = bp;
-            cdrd.bufferLength = 12;
-            io = ioctl(fd, DKIOCCDREAD, &cdrd);
-            if (io != 0)
-            {
-                *sz = kCDSectorSizeWhole * i;
-                return CDROM_GetStatusCode(io);
-            }
-
-            /* Then the header */
-            cdrd.offset += 12;
-            cdrd.sectorArea = kCDSectorAreaHeader;
-            cdrd.buffer = (PBYTE)cdrd.buffer + 12;
-            cdrd.bufferLength = 4;
-            io = ioctl(fd, DKIOCCDREAD, &cdrd);
-            if (io != 0)
-            {
-                *sz = kCDSectorSizeWhole * i + 12;
-                return CDROM_GetStatusCode(io);
-            }
-
-            /* And finally the sector proper */
-            cdrd.offset += 4;
-            cdrd.sectorArea = kCDSectorAreaUser;
-            cdrd.buffer = (PBYTE)cdrd.buffer + 4;
-            cdrd.bufferLength = kCDSectorSizeMode2;
-            io = ioctl(fd, DKIOCCDREAD, &cdrd);
-            if (io != 0)
-            {
-                *sz = kCDSectorSizeWhole * i + 16;
-                return CDROM_GetStatusCode(io);
-            }
-        }
-
+        cdrd.sectorType = kCDSectorTypeMode2;
+        cdrd.sectorArea = kCDSectorAreaSync | kCDSectorAreaHeader | kCDSectorAreaUser;
         break;
-    }
 
     case XAForm2:
-    {
-        /* Same here */
-        dk_cd_read_t cdrd;
-        UInt64 lba = raw->DiskOffset.QuadPart >> 11;
-        PBYTE bp;
-        int i;
-
-        for (i = 0, bp = buffer; i < raw->SectorCount;
-             i++, lba++, bp += kCDSectorSizeWhole)
-        {
-            cdrd.offset = lba * kCDSectorSizeWhole;
-            cdrd.sectorType = kCDSectorTypeMode2Form2;
-
-            /* First, the sync area */
-            cdrd.sectorArea = kCDSectorAreaSync;
-            cdrd.buffer = bp;
-            cdrd.bufferLength = 12;
-            io = ioctl(fd, DKIOCCDREAD, &cdrd);
-            if (io != 0)
-            {
-                *sz = kCDSectorSizeWhole * i;
-                return CDROM_GetStatusCode(io);
-            }
-
-            /* Then the header */
-            cdrd.offset += 12;
-            cdrd.sectorArea = kCDSectorAreaHeader;
-            cdrd.buffer = (PBYTE)cdrd.buffer + 12;
-            cdrd.bufferLength = 4;
-            io = ioctl(fd, DKIOCCDREAD, &cdrd);
-            if (io != 0)
-            {
-                *sz = kCDSectorSizeWhole * i + 12;
-                return CDROM_GetStatusCode(io);
-            }
-
-            /* And the sub-header */
-            cdrd.offset += 4;
-            cdrd.sectorArea = kCDSectorAreaSubHeader;
-            cdrd.buffer = (PBYTE)cdrd.buffer + 4;
-            cdrd.bufferLength = 8;
-            io = ioctl(fd, DKIOCCDREAD, &cdrd);
-            if (io != 0)
-            {
-                *sz = kCDSectorSizeWhole * i + 16;
-                return CDROM_GetStatusCode(io);
-            }
-
-            /* And finally the sector proper */
-            cdrd.offset += 8;
-            cdrd.sectorArea = kCDSectorAreaUser;
-            cdrd.buffer = (PBYTE)cdrd.buffer + 8;
-            cdrd.bufferLength = kCDSectorSizeMode2;
-            io = ioctl(fd, DKIOCCDREAD, &cdrd);
-            if (io != 0)
-            {
-                *sz = kCDSectorSizeWhole * i + 24;
-                return CDROM_GetStatusCode(io);
-            }
-        }
-
+        cdrd.sectorType = kCDSectorTypeMode2Form2;
+        cdrd.sectorArea = kCDSectorAreaSync | kCDSectorAreaHeader | kCDSectorAreaSubHeader | kCDSectorAreaUser;
         break;
-    }
 
     case CDDA:
-    {
-        /* With CDDA, the whole raw sector is considered user data, so there's
-         * no need to read one at a time.
-         */
-        dk_cd_read_t cdrd;
-
-        cdrd.offset = (raw->DiskOffset.QuadPart >> 11) * kCDSectorSizeCDDA;
-        cdrd.sectorArea = kCDSectorAreaUser;
         cdrd.sectorType = kCDSectorTypeCDDA;
-        cdrd.buffer = buffer;
-        cdrd.bufferLength = len < raw->SectorCount*kCDSectorSizeCDDA ? len :
-                            raw->SectorCount*kCDSectorSizeCDDA;
-
-        io = ioctl(fd, DKIOCCDREAD, &cdrd);
-        if (io != 0) return CDROM_GetStatusCode(io);
+        cdrd.sectorArea = kCDSectorAreaUser;
         break;
-    }
 
     default:
         FIXME("NIY: %d\n", raw->TrackMode);
         return STATUS_INVALID_PARAMETER;
+    }
+    io = ioctl(fd, DKIOCCDREAD, &cdrd);
+    if (io != 0)
+    {
+        *sz = cdrd.bufferLength;
+        return CDROM_GetStatusCode(io);
     }
 #else
     switch (raw->TrackMode)
