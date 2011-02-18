@@ -805,6 +805,7 @@ with_xshape
 with_xshm
 with_xslt
 with_xxf86vm
+with_zlib
 with_wine_tools
 with_wine64
 enable_largefile
@@ -1493,6 +1494,7 @@ Optional Packages:
   --without-xshm          do not use XShm (shared memory extension)
   --without-xslt          do not use XSLT
   --without-xxf86vm       do not use XFree video mode extension
+  --without-zlib          do not use Zlib (data compression)
   --with-wine-tools=DIR   use Wine tools from directory DIR
   --with-wine64=DIR       use the 64-bit Wine in DIR for a Wow64 build
   --with-x                use the X Window System
@@ -2737,6 +2739,12 @@ fi
 # Check whether --with-xxf86vm was given.
 if test "${with_xxf86vm+set}" = set; then :
   withval=$with_xxf86vm; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; ac_cv_header_X11_extensions_xf86vmproto_h=no; fi
+fi
+
+
+# Check whether --with-zlib was given.
+if test "${with_zlib+set}" = set; then :
+  withval=$with_zlib; if test "x$withval" = "xno"; then ac_cv_header_zlib_h=no; fi
 fi
 
 
@@ -10329,6 +10337,14 @@ $as_echo "#define HAVE_ZLIB 1" >>confdefs.h
 
 fi
 
+fi
+if test "x$ZLIB" = "x"; then :
+  case "x$with_zlib" in
+  x)   as_fn_append wine_notices "|libz ${notice_platform}development files not found, data compression won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libz ${notice_platform}development files not found, data compression won't be supported.
+This is an error since --with-zlib was requested." "$LINENO" 5  ;;
+esac
 fi
 
 if test "x$with_esd" != xno
