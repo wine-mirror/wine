@@ -625,7 +625,6 @@ static	BOOL		MCI_DumpCommandTable(UINT uTbl)
 {
     const BYTE*	lmem;
     LPCWSTR	str;
-    DWORD	flg;
     WORD	eid;
 
     if (!MCI_IsCommandTableValid(uTbl)) {
@@ -636,9 +635,10 @@ static	BOOL		MCI_DumpCommandTable(UINT uTbl)
     lmem = S_MciCmdTable[uTbl].lpTable;
     do {
 	do {
+	    /* DWORD flg; */
 	    str = (LPCWSTR)lmem;
 	    lmem += (strlenW(str) + 1) * sizeof(WCHAR);
-	    flg = *(const DWORD*)lmem;
+	    /* flg = *(const DWORD*)lmem; */
 	    eid = *(const WORD*)(lmem + sizeof(DWORD));
             /* TRACE("cmd=%s %08lx %04x\n", debugstr_w(str), flg, eid); */
 	    lmem += sizeof(DWORD) + sizeof(WORD);
