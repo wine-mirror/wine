@@ -99,6 +99,13 @@ static inline BOOL is_uri_unescaped(WCHAR c)
     return c < 128 && uri_char_table[c] == 2;
 }
 
+/* Check that the character is one of the 69 nonblank characters as defined by ECMA-262 B.2.1 */
+static inline BOOL is_ecma_nonblank(const WCHAR c)
+{
+    return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+        c == '@' || c == '*' || c == '_' || c == '+' || c == '-' || c == '.' || c == '/');
+}
+
 static WCHAR int_to_char(int i)
 {
     if(i < 10)
@@ -290,8 +297,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
     for(ptr=str; *ptr; ptr++) {
         if(*ptr > 0xff)
             len += 6;
-        else if(isalnum((unsigned char)*ptr) || *ptr=='*' || *ptr=='@' || *ptr=='-'
-                || *ptr=='_' || *ptr=='+' || *ptr=='.' || *ptr=='/')
+        else if(is_ecma_nonblank(*ptr))
             len++;
         else
             len += 3;
@@ -313,8 +319,7 @@ static HRESULT JSGlobal_escape(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, D
             ret[len++] = int_to_char((*ptr >> 4) & 0xf);
             ret[len++] = int_to_char(*ptr & 0xf);
         }
-        else if(isalnum((char)*ptr) || *ptr=='*' || *ptr=='@' || *ptr=='-'
-                || *ptr=='_' || *ptr=='+' || *ptr=='.' || *ptr=='/')
+        else if(is_ecma_nonblank(*ptr))
             ret[len++] = *ptr;
         else {
             ret[len++] = '%';
