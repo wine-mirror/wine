@@ -3460,9 +3460,9 @@ static void test_SetParent(void)
     check_parents(child1, parent, parent, parent, 0, parent, parent);
     check_parents(popup, desktop, 0, 0, 0, popup, popup);
 
-    SetFocus(0);
-    SetActiveWindow(0);
-    check_active_state(0, 0, 0);
+    SetActiveWindow(parent);
+    SetFocus(parent);
+    check_active_state(parent, 0, parent);
 
     ret = SetParent(popup, child1);
     ok(ret == desktop, "expected %p, got %p\n", desktop, ret);
@@ -3470,17 +3470,14 @@ static void test_SetParent(void)
 todo_wine
     check_active_state(popup, 0, popup);
 
-    SetFocus(0);
-    SetActiveWindow(0);
-    /* NT4 sets active window to 0, other Windows versions
-     * leave the popup an active window.
-    check_active_state(popup, 0, 0); */
+    SetActiveWindow(parent);
+    SetFocus(parent);
+    check_active_state(parent, 0, parent);
 
-todo_wine
+todo_wine {
     ok(SetForegroundWindow(popup), "SetForegroundWindow() failed\n");
-    /* NT4 sets focus window to the popup, other Windows versions
-     * leave the focus set to 0.
-    check_active_state(popup, 0, 0); */
+    check_active_state(popup, 0, popup);
+    }
 
     ok(DestroyWindow(parent), "DestroyWindow() failed\n");
 
