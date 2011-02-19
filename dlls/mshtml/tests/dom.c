@@ -5639,6 +5639,41 @@ static void test_create_elems(IHTMLDocument2 *doc)
     IHTMLElement_Release(body);
 }
 
+static void test_replacechild_elems(IHTMLDocument2 *doc)
+{
+    IHTMLElement *body;
+    IHTMLDOMNode *node, *node2, *node3;
+    IHTMLDOMNode *nodeBody, *nodeNew;
+    HRESULT hres;
+    VARIANT var;
+
+    body = doc_get_body(doc);
+
+    node = test_create_text(doc, "insert");
+
+    V_VT(&var) = VT_NULL;
+    V_DISPATCH(&var) = NULL;
+    node2 = test_node_insertbefore((IUnknown*)body, node, &var);
+    IHTMLDOMNode_Release(node);
+
+    test_elem_innertext(body, "insert");
+
+    node3 = test_create_text(doc, "replaced");
+
+    nodeBody = _get_node_iface(__LINE__, (IUnknown *)body);
+
+    hres = IHTMLDOMNode_replaceChild(nodeBody, node3, node2, &nodeNew);
+    ok(hres == S_OK, "Expected S_OK, got 0x%08x\n", hres);
+
+    test_elem_innertext(body, "replaced");
+
+    IHTMLDOMNode_Release(node2);
+    IHTMLDOMNode_Release(node3);
+    IHTMLDOMNode_Release(nodeBody);
+
+    IHTMLElement_Release(body);
+}
+
 static void test_null_write(IHTMLDocument2 *doc)
 {
     HRESULT hres;
@@ -6201,6 +6236,7 @@ START_TEST(dom)
     run_domtest(cond_comment_str, test_cond_comment);
     run_domtest(frameset_str, test_frameset);
     run_domtest(emptydiv_str, test_docfrag);
+    run_domtest(doc_blank, test_replacechild_elems);
 
     CoUninitialize();
 }

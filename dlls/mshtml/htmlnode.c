@@ -580,8 +580,37 @@ static HRESULT WINAPI HTMLDOMNode_replaceChild(IHTMLDOMNode *iface, IHTMLDOMNode
                                                IHTMLDOMNode *oldChild, IHTMLDOMNode **node)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
-    FIXME("(%p)->(%p %p %p)\n", This, newChild, oldChild, node);
-    return E_NOTIMPL;
+    HTMLDOMNode *node_new;
+    HTMLDOMNode *node_old;
+    nsIDOMNode *nsnode;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %p %p)\n", This, newChild, oldChild, node);
+
+    node_new = get_node_obj(This->doc, (IUnknown*)newChild);
+    if(!node_new)
+        return E_FAIL;
+
+    node_old = get_node_obj(This->doc, (IUnknown*)oldChild);
+    if(!node_old)
+        return E_FAIL;
+
+    nsres = nsIDOMNode_ReplaceChild(This->nsnode, node_new->nsnode, node_old->nsnode, &nsnode);
+    if(NS_FAILED(nsres)) {
+        return E_FAIL;
+    }
+
+    nsnode = node_new->nsnode;
+
+    hres = get_node(This->doc, nsnode, TRUE, &node_new);
+    nsIDOMNode_Release(nsnode);
+    if(FAILED(hres))
+        return hres;
+
+    *node = &node_new->IHTMLDOMNode_iface;
+    IHTMLDOMNode_AddRef(*node);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_cloneNode(IHTMLDOMNode *iface, VARIANT_BOOL fDeep,
