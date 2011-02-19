@@ -239,12 +239,9 @@ static void test_FDICreate(void)
     ok(erf.erfOper == FDIERROR_ALLOC_FAIL,
        "Expected FDIERROR_ALLOC_FAIL, got %d\n", erf.erfOper);
     ok(erf.fError == TRUE, "Expected TRUE, got %d\n", erf.fError);
-    todo_wine
-    {
-        ok(GetLastError() == 0xdeadbeef,
-           "Expected 0xdeadbeef, got %d\n", GetLastError());
-        ok(erf.erfType == 0, "Expected 0, got %d\n", erf.erfType);
-    }
+    ok(GetLastError() == 0xdeadbeef,
+       "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(erf.erfType == 0, "Expected 0, got %d\n", erf.erfType);
 }
 
 static void test_FDIDestroy(void)
@@ -582,8 +579,7 @@ static void test_FDIIsCabinet(void)
     ok(cabinfo.cFolders == 1, "Expected 1, got %d\n", cabinfo.cFolders);
     ok(cabinfo.setID == 0xbeef, "Expected 0xbeef, got %d\n", cabinfo.setID);
     ok(cabinfo.cbCabinet == 182, "Expected 182, got %d\n", cabinfo.cbCabinet);
-    todo_wine
-        ok(cabinfo.iCabinet == 0, "Expected 0, got %d\n", cabinfo.iCabinet);
+    ok(cabinfo.iCabinet == 0, "Expected 0, got %d\n", cabinfo.iCabinet);
 
     fdi_close(fd);
     FDIDestroy(hfdi);
@@ -629,11 +625,8 @@ static void test_FDICopy(void)
         SetLastError(0xdeadbeef);
         ret = FDICopy(hfdi, name, path, 0, CopyProgress, NULL, 0);
         ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-        todo_wine
-        {
-            ok(GetLastError() == ERROR_INVALID_HANDLE,
-               "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
-        }
+        ok(GetLastError() == ERROR_INVALID_HANDLE,
+           "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
         FDIDestroy(hfdi);
     }
@@ -649,7 +642,6 @@ static void test_FDICopy(void)
     /* cabinet with no files or folders */
     SetLastError(0xdeadbeef);
     ret = FDICopy(hfdi, name, path, 0, CopyProgress, NULL, 0);
-    todo_wine
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     ok(GetLastError() == 0, "Expected 0f, got %d\n", GetLastError());
 

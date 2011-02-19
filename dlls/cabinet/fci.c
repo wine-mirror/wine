@@ -672,7 +672,7 @@ static BOOL write_cabinet( FCI_Int *fci, PFNFCISTATUS status_callback )
     cfheader->cFiles       = fci_endian_uword( fci->cFiles );
     cfheader->flags        = fci_endian_uword( flags );
     cfheader->setID        = fci_endian_uword( fci->ccab.setID );
-    cfheader->iCabinet     = fci_endian_uword( fci->ccab.iCab - 1 );
+    cfheader->iCabinet     = fci_endian_uword( fci->ccab.iCab );
     ptr = (char *)(cfheader + 1);
 
     if (flags & cfheadRESERVE_PRESENT)

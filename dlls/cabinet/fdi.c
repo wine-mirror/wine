@@ -436,10 +436,8 @@ HFDI __cdecl FDICreate(
 
   if (!((fdi = pfnalloc(sizeof(FDI_Int))))) {
     perf->erfOper = FDIERROR_ALLOC_FAIL;
-    perf->erfType = ERROR_NOT_ENOUGH_MEMORY;
+    perf->erfType = 0;
     perf->fError = TRUE;
-
-    SetLastError(ERROR_NOT_ENOUGH_MEMORY);
     return NULL;
   }
 
@@ -603,21 +601,9 @@ static BOOL FDI_read_entries(
 
   /* get the number of folders */
   num_folders = EndGetI16(buf+cfhead_NumFolders);
-  if (num_folders == 0) {
-    /* PONDERME: is this really invalid? */
-    WARN("weird cabinet detect failure: no folders in cabinet\n");
-    if (pmii) set_error( fdi, FDIERROR_NOT_A_CABINET, 0 );
-    return FALSE;
-  }
 
   /* get the number of files */
   num_files = EndGetI16(buf+cfhead_NumFiles);
-  if (num_files == 0) {
-    /* PONDERME: is this really invalid? */
-    WARN("weird cabinet detect failure: no files in cabinet\n");
-    if (pmii) set_error( fdi, FDIERROR_NOT_A_CABINET, 0 );
-    return FALSE;
-  }
 
   /* setid */
   setid = EndGetI16(buf+cfhead_SetID);
@@ -2284,8 +2270,7 @@ static void free_decompression_temps(FDI_Int *fdi, const struct fdi_folder *fol,
   }
 }
 
-static void free_decompression_mem(FDI_Int *fdi,
-  fdi_decomp_state *decomp_state, struct fdi_file *file)
+static void free_decompression_mem(FDI_Int *fdi, fdi_decomp_state *decomp_state)
 {
   struct fdi_folder *fol;
   while (decomp_state) {
@@ -2305,7 +2290,7 @@ static void free_decompression_mem(FDI_Int *fdi,
       fdi->free(fol);
     }
     while (CAB(firstfile)) {
-      file = CAB(firstfile);
+      struct fdi_file *file = CAB(firstfile);
       if (file->filename) fdi->free(file->filename);
       CAB(firstfile) = CAB(firstfile)->next;
       fdi->free(file);
@@ -2531,7 +2516,6 @@ BOOL __cdecl FDICopy(
   idx = 0;
   if (pathlen) {
     for (i = 0; i < pathlen; i++) fullpath[idx++] = pszCabPath[i];
-    if (fullpath[idx - 1] != '\\') fullpath[idx++] = '\\';
   }
   if (filenamelen) for (i = 0; i < filenamelen; i++) fullpath[idx++] = pszCabinet[i];
   fullpath[idx] = '\0';
@@ -2544,13 +2528,6 @@ BOOL __cdecl FDICopy(
     fdi->free(decomp_state);
     set_error( fdi, FDIERROR_CABINET_NOT_FOUND, 0 );
     SetLastError(ERROR_FILE_NOT_FOUND);
-    return FALSE;
-  }
-
-  if (cabhf == 0) {
-    ERR("PFDI_OPEN returned zero for %s.\n", fullpath);
-    fdi->free(decomp_state);
-    set_error( fdi, FDIERROR_CABINET_NOT_FOUND, ERROR_FILE_NOT_FOUND );
     return FALSE;
   }
 
@@ -2859,8 +2836,8 @@ BOOL __cdecl FDICopy(
     }
   }
 
-  free_decompression_temps(fdi, fol, decomp_state);
-  free_decompression_mem(fdi, decomp_state, file);
+  if (fol) free_decompression_temps(fdi, fol, decomp_state);
+  free_decompression_mem(fdi, decomp_state);
  
   return TRUE;
 
@@ -2870,7 +2847,7 @@ BOOL __cdecl FDICopy(
 
   if (filehf) fdi->close(filehf);
 
-  free_decompression_mem(fdi, decomp_state, file);
+  free_decompression_mem(fdi, decomp_state);
 
   return FALSE;
 }
