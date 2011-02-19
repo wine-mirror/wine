@@ -512,15 +512,18 @@ HBITMAP BITMAP_CopyBitmap(HBITMAP hbitmap)
 {
     HBITMAP res;
     DIBSECTION dib;
-    DWORD size;
+    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
 
-    if (!(size = GetObjectW( hbitmap, sizeof(dib), &dib ))) return 0;
-
-    if (size == sizeof(DIBSECTION))
+    if (!bmp) return 0;
+    if (bmp->dib)
     {
         void *bits;
         BITMAPINFO *bi;
-        HDC dc = CreateCompatibleDC( NULL );
+        HDC dc;
+
+        dib = *bmp->dib;
+        GDI_ReleaseObj( hbitmap );
+        dc = CreateCompatibleDC( NULL );
 
         if (!dc) return 0;
         if (!(bi = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ))))
@@ -532,6 +535,7 @@ HBITMAP BITMAP_CopyBitmap(HBITMAP hbitmap)
 
         /* Get the color table or the color masks */
         GetDIBits( dc, hbitmap, 0, 0, NULL, bi, DIB_RGB_COLORS );
+        bi->bmiHeader.biHeight = dib.dsBmih.biHeight;
 
         res = CreateDIBSection( dc, bi, DIB_RGB_COLORS, &bits, NULL, 0 );
         if (res) SetDIBits( dc, res, 0, dib.dsBm.bmHeight, dib.dsBm.bmBits, bi, DIB_RGB_COLORS );
@@ -539,13 +543,16 @@ HBITMAP BITMAP_CopyBitmap(HBITMAP hbitmap)
         DeleteDC( dc );
         return res;
     }
+    dib.dsBm = bmp->bitmap;
+    dib.dsBm.bmBits = NULL;
+    GDI_ReleaseObj( hbitmap );
 
     res = CreateBitmapIndirect( &dib.dsBm );
     if(res) {
         char *buf = HeapAlloc( GetProcessHeap(), 0, dib.dsBm.bmWidthBytes * dib.dsBm.bmHeight );
         GetBitmapBits (hbitmap, dib.dsBm.bmWidthBytes * dib.dsBm.bmHeight, buf);
         SetBitmapBits (res, dib.dsBm.bmWidthBytes * dib.dsBm.bmHeight, buf);
-	HeapFree( GetProcessHeap(), 0, buf );
+        HeapFree( GetProcessHeap(), 0, buf );
     }
     return res;
 }
