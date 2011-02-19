@@ -3202,6 +3202,137 @@ static void test_removeNamedItem(void)
     IXMLDOMDocument_Release( doc );
 }
 
+#define test_IObjectSafety_set(p, r, r2, s, m, e, e2) _test_IObjectSafety_set(__LINE__,p, r, r2, s, m, e, e2)
+static void _test_IObjectSafety_set(unsigned line, IObjectSafety *safety, HRESULT result,
+                                    HRESULT result2, DWORD set, DWORD mask, DWORD expected,
+                                    DWORD expected2)
+{
+    DWORD enabled, supported;
+    HRESULT hr;
+
+    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL, set, mask);
+    if (result == result2)
+        ok_(__FILE__,line)(hr == result, "SetInterfaceSafetyOptions: expected %08x, returned %08x\n", result, hr );
+    else
+        ok_(__FILE__,line)(broken(hr == result) || hr == result2,
+           "SetInterfaceSafetyOptions: expected %08x, got %08x\n", result2, hr );
+
+    supported = enabled = 0xCAFECAFE;
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    if (expected == expected2)
+        ok_(__FILE__,line)(enabled == expected, "Expected %08x, got %08x\n", expected, enabled);
+    else
+        ok_(__FILE__,line)(broken(enabled == expected) || enabled == expected2,
+           "Expected %08x, got %08x\n", expected2, enabled);
+
+    /* reset the safety options */
+
+    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
+            INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_SECURITY_MANAGER,
+            0);
+    ok_(__FILE__,line)(hr == S_OK, "ret %08x\n", hr );
+
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
+    ok_(__FILE__,line)(hr == S_OK, "ret %08x\n", hr );
+    ok_(__FILE__,line)(enabled == 0, "Expected 0, got %08x\n", enabled);
+}
+
+#define test_IObjectSafety_common(s) _test_IObjectSafety_common(__LINE__,s)
+static void _test_IObjectSafety_common(unsigned line, IObjectSafety *safety)
+{
+    DWORD enabled = 0, supported = 0;
+    HRESULT hr;
+
+    /* get */
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, NULL, &enabled);
+    ok_(__FILE__,line)(hr == E_POINTER, "ret %08x\n", hr );
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, NULL);
+    ok_(__FILE__,line)(hr == E_POINTER, "ret %08x\n", hr );
+
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
+    ok_(__FILE__,line)(hr == S_OK, "ret %08x\n", hr );
+    ok_(__FILE__,line)(broken(supported == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA)) ||
+       supported == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER) /* msxml3 SP8+ */,
+        "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER), "
+             "got %08x\n", supported);
+    ok_(__FILE__,line)(enabled == 0, "Expected 0, got %08x\n", enabled);
+
+    /* set -- individual flags */
+
+    test_IObjectSafety_set(safety, S_OK, S_OK,
+        INTERFACESAFE_FOR_UNTRUSTED_CALLER, INTERFACESAFE_FOR_UNTRUSTED_CALLER,
+        INTERFACESAFE_FOR_UNTRUSTED_CALLER, INTERFACESAFE_FOR_UNTRUSTED_CALLER);
+
+    test_IObjectSafety_set(safety, S_OK, S_OK,
+        INTERFACESAFE_FOR_UNTRUSTED_DATA, INTERFACESAFE_FOR_UNTRUSTED_DATA,
+        INTERFACESAFE_FOR_UNTRUSTED_DATA, INTERFACESAFE_FOR_UNTRUSTED_DATA);
+
+    test_IObjectSafety_set(safety, S_OK, S_OK,
+        INTERFACE_USES_SECURITY_MANAGER, INTERFACE_USES_SECURITY_MANAGER,
+        0, INTERFACE_USES_SECURITY_MANAGER /* msxml3 SP8+ */);
+
+    /* set INTERFACE_USES_DISPEX  */
+
+    test_IObjectSafety_set(safety, S_OK, E_FAIL /* msxml3 SP8+ */,
+        INTERFACE_USES_DISPEX, INTERFACE_USES_DISPEX,
+        0, 0);
+
+    test_IObjectSafety_set(safety, S_OK, E_FAIL /* msxml3 SP8+ */,
+        INTERFACE_USES_DISPEX, 0,
+        0, 0);
+
+    test_IObjectSafety_set(safety, S_OK, S_OK /* msxml3 SP8+ */,
+        0, INTERFACE_USES_DISPEX,
+        0, 0);
+
+    /* set option masking */
+
+    test_IObjectSafety_set(safety, S_OK, S_OK,
+        INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA,
+        INTERFACESAFE_FOR_UNTRUSTED_CALLER,
+        INTERFACESAFE_FOR_UNTRUSTED_CALLER,
+        INTERFACESAFE_FOR_UNTRUSTED_CALLER);
+
+    test_IObjectSafety_set(safety, S_OK, S_OK,
+        INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA,
+        INTERFACESAFE_FOR_UNTRUSTED_DATA,
+        INTERFACESAFE_FOR_UNTRUSTED_DATA,
+        INTERFACESAFE_FOR_UNTRUSTED_DATA);
+
+    test_IObjectSafety_set(safety, S_OK, S_OK,
+        INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA,
+        INTERFACE_USES_SECURITY_MANAGER,
+        0,
+        0);
+
+    /* set -- inheriting previous settings */
+
+    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
+                                                         INTERFACESAFE_FOR_UNTRUSTED_CALLER,
+                                                         INTERFACESAFE_FOR_UNTRUSTED_CALLER);
+    ok_(__FILE__,line)(hr == S_OK, "ret %08x\n", hr );
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
+    ok_(__FILE__,line)(hr == S_OK, "ret %08x\n", hr );
+    todo_wine
+    ok_(__FILE__,line)(broken(enabled == INTERFACESAFE_FOR_UNTRUSTED_CALLER) ||
+       enabled == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACE_USES_SECURITY_MANAGER) /* msxml3 SP8+ */,
+         "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACE_USES_SECURITY_MANAGER), "
+         "got %08x\n", enabled);
+
+    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
+                                                         INTERFACESAFE_FOR_UNTRUSTED_DATA,
+                                                         INTERFACESAFE_FOR_UNTRUSTED_DATA);
+    ok_(__FILE__,line)(hr == S_OK, "ret %08x\n", hr );
+    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
+    ok_(__FILE__,line)(hr == S_OK, "ret %08x\n", hr );
+    todo_wine
+    ok_(__FILE__,line)(broken(enabled == INTERFACESAFE_FOR_UNTRUSTED_DATA) ||
+       enabled == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA) /* msxml3 SP8+ */,
+        "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA), "
+        "got %08x\n", enabled);
+}
+
 static void test_XMLHTTP(void)
 {
     static const WCHAR wszBody[] = {'m','o','d','e','=','T','e','s','t',0};
@@ -3216,6 +3347,7 @@ static void test_XMLHTTP(void)
     static const CHAR xmltestbodyA[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<a>TEST</a>\n";
 
     IXMLHttpRequest *pXMLHttpRequest;
+    IObjectSafety *safety;
     IObjectWithSite *pSite;
     BSTR bstrResponse, method, url;
     VARIANT dummy;
@@ -3440,6 +3572,16 @@ if (0)
     VariantClear(&varbody);
 
     SysFreeString(url);
+
+    hr = IXMLHttpRequest_QueryInterface(pXMLHttpRequest, &IID_IObjectSafety, (void**)&safety);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    if(hr == S_OK)
+    {
+        test_IObjectSafety_common(safety);
+
+        IObjectSafety_Release(safety);
+    }
+
 
     IDispatch_Release(event);
     IXMLHttpRequest_Release(pXMLHttpRequest);
@@ -6161,44 +6303,10 @@ static void test_put_nodeValue(void)
     IXMLDOMDocument_Release(doc);
 }
 
-static void test_IObjectSafety_set(IObjectSafety *safety, HRESULT result, HRESULT result2, DWORD set, DWORD mask, DWORD expected, DWORD expected2)
-{
-    DWORD enabled, supported;
-    HRESULT hr;
-
-    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL, set, mask);
-    if (result == result2)
-        ok(hr == result, "SetInterfaceSafetyOptions: expected %08x, returned %08x\n", result, hr );
-    else
-        ok(broken(hr == result) || hr == result2,
-           "SetInterfaceSafetyOptions: expected %08x, got %08x\n", result2, hr );
-
-    supported = enabled = 0xCAFECAFE;
-    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    if (expected == expected2)
-        ok(enabled == expected, "Expected %08x, got %08x\n", expected, enabled);
-    else
-        ok(broken(enabled == expected) || enabled == expected2,
-           "Expected %08x, got %08x\n", expected2, enabled);
-
-    /* reset the safety options */
-
-    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
-            INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_SECURITY_MANAGER,
-            0);
-    ok(hr == S_OK, "ret %08x\n", hr );
-
-    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    ok(enabled == 0, "Expected 0, got %08x\n", enabled);
-}
-
 static void test_document_IObjectSafety(void)
 {
     IXMLDOMDocument *doc;
     IObjectSafety *safety;
-    DWORD enabled = 0, supported = 0;
     HRESULT hr;
 
     doc = create_document(&IID_IXMLDOMDocument);
@@ -6207,93 +6315,7 @@ static void test_document_IObjectSafety(void)
     hr = IXMLDOMDocument_QueryInterface(doc, &IID_IObjectSafety, (void**)&safety);
     ok(hr == S_OK, "ret %08x\n", hr );
 
-    /* get */
-    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, NULL, &enabled);
-    ok(hr == E_POINTER, "ret %08x\n", hr );
-    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, NULL);
-    ok(hr == E_POINTER, "ret %08x\n", hr );
-
-    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    ok(broken(supported == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA)) ||
-       supported == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER) /* msxml3 SP8+ */,
-        "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA | INTERFACE_USES_SECURITY_MANAGER), "
-             "got %08x\n", supported);
-    ok(enabled == 0, "Expected 0, got %08x\n", enabled);
-
-    /* set -- individual flags */
-
-    test_IObjectSafety_set(safety, S_OK, S_OK,
-        INTERFACESAFE_FOR_UNTRUSTED_CALLER, INTERFACESAFE_FOR_UNTRUSTED_CALLER,
-        INTERFACESAFE_FOR_UNTRUSTED_CALLER, INTERFACESAFE_FOR_UNTRUSTED_CALLER);
-
-    test_IObjectSafety_set(safety, S_OK, S_OK,
-        INTERFACESAFE_FOR_UNTRUSTED_DATA, INTERFACESAFE_FOR_UNTRUSTED_DATA,
-        INTERFACESAFE_FOR_UNTRUSTED_DATA, INTERFACESAFE_FOR_UNTRUSTED_DATA);
-
-    test_IObjectSafety_set(safety, S_OK, S_OK,
-        INTERFACE_USES_SECURITY_MANAGER, INTERFACE_USES_SECURITY_MANAGER,
-        0, INTERFACE_USES_SECURITY_MANAGER /* msxml3 SP8+ */);
-
-    /* set INTERFACE_USES_DISPEX  */
-
-    test_IObjectSafety_set(safety, S_OK, E_FAIL /* msxml3 SP8+ */,
-        INTERFACE_USES_DISPEX, INTERFACE_USES_DISPEX,
-        0, 0);
-
-    test_IObjectSafety_set(safety, S_OK, E_FAIL /* msxml3 SP8+ */,
-        INTERFACE_USES_DISPEX, 0,
-        0, 0);
-
-    test_IObjectSafety_set(safety, S_OK, S_OK /* msxml3 SP8+ */,
-        0, INTERFACE_USES_DISPEX,
-        0, 0);
-
-    /* set option masking */
-
-    test_IObjectSafety_set(safety, S_OK, S_OK,
-        INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA,
-        INTERFACESAFE_FOR_UNTRUSTED_CALLER,
-        INTERFACESAFE_FOR_UNTRUSTED_CALLER,
-        INTERFACESAFE_FOR_UNTRUSTED_CALLER);
-
-    test_IObjectSafety_set(safety, S_OK, S_OK,
-        INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA,
-        INTERFACESAFE_FOR_UNTRUSTED_DATA,
-        INTERFACESAFE_FOR_UNTRUSTED_DATA,
-        INTERFACESAFE_FOR_UNTRUSTED_DATA);
-
-    test_IObjectSafety_set(safety, S_OK, S_OK,
-        INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA,
-        INTERFACE_USES_SECURITY_MANAGER,
-        0,
-        0);
-
-    /* set -- inheriting previous settings */
-
-    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
-                                                         INTERFACESAFE_FOR_UNTRUSTED_CALLER,
-                                                         INTERFACESAFE_FOR_UNTRUSTED_CALLER);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    todo_wine
-    ok(broken(enabled == INTERFACESAFE_FOR_UNTRUSTED_CALLER) ||
-       enabled == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACE_USES_SECURITY_MANAGER) /* msxml3 SP8+ */,
-         "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACE_USES_SECURITY_MANAGER), "
-         "got %08x\n", enabled);
-
-    hr = IObjectSafety_SetInterfaceSafetyOptions(safety, NULL,
-                                                         INTERFACESAFE_FOR_UNTRUSTED_DATA,
-                                                         INTERFACESAFE_FOR_UNTRUSTED_DATA);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    hr = IObjectSafety_GetInterfaceSafetyOptions(safety, NULL, &supported, &enabled);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    todo_wine
-    ok(broken(enabled == INTERFACESAFE_FOR_UNTRUSTED_DATA) ||
-       enabled == (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA) /* msxml3 SP8+ */,
-        "Expected (INTERFACESAFE_FOR_UNTRUSTED_CALLER | INTERFACESAFE_FOR_UNTRUSTED_DATA), "
-        "got %08x\n", enabled);
+    test_IObjectSafety_common(safety);
 
     IObjectSafety_Release(safety);
 

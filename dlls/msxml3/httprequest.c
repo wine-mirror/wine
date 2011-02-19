@@ -30,6 +30,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "msxml6.h"
+#include "objsafe.h"
 
 #include "msxml_private.h"
 
@@ -62,6 +63,7 @@ typedef struct
 {
     IXMLHTTPRequest IXMLHTTPRequest_iface;
     IObjectWithSite IObjectWithSite_iface;
+    IObjectSafety   IObjectSafety_iface;
     LONG ref;
 
     READYSTATE state;
@@ -85,6 +87,9 @@ typedef struct
 
     /* IObjectWithSite*/
     IUnknown *site;
+
+    /* IObjectSafety */
+    DWORD safeopt;
 } httprequest;
 
 static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
@@ -95,6 +100,11 @@ static inline httprequest *impl_from_IXMLHTTPRequest( IXMLHTTPRequest *iface )
 static inline httprequest *impl_from_IObjectWithSite(IObjectWithSite *iface)
 {
     return CONTAINING_RECORD(iface, httprequest, IObjectWithSite_iface);
+}
+
+static inline httprequest *impl_from_IObjectSafety(IObjectSafety *iface)
+{
+    return CONTAINING_RECORD(iface, httprequest, IObjectSafety_iface);
 }
 
 static void httprequest_setreadystate(httprequest *This, READYSTATE state)
@@ -515,6 +525,10 @@ static HRESULT WINAPI httprequest_QueryInterface(IXMLHTTPRequest *iface, REFIID 
     else if (IsEqualGUID(&IID_IObjectWithSite, riid))
     {
         *ppvObject = &This->IObjectWithSite_iface;
+    }
+    else if (IsEqualGUID(&IID_IObjectSafety, riid))
+    {
+        *ppvObject = &This->IObjectSafety_iface;
     }
     else
     {
@@ -1067,6 +1081,65 @@ static const IObjectWithSiteVtbl httprequestObjectSite =
     httprequest_ObjectWithSite_GetSite
 };
 
+/* IObjectSafety */
+static HRESULT WINAPI httprequest_Safety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
+{
+    httprequest *This = impl_from_IObjectSafety(iface);
+    return IXMLHTTPRequest_QueryInterface( (IXMLHTTPRequest *)This, riid, ppv );
+}
+
+static ULONG WINAPI httprequest_Safety_AddRef(IObjectSafety *iface)
+{
+    httprequest *This = impl_from_IObjectSafety(iface);
+    return IXMLHTTPRequest_AddRef((IXMLHTTPRequest *)This);
+}
+
+static ULONG WINAPI httprequest_Safety_Release(IObjectSafety *iface)
+{
+    httprequest *This = impl_from_IObjectSafety(iface);
+    return IXMLHTTPRequest_Release((IXMLHTTPRequest *)This);
+}
+
+#define SAFETY_SUPPORTED_OPTIONS (INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_SECURITY_MANAGER)
+
+static HRESULT WINAPI httprequest_Safety_GetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD *supported, DWORD *enabled)
+{
+    httprequest *This = impl_from_IObjectSafety(iface);
+
+    TRACE("(%p)->(%s %p %p)\n", This, debugstr_guid(riid), supported, enabled);
+
+    if(!supported || !enabled) return E_POINTER;
+
+    *supported = SAFETY_SUPPORTED_OPTIONS;
+    *enabled = This->safeopt;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI httprequest_Safety_SetInterfaceSafetyOptions(IObjectSafety *iface, REFIID riid,
+        DWORD mask, DWORD enabled)
+{
+    httprequest *This = impl_from_IObjectSafety(iface);
+    TRACE("(%p)->(%s %x %x)\n", This, debugstr_guid(riid), mask, enabled);
+
+    if ((mask & ~SAFETY_SUPPORTED_OPTIONS) != 0)
+        return E_FAIL;
+
+    This->safeopt = enabled & mask & SAFETY_SUPPORTED_OPTIONS;
+    return S_OK;
+}
+
+#undef SAFETY_SUPPORTED_OPTIONS
+
+static const IObjectSafetyVtbl httprequestObjectSafety = {
+    httprequest_Safety_QueryInterface,
+    httprequest_Safety_AddRef,
+    httprequest_Safety_Release,
+    httprequest_Safety_GetInterfaceSafetyOptions,
+    httprequest_Safety_SetInterfaceSafetyOptions
+};
+
 HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
 {
     httprequest *req;
@@ -1080,6 +1153,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
 
     req->IXMLHTTPRequest_iface.lpVtbl = &dimimpl_vtbl;
     req->IObjectWithSite_iface.lpVtbl = &httprequestObjectSite;
+    req->IObjectSafety_iface.lpVtbl = &httprequestObjectSafety;
     req->ref = 1;
 
     req->async = FALSE;
@@ -1094,6 +1168,7 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     req->reqheader_size = 0;
     list_init(&req->reqheaders);
     req->site = NULL;
+    req->safeopt = 0;
 
     *ppObj = &req->IXMLHTTPRequest_iface;
 
