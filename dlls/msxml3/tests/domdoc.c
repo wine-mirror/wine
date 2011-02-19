@@ -7530,6 +7530,9 @@ static void test_events(void)
     IConnectionPoint *point;
     IXMLDOMDocument *doc;
     HRESULT hr;
+    VARIANT v;
+    IDispatch *event;
+    ULONG ref;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
@@ -7548,6 +7551,54 @@ static void test_events(void)
     IConnectionPoint_Release(point);
 
     IConnectionPointContainer_Release(conn);
+
+    /* ready state callback */
+    VariantInit(&v);
+    hr = IXMLDOMDocument_put_onreadystatechange(doc, v);
+    ok(hr == DISP_E_TYPEMISMATCH, "got 0x%08x\n", hr);
+
+    event = create_dispevent();
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown*)event;
+
+    hr = IXMLDOMDocument_put_onreadystatechange(doc, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ref = IDispatch_AddRef(event);
+    IDispatch_Release(event);
+    ok(ref == 3, "got %d\n", ref);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = event;
+
+    hr = IXMLDOMDocument_put_onreadystatechange(doc, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ref = IDispatch_AddRef(event);
+    IDispatch_Release(event);
+    ok(ref == 3, "got %d\n", ref);
+
+    /* VT_NULL doesn't reset event handler */
+    V_VT(&v) = VT_NULL;
+    hr = IXMLDOMDocument_put_onreadystatechange(doc, v);
+    ok(hr == DISP_E_TYPEMISMATCH, "got 0x%08x\n", hr);
+    ref = IDispatch_AddRef(event);
+    IDispatch_Release(event);
+    ok(ref == 3, "got %d\n", ref);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+
+    hr = IXMLDOMDocument_put_onreadystatechange(doc, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ref = IDispatch_AddRef(event);
+    IDispatch_Release(event);
+    ok(ref == 2, "got %d\n", ref);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_DISPATCH(&v) = NULL;
+    hr = IXMLDOMDocument_put_onreadystatechange(doc, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDispatch_Release(event);
 
     IXMLDOMDocument_Release(doc);
 }

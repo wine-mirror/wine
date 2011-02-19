@@ -105,6 +105,13 @@ struct ConnectionPoint
     DWORD sinks_size;
 };
 
+typedef enum {
+    EVENTID_READYSTATECHANGE = 0,
+    EVENTID_DATAAVAILABLE,
+    EVENTID_TRANSFORMNODE,
+    EVENTID_LAST
+} eventid_t;
+
 struct domdoc
 {
     xmlnode node;
@@ -136,7 +143,36 @@ struct domdoc
     ConnectionPoint cp_domdocevents;
     ConnectionPoint cp_propnotif;
     ConnectionPoint cp_dispatch;
+
+    /* events */
+    IDispatch *events[EVENTID_LAST];
 };
+
+static HRESULT set_doc_event(domdoc *doc, eventid_t eid, const VARIANT *v)
+{
+    IDispatch *disp;
+
+    switch (V_VT(v))
+    {
+    case VT_UNKNOWN:
+        if (V_UNKNOWN(v))
+            IUnknown_QueryInterface(V_UNKNOWN(v), &IID_IDispatch, (void**)&disp);
+        else
+            disp = NULL;
+        break;
+    case VT_DISPATCH:
+        disp = V_DISPATCH(v);
+        if (disp) IDispatch_AddRef(disp);
+        break;
+    default:
+        return DISP_E_TYPEMISMATCH;
+    }
+
+    if (doc->events[eid]) IDispatch_Release(doc->events[eid]);
+    doc->events[eid] = disp;
+
+    return S_OK;
+}
 
 static inline ConnectionPoint *impl_from_IConnectionPoint(IConnectionPoint *iface)
 {
@@ -909,6 +945,8 @@ static ULONG WINAPI domdoc_Release(
 
     if ( ref == 0 )
     {
+        int eid;
+
         if(This->bsc)
             detach_bsc(This->bsc);
 
@@ -917,6 +955,10 @@ static ULONG WINAPI domdoc_Release(
         destroy_xmlnode(&This->node);
         if (This->stream)
             IStream_Release(This->stream);
+
+        for (eid = 0; eid < EVENTID_LAST; eid++)
+            if (This->events[eid]) IDispatch_Release(This->events[eid]);
+
         heap_free(This);
     }
 
@@ -2470,13 +2512,14 @@ static HRESULT WINAPI domdoc_put_preserveWhiteSpace(
 }
 
 
-static HRESULT WINAPI domdoc_put_onReadyStateChange(
+static HRESULT WINAPI domdoc_put_onreadystatechange(
     IXMLDOMDocument3 *iface,
-    VARIANT readyStateChangeSink )
+    VARIANT event )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    FIXME("%p\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&event));
+    return set_doc_event(This, EVENTID_READYSTATECHANGE, &event);
 }
 
 
@@ -3040,7 +3083,7 @@ static const struct IXMLDOMDocument3Vtbl domdoc_vtbl =
     domdoc_put_resolveExternals,
     domdoc_get_preserveWhiteSpace,
     domdoc_put_preserveWhiteSpace,
-    domdoc_put_onReadyStateChange,
+    domdoc_put_onreadystatechange,
     domdoc_put_onDataAvailable,
     domdoc_put_onTransformNode,
     domdoc_get_namespaces,
@@ -3402,6 +3445,7 @@ HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **docu
     doc->safeopt = 0;
     doc->bsc = NULL;
     doc->cp_list = NULL;
+    memset(doc->events, 0, sizeof(doc->events));
 
     /* events connection points */
     ConnectionPoint_Init(&doc->cp_dispatch, doc, &IID_IDispatch);
