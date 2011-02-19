@@ -244,7 +244,7 @@ static BOOL CDECL fci_get_temp( char *name, int size, void *ptr )
 
 static BOOL CDECL fci_get_next_cab( CCAB *cab, ULONG prev_size, void *ptr )
 {
-    return format_cab_name( cab->szCab, cab->iCab, opt_cab_file );
+    return format_cab_name( cab->szCab, cab->iCab + 1, opt_cab_file );
 }
 
 static LONG CDECL fci_status( UINT type, ULONG cb1, ULONG cb2, void *ptr )
@@ -561,7 +561,7 @@ static int new_cabinet( char *cab_dir )
     cab.cbReserveCFHeader = opt_reserve_space;
     cab.cbReserveCFFolder = 0;
     cab.cbReserveCFData   = 0;
-    cab.iCab              = 1;
+    cab.iCab              = 0;
     cab.iDisk             = 0;
     cab.setID             = opt_cabinet_id;
     cab.szDisk[0]         = 0;
