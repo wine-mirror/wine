@@ -974,23 +974,47 @@ static	WORD		MCI_GetMessage(LPCWSTR lpCmd)
 
 /**************************************************************************
  * 				MCI_GetDWord			[internal]
+ *
+ * Accept 0 -1 255 255:0 255:255:255:255 :::1 1::: 2::3 ::4: 12345678
+ * Refuse -1:0 0:-1 :: 256:0 1:256 0::::1
  */
 static	BOOL		MCI_GetDWord(DWORD* data, LPWSTR* ptr)
 {
-    DWORD	val;
-    LPWSTR	ret;
+    LPWSTR	ret = *ptr;
+    DWORD	total = 0, shift = 0;
+    BOOL	sign = FALSE, digits = FALSE;
 
-    val = strtoulW(*ptr, &ret, 10);
-
-    switch (*ret) {
-    case '\0':	break;
-    case ' ':	ret++; break;
-    default:	return FALSE;
+    while (*ret == ' ' || *ret == '\t') ret++;
+    if (*ret == '-') {
+	ret++;
+	sign = TRUE;
     }
+    for(;;) {
+	DWORD	val = 0;
+	while ('0' <= *ret && *ret <= '9') {
+	    val = *ret++ - '0' + 10 * val;
+	    digits = TRUE;
+	}
+	switch (*ret) {
+	case '\0':	break;
+	case '\t':
+	case ' ':	ret++; break;
+	default:	return FALSE;
+	case ':':
+	    if ((val >= 256) || (shift >= 24))	return FALSE;
+	    total |= val << shift;
+	    shift += 8;
+	    ret++;
+	    continue;
+	}
 
-    *data |= val;
-    *ptr = ret;
-    return TRUE;
+	if (!digits)				return FALSE;
+	if (shift && (val >= 256 || sign))	return FALSE;
+	total |= val << shift;
+	*data = sign ? -total : total;
+	*ptr = ret;
+	return TRUE;
+    }
 }
 
 /**************************************************************************
@@ -1116,7 +1140,6 @@ static	DWORD	MCI_ParseOptArgs(DWORD* data, int _offset, LPCWSTR lpCmd,
 			!MCI_GetDWord(&(data[offset+1]), &args) ||
 			!MCI_GetDWord(&(data[offset+2]), &args) ||
 			!MCI_GetDWord(&(data[offset+3]), &args)) {
-			ERR("Bad rect %s\n", debugstr_w(args));
 			return MCIERR_BAD_INTEGER;
 		    }
 		    TRACE("flag=%08x for rectangle\n", flg);

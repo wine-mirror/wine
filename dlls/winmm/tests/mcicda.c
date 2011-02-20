@@ -250,7 +250,7 @@ static void test_play(HWND hwnd)
     test_notification(hwnd, "status 2flags", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendString("play c from 00:02:00 to 00:01:00 notify", buf, sizeof(buf), hwnd);
-    todo_wine ok(err == MCIERR_OUTOFRANGE, "play 2s to 1s: %s\n", dbg_mcierr(err));
+    ok(err == MCIERR_OUTOFRANGE, "play 2s to 1s: %s\n", dbg_mcierr(err));
     test_notification(hwnd, "play 2s to 1s", err ? 0 : MCI_NOTIFY_SUCCESSFUL);
 
     err = mciSendString("resume c", buf, sizeof(buf), hwnd);
