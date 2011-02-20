@@ -3346,6 +3346,7 @@ static void test_SetParent(void)
     HWND desktop = GetDesktopWindow();
     HMENU hMenu;
     HWND ret, parent, child1, child2, child3, child4, sibling, popup;
+    BOOL bret;
 
     parent = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW,
 			     100, 100, 200, 200, 0, 0, 0, NULL);
@@ -3474,9 +3475,13 @@ todo_wine
     SetFocus(parent);
     check_active_state(parent, 0, parent);
 
+    bret = SetForegroundWindow(popup);
 todo_wine {
-    ok(SetForegroundWindow(popup), "SetForegroundWindow() failed\n");
-    check_active_state(popup, 0, popup);
+    ok(bret || broken(!bret), "SetForegroundWindow() failed\n");
+    if (!bret)
+        check_active_state(popup, 0, popup);
+    else
+        check_active_state(popup, popup, popup);
     }
 
     ok(DestroyWindow(parent), "DestroyWindow() failed\n");
