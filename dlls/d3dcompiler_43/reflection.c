@@ -31,6 +31,11 @@ enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE
     D3DCOMPILER_SIGNATURE_ELEMENT_SIZE7 = 7,
 };
 
+const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl;
+
+/* null objects - needed for invalid calls */
+static struct d3dcompiler_shader_reflection_constant_buffer null_constant_buffer = {{&d3dcompiler_shader_reflection_constant_buffer_vtbl}};
+
 static BOOL copy_name(const char *ptr, char **name)
 {
     size_t name_len;
@@ -216,9 +221,17 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetDesc(ID3D11Sha
 static struct ID3D11ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetConstantBufferByIndex(
         ID3D11ShaderReflection *iface, UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    if (index >= This->constant_buffer_count)
+    {
+        WARN("Invalid argument specified\n");
+        return &null_constant_buffer.ID3D11ShaderReflectionConstantBuffer_iface;
+    }
+
+    return &This->constant_buffers[index].ID3D11ShaderReflectionConstantBuffer_iface;
 }
 
 static struct ID3D11ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetConstantBufferByName(
