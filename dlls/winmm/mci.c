@@ -464,7 +464,7 @@ static void MCI_UnmapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR dwParam2,
             if (!result)
             {
                 WideCharToMultiByte(CP_ACP, 0,
-                                    mci_sysinfoW->lpstrReturn, mci_sysinfoW->dwRetSize,
+                                    mci_sysinfoW->lpstrReturn, -1,
                                     mci_sysinfoA->lpstrReturn, mci_sysinfoA->dwRetSize,
                                     NULL, NULL);
             }
@@ -482,7 +482,7 @@ static void MCI_UnmapMsgAtoW(UINT msg, DWORD_PTR dwParam1, DWORD_PTR dwParam2,
             if (!result)
             {
                 WideCharToMultiByte(CP_ACP, 0,
-                                    mci_infoW->lpstrReturn, mci_infoW->dwRetSize,
+                                    mci_infoW->lpstrReturn, -1,
                                     mci_infoA->lpstrReturn, mci_infoA->dwRetSize,
                                     NULL, NULL);
             }
