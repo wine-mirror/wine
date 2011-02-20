@@ -480,12 +480,37 @@ const struct ID3D11ShaderReflectionVtbl d3dcompiler_shader_reflection_vtbl =
 
 /* ID3D11ShaderReflectionConstantBuffer methods */
 
+static inline struct d3dcompiler_shader_reflection_constant_buffer *impl_from_ID3D11ShaderReflectionConstantBuffer(ID3D11ShaderReflectionConstantBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3dcompiler_shader_reflection_constant_buffer, ID3D11ShaderReflectionConstantBuffer_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_constant_buffer_GetDesc(
         ID3D11ShaderReflectionConstantBuffer *iface, D3D11_SHADER_BUFFER_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3dcompiler_shader_reflection_constant_buffer *This = impl_from_ID3D11ShaderReflectionConstantBuffer(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p\n", iface, desc);
+
+    if (This == &null_constant_buffer)
+    {
+        WARN("Null constant buffer specified\n");
+        return E_FAIL;
+    }
+
+    if (!desc)
+    {
+        WARN("Invalid argument specified\n");
+        return E_FAIL;
+    }
+
+    desc->Name = This->name;
+    desc->Type = This->type;
+    desc->Variables = This->variable_count;
+    desc->Size = This->size;
+    desc->uFlags = This->flags;
+
+    return S_OK;
 }
 
 static ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_shader_reflection_constant_buffer_GetVariableByIndex(
