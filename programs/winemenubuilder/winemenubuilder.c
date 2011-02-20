@@ -2250,7 +2250,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             WCHAR *progIdW = NULL;
             char *progIdA = NULL;
 
-            extensionA = wchars_to_utf8_chars(extensionW);
+            extensionA = wchars_to_utf8_chars(strlwrW(extensionW));
             if (extensionA == NULL)
             {
                 WINE_ERR("out of memory\n");
