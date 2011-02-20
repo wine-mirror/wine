@@ -60,6 +60,22 @@ static BOOL copy_name(const char *ptr, char **name)
     return TRUE;
 }
 
+static BOOL copy_value(const char *ptr, void **value, DWORD size)
+{
+    if (!ptr || !size) return TRUE;
+
+    *value = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!*value)
+    {
+        ERR("Failed to allocate vlaue memory.\n");
+        return FALSE;
+    }
+
+    memcpy(*value, ptr, size);
+
+    return TRUE;
+}
+
 static void free_signature(struct d3dcompiler_shader_signature *sig)
 {
     TRACE("Free signature %p\n", sig);
@@ -68,8 +84,28 @@ static void free_signature(struct d3dcompiler_shader_signature *sig)
     HeapFree(GetProcessHeap(), 0, sig->string_data);
 }
 
+static void free_variable(struct d3dcompiler_shader_reflection_variable *var)
+{
+    if (var)
+    {
+        HeapFree(GetProcessHeap(), 0, var->name);
+        HeapFree(GetProcessHeap(), 0, var->default_value);
+    }
+}
+
 static void free_constant_buffer(struct d3dcompiler_shader_reflection_constant_buffer *cb)
 {
+    if (cb->variables)
+    {
+        unsigned int i;
+
+        for (i = 0; i < cb->variable_count; ++i)
+        {
+            free_variable(&cb->variables[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, cb->variables);
+    }
+
     HeapFree(GetProcessHeap(), 0, cb->name);
 }
 
@@ -537,6 +573,49 @@ const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflect
     d3dcompiler_shader_reflection_constant_buffer_GetVariableByName,
 };
 
+/* ID3D11ShaderReflectionVariable methods */
+
+static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetDesc(
+        ID3D11ShaderReflectionVariable *iface, D3D11_SHADER_VARIABLE_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+
+    return E_NOTIMPL;
+}
+
+static ID3D11ShaderReflectionType * STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetType(
+        ID3D11ShaderReflectionVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static ID3D11ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetBuffer(
+        ID3D11ShaderReflectionVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static UINT STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetInterfaceSlot(
+        ID3D11ShaderReflectionVariable *iface, UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return 0;
+}
+
+const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_variable_vtbl =
+{
+    /* ID3D11ShaderReflectionVariable methods */
+    d3dcompiler_shader_reflection_variable_GetDesc,
+    d3dcompiler_shader_reflection_variable_GetType,
+    d3dcompiler_shader_reflection_variable_GetBuffer,
+    d3dcompiler_shader_reflection_variable_GetInterfaceSlot,
+};
+
 static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, const char *data, DWORD data_size)
 {
     const char *ptr = data;
@@ -645,6 +724,75 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
     FIXME("Unhandled size %u\n", size);
 
     return E_FAIL;
+}
+
+static HRESULT d3dcompiler_parse_variables(struct d3dcompiler_shader_reflection_constant_buffer *cb,
+        const char *data, DWORD data_size, const char *ptr)
+{
+    struct d3dcompiler_shader_reflection_variable *variables;
+    unsigned int i;
+    HRESULT hr;
+
+    variables = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, cb->variable_count * sizeof(*variables));
+    if (!variables)
+    {
+        ERR("Failed to allocate variables memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < cb->variable_count; i++)
+    {
+        struct d3dcompiler_shader_reflection_variable *v = &variables[i];
+        DWORD offset;
+
+        v->ID3D11ShaderReflectionVariable_iface.lpVtbl = &d3dcompiler_shader_reflection_variable_vtbl;
+
+        read_dword(&ptr, &offset);
+        if (!copy_name(data + offset, &v->name))
+        {
+            ERR("Failed to copy name.\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+        TRACE("Variable name: %s.\n", debugstr_a(v->name));
+
+        read_dword(&ptr, &v->start_offset);
+        TRACE("Variable offset: %u\n", v->start_offset);
+
+        read_dword(&ptr, &v->size);
+        TRACE("Variable size: %u\n", v->size);
+
+        read_dword(&ptr, &v->flags);
+        TRACE("Variable flags: %u\n", v->flags);
+
+        /* todo: Parse types */
+        read_dword(&ptr, &offset);
+        FIXME("Variable type offset: %x\n", offset);
+
+        read_dword(&ptr, &offset);
+        TRACE("Variable default value offset: %x\n", offset);
+        if (!copy_value(data + offset, &v->default_value, offset ? v->size : 0))
+        {
+            ERR("Failed to copy name.\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+
+        if ((cb->reflection->target & 0xffff) >= 0x500)
+            skip_dword_unknown(&ptr, 4);
+    }
+
+    cb->variables = variables;
+
+    return S_OK;
+
+err_out:
+    for (i = 0; i < cb->variable_count; i++)
+    {
+        free_variable(&variables[i]);
+    }
+    HeapFree(GetProcessHeap(), 0, variables);
+    return hr;
 }
 
 static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, const char *data, DWORD data_size)
@@ -779,9 +927,15 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
             read_dword(&ptr, &cb->variable_count);
             TRACE("Variable count: %u\n", cb->variable_count);
 
-            /* todo: Parse variables */
             read_dword(&ptr, &offset);
-            FIXME("Variable offset: %x\n", offset);
+            TRACE("Variable offset: %x\n", offset);
+
+            hr = d3dcompiler_parse_variables(cb, data, data_size, data + offset);
+            if (hr != S_OK)
+            {
+                FIXME("Failed to parse variables.");
+                goto err_out;
+            }
 
             read_dword(&ptr, &cb->size);
             TRACE("Cbuffer size: %u\n", cb->size);

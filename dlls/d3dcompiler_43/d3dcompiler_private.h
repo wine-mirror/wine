@@ -64,6 +64,17 @@ struct d3dcompiler_shader_signature
     char *string_data;
 };
 
+struct d3dcompiler_shader_reflection_variable
+{
+    ID3D11ShaderReflectionVariable ID3D11ShaderReflectionVariable_iface;
+
+    char *name;
+    UINT start_offset;
+    UINT size;
+    UINT flags;
+    LPVOID default_value;
+};
+
 struct d3dcompiler_shader_reflection_constant_buffer
 {
     ID3D11ShaderReflectionConstantBuffer ID3D11ShaderReflectionConstantBuffer_iface;
@@ -75,6 +86,8 @@ struct d3dcompiler_shader_reflection_constant_buffer
     UINT variable_count;
     UINT size;
     UINT flags;
+
+    struct d3dcompiler_shader_reflection_variable *variables;
 };
 
 /* ID3D11ShaderReflection */
