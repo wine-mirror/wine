@@ -63,6 +63,11 @@ static void free_signature(struct d3dcompiler_shader_signature *sig)
     HeapFree(GetProcessHeap(), 0, sig->string_data);
 }
 
+static void free_constant_buffer(struct d3dcompiler_shader_reflection_constant_buffer *cb)
+{
+    HeapFree(GetProcessHeap(), 0, cb->name);
+}
+
 static void reflection_cleanup(struct d3dcompiler_shader_reflection *ref)
 {
     TRACE("Cleanup %p\n", ref);
@@ -85,6 +90,17 @@ static void reflection_cleanup(struct d3dcompiler_shader_reflection *ref)
         HeapFree(GetProcessHeap(), 0, ref->pcsg);
     }
 
+    if (ref->constant_buffers)
+    {
+        unsigned int i;
+
+        for (i = 0; i < ref->constant_buffer_count; ++i)
+        {
+            free_constant_buffer(&ref->constant_buffers[i]);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, ref->constant_buffers);
     HeapFree(GetProcessHeap(), 0, ref->bound_resources);
     HeapFree(GetProcessHeap(), 0, ref->resource_string);
     HeapFree(GetProcessHeap(), 0, ref->creator);
@@ -427,6 +443,40 @@ const struct ID3D11ShaderReflectionVtbl d3dcompiler_shader_reflection_vtbl =
     d3dcompiler_shader_reflection_GetThreadGroupSize,
 };
 
+/* ID3D11ShaderReflectionConstantBuffer methods */
+
+static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_constant_buffer_GetDesc(
+        ID3D11ShaderReflectionConstantBuffer *iface, D3D11_SHADER_BUFFER_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+
+    return E_NOTIMPL;
+}
+
+static ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_shader_reflection_constant_buffer_GetVariableByIndex(
+        ID3D11ShaderReflectionConstantBuffer *iface, UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return NULL;
+}
+
+static ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_shader_reflection_constant_buffer_GetVariableByName(
+        ID3D11ShaderReflectionConstantBuffer *iface, LPCSTR name)
+{
+    FIXME("iface %p, name %s stub!\n", iface, name);
+
+    return NULL;
+}
+
+const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl =
+{
+    /* ID3D11ShaderReflectionConstantBuffer methods */
+    d3dcompiler_shader_reflection_constant_buffer_GetDesc,
+    d3dcompiler_shader_reflection_constant_buffer_GetVariableByIndex,
+    d3dcompiler_shader_reflection_constant_buffer_GetVariableByName,
+};
+
 static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, const char *data, DWORD data_size)
 {
     const char *ptr = data;
@@ -542,11 +592,10 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
     const char *ptr = data;
     DWORD size = data_size >> 2;
     DWORD offset, cbuffer_offset, resource_offset, creator_offset;
-    unsigned int i;
-    unsigned int string_data_offset;
-    unsigned int string_data_size;
+    unsigned int i, string_data_offset, string_data_size;
     char *string_data = NULL, *creator = NULL;
     D3D11_SHADER_INPUT_BIND_DESC *bound_resources = NULL;
+    struct d3dcompiler_shader_reflection_constant_buffer *constant_buffers = NULL;
     HRESULT hr;
 
     TRACE("Size %u\n", size);
@@ -640,15 +689,64 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
         }
     }
 
-    /* todo: Parse Constant buffers */
+    if (r->constant_buffer_count)
+    {
+        constant_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, r->constant_buffer_count * sizeof(*constant_buffers));
+        if (!constant_buffers)
+        {
+            ERR("Failed to allocate constant buffer memory.\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+
+        ptr = data + cbuffer_offset;
+        for (i = 0; i < r->constant_buffer_count; i++)
+        {
+            struct d3dcompiler_shader_reflection_constant_buffer *cb = &constant_buffers[i];
+
+            cb->ID3D11ShaderReflectionConstantBuffer_iface.lpVtbl = &d3dcompiler_shader_reflection_constant_buffer_vtbl;
+            cb->reflection = r;
+
+            read_dword(&ptr, &offset);
+            if (!copy_name(data + offset, &cb->name))
+            {
+                ERR("Failed to copy name.\n");
+                hr = E_OUTOFMEMORY;
+                goto err_out;
+            }
+            TRACE("Name: %s.\n", debugstr_a(cb->name));
+
+            read_dword(&ptr, &cb->variable_count);
+            TRACE("Variable count: %u\n", cb->variable_count);
+
+            /* todo: Parse variables */
+            read_dword(&ptr, &offset);
+            FIXME("Variable offset: %x\n", offset);
+
+            read_dword(&ptr, &cb->size);
+            TRACE("Cbuffer size: %u\n", cb->size);
+
+            read_dword(&ptr, &cb->flags);
+            TRACE("Cbuffer flags: %u\n", cb->flags);
+
+            read_dword(&ptr, &cb->type);
+            TRACE("Cbuffer type: %#x\n", cb->type);
+        }
+    }
 
     r->creator = creator;
     r->resource_string = string_data;
     r->bound_resources = bound_resources;
+    r->constant_buffers = constant_buffers;
 
     return S_OK;
 
 err_out:
+    for (i = 0; i < r->constant_buffer_count; ++i)
+    {
+        free_constant_buffer(&constant_buffers[i]);
+    }
+    HeapFree(GetProcessHeap(), 0, constant_buffers);
     HeapFree(GetProcessHeap(), 0, bound_resources);
     HeapFree(GetProcessHeap(), 0, string_data);
     HeapFree(GetProcessHeap(), 0, creator);
