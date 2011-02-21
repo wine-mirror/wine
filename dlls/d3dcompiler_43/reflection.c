@@ -611,9 +611,31 @@ static ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_shader_ref
 static ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_shader_reflection_constant_buffer_GetVariableByName(
         ID3D11ShaderReflectionConstantBuffer *iface, LPCSTR name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, name);
+    struct d3dcompiler_shader_reflection_constant_buffer *This = impl_from_ID3D11ShaderReflectionConstantBuffer(iface);
+    unsigned int i;
 
-    return NULL;
+    TRACE("iface %p, name %s\n", iface, debugstr_a(name));
+
+    if (!name)
+    {
+        WARN("Invalid argument specified\n");
+        return &null_variable.ID3D11ShaderReflectionVariable_iface;
+    }
+
+    for (i = 0; i < This->variable_count; ++i)
+    {
+        struct d3dcompiler_shader_reflection_variable *v = &This->variables[i];
+
+        if (!strcmp(v->name, name))
+        {
+            TRACE("Returning ID3D11ShaderReflectionVariable %p.\n", v);
+            return &v->ID3D11ShaderReflectionVariable_iface;
+        }
+    }
+
+    WARN("Invalid name specified\n");
+
+    return &null_variable.ID3D11ShaderReflectionVariable_iface;
 }
 
 const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl =
