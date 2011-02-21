@@ -32,9 +32,11 @@ enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE
 };
 
 const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl;
+const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_variable_vtbl;
 
 /* null objects - needed for invalid calls */
 static struct d3dcompiler_shader_reflection_constant_buffer null_constant_buffer = {{&d3dcompiler_shader_reflection_constant_buffer_vtbl}};
+static struct d3dcompiler_shader_reflection_variable null_variable = {{&d3dcompiler_shader_reflection_variable_vtbl}};
 
 static BOOL copy_name(const char *ptr, char **name)
 {
@@ -593,9 +595,17 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_constant_buffer_G
 static ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_shader_reflection_constant_buffer_GetVariableByIndex(
         ID3D11ShaderReflectionConstantBuffer *iface, UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3dcompiler_shader_reflection_constant_buffer *This = impl_from_ID3D11ShaderReflectionConstantBuffer(iface);
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    if (index >= This->variable_count)
+    {
+        WARN("Invalid index specified\n");
+        return &null_variable.ID3D11ShaderReflectionVariable_iface;
+    }
+
+    return &This->variables[index].ID3D11ShaderReflectionVariable_iface;
 }
 
 static ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_shader_reflection_constant_buffer_GetVariableByName(
