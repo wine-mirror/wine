@@ -81,6 +81,7 @@ struct d3dcompiler_shader_reflection_variable
 {
     ID3D11ShaderReflectionVariable ID3D11ShaderReflectionVariable_iface;
 
+    struct d3dcompiler_shader_reflection_constant_buffer *constant_buffer;
     struct d3dcompiler_shader_reflection_type *type;
 
     char *name;

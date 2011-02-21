@@ -36,7 +36,7 @@ const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_va
 
 /* null objects - needed for invalid calls */
 static struct d3dcompiler_shader_reflection_constant_buffer null_constant_buffer = {{&d3dcompiler_shader_reflection_constant_buffer_vtbl}};
-static struct d3dcompiler_shader_reflection_variable null_variable = {{&d3dcompiler_shader_reflection_variable_vtbl}};
+static struct d3dcompiler_shader_reflection_variable null_variable = {{&d3dcompiler_shader_reflection_variable_vtbl}, &null_constant_buffer};
 
 static BOOL copy_name(const char *ptr, char **name)
 {
@@ -692,9 +692,11 @@ static ID3D11ShaderReflectionType * STDMETHODCALLTYPE d3dcompiler_shader_reflect
 static ID3D11ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetBuffer(
         ID3D11ShaderReflectionVariable *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3dcompiler_shader_reflection_variable *This = impl_from_ID3D11ShaderReflectionVariable(iface);
 
-    return NULL;
+    TRACE("iface %p\n", iface);
+
+    return &This->constant_buffer->ID3D11ShaderReflectionConstantBuffer_iface;
 }
 
 static UINT STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetInterfaceSlot(
@@ -1031,6 +1033,7 @@ static HRESULT d3dcompiler_parse_variables(struct d3dcompiler_shader_reflection_
         DWORD offset;
 
         v->ID3D11ShaderReflectionVariable_iface.lpVtbl = &d3dcompiler_shader_reflection_variable_vtbl;
+        v->constant_buffer = cb;
 
         read_dword(&ptr, &offset);
         if (!copy_name(data + offset, &v->name))
