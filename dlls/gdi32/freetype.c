@@ -3880,6 +3880,13 @@ static void dump_gdi_font_list(void)
         TRACE("gdiFont=%p %s %d\n",
               gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
     }
+
+    TRACE("---------- Child gdiFont Cache ----------\n");
+    LIST_FOR_EACH(elem_ptr, &child_font_list) {
+        gdiFont = LIST_ENTRY(elem_ptr, struct tagGdiFont, entry);
+        TRACE("gdiFont=%p %s %d\n",
+              gdiFont, debugstr_w(gdiFont->font_desc.lf.lfFaceName), gdiFont->font_desc.lf.lfHeight);
+    }
 }
 
 /*************************************************************
