@@ -265,8 +265,23 @@ MSVCRT__onexit_t CDECL MSVCRT__onexit(MSVCRT__onexit_t func)
  */
 void CDECL MSVCRT_exit(int exitcode)
 {
+  HMODULE hmscoree;
+  static const WCHAR mscoreeW[] = {'m','s','c','o','r','e','e',0};
+  void WINAPI (*pCorExitProcess)(int);
+
   TRACE("(%d)\n",exitcode);
   MSVCRT__cexit();
+
+  hmscoree = GetModuleHandleW(mscoreeW);
+
+  if (hmscoree)
+  {
+    pCorExitProcess = (void*)GetProcAddress(hmscoree, "CorExitProcess");
+
+    if (pCorExitProcess)
+      pCorExitProcess(exitcode);
+  }
+
   ExitProcess(exitcode);
 }
 
