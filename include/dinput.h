@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_DINPUT_H
-#define __WINE_DINPUT_H
+#ifndef __DINPUT_INCLUDED__
+#define __DINPUT_INCLUDED__
 
 #define COM_NO_WINDOWS_H
 #include <objbase.h>
@@ -2298,4 +2298,4 @@ HRESULT WINAPI DirectInputCreateEx(HINSTANCE,DWORD,REFIID,LPVOID *,LPUNKNOWN);
 };
 #endif
 
-#endif /* __WINE_DINPUT_H */
+#endif /* __DINPUT_INCLUDED__ */
