@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #include "jscript.h"
 #include "engine.h"
 #include "objsafe.h"
@@ -77,7 +79,8 @@ static void change_state(JScript *This, SCRIPTSTATE state)
         return;
 
     This->ctx->state = state;
-    IActiveScriptSite_OnStateChange(This->site, state);
+    if(This->site)
+        IActiveScriptSite_OnStateChange(This->site, state);
 }
 
 static inline BOOL is_started(script_ctx_t *ctx)
@@ -151,6 +154,86 @@ static HRESULT set_ctx_site(JScript *This)
 
     change_state(This, SCRIPTSTATE_INITIALIZED);
     return S_OK;
+}
+
+static void decrease_state(JScript *This, SCRIPTSTATE state)
+{
+    if(This->ctx) {
+        switch(This->ctx->state) {
+        case SCRIPTSTATE_CONNECTED:
+            change_state(This, SCRIPTSTATE_DISCONNECTED);
+            if(state == SCRIPTSTATE_DISCONNECTED)
+                return;
+
+        case SCRIPTSTATE_STARTED:
+        case SCRIPTSTATE_DISCONNECTED:
+            clear_script_queue(This);
+
+            if(This->ctx->state == SCRIPTSTATE_DISCONNECTED)
+                change_state(This, SCRIPTSTATE_INITIALIZED);
+            if(state == SCRIPTSTATE_INITIALIZED)
+                return;
+
+        case SCRIPTSTATE_INITIALIZED:
+            if(This->ctx->host_global) {
+                IDispatch_Release(This->ctx->host_global);
+                This->ctx->host_global = NULL;
+            }
+
+            if(This->ctx->named_items) {
+                named_item_t *iter, *iter2;
+
+                iter = This->ctx->named_items;
+                while(iter) {
+                    iter2 = iter->next;
+
+                    if(iter->disp)
+                        IDispatch_Release(iter->disp);
+                    heap_free(iter->name);
+                    heap_free(iter);
+                    iter = iter2;
+                }
+
+                This->ctx->named_items = NULL;
+            }
+
+            if(This->ctx->secmgr) {
+                IInternetHostSecurityManager_Release(This->ctx->secmgr);
+                This->ctx->secmgr = NULL;
+            }
+
+            if(This->ctx->site) {
+                IActiveScriptSite_Release(This->ctx->site);
+                This->ctx->site = NULL;
+            }
+
+            if(This->ctx->global) {
+                jsdisp_release(This->ctx->global);
+                This->ctx->global = NULL;
+            }
+
+        case SCRIPTSTATE_UNINITIALIZED:
+            change_state(This, state);
+            break;
+        default:
+            assert(0);
+        }
+
+        change_state(This, state);
+    }else if(state == SCRIPTSTATE_UNINITIALIZED) {
+        if(This->site)
+            IActiveScriptSite_OnStateChange(This->site, state);
+    }else {
+        FIXME("NULL ctx\n");
+    }
+
+    if(state == SCRIPTSTATE_UNINITIALIZED)
+        This->thread_id = 0;
+
+    if(This->site) {
+        IActiveScriptSite_Release(This->site);
+        This->site = NULL;
+    }
 }
 
 typedef struct {
@@ -365,7 +448,18 @@ static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE s
 
     TRACE("(%p)->(%d)\n", This, ss);
 
-    if(!This->ctx || GetCurrentThreadId() != This->thread_id)
+    if(This->thread_id && GetCurrentThreadId() != This->thread_id)
+        return E_UNEXPECTED;
+
+    if(ss == SCRIPTSTATE_UNINITIALIZED) {
+        if(This->ctx && This->ctx->state == SCRIPTSTATE_CLOSED)
+            return E_UNEXPECTED;
+
+        decrease_state(This, SCRIPTSTATE_UNINITIALIZED);
+        return S_OK;
+    }
+
+    if(!This->ctx)
         return E_UNEXPECTED;
 
     switch(ss) {
@@ -397,12 +491,7 @@ static HRESULT WINAPI JScript_GetScriptState(IActiveScript *iface, SCRIPTSTATE *
     if(!pssState)
         return E_POINTER;
 
-    if(!This->thread_id) {
-        *pssState = SCRIPTSTATE_UNINITIALIZED;
-        return S_OK;
-    }
-
-    if(This->thread_id != GetCurrentThreadId())
+    if(This->thread_id && This->thread_id != GetCurrentThreadId())
         return E_UNEXPECTED;
 
     *pssState = This->ctx ? This->ctx->state : SCRIPTSTATE_UNINITIALIZED;
@@ -415,64 +504,10 @@ static HRESULT WINAPI JScript_Close(IActiveScript *iface)
 
     TRACE("(%p)->()\n", This);
 
-    if(This->thread_id != GetCurrentThreadId())
+    if(This->thread_id && This->thread_id != GetCurrentThreadId())
         return E_UNEXPECTED;
 
-    if(This->ctx) {
-        if(This->ctx->state == SCRIPTSTATE_CONNECTED)
-            change_state(This, SCRIPTSTATE_DISCONNECTED);
-
-        clear_script_queue(This);
-
-        if(This->ctx->state == SCRIPTSTATE_DISCONNECTED)
-            change_state(This, SCRIPTSTATE_INITIALIZED);
-
-        if(This->ctx->host_global) {
-            IDispatch_Release(This->ctx->host_global);
-            This->ctx->host_global = NULL;
-        }
-
-        if(This->ctx->named_items) {
-            named_item_t *iter, *iter2;
-
-            iter = This->ctx->named_items;
-            while(iter) {
-                iter2 = iter->next;
-
-                if(iter->disp)
-                    IDispatch_Release(iter->disp);
-                heap_free(iter->name);
-                heap_free(iter);
-                iter = iter2;
-            }
-
-            This->ctx->named_items = NULL;
-        }
-
-        if(This->ctx->secmgr) {
-            IInternetHostSecurityManager_Release(This->ctx->secmgr);
-            This->ctx->secmgr = NULL;
-        }
-
-        if(This->ctx->site) {
-            IActiveScriptSite_Release(This->ctx->site);
-            This->ctx->site = NULL;
-        }
-
-        if (This->site)
-            change_state(This, SCRIPTSTATE_CLOSED);
-
-        if(This->ctx->global) {
-            jsdisp_release(This->ctx->global);
-            This->ctx->global = NULL;
-        }
-    }
-
-    if(This->site) {
-        IActiveScriptSite_Release(This->site);
-        This->site = NULL;
-    }
-
+    decrease_state(This, SCRIPTSTATE_CLOSED);
     return S_OK;
 }
 
