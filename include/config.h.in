@@ -383,6 +383,12 @@
 /* Define to 1 if you have the <libxml/parser.h> header file. */
 #undef HAVE_LIBXML_PARSER_H
 
+/* Define to 1 if you have the <libxml/SAX2.h> header file. */
+#undef HAVE_LIBXML_SAX2_H
+
+/* Define to 1 if you have the <libxml/xmlsave.h> header file. */
+#undef HAVE_LIBXML_XMLSAVE_H
+
 /* Define if you have the X Shape extension */
 #undef HAVE_LIBXSHAPE
 

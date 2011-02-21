@@ -1154,28 +1154,30 @@ then
         ac_xml_cflags="`xml2-config --cflags  2>/dev/null`"
     fi
     CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
-    AC_CHECK_HEADERS(libxml/parser.h,
-            [AC_CHECK_LIB(xml2, xmlParseMemory,
-                [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])
-                 XML2LIBS="$ac_xml_libs"
-                 XML2INCL="$ac_xml_cflags"],,$ac_xml_libs)
-             AC_CHECK_LIB(xml2, xmlReadMemory,
-                [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])],,$ac_xml_libs)
-             AC_CHECK_LIB(xml2, xmlNewDocPI,
-                [AC_DEFINE(HAVE_XMLNEWDOCPI,1,[Define if libxml2 has the xmlNewDocPI function])],,$ac_xml_libs)
-             AC_CHECK_LIB(xml2, xmlSchemaSetParserStructuredErrors,
-                [AC_DEFINE(HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetParserStructuredErrors function])],,$ac_xml_libs)
-             AC_CHECK_LIB(xml2, xmlSchemaSetValidStructuredErrors,
-                [AC_DEFINE(HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetValidStructuredErrors function])],,$ac_xml_libs)
-             AC_CHECK_LIB(xml2, xmlFirstElementChild,
-                [AC_DEFINE(HAVE_XMLFIRSTELEMENTCHILD,1,[Define if libxml2 has the xmlFirstElementChild function])],,$ac_xml_libs)
-             AC_CHECK_TYPE([xmlDocProperties],
-                [AC_DEFINE(HAVE_XMLDOC_PROPERTIES,1,[Define if libxml2 has the xmlDocProperties enum])],,[[#include <libxml/tree.h>]])
-        ])
+    AC_CHECK_HEADERS([libxml/parser.h libxml/xmlsave.h libxml/SAX2.h])
+    if test "$ac_cv_header_libxml_parser_h" = "yes" -a "$ac_cv_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_header_libxml_SAX2_h" = "yes"
+    then
+        AC_CHECK_LIB(xml2, xmlParseMemory,
+            [AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have the libxml2 library])
+             XML2LIBS="$ac_xml_libs"
+             XML2INCL="$ac_xml_cflags"],,$ac_xml_libs)
+        AC_CHECK_LIB(xml2, xmlReadMemory,
+            [AC_DEFINE(HAVE_XMLREADMEMORY,1,[Define if libxml2 has the xmlReadMemory function])],,$ac_xml_libs)
+        AC_CHECK_LIB(xml2, xmlNewDocPI,
+            [AC_DEFINE(HAVE_XMLNEWDOCPI,1,[Define if libxml2 has the xmlNewDocPI function])],,$ac_xml_libs)
+        AC_CHECK_LIB(xml2, xmlSchemaSetParserStructuredErrors,
+            [AC_DEFINE(HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetParserStructuredErrors function])],,$ac_xml_libs)
+        AC_CHECK_LIB(xml2, xmlSchemaSetValidStructuredErrors,
+            [AC_DEFINE(HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS,1,[Define if libxml2 has the xmlSchemaSetValidStructuredErrors function])],,$ac_xml_libs)
+        AC_CHECK_LIB(xml2, xmlFirstElementChild,
+            [AC_DEFINE(HAVE_XMLFIRSTELEMENTCHILD,1,[Define if libxml2 has the xmlFirstElementChild function])],,$ac_xml_libs)
+        AC_CHECK_TYPE([xmlDocProperties],
+            [AC_DEFINE(HAVE_XMLDOC_PROPERTIES,1,[Define if libxml2 has the xmlDocProperties enum])],,[[#include <libxml/tree.h>]])
+    fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 WINE_WARNING_WITH(xml,[test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"],
-                 [libxml2 ${notice_platform}development files not found, XML won't be supported.])
+                 [libxml2 ${notice_platform}development files not found (or too old), XML won't be supported.])
 
 if test "x$with_xslt" != "xno"
 then

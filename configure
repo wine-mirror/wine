@@ -9179,14 +9179,22 @@ then
         ac_xml_cflags="`xml2-config --cflags  2>/dev/null`"
     fi
     CPPFLAGS="$CPPFLAGS $ac_xml_cflags"
-    for ac_header in libxml/parser.h
+    for ac_header in libxml/parser.h libxml/xmlsave.h libxml/SAX2.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "libxml/parser.h" "ac_cv_header_libxml_parser_h" "$ac_includes_default"
-if test "x$ac_cv_header_libxml_parser_h" = x""yes; then :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBXML_PARSER_H 1
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
- { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlParseMemory in -lxml2" >&5
+
+fi
+
+done
+
+    if test "$ac_cv_header_libxml_parser_h" = "yes" -a "$ac_cv_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_header_libxml_SAX2_h" = "yes"
+    then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlParseMemory in -lxml2" >&5
 $as_echo_n "checking for xmlParseMemory in -lxml2... " >&6; }
 if test "${ac_cv_lib_xml2_xmlParseMemory+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -9226,11 +9234,11 @@ if test "x$ac_cv_lib_xml2_xmlParseMemory" = x""yes; then :
 
 $as_echo "#define HAVE_LIBXML2 1" >>confdefs.h
 
-                 XML2LIBS="$ac_xml_libs"
-                 XML2INCL="$ac_xml_cflags"
+             XML2LIBS="$ac_xml_libs"
+             XML2INCL="$ac_xml_cflags"
 fi
 
-             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlReadMemory in -lxml2" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlReadMemory in -lxml2" >&5
 $as_echo_n "checking for xmlReadMemory in -lxml2... " >&6; }
 if test "${ac_cv_lib_xml2_xmlReadMemory+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -9272,7 +9280,7 @@ $as_echo "#define HAVE_XMLREADMEMORY 1" >>confdefs.h
 
 fi
 
-             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlNewDocPI in -lxml2" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlNewDocPI in -lxml2" >&5
 $as_echo_n "checking for xmlNewDocPI in -lxml2... " >&6; }
 if test "${ac_cv_lib_xml2_xmlNewDocPI+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -9314,7 +9322,7 @@ $as_echo "#define HAVE_XMLNEWDOCPI 1" >>confdefs.h
 
 fi
 
-             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSchemaSetParserStructuredErrors in -lxml2" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSchemaSetParserStructuredErrors in -lxml2" >&5
 $as_echo_n "checking for xmlSchemaSetParserStructuredErrors in -lxml2... " >&6; }
 if test "${ac_cv_lib_xml2_xmlSchemaSetParserStructuredErrors+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -9356,7 +9364,7 @@ $as_echo "#define HAVE_XMLSCHEMASSETPARSERSTRUCTUREDERRORS 1" >>confdefs.h
 
 fi
 
-             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSchemaSetValidStructuredErrors in -lxml2" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlSchemaSetValidStructuredErrors in -lxml2" >&5
 $as_echo_n "checking for xmlSchemaSetValidStructuredErrors in -lxml2... " >&6; }
 if test "${ac_cv_lib_xml2_xmlSchemaSetValidStructuredErrors+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -9398,7 +9406,7 @@ $as_echo "#define HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS 1" >>confdefs.h
 
 fi
 
-             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlFirstElementChild in -lxml2" >&5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for xmlFirstElementChild in -lxml2" >&5
 $as_echo_n "checking for xmlFirstElementChild in -lxml2... " >&6; }
 if test "${ac_cv_lib_xml2_xmlFirstElementChild+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -9440,7 +9448,7 @@ $as_echo "#define HAVE_XMLFIRSTELEMENTCHILD 1" >>confdefs.h
 
 fi
 
-             ac_fn_c_check_type "$LINENO" "xmlDocProperties" "ac_cv_type_xmlDocProperties" "#include <libxml/tree.h>
+        ac_fn_c_check_type "$LINENO" "xmlDocProperties" "ac_cv_type_xmlDocProperties" "#include <libxml/tree.h>
 "
 if test "x$ac_cv_type_xmlDocProperties" = x""yes; then :
 
@@ -9448,18 +9456,14 @@ $as_echo "#define HAVE_XMLDOC_PROPERTIES 1" >>confdefs.h
 
 fi
 
-
-fi
-
-done
-
+    fi
     CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 if test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"; then :
   case "x$with_xml" in
-  x)   as_fn_append wine_warnings "|libxml2 ${notice_platform}development files not found, XML won't be supported." ;;
+  x)   as_fn_append wine_warnings "|libxml2 ${notice_platform}development files not found (or too old), XML won't be supported." ;;
   xno) ;;
-  *)   as_fn_error $? "libxml2 ${notice_platform}development files not found, XML won't be supported.
+  *)   as_fn_error $? "libxml2 ${notice_platform}development files not found (or too old), XML won't be supported.
 This is an error since --with-xml was requested." "$LINENO" 5  ;;
 esac
 fi
