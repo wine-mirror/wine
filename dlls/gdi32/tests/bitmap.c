@@ -3116,27 +3116,27 @@ static void test_GetDIBits_single_pixel_destination(int bpp)
     ok((char)pixelOut == 0, "Bottom-up -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
     statusCode = GetDIBits(hdc, bmptb, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    todo_wine ok((char)pixelOut == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pixelOut);
+    ok((char)pixelOut == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pixelOut);
     /*Check second scanline.*/
     statusCode = GetDIBits(hdc, bmptb, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    todo_wine ok((char)pixelOut == 0, "Top-down -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
+    ok((char)pixelOut == 0, "Top-down -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
     statusCode = GetDIBits(hdc, bmpbt, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
     ok((char)pixelOut == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pixelOut);
 
-    /*Make destination bitmap top-down. Windows (and soon, Wine) will ignore this.*/
+    /*Make destination bitmap top-down.  This should be ignored by GetDIBits.*/
     bi.bmiHeader.biHeight = -2;
     statusCode = GetDIBits(hdc, bmpbt, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
     ok((char)pixelOut == 0, "Bottom-up -> top-down: first pixel should be 0 but was %d.\n", (char)pixelOut);
     statusCode = GetDIBits(hdc, bmptb, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    todo_wine ok((char)pixelOut == 2, "Top-down -> top-down: first pixel should be 2 but was %d.\n", (char)pixelOut);
+    ok((char)pixelOut == 2, "Top-down -> top-down: first pixel should be 2 but was %d.\n", (char)pixelOut);
     /*Check second scanline.*/
     statusCode = GetDIBits(hdc, bmptb, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    todo_wine ok((char)pixelOut == 0, "Top-down -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
+    ok((char)pixelOut == 0, "Top-down -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
     statusCode = GetDIBits(hdc, bmpbt, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
     ok((char)pixelOut == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pixelOut);
