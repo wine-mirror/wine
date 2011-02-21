@@ -215,6 +215,14 @@ static const FMTDATERES VarFormat_date_results[] =
   { 2.725, "hh:nn:ss A/P", "05:24:00 P" }
 };
 
+/* The following tests require that the time separator is a colon (:) */
+static const FMTDATERES VarFormat_namedtime_results[] =
+{
+  { 2.525, "short time", "12:36" },
+  { 2.525, "medium time", "12:36 PM" },
+  { 2.525, "long time", "12:36:00 PM" }
+};
+
 #define VNUMFMT(vt,v) \
   for (i = 0; i < sizeof(VarFormat_results)/sizeof(FMTRES); i++) \
   { \
@@ -297,6 +305,23 @@ static void test_VarFormat(void)
     VARFMT(VT_DATE,V_DATE,VarFormat_date_results[i].val,
            VarFormat_date_results[i].fmt,S_OK,
            VarFormat_date_results[i].res);
+  }
+
+  /* Named time formats */
+  GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_STIME, buff, sizeof(buff)/sizeof(char));
+  if (buff[0] != ':' || buff[1])
+  {
+    skip("Skipping namedtime tests as time separator is '%s'\n", buff);
+  }
+  else
+  {
+    for (i = 0; i < sizeof(VarFormat_namedtime_results)/sizeof(FMTDATERES); i++)
+    {
+      fd = 0;
+      VARFMT(VT_DATE,V_DATE,VarFormat_namedtime_results[i].val,
+             VarFormat_namedtime_results[i].fmt,S_OK,
+             VarFormat_namedtime_results[i].res);
+    }
   }
 
   /* Strings */
