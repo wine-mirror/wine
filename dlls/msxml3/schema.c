@@ -1057,7 +1057,7 @@ static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     xmlChar* name = uri ? xmlChar_from_wchar(uri) : xmlChar_from_wchar(emptyW);
-    TRACE("(%p)->(%s, var(vt %x))\n", This, debugstr_w(uri), V_VT(&var));
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(uri), debugstr_variant(&var));
 
     switch (V_VT(&var))
     {

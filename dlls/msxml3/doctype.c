@@ -207,7 +207,7 @@ static HRESULT WINAPI domdoctype_put_nodeValue(
     VARIANT value)
 {
     domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p): stub\n", This);
+    FIXME("(%p)->(%s): stub\n", This, debugstr_variant(&value));
     return E_NOTIMPL;
 }
 
@@ -293,7 +293,7 @@ static HRESULT WINAPI domdoctype_insertBefore(
 {
     domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
 
-    FIXME("(%p)->(%p x%d %p): stub\n", This, newNode, V_VT(&refChild), outOldNode);
+    FIXME("(%p)->(%p %s %p): stub\n", This, newNode, debugstr_variant(&refChild), outOldNode);
 
     return E_NOTIMPL;
 }
@@ -415,7 +415,7 @@ static HRESULT WINAPI domdoctype_put_nodeTypedValue(
     VARIANT value)
 {
     domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p): stub\n", This);
+    FIXME("(%p)->(%s): stub\n", This, debugstr_variant(&value));
     return E_NOTIMPL;
 }
 
@@ -514,7 +514,7 @@ static HRESULT WINAPI domdoctype_transformNodeToObject(
     IXMLDOMNode* domNode, VARIANT var1)
 {
     domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, domNode);
+    FIXME("(%p)->(%p %s): stub\n", This, domNode, debugstr_variant(&var1));
     return E_NOTIMPL;
 }
 

@@ -1992,7 +1992,7 @@ static HRESULT internal_parse(
 {
     HRESULT hr;
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&varInput));
 
     hr = S_OK;
     switch(V_VT(&varInput))
@@ -2155,7 +2155,7 @@ static HRESULT internal_putProperty(
         'x','m','l','d','e','c','l','-','v','e','r','s','i','o','n',0
     };
 
-    TRACE("(%p)->(%s)\n", This, debugstr_w(pProp));
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(pProp), debugstr_variant(&value));
 
     if(!memcmp(pProp, wszDeclarationHandler, sizeof(wszDeclarationHandler)))
     {

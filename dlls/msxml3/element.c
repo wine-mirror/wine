@@ -224,7 +224,7 @@ static HRESULT WINAPI domelem_put_nodeValue(
     VARIANT value)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
     return E_FAIL;
 }
 
@@ -325,7 +325,7 @@ static HRESULT WINAPI domelem_insertBefore(
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
 
-    TRACE("(%p)->(%p x%d %p)\n", This, newNode, V_VT(&refChild), outOldNode);
+    TRACE("(%p)->(%p %s %p)\n", This, newNode, debugstr_variant(&refChild), outOldNode);
 
     return node_insert_before(&This->node, newNode, &refChild, outOldNode);
 }
@@ -692,7 +692,7 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
     VARIANT type;
     HRESULT hr;
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
 
     /* for untyped node coerce to BSTR and set */
     if (IXMLDOMElement_get_dataType(iface, &type) == S_FALSE)
@@ -1071,7 +1071,7 @@ static HRESULT WINAPI domelem_setAttribute(
     HRESULT hr;
     VARIANT var;
 
-    TRACE("(%p)->(%s var)\n", This, debugstr_w(name));
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(name), debugstr_variant(&value));
 
     element = get_element( This );
     if ( !element )

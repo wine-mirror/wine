@@ -208,7 +208,7 @@ static HRESULT WINAPI entityref_put_nodeValue(
     VARIANT value)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
     return E_FAIL;
 }
 
@@ -308,7 +308,7 @@ static HRESULT WINAPI entityref_insertBefore(
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
 
-    FIXME("(%p)->(%p x%d %p) needs test\n", This, newNode, V_VT(&refChild), outOldNode);
+    FIXME("(%p)->(%p %s %p) needs test\n", This, newNode, debugstr_variant(&refChild), outOldNode);
 
     return node_insert_before(&This->node, newNode, &refChild, outOldNode);
 }

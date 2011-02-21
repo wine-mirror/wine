@@ -208,7 +208,7 @@ static HRESULT WINAPI dom_pi_put_nodeValue(
     BSTR sTarget;
     HRESULT hr;
 
-    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
 
     /* Cannot set data to a PI node whose target is 'xml' */
     hr = dom_pi_get_nodeName(iface, &sTarget);
@@ -324,7 +324,7 @@ static HRESULT WINAPI dom_pi_insertBefore(
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
 
-    FIXME("(%p)->(%p x%d %p) needs test\n", This, newNode, V_VT(&refChild), outOldNode);
+    FIXME("(%p)->(%p %s %p) needs test\n", This, newNode, debugstr_variant(&refChild), outOldNode);
 
     return node_insert_before(&This->node, newNode, &refChild, outOldNode);
 }

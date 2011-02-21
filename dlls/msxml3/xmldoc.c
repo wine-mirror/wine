@@ -503,7 +503,8 @@ static HRESULT WINAPI xmldoc_createElement(IXMLDocument *iface, VARIANT vType,
     xmlNodePtr node;
     static const xmlChar empty[] = "\0";
 
-    TRACE("(%p, %p)\n", iface, ppElem);
+    TRACE("(%p)->(%s %s %p)\n", iface, debugstr_variant(&vType),
+        debugstr_variant(&var1), ppElem);
 
     if (!ppElem)
         return E_INVALIDARG;

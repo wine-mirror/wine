@@ -650,7 +650,8 @@ static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR
     HRESULT hr;
     VARIANT str;
 
-    TRACE("(%p)->(%s %s)\n", This, debugstr_w(method), debugstr_w(url));
+    TRACE("(%p)->(%s %s %s)\n", This, debugstr_w(method), debugstr_w(url),
+        debugstr_variant(&async));
 
     if (!method || !url) return E_INVALIDARG;
 
@@ -766,7 +767,7 @@ static HRESULT WINAPI httprequest_send(IXMLHTTPRequest *iface, VARIANT body)
     BindStatusCallback *bsc = NULL;
     HRESULT hr;
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&body));
 
     if (This->state != READYSTATE_LOADING) return E_FAIL;
 

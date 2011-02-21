@@ -222,7 +222,7 @@ static HRESULT WINAPI domtext_put_nodeValue(
 {
     domtext *This = impl_from_IXMLDOMText( iface );
 
-    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
 
     return node_put_value(&This->node, &value);
 }
@@ -323,7 +323,7 @@ static HRESULT WINAPI domtext_insertBefore(
 {
     domtext *This = impl_from_IXMLDOMText( iface );
 
-    FIXME("(%p)->(%p x%d %p) needs test\n", This, newNode, V_VT(&refChild), outOldNode);
+    FIXME("(%p)->(%p %s %p) needs test\n", This, newNode, debugstr_variant(&refChild), outOldNode);
 
     return node_insert_before(&This->node, newNode, &refChild, outOldNode);
 }
@@ -462,19 +462,19 @@ static HRESULT WINAPI domtext_get_nodeTypedValue(
 
 static HRESULT WINAPI domtext_put_nodeTypedValue(
     IXMLDOMText *iface,
-    VARIANT var1)
+    VARIANT value)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
     IXMLDOMNode* parent = NULL;
     HRESULT hr;
 
-    TRACE("(%p)->(VARIANT)\n", This);
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
 
     hr = domtext_get_parentNode(iface, &parent);
 
     if (hr == S_OK)
     {
-        hr = IXMLDOMNode_put_nodeTypedValue(parent, var1);
+        hr = IXMLDOMNode_put_nodeTypedValue(parent, value);
         IXMLDOMNode_Release(parent);
     }
     else

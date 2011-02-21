@@ -212,7 +212,7 @@ static HRESULT WINAPI domfrag_put_nodeValue(
     VARIANT value)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
     return E_FAIL;
 }
 
@@ -312,7 +312,7 @@ static HRESULT WINAPI domfrag_insertBefore(
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    TRACE("(%p)->(%p x%d %p)\n", This, newNode, V_VT(&refChild), outOldNode);
+    TRACE("(%p)->(%p %s %p)\n", This, newNode, debugstr_variant(&refChild), outOldNode);
 
     /* TODO: test */
     return node_insert_before(&This->node, newNode, &refChild, outOldNode);

@@ -209,7 +209,7 @@ static HRESULT WINAPI domcomment_put_nodeValue(
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
 
-    TRACE("(%p)->(v%d)\n", This, V_VT(&value));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&value));
 
     return node_put_value(&This->node, &value);
 }
@@ -310,7 +310,7 @@ static HRESULT WINAPI domcomment_insertBefore(
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
 
-    FIXME("(%p)->(%p x%d %p) needs test\n", This, newNode, V_VT(&refChild), outOldNode);
+    FIXME("(%p)->(%p %s %p) needs test\n", This, newNode, debugstr_variant(&refChild), outOldNode);
 
     return node_insert_before(&This->node, newNode, &refChild, outOldNode);
 }
