@@ -90,8 +90,8 @@
 @ stdcall D3DXCreateSphere(ptr float long long ptr ptr)
 @ stdcall D3DXCreateSprite(ptr ptr)
 @ stdcall D3DXCreateTeapot(ptr ptr ptr)
-@ stub D3DXCreateTextA
-@ stub D3DXCreateTextW
+@ stdcall D3DXCreateTextA(ptr long str float float ptr ptr ptr)
+@ stdcall D3DXCreateTextW(ptr long wstr float float ptr ptr ptr)
 @ stdcall D3DXCreateTexture(ptr long long long long long long ptr)
 @ stdcall D3DXCreateTextureFromFileA(ptr str ptr)
 @ stdcall D3DXCreateTextureFromFileExA(ptr str long long long long long long long long long ptr ptr ptr)

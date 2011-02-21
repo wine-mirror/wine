@@ -1499,3 +1499,27 @@ HRESULT WINAPI D3DXCreateTeapot(LPDIRECT3DDEVICE9 device, LPD3DXMESH *mesh, LPD3
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI D3DXCreateTextA(LPDIRECT3DDEVICE9 device,
+                               HDC hdc, LPCSTR text,
+                               FLOAT deviation, FLOAT extrusion,
+                               LPD3DXMESH *mesh, LPD3DXBUFFER *adjacency,
+                               LPGLYPHMETRICSFLOAT glyphmetrics)
+{
+    FIXME("(%p, %p, %s, %f, %f, %p, %p, %p): stub\n", device, hdc,
+          debugstr_a(text), deviation, extrusion, mesh, adjacency, glyphmetrics);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DXCreateTextW(LPDIRECT3DDEVICE9 device,
+                               HDC hdc, LPCWSTR text,
+                               FLOAT deviation, FLOAT extrusion,
+                               LPD3DXMESH *mesh, LPD3DXBUFFER *adjacency,
+                               LPGLYPHMETRICSFLOAT glyphmetrics)
+{
+    FIXME("(%p, %p, %s, %f, %f, %p, %p, %p): stub\n", device, hdc,
+          debugstr_w(text), deviation, extrusion, mesh, adjacency, glyphmetrics);
+
+    return E_NOTIMPL;
+}
