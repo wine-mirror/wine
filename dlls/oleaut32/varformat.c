@@ -263,7 +263,7 @@ typedef struct tagFMT_DATE_HEADER
 #define FMT_DATE_HOUR_0     0x1F /* Hours with leading 0 */
 #define FMT_DATE_HOUR_12    0x20 /* Hours with no leading 0, 12 hour clock */
 #define FMT_DATE_HOUR_12_0  0x21 /* Hours with leading 0, 12 hour clock */
-#define FMT_DATE_TIME_UNK2  0x23
+#define FMT_DATE_TIME_UNK2  0x23 /* same as FMT_DATE_HOUR_0, for "short time" format */
 /* FIXME: probably missing some here */
 #define FMT_DATE_AMPM_SYS1  0x2E /* AM/PM as defined by system settings */
 #define FMT_DATE_AMPM_UPPER 0x2F /* Upper-case AM or PM */
@@ -1660,6 +1660,13 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
       pToken += 2;
       break;
 
+    case FMT_GEN_INLINE:
+      pToken += 2;
+      TRACE("copy %s\n", debugstr_a((LPCSTR)pToken));
+      while (*pToken)
+        *pBuff++ = *pToken++;
+      break;
+
     case FMT_DATE_TIME_SEP:
       TRACE("time separator\n");
       localeValue = LOCALE_STIME;
@@ -1836,6 +1843,7 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
       break;
 
     case FMT_DATE_HOUR_0:
+    case FMT_DATE_TIME_UNK2:
       szPrintFmt = szPercentZeroTwo_d;
       dwVal = udate.st.wHour;
       break;
