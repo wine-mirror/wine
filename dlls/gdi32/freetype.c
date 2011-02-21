@@ -3086,18 +3086,18 @@ static void free_font(GdiFont *font)
     LIST_FOR_EACH_SAFE(cursor, cursor2, &font->child_fonts)
     {
         CHILD_FONT *child = LIST_ENTRY(cursor, CHILD_FONT, entry);
-        struct list *first_hfont;
-        HFONTLIST *hfontlist;
         list_remove(cursor);
         if(child->font)
-        {
-            first_hfont = list_head(&child->font->hfontlist);
-            hfontlist = LIST_ENTRY(first_hfont, HFONTLIST, entry);
-            DeleteObject(hfontlist->hfont);
-            HeapFree(GetProcessHeap(), 0, hfontlist);
             free_font(child->font);
-        }
         HeapFree(GetProcessHeap(), 0, child);
+    }
+
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &font->hfontlist)
+    {
+        HFONTLIST *hfontlist = LIST_ENTRY(cursor, HFONTLIST, entry);
+        DeleteObject(hfontlist->hfont);
+        list_remove(&hfontlist->entry);
+        HeapFree(GetProcessHeap(), 0, hfontlist);
     }
 
     if (font->ft_face) pFT_Done_Face(font->ft_face);
