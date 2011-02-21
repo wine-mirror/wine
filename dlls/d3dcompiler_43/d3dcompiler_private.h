@@ -23,6 +23,7 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/rbtree.h"
 
 #define COBJMACROS
 #include "windef.h"
@@ -64,9 +65,23 @@ struct d3dcompiler_shader_signature
     char *string_data;
 };
 
+struct d3dcompiler_shader_reflection_type
+{
+    ID3D11ShaderReflectionType ID3D11ShaderReflectionType_iface;
+
+    DWORD id;
+    struct wine_rb_entry entry;
+
+    struct d3dcompiler_shader_reflection *reflection;
+
+    D3D11_SHADER_TYPE_DESC desc;
+};
+
 struct d3dcompiler_shader_reflection_variable
 {
     ID3D11ShaderReflectionVariable ID3D11ShaderReflectionVariable_iface;
+
+    struct d3dcompiler_shader_reflection_type *type;
 
     char *name;
     UINT start_offset;
@@ -136,6 +151,7 @@ struct d3dcompiler_shader_reflection
     char *resource_string;
     D3D11_SHADER_INPUT_BIND_DESC *bound_resources;
     struct d3dcompiler_shader_reflection_constant_buffer *constant_buffers;
+    struct wine_rb_tree types;
 };
 
 /* reflection handling */
