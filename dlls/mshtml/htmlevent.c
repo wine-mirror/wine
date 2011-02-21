@@ -83,6 +83,9 @@ static const WCHAR onloadW[] = {'o','n','l','o','a','d',0};
 static const WCHAR mousedownW[] = {'m','o','u','s','e','d','o','w','n',0};
 static const WCHAR onmousedownW[] = {'o','n','m','o','u','s','e','d','o','w','n',0};
 
+static const WCHAR mousemoveW[] = {'m','o','u','s','e','m','o','v','e',0};
+static const WCHAR onmousemoveW[] = {'o','n','m','o','u','s','e','m','o','v','e',0};
+
 static const WCHAR mouseoutW[] = {'m','o','u','s','e','o','u','t',0};
 static const WCHAR onmouseoutW[] = {'o','n','m','o','u','s','e','o','u','t',0};
 
@@ -161,6 +164,8 @@ static const event_info_t event_info[] = {
     {loadW,              onloadW,              EVENTT_HTML,   DISPID_EVMETH_ONLOAD,
         EVENT_NODEHANDLER},
     {mousedownW,         onmousedownW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEDOWN,
+        EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
+    {mousemoveW,         onmousemoveW,         EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEMOVE,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {mouseoutW,          onmouseoutW,          EVENTT_MOUSE,  DISPID_EVMETH_ONMOUSEOUT,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
