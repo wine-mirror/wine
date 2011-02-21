@@ -660,7 +660,7 @@ static inline xmlSchemaPtr get_node_schema(schema_cache* This, xmlNodePtr node)
     return (!entry)? NULL : entry->schema;
 }
 
-xmlExternalEntityLoader _external_entity_loader = NULL;
+static xmlExternalEntityLoader _external_entity_loader;
 
 static xmlParserInputPtr external_entity_loader(const char *URL, const char *ID,
                                                 xmlParserCtxtPtr ctxt)
@@ -713,7 +713,7 @@ void schemasInit(void)
     datatypes_src = BAD_CAST buf;
     datatypes_len = len + 1;
 
-    if ((void*)xmlGetExternalEntityLoader() != (void*)external_entity_loader)
+    if (xmlGetExternalEntityLoader() != external_entity_loader)
     {
         _external_entity_loader = xmlGetExternalEntityLoader();
         xmlSetExternalEntityLoader(external_entity_loader);
@@ -722,10 +722,7 @@ void schemasInit(void)
 
 void schemasCleanup(void)
 {
-    if (datatypes_handle)
-        FreeResource(datatypes_handle);
-    if (datatypes_schema)
-        xmlSchemaFree(datatypes_schema);
+    xmlSchemaFree(datatypes_schema);
     xmlSetExternalEntityLoader(_external_entity_loader);
 }
 
