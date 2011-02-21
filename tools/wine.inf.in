@@ -2574,7 +2574,8 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 [FakeDllsWow64]
 ; create some directories first
 11,mui,
-11,wbem,
+11,gecko\plugin,npmshtml.dll
+11,wbem,mofcomp.exe
 11,,iexplore.exe,-
 11,,winetest.exe,-
 12,,mountmgr.sys,-
