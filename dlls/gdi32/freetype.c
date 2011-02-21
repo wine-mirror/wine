@@ -3908,14 +3908,16 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
 
     LIST_FOR_EACH_ENTRY(gdiFont, &child_font_list, struct tagGdiFont, entry)
     {
-        struct list *first_hfont = list_head(&gdiFont->hfontlist);
-        hflist = LIST_ENTRY(first_hfont, HFONTLIST, entry);
-        if(hflist->hfont == handle)
-        {
-            TRACE("removing child font %p from child list\n", gdiFont);
-            list_remove(&gdiFont->entry);
-            LeaveCriticalSection( &freetype_cs );
-            return TRUE;
+        hfontlist_elem_ptr = list_head(&gdiFont->hfontlist);
+        while(hfontlist_elem_ptr) {
+            hflist = LIST_ENTRY(hfontlist_elem_ptr, struct tagHFONTLIST, entry);
+            hfontlist_elem_ptr = list_next(&gdiFont->hfontlist, hfontlist_elem_ptr);
+            if(hflist->hfont == handle) {
+                TRACE("removing child font %p from child list\n", gdiFont);
+                list_remove(&gdiFont->entry);
+                LeaveCriticalSection( &freetype_cs );
+                return TRUE;
+            }
         }
     }
 
