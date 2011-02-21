@@ -3050,6 +3050,101 @@ static void test_32bit_bitmap_blt(void)
     DeleteDC(hdcScreen);
 }
 
+/*
+ * Used by test_GetDIBits_single_pixel_destination to create the bitmap to test against.
+ */
+static void setup_picture(char *picture, int bpp)
+{
+    int i;
+
+    switch(bpp)
+    {
+        case 16:
+        case 32:
+            /*Set the first byte in each pixel to the index of that pixel.*/
+            for (i = 0; i < 4; i++)
+                picture[i * (bpp / 8)] = i;
+            break;
+        case 24:
+            picture[0] = 0;
+            picture[3] = 1;
+            /*Each scanline in a bitmap must be a multiple of 4 bytes long.*/
+            picture[8] = 2;
+            picture[11] = 3;
+            break;
+    }
+}
+
+static void test_GetDIBits_single_pixel_destination(int bpp)
+{
+    BITMAPINFO bi;
+    HBITMAP bmptb, bmpbt;
+    HDC hdc;
+    int pixelOut;
+    int *picture;
+    int statusCode;
+
+    bi.bmiHeader.biSize=sizeof(bi.bmiHeader);
+    bi.bmiHeader.biWidth=2;
+    bi.bmiHeader.biHeight=2;
+    bi.bmiHeader.biPlanes=1;
+    bi.bmiHeader.biBitCount=bpp;
+    bi.bmiHeader.biCompression=BI_RGB;
+
+    /*Get the device context for the screen.*/
+    hdc = GetDC(NULL);
+    ok(hdc != NULL, "Could not get a handle to a device context.\n");
+
+    /*Create the bottom to top image (image's bottom scan line is at the top in memory).*/
+    bmpbt = CreateDIBSection(hdc, &bi, DIB_RGB_COLORS, (void**)&picture, NULL, 0);
+    ok(bmpbt != NULL, "Could not create a DIB section.\n");
+    /*Now that we have a pointer to the pixels, we write to them.*/
+    setup_picture((char*)picture, bpp);
+    /*Create the top to bottom image (images' bottom scan line is at the bottom in memory).*/
+    bi.bmiHeader.biHeight=-2; /*We specify that we want a top to bottom image by specifying a negative height.*/
+    bmptb = CreateDIBSection(hdc, &bi, DIB_RGB_COLORS, (void**)&picture, NULL, 0);
+    ok(bmptb != NULL, "Could not create a DIB section.\n");
+    /*Write to this top to bottom bitmap.*/
+    setup_picture((char*)picture, bpp);
+
+    bi.bmiHeader.biWidth = 1;
+
+    bi.bmiHeader.biHeight = 2;
+    statusCode = GetDIBits(hdc, bmpbt, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    /*Check the first byte of the pixel.*/
+    ok((char)pixelOut == 0, "Bottom-up -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
+    statusCode = GetDIBits(hdc, bmptb, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    todo_wine ok((char)pixelOut == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pixelOut);
+    /*Check second scanline.*/
+    statusCode = GetDIBits(hdc, bmptb, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    todo_wine ok((char)pixelOut == 0, "Top-down -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
+    statusCode = GetDIBits(hdc, bmpbt, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    ok((char)pixelOut == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pixelOut);
+
+    /*Make destination bitmap top-down. Windows (and soon, Wine) will ignore this.*/
+    bi.bmiHeader.biHeight = -2;
+    statusCode = GetDIBits(hdc, bmpbt, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    ok((char)pixelOut == 0, "Bottom-up -> top-down: first pixel should be 0 but was %d.\n", (char)pixelOut);
+    statusCode = GetDIBits(hdc, bmptb, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    todo_wine ok((char)pixelOut == 2, "Top-down -> top-down: first pixel should be 2 but was %d.\n", (char)pixelOut);
+    /*Check second scanline.*/
+    statusCode = GetDIBits(hdc, bmptb, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    todo_wine ok((char)pixelOut == 0, "Top-down -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
+    statusCode = GetDIBits(hdc, bmpbt, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    ok((char)pixelOut == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pixelOut);
+
+    DeleteObject(bmpbt);
+    DeleteObject(bmptb);
+}
+
 START_TEST(bitmap)
 {
     HMODULE hdll;
@@ -3080,4 +3175,7 @@ START_TEST(bitmap)
     test_bitmapinfoheadersize();
     test_get16dibits();
     test_clipping();
+    test_GetDIBits_single_pixel_destination(16);
+    test_GetDIBits_single_pixel_destination(24);
+    test_GetDIBits_single_pixel_destination(32);
 }
