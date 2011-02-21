@@ -44,7 +44,7 @@ struct RuntimeHost
     const struct ICorRuntimeHostVtbl *lpVtbl;
     const struct ICLRRuntimeHostVtbl *lpCLRHostVtbl;
     const CLRRuntimeInfo *version;
-    const loaded_mono *mono;
+    loaded_mono *mono;
     struct list domains;
     MonoDomain *default_domain;
     CRITICAL_SECTION lock;
@@ -91,6 +91,8 @@ static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, MonoDomain **result)
         goto end;
     }
 
+    This->mono->is_started = TRUE;
+
     list_add_tail(&This->domains, &entry->entry);
 
     MSCOREE_LockModule();
@@ -131,7 +133,6 @@ static void RuntimeHost_DeleteDomain(RuntimeHost *This, MonoDomain *domain)
     {
         if (entry->domain == domain)
         {
-            This->mono->mono_jit_cleanup(domain);
             list_remove(&entry->entry);
             if (This->default_domain == domain)
                 This->default_domain = NULL;
@@ -711,11 +712,13 @@ __int32 WINAPI _CorExeMain(void)
 
     HeapFree(GetProcessHeap(), 0, argv);
 
+    unload_all_runtimes();
+
     return exit_code;
 }
 
 HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
-    const loaded_mono *loaded_mono, RuntimeHost** result)
+    loaded_mono *loaded_mono, RuntimeHost** result)
 {
     RuntimeHost *This;
 
@@ -786,7 +789,6 @@ HRESULT RuntimeHost_Destroy(RuntimeHost *This)
 
     LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->domains, struct DomainEntry, entry)
     {
-        This->mono->mono_jit_cleanup(cursor->domain);
         list_remove(&cursor->entry);
         HeapFree(GetProcessHeap(), 0, cursor);
     }

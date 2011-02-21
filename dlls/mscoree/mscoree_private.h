@@ -85,6 +85,7 @@ typedef struct _MonoImage MonoImage;
 typedef struct _MonoClass MonoClass;
 typedef struct _MonoObject MonoObject;
 typedef struct _MonoMethod MonoMethod;
+typedef struct _MonoProfiler MonoProfiler;
 
 typedef enum {
 	MONO_IMAGE_OK,
@@ -95,10 +96,15 @@ typedef enum {
 
 typedef MonoAssembly* (*MonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
 
+typedef void (*MonoProfileFunc)(MonoProfiler *prof);
+
 typedef struct loaded_mono
 {
     HMODULE mono_handle;
     HMODULE glib_handle;
+
+    BOOL is_started;
+    BOOL is_shutdown;
 
     MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly);
     MonoAssembly* (CDECL *mono_assembly_open)(const char *filename, MonoImageOpenStatus *status);
@@ -109,25 +115,32 @@ typedef struct loaded_mono
     MonoAssembly* (CDECL *mono_domain_assembly_open) (MonoDomain *domain, const char *name);
     void (CDECL *mono_free)(void *);
     void (CDECL *mono_install_assembly_preload_hook)(MonoAssemblyPreLoadFunc func, void *user_data);
-    void (CDECL *mono_jit_cleanup)(MonoDomain *domain);
     int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]);
     MonoDomain* (CDECL *mono_jit_init)(const char *file);
     int (CDECL *mono_jit_set_trace_options)(const char* options);
     MonoDomain* (CDECL *mono_object_get_domain)(MonoObject *obj);
     MonoObject* (CDECL *mono_object_new)(MonoDomain *domain, MonoClass *klass);
     void* (CDECL *mono_object_unbox)(MonoObject *obj);
+    void (CDECL *mono_profiler_install)(MonoProfiler *prof, MonoProfileFunc shutdown_callback);
     MonoType* (CDECL *mono_reflection_type_from_name)(char *name, MonoImage *image);
     MonoObject* (CDECL *mono_runtime_invoke)(MonoMethod *method, void *obj, void **params, MonoObject **exc);
     void (CDECL *mono_runtime_object_init)(MonoObject *this_obj);
+    void (CDECL *mono_runtime_quit)(void);
+    void (CDECL *mono_runtime_set_shutting_down)(void);
     void (CDECL *mono_set_dirs)(const char *assembly_dir, const char *config_dir);
     char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
+    void (CDECL *mono_thread_pool_cleanup)(void);
+    void (CDECL *mono_thread_suspend_all_other_threads)(void);
+    void (CDECL *mono_threads_set_shutting_down)(void);
 } loaded_mono;
 
 /* loaded runtime interfaces */
 extern void unload_all_runtimes(void);
 
+extern void expect_no_runtimes(void);
+
 extern HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
-    const loaded_mono *loaded_mono, RuntimeHost** result);
+    loaded_mono *loaded_mono, RuntimeHost** result);
 
 extern HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid, void **ppv);
 

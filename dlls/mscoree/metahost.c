@@ -76,6 +76,8 @@ static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path, int abi_version);
 
 static MonoAssembly* mono_assembly_search_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
 
+static void mono_shutdown_callback_fn(MonoProfiler *prof);
+
 static void set_environment(LPCWSTR bin_path)
 {
     WCHAR path_env[MAX_PATH];
@@ -89,6 +91,10 @@ static void set_environment(LPCWSTR bin_path)
     path_env[len++] = ';';
     strcpyW(path_env+len, bin_path);
     SetEnvironmentVariableW(pathW, path_env);
+}
+
+static void CDECL do_nothing(void)
+{
 }
 
 static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
@@ -110,6 +116,13 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
         return E_FAIL;
 
     *result = &loaded_monos[This->mono_abi_version-1];
+
+    if ((*result)->is_shutdown)
+    {
+        ERR("Cannot load Mono after it has been shut down.");
+        *result = NULL;
+        return E_FAIL;
+    }
 
     if (!(*result)->mono_handle)
     {
@@ -146,16 +159,17 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
         LOAD_MONO_FUNCTION(mono_class_get_method_from_name);
         LOAD_MONO_FUNCTION(mono_domain_assembly_open);
         LOAD_MONO_FUNCTION(mono_install_assembly_preload_hook);
-        LOAD_MONO_FUNCTION(mono_jit_cleanup);
         LOAD_MONO_FUNCTION(mono_jit_exec);
         LOAD_MONO_FUNCTION(mono_jit_init);
         LOAD_MONO_FUNCTION(mono_jit_set_trace_options);
         LOAD_MONO_FUNCTION(mono_object_get_domain);
         LOAD_MONO_FUNCTION(mono_object_new);
         LOAD_MONO_FUNCTION(mono_object_unbox);
+        LOAD_MONO_FUNCTION(mono_profiler_install);
         LOAD_MONO_FUNCTION(mono_reflection_type_from_name);
         LOAD_MONO_FUNCTION(mono_runtime_invoke);
         LOAD_MONO_FUNCTION(mono_runtime_object_init);
+        LOAD_MONO_FUNCTION(mono_runtime_quit);
         LOAD_MONO_FUNCTION(mono_set_dirs);
         LOAD_MONO_FUNCTION(mono_stringify_assembly_name);
 
@@ -174,6 +188,22 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
         }
 
 #undef LOAD_MONO_FUNCTION
+
+#define LOAD_OPT_VOID_MONO_FUNCTION(x) do { \
+    (*result)->x = (void*)GetProcAddress((*result)->mono_handle, #x); \
+    if (!(*result)->x) { \
+        (*result)->x = do_nothing; \
+    } \
+} while (0);
+
+        LOAD_OPT_VOID_MONO_FUNCTION(mono_runtime_set_shutting_down);
+        LOAD_OPT_VOID_MONO_FUNCTION(mono_thread_pool_cleanup);
+        LOAD_OPT_VOID_MONO_FUNCTION(mono_thread_suspend_all_other_threads);
+        LOAD_OPT_VOID_MONO_FUNCTION(mono_threads_set_shutting_down);
+
+#undef LOAD_OPT_VOID_MONO_FUNCTION
+
+        (*result)->mono_profiler_install((MonoProfiler*)*result, mono_shutdown_callback_fn);
 
         (*result)->mono_set_dirs(mono_lib_path_a, mono_etc_path_a);
 
@@ -198,6 +228,13 @@ fail:
     (*result)->mono_handle = NULL;
     (*result)->glib_handle = NULL;
     return E_FAIL;
+}
+
+static void mono_shutdown_callback_fn(MonoProfiler *prof)
+{
+    loaded_mono *mono = (loaded_mono*)prof;
+
+    mono->is_shutdown = TRUE;
 }
 
 static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost **result)
@@ -230,9 +267,38 @@ void unload_all_runtimes(void)
 {
     int i;
 
+    for (i=0; i<NUM_ABI_VERSIONS; i++)
+    {
+        loaded_mono *mono = &loaded_monos[i];
+        if (mono->mono_handle && mono->is_started && !mono->is_shutdown)
+        {
+            /* Copied from Mono's ves_icall_System_Environment_Exit */
+	    mono->mono_threads_set_shutting_down();
+	    mono->mono_runtime_set_shutting_down();
+	    mono->mono_thread_pool_cleanup();
+	    mono->mono_thread_suspend_all_other_threads();
+	    mono->mono_runtime_quit();
+        }
+    }
+
     for (i=0; i<NUM_RUNTIMES; i++)
         if (runtimes[i].loaded_runtime)
             RuntimeHost_Destroy(runtimes[i].loaded_runtime);
+}
+
+void expect_no_runtimes(void)
+{
+    int i;
+
+    for (i=0; i<NUM_ABI_VERSIONS; i++)
+    {
+        loaded_mono *mono = &loaded_monos[i];
+        if (mono->mono_handle && mono->is_started && !mono->is_shutdown)
+        {
+            ERR("Process exited with a Mono runtime loaded.\n");
+            return;
+        }
+    }
 }
 
 static HRESULT WINAPI CLRRuntimeInfo_QueryInterface(ICLRRuntimeInfo* iface,

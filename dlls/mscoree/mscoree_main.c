@@ -124,7 +124,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         DisableThreadLibraryCalls(hinstDLL);
         break;
     case DLL_PROCESS_DETACH:
-        unload_all_runtimes();
+        expect_no_runtimes();
         break;
     }
     return TRUE;
@@ -154,7 +154,8 @@ __int32 WINAPI _CorExeMain2(PBYTE ptrMemory, DWORD cntMemory, LPWSTR imageName, 
 
 void WINAPI CorExitProcess(int exitCode)
 {
-    FIXME("(%x) stub\n", exitCode);
+    TRACE("(%x)\n", exitCode);
+    unload_all_runtimes();
     ExitProcess(exitCode);
 }
 
