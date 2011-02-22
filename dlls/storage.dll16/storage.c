@@ -1608,20 +1608,6 @@ static void _create_istream16(LPSTREAM16 *str) {
 }
 
 
-/* --- IStream32 implementation */
-
-typedef struct
-{
-        /* IUnknown fields */
-        const IStreamVtbl              *lpVtbl;
-        LONG                            ref;
-        /* IStream32 fields */
-        struct storage_pps_entry        stde;
-        int                             ppsent;
-        HANDLE                          hf;
-        ULARGE_INTEGER                  offset;
-} IStream32Impl;
-
 /******************************************************************************
  *		IStorage16_QueryInterface	[STORAGE.500]
  */
