@@ -745,12 +745,33 @@ const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_va
 
 /* ID3D11ShaderReflectionType methods */
 
+static inline struct d3dcompiler_shader_reflection_type *impl_from_ID3D11ShaderReflectionType(ID3D11ShaderReflectionType *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3dcompiler_shader_reflection_type, ID3D11ShaderReflectionType_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_type_GetDesc(
         ID3D11ShaderReflectionType *iface, D3D11_SHADER_TYPE_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3dcompiler_shader_reflection_type *This = impl_from_ID3D11ShaderReflectionType(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p\n", iface, desc);
+
+    if (This == &null_type)
+    {
+        WARN("Null type specified\n");
+        return E_FAIL;
+    }
+
+    if (!desc)
+    {
+        WARN("Invalid argument specified\n");
+        return E_FAIL;
+    }
+
+    *desc = This->desc;
+
+    return S_OK;
 }
 
 static ID3D11ShaderReflectionType * STDMETHODCALLTYPE d3dcompiler_shader_reflection_type_GetMemberTypeByIndex(
