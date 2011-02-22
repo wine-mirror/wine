@@ -162,13 +162,17 @@ static void set_environment(LPCWSTR gre_path)
 
 static BOOL load_xpcom(const PRUnichar *gre_path)
 {
-    static const WCHAR strXPCOM[] = {'x','p','c','o','m','.','d','l','l',0};
+    static const WCHAR strXPCOM[] = {'\\','x','p','c','o','m','.','d','l','l',0};
+    WCHAR file_name[MAX_PATH];
 
-    TRACE("(%s)\n", debugstr_w(gre_path));
+    strcpyW(file_name, gre_path);
+    strcatW(file_name, strXPCOM);
+
+    TRACE("(%s)\n", debugstr_w(file_name));
 
     set_environment(gre_path);
 
-    hXPCOM = LoadLibraryW(strXPCOM);
+    hXPCOM = LoadLibraryExW(file_name, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
     if(!hXPCOM) {
         WARN("Could not load XPCOM: %d\n", GetLastError());
         return FALSE;
