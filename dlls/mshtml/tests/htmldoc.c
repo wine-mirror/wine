@@ -2755,7 +2755,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
     return E_FAIL;
 }
 
-static IDispatchVtbl DispatchVtbl = {
+static const IDispatchVtbl DispatchVtbl = {
     Dispatch_QueryInterface,
     Dispatch_AddRef,
     Dispatch_Release,
