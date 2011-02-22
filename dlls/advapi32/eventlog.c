@@ -235,6 +235,21 @@ BOOL WINAPI DeregisterEventSource( HANDLE hEventLog )
 }
 
 /******************************************************************************
+ * EnableTraceEx [ADVAPI32.@]
+ */
+ULONG WINAPI EnableTraceEx( LPCGUID provider, LPCGUID source, TRACEHANDLE hSession, ULONG enable,
+                            UCHAR level, ULONGLONG anykeyword, ULONGLONG allkeyword, ULONG enableprop,
+                            PEVENT_FILTER_DESCRIPTOR filterdesc )
+{
+    FIXME("(%s, %s, %s, %d, %c, %s, %s, %d, %p): stub\n", debugstr_guid(provider),
+            debugstr_guid(source), wine_dbgstr_longlong(hSession), enable, level,
+            wine_dbgstr_longlong(anykeyword), wine_dbgstr_longlong(allkeyword),
+            enableprop, filterdesc);
+
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
  * EnableTrace [ADVAPI32.@]
  */
 ULONG WINAPI EnableTrace( ULONG enable, ULONG flag, ULONG level, LPCGUID guid, TRACEHANDLE hSession )
