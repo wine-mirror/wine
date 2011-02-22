@@ -418,9 +418,36 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetPatchConstantP
 static struct ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetVariableByName(
         ID3D11ShaderReflection *iface, LPCSTR name)
 {
-    FIXME("iface %p, name %s stub!\n", iface, name);
+    struct d3dcompiler_shader_reflection *This = impl_from_ID3D11ShaderReflection(iface);
+    unsigned int i, k;
 
-    return NULL;
+    TRACE("iface %p, name %s\n", iface, debugstr_a(name));
+
+    if (!name)
+    {
+        WARN("Invalid name specified\n");
+        return &null_variable.ID3D11ShaderReflectionVariable_iface;
+    }
+
+    for (i = 0; i < This->constant_buffer_count; ++i)
+    {
+        struct d3dcompiler_shader_reflection_constant_buffer *cb = &This->constant_buffers[i];
+
+        for (k = 0; k < cb->variable_count; ++k)
+        {
+            struct d3dcompiler_shader_reflection_variable *v = &cb->variables[k];
+
+            if (!strcmp(v->name, name))
+            {
+                TRACE("Returning ID3D11ShaderReflectionVariable %p.\n", v);
+                return &v->ID3D11ShaderReflectionVariable_iface;
+            }
+        }
+    }
+
+    WARN("Invalid name specified\n");
+
+    return &null_variable.ID3D11ShaderReflectionVariable_iface;
 }
 
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetResourceBindingDescByName(
