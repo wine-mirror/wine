@@ -12818,7 +12818,6 @@ for ac_func in \
 	pwrite \
 	readdir \
 	readlink \
-	sched_setaffinity \
 	sched_yield \
 	select \
 	setproctitle \
@@ -13314,6 +13313,40 @@ if test "$wine_cv_one_arg_mkdir" = "yes"
 then
 
 $as_echo "#define HAVE_ONE_ARG_MKDIR 1" >>confdefs.h
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sched_setaffinity" >&5
+$as_echo_n "checking for sched_setaffinity... " >&6; }
+if test "${wine_cv_have_sched_setaffinity+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#define _GNU_SOURCE
+#include <sched.h>
+int
+main ()
+{
+sched_setaffinity(0, 0, 0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  wine_cv_have_sched_setaffinity=yes
+else
+  wine_cv_have_sched_setaffinity=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_sched_setaffinity" >&5
+$as_echo "$wine_cv_have_sched_setaffinity" >&6; }
+if test "$wine_cv_have_sched_setaffinity" = "yes"
+then
+
+$as_echo "#define HAVE_SCHED_SETAFFINITY 1" >>confdefs.h
 
 fi
 

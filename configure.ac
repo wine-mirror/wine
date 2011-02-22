@@ -1947,7 +1947,6 @@ AC_CHECK_FUNCS(\
 	pwrite \
 	readdir \
 	readlink \
-	sched_setaffinity \
 	sched_yield \
 	select \
 	setproctitle \
@@ -2047,6 +2046,15 @@ AC_CACHE_CHECK([whether mkdir takes only one argument],
 if test "$wine_cv_one_arg_mkdir" = "yes"
 then
   AC_DEFINE(HAVE_ONE_ARG_MKDIR, 1, [Define if mkdir takes only one argument])
+fi
+
+AC_CACHE_CHECK([for sched_setaffinity],wine_cv_have_sched_setaffinity,
+                AC_LINK_IFELSE([AC_LANG_PROGRAM(
+[[#define _GNU_SOURCE
+#include <sched.h>]], [[sched_setaffinity(0, 0, 0);]])],[wine_cv_have_sched_setaffinity=yes],[wine_cv_have_sched_setaffinity=no]))
+if test "$wine_cv_have_sched_setaffinity" = "yes"
+then
+  AC_DEFINE(HAVE_SCHED_SETAFFINITY, 1, [Define to 1 if you have the `sched_setaffinity' function.])
 fi
 
 dnl **** Check for types ****
