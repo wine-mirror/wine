@@ -33,10 +33,13 @@ enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE
 
 const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl;
 const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_variable_vtbl;
+const struct ID3D11ShaderReflectionTypeVtbl d3dcompiler_shader_reflection_type_vtbl;
 
 /* null objects - needed for invalid calls */
 static struct d3dcompiler_shader_reflection_constant_buffer null_constant_buffer = {{&d3dcompiler_shader_reflection_constant_buffer_vtbl}};
-static struct d3dcompiler_shader_reflection_variable null_variable = {{&d3dcompiler_shader_reflection_variable_vtbl}, &null_constant_buffer};
+static struct d3dcompiler_shader_reflection_type null_type = {{&d3dcompiler_shader_reflection_type_vtbl}};
+static struct d3dcompiler_shader_reflection_variable null_variable = {{&d3dcompiler_shader_reflection_variable_vtbl},
+    &null_constant_buffer, &null_type};
 
 static BOOL copy_name(const char *ptr, char **name)
 {
@@ -711,9 +714,11 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetDesc(
 static ID3D11ShaderReflectionType * STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetType(
         ID3D11ShaderReflectionVariable *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3dcompiler_shader_reflection_variable *This = impl_from_ID3D11ShaderReflectionVariable(iface);
 
-    return NULL;
+    TRACE("iface %p\n", iface);
+
+    return &This->type->ID3D11ShaderReflectionType_iface;
 }
 
 static ID3D11ShaderReflectionConstantBuffer * STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetBuffer(
