@@ -844,26 +844,23 @@ BOOL WINAPI SQLRemoveDriverW(LPCWSTR lpszDriver, BOOL fRemoveDSN,
                LPDWORD lpdwUsageCount)
 {
     clear_errors();
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    FIXME("stub\n");
+    return TRUE;
 }
 
 BOOL WINAPI SQLRemoveDriver(LPCSTR lpszDriver, BOOL fRemoveDSN,
                LPDWORD lpdwUsageCount)
 {
     clear_errors();
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    FIXME("stub\n");
+    return TRUE;
 }
 
 BOOL WINAPI SQLRemoveDriverManager(LPDWORD pdwUsageCount)
 {
     clear_errors();
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    FIXME("stub\n");
+    return TRUE;
 }
 
 BOOL WINAPI SQLRemoveDSNFromIniW(LPCWSTR lpszDSN)
