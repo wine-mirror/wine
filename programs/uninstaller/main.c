@@ -174,25 +174,15 @@ static int cmp_by_name(const void *a, const void *b)
  */
 static int FetchFromRootKey(HKEY root)
 {
-    HKEY hkeyUninst, hkeyApp;
+    HKEY hkeyApp;
     int i;
     DWORD sizeOfSubKeyName, displen, uninstlen;
     WCHAR subKeyName[256];
-    WCHAR key_app[1024];
-    WCHAR *p;
-
-    if (RegOpenKeyExW(root, PathUninstallW, 0, KEY_READ, &hkeyUninst) != ERROR_SUCCESS)
-        return 0;
-
-    lstrcpyW(key_app, PathUninstallW);
-    lstrcatW(key_app, BackSlashW);
-    p = key_app+lstrlenW(PathUninstallW)+1;
 
     sizeOfSubKeyName = 255;
-    for (i=0; RegEnumKeyExW( hkeyUninst, i, subKeyName, &sizeOfSubKeyName, NULL, NULL, NULL, NULL ) != ERROR_NO_MORE_ITEMS; ++i)
+    for (i=0; RegEnumKeyExW( root, i, subKeyName, &sizeOfSubKeyName, NULL, NULL, NULL, NULL ) != ERROR_NO_MORE_ITEMS; ++i)
     {
-        lstrcpyW(p, subKeyName);
-        RegOpenKeyExW(root, key_app, 0, KEY_READ, &hkeyApp);
+        RegOpenKeyExW(root, subKeyName, 0, KEY_READ, &hkeyApp);
         if (!RegQueryValueExW(hkeyApp, DisplayNameW, NULL, NULL, NULL, &displen))
         {
             DWORD value, type;
@@ -232,22 +222,37 @@ static int FetchFromRootKey(HKEY root)
         RegCloseKey(hkeyApp);
         sizeOfSubKeyName = 255;
     }
-    RegCloseKey(hkeyUninst);
     return 1;
 
 }
 
 static int FetchUninstallInformation(void)
 {
-    int rc;
+    static const BOOL is_64bit = sizeof(void *) > sizeof(int);
+    int rc = 0;
+    HKEY root;
 
     numentries = 0;
     oldsel = -1;
     if (!entries)
         entries = HeapAlloc(GetProcessHeap(), 0, sizeof(uninst_entry));
 
-    rc = FetchFromRootKey(HKEY_LOCAL_MACHINE);
-    rc |= FetchFromRootKey(HKEY_CURRENT_USER);
+    if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, PathUninstallW, 0, KEY_READ, &root))
+    {
+        rc |= FetchFromRootKey(root);
+        RegCloseKey(root);
+    }
+    if (is_64bit &&
+        !RegOpenKeyExW(HKEY_LOCAL_MACHINE, PathUninstallW, 0, KEY_READ|KEY_WOW64_32KEY, &root))
+    {
+        rc |= FetchFromRootKey(root);
+        RegCloseKey(root);
+    }
+    if (!RegOpenKeyExW(HKEY_CURRENT_USER, PathUninstallW, 0, KEY_READ, &root))
+    {
+        rc |= FetchFromRootKey(root);
+        RegCloseKey(root);
+    }
 
     qsort(entries, numentries, sizeof(uninst_entry), cmp_by_name);
     return rc;
