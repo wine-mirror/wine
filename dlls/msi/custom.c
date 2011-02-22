@@ -424,7 +424,7 @@ static MSIBINARY *create_temp_binary( MSIPACKAGE *package, LPCWSTR source, BOOL 
     /* keep a reference to prevent the dll from being unloaded */
     if (dll && !(binary->module = LoadLibraryW( tmpfile )))
     {
-        ERR("failed to load dll %s (%u)\n", debugstr_w( binary->tmpfile ), GetLastError() );
+        ERR("failed to load dll %s (%u)\n", debugstr_w( tmpfile ), GetLastError() );
         DeleteFileW( tmpfile );
         msi_free( binary );
         return NULL;
