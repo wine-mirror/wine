@@ -1,0 +1,9 @@
+TESTDLL   = wscript.exe
+IMPORTS   = ole32 advapi32
+
+C_SRCS = \
+	run.c
+
+RC_SRCS   = rsrc.rc
+
+@MAKE_TEST_RULES@
