@@ -4606,6 +4606,10 @@ struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
     int locerr = ENOBUFS;
 #endif
     char hostname[100];
+    if(!num_startup) {
+        SetLastError(WSANOTINITIALISED);
+        return NULL;
+    }
     if( gethostname( hostname, 100) == -1) {
         SetLastError( WSAENOBUFS); /* appropriate ? */
         return retval;

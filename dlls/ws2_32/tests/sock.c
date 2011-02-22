@@ -834,8 +834,6 @@ out:
 }
 
 /* Tests for WSAStartup */
-
-/* This should fail. WSAStartup should be called before any network function is used. */
 static void test_WithoutWSAStartup(void)
 {
     LPVOID ptr;
@@ -843,8 +841,8 @@ static void test_WithoutWSAStartup(void)
     WSASetLastError(0xdeadbeef);
     ptr = gethostbyname("localhost");
 
-    todo_wine ok(ptr == NULL, "gethostbyname() succeeded unexpectedly: %d\n", WSAGetLastError());
-    todo_wine ok(WSAGetLastError() == WSANOTINITIALISED, "gethostbyname() failed with unexpected error: %d\n",
+    ok(ptr == NULL, "gethostbyname() succeeded unexpectedly: %d\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSANOTINITIALISED, "gethostbyname() failed with unexpected error: %d\n",
                 WSAGetLastError());
 }
 
