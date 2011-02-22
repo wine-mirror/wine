@@ -145,37 +145,26 @@ static void FreeAppInfo(APPINFO *info)
  * Name       : ReadApplicationsFromRegistry
  * Description: Creates a linked list of uninstallable applications from the
  *              registry.
- * Parameters : root    - Which registry root to read from (HKCU/HKLM)
+ * Parameters : root    - Which registry root to read from
  * Returns    : TRUE if successful, FALSE otherwise
  */
 static BOOL ReadApplicationsFromRegistry(HKEY root)
 {
-    HKEY hkeyUninst, hkeyApp;
+    HKEY hkeyApp;
     int i, id = 0;
     DWORD sizeOfSubKeyName, displen, uninstlen;
     DWORD dwNoModify, dwType, value;
     WCHAR subKeyName[256];
-    WCHAR key_app[MAX_STRING_LEN];
-    WCHAR *p, *command;
+    WCHAR *command;
     APPINFO *info = NULL;
     LPWSTR iconPtr;
-    BOOL ret = FALSE;
-
-    if (RegOpenKeyExW(root, PathUninstallW, 0, KEY_READ, &hkeyUninst) !=
-      ERROR_SUCCESS)
-        return FALSE;
-
-    lstrcpyW(key_app, PathUninstallW);
-    lstrcatW(key_app, BackSlashW);
-    p = key_app+lstrlenW(PathUninstallW)+1;
 
     sizeOfSubKeyName = sizeof(subKeyName) / sizeof(subKeyName[0]);
 
-    for (i = 0; RegEnumKeyExW(hkeyUninst, i, subKeyName, &sizeOfSubKeyName, NULL,
+    for (i = 0; RegEnumKeyExW(root, i, subKeyName, &sizeOfSubKeyName, NULL,
         NULL, NULL, NULL) != ERROR_NO_MORE_ITEMS; ++i)
     {
-        lstrcpyW(p, subKeyName);
-        RegOpenKeyExW(root, key_app, 0, KEY_READ, &hkeyApp);
+        RegOpenKeyExW(root, subKeyName, 0, KEY_READ, &hkeyApp);
 
         displen = 0;
         uninstlen = 0;
@@ -313,16 +302,11 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
         sizeOfSubKeyName = sizeof(subKeyName) / sizeof(subKeyName[0]);
     }
 
-    ret = TRUE;
-    goto end;
-
+    return TRUE;
 err:
     RegCloseKey(hkeyApp);
     if (info) FreeAppInfo(info);
-
-end:
-    RegCloseKey(hkeyUninst);
-    return ret;
+    return FALSE;
 }
 
 
@@ -773,7 +757,9 @@ static HIMAGELIST AddListViewImageList(HWND hWnd)
  */
 static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hImageList)
 {
+    static const BOOL is_64bit = sizeof(void *) > sizeof(int);
     HWND hWndListView;
+    HKEY hkey;
 
     hWndListView = GetDlgItem(hWnd, IDL_PROGRAMS);
 
@@ -796,8 +782,22 @@ static HIMAGELIST ResetApplicationList(BOOL bFirstRun, HWND hWnd, HIMAGELIST hIm
     /* now create the image list and add the applications to the listview */
     hImageList = AddListViewImageList(hWndListView);
 
-    ReadApplicationsFromRegistry(HKEY_LOCAL_MACHINE);
-    ReadApplicationsFromRegistry(HKEY_CURRENT_USER);
+    if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, PathUninstallW, 0, KEY_READ, &hkey))
+    {
+        ReadApplicationsFromRegistry(hkey);
+        RegCloseKey(hkey);
+    }
+    if (is_64bit &&
+        !RegOpenKeyExW(HKEY_LOCAL_MACHINE, PathUninstallW, 0, KEY_READ|KEY_WOW64_32KEY, &hkey))
+    {
+        ReadApplicationsFromRegistry(hkey);
+        RegCloseKey(hkey);
+    }
+    if (!RegOpenKeyExW(HKEY_CURRENT_USER, PathUninstallW, 0, KEY_READ, &hkey))
+    {
+        ReadApplicationsFromRegistry(hkey);
+        RegCloseKey(hkey);
+    }
 
     AddApplicationsToList(hWndListView, hImageList);
     UpdateButtons(hWnd);
