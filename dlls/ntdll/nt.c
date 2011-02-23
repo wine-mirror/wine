@@ -1586,26 +1586,35 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 FILE *cpuinfo = fopen("/proc/stat", "r");
                 if (cpuinfo)
                 {
-                    unsigned usr,nice,sys;
-                    unsigned long idle;
+                    unsigned long usr,nice,sys,idle,remainder[8];
                     int count;
                     char name[10];
                     char line[255];
 
                     /* first line is combined usage */
                     if (fgets(line,255,cpuinfo))
-                        count = sscanf(line, "%s %u %u %u %lu", name, &usr, &nice,
-                                       &sys, &idle);
+                        count = sscanf(line, "%s %lu %lu %lu %lu "
+                                       "%lu %lu %lu %lu %lu %lu %lu %lu",
+                                    name, &usr, &nice, &sys, &idle,
+                                    &remainder[0], &remainder[1], &remainder[2],
+                                    &remainder[3], &remainder[4], &remainder[5],
+                                    &remainder[6], &remainder[7]);
                     else
                         count = 0;
                     /* we set this up in the for older non-smp enabled kernels */
-                    if (count == 5 && strcmp(name, "cpu") == 0)
+                    if (count >= 5 && strcmp(name, "cpu") == 0)
                     {
+                        int i;
+                        for (i = 0; i + 5 < count; ++i)
+                            sys += remainder[i];
+                        usr += nice;
                         sppi = RtlAllocateHeap(GetProcessHeap(), 0,
                                                sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
                         sppi->IdleTime.QuadPart = idle;
                         sppi->KernelTime.QuadPart = sys;
-                        sppi->UserTime.QuadPart = usr;
+                        sppi->UserTime.QuadPart = usr+nice;
+                        sppi->Reserved1[0].QuadPart = 0;
+                        sppi->Reserved1[1].QuadPart = 0;
                         cpus = 1;
                         len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
                     }
@@ -1613,12 +1622,20 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     do
                     {
                         if (fgets(line, 255, cpuinfo))
-                            count = sscanf(line, "%s %u %u %u %lu", name, &usr,
-                                           &nice, &sys, &idle);
+                            count = sscanf(line, "%s %lu %lu %lu %lu "
+                                        "%lu %lu %lu %lu %lu %lu %lu %lu",
+                                        name, &usr, &nice, &sys, &idle,
+                                        &remainder[0], &remainder[1], &remainder[2],
+                                        &remainder[3], &remainder[4], &remainder[5],
+                                        &remainder[6], &remainder[7]);
                         else
                             count = 0;
-                        if (count == 5 && strncmp(name, "cpu", 3)==0)
+                        if (count >= 5 && strncmp(name, "cpu", 3)==0)
                         {
+                            int i;
+                            for (i = 0; i + 5 < count; ++i)
+                                sys += remainder[i];
+                            usr += nice;
                             out_cpus --;
                             if (name[3]=='0') /* first cpu */
                             {
@@ -1633,6 +1650,8 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                                 sppi[cpus].IdleTime.QuadPart = idle;
                                 sppi[cpus].KernelTime.QuadPart = sys;
                                 sppi[cpus].UserTime.QuadPart = usr;
+                                sppi[cpus].Reserved1[0].QuadPart = 0;
+                                sppi[cpus].Reserved1[1].QuadPart = 0;
                                 cpus++;
                             }
                         }
