@@ -274,7 +274,7 @@ static void test__get_doserrno(void)
     errno = EBADF;
     ret = p_get_doserrno(NULL);
     ok(ret == EINVAL, "Expected _get_doserrno to return EINVAL, got %d\n", ret);
-    ok(_doserrno = ERROR_INVALID_CMM, "Expected _doserrno to be ERROR_INVALID_CMM, got %d\n", _doserrno);
+    ok(_doserrno == ERROR_INVALID_CMM, "Expected _doserrno to be ERROR_INVALID_CMM, got %d\n", _doserrno);
     ok(errno == EBADF, "Expected errno to be EBADF, got %d\n", errno);
 
     _doserrno = ERROR_INVALID_CMM;
