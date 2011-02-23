@@ -2897,6 +2897,7 @@ static void test_capture_4(void)
     HWND hwnd;
     WNDCLASSA wclass;
     HINSTANCE hInstance = GetModuleHandleA( NULL );
+    ATOM aclass;
 
     if (!pGetGUIThreadInfo)
     {
@@ -2913,10 +2914,11 @@ static void test_capture_4(void)
     wclass.lpszMenuName  = 0;
     wclass.cbClsExtra    = 0;
     wclass.cbWndExtra    = 0;
-    assert (RegisterClassA( &wclass ));
-    assert (hwnd = CreateWindowA( wclass.lpszClassName, "MenuTest",
-                                  WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
-                                  400, 200, NULL, NULL, hInstance, NULL) );
+    aclass = RegisterClassA( &wclass );
+    ok( aclass, "RegisterClassA failed with error %d\n", GetLastError());
+    hwnd = CreateWindowA( wclass.lpszClassName, "MenuTest",
+                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
+                          400, 200, NULL, NULL, hInstance, NULL);
     ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
     if (!hwnd) return;
     hmenu = CreatePopupMenu();
