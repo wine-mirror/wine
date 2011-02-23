@@ -2548,10 +2548,6 @@ static void test_gethostbyname_hack(void)
            he->h_addr_list[0][3]);
     }
 
-    /* No reason to test further with NULL hostname */
-    if(name == NULL)
-        return;
-
     if(strcmp(name, "localhost") == 0)
     {
         skip("hostname seems to be \"localhost\", skipping test.\n");
