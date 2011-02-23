@@ -249,6 +249,9 @@ static void test_mciParser(HWND hwnd)
     err = mciSendString("status x 2 track 3", buf, sizeof(buf), NULL);
     todo_wine ok(err==MCIERR_OUTOFRANGE,"status 2(position) track 3: %s\n", dbg_mcierr(err));
 
+    err = mciSendString("status x 0x4", buf, sizeof(buf), NULL);
+    todo_wine ok(err==MCIERR_BAD_CONSTANT, "status 0x4: %s\n", dbg_mcierr(err));
+
     err = mciSendString("status x 4", buf, sizeof(buf), hwnd);
     ok(!err,"status 4(mode): %s\n", dbg_mcierr(err));
     if(!err)ok(!strcmp(buf,"stopped"), "status 4(mode), got: %s\n", buf);
@@ -873,6 +876,9 @@ static void test_playWAVE(HWND hwnd)
     err = mciSendString("Seek Mysound to 250 wait Notify", NULL, 0, hwnd);
     ok(!err,"mci seek to 250 wait notify returned %s\n", dbg_mcierr(err));
     test_notification(hwnd,"seek wait notify",MCI_NOTIFY_SUCCESSFUL);
+
+    err = mciSendString("seek mysound to 0xfa", NULL, 0, NULL);
+    ok(err==MCIERR_BAD_INTEGER,"mci seek to 0xfa returned %s\n", dbg_mcierr(err));
 
     err = mciSendString("status mysound position notify", buf, sizeof(buf), hwnd);
     ok(!err,"mci status position notify returned %s\n", dbg_mcierr(err));

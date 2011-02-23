@@ -978,7 +978,7 @@ static	BOOL		MCI_GetDWord(DWORD* data, LPWSTR* ptr)
     DWORD	val;
     LPWSTR	ret;
 
-    val = strtoulW(*ptr, &ret, 0);
+    val = strtoulW(*ptr, &ret, 10);
 
     switch (*ret) {
     case '\0':	break;
