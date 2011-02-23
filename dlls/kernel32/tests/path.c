@@ -1564,8 +1564,7 @@ static void test_SearchPathA(void)
     SetLastError(0xdeadbeef);
     ret = pSearchPathA(pathA, fileA, NULL, sizeof(buffA)/sizeof(CHAR), buffA, &ptrA);
     ok(ret == 0, "Expected failure, got %d\n", ret);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER ||
-       broken(GetLastError() == ERROR_FILE_NOT_FOUND) /* win9x */,
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %x\n", GetLastError());
 }
 
@@ -1578,16 +1577,6 @@ static void test_SearchPathW(void)
     if (!pSearchPathW)
     {
         win_skip("SearchPathW isn't available\n");
-        return;
-    }
-
-    /* SearchPathW is a stub on win9x and doesn't return sane error,
-       so quess if it's implemented indirectly */
-    SetLastError(0xdeadbeef);
-    GetWindowsDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
-    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("SearchPathW not implemented\n");
         return;
     }
 
@@ -1609,7 +1598,7 @@ static void test_GetFullPathNameA(void)
 {
     char output[MAX_PATH], *filepart;
     DWORD ret;
-    int is_win9x, i;
+    int i;
 
     const struct
     {
@@ -1617,31 +1606,20 @@ static void test_GetFullPathNameA(void)
         DWORD len;
         LPSTR buffer;
         LPSTR *lastpart;
-        int win9x_crash;
     } invalid_parameters[] =
     {
-        {NULL, 0,        NULL,   NULL,      1},
-        {NULL, MAX_PATH, NULL,   NULL,      1},
-        {NULL, MAX_PATH, output, NULL,      1},
-        {NULL, MAX_PATH, output, &filepart, 1},
+        {NULL, 0,        NULL,   NULL},
+        {NULL, MAX_PATH, NULL,   NULL},
+        {NULL, MAX_PATH, output, NULL},
+        {NULL, MAX_PATH, output, &filepart},
         {"",   0,        NULL,   NULL},
         {"",   MAX_PATH, NULL,   NULL},
         {"",   MAX_PATH, output, NULL},
         {"",   MAX_PATH, output, &filepart},
     };
 
-    SetLastError(0xdeadbeef);
-    ret = GetFullPathNameW(NULL, 0, NULL, NULL);
-    is_win9x = !ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED;
-
-    if (is_win9x)
-        win_skip("Skipping some tests that cause GetFullPathNameA to crash on Win9x\n");
-
     for (i = 0; i < sizeof(invalid_parameters)/sizeof(invalid_parameters[0]); i++)
     {
-        if (is_win9x && invalid_parameters[i].win9x_crash)
-            continue;
-
         SetLastError(0xdeadbeef);
         strcpy(output, "deadbeef");
         filepart = (char *)0xdeadbeef;
@@ -1653,7 +1631,6 @@ static void test_GetFullPathNameA(void)
         ok(!strcmp(output, "deadbeef"), "[%d] Expected the output buffer to be unchanged, got \"%s\"\n", i, output);
         ok(filepart == (char *)0xdeadbeef, "[%d] Expected output file part pointer to be untouched, got %p\n", i, filepart);
         ok(GetLastError() == 0xdeadbeef ||
-           GetLastError() == ERROR_BAD_PATHNAME || /* Win9x */
            GetLastError() == ERROR_INVALID_NAME, /* Win7 */
            "[%d] Expected GetLastError() to return 0xdeadbeef, got %u\n",
            i, GetLastError());
