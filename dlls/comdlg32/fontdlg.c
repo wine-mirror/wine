@@ -955,6 +955,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
             }
             CFn_ReleaseDC(lpcf, hdc);
         }
+        break;
     case chx1:
     case chx2:
     case cmb2:
