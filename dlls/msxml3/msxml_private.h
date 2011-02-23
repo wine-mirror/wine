@@ -274,8 +274,10 @@ extern HRESULT node_get_base_name(xmlnode*,BSTR*);
 extern HRESULT node_get_namespaceURI(xmlnode*,BSTR*);
 extern HRESULT node_remove_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_has_childnodes(const xmlnode*,VARIANT_BOOL*);
+extern HRESULT node_get_owner_doc(const xmlnode*,IXMLDOMDocument**);
 
-extern HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
+extern HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
+
 extern HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree);
 extern XDR_DT  SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodePtr node);
 

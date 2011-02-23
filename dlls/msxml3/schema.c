@@ -1163,7 +1163,7 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection2* iface, BSTR uri
 
     /* TODO: this should be read-only */
     if (entry)
-        return DOMDocument_create_from_xmldoc(entry->doc, (IXMLDOMDocument3**)node);
+        return get_domdoc_from_xmldoc(entry->doc, (IXMLDOMDocument3**)node);
 
     *node = NULL;
     return S_OK;

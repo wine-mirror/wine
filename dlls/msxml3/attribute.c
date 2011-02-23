@@ -353,10 +353,11 @@ static HRESULT WINAPI domattr_hasChildNodes(
 
 static HRESULT WINAPI domattr_get_ownerDocument(
     IXMLDOMAttribute *iface,
-    IXMLDOMDocument** domDocument)
+    IXMLDOMDocument **doc)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
+    TRACE("(%p)->(%p)\n", This, doc);
+    return node_get_owner_doc(&This->node, doc);
 }
 
 static HRESULT WINAPI domattr_cloneNode(

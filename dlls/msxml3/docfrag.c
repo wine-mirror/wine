@@ -361,10 +361,11 @@ static HRESULT WINAPI domfrag_hasChildNodes(
 
 static HRESULT WINAPI domfrag_get_ownerDocument(
     IXMLDOMDocumentFragment *iface,
-    IXMLDOMDocument** domDocument)
+    IXMLDOMDocument **doc)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
+    TRACE("(%p)->(%p)\n", This, doc);
+    return node_get_owner_doc(&This->node, doc);
 }
 
 static HRESULT WINAPI domfrag_cloneNode(

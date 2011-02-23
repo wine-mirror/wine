@@ -355,10 +355,11 @@ static HRESULT WINAPI entityref_hasChildNodes(
 
 static HRESULT WINAPI entityref_get_ownerDocument(
     IXMLDOMEntityReference *iface,
-    IXMLDOMDocument** domDocument)
+    IXMLDOMDocument **doc)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
+    TRACE("(%p)->(%p)\n", This, doc);
+    return node_get_owner_doc(&This->node, doc);
 }
 
 static HRESULT WINAPI entityref_cloneNode(

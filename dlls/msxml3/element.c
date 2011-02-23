@@ -371,11 +371,12 @@ static HRESULT WINAPI domelem_hasChildNodes(
 }
 
 static HRESULT WINAPI domelem_get_ownerDocument(
-    IXMLDOMElement *iface,
-    IXMLDOMDocument** domDocument)
+    IXMLDOMElement   *iface,
+    IXMLDOMDocument **doc)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
+    TRACE("(%p)->(%p)\n", This, doc);
+    return node_get_owner_doc(&This->node, doc);
 }
 
 static HRESULT WINAPI domelem_cloneNode(

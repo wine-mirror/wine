@@ -463,15 +463,9 @@ HRESULT node_has_childnodes(const xmlnode *This, VARIANT_BOOL *ret)
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_get_ownerDocument(
-    IXMLDOMNode *iface,
-    IXMLDOMDocument** DOMDocument)
+HRESULT node_get_owner_doc(const xmlnode *This, IXMLDOMDocument **doc)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-
-    TRACE("(%p)->(%p)\n", This, DOMDocument);
-
-    return DOMDocument_create_from_xmldoc(This->node->doc, (IXMLDOMDocument3**)DOMDocument);
+    return get_domdoc_from_xmldoc(This->node->doc, (IXMLDOMDocument3**)doc);
 }
 
 HRESULT node_clone(xmlnode *This, VARIANT_BOOL deep, IXMLDOMNode **cloneNode)
@@ -1137,7 +1131,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     NULL,
     NULL,
-    xmlnode_get_ownerDocument,
+    NULL,
     NULL,
     NULL,
     xmlnode_get_text,
@@ -1500,7 +1494,7 @@ static HRESULT WINAPI unknode_get_ownerDocument(
     IXMLDOMDocument** domDocument)
 {
     unknode *This = unknode_from_IXMLDOMNode( iface );
-    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
+    return node_get_owner_doc(&This->node, domDocument);
 }
 
 static HRESULT WINAPI unknode_cloneNode(

@@ -1249,10 +1249,11 @@ static HRESULT WINAPI domdoc_hasChildNodes(
 
 static HRESULT WINAPI domdoc_get_ownerDocument(
     IXMLDOMDocument3 *iface,
-    IXMLDOMDocument** DOMDocument)
+    IXMLDOMDocument **doc)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, DOMDocument );
+    TRACE("(%p)->(%p)\n", This, doc);
+    return node_get_owner_doc(&This->node, doc);
 }
 
 
@@ -3423,7 +3424,7 @@ static dispex_static_data_t domdoc_dispex = {
     domdoc_iface_tids
 };
 
-HRESULT DOMDocument_create_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
+HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
 {
     domdoc *doc;
 
@@ -3477,7 +3478,7 @@ HRESULT DOMDocument_create(const GUID *clsid, IUnknown *pUnkOuter, void **ppObj)
     xmldoc->_private = create_priv();
     priv_from_xmlDocPtr(xmldoc)->properties = create_properties(clsid);
 
-    hr = DOMDocument_create_from_xmldoc(xmldoc, (IXMLDOMDocument3**)ppObj);
+    hr = get_domdoc_from_xmldoc(xmldoc, (IXMLDOMDocument3**)ppObj);
     if(FAILED(hr))
     {
         free_properties(properties_from_xmlDocPtr(xmldoc));
@@ -3496,7 +3497,7 @@ IUnknown* create_domdoc( xmlNodePtr document )
 
     TRACE("(%p)\n", document);
 
-    hr = DOMDocument_create_from_xmldoc((xmlDocPtr)document, (IXMLDOMDocument3**)&pObj);
+    hr = get_domdoc_from_xmldoc((xmlDocPtr)document, (IXMLDOMDocument3**)&pObj);
     if (FAILED(hr))
         return NULL;
 

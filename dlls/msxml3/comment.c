@@ -356,11 +356,12 @@ static HRESULT WINAPI domcomment_hasChildNodes(
 }
 
 static HRESULT WINAPI domcomment_get_ownerDocument(
-    IXMLDOMComment *iface,
-    IXMLDOMDocument** domDocument)
+    IXMLDOMComment   *iface,
+    IXMLDOMDocument **doc)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
+    TRACE("(%p)->(%p)\n", This, doc);
+    return node_get_owner_doc(&This->node, doc);
 }
 
 static HRESULT WINAPI domcomment_cloneNode(

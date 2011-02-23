@@ -370,10 +370,11 @@ static HRESULT WINAPI domtext_hasChildNodes(
 
 static HRESULT WINAPI domtext_get_ownerDocument(
     IXMLDOMText *iface,
-    IXMLDOMDocument** domDocument)
+    IXMLDOMDocument **doc)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_get_ownerDocument( &This->node.IXMLDOMNode_iface, domDocument );
+    TRACE("(%p)->(%p)\n", This, doc);
+    return node_get_owner_doc(&This->node, doc);
 }
 
 static HRESULT WINAPI domtext_cloneNode(
