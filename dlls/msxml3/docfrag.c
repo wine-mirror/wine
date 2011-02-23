@@ -496,7 +496,8 @@ static HRESULT WINAPI domfrag_selectNodes(
     BSTR p, IXMLDOMNodeList** outList)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_selectNodes( &This->node.IXMLDOMNode_iface, p, outList );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), outList);
+    return node_select_nodes(&This->node, p, outList);
 }
 
 static HRESULT WINAPI domfrag_selectSingleNode(

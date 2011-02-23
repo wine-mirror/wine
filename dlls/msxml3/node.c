@@ -1032,21 +1032,15 @@ static HRESULT WINAPI xmlnode_transformNode(
 #endif
 }
 
-static HRESULT WINAPI xmlnode_selectNodes(
-    IXMLDOMNode *iface,
-    BSTR queryString,
-    IXMLDOMNodeList** resultList)
+HRESULT node_select_nodes(const xmlnode *This, BSTR query, IXMLDOMNodeList **nodes)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
     xmlChar* str;
     HRESULT hr;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(queryString), resultList );
+    if (!query || !nodes) return E_INVALIDARG;
 
-    if (!queryString || !resultList) return E_INVALIDARG;
-
-    str = xmlChar_from_wchar(queryString);
-    hr = queryresult_create(This->node, str, resultList);
+    str = xmlChar_from_wchar(query);
+    hr = queryresult_create(This->node, str, nodes);
     heap_free(str);
 
     return hr;
@@ -1161,7 +1155,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     NULL,
     xmlnode_transformNode,
-    xmlnode_selectNodes,
+    NULL,
     xmlnode_selectSingleNode
 };
 
@@ -1632,7 +1626,7 @@ static HRESULT WINAPI unknode_selectNodes(
     BSTR p, IXMLDOMNodeList** outList)
 {
     unknode *This = unknode_from_IXMLDOMNode( iface );
-    return IXMLDOMNode_selectNodes( &This->node.IXMLDOMNode_iface, p, outList );
+    return node_select_nodes(&This->node, p, outList);
 }
 
 static HRESULT WINAPI unknode_selectSingleNode(

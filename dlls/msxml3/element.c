@@ -948,7 +948,8 @@ static HRESULT WINAPI domelem_selectNodes(
     BSTR p, IXMLDOMNodeList** outList)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_selectNodes( &This->node.IXMLDOMNode_iface, p, outList );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), outList);
+    return node_select_nodes(&This->node, p, outList);
 }
 
 static HRESULT WINAPI domelem_selectSingleNode(

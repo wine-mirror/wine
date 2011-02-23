@@ -1442,11 +1442,12 @@ static HRESULT WINAPI domdoc_transformNode(
 
 static HRESULT WINAPI domdoc_selectNodes(
     IXMLDOMDocument3 *iface,
-    BSTR queryString,
-    IXMLDOMNodeList** resultList )
+    BSTR p,
+    IXMLDOMNodeList **outList)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_selectNodes( &This->node.IXMLDOMNode_iface, queryString, resultList );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), outList);
+    return node_select_nodes(&This->node, p, outList);
 }
 
 
