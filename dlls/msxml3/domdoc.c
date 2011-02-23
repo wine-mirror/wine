@@ -1228,11 +1228,12 @@ static HRESULT WINAPI domdoc_removeChild(
 
 static HRESULT WINAPI domdoc_appendChild(
     IXMLDOMDocument3 *iface,
-    IXMLDOMNode* newChild,
-    IXMLDOMNode** outNewChild)
+    IXMLDOMNode  *child,
+    IXMLDOMNode **outChild)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_appendChild( &This->node.IXMLDOMNode_iface, newChild, outNewChild );
+    TRACE("(%p)->(%p %p)\n", This, child, outChild);
+    return node_append_child(&This->node, child, outChild);
 }
 
 

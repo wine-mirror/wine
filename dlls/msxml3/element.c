@@ -354,10 +354,11 @@ static HRESULT WINAPI domelem_removeChild(
 
 static HRESULT WINAPI domelem_appendChild(
     IXMLDOMElement *iface,
-    IXMLDOMNode* newNode, IXMLDOMNode** outNewNode)
+    IXMLDOMNode *child, IXMLDOMNode **outChild)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_appendChild( &This->node.IXMLDOMNode_iface, newNode, outNewNode );
+    TRACE("(%p)->(%p %p)\n", This, child, outChild);
+    return node_append_child(&This->node, child, outChild);
 }
 
 static HRESULT WINAPI domelem_hasChildNodes(

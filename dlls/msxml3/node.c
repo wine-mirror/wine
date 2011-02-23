@@ -433,26 +433,20 @@ HRESULT node_remove_child(xmlnode *This, IXMLDOMNode* child, IXMLDOMNode** oldCh
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_appendChild(
-    IXMLDOMNode *iface,
-    IXMLDOMNode* newChild,
-    IXMLDOMNode** outNewChild)
+HRESULT node_append_child(xmlnode *This, IXMLDOMNode *child, IXMLDOMNode **outChild)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
     DOMNodeType type;
     VARIANT var;
     HRESULT hr;
 
-    TRACE("(%p)->(%p %p)\n", This, newChild, outNewChild);
-
-    hr = IXMLDOMNode_get_nodeType(newChild, &type);
+    hr = IXMLDOMNode_get_nodeType(child, &type);
     if(FAILED(hr) || type == NODE_ATTRIBUTE) {
-        if(outNewChild) *outNewChild = NULL;
+        if (outChild) *outChild = NULL;
         return E_FAIL;
     }
 
     VariantInit(&var);
-    return IXMLDOMNode_insertBefore(This->iface, newChild, var, outNewChild);
+    return IXMLDOMNode_insertBefore(This->iface, child, var, outChild);
 }
 
 static HRESULT WINAPI xmlnode_hasChildNodes(
@@ -1147,7 +1141,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     NULL,
     NULL,
-    xmlnode_appendChild,
+    NULL,
     xmlnode_hasChildNodes,
     xmlnode_get_ownerDocument,
     NULL,
@@ -1496,7 +1490,7 @@ static HRESULT WINAPI unknode_appendChild(
     IXMLDOMNode* newNode, IXMLDOMNode** outNewNode)
 {
     unknode *This = unknode_from_IXMLDOMNode( iface );
-    return IXMLDOMNode_appendChild( &This->node.IXMLDOMNode_iface, newNode, outNewNode );
+    return node_append_child(&This->node, newNode, outNewNode);
 }
 
 static HRESULT WINAPI unknode_hasChildNodes(

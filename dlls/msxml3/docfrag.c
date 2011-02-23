@@ -343,10 +343,11 @@ static HRESULT WINAPI domfrag_removeChild(
 
 static HRESULT WINAPI domfrag_appendChild(
     IXMLDOMDocumentFragment *iface,
-    IXMLDOMNode* newNode, IXMLDOMNode** outNewNode)
+    IXMLDOMNode *child, IXMLDOMNode **outChild)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_appendChild( &This->node.IXMLDOMNode_iface, newNode, outNewNode );
+    TRACE("(%p)->(%p %p)\n", This, child, outChild);
+    return node_append_child(&This->node, child, outChild);
 }
 
 static HRESULT WINAPI domfrag_hasChildNodes(

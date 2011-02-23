@@ -252,6 +252,7 @@ extern void destroy_xmlnode(xmlnode*);
 extern BOOL node_query_interface(xmlnode*,REFIID,void**);
 extern xmlnode *get_node_obj(IXMLDOMNode*);
 
+extern HRESULT node_append_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_get_nodeName(xmlnode*,BSTR*);
 extern HRESULT node_get_content(xmlnode*,VARIANT*);
 extern HRESULT node_set_content(xmlnode*,LPCWSTR);
