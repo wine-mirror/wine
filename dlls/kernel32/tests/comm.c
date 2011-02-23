@@ -927,7 +927,7 @@ static void test_LoopbackRead(HANDLE hcom)
     i=0;
     do 
     {
-	res = ReadFile(hcom, rbuf+read, sizeof(rbuf-read), &read1, NULL);
+	res = ReadFile(hcom, rbuf+read, sizeof(rbuf)-read, &read1, NULL);
 	ok(res, "Readfile failed\n");
 	read += read1;
 	i++;
