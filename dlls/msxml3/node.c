@@ -952,66 +952,54 @@ HRESULT node_get_xml(xmlnode *This, BOOL ensure_eol, BOOL ensure_no_encoding, BS
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
-static HRESULT WINAPI xmlnode_transformNode(
-    IXMLDOMNode *iface,
-    IXMLDOMNode* styleSheet,
-    BSTR* xmlString)
+HRESULT node_transform_node(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *p)
 {
 #ifdef SONAME_LIBXSLT
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
-    xmlnode *pStyleSheet = NULL;
-    xsltStylesheetPtr xsltSS = NULL;
-    xmlDocPtr result = NULL;
+    xsltStylesheetPtr xsltSS;
+    xmlnode *sheet;
 
-    TRACE("(%p)->(%p %p)\n", This, styleSheet, xmlString);
+    if (!libxslt_handle) return E_NOTIMPL;
+    if (!stylesheet || !p) return E_INVALIDARG;
 
-    if (!libxslt_handle)
-        return E_NOTIMPL;
-    if(!styleSheet || !xmlString)
-        return E_INVALIDARG;
+    *p = NULL;
 
-    *xmlString = NULL;
-
-    pStyleSheet = get_node_obj(styleSheet);
-    if(!pStyleSheet) {
+    sheet = get_node_obj(stylesheet);
+    if(!sheet) {
         FIXME("styleSheet is not our xmlnode implementation\n");
         return E_FAIL;
     }
 
-    xsltSS = pxsltParseStylesheetDoc( pStyleSheet->node->doc);
+    xsltSS = pxsltParseStylesheetDoc(sheet->node->doc);
     if(xsltSS)
     {
-        result = pxsltApplyStylesheet(xsltSS, This->node->doc, NULL);
+        xmlDocPtr result = pxsltApplyStylesheet(xsltSS, This->node->doc, NULL);
         if(result)
         {
-            const xmlChar *pContent;
+            const xmlChar *content;
 
             if(result->type == XML_HTML_DOCUMENT_NODE)
             {
-                xmlOutputBufferPtr	pOutput = xmlAllocOutputBuffer(NULL);
-                if(pOutput)
+                xmlOutputBufferPtr output = xmlAllocOutputBuffer(NULL);
+                if (output)
                 {
-                    htmlDocContentDumpOutput(pOutput, result->doc, NULL);
-                    pContent = xmlBufferContent(pOutput->buffer);
-                    *xmlString = bstr_from_xmlChar(pContent);
-                    xmlOutputBufferClose(pOutput);
+                    htmlDocContentDumpOutput(output, result->doc, NULL);
+                    content = xmlBufferContent(output->buffer);
+                    *p = bstr_from_xmlChar(content);
+                    xmlOutputBufferClose(output);
                 }
             }
             else
             {
-                xmlBufferPtr pXmlBuf;
-                int nSize;
-
-                pXmlBuf = xmlBufferCreate();
-                if(pXmlBuf)
+                xmlBufferPtr buf = xmlBufferCreate();
+                if (buf)
                 {
-                    nSize = xmlNodeDump(pXmlBuf, NULL, (xmlNodePtr)result, 0, 0);
-                    if(nSize > 0)
+                    int size = xmlNodeDump(buf, NULL, (xmlNodePtr)result, 0, 0);
+                    if(size > 0)
                     {
-                        pContent = xmlBufferContent(pXmlBuf);
-                        *xmlString = bstr_from_xmlChar(pContent);
+                        content = xmlBufferContent(buf);
+                        *p = bstr_from_xmlChar(content);
                     }
-                    xmlBufferFree(pXmlBuf);
+                    xmlBufferFree(buf);
                 }
             }
             xmlFreeDoc(result);
@@ -1022,8 +1010,7 @@ static HRESULT WINAPI xmlnode_transformNode(
         pxsltFreeStylesheet(xsltSS);
     }
 
-    if(*xmlString == NULL)
-        *xmlString = SysAllocStringLen(NULL, 0);
+    if(!*p) *p = SysAllocStringLen(NULL, 0);
 
     return S_OK;
 #else
@@ -1148,7 +1135,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     NULL,
     NULL,
-    xmlnode_transformNode,
+    NULL,
     NULL,
     NULL
 };
@@ -1612,7 +1599,7 @@ static HRESULT WINAPI unknode_transformNode(
     IXMLDOMNode* domNode, BSTR* p)
 {
     unknode *This = unknode_from_IXMLDOMNode( iface );
-    return IXMLDOMNode_transformNode( &This->node.IXMLDOMNode_iface, domNode, p );
+    return node_transform_node(&This->node, domNode, p);
 }
 
 static HRESULT WINAPI unknode_selectNodes(

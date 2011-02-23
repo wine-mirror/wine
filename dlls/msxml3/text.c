@@ -566,10 +566,11 @@ static HRESULT WINAPI domtext_get_xml(
 
 static HRESULT WINAPI domtext_transformNode(
     IXMLDOMText *iface,
-    IXMLDOMNode* domNode, BSTR* p)
+    IXMLDOMNode *node, BSTR *p)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_transformNode( &This->node.IXMLDOMNode_iface, domNode, p );
+    TRACE("(%p)->(%p %p)\n", This, node, p);
+    return node_transform_node(&This->node, node, p);
 }
 
 static HRESULT WINAPI domtext_selectNodes(

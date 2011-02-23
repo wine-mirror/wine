@@ -496,10 +496,11 @@ static HRESULT WINAPI dom_pi_get_xml(
 
 static HRESULT WINAPI dom_pi_transformNode(
     IXMLDOMProcessingInstruction *iface,
-    IXMLDOMNode* domNode, BSTR* p)
+    IXMLDOMNode *node, BSTR *p)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_transformNode( &This->node.IXMLDOMNode_iface, domNode, p );
+    TRACE("(%p)->(%p %p)\n", This, node, p);
+    return node_transform_node(&This->node, node, p);
 }
 
 static HRESULT WINAPI dom_pi_selectNodes(

@@ -1432,11 +1432,12 @@ static HRESULT WINAPI domdoc_get_xml(
 
 static HRESULT WINAPI domdoc_transformNode(
     IXMLDOMDocument3 *iface,
-    IXMLDOMNode* styleSheet,
-    BSTR* xmlString )
+    IXMLDOMNode *node,
+    BSTR *p)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_transformNode( &This->node.IXMLDOMNode_iface, styleSheet, xmlString );
+    TRACE("(%p)->(%p %p)\n", This, node, p);
+    return node_transform_node(&This->node, node, p);
 }
 
 

@@ -485,10 +485,11 @@ static HRESULT WINAPI domfrag_get_xml(
 
 static HRESULT WINAPI domfrag_transformNode(
     IXMLDOMDocumentFragment *iface,
-    IXMLDOMNode* domNode, BSTR* p)
+    IXMLDOMNode *node, BSTR *p)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_transformNode( &This->node.IXMLDOMNode_iface, domNode, p );
+    TRACE("(%p)->(%p %p)\n", This, node, p);
+    return node_transform_node(&This->node, node, p);
 }
 
 static HRESULT WINAPI domfrag_selectNodes(

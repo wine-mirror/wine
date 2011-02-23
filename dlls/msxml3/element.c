@@ -937,10 +937,11 @@ static HRESULT WINAPI domelem_get_xml(
 
 static HRESULT WINAPI domelem_transformNode(
     IXMLDOMElement *iface,
-    IXMLDOMNode* domNode, BSTR* p)
+    IXMLDOMNode *node, BSTR *p)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_transformNode( &This->node.IXMLDOMNode_iface, domNode, p );
+    TRACE("(%p)->(%p %p)\n", This, node, p);
+    return node_transform_node(&This->node, node, p);
 }
 
 static HRESULT WINAPI domelem_selectNodes(
