@@ -664,8 +664,11 @@ static void processRegLinesA(FILE *in, char* first_chars)
             /* get a single line. note that `i' must be one past the last
              * meaningful character in `s' when this loop exits */
             for(i = 0; i < size_to_get-1; ++i){
-                s[i] = fgetc(in);
-                if(s[i] == EOF){
+                int xchar;
+
+                xchar = fgetc(in);
+                s[i] = xchar;
+                if(xchar == EOF){
                     if(ferror(in)){
                         perror("While reading input");
                         exit(IO_ERROR);
