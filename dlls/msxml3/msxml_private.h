@@ -144,7 +144,7 @@ typedef struct {
 } dispex_static_data_t;
 
 typedef struct {
-    const IDispatchExVtbl  *lpIDispatchExVtbl;
+    IDispatchEx IDispatchEx_iface;
 
     IUnknown *outer;
 
