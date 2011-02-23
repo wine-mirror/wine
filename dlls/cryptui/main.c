@@ -1637,7 +1637,7 @@ HCERTSTORE WINAPI CryptUIDlgSelectStoreA(PCRYPTUI_SELECTSTORE_INFO_A info)
         SetLastError(E_INVALIDARG);
         return NULL;
     }
-    memcpy(&infoW, &info, sizeof(info));
+    memcpy(&infoW, info, sizeof(*info));
     if (info->pszTitle)
     {
         len = MultiByteToWideChar(CP_ACP, 0, info->pszTitle, -1, NULL, 0);
