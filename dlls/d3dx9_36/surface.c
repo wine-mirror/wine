@@ -604,10 +604,7 @@ static DWORD dword_from_bytes(CONST BYTE *src, UINT bytes_per_pixel)
     static BOOL fixme_once;
 
     if(bytes_per_pixel > sizeof(DWORD)) {
-        if(!fixme_once) {
-            FIXME("Unsupported image: %u bytes per pixel\n", bytes_per_pixel);
-            fixme_once = TRUE;
-        }
+        if(!fixme_once++) FIXME("Unsupported image: %u bytes per pixel\n", bytes_per_pixel);
         bytes_per_pixel = sizeof(DWORD);
     }
 
@@ -620,10 +617,7 @@ static void dword_to_bytes(BYTE *dst, DWORD dword, UINT bytes_per_pixel)
     static BOOL fixme_once;
 
     if(bytes_per_pixel > sizeof(DWORD)) {
-        if(!fixme_once++) {
-            FIXME("Unsupported image: %u bytes per pixel\n", bytes_per_pixel);
-            fixme_once = TRUE;
-        }
+        if(!fixme_once++) FIXME("Unsupported image: %u bytes per pixel\n", bytes_per_pixel);
         ZeroMemory(dst, bytes_per_pixel);
         bytes_per_pixel = sizeof(DWORD);
     }
