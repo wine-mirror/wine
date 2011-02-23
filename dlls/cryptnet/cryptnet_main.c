@@ -740,11 +740,16 @@ static void CRYPT_CacheURL(LPCWSTR pszURL, const CRYPT_BLOB_ARRAY *pObject,
             if (ret)
                 lstrcpyW(cacheFileName, info->lpszLocalFileName);
             /* Check if the existing cache entry is up to date.  If it isn't,
-             * overwite it with the new value.
+             * remove the existing cache entry, and create a new one with the
+             * new value.
              */
             GetSystemTimeAsFileTime(&ft);
             if (CompareFileTime(&info->ExpireTime, &ft) < 0)
+            {
                 create = TRUE;
+                DeleteUrlCacheEntryW(pszURL);
+                DeleteFileW(cacheFileName);
+            }
             CryptMemFree(info);
         }
         else
