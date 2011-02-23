@@ -2210,6 +2210,27 @@ static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 #define TEST_USEIURI     0x0400
 #define TEST_IMPLPROTEX  0x0800
 
+static void register_filter(BOOL do_register)
+{
+    IInternetSession *session;
+    HRESULT hres;
+
+    static const WCHAR gzipW[] = {'g','z','i','p',0};
+
+    hres = pCoInternetGetSession(0, &session, 0);
+    ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
+
+    if(do_register) {
+        hres = IInternetSession_RegisterMimeFilter(session, &mimefilter_cf, &IID_IInternetProtocol, gzipW);
+        ok(hres == S_OK, "RegisterMimeFilter failed: %08x\n", hres);
+    }else {
+        hres = IInternetSession_UnregisterMimeFilter(session, &mimefilter_cf, gzipW);
+        ok(hres == S_OK, "RegisterMimeFilter failed: %08x\n", hres);
+    }
+
+    IInternetSession_Release(session);
+}
+
 static void init_test(int prot, DWORD flags)
 {
     tested_protocol = prot;
@@ -2239,6 +2260,8 @@ static void init_test(int prot, DWORD flags)
     test_redirect = (flags & TEST_REDIRECT) != 0;
     test_abort = (flags & TEST_ABORT) != 0;
     impl_protex = (flags & TEST_IMPLPROTEX) != 0;
+
+    register_filter(mimefilter_test);
 }
 
 static void test_priority(IInternetProtocol *protocol)
@@ -3463,22 +3486,6 @@ static void test_binding(int prot, DWORD grf_pi, DWORD test_flags)
     IInternetSession_Release(session);
 }
 
-static void register_filter(void)
-{
-    IInternetSession *session;
-    HRESULT hres;
-
-    static const WCHAR gzipW[] = {'g','z','i','p',0};
-
-    hres = pCoInternetGetSession(0, &session, 0);
-    ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
-
-    hres = IInternetSession_RegisterMimeFilter(session, &mimefilter_cf, &IID_IInternetProtocol, gzipW);
-    ok(hres == S_OK, "RegisterMimeFilter failed: %08x\n", hres);
-
-    IInternetSession_Release(session);
-}
-
 START_TEST(protocol)
 {
     HMODULE hurlmon;
@@ -3503,8 +3510,6 @@ START_TEST(protocol)
     event_continue = CreateEvent(NULL, FALSE, FALSE, NULL);
     event_continue_done = CreateEvent(NULL, FALSE, FALSE, NULL);
     thread_id = GetCurrentThreadId();
-
-    register_filter();
 
     test_file_protocol();
     test_http_protocol();
