@@ -2038,6 +2038,7 @@ static void test_menu_input(void) {
     HINSTANCE hInstance = GetModuleHandleA( NULL );
     HANDLE hThread, hWnd;
     DWORD tid;
+    ATOM aclass;
 
     if (!pSendInput)
     {
@@ -2055,11 +2056,14 @@ static void test_menu_input(void) {
     wclass.lpszMenuName  = 0;
     wclass.cbClsExtra    = 0;
     wclass.cbWndExtra    = 0;
-    assert (RegisterClassA( &wclass ));
-    assert (hWnd = CreateWindowA( wclass.lpszClassName, "MenuTest",
-                                  WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
-                                  400, 200, NULL, NULL, hInstance, NULL) );
-
+    aclass = RegisterClassA( &wclass );
+    ok (aclass, "MenuTest class not created\n");
+    if (!aclass) return;
+    hWnd = CreateWindowA( wclass.lpszClassName, "MenuTest",
+                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
+                          400, 200, NULL, NULL, hInstance, NULL);
+    ok (hWnd != NULL, "MenuTest window not created\n");
+    if (!hWnd) return;
     /* fixed menus */
     hMenus[3] = CreatePopupMenu();
     AppendMenu(hMenus[3], MF_STRING, 0, "&Enabled");
@@ -2125,6 +2129,7 @@ static void test_menu_hilitemenuitem( void )
     HMENU hMenu, hPopupMenu;
     WNDCLASSA wclass;
     HWND hWnd;
+    ATOM aclass;
 
     wclass.lpszClassName = "HiliteMenuTestClass";
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
@@ -2136,10 +2141,14 @@ static void test_menu_hilitemenuitem( void )
     wclass.lpszMenuName  = 0;
     wclass.cbClsExtra    = 0;
     wclass.cbWndExtra    = 0;
-    assert (RegisterClassA( &wclass ));
-    assert (hWnd = CreateWindowA( wclass.lpszClassName, "HiliteMenuTest",
-                                  WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
-                                  400, 200, NULL, NULL, wclass.hInstance, NULL) );
+    aclass = RegisterClassA( &wclass );
+    ok (aclass, "HiliteMenuTest class could not be created\n");
+    if (!aclass) return;
+    hWnd = CreateWindowA( wclass.lpszClassName, "HiliteMenuTest",
+                          WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0,
+                          400, 200, NULL, NULL, wclass.hInstance, NULL);
+    ok (hWnd != NULL, "HiliteMenuTest window could not be created\n");
+    if (!hWnd) return;
 
     hMenu = CreateMenu();
     hPopupMenu = CreatePopupMenu();
