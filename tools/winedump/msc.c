@@ -202,7 +202,7 @@ static const char* full_value_string(const struct full_value* fv)
 static int numeric_leaf(int* value, const unsigned short int* leaf)
 {
     struct full_value fv;
-    int len = len = full_numeric_leaf(&fv, leaf);
+    int len = full_numeric_leaf(&fv, leaf);
 
     switch (fv.type)
     {
