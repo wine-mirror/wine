@@ -401,22 +401,16 @@ HRESULT node_replace_child(xmlnode *This, IXMLDOMNode *newChild, IXMLDOMNode *ol
     return S_OK;
 }
 
-static HRESULT WINAPI xmlnode_removeChild(
-    IXMLDOMNode *iface,
-    IXMLDOMNode* childNode,
-    IXMLDOMNode** oldChild)
+HRESULT node_remove_child(xmlnode *This, IXMLDOMNode* child, IXMLDOMNode** oldChild)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
     xmlnode *child_node;
 
-    TRACE("(%p)->(%p %p)\n", This, childNode, oldChild);
-
-    if(!childNode) return E_INVALIDARG;
+    if(!child) return E_INVALIDARG;
 
     if(oldChild)
         *oldChild = NULL;
 
-    child_node = get_node_obj(childNode);
+    child_node = get_node_obj(child);
     if(!child_node) {
         FIXME("childNode is not our node implementation\n");
         return E_FAIL;
@@ -424,7 +418,7 @@ static HRESULT WINAPI xmlnode_removeChild(
 
     if(child_node->node->parent != This->node)
     {
-        WARN("childNode %p is not a child of %p\n", childNode, iface);
+        WARN("childNode %p is not a child of %p\n", child, This);
         return E_INVALIDARG;
     }
 
@@ -432,8 +426,8 @@ static HRESULT WINAPI xmlnode_removeChild(
 
     if(oldChild)
     {
-        IXMLDOMNode_AddRef(childNode);
-        *oldChild = childNode;
+        IXMLDOMNode_AddRef(child);
+        *oldChild = child;
     }
 
     return S_OK;
@@ -1152,7 +1146,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     NULL,
     NULL,
-    xmlnode_removeChild,
+    NULL,
     xmlnode_appendChild,
     xmlnode_hasChildNodes,
     xmlnode_get_ownerDocument,
@@ -1494,7 +1488,7 @@ static HRESULT WINAPI unknode_removeChild(
     IXMLDOMNode* domNode, IXMLDOMNode** oldNode)
 {
     unknode *This = unknode_from_IXMLDOMNode( iface );
-    return IXMLDOMNode_removeChild( &This->node.IXMLDOMNode_iface, domNode, oldNode );
+    return node_remove_child(&This->node, domNode, oldNode);
 }
 
 static HRESULT WINAPI unknode_appendChild(

@@ -1217,11 +1217,12 @@ static HRESULT WINAPI domdoc_replaceChild(
 
 static HRESULT WINAPI domdoc_removeChild(
     IXMLDOMDocument3 *iface,
-    IXMLDOMNode* childNode,
-    IXMLDOMNode** oldChild)
+    IXMLDOMNode  *child,
+    IXMLDOMNode **oldChild)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_removeChild( &This->node.IXMLDOMNode_iface, childNode, oldChild );
+    TRACE("(%p)->(%p %p)\n", This, child, oldChild);
+    return node_remove_child(&This->node, child, oldChild);
 }
 
 

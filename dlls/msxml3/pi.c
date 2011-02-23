@@ -344,10 +344,11 @@ static HRESULT WINAPI dom_pi_replaceChild(
 
 static HRESULT WINAPI dom_pi_removeChild(
     IXMLDOMProcessingInstruction *iface,
-    IXMLDOMNode* domNode, IXMLDOMNode** oldNode)
+    IXMLDOMNode *child, IXMLDOMNode **oldChild)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_removeChild( &This->node.IXMLDOMNode_iface, domNode, oldNode );
+    TRACE("(%p)->(%p %p)\n", This, child, oldChild);
+    return node_remove_child(&This->node, child, oldChild);
 }
 
 static HRESULT WINAPI dom_pi_appendChild(

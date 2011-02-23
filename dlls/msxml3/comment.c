@@ -330,10 +330,11 @@ static HRESULT WINAPI domcomment_replaceChild(
 
 static HRESULT WINAPI domcomment_removeChild(
     IXMLDOMComment *iface,
-    IXMLDOMNode* domNode, IXMLDOMNode** oldNode)
+    IXMLDOMNode *child, IXMLDOMNode **oldChild)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_removeChild( &This->node.IXMLDOMNode_iface, domNode, oldNode );
+    TRACE("(%p)->(%p %p)\n", This, child, oldChild);
+    return node_remove_child(&This->node, child, oldChild);
 }
 
 static HRESULT WINAPI domcomment_appendChild(

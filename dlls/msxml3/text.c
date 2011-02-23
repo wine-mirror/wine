@@ -343,10 +343,11 @@ static HRESULT WINAPI domtext_replaceChild(
 
 static HRESULT WINAPI domtext_removeChild(
     IXMLDOMText *iface,
-    IXMLDOMNode* domNode, IXMLDOMNode** oldNode)
+    IXMLDOMNode *child, IXMLDOMNode **oldChild)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_removeChild( &This->node.IXMLDOMNode_iface, domNode, oldNode );
+    TRACE("(%p)->(%p %p)\n", This, child, oldChild);
+    return node_remove_child(&This->node, child, oldChild);
 }
 
 static HRESULT WINAPI domtext_appendChild(

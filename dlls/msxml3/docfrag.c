@@ -334,10 +334,11 @@ static HRESULT WINAPI domfrag_replaceChild(
 
 static HRESULT WINAPI domfrag_removeChild(
     IXMLDOMDocumentFragment *iface,
-    IXMLDOMNode* domNode, IXMLDOMNode** oldNode)
+    IXMLDOMNode *child, IXMLDOMNode **oldChild)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_removeChild( &This->node.IXMLDOMNode_iface, domNode, oldNode );
+    TRACE("(%p)->(%p %p)\n", This, child, oldChild);
+    return node_remove_child(&This->node, child, oldChild);
 }
 
 static HRESULT WINAPI domfrag_appendChild(
