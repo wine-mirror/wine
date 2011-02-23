@@ -416,29 +416,6 @@ static void sync_window_style( Display *display, struct x11drv_win_data *data )
 
 
 /***********************************************************************
- *              sync_window_cursor
- */
-static void sync_window_cursor( struct x11drv_win_data *data )
-{
-    HCURSOR cursor;
-
-    SERVER_START_REQ( set_cursor )
-    {
-        req->flags = 0;
-        wine_server_call( req );
-        cursor = reply->prev_count >= 0 ? wine_server_ptr_handle( reply->prev_handle ) : 0;
-    }
-    SERVER_END_REQ;
-
-    set_window_cursor( data->hwnd, cursor );
-
-    /* setting the cursor can fail if the window isn't created yet */
-    /* so make sure that we try again once we receive a mouse event */
-    data->cursor = (HANDLE)~0u;
-}
-
-
-/***********************************************************************
  *              sync_window_region
  *
  * Update the X11 window region.
@@ -1744,6 +1721,10 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     wine_tsx11_unlock();
 
     sync_window_cursor( data );
+    /* setting the cursor can fail if the window isn't created yet */
+    /* so make sure that we try again once we receive a mouse event */
+    data->cursor = (HANDLE)~0u;
+
 done:
     if (win_rgn) DeleteObject( win_rgn );
     return data->whole_window;
@@ -2702,7 +2683,7 @@ LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         X11DRV_resize_desktop( LOWORD(lp), HIWORD(lp) );
         return 0;
     case WM_X11DRV_SET_CURSOR:
-        set_window_cursor( hwnd, (HCURSOR)lp );
+        if ((data = X11DRV_get_win_data( hwnd ))) set_window_cursor( data, (HCURSOR)lp );
         return 0;
     default:
         FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp );

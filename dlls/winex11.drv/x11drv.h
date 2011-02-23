@@ -803,12 +803,13 @@ extern int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow);
 extern void X11DRV_Clipboard_Cleanup(void);
 extern void X11DRV_ResetSelectionOwner(void);
 extern void CDECL X11DRV_SetFocus( HWND hwnd );
-extern void set_window_cursor( HWND hwnd, HCURSOR handle );
+extern void set_window_cursor( struct x11drv_win_data *data, HCURSOR handle );
+extern void sync_window_cursor( struct x11drv_win_data *data );
 extern BOOL CDECL X11DRV_ClipCursor( LPCRECT clip );
 extern void X11DRV_InitKeyboard( Display *display );
 extern void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time,
                                         DWORD dwExtraInfo, UINT injected_flags );
-extern void X11DRV_send_mouse_input( HWND top_hwnd, HWND cursor_hwnd, DWORD flags, DWORD x, DWORD y,
+extern void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
                                      DWORD data, DWORD time, DWORD extra_info, UINT injected_flags );
 extern DWORD CDECL X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
                                                        DWORD mask, DWORD flags );
