@@ -234,7 +234,6 @@ extern void set_xpathmode(xmlDocPtr doc, BOOL xpath);
 typedef struct _xmlnode
 {
     DispatchEx dispex;
-    IXMLDOMNode IXMLDOMNode_iface;
     IXMLDOMNode *iface;
     xmlNodePtr node;
 } xmlnode;
