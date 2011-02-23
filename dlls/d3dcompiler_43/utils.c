@@ -170,7 +170,7 @@ static const char *get_regname(const struct shader_reg *reg)
             {
                 case 0: return "vPos";
                 case 1: return "vFace";
-                case 2: return "unexpected misctype";
+                default: return "unexpected misctype";
             }
         case BWRITERSPR_LABEL:
             return wine_dbg_sprintf("l%u", reg->regnum);
