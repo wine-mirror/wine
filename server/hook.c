@@ -497,6 +497,7 @@ DECL_HANDLER(start_hook_chain)
 {
     struct hook *hook;
     struct hook_table *table = get_queue_hooks( current );
+    struct hook_table *global_table = get_global_hooks( current );
 
     if (req->id < WH_MINHOOK || req->id > WH_WINEVENT)
     {
@@ -510,9 +511,8 @@ DECL_HANDLER(start_hook_chain)
                                                  req->window, req->object_id, req->child_id )))
     {
         /* try global table */
-        if (!(table = get_global_hooks( current )) ||
-            !(hook = get_first_valid_hook( table, req->id - WH_MINHOOK, req->event,
-                                           req->window, req->object_id, req->child_id )))
+        if (!global_table || !(hook = get_first_valid_hook( global_table, req->id - WH_MINHOOK, req->event,
+                                                            req->window, req->object_id, req->child_id )))
             return;  /* no hook set */
     }
 
@@ -529,7 +529,8 @@ DECL_HANDLER(start_hook_chain)
     reply->proc    = hook->proc;
     reply->handle  = hook->handle;
     reply->unicode = hook->unicode;
-    table->counts[hook->index]++;
+    if (table) table->counts[hook->index]++;
+    if (global_table) global_table->counts[hook->index]++;
     if (hook->module) set_reply_data( hook->module, hook->module_size );
 }
 
