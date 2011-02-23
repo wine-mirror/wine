@@ -1453,11 +1453,12 @@ static HRESULT WINAPI domdoc_selectNodes(
 
 static HRESULT WINAPI domdoc_selectSingleNode(
     IXMLDOMDocument3 *iface,
-    BSTR queryString,
-    IXMLDOMNode** resultNode )
+    BSTR p,
+    IXMLDOMNode **outNode)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_selectSingleNode( &This->node.IXMLDOMNode_iface, queryString, resultNode );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), outNode);
+    return node_select_singlenode(&This->node, p, outNode);
 }
 
 

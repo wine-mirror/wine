@@ -1046,24 +1046,18 @@ HRESULT node_select_nodes(const xmlnode *This, BSTR query, IXMLDOMNodeList **nod
     return hr;
 }
 
-static HRESULT WINAPI xmlnode_selectSingleNode(
-    IXMLDOMNode *iface,
-    BSTR queryString,
-    IXMLDOMNode** resultNode)
+HRESULT node_select_singlenode(const xmlnode *This, BSTR query, IXMLDOMNode **node)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
     IXMLDOMNodeList *list;
-    HRESULT r;
+    HRESULT hr;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(queryString), resultNode );
-
-    r = IXMLDOMNode_selectNodes(This->iface, queryString, &list);
-    if(r == S_OK)
+    hr = node_select_nodes(This, query, &list);
+    if (hr == S_OK)
     {
-        r = IXMLDOMNodeList_nextNode(list, resultNode);
+        hr = IXMLDOMNodeList_nextNode(list, node);
         IXMLDOMNodeList_Release(list);
     }
-    return r;
+    return hr;
 }
 
 HRESULT node_get_namespaceURI(xmlnode *This, BSTR *namespaceURI)
@@ -1156,7 +1150,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     xmlnode_transformNode,
     NULL,
-    xmlnode_selectSingleNode
+    NULL
 };
 
 void destroy_xmlnode(xmlnode *This)
@@ -1634,7 +1628,7 @@ static HRESULT WINAPI unknode_selectSingleNode(
     BSTR p, IXMLDOMNode** outNode)
 {
     unknode *This = unknode_from_IXMLDOMNode( iface );
-    return IXMLDOMNode_selectSingleNode( &This->node.IXMLDOMNode_iface, p, outNode );
+    return node_select_singlenode(&This->node, p, outNode);
 }
 
 static HRESULT WINAPI unknode_get_parsed(

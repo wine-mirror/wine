@@ -586,7 +586,8 @@ static HRESULT WINAPI domtext_selectSingleNode(
     BSTR p, IXMLDOMNode** outNode)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_selectSingleNode( &This->node.IXMLDOMNode_iface, p, outNode );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), outNode);
+    return node_select_singlenode(&This->node, p, outNode);
 }
 
 static HRESULT WINAPI domtext_get_parsed(

@@ -499,7 +499,8 @@ static HRESULT WINAPI entityref_selectSingleNode(
     BSTR p, IXMLDOMNode** outNode)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_selectSingleNode( &This->node.IXMLDOMNode_iface, p, outNode );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), outNode);
+    return node_select_singlenode(&This->node, p, outNode);
 }
 
 static HRESULT WINAPI entityref_get_parsed(
