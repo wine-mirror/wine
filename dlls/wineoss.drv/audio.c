@@ -297,7 +297,7 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
 
 void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
 {
-    ZeroMemory(wf2, sizeof(wf2));
+    ZeroMemory(wf2, sizeof(*wf2));
     if (wf1->wFormatTag == WAVE_FORMAT_PCM)
         memcpy(wf2, wf1, sizeof(PCMWAVEFORMAT));
     else if (wf1->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
