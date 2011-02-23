@@ -664,6 +664,7 @@ void ME_RTFParAttrHook(RTF_Info *info)
       fmt.dyLineSpacing = info->rtfParam;
       fmt.bLineSpacingRule = 4;
     }
+    break;
   case rtfSpaceMultiply:
     fmt.dwMask = PFM_LINESPACING;
     fmt.dyLineSpacing = info->rtfParam * 20;
