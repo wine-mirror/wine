@@ -344,10 +344,11 @@ static HRESULT WINAPI domattr_appendChild(
 
 static HRESULT WINAPI domattr_hasChildNodes(
     IXMLDOMAttribute *iface,
-    VARIANT_BOOL* pbool)
+    VARIANT_BOOL *ret)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
+    TRACE("(%p)->(%p)\n", This, ret);
+    return node_has_childnodes(&This->node, ret);
 }
 
 static HRESULT WINAPI domattr_get_ownerDocument(

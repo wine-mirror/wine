@@ -348,10 +348,11 @@ static HRESULT WINAPI domcomment_appendChild(
 
 static HRESULT WINAPI domcomment_hasChildNodes(
     IXMLDOMComment *iface,
-    VARIANT_BOOL* pbool)
+    VARIANT_BOOL *ret)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
+    TRACE("(%p)->(%p)\n", This, ret);
+    return node_has_childnodes(&This->node, ret);
 }
 
 static HRESULT WINAPI domcomment_get_ownerDocument(

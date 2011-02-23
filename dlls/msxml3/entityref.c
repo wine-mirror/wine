@@ -346,10 +346,11 @@ static HRESULT WINAPI entityref_appendChild(
 
 static HRESULT WINAPI entityref_hasChildNodes(
     IXMLDOMEntityReference *iface,
-    VARIANT_BOOL* pbool)
+    VARIANT_BOOL *ret)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
+    TRACE("(%p)->(%p)\n", This, ret);
+    return node_has_childnodes(&This->node, ret);
 }
 
 static HRESULT WINAPI entityref_get_ownerDocument(

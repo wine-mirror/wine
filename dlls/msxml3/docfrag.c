@@ -352,10 +352,11 @@ static HRESULT WINAPI domfrag_appendChild(
 
 static HRESULT WINAPI domfrag_hasChildNodes(
     IXMLDOMDocumentFragment *iface,
-    VARIANT_BOOL* pbool)
+    VARIANT_BOOL *ret)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
+    TRACE("(%p)->(%p)\n", This, ret);
+    return node_has_childnodes(&This->node, ret);
 }
 
 static HRESULT WINAPI domfrag_get_ownerDocument(

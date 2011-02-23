@@ -449,23 +449,17 @@ HRESULT node_append_child(xmlnode *This, IXMLDOMNode *child, IXMLDOMNode **outCh
     return IXMLDOMNode_insertBefore(This->iface, child, var, outChild);
 }
 
-static HRESULT WINAPI xmlnode_hasChildNodes(
-    IXMLDOMNode *iface,
-    VARIANT_BOOL* hasChild)
+HRESULT node_has_childnodes(const xmlnode *This, VARIANT_BOOL *ret)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
+    if (!ret) return E_INVALIDARG;
 
-    TRACE("(%p)->(%p)\n", This, hasChild);
-
-    if (!hasChild)
-        return E_INVALIDARG;
     if (!This->node->children)
     {
-        *hasChild = VARIANT_FALSE;
+        *ret = VARIANT_FALSE;
         return S_FALSE;
     }
 
-    *hasChild = VARIANT_TRUE;
+    *ret = VARIANT_TRUE;
     return S_OK;
 }
 
@@ -1142,7 +1136,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     NULL,
     NULL,
-    xmlnode_hasChildNodes,
+    NULL,
     xmlnode_get_ownerDocument,
     NULL,
     NULL,
@@ -1498,7 +1492,7 @@ static HRESULT WINAPI unknode_hasChildNodes(
     VARIANT_BOOL* pbool)
 {
     unknode *This = unknode_from_IXMLDOMNode( iface );
-    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
+    return node_has_childnodes(&This->node, pbool);
 }
 
 static HRESULT WINAPI unknode_get_ownerDocument(

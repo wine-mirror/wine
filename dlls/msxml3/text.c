@@ -361,10 +361,11 @@ static HRESULT WINAPI domtext_appendChild(
 
 static HRESULT WINAPI domtext_hasChildNodes(
     IXMLDOMText *iface,
-    VARIANT_BOOL* pbool)
+    VARIANT_BOOL *ret)
 {
     domtext *This = impl_from_IXMLDOMText( iface );
-    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
+    TRACE("(%p)->(%p)\n", This, ret);
+    return node_has_childnodes(&This->node, ret);
 }
 
 static HRESULT WINAPI domtext_get_ownerDocument(

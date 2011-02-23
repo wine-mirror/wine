@@ -1239,10 +1239,11 @@ static HRESULT WINAPI domdoc_appendChild(
 
 static HRESULT WINAPI domdoc_hasChildNodes(
     IXMLDOMDocument3 *iface,
-    VARIANT_BOOL* hasChild)
+    VARIANT_BOOL *ret)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, hasChild );
+    TRACE("(%p)->(%p)\n", This, ret);
+    return node_has_childnodes(&This->node, ret);
 }
 
 

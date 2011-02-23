@@ -363,10 +363,11 @@ static HRESULT WINAPI domelem_appendChild(
 
 static HRESULT WINAPI domelem_hasChildNodes(
     IXMLDOMElement *iface,
-    VARIANT_BOOL* pbool)
+    VARIANT_BOOL *ret)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
+    TRACE("(%p)->(%p)\n", This, ret);
+    return node_has_childnodes(&This->node, ret);
 }
 
 static HRESULT WINAPI domelem_get_ownerDocument(

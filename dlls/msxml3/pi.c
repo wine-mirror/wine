@@ -362,10 +362,11 @@ static HRESULT WINAPI dom_pi_appendChild(
 
 static HRESULT WINAPI dom_pi_hasChildNodes(
     IXMLDOMProcessingInstruction *iface,
-    VARIANT_BOOL* pbool)
+    VARIANT_BOOL *ret)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return IXMLDOMNode_hasChildNodes( &This->node.IXMLDOMNode_iface, pbool );
+    TRACE("(%p)->(%p)\n", This, ret);
+    return node_has_childnodes(&This->node, ret);
 }
 
 static HRESULT WINAPI dom_pi_get_ownerDocument(
