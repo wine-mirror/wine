@@ -193,7 +193,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->module.TimeDateStamp = stamp;
     module->module.CheckSum = checksum;
 
-    memset(module->module.LoadedPdbName, 0, sizeof(module->module.CVData));
+    memset(module->module.LoadedPdbName, 0, sizeof(module->module.LoadedPdbName));
     module->module.CVSig = 0;
     memset(module->module.CVData, 0, sizeof(module->module.CVData));
     module->module.PdbSig = 0;
