@@ -388,7 +388,8 @@ static HRESULT WINAPI entityref_get_text(
     BSTR* p)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
+    TRACE("(%p)->(%p)\n", This, p);
+    return node_get_text(&This->node, p);
 }
 
 static HRESULT WINAPI entityref_put_text(

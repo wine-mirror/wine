@@ -405,7 +405,8 @@ static HRESULT WINAPI domelem_get_text(
     BSTR* p)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
+    TRACE("(%p)->(%p)\n", This, p);
+    return node_get_text(&This->node, p);
 }
 
 static HRESULT WINAPI domelem_put_text(

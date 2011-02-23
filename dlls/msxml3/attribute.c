@@ -386,7 +386,8 @@ static HRESULT WINAPI domattr_get_text(
     BSTR* p)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
+    TRACE("(%p)->(%p)\n", This, p);
+    return node_get_text(&This->node, p);
 }
 
 static HRESULT WINAPI domattr_put_text(

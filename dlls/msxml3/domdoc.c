@@ -1283,10 +1283,11 @@ static HRESULT WINAPI domdoc_get_nodeTypeString(
 
 static HRESULT WINAPI domdoc_get_text(
     IXMLDOMDocument3 *iface,
-    BSTR* text )
+    BSTR *p)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, text );
+    TRACE("(%p)->(%p)\n", This, p);
+    return node_get_text(&This->node, p);
 }
 
 

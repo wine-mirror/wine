@@ -275,6 +275,7 @@ extern HRESULT node_get_namespaceURI(xmlnode*,BSTR*);
 extern HRESULT node_remove_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode**);
 extern HRESULT node_has_childnodes(const xmlnode*,VARIANT_BOOL*);
 extern HRESULT node_get_owner_doc(const xmlnode*,IXMLDOMDocument**);
+extern HRESULT node_get_text(const xmlnode*,BSTR*);
 
 extern HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
 

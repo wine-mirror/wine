@@ -397,7 +397,8 @@ static HRESULT WINAPI domcdata_get_text(
     BSTR* p)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
+    TRACE("(%p)->(%p)\n", This, p);
+    return node_get_text(&This->node, p);
 }
 
 static HRESULT WINAPI domcdata_put_text(

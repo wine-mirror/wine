@@ -583,24 +583,18 @@ static xmlChar* do_get_text(xmlNodePtr node)
     return str;
 }
 
-static HRESULT WINAPI xmlnode_get_text(
-    IXMLDOMNode *iface,
-    BSTR* text)
+HRESULT node_get_text(const xmlnode *This, BSTR *text)
 {
-    xmlnode *This = impl_from_IXMLDOMNode( iface );
     BSTR str = NULL;
-    xmlChar *pContent;
+    xmlChar *content;
 
-    TRACE("(%p, type %d)->(%p)\n", This, This->node->type, text);
+    if (!text) return E_INVALIDARG;
 
-    if ( !text )
-        return E_INVALIDARG;
-
-    pContent = do_get_text((xmlNodePtr)This->node);
-    if(pContent)
+    content = do_get_text(This->node);
+    if (content)
     {
-        str = bstr_from_xmlChar(pContent);
-        xmlFree(pContent);
+        str = bstr_from_xmlChar(content);
+        xmlFree(content);
     }
 
     /* Always return a string. */
@@ -1134,7 +1128,7 @@ static const struct IXMLDOMNodeVtbl xmlnode_vtbl =
     NULL,
     NULL,
     NULL,
-    xmlnode_get_text,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -1521,7 +1515,7 @@ static HRESULT WINAPI unknode_get_text(
     BSTR* p)
 {
     unknode *This = unknode_from_IXMLDOMNode( iface );
-    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
+    return node_get_text(&This->node, p);
 }
 
 static HRESULT WINAPI unknode_put_text(

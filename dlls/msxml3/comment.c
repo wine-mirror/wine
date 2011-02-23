@@ -390,7 +390,8 @@ static HRESULT WINAPI domcomment_get_text(
     BSTR* p)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
+    TRACE("(%p)->(%p)\n", This, p);
+    return node_get_text(&This->node, p);
 }
 
 static HRESULT WINAPI domcomment_put_text(

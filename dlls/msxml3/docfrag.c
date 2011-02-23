@@ -394,7 +394,8 @@ static HRESULT WINAPI domfrag_get_text(
     BSTR* p)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    return IXMLDOMNode_get_text( &This->node.IXMLDOMNode_iface, p );
+    TRACE("(%p)->(%p)\n", This, p);
+    return node_get_text(&This->node, p);
 }
 
 static HRESULT WINAPI domfrag_put_text(
