@@ -79,8 +79,6 @@ static ULONG WINAPI MetaDataDispenser_AddRef(IMetaDataDispenserEx* iface)
 
     TRACE("%p ref=%u\n", This, ref);
 
-    MSCOREE_LockModule();
-
     return ref;
 }
 
@@ -95,8 +93,6 @@ static ULONG WINAPI MetaDataDispenser_Release(IMetaDataDispenserEx* iface)
     {
         HeapFree(GetProcessHeap(), 0, This);
     }
-
-    MSCOREE_UnlockModule();
 
     return ref;
 }

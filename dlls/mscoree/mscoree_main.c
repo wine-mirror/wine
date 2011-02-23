@@ -47,8 +47,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 
-LONG dll_refs = 0;
-
 char *WtoA(LPCWSTR wstr)
 {
     int length;
@@ -459,10 +457,7 @@ HRESULT WINAPI DllUnregisterServer(void)
 
 HRESULT WINAPI DllCanUnloadNow(VOID)
 {
-    if (dll_refs)
-        return S_FALSE;
-    else
-        return S_OK;
+    return S_FALSE;
 }
 
 INT WINAPI ND_RU1( const void *ptr, INT offset )
