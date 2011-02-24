@@ -218,15 +218,12 @@ static void test_get_profiles_dir(void)
     char *profiles_dir, *buf, small_buf[1];
 
     l = RegOpenKeyExA(HKEY_LOCAL_MACHINE, ProfileListA, 0, KEY_READ, &key);
-    if (l)
-    {
-        win_skip("No ProfileList key (Win9x), skipping tests\n");
-        return;
-    }
+    ok(!l, "RegOpenKeyExA failed: %d\n", GetLastError());
+
     l = RegQueryValueExA(key, ProfilesDirectory, NULL, NULL, NULL, &cch);
     if (l)
     {
-        win_skip("No ProfilesDirectory value, skipping tests\n");
+        win_skip("No ProfilesDirectory value (NT4), skipping tests\n");
         return;
     }
     buf = HeapAlloc(GetProcessHeap(), 0, cch);
