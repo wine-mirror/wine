@@ -798,9 +798,8 @@ static void test_OleLoadPicturePath(void)
     hres = OleLoadPicturePath(emptyW, NULL, 0, 0, NULL, (void **)&pic);
     todo_wine
     ok(hres == INET_E_UNKNOWN_PROTOCOL || /* XP/Vista+ */
-       hres == E_UNEXPECTED || /* NT4/Win95 */
-       hres == E_FAIL || /* Win95 OSR2 */
-       hres == E_OUTOFMEMORY, /* Win98/Win2k/Win2k3 */
+       broken(hres == E_UNEXPECTED) || /* NT4 */
+       broken(hres == E_OUTOFMEMORY), /* Win2k/Win2k3 */
        "Expected OleLoadPicturePath to return INET_E_UNKNOWN_PROTOCOL, got 0x%08x\n", hres);
     ok(pic == NULL,
        "Expected the output interface pointer to be NULL, got %p\n", pic);
@@ -809,9 +808,8 @@ static void test_OleLoadPicturePath(void)
     hres = OleLoadPicturePath(emptyW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
     todo_wine
     ok(hres == INET_E_UNKNOWN_PROTOCOL || /* XP/Vista+ */
-       hres == E_UNEXPECTED || /* NT4/Win95 */
-       hres == E_FAIL || /* Win95 OSR2 */
-       hres == E_OUTOFMEMORY, /* Win98/Win2k/Win2k3 */
+       broken(hres == E_UNEXPECTED) || /* NT4 */
+       broken(hres == E_OUTOFMEMORY), /* Win2k/Win2k3 */
        "Expected OleLoadPicturePath to return INET_E_UNKNOWN_PROTOCOL, got 0x%08x\n", hres);
     ok(pic == NULL,
        "Expected the output interface pointer to be NULL, got %p\n", pic);
@@ -829,7 +827,7 @@ static void test_OleLoadPicturePath(void)
     /* Try a normal DOS path. */
     hres = OleLoadPicturePath(temp_fileW + 8, NULL, 0, 0, &IID_IPicture, (void **)&pic);
     ok(hres == S_OK ||
-       broken(hres == E_UNEXPECTED), /* NT4/Win95 */
+       broken(hres == E_UNEXPECTED), /* NT4 */
        "Expected OleLoadPicturePath to return S_OK, got 0x%08x\n", hres);
     if (pic)
         IPicture_Release(pic);
@@ -837,7 +835,7 @@ static void test_OleLoadPicturePath(void)
     /* Try a DOS path with tacked on "file:". */
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
     ok(hres == S_OK ||
-       broken(hres == E_UNEXPECTED), /* NT4/Win95 */
+       broken(hres == E_UNEXPECTED), /* NT4 */
        "Expected OleLoadPicturePath to return S_OK, got 0x%08x\n", hres);
     if (pic)
         IPicture_Release(pic);
@@ -846,15 +844,15 @@ static void test_OleLoadPicturePath(void)
 
     /* Try with a nonexistent file. */
     hres = OleLoadPicturePath(temp_fileW + 8, NULL, 0, 0, &IID_IPicture, (void **)&pic);
-    ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
-       hres == E_UNEXPECTED || /* NT4/Win95 */
-       hres == E_FAIL, /* Win9x/Win2k */
+    todo_wine ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
+       broken(hres == E_UNEXPECTED) || /* NT4 */
+       broken(hres == E_FAIL), /*Win2k */
        "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08x\n", hres);
 
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
-    ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
-       hres == E_UNEXPECTED || /* NT4/Win95 */
-       hres == E_FAIL, /* Win9x/Win2k */
+    todo_wine ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
+       broken(hres == E_UNEXPECTED) || /* NT4 */
+       broken(hres == E_FAIL), /* Win2k */
        "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08x\n", hres);
 
     file = CreateFileA(temp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
@@ -873,7 +871,7 @@ static void test_OleLoadPicturePath(void)
 
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
     ok(hres == S_OK ||
-       broken(hres == E_UNEXPECTED), /* NT4/Win95 */
+       broken(hres == E_UNEXPECTED), /* NT4 */
        "Expected OleLoadPicturePath to return S_OK, got 0x%08x\n", hres);
     if (pic)
         IPicture_Release(pic);
@@ -882,9 +880,9 @@ static void test_OleLoadPicturePath(void)
 
     /* Try with a nonexistent file. */
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
-    ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
-       hres == E_UNEXPECTED || /* NT4/Win95 */
-       hres == E_FAIL, /* Win9x/Win2k */
+    todo_wine ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
+       broken(hres == E_UNEXPECTED) || /* NT4 */
+       broken(hres == E_FAIL), /* Win2k */
        "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08x\n", hres);
 }
 
