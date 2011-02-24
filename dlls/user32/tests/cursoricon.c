@@ -765,6 +765,24 @@ static unsigned char gif4pixel[42] = {
 0x02,0x00,0x00,0x02,0x03,0x14,0x16,0x05,0x00,0x3b
 };
 
+static const DWORD biSize_tests[] = {
+    0,
+    sizeof(BITMAPCOREHEADER) - 1,
+    sizeof(BITMAPCOREHEADER) + 1,
+    sizeof(BITMAPINFOHEADER) - 1,
+    sizeof(BITMAPINFOHEADER) + 1,
+    sizeof(BITMAPV4HEADER) - 1,
+    sizeof(BITMAPV4HEADER) + 1,
+    sizeof(BITMAPV5HEADER) - 1,
+    sizeof(BITMAPV5HEADER) + 1,
+    (sizeof(BITMAPCOREHEADER) + sizeof(BITMAPINFOHEADER)) / 2,
+    (sizeof(BITMAPV4HEADER) + sizeof(BITMAPV5HEADER)) / 2,
+    0xdeadbeef,
+    0xffffffff
+};
+
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+
 static void test_LoadImageBitmap(const char * test_desc, HBITMAP hbm)
 {
     BITMAP bm;
@@ -856,6 +874,7 @@ static void test_LoadImage(void)
     CURSORICONFILEDIRENTRY *icon_entry;
     BITMAPINFOHEADER *icon_header, *bitmap_header;
     ICONINFO icon_info;
+    int i;
 
 #define ICON_WIDTH 32
 #define ICON_HEIGHT 32
@@ -992,7 +1011,15 @@ static void test_LoadImage(void)
     bitmap_header->biWidth = 65536;
     test_LoadImageFile("BMP (too wide)", bmpimage, sizeof(bmpimage), "bmp", 0);
     bitmap_header->biWidth = 1;
+
+    for (i = 0; i < ARRAY_SIZE(biSize_tests); i++) {
+        bitmap_header->biSize = biSize_tests[i];
+        test_LoadImageFile("BMP (broken biSize)", bmpimage, sizeof(bmpimage), "bmp", 0);
+    }
+    bitmap_header->biSize = sizeof(BITMAPINFOHEADER);
 }
+
+#undef ARRAY_SIZE
 
 static void test_CreateIconFromResource(void)
 {

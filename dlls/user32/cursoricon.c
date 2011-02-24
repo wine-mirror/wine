@@ -372,7 +372,9 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
         *compr  = 0;
         return 0;
     }
-    else if (header->biSize >= sizeof(BITMAPINFOHEADER))
+    else if (header->biSize == sizeof(BITMAPINFOHEADER) ||
+             header->biSize == sizeof(BITMAPV4HEADER) ||
+             header->biSize == sizeof(BITMAPV5HEADER))
     {
         *width  = header->biWidth;
         *height = header->biHeight;
@@ -380,7 +382,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
         *compr  = header->biCompression;
         return 1;
     }
-    ERR("(%d): unknown/wrong size for header\n", header->biSize );
+    WARN("unknown/wrong size (%u) for header\n", header->biSize);
     return -1;
 }
 
