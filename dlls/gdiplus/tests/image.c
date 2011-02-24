@@ -687,6 +687,10 @@ static void test_LockBits(void)
     expect(Ok, stat);
     expect(0xff563412, color);
 
+    stat = GdipBitmapGetPixel(bm, 2, 8, &color);
+    expect(Ok, stat);
+    expect(0xffc30000, color);
+
     stat = GdipDisposeImage((GpImage*)bm);
     expect(Ok, stat);
     stat = GdipCreateBitmapFromScan0(WIDTH, HEIGHT, 0, PixelFormat24bppRGB, NULL, &bm);

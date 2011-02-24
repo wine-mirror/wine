@@ -280,6 +280,7 @@ struct GpBitmap{
     BYTE *bits; /* actual image bits if this is a DIB */
     INT stride; /* stride of bits if this is a DIB */
     BYTE *own_bits; /* image bits that need to be freed with this object */
+    INT lockx, locky; /* X and Y coordinates of the rect when a bitmap is locked for writing. */
 };
 
 struct GpCachedBitmap{

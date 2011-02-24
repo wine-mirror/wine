@@ -990,8 +990,8 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
         }
     }
 
-    abs_height = bitmap->height;
-    stride = (bitmap->width * bitspp + 7) / 8;
+    abs_height = act_rect.Height;
+    stride = (act_rect.Width * bitspp + 7) / 8;
     stride = (stride + 3) & ~3;
 
     buff = GdipAlloc(stride * abs_height);
@@ -1000,9 +1000,19 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
 
     if (flags & ImageLockModeRead)
     {
-        stat = convert_pixels(bitmap->width, bitmap->height,
+        static int fixme=0;
+
+        if (!fixme && (PIXELFORMATBPP(bitmap->format) * act_rect.X) % 8 != 0)
+        {
+            FIXME("Cannot copy rows that don't start at a whole byte.\n");
+            fixme = 1;
+        }
+
+        stat = convert_pixels(act_rect.Width, act_rect.Height,
             stride, buff, format,
-            bitmap->stride, bitmap->bits, bitmap->format, bitmap->image.palette_entries);
+            bitmap->stride,
+            bitmap->bits + bitmap->stride * act_rect.Y + PIXELFORMATBPP(bitmap->format) * act_rect.X / 8,
+            bitmap->format, bitmap->image.palette_entries);
 
         if (stat != Ok)
         {
@@ -1016,11 +1026,13 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     lockeddata->PixelFormat = format;
     lockeddata->Reserved = flags;
     lockeddata->Stride = stride;
-    lockeddata->Scan0  = buff + (bitspp / 8) * act_rect.X + stride * act_rect.Y;
+    lockeddata->Scan0  = buff;
 
     bitmap->lockmode = flags;
     bitmap->numlocks++;
     bitmap->bitmapbits = buff;
+    bitmap->lockx = act_rect.X;
+    bitmap->locky = act_rect.Y;
 
     return Ok;
 }
@@ -1042,6 +1054,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     BitmapData* lockeddata)
 {
     GpStatus stat;
+    static int fixme=0;
 
     TRACE("(%p,%p)\n", bitmap, lockeddata);
 
@@ -1071,9 +1084,17 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
         return Ok;
     }
 
-    stat = convert_pixels(bitmap->width, bitmap->height,
-        bitmap->stride, bitmap->bits, bitmap->format,
-        lockeddata->Stride, bitmap->bitmapbits, lockeddata->PixelFormat, NULL);
+    if (!fixme && (PIXELFORMATBPP(bitmap->format) * bitmap->lockx) % 8 != 0)
+    {
+        FIXME("Cannot copy rows that don't start at a whole byte.\n");
+        fixme = 1;
+    }
+
+    stat = convert_pixels(lockeddata->Width, lockeddata->Height,
+        bitmap->stride,
+        bitmap->bits + bitmap->stride * bitmap->locky + PIXELFORMATBPP(bitmap->format) * bitmap->lockx / 8,
+        bitmap->format,
+        lockeddata->Stride, lockeddata->Scan0, lockeddata->PixelFormat, NULL);
 
     if (stat != Ok)
     {
