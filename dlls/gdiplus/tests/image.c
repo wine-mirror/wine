@@ -777,10 +777,10 @@ static void test_LockBits_UserBuf(void)
 
     /* read-only */
     stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead|ImageLockModeUserInputBuf, PixelFormat32bppARGB, &bd);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     expect(0xaaaaaaaa, bits[0]);
-    todo_wine expect(0, bits[2+3*WIDTH]);
+    expect(0, bits[2+3*WIDTH]);
 
     bits[2+3*WIDTH] = 0xdeadbeef;
 
@@ -795,7 +795,7 @@ static void test_LockBits_UserBuf(void)
 
     /* write-only */
     stat = GdipBitmapLockBits(bm, &rect, ImageLockModeWrite|ImageLockModeUserInputBuf, PixelFormat32bppARGB, &bd);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     expect(0xdeadbeef, bits[2+3*WIDTH]);
     bits[2+3*WIDTH] = 0x12345678;
@@ -807,15 +807,15 @@ static void test_LockBits_UserBuf(void)
 
     stat = GdipBitmapGetPixel(bm, 2, 3, &color);
     expect(Ok, stat);
-    todo_wine expect(0x12345678, color);
+    expect(0x12345678, color);
 
     bits[2+3*WIDTH] = 0;
 
     /* read/write */
     stat = GdipBitmapLockBits(bm, &rect, ImageLockModeRead|ImageLockModeWrite|ImageLockModeUserInputBuf, PixelFormat32bppARGB, &bd);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
-    todo_wine expect(0x12345678, bits[2+3*WIDTH]);
+    expect(0x12345678, bits[2+3*WIDTH]);
     bits[2+3*WIDTH] = 0xdeadbeef;
 
     if (stat == Ok) {
@@ -825,7 +825,7 @@ static void test_LockBits_UserBuf(void)
 
     stat = GdipBitmapGetPixel(bm, 2, 3, &color);
     expect(Ok, stat);
-    todo_wine expect(0xdeadbeef, color);
+    expect(0xdeadbeef, color);
 
     stat = GdipDisposeImage((GpImage*)bm);
     expect(Ok, stat);

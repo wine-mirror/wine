@@ -913,9 +913,7 @@ GpStatus convert_pixels(UINT width, UINT height,
 GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     UINT flags, PixelFormat format, BitmapData* lockeddata)
 {
-    INT stride, bitspp = PIXELFORMATBPP(format);
-    BYTE *buff = NULL;
-    UINT abs_height;
+    INT bitspp = PIXELFORMATBPP(format);
     GpRect act_rect; /* actual rect to be used */
     GpStatus stat;
 
@@ -937,20 +935,13 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
         act_rect.Height = bitmap->height;
     }
 
-    if(flags & ImageLockModeUserInputBuf)
-    {
-        static int fixme=0;
-        if (!fixme++) FIXME("ImageLockModeUserInputBuf not implemented\n");
-        return NotImplemented;
-    }
-
     if(bitmap->lockmode)
     {
         WARN("bitmap is already locked and cannot be locked again\n");
         return WrongState;
     }
 
-    if (bitmap->bits && bitmap->format == format)
+    if (bitmap->bits && bitmap->format == format && !(flags & ImageLockModeUserInputBuf))
     {
         /* no conversion is necessary; just use the bits directly */
         lockeddata->Width = act_rect.Width;
@@ -990,13 +981,21 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
         }
     }
 
-    abs_height = act_rect.Height;
-    stride = (act_rect.Width * bitspp + 7) / 8;
-    stride = (stride + 3) & ~3;
+    lockeddata->Width  = act_rect.Width;
+    lockeddata->Height = act_rect.Height;
+    lockeddata->PixelFormat = format;
+    lockeddata->Reserved = flags;
 
-    buff = GdipAlloc(stride * abs_height);
+    if(!(flags & ImageLockModeUserInputBuf))
+    {
+        lockeddata->Stride = (((act_rect.Width * bitspp + 7) / 8) + 3) & ~3;
 
-    if (!buff) return OutOfMemory;
+        bitmap->bitmapbits = GdipAlloc(lockeddata->Stride * act_rect.Height);
+
+        if (!bitmap->bitmapbits) return OutOfMemory;
+
+        lockeddata->Scan0  = bitmap->bitmapbits;
+    }
 
     if (flags & ImageLockModeRead)
     {
@@ -1009,28 +1008,21 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
         }
 
         stat = convert_pixels(act_rect.Width, act_rect.Height,
-            stride, buff, format,
+            lockeddata->Stride, lockeddata->Scan0, format,
             bitmap->stride,
             bitmap->bits + bitmap->stride * act_rect.Y + PIXELFORMATBPP(bitmap->format) * act_rect.X / 8,
             bitmap->format, bitmap->image.palette_entries);
 
         if (stat != Ok)
         {
-            GdipFree(buff);
+            GdipFree(bitmap->bitmapbits);
+            bitmap->bitmapbits = NULL;
             return stat;
         }
     }
 
-    lockeddata->Width  = act_rect.Width;
-    lockeddata->Height = act_rect.Height;
-    lockeddata->PixelFormat = format;
-    lockeddata->Reserved = flags;
-    lockeddata->Stride = stride;
-    lockeddata->Scan0  = buff;
-
     bitmap->lockmode = flags;
     bitmap->numlocks++;
-    bitmap->bitmapbits = buff;
     bitmap->lockx = act_rect.X;
     bitmap->locky = act_rect.Y;
 
@@ -1064,9 +1056,6 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     if(!bitmap->lockmode)
         return WrongState;
 
-    if(lockeddata->Reserved & ImageLockModeUserInputBuf)
-        return NotImplemented;
-
     if(!(lockeddata->Reserved & ImageLockModeWrite)){
         if(!(--bitmap->numlocks))
             bitmap->lockmode = 0;
@@ -1076,7 +1065,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
         return Ok;
     }
 
-    if (!bitmap->bitmapbits)
+    if (!bitmap->bitmapbits && !(lockeddata->Reserved & ImageLockModeUserInputBuf))
     {
         /* we passed a direct reference; no need to do anything */
         bitmap->lockmode = 0;
