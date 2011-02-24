@@ -323,48 +323,85 @@ _get_typeinfo_for_iid(REFIID riid, ITypeInfo**ti) {
 }
 
 /*
- * Determine the number of functions including all inherited functions.
+ * Determine the number of functions including all inherited functions
+ * and well as the size of the vtbl.
  * Note for non-dual dispinterfaces we simply return the size of IDispatch.
  */
-static HRESULT num_of_funcs(ITypeInfo *tinfo, unsigned int *num)
+static HRESULT num_of_funcs(ITypeInfo *tinfo, unsigned int *num,
+                            unsigned int *vtbl_size)
 {
-    HRESULT hres;
+    HRESULT hr;
     TYPEATTR *attr;
     ITypeInfo *tinfo2;
+    UINT inherited_funcs = 0, i;
 
     *num = 0;
-    hres = ITypeInfo_GetTypeAttr(tinfo, &attr);
-    if (hres) {
-        ERR("GetTypeAttr failed with %x\n",hres);
-        return hres;
+    if(vtbl_size) *vtbl_size = 0;
+
+    hr = ITypeInfo_GetTypeAttr(tinfo, &attr);
+    if (hr)
+    {
+        ERR("GetTypeAttr failed with %x\n", hr);
+        return hr;
     }
 
-    if(attr->typekind == TKIND_DISPATCH && (attr->wTypeFlags & TYPEFLAG_FDUAL))
+    if(attr->typekind == TKIND_DISPATCH)
+    {
+        if(attr->wTypeFlags & TYPEFLAG_FDUAL)
+        {
+            HREFTYPE href;
+
+            ITypeInfo_ReleaseTypeAttr(tinfo, attr);
+            hr = ITypeInfo_GetRefTypeOfImplType(tinfo, -1, &href);
+            if(FAILED(hr))
+            {
+                ERR("Unable to get interface href from dual dispinterface\n");
+                return hr;
+            }
+            hr = ITypeInfo_GetRefTypeInfo(tinfo, href, &tinfo2);
+            if(FAILED(hr))
+            {
+                ERR("Unable to get interface from dual dispinterface\n");
+                return hr;
+            }
+            hr = num_of_funcs(tinfo2, num, vtbl_size);
+            ITypeInfo_Release(tinfo2);
+            return hr;
+        }
+        else /* non-dual dispinterface */
+        {
+            /* These will be the size of IDispatchVtbl */
+            *num = attr->cbSizeVft / sizeof(void *);
+            if(vtbl_size) *vtbl_size = attr->cbSizeVft;
+            ITypeInfo_ReleaseTypeAttr(tinfo, attr);
+            return hr;
+        }
+    }
+
+    for (i = 0; i < attr->cImplTypes; i++)
     {
         HREFTYPE href;
-        hres = ITypeInfo_GetRefTypeOfImplType(tinfo, -1, &href);
-        if(FAILED(hres))
-        {
-            ERR("Unable to get interface href from dual dispinterface\n");
-            goto end;
-        }
-        hres = ITypeInfo_GetRefTypeInfo(tinfo, href, &tinfo2);
-        if(FAILED(hres))
-        {
-            ERR("Unable to get interface from dual dispinterface\n");
-            goto end;
-        }
-        hres = num_of_funcs(tinfo2, num);
-        ITypeInfo_Release(tinfo2);
+        ITypeInfo *pSubTypeInfo;
+        UINT sub_funcs;
+
+        hr = ITypeInfo_GetRefTypeOfImplType(tinfo, i, &href);
+        if (FAILED(hr)) goto end;
+        hr = ITypeInfo_GetRefTypeInfo(tinfo, href, &pSubTypeInfo);
+        if (FAILED(hr)) goto end;
+
+        hr = num_of_funcs(pSubTypeInfo, &sub_funcs, NULL);
+        ITypeInfo_Release(pSubTypeInfo);
+
+        if(FAILED(hr)) goto end;
+        inherited_funcs += sub_funcs;
     }
-    else
-    {
-        *num = attr->cbSizeVft / 4;
-    }
+
+    *num = inherited_funcs + attr->cFuncs;
+    if(vtbl_size) *vtbl_size = attr->cbSizeVft;
 
  end:
     ITypeInfo_ReleaseTypeAttr(tinfo, attr);
-    return hres;
+    return hr;
 }
 
 #ifdef __i386__
@@ -1698,7 +1735,7 @@ static HRESULT init_proxy_entry_point(TMProxyImpl *proxy, unsigned int num)
     xasm->lret          = 0xc2;
     xasm->bytestopop    = (nrofargs+2)*4; /* pop args, This, iMethod */
     xasm->nop           = 0x90;
-    proxy->lpvtbl[num]  = xasm;
+    proxy->lpvtbl[fdesc->oVft / sizeof(void *)] = xasm;
 #else
     FIXME("not implemented on non i386\n");
     return E_FAIL;
@@ -1713,7 +1750,7 @@ PSFacBuf_CreateProxy(
 {
     HRESULT	hres;
     ITypeInfo	*tinfo;
-    unsigned int i, nroffuncs;
+    unsigned int i, nroffuncs, vtbl_size;
     TMProxyImpl	*proxy;
     TYPEATTR	*typeattr;
     BOOL        defer_to_dispatch = FALSE;
@@ -1725,7 +1762,9 @@ PSFacBuf_CreateProxy(
 	return hres;
     }
 
-    hres = num_of_funcs(tinfo, &nroffuncs);
+    hres = num_of_funcs(tinfo, &nroffuncs, &vtbl_size);
+    TRACE("Got %d funcs, vtbl size %d\n", nroffuncs, vtbl_size);
+
     if (FAILED(hres)) {
         ERR("Cannot get number of functions for typeinfo %s\n",debugstr_guid(riid));
         ITypeInfo_Release(tinfo);
@@ -1756,7 +1795,7 @@ PSFacBuf_CreateProxy(
     InitializeCriticalSection(&proxy->crit);
     proxy->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": TMProxyImpl.crit");
 
-    proxy->lpvtbl = HeapAlloc(GetProcessHeap(),0,sizeof(LPBYTE)*nroffuncs);
+    proxy->lpvtbl = HeapAlloc(GetProcessHeap(), 0, vtbl_size);
 
     /* if we derive from IDispatch then defer to its proxy for its methods */
     hres = ITypeInfo_GetTypeAttr(tinfo, &typeattr);
