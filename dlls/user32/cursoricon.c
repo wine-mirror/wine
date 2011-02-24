@@ -2198,6 +2198,14 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
         if (bmfh->bfOffBits) offbits = bmfh->bfOffBits - sizeof(BITMAPFILEHEADER);
     }
 
+    bm_type = DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
+                                 &bpp_dummy, &compr_dummy);
+    if (bm_type == -1)
+    {
+        WARN("Invalid bitmap format!\n");
+        goto end;
+    }
+
     size = bitmap_info_size(info, DIB_RGB_COLORS);
     fix_info = HeapAlloc(GetProcessHeap(), 0, size);
     scaled_info = HeapAlloc(GetProcessHeap(), 0, size);
@@ -2209,13 +2217,6 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
     DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
 
     memcpy(scaled_info, fix_info, size);
-    bm_type = DIB_GetBitmapInfo( &fix_info->bmiHeader, &width, &height,
-                                 &bpp_dummy, &compr_dummy);
-    if (bm_type == -1)
-    {
-        WARN("Invalid bitmap format!\n");
-        goto end;
-    }
 
     if(desiredx != 0)
         new_width = desiredx;
