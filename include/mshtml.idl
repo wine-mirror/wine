@@ -126,6 +126,7 @@ interface IHTMLDOMConstructor : IDispatch
     IDispatch *constructor()
 
 interface IHTMLDocument2;
+interface IHTMLElement2;
 interface IHTMLStyleSheetsCollection;
 interface IHTMLFrameBase;
 
@@ -3683,6 +3684,111 @@ interface IHTMLDOMImplementation : IDispatch
         [in] BSTR bstrfeature,
         [optional, in] VARIANT version,
         [retval, out] VARIANT_BOOL *pfHasFeature);
+}
+
+/*****************************************************************************
+ *    DispHTMLDOMAttribute dispinterface
+ */
+[
+    hidden,
+    uuid(3050f564-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLDOMAttribute
+{
+ properties:
+    methods:
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE_NODENAME)]
+    BSTR nodeName();
+
+    [propput, id(DISPID_IHTMLDOMATTRIBUTE_NODEVALUE)]
+    void nodeValue(VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE_NODEVALUE)]
+    VARIANT nodeValue();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE_SPECIFIED)]
+    VARIANT_BOOL specified();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_NAME)]
+    BSTR name();
+
+    [propput, id(DISPID_IHTMLDOMATTRIBUTE2_VALUE)]
+    void value(BSTR v);
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_VALUE)]
+    BSTR value();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_EXPANDO)]
+    VARIANT_BOOL expando();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_NODETYPE)]
+    long nodeType();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_PARENTNODE)]
+    IHTMLDOMNode *parentNode();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_CHILDNODES)]
+    IDispatch *childNodes();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_FIRSTCHILD)]
+    IHTMLDOMNode *firstChild();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_LASTCHILD)]
+    IHTMLDOMNode *lastChild();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_PREVIOUSSIBLING)]
+    IHTMLDOMNode *previousSibling();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_NEXTSIBLING)]
+    IHTMLDOMNode *nextSibling();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_ATTRIBUTES)]
+    IDispatch *attributes();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE2_OWNERDOCUMENT)]
+    IDispatch *ownerDocument();
+
+    [id(DISPID_IHTMLDOMATTRIBUTE2_INSERTBEFORE)]
+    IHTMLDOMNode *insertBefore(
+            [in] IHTMLDOMNode *newChild,
+            [optional, in] VARIANT refChild);
+
+    [id(DISPID_IHTMLDOMATTRIBUTE2_REPLACECHILD)]
+    IHTMLDOMNode *replaceChild(
+            [in] IHTMLDOMNode *newChild,
+            [in] IHTMLDOMNode *oldChild);
+
+    [id(DISPID_IHTMLDOMATTRIBUTE2_REMOVECHILD)]
+    IHTMLDOMNode *removeChild([in] IHTMLDOMNode *oldChild);
+
+    [id(DISPID_IHTMLDOMATTRIBUTE2_APPENDCHILD)]
+    IHTMLDOMNode *appendChild([in] IHTMLDOMNode *newChild);
+
+    [id(DISPID_IHTMLDOMATTRIBUTE2_HASCHILDNODES)]
+    VARIANT_BOOL hasChildNodes();
+
+    [id(DISPID_IHTMLDOMATTRIBUTE2_CLONENODE)]
+    IHTMLDOMAttribute *cloneNode([in] VARIANT_BOOL fDeep);
+
+    [propput, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_NODEVALUE)]
+    void ie8_nodeValue(VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_NODEVALUE)]
+    VARIANT ie8_nodeValue();
+
+    [propput, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_VALUE)]
+    void ie8_value(BSTR v);
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_VALUE)]
+    BSTR ie8_value();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_SPECIFIED)]
+    VARIANT_BOOL ie8_specified();
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_OWNERELEMENT)]
+    IHTMLElement2 *ownerElement();
+
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
 }
 
 /*****************************************************************************
