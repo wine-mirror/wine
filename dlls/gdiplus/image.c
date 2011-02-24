@@ -968,11 +968,14 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
     }
 
     /* Make sure we can convert to the requested format. */
-    stat = convert_pixels(0, 0, 0, NULL, format, 0, NULL, bitmap->format, NULL);
-    if (stat == NotImplemented)
+    if (flags & ImageLockModeRead)
     {
-        FIXME("cannot read bitmap from %x to %x\n", bitmap->format, format);
-        return NotImplemented;
+        stat = convert_pixels(0, 0, 0, NULL, format, 0, NULL, bitmap->format, NULL);
+        if (stat == NotImplemented)
+        {
+            FIXME("cannot read bitmap from %x to %x\n", bitmap->format, format);
+            return NotImplemented;
+        }
     }
 
     /* If we're opening for writing, make sure we'll be able to write back in
@@ -995,14 +998,17 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
 
     if (!buff) return OutOfMemory;
 
-    stat = convert_pixels(bitmap->width, bitmap->height,
-        stride, buff, format,
-        bitmap->stride, bitmap->bits, bitmap->format, bitmap->image.palette_entries);
-
-    if (stat != Ok)
+    if (flags & ImageLockModeRead)
     {
-        GdipFree(buff);
-        return stat;
+        stat = convert_pixels(bitmap->width, bitmap->height,
+            stride, buff, format,
+            bitmap->stride, bitmap->bits, bitmap->format, bitmap->image.palette_entries);
+
+        if (stat != Ok)
+        {
+            GdipFree(buff);
+            return stat;
+        }
     }
 
     lockeddata->Width  = act_rect.Width;
