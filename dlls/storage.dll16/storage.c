@@ -326,8 +326,7 @@ typedef struct {
 
 typedef struct
 {
-        /* IUnknown fields */
-        const IStorage16Vtbl           *lpVtbl;
+        IStorage16                      IStorage16_iface;
         LONG                            ref;
         /* IStorage16 fields */
         SEGPTR                          thisptr; /* pointer to this struct as segmented */
@@ -1055,8 +1054,7 @@ STORAGE_get_free_pps_entry(stream_access16*str) {
 
 typedef struct
 {
-        /* IUnknown fields */
-        const IStream16Vtbl            *lpVtbl;
+        IStream16                       IStream16_iface;
         LONG                            ref;
         /* IStream16 fields */
         SEGPTR                          thisptr; /* pointer to this struct as segmented */
@@ -1066,13 +1064,17 @@ typedef struct
 	stream_access16			str;
 } IStream16Impl;
 
+static inline IStream16Impl *impl_from_IStream16(IStream16 *iface)
+{
+        return CONTAINING_RECORD(iface, IStream16Impl, IStream16_iface);
+}
+
 /******************************************************************************
  *		IStream16_QueryInterface	[STORAGE.518]
  */
-HRESULT CDECL IStream16_fnQueryInterface(
-	IStream16* iface,REFIID refiid,LPVOID *obj
-) {
-	IStream16Impl *This = (IStream16Impl *)iface;
+HRESULT CDECL IStream16_fnQueryInterface(IStream16 *iface, REFIID refiid, void **obj)
+{
+	IStream16Impl *This = impl_from_IStream16(iface);
 	TRACE_(relay)("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
 		*obj = This;
@@ -1085,8 +1087,9 @@ HRESULT CDECL IStream16_fnQueryInterface(
 /******************************************************************************
  * IStream16_AddRef [STORAGE.519]
  */
-ULONG CDECL IStream16_fnAddRef(IStream16* iface) {
-	IStream16Impl *This = (IStream16Impl *)iface;
+ULONG CDECL IStream16_fnAddRef(IStream16 *iface)
+{
+	IStream16Impl *This = impl_from_IStream16(iface);
 	return InterlockedIncrement(&This->ref);
 }
 
@@ -1147,8 +1150,9 @@ _ilockbytes16_flush(SEGPTR lockbytes) {
 /******************************************************************************
  * IStream16_Release [STORAGE.520]
  */
-ULONG CDECL IStream16_fnRelease(IStream16* iface) {
-	IStream16Impl *This = (IStream16Impl *)iface;
+ULONG CDECL IStream16_fnRelease(IStream16 *iface)
+{
+	IStream16Impl *This = impl_from_IStream16(iface);
         ULONG ref;
 
 	if (This->str.hf)
@@ -1174,10 +1178,10 @@ ULONG CDECL IStream16_fnRelease(IStream16* iface) {
  * FIXME
  *    Does not handle 64 bits
  */
-HRESULT CDECL IStream16_fnSeek(
-	IStream16* iface,LARGE_INTEGER offset,DWORD whence,ULARGE_INTEGER *newpos
-) {
-	IStream16Impl *This = (IStream16Impl *)iface;
+HRESULT CDECL IStream16_fnSeek(IStream16 *iface, LARGE_INTEGER offset, DWORD whence,
+	ULARGE_INTEGER *newpos)
+{
+	IStream16Impl *This = impl_from_IStream16(iface);
 	TRACE_(relay)("(%p)->([%d.%d],%d,%p)\n",This,offset.u.HighPart,offset.u.LowPart,whence,newpos);
 
 	switch (whence) {
@@ -1218,10 +1222,9 @@ HRESULT CDECL IStream16_fnSeek(
 /******************************************************************************
  *		IStream16_Read	[STORAGE.521]
  */
-HRESULT CDECL IStream16_fnRead(
-        IStream16* iface,void  *pv,ULONG cb,ULONG  *pcbRead
-) {
-	IStream16Impl *This = (IStream16Impl *)iface;
+HRESULT CDECL IStream16_fnRead(IStream16 *iface, void *pv, ULONG cb, ULONG *pcbRead)
+{
+	IStream16Impl *This = impl_from_IStream16(iface);
 	BYTE	block[BIGSIZE];
 	ULONG	*bytesread=pcbRead,xxread;
 	int	blocknr;
@@ -1280,10 +1283,9 @@ HRESULT CDECL IStream16_fnRead(
 /******************************************************************************
  *		IStream16_Write	[STORAGE.522]
  */
-HRESULT CDECL IStream16_fnWrite(
-        IStream16* iface,const void *pv,ULONG cb,ULONG *pcbWrite
-) {
-	IStream16Impl *This = (IStream16Impl *)iface;
+HRESULT CDECL IStream16_fnWrite(IStream16 *iface, const void *pv, ULONG cb, ULONG *pcbWrite)
+{
+	IStream16Impl *This = impl_from_IStream16(iface);
 	BYTE	block[BIGSIZE];
 	ULONG	*byteswritten=pcbWrite,xxwritten;
 	int	oldsize,newsize,i,curoffset=0,lastblocknr,blocknr,cc;
@@ -1599,7 +1601,7 @@ static void _create_istream16(LPSTREAM16 *str) {
 		}
 	}
 	lpst = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpst) );
-	lpst->lpVtbl	= segstrvt16;
+	lpst->IStream16_iface.lpVtbl = segstrvt16;
 	lpst->ref	= 1;
 	lpst->thisptr	= MapLS( lpst );
 	lpst->str.hf	= NULL;
@@ -1607,14 +1609,17 @@ static void _create_istream16(LPSTREAM16 *str) {
 	*str = (void*)lpst->thisptr;
 }
 
+static inline IStorage16Impl *impl_from_IStorage16(IStorage16 *iface)
+{
+        return CONTAINING_RECORD(iface, IStorage16Impl, IStorage16_iface);
+}
 
 /******************************************************************************
  *		IStorage16_QueryInterface	[STORAGE.500]
  */
-HRESULT CDECL IStorage16_fnQueryInterface(
-	IStorage16* iface,REFIID refiid,LPVOID *obj
-) {
-	IStorage16Impl *This = (IStorage16Impl *)iface;
+HRESULT CDECL IStorage16_fnQueryInterface(IStorage16 *iface, REFIID refiid, void **obj)
+{
+	IStorage16Impl *This = impl_from_IStorage16(iface);
 
 	TRACE_(relay)("(%p)->(%s,%p)\n",This,debugstr_guid(refiid),obj);
 
@@ -1628,16 +1633,18 @@ HRESULT CDECL IStorage16_fnQueryInterface(
 /******************************************************************************
  * IStorage16_AddRef [STORAGE.501]
  */
-ULONG CDECL IStorage16_fnAddRef(IStorage16* iface) {
-	IStorage16Impl *This = (IStorage16Impl *)iface;
+ULONG CDECL IStorage16_fnAddRef(IStorage16 *iface)
+{
+	IStorage16Impl *This = impl_from_IStorage16(iface);
 	return InterlockedIncrement(&This->ref);
 }
 
 /******************************************************************************
  * IStorage16_Release [STORAGE.502]
  */
-ULONG CDECL IStorage16_fnRelease(IStorage16* iface) {
-	IStorage16Impl *This = (IStorage16Impl *)iface;
+ULONG CDECL IStorage16_fnRelease(IStorage16 *iface)
+{
+        IStorage16Impl *This = impl_from_IStorage16(iface);
         ULONG ref;
         ref = InterlockedDecrement(&This->ref);
         if (!ref)
@@ -1651,10 +1658,9 @@ ULONG CDECL IStorage16_fnRelease(IStorage16* iface) {
 /******************************************************************************
  * IStorage16_Stat [STORAGE.517]
  */
-HRESULT CDECL IStorage16_fnStat(
-        LPSTORAGE16 iface,STATSTG16 *pstatstg, DWORD grfStatFlag
-) {
-	IStorage16Impl *This = (IStorage16Impl *)iface;
+HRESULT CDECL IStorage16_fnStat(IStorage16 *iface, STATSTG16 *pstatstg, DWORD grfStatFlag)
+{
+        IStorage16Impl *This = impl_from_IStorage16(iface);
         DWORD len = WideCharToMultiByte( CP_ACP, 0, This->stde.pps_rawname, -1, NULL, 0, NULL, NULL );
         LPSTR nameA = HeapAlloc( GetProcessHeap(), 0, len );
 
@@ -1679,10 +1685,9 @@ HRESULT CDECL IStorage16_fnStat(
 /******************************************************************************
  *		IStorage16_Commit	[STORAGE.509]
  */
-HRESULT CDECL IStorage16_fnCommit(
-        LPSTORAGE16 iface,DWORD commitflags
-) {
-	IStorage16Impl *This = (IStorage16Impl *)iface;
+HRESULT CDECL IStorage16_fnCommit(IStorage16 *iface, DWORD commitflags)
+{
+	IStorage16Impl *This = impl_from_IStorage16(iface);
 	FIXME("(%p)->(0x%08x),STUB!\n",
 		This,commitflags
 	);
@@ -1692,8 +1697,10 @@ HRESULT CDECL IStorage16_fnCommit(
 /******************************************************************************
  * IStorage16_CopyTo [STORAGE.507]
  */
-HRESULT CDECL IStorage16_fnCopyTo(LPSTORAGE16 iface,DWORD ciidExclude,const IID *rgiidExclude,SNB16 SNB16Exclude,IStorage16 *pstgDest) {
-	IStorage16Impl *This = (IStorage16Impl *)iface;
+HRESULT CDECL IStorage16_fnCopyTo(IStorage16 *iface, DWORD ciidExclude, const IID *rgiidExclude,
+	SNB16 SNB16Exclude, IStorage16 *pstgDest)
+{
+	IStorage16Impl *This = impl_from_IStorage16(iface);
 	FIXME("IStorage16(%p)->(0x%08x,%s,%p,%p),stub!\n",
 		This,ciidExclude,debugstr_guid(rgiidExclude),SNB16Exclude,pstgDest
 	);
@@ -1704,10 +1711,10 @@ HRESULT CDECL IStorage16_fnCopyTo(LPSTORAGE16 iface,DWORD ciidExclude,const IID 
 /******************************************************************************
  * IStorage16_CreateStorage [STORAGE.505]
  */
-HRESULT CDECL IStorage16_fnCreateStorage(
-	LPSTORAGE16 iface,LPCOLESTR16 pwcsName,DWORD grfMode,DWORD dwStgFormat,DWORD reserved2, IStorage16 **ppstg
-) {
-	IStorage16Impl *This = (IStorage16Impl *)iface;
+HRESULT CDECL IStorage16_fnCreateStorage(IStorage16 *iface, LPCOLESTR16 pwcsName, DWORD grfMode,
+	DWORD dwStgFormat, DWORD reserved2, IStorage16 **ppstg)
+{
+	IStorage16Impl *This = impl_from_IStorage16(iface);
 	IStorage16Impl*	lpstg;
 	int		ppsent,x;
 	struct storage_pps_entry	stde;
@@ -1773,10 +1780,10 @@ HRESULT CDECL IStorage16_fnCreateStorage(
 /******************************************************************************
  *		IStorage16_CreateStream	[STORAGE.503]
  */
-HRESULT CDECL IStorage16_fnCreateStream(
-	LPSTORAGE16 iface,LPCOLESTR16 pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2, IStream16 **ppstm
-) {
-	IStorage16Impl *This = (IStorage16Impl *)iface;
+HRESULT CDECL IStorage16_fnCreateStream(IStorage16 *iface, LPCOLESTR16 pwcsName, DWORD grfMode,
+	DWORD reserved1, DWORD reserved2, IStream16 **ppstm)
+{
+	IStorage16Impl *This = impl_from_IStorage16(iface);
 	IStream16Impl*	lpstr;
 	int		ppsent,x;
 	struct storage_pps_entry	stde;
@@ -1837,10 +1844,10 @@ HRESULT CDECL IStorage16_fnCreateStream(
 /******************************************************************************
  *		IStorage16_OpenStorage	[STORAGE.506]
  */
-HRESULT CDECL IStorage16_fnOpenStorage(
-	LPSTORAGE16 iface,LPCOLESTR16 pwcsName, IStorage16 *pstgPrio, DWORD grfMode, SNB16 snbExclude, DWORD reserved, IStorage16 **ppstg
-) {
-	IStorage16Impl *This = (IStorage16Impl *)iface;
+HRESULT CDECL IStorage16_fnOpenStorage(IStorage16 *iface, LPCOLESTR16 pwcsName,
+	IStorage16 *pstgPrio, DWORD grfMode, SNB16 snbExclude, DWORD reserved, IStorage16 **ppstg)
+{
+	IStorage16Impl *This = impl_from_IStorage16(iface);
 	IStream16Impl*	lpstg;
 	WCHAR		name[33];
 	int		newpps;
@@ -1862,12 +1869,12 @@ HRESULT CDECL IStorage16_fnOpenStorage(
         MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, name, sizeof(name)/sizeof(WCHAR));
 	newpps = STORAGE_look_for_named_pps(&lpstg->str,This->stde.pps_dir,name);
 	if (newpps==-1) {
-		IStream16_fnRelease((IStream16*)lpstg);
+		IStream16_fnRelease(&lpstg->IStream16_iface);
 		return E_FAIL;
 	}
 
 	if (1!=STORAGE_get_pps_entry(&lpstg->str,newpps,&(lpstg->stde))) {
-		IStream16_fnRelease((IStream16*)lpstg);
+		IStream16_fnRelease(&lpstg->IStream16_iface);
 		return E_FAIL;
 	}
 	lpstg->ppsent		= newpps;
@@ -1877,10 +1884,10 @@ HRESULT CDECL IStorage16_fnOpenStorage(
 /******************************************************************************
  * IStorage16_OpenStream [STORAGE.504]
  */
-HRESULT CDECL IStorage16_fnOpenStream(
-	LPSTORAGE16 iface,LPCOLESTR16 pwcsName, void *reserved1, DWORD grfMode, DWORD reserved2, IStream16 **ppstm
-) {
-	IStorage16Impl *This = (IStorage16Impl *)iface;
+HRESULT CDECL IStorage16_fnOpenStream(IStorage16 *iface, LPCOLESTR16 pwcsName, void *reserved1,
+	DWORD grfMode, DWORD reserved2, IStream16 **ppstm)
+{
+	IStorage16Impl *This = impl_from_IStorage16(iface);
 	IStream16Impl*	lpstr;
 	WCHAR		name[33];
 	int		newpps;
@@ -1902,12 +1909,12 @@ HRESULT CDECL IStorage16_fnOpenStream(
         MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, name, sizeof(name)/sizeof(WCHAR));
 	newpps = STORAGE_look_for_named_pps(&lpstr->str,This->stde.pps_dir,name);
 	if (newpps==-1) {
-		IStream16_fnRelease((IStream16*)lpstr);
+		IStream16_fnRelease(&lpstr->IStream16_iface);
 		return E_FAIL;
 	}
 
 	if (1!=STORAGE_get_pps_entry(&lpstr->str,newpps,&(lpstr->stde))) {
-		IStream16_fnRelease((IStream16*)lpstr);
+		IStream16_fnRelease(&lpstr->IStream16_iface);
 		return E_FAIL;
 	}
 	lpstr->offset.u.LowPart		= 0;
@@ -1973,7 +1980,7 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 		}
 	}
 	lpst = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpst) );
-	lpst->lpVtbl	= segstvt16;
+	lpst->IStorage16_iface.lpVtbl = segstvt16;
 	lpst->str.hf	= NULL;
 	lpst->str.lockbytes	= 0;
 	lpst->ref	= 1;
@@ -2024,7 +2031,7 @@ HRESULT WINAPI StgCreateDocFile16(
 		i++;
 	}
 	if (ret!=1) {
-		IStorage16_fnRelease((IStorage16*)lpstg); /* will remove it */
+		IStorage16_fnRelease(&lpstg->IStorage16_iface);
 		return E_FAIL;
 	}
 
@@ -2079,7 +2086,7 @@ HRESULT WINAPI StgOpenStorage16(
 		i++;
 	}
 	if (ret!=1) {
-		IStorage16_fnRelease((IStorage16*)lpstg); /* will remove it */
+		IStorage16_fnRelease(&lpstg->IStorage16_iface);
 		return E_FAIL;
 	}
 	return S_OK;
@@ -2161,7 +2168,7 @@ HRESULT WINAPI StgOpenStorageOnILockBytes16(
 		i++;
 	}
 	if (ret!=1) {
-		IStorage16_fnRelease((IStorage16*)lpstg); /* will remove it */
+		IStorage16_fnRelease(&lpstg->IStorage16_iface);
 		return E_FAIL;
 	}
 	return S_OK;
