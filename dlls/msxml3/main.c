@@ -25,6 +25,21 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#ifdef HAVE_LIBXML2
+# include <libxml/parser.h>
+# include <libxml/xmlerror.h>
+# ifdef SONAME_LIBXSLT
+#  ifdef HAVE_LIBXSLT_PATTERN_H
+#   include <libxslt/pattern.h>
+#  endif
+#  ifdef HAVE_LIBXSLT_TRANSFORM_H
+#   include <libxslt/transform.h>
+#  endif
+#  include <libxslt/xsltutils.h>
+#  include <libxslt/xsltInternals.h>
+# endif
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"

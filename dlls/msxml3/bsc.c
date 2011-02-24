@@ -22,6 +22,11 @@
 #include "config.h"
 
 #include <stdarg.h>
+#ifdef HAVE_LIBXML2
+# include <libxml/parser.h>
+# include <libxml/xmlerror.h>
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"

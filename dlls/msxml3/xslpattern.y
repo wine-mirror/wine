@@ -25,6 +25,7 @@
 #ifdef HAVE_LIBXML2
 #include "xslpattern.h"
 #include <libxml/xpathInternals.h>
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 

@@ -25,8 +25,6 @@
 #error You must include config.h to use this header
 #endif
 
-#include "wine/debug.h"
-
 #ifndef HAVE_LIBXML2
 #error You must have libxml2 to use this header
 #endif

@@ -25,6 +25,18 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#ifdef HAVE_LIBXML2
+# include <libxml/parser.h>
+# include <libxml/xmlerror.h>
+# include <libxml/tree.h>
+# include <libxml/xmlschemas.h>
+# include <libxml/schemasInternals.h>
+# include <libxml/hash.h>
+# include <libxml/parser.h>
+# include <libxml/parserInternals.h>
+# include <libxml/xmlIO.h>
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -46,14 +58,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 #define DEFAULT_HASHTABLE_SIZE 17
 
 #ifdef HAVE_LIBXML2
-
-#include <libxml/tree.h>
-#include <libxml/xmlschemas.h>
-#include <libxml/schemasInternals.h>
-#include <libxml/hash.h>
-#include <libxml/parser.h>
-#include <libxml/parserInternals.h>
-#include <libxml/xmlIO.h>
 
 xmlDocPtr XDR_to_XSD_doc(xmlDocPtr xdr_doc, xmlChar const* nsURI);
 

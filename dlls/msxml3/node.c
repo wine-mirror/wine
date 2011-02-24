@@ -23,6 +23,23 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+
+#ifdef HAVE_LIBXML2
+# include <libxml/parser.h>
+# include <libxml/xmlerror.h>
+# include <libxml/HTMLtree.h>
+# ifdef SONAME_LIBXSLT
+#  ifdef HAVE_LIBXSLT_PATTERN_H
+#   include <libxslt/pattern.h>
+#  endif
+#  ifdef HAVE_LIBXSLT_TRANSFORM_H
+#   include <libxslt/transform.h>
+#  endif
+#  include <libxslt/xsltutils.h>
+#  include <libxslt/xsltInternals.h>
+# endif
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -32,15 +49,21 @@
 
 #include "msxml_private.h"
 
-#ifdef HAVE_LIBXML2
-# include <libxml/HTMLtree.h>
-#endif
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
+
+#ifdef SONAME_LIBXSLT
+extern void* libxslt_handle;
+# define MAKE_FUNCPTR(f) extern typeof(f) * p##f
+MAKE_FUNCPTR(xsltApplyStylesheet);
+MAKE_FUNCPTR(xsltCleanupGlobals);
+MAKE_FUNCPTR(xsltFreeStylesheet);
+MAKE_FUNCPTR(xsltParseStylesheetDoc);
+# undef MAKE_FUNCPTR
+#endif
 
 /* TODO: get rid of these and use the enum */
 static const WCHAR szBinBase64[]  = {'b','i','n','.','b','a','s','e','6','4',0};

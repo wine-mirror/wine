@@ -159,14 +159,6 @@ BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 
 #ifdef HAVE_LIBXML2
 
-#ifdef HAVE_LIBXML_PARSER_H
-#include <libxml/parser.h>
-#endif
-
-
-
-#include <libxml/xmlerror.h>
-
 extern void schemasInit(void);
 extern void schemasCleanup(void);
 
@@ -359,25 +351,6 @@ static inline HRESULT return_null_bstr(BSTR *p)
     return S_FALSE;
 }
 
-#endif
-
-extern void* libxslt_handle;
-#ifdef SONAME_LIBXSLT
-# ifdef HAVE_LIBXSLT_PATTERN_H
-#  include <libxslt/pattern.h>
-# endif
-# ifdef HAVE_LIBXSLT_TRANSFORM_H
-#  include <libxslt/transform.h>
-# endif
-# include <libxslt/xsltutils.h>
-# include <libxslt/xsltInternals.h>
-
-# define MAKE_FUNCPTR(f) extern typeof(f) * p##f
-MAKE_FUNCPTR(xsltApplyStylesheet);
-MAKE_FUNCPTR(xsltCleanupGlobals);
-MAKE_FUNCPTR(xsltFreeStylesheet);
-MAKE_FUNCPTR(xsltParseStylesheetDoc);
-# undef MAKE_FUNCPTR
 #endif
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,

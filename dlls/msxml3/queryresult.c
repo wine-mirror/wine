@@ -25,6 +25,13 @@
 #include "config.h"
 
 #include <stdarg.h>
+#ifdef HAVE_LIBXML2
+# include <libxml/parser.h>
+# include <libxml/xmlerror.h>
+# include <libxml/xpath.h>
+# include <libxml/xpathInternals.h>
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
@@ -47,9 +54,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
-
-#include <libxml/xpath.h>
-#include <libxml/xpathInternals.h>
 
 int registerNamespaces(xmlXPathContextPtr ctxt);
 xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str);

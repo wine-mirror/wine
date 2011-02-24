@@ -26,6 +26,7 @@
 
 #include "xslpattern.h"
 #include "xslpattern.tab.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 

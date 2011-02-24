@@ -20,8 +20,13 @@
 
 
 #include "config.h"
-#include "wine/debug.h"
+
 #include <assert.h>
+#ifdef HAVE_LIBXML2
+# include <libxml/tree.h>
+#endif
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -30,8 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
  */
 
 #ifdef HAVE_LIBXML2
-
-#include <libxml/tree.h>
 
 static const xmlChar DT_prefix[] = "dt";
 static const xmlChar DT_href[] = "urn:schemas-microsoft-com:datatypes";
