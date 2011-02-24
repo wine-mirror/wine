@@ -265,8 +265,12 @@ static HWND update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
         pt->x = data->client_rect.right - data->client_rect.left - 1 - pt->x;
     MapWindowPoints( hwnd, 0, pt, 1 );
 
-    cursor_window = hwnd;
-    sync_window_cursor( data );
+    if (InterlockedExchangePointer( (void **)&cursor_window, hwnd ) != hwnd ||
+        GetTickCount() - last_time_modified > 100)
+    {
+        cursor_window = hwnd;
+        sync_window_cursor( data );
+    }
     if (hwnd != GetDesktopWindow()) hwnd = GetAncestor( hwnd, GA_ROOT );
 
     /* update the wine server Z-order */
