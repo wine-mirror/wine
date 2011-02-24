@@ -208,10 +208,10 @@ START_TEST(spoolss)
 {
     LPCSTR ptr;
 
-    /* spoolss.dll does not exist on win9x */
+    /* The tests fail on Win7 (see comments in load_function() */
     ptr = load_functions();
     if (ptr) {
-        skip("%s not found\n", ptr);
+        win_skip("%s not found\n", ptr);
         return;
     }
 
