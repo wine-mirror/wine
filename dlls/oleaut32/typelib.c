@@ -1945,7 +1945,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
         (*pptfd)->funcdesc.callconv   =  (pFuncRec->FKCCIC) >> 8 & 0xF;
         (*pptfd)->funcdesc.cParams    =   pFuncRec->nrargs  ;
         (*pptfd)->funcdesc.cParamsOpt =   pFuncRec->nroargs ;
-        (*pptfd)->funcdesc.oVft       =   pFuncRec->VtableOffset;
+        (*pptfd)->funcdesc.oVft       =   pFuncRec->VtableOffset & ~1;
         (*pptfd)->funcdesc.wFuncFlags =   LOWORD(pFuncRec->Flags) ;
 
         MSFT_GetTdesc(pcx,
@@ -3514,7 +3514,7 @@ static void SLTG_DoFuncs(char *pBlk, char *pFirstItem, ITypeInfoImpl *pTI,
 	(*ppFuncDesc)->funcdesc.callconv = pFunc->nacc & 0x7;
 	(*ppFuncDesc)->funcdesc.cParams = pFunc->nacc >> 3;
 	(*ppFuncDesc)->funcdesc.cParamsOpt = (pFunc->retnextopt & 0x7e) >> 1;
-	(*ppFuncDesc)->funcdesc.oVft = pFunc->vtblpos;
+	(*ppFuncDesc)->funcdesc.oVft = pFunc->vtblpos & ~1;
 
 	if(pFunc->magic & SLTG_FUNCTION_FLAGS_PRESENT)
 	    (*ppFuncDesc)->funcdesc.wFuncFlags = pFunc->funcflags;
