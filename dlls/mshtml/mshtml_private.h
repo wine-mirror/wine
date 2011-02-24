@@ -74,6 +74,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispHTMLCommentElement) \
     XDIID(DispHTMLCurrentStyle) \
     XDIID(DispHTMLDocument) \
+    XDIID(DispHTMLDOMAttribute) \
     XDIID(DispHTMLDOMTextNode) \
     XDIID(DispHTMLElementCollection) \
     XDIID(DispHTMLEmbed) \
@@ -111,6 +112,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLDocument3) \
     XIID(IHTMLDocument4) \
     XIID(IHTMLDocument5) \
+    XIID(IHTMLDOMAttribute) \
     XIID(IHTMLDOMChildrenCollection) \
     XIID(IHTMLDOMNode) \
     XIID(IHTMLDOMNode2) \
@@ -740,6 +742,7 @@ HRESULT create_nselem(HTMLDocumentNode*,const WCHAR*,nsIDOMHTMLElement**);
 HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**);
 
 typedef struct {
+    DispatchEx dispex;
     IHTMLDOMAttribute IHTMLDOMAttribute_iface;
 
     LONG ref;
