@@ -1048,7 +1048,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     if(lockeddata->Reserved & ImageLockModeUserInputBuf)
         return NotImplemented;
 
-    if(lockeddata->Reserved & ImageLockModeRead){
+    if(!(lockeddata->Reserved & ImageLockModeWrite)){
         if(!(--bitmap->numlocks))
             bitmap->lockmode = 0;
 

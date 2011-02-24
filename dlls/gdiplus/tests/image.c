@@ -657,7 +657,7 @@ static void test_LockBits(void)
 
     stat = GdipBitmapGetPixel(bm, 2, 3, &color);
     expect(Ok, stat);
-    todo_wine expect(0xffff8800, color);
+    expect(0xffff8800, color);
 
     /* write, conversion */
     stat = GdipBitmapLockBits(bm, &rect, ImageLockModeWrite, PixelFormat32bppARGB, &bd);
