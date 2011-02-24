@@ -291,7 +291,7 @@ static void test_ownerdraw(void)
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "main_window_class";
-    assert(RegisterClass(&cls));
+    ok (RegisterClass(&cls), "RegisterClass failed\n");
 
     parent = CreateWindowEx(0, "main_window_class", NULL,
                             WS_POPUP | WS_VISIBLE,

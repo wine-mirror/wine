@@ -239,8 +239,9 @@ static BOOL do_test( HWND hwnd, int seqnr, const KEV td[] )
     }
     for( kmctr = 0; kmctr < MAXKEYEVENTS && expmsg[kmctr].message; kmctr++)
         ;
-    assert( evtctr <= MAXKEYEVENTS );
-    assert( evtctr == pSendInput(evtctr, &inputs[0], sizeof(INPUT)));
+    ok( evtctr <= MAXKEYEVENTS, "evtctr is above MAXKEYEVENTS\n" );
+    if( evtctr != pSendInput(evtctr, &inputs[0], sizeof(INPUT)))
+       ok (FALSE, "SendInput failed to send some events\n");
     i = 0;
     if (winetest_debug > 1)
         trace("======== key stroke sequence #%d: %s =============\n",

@@ -559,6 +559,7 @@ static HWND create_editcontrol (DWORD style, DWORD exstyle)
 			  style,
 			  10, 10, 300, 300,
 			  NULL, NULL, hinst, NULL);
+    ok (handle != NULL, "CreateWindow EDIT Control failed\n");
     assert (handle);
     if (winetest_interactive)
 	ShowWindow (handle, SW_SHOW);
@@ -570,12 +571,14 @@ static HWND create_child_editcontrol (DWORD style, DWORD exstyle)
     HWND parentWnd;
     HWND editWnd;
     RECT rect;
+    BOOL b;
     
     rect.left = 0;
     rect.top = 0;
     rect.right = 300;
     rect.bottom = 300;
-    assert(AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE));
+    b = AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    ok(b, "AdjustWindowRect failed\n");
     
     parentWnd = CreateWindowEx(0,
                             szEditTextPositionClass,
@@ -584,6 +587,7 @@ static HWND create_child_editcontrol (DWORD style, DWORD exstyle)
                             CW_USEDEFAULT, CW_USEDEFAULT,
                             rect.right - rect.left, rect.bottom - rect.top,
                             NULL, NULL, hinst, NULL);
+    ok (parentWnd != NULL, "CreateWindow EDIT Test failed\n");
     assert(parentWnd);
 
     editWnd = CreateWindowEx(exstyle,
@@ -592,6 +596,7 @@ static HWND create_child_editcontrol (DWORD style, DWORD exstyle)
                             WS_CHILD | style,
                             0, 0, 300, 300,
                             parentWnd, NULL, hinst, NULL);
+    ok (editWnd != NULL, "CreateWindow EDIT Test Text failed\n");
     assert(editWnd);
     if (winetest_interactive)
         ShowWindow (parentWnd, SW_SHOW);
@@ -1572,7 +1577,7 @@ static void test_text_position_style(DWORD style)
     HDC dc;
     TEXTMETRIC metrics;
     INT b, bm, b2, b3;
-    BOOL single_line = !(style & ES_MULTILINE);
+    BOOL xb, single_line = !(style & ES_MULTILINE);
 
     b = GetSystemMetrics(SM_CYBORDER) + 1;
     b2 = 2 * b;
@@ -1580,10 +1585,13 @@ static void test_text_position_style(DWORD style)
     bm = b2 - 1;
     
     /* Get a stock font for which we can determine the metrics */
-    assert(font = GetStockObject(SYSTEM_FONT));
-    assert(dc = GetDC(NULL));
+    font = GetStockObject(SYSTEM_FONT);
+    ok (font != NULL, "GetStockObjcet SYSTEM_FONT failed\n");
+    dc = GetDC(NULL);
+    ok (dc != NULL, "GetDC() failed\n");
     oldFont = SelectObject(dc, font);
-    assert(GetTextMetrics(dc, &metrics));    
+    xb = GetTextMetrics(dc, &metrics);
+    ok (xb, "GetTextMetrics failed\n");
     SelectObject(dc, oldFont);
     ReleaseDC(NULL, dc);
     
@@ -2448,10 +2456,14 @@ static void test_dialogmode(void)
 
 START_TEST(edit)
 {
+    BOOL b;
+
     init_function_pointers();
 
     hinst = GetModuleHandleA(NULL);
-    assert(RegisterWindowClasses());
+    b = RegisterWindowClasses();
+    ok (b, "RegisterWindowClasses failed\n");
+    if (!b) return;
 
     test_edit_control_1();
     test_edit_control_2();

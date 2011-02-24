@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -63,17 +62,19 @@ static void flush_events(void)
 static void create_dde_window(HWND *hwnd, LPCSTR name, WNDPROC wndproc)
 {
     WNDCLASSA wcA;
+    ATOM aclass;
 
     memset(&wcA, 0, sizeof(wcA));
     wcA.lpfnWndProc = wndproc;
     wcA.lpszClassName = name;
     wcA.hInstance = GetModuleHandleA(0);
-    assert(RegisterClassA(&wcA));
+    aclass = RegisterClassA(&wcA);
+    ok (aclass, "RegisterClass failed\n");
 
     *hwnd = CreateWindowExA(0, name, NULL, WS_POPUP,
                             500, 500, CW_USEDEFAULT, CW_USEDEFAULT,
                             GetDesktopWindow(), 0, GetModuleHandleA(0), NULL);
-    assert(*hwnd);
+    ok(*hwnd != NULL, "CreateWindowExA failed\n");
 }
 
 static void destroy_dde_window(HWND *hwnd, LPCSTR name)

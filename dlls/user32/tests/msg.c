@@ -3367,7 +3367,7 @@ static void test_mdi_messages(void)
     RECT rc;
     HMENU hMenu = CreateMenu();
 
-    assert(mdi_RegisterWindowClasses());
+    if (!mdi_RegisterWindowClasses()) assert(0);
 
     flush_sequence();
 
