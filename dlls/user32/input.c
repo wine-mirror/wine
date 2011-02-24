@@ -231,7 +231,22 @@ BOOL WINAPI GetCursorInfo( PCURSORINFO pci )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetCursorPos( INT x, INT y )
 {
-    return USER_Driver->pSetCursorPos( x, y );
+    BOOL ret;
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = SET_CURSOR_POS;
+        req->x     = x;
+        req->y     = y;
+        if ((ret = !wine_server_call( req )))
+        {
+            x = reply->new_x;
+            y = reply->new_y;
+        }
+    }
+    SERVER_END_REQ;
+    if (ret) ret = USER_Driver->pSetCursorPos( x, y );
+    return ret;
 }
 
 

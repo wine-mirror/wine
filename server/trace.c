@@ -3871,12 +3871,16 @@ static void dump_set_cursor_request( const struct set_cursor_request *req )
     fprintf( stderr, " flags=%08x", req->flags );
     fprintf( stderr, ", handle=%08x", req->handle );
     fprintf( stderr, ", show_count=%d", req->show_count );
+    fprintf( stderr, ", x=%d", req->x );
+    fprintf( stderr, ", y=%d", req->y );
 }
 
 static void dump_set_cursor_reply( const struct set_cursor_reply *req )
 {
     fprintf( stderr, " prev_handle=%08x", req->prev_handle );
     fprintf( stderr, ", prev_count=%d", req->prev_count );
+    fprintf( stderr, ", new_x=%d", req->new_x );
+    fprintf( stderr, ", new_y=%d", req->new_y );
 }
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {

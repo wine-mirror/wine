@@ -4769,15 +4769,20 @@ struct set_cursor_request
     unsigned int   flags;
     user_handle_t  handle;
     int            show_count;
+    int            x;
+    int            y;
 };
 struct set_cursor_reply
 {
     struct reply_header __header;
     user_handle_t  prev_handle;
     int            prev_count;
+    int            new_x;
+    int            new_y;
 };
 #define SET_CURSOR_HANDLE 0x01
 #define SET_CURSOR_COUNT  0x02
+#define SET_CURSOR_POS    0x04
 
 
 enum request
@@ -5525,6 +5530,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 412
+#define SERVER_PROTOCOL_VERSION 413
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

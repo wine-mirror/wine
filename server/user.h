@@ -63,6 +63,8 @@ struct desktop
     struct timeout_user *close_timeout;    /* timeout before closing the desktop */
     struct thread_input *foreground_input; /* thread input of foreground thread */
     unsigned int         users;            /* processes and threads using this desktop */
+    int                  cursor_x;         /* cursor position */
+    int                  cursor_y;
 };
 
 /* user handles functions */
