@@ -199,7 +199,6 @@ static const struct object_ops thread_input_ops =
 };
 
 /* pointer to input structure of foreground thread */
-static struct thread_input *foreground_input;
 static unsigned int last_input_time;
 
 static void free_message( struct message *msg );
@@ -894,9 +893,12 @@ static void thread_input_destroy( struct object *obj )
 {
     struct thread_input *input = (struct thread_input *)obj;
 
-    if (foreground_input == input) foreground_input = NULL;
     empty_msg_list( &input->msg_list );
-    if (input->desktop) release_object( input->desktop );
+    if (input->desktop)
+    {
+        if (input->desktop->foreground_input == input) input->desktop->foreground_input = NULL;
+        release_object( input->desktop );
+    }
 }
 
 /* fix the thread input data when a window is destroyed */
@@ -1704,8 +1706,9 @@ DECL_HANDLER(send_hardware_message)
 {
     struct message *msg;
     struct thread *thread = NULL;
+    struct desktop *desktop = NULL;
     struct hardware_msg_data *data;
-    struct thread_input *input = foreground_input;
+    struct thread_input *input;
 
     if (req->id)
     {
@@ -1717,15 +1720,18 @@ DECL_HANDLER(send_hardware_message)
             return;
         }
         input = thread->queue->input;
+        desktop = (struct desktop *)grab_object( input->desktop );
         reply->cursor = input->cursor;
         reply->count  = input->cursor_count;
     }
-
-    if (!req->msg || !(data = mem_alloc( sizeof(*data) )))
+    else
     {
-        if (thread) release_object( thread );
-        return;
+        if (!(desktop = get_thread_desktop( current, 0 ))) return;
+        input = desktop->foreground_input;
     }
+
+    if (!req->msg || !(data = mem_alloc( sizeof(*data) ))) goto done;
+
     memset( data, 0, sizeof(*data) );
     data->x    = req->x;
     data->y    = req->y;
@@ -1746,7 +1752,9 @@ DECL_HANDLER(send_hardware_message)
     }
     else free( data );
 
+done:
     if (thread) release_object( thread );
+    release_object( desktop );
 }
 
 /* post a quit message to the current queue */
@@ -2035,14 +2043,24 @@ DECL_HANDLER(attach_thread_input)
 DECL_HANDLER(get_thread_input)
 {
     struct thread *thread = NULL;
+    struct desktop *desktop;
     struct thread_input *input;
 
     if (req->tid)
     {
         if (!(thread = get_thread_from_id( req->tid ))) return;
+        if (!(desktop = get_thread_desktop( thread, 0 )))
+        {
+            release_object( thread );
+            return;
+        }
         input = thread->queue ? thread->queue->input : NULL;
     }
-    else input = foreground_input;  /* get the foreground thread info */
+    else
+    {
+        if (!(desktop = get_thread_desktop( current, 0 ))) return;
+        input = desktop->foreground_input;  /* get the foreground thread info */
+    }
 
     if (input)
     {
@@ -2058,8 +2076,9 @@ DECL_HANDLER(get_thread_input)
     }
 
     /* foreground window is active window of foreground thread */
-    reply->foreground = foreground_input ? foreground_input->active : 0;
+    reply->foreground = desktop->foreground_input ? desktop->foreground_input->active : 0;
     if (thread) release_object( thread );
+    release_object( desktop );
 }
 
 
@@ -2100,21 +2119,26 @@ DECL_HANDLER(set_key_state)
 /* set the system foreground window */
 DECL_HANDLER(set_foreground_window)
 {
-    struct thread *thread;
+    struct thread *thread = NULL;
+    struct desktop *desktop;
     struct msg_queue *queue = get_current_queue();
 
-    reply->previous = foreground_input ? foreground_input->active : 0;
-    reply->send_msg_old = (reply->previous && foreground_input != queue->input);
+    if (!(desktop = get_thread_desktop( current, 0 ))) return;
+    reply->previous = desktop->foreground_input ? desktop->foreground_input->active : 0;
+    reply->send_msg_old = (reply->previous && desktop->foreground_input != queue->input);
     reply->send_msg_new = FALSE;
 
     if (is_top_level_window( req->handle ) &&
-        ((thread = get_window_thread( req->handle ))))
+        ((thread = get_window_thread( req->handle ))) &&
+        (thread->queue->input->desktop == desktop))
     {
-        foreground_input = thread->queue->input;
-        reply->send_msg_new = (foreground_input != queue->input);
-        release_object( thread );
+        desktop->foreground_input = thread->queue->input;
+        reply->send_msg_new = (desktop->foreground_input != queue->input);
     }
     else set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
+
+    if (thread) release_object( thread );
+    release_object( desktop );
 }
 
 

@@ -53,15 +53,16 @@ struct winstation
 
 struct desktop
 {
-    struct object        obj;            /* object header */
-    unsigned int         flags;          /* desktop flags */
-    struct winstation   *winstation;     /* winstation this desktop belongs to */
-    struct list          entry;          /* entry in winstation list of desktops */
-    struct window       *top_window;     /* desktop window for this desktop */
-    struct window       *msg_window;     /* HWND_MESSAGE top window */
-    struct hook_table   *global_hooks;   /* table of global hooks on this desktop */
-    struct timeout_user *close_timeout;  /* timeout before closing the desktop */
-    unsigned int         users;          /* processes and threads using this desktop */
+    struct object        obj;              /* object header */
+    unsigned int         flags;            /* desktop flags */
+    struct winstation   *winstation;       /* winstation this desktop belongs to */
+    struct list          entry;            /* entry in winstation list of desktops */
+    struct window       *top_window;       /* desktop window for this desktop */
+    struct window       *msg_window;       /* HWND_MESSAGE top window */
+    struct hook_table   *global_hooks;     /* table of global hooks on this desktop */
+    struct timeout_user *close_timeout;    /* timeout before closing the desktop */
+    struct thread_input *foreground_input; /* thread input of foreground thread */
+    unsigned int         users;            /* processes and threads using this desktop */
 };
 
 /* user handles functions */
