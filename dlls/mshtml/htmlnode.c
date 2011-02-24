@@ -1033,6 +1033,9 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
         *ret = &comment->node;
         break;
     }
+    case ATTRIBUTE_NODE:
+        ERR("Called on attribute node\n");
+        return E_UNEXPECTED;
     default: {
         HTMLDOMNode *node;
 
