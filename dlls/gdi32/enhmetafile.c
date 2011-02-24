@@ -1133,6 +1133,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	const EMREXTTEXTOUTA *pExtTextOutA = (const EMREXTTEXTOUTA *)mr;
 	RECT rc;
         const INT *dx = NULL;
+        int old_mode;
 
 	rc.left = pExtTextOutA->emrtext.rcl.left;
 	rc.top = pExtTextOutA->emrtext.rcl.top;
@@ -1141,6 +1142,11 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         TRACE("EMR_EXTTEXTOUTA: x,y = %d, %d. rect = %d, %d - %d, %d. flags %08x\n",
               pExtTextOutA->emrtext.ptlReference.x, pExtTextOutA->emrtext.ptlReference.y,
               rc.left, rc.top, rc.right, rc.bottom, pExtTextOutA->emrtext.fOptions);
+
+        old_mode = SetGraphicsMode(hdc, pExtTextOutA->iGraphicsMode);
+        /* Reselect the font back into the dc so that the transformation
+           gets updated. */
+        SelectObject(hdc, GetCurrentObject(hdc, OBJ_FONT));
 
         /* Linux version of pstoedit produces EMFs with offDx set to 0.
          * These files can be enumerated and played under Win98 just
@@ -1153,6 +1159,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	    pExtTextOutA->emrtext.fOptions, &rc,
 	    (LPCSTR)((const BYTE *)mr + pExtTextOutA->emrtext.offString), pExtTextOutA->emrtext.nChars,
 	    dx);
+
+        SetGraphicsMode(hdc, old_mode);
 	break;
     }
 
@@ -1161,6 +1169,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	const EMREXTTEXTOUTW *pExtTextOutW = (const EMREXTTEXTOUTW *)mr;
 	RECT rc;
         const INT *dx = NULL;
+        int old_mode;
 
 	rc.left = pExtTextOutW->emrtext.rcl.left;
 	rc.top = pExtTextOutW->emrtext.rcl.top;
@@ -1169,6 +1178,11 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         TRACE("EMR_EXTTEXTOUTW: x,y = %d, %d.  rect = %d, %d - %d, %d. flags %08x\n",
               pExtTextOutW->emrtext.ptlReference.x, pExtTextOutW->emrtext.ptlReference.y,
               rc.left, rc.top, rc.right, rc.bottom, pExtTextOutW->emrtext.fOptions);
+
+        old_mode = SetGraphicsMode(hdc, pExtTextOutW->iGraphicsMode);
+        /* Reselect the font back into the dc so that the transformation
+           gets updated. */
+        SelectObject(hdc, GetCurrentObject(hdc, OBJ_FONT));
 
         /* Linux version of pstoedit produces EMFs with offDx set to 0.
          * These files can be enumerated and played under Win98 just
@@ -1181,6 +1195,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	    pExtTextOutW->emrtext.fOptions, &rc,
 	    (LPCWSTR)((const BYTE *)mr + pExtTextOutW->emrtext.offString), pExtTextOutW->emrtext.nChars,
 	    dx);
+
+        SetGraphicsMode(hdc, old_mode);
 	break;
     }
 
