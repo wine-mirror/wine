@@ -483,7 +483,169 @@ static const IHTMLElement3Vtbl HTMLElement3Vtbl = {
     HTMLElement3_get_glyphMode
 };
 
+static inline HTMLElement *impl_from_IHTMLElement4(IHTMLElement4 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLElement, IHTMLElement4_iface);
+}
+
+static HRESULT WINAPI HTMLElement4_QueryInterface(IHTMLElement4 *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    return IHTMLElement_QueryInterface(&This->IHTMLElement_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLElement4_AddRef(IHTMLElement4 *iface)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    return IHTMLElement_AddRef(&This->IHTMLElement_iface);
+}
+
+static ULONG WINAPI HTMLElement4_Release(IHTMLElement4 *iface)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    return IHTMLElement_Release(&This->IHTMLElement_iface);
+}
+
+static HRESULT WINAPI HTMLElement4_GetTypeInfoCount(IHTMLElement4 *iface, UINT *pctinfo)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLElement4_GetTypeInfo(IHTMLElement4 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLElement4_GetIDsOfNames(IHTMLElement4 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLElement4_Invoke(IHTMLElement4 *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLElement4_put_onmousewheel(IHTMLElement4 *iface, VARIANT v)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_get_onmousewheel(IHTMLElement4 *iface, VARIANT *p)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_normalize(IHTMLElement4 *iface)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_getAttributeNode(IHTMLElement4 *iface, BSTR bstrname, IHTMLDOMAttribute **ppAttribute)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrname), ppAttribute);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_setAttributeNode(IHTMLElement4 *iface, IHTMLDOMAttribute *pattr,
+        IHTMLDOMAttribute **ppretAttribute)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%p %p)\n", This, pattr, ppretAttribute);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_removeAttributeNode(IHTMLElement4 *iface, IHTMLDOMAttribute *pattr,
+        IHTMLDOMAttribute **ppretAttribute)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%p %p)\n", This, pattr, ppretAttribute);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_put_onbeforeactivate(IHTMLElement4 *iface, VARIANT v)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_get_onbeforeactivate(IHTMLElement4 *iface, VARIANT *p)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_put_onfocusin(IHTMLElement4 *iface, VARIANT v)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_get_onfocusin(IHTMLElement4 *iface, VARIANT *p)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_put_onfocusout(IHTMLElement4 *iface, VARIANT v)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLElement4_get_onfocusout(IHTMLElement4 *iface, VARIANT *p)
+{
+    HTMLElement *This = impl_from_IHTMLElement4(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IHTMLElement4Vtbl HTMLElement4Vtbl = {
+    HTMLElement4_QueryInterface,
+    HTMLElement4_AddRef,
+    HTMLElement4_Release,
+    HTMLElement4_GetTypeInfoCount,
+    HTMLElement4_GetTypeInfo,
+    HTMLElement4_GetIDsOfNames,
+    HTMLElement4_Invoke,
+    HTMLElement4_put_onmousewheel,
+    HTMLElement4_get_onmousewheel,
+    HTMLElement4_normalize,
+    HTMLElement4_getAttributeNode,
+    HTMLElement4_setAttributeNode,
+    HTMLElement4_removeAttributeNode,
+    HTMLElement4_put_onbeforeactivate,
+    HTMLElement4_get_onbeforeactivate,
+    HTMLElement4_put_onfocusin,
+    HTMLElement4_get_onfocusin,
+    HTMLElement4_put_onfocusout,
+    HTMLElement4_get_onfocusout
+};
+
 void HTMLElement3_Init(HTMLElement *This)
 {
     This->IHTMLElement3_iface.lpVtbl = &HTMLElement3Vtbl;
+    This->IHTMLElement4_iface.lpVtbl = &HTMLElement4Vtbl;
 }

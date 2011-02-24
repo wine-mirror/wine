@@ -554,6 +554,7 @@ typedef struct {
     IHTMLElement  IHTMLElement_iface;
     IHTMLElement2 IHTMLElement2_iface;
     IHTMLElement3 IHTMLElement3_iface;
+    IHTMLElement4 IHTMLElement4_iface;
 
     nsIDOMHTMLElement *nselem;
 } HTMLElement;

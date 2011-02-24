@@ -145,111 +145,75 @@ static const IID * const doc_obj_iids[] = {
     NULL
 };
 
+#define ELEM_IFACES \
+    &IID_IHTMLDOMNode,  \
+    &IID_IHTMLDOMNode2, \
+    &IID_IHTMLElement,  \
+    &IID_IHTMLElement2, \
+    &IID_IHTMLElement3, \
+    &IID_IHTMLElement4, \
+    &IID_IDispatchEx
+
 static const IID * const elem_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
-    &IID_IDispatchEx,
+    ELEM_IFACES,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const body_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLTextContainer,
     &IID_IHTMLBodyElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const anchor_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLAnchorElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const input_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLInputElement,
     &IID_IHTMLInputTextElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const select_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLSelectElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const textarea_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLTextAreaElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const option_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLOptionElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const table_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLTable,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const script_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLScriptElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
@@ -277,135 +241,80 @@ static const IID * const window_iids[] = {
 };
 
 static const IID * const comment_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLCommentElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const img_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
-    &IID_IDispatchEx,
+    ELEM_IFACES,
     &IID_IHTMLImgElement,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const tr_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
-    &IID_IDispatchEx,
+    ELEM_IFACES,
     &IID_IHTMLTableRow,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const td_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
-    &IID_IDispatchEx,
+    ELEM_IFACES,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const frame_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLFrameBase,
     &IID_IHTMLFrameBase2,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const object_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLObjectElement,
-    &IID_IDispatchEx,
     /* FIXME: No IConnectionPointContainer */
     NULL
 };
 
 static const IID * const embed_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLEmbedElement,
-    &IID_IDispatchEx,
     /* FIXME: No IConnectionPointContainer */
     NULL
 };
 
 static const IID * const iframe_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLFrameBase,
     &IID_IHTMLFrameBase2,
     &IID_IHTMLIFrameElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const form_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLFormElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const styleelem_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLStyleElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
 
 static const IID * const generic_iids[] = {
-    &IID_IHTMLDOMNode,
-    &IID_IHTMLDOMNode2,
-    &IID_IHTMLElement,
-    &IID_IHTMLElement2,
-    &IID_IHTMLElement3,
+    ELEM_IFACES,
     &IID_IHTMLGenericElement,
-    &IID_IDispatchEx,
     &IID_IConnectionPointContainer,
     NULL
 };
