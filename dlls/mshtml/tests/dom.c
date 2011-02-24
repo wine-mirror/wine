@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008 Jacek Caban for CodeWeavers
+ * Copyright 2007-2011 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -222,6 +222,12 @@ static const IID * const text_iids[] = {
     &IID_IHTMLDOMNode,
     &IID_IHTMLDOMNode2,
     &IID_IHTMLDOMTextNode,
+    NULL
+};
+
+static const IID * const attr_iids[] = {
+    &IID_IHTMLDOMAttribute,
+    &IID_IDispatchEx,
     NULL
 };
 
@@ -468,6 +474,18 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
     }
 }
 
+#define test_no_iface(a,b) _test_no_iface(__LINE__,a,b)
+static void _test_no_iface(unsigned line, IUnknown *iface, REFIID iid)
+{
+    IUnknown *unk;
+    HRESULT hres;
+
+    unk = (void*)0xdeadbeef;
+    hres = IUnknown_QueryInterface(iface, iid, (void**)&unk);
+    ok_(__FILE__,line)(hres == E_NOINTERFACE, "hres = %08x, expected E_NOINTERFACE\n", hres);
+    ok_(__FILE__,line)(!unk, "unk = %p\n", unk);
+}
+
 #define test_get_dispid(u,id) _test_get_dispid(__LINE__,u,id)
 static BOOL _test_get_dispid(unsigned line, IUnknown *unk, IID *iid)
 {
@@ -586,6 +604,17 @@ static IHTMLElement3 *_get_elem3_iface(unsigned line, IUnknown *unk)
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement3, (void**)&elem);
     ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLElement3: %08x\n", hres);
+    return elem;
+}
+
+#define get_elem4_iface(u) _get_elem4_iface(__LINE__,u)
+static IHTMLElement4 *_get_elem4_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLElement4 *elem;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLElement4, (void**)&elem);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLElement4: %08x\n", hres);
     return elem;
 }
 
@@ -2793,6 +2822,27 @@ static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
     ok(hres == S_OK, "Could not get IHTMLDocument2 iface: %08x\n", hres);
 
     return doc;
+}
+
+#define get_elem_attr_node(a,b,c) _get_elem_attr_node(__LINE__,a,b,c)
+static IHTMLDOMAttribute *_get_elem_attr_node(unsigned line, IUnknown *unk, const char *attr_name, BOOL expect_success)
+{
+    IHTMLElement4 *elem = _get_elem4_iface(line, unk);
+    BSTR str = a2bstr(attr_name);
+    IHTMLDOMAttribute *attr;
+    HRESULT hres;
+
+    attr = (void*)0xdeadbeef;
+    hres = IHTMLElement4_getAttributeNode(elem, str, &attr);
+    ok_(__FILE__,line)(hres == S_OK, "getAttributeNode failed: %08x\n", hres);
+    if(expect_success)
+        ok_(__FILE__,line)(attr != NULL, "attr = NULL\n");
+    else
+        ok_(__FILE__,line)(!attr, "attr = %p\n", attr);
+
+    IHTMLElement4_Release(elem);
+    SysFreeString(str);
+    return attr;
 }
 
 #define get_window_doc(e) _get_window_doc(__LINE__,e)
@@ -6584,6 +6634,26 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLWindow2_Release(window);
 }
 
+static void test_attr(IHTMLElement *elem)
+{
+    IHTMLDOMAttribute *attr, *attr2;
+
+    get_elem_attr_node((IUnknown*)elem, "noattr", FALSE);
+
+    attr = get_elem_attr_node((IUnknown*)elem, "id", TRUE);
+
+    test_disp((IUnknown*)attr, &DIID_DispHTMLDOMAttribute, "[object]");
+    test_ifaces((IUnknown*)attr, attr_iids);
+    test_no_iface((IUnknown*)attr, &IID_IHTMLDOMNode);
+
+    attr2 = get_elem_attr_node((IUnknown*)elem, "id", TRUE);
+    todo_wine
+    ok(iface_cmp((IUnknown*)attr, (IUnknown*)attr2), "attr != attr2\n");
+    IHTMLDOMAttribute_Release(attr2);
+
+    IHTMLDOMAttribute_Release(attr);
+}
+
 static void test_elems2(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem, *elem2, *div;
@@ -6641,6 +6711,8 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_form_encoding((IUnknown*)elem, "multipart/form-data");
         IHTMLElement_Release(elem);
     }
+
+    test_attr(div);
 
     IHTMLElement_Release(div);
 }
