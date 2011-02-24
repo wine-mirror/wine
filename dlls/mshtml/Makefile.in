@@ -10,6 +10,7 @@ C_SRCS = \
 	editor.c \
 	hlink.c \
 	htmlanchor.c \
+	htmlattr.c \
 	htmlbody.c \
 	htmlcomment.c \
 	htmlcurstyle.c \

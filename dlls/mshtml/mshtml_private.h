@@ -739,6 +739,15 @@ HRESULT create_nselem(HTMLDocumentNode*,const WCHAR*,nsIDOMHTMLElement**);
 
 HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**);
 
+typedef struct {
+    IHTMLDOMAttribute IHTMLDOMAttribute_iface;
+
+    LONG ref;
+    nsIDOMAttr *nsattr;
+} HTMLDOMAttribute;
+
+HRESULT HTMLDOMAttribute_Create(HTMLDocumentNode*,nsIDOMAttr*,HTMLDOMAttribute**);
+
 HRESULT HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLElement**);
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLElement**);
 HRESULT HTMLAnchorElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**);

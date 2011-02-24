@@ -89,6 +89,7 @@ interface nsIDOMCSSStyleSheet;
 interface nsIDOMDocumentView;
 interface nsIDocumentObserver;
 interface nsIDOMWindow;
+interface nsIDOMElement;
 
 interface IMoniker;
 
@@ -111,7 +112,6 @@ typedef nsISupports nsIDOMBarProp;
 typedef nsISupports nsIPrompt;
 typedef nsISupports nsIAuthPrompt;
 typedef nsISupports nsIDOMNamedNodeMap;
-typedef nsISupports nsIDOMAttr;
 typedef nsISupports nsIDOMDocumentType;
 typedef nsISupports nsIDOMDOMImplementation;
 typedef nsISupports nsIDOMCDATASection;
@@ -671,6 +671,20 @@ interface nsIDOMNode : nsISupports
     nsresult SetPrefix(const nsAString *aPrefix);
     nsresult GetLocalName(nsAString *aLocalName);
     nsresult HasAttributes(PRBool *_retval);
+}
+
+[
+    object,
+    uuid(a6cf9070-15b3-11d2-932e-00805f8add32),
+    local
+]
+interface nsIDOMAttr : nsIDOMNode
+{
+    nsresult GetName(nsAString *aName);
+    nsresult GetSpecified(PRBool *aSpecified);
+    nsresult GetValue(nsAString *aValue);
+    nsresult SetValue(const nsAString *aValue);
+    nsresult GetOwnerElement(nsIDOMElement **aOwnerElement);
 }
 
 [
