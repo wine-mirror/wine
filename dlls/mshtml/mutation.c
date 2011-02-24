@@ -547,7 +547,7 @@ static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocu
 {
     HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
 
-    TRACE("\n");
+    TRACE("(%p)\n", This);
 
     if(This->skip_mutation_notif)
         return;
