@@ -854,7 +854,7 @@ static void test_LoadImage(void)
     DWORD error, bytes_written;
     CURSORICONFILEDIR *icon_data;
     CURSORICONFILEDIRENTRY *icon_entry;
-    BITMAPINFOHEADER *icon_header;
+    BITMAPINFOHEADER *icon_header, *bitmap_header;
     ICONINFO icon_info;
 
 #define ICON_WIDTH 32
@@ -981,13 +981,17 @@ static void test_LoadImage(void)
     test_LoadImageFile("GIF (2x2 pixel)", gif4pixel, sizeof(gif4pixel), "gif", 0);
     test_LoadImageFile("JPG", jpgimage, sizeof(jpgimage), "jpg", 0);
     test_LoadImageFile("PNG", pngimage, sizeof(pngimage), "png", 0);
+
     /* Check failure for broken BMP images */
-    bmpimage[0x14]++; /* biHeight > 65535 */
+    bitmap_header = (BITMAPINFOHEADER *)(bmpimage + sizeof(BITMAPFILEHEADER));
+
+    bitmap_header->biHeight = 65536;
     test_LoadImageFile("BMP (too high)", bmpimage, sizeof(bmpimage), "bmp", 0);
-    bmpimage[0x14]--;
-    bmpimage[0x18]++; /* biWidth > 65535 */
+    bitmap_header->biHeight = 1;
+
+    bitmap_header->biWidth = 65536;
     test_LoadImageFile("BMP (too wide)", bmpimage, sizeof(bmpimage), "bmp", 0);
-    bmpimage[0x18]--;
+    bitmap_header->biWidth = 1;
 }
 
 static void test_CreateIconFromResource(void)
