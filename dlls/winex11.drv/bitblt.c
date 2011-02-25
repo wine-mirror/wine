@@ -1311,7 +1311,8 @@ static BOOL client_side_dib_copy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc
     }
     if (dstDib.dsBm.bmBitsPixel <= 8)
     {
-      FIXME("potential optimization: client-side color-index mode DIB copy\n");
+      static BOOL fixme_once;
+      if(!fixme_once++) FIXME("potential optimization: client-side color-index mode DIB copy\n");
       return FALSE;
     }
     if (!(srcDib.dsBmih.biCompression == BI_BITFIELDS &&
