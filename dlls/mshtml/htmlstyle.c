@@ -1079,8 +1079,58 @@ static HRESULT WINAPI HTMLStyle_get_backgroundPositionX(IHTMLStyle *iface, VARIA
 static HRESULT WINAPI HTMLStyle_put_backgroundPositionY(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
+    WCHAR buf[14], *pos_val;
+    nsAString pos_str;
+    const WCHAR *val;
+    DWORD val_len;
+    HRESULT hres;
+
     TRACE("(%p)->(v%d)\n", This, V_VT(&v));
-    return set_nsstyle_attr_var(This->nsstyle, STYLEID_BACKGROUND_POSITION_Y, &v, 0);
+
+    hres = var_to_styleval(&v, buf, ATTR_FIX_PX, &val);
+    if(FAILED(hres))
+        return hres;
+
+    val_len = val ? strlenW(val) : 0;
+
+    nsAString_Init(&pos_str, NULL);
+    hres = get_nsstyle_attr_nsval(This->nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
+    if(SUCCEEDED(hres)) {
+        const PRUnichar *pos, *space;
+        DWORD posx_len;
+
+        nsAString_GetData(&pos_str, &pos);
+        space = strchrW(pos, ' ');
+        if(space) {
+            space++;
+        }else {
+            static const WCHAR zero_pxW[] = {'0','p','x',' ',0};
+
+            TRACE("no space in %s\n", debugstr_w(pos));
+            pos = zero_pxW;
+            space = pos + sizeof(zero_pxW)/sizeof(WCHAR)-1;
+        }
+
+        posx_len = space-pos;
+
+        pos_val = heap_alloc((posx_len+val_len+1)*sizeof(WCHAR));
+        if(pos_val) {
+            memcpy(pos_val, pos, posx_len*sizeof(WCHAR));
+            if(val_len)
+                memcpy(pos_val+posx_len, val, val_len*sizeof(WCHAR));
+            pos_val[posx_len+val_len] = 0;
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
+    }
+    nsAString_Finish(&pos_str);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("setting position to %s\n", debugstr_w(pos_val));
+    hres = set_nsstyle_attr(This->nsstyle, STYLEID_BACKGROUND_POSITION, pos_val, ATTR_FIX_PX);
+    heap_free(pos_val);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLStyle_get_backgroundPositionY(IHTMLStyle *iface, VARIANT *p)
