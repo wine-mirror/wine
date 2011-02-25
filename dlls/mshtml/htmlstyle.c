@@ -1040,8 +1040,40 @@ static HRESULT WINAPI HTMLStyle_put_backgroundPositionX(IHTMLStyle *iface, VARIA
 static HRESULT WINAPI HTMLStyle_get_backgroundPositionX(IHTMLStyle *iface, VARIANT *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
+    nsAString pos_str;
+    BSTR ret;
+    HRESULT hres;
+
     TRACE("(%p)->(%p)\n", This, p);
-    return get_nsstyle_attr_var(This->nsstyle, STYLEID_BACKGROUND_POSITION_X, p, 0);
+
+    nsAString_Init(&pos_str, NULL);
+    hres = get_nsstyle_attr_nsval(This->nsstyle, STYLEID_BACKGROUND_POSITION, &pos_str);
+    if(SUCCEEDED(hres)) {
+        const PRUnichar *pos, *space;
+
+        nsAString_GetData(&pos_str, &pos);
+        space = strchrW(pos, ' ');
+        if(!space) {
+            WARN("no space in %s\n", debugstr_w(pos));
+            space = pos + strlenW(pos);
+        }
+
+        if(space != pos) {
+            ret = SysAllocStringLen(pos, space-pos);
+            if(!ret)
+                hres = E_OUTOFMEMORY;
+        }else {
+            ret = NULL;
+        }
+    }
+    nsAString_Finish(&pos_str);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("returning %s\n", debugstr_w(ret));
+    V_VT(p) = VT_BSTR;
+    V_BSTR(p) = ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundPositionY(IHTMLStyle *iface, VARIANT v)
