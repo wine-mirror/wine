@@ -661,7 +661,7 @@ static BOOL
 STATUSBAR_SetParts (STATUS_INFO *infoPtr, INT count, LPINT parts)
 {
     STATUSWINDOWPART *tmp;
-    UINT i, oldNumParts;
+    INT i, oldNumParts;
 
     TRACE("(%d,%p)\n", count, parts);
 
@@ -693,7 +693,7 @@ STATUSBAR_SetParts (STATUS_INFO *infoPtr, INT count, LPINT parts)
 	infoPtr->parts[i].x = parts[i];
 
     if (infoPtr->hwndToolTip) {
-	UINT nTipCount;
+	INT nTipCount;
 	TTTOOLINFOW ti;
 
 	ZeroMemory (&ti, sizeof(TTTOOLINFOW));
