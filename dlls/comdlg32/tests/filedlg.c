@@ -142,9 +142,7 @@ static void test_DialogCancel(void)
     else
     {
         ok(0 == result, "expected 0, got %d\n", result);
-        ok(0 == CommDlgExtendedError() ||
-           broken(CDERR_INITIALIZATION == CommDlgExtendedError()), /* win9x */
-           "expected 0, got %d\n", CommDlgExtendedError());
+        ok(0 == CommDlgExtendedError(), "expected 0, got %d\n", CommDlgExtendedError());
     }
 
     SetLastError(0xdeadbeef);
@@ -154,9 +152,7 @@ static void test_DialogCancel(void)
     else
     {
         ok(0 == result, "expected 0, got %d\n", result);
-        ok(0 == CommDlgExtendedError() ||
-           broken(CDERR_INITIALIZATION == CommDlgExtendedError()), /* win9x */
-           "expected 0, got %d\n", CommDlgExtendedError());
+        ok(0 == CommDlgExtendedError(), "expected 0, got %d\n", CommDlgExtendedError());
     }
 }
 
@@ -219,7 +215,7 @@ static UINT_PTR CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wPa
             hr = IShellView2_DestroyViewWindow(shell_view2);
             ok(SUCCEEDED(hr), "DestroyViewWindow returned %#x\n", hr);
 
-            /* XP and W2K3 need this. On Win9x and W2K the call to DestroyWindow() fails and has
+            /* XP and W2K3 need this. On W2K the call to DestroyWindow() fails and has
              * no side effects. NT4 doesn't get here. (FIXME: Vista doesn't get here yet).
              */
             DestroyWindow(view_params.hwndView);
@@ -231,9 +227,7 @@ static UINT_PTR CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wPa
 
             hr = IShellView2_GetCurrentInfo(shell_view2, &folder_settings);
             ok(SUCCEEDED(hr), "GetCurrentInfo returned %#x\n", hr);
-            ok(folder_settings.ViewMode == FVM_DETAILS ||
-               broken(folder_settings.ViewMode == FVM_LIST), /* Win9x */
-               "view mode is %d, expected FVM_DETAILS\n",
+            ok(folder_settings.ViewMode == FVM_DETAILS, "view mode is %d, expected FVM_DETAILS\n",
                folder_settings.ViewMode);
 
 cleanup:
@@ -433,8 +427,7 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
                             /* sized horizontal and moved vertical */
                             case cmb1:
                             case edt1:
-                                ok( TESTRECTS( ctrlrcs[i], rc, 0, 10, 10, 0) ||
-                                    broken(TESTRECTS( ctrlrcs[i], rc, 0, 10, 0, 0)),/*win98*/
+                                ok( TESTRECTS( ctrlrcs[i], rc, 0, 10, 10, 0),
                                     "control id %03x should have sized horizontally and moved vertically, before %d,%d-%d,%d after  %d,%d-%d,%d\n",
                                     ctrlids[i], ctrlrcs[i].left, ctrlrcs[i].top,
                                     ctrlrcs[i].right, ctrlrcs[i].bottom,
@@ -451,8 +444,7 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
                             /* moved horizontal and vertical */
                             case IDCANCEL:
                             case pshHelp:
-                                ok( TESTRECTS( ctrlrcs[i], rc, 10, 10, 0, 0) ||
-                                    broken(TESTRECTS( ctrlrcs[i], rc, 0, 10, 0, 0)),/*win98*/
+                                ok( TESTRECTS( ctrlrcs[i], rc, 10, 10, 0, 0),
                                     "control id %03x should have moved horizontally and vertically, before %d,%d-%d,%d after  %d,%d-%d,%d\n",
                                     ctrlids[i], ctrlrcs[i].left, ctrlrcs[i].top,
                                     ctrlrcs[i].right, ctrlrcs[i].bottom,
