@@ -750,7 +750,7 @@ static HRESULT test_secondary(LPGUID lpGuid)
 
             if (!gotdx8)
             {
-                skip("Not doing the WAVE_FORMAT_EXTENSIBLE tests\n");
+                win_skip("Not doing the WAVE_FORMAT_EXTENSIBLE tests\n");
                 /* Apparently they succeed with bogus values,
                  * which means that older dsound doesn't look at them
                  */
@@ -1095,8 +1095,7 @@ START_TEST(dsound)
         SetLastError(0xdeadbeef);
         ret = FreeLibrary(hDsound);
         ok( ret ||
-            broken(!ret && GetLastError() == ERROR_MOD_NOT_FOUND) || /* NT4 */
-            broken(!ret && GetLastError() == ERROR_INVALID_HANDLE),  /* Win9x */
+            broken(!ret && GetLastError() == ERROR_MOD_NOT_FOUND), /* NT4 */
             "FreeLibrary(2) returned %d\n", GetLastError());
         ok(!FreeLibrary(hDsound), "DirectSound DLL still loaded\n");
     }
@@ -1118,7 +1117,7 @@ START_TEST(dsound)
         FreeLibrary(hDsound);
     }
     else
-        skip("dsound.dll not found!\n");
+        win_skip("dsound.dll not found!\n");
 
     CoUninitialize();
 }
