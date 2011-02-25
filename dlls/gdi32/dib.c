@@ -885,7 +885,7 @@ INT WINAPI GetDIBits(
              */
             if (bmp->dib->dsBmih.biHeight < 0)
             {
-                sbits += (srcwidthb * (abs(bmp->dib->dsBmih.biHeight) - 2 * startscan - 1));
+                sbits += (srcwidthb * (int)(abs(bmp->dib->dsBmih.biHeight) - 2 * startscan - 1));
                 srcwidthb = -srcwidthb;
             }
             switch( bpp ) {
