@@ -335,38 +335,53 @@ HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCW
     return S_OK;
 }
 
-HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *value, DWORD flags)
+static HRESULT var_to_styleval(const VARIANT *v, WCHAR *buf, DWORD flags, const WCHAR **ret)
 {
-    switch(V_VT(value)) {
+    switch(V_VT(v)) {
     case VT_NULL:
-        return set_nsstyle_attr(nsstyle, sid, emptyW, flags);
+        *ret = emptyW;
+        return S_OK;
 
     case VT_BSTR:
-        return set_nsstyle_attr(nsstyle, sid, V_BSTR(value), flags);
+        *ret = V_BSTR(v);
+        return S_OK;
 
     case VT_BSTR|VT_BYREF:
-        return set_nsstyle_attr(nsstyle, sid, *V_BSTRREF(value), flags);
+        *ret = *V_BSTRREF(v);
+        return S_OK;
 
     case VT_I4: {
-        WCHAR str[14];
-
-        static const WCHAR format[] = {'%','d',0};
-        static const WCHAR px_format[] = {'%','d','p','x',0};
-        static const WCHAR hex_format[] = {'#','%','0','6','x',0};
+        static const WCHAR formatW[] = {'%','d',0};
+        static const WCHAR hex_formatW[] = {'#','%','0','6','x',0};
 
         if(flags & ATTR_HEX_INT)
-            wsprintfW(str, hex_format, V_I4(value));
+            wsprintfW(buf, hex_formatW, V_I4(v));
+        else if(flags & ATTR_FIX_PX)
+            wsprintfW(buf, px_formatW, V_I4(v));
         else
-            wsprintfW(str, flags&ATTR_FIX_PX ? px_format : format, V_I4(value));
-        return set_nsstyle_attr(nsstyle, sid, str, flags & ~ATTR_FIX_PX);
+            wsprintfW(buf, formatW, V_I4(v));
+
+        *ret = buf;
+        return S_OK;
     }
     default:
-        FIXME("not implemented vt %d\n", V_VT(value));
+        FIXME("not implemented vt %d\n", V_VT(v));
         return E_NOTIMPL;
 
     }
+}
 
-    return S_OK;
+HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *value, DWORD flags)
+{
+    const WCHAR *val;
+    WCHAR buf[14];
+    HRESULT hres;
+
+    hres = var_to_styleval(value, buf, flags, &val);
+    if(FAILED(hres))
+        return hres;
+
+    return set_nsstyle_attr(nsstyle, sid, val, flags);
 }
 
 static inline HRESULT set_style_attr(HTMLStyle *This, styleid_t sid, LPCWSTR value, DWORD flags)
