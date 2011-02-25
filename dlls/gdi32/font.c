@@ -2155,6 +2155,12 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     if(!(tm.tmPitchAndFamily & TMPF_VECTOR)) /* Non-scalable fonts shouldn't be rotated */
         lf.lfEscapement = 0;
 
+    if ((dc->GraphicsMode == GM_COMPATIBLE) &&
+        (dc->vport2WorldValid && dc->xformWorld2Vport.eM11 * dc->xformWorld2Vport.eM22 < 0))
+    {
+        lf.lfEscapement = -lf.lfEscapement;
+    }
+
     if(lf.lfEscapement != 0)
     {
         cosEsc = cos(lf.lfEscapement * M_PI / 1800);
@@ -2262,7 +2268,18 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             LPtoDP(hdc, desired, 2);
             desired[1].x -= desired[0].x;
             desired[1].y -= desired[0].y;
-            if (layout & LAYOUT_RTL) desired[1].x = -desired[1].x;
+
+            if (dc->GraphicsMode == GM_COMPATIBLE)
+            {
+                if (dc->vport2WorldValid && dc->xformWorld2Vport.eM11 < 0)
+                    desired[1].x = -desired[1].x;
+                if (dc->vport2WorldValid && dc->xformWorld2Vport.eM22 < 0)
+                    desired[1].y = -desired[1].y;
+            }
+            else
+            {
+                if (layout & LAYOUT_RTL) desired[1].x = -desired[1].x;
+            }
 
             deltas[i].x = desired[1].x - width.x;
             deltas[i].y = desired[1].y - width.y;
