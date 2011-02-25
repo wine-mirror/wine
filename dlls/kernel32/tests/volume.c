@@ -40,14 +40,12 @@ static void test_query_dos_deviceA(void)
     char drivestr[] = "a:";
     char *p, *buffer, buffer2[2000];
     DWORD ret, ret2, buflen=32768;
-    BOOL iswin9x, found = FALSE;
+    BOOL found = FALSE;
 
     buffer = HeapAlloc( GetProcessHeap(), 0, buflen );
     SetLastError(0xdeadbeef);
     ret = QueryDosDeviceA( NULL, buffer, buflen );
-    iswin9x = !ret && (GetLastError() == ERROR_INVALID_PARAMETER /* win98 */
-                    || GetLastError() == ERROR_CALL_NOT_IMPLEMENTED /* win95*/);
-    ok((ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) || broken(iswin9x),
+    ok((ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER),
         "QueryDosDeviceA failed to return list, last error %u\n", GetLastError());
 
     if (ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
@@ -64,15 +62,14 @@ static void test_query_dos_deviceA(void)
     for (;drivestr[0] <= 'z'; drivestr[0]++) {
         /* Older W2K fails with ERROR_INSUFFICIENT_BUFFER when buflen is > 32767 */
         ret = QueryDosDeviceA( drivestr, buffer, buflen - 1);
-        /* fails for all drives in win9x */
-        ok(ret || GetLastError() == ERROR_FILE_NOT_FOUND || broken(!ret && iswin9x),
+        ok(ret || GetLastError() == ERROR_FILE_NOT_FOUND,
             "QueryDosDeviceA failed to return current mapping for %s, last error %u\n", drivestr, GetLastError());
         if(ret) {
             for (p = buffer; *p; p++) *p = toupper(*p);
             if (strstr(buffer, "HARDDISK") || strstr(buffer, "RAMDISK")) found = TRUE;
         }
     }
-    ok(found ^ iswin9x, "expected at least one devicename to contain HARDDISK or RAMDISK except on win9x\n");
+    ok(found, "expected at least one devicename to contain HARDDISK or RAMDISK\n");
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
@@ -239,9 +236,7 @@ static void test_GetLogicalDriveStringsA(void)
     ok(size2 == size-1, "size2 = %d\n", size2);
 
     for(ptr = buf; ptr < buf+size2; ptr += 4) {
-        ok(('A' <= *ptr && *ptr <= 'Z') ||
-           (broken('a' <= *ptr && *ptr <= 'z')), /* Win9x and WinMe */
-           "device name '%c' is not uppercase\n", *ptr);
+        ok(('A' <= *ptr && *ptr <= 'Z'), "device name '%c' is not uppercase\n", *ptr);
         ok(ptr[1] == ':', "ptr[1] = %c, expected ':'\n", ptr[1]);
         ok(ptr[2] == '\\', "ptr[2] = %c expected '\\'\n", ptr[2]);
         ok(!ptr[3], "ptr[3] = %c expected nullbyte\n", ptr[3]);
@@ -333,8 +328,7 @@ static void test_GetVolumeInformationA(void)
     SetLastError(0xdeadbeef);
     ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
             NULL, NULL, fs_name_buf, fs_name_len);
-    ok(!ret && (GetLastError() == ERROR_INVALID_NAME ||
-         broken(GetLastError() == ERROR_BAD_PATHNAME/* win9x */)),
+    ok(!ret && (GetLastError() == ERROR_INVALID_NAME),
         "GetVolumeInformationA did%s fail, last error %u\n", ret ? " not":"", GetLastError());
 
     /* reset current directory */
@@ -362,8 +356,7 @@ static void test_GetVolumeInformationA(void)
         SetLastError(0xdeadbeef);
         ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
                 NULL, NULL, fs_name_buf, fs_name_len);
-        ok(!ret && (GetLastError() == ERROR_INVALID_NAME ||
-             broken(GetLastError() == ERROR_BAD_PATHNAME/* Win9x */)),
+        ok(!ret && (GetLastError() == ERROR_INVALID_NAME),
            "GetVolumeInformationA did%s fail, last error %u\n", ret ? " not":"", GetLastError());
 
         /* Try normal drive letter with trailing \ */
@@ -381,8 +374,7 @@ static void test_GetVolumeInformationA(void)
         SetLastError(0xdeadbeef);
         ret = pGetVolumeInformationA(Root_Colon, vol_name_buf, vol_name_size, NULL,
                 NULL, NULL, fs_name_buf, fs_name_len);
-        ok(!ret && (GetLastError() == ERROR_INVALID_NAME ||
-             broken(GetLastError() == ERROR_BAD_PATHNAME/* Win9x */)),
+        ok(!ret && (GetLastError() == ERROR_INVALID_NAME),
            "GetVolumeInformationA did%s fail, last error %u\n", ret ? " not":"", GetLastError());
 
         /* Now C:\ becomes the current directory on drive C: */
@@ -420,32 +412,28 @@ static void test_GetVolumeInformationA(void)
     SetLastError(0xdeadbeef);
     ret = pGetVolumeInformationA(Root_UNC, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
-    ok(ret || broken(!ret /* win9x */ && GetLastError()==ERROR_BAD_NETPATH),
-        "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", Root_UNC, GetLastError());
+    ok(ret, "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", Root_UNC, GetLastError());
 
     /* try again with device name space  */
     Root_UNC[2] = '.';
     SetLastError(0xdeadbeef);
     ret = pGetVolumeInformationA(Root_UNC, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
-    ok(ret || broken(!ret /* win9x */ && GetLastError()==ERROR_BAD_NETPATH),
-        "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", Root_UNC, GetLastError());
+    ok(ret, "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", Root_UNC, GetLastError());
 
     /* try again with a directory off the root - should generate error  */
     if (windowsdir[strlen(windowsdir)-1] != '\\') strcat(windowsdir, "\\");
     SetLastError(0xdeadbeef);
     ret = pGetVolumeInformationA(windowsdir, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
-    ok(!ret && (GetLastError()==ERROR_DIR_NOT_ROOT ||
-         broken(GetLastError()==ERROR_BAD_PATHNAME/* win9x */)),
+    ok(!ret && (GetLastError()==ERROR_DIR_NOT_ROOT),
           "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", windowsdir, GetLastError());
     /* A subdir with trailing \ yields DIR_NOT_ROOT instead of INVALID_NAME */
     if (windowsdir[strlen(windowsdir)-1] == '\\') windowsdir[strlen(windowsdir)-1] = 0;
     SetLastError(0xdeadbeef);
     ret = pGetVolumeInformationA(windowsdir, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
-    ok(!ret && (GetLastError()==ERROR_INVALID_NAME ||
-         broken(GetLastError()==ERROR_BAD_PATHNAME/* win9x */)),
+    ok(!ret && (GetLastError()==ERROR_INVALID_NAME),
           "GetVolumeInformationA did%s fail, root=%s, last error=%u\n", ret ? " not":"", windowsdir, GetLastError());
 
     if (!pGetVolumeNameForVolumeMountPointA) {
