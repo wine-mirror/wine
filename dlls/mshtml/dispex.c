@@ -324,30 +324,6 @@ static dispex_data_t *get_dispex_data(DispatchEx *This)
     return This->data->data;
 }
 
-HRESULT call_disp_func(IDispatch *disp, DISPPARAMS *dp)
-{
-    EXCEPINFO ei;
-    IDispatchEx *dispex;
-    VARIANT res;
-    HRESULT hres;
-
-    VariantInit(&res);
-    memset(&ei, 0, sizeof(ei));
-
-    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    if(SUCCEEDED(hres)) {
-        hres = IDispatchEx_InvokeEx(dispex, 0, GetUserDefaultLCID(), DISPATCH_METHOD, dp, &res, &ei, NULL);
-        IDispatchEx_Release(dispex);
-    }else {
-        TRACE("Could not get IDispatchEx interface: %08x\n", hres);
-        hres = IDispatch_Invoke(disp, 0, &IID_NULL, GetUserDefaultLCID(), DISPATCH_METHOD,
-                dp, &res, &ei, NULL);
-    }
-
-    VariantClear(&res);
-    return hres;
-}
-
 static inline BOOL is_custom_dispid(DISPID id)
 {
     return MSHTML_DISPID_CUSTOM_MIN <= id && id <= MSHTML_DISPID_CUSTOM_MAX;

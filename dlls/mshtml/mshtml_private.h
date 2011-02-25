@@ -204,6 +204,7 @@ BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**);
 HRESULT get_dispids(tid_t,DWORD*,DISPID**);
 HRESULT remove_prop(DispatchEx*,BSTR,VARIANT_BOOL*);
+void release_typelib(void);
 
 typedef struct HTMLWindow HTMLWindow;
 typedef struct HTMLDocumentNode HTMLDocumentNode;
@@ -865,9 +866,6 @@ void remove_target_tasks(LONG);
 
 DWORD set_task_timer(HTMLDocument*,DWORD,BOOL,IDispatch*);
 HRESULT clear_task_timer(HTMLDocument*,BOOL,DWORD);
-
-void release_typelib(void);
-HRESULT call_disp_func(IDispatch*,DISPPARAMS*);
 
 const char *debugstr_variant(const VARIANT*);
 
