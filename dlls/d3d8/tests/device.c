@@ -1306,13 +1306,9 @@ static void test_lights(void)
 
     /* TODO: Test the rendering results in this situation */
     hr = IDirect3DDevice8_LightEnable(device, i + 1, TRUE);
-    ok(hr == D3D_OK ||
-       broken(hr == D3DERR_INVALIDCALL), /* Some Win9x and WinME */
-       "Enabling one light more than supported returned %08x\n", hr);
+    ok(hr == D3D_OK, "Enabling one light more than supported returned %08x\n", hr);
     hr = IDirect3DDevice8_GetLightEnable(device, i + 1, &enabled);
-    ok(hr == D3D_OK ||
-       broken(hr == D3DERR_INVALIDCALL), /* Some Win9x and WinME */
-       "GetLightEnable on light %u failed with %08x\n", i + 1, hr);
+    ok(hr == D3D_OK, "GetLightEnable on light %u failed with %08x\n", i + 1, hr);
     ok(enabled, "Light %d is %s\n", i + 1, enabled ? "enabled" : "disabled");
     hr = IDirect3DDevice8_LightEnable(device, i + 1, FALSE);
     ok(hr == D3D_OK, "Disabling the additional returned %08x\n", hr);
