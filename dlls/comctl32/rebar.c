@@ -1524,8 +1524,9 @@ REBAR_SizeToHeight(REBAR_INFO *infoPtr, int height)
         for (i = prev_visible(infoPtr, infoPtr->uNumBands); i > 0; i = prev_visible(infoPtr, i))
         {
             REBAR_BAND *lpBand = REBAR_GetBand(infoPtr, i);
-            int height = lpBand->rcBand.bottom - lpBand->rcBand.top;
             int cyBreakExtra;  /* additional cy for the rebar after a RBBS_BREAK on this band */
+
+            height = lpBand->rcBand.bottom - lpBand->rcBand.top;
 
             if (infoPtr->dwStyle & RBS_VARHEIGHT)
                 cyBreakExtra = lpBand->cyRowSoFar; /* 'height' => 'lpBand->cyRowSoFar' + 'height'*/
