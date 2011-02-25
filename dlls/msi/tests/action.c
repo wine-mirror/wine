@@ -50,7 +50,6 @@ static HMODULE hsrclient;
 static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
 static BOOL (WINAPI *pSRSetRestorePointA)(RESTOREPOINTINFOA *, STATEMGRSTATUS *);
 
-static BOOL on_win9x;
 static BOOL is_wow64;
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 
@@ -1850,8 +1849,7 @@ static INT_PTR CDECL fci_open(char *pszFile, int oflag, int pmode, int *err, voi
     DWORD dwCreateDisposition = OPEN_EXISTING;
 
     dwAccess = GENERIC_READ | GENERIC_WRITE;
-    /* FILE_SHARE_DELETE is not supported by Windows Me/98/95 */
-    dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+    dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 
     if (GetFileAttributesA(pszFile) != INVALID_FILE_ATTRIBUTES)
         dwCreateDisposition = OPEN_EXISTING;
@@ -1962,19 +1960,6 @@ static BOOL is_process_limited(void)
         CloseHandle(token);
         return (ret && type == TokenElevationTypeLimited);
     }
-    return FALSE;
-}
-
-static BOOL check_win9x(void)
-{
-    SC_HANDLE scm;
-
-    scm = OpenSCManager(NULL, NULL, GENERIC_ALL);
-    if (!scm && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
-        return TRUE;
-
-    CloseServiceHandle(scm);
-
     return FALSE;
 }
 
@@ -4613,11 +4598,6 @@ static void test_envvar(void)
     char buffer[16];
     UINT i;
 
-    if (on_win9x)
-    {
-        win_skip("Environment variables are handled differently on Win9x and WinMe\n");
-        return;
-    }
     if (is_process_limited())
     {
         skip("process is limited\n");
@@ -4787,11 +4767,6 @@ static void test_start_services(void)
     BOOL ret;
     DWORD error = ERROR_SUCCESS;
 
-    if (on_win9x)
-    {
-        win_skip("Services are not implemented on Win9x and WinMe\n");
-        return;
-    }
     scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (!scm && GetLastError() == ERROR_ACCESS_DENIED)
     {
@@ -4869,11 +4844,6 @@ static void test_delete_services(void)
 {
     UINT r;
 
-    if (on_win9x)
-    {
-        win_skip("Services are not implemented on Win9x and WinMe\n");
-        return;
-    }
     if (is_process_limited())
     {
         skip("process is limited\n");
@@ -5528,11 +5498,6 @@ static void test_remove_env_strings(void)
     DWORD type, size;
     char buffer[0x10];
 
-    if (on_win9x)
-    {
-        win_skip("Environment variables are handled differently on win9x and winme\n");
-        return;
-    }
     if (is_process_limited())
     {
         skip("process is limited\n");
@@ -6037,8 +6002,6 @@ START_TEST(action)
     BOOL ret = FALSE;
 
     init_functionpointers();
-
-    on_win9x = check_win9x();
 
     if (pIsWow64Process)
         pIsWow64Process(GetCurrentProcess(), &is_wow64);
