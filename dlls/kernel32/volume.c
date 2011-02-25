@@ -1103,7 +1103,6 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         }
         else
         {
-            NTSTATUS status;
             WCHAR *buffer;
 
             if (!(buffer = HeapAlloc( GetProcessHeap(), 0, sizeof(dosdevW) + strlenW(devname)*sizeof(WCHAR) )))
