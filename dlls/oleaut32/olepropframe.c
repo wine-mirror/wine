@@ -221,7 +221,7 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
                 GetDeviceCaps(hdc, LOGPIXELSY), 72);
         font_desc.lfCharSet = DEFAULT_CHARSET;
         memcpy(font_desc.lfFaceName, property_sheet_dialog_data+1,
-                sizeof(WCHAR*)*(lstrlenW(property_sheet_dialog_data+1)+1));
+                sizeof(WCHAR)*(lstrlenW(property_sheet_dialog_data+1)+1));
         hfont = CreateFontIndirectW(&font_desc);
 
         if(hfont) {
