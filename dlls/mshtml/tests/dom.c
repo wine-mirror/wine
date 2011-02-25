@@ -5287,8 +5287,11 @@ static void test_default_style(IHTMLStyle *style)
     SysFreeString(sDefault);
 
     /* backgroundPositionX */
-    hres = IHTMLStyle_get_backgroundPositionX(style, &vDefault);
+    hres = IHTMLStyle_get_backgroundPositionX(style, &v);
     ok(hres == S_OK, "get_backgroundPositionX failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "backgroundPositionX = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("10px");
@@ -5299,18 +5302,17 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_get_backgroundPositionX(style, &v);
     ok(hres == S_OK, "get_backgroundPositionX failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "10px"), "backgroundPositionX = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
-    hres = IHTMLStyle_put_backgroundPositionX(style, vDefault);
-    ok(hres == S_OK, "put_backgroundPositionX failed: %08x\n", hres);
-    VariantClear(&vDefault);
-
     /* backgroundPositionY */
-    hres = IHTMLStyle_get_backgroundPositionY(style, &vDefault);
+    hres = IHTMLStyle_get_backgroundPositionY(style, &v);
     ok(hres == S_OK, "get_backgroundPositionY failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    VariantClear(&v);
 
     V_VT(&v) = VT_BSTR;
-    V_BSTR(&v) = a2bstr("10px");
+    V_BSTR(&v) = a2bstr("15px");
     hres = IHTMLStyle_put_backgroundPositionY(style, v);
     ok(hres == S_OK, "put_backgroundPositionY failed: %08x\n", hres);
     VariantClear(&v);
@@ -5318,11 +5320,38 @@ static void test_default_style(IHTMLStyle *style)
     hres = IHTMLStyle_get_backgroundPositionY(style, &v);
     ok(hres == S_OK, "get_backgroundPositionY failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "15px"), "backgroundPositionY = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
-    hres = IHTMLStyle_put_backgroundPositionY(style, vDefault);
-    ok(hres == S_OK, "put_backgroundPositionY failed: %08x\n", hres);
-    VariantClear(&vDefault);
+    /* backgroundPosition */
+    str = NULL;
+    hres = IHTMLStyle_get_backgroundPosition(style, &str);
+    ok(hres == S_OK, "get_backgroundPosition failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "10px 15px"), "backgroundPosition = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = a2bstr("center 20%");
+    hres = IHTMLStyle_put_backgroundPosition(style, str);
+    ok(hres == S_OK, "put_backgroundPosition failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle_get_backgroundPosition(style, &str);
+    ok(hres == S_OK, "get_backgroundPosition failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "center 20%"), "backgroundPosition = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_backgroundPositionX(style, &v);
+    ok(hres == S_OK, "get_backgroundPositionX failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "center"), "backgroundPositionX = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_backgroundPositionY(style, &v);
+    ok(hres == S_OK, "get_backgroundPositionY failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "20%"), "backgroundPositionY = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
      /* borderTopWidth */
     hres = IHTMLStyle_get_borderTopWidth(style, &vDefault);
