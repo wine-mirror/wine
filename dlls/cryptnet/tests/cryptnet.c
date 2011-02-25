@@ -365,12 +365,9 @@ static void test_retrieveObjectByUrl(void)
     SetLastError(0xdeadbeef);
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CRL, 0, 0, (void **)&crl,
      NULL, NULL, NULL, NULL);
-    /* w2k3,XP, newer w2k: CRYPT_E_NO_MATCH, 95: OSS_DATA_ERROR */
-    ok(!ret && (GetLastError() == CRYPT_E_NO_MATCH ||
-                GetLastError() == CRYPT_E_ASN1_BADTAG ||
-                GetLastError() == OSS_DATA_ERROR),
-       "got 0x%x/%u (expected CRYPT_E_NO_MATCH or CRYPT_E_ASN1_BADTAG or "
-       "OSS_DATA_ERROR)\n", GetLastError(), GetLastError());
+    /* w2k3,XP, newer w2k: CRYPT_E_NO_MATCH */
+    ok(!ret && (GetLastError() == CRYPT_E_NO_MATCH),
+        "got 0x%x/%u (expected CRYPT_E_NO_MATCH)\n", GetLastError(), GetLastError());
 
     /* only newer versions of cryptnet do the cleanup */
     if(!ret && GetLastError() != CRYPT_E_ASN1_BADTAG &&
@@ -408,9 +405,8 @@ static void test_retrieveObjectByUrl(void)
     cert = (PCCERT_CONTEXT)0xdeadbeef;
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, &aux);
-    /* w2k: success, 9x: fail with E_INVALIDARG */
-    ok(ret || (GetLastError() == E_INVALIDARG),
-       "got %u with 0x%x/%u (expected '!=0' or '0' with E_INVALIDARG)\n",
+    /* w2k: success */
+    ok(ret, "got %u with 0x%x/%u (expected '!=0' or '0' with E_INVALIDARG)\n",
        ret, GetLastError(), GetLastError());
     if (cert && cert != (PCCERT_CONTEXT)0xdeadbeef)
         CertFreeCertificateContext(cert);
@@ -419,9 +415,8 @@ static void test_retrieveObjectByUrl(void)
     aux.cbSize = sizeof(aux);
     ret = CryptRetrieveObjectByUrlA(url, CONTEXT_OID_CERTIFICATE, 0, 0,
      (void **)&cert, NULL, NULL, NULL, &aux);
-    /* w2k: success, 9x: fail with E_INVALIDARG */
-    ok(ret || (GetLastError() == E_INVALIDARG),
-       "got %u with 0x%x/%u (expected '!=0' or '0' with E_INVALIDARG)\n",
+    /* w2k: success */
+    ok(ret, "got %u with 0x%x/%u (expected '!=0' or '0' with E_INVALIDARG)\n",
        ret, GetLastError(), GetLastError());
     if (!ret) {
         /* no more tests useful */
