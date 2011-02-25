@@ -415,17 +415,6 @@ static void delete_test_files(void)
 /* ok-like statement which takes two unicode strings or one unicode and one ANSI string as arguments */
 static CHAR string1[MAX_PATH], string2[MAX_PATH];
 
-/* lstrcmpW is not supported on Win9x */
-static int strcmp_ww(const WCHAR* str1, const WCHAR* str2)
-{
-    CHAR str1A[MAX_PATH], str2A[MAX_PATH];
-
-    WideCharToMultiByte(CP_ACP, 0, str1, -1, str1A, MAX_PATH, NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, str2, -1, str2A, MAX_PATH, NULL, NULL);
-
-    return lstrcmpA(str1A, str2A);
-}
-
 #define ok_w2(format, szString1, szString2) \
 \
     do { \
@@ -1886,7 +1875,7 @@ static void test_Session(IDispatch *pSession)
     memset(stringw, 0, sizeof(stringw));
     hr = Session_PropertyGet(pSession, szProductName, stringw);
     ok(hr == S_OK, "Session_PropertyGet failed, hresult 0x%08x\n", hr);
-    if (strcmp_ww(stringw, szMSITEST) != 0)
+    if (lstrcmpW(stringw, szMSITEST) != 0)
     {
         len = WideCharToMultiByte(CP_ACP, 0, stringw, -1, string, MAX_PATH, NULL, NULL);
         ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError());
@@ -1899,7 +1888,7 @@ static void test_Session(IDispatch *pSession)
     memset(stringw, 0, sizeof(stringw));
     hr = Session_PropertyGet(pSession, szProductName, stringw);
     ok(hr == S_OK, "Session_PropertyGet failed, hresult 0x%08x\n", hr);
-    if (strcmp_ww(stringw, szProductName) != 0)
+    if (lstrcmpW(stringw, szProductName) != 0)
     {
         len = WideCharToMultiByte(CP_ACP, 0, stringw, -1, string, MAX_PATH, NULL, NULL);
         ok(len, "WideCharToMultiByteChar returned error %d\n", GetLastError());
@@ -2259,7 +2248,7 @@ static void test_Installer_Products(BOOL bProductInstalled)
                     ok(iValue == INSTALLSTATE_DEFAULT || iValue == INSTALLSTATE_ADVERTISED, "Installer_ProductState returned %d, expected %d or %d\n", iValue, INSTALLSTATE_DEFAULT, INSTALLSTATE_ADVERTISED);
 
                 /* Not found our product code yet? Check */
-                if (!bProductFound && !strcmp_ww(szString, szProductCode))
+                if (!bProductFound && !lstrcmpW(szString, szProductCode))
                     bProductFound = TRUE;
 
                 /* IEnumVARIANT::Next */
@@ -2560,25 +2549,15 @@ static void test_Installer_InstallProduct(void)
 
     res = find_registry_key(HKEY_LOCAL_MACHINE,
         "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData", "af054738b93a8cb43b12803b397f483b", access, &hkey);
-    ok(res == ERROR_SUCCESS ||
-       broken(res == ERROR_FILE_NOT_FOUND), /* win9x */
-       "Expected ERROR_SUCCESS, got %d\n", res);
-    if (res == ERROR_SUCCESS)
-    {
-        res = delete_registry_key(hkey, "af054738b93a8cb43b12803b397f483b", access);
-        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-        RegCloseKey(hkey);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-        res = delete_key_portable(HKEY_LOCAL_MACHINE,
-            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\Products\\af054738b93a8cb43b12803b397f483b", access);
-        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
-    }
-    else
-    {
-        /* win9x defaults to a per-machine install. */
-        delete_key_portable(HKEY_LOCAL_MACHINE,
-            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\Products\\af054738b93a8cb43b12803b397f483b", access);
-    }
+    res = delete_registry_key(hkey, "af054738b93a8cb43b12803b397f483b", access);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+    RegCloseKey(hkey);
+
+    res = delete_key_portable(HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Installer\\Products\\af054738b93a8cb43b12803b397f483b", access);
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     /* Remove registry keys written by PublishProduct standard action */
     res = RegOpenKey(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Installer", &hkey);
