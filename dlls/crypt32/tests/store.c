@@ -960,7 +960,7 @@ static void testRegStore(void)
                     certCount++;
             } while (context != NULL);
             ok(certCount == 1 ||
-               broken(certCount == 2), /* win9x */
+               broken(certCount == 2) /* NT4 */ ,
                "Expected 1 certificates, got %d\n", certCount);
 
             /* Try again with the correct hash... */
@@ -1161,10 +1161,7 @@ static void testSystemStore(void)
     /* Check opening a bogus store */
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
      CERT_SYSTEM_STORE_CURRENT_USER | CERT_STORE_OPEN_EXISTING_FLAG, BogusW);
-    ok((!store ||
-     broken(store != 0)) && /* win9x */
-     GetLastError() == ERROR_FILE_NOT_FOUND,
-     "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    ok(!store, "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0,
      CERT_SYSTEM_STORE_CURRENT_USER, BogusW);
     ok(store != 0, "CertOpenStore failed: %08x\n", GetLastError());
@@ -1764,7 +1761,7 @@ static void testMessageStore(void)
     store = CertOpenStore(CERT_STORE_PROV_PKCS7, 0, 0, 0, &blob);
     ok(!store &&
      (GetLastError() == CRYPT_E_ASN1_BADTAG ||
-      GetLastError() == OSS_DATA_ERROR), /* win9x */
+      broken(GetLastError() == OSS_DATA_ERROR)), /* NT4 */
      "Expected CRYPT_E_ASN1_BADTAG, got %08x\n", GetLastError());
 }
 
