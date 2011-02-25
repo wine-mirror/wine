@@ -1024,10 +1024,6 @@ static void test_hdm_filterMessages(HWND hParent)
     else
          ok_sequence(sequences, HEADER_SEQ_INDEX, filterMessages_seq_noninteractive,
                      "filterMessages sequence testing", FALSE);
-    /* Some Win9x versions don't send a WM_KILLFOCUS.
-     * Set the focus explicitly to the parent to avoid a crash.
-     */
-    SetFocus(hParent);
     DestroyWindow(hChild);
 
 }
