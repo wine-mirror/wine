@@ -134,8 +134,27 @@ static HRESULT WINAPI HTMLDOMAttribute_put_nodeName(IHTMLDOMAttribute *iface, VA
 static HRESULT WINAPI HTMLDOMAttribute_get_nodeValue(IHTMLDOMAttribute *iface, VARIANT *p)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    const PRUnichar *val;
+    nsAString val_str;
+    HRESULT hres = S_OK;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&val_str, NULL);
+    nsIDOMAttr_GetNodeValue(This->nsattr, &val_str);
+    nsAString_GetData(&val_str, &val);
+
+    V_VT(p) = VT_BSTR;
+    if(*val) {
+        V_BSTR(p) = SysAllocString(val);
+        if(!V_BSTR(p))
+            hres = E_OUTOFMEMORY;
+    }else {
+        V_BSTR(p) = NULL;
+    }
+
+    nsAString_Finish(&val_str);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, VARIANT_BOOL *p)

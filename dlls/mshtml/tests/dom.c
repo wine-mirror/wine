@@ -56,7 +56,7 @@ static const char elem_test_str[] =
     "</body></html>";
 static const char elem_test2_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
-    "<body><div id=\"divid\"></div></body>"
+    "<body><div id=\"divid\" emptyattr=""></div></body>"
     "</html>";
 
 static const char indent_test_str[] =
@@ -2843,6 +2843,23 @@ static IHTMLDOMAttribute *_get_elem_attr_node(unsigned line, IUnknown *unk, cons
     IHTMLElement4_Release(elem);
     SysFreeString(str);
     return attr;
+}
+
+#define test_attr_node_value(a,b) _test_attr_node_value(__LINE__,a,b)
+static void _test_attr_node_value(unsigned line, IHTMLDOMAttribute *attr, const char *exval)
+{
+    VARIANT var;
+    HRESULT hres;
+
+    hres = IHTMLDOMAttribute_get_nodeValue(attr, &var);
+    ok_(__FILE__,line) (hres == S_OK, "get_nodeValue failed: %08x, expected VT_BSTR\n", hres);
+    ok_(__FILE__,line) (V_VT(&var) == VT_BSTR, "vt=%d\n", V_VT(&var));
+    if(exval)
+        ok_(__FILE__,line) (!strcmp_wa(V_BSTR(&var), exval), "unexpected value %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    else
+        ok_(__FILE__,line) (!V_BSTR(&var), "nodeValue = %s, expected NULL\n", wine_dbgstr_w(V_BSTR(&var)));
+
+    VariantClear(&var);
 }
 
 #define get_window_doc(e) _get_window_doc(__LINE__,e)
@@ -6651,6 +6668,12 @@ static void test_attr(IHTMLElement *elem)
     ok(iface_cmp((IUnknown*)attr, (IUnknown*)attr2), "attr != attr2\n");
     IHTMLDOMAttribute_Release(attr2);
 
+    test_attr_node_value(attr, "divid");
+
+    IHTMLDOMAttribute_Release(attr);
+
+    attr = get_elem_attr_node((IUnknown*)elem, "emptyattr", TRUE);
+    test_attr_node_value(attr, NULL);
     IHTMLDOMAttribute_Release(attr);
 }
 
