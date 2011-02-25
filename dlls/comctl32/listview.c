@@ -543,7 +543,7 @@ static BOOL textsetptrT(LPWSTR *dest, LPCWSTR src, BOOL isW)
 static inline int textcmpWT(LPCWSTR aw, LPCWSTR bt, BOOL isW)
 {
     if (!aw) return bt ? -1 : 0;
-    if (!bt) return aw ? 1 : 0;
+    if (!bt) return 1;
     if (aw == LPSTR_TEXTCALLBACKW)
 	return bt == LPSTR_TEXTCALLBACKW ? 1 : -1;
     if (bt != LPSTR_TEXTCALLBACKW)
