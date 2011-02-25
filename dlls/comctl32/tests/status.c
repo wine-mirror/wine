@@ -261,7 +261,7 @@ static void test_status_control(void)
     char ch;
     char chstr[10] = "Inval id";
 
-    hWndStatus = create_status_control(WS_VISIBLE, 0);
+    hWndStatus = create_status_control(WS_VISIBLE | SBT_TOOLTIPS, 0);
 
     /* Divide into parts and set text */
     r = SendMessage(hWndStatus, SB_SETPARTS, 3, (LPARAM)nParts);
@@ -400,15 +400,12 @@ static void test_status_control(void)
     expect(FALSE,r);
 
     /* Set the ToolTip text */
-    todo_wine
-    {
-        SendMessage(hWndStatus, SB_SETTIPTEXT, 0,(LPARAM) "Tooltip Text");
-        lstrcpyA(charArray, "apple");
-        SendMessage(hWndStatus, SB_GETTIPTEXT, MAKEWPARAM (0, 20),(LPARAM) charArray);
-        ok(strcmp(charArray,"Tooltip Text") == 0 ||
-           broken(!strcmp(charArray, "apple")), /* win95 */
-           "Expected Tooltip Text, got %s\n", charArray);
-    }
+    SendMessage(hWndStatus, SB_SETTIPTEXT, 0,(LPARAM) "Tooltip Text");
+    lstrcpyA(charArray, "apple");
+    SendMessage(hWndStatus, SB_GETTIPTEXT, MAKEWPARAM (0, 20),(LPARAM) charArray);
+    ok(strcmp(charArray,"Tooltip Text") == 0 ||
+        broken(!strcmp(charArray, "apple")), /* win95 */
+        "Expected Tooltip Text, got %s\n", charArray);
 
     /* Make simple */
     SendMessage(hWndStatus, SB_SIMPLE, TRUE, 0);
