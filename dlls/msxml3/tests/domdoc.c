@@ -2738,11 +2738,8 @@ static void test_get_text(void)
         IXMLDOMNode_Release(nodeRoot);
     }
 
-    if (0) {
-    /* this test crashes on win9x */
     r = IXMLDOMNodeList_QueryInterface(node_list, &IID_IDispatch, NULL);
     ok( r == E_INVALIDARG, "ret %08x\n", r );
-    }
 
     r = IXMLDOMNodeList_get_length( node_list, NULL );
     ok( r == E_INVALIDARG, "ret %08x\n", r );
@@ -3381,19 +3378,15 @@ static void test_XMLHTTP(void)
     method = SysAllocString(wszPOST);
     url = SysAllocString(wszUrl);
 
-if (0)
-{
-    /* crashes on win98 */
     hr = IXMLHttpRequest_put_onreadystatechange(pXMLHttpRequest, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-}
 
     hr = IXMLHttpRequest_abort(pXMLHttpRequest);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* send before open */
     hr = IXMLHttpRequest_send(pXMLHttpRequest, dummy);
-    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
 
     /* initial status code */
     hr = IXMLHttpRequest_get_status(pXMLHttpRequest, NULL);
@@ -3401,7 +3394,7 @@ if (0)
 
     status = 0xdeadbeef;
     hr = IXMLHttpRequest_get_status(pXMLHttpRequest, &status);
-    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
     ok(status == 0xdeadbeef, "got %d\n", status);
 
     /* invalid parameters */
@@ -3418,13 +3411,13 @@ if (0)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, _bstr_("header1"), NULL);
-    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
 
     hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, NULL, _bstr_("value1"));
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IXMLHttpRequest_setRequestHeader(pXMLHttpRequest, _bstr_("header1"), _bstr_("value1"));
-    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
 
     hr = IXMLHttpRequest_get_readyState(pXMLHttpRequest, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
@@ -3457,7 +3450,7 @@ if (0)
     /* status code after ::open() */
     status = 0xdeadbeef;
     hr = IXMLHttpRequest_get_status(pXMLHttpRequest, &status);
-    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
     ok(status == 0xdeadbeef, "got %d\n", status);
 
     state = -1;
@@ -3471,7 +3464,7 @@ if (0)
     state = -1;
     hr = IXMLHttpRequest_get_readyState(pXMLHttpRequest, &state);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(state == READYSTATE_UNINITIALIZED || broken(state == READYSTATE_LOADING) /* win98, win2k */,
+    ok(state == READYSTATE_UNINITIALIZED || broken(state == READYSTATE_LOADING) /* win2k */,
         "got %d, expected READYSTATE_UNINITIALIZED\n", state);
 
     hr = IXMLHttpRequest_open(pXMLHttpRequest, method, url, async, dummy, dummy);
@@ -3506,7 +3499,7 @@ if (0)
 
     /* another ::send() after completed request */
     hr = IXMLHttpRequest_send(pXMLHttpRequest, varbody);
-    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win9x, win2k */, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
 
     VariantClear(&varbody);
 
