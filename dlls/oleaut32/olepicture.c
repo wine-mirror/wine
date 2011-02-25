@@ -2299,7 +2299,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
       hFile = CreateFileW(file_candidate, GENERIC_READ, 0, NULL, OPEN_EXISTING,
                           0, NULL);
       if (hFile == INVALID_HANDLE_VALUE)
-          return E_UNEXPECTED;
+          return INET_E_RESOURCE_NOT_FOUND;
 
       dwFileSize = GetFileSize(hFile, NULL);
       if (dwFileSize != INVALID_FILE_SIZE )
@@ -2318,7 +2318,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
       CloseHandle(hFile);
       
       if (!hGlobal)
-	  return E_UNEXPECTED;
+	  return INET_E_RESOURCE_NOT_FOUND;
 
       hRes = CreateStreamOnHGlobal(hGlobal, TRUE, &stream);
       if (FAILED(hRes)) 

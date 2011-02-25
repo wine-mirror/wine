@@ -844,13 +844,13 @@ static void test_OleLoadPicturePath(void)
 
     /* Try with a nonexistent file. */
     hres = OleLoadPicturePath(temp_fileW + 8, NULL, 0, 0, &IID_IPicture, (void **)&pic);
-    todo_wine ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
+    ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
        broken(hres == E_UNEXPECTED) || /* NT4 */
        broken(hres == E_FAIL), /*Win2k */
        "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08x\n", hres);
 
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
-    todo_wine ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
+    ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
        broken(hres == E_UNEXPECTED) || /* NT4 */
        broken(hres == E_FAIL), /* Win2k */
        "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08x\n", hres);
@@ -880,7 +880,7 @@ static void test_OleLoadPicturePath(void)
 
     /* Try with a nonexistent file. */
     hres = OleLoadPicturePath(temp_fileW, NULL, 0, 0, &IID_IPicture, (void **)&pic);
-    todo_wine ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
+    ok(hres == INET_E_RESOURCE_NOT_FOUND || /* XP+ */
        broken(hres == E_UNEXPECTED) || /* NT4 */
        broken(hres == E_FAIL), /* Win2k */
        "Expected OleLoadPicturePath to return INET_E_RESOURCE_NOT_FOUND, got 0x%08x\n", hres);
