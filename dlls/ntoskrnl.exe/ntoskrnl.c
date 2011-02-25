@@ -1523,7 +1523,10 @@ PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)
         RtlFreeAnsiString( &routineNameA );
     }
 
-    TRACE( "%s -> %p\n", debugstr_us(SystemRoutineName), pFunc );
+    if (pFunc)
+        TRACE( "%s -> %p\n", debugstr_us(SystemRoutineName), pFunc );
+    else
+        FIXME( "%s not found\n", debugstr_us(SystemRoutineName) );
     return pFunc;
 }
 
