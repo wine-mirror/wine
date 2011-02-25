@@ -314,8 +314,6 @@ HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCW
     LPWSTR val = NULL;
     nsresult nsres;
 
-    static const PRUnichar wszEmpty[] = {0};
-
     if(flags & ATTR_FIX_PX)
         val = fix_px_value(value);
     if(flags & ATTR_FIX_URL)
@@ -323,8 +321,7 @@ HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCW
 
     nsAString_InitDepend(&str_name, style_tbl[sid].name);
     nsAString_InitDepend(&str_value, val ? val : value);
-    nsAString_InitDepend(&str_empty, wszEmpty);
-    heap_free(val);
+    nsAString_InitDepend(&str_empty, emptyW);
 
     nsres = nsIDOMCSSStyleDeclaration_SetProperty(nsstyle, &str_name, &str_value, &str_empty);
     if(NS_FAILED(nsres))
@@ -333,6 +330,7 @@ HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, LPCW
     nsAString_Finish(&str_name);
     nsAString_Finish(&str_value);
     nsAString_Finish(&str_empty);
+    heap_free(val);
 
     return S_OK;
 }
