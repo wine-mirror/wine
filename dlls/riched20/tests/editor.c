@@ -46,8 +46,6 @@ static CHAR string1[MAX_PATH], string2[MAX_PATH], string3[MAX_PATH];
 
 static HMODULE hmoduleRichEdit;
 
-static int is_win9x = 0;
-
 static HWND new_window(LPCTSTR lpClassName, DWORD dwStyle, HWND parent) {
   HWND hwnd;
   hwnd = CreateWindow(lpClassName, NULL, dwStyle|WS_POPUP|WS_HSCROLL|WS_VSCROLL
@@ -386,7 +384,7 @@ static void test_EM_GETLINE(void)
        * to the MSDN documentation fo EM_GETLINE, which does not state that
        * a NULL terminating character will be added unless no text is copied.
        *
-       * Windows 95, 98 & NT do not append a NULL terminating character, but
+       * Windows NT does not append a NULL terminating character, but
        * Windows 2000 and up do append a NULL terminating character if there
        * is space in the buffer. The test will ignore this difference. */
       ok(!strncmp(dest, gl[i].text, expected_bytes_written),
@@ -3361,13 +3359,8 @@ static void test_WM_SETTEXT(void)
   result = lstrcmpW(b, bufW); \
   ok(result == 0, "WM_SETTEXT round trip: strcmp = %ld\n", result);
 
-  if (is_win9x)
-  {
-      skip("Cannot perform unicode tests\n");
-      return;
-  }
-hwndRichEdit = CreateWindowW(RICHEDIT_CLASS20W, NULL,
-                             ES_MULTILINE|WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
+  hwndRichEdit = CreateWindowW(RICHEDIT_CLASS20W, NULL,
+                               ES_MULTILINE|WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
                                0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
   ok(hwndRichEdit != NULL, "class: RichEdit20W, error: %d\n", (int) GetLastError());
   TEST_SETTEXTW(rtftextA, sometextW) /* interpreted as ascii rtf */
@@ -4448,17 +4441,9 @@ static void test_EM_REPLACESEL(int redraw)
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 2, "EM_GETLINECOUNT returned %d, expected 2\n", r);
 
-    /* Win98's riched20 and WinXP's riched20 disagree on what to return from
-       EM_REPLACESEL. The general rule seems to be that Win98's riched20
-       returns the number of characters *inserted* into the control (after
-       required conversions), but WinXP's riched20 returns the number of
-       characters interpreted from the original lParam. Wine's builtin riched20
-       implements the WinXP behavior.
-     */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "RichEdit1\r\n");
-    ok(11 == r /* WinXP */ || 10 == r /* Win98 */,
-        "EM_REPLACESEL returned %d, expected 11 or 10\n", r);
+    ok(r == 11, "EM_REPLACESEL returned %d, expected 11\n", r);
 
     /* Test number of lines reported after EM_REPLACESEL */
     r = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
@@ -4516,8 +4501,7 @@ static void test_EM_REPLACESEL(int redraw)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n");
-    ok(3 == r /* WinXP */ || 1 == r /* Win98 */,
-        "EM_REPLACESEL returned %d, expected 3 or 1\n", r);
+    ok(r == 3, "EM_REPLACESEL returned %d, expected 3\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 1, "EM_EXGETSEL returned cpMin=%d, expected 1\n", cr.cpMin);
@@ -4539,8 +4523,7 @@ static void test_EM_REPLACESEL(int redraw)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\r\r\r\n\r\r\r");
-    ok(9 == r /* WinXP */ || 7 == r /* Win98 */,
-        "EM_REPLACESEL returned %d, expected 9 or 7\n", r);
+    ok(r == 9, "EM_REPLACESEL returned %d, expected 9\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 7, "EM_EXGETSEL returned cpMin=%d, expected 7\n", cr.cpMin);
@@ -4562,8 +4545,7 @@ static void test_EM_REPLACESEL(int redraw)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n\r\n");
-    ok(5 == r /* WinXP */ || 2 == r /* Win98 */,
-        "EM_REPLACESEL returned %d, expected 5 or 2\n", r);
+    ok(r == 5, "EM_REPLACESEL returned %d, expected 5\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 2, "EM_EXGETSEL returned cpMin=%d, expected 2\n", cr.cpMin);
@@ -4585,8 +4567,7 @@ static void test_EM_REPLACESEL(int redraw)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\r\r\n\r\r");
-    ok(5 == r /* WinXP */ || 3 == r /* Win98 */,
-        "EM_REPLACESEL returned %d, expected 5 or 3\n", r);
+    ok(r == 5, "EM_REPLACESEL returned %d, expected 5\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 3, "EM_EXGETSEL returned cpMin=%d, expected 3\n", cr.cpMin);
@@ -4608,8 +4589,7 @@ static void test_EM_REPLACESEL(int redraw)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\rX\r\n\r\r");
-    ok(6 == r /* WinXP */ || 5 == r /* Win98 */,
-        "EM_REPLACESEL returned %d, expected 6 or 5\n", r);
+    ok(r == 6, "EM_REPLACESEL returned %d, expected 6\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 5, "EM_EXGETSEL returned cpMin=%d, expected 5\n", cr.cpMin);
@@ -4653,8 +4633,7 @@ static void test_EM_REPLACESEL(int redraw)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessage(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM) "\n\n\n\n\r\r\r\r\n");
-    ok(9 == r /* WinXP */ || 7 == r /* Win98 */,
-        "EM_REPLACESEL returned %d, expected 9 or 7\n", r);
+    ok(r == 9, "EM_REPLACESEL returned %d, expected 9\n", r);
     r = SendMessage(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
     ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
     ok(cr.cpMin == 7, "EM_EXGETSEL returned cpMin=%d, expected 7\n", cr.cpMin);
@@ -5271,17 +5250,8 @@ static void test_unicode_conversions(void)
         WPARAM wparam = (wm_get_text == WM_GETTEXT) ? 64 : (WPARAM)&gtex; \
         assert(wm_get_text == WM_GETTEXT || wm_get_text == EM_GETTEXTEX); \
         memset(bufW, 0xAA, sizeof(bufW)); \
-        if (is_win9x) \
-        { \
-            assert(wm_get_text == EM_GETTEXTEX); \
-            ret = SendMessageA(hwnd, wm_get_text, wparam, (LPARAM)bufW); \
-            ok(ret, "SendMessageA(%02x) error %u\n", wm_get_text, GetLastError()); \
-        } \
-        else \
-        { \
-            ret = SendMessageW(hwnd, wm_get_text, wparam, (LPARAM)bufW); \
-            ok(ret, "SendMessageW(%02x) error %u\n", wm_get_text, GetLastError()); \
-        } \
+        ret = SendMessageW(hwnd, wm_get_text, wparam, (LPARAM)bufW); \
+        ok(ret, "SendMessageW(%02x) error %u\n", wm_get_text, GetLastError()); \
         ret = lstrcmpW(bufW, txt); \
         ok(!ret, "%02x: strings do not match: expected[0] %x got[0] %x\n", wm_get_text, txt[0], bufW[0]); \
     } while(0)
@@ -5301,10 +5271,7 @@ static void test_unicode_conversions(void)
     ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
 
     ret = IsWindowUnicode(hwnd);
-    if (is_win9x)
-        ok(!ret, "RichEdit20W should NOT be unicode under Win9x\n");
-    else
-        ok(ret, "RichEdit20W should be unicode under NT\n");
+    ok(ret, "RichEdit20W should be unicode under NT\n");
 
     /* EM_SETTEXTEX is supported starting from version 3.0 */
     em_settextex_supported = is_em_settextex_supported(hwnd);
@@ -5330,10 +5297,7 @@ static void test_unicode_conversions(void)
     expect_empty(hwnd, WM_GETTEXT);
     expect_empty(hwnd, EM_GETTEXTEX);
 
-    if (is_win9x)
-        set_textA(hwnd, WM_SETTEXT, textW);
-    else
-        set_textA(hwnd, WM_SETTEXT, textA);
+    set_textA(hwnd, WM_SETTEXT, textA);
     expect_textA(hwnd, WM_GETTEXT, textA);
     expect_textA(hwnd, EM_GETTEXTEX, textA);
     expect_textW(hwnd, EM_GETTEXTEX, textW);
@@ -5346,22 +5310,19 @@ static void test_unicode_conversions(void)
         expect_textW(hwnd, EM_GETTEXTEX, textW);
     }
 
-    if (!is_win9x)
+    set_textW(hwnd, WM_SETTEXT, textW);
+    expect_textW(hwnd, WM_GETTEXT, textW);
+    expect_textA(hwnd, WM_GETTEXT, textA);
+    expect_textW(hwnd, EM_GETTEXTEX, textW);
+    expect_textA(hwnd, EM_GETTEXTEX, textA);
+
+    if (em_settextex_supported)
     {
-        set_textW(hwnd, WM_SETTEXT, textW);
+        set_textW(hwnd, EM_SETTEXTEX, textW);
         expect_textW(hwnd, WM_GETTEXT, textW);
         expect_textA(hwnd, WM_GETTEXT, textA);
         expect_textW(hwnd, EM_GETTEXTEX, textW);
         expect_textA(hwnd, EM_GETTEXTEX, textA);
-
-        if (em_settextex_supported)
-        {
-            set_textW(hwnd, EM_SETTEXTEX, textW);
-            expect_textW(hwnd, WM_GETTEXT, textW);
-            expect_textA(hwnd, WM_GETTEXT, textA);
-            expect_textW(hwnd, EM_GETTEXTEX, textW);
-            expect_textA(hwnd, EM_GETTEXTEX, textA);
-        }
     }
     DestroyWindow(hwnd);
 
@@ -5385,22 +5346,19 @@ static void test_unicode_conversions(void)
         expect_textW(hwnd, EM_GETTEXTEX, textW);
     }
 
-    if (!is_win9x)
-    {
         set_textW(hwnd, WM_SETTEXT, textW);
         expect_textW(hwnd, WM_GETTEXT, textW);
         expect_textA(hwnd, WM_GETTEXT, textA);
         expect_textW(hwnd, EM_GETTEXTEX, textW);
         expect_textA(hwnd, EM_GETTEXTEX, textA);
 
-        if (em_settextex_supported)
-        {
-            set_textW(hwnd, EM_SETTEXTEX, textW);
-            expect_textW(hwnd, WM_GETTEXT, textW);
-            expect_textA(hwnd, WM_GETTEXT, textA);
-            expect_textW(hwnd, EM_GETTEXTEX, textW);
-            expect_textA(hwnd, EM_GETTEXTEX, textA);
-        }
+    if (em_settextex_supported)
+    {
+        set_textW(hwnd, EM_SETTEXTEX, textW);
+        expect_textW(hwnd, WM_GETTEXT, textW);
+        expect_textA(hwnd, WM_GETTEXT, textA);
+        expect_textW(hwnd, EM_GETTEXTEX, textW);
+        expect_textA(hwnd, EM_GETTEXTEX, textA);
     }
     DestroyWindow(hwnd);
 }
@@ -5468,12 +5426,8 @@ static void test_EM_GETTEXTLENGTHEX(void)
     char buffer[64] = {0};
 
     /* single line */
-    if (!is_win9x)
-        hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
-                               0, 0, 200, 60, 0, 0, 0, 0);
-    else
-        hwnd = CreateWindowExA(0, "RichEdit20A", NULL, WS_POPUP,
-                               0, 0, 200, 60, 0, 0, 0, 0);
+    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
+                           0, 0, 200, 60, 0, 0, 0, 0);
     ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
@@ -5517,12 +5471,8 @@ static void test_EM_GETTEXTLENGTHEX(void)
     DestroyWindow(hwnd);
 
     /* multi line */
-    if (!is_win9x)
-        hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP | ES_MULTILINE,
-                               0, 0, 200, 60, 0, 0, 0, 0);
-    else
-        hwnd = CreateWindowExA(0, "RichEdit20A", NULL, WS_POPUP | ES_MULTILINE,
-                               0, 0, 200, 60, 0, 0, 0, 0);
+    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP | ES_MULTILINE,
+                           0, 0, 200, 60, 0, 0, 0, 0);
     ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE | GTL_USECRLF;
@@ -5825,12 +5775,8 @@ static void test_undo_coalescing(void)
     char buffer[64] = {0};
 
     /* multi-line control inserts CR normally */
-    if (!is_win9x)
-        hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP|ES_MULTILINE,
-                               0, 0, 200, 60, 0, 0, 0, 0);
-    else
-        hwnd = CreateWindowExA(0, "RichEdit20A", NULL, WS_POPUP|ES_MULTILINE,
-                               0, 0, 200, 60, 0, 0, 0, 0);
+    hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP|ES_MULTILINE,
+                           0, 0, 200, 60, 0, 0, 0, 0);
     ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
 
     result = SendMessage(hwnd, EM_CANUNDO, 0, 0);
@@ -6050,11 +5996,6 @@ static void test_word_movement(void)
 
     /* Make sure the behaviour is the same with a unicode richedit window,
      * and using unicode functions. */
-    if (is_win9x)
-    {
-        skip("Cannot test with unicode richedit window\n");
-        return;
-    }
 
     hwnd = CreateWindowW(RICHEDIT_CLASS20W, NULL,
                         ES_MULTILINE|WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
@@ -7100,8 +7041,6 @@ START_TEST( editor )
    * RICHED20.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibrary("RICHED20.DLL");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
-
-  is_win9x = GetVersion() & 0x80000000;
 
   test_WM_CHAR();
   test_EM_FINDTEXT();
