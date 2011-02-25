@@ -1187,9 +1187,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        /* win9x: 32 */
-        ok((info.uliAssemblySizeInKB.u.LowPart == 4) ||
-           broken(info.uliAssemblySizeInKB.u.LowPart == 32),
+        ok((info.uliAssemblySizeInKB.u.LowPart == 4),
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     }
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1210,9 +1208,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        /* win9x: 32 */
-        ok((info.uliAssemblySizeInKB.u.LowPart == 4) ||
-           broken(info.uliAssemblySizeInKB.u.LowPart == 32),
+        ok((info.uliAssemblySizeInKB.u.LowPart == 4),
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     }
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1235,9 +1231,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got %08x\n", hr);
     todo_wine
     {
-        /* win9x: 32 */
-        ok((info.uliAssemblySizeInKB.u.LowPart == 4) ||
-           broken(info.uliAssemblySizeInKB.u.LowPart == 32),
+        ok((info.uliAssemblySizeInKB.u.LowPart == 4),
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     }
     ok(info.cchBuf == lstrlenW(asmpath) + 1,
@@ -1260,9 +1254,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got %08x\n", hr);
     todo_wine
     {
-        /* win9x: 32 */
-        ok((info.uliAssemblySizeInKB.u.LowPart == 4) ||
-           broken(info.uliAssemblySizeInKB.u.LowPart == 32),
+        ok((info.uliAssemblySizeInKB.u.LowPart == 4),
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     }
     ok(info.cchBuf == lstrlenW(asmpath) + 1,
@@ -1284,9 +1276,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected %d, got %d\n", lstrlenW(asmpath) + 1, info.cchBuf);
     todo_wine
     {
-        /* win9x: 32 */
-        ok((info.uliAssemblySizeInKB.u.LowPart == 4) ||
-           broken(info.uliAssemblySizeInKB.u.LowPart == 32),
+        ok((info.uliAssemblySizeInKB.u.LowPart == 4),
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     }
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1308,9 +1298,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        /* win9x: 32 */
-        ok((info.uliAssemblySizeInKB.u.LowPart == 4) ||
-           broken(info.uliAssemblySizeInKB.u.LowPart == 32),
+        ok((info.uliAssemblySizeInKB.u.LowPart == 4),
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     }
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1341,9 +1329,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        /* win9x: 32 */
-        ok((info.uliAssemblySizeInKB.u.LowPart == 4) ||
-           broken(info.uliAssemblySizeInKB.u.LowPart == 32),
+        ok((info.uliAssemblySizeInKB.u.LowPart == 4),
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     }
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1387,9 +1373,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        /* win9x: 32 */
-        ok((info.uliAssemblySizeInKB.u.LowPart == 4) ||
-           broken(info.uliAssemblySizeInKB.u.LowPart == 32),
+        ok((info.uliAssemblySizeInKB.u.LowPart == 4),
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     }
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1439,9 +1423,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        /* win9x: 32 */
-        ok((info.uliAssemblySizeInKB.u.LowPart == 4) ||
-           broken(info.uliAssemblySizeInKB.u.LowPart == 32),
+        ok((info.uliAssemblySizeInKB.u.LowPart == 4),
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     }
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
@@ -1485,9 +1467,7 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     todo_wine
     {
-        /* win9x: 32 */
-        ok((info.uliAssemblySizeInKB.u.LowPart == 4) ||
-           broken(info.uliAssemblySizeInKB.u.LowPart == 32),
+        ok((info.uliAssemblySizeInKB.u.LowPart == 4),
            "Expected 4, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
     }
     ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, asmpath),
