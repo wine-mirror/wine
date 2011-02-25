@@ -2102,12 +2102,14 @@ C_ASSERT( FIELD_OFFSET(struct set_cursor_request, handle) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_request, show_count) == 20 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_request, x) == 24 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_request, y) == 28 );
-C_ASSERT( sizeof(struct set_cursor_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct set_cursor_request, clip) == 32 );
+C_ASSERT( sizeof(struct set_cursor_request) == 48 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, prev_handle) == 8 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, prev_count) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_x) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_y) == 20 );
-C_ASSERT( sizeof(struct set_cursor_reply) == 24 );
+C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_clip) == 24 );
+C_ASSERT( sizeof(struct set_cursor_reply) == 40 );
 
 #endif  /* WANT_REQUEST_HANDLERS */
 

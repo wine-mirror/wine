@@ -1264,6 +1264,13 @@ static user_handle_t find_hardware_message_window( struct thread_input *input, s
     return win;
 }
 
+/* set the cursor position, clipping to the cursor clip rect */
+static void set_cursor_pos( struct desktop *desktop, int x, int y )
+{
+    desktop->cursor_x = min( max( x, desktop->cursor_clip.left ), desktop->cursor_clip.right - 1 );
+    desktop->cursor_y = min( max( y, desktop->cursor_clip.top ), desktop->cursor_clip.bottom - 1 );
+}
+
 /* queue a hardware message into a given thread input */
 static void queue_hardware_message( struct desktop *desktop, struct thread_input *input,
                                     struct message *msg )
@@ -1273,11 +1280,7 @@ static void queue_hardware_message( struct desktop *desktop, struct thread_input
     unsigned int msg_code;
     struct hardware_msg_data *data = msg->data;
 
-    if (msg->msg == WM_MOUSEMOVE)
-    {
-        desktop->cursor_x = data->x;
-        desktop->cursor_y = data->y;
-    }
+    if (msg->msg == WM_MOUSEMOVE) set_cursor_pos( desktop, data->x, data->y );
     data->x = desktop->cursor_x;
     data->y = desktop->cursor_y;
     last_input_time = get_tick_count();
@@ -2302,10 +2305,17 @@ DECL_HANDLER(set_cursor)
     }
     if (req->flags & SET_CURSOR_POS)
     {
-        input->desktop->cursor_x = req->x;
-        input->desktop->cursor_y = req->y;
+        set_cursor_pos( input->desktop, req->x, req->y );
+    }
+    if (req->flags & SET_CURSOR_CLIP)
+    {
+        rectangle_t top_rect;
+        get_top_window_rectangle( input->desktop, &top_rect );
+        if (!intersect_rect( &input->desktop->cursor_clip, &top_rect, &req->clip ))
+            input->desktop->cursor_clip = top_rect;
     }
 
     reply->new_x    = input->desktop->cursor_x;
     reply->new_y    = input->desktop->cursor_y;
+    reply->new_clip = input->desktop->cursor_clip;
 }

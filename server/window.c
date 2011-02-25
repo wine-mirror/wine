@@ -394,6 +394,14 @@ struct process *get_top_window_owner( struct desktop *desktop )
     return win->thread->process;
 }
 
+/* get the top window size of a given desktop */
+void get_top_window_rectangle( struct desktop *desktop, rectangle_t *rect )
+{
+    struct window *win = desktop->top_window;
+    if (!win) rect->left = rect->top = rect->right = rect->bottom = 0;
+    else *rect = win->window_rect;
+}
+
 /* attempt to close the desktop window when the last process using it is gone */
 void close_desktop_window( struct desktop *desktop )
 {
@@ -885,17 +893,6 @@ static struct region *clip_children( struct window *parent, struct window *last,
     }
     free_region( tmp );
     return region;
-}
-
-
-/* compute the intersection of two rectangles; return 0 if the result is empty */
-static inline int intersect_rect( rectangle_t *dst, const rectangle_t *src1, const rectangle_t *src2 )
-{
-    dst->left   = max( src1->left, src2->left );
-    dst->top    = max( src1->top, src2->top );
-    dst->right  = min( src1->right, src2->right );
-    dst->bottom = min( src1->bottom, src2->bottom );
-    return (dst->left < dst->right && dst->top < dst->bottom);
 }
 
 
@@ -1554,6 +1551,9 @@ static void set_window_pos( struct window *win, struct window *previous,
             offset_rect( &child->client_rect, new_size - old_size, 0 );
         }
     }
+
+    /* reset cursor clip rectangle when the desktop changes size */
+    if (win == win->desktop->top_window) win->desktop->cursor_clip = *window_rect;
 
     /* if the window is not visible, everything is easy */
     if (!visible) return;

@@ -65,6 +65,7 @@ struct desktop
     unsigned int         users;            /* processes and threads using this desktop */
     int                  cursor_x;         /* cursor position */
     int                  cursor_y;
+    rectangle_t          cursor_clip;      /* cursor clip rectangle */
 };
 
 /* user handles functions */
@@ -133,6 +134,7 @@ extern int rect_in_region( struct region *region, const rectangle_t *rect );
 /* window functions */
 
 extern struct process *get_top_window_owner( struct desktop *desktop );
+extern void get_top_window_rectangle( struct desktop *desktop, rectangle_t *rect );
 extern void close_desktop_window( struct desktop *desktop );
 extern void destroy_window( struct window *win );
 extern void destroy_thread_windows( struct thread *thread );
@@ -175,6 +177,16 @@ static inline void mirror_rect( const rectangle_t *client_rect, rectangle_t *rec
     int tmp = rect->left;
     rect->left = width - rect->right;
     rect->right = width - tmp;
+}
+
+/* compute the intersection of two rectangles; return 0 if the result is empty */
+static inline int intersect_rect( rectangle_t *dst, const rectangle_t *src1, const rectangle_t *src2 )
+{
+    dst->left   = max( src1->left, src2->left );
+    dst->top    = max( src1->top, src2->top );
+    dst->right  = min( src1->right, src2->right );
+    dst->bottom = min( src1->bottom, src2->bottom );
+    return (dst->left < dst->right && dst->top < dst->bottom);
 }
 
 #endif  /* __WINE_SERVER_USER_H */

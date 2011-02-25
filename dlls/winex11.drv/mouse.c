@@ -425,6 +425,7 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         if ((injected_flags & LLMHF_INJECTED) &&
             ((flags & MOUSEEVENTF_ABSOLUTE) || x || y))  /* we have to actually move the cursor */
         {
+            clip_point_to_rect( &cursor_clip, &pt );
             X11DRV_SetCursorPos( pt.x, pt.y );
         }
         else
@@ -1084,25 +1085,15 @@ void CDECL X11DRV_SetCursor( HCURSOR handle )
 BOOL CDECL X11DRV_SetCursorPos( INT x, INT y )
 {
     Display *display = thread_init_display();
-    POINT pt;
 
     TRACE( "warping to (%d,%d)\n", x, y );
 
     wine_tsx11_lock();
-    if (cursor_pos.x == x && cursor_pos.y == y)
-    {
-        wine_tsx11_unlock();
-        /* We still need to generate WM_MOUSEMOVE */
-        queue_raw_mouse_message( WM_MOUSEMOVE, 0, x, y, 0, GetCurrentTime(), 0, 0 );
-        return TRUE;
-    }
-
-    pt.x = x; pt.y = y;
-    clip_point_to_rect( &cursor_clip, &pt);
     XWarpPointer( display, root_window, root_window, 0, 0, 0, 0,
-                  pt.x - virtual_screen_rect.left, pt.y - virtual_screen_rect.top );
+                  x - virtual_screen_rect.left, y - virtual_screen_rect.top );
     XFlush( display ); /* avoids bad mouse lag in games that do their own mouse warping */
-    cursor_pos = pt;
+    cursor_pos.x = x;
+    cursor_pos.y = y;
     wine_tsx11_unlock();
     return TRUE;
 }

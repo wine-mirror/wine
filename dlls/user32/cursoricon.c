@@ -71,8 +71,6 @@ typedef struct
 
 #include "poppack.h"
 
-static RECT CURSOR_ClipRect;       /* Cursor clipping rect */
-
 static HDC screen_dc;
 
 static const WCHAR DISPLAYW[] = {'D','I','S','P','L','A','Y',0};
@@ -1526,21 +1524,32 @@ HCURSOR WINAPI GetCursor(void)
  */
 BOOL WINAPI DECLSPEC_HOTPATCH ClipCursor( const RECT *rect )
 {
-    RECT virt;
+    BOOL ret;
+    RECT new_rect;
 
-    SetRect( &virt, 0, 0, GetSystemMetrics( SM_CXVIRTUALSCREEN ),
-                          GetSystemMetrics( SM_CYVIRTUALSCREEN ) );
-    OffsetRect( &virt, GetSystemMetrics( SM_XVIRTUALSCREEN ),
-                       GetSystemMetrics( SM_YVIRTUALSCREEN ) );
+    TRACE( "Clipping to %s\n", wine_dbgstr_rect(rect) );
 
-    TRACE( "Clipping to: %s was: %s screen: %s\n", wine_dbgstr_rect(rect),
-           wine_dbgstr_rect(&CURSOR_ClipRect), wine_dbgstr_rect(&virt) );
-
-    if (!IntersectRect( &CURSOR_ClipRect, &virt, rect ))
-        CURSOR_ClipRect = virt;
-
-    USER_Driver->pClipCursor( rect );
-    return TRUE;
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = SET_CURSOR_CLIP;
+        if (rect)
+        {
+            req->clip.left   = rect->left;
+            req->clip.top    = rect->top;
+            req->clip.right  = rect->right;
+            req->clip.bottom = rect->bottom;
+        }
+        if ((ret = !wine_server_call( req )))
+        {
+            new_rect.left   = reply->new_clip.left;
+            new_rect.top    = reply->new_clip.top;
+            new_rect.right  = reply->new_clip.right;
+            new_rect.bottom = reply->new_clip.bottom;
+        }
+    }
+    SERVER_END_REQ;
+    if (ret) USER_Driver->pClipCursor( &new_rect );
+    return ret;
 }
 
 
@@ -1549,10 +1558,23 @@ BOOL WINAPI DECLSPEC_HOTPATCH ClipCursor( const RECT *rect )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetClipCursor( RECT *rect )
 {
-    /* If this is first time - initialize the rect */
-    if (IsRectEmpty( &CURSOR_ClipRect )) ClipCursor( NULL );
+    BOOL ret;
 
-    return CopyRect( rect, &CURSOR_ClipRect );
+    if (!rect) return FALSE;
+
+    SERVER_START_REQ( set_cursor )
+    {
+        req->flags = 0;
+        if ((ret = !wine_server_call( req )))
+        {
+            rect->left   = reply->new_clip.left;
+            rect->top    = reply->new_clip.top;
+            rect->right  = reply->new_clip.right;
+            rect->bottom = reply->new_clip.bottom;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

@@ -3292,12 +3292,15 @@ enum coords_relative
     int            show_count;    /* show count increment/decrement */
     int            x;             /* cursor position */
     int            y;
+    rectangle_t    clip;          /* cursor clip rectangle */
 @REPLY
     user_handle_t  prev_handle;   /* previous handle */
     int            prev_count;    /* previous show count */
     int            new_x;         /* new position */
     int            new_y;
+    rectangle_t    new_clip;      /* new clip rectangle */
 @END
 #define SET_CURSOR_HANDLE 0x01
 #define SET_CURSOR_COUNT  0x02
 #define SET_CURSOR_POS    0x04
+#define SET_CURSOR_CLIP   0x08

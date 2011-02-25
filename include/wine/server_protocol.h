@@ -4771,6 +4771,7 @@ struct set_cursor_request
     int            show_count;
     int            x;
     int            y;
+    rectangle_t    clip;
 };
 struct set_cursor_reply
 {
@@ -4779,10 +4780,12 @@ struct set_cursor_reply
     int            prev_count;
     int            new_x;
     int            new_y;
+    rectangle_t    new_clip;
 };
 #define SET_CURSOR_HANDLE 0x01
 #define SET_CURSOR_COUNT  0x02
 #define SET_CURSOR_POS    0x04
+#define SET_CURSOR_CLIP   0x08
 
 
 enum request
@@ -5530,6 +5533,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 413
+#define SERVER_PROTOCOL_VERSION 414
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
