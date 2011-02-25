@@ -1101,18 +1101,18 @@ static struct timer *set_timer( struct msg_queue *queue, unsigned int rate )
 }
 
 /* change the input key state for a given key */
-static void set_input_key_state( struct thread_input *input, unsigned char key, int down )
+static void set_input_key_state( unsigned char *keystate, unsigned char key, int down )
 {
     if (down)
     {
-        if (!(input->keystate[key] & 0x80)) input->keystate[key] ^= 0x01;
-        input->keystate[key] |= 0x80;
+        if (!(keystate[key] & 0x80)) keystate[key] ^= 0x01;
+        keystate[key] |= 0x80;
     }
-    else input->keystate[key] &= ~0x80;
+    else keystate[key] &= ~0x80;
 }
 
 /* update the input key state for a keyboard message */
-static void update_input_key_state( struct thread_input *input, const struct message *msg )
+static void update_input_key_state( unsigned char *keystate, const struct message *msg )
 {
     unsigned char key;
     int down = 0;
@@ -1123,26 +1123,26 @@ static void update_input_key_state( struct thread_input *input, const struct mes
         down = 1;
         /* fall through */
     case WM_LBUTTONUP:
-        set_input_key_state( input, VK_LBUTTON, down );
+        set_input_key_state( keystate, VK_LBUTTON, down );
         break;
     case WM_MBUTTONDOWN:
         down = 1;
         /* fall through */
     case WM_MBUTTONUP:
-        set_input_key_state( input, VK_MBUTTON, down );
+        set_input_key_state( keystate, VK_MBUTTON, down );
         break;
     case WM_RBUTTONDOWN:
         down = 1;
         /* fall through */
     case WM_RBUTTONUP:
-        set_input_key_state( input, VK_RBUTTON, down );
+        set_input_key_state( keystate, VK_RBUTTON, down );
         break;
     case WM_XBUTTONDOWN:
         down = 1;
         /* fall through */
     case WM_XBUTTONUP:
-        if (msg->wparam == XBUTTON1) set_input_key_state( input, VK_XBUTTON1, down );
-        else if (msg->wparam == XBUTTON2) set_input_key_state( input, VK_XBUTTON2, down );
+        if (msg->wparam == XBUTTON1) set_input_key_state( keystate, VK_XBUTTON1, down );
+        else if (msg->wparam == XBUTTON2) set_input_key_state( keystate, VK_XBUTTON2, down );
         break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
@@ -1151,23 +1151,23 @@ static void update_input_key_state( struct thread_input *input, const struct mes
     case WM_KEYUP:
     case WM_SYSKEYUP:
         key = (unsigned char)msg->wparam;
-        set_input_key_state( input, key, down );
+        set_input_key_state( keystate, key, down );
         switch(key)
         {
         case VK_LCONTROL:
         case VK_RCONTROL:
-            down = (input->keystate[VK_LCONTROL] | input->keystate[VK_RCONTROL]) & 0x80;
-            set_input_key_state( input, VK_CONTROL, down );
+            down = (keystate[VK_LCONTROL] | keystate[VK_RCONTROL]) & 0x80;
+            set_input_key_state( keystate, VK_CONTROL, down );
             break;
         case VK_LMENU:
         case VK_RMENU:
-            down = (input->keystate[VK_LMENU] | input->keystate[VK_RMENU]) & 0x80;
-            set_input_key_state( input, VK_MENU, down );
+            down = (keystate[VK_LMENU] | keystate[VK_RMENU]) & 0x80;
+            set_input_key_state( keystate, VK_MENU, down );
             break;
         case VK_LSHIFT:
         case VK_RSHIFT:
-            down = (input->keystate[VK_LSHIFT] | input->keystate[VK_RSHIFT]) & 0x80;
-            set_input_key_state( input, VK_SHIFT, down );
+            down = (keystate[VK_LSHIFT] | keystate[VK_RSHIFT]) & 0x80;
+            set_input_key_state( keystate, VK_SHIFT, down );
             break;
         }
         break;
@@ -1229,7 +1229,7 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
     }
     if (remove)
     {
-        update_input_key_state( input, msg );
+        update_input_key_state( input->keystate, msg );
         list_remove( &msg->entry );
         free_message( msg );
     }
@@ -1283,11 +1283,12 @@ static void queue_hardware_message( struct desktop *desktop, struct thread_input
     if (msg->msg == WM_MOUSEMOVE) set_cursor_pos( desktop, data->x, data->y );
     data->x = desktop->cursor_x;
     data->y = desktop->cursor_y;
+    update_input_key_state( desktop->keystate, msg );
     last_input_time = get_tick_count();
     win = find_hardware_message_window( input, msg, &msg_code );
     if (!win || !(thread = get_window_thread(win)))
     {
-        if (input) update_input_key_state( input, msg );
+        if (input) update_input_key_state( input->keystate, msg );
         free( msg );
         return;
     }
@@ -1377,7 +1378,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         if (!win || !(win_thread = get_window_thread( win )))
         {
             /* no window at all, remove it */
-            update_input_key_state( input, msg );
+            update_input_key_state( input->keystate, msg );
             list_remove( &msg->entry );
             free_message( msg );
             continue;
@@ -1393,7 +1394,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
             else
             {
                 /* for another thread input, drop it */
-                update_input_key_state( input, msg );
+                update_input_key_state( input->keystate, msg );
                 list_remove( &msg->entry );
                 free_message( msg );
             }
@@ -2098,33 +2099,48 @@ DECL_HANDLER(get_thread_input)
 DECL_HANDLER(get_key_state)
 {
     struct thread *thread;
-    struct thread_input *input;
+    struct desktop *desktop;
+    data_size_t size = min( 256, get_reply_max_size() );
 
-    if (!(thread = get_thread_from_id( req->tid ))) return;
-    input = thread->queue ? thread->queue->input : NULL;
-    if (input)
+    if (!req->tid)  /* get global async key state */
     {
-        if (req->key >= 0) reply->state = input->keystate[req->key & 0xff];
-        set_reply_data( input->keystate, min( get_reply_max_size(), sizeof(input->keystate) ));
+        if (!(desktop = get_thread_desktop( current, 0 ))) return;
+        if (req->key >= 0) reply->state = desktop->keystate[req->key & 0xff];
+        set_reply_data( desktop->keystate, size );
+        release_object( desktop );
     }
-    release_object( thread );
+    else
+    {
+        if (!(thread = get_thread_from_id( req->tid ))) return;
+        if (thread->queue)
+        {
+            if (req->key >= 0) reply->state = thread->queue->input->keystate[req->key & 0xff];
+            set_reply_data( thread->queue->input->keystate, size );
+        }
+        release_object( thread );
+    }
 }
 
 
 /* set queue keyboard state for a given thread */
 DECL_HANDLER(set_key_state)
 {
-    struct thread *thread = NULL;
-    struct thread_input *input;
+    struct thread *thread;
+    struct desktop *desktop;
+    data_size_t size = min( 256, get_req_data_size() );
 
-    if (!(thread = get_thread_from_id( req->tid ))) return;
-    input = thread->queue ? thread->queue->input : NULL;
-    if (input)
+    if (!req->tid)  /* set global async key state */
     {
-        data_size_t size = min( sizeof(input->keystate), get_req_data_size() );
-        if (size) memcpy( input->keystate, get_req_data(), size );
+        if (!(desktop = get_thread_desktop( current, 0 ))) return;
+        memcpy( desktop->keystate, get_req_data(), size );
+        release_object( desktop );
     }
-    release_object( thread );
+    else
+    {
+        if (!(thread = get_thread_from_id( req->tid ))) return;
+        if (thread->queue) memcpy( thread->queue->input->keystate, get_req_data(), size );
+        release_object( thread );
+    }
 }
 
 

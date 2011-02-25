@@ -66,6 +66,7 @@ struct desktop
     int                  cursor_x;         /* cursor position */
     int                  cursor_y;
     rectangle_t          cursor_clip;      /* cursor clip rectangle */
+    unsigned char        keystate[256];    /* asynchronous key state */
 };
 
 /* user handles functions */
