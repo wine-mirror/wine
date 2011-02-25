@@ -277,10 +277,11 @@ DATETIME_UseFormat (DATETIME_INFO *infoPtr, LPCWSTR formattxt)
 
 
 static BOOL
-DATETIME_SetFormatW (DATETIME_INFO *infoPtr, LPCWSTR lpszFormat)
+DATETIME_SetFormatW (DATETIME_INFO *infoPtr, LPCWSTR format)
 {
-    if (!lpszFormat) {
-	WCHAR format_buf[80];
+    WCHAR format_buf[80];
+
+    if (!format) {
 	DWORD format_item;
 
 	if (infoPtr->dwStyle & DTS_LONGDATEFORMAT)
@@ -290,13 +291,13 @@ DATETIME_SetFormatW (DATETIME_INFO *infoPtr, LPCWSTR lpszFormat)
         else /* DTS_SHORTDATEFORMAT */
 	    format_item = LOCALE_SSHORTDATE;
 	GetLocaleInfoW(LOCALE_USER_DEFAULT, format_item, format_buf, sizeof(format_buf)/sizeof(format_buf[0]));
-	lpszFormat = format_buf;
+	format = format_buf;
     }
 
-    DATETIME_UseFormat (infoPtr, lpszFormat);
+    DATETIME_UseFormat (infoPtr, format);
     InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
-    return 1;
+    return TRUE;
 }
 
 
