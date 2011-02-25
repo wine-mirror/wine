@@ -1971,10 +1971,9 @@ static HKEY open_associations_reg_key(void)
 }
 
 static BOOL has_association_changed(LPCWSTR extensionW, LPCSTR mimeType, LPCWSTR progId,
-    LPCSTR appName, LPCWSTR docName, LPCSTR openWithIcon)
+    LPCSTR appName, LPCSTR openWithIcon)
 {
     static const WCHAR ProgIDW[] = {'P','r','o','g','I','D',0};
-    static const WCHAR DocNameW[] = {'D','o','c','N','a','m','e',0};
     static const WCHAR MimeTypeW[] = {'M','i','m','e','T','y','p','e',0};
     static const WCHAR AppNameW[] = {'A','p','p','N','a','m','e',0};
     static const WCHAR OpenWithIconW[] = {'O','p','e','n','W','i','t','h','I','c','o','n',0};
@@ -2003,11 +2002,6 @@ static BOOL has_association_changed(LPCWSTR extensionW, LPCSTR mimeType, LPCWSTR
             ret = TRUE;
         HeapFree(GetProcessHeap(), 0, valueA);
 
-        value = reg_get_valW(assocKey, extensionW, DocNameW);
-        if (docName && (!value || strcmpW(value, docName)))
-            ret = TRUE;
-        HeapFree(GetProcessHeap(), 0, value);
-
         valueA = reg_get_val_utf8(assocKey, extensionW, OpenWithIconW);
         if ((openWithIcon && !valueA) ||
             (!openWithIcon && valueA) ||
@@ -2026,10 +2020,9 @@ static BOOL has_association_changed(LPCWSTR extensionW, LPCSTR mimeType, LPCWSTR
 }
 
 static void update_association(LPCWSTR extension, LPCSTR mimeType, LPCWSTR progId,
-    LPCSTR appName, LPCWSTR docName, LPCSTR desktopFile, LPCSTR openWithIcon)
+    LPCSTR appName, LPCSTR desktopFile, LPCSTR openWithIcon)
 {
     static const WCHAR ProgIDW[] = {'P','r','o','g','I','D',0};
-    static const WCHAR DocNameW[] = {'D','o','c','N','a','m','e',0};
     static const WCHAR MimeTypeW[] = {'M','i','m','e','T','y','p','e',0};
     static const WCHAR AppNameW[] = {'A','p','p','N','a','m','e',0};
     static const WCHAR DesktopFileW[] = {'D','e','s','k','t','o','p','F','i','l','e',0};
@@ -2088,8 +2081,6 @@ static void update_association(LPCWSTR extension, LPCSTR mimeType, LPCWSTR progI
     RegSetValueExW(subkey, MimeTypeW, 0, REG_SZ, (const BYTE*) mimeTypeW, (lstrlenW(mimeTypeW) + 1) * sizeof(WCHAR));
     RegSetValueExW(subkey, ProgIDW, 0, REG_SZ, (const BYTE*) progId, (lstrlenW(progId) + 1) * sizeof(WCHAR));
     RegSetValueExW(subkey, AppNameW, 0, REG_SZ, (const BYTE*) appNameW, (lstrlenW(appNameW) + 1) * sizeof(WCHAR));
-    if (docName)
-        RegSetValueExW(subkey, DocNameW, 0, REG_SZ, (const BYTE*) docName, (lstrlenW(docName) + 1) * sizeof(WCHAR));
     RegSetValueExW(subkey, DesktopFileW, 0, REG_SZ, (const BYTE*) desktopFileW, (lstrlenW(desktopFileW) + 1) * sizeof(WCHAR));
     if (openWithIcon)
         RegSetValueExW(subkey, OpenWithIconW, 0, REG_SZ, (const BYTE*) openWithIconW, (lstrlenW(openWithIconW) + 1) * sizeof(WCHAR));
@@ -2455,7 +2446,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
                 }
             }
 
-            if (has_association_changed(extensionW, mimeTypeA, progIdW, friendlyAppNameA, friendlyDocNameW, openWithIconA))
+            if (has_association_changed(extensionW, mimeTypeA, progIdW, friendlyAppNameA, openWithIconA))
             {
                 char *desktopPath = heap_printf("%s/wine-extension-%s.desktop", applications_dir, &extensionA[1]);
                 if (desktopPath)
@@ -2463,7 +2454,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
                     if (write_freedesktop_association_entry(desktopPath, extensionA, friendlyAppNameA, mimeTypeA, progIdA, openWithIconA))
                     {
                         hasChanged = TRUE;
-                        update_association(extensionW, mimeTypeA, progIdW, friendlyAppNameA, friendlyDocNameW, desktopPath, openWithIconA);
+                        update_association(extensionW, mimeTypeA, progIdW, friendlyAppNameA, desktopPath, openWithIconA);
                     }
                     HeapFree(GetProcessHeap(), 0, desktopPath);
                 }
