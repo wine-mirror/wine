@@ -109,7 +109,7 @@ static void testQuery(void)
     ret = pQuery(SNMP_PDU_GET, &list, &error, &index);
     ok(ret, "SnmpExtensionQuery failed: %d, %d\n", error, index);
     ok(error == SNMP_ERRORSTATUS_NOERROR ||
-        error == ERROR_FILE_NOT_FOUND /* Win9x */,
+        broken(error == ERROR_FILE_NOT_FOUND) /* NT4 */,
         "expected SNMP_ERRORSTATUS_NOERROR or ERROR_FILE_NOT_FOUND, got %d\n",
         error);
     if (error == SNMP_ERRORSTATUS_NOERROR)
