@@ -494,6 +494,8 @@ LPWSTR build_directory_name(DWORD count, ...)
         if( ((i+1)!=count) && dir[strlenW(dir)-1]!='\\')
             strcatW(dir, szBackSlash);
     }
+    va_end(va);
+
     return dir;
 }
 
