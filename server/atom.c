@@ -334,19 +334,19 @@ static struct atom_table *get_table( obj_handle_t h, int create )
 /* add an atom in the global table; used for window properties */
 atom_t add_global_atom( struct winstation *winstation, const struct unicode_str *str )
 {
-    struct atom_table *global_table = get_global_table( winstation, 1 );
-    if (!global_table) return 0;
-    return add_atom( global_table, str );
+    struct atom_table *table = get_global_table( winstation, 1 );
+    if (!table) return 0;
+    return add_atom( table, str );
 }
 
 /* find an atom in the global table; used for window properties */
 atom_t find_global_atom( struct winstation *winstation, const struct unicode_str *str )
 {
-    struct atom_table *global_table = get_global_table( winstation, 0 );
+    struct atom_table *table = get_global_table( winstation, 0 );
     struct atom_entry *entry;
 
-    if (!str->len || str->len > MAX_ATOM_LEN || !global_table) return 0;
-    if ((entry = find_atom_entry( global_table, str, atom_hash(global_table, str) )))
+    if (!str->len || str->len > MAX_ATOM_LEN || !table) return 0;
+    if ((entry = find_atom_entry( table, str, atom_hash(table, str) )))
         return entry->atom;
     return 0;
 }
@@ -356,10 +356,10 @@ int grab_global_atom( struct winstation *winstation, atom_t atom )
 {
     if (atom >= MIN_STR_ATOM)
     {
-        struct atom_table *global_table = get_global_table( winstation, 0 );
-        if (global_table)
+        struct atom_table *table = get_global_table( winstation, 0 );
+        if (table)
         {
-            struct atom_entry *entry = get_atom_entry( global_table, atom );
+            struct atom_entry *entry = get_atom_entry( table, atom );
             if (entry) entry->count++;
             return (entry != NULL);
         }
@@ -373,8 +373,8 @@ void release_global_atom( struct winstation *winstation, atom_t atom )
 {
     if (atom >= MIN_STR_ATOM)
     {
-        struct atom_table *global_table = get_global_table( winstation, 0 );
-        if (global_table) delete_atom( global_table, atom, 1 );
+        struct atom_table *table = get_global_table( winstation, 0 );
+        if (table) delete_atom( table, atom, 1 );
     }
 }
 
