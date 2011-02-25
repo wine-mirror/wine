@@ -41,6 +41,8 @@ static const WCHAR attrBackgroundColor[] =
     {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
 static const WCHAR attrBackgroundImage[] =
     {'b','a','c','k','g','r','o','u','n','d','-','i','m','a','g','e',0};
+static const WCHAR attrBackgroundPosition[] =
+    {'b','a','c','k','g','r','o','u','n','d','-','p','o','s','i','t','i','o','n',0};
 static const WCHAR attrBackgroundPositionX[] =
     {'b','a','c','k','g','r','o','u','n','d','-','p','o','s','i','t','i','o','n','-','x',0};
 static const WCHAR attrBackgroundPositionY[] =
@@ -171,6 +173,7 @@ static const struct{
     {attrBackground,           DISPID_IHTMLSTYLE_BACKGROUND},
     {attrBackgroundColor,      DISPID_IHTMLSTYLE_BACKGROUNDCOLOR},
     {attrBackgroundImage,      DISPID_IHTMLSTYLE_BACKGROUNDIMAGE},
+    {attrBackgroundPosition,   DISPID_IHTMLSTYLE_BACKGROUNDPOSITION},
     {attrBackgroundPositionX,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONX},
     {attrBackgroundPositionY,  DISPID_IHTMLSTYLE_BACKGROUNDPOSITIONY},
     {attrBackgroundRepeat,     DISPID_IHTMLSTYLE_BACKGROUNDREPEAT},
@@ -952,15 +955,19 @@ static HRESULT WINAPI HTMLStyle_get_backgroundAttachment(IHTMLStyle *iface, BSTR
 static HRESULT WINAPI HTMLStyle_put_backgroundPosition(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, STYLEID_BACKGROUND_POSITION, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_backgroundPosition(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, STYLEID_BACKGROUND_POSITION, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_backgroundPositionX(IHTMLStyle *iface, VARIANT v)
