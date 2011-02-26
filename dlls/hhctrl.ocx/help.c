@@ -1509,7 +1509,7 @@ static void HH_CreateFont(HHInfo *pHHInfo)
 {
     LOGFONTW lf;
 
-    GetObjectW(GetStockObject(ANSI_VAR_FONT), sizeof(LOGFONTW), &lf);
+    GetObjectW(GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONTW), &lf);
     lf.lfWeight = FW_NORMAL;
     lf.lfItalic = FALSE;
     lf.lfUnderline = FALSE;
