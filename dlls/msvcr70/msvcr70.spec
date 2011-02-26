@@ -625,7 +625,7 @@
 @ cdecl _wfindfirst64(wstr ptr) msvcrt._wfindfirst64
 @ cdecl _wfindfirsti64(wstr ptr) msvcrt._wfindfirsti64
 @ cdecl _wfindnext(long ptr) msvcrt._wfindnext
-@ stub _wfindnext64
+@ cdecl _wfindnext64(long ptr) msvcrt._wfindnext64
 @ cdecl _wfindnexti64(long ptr) msvcrt._wfindnexti64
 @ cdecl _wfopen(wstr wstr) msvcrt._wfopen
 @ cdecl _wfreopen(wstr wstr ptr) msvcrt._wfreopen

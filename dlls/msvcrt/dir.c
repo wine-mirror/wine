@@ -560,6 +560,25 @@ int CDECL MSVCRT__findnext64(long hand, struct MSVCRT__finddata64_t * ft)
 }
 
 /*********************************************************************
+ *		_wfindnext64 (MSVCRT.@)
+ *
+ * Unicode version of _wfindnext64.
+ */
+int CDECL MSVCRT__wfindnext64(MSVCRT_intptr_t hand, struct MSVCRT__wfinddata64_t * ft)
+{
+  WIN32_FIND_DATAW find_data;
+
+  if (!FindNextFileW((HANDLE)hand, &find_data))
+  {
+    *MSVCRT__errno() = MSVCRT_ENOENT;
+    return -1;
+  }
+
+  msvcrt_wfttofd64(&find_data,ft);
+  return 0;
+}
+
+/*********************************************************************
  *		_findnext64i32 (MSVCRT.@)
  *
  * 64-bit/32-bit version of _findnext.
