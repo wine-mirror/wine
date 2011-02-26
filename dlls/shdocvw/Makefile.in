@@ -31,6 +31,7 @@ RC_SRCS = \
 	Fr.rc \
 	He.rc \
 	It.rc \
+	Ja.rc \
 	Ko.rc \
 	Lt.rc \
 	Nl.rc \
