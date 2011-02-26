@@ -23,6 +23,7 @@ RC_SRCS = \
 	wineconsole_He.rc \
 	wineconsole_Hu.rc \
 	wineconsole_It.rc \
+	wineconsole_Ja.rc \
 	wineconsole_Ko.rc \
 	wineconsole_Lt.rc \
 	wineconsole_Nl.rc \
