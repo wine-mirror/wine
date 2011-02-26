@@ -119,13 +119,9 @@ static void UuidConversionAndComparison(void) {
     for (i1 = 0; i1 < 10; i1++) {
         Uuid1 = Uuid_Table[i1];
         rslt=UuidToStringW(&Uuid1, &wstr);
-        if (rslt==RPC_S_CANNOT_SUPPORT) {
-            /* Must be Win9x (no Unicode support), skip the tests */
-            break;
-        }
-	ok( (rslt == RPC_S_OK), "Simple UUID->WString copy\n" );
-	ok( (UuidFromStringW(wstr, &Uuid2) == RPC_S_OK), "Simple WString->UUID copy from generated UUID String\n" );
-	ok( UuidEqual(&Uuid1, &Uuid2, &rslt), "Uuid -> WString -> Uuid transform\n" );
+        ok( (rslt == RPC_S_OK), "Simple UUID->WString copy\n" );
+        ok( (UuidFromStringW(wstr, &Uuid2) == RPC_S_OK), "Simple WString->UUID copy from generated UUID String\n" );
+        ok( UuidEqual(&Uuid1, &Uuid2, &rslt), "Uuid -> WString -> Uuid transform\n" );
 	/* invalid uuid tests  -- size of valid UUID string=36 */
 	for (i2 = 0; i2 < 36; i2++) {
 	    wx = wstr[i2];
@@ -265,8 +261,7 @@ todo_wine {
 
     status = RpcBindingSetAuthInfo(IFoo_IfHandle, NULL, RPC_C_AUTHN_LEVEL_NONE,
                                    RPC_C_AUTHN_WINNT, NULL, RPC_C_AUTHZ_NAME);
-    ok(status == RPC_S_OK || broken(status == RPC_S_UNKNOWN_AUTHN_SERVICE), /* win9x */
-       "RpcBindingSetAuthInfo failed (%u)\n", status);
+    ok(status == RPC_S_OK, "RpcBindingSetAuthInfo failed (%u)\n", status);
 
     status = RpcBindingInqAuthInfo(IFoo_IfHandle, NULL, NULL, NULL, NULL, NULL);
     ok(status == RPC_S_BINDING_HAS_NO_AUTH, "RpcBindingInqAuthInfo failed (%u)\n",
@@ -436,13 +431,7 @@ static void test_I_RpcMapWin32Status(void)
 {
     LONG win32status;
     RPC_STATUS rpc_status;
-    BOOL on_win9x = FALSE;
     BOOL w2k3_up = FALSE;
-
-    /* Win9x always returns the given status */
-    win32status = I_RpcMapWin32Status(ERROR_ACCESS_DENIED);
-    if (win32status == ERROR_ACCESS_DENIED)
-        on_win9x = TRUE;
 
     /* Windows 2003 and Vista return STATUS_UNSUCCESSFUL if given an unknown status */
     win32status = I_RpcMapWin32Status(9999);
@@ -576,9 +565,6 @@ static void test_I_RpcMapWin32Status(void)
             else
                 expected_win32status = rpc_status;
         }
-
-        if (on_win9x)
-            missing = TRUE;
 
         ok(win32status == expected_win32status ||
             broken(missing && win32status == rpc_status),
