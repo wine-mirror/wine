@@ -61,7 +61,7 @@
 	else if(cv_signed(v1) && !cv_signed(v2))	\
 		r.val.si = v1.val.si OP (signed) v2.val.ui; \
 	else if(!cv_signed(v1) && cv_signed(v2))	\
-		r.val.si = v1.val.ui OP v2.val.si;	\
+		r.val.si = (signed) v1.val.ui OP v2.val.si; \
 	else						\
 		r.val.ui = v1.val.ui OP v2.val.ui;
 
@@ -72,7 +72,7 @@
 	else if(cv_signed(v1) && !cv_signed(v2))	\
 		r.val.sl = v1.val.sl OP (signed long) v2.val.ul; \
 	else if(!cv_signed(v1) && cv_signed(v2))	\
-		r.val.sl = v1.val.ul OP v2.val.sl;	\
+		r.val.sl = (signed long) v1.val.ul OP v2.val.sl; \
 	else						\
 		r.val.ul = v1.val.ul OP v2.val.ul;
 
@@ -83,7 +83,7 @@
 	else if(cv_signed(v1) && !cv_signed(v2))	\
 		r.val.sll = v1.val.sll OP (wrc_sll_t) v2.val.ull; \
 	else if(!cv_signed(v1) && cv_signed(v2))	\
-		r.val.sll = v1.val.ull OP v2.val.sll;	\
+		r.val.sll = (wrc_sll_t) v1.val.ull OP v2.val.sll; \
 	else						\
 		r.val.ull = v1.val.ull OP v2.val.ull;
 
