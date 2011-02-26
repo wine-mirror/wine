@@ -1193,7 +1193,7 @@
 @ cdecl _wfdopen(long wstr) msvcrt._wfdopen
 @ stub _wfindfirst32
 @ stub _wfindfirst32i64
-@ stub _wfindfirst64
+@ cdecl _wfindfirst64(wstr ptr) msvcrt._wfindfirst64
 @ cdecl _wfindfirst64i32(wstr ptr) msvcrt._wfindfirst64i32
 @ stub _wfindnext32
 @ stub _wfindnext32i64

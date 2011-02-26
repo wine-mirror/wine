@@ -622,7 +622,7 @@
 @ cdecl _wexecvpe(wstr ptr ptr) msvcrt._wexecvpe
 @ cdecl _wfdopen(long wstr) msvcrt._wfdopen
 @ cdecl _wfindfirst(wstr ptr) msvcrt._wfindfirst
-@ stub _wfindfirst64
+@ cdecl _wfindfirst64(wstr ptr) msvcrt._wfindfirst64
 @ cdecl _wfindfirsti64(wstr ptr) msvcrt._wfindfirsti64
 @ cdecl _wfindnext(long ptr) msvcrt._wfindnext
 @ stub _wfindnext64
