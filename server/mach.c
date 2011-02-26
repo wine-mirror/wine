@@ -211,6 +211,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
     mach_msg_type_number_t count = sizeof(state) / sizeof(int);
     mach_msg_type_name_t type;
     mach_port_t port, process_port = get_process_port( thread->process );
+    unsigned int dr7;
 
     /* all other regs are handled on the client side */
     assert( flags == SERVER_CTX_DEBUG_REGISTERS );
@@ -223,6 +224,9 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         return;
     }
 
+    /* Mac OS doesn't allow setting the global breakpoint flags */
+    dr7 = (context->debug.i386_regs.dr7 & ~0xaa) | ((context->debug.i386_regs.dr7 & 0xaa) >> 1);
+
 #if __DARWIN_UNIX03 && defined(_STRUCT_X86_DEBUG_STATE32)
     state.__dr0 = context->debug.i386_regs.dr0;
     state.__dr1 = context->debug.i386_regs.dr1;
@@ -231,7 +235,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
     state.__dr4 = 0;
     state.__dr5 = 0;
     state.__dr6 = context->debug.i386_regs.dr6;
-    state.__dr7 = context->debug.i386_regs.dr7;
+    state.__dr7 = dr7;
 #else
     state.dr0 = context->debug.i386_regs.dr0;
     state.dr1 = context->debug.i386_regs.dr1;
@@ -240,7 +244,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
     state.dr4 = 0;
     state.dr5 = 0;
     state.dr6 = context->debug.i386_regs.dr6;
-    state.dr7 = context->debug.i386_regs.dr7;
+    state.dr7 = dr7;
 #endif
     if (!thread_set_state( port, x86_DEBUG_STATE32, (thread_state_t)&state, count ))
     {
