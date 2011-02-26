@@ -15,6 +15,7 @@ RC_SRCS = \
 	credui_He.rc \
 	credui_Hu.rc \
 	credui_It.rc \
+	credui_Ja.rc \
 	credui_Ko.rc \
 	credui_Lt.rc \
 	credui_Nl.rc \
