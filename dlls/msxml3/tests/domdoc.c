@@ -7213,6 +7213,7 @@ static void test_setAttributeNode(void)
     IXMLDOMAttribute *attr, *attr2, *ret_attr;
     VARIANT_BOOL b;
     HRESULT hr;
+    VARIANT v;
     BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
@@ -7239,6 +7240,11 @@ static void test_setAttributeNode(void)
     hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
     ok( hr == S_OK, "got 0x%08x\n", hr);
     ok( ret_attr == NULL, "got %p\n", ret_attr);
+
+    b = VARIANT_FALSE;
+    hr = IXMLDOMElement_hasChildNodes(elem, &b);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
 
     attr2 = NULL;
     hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("attr"), &attr2);
@@ -7278,8 +7284,134 @@ static void test_setAttributeNode(void)
     IXMLDOMElement_Release(elem);
 
     IXMLDOMDocument_Release(doc2);
-
     IXMLDOMAttribute_Release(attr);
+    IXMLDOMDocument_Release(doc);
+
+    hr = CoCreateInstance( &CLSID_DOMDocument40, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc );
+    if (hr != S_OK)
+    {
+        win_skip("DOMDocument40 is not available (0x%08x)\n", hr);
+        return;
+    }
+
+    /* try attribute with xmlns name */
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ELEMENT;
+
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("test"), _bstr_("http://winehq.org/default"), (IXMLDOMNode**)&elem);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ATTRIBUTE;
+
+    attr = NULL;
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("xmlns"), NULL, (IXMLDOMNode**)&attr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(attr != NULL, "got %p\n", attr);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("http://winehq.org/default");
+    hr = IXMLDOMAttribute_put_nodeValue(attr, v);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    ret_attr = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
+    ok(hr == DISP_E_UNKNOWNNAME, "got 0x%08x\n", hr);
+    ok(ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
+
+    /* no child node added actually */
+    b = VARIANT_TRUE;
+    hr = IXMLDOMElement_hasChildNodes(elem, &b);
+    ok( hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
+
+    /* a single namespace definition as output */
+    hr = IXMLDOMElement_get_xml(elem, &str);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( lstrcmpW(str, _bstr_("<test xmlns=\"http://winehq.org/default\"/>")) == 0,
+        "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* alter value isn't possible after creation? */
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("http://winehq.org/default1");
+    hr = IXMLDOMAttribute_put_nodeValue(attr, v);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMAttribute_Release(attr);
+
+    /* try to alter it with different attribute value */
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ELEMENT;
+
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("test"), _bstr_("http://winehq.org/default"), (IXMLDOMNode**)&elem);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ATTRIBUTE;
+
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("xmlns"), NULL, (IXMLDOMNode**)&attr);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("http://winehq.org/default1");
+    hr = IXMLDOMAttribute_put_nodeValue(attr, v);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    ret_attr = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
+    ok( hr == DISP_E_UNKNOWNNAME, "got 0x%08x\n", hr);
+    ok(ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
+
+    /* no child node added actually */
+    b = VARIANT_TRUE;
+    hr = IXMLDOMElement_hasChildNodes(elem, &b);
+    ok( hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
+
+    /* initial value preserved */
+    hr = IXMLDOMElement_get_xml(elem, &str);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( lstrcmpW(str, _bstr_("<test xmlns=\"http://winehq.org/default\"/>")) == 0,
+        "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMAttribute_Release(attr);
+
+    /* now create without default namespace and add it as attribute */
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ELEMENT;
+
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("test"), NULL, (IXMLDOMNode**)&elem);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ATTRIBUTE;
+
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("xmlns"), NULL, (IXMLDOMNode**)&attr);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("http://winehq.org/default");
+    hr = IXMLDOMAttribute_put_nodeValue(attr, v);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    ret_attr = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
+    ok(hr == DISP_E_UNKNOWNNAME, "got 0x%08x\n", hr);
+    ok(ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
+
+    /* no child node added */
+    b = VARIANT_TRUE;
+    hr = IXMLDOMElement_hasChildNodes(elem, &b);
+    ok( hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMAttribute_Release(attr);
+
     IXMLDOMDocument_Release(doc);
     free_bstrs();
 }
@@ -7346,6 +7478,12 @@ static void test_createNode(void)
     hr = IXMLDOMNode_get_prefix(node, &prefix);
     ok( hr == S_FALSE, "got 0x%08x\n", hr);
     ok(prefix == 0, "expected empty prefix, got %p\n", prefix);
+    /* check dump */
+    hr = IXMLDOMNode_get_xml(node, &str);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( lstrcmpW(str, _bstr_("<test xmlns=\"http://winehq.org/default\"/>")) == 0,
+        "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&elem);
     ok( hr == S_OK, "got 0x%08x\n", hr);
