@@ -266,7 +266,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
     TRACE("(%p)->(%s %p)\n", This, debugstr_cp_guid(riid), ppCP);
 
     if(This->forward_container)
-        return IConnectionPointContainer_FindConnectionPoint(&This->IConnectionPointContainer_iface,
+        return IConnectionPointContainer_FindConnectionPoint(&This->forward_container->IConnectionPointContainer_iface,
                 riid, ppCP);
 
     *ppCP = NULL;

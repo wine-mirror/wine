@@ -40,6 +40,8 @@ static struct list window_list = LIST_INIT(window_list);
 static void window_set_docnode(HTMLWindow *window, HTMLDocumentNode *doc_node)
 {
     if(window->doc) {
+        if(window->doc_obj && window == window->doc_obj->basedoc.window)
+            window->doc->basedoc.cp_container.forward_container = NULL;
         abort_document_bindings(window->doc);
         window->doc->basedoc.window = NULL;
         htmldoc_release(&window->doc->basedoc);
@@ -2245,6 +2247,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     list_init(&window->script_hosts);
 
     window->task_magic = get_task_target_magic();
+    *ret = window;
     update_window_doc(window);
 
     list_init(&window->children);
@@ -2257,7 +2260,6 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
         list_add_tail(&parent->children, &window->sibling_entry);
     }
 
-    *ret = window;
     return S_OK;
 }
 

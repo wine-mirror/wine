@@ -2407,7 +2407,7 @@ static void test_empty_document(void)
     cp = get_cp((IUnknown*)doc, &IID_IDispatch);
     hres = IConnectionPoint_Unadvise(cp, cookie);
     IConnectionPoint_Release(cp);
-    todo_wine ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+    ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
 
     IHTMLDocument2_Release(windows_doc);
 }
