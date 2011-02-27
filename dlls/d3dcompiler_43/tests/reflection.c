@@ -1018,22 +1018,22 @@ static void test_reflection_bound_resources(void)
 
     /* check invalid cases */
     hr = ref11->lpVtbl->GetResourceBindingDesc(ref11, 0, NULL);
-    ok(hr == E_INVALIDARG, "GetResourceBindingDesc failed %x\n", hr);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
     hr = ref11->lpVtbl->GetResourceBindingDesc(ref11, 0xffffffff, &desc);
-    ok(hr == E_INVALIDARG, "GetResourceBindingDesc failed %x\n", hr);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDesc failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
     hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, NULL, &desc);
-    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed %x\n", hr);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
     hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, "sam", NULL);
-    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed %x\n", hr);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
     hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, "invalid", NULL);
-    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed %x\n", hr);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
     hr = ref11->lpVtbl->GetResourceBindingDescByName(ref11, "invalid", &desc);
-    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed %x\n", hr);
+    ok(hr == E_INVALIDARG, "GetResourceBindingDescByName failed, got %x, expected %x\n", hr, E_INVALIDARG);
 
     /* GetResourceBindingDesc */
     for (i = 0; i < sizeof(test_reflection_bound_resources_result)/sizeof(*test_reflection_bound_resources_result); ++i)
