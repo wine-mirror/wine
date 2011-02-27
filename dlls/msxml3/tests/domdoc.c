@@ -1942,9 +1942,6 @@ todo_wine
 
     if (list)
     {
-        r = IXMLDOMNodeList_QueryInterface(list, &IID_IDispatch, NULL);
-        ok( r == E_INVALIDARG || r == E_POINTER, "ret %08x\n", r );
-
         r = IXMLDOMNodeList_get_item(list, 0, NULL);
         ok(r == E_INVALIDARG, "Exected E_INVALIDARG got %08x\n", r);
 
@@ -2737,9 +2734,6 @@ static void test_get_text(void)
 
         IXMLDOMNode_Release(nodeRoot);
     }
-
-    r = IXMLDOMNodeList_QueryInterface(node_list, &IID_IDispatch, NULL);
-    ok( r == E_INVALIDARG, "ret %08x\n", r );
 
     r = IXMLDOMNodeList_get_length( node_list, NULL );
     ok( r == E_INVALIDARG, "ret %08x\n", r );
