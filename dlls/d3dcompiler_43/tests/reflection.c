@@ -694,7 +694,7 @@ static void test_reflection_desc_ps(void)
                 i, desc.SemanticIndex, pdesc->SemanticIndex);
         ok(desc.Register == pdesc->Register, "GetOutputParameterDesc(%u) Register failed, got %u, expected %u\n",
                 i, desc.Register, pdesc->Register);
-        todo_wine ok(desc.SystemValueType == pdesc->SystemValueType, "GetOutputParameterDesc(%u) SystemValueType failed, got %x, expected %x\n",
+        ok(desc.SystemValueType == pdesc->SystemValueType, "GetOutputParameterDesc(%u) SystemValueType failed, got %x, expected %x\n",
                 i, desc.SystemValueType, pdesc->SystemValueType);
         ok(desc.ComponentType == pdesc->ComponentType, "GetOutputParameterDesc(%u) ComponentType failed, got %x, expected %x\n",
                 i, desc.ComponentType, pdesc->ComponentType);

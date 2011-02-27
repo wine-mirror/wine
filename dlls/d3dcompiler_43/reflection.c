@@ -1315,7 +1315,7 @@ err_out:
     return hr;
 }
 
-HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, struct dxbc_section *section)
+static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, struct dxbc_section *section, DWORD target)
 {
     D3D11_SIGNATURE_PARAMETER_DESC *d;
     unsigned int string_data_offset;
@@ -1392,6 +1392,24 @@ HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *s, stru
         read_dword(&ptr, &mask);
         d[i].ReadWriteMask = (mask >> 8) & 0xff;
         d[i].Mask = mask & 0xff;
+
+        /* pixel shaders have a special handling for SystemValueType in the output signature */
+        if (((target & 0xffff0000) == 0xffff0000) && (section->tag == TAG_OSG5 || section->tag == TAG_OSGN))
+        {
+            TRACE("Pixelshader output signature fixup.\n");
+
+            if (d[i].Register == 0xffffffff)
+            {
+                if (!strcasecmp(d[i].SemanticName, "sv_depth")) d[i].SystemValueType = D3D_NAME_DEPTH;
+                if (!strcasecmp(d[i].SemanticName, "sv_coverage")) d[i].SystemValueType = D3D_NAME_COVERAGE;
+                if (!strcasecmp(d[i].SemanticName, "sv_depthgreaterequal")) d[i].SystemValueType = D3D_NAME_DEPTH_GREATER_EQUAL;
+                if (!strcasecmp(d[i].SemanticName, "sv_depthlessequal")) d[i].SystemValueType = D3D_NAME_DEPTH_LESS_EQUAL;
+            }
+            else
+            {
+                d[i].SystemValueType = D3D_NAME_TARGET;
+            }
+        }
 
         TRACE("semantic: %s, semantic idx: %u, sysval_semantic %#x, "
                 "type %u, register idx: %u, use_mask %#x, input_mask %#x, stream %u\n",
@@ -1484,7 +1502,7 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                     goto err_out;
                 }
 
-                hr = d3dcompiler_parse_signature(reflection->isgn, section);
+                hr = d3dcompiler_parse_signature(reflection->isgn, section, reflection->target);
                 if (FAILED(hr))
                 {
                     WARN("Failed to parse section ISGN.\n");
@@ -1502,7 +1520,7 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                     goto err_out;
                 }
 
-                hr = d3dcompiler_parse_signature(reflection->osgn, section);
+                hr = d3dcompiler_parse_signature(reflection->osgn, section, reflection->target);
                 if (FAILED(hr))
                 {
                     WARN("Failed to parse section OSGN.\n");
@@ -1519,7 +1537,7 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                     goto err_out;
                 }
 
-                hr = d3dcompiler_parse_signature(reflection->pcsg, section);
+                hr = d3dcompiler_parse_signature(reflection->pcsg, section, reflection->target);
                 if (FAILED(hr))
                 {
                     WARN("Failed to parse section PCSG.\n");
