@@ -109,6 +109,9 @@ static const char img_doc_str[] =
 static const char input_doc_str[] =
     "<html><body><input id=\"inputid\"></input></body></html>";    
 
+static const char iframe_doc_str[] =
+    "<html><body><iframe id=\"ifr\">Testing</iframe></body></html>";
+
 static const char form_doc_str[] =
     "<html><body><form id=\"formid\" method=\"post\" action=\"about:blank\">"
     "<input type=\"text\" value=\"test\" name=\"i\"/>"
@@ -1717,6 +1720,77 @@ static void test_timeout(IHTMLDocument2 *doc)
     IHTMLWindow3_Release(win3);
 }
 
+static IHTMLElement* find_element_by_id(IHTMLDocument2 *doc, const char *id)
+{
+    HRESULT hres;
+    IHTMLDocument3 *doc3;
+    IHTMLElement *result;
+    BSTR idW = a2bstr(id);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument3) failed: %08x\n", hres);
+
+    hres = IHTMLDocument3_getElementById(doc3, idW, &result);
+    ok(hres == S_OK, "getElementById failed: %08x\n", hres);
+    ok(result != NULL, "result == NULL\n");
+    SysFreeString(idW);
+
+    IHTMLDocument3_Release(doc3);
+    return result;
+}
+
+static IHTMLDocument2* get_iframe_doc(IHTMLIFrameElement *iframe)
+{
+    HRESULT hres;
+    IHTMLFrameBase2 *base;
+    IHTMLDocument2 *result = NULL;
+
+    hres = IHTMLIFrameElement_QueryInterface(iframe, &IID_IHTMLFrameBase2, (void**)&base);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLFrameBase2) failed: %08x\n", hres);
+    if(hres == S_OK) {
+        IHTMLWindow2 *window;
+
+        hres = IHTMLFrameBase2_get_contentWindow(base, &window);
+        ok(hres == S_OK, "get_contentWindow failed: %08x\n", hres);
+        ok(window != NULL, "window == NULL\n");
+        if(window) {
+            hres = IHTMLWindow2_get_document(window, &result);
+            ok(hres == S_OK, "get_document failed: %08x\n", hres);
+            ok(result != NULL, "result == NULL\n");
+            IHTMLWindow2_Release(window);
+        }
+    }
+    if(base) IHTMLFrameBase2_Release(base);
+
+    return result;
+}
+
+static void test_iframe_connections(IHTMLDocument2 *doc)
+{
+    HRESULT hres;
+    IHTMLIFrameElement *iframe;
+    IHTMLDocument2 *iframes_doc;
+    DWORD cookie;
+    IConnectionPoint *cp;
+    IHTMLElement *element = find_element_by_id(doc, "ifr");
+
+    hres = IHTMLElement_QueryInterface(element, &IID_IHTMLIFrameElement, (void**)&iframe);
+    IHTMLElement_Release(element);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLIFrameElement) failed: %08x\n", hres);
+
+    iframes_doc = get_iframe_doc(iframe);
+    IHTMLIFrameElement_Release(iframe);
+
+    cookie = register_cp((IUnknown*)iframes_doc, &IID_IDispatch, (IUnknown*)&div_onclick_disp);
+
+    cp = get_cp((IUnknown*)doc, &IID_IDispatch);
+    hres = IConnectionPoint_Unadvise(cp, cookie);
+    IConnectionPoint_Release(cp);
+    ok(hres == CONNECT_E_NOCONNECTION, "Unadvise returned %08x, expected CONNECT_E_NOCONNECTION\n", hres);
+
+    IHTMLDocument2_Release(iframes_doc);
+}
+
 static HRESULT QueryInterface(REFIID,void**);
 
 static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFIID riid, void **ppv)
@@ -2309,6 +2383,35 @@ static HWND create_container_window(void)
             300, 300, NULL, NULL, NULL, NULL);
 }
 
+static void test_empty_document(void)
+{
+    HRESULT hres;
+    IHTMLWindow2 *window;
+    IHTMLDocument2 *windows_doc, *doc;
+    IConnectionPoint *cp;
+    DWORD cookie;
+
+    doc = create_document();
+    if(!doc)
+        return;
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
+
+    hres = IHTMLWindow2_get_document(window, &windows_doc);
+    IHTMLWindow2_Release(window);
+    ok(hres == S_OK, "get_document failed: %08x\n", hres);
+
+    cookie = register_cp((IUnknown*)windows_doc, &IID_IDispatch, (IUnknown*)&div_onclick_disp);
+
+    cp = get_cp((IUnknown*)doc, &IID_IDispatch);
+    hres = IConnectionPoint_Unadvise(cp, cookie);
+    IConnectionPoint_Release(cp);
+    todo_wine ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
+
+    IHTMLDocument2_Release(windows_doc);
+}
+
 START_TEST(events)
 {
     CoInitialize(NULL);
@@ -2323,6 +2426,9 @@ START_TEST(events)
     run_test(img_doc_str, test_imgload);
     run_test(input_doc_str, test_focus);
     run_test(form_doc_str, test_submit);
+    run_test(iframe_doc_str, test_iframe_connections);
+
+    test_empty_document();
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
