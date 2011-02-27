@@ -1091,6 +1091,341 @@ static void test_reflection_bound_resources(void)
     ok(count == 0, "Release failed %u\n", count);
 }
 
+/*
+ * fxc.exe /E PS /Tps_5_0 /Fx
+ */
+#if 0
+cbuffer c1
+{
+    float a;
+    float b[2];
+    int i;
+    struct s {
+        float a;
+        float b;
+    } t;
+};
+
+interface iTest
+{
+    float4 test(float2 vec);
+};
+
+class cTest : iTest
+{
+    bool m_on;
+    float4 test(float2 vec);
+};
+
+float4 cTest::test(float2 vec)
+{
+    float4 res;
+    if(m_on)
+        res = float4(vec.x, vec.y, vec.x+vec.y, 0);
+    else
+        res = 0;
+    return res;
+}
+
+iTest g_Test;
+
+
+float4 PS(float2 uv : TEXCOORD0) : sv_target
+{
+    float4 q = g_Test.test(uv);
+    q.x = q.x + t.a;
+    return q;
+}
+#endif
+static DWORD test_reflection_constant_buffer_blob[] = {
+0x43425844, 0xe6470e0d, 0x0d5698bb, 0x29373c30, 0x64a5d268, 0x00000001, 0x00000590, 0x00000006,
+0x00000038, 0x00000318, 0x0000034c, 0x00000380, 0x000003d8, 0x000004f4, 0x46454452, 0x000002d8,
+0x00000002, 0x00000060, 0x00000001, 0x0000003c, 0xffff0500, 0x00000100, 0x000002a4, 0x31314452,
+0x0000003c, 0x00000018, 0x00000020, 0x00000028, 0x00000024, 0x0000000c, 0x00000001, 0x0000005c,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0xab003163,
+0x00000090, 0x00000001, 0x000000a0, 0x00000010, 0x00000000, 0x00000002, 0x0000005c, 0x00000004,
+0x00000120, 0x00000040, 0x00000000, 0x00000000, 0x69685424, 0x696f5073, 0x7265746e, 0xababab00,
+0x000000c8, 0x00000000, 0x00000001, 0x00000006, 0x000000fc, 0x00000000, 0xffffffff, 0x00000000,
+0xffffffff, 0x00000000, 0x65545f67, 0x69007473, 0x74736554, 0xababab00, 0x00000006, 0x00000001,
+0x00000000, 0x000000d8, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x000000cf, 0x00250007,
+0x00040001, 0x00000000, 0x00000000, 0x000000d8, 0x00000000, 0x00000000, 0x00000000, 0x000000cf,
+0x000001c0, 0x00000000, 0x00000004, 0x00000000, 0x000001c8, 0x00000000, 0xffffffff, 0x00000000,
+0xffffffff, 0x00000000, 0x000001ec, 0x00000010, 0x00000014, 0x00000000, 0x000001f0, 0x00000000,
+0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0x00000214, 0x00000024, 0x00000004, 0x00000000,
+0x0000021c, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000, 0x00000240, 0x00000030,
+0x00000008, 0x00000002, 0x00000280, 0x00000000, 0xffffffff, 0x00000000, 0xffffffff, 0x00000000,
+0x6c660061, 0x0074616f, 0x00030000, 0x00010001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x000001c2, 0xabab0062, 0x00030000, 0x00010001, 0x00000002, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x000001c2, 0x6e690069, 0xabab0074, 0x00020000,
+0x00010001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000216,
+0x00730074, 0x00030000, 0x00010001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x000001c2, 0x000001c0, 0x00000244, 0x00000000, 0x000001ec, 0x00000244, 0x00000004,
+0x00000005, 0x00020001, 0x00020000, 0x00000268, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000242, 0x7263694d, 0x666f736f, 0x52282074, 0x4c482029, 0x53204c53, 0x65646168, 0x6f432072,
+0x6c69706d, 0x39207265, 0x2e39322e, 0x2e323539, 0x31313133, 0xababab00, 0x4e475349, 0x0000002c,
+0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000303,
+0x43584554, 0x44524f4f, 0xababab00, 0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x745f7673, 0x65677261, 0xabab0074,
+0x45434649, 0x00000050, 0x00000000, 0x00000001, 0x00000001, 0x00000001, 0x00000040, 0x00000034,
+0x00000024, 0x00000000, 0x4e47534f, 0x00000001, 0x00000001, 0x00000040, 0x00000044, 0x00000048,
+0x00010000, 0x00000000, 0xabab0000, 0x00000000, 0x73655463, 0xabab0074, 0x58454853, 0x00000114,
+0x00000050, 0x00000045, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000004, 0x03000091,
+0x00000000, 0x00000000, 0x05000092, 0x00000000, 0x00000000, 0x00010001, 0x00000000, 0x03001062,
+0x00101032, 0x00000000, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000002, 0x07000000,
+0x00100042, 0x00000000, 0x0010101a, 0x00000000, 0x0010100a, 0x00000000, 0x05000036, 0x00100032,
+0x00000000, 0x00101046, 0x00000000, 0x05000036, 0x00100082, 0x00000000, 0x00004001, 0x00000000,
+0x05000036, 0x00100032, 0x00000001, 0x0011d516, 0x00000000, 0x0a000001, 0x001000f2, 0x00000000,
+0x00100e46, 0x00000000, 0x04a08006, 0x0010001a, 0x00000001, 0x0010000a, 0x00000001, 0x08000000,
+0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x0020800a, 0x00000000, 0x00000003, 0x05000036,
+0x001020e2, 0x00000000, 0x00100e56, 0x00000000, 0x0100003e, 0x54415453, 0x00000094, 0x00000008,
+0x00000002, 0x00000000, 0x00000002, 0x00000002, 0x00000000, 0x00000001, 0x00000001, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+0x00000000, 0x00000000, 0x00000000, 0x00000000,
+};
+
+static const D3D11_SHADER_BUFFER_DESC test_reflection_constant_buffer_cb_result[] =
+{
+    {"$ThisPointer", D3D_CT_INTERFACE_POINTERS, 1, 16, 0},
+    {"c1", D3D_CT_CBUFFER, 4, 64, 0},
+};
+
+static const struct {
+    D3D11_SHADER_VARIABLE_DESC desc;
+    unsigned int type;
+} test_reflection_constant_buffer_variable_result[] =
+{
+    {{"g_Test", 0, 1, 6, 0}, 0},
+    {{"a", 0, 4, 0, 0}, 1},
+    {{"b", 16, 20, 0, 0}, 2},
+    {{"i", 36, 4, 0, 0}, 3},
+    {{"t", 48, 8, 2, 0}, 4},
+};
+
+static const D3D11_SHADER_TYPE_DESC test_reflection_constant_buffer_type_result[] =
+{
+    {D3D11_SVC_INTERFACE_POINTER, D3D11_SVT_INTERFACE_POINTER, 1, 4, 0, 1, 0},
+    {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 0, 1, 0},
+    {D3D_SVC_SCALAR, D3D_SVT_FLOAT, 1, 1, 2, 1, 0},
+    {D3D_SVC_SCALAR, D3D_SVT_INT, 1, 1, 0, 1, 0},
+    {D3D_SVC_STRUCT, D3D_SVT_VOID, 1, 2, 0, 1, 0},
+};
+
+static void test_reflection_constant_buffer(void)
+{
+    HRESULT hr;
+    ULONG count;
+    ID3D11ShaderReflection *ref11;
+    ID3D11ShaderReflectionConstantBuffer *cb11, *cb11_dummy = NULL, *cb11_valid = NULL;
+    ID3D11ShaderReflectionVariable *v11, *v11_dummy = NULL, *v11_valid = NULL;
+    ID3D11ShaderReflectionType *t11, *t11_dummy = NULL, *t11_valid = NULL;
+    D3D11_SHADER_BUFFER_DESC cbdesc = {0};
+    D3D11_SHADER_VARIABLE_DESC vdesc = {0};
+    D3D11_SHADER_TYPE_DESC tdesc = {0};
+    D3D11_SHADER_DESC sdesc = {0};
+    const D3D11_SHADER_BUFFER_DESC *pcbdesc;
+    const D3D11_SHADER_VARIABLE_DESC *pvdesc;
+    const D3D11_SHADER_TYPE_DESC *ptdesc;
+    unsigned int i;
+
+    hr = D3DReflect(test_reflection_constant_buffer_blob, test_reflection_constant_buffer_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    ok(hr == S_OK, "D3DReflect failed %x\n", hr);
+
+    hr = ref11->lpVtbl->GetDesc(ref11, &sdesc);
+    ok(hr == S_OK, "GetDesc failed %x\n", hr);
+
+    ok(sdesc.Version == 80, "GetDesc failed, got %u, expected %u\n", sdesc.Version, 80);
+    ok(strcmp(sdesc.Creator, (char*) shader_creator) == 0, "GetDesc failed, got \"%s\", expected \"%s\"\n", sdesc.Creator, (char*)shader_creator);
+    ok(sdesc.Flags == 256, "GetDesc failed, got %u, expected %u\n", sdesc.Flags, 256);
+    ok(sdesc.ConstantBuffers == 2, "GetDesc failed, got %u, expected %u\n", sdesc.ConstantBuffers, 2);
+    ok(sdesc.BoundResources == 1, "GetDesc failed, got %u, expected %u\n", sdesc.BoundResources, 1);
+    ok(sdesc.InputParameters == 1, "GetDesc failed, got %u, expected %u\n", sdesc.InputParameters, 1);
+    ok(sdesc.OutputParameters == 1, "GetDesc failed, got %u, expected %u\n", sdesc.OutputParameters, 1);
+    ok(sdesc.InstructionCount == 8, "GetDesc failed, got %u, expected %u\n", sdesc.InstructionCount, 8);
+    ok(sdesc.TempRegisterCount == 2, "GetDesc failed, got %u, expected %u\n", sdesc.TempRegisterCount, 2);
+    ok(sdesc.TempArrayCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc.TempArrayCount, 0);
+    ok(sdesc.DefCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc.DefCount, 0);
+    ok(sdesc.DclCount == 2, "GetDesc failed, got %u, expected %u\n", sdesc.DclCount, 2);
+    ok(sdesc.TextureNormalInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc.TextureNormalInstructions, 0);
+    ok(sdesc.TextureLoadInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc.TextureLoadInstructions, 0);
+    ok(sdesc.TextureCompInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc.TextureCompInstructions, 0);
+    ok(sdesc.TextureBiasInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc.TextureBiasInstructions, 0);
+    ok(sdesc.TextureGradientInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc.TextureGradientInstructions, 0);
+    ok(sdesc.FloatInstructionCount == 2, "GetDesc failed, got %u, expected %u\n", sdesc.FloatInstructionCount, 2);
+    ok(sdesc.IntInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc.IntInstructionCount, 0);
+    ok(sdesc.UintInstructionCount == 1, "GetDesc failed, got %u, expected %u\n", sdesc.UintInstructionCount, 1);
+    ok(sdesc.StaticFlowControlCount == 1, "GetDesc failed, got %u, expected %u\n", sdesc.StaticFlowControlCount, 1);
+    ok(sdesc.DynamicFlowControlCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc.DynamicFlowControlCount, 0);
+    ok(sdesc.MacroInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc.MacroInstructionCount, 0);
+    ok(sdesc.ArrayInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc.ArrayInstructionCount, 0);
+    ok(sdesc.CutInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc.CutInstructionCount, 0);
+    ok(sdesc.EmitInstructionCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc.EmitInstructionCount, 0);
+    ok(sdesc.GSOutputTopology == 0, "GetDesc failed, got %x, expected %x\n", sdesc.GSOutputTopology, 0);
+    ok(sdesc.GSMaxOutputVertexCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc.GSMaxOutputVertexCount, 0);
+    ok(sdesc.InputPrimitive == 0, "GetDesc failed, got %x, expected %x\n", sdesc.InputPrimitive, 0);
+    ok(sdesc.PatchConstantParameters == 0, "GetDesc failed, got %u, expected %u\n", sdesc.PatchConstantParameters, 0);
+    ok(sdesc.cGSInstanceCount == 0, "GetDesc failed, got %u, expected %u\n", sdesc.cGSInstanceCount, 0);
+    ok(sdesc.cControlPoints == 0, "GetDesc failed, got %u, expected %u\n", sdesc.cControlPoints, 0);
+    ok(sdesc.HSOutputPrimitive == 0, "GetDesc failed, got %x, expected %x\n", sdesc.HSOutputPrimitive, 0);
+    ok(sdesc.HSPartitioning == 0, "GetDesc failed, got %x, expected %x\n", sdesc.HSPartitioning, 0);
+    ok(sdesc.TessellatorDomain == 0, "GetDesc failed, got %x, expected %x\n", sdesc.TessellatorDomain, 0);
+    ok(sdesc.cBarrierInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc.cBarrierInstructions, 0);
+    ok(sdesc.cInterlockedInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc.cInterlockedInstructions, 0);
+    ok(sdesc.cTextureStoreInstructions == 0, "GetDesc failed, got %u, expected %u\n", sdesc.cTextureStoreInstructions, 0);
+
+    /* get the dummys for comparison */
+    cb11_dummy = ref11->lpVtbl->GetConstantBufferByIndex(ref11, 0xffffffff);
+    ok(cb11_dummy != NULL, "GetConstantBufferByIndex failed\n");
+
+    v11_dummy = cb11_dummy->lpVtbl->GetVariableByIndex(cb11_dummy, 0xffffffff);
+    ok(v11_dummy != NULL, "GetVariableByIndex failed\n");
+
+    t11_dummy = v11_dummy->lpVtbl->GetType(v11_dummy);
+    ok(t11_dummy != NULL, "GetType failed\n");
+
+    /* get the valid variables */
+    cb11_valid = ref11->lpVtbl->GetConstantBufferByIndex(ref11, 1);
+    ok(cb11_valid != cb11_dummy && cb11_valid, "GetConstantBufferByIndex failed\n");
+
+    v11_valid = cb11_valid->lpVtbl->GetVariableByIndex(cb11_valid, 0);
+    ok(v11_valid != v11_dummy && v11_valid, "GetVariableByIndex failed\n");
+
+    t11_valid = v11_valid->lpVtbl->GetType(v11_valid);
+    ok(t11_valid != t11_dummy && t11_valid, "GetType failed\n");
+
+    /* reflection calls */
+    cb11 = ref11->lpVtbl->GetConstantBufferByName(ref11, "invaild");
+    ok(cb11_dummy == cb11, "GetConstantBufferByName failed, got %p, expected %p\n", cb11, cb11_dummy);
+
+    cb11 = ref11->lpVtbl->GetConstantBufferByName(ref11, NULL);
+    ok(cb11_dummy == cb11, "GetConstantBufferByName failed, got %p, expected %p\n", cb11, cb11_dummy);
+
+    v11 = ref11->lpVtbl->GetVariableByName(ref11, NULL);
+    ok(v11_dummy == v11, "GetVariableByIndex failed, got %p, expected %p\n", v11, v11_dummy);
+
+    v11 = ref11->lpVtbl->GetVariableByName(ref11, "invaild");
+    ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
+
+    v11 = ref11->lpVtbl->GetVariableByName(ref11, "a");
+    ok(v11_valid == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_valid);
+
+    /* constant buffer calls */
+    v11 = cb11_dummy->lpVtbl->GetVariableByName(cb11_dummy, NULL);
+    ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
+
+    v11 = cb11_dummy->lpVtbl->GetVariableByName(cb11_dummy, "invalid");
+    ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
+
+    v11 = cb11_valid->lpVtbl->GetVariableByName(cb11_valid, NULL);
+    ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
+
+    v11 = cb11_valid->lpVtbl->GetVariableByName(cb11_valid, "invalid");
+    ok(v11_dummy == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_dummy);
+
+    v11 = cb11_valid->lpVtbl->GetVariableByName(cb11_valid, "a");
+    ok(v11_valid == v11, "GetVariableByName failed, got %p, expected %p\n", v11, v11_valid);
+
+    hr = cb11_dummy->lpVtbl->GetDesc(cb11_dummy, NULL);
+    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+
+    hr = cb11_dummy->lpVtbl->GetDesc(cb11_dummy, &cbdesc);
+    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+
+    hr = cb11_valid->lpVtbl->GetDesc(cb11_valid, NULL);
+    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+
+    /* variable calls */
+    hr = v11_dummy->lpVtbl->GetDesc(v11_dummy, NULL);
+    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+
+    hr = v11_dummy->lpVtbl->GetDesc(v11_dummy, &vdesc);
+    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+
+    hr = v11_valid->lpVtbl->GetDesc(v11_valid, NULL);
+    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+
+    /* type calls */
+    hr = t11_dummy->lpVtbl->GetDesc(t11_dummy, NULL);
+    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+
+    hr = t11_dummy->lpVtbl->GetDesc(t11_dummy, &tdesc);
+    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+
+    hr = t11_valid->lpVtbl->GetDesc(t11_valid, NULL);
+    ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
+
+    /* constant buffers */
+    for (i = 0; i < sizeof(test_reflection_constant_buffer_cb_result)/sizeof(*test_reflection_constant_buffer_cb_result); ++i)
+    {
+        pcbdesc = &test_reflection_constant_buffer_cb_result[i];
+
+        cb11 = ref11->lpVtbl->GetConstantBufferByIndex(ref11, i);
+        ok(cb11_dummy != cb11, "GetConstantBufferByIndex(%u) failed\n", i);
+
+        hr = cb11->lpVtbl->GetDesc(cb11, &cbdesc);
+        ok(hr == S_OK, "GetDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+
+        ok(!strcmp(cbdesc.Name, pcbdesc->Name), "GetDesc(%u) Name failed, got \"%s\", expected \"%s\"\n",
+                i, cbdesc.Name, pcbdesc->Name);
+        ok(cbdesc.Type == pcbdesc->Type, "GetDesc(%u) Type failed, got %x, expected %x\n",
+                i, cbdesc.Type, pcbdesc->Type);
+        ok(cbdesc.Variables == pcbdesc->Variables, "GetDesc(%u) Variables failed, got %u, expected %u\n",
+                i, cbdesc.Variables, pcbdesc->Variables);
+        ok(cbdesc.Size == pcbdesc->Size, "GetDesc(%u) Size failed, got %u, expected %u\n",
+                i, cbdesc.Size, pcbdesc->Size);
+        ok(cbdesc.uFlags == pcbdesc->uFlags, "GetDesc(%u) uFlags failed, got %u, expected %u\n",
+                i, cbdesc.uFlags, pcbdesc->uFlags);
+    }
+
+    /* variables */
+    for (i = 0; i < sizeof(test_reflection_constant_buffer_variable_result)/sizeof(*test_reflection_constant_buffer_variable_result); ++i)
+    {
+        pvdesc = &test_reflection_constant_buffer_variable_result[i].desc;
+
+        v11 = ref11->lpVtbl->GetVariableByName(ref11, pvdesc->Name);
+        ok(v11_dummy != v11, "GetVariableByName(%u) failed\n", i);
+
+        hr = v11->lpVtbl->GetDesc(v11, &vdesc);
+        ok(hr == S_OK, "GetDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+
+        ok(!strcmp(vdesc.Name, pvdesc->Name), "GetDesc(%u) Name failed, got \"%s\", expected \"%s\"\n",
+                i, vdesc.Name, pvdesc->Name);
+        ok(vdesc.StartOffset == pvdesc->StartOffset, "GetDesc(%u) StartOffset failed, got %u, expected %u\n",
+                i, vdesc.StartOffset, pvdesc->StartOffset);
+        ok(vdesc.Size == pvdesc->Size, "GetDesc(%u) Size failed, got %u, expected %u\n",
+                i, vdesc.Size, pvdesc->Size);
+        ok(vdesc.uFlags == pvdesc->uFlags, "GetDesc(%u) uFlags failed, got %u, expected %u\n",
+                i, vdesc.uFlags, pvdesc->uFlags);
+        ok(vdesc.DefaultValue == pvdesc->DefaultValue, "GetDesc(%u) DefaultValue failed\n", i);
+
+        /* types */
+        ptdesc = &test_reflection_constant_buffer_type_result[test_reflection_constant_buffer_variable_result[i].type];
+
+        t11 = v11->lpVtbl->GetType(v11);
+        ok(t11_dummy != t11, "GetType(%u) failed\n", i);
+
+        hr = t11->lpVtbl->GetDesc(t11, &tdesc);
+        ok(hr == S_OK, "GetDesc(%u) failed, got %x, expected %x\n", i, hr, S_OK);
+
+        ok(tdesc.Class == ptdesc->Class, "GetDesc(%u) Class failed, got %x, expected %x\n",
+                i, tdesc.Class, ptdesc->Class);
+        ok(tdesc.Type == ptdesc->Type, "GetDesc(%u) Type failed, got %x, expected %x\n",
+                i, tdesc.Type, ptdesc->Type);
+        ok(tdesc.Rows == ptdesc->Rows, "GetDesc(%u) Rows failed, got %x, expected %x\n",
+                i, tdesc.Rows, ptdesc->Rows);
+        ok(tdesc.Columns == ptdesc->Columns, "GetDesc(%u) Columns failed, got %u, expected %u\n",
+                i, tdesc.Columns, ptdesc->Columns);
+        ok(tdesc.Elements == ptdesc->Elements, "GetDesc(%u) Elements failed, got %u, expected %u\n",
+                i, tdesc.Elements, ptdesc->Elements);
+        ok(tdesc.Offset == ptdesc->Offset, "GetDesc(%u) Offset failed, got %u, expected %u\n",
+                i, tdesc.Offset, ptdesc->Offset);
+    }
+
+    count = ref11->lpVtbl->Release(ref11);
+    ok(count == 0, "Release failed %u\n", count);
+}
+
 START_TEST(reflection)
 {
     test_reflection_references();
@@ -1098,4 +1433,5 @@ START_TEST(reflection)
     test_reflection_desc_ps();
     test_reflection_desc_ps_output();
     test_reflection_bound_resources();
+    test_reflection_constant_buffer();
 }
