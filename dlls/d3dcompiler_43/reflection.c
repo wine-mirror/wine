@@ -1465,25 +1465,6 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
 
         switch (section->tag)
         {
-            case TAG_STAT:
-                hr = d3dcompiler_parse_stat(reflection, section->data, section->data_size);
-                if (FAILED(hr))
-                {
-                    WARN("Failed to parse section STAT.\n");
-                    goto err_out;
-                }
-                break;
-
-            case TAG_SHEX:
-            case TAG_SHDR:
-                hr = d3dcompiler_parse_shdr(reflection, section->data, section->data_size);
-                if (FAILED(hr))
-                {
-                    WARN("Failed to parse SHDR section.\n");
-                    goto err_out;
-                }
-                break;
-
             case TAG_RDEF:
                 hr = d3dcompiler_parse_rdef(reflection, section->data, section->data_size);
                 if (FAILED(hr))
@@ -1541,6 +1522,25 @@ HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection 
                 if (FAILED(hr))
                 {
                     WARN("Failed to parse section PCSG.\n");
+                    goto err_out;
+                }
+                break;
+
+            case TAG_SHEX:
+            case TAG_SHDR:
+                hr = d3dcompiler_parse_shdr(reflection, section->data, section->data_size);
+                if (FAILED(hr))
+                {
+                    WARN("Failed to parse SHDR section.\n");
+                    goto err_out;
+                }
+                break;
+
+            case TAG_STAT:
+                hr = d3dcompiler_parse_stat(reflection, section->data, section->data_size);
+                if (FAILED(hr))
+                {
+                    WARN("Failed to parse section STAT.\n");
                     goto err_out;
                 }
                 break;
