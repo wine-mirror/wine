@@ -1272,8 +1272,6 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD event_flags, DWORD 
         req->msg      = message;
         req->wparam   = wVk;
         req->lparam   = lParam;
-        req->x        = cursor_pos.x;
-        req->y        = cursor_pos.y;
         req->time     = time;
         req->info     = dwExtraInfo;
         wine_server_call( req );

@@ -609,8 +609,6 @@ extern int alloc_system_colors;
 extern int xrender_error_base;
 extern HMODULE x11drv_module;
 
-extern POINT cursor_pos;
-
 /* atoms */
 
 enum x11drv_atoms

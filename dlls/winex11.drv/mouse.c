@@ -92,7 +92,7 @@ static const UINT button_up_flags[NB_BUTTONS] =
     MOUSEEVENTF_XUP
 };
 
-POINT cursor_pos;
+static POINT cursor_pos;
 static HWND cursor_window;
 static DWORD last_time_modified;
 static RECT cursor_clip; /* Cursor clipping rect */
@@ -1042,6 +1042,7 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
     Window root, child;
     int rootX, rootY, winX, winY;
     unsigned int xstate;
+    BOOL ret = FALSE;
 
     wine_tsx11_lock();
     if ((GetTickCount() - last_time_modified > 100) &&
@@ -1051,12 +1052,12 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
         winX += virtual_screen_rect.left;
         winY += virtual_screen_rect.top;
         TRACE("pointer at (%d,%d)\n", winX, winY );
-        cursor_pos.x = winX;
-        cursor_pos.y = winY;
+        pos->x = winX;
+        pos->y = winY;
+        ret = TRUE;
     }
-    *pos = cursor_pos;
     wine_tsx11_unlock();
-    return TRUE;
+    return ret;
 }
 
 

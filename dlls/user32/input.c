@@ -197,8 +197,29 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetCursorPos( POINT *pt )
 {
+    BOOL ret;
+
     if (!pt) return FALSE;
-    return USER_Driver->pGetCursorPos( pt );
+
+    ret = USER_Driver->pGetCursorPos( pt );
+
+    SERVER_START_REQ( set_cursor )
+    {
+        if (ret)  /* update it */
+        {
+            req->flags = SET_CURSOR_POS;
+            req->x     = pt->x;
+            req->y     = pt->y;
+        }
+        if ((ret = !wine_server_call( req )))
+        {
+            pt->x = reply->new_x;
+            pt->y = reply->new_y;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+
 }
 
 
@@ -245,7 +266,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetCursorPos( INT x, INT y )
         }
     }
     SERVER_END_REQ;
-    if (ret) ret = USER_Driver->pSetCursorPos( x, y );
+    if (ret) USER_Driver->pSetCursorPos( x, y );
     return ret;
 }
 
