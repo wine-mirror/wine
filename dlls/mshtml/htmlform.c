@@ -174,6 +174,7 @@ static HRESULT WINAPI HTMLFormElement_get_action(IHTMLFormElement *iface, BSTR *
         hres = E_FAIL;
     }
 
+    nsAString_Finish(&action_str);
     return hres;
 }
 
