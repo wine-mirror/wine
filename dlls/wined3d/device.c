@@ -2102,11 +2102,14 @@ err_out:
     return hr;
 }
 
-static HRESULT WINAPI device_unload_resource(IWineD3DResource *resource, void *ctx)
+static HRESULT WINAPI device_unload_resource(IWineD3DResource *resource, void *data)
 {
+    TRACE("Unloading resource %p.\n", resource);
+
     IWineD3DResource_UnLoad(resource);
     IWineD3DResource_Release(resource);
-    return WINED3D_OK;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
@@ -6180,13 +6183,6 @@ static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRES
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI reset_unload_resources(IWineD3DResource *resource, void *data) {
-    TRACE("Unloading resource %p\n", resource);
-    IWineD3DResource_UnLoad(resource);
-    IWineD3DResource_Release(resource);
-    return S_OK;
-}
-
 static BOOL is_display_mode_supported(IWineD3DDeviceImpl *This, const WINED3DPRESENT_PARAMETERS *pp)
 {
     UINT i, count;
@@ -6223,7 +6219,7 @@ static void delete_opengl_contexts(IWineD3DDeviceImpl *device, IWineD3DSwapChain
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    IWineD3DDevice_EnumResources((IWineD3DDevice *)device, reset_unload_resources, NULL);
+    IWineD3DDevice_EnumResources((IWineD3DDevice *)device, device_unload_resource, NULL);
     LIST_FOR_EACH_ENTRY(shader, &device->shaders, IWineD3DBaseShaderImpl, baseShader.shader_list_entry)
     {
         device->shader_backend->shader_destroy(shader);
