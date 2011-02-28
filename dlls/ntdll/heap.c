@@ -1538,6 +1538,8 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
 
     if (!(subheap = HEAP_CreateSubHeap( NULL, addr, flags, commitSize, totalSize ))) return 0;
 
+    heap_set_debug_flags( subheap->heap );
+
     /* link it into the per-process heap list */
     if (processHeap)
     {
@@ -1552,7 +1554,6 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
         list_init( &processHeap->entry );
     }
 
-    heap_set_debug_flags( subheap->heap );
     return subheap->heap;
 }
 
