@@ -5569,6 +5569,53 @@ static void test_default_style(IHTMLStyle *style)
     }
 }
 
+#define test_style_filter(a,b) _test_style_filter(__LINE__,a,b)
+static void _test_style_filter(unsigned line, IHTMLStyle *style, const char *exval)
+{
+    BSTR str;
+    HRESULT hres;
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_filter(style, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_filter failed: %08x\n", hres);
+    if(exval)
+        ok_(__FILE__,line)(str && !strcmp_wa(str, exval), "filter = %s, expected %s\n", wine_dbgstr_w(str), exval);
+    else
+        ok_(__FILE__,line)(!str, "str = %s, expected NULL\n", wine_dbgstr_w(str));
+
+    SysFreeString(str);
+}
+
+#define set_style_filter(a,b) _set_style_filter(__LINE__,a,b)
+static void _set_style_filter(unsigned line, IHTMLStyle *style, const char *val)
+{
+    BSTR str = a2bstr(val);
+    HRESULT hres;
+
+    hres = IHTMLStyle_put_filter(style, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_filter failed: %08x\n", hres);
+    SysFreeString(str);
+
+    _test_style_filter(line, style, val);
+}
+
+static void test_style_filters(IHTMLElement *elem)
+{
+    IHTMLStyle *style;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_style(elem, &style);
+    ok(hres == S_OK, "get_style failed: %08x\n", hres);
+
+    test_style_filter(style, NULL);
+    set_style_filter(style, "alpha(opacity=50.00000)");
+    set_style_filter(style, "alpha(opacity=100)");
+    set_style_filter(style, "xxx(a,b,c) alpha(opacity=100)");
+    set_style_filter(style, NULL);
+
+    IHTMLStyle_Release(style);
+}
+
 static void test_set_csstext(IHTMLStyle *style)
 {
     VARIANT v;
@@ -6770,6 +6817,7 @@ static void test_elems2(IHTMLDocument2 *doc)
     }
 
     test_attr(div);
+    test_style_filters(div);
 
     IHTMLElement_Release(div);
 }

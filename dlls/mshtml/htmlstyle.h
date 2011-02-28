@@ -26,6 +26,7 @@ struct HTMLStyle {
     LONG ref;
 
     nsIDOMCSSStyleDeclaration *nsstyle;
+    WCHAR *filter;
 };
 
 /* NOTE: Make sure to keep in sync with style_tbl in htmlstyle.c */

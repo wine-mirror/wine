@@ -633,6 +633,7 @@ static ULONG WINAPI HTMLStyle_Release(IHTMLStyle *iface)
     if(!ref) {
         if(This->nsstyle)
             nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
+        heap_free(This->filter);
         release_dispex(&This->dispex);
         heap_free(This);
     }
@@ -2547,21 +2548,36 @@ static HRESULT WINAPI HTMLStyle_get_clip(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_filter(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
+    WCHAR *new_filter = NULL;
 
-    WARN("(%p)->(%s)\n", This, debugstr_w(v));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    /* FIXME: Handle MS-style filters */
-    return set_style_attr(This, STYLEID_FILTER, v, 0);
+    if(v) {
+        new_filter = heap_strdupW(v);
+        if(!new_filter)
+            return E_OUTOFMEMORY;
+    }
+
+    heap_free(This->filter);
+    This->filter = new_filter;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_get_filter(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
 
-    WARN("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    /* FIXME: Handle MS-style filters */
-    return get_style_attr(This, STYLEID_FILTER, p);
+    if(This->filter) {
+        *p = SysAllocString(This->filter);
+        if(!*p)
+            return E_OUTOFMEMORY;
+    }else {
+        *p = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_setAttribute(IHTMLStyle *iface, BSTR strAttributeName,
