@@ -2219,8 +2219,6 @@ interface IWineD3DResource : IWineD3DBase
     );
     void PreLoad(
     );
-    void UnLoad(
-    );
     WINED3DRESOURCETYPE GetType(
     );
 }

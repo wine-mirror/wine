@@ -136,10 +136,36 @@ static void cubetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSR
     if (context) context_release(context);
 }
 
+/* Do not call while under the GL lock. */
+static void cubetexture_unload(IWineD3DResourceImpl *resource)
+{
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)resource;
+    UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
+    UINT i;
+
+    TRACE("texture %p.\n", texture);
+
+    for (i = 0; i < sub_count; ++i)
+    {
+        IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
+
+        surface->resource.resource_ops->resource_unload((IWineD3DResourceImpl *)surface);
+        surface_set_texture_name(surface, 0, TRUE);
+        surface_set_texture_name(surface, 0, FALSE);
+    }
+
+    basetexture_unload(texture);
+}
+
 static const struct wined3d_texture_ops cubetexture_ops =
 {
     cubetexture_bind,
     cubetexture_preload,
+};
+
+static const struct wined3d_resource_ops cubetexture_resource_ops =
+{
+    cubetexture_unload,
 };
 
 static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This)
@@ -243,31 +269,6 @@ static DWORD WINAPI IWineD3DCubeTextureImpl_GetPriority(IWineD3DCubeTexture *ifa
 static void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface)
 {
     cubetexture_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
-}
-
-/* Do not call while under the GL lock. */
-static void WINAPI IWineD3DCubeTextureImpl_UnLoad(IWineD3DCubeTexture *iface)
-{
-    IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    UINT sub_count = This->baseTexture.level_count * This->baseTexture.layer_count;
-    UINT i;
-
-    TRACE("iface %p.\n", iface);
-
-    /* Unload all the surfaces and reset the texture name. If UnLoad was called on the
-     * surface before, this one will be a NOP and vice versa. Unloading an unloaded
-     * surface is fine. */
-
-    for (i = 0; i < sub_count; ++i)
-    {
-        IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)This->baseTexture.sub_resources[i];
-
-        IWineD3DSurface_UnLoad((IWineD3DSurface *)surface);
-        surface_set_texture_name(surface, 0, TRUE);
-        surface_set_texture_name(surface, 0, FALSE);
-    }
-
-    basetexture_unload((IWineD3DBaseTextureImpl *)This);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DCubeTextureImpl_GetType(IWineD3DCubeTexture *iface)
@@ -436,7 +437,6 @@ static const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_SetPriority,
     IWineD3DCubeTextureImpl_GetPriority,
     IWineD3DCubeTextureImpl_PreLoad,
-    IWineD3DCubeTextureImpl_UnLoad,
     IWineD3DCubeTextureImpl_GetType,
     /* IWineD3DBaseTexture */
     IWineD3DCubeTextureImpl_SetLOD,
@@ -506,7 +506,7 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
 
     hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, &cubetexture_ops,
             6, levels, WINED3DRTYPE_CUBETEXTURE, device, usage, format, pool,
-            parent, parent_ops);
+            parent, parent_ops, &cubetexture_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x\n", hr);

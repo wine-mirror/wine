@@ -45,7 +45,8 @@ struct private_data
 
 HRESULT resource_init(struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE resource_type,
         IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format *format,
-        WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops)
+        WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops,
+        const struct wined3d_resource_ops *resource_ops)
 {
     struct IWineD3DResourceClass *r = &resource->resource;
 
@@ -59,6 +60,7 @@ HRESULT resource_init(struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE
     r->priority = 0;
     r->parent = parent;
     r->parent_ops = parent_ops;
+    r->resource_ops = resource_ops;
     list_init(&r->privateData);
 
     if (size)

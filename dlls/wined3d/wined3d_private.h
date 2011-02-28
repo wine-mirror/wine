@@ -1793,9 +1793,11 @@ static inline BOOL isStateDirty(struct wined3d_context *context, DWORD state)
     return context->isStateDirty[idx] & (1 << shift);
 }
 
-/*****************************************************************************
- * IWineD3DResource implementation structure
- */
+struct wined3d_resource_ops
+{
+    void (*resource_unload)(struct IWineD3DResourceImpl *resource);
+};
+
 typedef struct IWineD3DResourceClass
 {
     /* IUnknown fields */
@@ -1816,6 +1818,7 @@ typedef struct IWineD3DResourceClass
 
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
+    const struct wined3d_resource_ops *resource_ops;
 } IWineD3DResourceClass;
 
 typedef struct IWineD3DResourceImpl
@@ -1832,7 +1835,8 @@ HRESULT resource_get_private_data(struct IWineD3DResourceImpl *resource, REFGUID
         void *data, DWORD *data_size) DECLSPEC_HIDDEN;
 HRESULT resource_init(struct IWineD3DResourceImpl *resource, WINED3DRESOURCETYPE resource_type,
         IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format *format,
-        WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+        WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops,
+        const struct wined3d_resource_ops *resource_ops) DECLSPEC_HIDDEN;
 WINED3DRESOURCETYPE resource_get_type(struct IWineD3DResourceImpl *resource) DECLSPEC_HIDDEN;
 DWORD resource_set_priority(struct IWineD3DResourceImpl *resource, DWORD priority) DECLSPEC_HIDDEN;
 HRESULT resource_set_private_data(struct IWineD3DResourceImpl *resource, REFGUID guid,
@@ -1927,7 +1931,7 @@ IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *text
 HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, const struct wined3d_texture_ops *texture_ops,
         UINT layer_count, UINT level_count, WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device,
         DWORD usage, const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+        const struct wined3d_parent_ops *parent_ops, const struct wined3d_resource_ops *resource_ops) DECLSPEC_HIDDEN;
 HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTextureImpl *texture,
         WINED3DTEXTUREFILTERTYPE filter_type) DECLSPEC_HIDDEN;
 BOOL basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty) DECLSPEC_HIDDEN;

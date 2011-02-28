@@ -160,10 +160,35 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
     *dirty = FALSE;
 }
 
+/* Do not call while under the GL lock. */
+static void texture_unload(IWineD3DResourceImpl *resource)
+{
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)resource;
+    unsigned int i;
+
+    TRACE("texture %p.\n", texture);
+
+    for (i = 0; i < texture->baseTexture.level_count; ++i)
+    {
+        IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
+
+        surface->resource.resource_ops->resource_unload((IWineD3DResourceImpl *)surface);
+        surface_set_texture_name(surface, 0, FALSE); /* Delete rgb name */
+        surface_set_texture_name(surface, 0, TRUE); /* delete srgb name */
+    }
+
+    basetexture_unload(texture);
+}
+
 static const struct wined3d_texture_ops texture_ops =
 {
     texture_bind,
     texture_preload,
+};
+
+static const struct wined3d_resource_ops texture_resource_ops =
+{
+    texture_unload,
 };
 
 static void texture_cleanup(IWineD3DTextureImpl *This)
@@ -268,27 +293,6 @@ static DWORD WINAPI IWineD3DTextureImpl_GetPriority(IWineD3DTexture *iface)
 static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface)
 {
     texture_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
-}
-
-/* Do not call while under the GL lock. */
-static void WINAPI IWineD3DTextureImpl_UnLoad(IWineD3DTexture *iface) {
-    unsigned int i;
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    TRACE("(%p)\n", This);
-
-    /* Unload all the surfaces and reset the texture name. If UnLoad was called on the
-     * surface before, this one will be a NOP and vice versa. Unloading an unloaded
-     * surface is fine
-     */
-    for (i = 0; i < This->baseTexture.level_count; ++i)
-    {
-        IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)This->baseTexture.sub_resources[i];
-        IWineD3DSurface_UnLoad((IWineD3DSurface *)surface);
-        surface_set_texture_name(surface, 0, FALSE); /* Delete rgb name */
-        surface_set_texture_name(surface, 0, TRUE); /* delete srgb name */
-    }
-
-    basetexture_unload((IWineD3DBaseTextureImpl *)This);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DTextureImpl_GetType(IWineD3DTexture *iface)
@@ -451,7 +455,6 @@ static const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_SetPriority,
     IWineD3DTextureImpl_GetPriority,
     IWineD3DTextureImpl_PreLoad,
-    IWineD3DTextureImpl_UnLoad,
     IWineD3DTextureImpl_GetType,
     /* IWineD3DBaseTexture */
     IWineD3DTextureImpl_SetLOD,
@@ -539,7 +542,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
 
     hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, &texture_ops,
             1, levels, WINED3DRTYPE_TEXTURE, device, usage, format, pool,
-            parent, parent_ops);
+            parent, parent_ops, &texture_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);

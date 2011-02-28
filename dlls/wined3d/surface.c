@@ -408,6 +408,109 @@ static HRESULT surface_draw_overlay(IWineD3DSurfaceImpl *surface)
     return hr;
 }
 
+/* Context activation is done by the caller. */
+static void surface_remove_pbo(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info)
+{
+    if (!surface->resource.heapMemory)
+    {
+        surface->resource.heapMemory = HeapAlloc(GetProcessHeap(), 0, surface->resource.size + RESOURCE_ALIGNMENT);
+        surface->resource.allocatedMemory = (BYTE *)(((ULONG_PTR)surface->resource.heapMemory
+                + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+    }
+
+    ENTER_GL();
+    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
+    checkGLcall("glBindBufferARB(GL_PIXEL_UNPACK_BUFFER, surface->pbo)");
+    GL_EXTCALL(glGetBufferSubDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0,
+            surface->resource.size, surface->resource.allocatedMemory));
+    checkGLcall("glGetBufferSubDataARB");
+    GL_EXTCALL(glDeleteBuffersARB(1, &surface->pbo));
+    checkGLcall("glDeleteBuffersARB");
+    LEAVE_GL();
+
+    surface->pbo = 0;
+    surface->flags &= ~SFLAG_PBO;
+}
+
+/* Do not call while under the GL lock. */
+static void surface_unload(IWineD3DResourceImpl *resource)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)resource;
+    IWineD3DDeviceImpl *device = resource->resource.device;
+    const struct wined3d_gl_info *gl_info;
+    renderbuffer_entry_t *entry, *entry2;
+    struct wined3d_context *context;
+
+    TRACE("surface %p.\n", surface);
+
+    if (resource->resource.pool == WINED3DPOOL_DEFAULT)
+    {
+        /* Default pool resources are supposed to be destroyed before Reset is called.
+         * Implicit resources stay however. So this means we have an implicit render target
+         * or depth stencil. The content may be destroyed, but we still have to tear down
+         * opengl resources, so we cannot leave early.
+         *
+         * Put the surfaces into sysmem, and reset the content. The D3D content is undefined,
+         * but we can't set the sysmem INDRAWABLE because when we're rendering the swapchain
+         * or the depth stencil into an FBO the texture or render buffer will be removed
+         * and all flags get lost
+         */
+        surface_init_sysmem(surface);
+    }
+    else
+    {
+        /* Load the surface into system memory */
+        surface_load_location(surface, SFLAG_INSYSMEM, NULL);
+        surface_modify_location(surface, SFLAG_INDRAWABLE, FALSE);
+    }
+    surface_modify_location(surface, SFLAG_INTEXTURE, FALSE);
+    surface_modify_location(surface, SFLAG_INSRGBTEX, FALSE);
+    surface->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
+
+    context = context_acquire(device, NULL);
+    gl_info = context->gl_info;
+
+    /* Destroy PBOs, but load them into real sysmem before */
+    if (surface->flags & SFLAG_PBO)
+        surface_remove_pbo(surface, gl_info);
+
+    /* Destroy fbo render buffers. This is needed for implicit render targets, for
+     * all application-created targets the application has to release the surface
+     * before calling _Reset
+     */
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, renderbuffer_entry_t, entry)
+    {
+        ENTER_GL();
+        gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
+        LEAVE_GL();
+        list_remove(&entry->entry);
+        HeapFree(GetProcessHeap(), 0, entry);
+    }
+    list_init(&surface->renderbuffers);
+    surface->current_renderbuffer = NULL;
+
+    /* If we're in a texture, the texture name belongs to the texture.
+     * Otherwise, destroy it. */
+    if (surface->container.type != WINED3D_CONTAINER_TEXTURE)
+    {
+        ENTER_GL();
+        glDeleteTextures(1, &surface->texture_name);
+        surface->texture_name = 0;
+        glDeleteTextures(1, &surface->texture_name_srgb);
+        surface->texture_name_srgb = 0;
+        LEAVE_GL();
+    }
+
+    context_release(context);
+
+    resource_unload(resource);
+}
+
+static const struct wined3d_resource_ops surface_resource_ops =
+{
+    surface_unload,
+};
+
 static const struct wined3d_surface_ops surface_ops =
 {
     surface_realize_palette,
@@ -494,8 +597,8 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
             return WINED3DERR_INVALIDCALL;
     }
 
-    hr = resource_init((IWineD3DResourceImpl *)surface, WINED3DRTYPE_SURFACE,
-            device, resource_size, usage, format, pool, parent, parent_ops);
+    hr = resource_init((IWineD3DResourceImpl *)surface, WINED3DRTYPE_SURFACE, device,
+            resource_size, usage, format, pool, parent, parent_ops, &surface_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
@@ -1300,29 +1403,6 @@ static void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface)
     surface_internal_preload((IWineD3DSurfaceImpl *)iface, SRGB_ANY);
 }
 
-/* Context activation is done by the caller. */
-static void surface_remove_pbo(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info)
-{
-    if (!This->resource.heapMemory)
-    {
-        This->resource.heapMemory = HeapAlloc(GetProcessHeap(), 0, This->resource.size + RESOURCE_ALIGNMENT);
-        This->resource.allocatedMemory =
-                (BYTE *)(((ULONG_PTR)This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
-    }
-
-    ENTER_GL();
-    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
-    checkGLcall("glBindBufferARB(GL_PIXEL_UNPACK_BUFFER, This->pbo)");
-    GL_EXTCALL(glGetBufferSubDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0, This->resource.size, This->resource.allocatedMemory));
-    checkGLcall("glGetBufferSubDataARB");
-    GL_EXTCALL(glDeleteBuffersARB(1, &This->pbo));
-    checkGLcall("glDeleteBuffersARB");
-    LEAVE_GL();
-
-    This->pbo = 0;
-    This->flags &= ~SFLAG_PBO;
-}
-
 BOOL surface_init_sysmem(IWineD3DSurfaceImpl *surface)
 {
     if (!surface->resource.allocatedMemory)
@@ -1345,78 +1425,6 @@ BOOL surface_init_sysmem(IWineD3DSurfaceImpl *surface)
     surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
 
     return TRUE;
-}
-
-/* Do not call while under the GL lock. */
-static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    IWineD3DDeviceImpl *device = This->resource.device;
-    const struct wined3d_gl_info *gl_info;
-    renderbuffer_entry_t *entry, *entry2;
-    struct wined3d_context *context;
-
-    TRACE("(%p)\n", iface);
-
-    if(This->resource.pool == WINED3DPOOL_DEFAULT) {
-        /* Default pool resources are supposed to be destroyed before Reset is called.
-         * Implicit resources stay however. So this means we have an implicit render target
-         * or depth stencil. The content may be destroyed, but we still have to tear down
-         * opengl resources, so we cannot leave early.
-         *
-         * Put the surfaces into sysmem, and reset the content. The D3D content is undefined,
-         * but we can't set the sysmem INDRAWABLE because when we're rendering the swapchain
-         * or the depth stencil into an FBO the texture or render buffer will be removed
-         * and all flags get lost
-         */
-        surface_init_sysmem(This);
-    }
-    else
-    {
-        /* Load the surface into system memory */
-        surface_load_location(This, SFLAG_INSYSMEM, NULL);
-        surface_modify_location(This, SFLAG_INDRAWABLE, FALSE);
-    }
-    surface_modify_location(This, SFLAG_INTEXTURE, FALSE);
-    surface_modify_location(This, SFLAG_INSRGBTEX, FALSE);
-    This->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
-
-    context = context_acquire(device, NULL);
-    gl_info = context->gl_info;
-
-    /* Destroy PBOs, but load them into real sysmem before */
-    if (This->flags & SFLAG_PBO)
-        surface_remove_pbo(This, gl_info);
-
-    /* Destroy fbo render buffers. This is needed for implicit render targets, for
-     * all application-created targets the application has to release the surface
-     * before calling _Reset
-     */
-    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry) {
-        ENTER_GL();
-        gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
-        LEAVE_GL();
-        list_remove(&entry->entry);
-        HeapFree(GetProcessHeap(), 0, entry);
-    }
-    list_init(&This->renderbuffers);
-    This->current_renderbuffer = NULL;
-
-    /* If we're in a texture, the texture name belongs to the texture.
-     * Otherwise, destroy it. */
-    if (This->container.type != WINED3D_CONTAINER_TEXTURE)
-    {
-        ENTER_GL();
-        glDeleteTextures(1, &This->texture_name);
-        This->texture_name = 0;
-        glDeleteTextures(1, &This->texture_name_srgb);
-        This->texture_name_srgb = 0;
-        LEAVE_GL();
-    }
-
-    context_release(context);
-
-    resource_unload((IWineD3DResourceImpl *)This);
 }
 
 /* ******************************************************
@@ -4675,7 +4683,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetPriority,
     IWineD3DBaseSurfaceImpl_GetPriority,
     IWineD3DSurfaceImpl_PreLoad,
-    IWineD3DSurfaceImpl_UnLoad,
     IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetDesc,

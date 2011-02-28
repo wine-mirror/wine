@@ -84,10 +84,32 @@ static void volumetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3D
     texture->baseTexture.texture_rgb.dirty = FALSE;
 }
 
+/* Do not call while under the GL lock. */
+static void volumetexture_unload(IWineD3DResourceImpl *resource)
+{
+    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)resource;
+    unsigned int i;
+
+    TRACE("texture %p.\n", texture);
+
+    for (i = 0; i < texture->baseTexture.level_count; ++i)
+    {
+        IWineD3DResourceImpl *resource = texture->baseTexture.sub_resources[i];
+        resource->resource.resource_ops->resource_unload(resource);
+    }
+
+    basetexture_unload(texture);
+}
+
 static const struct wined3d_texture_ops volumetexture_ops =
 {
     volumetexture_bind,
     volumetexture_preload,
+};
+
+static const struct wined3d_resource_ops volumetexture_resource_ops =
+{
+    volumetexture_unload,
 };
 
 static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
@@ -185,24 +207,6 @@ static DWORD WINAPI IWineD3DVolumeTextureImpl_GetPriority(IWineD3DVolumeTexture 
 static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface)
 {
     volumetexture_preload((IWineD3DBaseTextureImpl *)iface, SRGB_ANY);
-}
-
-/* Do not call while under the GL lock. */
-static void WINAPI IWineD3DVolumeTextureImpl_UnLoad(IWineD3DVolumeTexture *iface) {
-    unsigned int i;
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    TRACE("(%p)\n", This);
-
-    /* Unload all the surfaces and reset the texture name. If UnLoad was called on the
-     * surface before, this one will be a NOP and vice versa. Unloading an unloaded
-     * surface is fine
-     */
-    for (i = 0; i < This->baseTexture.level_count; ++i)
-    {
-        IWineD3DVolume_UnLoad((IWineD3DVolume *)This->baseTexture.sub_resources[i]);
-    }
-
-    basetexture_unload((IWineD3DBaseTextureImpl *)This);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeTextureImpl_GetType(IWineD3DVolumeTexture *iface)
@@ -365,7 +369,6 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_SetPriority,
     IWineD3DVolumeTextureImpl_GetPriority,
     IWineD3DVolumeTextureImpl_PreLoad,
-    IWineD3DVolumeTextureImpl_UnLoad,
     IWineD3DVolumeTextureImpl_GetType,
     /* BaseTexture */
     IWineD3DVolumeTextureImpl_SetLOD,
@@ -435,7 +438,7 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
 
     hr = basetexture_init((IWineD3DBaseTextureImpl *)texture, &volumetexture_ops,
             1, levels, WINED3DRTYPE_VOLUMETEXTURE, device, usage, format, pool,
-            parent, parent_ops);
+            parent, parent_ops, &volumetexture_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize basetexture, returning %#x.\n", hr);

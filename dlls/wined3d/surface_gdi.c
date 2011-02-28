@@ -145,20 +145,6 @@ IWineGDISurfaceImpl_PreLoad(IWineD3DSurface *iface)
     ERR("(%p): Please report to wine-devel\n", iface);
 }
 
-/*****************************************************************************
- * IWineD3DSurface::UnLoad, GDI version
- *
- * This call is unsupported on GDI surfaces, if it's called something went
- * wrong in the parent library. Write an informative warning.
- *
- *****************************************************************************/
-static void WINAPI IWineGDISurfaceImpl_UnLoad(IWineD3DSurface *iface)
-{
-    ERR("(%p): UnLoad is not supported on X11 surfaces!\n", iface);
-    ERR("(%p): Most likely the parent library did something wrong.\n", iface);
-    ERR("(%p): Please report to wine-devel\n", iface);
-}
-
 static HRESULT WINAPI IWineGDISurfaceImpl_Map(IWineD3DSurface *iface,
         WINED3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD flags)
 {
@@ -463,7 +449,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetPriority,
     IWineD3DBaseSurfaceImpl_GetPriority,
     IWineGDISurfaceImpl_PreLoad,
-    IWineGDISurfaceImpl_UnLoad,
     IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetDesc,

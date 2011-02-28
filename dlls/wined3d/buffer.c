@@ -693,15 +693,15 @@ BYTE *buffer_get_sysmem(struct wined3d_buffer *This, const struct wined3d_gl_inf
 }
 
 /* Do not call while under the GL lock. */
-static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
+static void buffer_unload(IWineD3DResourceImpl *resource)
 {
-    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
+    struct wined3d_buffer *This = (struct wined3d_buffer *)resource;
 
-    TRACE("iface %p\n", iface);
+    TRACE("buffer %p.\n", This);
 
     if (This->buffer_object)
     {
-        IWineD3DDeviceImpl *device = This->resource.device;
+        IWineD3DDeviceImpl *device = resource->resource.device;
         struct wined3d_context *context;
 
         context = context_acquire(device, NULL);
@@ -728,7 +728,7 @@ static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
         This->flags &= ~WINED3D_BUFFER_HASDESC;
     }
 
-    resource_unload((IWineD3DResourceImpl *)This);
+    resource_unload(resource);
 }
 
 /* Do not call while under the GL lock. */
@@ -741,7 +741,7 @@ static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)
 
     if (!refcount)
     {
-        buffer_UnLoad(iface);
+        buffer_unload((IWineD3DResourceImpl *)This);
         resource_cleanup((IWineD3DResourceImpl *)iface);
         This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This->maps);
@@ -997,7 +997,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         {
             FIXME("Too many declaration changes or converting dynamic buffer, stopping converting\n");
 
-            IWineD3DBuffer_UnLoad(iface);
+            buffer_unload((IWineD3DResourceImpl *)This);
             This->flags &= ~WINED3D_BUFFER_CREATEBO;
 
             /* The stream source state handler might have read the memory of the vertex buffer already
@@ -1035,7 +1035,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
             if(This->full_conversion_count > VB_MAXFULLCONVERSIONS)
             {
                 FIXME("Too many full buffer conversions, stopping converting\n");
-                IWineD3DBuffer_UnLoad(iface);
+                buffer_unload((IWineD3DResourceImpl *)This);
                 This->flags &= ~WINED3D_BUFFER_CREATEBO;
                 IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
                 goto end;
@@ -1448,12 +1448,16 @@ static const struct IWineD3DBufferVtbl wined3d_buffer_vtbl =
     buffer_SetPriority,
     buffer_GetPriority,
     buffer_PreLoad,
-    buffer_UnLoad,
     buffer_GetType,
     /* IWineD3DBuffer methods */
     buffer_Map,
     buffer_Unmap,
     buffer_GetDesc,
+};
+
+static const struct wined3d_resource_ops buffer_resource_ops =
+{
+    buffer_unload,
 };
 
 HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
@@ -1474,7 +1478,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     buffer->vtbl = &wined3d_buffer_vtbl;
 
     hr = resource_init((IWineD3DResourceImpl *)buffer, WINED3DRTYPE_BUFFER,
-            device, size, usage, format, pool, parent, parent_ops);
+            device, size, usage, format, pool, parent, parent_ops, &buffer_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, hr %#x\n", hr);
@@ -1520,7 +1524,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
         if (FAILED(hr))
         {
             ERR("Failed to map buffer, hr %#x\n", hr);
-            buffer_UnLoad((IWineD3DBuffer *)buffer);
+            buffer_unload((IWineD3DResourceImpl *)buffer);
             resource_cleanup((IWineD3DResourceImpl *)buffer);
             return hr;
         }
@@ -1534,7 +1538,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     if (!buffer->maps)
     {
         ERR("Out of memory\n");
-        buffer_UnLoad((IWineD3DBuffer *)buffer);
+        buffer_unload((IWineD3DResourceImpl *)buffer);
         resource_cleanup((IWineD3DResourceImpl *)buffer);
         return E_OUTOFMEMORY;
     }

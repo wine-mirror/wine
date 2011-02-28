@@ -30,12 +30,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, const struct wined3d_texture_ops *texture_ops,
         UINT layer_count, UINT level_count, WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device,
         DWORD usage, const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops)
+        const struct wined3d_parent_ops *parent_ops, const struct wined3d_resource_ops *resource_ops)
 {
     HRESULT hr;
 
     hr = resource_init((IWineD3DResourceImpl *)texture, resource_type, device,
-            0, usage, format, pool, parent, parent_ops);
+            0, usage, format, pool, parent, parent_ops, resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);

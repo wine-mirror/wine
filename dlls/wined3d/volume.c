@@ -118,6 +118,17 @@ void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode)
      * supported. */
 }
 
+/* Do not call while under the GL lock. */
+static void volume_unload(IWineD3DResourceImpl *resource)
+{
+    TRACE("texture %p.\n", resource);
+
+    /* The whole content is shadowed on This->resource.allocatedMemory, and
+     * the texture name is managed by the VolumeTexture container. */
+
+    resource_unload(resource);
+}
+
 /* *******************************************
    IWineD3DVolume IUnknown parts follow
    ******************************************* */
@@ -203,17 +214,6 @@ static DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface)
 /* Do not call while under the GL lock. */
 static void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
     FIXME("iface %p stub!\n", iface);
-}
-
-/* Do not call while under the GL lock. */
-static void WINAPI IWineD3DVolumeImpl_UnLoad(IWineD3DVolume *iface)
-{
-    TRACE("iface %p.\n", iface);
-
-    /* The whole content is shadowed on This->resource.allocatedMemory, and
-     * the texture name is managed by the VolumeTexture container. */
-
-    resource_unload((IWineD3DResourceImpl *)iface);
 }
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface)
@@ -316,12 +316,16 @@ static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_SetPriority,
     IWineD3DVolumeImpl_GetPriority,
     IWineD3DVolumeImpl_PreLoad,
-    IWineD3DVolumeImpl_UnLoad,
     IWineD3DVolumeImpl_GetType,
     /* IWineD3DVolume */
     IWineD3DVolumeImpl_GetDesc,
     IWineD3DVolumeImpl_Map,
     IWineD3DVolumeImpl_Unmap,
+};
+
+static const struct wined3d_resource_ops volume_resource_ops =
+{
+    volume_unload,
 };
 
 HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,
@@ -341,7 +345,8 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
     volume->lpVtbl = &IWineD3DVolume_Vtbl;
 
     hr = resource_init((IWineD3DResourceImpl *)volume, WINED3DRTYPE_VOLUME, device,
-            width * height * depth * format->byte_count, usage, format, pool, parent, parent_ops);
+            width * height * depth * format->byte_count, usage, format, pool,
+            parent, parent_ops, &volume_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);

@@ -2106,7 +2106,7 @@ static HRESULT WINAPI device_unload_resource(IWineD3DResource *resource, void *d
 {
     TRACE("Unloading resource %p.\n", resource);
 
-    IWineD3DResource_UnLoad(resource);
+    ((IWineD3DResourceImpl *)resource)->resource.resource_ops->resource_unload((IWineD3DResourceImpl *)resource);
     IWineD3DResource_Release(resource);
 
     return S_OK;
@@ -6103,7 +6103,7 @@ static HRESULT WINAPI evict_managed_resource(IWineD3DResource *resource, void *d
     TRACE("checking resource %p for eviction\n", resource);
     if(((IWineD3DResourceImpl *) resource)->resource.pool == WINED3DPOOL_MANAGED) {
         TRACE("Evicting %p\n", resource);
-        IWineD3DResource_UnLoad(resource);
+        ((IWineD3DResourceImpl *)resource)->resource.resource_ops->resource_unload((IWineD3DResourceImpl *)resource);
     }
     IWineD3DResource_Release(resource);
     return S_OK;
