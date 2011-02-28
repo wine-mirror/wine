@@ -57,7 +57,9 @@ typedef struct _xslprocessor
 
     xsltemplate *stylesheet;
     IXMLDOMNode *input;
+
     IStream     *output;
+    BSTR         outstr;
 } xslprocessor;
 
 static HRESULT XSLProcessor_create(xsltemplate*, IXSLProcessor**);
@@ -292,6 +294,7 @@ static HRESULT WINAPI xslprocessor_QueryInterface(
     else
     {
         FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 
@@ -315,6 +318,7 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
     {
         if (This->input) IXMLDOMNode_Release(This->input);
         if (This->output) IStream_Release(This->output);
+        SysFreeString(This->outstr);
         IXSLTemplate_Release(&This->stylesheet->IXSLTemplate_iface);
         heap_free( This );
     }
@@ -518,8 +522,25 @@ static HRESULT WINAPI xslprocessor_get_output(
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
 
-    FIXME("(%p)->(%p): stub\n", This, output);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, output);
+
+    if (!output) return E_INVALIDARG;
+
+    if (This->output)
+    {
+        V_VT(output) = VT_UNKNOWN;
+        V_UNKNOWN(output) = (IUnknown*)This->output;
+        IStream_AddRef(This->output);
+    }
+    else if (This->outstr)
+    {
+        V_VT(output) = VT_BSTR;
+        V_BSTR(output) = SysAllocString(This->outstr);
+    }
+    else
+        V_VT(output) = VT_EMPTY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xslprocessor_transform(
@@ -528,21 +549,23 @@ static HRESULT WINAPI xslprocessor_transform(
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
     HRESULT hr;
-    BSTR p;
 
     TRACE("(%p)->(%p)\n", This, ret);
 
     if (!ret) return E_INVALIDARG;
 
-    hr = IXMLDOMNode_transformNode(This->input, This->stylesheet->node, &p);
+    SysFreeString(This->outstr);
+    hr = IXMLDOMNode_transformNode(This->input, This->stylesheet->node, &This->outstr);
     if (hr == S_OK)
     {
-        ULONG len = 0;
+        if (This->output)
+        {
+            ULONG len = 0;
 
-        /* output to stream */
-        hr = IStream_Write(This->output, p, SysStringByteLen(p), &len);
-        *ret = len == SysStringByteLen(p) ? VARIANT_TRUE : VARIANT_FALSE;
-        SysFreeString(p);
+            /* output to stream */
+            hr = IStream_Write(This->output, This->outstr, SysStringByteLen(This->outstr), &len);
+            *ret = len == SysStringByteLen(This->outstr) ? VARIANT_TRUE : VARIANT_FALSE;
+        }
     }
     else
         *ret = VARIANT_FALSE;
@@ -642,6 +665,7 @@ HRESULT XSLProcessor_create(xsltemplate *template, IXSLProcessor **ppObj)
     This->ref = 1;
     This->input = NULL;
     This->output = NULL;
+    This->outstr = NULL;
     This->stylesheet = template;
     IXSLTemplate_AddRef(&template->IXSLTemplate_iface);
 

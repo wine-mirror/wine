@@ -7865,7 +7865,7 @@ static void test_xsltemplate(void)
 {
     IXSLTemplate *template;
     IXSLProcessor *processor;
-    IXMLDOMDocument *doc;
+    IXMLDOMDocument *doc, *doc2;
     IStream *stream;
     VARIANT_BOOL b;
     HRESULT hr;
@@ -7947,6 +7947,9 @@ todo_wine {
     ok(V_VT(&v) == VT_EMPTY, "got %d\n", V_VT(&v));
 }
 
+    hr = IXSLProcessor_get_output(processor, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     /* reset before it was set */
     V_VT(&v) = VT_EMPTY;
     hr = IXSLProcessor_put_output(processor, v);
@@ -7967,6 +7970,17 @@ todo_wine {
     IStream_Release(stream);
     todo_wine ok(ref == 4, "got %d\n", ref);
 
+    V_VT(&v) = VT_EMPTY;
+    hr = IXSLProcessor_get_output(processor, &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "got type %d\n", V_VT(&v));
+    ok(V_UNKNOWN(&v) == (IUnknown*)stream, "got %p\n", V_UNKNOWN(&v));
+
+    ref = IStream_AddRef(stream);
+    IStream_Release(stream);
+    todo_wine ok(ref == 5, "got %d\n", ref);
+    VariantClear(&v);
+
     hr = IXSLProcessor_transform(processor, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
@@ -7980,6 +7994,31 @@ todo_wine {
     ok(ref == 2, "got %d\n", ref);
 
     IStream_Release(stream);
+
+    /* no output interface set, check output */
+    doc2 = create_document(&IID_IXMLDOMDocument);
+
+    b = VARIANT_TRUE;
+    hr = IXMLDOMDocument_loadXML( doc2, _bstr_("<a>test</a>"), &b );
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok( b == VARIANT_TRUE, "got %d\n", b);
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown*)doc2;
+    hr = IXSLProcessor_put_input(processor, v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXSLProcessor_transform(processor, &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&v) = VT_EMPTY;
+    hr = IXSLProcessor_get_output(processor, &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "got type %d\n", V_VT(&v));
+    /* we currently output one '\n' instead of empty string */
+    todo_wine ok(lstrcmpW(V_BSTR(&v), _bstr_("")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    IXMLDOMDocument_Release(doc2);
+
     IXSLProcessor_Release(processor);
 
     /* drop reference */
@@ -7991,6 +8030,7 @@ todo_wine {
 
     IXMLDOMDocument_Release(doc);
     IXSLTemplate_Release(template);
+    free_bstrs();
 }
 
 START_TEST(domdoc)
