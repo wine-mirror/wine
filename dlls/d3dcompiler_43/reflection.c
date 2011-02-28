@@ -31,6 +31,9 @@ enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE
     D3DCOMPILER_SIGNATURE_ELEMENT_SIZE7 = 7,
 };
 
+#define D3DCOMPILER_SHADER_TARGET_VERSION_MASK 0xffff
+#define D3DCOMPILER_SHADER_TARGET_SHADERTYPE_MASK 0xffff0000
+
 static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3dcompiler_shader_reflection *reflection, const char *data, DWORD offset);
 
 const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl;
@@ -1108,7 +1111,7 @@ static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type 
     read_dword(&ptr, &member_offset);
     TRACE("Member Offset %u\n", member_offset);
 
-    if ((type->reflection->target & 0xffff) >= 0x500)
+    if ((type->reflection->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK) >= 0x500)
         skip_dword_unknown(&ptr, 4);
 
     if (desc->Members)
@@ -1247,7 +1250,7 @@ static HRESULT d3dcompiler_parse_variables(struct d3dcompiler_shader_reflection_
             goto err_out;
         }
 
-        if ((cb->reflection->target & 0xffff) >= 0x500)
+        if ((cb->reflection->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK) >= 0x500)
             skip_dword_unknown(&ptr, 4);
     }
 
@@ -1306,7 +1309,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
     TRACE("Creator: %s.\n", debugstr_a(creator));
 
     /* todo: Parse RD11 */
-    if ((r->target & 0x0000ffff) >= 0x500)
+    if ((r->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK) >= 0x500)
     {
         skip_dword_unknown(&ptr, 8);
     }
@@ -1516,7 +1519,7 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
         d[i].Mask = mask & 0xff;
 
         /* pixel shaders have a special handling for SystemValueType in the output signature */
-        if (((target & 0xffff0000) == 0xffff0000) && (section->tag == TAG_OSG5 || section->tag == TAG_OSGN))
+        if (((target & D3DCOMPILER_SHADER_TARGET_SHADERTYPE_MASK) == 0xffff0000) && (section->tag == TAG_OSG5 || section->tag == TAG_OSGN))
         {
             TRACE("Pixelshader output signature fixup.\n");
 
