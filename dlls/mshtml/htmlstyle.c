@@ -2902,19 +2902,24 @@ static dispex_static_data_t HTMLStyle_dispex = {
     HTMLStyle_iface_tids
 };
 
-IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle)
+HRESULT HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle, HTMLStyle **ret)
 {
-    HTMLStyle *ret = heap_alloc_zero(sizeof(HTMLStyle));
+    HTMLStyle *style;
 
-    ret->IHTMLStyle_iface.lpVtbl = &HTMLStyleVtbl;
-    ret->ref = 1;
-    ret->nsstyle = nsstyle;
-    HTMLStyle2_Init(ret);
-    HTMLStyle3_Init(ret);
+    style = heap_alloc_zero(sizeof(HTMLStyle));
+    if(!style)
+        return E_OUTOFMEMORY;
+
+    style->IHTMLStyle_iface.lpVtbl = &HTMLStyleVtbl;
+    style->ref = 1;
+    style->nsstyle = nsstyle;
+    HTMLStyle2_Init(style);
+    HTMLStyle3_Init(style);
 
     nsIDOMCSSStyleDeclaration_AddRef(nsstyle);
 
-    init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLStyle_iface, &HTMLStyle_dispex);
+    init_dispex(&style->dispex, (IUnknown*)&style->IHTMLStyle_iface, &HTMLStyle_dispex);
 
-    return &ret->IHTMLStyle_iface;
+    *ret = style;
+    return S_OK;
 }

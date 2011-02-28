@@ -33,6 +33,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "htmlstyle.h"
 
 static const WCHAR aW[]        = {'A',0};
 static const WCHAR bodyW[]     = {'B','O','D','Y',0};
@@ -423,35 +424,42 @@ static HRESULT WINAPI HTMLElement_get_parentElement(IHTMLElement *iface, IHTMLEl
 static HRESULT WINAPI HTMLElement_get_style(IHTMLElement *iface, IHTMLStyle **p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    nsIDOMElementCSSInlineStyle *nselemstyle;
-    nsIDOMCSSStyleDeclaration *nsstyle;
-    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->nselem) {
-        FIXME("NULL nselem\n");
-        return E_NOTIMPL;
+    if(!This->style) {
+        nsIDOMElementCSSInlineStyle *nselemstyle;
+        nsIDOMCSSStyleDeclaration *nsstyle;
+        nsresult nsres;
+        HRESULT hres;
+
+        if(!This->nselem) {
+            FIXME("NULL nselem\n");
+            return E_NOTIMPL;
+        }
+
+        nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMElementCSSInlineStyle,
+                (void**)&nselemstyle);
+        if(NS_FAILED(nsres)) {
+            ERR("Coud not get nsIDOMCSSStyleDeclaration interface: %08x\n", nsres);
+            return E_FAIL;
+        }
+
+        nsres = nsIDOMElementCSSInlineStyle_GetStyle(nselemstyle, &nsstyle);
+        nsIDOMElementCSSInlineStyle_Release(nselemstyle);
+        if(NS_FAILED(nsres)) {
+            ERR("GetStyle failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+
+        hres = HTMLStyle_Create(nsstyle, &This->style);
+        nsIDOMCSSStyleDeclaration_Release(nsstyle);
+        if(FAILED(hres))
+            return hres;
     }
 
-    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMElementCSSInlineStyle,
-                                             (void**)&nselemstyle);
-    if(NS_FAILED(nsres)) {
-        ERR("Coud not get nsIDOMCSSStyleDeclaration interface: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMElementCSSInlineStyle_GetStyle(nselemstyle, &nsstyle);
-    nsIDOMElementCSSInlineStyle_Release(nselemstyle);
-    if(NS_FAILED(nsres)) {
-        ERR("GetStyle failed: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    /* FIXME: Store style instead of creating a new instance in each call */
-    *p = HTMLStyle_Create(nsstyle);
-
-    nsIDOMCSSStyleDeclaration_Release(nsstyle);
+    *p = &This->style->IHTMLStyle_iface;
+    IHTMLStyle_AddRef(*p);
     return S_OK;
 }
 
@@ -1644,6 +1652,8 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
 
     if(This->nselem)
         nsIDOMHTMLElement_Release(This->nselem);
+    if(This->style)
+        IHTMLStyle_Release(&This->style->IHTMLStyle_iface);
 
     HTMLDOMNode_destructor(&This->node);
 }

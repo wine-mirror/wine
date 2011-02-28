@@ -5610,6 +5610,13 @@ static void test_style_filters(IHTMLElement *elem)
     test_style_filter(style, NULL);
     set_style_filter(style, "alpha(opacity=50.00000)");
     set_style_filter(style, "alpha(opacity=100)");
+
+    IHTMLStyle_Release(style);
+
+    hres = IHTMLElement_get_style(elem, &style);
+    ok(hres == S_OK, "get_style failed: %08x\n", hres);
+
+    test_style_filter(style, "alpha(opacity=100)");
     set_style_filter(style, "xxx(a,b,c) alpha(opacity=100)");
     set_style_filter(style, NULL);
 

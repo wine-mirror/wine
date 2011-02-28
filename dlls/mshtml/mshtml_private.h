@@ -560,6 +560,7 @@ typedef struct {
     IHTMLElement4 IHTMLElement4_iface;
 
     nsIDOMHTMLElement *nselem;
+    HTMLStyle *style;
 } HTMLElement;
 
 #define HTMLELEMENT_TIDS    \
@@ -730,7 +731,7 @@ void set_ready_state(HTMLWindow*,READYSTATE);
 
 HRESULT HTMLSelectionObject_Create(HTMLDocumentNode*,nsISelection*,IHTMLSelectionObject**);
 HRESULT HTMLTxtRange_Create(HTMLDocumentNode*,nsIDOMRange*,IHTMLTxtRange**);
-IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration*);
+HRESULT HTMLStyle_Create(nsIDOMCSSStyleDeclaration*,HTMLStyle**);
 IHTMLStyleSheet *HTMLStyleSheet_Create(nsIDOMStyleSheet*);
 IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList*);
 
