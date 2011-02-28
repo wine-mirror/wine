@@ -1359,6 +1359,9 @@ enum wined3d_pci_device
     CARD_ATI_RADEON_HD5850          = 0x6898,
     CARD_ATI_RADEON_HD5870          = 0x6899,
     CARD_ATI_RADEON_HD5900          = 0x689c,
+    CARD_ATI_RADEON_HD6310          = 0x9803,
+    CARD_ATI_RADEON_HD6800          = 0x6739,
+    CARD_ATI_RADEON_HD6900          = 0x6719,
 
     CARD_NVIDIA_RIVA_128            = 0x0018,
     CARD_NVIDIA_RIVA_TNT            = 0x0020,

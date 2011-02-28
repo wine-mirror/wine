@@ -1090,6 +1090,9 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        DRIVER_ATI_R600,         512 },
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        DRIVER_ATI_R600,         1024},
     {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5900,         "ATI Radeon HD 5900 Series",        DRIVER_ATI_R600,         1024},
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD6310,         "AMD Radeon HD 6310 Graphics",      DRIVER_ATI_R600,         1024},
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD6800,         "AMD Radeon HD 6800 Series",        DRIVER_ATI_R600,         1024},
+    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD6900,         "AMD Radeon HD 6900 Series",        DRIVER_ATI_R600,         2048},
     /* Intel cards */
     {HW_VENDOR_INTEL,      CARD_INTEL_I830G,               "Intel(R) 82830M Graphics Controller",                       DRIVER_INTEL_GMA800,  32 },
     {HW_VENDOR_INTEL,      CARD_INTEL_I855G,               "Intel(R) 82852/82855 GM/GME Graphics Controller",           DRIVER_INTEL_GMA800,  32 },
@@ -1727,6 +1730,10 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
         }
         cards[] =
         {
+            /* Northern Islands */
+            {"CAYMAN",  CARD_ATI_RADEON_HD6900},
+            {"BARTS",   CARD_ATI_RADEON_HD6800},
+            {"PALM",    CARD_ATI_RADEON_HD6310},
             /* Evergreen */
             {"HEMLOCK", CARD_ATI_RADEON_HD5900},
             {"CYPRESS", CARD_ATI_RADEON_HD5800},
