@@ -145,19 +145,6 @@ static inline void clip_point_to_rect( LPCRECT rect, LPPOINT pt )
 }
 
 /***********************************************************************
- *		update_button_state
- *
- * Update the button state with what X provides us
- */
-static inline void update_button_state( unsigned int state )
-{
-    key_state_table[VK_LBUTTON] = (state & Button1Mask ? 0x80 : 0);
-    key_state_table[VK_MBUTTON] = (state & Button2Mask ? 0x80 : 0);
-    key_state_table[VK_RBUTTON] = (state & Button3Mask ? 0x80 : 0);
-    /* X-buttons are not reported from XQueryPointer */
-}
-
-/***********************************************************************
  *		get_empty_cursor
  */
 static Cursor get_empty_cursor(void)
@@ -299,32 +286,6 @@ static HWND update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
 
 
 /***********************************************************************
- *           get_key_state
- */
-static WORD get_key_state(void)
-{
-    WORD ret = 0;
-
-    if (GetSystemMetrics( SM_SWAPBUTTON ))
-    {
-        if (key_state_table[VK_RBUTTON] & 0x80) ret |= MK_LBUTTON;
-        if (key_state_table[VK_LBUTTON] & 0x80) ret |= MK_RBUTTON;
-    }
-    else
-    {
-        if (key_state_table[VK_LBUTTON] & 0x80) ret |= MK_LBUTTON;
-        if (key_state_table[VK_RBUTTON] & 0x80) ret |= MK_RBUTTON;
-    }
-    if (key_state_table[VK_MBUTTON] & 0x80)  ret |= MK_MBUTTON;
-    if (key_state_table[VK_SHIFT] & 0x80)    ret |= MK_SHIFT;
-    if (key_state_table[VK_CONTROL] & 0x80)  ret |= MK_CONTROL;
-    if (key_state_table[VK_XBUTTON1] & 0x80) ret |= MK_XBUTTON1;
-    if (key_state_table[VK_XBUTTON2] & 0x80) ret |= MK_XBUTTON2;
-    return ret;
-}
-
-
-/***********************************************************************
  *           queue_raw_mouse_message
  */
 static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
@@ -348,7 +309,7 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
         req->id       = (injected_flags & LLMHF_INJECTED) ? 0 : GetCurrentThreadId();
         req->win      = wine_server_user_handle( hwnd );
         req->msg      = message;
-        req->wparam   = MAKEWPARAM( get_key_state(), data );
+        req->wparam   = MAKEWPARAM( 0, data );
         req->lparam   = 0;
         req->x        = x;
         req->y        = y;
@@ -1113,7 +1074,6 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
         XQueryPointer( display, root_window, &root, &child,
                        &rootX, &rootY, &winX, &winY, &xstate ))
     {
-        update_button_state( xstate );
         winX += virtual_screen_rect.left;
         winY += virtual_screen_rect.top;
         TRACE("pointer at (%d,%d)\n", winX, winY );

@@ -1280,11 +1280,23 @@ static void queue_hardware_message( struct desktop *desktop, struct thread_input
     unsigned int msg_code;
     struct hardware_msg_data *data = msg->data;
 
-    if (msg->msg == WM_MOUSEMOVE) set_cursor_pos( desktop, data->x, data->y );
-    data->x = desktop->cursor_x;
-    data->y = desktop->cursor_y;
     update_input_key_state( desktop->keystate, msg );
     last_input_time = get_tick_count();
+
+    if (!is_keyboard_msg( msg ))
+    {
+        if (msg->msg == WM_MOUSEMOVE) set_cursor_pos( desktop, data->x, data->y );
+        if (desktop->keystate[VK_LBUTTON] & 0x80)  msg->wparam |= MK_LBUTTON;
+        if (desktop->keystate[VK_MBUTTON] & 0x80)  msg->wparam |= MK_MBUTTON;
+        if (desktop->keystate[VK_RBUTTON] & 0x80)  msg->wparam |= MK_RBUTTON;
+        if (desktop->keystate[VK_SHIFT] & 0x80)    msg->wparam |= MK_SHIFT;
+        if (desktop->keystate[VK_CONTROL] & 0x80)  msg->wparam |= MK_CONTROL;
+        if (desktop->keystate[VK_XBUTTON1] & 0x80) msg->wparam |= MK_XBUTTON1;
+        if (desktop->keystate[VK_XBUTTON2] & 0x80) msg->wparam |= MK_XBUTTON2;
+    }
+    data->x = desktop->cursor_x;
+    data->y = desktop->cursor_y;
+
     win = find_hardware_message_window( input, msg, &msg_code );
     if (!win || !(thread = get_window_thread(win)))
     {
