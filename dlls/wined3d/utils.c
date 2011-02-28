@@ -1197,6 +1197,14 @@ static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
         format->flags |= format_texture_info[i].flags;
         format->heightscale = 1.0f;
 
+        /* Filter sRGB capabilities if EXT_texture_sRGB is not supported. */
+        if (!gl_info->supported[EXT_TEXTURE_SRGB]
+                && format->glGammaInternal != format->glInternal)
+        {
+            format->glGammaInternal = format->glInternal;
+            format->flags &= ~(WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
+        }
+
         /* Texture conversion stuff */
         format->convert = format_texture_info[i].convert;
         format->conv_byte_count = format_texture_info[i].conv_byte_count;

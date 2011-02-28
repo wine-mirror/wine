@@ -40,7 +40,6 @@ static HRESULT volumetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb)
 static void volumetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb)
 {
     IWineD3DDeviceImpl *device = texture->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_context *context = NULL;
     BOOL srgb_mode = texture->baseTexture.is_srgb;
     BOOL srgb_was_toggled = FALSE;
@@ -49,7 +48,7 @@ static void volumetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3D
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
     if (!device->isInDraw) context = context_acquire(device, NULL);
-    else if (gl_info->supported[EXT_TEXTURE_SRGB] && texture->baseTexture.bindCount > 0)
+    else if (texture->baseTexture.bindCount > 0)
     {
         srgb_mode = device->stateBlock->state.sampler_states[texture->baseTexture.sampler][WINED3DSAMP_SRGBTEXTURE];
         srgb_was_toggled = texture->baseTexture.is_srgb != srgb_mode;

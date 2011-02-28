@@ -3159,7 +3159,7 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
 
 static BOOL CheckSrgbReadCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
 {
-    return adapter->gl_info.supported[EXT_TEXTURE_SRGB] && (format->flags & WINED3DFMT_FLAG_SRGB_READ);
+    return format->flags & WINED3DFMT_FLAG_SRGB_READ;
 }
 
 static BOOL CheckSrgbWriteCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
