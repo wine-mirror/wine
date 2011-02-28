@@ -567,11 +567,7 @@ static void test_StrFormatKBSizeW(void)
     pStrFormatKBSizeW(result->value, szBuffW, 256);
     WideCharToMultiByte(0,0,szBuffW,-1,szBuff,sizeof(szBuff)/sizeof(WCHAR),0,0);
 
-    /* shlwapi on Win98 SE does not appear to apply delimiters to the output
-     * and does not correctly handle extremely large values. */
-    ok(!strcmp(result->kb_size, szBuff) ||
-      (result->kb_size_broken && !strcmp(result->kb_size2, szBuff)),
-        "Formatted %x%08x wrong: got %s, expected %s\n",
+    ok(!strcmp(result->kb_size, szBuff), "Formatted %x%08x wrong: got %s, expected %s\n",
        (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->kb_size);
     result++;
   }
@@ -786,15 +782,6 @@ static void test_StrRStrI(void)
     LPWSTR retW;
     LPSTR retA;
 
-    /* StrCpyNXA was chosen simply because it doesn't appear to be available on
-     * Win9x machines where StrRStrI crashes. Despite StrRStrI being exported
-     * by name, all StrRStrI tests appear to crash for unknown reasons. */
-    if (!pStrCpyNXA)
-    {
-        win_skip("StrRStrI crashes on older Win9x platforms\n");
-        return;
-    }
-
     check_strrstri(A, szTest, 4, "A", szTest+1);
     check_strrstri(A, szTest, 4, "aX", szTest+1);
     check_strrstri(A, szTest, 4, "Ay", NULL);
@@ -909,15 +896,10 @@ if (0)
     expect_eq(wbuf[0], 0, WCHAR, "%x");
     expect_eq(wbuf[1], (WCHAR)0xbfbf, WCHAR, "%x");
 
-    if (pStrCpyNXA)
-    {
-        memset(wbuf, 0xbf, sizeof(wbuf));
-        expect_eq(StrCpyNW(wbuf, 0, 10), wbuf, PWCHAR, "%p");
-        expect_eq(wbuf[0], 0, WCHAR, "%x");
-        expect_eq(wbuf[1], (WCHAR)0xbfbf, WCHAR, "%x");
-    }
-    else
-        win_skip("StrCpyNW test crashes on older Win9x platforms\n");
+    memset(wbuf, 0xbf, sizeof(wbuf));
+    expect_eq(StrCpyNW(wbuf, 0, 10), wbuf, PWCHAR, "%p");
+    expect_eq(wbuf[0], 0, WCHAR, "%x");
+    expect_eq(wbuf[1], (WCHAR)0xbfbf, WCHAR, "%x");
 
     memset(wbuf, 0xbf, sizeof(wbuf));
     expect_eq(StrCpyNW(wbuf, 0, 0), wbuf, PWCHAR, "%p");
@@ -1012,7 +994,7 @@ static void test_StrStrA(void)
     LPSTR ret;
     int i;
 
-    /* Tests crash on Win9x/Win2k. */
+    /* Tests crash on Win2k */
     if (0)
     {
         ret = StrStrA(NULL, NULL);
@@ -1066,7 +1048,7 @@ static void test_StrStrW(void)
     LPWSTR ret;
     int i;
 
-    /* Tests crash on Win9x. */
+    /* Tests crash on Win2k */
     if (0)
     {
         ret = StrStrW(NULL, NULL);
@@ -1114,7 +1096,7 @@ static void test_StrStrIA(void)
     LPSTR ret;
     int i;
 
-    /* Tests crash on Win9x/Win2k. */
+    /* Tests crash on Win2k */
     if (0)
     {
         ret = StrStrIA(NULL, NULL);
@@ -1170,7 +1152,7 @@ static void test_StrStrIW(void)
     LPWSTR ret;
     int i;
 
-    /* Tests crash on Win9x/Win2k */
+    /* Tests crash on Win2k */
     if (0)
     {
         ret = StrStrIW(NULL, NULL);
