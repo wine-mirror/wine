@@ -168,7 +168,7 @@ static void CDECL nulldrv_Beep(void)
 
 static SHORT CDECL nulldrv_GetAsyncKeyState( INT key )
 {
-    return 0;
+    return -1;
 }
 
 static INT CDECL nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )

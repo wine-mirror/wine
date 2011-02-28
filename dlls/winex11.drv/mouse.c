@@ -398,58 +398,32 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         }
     }
     if (flags & MOUSEEVENTF_LEFTDOWN)
-    {
-        key_state_table[VK_LBUTTON] |= 0xc0;
         queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONDOWN : WM_LBUTTONDOWN,
                                  hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
-    }
     if (flags & MOUSEEVENTF_LEFTUP)
-    {
-        key_state_table[VK_LBUTTON] &= ~0x80;
         queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONUP : WM_LBUTTONUP,
                                  hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
-    }
     if (flags & MOUSEEVENTF_RIGHTDOWN)
-    {
-        key_state_table[VK_RBUTTON] |= 0xc0;
         queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONDOWN : WM_RBUTTONDOWN,
                                  hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
-    }
     if (flags & MOUSEEVENTF_RIGHTUP)
-    {
-        key_state_table[VK_RBUTTON] &= ~0x80;
         queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONUP : WM_RBUTTONUP,
                                  hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
-    }
     if (flags & MOUSEEVENTF_MIDDLEDOWN)
-    {
-        key_state_table[VK_MBUTTON] |= 0xc0;
         queue_raw_mouse_message( WM_MBUTTONDOWN, hwnd, pt.x, pt.y,
                                  data, time, extra_info, injected_flags );
-    }
     if (flags & MOUSEEVENTF_MIDDLEUP)
-    {
-        key_state_table[VK_MBUTTON] &= ~0x80;
         queue_raw_mouse_message( WM_MBUTTONUP, hwnd, pt.x, pt.y,
                                  data, time, extra_info, injected_flags );
-    }
     if (flags & MOUSEEVENTF_WHEEL)
-    {
         queue_raw_mouse_message( WM_MOUSEWHEEL, hwnd, pt.x, pt.y,
                                  data, time, extra_info, injected_flags );
-    }
     if (flags & MOUSEEVENTF_XDOWN)
-    {
-        key_state_table[VK_XBUTTON1 + data - 1] |= 0xc0;
         queue_raw_mouse_message( WM_XBUTTONDOWN, hwnd, pt.x, pt.y,
                                  data, time, extra_info, injected_flags );
-    }
     if (flags & MOUSEEVENTF_XUP)
-    {
-        key_state_table[VK_XBUTTON1 + data - 1] &= ~0x80;
         queue_raw_mouse_message( WM_XBUTTONUP, hwnd, pt.x, pt.y,
                                  data, time, extra_info, injected_flags );
-    }
 }
 
 #ifdef SONAME_LIBXCURSOR

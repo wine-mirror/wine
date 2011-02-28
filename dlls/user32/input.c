@@ -300,11 +300,28 @@ HWND WINAPI GetCapture(void)
  * bit set to 1 if currently pressed, low-order bit set to 1 if key has
  * been pressed.
  */
-SHORT WINAPI DECLSPEC_HOTPATCH GetAsyncKeyState(INT nKey)
+SHORT WINAPI DECLSPEC_HOTPATCH GetAsyncKeyState( INT key )
 {
-    if (nKey < 0 || nKey > 256)
-        return 0;
-    return USER_Driver->pGetAsyncKeyState( nKey );
+    SHORT ret;
+
+    if (key < 0 || key >= 256) return 0;
+
+    if ((ret = USER_Driver->pGetAsyncKeyState( key )) == -1)
+    {
+        ret = 0;
+        SERVER_START_REQ( get_key_state )
+        {
+            req->tid = 0;
+            req->key = key;
+            if (!wine_server_call( req ))
+            {
+                if (reply->state & 0x40) ret |= 0x0001;
+                if (reply->state & 0x80) ret |= 0x8000;
+            }
+        }
+        SERVER_END_REQ;
+    }
+    return ret;
 }
 
 

@@ -609,7 +609,6 @@ extern int alloc_system_colors;
 extern int xrender_error_base;
 extern HMODULE x11drv_module;
 
-extern BYTE key_state_table[256];
 extern POINT cursor_pos;
 
 /* atoms */

@@ -65,7 +65,7 @@ WINE_DECLARE_DEBUG_CHANNEL(key);
   0x40 -> key got pressed since last time
   0x01 -> key is toggled
 */
-BYTE key_state_table[256];
+static BYTE key_state_table[256];
 
 static BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYSKEYUP
                                 or a WM_KEYUP message */
@@ -1968,16 +1968,9 @@ static BOOL match_x11_keyboard_layout(HKL hkl)
  */
 SHORT CDECL X11DRV_GetAsyncKeyState(INT key)
 {
-    SHORT retval;
-
     /* Photoshop livelocks unless mouse events are included here */
     X11DRV_MsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_KEY | QS_MOUSE, 0 );
-
-    retval = ((key_state_table[key] & 0x40) ? 0x0001 : 0) |
-             ((key_state_table[key] & 0x80) ? 0x8000 : 0);
-    key_state_table[key] &= ~0x40;
-    TRACE_(key)("(%X) -> %x\n", key, retval);
-    return retval;
+    return -1;
 }
 
 
