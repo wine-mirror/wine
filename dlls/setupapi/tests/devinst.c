@@ -1530,21 +1530,7 @@ static void testSetupDiGetINFClassA(void)
 
 START_TEST(devinst)
 {
-    HDEVINFO set;
-
-     init_function_pointers();
-
-    /* Win9x/WinMe does things totally different so we skip all the tests
-     *
-     * We don't want to exclude NT4 so hence this check.
-     */
-    SetLastError(0xdeadbeef);
-    set = pSetupDiGetClassDevsW(NULL, NULL, 0, 0);
-    if (set == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-    {
-        win_skip("Win9x/WinMe has totally different behavior\n");
-        return;
-    }
+    init_function_pointers();
 
     if (pIsWow64Process)
         pIsWow64Process(GetCurrentProcess(), &is_wow64);
