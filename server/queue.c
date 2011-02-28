@@ -1106,13 +1106,14 @@ static void set_input_key_state( unsigned char *keystate, unsigned char key, int
     if (down)
     {
         if (!(keystate[key] & 0x80)) keystate[key] ^= 0x01;
-        keystate[key] |= 0x80;
+        keystate[key] |= down;
     }
     else keystate[key] &= ~0x80;
 }
 
 /* update the input key state for a keyboard message */
-static void update_input_key_state( unsigned char *keystate, const struct message *msg )
+static void update_input_key_state( struct desktop *desktop, unsigned char *keystate,
+                                    const struct message *msg )
 {
     unsigned char key;
     int down = 0;
@@ -1120,25 +1121,25 @@ static void update_input_key_state( unsigned char *keystate, const struct messag
     switch (msg->msg)
     {
     case WM_LBUTTONDOWN:
-        down = 1;
+        down = (keystate == desktop->keystate) ? 0xc0 : 0x80;
         /* fall through */
     case WM_LBUTTONUP:
         set_input_key_state( keystate, VK_LBUTTON, down );
         break;
     case WM_MBUTTONDOWN:
-        down = 1;
+        down = (keystate == desktop->keystate) ? 0xc0 : 0x80;
         /* fall through */
     case WM_MBUTTONUP:
         set_input_key_state( keystate, VK_MBUTTON, down );
         break;
     case WM_RBUTTONDOWN:
-        down = 1;
+        down = (keystate == desktop->keystate) ? 0xc0 : 0x80;
         /* fall through */
     case WM_RBUTTONUP:
         set_input_key_state( keystate, VK_RBUTTON, down );
         break;
     case WM_XBUTTONDOWN:
-        down = 1;
+        down = (keystate == desktop->keystate) ? 0xc0 : 0x80;
         /* fall through */
     case WM_XBUTTONUP:
         if (msg->wparam == XBUTTON1) set_input_key_state( keystate, VK_XBUTTON1, down );
@@ -1146,7 +1147,7 @@ static void update_input_key_state( unsigned char *keystate, const struct messag
         break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
-        down = 1;
+        down = (keystate == desktop->keystate) ? 0xc0 : 0x80;
         /* fall through */
     case WM_KEYUP:
     case WM_SYSKEYUP:
@@ -1229,7 +1230,7 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
     }
     if (remove)
     {
-        update_input_key_state( input->keystate, msg );
+        update_input_key_state( input->desktop, input->keystate, msg );
         list_remove( &msg->entry );
         free_message( msg );
     }
@@ -1280,7 +1281,7 @@ static void queue_hardware_message( struct desktop *desktop, struct thread_input
     unsigned int msg_code;
     struct hardware_msg_data *data = msg->data;
 
-    update_input_key_state( desktop->keystate, msg );
+    update_input_key_state( desktop, desktop->keystate, msg );
     last_input_time = get_tick_count();
 
     if (!is_keyboard_msg( msg ))
@@ -1300,7 +1301,7 @@ static void queue_hardware_message( struct desktop *desktop, struct thread_input
     win = find_hardware_message_window( input, msg, &msg_code );
     if (!win || !(thread = get_window_thread(win)))
     {
-        if (input) update_input_key_state( input->keystate, msg );
+        if (input) update_input_key_state( input->desktop, input->keystate, msg );
         free( msg );
         return;
     }
@@ -1390,7 +1391,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         if (!win || !(win_thread = get_window_thread( win )))
         {
             /* no window at all, remove it */
-            update_input_key_state( input->keystate, msg );
+            update_input_key_state( input->desktop, input->keystate, msg );
             list_remove( &msg->entry );
             free_message( msg );
             continue;
@@ -1406,7 +1407,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
             else
             {
                 /* for another thread input, drop it */
-                update_input_key_state( input->keystate, msg );
+                update_input_key_state( input->desktop, input->keystate, msg );
                 list_remove( &msg->entry );
                 free_message( msg );
             }
@@ -2117,7 +2118,11 @@ DECL_HANDLER(get_key_state)
     if (!req->tid)  /* get global async key state */
     {
         if (!(desktop = get_thread_desktop( current, 0 ))) return;
-        if (req->key >= 0) reply->state = desktop->keystate[req->key & 0xff];
+        if (req->key >= 0)
+        {
+            reply->state = desktop->keystate[req->key & 0xff];
+            desktop->keystate[req->key & 0xff] &= ~0x40;
+        }
         set_reply_data( desktop->keystate, size );
         release_object( desktop );
     }
