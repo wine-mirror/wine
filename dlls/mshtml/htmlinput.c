@@ -178,25 +178,13 @@ static HRESULT WINAPI HTMLInputElement_get_value(IHTMLInputElement *iface, BSTR 
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
     nsAString value_str;
-    const PRUnichar *value = NULL;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&value_str, NULL);
-
     nsres = nsIDOMHTMLInputElement_GetValue(This->nsinput, &value_str);
-    if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&value_str, &value);
-        *p = SysAllocString(value);
-    }else {
-        ERR("GetValue failed: %08x\n", nsres);
-    }
-
-    nsAString_Finish(&value_str);
-
-    TRACE("value=%s\n", debugstr_w(*p));
-    return S_OK;
+    return return_nsstr(nsres, &value_str, p);
 }
 
 static HRESULT WINAPI HTMLInputElement_put_name(IHTMLInputElement *iface, BSTR v)

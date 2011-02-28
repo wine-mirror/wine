@@ -414,6 +414,9 @@ static BSTR a2bstr(const char *str)
     BSTR ret;
     int len;
 
+    if(!str)
+        return NULL;
+
     len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
     ret = SysAllocStringLen(NULL, len);
     MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
@@ -2306,7 +2309,7 @@ static void _test_input_value(unsigned line, IUnknown *unk, const char *exval)
     if(exval)
         ok_(__FILE__,line) (!strcmp_wa(bstr, exval), "value=%s\n", wine_dbgstr_w(bstr));
     else
-        ok_(__FILE__,line) (!exval, "exval != NULL\n");
+        ok_(__FILE__,line) (!bstr, "exval != NULL\n");
     SysFreeString(bstr);
     IHTMLInputElement_Release(input);
 }
@@ -2324,10 +2327,12 @@ static void _test_input_put_value(unsigned line, IUnknown *unk, const char *val)
         return;
 
     bstr = a2bstr(val);
-    hres = IHTMLInputElement_get_value(input, &bstr);
+    hres = IHTMLInputElement_put_value(input, bstr);
     ok_(__FILE__,line) (hres == S_OK, "get_value failed: %08x\n", hres);
     SysFreeString(bstr);
     IHTMLInputElement_Release(input);
+
+    _test_input_value(line, unk, val);
 }
 
 #define test_input_src(i,s) _test_input_src(__LINE__,i,s)
@@ -3101,6 +3106,7 @@ static void _test_border_styles(unsigned line, IHTMLStyle *pStyle, BSTR Name)
         hres = IHTMLStyle_Invoke(pStyle, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
             DISPATCH_PROPERTYPUT, &params, &ret, NULL, NULL);
         ok_(__FILE__,line) (hres == S_OK, "default. ret: %08x\n", hres);
+        VariantClear(&vDefault);
     }
 }
 
@@ -6427,7 +6433,6 @@ static void test_elems(IHTMLDocument2 *doc)
         test_node_get_value_str((IUnknown*)elem, NULL);
         test_input_value((IUnknown*)elem, NULL);
         test_input_put_value((IUnknown*)elem, "test");
-        test_input_value((IUnknown*)elem, NULL);
         test_elem_class((IUnknown*)elem, "testclass");
         test_elem_tabindex((IUnknown*)elem, 2);
         test_elem_set_tabindex((IUnknown*)elem, 3);
