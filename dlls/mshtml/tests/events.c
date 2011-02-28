@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Jacek Caban for CodeWeavers
+ * Copyright 2008-2011 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -64,6 +64,7 @@ DEFINE_EXPECT(div_onclick);
 DEFINE_EXPECT(div_onclick_attached);
 DEFINE_EXPECT(timeout);
 DEFINE_EXPECT(doccp_onclick);
+DEFINE_EXPECT(doccp_onclick_cancel);
 DEFINE_EXPECT(div_onclick_disp);
 DEFINE_EXPECT(iframe_onreadystatechange_loading);
 DEFINE_EXPECT(iframe_onreadystatechange_interactive);
@@ -71,6 +72,10 @@ DEFINE_EXPECT(iframe_onreadystatechange_complete);
 DEFINE_EXPECT(iframedoc_onreadystatechange);
 DEFINE_EXPECT(img_onload);
 DEFINE_EXPECT(input_onfocus);
+DEFINE_EXPECT(form_onsubmit);
+DEFINE_EXPECT(form_onclick);
+DEFINE_EXPECT(submit_onclick);
+DEFINE_EXPECT(submit_onclick_attached);
 
 static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
@@ -103,6 +108,12 @@ static const char img_doc_str[] =
 
 static const char input_doc_str[] =
     "<html><body><input id=\"inputid\"></input></body></html>";    
+
+static const char form_doc_str[] =
+    "<html><body><form id=\"formid\" method=\"post\" action=\"about:blank\">"
+    "<input type=\"text\" value=\"test\" name=\"i\"/>"
+    "<input type=\"submit\" id=\"submitid\" />"
+    "</form></body></html>";
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -921,6 +932,59 @@ static HRESULT WINAPI input_onfocus(IDispatchEx *iface, DISPID id, LCID lcid, WO
 
 EVENT_HANDLER_FUNC_OBJ(input_onfocus);
 
+static HRESULT WINAPI form_onsubmit(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(form_onsubmit);
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("FORM");
+
+    V_VT(pvarRes) = VT_BOOL;
+    V_BOOL(pvarRes) = VARIANT_FALSE;
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(form_onsubmit);
+
+static HRESULT WINAPI form_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(form_onclick);
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(form_onclick);
+
+static HRESULT WINAPI submit_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(submit_onclick);
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_src("INPUT");
+
+    V_VT(pvarRes) = VT_BOOL;
+    V_BOOL(pvarRes) = VARIANT_FALSE;
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(submit_onclick);
+
+static HRESULT WINAPI submit_onclick_attached(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(submit_onclick_attached);
+    test_attached_event_args(id, wFlags, pdp, pvarRes, pei);
+    test_event_src("INPUT");
+
+    V_VT(pvarRes) = VT_BOOL;
+    V_BOOL(pvarRes) = VARIANT_FALSE;
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(submit_onclick_attached);
+
 static HRESULT WINAPI iframedoc_onreadystatechange(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -1086,6 +1150,26 @@ static HRESULT WINAPI doccp(IDispatchEx *iface, DISPID dispIdMember,
 }
 
 CONNECTION_POINT_OBJ(doccp, DIID_HTMLDocumentEvents);
+
+static HRESULT WINAPI doccp_onclick_cancel(IDispatchEx *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pdp, VARIANT *pVarResult, EXCEPINFO *pei, UINT *puArgErr)
+{
+    switch(dispIdMember) {
+    case DISPID_HTMLDOCUMENTEVENTS_ONCLICK:
+        CHECK_EXPECT(doccp_onclick_cancel);
+        test_cp_args(riid, wFlags, pdp, pVarResult, pei, puArgErr);
+        V_VT(pVarResult) = VT_BOOL;
+        V_BOOL(pVarResult) = VARIANT_FALSE;
+        break;
+    default:
+        ok(0, "unexpected call %d\n", dispIdMember);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+CONNECTION_POINT_OBJ(doccp_onclick_cancel, DIID_HTMLDocumentEvents);
 
 static HRESULT WINAPI timeoutFunc_Invoke(IDispatchEx *iface, DISPID dispIdMember,
                             REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
@@ -1510,6 +1594,91 @@ static void test_focus(IHTMLDocument2 *doc)
         ShowWindow(container_hwnd, SW_HIDE);
 
     IHTMLElement2_Release(elem2);
+}
+
+static void test_submit(IHTMLDocument2 *doc)
+{
+    IHTMLElement *elem, *submit;
+    IHTMLFormElement *form;
+    VARIANT v;
+    DWORD cp_cookie;
+    HRESULT hres;
+
+    elem = get_elem_id(doc, "formid");
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&form_onclick_obj;
+    hres = IHTMLElement_put_onclick(elem, v);
+    ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLFormElement, (void**)&form);
+    IHTMLElement_Release(elem);
+    ok(hres == S_OK, "Could not get IHTMLFormElement iface: %08x\n", hres);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&form_onsubmit_obj;
+    hres = IHTMLFormElement_put_onsubmit(form, v);
+    ok(hres == S_OK, "put_onsubmit failed: %08x\n", hres);
+
+    IHTMLFormElement_Release(form);
+
+    submit = get_elem_id(doc, "submitid");
+
+    SET_EXPECT(form_onclick);
+    SET_EXPECT(form_onsubmit);
+    hres = IHTMLElement_click(submit);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    CHECK_CALLED(form_onclick);
+    CHECK_CALLED(form_onsubmit);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&submit_onclick_obj;
+    hres = IHTMLElement_put_onclick(submit, v);
+    ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
+
+    SET_EXPECT(form_onclick);
+    SET_EXPECT(submit_onclick);
+    hres = IHTMLElement_click(submit);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    CHECK_CALLED(form_onclick);
+    CHECK_CALLED(submit_onclick);
+
+    elem_attach_event((IUnknown*)submit, "onclick", (IDispatch*)&submit_onclick_attached_obj);
+
+    SET_EXPECT(form_onclick);
+    SET_EXPECT(submit_onclick);
+    SET_EXPECT(submit_onclick_attached);
+    hres = IHTMLElement_click(submit);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    CHECK_CALLED(form_onclick);
+    CHECK_CALLED(submit_onclick);
+    CHECK_CALLED(submit_onclick_attached);
+
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLElement_put_onclick(submit, v);
+    ok(hres == S_OK, "put_onclick failed: %08x\n", hres);
+
+    SET_EXPECT(form_onclick);
+    SET_EXPECT(submit_onclick_attached);
+    hres = IHTMLElement_click(submit);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    CHECK_CALLED(form_onclick);
+    CHECK_CALLED(submit_onclick_attached);
+
+    elem_detach_event((IUnknown*)submit, "onclick", (IDispatch*)&submit_onclick_attached_obj);
+
+    cp_cookie = register_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, (IUnknown*)&doccp_onclick_cancel_obj);
+
+    SET_EXPECT(form_onclick);
+    SET_EXPECT(doccp_onclick_cancel);
+    hres = IHTMLElement_click(submit);
+    ok(hres == S_OK, "click failed: %08x\n", hres);
+    CHECK_CALLED(form_onclick);
+    CHECK_CALLED(doccp_onclick_cancel);
+
+    unregister_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, cp_cookie);
+
+    IHTMLElement_Release(submit);
 }
 
 static void test_timeout(IHTMLDocument2 *doc)
@@ -2153,6 +2322,7 @@ START_TEST(events)
     run_test(readystate_doc_str, test_onreadystatechange);
     run_test(img_doc_str, test_imgload);
     run_test(input_doc_str, test_focus);
+    run_test(form_doc_str, test_submit);
 
     DestroyWindow(container_hwnd);
     CoUninitialize();
