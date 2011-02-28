@@ -450,10 +450,10 @@ static INT char_to_int(WCHAR c)
 static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
+    BOOL neg = FALSE, empty = TRUE;
     DOUBLE ret = 0.0;
-    INT radix=10, i;
+    INT radix=0, i;
     WCHAR *ptr;
-    BOOL neg = FALSE;
     BSTR str;
     HRESULT hres;
 
@@ -467,11 +467,11 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         if(FAILED(hres))
             return hres;
 
-        if(!radix) {
-            radix = 10;
-        }else if(radix < 2 || radix > 36) {
+        if(radix && (radix < 2 || radix > 36)) {
             WARN("radix %d out of range\n", radix);
-            return E_FAIL;
+            if(retv)
+                num_set_nan(retv);
+            return S_OK;
         }
     }
 
@@ -489,20 +489,31 @@ static HRESULT JSGlobal_parseInt(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         neg = TRUE;
         ptr++;
         break;
-    case '0':
-        ptr++;
-        if(*ptr == 'x' || *ptr == 'X') {
-            radix = 16;
-            ptr++;
+    }
+
+    if(!radix) {
+        if(*ptr == '0') {
+            if(ptr[1] == 'x' || ptr[1] == 'X') {
+                radix = 16;
+                ptr += 2;
+            }else {
+                radix = 8;
+                ptr++;
+                empty = FALSE;
+            }
+        }else {
+            radix = 10;
         }
     }
 
-    while(*ptr) {
-        i = char_to_int(*ptr++);
-        if(i > radix)
-            break;
-
-        ret = ret*radix + i;
+    i = char_to_int(*ptr++);
+    if(i < radix) {
+        do {
+            ret = ret*radix + i;
+            i = char_to_int(*ptr++);
+        }while(i < radix);
+    }else if(empty) {
+        ret = ret_nan();
     }
 
     SysFreeString(str);
