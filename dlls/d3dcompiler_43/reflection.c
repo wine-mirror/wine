@@ -31,6 +31,8 @@ enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE
     D3DCOMPILER_SIGNATURE_ELEMENT_SIZE7 = 7,
 };
 
+static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3dcompiler_shader_reflection *reflection, const char *data, DWORD offset);
+
 const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl;
 const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_variable_vtbl;
 const struct ID3D11ShaderReflectionTypeVtbl d3dcompiler_shader_reflection_type_vtbl;
@@ -81,17 +83,17 @@ static BOOL copy_value(const char *ptr, void **value, DWORD size)
     return TRUE;
 }
 
-void *d3dcompiler_rb_alloc(size_t size)
+static void *d3dcompiler_rb_alloc(size_t size)
 {
     return HeapAlloc(GetProcessHeap(), 0, size);
 }
 
-void *d3dcompiler_rb_realloc(void *ptr, size_t size)
+static void *d3dcompiler_rb_realloc(void *ptr, size_t size)
 {
     return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
 }
 
-void d3dcompiler_rb_free(void *ptr)
+static void d3dcompiler_rb_free(void *ptr)
 {
     HeapFree(GetProcessHeap(), 0, ptr);
 }
@@ -104,11 +106,28 @@ static int d3dcompiler_shader_reflection_type_compare(const void *key, const str
     return *id - t->id;
 }
 
+static void free_type_member(struct d3dcompiler_shader_reflection_type_member *member)
+{
+    if (member)
+    {
+        HeapFree(GetProcessHeap(), 0, member->name);
+    }
+}
+
 static void d3dcompiler_shader_reflection_type_destroy(struct wine_rb_entry *entry, void *context)
 {
     struct d3dcompiler_shader_reflection_type *t = WINE_RB_ENTRY_VALUE(entry, struct d3dcompiler_shader_reflection_type, entry);
+    unsigned int i;
 
     TRACE("reflection type %p.\n", t);
+
+    if (t->members)
+    {
+        for (i = 0; i < t->desc.Members; ++i)
+        {
+            free_type_member(&t->members[i]);
+        }
+    }
 
     HeapFree(GetProcessHeap(), 0, t);
 }
@@ -985,12 +1004,45 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
     return E_FAIL;
 }
 
+static HRESULT d3dcompiler_parse_type_members(struct d3dcompiler_shader_reflection *ref,
+        struct d3dcompiler_shader_reflection_type_member *member, const char *data, const char **ptr)
+{
+    DWORD offset;
+
+    read_dword(ptr, &offset);
+    if (!copy_name(data + offset, &member->name))
+    {
+        ERR("Failed to copy name.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Member name: %s.\n", debugstr_a(member->name));
+
+    read_dword(ptr, &offset);
+    TRACE("Member type offset: %x\n", offset);
+
+    member->type = get_reflection_type(ref, data, offset);
+    if (!member->type)
+    {
+        ERR("Failed to get member type\n");
+        HeapFree(GetProcessHeap(), 0, member->name);
+        return E_FAIL;
+    }
+
+    read_dword(ptr, &member->offset);
+    TRACE("Member offset %x\n", member->offset);
+
+    return S_OK;
+}
+
 static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type *type, const char *data, DWORD offset)
 {
     const char *ptr = data + offset;
     DWORD temp;
     D3D11_SHADER_TYPE_DESC *desc;
     unsigned int i;
+    struct d3dcompiler_shader_reflection_type_member *members;
+    HRESULT hr;
+    DWORD member_offset;
 
     desc = &type->desc;
 
@@ -1009,19 +1061,45 @@ static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type 
     desc->Members = temp >> 16;
     TRACE("Elements %u, Members %u\n", desc->Elements, desc->Members);
 
-    read_dword(&ptr, &temp);
-    TRACE("Member Offset %u\n", temp);
+    read_dword(&ptr, &member_offset);
+    TRACE("Member Offset %u\n", member_offset);
 
     if ((type->reflection->target & 0xffff) >= 0x500)
         skip_dword_unknown(&ptr, 4);
 
-    /* todo: Parse type members */
-    for (i = 0; i < desc->Members; ++i)
+    if (desc->Members)
     {
-        skip_dword_unknown(&ptr, 3);
+        const char *ptr2 = data + member_offset;
+
+        members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*members));
+        if (!members)
+        {
+            ERR("Failed to allocate type memory.\n");
+            return E_OUTOFMEMORY;
+        }
+
+        for (i = 0; i < desc->Members; ++i)
+        {
+            hr = d3dcompiler_parse_type_members(type->reflection, &members[i], data, &ptr2);
+            if (hr != S_OK)
+            {
+                FIXME("Failed to parse type members.");
+                goto err_out;
+            }
+        }
     }
 
+    type->members = members;
+
     return S_OK;
+
+err_out:
+    for (i = 0; i < desc->Members; ++i)
+    {
+        free_type_member(&members[i]);
+    }
+    HeapFree(GetProcessHeap(), 0, members);
+    return hr;
 }
 
 static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3dcompiler_shader_reflection *reflection, const char *data, DWORD offset)

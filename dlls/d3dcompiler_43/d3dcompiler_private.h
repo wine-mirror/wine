@@ -75,6 +75,14 @@ struct d3dcompiler_shader_reflection_type
     struct d3dcompiler_shader_reflection *reflection;
 
     D3D11_SHADER_TYPE_DESC desc;
+    struct d3dcompiler_shader_reflection_type_member *members;
+};
+
+struct d3dcompiler_shader_reflection_type_member
+{
+    char *name;
+    DWORD offset;
+    struct d3dcompiler_shader_reflection_type *type;
 };
 
 struct d3dcompiler_shader_reflection_variable
