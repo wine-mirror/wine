@@ -200,8 +200,8 @@ STRING     \"[^\n"]+\"
 <INITIAL,NOPROCESS>source|sourc|sour|src { BEGIN(PATH_EXPECTED); return tSOURCE; }
 <INITIAL>symbolfile|symbols|symbol|sf   { BEGIN(PATH_EXPECTED); return tSYMBOLFILE; }
 
-<INITIAL,INFO_CMD,BD_CMD>break|brea|bre|br|b	{ BEGIN(NOCMD); return tBREAK; }
-<INITIAL,INFO_CMD,BD_CMD>hbreak|hbrea|hbre|hbr|hb { BEGIN(NOCMD); return tHBREAK; }
+<INITIAL,INFO_CMD,BD_CMD>break|brea|bre|br|b	{ BEGIN(PATH_ACCEPTED); return tBREAK; }
+<INITIAL,INFO_CMD,BD_CMD>hbreak|hbrea|hbre|hbr|hb { BEGIN(PATH_ACCEPTED); return tHBREAK; }
 <INITIAL>watch|watc|wat			{ BEGIN(NOCMD); return tWATCH; }
 <INITIAL>rwatch|rwatc|rwat		{ BEGIN(NOCMD); return tRWATCH; }
 <INITIAL>whatis|whati|what		{ BEGIN(NOCMD); return tWHATIS; }

@@ -293,7 +293,7 @@ extern void             break_set_xpoints(BOOL set);
 extern BOOL             break_add_break(const ADDRESS64* addr, BOOL verbose, BOOL swbp);
 extern BOOL             break_add_break_from_lvalue(const struct dbg_lvalue* value, BOOL swbp);
 extern void             break_add_break_from_id(const char* name, int lineno, BOOL swbp);
-extern void             break_add_break_from_lineno(int lineno, BOOL swbp);
+extern void             break_add_break_from_lineno(const char *filename, int lineno, BOOL swbp);
 extern void             break_add_watch_from_lvalue(const struct dbg_lvalue* lvalue, BOOL is_write);
 extern void             break_add_watch_from_id(const char* name, BOOL is_write);
 extern void             break_check_delayed_bp(void);
