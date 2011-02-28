@@ -5608,7 +5608,7 @@ static void test_style_filters(IHTMLElement *elem)
     ok(hres == S_OK, "get_style failed: %08x\n", hres);
 
     test_style_filter(style, NULL);
-    set_style_filter(style, "alpha(opacity=50.00000)");
+    set_style_filter(style, "alpha(opacity=50.0040)");
     set_style_filter(style, "alpha(opacity=100)");
 
     IHTMLStyle_Release(style);

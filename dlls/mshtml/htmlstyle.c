@@ -2545,6 +2545,109 @@ static HRESULT WINAPI HTMLStyle_get_clip(IHTMLStyle *iface, BSTR *p)
     return E_NOTIMPL;
 }
 
+static void set_opacity(HTMLStyle *This, const WCHAR *val)
+{
+    nsAString name_str, val_str, empty_str;
+    nsresult nsres;
+
+    static const WCHAR opacityW[] = {'o','p','a','c','i','t','y',0};
+
+    TRACE("%s\n", debugstr_w(val));
+
+    nsAString_InitDepend(&name_str, opacityW);
+    nsAString_InitDepend(&val_str, val);
+    nsAString_InitDepend(&empty_str, emptyW);
+
+    nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->nsstyle, &name_str, &val_str, &empty_str);
+    if(NS_FAILED(nsres))
+        ERR("SetProperty failed: %08x\n", nsres);
+
+    nsAString_Finish(&name_str);
+    nsAString_Finish(&val_str);
+    nsAString_Finish(&empty_str);
+}
+
+static void update_filter(HTMLStyle *This)
+{
+    const WCHAR *ptr = This->filter, *ptr2;
+
+    static const WCHAR alphaW[] = {'a','l','p','h','a'};
+
+    if(!ptr) {
+        set_opacity(This, emptyW);
+        return;
+    }
+
+    while(1) {
+        while(isspaceW(*ptr))
+            ptr++;
+        if(!*ptr)
+            break;
+
+        ptr2 = ptr;
+        while(isalnumW(*ptr))
+            ptr++;
+        if(ptr == ptr2) {
+            WARN("unexpected char '%c'\n", *ptr);
+            break;
+        }
+        if(*ptr != '(') {
+            WARN("expected '('\n");
+            continue;
+        }
+
+        if(ptr2 + sizeof(alphaW)/sizeof(WCHAR) == ptr && !memcmp(ptr2, alphaW, sizeof(alphaW))) {
+            static const WCHAR formatW[] = {'%','f',0};
+            static const WCHAR opacityW[] = {'o','p','a','c','i','t','y','='};
+
+            ptr++;
+            do {
+                while(isspaceW(*ptr))
+                    ptr++;
+
+                ptr2 = ptr;
+                while(*ptr && *ptr != ',' && *ptr != ')')
+                    ptr++;
+                if(!*ptr) {
+                    WARN("unexpected end of string\n");
+                    break;
+                }
+
+                if(ptr-ptr2 > sizeof(opacityW)/sizeof(WCHAR) && !memcmp(ptr2, opacityW, sizeof(opacityW))) {
+                    float fval = 0.0f, e = 0.1f;
+                    WCHAR buf[32];
+
+                    ptr2 += sizeof(opacityW)/sizeof(WCHAR);
+
+                    while(isdigitW(*ptr2))
+                        fval = fval*10.0f + (float)(*ptr2++ - '0');
+
+                    if(*ptr2 == '.') {
+                        while(isdigitW(*++ptr2)) {
+                            fval += e * (float)(*ptr2++ - '0');
+                            e *= 0.1f;
+                        }
+                    }
+
+                    sprintfW(buf, formatW, fval * 0.01f);
+                    set_opacity(This, buf);
+                }else {
+                    FIXME("unknown param %s\n", debugstr_wn(ptr2, ptr-ptr2));
+                }
+
+                if(*ptr == ',')
+                    ptr++;
+            }while(*ptr != ')');
+        }else {
+            FIXME("unknown filter %s\n", debugstr_wn(ptr2, ptr-ptr2));
+            ptr = strchrW(ptr, ')');
+            if(!ptr)
+                break;
+            ptr++;
+        }
+    }
+}
+
 static HRESULT WINAPI HTMLStyle_put_filter(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
@@ -2560,6 +2663,8 @@ static HRESULT WINAPI HTMLStyle_put_filter(IHTMLStyle *iface, BSTR v)
 
     heap_free(This->filter);
     This->filter = new_filter;
+
+    update_filter(This);
     return S_OK;
 }
 
