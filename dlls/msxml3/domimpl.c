@@ -70,6 +70,7 @@ static HRESULT WINAPI dimimpl_QueryInterface(
     else
     {
         FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 

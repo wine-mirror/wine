@@ -75,6 +75,7 @@ static HRESULT WINAPI xmlelem_QueryInterface(IXMLElement *iface, REFIID riid, vo
     else
     {
         FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 

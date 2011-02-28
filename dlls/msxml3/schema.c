@@ -948,6 +948,7 @@ static HRESULT WINAPI schema_cache_QueryInterface(IXMLDOMSchemaCollection2* ifac
     else
     {
         FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 

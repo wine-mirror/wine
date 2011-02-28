@@ -74,6 +74,7 @@ static HRESULT WINAPI bsc_QueryInterface(
     }
 
     TRACE("interface %s not implemented\n", debugstr_guid(riid));
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

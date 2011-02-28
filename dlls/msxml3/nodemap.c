@@ -82,6 +82,7 @@ static HRESULT WINAPI xmlnodemap_QueryInterface(
     else
     {
         FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 

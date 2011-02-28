@@ -75,16 +75,10 @@ static HRESULT WINAPI domtext_QueryInterface(
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
     }
-    else if ( IsEqualGUID( riid, &IID_IXMLDOMElement ) ||
-              IsEqualGUID( riid, &IID_IXMLDOMCDATASection ) )
-    {
-        /* IXMLDOMText is known to be correct in not implementing these */
-        TRACE("Unsupported interface\n");
-        return E_NOINTERFACE;
-    }
     else
     {
         FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 

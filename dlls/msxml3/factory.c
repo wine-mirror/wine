@@ -80,6 +80,7 @@ static HRESULT WINAPI ClassFactory_QueryInterface(
     }
 
     FIXME("interface %s not implemented\n", debugstr_guid(riid));
+    *ppobj = NULL;
     return E_NOINTERFACE;
 }
 

@@ -76,6 +76,7 @@ static HRESULT WINAPI dom_pi_QueryInterface(
     else
     {
         FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+        *ppvObject = NULL;
         return E_NOINTERFACE;
     }
 
