@@ -107,6 +107,9 @@ static const WCHAR onresizeW[] = {'o','n','r','e','s','i','z','e',0};
 static const WCHAR selectstartW[] = {'s','e','l','e','c','t','s','t','a','r','t',0};
 static const WCHAR onselectstartW[] = {'o','n','s','e','l','e','c','t','s','t','a','r','t',0};
 
+static const WCHAR submitW[] = {'s','u','b','m','i','t',0};
+static const WCHAR onsubmitW[] = {'o','n','s','u','b','m','i','t',0};
+
 static const WCHAR HTMLEventsW[] = {'H','T','M','L','E','v','e','n','t','s',0};
 static const WCHAR KeyboardEventW[] = {'K','e','y','b','o','a','r','d','E','v','e','n','t',0};
 static const WCHAR MouseEventW[] = {'M','o','u','s','e','E','v','e','n','t',0};
@@ -180,7 +183,9 @@ static const event_info_t event_info[] = {
     {resizeW,            onresizeW,            EVENTT_NONE,   DISPID_EVMETH_ONRESIZE,
         EVENT_DEFAULTLISTENER|EVENT_BUBBLE},
     {selectstartW,       onselectstartW,       EVENTT_MOUSE,  DISPID_EVMETH_ONSELECTSTART,
-        0}
+        0},
+    {submitW,            onsubmitW,            EVENTT_HTML,   DISPID_EVMETH_ONSUBMIT,
+        EVENT_DEFAULTLISTENER|EVENT_BUBBLE}
 };
 
 static const eventid_t node_handled_list[] = { EVENTID_LOAD };
