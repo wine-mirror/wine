@@ -801,9 +801,17 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_type_GetDesc(
 static ID3D11ShaderReflectionType * STDMETHODCALLTYPE d3dcompiler_shader_reflection_type_GetMemberTypeByIndex(
         ID3D11ShaderReflectionType *iface, UINT index)
 {
-    FIXME("iface %p, index %u stub!\n", iface, index);
+    struct d3dcompiler_shader_reflection_type *This = impl_from_ID3D11ShaderReflectionType(iface);
 
-    return NULL;
+    TRACE("iface %p, index %u\n", iface, index);
+
+    if (index >= This->desc.Members)
+    {
+        WARN("Invalid index specified\n");
+        return &null_type.ID3D11ShaderReflectionType_iface;
+    }
+
+    return &This->members[index].type->ID3D11ShaderReflectionType_iface;
 }
 
 static ID3D11ShaderReflectionType * STDMETHODCALLTYPE d3dcompiler_shader_reflection_type_GetMemberTypeByName(
