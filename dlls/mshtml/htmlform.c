@@ -274,8 +274,12 @@ static HRESULT WINAPI HTMLFormElement_get_method(IHTMLFormElement *iface, BSTR *
 static HRESULT WINAPI HTMLFormElement_get_elements(IHTMLFormElement *iface, IDispatch **p)
 {
     HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = (IDispatch*)&This->IHTMLFormElement_iface;
+    IDispatch_AddRef(*p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFormElement_put_target(IHTMLFormElement *iface, BSTR v)

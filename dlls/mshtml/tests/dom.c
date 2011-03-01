@@ -2809,6 +2809,23 @@ static void _test_form_put_encoding(unsigned line, IUnknown *unk, HRESULT exp_hr
         _test_form_encoding(line, unk, encoding);
 }
 
+#define test_form_elements(a) _test_form_elements(__LINE__,a)
+static void _test_form_elements(unsigned line, IUnknown *unk)
+{
+    IHTMLFormElement *form = _get_form_iface(line, unk);
+    IDispatch *disp;
+    HRESULT hres;
+
+    disp = NULL;
+    hres = IHTMLFormElement_get_elements(form, &disp);
+    ok_(__FILE__,line)(hres == S_OK, "get_elements failed: %08x\n", hres);
+    ok_(__FILE__,line)(disp != NULL, "disp = NULL\n");
+    ok_(__FILE__,line)(iface_cmp((IUnknown*)form, (IUnknown*)disp), "disp != form\n");
+
+    IDispatch_Release(disp);
+    IHTMLFormElement_Release(form);
+}
+
 #define get_elem_doc(e) _get_elem_doc(__LINE__,e)
 static IHTMLDocument2 *_get_elem_doc(unsigned line, IUnknown *unk)
 {
@@ -6652,6 +6669,7 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_form_length((IUnknown*)elem, 0);
+        test_form_elements((IUnknown*)elem);
         IHTMLElement_Release(elem);
     }
 
@@ -6802,7 +6820,7 @@ static void test_elems2(IHTMLDocument2 *doc)
     }
 
     test_elem_set_innerhtml((IUnknown*)div,
-            "<form id=\"form\"><input type=\"button\"></input><input type=\"text\"></input></textarea>");
+            "<form id=\"form\"><input type=\"button\" /><div><input type=\"text\" /></div></textarea>");
     elem = get_elem_by_id(doc, "form", TRUE);
     if(elem) {
         test_form_length((IUnknown*)elem, 2);
@@ -6820,6 +6838,7 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_form_put_encoding((IUnknown*)elem, S_OK, "multipart/form-data");
         test_form_put_encoding((IUnknown*)elem, E_INVALIDARG, "image/png");
         test_form_encoding((IUnknown*)elem, "multipart/form-data");
+        test_form_elements((IUnknown*)elem);
         IHTMLElement_Release(elem);
     }
 
