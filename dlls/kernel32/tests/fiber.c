@@ -138,6 +138,7 @@ static void test_FiberHandling(void)
         return;
     }
 
+    SetLastError(0xdeadbeef);
     fibers[1] = pCreateFiberEx(0,0,0,FiberMainProc,&testparam);
     ok(fibers[1] != 0, "CreateFiberEx failed with error %d\n", GetLastError());
 
