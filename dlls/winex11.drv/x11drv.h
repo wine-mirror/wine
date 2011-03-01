@@ -804,7 +804,7 @@ extern void set_window_cursor( struct x11drv_win_data *data, HCURSOR handle );
 extern void sync_window_cursor( struct x11drv_win_data *data );
 extern BOOL CDECL X11DRV_ClipCursor( LPCRECT clip );
 extern void X11DRV_InitKeyboard( Display *display );
-extern void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWORD time,
+extern void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD dwFlags, DWORD time,
                                         DWORD dwExtraInfo, UINT injected_flags );
 extern void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
                                      DWORD data, DWORD time, DWORD extra_info, UINT injected_flags );

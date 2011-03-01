@@ -1150,7 +1150,7 @@ static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
 /***********************************************************************
  *           X11DRV_send_keyboard_input
  */
-void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD event_flags, DWORD time,
+void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD event_flags, DWORD time,
                                  DWORD dwExtraInfo, UINT injected_flags )
 {
     UINT message;
@@ -1268,7 +1268,7 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD event_flags, DWORD 
     SERVER_START_REQ( send_hardware_message )
     {
         req->id       = (injected_flags & LLKHF_INJECTED) ? 0 : GetCurrentThreadId();
-        req->win      = 0;
+        req->win      = wine_server_user_handle( hwnd );
         req->msg      = message;
         req->wparam   = wVk;
         req->lparam   = lParam;
@@ -1286,7 +1286,7 @@ void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD event_flags, DWORD 
  * Updates internal state for <vkey>, depending on key <state> under X
  *
  */
-static inline void KEYBOARD_UpdateOneState ( WORD vkey, WORD scan, int state, DWORD time )
+static inline void KEYBOARD_UpdateOneState ( HWND hwnd, WORD vkey, WORD scan, int state, DWORD time )
 {
     /* Do something if internal table state != X state for keycode */
     if (((key_state_table[vkey & 0xff] & 0x80)!=0) != state)
@@ -1299,7 +1299,7 @@ static inline void KEYBOARD_UpdateOneState ( WORD vkey, WORD scan, int state, DW
               vkey, key_state_table[vkey & 0xff]);
 
         /* Fake key being pressed inside wine */
-        X11DRV_send_keyboard_input( vkey & 0xff, scan & 0xff, flags, time, 0, 0 );
+        X11DRV_send_keyboard_input( hwnd, vkey & 0xff, scan & 0xff, flags, time, 0, 0 );
 
         TRACE("State after %#.2x\n", key_state_table[vkey & 0xff]);
     }
@@ -1338,21 +1338,21 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
             case VK_RCONTROL:
             case VK_LSHIFT:
             case VK_RSHIFT:
-                KEYBOARD_UpdateOneState( vkey, scan, state, time );
+                KEYBOARD_UpdateOneState( hwnd, vkey, scan, state, time );
                 break;
             }
         }
     }
 }
 
-static void update_lock_state(BYTE vkey, WORD scan, DWORD time)
+static void update_lock_state(HWND hwnd, BYTE vkey, WORD scan, DWORD time)
 {
     DWORD flags = vkey == VK_NUMLOCK ? KEYEVENTF_EXTENDEDKEY : 0;
 
     if (key_state_table[vkey] & 0x80) flags ^= KEYEVENTF_KEYUP;
 
-    X11DRV_send_keyboard_input( vkey, scan, flags, time, 0, 0 );
-    X11DRV_send_keyboard_input( vkey, scan, flags ^ KEYEVENTF_KEYUP, time, 0, 0 );
+    X11DRV_send_keyboard_input( hwnd, vkey, scan, flags, time, 0, 0 );
+    X11DRV_send_keyboard_input( hwnd, vkey, scan, flags ^ KEYEVENTF_KEYUP, time, 0, 0 );
 }
 
 /***********************************************************************
@@ -1461,7 +1461,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
         vkey != VK_CAPITAL)
     {
         TRACE("Adjusting CapsLock state (%#.2x)\n", key_state_table[VK_CAPITAL]);
-        update_lock_state(VK_CAPITAL, 0x3A, event_time);
+        update_lock_state( hwnd, VK_CAPITAL, 0x3A, event_time );
     }
 
     /* Adjust the NUMLOCK state if it has been changed outside wine */
@@ -1469,7 +1469,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
         (vkey & 0xff) != VK_NUMLOCK)
     {
         TRACE("Adjusting NumLock state (%#.2x)\n", key_state_table[VK_NUMLOCK]);
-        update_lock_state(VK_NUMLOCK, 0x45, event_time);
+        update_lock_state( hwnd, VK_NUMLOCK, 0x45, event_time );
     }
 
     /* Adjust the SCROLLLOCK state if it has been changed outside wine */
@@ -1477,13 +1477,13 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
         vkey != VK_SCROLL)
     {
         TRACE("Adjusting ScrLock state (%#.2x)\n", key_state_table[VK_SCROLL]);
-        update_lock_state(VK_SCROLL, 0x46, event_time);
+        update_lock_state( hwnd, VK_SCROLL, 0x46, event_time );
     }
 
     bScan = keyc2scan[event->keycode] & 0xFF;
     TRACE_(key)("bScan = 0x%02x.\n", bScan);
 
-    X11DRV_send_keyboard_input( vkey & 0xff, bScan, dwFlags, event_time, 0, 0 );
+    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, bScan, dwFlags, event_time, 0, 0 );
 }
 
 /**********************************************************************

@@ -1568,7 +1568,7 @@ UINT CDECL X11DRV_SendInput( UINT count, LPINPUT inputs, int size )
                                      inputs->u.mi.dwExtraInfo, LLMHF_INJECTED );
             break;
         case INPUT_KEYBOARD:
-            X11DRV_send_keyboard_input( inputs->u.ki.wVk, inputs->u.ki.wScan, inputs->u.ki.dwFlags,
+            X11DRV_send_keyboard_input( 0, inputs->u.ki.wVk, inputs->u.ki.wScan, inputs->u.ki.dwFlags,
                                         inputs->u.ki.time, inputs->u.ki.dwExtraInfo, LLKHF_INJECTED );
             break;
         case INPUT_HARDWARE:
