@@ -78,7 +78,7 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     if (NULL == session)
         goto done;
 
-    hIC = session->lpAppInfo;
+    hIC = session->appInfo;
     if (NULL == hIC)
         goto done;
 
@@ -115,7 +115,7 @@ static BOOL WININET_GetServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     if (NULL == session)
         goto done;
 
-    lstrcpynW(szBuf, session->lpszHostName, sz);
+    lstrcpynW(szBuf, session->hostName, sz);
 
     ret = TRUE;
 
@@ -270,7 +270,7 @@ static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
 
     if (proxy)
     {
-        appinfo_t *hIC = session->lpAppInfo;
+        appinfo_t *hIC = session->appInfo;
 
         HeapFree(GetProcessHeap(), 0, hIC->proxyUsername);
         hIC->proxyUsername = p;
@@ -280,11 +280,11 @@ static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
     }
     else
     {
-        HeapFree(GetProcessHeap(), 0, session->lpszUserName);
-        session->lpszUserName = p;
+        HeapFree(GetProcessHeap(), 0, session->userName);
+        session->userName = p;
 
-        HeapFree(GetProcessHeap(), 0, session->lpszPassword);
-        session->lpszPassword = q;
+        HeapFree(GetProcessHeap(), 0, session->password);
+        session->password = q;
     }
 
     ret = TRUE;

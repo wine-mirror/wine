@@ -939,7 +939,7 @@ static BOOL HTTP_DoAuthorization( http_request_t *request, LPCWSTR pszAuthValue,
 
         sec_status = InitializeSecurityContextW(first ? &pAuthInfo->cred : NULL,
                                                 first ? NULL : &pAuthInfo->ctx,
-                                                first ? request->lpHttpSession->lpszServerName : NULL,
+                                                first ? request->lpHttpSession->serverName : NULL,
                                                 context_req, 0, SECURITY_NETWORK_DREP,
                                                 in.pvBuffer ? &in_desc : NULL,
                                                 0, &pAuthInfo->ctx, &out_desc,
@@ -1429,14 +1429,14 @@ static WCHAR *HTTP_BuildProxyRequestUrl(http_request_t *req)
         http_session_t *session = req->lpHttpSession;
 
         size = 16; /* "https://" + sizeof(port#) + ":/\0" */
-        size += strlenW( session->lpszHostName ) + strlenW( req->lpszPath );
+        size += strlenW( session->hostName ) + strlenW( req->lpszPath );
 
         if (!(url = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return NULL;
 
         if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
-            sprintfW( url, formatSSL, session->lpszHostName, session->nHostPort );
+            sprintfW( url, formatSSL, session->hostName, session->hostPort );
         else
-            sprintfW( url, format, session->lpszHostName, session->nHostPort );
+            sprintfW( url, format, session->hostName, session->hostPort );
         if (req->lpszPath[0] != '/') strcatW( url, slash );
         strcatW( url, req->lpszPath );
     }
@@ -1482,11 +1482,11 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
         UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
 
-    HeapFree(GetProcessHeap(), 0, session->lpszServerName);
-    session->lpszServerName = heap_strdupW(UrlComponents.lpszHostName);
-    session->nServerPort = UrlComponents.nPort;
+    HeapFree(GetProcessHeap(), 0, session->serverName);
+    session->serverName = heap_strdupW(UrlComponents.lpszHostName);
+    session->serverPort = UrlComponents.nPort;
 
-    TRACE("proxy server=%s port=%d\n", debugstr_w(session->lpszServerName), session->nServerPort);
+    TRACE("proxy server=%s port=%d\n", debugstr_w(session->serverName), session->serverPort);
     return TRUE;
 }
 
@@ -1502,11 +1502,11 @@ static DWORD HTTP_ResolveName(http_request_t *request)
 
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                           INTERNET_STATUS_RESOLVING_NAME,
-                          session->lpszServerName,
-                          (strlenW(session->lpszServerName)+1) * sizeof(WCHAR));
+                          session->serverName,
+                          (strlenW(session->serverName)+1) * sizeof(WCHAR));
 
     session->sa_len = sizeof(session->socketAddress);
-    if (!GetAddress(session->lpszServerName, session->nServerPort,
+    if (!GetAddress(session->serverName, session->serverPort,
                     (struct sockaddr *)&session->socketAddress, &session->sa_len))
         return ERROR_INTERNET_NAME_NOT_RESOLVED;
 
@@ -1527,7 +1527,7 @@ static DWORD HTTP_ResolveName(http_request_t *request)
                           INTERNET_STATUS_NAME_RESOLVED,
                           szaddr, strlen(szaddr)+1);
 
-    TRACE("resolved %s to %s\n", debugstr_w(session->lpszServerName), szaddr);
+    TRACE("resolved %s to %s\n", debugstr_w(session->serverName), szaddr);
     return ERROR_SUCCESS;
 }
 
@@ -1667,11 +1667,11 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         info->Socket = 0;
         /* FIXME: get source port from req->netConnection */
         info->SourcePort = 0;
-        info->DestPort = session->nHostPort;
+        info->DestPort = session->hostPort;
         info->Flags = 0;
         if (HTTP_KeepAlive(req))
             info->Flags |= IDSI_FLAG_KEEP_ALIVE;
-        if (session->lpAppInfo->proxy && session->lpAppInfo->proxy[0] != 0)
+        if (session->appInfo->proxy && session->appInfo->proxy[0] != 0)
             info->Flags |= IDSI_FLAG_PROXY;
         if (req->netConnection.useSSL)
             info->Flags |= IDSI_FLAG_SECURE;
@@ -1881,13 +1881,13 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
                     *(DWORD*)buffer);
 
     case INTERNET_OPTION_USERNAME:
-        HeapFree(GetProcessHeap(), 0, req->lpHttpSession->lpszUserName);
-        if (!(req->lpHttpSession->lpszUserName = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        HeapFree(GetProcessHeap(), 0, req->lpHttpSession->userName);
+        if (!(req->lpHttpSession->userName = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
 
     case INTERNET_OPTION_PASSWORD:
-        HeapFree(GetProcessHeap(), 0, req->lpHttpSession->lpszPassword);
-        if (!(req->lpHttpSession->lpszPassword = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        HeapFree(GetProcessHeap(), 0, req->lpHttpSession->password);
+        if (!(req->lpHttpSession->password = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
     case INTERNET_OPTION_HTTP_DECODING:
         if(size != sizeof(BOOL))
@@ -2494,7 +2494,7 @@ static DWORD HTTPREQ_QueryDataAvailable(object_header_t *hdr, DWORD *available, 
 
     TRACE("(%p %p %x %lx)\n", req, available, flags, ctx);
 
-    if (req->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+    if (req->lpHttpSession->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
 
@@ -2572,7 +2572,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     TRACE("-->\n");
 
     assert( session->hdr.htype == WH_HHTTPSESSION );
-    hIC = session->lpAppInfo;
+    hIC = session->appInfo;
 
     request = alloc_object(&session->hdr, &HTTPREQVtbl, sizeof(http_request_t));
     if(!request)
@@ -2590,7 +2590,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     list_add_head( &session->hdr.children, &request->hdr.entry );
 
     lpszHostName = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) *
-            (strlenW(session->lpszHostName) + 7 /* length of ":65535" + 1 */));
+            (strlenW(session->hostName) + 7 /* length of ":65535" + 1 */));
     if (NULL == lpszHostName)
     {
         res = ERROR_OUTOFMEMORY;
@@ -2640,25 +2640,25 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->lpszVerb = heap_strdupW(lpszVerb && *lpszVerb ? lpszVerb : szGET);
     request->lpszVersion = heap_strdupW(lpszVersion ? lpszVersion : g_szHttp1_1);
 
-    if (session->nHostPort != INTERNET_INVALID_PORT_NUMBER &&
-        session->nHostPort != INTERNET_DEFAULT_HTTP_PORT &&
-        session->nHostPort != INTERNET_DEFAULT_HTTPS_PORT)
+    if (session->hostPort != INTERNET_INVALID_PORT_NUMBER &&
+        session->hostPort != INTERNET_DEFAULT_HTTP_PORT &&
+        session->hostPort != INTERNET_DEFAULT_HTTPS_PORT)
     {
-        sprintfW(lpszHostName, szHostForm, session->lpszHostName, session->nHostPort);
+        sprintfW(lpszHostName, szHostForm, session->hostName, session->hostPort);
         HTTP_ProcessHeader(request, hostW, lpszHostName,
                 HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
     }
     else
-        HTTP_ProcessHeader(request, hostW, session->lpszHostName,
+        HTTP_ProcessHeader(request, hostW, session->hostName,
                 HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
-    if (session->nServerPort == INTERNET_INVALID_PORT_NUMBER)
-        session->nServerPort = (dwFlags & INTERNET_FLAG_SECURE ?
+    if (session->serverPort == INTERNET_INVALID_PORT_NUMBER)
+        session->serverPort = (dwFlags & INTERNET_FLAG_SECURE ?
                         INTERNET_DEFAULT_HTTPS_PORT :
                         INTERNET_DEFAULT_HTTP_PORT);
 
-    if (session->nHostPort == INTERNET_INVALID_PORT_NUMBER)
-        session->nHostPort = (dwFlags & INTERNET_FLAG_SECURE ?
+    if (session->hostPort == INTERNET_INVALID_PORT_NUMBER)
+        session->hostPort = (dwFlags & INTERNET_FLAG_SECURE ?
                         INTERNET_DEFAULT_HTTPS_PORT :
                         INTERNET_DEFAULT_HTTP_PORT);
 
@@ -3265,10 +3265,10 @@ static LPWSTR HTTP_GetRedirectURL(http_request_t *request, LPCWSTR lpszUrl)
     urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
     urlComponents.lpszScheme = (request->hdr.dwFlags & INTERNET_FLAG_SECURE) ? szHttps : szHttp;
     urlComponents.dwSchemeLength = 0;
-    urlComponents.lpszHostName = session->lpszHostName;
+    urlComponents.lpszHostName = session->hostName;
     urlComponents.dwHostNameLength = 0;
-    urlComponents.nPort = session->nHostPort;
-    urlComponents.lpszUserName = session->lpszUserName;
+    urlComponents.nPort = session->hostPort;
+    urlComponents.lpszUserName = session->userName;
     urlComponents.dwUserNameLength = 0;
     urlComponents.lpszPassword = NULL;
     urlComponents.dwPasswordLength = 0;
@@ -3317,7 +3317,7 @@ static LPWSTR HTTP_GetRedirectURL(http_request_t *request, LPCWSTR lpszUrl)
 static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
 {
     http_session_t *session = request->lpHttpSession;
-    appinfo_t *hIC = session->lpAppInfo;
+    appinfo_t *hIC = session->appInfo;
     BOOL using_proxy = hIC->proxy && hIC->proxy[0];
     WCHAR path[INTERNET_MAX_URL_LENGTH];
     int index;
@@ -3394,7 +3394,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
                            HTTP_ADDHDR_FLAG_ADD_IF_NEW);
 #endif
         
-        HeapFree(GetProcessHeap(), 0, session->lpszHostName);
+        HeapFree(GetProcessHeap(), 0, session->hostName);
         if (urlComponents.nPort != INTERNET_DEFAULT_HTTP_PORT &&
             urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT)
         {
@@ -3402,28 +3402,28 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
             static const WCHAR fmt[] = {'%','s',':','%','i',0};
             len = lstrlenW(hostName);
             len += 7; /* 5 for strlen("65535") + 1 for ":" + 1 for '\0' */
-            session->lpszHostName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-            sprintfW(session->lpszHostName, fmt, hostName, urlComponents.nPort);
+            session->hostName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+            sprintfW(session->hostName, fmt, hostName, urlComponents.nPort);
         }
         else
-            session->lpszHostName = heap_strdupW(hostName);
+            session->hostName = heap_strdupW(hostName);
 
-        HTTP_ProcessHeader(request, hostW, session->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
+        HTTP_ProcessHeader(request, hostW, session->hostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
-        HeapFree(GetProcessHeap(), 0, session->lpszUserName);
-        session->lpszUserName = NULL;
+        HeapFree(GetProcessHeap(), 0, session->userName);
+        session->userName = NULL;
         if (userName[0])
-            session->lpszUserName = heap_strdupW(userName);
+            session->userName = heap_strdupW(userName);
 
         if (!using_proxy)
         {
-            if (strcmpiW(session->lpszServerName, hostName) || session->nServerPort != urlComponents.nPort)
+            if (strcmpiW(session->serverName, hostName) || session->serverPort != urlComponents.nPort)
             {
                 DWORD res;
 
-                HeapFree(GetProcessHeap(), 0, session->lpszServerName);
-                session->lpszServerName = heap_strdupW(hostName);
-                session->nServerPort = urlComponents.nPort;
+                HeapFree(GetProcessHeap(), 0, session->serverName);
+                session->serverName = heap_strdupW(hostName);
+                session->serverPort = urlComponents.nPort;
 
                 NETCON_close(&request->netConnection);
                 if ((res = HTTP_ResolveName(request)) != ERROR_SUCCESS)
@@ -3510,8 +3510,8 @@ static DWORD HTTP_SecureProxyConnect(http_request_t *request)
 
     TRACE("\n");
 
-    lpszPath = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( session->lpszHostName ) + 13)*sizeof(WCHAR) );
-    sprintfW( lpszPath, szFormat, session->lpszHostName, session->nHostPort );
+    lpszPath = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( session->hostName ) + 13)*sizeof(WCHAR) );
+    sprintfW( lpszPath, szFormat, session->hostName, session->hostPort );
     requestString = HTTP_BuildHeaderRequestString( request, szConnect, lpszPath, g_szHttp1_1 );
     HeapFree( GetProcessHeap(), 0, lpszPath );
 
@@ -3607,15 +3607,15 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         HTTP_HttpAddRequestHeadersW(request, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_REPLACE);
         request->dwBytesToWrite = dwContentLength;
     }
-    if (request->lpHttpSession->lpAppInfo->agent)
+    if (request->lpHttpSession->appInfo->agent)
     {
         WCHAR *agent_header;
         static const WCHAR user_agent[] = {'U','s','e','r','-','A','g','e','n','t',':',' ','%','s','\r','\n',0};
         int len;
 
-        len = strlenW(request->lpHttpSession->lpAppInfo->agent) + strlenW(user_agent);
+        len = strlenW(request->lpHttpSession->appInfo->agent) + strlenW(user_agent);
         agent_header = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        sprintfW(agent_header, user_agent, request->lpHttpSession->lpAppInfo->agent);
+        sprintfW(agent_header, user_agent, request->lpHttpSession->appInfo->agent);
 
         HTTP_HttpAddRequestHeadersW(request, agent_header, strlenW(agent_header), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
         HeapFree(GetProcessHeap(), 0, agent_header);
@@ -3673,7 +3673,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                         HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
         }
 
-        if (request->lpHttpSession->lpAppInfo->proxy && request->lpHttpSession->lpAppInfo->proxy[0])
+        if (request->lpHttpSession->appInfo->proxy && request->lpHttpSession->appInfo->proxy[0])
         {
             WCHAR *url = HTTP_BuildProxyRequestUrl(request);
             requestString = HTTP_BuildHeaderRequestString(request, request->lpszVerb, url, request->lpszVersion);
@@ -3795,8 +3795,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                     {
                         if (HTTP_DoAuthorization(request, szAuthValue,
                                                  &request->pAuthInfo,
-                                                 request->lpHttpSession->lpszUserName,
-                                                 request->lpHttpSession->lpszPassword,
+                                                 request->lpHttpSession->userName,
+                                                 request->lpHttpSession->password,
                                                  Host->lpszValue))
                         {
                             HeapFree(GetProcessHeap(), 0, requestString);
@@ -3818,8 +3818,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                     {
                         if (HTTP_DoAuthorization(request, szAuthValue,
                                                  &request->pProxyAuthInfo,
-                                                 request->lpHttpSession->lpAppInfo->proxyUsername,
-                                                 request->lpHttpSession->lpAppInfo->proxyPassword,
+                                                 request->lpHttpSession->appInfo->proxyUsername,
+                                                 request->lpHttpSession->appInfo->proxyPassword,
                                                  NULL))
                         {
                             loop_next = TRUE;
@@ -3874,7 +3874,7 @@ lend:
 
     /* TODO: send notification for P3P header */
 
-    if (request->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+    if (request->lpHttpSession->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         if (res == ERROR_SUCCESS && request->dwBytesWritten == request->dwBytesToWrite)
             HTTP_ReceiveRequestData(request, TRUE);
@@ -4042,7 +4042,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     }
     request->hdr.dwFlags |= dwFlags;
 
-    if (request->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+    if (request->lpHttpSession->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST work;
         struct WORKREQ_HTTPENDREQUESTW *work_endrequest;
@@ -4156,7 +4156,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
 
     session = request->lpHttpSession;
     assert(session->hdr.htype == WH_HHTTPSESSION);
-    hIC = session->lpAppInfo;
+    hIC = session->appInfo;
     assert(hIC->hdr.htype == WH_HINIT);
 
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
@@ -4259,7 +4259,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         goto lend;
     }
 
-    hIC = session->lpAppInfo;
+    hIC = session->appInfo;
     if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT)
     {
         res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
@@ -4351,12 +4351,12 @@ static void HTTPSESSION_Destroy(object_header_t *hdr)
 
     TRACE("%p\n", session);
 
-    WININET_Release(&session->lpAppInfo->hdr);
+    WININET_Release(&session->appInfo->hdr);
 
-    HeapFree(GetProcessHeap(), 0, session->lpszHostName);
-    HeapFree(GetProcessHeap(), 0, session->lpszServerName);
-    HeapFree(GetProcessHeap(), 0, session->lpszPassword);
-    HeapFree(GetProcessHeap(), 0, session->lpszUserName);
+    HeapFree(GetProcessHeap(), 0, session->hostName);
+    HeapFree(GetProcessHeap(), 0, session->serverName);
+    HeapFree(GetProcessHeap(), 0, session->password);
+    HeapFree(GetProcessHeap(), 0, session->userName);
 }
 
 static DWORD HTTPSESSION_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
@@ -4383,14 +4383,14 @@ static DWORD HTTPSESSION_SetOption(object_header_t *hdr, DWORD option, void *buf
     switch(option) {
     case INTERNET_OPTION_USERNAME:
     {
-        HeapFree(GetProcessHeap(), 0, ses->lpszUserName);
-        if (!(ses->lpszUserName = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        HeapFree(GetProcessHeap(), 0, ses->userName);
+        if (!(ses->userName = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
     }
     case INTERNET_OPTION_PASSWORD:
     {
-        HeapFree(GetProcessHeap(), 0, ses->lpszPassword);
-        if (!(ses->lpszPassword = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        HeapFree(GetProcessHeap(), 0, ses->password);
+        if (!(ses->password = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
     }
     default: break;
@@ -4423,7 +4423,7 @@ static const object_vtbl_t HTTPSESSIONVtbl = {
  *
  */
 DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
-        INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
+        INTERNET_PORT serverPort, LPCWSTR lpszUserName,
         LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
         DWORD dwInternalFlags, HINTERNET *ret)
 {
@@ -4450,21 +4450,21 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     session->hdr.dwInternalFlags |= dwInternalFlags;
 
     WININET_AddRef( &hIC->hdr );
-    session->lpAppInfo = hIC;
+    session->appInfo = hIC;
     list_add_head( &hIC->hdr.children, &session->hdr.entry );
 
     if(hIC->proxy && hIC->accessType == INTERNET_OPEN_TYPE_PROXY) {
         if(hIC->proxyBypass)
             FIXME("Proxy bypass is ignored.\n");
     }
-    session->lpszServerName = heap_strdupW(lpszServerName);
-    session->lpszHostName = heap_strdupW(lpszServerName);
+    session->serverName = heap_strdupW(lpszServerName);
+    session->hostName = heap_strdupW(lpszServerName);
     if (lpszUserName && lpszUserName[0])
-        session->lpszUserName = heap_strdupW(lpszUserName);
+        session->userName = heap_strdupW(lpszUserName);
     if (lpszPassword && lpszPassword[0])
-        session->lpszPassword = heap_strdupW(lpszPassword);
-    session->nServerPort = nServerPort;
-    session->nHostPort = nServerPort;
+        session->password = heap_strdupW(lpszPassword);
+    session->serverPort = serverPort;
+    session->hostPort = serverPort;
 
     /* Don't send a handle created callback if this handle was created with InternetOpenUrl */
     if (!(session->hdr.dwInternalFlags & INET_OPENURL))
@@ -4519,7 +4519,7 @@ static DWORD HTTP_OpenConnection(http_request_t *request)
 
     session = request->lpHttpSession;
 
-    hIC = session->lpAppInfo;
+    hIC = session->appInfo;
     switch (session->socketAddress.ss_family)
     {
     case AF_INET:
@@ -4567,7 +4567,7 @@ static DWORD HTTP_OpenConnection(http_request_t *request)
             goto lend;
         }
 
-        res = NETCON_secure_connect(&request->netConnection, session->lpszHostName);
+        res = NETCON_secure_connect(&request->netConnection, session->hostName);
         if(res != ERROR_SUCCESS)
         {
             WARN("Couldn't connect securely to host\n");

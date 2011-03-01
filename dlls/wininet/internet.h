@@ -232,13 +232,13 @@ typedef struct
 typedef struct
 {
     object_header_t hdr;
-    appinfo_t *lpAppInfo;
-    LPWSTR  lpszHostName; /* the final destination of the request */
-    LPWSTR  lpszServerName; /* the name of the server we directly connect to */
-    LPWSTR  lpszUserName;
-    LPWSTR  lpszPassword;
-    INTERNET_PORT nHostPort; /* the final destination port of the request */
-    INTERNET_PORT nServerPort; /* the port of the server we directly connect to */
+    appinfo_t *appInfo;
+    LPWSTR  hostName; /* the final destination of the request */
+    LPWSTR  serverName; /* the name of the server we directly connect to */
+    LPWSTR  userName;
+    LPWSTR  password;
+    INTERNET_PORT hostPort; /* the final destination port of the request */
+    INTERNET_PORT serverPort; /* the port of the server we directly connect to */
     struct sockaddr_storage socketAddress;
     socklen_t sa_len;
 } http_session_t;
