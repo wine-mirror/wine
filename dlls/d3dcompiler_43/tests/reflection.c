@@ -1219,7 +1219,7 @@ static void test_reflection_constant_buffer(void)
     ID3D11ShaderReflection *ref11;
     ID3D11ShaderReflectionConstantBuffer *cb11, *cb11_dummy = NULL, *cb11_valid = NULL;
     ID3D11ShaderReflectionVariable *v11, *v11_dummy = NULL, *v11_valid = NULL;
-    ID3D11ShaderReflectionType *t11, *t11_dummy = NULL, *t11_valid = NULL;
+    ID3D11ShaderReflectionType *t11, *t, *t2, *t11_dummy = NULL, *t11_valid = NULL;
     D3D11_SHADER_BUFFER_DESC cbdesc = {0};
     D3D11_SHADER_VARIABLE_DESC vdesc = {0};
     D3D11_SHADER_TYPE_DESC tdesc = {0};
@@ -1228,6 +1228,7 @@ static void test_reflection_constant_buffer(void)
     const D3D11_SHADER_VARIABLE_DESC *pvdesc;
     const D3D11_SHADER_TYPE_DESC *ptdesc;
     unsigned int i;
+    LPCSTR string;
 
     hr = D3DReflect(test_reflection_constant_buffer_blob, test_reflection_constant_buffer_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == S_OK, "D3DReflect failed %x\n", hr);
@@ -1355,6 +1356,30 @@ static void test_reflection_constant_buffer(void)
     hr = t11_valid->lpVtbl->GetDesc(t11_valid, NULL);
     ok(hr == E_FAIL, "GetDesc failed, got %x, expected %x\n", hr, E_FAIL);
 
+    string = t11_dummy->lpVtbl->GetMemberTypeName(t11_dummy, 0xffffffff);
+    ok(!strcmp(string, "$Invalid"), "GetMemberTypeName failed, got \"%s\", expected \"%s\"\n", string, "$Invalid");
+
+    string = t11_valid->lpVtbl->GetMemberTypeName(t11_valid, 0xffffffff);
+    ok(!string, "GetMemberTypeName failed, got \"%s\", expected NULL\n", string);
+
+    t11 = t11_dummy->lpVtbl->GetMemberTypeByIndex(t11_dummy, 0xffffffff);
+    ok(t11_dummy == t11, "GetMemberTypeByIndex failed, got %p, expected %p\n", t11, t11_dummy);
+
+    t11 = t11_valid->lpVtbl->GetMemberTypeByIndex(t11_valid, 0xffffffff);
+    ok(t11_dummy == t11, "GetMemberTypeByIndex failed, got %p, expected %p\n", t11, t11_dummy);
+
+    t11 = t11_dummy->lpVtbl->GetMemberTypeByName(t11_dummy, NULL);
+    ok(t11_dummy == t11, "GetMemberTypeByName failed, got %p, expected %p\n", t11, t11_dummy);
+
+    t11 = t11_dummy->lpVtbl->GetMemberTypeByName(t11_dummy, "invalid");
+    ok(t11_dummy == t11, "GetMemberTypeByName failed, got %p, expected %p\n", t11, t11_dummy);
+
+    t11 = t11_valid->lpVtbl->GetMemberTypeByName(t11_valid, NULL);
+    ok(t11_dummy == t11, "GetMemberTypeByName failed, got %p, expected %p\n", t11, t11_dummy);
+
+    t11 = t11_valid->lpVtbl->GetMemberTypeByName(t11_valid, "invalid");
+    ok(t11_dummy == t11, "GetMemberTypeByName failed, got %p, expected %p\n", t11, t11_dummy);
+
     /* constant buffers */
     for (i = 0; i < sizeof(test_reflection_constant_buffer_cb_result)/sizeof(*test_reflection_constant_buffer_cb_result); ++i)
     {
@@ -1421,6 +1446,31 @@ static void test_reflection_constant_buffer(void)
         ok(tdesc.Offset == ptdesc->Offset, "GetDesc(%u) Offset failed, got %u, expected %u\n",
                 i, tdesc.Offset, ptdesc->Offset);
     }
+
+    /* types */
+    v11 = ref11->lpVtbl->GetVariableByName(ref11, "t");
+    ok(v11_dummy != v11, "GetVariableByName failed\n");
+
+    t11 = v11->lpVtbl->GetType(v11);
+    ok(t11 != t11_dummy, "GetType failed\n");
+
+    t = t11->lpVtbl->GetMemberTypeByIndex(t11, 0);
+    ok(t != t11_dummy, "GetMemberTypeByIndex failed\n");
+
+    t2 = t11->lpVtbl->GetMemberTypeByName(t11, "a");
+    ok(t == t2, "GetMemberTypeByName failed, got %p, expected %p\n", t2, t);
+
+    string = t11->lpVtbl->GetMemberTypeName(t11, 0);
+    ok(!strcmp(string, "a"), "GetMemberTypeName failed, got \"%s\", expected \"%s\"\n", string, "a");
+
+    t = t11->lpVtbl->GetMemberTypeByIndex(t11, 1);
+    ok(t != t11_dummy, "GetMemberTypeByIndex failed\n");
+
+    t2 = t11->lpVtbl->GetMemberTypeByName(t11, "b");
+    ok(t == t2, "GetMemberTypeByName failed, got %p, expected %p\n", t2, t);
+
+    string = t11->lpVtbl->GetMemberTypeName(t11, 1);
+    ok(!strcmp(string, "b"), "GetMemberTypeName failed, got \"%s\", expected \"%s\"\n", string, "b");
 
     count = ref11->lpVtbl->Release(ref11);
     ok(count == 0, "Release failed %u\n", count);
