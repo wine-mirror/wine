@@ -872,9 +872,20 @@ static LPCSTR STDMETHODCALLTYPE d3dcompiler_shader_reflection_type_GetMemberType
 static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_type_IsEqual(
         ID3D11ShaderReflectionType *iface, ID3D11ShaderReflectionType *type)
 {
-    FIXME("iface %p, type %p stub!\n", iface, type);
+    struct d3dcompiler_shader_reflection_type *This = impl_from_ID3D11ShaderReflectionType(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, type %p\n", iface, type);
+
+    if (This == &null_type)
+    {
+        WARN("Null type specified\n");
+        return E_FAIL;
+    }
+
+    if (iface == type)
+        return S_OK;
+
+    return S_FALSE;
 }
 
 static ID3D11ShaderReflectionType * STDMETHODCALLTYPE d3dcompiler_shader_reflection_type_GetSubType(

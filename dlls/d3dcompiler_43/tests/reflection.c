@@ -1380,6 +1380,18 @@ static void test_reflection_constant_buffer(void)
     t11 = t11_valid->lpVtbl->GetMemberTypeByName(t11_valid, "invalid");
     ok(t11_dummy == t11, "GetMemberTypeByName failed, got %p, expected %p\n", t11, t11_dummy);
 
+    hr = t11_dummy->lpVtbl->IsEqual(t11_dummy, t11_dummy);
+    ok(hr == E_FAIL, "IsEqual failed, got %x, expected %x\n", hr, E_FAIL);
+
+    hr = t11_valid->lpVtbl->IsEqual(t11_valid, t11_dummy);
+    ok(hr == S_FALSE, "IsEqual failed, got %x, expected %x\n", hr, S_FALSE);
+
+    hr = t11_dummy->lpVtbl->IsEqual(t11_dummy, t11_valid);
+    ok(hr == E_FAIL, "IsEqual failed, got %x, expected %x\n", hr, E_FAIL);
+
+    hr = t11_valid->lpVtbl->IsEqual(t11_valid, t11_valid);
+    ok(hr == S_OK, "IsEqual failed, got %x, expected %x\n", hr, S_OK);
+
     /* constant buffers */
     for (i = 0; i < sizeof(test_reflection_constant_buffer_cb_result)/sizeof(*test_reflection_constant_buffer_cb_result); ++i)
     {
@@ -1471,6 +1483,23 @@ static void test_reflection_constant_buffer(void)
 
     string = t11->lpVtbl->GetMemberTypeName(t11, 1);
     ok(!strcmp(string, "b"), "GetMemberTypeName failed, got \"%s\", expected \"%s\"\n", string, "b");
+
+    /* float vs float (in struct) */
+    hr = t11->lpVtbl->IsEqual(t11, t11_valid);
+    ok(hr == S_FALSE, "IsEqual failed, got %x, expected %x\n", hr, S_FALSE);
+
+    hr = t11_valid->lpVtbl->IsEqual(t11_valid, t11);
+    ok(hr == S_FALSE, "IsEqual failed, got %x, expected %x\n", hr, S_FALSE);
+
+    /* float vs float */
+    t = t11->lpVtbl->GetMemberTypeByIndex(t11, 0);
+    ok(t != t11_dummy, "GetMemberTypeByIndex failed\n");
+
+    t2 = t11->lpVtbl->GetMemberTypeByIndex(t11, 1);
+    ok(t2 != t11_dummy, "GetMemberTypeByIndex failed\n");
+
+    hr = t->lpVtbl->IsEqual(t, t2);
+    ok(hr == S_OK, "IsEqual failed, got %x, expected %x\n", hr, S_OK);
 
     count = ref11->lpVtbl->Release(ref11);
     ok(count == 0, "Release failed %u\n", count);
