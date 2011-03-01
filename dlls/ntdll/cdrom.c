@@ -103,7 +103,16 @@ typedef struct
     uint64_t senseLen;
 } dk_scsi_command_t;
 
+typedef struct
+{
+    uint64_t bus;
+    uint64_t port;
+    uint64_t target;
+    uint64_t lun;
+} dk_scsi_identify_t;
+
 #define DKIOCSCSICOMMAND _IOWR('d', 253, dk_scsi_command_t)
+#define DKIOCSCSIIDENTIFY _IOR('d', 254, dk_scsi_identify_t)
 
 #endif
 
@@ -628,6 +637,17 @@ static int CDROM_GetInterfaceInfo(int fd, UCHAR* iface, UCHAR* port, UCHAR* devi
             *lun = 0;
             return 1;
         }
+    }
+    return 0;
+#elif defined(__APPLE__)
+    dk_scsi_identify_t addr;
+    if (ioctl(fd, DKIOCSCSIIDENTIFY, &addr) != -1)
+    {
+       *port = addr.bus;
+       *iface = addr.port;
+       *device = addr.target;
+       *lun = addr.lun;
+       return 1;
     }
     return 0;
 #else
