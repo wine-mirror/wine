@@ -18,7 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
 #include <stdarg.h>
+#include <fcntl.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -864,6 +869,105 @@ NET_API_STATUS WINAPI NetUserModalsGet(
     return NERR_Success;
 }
 
+static int fork_smbpasswd( char * const argv[] )
+{
+#ifdef HAVE_FORK
+    int pipe_out[2];
+
+    if (pipe( pipe_out ) == -1) return -1;
+    fcntl( pipe_out[0], F_SETFD, FD_CLOEXEC );
+    fcntl( pipe_out[1], F_SETFD, FD_CLOEXEC );
+
+    switch (fork())
+    {
+    case -1:
+        close( pipe_out[0] );
+        close( pipe_out[1] );
+        return -1;
+    case 0:
+        dup2( pipe_out[0], 0 );
+        close( pipe_out[0] );
+        close( pipe_out[1] );
+        execvp( "smbpasswd", argv );
+        ERR( "can't execute smbpasswd, is it installed?\n" );
+        return -1;
+    default:
+        close( pipe_out[0] );
+        break;
+    }
+    return pipe_out[1];
+#else
+    ERR( "no fork support on this platform\n" );
+    return -1;
+#endif
+}
+
+static char *strdup_unixcp( const WCHAR *str )
+{
+    char *ret;
+    int len = WideCharToMultiByte( CP_UNIXCP, 0, str, -1, NULL, 0, NULL, NULL );
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
+        WideCharToMultiByte( CP_UNIXCP, 0, str, -1, ret, len, NULL, NULL );
+    return ret;
+}
+
+static NET_API_STATUS change_password_smb( LPCWSTR domainname, LPCWSTR username,
+    LPCWSTR oldpassword, LPCWSTR newpassword )
+{
+    static char option_silent[] = "-s";
+    static char option_user[] = "-U";
+    static char option_remote[] = "-r";
+    static char smbpasswd[] = "smbpasswd";
+    int pipe_out;
+    char *server = NULL, *user, *argv[7], *old, *new;
+
+    if (domainname && !(server = strdup_unixcp( domainname ))) return ERROR_OUTOFMEMORY;
+    if (!(user = strdup_unixcp( username )))
+    {
+        HeapFree( GetProcessHeap(), 0, server );
+        return ERROR_OUTOFMEMORY;
+    }
+    argv[0] = smbpasswd;
+    argv[1] = option_silent;
+    argv[2] = option_user;
+    argv[3] = user;
+    if (server)
+    {
+        argv[4] = option_remote;
+        argv[5] = server;
+        argv[6] = NULL;
+    }
+    else argv[4] = NULL;
+
+    pipe_out = fork_smbpasswd( argv );
+    HeapFree( GetProcessHeap(), 0, server );
+    HeapFree( GetProcessHeap(), 0, user );
+    if (pipe_out == -1) return NERR_InternalError;
+
+    if (!(old = strdup_unixcp( oldpassword )))
+    {
+        close( pipe_out );
+        return ERROR_OUTOFMEMORY;
+    }
+    if (!(new = strdup_unixcp( newpassword )))
+    {
+        close( pipe_out );
+        HeapFree( GetProcessHeap(), 0, old );
+        return ERROR_OUTOFMEMORY;
+    }
+    write( pipe_out, old, strlen( old ) );
+    write( pipe_out, "\n", 1 );
+    write( pipe_out, new, strlen( new ) );
+    write( pipe_out, "\n", 1 );
+    write( pipe_out, new, strlen( new ) );
+    write( pipe_out, "\n", 1 );
+
+    close( pipe_out );
+    HeapFree( GetProcessHeap(), 0, old );
+    HeapFree( GetProcessHeap(), 0, new );
+    return NERR_Success;
+}
+
 /******************************************************************************
  *                NetUserChangePassword  (NETAPI32.@)
  * PARAMS
@@ -885,6 +989,9 @@ NET_API_STATUS WINAPI NetUserChangePassword(LPCWSTR domainname, LPCWSTR username
     struct sam_user *user;
 
     TRACE("(%s, %s, ..., ...)\n", debugstr_w(domainname), debugstr_w(username));
+
+    if (!change_password_smb( domainname, username, oldpassword, newpassword ))
+        return NERR_Success;
 
     if(domainname)
         FIXME("Ignoring domainname %s.\n", debugstr_w(domainname));
