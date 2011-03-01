@@ -423,13 +423,13 @@ static DWORD ver_for_ext(GL_SupportedExt ext)
     return 0;
 }
 
-static BOOL match_ati_r300_to_500(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+static BOOL match_amd_r300_to_500(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    if (card_vendor != HW_VENDOR_ATI) return FALSE;
-    if (device == CARD_ATI_RADEON_9500) return TRUE;
-    if (device == CARD_ATI_RADEON_X700) return TRUE;
-    if (device == CARD_ATI_RADEON_X1600) return TRUE;
+    if (card_vendor != HW_VENDOR_AMD) return FALSE;
+    if (device == CARD_AMD_RADEON_9500) return TRUE;
+    if (device == CARD_AMD_RADEON_X700) return TRUE;
+    if (device == CARD_AMD_RADEON_X1600) return TRUE;
     return FALSE;
 }
 
@@ -554,8 +554,8 @@ static BOOL match_apple_nonr500ati(const struct wined3d_gl_info *gl_info, const 
         enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
     if (gl_vendor != GL_VENDOR_APPLE) return FALSE;
-    if (card_vendor != HW_VENDOR_ATI) return FALSE;
-    if (device == CARD_ATI_RADEON_X1600) return FALSE;
+    if (card_vendor != HW_VENDOR_AMD) return FALSE;
+    if (device == CARD_AMD_RADEON_X1600) return FALSE;
     return TRUE;
 }
 
@@ -755,7 +755,7 @@ static void quirk_one_point_sprite(struct wined3d_gl_info *gl_info)
     }
 }
 
-static void quirk_ati_dx9(struct wined3d_gl_info *gl_info)
+static void quirk_amd_dx9(struct wined3d_gl_info *gl_info)
 {
     quirk_arb_constants(gl_info);
 
@@ -860,9 +860,9 @@ struct driver_quirk
 static const struct driver_quirk quirk_table[] =
 {
     {
-        match_ati_r300_to_500,
-        quirk_ati_dx9,
-        "ATI GLSL constant and normalized texrect quirk"
+        match_amd_r300_to_500,
+        quirk_amd_dx9,
+        "AMD GLSL constant and normalized texrect quirk"
     },
     /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
      * used it falls back to software. While the compiler can detect if the shader uses all declared
@@ -976,17 +976,17 @@ struct driver_version_information
 /* The driver version table contains driver information for different devices on several OS versions. */
 static const struct driver_version_information driver_version_table[] =
 {
-    /* ATI
+    /* AMD
      * - Radeon HD2x00 (R600) and up supported by current drivers.
      * - Radeon 9500 (R300) - X1*00 (R5xx) supported up to Catalyst 9.3 (Linux) and 10.2 (XP/Vista/Win7)
      * - Radeon 7xxx (R100) - 9250 (RV250) supported up to Catalyst 6.11 (XP)
      * - Rage 128 supported up to XP, latest official build 6.13.3279 dated October 2001 */
-    {DRIVER_ATI_RAGE_128PRO,    DRIVER_MODEL_NT5X,  "ati2dvaa.dll", 13, 3279,  0},
-    {DRIVER_ATI_R100,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6614},
-    {DRIVER_ATI_R300,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6764},
-    {DRIVER_ATI_R600,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 8681},
-    {DRIVER_ATI_R300,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 14, 10, 741 },
-    {DRIVER_ATI_R600,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 14, 10, 741 },
+    {DRIVER_AMD_RAGE_128PRO,    DRIVER_MODEL_NT5X,  "ati2dvaa.dll", 13, 3279,  0},
+    {DRIVER_AMD_R100,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6614},
+    {DRIVER_AMD_R300,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 6764},
+    {DRIVER_AMD_R600,           DRIVER_MODEL_NT5X,  "ati2dvag.dll", 14, 10, 8681},
+    {DRIVER_AMD_R300,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 14, 10, 741 },
+    {DRIVER_AMD_R600,           DRIVER_MODEL_NT6X,  "atiumdag.dll", 14, 10, 741 },
 
     /* Intel
      * The drivers are unified but not all versions support all GPUs. At some point the 2k/xp
@@ -1069,30 +1069,30 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX465,     "NVIDIA GeForce GTX 465",           DRIVER_NVIDIA_GEFORCE6,  1024},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX470,     "NVIDIA GeForce GTX 470",           DRIVER_NVIDIA_GEFORCE6,  1280},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX480,     "NVIDIA GeForce GTX 480",           DRIVER_NVIDIA_GEFORCE6,  1536},
-    /* ATI cards */
-    {HW_VENDOR_ATI,        CARD_ATI_RAGE_128PRO,           "ATI Rage Fury",                    DRIVER_ATI_RAGE_128PRO,  16  },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_7200,           "ATI RADEON 7200 SERIES",           DRIVER_ATI_R100,         32  },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_8500,           "ATI RADEON 8500 SERIES",           DRIVER_ATI_R100,         64  },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  DRIVER_ATI_R300,         64  },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_XPRESS_200M,    "ATI RADEON XPRESS 200M Series",    DRIVER_ATI_R300,         64  },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               DRIVER_ATI_R300,         128 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          DRIVER_ATI_R300,         128 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2350,         "ATI Mobility Radeon HD 2350",      DRIVER_ATI_R600,         256 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      DRIVER_ATI_R600,         256 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            DRIVER_ATI_R600,         512 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD3200,         "ATI Radeon HD 3200 Graphics",      DRIVER_ATI_R600,         128 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               DRIVER_ATI_R600,         256 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        DRIVER_ATI_R600,         512 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        DRIVER_ATI_R600,         512 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        DRIVER_ATI_R600,         512 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5400,         "ATI Radeon HD 5400 Series",        DRIVER_ATI_R600,         512 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5600,         "ATI Radeon HD 5600 Series",        DRIVER_ATI_R600,         512 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        DRIVER_ATI_R600,         512 },
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        DRIVER_ATI_R600,         1024},
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD5900,         "ATI Radeon HD 5900 Series",        DRIVER_ATI_R600,         1024},
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD6310,         "AMD Radeon HD 6310 Graphics",      DRIVER_ATI_R600,         1024},
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD6800,         "AMD Radeon HD 6800 Series",        DRIVER_ATI_R600,         1024},
-    {HW_VENDOR_ATI,        CARD_ATI_RADEON_HD6900,         "AMD Radeon HD 6900 Series",        DRIVER_ATI_R600,         2048},
+    /* AMD cards */
+    {HW_VENDOR_AMD,        CARD_AMD_RAGE_128PRO,           "ATI Rage Fury",                    DRIVER_AMD_RAGE_128PRO,  16  },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_7200,           "ATI RADEON 7200 SERIES",           DRIVER_AMD_R100,         32  },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_8500,           "ATI RADEON 8500 SERIES",           DRIVER_AMD_R100,         64  },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_9500,           "ATI Radeon 9500",                  DRIVER_AMD_R300,         64  },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_XPRESS_200M,    "ATI RADEON XPRESS 200M Series",    DRIVER_AMD_R300,         64  },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_X700,           "ATI Radeon X700 SE",               DRIVER_AMD_R300,         128 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_X1600,          "ATI Radeon X1600 Series",          DRIVER_AMD_R300,         128 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD2350,         "ATI Mobility Radeon HD 2350",      DRIVER_AMD_R600,         256 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      DRIVER_AMD_R600,         256 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            DRIVER_AMD_R600,         512 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD3200,         "ATI Radeon HD 3200 Graphics",      DRIVER_AMD_R600,         128 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4350,         "ATI Radeon HD 4350",               DRIVER_AMD_R600,         256 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        DRIVER_AMD_R600,         512 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        DRIVER_AMD_R600,         512 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        DRIVER_AMD_R600,         512 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD5400,         "ATI Radeon HD 5400 Series",        DRIVER_AMD_R600,         512 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD5600,         "ATI Radeon HD 5600 Series",        DRIVER_AMD_R600,         512 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD5700,         "ATI Radeon HD 5700 Series",        DRIVER_AMD_R600,         512 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD5800,         "ATI Radeon HD 5800 Series",        DRIVER_AMD_R600,         1024},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD5900,         "ATI Radeon HD 5900 Series",        DRIVER_AMD_R600,         1024},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6310,         "AMD Radeon HD 6310 Graphics",      DRIVER_AMD_R600,         1024},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6800,         "AMD Radeon HD 6800 Series",        DRIVER_AMD_R600,         1024},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6900,         "AMD Radeon HD 6900 Series",        DRIVER_AMD_R600,         2048},
     /* Intel cards */
     {HW_VENDOR_INTEL,      CARD_INTEL_I830G,               "Intel(R) 82830M Graphics Controller",                       DRIVER_INTEL_GMA800,  32 },
     {HW_VENDOR_INTEL,      CARD_INTEL_I855G,               "Intel(R) 82852/82855 GM/GME Graphics Controller",           DRIVER_INTEL_GMA800,  32 },
@@ -1370,7 +1370,7 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
             || strstr(gl_renderer, "R300")
             || strstr(gl_renderer, "R600")
             || strstr(gl_renderer, "R700"))
-        return HW_VENDOR_ATI;
+        return HW_VENDOR_AMD;
 
     if (strstr(gl_vendor_string, "Intel(R)")
             /* Intel switched from Intel(R) to Intel® recently, so just match Intel. */
@@ -1559,7 +1559,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
     return CARD_NVIDIA_RIVA_TNT; /* Riva TNT, Vanta */
 }
 
-static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_info *gl_info,
+static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
     /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
@@ -1578,47 +1578,47 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
         cards[] =
         {
             /* Evergreen */
-            {"HD 5870", CARD_ATI_RADEON_HD5800},    /* Radeon EG CYPRESS PRO */
-            {"HD 5850", CARD_ATI_RADEON_HD5800},    /* Radeon EG CYPRESS XT */
-            {"HD 5800", CARD_ATI_RADEON_HD5800},    /* Radeon EG CYPRESS HD58xx generic renderer string */
-            {"HD 5770", CARD_ATI_RADEON_HD5700},    /* Radeon EG JUNIPER XT */
-            {"HD 5750", CARD_ATI_RADEON_HD5700},    /* Radeon EG JUNIPER LE */
-            {"HD 5700", CARD_ATI_RADEON_HD5700},    /* Radeon EG JUNIPER HD57xx generic renderer string */
-            {"HD 5670", CARD_ATI_RADEON_HD5600},    /* Radeon EG REDWOOD XT */
-            {"HD 5570", CARD_ATI_RADEON_HD5600},    /* Radeon EG REDWOOD PRO mapped to HD5600 series */
-            {"HD 5550", CARD_ATI_RADEON_HD5600},    /* Radeon EG REDWOOD LE mapped to HD5600 series */
-            {"HD 5450", CARD_ATI_RADEON_HD5400},    /* Radeon EG CEDAR PRO */
+            {"HD 5870", CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS PRO */
+            {"HD 5850", CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS XT */
+            {"HD 5800", CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS HD58xx generic renderer string */
+            {"HD 5770", CARD_AMD_RADEON_HD5700},    /* Radeon EG JUNIPER XT */
+            {"HD 5750", CARD_AMD_RADEON_HD5700},    /* Radeon EG JUNIPER LE */
+            {"HD 5700", CARD_AMD_RADEON_HD5700},    /* Radeon EG JUNIPER HD57xx generic renderer string */
+            {"HD 5670", CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD XT */
+            {"HD 5570", CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD PRO mapped to HD5600 series */
+            {"HD 5550", CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD LE mapped to HD5600 series */
+            {"HD 5450", CARD_AMD_RADEON_HD5400},    /* Radeon EG CEDAR PRO */
             /* R700 */
-            {"HD 4890", CARD_ATI_RADEON_HD4800},    /* Radeon RV790 */
-            {"HD 4870", CARD_ATI_RADEON_HD4800},    /* Radeon RV770 */
-            {"HD 4850", CARD_ATI_RADEON_HD4800},    /* Radeon RV770 */
-            {"HD 4830", CARD_ATI_RADEON_HD4800},    /* Radeon RV770 */
-            {"HD 4800", CARD_ATI_RADEON_HD4800},    /* Radeon RV7xx HD48xx generic renderer string */
-            {"HD 4770", CARD_ATI_RADEON_HD4700},    /* Radeon RV740 */
-            {"HD 4700", CARD_ATI_RADEON_HD4700},    /* Radeon RV7xx HD47xx generic renderer string */
-            {"HD 4670", CARD_ATI_RADEON_HD4600},    /* Radeon RV730 */
-            {"HD 4650", CARD_ATI_RADEON_HD4600},    /* Radeon RV730 */
-            {"HD 4600", CARD_ATI_RADEON_HD4600},    /* Radeon RV730 */
-            {"HD 4550", CARD_ATI_RADEON_HD4350},    /* Radeon RV710 */
-            {"HD 4350", CARD_ATI_RADEON_HD4350},    /* Radeon RV710 */
+            {"HD 4890", CARD_AMD_RADEON_HD4800},    /* Radeon RV790 */
+            {"HD 4870", CARD_AMD_RADEON_HD4800},    /* Radeon RV770 */
+            {"HD 4850", CARD_AMD_RADEON_HD4800},    /* Radeon RV770 */
+            {"HD 4830", CARD_AMD_RADEON_HD4800},    /* Radeon RV770 */
+            {"HD 4800", CARD_AMD_RADEON_HD4800},    /* Radeon RV7xx HD48xx generic renderer string */
+            {"HD 4770", CARD_AMD_RADEON_HD4700},    /* Radeon RV740 */
+            {"HD 4700", CARD_AMD_RADEON_HD4700},    /* Radeon RV7xx HD47xx generic renderer string */
+            {"HD 4670", CARD_AMD_RADEON_HD4600},    /* Radeon RV730 */
+            {"HD 4650", CARD_AMD_RADEON_HD4600},    /* Radeon RV730 */
+            {"HD 4600", CARD_AMD_RADEON_HD4600},    /* Radeon RV730 */
+            {"HD 4550", CARD_AMD_RADEON_HD4350},    /* Radeon RV710 */
+            {"HD 4350", CARD_AMD_RADEON_HD4350},    /* Radeon RV710 */
             /* R600/R700 integrated */
-            {"HD 3300", CARD_ATI_RADEON_HD3200},
-            {"HD 3200", CARD_ATI_RADEON_HD3200},
-            {"HD 3100", CARD_ATI_RADEON_HD3200},
+            {"HD 3300", CARD_AMD_RADEON_HD3200},
+            {"HD 3200", CARD_AMD_RADEON_HD3200},
+            {"HD 3100", CARD_AMD_RADEON_HD3200},
             /* R600 */
-            {"HD 3870", CARD_ATI_RADEON_HD2900},    /* HD2900/HD3800 - highend */
-            {"HD 3850", CARD_ATI_RADEON_HD2900},    /* HD2900/HD3800 - highend */
-            {"HD 2900", CARD_ATI_RADEON_HD2900},    /* HD2900/HD3800 - highend */
-            {"HD 3830", CARD_ATI_RADEON_HD2600},    /* China-only midend */
-            {"HD 3690", CARD_ATI_RADEON_HD2600},    /* HD2600/HD3600 - midend */
-            {"HD 3650", CARD_ATI_RADEON_HD2600},    /* HD2600/HD3600 - midend */
-            {"HD 2600", CARD_ATI_RADEON_HD2600},    /* HD2600/HD3600 - midend */
-            {"HD 3470", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"HD 3450", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"HD 3430", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"HD 3400", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"HD 2400", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"HD 2350", CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 3870", CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+            {"HD 3850", CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+            {"HD 2900", CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+            {"HD 3830", CARD_AMD_RADEON_HD2600},    /* China-only midend */
+            {"HD 3690", CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend */
+            {"HD 3650", CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend */
+            {"HD 2600", CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend */
+            {"HD 3470", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 3450", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 3430", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 3400", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 2400", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"HD 2350", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
         };
 
         for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
@@ -1628,7 +1628,7 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
         }
 
         /* Default for when no GPU has been found */
-        return CARD_ATI_RADEON_HD3200;
+        return CARD_AMD_RADEON_HD3200;
     }
 
     if (WINE_D3D8_CAPABLE(gl_info))
@@ -1640,7 +1640,7 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "X1900")
                 || strstr(gl_renderer, "X1950"))
         {
-            return CARD_ATI_RADEON_X1600;
+            return CARD_AMD_RADEON_X1600;
         }
 
         /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300/X2500/HD2300 (lowend R5xx)
@@ -1657,30 +1657,30 @@ static enum wined3d_pci_device select_card_ati_binary(const struct wined3d_gl_in
                 || strstr(gl_renderer, "HD 2300")
                 )
         {
-            return CARD_ATI_RADEON_X700;
+            return CARD_AMD_RADEON_X700;
         }
 
         /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400MHz */
         if (strstr(gl_renderer, "Radeon Xpress"))
         {
-            return CARD_ATI_RADEON_XPRESS_200M;
+            return CARD_AMD_RADEON_XPRESS_200M;
         }
 
         /* Radeon R3xx */
-        return CARD_ATI_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
+        return CARD_AMD_RADEON_9500; /* Radeon 9500/9550/9600/9700/9800/X300/X550/X600 */
     }
 
     if (WINE_D3D8_CAPABLE(gl_info))
     {
-        return CARD_ATI_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
+        return CARD_AMD_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
     }
 
     if (WINE_D3D7_CAPABLE(gl_info))
     {
-        return CARD_ATI_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
+        return CARD_AMD_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
     }
 
-    return CARD_ATI_RAGE_128PRO;
+    return CARD_AMD_RAGE_128PRO;
 }
 
 static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *gl_info,
@@ -1708,7 +1708,7 @@ static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *g
 
 }
 
-static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info *gl_info,
+static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
     unsigned int i;
@@ -1731,66 +1731,66 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
         cards[] =
         {
             /* Northern Islands */
-            {"CAYMAN",  CARD_ATI_RADEON_HD6900},
-            {"BARTS",   CARD_ATI_RADEON_HD6800},
-            {"PALM",    CARD_ATI_RADEON_HD6310},
+            {"CAYMAN",  CARD_AMD_RADEON_HD6900},
+            {"BARTS",   CARD_AMD_RADEON_HD6800},
+            {"PALM",    CARD_AMD_RADEON_HD6310},
             /* Evergreen */
-            {"HEMLOCK", CARD_ATI_RADEON_HD5900},
-            {"CYPRESS", CARD_ATI_RADEON_HD5800},
-            {"JUNIPER", CARD_ATI_RADEON_HD5700},
-            {"REDWOOD", CARD_ATI_RADEON_HD5600},
-            {"CEDAR",   CARD_ATI_RADEON_HD5400},
+            {"HEMLOCK", CARD_AMD_RADEON_HD5900},
+            {"CYPRESS", CARD_AMD_RADEON_HD5800},
+            {"JUNIPER", CARD_AMD_RADEON_HD5700},
+            {"REDWOOD", CARD_AMD_RADEON_HD5600},
+            {"CEDAR",   CARD_AMD_RADEON_HD5400},
             /* R700 */
-            {"R700",    CARD_ATI_RADEON_HD4800},    /* HD4800 - highend */
-            {"RV790",   CARD_ATI_RADEON_HD4800},
-            {"RV770",   CARD_ATI_RADEON_HD4800},
-            {"RV740",   CARD_ATI_RADEON_HD4700},    /* HD4700 - midend */
-            {"RV730",   CARD_ATI_RADEON_HD4600},    /* HD4600 - midend */
-            {"RV710",   CARD_ATI_RADEON_HD4350},    /* HD4500/HD4350 - lowend */
+            {"R700",    CARD_AMD_RADEON_HD4800},    /* HD4800 - highend */
+            {"RV790",   CARD_AMD_RADEON_HD4800},
+            {"RV770",   CARD_AMD_RADEON_HD4800},
+            {"RV740",   CARD_AMD_RADEON_HD4700},    /* HD4700 - midend */
+            {"RV730",   CARD_AMD_RADEON_HD4600},    /* HD4600 - midend */
+            {"RV710",   CARD_AMD_RADEON_HD4350},    /* HD4500/HD4350 - lowend */
             /* R600/R700 integrated */
-            {"RS880",   CARD_ATI_RADEON_HD3200},
-            {"RS780",   CARD_ATI_RADEON_HD3200},
+            {"RS880",   CARD_AMD_RADEON_HD3200},
+            {"RS780",   CARD_AMD_RADEON_HD3200},
             /* R600 */
-            {"R680",    CARD_ATI_RADEON_HD2900},    /* HD2900/HD3800 - highend */
-            {"R600",    CARD_ATI_RADEON_HD2900},
-            {"RV670",   CARD_ATI_RADEON_HD2900},
-            {"RV635",   CARD_ATI_RADEON_HD2600},    /* HD2600/HD3600 - midend; HD3830 is China-only midend */
-            {"RV630",   CARD_ATI_RADEON_HD2600},
-            {"RV620",   CARD_ATI_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"RV610",   CARD_ATI_RADEON_HD2350},
+            {"R680",    CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+            {"R600",    CARD_AMD_RADEON_HD2900},
+            {"RV670",   CARD_AMD_RADEON_HD2900},
+            {"RV635",   CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend; HD3830 is China-only midend */
+            {"RV630",   CARD_AMD_RADEON_HD2600},
+            {"RV620",   CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+            {"RV610",   CARD_AMD_RADEON_HD2350},
             /* R500 */
-            {"R580",    CARD_ATI_RADEON_X1600},
-            {"R520",    CARD_ATI_RADEON_X1600},
-            {"RV570",   CARD_ATI_RADEON_X1600},
-            {"RV560",   CARD_ATI_RADEON_X1600},
-            {"RV535",   CARD_ATI_RADEON_X1600},
-            {"RV530",   CARD_ATI_RADEON_X1600},
-            {"RV516",   CARD_ATI_RADEON_X700},      /* X700 is actually R400. */
-            {"RV515",   CARD_ATI_RADEON_X700},
+            {"R580",    CARD_AMD_RADEON_X1600},
+            {"R520",    CARD_AMD_RADEON_X1600},
+            {"RV570",   CARD_AMD_RADEON_X1600},
+            {"RV560",   CARD_AMD_RADEON_X1600},
+            {"RV535",   CARD_AMD_RADEON_X1600},
+            {"RV530",   CARD_AMD_RADEON_X1600},
+            {"RV516",   CARD_AMD_RADEON_X700},      /* X700 is actually R400. */
+            {"RV515",   CARD_AMD_RADEON_X700},
             /* R400 */
-            {"R481",    CARD_ATI_RADEON_X700},
-            {"R480",    CARD_ATI_RADEON_X700},
-            {"R430",    CARD_ATI_RADEON_X700},
-            {"R423",    CARD_ATI_RADEON_X700},
-            {"R420",    CARD_ATI_RADEON_X700},
-            {"R410",    CARD_ATI_RADEON_X700},
-            {"RV410",   CARD_ATI_RADEON_X700},
+            {"R481",    CARD_AMD_RADEON_X700},
+            {"R480",    CARD_AMD_RADEON_X700},
+            {"R430",    CARD_AMD_RADEON_X700},
+            {"R423",    CARD_AMD_RADEON_X700},
+            {"R420",    CARD_AMD_RADEON_X700},
+            {"R410",    CARD_AMD_RADEON_X700},
+            {"RV410",   CARD_AMD_RADEON_X700},
             /* Radeon Xpress - onboard, DX9b, Shader 2.0, 300-400MHz */
-            {"RS740",   CARD_ATI_RADEON_XPRESS_200M},
-            {"RS690",   CARD_ATI_RADEON_XPRESS_200M},
-            {"RS600",   CARD_ATI_RADEON_XPRESS_200M},
-            {"RS485",   CARD_ATI_RADEON_XPRESS_200M},
-            {"RS482",   CARD_ATI_RADEON_XPRESS_200M},
-            {"RS480",   CARD_ATI_RADEON_XPRESS_200M},
-            {"RS400",   CARD_ATI_RADEON_XPRESS_200M},
+            {"RS740",   CARD_AMD_RADEON_XPRESS_200M},
+            {"RS690",   CARD_AMD_RADEON_XPRESS_200M},
+            {"RS600",   CARD_AMD_RADEON_XPRESS_200M},
+            {"RS485",   CARD_AMD_RADEON_XPRESS_200M},
+            {"RS482",   CARD_AMD_RADEON_XPRESS_200M},
+            {"RS480",   CARD_AMD_RADEON_XPRESS_200M},
+            {"RS400",   CARD_AMD_RADEON_XPRESS_200M},
             /* R300 */
-            {"R360",    CARD_ATI_RADEON_9500},
-            {"R350",    CARD_ATI_RADEON_9500},
-            {"R300",    CARD_ATI_RADEON_9500},
-            {"RV370",   CARD_ATI_RADEON_9500},
-            {"RV360",   CARD_ATI_RADEON_9500},
-            {"RV351",   CARD_ATI_RADEON_9500},
-            {"RV350",   CARD_ATI_RADEON_9500},
+            {"R360",    CARD_AMD_RADEON_9500},
+            {"R350",    CARD_AMD_RADEON_9500},
+            {"R300",    CARD_AMD_RADEON_9500},
+            {"RV370",   CARD_AMD_RADEON_9500},
+            {"RV360",   CARD_AMD_RADEON_9500},
+            {"RV351",   CARD_AMD_RADEON_9500},
+            {"RV350",   CARD_AMD_RADEON_9500},
         };
 
         for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
@@ -1810,23 +1810,23 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
         cards[] =
         {
             /* R700 */
-            {"(R700",   CARD_ATI_RADEON_HD4800},    /* HD4800 - highend */
-            {"(RV790",  CARD_ATI_RADEON_HD4800},
-            {"(RV770",  CARD_ATI_RADEON_HD4800},
-            {"(RV740",  CARD_ATI_RADEON_HD4700},    /* HD4700 - midend */
-            {"(RV730",  CARD_ATI_RADEON_HD4600},    /* HD4600 - midend */
-            {"(RV710",  CARD_ATI_RADEON_HD4350},    /* HD4500/HD4350 - lowend */
+            {"(R700",   CARD_AMD_RADEON_HD4800},    /* HD4800 - highend */
+            {"(RV790",  CARD_AMD_RADEON_HD4800},
+            {"(RV770",  CARD_AMD_RADEON_HD4800},
+            {"(RV740",  CARD_AMD_RADEON_HD4700},    /* HD4700 - midend */
+            {"(RV730",  CARD_AMD_RADEON_HD4600},    /* HD4600 - midend */
+            {"(RV710",  CARD_AMD_RADEON_HD4350},    /* HD4500/HD4350 - lowend */
             /* R600/R700 integrated */
-            {"RS880",   CARD_ATI_RADEON_HD3200},
-            {"RS780",   CARD_ATI_RADEON_HD3200},
+            {"RS880",   CARD_AMD_RADEON_HD3200},
+            {"RS780",   CARD_AMD_RADEON_HD3200},
             /* R600 */
-            {"(R680",   CARD_ATI_RADEON_HD2900},    /* HD2900/HD3800 - highend */
-            {"(R600",   CARD_ATI_RADEON_HD2900},
-            {"(RV670",  CARD_ATI_RADEON_HD2900},
-            {"(RV635",  CARD_ATI_RADEON_HD2600},    /* HD2600/HD3600 - midend; HD3830 is China-only midend */
-            {"(RV630",  CARD_ATI_RADEON_HD2600},
-            {"(RV620",  CARD_ATI_RADEON_HD2350},    /* HD2300/HD2400/HD3400 - lowend */
-            {"(RV610",  CARD_ATI_RADEON_HD2350},
+            {"(R680",   CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+            {"(R600",   CARD_AMD_RADEON_HD2900},
+            {"(RV670",  CARD_AMD_RADEON_HD2900},
+            {"(RV635",  CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend; HD3830 is China-only midend */
+            {"(RV630",  CARD_AMD_RADEON_HD2600},
+            {"(RV620",  CARD_AMD_RADEON_HD2350},    /* HD2300/HD2400/HD3400 - lowend */
+            {"(RV610",  CARD_AMD_RADEON_HD2350},
         };
 
         for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
@@ -1838,15 +1838,15 @@ static enum wined3d_pci_device select_card_ati_mesa(const struct wined3d_gl_info
 
     if (WINE_D3D8_CAPABLE(gl_info))
     {
-        return CARD_ATI_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
+        return CARD_AMD_RADEON_8500; /* Radeon 8500/9000/9100/9200/9300 */
     }
 
     if (WINE_D3D7_CAPABLE(gl_info))
     {
-        return CARD_ATI_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
+        return CARD_AMD_RADEON_7200; /* Radeon 7000/7100/7200/7500 */
     }
 
-    return CARD_ATI_RAGE_128PRO;
+    return CARD_AMD_RAGE_128PRO;
 }
 
 static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_info *gl_info,
@@ -1873,10 +1873,10 @@ static const struct vendor_card_selection vendor_card_select_table[] =
 {
     {GL_VENDOR_NVIDIA, HW_VENDOR_NVIDIA,  "Nvidia binary driver",     select_card_nvidia_binary},
     {GL_VENDOR_APPLE,  HW_VENDOR_NVIDIA,  "Apple OSX NVidia binary driver",   select_card_nvidia_binary},
-    {GL_VENDOR_APPLE,  HW_VENDOR_ATI,     "Apple OSX AMD/ATI binary driver",  select_card_ati_binary},
+    {GL_VENDOR_APPLE,  HW_VENDOR_AMD,     "Apple OSX AMD/ATI binary driver",  select_card_amd_binary},
     {GL_VENDOR_APPLE,  HW_VENDOR_INTEL,   "Apple OSX Intel binary driver",    select_card_intel},
-    {GL_VENDOR_FGLRX,  HW_VENDOR_ATI,     "AMD/ATI binary driver",    select_card_ati_binary},
-    {GL_VENDOR_MESA,   HW_VENDOR_ATI,     "Mesa AMD/ATI driver",      select_card_ati_mesa},
+    {GL_VENDOR_FGLRX,  HW_VENDOR_AMD,     "AMD/ATI binary driver",    select_card_amd_binary},
+    {GL_VENDOR_MESA,   HW_VENDOR_AMD,     "Mesa AMD/ATI driver",      select_card_amd_mesa},
     {GL_VENDOR_MESA,   HW_VENDOR_NVIDIA,  "Mesa Nouveau driver",      select_card_nvidia_mesa},
     {GL_VENDOR_MESA,   HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel},
     {GL_VENDOR_INTEL,  HW_VENDOR_INTEL,   "Mesa Intel driver",        select_card_intel}

@@ -1276,14 +1276,14 @@ typedef struct WineD3D_PixelFormat
 } WineD3D_PixelFormat;
 
 /* The driver names reflect the lowest GPU supported
- * by a certain driver, so DRIVER_ATI_R300 supports
+ * by a certain driver, so DRIVER_AMD_R300 supports
  * R3xx, R4xx and R5xx GPUs. */
 enum wined3d_display_driver
 {
-    DRIVER_ATI_RAGE_128PRO,
-    DRIVER_ATI_R100,
-    DRIVER_ATI_R300,
-    DRIVER_ATI_R600,
+    DRIVER_AMD_RAGE_128PRO,
+    DRIVER_AMD_R100,
+    DRIVER_AMD_R300,
+    DRIVER_AMD_R600,
     DRIVER_INTEL_GMA800,
     DRIVER_INTEL_GMA900,
     DRIVER_INTEL_GMA950,
@@ -1317,7 +1317,7 @@ enum wined3d_gl_vendor
 enum wined3d_pci_vendor
 {
     HW_VENDOR_SOFTWARE                 = 0x0000,
-    HW_VENDOR_ATI                      = 0x1002,
+    HW_VENDOR_AMD                      = 0x1002,
     HW_VENDOR_NVIDIA                   = 0x10de,
     HW_VENDOR_INTEL                    = 0x8086,
 };
@@ -1326,41 +1326,41 @@ enum wined3d_pci_device
 {
     CARD_WINE                       = 0x0000,
 
-    CARD_ATI_RAGE_128PRO            = 0x5246,
-    CARD_ATI_RADEON_7200            = 0x5144,
-    CARD_ATI_RADEON_8500            = 0x514c,
-    CARD_ATI_RADEON_9500            = 0x4144,
-    CARD_ATI_RADEON_XPRESS_200M     = 0x5955,
-    CARD_ATI_RADEON_X700            = 0x5e4c,
-    CARD_ATI_RADEON_X1600           = 0x71c2,
-    CARD_ATI_RADEON_HD2350          = 0x94c7,
-    CARD_ATI_RADEON_HD2600          = 0x9581,
-    CARD_ATI_RADEON_HD2900          = 0x9400,
-    CARD_ATI_RADEON_HD3200          = 0x9620,
-    CARD_ATI_RADEON_HD4350          = 0x954f,
-    CARD_ATI_RADEON_HD4550          = 0x9540,
-    CARD_ATI_RADEON_HD4600          = 0x9495,
-    CARD_ATI_RADEON_HD4650          = 0x9498,
-    CARD_ATI_RADEON_HD4670          = 0x9490,
-    CARD_ATI_RADEON_HD4700          = 0x944e,
-    CARD_ATI_RADEON_HD4770          = 0x94b3,
-    CARD_ATI_RADEON_HD4800          = 0x944c, /* Picked one value between 9440, 944c, 9442, 9460 */
-    CARD_ATI_RADEON_HD4830          = 0x944c,
-    CARD_ATI_RADEON_HD4850          = 0x9442,
-    CARD_ATI_RADEON_HD4870          = 0x9440,
-    CARD_ATI_RADEON_HD4890          = 0x9460,
-    CARD_ATI_RADEON_HD5400          = 0x68f9,
-    CARD_ATI_RADEON_HD5600          = 0x68d8,
-    CARD_ATI_RADEON_HD5700          = 0x68BE, /* Picked HD5750 */
-    CARD_ATI_RADEON_HD5750          = 0x68BE,
-    CARD_ATI_RADEON_HD5770          = 0x68B8,
-    CARD_ATI_RADEON_HD5800          = 0x6898, /* Picked HD5850 */
-    CARD_ATI_RADEON_HD5850          = 0x6898,
-    CARD_ATI_RADEON_HD5870          = 0x6899,
-    CARD_ATI_RADEON_HD5900          = 0x689c,
-    CARD_ATI_RADEON_HD6310          = 0x9803,
-    CARD_ATI_RADEON_HD6800          = 0x6739,
-    CARD_ATI_RADEON_HD6900          = 0x6719,
+    CARD_AMD_RAGE_128PRO            = 0x5246,
+    CARD_AMD_RADEON_7200            = 0x5144,
+    CARD_AMD_RADEON_8500            = 0x514c,
+    CARD_AMD_RADEON_9500            = 0x4144,
+    CARD_AMD_RADEON_XPRESS_200M     = 0x5955,
+    CARD_AMD_RADEON_X700            = 0x5e4c,
+    CARD_AMD_RADEON_X1600           = 0x71c2,
+    CARD_AMD_RADEON_HD2350          = 0x94c7,
+    CARD_AMD_RADEON_HD2600          = 0x9581,
+    CARD_AMD_RADEON_HD2900          = 0x9400,
+    CARD_AMD_RADEON_HD3200          = 0x9620,
+    CARD_AMD_RADEON_HD4350          = 0x954f,
+    CARD_AMD_RADEON_HD4550          = 0x9540,
+    CARD_AMD_RADEON_HD4600          = 0x9495,
+    CARD_AMD_RADEON_HD4650          = 0x9498,
+    CARD_AMD_RADEON_HD4670          = 0x9490,
+    CARD_AMD_RADEON_HD4700          = 0x944e,
+    CARD_AMD_RADEON_HD4770          = 0x94b3,
+    CARD_AMD_RADEON_HD4800          = 0x944c, /* Picked one value between 9440, 944c, 9442, 9460 */
+    CARD_AMD_RADEON_HD4830          = 0x944c,
+    CARD_AMD_RADEON_HD4850          = 0x9442,
+    CARD_AMD_RADEON_HD4870          = 0x9440,
+    CARD_AMD_RADEON_HD4890          = 0x9460,
+    CARD_AMD_RADEON_HD5400          = 0x68f9,
+    CARD_AMD_RADEON_HD5600          = 0x68d8,
+    CARD_AMD_RADEON_HD5700          = 0x68BE, /* Picked HD5750 */
+    CARD_AMD_RADEON_HD5750          = 0x68BE,
+    CARD_AMD_RADEON_HD5770          = 0x68B8,
+    CARD_AMD_RADEON_HD5800          = 0x6898, /* Picked HD5850 */
+    CARD_AMD_RADEON_HD5850          = 0x6898,
+    CARD_AMD_RADEON_HD5870          = 0x6899,
+    CARD_AMD_RADEON_HD5900          = 0x689c,
+    CARD_AMD_RADEON_HD6310          = 0x9803,
+    CARD_AMD_RADEON_HD6800          = 0x6739,
+    CARD_AMD_RADEON_HD6900          = 0x6719,
 
     CARD_NVIDIA_RIVA_128            = 0x0018,
     CARD_NVIDIA_RIVA_TNT            = 0x0020,
