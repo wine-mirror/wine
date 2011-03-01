@@ -34,6 +34,111 @@ enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE
 #define D3DCOMPILER_SHADER_TARGET_VERSION_MASK 0xffff
 #define D3DCOMPILER_SHADER_TARGET_SHADERTYPE_MASK 0xffff0000
 
+struct d3dcompiler_shader_signature
+{
+    D3D11_SIGNATURE_PARAMETER_DESC *elements;
+    UINT element_count;
+    char *string_data;
+};
+
+struct d3dcompiler_shader_reflection_type
+{
+    ID3D11ShaderReflectionType ID3D11ShaderReflectionType_iface;
+
+    DWORD id;
+    struct wine_rb_entry entry;
+
+    struct d3dcompiler_shader_reflection *reflection;
+
+    D3D11_SHADER_TYPE_DESC desc;
+    struct d3dcompiler_shader_reflection_type_member *members;
+};
+
+struct d3dcompiler_shader_reflection_type_member
+{
+    char *name;
+    DWORD offset;
+    struct d3dcompiler_shader_reflection_type *type;
+};
+
+struct d3dcompiler_shader_reflection_variable
+{
+    ID3D11ShaderReflectionVariable ID3D11ShaderReflectionVariable_iface;
+
+    struct d3dcompiler_shader_reflection_constant_buffer *constant_buffer;
+    struct d3dcompiler_shader_reflection_type *type;
+
+    char *name;
+    UINT start_offset;
+    UINT size;
+    UINT flags;
+    LPVOID default_value;
+};
+
+struct d3dcompiler_shader_reflection_constant_buffer
+{
+    ID3D11ShaderReflectionConstantBuffer ID3D11ShaderReflectionConstantBuffer_iface;
+
+    struct d3dcompiler_shader_reflection *reflection;
+
+    char *name;
+    D3D_CBUFFER_TYPE type;
+    UINT variable_count;
+    UINT size;
+    UINT flags;
+
+    struct d3dcompiler_shader_reflection_variable *variables;
+};
+
+/* ID3D11ShaderReflection */
+struct d3dcompiler_shader_reflection
+{
+    ID3D11ShaderReflection ID3D11ShaderReflection_iface;
+    LONG refcount;
+
+    DWORD target;
+    char *creator;
+    UINT flags;
+    UINT version;
+    UINT bound_resource_count;
+    UINT constant_buffer_count;
+
+    UINT mov_instruction_count;
+    UINT conversion_instruction_count;
+    UINT instruction_count;
+    UINT emit_instruction_count;
+    D3D_PRIMITIVE_TOPOLOGY gs_output_topology;
+    UINT gs_max_output_vertex_count;
+    D3D_PRIMITIVE input_primitive;
+    UINT cut_instruction_count;
+    UINT dcl_count;
+    UINT static_flow_control_count;
+    UINT float_instruction_count;
+    UINT temp_register_count;
+    UINT int_instruction_count;
+    UINT uint_instruction_count;
+    UINT temp_array_count;
+    UINT array_instruction_count;
+    UINT texture_normal_instructions;
+    UINT texture_load_instructions;
+    UINT texture_comp_instructions;
+    UINT texture_bias_instructions;
+    UINT texture_gradient_instructions;
+    UINT dynamic_flow_control_count;
+    UINT c_control_points;
+    D3D_TESSELLATOR_OUTPUT_PRIMITIVE hs_output_primitive;
+    D3D_TESSELLATOR_PARTITIONING hs_prtitioning;
+    D3D_TESSELLATOR_DOMAIN tessellator_domain;
+
+    struct d3dcompiler_shader_signature *isgn;
+    struct d3dcompiler_shader_signature *osgn;
+    struct d3dcompiler_shader_signature *pcsg;
+    char *resource_string;
+    D3D11_SHADER_INPUT_BIND_DESC *bound_resources;
+    struct d3dcompiler_shader_reflection_constant_buffer *constant_buffers;
+    struct wine_rb_tree types;
+};
+
 static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3dcompiler_shader_reflection *reflection, const char *data, DWORD offset);
 
 const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl;
@@ -1572,7 +1677,7 @@ static HRESULT d3dcompiler_parse_shdr(struct d3dcompiler_shader_reflection *r, c
     return S_OK;
 }
 
-HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection *reflection,
+static HRESULT d3dcompiler_shader_reflection_init(struct d3dcompiler_shader_reflection *reflection,
         const void *data, SIZE_T data_size)
 {
     struct dxbc src_dxbc;
@@ -1696,4 +1801,52 @@ err_out:
     dxbc_destroy(&src_dxbc);
 
     return hr;
+}
+
+HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void **reflector)
+{
+    struct d3dcompiler_shader_reflection *object;
+    HRESULT hr;
+    const DWORD *temp = data;
+
+    TRACE("data %p, data_size %lu, riid %s, blob %p\n", data, data_size, debugstr_guid(riid), reflector);
+
+    if (!data || data_size < 32)
+    {
+        WARN("Invalid argument supplied.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (temp[6] != data_size)
+    {
+        WARN("Wrong size supplied.\n");
+        return E_FAIL;
+    }
+
+    if (!IsEqualGUID(riid, &IID_ID3D11ShaderReflection))
+    {
+        WARN("Wrong riid %s, accept only %s!\n", debugstr_guid(riid), debugstr_guid(&IID_ID3D11ShaderReflection));
+        return E_NOINTERFACE;
+    }
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D compiler shader reflection object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = d3dcompiler_shader_reflection_init(object, data, data_size);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize shader reflection\n");
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    *reflector = object;
+
+    TRACE("Created ID3D11ShaderReflection %p\n", object);
+
+    return S_OK;
 }
