@@ -1119,7 +1119,7 @@ size_t server_init_thread( void *entry_point )
             if (!strcmp( arch, "win32" ) && (is_win64 || is_wow64))
                 fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n",
                              wine_get_config_dir() );
-            if (!strcmp( arch, "win64" ) && !is_wow64)
+            if (!strcmp( arch, "win64" ) && !is_win64 && !is_wow64)
                 fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n",
                              wine_get_config_dir() );
         }
