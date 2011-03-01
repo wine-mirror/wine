@@ -220,12 +220,12 @@ struct _object_header_t
 typedef struct
 {
     object_header_t hdr;
-    LPWSTR  lpszAgent;
-    LPWSTR  lpszProxy;
-    LPWSTR  lpszProxyBypass;
-    LPWSTR  lpszProxyUsername;
-    LPWSTR  lpszProxyPassword;
-    DWORD   dwAccessType;
+    LPWSTR  agent;
+    LPWSTR  proxy;
+    LPWSTR  proxyBypass;
+    LPWSTR  proxyUsername;
+    LPWSTR  proxyPassword;
+    DWORD   accessType;
 } appinfo_t;
 
 

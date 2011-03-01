@@ -603,12 +603,12 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
 
     if (wpi.dwProxyEnabled)
     {
-        lpwai->dwAccessType = INTERNET_OPEN_TYPE_PROXY;
-        lpwai->lpszProxy = wpi.lpszProxyServer;
+        lpwai->accessType = INTERNET_OPEN_TYPE_PROXY;
+        lpwai->proxy = wpi.lpszProxyServer;
         return TRUE;
     }
 
-    lpwai->dwAccessType = INTERNET_OPEN_TYPE_DIRECT;
+    lpwai->accessType = INTERNET_OPEN_TYPE_DIRECT;
     return FALSE;
 }
 
@@ -681,11 +681,11 @@ static VOID APPINFO_Destroy(object_header_t *hdr)
 
     TRACE("%p\n",lpwai);
 
-    HeapFree(GetProcessHeap(), 0, lpwai->lpszAgent);
-    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxy);
-    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyBypass);
-    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyUsername);
-    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyPassword);
+    HeapFree(GetProcessHeap(), 0, lpwai->agent);
+    HeapFree(GetProcessHeap(), 0, lpwai->proxy);
+    HeapFree(GetProcessHeap(), 0, lpwai->proxyBypass);
+    HeapFree(GetProcessHeap(), 0, lpwai->proxyUsername);
+    HeapFree(GetProcessHeap(), 0, lpwai->proxyPassword);
 }
 
 static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
@@ -711,14 +711,14 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         bufsize = *size;
 
         if (unicode) {
-            DWORD len = ai->lpszAgent ? strlenW(ai->lpszAgent) : 0;
+            DWORD len = ai->agent ? strlenW(ai->agent) : 0;
 
             *size = (len + 1) * sizeof(WCHAR);
             if(!buffer || bufsize < *size)
                 return ERROR_INSUFFICIENT_BUFFER;
 
-            if (ai->lpszAgent)
-                strcpyW(buffer, ai->lpszAgent);
+            if (ai->agent)
+                strcpyW(buffer, ai->agent);
             else
                 *(WCHAR *)buffer = 0;
             /* If the buffer is copied, the returned length doesn't include
@@ -726,15 +726,15 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
              */
             *size = len * sizeof(WCHAR);
         }else {
-            if (ai->lpszAgent)
-                *size = WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, NULL, 0, NULL, NULL);
+            if (ai->agent)
+                *size = WideCharToMultiByte(CP_ACP, 0, ai->agent, -1, NULL, 0, NULL, NULL);
             else
                 *size = 1;
             if(!buffer || bufsize < *size)
                 return ERROR_INSUFFICIENT_BUFFER;
 
-            if (ai->lpszAgent)
-                WideCharToMultiByte(CP_ACP, 0, ai->lpszAgent, -1, buffer, *size, NULL, NULL);
+            if (ai->agent)
+                WideCharToMultiByte(CP_ACP, 0, ai->agent, -1, buffer, *size, NULL, NULL);
             else
                 *(char *)buffer = 0;
             /* If the buffer is copied, the returned length doesn't include
@@ -752,10 +752,10 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             DWORD proxyBytesRequired = 0, proxyBypassBytesRequired = 0;
             LPWSTR proxy, proxy_bypass;
 
-            if (ai->lpszProxy)
-                proxyBytesRequired = (lstrlenW(ai->lpszProxy) + 1) * sizeof(WCHAR);
-            if (ai->lpszProxyBypass)
-                proxyBypassBytesRequired = (lstrlenW(ai->lpszProxyBypass) + 1) * sizeof(WCHAR);
+            if (ai->proxy)
+                proxyBytesRequired = (lstrlenW(ai->proxy) + 1) * sizeof(WCHAR);
+            if (ai->proxyBypass)
+                proxyBypassBytesRequired = (lstrlenW(ai->proxyBypass) + 1) * sizeof(WCHAR);
             if (*size < sizeof(INTERNET_PROXY_INFOW) + proxyBytesRequired + proxyBypassBytesRequired)
             {
                 *size = sizeof(INTERNET_PROXY_INFOW) + proxyBytesRequired + proxyBypassBytesRequired;
@@ -764,16 +764,16 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             proxy = (LPWSTR)((LPBYTE)buffer + sizeof(INTERNET_PROXY_INFOW));
             proxy_bypass = (LPWSTR)((LPBYTE)buffer + sizeof(INTERNET_PROXY_INFOW) + proxyBytesRequired);
 
-            pi->dwAccessType = ai->dwAccessType;
+            pi->dwAccessType = ai->accessType;
             pi->lpszProxy = NULL;
             pi->lpszProxyBypass = NULL;
-            if (ai->lpszProxy) {
-                lstrcpyW(proxy, ai->lpszProxy);
+            if (ai->proxy) {
+                lstrcpyW(proxy, ai->proxy);
                 pi->lpszProxy = proxy;
             }
 
-            if (ai->lpszProxyBypass) {
-                lstrcpyW(proxy_bypass, ai->lpszProxyBypass);
+            if (ai->proxyBypass) {
+                lstrcpyW(proxy_bypass, ai->proxyBypass);
                 pi->lpszProxyBypass = proxy_bypass;
             }
 
@@ -784,10 +784,10 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             DWORD proxyBytesRequired = 0, proxyBypassBytesRequired = 0;
             LPSTR proxy, proxy_bypass;
 
-            if (ai->lpszProxy)
-                proxyBytesRequired = WideCharToMultiByte(CP_ACP, 0, ai->lpszProxy, -1, NULL, 0, NULL, NULL);
-            if (ai->lpszProxyBypass)
-                proxyBypassBytesRequired = WideCharToMultiByte(CP_ACP, 0, ai->lpszProxyBypass, -1,
+            if (ai->proxy)
+                proxyBytesRequired = WideCharToMultiByte(CP_ACP, 0, ai->proxy, -1, NULL, 0, NULL, NULL);
+            if (ai->proxyBypass)
+                proxyBypassBytesRequired = WideCharToMultiByte(CP_ACP, 0, ai->proxyBypass, -1,
                         NULL, 0, NULL, NULL);
             if (*size < sizeof(INTERNET_PROXY_INFOA) + proxyBytesRequired + proxyBypassBytesRequired)
             {
@@ -797,16 +797,16 @@ static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             proxy = (LPSTR)((LPBYTE)buffer + sizeof(INTERNET_PROXY_INFOA));
             proxy_bypass = (LPSTR)((LPBYTE)buffer + sizeof(INTERNET_PROXY_INFOA) + proxyBytesRequired);
 
-            pi->dwAccessType = ai->dwAccessType;
+            pi->dwAccessType = ai->accessType;
             pi->lpszProxy = NULL;
             pi->lpszProxyBypass = NULL;
-            if (ai->lpszProxy) {
-                WideCharToMultiByte(CP_ACP, 0, ai->lpszProxy, -1, proxy, proxyBytesRequired, NULL, NULL);
+            if (ai->proxy) {
+                WideCharToMultiByte(CP_ACP, 0, ai->proxy, -1, proxy, proxyBytesRequired, NULL, NULL);
                 pi->lpszProxy = proxy;
             }
 
-            if (ai->lpszProxyBypass) {
-                WideCharToMultiByte(CP_ACP, 0, ai->lpszProxyBypass, -1, proxy_bypass,
+            if (ai->proxyBypass) {
+                WideCharToMultiByte(CP_ACP, 0, ai->proxyBypass, -1, proxy_bypass,
                         proxyBypassBytesRequired, NULL, NULL);
                 pi->lpszProxyBypass = proxy_bypass;
             }
@@ -883,16 +883,16 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
 
     lpwai->hdr.htype = WH_HINIT;
     lpwai->hdr.dwFlags = dwFlags;
-    lpwai->dwAccessType = dwAccessType;
-    lpwai->lpszProxyUsername = NULL;
-    lpwai->lpszProxyPassword = NULL;
+    lpwai->accessType = dwAccessType;
+    lpwai->proxyUsername = NULL;
+    lpwai->proxyPassword = NULL;
 
-    lpwai->lpszAgent = heap_strdupW(lpszAgent);
+    lpwai->agent = heap_strdupW(lpszAgent);
     if(dwAccessType == INTERNET_OPEN_TYPE_PRECONFIG)
         INTERNET_ConfigureProxy( lpwai );
     else
-        lpwai->lpszProxy = heap_strdupW(lpszProxy);
-    lpwai->lpszProxyBypass = heap_strdupW(lpszProxyBypass);
+        lpwai->proxy = heap_strdupW(lpszProxy);
+    lpwai->proxyBypass = heap_strdupW(lpszProxyBypass);
 
     TRACE("returning %p\n", lpwai);
 

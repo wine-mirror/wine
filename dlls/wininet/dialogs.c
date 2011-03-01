@@ -82,7 +82,7 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     if (NULL == hIC)
         goto done;
 
-    lstrcpynW(szBuf, hIC->lpszProxy, sz);
+    lstrcpynW(szBuf, hIC->proxy, sz);
 
     /* FIXME: perhaps it would be better to use InternetCrackUrl here */
     p = strchrW(szBuf, ':');
@@ -272,11 +272,11 @@ static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
     {
         appinfo_t *hIC = session->lpAppInfo;
 
-        HeapFree(GetProcessHeap(), 0, hIC->lpszProxyUsername);
-        hIC->lpszProxyUsername = p;
+        HeapFree(GetProcessHeap(), 0, hIC->proxyUsername);
+        hIC->proxyUsername = p;
 
-        HeapFree(GetProcessHeap(), 0, hIC->lpszProxyPassword);
-        hIC->lpszProxyPassword = q;
+        HeapFree(GetProcessHeap(), 0, hIC->proxyPassword);
+        hIC->proxyPassword = q;
     }
     else
     {

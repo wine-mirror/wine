@@ -1464,7 +1464,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *session, http_req
     UrlComponents.lpszHostName = buf;
     UrlComponents.dwHostNameLength = MAXHOSTNAME;
 
-    if (!INTERNET_FindProxyForProtocol(hIC->lpszProxy, protoHttp, protoProxy, &protoProxyLen))
+    if (!INTERNET_FindProxyForProtocol(hIC->proxy, protoHttp, protoProxy, &protoProxyLen))
         return FALSE;
     if( CSTR_EQUAL != CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
                                  protoProxy,strlenW(szHttp),szHttp,strlenW(szHttp)) )
@@ -1671,7 +1671,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         info->Flags = 0;
         if (HTTP_KeepAlive(req))
             info->Flags |= IDSI_FLAG_KEEP_ALIVE;
-        if (session->lpAppInfo->lpszProxy && session->lpAppInfo->lpszProxy[0] != 0)
+        if (session->lpAppInfo->proxy && session->lpAppInfo->proxy[0] != 0)
             info->Flags |= IDSI_FLAG_PROXY;
         if (req->netConnection.useSSL)
             info->Flags |= IDSI_FLAG_SECURE;
@@ -2662,7 +2662,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
                         INTERNET_DEFAULT_HTTPS_PORT :
                         INTERNET_DEFAULT_HTTP_PORT);
 
-    if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0)
+    if (NULL != hIC->proxy && hIC->proxy[0] != 0)
         HTTP_DealWithProxy( hIC, session, request );
 
     INTERNET_SendCallback(&session->hdr, dwContext,
@@ -3318,7 +3318,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
 {
     http_session_t *session = request->lpHttpSession;
     appinfo_t *hIC = session->lpAppInfo;
-    BOOL using_proxy = hIC->lpszProxy && hIC->lpszProxy[0];
+    BOOL using_proxy = hIC->proxy && hIC->proxy[0];
     WCHAR path[INTERNET_MAX_URL_LENGTH];
     int index;
 
@@ -3607,15 +3607,15 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         HTTP_HttpAddRequestHeadersW(request, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_REPLACE);
         request->dwBytesToWrite = dwContentLength;
     }
-    if (request->lpHttpSession->lpAppInfo->lpszAgent)
+    if (request->lpHttpSession->lpAppInfo->agent)
     {
         WCHAR *agent_header;
         static const WCHAR user_agent[] = {'U','s','e','r','-','A','g','e','n','t',':',' ','%','s','\r','\n',0};
         int len;
 
-        len = strlenW(request->lpHttpSession->lpAppInfo->lpszAgent) + strlenW(user_agent);
+        len = strlenW(request->lpHttpSession->lpAppInfo->agent) + strlenW(user_agent);
         agent_header = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        sprintfW(agent_header, user_agent, request->lpHttpSession->lpAppInfo->lpszAgent);
+        sprintfW(agent_header, user_agent, request->lpHttpSession->lpAppInfo->agent);
 
         HTTP_HttpAddRequestHeadersW(request, agent_header, strlenW(agent_header), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
         HeapFree(GetProcessHeap(), 0, agent_header);
@@ -3673,7 +3673,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                         HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
         }
 
-        if (request->lpHttpSession->lpAppInfo->lpszProxy && request->lpHttpSession->lpAppInfo->lpszProxy[0])
+        if (request->lpHttpSession->lpAppInfo->proxy && request->lpHttpSession->lpAppInfo->proxy[0])
         {
             WCHAR *url = HTTP_BuildProxyRequestUrl(request);
             requestString = HTTP_BuildHeaderRequestString(request, request->lpszVerb, url, request->lpszVersion);
@@ -3818,8 +3818,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                     {
                         if (HTTP_DoAuthorization(request, szAuthValue,
                                                  &request->pProxyAuthInfo,
-                                                 request->lpHttpSession->lpAppInfo->lpszProxyUsername,
-                                                 request->lpHttpSession->lpAppInfo->lpszProxyPassword,
+                                                 request->lpHttpSession->lpAppInfo->proxyUsername,
+                                                 request->lpHttpSession->lpAppInfo->proxyPassword,
                                                  NULL))
                         {
                             loop_next = TRUE;
@@ -4453,8 +4453,8 @@ DWORD HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     session->lpAppInfo = hIC;
     list_add_head( &hIC->hdr.children, &session->hdr.entry );
 
-    if(hIC->lpszProxy && hIC->dwAccessType == INTERNET_OPEN_TYPE_PROXY) {
-        if(hIC->lpszProxyBypass)
+    if(hIC->proxy && hIC->accessType == INTERNET_OPEN_TYPE_PROXY) {
+        if(hIC->proxyBypass)
             FIXME("Proxy bypass is ignored.\n");
     }
     session->lpszServerName = heap_strdupW(lpszServerName);
@@ -4562,7 +4562,7 @@ static DWORD HTTP_OpenConnection(http_request_t *request)
          * behaviour to be more correct and to not cause any incompatibilities
          * because using a secure connection through a proxy server is a rare
          * case that would be hard for anyone to depend on */
-        if (hIC->lpszProxy && (res = HTTP_SecureProxyConnect(request)) != ERROR_SUCCESS) {
+        if (hIC->proxy && (res = HTTP_SecureProxyConnect(request)) != ERROR_SUCCESS) {
             HTTPREQ_CloseConnection(&request->hdr);
             goto lend;
         }

@@ -2478,10 +2478,10 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     lpwfs->lpAppInfo = hIC;
     list_add_head( &hIC->hdr.children, &lpwfs->hdr.entry );
 
-    if(hIC->lpszProxy && hIC->dwAccessType == INTERNET_OPEN_TYPE_PROXY) {
-        if(strchrW(hIC->lpszProxy, ' '))
+    if(hIC->proxy && hIC->accessType == INTERNET_OPEN_TYPE_PROXY) {
+        if(strchrW(hIC->proxy, ' '))
             FIXME("Several proxies not implemented.\n");
-        if(hIC->lpszProxyBypass)
+        if(hIC->proxyBypass)
             FIXME("Proxy bypass is ignored.\n");
     }
     if (!lpszUserName || !strlenW(lpszUserName)) {
