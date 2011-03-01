@@ -1170,17 +1170,19 @@ static DWORD MIDI_mciPlay(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_PLAY_PARMS lpP
 	return MCI_SendCommandAsync(wmm->wDevID, MCI_PLAY, dwFlags, (DWORD_PTR)lpParms, sizeof(MCI_PLAY_PARMS));
     }
 
+    if (lpParms && (dwFlags & MCI_TO)) {
+	dwEndMS = MIDI_ConvertTimeFormatToMS(wmm, lpParms->dwTo);
+	/* FIXME: if (dwEndMS > length) return MCIERR_OUTOFRANGE; */
+    } else {
+	dwEndMS = 0xFFFFFFFFul; /* FIXME: dwEndMS = length; */
+    }
     if (lpParms && (dwFlags & MCI_FROM)) {
 	dwStartMS = MIDI_ConvertTimeFormatToMS(wmm, lpParms->dwFrom);
     } else {
 	dwStartMS = wmm->dwPositionMS;
     }
-
-    if (lpParms && (dwFlags & MCI_TO)) {
-	dwEndMS = MIDI_ConvertTimeFormatToMS(wmm, lpParms->dwTo);
-    } else {
-	dwEndMS = 0xFFFFFFFFul;
-    }
+    if (dwEndMS < dwStartMS)
+	return MCIERR_OUTOFRANGE;
 
     TRACE("Playing from %u to %u\n", dwStartMS, dwEndMS);
 
