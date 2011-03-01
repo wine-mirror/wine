@@ -867,14 +867,13 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
 
         if (!list_empty(&This->resources))
         {
-            IWineD3DResourceImpl *resource;
+            struct wined3d_resource *resource;
             FIXME("(%p) Device released with resources still bound, acceptable but unexpected\n", This);
 
-            LIST_FOR_EACH_ENTRY(resource, &This->resources, IWineD3DResourceImpl, resource.resource_list_entry)
+            LIST_FOR_EACH_ENTRY(resource, &This->resources, struct wined3d_resource, resource_list_entry)
             {
-                WINED3DRESOURCETYPE type = IWineD3DResource_GetType((IWineD3DResource *)resource);
                 FIXME("Leftover resource %p with type %s (%#x).\n",
-                        resource, debug_d3dresourcetype(type), type);
+                        resource, debug_d3dresourcetype(resource->resourceType), resource->resourceType);
             }
         }
 
@@ -1079,7 +1078,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *iface,
-        IWineD3DResource *resource, void *parent, IWineD3DRendertargetView **rendertarget_view)
+        struct wined3d_resource *resource, void *parent, IWineD3DRendertargetView **rendertarget_view)
 {
     struct wined3d_rendertarget_view *object;
 
@@ -1093,7 +1092,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *
         return E_OUTOFMEMORY;
     }
 
-    wined3d_rendertarget_view_init(object, (IWineD3DResourceImpl *)resource, parent);
+    wined3d_rendertarget_view_init(object, resource, parent);
 
     TRACE("Created render target view %p.\n", object);
     *rendertarget_view = (IWineD3DRendertargetView *)object;
@@ -2102,12 +2101,11 @@ err_out:
     return hr;
 }
 
-static HRESULT WINAPI device_unload_resource(IWineD3DResource *resource, void *data)
+static HRESULT WINAPI device_unload_resource(struct wined3d_resource *resource, void *data)
 {
     TRACE("Unloading resource %p.\n", resource);
 
-    ((IWineD3DResourceImpl *)resource)->resource.resource_ops->resource_unload((IWineD3DResourceImpl *)resource);
-    IWineD3DResource_Release(resource);
+    resource->resource_ops->resource_unload(resource);
 
     return S_OK;
 }
@@ -5726,7 +5724,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
 static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *iface,
         IWineD3DRendertargetView *rendertarget_view, const WINED3DCOLORVALUE *color)
 {
-    IWineD3DResource *resource;
+    struct wined3d_resource *resource;
     HRESULT hr;
 
     hr = IWineD3DRendertargetView_GetResource(rendertarget_view, &resource);
@@ -5736,17 +5734,14 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
         return;
     }
 
-    if (IWineD3DResource_GetType(resource) != WINED3DRTYPE_SURFACE)
+    if (resource->resourceType != WINED3DRTYPE_SURFACE)
     {
         FIXME("Only supported on surface resources\n");
-        IWineD3DResource_Release(resource);
         return;
     }
 
-    hr = surface_color_fill((IWineD3DSurfaceImpl *)resource, NULL, color);
+    hr = surface_color_fill(surface_from_resource(resource), NULL, color);
     if (FAILED(hr)) ERR("Color fill failed, hr %#x.\n", hr);
-
-    IWineD3DResource_Release(resource);
 }
 
 /* rendertarget and depth stencil functions */
@@ -6099,13 +6094,16 @@ static BOOL     WINAPI  IWineD3DDeviceImpl_ShowCursor(IWineD3DDevice* iface, BOO
     return oldVisible;
 }
 
-static HRESULT WINAPI evict_managed_resource(IWineD3DResource *resource, void *data) {
+static HRESULT WINAPI evict_managed_resource(struct wined3d_resource *resource, void *data)
+{
     TRACE("checking resource %p for eviction\n", resource);
-    if(((IWineD3DResourceImpl *) resource)->resource.pool == WINED3DPOOL_MANAGED) {
-        TRACE("Evicting %p\n", resource);
-        ((IWineD3DResourceImpl *)resource)->resource.resource_ops->resource_unload((IWineD3DResourceImpl *)resource);
+
+    if (resource->pool == WINED3DPOOL_MANAGED)
+    {
+        TRACE("Evicting %p.\n", resource);
+        resource->resource_ops->resource_unload(resource);
     }
-    IWineD3DResource_Release(resource);
+
     return S_OK;
 }
 
@@ -6626,23 +6624,23 @@ static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT i
     }
 }
 
-void device_resource_add(struct IWineD3DDeviceImpl *device, struct IWineD3DResourceImpl *resource)
+void device_resource_add(struct IWineD3DDeviceImpl *device, struct wined3d_resource *resource)
 {
     TRACE("device %p, resource %p.\n", device, resource);
 
-    list_add_head(&device->resources, &resource->resource.resource_list_entry);
+    list_add_head(&device->resources, &resource->resource_list_entry);
 }
 
-static void device_resource_remove(struct IWineD3DDeviceImpl *device, struct IWineD3DResourceImpl *resource)
+static void device_resource_remove(struct IWineD3DDeviceImpl *device, struct wined3d_resource *resource)
 {
     TRACE("device %p, resource %p.\n", device, resource);
 
-    list_remove(&resource->resource.resource_list_entry);
+    list_remove(&resource->resource_list_entry);
 }
 
-void device_resource_released(struct IWineD3DDeviceImpl *device, struct IWineD3DResourceImpl *resource)
+void device_resource_released(struct IWineD3DDeviceImpl *device, struct wined3d_resource *resource)
 {
-    WINED3DRESOURCETYPE type = IWineD3DResource_GetType((IWineD3DResource *)resource);
+    WINED3DRESOURCETYPE type = resource->resourceType;
     unsigned int i;
 
     TRACE("device %p, resource %p, type %s.\n", device, resource, debug_d3dresourcetype(type));
@@ -6652,21 +6650,25 @@ void device_resource_released(struct IWineD3DDeviceImpl *device, struct IWineD3D
     switch (type)
     {
         case WINED3DRTYPE_SURFACE:
-            if (!device->d3d_initialized) break;
-
-            for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
             {
-                if (device->render_targets[i] == (IWineD3DSurfaceImpl *)resource)
+                IWineD3DSurfaceImpl *surface = surface_from_resource(resource);
+
+                if (!device->d3d_initialized) break;
+
+                for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
                 {
-                    ERR("Surface %p is still in use as render target %u.\n", resource, i);
-                    device->render_targets[i] = NULL;
+                    if (device->render_targets[i] == surface)
+                    {
+                        ERR("Surface %p is still in use as render target %u.\n", surface, i);
+                        device->render_targets[i] = NULL;
+                    }
                 }
-            }
 
-            if (device->depth_stencil == (IWineD3DSurfaceImpl *)resource)
-            {
-                ERR("Surface %p is still in use as depth/stencil buffer.\n", resource);
-                device->depth_stencil = NULL;
+                if (device->depth_stencil == surface)
+                {
+                    ERR("Surface %p is still in use as depth/stencil buffer.\n", surface);
+                    device->depth_stencil = NULL;
+                }
             }
             break;
 
@@ -6675,57 +6677,62 @@ void device_resource_released(struct IWineD3DDeviceImpl *device, struct IWineD3D
         case WINED3DRTYPE_VOLUMETEXTURE:
             for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
             {
-                if (device->stateBlock && device->stateBlock->state.textures[i] == (IWineD3DBaseTextureImpl *)resource)
+                IWineD3DBaseTextureImpl *texture = basetexture_from_resource(resource);
+
+                if (device->stateBlock && device->stateBlock->state.textures[i] == texture)
                 {
                     ERR("Texture %p is still in use by stateblock %p, stage %u.\n",
-                            resource, device->stateBlock, i);
+                            texture, device->stateBlock, i);
                     device->stateBlock->state.textures[i] = NULL;
                 }
 
                 if (device->updateStateBlock != device->stateBlock
-                        && device->updateStateBlock->state.textures[i] == (IWineD3DBaseTextureImpl *)resource)
+                        && device->updateStateBlock->state.textures[i] == texture)
                 {
                     ERR("Texture %p is still in use by stateblock %p, stage %u.\n",
-                            resource, device->updateStateBlock, i);
+                            texture, device->updateStateBlock, i);
                     device->updateStateBlock->state.textures[i] = NULL;
                 }
             }
             break;
 
         case WINED3DRTYPE_BUFFER:
-            for (i = 0; i < MAX_STREAMS; ++i)
             {
-                if (device->stateBlock
-                        && device->stateBlock->state.streams[i].buffer == (struct wined3d_buffer *)resource)
+                struct wined3d_buffer *buffer = buffer_from_resource(resource);
+
+                for (i = 0; i < MAX_STREAMS; ++i)
                 {
-                    ERR("Buffer %p is still in use by stateblock %p, stream %u.\n",
-                            resource, device->stateBlock, i);
-                    device->stateBlock->state.streams[i].buffer = NULL;
+                    if (device->stateBlock && device->stateBlock->state.streams[i].buffer == buffer)
+                    {
+                        ERR("Buffer %p is still in use by stateblock %p, stream %u.\n",
+                                buffer, device->stateBlock, i);
+                        device->stateBlock->state.streams[i].buffer = NULL;
+                    }
+
+                    if (device->updateStateBlock != device->stateBlock
+                            && device->updateStateBlock->state.streams[i].buffer == buffer)
+                    {
+                        ERR("Buffer %p is still in use by stateblock %p, stream %u.\n",
+                                buffer, device->updateStateBlock, i);
+                        device->updateStateBlock->state.streams[i].buffer = NULL;
+                    }
+
+                }
+
+                if (device->stateBlock && device->stateBlock->state.index_buffer == buffer)
+                {
+                    ERR("Buffer %p is still in use by stateblock %p as index buffer.\n",
+                            buffer, device->stateBlock);
+                    device->stateBlock->state.index_buffer =  NULL;
                 }
 
                 if (device->updateStateBlock != device->stateBlock
-                        && device->updateStateBlock->state.streams[i].buffer == (struct wined3d_buffer *)resource)
+                        && device->updateStateBlock->state.index_buffer == buffer)
                 {
-                    ERR("Buffer %p is still in use by stateblock %p, stream %u.\n",
-                            resource, device->updateStateBlock, i);
-                    device->updateStateBlock->state.streams[i].buffer = NULL;
+                    ERR("Buffer %p is still in use by stateblock %p as index buffer.\n",
+                            buffer, device->updateStateBlock);
+                    device->updateStateBlock->state.index_buffer =  NULL;
                 }
-
-            }
-
-            if (device->stateBlock && device->stateBlock->state.index_buffer == (struct wined3d_buffer *)resource)
-            {
-                ERR("Buffer %p is still in use by stateblock %p as index buffer.\n",
-                        resource, device->stateBlock);
-                device->stateBlock->state.index_buffer =  NULL;
-            }
-
-            if (device->updateStateBlock != device->stateBlock
-                    && device->updateStateBlock->state.index_buffer == (struct wined3d_buffer *)resource)
-            {
-                ERR("Buffer %p is still in use by stateblock %p as index buffer.\n",
-                        resource, device->updateStateBlock);
-                device->updateStateBlock->state.index_buffer =  NULL;
             }
             break;
 
@@ -6739,38 +6746,42 @@ void device_resource_released(struct IWineD3DDeviceImpl *device, struct IWineD3D
     TRACE("Resource released.\n");
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_EnumResources(IWineD3DDevice *iface, D3DCB_ENUMRESOURCES pCallback, void *pData) {
+static HRESULT WINAPI IWineD3DDeviceImpl_EnumResources(IWineD3DDevice *iface,
+        D3DCB_ENUMRESOURCES callback, void *data)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DResourceImpl *resource, *cursor;
-    HRESULT ret;
-    TRACE("(%p)->(%p,%p)\n", This, pCallback, pData);
+    struct wined3d_resource *resource, *cursor;
 
-    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &This->resources, IWineD3DResourceImpl, resource.resource_list_entry) {
-        TRACE("enumerating resource %p\n", resource);
-        IWineD3DResource_AddRef((IWineD3DResource *) resource);
-        ret = pCallback((IWineD3DResource *) resource, pData);
-        if(ret == S_FALSE) {
-            TRACE("Canceling enumeration\n");
+    TRACE("iface %p, callback %p, data %p.\n", iface, callback, data);
+
+    LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &This->resources, struct wined3d_resource, resource_list_entry)
+    {
+        TRACE("enumerating resource %p.\n", resource);
+        if (callback(resource, data) == S_FALSE)
+        {
+            TRACE("Canceling enumeration.\n");
             break;
         }
     }
+
     return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetSurfaceFromDC(IWineD3DDevice *iface, HDC dc, IWineD3DSurface **surface)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DResourceImpl *resource;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_resource *resource;
 
-    LIST_FOR_EACH_ENTRY(resource, &This->resources, IWineD3DResourceImpl, resource.resource_list_entry)
+    LIST_FOR_EACH_ENTRY(resource, &This->resources, struct wined3d_resource, resource_list_entry)
     {
-        WINED3DRESOURCETYPE type = IWineD3DResource_GetType((IWineD3DResource *)resource);
-        if (type == WINED3DRTYPE_SURFACE)
+        if (resource->resourceType == WINED3DRTYPE_SURFACE)
         {
-            if (((IWineD3DSurfaceImpl *)resource)->hDC == dc)
+            IWineD3DSurfaceImpl *s = surface_from_resource(resource);
+
+            if (s->hDC == dc)
             {
-                TRACE("Found surface %p for dc %p.\n", resource, dc);
-                *surface = (IWineD3DSurface *)resource;
+                TRACE("Found surface %p for dc %p.\n", s, dc);
+                *surface = (IWineD3DSurface *)s;
                 return WINED3D_OK;
             }
         }

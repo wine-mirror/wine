@@ -693,39 +693,39 @@ BYTE *buffer_get_sysmem(struct wined3d_buffer *This, const struct wined3d_gl_inf
 }
 
 /* Do not call while under the GL lock. */
-static void buffer_unload(IWineD3DResourceImpl *resource)
+static void buffer_unload(struct wined3d_resource *resource)
 {
-    struct wined3d_buffer *This = (struct wined3d_buffer *)resource;
+    struct wined3d_buffer *buffer = buffer_from_resource(resource);
 
-    TRACE("buffer %p.\n", This);
+    TRACE("buffer %p.\n", buffer);
 
-    if (This->buffer_object)
+    if (buffer->buffer_object)
     {
-        IWineD3DDeviceImpl *device = resource->resource.device;
+        IWineD3DDeviceImpl *device = resource->device;
         struct wined3d_context *context;
 
         context = context_acquire(device, NULL);
 
         /* Download the buffer, but don't permanently enable double buffering */
-        if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
+        if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {
-            buffer_get_sysmem(This, context->gl_info);
-            This->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
+            buffer_get_sysmem(buffer, context->gl_info);
+            buffer->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
         }
 
-        delete_gl_buffer(This, context->gl_info);
-        This->flags |= WINED3D_BUFFER_CREATEBO; /* Recreate the buffer object next load */
-        buffer_clear_dirty_areas(This);
+        delete_gl_buffer(buffer, context->gl_info);
+        buffer->flags |= WINED3D_BUFFER_CREATEBO; /* Recreate the buffer object next load */
+        buffer_clear_dirty_areas(buffer);
 
         context_release(context);
 
-        HeapFree(GetProcessHeap(), 0, This->conversion_shift);
-        This->conversion_shift = NULL;
-        HeapFree(GetProcessHeap(), 0, This->conversion_map);
-        This->conversion_map = NULL;
-        This->stride = 0;
-        This->conversion_stride = 0;
-        This->flags &= ~WINED3D_BUFFER_HASDESC;
+        HeapFree(GetProcessHeap(), 0, buffer->conversion_shift);
+        buffer->conversion_shift = NULL;
+        HeapFree(GetProcessHeap(), 0, buffer->conversion_map);
+        buffer->conversion_map = NULL;
+        buffer->stride = 0;
+        buffer->conversion_stride = 0;
+        buffer->flags &= ~WINED3D_BUFFER_HASDESC;
     }
 
     resource_unload(resource);
@@ -741,8 +741,8 @@ static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)
 
     if (!refcount)
     {
-        buffer_unload((IWineD3DResourceImpl *)This);
-        resource_cleanup((IWineD3DResourceImpl *)iface);
+        buffer_unload(&This->resource);
+        resource_cleanup(&This->resource);
         This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This->maps);
         HeapFree(GetProcessHeap(), 0, This);
@@ -764,28 +764,28 @@ static void * STDMETHODCALLTYPE buffer_GetParent(IWineD3DBuffer *iface)
 static HRESULT STDMETHODCALLTYPE buffer_SetPrivateData(IWineD3DBuffer *iface,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data((IWineD3DResourceImpl *)iface, guid, data, data_size, flags);
+    return resource_set_private_data(&((struct wined3d_buffer *)iface)->resource, guid, data, data_size, flags);
 }
 
 static HRESULT STDMETHODCALLTYPE buffer_GetPrivateData(IWineD3DBuffer *iface,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data((IWineD3DResourceImpl *)iface, guid, data, data_size);
+    return resource_get_private_data(&((struct wined3d_buffer *)iface)->resource, guid, data, data_size);
 }
 
 static HRESULT STDMETHODCALLTYPE buffer_FreePrivateData(IWineD3DBuffer *iface, REFGUID guid)
 {
-    return resource_free_private_data((IWineD3DResourceImpl *)iface, guid);
+    return resource_free_private_data(&((struct wined3d_buffer *)iface)->resource, guid);
 }
 
 static DWORD STDMETHODCALLTYPE buffer_SetPriority(IWineD3DBuffer *iface, DWORD priority)
 {
-    return resource_set_priority((IWineD3DResourceImpl *)iface, priority);
+    return resource_set_priority(&((struct wined3d_buffer *)iface)->resource, priority);
 }
 
 static DWORD STDMETHODCALLTYPE buffer_GetPriority(IWineD3DBuffer *iface)
 {
-    return resource_get_priority((IWineD3DResourceImpl *)iface);
+    return resource_get_priority(&((struct wined3d_buffer *)iface)->resource);
 }
 
 /* The caller provides a context and binds the buffer */
@@ -997,7 +997,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         {
             FIXME("Too many declaration changes or converting dynamic buffer, stopping converting\n");
 
-            buffer_unload((IWineD3DResourceImpl *)This);
+            buffer_unload(&This->resource);
             This->flags &= ~WINED3D_BUFFER_CREATEBO;
 
             /* The stream source state handler might have read the memory of the vertex buffer already
@@ -1035,7 +1035,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
             if(This->full_conversion_count > VB_MAXFULLCONVERSIONS)
             {
                 FIXME("Too many full buffer conversions, stopping converting\n");
-                buffer_unload((IWineD3DResourceImpl *)This);
+                buffer_unload(&This->resource);
                 This->flags &= ~WINED3D_BUFFER_CREATEBO;
                 IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
                 goto end;
@@ -1190,7 +1190,7 @@ end:
 
 static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *iface)
 {
-    return resource_get_type((IWineD3DResourceImpl *)iface);
+    return resource_get_type(&((struct wined3d_buffer *)iface)->resource);
 }
 
 /* IWineD3DBuffer methods */
@@ -1243,6 +1243,13 @@ static GLbitfield buffer_gl_map_flags(DWORD d3d_flags)
     }
 
     return ret;
+}
+
+static struct wined3d_resource * STDMETHODCALLTYPE buffer_GetResource(IWineD3DBuffer *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return &((struct wined3d_buffer *)iface)->resource;
 }
 
 static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, UINT size, BYTE **data, DWORD flags)
@@ -1450,6 +1457,7 @@ static const struct IWineD3DBufferVtbl wined3d_buffer_vtbl =
     buffer_PreLoad,
     buffer_GetType,
     /* IWineD3DBuffer methods */
+    buffer_GetResource,
     buffer_Map,
     buffer_Unmap,
     buffer_GetDesc,
@@ -1477,8 +1485,8 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
 
     buffer->vtbl = &wined3d_buffer_vtbl;
 
-    hr = resource_init((IWineD3DResourceImpl *)buffer, WINED3DRTYPE_BUFFER,
-            device, size, usage, format, pool, parent, parent_ops, &buffer_resource_ops);
+    hr = resource_init(&buffer->resource, WINED3DRTYPE_BUFFER, device, size,
+            usage, format, pool, parent, parent_ops, &buffer_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, hr %#x\n", hr);
@@ -1524,8 +1532,8 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
         if (FAILED(hr))
         {
             ERR("Failed to map buffer, hr %#x\n", hr);
-            buffer_unload((IWineD3DResourceImpl *)buffer);
-            resource_cleanup((IWineD3DResourceImpl *)buffer);
+            buffer_unload(&buffer->resource);
+            resource_cleanup(&buffer->resource);
             return hr;
         }
 
@@ -1538,8 +1546,8 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     if (!buffer->maps)
     {
         ERR("Out of memory\n");
-        buffer_unload((IWineD3DResourceImpl *)buffer);
-        resource_cleanup((IWineD3DResourceImpl *)buffer);
+        buffer_unload(&buffer->resource);
+        resource_cleanup(&buffer->resource);
         return E_OUTOFMEMORY;
     }
     buffer->maps_size = 1;

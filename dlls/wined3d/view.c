@@ -65,7 +65,6 @@ static ULONG STDMETHODCALLTYPE rendertarget_view_Release(IWineD3DRendertargetVie
 
     if (!refcount)
     {
-        IWineD3DResource_Release((IWineD3DResource *)This->resource);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -84,12 +83,11 @@ static void * STDMETHODCALLTYPE rendertarget_view_GetParent(IWineD3DRendertarget
 /* IWineD3DRendertargetView methods */
 
 static HRESULT STDMETHODCALLTYPE rendertarget_view_GetResource(IWineD3DRendertargetView *iface,
-        IWineD3DResource **resource)
+        struct wined3d_resource **resource)
 {
     struct wined3d_rendertarget_view *This = (struct wined3d_rendertarget_view *)iface;
 
-    IWineD3DResource_AddRef((IWineD3DResource *)This->resource);
-    *resource = (IWineD3DResource *)This->resource;
+    *resource = This->resource;
 
     return WINED3D_OK;
 }
@@ -107,11 +105,10 @@ static const struct IWineD3DRendertargetViewVtbl wined3d_rendertarget_view_vtbl 
 };
 
 void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
-        struct IWineD3DResourceImpl *resource, void *parent)
+        struct wined3d_resource *resource, void *parent)
 {
     view->vtbl = &wined3d_rendertarget_view_vtbl;
     view->refcount = 1;
-    IWineD3DResource_AddRef((IWineD3DResource *)resource);
     view->resource = resource;
     view->parent = parent;
 }

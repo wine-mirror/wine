@@ -529,27 +529,28 @@ static UINT WINAPI IDirect3DDevice9Impl_GetNumberOfSwapChains(IDirect3DDevice9Ex
     return count;
 }
 
-static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data) {
+static HRESULT WINAPI reset_enum_callback(struct wined3d_resource *resource, void *data)
+{
     BOOL *resources_ok = data;
     D3DRESOURCETYPE type;
     HRESULT ret = S_OK;
-    WINED3DSURFACE_DESC surface_desc;
-    WINED3DVOLUME_DESC volume_desc;
+    D3DSURFACE_DESC surface_desc;
+    D3DVOLUME_DESC volume_desc;
     D3DINDEXBUFFER_DESC index_desc;
     D3DVERTEXBUFFER_DESC vertex_desc;
     WINED3DPOOL pool;
     IDirect3DResource9 *parent;
 
-    parent = IWineD3DResource_GetParent(resource);
+    parent = wined3d_resource_get_parent(resource);
     type = IDirect3DResource9_GetType(parent);
     switch(type) {
         case D3DRTYPE_SURFACE:
-            IWineD3DSurface_GetDesc((IWineD3DSurface *) resource, &surface_desc);
-            pool = surface_desc.pool;
+            IDirect3DSurface9_GetDesc((IDirect3DSurface9 *)parent, &surface_desc);
+            pool = surface_desc.Pool;
             break;
 
         case D3DRTYPE_VOLUME:
-            IWineD3DVolume_GetDesc((IWineD3DVolume *) resource, &volume_desc);
+            IDirect3DVolume9_GetDesc((IDirect3DVolume9 *)parent, &volume_desc);
             pool = volume_desc.Pool;
             break;
 
@@ -583,7 +584,6 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
             *resources_ok = FALSE;
         }
     }
-    IWineD3DResource_Release(resource);
 
     return ret;
 }

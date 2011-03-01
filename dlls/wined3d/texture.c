@@ -48,7 +48,7 @@ static HRESULT texture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb)
 
         for (i = 0; i < texture->baseTexture.level_count; ++i)
         {
-            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
+            IWineD3DSurfaceImpl *surface = surface_from_resource(texture->baseTexture.sub_resources[i]);
             surface_set_texture_name(surface, gl_tex->name, texture->baseTexture.is_srgb);
         }
 
@@ -128,7 +128,7 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
     {
         for (i = 0; i < texture->baseTexture.level_count; ++i)
         {
-            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
+            IWineD3DSurfaceImpl *surface = surface_from_resource(texture->baseTexture.sub_resources[i]);
             if (palette9_changed(surface))
             {
                 TRACE("Reloading surface because the d3d8/9 palette was changed.\n");
@@ -146,7 +146,7 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
     {
         for (i = 0; i < texture->baseTexture.level_count; ++i)
         {
-            surface_load((IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i], srgb_mode);
+            surface_load(surface_from_resource(texture->baseTexture.sub_resources[i]), srgb_mode);
         }
     }
     else
@@ -161,18 +161,19 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
 }
 
 /* Do not call while under the GL lock. */
-static void texture_unload(IWineD3DResourceImpl *resource)
+static void texture_unload(struct wined3d_resource *resource)
 {
-    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)resource;
+    IWineD3DBaseTextureImpl *texture = basetexture_from_resource(resource);
     unsigned int i;
 
     TRACE("texture %p.\n", texture);
 
     for (i = 0; i < texture->baseTexture.level_count; ++i)
     {
-        IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
+        struct wined3d_resource *sub_resource = texture->baseTexture.sub_resources[i];
+        IWineD3DSurfaceImpl *surface = surface_from_resource(sub_resource);
 
-        surface->resource.resource_ops->resource_unload((IWineD3DResourceImpl *)surface);
+        sub_resource->resource_ops->resource_unload(sub_resource);
         surface_set_texture_name(surface, 0, FALSE); /* Delete rgb name */
         surface_set_texture_name(surface, 0, TRUE); /* delete srgb name */
     }
@@ -199,7 +200,7 @@ static void texture_cleanup(IWineD3DTextureImpl *This)
 
     for (i = 0; i < This->baseTexture.level_count; ++i)
     {
-        IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)This->baseTexture.sub_resources[i];
+        IWineD3DSurfaceImpl *surface = surface_from_resource(This->baseTexture.sub_resources[i]);
         if (surface)
         {
             /* Clean out the texture name we gave to the surface so that the
@@ -265,28 +266,28 @@ static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
 static HRESULT WINAPI IWineD3DTextureImpl_SetPrivateData(IWineD3DTexture *iface,
         REFGUID riid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data((IWineD3DResourceImpl *)iface, riid, data, data_size, flags);
+    return resource_set_private_data(&((IWineD3DTextureImpl *)iface)->resource, riid, data, data_size, flags);
 }
 
 static HRESULT WINAPI IWineD3DTextureImpl_GetPrivateData(IWineD3DTexture *iface,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data((IWineD3DResourceImpl *)iface, guid, data, data_size);
+    return resource_get_private_data(&((IWineD3DTextureImpl *)iface)->resource, guid, data, data_size);
 }
 
 static HRESULT WINAPI IWineD3DTextureImpl_FreePrivateData(IWineD3DTexture *iface, REFGUID refguid)
 {
-    return resource_free_private_data((IWineD3DResourceImpl *)iface, refguid);
+    return resource_free_private_data(&((IWineD3DTextureImpl *)iface)->resource, refguid);
 }
 
 static DWORD WINAPI IWineD3DTextureImpl_SetPriority(IWineD3DTexture *iface, DWORD priority)
 {
-    return resource_set_priority((IWineD3DResourceImpl *)iface, priority);
+    return resource_set_priority(&((IWineD3DTextureImpl *)iface)->resource, priority);
 }
 
 static DWORD WINAPI IWineD3DTextureImpl_GetPriority(IWineD3DTexture *iface)
 {
-    return resource_get_priority((IWineD3DResourceImpl *)iface);
+    return resource_get_priority(&((IWineD3DTextureImpl *)iface)->resource);
 }
 
 /* Do not call while under the GL lock. */
@@ -297,7 +298,7 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface)
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DTextureImpl_GetType(IWineD3DTexture *iface)
 {
-    return resource_get_type((IWineD3DResourceImpl *)iface);
+    return resource_get_type(&((IWineD3DTextureImpl *)iface)->resource);
 }
 
 static void * WINAPI IWineD3DTextureImpl_GetParent(IWineD3DTexture *iface)
@@ -350,17 +351,17 @@ static HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface,
         UINT sub_resource_idx, WINED3DSURFACE_DESC *desc)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    IWineD3DSurface *surface;
+    struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, sub_resource_idx %u, desc %p.\n", iface, sub_resource_idx, desc);
 
-    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(sub_resource = basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    IWineD3DSurface_GetDesc(surface, desc);
+    IWineD3DSurface_GetDesc((IWineD3DSurface *)surface_from_resource(sub_resource), desc);
 
     return WINED3D_OK;
 }
@@ -369,18 +370,18 @@ static HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface
         UINT sub_resource_idx, IWineD3DSurface **surface)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    IWineD3DSurface *s;
+    struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, sub_resource_idx %u, surface %p.\n", iface, sub_resource_idx, surface);
 
-    if (!(s = (IWineD3DSurface *)basetexture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(sub_resource = basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    IWineD3DSurface_AddRef(s);
-    *surface = s;
+    *surface = (IWineD3DSurface *)surface_from_resource(sub_resource);
+    IWineD3DSurface_AddRef(*surface);
 
     TRACE("Returning surface %p.\n", *surface);
 
@@ -391,44 +392,44 @@ static HRESULT WINAPI IWineD3DTextureImpl_Map(IWineD3DTexture *iface,
         UINT sub_resource_idx, WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    IWineD3DSurface *surface;
+    struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, sub_resource_idx %u, locked_rect %p, rect %s, flags %#x.\n",
             iface, sub_resource_idx, locked_rect, wine_dbgstr_rect(rect), flags);
 
-    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(sub_resource = basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    return IWineD3DSurface_Map(surface, locked_rect, rect, flags);
+    return IWineD3DSurface_Map((IWineD3DSurface *)surface_from_resource(sub_resource), locked_rect, rect, flags);
 }
 
 static HRESULT WINAPI IWineD3DTextureImpl_Unmap(IWineD3DTexture *iface, UINT sub_resource_idx)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    IWineD3DSurface *surface;
+    struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
 
-    if (!(surface = (IWineD3DSurface *)basetexture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(sub_resource = basetexture_get_sub_resource(texture, sub_resource_idx)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    return IWineD3DSurface_Unmap(surface);
+    return IWineD3DSurface_Unmap((IWineD3DSurface *)surface_from_resource(sub_resource));
 }
 
 static HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, const RECT *dirty_rect)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    IWineD3DSurfaceImpl *surface;
+    struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, dirty_rect %s.\n", iface, wine_dbgstr_rect(dirty_rect));
 
-    if (!(surface = (IWineD3DSurfaceImpl *)basetexture_get_sub_resource(texture, 0)))
+    if (!(sub_resource = basetexture_get_sub_resource(texture, 0)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
@@ -436,7 +437,7 @@ static HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, c
 
     texture->baseTexture.texture_rgb.dirty = TRUE;
     texture->baseTexture.texture_srgb.dirty = TRUE;
-    surface_add_dirty_rect(surface, dirty_rect);
+    surface_add_dirty_rect(surface_from_resource(sub_resource), dirty_rect);
 
     return WINED3D_OK;
 }
@@ -625,7 +626,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
 
         surface_set_container((IWineD3DSurfaceImpl *)surface, WINED3D_CONTAINER_TEXTURE, (IWineD3DBase *)texture);
         surface_set_texture_target((IWineD3DSurfaceImpl *)surface, texture->baseTexture.target);
-        texture->baseTexture.sub_resources[i] = (IWineD3DResourceImpl *)surface;
+        texture->baseTexture.sub_resources[i] = &((IWineD3DSurfaceImpl *)surface)->resource;
         TRACE("Created surface level %u @ %p.\n", i, surface);
         /* Calculate the next mipmap level. */
         tmp_w = max(1, tmp_w >> 1);

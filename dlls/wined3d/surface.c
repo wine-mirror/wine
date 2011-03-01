@@ -89,7 +89,7 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
 
     HeapFree(GetProcessHeap(), 0, This->palette9);
 
-    resource_cleanup((IWineD3DResourceImpl *)This);
+    resource_cleanup(&This->resource);
 }
 
 void surface_set_container(IWineD3DSurfaceImpl *surface, enum wined3d_container_type type, IWineD3DBase *container)
@@ -433,17 +433,17 @@ static void surface_remove_pbo(IWineD3DSurfaceImpl *surface, const struct wined3
 }
 
 /* Do not call while under the GL lock. */
-static void surface_unload(IWineD3DResourceImpl *resource)
+static void surface_unload(struct wined3d_resource *resource)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)resource;
-    IWineD3DDeviceImpl *device = resource->resource.device;
+    IWineD3DSurfaceImpl *surface = surface_from_resource(resource);
+    IWineD3DDeviceImpl *device = resource->device;
     const struct wined3d_gl_info *gl_info;
     renderbuffer_entry_t *entry, *entry2;
     struct wined3d_context *context;
 
     TRACE("surface %p.\n", surface);
 
-    if (resource->resource.pool == WINED3DPOOL_DEFAULT)
+    if (resource->pool == WINED3DPOOL_DEFAULT)
     {
         /* Default pool resources are supposed to be destroyed before Reset is called.
          * Implicit resources stay however. So this means we have an implicit render target
@@ -597,8 +597,8 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
             return WINED3DERR_INVALIDCALL;
     }
 
-    hr = resource_init((IWineD3DResourceImpl *)surface, WINED3DRTYPE_SURFACE, device,
-            resource_size, usage, format, pool, parent, parent_ops, &surface_resource_ops);
+    hr = resource_init(&surface->resource, WINED3DRTYPE_SURFACE, device, resource_size,
+            usage, format, pool, parent, parent_ops, &surface_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
@@ -1751,7 +1751,7 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
 
         for (i = 0; i < sub_count; ++i)
         {
-            IWineD3DSurfaceImpl *s = (IWineD3DSurfaceImpl *)texture->baseTexture.sub_resources[i];
+            IWineD3DSurfaceImpl *s = surface_from_resource(texture->baseTexture.sub_resources[i]);
             surface_prepare_texture_internal(s, gl_info, srgb);
         }
 
@@ -2761,8 +2761,8 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) {
         back->texture_name_srgb = front->texture_name_srgb;
         front->texture_name_srgb = tmp;
 
-        resource_unload((IWineD3DResourceImpl *)back);
-        resource_unload((IWineD3DResourceImpl *)front);
+        resource_unload(&back->resource);
+        resource_unload(&front->resource);
     }
 
     {
@@ -4685,6 +4685,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_PreLoad,
     IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
+    IWineD3DBaseSurfaceImpl_GetResource,
     IWineD3DBaseSurfaceImpl_GetDesc,
     IWineD3DSurfaceImpl_Map,
     IWineD3DSurfaceImpl_Unmap,

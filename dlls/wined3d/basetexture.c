@@ -34,7 +34,7 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, const struct wined3d_
 {
     HRESULT hr;
 
-    hr = resource_init((IWineD3DResourceImpl *)texture, resource_type, device,
+    hr = resource_init(&texture->resource, resource_type, device,
             0, usage, format, pool, parent, parent_ops, resource_ops);
     if (FAILED(hr))
     {
@@ -48,7 +48,7 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, const struct wined3d_
     if (!texture->baseTexture.sub_resources)
     {
         ERR("Failed to allocate sub-resource array.\n");
-        resource_cleanup((IWineD3DResourceImpl *)texture);
+        resource_cleanup(&texture->resource);
         return E_OUTOFMEMORY;
     }
 
@@ -79,10 +79,10 @@ void basetexture_cleanup(IWineD3DBaseTextureImpl *texture)
 {
     basetexture_unload(texture);
     HeapFree(GetProcessHeap(), 0, texture->baseTexture.sub_resources);
-    resource_cleanup((IWineD3DResourceImpl *)texture);
+    resource_cleanup(&texture->resource);
 }
 
-IWineD3DResourceImpl *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture, UINT sub_resource_idx)
+struct wined3d_resource *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture, UINT sub_resource_idx)
 {
     UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
 
@@ -125,7 +125,7 @@ void basetexture_unload(IWineD3DBaseTextureImpl *texture)
     texture->baseTexture.texture_rgb.dirty = TRUE;
     texture->baseTexture.texture_srgb.dirty = TRUE;
 
-    resource_unload((IWineD3DResourceImpl *)texture);
+    resource_unload(&texture->resource);
 }
 
 DWORD basetexture_set_lod(IWineD3DBaseTextureImpl *texture, DWORD lod)

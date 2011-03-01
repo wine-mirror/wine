@@ -54,7 +54,7 @@ void surface_gdi_cleanup(IWineD3DSurfaceImpl *This)
 
     HeapFree(GetProcessHeap(), 0, This->palette9);
 
-    resource_cleanup((IWineD3DResourceImpl *)This);
+    resource_cleanup(&This->resource);
 }
 
 static void gdi_surface_realize_palette(IWineD3DSurfaceImpl *surface)
@@ -451,6 +451,7 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineGDISurfaceImpl_PreLoad,
     IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
+    IWineD3DBaseSurfaceImpl_GetResource,
     IWineD3DBaseSurfaceImpl_GetDesc,
     IWineGDISurfaceImpl_Map,
     IWineGDISurfaceImpl_Unmap,

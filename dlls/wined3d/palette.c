@@ -95,7 +95,7 @@ HRESULT CDECL wined3d_palette_get_entries(const struct wined3d_palette *palette,
 HRESULT CDECL wined3d_palette_set_entries(struct wined3d_palette *palette,
         DWORD flags, DWORD start, DWORD count, const PALETTEENTRY *entries)
 {
-    IWineD3DResourceImpl *res;
+    struct wined3d_resource *resource;
 
     TRACE("palette %p, flags %#x, start %u, count %u, entries %p.\n",
             palette, flags, start, count, entries);
@@ -131,11 +131,11 @@ HRESULT CDECL wined3d_palette_set_entries(struct wined3d_palette *palette,
     }
 
     /* If the palette is attached to the render target, update all render targets */
-    LIST_FOR_EACH_ENTRY(res, &palette->device->resources, IWineD3DResourceImpl, resource.resource_list_entry)
+    LIST_FOR_EACH_ENTRY(resource, &palette->device->resources, struct wined3d_resource, resource_list_entry)
     {
-        if (IWineD3DResource_GetType((IWineD3DResource *)res) == WINED3DRTYPE_SURFACE)
+        if (resource->resourceType == WINED3DRTYPE_SURFACE)
         {
-            IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)res;
+            IWineD3DSurfaceImpl *surface = surface_from_resource(resource);
             if (surface->palette == palette)
                 surface->surface_ops->surface_realize_palette(surface);
         }

@@ -2105,7 +2105,6 @@ struct wined3d_parent_ops
     void (__stdcall *wined3d_object_destroyed)(void *parent);
 };
 
-interface IWineD3DResource;
 interface IWineD3DSurface;
 interface IWineD3DVolume;
 interface IWineD3DSwapChain;
@@ -2114,6 +2113,7 @@ struct wined3d;
 struct wined3d_clipper;
 struct wined3d_palette;
 struct wined3d_query;
+struct wined3d_resource;
 struct wined3d_stateblock;
 struct wined3d_vertex_declaration;
 
@@ -2178,7 +2178,7 @@ interface IWineD3DDeviceParent : IUnknown
     );
 }
 typedef ULONG (__stdcall *D3DCB_DESTROYSWAPCHAINFN)(IWineD3DSwapChain *pSwapChain);
-typedef HRESULT (__stdcall *D3DCB_ENUMRESOURCES)(IWineD3DResource *resource, void *pData);
+typedef HRESULT (__stdcall *D3DCB_ENUMRESOURCES)(struct wined3d_resource *resource, void *pData);
 
 [
     object,
@@ -2231,7 +2231,7 @@ interface IWineD3DResource : IWineD3DBase
 interface IWineD3DRendertargetView : IWineD3DBase
 {
     HRESULT GetResource(
-        [out] IWineD3DResource **resource
+        [out] struct wined3d_resource **resource
     );
 }
 
@@ -2242,6 +2242,8 @@ interface IWineD3DRendertargetView : IWineD3DBase
 ]
 interface IWineD3DSurface : IWineD3DResource
 {
+    struct wined3d_resource *GetResource(
+    );
     void GetDesc(
         [out] WINED3DSURFACE_DESC *desc
     );
@@ -2523,6 +2525,8 @@ interface IWineD3DSwapChain : IWineD3DBase
 ]
 interface IWineD3DBuffer : IWineD3DResource
 {
+    struct wined3d_resource *GetResource(
+    );
     HRESULT Map(
         [in] UINT offset,
         [in] UINT size,
@@ -2632,7 +2636,7 @@ interface IWineD3DDevice : IUnknown
         [out] IWineD3DSurface **surface
     );
     HRESULT CreateRendertargetView(
-        [in] IWineD3DResource *resource,
+        [in] struct wined3d_resource *resource,
         [in] void *parent,
         [out] IWineD3DRendertargetView **rendertarget_view
     );
@@ -3250,6 +3254,8 @@ UINT __cdecl wined3d_query_get_data_size(const struct wined3d_query *query);
 WINED3DQUERYTYPE __cdecl wined3d_query_get_type(const struct wined3d_query *query);
 ULONG __cdecl wined3d_query_incref(struct wined3d_query *query);
 HRESULT __cdecl wined3d_query_issue(struct wined3d_query *query, DWORD flags);
+
+void * __cdecl wined3d_resource_get_parent(const struct wined3d_resource *resource);
 
 HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);

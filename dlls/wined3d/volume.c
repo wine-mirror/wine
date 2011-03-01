@@ -119,7 +119,7 @@ void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode)
 }
 
 /* Do not call while under the GL lock. */
-static void volume_unload(IWineD3DResourceImpl *resource)
+static void volume_unload(struct wined3d_resource *resource)
 {
     TRACE("texture %p.\n", resource);
 
@@ -167,7 +167,7 @@ static ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
 
     if (!ref)
     {
-        resource_cleanup((IWineD3DResourceImpl *)iface);
+        resource_cleanup(&This->resource);
         This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -187,28 +187,28 @@ static void * WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface)
 static HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface,
         REFGUID riid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data((IWineD3DResourceImpl *)iface, riid, data, data_size, flags);
+    return resource_set_private_data(&((IWineD3DVolumeImpl *)iface)->resource, riid, data, data_size, flags);
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data((IWineD3DResourceImpl *)iface, guid, data, data_size);
+    return resource_get_private_data(&((IWineD3DVolumeImpl *)iface)->resource, guid, data, data_size);
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_FreePrivateData(IWineD3DVolume *iface, REFGUID refguid)
 {
-    return resource_free_private_data((IWineD3DResourceImpl *)iface, refguid);
+    return resource_free_private_data(&((IWineD3DVolumeImpl *)iface)->resource, refguid);
 }
 
 static DWORD WINAPI IWineD3DVolumeImpl_SetPriority(IWineD3DVolume *iface, DWORD priority)
 {
-    return resource_set_priority((IWineD3DResourceImpl *)iface, priority);
+    return resource_set_priority(&((IWineD3DVolumeImpl *)iface)->resource, priority);
 }
 
 static DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface)
 {
-    return resource_get_priority((IWineD3DResourceImpl *)iface);
+    return resource_get_priority(&((IWineD3DVolumeImpl *)iface)->resource);
 }
 
 /* Do not call while under the GL lock. */
@@ -218,7 +218,7 @@ static void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface)
 {
-    return resource_get_type((IWineD3DResourceImpl *)iface);
+    return resource_get_type(&((IWineD3DVolumeImpl *)iface)->resource);
 }
 
 static void WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC *desc)
@@ -344,7 +344,7 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
 
     volume->lpVtbl = &IWineD3DVolume_Vtbl;
 
-    hr = resource_init((IWineD3DResourceImpl *)volume, WINED3DRTYPE_VOLUME, device,
+    hr = resource_init(&volume->resource, WINED3DRTYPE_VOLUME, device,
             width * height * depth * format->byte_count, usage, format, pool,
             parent, parent_ops, &volume_resource_ops);
     if (FAILED(hr))

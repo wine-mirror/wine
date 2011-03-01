@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
-static IWineD3DResource *wined3d_resource_from_resource(ID3D10Resource *resource)
+static struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource)
 {
     D3D10_RESOURCE_DIMENSION dimension;
 
@@ -34,10 +34,10 @@ static IWineD3DResource *wined3d_resource_from_resource(ID3D10Resource *resource
     switch(dimension)
     {
         case D3D10_RESOURCE_DIMENSION_BUFFER:
-            return (IWineD3DResource *)((struct d3d10_buffer *)resource)->wined3d_buffer;
+            return IWineD3DBuffer_GetResource(((struct d3d10_buffer *)resource)->wined3d_buffer);
 
         case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
-            return (IWineD3DResource *)((struct d3d10_texture2d *)resource)->wined3d_surface;
+            return IWineD3DSurface_GetResource(((struct d3d10_texture2d *)resource)->wined3d_surface);
 
         default:
             FIXME("Unhandled resource dimension %#x.\n", dimension);
@@ -374,7 +374,7 @@ static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetResource(ID3D10RenderTa
         ID3D10Resource **resource)
 {
     struct d3d10_rendertarget_view *This = (struct d3d10_rendertarget_view *)iface;
-    IWineD3DResource *wined3d_resource;
+    struct wined3d_resource *wined3d_resource;
     IUnknown *parent;
     HRESULT hr;
 
@@ -388,9 +388,8 @@ static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetResource(ID3D10RenderTa
         return;
     }
 
-    parent = IWineD3DResource_GetParent(wined3d_resource);
+    parent = wined3d_resource_get_parent(wined3d_resource);
     hr = IUnknown_QueryInterface(parent, &IID_ID3D10Resource, (void **)&resource);
-    IWineD3DResource_Release(wined3d_resource);
     if (FAILED(hr))
     {
         ERR("Resource parent isn't a d3d10 resource, hr %#x\n", hr);
@@ -431,7 +430,7 @@ static const struct ID3D10RenderTargetViewVtbl d3d10_rendertarget_view_vtbl =
 HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d10_device *device,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc)
 {
-    IWineD3DResource *wined3d_resource;
+    struct wined3d_resource *wined3d_resource;
     HRESULT hr;
 
     view->vtbl = &d3d10_rendertarget_view_vtbl;
