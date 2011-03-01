@@ -183,10 +183,10 @@ typedef struct _basicAuthorizationData
 {
     struct list entry;
 
-    LPWSTR lpszwHost;
-    LPWSTR lpszwRealm;
-    LPSTR  lpszAuthorization;
-    UINT   AuthorizationLen;
+    LPWSTR host;
+    LPWSTR realm;
+    LPSTR  authorization;
+    UINT   authorizationLen;
 } basicAuthorizationData;
 
 typedef struct _authorizationData
@@ -585,12 +585,12 @@ static UINT retrieve_cached_basic_authorization(LPWSTR host, LPWSTR realm, LPSTR
     EnterCriticalSection(&authcache_cs);
     LIST_FOR_EACH_ENTRY(ad, &basicAuthorizationCache, basicAuthorizationData, entry)
     {
-        if (!strcmpiW(host,ad->lpszwHost) && !strcmpW(realm,ad->lpszwRealm))
+        if (!strcmpiW(host,ad->host) && !strcmpW(realm,ad->realm))
         {
             TRACE("Authorization found in cache\n");
-            *auth_data = HeapAlloc(GetProcessHeap(),0,ad->AuthorizationLen);
-            memcpy(*auth_data,ad->lpszAuthorization,ad->AuthorizationLen);
-            rc = ad->AuthorizationLen;
+            *auth_data = HeapAlloc(GetProcessHeap(),0,ad->authorizationLen);
+            memcpy(*auth_data,ad->authorization,ad->authorizationLen);
+            rc = ad->authorizationLen;
             break;
         }
     }
@@ -609,7 +609,7 @@ static void cache_basic_authorization(LPWSTR host, LPWSTR realm, LPSTR auth_data
     LIST_FOR_EACH(cursor, &basicAuthorizationCache)
     {
         basicAuthorizationData *check = LIST_ENTRY(cursor,basicAuthorizationData,entry);
-        if (!strcmpiW(host,check->lpszwHost) && !strcmpW(realm,check->lpszwRealm))
+        if (!strcmpiW(host,check->host) && !strcmpW(realm,check->realm))
         {
             ad = check;
             break;
@@ -619,19 +619,19 @@ static void cache_basic_authorization(LPWSTR host, LPWSTR realm, LPSTR auth_data
     if (ad)
     {
         TRACE("Found match in cache, replacing\n");
-        HeapFree(GetProcessHeap(),0,ad->lpszAuthorization);
-        ad->lpszAuthorization = HeapAlloc(GetProcessHeap(),0,auth_data_len);
-        memcpy(ad->lpszAuthorization, auth_data, auth_data_len);
-        ad->AuthorizationLen = auth_data_len;
+        HeapFree(GetProcessHeap(),0,ad->authorization);
+        ad->authorization = HeapAlloc(GetProcessHeap(),0,auth_data_len);
+        memcpy(ad->authorization, auth_data, auth_data_len);
+        ad->authorizationLen = auth_data_len;
     }
     else
     {
         ad = HeapAlloc(GetProcessHeap(),0,sizeof(basicAuthorizationData));
-        ad->lpszwHost = heap_strdupW(host);
-        ad->lpszwRealm = heap_strdupW(realm);
-        ad->lpszAuthorization = HeapAlloc(GetProcessHeap(),0,auth_data_len);
-        memcpy(ad->lpszAuthorization, auth_data, auth_data_len);
-        ad->AuthorizationLen = auth_data_len;
+        ad->host = heap_strdupW(host);
+        ad->host = heap_strdupW(realm);
+        ad->authorization = HeapAlloc(GetProcessHeap(),0,auth_data_len);
+        memcpy(ad->authorization, auth_data, auth_data_len);
+        ad->authorizationLen = auth_data_len;
         list_add_head(&basicAuthorizationCache,&ad->entry);
         TRACE("authorization cached\n");
     }
