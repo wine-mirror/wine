@@ -263,25 +263,25 @@ typedef struct gzip_stream_t gzip_stream_t;
 typedef struct
 {
     object_header_t hdr;
-    http_session_t *lpHttpSession;
-    LPWSTR lpszPath;
-    LPWSTR lpszVerb;
-    LPWSTR lpszRawHeaders;
+    http_session_t *session;
+    LPWSTR path;
+    LPWSTR verb;
+    LPWSTR rawHeaders;
     WININET_NETCONNECTION netConnection;
-    LPWSTR lpszVersion;
-    LPWSTR lpszStatusText;
-    DWORD dwBytesToWrite;
-    DWORD dwBytesWritten;
-    HTTPHEADERW *pCustHeaders;
+    LPWSTR version;
+    LPWSTR statusText;
+    DWORD bytesToWrite;
+    DWORD bytesWritten;
+    HTTPHEADERW *custHeaders;
     DWORD nCustHeaders;
     HANDLE hCacheFile;
-    LPWSTR lpszCacheFile;
-    struct HttpAuthInfo *pAuthInfo;
-    struct HttpAuthInfo *pProxyAuthInfo;
+    LPWSTR cacheFile;
+    struct HttpAuthInfo *authInfo;
+    struct HttpAuthInfo *proxyAuthInfo;
 
     CRITICAL_SECTION read_section;  /* section to protect the following fields */
-    DWORD dwContentLength; /* total number of bytes to be read */
-    DWORD dwContentRead;  /* bytes of the content read so far */
+    DWORD contentLength;  /* total number of bytes to be read */
+    DWORD contentRead;    /* bytes of the content read so far */
     BOOL  read_chunked;   /* are we reading in chunked mode? */
     DWORD read_pos;       /* current read position in read_buf */
     DWORD read_size;      /* valid data size in read_buf */

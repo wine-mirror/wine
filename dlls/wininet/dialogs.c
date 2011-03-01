@@ -74,7 +74,7 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     if (NULL == request)
         return FALSE;
 
-    session = request->lpHttpSession;
+    session = request->session;
     if (NULL == session)
         goto done;
 
@@ -111,7 +111,7 @@ static BOOL WININET_GetServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     if (NULL == request)
         return FALSE;
 
-    session = request->lpHttpSession;
+    session = request->session;
     if (NULL == session)
         goto done;
 
@@ -250,7 +250,7 @@ static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
     if( !request )
         return FALSE;
 
-    session = request->lpHttpSession;
+    session = request->session;
     if (NULL == session ||  session->hdr.htype != WH_HHTTPSESSION)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
