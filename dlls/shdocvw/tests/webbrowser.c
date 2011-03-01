@@ -122,7 +122,10 @@ DEFINE_EXPECT(Exec_SETPROGRESSPOS);
 DEFINE_EXPECT(Exec_UPDATECOMMANDS);
 DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(QueryStatus_SETPROGRESSTEXT);
+DEFINE_EXPECT(Exec_STOP);
+DEFINE_EXPECT(Exec_IDM_STOP);
 DEFINE_EXPECT(QueryStatus_STOP);
+DEFINE_EXPECT(QueryStatus_IDM_STOP);
 DEFINE_EXPECT(DocHost_EnableModeless_TRUE);
 DEFINE_EXPECT(DocHost_EnableModeless_FALSE);
 DEFINE_EXPECT(DocHost_TranslateAccelerator);
@@ -138,10 +141,11 @@ static const WCHAR wszItem[] = {'i','t','e','m',0};
 static const WCHAR emptyW[] = {0};
 
 static VARIANT_BOOL exvb;
+
 static IWebBrowser2 *wb;
 
 static HWND container_hwnd, shell_embedding_hwnd;
-static BOOL is_downloading, is_first_load;
+static BOOL is_downloading, is_first_load, use_container_olecmd;
 static HRESULT hr_dochost_TranslateAccelerator = E_NOTIMPL;
 static HRESULT hr_site_TranslateAccelerator = E_NOTIMPL;
 static const char *current_url;
@@ -195,6 +199,17 @@ static BSTR a2bstr(const char *str)
     MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
 
     return ret;
+}
+
+#define create_WebBrowser(a) _create_WebBrowser(__LINE__,a)
+static HRESULT _create_WebBrowser(unsigned line, IUnknown **unk)
+{
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_WebBrowser, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IUnknown, (void**)unk);
+    ok_(__FILE__,line)(hres == S_OK, "Creating WebBrowser object failed: %08x\n", hres);
+    return hres;
 }
 
 #define test_LocationURL(a,b) _test_LocationURL(__LINE__,a,b)
@@ -308,6 +323,15 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
         CHECK_EXPECT(QueryStatus_SETPROGRESSTEXT);
         prgCmds[0].cmdf = OLECMDF_ENABLED;
         return S_OK;
+    case IDM_STOP:
+        /* Note:
+         *  IDM_STOP is a command specific to CGID_MSHTML (not an OLECMDID command).
+         *  This command appears here for the ExecWB and QueryStatusWB tests in order
+         *  to help demonstrate that these routines use a NULL pguidCmdGroup.
+         */
+        CHECK_EXPECT(QueryStatus_IDM_STOP);
+        prgCmds[0].cmdf = 0;
+        return S_OK;
     default:
         ok(0, "unexpected command %d\n", prgCmds[0].cmdID);
     }
@@ -366,6 +390,17 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             CHECK_EXPECT(Exec_SETTITLE);
             /* TODO: test args */
             return S_OK;
+        case OLECMDID_STOP:
+            CHECK_EXPECT(Exec_STOP);
+            return S_OK;
+        case IDM_STOP:
+            /* Note:
+             *  IDM_STOP is a command specific to CGID_MSHTML (not an OLECMDID command).
+             *  This command appears here for the ExecWB and QueryStatusWB tests in order
+             *  to help demonstrate that these routines use a NULL pguidCmdGroup.
+             */
+            CHECK_EXPECT(Exec_IDM_STOP);
+            return OLECMDERR_E_NOTSUPPORTED;
         default:
             ok(0, "unexpected nsCmdID %d\n", nCmdID);
         }
@@ -428,8 +463,13 @@ static HRESULT WINAPI OleContainer_QueryInterface(IOleContainer *iface, REFIID r
         return E_NOINTERFACE; /* TODO */
 
     if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
-        *ppv = &OleCommandTarget;
-        return S_OK;
+        if(use_container_olecmd)
+        {
+            *ppv = &OleCommandTarget;
+            return S_OK;
+        }
+        else
+            return E_NOINTERFACE;
     }
 
     ok(0, "unexpected call\n");
@@ -1729,7 +1769,7 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client, BOOL stop_dow
         SET_EXPECT(Invoke_AMBIENT_SILENT);
     }else if(stop_download) {
         SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
-        SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
+        if (use_container_olecmd) SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
         SET_EXPECT(Invoke_COMMANDSTATECHANGE);
     }
 
@@ -1743,7 +1783,7 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client, BOOL stop_dow
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
     }else if(stop_download) {
         todo_wine CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
-        todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+        if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
         todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
    }
 
@@ -2343,7 +2383,7 @@ static void test_Navigate2(IUnknown *unk)
         SET_EXPECT(Invoke_PROPERTYCHANGE);
         SET_EXPECT(Invoke_BEFORENAVIGATE2);
         SET_EXPECT(Invoke_DOWNLOADBEGIN);
-        SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
+        if (use_container_olecmd) SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
         SET_EXPECT(EnableModeless_FALSE);
         SET_EXPECT(Invoke_STATUSTEXTCHANGE);
         SET_EXPECT(SetStatusText);
@@ -2353,14 +2393,15 @@ static void test_Navigate2(IUnknown *unk)
         SET_EXPECT(Invoke_AMBIENT_PALETTE);
         SET_EXPECT(GetOptionKeyPath);
         SET_EXPECT(GetOverridesKeyPath);
-        SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
-        SET_EXPECT(Exec_SETPROGRESSMAX);
-        SET_EXPECT(Exec_SETPROGRESSPOS);
+        if (use_container_olecmd) SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
+        if (use_container_olecmd) SET_EXPECT(Exec_SETPROGRESSMAX);
+        if (use_container_olecmd) SET_EXPECT(Exec_SETPROGRESSPOS);
         SET_EXPECT(Invoke_SETSECURELOCKICON);
         SET_EXPECT(Invoke_FILEDOWNLOAD);
-        SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
+        if (use_container_olecmd) SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
         SET_EXPECT(Invoke_COMMANDSTATECHANGE);
         SET_EXPECT(EnableModeless_TRUE);
+        if (!use_container_olecmd) SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
     }
 
     hres = IWebBrowser2_Navigate2(webbrowser, &url, NULL, NULL, NULL, NULL);
@@ -2371,7 +2412,7 @@ static void test_Navigate2(IUnknown *unk)
         todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
         CHECK_CALLED(Invoke_BEFORENAVIGATE2);
         todo_wine CHECK_CALLED(Invoke_DOWNLOADBEGIN);
-        todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
+        if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
         CHECK_CALLED(EnableModeless_FALSE);
         CHECK_CALLED(Invoke_STATUSTEXTCHANGE);
         CHECK_CALLED(SetStatusText);
@@ -2381,13 +2422,13 @@ static void test_Navigate2(IUnknown *unk)
         CHECK_CALLED(Invoke_AMBIENT_PALETTE);
         CHECK_CALLED(GetOptionKeyPath);
         CHECK_CALLED(GetOverridesKeyPath);
-        todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
-        todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
-        todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
+        if (use_container_olecmd) todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
+        if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
+        if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
         todo_wine CHECK_CALLED(Invoke_SETSECURELOCKICON);
         todo_wine CHECK_CALLED(Invoke_FILEDOWNLOAD);
         todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
-        todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
+        if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
         CHECK_CALLED(EnableModeless_TRUE);
     }
 
@@ -2395,6 +2436,84 @@ static void test_Navigate2(IUnknown *unk)
     IWebBrowser2_Release(webbrowser);
 
     test_ready_state(READYSTATE_LOADING);
+}
+
+static void test_QueryStatusWB(IWebBrowser2 *webbrowser, BOOL use_custom_target, BOOL has_document)
+{
+    HRESULT hres, success_state;
+    OLECMDF success_flags;
+    enum OLECMDF status;
+
+    /*
+     * We can tell the difference between the custom container target and the built-in target
+     * since the custom target returns OLECMDF_SUPPORTED instead of OLECMDF_ENABLED.
+     */
+    if (use_custom_target)
+        success_flags = OLECMDF_SUPPORTED;
+    else
+        success_flags = OLECMDF_ENABLED;
+
+    /* When no target is available (no document or custom target) an error is returned */
+    if (has_document)
+        success_state = S_OK;
+    else
+        success_state = E_UNEXPECTED;
+
+    /*
+     * Test a safe operation that exists as both a high-numbered MSHTML id and an OLECMDID.
+     * These tests show that QueryStatusWB uses a NULL pguidCmdGroup, since OLECMDID_STOP
+     * is enabled and IDM_STOP is not.
+     */
+    status = 0xdeadbeef;
+    if (use_custom_target) SET_EXPECT(QueryStatus_STOP);
+    hres = IWebBrowser2_QueryStatusWB(webbrowser, OLECMDID_STOP, &status);
+    ok(hres == success_state, "QueryStatusWB failed: %08x %08x\n", hres, success_state);
+    if (!use_custom_target && has_document)
+        todo_wine ok((has_document && status == success_flags) || (!has_document && status == 0xdeadbeef),
+                     "OLECMDID_STOP not enabled/supported: %08x %08x\n", status, success_flags);
+    else
+        ok((has_document && status == success_flags) || (!has_document && status == 0xdeadbeef),
+           "OLECMDID_STOP not enabled/supported: %08x %08x\n", status, success_flags);
+    status = 0xdeadbeef;
+    if (use_custom_target) SET_EXPECT(QueryStatus_IDM_STOP);
+    hres = IWebBrowser2_QueryStatusWB(webbrowser, IDM_STOP, &status);
+    ok(hres == success_state, "QueryStatusWB failed: %08x %08x\n", hres, success_state);
+    ok((has_document && status == 0) || (!has_document && status == 0xdeadbeef),
+       "IDM_STOP is enabled/supported: %08x %d\n", status, has_document);
+}
+
+static void test_ExecWB(IWebBrowser2 *webbrowser, BOOL use_custom_target, BOOL has_document)
+{
+    HRESULT hres, olecmdid_state, idm_state;
+
+    /* When no target is available (no document or custom target) an error is returned */
+    if (has_document)
+    {
+        olecmdid_state = S_OK;
+        idm_state = OLECMDERR_E_NOTSUPPORTED;
+    }
+    else
+    {
+        olecmdid_state = E_UNEXPECTED;
+        idm_state = E_UNEXPECTED;
+    }
+
+    /*
+     * Test a safe operation that exists as both a high-numbered MSHTML id and an OLECMDID.
+     * These tests show that QueryStatusWB uses a NULL pguidCmdGroup, since OLECMDID_STOP
+     * succeeds (S_OK) and IDM_STOP does not (OLECMDERR_E_NOTSUPPORTED).
+     */
+    if (use_custom_target)
+        SET_EXPECT(Exec_STOP);
+    hres = IWebBrowser2_ExecWB(webbrowser, OLECMDID_STOP, OLECMDEXECOPT_DONTPROMPTUSER, 0, 0);
+    if (!use_custom_target && has_document)
+        todo_wine ok(hres == olecmdid_state, "ExecWB failed: %08x %08x\n", hres, olecmdid_state);
+    else
+        ok(hres == olecmdid_state, "ExecWB failed: %08x %08x\n", hres, olecmdid_state);
+    if (use_custom_target)
+        SET_EXPECT(Exec_IDM_STOP);
+    hres = IWebBrowser2_ExecWB(webbrowser, IDM_STOP, OLECMDEXECOPT_DONTPROMPTUSER, 0, 0);
+    ok(hres == idm_state, "ExecWB failed: %08x %08x\n", hres, idm_state);
 }
 
 static void test_download(DWORD flags)
@@ -2854,16 +2973,18 @@ static void test_WebBrowser(BOOL do_download)
     ULONG ref;
     HRESULT hres;
 
-    hres = CoCreateInstance(&CLSID_WebBrowser, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-            &IID_IUnknown, (void**)&unk);
-    ok(hres == S_OK, "Creating WebBrowser object failed: %08x\n", hres);
+    if (FAILED(create_WebBrowser(&unk)))
+        return;
 
     is_downloading = FALSE;
     is_first_load = TRUE;
+    use_container_olecmd = TRUE;
 
     hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
     ok(hres == S_OK, "Could not get IWebBrowser2 iface: %08x\n", hres);
 
+    test_QueryStatusWB(wb, FALSE, FALSE);
+    test_ExecWB(wb, FALSE, FALSE);
     test_QueryInterface(unk);
     test_ready_state(READYSTATE_UNINITIALIZED);
     test_ClassInfo(unk);
@@ -2875,6 +2996,8 @@ static void test_WebBrowser(BOOL do_download)
     test_DoVerb(unk);
     test_olecmd(unk, FALSE);
     test_Navigate2(unk);
+    test_QueryStatusWB(wb, TRUE, TRUE);
+    test_ExecWB(wb, TRUE, TRUE);
 
     if(do_download) {
         IDispatch *doc, *doc2;
@@ -2912,6 +3035,40 @@ static void test_WebBrowser(BOOL do_download)
     ok(ref == 0, "ref=%d, expected 0\n", ref);
 }
 
+static void test_WebBrowser_NoContainerOlecmd(void)
+{
+    IUnknown *unk = NULL;
+    HRESULT hres;
+    ULONG ref;
+
+    is_downloading = FALSE;
+    is_first_load = TRUE;
+    use_container_olecmd = FALSE;
+
+    /* Setup stage */
+    if (FAILED(create_WebBrowser(&unk)))
+        return;
+    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
+    ok(hres == S_OK, "QueryInterface(IID_IWebBrowser) failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+    test_ConnectionPoint(unk, TRUE);
+    test_ClientSite(unk, &ClientSite, TRUE);
+    test_DoVerb(unk);
+    test_Navigate2(unk);
+
+    /* Tests of interest */
+    test_QueryStatusWB(wb, FALSE, TRUE);
+    test_ExecWB(wb, FALSE, TRUE);
+
+    /* Cleanup stage */
+    IWebBrowser2_Release(wb);
+    test_ClientSite(unk, NULL, TRUE);
+    test_ConnectionPoint(unk, FALSE);
+    ref = IUnknown_Release(unk);
+    ok(ref == 0, "ref=%d, expected 0\n", ref);
+}
+
 static BOOL check_ie(void)
 {
     IHTMLDocument5 *doc;
@@ -2937,6 +3094,8 @@ START_TEST(webbrowser)
       test_WebBrowser(FALSE);
       trace("Testing WebBrowser...\n");
       test_WebBrowser(TRUE);
+      trace("Testing WebBrowser w/o container-based olecmd...\n");
+      test_WebBrowser_NoContainerOlecmd();
     }else {
       win_skip("Skipping tests on too old IE\n");
     }

@@ -780,16 +780,75 @@ static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VA
 static HRESULT WINAPI WebBrowser_QueryStatusWB(IWebBrowser2 *iface, OLECMDID cmdID, OLECMDF *pcmdf)
 {
     WebBrowser *This = impl_from_IWebBrowser2(iface);
-    FIXME("(%p)->(%d %p)\n", This, cmdID, pcmdf);
-    return E_NOTIMPL;
+    IOleCommandTarget *target = NULL;
+    OLECMD ole_command[1];
+    HRESULT hres;
+
+    TRACE("(%p)->(%d %p)\n", This, cmdID, pcmdf);
+
+    if (!pcmdf)
+        return E_POINTER;
+    ole_command[0].cmdID = cmdID;
+    ole_command[0].cmdf = *pcmdf;
+
+    if (This->container)
+    {
+        hres = IOleContainer_QueryInterface(This->container, &IID_IOleCommandTarget, (LPVOID*)&target);
+        if(FAILED(hres))
+            target = NULL;
+    }
+    if (!target && This->doc_host.document)
+    {
+        hres = IOleContainer_QueryInterface(This->doc_host.document, &IID_IOleCommandTarget, (LPVOID*)&target);
+        if(FAILED(hres))
+            target = NULL;
+    }
+
+    if (!target)
+        return E_UNEXPECTED;
+
+    hres = IOleCommandTarget_QueryStatus(target, NULL, 1, ole_command, NULL);
+    if (SUCCEEDED(hres))
+        *pcmdf = ole_command[0].cmdf;
+    if (hres == OLECMDERR_E_NOTSUPPORTED)
+    {
+        *pcmdf = 0;
+        hres = S_OK;
+    }
+    IOleCommandTarget_Release(target);
+
+    return hres;
 }
 
 static HRESULT WINAPI WebBrowser_ExecWB(IWebBrowser2 *iface, OLECMDID cmdID,
         OLECMDEXECOPT cmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
     WebBrowser *This = impl_from_IWebBrowser2(iface);
-    FIXME("(%p)->(%d %d %s %p)\n", This, cmdID, cmdexecopt, debugstr_variant(pvaIn), pvaOut);
-    return E_NOTIMPL;
+    IOleCommandTarget *target = NULL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%d %d %s %p)\n", This, cmdID, cmdexecopt, debugstr_variant(pvaIn), pvaOut);
+
+    if(This->container)
+    {
+        hres = IOleContainer_QueryInterface(This->container, &IID_IOleCommandTarget, (LPVOID*)&target);
+        if(FAILED(hres))
+            target = NULL;
+    }
+    if(!target && This->doc_host.document)
+    {
+        hres = IOleContainer_QueryInterface(This->doc_host.document, &IID_IOleCommandTarget, (LPVOID*)&target);
+        if(FAILED(hres))
+            target = NULL;
+    }
+
+    if(!target)
+        return E_UNEXPECTED;
+
+    hres = IOleCommandTarget_Exec(target, NULL, cmdID, cmdexecopt, pvaIn, pvaOut);
+    IOleCommandTarget_Release(target);
+
+    return hres;
 }
 
 static HRESULT WINAPI WebBrowser_ShowBrowserBar(IWebBrowser2 *iface, VARIANT *pvaClsid,
