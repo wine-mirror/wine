@@ -294,22 +294,29 @@ static inline void cp_fields(const IDirectSoundBufferImpl *dsb, const BYTE *ibuf
     INT istep = dsb->pwfx->wBitsPerSample / 8, ostep = device->pwfx->wBitsPerSample / 8;
 
     if (device->pwfx->nChannels == dsb->pwfx->nChannels ||
-        (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 6)) {
+        (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 6) ||
+        (device->pwfx->nChannels == 6 && dsb->pwfx->nChannels == 2)) {
         dsb->convert(ibuf, obuf, istride, ostride, count, freqAcc, adj);
-        if (device->pwfx->nChannels == 2)
+        if (device->pwfx->nChannels == 2 || dsb->pwfx->nChannels == 2)
             dsb->convert(ibuf + istep, obuf + ostep, istride, ostride, count, freqAcc, adj);
+        return;
     }
 
     if (device->pwfx->nChannels == 1 && dsb->pwfx->nChannels == 2)
     {
         dsb->convert(ibuf, obuf, istride, ostride, count, freqAcc, adj);
+        return;
     }
 
     if (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 1)
     {
         dsb->convert(ibuf, obuf, istride, ostride, count, freqAcc, adj);
         dsb->convert(ibuf, obuf + ostep, istride, ostride, count, freqAcc, adj);
+        return;
     }
+
+    WARN("Unable to remap channels: device=%u, buffer=%u\n", device->pwfx->nChannels,
+            dsb->pwfx->nChannels);
 }
 
 /**
