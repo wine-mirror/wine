@@ -131,7 +131,7 @@ void resource_unload(IWineD3DResourceImpl *resource)
             resource, resource->resource.resourceType);
 }
 
-static struct private_data *resource_find_private_data(IWineD3DResourceImpl *This, REFGUID tag)
+static struct private_data *resource_find_private_data(const struct IWineD3DResourceImpl *This, REFGUID tag)
 {
     struct private_data *data;
     struct list *entry;
@@ -193,7 +193,7 @@ HRESULT resource_set_private_data(struct IWineD3DResourceImpl *resource, REFGUID
     return WINED3D_OK;
 }
 
-HRESULT resource_get_private_data(struct IWineD3DResourceImpl *resource, REFGUID guid, void *data, DWORD *data_size)
+HRESULT resource_get_private_data(const struct IWineD3DResourceImpl *resource, REFGUID guid, void *data, DWORD *data_size)
 {
     const struct private_data *d;
 
@@ -260,13 +260,13 @@ DWORD resource_set_priority(struct IWineD3DResourceImpl *resource, DWORD priorit
     return prev;
 }
 
-DWORD resource_get_priority(struct IWineD3DResourceImpl *resource)
+DWORD resource_get_priority(const struct IWineD3DResourceImpl *resource)
 {
     TRACE("resource %p, returning %u.\n", resource, resource->resource.priority);
     return resource->resource.priority;
 }
 
-WINED3DRESOURCETYPE resource_get_type(struct IWineD3DResourceImpl *resource)
+WINED3DRESOURCETYPE resource_get_type(const struct IWineD3DResourceImpl *resource)
 {
     TRACE("resource %p, returning %#x.\n", resource, resource->resource.resourceType);
     return resource->resource.resourceType;
