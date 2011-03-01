@@ -1852,7 +1852,79 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
 static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
-    FIXME_(d3d_caps)("Card selection not handled for Mesa Nouveau driver\n");
+    if (strstr(gl_renderer, "Gallium"))
+    {
+        unsigned int i;
+
+        static const struct
+        {
+            const char *renderer;
+            enum wined3d_pci_device id;
+        }
+        cards[] =
+        {
+            {"NVC4",    CARD_NVIDIA_GEFORCE_GTX460},
+            {"NVC0",    CARD_NVIDIA_GEFORCE_GTX480},
+            {"NVAF",    CARD_NVIDIA_GEFORCE_GT320M},
+            {"NVAC",    CARD_NVIDIA_GEFORCE_8200},
+            {"NVAA",    CARD_NVIDIA_GEFORCE_8200},
+            {"NVA8",    CARD_NVIDIA_GEFORCE_210},
+            {"NVA5",    CARD_NVIDIA_GEFORCE_GT220},
+            {"NVA3",    CARD_NVIDIA_GEFORCE_GT240},
+            {"NVA0",    CARD_NVIDIA_GEFORCE_GTX280},
+            {"NV98",    CARD_NVIDIA_GEFORCE_9200},
+            {"NV96",    CARD_NVIDIA_GEFORCE_9400GT},
+            {"NV94",    CARD_NVIDIA_GEFORCE_9600GT},
+            {"NV92",    CARD_NVIDIA_GEFORCE_9800GT},
+            {"NV86",    CARD_NVIDIA_GEFORCE_8500GT},
+            {"NV84",    CARD_NVIDIA_GEFORCE_8600GT},
+            {"NV68",    CARD_NVIDIA_GEFORCE_6200},      /* 7050 */
+            {"NV67",    CARD_NVIDIA_GEFORCE_6200},      /* 7000M */
+            {"NV63",    CARD_NVIDIA_GEFORCE_6200},      /* 7100 */
+            {"NV50",    CARD_NVIDIA_GEFORCE_8800GTX},
+            {"NV4E",    CARD_NVIDIA_GEFORCE_6200},      /* 6100 Go / 6150 Go */
+            {"NV4C",    CARD_NVIDIA_GEFORCE_6200},      /* 6150SE */
+            {"NV4B",    CARD_NVIDIA_GEFORCE_7600},
+            {"NV4A",    CARD_NVIDIA_GEFORCE_6200},
+            {"NV49",    CARD_NVIDIA_GEFORCE_7800GT},    /* 7900 */
+            {"NV47",    CARD_NVIDIA_GEFORCE_7800GT},
+            {"NV46",    CARD_NVIDIA_GEFORCE_7400},
+            {"NV45",    CARD_NVIDIA_GEFORCE_6800},
+            {"NV44",    CARD_NVIDIA_GEFORCE_6200},
+            {"NV43",    CARD_NVIDIA_GEFORCE_6600GT},
+            {"NV42",    CARD_NVIDIA_GEFORCE_6800},
+            {"NV41",    CARD_NVIDIA_GEFORCE_6800},
+            {"NV40",    CARD_NVIDIA_GEFORCE_6800},
+            {"NV38",    CARD_NVIDIA_GEFORCEFX_5800},    /* FX 5950 Ultra */
+            {"NV36",    CARD_NVIDIA_GEFORCEFX_5800},    /* FX 5700/5750 */
+            {"NV35",    CARD_NVIDIA_GEFORCEFX_5800},    /* FX 5900 */
+            {"NV34",    CARD_NVIDIA_GEFORCEFX_5200},
+            {"NV31",    CARD_NVIDIA_GEFORCEFX_5600},
+            {"NV30",    CARD_NVIDIA_GEFORCEFX_5800},
+            {"NV28",    CARD_NVIDIA_GEFORCE4_TI4200},
+            {"NV25",    CARD_NVIDIA_GEFORCE4_TI4200},
+            {"NV20",    CARD_NVIDIA_GEFORCE3},
+            {"NV1F",    CARD_NVIDIA_GEFORCE4_MX},       /* GF4 MX IGP */
+            {"NV1A",    CARD_NVIDIA_GEFORCE2},          /* GF2 IGP */
+            {"NV18",    CARD_NVIDIA_GEFORCE4_MX},
+            {"NV17",    CARD_NVIDIA_GEFORCE4_MX},
+            {"NV16",    CARD_NVIDIA_GEFORCE2},
+            {"NV15",    CARD_NVIDIA_GEFORCE2},
+            {"NV11",    CARD_NVIDIA_GEFORCE2_MX},
+            {"NV10",    CARD_NVIDIA_GEFORCE},
+            {"NV05",    CARD_NVIDIA_RIVA_TNT2},
+            {"NV04",    CARD_NVIDIA_RIVA_TNT},
+            {"NV03",    CARD_NVIDIA_RIVA_128},
+        };
+
+        for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
+        {
+            if (strstr(gl_renderer, cards[i].renderer))
+                return cards[i].id;
+        }
+    }
+
+    FIXME_(d3d_caps)("Unknown renderer %s.\n", debugstr_a(gl_renderer));
     if (WINE_D3D9_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCEFX_5600;
     if (WINE_D3D8_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE3;
     if (WINE_D3D7_CAPABLE(gl_info)) return CARD_NVIDIA_GEFORCE;
