@@ -36,6 +36,7 @@
 #include "winbase.h"
 #include "wincon.h"
 #include "winternl.h"
+#include "winuser.h"
 #include "winioctl.h"
 #include "file.h"
 #include "request.h"
@@ -291,6 +292,34 @@ static void dump_async_data( const char *prefix, const async_data_t *data )
     dump_uint64( ",arg=", &data->arg );
     dump_uint64( ",cvalue=", &data->cvalue );
     fputc( '}', stderr );
+}
+
+static void dump_hw_input( const char *prefix, const hw_input_t *input )
+{
+    switch (input->type)
+    {
+    case INPUT_MOUSE:
+        fprintf( stderr, "%s{type=MOUSE,x=%d,y=%d,data=%08x,flags=%08x,time=%u",
+                 prefix, input->mouse.x, input->mouse.y, input->mouse.data, input->mouse.flags,
+                 input->mouse.time );
+        dump_uint64( ",info=", &input->mouse.info );
+        fputc( '}', stderr );
+        break;
+    case INPUT_KEYBOARD:
+        fprintf( stderr, "%s{type=KEYBOARD,vkey=%04hx,scan=%04hx,flags=%08x,time=%u",
+                 prefix, input->kbd.vkey, input->kbd.scan, input->kbd.flags, input->kbd.time );
+        dump_uint64( ",info=", &input->kbd.info );
+        fputc( '}', stderr );
+        break;
+    case INPUT_HARDWARE:
+        fprintf( stderr, "%s{type=HARDWARE,msg=%04x", prefix, input->hw.msg );
+        dump_uint64( ",lparam=", &input->hw.lparam );
+        fputc( '}', stderr );
+        break;
+    default:
+        fprintf( stderr, "%s{type=%04x}", prefix, input->type );
+        break;
+    }
 }
 
 static void dump_luid( const char *prefix, const luid_t *luid )
@@ -2465,13 +2494,9 @@ static void dump_post_quit_message_request( const struct post_quit_message_reque
 static void dump_send_hardware_message_request( const struct send_hardware_message_request *req )
 {
     fprintf( stderr, " win=%08x", req->win );
+    dump_hw_input( ", input=", &req->input );
+    fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", msg=%08x", req->msg );
-    fprintf( stderr, ", time=%08x", req->time );
-    dump_uint64( ", wparam=", &req->wparam );
-    dump_uint64( ", lparam=", &req->lparam );
-    dump_uint64( ", info=", &req->info );
-    fprintf( stderr, ", x=%d", req->x );
-    fprintf( stderr, ", y=%d", req->y );
 }
 
 static void dump_get_message_request( const struct get_message_request *req )

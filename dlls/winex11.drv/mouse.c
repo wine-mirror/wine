@@ -306,14 +306,16 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
 
     SERVER_START_REQ( send_hardware_message )
     {
-        req->win      = wine_server_user_handle( hwnd );
-        req->msg      = message;
-        req->wparam   = MAKEWPARAM( 0, data );
-        req->lparam   = 0;
-        req->x        = x;
-        req->y        = y;
-        req->time     = time;
-        req->info     = extra_info;
+        req->win               = wine_server_user_handle( hwnd );
+        req->msg               = message;
+        req->input.type        = INPUT_MOUSE;
+        req->input.mouse.x     = x;
+        req->input.mouse.y     = y;
+        req->input.mouse.data  = data;
+        req->input.mouse.flags = 0; /* FIXME */
+        req->input.mouse.time  = time;
+        req->input.mouse.info  = extra_info;
+        if (injected_flags & LLMHF_INJECTED) req->flags = SEND_HWMSG_INJECTED;
         wine_server_call( req );
     }
     SERVER_END_REQ;

@@ -319,6 +319,36 @@ struct winevent_msg_data
 
 typedef union
 {
+    int type;
+    struct
+    {
+        int            type;    /* INPUT_KEYBOARD */
+        unsigned short vkey;    /* virtual key code */
+        unsigned short scan;    /* scan code */
+        unsigned int   flags;   /* event flags */
+        unsigned int   time;    /* event time */
+        lparam_t       info;    /* extra info */
+    } kbd;
+    struct
+    {
+        int            type;    /* INPUT_MOUSE */
+        int            x;       /* coordinates */
+        int            y;
+        unsigned int   data;    /* mouse data */
+        unsigned int   flags;   /* event flags */
+        unsigned int   time;    /* event time */
+        lparam_t       info;    /* extra info */
+    } mouse;
+    struct
+    {
+        int            type;    /* INPUT_HARDWARE */
+        unsigned int   msg;     /* message code */
+        lparam_t       lparam;  /* message param */
+    } hw;
+} hw_input_t;
+
+typedef union
+{
     unsigned char            bytes[1];   /* raw data for sent messages */
     struct hardware_msg_data hardware;
     struct callback_msg_data callback;
@@ -2002,14 +2032,11 @@ enum message_type
 /* Send a hardware message to a thread queue */
 @REQ(send_hardware_message)
     user_handle_t   win;       /* window handle */
+    hw_input_t      input;     /* input data */
+    unsigned int    flags;     /* flags (see below) */
     unsigned int    msg;       /* message code */
-    unsigned int    time;      /* message time */
-    lparam_t        wparam;    /* parameters */
-    lparam_t        lparam;    /* parameters */
-    lparam_t        info;      /* extra info */
-    int             x;         /* x position */
-    int             y;         /* y position */
 @END
+#define SEND_HWMSG_INJECTED    0x01
 
 
 /* Get a message from the current queue */

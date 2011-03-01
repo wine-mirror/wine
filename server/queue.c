@@ -1282,7 +1282,13 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     update_input_key_state( desktop, desktop->keystate, msg );
     last_input_time = get_tick_count();
 
-    if (!is_keyboard_msg( msg ))
+    if (is_keyboard_msg( msg ))
+    {
+        if (desktop->keystate[VK_MENU] & 0x80) msg->lparam |= KF_ALTDOWN << 16;
+        if (msg->wparam == VK_SHIFT || msg->wparam == VK_LSHIFT || msg->wparam == VK_RSHIFT)
+            msg->lparam &= ~(KF_EXTENDED << 16);
+    }
+    else
     {
         if (msg->msg == WM_MOUSEMOVE) set_cursor_pos( desktop, data->x, data->y );
         if (desktop->keystate[VK_LBUTTON] & 0x80)  msg->wparam |= MK_LBUTTON;
@@ -1320,6 +1326,128 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
         set_queue_bits( thread->queue, get_hardware_msg_bit(msg) );
     }
     release_object( thread );
+}
+
+/* queue a hardware message for a mouse event */
+static void queue_mouse_message( struct desktop *desktop, user_handle_t win, unsigned int message,
+                                 const hw_input_t *input )
+{
+    struct hardware_msg_data *msg_data;
+    struct message *msg;
+
+    if (!(msg = mem_alloc( sizeof(*msg) ))) return;
+    if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
+    {
+        free( msg );
+        return;
+    }
+    memset( msg_data, 0, sizeof(*msg_data) );
+
+    msg->type      = MSG_HARDWARE;
+    msg->win       = get_user_full_handle( win );
+    msg->msg       = message;
+    msg->wparam    = input->mouse.data << 16;
+    msg->lparam    = 0;
+    msg->time      = input->mouse.time;
+    msg->result    = NULL;
+    msg->data      = msg_data;
+    msg->data_size = sizeof(*msg_data);
+    msg_data->x    = input->mouse.x;
+    msg_data->y    = input->mouse.y;
+    msg_data->info = input->mouse.info;
+    if (!msg->time) msg->time = get_tick_count();
+
+    queue_hardware_message( desktop, msg );
+}
+
+/* queue a hardware message for a keyboard event */
+static void queue_keyboard_message( struct desktop *desktop, user_handle_t win, unsigned int message,
+                                    const hw_input_t *input )
+{
+    struct hardware_msg_data *msg_data;
+    struct message *msg;
+    unsigned char vkey = input->kbd.vkey;
+
+    if (!(msg = mem_alloc( sizeof(*msg) ))) return;
+    if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
+    {
+        free( msg );
+        return;
+    }
+    memset( msg_data, 0, sizeof(*msg_data) );
+
+    msg->type      = MSG_HARDWARE;
+    msg->win       = get_user_full_handle( win );
+    msg->msg       = message;
+    msg->lparam    = (input->kbd.scan << 16) | 1; /* repeat count */
+    msg->time      = input->kbd.time;
+    msg->result    = NULL;
+    msg->data      = msg_data;
+    msg->data_size = sizeof(*msg_data);
+    msg_data->info = input->kbd.info;
+    if (!msg->time) msg->time = get_tick_count();
+
+    if (input->kbd.flags & KEYEVENTF_UNICODE)
+    {
+        msg->wparam = VK_PACKET;
+    }
+    else
+    {
+        switch (vkey)
+        {
+        case VK_MENU:
+        case VK_LMENU:
+        case VK_RMENU:
+            vkey = (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) ? VK_RMENU : VK_LMENU;
+            break;
+        case VK_CONTROL:
+        case VK_LCONTROL:
+        case VK_RCONTROL:
+            vkey = (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) ? VK_RCONTROL : VK_LCONTROL;
+            break;
+        case VK_SHIFT:
+        case VK_LSHIFT:
+        case VK_RSHIFT:
+            vkey = (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) ? VK_RSHIFT : VK_LSHIFT;
+            break;
+        }
+        if (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) msg->lparam |= KF_EXTENDED << 16;
+        /* FIXME: set KF_DLGMODE and KF_MENUMODE when needed */
+        if (input->kbd.flags & KEYEVENTF_KEYUP) msg->lparam |= (KF_REPEAT | KF_UP) << 16;
+        else if (desktop->keystate[vkey] & 0x80) msg->lparam |= KF_REPEAT << 16;
+
+        msg->wparam = vkey;
+    }
+
+    queue_hardware_message( desktop, msg );
+}
+
+/* queue a hardware message for a custom type of event */
+static void queue_custom_hardware_message( struct desktop *desktop, user_handle_t win,
+                                           const hw_input_t *input )
+{
+    struct hardware_msg_data *msg_data;
+    struct message *msg;
+
+    if (!(msg = mem_alloc( sizeof(*msg) ))) return;
+    if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
+    {
+        free( msg );
+        return;
+    }
+    memset( msg_data, 0, sizeof(*msg_data) );
+
+    msg->type      = MSG_HARDWARE;
+    msg->win       = get_user_full_handle( win );
+    msg->msg       = input->hw.msg;
+    msg->wparam    = 0;
+    msg->lparam    = input->hw.lparam;
+    msg->time      = get_tick_count();
+    msg->result    = NULL;
+    msg->data      = msg_data;
+    msg->data_size = sizeof(*msg_data);
+
+    queue_hardware_message( desktop, msg );
 }
 
 /* check message filter for a hardware message */
@@ -1735,10 +1863,8 @@ DECL_HANDLER(send_message)
 /* send a hardware message to a thread queue */
 DECL_HANDLER(send_hardware_message)
 {
-    struct message *msg;
     struct thread *thread = NULL;
     struct desktop *desktop;
-    struct hardware_msg_data *data;
 
     if (req->win)
     {
@@ -1747,29 +1873,20 @@ DECL_HANDLER(send_hardware_message)
     }
     else if (!(desktop = get_thread_desktop( current, 0 ))) return;
 
-    if (!(data = mem_alloc( sizeof(*data) ))) goto done;
-
-    memset( data, 0, sizeof(*data) );
-    data->x    = req->x;
-    data->y    = req->y;
-    data->info = req->info;
-
-    if ((msg = mem_alloc( sizeof(*msg) )))
+    switch (req->input.type)
     {
-        msg->type      = MSG_HARDWARE;
-        msg->win       = get_user_full_handle( req->win );
-        msg->msg       = req->msg;
-        msg->wparam    = req->wparam;
-        msg->lparam    = req->lparam;
-        msg->time      = req->time;
-        msg->result    = NULL;
-        msg->data      = data;
-        msg->data_size = sizeof(*data);
-        queue_hardware_message( desktop, msg );
+    case INPUT_MOUSE:
+        queue_mouse_message( desktop, req->win, req->msg, &req->input );
+        break;
+    case INPUT_KEYBOARD:
+        queue_keyboard_message( desktop, req->win, req->msg, &req->input );
+        break;
+    case INPUT_HARDWARE:
+        queue_custom_hardware_message( desktop, req->win, &req->input );
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
     }
-    else free( data );
-
-done:
     if (thread) release_object( thread );
     release_object( desktop );
 }

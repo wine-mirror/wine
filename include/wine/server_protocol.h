@@ -303,6 +303,36 @@ struct winevent_msg_data
 
 typedef union
 {
+    int type;
+    struct
+    {
+        int            type;
+        unsigned short vkey;
+        unsigned short scan;
+        unsigned int   flags;
+        unsigned int   time;
+        lparam_t       info;
+    } kbd;
+    struct
+    {
+        int            type;
+        int            x;
+        int            y;
+        unsigned int   data;
+        unsigned int   flags;
+        unsigned int   time;
+        lparam_t       info;
+    } mouse;
+    struct
+    {
+        int            type;
+        unsigned int   msg;
+        lparam_t       lparam;
+    } hw;
+} hw_input_t;
+
+typedef union
+{
     unsigned char            bytes[1];
     struct hardware_msg_data hardware;
     struct callback_msg_data callback;
@@ -2762,18 +2792,15 @@ struct send_hardware_message_request
 {
     struct request_header __header;
     user_handle_t   win;
+    hw_input_t      input;
+    unsigned int    flags;
     unsigned int    msg;
-    unsigned int    time;
-    lparam_t        wparam;
-    lparam_t        lparam;
-    lparam_t        info;
-    int             x;
-    int             y;
 };
 struct send_hardware_message_reply
 {
     struct reply_header __header;
 };
+#define SEND_HWMSG_INJECTED    0x01
 
 
 
@@ -5529,6 +5556,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 415
+#define SERVER_PROTOCOL_VERSION 416
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1156,7 +1156,6 @@ void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD event_fl
     UINT message;
     KBDLLHOOKSTRUCT hook;
     WORD flags, wVkStripped, wVkL, wVkR, vk_hook = wVk;
-    LPARAM lParam = 0;
 
     if (!time) time = GetTickCount();
 
@@ -1225,13 +1224,7 @@ void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD event_fl
         if (!(event_flags & KEYEVENTF_UNICODE) && key_state_table[wVk] & 0x80) flags |= KF_REPEAT;
     }
 
-    if (event_flags & KEYEVENTF_UNICODE)
-    {
-        vk_hook = wVk = VK_PACKET;
-        lParam = MAKELPARAM(1 /* repeat count */, wScan);
-        TRACE_(key)("message=0x%04x wParam=0x%04X lParam=0x%08lx\n",
-                    message, wVk, lParam);
-    }
+    if (event_flags & KEYEVENTF_UNICODE) vk_hook = wVk = VK_PACKET;
 
     /* Hook gets whatever key was sent. */
     hook.vkCode      = vk_hook;
@@ -1254,25 +1247,22 @@ void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD event_fl
             key_state_table[wVk] |= 0xc0;
             key_state_table[wVkStripped] = key_state_table[wVkL] | key_state_table[wVkR];
         }
-
-        if (key_state_table[VK_MENU] & 0x80) flags |= KF_ALTDOWN;
-
-        if (wVkStripped == VK_SHIFT) flags &= ~KF_EXTENDED;
-
-        lParam = MAKELPARAM(1 /* repeat count */, flags);
-
-        TRACE_(key)(" message=0x%04x wParam=0x%04X, lParam=0x%08lx, InputKeyState=0x%x\n",
-                    message, wVk, lParam, key_state_table[wVk]);
     }
+
+    TRACE_(key)("message=0x%04x wParam=0x%04x InputKeyState=0x%x\n",
+                message, wVk, key_state_table[wVk]);
 
     SERVER_START_REQ( send_hardware_message )
     {
-        req->win      = wine_server_user_handle( hwnd );
-        req->msg      = message;
-        req->wparam   = wVk;
-        req->lparam   = lParam;
-        req->time     = time;
-        req->info     = dwExtraInfo;
+        req->win             = wine_server_user_handle( hwnd );
+        req->msg             = message;
+        req->input.type      = INPUT_KEYBOARD;
+        req->input.kbd.vkey  = vk_hook;
+        req->input.kbd.scan  = wScan;
+        req->input.kbd.flags = event_flags;
+        req->input.kbd.time  = time;
+        req->input.kbd.info  = dwExtraInfo;
+        if (injected_flags & LLKHF_INJECTED) req->flags = SEND_HWMSG_INJECTED;
         wine_server_call( req );
     }
     SERVER_END_REQ;
