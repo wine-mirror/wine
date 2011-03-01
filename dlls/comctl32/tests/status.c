@@ -382,6 +382,12 @@ static void test_status_control(void)
     /* Reset number of parts */
     r = SendMessage(hWndStatus, SB_SETPARTS, 2, (LPARAM)nParts);
     expect(TRUE,r);
+    r = SendMessage(hWndStatus, SB_GETPARTS, 0, 0);
+    ok(r == 2, "Expected 2, got %d\n", r);
+    r = SendMessage(hWndStatus, SB_SETPARTS, 0, 0);
+    expect(FALSE,r);
+    r = SendMessage(hWndStatus, SB_GETPARTS, 0, 0);
+    ok(r == 2, "Expected 2, got %d\n", r);
 
     /* Set the minimum height and get rectangle information again */
     SendMessage(hWndStatus, SB_SETMINHEIGHT, 50, 0);

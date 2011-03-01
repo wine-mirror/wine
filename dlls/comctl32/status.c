@@ -665,6 +665,8 @@ STATUSBAR_SetParts (STATUS_INFO *infoPtr, INT count, LPINT parts)
 
     TRACE("(%d,%p)\n", count, parts);
 
+    if(!count) return FALSE;
+
     oldNumParts = infoPtr->numParts;
     infoPtr->numParts = count;
     if (oldNumParts > infoPtr->numParts) {
