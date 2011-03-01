@@ -306,7 +306,6 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
 
     SERVER_START_REQ( send_hardware_message )
     {
-        req->id       = (injected_flags & LLMHF_INJECTED) ? 0 : GetCurrentThreadId();
         req->win      = wine_server_user_handle( hwnd );
         req->msg      = message;
         req->wparam   = MAKEWPARAM( 0, data );

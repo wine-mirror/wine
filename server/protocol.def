@@ -2001,18 +2001,14 @@ enum message_type
 
 /* Send a hardware message to a thread queue */
 @REQ(send_hardware_message)
-    thread_id_t     id;        /* thread id */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message code */
+    unsigned int    time;      /* message time */
     lparam_t        wparam;    /* parameters */
     lparam_t        lparam;    /* parameters */
     lparam_t        info;      /* extra info */
     int             x;         /* x position */
     int             y;         /* y position */
-    unsigned int    time;      /* message time */
-@REPLY
-    user_handle_t   cursor;    /* current cursor for the target thread input */
-    int             count;     /* current cursor count */
 @END
 
 

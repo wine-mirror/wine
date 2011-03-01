@@ -2761,22 +2761,18 @@ enum message_type
 struct send_hardware_message_request
 {
     struct request_header __header;
-    thread_id_t     id;
     user_handle_t   win;
     unsigned int    msg;
+    unsigned int    time;
     lparam_t        wparam;
     lparam_t        lparam;
     lparam_t        info;
     int             x;
     int             y;
-    unsigned int    time;
-    char __pad_60[4];
 };
 struct send_hardware_message_reply
 {
     struct reply_header __header;
-    user_handle_t   cursor;
-    int             count;
 };
 
 
@@ -5533,6 +5529,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 414
+#define SERVER_PROTOCOL_VERSION 415
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

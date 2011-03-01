@@ -1267,7 +1267,6 @@ void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD event_fl
 
     SERVER_START_REQ( send_hardware_message )
     {
-        req->id       = (injected_flags & LLKHF_INJECTED) ? 0 : GetCurrentThreadId();
         req->win      = wine_server_user_handle( hwnd );
         req->msg      = message;
         req->wparam   = wVk;

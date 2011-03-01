@@ -2464,21 +2464,14 @@ static void dump_post_quit_message_request( const struct post_quit_message_reque
 
 static void dump_send_hardware_message_request( const struct send_hardware_message_request *req )
 {
-    fprintf( stderr, " id=%04x", req->id );
-    fprintf( stderr, ", win=%08x", req->win );
+    fprintf( stderr, " win=%08x", req->win );
     fprintf( stderr, ", msg=%08x", req->msg );
+    fprintf( stderr, ", time=%08x", req->time );
     dump_uint64( ", wparam=", &req->wparam );
     dump_uint64( ", lparam=", &req->lparam );
     dump_uint64( ", info=", &req->info );
     fprintf( stderr, ", x=%d", req->x );
     fprintf( stderr, ", y=%d", req->y );
-    fprintf( stderr, ", time=%08x", req->time );
-}
-
-static void dump_send_hardware_message_reply( const struct send_hardware_message_reply *req )
-{
-    fprintf( stderr, " cursor=%08x", req->cursor );
-    fprintf( stderr, ", count=%d", req->count );
 }
 
 static void dump_get_message_request( const struct get_message_request *req )
@@ -4257,7 +4250,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_process_idle_event_reply,
     NULL,
     NULL,
-    (dump_func)dump_send_hardware_message_reply,
+    NULL,
     (dump_func)dump_get_message_reply,
     NULL,
     NULL,

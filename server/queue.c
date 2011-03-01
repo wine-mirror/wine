@@ -1237,8 +1237,8 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
 }
 
 /* find the window that should receive a given hardware message */
-static user_handle_t find_hardware_message_window( struct thread_input *input, struct message *msg,
-                                                   unsigned int *msg_code )
+static user_handle_t find_hardware_message_window( struct desktop *desktop, struct thread_input *input,
+                                                   struct message *msg, unsigned int *msg_code )
 {
     struct hardware_msg_data *data = msg->data;
     user_handle_t win = 0;
@@ -1257,9 +1257,7 @@ static user_handle_t find_hardware_message_window( struct thread_input *input, s
         if (!input || !(win = input->capture))
         {
             if (!(win = msg->win) || !is_window_visible( win ) || is_window_transparent( win ))
-            {
-                if (input) win = window_from_point( input->desktop, data->x, data->y );
-            }
+                win = window_from_point( desktop, data->x, data->y );
         }
     }
     return win;
@@ -1273,11 +1271,11 @@ static void set_cursor_pos( struct desktop *desktop, int x, int y )
 }
 
 /* queue a hardware message into a given thread input */
-static void queue_hardware_message( struct desktop *desktop, struct thread_input *input,
-                                    struct message *msg )
+static void queue_hardware_message( struct desktop *desktop, struct message *msg )
 {
     user_handle_t win;
     struct thread *thread;
+    struct thread_input *input;
     unsigned int msg_code;
     struct hardware_msg_data *data = msg->data;
 
@@ -1298,7 +1296,14 @@ static void queue_hardware_message( struct desktop *desktop, struct thread_input
     data->x = desktop->cursor_x;
     data->y = desktop->cursor_y;
 
-    win = find_hardware_message_window( input, msg, &msg_code );
+    if (msg->win && (thread = get_window_thread( msg->win )))
+    {
+        input = thread->queue->input;
+        release_object( thread );
+    }
+    else input = desktop->foreground_input;
+
+    win = find_hardware_message_window( desktop, input, msg, &msg_code );
     if (!win || !(thread = get_window_thread(win)))
     {
         if (input) update_input_key_state( input->desktop, input->keystate, msg );
@@ -1387,7 +1392,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         struct hardware_msg_data *data = msg->data;
 
         ptr = list_next( &input->msg_list, ptr );
-        win = find_hardware_message_window( input, msg, &msg_code );
+        win = find_hardware_message_window( input->desktop, input, msg, &msg_code );
         if (!win || !(win_thread = get_window_thread( win )))
         {
             /* no window at all, remove it */
@@ -1732,31 +1737,17 @@ DECL_HANDLER(send_hardware_message)
 {
     struct message *msg;
     struct thread *thread = NULL;
-    struct desktop *desktop = NULL;
+    struct desktop *desktop;
     struct hardware_msg_data *data;
-    struct thread_input *input;
 
-    if (req->id)
+    if (req->win)
     {
-        if (!(thread = get_thread_from_id( req->id ))) return;
-        if (!thread->queue)
-        {
-            set_error( STATUS_INVALID_PARAMETER );
-            release_object( thread );
-            return;
-        }
-        input = thread->queue->input;
-        desktop = (struct desktop *)grab_object( input->desktop );
-        reply->cursor = input->cursor;
-        reply->count  = input->cursor_count;
+        if (!(thread = get_window_thread( req->win ))) return;
+        desktop = (struct desktop *)grab_object( thread->queue->input->desktop );
     }
-    else
-    {
-        if (!(desktop = get_thread_desktop( current, 0 ))) return;
-        input = desktop->foreground_input;
-    }
+    else if (!(desktop = get_thread_desktop( current, 0 ))) return;
 
-    if (!req->msg || !(data = mem_alloc( sizeof(*data) ))) goto done;
+    if (!(data = mem_alloc( sizeof(*data) ))) goto done;
 
     memset( data, 0, sizeof(*data) );
     data->x    = req->x;
@@ -1774,7 +1765,7 @@ DECL_HANDLER(send_hardware_message)
         msg->result    = NULL;
         msg->data      = data;
         msg->data_size = sizeof(*data);
-        queue_hardware_message( desktop, input, msg );
+        queue_hardware_message( desktop, msg );
     }
     else free( data );
 
