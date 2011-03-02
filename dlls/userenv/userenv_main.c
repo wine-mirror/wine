@@ -26,9 +26,11 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "winnls.h"
 #include "userenv.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( userenv );
 
@@ -115,15 +117,79 @@ BOOL WINAPI GetDefaultUserProfileDirectoryW( LPWSTR lpProfileDir, LPDWORD lpcchS
 BOOL WINAPI GetUserProfileDirectoryA( HANDLE hToken, LPSTR lpProfileDir,
                      LPDWORD lpcchSize )
 {
-    FIXME("%p %p %p\n", hToken, lpProfileDir, lpcchSize );
-    return FALSE;
+    BOOL ret;
+    WCHAR *dirW = NULL;
+
+    TRACE( "%p %p %p\n", hToken, lpProfileDir, lpcchSize );
+
+    if (!lpProfileDir || !lpcchSize)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!(dirW = HeapAlloc( GetProcessHeap(), 0, *lpcchSize * sizeof(WCHAR) )))
+        return FALSE;
+
+    if ((ret = GetUserProfileDirectoryW( hToken, dirW, lpcchSize )))
+        WideCharToMultiByte( CP_ACP, 0, dirW, *lpcchSize, lpProfileDir, *lpcchSize, NULL, NULL );
+
+    HeapFree( GetProcessHeap(), 0, dirW );
+    return ret;
 }
 
 BOOL WINAPI GetUserProfileDirectoryW( HANDLE hToken, LPWSTR lpProfileDir,
                      LPDWORD lpcchSize )
 {
-    FIXME("%p %p %p\n", hToken, lpProfileDir, lpcchSize );
-    return FALSE;
+    static const WCHAR slashW[] = {'\\',0};
+    TOKEN_USER *t;
+    WCHAR *userW = NULL, *dirW = NULL;
+    DWORD len, dir_len, domain_len;
+    SID_NAME_USE use;
+    BOOL ret = FALSE;
+
+    TRACE( "%p %p %p\n", hToken, lpProfileDir, lpcchSize );
+
+    if (!lpcchSize)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    len = 0;
+    GetTokenInformation( hToken, TokenUser, NULL, 0, &len );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
+    if (!(t = HeapAlloc( GetProcessHeap(), 0, len ))) return FALSE;
+    if (!GetTokenInformation( hToken, TokenUser, t, len, &len )) goto done;
+
+    len = 0;
+    LookupAccountSidW( NULL, t->User.Sid, NULL, &len, NULL, &domain_len, NULL );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) goto done;
+    if (!(userW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) goto done;
+    if (!LookupAccountSidW( NULL, t->User.Sid, userW, &len, NULL, &domain_len, &use )) goto done;
+
+    dir_len = 0;
+    GetProfilesDirectoryW( NULL, &dir_len );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) goto done;
+    if (!(dirW = HeapAlloc( GetProcessHeap(), 0, (dir_len + 1) * sizeof(WCHAR) ))) goto done;
+    if (!GetProfilesDirectoryW( dirW, &dir_len )) goto done;
+
+    len += dir_len + 2;
+    if (*lpcchSize < len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        *lpcchSize = len;
+        goto done;
+    }
+    strcpyW( lpProfileDir, dirW );
+    strcatW( lpProfileDir, slashW );
+    strcatW( lpProfileDir, userW );
+    *lpcchSize = len;
+    ret = TRUE;
+
+done:
+    HeapFree( GetProcessHeap(), 0, userW );
+    HeapFree( GetProcessHeap(), 0, dirW );
+    return ret;
 }
 
 static const char ProfileListA[] = "Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList";
