@@ -1,5 +1,5 @@
 /*
- * English resources for the Internet control panel applet
+ * Portuguese resources for the Internet control panel applet
  *
  * Copyright 2010 Gustavo Henrique Milaré
  *
@@ -39,6 +39,11 @@ BEGIN
     PUSHBUTTON  "Página &atual", IDC_HOME_CURRENT, 58, 36, 80, 14
     PUSHBUTTON  "Página &padrão", IDC_HOME_DEFAULT, 144, 36, 80, 14
     PUSHBUTTON  "Página em &branco", IDC_HOME_BLANK, 230, 36, 80, 14
+    GROUPBOX    " Browsing history ", IDC_STATIC, 4, 60, 312, 46
+    LTEXT       "You can delete cached pages, cookies and other data.",
+                IDC_STATIC, 58, 72, 252, 10
+    PUSHBUTTON  "Delete &files...", IDC_HISTORY_DELETE, 144, 86, 80, 14
+    PUSHBUTTON  "&Settings...", IDC_HISTORY_SETTINGS, 230, 86, 80, 14
 
 END
 

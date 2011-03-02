@@ -1,6 +1,6 @@
 MODULE    = inetcpl.cpl
 IMPORTS   = comctl32 shlwapi user32 advapi32
-DELAYIMPORTS = cryptui
+DELAYIMPORTS = cryptui wininet
 
 C_SRCS = \
 	content.c \

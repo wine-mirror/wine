@@ -40,6 +40,11 @@ BEGIN
     PUSHBUTTON  "현재 페이지(&C)", IDC_HOME_CURRENT, 58, 36, 80, 14
     PUSHBUTTON  "기본 페이지(&D)", IDC_HOME_DEFAULT, 144, 36, 80, 14
     PUSHBUTTON  "빈 페이지(&B)", IDC_HOME_BLANK, 230, 36, 80, 14
+    GROUPBOX    " Browsing history ", IDC_STATIC, 4, 60, 312, 46
+    LTEXT       "You can delete cached pages, cookies and other data.",
+                IDC_STATIC, 58, 72, 252, 10
+    PUSHBUTTON  "Delete &files...", IDC_HISTORY_DELETE, 144, 86, 80, 14
+    PUSHBUTTON  "&Settings...", IDC_HISTORY_SETTINGS, 230, 86, 80, 14
 
 END
 

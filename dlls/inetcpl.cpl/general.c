@@ -43,8 +43,88 @@ static const WCHAR reg_ie_main[] = {'S','o','f','t','w','a','r','e','\\',
                                     'M','a','i','n',0};
 
 /* list of unimplemented buttons */
-static DWORD disable_me[] = {IDC_HOME_CURRENT,
-                             IDC_HOME_DEFAULT, 0};
+static DWORD disabled_general_buttons[] = {IDC_HOME_CURRENT,
+                                           IDC_HOME_DEFAULT,
+                                           IDC_HISTORY_SETTINGS,
+                                           0};
+static DWORD disabled_delhist_buttons[] = {IDC_DELETE_COOKIES,
+                                           IDC_DELETE_HISTORY,
+                                           IDC_DELETE_FORM_DATA,
+                                           IDC_DELETE_PASSWORDS,
+                                           0};
+
+/*********************************************************************
+ * delhist_on_command [internal]
+ *
+ * handle WM_COMMAND in Delete browsing history dialog
+ *
+ */
+static INT_PTR delhist_on_command(HWND hdlg, WPARAM wparam)
+{
+    switch (wparam)
+    {
+        case MAKEWPARAM(IDOK, BN_CLICKED):
+            if (!FreeUrlCacheSpaceW(NULL, 100, FCS_PERCENT_CACHE_SPACE))
+                break;   /* Don't close the dialog. */
+            EndDialog(hdlg, IDOK);
+            return TRUE;
+
+        case MAKEWPARAM(IDCANCEL, BN_CLICKED):
+            EndDialog(hdlg, IDCANCEL);
+            return TRUE;
+
+        case MAKEWPARAM(IDC_DELETE_TEMP_FILES, BN_CLICKED):
+        case MAKEWPARAM(IDC_DELETE_COOKIES, BN_CLICKED):
+        case MAKEWPARAM(IDC_DELETE_HISTORY, BN_CLICKED):
+        case MAKEWPARAM(IDC_DELETE_FORM_DATA, BN_CLICKED):
+        case MAKEWPARAM(IDC_DELETE_PASSWORDS, BN_CLICKED):
+        {
+            BOOL any = IsDlgButtonChecked(hdlg, IDC_DELETE_TEMP_FILES) ||
+                       IsDlgButtonChecked(hdlg, IDC_DELETE_COOKIES) ||
+                       IsDlgButtonChecked(hdlg, IDC_DELETE_HISTORY) ||
+                       IsDlgButtonChecked(hdlg, IDC_DELETE_FORM_DATA) ||
+                       IsDlgButtonChecked(hdlg, IDC_DELETE_PASSWORDS);
+            EnableWindow(GetDlgItem(hdlg, IDOK), any);
+            break;
+        }
+
+        default:
+            break;
+    }
+    return FALSE;
+}
+
+
+/*********************************************************************
+ * delhist_dlgproc [internal]
+ *
+ * Delete browsing history dialog procedure
+ *
+ */
+static INT_PTR CALLBACK delhist_dlgproc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+        case WM_COMMAND:
+            return delhist_on_command(hdlg, wparam);
+
+        case WM_INITDIALOG:
+        {
+            DWORD *ptr = disabled_delhist_buttons;
+            while (*ptr)
+            {
+                EnableWindow(GetDlgItem(hdlg, *ptr), FALSE);
+                ptr++;
+            }
+            CheckDlgButton(hdlg, IDC_DELETE_TEMP_FILES, BST_CHECKED);
+            break;
+        }
+
+        default:
+            break;
+    }
+    return FALSE;
+}
 
 /*********************************************************************
  * parse_url_from_outside [internal]
@@ -93,6 +173,11 @@ static INT_PTR general_on_command(HWND hwnd, WPARAM wparam)
             SetDlgItemTextW(hwnd, IDC_HOME_EDIT, about_blank);
             break;
 
+        case MAKEWPARAM(IDC_HISTORY_DELETE, BN_CLICKED):
+            DialogBoxW(hcpl, MAKEINTRESOURCEW(IDD_DELETE_HISTORY), hwnd,
+                       delhist_dlgproc);
+            break;
+
         default:
             TRACE("not implemented for command: %d/%d\n", HIWORD(wparam),  LOWORD(wparam));
             return FALSE;
@@ -112,7 +197,7 @@ static VOID general_on_initdialog(HWND hwnd)
     DWORD len;
     DWORD type;
     LONG res;
-    DWORD *ptr = disable_me;
+    DWORD *ptr = disabled_general_buttons;
 
     /* disable unimplemented buttons */
     while (*ptr)
