@@ -80,7 +80,6 @@ static ULONG WINAPI HTMLDOMAttribute_Release(IHTMLDOMAttribute *iface)
 
     if(!ref) {
         assert(!This->elem);
-        nsIDOMAttr_Release(This->nsattr);
         release_dispex(&This->dispex);
         heap_free(This);
     }
@@ -136,27 +135,19 @@ static HRESULT WINAPI HTMLDOMAttribute_put_nodeName(IHTMLDOMAttribute *iface, VA
 static HRESULT WINAPI HTMLDOMAttribute_get_nodeValue(IHTMLDOMAttribute *iface, VARIANT *p)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
-    const PRUnichar *val;
-    nsAString val_str;
-    HRESULT hres = S_OK;
+    DISPPARAMS dp = {NULL, NULL, 0, 0};
+    EXCEPINFO ei;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsAString_Init(&val_str, NULL);
-    nsIDOMAttr_GetNodeValue(This->nsattr, &val_str);
-    nsAString_GetData(&val_str, &val);
-
-    V_VT(p) = VT_BSTR;
-    if(*val) {
-        V_BSTR(p) = SysAllocString(val);
-        if(!V_BSTR(p))
-            hres = E_OUTOFMEMORY;
-    }else {
-        V_BSTR(p) = NULL;
+    if(!This->elem) {
+        FIXME("NULL This->elem\n");
+        return E_UNEXPECTED;
     }
 
-    nsAString_Finish(&val_str);
-    return hres;
+    memset(&ei, 0, sizeof(ei));
+    return IDispatchEx_InvokeEx(&This->elem->node.dispex.IDispatchEx_iface, This->dispid, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYGET, &dp, p, &ei, NULL);
 }
 
 static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, VARIANT_BOOL *p)
@@ -191,7 +182,7 @@ static dispex_static_data_t HTMLDOMAttribute_dispex = {
     HTMLDOMAttribute_iface_tids
 };
 
-HRESULT HTMLDOMAttribute_Create(HTMLElement *elem, nsIDOMAttr *nsattr, HTMLDOMAttribute **attr)
+HRESULT HTMLDOMAttribute_Create(HTMLElement *elem, DISPID dispid, HTMLDOMAttribute **attr)
 {
     HTMLDOMAttribute *ret;
 
@@ -202,9 +193,7 @@ HRESULT HTMLDOMAttribute_Create(HTMLElement *elem, nsIDOMAttr *nsattr, HTMLDOMAt
     ret->IHTMLDOMAttribute_iface.lpVtbl = &HTMLDOMAttributeVtbl;
     ret->ref = 1;
 
-    nsIDOMAttr_AddRef(nsattr);
-    ret->nsattr = nsattr;
-
+    ret->dispid = dispid;
     ret->elem = elem;
     list_add_tail(&elem->attrs, &ret->entry);
 

@@ -749,13 +749,13 @@ typedef struct {
     IHTMLDOMAttribute IHTMLDOMAttribute_iface;
 
     LONG ref;
-    nsIDOMAttr *nsattr;
 
+    DISPID dispid;
     HTMLElement *elem;
     struct list entry;
 } HTMLDOMAttribute;
 
-HRESULT HTMLDOMAttribute_Create(HTMLElement*,nsIDOMAttr*,HTMLDOMAttribute**);
+HRESULT HTMLDOMAttribute_Create(HTMLElement*,DISPID,HTMLDOMAttribute**);
 
 HRESULT HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLElement**);
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLElement**);
