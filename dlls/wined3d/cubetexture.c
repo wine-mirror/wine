@@ -418,8 +418,7 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *
         return WINED3DERR_INVALIDCALL;
     }
 
-    texture->baseTexture.texture_rgb.dirty = TRUE;
-    texture->baseTexture.texture_srgb.dirty = TRUE;
+    basetexture_set_dirty(texture, TRUE);
     surface_add_dirty_rect(surface_from_resource(sub_resource), dirty_rect);
 
     return WINED3D_OK;

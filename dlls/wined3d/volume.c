@@ -279,8 +279,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
     if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
     {
         volume_add_dirty_box(This, &This->lockedBox);
-        This->container->baseTexture.texture_rgb.dirty = TRUE;
-        This->container->baseTexture.texture_srgb.dirty = TRUE;
+        basetexture_set_dirty((IWineD3DBaseTextureImpl *)This->container, TRUE);
     }
 
     This->locked = TRUE;

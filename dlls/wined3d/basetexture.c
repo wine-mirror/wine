@@ -122,8 +122,7 @@ void basetexture_unload(IWineD3DBaseTextureImpl *texture)
 
     if (context) context_release(context);
 
-    texture->baseTexture.texture_rgb.dirty = TRUE;
-    texture->baseTexture.texture_srgb.dirty = TRUE;
+    basetexture_set_dirty(texture, TRUE);
 
     resource_unload(&texture->resource);
 }

@@ -349,8 +349,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTextur
         return WINED3DERR_INVALIDCALL;
     }
 
-    texture->baseTexture.texture_rgb.dirty = TRUE;
-    texture->baseTexture.texture_srgb.dirty = TRUE;
+    basetexture_set_dirty(texture, TRUE);
     volume_add_dirty_box(volume_from_resource(sub_resource), dirty_box);
 
     return WINED3D_OK;
