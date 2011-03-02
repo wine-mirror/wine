@@ -1090,7 +1090,7 @@ static DWORD URLCache_SetEntryInfo(URL_CACHEFILE_ENTRY * pUrlEntry, const INTERN
     if (dwFieldControl & CACHE_ENTRY_EXEMPT_DELTA_FC)
         pUrlEntry->dwExemptDelta = lpCacheEntryInfo->u.dwExemptDelta;
     if (dwFieldControl & CACHE_ENTRY_EXPTIME_FC)
-        FIXME("CACHE_ENTRY_EXPTIME_FC unimplemented\n");
+        FileTimeToDosDateTime(&lpCacheEntryInfo->ExpireTime, &pUrlEntry->wExpiredDate, &pUrlEntry->wExpiredTime);
     if (dwFieldControl & CACHE_ENTRY_HEADERINFO_FC)
         FIXME("CACHE_ENTRY_HEADERINFO_FC unimplemented\n");
     if (dwFieldControl & CACHE_ENTRY_HITRATE_FC)
