@@ -1986,6 +1986,18 @@ static void test_script_run(void)
     ok(V_VT(&var) == VT_I4, "V_VT(var)=%d\n", V_VT(&var));
     ok(V_I4(&var) == 300, "V_I4(&var) = %d\n", V_I4(&var));
 
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = NULL;
+    dispex_propput(document, id, 0,&var);
+
+    VariantInit(&var);
+    memset(&dp, 0, sizeof(dp));
+    memset(&ei, 0, sizeof(ei));
+    hres = IDispatchEx_InvokeEx(document, id, LOCALE_NEUTRAL, INVOKE_PROPERTYGET, &dp, &var, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&var) == VT_BSTR, "V_VT(var)=%d\n", V_VT(&var));
+    ok(!V_BSTR(&var), "V_BSTR(&var) = %s\n", wine_dbgstr_w(V_BSTR(&var)));
+
     unk = (void*)0xdeadbeef;
     hres = IDispatchEx_GetNameSpaceParent(window_dispex, &unk);
     ok(hres == S_OK, "GetNameSpaceParent failed: %08x\n", hres);

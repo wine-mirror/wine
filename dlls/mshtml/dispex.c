@@ -334,6 +334,17 @@ static inline BOOL is_dynamic_dispid(DISPID id)
     return DISPID_DYNPROP_0 <= id && id <= DISPID_DYNPROP_MAX;
 }
 
+static HRESULT variant_copy(VARIANT *dest, VARIANT *src)
+{
+    if(V_VT(src) == VT_BSTR && !V_BSTR(src)) {
+        V_VT(dest) = VT_BSTR;
+        V_BSTR(dest) = NULL;
+        return S_OK;
+    }
+
+    return VariantCopy(dest, src);
+}
+
 static inline dispex_dynamic_data_t *get_dynamic_data(DispatchEx *This, BOOL alloc)
 {
     return !alloc || This->dynamic_data
@@ -938,7 +949,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         case DISPATCH_PROPERTYGET:
             if(prop->flags & DYNPROP_DELETED)
                 return DISP_E_UNKNOWNNAME;
-            return VariantCopy(pvarRes, &prop->var);
+            return variant_copy(pvarRes, &prop->var);
         case DISPATCH_PROPERTYPUT|DISPATCH_PROPERTYPUTREF:
         case DISPATCH_PROPERTYPUT:
             if(pdp->cArgs != 1 || (pdp->cNamedArgs == 1 && *pdp->rgdispidNamedArgs != DISPID_PROPERTYPUT)
@@ -949,7 +960,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
             TRACE("put %s\n", debugstr_variant(pdp->rgvarg));
             VariantClear(&prop->var);
-            hres = VariantCopy(&prop->var, pdp->rgvarg);
+            hres = variant_copy(&prop->var, pdp->rgvarg);
             if(FAILED(hres))
                 return hres;
 
