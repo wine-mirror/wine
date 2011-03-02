@@ -656,7 +656,6 @@ NTSTATUS WINAPI LsaQueryInformationPolicy(
 
             xdi->info.DomainSid = &xdi->sid;
 
-            /* read the computer SID from the registry */
             if (!ADVAPI_GetComputerSid(&xdi->sid))
             {
                 HeapFree(GetProcessHeap(), 0, xdi);
