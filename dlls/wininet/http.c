@@ -1533,15 +1533,25 @@ static DWORD HTTP_ResolveName(http_request_t *request)
 
 static BOOL HTTP_GetRequestURL(http_request_t *req, LPWSTR buf)
 {
+    static const WCHAR http[] = { 'h','t','t','p',':','/','/',0 };
+    static const WCHAR https[] = { 'h','t','t','p','s',':','/','/',0 };
+    static const WCHAR slash[] = { '/',0 };
     LPHTTPHEADERW host_header;
-
-    static const WCHAR formatW[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
+    LPCWSTR scheme;
 
     host_header = HTTP_GetHeader(req, hostW);
     if(!host_header)
         return FALSE;
 
-    sprintfW(buf, formatW, host_header->lpszValue, req->path); /* FIXME */
+    if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
+        scheme = https;
+    else
+        scheme = http;
+    strcpyW(buf, scheme);
+    strcatW(buf, host_header->lpszValue);
+    if (req->path[0] != '/')
+        strcatW(buf, slash);
+    strcatW(buf, req->path);
     return TRUE;
 }
 
