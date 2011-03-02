@@ -58,6 +58,8 @@ struct message_result
     int                    replied;       /* has it been replied to? */
     unsigned int           error;         /* error code to pass back to sender */
     lparam_t               result;        /* reply result */
+    struct message        *hardware_msg;  /* hardware message if low-level hook result */
+    struct desktop        *desktop;       /* desktop for hardware message */
     struct message        *callback_msg;  /* message to queue for callback */
     void                  *data;          /* message reply data */
     unsigned int           data_size;     /* size of message reply data */
@@ -201,6 +203,7 @@ static const struct object_ops thread_input_ops =
 /* pointer to input structure of foreground thread */
 static unsigned int last_input_time;
 
+static void queue_hardware_message( struct desktop *desktop, struct message *msg );
 static void free_message( struct message *msg );
 
 /* set the caret window in a given thread input */
@@ -436,6 +439,8 @@ static void free_result( struct message_result *result )
     if (result->timeout) remove_timeout_user( result->timeout );
     free( result->data );
     if (result->callback_msg) free_message( result->callback_msg );
+    if (result->hardware_msg) free_message( result->hardware_msg );
+    if (result->desktop) release_object( result->desktop );
     free( result );
 }
 
@@ -460,6 +465,17 @@ static void store_message_result( struct message_result *res, lparam_t result, u
         remove_timeout_user( res->timeout );
         res->timeout = NULL;
     }
+
+    if (res->hardware_msg)
+    {
+        if (!error && result)  /* rejected by the hook */
+            free_message( res->hardware_msg );
+        else
+            queue_hardware_message( res->desktop, res->hardware_msg );
+
+        res->hardware_msg = NULL;
+    }
+
     if (res->sender)
     {
         if (res->callback_msg)
@@ -479,7 +495,7 @@ static void store_message_result( struct message_result *res, lparam_t result, u
                 set_queue_bits( res->sender, QS_SMRESULT );
         }
     }
-
+    else if (!res->receiver) free_result( res );
 }
 
 /* free a message when deleting a queue or window */
@@ -489,12 +505,8 @@ static void free_message( struct message *msg )
     if (result)
     {
         result->msg = NULL;
-        if (result->sender)
-        {
-            result->receiver = NULL;
-            store_message_result( result, 0, STATUS_ACCESS_DENIED /*FIXME*/ );
-        }
-        else free_result( result );
+        result->receiver = NULL;
+        store_message_result( result, 0, STATUS_ACCESS_DENIED /*FIXME*/ );
     }
     free( msg->data );
     free( msg );
@@ -535,13 +547,7 @@ static void result_timeout( void *private )
         msg->result = NULL;
         remove_queue_message( result->receiver, msg, SEND_MESSAGE );
         result->receiver = NULL;
-        if (!result->sender)
-        {
-            free_result( result );
-            return;
-        }
     }
-
     store_message_result( result, 0, STATUS_TIMEOUT );
 }
 
@@ -553,13 +559,16 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
     struct message_result *result = mem_alloc( sizeof(*result) );
     if (result)
     {
-        result->msg       = msg;
-        result->sender    = send_queue;
-        result->receiver  = recv_queue;
-        result->replied   = 0;
-        result->data      = NULL;
-        result->data_size = 0;
-        result->timeout   = NULL;
+        result->msg          = msg;
+        result->sender       = send_queue;
+        result->receiver     = recv_queue;
+        result->replied      = 0;
+        result->data         = NULL;
+        result->data_size    = 0;
+        result->timeout      = NULL;
+        result->hardware_msg = NULL;
+        result->desktop      = NULL;
+        result->callback_msg = NULL;
 
         if (msg->type == MSG_CALLBACK)
         {
@@ -586,11 +595,7 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
             result->callback_msg = callback_msg;
             list_add_head( &send_queue->callback_result, &result->sender_entry );
         }
-        else
-        {
-            result->callback_msg = NULL;
-            list_add_head( &send_queue->send_result, &result->sender_entry );
-        }
+        else if (send_queue) list_add_head( &send_queue->send_result, &result->sender_entry );
 
         if (timeout != TIMEOUT_INFINITE)
             result->timeout = add_timeout_user( timeout, result_timeout, result );
@@ -641,7 +646,7 @@ static void reply_message( struct msg_queue *queue, lparam_t result,
     {
         queue->recv_result = res->recv_next;
         res->receiver = NULL;
-        if (!res->sender)  /* no one waiting for it */
+        if (!res->sender && !res->hardware_msg)  /* no one waiting for it */
         {
             free_result( res );
             return;
@@ -1328,13 +1333,58 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     release_object( thread );
 }
 
+/* send the low-level hook message for a given hardware message */
+static int send_hook_ll_message( struct desktop *desktop, struct message *hardware_msg,
+                                 const hw_input_t *input, struct msg_queue *sender )
+{
+    struct thread *hook_thread;
+    struct msg_queue *queue;
+    struct message *msg;
+    timeout_t timeout = 2000 * -10000;  /* FIXME: load from registry */
+    int id = (input->type == INPUT_MOUSE) ? WH_MOUSE_LL : WH_KEYBOARD_LL;
+
+    if (!(hook_thread = get_first_global_hook( id ))) return 0;
+    if (!(queue = hook_thread->queue)) return 0;
+
+    if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
+
+    msg->type      = MSG_HOOK_LL;
+    msg->win       = 0;
+    msg->msg       = id;
+    msg->wparam    = hardware_msg->msg;
+    msg->time      = hardware_msg->time;
+    msg->data_size = hardware_msg->data_size;
+    msg->result    = NULL;
+
+    if (input->type == INPUT_KEYBOARD)
+    {
+        unsigned short vkey = input->kbd.vkey;
+        if (input->kbd.flags & KEYEVENTF_UNICODE) vkey = VK_PACKET;
+        msg->lparam = (input->kbd.scan << 16) | vkey;
+    }
+    else msg->lparam = input->mouse.data;
+
+    if (!(msg->data = memdup( hardware_msg->data, hardware_msg->data_size )) ||
+        !(msg->result = alloc_message_result( sender, queue, msg, timeout )))
+    {
+        free_message( msg );
+        return 0;
+    }
+    msg->result->hardware_msg = hardware_msg;
+    msg->result->desktop = (struct desktop *)grab_object( desktop );
+    list_add_tail( &queue->msg_list[SEND_MESSAGE], &msg->entry );
+    set_queue_bits( queue, QS_SENDMESSAGE );
+    return 1;
+}
+
 /* queue a hardware message for a mouse event */
-static void queue_mouse_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input )
+static int queue_mouse_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
+                                unsigned int hook_flags, struct msg_queue *sender )
 {
     struct hardware_msg_data *msg_data;
     struct message *msg;
     unsigned int i, time, flags;
-    int x, y;
+    int wait = 0, x, y;
 
     static const unsigned int messages[] =
     {
@@ -1383,12 +1433,13 @@ static void queue_mouse_message( struct desktop *desktop, user_handle_t win, con
     {
         if (!messages[i]) continue;
         if (!(flags & (1 << i))) continue;
+        flags &= ~(1 << i);
 
-        if (!(msg = mem_alloc( sizeof(*msg) ))) return;
+        if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
         if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
         {
             free( msg );
-            return;
+            return 0;
         }
         memset( msg_data, 0, sizeof(*msg_data) );
 
@@ -1404,23 +1455,34 @@ static void queue_mouse_message( struct desktop *desktop, user_handle_t win, con
         msg_data->x    = x;
         msg_data->y    = y;
         msg_data->info = input->mouse.info;
+        if (hook_flags & SEND_HWMSG_INJECTED) msg_data->flags = LLMHF_INJECTED;
 
-        queue_hardware_message( desktop, msg );
+        /* specify a sender only when sending the last message */
+        if (!(flags & ((1 << sizeof(messages)/sizeof(messages[0])) - 1)))
+        {
+            if (!(wait = send_hook_ll_message( desktop, msg, input, sender )))
+                queue_hardware_message( desktop, msg );
+        }
+        else if (!send_hook_ll_message( desktop, msg, input, NULL ))
+            queue_hardware_message( desktop, msg );
     }
+    return wait;
 }
 
 /* queue a hardware message for a keyboard event */
-static void queue_keyboard_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input )
+static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input,
+                                   unsigned int hook_flags, struct msg_queue *sender )
 {
     struct hardware_msg_data *msg_data;
     struct message *msg;
     unsigned char vkey = input->kbd.vkey;
+    int wait;
 
-    if (!(msg = mem_alloc( sizeof(*msg) ))) return;
+    if (!(msg = mem_alloc( sizeof(*msg) ))) return 0;
     if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
     {
         free( msg );
-        return;
+        return 0;
     }
     memset( msg_data, 0, sizeof(*msg_data) );
 
@@ -1433,6 +1495,7 @@ static void queue_keyboard_message( struct desktop *desktop, user_handle_t win, 
     msg->data_size = sizeof(*msg_data);
     msg_data->info = input->kbd.info;
     if (!msg->time) msg->time = get_tick_count();
+    if (hook_flags & SEND_HWMSG_INJECTED) msg_data->flags = LLKHF_INJECTED;
 
     if (input->kbd.flags & KEYEVENTF_UNICODE)
     {
@@ -1440,6 +1503,7 @@ static void queue_keyboard_message( struct desktop *desktop, user_handle_t win, 
     }
     else
     {
+        unsigned int flags = 0;
         switch (vkey)
         {
         case VK_MENU:
@@ -1458,12 +1522,14 @@ static void queue_keyboard_message( struct desktop *desktop, user_handle_t win, 
             vkey = (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) ? VK_RSHIFT : VK_LSHIFT;
             break;
         }
-        if (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) msg->lparam |= KF_EXTENDED << 16;
+        if (input->kbd.flags & KEYEVENTF_EXTENDEDKEY) flags |= KF_EXTENDED;
         /* FIXME: set KF_DLGMODE and KF_MENUMODE when needed */
-        if (input->kbd.flags & KEYEVENTF_KEYUP) msg->lparam |= (KF_REPEAT | KF_UP) << 16;
-        else if (desktop->keystate[vkey] & 0x80) msg->lparam |= KF_REPEAT << 16;
+        if (input->kbd.flags & KEYEVENTF_KEYUP) flags |= KF_REPEAT | KF_UP;
+        else if (desktop->keystate[vkey] & 0x80) flags |= KF_REPEAT;
 
         msg->wparam = vkey;
+        msg->lparam |= flags << 16;
+        msg_data->flags |= (flags & (KF_EXTENDED | KF_ALTDOWN | KF_UP)) >> 8;
     }
 
     msg->msg = (input->kbd.flags & KEYEVENTF_KEYUP) ? WM_KEYUP : WM_KEYDOWN;
@@ -1508,8 +1574,10 @@ static void queue_keyboard_message( struct desktop *desktop, user_handle_t win, 
         desktop->keystate[VK_MENU] &= ~0x02;
         break;
     }
+    if (!(wait = send_hook_ll_message( desktop, msg, input, sender )))
+        queue_hardware_message( desktop, msg );
 
-    queue_hardware_message( desktop, msg );
+    return wait;
 }
 
 /* queue a hardware message for a custom type of event */
@@ -1941,6 +2009,7 @@ DECL_HANDLER(send_message)
             break;
         case MSG_HARDWARE:  /* should use send_hardware_message instead */
         case MSG_CALLBACK_RESULT:  /* cannot send this one */
+        case MSG_HOOK_LL:  /* generated internally */
         default:
             set_error( STATUS_INVALID_PARAMETER );
             free( msg );
@@ -1955,6 +2024,7 @@ DECL_HANDLER(send_hardware_message)
 {
     struct thread *thread = NULL;
     struct desktop *desktop;
+    struct msg_queue *sender = get_current_queue();
 
     if (req->win)
     {
@@ -1966,10 +2036,10 @@ DECL_HANDLER(send_hardware_message)
     switch (req->input.type)
     {
     case INPUT_MOUSE:
-        queue_mouse_message( desktop, req->win, &req->input );
+        reply->wait = queue_mouse_message( desktop, req->win, &req->input, req->flags, sender );
         break;
     case INPUT_KEYBOARD:
-        queue_keyboard_message( desktop, req->win, &req->input );
+        reply->wait = queue_keyboard_message( desktop, req->win, &req->input, req->flags, sender );
         break;
     case INPUT_HARDWARE:
         queue_custom_hardware_message( desktop, req->win, &req->input );

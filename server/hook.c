@@ -369,6 +369,17 @@ unsigned int get_active_hooks(void)
     return ret;
 }
 
+/* return the thread that owns the first global hook */
+struct thread *get_first_global_hook( int id )
+{
+    struct hook *hook;
+    struct hook_table *global_hooks = get_global_hooks( current );
+
+    if (!global_hooks) return NULL;
+    if (!(hook = get_first_valid_hook( global_hooks, id - WH_MINHOOK, EVENT_MIN, 0, 0, 0 ))) return NULL;
+    return hook->owner;
+}
+
 /* set a window hook */
 DECL_HANDLER(set_hook)
 {

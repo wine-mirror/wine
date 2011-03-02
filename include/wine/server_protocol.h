@@ -283,7 +283,7 @@ struct hardware_msg_data
     int             x;
     int             y;
     unsigned int    hw_id;
-    int             __pad;
+    unsigned int    flags;
 };
 
 struct callback_msg_data
@@ -2782,7 +2782,8 @@ enum message_type
     MSG_OTHER_PROCESS,
     MSG_POSTED,
     MSG_HARDWARE,
-    MSG_WINEVENT
+    MSG_WINEVENT,
+    MSG_HOOK_LL
 };
 #define SEND_MSG_ABORT_IF_HUNG  0x01
 
@@ -2794,11 +2795,13 @@ struct send_hardware_message_request
     user_handle_t   win;
     hw_input_t      input;
     unsigned int    flags;
-    unsigned int    msg;
+    char __pad_52[4];
 };
 struct send_hardware_message_reply
 {
     struct reply_header __header;
+    int             wait;
+    char __pad_12[4];
 };
 #define SEND_HWMSG_INJECTED    0x01
 
@@ -5556,6 +5559,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 416
+#define SERVER_PROTOCOL_VERSION 417
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -293,7 +293,6 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
 {
     POINT pt;
     INPUT input;
-    MSLLHOOKSTRUCT hook;
 
     if (!time) time = GetTickCount();
 
@@ -308,34 +307,29 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         {
             pt.x = x;
             pt.y = y;
-            wine_tsx11_lock();
-            if (cursor_pos.x == x && cursor_pos.y == y &&
-                (flags & ~(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE)))
-                flags &= ~MOUSEEVENTF_MOVE;
-            wine_tsx11_unlock();
         }
     }
     else if (flags & MOUSEEVENTF_MOVE)
     {
-        int accel[3], xMult = 1, yMult = 1;
+        int accel[3];
 
         /* dx and dy can be negative numbers for relative movements */
         SystemParametersInfoW(SPI_GETMOUSE, 0, accel, 0);
 
         if (abs(x) > accel[0] && accel[2] != 0)
         {
-            xMult = 2;
-            if ((abs(x) > accel[1]) && (accel[2] == 2)) xMult = 4;
+            x = (int)x * 2;
+            if ((abs(x) > accel[1]) && (accel[2] == 2)) x = (int)x * 2;
         }
         if (abs(y) > accel[0] && accel[2] != 0)
         {
-            yMult = 2;
-            if ((abs(y) > accel[1]) && (accel[2] == 2)) yMult = 4;
+            y = (int)y * 2;
+            if ((abs(y) > accel[1]) && (accel[2] == 2)) y = (int)y * 2;
         }
 
         wine_tsx11_lock();
-        pt.x = cursor_pos.x + (long)x * xMult;
-        pt.y = cursor_pos.y + (long)y * yMult;
+        pt.x = cursor_pos.x + x;
+        pt.y = cursor_pos.y + y;
         wine_tsx11_unlock();
     }
     else
@@ -345,85 +339,28 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         wine_tsx11_unlock();
     }
 
-    hook.pt.x        = pt.x;
-    hook.pt.y        = pt.y;
-    hook.mouseData   = MAKELONG( 0, data );
-    hook.flags       = injected_flags;
-    hook.time        = time;
-    hook.dwExtraInfo = extra_info;
     last_time_modified = GetTickCount();
 
-    if (flags & MOUSEEVENTF_MOVE)
-    {
-        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_MOUSEMOVE, (LPARAM)&hook, TRUE )) return;
-        if ((injected_flags & LLMHF_INJECTED) &&
-            ((flags & MOUSEEVENTF_ABSOLUTE) || x || y))  /* we have to actually move the cursor */
-        {
-            clip_point_to_rect( &cursor_clip, &pt );
-            X11DRV_SetCursorPos( pt.x, pt.y );
-        }
-        else
-        {
-            wine_tsx11_lock();
-            clip_point_to_rect( &cursor_clip, &pt);
-            cursor_pos = pt;
-            wine_tsx11_unlock();
-        }
-    }
-    if (flags & MOUSEEVENTF_LEFTDOWN)
-    {
-        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION,
-                            GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONDOWN : WM_LBUTTONDOWN,
-                            (LPARAM)&hook, TRUE )) return;
-    }
-    if (flags & MOUSEEVENTF_LEFTUP)
-    {
-        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION,
-                            GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONUP : WM_LBUTTONUP,
-                            (LPARAM)&hook, TRUE )) return;
-    }
-    if (flags & MOUSEEVENTF_RIGHTDOWN)
-    {
-        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION,
-                            GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONDOWN : WM_RBUTTONDOWN,
-                            (LPARAM)&hook, TRUE )) return;
-    }
-    if (flags & MOUSEEVENTF_RIGHTUP)
-    {
-        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION,
-                            GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONUP : WM_RBUTTONUP,
-                            (LPARAM)&hook, TRUE )) return;
-    }
-    if (flags & MOUSEEVENTF_MIDDLEDOWN)
-    {
-        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_MBUTTONDOWN, (LPARAM)&hook, TRUE )) return;
-    }
-    if (flags & MOUSEEVENTF_MIDDLEUP)
-    {
-        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_MBUTTONUP, (LPARAM)&hook, TRUE )) return;
-    }
-    if (flags & MOUSEEVENTF_WHEEL)
-    {
-        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_MOUSEWHEEL, (LPARAM)&hook, TRUE )) return;
-    }
-    if (flags & MOUSEEVENTF_XDOWN)
-    {
-        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_XBUTTONDOWN, (LPARAM)&hook, TRUE )) return;
-    }
-    if (flags & MOUSEEVENTF_XUP)
-    {
-        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_XBUTTONUP, (LPARAM)&hook, TRUE )) return;
-    }
-
     input.type             = INPUT_MOUSE;
-    input.u.mi.dx          = pt.x;
-    input.u.mi.dy          = pt.y;
+    input.u.mi.dx          = x;
+    input.u.mi.dy          = y;
     input.u.mi.mouseData   = data;
-    input.u.mi.dwFlags     = flags | MOUSEEVENTF_ABSOLUTE;
+    input.u.mi.dwFlags     = flags;
     input.u.mi.time        = time;
     input.u.mi.dwExtraInfo = extra_info;
 
     __wine_send_input( hwnd, &input, (injected_flags & LLMHF_INJECTED) != 0 );
+
+    if (injected_flags & LLMHF_INJECTED)
+    {
+        if ((flags & MOUSEEVENTF_MOVE) &&
+            ((flags & MOUSEEVENTF_ABSOLUTE) || x || y))  /* we have to actually move the cursor */
+        {
+            GetCursorPos( &pt );
+            if (!(flags & MOUSEEVENTF_ABSOLUTE) || pt.x != x || pt.y != y)
+                X11DRV_SetCursorPos( pt.x, pt.y );
+        }
+    }
 }
 
 #ifdef SONAME_LIBXCURSOR

@@ -299,7 +299,7 @@ struct hardware_msg_data
     int             x;         /* x position */
     int             y;         /* y position */
     unsigned int    hw_id;     /* unique id */
-    int             __pad;
+    unsigned int    flags;     /* hook flags */
 };
 
 struct callback_msg_data
@@ -2024,7 +2024,8 @@ enum message_type
     MSG_OTHER_PROCESS,  /* sent from other process, may include vararg data, always Unicode */
     MSG_POSTED,         /* posted message (from PostMessageW), always Unicode */
     MSG_HARDWARE,       /* hardware message */
-    MSG_WINEVENT        /* winevent message */
+    MSG_WINEVENT,       /* winevent message */
+    MSG_HOOK_LL         /* low-level hardware hook */
 };
 #define SEND_MSG_ABORT_IF_HUNG  0x01
 
@@ -2034,7 +2035,8 @@ enum message_type
     user_handle_t   win;       /* window handle */
     hw_input_t      input;     /* input data */
     unsigned int    flags;     /* flags (see below) */
-    unsigned int    msg;       /* message code */
+@REPLY
+    int             wait;      /* do we need to wait for a reply? */
 @END
 #define SEND_HWMSG_INJECTED    0x01
 

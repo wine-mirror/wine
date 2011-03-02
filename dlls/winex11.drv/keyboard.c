@@ -1155,7 +1155,6 @@ void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD event_fl
 {
     UINT message;
     INPUT input;
-    KBDLLHOOKSTRUCT hook;
     WORD flags, wVkStripped, wVkL, wVkR, vk_hook = wVk;
 
     if (!time) time = GetTickCount();
@@ -1226,14 +1225,6 @@ void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD event_fl
     }
 
     if (event_flags & KEYEVENTF_UNICODE) vk_hook = wVk = VK_PACKET;
-
-    /* Hook gets whatever key was sent. */
-    hook.vkCode      = vk_hook;
-    hook.scanCode    = wScan;
-    hook.flags       = (flags >> 8) | injected_flags;
-    hook.time        = time;
-    hook.dwExtraInfo = dwExtraInfo;
-    if (HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, message, (LPARAM)&hook, TRUE )) return;
 
     input.type             = INPUT_KEYBOARD;
     input.u.ki.wVk         = vk_hook;

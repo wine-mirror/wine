@@ -2709,6 +2709,38 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                              info.msg.lParam, msg_data->winevent.tid, info.msg.time);
             }
             continue;
+        case MSG_HOOK_LL:
+            info.flags = ISMEX_SEND;
+            result = 0;
+            if (info.msg.message == WH_KEYBOARD_LL && size >= sizeof(msg_data->hardware))
+            {
+                KBDLLHOOKSTRUCT hook;
+
+                hook.vkCode      = LOWORD( info.msg.lParam );
+                hook.scanCode    = HIWORD( info.msg.lParam );
+                hook.flags       = msg_data->hardware.flags;
+                hook.time        = info.msg.time;
+                hook.dwExtraInfo = msg_data->hardware.info;
+                TRACE( "calling keyboard LL hook vk %x scan %x flags %x time %u info %lx\n",
+                       hook.vkCode, hook.scanCode, hook.flags, hook.time, hook.dwExtraInfo );
+                result = HOOK_CallHooks( WH_KEYBOARD_LL, HC_ACTION, info.msg.wParam, (LPARAM)&hook, TRUE );
+            }
+            else if (info.msg.message == WH_MOUSE_LL && size >= sizeof(msg_data->hardware))
+            {
+                MSLLHOOKSTRUCT hook;
+
+                hook.pt.x        = msg_data->hardware.x;
+                hook.pt.y        = msg_data->hardware.y;
+                hook.mouseData   = info.msg.lParam;
+                hook.flags       = msg_data->hardware.flags;
+                hook.time        = info.msg.time;
+                hook.dwExtraInfo = msg_data->hardware.info;
+                TRACE( "calling mouse LL hook pos %d,%d data %x flags %x time %u info %lx\n",
+                       hook.pt.x, hook.pt.y, hook.mouseData, hook.flags, hook.time, hook.dwExtraInfo );
+                result = HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, info.msg.wParam, (LPARAM)&hook, TRUE );
+            }
+            reply_message( &info, result, TRUE );
+            continue;
         case MSG_OTHER_PROCESS:
             info.flags = ISMEX_SEND;
             if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
@@ -3072,7 +3104,15 @@ static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BO
  */
 NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, UINT flags )
 {
+    struct send_message_info info;
     NTSTATUS ret;
+    BOOL wait;
+
+    info.type     = MSG_HARDWARE;
+    info.dest_tid = 0;
+    info.hwnd     = hwnd;
+    info.flags    = 0;
+    info.timeout  = 0;
 
     SERVER_START_REQ( send_hardware_message )
     {
@@ -3102,8 +3142,16 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, UINT flags )
             break;
         }
         ret = wine_server_call( req );
+        wait = reply->wait;
     }
     SERVER_END_REQ;
+
+    if (wait)
+    {
+        LRESULT ignored;
+        wait_message_reply( 0 );
+        retrieve_reply( &info, 0, &ignored );
+    }
     return ret;
 }
 
