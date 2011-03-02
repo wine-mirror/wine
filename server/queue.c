@@ -1361,8 +1361,7 @@ static void queue_mouse_message( struct desktop *desktop, user_handle_t win, uns
 }
 
 /* queue a hardware message for a keyboard event */
-static void queue_keyboard_message( struct desktop *desktop, user_handle_t win, unsigned int message,
-                                    const hw_input_t *input )
+static void queue_keyboard_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input )
 {
     struct hardware_msg_data *msg_data;
     struct message *msg;
@@ -1378,7 +1377,6 @@ static void queue_keyboard_message( struct desktop *desktop, user_handle_t win, 
 
     msg->type      = MSG_HARDWARE;
     msg->win       = get_user_full_handle( win );
-    msg->msg       = message;
     msg->lparam    = (input->kbd.scan << 16) | 1; /* repeat count */
     msg->time      = input->kbd.time;
     msg->result    = NULL;
@@ -1417,6 +1415,49 @@ static void queue_keyboard_message( struct desktop *desktop, user_handle_t win, 
         else if (desktop->keystate[vkey] & 0x80) msg->lparam |= KF_REPEAT << 16;
 
         msg->wparam = vkey;
+    }
+
+    msg->msg = (input->kbd.flags & KEYEVENTF_KEYUP) ? WM_KEYUP : WM_KEYDOWN;
+
+    switch (vkey)
+    {
+    case VK_LMENU:
+    case VK_RMENU:
+        if (input->kbd.flags & KEYEVENTF_KEYUP)
+        {
+            /* send WM_SYSKEYUP if Alt still pressed and no other key in between */
+            /* we use 0x02 as a flag to track if some other SYSKEYUP was sent already */
+            if ((desktop->keystate[VK_MENU] & 0x82) != 0x82) break;
+            msg->msg = WM_SYSKEYUP;
+            desktop->keystate[VK_MENU] &= ~0x02;
+        }
+        else
+        {
+            /* send WM_SYSKEYDOWN for Alt except with Ctrl */
+            if (desktop->keystate[VK_CONTROL] & 0x80) break;
+            msg->msg = WM_SYSKEYDOWN;
+            desktop->keystate[VK_MENU] |= 0x02;
+        }
+        break;
+
+    case VK_LCONTROL:
+    case VK_RCONTROL:
+        /* send WM_SYSKEYUP on release if Alt still pressed */
+        if (!(input->kbd.flags & KEYEVENTF_KEYUP)) break;
+        if (!(desktop->keystate[VK_MENU] & 0x80)) break;
+        msg->msg = WM_SYSKEYUP;
+        desktop->keystate[VK_MENU] &= ~0x02;
+        break;
+
+    default:
+        /* send WM_SYSKEY for Alt-anykey and for F10 */
+        if (desktop->keystate[VK_CONTROL] & 0x80) break;
+        if (!(desktop->keystate[VK_MENU] & 0x80)) break;
+        /* fall through */
+    case VK_F10:
+        msg->msg = (input->kbd.flags & KEYEVENTF_KEYUP) ? WM_SYSKEYUP : WM_SYSKEYDOWN;
+        desktop->keystate[VK_MENU] &= ~0x02;
+        break;
     }
 
     queue_hardware_message( desktop, msg );
@@ -1879,7 +1920,7 @@ DECL_HANDLER(send_hardware_message)
         queue_mouse_message( desktop, req->win, req->msg, &req->input );
         break;
     case INPUT_KEYBOARD:
-        queue_keyboard_message( desktop, req->win, req->msg, &req->input );
+        queue_keyboard_message( desktop, req->win, &req->input );
         break;
     case INPUT_HARDWARE:
         queue_custom_hardware_message( desktop, req->win, &req->input );
