@@ -70,11 +70,20 @@ static const SID interactive_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY },
 static const SID anonymous_logon_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_ANONYMOUS_LOGON_RID } };
 static const SID authenticated_user_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_AUTHENTICATED_USER_RID } };
 static const SID local_system_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_LOCAL_SYSTEM_RID } };
+static const struct /* same fields as struct SID */
+{
+    BYTE Revision;
+    BYTE SubAuthorityCount;
+    SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+    DWORD SubAuthority[5];
+} local_user_sid = { SID_REVISION, 5, { SECURITY_NT_AUTHORITY }, { SECURITY_NT_NON_UNIQUE, 0, 0, 0, 1000 } };
+
 const PSID security_world_sid = (PSID)&world_sid;
 static const PSID security_local_sid = (PSID)&local_sid;
-const PSID security_interactive_sid = (PSID)&interactive_sid;
+static const PSID security_interactive_sid = (PSID)&interactive_sid;
 static const PSID security_authenticated_user_sid = (PSID)&authenticated_user_sid;
 const PSID security_local_system_sid = (PSID)&local_system_sid;
+const PSID security_local_user_sid = (PSID)&local_user_sid;
 
 static luid_t prev_luid_value = { 1000, 0 };
 
@@ -194,7 +203,7 @@ const SID *security_unix_uid_to_sid( uid_t uid )
 {
     /* very simple mapping: either the current user or not the current user */
     if (uid == getuid())
-        return &interactive_sid;
+        return (const SID *)&local_user_sid;
     else
         return &anonymous_logon_sid;
 }

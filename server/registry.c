@@ -1718,7 +1718,7 @@ void init_registry(void)
     /* load user.reg into HKEY_CURRENT_USER */
 
     /* FIXME: match default user in token.c. should get from process token instead */
-    current_user_path = format_user_registry_path( security_interactive_sid, &current_user_str );
+    current_user_path = format_user_registry_path( security_local_user_sid, &current_user_str );
     if (!current_user_path ||
         !(hkcu = create_key_recursive( root_key, &current_user_str, current_time )))
         fatal_error( "could not create HKEY_CURRENT_USER registry key\n" );

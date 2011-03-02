@@ -72,8 +72,7 @@ static void test_Predefined(void)
     ok(NoErr, "Failed to open token, error %u\n", GetLastError());
     DataSize = sizeof(Data);
     NoErr = pGetUserProfileDirectoryA(Token, Data, &DataSize);
-    todo_wine ok(NoErr, "Failed to get user profile dir, error %u\n",
-                 GetLastError());
+    ok(NoErr, "Failed to get user profile dir, error %u\n", GetLastError());
     if (NoErr)
     {
         EnvSize = GetEnvironmentVariableA("USERPROFILE", Env, sizeof(Env));

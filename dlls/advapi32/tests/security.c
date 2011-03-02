@@ -1674,10 +1674,7 @@ static void test_LookupAccountSid(void)
         user_sizeA = MAX_PATH;
         ret = GetUserNameA(usernameA , &user_sizeA);
         ok(ret, "GetUserNameA() Expected TRUE, got FALSE\n");
-        todo_wine
-        {
-            ok(lstrcmpA(usernameA, accountA) == 0, "LookupAccountSidA() Expected account name: %s got: %s\n", usernameA, accountA );
-        }
+        ok(lstrcmpA(usernameA, accountA) == 0, "LookupAccountSidA() Expected account name: %s got: %s\n", usernameA, accountA );
     }
     HeapFree(GetProcessHeap(), 0, ptiUser);
 
@@ -1912,11 +1909,8 @@ static void test_LookupAccountName(void)
     get_sid_info(psid, &account, &sid_dom);
     ok(ret, "Failed to lookup account name\n");
     ok(sid_size == GetLengthSid(psid), "Expected %d, got %d\n", GetLengthSid(psid), sid_size);
-    todo_wine
-    {
-        ok(!lstrcmp(account, user_name), "Expected %s, got %s\n", user_name, account);
-        ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
-    }
+    ok(!lstrcmp(account, user_name), "Expected %s, got %s\n", user_name, account);
+    ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
     ok(domain_size == domain_save - 1, "Expected %d, got %d\n", domain_save - 1, domain_size);
     ok(strlen(domain) == domain_size, "Expected %d, got %d\n", lstrlen(domain), domain_size);
     ok(sid_use == SidTypeUser, "Expected SidTypeUser (%d), got %d\n", SidTypeUser, sid_use);
