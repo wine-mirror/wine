@@ -232,15 +232,10 @@ void basetexture_generate_mipmaps(IWineD3DBaseTextureImpl *texture)
     FIXME("texture %p stub!\n", texture);
 }
 
-BOOL basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty)
+void basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty)
 {
-    BOOL old;
-
-    old = texture->baseTexture.texture_rgb.dirty || texture->baseTexture.texture_srgb.dirty;
     texture->baseTexture.texture_rgb.dirty = dirty;
     texture->baseTexture.texture_srgb.dirty = dirty;
-
-    return old;
 }
 
 /* Context activation is done by the caller. */
