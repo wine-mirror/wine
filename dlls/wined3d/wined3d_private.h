@@ -2155,6 +2155,11 @@ static inline IWineD3DSurfaceImpl *surface_from_resource(struct wined3d_resource
     return CONTAINING_RECORD(resource, IWineD3DSurfaceImpl, resource);
 }
 
+static inline GLuint surface_get_texture_name(IWineD3DSurfaceImpl *surface, BOOL srgb)
+{
+    return srgb ? surface->texture_name_srgb : surface->texture_name;
+}
+
 void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect) DECLSPEC_HIDDEN;
 void surface_bind(IWineD3DSurfaceImpl *surface, BOOL srgb) DECLSPEC_HIDDEN;
 HRESULT surface_color_fill(IWineD3DSurfaceImpl *s, const RECT *rect, const WINED3DCOLORVALUE *color) DECLSPEC_HIDDEN;

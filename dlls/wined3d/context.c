@@ -273,20 +273,18 @@ static void context_attach_surface_fbo(const struct wined3d_context *context,
 
     if (surface && surface->resource.format->id != WINED3DFMT_NULL)
     {
+        BOOL srgb;
+
         switch (location)
         {
             case SFLAG_INTEXTURE:
-                surface_prepare_texture(surface, gl_info, FALSE);
-                context_apply_attachment_filter_states(surface, location);
-                gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
-                        surface->texture_target, surface->texture_name, surface->texture_level);
-                break;
-
             case SFLAG_INSRGBTEX:
-                surface_prepare_texture(surface, gl_info, TRUE);
+                srgb = location == SFLAG_INSRGBTEX;
+                surface_prepare_texture(surface, gl_info, srgb);
                 context_apply_attachment_filter_states(surface, location);
                 gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
-                        surface->texture_target, surface->texture_name_srgb, surface->texture_level);
+                        surface->texture_target, surface_get_texture_name(surface, srgb),
+                        surface->texture_level);
                 break;
 
             default:
