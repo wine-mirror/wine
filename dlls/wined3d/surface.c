@@ -707,24 +707,25 @@ void surface_bind(IWineD3DSurfaceImpl *surface, BOOL srgb)
     }
     else
     {
-        GLuint *name = srgb ? &surface->texture_name_srgb : &surface->texture_name;
-
         if (surface->texture_level)
         {
             ERR("Standalone surface %p is non-zero texture level %u.\n",
                     surface, surface->texture_level);
         }
 
+        if (srgb)
+            ERR("Trying to bind standalone surface %p as sRGB.\n", surface);
+
         ENTER_GL();
 
-        if (!*name)
+        if (!surface->texture_name)
         {
-            glGenTextures(1, name);
+            glGenTextures(1, &surface->texture_name);
             checkGLcall("glGenTextures");
 
-            TRACE("Surface %p given name %u.\n", surface, *name);
+            TRACE("Surface %p given name %u.\n", surface, surface->texture_name);
 
-            glBindTexture(surface->texture_target, *name);
+            glBindTexture(surface->texture_target, surface->texture_name);
             checkGLcall("glBindTexture");
             glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(surface->texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -735,7 +736,7 @@ void surface_bind(IWineD3DSurfaceImpl *surface, BOOL srgb)
         }
         else
         {
-            glBindTexture(surface->texture_target, *name);
+            glBindTexture(surface->texture_target, surface->texture_name);
             checkGLcall("glBindTexture");
         }
 
