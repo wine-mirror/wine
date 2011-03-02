@@ -1649,7 +1649,10 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
     HTMLElement *This = impl_from_HTMLDOMNode(iface);
     HTMLDOMAttribute *attr;
 
-    LIST_FOR_EACH_ENTRY(attr, &This->attrs, HTMLDOMAttribute, entry) {
+    while(!list_empty(&This->attrs)) {
+        attr = LIST_ENTRY(list_head(&This->attrs), HTMLDOMAttribute, entry);
+
+        list_remove(&attr->entry);
         attr->elem = NULL;
         IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
     }
