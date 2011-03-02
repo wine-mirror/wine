@@ -187,6 +187,7 @@ BOOL WINAPI GetUserProfileDirectoryW( HANDLE hToken, LPWSTR lpProfileDir,
     ret = TRUE;
 
 done:
+    HeapFree( GetProcessHeap(), 0, t );
     HeapFree( GetProcessHeap(), 0, userW );
     HeapFree( GetProcessHeap(), 0, dirW );
     return ret;
