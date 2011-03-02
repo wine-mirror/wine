@@ -264,6 +264,23 @@ static void test_get_profiles_dir(void)
 
     HeapFree(GetProcessHeap(), 0, buf);
     HeapFree(GetProcessHeap(), 0, profiles_dir);
+
+    SetLastError(0xdeadbeef);
+    r = GetProfilesDirectoryW(NULL, NULL);
+    expect(FALSE, r);
+    expect_gle(ERROR_INVALID_PARAMETER);
+
+    cch = 0;
+    SetLastError(0xdeadbeef);
+    r = GetProfilesDirectoryW(NULL, &cch);
+    expect(FALSE, r);
+    expect_gle(ERROR_INSUFFICIENT_BUFFER);
+    ok(cch, "expected cch > 0\n");
+
+    SetLastError(0xdeadbeef);
+    r = GetProfilesDirectoryW(NULL, &cch);
+    expect(FALSE, r);
+    expect_gle(ERROR_INSUFFICIENT_BUFFER);
 }
 
 START_TEST(userenv)

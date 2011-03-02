@@ -201,7 +201,7 @@ BOOL WINAPI GetProfilesDirectoryW( LPWSTR lpProfilesDir, LPDWORD lpcchSize )
 
     TRACE("%p %p\n", lpProfilesDir, lpcchSize );
 
-    if (!lpProfilesDir || !lpcchSize)
+    if (!lpcchSize)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
@@ -234,7 +234,7 @@ BOOL WINAPI GetProfilesDirectoryW( LPWSTR lpProfilesDir, LPDWORD lpcchSize )
     }
     expanded_len = ExpandEnvironmentStringsW(unexpanded_profiles_dir, NULL, 0);
     /* The returned length doesn't include the NULL terminator. */
-    if (*lpcchSize < expanded_len - 1)
+    if (*lpcchSize < expanded_len - 1 || !lpProfilesDir)
     {
         *lpcchSize = expanded_len - 1;
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
