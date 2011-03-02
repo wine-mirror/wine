@@ -56,7 +56,7 @@ static const char elem_test_str[] =
     "</body></html>";
 static const char elem_test2_str[] =
     "<html><head><title>test</title><style>.body { margin-right: 0px; }</style>"
-    "<body><div id=\"divid\" emptyattr=""></div></body>"
+    "<body><div id=\"divid\" emptyattr=\"\" onclick=\"parseInt();\"></div></body>"
     "</html>";
 
 static const char indent_test_str[] =
@@ -462,6 +462,17 @@ static IHTMLDocument2 *create_document(void)
     return doc;
 }
 
+#define get_dispex_iface(u) _get_dispex_iface(__LINE__,u)
+static IDispatchEx *_get_dispex_iface(unsigned line, IUnknown *unk)
+{
+    IDispatchEx *dispex;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IDispatchEx: %08x\n", hres);
+    return dispex;
+}
+
 #define test_ifaces(i,ids) _test_ifaces(__LINE__,i,ids)
 static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
 {
@@ -492,16 +503,11 @@ static void _test_no_iface(unsigned line, IUnknown *iface, REFIID iid)
 #define test_get_dispid(u,id) _test_get_dispid(__LINE__,u,id)
 static BOOL _test_get_dispid(unsigned line, IUnknown *unk, IID *iid)
 {
-    IDispatchEx *dispex;
+    IDispatchEx *dispex = _get_dispex_iface(line, unk);
     ITypeInfo *typeinfo;
     BOOL ret = FALSE;
     UINT ticnt;
     HRESULT hres;
-
-    hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
-    ok_(__FILE__,line) (hres == S_OK, "Could not get IDispatchEx: %08x\n", hres);
-    if(FAILED(hres))
-        return FALSE;
 
     ticnt = 0xdeadbeef;
     hres = IDispatchEx_GetTypeInfoCount(dispex, &ticnt);
@@ -532,16 +538,11 @@ static BOOL _test_get_dispid(unsigned line, IUnknown *unk, IID *iid)
 #define test_disp_value(u) _test_disp_value(__LINE__,u,v)
 static void _test_disp_value(unsigned line, IUnknown *unk, const char *val)
 {
+    IDispatchEx *dispex = _get_dispex_iface(line, unk);
     DISPPARAMS dp  = {NULL,NULL,0,0};
-    IDispatchEx *dispex;
     EXCEPINFO ei;
     VARIANT var;
     HRESULT hres;
-
-    hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
-    ok_(__FILE__,line)(hres == S_OK, "Could not get IDispatchEx interface: %08x\n", hres);
-    if(FAILED(hres))
-        return;
 
     hres = IDispatchEx_InvokeEx(dispex, DISPID_VALUE, 0, DISPATCH_PROPERTYGET, &dp, &var, &ei, NULL);
     IDispatchEx_Release(dispex);
@@ -575,6 +576,27 @@ static void _test_disp2(unsigned line, IUnknown *unk, const IID *diid, const IID
 
     if(val)
         _test_disp_value(line, unk, val);
+}
+
+#define set_dispex_value(a,b,c) _set_dispex_value(__LINE__,a,b,c)
+static void _set_dispex_value(unsigned line, IUnknown *unk, const char *name, VARIANT *val)
+{
+    IDispatchEx *dispex = _get_dispex_iface(line, unk);
+    DISPPARAMS dp = {val, NULL, 1, 0};
+    EXCEPINFO ei;
+    DISPID id;
+    BSTR str;
+    HRESULT hres;
+
+    str = a2bstr(name);
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameEnsure|fdexNameCaseInsensitive, &id);
+    SysFreeString(str);
+    ok_(__FILE__,line)(hres == S_OK, "GetDispID failed: %08x\n", hres);
+
+    memset(&ei, 0, sizeof(ei));
+    hres = IDispatchEx_InvokeEx(dispex, id, LOCALE_NEUTRAL, INVOKE_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    ok_(__FILE__,line)(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+
 }
 
 #define get_elem_iface(u) _get_elem_iface(__LINE__,u)
@@ -2897,21 +2919,14 @@ static IHTMLDOMAttribute *_get_elem_attr_node(unsigned line, IUnknown *unk, cons
     return attr;
 }
 
-#define test_attr_node_value(a,b) _test_attr_node_value(__LINE__,a,b)
-static void _test_attr_node_value(unsigned line, IHTMLDOMAttribute *attr, const char *exval)
+#define get_attr_node_value(a,b,c) _get_attr_node_value(__LINE__,a,b,c)
+static void _get_attr_node_value(unsigned line, IHTMLDOMAttribute *attr, VARIANT *v, VARTYPE vt)
 {
-    VARIANT var;
     HRESULT hres;
 
-    hres = IHTMLDOMAttribute_get_nodeValue(attr, &var);
+    hres = IHTMLDOMAttribute_get_nodeValue(attr, v);
     ok_(__FILE__,line) (hres == S_OK, "get_nodeValue failed: %08x, expected VT_BSTR\n", hres);
-    ok_(__FILE__,line) (V_VT(&var) == VT_BSTR, "vt=%d\n", V_VT(&var));
-    if(exval)
-        ok_(__FILE__,line) (!strcmp_wa(V_BSTR(&var), exval), "unexpected value %s\n", wine_dbgstr_w(V_BSTR(&var)));
-    else
-        ok_(__FILE__,line) (!V_BSTR(&var), "nodeValue = %s, expected NULL\n", wine_dbgstr_w(V_BSTR(&var)));
-
-    VariantClear(&var);
+    ok_(__FILE__,line) (V_VT(v) == vt, "vt=%d, expected %d\n", V_VT(v), vt);
 }
 
 #define get_window_doc(e) _get_window_doc(__LINE__,e)
@@ -6802,6 +6817,7 @@ static void test_elems(IHTMLDocument2 *doc)
 static void test_attr(IHTMLElement *elem)
 {
     IHTMLDOMAttribute *attr, *attr2;
+    VARIANT v;
 
     get_elem_attr_node((IUnknown*)elem, "noattr", FALSE);
 
@@ -6815,12 +6831,24 @@ static void test_attr(IHTMLElement *elem)
     ok(iface_cmp((IUnknown*)attr, (IUnknown*)attr2), "attr != attr2\n");
     IHTMLDOMAttribute_Release(attr2);
 
-    test_attr_node_value(attr, "divid");
+    get_attr_node_value(attr, &v, VT_BSTR);
+    ok(!strcmp_wa(V_BSTR(&v), "divid"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
 
     IHTMLDOMAttribute_Release(attr);
 
     attr = get_elem_attr_node((IUnknown*)elem, "emptyattr", TRUE);
-    test_attr_node_value(attr, NULL);
+    get_attr_node_value(attr, &v, VT_BSTR);
+    ok(!V_BSTR(&v), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    IHTMLDOMAttribute_Release(attr);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 100;
+    set_dispex_value((IUnknown*)elem, "dispprop", &v);
+    attr = get_elem_attr_node((IUnknown*)elem, "dispprop", TRUE);
+    get_attr_node_value(attr, &v, VT_I4);
+    ok(V_I4(&v) == 100, "V_I4(v) = %d\n", V_I4(&v));
     IHTMLDOMAttribute_Release(attr);
 }
 
@@ -7529,10 +7557,10 @@ START_TEST(dom)
     run_domtest(range_test2_str, test_txtrange2);
     if (winetest_interactive || ! is_ie_hardened()) {
         run_domtest(elem_test_str, test_elems);
+        run_domtest(elem_test2_str, test_elems2);
     }else {
         skip("IE running in Enhanced Security Configuration\n");
     }
-    run_domtest(elem_test2_str, test_elems2);
     run_domtest(doc_blank, test_create_elems);
     run_domtest(doc_blank, test_defaults);
     run_domtest(doc_blank, test_null_write);
