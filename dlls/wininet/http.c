@@ -3843,6 +3843,35 @@ static void HTTP_ProcessExpires(http_request_t *request)
     }
 }
 
+static void HTTP_CacheRequest(http_request_t *request)
+{
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
+    WCHAR cacheFileName[MAX_PATH+1];
+    BOOL b;
+
+    b = HTTP_GetRequestURL(request, url);
+    if(!b) {
+        WARN("Could not get URL\n");
+        return;
+    }
+
+    b = CreateUrlCacheEntryW(url, request->contentLength > 0 ? request->contentLength : 0, NULL, cacheFileName, 0);
+    if(b) {
+        HeapFree(GetProcessHeap(), 0, request->cacheFile);
+        CloseHandle(request->hCacheFile);
+
+        request->cacheFile = heap_strdupW(cacheFileName);
+        request->hCacheFile = CreateFileW(request->cacheFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                  NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if(request->hCacheFile == INVALID_HANDLE_VALUE) {
+            WARN("Could not create file: %u\n", GetLastError());
+            request->hCacheFile = NULL;
+        }
+    }else {
+        WARN("Could not create cache entry: %08x\n", GetLastError());
+    }
+}
+
 /***********************************************************************
  *           HTTP_HttpSendRequestW (internal)
  *
@@ -4117,33 +4146,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     }
     while (loop_next);
 
-    if(res == ERROR_SUCCESS) {
-        WCHAR url[INTERNET_MAX_URL_LENGTH];
-        WCHAR cacheFileName[MAX_PATH+1];
-        BOOL b;
-
-        b = HTTP_GetRequestURL(request, url);
-        if(!b) {
-            WARN("Could not get URL\n");
-            goto lend;
-        }
-
-        b = CreateUrlCacheEntryW(url, request->contentLength > 0 ? request->contentLength : 0, NULL, cacheFileName, 0);
-        if(b) {
-            HeapFree(GetProcessHeap(), 0, request->cacheFile);
-            CloseHandle(request->hCacheFile);
-
-            request->cacheFile = heap_strdupW(cacheFileName);
-            request->hCacheFile = CreateFileW(request->cacheFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-                      NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-            if(request->hCacheFile == INVALID_HANDLE_VALUE) {
-                WARN("Could not create file: %u\n", GetLastError());
-                request->hCacheFile = NULL;
-            }
-        }else {
-            WARN("Could not create cache entry: %08x\n", GetLastError());
-        }
-    }
+    if(res == ERROR_SUCCESS)
+        HTTP_CacheRequest(request);
 
 lend:
 
