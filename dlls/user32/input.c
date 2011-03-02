@@ -115,6 +115,19 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
 
 
 /***********************************************************************
+ *		__wine_send_input  (USER32.@)
+ *
+ * Internal SendInput function to allow the graphics driver to inject real events.
+ */
+BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, BOOL injected )
+{
+    NTSTATUS status = send_hardware_message( hwnd, input, injected ? SEND_HWMSG_INJECTED : 0 );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+
+/***********************************************************************
  *		SendInput  (USER32.@)
  */
 UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )

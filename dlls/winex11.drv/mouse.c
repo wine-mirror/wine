@@ -292,6 +292,7 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
                               DWORD data, DWORD time, DWORD extra_info, UINT injected_flags )
 {
     POINT pt;
+    INPUT input;
     MSLLHOOKSTRUCT hook;
 
     if (!time) time = GetTickCount();
@@ -414,20 +415,15 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_XBUTTONUP, (LPARAM)&hook, TRUE )) return;
     }
 
-    SERVER_START_REQ( send_hardware_message )
-    {
-        req->win               = wine_server_user_handle( hwnd );
-        req->input.type        = INPUT_MOUSE;
-        req->input.mouse.x     = pt.x;
-        req->input.mouse.y     = pt.y;
-        req->input.mouse.data  = data;
-        req->input.mouse.flags = flags | MOUSEEVENTF_ABSOLUTE;
-        req->input.mouse.time  = time;
-        req->input.mouse.info  = extra_info;
-        if (injected_flags & LLMHF_INJECTED) req->flags = SEND_HWMSG_INJECTED;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
+    input.type             = INPUT_MOUSE;
+    input.u.mi.dx          = pt.x;
+    input.u.mi.dy          = pt.y;
+    input.u.mi.mouseData   = data;
+    input.u.mi.dwFlags     = flags | MOUSEEVENTF_ABSOLUTE;
+    input.u.mi.time        = time;
+    input.u.mi.dwExtraInfo = extra_info;
+
+    __wine_send_input( hwnd, &input, (injected_flags & LLMHF_INJECTED) != 0 );
 }
 
 #ifdef SONAME_LIBXCURSOR

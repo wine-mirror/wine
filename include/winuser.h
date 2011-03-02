@@ -5136,6 +5136,10 @@ WINUSERAPI INT         WINAPI wvsprintfW(LPWSTR,LPCWSTR,__ms_va_list);
 /* NOTE: This is SYSTEM.3, not USER.182, which is also named KillSystemTimer */
 WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
 
+#ifdef __WINESRC__
+WINUSERAPI BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, BOOL injected );
+#endif
+
 #ifdef __cplusplus
 }
 #endif

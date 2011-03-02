@@ -25,6 +25,8 @@
 #include <assert.h>
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -3061,6 +3063,47 @@ static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BO
 
     SPY_ExitMessage( SPY_RESULT_OK, info->hwnd, info->msg, result, info->wparam, info->lparam );
     if (ret && res_ptr) *res_ptr = result;
+    return ret;
+}
+
+
+/***********************************************************************
+ *		send_hardware_message
+ */
+NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, UINT flags )
+{
+    NTSTATUS ret;
+
+    SERVER_START_REQ( send_hardware_message )
+    {
+        req->win        = wine_server_user_handle( hwnd );
+        req->flags      = flags;
+        req->input.type = input->type;
+        switch (input->type)
+        {
+        case INPUT_MOUSE:
+            req->input.mouse.x     = input->u.mi.dx;
+            req->input.mouse.y     = input->u.mi.dy;
+            req->input.mouse.data  = input->u.mi.mouseData;
+            req->input.mouse.flags = input->u.mi.dwFlags;
+            req->input.mouse.time  = input->u.mi.time;
+            req->input.mouse.info  = input->u.mi.dwExtraInfo;
+            break;
+        case INPUT_KEYBOARD:
+            req->input.kbd.vkey  = input->u.ki.wVk;
+            req->input.kbd.scan  = input->u.ki.wScan;
+            req->input.kbd.flags = input->u.ki.dwFlags;
+            req->input.kbd.time  = input->u.ki.time;
+            req->input.kbd.info  = input->u.ki.dwExtraInfo;
+            break;
+        case INPUT_HARDWARE:
+            req->input.hw.msg    = input->u.hi.uMsg;
+            req->input.hw.lparam = MAKELONG( input->u.hi.wParamL, input->u.hi.wParamH );
+            break;
+        }
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
