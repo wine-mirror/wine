@@ -1251,7 +1251,7 @@ void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD event_fl
     TRACE_(key)("message=0x%04x wParam=0x%04x InputKeyState=0x%x\n",
                 message, wVk, key_state_table[wVk]);
 
-    __wine_send_input( hwnd, &input, (injected_flags & LLKHF_INJECTED) != 0 );
+    __wine_send_input( hwnd, &input );
 }
 
 

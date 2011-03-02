@@ -349,7 +349,7 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
     input.u.mi.time        = time;
     input.u.mi.dwExtraInfo = extra_info;
 
-    __wine_send_input( hwnd, &input, (injected_flags & LLMHF_INJECTED) != 0 );
+    __wine_send_input( hwnd, &input );
 
     if (injected_flags & LLMHF_INJECTED)
     {

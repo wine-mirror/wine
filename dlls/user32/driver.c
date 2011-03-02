@@ -80,7 +80,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(GetKeyboardLayoutName);
         GET_USER_FUNC(LoadKeyboardLayout);
         GET_USER_FUNC(MapVirtualKeyEx);
-        GET_USER_FUNC(SendInput);
         GET_USER_FUNC(ToUnicodeEx);
         GET_USER_FUNC(UnloadKeyboardLayout);
         GET_USER_FUNC(VkKeyScanEx);
@@ -192,11 +191,6 @@ static HKL CDECL nulldrv_LoadKeyboardLayout( LPCWSTR name, UINT flags )
 }
 
 static UINT CDECL nulldrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
-{
-    return 0;
-}
-
-static UINT CDECL nulldrv_SendInput( UINT count, LPINPUT inputs, int size )
 {
     return 0;
 }
@@ -448,7 +442,6 @@ static USER_DRIVER null_driver =
     nulldrv_GetKeyboardLayoutName,
     nulldrv_LoadKeyboardLayout,
     nulldrv_MapVirtualKeyEx,
-    nulldrv_SendInput,
     nulldrv_ToUnicodeEx,
     nulldrv_UnloadKeyboardLayout,
     nulldrv_VkKeyScanEx,
@@ -547,11 +540,6 @@ static HKL CDECL loaderdrv_LoadKeyboardLayout( LPCWSTR name, UINT flags )
 static UINT CDECL loaderdrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
     return load_driver()->pMapVirtualKeyEx( code, type, layout );
-}
-
-static UINT CDECL loaderdrv_SendInput( UINT count, LPINPUT inputs, int size )
-{
-    return load_driver()->pSendInput( count, inputs, size );
 }
 
 static INT CDECL loaderdrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
@@ -801,7 +789,6 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_GetKeyboardLayoutName,
     loaderdrv_LoadKeyboardLayout,
     loaderdrv_MapVirtualKeyEx,
-    loaderdrv_SendInput,
     loaderdrv_ToUnicodeEx,
     loaderdrv_UnloadKeyboardLayout,
     loaderdrv_VkKeyScanEx,

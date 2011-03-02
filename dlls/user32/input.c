@@ -34,6 +34,8 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -50,6 +52,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(keyboard);
 
+static DWORD last_mouse_event;
 
 /***********************************************************************
  *           get_key_state
@@ -119,52 +122,92 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
  *
  * Internal SendInput function to allow the graphics driver to inject real events.
  */
-BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, BOOL injected )
+BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input )
 {
-    NTSTATUS status = send_hardware_message( hwnd, input, injected ? SEND_HWMSG_INJECTED : 0 );
+    NTSTATUS status = send_hardware_message( hwnd, input, 0 );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
+    else if (input->type == INPUT_MOUSE) last_mouse_event = GetTickCount();
     return !status;
 }
 
+
+/***********************************************************************
+ *		update_mouse_coords
+ *
+ * Helper for SendInput.
+ */
+static void update_mouse_coords( INPUT *input )
+{
+    if (!(input->u.mi.dwFlags & MOUSEEVENTF_MOVE)) return;
+
+    if (input->u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE)
+    {
+        input->u.mi.dx = (input->u.mi.dx * GetSystemMetrics( SM_CXSCREEN )) >> 16;
+        input->u.mi.dy = (input->u.mi.dy * GetSystemMetrics( SM_CYSCREEN )) >> 16;
+    }
+    else
+    {
+        int accel[3];
+
+        /* dx and dy can be negative numbers for relative movements */
+        SystemParametersInfoW(SPI_GETMOUSE, 0, accel, 0);
+
+        if (!accel[2]) return;
+
+        if (abs(input->u.mi.dx) > accel[0])
+        {
+            input->u.mi.dx *= 2;
+            if ((abs(input->u.mi.dx) > accel[1]) && (accel[2] == 2)) input->u.mi.dx *= 2;
+        }
+        if (abs(input->u.mi.dy) > accel[0])
+        {
+            input->u.mi.dy *= 2;
+            if ((abs(input->u.mi.dy) > accel[1]) && (accel[2] == 2)) input->u.mi.dy *= 2;
+        }
+    }
+}
 
 /***********************************************************************
  *		SendInput  (USER32.@)
  */
 UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
 {
-    if (TRACE_ON(win))
+    UINT i;
+    NTSTATUS status;
+
+    for (i = 0; i < count; i++)
     {
-        UINT i;
-
-        for (i = 0; i < count; i++)
+        if (inputs[i].type == INPUT_MOUSE)
         {
-            switch(inputs[i].type)
+            /* we need to update the coordinates to what the server expects */
+            INPUT input = inputs[i];
+            update_mouse_coords( &input );
+            if (!(status = send_hardware_message( 0, &input, SEND_HWMSG_INJECTED )))
             {
-            case INPUT_MOUSE:
-                TRACE("mouse: dx %d, dy %d, data %x, flags %x, time %u, info %lx\n",
-                      inputs[i].u.mi.dx, inputs[i].u.mi.dy, inputs[i].u.mi.mouseData,
-                      inputs[i].u.mi.dwFlags, inputs[i].u.mi.time, inputs[i].u.mi.dwExtraInfo);
-                break;
+                last_mouse_event = GetTickCount();
 
-            case INPUT_KEYBOARD:
-                TRACE("keyboard: vk %X, scan %x, flags %x, time %u, info %lx\n",
-                      inputs[i].u.ki.wVk, inputs[i].u.ki.wScan, inputs[i].u.ki.dwFlags,
-                      inputs[i].u.ki.time, inputs[i].u.ki.dwExtraInfo);
-                break;
-
-            case INPUT_HARDWARE:
-                TRACE("hardware: msg %d, wParamL %x, wParamH %x\n",
-                      inputs[i].u.hi.uMsg, inputs[i].u.hi.wParamL, inputs[i].u.hi.wParamH);
-                break;
-
-            default:
-                FIXME("unknown input type %u\n", inputs[i].type);
-                break;
+                if ((input.u.mi.dwFlags & MOUSEEVENTF_MOVE) &&
+                    ((input.u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) || input.u.mi.dx || input.u.mi.dy))
+                {
+                    /* we have to actually move the cursor */
+                    POINT pt;
+                    GetCursorPos( &pt );
+                    if (!(input.u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) ||
+                        pt.x != input.u.mi.dx  || pt.y != input.u.mi.dy)
+                        USER_Driver->pSetCursorPos( pt.x, pt.y );
+                }
             }
+        }
+        else status = send_hardware_message( 0, &inputs[i], SEND_HWMSG_INJECTED );
+
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError(status) );
+            break;
         }
     }
 
-    return USER_Driver->pSendInput( count, inputs, size );
+    return i;
 }
 
 
@@ -210,11 +253,12 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetCursorPos( POINT *pt )
 {
-    BOOL ret;
+    BOOL ret = FALSE;
 
     if (!pt) return FALSE;
 
-    ret = USER_Driver->pGetCursorPos( pt );
+    /* query new position from graphics driver if we haven't updated recently */
+    if (GetTickCount() - last_mouse_event > 100) ret = USER_Driver->pGetCursorPos( pt );
 
     SERVER_START_REQ( set_cursor )
     {
@@ -232,7 +276,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetCursorPos( POINT *pt )
     }
     SERVER_END_REQ;
     return ret;
-
 }
 
 
