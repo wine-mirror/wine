@@ -4034,10 +4034,22 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                 if (type_array_has_conformance(var->type))
                 {
                     unsigned int size;
-                    type_t *type = var->type;
+                    type_t *type;
 
                     fprintf(file, " = NdrAllocate(&__frame->_StubMsg, ");
-                    for ( ;
+                    for (type = var->type;
+                         is_array(type) && type_array_has_conformance(type);
+                         type = type_array_get_element(type))
+                    {
+                        write_expr(file, type_array_get_conformance(type), TRUE,
+                                   TRUE, NULL, NULL, local_var_prefix);
+                        fprintf(file, " * ");
+                    }
+                    size = type_memsize(type);
+                    fprintf(file, "%u);\n", size);
+
+                    print_file(file, indent, "memset(%s%s, 0, ", local_var_prefix, var->name);
+                    for (type = var->type;
                          is_array(type) && type_array_has_conformance(type);
                          type = type_array_get_element(type))
                     {
