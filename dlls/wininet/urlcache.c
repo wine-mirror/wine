@@ -48,10 +48,12 @@
 #include "wininet.h"
 #include "winineti.h"
 #include "winerror.h"
-#include "internet.h"
 #include "winreg.h"
 #include "shlwapi.h"
 #include "shlobj.h"
+#include "shellapi.h"
+
+#include "internet.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -1460,25 +1462,102 @@ static BOOL URLCache_EnumHashTableEntries(LPCURLCACHE_HEADER pHeader, const HASH
 }
 
 /***********************************************************************
- *           FreeUrlCacheSpaceA (WININET.@)
+ *           URLCache_DeleteCacheDirectory (Internal)
+ *
+ *  Erase a directory containing an URL cache.
+ *
+ * RETURNS
+ *    TRUE success, FALSE failure/aborted.
  *
  */
-BOOL WINAPI FreeUrlCacheSpaceA(LPCSTR lpszCachePath, DWORD dwSize, DWORD dwFilter)
+static BOOL URLCache_DeleteCacheDirectory(LPCWSTR lpszPath)
 {
-    FIXME("stub!\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    DWORD path_len;
+    WCHAR path[MAX_PATH + 1];
+    SHFILEOPSTRUCTW shfos;
+    int ret;
+
+    path_len = strlenW(lpszPath);
+    if (path_len >= MAX_PATH)
+        return FALSE;
+    strcpyW(path, lpszPath);
+    path[path_len + 1] = 0;  /* double-NUL-terminate path */
+
+    shfos.hwnd = NULL;
+    shfos.wFunc = FO_DELETE;
+    shfos.pFrom = path;
+    shfos.pTo = NULL;
+    shfos.fFlags = 0;
+    shfos.fAnyOperationsAborted = FALSE;
+    ret = SHFileOperationW(&shfos);
+    if (ret)
+        ERR("SHFileOperationW on %s returned %i\n", debugstr_w(path), ret);
+    return !(ret || shfos.fAnyOperationsAborted);
+}
+
+/***********************************************************************
+ *           FreeUrlCacheSpaceW (WININET.@)
+ *
+ * Frees up some cache.
+ *
+ * PARAMETERS
+ *   lpszCachePath [I] Which volume to free up from, or NULL if you don't care.
+ *   dwSize        [I] How much space to free up.
+ *   dwSizeType    [I] How to interpret dwSize.
+ *
+ * RETURNS
+ *   TRUE success. FALSE failure.
+ *
+ * IMPLEMENTATION
+ *   This implementation just retrieves the path of the cache directory, and
+ *   deletes its contents from the filesystem. The correct approach would
+ *   probably be to implement and use {FindFirst,FindNext,Delete}UrlCacheGroup().
+ */
+BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR lpszCachePath, DWORD dwSize, DWORD dwSizeType)
+{
+    URLCACHECONTAINER * pContainer;
+
+    if (lpszCachePath != NULL || dwSize != 100 || dwSizeType != FCS_PERCENT_CACHE_SPACE)
+    {
+        FIXME("(%s, %x, %x): partial stub!\n", debugstr_w(lpszCachePath), dwSize, dwSizeType);
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
+
+    LIST_FOR_EACH_ENTRY(pContainer, &UrlContainers, URLCACHECONTAINER, entry)
+    {
+        /* The URL cache has prefix L"" (unlike Cookies and History) */
+        if (pContainer->cache_prefix[0] == 0)
+        {
+            BOOL ret_del;
+            DWORD ret_open;
+            WaitForSingleObject(pContainer->hMutex, INFINITE);
+
+            /* unlock, delete, recreate and lock cache */
+            URLCacheContainer_CloseIndex(pContainer);
+            ret_del = URLCache_DeleteCacheDirectory(pContainer->path);
+            ret_open = URLCacheContainer_OpenIndex(pContainer);
+
+            ReleaseMutex(pContainer->hMutex);
+            return ret_del && (ret_open == ERROR_SUCCESS);
+        }
+    }
     return FALSE;
 }
 
- /***********************************************************************
- *           FreeUrlCacheSpaceW (WININET.@)
+/***********************************************************************
+ *           FreeUrlCacheSpaceA (WININET.@)
  *
+ * See FreeUrlCacheSpaceW.
  */
-BOOL WINAPI FreeUrlCacheSpaceW(LPCWSTR lpszCachePath, DWORD dwSize, DWORD dwFilter)
+BOOL WINAPI FreeUrlCacheSpaceA(LPCSTR lpszCachePath, DWORD dwSize, DWORD dwSizeType)
 {
-    FIXME("stub!\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    BOOL ret = FALSE;
+    LPWSTR path = heap_strdupAtoW(lpszCachePath);
+    if (lpszCachePath == NULL || path != NULL)
+        ret = FreeUrlCacheSpaceW(path, dwSize, dwSizeType);
+    heap_free(path);
+    return ret;
 }
 
 /***********************************************************************

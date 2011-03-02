@@ -1660,6 +1660,16 @@ BOOLAPI DeleteUrlCacheEntryA(LPCSTR);
 BOOLAPI DeleteUrlCacheEntryW(LPCWSTR);
 #define DeleteUrlCacheEntry  WINELIB_NAME_AW(DeleteUrlCacheEntry)
 
+/* FCS_ flags and FreeUrlCacheSpace are no longer documented */
+#define FCS_PERCENT_CACHE_SPACE  0  /* guessed value */
+#define FCS_PERCENT_DISK_SPACE   1  /* guessed value */
+#define FCS_ABSOLUTE_SIZE        2  /* guessed value */
+
+BOOLAPI FreeUrlCacheSpaceA(LPCSTR ,DWORD ,DWORD);
+BOOLAPI FreeUrlCacheSpaceW(LPCWSTR ,DWORD ,DWORD);
+#define FreeUrlCacheSpace  WINELIB_NAME_AW(FreeUrlCacheSpace)
+
+
 INTERNETAPI DWORD WINAPI InternetDialA(HWND ,LPSTR ,DWORD ,DWORD_PTR* ,DWORD);
 INTERNETAPI DWORD WINAPI InternetDialW(HWND ,LPWSTR ,DWORD ,DWORD_PTR* ,DWORD);
 #define InternetDial WINELIB_NAME_AW(InternetDial)
