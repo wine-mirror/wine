@@ -92,10 +92,8 @@ static const UINT button_up_flags[NB_BUTTONS] =
     MOUSEEVENTF_XUP
 };
 
-static POINT cursor_pos;
 static HWND cursor_window;
 static DWORD last_time_modified;
-static RECT cursor_clip; /* Cursor clipping rect */
 static XContext cursor_context;
 static Cursor create_cursor( HANDLE handle );
 
@@ -130,19 +128,6 @@ void X11DRV_Xcursor_Init(void)
 #endif /* SONAME_LIBXCURSOR */
 }
 
-
-/***********************************************************************
- *		clip_point_to_rect
- *
- * Clip point to the provided rectangle
- */
-static inline void clip_point_to_rect( LPCRECT rect, LPPOINT pt )
-{
-    if      (pt->x <  rect->left)   pt->x = rect->left;
-    else if (pt->x >= rect->right)  pt->x = rect->right - 1;
-    if      (pt->y <  rect->top)    pt->y = rect->top;
-    else if (pt->y >= rect->bottom) pt->y = rect->bottom - 1;
-}
 
 /***********************************************************************
  *		get_empty_cursor
@@ -288,56 +273,9 @@ static HWND update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
 /***********************************************************************
  *		X11DRV_send_mouse_input
  */
-void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
-                              DWORD data, DWORD time, DWORD extra_info, UINT injected_flags )
+static void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, int x, int y, DWORD data, DWORD time )
 {
-    POINT pt;
     INPUT input;
-
-    if (!time) time = GetTickCount();
-
-    if (flags & MOUSEEVENTF_MOVE && flags & MOUSEEVENTF_ABSOLUTE)
-    {
-        if (injected_flags & LLMHF_INJECTED)
-        {
-            pt.x = (x * screen_width) >> 16;
-            pt.y = (y * screen_height) >> 16;
-        }
-        else
-        {
-            pt.x = x;
-            pt.y = y;
-        }
-    }
-    else if (flags & MOUSEEVENTF_MOVE)
-    {
-        int accel[3];
-
-        /* dx and dy can be negative numbers for relative movements */
-        SystemParametersInfoW(SPI_GETMOUSE, 0, accel, 0);
-
-        if (abs(x) > accel[0] && accel[2] != 0)
-        {
-            x = (int)x * 2;
-            if ((abs(x) > accel[1]) && (accel[2] == 2)) x = (int)x * 2;
-        }
-        if (abs(y) > accel[0] && accel[2] != 0)
-        {
-            y = (int)y * 2;
-            if ((abs(y) > accel[1]) && (accel[2] == 2)) y = (int)y * 2;
-        }
-
-        wine_tsx11_lock();
-        pt.x = cursor_pos.x + x;
-        pt.y = cursor_pos.y + y;
-        wine_tsx11_unlock();
-    }
-    else
-    {
-        wine_tsx11_lock();
-        pt = cursor_pos;
-        wine_tsx11_unlock();
-    }
 
     last_time_modified = GetTickCount();
 
@@ -347,20 +285,9 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
     input.u.mi.mouseData   = data;
     input.u.mi.dwFlags     = flags;
     input.u.mi.time        = time;
-    input.u.mi.dwExtraInfo = extra_info;
+    input.u.mi.dwExtraInfo = 0;
 
     __wine_send_input( hwnd, &input );
-
-    if (injected_flags & LLMHF_INJECTED)
-    {
-        if ((flags & MOUSEEVENTF_MOVE) &&
-            ((flags & MOUSEEVENTF_ABSOLUTE) || x || y))  /* we have to actually move the cursor */
-        {
-            GetCursorPos( &pt );
-            if (!(flags & MOUSEEVENTF_ABSOLUTE) || pt.x != x || pt.y != y)
-                X11DRV_SetCursorPos( pt.x, pt.y );
-        }
-    }
 }
 
 #ifdef SONAME_LIBXCURSOR
@@ -964,8 +891,6 @@ BOOL CDECL X11DRV_SetCursorPos( INT x, INT y )
     XWarpPointer( display, root_window, root_window, 0, 0, 0, 0,
                   x - virtual_screen_rect.left, y - virtual_screen_rect.top );
     XFlush( display ); /* avoids bad mouse lag in games that do their own mouse warping */
-    cursor_pos.x = x;
-    cursor_pos.y = y;
     wine_tsx11_unlock();
     return TRUE;
 }
@@ -979,37 +904,20 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
     Window root, child;
     int rootX, rootY, winX, winY;
     unsigned int xstate;
-    BOOL ret = FALSE;
+    BOOL ret;
 
     wine_tsx11_lock();
-    if ((GetTickCount() - last_time_modified > 100) &&
-        XQueryPointer( display, root_window, &root, &child,
-                       &rootX, &rootY, &winX, &winY, &xstate ))
+    ret = XQueryPointer( display, root_window, &root, &child, &rootX, &rootY, &winX, &winY, &xstate );
+    if (ret)
     {
-        winX += virtual_screen_rect.left;
-        winY += virtual_screen_rect.top;
-        TRACE("pointer at (%d,%d)\n", winX, winY );
-        pos->x = winX;
-        pos->y = winY;
-        ret = TRUE;
+        pos->x = winX + virtual_screen_rect.left;
+        pos->y = winY + virtual_screen_rect.top;
+        TRACE("pointer at (%d,%d)\n", pos->x, pos->y );
     }
     wine_tsx11_unlock();
     return ret;
 }
 
-
-/***********************************************************************
- *		ClipCursor (X11DRV.@)
- *
- * Set the cursor clipping rectangle.
- */
-BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
-{
-    if (!IntersectRect( &cursor_clip, &virtual_screen_rect, clip ))
-        cursor_clip = virtual_screen_rect;
-
-    return TRUE;
-}
 
 /***********************************************************************
  *           X11DRV_ButtonPress
@@ -1050,7 +958,7 @@ void X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
     if (!hwnd) return;
 
     X11DRV_send_mouse_input( hwnd, button_down_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
-                             pt.x, pt.y, wData, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
+                             pt.x, pt.y, wData, EVENT_x11_time_to_win32_time(event->time) );
 }
 
 
@@ -1086,7 +994,7 @@ void X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
     if (!hwnd) return;
 
     X11DRV_send_mouse_input( hwnd, button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
-                             pt.x, pt.y, wData, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
+                             pt.x, pt.y, wData, EVENT_x11_time_to_win32_time(event->time) );
 }
 
 
@@ -1104,7 +1012,7 @@ void X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
     if (!hwnd) return;
 
     X11DRV_send_mouse_input( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
-                             pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
+                             pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time) );
 }
 
 
@@ -1126,5 +1034,5 @@ void X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
     if (!hwnd) return;
 
     X11DRV_send_mouse_input( hwnd, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE,
-                             pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
+                             pt.x, pt.y, 0, EVENT_x11_time_to_win32_time(event->time) );
 }

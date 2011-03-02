@@ -69,7 +69,6 @@
 @ cdecl GetKeyboardLayoutName(ptr) X11DRV_GetKeyboardLayoutName
 @ cdecl LoadKeyboardLayout(wstr long) X11DRV_LoadKeyboardLayout
 @ cdecl MapVirtualKeyEx(long long long) X11DRV_MapVirtualKeyEx
-@ cdecl SendInput(long ptr long) X11DRV_SendInput
 @ cdecl ToUnicodeEx(long long ptr ptr long long long) X11DRV_ToUnicodeEx
 @ cdecl UnloadKeyboardLayout(long) X11DRV_UnloadKeyboardLayout
 @ cdecl VkKeyScanEx(long long) X11DRV_VkKeyScanEx
@@ -77,7 +76,6 @@
 @ cdecl SetCursor(long) X11DRV_SetCursor
 @ cdecl GetCursorPos(ptr) X11DRV_GetCursorPos
 @ cdecl SetCursorPos(long long) X11DRV_SetCursorPos
-@ cdecl ClipCursor(ptr) X11DRV_ClipCursor
 @ cdecl GetScreenSaveActive() X11DRV_GetScreenSaveActive
 @ cdecl SetScreenSaveActive(long) X11DRV_SetScreenSaveActive
 @ cdecl ChangeDisplaySettingsEx(ptr ptr long long long) X11DRV_ChangeDisplaySettingsEx

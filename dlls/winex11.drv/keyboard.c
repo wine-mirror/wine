@@ -60,16 +60,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
 
-/* key state table bits:
-  0x80 -> key is pressed
-  0x40 -> key got pressed since last time
-  0x01 -> key is toggled
-*/
-static BYTE key_state_table[256];
-
-static BYTE TrackSysKey = 0; /* determine whether ALT key up will cause a WM_SYSKEYUP
-                                or a WM_KEYUP message */
-
 static int min_keycode, max_keycode, keysyms_per_keycode;
 static WORD keyc2vkey[256], keyc2scan[256];
 
@@ -1150,106 +1140,18 @@ static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
 /***********************************************************************
  *           X11DRV_send_keyboard_input
  */
-void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD event_flags, DWORD time,
-                                 DWORD dwExtraInfo, UINT injected_flags )
+static void X11DRV_send_keyboard_input( HWND hwnd, WORD vkey, WORD scan, DWORD flags, DWORD time )
 {
-    UINT message;
     INPUT input;
-    WORD flags, wVkStripped, wVkL, wVkR, vk_hook = wVk;
 
-    if (!time) time = GetTickCount();
-
-    wVk = LOBYTE(wVk);
-    flags = LOBYTE(wScan);
-
-    if (event_flags & KEYEVENTF_EXTENDEDKEY) flags |= KF_EXTENDED;
-    /* FIXME: set KF_DLGMODE and KF_MENUMODE when needed */
-
-    /* strip left/right for menu, control, shift */
-    switch (wVk)
-    {
-    case VK_MENU:
-    case VK_LMENU:
-    case VK_RMENU:
-        wVk = (event_flags & KEYEVENTF_EXTENDEDKEY) ? VK_RMENU : VK_LMENU;
-        wVkStripped = VK_MENU;
-        wVkL = VK_LMENU;
-        wVkR = VK_RMENU;
-        break;
-    case VK_CONTROL:
-    case VK_LCONTROL:
-    case VK_RCONTROL:
-        wVk = (event_flags & KEYEVENTF_EXTENDEDKEY) ? VK_RCONTROL : VK_LCONTROL;
-        wVkStripped = VK_CONTROL;
-        wVkL = VK_LCONTROL;
-        wVkR = VK_RCONTROL;
-        break;
-    case VK_SHIFT:
-    case VK_LSHIFT:
-    case VK_RSHIFT:
-        wVk = (event_flags & KEYEVENTF_EXTENDEDKEY) ? VK_RSHIFT : VK_LSHIFT;
-        wVkStripped = VK_SHIFT;
-        wVkL = VK_LSHIFT;
-        wVkR = VK_RSHIFT;
-        break;
-    default:
-        wVkStripped = wVkL = wVkR = wVk;
-    }
-
-    if (event_flags & KEYEVENTF_KEYUP)
-    {
-        message = WM_KEYUP;
-        if (((key_state_table[VK_MENU] & 0x80) &&
-             ((wVkStripped == VK_MENU) || (wVkStripped == VK_CONTROL)
-              || !(key_state_table[VK_CONTROL] & 0x80)))
-            || (wVkStripped == VK_F10))
-        {
-            if( TrackSysKey == VK_MENU || /* <ALT>-down/<ALT>-up sequence */
-                (wVkStripped != VK_MENU)) /* <ALT>-down...<something else>-up */
-                message = WM_SYSKEYUP;
-            TrackSysKey = 0;
-        }
-        flags |= KF_REPEAT | KF_UP;
-    }
-    else
-    {
-        message = WM_KEYDOWN;
-        if (((key_state_table[VK_MENU] & 0x80 || wVkStripped == VK_MENU) &&
-             !(key_state_table[VK_CONTROL] & 0x80 || wVkStripped == VK_CONTROL)) ||
-            (wVkStripped == VK_F10))
-        {
-            message = WM_SYSKEYDOWN;
-            TrackSysKey = wVkStripped;
-        }
-        if (!(event_flags & KEYEVENTF_UNICODE) && key_state_table[wVk] & 0x80) flags |= KF_REPEAT;
-    }
-
-    if (event_flags & KEYEVENTF_UNICODE) vk_hook = wVk = VK_PACKET;
+    TRACE_(key)( "vkey=%04x scan=%04x flags=%04x\n", vkey, scan, flags );
 
     input.type             = INPUT_KEYBOARD;
-    input.u.ki.wVk         = vk_hook;
-    input.u.ki.wScan       = wScan;
-    input.u.ki.dwFlags     = event_flags;
+    input.u.ki.wVk         = vkey;
+    input.u.ki.wScan       = scan;
+    input.u.ki.dwFlags     = flags;
     input.u.ki.time        = time;
-    input.u.ki.dwExtraInfo = dwExtraInfo;
-
-    if (!(event_flags & KEYEVENTF_UNICODE))
-    {
-        if (event_flags & KEYEVENTF_KEYUP)
-        {
-            key_state_table[wVk] &= ~0x80;
-            key_state_table[wVkStripped] = key_state_table[wVkL] | key_state_table[wVkR];
-        }
-        else
-        {
-            if (!(key_state_table[wVk] & 0x80)) key_state_table[wVk] ^= 0x01;
-            key_state_table[wVk] |= 0xc0;
-            key_state_table[wVkStripped] = key_state_table[wVkL] | key_state_table[wVkR];
-        }
-    }
-
-    TRACE_(key)("message=0x%04x wParam=0x%04x InputKeyState=0x%x\n",
-                message, wVk, key_state_table[wVk]);
+    input.u.ki.dwExtraInfo = 0;
 
     __wine_send_input( hwnd, &input );
 }
@@ -1317,7 +1219,7 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
                            vkey, keystate[vkey & 0xff]);
 
                     /* Fake key being pressed inside wine */
-                    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, scan & 0xff, flags, time, 0, 0 );
+                    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, scan & 0xff, flags, time );
                 }
                 break;
             }
@@ -1340,8 +1242,8 @@ static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
         DWORD flags = 0;
         if (keystate[VK_CAPITAL] & 0x80) flags ^= KEYEVENTF_KEYUP;
         TRACE("Adjusting CapsLock state (%#.2x)\n", keystate[VK_CAPITAL]);
-        X11DRV_send_keyboard_input( hwnd, VK_CAPITAL, 0x3a, flags, time, 0, 0 );
-        X11DRV_send_keyboard_input( hwnd, VK_CAPITAL, 0x3a, flags ^ KEYEVENTF_KEYUP, time, 0, 0 );
+        X11DRV_send_keyboard_input( hwnd, VK_CAPITAL, 0x3a, flags, time );
+        X11DRV_send_keyboard_input( hwnd, VK_CAPITAL, 0x3a, flags ^ KEYEVENTF_KEYUP, time );
     }
 
     /* Adjust the NUMLOCK state if it has been changed outside wine */
@@ -1350,8 +1252,8 @@ static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
         DWORD flags = KEYEVENTF_EXTENDEDKEY;
         if (keystate[VK_NUMLOCK] & 0x80) flags ^= KEYEVENTF_KEYUP;
         TRACE("Adjusting NumLock state (%#.2x)\n", keystate[VK_NUMLOCK]);
-        X11DRV_send_keyboard_input( hwnd, VK_NUMLOCK, 0x45, flags, time, 0, 0 );
-        X11DRV_send_keyboard_input( hwnd, VK_NUMLOCK, 0x45, flags ^ KEYEVENTF_KEYUP, time, 0, 0 );
+        X11DRV_send_keyboard_input( hwnd, VK_NUMLOCK, 0x45, flags, time );
+        X11DRV_send_keyboard_input( hwnd, VK_NUMLOCK, 0x45, flags ^ KEYEVENTF_KEYUP, time );
     }
 
     /* Adjust the SCROLLLOCK state if it has been changed outside wine */
@@ -1360,8 +1262,8 @@ static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
         DWORD flags = 0;
         if (keystate[VK_SCROLL] & 0x80) flags ^= KEYEVENTF_KEYUP;
         TRACE("Adjusting ScrLock state (%#.2x)\n", keystate[VK_SCROLL]);
-        X11DRV_send_keyboard_input( hwnd, VK_SCROLL, 0x46, flags, time, 0, 0 );
-        X11DRV_send_keyboard_input( hwnd, VK_SCROLL, 0x46, flags ^ KEYEVENTF_KEYUP, time, 0, 0 );
+        X11DRV_send_keyboard_input( hwnd, VK_SCROLL, 0x46, flags, time );
+        X11DRV_send_keyboard_input( hwnd, VK_SCROLL, 0x46, flags ^ KEYEVENTF_KEYUP, time );
     }
 }
 
@@ -1467,7 +1369,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     bScan = keyc2scan[event->keycode] & 0xFF;
     TRACE_(key)("bScan = 0x%02x.\n", bScan);
 
-    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, bScan, dwFlags, event_time, 0, 0 );
+    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, bScan, dwFlags, event_time );
 }
 
 /**********************************************************************
