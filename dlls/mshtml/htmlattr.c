@@ -18,6 +18,7 @@
 
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -78,6 +79,7 @@ static ULONG WINAPI HTMLDOMAttribute_Release(IHTMLDOMAttribute *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        assert(!This->elem);
         nsIDOMAttr_Release(This->nsattr);
         release_dispex(&This->dispex);
         heap_free(This);
@@ -189,7 +191,7 @@ static dispex_static_data_t HTMLDOMAttribute_dispex = {
     HTMLDOMAttribute_iface_tids
 };
 
-HRESULT HTMLDOMAttribute_Create(HTMLDocumentNode *doc, nsIDOMAttr *nsattr, HTMLDOMAttribute **attr)
+HRESULT HTMLDOMAttribute_Create(HTMLElement *elem, nsIDOMAttr *nsattr, HTMLDOMAttribute **attr)
 {
     HTMLDOMAttribute *ret;
 
@@ -202,6 +204,9 @@ HRESULT HTMLDOMAttribute_Create(HTMLDocumentNode *doc, nsIDOMAttr *nsattr, HTMLD
 
     nsIDOMAttr_AddRef(nsattr);
     ret->nsattr = nsattr;
+
+    ret->elem = elem;
+    list_add_tail(&elem->attrs, &ret->entry);
 
     init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLDOMAttribute_iface,
             &HTMLDOMAttribute_dispex);

@@ -6812,7 +6812,6 @@ static void test_attr(IHTMLElement *elem)
     test_no_iface((IUnknown*)attr, &IID_IHTMLDOMNode);
 
     attr2 = get_elem_attr_node((IUnknown*)elem, "id", TRUE);
-    todo_wine
     ok(iface_cmp((IUnknown*)attr, (IUnknown*)attr2), "attr != attr2\n");
     IHTMLDOMAttribute_Release(attr2);
 

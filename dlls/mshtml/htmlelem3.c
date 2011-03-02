@@ -560,7 +560,7 @@ static HRESULT WINAPI HTMLElement4_normalize(IHTMLElement4 *iface)
 static HRESULT WINAPI HTMLElement4_getAttributeNode(IHTMLElement4 *iface, BSTR bstrname, IHTMLDOMAttribute **ppAttribute)
 {
     HTMLElement *This = impl_from_IHTMLElement4(iface);
-    HTMLDOMAttribute *attr;
+    HTMLDOMAttribute *attr = NULL, *iter;
     nsAString name_str;
     nsIDOMAttr *nsattr;
     nsresult nsres;
@@ -576,16 +576,28 @@ static HRESULT WINAPI HTMLElement4_getAttributeNode(IHTMLElement4 *iface, BSTR b
         return E_FAIL;
     }
 
-    if(nsattr) {
-        hres = HTMLDOMAttribute_Create(This->node.doc, nsattr, &attr);
-        nsIDOMAttr_Release(nsattr);
-        if(FAILED(hres))
-            return hres;
-
-        *ppAttribute = &attr->IHTMLDOMAttribute_iface;
-    }else {
+    if(!nsattr) {
         *ppAttribute = NULL;
+        return S_OK;
     }
+
+    LIST_FOR_EACH_ENTRY(iter, &This->attrs, HTMLDOMAttribute, entry) {
+        if(iter->nsattr == nsattr) {
+            attr = iter;
+            break;
+        }
+    }
+
+    if(!attr) {
+        hres = HTMLDOMAttribute_Create(This, nsattr, &attr);
+        if(FAILED(hres)) {
+            nsIDOMAttr_Release(nsattr);
+            return hres;
+        }
+    }
+
+    IHTMLDOMAttribute_AddRef(&attr->IHTMLDOMAttribute_iface);
+    *ppAttribute = &attr->IHTMLDOMAttribute_iface;
     return S_OK;
 }
 

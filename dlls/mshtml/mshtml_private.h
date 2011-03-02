@@ -561,6 +561,7 @@ typedef struct {
 
     nsIDOMHTMLElement *nselem;
     HTMLStyle *style;
+    struct list attrs;
 } HTMLElement;
 
 #define HTMLELEMENT_TIDS    \
@@ -749,9 +750,12 @@ typedef struct {
 
     LONG ref;
     nsIDOMAttr *nsattr;
+
+    HTMLElement *elem;
+    struct list entry;
 } HTMLDOMAttribute;
 
-HRESULT HTMLDOMAttribute_Create(HTMLDocumentNode*,nsIDOMAttr*,HTMLDOMAttribute**);
+HRESULT HTMLDOMAttribute_Create(HTMLElement*,nsIDOMAttr*,HTMLDOMAttribute**);
 
 HRESULT HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLElement**);
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLElement**);

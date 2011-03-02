@@ -1647,6 +1647,12 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 void HTMLElement_destructor(HTMLDOMNode *iface)
 {
     HTMLElement *This = impl_from_HTMLDOMNode(iface);
+    HTMLDOMAttribute *attr;
+
+    LIST_FOR_EACH_ENTRY(attr, &This->attrs, HTMLDOMAttribute, entry) {
+        attr->elem = NULL;
+        IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
+    }
 
     ConnectionPointContainer_Destroy(&This->cp_container);
 
@@ -1742,6 +1748,7 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMHTMLElemen
     if(nselem)
         nsIDOMHTMLElement_AddRef(nselem);
     This->nselem = nselem;
+    list_init(&This->attrs);
 
     HTMLDOMNode_Init(doc, &This->node, (nsIDOMNode*)nselem);
 
