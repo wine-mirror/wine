@@ -2956,7 +2956,7 @@ static void test_32bit_bitmap_blt(void)
 }
 
 /*
- * Used by test_GetDIBits_single_pixel_destination to create the bitmap to test against.
+ * Used by test_GetDIBits_top_down to create the bitmap to test against.
  */
 static void setup_picture(char *picture, int bpp)
 {
@@ -2980,12 +2980,12 @@ static void setup_picture(char *picture, int bpp)
     }
 }
 
-static void test_GetDIBits_single_pixel_destination(int bpp)
+static void test_GetDIBits_top_down(int bpp)
 {
     BITMAPINFO bi;
     HBITMAP bmptb, bmpbt;
     HDC hdc;
-    int pixelOut;
+    int pictureOut[4];
     int *picture;
     int statusCode;
 
@@ -3015,36 +3015,54 @@ static void test_GetDIBits_single_pixel_destination(int bpp)
     bi.bmiHeader.biWidth = 1;
 
     bi.bmiHeader.biHeight = 2;
-    statusCode = GetDIBits(hdc, bmpbt, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    statusCode = GetDIBits(hdc, bmpbt, 0, 1, pictureOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
     /*Check the first byte of the pixel.*/
-    ok((char)pixelOut == 0, "Bottom-up -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
-    statusCode = GetDIBits(hdc, bmptb, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok((char)pictureOut[0] == 0, "Bottom-up -> bottom-up: first pixel should be 0 but was %d.\n", (char)pictureOut[0]);
+    statusCode = GetDIBits(hdc, bmptb, 0, 1, pictureOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    ok((char)pixelOut == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pixelOut);
+    ok((char)pictureOut[0] == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pictureOut[0]);
     /*Check second scanline.*/
-    statusCode = GetDIBits(hdc, bmptb, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    statusCode = GetDIBits(hdc, bmptb, 1, 1, pictureOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    ok((char)pixelOut == 0, "Top-down -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
-    statusCode = GetDIBits(hdc, bmpbt, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok((char)pictureOut[0] == 0, "Top-down -> bottom-up: first pixel should be 0 but was %d.\n", (char)pictureOut[0]);
+    statusCode = GetDIBits(hdc, bmpbt, 1, 1, pictureOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    ok((char)pixelOut == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pixelOut);
+    ok((char)pictureOut[0] == 2, "Bottom-up -> bottom-up: first pixel should be 2 but was %d.\n", (char)pictureOut[0]);
+    /*Check both scanlines.*/
+    statusCode = GetDIBits(hdc, bmptb, 0, 2, pictureOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    ok((char)pictureOut[0] == 2, "Top-down -> bottom-up: first scanline should be 2 but was %d.\n", (char)pictureOut[0]);
+    ok((char)pictureOut[1] == 0, "Top-down -> bottom-up: second scanline should be 0 but was %d.\n", (char)pictureOut[0]);
+    statusCode = GetDIBits(hdc, bmpbt, 0, 2, pictureOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    ok((char)pictureOut[0] == 0, "Bottom up -> bottom-up: first scanline should be 0 but was %d.\n", (char)pictureOut[0]);
+    ok((char)pictureOut[1] == 2, "Bottom up -> bottom-up: second scanline should be 2 but was %d.\n", (char)pictureOut[0]);
 
-    /*Make destination bitmap top-down.  This should be ignored by GetDIBits.*/
+    /*Make destination bitmap top-down.*/
     bi.bmiHeader.biHeight = -2;
-    statusCode = GetDIBits(hdc, bmpbt, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    statusCode = GetDIBits(hdc, bmpbt, 0, 1, pictureOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    ok((char)pixelOut == 0, "Bottom-up -> top-down: first pixel should be 0 but was %d.\n", (char)pixelOut);
-    statusCode = GetDIBits(hdc, bmptb, 0, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok((char)pictureOut[0] == 0, "Bottom-up -> top-down: first pixel should be 0 but was %d.\n", (char)pictureOut[0]);
+    statusCode = GetDIBits(hdc, bmptb, 0, 1, pictureOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    ok((char)pixelOut == 2, "Top-down -> top-down: first pixel should be 2 but was %d.\n", (char)pixelOut);
+    ok((char)pictureOut[0] == 2, "Top-down -> top-down: first pixel should be 2 but was %d.\n", (char)pictureOut[0]);
     /*Check second scanline.*/
-    statusCode = GetDIBits(hdc, bmptb, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    statusCode = GetDIBits(hdc, bmptb, 1, 1, pictureOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    ok((char)pixelOut == 0, "Top-down -> bottom-up: first pixel should be 0 but was %d.\n", (char)pixelOut);
-    statusCode = GetDIBits(hdc, bmpbt, 1, 1, &pixelOut, &bi, DIB_RGB_COLORS);
+    ok((char)pictureOut[0] == 0, "Top-down -> bottom-up: first pixel should be 0 but was %d.\n", (char)pictureOut[0]);
+    statusCode = GetDIBits(hdc, bmpbt, 1, 1, pictureOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    ok((char)pixelOut == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pixelOut);
+    ok((char)pictureOut[0] == 2, "Top-down -> bottom-up: first pixel should be 2 but was %d.\n", (char)pictureOut[0]);
+    /*Check both scanlines.*/
+    statusCode = GetDIBits(hdc, bmptb, 0, 2, pictureOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    todo_wine ok((char)pictureOut[0] == 0, "Top-down -> top-down: first scanline should be 0 but was %d.\n", (char)pictureOut[0]);
+    todo_wine ok((char)pictureOut[1] == 2, "Top-down -> top-down: second scanline should be 2 but was %d.\n", (char)pictureOut[0]);
+    statusCode = GetDIBits(hdc, bmpbt, 0, 2, pictureOut, &bi, DIB_RGB_COLORS);
+    ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
+    todo_wine ok((char)pictureOut[0] == 2, "Bottom up -> top-down: first scanline should be 2 but was %d.\n", (char)pictureOut[0]);
+    todo_wine ok((char)pictureOut[1] == 0, "Bottom up -> top-down: second scanline should be 0 but was %d.\n", (char)pictureOut[0]);
 
     DeleteObject(bmpbt);
     DeleteObject(bmptb);
@@ -3079,7 +3097,7 @@ START_TEST(bitmap)
     test_bitmapinfoheadersize();
     test_get16dibits();
     test_clipping();
-    test_GetDIBits_single_pixel_destination(16);
-    test_GetDIBits_single_pixel_destination(24);
-    test_GetDIBits_single_pixel_destination(32);
+    test_GetDIBits_top_down(16);
+    test_GetDIBits_top_down(24);
+    test_GetDIBits_top_down(32);
 }
