@@ -375,16 +375,15 @@ HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid, REFIID riid,
           ppvClassObj);
 
     /* Figure if there is an 'Instance' subkey for the given CLSID and acquire a handle. */
-    if (!StringFromGUID2(rclsid, wszInstanceKey + 6, CHARS_IN_GUID) ||
-        !(wszInstanceKey[5+CHARS_IN_GUID]='\\') || /* Repair the null-termination. */
-        ERROR_SUCCESS != RegOpenKeyExW(HKEY_CLASSES_ROOT, wszInstanceKey, 0, KEY_READ, &hInstanceKey))
-    {
+    if (!StringFromGUID2(rclsid, wszInstanceKey + 6, CHARS_IN_GUID))
+        return CLASS_E_CLASSNOTAVAILABLE;
+    wszInstanceKey[5+CHARS_IN_GUID] = '\\'; /* Repair the null-termination. */
+    if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CLASSES_ROOT, wszInstanceKey, 0, KEY_READ, &hInstanceKey))
         /* If there is no 'Instance' subkey, then it's not a Shell Instance Object. */
         return CLASS_E_CLASSNOTAVAILABLE;
-    }
 
-    if (RegQueryValueExW(hInstanceKey, wszCLSID, NULL, &dwType, (LPBYTE)wszCLSIDInstance, &cbBytes)
-        != ERROR_SUCCESS || FAILED(CLSIDFromString(wszCLSIDInstance, &clsidInstance)))
+    if (ERROR_SUCCESS != RegQueryValueExW(hInstanceKey, wszCLSID, NULL, &dwType, (LPBYTE)wszCLSIDInstance, &cbBytes) ||
+        FAILED(CLSIDFromString(wszCLSIDInstance, &clsidInstance)))
     {
         /* 'Instance' should have a 'CLSID' value with a well-formed clsid-string. */
         FIXME("Failed to infer instance CLSID! %s\n", debugstr_w(wszCLSIDInstance));
