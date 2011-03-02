@@ -1270,28 +1270,21 @@ void X11DRV_send_keyboard_input( HWND hwnd, WORD wVk, WORD wScan, DWORD event_fl
 
 
 /***********************************************************************
- *           KEYBOARD_UpdateOneState
- *
- * Updates internal state for <vkey>, depending on key <state> under X
- *
+ *           get_async_key_state
  */
-static inline void KEYBOARD_UpdateOneState ( HWND hwnd, WORD vkey, WORD scan, int state, DWORD time )
+static BOOL get_async_key_state( BYTE state[256] )
 {
-    /* Do something if internal table state != X state for keycode */
-    if (((key_state_table[vkey & 0xff] & 0x80)!=0) != state)
+    BOOL ret;
+
+    SERVER_START_REQ( get_key_state )
     {
-        DWORD flags = vkey & 0x100 ? KEYEVENTF_EXTENDEDKEY : 0;
-
-        if (!state) flags |= KEYEVENTF_KEYUP;
-
-        TRACE("Adjusting state for vkey %#.2x. State before %#.2x\n",
-              vkey, key_state_table[vkey & 0xff]);
-
-        /* Fake key being pressed inside wine */
-        X11DRV_send_keyboard_input( hwnd, vkey & 0xff, scan & 0xff, flags, time, 0, 0 );
-
-        TRACE("State after %#.2x\n", key_state_table[vkey & 0xff]);
+        req->tid = 0;
+        req->key = -1;
+        wine_server_set_reply( req, state, 256 );
+        ret = !wine_server_call( req );
     }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /***********************************************************************
@@ -1307,6 +1300,9 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
 {
     int i, j;
     DWORD time = GetCurrentTime();
+    BYTE keystate[256];
+
+    if (!get_async_key_state( keystate )) return;
 
     /* the minimum keycode is always greater or equal to 8, so we can
      * skip the first 8 values, hence start at 1
@@ -1316,8 +1312,6 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
         for (j = 0; j < 8; j++)
         {
             WORD vkey = keyc2vkey[(i * 8) + j];
-            WORD scan = keyc2scan[(i * 8) + j];
-            int state = (event->xkeymap.key_vector[i] & (1<<j)) != 0;
 
             switch(vkey & 0xff)
             {
@@ -1327,21 +1321,62 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
             case VK_RCONTROL:
             case VK_LSHIFT:
             case VK_RSHIFT:
-                KEYBOARD_UpdateOneState( hwnd, vkey, scan, state, time );
+                if (!(keystate[vkey & 0xff] & 0x80) != !(event->xkeymap.key_vector[i] & (1<<j)))
+                {
+                    WORD scan = keyc2scan[(i * 8) + j];
+                    DWORD flags = vkey & 0x100 ? KEYEVENTF_EXTENDEDKEY : 0;
+                    if (!(event->xkeymap.key_vector[i] & (1<<j))) flags |= KEYEVENTF_KEYUP;
+
+                    TRACE( "Adjusting state for vkey %#.2x. State before %#.2x\n",
+                           vkey, keystate[vkey & 0xff]);
+
+                    /* Fake key being pressed inside wine */
+                    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, scan & 0xff, flags, time, 0, 0 );
+                }
                 break;
             }
         }
     }
 }
 
-static void update_lock_state(HWND hwnd, BYTE vkey, WORD scan, DWORD time)
+static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
 {
-    DWORD flags = vkey == VK_NUMLOCK ? KEYEVENTF_EXTENDEDKEY : 0;
+    BYTE keystate[256];
 
-    if (key_state_table[vkey] & 0x80) flags ^= KEYEVENTF_KEYUP;
+    /* Note: X sets the below states on key down and clears them on key up.
+       Windows triggers them on key down. */
 
-    X11DRV_send_keyboard_input( hwnd, vkey, scan, flags, time, 0, 0 );
-    X11DRV_send_keyboard_input( hwnd, vkey, scan, flags ^ KEYEVENTF_KEYUP, time, 0, 0 );
+    if (!get_async_key_state( keystate )) return;
+
+    /* Adjust the CAPSLOCK state if it has been changed outside wine */
+    if (!(keystate[VK_CAPITAL] & 0x01) != !(state & LockMask) && vkey != VK_CAPITAL)
+    {
+        DWORD flags = 0;
+        if (keystate[VK_CAPITAL] & 0x80) flags ^= KEYEVENTF_KEYUP;
+        TRACE("Adjusting CapsLock state (%#.2x)\n", keystate[VK_CAPITAL]);
+        X11DRV_send_keyboard_input( hwnd, VK_CAPITAL, 0x3a, flags, time, 0, 0 );
+        X11DRV_send_keyboard_input( hwnd, VK_CAPITAL, 0x3a, flags ^ KEYEVENTF_KEYUP, time, 0, 0 );
+    }
+
+    /* Adjust the NUMLOCK state if it has been changed outside wine */
+    if (!(keystate[VK_NUMLOCK] & 0x01) != !(state & NumLockMask) && (vkey & 0xff) != VK_NUMLOCK)
+    {
+        DWORD flags = KEYEVENTF_EXTENDEDKEY;
+        if (keystate[VK_NUMLOCK] & 0x80) flags ^= KEYEVENTF_KEYUP;
+        TRACE("Adjusting NumLock state (%#.2x)\n", keystate[VK_NUMLOCK]);
+        X11DRV_send_keyboard_input( hwnd, VK_NUMLOCK, 0x45, flags, time, 0, 0 );
+        X11DRV_send_keyboard_input( hwnd, VK_NUMLOCK, 0x45, flags ^ KEYEVENTF_KEYUP, time, 0, 0 );
+    }
+
+    /* Adjust the SCROLLLOCK state if it has been changed outside wine */
+    if (!(keystate[VK_SCROLL] & 0x01) != !(state & ScrollLockMask) && vkey != VK_SCROLL)
+    {
+        DWORD flags = 0;
+        if (keystate[VK_SCROLL] & 0x80) flags ^= KEYEVENTF_KEYUP;
+        TRACE("Adjusting ScrLock state (%#.2x)\n", keystate[VK_SCROLL]);
+        X11DRV_send_keyboard_input( hwnd, VK_SCROLL, 0x46, flags, time, 0, 0 );
+        X11DRV_send_keyboard_input( hwnd, VK_SCROLL, 0x46, flags ^ KEYEVENTF_KEYUP, time, 0, 0 );
+    }
 }
 
 /***********************************************************************
@@ -1441,33 +1476,7 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
     if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
 
-
-    /* Note: X sets the below states on key down and clears them on key up.
-       Windows triggers them on key down. */
-
-    /* Adjust the CAPSLOCK state if it has been changed outside wine */
-    if (!(key_state_table[VK_CAPITAL] & 0x01) != !(event->state & LockMask) &&
-        vkey != VK_CAPITAL)
-    {
-        TRACE("Adjusting CapsLock state (%#.2x)\n", key_state_table[VK_CAPITAL]);
-        update_lock_state( hwnd, VK_CAPITAL, 0x3A, event_time );
-    }
-
-    /* Adjust the NUMLOCK state if it has been changed outside wine */
-    if (!(key_state_table[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask) &&
-        (vkey & 0xff) != VK_NUMLOCK)
-    {
-        TRACE("Adjusting NumLock state (%#.2x)\n", key_state_table[VK_NUMLOCK]);
-        update_lock_state( hwnd, VK_NUMLOCK, 0x45, event_time );
-    }
-
-    /* Adjust the SCROLLLOCK state if it has been changed outside wine */
-    if (!(key_state_table[VK_SCROLL] & 0x01) != !(event->state & ScrollLockMask) &&
-        vkey != VK_SCROLL)
-    {
-        TRACE("Adjusting ScrLock state (%#.2x)\n", key_state_table[VK_SCROLL]);
-        update_lock_state( hwnd, VK_SCROLL, 0x46, event_time );
-    }
+    update_lock_state( hwnd, vkey, event->state, event_time );
 
     bScan = keyc2scan[event->keycode] & 0xFF;
     TRACE_(key)("bScan = 0x%02x.\n", bScan);
