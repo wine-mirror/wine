@@ -1329,35 +1329,84 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
 }
 
 /* queue a hardware message for a mouse event */
-static void queue_mouse_message( struct desktop *desktop, user_handle_t win, unsigned int message,
-                                 const hw_input_t *input )
+static void queue_mouse_message( struct desktop *desktop, user_handle_t win, const hw_input_t *input )
 {
     struct hardware_msg_data *msg_data;
     struct message *msg;
+    unsigned int i, time, flags;
+    int x, y;
 
-    if (!(msg = mem_alloc( sizeof(*msg) ))) return;
-    if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
+    static const unsigned int messages[] =
     {
-        free( msg );
-        return;
+        WM_MOUSEMOVE,    /* 0x0001 = MOUSEEVENTF_MOVE */
+        WM_LBUTTONDOWN,  /* 0x0002 = MOUSEEVENTF_LEFTDOWN */
+        WM_LBUTTONUP,    /* 0x0004 = MOUSEEVENTF_LEFTUP */
+        WM_RBUTTONDOWN,  /* 0x0008 = MOUSEEVENTF_RIGHTDOWN */
+        WM_RBUTTONUP,    /* 0x0010 = MOUSEEVENTF_RIGHTUP */
+        WM_MBUTTONDOWN,  /* 0x0020 = MOUSEEVENTF_MIDDLEDOWN */
+        WM_MBUTTONUP,    /* 0x0040 = MOUSEEVENTF_MIDDLEUP */
+        WM_XBUTTONDOWN,  /* 0x0080 = MOUSEEVENTF_XDOWN */
+        WM_XBUTTONUP,    /* 0x0100 = MOUSEEVENTF_XUP */
+        0,               /* 0x0200 = unused */
+        0,               /* 0x0400 = unused */
+        WM_MOUSEWHEEL,   /* 0x0800 = MOUSEEVENTF_WHEEL */
+        WM_MOUSEHWHEEL   /* 0x1000 = MOUSEEVENTF_HWHEEL */
+    };
+
+    flags = input->mouse.flags;
+    time  = input->mouse.time;
+    if (!time) time = get_tick_count();
+
+    if (flags & MOUSEEVENTF_MOVE)
+    {
+        if (flags & MOUSEEVENTF_ABSOLUTE)
+        {
+            x = input->mouse.x;
+            y = input->mouse.y;
+            if (flags & ~(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE) &&
+                x == desktop->cursor_x && y == desktop->cursor_y)
+                flags &= ~MOUSEEVENTF_MOVE;
+        }
+        else
+        {
+            x = desktop->cursor_x + input->mouse.x;
+            y = desktop->cursor_y + input->mouse.y;
+        }
     }
-    memset( msg_data, 0, sizeof(*msg_data) );
+    else
+    {
+        x = desktop->cursor_x;
+        y = desktop->cursor_y;
+    }
 
-    msg->type      = MSG_HARDWARE;
-    msg->win       = get_user_full_handle( win );
-    msg->msg       = message;
-    msg->wparam    = input->mouse.data << 16;
-    msg->lparam    = 0;
-    msg->time      = input->mouse.time;
-    msg->result    = NULL;
-    msg->data      = msg_data;
-    msg->data_size = sizeof(*msg_data);
-    msg_data->x    = input->mouse.x;
-    msg_data->y    = input->mouse.y;
-    msg_data->info = input->mouse.info;
-    if (!msg->time) msg->time = get_tick_count();
+    for (i = 0; i < sizeof(messages)/sizeof(messages[0]); i++)
+    {
+        if (!messages[i]) continue;
+        if (!(flags & (1 << i))) continue;
 
-    queue_hardware_message( desktop, msg );
+        if (!(msg = mem_alloc( sizeof(*msg) ))) return;
+        if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
+        {
+            free( msg );
+            return;
+        }
+        memset( msg_data, 0, sizeof(*msg_data) );
+
+        msg->type      = MSG_HARDWARE;
+        msg->win       = get_user_full_handle( win );
+        msg->msg       = messages[i];
+        msg->wparam    = input->mouse.data << 16;
+        msg->lparam    = 0;
+        msg->time      = time;
+        msg->result    = NULL;
+        msg->data      = msg_data;
+        msg->data_size = sizeof(*msg_data);
+        msg_data->x    = x;
+        msg_data->y    = y;
+        msg_data->info = input->mouse.info;
+
+        queue_hardware_message( desktop, msg );
+    }
 }
 
 /* queue a hardware message for a keyboard event */
@@ -1917,7 +1966,7 @@ DECL_HANDLER(send_hardware_message)
     switch (req->input.type)
     {
     case INPUT_MOUSE:
-        queue_mouse_message( desktop, req->win, req->msg, &req->input );
+        queue_mouse_message( desktop, req->win, &req->input );
         break;
     case INPUT_KEYBOARD:
         queue_keyboard_message( desktop, req->win, &req->input );

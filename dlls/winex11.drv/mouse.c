@@ -286,49 +286,13 @@ static HWND update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
 
 
 /***********************************************************************
- *           queue_raw_mouse_message
- */
-static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
-                                     DWORD data, DWORD time, DWORD extra_info, UINT injected_flags )
-{
-    MSLLHOOKSTRUCT hook;
-
-    hook.pt.x        = x;
-    hook.pt.y        = y;
-    hook.mouseData   = MAKELONG( 0, data );
-    hook.flags       = injected_flags;
-    hook.time        = time;
-    hook.dwExtraInfo = extra_info;
-
-    last_time_modified = GetTickCount();
-    if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, message, (LPARAM)&hook, TRUE ))
-        message = 0;  /* ignore it */
-
-    SERVER_START_REQ( send_hardware_message )
-    {
-        req->win               = wine_server_user_handle( hwnd );
-        req->msg               = message;
-        req->input.type        = INPUT_MOUSE;
-        req->input.mouse.x     = x;
-        req->input.mouse.y     = y;
-        req->input.mouse.data  = data;
-        req->input.mouse.flags = 0; /* FIXME */
-        req->input.mouse.time  = time;
-        req->input.mouse.info  = extra_info;
-        if (injected_flags & LLMHF_INJECTED) req->flags = SEND_HWMSG_INJECTED;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-}
-
-
-/***********************************************************************
  *		X11DRV_send_mouse_input
  */
 void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
                               DWORD data, DWORD time, DWORD extra_info, UINT injected_flags )
 {
     POINT pt;
+    MSLLHOOKSTRUCT hook;
 
     if (!time) time = GetTickCount();
 
@@ -380,10 +344,17 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         wine_tsx11_unlock();
     }
 
+    hook.pt.x        = pt.x;
+    hook.pt.y        = pt.y;
+    hook.mouseData   = MAKELONG( 0, data );
+    hook.flags       = injected_flags;
+    hook.time        = time;
+    hook.dwExtraInfo = extra_info;
+    last_time_modified = GetTickCount();
+
     if (flags & MOUSEEVENTF_MOVE)
     {
-        queue_raw_mouse_message( WM_MOUSEMOVE, hwnd, pt.x, pt.y, data, time,
-                                 extra_info, injected_flags );
+        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_MOUSEMOVE, (LPARAM)&hook, TRUE )) return;
         if ((injected_flags & LLMHF_INJECTED) &&
             ((flags & MOUSEEVENTF_ABSOLUTE) || x || y))  /* we have to actually move the cursor */
         {
@@ -399,32 +370,64 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         }
     }
     if (flags & MOUSEEVENTF_LEFTDOWN)
-        queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONDOWN : WM_LBUTTONDOWN,
-                                 hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
+    {
+        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION,
+                            GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONDOWN : WM_LBUTTONDOWN,
+                            (LPARAM)&hook, TRUE )) return;
+    }
     if (flags & MOUSEEVENTF_LEFTUP)
-        queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONUP : WM_LBUTTONUP,
-                                 hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
+    {
+        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION,
+                            GetSystemMetrics(SM_SWAPBUTTON) ? WM_RBUTTONUP : WM_LBUTTONUP,
+                            (LPARAM)&hook, TRUE )) return;
+    }
     if (flags & MOUSEEVENTF_RIGHTDOWN)
-        queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONDOWN : WM_RBUTTONDOWN,
-                                 hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
+    {
+        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION,
+                            GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONDOWN : WM_RBUTTONDOWN,
+                            (LPARAM)&hook, TRUE )) return;
+    }
     if (flags & MOUSEEVENTF_RIGHTUP)
-        queue_raw_mouse_message( GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONUP : WM_RBUTTONUP,
-                                 hwnd, pt.x, pt.y, data, time, extra_info, injected_flags );
+    {
+        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION,
+                            GetSystemMetrics(SM_SWAPBUTTON) ? WM_LBUTTONUP : WM_RBUTTONUP,
+                            (LPARAM)&hook, TRUE )) return;
+    }
     if (flags & MOUSEEVENTF_MIDDLEDOWN)
-        queue_raw_mouse_message( WM_MBUTTONDOWN, hwnd, pt.x, pt.y,
-                                 data, time, extra_info, injected_flags );
+    {
+        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_MBUTTONDOWN, (LPARAM)&hook, TRUE )) return;
+    }
     if (flags & MOUSEEVENTF_MIDDLEUP)
-        queue_raw_mouse_message( WM_MBUTTONUP, hwnd, pt.x, pt.y,
-                                 data, time, extra_info, injected_flags );
+    {
+        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_MBUTTONUP, (LPARAM)&hook, TRUE )) return;
+    }
     if (flags & MOUSEEVENTF_WHEEL)
-        queue_raw_mouse_message( WM_MOUSEWHEEL, hwnd, pt.x, pt.y,
-                                 data, time, extra_info, injected_flags );
+    {
+        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_MOUSEWHEEL, (LPARAM)&hook, TRUE )) return;
+    }
     if (flags & MOUSEEVENTF_XDOWN)
-        queue_raw_mouse_message( WM_XBUTTONDOWN, hwnd, pt.x, pt.y,
-                                 data, time, extra_info, injected_flags );
+    {
+        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_XBUTTONDOWN, (LPARAM)&hook, TRUE )) return;
+    }
     if (flags & MOUSEEVENTF_XUP)
-        queue_raw_mouse_message( WM_XBUTTONUP, hwnd, pt.x, pt.y,
-                                 data, time, extra_info, injected_flags );
+    {
+        if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, WM_XBUTTONUP, (LPARAM)&hook, TRUE )) return;
+    }
+
+    SERVER_START_REQ( send_hardware_message )
+    {
+        req->win               = wine_server_user_handle( hwnd );
+        req->input.type        = INPUT_MOUSE;
+        req->input.mouse.x     = pt.x;
+        req->input.mouse.y     = pt.y;
+        req->input.mouse.data  = data;
+        req->input.mouse.flags = flags | MOUSEEVENTF_ABSOLUTE;
+        req->input.mouse.time  = time;
+        req->input.mouse.info  = extra_info;
+        if (injected_flags & LLMHF_INJECTED) req->flags = SEND_HWMSG_INJECTED;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
 }
 
 #ifdef SONAME_LIBXCURSOR
