@@ -874,7 +874,7 @@ INT WINAPI GetDIBits(
             unsigned int srcwidth = bmp->dib->dsBm.bmWidth;
             int srcwidthb = bmp->dib->dsBm.bmWidthBytes;
             unsigned int dstwidth = width;
-            unsigned int dstwidthb = DIB_GetDIBWidthBytes( width, bpp );
+            int dstwidthb = DIB_GetDIBWidthBytes( width, bpp );
             LPBYTE dbits = bits, sbits = (LPBYTE) bmp->dib->dsBm.bmBits + (startscan * srcwidthb);
             unsigned int x, y, width, widthb;
 
@@ -887,6 +887,12 @@ INT WINAPI GetDIBits(
             {
                 sbits += (srcwidthb * (int)(abs(bmp->dib->dsBmih.biHeight) - 2 * startscan - 1));
                 srcwidthb = -srcwidthb;
+            }
+            /*Same for the destination.*/
+            if (height < 0)
+            {
+                dbits = (LPBYTE)bits + (dstwidthb * (lines - 1));
+                dstwidthb = -dstwidthb;
             }
             switch( bpp ) {
 
@@ -902,7 +908,7 @@ INT WINAPI GetDIBits(
 
                     case 16: /* 16 bpp srcDIB -> 16 bpp dstDIB */
                         {
-                            widthb = min(abs(srcwidthb), dstwidthb);
+                            widthb = min(abs(srcwidthb), abs(dstwidthb));
                             /* FIXME: BI_BITFIELDS not supported yet */
                             for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb)
                                 memcpy(dbits, sbits, widthb);
@@ -980,7 +986,7 @@ INT WINAPI GetDIBits(
 
                     case 24: /* 24 bpp srcDIB -> 24 bpp dstDIB */
                         {
-                            widthb = min(abs(srcwidthb), dstwidthb);
+                            widthb = min(abs(srcwidthb), abs(dstwidthb));
                             for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb)
                                 memcpy(dbits, sbits, widthb);
                         }
@@ -1056,7 +1062,7 @@ INT WINAPI GetDIBits(
 
                     case 32: /* 32 bpp srcDIB -> 32 bpp dstDIB */
                         {
-                            widthb = min(abs(srcwidthb), dstwidthb);
+                            widthb = min(abs(srcwidthb), abs(dstwidthb));
                             /* FIXME: BI_BITFIELDS not supported yet */
                             for (y = 0; y < lines; y++, dbits+=dstwidthb, sbits+=srcwidthb) {
                                 memcpy(dbits, sbits, widthb);

@@ -3057,12 +3057,12 @@ static void test_GetDIBits_top_down(int bpp)
     /*Check both scanlines.*/
     statusCode = GetDIBits(hdc, bmptb, 0, 2, pictureOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    todo_wine ok((char)pictureOut[0] == 0, "Top-down -> top-down: first scanline should be 0 but was %d.\n", (char)pictureOut[0]);
-    todo_wine ok((char)pictureOut[1] == 2, "Top-down -> top-down: second scanline should be 2 but was %d.\n", (char)pictureOut[0]);
+    ok((char)pictureOut[0] == 0, "Top-down -> top-down: first scanline should be 0 but was %d.\n", (char)pictureOut[0]);
+    ok((char)pictureOut[1] == 2, "Top-down -> top-down: second scanline should be 2 but was %d.\n", (char)pictureOut[0]);
     statusCode = GetDIBits(hdc, bmpbt, 0, 2, pictureOut, &bi, DIB_RGB_COLORS);
     ok(statusCode, "Failed to call GetDIBits. Status code: %d.\n", statusCode);
-    todo_wine ok((char)pictureOut[0] == 2, "Bottom up -> top-down: first scanline should be 2 but was %d.\n", (char)pictureOut[0]);
-    todo_wine ok((char)pictureOut[1] == 0, "Bottom up -> top-down: second scanline should be 0 but was %d.\n", (char)pictureOut[0]);
+    ok((char)pictureOut[0] == 2, "Bottom up -> top-down: first scanline should be 2 but was %d.\n", (char)pictureOut[0]);
+    ok((char)pictureOut[1] == 0, "Bottom up -> top-down: second scanline should be 0 but was %d.\n", (char)pictureOut[0]);
 
     DeleteObject(bmpbt);
     DeleteObject(bmptb);
