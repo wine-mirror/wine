@@ -29,6 +29,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
 #define WINE_D3DCOMPILER_TO_STR(x) case x: return #x
 
+const char *debug_d3dcompiler_shader_variable_class(D3D_SHADER_VARIABLE_CLASS c)
+{
+    switch (c)
+    {
+        WINE_D3DCOMPILER_TO_STR(D3D_SVC_SCALAR);
+        WINE_D3DCOMPILER_TO_STR(D3D_SVC_VECTOR);
+        WINE_D3DCOMPILER_TO_STR(D3D_SVC_MATRIX_ROWS);
+        WINE_D3DCOMPILER_TO_STR(D3D_SVC_MATRIX_COLUMNS);
+        WINE_D3DCOMPILER_TO_STR(D3D_SVC_OBJECT);
+        WINE_D3DCOMPILER_TO_STR(D3D_SVC_STRUCT);
+        WINE_D3DCOMPILER_TO_STR(D3D_SVC_INTERFACE_CLASS);
+        WINE_D3DCOMPILER_TO_STR(D3D_SVC_INTERFACE_POINTER);
+        default:
+            FIXME("Unrecognized D3D_SHADER_VARIABLE_CLASS %#x.\n", c);
+            return "unrecognized";
+    }
+}
+
 const char *debug_d3dcompiler_d3d_blob_part(D3D_BLOB_PART part)
 {
     switch(part)
