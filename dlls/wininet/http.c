@@ -3976,7 +3976,7 @@ static void HTTP_CacheRequest(http_request_t *request)
         return;
     }
 
-    b = CreateUrlCacheEntryW(url, request->contentLength > 0 ? request->contentLength : 0, NULL, cacheFileName, 0);
+    b = CreateUrlCacheEntryW(url, request->contentLength, NULL, cacheFileName, 0);
     if(b) {
         HeapFree(GetProcessHeap(), 0, request->cacheFile);
         CloseHandle(request->hCacheFile);
