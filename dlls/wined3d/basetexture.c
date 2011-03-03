@@ -240,6 +240,7 @@ void basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty)
 /* Context activation is done by the caller. */
 HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb, BOOL *set_surface_desc)
 {
+    const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
     HRESULT hr = WINED3D_OK;
     GLenum textureDimensions;
     BOOL isNewTexture = FALSE;
@@ -248,7 +249,7 @@ HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb, BOOL *set_
     TRACE("texture %p, srgb %#x, set_surface_desc %p.\n", texture, srgb, set_surface_desc);
 
     texture->baseTexture.is_srgb = srgb; /* SRGB mode cache for PreLoad calls outside drawprim */
-    gl_tex = basetexture_get_gl_texture(texture, srgb);
+    gl_tex = basetexture_get_gl_texture(texture, gl_info, srgb);
 
     textureDimensions = texture->baseTexture.target;
 
@@ -279,7 +280,10 @@ HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb, BOOL *set_
         gl_tex->states[WINED3DTEXSTA_MIPFILTER]     = WINED3DTEXF_LINEAR; /* GL_NEAREST_MIPMAP_LINEAR */
         gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL]   = 0;
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = 1;
-        gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE]   = 0;
+        if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+            gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE] = TRUE;
+        else
+            gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE] = srgb;
         gl_tex->states[WINED3DTEXSTA_SHADOW]        = FALSE;
         basetexture_set_dirty(texture, TRUE);
         isNewTexture = TRUE;
@@ -374,7 +378,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
 
     TRACE("texture %p, samplerStates %p\n", texture, samplerStates);
 
-    gl_tex = basetexture_get_gl_texture(texture, texture->baseTexture.is_srgb);
+    gl_tex = basetexture_get_gl_texture(texture, gl_info, texture->baseTexture.is_srgb);
 
     /* This function relies on the correct texture being bound and loaded. */
 
@@ -493,6 +497,14 @@ void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
             WARN("Anisotropic filtering not supported.\n");
         }
         gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = aniso;
+    }
+
+    /* These should always be the same unless EXT_texture_sRGB_decode is supported. */
+    if (samplerStates[WINED3DSAMP_SRGBTEXTURE] != gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE])
+    {
+        glTexParameteri(textureDimensions, GL_TEXTURE_SRGB_DECODE_EXT,
+                samplerStates[WINED3DSAMP_SRGBTEXTURE] ? GL_DECODE_EXT : GL_SKIP_DECODE_EXT);
+        checkGLcall("glTexParameteri(GL_TEXTURE_SRGB_DECODE_EXT)");
     }
 
     if (!(texture->resource.format->flags & WINED3DFMT_FLAG_SHADOW)

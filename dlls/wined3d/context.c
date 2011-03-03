@@ -112,7 +112,8 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 }
 
 /* GL locking is done by the caller */
-static void context_apply_attachment_filter_states(IWineD3DSurfaceImpl *surface, DWORD location)
+static void context_apply_attachment_filter_states(const struct wined3d_context *context,
+        IWineD3DSurfaceImpl *surface, DWORD location)
 {
     /* Update base texture states array */
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
@@ -127,7 +128,8 @@ static void context_apply_attachment_filter_states(IWineD3DSurfaceImpl *surface,
         {
             case SFLAG_INTEXTURE:
             case SFLAG_INSRGBTEX:
-                gl_tex = basetexture_get_gl_texture(texture, location == SFLAG_INSRGBTEX);
+                gl_tex = basetexture_get_gl_texture(texture,
+                        context->gl_info, location == SFLAG_INSRGBTEX);
                 break;
 
             default:
@@ -219,7 +221,7 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         else
         {
             surface_prepare_texture(depth_stencil, gl_info, FALSE);
-            context_apply_attachment_filter_states(depth_stencil, SFLAG_INTEXTURE);
+            context_apply_attachment_filter_states(context, depth_stencil, SFLAG_INTEXTURE);
 
             if (format_flags & WINED3DFMT_FLAG_DEPTH)
             {
@@ -278,9 +280,9 @@ static void context_attach_surface_fbo(const struct wined3d_context *context,
             case SFLAG_INSRGBTEX:
                 srgb = location == SFLAG_INSRGBTEX;
                 surface_prepare_texture(surface, gl_info, srgb);
-                context_apply_attachment_filter_states(surface, location);
+                context_apply_attachment_filter_states(context, surface, location);
                 gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
-                        surface->texture_target, surface_get_texture_name(surface, srgb),
+                        surface->texture_target, surface_get_texture_name(surface, gl_info, srgb),
                         surface->texture_level);
                 break;
 
@@ -457,10 +459,10 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
         for (i = 0; i < gl_info->limits.buffers; ++i)
         {
             if (entry->render_targets[i])
-                context_apply_attachment_filter_states(entry->render_targets[i], entry->location);
+                context_apply_attachment_filter_states(context, entry->render_targets[i], entry->location);
         }
         if (entry->depth_stencil)
-            context_apply_attachment_filter_states(entry->depth_stencil, SFLAG_INTEXTURE);
+            context_apply_attachment_filter_states(context, entry->depth_stencil, SFLAG_INTEXTURE);
     }
 }
 

@@ -1197,12 +1197,18 @@ static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
         format->flags |= format_texture_info[i].flags;
         format->heightscale = 1.0f;
 
-        /* Filter sRGB capabilities if EXT_texture_sRGB is not supported. */
-        if (!gl_info->supported[EXT_TEXTURE_SRGB]
-                && format->glGammaInternal != format->glInternal)
+        if (format->glGammaInternal != format->glInternal)
         {
-            format->glGammaInternal = format->glInternal;
-            format->flags &= ~(WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
+            /* Filter sRGB capabilities if EXT_texture_sRGB is not supported. */
+            if (!gl_info->supported[EXT_TEXTURE_SRGB])
+            {
+                format->glGammaInternal = format->glInternal;
+                format->flags &= ~(WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
+            }
+            else if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+            {
+                format->glInternal = format->glGammaInternal;
+            }
         }
 
         /* Texture conversion stuff */

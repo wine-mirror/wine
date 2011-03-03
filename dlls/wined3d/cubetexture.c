@@ -39,16 +39,15 @@ static HRESULT cubetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb)
     if (set_gl_texture_desc && SUCCEEDED(hr))
     {
         UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
+        const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
+        BOOL srgb_tex = !gl_info->supported[EXT_TEXTURE_SRGB_DECODE] && texture->baseTexture.is_srgb;
+        GLuint name = srgb_tex ? texture->baseTexture.texture_srgb.name : texture->baseTexture.texture_rgb.name;
         UINT i;
 
         for (i = 0; i < sub_count; ++i)
         {
             IWineD3DSurfaceImpl *surface = surface_from_resource(texture->baseTexture.sub_resources[i]);
-
-            if (texture->baseTexture.is_srgb)
-                surface_set_texture_name(surface, texture->baseTexture.texture_srgb.name, TRUE);
-            else
-                surface_set_texture_name(surface, texture->baseTexture.texture_rgb.name, FALSE);
+            surface_set_texture_name(surface, name, srgb_tex);
         }
     }
 
@@ -60,6 +59,7 @@ static void cubetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSR
 {
     UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
     IWineD3DDeviceImpl *device = texture->resource.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_context *context = NULL;
     struct gl_texture *gl_tex;
     BOOL srgb_mode;
@@ -86,7 +86,7 @@ static void cubetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSR
             break;
     }
 
-    gl_tex = basetexture_get_gl_texture(texture, srgb_mode);
+    gl_tex = basetexture_get_gl_texture(texture, gl_info, srgb_mode);
 
     /* We only have to activate a context for gl when we're not drawing.
      * In most cases PreLoad will be called during draw and a context was

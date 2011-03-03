@@ -1908,9 +1908,12 @@ static inline IWineD3DBaseTextureImpl *basetexture_from_resource(struct wined3d_
     return CONTAINING_RECORD(resource, IWineD3DBaseTextureImpl, resource);
 }
 
-static inline struct gl_texture *basetexture_get_gl_texture(IWineD3DBaseTextureImpl *texture, BOOL srgb)
+static inline struct gl_texture *basetexture_get_gl_texture(IWineD3DBaseTextureImpl *texture,
+        const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
-    return srgb ? &texture->baseTexture.texture_srgb : &texture->baseTexture.texture_rgb;
+    return srgb && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
+            ? &texture->baseTexture.texture_srgb
+            : &texture->baseTexture.texture_rgb;
 }
 
 void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
@@ -2160,9 +2163,11 @@ static inline IWineD3DSurfaceImpl *surface_from_resource(struct wined3d_resource
     return CONTAINING_RECORD(resource, IWineD3DSurfaceImpl, resource);
 }
 
-static inline GLuint surface_get_texture_name(IWineD3DSurfaceImpl *surface, BOOL srgb)
+static inline GLuint surface_get_texture_name(IWineD3DSurfaceImpl *surface,
+        const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
-    return srgb ? surface->texture_name_srgb : surface->texture_name;
+    return srgb && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
+            ? surface->texture_name_srgb : surface->texture_name;
 }
 
 void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect) DECLSPEC_HIDDEN;

@@ -4283,6 +4283,7 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
 
 void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL persistent)
 {
+    const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
     IWineD3DSurfaceImpl *overlay;
 
     TRACE("surface %p, location %s, persistent %#x.\n",
@@ -4299,6 +4300,12 @@ void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL pers
         {
             TRACE("Surface %p is an onscreen surface.\n", surface);
         }
+    }
+
+    if (flag & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)
+            && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+    {
+        flag |= (SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
     }
 
     if (persistent)
@@ -4386,6 +4393,11 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
         {
             TRACE("Surface %p is an onscreen surface.\n", surface);
         }
+    }
+
+    if (flag == SFLAG_INSRGBTEX && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+    {
+        flag = SFLAG_INTEXTURE;
     }
 
     if (surface->flags & flag)
@@ -4646,6 +4658,12 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
     {
         /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets. */
         surface->flags |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
+    }
+
+    if (surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)
+            && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+    {
+        surface->flags |= (SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
     }
 
     return WINED3D_OK;

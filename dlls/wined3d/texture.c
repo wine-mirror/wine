@@ -38,18 +38,17 @@ static HRESULT texture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb)
     hr = basetexture_bind(texture, srgb, &set_gl_texture_desc);
     if (set_gl_texture_desc && SUCCEEDED(hr))
     {
-        UINT i;
+        const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
+        BOOL srgb_tex = !gl_info->supported[EXT_TEXTURE_SRGB_DECODE] && texture->baseTexture.is_srgb;
         struct gl_texture *gl_tex;
+        UINT i;
 
-        if (texture->baseTexture.is_srgb)
-            gl_tex = &texture->baseTexture.texture_srgb;
-        else
-            gl_tex = &texture->baseTexture.texture_rgb;
+        gl_tex = basetexture_get_gl_texture(texture, gl_info, srgb_tex);
 
         for (i = 0; i < texture->baseTexture.level_count; ++i)
         {
             IWineD3DSurfaceImpl *surface = surface_from_resource(texture->baseTexture.sub_resources[i]);
-            surface_set_texture_name(surface, gl_tex->name, texture->baseTexture.is_srgb);
+            surface_set_texture_name(surface, gl_tex->name, srgb_tex);
         }
 
         /* Conditinal non power of two textures use a different clamping
@@ -89,6 +88,7 @@ static HRESULT texture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb)
 static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb)
 {
     IWineD3DDeviceImpl *device = texture->resource.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_context *context = NULL;
     struct gl_texture *gl_tex;
     unsigned int i;
@@ -115,7 +115,7 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
             break;
     }
 
-    gl_tex = basetexture_get_gl_texture(texture, srgb_mode);
+    gl_tex = basetexture_get_gl_texture(texture, gl_info, srgb_mode);
 
     if (!device->isInDraw)
     {
