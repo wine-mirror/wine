@@ -3757,6 +3757,7 @@ static BOOL HTTP_ParseDate(LPCWSTR value, FILETIME *ft)
 
 static void HTTP_ProcessExpires(http_request_t *request)
 {
+    BOOL expirationFound = FALSE;
     int headerIndex;
 
     headerIndex = HTTP_GetCustomHeaderIndex(request, szExpires, 0, FALSE);
@@ -3766,7 +3767,20 @@ static void HTTP_ProcessExpires(http_request_t *request)
         FILETIME ft;
 
         if (HTTP_ParseDate(expiresHeader->lpszValue, &ft))
+        {
+            expirationFound = TRUE;
             request->expires = ft;
+        }
+    }
+    if (!expirationFound)
+    {
+        ULARGE_INTEGER ft;
+
+        /* With no known age, default to 10 minutes until expiration. */
+        GetSystemTimeAsFileTime((FILETIME *)&ft);
+        ft.QuadPart += 10 * 60 * 10000000;
+        request->expires.dwLowDateTime = ft.u.LowPart;
+        request->expires.dwHighDateTime = ft.u.HighPart;
     }
 }
 
