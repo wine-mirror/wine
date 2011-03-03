@@ -1896,6 +1896,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
 
     pUrlEntry->dwHitRate++;
     pUrlEntry->dwUseCount++;
+    GetSystemTimeAsFileTime(&pUrlEntry->LastAccessTime);
     URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
 
     error = URLCache_CopyEntry(pContainer, pHeader, lpCacheEntryInfo,
@@ -1992,6 +1993,7 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
 
     pUrlEntry->dwHitRate++;
     pUrlEntry->dwUseCount++;
+    GetSystemTimeAsFileTime(&pUrlEntry->LastAccessTime);
     URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
 
     error = URLCache_CopyEntry(
