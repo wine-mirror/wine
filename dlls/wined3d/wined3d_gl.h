@@ -1810,6 +1810,7 @@ typedef enum wined3d_gl_extension
     EXT_TEXTURE_FILTER_ANISOTROPIC,
     EXT_TEXTURE_LOD_BIAS,
     EXT_TEXTURE_SRGB,
+    EXT_TEXTURE_SRGB_DECODE,
     EXT_VERTEX_ARRAY_BGRA,
     /* NVIDIA */
     NV_DEPTH_CLAMP,
@@ -3410,6 +3411,14 @@ typedef void (WINE_GLAPI *PGLFNGETCOMPRESSEDTEXIMAGEPROC)(GLenum target, GLint l
 #define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT              0x8c4d
 #define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT              0x8c4e
 #define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT              0x8c4f
+#endif
+
+/* GL_EXT_texture_sRGB_decode */
+#ifndef GL_EXT_texture_sRGB_decode
+#define GL_EXT_texture_sRGB_decode 1
+#define GL_TEXTURE_SRGB_DECODE_EXT                          0x8a48
+#define GL_DECODE_EXT                                       0x8a49
+#define GL_SKIP_DECODE_EXT                                  0x8a4a
 #endif
 
 /* GL_NV_depth_clamp */

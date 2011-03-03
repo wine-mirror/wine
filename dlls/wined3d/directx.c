@@ -129,6 +129,7 @@ static const struct {
     {"GL_EXT_texture_filter_anisotropic",   EXT_TEXTURE_FILTER_ANISOTROPIC, 0                           },
     {"GL_EXT_texture_lod_bias",             EXT_TEXTURE_LOD_BIAS,           0                           },
     {"GL_EXT_texture_sRGB",                 EXT_TEXTURE_SRGB,               0                           },
+    {"GL_EXT_texture_sRGB_decode",          EXT_TEXTURE_SRGB_DECODE,        0                           },
     {"GL_EXT_vertex_array_bgra",            EXT_VERTEX_ARRAY_BGRA,          0                           },
 
     /* NV */
