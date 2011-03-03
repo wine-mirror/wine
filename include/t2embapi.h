@@ -28,6 +28,7 @@ extern "C" {
 #define E_API_NOTIMPL                       0x0001L
 
 typedef ULONG (WINAPIV * READEMBEDPROC)(void*,void*,ULONG);
+typedef ULONG (WINAPIV * WRITEEMBEDPROC)(void*,void*,ULONG);
 
 typedef struct
 {
@@ -35,6 +36,13 @@ typedef struct
     unsigned short usRefStrSize;
     unsigned short *pusRefStr;
 } TTLOADINFO;
+
+typedef struct
+{
+    unsigned short usStructSize;
+    unsigned short usRootStrSize;
+    unsigned short *pusRootStr;
+} TTEMBEDINFO;
 
 LONG WINAPI TTLoadEmbeddedFont(HANDLE*,ULONG,ULONG*,ULONG,ULONG*,READEMBEDPROC,
                                LPVOID,LPWSTR,LPSTR,TTLOADINFO*);

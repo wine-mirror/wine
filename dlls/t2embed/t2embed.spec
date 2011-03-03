@@ -1,6 +1,6 @@
 @ stub TTCharToUnicode
 @ stub TTDeleteEmbeddedFont
-@ stub TTEmbedFont
+@ stdcall TTEmbedFont(ptr long long ptr ptr ptr ptr ptr long long ptr)
 @ stub TTEmbedFontFromFileA
 @ stub TTEnableEmbeddingForFacename
 @ stub TTGetEmbeddedFontInfo
@@ -11,7 +11,7 @@
 @ stub TTRunValidationTests
 @ stub _TTCharToUnicode@24
 @ stub _TTDeleteEmbeddedFont@12
-@ stub _TTEmbedFont@44
+@ stdcall _TTEmbedFont@44(ptr long long ptr ptr ptr ptr ptr long long ptr) TTEmbedFont
 @ stub _TTEmbedFontFromFileA@52
 @ stub _TTEnableEmbeddingForFacename@8
 @ stub _TTGetEmbeddedFontInfo@28

@@ -60,6 +60,19 @@ LONG WINAPI TTLoadEmbeddedFont(HANDLE *phFontReference, ULONG ulFlags,
     return E_API_NOTIMPL;
 }
 
+LONG WINAPI TTEmbedFont(HDC hDC, ULONG ulFlags, ULONG ulCharSet, ULONG *pulPrivStatus,
+                         ULONG *pulStatus, WRITEEMBEDPROC lpfnWriteToStream, LPVOID lpvWriteStream,
+                         USHORT *pusCharCodeSet, USHORT usCharCodeCount, USHORT usLanguage,
+                         TTEMBEDINFO *pTTEmbedInfo)
+{
+    FIXME("(%p 0x%08x 0x%08x %p %p %p %p %p %u %u %p) stub\n", hDC,
+          ulFlags, ulCharSet, pulPrivStatus, pulStatus, lpfnWriteToStream,
+          lpvWriteStream, pusCharCodeSet, usCharCodeCount, usLanguage,
+          pTTEmbedInfo);
+
+    return E_API_NOTIMPL;
+}
+
 LONG WINAPI TTGetEmbeddingType(HDC hDC, ULONG *status)
 {
     FIXME("(%p %p) stub\n", hDC, status);
