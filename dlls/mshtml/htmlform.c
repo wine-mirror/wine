@@ -534,6 +534,20 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
         return E_FAIL;
     }
 
+    if(len > MSHTML_CUSTOM_DISPID_CNT)
+        len = MSHTML_CUSTOM_DISPID_CNT;
+
+    /* FIXME: Implement in more generic way */
+    if('0' <= *name && *name <= '9') {
+        WCHAR *end_ptr;
+
+        i = strtoulW(name, &end_ptr, 10);
+        if(!*end_ptr && i < len) {
+            *pid = MSHTML_DISPID_CUSTOM_MIN + i;
+            return S_OK;
+        }
+    }
+
     nsAString_InitDepend(&nsname, nameW);
     nsAString_Init(&nsstr, NULL);
     for(i = 0; i < len; ++i) {
