@@ -3761,16 +3761,74 @@ static void HTTP_ProcessExpires(http_request_t *request)
     BOOL expirationFound = FALSE;
     int headerIndex;
 
-    headerIndex = HTTP_GetCustomHeaderIndex(request, szExpires, 0, FALSE);
+    /* Look for a Cache-Control header with a max-age directive, as it takes
+     * precedence over the Expires header.
+     */
+    headerIndex = HTTP_GetCustomHeaderIndex(request, szCache_Control, 0, FALSE);
     if (headerIndex != -1)
     {
-        LPHTTPHEADERW expiresHeader = &request->custHeaders[headerIndex];
-        FILETIME ft;
+        LPHTTPHEADERW ccHeader = &request->custHeaders[headerIndex];
+        LPWSTR ptr;
 
-        if (HTTP_ParseDate(expiresHeader->lpszValue, &ft))
+        for (ptr = ccHeader->lpszValue; ptr && *ptr; )
         {
-            expirationFound = TRUE;
-            request->expires = ft;
+            LPWSTR comma = strchrW(ptr, ','), end, equal;
+
+            if (comma)
+                end = comma;
+            else
+                end = ptr + strlenW(ptr);
+            for (equal = end - 1; equal > ptr && *equal != '='; equal--)
+                ;
+            if (*equal == '=')
+            {
+                static const WCHAR max_age[] = {
+                    'm','a','x','-','a','g','e',0 };
+
+                if (!strncmpiW(ptr, max_age, equal - ptr - 1))
+                {
+                    LPWSTR nextPtr;
+                    unsigned long age;
+
+                    age = strtoulW(equal + 1, &nextPtr, 10);
+                    if (nextPtr > equal + 1)
+                    {
+                        LARGE_INTEGER ft;
+
+                        NtQuerySystemTime( &ft );
+                        /* Age is in seconds, FILETIME resolution is in
+                         * 100 nanosecond intervals.
+                         */
+                        ft.QuadPart += age * (ULONGLONG)1000000;
+                        request->expires.dwLowDateTime = ft.u.LowPart;
+                        request->expires.dwHighDateTime = ft.u.HighPart;
+                        expirationFound = TRUE;
+                    }
+                }
+            }
+            if (comma)
+            {
+                ptr = comma + 1;
+                while (isspaceW(*ptr))
+                    ptr++;
+            }
+            else
+                ptr = NULL;
+        }
+    }
+    if (!expirationFound)
+    {
+        headerIndex = HTTP_GetCustomHeaderIndex(request, szExpires, 0, FALSE);
+        if (headerIndex != -1)
+        {
+            LPHTTPHEADERW expiresHeader = &request->custHeaders[headerIndex];
+            FILETIME ft;
+
+            if (HTTP_ParseDate(expiresHeader->lpszValue, &ft))
+            {
+                expirationFound = TRUE;
+                request->expires = ft;
+            }
         }
     }
     if (!expirationFound)
