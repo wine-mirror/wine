@@ -310,6 +310,44 @@ static Window thread_selection_wnd(void)
     return w;
 }
 
+static const char *debugstr_format( UINT id )
+{
+    if (id >= 0xc000)
+    {
+        WCHAR buffer[256];
+        GlobalGetAtomNameW( id, buffer, 256 );
+        return wine_dbg_sprintf( "%04x %s", id, debugstr_w(buffer) );
+    }
+    switch (id)
+    {
+#define BUILTIN(id) case id: return #id;
+    BUILTIN(CF_TEXT)
+    BUILTIN(CF_BITMAP)
+    BUILTIN(CF_METAFILEPICT)
+    BUILTIN(CF_SYLK)
+    BUILTIN(CF_DIF)
+    BUILTIN(CF_TIFF)
+    BUILTIN(CF_OEMTEXT)
+    BUILTIN(CF_DIB)
+    BUILTIN(CF_PALETTE)
+    BUILTIN(CF_PENDATA)
+    BUILTIN(CF_RIFF)
+    BUILTIN(CF_WAVE)
+    BUILTIN(CF_UNICODETEXT)
+    BUILTIN(CF_ENHMETAFILE)
+    BUILTIN(CF_HDROP)
+    BUILTIN(CF_LOCALE)
+    BUILTIN(CF_DIBV5)
+    BUILTIN(CF_OWNERDISPLAY)
+    BUILTIN(CF_DSPTEXT)
+    BUILTIN(CF_DSPBITMAP)
+    BUILTIN(CF_DSPMETAFILEPICT)
+    BUILTIN(CF_DSPENHMETAFILE)
+#undef BUILTIN
+    default: return wine_dbg_sprintf( "%04x", id );
+    }
+}
+
 /**************************************************************************
  *		X11DRV_InitClipboard
  */
@@ -498,8 +536,8 @@ static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCWSTR FormatNam
 
     list_add_tail( &format_list, &lpNewFormat->entry );
 
-    TRACE("Registering format(%04x): %s drvData %d\n",
-        lpNewFormat->wFormatID, debugstr_w(FormatName), lpNewFormat->drvData);
+    TRACE("Registering format %s drvData %d\n",
+          debugstr_format(lpNewFormat->wFormatID), lpNewFormat->drvData);
 
     return lpNewFormat;
 }
@@ -1936,8 +1974,8 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
               */
              while (lpFormat)
              {
-                 TRACE("Atom#%d Property(%d): --> FormatID(%04x) %s\n",
-                       i, lpFormat->drvData, lpFormat->wFormatID, debugstr_w(lpFormat->Name));
+                 TRACE("Atom#%d Property(%d): --> Format %s\n",
+                       i, lpFormat->drvData, debugstr_format(lpFormat->wFormatID));
                  X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, lpFormat, FALSE);
                  lpFormat = X11DRV_CLIPBOARD_LookupProperty(lpFormat, properties[i]);
              }
@@ -1979,8 +2017,8 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
                      ERR("Failed to register %s property. Type will not be cached.\n", names[i]);
                      continue;
                  }
-                 TRACE("Atom#%d Property(%d): --> FormatID(%04x) %s\n",
-                       i, lpFormat->drvData, lpFormat->wFormatID, debugstr_w(lpFormat->Name));
+                 TRACE("Atom#%d Property(%d): --> Format %s\n",
+                       i, lpFormat->drvData, debugstr_format(lpFormat->wFormatID));
                  X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, lpFormat, FALSE);
              }
              wine_tsx11_lock();
@@ -2145,7 +2183,8 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
         }
 
         TRACE("Requesting conversion of %s property (%d) from selection type %08x\n",
-            debugstr_w(lpData->lpFormat->Name), lpData->lpFormat->drvData, (UINT)selectionCacheSrc);
+              debugstr_format(lpData->lpFormat->wFormatID), lpData->lpFormat->drvData,
+              (UINT)selectionCacheSrc);
 
         wine_tsx11_lock();
         XConvertSelection(display, selectionCacheSrc, lpData->lpFormat->drvData,
@@ -3168,8 +3207,8 @@ static void X11DRV_HandleSelectionRequest( HWND hWnd, XSelectionRequestEvent *ev
                 {
                     int mode = PropModeReplace;
 
-                    TRACE("\tUpdating property %s, %d bytes\n", debugstr_w(lpFormat->Name), cBytes);
-
+                    TRACE("\tUpdating property %s, %d bytes\n",
+                          debugstr_format(lpFormat->wFormatID), cBytes);
                     wine_tsx11_lock();
                     do
                     {
