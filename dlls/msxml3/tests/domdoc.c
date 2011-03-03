@@ -7984,6 +7984,7 @@ static void test_insertBefore(void)
     IXMLDOMNode *node, *newnode;
     HRESULT hr;
     VARIANT v;
+    BSTR p;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -8161,6 +8162,93 @@ static void test_insertBefore(void)
     IXMLDOMElement_Release(elem3);
     IXMLDOMElement_Release(elem4);
     IXMLDOMElement_Release(elem5);
+
+    /* elements with same default namespace */
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ELEMENT;
+    elem1 = NULL;
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("elem1"), _bstr_("http://winehq.org/default"), (IXMLDOMNode**)&elem1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(elem1 != NULL, "got %p\n", elem1);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ELEMENT;
+    elem2 = NULL;
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("elem2"), _bstr_("http://winehq.org/default"), (IXMLDOMNode**)&elem2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(elem2 != NULL, "got %p\n", elem2);
+
+    /* check contents so far */
+    p = NULL;
+    hr = IXMLDOMElement_get_xml(elem1, &p);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(p, _bstr_("<elem1 xmlns=\"http://winehq.org/default\"/>")), "got %s\n", wine_dbgstr_w(p));
+    SysFreeString(p);
+
+    p = NULL;
+    hr = IXMLDOMElement_get_xml(elem2, &p);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(p, _bstr_("<elem2 xmlns=\"http://winehq.org/default\"/>")), "got %s\n", wine_dbgstr_w(p));
+    SysFreeString(p);
+
+    V_VT(&v) = VT_NULL;
+    hr = IXMLDOMElement_insertBefore(elem1, (IXMLDOMNode*)elem2, v, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* get_xml depends on context, for top node it omits child namespace attribute,
+       but at child level it's still returned */
+    p = NULL;
+    hr = IXMLDOMElement_get_xml(elem1, &p);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(!lstrcmpW(p, _bstr_("<elem1 xmlns=\"http://winehq.org/default\"><elem2/></elem1>")),
+        "got %s\n", wine_dbgstr_w(p));
+    SysFreeString(p);
+
+    p = NULL;
+    hr = IXMLDOMElement_get_xml(elem2, &p);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(p, _bstr_("<elem2 xmlns=\"http://winehq.org/default\"/>")), "got %s\n", wine_dbgstr_w(p));
+    SysFreeString(p);
+
+    IXMLDOMElement_Release(elem1);
+    IXMLDOMElement_Release(elem2);
+
+    /* child without default namespace added to node with default namespace */
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ELEMENT;
+    elem1 = NULL;
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("elem1"), _bstr_("http://winehq.org/default"), (IXMLDOMNode**)&elem1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(elem1 != NULL, "got %p\n", elem1);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = NODE_ELEMENT;
+    elem2 = NULL;
+    hr = IXMLDOMDocument_createNode(doc, v, _bstr_("elem2"), NULL, (IXMLDOMNode**)&elem2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(elem2 != NULL, "got %p\n", elem2);
+
+    EXPECT_REF(elem2, 1);
+    V_VT(&v) = VT_NULL;
+    hr = IXMLDOMElement_insertBefore(elem1, (IXMLDOMNode*)elem2, v, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(elem2, 1);
+
+    p = NULL;
+    hr = IXMLDOMElement_get_xml(elem2, &p);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(p, _bstr_("<elem2/>")), "got %s\n", wine_dbgstr_w(p));
+    SysFreeString(p);
+
+    hr = IXMLDOMElement_removeChild(elem1, (IXMLDOMNode*)elem2, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    p = NULL;
+    hr = IXMLDOMElement_get_xml(elem2, &p);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(p, _bstr_("<elem2/>")), "got %s\n", wine_dbgstr_w(p));
+    SysFreeString(p);
+
     IXMLDOMDocument_Release(doc);
     free_bstrs();
 }
