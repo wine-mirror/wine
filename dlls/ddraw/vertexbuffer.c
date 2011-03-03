@@ -137,7 +137,7 @@ IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
 
     if (ref == 0)
     {
-        IWineD3DBuffer *curVB = NULL;
+        struct wined3d_buffer *curVB = NULL;
         UINT offset, stride;
 
         EnterCriticalSection(&ddraw_cs);
@@ -158,13 +158,11 @@ IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
                                         0 /* Offset */,
                                         0 /* stride */);
         }
-        if(curVB)
-        {
-            IWineD3DBuffer_Release(curVB); /* For the GetStreamSource */
-        }
+        if (curVB)
+            wined3d_buffer_decref(curVB); /* For the GetStreamSource */
 
         wined3d_vertex_declaration_decref(This->wineD3DVertexDeclaration);
-        IWineD3DBuffer_Release(This->wineD3DVertexBuffer);
+        wined3d_buffer_decref(This->wineD3DVertexBuffer);
         LeaveCriticalSection(&ddraw_cs);
         HeapFree(GetProcessHeap(), 0, This);
 
@@ -228,12 +226,11 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
     if(Size)
     {
         /* Get the size, for returning it, and for locking */
-        IWineD3DBuffer_GetDesc(This->wineD3DVertexBuffer, &Desc);
+        wined3d_buffer_get_desc(This->wineD3DVertexBuffer, &Desc);
         *Size = Desc.Size;
     }
 
-    hr = IWineD3DBuffer_Map(This->wineD3DVertexBuffer, 0 /* OffsetToLock */,
-            0 /* SizeToLock, 0 == Full lock */, (BYTE **)Data, wined3d_flags);
+    hr = wined3d_buffer_map(This->wineD3DVertexBuffer, 0, 0, (BYTE **)Data, wined3d_flags);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -263,7 +260,7 @@ IDirect3DVertexBufferImpl_Unlock(IDirect3DVertexBuffer7 *iface)
     TRACE("iface %p.\n", iface);
 
     EnterCriticalSection(&ddraw_cs);
-    IWineD3DBuffer_Unmap(This->wineD3DVertexBuffer);
+    wined3d_buffer_unmap(This->wineD3DVertexBuffer);
     LeaveCriticalSection(&ddraw_cs);
 
     return D3D_OK;
@@ -410,7 +407,7 @@ IDirect3DVertexBufferImpl_GetVertexBufferDesc(IDirect3DVertexBuffer7 *iface,
     if(!Desc) return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    IWineD3DBuffer_GetDesc(This->wineD3DVertexBuffer, &WDesc);
+    wined3d_buffer_get_desc(This->wineD3DVertexBuffer, &WDesc);
     LeaveCriticalSection(&ddraw_cs);
 
     /* Now fill the Desc structure */
@@ -590,7 +587,7 @@ HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
     if (!buffer->wineD3DVertexDeclaration)
     {
         ERR("Failed to find vertex declaration for fvf %#x.\n", desc->dwFVF);
-        IWineD3DBuffer_Release(buffer->wineD3DVertexBuffer);
+        wined3d_buffer_decref(buffer->wineD3DVertexBuffer);
         LeaveCriticalSection(&ddraw_cs);
 
         return DDERR_INVALIDPARAMS;

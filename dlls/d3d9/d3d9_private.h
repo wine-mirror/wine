@@ -275,12 +275,8 @@ typedef struct IDirect3DVertexBuffer9Impl
     const IDirect3DVertexBuffer9Vtbl *lpVtbl;
     LONG                    ref;
 
-    /* IDirect3DResource9 fields */
-    IWineD3DBuffer *wineD3DVertexBuffer;
-
-    /* Parent reference */
-    LPDIRECT3DDEVICE9EX       parentDevice;
-
+    struct wined3d_buffer *wineD3DVertexBuffer;
+    IDirect3DDevice9Ex *parentDevice;
     DWORD fvf;
 } IDirect3DVertexBuffer9Impl;
 
@@ -300,11 +296,8 @@ typedef struct IDirect3DIndexBuffer9Impl
     const IDirect3DIndexBuffer9Vtbl *lpVtbl;
     LONG                    ref;
 
-    /* IDirect3DResource9 fields */
-    IWineD3DBuffer         *wineD3DIndexBuffer;
-
-    /* Parent reference */
-    LPDIRECT3DDEVICE9EX       parentDevice;
+    struct wined3d_buffer *wineD3DIndexBuffer;
+    IDirect3DDevice9Ex *parentDevice;
     enum wined3d_format_id format;
 } IDirect3DIndexBuffer9Impl;
 

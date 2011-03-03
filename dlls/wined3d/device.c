@@ -321,7 +321,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
 
             element = &stream_info->elements[i];
             buffer = This->stateBlock->state.streams[element->stream_idx].buffer;
-            IWineD3DBuffer_PreLoad((IWineD3DBuffer *)buffer);
+            wined3d_buffer_preload(buffer);
 
             /* If PreLoad dropped the buffer object, update the stream info. */
             if (buffer->buffer_object != element->buffer_object)
@@ -2429,20 +2429,22 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        if (pStreamData) IWineD3DBuffer_AddRef(pStreamData);
-        if (oldSrc) IWineD3DBuffer_Release(oldSrc);
+        if (pStreamData)
+            wined3d_buffer_incref(pStreamData);
+        if (oldSrc)
+            wined3d_buffer_decref(oldSrc);
         return WINED3D_OK;
     }
 
     if (pStreamData)
     {
         InterlockedIncrement(&((struct wined3d_buffer *)pStreamData)->bind_count);
-        IWineD3DBuffer_AddRef(pStreamData);
+        wined3d_buffer_incref(pStreamData);
     }
     if (oldSrc)
     {
         InterlockedDecrement(&((struct wined3d_buffer *)oldSrc)->bind_count);
-        IWineD3DBuffer_Release(oldSrc);
+        wined3d_buffer_decref(oldSrc);
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
@@ -2470,7 +2472,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface,
     *pStride = stream->stride;
     if (pOffset) *pOffset = stream->offset;
 
-    if (*pStream) IWineD3DBuffer_AddRef(*pStream);
+    if (*pStream)
+        wined3d_buffer_incref(*pStream);
 
     return WINED3D_OK;
 }
@@ -3060,20 +3063,24 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndexBuffer(IWineD3DDevice *iface,
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        if(pIndexData) IWineD3DBuffer_AddRef(pIndexData);
-        if(oldIdxs) IWineD3DBuffer_Release(oldIdxs);
+        if (pIndexData)
+            wined3d_buffer_incref(pIndexData);
+        if (oldIdxs)
+            wined3d_buffer_decref(oldIdxs);
         return WINED3D_OK;
     }
 
     if(oldIdxs != pIndexData) {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
-        if(pIndexData) {
+        if (pIndexData)
+        {
             InterlockedIncrement(&((struct wined3d_buffer *)pIndexData)->bind_count);
-            IWineD3DBuffer_AddRef(pIndexData);
+            wined3d_buffer_incref(pIndexData);
         }
-        if(oldIdxs) {
+        if (oldIdxs)
+        {
             InterlockedDecrement(&((struct wined3d_buffer *)oldIdxs)->bind_count);
-            IWineD3DBuffer_Release(oldIdxs);
+            wined3d_buffer_decref(oldIdxs);
         }
     }
 
@@ -3086,14 +3093,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetIndexBuffer(IWineD3DDevice *iface, I
 
     *ppIndexData = (IWineD3DBuffer *)This->stateBlock->state.index_buffer;
 
-    /* up ref count on ppindexdata */
-    if (*ppIndexData) {
-        IWineD3DBuffer_AddRef(*ppIndexData);
-        TRACE("(%p) index data set to %p\n", This, ppIndexData);
-    }else{
-        TRACE("(%p) No index data set\n", This);
-    }
-    TRACE("Returning %p\n", *ppIndexData);
+    if (*ppIndexData)
+        wined3d_buffer_incref(*ppIndexData);
+
+    TRACE("Returning %p.\n", *ppIndexData);
 
     return WINED3D_OK;
 }
@@ -3960,7 +3963,7 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
     if (!dest->buffer_object && gl_info->supported[ARB_VERTEX_BUFFER_OBJECT])
     {
         dest->flags |= WINED3D_BUFFER_CREATEBO;
-        IWineD3DBuffer_PreLoad((IWineD3DBuffer *)dest);
+        wined3d_buffer_preload(dest);
     }
 
     if (dest->buffer_object)
@@ -4915,7 +4918,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     stream = &This->stateBlock->state.streams[0];
     vb = (IWineD3DBuffer *)stream->buffer;
     stream->buffer = (struct wined3d_buffer *)pVertexStreamZeroData;
-    if (vb) IWineD3DBuffer_Release(vb);
+    if (vb)
+        wined3d_buffer_decref(vb);
     stream->offset = 0;
     stream->stride = VertexStreamZeroStride;
     This->stateBlock->state.user_stream = TRUE;
@@ -4964,7 +4968,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     stream = &This->stateBlock->state.streams[0];
     vb = (IWineD3DBuffer *)stream->buffer;
     stream->buffer = (struct wined3d_buffer *)pVertexStreamZeroData;
-    if (vb) IWineD3DBuffer_Release(vb);
+    if (vb)
+        wined3d_buffer_decref(vb);
     stream->offset = 0;
     stream->stride = VertexStreamZeroStride;
     This->stateBlock->state.user_stream = TRUE;
@@ -4984,7 +4989,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     ib = (IWineD3DBuffer *)This->stateBlock->state.index_buffer;
     if (ib)
     {
-        IWineD3DBuffer_Release(ib);
+        wined3d_buffer_decref(ib);
         This->stateBlock->state.index_buffer = NULL;
     }
     /* No need to mark the stream source state dirty here. Either the app calls UP drawing again, or it has to call

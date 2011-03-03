@@ -2381,7 +2381,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetStreamSource(IDirect3DDevice9Ex *i
         UINT StreamNumber, IDirect3DVertexBuffer9 **pStream, UINT* OffsetInBytes, UINT* pStride)
 {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    IWineD3DBuffer *retStream = NULL;
+    struct wined3d_buffer *retStream = NULL;
     HRESULT hr;
 
     TRACE("iface %p, stream_idx %u, buffer %p, offset %p, stride %p.\n",
@@ -2395,9 +2395,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetStreamSource(IDirect3DDevice9Ex *i
     hr = IWineD3DDevice_GetStreamSource(This->WineD3DDevice, StreamNumber, &retStream, OffsetInBytes, pStride);
     if (SUCCEEDED(hr) && retStream)
     {
-        *pStream = IWineD3DBuffer_GetParent(retStream);
+        *pStream = wined3d_buffer_get_parent(retStream);
         IDirect3DVertexBuffer9_AddRef(*pStream);
-        IWineD3DBuffer_Release(retStream);
+        wined3d_buffer_decref(retStream);
     }
     else
     {
@@ -2459,7 +2459,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetIndices(LPDIRECT3DDEVICE9EX ifac
 static HRESULT WINAPI IDirect3DDevice9Impl_GetIndices(IDirect3DDevice9Ex *iface, IDirect3DIndexBuffer9 **ppIndexData)
 {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    IWineD3DBuffer *retIndexData = NULL;
+    struct wined3d_buffer *retIndexData = NULL;
     HRESULT hr;
 
     TRACE("iface %p, buffer %p.\n", iface, ppIndexData);
@@ -2472,9 +2472,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetIndices(IDirect3DDevice9Ex *iface,
     hr = IWineD3DDevice_GetIndexBuffer(This->WineD3DDevice, &retIndexData);
     if (SUCCEEDED(hr) && retIndexData)
     {
-        *ppIndexData = IWineD3DBuffer_GetParent(retIndexData);
+        *ppIndexData = wined3d_buffer_get_parent(retIndexData);
         IDirect3DIndexBuffer9_AddRef(*ppIndexData);
-        IWineD3DBuffer_Release(retIndexData);
+        wined3d_buffer_decref(retIndexData);
     }
     else
     {

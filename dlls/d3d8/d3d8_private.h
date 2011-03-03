@@ -283,13 +283,9 @@ struct IDirect3DVertexBuffer8Impl
     const IDirect3DVertexBuffer8Vtbl *lpVtbl;
     LONG                              ref;
 
-    /* IDirect3DResource8 fields */
-    IWineD3DBuffer *wineD3DVertexBuffer;
-
-    /* Parent reference */
-    LPDIRECT3DDEVICE8                 parentDevice;
-
-    DWORD                             fvf;
+    struct wined3d_buffer *wineD3DVertexBuffer;
+    IDirect3DDevice8 *parentDevice;
+    DWORD fvf;
 };
 
 HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, IDirect3DDevice8Impl *device,
@@ -308,12 +304,8 @@ struct IDirect3DIndexBuffer8Impl
     const IDirect3DIndexBuffer8Vtbl *lpVtbl;
     LONG                             ref;
 
-    /* IDirect3DResource8 fields */
-    IWineD3DBuffer                  *wineD3DIndexBuffer;
-
-    /* Parent reference */
-    LPDIRECT3DDEVICE8                parentDevice;
-
+    struct wined3d_buffer *wineD3DIndexBuffer;
+    IDirect3DDevice8 *parentDevice;
     enum wined3d_format_id format;
 };
 

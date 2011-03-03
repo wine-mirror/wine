@@ -635,36 +635,11 @@ const BYTE *buffer_get_memory(struct wined3d_buffer *buffer,
     }
 }
 
-/* IUnknown methods */
-
-static HRESULT STDMETHODCALLTYPE buffer_QueryInterface(IWineD3DBuffer *iface,
-        REFIID riid, void **object)
+ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 {
-    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
+    ULONG refcount = InterlockedIncrement(&buffer->resource.ref);
 
-    if (IsEqualGUID(riid, &IID_IWineD3DBuffer)
-            || IsEqualGUID(riid, &IID_IWineD3DResource)
-            || IsEqualGUID(riid, &IID_IWineD3DBase)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
-    }
-
-    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
-
-    *object = NULL;
-
-    return E_NOINTERFACE;
-}
-
-static ULONG STDMETHODCALLTYPE buffer_AddRef(IWineD3DBuffer *iface)
-{
-    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
-    ULONG refcount = InterlockedIncrement(&This->resource.ref);
-
-    TRACE("%p increasing refcount to %u\n", This, refcount);
+    TRACE("%p increasing refcount to %u.\n", buffer, refcount);
 
     return refcount;
 }
@@ -732,60 +707,56 @@ static void buffer_unload(struct wined3d_resource *resource)
 }
 
 /* Do not call while under the GL lock. */
-static ULONG STDMETHODCALLTYPE buffer_Release(IWineD3DBuffer *iface)
+ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
 {
-    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
-    ULONG refcount = InterlockedDecrement(&This->resource.ref);
+    ULONG refcount = InterlockedDecrement(&buffer->resource.ref);
 
-    TRACE("%p decreasing refcount to %u\n", This, refcount);
+    TRACE("%p decreasing refcount to %u.\n", buffer, refcount);
 
     if (!refcount)
     {
-        buffer_unload(&This->resource);
-        resource_cleanup(&This->resource);
-        This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
-        HeapFree(GetProcessHeap(), 0, This->maps);
-        HeapFree(GetProcessHeap(), 0, This);
+        buffer_unload(&buffer->resource);
+        resource_cleanup(&buffer->resource);
+        buffer->resource.parent_ops->wined3d_object_destroyed(buffer->resource.parent);
+        HeapFree(GetProcessHeap(), 0, buffer->maps);
+        HeapFree(GetProcessHeap(), 0, buffer);
     }
 
     return refcount;
 }
 
-/* IWineD3DBase methods */
-static void * STDMETHODCALLTYPE buffer_GetParent(IWineD3DBuffer *iface)
+void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
 {
-    TRACE("iface %p.\n", iface);
+    TRACE("buffer %p.\n", buffer);
 
-    return ((struct wined3d_buffer *)iface)->resource.parent;
+    return buffer->resource.parent;
 }
 
-/* IWineD3DResource methods */
-
-static HRESULT STDMETHODCALLTYPE buffer_SetPrivateData(IWineD3DBuffer *iface,
+HRESULT CDECL wined3d_buffer_set_private_data(struct wined3d_buffer *buffer,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data(&((struct wined3d_buffer *)iface)->resource, guid, data, data_size, flags);
+    return resource_set_private_data(&buffer->resource, guid, data, data_size, flags);
 }
 
-static HRESULT STDMETHODCALLTYPE buffer_GetPrivateData(IWineD3DBuffer *iface,
+HRESULT CDECL wined3d_buffer_get_private_data(const struct wined3d_buffer *buffer,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data(&((struct wined3d_buffer *)iface)->resource, guid, data, data_size);
+    return resource_get_private_data(&buffer->resource, guid, data, data_size);
 }
 
-static HRESULT STDMETHODCALLTYPE buffer_FreePrivateData(IWineD3DBuffer *iface, REFGUID guid)
+HRESULT CDECL wined3d_buffer_free_private_data(struct wined3d_buffer *buffer, REFGUID guid)
 {
-    return resource_free_private_data(&((struct wined3d_buffer *)iface)->resource, guid);
+    return resource_free_private_data(&buffer->resource, guid);
 }
 
-static DWORD STDMETHODCALLTYPE buffer_SetPriority(IWineD3DBuffer *iface, DWORD priority)
+DWORD CDECL wined3d_buffer_set_priority(struct wined3d_buffer *buffer, DWORD priority)
 {
-    return resource_set_priority(&((struct wined3d_buffer *)iface)->resource, priority);
+    return resource_set_priority(&buffer->resource, priority);
 }
 
-static DWORD STDMETHODCALLTYPE buffer_GetPriority(IWineD3DBuffer *iface)
+DWORD CDECL wined3d_buffer_get_priority(const struct wined3d_buffer *buffer)
 {
-    return resource_get_priority(&((struct wined3d_buffer *)iface)->resource);
+    return resource_get_priority(&buffer->resource);
 }
 
 /* The caller provides a context and binds the buffer */
@@ -934,31 +905,31 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
 }
 
 /* Do not call while under the GL lock. */
-static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
+void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 {
-    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
-    IWineD3DDeviceImpl *device = This->resource.device;
+    DWORD flags = buffer->flags & (WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
+    IWineD3DDeviceImpl *device = buffer->resource.device;
     UINT start = 0, end = 0, len = 0, vertices;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     BOOL decl_changed = FALSE;
     unsigned int i, j;
     BYTE *data;
-    DWORD flags = This->flags & (WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
 
-    TRACE("iface %p\n", iface);
-    This->flags &= ~(WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
+    TRACE("buffer %p.\n", buffer);
+
+    buffer->flags &= ~(WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
 
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    if (!This->buffer_object)
+    if (!buffer->buffer_object)
     {
         /* TODO: Make converting independent from VBOs */
-        if (This->flags & WINED3D_BUFFER_CREATEBO)
+        if (buffer->flags & WINED3D_BUFFER_CREATEBO)
         {
-            buffer_create_buffer_object(This, gl_info);
-            This->flags &= ~WINED3D_BUFFER_CREATEBO;
+            buffer_create_buffer_object(buffer, gl_info);
+            buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
         }
         else
         {
@@ -968,18 +939,20 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
     }
 
     /* Reading the declaration makes only sense if the stateblock is finalized and the buffer bound to a stream */
-    if (device->isInDraw && This->bind_count > 0)
+    if (device->isInDraw && buffer->bind_count > 0)
     {
-        decl_changed = buffer_find_decl(This);
-        This->flags |= WINED3D_BUFFER_HASDESC;
+        decl_changed = buffer_find_decl(buffer);
+        buffer->flags |= WINED3D_BUFFER_HASDESC;
     }
 
-    if (!decl_changed && !(This->flags & WINED3D_BUFFER_HASDESC && buffer_is_dirty(This)))
+    if (!decl_changed && !(buffer->flags & WINED3D_BUFFER_HASDESC && buffer_is_dirty(buffer)))
     {
         context_release(context);
-        ++This->draw_count;
-        if (This->draw_count > VB_RESETDECLCHANGE) This->decl_change_count = 0;
-        if (This->draw_count > VB_RESETFULLCONVS) This->full_conversion_count = 0;
+        ++buffer->draw_count;
+        if (buffer->draw_count > VB_RESETDECLCHANGE)
+            buffer->decl_change_count = 0;
+        if (buffer->draw_count > VB_RESETFULLCONVS)
+            buffer->full_conversion_count = 0;
         return;
     }
 
@@ -989,31 +962,31 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
      */
     if (decl_changed)
     {
-        ++This->decl_change_count;
-        This->draw_count = 0;
+        ++buffer->decl_change_count;
+        buffer->draw_count = 0;
 
-        if (This->decl_change_count > VB_MAXDECLCHANGES ||
-            (This->conversion_map && (This->resource.usage & WINED3DUSAGE_DYNAMIC)))
+        if (buffer->decl_change_count > VB_MAXDECLCHANGES
+                || (buffer->conversion_map && (buffer->resource.usage & WINED3DUSAGE_DYNAMIC)))
         {
             FIXME("Too many declaration changes or converting dynamic buffer, stopping converting\n");
 
-            buffer_unload(&This->resource);
-            This->flags &= ~WINED3D_BUFFER_CREATEBO;
+            buffer_unload(&buffer->resource);
+            buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
 
-            /* The stream source state handler might have read the memory of the vertex buffer already
-             * and got the memory in the vbo which is not valid any longer. Dirtify the stream source
-             * to force a reload. This happens only once per changed vertexbuffer and should occur rather
-             * rarely
-             */
+            /* The stream source state handler might have read the memory of
+             * the vertex buffer already and got the memory in the vbo which
+             * is not valid any longer. Dirtify the stream source to force a
+             * reload. This happens only once per changed vertexbuffer and
+             * should occur rather rarely. */
             IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
             goto end;
         }
-        buffer_check_buffer_object_size(This, gl_info);
+        buffer_check_buffer_object_size(buffer, gl_info);
 
         /* The declaration changed, reload the whole buffer */
         WARN("Reloading buffer because of decl change\n");
-        buffer_clear_dirty_areas(This);
-        if(!buffer_add_dirty_area(This, 0, 0))
+        buffer_clear_dirty_areas(buffer);
+        if (!buffer_add_dirty_area(buffer, 0, 0))
         {
             ERR("buffer_add_dirty_area failed, this is not expected\n");
             goto end;
@@ -1029,89 +1002,90 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
          * changes it every minute drop the VBO after VB_MAX_DECL_CHANGES minutes. So count draws without
          * decl changes and reset the decl change count after a specific number of them
          */
-        if(buffer_is_fully_dirty(This))
+        if (buffer_is_fully_dirty(buffer))
         {
-            ++This->full_conversion_count;
-            if(This->full_conversion_count > VB_MAXFULLCONVERSIONS)
+            ++buffer->full_conversion_count;
+            if (buffer->full_conversion_count > VB_MAXFULLCONVERSIONS)
             {
-                FIXME("Too many full buffer conversions, stopping converting\n");
-                buffer_unload(&This->resource);
-                This->flags &= ~WINED3D_BUFFER_CREATEBO;
+                FIXME("Too many full buffer conversions, stopping converting.\n");
+                buffer_unload(&buffer->resource);
+                buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
                 IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
                 goto end;
             }
         }
         else
         {
-            ++This->draw_count;
-            if (This->draw_count > VB_RESETDECLCHANGE) This->decl_change_count = 0;
-            if (This->draw_count > VB_RESETFULLCONVS) This->full_conversion_count = 0;
+            ++buffer->draw_count;
+            if (buffer->draw_count > VB_RESETDECLCHANGE)
+                buffer->decl_change_count = 0;
+            if (buffer->draw_count > VB_RESETFULLCONVS)
+                buffer->full_conversion_count = 0;
         }
     }
 
-    if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-    {
-        IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_INDEXBUFFER);
-    }
+    if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
+        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
 
-    if (!This->conversion_map)
+    if (!buffer->conversion_map)
     {
-        /* That means that there is nothing to fixup. Just upload from This->resource.allocatedMemory
-         * directly into the vbo. Do not free the system memory copy because drawPrimitive may need it if
-         * the stride is 0, for instancing emulation, vertex blending emulation or shader emulation.
-         */
-        TRACE("No conversion needed\n");
+        /* That means that there is nothing to fixup. Just upload from
+         * buffer->resource.allocatedMemory directly into the vbo. Do not
+         * free the system memory copy because drawPrimitive may need it if
+         * the stride is 0, for instancing emulation, vertex blending
+         * emulation or shader emulation. */
+        TRACE("No conversion needed.\n");
 
         /* Nothing to do because we locked directly into the vbo */
-        if (!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
+        if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {
             context_release(context);
             return;
         }
 
-        buffer_direct_upload(This, context->gl_info, flags);
+        buffer_direct_upload(buffer, context->gl_info, flags);
 
         context_release(context);
         return;
     }
 
-    if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
+    if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
     {
-        buffer_get_sysmem(This, gl_info);
+        buffer_get_sysmem(buffer, gl_info);
     }
 
     /* Now for each vertex in the buffer that needs conversion */
-    vertices = This->resource.size / This->stride;
+    vertices = buffer->resource.size / buffer->stride;
 
-    if (This->conversion_shift)
+    if (buffer->conversion_shift)
     {
         TRACE("Shifted conversion\n");
-        data = HeapAlloc(GetProcessHeap(), 0, vertices * This->conversion_stride);
+        data = HeapAlloc(GetProcessHeap(), 0, vertices * buffer->conversion_stride);
 
         start = 0;
-        len = This->resource.size;
+        len = buffer->resource.size;
         end = start + len;
 
-        if (This->maps[0].offset || This->maps[0].size != This->resource.size)
+        if (buffer->maps[0].offset || buffer->maps[0].size != buffer->resource.size)
         {
             FIXME("Implement partial buffer load with shifted conversion\n");
         }
 
-        for (i = start / This->stride; i < min((end / This->stride) + 1, vertices); ++i)
+        for (i = start / buffer->stride; i < min((end / buffer->stride) + 1, vertices); ++i)
         {
-            for (j = 0; j < This->stride; ++j)
+            for (j = 0; j < buffer->stride; ++j)
             {
-                switch(This->conversion_map[j])
+                switch (buffer->conversion_map[j])
                 {
                     case CONV_NONE:
-                        data[This->conversion_stride * i + j + This->conversion_shift[j]]
-                                = This->resource.allocatedMemory[This->stride * i + j];
+                        data[buffer->conversion_stride * i + j + buffer->conversion_shift[j]]
+                                = buffer->resource.allocatedMemory[buffer->stride * i + j];
                         break;
 
                     case CONV_FLOAT16_2:
                     {
-                        float *out = (float *)(&data[This->conversion_stride * i + j + This->conversion_shift[j]]);
-                        const WORD *in = (WORD *)(&This->resource.allocatedMemory[i * This->stride + j]);
+                        float *out = (float *)(&data[buffer->conversion_stride * i + j + buffer->conversion_shift[j]]);
+                        const WORD *in = (WORD *)(&buffer->resource.allocatedMemory[i * buffer->stride + j]);
 
                         out[1] = float_16_to_32(in + 1);
                         out[0] = float_16_to_32(in + 0);
@@ -1120,63 +1094,63 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
                     }
 
                     default:
-                        FIXME("Unimplemented conversion %d in shifted conversion\n", This->conversion_map[j]);
+                        FIXME("Unimplemented conversion %#x in shifted conversion.\n", buffer->conversion_map[j]);
                         break;
                 }
             }
         }
 
         ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
+        GL_EXTCALL(glBindBufferARB(buffer->buffer_type_hint, buffer->buffer_object));
         checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glBufferSubDataARB(This->buffer_type_hint, 0, vertices * This->conversion_stride, data));
+        GL_EXTCALL(glBufferSubDataARB(buffer->buffer_type_hint, 0, vertices * buffer->conversion_stride, data));
         checkGLcall("glBufferSubDataARB");
         LEAVE_GL();
     }
     else
     {
-        data = HeapAlloc(GetProcessHeap(), 0, This->resource.size);
+        data = HeapAlloc(GetProcessHeap(), 0, buffer->resource.size);
 
-        while(This->modified_areas)
+        while (buffer->modified_areas)
         {
-            This->modified_areas--;
-            start = This->maps[This->modified_areas].offset;
-            len = This->maps[This->modified_areas].size;
+            buffer->modified_areas--;
+            start = buffer->maps[buffer->modified_areas].offset;
+            len = buffer->maps[buffer->modified_areas].size;
             end = start + len;
 
-            memcpy(data + start, This->resource.allocatedMemory + start, end - start);
-            for (i = start / This->stride; i < min((end / This->stride) + 1, vertices); ++i)
+            memcpy(data + start, buffer->resource.allocatedMemory + start, end - start);
+            for (i = start / buffer->stride; i < min((end / buffer->stride) + 1, vertices); ++i)
             {
-                for (j = 0; j < This->stride; ++j)
+                for (j = 0; j < buffer->stride; ++j)
                 {
-                    switch(This->conversion_map[j])
+                    switch (buffer->conversion_map[j])
                     {
                         case CONV_NONE:
                             /* Done already */
                             j += 3;
                             break;
                         case CONV_D3DCOLOR:
-                            fixup_d3dcolor((DWORD *) (data + i * This->stride + j));
+                            fixup_d3dcolor((DWORD *)(data + i * buffer->stride + j));
                             j += 3;
                             break;
 
                         case CONV_POSITIONT:
-                            fixup_transformed_pos((float *) (data + i * This->stride + j));
+                            fixup_transformed_pos((float *)(data + i * buffer->stride + j));
                             j += 15;
                             break;
 
                         case CONV_FLOAT16_2:
-                            ERR("Did not expect FLOAT16 conversion in unshifted conversion\n");
+                            ERR("Did not expect FLOAT16 conversion in unshifted conversion.\n");
                         default:
-                            FIXME("Unimplemented conversion %d in shifted conversion\n", This->conversion_map[j]);
+                            FIXME("Unimplemented conversion %u in unshifted conversion.\n", buffer->conversion_map[j]);
                     }
                 }
             }
 
             ENTER_GL();
-            GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
+            GL_EXTCALL(glBindBufferARB(buffer->buffer_type_hint, buffer->buffer_object));
             checkGLcall("glBindBufferARB");
-            GL_EXTCALL(glBufferSubDataARB(This->buffer_type_hint, start, len, data + start));
+            GL_EXTCALL(glBufferSubDataARB(buffer->buffer_type_hint, start, len, data + start));
             checkGLcall("glBufferSubDataARB");
             LEAVE_GL();
         }
@@ -1188,9 +1162,9 @@ end:
     context_release(context);
 }
 
-static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *iface)
+WINED3DRESOURCETYPE CDECL wined3d_buffer_get_type(const struct wined3d_buffer *buffer)
 {
-    return resource_get_type(&((struct wined3d_buffer *)iface)->resource);
+    return resource_get_type(&buffer->resource);
 }
 
 /* IWineD3DBuffer methods */
@@ -1245,82 +1219,80 @@ static GLbitfield buffer_gl_map_flags(DWORD d3d_flags)
     return ret;
 }
 
-static struct wined3d_resource * STDMETHODCALLTYPE buffer_GetResource(IWineD3DBuffer *iface)
+struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffer *buffer)
 {
-    TRACE("iface %p.\n", iface);
+    TRACE("buffer %p.\n", buffer);
 
-    return &((struct wined3d_buffer *)iface)->resource;
+    return &buffer->resource;
 }
 
-static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, UINT size, BYTE **data, DWORD flags)
+HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UINT size, BYTE **data, DWORD flags)
 {
-    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
+    BOOL dirty = buffer_is_dirty(buffer);
     LONG count;
-    BOOL dirty = buffer_is_dirty(This);
 
-    TRACE("iface %p, offset %u, size %u, data %p, flags %#x\n", iface, offset, size, data, flags);
+    TRACE("buffer %p, offset %u, size %u, data %p, flags %#x\n", buffer, offset, size, data, flags);
 
-    flags = buffer_sanitize_flags(This, flags);
+    flags = buffer_sanitize_flags(buffer, flags);
     if (!(flags & WINED3DLOCK_READONLY))
     {
-        if (!buffer_add_dirty_area(This, offset, size)) return E_OUTOFMEMORY;
+        if (!buffer_add_dirty_area(buffer, offset, size)) return E_OUTOFMEMORY;
     }
 
-    count = InterlockedIncrement(&This->lock_count);
+    count = InterlockedIncrement(&buffer->lock_count);
 
-    if (This->buffer_object)
+    if (buffer->buffer_object)
     {
-        if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
+        if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {
-            if(count == 1)
+            if (count == 1)
             {
-                IWineD3DDeviceImpl *device = This->resource.device;
+                IWineD3DDeviceImpl *device = buffer->resource.device;
                 struct wined3d_context *context;
                 const struct wined3d_gl_info *gl_info;
 
-                if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
-                {
-                    IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_INDEXBUFFER);
-                }
+                if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
+                    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
 
                 context = context_acquire(device, NULL);
                 gl_info = context->gl_info;
                 ENTER_GL();
-                GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
+                GL_EXTCALL(glBindBufferARB(buffer->buffer_type_hint, buffer->buffer_object));
 
                 if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
                 {
                     GLbitfield mapflags = buffer_gl_map_flags(flags);
-                    This->resource.allocatedMemory = GL_EXTCALL(glMapBufferRange(This->buffer_type_hint, 0,
-                                                                                This->resource.size, mapflags));
+                    buffer->resource.allocatedMemory = GL_EXTCALL(glMapBufferRange(buffer->buffer_type_hint,
+                            0, buffer->resource.size, mapflags));
                     checkGLcall("glMapBufferRange");
                 }
                 else
                 {
-                    if(This->flags & WINED3D_BUFFER_APPLESYNC)
+                    if (buffer->flags & WINED3D_BUFFER_APPLESYNC)
                     {
                         LEAVE_GL();
-                        buffer_sync_apple(This, flags, gl_info);
+                        buffer_sync_apple(buffer, flags, gl_info);
                         ENTER_GL();
                     }
-                    This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_READ_WRITE_ARB));
+                    buffer->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(buffer->buffer_type_hint,
+                            GL_READ_WRITE_ARB));
                     checkGLcall("glMapBufferARB");
                 }
                 LEAVE_GL();
 
-                if (((DWORD_PTR) This->resource.allocatedMemory) & (RESOURCE_ALIGNMENT - 1))
+                if (((DWORD_PTR)buffer->resource.allocatedMemory) & (RESOURCE_ALIGNMENT - 1))
                 {
-                    WARN("Pointer %p is not %u byte aligned, falling back to double buffered operation\n",
-                        This->resource.allocatedMemory, RESOURCE_ALIGNMENT);
+                    WARN("Pointer %p is not %u byte aligned, falling back to double buffered operation.\n",
+                            buffer->resource.allocatedMemory, RESOURCE_ALIGNMENT);
 
                     ENTER_GL();
-                    GL_EXTCALL(glUnmapBufferARB(This->buffer_type_hint));
+                    GL_EXTCALL(glUnmapBufferARB(buffer->buffer_type_hint));
                     checkGLcall("glUnmapBufferARB");
                     LEAVE_GL();
-                    This->resource.allocatedMemory = NULL;
+                    buffer->resource.allocatedMemory = NULL;
 
-                    buffer_get_sysmem(This, gl_info);
-                    TRACE("New pointer is %p\n", This->resource.allocatedMemory);
+                    buffer_get_sysmem(buffer, gl_info);
+                    TRACE("New pointer is %p.\n", buffer->resource.allocatedMemory);
                 }
                 context_release(context);
             }
@@ -1329,139 +1301,111 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
         {
             if (dirty)
             {
-                if (This->flags & WINED3D_BUFFER_NOSYNC && !(flags & WINED3DLOCK_NOOVERWRITE))
+                if (buffer->flags & WINED3D_BUFFER_NOSYNC && !(flags & WINED3DLOCK_NOOVERWRITE))
                 {
-                    This->flags &= ~WINED3D_BUFFER_NOSYNC;
+                    buffer->flags &= ~WINED3D_BUFFER_NOSYNC;
                 }
             }
             else if(flags & WINED3DLOCK_NOOVERWRITE)
             {
-                This->flags |= WINED3D_BUFFER_NOSYNC;
+                buffer->flags |= WINED3D_BUFFER_NOSYNC;
             }
 
             if (flags & WINED3DLOCK_DISCARD)
             {
-                This->flags |= WINED3D_BUFFER_DISCARD;
+                buffer->flags |= WINED3D_BUFFER_DISCARD;
             }
         }
     }
 
-    *data = This->resource.allocatedMemory + offset;
+    *data = buffer->resource.allocatedMemory + offset;
 
-    TRACE("Returning memory at %p (base %p, offset %u)\n", *data, This->resource.allocatedMemory, offset);
-    /* TODO: check Flags compatibility with This->currentDesc.Usage (see MSDN) */
+    TRACE("Returning memory at %p (base %p, offset %u).\n", *data, buffer->resource.allocatedMemory, offset);
+    /* TODO: check Flags compatibility with buffer->currentDesc.Usage (see MSDN) */
 
     return WINED3D_OK;
 }
 
-static void STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
+void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
 {
-    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
     ULONG i;
 
-    TRACE("(%p)\n", This);
+    TRACE("buffer %p.\n", buffer);
 
     /* In the case that the number of Unmap calls > the
      * number of Map calls, d3d returns always D3D_OK.
      * This is also needed to prevent Map from returning garbage on
      * the next call (this will happen if the lock_count is < 0). */
-    if (!This->lock_count)
+    if (!buffer->lock_count)
     {
-        WARN("Unmap called without a previous Map call.\n");
+        WARN("Unmap called without a previous map call.\n");
         return;
     }
 
-    if (InterlockedDecrement(&This->lock_count))
+    if (InterlockedDecrement(&buffer->lock_count))
     {
         /* Delay loading the buffer until everything is unlocked */
-        TRACE("Ignoring unlock\n");
+        TRACE("Ignoring unmap.\n");
         return;
     }
 
-    if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER) && This->buffer_object)
+    if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER) && buffer->buffer_object)
     {
-        IWineD3DDeviceImpl *device = This->resource.device;
+        IWineD3DDeviceImpl *device = buffer->resource.device;
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
-        if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
+        if (buffer->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
         {
-            IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_INDEXBUFFER);
+            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_INDEXBUFFER);
         }
 
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
         ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
+        GL_EXTCALL(glBindBufferARB(buffer->buffer_type_hint, buffer->buffer_object));
 
         if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
         {
-            for(i = 0; i < This->modified_areas; i++)
+            for (i = 0; i < buffer->modified_areas; ++i)
             {
-                GL_EXTCALL(glFlushMappedBufferRange(This->buffer_type_hint,
-                                                    This->maps[i].offset,
-                                                    This->maps[i].size));
+                GL_EXTCALL(glFlushMappedBufferRange(buffer->buffer_type_hint,
+                        buffer->maps[i].offset, buffer->maps[i].size));
                 checkGLcall("glFlushMappedBufferRange");
             }
         }
-        else if (This->flags & WINED3D_BUFFER_FLUSH)
+        else if (buffer->flags & WINED3D_BUFFER_FLUSH)
         {
-            for(i = 0; i < This->modified_areas; i++)
+            for (i = 0; i < buffer->modified_areas; ++i)
             {
-                GL_EXTCALL(glFlushMappedBufferRangeAPPLE(This->buffer_type_hint,
-                                                         This->maps[i].offset,
-                                                         This->maps[i].size));
+                GL_EXTCALL(glFlushMappedBufferRangeAPPLE(buffer->buffer_type_hint,
+                        buffer->maps[i].offset, buffer->maps[i].size));
                 checkGLcall("glFlushMappedBufferRangeAPPLE");
             }
         }
 
-        GL_EXTCALL(glUnmapBufferARB(This->buffer_type_hint));
+        GL_EXTCALL(glUnmapBufferARB(buffer->buffer_type_hint));
         LEAVE_GL();
         context_release(context);
 
-        This->resource.allocatedMemory = NULL;
-        buffer_clear_dirty_areas(This);
+        buffer->resource.allocatedMemory = NULL;
+        buffer_clear_dirty_areas(buffer);
     }
-    else if (This->flags & WINED3D_BUFFER_HASDESC)
+    else if (buffer->flags & WINED3D_BUFFER_HASDESC)
     {
-        buffer_PreLoad(iface);
+        wined3d_buffer_preload(buffer);
     }
 }
 
-static void STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DBUFFER_DESC *desc)
+void CDECL wined3d_buffer_get_desc(const struct wined3d_buffer *buffer, WINED3DBUFFER_DESC *desc)
 {
-    struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
+    TRACE("buffer %p, desc %p.\n", buffer, desc);
 
-    TRACE("(%p)\n", This);
-
-    desc->Type = This->resource.resourceType;
-    desc->Usage = This->resource.usage;
-    desc->Pool = This->resource.pool;
-    desc->Size = This->resource.size;
+    desc->Type = buffer->resource.resourceType;
+    desc->Usage = buffer->resource.usage;
+    desc->Pool = buffer->resource.pool;
+    desc->Size = buffer->resource.size;
 }
-
-static const struct IWineD3DBufferVtbl wined3d_buffer_vtbl =
-{
-    /* IUnknown methods */
-    buffer_QueryInterface,
-    buffer_AddRef,
-    buffer_Release,
-    /* IWineD3DBase methods */
-    buffer_GetParent,
-    /* IWineD3DResource methods */
-    buffer_SetPrivateData,
-    buffer_GetPrivateData,
-    buffer_FreePrivateData,
-    buffer_SetPriority,
-    buffer_GetPriority,
-    buffer_PreLoad,
-    buffer_GetType,
-    /* IWineD3DBuffer methods */
-    buffer_GetResource,
-    buffer_Map,
-    buffer_Unmap,
-    buffer_GetDesc,
-};
 
 static const struct wined3d_resource_ops buffer_resource_ops =
 {
@@ -1482,8 +1426,6 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
         WARN("Size 0 requested, returning WINED3DERR_INVALIDCALL\n");
         return WINED3DERR_INVALIDCALL;
     }
-
-    buffer->vtbl = &wined3d_buffer_vtbl;
 
     hr = resource_init(&buffer->resource, WINED3DRTYPE_BUFFER, device, size,
             usage, format, pool, parent, parent_ops, &buffer_resource_ops);
@@ -1528,7 +1470,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
     {
         BYTE *ptr;
 
-        hr = IWineD3DBuffer_Map((IWineD3DBuffer *)buffer, 0, size, &ptr, 0);
+        hr = wined3d_buffer_map(buffer, 0, size, &ptr, 0);
         if (FAILED(hr))
         {
             ERR("Failed to map buffer, hr %#x\n", hr);
@@ -1539,7 +1481,7 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
 
         memcpy(ptr, data, size);
 
-        IWineD3DBuffer_Unmap((IWineD3DBuffer *)buffer);
+        wined3d_buffer_unmap(buffer);
     }
 
     buffer->maps = HeapAlloc(GetProcessHeap(), 0, sizeof(*buffer->maps));

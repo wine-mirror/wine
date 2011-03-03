@@ -2110,6 +2110,7 @@ interface IWineD3DVolume;
 interface IWineD3DSwapChain;
 interface IWineD3DDevice;
 struct wined3d;
+struct wined3d_buffer;
 struct wined3d_clipper;
 struct wined3d_palette;
 struct wined3d_query;
@@ -2521,28 +2522,6 @@ interface IWineD3DSwapChain : IWineD3DBase
 [
     object,
     local,
-    uuid(b3f028e8-1a40-4ab3-9292-5bf6cfd80209)
-]
-interface IWineD3DBuffer : IWineD3DResource
-{
-    struct wined3d_resource *GetResource(
-    );
-    HRESULT Map(
-        [in] UINT offset,
-        [in] UINT size,
-        [out] BYTE **data,
-        [in] DWORD flags
-    );
-    void Unmap(
-    );
-    void GetDesc(
-        [out] WINED3DBUFFER_DESC *desc
-    );
-}
-
-[
-    object,
-    local,
     uuid(eac93065-a4df-446f-86a1-9ef2bca40a3c)
 ]
 interface IWineD3DBaseShader : IWineD3DBase
@@ -2597,7 +2576,7 @@ interface IWineD3DDevice : IUnknown
         [in] const void *data,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DBuffer **buffer
+        [out] struct wined3d_buffer **buffer
     );
     HRESULT CreateVertexBuffer(
         [in] UINT length,
@@ -2605,7 +2584,7 @@ interface IWineD3DDevice : IUnknown
         [in] WINED3DPOOL pool,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DBuffer **vertex_buffer
+        [out] struct wined3d_buffer **vertex_buffer
     );
     HRESULT CreateIndexBuffer(
         [in] UINT length,
@@ -2613,7 +2592,7 @@ interface IWineD3DDevice : IUnknown
         [in] WINED3DPOOL pool,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DBuffer **index_buffer
+        [out] struct wined3d_buffer **index_buffer
     );
     HRESULT CreateStateBlock(
         [in] WINED3DSTATEBLOCKTYPE type,
@@ -2840,11 +2819,11 @@ interface IWineD3DDevice : IUnknown
         [out] WINED3DGAMMARAMP *ramp
     );
     HRESULT SetIndexBuffer(
-        [in] IWineD3DBuffer *index_buffer,
+        [in] struct wined3d_buffer *index_buffer,
         [in] enum wined3d_format_id format_id
     );
     HRESULT GetIndexBuffer(
-        [out] IWineD3DBuffer **index_buffer
+        [out] struct wined3d_buffer **index_buffer
     );
     HRESULT SetBaseVertexIndex(
         [in] INT base_index
@@ -2962,13 +2941,13 @@ interface IWineD3DDevice : IUnknown
     );
     HRESULT SetStreamSource(
         [in] UINT stream_idx,
-        [in] IWineD3DBuffer *buffer,
+        [in] struct wined3d_buffer *buffer,
         [in] UINT offset,
         [in] UINT stride
     );
     HRESULT GetStreamSource(
         [in] UINT stream_idx,
-        [out] IWineD3DBuffer **buffer,
+        [out] struct wined3d_buffer **buffer,
         [out] UINT *offset,
         [out] UINT *stride
     );
@@ -3064,7 +3043,7 @@ interface IWineD3DDevice : IUnknown
         [in] UINT src_start_idx,
         [in] UINT dst_idx,
         [in] UINT vertex_count,
-        [in] IWineD3DBuffer *dest_buffer,
+        [in] struct wined3d_buffer *dst_buffer,
         [in] struct wined3d_vertex_declaration *declaration,
         [in] DWORD flags,
         [in] DWORD DestFVF
@@ -3224,6 +3203,23 @@ HRESULT __cdecl wined3d_get_device_caps(const struct wined3d *wined3d, UINT adap
 void * __cdecl wined3d_get_parent(const struct wined3d *wined3d);
 ULONG __cdecl wined3d_incref(struct wined3d *wined3d);
 HRESULT __cdecl wined3d_register_software_device(struct wined3d *wined3d, void *init_function);
+
+ULONG __cdecl wined3d_buffer_decref(struct wined3d_buffer *buffer);
+HRESULT __cdecl wined3d_buffer_free_private_data(struct wined3d_buffer *buffer, REFGUID guid);
+void __cdecl wined3d_buffer_get_desc(const struct wined3d_buffer *buffer, WINED3DBUFFER_DESC *desc);
+void * __cdecl wined3d_buffer_get_parent(const struct wined3d_buffer *buffer);
+DWORD __cdecl wined3d_buffer_get_priority(const struct wined3d_buffer *buffer);
+HRESULT __cdecl wined3d_buffer_get_private_data(const struct wined3d_buffer *buffer,
+        REFGUID guid, void *data, DWORD *data_size);
+struct wined3d_resource * __cdecl wined3d_buffer_get_resource(struct wined3d_buffer *buffer);
+WINED3DRESOURCETYPE __cdecl wined3d_buffer_get_type(const struct wined3d_buffer *buffer);
+ULONG __cdecl wined3d_buffer_incref(struct wined3d_buffer *buffer);
+HRESULT __cdecl wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UINT size, BYTE **data, DWORD flags);
+void  __cdecl wined3d_buffer_preload(struct wined3d_buffer *buffer);
+DWORD __cdecl wined3d_buffer_set_priority(struct wined3d_buffer *buffer, DWORD new_priority);
+HRESULT __cdecl wined3d_buffer_set_private_data(struct wined3d_buffer *buffer,
+        REFGUID guid, const void *data, DWORD data_size, DWORD flags);
+void __cdecl wined3d_buffer_unmap(struct wined3d_buffer *buffer);
 
 struct wined3d_clipper * __cdecl wined3d_clipper_create(void);
 ULONG __cdecl wined3d_clipper_decref(struct wined3d_clipper *clipper);

@@ -290,7 +290,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         EnterCriticalSection(&ddraw_cs);
         /* Free the index buffer. */
         IWineD3DDevice_SetIndexBuffer(This->wineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
-        IWineD3DBuffer_Release(This->indexbuffer);
+        wined3d_buffer_decref(This->indexbuffer);
 
         /* There is no need to unset the vertex buffer here, IWineD3DDevice_Uninit3D will do that when
          * destroying the primary stateblock. If a vertex buffer is destroyed while it is bound
@@ -4173,11 +4173,11 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     /* check that the buffer is large enough to hold the indices,
      * reallocate if necessary. */
-    IWineD3DBuffer_GetDesc(This->indexbuffer, &desc);
+    wined3d_buffer_get_desc(This->indexbuffer, &desc);
     if (desc.Size < IndexCount * sizeof(WORD))
     {
         UINT size = max(desc.Size * 2, IndexCount * sizeof(WORD));
-        IWineD3DBuffer *buffer;
+        struct wined3d_buffer *buffer;
 
         TRACE("Growing index buffer to %u bytes\n", size);
 
@@ -4190,29 +4190,24 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
             return hr;
         }
 
-        IWineD3DBuffer_Release(This->indexbuffer);
+        wined3d_buffer_decref(This->indexbuffer);
         This->indexbuffer = buffer;
     }
 
-    /* copy the index stream into the index buffer.
-     * A new IWineD3DDevice method could be created
-     * which takes an user pointer containing the indices
-     * or a SetData-Method for the index buffer, which
-     * overrides the index buffer data with our pointer.
-     */
-    hr = IWineD3DBuffer_Map(This->indexbuffer,
-                            0 /* OffSetToLock */,
-                            IndexCount * sizeof(WORD),
-                            (BYTE **) &LockedIndices,
-                            0 /* Flags */);
-    if(hr != D3D_OK)
+    /* Copy the index stream into the index buffer. A new IWineD3DDevice
+     * method could be created which takes an user pointer containing the
+     * indices or a SetData-Method for the index buffer, which overrides the
+     * index buffer data with our pointer. */
+    hr = wined3d_buffer_map(This->indexbuffer, 0, IndexCount * sizeof(WORD),
+            (BYTE **)&LockedIndices, 0);
+    if (FAILED(hr))
     {
-        ERR("(%p) IWineD3DBuffer::Map failed with hr = %08x\n", This, hr);
+        ERR("Failed to map buffer, hr %#x.\n", hr);
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
     memcpy(LockedIndices, Indices, IndexCount * sizeof(WORD));
-    IWineD3DBuffer_Unmap(This->indexbuffer);
+    wined3d_buffer_unmap(This->indexbuffer);
 
     /* Set the index stream */
     IWineD3DDevice_SetBaseVertexIndex(This->wineD3DDevice, StartVertex);
@@ -6814,7 +6809,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
     if (FAILED(hr))
     {
         ERR("Failed to set render target, hr %#x.\n", hr);
-        IWineD3DBuffer_Release(device->indexbuffer);
+        wined3d_buffer_decref(device->indexbuffer);
         ddraw_handle_table_destroy(&device->handle_table);
         return hr;
     }

@@ -333,7 +333,7 @@ struct IDirect3DDeviceImpl
     /* Other object connections */
     IWineD3DDevice          *wineD3DDevice;
     IDirectDrawImpl         *ddraw;
-    IWineD3DBuffer          *indexbuffer;
+    struct wined3d_buffer *indexbuffer;
     IDirectDrawSurfaceImpl  *target;
 
     /* Viewport management */
@@ -577,7 +577,7 @@ struct IDirect3DVertexBufferImpl
     LONG                 ref;
 
     /*** WineD3D and ddraw links ***/
-    IWineD3DBuffer *wineD3DVertexBuffer;
+    struct wined3d_buffer *wineD3DVertexBuffer;
     struct wined3d_vertex_declaration *wineD3DVertexDeclaration;
     IDirectDrawImpl *ddraw;
 

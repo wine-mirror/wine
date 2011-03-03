@@ -490,14 +490,14 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
             struct wined3d_buffer *buffer = stateblock->state.streams[counter].buffer;
             if (buffer)
             {
-                if (IWineD3DBuffer_Release((IWineD3DBuffer *)buffer))
+                if (wined3d_buffer_decref(buffer))
                 {
                     WARN("Buffer %p still referenced by stateblock, stream %u.\n", buffer, counter);
                 }
             }
         }
         if (stateblock->state.index_buffer)
-            IWineD3DBuffer_Release((IWineD3DBuffer *)stateblock->state.index_buffer);
+            wined3d_buffer_decref(stateblock->state.index_buffer);
         if (stateblock->state.vertex_shader)
             IWineD3DVertexShader_Release((IWineD3DVertexShader *)stateblock->state.vertex_shader);
         if (stateblock->state.pixel_shader)
@@ -715,9 +715,9 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
                 src_state->index_buffer, src_state->base_vertex_index);
 
         if (src_state->index_buffer)
-            IWineD3DBuffer_AddRef((IWineD3DBuffer *)src_state->index_buffer);
+            wined3d_buffer_incref(src_state->index_buffer);
         if (stateblock->state.index_buffer)
-            IWineD3DBuffer_Release((IWineD3DBuffer *)stateblock->state.index_buffer);
+            wined3d_buffer_decref(stateblock->state.index_buffer);
         stateblock->state.index_buffer = src_state->index_buffer;
         stateblock->state.base_vertex_index = src_state->base_vertex_index;
         stateblock->state.index_format = src_state->index_format;
@@ -773,9 +773,9 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
 
             stateblock->state.streams[i].stride = src_state->streams[i].stride;
             if (src_state->streams[i].buffer)
-                    IWineD3DBuffer_AddRef((IWineD3DBuffer *)src_state->streams[i].buffer);
+                    wined3d_buffer_incref(src_state->streams[i].buffer);
             if (stateblock->state.streams[i].buffer)
-                    IWineD3DBuffer_Release((IWineD3DBuffer *)stateblock->state.streams[i].buffer);
+                    wined3d_buffer_decref(stateblock->state.streams[i].buffer);
             stateblock->state.streams[i].buffer = src_state->streams[i].buffer;
         }
     }

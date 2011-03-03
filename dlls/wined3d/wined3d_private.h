@@ -55,6 +55,7 @@
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
+typedef struct wined3d_buffer IWineD3DBuffer;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 
@@ -2542,7 +2543,6 @@ struct wined3d_map_range
 
 struct wined3d_buffer
 {
-    const struct IWineD3DBufferVtbl *vtbl;
     struct wined3d_resource resource;
 
     struct wined3d_buffer_desc desc;

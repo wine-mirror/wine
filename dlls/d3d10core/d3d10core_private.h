@@ -113,7 +113,7 @@ struct d3d10_buffer
     const struct ID3D10BufferVtbl *vtbl;
     LONG refcount;
 
-    IWineD3DBuffer *wined3d_buffer;
+    struct wined3d_buffer *wined3d_buffer;
 };
 
 HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *device,
