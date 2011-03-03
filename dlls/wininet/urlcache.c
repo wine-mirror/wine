@@ -154,10 +154,10 @@ typedef struct _URLCACHE_HEADER
     DWORD dwIndexCapacityInBlocks;
     DWORD dwBlocksInUse;
     DWORD dwUnknown1;
-    DWORD dwCacheLimitLow; /* disk space limit for cache */
-    DWORD dwCacheLimitHigh; /* disk space limit for cache */
-    DWORD dwUnknown4; /* current disk space usage for cache */
-    DWORD dwUnknown5; /* current disk space usage for cache */
+    DWORD dwCacheLimitLow;
+    DWORD dwCacheLimitHigh;
+    DWORD dwCacheUsageLow;
+    DWORD dwCacheUsageHigh;
     DWORD dwUnknown6; /* possibly a flag? */
     DWORD dwUnknown7;
     BYTE DirectoryCount; /* number of directory_data's */
