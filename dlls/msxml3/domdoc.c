@@ -1588,10 +1588,7 @@ static HRESULT WINAPI domdoc_put_documentElement(
         return hr;
 
     xmlNode = get_node_obj( elementNode );
-    if(!xmlNode) {
-        FIXME("elementNode is not our object\n");
-        return E_FAIL;
-    }
+    if(!xmlNode) return E_FAIL;
 
     if(!xmlNode->node->parent)
         if(xmldoc_remove_orphan(xmlNode->node->doc, xmlNode->node) != S_OK)

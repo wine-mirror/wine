@@ -231,10 +231,7 @@ static HRESULT WINAPI xmlnodemap_setNamedItem(
 
     /* Must be an Attribute */
     ThisNew = get_node_obj( newItem );
-    if(!ThisNew) {
-        FIXME("ThisNew is not our node implementation\n");
-        return E_FAIL;
-    }
+    if(!ThisNew) return E_FAIL;
 
     if(ThisNew->node->type != XML_ATTRIBUTE_NODE)
         return E_FAIL;

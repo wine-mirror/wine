@@ -1192,11 +1192,7 @@ static HRESULT WINAPI domelem_setAttributeNode(
     if (!attribute) return E_INVALIDARG;
 
     attr_node = get_node_obj((IXMLDOMNode*)attribute);
-    if (!attr_node)
-    {
-        FIXME("att_node is not our node implementation\n");
-        return E_FAIL;
-    }
+    if (!attr_node) return E_FAIL;
 
     if (attr_node->parent)
     {

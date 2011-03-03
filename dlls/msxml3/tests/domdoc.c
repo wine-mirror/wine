@@ -2958,13 +2958,17 @@ static void test_removeChild(void)
 
     /* ba_node is a descendant of element, but not a direct child. */
     removed_node = (void*)0xdeadbeef;
+    EXPECT_REF(ba_node, 1);
     r = IXMLDOMElement_removeChild( element, ba_node, &removed_node );
     ok( r == E_INVALIDARG, "ret %08x\n", r );
     ok( removed_node == NULL, "%p\n", removed_node );
+    EXPECT_REF(ba_node, 1);
 
+    EXPECT_REF(ba_node, 1);
     r = IXMLDOMElement_removeChild( element, fo_node, &removed_node );
     ok( r == S_OK, "ret %08x\n", r);
     ok( fo_node == removed_node, "node %p node2 %p\n", fo_node, removed_node );
+    EXPECT_REF(ba_node, 1);
 
     /* try removing already removed child */
     temp_node = (void*)0xdeadbeef;
@@ -7397,6 +7401,8 @@ static void test_createNode(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
+    EXPECT_REF(doc, 1);
+
     /* reference count tests */
     hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &elem);
     ok( hr == S_OK, "got 0x%08x\n", hr);
@@ -7408,6 +7414,14 @@ todo_wine {
     ok(ref == 1, "got %d\n", ref);
     /* it's released already, attempt to release now will crash it */
 }
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &elem);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine EXPECT_REF(elem, 2);
+    IXMLDOMDocument_Release(doc);
+    todo_wine EXPECT_REF(elem, 2);
+
+    doc = create_document(&IID_IXMLDOMDocument);
 
     /* NODE_ELEMENT nodes */
     /* 1. specified namespace */
@@ -7964,9 +7978,9 @@ todo_wine {
 
 static void test_insertBefore(void)
 {
-    IXMLDOMDocument *doc;
+    IXMLDOMDocument *doc, *doc2;
     IXMLDOMAttribute *attr;
-    IXMLDOMElement *elem1, *elem2, *elem3;
+    IXMLDOMElement *elem1, *elem2, *elem3, *elem4, *elem5;
     IXMLDOMNode *node, *newnode;
     HRESULT hr;
     VARIANT v;
@@ -8109,11 +8123,44 @@ static void test_insertBefore(void)
     ok(node == (void*)elem2, "got %p\n", node);
 
     EXPECT_CHILDREN(elem3);
-    todo_wine EXPECT_NO_CHILDREN(elem1);
+    EXPECT_NO_CHILDREN(elem1);
+
+    /* cross document case - try to add as child to a node created with other doc */
+    doc2 = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_createElement(doc2, _bstr_("elem4"), &elem4);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine EXPECT_REF(elem4, 2);
+
+    /* same name, another instance */
+    hr = IXMLDOMDocument_createElement(doc2, _bstr_("elem4"), &elem5);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine EXPECT_REF(elem5, 2);
+
+    todo_wine EXPECT_REF(elem3, 2);
+    V_VT(&v) = VT_NULL;
+    node = NULL;
+    hr = IXMLDOMElement_insertBefore(elem3, (IXMLDOMNode*)elem4, v, &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(node == (void*)elem4, "got %p\n", node);
+    todo_wine EXPECT_REF(elem4, 3);
+    todo_wine EXPECT_REF(elem3, 2);
+
+    V_VT(&v) = VT_NULL;
+    node = NULL;
+    hr = IXMLDOMElement_insertBefore(elem3, (IXMLDOMNode*)elem5, v, &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(node == (void*)elem5, "got %p\n", node);
+    todo_wine EXPECT_REF(elem4, 3);
+    todo_wine EXPECT_REF(elem5, 3);
+
+    IXMLDOMDocument_Release(doc2);
 
     IXMLDOMElement_Release(elem1);
     IXMLDOMElement_Release(elem2);
     IXMLDOMElement_Release(elem3);
+    IXMLDOMElement_Release(elem4);
+    IXMLDOMElement_Release(elem5);
     IXMLDOMDocument_Release(doc);
     free_bstrs();
 }

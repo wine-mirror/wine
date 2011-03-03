@@ -121,10 +121,11 @@ BOOL node_query_interface(xmlnode *This, REFIID riid, void **ppv)
 
 xmlnode *get_node_obj(IXMLDOMNode *node)
 {
-    xmlnode *obj;
+    xmlnode *obj = NULL;
     HRESULT hres;
 
     hres = IXMLDOMNode_QueryInterface(node, &IID_xmlnode, (void**)&obj);
+    if (!obj) WARN("node is not our IXMLDOMNode implementation\n");
     return SUCCEEDED(hres) ? obj : NULL;
 }
 
@@ -291,7 +292,7 @@ HRESULT node_get_next_sibling(xmlnode *This, IXMLDOMNode **ret)
 HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT *ref_child,
         IXMLDOMNode **ret)
 {
-    xmlNodePtr before_node, new_child_node;
+    xmlNodePtr new_child_node;
     IXMLDOMNode *before = NULL;
     xmlnode *node_obj;
     HRESULT hr;
@@ -300,10 +301,7 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
         return E_INVALIDARG;
 
     node_obj = get_node_obj(new_child);
-    if(!node_obj) {
-        FIXME("newChild is not our node implementation\n");
-        return E_FAIL;
-    }
+    if(!node_obj) return E_FAIL;
 
     switch(V_VT(ref_child))
     {
@@ -313,7 +311,7 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
 
     case VT_UNKNOWN:
     case VT_DISPATCH:
-        hr = IUnknown_QueryInterface(V_UNKNOWN(ref_child), &IID_IXMLDOMNode, (LPVOID)&before);
+        hr = IUnknown_QueryInterface(V_UNKNOWN(ref_child), &IID_IXMLDOMNode, (void**)&before);
         if(FAILED(hr)) return hr;
         break;
 
@@ -331,22 +329,27 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
 
     if(before)
     {
-        node_obj = get_node_obj(before);
+        xmlnode *before_node_obj = get_node_obj(before);
         IXMLDOMNode_Release(before);
-        if(!node_obj) {
-            FIXME("before node is not our node implementation\n");
-            return E_FAIL;
-        }
+        if(!before_node_obj) return E_FAIL;
 
-        before_node = node_obj->node;
-        xmlAddPrevSibling(before_node, new_child_node);
+        /* unlink from current parent first */
+        if(node_obj->parent)
+            IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
+        xmlAddPrevSibling(before_node_obj->node, new_child_node);
+        node_obj->parent = This->parent;
     }
     else
     {
+        /* unlink from current parent first */
+        if(node_obj->parent)
+            IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
         xmlAddChild(This->node, new_child_node);
+        node_obj->parent = This->iface;
     }
 
-    if(ret) {
+    if(ret)
+    {
         IXMLDOMNode_AddRef(new_child);
         *ret = new_child;
     }
@@ -371,10 +374,7 @@ HRESULT node_replace_child(xmlnode *This, IXMLDOMNode *newChild, IXMLDOMNode *ol
         *ret = NULL;
 
     old_child = get_node_obj(oldChild);
-    if(!old_child) {
-        FIXME("oldChild is not our node implementation\n");
-        return E_FAIL;
-    }
+    if(!old_child) return E_FAIL;
 
     if(old_child->node->parent != This->node)
     {
@@ -383,10 +383,7 @@ HRESULT node_replace_child(xmlnode *This, IXMLDOMNode *newChild, IXMLDOMNode *ol
     }
 
     new_child = get_node_obj(newChild);
-    if(!new_child) {
-        FIXME("newChild is not our node implementation\n");
-        return E_FAIL;
-    }
+    if(!new_child) return E_FAIL;
 
     my_ancestor = This->node;
     while(my_ancestor)
@@ -407,6 +404,8 @@ HRESULT node_replace_child(xmlnode *This, IXMLDOMNode *newChild, IXMLDOMNode *ol
     xmldoc_add_ref(old_child->node->doc);
     xmlReplaceNode(old_child->node, new_child->node);
     xmldoc_release(leaving_doc);
+    new_child->parent = old_child->parent;
+    old_child->parent = NULL;
 
     xmldoc_add_orphan(old_child->node->doc, old_child->node);
 
@@ -429,10 +428,7 @@ HRESULT node_remove_child(xmlnode *This, IXMLDOMNode* child, IXMLDOMNode** oldCh
         *oldChild = NULL;
 
     child_node = get_node_obj(child);
-    if(!child_node) {
-        FIXME("childNode is not our node implementation\n");
-        return E_FAIL;
-    }
+    if(!child_node) return E_FAIL;
 
     if(child_node->node->parent != This->node)
     {
@@ -441,6 +437,7 @@ HRESULT node_remove_child(xmlnode *This, IXMLDOMNode* child, IXMLDOMNode** oldCh
     }
 
     xmlUnlinkNode(child_node->node);
+    child_node->parent = NULL;
 
     if(oldChild)
     {
@@ -959,10 +956,7 @@ HRESULT node_transform_node(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *
     *p = NULL;
 
     sheet = get_node_obj(stylesheet);
-    if(!sheet) {
-        FIXME("styleSheet is not our xmlnode implementation\n");
-        return E_FAIL;
-    }
+    if(!sheet) return E_FAIL;
 
     xsltSS = pxsltParseStylesheetDoc(sheet->node->doc);
     if(xsltSS)
