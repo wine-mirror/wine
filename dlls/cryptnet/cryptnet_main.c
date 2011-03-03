@@ -748,7 +748,6 @@ static void CRYPT_CacheURL(LPCWSTR pszURL, const CRYPT_BLOB_ARRAY *pObject,
             {
                 create = TRUE;
                 DeleteUrlCacheEntryW(pszURL);
-                DeleteFileW(cacheFileName);
             }
             CryptMemFree(info);
         }
