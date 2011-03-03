@@ -984,8 +984,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
 
     if (stateblock->changed.indices)
     {
-        IWineD3DDevice_SetIndexBuffer(device, (IWineD3DBuffer *)stateblock->state.index_buffer,
-                stateblock->state.index_format);
+        IWineD3DDevice_SetIndexBuffer(device, stateblock->state.index_buffer, stateblock->state.index_format);
         IWineD3DDevice_SetBaseVertexIndex(device, stateblock->state.base_vertex_index);
     }
 
@@ -1014,7 +1013,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     {
         if (map & 1)
             IWineD3DDevice_SetStreamSource(device, i,
-                    (IWineD3DBuffer *)stateblock->state.streams[i].buffer,
+                    stateblock->state.streams[i].buffer,
                     0, stateblock->state.streams[i].stride);
     }
 

@@ -55,7 +55,6 @@
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
-typedef struct wined3d_buffer IWineD3DBuffer;
 struct IWineD3DBaseShaderImpl;
 struct IWineD3DBaseTextureImpl;
 
@@ -2513,8 +2512,6 @@ struct wined3d_query
 };
 
 HRESULT query_init(struct wined3d_query *query, IWineD3DDeviceImpl *device, WINED3DQUERYTYPE type) DECLSPEC_HIDDEN;
-
-/* IWineD3DBuffer */
 
 /* TODO: Add tests and support for FLOAT16_4 POSITIONT, D3DCOLOR position, other
  * fixed function semantics as D3DCOLOR or FLOAT16 */

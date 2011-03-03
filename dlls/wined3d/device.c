@@ -891,7 +891,7 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface, struct wined3d_buffer_desc *desc,
-        const void *data, void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DBuffer **buffer)
+        const void *data, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
@@ -920,21 +920,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface, str
 
     TRACE("Created buffer %p.\n", object);
 
-    *buffer = (IWineD3DBuffer *)object;
+    *buffer = object;
 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface,
-        UINT Size, DWORD Usage, WINED3DPOOL Pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops, IWineD3DBuffer **ppVertexBuffer)
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage,
+        WINED3DPOOL Pool, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
     HRESULT hr;
 
-    TRACE("iface %p, size %u, usage %#x, pool %#x, buffer %p, parent %p, parent_ops %p.\n",
-            iface, Size, Usage, Pool, ppVertexBuffer, parent, parent_ops);
+    TRACE("iface %p, size %u, usage %#x, pool %#x, parent %p, parent_ops %p, buffer %p.\n",
+            iface, Size, Usage, Pool, parent, parent_ops, buffer);
 
     if (Pool == WINED3DPOOL_SCRATCH)
     {
@@ -942,7 +941,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
          * anyway, SCRATCH vertex buffers aren't usable anywhere
          */
         WARN("Vertex buffer in D3DPOOL_SCRATCH requested, returning WINED3DERR_INVALIDCALL\n");
-        *ppVertexBuffer = NULL;
+        *buffer = NULL;
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -950,7 +949,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     if (!object)
     {
         ERR("Out of memory\n");
-        *ppVertexBuffer = NULL;
+        *buffer = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -964,27 +963,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     }
 
     TRACE("Created buffer %p.\n", object);
-    *ppVertexBuffer = (IWineD3DBuffer *)object;
+    *buffer = object;
 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface,
-        UINT Length, DWORD Usage, WINED3DPOOL Pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops, IWineD3DBuffer **ppIndexBuffer)
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage,
+        WINED3DPOOL Pool, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
     HRESULT hr;
 
-    TRACE("(%p) Creating index buffer\n", This);
+    TRACE("iface %p, size %u, usage %#x, pool %#x, parent %p, parent_ops %p, buffer %p.\n",
+            iface, Length, Usage, Pool, parent, parent_ops, buffer);
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
         ERR("Out of memory\n");
-        *ppIndexBuffer = NULL;
+        *buffer = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -1000,7 +999,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
 
     TRACE("Created buffer %p.\n", object);
 
-    *ppIndexBuffer = (IWineD3DBuffer *) object;
+    *buffer = object;
 
     return WINED3D_OK;
 }
@@ -2385,18 +2384,15 @@ static UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *ifa
     return (This->adapter->TextureRam - This->adapter->UsedTextureRam);
 }
 
-/*****
- * Get / Set Stream Source
- *****/
 static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,
-        IWineD3DBuffer *pStreamData, UINT OffsetInBytes, UINT Stride)
+        struct wined3d_buffer *buffer, UINT OffsetInBytes, UINT Stride)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_stream_state *stream;
-    IWineD3DBuffer *oldSrc;
+    struct wined3d_buffer *prev_buffer;
 
     TRACE("iface %p, stream_idx %u, buffer %p, offset %u, stride %u.\n",
-            iface, StreamNumber, pStreamData, OffsetInBytes, Stride);
+            iface, StreamNumber, buffer, OffsetInBytes, Stride);
 
     if (StreamNumber >= MAX_STREAMS) {
         WARN("Stream out of range %d\n", StreamNumber);
@@ -2407,11 +2403,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     }
 
     stream = &This->updateStateBlock->state.streams[StreamNumber];
-    oldSrc = (IWineD3DBuffer *)stream->buffer;
+    prev_buffer = stream->buffer;
 
     This->updateStateBlock->changed.streamSource |= 1 << StreamNumber;
 
-    if (oldSrc == pStreamData
+    if (prev_buffer == buffer
             && stream->stride == Stride
             && stream->offset == OffsetInBytes)
     {
@@ -2419,8 +2415,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
        return WINED3D_OK;
     }
 
-    stream->buffer = (struct wined3d_buffer *)pStreamData;
-    if (pStreamData)
+    stream->buffer = buffer;
+    if (buffer)
     {
         stream->stride = Stride;
         stream->offset = OffsetInBytes;
@@ -2429,22 +2425,22 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        if (pStreamData)
-            wined3d_buffer_incref(pStreamData);
-        if (oldSrc)
-            wined3d_buffer_decref(oldSrc);
+        if (buffer)
+            wined3d_buffer_incref(buffer);
+        if (prev_buffer)
+            wined3d_buffer_decref(prev_buffer);
         return WINED3D_OK;
     }
 
-    if (pStreamData)
+    if (buffer)
     {
-        InterlockedIncrement(&((struct wined3d_buffer *)pStreamData)->bind_count);
-        wined3d_buffer_incref(pStreamData);
+        InterlockedIncrement(&buffer->bind_count);
+        wined3d_buffer_incref(buffer);
     }
-    if (oldSrc)
+    if (prev_buffer)
     {
-        InterlockedDecrement(&((struct wined3d_buffer *)oldSrc)->bind_count);
-        wined3d_buffer_decref(oldSrc);
+        InterlockedDecrement(&prev_buffer->bind_count);
+        wined3d_buffer_decref(prev_buffer);
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
@@ -2453,13 +2449,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface,
-        UINT StreamNumber, IWineD3DBuffer **pStream, UINT *pOffset, UINT *pStride)
+        UINT StreamNumber, struct wined3d_buffer **buffer, UINT *pOffset, UINT *pStride)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_stream_state *stream;
 
     TRACE("iface %p, stream_idx %u, buffer %p, offset %p, stride %p.\n",
-            iface, StreamNumber, pStream, pOffset, pStride);
+            iface, StreamNumber, buffer, pOffset, pStride);
 
     if (StreamNumber >= MAX_STREAMS)
     {
@@ -2468,12 +2464,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface,
     }
 
     stream = &This->stateBlock->state.streams[StreamNumber];
-    *pStream = (IWineD3DBuffer *)stream->buffer;
+    *buffer = stream->buffer;
     *pStride = stream->stride;
     if (pOffset) *pOffset = stream->offset;
 
-    if (*pStream)
-        wined3d_buffer_incref(*pStream);
+    if (*buffer)
+        wined3d_buffer_incref(*buffer);
 
     return WINED3D_OK;
 }
@@ -3048,55 +3044,60 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetMaterial(IWineD3DDevice *iface, WINE
  * Get / Set Indices
  *****/
 static HRESULT WINAPI IWineD3DDeviceImpl_SetIndexBuffer(IWineD3DDevice *iface,
-        IWineD3DBuffer *pIndexData, enum wined3d_format_id fmt)
+        struct wined3d_buffer *buffer, enum wined3d_format_id fmt)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBuffer *oldIdxs;
+    struct wined3d_buffer *prev_buffer;
 
-    TRACE("(%p) : Setting to %p\n", This, pIndexData);
-    oldIdxs = (IWineD3DBuffer *)This->updateStateBlock->state.index_buffer;
+    TRACE("iface %p, buffer %p, format %s.\n",
+            iface, buffer, debug_d3dformat(fmt));
+
+    prev_buffer = This->updateStateBlock->state.index_buffer;
 
     This->updateStateBlock->changed.indices = TRUE;
-    This->updateStateBlock->state.index_buffer = (struct wined3d_buffer *)pIndexData;
+    This->updateStateBlock->state.index_buffer = buffer;
     This->updateStateBlock->state.index_format = fmt;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
-        if (pIndexData)
-            wined3d_buffer_incref(pIndexData);
-        if (oldIdxs)
-            wined3d_buffer_decref(oldIdxs);
+        if (buffer)
+            wined3d_buffer_incref(buffer);
+        if (prev_buffer)
+            wined3d_buffer_decref(prev_buffer);
         return WINED3D_OK;
     }
 
-    if(oldIdxs != pIndexData) {
+    if (prev_buffer != buffer)
+    {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
-        if (pIndexData)
+        if (buffer)
         {
-            InterlockedIncrement(&((struct wined3d_buffer *)pIndexData)->bind_count);
-            wined3d_buffer_incref(pIndexData);
+            InterlockedIncrement(&buffer->bind_count);
+            wined3d_buffer_incref(buffer);
         }
-        if (oldIdxs)
+        if (prev_buffer)
         {
-            InterlockedDecrement(&((struct wined3d_buffer *)oldIdxs)->bind_count);
-            wined3d_buffer_decref(oldIdxs);
+            InterlockedDecrement(&prev_buffer->bind_count);
+            wined3d_buffer_decref(prev_buffer);
         }
     }
 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetIndexBuffer(IWineD3DDevice *iface, IWineD3DBuffer **ppIndexData)
+static HRESULT WINAPI IWineD3DDeviceImpl_GetIndexBuffer(IWineD3DDevice *iface, struct wined3d_buffer **buffer)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    *ppIndexData = (IWineD3DBuffer *)This->stateBlock->state.index_buffer;
+    TRACE("iface %p, buffer %p.\n", iface, buffer);
 
-    if (*ppIndexData)
-        wined3d_buffer_incref(*ppIndexData);
+    *buffer = This->stateBlock->state.index_buffer;
 
-    TRACE("Returning %p.\n", *ppIndexData);
+    if (*buffer)
+        wined3d_buffer_incref(*buffer);
+
+    TRACE("Returning %p.\n", *buffer);
 
     return WINED3D_OK;
 }
@@ -4274,9 +4275,9 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
 #undef copy_and_next
 
 /* Do not call while under the GL lock. */
-static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex,
-        UINT VertexCount, IWineD3DBuffer *pDestBuffer, struct wined3d_vertex_declaration *pVertexDecl, DWORD flags,
-        DWORD DestFVF)
+static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface,
+        UINT SrcStartIndex, UINT DestIndex, UINT VertexCount, struct wined3d_buffer *dst_buffer,
+        struct wined3d_vertex_declaration *pVertexDecl, DWORD flags, DWORD DestFVF)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_stream_info stream_info;
@@ -4285,7 +4286,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
     BOOL vbo = FALSE, streamWasUP = This->stateBlock->state.user_stream;
     HRESULT hr;
 
-    TRACE("(%p)->(%d,%d,%d,%p,%p,%d\n", This, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, flags);
+    TRACE("(%p)->(%d,%d,%d,%p,%p,%d\n", This, SrcStartIndex, DestIndex, VertexCount, dst_buffer, pVertexDecl, flags);
 
     if(pVertexDecl) {
         ERR("Output vertex declaration not implemented yet\n");
@@ -4330,8 +4331,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
         }
     }
 
-    hr = process_vertices_strided(This, DestIndex, VertexCount, &stream_info,
-            (struct wined3d_buffer *)pDestBuffer, flags, DestFVF);
+    hr = process_vertices_strided(This, DestIndex, VertexCount,
+            &stream_info, dst_buffer, flags, DestFVF);
 
     context_release(context);
 
@@ -4903,7 +4904,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_stream_state *stream;
-    IWineD3DBuffer *vb;
+    struct wined3d_buffer *vb;
 
     TRACE("(%p) : vertex count %u, pVtxData %p, stride %u\n",
             This, vertex_count, pVertexStreamZeroData, VertexStreamZeroStride);
@@ -4916,7 +4917,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
     stream = &This->stateBlock->state.streams[0];
-    vb = (IWineD3DBuffer *)stream->buffer;
+    vb = stream->buffer;
     stream->buffer = (struct wined3d_buffer *)pVertexStreamZeroData;
     if (vb)
         wined3d_buffer_decref(vb);
@@ -4947,8 +4948,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     int                 idxStride;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_stream_state *stream;
-    IWineD3DBuffer *vb;
-    IWineD3DBuffer *ib;
+    struct wined3d_buffer *vb, *ib;
 
     TRACE("(%p) : index count %u, pidxdata %p, IdxFmt %u, pVtxdata %p, stride=%u.\n",
             This, index_count, pIndexData, IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
@@ -4966,7 +4966,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     }
 
     stream = &This->stateBlock->state.streams[0];
-    vb = (IWineD3DBuffer *)stream->buffer;
+    vb = stream->buffer;
     stream->buffer = (struct wined3d_buffer *)pVertexStreamZeroData;
     if (vb)
         wined3d_buffer_decref(vb);
@@ -4986,7 +4986,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     /* MSDN specifies stream zero settings and index buffer must be set to NULL */
     stream->buffer = NULL;
     stream->stride = 0;
-    ib = (IWineD3DBuffer *)This->stateBlock->state.index_buffer;
+    ib = This->stateBlock->state.index_buffer;
     if (ib)
     {
         wined3d_buffer_decref(ib);
