@@ -111,14 +111,13 @@ typedef HANDLE (*DRVEXPORTFUNC)(Display *display, Window requestor, Atom aTarget
 typedef HANDLE (*DRVIMPORTFUNC)(Display *d, Window w, Atom prop);
 
 typedef struct tagWINE_CLIPFORMAT {
+    struct list entry;
     UINT        wFormatID;
     LPCWSTR     Name;
     UINT        drvData;
     UINT        wFlags;
     DRVIMPORTFUNC  lpDrvImportFunc;
     DRVEXPORTFUNC  lpDrvExportFunc;
-    struct tagWINE_CLIPFORMAT *PrevFormat;
-    struct tagWINE_CLIPFORMAT *NextFormat;
 } WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
 
 typedef struct tagWINE_CLIPDATA {
@@ -209,81 +208,43 @@ static const WCHAR wszCF_DSPBITMAP[] = {'W','C','F','_','D','S','P','B','I','T',
 static const WCHAR wszCF_DSPMETAFILEPICT[] = {'W','C','F','_','D','S','P','M','E','T','A','F','I','L','E','P','I','C','T',0};
 static const WCHAR wszCF_DSPENHMETAFILE[] = {'W','C','F','_','D','S','P','E','N','H','M','E','T','A','F','I','L','E',0};
 
-static WINE_CLIPFORMAT ClipFormats[]  =
+static const struct
 {
-    { CF_TEXT, wszCF_TEXT, XA_STRING, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportXAString,
-        X11DRV_CLIPBOARD_ExportString, NULL, &ClipFormats[1]},
-
-    { CF_BITMAP, wszCF_BITMAP, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        NULL, &ClipFormats[0], &ClipFormats[2]},
-
-    { CF_METAFILEPICT, wszCF_METAFILEPICT, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportMetaFilePict,
-        X11DRV_CLIPBOARD_ExportMetaFilePict, &ClipFormats[1], &ClipFormats[3]},
-
-    { CF_SYLK, wszCF_SYLK, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[2], &ClipFormats[4]},
-
-    { CF_DIF, wszCF_DIF, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[3], &ClipFormats[5]},
-
-    { CF_TIFF, wszCF_TIFF, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[4], &ClipFormats[6]},
-
-    { CF_OEMTEXT, wszCF_OEMTEXT, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[5], &ClipFormats[7]},
-
-    { CF_DIB, wszCF_DIB, XA_PIXMAP, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportXAPIXMAP,
-        X11DRV_CLIPBOARD_ExportXAPIXMAP, &ClipFormats[6], &ClipFormats[8]},
-
-    { CF_PALETTE, wszCF_PALETTE, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[7], &ClipFormats[9]},
-
-    { CF_PENDATA, wszCF_PENDATA, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[8], &ClipFormats[10]},
-
-    { CF_RIFF, wszCF_RIFF, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[9], &ClipFormats[11]},
-
-    { CF_WAVE, wszCF_WAVE, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[10], &ClipFormats[12]},
-
-    { CF_UNICODETEXT, wszUTF8STRING, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportUTF8,
-        X11DRV_CLIPBOARD_ExportString, &ClipFormats[11], &ClipFormats[13]},
-
-    /* If UTF8_STRING is not available, attempt COMPUND_TEXT */
-    { CF_UNICODETEXT, wszCOMPOUNDTEXT, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportCompoundText,
-        X11DRV_CLIPBOARD_ExportString, &ClipFormats[12], &ClipFormats[14]},
-
-    { CF_ENHMETAFILE, wszCF_ENHMETAFILE, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportEnhMetaFile,
-        X11DRV_CLIPBOARD_ExportEnhMetaFile, &ClipFormats[13], &ClipFormats[15]},
-
-    { CF_HDROP, wszCF_HDROP, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[14], &ClipFormats[16]},
-
-    { CF_LOCALE, wszCF_LOCALE, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[15], &ClipFormats[17]},
-
-    { CF_DIBV5, wszCF_DIBV5, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[16], &ClipFormats[18]},
-
-    { CF_OWNERDISPLAY, wszCF_OWNERDISPLAY, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[17], &ClipFormats[19]},
-
-    { CF_DSPTEXT, wszCF_DSPTEXT, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[18], &ClipFormats[20]},
-
-    { CF_DSPBITMAP, wszCF_DSPBITMAP, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[19], &ClipFormats[21]},
-
-    { CF_DSPMETAFILEPICT, wszCF_DSPMETAFILEPICT, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[20], &ClipFormats[22]},
-
-    { CF_DSPENHMETAFILE, wszCF_DSPENHMETAFILE, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[21], &ClipFormats[23]},
-
-    { CF_DIB, wszIMAGEBMP, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportImageBmp,
-        X11DRV_CLIPBOARD_ExportImageBmp, &ClipFormats[22], NULL},
+    UINT          id;
+    LPCWSTR       name;
+    UINT          data;
+    DRVIMPORTFUNC import;
+    DRVEXPORTFUNC export;
+} builtin_formats[] =
+{
+    { CF_TEXT, wszCF_TEXT, XA_STRING, X11DRV_CLIPBOARD_ImportXAString, X11DRV_CLIPBOARD_ExportString},
+    { CF_BITMAP, wszCF_BITMAP, 0, X11DRV_CLIPBOARD_ImportClipboardData, NULL},
+    { CF_METAFILEPICT, wszCF_METAFILEPICT, 0, X11DRV_CLIPBOARD_ImportMetaFilePict, X11DRV_CLIPBOARD_ExportMetaFilePict },
+    { CF_SYLK, wszCF_SYLK, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DIF, wszCF_DIF, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_TIFF, wszCF_TIFF, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_OEMTEXT, wszCF_OEMTEXT, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DIB, wszCF_DIB, XA_PIXMAP, X11DRV_CLIPBOARD_ImportXAPIXMAP, X11DRV_CLIPBOARD_ExportXAPIXMAP },
+    { CF_PALETTE, wszCF_PALETTE, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_PENDATA, wszCF_PENDATA, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_RIFF, wszCF_RIFF, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_WAVE, wszCF_WAVE, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_UNICODETEXT, wszUTF8STRING, 0, X11DRV_CLIPBOARD_ImportUTF8, X11DRV_CLIPBOARD_ExportString },
+    /* If UTF8_STRING is not available, attempt COMPOUND_TEXT */
+    { CF_UNICODETEXT, wszCOMPOUNDTEXT, 0, X11DRV_CLIPBOARD_ImportCompoundText, X11DRV_CLIPBOARD_ExportString },
+    { CF_ENHMETAFILE, wszCF_ENHMETAFILE, 0, X11DRV_CLIPBOARD_ImportEnhMetaFile, X11DRV_CLIPBOARD_ExportEnhMetaFile },
+    { CF_HDROP, wszCF_HDROP, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_LOCALE, wszCF_LOCALE, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DIBV5, wszCF_DIBV5, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_OWNERDISPLAY, wszCF_OWNERDISPLAY, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DSPTEXT, wszCF_DSPTEXT, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DSPBITMAP, wszCF_DSPBITMAP, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DSPMETAFILEPICT, wszCF_DSPMETAFILEPICT, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DSPENHMETAFILE, wszCF_DSPENHMETAFILE, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DIB, wszIMAGEBMP, 0, X11DRV_CLIPBOARD_ImportImageBmp, X11DRV_CLIPBOARD_ExportImageBmp },
 };
+
+static struct list format_list = LIST_INIT( format_list );
 
 #define GET_ATOM(prop)  (((prop) < FIRST_XATOM) ? (Atom)(prop) : X11DRV_Atoms[(prop) - FIRST_XATOM])
 
@@ -357,6 +318,19 @@ void X11DRV_InitClipboard(void)
     UINT i;
     WINE_CLIPFORMAT *format;
 
+    /* Register built-in formats */
+    for (i = 0; i < sizeof(builtin_formats)/sizeof(builtin_formats[0]); i++)
+    {
+        if (!(format = HeapAlloc( GetProcessHeap(), 0, sizeof(*format )))) break;
+        format->wFormatID       = builtin_formats[i].id;
+        format->Name            = builtin_formats[i].name;
+        format->drvData         = builtin_formats[i].data;
+        format->wFlags          = CF_FLAG_BUILTINFMT;
+        format->lpDrvImportFunc = builtin_formats[i].import;
+        format->lpDrvExportFunc = builtin_formats[i].export;
+        list_add_tail( &format_list, &format->entry );
+    }
+
     /* Register known mapping between window formats and X properties */
     for (i = 0; i < sizeof(PropertyFormatMap)/sizeof(PropertyFormatMap[0]); i++)
         X11DRV_CLIPBOARD_InsertClipboardFormat(PropertyFormatMap[i].lpszFormat, GET_ATOM(PropertyFormatMap[i].prop));
@@ -380,7 +354,8 @@ static void intern_atoms(void)
     Atom *atoms;
     Display *display;
 
-    for (format = ClipFormats, count = 0; format; format = format->NextFormat)
+    count = 0;
+    LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
         if (!format->drvData) count++;
     if (!count) return;
 
@@ -389,24 +364,24 @@ static void intern_atoms(void)
     names = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*names) );
     atoms = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*atoms) );
 
-    for (format = ClipFormats, i = 0; format; format = format->NextFormat) {
+    i = 0;
+    LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
         if (!format->drvData) {
             len = WideCharToMultiByte(CP_UNIXCP, 0, format->Name, -1, NULL, 0, NULL, NULL);
             names[i] = HeapAlloc(GetProcessHeap(), 0, len);
             WideCharToMultiByte(CP_UNIXCP, 0, format->Name, -1, names[i++], len, NULL, NULL);
         }
-    }
 
     wine_tsx11_lock();
     XInternAtoms( display, names, count, False, atoms );
     wine_tsx11_unlock();
 
-    for (format = ClipFormats, i = 0; format; format = format->NextFormat) {
+    i = 0;
+    LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
         if (!format->drvData) {
             HeapFree(GetProcessHeap(), 0, names[i]);
             format->drvData = atoms[i++];
         }
-    }
 
     HeapFree( GetProcessHeap(), 0, names );
     HeapFree( GetProcessHeap(), 0, atoms );
@@ -420,17 +395,16 @@ static void intern_atoms(void)
  */
 static WINE_CLIPFORMAT *register_format( LPCWSTR FormatName, Atom prop )
 {
-    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
+    LPWINE_CLIPFORMAT lpFormat;
 
     TRACE("%s\n", debugstr_w(FormatName));
 
     /* walk format chain to see if it's already registered */
-    while (lpFormat)
+    LIST_FOR_EACH_ENTRY( lpFormat, &format_list, WINE_CLIPFORMAT, entry )
     {
 	if (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, lpFormat->Name, -1, FormatName, -1) == CSTR_EQUAL
 	    && (lpFormat->wFlags & CF_FLAG_BUILTINFMT) == 0)
 	     return lpFormat;
-	lpFormat = lpFormat->NextFormat;
     }
 
     return X11DRV_CLIPBOARD_InsertClipboardFormat(FormatName, prop);
@@ -442,17 +416,15 @@ static WINE_CLIPFORMAT *register_format( LPCWSTR FormatName, Atom prop )
  */
 static LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupFormat(WORD wID)
 {
-    LPWINE_CLIPFORMAT lpFormat = ClipFormats;
+    WINE_CLIPFORMAT *format;
 
-    while(lpFormat)
+    LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
     {
-        if (lpFormat->wFormatID == wID) 
-            break;
-
-	lpFormat = lpFormat->NextFormat;
+        if (format->wFormatID != wID) continue;
+        if (!format->drvData) intern_atoms();
+        return format;
     }
-    if (lpFormat && !lpFormat->drvData) intern_atoms();
-    return lpFormat;
+    return NULL;
 }
 
 
@@ -463,17 +435,14 @@ static LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(LPWINE_CLIPFORMAT curre
 {
     for (;;)
     {
-        LPWINE_CLIPFORMAT lpFormat = ClipFormats;
+        struct list *ptr = current ? &current->entry : &format_list;
         BOOL need_intern = FALSE;
 
-        if (current)
-            lpFormat = current->NextFormat;
-
-        while(lpFormat)
+        while ((ptr = list_next( &format_list, ptr )))
         {
+            LPWINE_CLIPFORMAT lpFormat = LIST_ENTRY( ptr, WINE_CLIPFORMAT, entry );
             if (lpFormat->drvData == drvData) return lpFormat;
             if (!lpFormat->drvData) need_intern = TRUE;
-            lpFormat = lpFormat->NextFormat;
         }
         if (!need_intern) return NULL;
         intern_atoms();
@@ -501,7 +470,6 @@ static LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID)
  */
 static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCWSTR FormatName, Atom prop)
 {
-    LPWINE_CLIPFORMAT lpFormat;
     LPWINE_CLIPFORMAT lpNewFormat;
     LPWSTR new_name;
 
@@ -528,15 +496,7 @@ static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCWSTR FormatNam
     lpNewFormat->lpDrvImportFunc = X11DRV_CLIPBOARD_ImportClipboardData;
     lpNewFormat->lpDrvExportFunc = X11DRV_CLIPBOARD_ExportClipboardData;
 
-    /* Link Format */
-    lpFormat = ClipFormats;
-
-    while(lpFormat->NextFormat) /* Move to last entry */
-	lpFormat = lpFormat->NextFormat;
-
-    lpNewFormat->NextFormat = NULL;
-    lpFormat->NextFormat = lpNewFormat;
-    lpNewFormat->PrevFormat = lpFormat;
+    list_add_tail( &format_list, &lpNewFormat->entry );
 
     TRACE("Registering format(%04x): %s drvData %d\n",
         lpNewFormat->wFormatID, debugstr_w(FormatName), lpNewFormat->drvData);
@@ -2969,7 +2929,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
     UINT i;
     Atom* targets;
     ULONG cTargets;
-    LPWINE_CLIPFORMAT lpFormats;
+    LPWINE_CLIPFORMAT format;
     LPWINE_CLIPDATA lpData;
 
     /* Create X atoms for any clipboard types which don't have atoms yet.
@@ -2987,18 +2947,10 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
     if (!list_head( &data_list )) return None;
 
     LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
-    {
-        lpFormats = ClipFormats;
-
-        while (lpFormats)
-        {
-            if ((lpFormats->wFormatID == lpData->wFormatID) &&
-                lpFormats->lpDrvExportFunc && lpFormats->drvData)
+        LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
+            if ((format->wFormatID == lpData->wFormatID) &&
+                format->lpDrvExportFunc && format->drvData)
                 cTargets++;
-
-            lpFormats = lpFormats->NextFormat;
-        }
-    }
 
     TRACE(" found %d formats\n", cTargets);
 
@@ -3011,18 +2963,10 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
     targets[i++] = x11drv_atom(TARGETS);
 
     LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
-    {
-        lpFormats = ClipFormats;
-
-        while (lpFormats)
-        {
-            if ((lpFormats->wFormatID == lpData->wFormatID) &&
-                lpFormats->lpDrvExportFunc && lpFormats->drvData)
-                targets[i++] = lpFormats->drvData;
-
-            lpFormats = lpFormats->NextFormat;
-        }
-    }
+        LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
+            if ((format->wFormatID == lpData->wFormatID) &&
+                format->lpDrvExportFunc && format->drvData)
+                targets[i++] = format->drvData;
 
     wine_tsx11_lock();
 
