@@ -3012,6 +3012,75 @@ static void test_string_functions(void)
     ReleaseDC(hwnd, hdc);
 }
 
+static void test_get_set_interpolation(void)
+{
+    GpGraphics *graphics;
+    HDC hdc = GetDC( hwnd );
+    GpStatus status;
+    InterpolationMode mode;
+
+    ok(hdc != NULL, "Expected HDC to be initialized\n");
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    status = GdipGetInterpolationMode(NULL, &mode);
+    expect(InvalidParameter, status);
+
+    if (0)
+    {
+        /* Crashes on Windows XP */
+        status = GdipGetInterpolationMode(graphics, NULL);
+        expect(InvalidParameter, status);
+    }
+
+    status = GdipSetInterpolationMode(NULL, InterpolationModeNearestNeighbor);
+    expect(InvalidParameter, status);
+
+    /* out of range */
+    status = GdipSetInterpolationMode(graphics, InterpolationModeHighQualityBicubic+1);
+    expect(InvalidParameter, status);
+
+    status = GdipSetInterpolationMode(graphics, InterpolationModeInvalid);
+    expect(InvalidParameter, status);
+
+    status = GdipGetInterpolationMode(graphics, &mode);
+    expect(Ok, status);
+    expect(InterpolationModeBilinear, mode);
+
+    status = GdipSetInterpolationMode(graphics, InterpolationModeNearestNeighbor);
+    expect(Ok, status);
+
+    status = GdipGetInterpolationMode(graphics, &mode);
+    expect(Ok, status);
+    expect(InterpolationModeNearestNeighbor, mode);
+
+    status = GdipSetInterpolationMode(graphics, InterpolationModeDefault);
+    expect(Ok, status);
+
+    status = GdipGetInterpolationMode(graphics, &mode);
+    expect(Ok, status);
+    expect(InterpolationModeBilinear, mode);
+
+    status = GdipSetInterpolationMode(graphics, InterpolationModeLowQuality);
+    expect(Ok, status);
+
+    status = GdipGetInterpolationMode(graphics, &mode);
+    expect(Ok, status);
+    expect(InterpolationModeBilinear, mode);
+
+    status = GdipSetInterpolationMode(graphics, InterpolationModeHighQuality);
+    expect(Ok, status);
+
+    status = GdipGetInterpolationMode(graphics, &mode);
+    expect(Ok, status);
+    expect(InterpolationModeHighQualityBicubic, mode);
+
+    GdipDeleteGraphics(graphics);
+
+    ReleaseDC(hwnd, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3070,6 +3139,7 @@ START_TEST(graphics)
     test_textcontrast();
     test_fromMemoryBitmap();
     test_string_functions();
+    test_get_set_interpolation();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );

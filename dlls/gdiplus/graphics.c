@@ -1364,7 +1364,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     (*graphics)->owndc = FALSE;
     (*graphics)->smoothing = SmoothingModeDefault;
     (*graphics)->compqual = CompositingQualityDefault;
-    (*graphics)->interpolation = InterpolationModeDefault;
+    (*graphics)->interpolation = InterpolationModeBilinear;
     (*graphics)->pixeloffset = PixelOffsetModeDefault;
     (*graphics)->compmode = CompositingModeSourceOver;
     (*graphics)->unit = UnitDisplay;
@@ -1403,7 +1403,7 @@ GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics)
     (*graphics)->image = image;
     (*graphics)->smoothing = SmoothingModeDefault;
     (*graphics)->compqual = CompositingQualityDefault;
-    (*graphics)->interpolation = InterpolationModeDefault;
+    (*graphics)->interpolation = InterpolationModeBilinear;
     (*graphics)->pixeloffset = PixelOffsetModeDefault;
     (*graphics)->compmode = CompositingModeSourceOver;
     (*graphics)->unit = UnitDisplay;
@@ -4638,11 +4638,17 @@ GpStatus WINGDIPAPI GdipSetInterpolationMode(GpGraphics *graphics,
 {
     TRACE("(%p, %d)\n", graphics, mode);
 
-    if(!graphics)
+    if(!graphics || mode == InterpolationModeInvalid || mode > InterpolationModeHighQualityBicubic)
         return InvalidParameter;
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if (mode == InterpolationModeDefault || mode == InterpolationModeLowQuality)
+        mode = InterpolationModeBilinear;
+
+    if (mode == InterpolationModeHighQuality)
+        mode = InterpolationModeHighQualityBicubic;
 
     graphics->interpolation = mode;
 
