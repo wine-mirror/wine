@@ -79,6 +79,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "x11drv.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
@@ -121,13 +122,12 @@ typedef struct tagWINE_CLIPFORMAT {
 } WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
 
 typedef struct tagWINE_CLIPDATA {
+    struct list entry;
     UINT        wFormatID;
     HANDLE      hData;
     UINT        wFlags;
     UINT        drvData;
     LPWINE_CLIPFORMAT lpFormat;
-    struct tagWINE_CLIPDATA *PrevData;
-    struct tagWINE_CLIPDATA *NextData;
 } WINE_CLIPDATA, *LPWINE_CLIPDATA;
 
 #define CF_FLAG_BUILTINFMT   0x0001 /* Built-in windows format */
@@ -311,7 +311,7 @@ static const struct
 /*
  * Cached clipboard data.
  */
-static LPWINE_CLIPDATA ClipData = NULL;
+static struct list data_list = LIST_INIT( data_list );
 static UINT ClipDataCount = 0;
 
 /*
@@ -487,24 +487,12 @@ static LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(LPWINE_CLIPFORMAT curre
  */
 static LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID)
 {
-    LPWINE_CLIPDATA lpData = ClipData;
+    WINE_CLIPDATA *data;
 
-    if (lpData)
-    {
-        do
-        {
-            if (lpData->wFormatID == wID) 
-                break;
+    LIST_FOR_EACH_ENTRY( data, &data_list, WINE_CLIPDATA, entry )
+        if (data->wFormatID == wID) return data;
 
-	    lpData = lpData->NextData;
-        }
-        while(lpData != ClipData);
-
-        if (lpData->wFormatID != wID)
-            lpData = NULL;
-    }
-
-    return lpData;
+    return NULL;
 }
 
 
@@ -649,23 +637,7 @@ static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormatID, HANDLE hData, D
         lpData->lpFormat = lpFormat;
         lpData->drvData = 0;
 
-        if (ClipData)
-        {
-            LPWINE_CLIPDATA lpPrevData = ClipData->PrevData;
-
-            lpData->PrevData = lpPrevData;
-            lpData->NextData = ClipData;
-
-            lpPrevData->NextData = lpData;
-            ClipData->PrevData = lpData;
-        }
-        else
-        {
-            lpData->NextData = lpData;
-            lpData->PrevData = lpData;
-            ClipData = lpData;
-        }
-
+        list_add_tail( &data_list, &lpData->entry );
         ClipDataCount++;
     }
 
@@ -2734,33 +2706,15 @@ int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow)
  */
 void CDECL X11DRV_EmptyClipboard(BOOL keepunowned)
 {
-    if (ClipData)
+    WINE_CLIPDATA *data, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( data, next, &data_list, WINE_CLIPDATA, entry )
     {
-        LPWINE_CLIPDATA lpData, lpStart;
-        LPWINE_CLIPDATA lpNext = ClipData;
-
-        TRACE(" called with %d entries in cache.\n", ClipDataCount);
-
-        do
-        {
-            lpStart = ClipData;
-            lpData = lpNext;
-            lpNext = lpData->NextData;
-
-            if (!keepunowned || !(lpData->wFlags & CF_FLAG_UNOWNED))
-            {
-            lpData->PrevData->NextData = lpData->NextData;
-            lpData->NextData->PrevData = lpData->PrevData;
-
-                if (lpData == ClipData)
-                    ClipData = lpNext != lpData ? lpNext : NULL;
-
-            X11DRV_CLIPBOARD_FreeData(lpData);
-            HeapFree(GetProcessHeap(), 0, lpData);
-
-                ClipDataCount--;
-            }
-        } while (lpNext != lpStart);
+        if (keepunowned && (data->wFlags & CF_FLAG_UNOWNED)) continue;
+        list_remove( &data->entry );
+        X11DRV_CLIPBOARD_FreeData( data );
+        HeapFree( GetProcessHeap(), 0, data );
+        ClipDataCount--;
     }
 
     TRACE(" %d entries remaining in cache.\n", ClipDataCount);
@@ -2820,7 +2774,7 @@ INT CDECL X11DRV_CountClipboardFormats(void)
 UINT CDECL X11DRV_EnumClipboardFormats(UINT wFormat)
 {
     CLIPBOARDINFO cbinfo;
-    UINT wNextFormat = 0;
+    struct list *ptr = NULL;
 
     TRACE("(%04X)\n", wFormat);
 
@@ -2828,18 +2782,16 @@ UINT CDECL X11DRV_EnumClipboardFormats(UINT wFormat)
 
     if (!wFormat)
     {
-        if (ClipData)
-            wNextFormat = ClipData->wFormatID;
+        ptr = list_head( &data_list );
     }
     else
     {
         LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(wFormat);
-
-        if (lpData && lpData->NextData != ClipData)
-            wNextFormat = lpData->NextData->wFormatID;
+        if (lpData) ptr = list_next( &data_list, &lpData->entry );
     }
 
-    return wNextFormat;
+    if (!ptr) return 0;
+    return LIST_ENTRY( ptr, WINE_CLIPDATA, entry )->wFormatID;
 }
 
 
@@ -3032,9 +2984,9 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
      */
     cTargets = 1; /* Include TARGETS */
 
-    if (!(lpData = ClipData)) return None;
+    if (!list_head( &data_list )) return None;
 
-    do
+    LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
     {
         lpFormats = ClipFormats;
 
@@ -3046,10 +2998,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
 
             lpFormats = lpFormats->NextFormat;
         }
-
-        lpData = lpData->NextData;
     }
-    while (lpData != ClipData);
 
     TRACE(" found %d formats\n", cTargets);
 
@@ -3059,10 +3008,9 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
         return None;
 
     i = 0;
-    lpData = ClipData;
     targets[i++] = x11drv_atom(TARGETS);
 
-    do
+    LIST_FOR_EACH_ENTRY( lpData, &data_list, WINE_CLIPDATA, entry )
     {
         lpFormats = ClipFormats;
 
@@ -3074,10 +3022,7 @@ static Atom X11DRV_SelectionRequest_TARGETS( Display *display, Window requestor,
 
             lpFormats = lpFormats->NextFormat;
         }
-
-        lpData = lpData->NextData;
     }
-    while (lpData != ClipData);
 
     wine_tsx11_lock();
 
