@@ -218,30 +218,30 @@ static const struct
 } builtin_formats[] =
 {
     { CF_TEXT, wszCF_TEXT, XA_STRING, X11DRV_CLIPBOARD_ImportXAString, X11DRV_CLIPBOARD_ExportString},
-    { CF_BITMAP, wszCF_BITMAP, 0, X11DRV_CLIPBOARD_ImportClipboardData, NULL},
-    { CF_METAFILEPICT, wszCF_METAFILEPICT, 0, X11DRV_CLIPBOARD_ImportMetaFilePict, X11DRV_CLIPBOARD_ExportMetaFilePict },
-    { CF_SYLK, wszCF_SYLK, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DIF, wszCF_DIF, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_TIFF, wszCF_TIFF, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_OEMTEXT, wszCF_OEMTEXT, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_BITMAP, wszCF_BITMAP, XATOM_WCF_BITMAP, X11DRV_CLIPBOARD_ImportClipboardData, NULL},
+    { CF_METAFILEPICT, wszCF_METAFILEPICT, XATOM_WCF_METAFILEPICT, X11DRV_CLIPBOARD_ImportMetaFilePict, X11DRV_CLIPBOARD_ExportMetaFilePict },
+    { CF_SYLK, wszCF_SYLK, XATOM_WCF_SYLK, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DIF, wszCF_DIF, XATOM_WCF_DIF, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_TIFF, wszCF_TIFF, XATOM_WCF_TIFF, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_OEMTEXT, wszCF_OEMTEXT, XATOM_WCF_OEMTEXT, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
     { CF_DIB, wszCF_DIB, XA_PIXMAP, X11DRV_CLIPBOARD_ImportXAPIXMAP, X11DRV_CLIPBOARD_ExportXAPIXMAP },
-    { CF_PALETTE, wszCF_PALETTE, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_PENDATA, wszCF_PENDATA, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_RIFF, wszCF_RIFF, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_WAVE, wszCF_WAVE, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_UNICODETEXT, wszUTF8STRING, 0, X11DRV_CLIPBOARD_ImportUTF8, X11DRV_CLIPBOARD_ExportString },
+    { CF_PALETTE, wszCF_PALETTE, XATOM_WCF_PALETTE, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_PENDATA, wszCF_PENDATA, XATOM_WCF_PENDATA, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_RIFF, wszCF_RIFF, XATOM_WCF_RIFF, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_WAVE, wszCF_WAVE, XATOM_WCF_WAVE, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_UNICODETEXT, wszUTF8STRING, XATOM_UTF8_STRING, X11DRV_CLIPBOARD_ImportUTF8, X11DRV_CLIPBOARD_ExportString },
     /* If UTF8_STRING is not available, attempt COMPOUND_TEXT */
-    { CF_UNICODETEXT, wszCOMPOUNDTEXT, 0, X11DRV_CLIPBOARD_ImportCompoundText, X11DRV_CLIPBOARD_ExportString },
-    { CF_ENHMETAFILE, wszCF_ENHMETAFILE, 0, X11DRV_CLIPBOARD_ImportEnhMetaFile, X11DRV_CLIPBOARD_ExportEnhMetaFile },
-    { CF_HDROP, wszCF_HDROP, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_LOCALE, wszCF_LOCALE, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DIBV5, wszCF_DIBV5, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_OWNERDISPLAY, wszCF_OWNERDISPLAY, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DSPTEXT, wszCF_DSPTEXT, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DSPBITMAP, wszCF_DSPBITMAP, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DSPMETAFILEPICT, wszCF_DSPMETAFILEPICT, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DSPENHMETAFILE, wszCF_DSPENHMETAFILE, 0, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_DIB, wszIMAGEBMP, 0, X11DRV_CLIPBOARD_ImportImageBmp, X11DRV_CLIPBOARD_ExportImageBmp },
+    { CF_UNICODETEXT, wszCOMPOUNDTEXT, XATOM_COMPOUND_TEXT, X11DRV_CLIPBOARD_ImportCompoundText, X11DRV_CLIPBOARD_ExportString },
+    { CF_ENHMETAFILE, wszCF_ENHMETAFILE, XATOM_WCF_ENHMETAFILE, X11DRV_CLIPBOARD_ImportEnhMetaFile, X11DRV_CLIPBOARD_ExportEnhMetaFile },
+    { CF_HDROP, wszCF_HDROP, XATOM_WCF_HDROP, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_LOCALE, wszCF_LOCALE, XATOM_WCF_LOCALE, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DIBV5, wszCF_DIBV5, XATOM_WCF_DIBV5, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_OWNERDISPLAY, wszCF_OWNERDISPLAY, XATOM_WCF_OWNERDISPLAY, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DSPTEXT, wszCF_DSPTEXT, XATOM_WCF_DSPTEXT, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DSPBITMAP, wszCF_DSPBITMAP, XATOM_WCF_DSPBITMAP, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DSPMETAFILEPICT, wszCF_DSPMETAFILEPICT, XATOM_WCF_DSPMETAFILEPICT, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DSPENHMETAFILE, wszCF_DSPENHMETAFILE, XATOM_WCF_DSPENHMETAFILE, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_DIB, wszIMAGEBMP, XATOM_image_bmp, X11DRV_CLIPBOARD_ImportImageBmp, X11DRV_CLIPBOARD_ExportImageBmp },
 };
 
 static struct list format_list = LIST_INIT( format_list );
@@ -362,7 +362,7 @@ void X11DRV_InitClipboard(void)
         if (!(format = HeapAlloc( GetProcessHeap(), 0, sizeof(*format )))) break;
         format->wFormatID       = builtin_formats[i].id;
         format->Name            = builtin_formats[i].name;
-        format->drvData         = builtin_formats[i].data;
+        format->drvData         = GET_ATOM(builtin_formats[i].data);
         format->wFlags          = CF_FLAG_BUILTINFMT;
         format->lpDrvImportFunc = builtin_formats[i].import;
         format->lpDrvExportFunc = builtin_formats[i].export;
