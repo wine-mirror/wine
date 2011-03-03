@@ -331,6 +331,89 @@ static ARGB blend_line_gradient(GpLineGradient* brush, REAL position)
     }
 }
 
+static void apply_image_attributes(const GpImageAttributes *attributes, LPBYTE data,
+    UINT width, UINT height, INT stride, ColorAdjustType type)
+{
+    UINT x, y, i;
+
+    if (attributes->colorkeys[type].enabled ||
+        attributes->colorkeys[ColorAdjustTypeDefault].enabled)
+    {
+        const struct color_key *key;
+        BYTE min_blue, min_green, min_red;
+        BYTE max_blue, max_green, max_red;
+
+        if (attributes->colorkeys[type].enabled)
+            key = &attributes->colorkeys[type];
+        else
+            key = &attributes->colorkeys[ColorAdjustTypeDefault];
+
+        min_blue = key->low&0xff;
+        min_green = (key->low>>8)&0xff;
+        min_red = (key->low>>16)&0xff;
+
+        max_blue = key->high&0xff;
+        max_green = (key->high>>8)&0xff;
+        max_red = (key->high>>16)&0xff;
+
+        for (x=0; x<width; x++)
+            for (y=0; y<height; y++)
+            {
+                ARGB *src_color;
+                BYTE blue, green, red;
+                src_color = (ARGB*)(data + stride * y + sizeof(ARGB) * x);
+                blue = *src_color&0xff;
+                green = (*src_color>>8)&0xff;
+                red = (*src_color>>16)&0xff;
+                if (blue >= min_blue && green >= min_green && red >= min_red &&
+                    blue <= max_blue && green <= max_green && red <= max_red)
+                    *src_color = 0x00000000;
+            }
+    }
+
+    if (attributes->colorremaptables[type].enabled ||
+        attributes->colorremaptables[ColorAdjustTypeDefault].enabled)
+    {
+        const struct color_remap_table *table;
+
+        if (attributes->colorremaptables[type].enabled)
+            table = &attributes->colorremaptables[type];
+        else
+            table = &attributes->colorremaptables[ColorAdjustTypeDefault];
+
+        for (x=0; x<width; x++)
+            for (y=0; y<height; y++)
+            {
+                ARGB *src_color;
+                src_color = (ARGB*)(data + stride * y + sizeof(ARGB) * x);
+                for (i=0; i<table->mapsize; i++)
+                {
+                    if (*src_color == table->colormap[i].oldColor.Argb)
+                    {
+                        *src_color = table->colormap[i].newColor.Argb;
+                        break;
+                    }
+                }
+            }
+    }
+
+    if (attributes->colormatrices[type].enabled ||
+        attributes->colormatrices[ColorAdjustTypeDefault].enabled)
+    {
+        static int fixme;
+        if (!fixme++)
+            FIXME("Color transforms not implemented\n");
+    }
+
+    if (attributes->gamma_enabled[type] ||
+        attributes->gamma_enabled[ColorAdjustTypeDefault])
+    {
+        static int fixme;
+        if (!fixme++)
+            FIXME("Gamma adjustment not implemented\n");
+    }
+}
+
 static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
 {
     switch (brush->bt)
@@ -2313,82 +2396,10 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             if (imageAttributes)
             {
-                if (imageAttributes->colorkeys[ColorAdjustTypeBitmap].enabled ||
-                    imageAttributes->colorkeys[ColorAdjustTypeDefault].enabled)
-                {
-                    const struct color_key *key;
-                    BYTE min_blue, min_green, min_red;
-                    BYTE max_blue, max_green, max_red;
-
-                    if (imageAttributes->colorkeys[ColorAdjustTypeBitmap].enabled)
-                        key = &imageAttributes->colorkeys[ColorAdjustTypeBitmap];
-                    else
-                        key = &imageAttributes->colorkeys[ColorAdjustTypeDefault];
-
-                    min_blue = key->low&0xff;
-                    min_green = (key->low>>8)&0xff;
-                    min_red = (key->low>>16)&0xff;
-
-                    max_blue = key->high&0xff;
-                    max_green = (key->high>>8)&0xff;
-                    max_red = (key->high>>16)&0xff;
-
-                    for (x=dst_area.left; x<dst_area.right; x++)
-                        for (y=dst_area.top; y<dst_area.bottom; y++)
-                        {
-                            ARGB *src_color;
-                            BYTE blue, green, red;
-                            src_color = (ARGB*)(data + stride * (y - dst_area.top) + sizeof(ARGB) * (x - dst_area.left));
-                            blue = *src_color&0xff;
-                            green = (*src_color>>8)&0xff;
-                            red = (*src_color>>16)&0xff;
-                            if (blue >= min_blue && green >= min_green && red >= min_red &&
-                                blue <= max_blue && green <= max_green && red <= max_red)
-                                *src_color = 0x00000000;
-                        }
-                }
-
-                if (imageAttributes->colorremaptables[ColorAdjustTypeBitmap].enabled ||
-                    imageAttributes->colorremaptables[ColorAdjustTypeDefault].enabled)
-                {
-                    const struct color_remap_table *table;
-
-                    if (imageAttributes->colorremaptables[ColorAdjustTypeBitmap].enabled)
-                        table = &imageAttributes->colorremaptables[ColorAdjustTypeBitmap];
-                    else
-                        table = &imageAttributes->colorremaptables[ColorAdjustTypeDefault];
-
-                    for (x=dst_area.left; x<dst_area.right; x++)
-                        for (y=dst_area.top; y<dst_area.bottom; y++)
-                        {
-                            ARGB *src_color;
-                            src_color = (ARGB*)(data + stride * (y - dst_area.top) + sizeof(ARGB) * (x - dst_area.left));
-                            for (i=0; i<table->mapsize; i++)
-                            {
-                                if (*src_color == table->colormap[i].oldColor.Argb)
-                                {
-                                    *src_color = table->colormap[i].newColor.Argb;
-                                    break;
-                                }
-                            }
-                        }
-                }
-
-                if (imageAttributes->colormatrices[ColorAdjustTypeBitmap].enabled ||
-                    imageAttributes->colormatrices[ColorAdjustTypeDefault].enabled)
-                {
-                    static int fixme;
-                    if (!fixme++)
-                        FIXME("Color transforms not implemented\n");
-                }
-
-                if (imageAttributes->gamma_enabled[ColorAdjustTypeBitmap] ||
-                    imageAttributes->gamma_enabled[ColorAdjustTypeDefault])
-                {
-                    static int fixme;
-                    if (!fixme++)
-                        FIXME("Gamma adjustment not implemented\n");
-                }
+                apply_image_attributes(imageAttributes, data,
+                    dst_area.right - dst_area.left,
+                    dst_area.bottom - dst_area.top,
+                    stride, ColorAdjustTypeBitmap);
             }
 
             stat = alpha_blend_pixels(graphics, dst_area.left, dst_area.top,
