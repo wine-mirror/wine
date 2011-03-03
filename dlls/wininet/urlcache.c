@@ -158,8 +158,8 @@ typedef struct _URLCACHE_HEADER
     DWORD dwCacheLimitHigh;
     DWORD dwCacheUsageLow;
     DWORD dwCacheUsageHigh;
-    DWORD dwUnknown6; /* possibly a flag? */
-    DWORD dwUnknown7;
+    DWORD dwExemptUsageLow;
+    DWORD dwExemptUsageHigh;
     BYTE DirectoryCount; /* number of directory_data's */
     BYTE Unknown8[3]; /* just padding? */
     DIRECTORY_DATA directory_data[1]; /* first directory entry */
