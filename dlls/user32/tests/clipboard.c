@@ -140,6 +140,7 @@ todo_wine
     atom_id = GlobalFindAtomA("my_cool_clipboard_format");
     ok(atom_id == 0, "GlobalFindAtomA should fail\n");
     test_last_error(ERROR_FILE_NOT_FOUND);
+    }
 
     for (format_id = 0; format_id < 0xffff; format_id++)
     {
@@ -147,18 +148,9 @@ todo_wine
         len = GetClipboardFormatNameA(format_id, buf, 256);
 
         if (format_id < 0xc000)
-        {
             ok(!len, "GetClipboardFormatNameA should fail, but it returned %d (%s)\n", len, buf);
-            test_last_error(ERROR_INVALID_PARAMETER);
-        }
         else
-        {
-            if (len)
-                trace("%04x: %s\n", format_id, len ? buf : "");
-            else
-                test_last_error(ERROR_INVALID_HANDLE);
-        }
-    }
+            if (len) trace("%04x: %s\n", format_id, len ? buf : "");
     }
 
     ret = OpenClipboard(0);

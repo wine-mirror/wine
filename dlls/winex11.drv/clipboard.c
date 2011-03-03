@@ -283,12 +283,11 @@ static Window thread_selection_wnd(void)
 
 static const char *debugstr_format( UINT id )
 {
-    if (id >= 0xc000)
-    {
-        WCHAR buffer[256];
-        GlobalGetAtomNameW( id, buffer, 256 );
+    WCHAR buffer[256];
+
+    if (GetClipboardFormatNameW( id, buffer, 256 ))
         return wine_dbg_sprintf( "%04x %s", id, debugstr_w(buffer) );
-    }
+
     switch (id)
     {
 #define BUILTIN(id) case id: return #id;
@@ -378,7 +377,7 @@ static void intern_atoms(void)
     i = 0;
     LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
         if (!format->drvData) {
-            GlobalGetAtomNameW( format->wFormatID, buffer, 256 );
+            GetClipboardFormatNameW( format->wFormatID, buffer, 256 );
             len = WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, NULL, 0, NULL, NULL);
             names[i] = HeapAlloc(GetProcessHeap(), 0, len);
             WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, names[i++], len, NULL, NULL);
@@ -2500,21 +2499,6 @@ UINT CDECL X11DRV_RegisterClipboardFormat(LPCWSTR FormatName)
     return id;
 }
 
-
-/**************************************************************************
- *		X11DRV_GetClipboardFormatName
- */
-INT CDECL X11DRV_GetClipboardFormatName(UINT wFormat, LPWSTR retStr, INT maxlen)
-{
-    TRACE("(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
-
-    if (wFormat < 0xc000)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    return GlobalGetAtomNameW( wFormat, retStr, maxlen );
-}
 
 static void selection_acquire(void)
 {
