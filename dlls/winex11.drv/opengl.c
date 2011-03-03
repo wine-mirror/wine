@@ -1907,7 +1907,6 @@ BOOL CDECL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
     {
         Drawable drawable = get_glxdrawable(physDev);
         Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
-        if (prev_ctx) prev_ctx->tid = 0;
 
         /* The describe lines below are for debugging purposes only */
         if (TRACE_ON(wgl)) {
@@ -1917,10 +1916,12 @@ BOOL CDECL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
 
         TRACE(" make current for dis %p, drawable %p, ctx %p\n", gdi_display, (void*) drawable, ctx->ctx);
         ret = pglXMakeCurrent(gdi_display, drawable, ctx->ctx);
-        NtCurrentTeb()->glContext = ctx;
 
-        if(ret)
+        if (ret)
         {
+            if (prev_ctx) prev_ctx->tid = 0;
+            NtCurrentTeb()->glContext = ctx;
+
             ctx->has_been_current = TRUE;
             ctx->tid = GetCurrentThreadId();
             ctx->hdc = hdc;
@@ -1935,6 +1936,8 @@ BOOL CDECL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
                 pglDrawBuffer(GL_FRONT_LEFT);
             }
         }
+        else
+            SetLastError(ERROR_INVALID_HANDLE);
     }
     wine_tsx11_unlock();
     TRACE(" returning %s\n", (ret ? "True" : "False"));
