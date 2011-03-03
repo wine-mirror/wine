@@ -1576,8 +1576,12 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
         CloseHandle(request->hCacheFile);
 
         if(HTTP_GetRequestURL(request, url)) {
+            DWORD headersLen;
+
+            headersLen = request->rawHeaders ? strlenW(request->rawHeaders) : 0;
             CommitUrlCacheEntryW(url, request->cacheFile, request->expires,
-                    request->last_modified, NORMAL_CACHE_ENTRY, NULL, 0, NULL, 0);
+                    request->last_modified, NORMAL_CACHE_ENTRY,
+                    request->rawHeaders, headersLen, NULL, 0);
         }
     }
 
