@@ -3449,8 +3449,6 @@ BOOL WINAPI GetUrlCacheConfigInfoW(LPINTERNET_CACHE_CONFIG_INFOW CacheInfo, LPDW
 
 /***********************************************************************
  *           GetUrlCacheConfigInfoA (WININET.@)
- *
- * CacheInfo is some CACHE_CONFIG_INFO structure, with no MS info found by google
  */
 BOOL WINAPI GetUrlCacheConfigInfoA(LPINTERNET_CACHE_CONFIG_INFOA CacheInfo, LPDWORD size, DWORD bitmask)
 {
