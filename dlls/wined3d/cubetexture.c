@@ -61,8 +61,8 @@ static void cubetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSR
     UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
     IWineD3DDeviceImpl *device = texture->resource.device;
     struct wined3d_context *context = NULL;
+    struct gl_texture *gl_tex;
     BOOL srgb_mode;
-    BOOL *dirty;
     UINT i;
 
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
@@ -85,7 +85,8 @@ static void cubetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSR
             srgb_mode = texture->baseTexture.is_srgb;
             break;
     }
-    dirty = srgb_mode ? &texture->baseTexture.texture_srgb.dirty : &texture->baseTexture.texture_rgb.dirty;
+
+    gl_tex = basetexture_get_gl_texture(texture, srgb_mode);
 
     /* We only have to activate a context for gl when we're not drawing.
      * In most cases PreLoad will be called during draw and a context was
@@ -118,7 +119,7 @@ static void cubetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSR
 
     /* If the texture is marked dirty or the srgb sampler setting has changed
      * since the last load then reload the surfaces. */
-    if (*dirty)
+    if (gl_tex->dirty)
     {
         for (i = 0; i < sub_count; ++i)
         {
@@ -131,7 +132,7 @@ static void cubetexture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSR
     }
 
     /* No longer dirty. */
-    *dirty = FALSE;
+    gl_tex->dirty = FALSE;
 
     if (context) context_release(context);
 }

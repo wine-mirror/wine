@@ -90,9 +90,9 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
 {
     IWineD3DDeviceImpl *device = texture->resource.device;
     struct wined3d_context *context = NULL;
+    struct gl_texture *gl_tex;
     unsigned int i;
     BOOL srgb_mode;
-    BOOL *dirty;
 
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
@@ -114,7 +114,8 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
             srgb_mode = texture->baseTexture.is_srgb;
             break;
     }
-    dirty = srgb_mode ? &texture->baseTexture.texture_srgb.dirty : &texture->baseTexture.texture_rgb.dirty;
+
+    gl_tex = basetexture_get_gl_texture(texture, srgb_mode);
 
     if (!device->isInDraw)
     {
@@ -142,7 +143,7 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
 
     /* If the texture is marked dirty or the srgb sampler setting has changed
      * since the last load then reload the surfaces. */
-    if (*dirty)
+    if (gl_tex->dirty)
     {
         for (i = 0; i < texture->baseTexture.level_count; ++i)
         {
@@ -157,7 +158,7 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
     if (context) context_release(context);
 
     /* No longer dirty. */
-    *dirty = FALSE;
+    gl_tex->dirty = FALSE;
 }
 
 /* Do not call while under the GL lock. */

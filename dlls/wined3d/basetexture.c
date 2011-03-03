@@ -248,10 +248,7 @@ HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb, BOOL *set_
     TRACE("texture %p, srgb %#x, set_surface_desc %p.\n", texture, srgb, set_surface_desc);
 
     texture->baseTexture.is_srgb = srgb; /* SRGB mode cache for PreLoad calls outside drawprim */
-    if (srgb)
-        gl_tex = &texture->baseTexture.texture_srgb;
-    else
-        gl_tex = &texture->baseTexture.texture_rgb;
+    gl_tex = basetexture_get_gl_texture(texture, srgb);
 
     textureDimensions = texture->baseTexture.target;
 
@@ -377,10 +374,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
 
     TRACE("texture %p, samplerStates %p\n", texture, samplerStates);
 
-    if (texture->baseTexture.is_srgb)
-        gl_tex = &texture->baseTexture.texture_srgb;
-    else
-        gl_tex = &texture->baseTexture.texture_rgb;
+    gl_tex = basetexture_get_gl_texture(texture, texture->baseTexture.is_srgb);
 
     /* This function relies on the correct texture being bound and loaded. */
 

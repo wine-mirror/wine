@@ -1908,6 +1908,11 @@ static inline IWineD3DBaseTextureImpl *basetexture_from_resource(struct wined3d_
     return CONTAINING_RECORD(resource, IWineD3DBaseTextureImpl, resource);
 }
 
+static inline struct gl_texture *basetexture_get_gl_texture(IWineD3DBaseTextureImpl *texture, BOOL srgb)
+{
+    return srgb ? &texture->baseTexture.texture_srgb : &texture->baseTexture.texture_rgb;
+}
+
 void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;

@@ -117,7 +117,7 @@ static void context_apply_attachment_filter_states(IWineD3DSurfaceImpl *surface,
     /* Update base texture states array */
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
-        IWineD3DBaseTextureImpl *texture_impl = surface->container.u.texture;
+        IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
         IWineD3DDeviceImpl *device = surface->resource.device;
         BOOL update_minfilter = FALSE;
         BOOL update_magfilter = FALSE;
@@ -126,16 +126,13 @@ static void context_apply_attachment_filter_states(IWineD3DSurfaceImpl *surface,
         switch (location)
         {
             case SFLAG_INTEXTURE:
-                gl_tex = &texture_impl->baseTexture.texture_rgb;
-                break;
-
             case SFLAG_INSRGBTEX:
-                gl_tex = &texture_impl->baseTexture.texture_srgb;
+                gl_tex = basetexture_get_gl_texture(texture, location == SFLAG_INSRGBTEX);
                 break;
 
             default:
                 ERR("Unsupported location %s (%#x).\n", debug_surflocation(location), location);
-                IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture_impl);
+                IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture);
                 return;
         }
 
@@ -153,10 +150,10 @@ static void context_apply_attachment_filter_states(IWineD3DSurfaceImpl *surface,
             update_magfilter = TRUE;
         }
 
-        if (texture_impl->baseTexture.bindCount)
+        if (texture->baseTexture.bindCount)
         {
             WARN("Render targets should not be bound to a sampler\n");
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(texture_impl->baseTexture.sampler));
+            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(texture->baseTexture.sampler));
         }
 
         if (update_minfilter || update_magfilter)
