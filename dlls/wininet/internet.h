@@ -276,6 +276,7 @@ typedef struct
     DWORD nCustHeaders;
     HANDLE hCacheFile;
     LPWSTR cacheFile;
+    FILETIME expires;
     struct HttpAuthInfo *authInfo;
     struct HttpAuthInfo *proxyAuthInfo;
 

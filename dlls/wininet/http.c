@@ -1577,7 +1577,7 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
 
         memset(&ft, 0, sizeof(FILETIME));
         if(HTTP_GetRequestURL(request, url)) {
-            CommitUrlCacheEntryW(url, request->cacheFile, ft, ft,
+            CommitUrlCacheEntryW(url, request->cacheFile, request->expires, ft,
                     NORMAL_CACHE_ENTRY, NULL, 0, NULL, 0);
         }
     }
@@ -3577,6 +3577,199 @@ static void HTTP_InsertCookies(http_request_t *request)
     HeapFree(GetProcessHeap(), 0, lpszUrl);
 }
 
+static WORD HTTP_ParseDay(LPCWSTR day)
+{
+    static const WCHAR sun[] = { 's','u','n',0 };
+    static const WCHAR mon[] = { 'm','o','n',0 };
+    static const WCHAR tue[] = { 't','u','e',0 };
+    static const WCHAR wed[] = { 'w','e','d',0 };
+    static const WCHAR thu[] = { 't','h','u',0 };
+    static const WCHAR fri[] = { 'f','r','i',0 };
+    static const WCHAR sat[] = { 's','a','t',0 };
+
+    if (!strcmpiW(day, sun)) return 0;
+    if (!strcmpiW(day, mon)) return 1;
+    if (!strcmpiW(day, tue)) return 2;
+    if (!strcmpiW(day, wed)) return 3;
+    if (!strcmpiW(day, thu)) return 4;
+    if (!strcmpiW(day, fri)) return 5;
+    if (!strcmpiW(day, sat)) return 6;
+    /* Invalid */
+    return 7;
+}
+
+static WORD HTTP_ParseMonth(LPCWSTR month)
+{
+    static const WCHAR jan[] = { 'j','a','n',0 };
+    static const WCHAR feb[] = { 'f','e','b',0 };
+    static const WCHAR mar[] = { 'm','a','r',0 };
+    static const WCHAR apr[] = { 'a','p','r',0 };
+    static const WCHAR may[] = { 'm','a','y',0 };
+    static const WCHAR jun[] = { 'j','u','n',0 };
+    static const WCHAR jul[] = { 'j','u','l',0 };
+    static const WCHAR aug[] = { 'a','u','g',0 };
+    static const WCHAR sep[] = { 's','e','p',0 };
+    static const WCHAR oct[] = { 'o','c','t',0 };
+    static const WCHAR nov[] = { 'n','o','v',0 };
+    static const WCHAR dec[] = { 'd','e','c',0 };
+
+    if (!strcmpiW(month, jan)) return 1;
+    if (!strcmpiW(month, feb)) return 2;
+    if (!strcmpiW(month, mar)) return 3;
+    if (!strcmpiW(month, apr)) return 4;
+    if (!strcmpiW(month, may)) return 5;
+    if (!strcmpiW(month, jun)) return 6;
+    if (!strcmpiW(month, jul)) return 7;
+    if (!strcmpiW(month, aug)) return 8;
+    if (!strcmpiW(month, sep)) return 9;
+    if (!strcmpiW(month, oct)) return 10;
+    if (!strcmpiW(month, nov)) return 11;
+    if (!strcmpiW(month, dec)) return 12;
+    /* Invalid */
+    return 0;
+}
+
+/* FIXME: only accepts dates in RFC 1123 format, which is the only correct
+ * format for HTTP, but which may not be the only format actually seen in the
+ * wild.  http://www.hackcraft.net/web/datetime/ suggests at least RFC 850
+ * dates and dates as formatted by asctime() should be accepted as well.
+ */
+static BOOL HTTP_ParseDate(LPCWSTR value, FILETIME *ft)
+{
+    static const WCHAR gmt[]= { 'G','M','T',0 };
+    WCHAR *ptr, *nextPtr, day[4], month[4], *monthPtr;
+    unsigned long num;
+    SYSTEMTIME st;
+
+    ptr = strchrW(value, ',');
+    if (!ptr)
+    {
+        ERR("unexpected date format %s\n", debugstr_w(value));
+        return FALSE;
+    }
+    if (ptr - value != 3)
+    {
+        ERR("unexpected weekday %s\n", debugstr_wn(value, ptr - value));
+        return FALSE;
+    }
+    memcpy(day, value, (ptr - value) * sizeof(WCHAR));
+    day[3] = 0;
+    st.wDayOfWeek = HTTP_ParseDay(day);
+    if (st.wDayOfWeek > 6)
+    {
+        ERR("unexpected weekday %s\n", debugstr_wn(value, ptr - value));
+        return FALSE;
+    }
+    ptr++;
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr || !num || num > 31)
+    {
+        ERR("unexpected day %s\n", debugstr_w(value));
+        return FALSE;
+    }
+    ptr = nextPtr;
+    st.wDay = (WORD)num;
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    for (monthPtr = month; !isspace(*ptr) &&
+         monthPtr - month < sizeof(month) / sizeof(month[0]) - 1;
+         monthPtr++, ptr++)
+        *monthPtr = *ptr;
+    *monthPtr = 0;
+    st.wMonth = HTTP_ParseMonth(month);
+    if (!st.wMonth || st.wMonth > 12)
+    {
+        ERR("unexpected month %s\n", debugstr_w(month));
+        return FALSE;
+    }
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr || num < 1601 || num > 30827)
+    {
+        ERR("unexpected year %s\n", debugstr_w(value));
+        return FALSE;
+    }
+    ptr = nextPtr;
+    st.wYear = (WORD)num;
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr || *nextPtr != ':')
+    {
+        ERR("unexpected time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    if (num > 23)
+    {
+        ERR("unexpected hour in time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    ptr = nextPtr + 1;
+    st.wHour = (WORD)num;
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr || *nextPtr != ':')
+    {
+        ERR("unexpected time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    if (num > 59)
+    {
+        ERR("unexpected minute in time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    ptr = nextPtr + 1;
+    st.wMinute = (WORD)num;
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr)
+    {
+        ERR("unexpected time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    if (num > 59)
+    {
+        ERR("unexpected second in time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    ptr = nextPtr + 1;
+    st.wSecond = (WORD)num;
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    if (strcmpW(ptr, gmt))
+    {
+        ERR("unexpected time zone %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    return SystemTimeToFileTime(&st, ft);
+}
+
+static void HTTP_ProcessExpires(http_request_t *request)
+{
+    int headerIndex;
+
+    headerIndex = HTTP_GetCustomHeaderIndex(request, szExpires, 0, FALSE);
+    if (headerIndex != -1)
+    {
+        LPHTTPHEADERW expiresHeader = &request->custHeaders[headerIndex];
+        FILETIME ft;
+
+        if (HTTP_ParseDate(expiresHeader->lpszValue, &ft))
+            request->expires = ft;
+    }
+}
+
 /***********************************************************************
  *           HTTP_HttpSendRequestW (internal)
  *
@@ -3755,6 +3948,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                                 sizeof(DWORD));
 
             HTTP_ProcessCookies(request);
+            HTTP_ProcessExpires(request);
 
             if (!set_content_length( request )) HTTP_FinishedReading(request);
 
@@ -3942,6 +4136,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
 
     /* process cookies here. Is this right? */
     HTTP_ProcessCookies(request);
+    HTTP_ProcessExpires(request);
 
     if (!set_content_length( request )) HTTP_FinishedReading(request);
 
