@@ -422,11 +422,8 @@ static snd_pcm_uframes_t CommitAll(IDsCaptureDriverBufferImpl *This, DWORD force
 static void CheckXRUN(IDsCaptureDriverBufferImpl* This)
 {
     snd_pcm_state_t state = snd_pcm_state(This->pcm);
-    snd_pcm_sframes_t delay;
     int err;
 
-    snd_pcm_hwsync(This->pcm);
-    snd_pcm_delay(This->pcm, &delay);
     if ( state == SND_PCM_STATE_XRUN )
     {
         err = snd_pcm_prepare(This->pcm);
