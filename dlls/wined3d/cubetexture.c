@@ -28,18 +28,18 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
 /* Context activation is done by the caller. */
-static HRESULT cubetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb)
+static HRESULT cubetexture_bind(IWineD3DBaseTextureImpl *texture,
+        const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
     BOOL set_gl_texture_desc;
     HRESULT hr;
 
-    TRACE("texture %p, srgb %#x.\n", texture, srgb);
+    TRACE("texture %p, gl_info %p, srgb %#x.\n", texture, gl_info, srgb);
 
-    hr = basetexture_bind(texture, srgb, &set_gl_texture_desc);
+    hr = basetexture_bind(texture, gl_info, srgb, &set_gl_texture_desc);
     if (set_gl_texture_desc && SUCCEEDED(hr))
     {
         UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
-        const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
         BOOL srgb_tex = !gl_info->supported[EXT_TEXTURE_SRGB_DECODE] && texture->baseTexture.is_srgb;
         GLuint name = srgb_tex ? texture->baseTexture.texture_srgb.name : texture->baseTexture.texture_rgb.name;
         UINT i;

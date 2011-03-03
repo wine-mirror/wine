@@ -238,9 +238,9 @@ void basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty)
 }
 
 /* Context activation is done by the caller. */
-HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb, BOOL *set_surface_desc)
+HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture,
+        const struct wined3d_gl_info *gl_info, BOOL srgb, BOOL *set_surface_desc)
 {
-    const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
     HRESULT hr = WINED3D_OK;
     GLenum textureDimensions;
     BOOL isNewTexture = FALSE;

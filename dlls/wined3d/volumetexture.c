@@ -27,13 +27,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
 /* Context activation is done by the caller. */
-static HRESULT volumetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb)
+static HRESULT volumetexture_bind(IWineD3DBaseTextureImpl *texture,
+        const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
     BOOL dummy;
 
-    TRACE("texture %p, srgb %#x.\n", texture, srgb);
+    TRACE("texture %p, gl_info %p, srgb %#x.\n", texture, gl_info, srgb);
 
-    return basetexture_bind(texture, srgb, &dummy);
+    return basetexture_bind(texture, gl_info, srgb, &dummy);
 }
 
 /* Do not call while under the GL lock. */

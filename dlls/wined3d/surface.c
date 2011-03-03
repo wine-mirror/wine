@@ -701,9 +701,10 @@ void surface_bind(IWineD3DSurfaceImpl *surface, BOOL srgb)
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
         IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
+        const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
 
         TRACE("Passing to container (%p).\n", texture);
-        texture->baseTexture.texture_ops->texture_bind(texture, srgb);
+        texture->baseTexture.texture_ops->texture_bind(texture, gl_info, srgb);
     }
     else
     {

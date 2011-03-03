@@ -1871,7 +1871,8 @@ struct gl_texture
 
 struct wined3d_texture_ops
 {
-    HRESULT (*texture_bind)(struct IWineD3DBaseTextureImpl *texture, BOOL srgb);
+    HRESULT (*texture_bind)(struct IWineD3DBaseTextureImpl *texture,
+            const struct wined3d_gl_info *gl_info, BOOL srgb);
     void (*texture_preload)(struct IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb);
 };
 
@@ -1919,7 +1920,8 @@ static inline struct gl_texture *basetexture_get_gl_texture(IWineD3DBaseTextureI
 void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture, BOOL srgb, BOOL *set_surface_desc) DECLSPEC_HIDDEN;
+HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture,
+        const struct wined3d_gl_info *gl_info, BOOL srgb, BOOL *set_surface_desc) DECLSPEC_HIDDEN;
 void basetexture_cleanup(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 void basetexture_generate_mipmaps(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
