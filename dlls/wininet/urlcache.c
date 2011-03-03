@@ -877,7 +877,7 @@ static BOOL URLCache_LocalFileNameToPathW(
     }
 
     nRequired = (path_len + DIR_LENGTH + file_name_len + 1) * sizeof(WCHAR);
-    if (nRequired < *lpBufferSize)
+    if (nRequired <= *lpBufferSize)
     {
         int dir_len;
 
