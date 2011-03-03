@@ -5499,7 +5499,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
 
     /* Make sure the surface is loaded and up to date */
     surface_internal_preload(dst_impl, SRGB_RGB);
-    surface_bind(dst_impl, FALSE);
+    surface_bind(dst_impl, gl_info, FALSE);
 
     src_w = src_impl->currentDesc.Width;
     src_h = src_impl->currentDesc.Height;

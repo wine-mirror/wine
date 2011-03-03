@@ -694,14 +694,13 @@ void surface_set_texture_target(IWineD3DSurfaceImpl *surface, GLenum target)
 }
 
 /* Context activation is done by the caller. */
-void surface_bind(IWineD3DSurfaceImpl *surface, BOOL srgb)
+void surface_bind(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
-    TRACE("surface %p, srgb %#x.\n", surface, srgb);
+    TRACE("surface %p, gl_info %p, srgb %#x.\n", surface, gl_info, srgb);
 
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
         IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
-        const struct wined3d_gl_info *gl_info = &texture->resource.device->adapter->gl_info;
 
         TRACE("Passing to container (%p).\n", texture);
         texture->baseTexture.texture_ops->texture_bind(texture, gl_info, srgb);
@@ -746,7 +745,10 @@ void surface_bind(IWineD3DSurfaceImpl *surface, BOOL srgb)
 }
 
 /* Context activation is done by the caller. */
-static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This, BOOL srgb) {
+static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *surface,
+        const struct wined3d_gl_info *gl_info, BOOL srgb)
+{
+    IWineD3DDeviceImpl *device = surface->resource.device;
     DWORD active_sampler;
 
     /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
@@ -764,13 +766,13 @@ static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This, BOOL srgb) {
     ENTER_GL();
     glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
     LEAVE_GL();
-    active_sampler = This->resource.device->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
+    active_sampler = device->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
     {
-        IWineD3DDeviceImpl_MarkStateDirty(This->resource.device, STATE_SAMPLER(active_sampler));
+        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(active_sampler));
     }
-    surface_bind(This, srgb);
+    surface_bind(surface, gl_info, srgb);
 }
 
 /* This function checks if the primary render target uses the 8bit paletted format. */
@@ -1703,7 +1705,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     gl_info = context->gl_info;
 
     surface_prepare_texture(This, gl_info, srgb);
-    surface_bind_and_dirtify(This, srgb);
+    surface_bind_and_dirtify(This, gl_info, srgb);
 
     TRACE("Reading back offscreen render target %p.\n", This);
 
@@ -1735,7 +1737,7 @@ static void surface_prepare_texture_internal(IWineD3DSurfaceImpl *surface,
     if (convert != NO_CONVERSION || format.convert) surface->flags |= SFLAG_CONVERTED;
     else surface->flags &= ~SFLAG_CONVERTED;
 
-    surface_bind_and_dirtify(surface, srgb);
+    surface_bind_and_dirtify(surface, gl_info, srgb);
     surface_allocate_surface(surface, gl_info, &format, srgb);
     surface->flags |= alloc_flag;
 }
@@ -2102,13 +2104,13 @@ static void surface_release_client_storage(IWineD3DSurfaceImpl *surface)
     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
     if (surface->texture_name)
     {
-        surface_bind_and_dirtify(surface, FALSE);
+        surface_bind_and_dirtify(surface, context->gl_info, FALSE);
         glTexImage2D(surface->texture_target, surface->texture_level,
                 GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     }
     if (surface->texture_name_srgb)
     {
-        surface_bind_and_dirtify(surface, TRUE);
+        surface_bind_and_dirtify(surface, context->gl_info, TRUE);
         glTexImage2D(surface->texture_target, surface->texture_level,
                 GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     }
@@ -4425,7 +4427,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
 
             if (!device->isInDraw) context = context_acquire(device, NULL);
 
-            surface_bind_and_dirtify(surface, !(surface->flags & SFLAG_INTEXTURE));
+            surface_bind_and_dirtify(surface, gl_info, !(surface->flags & SFLAG_INTEXTURE));
             surface_download_data(surface, gl_info);
 
             if (context) context_release(context);
@@ -4571,7 +4573,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
             if (!device->isInDraw) context = context_acquire(device, NULL);
 
             surface_prepare_texture(surface, gl_info, srgb);
-            surface_bind_and_dirtify(surface, srgb);
+            surface_bind_and_dirtify(surface, gl_info, srgb);
 
             if (surface->CKeyFlags & WINEDDSD_CKSRCBLT)
             {
