@@ -148,6 +148,37 @@ static IDispatch* create_dispevent(void)
     return (IDispatch*)&event->lpVtbl;
 }
 
+#define EXPECT_CHILDREN(node) _expect_children((IXMLDOMNode*)node, __LINE__)
+static void _expect_children(IXMLDOMNode *node, int line)
+{
+    VARIANT_BOOL b;
+    HRESULT hr;
+
+    b = VARIANT_FALSE;
+    hr = IXMLDOMNode_hasChildNodes(node, &b);
+    ok_(__FILE__,line)(hr == S_OK, "hasChildNodes() failed, 0x%08x\n", hr);
+    ok_(__FILE__,line)(b == VARIANT_TRUE, "no children, %d\n", b);
+}
+
+#define EXPECT_NO_CHILDREN(node) _expect_no_children((IXMLDOMNode*)node, __LINE__)
+static void _expect_no_children(IXMLDOMNode *node, int line)
+{
+    VARIANT_BOOL b;
+    HRESULT hr;
+
+    b = VARIANT_TRUE;
+    hr = IXMLDOMNode_hasChildNodes(node, &b);
+    ok_(__FILE__,line)(hr == S_FALSE, "hasChildNodes() failed, 0x%08x\n", hr);
+    ok_(__FILE__,line)(b == VARIANT_FALSE, "no children, %d\n", b);
+}
+
+#define EXPECT_REF(node,ref) _expect_ref((IUnknown*)node, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc = IUnknown_AddRef(obj);
+    IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
+}
 
 static const WCHAR szEmpty[] = { 0 };
 static const WCHAR szIncomplete[] = {
@@ -1619,10 +1650,7 @@ static void test_domnode( void )
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
-    b = 1;
-    r = IXMLDOMNode_hasChildNodes( doc, &b );
-    ok( r == S_OK, "hasChildNoes bad return\n");
-    ok( b == VARIANT_TRUE, "hasChildNoes wrong result\n");
+    EXPECT_CHILDREN(doc);
 
     r = IXMLDOMDocument_get_documentElement( doc, &element );
     ok( r == S_OK, "should be a document element\n");
@@ -1733,10 +1761,7 @@ static void test_domnode( void )
         ok( r == S_OK, "get_attributes returned wrong code\n");
         ok( map != NULL, "should be attributes\n");
 
-        b = 1;
-        r = IXMLDOMNode_hasChildNodes( element, &b );
-        ok( r == S_OK, "hasChildNoes bad return\n");
-        ok( b == VARIANT_TRUE, "hasChildNoes wrong result\n");
+        EXPECT_CHILDREN(element);
     }
     else
         ok( FALSE, "no element\n");
@@ -1869,10 +1894,7 @@ todo_wine
 
         if (next)
         {
-            b = 1;
-            r = IXMLDOMNode_hasChildNodes( next, &b );
-            ok( r == S_FALSE, "hasChildNoes bad return\n");
-            ok( b == VARIANT_FALSE, "hasChildNoes wrong result\n");
+            EXPECT_NO_CHILDREN(next);
 
             type = NODE_INVALID;
             r = IXMLDOMNode_get_nodeType( next, &type);
@@ -1978,10 +2000,7 @@ todo_wine
         r = IXMLDOMNode_hasChildNodes( node, NULL );
         ok( r == E_INVALIDARG, "hasChildNoes bad return\n");
 
-        b = 1;
-        r = IXMLDOMNode_hasChildNodes( node, &b );
-        ok( r == S_OK, "hasChildNoes bad return\n");
-        ok( b == VARIANT_TRUE, "hasChildNoes wrong result\n");
+        EXPECT_CHILDREN(node);
 
         str = NULL;
         r = IXMLDOMNode_get_baseName( node, &str );
@@ -2006,10 +2025,7 @@ todo_wine
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
-    b = 1;
-    r = IXMLDOMNode_hasChildNodes( doc, &b );
-    ok( r == S_OK, "hasChildNoes bad return\n");
-    ok( b == VARIANT_TRUE, "hasChildNoes wrong result\n");
+    EXPECT_CHILDREN(doc);
 
     r = IXMLDOMDocument_get_documentElement( doc, &element );
     ok( r == S_OK, "should be a document element\n");
@@ -2060,10 +2076,11 @@ static void test_refs(void)
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
-    ref = IXMLDOMDocument_AddRef( doc );
-    ok( ref == 2, "ref %d\n", ref );
-    ref = IXMLDOMDocument_AddRef( doc );
-    ok( ref == 3, "ref %d\n", ref );
+    IXMLDOMDocument_AddRef( doc );
+    EXPECT_REF(doc, 2);
+    IXMLDOMDocument_AddRef( doc );
+    EXPECT_REF(doc, 3);
+
     IXMLDOMDocument_Release( doc );
     IXMLDOMDocument_Release( doc );
 
@@ -2071,16 +2088,12 @@ static void test_refs(void)
     ok( r == S_OK, "should be a document element\n");
     ok( element != NULL, "should be an element\n");
 
-    ref = IXMLDOMDocument_AddRef( doc );
-    ok( ref == 2, "ref %d\n", ref );
-    IXMLDOMDocument_Release( doc );
+    EXPECT_REF(doc, 1);
 
     r = IXMLDOMElement_get_childNodes( element, &node_list );
     ok( r == S_OK, "rets %08x\n", r);
 
-    ref = IXMLDOMNodeList_AddRef( node_list );
-    ok( ref == 2, "ref %d\n", ref );
-    IXMLDOMNodeList_Release( node_list );
+    EXPECT_REF(node_list, 1);
 
     IXMLDOMNodeList_get_item( node_list, 0, &node );
     ok( r == S_OK, "rets %08x\n", r);
@@ -2088,9 +2101,7 @@ static void test_refs(void)
     IXMLDOMNodeList_get_item( node_list, 0, &node2 );
     ok( r == S_OK, "rets %08x\n", r);
 
-    ref = IXMLDOMNode_AddRef( node );
-    ok( ref == 2, "ref %d\n", ref );
-    IXMLDOMNode_Release( node );
+    EXPECT_REF(node, 1);
 
     ref = IXMLDOMNode_Release( node );
     ok( ref == 0, "ref %d\n", ref );
@@ -2105,11 +2116,7 @@ static void test_refs(void)
     ref = IXMLDOMDocument_Release( doc );
     ok( ref == 0, "ref %d\n", ref );
 
-    ref = IXMLDOMElement_AddRef( element );
-    todo_wine {
-    ok( ref == 3, "ref %d\n", ref );
-    }
-    IXMLDOMElement_Release( element );
+    todo_wine EXPECT_REF(element, 2);
 
     /* IUnknown must be unique however we obtain it */
     r = IXMLDOMElement_QueryInterface( element, &IID_IUnknown, (void**)&unk );
@@ -2449,9 +2456,7 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     ok( node == root, "%p %p\n", node, root );
 
-    ref = IXMLDOMNode_AddRef( node );
-    ok(ref == 3, "ref %d\n", ref);
-    IXMLDOMNode_Release( node );
+    EXPECT_REF(node, 2);
 
     ref = IXMLDOMNode_Release( node );
     ok(ref == 1, "ref %d\n", ref);
@@ -2464,16 +2469,12 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     SysFreeString( str );
 
-    ref = IXMLDOMNode_AddRef( node );
-    ok(ref == 2, "ref = %d\n", ref);
-    IXMLDOMNode_Release( node );
+    EXPECT_REF(node, 1);
 
     r = IXMLDOMNode_QueryInterface( node, &IID_IUnknown, (void**)&unk );
     ok( r == S_OK, "returns %08x\n", r );
 
-    ref = IXMLDOMNode_AddRef( unk );
-    ok(ref == 3, "ref = %d\n", ref);
-    IXMLDOMNode_Release( unk );
+    EXPECT_REF(unk, 2);
 
     V_VT(&var) = VT_EMPTY;
     child = NULL;
@@ -2481,9 +2482,7 @@ static void test_create(void)
     ok( r == S_OK, "returns %08x\n", r );
     ok( unk == (IUnknown*)child, "%p %p\n", unk, child );
 
-    ref = IXMLDOMNode_AddRef( unk );
-    todo_wine ok(ref == 5, "ref = %d\n", ref);
-    IXMLDOMNode_Release( unk );
+    todo_wine EXPECT_REF(unk, 4);
 
     IXMLDOMNode_Release( child );
     IUnknown_Release( unk );
@@ -3348,7 +3347,7 @@ static void test_XMLHTTP(void)
     VARIANT dummy;
     VARIANT async;
     VARIANT varbody;
-    LONG state, status, ref, bound;
+    LONG state, status, bound;
     void *ptr;
     IDispatch *event;
     HRESULT hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL,
@@ -3426,16 +3425,11 @@ static void test_XMLHTTP(void)
     ok(state == READYSTATE_UNINITIALIZED, "got %d, expected READYSTATE_UNINITIALIZED\n", state);
 
     event = create_dispevent();
-    ref = IDispatch_AddRef(event);
-    ok(ref == 2, "got %d\n", ref);
-    IDispatch_Release(event);
 
+    EXPECT_REF(event, 1);
     hr = IXMLHttpRequest_put_onreadystatechange(pXMLHttpRequest, event);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ref = IDispatch_AddRef(event);
-    ok(ref == 3, "got %d\n", ref);
-    IDispatch_Release(event);
+    EXPECT_REF(event, 2);
 
     g_unexpectedcall = g_expectedcall = 0;
 
@@ -3589,7 +3583,7 @@ static void test_IXMLDOMDocument2(void)
     VARIANT_BOOL b;
     VARIANT var;
     HRESULT r;
-    LONG ref, res;
+    LONG res;
     BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
@@ -3652,8 +3646,9 @@ static void test_IXMLDOMDocument2(void)
     }
 
     /* we will check if the variant got cleared */
-    ref = IXMLDOMDocument2_AddRef(doc2);
-    expect_eq(ref, 3, int, "%d");  /* doc, doc2, AddRef*/
+    IXMLDOMDocument2_AddRef(doc2);
+    EXPECT_REF(doc2, 3); /* doc, doc2, AddRef*/
+
     V_VT(&var) = VT_UNKNOWN;
     V_UNKNOWN(&var) = (IUnknown *)doc2;
 
@@ -7258,15 +7253,9 @@ static void test_setAttributeNode(void)
     IXMLDOMElement_Release(elem);
     ok(ref2 == ref1, "got %d, expected %d\n", ref2, ref1);
 
-    b = VARIANT_FALSE;
-    hr = IXMLDOMElement_hasChildNodes(elem, &b);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok(b == VARIANT_TRUE, "got %d\n", b);
+    EXPECT_CHILDREN(elem);
+    EXPECT_CHILDREN(elem2);
 
-    b = VARIANT_FALSE;
-    hr = IXMLDOMElement_hasChildNodes(elem2, &b);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-    ok(b == VARIANT_TRUE, "got %d\n", b);
     IXMLDOMElement_Release(elem2);
 
     attr2 = NULL;
@@ -7403,9 +7392,22 @@ static void test_createNode(void)
     VARIANT v, var;
     BSTR prefix, str;
     HRESULT hr;
+    ULONG ref;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
+
+    /* reference count tests */
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &elem);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    /* initial reference is 2 */
+todo_wine {
+    EXPECT_REF(elem, 2);
+    ref = IXMLDOMElement_Release(elem);
+    ok(ref == 1, "got %d\n", ref);
+    /* it's released already, attempt to release now will crash it */
+}
 
     /* NODE_ELEMENT nodes */
     /* 1. specified namespace */
@@ -7629,7 +7631,6 @@ static void test_events(void)
     HRESULT hr;
     VARIANT v;
     IDispatch *event;
-    ULONG ref;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
@@ -7660,35 +7661,27 @@ static void test_events(void)
 
     hr = IXMLDOMDocument_put_onreadystatechange(doc, v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ref = IDispatch_AddRef(event);
-    IDispatch_Release(event);
-    ok(ref == 3, "got %d\n", ref);
+    EXPECT_REF(event, 2);
 
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = event;
 
     hr = IXMLDOMDocument_put_onreadystatechange(doc, v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ref = IDispatch_AddRef(event);
-    IDispatch_Release(event);
-    ok(ref == 3, "got %d\n", ref);
+    EXPECT_REF(event, 2);
 
     /* VT_NULL doesn't reset event handler */
     V_VT(&v) = VT_NULL;
     hr = IXMLDOMDocument_put_onreadystatechange(doc, v);
     ok(hr == DISP_E_TYPEMISMATCH, "got 0x%08x\n", hr);
-    ref = IDispatch_AddRef(event);
-    IDispatch_Release(event);
-    ok(ref == 3, "got %d\n", ref);
+    EXPECT_REF(event, 2);
 
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = NULL;
 
     hr = IXMLDOMDocument_put_onreadystatechange(doc, v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ref = IDispatch_AddRef(event);
-    IDispatch_Release(event);
-    ok(ref == 2, "got %d\n", ref);
+    EXPECT_REF(event, 1);
 
     V_VT(&v) = VT_UNKNOWN;
     V_DISPATCH(&v) = NULL;
@@ -7819,7 +7812,7 @@ static void test_xsltemplate(void)
     IStream *stream;
     VARIANT_BOOL b;
     HRESULT hr;
-    ULONG ref1, ref2, ref;
+    ULONG ref1, ref2;
     VARIANT v;
 
     template = create_xsltemplate(&IID_IXSLTemplate);
@@ -7877,16 +7870,10 @@ static void test_xsltemplate(void)
     hr = IXSLTemplate_createProcessor(template, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-    ref = IXSLTemplate_AddRef(template);
-    IXSLTemplate_Release(template);
-    ok(ref == 2, "got %d\n", ref);
-
+    EXPECT_REF(template, 1);
     hr = IXSLTemplate_createProcessor(template, &processor);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    ref = IXSLTemplate_AddRef(template);
-    IXSLTemplate_Release(template);
-    ok(ref == 3, "got %d\n", ref);
+    EXPECT_REF(template, 2);
 
     /* input no set yet */
     V_VT(&v) = VT_BSTR;
@@ -7906,9 +7893,7 @@ todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    ref = IStream_AddRef(stream);
-    IStream_Release(stream);
-    ok(ref == 2, "got %d\n", ref);
+    EXPECT_REF(stream, 1);
 
     V_VT(&v) = VT_UNKNOWN;
     V_UNKNOWN(&v) = (IUnknown*)stream;
@@ -7916,9 +7901,7 @@ todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* it seems processor grabs 2 references */
-    ref = IStream_AddRef(stream);
-    IStream_Release(stream);
-    todo_wine ok(ref == 4, "got %d\n", ref);
+    todo_wine EXPECT_REF(stream, 3);
 
     V_VT(&v) = VT_EMPTY;
     hr = IXSLProcessor_get_output(processor, &v);
@@ -7926,9 +7909,7 @@ todo_wine {
     ok(V_VT(&v) == VT_UNKNOWN, "got type %d\n", V_VT(&v));
     ok(V_UNKNOWN(&v) == (IUnknown*)stream, "got %p\n", V_UNKNOWN(&v));
 
-    ref = IStream_AddRef(stream);
-    IStream_Release(stream);
-    todo_wine ok(ref == 5, "got %d\n", ref);
+    todo_wine EXPECT_REF(stream, 4);
     VariantClear(&v);
 
     hr = IXSLProcessor_transform(processor, NULL);
@@ -7939,9 +7920,7 @@ todo_wine {
     hr = IXSLProcessor_put_output(processor, v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ref = IStream_AddRef(stream);
-    IStream_Release(stream);
-    ok(ref == 2, "got %d\n", ref);
+    EXPECT_REF(stream, 1);
 
     IStream_Release(stream);
 
@@ -7987,6 +7966,7 @@ static void test_insertBefore(void)
 {
     IXMLDOMDocument *doc;
     IXMLDOMAttribute *attr;
+    IXMLDOMElement *elem1, *elem2, *elem3;
     IXMLDOMNode *node, *newnode;
     HRESULT hr;
     VARIANT v;
@@ -8084,6 +8064,56 @@ static void test_insertBefore(void)
     ok(node == NULL, "got %p\n", node);
     IXMLDOMNode_Release(newnode);
 
+    /* insertBefore for elements */
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &elem1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem2"), &elem2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem3"), &elem3);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    EXPECT_NO_CHILDREN(elem1);
+    EXPECT_NO_CHILDREN(elem2);
+    EXPECT_NO_CHILDREN(elem3);
+
+    todo_wine EXPECT_REF(elem2, 2);
+
+    V_VT(&v) = VT_NULL;
+    node = NULL;
+    hr = IXMLDOMElement_insertBefore(elem1, (IXMLDOMNode*)elem2, v, &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(node == (void*)elem2, "got %p\n", node);
+
+    EXPECT_CHILDREN(elem1);
+    todo_wine EXPECT_REF(elem2, 3);
+
+    /* again for already linked node */
+    V_VT(&v) = VT_NULL;
+    node = NULL;
+    hr = IXMLDOMElement_insertBefore(elem1, (IXMLDOMNode*)elem2, v, &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(node == (void*)elem2, "got %p\n", node);
+
+    EXPECT_CHILDREN(elem1);
+
+    /* increments each time */
+    todo_wine EXPECT_REF(elem2, 4);
+
+    /* try to add to another element */
+    V_VT(&v) = VT_NULL;
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_insertBefore(elem3, (IXMLDOMNode*)elem2, v, &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(node == (void*)elem2, "got %p\n", node);
+
+    EXPECT_CHILDREN(elem3);
+    todo_wine EXPECT_NO_CHILDREN(elem1);
+
+    IXMLDOMElement_Release(elem1);
+    IXMLDOMElement_Release(elem2);
+    IXMLDOMElement_Release(elem3);
     IXMLDOMDocument_Release(doc);
     free_bstrs();
 }
