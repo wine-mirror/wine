@@ -142,7 +142,7 @@ typedef struct _HASH_CACHEFILE_ENTRY
 
 typedef struct _DIRECTORY_DATA
 {
-    DWORD dwUnknown;
+    DWORD dwNumFiles;
     char filename[DIR_LENGTH];
 } DIRECTORY_DATA;
 
@@ -346,12 +346,7 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 	
 		    for (i = 0; !dwError && i < pHeader->DirectoryCount; ++i)
 		    {
-			/* The following values were copied from a Windows index.
-			 * I don't know what the values are supposed to mean but
-			 * have made them the same in the hope that this will
-			 * be better for compatibility
-			 */
-			pHeader->directory_data[i].dwUnknown = (i > 1) ? 0xfe : 0xff;
+			pHeader->directory_data[i].dwNumFiles = 0;
 			for (j = 0;; ++j)
 			{
 			    int k;
