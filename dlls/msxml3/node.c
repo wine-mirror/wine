@@ -1106,6 +1106,7 @@ void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispe
 
     This->node = node;
     This->iface = node_iface;
+    This->parent = NULL;
 
     if(dispex_data)
         init_dispex(&This->dispex, (IUnknown*)This->iface, dispex_data);

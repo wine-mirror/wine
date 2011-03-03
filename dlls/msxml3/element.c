@@ -1182,6 +1182,7 @@ static HRESULT WINAPI domelem_setAttributeNode(
     static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
     xmlChar *name, *value;
     BSTR nameW, prefix;
+    xmlnode *attr_node;
     xmlAttrPtr attr;
     VARIANT valueW;
     HRESULT hr;
@@ -1189,6 +1190,19 @@ static HRESULT WINAPI domelem_setAttributeNode(
     FIXME("(%p)->(%p %p): semi-stub\n", This, attribute, old);
 
     if (!attribute) return E_INVALIDARG;
+
+    attr_node = get_node_obj((IXMLDOMNode*)attribute);
+    if (!attr_node)
+    {
+        FIXME("att_node is not our node implementation\n");
+        return E_FAIL;
+    }
+
+    if (attr_node->parent)
+    {
+        WARN("attempt to add already used attribute\n");
+        return E_FAIL;
+    }
 
     hr = IXMLDOMAttribute_get_nodeName(attribute, &nameW);
     if (hr != S_OK) return hr;
@@ -1231,6 +1245,8 @@ static HRESULT WINAPI domelem_setAttributeNode(
     }
 
     attr = xmlSetNsProp(get_element(This), NULL, name, value);
+    if (attr)
+        attr_node->parent = (IXMLDOMNode*)iface;
 
     SysFreeString(nameW);
     VariantClear(&valueW);

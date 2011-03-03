@@ -7213,7 +7213,7 @@ static void test_get_ownerDocument(void)
 static void test_setAttributeNode(void)
 {
     IXMLDOMDocument *doc, *doc2;
-    IXMLDOMElement *elem;
+    IXMLDOMElement *elem, *elem2;
     IXMLDOMAttribute *attr, *attr2, *ret_attr;
     VARIANT_BOOL b;
     HRESULT hr;
@@ -7232,6 +7232,10 @@ static void test_setAttributeNode(void)
 
     hr = IXMLDOMDocument_get_documentElement(doc, &elem);
     ok( hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem2);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( elem2 != elem, "got same instance\n");
 
     ret_attr = (void*)0xdeadbeef;
     hr = IXMLDOMElement_setAttributeNode(elem, NULL, &ret_attr);
@@ -7259,16 +7263,23 @@ static void test_setAttributeNode(void)
     ok( hr == S_OK, "got 0x%08x\n", hr);
     ok(b == VARIANT_TRUE, "got %d\n", b);
 
+    b = VARIANT_FALSE;
+    hr = IXMLDOMElement_hasChildNodes(elem2, &b);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+    IXMLDOMElement_Release(elem2);
+
     attr2 = NULL;
     hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("attr"), &attr2);
     ok( hr == S_OK, "got 0x%08x\n", hr);
+    ok( attr2 != attr, "got same instance %p\n", attr2);
     IXMLDOMAttribute_Release(attr2);
 
     /* try to add it another time */
     ret_attr = (void*)0xdeadbeef;
     hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
-    todo_wine ok( hr == E_FAIL, "got 0x%08x\n", hr);
-    todo_wine ok( ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
+    ok( hr == E_FAIL, "got 0x%08x\n", hr);
+    ok( ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
 
     IXMLDOMElement_Release(elem);
 
@@ -7277,8 +7288,8 @@ static void test_setAttributeNode(void)
     ok( hr == S_OK, "got 0x%08x\n", hr);
     ret_attr = (void*)0xdeadbeef;
     hr = IXMLDOMElement_setAttributeNode(elem, attr, &ret_attr);
-    todo_wine ok( hr == E_FAIL, "got 0x%08x\n", hr);
-    todo_wine ok( ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
+    ok( hr == E_FAIL, "got 0x%08x\n", hr);
+    ok( ret_attr == (void*)0xdeadbeef, "got %p\n", ret_attr);
     IXMLDOMElement_Release(elem);
 
     /* add attribute already attached to another document */
@@ -7293,7 +7304,7 @@ static void test_setAttributeNode(void)
     hr = IXMLDOMDocument_get_documentElement(doc2, &elem);
     ok( hr == S_OK, "got 0x%08x\n", hr);
     hr = IXMLDOMElement_setAttributeNode(elem, attr, NULL);
-    todo_wine ok( hr == E_FAIL, "got 0x%08x\n", hr);
+    ok( hr == E_FAIL, "got 0x%08x\n", hr);
     IXMLDOMElement_Release(elem);
 
     IXMLDOMAttribute_Release(attr);
