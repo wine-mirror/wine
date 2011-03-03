@@ -56,6 +56,7 @@
 #include "winbase.h"
 #include "wininet.h"
 #include "winerror.h"
+#include "winternl.h"
 #define NO_SHLWAPI_STREAM
 #define NO_SHLWAPI_REG
 #define NO_SHLWAPI_STRFCNS
@@ -3774,13 +3775,13 @@ static void HTTP_ProcessExpires(http_request_t *request)
     }
     if (!expirationFound)
     {
-        ULARGE_INTEGER ft;
+        LARGE_INTEGER t;
 
         /* With no known age, default to 10 minutes until expiration. */
-        GetSystemTimeAsFileTime((FILETIME *)&ft);
-        ft.QuadPart += 10 * 60 * 10000000;
-        request->expires.dwLowDateTime = ft.u.LowPart;
-        request->expires.dwHighDateTime = ft.u.HighPart;
+        NtQuerySystemTime( &t );
+        t.QuadPart += 10 * 60 * (ULONGLONG)10000000;
+        request->expires.dwLowDateTime = t.u.LowPart;
+        request->expires.dwHighDateTime = t.u.HighPart;
     }
 }
 
