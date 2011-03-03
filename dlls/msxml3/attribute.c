@@ -309,13 +309,32 @@ static HRESULT WINAPI domattr_get_attributes(
 static HRESULT WINAPI domattr_insertBefore(
     IXMLDOMAttribute *iface,
     IXMLDOMNode* newNode, VARIANT refChild,
-    IXMLDOMNode** outOldNode)
+    IXMLDOMNode** old_node)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
+    DOMNodeType type;
+    HRESULT hr;
 
-    FIXME("(%p)->(%p %s %p) needs test\n", This, newNode, debugstr_variant(&refChild), outOldNode);
+    FIXME("(%p)->(%p %s %p) needs test\n", This, newNode, debugstr_variant(&refChild), old_node);
 
-    return node_insert_before(&This->node, newNode, &refChild, outOldNode);
+    if (!newNode) return E_INVALIDARG;
+
+    hr = IXMLDOMNode_get_nodeType(newNode, &type);
+    if (hr != S_OK) return hr;
+
+    TRACE("new node type %d\n", type);
+    switch (type)
+    {
+        case NODE_ATTRIBUTE:
+        case NODE_CDATA_SECTION:
+        case NODE_COMMENT:
+        case NODE_ELEMENT:
+        case NODE_PROCESSING_INSTRUCTION:
+            if (old_node) *old_node = NULL;
+            return E_FAIL;
+        default:
+            return node_insert_before(&This->node, newNode, &refChild, old_node);
+    }
 }
 
 static HRESULT WINAPI domattr_replaceChild(
