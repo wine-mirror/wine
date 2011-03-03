@@ -285,17 +285,12 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
      */
     if (ref == 0)
     {
-        IParent *IndexBufferParent;
         DWORD i;
 
         EnterCriticalSection(&ddraw_cs);
         /* Free the index buffer. */
         IWineD3DDevice_SetIndexBuffer(This->wineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
-        IndexBufferParent = IWineD3DBuffer_GetParent(This->indexbuffer);
-        if (IParent_Release(IndexBufferParent))
-        {
-            ERR(" (%p) Something is still holding the index buffer parent %p\n", This, IndexBufferParent);
-        }
+        IWineD3DBuffer_Release(This->indexbuffer);
 
         /* There is no need to unset the vertex buffer here, IWineD3DDevice_Uninit3D will do that when
          * destroying the primary stateblock. If a vertex buffer is destroyed while it is bound
@@ -4183,13 +4178,11 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     {
         UINT size = max(desc.Size * 2, IndexCount * sizeof(WORD));
         IWineD3DBuffer *buffer;
-        IParentImpl *parent;
 
         TRACE("Growing index buffer to %u bytes\n", size);
 
-        parent = IWineD3DBuffer_GetParent(This->indexbuffer);
         hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice, size, WINED3DUSAGE_DYNAMIC /* Usage */,
-                WINED3DPOOL_DEFAULT, parent, &ddraw_null_wined3d_parent_ops, &buffer);
+                WINED3DPOOL_DEFAULT, NULL, &ddraw_null_wined3d_parent_ops, &buffer);
         if (FAILED(hr))
         {
             ERR("(%p) IWineD3DDevice::CreateIndexBuffer failed with hr = %08x\n", This, hr);
@@ -4199,8 +4192,6 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
         IWineD3DBuffer_Release(This->indexbuffer);
         This->indexbuffer = buffer;
-
-        parent->child = (IUnknown *)buffer;
     }
 
     /* copy the index stream into the index buffer.
@@ -6781,7 +6772,6 @@ IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
 
 HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *target)
 {
-    IParentImpl *index_buffer_parent;
     HRESULT hr;
 
     if (ddraw->cooperative_level & DDSCL_FPUPRESERVE)
@@ -6805,27 +6795,15 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
     device->legacyTextureBlending = FALSE;
 
     /* Create an index buffer, it's needed for indexed drawing */
-    index_buffer_parent = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*index_buffer_parent));
-    if (!index_buffer_parent)
-    {
-        ERR("Failed to allocate index buffer parent memory.\n");
-        ddraw_handle_table_destroy(&device->handle_table);
-        return DDERR_OUTOFMEMORY;
-    }
-
-    ddraw_parent_init(index_buffer_parent);
-
     hr = IWineD3DDevice_CreateIndexBuffer(ddraw->wineD3DDevice, 0x40000 /* Length. Don't know how long it should be */,
-            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT, index_buffer_parent,
+            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT, NULL,
             &ddraw_null_wined3d_parent_ops, &device->indexbuffer);
     if (FAILED(hr))
     {
         ERR("Failed to create an index buffer, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, index_buffer_parent);
         ddraw_handle_table_destroy(&device->handle_table);
         return hr;
     }
-    index_buffer_parent->child = (IUnknown *)device->indexbuffer;
 
     /* This is for convenience. */
     device->wineD3DDevice = ddraw->wineD3DDevice;
@@ -6836,7 +6814,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
     if (FAILED(hr))
     {
         ERR("Failed to set render target, hr %#x.\n", hr);
-        IParent_Release((IParent *)index_buffer_parent);
+        IWineD3DBuffer_Release(device->indexbuffer);
         ddraw_handle_table_destroy(&device->handle_table);
         return hr;
     }
