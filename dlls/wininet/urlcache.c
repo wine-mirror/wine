@@ -160,8 +160,7 @@ typedef struct _URLCACHE_HEADER
     DWORD dwCacheUsageHigh;
     DWORD dwExemptUsageLow;
     DWORD dwExemptUsageHigh;
-    BYTE DirectoryCount; /* number of directory_data's */
-    BYTE Unknown8[3]; /* just padding? */
+    DWORD DirectoryCount; /* number of directory_data's */
     DIRECTORY_DATA directory_data[1]; /* first directory entry */
 } URLCACHE_HEADER, *LPURLCACHE_HEADER;
 typedef const URLCACHE_HEADER *LPCURLCACHE_HEADER;
