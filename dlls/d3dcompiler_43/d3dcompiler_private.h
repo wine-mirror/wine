@@ -42,6 +42,7 @@
 /* TRACE helper functions */
 const char *debug_d3dcompiler_d3d_blob_part(D3D_BLOB_PART part) DECLSPEC_HIDDEN;
 const char *debug_d3dcompiler_shader_variable_class(D3D_SHADER_VARIABLE_CLASS c) DECLSPEC_HIDDEN;
+const char *debug_d3dcompiler_shader_variable_type(D3D_SHADER_VARIABLE_TYPE t) DECLSPEC_HIDDEN;
 
 /* ID3DBlob */
 struct d3dcompiler_blob

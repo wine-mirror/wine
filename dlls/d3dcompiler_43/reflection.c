@@ -1212,7 +1212,8 @@ static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type 
     read_dword(&ptr, &temp);
     desc->Class = temp & 0xffff;
     desc->Type = temp >> 16;
-    TRACE("Class %s, Type %x\n", debug_d3dcompiler_shader_variable_class(desc->Class), desc->Type);
+    TRACE("Class %s, Type %s\n", debug_d3dcompiler_shader_variable_class(desc->Class),
+            debug_d3dcompiler_shader_variable_type(desc->Type));
 
     read_dword(&ptr, &temp);
     desc->Rows = temp & 0xffff;
