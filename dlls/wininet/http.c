@@ -3999,8 +3999,8 @@ static void HTTP_CacheRequest(http_request_t *request)
  * Sends the specified request to the HTTP server
  *
  * RETURNS
- *    TRUE  on success
- *    FALSE on failure
+ *    ERROR_SUCCESS on success
+ *    win32 error code on failure
  *
  */
 static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
