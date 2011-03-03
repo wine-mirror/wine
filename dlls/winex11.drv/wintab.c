@@ -484,7 +484,7 @@ static void disable_system_cursors(void)
 /***********************************************************************
  *             X11DRV_LoadTabletInfo (X11DRV.@)
  */
-void CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
+BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
     const WCHAR SZ_CONTEXT_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','C','o','n','t','e','x','t',0};
     const WCHAR SZ_DEVICE_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','D','e','v','i','c','e',0};
@@ -507,7 +507,7 @@ void CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
     if (!X11DRV_XInput_Init())
     {
         ERR("Unable to initialize the XInput library.\n");
-        return;
+        return FALSE;
     }
 
     hwndTabletDefault = hwnddefault;
@@ -555,9 +555,9 @@ void CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
     devices = pXListInputDevices(data->display, &num_devices);
     if (!devices)
     {
-        WARN("XInput Extensions reported as not avalable\n");
+        WARN("XInput Extensions reported as not available\n");
         wine_tsx11_unlock();
-        return;
+        return FALSE;
     }
     TRACE("XListInputDevices reports %d devices\n", num_devices);
     for (loop=0; loop < num_devices; loop++)
@@ -778,6 +778,7 @@ void CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
     }
 
     wine_tsx11_unlock();
+    return TRUE;
 }
 
 static int figure_deg(int x, int y)
@@ -971,7 +972,7 @@ int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
     XEventClass     event_list[7];
     Window          win = X11DRV_get_whole_window( hOwner );
 
-    if (!win) return 0;
+    if (!win || !xinput_handle) return 0;
 
     TRACE("Creating context for window %p (%lx)  %i cursors\n", hOwner, win, gNumCursors);
 
@@ -1079,6 +1080,8 @@ UINT CDECL X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
     int rc = 0;
     LPWTI_CURSORS_INFO  tgtcursor;
     TRACE("(%u, %u, %p)\n", wCategory, nIndex, lpOutput);
+
+    if (!xinput_handle) return 0;
 
     switch(wCategory)
     {
@@ -1512,8 +1515,9 @@ int CDECL X11DRV_GetCurrentPacket(LPWTPACKET packet)
 /***********************************************************************
  *		LoadTabletInfo (X11DRV.@)
  */
-void CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
+BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
+    return FALSE;
 }
 
 /***********************************************************************

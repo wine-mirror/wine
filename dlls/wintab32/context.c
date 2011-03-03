@@ -42,7 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
  * http://www.csl.sony.co.jp/projects/ar/restricted/wintabl.html
  */
 
-static BOOL gLoaded;
 static LPOPENCONTEXT gOpenContexts;
 static HCTX gTopContext = (HCTX)0xc00;
 
@@ -151,12 +150,26 @@ static LPOPENCONTEXT TABLET_FindOpenContext(HCTX hCtx)
     return NULL;
 }
 
-static void LoadTablet(void)
+static inline BOOL LoadTablet(void)
 {
-    TRACE("Initializing the tablet to hwnd %p\n",hwndDefault);
-    gLoaded= TRUE;
-    if (pLoadTabletInfo)
-        pLoadTabletInfo(hwndDefault);
+    static enum {TI_START = 0, TI_OK, TI_FAIL} loaded = TI_START;
+
+    if (loaded == TI_START)
+    {
+        TRACE("Initializing the tablet to hwnd %p\n",hwndDefault);
+
+        if (pLoadTabletInfo && pLoadTabletInfo(hwndDefault))
+        {
+            loaded = TI_OK;
+        }
+        else
+        {
+            loaded = TI_FAIL;
+            ERR("LoadTabletInfo(%p) failed\n", hwndDefault);
+        }
+    }
+
+    return loaded == TI_OK;
 }
 
 int TABLET_PostTabletMessage(LPOPENCONTEXT newcontext, UINT msg, WPARAM wParam,
@@ -366,9 +379,9 @@ static UINT WTInfoT(UINT wCategory, UINT nIndex, LPVOID lpOutput, BOOL bUnicode)
 {
     UINT result;
 
+    if (!LoadTablet()) return 0;
+
     TRACE("(%d, %d, %p, %d)\n", wCategory, nIndex, lpOutput, bUnicode);
-    if (gLoaded == FALSE)
-         LoadTablet();
 
     /*
      *  Handle system extents here, as we can use user32.dll code to set them.
@@ -449,6 +462,8 @@ UINT WINAPI WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
 HCTX WINAPI WTOpenW(HWND hWnd, LPLOGCONTEXTW lpLogCtx, BOOL fEnable)
 {
     LPOPENCONTEXT newcontext;
+
+    if (!LoadTablet()) return 0;
 
     TRACE("hWnd=%p, lpLogCtx=%p, fEnable=%u\n", hWnd, lpLogCtx, fEnable);
     DUMPCONTEXT(*lpLogCtx);
