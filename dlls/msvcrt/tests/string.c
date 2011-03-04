@@ -75,6 +75,7 @@ static errno_t (__cdecl *p_ultoa_s)(__msvcrt_ulong,char*,size_t,int);
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
 static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
+static int (__cdecl *p_wcslwr_s)(wchar_t*,size_t);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -729,6 +730,93 @@ static void test__wcsupr_s(void)
     ret = p_wcsupr_s(testBuffer, sizeof(testBuffer)/sizeof(WCHAR));
     ok(ret == 0, "Expected _wcsupr_s to succeed, got %d\n", ret);
     ok(!wcscmp(testBuffer, expectedString), "Expected the string to be fully upper-case\n");
+}
+
+static void test__wcslwr_s(void)
+{
+    static const WCHAR mixedString[] = {'M', 'i', 'X', 'e', 'D', 'l', 'o', 'w',
+                                        'e', 'r', 'U', 'P', 'P', 'E', 'R', 0};
+    static const WCHAR expectedString[] = {'m', 'i', 'x', 'e', 'd', 'l', 'o',
+                                           'w', 'e', 'r', 'u', 'p', 'p', 'e',
+                                           'r', 0};
+    WCHAR buffer[2*sizeof(mixedString)/sizeof(WCHAR)];
+    int ret;
+
+    if (!p_wcslwr_s)
+    {
+        win_skip("_wcslwr_s not found\n");
+        return;
+    }
+
+    /* Test NULL input string and invalid size. */
+    errno = EBADF;
+    ret = p_wcslwr_s(NULL, 0);
+    ok(ret == EINVAL, "expected EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "expected errno EINVAL, got %d\n", errno);
+
+    /* Test NULL input string and valid size. */
+    errno = EBADF;
+    ret = p_wcslwr_s(NULL, sizeof(buffer)/sizeof(wchar_t));
+    ok(ret == EINVAL, "expected EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "expected errno EINVAL, got %d\n", errno);
+
+    /* Test empty string with zero size. */
+    errno = EBADF;
+    buffer[0] = 'a';
+    ret = p_wcslwr_s(buffer, 0);
+    ok(ret == EINVAL, "expected EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "expected errno EINVAL, got %d\n", errno);
+    ok(buffer[0] == 0, "expected empty string\n");
+
+    /* Test empty string with size of one. */
+    buffer[0] = 0;
+    ret = p_wcslwr_s(buffer, 1);
+    ok(ret == 0, "got %d\n", ret);
+    ok(buffer[0] == 0, "expected buffer to be unchanged\n");
+
+    /* Test one-byte buffer with zero size. */
+    errno = EBADF;
+    buffer[0] = 'x';
+    ret = p_wcslwr_s(buffer, 0);
+    ok(ret == EINVAL, "expected EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "expected errno to be EINVAL, got %d\n", errno);
+    ok(buffer[0] == '\0', "expected empty string\n");
+
+    /* Test one-byte buffer with size of one. */
+    errno = EBADF;
+    buffer[0] = 'x';
+    ret = p_wcslwr_s(buffer, 1);
+    ok(ret == EINVAL, "expected EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "expected errno to be EINVAL, got %d\n", errno);
+    ok(buffer[0] == '\0', "expected empty string\n");
+
+    /* Test invalid size. */
+    wcscpy(buffer, mixedString);
+    errno = EBADF;
+    ret = p_wcslwr_s(buffer, 0);
+    ok(ret == EINVAL, "Expected EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "expected errno to be EINVAL, got %d\n", errno);
+    ok(buffer[0] == '\0', "expected empty string\n");
+
+    /* Test normal string uppercasing. */
+    wcscpy(buffer, mixedString);
+    ret = p_wcslwr_s(buffer, sizeof(mixedString)/sizeof(WCHAR));
+    ok(ret == 0, "expected 0, got %d\n", ret);
+    ok(!wcscmp(buffer, expectedString), "expected lowercase\n");
+
+    /* Test uppercasing with a shorter buffer size count. */
+    wcscpy(buffer, mixedString);
+    errno = EBADF;
+    ret = p_wcslwr_s(buffer, sizeof(mixedString)/sizeof(WCHAR) - 1);
+    ok(ret == EINVAL, "expected EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "expected errno to be EINVAL, got %d\n", errno);
+    ok(buffer[0] == '\0', "expected empty string\n");
+
+    /* Test uppercasing with a longer buffer size count. */
+    wcscpy(buffer, mixedString);
+    ret = p_wcslwr_s(buffer, sizeof(buffer)/sizeof(WCHAR));
+    ok(ret == 0, "expected 0, got %d\n", ret);
+    ok(!wcscmp(buffer, expectedString), "expected lowercase\n");
 }
 
 static void test_mbcjisjms(void)
@@ -1732,6 +1820,7 @@ START_TEST(string)
     p_strlwr_s = (void *)GetProcAddress(hMsvcrt, "_strlwr_s");
     p_ultoa_s = (void *)GetProcAddress(hMsvcrt, "_ultoa_s");
     p_set_invalid_parameter_handler = (void *) GetProcAddress(hMsvcrt, "_set_invalid_parameter_handler");
+    p_wcslwr_s = (void*)GetProcAddress(hMsvcrt, "_wcslwr_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -1771,4 +1860,5 @@ START_TEST(string)
     test_wcsncat_s();
     test__mbsnbcat_s();
     test__ultoa_s();
+    test__wcslwr_s();
 }

@@ -1146,7 +1146,7 @@
 @ stub _wcsicoll_l
 @ cdecl _wcslwr(wstr) msvcrt._wcslwr
 @ stub _wcslwr_l
-@ stub _wcslwr_s
+@ cdecl _wcslwr_s(wstr long) msvcrt._wcslwr_s
 @ stub _wcslwr_s_l
 @ stub _wcsncoll
 @ stub _wcsncoll_l
