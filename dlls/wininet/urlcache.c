@@ -2868,9 +2868,53 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamW(
     IN DWORD dwReserved
     )
 {
-    FIXME( "(%s, %p, %p, %x, 0x%08x)\n", debugstr_w(lpszUrlName), lpCacheEntryInfo,
+    DWORD size;
+    int url_len;
+    /* NOTE: this is not the same as the way that the native
+     * version allocates 'stream' handles. I did it this way
+     * as it is much easier and no applications should depend
+     * on this behaviour. (Native version appears to allocate
+     * indices into a table)
+     */
+    STREAM_HANDLE * pStream;
+    HANDLE hFile;
+
+    TRACE( "(%s, %p, %p, %x, 0x%08x)\n", debugstr_w(lpszUrlName), lpCacheEntryInfo,
            lpdwCacheEntryInfoBufferSize, fRandomRead, dwReserved );
-    return NULL;
+
+    if (!RetrieveUrlCacheEntryFileW(lpszUrlName,
+        lpCacheEntryInfo,
+        lpdwCacheEntryInfoBufferSize,
+        dwReserved))
+    {
+        return NULL;
+    }
+
+    hFile = CreateFileW(lpCacheEntryInfo->lpszLocalFileName,
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        NULL,
+        OPEN_EXISTING,
+        fRandomRead ? FILE_FLAG_RANDOM_ACCESS : 0,
+        NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    /* allocate handle storage space */
+    size = sizeof(STREAM_HANDLE);
+    url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, NULL, 0, NULL, NULL);
+    size += url_len;
+    pStream = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!pStream)
+    {
+        CloseHandle(hFile);
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+
+    pStream->hFile = hFile;
+    WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, pStream->lpszUrl, url_len, NULL, NULL);
+    return pStream;
 }
 
 /***********************************************************************
