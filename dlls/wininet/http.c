@@ -1572,14 +1572,12 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
 
     if(request->hCacheFile) {
         WCHAR url[INTERNET_MAX_URL_LENGTH];
-        FILETIME ft;
 
         CloseHandle(request->hCacheFile);
 
-        memset(&ft, 0, sizeof(FILETIME));
         if(HTTP_GetRequestURL(request, url)) {
-            CommitUrlCacheEntryW(url, request->cacheFile, request->expires, ft,
-                    NORMAL_CACHE_ENTRY, NULL, 0, NULL, 0);
+            CommitUrlCacheEntryW(url, request->cacheFile, request->expires,
+                    request->last_modified, NORMAL_CACHE_ENTRY, NULL, 0, NULL, 0);
         }
     }
 
@@ -3630,24 +3628,152 @@ static WORD HTTP_ParseMonth(LPCWSTR month)
     return 0;
 }
 
-/* FIXME: only accepts dates in RFC 1123 format, which is the only correct
- * format for HTTP, but which may not be the only format actually seen in the
- * wild.  http://www.hackcraft.net/web/datetime/ suggests at least RFC 850
- * dates and dates as formatted by asctime() should be accepted as well.
+/* Parses the string pointed to by *str, assumed to be a 24-hour time HH:MM:SS,
+ * optionally preceded by whitespace.
+ * Upon success, returns TRUE, sets the wHour, wMinute, and wSecond fields of
+ * st, and sets *str to the first character after the time format.
  */
-static BOOL HTTP_ParseDate(LPCWSTR value, FILETIME *ft)
+static BOOL HTTP_ParseTime(SYSTEMTIME *st, LPCWSTR *str)
+{
+    LPCWSTR ptr = *str;
+    WCHAR *nextPtr;
+    unsigned long num;
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr || *nextPtr != ':')
+    {
+        ERR("unexpected time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    if (num > 23)
+    {
+        ERR("unexpected hour in time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    ptr = nextPtr + 1;
+    st->wHour = (WORD)num;
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr || *nextPtr != ':')
+    {
+        ERR("unexpected time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    if (num > 59)
+    {
+        ERR("unexpected minute in time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    ptr = nextPtr + 1;
+    st->wMinute = (WORD)num;
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr)
+    {
+        ERR("unexpected time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    if (num > 59)
+    {
+        ERR("unexpected second in time format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    ptr = nextPtr + 1;
+    *str = ptr;
+    st->wSecond = (WORD)num;
+    return TRUE;
+}
+
+static BOOL HTTP_ParseDateAsAsctime(LPCWSTR value, FILETIME *ft)
 {
     static const WCHAR gmt[]= { 'G','M','T',0 };
-    WCHAR *ptr, *nextPtr, day[4], month[4], *monthPtr;
+    WCHAR day[4], *dayPtr, month[4], *monthPtr, *nextPtr;
+    LPCWSTR ptr;
+    SYSTEMTIME st = { 0 };
+    unsigned long num;
+
+    for (ptr = value, dayPtr = day; *ptr && !isspaceW(*ptr) &&
+         dayPtr - day < sizeof(day) / sizeof(day[0]) - 1; ptr++, dayPtr++)
+        *dayPtr = *ptr;
+    *dayPtr = 0;
+    st.wDayOfWeek = HTTP_ParseDay(day);
+    if (st.wDayOfWeek >= 7)
+    {
+        ERR("unexpected weekday %s\n", debugstr_w(day));
+        return FALSE;
+    }
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    for (monthPtr = month; !isspace(*ptr) &&
+         monthPtr - month < sizeof(month) / sizeof(month[0]) - 1;
+         monthPtr++, ptr++)
+        *monthPtr = *ptr;
+    *monthPtr = 0;
+    st.wMonth = HTTP_ParseMonth(month);
+    if (!st.wMonth || st.wMonth > 12)
+    {
+        ERR("unexpected month %s\n", debugstr_w(month));
+        return FALSE;
+    }
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr || !num || num > 31)
+    {
+        ERR("unexpected day %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    ptr = nextPtr;
+    st.wDay = (WORD)num;
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    if (!HTTP_ParseTime(&st, &ptr))
+        return FALSE;
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr || num < 1601 || num > 30827)
+    {
+        ERR("unexpected year %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    ptr = nextPtr;
+    st.wYear = (WORD)num;
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    /* asctime() doesn't report a timezone, but some web servers do, so accept
+     * with or without GMT.
+     */
+    if (*ptr && strcmpW(ptr, gmt))
+    {
+        ERR("unexpected timezone %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    return SystemTimeToFileTime(&st, ft);
+}
+
+static BOOL HTTP_ParseRfc1123Date(LPCWSTR value, FILETIME *ft)
+{
+    static const WCHAR gmt[]= { 'G','M','T',0 };
+    WCHAR *nextPtr, day[4], month[4], *monthPtr;
+    LPCWSTR ptr;
     unsigned long num;
     SYSTEMTIME st;
 
     ptr = strchrW(value, ',');
     if (!ptr)
-    {
-        ERR("unexpected date format %s\n", debugstr_w(value));
         return FALSE;
-    }
     if (ptr - value != 3)
     {
         ERR("unexpected weekday %s\n", debugstr_wn(value, ptr - value));
@@ -3702,48 +3828,8 @@ static BOOL HTTP_ParseDate(LPCWSTR value, FILETIME *ft)
     ptr = nextPtr;
     st.wYear = (WORD)num;
 
-    while (isspaceW(*ptr))
-        ptr++;
-
-    num = strtoulW(ptr, &nextPtr, 10);
-    if (!nextPtr || nextPtr <= ptr || *nextPtr != ':')
-    {
-        ERR("unexpected time format %s\n", debugstr_w(ptr));
+    if (!HTTP_ParseTime(&st, &ptr))
         return FALSE;
-    }
-    if (num > 23)
-    {
-        ERR("unexpected hour in time format %s\n", debugstr_w(ptr));
-        return FALSE;
-    }
-    ptr = nextPtr + 1;
-    st.wHour = (WORD)num;
-    num = strtoulW(ptr, &nextPtr, 10);
-    if (!nextPtr || nextPtr <= ptr || *nextPtr != ':')
-    {
-        ERR("unexpected time format %s\n", debugstr_w(ptr));
-        return FALSE;
-    }
-    if (num > 59)
-    {
-        ERR("unexpected minute in time format %s\n", debugstr_w(ptr));
-        return FALSE;
-    }
-    ptr = nextPtr + 1;
-    st.wMinute = (WORD)num;
-    num = strtoulW(ptr, &nextPtr, 10);
-    if (!nextPtr || nextPtr <= ptr)
-    {
-        ERR("unexpected time format %s\n", debugstr_w(ptr));
-        return FALSE;
-    }
-    if (num > 59)
-    {
-        ERR("unexpected second in time format %s\n", debugstr_w(ptr));
-        return FALSE;
-    }
-    ptr = nextPtr + 1;
-    st.wSecond = (WORD)num;
 
     while (isspaceW(*ptr))
         ptr++;
@@ -3754,6 +3840,26 @@ static BOOL HTTP_ParseDate(LPCWSTR value, FILETIME *ft)
         return FALSE;
     }
     return SystemTimeToFileTime(&st, ft);
+}
+
+/* FIXME: only accepts dates in RFC 1123 format and asctime() format,
+ * which may not be the only formats actually seen in the wild.
+ * http://www.hackcraft.net/web/datetime/ suggests at least RFC 850 dates
+ * should be accepted as well.
+ */
+static BOOL HTTP_ParseDate(LPCWSTR value, FILETIME *ft)
+{
+    BOOL ret;
+
+    if (strchrW(value, ','))
+        ret = HTTP_ParseRfc1123Date(value, ft);
+    else
+    {
+        ret = HTTP_ParseDateAsAsctime(value, ft);
+        if (!ret)
+            ERR("unexpected date format %s\n", debugstr_w(value));
+    }
+    return ret;
 }
 
 static void HTTP_ProcessExpires(http_request_t *request)
@@ -3840,6 +3946,21 @@ static void HTTP_ProcessExpires(http_request_t *request)
         t.QuadPart += 10 * 60 * (ULONGLONG)10000000;
         request->expires.dwLowDateTime = t.u.LowPart;
         request->expires.dwHighDateTime = t.u.HighPart;
+    }
+}
+
+static void HTTP_ProcessLastModified(http_request_t *request)
+{
+    int headerIndex;
+
+    headerIndex = HTTP_GetCustomHeaderIndex(request, szLast_Modified, 0, FALSE);
+    if (headerIndex != -1)
+    {
+        LPHTTPHEADERW expiresHeader = &request->custHeaders[headerIndex];
+        FILETIME ft;
+
+        if (HTTP_ParseDate(expiresHeader->lpszValue, &ft))
+            request->last_modified = ft;
     }
 }
 
@@ -4051,6 +4172,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
 
             HTTP_ProcessCookies(request);
             HTTP_ProcessExpires(request);
+            HTTP_ProcessLastModified(request);
 
             if (!set_content_length( request )) HTTP_FinishedReading(request);
 
@@ -4214,6 +4336,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
     /* process cookies here. Is this right? */
     HTTP_ProcessCookies(request);
     HTTP_ProcessExpires(request);
+    HTTP_ProcessLastModified(request);
 
     if (!set_content_length( request )) HTTP_FinishedReading(request);
 

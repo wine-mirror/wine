@@ -274,6 +274,7 @@ typedef struct
     DWORD bytesWritten;
     HTTPHEADERW *custHeaders;
     DWORD nCustHeaders;
+    FILETIME last_modified;
     HANDLE hCacheFile;
     LPWSTR cacheFile;
     FILETIME expires;
