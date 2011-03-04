@@ -471,6 +471,7 @@ HRESULT WINAPI RegisterActiveObject(
 	HRESULT			ret;
 	LPRUNNINGOBJECTTABLE	runobtable;
 	LPMONIKER		moniker;
+        DWORD                   rot_flags = ROTFLAGS_REGISTRATIONKEEPSALIVE; /* default registration is strong */
 
 	StringFromGUID2(rcid,guidbuf,39);
 	ret = CreateItemMoniker(pdelimiter,guidbuf,&moniker);
@@ -481,7 +482,9 @@ HRESULT WINAPI RegisterActiveObject(
 		IMoniker_Release(moniker);
 		return ret;
 	}
-	ret = IRunningObjectTable_Register(runobtable,dwFlags,punk,moniker,pdwRegister);
+        if(dwFlags == ACTIVEOBJECT_WEAK)
+          rot_flags = 0;
+	ret = IRunningObjectTable_Register(runobtable,rot_flags,punk,moniker,pdwRegister);
 	IRunningObjectTable_Release(runobtable);
 	IMoniker_Release(moniker);
 	return ret;
