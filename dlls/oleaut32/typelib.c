@@ -998,7 +998,7 @@ typedef struct tagITypeLibImpl
     BSTR HelpStringDll;
     DWORD dwHelpContext;
     int TypeInfoCount;          /* nr of typeinfo's in librarry */
-    struct tagITypeInfoImpl *pTypeInfo;   /* linked list of type info data */
+    struct tagITypeInfoImpl **typeinfos;
     int ctCustData;             /* number of items in cust data list */
     TLBCustData * pCustData;    /* linked list to cust data */
     TLBImpLib   * pImpLibs;     /* linked list to all imported typelibs */
@@ -1130,7 +1130,6 @@ typedef struct tagITypeInfoImpl
 
     int ctCustData;
     TLBCustData * pCustData;        /* linked list to cust data; */
-    struct tagITypeInfoImpl * next;
 } ITypeInfoImpl;
 
 static inline ITypeInfoImpl *info_impl_from_ITypeComp( ITypeComp *iface )
@@ -3062,18 +3061,19 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     if(pTypeLibImpl->dispatch_href != -1)
         MSFT_DoRefType(&cx, pTypeLibImpl, pTypeLibImpl->dispatch_href);
 
-    /* type info's */
+    /* type infos */
     if(tlbHeader.nrtypeinfos >= 0 )
     {
-        /*pTypeLibImpl->TypeInfoCount=tlbHeader.nrtypeinfos; */
-        ITypeInfoImpl **ppTI = &(pTypeLibImpl->pTypeInfo);
+        ITypeInfoImpl **ppTI;
         int i;
+
+        ppTI = pTypeLibImpl->typeinfos = heap_alloc_zero(sizeof(ITypeInfoImpl*) * tlbHeader.nrtypeinfos);
 
         for(i = 0; i < tlbHeader.nrtypeinfos; i++)
         {
             *ppTI = MSFT_DoTypeInfo(&cx, i, pTypeLibImpl);
 
-            ppTI = &((*ppTI)->next);
+            ++ppTI;
             (pTypeLibImpl->TypeInfoCount)++;
         }
     }
@@ -3941,7 +3941,8 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
        I'll just follow the links along the BlkEntry chain and read
        them in the order in which they are in the file */
 
-    ppTypeInfoImpl = &(pTypeLibImpl->pTypeInfo);
+    pTypeLibImpl->typeinfos = heap_alloc_zero(pTypeLibImpl->TypeInfoCount * sizeof(ITypeInfoImpl*));
+    ppTypeInfoImpl = pTypeLibImpl->typeinfos;
 
     for(pBlk = pFirstBlk, order = pHeader->first_blk - 1, i = 0;
 	pBlkEntry[order].next != 0;
@@ -4061,7 +4062,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
       X(32);
       X(34);
 #undef X
-      ppTypeInfoImpl = &((*ppTypeInfoImpl)->next);
+      ++ppTypeInfoImpl;
       pBlk = (char*)pBlk + pBlkEntry[order].len;
     }
 
@@ -4131,7 +4132,6 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       TLBRefType *ref_type;
       void *cursor2;
       int i;
-      ITypeInfoImpl *pTI, *pTINext;
 
       /* remove cache entry */
       if(This->path)
@@ -4188,11 +4188,9 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
           heap_free(ref_type);
       }
 
-      for (pTI = This->pTypeInfo; pTI; pTI = pTINext)
-      {
-          pTINext = pTI->next;
-          ITypeInfoImpl_Destroy(pTI);
-      }
+      for (i = 0; i < This->TypeInfoCount; ++i)
+          ITypeInfoImpl_Destroy(This->typeinfos[i]);
+      heap_free(This->typeinfos);
       heap_free(This);
       return 0;
     }
@@ -4220,30 +4218,19 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfo(
     UINT index,
     ITypeInfo **ppTInfo)
 {
-    UINT i;
+    ITypeLibImpl *This = (ITypeLibImpl*)iface;
 
-    ITypeLibImpl *This = (ITypeLibImpl *)iface;
-    ITypeInfoImpl *pTypeInfo = This->pTypeInfo;
+    TRACE("%p %u %p\n", This, index, ppTInfo);
 
-    TRACE("(%p)->(index=%d)\n", This, index);
+    if(!ppTInfo)
+        return E_INVALIDARG;
 
-    if (!ppTInfo) return E_INVALIDARG;
-
-    /* search element n in list */
-    for(i=0; i < index; i++)
-    {
-      pTypeInfo = pTypeInfo->next;
-      if (!pTypeInfo)
-      {
-        TRACE("-- element not found\n");
+    if(index >= This->TypeInfoCount)
         return TYPE_E_ELEMENTNOTFOUND;
-      }
-    }
 
-    *ppTInfo = (ITypeInfo *) pTypeInfo;
-
+    *ppTInfo = (ITypeInfo*)This->typeinfos[index];
     ITypeInfo_AddRef(*ppTInfo);
-    TRACE("-- found (%p)\n",*ppTInfo);
+
     return S_OK;
 }
 
@@ -4258,29 +4245,17 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoType(
     TYPEKIND *pTKind)
 {
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
-    UINT i;
-    ITypeInfoImpl *pTInfo = This->pTypeInfo;
 
     TRACE("(%p, %d, %p)\n", This, index, pTKind);
 
-    if(!pTKind) return E_INVALIDARG;
+    if(!pTKind)
+        return E_INVALIDARG;
 
-    if(ITypeLib2_GetTypeInfoCount(iface) <= index)
+    if(index >= This->TypeInfoCount)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    /* search element n in list */
-    for(i=0; i < index; i++)
-    {
-      if(!pTInfo)
-      {
-        TRACE("-- element not found\n");
-        return TYPE_E_ELEMENTNOTFOUND;
-      }
-      pTInfo = pTInfo->next;
-    }
+    *pTKind = This->typeinfos[index]->TypeAttr.typekind;
 
-    *pTKind = pTInfo->TypeAttr.typekind;
-    TRACE("-- found Type (%d)\n", *pTKind);
     return S_OK;
 }
 
@@ -4295,36 +4270,19 @@ static HRESULT WINAPI ITypeLib2_fnGetTypeInfoOfGuid(
     ITypeInfo **ppTInfo)
 {
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
-    ITypeInfoImpl *pTypeInfo = This->pTypeInfo; /* head of list */
+    UINT i;
 
-    TRACE("(%p)\n\tguid:\t%s)\n",This,debugstr_guid(guid));
+    TRACE("%p %s %p\n", This, debugstr_guid(guid), ppTInfo);
 
-    if (!pTypeInfo)
-    {
-        WARN("-- element not found\n");
-        return TYPE_E_ELEMENTNOTFOUND;
+    for(i = 0; i < This->TypeInfoCount; ++i){
+        if(IsEqualIID(&This->typeinfos[i]->TypeAttr.guid, guid)){
+            *ppTInfo = (ITypeInfo*)This->typeinfos[i];
+            ITypeInfo_AddRef(*ppTInfo);
+            return S_OK;
+        }
     }
 
-    /* search linked list for guid */
-    while( !IsEqualIID(guid,&pTypeInfo->TypeAttr.guid) )
-    {
-      pTypeInfo = pTypeInfo->next;
-
-      if (!pTypeInfo)
-      {
-        /* end of list reached */
-        WARN("-- element not found\n");
-        return TYPE_E_ELEMENTNOTFOUND;
-      }
-    }
-
-    TRACE("-- found (%p, %s)\n",
-          pTypeInfo,
-          debugstr_w(pTypeInfo->Name));
-
-    *ppTInfo = (ITypeInfo*)pTypeInfo;
-    ITypeInfo_AddRef(*ppTInfo);
-    return S_OK;
+    return TYPE_E_ELEMENTNOTFOUND;
 }
 
 /* ITypeLib::GetLibAttr
@@ -4480,17 +4438,16 @@ static HRESULT WINAPI ITypeLib2_fnIsName(
 	BOOL *pfName)
 {
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
-    ITypeInfoImpl *pTInfo;
     TLBFuncDesc *pFInfo;
     TLBVarDesc *pVInfo;
-    int i;
-    UINT nNameBufLen = (lstrlenW(szNameBuf)+1)*sizeof(WCHAR);
+    UINT nNameBufLen = (lstrlenW(szNameBuf)+1)*sizeof(WCHAR), i, j;
 
     TRACE("(%p)->(%s,%08x,%p)\n", This, debugstr_w(szNameBuf), lHashVal,
 	  pfName);
 
     *pfName=TRUE;
-    for(pTInfo=This->pTypeInfo;pTInfo;pTInfo=pTInfo->next){
+    for(j = 0; j < This->TypeInfoCount; ++j){
+        ITypeInfoImpl *pTInfo = This->typeinfos[j];
         if(!memcmp(szNameBuf,pTInfo->Name, nNameBufLen)) goto ITypeLib2_fnIsName_exit;
         for(pFInfo=pTInfo->funclist;pFInfo;pFInfo=pFInfo->next) {
             if(!memcmp(szNameBuf,pFInfo->Name, nNameBufLen)) goto ITypeLib2_fnIsName_exit;
@@ -4526,13 +4483,13 @@ static HRESULT WINAPI ITypeLib2_fnFindName(
 	UINT16 *pcFound)
 {
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
-    ITypeInfoImpl *pTInfo;
     TLBFuncDesc *pFInfo;
     TLBVarDesc *pVInfo;
-    int i,j = 0;
+    int i,j = 0, k;
     UINT nNameBufLen = (lstrlenW(szNameBuf)+1)*sizeof(WCHAR);
 
-    for(pTInfo=This->pTypeInfo;pTInfo && j<*pcFound; pTInfo=pTInfo->next){
+    for(k = 0; k < This->TypeInfoCount; ++k){
+        ITypeInfoImpl *pTInfo = This->typeinfos[k];
         if(!memcmp(szNameBuf,pTInfo->Name, nNameBufLen)) goto ITypeLib2_fnFindName_exit;
         for(pFInfo=pTInfo->funclist;pFInfo;pFInfo=pFInfo->next) {
             if(!memcmp(szNameBuf,pFInfo->Name,nNameBufLen)) goto ITypeLib2_fnFindName_exit;
@@ -4767,8 +4724,7 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
     BINDPTR * pBindPtr)
 {
     ITypeLibImpl *This = impl_from_ITypeComp(iface);
-    ITypeInfoImpl *pTypeInfo;
-    int typemismatch=0;
+    int typemismatch=0, i;
 
     TRACE("(%s, 0x%x, 0x%x, %p, %p, %p)\n", debugstr_w(szName), lHash, wFlags, ppTInfo, pDescKind, pBindPtr);
 
@@ -4776,8 +4732,8 @@ static HRESULT WINAPI ITypeLibComp_fnBind(
     pBindPtr->lptcomp = NULL;
     *ppTInfo = NULL;
 
-    for (pTypeInfo = This->pTypeInfo; pTypeInfo; pTypeInfo = pTypeInfo->next)
-    {
+    for(i = 0; i < This->TypeInfoCount; ++i){
+        ITypeInfoImpl *pTypeInfo = This->typeinfos[i];
         TRACE("testing %s\n", debugstr_w(pTypeInfo->Name));
 
         /* FIXME: check wFlags here? */
@@ -4904,15 +4860,16 @@ static HRESULT WINAPI ITypeLibComp_fnBindType(
     ITypeComp ** ppTComp)
 {
     ITypeLibImpl *This = impl_from_ITypeComp(iface);
-    ITypeInfoImpl *pTypeInfo;
+    UINT i;
 
     TRACE("(%s, %x, %p, %p)\n", debugstr_w(szName), lHash, ppTInfo, ppTComp);
 
     if(!szName || !ppTInfo || !ppTComp)
         return E_INVALIDARG;
 
-    for (pTypeInfo = This->pTypeInfo; pTypeInfo; pTypeInfo = pTypeInfo->next)
+    for(i = 0; i < This->TypeInfoCount; ++i)
     {
+        ITypeInfoImpl *pTypeInfo = This->typeinfos[i];
         /* FIXME: should use lHash to do the search */
         if (pTypeInfo->Name && !strcmpiW(pTypeInfo->Name, szName))
         {
@@ -7707,7 +7664,10 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTypeLibImpl = TypeLibImpl_Constructor();
     if (!pTypeLibImpl) return E_FAIL;
 
-    pTIIface = ITypeInfoImpl_Constructor();
+    pTypeLibImpl->TypeInfoCount = 2;
+    pTypeLibImpl->typeinfos = heap_alloc_zero(pTypeLibImpl->TypeInfoCount * sizeof(ITypeInfoImpl*));
+
+    pTIIface = pTypeLibImpl->typeinfos[0] = ITypeInfoImpl_Constructor();
     pTIIface->pTypeLib = pTypeLibImpl;
     pTIIface->index = 0;
     pTIIface->Name = NULL;
@@ -7762,10 +7722,7 @@ HRESULT WINAPI CreateDispTypeInfo(
 
     dump_TypeInfo(pTIIface);
 
-    pTypeLibImpl->pTypeInfo = pTIIface;
-    pTypeLibImpl->TypeInfoCount++;
-
-    pTIClass = ITypeInfoImpl_Constructor();
+    pTIClass = pTypeLibImpl->typeinfos[1] = ITypeInfoImpl_Constructor();
     pTIClass->pTypeLib = pTypeLibImpl;
     pTIClass->index = 1;
     pTIClass->Name = NULL;
@@ -7793,9 +7750,6 @@ HRESULT WINAPI CreateDispTypeInfo(
     list_add_head(&pTypeLibImpl->ref_list, &ref->entry);
 
     dump_TypeInfo(pTIClass);
-
-    pTIIface->next = pTIClass;
-    pTypeLibImpl->TypeInfoCount++;
 
     *pptinfo = (ITypeInfo*)pTIClass;
 
