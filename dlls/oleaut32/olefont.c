@@ -338,6 +338,7 @@ HRESULT WINAPI OleCreateFontIndirect(
 {
   OLEFontImpl* newFont = 0;
   HRESULT      hr      = S_OK;
+  FONTDESC     fd;
 
   TRACE("(%p, %s, %p)\n", lpFontDesc, debugstr_guid(riid), ppvObj);
   /*
@@ -349,8 +350,6 @@ HRESULT WINAPI OleCreateFontIndirect(
   *ppvObj = 0;
 
   if (!lpFontDesc) {
-    FONTDESC fd;
-
     static WCHAR fname[] = { 'S','y','s','t','e','m',0 };
 
     fd.cbSizeofstruct = sizeof(fd);
