@@ -1184,7 +1184,8 @@ static BOOL handle_template(struct parsed_symbol* sym)
     const char* name;
     const char* args;
 
-    assert(*sym->current++ == '$');
+    assert(*sym->current == '$');
+    sym->current++;
     if (!(name = get_literal_string(sym))) return FALSE;
     if (!(args = get_args(sym, NULL, FALSE, '<', '>'))) return FALSE;
     sym->result = str_printf(sym, "%s%s", name, args);
