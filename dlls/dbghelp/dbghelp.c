@@ -553,12 +553,13 @@ static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, U
  */
 BOOL pcs_callback(const struct process* pcs, ULONG action, void* data)
 {
+    IMAGEHLP_DEFERRED_SYMBOL_LOAD64 idsl;
+
     TRACE("%p %u %p\n", pcs, action, data);
 
     if (!pcs->reg_cb) return FALSE;
     if (!pcs->reg_is_unicode)
     {
-        IMAGEHLP_DEFERRED_SYMBOL_LOAD64     idsl;
         IMAGEHLP_DEFERRED_SYMBOL_LOADW64*   idslW;
 
         switch (action)
