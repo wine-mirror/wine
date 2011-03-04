@@ -156,9 +156,9 @@ static DWORD WINAPI ID3DXMeshImpl_GetNumBytesPerVertex(ID3DXMesh *iface)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
-    FIXME("(%p): stub\n", This);
+    TRACE("iface (%p)\n", This);
 
-    return 0; /* arbitrary since we cannot return E_NOTIMPL */
+    return D3DXGetFVFVertexSize(This->fvf);
 }
 
 static DWORD WINAPI ID3DXMeshImpl_GetOptions(ID3DXMesh *iface)
