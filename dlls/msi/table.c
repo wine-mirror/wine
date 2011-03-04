@@ -1143,6 +1143,8 @@ static UINT msi_stream_name( const MSITABLEVIEW *tv, UINT row, LPWSTR *pstname )
         type = tv->columns[i].type;
         if ( type & MSITYPE_KEY )
         {
+            WCHAR number[0x20];
+
             r = TABLE_fetch_int( view, row, i+1, &ival );
             if ( r != ERROR_SUCCESS )
                 goto err;
@@ -1159,7 +1161,6 @@ static UINT msi_stream_name( const MSITABLEVIEW *tv, UINT row, LPWSTR *pstname )
             else
             {
                 static const WCHAR fmt[] = { '%','d',0 };
-                WCHAR number[0x20];
                 UINT n = bytes_per_column( tv->db, &tv->columns[i], LONG_STR_BYTES );
 
                 switch( n )
