@@ -124,7 +124,7 @@ typedef struct tagDC_FUNCS
     INT      (CDECL *pGetPixelFormat)(PHYSDEV);
     UINT     (CDECL *pGetSystemPaletteEntries)(PHYSDEV,UINT,UINT,LPPALETTEENTRY);
     BOOL     (CDECL *pGetTextExtentExPoint)(PHYSDEV,LPCWSTR,INT,INT,LPINT,LPINT,LPSIZE);
-    BOOL     (CDECL *CDECL pGetTextMetrics)(PHYSDEV,TEXTMETRICW*);
+    BOOL     (CDECL *pGetTextMetrics)(PHYSDEV,TEXTMETRICW*);
     INT      (CDECL *pIntersectClipRect)(PHYSDEV,INT,INT,INT,INT);
     BOOL     (CDECL *pInvertRgn)(PHYSDEV,HRGN);
     BOOL     (CDECL *pLineTo)(PHYSDEV,INT,INT);
