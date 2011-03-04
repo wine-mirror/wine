@@ -1557,6 +1557,12 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
     switch (status)
     {
     case STATUS_ALERTED:
+        if ( wsa->n_iovecs <= wsa->first_iovec )
+        {
+            /* Nothing to do */
+            status = STATUS_SUCCESS;
+            break;
+        }
         if ((status = wine_server_handle_to_fd( wsa->hSocket, FILE_WRITE_DATA, &fd, NULL ) ))
             break;
 
