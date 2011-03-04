@@ -1357,6 +1357,15 @@ static void D3DXCreateBoxTest(void)
     D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh* box;
     ID3DXBuffer* ppBuffer;
+    DWORD *buffer;
+    static const DWORD adjacency[36]=
+        {6, 9, 1, 2, 10, 0,
+         1, 9, 3, 4, 10, 2,
+         3, 8, 5, 7, 11, 4,
+         0, 11, 7, 5, 8, 6,
+         7, 4, 9, 2, 0, 8,
+         1, 3, 11, 5, 6, 10};
+    unsigned int i;
 
     wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "d3dx9_test_wc";
@@ -1413,6 +1422,21 @@ static void D3DXCreateBoxTest(void)
 
     hr = D3DXCreateBox(device,22.0f,20.0f,-4.9f,&box, &ppBuffer);
     todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+
+    hr = D3DXCreateBox(device,10.9f,20.0f,4.9f,&box, &ppBuffer);
+    todo_wine ok(hr==D3D_OK,"Expected D3D_OK, received %#x", hr);
+
+    if (FAILED(hr))
+    {
+        skip("D3DXCreateBox failed\n");
+        goto end;
+    }
+
+    buffer = ID3DXBuffer_GetBufferPointer(ppBuffer);
+    for(i=0; i<36; i++)
+        todo_wine ok(adjacency[i]==buffer[i], "expected adjacency %d: %#x, received %#x\n",i,adjacency[i], buffer[i]);
+
+    box->lpVtbl->Release(box);
 
 end:
     IDirect3DDevice9_Release(device);
