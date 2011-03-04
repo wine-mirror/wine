@@ -1171,7 +1171,7 @@
 @ cdecl _wcsupr(wstr) msvcrt._wcsupr
 @ stub _wcsupr_l
 @ cdecl _wcsupr_s(wstr long) msvcrt._wcsupr_s
-@ stub _wcsupr_s_l
+@ cdecl _wcsupr_s_l(wstr long ptr) msvcrt._wcsupr_s_l
 @ stub _wcsxfrm_l
 @ cdecl _wctime32(ptr) msvcrt._wctime32
 @ stub _wctime32_s
