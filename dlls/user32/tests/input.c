@@ -369,6 +369,16 @@ static void test_Input_whitebox(void)
     DestroyWindow(hWndTest);
 }
 
+static inline BOOL is_keyboard_message( UINT message )
+{
+    return (message >= WM_KEYFIRST && message <= WM_KEYLAST);
+}
+
+static inline BOOL is_mouse_message( UINT message )
+{
+    return (message >= WM_MOUSEFIRST && message <= WM_MOUSELAST);
+}
+
 /* try to make sure pending X events have been processed before continuing */
 static void empty_message_queue(void)
 {
@@ -382,6 +392,9 @@ static void empty_message_queue(void)
         if (MsgWaitForMultipleObjects(0, NULL, FALSE, min_timeout, QS_ALLINPUT) == WAIT_TIMEOUT) break;
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
         {
+            if (is_keyboard_message(msg.message) || is_mouse_message(msg.message))
+                ok(msg.time != 0, "message %#x has time set to 0\n", msg.message);
+
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
