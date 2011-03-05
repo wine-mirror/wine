@@ -1377,7 +1377,7 @@ static void D3DXCreateBoxTest(void)
 
     wnd = CreateWindow("d3dx9_test_wc", "d3dx9_test",
                         WS_SYSMENU | WS_POPUP , 0, 0, 640, 480, 0, 0, 0, 0);
-    ok(wnd != NULL, "Expected to have a window, received NULL");
+    ok(wnd != NULL, "Expected to have a window, received NULL\n");
     if (!wnd)
     {
         skip("Couldn't create application window\n");
@@ -1405,26 +1405,26 @@ static void D3DXCreateBoxTest(void)
     }
 
     hr = D3DXCreateBuffer(36 * sizeof(DWORD), &ppBuffer);
-    ok(hr==D3D_OK, "Expected D3D_OK, received %#x", hr);
+    ok(hr==D3D_OK, "Expected D3D_OK, received %#x\n", hr);
     if (FAILED(hr)) goto end;
 
     hr = D3DXCreateBox(device,2.0f,20.0f,4.9f,NULL, &ppBuffer);
-    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
     hr = D3DXCreateBox(NULL,22.0f,20.0f,4.9f,&box, &ppBuffer);
-    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
     hr = D3DXCreateBox(device,-2.0f,20.0f,4.9f,&box, &ppBuffer);
-    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
     hr = D3DXCreateBox(device,22.0f,-20.0f,4.9f,&box, &ppBuffer);
-    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
     hr = D3DXCreateBox(device,22.0f,20.0f,-4.9f,&box, &ppBuffer);
-    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x", hr);
+    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
     hr = D3DXCreateBox(device,10.9f,20.0f,4.9f,&box, &ppBuffer);
-    todo_wine ok(hr==D3D_OK,"Expected D3D_OK, received %#x", hr);
+    todo_wine ok(hr==D3D_OK, "Expected D3D_OK, received %#x\n", hr);
 
     if (FAILED(hr))
     {
