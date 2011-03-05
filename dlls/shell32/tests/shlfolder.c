@@ -3696,7 +3696,7 @@ void test_ShellItemGetAttributes(void)
     }
     if(FAILED(hr))
     {
-        skip("Skipping tests.");
+        skip("Skipping tests.\n");
         return;
     }
 
