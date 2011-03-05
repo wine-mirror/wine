@@ -2116,7 +2116,7 @@ REBAR_HandleUDDrag (REBAR_INFO *infoPtr, const POINT *ptsmove)
     REBAR_BAND *hitBand, *rowBeginBand;
 
     if(infoPtr->uNumBands <= 0)
-        ERR("There are no bands in this rebar");
+        ERR("There are no bands in this rebar\n");
 
     /* Up/down dragging can only occur when there is more than one
      * band in the rebar */
