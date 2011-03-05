@@ -6028,7 +6028,7 @@ static void test_EM_CHARFROMPOS(void)
     hwnd = new_richedit(NULL);
     result = SendMessageA(hwnd, WM_SETTEXT, 0,
                           (LPARAM)"one two three four five six seven\reight");
-    ok(result == 1, "Expected 1, got %d", result);
+    ok(result == 1, "Expected 1, got %d\n", result);
     GetClientRect(hwnd, &rcClient);
 
     result = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)&point);
