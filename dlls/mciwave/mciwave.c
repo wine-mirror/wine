@@ -756,8 +756,8 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
 	return MCIERR_FILE_NOT_FOUND;
     }
 
-    if (wmw->dwStatus == MCI_MODE_PAUSE && !wmw->fInput) {
-	/* FIXME: parameters (start/end) in lpParams may not be used */
+    if (wmw->dwStatus == MCI_MODE_PAUSE && !wmw->fInput && !(dwFlags & (MCI_FROM | MCI_TO))) {
+	/* FIXME: notification is different with Resume than Play */
 	return WAVE_mciResume(wDevID, dwFlags, (LPMCI_GENERIC_PARMS)lpParms);
     }
 
@@ -765,8 +765,12 @@ static DWORD WAVE_mciPlay(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt, 
      * We have to set MCI_MODE_PLAY before we do this so that the app can spin
      * on MCI_STATUS, so we have to allow it here if we're not going to start this thread.
      */
-    if ((wmw->dwStatus != MCI_MODE_STOP) && ((wmw->dwStatus != MCI_MODE_PLAY) && (dwFlags & MCI_WAIT))) {
-	return MCIERR_INTERNAL;
+    if ( !(wmw->dwStatus == MCI_MODE_STOP) &&
+	!((wmw->dwStatus == MCI_MODE_PLAY) && (dwFlags & MCI_WAIT) && !wmw->hWave)) {
+	/* FIXME: Check FROM/TO parameters first. */
+	/* FIXME: Play; Play [notify|wait] must hook into the running player. */
+	dwRet = WAVE_mciStop(wDevID, MCI_WAIT, NULL);
+	if (dwRet) return dwRet;
     }
 
     if (wmw->lpWaveFormat->wFormatTag == WAVE_FORMAT_PCM) {
@@ -1011,7 +1015,8 @@ static DWORD WAVE_mciRecord(MCIDEVICEID wDevID, DWORD_PTR dwFlags, DWORD_PTR pmt
      * We have to set MCI_MODE_RECORD before we do this so that the app can spin
      * on MCI_STATUS, so we have to allow it here if we're not going to start this thread.
      */
-    if ((wmw->dwStatus != MCI_MODE_STOP) && ((wmw->dwStatus != MCI_MODE_RECORD) && (dwFlags & MCI_WAIT))) {
+    if ( !(wmw->dwStatus == MCI_MODE_STOP) &&
+	!((wmw->dwStatus == MCI_MODE_RECORD) && (dwFlags & MCI_WAIT) && !wmw->hWave)) {
 	return MCIERR_INTERNAL;
     }
 
