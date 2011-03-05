@@ -1247,7 +1247,7 @@ static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type 
             hr = d3dcompiler_parse_type_members(type->reflection, &members[i], data, &ptr2);
             if (hr != S_OK)
             {
-                FIXME("Failed to parse type members.");
+                FIXME("Failed to parse type members.\n");
                 goto err_out;
             }
         }
@@ -1522,7 +1522,7 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
             hr = d3dcompiler_parse_variables(cb, data, data_size, data + offset);
             if (hr != S_OK)
             {
-                FIXME("Failed to parse variables.");
+                FIXME("Failed to parse variables.\n");
                 goto err_out;
             }
 
