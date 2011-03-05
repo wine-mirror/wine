@@ -2765,7 +2765,7 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
             ok(hres == S_OK, "IMoniker_BindToStorage failed: %08x\n", hres);
             ok(unk != NULL, "unk == NULL\n");
             if(unk == NULL) {
-                ok(0, "Expected security problem to be ignored.");
+                ok(0, "Expected security problem to be ignored.\n");
                 invalid_cn_accepted = FALSE;
                 binding_hres = INET_E_INVALID_CERTIFICATE;
             }
