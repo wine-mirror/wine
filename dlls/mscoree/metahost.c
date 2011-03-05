@@ -119,7 +119,7 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
 
     if ((*result)->is_shutdown)
     {
-        ERR("Cannot load Mono after it has been shut down.");
+        ERR("Cannot load Mono after it has been shut down.\n");
         *result = NULL;
         return E_FAIL;
     }
