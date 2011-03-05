@@ -421,6 +421,8 @@ int ALSA_CheckSetVolume(snd_hctl_t *hctl, int *out_left, int *out_right,
     snd_ctl_elem_info_t *       eleminfop = NULL;
     snd_ctl_elem_value_t *      elemvaluep = NULL;
     snd_ctl_elem_id_t *         elemidp = NULL;
+    const char *names[] = {"PCM Playback Volume", "Line Playback Volume", NULL};
+    const char **name;
 
 
 #define EXIT_ON_ERROR(f,txt,exitcode) do \
@@ -447,81 +449,88 @@ int ALSA_CheckSetVolume(snd_hctl_t *hctl, int *out_left, int *out_right,
 
     /* Setup and find an element id that exactly matches the characteristic we want
     ** FIXME:  It is probably short sighted to hard code and fixate on PCM Playback Volume */
-    snd_ctl_elem_id_set_name(elemidp, "PCM Playback Volume");
-    snd_ctl_elem_id_set_interface(elemidp, SND_CTL_ELEM_IFACE_MIXER);
-    elem = snd_hctl_find_elem(hctl, elemidp);
-    if (elem)
+
+    for( name = names; *name; name++ )
     {
-        /* Read and return volume information */
-        EXIT_ON_ERROR(snd_hctl_elem_info(elem, eleminfop), "snd_hctl_elem_info", MMSYSERR_NOTSUPPORTED);
-        value_count = snd_ctl_elem_info_get_count(eleminfop);
-        if (out_min || out_max || out_step)
-        {
-	    if (!snd_ctl_elem_info_is_readable(eleminfop))
-            {
-                ERR("snd_ctl_elem_info_is_readable returned false; cannot return info\n");
-                rc = MMSYSERR_NOTSUPPORTED;
-                goto out;
-            }
+	snd_ctl_elem_id_set_name(elemidp, *name);
+	snd_ctl_elem_id_set_interface(elemidp, SND_CTL_ELEM_IFACE_MIXER);
+	elem = snd_hctl_find_elem(hctl, elemidp);
+	if (elem)
+	{
+	    /* Read and return volume information */
+	    EXIT_ON_ERROR(snd_hctl_elem_info(elem, eleminfop), "snd_hctl_elem_info", MMSYSERR_NOTSUPPORTED);
+	    value_count = snd_ctl_elem_info_get_count(eleminfop);
+	    if (out_min || out_max || out_step)
+	    {
+		if (!snd_ctl_elem_info_is_readable(eleminfop))
+		{
+		    ERR("snd_ctl_elem_info_is_readable returned false; cannot return info\n");
+		    rc = MMSYSERR_NOTSUPPORTED;
+		    goto out;
+		}
 
-            if (out_min)
-                *out_min = snd_ctl_elem_info_get_min(eleminfop);
+		if (out_min)
+		    *out_min = snd_ctl_elem_info_get_min(eleminfop);
 
-            if (out_max)
-                *out_max = snd_ctl_elem_info_get_max(eleminfop);
+		if (out_max)
+		    *out_max = snd_ctl_elem_info_get_max(eleminfop);
 
-            if (out_step)
-                *out_step = snd_ctl_elem_info_get_step(eleminfop);
-        }
+		if (out_step)
+		    *out_step = snd_ctl_elem_info_get_step(eleminfop);
+	    }
 
-        if (out_left || out_right)
-        {
-            EXIT_ON_ERROR(snd_hctl_elem_read(elem, elemvaluep), "snd_hctl_elem_read", MMSYSERR_NOTSUPPORTED);
+	    if (out_left || out_right)
+	    {
+		EXIT_ON_ERROR(snd_hctl_elem_read(elem, elemvaluep), "snd_hctl_elem_read", MMSYSERR_NOTSUPPORTED);
 
-            if (out_left)
-                *out_left = snd_ctl_elem_value_get_integer(elemvaluep, 0);
+		if (out_left)
+		    *out_left = snd_ctl_elem_value_get_integer(elemvaluep, 0);
 
-            if (out_right)
-            {
-                if (value_count == 1)
-                    *out_right = snd_ctl_elem_value_get_integer(elemvaluep, 0);
-                else if (value_count == 2)
-                    *out_right = snd_ctl_elem_value_get_integer(elemvaluep, 1);
-                else
-                {
-                    ERR("Unexpected value count %d from snd_ctl_elem_info_get_count while getting volume info\n", value_count);
-                    rc = -1;
-                    goto out;
-                }
-            }
-        }
+		if (out_right)
+		{
+		    if (value_count == 1)
+			*out_right = snd_ctl_elem_value_get_integer(elemvaluep, 0);
+		    else if (value_count == 2)
+			*out_right = snd_ctl_elem_value_get_integer(elemvaluep, 1);
+		    else
+		    {
+			ERR("Unexpected value count %d from snd_ctl_elem_info_get_count while getting volume info\n", value_count);
+			rc = -1;
+			goto out;
+		    }
+		}
+	    }
 
-        /* Set the volume */
-        if (new_left || new_right)
-        {
-            EXIT_ON_ERROR(snd_hctl_elem_read(elem, elemvaluep), "snd_hctl_elem_read", MMSYSERR_NOTSUPPORTED);
-            if (new_left)
-	        snd_ctl_elem_value_set_integer(elemvaluep, 0, *new_left);
-            if (new_right)
-            {
-                if (value_count == 1)
-	            snd_ctl_elem_value_set_integer(elemvaluep, 0, *new_right);
-                else if (value_count == 2)
-	            snd_ctl_elem_value_set_integer(elemvaluep, 1, *new_right);
-                else
-                {
-                    ERR("Unexpected value count %d from snd_ctl_elem_info_get_count while setting volume info\n", value_count);
-                    rc = -1;
-                    goto out;
-                }
-            }
+	    /* Set the volume */
+	    if (new_left || new_right)
+	    {
+		EXIT_ON_ERROR(snd_hctl_elem_read(elem, elemvaluep), "snd_hctl_elem_read", MMSYSERR_NOTSUPPORTED);
+		if (new_left)
+		    snd_ctl_elem_value_set_integer(elemvaluep, 0, *new_left);
+		if (new_right)
+		{
+		    if (value_count == 1)
+			snd_ctl_elem_value_set_integer(elemvaluep, 0, *new_right);
+		    else if (value_count == 2)
+			snd_ctl_elem_value_set_integer(elemvaluep, 1, *new_right);
+		    else
+		    {
+			ERR("Unexpected value count %d from snd_ctl_elem_info_get_count while setting volume info\n", value_count);
+			rc = -1;
+			goto out;
+		    }
+		}
 
-            EXIT_ON_ERROR(snd_hctl_elem_write(elem, elemvaluep), "snd_hctl_elem_write", MMSYSERR_NOTSUPPORTED);
-        }
+		EXIT_ON_ERROR(snd_hctl_elem_write(elem, elemvaluep), "snd_hctl_elem_write", MMSYSERR_NOTSUPPORTED);
+	    }
+
+	    break;
+	}
     }
-    else
+
+    if( !*name )
     {
-        ERR("Could not find 'PCM Playback Volume' element\n");
+        ERR("Could not find '{PCM,Line} Playback Volume' element\n");
         rc = MMSYSERR_NOTSUPPORTED;
     }
 

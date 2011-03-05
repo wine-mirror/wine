@@ -435,7 +435,7 @@ static void ALSA_MixerInit(void)
         char cardind[6], cardname[10];
 
         snd_ctl_t *ctl;
-        snd_mixer_elem_t *elem, *mastelem = NULL, *headelem = NULL, *captelem = NULL, *pcmelem = NULL, *micelem = NULL;
+        snd_mixer_elem_t *elem, *mastelem = NULL, *headelem = NULL, *captelem = NULL, *pcmelem = NULL, *lineelem = NULL, *micelem = NULL;
 
         memset(info, 0, snd_ctl_card_info_sizeof());
         memset(&mixdev[mixnum], 0, sizeof(*mixdev));
@@ -520,6 +520,8 @@ static void ALSA_MixerInit(void)
                         headelem = elem;
                     else if (!strcasecmp(snd_mixer_selem_get_name(elem), "PCM") && !pcmelem)
                         pcmelem = elem;
+                    else if (!strcasecmp(snd_mixer_selem_get_name(elem), "Line") && !lineelem)
+                        lineelem = elem;
                     ++(mixdev[mixnum].chans);
                 }
             }
@@ -546,6 +548,12 @@ static void ALSA_MixerInit(void)
         {
             /* Use 'PCM' as master device */
             mastelem = pcmelem;
+            capcontrols -= !!snd_mixer_selem_has_capture_switch(mastelem);
+        }
+        else if (lineelem && !mastelem)
+        {
+            /* Use 'Line' as master device */
+            mastelem = lineelem;
             capcontrols -= !!snd_mixer_selem_has_capture_switch(mastelem);
         }
         else if (!mastelem && !captelem && !micelem)
