@@ -88,16 +88,18 @@ static ULONG WINAPI dom_pi_AddRef(
     IXMLDOMProcessingInstruction *iface )
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    return InterlockedIncrement( &This->ref );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI dom_pi_Release(
     IXMLDOMProcessingInstruction *iface )
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    ULONG ref;
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    ref = InterlockedDecrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
         destroy_xmlnode(&This->node);

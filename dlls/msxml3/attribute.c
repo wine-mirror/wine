@@ -89,16 +89,18 @@ static ULONG WINAPI domattr_AddRef(
     IXMLDOMAttribute *iface )
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    return InterlockedIncrement( &This->ref );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI domattr_Release(
     IXMLDOMAttribute *iface )
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    ULONG ref;
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    ref = InterlockedDecrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
         destroy_xmlnode(&This->node);

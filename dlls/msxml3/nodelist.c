@@ -93,16 +93,18 @@ static ULONG WINAPI xmlnodelist_AddRef(
     IXMLDOMNodeList *iface )
 {
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
-    return InterlockedIncrement( &This->ref );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI xmlnodelist_Release(
     IXMLDOMNodeList *iface )
 {
     xmlnodelist *This = impl_from_IXMLDOMNodeList( iface );
-    ULONG ref;
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    ref = InterlockedDecrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
         xmldoc_release( This->parent->doc );

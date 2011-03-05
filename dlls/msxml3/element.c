@@ -100,7 +100,7 @@ static ULONG WINAPI domelem_AddRef(
     domelem *This = impl_from_IXMLDOMElement( iface );
     LONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p)->(%d)\n", This, ref);
 
     return ref;
 }
@@ -111,7 +111,7 @@ static ULONG WINAPI domelem_Release(
     domelem *This = impl_from_IXMLDOMElement( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p)->(%d)\n", This, ref);
 
     if(!ref) {
         destroy_xmlnode(&This->node);

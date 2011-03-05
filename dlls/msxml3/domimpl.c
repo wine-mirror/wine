@@ -83,16 +83,18 @@ static ULONG WINAPI dimimpl_AddRef(
     IXMLDOMImplementation *iface )
 {
     domimpl *This = impl_from_IXMLDOMImplementation( iface );
-    return InterlockedIncrement( &This->ref );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI dimimpl_Release(
     IXMLDOMImplementation *iface )
 {
     domimpl *This = impl_from_IXMLDOMImplementation( iface );
-    ULONG ref;
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    ref = InterlockedDecrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
         heap_free( This );

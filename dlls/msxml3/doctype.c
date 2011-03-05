@@ -91,9 +91,7 @@ static ULONG WINAPI domdoctype_AddRef(
 {
     domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
     LONG ref = InterlockedIncrement(&This->ref);
-
-    TRACE("(%p) ref=%d\n", This, ref);
-
+    TRACE("(%p)->(%d)\n", This, ref);
     return ref;
 }
 
@@ -103,7 +101,7 @@ static ULONG WINAPI domdoctype_Release(
     domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) ref=%d\n", This, ref);
+    TRACE("(%p)->(%d)\n", This, ref);
 
     if(!ref) {
         destroy_xmlnode(&This->node);
