@@ -272,7 +272,7 @@ static BOOL WINAPI test_enum_proc(HMODULE module, LPCTSTR type, LPSTR name, LONG
         script_size--;
 
     ext = strrchr(name, '.');
-    ok(ext != NULL, "no script extension");
+    ok(ext != NULL, "no script extension\n");
     if(!ext)
       return TRUE;
 
