@@ -405,7 +405,7 @@ static void test_WM_WINDOWPOSCHANGING(void)
     wp.hwndInsertAfter = NULL;
 
     ret = SendMessageA(hCombo, WM_WINDOWPOSCHANGING, 0, (LPARAM)&wp);
-    ok(ret == 0, "expected 0, got %x", ret);
+    ok(ret == 0, "expected 0, got %x\n", ret);
     ok(wp.cy == combo_height,
             "Expected height %d, got %d\n", combo_height, wp.cy);
 
@@ -419,7 +419,7 @@ static void test_WM_WINDOWPOSCHANGING(void)
     wp.hwndInsertAfter = NULL;
 
     ret = SendMessageA(hCombo, WM_WINDOWPOSCHANGING, 0, (LPARAM)&wp);
-    ok(ret == 0, "expected 0, got %x", ret);
+    ok(ret == 0, "expected 0, got %x\n", ret);
     ok(wp.cy == combo_height,
             "Expected height %d, got %d\n", combo_height, wp.cy);
 
