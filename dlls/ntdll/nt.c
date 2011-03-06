@@ -1310,6 +1310,25 @@ void fill_cpu_info(void)
           cached_sci.Architecture, cached_sci.Level, cached_sci.Revision, cached_sci.FeatureSet);
 }
 
+static void fill_in_sppi(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi, DWORD64 idle, DWORD64 sys, DWORD64 usr)
+{
+    DWORD64 steal;
+    sppi->IdleTime.QuadPart = idle * 10000000 / sysconf(_SC_CLK_TCK);
+    sppi->KernelTime.QuadPart = sys * 10000000 / sysconf(_SC_CLK_TCK);
+    sppi->UserTime.QuadPart = usr * 10000000 / sysconf(_SC_CLK_TCK);
+
+    /* Add 1% from idle time to kernel time, to make .NET happy */
+    steal = sppi->IdleTime.QuadPart / 100;
+    sppi->IdleTime.QuadPart -= steal;
+    sppi->KernelTime.QuadPart += steal;
+
+    /* DPC time */
+    sppi->Reserved1[0].QuadPart = 0;
+    /* Interrupt time */
+    sppi->Reserved1[1].QuadPart = 0;
+    sppi->Reserved2 = 0;
+}
+
 /******************************************************************************
  * NtQuerySystemInformation [NTDLL.@]
  * ZwQuerySystemInformation [NTDLL.@]
@@ -1610,11 +1629,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                         usr += nice;
                         sppi = RtlAllocateHeap(GetProcessHeap(), 0,
                                                sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
-                        sppi->IdleTime.QuadPart = idle;
-                        sppi->KernelTime.QuadPart = sys;
-                        sppi->UserTime.QuadPart = usr+nice;
-                        sppi->Reserved1[0].QuadPart = 0;
-                        sppi->Reserved1[1].QuadPart = 0;
+                        fill_in_sppi(sppi, idle, sys, usr);
                         cpus = 1;
                         len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
                     }
@@ -1638,20 +1653,12 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                             usr += nice;
                             out_cpus --;
                             if (name[3]=='0') /* first cpu */
-                            {
-                                sppi->IdleTime.QuadPart = idle;
-                                sppi->KernelTime.QuadPart = sys;
-                                sppi->UserTime.QuadPart = usr;
-                            }
+                                fill_in_sppi(sppi, idle, sys, usr);
                             else /* new cpu */
                             {
                                 len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * (cpus+1);
                                 sppi = RtlReAllocateHeap(GetProcessHeap(), 0, sppi, len);
-                                sppi[cpus].IdleTime.QuadPart = idle;
-                                sppi[cpus].KernelTime.QuadPart = sys;
-                                sppi[cpus].UserTime.QuadPart = usr;
-                                sppi[cpus].Reserved1[0].QuadPart = 0;
-                                sppi[cpus].Reserved1[1].QuadPart = 0;
+                                fill_in_sppi(sppi + cpus, idle, sys, usr);
                                 cpus++;
                             }
                         }
