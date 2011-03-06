@@ -1517,11 +1517,29 @@ static HRESULT WINAPI domdoc_transformNodeToObject(
 
 static HRESULT WINAPI domdoc_get_doctype(
     IXMLDOMDocument3 *iface,
-    IXMLDOMDocumentType** documentType )
+    IXMLDOMDocumentType** doctype )
 {
     domdoc *This = impl_from_IXMLDOMDocument3(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    IXMLDOMNode *node;
+    xmlDtdPtr dtd;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, doctype);
+
+    if (!doctype) return E_INVALIDARG;
+
+    *doctype = NULL;
+
+    dtd = xmlGetIntSubset(get_doc(This));
+    if (!dtd) return S_FALSE;
+
+    node = create_node((xmlNodePtr)dtd);
+    if (!node) return S_FALSE;
+
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMDocumentType, (void**)doctype);
+    IXMLDOMNode_Release(node);
+
+    return hr;
 }
 
 

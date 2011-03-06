@@ -6009,9 +6009,9 @@ static const nodetypedvalue_t get_nodetypedvalue[] = {
 static void test_nodeTypedValue(void)
 {
     const nodetypedvalue_t *entry = get_nodetypedvalue;
+    IXMLDOMDocumentType *doctype, *doctype2;
     IXMLDOMProcessingInstruction *pi;
     IXMLDOMDocumentFragment *frag;
-    IXMLDOMDocumentType *doctype;
     IXMLDOMDocument *doc, *doc2;
     IXMLDOMCDATASection *cdata;
     IXMLDOMComment *comment;
@@ -6142,16 +6142,27 @@ static void test_nodeTypedValue(void)
     ok(hr == S_OK, "ret %08x\n", hr );
     ok(b == VARIANT_TRUE, "got %d\n", b);
 
+    EXPECT_REF(doc2, 1);
+
     hr = IXMLDOMDocument_get_doctype(doc2, &doctype);
-    todo_wine ok(hr == S_OK, "ret %08x\n", hr );
-    if (hr == S_OK)
+    ok(hr == S_OK, "ret %08x\n", hr );
+
+    EXPECT_REF(doc2, 1);
+    todo_wine EXPECT_REF(doctype, 2);
+
     {
         V_VT(&value) = VT_EMPTY;
         hr = IXMLDOMDocumentType_get_nodeTypedValue(doctype, &value);
         ok(hr == S_FALSE, "ret %08x\n", hr );
         ok(V_VT(&value) == VT_NULL, "got %d\n", V_VT(&value));
-        IXMLDOMDocumentType_Release(doctype);
     }
+
+    hr = IXMLDOMDocument_get_doctype(doc2, &doctype2);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok(doctype != doctype2, "got %p, was %p\n", doctype2, doctype);
+
+    IXMLDOMDocumentType_Release(doctype2);
+    IXMLDOMDocumentType_Release(doctype);
 
     IXMLDOMDocument_Release(doc2);
 
@@ -8383,6 +8394,25 @@ static void test_appendChild(void)
     IXMLDOMDocument_Release(doc2);
 }
 
+static void test_get_doctype(void)
+{
+    IXMLDOMDocumentType *doctype;
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_get_doctype(doc, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    doctype = (void*)0xdeadbeef;
+    hr = IXMLDOMDocument_get_doctype(doc, &doctype);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(doctype == NULL, "got %p\n", doctype);
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -8449,6 +8479,7 @@ START_TEST(domdoc)
     test_get_xml();
     test_insertBefore();
     test_appendChild();
+    test_get_doctype();
     test_xsltemplate();
 
     CoUninitialize();
