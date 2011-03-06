@@ -2064,6 +2064,7 @@ static void test_refs(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
+    EXPECT_REF(doc, 1);
     ref = IXMLDOMDocument_Release(doc);
     ok( ref == 0, "ref %d\n", ref);
 
@@ -2076,6 +2077,7 @@ static void test_refs(void)
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
+    EXPECT_REF(doc, 1);
     IXMLDOMDocument_AddRef( doc );
     EXPECT_REF(doc, 2);
     IXMLDOMDocument_AddRef( doc );
@@ -2089,19 +2091,27 @@ static void test_refs(void)
     ok( element != NULL, "should be an element\n");
 
     EXPECT_REF(doc, 1);
+    todo_wine EXPECT_REF(element, 2);
+
+    IXMLDOMElement_AddRef(element);
+    todo_wine EXPECT_REF(element, 3);
+    IXMLDOMElement_Release(element);
 
     r = IXMLDOMElement_get_childNodes( element, &node_list );
     ok( r == S_OK, "rets %08x\n", r);
 
+    todo_wine EXPECT_REF(element, 2);
     EXPECT_REF(node_list, 1);
 
     IXMLDOMNodeList_get_item( node_list, 0, &node );
     ok( r == S_OK, "rets %08x\n", r);
+    EXPECT_REF(node_list, 1);
+    EXPECT_REF(node, 1);
 
     IXMLDOMNodeList_get_item( node_list, 0, &node2 );
     ok( r == S_OK, "rets %08x\n", r);
-
-    EXPECT_REF(node, 1);
+    EXPECT_REF(node_list, 1);
+    EXPECT_REF(node2, 1);
 
     ref = IXMLDOMNode_Release( node );
     ok( ref == 0, "ref %d\n", ref );
@@ -2121,18 +2131,22 @@ static void test_refs(void)
     /* IUnknown must be unique however we obtain it */
     r = IXMLDOMElement_QueryInterface( element, &IID_IUnknown, (void**)&unk );
     ok( r == S_OK, "rets %08x\n", r );
+    EXPECT_REF(element, 2);
     r = IXMLDOMElement_QueryInterface( element, &IID_IXMLDOMNode, (void**)&node );
     ok( r == S_OK, "rets %08x\n", r );
+    todo_wine EXPECT_REF(element, 2);
     r = IXMLDOMNode_QueryInterface( node, &IID_IUnknown, (void**)&unk2 );
     ok( r == S_OK, "rets %08x\n", r );
+    todo_wine EXPECT_REF(element, 2);
     ok( unk == unk2, "unk %p unk2 %p\n", unk, unk2 );
+    todo_wine ok( element != (void*)node, "node %p element %p\n", node, element );
 
     IUnknown_Release( unk2 );
     IUnknown_Release( unk );
     IXMLDOMNode_Release( node );
+    todo_wine EXPECT_REF(element, 2);
 
     IXMLDOMElement_Release( element );
-
 }
 
 static void test_create(void)
@@ -2155,6 +2169,8 @@ static void test_create(void)
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
+
+    EXPECT_REF(doc, 1);
 
     /* types not supported for creation */
     V_VT(&var) = VT_I1;
@@ -2452,9 +2468,12 @@ static void test_create(void)
     V_I4(&var) = NODE_ELEMENT;
     r = IXMLDOMDocument_createNode( doc, var, str, NULL, &node );
     ok( r == S_OK, "returns %08x\n", r );
+
+    EXPECT_REF(doc, 1);
     r = IXMLDOMDocument_appendChild( doc, node, &root );
     ok( r == S_OK, "returns %08x\n", r );
     ok( node == root, "%p %p\n", node, root );
+    EXPECT_REF(doc, 1);
 
     EXPECT_REF(node, 2);
 
@@ -8250,7 +8269,45 @@ static void test_insertBefore(void)
     SysFreeString(p);
 
     IXMLDOMDocument_Release(doc);
-    free_bstrs();
+}
+
+static void test_appendChild(void)
+{
+    IXMLDOMDocument *doc, *doc2;
+    IXMLDOMElement *elem, *elem2;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    doc2 = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &elem);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_createElement(doc2, _bstr_("elem2"), &elem2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    EXPECT_REF(doc, 1);
+    todo_wine EXPECT_REF(elem, 2);
+    EXPECT_REF(doc2, 1);
+    todo_wine EXPECT_REF(elem2, 2);
+    EXPECT_NO_CHILDREN(doc);
+    EXPECT_NO_CHILDREN(doc2);
+
+    /* append from another document */
+    hr = IXMLDOMDocument_appendChild(doc2, (IXMLDOMNode*)elem, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    EXPECT_REF(doc, 1);
+    todo_wine EXPECT_REF(elem, 2);
+    EXPECT_REF(doc2, 1);
+    todo_wine EXPECT_REF(elem2, 2);
+    EXPECT_NO_CHILDREN(doc);
+    EXPECT_CHILDREN(doc2);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMElement_Release(elem2);
+    IXMLDOMDocument_Release(doc);
+    IXMLDOMDocument_Release(doc2);
 }
 
 START_TEST(domdoc)
@@ -8318,6 +8375,7 @@ START_TEST(domdoc)
     test_put_nodeTypedValue();
     test_get_xml();
     test_insertBefore();
+    test_appendChild();
     test_xsltemplate();
 
     CoUninitialize();

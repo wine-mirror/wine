@@ -295,6 +295,7 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
     xmlNodePtr new_child_node;
     IXMLDOMNode *before = NULL;
     xmlnode *node_obj;
+    xmlDocPtr doc;
     HRESULT hr;
 
     if(!new_child)
@@ -336,7 +337,10 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
         /* unlink from current parent first */
         if(node_obj->parent)
             IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
+        doc = new_child_node->doc;
+        xmldoc_add_ref(before_node_obj->node->doc);
         xmlAddPrevSibling(before_node_obj->node, new_child_node);
+        xmldoc_release(doc);
         node_obj->parent = This->parent;
     }
     else
@@ -344,7 +348,10 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
         /* unlink from current parent first */
         if(node_obj->parent)
             IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
+        doc = new_child_node->doc;
+        xmldoc_add_ref(This->node->doc);
         xmlAddChild(This->node, new_child_node);
+        xmldoc_release(doc);
         node_obj->parent = This->iface;
     }
 
