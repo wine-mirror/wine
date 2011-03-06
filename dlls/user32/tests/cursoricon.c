@@ -54,6 +54,135 @@ typedef struct
     CURSORICONFILEDIRENTRY idEntries[1];
 } CURSORICONFILEDIR;
 
+#define RIFF_FOURCC( c0, c1, c2, c3 ) \
+        ( (DWORD)(BYTE)(c0) | ( (DWORD)(BYTE)(c1) << 8 ) | \
+        ( (DWORD)(BYTE)(c2) << 16 ) | ( (DWORD)(BYTE)(c3) << 24 ) )
+
+#define ANI_RIFF_ID RIFF_FOURCC('R', 'I', 'F', 'F')
+#define ANI_LIST_ID RIFF_FOURCC('L', 'I', 'S', 'T')
+#define ANI_ACON_ID RIFF_FOURCC('A', 'C', 'O', 'N')
+#define ANI_anih_ID RIFF_FOURCC('a', 'n', 'i', 'h')
+#define ANI_seq__ID RIFF_FOURCC('s', 'e', 'q', ' ')
+#define ANI_fram_ID RIFF_FOURCC('f', 'r', 'a', 'm')
+#define ANI_icon_ID RIFF_FOURCC('i', 'c', 'o', 'n')
+
+#define ANI_FLAG_ICON       0x1
+#define ANI_FLAG_SEQUENCE   0x2
+
+typedef struct {
+    DWORD header_size;
+    DWORD num_frames;
+    DWORD num_steps;
+    DWORD width;
+    DWORD height;
+    DWORD bpp;
+    DWORD num_planes;
+    DWORD display_rate;
+    DWORD flags;
+} ani_header;
+
+typedef struct {
+    BYTE data[32*32*4];
+} ani_data32x32x32;
+
+typedef struct {
+    CURSORICONFILEDIR    icon_info;  /* animated cursor frame information */
+    BITMAPINFOHEADER     bmi_header; /* animated cursor frame header */
+    ani_data32x32x32     bmi_data;   /* animated cursor frame DIB data */
+} ani_frame32x32x32;
+
+typedef struct {
+    DWORD                chunk_id;   /* ANI_anih_ID */
+    DWORD                chunk_size; /* actual size of data */
+    ani_header           header;     /* animated cursor header */
+} riff_header_t;
+
+typedef struct {
+    DWORD                chunk_id;   /* ANI_LIST_ID */
+    DWORD                chunk_size; /* actual size of data */
+    DWORD                chunk_type; /* ANI_fram_ID */
+} riff_list_t;
+
+typedef struct {
+    DWORD                chunk_id;   /* ANI_icon_ID */
+    DWORD                chunk_size; /* actual size of data */
+    ani_frame32x32x32    data;       /* animated cursor frame */
+} riff_icon32x32x32_t;
+
+typedef struct {
+    DWORD                chunk_id;   /* ANI_RIFF_ID */
+    DWORD                chunk_size; /* actual size of data */
+    DWORD                chunk_type; /* ANI_ACON_ID */
+    riff_header_t        header;     /* RIFF animated cursor header */
+    riff_list_t          frame_list; /* RIFF animated cursor frame list info */
+    riff_icon32x32x32_t  frames[1];  /* array of animated cursor frames */
+} riff_cursor_t;
+
+riff_cursor_t empty_anicursor = {
+    ANI_RIFF_ID,
+    sizeof(empty_anicursor) - sizeof(DWORD)*2,
+    ANI_ACON_ID,
+    {
+        ANI_anih_ID,
+        sizeof(ani_header),
+        {
+            sizeof(ani_header),
+            1,            /* frames */
+            1,            /* steps */
+            32,           /* width */
+            32,           /* height */
+            32,           /* depth */
+            1,            /* planes */
+            10,           /* display rate in jiffies */
+            ANI_FLAG_ICON /* flags */
+        }
+    },
+    {
+        ANI_LIST_ID,
+        sizeof(riff_icon32x32x32_t)*1 + sizeof(DWORD),
+        ANI_fram_ID,
+    },
+    {
+        {
+            ANI_icon_ID,
+            sizeof(ani_frame32x32x32),
+            {
+                {
+                    0x0, /* reserved */
+                    0,   /* type: icon(1), cursor(2) */
+                    1,   /* count */
+                    {
+                        {
+                            32,                        /* width */
+                            32,                        /* height */
+                            0,                         /* color count */
+                            0x0,                       /* reserved */
+                            16,                        /* x hotspot */
+                            16,                        /* y hotspot */
+                            sizeof(ani_data32x32x32),  /* DIB size */
+                            sizeof(CURSORICONFILEDIR)  /* DIB offset */
+                        }
+                    }
+                },
+                {
+                      sizeof(BITMAPINFOHEADER),  /* structure for DIB-type data */
+                      32,                        /* width */
+                      32*2,                      /* actual height times two */
+                      1,                         /* planes */
+                      32,                        /* bpp */
+                      BI_RGB,                    /* compression */
+                      0,                         /* image size */
+                      0,                         /* biXPelsPerMeter */
+                      0,                         /* biYPelsPerMeter */
+                      0,                         /* biClrUsed */
+                      0                          /* biClrImportant */
+                },
+                { /* DIB data: left uninitialized */ }
+            }
+        }
+    }
+};
+
 #include "poppack.h"
 
 static char **test_argv;
@@ -1129,6 +1258,37 @@ static void test_CreateIconFromResource(void)
      * ok(handle == NULL, "Invalid pointer accepted (%p)\n", handle);
      */
     HeapFree(GetProcessHeap(), 0, hotspot);
+
+    /* Test creating an animated cursor. */
+    empty_anicursor.frames[0].data.icon_info.idType = 2; /* type: cursor */
+    empty_anicursor.frames[0].data.icon_info.idEntries[0].xHotspot = 3;
+    empty_anicursor.frames[0].data.icon_info.idEntries[0].yHotspot = 3;
+    handle = CreateIconFromResource((PBYTE) &empty_anicursor, sizeof(empty_anicursor), FALSE, 0x00030000);
+    ok(handle != NULL, "Create cursor failed.\n");
+
+    /* Test the animated cursor's information. */
+    SetLastError(0xdeadbeef);
+    ret = GetIconInfo(handle, &icon_info);
+    ok(ret, "GetIconInfo() failed.\n");
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: %u\n", error);
+
+    if (ret)
+    {
+        ok(icon_info.fIcon == FALSE, "fIcon != FALSE.\n");
+        ok(icon_info.xHotspot == 3, "xHotspot is %u.\n", icon_info.xHotspot);
+        ok(icon_info.yHotspot == 3, "yHotspot is %u.\n", icon_info.yHotspot);
+        ok(icon_info.hbmColor != NULL || broken(!icon_info.hbmColor) /* no color cursor support */,
+           "No hbmColor!\n");
+        ok(icon_info.hbmMask != NULL, "No hbmMask!\n");
+    }
+
+    /* Clean up. */
+    SetLastError(0xdeadbeef);
+    ret = DestroyCursor(handle);
+    ok(ret, "DestroyCursor() failed.\n");
+    error = GetLastError();
+    ok(error == 0xdeadbeef, "Last error: %u\n", error);
 }
 
 static HICON create_test_icon(HDC hdc, int width, int height, int bpp,

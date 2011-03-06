@@ -1120,6 +1120,10 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
         return 0;
     }
 
+    /* Check if the resource is an animated icon/cursor */
+    if (!memcmp(bits, "RIFF", 4))
+        return CURSORICON_CreateIconFromANI( bits, cbSize, width, height, 0 /* default depth */, cFlag );
+
     if (bIcon)
     {
         hotspot.x = width / 2;
