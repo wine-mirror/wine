@@ -2633,6 +2633,11 @@ static BOOL CommitUrlCacheEntryInternal(
         (DWORD)((LPBYTE)pUrlEntry - (LPBYTE)pHeader));
     if (error != ERROR_SUCCESS)
         URLCache_DeleteEntry(pHeader, &pUrlEntry->CacheFileEntry);
+    else
+    {
+        if (pUrlEntry->CacheDir < pHeader->DirectoryCount)
+            pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles++;
+    }
 
 cleanup:
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
