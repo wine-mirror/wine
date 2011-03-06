@@ -2924,6 +2924,7 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
     LPURLCACHE_HEADER pHeader;
     struct _HASH_ENTRY * pHashEntry;
     CACHEFILE_ENTRY * pEntry;
+    const URL_CACHEFILE_ENTRY * pUrlEntry;
     DWORD error;
 
     TRACE("(%s)\n", debugstr_a(lpszUrlName));
@@ -2954,6 +2955,21 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
     }
 
     pEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    if (pEntry->dwSignature != URL_SIGNATURE)
+    {
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        FIXME("Trying to delete entry of unknown format %s\n",
+              debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+    pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
+    if (pUrlEntry->CacheDir < pHeader->DirectoryCount)
+    {
+        if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
+            pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles--;
+    }
+
     URLCache_DeleteEntry(pHeader, pEntry);
 
     URLCache_DeleteEntryFromHash(pHashEntry);
@@ -2973,6 +2989,7 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     LPURLCACHE_HEADER pHeader;
     struct _HASH_ENTRY * pHashEntry;
     CACHEFILE_ENTRY * pEntry;
+    const URL_CACHEFILE_ENTRY * pUrlEntry;
     LPSTR urlA;
     DWORD error;
 
@@ -3017,6 +3034,21 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     }
 
     pEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    if (pEntry->dwSignature != URL_SIGNATURE)
+    {
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        FIXME("Trying to delete entry of unknown format %s\n",
+              debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+    pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
+    if (pUrlEntry->CacheDir < pHeader->DirectoryCount)
+    {
+        if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
+            pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles--;
+    }
+
     URLCache_DeleteEntry(pHeader, pEntry);
 
     URLCache_DeleteEntryFromHash(pHashEntry);
