@@ -515,7 +515,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         SetThreadPriority(wwi->hThread, THREAD_PRIORITY_TIME_CRITICAL);
     WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
     CloseHandle(wwi->hStartUpEvent);
-    wwi->hStartUpEvent = INVALID_HANDLE_VALUE;
+    wwi->hStartUpEvent = NULL;
 
     HeapFree( GetProcessHeap(), 0, hw_params );
     HeapFree( GetProcessHeap(), 0, sw_params );
@@ -554,7 +554,7 @@ static DWORD widClose(WORD wDevID)
 	WARN("buffers still playing !\n");
 	ret = WAVERR_STILLPLAYING;
     } else {
-	if (wwi->hThread != INVALID_HANDLE_VALUE) {
+	if (wwi->hThread) {
 	    ALSA_AddRingMessage(&wwi->msgRing, WINE_WM_CLOSING, 0, TRUE);
 	}
         ALSA_DestroyRingMessage(&wwi->msgRing);

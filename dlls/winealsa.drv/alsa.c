@@ -127,7 +127,7 @@ void ALSA_WaitRingMessage(ALSA_MSG_RING* omr, DWORD sleep)
  */
 int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD_PTR param, BOOL wait)
 {
-    HANDLE	hEvent = INVALID_HANDLE_VALUE;
+    HANDLE	hEvent = NULL;
 
     EnterCriticalSection(&omr->msg_crst);
     if ((omr->msg_toget == ((omr->msg_tosave + 1) % omr->ring_buffer_size)))
@@ -151,7 +151,7 @@ int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD_PTR p
     if (wait)
     {
         hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
-        if (hEvent == INVALID_HANDLE_VALUE)
+        if (!hEvent)
         {
             ERR("can't create event !?\n");
             LeaveCriticalSection(&omr->msg_crst);
@@ -173,7 +173,7 @@ int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD_PTR p
     {
         omr->messages[omr->msg_tosave].msg = msg;
         omr->messages[omr->msg_tosave].param = param;
-        omr->messages[omr->msg_tosave].hEvent = INVALID_HANDLE_VALUE;
+        omr->messages[omr->msg_tosave].hEvent = NULL;
         omr->msg_tosave = (omr->msg_tosave + 1) % omr->ring_buffer_size;
     }
     LeaveCriticalSection(&omr->msg_crst);

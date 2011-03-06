@@ -782,18 +782,16 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD_PTR)wDevID, 0, &(wwo->dwThreadID));
-    if (wwo->hThread)
-        SetThreadPriority(wwo->hThread, THREAD_PRIORITY_TIME_CRITICAL);
-    else
-    {
+    if (!wwo->hThread) {
         ERR("Thread creation for the wodPlayer failed!\n");
         CloseHandle(wwo->hStartUpEvent);
         retcode = MMSYSERR_NOMEM;
         goto errexit;
     }
+    SetThreadPriority(wwo->hThread, THREAD_PRIORITY_TIME_CRITICAL);
     WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
     CloseHandle(wwo->hStartUpEvent);
-    wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
+    wwo->hStartUpEvent = NULL;
 
     TRACE("handle=%p\n", pcm);
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
@@ -856,7 +854,7 @@ static DWORD wodClose(WORD wDevID)
 	WARN("buffers still playing !\n");
 	ret = WAVERR_STILLPLAYING;
     } else {
-	if (wwo->hThread != INVALID_HANDLE_VALUE) {
+	if (wwo->hThread) {
 	    ALSA_AddRingMessage(&wwo->msgRing, WINE_WM_CLOSING, 0, TRUE);
 	}
         ALSA_DestroyRingMessage(&wwo->msgRing);
