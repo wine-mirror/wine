@@ -511,8 +511,13 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD_PTR)wDevID, 0, &(wwi->dwThreadID));
-    if (wwi->hThread)
-        SetThreadPriority(wwi->hThread, THREAD_PRIORITY_TIME_CRITICAL);
+    if (!wwi->hThread) {
+        ERR("Thread creation for the widRecorder failed!\n");
+        CloseHandle(wwi->hStartUpEvent);
+        ret = MMSYSERR_NOMEM;
+        goto error;
+    }
+    SetThreadPriority(wwi->hThread, THREAD_PRIORITY_TIME_CRITICAL);
     WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
     CloseHandle(wwi->hStartUpEvent);
     wwi->hStartUpEvent = NULL;
@@ -525,6 +530,8 @@ error:
     snd_pcm_close(pcm);
     HeapFree( GetProcessHeap(), 0, hw_params );
     HeapFree( GetProcessHeap(), 0, sw_params );
+    if (wwi->msgRing.ring_buffer_size > 0)
+        ALSA_DestroyRingMessage(&wwi->msgRing);
     return ret;
 }
 
