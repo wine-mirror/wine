@@ -101,7 +101,7 @@ struct cursoricon_object
     UINT                    height;
     POINT                   hotspot;
     UINT                    num_frames; /* number of frames in the icon/cursor */
-    UINT                    ms_delay;   /* delay between frames (in milliseconds) */
+    UINT                    delay;      /* delay between frames (in jiffies) */
     struct cursoricon_frame frames[1];  /* icon frame information */
 };
 
@@ -111,6 +111,7 @@ static HICON alloc_icon_handle( UINT num_frames )
                                                FIELD_OFFSET( struct cursoricon_object, frames[num_frames] ));
 
     if (!obj) return 0;
+    obj->delay = 0;
     obj->num_frames = num_frames;
     return alloc_user_handle( &obj->obj, USER_ICON );
 }
@@ -1027,8 +1028,8 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
     info = get_icon_ptr( cursor );
     info->is_icon = FALSE;
 
-    /* The .ANI stores the display rate in 1/60s, we store the delay between frames in ms */
-    info->ms_delay = (100 * header.display_rate) / 6;
+    /* The .ANI stores the display rate in jiffies (1/60s) */
+    info->delay = header.display_rate;
 
     icon_chunk = fram_chunk.data;
     icon_data = fram_chunk.data + (2 * sizeof(DWORD));
@@ -1084,7 +1085,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
             if (info->frames[i].alpha) DeleteObject( info->frames[i].alpha );
         }
         info->num_frames = 1;
-        info->ms_delay = 0;
+        info->delay = 0;
     }
     info->width = header.width;
     info->height = header.height;
@@ -1694,6 +1695,40 @@ HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
 
     return LoadImageA( hInstance, name, IMAGE_ICON, 0, 0,
                        LR_SHARED | LR_DEFAULTSIZE );
+}
+
+/**********************************************************************
+ *              GetCursorFrameInfo (USER32.@)
+ */
+HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD rate_index_num, DWORD *rate_jiffies, DWORD *is_static)
+{
+    struct cursoricon_object *ptr;
+    HCURSOR ret = 0;
+
+    if (rate_jiffies == NULL || is_static == NULL) return 0;
+
+    if (!(ptr = get_icon_ptr( hCursor ))) return 0;
+
+    FIXME("semi-stub! %p => %d %d %p %p\n", hCursor, unk1, rate_index_num, rate_jiffies, is_static);
+
+    if (ptr->num_frames == 1 || rate_index_num == 0)
+    {
+        ret = hCursor;
+        if (ptr->num_frames == 1)
+        {
+            *rate_jiffies = 0;
+            *is_static = 1;
+        }
+        else
+        {
+            *is_static = ~0;
+            *rate_jiffies = ptr->delay;
+        }
+    }
+
+    release_icon_ptr( hCursor, ptr );
+
+    return ret;
 }
 
 /**********************************************************************

@@ -272,7 +272,7 @@
 @ stdcall GetClipboardViewer()
 @ stdcall GetComboBoxInfo(long ptr)
 @ stdcall GetCursor()
-# @ stub GetCursorFrameInfo
+@ stdcall GetCursorFrameInfo(long long long ptr ptr)
 @ stdcall GetCursorInfo(ptr)
 @ stdcall GetCursorPos(ptr)
 @ stdcall GetDC(long)

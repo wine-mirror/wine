@@ -116,9 +116,18 @@ typedef struct {
     riff_header_t        header;     /* RIFF animated cursor header */
     riff_list_t          frame_list; /* RIFF animated cursor frame list info */
     riff_icon32x32x32_t  frames[1];  /* array of animated cursor frames */
-} riff_cursor_t;
+} riff_cursor1_t;
 
-riff_cursor_t empty_anicursor = {
+typedef struct {
+    DWORD                chunk_id;   /* ANI_RIFF_ID */
+    DWORD                chunk_size; /* actual size of data */
+    DWORD                chunk_type; /* ANI_ACON_ID */
+    riff_header_t        header;     /* RIFF animated cursor header */
+    riff_list_t          frame_list; /* RIFF animated cursor frame list info */
+    riff_icon32x32x32_t  frames[3];  /* array of animated cursor frames */
+} riff_cursor3_t;
+
+riff_cursor1_t empty_anicursor = {
     ANI_RIFF_ID,
     sizeof(empty_anicursor) - sizeof(DWORD)*2,
     ANI_ACON_ID,
@@ -143,6 +152,145 @@ riff_cursor_t empty_anicursor = {
         ANI_fram_ID,
     },
     {
+        {
+            ANI_icon_ID,
+            sizeof(ani_frame32x32x32),
+            {
+                {
+                    0x0, /* reserved */
+                    0,   /* type: icon(1), cursor(2) */
+                    1,   /* count */
+                    {
+                        {
+                            32,                        /* width */
+                            32,                        /* height */
+                            0,                         /* color count */
+                            0x0,                       /* reserved */
+                            16,                        /* x hotspot */
+                            16,                        /* y hotspot */
+                            sizeof(ani_data32x32x32),  /* DIB size */
+                            sizeof(CURSORICONFILEDIR)  /* DIB offset */
+                        }
+                    }
+                },
+                {
+                      sizeof(BITMAPINFOHEADER),  /* structure for DIB-type data */
+                      32,                        /* width */
+                      32*2,                      /* actual height times two */
+                      1,                         /* planes */
+                      32,                        /* bpp */
+                      BI_RGB,                    /* compression */
+                      0,                         /* image size */
+                      0,                         /* biXPelsPerMeter */
+                      0,                         /* biYPelsPerMeter */
+                      0,                         /* biClrUsed */
+                      0                          /* biClrImportant */
+                },
+                { /* DIB data: left uninitialized */ }
+            }
+        }
+    }
+};
+
+riff_cursor3_t empty_anicursor3 = {
+    ANI_RIFF_ID,
+    sizeof(empty_anicursor3) - sizeof(DWORD)*2,
+    ANI_ACON_ID,
+    {
+        ANI_anih_ID,
+        sizeof(ani_header),
+        {
+            sizeof(ani_header),
+            3,            /* frames */
+            1,            /* steps */
+            32,           /* width */
+            32,           /* height */
+            32,           /* depth */
+            1,            /* planes */
+            0xbeef,       /* display rate in jiffies */
+            ANI_FLAG_ICON /* flags */
+        }
+    },
+    {
+        ANI_LIST_ID,
+        sizeof(riff_icon32x32x32_t)*(3 /*frames*/) + sizeof(DWORD),
+        ANI_fram_ID,
+    },
+    {
+        {
+            ANI_icon_ID,
+            sizeof(ani_frame32x32x32),
+            {
+                {
+                    0x0, /* reserved */
+                    0,   /* type: icon(1), cursor(2) */
+                    1,   /* count */
+                    {
+                        {
+                            32,                        /* width */
+                            32,                        /* height */
+                            0,                         /* color count */
+                            0x0,                       /* reserved */
+                            16,                        /* x hotspot */
+                            16,                        /* y hotspot */
+                            sizeof(ani_data32x32x32),  /* DIB size */
+                            sizeof(CURSORICONFILEDIR)  /* DIB offset */
+                        }
+                    }
+                },
+                {
+                      sizeof(BITMAPINFOHEADER),  /* structure for DIB-type data */
+                      32,                        /* width */
+                      32*2,                      /* actual height times two */
+                      1,                         /* planes */
+                      32,                        /* bpp */
+                      BI_RGB,                    /* compression */
+                      0,                         /* image size */
+                      0,                         /* biXPelsPerMeter */
+                      0,                         /* biYPelsPerMeter */
+                      0,                         /* biClrUsed */
+                      0                          /* biClrImportant */
+                },
+                { /* DIB data: left uninitialized */ }
+            }
+        },
+        {
+            ANI_icon_ID,
+            sizeof(ani_frame32x32x32),
+            {
+                {
+                    0x0, /* reserved */
+                    0,   /* type: icon(1), cursor(2) */
+                    1,   /* count */
+                    {
+                        {
+                            32,                        /* width */
+                            32,                        /* height */
+                            0,                         /* color count */
+                            0x0,                       /* reserved */
+                            16,                        /* x hotspot */
+                            16,                        /* y hotspot */
+                            sizeof(ani_data32x32x32),  /* DIB size */
+                            sizeof(CURSORICONFILEDIR)  /* DIB offset */
+                        }
+                    }
+                },
+                {
+                      sizeof(BITMAPINFOHEADER),  /* structure for DIB-type data */
+                      32,                        /* width */
+                      32*2,                      /* actual height times two */
+                      1,                         /* planes */
+                      32,                        /* bpp */
+                      BI_RGB,                    /* compression */
+                      0,                         /* image size */
+                      0,                         /* biXPelsPerMeter */
+                      0,                         /* biYPelsPerMeter */
+                      0,                         /* biClrUsed */
+                      0                          /* biClrImportant */
+                },
+                { /* DIB data: left uninitialized */ }
+            }
+        },
         {
             ANI_icon_ID,
             sizeof(ani_frame32x32x32),
@@ -1291,6 +1439,118 @@ static void test_CreateIconFromResource(void)
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
 }
 
+static HCURSOR WINAPI (*pGetCursorFrameInfo)(HCURSOR hCursor, VOID *unk1, VOID *unk2, VOID *unk3, VOID *unk4);
+static void test_GetCursorFrameInfo(void)
+{
+    DWORD unk1, unk2, unk3, unk4;
+    BITMAPINFOHEADER *icon_header;
+    INT16 *hotspot;
+    HANDLE h1, h2;
+    BOOL ret;
+
+    if (!pGetCursorFrameInfo)
+    {
+        win_skip( "GetCursorFrameInfo not supported, skipping tests.\n" );
+        return;
+    }
+#define ICON_RES_WIDTH 32
+#define ICON_RES_HEIGHT 32
+#define ICON_RES_AND_SIZE (ICON_WIDTH*ICON_HEIGHT/8)
+#define ICON_RES_BPP 32
+#define ICON_RES_SIZE \
+    (sizeof(BITMAPINFOHEADER) + ICON_AND_SIZE + ICON_AND_SIZE*ICON_BPP)
+#define CRSR_RES_SIZE (2*sizeof(INT16) + ICON_RES_SIZE)
+
+    /* Set icon data. */
+    hotspot = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, CRSR_RES_SIZE);
+
+    /* Cursor resources have an extra hotspot, icon resources not. */
+    hotspot[0] = 3;
+    hotspot[1] = 3;
+
+    icon_header = (BITMAPINFOHEADER *) (hotspot + 2);
+    icon_header->biSize = sizeof(BITMAPINFOHEADER);
+    icon_header->biWidth = ICON_WIDTH;
+    icon_header->biHeight = ICON_HEIGHT*2;
+    icon_header->biPlanes = 1;
+    icon_header->biBitCount = ICON_BPP;
+    icon_header->biSizeImage = 0; /* Uncompressed bitmap. */
+
+    /* Creating a static cursor. */
+    SetLastError(0xdeadbeef);
+    h1 = CreateIconFromResource((PBYTE) hotspot, CRSR_RES_SIZE, FALSE, 0x00030000);
+    ok(h1 != NULL, "Create cursor failed.\n");
+
+    /* Check GetCursorFrameInfo behavior on a static cursor */
+    unk1 = unk2 = unk3 = unk4 = 0xdead;
+    h2 = pGetCursorFrameInfo(h1, &unk1, &unk2, &unk3, &unk4);
+    ok(h1 == h2, "GetCursorFrameInfo() failed: (%p != %p).\n", h1, h2);
+    ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (%d != 0xdead).\n", unk1);
+    ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (%d != 0xdead).\n", unk2);
+    ok(unk3 == 0, "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x0).\n", unk3);
+    ok(unk4 == 1, "GetCursorFrameInfo() unexpected param 5 value (%d != 1).\n", unk4);
+
+    /* Clean up static cursor. */
+    ret = DestroyCursor(h1);
+    ok(ret, "DestroyCursor() failed.\n");
+
+    /* Creating a single-frame animated cursor. */
+    empty_anicursor.frames[0].data.icon_info.idType = 2; /* type: cursor */
+    empty_anicursor.frames[0].data.icon_info.idEntries[0].xHotspot = 3;
+    empty_anicursor.frames[0].data.icon_info.idEntries[0].yHotspot = 3;
+    h1 = CreateIconFromResource((PBYTE) &empty_anicursor, sizeof(empty_anicursor3), FALSE, 0x00030000);
+    ok(h1 != NULL, "Create cursor failed.\n");
+
+    /* Check GetCursorFrameInfo behavior on a single-frame animated cursor */
+    unk1 = unk2 = unk3 = unk4 = 0xdead;
+    h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)0, &unk3, &unk4);
+    ok(h1 == h2, "GetCursorFrameInfo() failed: (%p != %p).\n", h1, h2);
+    ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (%d != 0xdead).\n", unk1);
+    ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (%d != 0xdead).\n", unk2);
+    ok(unk3 == 0x0, "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x0).\n", unk3);
+    ok(unk4 == 1, "GetCursorFrameInfo() unexpected param 5 value (%d != 1).\n", unk4);
+
+    /* Clean up single-frame animated cursor. */
+    ret = DestroyCursor(h1);
+    ok(ret, "DestroyCursor() failed.\n");
+
+    /* Creating a multi-frame animated cursor. */
+    empty_anicursor3.frames[0].data.icon_info.idType = 2; /* type: cursor */
+    empty_anicursor3.frames[0].data.icon_info.idEntries[0].xHotspot = 3;
+    empty_anicursor3.frames[0].data.icon_info.idEntries[0].yHotspot = 3;
+    empty_anicursor3.frames[1].data.icon_info.idType = 2; /* type: cursor */
+    empty_anicursor3.frames[1].data.icon_info.idEntries[0].xHotspot = 3;
+    empty_anicursor3.frames[1].data.icon_info.idEntries[0].yHotspot = 3;
+    empty_anicursor3.frames[2].data.icon_info.idType = 2; /* type: cursor */
+    empty_anicursor3.frames[2].data.icon_info.idEntries[0].xHotspot = 3;
+    empty_anicursor3.frames[2].data.icon_info.idEntries[0].yHotspot = 3;
+    h1 = CreateIconFromResource((PBYTE) &empty_anicursor3, sizeof(empty_anicursor3), FALSE, 0x00030000);
+    ok(h1 != NULL, "Create cursor failed.\n");
+
+    /* Check GetCursorFrameInfo behavior on a multi-frame animated cursor */
+    unk1 = unk2 = unk3 = unk4 = 0xdead;
+    h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)0, &unk3, &unk4);
+    ok(h2 != 0, "GetCursorFrameInfo() failed: (%p != 0).\n", h2);
+    ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (%d != 0xdead).\n", unk1);
+    ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (%d != 0xdead).\n", unk2);
+    ok(unk3 == 0xbeef, "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0xbeef).\n", unk3);
+    ok(unk4 == ~0 || broken(unk4 == 1) /*win2k*/, "GetCursorFrameInfo() unexpected param 5 value (%d != 1).\n", unk4);
+
+    /* Check GetCursorFrameInfo behavior on a multi-frame animated cursor */
+    unk1 = unk2 = unk3 = unk4 = 0xdead;
+    h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)1, &unk3, &unk4);
+    ok(h2 == 0, "GetCursorFrameInfo() failed: (%p != 0).\n", h2);
+    ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (%d != 0xdead).\n", unk1);
+    ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (%d != 0xdead).\n", unk2);
+    ok(unk3 == 0xdead || broken(unk3 == 0xbeef) /*win2k*/, "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0xdead).\n", unk3);
+    ok(unk4 == 0xdead || broken(unk4 == 1) /*win2k*/, "GetCursorFrameInfo() unexpected param 5 value (%d != 0xdead).\n", unk4);
+
+    /* Clean up multi-frame animated cursor. */
+    ret = DestroyCursor(h1);
+    ok(ret, "DestroyCursor() failed.\n");
+
+}
+
 static HICON create_test_icon(HDC hdc, int width, int height, int bpp,
                               BOOL maskvalue, UINT32 *color, int colorSize)
 {
@@ -2062,6 +2322,7 @@ START_TEST(cursoricon)
     pGetCursorInfo = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetCursorInfo" );
     pGetIconInfoExA = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetIconInfoExA" );
     pGetIconInfoExW = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetIconInfoExW" );
+    pGetCursorFrameInfo = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetCursorFrameInfo" );
     test_argc = winetest_get_mainargs(&test_argv);
 
     if (test_argc >= 3)
@@ -2087,6 +2348,7 @@ START_TEST(cursoricon)
     test_CreateIcon();
     test_LoadImage();
     test_CreateIconFromResource();
+    test_GetCursorFrameInfo();
     test_DrawIcon();
     test_DrawIconEx();
     test_DrawState();
