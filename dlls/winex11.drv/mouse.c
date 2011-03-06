@@ -296,6 +296,7 @@ static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HA
                                            int width, int height, int istep )
 {
     XcursorImage *image, *ret = NULL;
+    DWORD delay_jiffies, is_static;
     int x, y, i, has_alpha;
     XcursorPixel *ptr;
 
@@ -310,7 +311,13 @@ static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HA
 
     image->xhot = iinfo->xHotspot;
     image->yhot = iinfo->yHotspot;
-    image->delay = 100; /* TODO: find a way to get the proper delay */
+
+    /* TODO: Handle animated cursors that use multiple rates */
+    image->delay = 100; /* fallback delay, 100 ms */
+    if (GetCursorFrameInfo(icon, 0x0 /* unknown parameter */, 0 /* obtain first rate */, &delay_jiffies, &is_static) != 0)
+        image->delay = (100 * delay_jiffies) / 6; /* convert jiffies (1/60s) to milliseconds */
+    else
+        WARN("Failed to retrieve animated cursor framerate.\n");
 
     /* draw the cursor frame to a temporary buffer then copy it into the XcursorImage */
     memset( color_bits, 0x00, color_size );
