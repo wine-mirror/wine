@@ -436,11 +436,11 @@ static HRESULT WINAPI domfrag_get_definition(
 
 static HRESULT WINAPI domfrag_get_nodeTypedValue(
     IXMLDOMDocumentFragment *iface,
-    VARIANT* var1)
+    VARIANT *v)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-    FIXME("(%p)->(%p)\n", This, var1);
-    return return_null_var(var1);
+    TRACE("(%p)->(%p)\n", This, v);
+    return return_null_var(v);
 }
 
 static HRESULT WINAPI domfrag_put_nodeTypedValue(

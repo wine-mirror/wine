@@ -432,11 +432,11 @@ static HRESULT WINAPI domcomment_get_definition(
 
 static HRESULT WINAPI domcomment_get_nodeTypedValue(
     IXMLDOMComment *iface,
-    VARIANT* var1)
+    VARIANT* v)
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
-    FIXME("(%p)->(%p)\n", This, var1);
-    return return_null_var(var1);
+    TRACE("(%p)->(%p)\n", This, v);
+    return node_get_content(&This->node, v);
 }
 
 static HRESULT WINAPI domcomment_put_nodeTypedValue(

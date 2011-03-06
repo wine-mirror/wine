@@ -407,11 +407,11 @@ static HRESULT WINAPI domdoctype_get_definition(
 
 static HRESULT WINAPI domdoctype_get_nodeTypedValue(
     IXMLDOMDocumentType *iface,
-    VARIANT* var1)
+    VARIANT* v)
 {
     domdoctype *This = impl_from_IXMLDOMDocumentType( iface );
-    FIXME("(%p)->(%p): stub\n", This, var1);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, v);
+    return return_null_var(v);
 }
 
 static HRESULT WINAPI domdoctype_put_nodeTypedValue(

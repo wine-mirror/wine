@@ -6009,7 +6009,12 @@ static const nodetypedvalue_t get_nodetypedvalue[] = {
 static void test_nodeTypedValue(void)
 {
     const nodetypedvalue_t *entry = get_nodetypedvalue;
-    IXMLDOMDocument *doc;
+    IXMLDOMProcessingInstruction *pi;
+    IXMLDOMDocumentFragment *frag;
+    IXMLDOMDocumentType *doctype;
+    IXMLDOMDocument *doc, *doc2;
+    IXMLDOMCDATASection *cdata;
+    IXMLDOMComment *comment;
     IXMLDOMNode *node;
     VARIANT_BOOL b;
     VARIANT value;
@@ -6035,8 +6040,10 @@ static void test_nodeTypedValue(void)
     hr = IXMLDOMDocument_get_nodeTypedValue(doc, NULL);
     ok(hr == E_INVALIDARG, "ret %08x\n", hr );
 
+    V_VT(&value) = VT_EMPTY;
     hr = IXMLDOMDocument_get_nodeTypedValue(doc, &value);
     ok(hr == S_FALSE, "ret %08x\n", hr );
+    ok(V_VT(&value) == VT_NULL, "got %d\n", V_VT(&value));
 
     hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/string"), &node);
     ok(hr == S_OK, "ret %08x\n", hr );
@@ -6081,6 +6088,72 @@ static void test_nodeTypedValue(void)
         VariantClear(&value);
         IXMLDOMNode_Release(node);
     }
+
+    hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("foo"), _bstr_("value"), &pi);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    {
+        V_VT(&value) = VT_NULL;
+        V_BSTR(&value) = (void*)0xdeadbeef;
+        hr = IXMLDOMProcessingInstruction_get_nodeTypedValue(pi, &value);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
+        ok(!lstrcmpW(V_BSTR(&value), _bstr_("value")), "got wrong value\n");
+        IXMLDOMProcessingInstruction_Release(pi);
+    }
+
+    hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("[1]*2=3; &gee thats not right!"), &cdata);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    {
+        V_VT(&value) = VT_NULL;
+        V_BSTR(&value) = (void*)0xdeadbeef;
+        hr = IXMLDOMCDATASection_get_nodeTypedValue(cdata, &value);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
+        ok(!lstrcmpW(V_BSTR(&value), _bstr_("[1]*2=3; &gee thats not right!")), "got wrong value\n");
+        IXMLDOMCDATASection_Release(cdata);
+    }
+
+    hr = IXMLDOMDocument_createComment(doc, _bstr_("comment"), &comment);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    {
+        V_VT(&value) = VT_NULL;
+        V_BSTR(&value) = (void*)0xdeadbeef;
+        hr = IXMLDOMComment_get_nodeTypedValue(comment, &value);
+        ok(hr == S_OK, "ret %08x\n", hr );
+        ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
+        ok(!lstrcmpW(V_BSTR(&value), _bstr_("comment")), "got wrong value\n");
+        IXMLDOMComment_Release(comment);
+    }
+
+    hr = IXMLDOMDocument_createDocumentFragment(doc, &frag);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    {
+        V_VT(&value) = VT_EMPTY;
+        hr = IXMLDOMDocumentFragment_get_nodeTypedValue(frag, &value);
+        ok(hr == S_FALSE, "ret %08x\n", hr );
+        ok(V_VT(&value) == VT_NULL, "got %d\n", V_VT(&value));
+        IXMLDOMDocumentFragment_Release(frag);
+    }
+
+    doc2 = create_document(&IID_IXMLDOMDocument);
+
+    b = VARIANT_FALSE;
+    hr = IXMLDOMDocument_loadXML(doc2, _bstr_(szEmailXML), &b);
+    ok(hr == S_OK, "ret %08x\n", hr );
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    hr = IXMLDOMDocument_get_doctype(doc2, &doctype);
+    todo_wine ok(hr == S_OK, "ret %08x\n", hr );
+    if (hr == S_OK)
+    {
+        V_VT(&value) = VT_EMPTY;
+        hr = IXMLDOMDocumentType_get_nodeTypedValue(doctype, &value);
+        ok(hr == S_FALSE, "ret %08x\n", hr );
+        ok(V_VT(&value) == VT_NULL, "got %d\n", V_VT(&value));
+        IXMLDOMDocumentType_Release(doctype);
+    }
+
+    IXMLDOMDocument_Release(doc2);
 
     while (entry->name)
     {

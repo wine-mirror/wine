@@ -433,11 +433,11 @@ static HRESULT WINAPI domcdata_get_definition(
 
 static HRESULT WINAPI domcdata_get_nodeTypedValue(
     IXMLDOMCDATASection *iface,
-    VARIANT* var1)
+    VARIANT* v)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    FIXME("(%p)->(%p)\n", This, var1);
-    return return_null_var(var1);
+    TRACE("(%p)->(%p)\n", This, v);
+    return node_get_content(&This->node, v);
 }
 
 static HRESULT WINAPI domcdata_put_nodeTypedValue(

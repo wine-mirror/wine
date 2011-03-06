@@ -1328,11 +1328,11 @@ static HRESULT WINAPI domdoc_get_definition(
 
 static HRESULT WINAPI domdoc_get_nodeTypedValue(
     IXMLDOMDocument3 *iface,
-    VARIANT* typedValue )
+    VARIANT* v )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    FIXME("(%p)->(%p)\n", This, typedValue);
-    return return_null_var(typedValue);
+    TRACE("(%p)->(%p)\n", This, v);
+    return return_null_var(v);
 }
 
 static HRESULT WINAPI domdoc_put_nodeTypedValue(
