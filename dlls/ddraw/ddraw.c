@@ -2628,14 +2628,11 @@ static HRESULT ddraw_recreate_surfaces(IDirectDrawImpl *This)
             ddraw_recreate_surfaces_cb);
 }
 
-ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain)
+ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *swapchain)
 {
-    IUnknown *swapChainParent;
+    TRACE("swapchain %p.\n", swapchain);
 
-    TRACE("swapchain %p.\n", pSwapChain);
-
-    swapChainParent = IWineD3DSwapChain_GetParent(pSwapChain);
-    return IUnknown_Release(swapChainParent);
+    return IWineD3DSwapChain_Release(swapchain);
 }
 
 /*****************************************************************************
@@ -5919,32 +5916,19 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
     IDirectDrawSurfaceImpl *iterator;
-    IParentImpl *object;
     HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p\n", iface, present_parameters, swapchain);
 
-    object = HeapAlloc(GetProcessHeap(),  HEAP_ZERO_MEMORY, sizeof(IParentImpl));
-    if (!object)
-    {
-        FIXME("Allocation of memory failed\n");
-        *swapchain = NULL;
-        return DDERR_OUTOFVIDEOMEMORY;
-    }
-
-    ddraw_parent_init(object);
-
     hr = IWineD3DDevice_CreateSwapChain(This->wineD3DDevice, present_parameters,
-            This->ImplType, object, swapchain);
+            This->ImplType, NULL, swapchain);
     if (FAILED(hr))
     {
         FIXME("(%p) CreateSwapChain failed, returning %#x\n", iface, hr);
-        HeapFree(GetProcessHeap(), 0 , object);
         *swapchain = NULL;
         return hr;
     }
 
-    object->child = (IUnknown *)*swapchain;
     This->d3d_target->wineD3DSwapChain = *swapchain;
     iterator = This->d3d_target->complex_array[0];
     while (iterator)

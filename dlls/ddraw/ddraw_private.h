@@ -39,30 +39,6 @@
 
 extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IParent - a helper interface
- *****************************************************************************/
-DEFINE_GUID(IID_IParent, 0xc20e4c88, 0x74e7, 0x4940, 0xba, 0x9f, 0x2e, 0x32, 0x3f, 0x9d, 0xc9, 0x81);
-typedef struct IParent *LPPARENT, *PPARENT;
-
-#define INTERFACE IParent
-DECLARE_INTERFACE_(IParent,IUnknown)
-{
-    /*** IUnknown methods ***/
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
-    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-    STDMETHOD_(ULONG,Release)(THIS) PURE;
-};
-#undef INTERFACE
-
-#if !defined(__cplusplus) || defined(CINTERFACE)
-/*** IUnknown methods ***/
-#define IParent_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
-#define IParent_AddRef(p)             (p)->lpVtbl->AddRef(p)
-#define IParent_Release(p)            (p)->lpVtbl->Release(p)
-#endif
-
-
 /* Typdef the interfaces */
 typedef struct IDirectDrawImpl            IDirectDrawImpl;
 typedef struct IDirectDrawSurfaceImpl     IDirectDrawSurfaceImpl;
@@ -74,7 +50,6 @@ typedef struct IDirect3DViewportImpl      IDirect3DViewportImpl;
 typedef struct IDirect3DMaterialImpl      IDirect3DMaterialImpl;
 typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
 typedef struct IDirect3DVertexBufferImpl  IDirect3DVertexBufferImpl;
-typedef struct IParentImpl                IParentImpl;
 
 /* Callbacks for implicit object destruction */
 extern ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) DECLSPEC_HIDDEN;
@@ -269,26 +244,6 @@ static inline IDirectDrawSurfaceImpl *surface_from_surface3(IDirectDrawSurface3 
 /* Get the number of bytes per pixel for a given surface */
 #define PFGET_BPP(pf) (pf.dwFlags&DDPF_PALETTEINDEXED8?1:((pf.dwRGBBitCount+7)/8))
 #define GET_BPP(desc) PFGET_BPP(desc.ddpfPixelFormat)
-
-/*****************************************************************************
- * IParent Implementation
- *****************************************************************************/
-struct IParentImpl
-{
-    /* IUnknown fields */
-    const IParentVtbl *lpVtbl;
-    LONG                    ref;
-
-    /* IParentImpl fields */
-    IUnknown      *child;
-
-};
-
-void ddraw_parent_init(IParentImpl *parent) DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * IDirect3DDevice implementation
- *****************************************************************************/
 
 #define DDRAW_INVALID_HANDLE ~0U
 
