@@ -121,10 +121,12 @@ static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
 
     for (i = 0; i < This->baseTexture.level_count; ++i)
     {
-        IWineD3DVolumeImpl *volume = volume_from_resource(This->baseTexture.sub_resources[i]);
+        struct wined3d_resource *sub_resource = This->baseTexture.sub_resources[i];
 
-        if (volume)
+        if (sub_resource)
         {
+            IWineD3DVolumeImpl *volume = volume_from_resource(sub_resource);
+
             /* Cleanup the container. */
             volume_set_container(volume, NULL);
             IWineD3DVolume_Release((IWineD3DVolume *)volume);

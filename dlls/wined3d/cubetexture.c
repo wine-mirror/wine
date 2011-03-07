@@ -179,10 +179,12 @@ static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This)
 
     for (i = 0; i < sub_count; ++i)
     {
-        IWineD3DSurfaceImpl *surface = surface_from_resource(This->baseTexture.sub_resources[i]);
+        struct wined3d_resource *sub_resource = This->baseTexture.sub_resources[i];
 
-        if (surface)
+        if (sub_resource)
         {
+            IWineD3DSurfaceImpl *surface = surface_from_resource(sub_resource);
+
             /* Clean out the texture name we gave to the surface so that the
              * surface doesn't try and release it. */
             surface_set_texture_name(surface, 0, TRUE);
