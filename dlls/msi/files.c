@@ -915,14 +915,14 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     MSIPACKAGE *package = param;
     MSICOMPONENT *comp;
     MSIRECORD *uirow;
-    LPCWSTR component, filename, dirprop;
+    LPCWSTR component, dirprop;
     UINT install_mode;
-    LPWSTR dir = NULL, path = NULL;
+    LPWSTR dir = NULL, path = NULL, filename = NULL;
     DWORD size;
     UINT ret = ERROR_SUCCESS;
 
     component = MSI_RecordGetString(row, 2);
-    filename = MSI_RecordGetString(row, 3);
+    filename = strdupW( MSI_RecordGetString(row, 3) );
     dirprop = MSI_RecordGetString(row, 4);
     install_mode = MSI_RecordGetInteger(row, 5);
 
@@ -950,7 +950,12 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     if (!dir)
         return ERROR_OUTOFMEMORY;
 
-    size = (filename != NULL) ? lstrlenW(filename) : 0;
+    size = 0;
+    if (filename)
+    {
+        reduce_to_longfilename( filename );
+        size = lstrlenW( filename );
+    }
     size += lstrlenW(dir) + 2;
     path = msi_alloc(size * sizeof(WCHAR));
     if (!path)
@@ -981,6 +986,7 @@ done:
     ui_actiondata( package, szRemoveFiles, uirow );
     msiobj_release( &uirow->hdr );
 
+    msi_free(filename);
     msi_free(path);
     msi_free(dir);
     return ret;
