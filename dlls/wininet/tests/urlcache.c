@@ -181,15 +181,61 @@ static void test_RetrieveUrlCacheEntryA(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "RetrieveUrlCacheEntryFile should have set last error to ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
 }
 
+static void _check_file_exists(LONG l, LPCSTR filename)
+{
+    HANDLE file;
+
+    file = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                       NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok_(__FILE__,l)(file != INVALID_HANDLE_VALUE,
+                    "expected file to exist, CreateFile failed with error %d\n",
+                    GetLastError());
+    CloseHandle(file);
+}
+
+#define check_file_exists(f) _check_file_exists(__LINE__, f)
+
+static void _check_file_not_exists(LONG l, LPCSTR filename)
+{
+    HANDLE file;
+
+    file = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                       NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok_(__FILE__,l)(file == INVALID_HANDLE_VALUE,
+                    "expected file not to exist\n");
+    if (file != INVALID_HANDLE_VALUE)
+        CloseHandle(file);
+}
+
+#define check_file_not_exists(f) _check_file_not_exists(__LINE__, f)
+
+static void create_and_write_file(LPCSTR filename, void *data, DWORD len)
+{
+    HANDLE file;
+    DWORD written;
+    BOOL ret;
+
+    file = CreateFileA(filename, GENERIC_WRITE,
+                       FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFileA failed with error %d\n", GetLastError());
+
+    ret = WriteFile(file, data, len, &written, NULL);
+    ok(ret, "WriteFile failed with error %d\n", GetLastError());
+
+    CloseHandle(file);
+}
+
 static void test_urlcacheA(void)
 {
+    static char ok_header[] = "HTTP/1.0 200 OK\r\n\r\n";
     BOOL ret;
     HANDLE hFile;
-    DWORD written;
     BYTE zero_byte = 0;
     LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo;
     DWORD cbCacheEntryInfo;
     static const FILETIME filetime_zero;
+    FILETIME now;
 
     ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA, 0);
     ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
@@ -199,20 +245,58 @@ static void test_urlcacheA(void)
 
     ok(lstrcmpiA(filenameA, filenameA1), "expected a different file name\n");
 
-    hFile = CreateFileA(filenameA, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-                        NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA failed with error %d\n", GetLastError());
-
-    ret = WriteFile(hFile, &zero_byte, sizeof(zero_byte), &written, NULL);
-    ok(ret, "WriteFile failed with error %d\n", GetLastError());
-
-    CloseHandle(hFile);
+    create_and_write_file(filenameA, &zero_byte, sizeof(zero_byte));
 
     ret = CommitUrlCacheEntry(TEST_URL1, NULL, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, NULL, 0, NULL, NULL);
     ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+    cbCacheEntryInfo = 0;
+    ret = GetUrlCacheEntryInfo(TEST_URL1, NULL, &cbCacheEntryInfo);
+    ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "GetUrlCacheEntryInfo should have set last error to ERROR_INSUFFICIENT_BUFFER instead of %d\n", GetLastError());
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = GetUrlCacheEntryInfo(TEST_URL1, lpCacheEntryInfo, &cbCacheEntryInfo);
+    ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
+    todo_wine
+    ok(!memcmp(&lpCacheEntryInfo->ExpireTime, &filetime_zero, sizeof(FILETIME)),
+       "expected zero ExpireTime\n");
+    ok(!memcmp(&lpCacheEntryInfo->LastModifiedTime, &filetime_zero, sizeof(FILETIME)),
+       "expected zero LastModifiedTime\n");
+    ok(lpCacheEntryInfo->CacheEntryType == (NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY) ||
+       broken(lpCacheEntryInfo->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
+       "expected type NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, got %08x\n",
+       lpCacheEntryInfo->CacheEntryType);
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
-    ret = CommitUrlCacheEntry(TEST_URL1, NULL, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, NULL, 0, NULL, NULL);
+    /* A subsequent commit with a different time/type doesn't change the type */
+    GetSystemTimeAsFileTime(&now);
+    ret = CommitUrlCacheEntry(TEST_URL1, NULL, now, now, NORMAL_CACHE_ENTRY,
+            (LPBYTE)ok_header, strlen(ok_header), NULL, NULL);
     ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+    cbCacheEntryInfo = 0;
+    ret = GetUrlCacheEntryInfo(TEST_URL1, NULL, &cbCacheEntryInfo);
+    ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = GetUrlCacheEntryInfo(TEST_URL1, lpCacheEntryInfo, &cbCacheEntryInfo);
+    ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
+    /* but it does change the time.. */
+    ok(memcmp(&lpCacheEntryInfo->ExpireTime, &filetime_zero, sizeof(FILETIME)),
+       "expected positive ExpireTime\n");
+    todo_wine
+    ok(memcmp(&lpCacheEntryInfo->LastModifiedTime, &filetime_zero, sizeof(FILETIME)),
+       "expected positive LastModifiedTime\n");
+    ok(lpCacheEntryInfo->CacheEntryType == (NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY) ||
+       broken(lpCacheEntryInfo->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
+       "expected type NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, got %08x\n",
+       lpCacheEntryInfo->CacheEntryType);
+    /* and set the headers. */
+    todo_wine
+    ok(lpCacheEntryInfo->dwHeaderInfoSize == 19,
+       "expected headers size 19, got %d\n",
+       lpCacheEntryInfo->dwHeaderInfoSize);
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
     ret = CommitUrlCacheEntry(TEST_URL, filenameA, filetime_zero, filetime_zero, NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
     ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
@@ -263,6 +347,161 @@ static void test_urlcacheA(void)
     ret = DeleteFile(filenameA);
     todo_wine
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND, "local file should no longer exist\n");
+
+    /* Creating two entries with the same URL */
+    ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA, 0);
+    ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
+
+    ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA1, 0);
+    ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
+
+    ok(lstrcmpiA(filenameA, filenameA1), "expected a different file name\n");
+
+    create_and_write_file(filenameA, &zero_byte, sizeof(zero_byte));
+    create_and_write_file(filenameA1, &zero_byte, sizeof(zero_byte));
+    check_file_exists(filenameA);
+    check_file_exists(filenameA1);
+
+    ret = CommitUrlCacheEntry(TEST_URL, filenameA, filetime_zero,
+            filetime_zero, NORMAL_CACHE_ENTRY, (LPBYTE)ok_header,
+            strlen(ok_header), "html", NULL);
+    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+    check_file_exists(filenameA);
+    check_file_exists(filenameA1);
+    ret = CommitUrlCacheEntry(TEST_URL, filenameA1, filetime_zero,
+            filetime_zero, COOKIE_CACHE_ENTRY, NULL, 0, "html", NULL);
+    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+    /* By committing the same URL a second time, the prior entry is
+     * overwritten...
+     */
+    cbCacheEntryInfo = 0;
+    SetLastError(0xdeadbeef);
+    ret = GetUrlCacheEntryInfo(TEST_URL, NULL, &cbCacheEntryInfo);
+    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
+    ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
+    /* with the previous entry type retained.. */
+    ok(lpCacheEntryInfo->CacheEntryType & NORMAL_CACHE_ENTRY,
+       "expected cache entry type NORMAL_CACHE_ENTRY, got %d (0x%08x)\n",
+       lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
+    /* and the headers overwritten.. */
+    todo_wine
+    ok(!lpCacheEntryInfo->dwHeaderInfoSize, "expected headers size 0, got %d\n",
+       lpCacheEntryInfo->dwHeaderInfoSize);
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+    /* and the previous filename shouldn't exist. */
+    todo_wine
+    check_file_not_exists(filenameA);
+    check_file_exists(filenameA1);
+
+    if (pDeleteUrlCacheEntryA)
+    {
+        ret = pDeleteUrlCacheEntryA(TEST_URL);
+        ok(ret, "DeleteUrlCacheEntryA failed with error %d\n", GetLastError());
+        todo_wine
+        check_file_not_exists(filenameA);
+        todo_wine
+        check_file_not_exists(filenameA1);
+        /* Just in case, clean up files */
+        DeleteFileA(filenameA1);
+        DeleteFileA(filenameA);
+    }
+
+    /* Check whether a retrieved cache entry can be deleted before it's
+     * unlocked:
+     */
+    ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA, 0);
+    ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
+    ret = CommitUrlCacheEntry(TEST_URL, filenameA, filetime_zero, filetime_zero,
+            NORMAL_CACHE_ENTRY, NULL, 0, "html", NULL);
+    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+
+    cbCacheEntryInfo = 0;
+    SetLastError(0xdeadbeef);
+    ret = RetrieveUrlCacheEntryFile(TEST_URL, NULL, &cbCacheEntryInfo, 0);
+    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = RetrieveUrlCacheEntryFile(TEST_URL, lpCacheEntryInfo,
+            &cbCacheEntryInfo, 0);
+    ok(ret, "RetrieveUrlCacheEntryFile failed with error %d\n", GetLastError());
+
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+
+    if (pDeleteUrlCacheEntryA)
+    {
+        ret = pDeleteUrlCacheEntryA(TEST_URL);
+        todo_wine
+        ok(!ret, "Expected failure\n");
+        todo_wine
+        ok(GetLastError() == ERROR_SHARING_VIOLATION,
+           "Expected ERROR_SHARING_VIOLATION, got %d\n", GetLastError());
+        check_file_exists(filenameA);
+    }
+    if (pUnlockUrlCacheEntryFileA)
+    {
+        check_file_exists(filenameA);
+        ret = pUnlockUrlCacheEntryFileA(TEST_URL, 0);
+        todo_wine
+        ok(ret, "UnlockUrlCacheEntryFileA failed: %d\n", GetLastError());
+        /* By unlocking the already-deleted cache entry, the file associated
+         * with it is deleted..
+         */
+        todo_wine
+        check_file_not_exists(filenameA);
+        /* (just in case, delete file) */
+        DeleteFileA(filenameA);
+    }
+    if (pDeleteUrlCacheEntryA)
+    {
+        /* and a subsequent deletion should fail. */
+        ret = pDeleteUrlCacheEntryA(TEST_URL);
+        ok(!ret, "Expected failure\n");
+        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+           "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    }
+
+    /* Test whether preventing a file from being deleted causes
+     * DeleteUrlCacheEntryA to fail.
+     */
+    ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA, 0);
+    ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
+
+    create_and_write_file(filenameA, &zero_byte, sizeof(zero_byte));
+    check_file_exists(filenameA);
+
+    ret = CommitUrlCacheEntry(TEST_URL, filenameA, filetime_zero,
+            filetime_zero, NORMAL_CACHE_ENTRY, (LPBYTE)ok_header,
+            strlen(ok_header), "html", NULL);
+    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+    check_file_exists(filenameA);
+    hFile = CreateFileA(filenameA, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA failed: %d\n",
+       GetLastError());
+    if (pDeleteUrlCacheEntryA)
+    {
+        /* DeleteUrlCacheEntryA should succeed.. */
+        ret = pDeleteUrlCacheEntryA(TEST_URL);
+        ok(ret, "DeleteUrlCacheEntryA failed with error %d\n", GetLastError());
+    }
+    CloseHandle(hFile);
+    if (pDeleteUrlCacheEntryA)
+    {
+        /* and a subsequent deletion should fail.. */
+        ret = pDeleteUrlCacheEntryA(TEST_URL);
+        ok(!ret, "Expected failure\n");
+        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+           "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    }
+    /* and the file should be untouched. */
+    check_file_exists(filenameA);
+    DeleteFileA(filenameA);
 }
 
 static void test_FindCloseUrlCache(void)
