@@ -3769,7 +3769,7 @@ static BOOL HTTP_ParseRfc1123Date(LPCWSTR value, FILETIME *ft)
     WCHAR *nextPtr, day[4], month[4], *monthPtr;
     LPCWSTR ptr;
     unsigned long num;
-    SYSTEMTIME st;
+    SYSTEMTIME st = { 0 };
 
     ptr = strchrW(value, ',');
     if (!ptr)
