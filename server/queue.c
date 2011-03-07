@@ -1362,7 +1362,7 @@ static int send_hook_ll_message( struct desktop *desktop, struct message *hardwa
         if (input->kbd.flags & KEYEVENTF_UNICODE) vkey = VK_PACKET;
         msg->lparam = (input->kbd.scan << 16) | vkey;
     }
-    else msg->lparam = input->mouse.data;
+    else msg->lparam = input->mouse.data << 16;
 
     if (!(msg->data = memdup( hardware_msg->data, hardware_msg->data_size )) ||
         !(msg->result = alloc_message_result( sender, queue, msg, timeout )))
