@@ -213,28 +213,18 @@ static HWND CLIPBOARD_SetClipboardViewer( HWND hWnd )
 /**************************************************************************
  *		RegisterClipboardFormatW (USER32.@)
  */
-UINT WINAPI RegisterClipboardFormatW(LPCWSTR FormatName)
+UINT WINAPI RegisterClipboardFormatW( LPCWSTR name )
 {
-    return USER_Driver->pRegisterClipboardFormat(FormatName);
+    return GlobalAddAtomW( name );
 }
 
 
 /**************************************************************************
  *		RegisterClipboardFormatA (USER32.@)
  */
-UINT WINAPI RegisterClipboardFormatA(LPCSTR formatName)
+UINT WINAPI RegisterClipboardFormatA( LPCSTR name )
 {
-    int len;
-    LPWSTR wFormat;
-    UINT ret;
-
-    len = MultiByteToWideChar(CP_ACP, 0, formatName, -1, NULL, 0);
-    wFormat = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, formatName, -1, wFormat, len);
-
-    ret = RegisterClipboardFormatW(wFormat);
-    HeapFree(GetProcessHeap(), 0, wFormat);
-    return ret;
+    return GlobalAddAtomA( name );
 }
 
 

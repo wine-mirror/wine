@@ -183,6 +183,9 @@ todo_wine
     ok(!EmptyClipboard(), "EmptyClipboard should fail if clipboard wasn't open\n");
     ok(GetLastError() == ERROR_CLIPBOARD_NOT_OPEN || broken(GetLastError() == 0xdeadbeef), /* wow64 */
        "Wrong error %u\n", GetLastError());
+
+    format_id = RegisterClipboardFormatA("#1234");
+    ok(format_id == 1234, "invalid clipboard format id %04x\n", format_id);
 }
 
 static HGLOBAL create_text(void)

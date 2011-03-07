@@ -98,7 +98,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(CountClipboardFormats);
         GET_USER_FUNC(EnumClipboardFormats);
         GET_USER_FUNC(IsClipboardFormatAvailable);
-        GET_USER_FUNC(RegisterClipboardFormat);
         GET_USER_FUNC(EndClipboardUpdate);
         GET_USER_FUNC(ChangeDisplaySettingsEx);
         GET_USER_FUNC(EnumDisplayMonitors);
@@ -279,11 +278,6 @@ static BOOL CDECL nulldrv_IsClipboardFormatAvailable( UINT format )
     return FALSE;
 }
 
-static UINT CDECL nulldrv_RegisterClipboardFormat( LPCWSTR name )
-{
-    return 0;
-}
-
 static BOOL CDECL nulldrv_SetClipboardData( UINT format, HANDLE handle, BOOL owner )
 {
     return FALSE;
@@ -457,7 +451,6 @@ static USER_DRIVER null_driver =
     nulldrv_EnumClipboardFormats,
     nulldrv_GetClipboardData,
     nulldrv_IsClipboardFormatAvailable,
-    nulldrv_RegisterClipboardFormat,
     nulldrv_SetClipboardData,
     /* display modes */
     nulldrv_ChangeDisplaySettingsEx,
@@ -624,11 +617,6 @@ static HANDLE CDECL loaderdrv_GetClipboardData( UINT format )
 static BOOL CDECL loaderdrv_IsClipboardFormatAvailable( UINT format )
 {
     return load_driver()->pIsClipboardFormatAvailable( format );
-}
-
-static UINT CDECL loaderdrv_RegisterClipboardFormat( LPCWSTR name )
-{
-    return load_driver()->pRegisterClipboardFormat( name );
 }
 
 static BOOL CDECL loaderdrv_SetClipboardData( UINT format, HANDLE handle, BOOL owner )
@@ -798,7 +786,6 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_EnumClipboardFormats,
     loaderdrv_GetClipboardData,
     loaderdrv_IsClipboardFormatAvailable,
-    loaderdrv_RegisterClipboardFormat,
     loaderdrv_SetClipboardData,
     /* display modes */
     loaderdrv_ChangeDisplaySettingsEx,

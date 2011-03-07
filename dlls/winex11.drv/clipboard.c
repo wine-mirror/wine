@@ -2481,18 +2481,6 @@ static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void)
  **************************************************************************/
 
 
-/**************************************************************************
- *		RegisterClipboardFormat (X11DRV.@)
- *
- * Registers a custom X clipboard format
- * Returns: Format id or 0 on failure
- */
-UINT CDECL X11DRV_RegisterClipboardFormat(LPCWSTR FormatName)
-{
-    return GlobalAddAtomW( FormatName );
-}
-
-
 static void selection_acquire(void)
 {
     Window owner;
