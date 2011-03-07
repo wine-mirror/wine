@@ -927,6 +927,18 @@ static BOOL URLCache_LocalFileNameToPathA(
     return FALSE;
 }
 
+/* Just like DosDateTimeToFileTime, except that it also maps the special
+ * case of a DOS date/time of (0,0) to a filetime of (0,0).
+ */
+static void URLCache_DosDateTimeToFileTime(WORD fatdate, WORD fattime,
+                                           FILETIME *ft)
+{
+    if (!fatdate && !fattime)
+        ft->dwLowDateTime = ft->dwHighDateTime = 0;
+    else
+        DosDateTimeToFileTime(fatdate, fattime, ft);
+}
+
 /***********************************************************************
  *           URLCache_CopyEntry (Internal)
  *
@@ -962,12 +974,12 @@ static DWORD URLCache_CopyEntry(
         lpCacheEntryInfo->dwSizeLow = pUrlEntry->size.u.LowPart;
         lpCacheEntryInfo->dwStructSize = sizeof(*lpCacheEntryInfo);
         lpCacheEntryInfo->dwUseCount = pUrlEntry->dwUseCount;
-        DosDateTimeToFileTime(pUrlEntry->wExpiredDate, pUrlEntry->wExpiredTime, &lpCacheEntryInfo->ExpireTime);
+        URLCache_DosDateTimeToFileTime(pUrlEntry->wExpiredDate, pUrlEntry->wExpiredTime, &lpCacheEntryInfo->ExpireTime);
         lpCacheEntryInfo->LastAccessTime.dwHighDateTime = pUrlEntry->LastAccessTime.dwHighDateTime;
         lpCacheEntryInfo->LastAccessTime.dwLowDateTime = pUrlEntry->LastAccessTime.dwLowDateTime;
         lpCacheEntryInfo->LastModifiedTime.dwHighDateTime = pUrlEntry->LastModifiedTime.dwHighDateTime;
         lpCacheEntryInfo->LastModifiedTime.dwLowDateTime = pUrlEntry->LastModifiedTime.dwLowDateTime;
-        DosDateTimeToFileTime(pUrlEntry->wLastSyncDate, pUrlEntry->wLastSyncTime, &lpCacheEntryInfo->LastSyncTime);
+        URLCache_DosDateTimeToFileTime(pUrlEntry->wLastSyncDate, pUrlEntry->wLastSyncTime, &lpCacheEntryInfo->LastSyncTime);
     }
 
     if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
@@ -1057,6 +1069,17 @@ static DWORD URLCache_CopyEntry(
     return ERROR_SUCCESS;
 }
 
+/* Just like FileTimeToDosDateTime, except that it also maps the special
+ * case of a filetime of (0,0) to a DOS date/time of (0,0).
+ */
+static void URLCache_FileTimeToDosDateTime(const FILETIME *ft, WORD *fatdate,
+                                           WORD *fattime)
+{
+    if (!ft->dwLowDateTime && !ft->dwHighDateTime)
+        *fatdate = *fattime = 0;
+    else
+        FileTimeToDosDateTime(ft, fatdate, fattime);
+}
 
 /***********************************************************************
  *           URLCache_SetEntryInfo (Internal)
@@ -1078,7 +1101,7 @@ static DWORD URLCache_SetEntryInfo(URL_CACHEFILE_ENTRY * pUrlEntry, const INTERN
     if (dwFieldControl & CACHE_ENTRY_EXEMPT_DELTA_FC)
         pUrlEntry->dwExemptDelta = lpCacheEntryInfo->u.dwExemptDelta;
     if (dwFieldControl & CACHE_ENTRY_EXPTIME_FC)
-        FileTimeToDosDateTime(&lpCacheEntryInfo->ExpireTime, &pUrlEntry->wExpiredDate, &pUrlEntry->wExpiredTime);
+        URLCache_FileTimeToDosDateTime(&lpCacheEntryInfo->ExpireTime, &pUrlEntry->wExpiredDate, &pUrlEntry->wExpiredTime);
     if (dwFieldControl & CACHE_ENTRY_HEADERINFO_FC)
         FIXME("CACHE_ENTRY_HEADERINFO_FC unimplemented\n");
     if (dwFieldControl & CACHE_ENTRY_HITRATE_FC)
@@ -1086,7 +1109,7 @@ static DWORD URLCache_SetEntryInfo(URL_CACHEFILE_ENTRY * pUrlEntry, const INTERN
     if (dwFieldControl & CACHE_ENTRY_MODTIME_FC)
         pUrlEntry->LastModifiedTime = lpCacheEntryInfo->LastModifiedTime;
     if (dwFieldControl & CACHE_ENTRY_SYNCTIME_FC)
-        FileTimeToDosDateTime(&lpCacheEntryInfo->LastAccessTime, &pUrlEntry->wLastSyncDate, &pUrlEntry->wLastSyncTime);
+        URLCache_FileTimeToDosDateTime(&lpCacheEntryInfo->LastAccessTime, &pUrlEntry->wLastSyncDate, &pUrlEntry->wLastSyncTime);
 
     return ERROR_SUCCESS;
 }
@@ -2599,8 +2622,8 @@ static BOOL CommitUrlCacheEntryInternal(
     pUrlEntry->dwUseCount = 0;
     GetSystemTimeAsFileTime(&pUrlEntry->LastAccessTime);
     pUrlEntry->LastModifiedTime = LastModifiedTime;
-    FileTimeToDosDateTime(&pUrlEntry->LastAccessTime, &pUrlEntry->wLastSyncDate, &pUrlEntry->wLastSyncTime);
-    FileTimeToDosDateTime(&ExpireTime, &pUrlEntry->wExpiredDate, &pUrlEntry->wExpiredTime);
+    URLCache_FileTimeToDosDateTime(&pUrlEntry->LastAccessTime, &pUrlEntry->wLastSyncDate, &pUrlEntry->wLastSyncTime);
+    URLCache_FileTimeToDosDateTime(&ExpireTime, &pUrlEntry->wExpiredDate, &pUrlEntry->wExpiredTime);
     pUrlEntry->wUnknownDate = pUrlEntry->wLastSyncDate;
     pUrlEntry->wUnknownTime = pUrlEntry->wLastSyncTime;
 
@@ -3671,7 +3694,7 @@ BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLas
 
     pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
 
-    DosDateTimeToFileTime(pUrlEntry->wExpiredDate, pUrlEntry->wExpiredTime, pftLastModified);
+    URLCache_DosDateTimeToFileTime(pUrlEntry->wExpiredDate, pUrlEntry->wExpiredTime, pftLastModified);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
@@ -3733,7 +3756,7 @@ BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLa
 
     pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
 
-    DosDateTimeToFileTime(pUrlEntry->wExpiredDate, pUrlEntry->wExpiredTime, pftLastModified);
+    URLCache_DosDateTimeToFileTime(pUrlEntry->wExpiredDate, pUrlEntry->wExpiredTime, pftLastModified);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 

@@ -257,7 +257,6 @@ static void test_urlcacheA(void)
     lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
     ret = GetUrlCacheEntryInfo(TEST_URL1, lpCacheEntryInfo, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
-    todo_wine
     ok(!memcmp(&lpCacheEntryInfo->ExpireTime, &filetime_zero, sizeof(FILETIME)),
        "expected zero ExpireTime\n");
     ok(!memcmp(&lpCacheEntryInfo->LastModifiedTime, &filetime_zero, sizeof(FILETIME)),
@@ -282,6 +281,7 @@ static void test_urlcacheA(void)
     ret = GetUrlCacheEntryInfo(TEST_URL1, lpCacheEntryInfo, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
     /* but it does change the time.. */
+    todo_wine
     ok(memcmp(&lpCacheEntryInfo->ExpireTime, &filetime_zero, sizeof(FILETIME)),
        "expected positive ExpireTime\n");
     todo_wine
