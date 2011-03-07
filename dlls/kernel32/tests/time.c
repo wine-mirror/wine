@@ -600,6 +600,43 @@ static void test_TzSpecificLocalTimeToSystemTime(void)
     }        
 }
 
+static void test_FileTimeToDosDateTime(void)
+{
+    FILETIME ft = { 0 };
+    WORD fatdate, fattime;
+    BOOL ret;
+
+    if (0)
+    {
+        /* Crashes */
+        FileTimeToDosDateTime(NULL, NULL, NULL);
+    }
+    /* Parameter checking */
+    SetLastError(0xdeadbeef);
+    ret = FileTimeToDosDateTime(&ft, NULL, NULL);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = FileTimeToDosDateTime(&ft, &fatdate, NULL);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = FileTimeToDosDateTime(&ft, NULL, &fattime);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = FileTimeToDosDateTime(&ft, &fatdate, &fattime);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+}
+
 START_TEST(time)
 {
     HMODULE hKernel = GetModuleHandle("kernel32");
@@ -612,4 +649,5 @@ START_TEST(time)
     test_FileTimeToSystemTime();
     test_FileTimeToLocalFileTime();
     test_TzSpecificLocalTimeToSystemTime();
+    test_FileTimeToDosDateTime();
 }

@@ -1000,9 +1000,18 @@ BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
     time_t              unixtime;
     struct tm*          tm;
 
+    if (!fatdate || !fattime)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     li.u.LowPart = ft->dwLowDateTime;
     li.u.HighPart = ft->dwHighDateTime;
-    RtlTimeToSecondsSince1970( &li, &t );
+    if (!RtlTimeToSecondsSince1970( &li, &t ))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     unixtime = t;
     tm = gmtime( &unixtime );
     if (fattime)
