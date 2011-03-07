@@ -270,6 +270,7 @@ void	break_add_break_from_id(const char *name, int lineno, BOOL swbp)
 
 struct cb_break_lineno
 {
+    const char* filename;
     int         lineno;
     ADDRESS64   addr;
 };
@@ -287,6 +288,17 @@ static BOOL CALLBACK line_cb(SRCCODEINFO* sci, void* user)
     return TRUE;
 }
 
+static BOOL CALLBACK mcb(PCWSTR module, DWORD64 base, void* user)
+{
+    struct cb_break_lineno*      bkln = user;
+
+    SymEnumLines(dbg_curr_process->handle, base, NULL, bkln->filename, line_cb, bkln);
+    /* continue module enum if no addr found
+     * FIXME: we don't report when several addresses match the same filename/lineno pair
+     */
+    return !bkln->addr.Offset;
+}
+
 /***********************************************************************
  *           break_add_break_from_lineno
  *
@@ -295,38 +307,38 @@ static BOOL CALLBACK line_cb(SRCCODEINFO* sci, void* user)
 void break_add_break_from_lineno(const char *filename, int lineno, BOOL swbp)
 {
     struct cb_break_lineno      bkln;
+    bkln.addr.Offset = 0;
+    bkln.lineno = lineno;
 
-    memory_get_current_pc(&bkln.addr);
-
-    if (lineno != -1)
+    if (!filename)
     {
+        DWORD disp;
+        ADDRESS64 curr;
         IMAGEHLP_LINE64 il;
-        DWORD_PTR       linear = (DWORD_PTR)memory_to_linear_addr(&bkln.addr);
+        DWORD_PTR linear;
 
-        if (!filename)
+        memory_get_current_pc(&curr);
+        linear = (DWORD_PTR)memory_to_linear_addr(&curr);
+        il.SizeOfStruct = sizeof(il);
+        if (!SymGetLineFromAddr64(dbg_curr_process->handle, linear, &disp, &il))
         {
-            DWORD disp;
-
-            il.SizeOfStruct = sizeof(il);
-            if (!SymGetLineFromAddr64(dbg_curr_process->handle, linear, &disp, &il))
-            {
-                dbg_printf("Unable to add breakpoint (unknown address %lx)\n", linear);
-                return;
-            }
-            filename = il.FileName;
-        }
-        bkln.addr.Offset = 0;
-        bkln.lineno = lineno;
-        SymEnumLines(dbg_curr_process->handle, linear, NULL, filename, line_cb, &bkln);
-        if (!bkln.addr.Offset)
-        {
-            dbg_printf("Unknown line number\n"
-                       "(either out of file, or no code at given line number)\n");
+            dbg_printf("Unable to add breakpoint (unknown address %lx)\n", linear);
             return;
         }
+        filename = il.FileName;
+        SymEnumLines(dbg_curr_process->handle, linear, NULL, filename, line_cb, &bkln);
     }
-
-    break_add_break(&bkln.addr, TRUE, swbp);
+    else
+    {
+        /* we have to enumerate across modules */
+        bkln.filename = filename;
+        SymEnumerateModulesW64(dbg_curr_process->handle, mcb, &bkln);
+    }
+    if (bkln.addr.Offset)
+        break_add_break(&bkln.addr, TRUE, swbp);
+    else
+        dbg_printf("Unknown line number\n"
+                   "(either out of file, or no code at given line number)\n");
 }
 
 /***********************************************************************
