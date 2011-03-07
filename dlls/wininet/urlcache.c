@@ -3304,18 +3304,14 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
     return pEntryHandle;
 }
 
-/***********************************************************************
- *           FindNextUrlCacheEntryA (WININET.@)
- */
-BOOL WINAPI FindNextUrlCacheEntryA(
+static BOOL FindNextUrlCacheEntryInternal(
   HANDLE hEnumHandle,
   LPINTERNET_CACHE_ENTRY_INFOA lpNextCacheEntryInfo,
-  LPDWORD lpdwNextCacheEntryInfoBufferSize)
+  LPDWORD lpdwNextCacheEntryInfoBufferSize,
+  BOOL unicode)
 {
     URLCacheFindEntryHandle *pEntryHandle = (URLCacheFindEntryHandle *)hEnumHandle;
     URLCACHECONTAINER * pContainer;
-
-    TRACE("(%p, %p, %p)\n", hEnumHandle, lpNextCacheEntryInfo, lpdwNextCacheEntryInfoBufferSize);
 
     if (pEntryHandle->dwMagic != URLCACHE_FIND_ENTRY_HANDLE_MAGIC)
     {
@@ -3354,8 +3350,10 @@ BOOL WINAPI FindNextUrlCacheEntryA(
                     continue;
 
                 pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
-                TRACE("Found URL: %s\n", (LPCSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
-                TRACE("Header info: %s\n", (LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo);
+                TRACE("Found URL: %s\n",
+                      debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetUrl));
+                TRACE("Header info: %s\n",
+                      debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo));
 
                 error = URLCache_CopyEntry(
                     pContainer,
@@ -3363,14 +3361,15 @@ BOOL WINAPI FindNextUrlCacheEntryA(
                     lpNextCacheEntryInfo,
                     lpdwNextCacheEntryInfoBufferSize,
                     pUrlEntry,
-                    FALSE /* not UNICODE */);
+                    unicode);
                 if (error != ERROR_SUCCESS)
                 {
                     URLCacheContainer_UnlockIndex(pContainer, pHeader);
                     SetLastError(error);
                     return FALSE;
                 }
-                TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
+                TRACE("Local File Name: %s\n",
+                      debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
 
                 /* increment the current index so that next time the function
                  * is called the next entry is returned */
@@ -3388,6 +3387,20 @@ BOOL WINAPI FindNextUrlCacheEntryA(
 }
 
 /***********************************************************************
+ *           FindNextUrlCacheEntryA (WININET.@)
+ */
+BOOL WINAPI FindNextUrlCacheEntryA(
+  HANDLE hEnumHandle,
+  LPINTERNET_CACHE_ENTRY_INFOA lpNextCacheEntryInfo,
+  LPDWORD lpdwNextCacheEntryInfoBufferSize)
+{
+    TRACE("(%p, %p, %p)\n", hEnumHandle, lpNextCacheEntryInfo, lpdwNextCacheEntryInfoBufferSize);
+
+    return FindNextUrlCacheEntryInternal(hEnumHandle, lpNextCacheEntryInfo,
+            lpdwNextCacheEntryInfoBufferSize, FALSE /* not UNICODE */);
+}
+
+/***********************************************************************
  *           FindNextUrlCacheEntryW (WININET.@)
  */
 BOOL WINAPI FindNextUrlCacheEntryW(
@@ -3396,9 +3409,11 @@ BOOL WINAPI FindNextUrlCacheEntryW(
   LPDWORD lpdwNextCacheEntryInfoBufferSize
 )
 {
-    FIXME("(%p, %p, %p) stub\n", hEnumHandle, lpNextCacheEntryInfo, lpdwNextCacheEntryInfoBufferSize);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("(%p, %p, %p)\n", hEnumHandle, lpNextCacheEntryInfo, lpdwNextCacheEntryInfoBufferSize);
+
+    return FindNextUrlCacheEntryInternal(hEnumHandle,
+            (LPINTERNET_CACHE_ENTRY_INFOA)lpNextCacheEntryInfo,
+            lpdwNextCacheEntryInfoBufferSize, TRUE /* UNICODE */);
 }
 
 /***********************************************************************
