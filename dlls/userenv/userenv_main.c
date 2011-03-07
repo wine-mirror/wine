@@ -161,7 +161,7 @@ BOOL WINAPI GetUserProfileDirectoryW( HANDLE hToken, LPWSTR lpProfileDir,
     if (!(t = HeapAlloc( GetProcessHeap(), 0, len ))) return FALSE;
     if (!GetTokenInformation( hToken, TokenUser, t, len, &len )) goto done;
 
-    len = 0;
+    len = domain_len = 0;
     LookupAccountSidW( NULL, t->User.Sid, NULL, &len, NULL, &domain_len, NULL );
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) goto done;
     if (!(userW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) goto done;
