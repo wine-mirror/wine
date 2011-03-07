@@ -1630,6 +1630,8 @@ static int compare_record( MSITABLEVIEW *tv, UINT row, MSIRECORD *rec )
 
     for (i = 0; i < tv->num_cols; i++ )
     {
+        if (!(tv->columns[i].type & MSITYPE_KEY)) continue;
+
         r = get_table_value_from_record( tv, rec, i + 1, &ivalue );
         if (r != ERROR_SUCCESS)
             return 1;
