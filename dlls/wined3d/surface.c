@@ -1925,39 +1925,36 @@ lock_end:
     return IWineD3DBaseSurfaceImpl_Map(iface, pLockedRect, pRect, flags);
 }
 
-static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This,
-        GLenum fmt, GLenum type, UINT bpp, const BYTE *mem)
+static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *surface,
+        const RECT *rect, GLenum fmt, GLenum type, UINT bpp, const BYTE *mem)
 {
-    UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
-    IWineD3DDeviceImpl *device = This->resource.device;
+    UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *)surface);    /* target is argb, 4 byte */
+    IWineD3DDeviceImpl *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
-    RECT rect;
+    RECT local_rect;
     UINT w, h;
 
-    if (This->flags & SFLAG_LOCKED)
-        rect = This->lockedRect;
-    else
-        SetRect(&rect, 0, 0, This->currentDesc.Width, This->currentDesc.Height);
+    surface_get_rect(surface, rect, &local_rect);
 
-    mem += rect.top * pitch + rect.left * bpp;
-    w = rect.right - rect.left;
-    h = rect.bottom - rect.top;
+    mem += local_rect.top * pitch + local_rect.left * bpp;
+    w = local_rect.right - local_rect.left;
+    h = local_rect.bottom - local_rect.top;
 
     /* Activate the correct context for the render target */
-    context = context_acquire(device, This);
+    context = context_acquire(device, surface);
     context_apply_blit_state(context, device);
     gl_info = context->gl_info;
 
     ENTER_GL();
 
-    if (!surface_is_offscreen(This))
+    if (!surface_is_offscreen(surface))
     {
-        GLenum buffer = surface_get_gl_buffer(This);
+        GLenum buffer = surface_get_gl_buffer(surface);
         TRACE("Unlocking %#x buffer.\n", buffer);
         context_set_draw_buffer(context, buffer);
 
-        surface_translate_drawable_coords(This, context->win_handle, &rect);
+        surface_translate_drawable_coords(surface, context->win_handle, &local_rect);
         glPixelZoom(1.0f, -1.0f);
     }
     else
@@ -1969,22 +1966,22 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This,
         glPixelZoom(1.0f, 1.0f);
     }
 
-    glRasterPos3i(rect.left, rect.top, 1);
+    glRasterPos3i(local_rect.left, local_rect.top, 1);
     checkGLcall("glRasterPos3i");
 
     /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, This->currentDesc.Width);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->currentDesc.Width);
 
-    if (This->flags & SFLAG_PBO)
+    if (surface->flags & SFLAG_PBO)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
         checkGLcall("glBindBufferARB");
     }
 
     glDrawPixels(w, h, fmt, type, mem);
     checkGLcall("glDrawPixels");
 
-    if (This->flags & SFLAG_PBO)
+    if (surface->flags & SFLAG_PBO)
     {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
         checkGLcall("glBindBufferARB");
@@ -4509,7 +4506,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
                 byte_count = format.byte_count;
             }
 
-            flush_to_framebuffer_drawpixels(surface, format.glFormat, format.glType, byte_count, mem);
+            flush_to_framebuffer_drawpixels(surface, rect, format.glFormat, format.glType, byte_count, mem);
 
             /* Don't delete PBO memory */
             if ((mem != surface->resource.allocatedMemory) && !(surface->flags & SFLAG_PBO))
