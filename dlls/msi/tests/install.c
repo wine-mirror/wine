@@ -2205,7 +2205,7 @@ static BOOL get_system_dirs(void)
 
     RegCloseKey(hkey);
 
-    if(GetWindowsDirectoryA(WINDOWS_DIR, MAX_PATH) != ERROR_SUCCESS)
+    if(!GetWindowsDirectoryA(WINDOWS_DIR, MAX_PATH))
         return FALSE;
 
     return TRUE;
@@ -6371,8 +6371,8 @@ START_TEST(install)
     if(len && (CURR_DIR[len - 1] == '\\'))
         CURR_DIR[len - 1] = 0;
 
-    get_system_dirs();
-    get_user_dirs();
+    ok(get_system_dirs(), "failed to retrieve system dirs\n");
+    ok(get_user_dirs(), "failed to retrieve user dirs\n");
 
     /* Create a restore point ourselves so we circumvent the multitude of restore points
      * that would have been created by all the installation and removal tests.
