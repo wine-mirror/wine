@@ -2567,6 +2567,11 @@ UINT msi_package_add_info(MSIPACKAGE *package, DWORD context, DWORD options,
 {
     MSISOURCELISTINFO *info;
 
+    LIST_FOR_EACH_ENTRY( info, &package->sourcelist_info, MSISOURCELISTINFO, entry )
+    {
+        if (!strcmpW( info->value, value )) return ERROR_SUCCESS;
+    }
+
     info = msi_alloc(sizeof(MSISOURCELISTINFO));
     if (!info)
         return ERROR_OUTOFMEMORY;
@@ -2584,6 +2589,11 @@ UINT msi_package_add_media_disk(MSIPACKAGE *package, DWORD context, DWORD option
                                 DWORD disk_id, LPWSTR volume_label, LPWSTR disk_prompt)
 {
     MSIMEDIADISK *disk;
+
+    LIST_FOR_EACH_ENTRY( disk, &package->sourcelist_media, MSIMEDIADISK, entry )
+    {
+        if (disk->disk_id == disk_id) return ERROR_SUCCESS;
+    }
 
     disk = msi_alloc(sizeof(MSIMEDIADISK));
     if (!disk)
