@@ -43,10 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
 #define HKEY_SPECIAL_ROOT_FIRST   HKEY_CLASSES_ROOT
 #define HKEY_SPECIAL_ROOT_LAST    HKEY_DYN_DATA
-#define NB_SPECIAL_ROOT_KEYS      ((UINT_PTR)HKEY_SPECIAL_ROOT_LAST - (UINT_PTR)HKEY_SPECIAL_ROOT_FIRST + 1)
-
-static HKEY special_root_keys[NB_SPECIAL_ROOT_KEYS];
-static BOOL hkcu_cache_disabled;
 
 static const WCHAR name_CLASSES_ROOT[] =
     {'M','a','c','h','i','n','e','\\',
@@ -67,7 +63,7 @@ static const WCHAR name_CURRENT_CONFIG[] =
 static const WCHAR name_DYN_DATA[] =
     {'D','y','n','D','a','t','a',0};
 
-static const WCHAR * const root_key_names[NB_SPECIAL_ROOT_KEYS] =
+static const WCHAR * const root_key_names[] =
 {
     name_CLASSES_ROOT,
     NULL,         /* HKEY_CURRENT_USER is determined dynamically */
@@ -77,6 +73,11 @@ static const WCHAR * const root_key_names[NB_SPECIAL_ROOT_KEYS] =
     name_CURRENT_CONFIG,
     name_DYN_DATA
 };
+
+#define NB_SPECIAL_ROOT_KEYS   (sizeof(root_key_names)/sizeof(root_key_names[0]))
+
+static HKEY special_root_keys[NB_SPECIAL_ROOT_KEYS];
+static BOOL hkcu_cache_disabled;
 
 static const int is_win64 = (sizeof(void *) > sizeof(int));
 
