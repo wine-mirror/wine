@@ -324,6 +324,13 @@ enum platform
     PLATFORM_X64
 };
 
+enum clr_version
+{
+    CLR_VERSION_V11,
+    CLR_VERSION_V20,
+    CLR_VERSION_MAX
+};
+
 typedef struct tagMSIPACKAGE
 {
     MSIOBJECTHDR hdr;
@@ -342,7 +349,7 @@ typedef struct tagMSIPACKAGE
     LPWSTR ActionFormat;
     LPWSTR LastAction;
     HANDLE log_file;
-    IAssemblyCache *cache_net;
+    IAssemblyCache *cache_net[CLR_VERSION_MAX];
     IAssemblyCache *cache_sxs;
 
     struct list classes;
@@ -423,6 +430,7 @@ typedef struct tagMSIASSEMBLY
     LPWSTR display_name;
     LPWSTR tempdir;
     BOOL installed;
+    BOOL clr_version[CLR_VERSION_MAX];
 } MSIASSEMBLY;
 
 typedef struct tagMSICOMPONENT

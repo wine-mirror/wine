@@ -313,7 +313,8 @@ static void free_package_structures( MSIPACKAGE *package )
 
 static void MSI_FreePackage( MSIOBJECTHDR *arg)
 {
-    MSIPACKAGE *package= (MSIPACKAGE*) arg;
+    UINT i;
+    MSIPACKAGE *package = (MSIPACKAGE *)arg;
 
     if( package->dialog )
         msi_dialog_destroy( package->dialog );
@@ -322,7 +323,8 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
     free_package_structures(package);
     CloseHandle( package->log_file );
 
-    if (package->cache_net) IAssemblyCache_Release( package->cache_net );
+    for (i = 0; i < CLR_VERSION_MAX; i++)
+        if (package->cache_net[i]) IAssemblyCache_Release( package->cache_net[i] );
     if (package->cache_sxs) IAssemblyCache_Release( package->cache_sxs );
 }
 

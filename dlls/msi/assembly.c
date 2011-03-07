@@ -31,66 +31,72 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-static HRESULT (WINAPI *pCreateAssemblyCacheNet)( IAssemblyCache **, DWORD );
+static HRESULT (WINAPI *pCreateAssemblyCacheNet11)( IAssemblyCache **, DWORD );
+static HRESULT (WINAPI *pCreateAssemblyCacheNet20)( IAssemblyCache **, DWORD );
 static HRESULT (WINAPI *pCreateAssemblyCacheSxs)( IAssemblyCache **, DWORD );
 static HRESULT (WINAPI *pLoadLibraryShim)( LPCWSTR, LPCWSTR, LPVOID, HMODULE * );
+static HRESULT (WINAPI *pGetFileVersion)( LPCWSTR, LPWSTR, DWORD, DWORD * );
 
 static BOOL init_function_pointers( void )
 {
     static const WCHAR szFusion[] = {'f','u','s','i','o','n','.','d','l','l',0};
-    HMODULE hfusion, hmscoree, hsxs;
-    HRESULT hr;
+    static const WCHAR szVersion11[] = {'v','1','.','1','.','4','3','2','2',0};
+    static const WCHAR szVersion20[] = {'v','2','.','0','.','5','0','7','2','7',0};
+    HMODULE hfusion11 = NULL, hfusion20 = NULL, hmscoree, hsxs;
 
-    if (pCreateAssemblyCacheNet) return TRUE;
+    if (pCreateAssemblyCacheNet11 || pCreateAssemblyCacheNet20) return TRUE;
 
-    if (!(hmscoree = LoadLibraryA( "mscoree.dll" )))
-    {
-        WARN("mscoree.dll not available\n");
-        return FALSE;
-    }
-    if (!(pLoadLibraryShim = (void *)GetProcAddress( hmscoree, "LoadLibraryShim" )))
-    {
-        WARN("LoadLibraryShim not available\n");
-        FreeLibrary( hmscoree );
-        return FALSE;
-    }
-    hr = pLoadLibraryShim( szFusion, NULL, NULL, &hfusion );
-    if (FAILED( hr ))
-    {
-        WARN("fusion.dll not available 0x%08x\n", hr);
-        FreeLibrary( hmscoree );
-        return FALSE;
-    }
-    pCreateAssemblyCacheNet = (void *)GetProcAddress( hfusion, "CreateAssemblyCache" );
-    FreeLibrary( hmscoree );
-    if (!(hsxs = LoadLibraryA( "sxs.dll" )))
-    {
-        WARN("sxs.dll not available\n");
-        FreeLibrary( hfusion );
-        return FALSE;
-    }
-    pCreateAssemblyCacheSxs = (void *)GetProcAddress( hsxs, "CreateAssemblyCache" );
+    if (!(hmscoree = LoadLibraryA( "mscoree.dll" ))) return FALSE;
+    if (!(pGetFileVersion = (void *)GetProcAddress( hmscoree, "GetFileVersion" ))) goto error;
+    if (!(pLoadLibraryShim = (void *)GetProcAddress( hmscoree, "LoadLibraryShim" ))) goto error;
+
+    if (!pLoadLibraryShim( szFusion, szVersion11, NULL, &hfusion11 ))
+        pCreateAssemblyCacheNet11 = (void *)GetProcAddress( hfusion11, "CreateAssemblyCache" );
+
+    if (!pLoadLibraryShim( szFusion, szVersion20, NULL, &hfusion20 ))
+        pCreateAssemblyCacheNet20 = (void *)GetProcAddress( hfusion20, "CreateAssemblyCache" );
+
+    if (!pCreateAssemblyCacheNet11 && !pCreateAssemblyCacheNet20) goto error;
+
+    if (!(hsxs = LoadLibraryA( "sxs.dll" ))) goto error;
+    if (!(pCreateAssemblyCacheSxs = (void *)GetProcAddress( hsxs, "CreateAssemblyCache" ))) goto error;
     return TRUE;
+
+error:
+    pCreateAssemblyCacheNet11 = NULL;
+    pCreateAssemblyCacheNet20 = NULL;
+    FreeLibrary( hfusion11 );
+    FreeLibrary( hfusion20 );
+    FreeLibrary( hmscoree );
+    return FALSE;
 }
 
 static BOOL init_assembly_caches( MSIPACKAGE *package )
 {
-    HRESULT hr;
-
     if (!init_function_pointers()) return FALSE;
-    if (package->cache_net) return TRUE;
+    if (package->cache_net[CLR_VERSION_V11] || package->cache_net[CLR_VERSION_V20]) return TRUE;
+    if (pCreateAssemblyCacheSxs( &package->cache_sxs, 0 ) != S_OK) return FALSE;
 
-    hr = pCreateAssemblyCacheNet( &package->cache_net, 0 );
-    if (hr != S_OK) return FALSE;
+    if (pCreateAssemblyCacheNet11) pCreateAssemblyCacheNet11( &package->cache_net[CLR_VERSION_V11], 0 );
+    if (pCreateAssemblyCacheNet20) pCreateAssemblyCacheNet20( &package->cache_net[CLR_VERSION_V20], 0 );
 
-    hr = pCreateAssemblyCacheSxs( &package->cache_sxs, 0 );
-    if (hr != S_OK)
+    if (package->cache_net[CLR_VERSION_V11] || package->cache_net[CLR_VERSION_V20])
     {
-        IAssemblyCache_Release( package->cache_net );
-        package->cache_net = NULL;
-        return FALSE;
+        return TRUE;
     }
-    return TRUE;
+    if (package->cache_net[CLR_VERSION_V11])
+    {
+        IAssemblyCache_Release( package->cache_net[CLR_VERSION_V11] );
+        package->cache_net[CLR_VERSION_V11] = NULL;
+    }
+    if (package->cache_net[CLR_VERSION_V20])
+    {
+        IAssemblyCache_Release( package->cache_net[CLR_VERSION_V20] );
+        package->cache_net[CLR_VERSION_V20] = NULL;
+    }
+    IAssemblyCache_Release( package->cache_sxs );
+    package->cache_sxs = NULL;
+    return FALSE;
 }
 
 MSIRECORD *get_assembly_record( MSIPACKAGE *package, const WCHAR *comp )
@@ -201,34 +207,36 @@ done:
     return display_name;
 }
 
-static BOOL check_assembly_installed( MSIPACKAGE *package, MSIASSEMBLY *assembly )
+static BOOL is_assembly_installed( IAssemblyCache *cache, const WCHAR *display_name )
 {
-    IAssemblyCache *cache;
-    ASSEMBLY_INFO info;
     HRESULT hr;
-
-    if (assembly->application)
-    {
-        FIXME("we should probably check the manifest file here\n");
-        if (msi_get_property_int( package->db, szInstalled, 0 )) return TRUE;
-        return FALSE;
-    }
-
-    if (!init_assembly_caches( package ))
-        return FALSE;
-
-    if (assembly->attributes == msidbAssemblyAttributesWin32)
-        cache = package->cache_sxs;
-    else
-        cache = package->cache_net;
+    ASSEMBLY_INFO info;
 
     memset( &info, 0, sizeof(info) );
     info.cbAssemblyInfo = sizeof(info);
-    hr = IAssemblyCache_QueryAssemblyInfo( cache, QUERYASMINFO_FLAG_VALIDATE, assembly->display_name, &info );
-    if (hr != HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER))
+    hr = IAssemblyCache_QueryAssemblyInfo( cache, QUERYASMINFO_FLAG_GETSIZE, display_name, &info );
+    if (FAILED( hr ))
+    {
+        TRACE("QueryAssemblyInfo returned 0x%08x\n", hr);
         return FALSE;
-
+    }
     return (info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED);
+}
+
+static const WCHAR clr_version_v11[] = {'v','1','.','1','.','4','3','2','2',0};
+static const WCHAR clr_version_v20[] = {'v','2','.','0','.','5','0','7','2','7',0};
+static const WCHAR clr_version_unknown[] = {'u','n','k','n','o','w','n',0};
+
+static const WCHAR *clr_version[] =
+{
+    clr_version_v11,
+    clr_version_v20
+};
+
+static const WCHAR *get_clr_version_str( enum clr_version version )
+{
+    if (version >= sizeof(clr_version)/sizeof(clr_version[0])) return clr_version_unknown;
+    return clr_version[version];
 }
 
 MSIASSEMBLY *load_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
@@ -236,9 +244,13 @@ MSIASSEMBLY *load_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
     MSIRECORD *rec;
     MSIASSEMBLY *a;
 
-    if (!(rec = get_assembly_record( package, comp->Component )))
+    if (!(rec = get_assembly_record( package, comp->Component ))) return NULL;
+    if (!init_assembly_caches( package ))
+    {
+        ERR("can't initialize assembly caches\n");
+        msiobj_release( &rec->hdr );
         return NULL;
-
+    }
     if (!(a = msi_alloc_zero( sizeof(MSIASSEMBLY) )))
     {
         msiobj_release( &rec->hdr );
@@ -268,11 +280,55 @@ MSIASSEMBLY *load_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
     }
     TRACE("display name %s\n", debugstr_w(a->display_name));
 
-    a->installed = check_assembly_installed( package, a );
+    if (a->application)
+    {
+        FIXME("we should probably check the manifest file here\n");
+        a->installed = (msi_get_property_int( package->db, szInstalled, 0 ) != 0);
+    }
+    else
+    {
+        if (a->attributes == msidbAssemblyAttributesWin32)
+            a->installed = is_assembly_installed( package->cache_sxs, a->display_name );
+        else
+        {
+            UINT i;
+            for (i = 0; i < CLR_VERSION_MAX; i++)
+            {
+                a->clr_version[i] = is_assembly_installed( package->cache_net[i], a->display_name );
+                if (a->clr_version[i])
+                {
+                    TRACE("runtime version %s\n", debugstr_w(get_clr_version_str( i )));
+                    a->installed = TRUE;
+                }
+            }
+        }
+    }
     TRACE("assembly is %s\n", a->installed ? "installed" : "not installed");
-
     msiobj_release( &rec->hdr );
     return a;
+}
+
+static enum clr_version get_clr_version( const WCHAR *filename )
+{
+    DWORD len;
+    HRESULT hr;
+    enum clr_version version = CLR_VERSION_V11;
+    WCHAR *strW;
+
+    hr = pGetFileVersion( filename, NULL, 0, &len );
+    if (hr != HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) return CLR_VERSION_V11;
+    if ((strW = msi_alloc( len * sizeof(WCHAR) )))
+    {
+        hr = pGetFileVersion( filename, strW, len, &len );
+        if (hr == S_OK)
+        {
+            UINT i;
+            for (i = 0; i < CLR_VERSION_MAX; i++)
+                if (!strcmpW( strW, clr_version[i] )) version = i;
+        }
+        msi_free( strW );
+    }
+    return version;
 }
 
 UINT install_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
@@ -304,7 +360,7 @@ UINT install_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
     else
     {
         manifest = get_loaded_file( package, comp->KeyPath )->TargetPath;
-        cache = package->cache_net;
+        cache = package->cache_net[get_clr_version( manifest )];
     }
     TRACE("installing assembly %s\n", debugstr_w(manifest));
 
