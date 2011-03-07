@@ -336,11 +336,11 @@ void X11DRV_InitClipboard(void)
 
     /* Register known mapping between window formats and X properties */
     for (i = 0; i < sizeof(PropertyFormatMap)/sizeof(PropertyFormatMap[0]); i++)
-        X11DRV_CLIPBOARD_InsertClipboardFormat( GlobalAddAtomW(PropertyFormatMap[i].lpszFormat),
+        X11DRV_CLIPBOARD_InsertClipboardFormat( RegisterClipboardFormatW(PropertyFormatMap[i].lpszFormat),
                                                 GET_ATOM(PropertyFormatMap[i].prop));
 
     /* Set up a conversion function from "HTML Format" to "text/html" */
-    format = X11DRV_CLIPBOARD_InsertClipboardFormat( GlobalAddAtomW(wszHTMLFormat),
+    format = X11DRV_CLIPBOARD_InsertClipboardFormat( RegisterClipboardFormatW(wszHTMLFormat),
                                                      GET_ATOM(XATOM_text_html));
     format->lpDrvExportFunc = X11DRV_CLIPBOARD_ExportTextHtml;
 }
@@ -551,6 +551,9 @@ static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormatID, HANDLE hData, D
 
     TRACE("format=%04x lpData=%p hData=%p flags=0x%08x lpFormat=%p override=%d\n",
         wFormatID, lpData, hData, flags, lpFormat, override);
+
+    /* make sure the format exists */
+    if (!lpFormat) register_format( wFormatID, 0 );
 
     if (lpData && !override)
         return TRUE;
@@ -1945,7 +1948,7 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
                  wname = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
                  MultiByteToWideChar(CP_UNIXCP, 0, names[i], -1, wname, len);
 
-                 lpFormat = register_format( GlobalAddAtomW(wname), atoms[i] );
+                 lpFormat = register_format( RegisterClipboardFormatW(wname), atoms[i] );
                  HeapFree(GetProcessHeap(), 0, wname);
                  if (!lpFormat)
                  {
@@ -2486,11 +2489,7 @@ static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void)
  */
 UINT CDECL X11DRV_RegisterClipboardFormat(LPCWSTR FormatName)
 {
-    UINT id = GlobalAddAtomW( FormatName );
-
-    if (!id) return 0;
-    if (!register_format( id, 0 )) return 0;
-    return id;
+    return GlobalAddAtomW( FormatName );
 }
 
 
