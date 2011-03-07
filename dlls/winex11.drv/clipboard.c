@@ -114,7 +114,6 @@ typedef struct tagWINE_CLIPFORMAT {
     struct list entry;
     UINT        wFormatID;
     UINT        drvData;
-    UINT        wFlags;
     DRVIMPORTFUNC  lpDrvImportFunc;
     DRVEXPORTFUNC  lpDrvExportFunc;
 } WINE_CLIPFORMAT, *LPWINE_CLIPFORMAT;
@@ -128,10 +127,8 @@ typedef struct tagWINE_CLIPDATA {
     LPWINE_CLIPFORMAT lpFormat;
 } WINE_CLIPDATA, *LPWINE_CLIPDATA;
 
-#define CF_FLAG_BUILTINFMT   0x0001 /* Built-in windows format */
-#define CF_FLAG_UNOWNED      0x0002 /* cached data is not owned */
-#define CF_FLAG_SYNTHESIZED  0x0004 /* Implicitly converted data */
-#define CF_FLAG_UNICODE      0x0008 /* Data is in unicode */
+#define CF_FLAG_UNOWNED      0x0001 /* cached data is not owned */
+#define CF_FLAG_SYNTHESIZED  0x0002 /* Implicitly converted data */
 
 static int selectionAcquired = 0;              /* Contains the current selection masks */
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
@@ -332,7 +329,6 @@ void X11DRV_InitClipboard(void)
         if (!(format = HeapAlloc( GetProcessHeap(), 0, sizeof(*format )))) break;
         format->wFormatID       = builtin_formats[i].id;
         format->drvData         = GET_ATOM(builtin_formats[i].data);
-        format->wFlags          = CF_FLAG_BUILTINFMT;
         format->lpDrvImportFunc = builtin_formats[i].import;
         format->lpDrvExportFunc = builtin_formats[i].export;
         list_add_tail( &format_list, &format->entry );
@@ -410,8 +406,7 @@ static WINE_CLIPFORMAT *register_format( UINT id, Atom prop )
 
     /* walk format chain to see if it's already registered */
     LIST_FOR_EACH_ENTRY( lpFormat, &format_list, WINE_CLIPFORMAT, entry )
-        if ((lpFormat->wFormatID == id) && (lpFormat->wFlags & CF_FLAG_BUILTINFMT) == 0)
-            return lpFormat;
+        if (lpFormat->wFormatID == id) return lpFormat;
 
     return X11DRV_CLIPBOARD_InsertClipboardFormat(id, prop);
 }
@@ -469,7 +464,6 @@ static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat( UINT id, Atom pr
         WARN("No more memory for a new format!\n");
         return NULL;
     }
-    lpNewFormat->wFlags = 0;
     lpNewFormat->wFormatID = id;
     lpNewFormat->drvData = prop;
     lpNewFormat->lpDrvImportFunc = X11DRV_CLIPBOARD_ImportClipboardData;
