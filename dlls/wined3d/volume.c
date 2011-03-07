@@ -27,9 +27,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
 /* Context activation is done by the caller. */
-static void volume_bind_and_dirtify(struct IWineD3DVolumeImpl *volume)
+static void volume_bind_and_dirtify(struct IWineD3DVolumeImpl *volume, const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = &volume->resource.device->adapter->gl_info;
     IWineD3DBaseTextureImpl *container = (IWineD3DBaseTextureImpl *)volume->container;
     DWORD active_sampler;
 
@@ -102,7 +101,7 @@ void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode)
     TRACE("volume %p, level %u, srgb %#x, format %s (%#x).\n",
             volume, level, srgb_mode, debug_d3dformat(format->id), format->id);
 
-    volume_bind_and_dirtify(volume);
+    volume_bind_and_dirtify(volume, gl_info);
 
     ENTER_GL();
     GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, level, format->glInternal,
