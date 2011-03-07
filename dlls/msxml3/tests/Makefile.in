@@ -5,7 +5,6 @@ C_SRCS = \
 	domdoc.c \
 	saxreader.c \
 	schema.c \
-	xmldoc.c \
-	xmlelem.c
+	xmldoc.c
 
 @MAKE_TEST_RULES@
