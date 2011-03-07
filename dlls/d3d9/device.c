@@ -3029,7 +3029,7 @@ static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceP
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
+        void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
 {
     struct IDirect3DDevice9Impl *This = device_from_device_parent(iface);
@@ -3037,9 +3037,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     BOOL lockable = TRUE;
     HRESULT hr;
 
-    TRACE("iface %p, superior %p, width %u, height %u, format %#x, usage %#x,\n"
+    TRACE("iface %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
             "\tpool %#x, level %u, face %u, surface %p\n",
-            iface, superior, width, height, format, usage, pool, level, face, surface);
+            iface, container_parent, width, height, format, usage, pool, level, face, surface);
 
     if (pool == WINED3DPOOL_DEFAULT && !(usage & D3DUSAGE_DYNAMIC))
         lockable = FALSE;
@@ -3056,18 +3056,18 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     *surface = d3d_surface->wineD3DSurface;
     IWineD3DSurface_AddRef(*surface);
 
-    d3d_surface->container = superior;
+    d3d_surface->container = container_parent;
     IDirect3DDevice9Ex_Release(d3d_surface->parentDevice);
     d3d_surface->parentDevice = NULL;
 
     IDirect3DSurface9_Release((IDirect3DSurface9 *)d3d_surface);
-    d3d_surface->forwardReference = superior;
+    d3d_surface->forwardReference = container_parent;
 
     return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format,
+        void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
         IWineD3DSurface **surface)
 {
@@ -3075,9 +3075,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     IDirect3DSurface9Impl *d3d_surface;
     HRESULT hr;
 
-    TRACE("iface %p, superior %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+    TRACE("iface %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
             "\tmultisample_quality %u, lockable %u, surface %p\n",
-            iface, superior, width, height, format, multisample_type, multisample_quality, lockable, surface);
+            iface, container_parent, width, height, format, multisample_type, multisample_quality, lockable, surface);
 
     hr = IDirect3DDevice9Impl_CreateRenderTarget((IDirect3DDevice9Ex *)This, width, height,
             d3dformat_from_wined3dformat(format), multisample_type, multisample_quality, lockable,
@@ -3091,7 +3091,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     *surface = d3d_surface->wineD3DSurface;
     IWineD3DSurface_AddRef(*surface);
 
-    d3d_surface->container = superior;
+    d3d_surface->container = container_parent;
     /* Implicit surfaces are created with an refcount of 0 */
     IDirect3DSurface9_Release((IDirect3DSurface9 *)d3d_surface);
 
@@ -3129,15 +3129,15 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
+        void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
         WINED3DPOOL pool, DWORD usage, IWineD3DVolume **volume)
 {
     struct IDirect3DDevice9Impl *This = device_from_device_parent(iface);
     IDirect3DVolume9Impl *object;
     HRESULT hr;
 
-    TRACE("iface %p, superior %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p\n",
-            iface, superior, width, height, depth, format, pool, usage, volume);
+    TRACE("iface %p, container_parent %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p\n",
+            iface, container_parent, width, height, depth, format, pool, usage, volume);
 
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -3160,8 +3160,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
     IWineD3DVolume_AddRef(*volume);
     IDirect3DVolume9_Release((IDirect3DVolume9 *)object);
 
-    object->container = superior;
-    object->forwardReference = superior;
+    object->container = container_parent;
+    object->forwardReference = container_parent;
 
     TRACE("(%p) Created volume %p\n", iface, object);
 

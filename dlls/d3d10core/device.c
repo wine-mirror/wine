@@ -1320,7 +1320,7 @@ static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceP
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
+        void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
 {
     struct d3d10_device *This = device_from_device_parent(iface);
@@ -1328,9 +1328,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("iface %p, superior %p, width %u, height %u, format %#x, usage %#x,\n"
+    FIXME("iface %p, container_parent %p, width %u, height %u, format %#x, usage %#x,\n"
             "\tpool %#x, level %u, face %u, surface %p partial stub!\n",
-            iface, superior, width, height, format, usage, pool, level, face, surface);
+            iface, container_parent, width, height, format, usage, pool, level, face, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
 
@@ -1361,7 +1361,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, enum wined3d_format_id format,
+        void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
         IWineD3DSurface **surface)
 {
@@ -1370,9 +1370,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("iface %p, superior %p, width %u, height %u, format %#x, multisample_type %#x,\n"
+    FIXME("iface %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
             "\tmultisample_quality %u, lockable %u, surface %p partial stub!\n",
-            iface, superior, width, height, format, multisample_type, multisample_quality, lockable, surface);
+            iface, container_parent, width, height, format, multisample_type, multisample_quality, lockable, surface);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
 
@@ -1444,13 +1444,13 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent *iface,
-        IUnknown *superior, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
+        void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
         WINED3DPOOL pool, DWORD usage, IWineD3DVolume **volume)
 {
     HRESULT hr;
 
-    TRACE("iface %p, superior %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p.\n",
-            iface, superior, width, height, depth, format, pool, usage, volume);
+    TRACE("iface %p, container_parent %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p.\n",
+            iface, container_parent, width, height, depth, format, pool, usage, volume);
 
     hr = IWineD3DDevice_CreateVolume(device_from_device_parent(iface)->wined3d_device,
             width, height, depth, usage, format, pool, NULL, &d3d10_subresource_parent_ops, volume);

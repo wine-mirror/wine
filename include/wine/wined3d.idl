@@ -2130,7 +2130,7 @@ interface IWineD3DDeviceParent : IUnknown
     );
 
     HRESULT CreateSurface(
-        [in] IUnknown *superior,
+        [in] void *container_parent,
         [in] UINT width,
         [in] UINT height,
         [in] enum wined3d_format_id format_id,
@@ -2142,7 +2142,7 @@ interface IWineD3DDeviceParent : IUnknown
     );
 
     HRESULT CreateRenderTarget(
-        [in] IUnknown *superior,
+        [in] void *container_parent,
         [in] UINT width,
         [in] UINT height,
         [in] enum wined3d_format_id format_id,
@@ -2163,7 +2163,7 @@ interface IWineD3DDeviceParent : IUnknown
     );
 
     HRESULT CreateVolume(
-        [in] IUnknown *superior,
+        [in] void *container_parent,
         [in] UINT width,
         [in] UINT height,
         [in] UINT depth,
