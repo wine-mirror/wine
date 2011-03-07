@@ -220,6 +220,10 @@ static BOOL compile_file_regex(regex_t* re, const char* srcfile)
             *p++ = '\\';
             *p++ = '.';
             break;
+        case '*':
+            *p++ = '.';
+            *p++ = '*';
+            break;
         default:
             *p++ = *srcfile;
             break;
@@ -2029,8 +2033,8 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
             if (dli->is_source_file)
             {
                 file = source_get(pair.effective, dli->u.source_file);
-                if (!match_regexp(&re, file)) file = "";
-                strcpy(sci.FileName, file);
+                if (!match_regexp(&re, file)) sci.FileName[0] = '\0';
+                else strcpy(sci.FileName, file);
             }
             else if (sci.FileName[0])
             {
