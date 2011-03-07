@@ -150,6 +150,7 @@ static Wine_GLContext *context_list;
 static struct WineGLInfo WineGLInfo = { 0 };
 static int use_render_texture_emulation = 1;
 static int use_render_texture_ati = 0;
+static BOOL has_swap_control;
 static int swap_interval = 1;
 
 #define MAX_EXTENSIONS 16
@@ -3424,7 +3425,7 @@ static BOOL WINAPI X11DRV_wglSwapIntervalEXT(int interval) {
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
-    else if (interval == 0)
+    else if (!has_swap_control && interval == 0)
     {
         /* wglSwapIntervalEXT considers an interval value of zero to mean that
          * vsync should be disabled, but glXSwapIntervalSGI considers such a
@@ -3737,6 +3738,9 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     if(glxRequireExtension("GLX_EXT_fbconfig_packed_float"))
         register_extension_string("WGL_EXT_pixel_format_packed_float");
+
+    if (glxRequireExtension("GLX_EXT_swap_control"))
+        has_swap_control = TRUE;
 
     /* The OpenGL extension GL_NV_vertex_array_range adds wgl/glX functions which aren't exported as 'real' wgl/glX extensions. */
     if(strstr(WineGLInfo.glExtensions, "GL_NV_vertex_array_range") != NULL)
