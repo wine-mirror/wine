@@ -124,9 +124,11 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
  */
 BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input )
 {
-    NTSTATUS status = send_hardware_message( hwnd, input, 0 );
+    NTSTATUS status;
+
+    if (input->type == INPUT_MOUSE) last_mouse_event = GetTickCount();
+    status = send_hardware_message( hwnd, input, 0 );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
-    else if (input->type == INPUT_MOUSE) last_mouse_event = GetTickCount();
     return !status;
 }
 
@@ -181,11 +183,10 @@ UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
         {
             /* we need to update the coordinates to what the server expects */
             INPUT input = inputs[i];
+            last_mouse_event = GetTickCount();
             update_mouse_coords( &input );
             if (!(status = send_hardware_message( 0, &input, SEND_HWMSG_INJECTED )))
             {
-                last_mouse_event = GetTickCount();
-
                 if ((input.u.mi.dwFlags & MOUSEEVENTF_MOVE) &&
                     ((input.u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) || input.u.mi.dx || input.u.mi.dy))
                 {
