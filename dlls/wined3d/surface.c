@@ -1275,6 +1275,17 @@ static BOOL surface_convert_color_to_float(IWineD3DSurfaceImpl *surface, DWORD c
     return TRUE;
 }
 
+static void surface_evict_sysmem(IWineD3DSurfaceImpl *surface)
+{
+    if (surface->flags & SFLAG_DONOTFREE)
+        return;
+
+    HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+    surface->resource.allocatedMemory = NULL;
+    surface->resource.heapMemory = NULL;
+    surface_modify_location(surface, SFLAG_INSYSMEM, FALSE);
+}
+
 HRESULT surface_load(IWineD3DSurfaceImpl *surface, BOOL srgb)
 {
     DWORD flag = srgb ? SFLAG_INSRGBTEX : SFLAG_INTEXTURE;
@@ -1316,14 +1327,7 @@ HRESULT surface_load(IWineD3DSurfaceImpl *surface, BOOL srgb)
 
     /* No partial locking for textures yet. */
     surface_load_location(surface, flag, NULL);
-
-    if (!(surface->flags & SFLAG_DONOTFREE))
-    {
-        HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
-        surface->resource.allocatedMemory = NULL;
-        surface->resource.heapMemory = NULL;
-        surface_modify_location(surface, SFLAG_INSYSMEM, FALSE);
-    }
+    surface_evict_sysmem(surface);
 
     return WINED3D_OK;
 }
@@ -2071,7 +2075,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
          * merged again in the drawable. The sysmem copy is not fully up to
          * date because only a subrectangle was read in Map(). */
         if (!fullsurface)
+        {
             surface_modify_location(This, SFLAG_INDRAWABLE, TRUE);
+            surface_evict_sysmem(This);
+        }
 
         This->dirtyRect.left   = This->currentDesc.Width;
         This->dirtyRect.top    = This->currentDesc.Height;
@@ -4652,7 +4659,13 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
         }
     }
 
-    if (!rect) surface->flags |= flag;
+    if (!rect)
+    {
+        surface->flags |= flag;
+
+        if (flag != SFLAG_INSYSMEM && (surface->flags & SFLAG_INSYSMEM))
+            surface_evict_sysmem(surface);
+    }
 
     if (in_fbo && (surface->flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)))
     {
