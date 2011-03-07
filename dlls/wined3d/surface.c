@@ -2006,6 +2006,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
         return WINEDDERR_NOTLOCKED;
     }
 
+    This->flags &= ~SFLAG_LOCKED;
+    memset(&This->lockedRect, 0, sizeof(This->lockedRect));
+
     if (This->flags & SFLAG_PBO)
     {
         const struct wined3d_gl_info *gl_info;
@@ -2080,10 +2083,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
         FIXME("Depth Stencil buffer locking is not implemented\n");
     }
 
-    unlock_end:
-    This->flags &= ~SFLAG_LOCKED;
-    memset(&This->lockedRect, 0, sizeof(RECT));
-
+unlock_end:
     /* Overlays have to be redrawn manually after changes with the GL implementation */
     if (This->overlay_dest)
         This->surface_ops->surface_draw_overlay(This);
