@@ -1147,8 +1147,8 @@ static void update_input_key_state( struct desktop *desktop, unsigned char *keys
         down = (keystate == desktop->keystate) ? 0xc0 : 0x80;
         /* fall through */
     case WM_XBUTTONUP:
-        if (msg->wparam == XBUTTON1) set_input_key_state( keystate, VK_XBUTTON1, down );
-        else if (msg->wparam == XBUTTON2) set_input_key_state( keystate, VK_XBUTTON2, down );
+        if (msg->wparam >> 16 == XBUTTON1) set_input_key_state( keystate, VK_XBUTTON1, down );
+        else if (msg->wparam >> 16 == XBUTTON2) set_input_key_state( keystate, VK_XBUTTON2, down );
         break;
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
