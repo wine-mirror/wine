@@ -1663,8 +1663,8 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
     int i;
     const struct StateEntry *StateTable = This->StateTable;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    UINT width = context->current_rt->currentDesc.Width;
-    UINT height = context->current_rt->currentDesc.Height;
+    UINT width = context->current_rt->resource.width;
+    UINT height = context->current_rt->resource.height;
     DWORD sampler;
 
     TRACE("Setting up context %p for blitting\n", context);

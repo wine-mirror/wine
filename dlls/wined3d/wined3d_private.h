@@ -1800,12 +1800,17 @@ struct wined3d_resource_ops
 struct wined3d_resource
 {
     LONG ref;
-    WINED3DRESOURCETYPE     resourceType;
     IWineD3DDeviceImpl *device;
-    WINED3DPOOL             pool;
-    UINT                    size;
-    DWORD                   usage;
+    WINED3DRESOURCETYPE     resourceType;
     const struct wined3d_format *format;
+    WINED3DMULTISAMPLE_TYPE multisample_type;
+    UINT                    multisample_quality;
+    DWORD                   usage;
+    WINED3DPOOL             pool;
+    UINT width;
+    UINT height;
+    UINT depth;
+    UINT                    size;
     DWORD                   priority;
     BYTE                   *allocatedMemory; /* Pointer to the real data location */
     BYTE                   *heapMemory; /* Pointer to the HeapAlloced block of memory */
@@ -1822,9 +1827,11 @@ HRESULT resource_free_private_data(struct wined3d_resource *resource, REFGUID gu
 DWORD resource_get_priority(const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 HRESULT resource_get_private_data(const struct wined3d_resource *resource, REFGUID guid,
         void *data, DWORD *data_size) DECLSPEC_HIDDEN;
-HRESULT resource_init(struct wined3d_resource *resource, WINED3DRESOURCETYPE resource_type,
-        IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format *format,
-        WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops,
+HRESULT resource_init(struct wined3d_resource *resource, IWineD3DDeviceImpl *device,
+        WINED3DRESOURCETYPE resource_type, const struct wined3d_format *format,
+        WINED3DMULTISAMPLE_TYPE multisample_type, UINT multisample_quality,
+        DWORD usage, WINED3DPOOL pool, UINT width, UINT height, UINT depth, UINT size,
+        void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops) DECLSPEC_HIDDEN;
 WINED3DRESOURCETYPE resource_get_type(const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 DWORD resource_set_priority(struct wined3d_resource *resource, DWORD priority) DECLSPEC_HIDDEN;
@@ -1973,24 +1980,12 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
         IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-typedef struct _WINED3DVOLUMET_DESC
-{
-    UINT                    Width;
-    UINT                    Height;
-    UINT                    Depth;
-} WINED3DVOLUMET_DESC;
-
-/*****************************************************************************
- * IWineD3DVolume implementation structure (extends IUnknown)
- */
 typedef struct IWineD3DVolumeImpl
 {
     /* IUnknown & WineD3DResource fields */
     const IWineD3DVolumeVtbl  *lpVtbl;
     struct wined3d_resource resource;
 
-    /* WineD3DVolume Information */
-    WINED3DVOLUMET_DESC      currentDesc;
     struct IWineD3DVolumeTextureImpl *container;
     BOOL                    lockable;
     BOOL                    locked;
@@ -2025,14 +2020,6 @@ typedef struct IWineD3DVolumeTextureImpl
 HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT height,
         UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-
-typedef struct _WINED3DSURFACET_DESC
-{
-    WINED3DMULTISAMPLE_TYPE MultiSampleType;
-    DWORD                   MultiSampleQuality;
-    UINT                    Width;
-    UINT                    Height;
-} WINED3DSURFACET_DESC;
 
 /*****************************************************************************
  * Structure for DIB Surfaces (GetDC and GDI surfaces)
@@ -2105,7 +2092,6 @@ struct IWineD3DSurfaceImpl
     /* IWineD3DSurface fields */
     const struct wined3d_surface_ops *surface_ops;
     struct wined3d_subresource_container container;
-    WINED3DSURFACET_DESC      currentDesc;
     struct wined3d_palette *palette; /* D3D7 style palette handling */
     PALETTEENTRY              *palette9; /* D3D8/9 style palette handling */
 

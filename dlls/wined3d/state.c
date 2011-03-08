@@ -4758,8 +4758,10 @@ static void viewport_miscpart(DWORD state, struct wined3d_stateblock *stateblock
     UINT width, height;
     WINED3DVIEWPORT vp = stateblock->state.viewport;
 
-    if(vp.Width > target->currentDesc.Width) vp.Width = target->currentDesc.Width;
-    if(vp.Height > target->currentDesc.Height) vp.Height = target->currentDesc.Height;
+    if (vp.Width > target->resource.width)
+        vp.Width = target->resource.width;
+    if (vp.Height > target->resource.height)
+        vp.Height = target->resource.height;
 
     glDepthRange(vp.MinZ, vp.MaxZ);
     checkGLcall("glDepthRange");

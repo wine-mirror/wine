@@ -369,8 +369,8 @@ IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
     }
 
     /* We don't mind the nonpow2 stuff in GDI */
-    This->pow2Width = This->currentDesc.Width;
-    This->pow2Height = This->currentDesc.Height;
+    This->pow2Width = This->resource.width;
+    This->pow2Height = This->resource.height;
 
     return WINED3D_OK;
 }

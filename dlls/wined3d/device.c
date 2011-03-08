@@ -591,14 +591,14 @@ static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const RECT *draw_rect, co
 {
     /* partial draw rect */
     if (draw_rect->left || draw_rect->top
-            || draw_rect->right < target->currentDesc.Width
-            || draw_rect->bottom < target->currentDesc.Height)
+            || draw_rect->right < target->resource.width
+            || draw_rect->bottom < target->resource.height)
         return FALSE;
 
     /* partial clear rect */
     if (clear_rect && (clear_rect->left > 0 || clear_rect->top > 0
-            || clear_rect->right < target->currentDesc.Width
-            || clear_rect->bottom < target->currentDesc.Height))
+            || clear_rect->right < target->resource.width
+            || clear_rect->bottom < target->resource.height))
         return FALSE;
 
     return TRUE;
@@ -5506,8 +5506,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     surface_internal_preload(dst_impl, SRGB_RGB);
     surface_bind(dst_impl, gl_info, FALSE);
 
-    src_w = src_impl->currentDesc.Width;
-    src_h = src_impl->currentDesc.Height;
+    src_w = src_impl->resource.width;
+    src_h = src_impl->resource.height;
     update_w = src_rect ? src_rect->right - src_rect->left : src_w;
     update_h = src_rect ? src_rect->bottom - src_rect->top : src_h;
 
@@ -5833,8 +5833,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
         /* Set the viewport and scissor rectangles, if requested. Tests show
          * that stateblock recording is ignored, the change goes directly
          * into the primary stateblock. */
-        device->stateBlock->state.viewport.Height = device->render_targets[0]->currentDesc.Height;
-        device->stateBlock->state.viewport.Width  = device->render_targets[0]->currentDesc.Width;
+        device->stateBlock->state.viewport.Height = device->render_targets[0]->resource.height;
+        device->stateBlock->state.viewport.Width  = device->render_targets[0]->resource.width;
         device->stateBlock->state.viewport.X      = 0;
         device->stateBlock->state.viewport.Y      = 0;
         device->stateBlock->state.viewport.MaxZ   = 1.0f;
@@ -5870,8 +5870,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
                 || This->depth_stencil->flags & SFLAG_DISCARD)
         {
             surface_modify_ds_location(This->depth_stencil, SFLAG_DS_DISCARDED,
-                    This->depth_stencil->currentDesc.Width,
-                    This->depth_stencil->currentDesc.Height);
+                    This->depth_stencil->resource.width,
+                    This->depth_stencil->resource.height);
             if (This->depth_stencil == This->onscreen_depth_stencil)
             {
                 IWineD3DSurface_Release((IWineD3DSurface *)This->onscreen_depth_stencil);
@@ -5917,7 +5917,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
         This->cursorTexture = 0;
     }
 
-    if ((s->currentDesc.Width == 32) && (s->currentDesc.Height == 32))
+    if (s->resource.width == 32 && s->resource.height == 32)
         This->haveHardwareCursor = TRUE;
     else
         This->haveHardwareCursor = FALSE;
@@ -5934,11 +5934,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
         }
 
         /* MSDN: Cursor must be smaller than the display mode */
-        if (s->currentDesc.Width > This->ddraw_width
-                || s->currentDesc.Height > This->ddraw_height)
+        if (s->resource.width > This->ddraw_width
+                || s->resource.height > This->ddraw_height)
         {
             WARN("Surface %p dimensions are %ux%u, but screen dimensions are %ux%u.\n",
-                    s, s->currentDesc.Width, s->currentDesc.Height, This->ddraw_width, This->ddraw_height);
+                    s, s->resource.width, s->resource.height, This->ddraw_width, This->ddraw_height);
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -5951,8 +5951,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
              * creating circular refcount dependencies. Copy out the gl texture
              * instead.
              */
-            This->cursorWidth = s->currentDesc.Width;
-            This->cursorHeight = s->currentDesc.Height;
+            This->cursorWidth = s->resource.width;
+            This->cursorHeight = s->resource.height;
             if (SUCCEEDED(IWineD3DSurface_Map(cursor_image, &rect, NULL, WINED3DLOCK_READONLY)))
             {
                 const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
@@ -6028,16 +6028,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
              * 32-bit cursors.  32x32 bits split into 32-bit chunks == 32
              * chunks. */
             DWORD *maskBits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    (s->currentDesc.Width * s->currentDesc.Height / 8));
+                    (s->resource.width * s->resource.height / 8));
             IWineD3DSurface_Map(cursor_image, &lockedRect, NULL,
                     WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY);
-            TRACE("width: %u height: %u.\n", s->currentDesc.Width, s->currentDesc.Height);
+            TRACE("width: %u height: %u.\n", s->resource.width, s->resource.height);
 
             cursorInfo.fIcon = FALSE;
             cursorInfo.xHotspot = XHotSpot;
             cursorInfo.yHotspot = YHotSpot;
-            cursorInfo.hbmMask = CreateBitmap(s->currentDesc.Width, s->currentDesc.Height, 1, 1, maskBits);
-            cursorInfo.hbmColor = CreateBitmap(s->currentDesc.Width, s->currentDesc.Height, 1, 32, lockedRect.pBits);
+            cursorInfo.hbmMask = CreateBitmap(s->resource.width, s->resource.height, 1, 1, maskBits);
+            cursorInfo.hbmColor = CreateBitmap(s->resource.width, s->resource.height, 1, 32, lockedRect.pBits);
             IWineD3DSurface_Unmap(cursor_image);
             /* Create our cursor and clean up. */
             cursor = CreateIconIndirect(&cursorInfo);
@@ -6140,8 +6140,8 @@ static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRES
         surface->resource.allocatedMemory = NULL;
         surface->flags &= ~SFLAG_DIBSECTION;
     }
-    surface->currentDesc.Width = pPresentationParameters->BackBufferWidth;
-    surface->currentDesc.Height = pPresentationParameters->BackBufferHeight;
+    surface->resource.width = pPresentationParameters->BackBufferWidth;
+    surface->resource.height = pPresentationParameters->BackBufferHeight;
     if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[ARB_TEXTURE_RECTANGLE]
             || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
     {

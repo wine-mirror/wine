@@ -126,9 +126,9 @@ void x11_copy_to_screen(IWineD3DSwapChainImpl *This, const RECT *rc)
     }
 #endif
         drawrect.left   = 0;
-        drawrect.right  = front->currentDesc.Width;
+        drawrect.right  = front->resource.width;
         drawrect.top    = 0;
-        drawrect.bottom = front->currentDesc.Height;
+        drawrect.bottom = front->resource.height;
 
 #if 0
         /* TODO: Support clippers */

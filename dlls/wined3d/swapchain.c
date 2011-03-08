@@ -268,11 +268,11 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface,
         cursor.texture_name = This->device->cursorTexture;
         cursor.texture_target = GL_TEXTURE_2D;
         cursor.texture_level = 0;
-        cursor.currentDesc.Width = This->device->cursorWidth;
-        cursor.currentDesc.Height = This->device->cursorHeight;
+        cursor.resource.width = This->device->cursorWidth;
+        cursor.resource.height = This->device->cursorHeight;
         /* The cursor must have pow2 sizes */
-        cursor.pow2Width = cursor.currentDesc.Width;
-        cursor.pow2Height = cursor.currentDesc.Height;
+        cursor.pow2Width = cursor.resource.width;
+        cursor.pow2Height = cursor.resource.height;
         /* The surface is in the texture */
         cursor.flags |= SFLAG_INTEXTURE;
         /* DDBLT_KEYSRC will cause BltOverride to enable the alpha test with GL_NOTEQUAL, 0.0,
@@ -441,8 +441,8 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface,
                 || This->device->depth_stencil->flags & SFLAG_DISCARD)
         {
             surface_modify_ds_location(This->device->depth_stencil, SFLAG_DS_DISCARDED,
-                    This->device->depth_stencil->currentDesc.Width,
-                    This->device->depth_stencil->currentDesc.Height);
+                    This->device->depth_stencil->resource.width,
+                    This->device->depth_stencil->resource.height);
             if (This->device->depth_stencil == This->device->onscreen_depth_stencil)
             {
                 IWineD3DSurface_Release((IWineD3DSurface *)This->device->onscreen_depth_stencil);
@@ -832,6 +832,6 @@ void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, U
 {
     /* The drawable size of an onscreen drawable is the surface size.
      * (Actually: The window size, but the surface is created in window size) */
-    *width = context->current_rt->currentDesc.Width;
-    *height = context->current_rt->currentDesc.Height;
+    *width = context->current_rt->resource.width;
+    *height = context->current_rt->resource.height;
 }

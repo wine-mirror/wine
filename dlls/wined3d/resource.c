@@ -43,17 +43,24 @@ struct private_data
     DWORD size;
 };
 
-HRESULT resource_init(struct wined3d_resource *resource, WINED3DRESOURCETYPE resource_type,
-        IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct wined3d_format *format,
-        WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops,
+HRESULT resource_init(struct wined3d_resource *resource, IWineD3DDeviceImpl *device,
+        WINED3DRESOURCETYPE resource_type, const struct wined3d_format *format,
+        WINED3DMULTISAMPLE_TYPE multisample_type, UINT multisample_quality,
+        DWORD usage, WINED3DPOOL pool, UINT width, UINT height, UINT depth, UINT size,
+        void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops)
 {
+    resource->ref = 1;
     resource->device = device;
     resource->resourceType = resource_type;
-    resource->ref = 1;
-    resource->pool = pool;
     resource->format = format;
+    resource->multisample_type = multisample_type;
+    resource->multisample_quality = multisample_quality;
     resource->usage = usage;
+    resource->pool = pool;
+    resource->width = width;
+    resource->height = height;
+    resource->depth = depth;
     resource->size = size;
     resource->priority = 0;
     resource->parent = parent;

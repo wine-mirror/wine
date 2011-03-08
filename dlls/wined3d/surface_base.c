@@ -168,11 +168,11 @@ void WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, struct wined
     desc->usage = surface->resource.usage;
     desc->pool = surface->resource.pool;
     desc->size = surface->resource.size; /* dx8 only */
-    desc->multisample_type = surface->currentDesc.MultiSampleType;
-    desc->multisample_quality = surface->currentDesc.MultiSampleQuality;
-    desc->width = surface->currentDesc.Width;
-    desc->height = surface->currentDesc.Height;
-    desc->depth = 1;
+    desc->multisample_type = surface->resource.multisample_type;
+    desc->multisample_quality = surface->resource.multisample_quality;
+    desc->width = surface->resource.width;
+    desc->height = surface->resource.height;
+    desc->depth = surface->resource.depth;
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD flags)
@@ -338,13 +338,13 @@ DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface)
     {
         /* Since compressed formats are block based, pitch means the amount of
          * bytes to the next row of block rather than the next row of pixels. */
-        UINT row_block_count = (This->currentDesc.Width + format->block_width - 1) / format->block_width;
+        UINT row_block_count = (This->resource.width + format->block_width - 1) / format->block_width;
         ret = row_block_count * format->block_byte_count;
     }
     else
     {
         unsigned char alignment = This->resource.device->surface_alignment;
-        ret = This->resource.format->byte_count * This->currentDesc.Width;  /* Bytes / row */
+        ret = This->resource.format->byte_count * This->resource.width;  /* Bytes / row */
         ret = (ret + alignment - 1) & ~(alignment - 1);
     }
     TRACE("(%p) Returning %d\n", This, ret);
@@ -439,8 +439,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, con
     } else {
         This->overlay_srcrect.left = 0;
         This->overlay_srcrect.top = 0;
-        This->overlay_srcrect.right = This->currentDesc.Width;
-        This->overlay_srcrect.bottom = This->currentDesc.Height;
+        This->overlay_srcrect.right = This->resource.width;
+        This->overlay_srcrect.bottom = This->resource.height;
     }
 
     if(DstRect) {
@@ -448,8 +448,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, con
     } else {
         This->overlay_destrect.left = 0;
         This->overlay_destrect.top = 0;
-        This->overlay_destrect.right = Dst ? Dst->currentDesc.Width : 0;
-        This->overlay_destrect.bottom = Dst ? Dst->currentDesc.Height : 0;
+        This->overlay_destrect.right = Dst ? Dst->resource.width : 0;
+        This->overlay_destrect.bottom = Dst ? Dst->resource.height : 0;
     }
 
     if (This->overlay_dest && (This->overlay_dest != Dst || flags & WINEDDOVER_HIDE))
@@ -582,8 +582,8 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface)
     b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     /* TODO: Is there a nicer way to force a specific alignment? (8 byte for ddraw) */
     b_info->bmiHeader.biWidth = IWineD3DSurface_GetPitch(iface) / format->byte_count;
-    b_info->bmiHeader.biHeight = -This->currentDesc.Height -extraline;
-    b_info->bmiHeader.biSizeImage = ( This->currentDesc.Height + extraline) * IWineD3DSurface_GetPitch(iface);
+    b_info->bmiHeader.biHeight = -This->resource.height - extraline;
+    b_info->bmiHeader.biSizeImage = (This->resource.height + extraline) * IWineD3DSurface_GetPitch(iface);
     b_info->bmiHeader.biPlanes = 1;
     b_info->bmiHeader.biBitCount = format->byte_count * 8;
 
@@ -645,9 +645,13 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface)
 
     TRACE("DIBSection at : %p\n", This->dib.bitmap_data);
     /* copy the existing surface to the dib section */
-    if(This->resource.allocatedMemory) {
-        memcpy(This->dib.bitmap_data, This->resource.allocatedMemory,  This->currentDesc.Height * IWineD3DSurface_GetPitch(iface));
-    } else {
+    if (This->resource.allocatedMemory)
+    {
+        memcpy(This->dib.bitmap_data, This->resource.allocatedMemory,
+                This->resource.height * IWineD3DSurface_GetPitch(iface));
+    }
+    else
+    {
         /* This is to make LockRect read the gl Texture although memory is allocated */
         This->flags &= ~SFLAG_INSYSMEM;
     }
@@ -847,8 +851,8 @@ static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, 
         return NULL;
     }
 
-    IWineD3DDevice_CreateSurface((IWineD3DDevice *)source->resource.device, source->currentDesc.Width,
-            source->currentDesc.Height, to_fmt, TRUE /* lockable */, TRUE /* discard  */, 0 /* level */,
+    IWineD3DDevice_CreateSurface((IWineD3DDevice *)source->resource.device, source->resource.width,
+            source->resource.height, to_fmt, TRUE /* lockable */, TRUE /* discard  */, 0 /* level */,
             0 /* usage */, WINED3DPOOL_SCRATCH, WINED3DMULTISAMPLE_NONE /* TODO: Multisampled conversion */,
             0 /* MultiSampleQuality */, IWineD3DSurface_GetImplType((IWineD3DSurface *) source),
             NULL /* parent */, &wined3d_null_parent_ops, &ret);
@@ -877,7 +881,7 @@ static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, 
     }
 
     conv->convert(lock_src.pBits, lock_dst.pBits, lock_src.Pitch, lock_dst.Pitch,
-                  source->currentDesc.Width, source->currentDesc.Height);
+            source->resource.width, source->resource.height);
 
     IWineD3DSurface_Unmap(ret);
     IWineD3DSurface_Unmap((IWineD3DSurface *)source);
@@ -992,18 +996,18 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         if (src)
         {
             if (SrcRect->right < SrcRect->left || SrcRect->bottom < SrcRect->top
-                    || SrcRect->left > src->currentDesc.Width || SrcRect->left < 0
-                    || SrcRect->top > src->currentDesc.Height || SrcRect->top < 0
-                    || SrcRect->right > src->currentDesc.Width || SrcRect->right < 0
-                    || SrcRect->bottom > src->currentDesc.Height || SrcRect->bottom < 0)
+                    || SrcRect->left > src->resource.width || SrcRect->left < 0
+                    || SrcRect->top > src->resource.height || SrcRect->top < 0
+                    || SrcRect->right > src->resource.width || SrcRect->right < 0
+                    || SrcRect->bottom > src->resource.height || SrcRect->bottom < 0)
             {
                 WARN("Application gave us bad source rectangle for Blt.\n");
                 return WINEDDERR_INVALIDRECT;
             }
 
             if (!SrcRect->right || !SrcRect->bottom
-                    || SrcRect->left == (int)src->currentDesc.Width
-                    || SrcRect->top == (int)src->currentDesc.Height)
+                    || SrcRect->left == (int)src->resource.width
+                    || SrcRect->top == (int)src->resource.height)
             {
                 TRACE("Nothing to be done.\n");
                 return WINED3D_OK;
@@ -1016,8 +1020,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     {
         xsrc.left = 0;
         xsrc.top = 0;
-        xsrc.right = src->currentDesc.Width;
-        xsrc.bottom = src->currentDesc.Height;
+        xsrc.right = src->resource.width;
+        xsrc.bottom = src->resource.height;
     }
     else
     {
@@ -1029,18 +1033,18 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         /* For the Destination rect, it can be out of bounds on the condition
          * that a clipper is set for the given surface. */
         if (!This->clipper && (DestRect->right < DestRect->left || DestRect->bottom < DestRect->top
-                || DestRect->left > This->currentDesc.Width || DestRect->left < 0
-                || DestRect->top > This->currentDesc.Height || DestRect->top < 0
-                || DestRect->right > This->currentDesc.Width || DestRect->right < 0
-                || DestRect->bottom > This->currentDesc.Height || DestRect->bottom < 0))
+                || DestRect->left > This->resource.width || DestRect->left < 0
+                || DestRect->top > This->resource.height || DestRect->top < 0
+                || DestRect->right > This->resource.width || DestRect->right < 0
+                || DestRect->bottom > This->resource.height || DestRect->bottom < 0))
         {
             WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
             return WINEDDERR_INVALIDRECT;
         }
 
         if (DestRect->right <= 0 || DestRect->bottom <= 0
-                || DestRect->left >= (int)This->currentDesc.Width
-                || DestRect->top >= (int)This->currentDesc.Height)
+                || DestRect->left >= (int)This->resource.width
+                || DestRect->top >= (int)This->resource.height)
         {
             TRACE("Nothing to be done.\n");
             return WINED3D_OK;
@@ -1052,8 +1056,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
 
             full_rect.left = 0;
             full_rect.top = 0;
-            full_rect.right = This->currentDesc.Width;
-            full_rect.bottom = This->currentDesc.Height;
+            full_rect.right = This->resource.width;
+            full_rect.bottom = This->resource.height;
             IntersectRect(&xdst, &full_rect, DestRect);
         }
         else
@@ -1061,8 +1065,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
             BOOL clip_horiz, clip_vert;
 
             xdst = *DestRect;
-            clip_horiz = xdst.left < 0 || xdst.right > (int)This->currentDesc.Width;
-            clip_vert = xdst.top < 0 || xdst.bottom > (int)This->currentDesc.Height;
+            clip_horiz = xdst.left < 0 || xdst.right > (int)This->resource.width;
+            clip_vert = xdst.top < 0 || xdst.bottom > (int)This->resource.height;
 
             if (clip_vert || clip_horiz)
             {
@@ -1082,10 +1086,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                         xsrc.left -= xdst.left;
                         xdst.left = 0;
                     }
-                    if (xdst.right > This->currentDesc.Width)
+                    if (xdst.right > This->resource.width)
                     {
-                        xsrc.right -= (xdst.right - (int)This->currentDesc.Width);
-                        xdst.right = (int)This->currentDesc.Width;
+                        xsrc.right -= (xdst.right - (int)This->resource.width);
+                        xdst.right = (int)This->resource.width;
                     }
                 }
 
@@ -1096,20 +1100,20 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                         xsrc.top -= xdst.top;
                         xdst.top = 0;
                     }
-                    if (xdst.bottom > This->currentDesc.Height)
+                    if (xdst.bottom > This->resource.height)
                     {
-                        xsrc.bottom -= (xdst.bottom - (int)This->currentDesc.Height);
-                        xdst.bottom = (int)This->currentDesc.Height;
+                        xsrc.bottom -= (xdst.bottom - (int)This->resource.height);
+                        xdst.bottom = (int)This->resource.height;
                     }
                 }
 
                 /* And check if after clipping something is still to be done... */
                 if ((xdst.right <= 0) || (xdst.bottom <= 0)
-                        || (xdst.left >= (int)This->currentDesc.Width)
-                        || (xdst.top >= (int)This->currentDesc.Height)
+                        || (xdst.left >= (int)This->resource.width)
+                        || (xdst.top >= (int)This->resource.height)
                         || (xsrc.right <= 0) || (xsrc.bottom <= 0)
-                        || (xsrc.left >= (int)src->currentDesc.Width)
-                        || (xsrc.top >= (int)src->currentDesc.Height))
+                        || (xsrc.left >= (int)src->resource.width)
+                        || (xsrc.top >= (int)src->resource.height))
                 {
                     TRACE("Nothing to be done after clipping.\n");
                     return WINED3D_OK;
@@ -1121,8 +1125,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     {
         xdst.left = 0;
         xdst.top = 0;
-        xdst.right = This->currentDesc.Width;
-        xdst.bottom = This->currentDesc.Height;
+        xdst.right = This->resource.width;
+        xdst.bottom = This->resource.height;
     }
 
     if (src == This)
@@ -1619,16 +1623,16 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         WARN("rsrc is NULL!\n");
         rsrc2.left = 0;
         rsrc2.top = 0;
-        rsrc2.right = src->currentDesc.Width;
-        rsrc2.bottom = src->currentDesc.Height;
+        rsrc2.right = src->resource.width;
+        rsrc2.bottom = src->resource.height;
         rsrc = &rsrc2;
     }
 
     /* Check source rect for validity. Copied from normal Blt. Fixes Baldur's Gate.*/
-    if ((rsrc->bottom > src->currentDesc.Height) || (rsrc->bottom < 0)
-            || (rsrc->top   > src->currentDesc.Height) || (rsrc->top    < 0)
-            || (rsrc->left  > src->currentDesc.Width)  || (rsrc->left   < 0)
-            || (rsrc->right > src->currentDesc.Width)  || (rsrc->right  < 0)
+    if ((rsrc->bottom > src->resource.height) || (rsrc->bottom < 0)
+            || (rsrc->top   > src->resource.height) || (rsrc->top    < 0)
+            || (rsrc->left  > src->resource.width)  || (rsrc->left   < 0)
+            || (rsrc->right > src->resource.width)  || (rsrc->right  < 0)
             || (rsrc->right < rsrc->left)              || (rsrc->bottom < rsrc->top))
     {
         WARN("Application gave us bad source rectangle for BltFast.\n");
@@ -1636,14 +1640,20 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     }
 
     h = rsrc->bottom - rsrc->top;
-    if (h > This->currentDesc.Height-dsty) h = This->currentDesc.Height-dsty;
-    if (h > src->currentDesc.Height-rsrc->top) h = src->currentDesc.Height-rsrc->top;
-    if (h <= 0) return WINEDDERR_INVALIDRECT;
+    if (h > This->resource.height-dsty)
+        h = This->resource.height-dsty;
+    if (h > src->resource.height-rsrc->top)
+        h = src->resource.height-rsrc->top;
+    if (h <= 0)
+        return WINEDDERR_INVALIDRECT;
 
     w = rsrc->right - rsrc->left;
-    if (w > This->currentDesc.Width-dstx) w = This->currentDesc.Width-dstx;
-    if (w > src->currentDesc.Width-rsrc->left) w = src->currentDesc.Width-rsrc->left;
-    if (w <= 0) return WINEDDERR_INVALIDRECT;
+    if (w > This->resource.width-dstx)
+        w = This->resource.width-dstx;
+    if (w > src->resource.width-rsrc->left)
+        w = src->resource.width-rsrc->left;
+    if (w <= 0)
+        return WINEDDERR_INVALIDRECT;
 
     /* Now compute the locking rectangle... */
     lock_src.left = rsrc->left;
@@ -1863,8 +1873,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
         pLockedRect->pBits = This->resource.allocatedMemory;
         This->lockedRect.left   = 0;
         This->lockedRect.top    = 0;
-        This->lockedRect.right  = This->currentDesc.Width;
-        This->lockedRect.bottom = This->currentDesc.Height;
+        This->lockedRect.right  = This->resource.width;
+        This->lockedRect.bottom = This->resource.height;
 
         TRACE("Locked Rect (%p) = l %d, t %d, r %d, b %d\n",
               &This->lockedRect, This->lockedRect.left, This->lockedRect.top,

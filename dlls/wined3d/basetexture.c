@@ -34,8 +34,9 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, const struct wined3d_
 {
     HRESULT hr;
 
-    hr = resource_init(&texture->resource, resource_type, device,
-            0, usage, format, pool, parent, parent_ops, resource_ops);
+    hr = resource_init(&texture->resource, device, resource_type, format,
+            WINED3DMULTISAMPLE_NONE, 0, usage, pool, 0, 0, 0, 0,
+            parent, parent_ops, resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);

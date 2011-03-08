@@ -272,8 +272,8 @@ static inline void surface_get_rect(IWineD3DSurfaceImpl *This, const RECT *rect_
     {
         rect_out->left = 0;
         rect_out->top = 0;
-        rect_out->right = This->currentDesc.Width;
-        rect_out->bottom = This->currentDesc.Height;
+        rect_out->right = This->resource.width;
+        rect_out->bottom = This->resource.height;
     }
 }
 
@@ -597,8 +597,9 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
             return WINED3DERR_INVALIDCALL;
     }
 
-    hr = resource_init(&surface->resource, WINED3DRTYPE_SURFACE, device, resource_size,
-            usage, format, pool, parent, parent_ops, &surface_resource_ops);
+    hr = resource_init(&surface->resource, device, WINED3DRTYPE_SURFACE, format,
+            multisample_type, multisample_quality, usage, pool, width, height, 1,
+            resource_size, parent, parent_ops, &surface_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
@@ -608,10 +609,6 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     /* "Standalone" surface. */
     surface_set_container(surface, WINED3D_CONTAINER_NONE, NULL);
 
-    surface->currentDesc.Width = width;
-    surface->currentDesc.Height = height;
-    surface->currentDesc.MultiSampleType = multisample_type;
-    surface->currentDesc.MultiSampleQuality = multisample_quality;
     surface->texture_level = level;
     list_init(&surface->overlays);
 
@@ -920,7 +917,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This, const struct wined3
              * standard texture with a non-power2 width instead of texture boxed up to be a power2 texture.
              *
              * internally the texture is still stored in a boxed format so any references to textureName will
-             * get a boxed texture with width pow2width and not a texture of width currentDesc.Width.
+             * get a boxed texture with width pow2width and not a texture of width resource.width.
              *
              * Performance should not be an issue, because applications normally do not lock the surfaces when
              * rendering. If an app does, the SFLAG_DYNLOCK flag will kick in and the memory copy won't be released,
@@ -929,7 +926,8 @@ static void surface_download_data(IWineD3DSurfaceImpl *This, const struct wined3
             src_data = mem;
             dst_data = This->resource.allocatedMemory;
             TRACE("(%p) : Repacking the surface data from pitch %d to pitch %d\n", This, src_pitch, dst_pitch);
-            for (y = 1 ; y < This->currentDesc.Height; y++) {
+            for (y = 1; y < This->resource.height; ++y)
+            {
                 /* skip the first row */
                 src_data += src_pitch;
                 dst_data += dst_pitch;
@@ -950,8 +948,8 @@ static void surface_download_data(IWineD3DSurfaceImpl *This, const struct wined3
 static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info,
         const struct wined3d_format *format, BOOL srgb, const GLvoid *data)
 {
-    GLsizei width = This->currentDesc.Width;
-    GLsizei height = This->currentDesc.Height;
+    GLsizei width = This->resource.width;
+    GLsizei height = This->resource.height;
     GLenum internal;
 
     if (srgb)
@@ -1210,8 +1208,8 @@ void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect
     {
         surface->dirtyRect.left = 0;
         surface->dirtyRect.top = 0;
-        surface->dirtyRect.right = surface->currentDesc.Width;
-        surface->dirtyRect.bottom = surface->currentDesc.Height;
+        surface->dirtyRect.right = surface->resource.width;
+        surface->dirtyRect.bottom = surface->resource.height;
     }
 
     /* if the container is a basetexture then mark it dirty. */
@@ -1498,9 +1496,11 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
     if(!rect) {
         local_rect.left = 0;
         local_rect.top = 0;
-        local_rect.right = This->currentDesc.Width;
-        local_rect.bottom = This->currentDesc.Height;
-    } else {
+        local_rect.right = This->resource.width;
+        local_rect.bottom = This->resource.height;
+    }
+    else
+    {
         local_rect = *rect;
     }
     /* TODO: Get rid of the extra GetPitch call, LockRect does that too. Cache the pitch */
@@ -1567,14 +1567,14 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, const RECT *rect, v
     checkGLcall("glGetIntegerv");
 
     /* Setup pixel store pack state -- to glReadPixels into the correct place */
-    glPixelStorei(GL_PACK_ROW_LENGTH, This->currentDesc.Width);
+    glPixelStorei(GL_PACK_ROW_LENGTH, This->resource.width);
     checkGLcall("glPixelStorei");
     glPixelStorei(GL_PACK_SKIP_PIXELS, local_rect.left);
     checkGLcall("glPixelStorei");
     glPixelStorei(GL_PACK_SKIP_ROWS, local_rect.top);
     checkGLcall("glPixelStorei");
 
-    glReadPixels(local_rect.left, (!srcIsUpsideDown) ? (This->currentDesc.Height - local_rect.bottom) : local_rect.top ,
+    glReadPixels(local_rect.left, !srcIsUpsideDown ? (This->resource.height - local_rect.bottom) : local_rect.top,
                  local_rect.right - local_rect.left,
                  local_rect.bottom - local_rect.top,
                  fmt, type, mem);
@@ -1719,7 +1719,7 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
     checkGLcall("glReadBuffer");
 
     glCopyTexSubImage2D(This->texture_target, This->texture_level,
-            0, 0, 0, 0, This->currentDesc.Width, This->currentDesc.Height);
+            0, 0, 0, 0, This->resource.width, This->resource.height);
     checkGLcall("glCopyTexSubImage2D");
 
     LEAVE_GL();
@@ -1882,8 +1882,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Map(IWineD3DSurface *iface,
     /* surface_load_location() does not check if the rectangle specifies
      * the full surface. Most callers don't need that, so do it here. */
     if (pRect && !pRect->top && !pRect->left
-            && pRect->right == This->currentDesc.Width
-            && pRect->bottom == This->currentDesc.Height)
+            && pRect->right == This->resource.width
+            && pRect->bottom == This->resource.height)
     {
         pass_rect = NULL;
     }
@@ -1974,7 +1974,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *surface,
     checkGLcall("glRasterPos3i");
 
     /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->currentDesc.Width);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->resource.width);
 
     if (surface->flags & SFLAG_PBO)
     {
@@ -2055,8 +2055,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
         }
 
         if (!This->dirtyRect.left && !This->dirtyRect.top
-                && This->dirtyRect.right == This->currentDesc.Width
-                && This->dirtyRect.bottom == This->currentDesc.Height)
+                && This->dirtyRect.right == This->resource.width
+                && This->dirtyRect.bottom == This->resource.height)
         {
             fullsurface = TRUE;
         } else {
@@ -2080,8 +2080,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
             surface_evict_sysmem(This);
         }
 
-        This->dirtyRect.left   = This->currentDesc.Width;
-        This->dirtyRect.top    = This->currentDesc.Height;
+        This->dirtyRect.left   = This->resource.width;
+        This->dirtyRect.top    = This->resource.height;
         This->dirtyRect.right  = 0;
         This->dirtyRect.bottom = 0;
     }
@@ -2906,10 +2906,12 @@ static void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *dst_surface, IWineD3D
 
         glCopyTexSubImage2D(dst_surface->texture_target, dst_surface->texture_level,
                 dst_rect.left /*xoffset */, dst_rect.top /* y offset */,
-                src_rect->left, src_surface->currentDesc.Height - src_rect->bottom,
+                src_rect->left, src_surface->resource.height - src_rect->bottom,
                 dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top);
-    } else {
-        UINT yoffset = src_surface->currentDesc.Height - src_rect->top + dst_rect.top - 1;
+    }
+    else
+    {
+        UINT yoffset = src_surface->resource.height - src_rect->top + dst_rect.top - 1;
         /* I have to process this row by row to swap the image,
          * otherwise it would be upside down, so stretching in y direction
          * doesn't cost extra time
@@ -2958,8 +2960,8 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
     GLuint src, backup = 0;
     IWineD3DSwapChainImpl *src_swapchain = NULL;
     float left, right, top, bottom; /* Texture coordinates */
-    UINT fbwidth = src_surface->currentDesc.Width;
-    UINT fbheight = src_surface->currentDesc.Height;
+    UINT fbwidth = src_surface->resource.width;
+    UINT fbheight = src_surface->resource.height;
     struct wined3d_context *context;
     GLenum drawBuffer = GL_BACK;
     GLenum texture_target;
@@ -3104,13 +3106,13 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
 
     if (!upsidedown)
     {
-        top = src_surface->currentDesc.Height - src_rect->top;
-        bottom = src_surface->currentDesc.Height - src_rect->bottom;
+        top = src_surface->resource.height - src_rect->top;
+        bottom = src_surface->resource.height - src_rect->bottom;
     }
     else
     {
-        top = src_surface->currentDesc.Height - src_rect->bottom;
-        bottom = src_surface->currentDesc.Height - src_rect->top;
+        top = src_surface->resource.height - src_rect->bottom;
+        bottom = src_surface->resource.height - src_rect->top;
     }
 
     if (src_surface->flags & SFLAG_NORMCOORD)
@@ -3259,7 +3261,7 @@ void surface_translate_drawable_coords(IWineD3DSurfaceImpl *surface, HWND window
     }
     else
     {
-        drawable_height = surface->currentDesc.Height;
+        drawable_height = surface->resource.height;
     }
 
     rect->top = drawable_height - rect->top;
@@ -3268,9 +3270,9 @@ void surface_translate_drawable_coords(IWineD3DSurfaceImpl *surface, HWND window
 
 static BOOL surface_is_full_rect(IWineD3DSurfaceImpl *surface, const RECT *r)
 {
-    if ((r->left && r->right) || abs(r->right - r->left) != surface->currentDesc.Width)
+    if ((r->left && r->right) || abs(r->right - r->left) != surface->resource.width)
         return FALSE;
-    if ((r->top && r->bottom) || abs(r->bottom - r->top) != surface->currentDesc.Height)
+    if ((r->top && r->bottom) || abs(r->bottom - r->top) != surface->resource.height)
         return FALSE;
     return TRUE;
 }
@@ -3562,8 +3564,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
             TRACE("Looking if a Present can be done...\n");
             /* Source Rectangle must be full surface */
             if (src_rect.left || src_rect.top
-                    || src_rect.right != src_surface->currentDesc.Width
-                    || src_rect.bottom != src_surface->currentDesc.Height)
+                    || src_rect.right != src_surface->resource.width
+                    || src_rect.bottom != src_surface->resource.height)
             {
                 TRACE("No, Source rectangle doesn't match\n");
                 break;
@@ -3598,8 +3600,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
                 }
             }
             else if (dst_rect.left || dst_rect.top
-                    || dst_rect.right != dst_surface->currentDesc.Width
-                    || dst_rect.bottom != dst_surface->currentDesc.Height)
+                    || dst_rect.right != dst_surface->resource.width
+                    || dst_rect.bottom != dst_surface->resource.height)
             {
                 TRACE("No, dest rectangle doesn't match(surface size)\n");
                 break;
@@ -3712,8 +3714,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
                     dst_surface, SFLAG_INDRAWABLE, &dst_rect);
             surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
         }
-        else if (!stretchx || dst_rect.right - dst_rect.left > src_surface->currentDesc.Width
-                || dst_rect.bottom - dst_rect.top > src_surface->currentDesc.Height)
+        else if (!stretchx || dst_rect.right - dst_rect.left > src_surface->resource.width
+                || dst_rect.bottom - dst_rect.top > src_surface->resource.height)
         {
             TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");
             fb_copy_to_texture_direct(dst_surface, src_surface, &src_rect, &dst_rect, Filter);
@@ -3989,32 +3991,32 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     /* Non-power2 support */
     if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
     {
-        pow2Width = This->currentDesc.Width;
-        pow2Height = This->currentDesc.Height;
+        pow2Width = This->resource.width;
+        pow2Height = This->resource.height;
     }
     else
     {
         /* Find the nearest pow2 match */
         pow2Width = pow2Height = 1;
-        while (pow2Width < This->currentDesc.Width) pow2Width <<= 1;
-        while (pow2Height < This->currentDesc.Height) pow2Height <<= 1;
+        while (pow2Width < This->resource.width) pow2Width <<= 1;
+        while (pow2Height < This->resource.height) pow2Height <<= 1;
     }
     This->pow2Width  = pow2Width;
     This->pow2Height = pow2Height;
 
-    if (pow2Width > This->currentDesc.Width || pow2Height > This->currentDesc.Height)
+    if (pow2Width > This->resource.width || pow2Height > This->resource.height)
     {
         /* TODO: Add support for non power two compressed textures. */
         if (This->resource.format->flags & WINED3DFMT_FLAG_COMPRESSED)
         {
             FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d)\n",
-                  This, This->currentDesc.Width, This->currentDesc.Height);
+                  This, This->resource.width, This->resource.height);
             return WINED3DERR_NOTAVAILABLE;
         }
     }
 
-    if (pow2Width != This->currentDesc.Width
-            || pow2Height != This->currentDesc.Height)
+    if (pow2Width != This->resource.width
+            || pow2Height != This->resource.height)
     {
         This->flags |= SFLAG_NONPOW2;
     }
@@ -4050,8 +4052,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
                 && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
         {
             This->texture_target = GL_TEXTURE_RECTANGLE_ARB;
-            This->pow2Width  = This->currentDesc.Width;
-            This->pow2Height = This->currentDesc.Height;
+            This->pow2Width  = This->resource.width;
+            This->pow2Height = This->resource.height;
             This->flags &= ~(SFLAG_NONPOW2 | SFLAG_NORMCOORD);
         }
     }
@@ -4163,8 +4165,8 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
         surface->ds_current_size.cy = 0;
     }
 
-    if (surface->ds_current_size.cx == surface->currentDesc.Width
-            && surface->ds_current_size.cy == surface->currentDesc.Height)
+    if (surface->ds_current_size.cx == surface->resource.width
+            && surface->ds_current_size.cy == surface->resource.height)
     {
         TRACE("Location (%#x) is already up to date.\n", location);
         return;
@@ -4193,8 +4195,8 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
          * buffer, so the onscreen depth/stencil buffer is potentially smaller
          * than the offscreen surface. Don't overwrite the offscreen surface
          * with undefined data. */
-        w = min(surface->currentDesc.Width, context->swapchain->presentParms.BackBufferWidth);
-        h = min(surface->currentDesc.Height, context->swapchain->presentParms.BackBufferHeight);
+        w = min(surface->resource.width, context->swapchain->presentParms.BackBufferWidth);
+        h = min(surface->resource.height, context->swapchain->presentParms.BackBufferHeight);
 
         TRACE("Copying onscreen depth buffer to depth texture.\n");
 
@@ -4269,7 +4271,7 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
 
         context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
         surface_depth_blt(surface, gl_info, surface->texture_name,
-                surface->currentDesc.Width, surface->currentDesc.Height, surface->texture_target);
+                surface->resource.width, surface->resource.height, surface->texture_target);
         checkGLcall("depth_blt");
 
         if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
@@ -4284,8 +4286,8 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
     }
 
     surface->flags |= location;
-    surface->ds_current_size.cx = surface->currentDesc.Width;
-    surface->ds_current_size.cy = surface->currentDesc.Height;
+    surface->ds_current_size.cx = surface->resource.width;
+    surface->ds_current_size.cy = surface->resource.height;
 }
 
 void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL persistent)
@@ -4471,7 +4473,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
                     FALSE /* We won't use textures */, &format, &convert);
 
             /* The width is in 'length' not in bytes */
-            width = surface->currentDesc.Width;
+            width = surface->resource.width;
             pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *)surface);
 
             /* Don't use PBOs for converted surfaces. During PBO conversion we look at SFLAG_CONVERTED
@@ -4489,7 +4491,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
 
             if ((convert != NO_CONVERSION) && surface->resource.allocatedMemory)
             {
-                int height = surface->currentDesc.Height;
+                int height = surface->resource.height;
                 byte_count = format.conv_byte_count;
 
                 /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
@@ -4535,7 +4537,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
                         NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
         {
             DWORD src_location = flag == SFLAG_INSRGBTEX ? SFLAG_INTEXTURE : SFLAG_INSRGBTEX;
-            RECT rect = {0, 0, surface->currentDesc.Width, surface->currentDesc.Height};
+            RECT rect = {0, 0, surface->resource.width, surface->resource.height};
 
             surface_blt_fbo(surface->resource.device, WINED3DTEXF_POINT,
                     surface, src_location, &rect, surface, flag, &rect);
@@ -4587,7 +4589,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
             else surface->flags &= ~SFLAG_GLCKEY;
 
             /* The width is in 'length' not in bytes */
-            width = surface->currentDesc.Width;
+            width = surface->resource.width;
             pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *)surface);
 
             /* Don't use PBOs for converted surfaces. During PBO conversion we look at SFLAG_CONVERTED
@@ -4601,7 +4603,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
             if (format.convert)
             {
                 /* This code is entered for texture formats which need a fixup. */
-                int height = surface->currentDesc.Height;
+                UINT height = surface->resource.height;
 
                 /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
                 outpitch = width * format.conv_byte_count;
@@ -4618,7 +4620,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
             else if (convert != NO_CONVERSION && surface->resource.allocatedMemory)
             {
                 /* This code is only entered for color keying fixups */
-                int height = surface->currentDesc.Height;
+                UINT height = surface->resource.height;
 
                 /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
                 outpitch = width * format.conv_byte_count;
@@ -4860,7 +4862,7 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
 static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
         const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {
-    const RECT draw_rect = {0, 0, dst_surface->currentDesc.Width, dst_surface->currentDesc.Height};
+    const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
 
     return device_clear_render_targets(device, 1 /* rt_count */, &dst_surface, 1 /* rect_count */,
             dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f /* depth */, 0 /* stencil */);

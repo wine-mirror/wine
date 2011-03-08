@@ -821,7 +821,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
                 correction_params[1] = 1.0f;
             } else {
                 /* position is window relative, not viewport relative */
-                correction_params[0] = context->current_rt->currentDesc.Height;
+                correction_params[0] = context->current_rt->resource.height;
                 correction_params[1] = -1.0f;
             }
             GL_EXTCALL(glUniform4fvARB(prog->ycorrection_location, 1, correction_params));
@@ -1039,7 +1039,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                  */
                 FIXME("Cannot find a free uniform for vpos correction params\n");
                 shader_addline(buffer, "const vec4 ycorrection = vec4(%f, %f, 0.0, 0.0);\n",
-                        context->render_offscreen ? 0.0f : device->render_targets[0]->currentDesc.Height,
+                        context->render_offscreen ? 0.0f : device->render_targets[0]->resource.height,
                         context->render_offscreen ? 1.0f : -1.0f);
             }
             shader_addline(buffer, "vec4 vpos;\n");

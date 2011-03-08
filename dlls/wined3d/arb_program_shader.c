@@ -640,7 +640,7 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
     {
         IWineD3DBaseShaderImpl *pshader = (IWineD3DBaseShaderImpl *)stateBlock->state.pixel_shader;
         const struct arb_ps_compiled_shader *gl_shader = priv->compiled_fprog;
-        float rt_height = device->render_targets[0]->currentDesc.Height;
+        float rt_height = device->render_targets[0]->resource.height;
 
         /* Load DirectX 9 float constants for pixel shader */
         device->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
@@ -4592,7 +4592,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         }
         else
         {
-            float rt_height = This->render_targets[0]->currentDesc.Height;
+            float rt_height = This->render_targets[0]->resource.height;
             shader_arb_ps_local_constants(compiled, context, state, rt_height);
         }
 

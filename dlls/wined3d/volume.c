@@ -79,9 +79,9 @@ void volume_add_dirty_box(struct IWineD3DVolumeImpl *volume, const WINED3DBOX *d
         volume->lockedBox.Left = 0;
         volume->lockedBox.Top = 0;
         volume->lockedBox.Front = 0;
-        volume->lockedBox.Right = volume->currentDesc.Width;
-        volume->lockedBox.Bottom = volume->currentDesc.Height;
-        volume->lockedBox.Back = volume->currentDesc.Depth;
+        volume->lockedBox.Right = volume->resource.width;
+        volume->lockedBox.Bottom = volume->resource.height;
+        volume->lockedBox.Back = volume->resource.depth;
     }
 }
 
@@ -105,7 +105,7 @@ void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode)
 
     ENTER_GL();
     GL_EXTCALL(glTexImage3DEXT(GL_TEXTURE_3D, level, format->glInternal,
-            volume->currentDesc.Width, volume->currentDesc.Height, volume->currentDesc.Depth,
+            volume->resource.width, volume->resource.height, volume->resource.depth,
             0, format->glFormat, format->glType, volume->resource.allocatedMemory));
     checkGLcall("glTexImage3D");
     LEAVE_GL();
@@ -233,9 +233,9 @@ static void WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, struct wine
     desc->size = volume->resource.size; /* dx8 only */
     desc->multisample_type = WINED3DMULTISAMPLE_NONE;
     desc->multisample_quality = 0;
-    desc->width = volume->currentDesc.Width;
-    desc->height = volume->currentDesc.Height;
-    desc->depth = volume->currentDesc.Depth;
+    desc->width = volume->resource.width;
+    desc->height = volume->resource.height;
+    desc->depth = volume->resource.depth;
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
@@ -251,18 +251,18 @@ static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
     /* fixme: should we really lock as such? */
     TRACE("(%p) : box=%p, output pbox=%p, allMem=%p\n", This, pBox, pLockedVolume, This->resource.allocatedMemory);
 
-    pLockedVolume->RowPitch = This->resource.format->byte_count * This->currentDesc.Width; /* Bytes / row   */
+    pLockedVolume->RowPitch = This->resource.format->byte_count * This->resource.width; /* Bytes / row */
     pLockedVolume->SlicePitch = This->resource.format->byte_count
-            * This->currentDesc.Width * This->currentDesc.Height;                               /* Bytes / slice */
+            * This->resource.width * This->resource.height; /* Bytes / slice */
     if (!pBox) {
         TRACE("No box supplied - all is ok\n");
         pLockedVolume->pBits = This->resource.allocatedMemory;
         This->lockedBox.Left   = 0;
         This->lockedBox.Top    = 0;
         This->lockedBox.Front  = 0;
-        This->lockedBox.Right  = This->currentDesc.Width;
-        This->lockedBox.Bottom = This->currentDesc.Height;
-        This->lockedBox.Back   = This->currentDesc.Depth;
+        This->lockedBox.Right  = This->resource.width;
+        This->lockedBox.Bottom = This->resource.height;
+        This->lockedBox.Back   = This->resource.depth;
     } else {
         TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n", pBox, pBox->Left, pBox->Top, pBox->Right, pBox->Bottom, pBox->Front, pBox->Back);
         pLockedVolume->pBits = This->resource.allocatedMemory
@@ -344,18 +344,16 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
 
     volume->lpVtbl = &IWineD3DVolume_Vtbl;
 
-    hr = resource_init(&volume->resource, WINED3DRTYPE_VOLUME, device,
-            width * height * depth * format->byte_count, usage, format, pool,
-            parent, parent_ops, &volume_resource_ops);
+    hr = resource_init(&volume->resource, device, WINED3DRTYPE_VOLUME, format,
+            WINED3DMULTISAMPLE_NONE, 0, usage, pool, width, height, depth,
+            width * height * depth * format->byte_count, parent, parent_ops,
+            &volume_resource_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
         return hr;
     }
 
-    volume->currentDesc.Width = width;
-    volume->currentDesc.Height = height;
-    volume->currentDesc.Depth = depth;
     volume->lockable = TRUE;
     volume->locked = FALSE;
     memset(&volume->lockedBox, 0, sizeof(volume->lockedBox));
