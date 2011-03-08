@@ -2,7 +2,7 @@
  * File dwarf.c - read dwarf2 information from the ELF modules
  *
  * Copyright (C) 2005, Raphael Junqueira
- * Copyright (C) 2006-2010, Eric Pouech
+ * Copyright (C) 2006-2011, Eric Pouech
  * Copyright (C) 2010, Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
@@ -957,12 +957,27 @@ static const char* dwarf2_get_cpp_name(dwarf2_parse_context_t* ctx, dwarf2_debug
 {
     char* last;
     struct attribute diname;
+    struct attribute spec;
 
     if (di->abbrev->tag == DW_TAG_compile_unit) return name;
     if (!ctx->cpp_name)
         ctx->cpp_name = pool_alloc(&ctx->pool, MAX_SYM_NAME);
     last = ctx->cpp_name + MAX_SYM_NAME - strlen(name);
     strcpy(last, name);
+
+    /* if the di is a definition, but has also a (previous) declaration, then scope must
+     * be gotten from declaration not definition
+     */
+    if (dwarf2_find_attribute(ctx, di, DW_AT_specification, &spec) && spec.gotten_from == attr_direct)
+    {
+        di = sparse_array_find(&ctx->debug_info_table, spec.u.uvalue);
+        if (!di)
+        {
+            FIXME("Should have found the debug info entry\n");
+            return NULL;
+        }
+    }
+
     for (di = di->parent; di; di = di->parent)
     {
         switch (di->abbrev->tag)
@@ -1033,10 +1048,7 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
 
         if (!dwarf2_find_attribute(ctx, di, DW_AT_low_pc, &low_pc) ||
             !dwarf2_find_attribute(ctx, di, DW_AT_high_pc, &high_pc))
-        {
-            FIXME("missing low or high value\n");
             return FALSE;
-        }
         *plow = low_pc.u.uvalue;
         *phigh = high_pc.u.uvalue;
         return TRUE;
@@ -1834,43 +1846,35 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
         return NULL;
     }
 
-    if (!dwarf2_read_range(ctx, di, &low_pc, &high_pc))
+    if (dwarf2_find_attribute(ctx, di, DW_AT_declaration, &is_decl) &&
+        is_decl.u.uvalue && is_decl.gotten_from == attr_direct)
     {
-        FIXME("cannot get range\n");
+        /* it's a real declaration, skip it */
         return NULL;
     }
-
+    if (!dwarf2_read_range(ctx, di, &low_pc, &high_pc))
+    {
+        WARN("cannot get range for %s\n", name.u.string);
+        return NULL;
+    }
     /* As functions (defined as inline assembly) get debug info with dwarf
      * (not the case for stabs), we just drop Wine's thunks here...
      * Actual thunks will be created in elf_module from the symbol table
      */
     if (elf_is_in_thunk_area(ctx->load_offset + low_pc, ctx->thunks) >= 0)
         return NULL;
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_declaration, &is_decl))
-        is_decl.u.uvalue = 0;
-        
     if (!(ret_type = dwarf2_lookup_type(ctx, di)))
     {
         ret_type = ctx->symt_cache[sc_void];
         assert(ret_type);
     }
-
     /* FIXME: assuming C source code */
     sig_type = symt_new_function_signature(ctx->module, ret_type, CV_CALL_FAR_C);
-    if (!is_decl.u.uvalue || is_decl.gotten_from != attr_direct)
-    {
-        subpgm.func = symt_new_function(ctx->module, ctx->compiland,
-                                        dwarf2_get_cpp_name(ctx, di, name.u.string),
-                                        ctx->load_offset + low_pc, high_pc - low_pc,
-                                        &sig_type->symt);
-        di->symt = &subpgm.func->symt;
-    }
-    else
-    {
-        WARN("no location for '%s::%s'\n", ctx->name_space, name.u.string);
-        subpgm.func = NULL;
-    }
-
+    subpgm.func = symt_new_function(ctx->module, ctx->compiland,
+                                    dwarf2_get_cpp_name(ctx, di, name.u.string),
+                                    ctx->load_offset + low_pc, high_pc - low_pc,
+                                    &sig_type->symt);
+    di->symt = &subpgm.func->symt;
     subpgm.ctx = ctx;
     if (!dwarf2_compute_location_attr(ctx, di, DW_AT_frame_base,
                                       &subpgm.frame, NULL))
