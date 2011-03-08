@@ -262,28 +262,29 @@ static void WINAPI IDirect3DTexture9Impl_GenerateMipSubLevels(LPDIRECT3DTEXTURE9
     wined3d_mutex_unlock();
 }
 
-/* IDirect3DTexture9 Interface follow: */
-static HRESULT WINAPI IDirect3DTexture9Impl_GetLevelDesc(LPDIRECT3DTEXTURE9 iface, UINT Level, D3DSURFACE_DESC* pDesc) {
+static HRESULT WINAPI IDirect3DTexture9Impl_GetLevelDesc(IDirect3DTexture9 *iface,
+        UINT level, D3DSURFACE_DESC *desc)
+{
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
-    WINED3DSURFACE_DESC wined3ddesc;
+    struct wined3d_resource_desc wined3d_desc;
     HRESULT hr;
 
-    TRACE("iface %p, level %u, desc %p.\n", iface, Level, pDesc);
+    TRACE("iface %p, level %u, desc %p.\n", iface, level, desc);
 
     wined3d_mutex_lock();
-    hr = IWineD3DTexture_GetLevelDesc(This->wineD3DTexture, Level, &wined3ddesc);
+    hr = IWineD3DTexture_GetLevelDesc(This->wineD3DTexture, level, &wined3d_desc);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
     {
-        pDesc->Format = d3dformat_from_wined3dformat(wined3ddesc.format);
-        pDesc->Type = wined3ddesc.resource_type;
-        pDesc->Usage = wined3ddesc.usage;
-        pDesc->Pool = wined3ddesc.pool;
-        pDesc->MultiSampleType = wined3ddesc.multisample_type;
-        pDesc->MultiSampleQuality = wined3ddesc.multisample_quality;
-        pDesc->Width = wined3ddesc.width;
-        pDesc->Height = wined3ddesc.height;
+        desc->Format = d3dformat_from_wined3dformat(wined3d_desc.format);
+        desc->Type = wined3d_desc.resource_type;
+        desc->Usage = wined3d_desc.usage;
+        desc->Pool = wined3d_desc.pool;
+        desc->MultiSampleType = wined3d_desc.multisample_type;
+        desc->MultiSampleQuality = wined3d_desc.multisample_quality;
+        desc->Width = wined3d_desc.width;
+        desc->Height = wined3d_desc.height;
     }
 
     return hr;

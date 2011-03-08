@@ -327,7 +327,7 @@ static BOOL WINAPI IWineD3DCubeTextureImpl_IsCondNP2(IWineD3DCubeTexture *iface)
 }
 
 static HRESULT WINAPI IWineD3DCubeTextureImpl_GetLevelDesc(IWineD3DCubeTexture *iface,
-        UINT sub_resource_idx, WINED3DSURFACE_DESC *desc)
+        UINT sub_resource_idx, struct wined3d_resource_desc *desc)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
     struct wined3d_resource *sub_resource;

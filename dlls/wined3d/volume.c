@@ -220,20 +220,22 @@ static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *ifa
     return resource_get_type(&((IWineD3DVolumeImpl *)iface)->resource);
 }
 
-static void WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC *desc)
+static void WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, struct wined3d_resource_desc *desc)
 {
     IWineD3DVolumeImpl *volume = (IWineD3DVolumeImpl *)iface;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    desc->Format = volume->resource.format->id;
-    desc->Type = volume->resource.resourceType;
-    desc->Usage = volume->resource.usage;
-    desc->Pool = volume->resource.pool;
-    desc->Size = volume->resource.size; /* dx8 only */
-    desc->Width = volume->currentDesc.Width;
-    desc->Height = volume->currentDesc.Height;
-    desc->Depth = volume->currentDesc.Depth;
+    desc->format = volume->resource.format->id;
+    desc->resource_type = volume->resource.resourceType;
+    desc->usage = volume->resource.usage;
+    desc->pool = volume->resource.pool;
+    desc->size = volume->resource.size; /* dx8 only */
+    desc->multisample_type = WINED3DMULTISAMPLE_NONE;
+    desc->multisample_quality = 0;
+    desc->width = volume->currentDesc.Width;
+    desc->height = volume->currentDesc.Height;
+    desc->depth = volume->currentDesc.Depth;
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,

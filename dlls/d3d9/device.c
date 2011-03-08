@@ -1070,10 +1070,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ColorFill(IDirect3DDevice9Ex *iface,
     };
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DSurface9Impl *surface = (IDirect3DSurface9Impl *)pSurface;
-    WINED3DPOOL pool;
-    WINED3DRESOURCETYPE restype;
-    DWORD usage;
-    WINED3DSURFACE_DESC desc;
+    struct wined3d_resource_desc desc;
     HRESULT hr;
 
     TRACE("iface %p, surface %p, rect %p, color 0x%08x.\n", iface, pSurface, pRect, color);
@@ -1081,14 +1078,12 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ColorFill(IDirect3DDevice9Ex *iface,
     wined3d_mutex_lock();
 
     IWineD3DSurface_GetDesc(surface->wineD3DSurface, &desc);
-    usage = desc.usage;
-    pool = desc.pool;
-    restype = desc.resource_type;
 
-    /* This method is only allowed with surfaces that are render targets, or offscreen plain surfaces
-     * in D3DPOOL_DEFAULT
-     */
-    if(!(usage & WINED3DUSAGE_RENDERTARGET) && (pool != WINED3DPOOL_DEFAULT || restype != WINED3DRTYPE_SURFACE)) {
+    /* This method is only allowed with surfaces that are render targets, or
+     * offscreen plain surfaces in D3DPOOL_DEFAULT. */
+    if (!(desc.usage & WINED3DUSAGE_RENDERTARGET)
+            && (desc.pool != WINED3DPOOL_DEFAULT || desc.resource_type != WINED3DRTYPE_SURFACE))
+    {
         wined3d_mutex_unlock();
         WARN("Surface is not a render target, or not a stand-alone D3DPOOL_DEFAULT surface\n");
         return D3DERR_INVALIDCALL;

@@ -2497,7 +2497,7 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
                 HRESULT hr;
                 BOOL tex_alpha = FALSE;
                 IWineD3DBaseTexture *tex = NULL;
-                WINED3DSURFACE_DESC desc;
+                struct wined3d_resource_desc desc;
                 DDPIXELFORMAT ddfmt;
 
                 hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
@@ -2805,7 +2805,7 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                 {
                     BOOL tex_alpha = FALSE;
                     IWineD3DBaseTexture *tex = NULL;
-                    WINED3DSURFACE_DESC desc;
+                    struct wined3d_resource_desc desc;
                     DDPIXELFORMAT ddfmt;
 
                     hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
@@ -4146,9 +4146,9 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
     IDirect3DVertexBufferImpl *vb = (IDirect3DVertexBufferImpl *)D3DVertexBuf;
     DWORD stride = get_flexible_vertex_size(vb->fvf);
+    struct wined3d_resource_desc desc;
     WORD *LockedIndices;
     HRESULT hr;
-    WINED3DBUFFER_DESC desc;
 
     TRACE("iface %p, primitive_type %#x, vb %p, start_vertex %u, vertex_count %u, indices %p, index_count %u, flags %#x.\n",
             iface, PrimitiveType, D3DVertexBuf, StartVertex, NumVertices, Indices, IndexCount, Flags);
@@ -4174,9 +4174,9 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     /* check that the buffer is large enough to hold the indices,
      * reallocate if necessary. */
     wined3d_buffer_get_desc(This->indexbuffer, &desc);
-    if (desc.Size < IndexCount * sizeof(WORD))
+    if (desc.size < IndexCount * sizeof(WORD))
     {
-        UINT size = max(desc.Size * 2, IndexCount * sizeof(WORD));
+        UINT size = max(desc.size * 2, IndexCount * sizeof(WORD));
         struct wined3d_buffer *buffer;
 
         TRACE("Growing index buffer to %u bytes\n", size);
@@ -4575,9 +4575,9 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
     {
         /* This fixup is required by the way D3DTBLEND_MODULATE maps to texture stage states.
            See IDirect3DDeviceImpl_3_SetRenderState for details. */
+        struct wined3d_resource_desc desc;
         BOOL tex_alpha = FALSE;
         IWineD3DBaseTexture *tex = NULL;
-        WINED3DSURFACE_DESC desc;
         DDPIXELFORMAT ddfmt;
         HRESULT result;
 

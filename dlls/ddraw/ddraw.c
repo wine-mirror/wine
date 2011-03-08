@@ -2515,22 +2515,13 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
 HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDESC2 *desc, void *Context)
 {
     IDirectDrawSurfaceImpl *surfImpl = (IDirectDrawSurfaceImpl *)surf;
+    struct wined3d_resource_desc wined3d_desc;
     IDirectDrawImpl *This = surfImpl->ddraw;
     struct wined3d_clipper *clipper = NULL;
     IWineD3DSurface *wineD3DSurface;
     IWineD3DSwapChain *swapchain;
     void *parent;
     HRESULT hr;
-
-    WINED3DSURFACE_DESC     Desc;
-    enum wined3d_format_id Format;
-    DWORD                   Usage;
-    WINED3DPOOL             Pool;
-
-    WINED3DMULTISAMPLE_TYPE MultiSampleType;
-    DWORD                   MultiSampleQuality;
-    UINT                    Width;
-    UINT                    Height;
 
     TRACE("surface %p, surface_desc %p, context %p.\n",
             surf, desc, Context);
@@ -2549,20 +2540,13 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     IWineD3DSurface_GetClipper(wineD3DSurface, &clipper);
 
     /* Get the surface properties */
-    IWineD3DSurface_GetDesc(wineD3DSurface, &Desc);
-
-    Format = Desc.format;
-    Usage = Desc.usage;
-    Pool = Desc.pool;
-    MultiSampleType = Desc.multisample_type;
-    MultiSampleQuality = Desc.multisample_quality;
-    Width = Desc.width;
-    Height = Desc.height;
+    IWineD3DSurface_GetDesc(wineD3DSurface, &wined3d_desc);
 
     parent = IWineD3DSurface_GetParent(wineD3DSurface);
-    hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, Width, Height, Format, TRUE /* Lockable */,
-            FALSE /* Discard */, surfImpl->mipmap_level, Usage, Pool, MultiSampleType, MultiSampleQuality,
-            This->ImplType, parent, &ddraw_null_wined3d_parent_ops, &surfImpl->WineD3DSurface);
+    hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, wined3d_desc.width, wined3d_desc.height,
+            wined3d_desc.format, TRUE, FALSE, surfImpl->mipmap_level, wined3d_desc.usage, wined3d_desc.pool,
+            wined3d_desc.multisample_type, wined3d_desc.multisample_quality, This->ImplType,
+            parent, &ddraw_null_wined3d_parent_ops, &surfImpl->WineD3DSurface);
     if (FAILED(hr))
     {
         surfImpl->WineD3DSurface = wineD3DSurface;

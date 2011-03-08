@@ -157,7 +157,7 @@ struct wined3d_resource * WINAPI IWineD3DBaseSurfaceImpl_GetResource(IWineD3DSur
     return &((IWineD3DSurfaceImpl *)iface)->resource;
 }
 
-void WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFACE_DESC *desc)
+void WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, struct wined3d_resource_desc *desc)
 {
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
 
@@ -172,6 +172,7 @@ void WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFA
     desc->multisample_quality = surface->currentDesc.MultiSampleQuality;
     desc->width = surface->currentDesc.Width;
     desc->height = surface->currentDesc.Height;
+    desc->depth = 1;
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD flags)

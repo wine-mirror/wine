@@ -224,28 +224,29 @@ static DWORD WINAPI IDirect3DVolumeTexture8Impl_GetLevelCount(LPDIRECT3DVOLUMETE
     return ret;
 }
 
-/* IDirect3DVolumeTexture8 Interface follow: */
-static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level, D3DVOLUME_DESC* pDesc) {
+static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetLevelDesc(IDirect3DVolumeTexture8 *iface,
+        UINT level, D3DVOLUME_DESC *desc)
+{
     IDirect3DVolumeTexture8Impl *This = (IDirect3DVolumeTexture8Impl *)iface;
-    WINED3DVOLUME_DESC     wined3ddesc;
+    struct wined3d_resource_desc wined3d_desc;
     HRESULT hr;
 
-    TRACE("iface %p, level %u, desc %p.\n", iface, Level, pDesc);
+    TRACE("iface %p, level %u, desc %p.\n", iface, level, desc);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolumeTexture_GetLevelDesc(This->wineD3DVolumeTexture, Level, &wined3ddesc);
+    hr = IWineD3DVolumeTexture_GetLevelDesc(This->wineD3DVolumeTexture, level, &wined3d_desc);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
     {
-        pDesc->Format = d3dformat_from_wined3dformat(wined3ddesc.Format);
-        pDesc->Type = wined3ddesc.Type;
-        pDesc->Usage = wined3ddesc.Usage;
-        pDesc->Pool = wined3ddesc.Pool;
-        pDesc->Size = wined3ddesc.Size;
-        pDesc->Width = wined3ddesc.Width;
-        pDesc->Height = wined3ddesc.Height;
-        pDesc->Depth = wined3ddesc.Depth;
+        desc->Format = d3dformat_from_wined3dformat(wined3d_desc.format);
+        desc->Type = wined3d_desc.resource_type;
+        desc->Usage = wined3d_desc.usage;
+        desc->Pool = wined3d_desc.pool;
+        desc->Size = wined3d_desc.size;
+        desc->Width = wined3d_desc.width;
+        desc->Height = wined3d_desc.height;
+        desc->Depth = wined3d_desc.depth;
     }
 
     return hr;

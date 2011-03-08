@@ -3499,8 +3499,8 @@ static const struct IDirect3DTextureVtbl d3d_texture1_vtbl =
 HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
         DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type)
 {
+    struct wined3d_resource_desc wined3d_desc;
     WINED3DPOOL pool = WINED3DPOOL_DEFAULT;
-    WINED3DSURFACE_DESC wined3d_desc;
     enum wined3d_format_id format;
     DWORD usage = 0;
     HRESULT hr;

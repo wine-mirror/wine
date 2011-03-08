@@ -1395,14 +1395,20 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
     }
 }
 
-void CDECL wined3d_buffer_get_desc(const struct wined3d_buffer *buffer, WINED3DBUFFER_DESC *desc)
+void CDECL wined3d_buffer_get_desc(const struct wined3d_buffer *buffer, struct wined3d_resource_desc *desc)
 {
     TRACE("buffer %p, desc %p.\n", buffer, desc);
 
-    desc->Type = buffer->resource.resourceType;
-    desc->Usage = buffer->resource.usage;
-    desc->Pool = buffer->resource.pool;
-    desc->Size = buffer->resource.size;
+    desc->format = buffer->resource.format->id;
+    desc->resource_type = buffer->resource.resourceType;
+    desc->usage = buffer->resource.usage;
+    desc->pool = buffer->resource.pool;
+    desc->size = buffer->resource.size;
+    desc->multisample_type = WINED3DMULTISAMPLE_NONE;
+    desc->multisample_quality = 0;
+    desc->width = buffer->resource.size;
+    desc->height = 1;
+    desc->depth = 1;
 }
 
 static const struct wined3d_resource_ops buffer_resource_ops =

@@ -1682,30 +1682,19 @@ typedef struct _WINED3DPRESENT_PARAMETERS
     BOOL AutoRestoreDisplayMode;
 } WINED3DPRESENT_PARAMETERS;
 
-typedef struct _WINED3DSURFACE_DESC
+struct wined3d_resource_desc
 {
-    enum wined3d_format_id format;
     WINED3DRESOURCETYPE resource_type;
+    enum wined3d_format_id format;
+    WINED3DMULTISAMPLE_TYPE multisample_type;
+    UINT multisample_quality;
     DWORD usage;
     WINED3DPOOL pool;
-    UINT size;
-    WINED3DMULTISAMPLE_TYPE multisample_type;
-    DWORD multisample_quality;
     UINT width;
     UINT height;
-} WINED3DSURFACE_DESC;
-
-typedef struct _WINED3DVOLUME_DESC
-{
-    enum wined3d_format_id Format;
-    WINED3DRESOURCETYPE Type;
-    DWORD Usage;
-    WINED3DPOOL Pool;
-    UINT Size;
-    UINT Width;
-    UINT Height;
-    UINT Depth;
-} WINED3DVOLUME_DESC;
+    UINT depth;
+    UINT size;
+};
 
 typedef struct _WINED3DCLIPSTATUS
 {
@@ -1834,14 +1823,6 @@ typedef struct WINED3DDEVINFO_VCACHE
     DWORD MagicNumber;  /* Internal for deciding when to restart strips,
                            non user modifiable (only valid if OptMethod==1) */
 } WINED3DDEVINFO_VCACHE;
-
-typedef struct _WINED3DBUFFER_DESC
-{
-    WINED3DRESOURCETYPE Type;
-    DWORD Usage;
-    WINED3DPOOL Pool;
-    UINT Size;
-} WINED3DBUFFER_DESC;
 
 typedef struct WineDirect3DStridedData
 {
@@ -2246,7 +2227,7 @@ interface IWineD3DSurface : IWineD3DResource
     struct wined3d_resource *GetResource(
     );
     void GetDesc(
-        [out] WINED3DSURFACE_DESC *desc
+        [out] struct wined3d_resource_desc *desc
     );
     HRESULT Map(
         [out] WINED3DLOCKED_RECT *locked_rect,
@@ -2347,7 +2328,7 @@ interface IWineD3DSurface : IWineD3DResource
 interface IWineD3DVolume : IWineD3DResource
 {
     void GetDesc(
-        [out] WINED3DVOLUME_DESC *desc
+        [out] struct wined3d_resource_desc *desc
     );
     HRESULT Map(
         [out] WINED3DLOCKED_BOX *locked_box,
@@ -2392,7 +2373,7 @@ interface IWineD3DTexture : IWineD3DBaseTexture
 {
     HRESULT GetLevelDesc(
         [in] UINT sub_resource_idx,
-        [out] WINED3DSURFACE_DESC *desc
+        [out] struct wined3d_resource_desc *desc
     );
     HRESULT GetSurfaceLevel(
         [in] UINT sub_resource_idx,
@@ -2421,7 +2402,7 @@ interface IWineD3DCubeTexture : IWineD3DBaseTexture
 {
     HRESULT GetLevelDesc(
         [in] UINT sub_resource_idx,
-        [out] WINED3DSURFACE_DESC *desc
+        [out] struct wined3d_resource_desc *desc
     );
     HRESULT GetCubeMapSurface(
         [in] UINT sub_resource_idx,
@@ -2451,7 +2432,7 @@ interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 {
     HRESULT GetLevelDesc(
         [in] UINT sub_resource_idx,
-        [out] WINED3DVOLUME_DESC *desc
+        [out] struct wined3d_resource_desc *desc
     );
     HRESULT GetVolumeLevel(
         [in] UINT sub_resource_idx,
@@ -3206,7 +3187,7 @@ HRESULT __cdecl wined3d_register_software_device(struct wined3d *wined3d, void *
 
 ULONG __cdecl wined3d_buffer_decref(struct wined3d_buffer *buffer);
 HRESULT __cdecl wined3d_buffer_free_private_data(struct wined3d_buffer *buffer, REFGUID guid);
-void __cdecl wined3d_buffer_get_desc(const struct wined3d_buffer *buffer, WINED3DBUFFER_DESC *desc);
+void __cdecl wined3d_buffer_get_desc(const struct wined3d_buffer *buffer, struct wined3d_resource_desc *desc);
 void * __cdecl wined3d_buffer_get_parent(const struct wined3d_buffer *buffer);
 DWORD __cdecl wined3d_buffer_get_priority(const struct wined3d_buffer *buffer);
 HRESULT __cdecl wined3d_buffer_get_private_data(const struct wined3d_buffer *buffer,

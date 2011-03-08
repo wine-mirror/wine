@@ -923,13 +923,14 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateImageSurface(IDirect3DDevice8 *
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8 *pSourceSurface, CONST RECT *pSourceRects, UINT cRects, IDirect3DSurface8 *pDestinationSurface, CONST POINT *pDestPoints) {
+static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
+        IDirect3DSurface8 *pSourceSurface, const RECT *pSourceRects, UINT cRects,
+        IDirect3DSurface8 *pDestinationSurface, const POINT *pDestPoints)
+{
     IDirect3DSurface8Impl *Source = (IDirect3DSurface8Impl *) pSourceSurface;
     IDirect3DSurface8Impl *Dest = (IDirect3DSurface8Impl *) pDestinationSurface;
-
-    HRESULT              hr = WINED3D_OK;
     enum wined3d_format_id srcFormat, destFormat;
-    WINED3DSURFACE_DESC  winedesc;
+    struct wined3d_resource_desc wined3d_desc;
 
     TRACE("iface %p, src_surface %p, src_rects %p, rect_count %u, dst_surface %p, dst_points %p.\n",
             iface, pSourceSurface, pSourceRects, cRects, pDestinationSurface, pDestPoints);
@@ -938,11 +939,11 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, ID
      * destination texture is in WINED3DPOOL_DEFAULT. */
 
     wined3d_mutex_lock();
-    IWineD3DSurface_GetDesc(Source->wineD3DSurface, &winedesc);
-    srcFormat = winedesc.format;
+    IWineD3DSurface_GetDesc(Source->wineD3DSurface, &wined3d_desc);
+    srcFormat = wined3d_desc.format;
 
-    IWineD3DSurface_GetDesc(Dest->wineD3DSurface, &winedesc);
-    destFormat = winedesc.format;
+    IWineD3DSurface_GetDesc(Dest->wineD3DSurface, &wined3d_desc);
+    destFormat = wined3d_desc.format;
 
     /* Check that the source and destination formats match */
     if (srcFormat != destFormat && WINED3DFMT_UNKNOWN != destFormat)
@@ -976,7 +977,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, ID
     }
     wined3d_mutex_unlock();
 
-    return hr;
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_UpdateTexture(IDirect3DDevice8 *iface,

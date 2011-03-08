@@ -209,7 +209,7 @@ static HRESULT WINAPI d3d8_vertexbuffer_Unlock(IDirect3DVertexBuffer8 *iface)
 static HRESULT WINAPI d3d8_vertexbuffer_GetDesc(IDirect3DVertexBuffer8 *iface, D3DVERTEXBUFFER_DESC *desc)
 {
     IDirect3DVertexBuffer8Impl *buffer = (IDirect3DVertexBuffer8Impl *)iface;
-    WINED3DBUFFER_DESC wined3d_desc;
+    struct wined3d_resource_desc wined3d_desc;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
@@ -218,9 +218,9 @@ static HRESULT WINAPI d3d8_vertexbuffer_GetDesc(IDirect3DVertexBuffer8 *iface, D
     wined3d_mutex_unlock();
 
     desc->Type = D3DRTYPE_VERTEXBUFFER;
-    desc->Usage = wined3d_desc.Usage;
-    desc->Pool = wined3d_desc.Pool;
-    desc->Size = wined3d_desc.Size;
+    desc->Usage = wined3d_desc.usage;
+    desc->Pool = wined3d_desc.pool;
+    desc->Size = wined3d_desc.size;
     desc->FVF = buffer->fvf;
     desc->Format = D3DFMT_VERTEXDATA;
 
@@ -471,7 +471,7 @@ static HRESULT WINAPI d3d8_indexbuffer_Unlock(IDirect3DIndexBuffer8 *iface)
 static HRESULT WINAPI d3d8_indexbuffer_GetDesc(IDirect3DIndexBuffer8 *iface, D3DINDEXBUFFER_DESC *desc)
 {
     IDirect3DIndexBuffer8Impl *buffer = (IDirect3DIndexBuffer8Impl *)iface;
-    WINED3DBUFFER_DESC wined3d_desc;
+    struct wined3d_resource_desc wined3d_desc;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
@@ -481,9 +481,9 @@ static HRESULT WINAPI d3d8_indexbuffer_GetDesc(IDirect3DIndexBuffer8 *iface, D3D
 
     desc->Format = d3dformat_from_wined3dformat(buffer->format);
     desc->Type = D3DRTYPE_INDEXBUFFER;
-    desc->Usage = wined3d_desc.Usage;
-    desc->Pool = wined3d_desc.Pool;
-    desc->Size = wined3d_desc.Size;
+    desc->Usage = wined3d_desc.usage;
+    desc->Pool = wined3d_desc.pool;
+    desc->Size = wined3d_desc.size;
 
     return D3D_OK;
 }

@@ -1290,7 +1290,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         hr = IWineD3DSwapChain_GetBackBuffer(swapchain, 0, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);
         if (SUCCEEDED(hr) && backbuffer)
         {
-            WINED3DSURFACE_DESC desc;
+            struct wined3d_resource_desc desc;
 
             IWineD3DSurface_GetDesc(backbuffer, &desc);
             IWineD3DSurface_Release(backbuffer);

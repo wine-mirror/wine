@@ -176,25 +176,26 @@ static HRESULT WINAPI IDirect3DVolume9Impl_GetContainer(LPDIRECT3DVOLUME9 iface,
     return res;
 }
 
-static HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(LPDIRECT3DVOLUME9 iface, D3DVOLUME_DESC* pDesc) {
+static HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(IDirect3DVolume9 *iface, D3DVOLUME_DESC *desc)
+{
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
-    WINED3DVOLUME_DESC wined3ddesc;
+    struct wined3d_resource_desc wined3d_desc;
 
-    TRACE("iface %p, desc %p.\n", iface, pDesc);
+    TRACE("iface %p, desc %p.\n", iface, desc);
 
     wined3d_mutex_lock();
 
-    IWineD3DVolume_GetDesc(This->wineD3DVolume, &wined3ddesc);
+    IWineD3DVolume_GetDesc(This->wineD3DVolume, &wined3d_desc);
 
     wined3d_mutex_unlock();
 
-    pDesc->Format = d3dformat_from_wined3dformat(wined3ddesc.Format);
-    pDesc->Type = wined3ddesc.Type;
-    pDesc->Usage = wined3ddesc.Usage;
-    pDesc->Pool = wined3ddesc.Pool;
-    pDesc->Width = wined3ddesc.Width;
-    pDesc->Height = wined3ddesc.Height;
-    pDesc->Depth = wined3ddesc.Depth;
+    desc->Format = d3dformat_from_wined3dformat(wined3d_desc.format);
+    desc->Type = wined3d_desc.resource_type;
+    desc->Usage = wined3d_desc.usage;
+    desc->Pool = wined3d_desc.pool;
+    desc->Width = wined3d_desc.width;
+    desc->Height = wined3d_desc.height;
+    desc->Depth = wined3d_desc.depth;
 
     return D3D_OK;
 }

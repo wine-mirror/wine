@@ -208,7 +208,7 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
                                DWORD *Size)
 {
     IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
-    WINED3DBUFFER_DESC Desc;
+    struct wined3d_resource_desc wined3d_desc;
     HRESULT hr;
     DWORD wined3d_flags = 0;
 
@@ -226,8 +226,8 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
     if(Size)
     {
         /* Get the size, for returning it, and for locking */
-        wined3d_buffer_get_desc(This->wineD3DVertexBuffer, &Desc);
-        *Size = Desc.Size;
+        wined3d_buffer_get_desc(This->wineD3DVertexBuffer, &wined3d_desc);
+        *Size = wined3d_desc.size;
     }
 
     hr = wined3d_buffer_map(This->wineD3DVertexBuffer, 0, 0, (BYTE **)Data, wined3d_flags);
@@ -400,20 +400,20 @@ IDirect3DVertexBufferImpl_GetVertexBufferDesc(IDirect3DVertexBuffer7 *iface,
                                               D3DVERTEXBUFFERDESC *Desc)
 {
     IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
-    WINED3DBUFFER_DESC WDesc;
+    struct wined3d_resource_desc wined3d_desc;
 
     TRACE("iface %p, desc %p.\n", iface, Desc);
 
     if(!Desc) return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    wined3d_buffer_get_desc(This->wineD3DVertexBuffer, &WDesc);
+    wined3d_buffer_get_desc(This->wineD3DVertexBuffer, &wined3d_desc);
     LeaveCriticalSection(&ddraw_cs);
 
     /* Now fill the Desc structure */
     Desc->dwCaps = This->Caps;
     Desc->dwFVF = This->fvf;
-    Desc->dwNumVertices = WDesc.Size / get_flexible_vertex_size(This->fvf);
+    Desc->dwNumVertices = wined3d_desc.size / get_flexible_vertex_size(This->fvf);
 
     return D3D_OK;
 }
