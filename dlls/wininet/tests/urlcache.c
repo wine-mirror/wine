@@ -96,7 +96,7 @@ static void test_find_url_cache_entriesA(void)
 static void test_GetUrlCacheEntryInfoExA(void)
 {
     BOOL ret;
-    DWORD cbCacheEntryInfo;
+    DWORD cbCacheEntryInfo, cbRedirectUrl;
     LPINTERNET_CACHE_ENTRY_INFO lpCacheEntryInfo;
 
     SetLastError(0xdeadbeef);
@@ -142,6 +142,16 @@ static void test_GetUrlCacheEntryInfoExA(void)
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetUrlCacheEntryInfoEx should have set last error to ERROR_INSUFFICIENT_BUFFER instead of %d\n", GetLastError());
 
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+
+    /* Querying the redirect URL fails with ERROR_INVALID_PARAMETER */
+    SetLastError(0xdeadbeef);
+    ret = GetUrlCacheEntryInfoEx(TEST_URL, NULL, NULL, NULL, &cbRedirectUrl, NULL, 0);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = GetUrlCacheEntryInfoEx(TEST_URL, NULL, &cbCacheEntryInfo, NULL, &cbRedirectUrl, NULL, 0);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 }
 
 static void test_RetrieveUrlCacheEntryA(void)
