@@ -119,12 +119,21 @@ static msi_file_state calculate_install_state( MSIFILE *file )
     {
         return msifs_overwrite;
     }
-    if (file->hash.dwFileHashInfoSize && msi_file_hash_matches( file ))
+    if (file->hash.dwFileHashInfoSize)
     {
-        TRACE("file hashes match, not overwriting\n");
-        return msifs_present;
+        if (msi_file_hash_matches( file ))
+        {
+            TRACE("file hashes match, not overwriting\n");
+            return msifs_hashmatch;
+        }
+        else
+        {
+            TRACE("file hashes do not match, overwriting\n");
+            return msifs_overwrite;
+        }
     }
-    return msifs_overwrite;
+    /* assume present */
+    return msifs_present;
 }
 
 static void schedule_install_files(MSIPACKAGE *package)
@@ -299,6 +308,13 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             ERR("Unable to load media info for %s (%u)\n", debugstr_w(file->File), rc);
             return ERROR_FUNCTION_FAILED;
         }
+        if (!file->Component->Enabled) continue;
+
+        if (file->state != msifs_hashmatch && (rc = ready_media( package, file, mi )))
+        {
+            ERR("Failed to ready media for %s\n", debugstr_w(file->File));
+            goto done;
+        }
 
         if (file->state != msifs_missing && !mi->is_continuous && file->state != msifs_overwrite)
             continue;
@@ -307,13 +323,6 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             (file->IsCompressed && !mi->is_extracted))
         {
             MSICABDATA data;
-
-            rc = ready_media(package, file, mi);
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Failed to ready media for %s\n", debugstr_w(file->File));
-                goto done;
-            }
 
             data.mi = mi;
             data.package = package;

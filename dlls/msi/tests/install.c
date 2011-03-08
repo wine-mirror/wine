@@ -713,7 +713,8 @@ static const CHAR mc_component_dat[] = "Component\tComponentId\tDirectory_\tAttr
                                         "maximus\t\tMSITESTDIR\t0\t1\tmaximus\n"
                                         "augustus\t\tMSITESTDIR\t0\t1\taugustus\n"
                                         "caesar\t\tMSITESTDIR\t0\t1\tcaesar\n"
-                                        "gaius\t\tMSITESTDIR\t0\tGAIUS=1\tgaius\n";
+                                        "gaius\t\tMSITESTDIR\t0\tGAIUS=1\tgaius\n"
+                                        "tiberius\t\tMSITESTDIR\t0\t\ttiberius\n";
 
 static const CHAR mc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
@@ -721,7 +722,8 @@ static const CHAR mc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion
                                   "maximus\tmaximus\tmaximus\t500\t\t\t16384\t1\n"
                                   "augustus\taugustus\taugustus\t500\t\t\t0\t2\n"
                                   "caesar\tcaesar\tcaesar\t500\t\t\t16384\t3\n"
-                                  "gaius\tgaius\tgaius\t500\t\t\t16384\t4";
+                                  "gaius\tgaius\tgaius\t500\t\t\t16384\t4\n"
+                                  "tiberius\ttiberius\ttiberius\t500\t\t\t0\t5\n";
 
 static const CHAR mc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
                                    "i2\ti4\tL64\tS255\tS32\tS72\n"
@@ -729,7 +731,8 @@ static const CHAR mc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tV
                                    "1\t1\t\ttest1.cab\tDISK1\t\n"
                                    "2\t2\t\ttest2.cab\tDISK2\t\n"
                                    "3\t3\t\ttest3.cab\tDISK3\t\n"
-                                   "4\t4\t\ttest3.cab\tDISK3\t\n";
+                                   "4\t4\t\ttest3.cab\tDISK3\t\n"
+                                   "5\t5\t\ttest4.cab\tDISK4\t\n";
 
 static const CHAR mc_file_hash_dat[] = "File_\tOptions\tHashPart1\tHashPart2\tHashPart3\tHashPart4\n"
                                        "s72\ti2\ti4\ti4\ti4\ti4\n"
@@ -2293,6 +2296,29 @@ static BOOL delete_cf(const CHAR *rel_path, BOOL is_file)
         return DeleteFileA(path);
     else
         return RemoveDirectoryA(path);
+}
+
+static BOOL compare_pf_data(const char *filename, const char *data, DWORD size)
+{
+    DWORD read;
+    HANDLE handle;
+    BOOL ret = FALSE;
+    char *buffer, path[MAX_PATH];
+
+    lstrcpyA(path, PROG_FILES_DIR);
+    lstrcatA(path, "\\");
+    lstrcatA(path, filename);
+
+    handle = CreateFileA(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    if (buffer)
+    {
+        ReadFile(handle, buffer, size, &read, NULL);
+        if (read == size && !memcmp(data, buffer, size)) ret = TRUE;
+        HeapFree(GetProcessHeap(), 0, buffer);
+    }
+    CloseHandle(handle);
+    return ret;
 }
 
 static void delete_test_files(void)
@@ -4068,15 +4094,18 @@ static void test_missingcab(void)
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\augustus", 500);
     create_file("maximus", 500);
+    create_file("tiberius", 500);
 
     create_database(msifile, mc_tables, sizeof(mc_tables) / sizeof(msi_table));
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     create_cab_file("test1.cab", MEDIA_SIZE, "maximus\0");
+    create_cab_file("test4.cab", MEDIA_SIZE, "tiberius\0");
 
     create_pf("msitest", FALSE);
     create_pf_data("msitest\\caesar", "abcdefgh", TRUE);
+    create_pf_data("msitest\\tiberius", "abcdefgh", TRUE);
 
     r = MsiInstallProductA(msifile, NULL);
     if (r == ERROR_INSTALL_PACKAGE_REJECTED)
@@ -4093,11 +4122,14 @@ static void test_missingcab(void)
       ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     }
     ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+    ok(compare_pf_data("msitest\\tiberius", "abcdefgh", sizeof("abcdefgh")), "Wrong file contents\n");
+    ok(delete_pf("msitest\\tiberius", TRUE), "File not installed\n");
     ok(!delete_pf("msitest\\gaius", TRUE), "File installed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
     create_pf("msitest", FALSE);
     create_pf_data("msitest\\caesar", "abcdefgh", TRUE);
+    create_pf_data("msitest\\tiberius", "abcdefgh", TRUE);
     create_pf("msitest\\gaius", TRUE);
 
     r = MsiInstallProductA(msifile, "GAIUS=1");
@@ -4108,16 +4140,19 @@ static void test_missingcab(void)
         ok(!delete_pf("msitest\\augustus", TRUE), "File installed\n");
     }
     ok(delete_pf("msitest\\caesar", TRUE), "File removed\n");
+    ok(compare_pf_data("msitest\\tiberius", "abcdefgh", sizeof("abcdefgh")), "Wrong file contents\n");
+    ok(delete_pf("msitest\\tiberius", TRUE), "File removed\n");
     ok(delete_pf("msitest\\gaius", TRUE), "File removed\n");
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
 error:
-    delete_pf("msitest\\caesar", TRUE);
     delete_pf("msitest", FALSE);
     DeleteFile("msitest\\augustus");
     RemoveDirectory("msitest");
     DeleteFile("maximus");
+    DeleteFile("tiberius");
     DeleteFile("test1.cab");
+    DeleteFile("test4.cab");
     DeleteFile(msifile);
 }
 

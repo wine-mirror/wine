@@ -499,6 +499,7 @@ typedef enum _msi_file_state {
     msifs_present,
     msifs_installed,
     msifs_skipped,
+    msifs_hashmatch
 } msi_file_state;
 
 typedef struct tagMSIFILE
