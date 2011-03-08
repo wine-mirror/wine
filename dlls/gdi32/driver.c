@@ -403,9 +403,9 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pAbortDoc */
     NULL,                               /* pAbortPath */
     NULL,                               /* pAlphaBlend */
-    NULL,                               /* pAngleArc */
+    nulldrv_AngleArc,                   /* pAngleArc */
     nulldrv_Arc,                        /* pArc */
-    NULL,                               /* pArcTo */
+    nulldrv_ArcTo,                      /* pArcTo */
     NULL,                               /* pBeginPath */
     NULL,                               /* pBitBlt */
     NULL,                               /* pChoosePixelFormat */
@@ -432,9 +432,9 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pExtSelectClipRgn */
     NULL,                               /* pExtTextOut */
     NULL,                               /* pFillPath */
-    NULL,                               /* pFillRgn */
+    nulldrv_FillRgn,                    /* pFillRgn */
     NULL,                               /* pFlattenPath */
-    NULL,                               /* pFrameRgn */
+    nulldrv_FrameRgn,                   /* pFrameRgn */
     NULL,                               /* pGdiComment */
     NULL,                               /* pGetBitmapBits */
     NULL,                               /* pGetCharWidth */
@@ -449,7 +449,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pGetTextExtentExPoint */
     NULL,                               /* pGetTextMetrics */
     NULL,                               /* pIntersectClipRect */
-    NULL,                               /* pInvertRgn */
+    nulldrv_InvertRgn,                  /* pInvertRgn */
     nulldrv_LineTo,                     /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     nulldrv_MoveTo,                     /* pMoveTo */
@@ -459,14 +459,14 @@ const DC_FUNCTIONS null_driver =
     nulldrv_PaintRgn,                   /* pPaintRgn */
     NULL,                               /* pPatBlt */
     nulldrv_Pie,                        /* pPie */
-    NULL,                               /* pPolyBezier */
-    NULL,                               /* pPolyBezierTo */
-    NULL,                               /* pPolyDraw */
+    nulldrv_PolyBezier,                 /* pPolyBezier */
+    nulldrv_PolyBezierTo,               /* pPolyBezierTo */
+    nulldrv_PolyDraw,                   /* pPolyDraw */
     nulldrv_PolyPolygon,                /* pPolyPolygon */
     nulldrv_PolyPolyline,               /* pPolyPolyline */
     nulldrv_Polygon,                    /* pPolygon */
     nulldrv_Polyline,                   /* pPolyline */
-    NULL,                               /* pPolylineTo */
+    nulldrv_PolylineTo,                 /* pPolylineTo */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
     nulldrv_Rectangle,                  /* pRectangle */

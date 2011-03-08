@@ -38,6 +38,195 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 
 /***********************************************************************
+ *           null driver fallback implementations
+ */
+
+BOOL CDECL nulldrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep )
+{
+    INT x1 = GDI_ROUND( x + cos( start * M_PI / 180 ) * radius );
+    INT y1 = GDI_ROUND( y - sin( start * M_PI / 180 ) * radius );
+    INT x2 = GDI_ROUND( x + cos( (start + sweep) * M_PI / 180) * radius );
+    INT y2 = GDI_ROUND( y - sin( (start + sweep) * M_PI / 180) * radius );
+    INT arcdir = SetArcDirection( dev->hdc, sweep >= 0 ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE );
+    BOOL ret = ArcTo( dev->hdc, x - radius, y - radius, x + radius, y + radius, x1, y1, x2, y2 );
+    SetArcDirection( dev->hdc, arcdir );
+    return ret;
+}
+
+BOOL CDECL nulldrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                          INT xstart, INT ystart, INT xend, INT yend )
+{
+    INT width = abs( right - left );
+    INT height = abs( bottom - top );
+    double xradius = width / 2.0;
+    double yradius = height / 2.0;
+    double xcenter = right > left ? left + xradius : right + xradius;
+    double ycenter = bottom > top ? top + yradius : bottom + yradius;
+    double angle;
+
+    if (!height || !width) return FALSE;
+    /* draw a line from the current position to the starting point of the arc, then draw the arc */
+    angle = atan2( (ystart - ycenter) / height, (xstart - xcenter) / width );
+    LineTo( dev->hdc, GDI_ROUND( xcenter + cos(angle) * xradius ),
+            GDI_ROUND( ycenter + sin(angle) * yradius ));
+    return Arc( dev->hdc, left, top, right, bottom, xstart, ystart, xend, yend );
+}
+
+BOOL CDECL nulldrv_FillRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush )
+{
+    BOOL ret = FALSE;
+    HBRUSH prev;
+
+    if ((prev = SelectObject( dev->hdc, brush )))
+    {
+        ret = PaintRgn( dev->hdc, rgn );
+        SelectObject( dev->hdc, prev );
+    }
+    return ret;
+}
+
+BOOL CDECL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, INT height )
+{
+    BOOL ret = FALSE;
+    HRGN tmp = CreateRectRgn( 0, 0, 0, 0 );
+
+    if (tmp)
+    {
+        if (REGION_FrameRgn( tmp, rgn, width, height )) ret = FillRgn( dev->hdc, tmp, brush );
+        DeleteObject( tmp );
+    }
+    return ret;
+}
+
+BOOL CDECL nulldrv_InvertRgn( PHYSDEV dev, HRGN rgn )
+{
+    HBRUSH prev_brush = SelectObject( dev->hdc, GetStockObject(BLACK_BRUSH) );
+    INT prev_rop = SetROP2( dev->hdc, R2_NOT );
+    BOOL ret = PaintRgn( dev->hdc, rgn );
+    SelectObject( dev->hdc, prev_brush );
+    SetROP2( dev->hdc, prev_rop );
+    return ret;
+}
+
+BOOL CDECL nulldrv_PolyBezier( PHYSDEV dev, const POINT *points, DWORD count )
+{
+    BOOL ret = FALSE;
+    POINT *pts;
+    INT n;
+
+    if ((pts = GDI_Bezier( points, count, &n )))
+    {
+        ret = Polyline( dev->hdc, pts, n );
+        HeapFree( GetProcessHeap(), 0, pts );
+    }
+    return ret;
+}
+
+BOOL CDECL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count )
+{
+    BOOL ret = FALSE;
+    POINT *pts = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT) * (count + 1) );
+
+    if (pts)
+    {
+        GetCurrentPositionEx( dev->hdc, &pts[0] );
+        memcpy( pts + 1, points, sizeof(POINT) * count );
+        ret = PolyBezier( dev->hdc, pts, count + 1 );
+        HeapFree( GetProcessHeap(), 0, pts );
+    }
+    return ret;
+}
+
+BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count )
+{
+    POINT *line_pts = NULL, *bzr_pts = NULL, bzr[4];
+    INT i, num_pts, num_bzr_pts, space, size;
+
+    /* check for valid point types */
+    for (i = 0; i < count; i++)
+    {
+        switch (types[i])
+        {
+        case PT_MOVETO:
+        case PT_LINETO | PT_CLOSEFIGURE:
+        case PT_LINETO:
+            break;
+        case PT_BEZIERTO:
+            if((i + 2 < count) && (types[i + 1] == PT_BEZIERTO) &&
+               ((types[i + 2] & ~PT_CLOSEFIGURE) == PT_BEZIERTO))
+            {
+                i += 2;
+                break;
+            }
+        default:
+            return FALSE;
+        }
+    }
+
+    space = count + 300;
+    line_pts = HeapAlloc( GetProcessHeap(), 0, space * sizeof(POINT) );
+    num_pts = 1;
+
+    GetCurrentPositionEx( dev->hdc, &line_pts[0] );
+    for (i = 0; i < count; i++)
+    {
+        switch (types[i])
+        {
+        case PT_MOVETO:
+            if (num_pts >= 2) Polyline( dev->hdc, line_pts, num_pts );
+            num_pts = 0;
+            line_pts[num_pts++] = points[i];
+            break;
+        case PT_LINETO:
+        case (PT_LINETO | PT_CLOSEFIGURE):
+            line_pts[num_pts++] = points[i];
+            break;
+        case PT_BEZIERTO:
+            bzr[0].x = line_pts[num_pts - 1].x;
+            bzr[0].y = line_pts[num_pts - 1].y;
+            memcpy( &bzr[1], &points[i], 3 * sizeof(POINT) );
+
+            if ((bzr_pts = GDI_Bezier( bzr, 4, &num_bzr_pts )))
+            {
+                size = num_pts + (count - i) + num_bzr_pts;
+                if (space < size)
+                {
+                    space = size * 2;
+                    line_pts = HeapReAlloc( GetProcessHeap(), 0, line_pts, space * sizeof(POINT) );
+                }
+                memcpy( &line_pts[num_pts], &bzr_pts[1], (num_bzr_pts - 1) * sizeof(POINT) );
+                num_pts += num_bzr_pts - 1;
+                HeapFree( GetProcessHeap(), 0, bzr_pts );
+            }
+            i += 2;
+            break;
+        }
+        if (types[i] & PT_CLOSEFIGURE) line_pts[num_pts++] = line_pts[0];
+    }
+
+    if (num_pts >= 2) Polyline( dev->hdc, line_pts, num_pts );
+    MoveToEx( dev->hdc, line_pts[num_pts - 1].x, line_pts[num_pts - 1].y, NULL );
+    HeapFree( GetProcessHeap(), 0, line_pts );
+    return TRUE;
+}
+
+BOOL CDECL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count )
+{
+    BOOL ret = FALSE;
+    POINT *pts;
+
+    if (!count) return FALSE;
+    if ((pts = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT) * (count + 1) )))
+    {
+        GetCurrentPositionEx( dev->hdc, &pts[0] );
+        memcpy( pts + 1, points, sizeof(POINT) * count );
+        ret = Polyline( dev->hdc, pts, count + 1 );
+        HeapFree( GetProcessHeap(), 0, pts );
+    }
+    return ret;
+}
+
+/***********************************************************************
  *           LineTo    (GDI32.@)
  */
 BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
@@ -140,16 +329,10 @@ BOOL WINAPI ArcTo( HDC hdc,
     update_dc( dc );
     if(PATH_IsPathOpen(dc->path))
         result = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,-1);
-    else if(dc->funcs->pArcTo)
-        result = dc->funcs->pArcTo( dc->physDev, left, top, right, bottom,
-				  xstart, ystart, xend, yend );
-    else /* We'll draw a line from the current position to the starting point of the arc, then draw the arc */
+    else
     {
-        angle = atan2(((ystart-ycenter)/height),
-                      ((xstart-xcenter)/width));
-        LineTo(hdc, GDI_ROUND(xcenter+(cos(angle)*xradius)),
-               GDI_ROUND(ycenter+(sin(angle)*yradius)));
-        result = Arc(hdc, left, top, right, bottom, xstart, ystart, xend, yend);
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pArcTo );
+        result = physdev->funcs->pArcTo( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
     }
     if (result) {
         angle = atan2(((yend-ycenter)/height),
@@ -530,21 +713,15 @@ BOOL WINAPI PaintRgn( HDC hdc, HRGN hrgn )
 BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 {
     BOOL retval = FALSE;
-    HBRUSH prevBrush;
     DC * dc = get_dc_ptr( hdc );
 
-    if (!dc) return FALSE;
-    if(dc->funcs->pFillRgn)
+    if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pFillRgn );
         update_dc( dc );
-        retval = dc->funcs->pFillRgn(dc->physDev, hrgn, hbrush);
+        retval = physdev->funcs->pFillRgn( physdev, hrgn, hbrush );
+        release_dc_ptr( dc );
     }
-    else if ((prevBrush = SelectObject( hdc, hbrush )))
-    {
-        retval = PaintRgn( hdc, hrgn );
-        SelectObject( hdc, prevBrush );
-    }
-    release_dc_ptr( dc );
     return retval;
 }
 
@@ -558,27 +735,13 @@ BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush,
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
 
-    if (!dc) return FALSE;
-
-    if(dc->funcs->pFrameRgn)
+    if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pFrameRgn );
         update_dc( dc );
-        ret = dc->funcs->pFrameRgn( dc->physDev, hrgn, hbrush, nWidth, nHeight );
+        ret = physdev->funcs->pFrameRgn( physdev, hrgn, hbrush, nWidth, nHeight );
+        release_dc_ptr( dc );
     }
-    else
-    {
-        HRGN tmp = CreateRectRgn( 0, 0, 0, 0 );
-        if (tmp)
-        {
-            if (REGION_FrameRgn( tmp, hrgn, nWidth, nHeight ))
-            {
-                FillRgn( hdc, tmp, hbrush );
-                ret = TRUE;
-            }
-            DeleteObject( tmp );
-        }
-    }
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -588,27 +751,17 @@ BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush,
  */
 BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
 {
-    HBRUSH prevBrush;
-    INT prevROP;
-    BOOL retval;
+    BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
 
-    if(dc->funcs->pInvertRgn)
+    if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pInvertRgn );
         update_dc( dc );
-        retval = dc->funcs->pInvertRgn( dc->physDev, hrgn );
+        ret = physdev->funcs->pInvertRgn( physdev, hrgn );
+        release_dc_ptr( dc );
     }
-    else
-    {
-        prevBrush = SelectObject( hdc, GetStockObject(BLACK_BRUSH) );
-        prevROP = SetROP2( hdc, R2_NOT );
-        retval = PaintRgn( hdc, hrgn );
-        SelectObject( hdc, prevBrush );
-        SetROP2( hdc, prevROP );
-    }
-    release_dc_ptr( dc );
-    return retval;
+    return ret;
 }
 
 
@@ -644,30 +797,15 @@ BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
 
     if(!dc) return FALSE;
 
-    if(PATH_IsPathOpen(dc->path))
+    update_dc( dc );
+    if(PATH_IsPathOpen(dc->path)) ret = PATH_PolylineTo(dc, pt, cCount);
+    else
     {
-        update_dc( dc );
-        ret = PATH_PolylineTo(dc, pt, cCount);
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolylineTo );
+        ret = physdev->funcs->pPolylineTo( physdev, pt, cCount );
     }
-    else if(dc->funcs->pPolylineTo)
+    if (ret && cCount)
     {
-        update_dc( dc );
-        ret = dc->funcs->pPolylineTo(dc->physDev, pt, cCount);
-    }
-    else /* do it using Polyline */
-    {
-        POINT *pts = HeapAlloc( GetProcessHeap(), 0,
-				sizeof(POINT) * (cCount + 1) );
-	if (pts)
-        {
-            pts[0].x = dc->CursPosX;
-            pts[0].y = dc->CursPosY;
-            memcpy( pts + 1, pt, sizeof(POINT) * cCount );
-            ret = Polyline( hdc, pts, cCount + 1 );
-            HeapFree( GetProcessHeap(), 0, pts );
-        }
-    }
-    if(ret) {
         dc->CursPosX = pt[cCount-1].x;
 	dc->CursPosY = pt[cCount-1].y;
     }
@@ -799,29 +937,13 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
     dc = get_dc_ptr( hdc );
     if(!dc) return FALSE;
 
-    if(PATH_IsPathOpen(dc->path))
+    update_dc( dc );
+    if(PATH_IsPathOpen(dc->path)) ret = PATH_PolyBezier(dc, lppt, cPoints);
+    else
     {
-        update_dc( dc );
-	ret = PATH_PolyBezier(dc, lppt, cPoints);
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyBezier );
+        ret = physdev->funcs->pPolyBezier( physdev, lppt, cPoints );
     }
-    else if (dc->funcs->pPolyBezier)
-    {
-        update_dc( dc );
-        ret = dc->funcs->pPolyBezier(dc->physDev, lppt, cPoints);
-    }
-    else  /* We'll convert it into line segments and draw them using Polyline */
-    {
-        POINT *Pts;
-	INT nOut;
-
-	if ((Pts = GDI_Bezier( lppt, cPoints, &nOut )))
-        {
-	    TRACE("Pts = %p, no = %d\n", Pts, nOut);
-	    ret = Polyline( hdc, Pts, nOut );
-	    HeapFree( GetProcessHeap(), 0, Pts );
-	}
-    }
-
     release_dc_ptr( dc );
     return ret;
 }
@@ -850,27 +972,12 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
     dc = get_dc_ptr( hdc );
     if(!dc) return FALSE;
 
-    if(PATH_IsPathOpen(dc->path))
+    update_dc( dc );
+    if(PATH_IsPathOpen(dc->path)) ret = PATH_PolyBezierTo(dc, lppt, cPoints);
+    else
     {
-        update_dc( dc );
-        ret = PATH_PolyBezierTo(dc, lppt, cPoints);
-    }
-    else if(dc->funcs->pPolyBezierTo)
-    {
-        update_dc( dc );
-        ret = dc->funcs->pPolyBezierTo(dc->physDev, lppt, cPoints);
-    }
-    else  /* We'll do it using PolyBezier */
-    {
-        POINT *pt = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT) * (cPoints + 1) );
-	if(pt)
-        {
-            pt[0].x = dc->CursPosX;
-            pt[0].y = dc->CursPosY;
-            memcpy(pt + 1, lppt, sizeof(POINT) * cPoints);
-            ret = PolyBezier(hdc, pt, cPoints+1);
-            HeapFree( GetProcessHeap(), 0, pt );
-        }
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyBezierTo );
+        ret = physdev->funcs->pPolyBezierTo( physdev, lppt, cPoints );
     }
     if(ret) {
         dc->CursPosX = lppt[cPoints-1].x;
@@ -899,10 +1006,11 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
     x2 = GDI_ROUND( x + cos((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius );
     y2 = GDI_ROUND( y - sin((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius );
 
-    if(!PATH_IsPathOpen(dc->path) && dc->funcs->pAngleArc)
+    update_dc( dc );
+    if(!PATH_IsPathOpen(dc->path))
     {
-        update_dc( dc );
-        result = dc->funcs->pAngleArc( dc->physDev, x, y, dwRadius, eStartAngle, eSweepAngle );
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pAngleArc );
+        result = physdev->funcs->pAngleArc( physdev, x, y, dwRadius, eStartAngle, eSweepAngle );
     }
     else { /* do it using ArcTo */
         x1 = GDI_ROUND( x + cos(eStartAngle*M_PI/180) * dwRadius );
@@ -927,98 +1035,18 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
 BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
                        DWORD cCount)
 {
-    DC *dc;
+    DC *dc = get_dc_ptr( hdc );
     BOOL result = FALSE;
-    POINT * line_pts = NULL, * bzr_pts = NULL, bzr[4];
-    INT i, num_pts, num_bzr_pts, space, size;
 
-    dc = get_dc_ptr( hdc );
     if(!dc) return FALSE;
 
-    if( PATH_IsPathOpen( dc->path ) )
+    update_dc( dc );
+    if( PATH_IsPathOpen( dc->path ) ) result = PATH_PolyDraw(dc, lppt, lpbTypes, cCount);
+    else
     {
-        update_dc( dc );
-        result = PATH_PolyDraw(dc, lppt, lpbTypes, cCount);
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyDraw );
+        result = physdev->funcs->pPolyDraw( physdev, lppt, lpbTypes, cCount );
     }
-    else if(dc->funcs->pPolyDraw)
-    {
-        update_dc( dc );
-        result = dc->funcs->pPolyDraw( dc->physDev, lppt, lpbTypes, cCount );
-    }
-    else {
-        /* check for valid point types */
-        for(i = 0; i < cCount; i++) {
-            switch(lpbTypes[i]) {
-                case PT_MOVETO:
-                case PT_LINETO | PT_CLOSEFIGURE:
-                case PT_LINETO:
-                    break;
-                case PT_BEZIERTO:
-                    if((i + 2 < cCount) && (lpbTypes[i + 1] == PT_BEZIERTO) &&
-                        ((lpbTypes[i + 2] & ~PT_CLOSEFIGURE) == PT_BEZIERTO)){
-                        i += 2;
-                        break;
-                    }
-                default:
-                    goto end;
-            }
-        }
-
-        space = cCount + 300;
-        line_pts = HeapAlloc(GetProcessHeap(), 0, space * sizeof(POINT));
-        num_pts = 1;
-
-        line_pts[0].x = dc->CursPosX;
-        line_pts[0].y = dc->CursPosY;
-
-        for(i = 0; i < cCount; i++) {
-            switch(lpbTypes[i]) {
-                case PT_MOVETO:
-                    if(num_pts >= 2)
-                        Polyline(hdc, line_pts, num_pts);
-                    num_pts = 0;
-                    line_pts[num_pts++] = lppt[i];
-                    break;
-                case PT_LINETO:
-                case (PT_LINETO | PT_CLOSEFIGURE):
-                    line_pts[num_pts++] = lppt[i];
-                    break;
-                case PT_BEZIERTO:
-                    bzr[0].x = line_pts[num_pts - 1].x;
-                    bzr[0].y = line_pts[num_pts - 1].y;
-                    memcpy(&bzr[1], &lppt[i], 3 * sizeof(POINT));
-
-                    bzr_pts = GDI_Bezier(bzr, 4, &num_bzr_pts);
-
-                    size = num_pts + (cCount - i) + num_bzr_pts;
-                    if(space < size){
-                        space = size * 2;
-                        line_pts = HeapReAlloc(GetProcessHeap(), 0, line_pts,
-                            space * sizeof(POINT));
-                    }
-                    memcpy(&line_pts[num_pts], &bzr_pts[1],
-                        (num_bzr_pts - 1) * sizeof(POINT));
-                    num_pts += num_bzr_pts - 1;
-                    HeapFree(GetProcessHeap(), 0, bzr_pts);
-                    i += 2;
-                    break;
-                default:
-                    goto end;
-            }
-
-            if(lpbTypes[i] & PT_CLOSEFIGURE)
-                line_pts[num_pts++] = line_pts[0];
-        }
-
-        if(num_pts >= 2)
-            Polyline(hdc, line_pts, num_pts);
-
-        MoveToEx(hdc, line_pts[num_pts - 1].x, line_pts[num_pts - 1].y, NULL);
-        HeapFree(GetProcessHeap(), 0, line_pts);
-        result = TRUE;
-    }
-
-end:
     release_dc_ptr( dc );
     return result;
 }
