@@ -1358,6 +1358,8 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
             case DW_TAG_template_type_param:
             case DW_TAG_template_value_param:
             case DW_TAG_variable:
+            case DW_TAG_imported_declaration:
+            case DW_TAG_ptr_to_member_type:
                 /* FIXME: some C++ related stuff */
                 break;
             default:
@@ -1715,6 +1717,9 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
                  * Skip it for now
                  */
                 break;
+            case DW_TAG_imported_module:
+                /* C++ stuff to be silenced (for now) */
+                break;
             case DW_TAG_label:
                 dwarf2_parse_subprogram_label(subpgm, child);
                 break;
@@ -1974,6 +1979,7 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
     case DW_TAG_namespace:
     case DW_TAG_imported_module:
     case DW_TAG_imported_declaration:
+    case DW_TAG_ptr_to_member_type:
         break;
     default:
         FIXME("Unhandled Tag type 0x%lx at %s, for %lu\n",
