@@ -210,15 +210,43 @@ static void test_world_transform(void)
     expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, 20000, 20000);
 
-    ret = SetGraphicsMode(hdc, GM_COMPATIBLE);
-    ok(ret, "SetGraphicsMode(GM_COMPATIBLE) should not fail if DC has't an identity transform\n");
-    ret = GetGraphicsMode(hdc);
-    ok(ret == GM_COMPATIBLE, "expected GM_COMPATIBLE, got %d\n", ret);
+    size.cx = 0xdeadbeef;
+    size.cy = 0xdeadbeef;
+    ret = SetViewportExtEx(hdc, -1, -1, &size);
+    ok(ret, "SetViewportExtEx(-1, -1) failed\n");
+    ok(size.cx == 1 && size.cy == 1, "expected 1,1 got %d,%d\n", size.cx, size.cy);
+    expect_viewport_ext(hdc, 1, 1);
+    expect_window_ext(hdc, 1, 1);
+    expect_world_transform(hdc, 20.0, 20.0);
+    expect_LPtoDP(hdc, 20000, 20000);
+
+    ret = SetMapMode(hdc, MM_ANISOTROPIC);
+    ok(ret == MM_TEXT, "expected MM_TEXT, got %d\n", ret);
 
     expect_viewport_ext(hdc, 1, 1);
     expect_window_ext(hdc, 1, 1);
     expect_world_transform(hdc, 20.0, 20.0);
     expect_LPtoDP(hdc, 20000, 20000);
+
+    size.cx = 0xdeadbeef;
+    size.cy = 0xdeadbeef;
+    ret = SetViewportExtEx(hdc, -1, -1, &size);
+    ok(ret, "SetViewportExtEx(-1, -1) failed\n");
+    ok(size.cx == 1 && size.cy == 1, "expected 1,1 got %d,%d\n", size.cx, size.cy);
+    expect_viewport_ext(hdc, -1, -1);
+    expect_window_ext(hdc, 1, 1);
+    expect_world_transform(hdc, 20.0, 20.0);
+    expect_LPtoDP(hdc, -20000, -20000);
+
+    ret = SetGraphicsMode(hdc, GM_COMPATIBLE);
+    ok(ret, "SetGraphicsMode(GM_COMPATIBLE) should not fail if DC has't an identity transform\n");
+    ret = GetGraphicsMode(hdc);
+    ok(ret == GM_COMPATIBLE, "expected GM_COMPATIBLE, got %d\n", ret);
+
+    expect_viewport_ext(hdc, -1, -1);
+    expect_window_ext(hdc, 1, 1);
+    expect_world_transform(hdc, 20.0, 20.0);
+    expect_LPtoDP(hdc, -20000, -20000);
 
     DeleteDC(hdc);
 }
