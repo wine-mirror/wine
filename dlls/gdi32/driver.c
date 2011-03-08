@@ -312,18 +312,104 @@ done:
 }
 
 
+static BOOL CDECL nulldrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                               INT xstart, INT ystart, INT xend, INT yend )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                                 INT xstart, INT ystart, INT xend, INT yend )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
+{
+    return TRUE;
+}
+
+static COLORREF CDECL nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
+{
+    return 0;
+}
+
+static BOOL CDECL nulldrv_LineTo( PHYSDEV dev, INT x, INT y )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_MoveTo( PHYSDEV dev, INT x, INT y )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_PaintRgn( PHYSDEV dev, HRGN rgn )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                               INT xstart, INT ystart, INT xend, INT yend )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_PolyPolygon( PHYSDEV dev, const POINT *points, const INT *counts, UINT polygons )
+{
+    /* FIXME: could be implemented with Polygon */
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_PolyPolyline( PHYSDEV dev, const POINT *points, const DWORD *counts, DWORD lines )
+{
+    /* FIXME: could be implemented with Polyline */
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                                     INT ell_width, INT ell_height )
+{
+    return TRUE;
+}
+
+static COLORREF CDECL nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+{
+    return color;
+}
+
 const DC_FUNCTIONS null_driver =
 {
     NULL,                               /* pAbortDoc */
     NULL,                               /* pAbortPath */
     NULL,                               /* pAlphaBlend */
     NULL,                               /* pAngleArc */
-    NULL,                               /* pArc */
+    nulldrv_Arc,                        /* pArc */
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
     NULL,                               /* pBitBlt */
     NULL,                               /* pChoosePixelFormat */
-    NULL,                               /* pChord */
+    nulldrv_Chord,                      /* pChord */
     NULL,                               /* pCloseFigure */
     NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateDC */
@@ -333,7 +419,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pDeleteObject */
     NULL,                               /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
-    NULL,                               /* pEllipse */
+    nulldrv_Ellipse,                    /* pEllipse */
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
@@ -342,7 +428,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
-    NULL,                               /* pExtFloodFill */
+    nulldrv_ExtFloodFill,               /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
     NULL,                               /* pExtTextOut */
     NULL,                               /* pFillPath */
@@ -357,36 +443,36 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetICMProfile */
     NULL,                               /* pGetNearestColor */
-    NULL,                               /* pGetPixel */
+    nulldrv_GetPixel,                   /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextExtentExPoint */
     NULL,                               /* pGetTextMetrics */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
-    NULL,                               /* pLineTo */
+    nulldrv_LineTo,                     /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
-    NULL,                               /* pMoveTo */
+    nulldrv_MoveTo,                     /* pMoveTo */
     NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */
-    NULL,                               /* pPaintRgn */
+    nulldrv_PaintRgn,                   /* pPaintRgn */
     NULL,                               /* pPatBlt */
-    NULL,                               /* pPie */
+    nulldrv_Pie,                        /* pPie */
     NULL,                               /* pPolyBezier */
     NULL,                               /* pPolyBezierTo */
     NULL,                               /* pPolyDraw */
-    NULL,                               /* pPolyPolygon */
-    NULL,                               /* pPolyPolyline */
-    NULL,                               /* pPolygon */
-    NULL,                               /* pPolyline */
+    nulldrv_PolyPolygon,                /* pPolyPolygon */
+    nulldrv_PolyPolyline,               /* pPolyPolyline */
+    nulldrv_Polygon,                    /* pPolygon */
+    nulldrv_Polyline,                   /* pPolyline */
     NULL,                               /* pPolylineTo */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
-    NULL,                               /* pRectangle */
+    nulldrv_Rectangle,                  /* pRectangle */
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
-    NULL,                               /* pRoundRect */
+    nulldrv_RoundRect,                  /* pRoundRect */
     NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
@@ -409,7 +495,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pSetDeviceGammaRamp */
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
-    NULL,                               /* pSetPixel */
+    nulldrv_SetPixel,                   /* pSetPixel */
     NULL,                               /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
     NULL,                               /* pSetROP2 */
