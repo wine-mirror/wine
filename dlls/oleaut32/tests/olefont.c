@@ -57,8 +57,7 @@ static HRESULT (WINAPI *pOleCreateFontIndirect)(LPFONTDESC,REFIID,LPVOID*);
 /* SetRatio to ratio_logical, ratio_himetric,            */
 /* check that resulting hfont has height hfont_height.   */
 /* Various checks along the way.                         */
-
-static void test_ifont_sizes(LONG lo_size, LONG hi_size,
+static void test_ifont_size(LONG lo_size, LONG hi_size,
 	LONG ratio_logical, LONG ratio_himetric,
 	LONG hfont_height, const char * test_name)
 {
@@ -69,9 +68,10 @@ static void test_ifont_sizes(LONG lo_size, LONG hi_size,
 	LOGFONT lf;
 	CY psize;
 	HRESULT hres;
+        DWORD rtnval;
 
 	fd.cbSizeofstruct = sizeof(FONTDESC);
-	fd.lpstrName      = system_font;
+	fd.lpstrName      = arial_font; /* using scaleable instead of bitmap font reduces errors due to font realization */
 	S(fd.cySize).Lo   = lo_size;
 	S(fd.cySize).Hi   = hi_size;
 	fd.sWeight        = 0;
@@ -87,38 +87,69 @@ static void test_ifont_sizes(LONG lo_size, LONG hi_size,
 		test_name, hres);
 	ok(pvObj != NULL,"%s: OCFI returns NULL.\n", test_name);
 
-	/* Read back size.  Hi part was ignored. */
+	/* If scaling ration specified, change ratio. */
+        if(ratio_logical && ratio_himetric)
+        {
+          hres = IFont_SetRatio(ifnt, ratio_logical, ratio_himetric);
+          ok(hres == S_OK,"%s: IFont_SetRatio returns 0x%08x instead of S_OK.\n",
+            test_name, hres);
+        }
+
+	/* Read back size. */
 	hres = IFont_get_Size(ifnt, &psize);
 	ok(hres == S_OK,"%s: IFont_get_size returns 0x%08x instead of S_OK.\n",
 		test_name, hres);
-	ok(S(psize).Lo == lo_size && S(psize).Hi == 0,
-		"%s: get_Size: Lo=%d, Hi=%d; expected Lo=%d, Hi=0.\n",
-		test_name, S(psize).Lo, S(psize).Hi, lo_size);
 
-	/* Change ratio, check size unchanged.  Standard is 72, 2540. */
-	hres = IFont_SetRatio(ifnt, ratio_logical, ratio_himetric);
-	ok(hres == S_OK,"%s: IFont_SR returns 0x%08x instead of S_OK.\n",
-		test_name, hres);
-	hres = IFont_get_Size(ifnt, &psize);
-	ok(hres == S_OK,"%s: IFont_get_size returns 0x%08x instead of S_OK.\n",
-                test_name, hres);
-	ok(S(psize).Lo == lo_size && S(psize).Hi == 0,
-		"%s: gS after SR: Lo=%d, Hi=%d; expected Lo=%d, Hi=0.\n",
-		test_name, S(psize).Lo, S(psize).Hi, lo_size);
+        /* Check returned size - allow for errors due to rouding & font realization. */
+	ok((abs(S(psize).Lo - lo_size) < 10000) && S(psize).Hi == hi_size,
+		"%s: IFont_get_Size: Lo=%d, Hi=%d; expected Lo=%d, Hi=%d.\n",
+		test_name, S(psize).Lo, S(psize).Hi, lo_size, hi_size);
 
-	/* Check hFont size with this ratio.  This tests an important 	*/
-	/* conversion for which MSDN is very wrong.			*/
+	/* Check hFont size. */
 	hres = IFont_get_hFont (ifnt, &hfont);
 	ok(hres == S_OK, "%s: IFont_get_hFont returns 0x%08x instead of S_OK.\n",
 		test_name, hres);
-	hres = GetObject (hfont, sizeof(LOGFONT), &lf);
-        ok(hres == OBJ_FONT, "got obj type %d\n", hres);
-	ok(lf.lfHeight == hfont_height,
+	rtnval = GetObject (hfont, sizeof(LOGFONT), &lf);
+        ok(rtnval > 0, "GetObject(hfont) failed\n");
+
+        /* Since font scaling may encounter rouding errors, allow 1 pixel deviation. */
+	ok(abs(lf.lfHeight - hfont_height) <= 1,
 		"%s: hFont has lf.lfHeight=%d, expected %d.\n",
 		test_name, lf.lfHeight, hfont_height);
 
 	/* Free IFont. */
 	IFont_Release(ifnt);
+}
+
+static void test_ifont_sizes(void)
+{
+  /* Test various size operations and conversions. */
+  /* Add more as needed. */
+
+  /* Results of first 2 tests depend on display resolution. */
+  HDC hdc = GetDC(0);
+  LONG dpi = GetDeviceCaps(hdc, LOGPIXELSY); /* expected results depend on display DPI */
+  ReleaseDC(0, hdc);
+  if(dpi == 96) /* normal resolution display */
+  {
+    test_ifont_size(180000, 0, 0, 0, -24, "default");     /* normal font */
+    test_ifont_size(186000, 0, 0, 0, -25, "rounding");    /* test rounding */
+  } else if(dpi == 72) /* low resolution display */
+  {
+    test_ifont_size(180000, 0, 0, 0, -18, "default");     /* normal font */
+    test_ifont_size(186000, 0, 0, 0, -19, "rounding");    /* test rounding */
+  } else if(dpi == 120) /* high resolution display */
+  {
+    test_ifont_size(180000, 0, 0, 0, -30, "default");     /* normal font */
+    test_ifont_size(186000, 0, 0, 0, -31, "rounding");    /* test rounding */
+  } else
+    skip("Skipping resolution dependent font size tests - display resolution is %d\n", dpi);
+
+  /* Next 4 tests specify a scaling ratio, so display resolution is not a factor. */
+    test_ifont_size(180000, 0, 72,  2540, -18, "ratio1");  /* change ratio */
+    test_ifont_size(180000, 0, 144, 2540, -36, "ratio2");  /* another ratio */
+    test_ifont_size(180000, 0, 72,  1270, -36, "ratio3");  /* yet another ratio */
+    test_ifont_size(186000, 0, 72,  2540, -19, "rounding+ratio"); /* test rounding with ratio */
 }
 
 static void test_QueryInterface(void)
@@ -1094,20 +1125,7 @@ START_TEST(olefont)
 
 	test_QueryInterface();
 	test_type_info();
-
-	/* Test various size operations and conversions. */
-	/* Add more as needed. */
-	if (0) /* FIXME: failing tests */
-	{
-	    test_ifont_sizes(180000, 0, 72, 2540, -18, "default");
-	    test_ifont_sizes(180000, 0, 144, 2540, -36, "ratio1");		/* change ratio */
-	    test_ifont_sizes(180000, 0, 72, 1270, -36, "ratio2");		/* 2nd part of ratio */
-
-	    /* These depend on details of how IFont rounds sizes internally. */
-	    test_ifont_sizes(0, 0, 72, 2540, 0, "zero size");          /* zero size */
-	    test_ifont_sizes(186000, 0, 72, 2540, -19, "rounding");   /* test rounding */
-	}
-
+        test_ifont_sizes();
 	test_font_events_disp();
 	test_GetIDsOfNames();
 	test_Invoke();

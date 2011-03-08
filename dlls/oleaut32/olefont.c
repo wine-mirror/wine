@@ -278,6 +278,11 @@ struct OLEFontImpl
   LONG cyLogical;
   LONG cyHimetric;
 
+  /*
+   * Stash realized height (pixels) from TEXTMETRIC - used in get_Size()
+   */
+  LONG nRealHeight;
+
   IConnectionPoint *pPropertyNotifyCP;
   IConnectionPoint *pFontEventsCP;
 };
@@ -671,6 +676,8 @@ static void realize_font(OLEFontImpl *This)
         }
         GetTextMetricsW(hdc, &tm);
         This->description.sCharset = tm.tmCharSet;
+        /* While we have it handy, stash the realized font height for use by get_Size() */
+        This->nRealHeight = tm.tmHeight - tm.tmInternalLeading; /* corresponds to LOGFONT lfHeight */
         SelectObject(hdc, old_font);
     }
 }
@@ -760,8 +767,14 @@ static HRESULT WINAPI OLEFontImpl_get_Size(
 
   if(this->dirty) realize_font(this);
 
+  /*
+   * Convert realized font height in pixels to points descaled by current
+   * scaling ratio then scaled up by 10000.
+   */
+  psize->s.Lo = MulDiv(this->nRealHeight,
+                       this->cyHimetric * 72 * 10000,
+                       this->cyLogical * 2540);
   psize->s.Hi = 0;
-  psize->s.Lo = this->description.cySize.s.Lo;
 
   return S_OK;
 }
@@ -1179,8 +1192,12 @@ static HRESULT WINAPI OLEFontImpl_SetRatio(
   OLEFontImpl *this = impl_from_IFont(iface);
   TRACE("(%p)->(%d, %d)\n", this, cyLogical, cyHimetric);
 
+  if(cyLogical == 0 || cyHimetric == 0)
+    return E_INVALIDARG;
+
   this->cyLogical  = cyLogical;
   this->cyHimetric = cyHimetric;
+  this->dirty = TRUE;
 
   return S_OK;
 }
@@ -2401,7 +2418,7 @@ static OLEFontImpl* OLEFontImpl_Construct(const FONTDESC *fontDesc)
    */
   newObject->gdiFont  = 0;
   newObject->dirty = TRUE;
-  newObject->cyLogical  = 72L;
+  newObject->cyLogical  = GetDeviceCaps(get_dc(), LOGPIXELSY);
   newObject->cyHimetric = 2540L;
   newObject->pPropertyNotifyCP = NULL;
   newObject->pFontEventsCP = NULL;
