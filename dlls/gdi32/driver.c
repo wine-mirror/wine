@@ -312,6 +312,11 @@ done:
 }
 
 
+static INT CDECL nulldrv_AbortDoc( PHYSDEV dev )
+{
+    return 0;
+}
+
 static BOOL CDECL nulldrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                INT xstart, INT ystart, INT xend, INT yend )
 {
@@ -327,6 +332,16 @@ static BOOL CDECL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT 
 static BOOL CDECL nulldrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     return TRUE;
+}
+
+static INT CDECL nulldrv_EndDoc( PHYSDEV dev )
+{
+    return 0;
+}
+
+static INT CDECL nulldrv_EndPage( PHYSDEV dev )
+{
+    return 0;
 }
 
 static BOOL CDECL nulldrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
@@ -398,9 +413,19 @@ static COLORREF CDECL nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF colo
     return color;
 }
 
+static INT CDECL nulldrv_StartDoc( PHYSDEV dev, const DOCINFOW *info )
+{
+    return 0;
+}
+
+static INT CDECL nulldrv_StartPage( PHYSDEV dev )
+{
+    return 1;
+}
+
 const DC_FUNCTIONS null_driver =
 {
-    NULL,                               /* pAbortDoc */
+    nulldrv_AbortDoc,                   /* pAbortDoc */
     NULL,                               /* pAbortPath */
     NULL,                               /* pAlphaBlend */
     nulldrv_AngleArc,                   /* pAngleArc */
@@ -420,8 +445,8 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
     nulldrv_Ellipse,                    /* pEllipse */
-    NULL,                               /* pEndDoc */
-    NULL,                               /* pEndPage */
+    nulldrv_EndDoc,                     /* pEndDoc */
+    nulldrv_EndPage,                    /* pEndPage */
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pEnumDeviceFonts */
@@ -510,8 +535,8 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pSetWindowExt */
     NULL,                               /* pSetWindowOrg */
     NULL,                               /* pSetWorldTransform */
-    NULL,                               /* pStartDoc */
-    NULL,                               /* pStartPage */
+    nulldrv_StartDoc,                   /* pStartDoc */
+    nulldrv_StartPage,                  /* pStartPage */
     NULL,                               /* pStretchBlt */
     NULL,                               /* pStretchDIBits */
     NULL,                               /* pStrokeAndFillPath */

@@ -69,7 +69,7 @@ DWORD WINAPI GdiInitSpool(void)
  */
 INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
 {
-    INT ret = 0;
+    INT ret;
     DC *dc = get_dc_ptr( hdc );
 
     TRACE("DocName = %s Output = %s Datatype = %s\n",
@@ -78,13 +78,12 @@ INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
 
     if(!dc) return SP_ERROR;
 
-    if (dc->pAbortProc && !dc->pAbortProc( hdc, 0 ))
+    if (dc->pAbortProc && !dc->pAbortProc( hdc, 0 )) ret = 0;
+    else
     {
-        release_dc_ptr( dc );
-        return ret;
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pStartDoc );
+        ret = physdev->funcs->pStartDoc( physdev, doc );
     }
-
-    if (dc->funcs->pStartDoc) ret = dc->funcs->pStartDoc( dc->physDev, doc );
     release_dc_ptr( dc );
     return ret;
 }
@@ -140,12 +139,15 @@ INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
  */
 INT WINAPI EndDoc(HDC hdc)
 {
-    INT ret = 0;
+    INT ret = SP_ERROR;
     DC *dc = get_dc_ptr( hdc );
-    if(!dc) return SP_ERROR;
 
-    if (dc->funcs->pEndDoc) ret = dc->funcs->pEndDoc( dc->physDev );
-    release_dc_ptr( dc );
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pEndDoc );
+        ret = physdev->funcs->pEndDoc( physdev );
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -156,15 +158,15 @@ INT WINAPI EndDoc(HDC hdc)
  */
 INT WINAPI StartPage(HDC hdc)
 {
-    INT ret = 1;
+    INT ret = SP_ERROR;
     DC *dc = get_dc_ptr( hdc );
-    if(!dc) return SP_ERROR;
 
-    if(dc->funcs->pStartPage)
-        ret = dc->funcs->pStartPage( dc->physDev );
-    else
-        FIXME("stub\n");
-    release_dc_ptr( dc );
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pStartPage );
+        ret = physdev->funcs->pStartPage( physdev );
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -175,12 +177,15 @@ INT WINAPI StartPage(HDC hdc)
  */
 INT WINAPI EndPage(HDC hdc)
 {
-    INT ret = 0;
+    INT ret = SP_ERROR;
     DC *dc = get_dc_ptr( hdc );
-    if(!dc) return SP_ERROR;
 
-    if (dc->funcs->pEndPage) ret = dc->funcs->pEndPage( dc->physDev );
-    release_dc_ptr( dc );
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pEndPage );
+        ret = physdev->funcs->pEndPage( physdev );
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -190,12 +195,15 @@ INT WINAPI EndPage(HDC hdc)
  */
 INT WINAPI AbortDoc(HDC hdc)
 {
-    INT ret = 0;
+    INT ret = SP_ERROR;
     DC *dc = get_dc_ptr( hdc );
-    if(!dc) return SP_ERROR;
 
-    if (dc->funcs->pAbortDoc) ret = dc->funcs->pAbortDoc( dc->physDev );
-    release_dc_ptr( dc );
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pAbortDoc );
+        ret = physdev->funcs->pAbortDoc( physdev );
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
