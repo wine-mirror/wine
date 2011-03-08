@@ -1100,19 +1100,60 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
                            const SCRIPT_ANALYSIS *psa,
                            int *piX)
 {
-    int  item;
-    int  iPosX;
-    float  fMaxPosX = 0;
+    int item;
+    float iPosX;
+    int iSpecial = -1;
+    int iCluster = -1;
+    int clust_size = 1;
+    float special_size = 0.0;
+
     TRACE("(%d,%d,%d,%d,%p,%p,%p,%p,%p)\n",
           iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance,
           psa, piX);
-    for (item=0; item < cGlyphs; item++)            /* total piAdvance           */
-        fMaxPosX += piAdvance[item];
-    iPosX = (fMaxPosX/cGlyphs)*(iCP+fTrailing);
-    if  (iPosX > fMaxPosX)
-        iPosX = fMaxPosX;
-    *piX = iPosX;                                    /* Return something in range */
 
+    if (fTrailing)
+        iCP++;
+
+    iPosX = 0.0;
+    for (item=0; item < iCP && item < cGlyphs; item++)
+    {
+        if (iSpecial == -1 && (iCluster == -1 || (iCluster != -1 && iCluster+clust_size <= item)))
+        {
+            int check;
+            int clust = pwLogClust[item];
+
+            clust_size = 1;
+            iCluster = -1;
+
+            for (check = item+1; check < cGlyphs; check++)
+            {
+                if (pwLogClust[check] == clust)
+                {
+                    clust_size ++;
+                    if (iCluster == -1)
+                        iCluster = item;
+                }
+                else break;
+            }
+
+            if (check >= cGlyphs)
+            {
+                for (check = clust; check < cGlyphs; check++)
+                    special_size += piAdvance[check];
+                iSpecial = item;
+                special_size /= (cChars - item);
+                iPosX += special_size;
+            }
+            else
+                iPosX += piAdvance[clust] / (float)clust_size;
+        }
+        else if (iSpecial != -1)
+            iPosX += special_size;
+        else /* (iCluster != -1) */
+            iPosX += piAdvance[pwLogClust[iCluster]] / (float)clust_size;
+    }
+
+    *piX = iPosX;
     TRACE("*piX=%d\n", *piX);
     return S_OK;
 }
