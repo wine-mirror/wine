@@ -51,12 +51,9 @@ static inline int cmp_addr(ULONG64 a1, ULONG64 a2)
 static inline int cmp_sorttab_addr(struct module* module, int idx, ULONG64 addr)
 {
     ULONG64     ref;
-
-    symt_get_info(module, &module->addr_sorttab[idx]->symt, TI_GET_ADDRESS, &ref);
+    symt_get_address(&module->addr_sorttab[idx]->symt, &ref);
     return cmp_addr(ref, addr);
 }
-
-struct module*  symt_cmp_addr_module = NULL;
 
 int symt_cmp_addr(const void* p1, const void* p2)
 {
@@ -64,8 +61,8 @@ int symt_cmp_addr(const void* p1, const void* p2)
     const struct symt*  sym2 = *(const struct symt* const *)p2;
     ULONG64     a1, a2;
 
-    symt_get_info(symt_cmp_addr_module, sym1, TI_GET_ADDRESS, &a1);
-    symt_get_info(symt_cmp_addr_module, sym2, TI_GET_ADDRESS, &a2);
+    symt_get_address(sym1, &a1);
+    symt_get_address(sym2, &a2);
     return cmp_addr(a1, a2);
 }
 
@@ -131,7 +128,7 @@ static void symt_add_module_ht(struct module* module, struct symt_ht* ht)
     /* Don't store in sorttab a symbol without address, they are of
      * no use here (e.g. constant values)
      */
-    if (symt_get_info(module, &ht->symt, TI_GET_ADDRESS, &addr) &&
+    if (symt_get_address(&ht->symt, &addr) &&
         symt_grow_sorttab(module, module->num_symbols + 1))
     {
         module->addr_sorttab[module->num_symbols++] = ht;
@@ -746,7 +743,7 @@ static void symt_fill_sym_info(struct module_pair* pair,
                     sym_info->Flags |= SYMFLAG_TLSREL;
                     /* fall through */
                 case loc_absolute:
-                    symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
+                    symt_get_address(sym, &sym_info->Address);
                     sym_info->Register = 0;
                     break;
                 default:
@@ -779,18 +776,18 @@ static void symt_fill_sym_info(struct module_pair* pair,
         break;
     case SymTagPublicSymbol:
         sym_info->Flags |= SYMFLAG_EXPORT;
-        symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
+        symt_get_address(sym, &sym_info->Address);
         break;
     case SymTagFunction:
         sym_info->Flags |= SYMFLAG_FUNCTION;
-        symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
+        symt_get_address(sym, &sym_info->Address);
         break;
     case SymTagThunk:
         sym_info->Flags |= SYMFLAG_THUNK;
-        symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
+        symt_get_address(sym, &sym_info->Address);
         break;
     default:
-        symt_get_info(pair->effective, sym, TI_GET_ADDRESS, &sym_info->Address);
+        symt_get_address(sym, &sym_info->Address);
         sym_info->Register = 0;
         break;
     }
@@ -861,7 +858,7 @@ static inline unsigned where_to_insert(struct module* module, unsigned high, con
     ULONG64     addr;
 
     if (!high) return 0;
-    symt_get_info(module, &elt->symt, TI_GET_ADDRESS, &addr);
+    symt_get_address(&elt->symt, &addr);
     do
     {
         switch (cmp_sorttab_addr(module, mid, addr))
@@ -893,13 +890,12 @@ static BOOL resort_symbols(struct module* module)
 
         delta = module->num_symbols - module->num_sorttab;
         memcpy(tmp, &module->addr_sorttab[module->num_sorttab], delta * sizeof(struct symt_ht*));
-        symt_cmp_addr_module = module;
         qsort(tmp, delta, sizeof(struct symt_ht*), symt_cmp_addr);
 
         for (i = delta - 1; i >= 0; i--)
         {
             prev_ins_idx = ins_idx;
-            ins_idx = where_to_insert(module, prev_ins_idx = ins_idx, tmp[i]);
+            ins_idx = where_to_insert(module, ins_idx, tmp[i]);
             memmove(&module->addr_sorttab[ins_idx + i + 1],
                     &module->addr_sorttab[ins_idx],
                     (prev_ins_idx - ins_idx) * sizeof(struct symt_ht*));
@@ -908,7 +904,6 @@ static BOOL resort_symbols(struct module* module)
     }
     else
     {
-        symt_cmp_addr_module = module;
         qsort(module->addr_sorttab, module->num_symbols, sizeof(struct symt_ht*), symt_cmp_addr);
     }
     module->num_sorttab = module->num_symbols;
@@ -944,11 +939,11 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD_PTR addr)
     low = 0;
     high = module->num_sorttab;
 
-    symt_get_info(module, &module->addr_sorttab[0]->symt, TI_GET_ADDRESS, &ref_addr);
+    symt_get_address(&module->addr_sorttab[0]->symt, &ref_addr);
     if (addr < ref_addr) return NULL;
     if (high)
     {
-        symt_get_info(module, &module->addr_sorttab[high - 1]->symt, TI_GET_ADDRESS, &ref_addr);
+        symt_get_address(&module->addr_sorttab[high - 1]->symt, &ref_addr);
         symt_get_length(module, &module->addr_sorttab[high - 1]->symt, &ref_size);
         if (addr >= ref_addr + ref_size) return NULL;
     }
@@ -969,8 +964,8 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD_PTR addr)
      * might also have the same address, but would get better information
      */
     if (module->addr_sorttab[low]->symt.tag == SymTagPublicSymbol)
-    {   
-        symt_get_info(module, &module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref_addr);
+    {
+        symt_get_address(&module->addr_sorttab[low]->symt, &ref_addr);
         if (low > 0 &&
             module->addr_sorttab[low - 1]->symt.tag != SymTagPublicSymbol &&
             !cmp_sorttab_addr(module, low - 1, ref_addr))
@@ -981,7 +976,7 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD_PTR addr)
             low++;
     }
     /* finally check that we fit into the found symbol */
-    symt_get_info(module, &module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref_addr);
+    symt_get_address(&module->addr_sorttab[low]->symt, &ref_addr);
     if (addr < ref_addr) return NULL;
     symt_get_length(module, &module->addr_sorttab[low]->symt, &ref_size);
     if (addr >= ref_addr + ref_size) return NULL;

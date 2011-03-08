@@ -778,7 +778,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
 
             sym = symt_find_nearest(module, ste->addr);
             if (sym)
-                symt_get_info(module, &sym->symt, TI_GET_ADDRESS, &addr);
+                symt_get_address(&sym->symt, &addr);
             if (sym && ste->addr == addr)
             {
                 ULONG64 size = 0;

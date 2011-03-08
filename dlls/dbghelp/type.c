@@ -102,6 +102,47 @@ const char* symt_get_name(const struct symt* sym)
     }
 }
 
+BOOL symt_get_address(const struct symt* type, ULONG64* addr)
+{
+    switch (type->tag)
+    {
+    case SymTagData:
+        switch (((const struct symt_data*)type)->kind)
+        {
+        case DataIsGlobal:
+        case DataIsFileStatic:
+            *addr = ((const struct symt_data*)type)->u.var.offset;
+            break;
+        default: return FALSE;
+        }
+        break;
+    case SymTagFunction:
+        *addr = ((const struct symt_function*)type)->address;
+        break;
+    case SymTagPublicSymbol:
+        *addr = ((const struct symt_public*)type)->address;
+        break;
+    case SymTagFuncDebugStart:
+    case SymTagFuncDebugEnd:
+    case SymTagLabel:
+        if (!((const struct symt_hierarchy_point*)type)->parent ||
+            !symt_get_address(((const struct symt_hierarchy_point*)type)->parent, addr))
+            return FALSE;
+        *addr += ((const struct symt_hierarchy_point*)type)->loc.offset;
+        break;
+    case SymTagThunk:
+        *addr = ((const struct symt_thunk*)type)->address;
+        break;
+    case SymTagCompiland:
+        *addr = ((const struct symt_compiland*)type)->address;
+        break;
+    default:
+        FIXME("Unsupported sym-tag %s for get-address\n", symt_get_tag_str(type->tag));
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static struct symt* symt_find_type_by_name(const struct module* module,
                                            enum SymTagEnum sym_tag, 
                                            const char* typename)
@@ -517,44 +558,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         break;
 
     case TI_GET_ADDRESS:
-        switch (type->tag)
-        {
-        case SymTagData:
-            switch (((const struct symt_data*)type)->kind)
-            {
-            case DataIsGlobal:
-            case DataIsFileStatic:
-                X(ULONG64) = ((const struct symt_data*)type)->u.var.offset;
-                break;
-            default: return FALSE;
-            }
-            break;
-        case SymTagFunction:
-            X(ULONG64) = ((const struct symt_function*)type)->address;
-            break;
-        case SymTagPublicSymbol:
-            X(ULONG64) = ((const struct symt_public*)type)->address;
-            break;
-        case SymTagFuncDebugStart:
-        case SymTagFuncDebugEnd:
-        case SymTagLabel:
-            if (!symt_get_info(module, ((const struct symt_hierarchy_point*)type)->parent,
-                               req, pInfo))
-                return FALSE;
-            X(ULONG64) += ((const struct symt_hierarchy_point*)type)->loc.offset;
-            break;
-        case SymTagThunk:
-            X(ULONG64) = ((const struct symt_thunk*)type)->address;
-            break;
-        case SymTagCompiland:
-            X(ULONG64) = ((const struct symt_compiland*)type)->address;
-            break;
-        default:
-            FIXME("Unsupported sym-tag %s for get-address\n", 
-                  symt_get_tag_str(type->tag));
-            return FALSE;
-        }
-        break;
+        return symt_get_address(type, (ULONG64*)pInfo);
 
     case TI_GET_BASETYPE:
         switch (type->tag)

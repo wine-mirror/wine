@@ -619,7 +619,7 @@ extern DWORD64      sw_module_base(struct cpu_stack_walk* csw, DWORD64 addr);
 
 /* symbol.c */
 extern const char*  symt_get_name(const struct symt* sym);
-extern struct module* symt_cmp_addr_module;
+extern BOOL         symt_get_address(const struct symt* type, ULONG64* addr);
 extern int          symt_cmp_addr(const void* p1, const void* p2);
 extern void         copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si);
 extern struct symt_ht*
