@@ -39,19 +39,6 @@ DWORD USER16_AlertableWait = 0;
 
 struct wow_handlers32 wow_handlers32;
 
-static LRESULT cwp_hook_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
-                                  LRESULT *result, void *arg )
-{
-    CWPSTRUCT cwp;
-
-    cwp.hwnd    = hwnd;
-    cwp.message = msg;
-    cwp.wParam  = wp;
-    cwp.lParam  = lp;
-    *result = 0;
-    return HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 1, (LPARAM)&cwp, FALSE );
-}
-
 static LRESULT send_message_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                       LRESULT *result, void *arg )
 {
@@ -1498,7 +1485,7 @@ LRESULT WINAPI SendMessage16( HWND16 hwnd16, UINT16 msg, WPARAM16 wparam, LPARAM
         WNDPROC16 winproc;
 
         /* first the WH_CALLWNDPROC hook */
-        WINPROC_CallProc16To32A( cwp_hook_callback, hwnd16, msg, wparam, lparam, &result, NULL );
+        call_WH_CALLWNDPROC_hook( hwnd16, msg, wparam, lparam );
 
         if (!(winproc = (WNDPROC16)GetWindowLong16( hwnd16, GWLP_WNDPROC ))) return 0;
 
