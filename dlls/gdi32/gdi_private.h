@@ -244,6 +244,7 @@ typedef struct tagDC
 {
     GDIOBJHDR    header;
     HDC          hSelf;            /* Handle to this DC */
+    struct gdi_physdev nulldrv;    /* physdev for the null driver */
     const struct tagDC_FUNCS *funcs; /* DC function table */
     PHYSDEV      physDev;         /* Physical device (driver-specific) */
     DWORD        thread;          /* thread owning the DC */
@@ -389,9 +390,12 @@ extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
                               LONG *height, WORD *planes, WORD *bpp, DWORD *compr, DWORD *size ) DECLSPEC_HIDDEN;
 
 /* driver.c */
+extern const DC_FUNCTIONS null_driver DECLSPEC_HIDDEN;
 extern const DC_FUNCTIONS *DRIVER_get_display_driver(void) DECLSPEC_HIDDEN;
 extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
 extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;
+
+#define GET_DC_PHYSDEV(dc,func) ((dc)->physDev->funcs->func ? (dc)->physDev : &(dc)->nulldrv)
 
 /* enhmetafile.c */
 extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk ) DECLSPEC_HIDDEN;

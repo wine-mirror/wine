@@ -78,6 +78,7 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
     if (!(dc = HeapAlloc( GetProcessHeap(), 0, sizeof(*dc) ))) return NULL;
 
     dc->funcs               = funcs;
+    dc->nulldrv.funcs       = &null_driver;
     dc->physDev             = NULL;
     dc->thread              = GetCurrentThreadId();
     dc->refcount            = 1;
@@ -150,6 +151,7 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
         HeapFree( GetProcessHeap(), 0, dc );
         dc = NULL;
     }
+    dc->nulldrv.hdc = dc->hSelf;
     return dc;
 }
 
