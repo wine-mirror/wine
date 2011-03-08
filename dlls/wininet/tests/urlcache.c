@@ -181,6 +181,117 @@ static void test_RetrieveUrlCacheEntryA(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "RetrieveUrlCacheEntryFile should have set last error to ERROR_INVALID_PARAMETER instead of %d\n", GetLastError());
 }
 
+static void test_IsUrlCacheEntryExpiredA(void)
+{
+    static const char uncached_url[] =
+        "What's the airspeed velocity of an unladen swallow?";
+    BOOL ret;
+    FILETIME ft;
+    DWORD size;
+    LPINTERNET_CACHE_ENTRY_INFO info;
+    ULARGE_INTEGER exp_time;
+
+    /* The function returns TRUE when the output time is NULL or the tested URL
+     * is NULL.
+     */
+    ret = IsUrlCacheEntryExpiredA(NULL, 0, NULL);
+    ok(ret, "expected TRUE\n");
+    ft.dwLowDateTime = 0xdeadbeef;
+    ft.dwHighDateTime = 0xbaadf00d;
+    ret = IsUrlCacheEntryExpiredA(NULL, 0, &ft);
+    ok(ret, "expected TRUE\n");
+    ok(ft.dwLowDateTime == 0xdeadbeef && ft.dwHighDateTime == 0xbaadf00d,
+       "expected time to be unchanged, got (%u,%u)\n",
+       ft.dwLowDateTime, ft.dwHighDateTime);
+    ret = IsUrlCacheEntryExpiredA(TEST_URL, 0, NULL);
+    ok(ret, "expected TRUE\n");
+
+    /* The return value should indicate whether the URL is expired,
+     * and the filetime indicates the last modified time, but a cache entry
+     * with a zero expire time is "not expired".
+     */
+    ft.dwLowDateTime = 0xdeadbeef;
+    ft.dwHighDateTime = 0xbaadf00d;
+    ret = IsUrlCacheEntryExpiredA(TEST_URL, 0, &ft);
+    ok(!ret, "expected FALSE\n");
+    ok(!ft.dwLowDateTime && !ft.dwHighDateTime,
+       "expected time (0,0), got (%u,%u)\n",
+       ft.dwLowDateTime, ft.dwHighDateTime);
+
+    /* Same behavior with bogus flags. */
+    ft.dwLowDateTime = 0xdeadbeef;
+    ft.dwHighDateTime = 0xbaadf00d;
+    ret = IsUrlCacheEntryExpiredA(TEST_URL, 0xffffffff, &ft);
+    ok(!ret, "expected FALSE\n");
+    ok(!ft.dwLowDateTime && !ft.dwHighDateTime,
+       "expected time (0,0), got (%u,%u)\n",
+       ft.dwLowDateTime, ft.dwHighDateTime);
+
+    /* Set the expire time to a point in the past.. */
+    ret = GetUrlCacheEntryInfo(TEST_URL, NULL, &size);
+    ok(!ret, "GetUrlCacheEntryInfo should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    info = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetUrlCacheEntryInfo(TEST_URL, info, &size);
+    GetSystemTimeAsFileTime(&info->ExpireTime);
+    exp_time.LowPart = info->ExpireTime.dwLowDateTime;
+    exp_time.HighPart = info->ExpireTime.dwHighDateTime;
+    exp_time.QuadPart -= 10 * 60 * (ULONGLONG)10000000;
+    info->ExpireTime.dwLowDateTime = exp_time.LowPart;
+    info->ExpireTime.dwHighDateTime = exp_time.HighPart;
+    ret = SetUrlCacheEntryInfo(TEST_URL, info, CACHE_ENTRY_EXPTIME_FC);
+    ok(ret, "SetUrlCacheEntryInfo failed: %d\n", GetLastError());
+    ft.dwLowDateTime = 0xdeadbeef;
+    ft.dwHighDateTime = 0xbaadf00d;
+    /* and the entry should be expired. */
+    ret = IsUrlCacheEntryExpiredA(TEST_URL, 0, &ft);
+    ok(ret, "expected TRUE\n");
+    /* The modified time returned is 0. */
+    ok(!ft.dwLowDateTime && !ft.dwHighDateTime,
+       "expected time (0,0), got (%u,%u)\n",
+       ft.dwLowDateTime, ft.dwHighDateTime);
+    /* Set the expire time to a point in the future.. */
+    exp_time.QuadPart += 20 * 60 * (ULONGLONG)10000000;
+    info->ExpireTime.dwLowDateTime = exp_time.LowPart;
+    info->ExpireTime.dwHighDateTime = exp_time.HighPart;
+    ret = SetUrlCacheEntryInfo(TEST_URL, info, CACHE_ENTRY_EXPTIME_FC);
+    ok(ret, "SetUrlCacheEntryInfo failed: %d\n", GetLastError());
+    ft.dwLowDateTime = 0xdeadbeef;
+    ft.dwHighDateTime = 0xbaadf00d;
+    /* and the entry should no longer be expired. */
+    ret = IsUrlCacheEntryExpiredA(TEST_URL, 0, &ft);
+    ok(!ret, "expected FALSE\n");
+    /* The modified time returned is still 0. */
+    ok(!ft.dwLowDateTime && !ft.dwHighDateTime,
+       "expected time (0,0), got (%u,%u)\n",
+       ft.dwLowDateTime, ft.dwHighDateTime);
+    /* Set the modified time... */
+    GetSystemTimeAsFileTime(&info->LastModifiedTime);
+    ret = SetUrlCacheEntryInfo(TEST_URL, info, CACHE_ENTRY_MODTIME_FC);
+    ok(ret, "SetUrlCacheEntryInfo failed: %d\n", GetLastError());
+    /* and the entry should still be unexpired.. */
+    ret = IsUrlCacheEntryExpiredA(TEST_URL, 0, &ft);
+    ok(!ret, "expected FALSE\n");
+    /* but the modified time returned is the last modified time just set. */
+    ok(ft.dwLowDateTime == info->LastModifiedTime.dwLowDateTime &&
+       ft.dwHighDateTime == info->LastModifiedTime.dwHighDateTime,
+       "expected time (%u,%u), got (%u,%u)\n",
+       info->LastModifiedTime.dwLowDateTime,
+       info->LastModifiedTime.dwHighDateTime,
+       ft.dwLowDateTime, ft.dwHighDateTime);
+    HeapFree(GetProcessHeap(), 0, info);
+
+    /* An uncached URL is implicitly expired, but with unknown time. */
+    ft.dwLowDateTime = 0xdeadbeef;
+    ft.dwHighDateTime = 0xbaadf00d;
+    ret = IsUrlCacheEntryExpiredA(uncached_url, 0, &ft);
+    ok(ret, "expected TRUE\n");
+    ok(!ft.dwLowDateTime && !ft.dwHighDateTime,
+       "expected time (0,0), got (%u,%u)\n",
+       ft.dwLowDateTime, ft.dwHighDateTime);
+}
+
 static void _check_file_exists(LONG l, LPCSTR filename)
 {
     HANDLE file;
@@ -336,6 +447,7 @@ static void test_urlcacheA(void)
 
     test_GetUrlCacheEntryInfoExA();
     test_RetrieveUrlCacheEntryA();
+    test_IsUrlCacheEntryExpiredA();
 
     if (pDeleteUrlCacheEntryA)
     {

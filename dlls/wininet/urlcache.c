@@ -3649,6 +3649,24 @@ DWORD WINAPI DeleteIE3Cache(HWND hWnd, HINSTANCE hInst, LPSTR lpszCmdLine, int n
     return 0;
 }
 
+static BOOL IsUrlCacheEntryExpiredInternal(const URL_CACHEFILE_ENTRY *pUrlEntry,
+        FILETIME *pftLastModified)
+{
+    BOOL ret;
+    FILETIME now, expired;
+
+    *pftLastModified = pUrlEntry->LastModifiedTime;
+    GetSystemTimeAsFileTime(&now);
+    URLCache_DosDateTimeToFileTime(pUrlEntry->wExpiredDate,
+            pUrlEntry->wExpiredTime, &expired);
+    /* If the expired time is 0, it's interpreted as not expired */
+    if (!expired.dwLowDateTime && !expired.dwHighDateTime)
+        ret = FALSE;
+    else
+        ret = CompareFileTime(&expired, &now) < 0;
+    return ret;
+}
+
 /***********************************************************************
  *           IsUrlCacheEntryExpiredA (WININET.@)
  *
@@ -3664,51 +3682,57 @@ BOOL WINAPI IsUrlCacheEntryExpiredA( LPCSTR url, DWORD dwFlags, FILETIME* pftLas
     const CACHEFILE_ENTRY * pEntry;
     const URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
-    DWORD error;
+    BOOL expired;
 
     TRACE("(%s, %08x, %p)\n", debugstr_a(url), dwFlags, pftLastModified);
 
-    error = URLCacheContainers_FindContainerA(url, &pContainer);
-    if (error != ERROR_SUCCESS)
+    if (!url || !pftLastModified)
+        return TRUE;
+    if (dwFlags)
+        FIXME("unknown flags 0x%08x\n", dwFlags);
+
+    /* Any error implies that the URL is expired, i.e. not in the cache */
+    if (URLCacheContainers_FindContainerA(url, &pContainer))
     {
-        SetLastError(error);
-        return FALSE;
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
+        return TRUE;
     }
 
-    error = URLCacheContainer_OpenIndex(pContainer);
-    if (error != ERROR_SUCCESS)
+    if (URLCacheContainer_OpenIndex(pContainer))
     {
-        SetLastError(error);
-        return FALSE;
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
+        return TRUE;
     }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
-        return FALSE;
+    {
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
+        return TRUE;
+    }
 
     if (!URLCache_FindHash(pHeader, url, &pHashEntry))
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
         TRACE("entry %s not found!\n", url);
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
+        return TRUE;
     }
 
     pEntry = (const CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
     if (pEntry->dwSignature != URL_SIGNATURE)
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
         FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
+        return TRUE;
     }
 
     pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
-
-    URLCache_DosDateTimeToFileTime(pUrlEntry->wExpiredDate, pUrlEntry->wExpiredTime, pftLastModified);
+    expired = IsUrlCacheEntryExpiredInternal(pUrlEntry, pftLastModified);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
-    return TRUE;
+    return expired;
 }
 
 /***********************************************************************
@@ -3726,51 +3750,65 @@ BOOL WINAPI IsUrlCacheEntryExpiredW( LPCWSTR url, DWORD dwFlags, FILETIME* pftLa
     const CACHEFILE_ENTRY * pEntry;
     const URL_CACHEFILE_ENTRY * pUrlEntry;
     URLCACHECONTAINER * pContainer;
-    DWORD error;
+    BOOL expired;
 
     TRACE("(%s, %08x, %p)\n", debugstr_w(url), dwFlags, pftLastModified);
 
-    error = URLCacheContainers_FindContainerW(url, &pContainer);
-    if (error != ERROR_SUCCESS)
+    if (!url || !pftLastModified)
+        return TRUE;
+    if (dwFlags)
+        FIXME("unknown flags 0x%08x\n", dwFlags);
+
+    /* Any error implies that the URL is expired, i.e. not in the cache */
+    if (URLCacheContainers_FindContainerW(url, &pContainer))
     {
-        SetLastError(error);
-        return FALSE;
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
+        return TRUE;
     }
 
-    error = URLCacheContainer_OpenIndex(pContainer);
-    if (error != ERROR_SUCCESS)
+    if (URLCacheContainer_OpenIndex(pContainer))
     {
-        SetLastError(error);
-        return FALSE;
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
+        return TRUE;
     }
 
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
-        return FALSE;
+    {
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
+        return TRUE;
+    }
 
     if (!URLCache_FindHashW(pHeader, url, &pHashEntry))
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
         TRACE("entry %s not found!\n", debugstr_w(url));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
+        return TRUE;
+    }
+
+    if (!URLCache_FindHashW(pHeader, url, &pHashEntry))
+    {
+        URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
+        TRACE("entry %s not found!\n", debugstr_w(url));
+        return TRUE;
     }
 
     pEntry = (const CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
     if (pEntry->dwSignature != URL_SIGNATURE)
     {
         URLCacheContainer_UnlockIndex(pContainer, pHeader);
+        memset(pftLastModified, 0, sizeof(*pftLastModified));
         FIXME("Trying to retrieve entry of unknown format %s\n", debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
+        return TRUE;
     }
 
     pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
-
-    URLCache_DosDateTimeToFileTime(pUrlEntry->wExpiredDate, pUrlEntry->wExpiredTime, pftLastModified);
+    expired = IsUrlCacheEntryExpiredInternal(pUrlEntry, pftLastModified);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
-    return TRUE;
+    return expired;
 }
 
 /***********************************************************************
