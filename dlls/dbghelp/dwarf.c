@@ -154,6 +154,7 @@ typedef struct dwarf2_debug_info_s
     struct symt*                symt;
     const unsigned char**       data;
     struct vector               children;
+    struct dwarf2_debug_info_s* parent;
 } dwarf2_debug_info_t;
 
 typedef struct dwarf2_section_s
@@ -1006,6 +1007,7 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
  */
 static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
                                        dwarf2_traverse_context_t* traverse,
+                                       dwarf2_debug_info_t* parent_di,
                                        dwarf2_debug_info_t** pdi)
 {
     const dwarf2_abbrev_entry_t*abbrev;
@@ -1036,6 +1038,7 @@ static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
     if (!di) return FALSE;
     di->abbrev = abbrev;
     di->symt   = NULL;
+    di->parent = parent_di;
 
     if (abbrev->num_attr)
     {
@@ -1052,7 +1055,7 @@ static BOOL dwarf2_read_one_debug_info(dwarf2_parse_context_t* ctx,
         vector_init(&di->children, sizeof(dwarf2_debug_info_t*), 16);
         while (traverse->data < traverse->end_data)
         {
-            if (!dwarf2_read_one_debug_info(ctx, traverse, &child)) return FALSE;
+            if (!dwarf2_read_one_debug_info(ctx, traverse, di, &child)) return FALSE;
             if (!child) break;
             where = vector_add(&di->children, &ctx->pool);
             if (!where) return FALSE;
@@ -2238,7 +2241,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     dwarf2_parse_abbrev_set(&abbrev_ctx, &ctx.abbrev_table, &ctx.pool);
 
     sparse_array_init(&ctx.debug_info_table, sizeof(dwarf2_debug_info_t), 128);
-    dwarf2_read_one_debug_info(&ctx, &cu_ctx, &di);
+    dwarf2_read_one_debug_info(&ctx, &cu_ctx, NULL, &di);
 
     if (di->abbrev->tag == DW_TAG_compile_unit)
     {
