@@ -43,6 +43,7 @@ static int (__cdecl *p__ecvt_s)(char *buffer, size_t length, double number,
                                 int ndigits, int *decpt, int *sign);
 static int (__cdecl *p__fcvt_s)(char *buffer, size_t length, double number,
                                 int ndigits, int *decpt, int *sign);
+static unsigned int (__cdecl *p__get_output_format)(void);
 
 static void init( void )
 {
@@ -53,6 +54,7 @@ static void init( void )
     p__vsnwprintf_s = (void *)GetProcAddress(hmod, "_vsnwprintf_s");
     p__ecvt_s = (void *)GetProcAddress(hmod, "_ecvt_s");
     p__fcvt_s = (void *)GetProcAddress(hmod, "_fcvt_s");
+    p__get_output_format = (void *)GetProcAddress(hmod, "_get_output_format");
 }
 
 static void test_sprintf( void )
@@ -1013,6 +1015,20 @@ static void test_vsnwprintf_s(void)
     ok( !wcscmp(out1, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
 }
 
+static void test__get_output_format(void)
+{
+    unsigned int ret;
+
+    if (!p__get_output_format)
+    {
+        win_skip("_get_output_format not available\n");
+        return;
+    }
+
+    ret = p__get_output_format();
+    ok(ret == 0, "got %d\n", ret);
+}
+
 START_TEST(printf)
 {
     init();
@@ -1026,4 +1042,5 @@ START_TEST(printf)
     test_vscprintf();
     test_vscwprintf();
     test_vsnwprintf_s();
+    test__get_output_format();
 }

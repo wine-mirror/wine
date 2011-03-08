@@ -528,7 +528,7 @@
 @ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
 @ cdecl _get_osplatform(ptr) msvcrt._get_osplatform
 @ stub _get_osver
-@ stub _get_output_format
+@ cdecl _get_output_format() msvcrt._get_output_format
 @ stub _get_pgmptr
 @ stub _get_printf_count_output
 @ stub _get_purecall_handler

@@ -769,6 +769,9 @@ typedef void (__cdecl *MSVCRT___sighandler_t)(int);
 #define MSVCRT__WRITE_ABORT_MSG    1
 #define MSVCRT__CALL_REPORTFAULT   2
 
+/* _get_output_format return code */
+#define MSVCRT__TWO_DIGIT_EXPONENT 0x1
+
 void  __cdecl    MSVCRT_free(void*);
 void* __cdecl    MSVCRT_malloc(MSVCRT_size_t);
 void* __cdecl    MSVCRT_calloc(MSVCRT_size_t,MSVCRT_size_t);

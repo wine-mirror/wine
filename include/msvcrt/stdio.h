@@ -94,6 +94,9 @@ FILE* __cdecl __iob_func(void);
 #define stdout             (_iob+STDOUT_FILENO)
 #define stderr             (_iob+STDERR_FILENO)
 
+/* return value for _get_output_format */
+#define _TWO_DIGIT_EXPONENT 0x1
+
 #ifndef _STDIO_DEFINED
 #define _STDIO_DEFINED
 int    __cdecl _fcloseall(void);
@@ -173,6 +176,7 @@ int    __cdecl vprintf(const char*,__ms_va_list);
 int    __cdecl vprintf_s(const char*,__ms_va_list);
 int    __cdecl vsprintf(char*,const char*,__ms_va_list);
 int    __cdecl vsprintf_s(char*,size_t,const char*,__ms_va_list);
+unsigned int __cdecl _get_output_format(void);
 
 #ifndef _WSTDIO_DEFINED
 #define _WSTDIO_DEFINED

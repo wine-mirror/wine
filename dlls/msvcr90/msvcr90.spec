@@ -518,7 +518,7 @@
 @ cdecl _get_heap_handle() msvcrt._get_heap_handle
 @ cdecl _get_invalid_parameter_handler() msvcrt._get_invalid_parameter_handler
 @ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
-@ stub _get_output_format
+@ cdecl _get_output_format() msvcrt._get_output_format
 @ stub _get_pgmptr
 @ stub _get_printf_count_output
 @ stub _get_purecall_handler

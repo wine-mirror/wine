@@ -473,7 +473,7 @@
 @ cdecl _get_osfhandle(long)
 @ cdecl _get_osplatform(ptr) MSVCRT__get_osplatform
 # stub _get_osver
-# stub _get_output_format
+@ cdecl _get_output_format()
 # stub _get_pgmptr
 @ cdecl _get_sbh_threshold()
 # stub _get_wenviron

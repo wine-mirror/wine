@@ -253,3 +253,12 @@ void CDECL MSVCRT_qsort_s(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
     MSVCRT_mergesort(base, secondarr, size, compar, 0, nmemb-1, context);
     MSVCRT_free(secondarr);
 }
+
+/*********************************************************************
+ * _get_output_format (MSVCRT.@)
+ *
+ */
+unsigned int CDECL _get_output_format(void)
+{
+   return 0;
+}
