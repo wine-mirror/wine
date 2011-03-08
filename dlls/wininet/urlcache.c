@@ -154,12 +154,9 @@ typedef struct _URLCACHE_HEADER
     DWORD dwIndexCapacityInBlocks;
     DWORD dwBlocksInUse;
     DWORD dwUnknown1;
-    DWORD dwCacheLimitLow;
-    DWORD dwCacheLimitHigh;
-    DWORD dwCacheUsageLow;
-    DWORD dwCacheUsageHigh;
-    DWORD dwExemptUsageLow;
-    DWORD dwExemptUsageHigh;
+    ULARGE_INTEGER CacheLimit;
+    ULARGE_INTEGER CacheUsage;
+    ULARGE_INTEGER ExemptUsage;
     DWORD DirectoryCount; /* number of directory_data's */
     DIRECTORY_DATA directory_data[1]; /* first directory entry */
 } URLCACHE_HEADER, *LPURLCACHE_HEADER;
@@ -312,8 +309,7 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 		    pHeader->dwFileSize = dwFileSize;
 		    pHeader->dwIndexCapacityInBlocks = NEWFILE_NUM_BLOCKS;
 		    /* 127MB - taken from default for Windows 2000 */
-		    pHeader->dwCacheLimitHigh = 0;
-		    pHeader->dwCacheLimitLow = 0x07ff5400;
+                    pHeader->CacheLimit.QuadPart = 0x07ff5400;
 		    /* Copied from a Windows 2000 cache index */
 		    pHeader->DirectoryCount = 4;
 		
@@ -328,8 +324,7 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 					     (BYTE *) &dw, &len) == ERROR_SUCCESS &&
 			    keytype == REG_DWORD)
 			{
-			    pHeader->dwCacheLimitHigh = (dw >> 22);
-			    pHeader->dwCacheLimitLow = dw << 10;
+                            pHeader->CacheLimit.QuadPart = (ULONGLONG)dw * 1024;
 			}
 			RegCloseKey(key);
 		    }
