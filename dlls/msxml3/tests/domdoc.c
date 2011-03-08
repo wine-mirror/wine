@@ -2956,18 +2956,23 @@ static void test_removeChild(void)
 
     r = IXMLDOMDocument_get_documentElement( doc, &element );
     ok( r == S_OK, "ret %08x\n", r);
+    todo_wine EXPECT_REF(element, 2);
 
     r = IXMLDOMElement_get_childNodes( element, &root_list );
     ok( r == S_OK, "ret %08x\n", r);
+    EXPECT_REF(root_list, 1);
 
     r = IXMLDOMNodeList_get_item( root_list, 3, &fo_node );
     ok( r == S_OK, "ret %08x\n", r);
+    EXPECT_REF(fo_node, 1);
 
     r = IXMLDOMNode_get_childNodes( fo_node, &fo_list );
     ok( r == S_OK, "ret %08x\n", r);
+    EXPECT_REF(fo_list, 1);
 
     r = IXMLDOMNodeList_get_item( fo_list, 0, &ba_node );
     ok( r == S_OK, "ret %08x\n", r);
+    EXPECT_REF(ba_node, 1);
 
     /* invalid parameter: NULL ptr */
     removed_node = (void*)0xdeadbeef;
@@ -2978,15 +2983,19 @@ static void test_removeChild(void)
     /* ba_node is a descendant of element, but not a direct child. */
     removed_node = (void*)0xdeadbeef;
     EXPECT_REF(ba_node, 1);
+    EXPECT_CHILDREN(fo_node);
     r = IXMLDOMElement_removeChild( element, ba_node, &removed_node );
     ok( r == E_INVALIDARG, "ret %08x\n", r );
     ok( removed_node == NULL, "%p\n", removed_node );
     EXPECT_REF(ba_node, 1);
+    EXPECT_CHILDREN(fo_node);
 
     EXPECT_REF(ba_node, 1);
+    EXPECT_REF(fo_node, 1);
     r = IXMLDOMElement_removeChild( element, fo_node, &removed_node );
     ok( r == S_OK, "ret %08x\n", r);
     ok( fo_node == removed_node, "node %p node2 %p\n", fo_node, removed_node );
+    EXPECT_REF(fo_node, 2);
     EXPECT_REF(ba_node, 1);
 
     /* try removing already removed child */
@@ -3016,6 +3025,7 @@ static void test_removeChild(void)
     ok( r == S_OK, "ret %08x\n", r);
     IXMLDOMElement_Release( lc_element );
 
+    temp_node = (void*)0xdeadbeef;
     r = IXMLDOMNode_get_parentNode( lc_node, &temp_node );
     ok( r == S_FALSE, "ret %08x\n", r);
     ok( temp_node == NULL, "%p\n", temp_node );
@@ -3117,9 +3127,13 @@ static void test_replaceChild(void)
     /* MS quirk: replaceChild also accepts elements instead of nodes */
     r = IXMLDOMNode_QueryInterface( ba_node, &IID_IXMLDOMElement, (void**)&ba_element);
     ok( r == S_OK, "ret %08x\n", r );
+    EXPECT_REF(ba_element, 2);
 
+    removed_node = NULL;
     r = IXMLDOMElement_replaceChild( element, ba_node, (IXMLDOMNode*)ba_element, &removed_node );
     ok( r == S_OK, "ret %08x\n", r );
+    ok( removed_node != NULL, "got %p\n", removed_node);
+    EXPECT_REF(ba_element, 3);
     IXMLDOMElement_Release( ba_element );
 
     r = IXMLDOMNodeList_get_length( fo_list, &len);
@@ -6099,6 +6113,7 @@ static void test_nodeTypedValue(void)
         ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
         ok(!lstrcmpW(V_BSTR(&value), _bstr_("value")), "got wrong value\n");
         IXMLDOMProcessingInstruction_Release(pi);
+        VariantClear(&value);
     }
 
     hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("[1]*2=3; &gee thats not right!"), &cdata);
@@ -6111,6 +6126,7 @@ static void test_nodeTypedValue(void)
         ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
         ok(!lstrcmpW(V_BSTR(&value), _bstr_("[1]*2=3; &gee thats not right!")), "got wrong value\n");
         IXMLDOMCDATASection_Release(cdata);
+        VariantClear(&value);
     }
 
     hr = IXMLDOMDocument_createComment(doc, _bstr_("comment"), &comment);
@@ -6123,6 +6139,7 @@ static void test_nodeTypedValue(void)
         ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
         ok(!lstrcmpW(V_BSTR(&value), _bstr_("comment")), "got wrong value\n");
         IXMLDOMComment_Release(comment);
+        VariantClear(&value);
     }
 
     hr = IXMLDOMDocument_createDocumentFragment(doc, &frag);
@@ -7523,6 +7540,7 @@ todo_wine {
     todo_wine EXPECT_REF(elem, 2);
     IXMLDOMDocument_Release(doc);
     todo_wine EXPECT_REF(elem, 2);
+    IXMLDOMElement_Release(elem);
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -8064,6 +8082,7 @@ todo_wine {
     /* we currently output one '\n' instead of empty string */
     todo_wine ok(lstrcmpW(V_BSTR(&v), _bstr_("")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     IXMLDOMDocument_Release(doc2);
+    VariantClear(&v);
 
     IXSLProcessor_Release(processor);
 
@@ -8181,6 +8200,7 @@ static void test_insertBefore(void)
     ok(hr == E_FAIL, "got 0x%08x\n", hr);
     ok(node == NULL, "got %p\n", node);
     IXMLDOMNode_Release(newnode);
+    IXMLDOMAttribute_Release(attr);
 
     /* insertBefore for elements */
     hr = IXMLDOMDocument_createElement(doc, _bstr_("elem"), &elem1);
@@ -8206,6 +8226,7 @@ static void test_insertBefore(void)
 
     EXPECT_CHILDREN(elem1);
     todo_wine EXPECT_REF(elem2, 3);
+    IXMLDOMNode_Release(node);
 
     /* again for already linked node */
     V_VT(&v) = VT_NULL;
@@ -8217,7 +8238,8 @@ static void test_insertBefore(void)
     EXPECT_CHILDREN(elem1);
 
     /* increments each time */
-    todo_wine EXPECT_REF(elem2, 4);
+    todo_wine EXPECT_REF(elem2, 3);
+    IXMLDOMNode_Release(node);
 
     /* try to add to another element */
     V_VT(&v) = VT_NULL;
@@ -8228,6 +8250,8 @@ static void test_insertBefore(void)
 
     EXPECT_CHILDREN(elem3);
     EXPECT_NO_CHILDREN(elem1);
+
+    IXMLDOMNode_Release(node);
 
     /* cross document case - try to add as child to a node created with other doc */
     doc2 = create_document(&IID_IXMLDOMDocument);
@@ -8249,14 +8273,16 @@ static void test_insertBefore(void)
     ok(node == (void*)elem4, "got %p\n", node);
     todo_wine EXPECT_REF(elem4, 3);
     todo_wine EXPECT_REF(elem3, 2);
+    IXMLDOMNode_Release(node);
 
     V_VT(&v) = VT_NULL;
     node = NULL;
     hr = IXMLDOMElement_insertBefore(elem3, (IXMLDOMNode*)elem5, v, &node);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(node == (void*)elem5, "got %p\n", node);
-    todo_wine EXPECT_REF(elem4, 3);
+    todo_wine EXPECT_REF(elem4, 2);
     todo_wine EXPECT_REF(elem5, 3);
+    IXMLDOMNode_Release(node);
 
     IXMLDOMDocument_Release(doc2);
 
@@ -8352,6 +8378,8 @@ static void test_insertBefore(void)
     ok(!lstrcmpW(p, _bstr_("<elem2/>")), "got %s\n", wine_dbgstr_w(p));
     SysFreeString(p);
 
+    IXMLDOMElement_Release(elem1);
+    IXMLDOMElement_Release(elem2);
     IXMLDOMDocument_Release(doc);
 }
 
