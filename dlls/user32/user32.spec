@@ -780,8 +780,3 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 #
 @ cdecl __wine_send_input(long ptr)
-
-################################################################
-# Wine dll separation hacks, these will go away, don't use them
-#
-@ cdecl HOOK_CallHooks(long long long long long)

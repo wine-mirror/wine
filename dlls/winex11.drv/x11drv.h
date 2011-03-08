@@ -858,9 +858,6 @@ extern void X11DRV_XIMLookupChars( const char *str, DWORD count ) DECLSPEC_HIDDE
 extern void X11DRV_ForceXIMReset(HWND hwnd) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen);
 
-/* FIXME: private functions imported from user32 */
-extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode );
-
 #define XEMBED_MAPPED  (1 << 0)
 
 #endif  /* __WINE_X11DRV_H */
