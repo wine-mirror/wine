@@ -138,12 +138,18 @@ static void coff_add_symbol(struct CoffFile* coff_file, struct symt* sym)
 {
     if (coff_file->neps + 1 >= coff_file->neps_alloc)
     {
-        coff_file->neps_alloc *= 2;
-        coff_file->entries = (coff_file->entries) ?
-            HeapReAlloc(GetProcessHeap(), 0, coff_file->entries,
-                        coff_file->neps_alloc * sizeof(struct symt*)) :
-            HeapAlloc(GetProcessHeap(), 0, 
-                      coff_file->neps_alloc * sizeof(struct symt*));
+        if (coff_file->entries)
+        {
+            coff_file->neps_alloc *= 2;
+            coff_file->entries = HeapReAlloc(GetProcessHeap(), 0, coff_file->entries,
+                                             coff_file->neps_alloc * sizeof(struct symt*));
+        }
+        else
+        {
+            coff_file->neps_alloc = 32;
+            coff_file->entries = HeapAlloc(GetProcessHeap(), 0,
+                                           coff_file->neps_alloc * sizeof(struct symt*));
+        }
     }
     coff_file->entries[coff_file->neps++] = sym;
 }
