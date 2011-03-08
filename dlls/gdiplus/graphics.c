@@ -4411,7 +4411,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     lfw.lfEscapement = lfw.lfOrientation = roundr((angle / M_PI) * 1800.0);
 
     gdifont = CreateFontIndirectW(&lfw);
-    DeleteObject(SelectObject(graphics->hdc, CreateFontIndirectW(&lfw)));
+    DeleteObject(SelectObject(graphics->hdc, gdifont));
 
     if (!format || format->align == StringAlignmentNear)
     {
