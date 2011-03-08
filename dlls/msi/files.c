@@ -293,6 +293,13 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
+        rc = msi_load_media_info( package, file, mi );
+        if (rc != ERROR_SUCCESS)
+        {
+            ERR("Unable to load media info for %s (%u)\n", debugstr_w(file->File), rc);
+            return ERROR_FUNCTION_FAILED;
+        }
+
         if (file->state != msifs_missing && !mi->is_continuous && file->state != msifs_overwrite)
             continue;
 

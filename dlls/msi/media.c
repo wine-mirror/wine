@@ -656,7 +656,7 @@ static UINT get_drive_type(const WCHAR *path)
     return GetDriveTypeW(root);
 }
 
-static UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
+UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
 {
     MSIRECORD *row;
     LPWSTR source_dir;
@@ -802,13 +802,6 @@ UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
     /* media info for continuous cabinet is already loaded */
     if (mi->is_continuous)
         return ERROR_SUCCESS;
-
-    rc = msi_load_media_info(package, file, mi);
-    if (rc != ERROR_SUCCESS)
-    {
-        ERR("Unable to load media info %u\n", rc);
-        return ERROR_FUNCTION_FAILED;
-    }
 
     /* cabinet is internal, no checks needed */
     if (!mi->cabinet || mi->cabinet[0] == '#')

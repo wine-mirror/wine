@@ -3339,11 +3339,8 @@ static void test_lastusedsource(void)
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    todo_wine
-    {
     ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
     ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
-    }
 
     r = MsiInstallProductA("msifile0.msi", "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -3368,11 +3365,8 @@ static void test_lastusedsource(void)
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    todo_wine
-    {
     ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
     ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
-    }
 
     r = MsiInstallProductA("msifile1.msi", "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -3396,11 +3390,8 @@ static void test_lastusedsource(void)
     r = pMsiSourceListGetInfoA(prodcode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                                MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCE, value, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    todo_wine
-    {
     ok(!lstrcmpA(value, path), "Expected \"%s\", got \"%s\"\n", path, value);
     ok(size == lstrlenA(path), "Expected %d, got %d\n", lstrlenA(path), size);
-    }
 
     r = MsiInstallProductA("msifile2.msi", "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
