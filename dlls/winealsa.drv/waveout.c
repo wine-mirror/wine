@@ -75,11 +75,8 @@ static void wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD_PTR dwParam1, DW
     case WOM_OPEN:
     case WOM_CLOSE:
     case WOM_DONE:
-	if (wwo->wFlags != DCB_NULL &&
-	    !DriverCallback(wwo->waveDesc.dwCallback, wwo->wFlags, (HDRVR)wwo->waveDesc.hWave,
-			    wMsg, wwo->waveDesc.dwInstance, dwParam1, dwParam2)) {
-	    WARN("can't notify client !\n");
-	}
+        DriverCallback(wwo->waveDesc.dwCallback, wwo->wFlags, (HDRVR)wwo->waveDesc.hWave,
+                       wMsg, wwo->waveDesc.dwInstance, dwParam1, dwParam2);
 	break;
     default:
 	FIXME("Unknown callback message %u\n", wMsg);

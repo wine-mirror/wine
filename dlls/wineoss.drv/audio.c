@@ -1444,12 +1444,9 @@ static void wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD_PTR dwParam1, DW
     case WOM_OPEN:
     case WOM_CLOSE:
     case WOM_DONE:
-	if (wwo->wFlags != DCB_NULL &&
-	    !DriverCallback(wwo->waveDesc.dwCallback, wwo->wFlags,
-			    (HDRVR)wwo->waveDesc.hWave, wMsg,
-			    wwo->waveDesc.dwInstance, dwParam1, dwParam2)) {
-	    WARN("can't notify client !\n");
-	}
+        DriverCallback(wwo->waveDesc.dwCallback, wwo->wFlags,
+                       (HDRVR)wwo->waveDesc.hWave, wMsg,
+                       wwo->waveDesc.dwInstance, dwParam1, dwParam2);
 	break;
     default:
 	FIXME("Unknown callback message %u\n", wMsg);
@@ -2478,12 +2475,9 @@ static void widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD_PTR dwParam1, DWO
     case WIM_OPEN:
     case WIM_CLOSE:
     case WIM_DATA:
-	if (wwi->wFlags != DCB_NULL &&
-	    !DriverCallback(wwi->waveDesc.dwCallback, wwi->wFlags,
-			    (HDRVR)wwi->waveDesc.hWave, wMsg,
-			    wwi->waveDesc.dwInstance, dwParam1, dwParam2)) {
-	    WARN("can't notify client !\n");
-	}
+        DriverCallback(wwi->waveDesc.dwCallback, wwi->wFlags,
+                       (HDRVR)wwi->waveDesc.hWave, wMsg,
+                       wwi->waveDesc.dwInstance, dwParam1, dwParam2);
 	break;
     default:
 	FIXME("Unknown callback message %u\n", wMsg);
