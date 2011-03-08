@@ -1081,8 +1081,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ColorFill(IDirect3DDevice9Ex *iface,
 
     /* This method is only allowed with surfaces that are render targets, or
      * offscreen plain surfaces in D3DPOOL_DEFAULT. */
-    if (!(desc.usage & WINED3DUSAGE_RENDERTARGET)
-            && (desc.pool != WINED3DPOOL_DEFAULT || desc.resource_type != WINED3DRTYPE_SURFACE))
+    if (!(desc.usage & WINED3DUSAGE_RENDERTARGET) && desc.pool != WINED3DPOOL_DEFAULT)
     {
         wined3d_mutex_unlock();
         WARN("Surface is not a render target, or not a stand-alone D3DPOOL_DEFAULT surface\n");
