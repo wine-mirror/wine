@@ -70,7 +70,6 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pGdiComment */
     NULL,                            /* pGetBitmapBits */
     NULL,                            /* pGetCharWidth */
-    NULL,                            /* pGetDIBColorTable */
     NULL,                            /* pGetDIBits */
     MFDRV_GetDeviceCaps,             /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */

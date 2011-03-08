@@ -72,7 +72,6 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_GdiComment,               /* pGdiComment */
     NULL,                            /* pGetBitmapBits */
     NULL,                            /* pGetCharWidth */
-    NULL,                            /* pGetDIBColorTable */
     NULL,                            /* pGetDIBits */
     EMFDRV_GetDeviceCaps,            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */

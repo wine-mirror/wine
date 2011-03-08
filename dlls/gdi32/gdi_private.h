@@ -114,7 +114,6 @@ typedef struct tagDC_FUNCS
     BOOL     (CDECL *pGdiComment)(PHYSDEV,UINT,CONST BYTE*);
     LONG     (CDECL *pGetBitmapBits)(HBITMAP,void*,LONG);
     BOOL     (CDECL *pGetCharWidth)(PHYSDEV,UINT,UINT,LPINT);
-    UINT     (CDECL *pGetDIBColorTable)(PHYSDEV,UINT,UINT,RGBQUAD*);
     INT      (CDECL *pGetDIBits)(PHYSDEV,HBITMAP,UINT,UINT,LPVOID,BITMAPINFO*,UINT);
     INT      (CDECL *pGetDeviceCaps)(PHYSDEV,INT);
     BOOL     (CDECL *pGetDeviceGammaRamp)(PHYSDEV,LPVOID);

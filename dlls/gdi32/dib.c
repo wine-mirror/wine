@@ -453,29 +453,24 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
 UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *colors )
 {
     DC * dc;
+    BITMAPOBJ *bitmap;
     UINT result = 0;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-    if (dc->funcs->pGetDIBColorTable)
-        result = dc->funcs->pGetDIBColorTable(dc->physDev, startpos, entries, colors);
-    else
+    if ((bitmap = GDI_GetObjPtr( dc->hBitmap, OBJ_BITMAP )))
     {
-        BITMAPOBJ *bitmap = GDI_GetObjPtr( dc->hBitmap, OBJ_BITMAP );
-        if (bitmap)
+        /* Check if currently selected bitmap is a DIB */
+        if (bitmap->color_table)
         {
-            /* Check if currently selected bitmap is a DIB */
-            if (bitmap->color_table)
+            if (startpos < bitmap->nb_colors)
             {
-                if (startpos < bitmap->nb_colors)
-                {
-                    if (startpos + entries > bitmap->nb_colors) entries = bitmap->nb_colors - startpos;
-                    memcpy(colors, bitmap->color_table + startpos, entries * sizeof(RGBQUAD));
-                    result = entries;
-                }
+                if (startpos + entries > bitmap->nb_colors) entries = bitmap->nb_colors - startpos;
+                memcpy(colors, bitmap->color_table + startpos, entries * sizeof(RGBQUAD));
+                result = entries;
             }
-            GDI_ReleaseObj( dc->hBitmap );
         }
+        GDI_ReleaseObj( dc->hBitmap );
     }
     release_dc_ptr( dc );
     return result;
