@@ -152,7 +152,7 @@ sub process_spec_file($)
     {
       $flags |= $FLAG_REGISTER;
     }
-    s/ \-[a-z0-9]+//g;   # Strip flags
+    s/ \-[a-z0-9=_]+//g;   # Strip flags
 
     if( /^(([0-9]+)|@) / )
     {
