@@ -2247,7 +2247,6 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     list_init(&window->script_hosts);
 
     window->task_magic = get_task_target_magic();
-    *ret = window;
     update_window_doc(window);
 
     list_init(&window->children);
@@ -2260,6 +2259,7 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
         list_add_tail(&parent->children, &window->sibling_entry);
     }
 
+    *ret = window;
     return S_OK;
 }
 

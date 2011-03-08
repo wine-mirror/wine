@@ -2019,7 +2019,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     if(!doc)
         return E_OUTOFMEMORY;
 
-    if(window == doc_obj->basedoc.window)
+    if(!doc_obj->basedoc.window || window == doc_obj->basedoc.window)
         doc->basedoc.cp_container.forward_container = &doc_obj->basedoc.cp_container;
 
     nsIDOMHTMLDocument_AddRef(nsdoc);
