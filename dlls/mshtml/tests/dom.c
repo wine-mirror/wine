@@ -1989,6 +1989,20 @@ static IHTMLDOMNode *_node_get_next(unsigned line, IUnknown *unk)
     return next;
 }
 
+#define node_get_prev(u) _node_get_prev(__LINE__,u)
+static IHTMLDOMNode *_node_get_prev(unsigned line, IUnknown *unk)
+{
+    IHTMLDOMNode *node = _get_node_iface(line, unk);
+    IHTMLDOMNode *prev;
+    HRESULT hres;
+
+    hres = IHTMLDOMNode_get_previousSibling(node, &prev);
+    IHTMLDOMNode_Release(node);
+    ok_(__FILE__,line) (hres == S_OK, "get_previousSibling failed: %08x\n", hres);
+
+    return prev;
+}
+
 #define test_elem_get_parent(u) _test_elem_get_parent(__LINE__,u)
 static IHTMLElement *_test_elem_get_parent(unsigned line, IUnknown *unk)
 {
@@ -6681,9 +6695,16 @@ static void test_elems(IHTMLDocument2 *doc)
         node = get_child_item(child_col, 0);
         ok(node != NULL, "node == NULL\n");
         if(node) {
+            IHTMLDOMNode *prev;
+
             type = get_node_type((IUnknown*)node);
             ok(type == 3, "type=%d\n", type);
             node2 = node_get_next((IUnknown*)node);
+
+            prev = node_get_prev((IUnknown*)node2);
+            ok(iface_cmp((IUnknown*)node, (IUnknown*)prev), "node != prev\n");
+            IHTMLDOMNode_Release(prev);
+
             IHTMLDOMNode_Release(node);
         }
 

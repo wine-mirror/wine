@@ -782,8 +782,26 @@ static HRESULT WINAPI HTMLDOMNode_get_lastChild(IHTMLDOMNode *iface, IHTMLDOMNod
 static HRESULT WINAPI HTMLDOMNode_get_previousSibling(IHTMLDOMNode *iface, IHTMLDOMNode **p)
 {
     HTMLDOMNode *This = impl_from_IHTMLDOMNode(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMNode *nschild = NULL;
+    HTMLDOMNode *node;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsIDOMNode_GetPreviousSibling(This->nsnode, &nschild);
+    if(!nschild) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    hres = get_node(This->doc, nschild, TRUE, &node);
+    nsIDOMNode_Release(nschild);
+    if(FAILED(hres))
+        return hres;
+
+    *p = &node->IHTMLDOMNode_iface;
+    IHTMLDOMNode_AddRef(*p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMNode_get_nextSibling(IHTMLDOMNode *iface, IHTMLDOMNode **p)
