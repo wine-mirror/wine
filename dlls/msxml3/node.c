@@ -292,7 +292,6 @@ HRESULT node_get_next_sibling(xmlnode *This, IXMLDOMNode **ret)
 HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT *ref_child,
         IXMLDOMNode **ret)
 {
-    xmlNodePtr new_child_node;
     IXMLDOMNode *before = NULL;
     xmlnode *node_obj;
     xmlDocPtr doc;
@@ -321,12 +320,11 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
         return E_FAIL;
     }
 
-    new_child_node = node_obj->node;
-    TRACE("new_child_node %p This->node %p\n", new_child_node, This->node);
+    TRACE("new child %p, This->node %p\n", node_obj->node, This->node);
 
-    if(!new_child_node->parent)
-        if(xmldoc_remove_orphan(new_child_node->doc, new_child_node) != S_OK)
-            WARN("%p is not an orphan of %p\n", new_child_node, new_child_node->doc);
+    if(!node_obj->node->parent)
+        if(xmldoc_remove_orphan(node_obj->node->doc, node_obj->node) != S_OK)
+            WARN("%p is not an orphan of %p\n", node_obj->node, node_obj->node->doc);
 
     if(before)
     {
@@ -336,10 +334,13 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
 
         /* unlink from current parent first */
         if(node_obj->parent)
-            IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
-        doc = new_child_node->doc;
+        {
+            hr = IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
+            if (hr == S_OK) xmldoc_remove_orphan(node_obj->node->doc, node_obj->node);
+        }
+        doc = node_obj->node->doc;
         xmldoc_add_ref(before_node_obj->node->doc);
-        xmlAddPrevSibling(before_node_obj->node, new_child_node);
+        xmlAddPrevSibling(before_node_obj->node, node_obj->node);
         xmldoc_release(doc);
         node_obj->parent = This->parent;
     }
@@ -347,10 +348,13 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
     {
         /* unlink from current parent first */
         if(node_obj->parent)
-            IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
-        doc = new_child_node->doc;
+        {
+            hr = IXMLDOMNode_removeChild(node_obj->parent, node_obj->iface, NULL);
+            if (hr == S_OK) xmldoc_remove_orphan(node_obj->node->doc, node_obj->node);
+        }
+        doc = node_obj->node->doc;
         xmldoc_add_ref(This->node->doc);
-        xmlAddChild(This->node, new_child_node);
+        xmlAddChild(This->node, node_obj->node);
         xmldoc_release(doc);
         node_obj->parent = This->iface;
     }
@@ -445,6 +449,7 @@ HRESULT node_remove_child(xmlnode *This, IXMLDOMNode* child, IXMLDOMNode** oldCh
 
     xmlUnlinkNode(child_node->node);
     child_node->parent = NULL;
+    xmldoc_add_orphan(child_node->node->doc, child_node->node);
 
     if(oldChild)
     {
@@ -507,6 +512,8 @@ HRESULT node_clone(xmlnode *This, VARIANT_BOOL deep, IXMLDOMNode **cloneNode)
         if (!node)
         {
             ERR("Copy failed\n");
+            xmldoc_remove_orphan(clone->doc, clone);
+            xmlFreeNode(clone);
             return E_FAIL;
         }
 
