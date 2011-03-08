@@ -879,16 +879,38 @@ static inline unsigned where_to_insert(struct module* module, unsigned high, con
  */
 static BOOL resort_symbols(struct module* module)
 {
+    int delta;
+
     if (!(module->module.NumSyms = module->num_symbols))
         return FALSE;
 
-    /* FIXME: what's the optimal value here ??? */
-    if (module->num_sorttab && module->num_symbols <= module->num_sorttab + 30)
+    /* we know that set from 0 up to num_sorttab is already sorted
+     * so sort the remaining (new) symbols, and merge the two sets
+     * (unless the first set is empty)
+     */
+    delta = module->num_symbols - module->num_sorttab;
+    qsort(&module->addr_sorttab[module->num_sorttab], delta, sizeof(struct symt_ht*), symt_cmp_addr);
+    if (module->num_sorttab)
     {
-        int     i, delta, ins_idx = module->num_sorttab, prev_ins_idx;
-        struct symt_ht* tmp[30];
+        int     i, ins_idx = module->num_sorttab, prev_ins_idx;
+        static struct symt_ht** tmp;
+        static unsigned num_tmp;
 
-        delta = module->num_symbols - module->num_sorttab;
+        if (num_tmp < delta)
+        {
+            static struct symt_ht** new;
+            if (tmp)
+                new = HeapReAlloc(GetProcessHeap(), 0, tmp, delta * sizeof(struct symt_ht*));
+            else
+                new = HeapAlloc(GetProcessHeap(), 0, delta * sizeof(struct symt_ht*));
+            if (!new)
+            {
+                module->num_sorttab = 0;
+                return resort_symbols(module);
+            }
+            tmp = new;
+            num_tmp = delta;
+        }
         memcpy(tmp, &module->addr_sorttab[module->num_sorttab], delta * sizeof(struct symt_ht*));
         qsort(tmp, delta, sizeof(struct symt_ht*), symt_cmp_addr);
 
@@ -901,10 +923,6 @@ static BOOL resort_symbols(struct module* module)
                     (prev_ins_idx - ins_idx) * sizeof(struct symt_ht*));
             module->addr_sorttab[ins_idx + i] = tmp[i];
         }
-    }
-    else
-    {
-        qsort(module->addr_sorttab, module->num_symbols, sizeof(struct symt_ht*), symt_cmp_addr);
     }
     module->num_sorttab = module->num_symbols;
     return module->sortlist_valid = TRUE;
