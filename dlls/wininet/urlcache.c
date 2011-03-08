@@ -2963,6 +2963,10 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
         if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
             pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles--;
     }
+    if (pUrlEntry->size.QuadPart < pHeader->CacheUsage.QuadPart)
+        pHeader->CacheUsage.QuadPart -= pUrlEntry->size.QuadPart;
+    else
+        pHeader->CacheUsage.QuadPart = 0;
 
     URLCache_DeleteEntry(pHeader, pEntry);
 
@@ -3042,6 +3046,10 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
         if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
             pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles--;
     }
+    if (pUrlEntry->size.QuadPart < pHeader->CacheUsage.QuadPart)
+        pHeader->CacheUsage.QuadPart -= pUrlEntry->size.QuadPart;
+    else
+        pHeader->CacheUsage.QuadPart = 0;
 
     URLCache_DeleteEntry(pHeader, pEntry);
 
