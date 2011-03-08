@@ -128,7 +128,7 @@ typedef struct tagDC_FUNCS
     INT      (CDECL *pIntersectClipRect)(PHYSDEV,INT,INT,INT,INT);
     BOOL     (CDECL *pInvertRgn)(PHYSDEV,HRGN);
     BOOL     (CDECL *pLineTo)(PHYSDEV,INT,INT);
-    BOOL     (CDECL *pModifyWorldTransform)(PHYSDEV,const XFORM*,INT);
+    BOOL     (CDECL *pModifyWorldTransform)(PHYSDEV,const XFORM*,DWORD);
     BOOL     (CDECL *pMoveTo)(PHYSDEV,INT,INT);
     INT      (CDECL *pOffsetClipRgn)(PHYSDEV,INT,INT);
     INT      (CDECL *pOffsetViewportOrg)(PHYSDEV,INT,INT);

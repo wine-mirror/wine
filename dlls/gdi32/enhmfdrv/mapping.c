@@ -119,7 +119,7 @@ BOOL CDECL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform)
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL CDECL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, INT mode)
+BOOL CDECL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode)
 {
     EMRMODIFYWORLDTRANSFORM emr;
 
