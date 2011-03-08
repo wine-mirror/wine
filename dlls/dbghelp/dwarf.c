@@ -1764,7 +1764,8 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     /* if it's an abstract representation of an inline function, there should be
      * a concrete object that we'll handle
      */
-    if (dwarf2_find_attribute(ctx, di, DW_AT_inline, &inline_flags))
+    if (dwarf2_find_attribute(ctx, di, DW_AT_inline, &inline_flags) &&
+        inline_flags.u.uvalue != DW_INL_not_inlined)
     {
         TRACE("Function %s declared as inlined (%ld)... skipping\n",
               name.u.string ? name.u.string : "(null)", inline_flags.u.uvalue);

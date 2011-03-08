@@ -475,3 +475,8 @@ enum dwarf_call_frame_info
 #define DW_EH_PE_aligned  0x50
 #define DW_EH_PE_indirect 0x80
 #define DW_EH_PE_omit     0xff
+
+#define DW_INL_not_inlined              0x00
+#define DW_INL_inlined                  0x01
+#define DW_INL_declared_not_inlined     0x02
+#define DW_INL_declared_inlined         0x03
