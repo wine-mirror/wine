@@ -2362,6 +2362,10 @@ interface IWineD3DBaseTexture : IWineD3DResource
     );
     BOOL IsCondNP2(
     );
+    HRESULT GetSubResourceDesc(
+        [in] UINT sub_resource_idx,
+        [out] struct wined3d_resource_desc *desc
+    );
 }
 
 [
@@ -2371,10 +2375,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
 ]
 interface IWineD3DTexture : IWineD3DBaseTexture
 {
-    HRESULT GetLevelDesc(
-        [in] UINT sub_resource_idx,
-        [out] struct wined3d_resource_desc *desc
-    );
     HRESULT GetSurfaceLevel(
         [in] UINT sub_resource_idx,
         [out] IWineD3DSurface **surface
@@ -2400,10 +2400,6 @@ interface IWineD3DTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DCubeTexture : IWineD3DBaseTexture
 {
-    HRESULT GetLevelDesc(
-        [in] UINT sub_resource_idx,
-        [out] struct wined3d_resource_desc *desc
-    );
     HRESULT GetCubeMapSurface(
         [in] UINT sub_resource_idx,
         [out] IWineD3DSurface **surface
@@ -2430,10 +2426,6 @@ interface IWineD3DCubeTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 {
-    HRESULT GetLevelDesc(
-        [in] UINT sub_resource_idx,
-        [out] struct wined3d_resource_desc *desc
-    );
     HRESULT GetVolumeLevel(
         [in] UINT sub_resource_idx,
         [out] IWineD3DVolume **volume

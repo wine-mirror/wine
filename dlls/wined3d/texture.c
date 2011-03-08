@@ -351,7 +351,7 @@ static BOOL WINAPI IWineD3DTextureImpl_IsCondNP2(IWineD3DTexture *iface) {
     return This->cond_np2;
 }
 
-static HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface,
+static HRESULT WINAPI IWineD3DTextureImpl_GetSubResourceDesc(IWineD3DTexture *iface,
         UINT sub_resource_idx, struct wined3d_resource_desc *desc)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
@@ -468,8 +468,8 @@ static const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_GetAutoGenFilterType,
     IWineD3DTextureImpl_GenerateMipSubLevels,
     IWineD3DTextureImpl_IsCondNP2,
+    IWineD3DTextureImpl_GetSubResourceDesc,
     /* IWineD3DTexture */
-    IWineD3DTextureImpl_GetLevelDesc,
     IWineD3DTextureImpl_GetSurfaceLevel,
     IWineD3DTextureImpl_Map,
     IWineD3DTextureImpl_Unmap,

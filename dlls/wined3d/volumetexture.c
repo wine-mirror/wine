@@ -263,7 +263,7 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *if
     return FALSE;
 }
 
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTexture *iface,
+static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetSubResourceDesc(IWineD3DVolumeTexture *iface,
         UINT sub_resource_idx, struct wined3d_resource_desc *desc)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
@@ -380,10 +380,9 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_SetAutoGenFilterType,
     IWineD3DVolumeTextureImpl_GetAutoGenFilterType,
     IWineD3DVolumeTextureImpl_GenerateMipSubLevels,
-    /* not in d3d */
     IWineD3DVolumeTextureImpl_IsCondNP2,
+    IWineD3DVolumeTextureImpl_GetSubResourceDesc,
     /* volume texture */
-    IWineD3DVolumeTextureImpl_GetLevelDesc,
     IWineD3DVolumeTextureImpl_GetVolumeLevel,
     IWineD3DVolumeTextureImpl_Map,
     IWineD3DVolumeTextureImpl_Unmap,

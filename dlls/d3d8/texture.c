@@ -257,7 +257,7 @@ static HRESULT WINAPI IDirect3DTexture8Impl_GetLevelDesc(IDirect3DTexture8 *ifac
     TRACE("iface %p, level %u, desc %p.\n", iface, level, desc);
 
     wined3d_mutex_lock();
-    hr = IWineD3DTexture_GetLevelDesc(This->wineD3DTexture, level, &wined3d_desc);
+    hr = IWineD3DTexture_GetSubResourceDesc(This->wineD3DTexture, level, &wined3d_desc);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))

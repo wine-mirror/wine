@@ -2506,7 +2506,7 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
 
                 if(hr == WINED3D_OK && tex)
                 {
-                    hr = IWineD3DTexture_GetLevelDesc((IWineD3DTexture*) tex, 0, &desc);
+                    hr = IWineD3DBaseTexture_GetSubResourceDesc(tex, 0, &desc);
                     if (SUCCEEDED(hr))
                     {
                         ddfmt.dwSize = sizeof(ddfmt);
@@ -2815,7 +2815,7 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     if(hr == WINED3D_OK && tex)
                     {
                         memset(&desc, 0, sizeof(desc));
-                        hr = IWineD3DTexture_GetLevelDesc((IWineD3DTexture*) tex, 0, &desc);
+                        hr = IWineD3DBaseTexture_GetSubResourceDesc(tex, 0, &desc);
                         if (SUCCEEDED(hr))
                         {
                             ddfmt.dwSize = sizeof(ddfmt);
@@ -4588,7 +4588,7 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
         if(result == WINED3D_OK && tex)
         {
             memset(&desc, 0, sizeof(desc));
-            result = IWineD3DTexture_GetLevelDesc((IWineD3DTexture*) tex, 0, &desc);
+            result = IWineD3DBaseTexture_GetSubResourceDesc(tex, 0, &desc);
             if (SUCCEEDED(result))
             {
                 ddfmt.dwSize = sizeof(ddfmt);
