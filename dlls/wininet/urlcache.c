@@ -1996,11 +1996,6 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
     TRACE("Found URL: %s\n", (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
     TRACE("Header info: %s\n", (LPBYTE)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo);
 
-    pUrlEntry->dwHitRate++;
-    pUrlEntry->dwUseCount++;
-    GetSystemTimeAsFileTime(&pUrlEntry->LastAccessTime);
-    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
-
     error = URLCache_CopyEntry(pContainer, pHeader, lpCacheEntryInfo,
                                lpdwCacheEntryInfoBufferSize, pUrlEntry,
                                FALSE);
@@ -2011,6 +2006,11 @@ BOOL WINAPI RetrieveUrlCacheEntryFileA(
         return FALSE;
     }
     TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
+
+    pUrlEntry->dwHitRate++;
+    pUrlEntry->dwUseCount++;
+    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
+    GetSystemTimeAsFileTime(&pUrlEntry->LastAccessTime);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
@@ -2093,11 +2093,6 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
     TRACE("Found URL: %s\n", (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl);
     TRACE("Header info: %s\n", (LPBYTE)pUrlEntry + pUrlEntry->dwOffsetHeaderInfo);
 
-    pUrlEntry->dwHitRate++;
-    pUrlEntry->dwUseCount++;
-    GetSystemTimeAsFileTime(&pUrlEntry->LastAccessTime);
-    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
-
     error = URLCache_CopyEntry(
         pContainer,
         pHeader,
@@ -2112,6 +2107,11 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
         return FALSE;
     }
     TRACE("Local File Name: %s\n", debugstr_a((LPCSTR)pUrlEntry + pUrlEntry->dwOffsetLocalName));
+
+    pUrlEntry->dwHitRate++;
+    pUrlEntry->dwUseCount++;
+    URLCache_HashEntrySetUse(pHashEntry, pUrlEntry->dwUseCount);
+    GetSystemTimeAsFileTime(&pUrlEntry->LastAccessTime);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
