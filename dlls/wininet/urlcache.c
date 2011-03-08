@@ -2628,6 +2628,9 @@ static BOOL CommitUrlCacheEntryInternal(
     {
         if (pUrlEntry->CacheDir < pHeader->DirectoryCount)
             pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles++;
+        pHeader->CacheUsage.QuadPart += file_size.QuadPart;
+        if (pHeader->CacheUsage.QuadPart > pHeader->CacheLimit.QuadPart)
+            FIXME("file of size %s bytes fills cache\n", wine_dbgstr_longlong(file_size.QuadPart));
     }
 
 cleanup:
