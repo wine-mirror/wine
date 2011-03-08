@@ -667,6 +667,8 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         goto error;
     }
 
+    dc->physDev->funcs = funcs;
+    dc->physDev->hdc = hdc;
     dc->vis_rect.left   = 0;
     dc->vis_rect.top    = 0;
     dc->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
@@ -791,6 +793,8 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         goto error;
     }
 
+    dc->physDev->funcs = funcs;
+    dc->physDev->hdc = hdc;
     DC_InitDC( dc );
     release_dc_ptr( dc );
     return ret;

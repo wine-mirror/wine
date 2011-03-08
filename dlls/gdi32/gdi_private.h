@@ -72,7 +72,11 @@ typedef struct tagGDIOBJHDR
 
 /* Device functions for the Wine driver interface */
 
-typedef struct { int opaque; } *PHYSDEV;  /* PHYSDEV is an opaque pointer */
+typedef struct gdi_physdev
+{
+    const struct tagDC_FUNCS *funcs;
+    HDC                       hdc;
+} *PHYSDEV;
 
 typedef struct tagDC_FUNCS
 {

@@ -172,6 +172,8 @@ static DC *MFDRV_AllocMetaFile(void)
         return NULL;
     }
     dc->physDev = (PHYSDEV)physDev;
+    physDev->dev.funcs = &MFDRV_Funcs;
+    physDev->dev.hdc = dc->hSelf;
     physDev->hdc = dc->hSelf;
 
     if (!(physDev->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev->mh) )))

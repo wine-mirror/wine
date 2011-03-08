@@ -320,6 +320,8 @@ HDC WINAPI CreateEnhMetaFileW(
         return 0;
     }
     dc->physDev = (PHYSDEV)physDev;
+    physDev->dev.funcs = &EMFDRV_Funcs;
+    physDev->dev.hdc = dc->hSelf;
     physDev->hdc = dc->hSelf;
 
     if(description) { /* App name\0Title\0\0 */
