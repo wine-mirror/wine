@@ -265,6 +265,8 @@ static void test_urlcacheA(void)
        broken(lpCacheEntryInfo->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
        "expected type NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, got %08x\n",
        lpCacheEntryInfo->CacheEntryType);
+    ok(!lpCacheEntryInfo->dwExemptDelta, "expected dwExemptDelta 0, got %d\n",
+       lpCacheEntryInfo->dwExemptDelta);
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
     /* A subsequent commit with a different time/type doesn't change the type */
@@ -502,6 +504,106 @@ static void test_urlcacheA(void)
     /* and the file should be untouched. */
     check_file_exists(filenameA);
     DeleteFileA(filenameA);
+
+    /* Try creating a sticky entry.  Unlike non-sticky entries, the filename
+     * must have been set already.
+     */
+    SetLastError(0xdeadbeef);
+    ret = CommitUrlCacheEntry(TEST_URL, NULL, filetime_zero, filetime_zero,
+            STICKY_CACHE_ENTRY, (LPBYTE)ok_header, strlen(ok_header), "html",
+            NULL);
+    todo_wine {
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
+    SetLastError(0xdeadbeef);
+    ret = CommitUrlCacheEntry(TEST_URL, NULL, filetime_zero, filetime_zero,
+            NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY,
+            (LPBYTE)ok_header, strlen(ok_header), "html", NULL);
+    todo_wine {
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
+    ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA, 0);
+    ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
+    create_and_write_file(filenameA, &zero_byte, sizeof(zero_byte));
+    ret = CommitUrlCacheEntry(TEST_URL, filenameA, filetime_zero, filetime_zero,
+            NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY,
+            (LPBYTE)ok_header, strlen(ok_header), "html", NULL);
+    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+    cbCacheEntryInfo = 0;
+    SetLastError(0xdeadbeef);
+    ret = GetUrlCacheEntryInfo(TEST_URL, NULL, &cbCacheEntryInfo);
+    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
+    ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
+    ok(lpCacheEntryInfo->CacheEntryType & (NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY),
+       "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %d (0x%08x)\n",
+       lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
+    todo_wine
+    ok(lpCacheEntryInfo->dwExemptDelta == 86400,
+       "expected dwExemptDelta 864000, got %d\n",
+       lpCacheEntryInfo->dwExemptDelta);
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+    if (pDeleteUrlCacheEntryA)
+    {
+        ret = pDeleteUrlCacheEntryA(TEST_URL);
+        ok(ret, "DeleteUrlCacheEntryA failed with error %d\n", GetLastError());
+        /* When explicitly deleting the cache entry, the file is also deleted */
+        todo_wine
+        check_file_not_exists(filenameA);
+    }
+    /* Test once again, setting the exempt delta via SetUrlCacheEntryInfo */
+    ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA, 0);
+    ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
+    create_and_write_file(filenameA, &zero_byte, sizeof(zero_byte));
+    ret = CommitUrlCacheEntry(TEST_URL, filenameA, filetime_zero, filetime_zero,
+            NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY,
+            (LPBYTE)ok_header, strlen(ok_header), "html", NULL);
+    ok(ret, "CommitUrlCacheEntry failed with error %d\n", GetLastError());
+    cbCacheEntryInfo = 0;
+    SetLastError(0xdeadbeef);
+    ret = GetUrlCacheEntryInfo(TEST_URL, NULL, &cbCacheEntryInfo);
+    ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    lpCacheEntryInfo = HeapAlloc(GetProcessHeap(), 0, cbCacheEntryInfo);
+    ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
+    ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
+    ok(lpCacheEntryInfo->CacheEntryType & (NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY),
+       "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %d (0x%08x)\n",
+       lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
+    todo_wine
+    ok(lpCacheEntryInfo->dwExemptDelta == 86400,
+       "expected dwExemptDelta 864000, got %d\n",
+       lpCacheEntryInfo->dwExemptDelta);
+    lpCacheEntryInfo->dwExemptDelta = 0;
+    ret = SetUrlCacheEntryInfoA(TEST_URL, lpCacheEntryInfo,
+            CACHE_ENTRY_EXEMPT_DELTA_FC);
+    ok(ret, "SetUrlCacheEntryInfo failed: %d\n", GetLastError());
+    ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
+    ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
+    ok(!lpCacheEntryInfo->dwExemptDelta, "expected dwExemptDelta 0, got %d\n",
+       lpCacheEntryInfo->dwExemptDelta);
+    /* See whether a sticky cache entry has the flag cleared once the exempt
+     * delta is meaningless.
+     */
+    ok(lpCacheEntryInfo->CacheEntryType & (NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY),
+       "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %d (0x%08x)\n",
+       lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
+    if (pDeleteUrlCacheEntryA)
+    {
+        ret = pDeleteUrlCacheEntryA(TEST_URL);
+        ok(ret, "DeleteUrlCacheEntryA failed with error %d\n", GetLastError());
+        todo_wine
+        check_file_not_exists(filenameA);
+    }
 }
 
 static void test_FindCloseUrlCache(void)
