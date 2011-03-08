@@ -1377,6 +1377,9 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
     if (dwarf2_get_di_children(ctx, di)) FIXME("Unsupported children\n");
 }
 
+static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
+                                            dwarf2_debug_info_t* di);
+
 static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
                                           dwarf2_debug_info_t* di,
                                           enum UdtKind udt)
@@ -1411,13 +1414,15 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
         case DW_TAG_enumeration_type:
             dwarf2_parse_enumeration_type(ctx, child);
             break;
+        case DW_TAG_subprogram:
+            dwarf2_parse_subprogram(ctx, child);
+            break;
         case DW_TAG_structure_type:
         case DW_TAG_class_type:
         case DW_TAG_union_type:
         case DW_TAG_typedef:
             /* FIXME: we need to handle nested udt definitions */
         case DW_TAG_inheritance:
-        case DW_TAG_subprogram:
         case DW_TAG_template_type_param:
         case DW_TAG_template_value_param:
         case DW_TAG_variable:
@@ -1860,7 +1865,11 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
                                         &sig_type->symt);
         di->symt = &subpgm.func->symt;
     }
-    else subpgm.func = NULL;
+    else
+    {
+        WARN("no location for '%s::%s'\n", ctx->name_space, name.u.string);
+        subpgm.func = NULL;
+    }
 
     subpgm.ctx = ctx;
     if (!dwarf2_compute_location_attr(ctx, di, DW_AT_frame_base,
