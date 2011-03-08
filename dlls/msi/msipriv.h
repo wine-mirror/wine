@@ -856,7 +856,9 @@ extern DWORD msi_version_str_to_dword(LPCWSTR p);
 extern void msi_parse_version_string(LPCWSTR, PDWORD, PDWORD);
 extern VS_FIXEDFILEINFO *msi_get_disk_file_version(LPCWSTR);
 extern int msi_compare_file_versions(VS_FIXEDFILEINFO *, const WCHAR *);
-
+extern int msi_compare_font_versions(const WCHAR *, const WCHAR *);
+extern DWORD msi_get_disk_file_size(LPCWSTR);
+extern BOOL msi_file_hash_matches(MSIFILE *);
 
 extern LONG msi_reg_set_val_str( HKEY hkey, LPCWSTR name, LPCWSTR value );
 extern LONG msi_reg_set_val_multi_str( HKEY hkey, LPCWSTR name, LPCWSTR value );

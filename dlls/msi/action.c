@@ -2178,7 +2178,7 @@ int msi_compare_file_versions( VS_FIXEDFILEINFO *fi, const WCHAR *version )
     return 0;
 }
 
-static int msi_compare_font_versions( const WCHAR *ver1, const WCHAR *ver2 )
+int msi_compare_font_versions( const WCHAR *ver1, const WCHAR *ver2 )
 {
     DWORD ms1, ms2;
 
@@ -2190,7 +2190,7 @@ static int msi_compare_font_versions( const WCHAR *ver1, const WCHAR *ver2 )
     return 0;
 }
 
-static DWORD get_disk_file_size( LPCWSTR filename )
+DWORD msi_get_disk_file_size( LPCWSTR filename )
 {
     HANDLE file;
     DWORD size;
@@ -2206,7 +2206,7 @@ static DWORD get_disk_file_size( LPCWSTR filename )
     return size;
 }
 
-static BOOL hash_matches( MSIFILE *file )
+BOOL msi_file_hash_matches( MSIFILE *file )
 {
     UINT r;
     MSIFILEHASHINFO hash;
@@ -2256,7 +2256,7 @@ static void set_target_path( MSIPACKAGE *package, MSIFILE *file )
     TRACE("resolves to %s\n", debugstr_w(file->TargetPath));
 }
 
-static UINT set_file_install_states( MSIPACKAGE *package )
+static UINT calculate_file_cost( MSIPACKAGE *package )
 {
     VS_FIXEDFILEINFO *file_version;
     WCHAR *font_version;
@@ -2277,67 +2277,37 @@ static UINT set_file_install_states( MSIPACKAGE *package )
         if ((comp->assembly && !comp->assembly->installed) ||
             GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
         {
-            file->state = msifs_missing;
             comp->Cost += file->FileSize;
             continue;
         }
+        file_size = msi_get_disk_file_size( file->TargetPath );
+
         if (file->Version)
         {
             if ((file_version = msi_get_disk_file_version( file->TargetPath )))
             {
-                TRACE("new %s old %u.%u.%u.%u\n", debugstr_w(file->Version),
-                      HIWORD(file_version->dwFileVersionMS),
-                      LOWORD(file_version->dwFileVersionMS),
-                      HIWORD(file_version->dwFileVersionLS),
-                      LOWORD(file_version->dwFileVersionLS));
-
                 if (msi_compare_file_versions( file_version, file->Version ) < 0)
                 {
-                    file->state = msifs_overwrite;
-                    comp->Cost += file->FileSize;
-                }
-                else
-                {
-                    TRACE("Destination file version equal or greater, not overwriting\n");
-                    file->state = msifs_present;
+                    comp->Cost += file->FileSize - file_size;
                 }
                 msi_free( file_version );
                 continue;
             }
             else if ((font_version = font_version_from_file( file->TargetPath )))
             {
-                TRACE("new %s old %s\n", debugstr_w(file->Version), debugstr_w(font_version));
-
                 if (msi_compare_font_versions( font_version, file->Version ) < 0)
                 {
-                    file->state = msifs_overwrite;
-                    comp->Cost += file->FileSize;
-                }
-                else
-                {
-                    TRACE("Destination file version equal or greater, not overwriting\n");
-                    file->state = msifs_present;
+                    comp->Cost += file->FileSize - file_size;
                 }
                 msi_free( font_version );
                 continue;
             }
         }
-        if ((file_size = get_disk_file_size( file->TargetPath )) != file->FileSize)
+        if (file_size != file->FileSize)
         {
-            file->state = msifs_overwrite;
             comp->Cost += file->FileSize - file_size;
-            continue;
         }
-        if (file->hash.dwFileHashInfoSize && hash_matches( file ))
-        {
-            TRACE("File hashes match, not overwriting\n");
-            file->state = msifs_present;
-            continue;
-        }
-        file->state = msifs_overwrite;
-        comp->Cost += file->FileSize - file_size;
     }
-
     return ERROR_SUCCESS;
 }
 
@@ -2404,8 +2374,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         }
     }
 
-    TRACE("Calculating file install states\n");
-    set_file_install_states( package );
+    TRACE("Calculating file cost\n");
+    calculate_file_cost( package );
 
     msi_set_property( package->db, szCosting, szOne );
     /* set default run level if not set */

@@ -60,6 +60,73 @@ static void msi_file_update_ui( MSIPACKAGE *package, MSIFILE *f, const WCHAR *ac
     ui_progress( package, 2, f->FileSize, 0, 0 );
 }
 
+static msi_file_state calculate_install_state( MSIFILE *file )
+{
+    MSICOMPONENT *comp = file->Component;
+    VS_FIXEDFILEINFO *file_version;
+    WCHAR *font_version;
+    msi_file_state state;
+    DWORD file_size;
+
+    if (comp->ActionRequest != INSTALLSTATE_LOCAL || !comp->Enabled ||
+        (comp->assembly && comp->assembly->installed))
+    {
+        TRACE("file %s is not scheduled for install\n", debugstr_w(file->File));
+        return msifs_skipped;
+    }
+    if ((comp->assembly && !comp->assembly->installed) ||
+        GetFileAttributesW( file->TargetPath ) == INVALID_FILE_ATTRIBUTES)
+    {
+        TRACE("file %s is missing\n", debugstr_w(file->File));
+        return msifs_missing;
+    }
+    if (file->Version)
+    {
+        if ((file_version = msi_get_disk_file_version( file->TargetPath )))
+        {
+            TRACE("new %s old %u.%u.%u.%u\n", debugstr_w(file->Version),
+                  HIWORD(file_version->dwFileVersionMS),
+                  LOWORD(file_version->dwFileVersionMS),
+                  HIWORD(file_version->dwFileVersionLS),
+                  LOWORD(file_version->dwFileVersionLS));
+
+            if (msi_compare_file_versions( file_version, file->Version ) < 0)
+                state = msifs_overwrite;
+            else
+            {
+                TRACE("destination file version equal or greater, not overwriting\n");
+                state = msifs_present;
+            }
+            msi_free( file_version );
+            return state;
+        }
+        else if ((font_version = font_version_from_file( file->TargetPath )))
+        {
+            TRACE("new %s old %s\n", debugstr_w(file->Version), debugstr_w(font_version));
+
+            if (msi_compare_font_versions( font_version, file->Version ) < 0)
+                state = msifs_overwrite;
+            else
+            {
+                TRACE("destination file version equal or greater, not overwriting\n");
+                state = msifs_present;
+            }
+            msi_free( font_version );
+            return state;
+        }
+    }
+    if ((file_size = msi_get_disk_file_size( file->TargetPath )) != file->FileSize)
+    {
+        return msifs_overwrite;
+    }
+    if (file->hash.dwFileHashInfoSize && msi_file_hash_matches( file ))
+    {
+        TRACE("file hashes match, not overwriting\n");
+        return msifs_present;
+    }
+    return msifs_overwrite;
+}
+
 static void schedule_install_files(MSIPACKAGE *package)
 {
     MSIFILE *file;
@@ -68,22 +135,14 @@ static void schedule_install_files(MSIPACKAGE *package)
     {
         MSICOMPONENT *comp = file->Component;
 
-        if (comp->ActionRequest != INSTALLSTATE_LOCAL || !comp->Enabled ||
-            (comp->assembly && comp->assembly->installed))
-        {
-            TRACE("File %s is not scheduled for install\n", debugstr_w(file->File));
-            file->state = msifs_skipped;
-            continue;
-        }
-        comp->Action = INSTALLSTATE_LOCAL;
-        ui_progress( package, 2, file->FileSize, 0, 0 );
-
-        if (file->state == msifs_overwrite &&
-            (comp->Attributes & msidbComponentAttributesNeverOverwrite))
+        file->state = calculate_install_state( file );
+        if (file->state == msifs_overwrite && (comp->Attributes & msidbComponentAttributesNeverOverwrite))
         {
             TRACE("not overwriting %s\n", debugstr_w(file->TargetPath));
             file->state = msifs_skipped;
         }
+        comp->Action = INSTALLSTATE_LOCAL;
+        ui_progress( package, 2, file->FileSize, 0, 0 );
     }
 }
 
