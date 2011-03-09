@@ -1589,6 +1589,30 @@ struct glyphinfo
     float offset_x;
 };
 
+/* is an dynamic_array */
+struct word_array
+{
+    int count, capacity;
+    WORD *items;
+};
+
+/* complex polygons are split into monotone polygons, which have
+ * at most 2 intersections with the vertical sweep line */
+struct triangulation
+{
+    struct word_array vertex_stack;
+    BOOL last_on_top, merging;
+};
+
+/* is an dynamic_array */
+struct triangulation_array
+{
+    int count, capacity;
+    struct triangulation *items;
+
+    struct glyphinfo *glyph;
+};
+
 static BOOL reserve(struct dynamic_array *array, int count, int itemsize)
 {
     if (count > array->capacity) {
@@ -1631,6 +1655,32 @@ static struct outline *add_outline(struct outline_array *array)
     item = &array->items[array->count++];
     ZeroMemory(item, sizeof(*item));
     return item;
+}
+
+static inline face *add_face(struct face_array *array)
+{
+    return &array->items[array->count++];
+}
+
+static struct triangulation *add_triangulation(struct triangulation_array *array)
+{
+    struct triangulation *item;
+
+    if (!reserve((struct dynamic_array *)array, array->count + 1, sizeof(array->items[0])))
+        return NULL;
+
+    item = &array->items[array->count++];
+    ZeroMemory(item, sizeof(*item));
+    return item;
+}
+
+static HRESULT add_vertex_index(struct word_array *array, WORD vertex_index)
+{
+    if (!reserve((struct dynamic_array *)array, array->count + 1, sizeof(array->items[0])))
+        return E_OUTOFMEMORY;
+
+    array->items[array->count++] = vertex_index;
+    return S_OK;
 }
 
 /* assume fixed point numbers can be converted to float point in place */
@@ -1889,6 +1939,21 @@ static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int da
     return S_OK;
 }
 
+/* Get the y-distance from a line to a point */
+static float get_line_to_point_y_distance(D3DXVECTOR2 *line_pt1,
+                                          D3DXVECTOR2 *line_pt2,
+                                          D3DXVECTOR2 *point)
+{
+    D3DXVECTOR2 line_vec = {0, 0};
+    float line_pt_dx;
+    float line_y;
+
+    D3DXVec2Subtract(&line_vec, line_pt2, line_pt1);
+    line_pt_dx = point->x - line_pt1->x;
+    line_y = line_pt1->y + (line_vec.y * line_pt_dx) / line_vec.x;
+    return point->y - line_y;
+}
+
 static D3DXVECTOR2 *get_indexed_point(struct point2d_index *pt_idx)
 {
     return &pt_idx->outline->items[pt_idx->vertex].pos;
@@ -1899,8 +1964,126 @@ static D3DXVECTOR2 *get_ordered_vertex(struct glyphinfo *glyph, WORD index)
     return get_indexed_point(&glyph->ordered_vertices.items[index]);
 }
 
-static HRESULT triangulate(struct glyphinfo *glyph)
+static void remove_triangulation(struct triangulation_array *array, struct triangulation *item)
 {
+    HeapFree(GetProcessHeap(), 0, item->vertex_stack.items);
+    MoveMemory(item, item + 1, (char*)&array->items[array->count] - (char*)(item + 1));
+    array->count--;
+}
+
+static HRESULT triangulation_add_point(struct triangulation **t_ptr,
+                                       struct triangulation_array *triangulations,
+                                       WORD vtx_idx,
+                                       BOOL to_top)
+{
+    struct glyphinfo *glyph = triangulations->glyph;
+    struct triangulation *t = *t_ptr;
+    HRESULT hr;
+    face *face;
+    int f1, f2;
+
+    if (t->last_on_top) {
+        f1 = 1;
+        f2 = 2;
+    } else {
+        f1 = 2;
+        f2 = 1;
+    }
+
+    if (t->last_on_top != to_top && t->vertex_stack.count > 1) {
+        /* consume all vertices on the stack */
+        WORD last_pt = t->vertex_stack.items[0];
+        int i;
+        for (i = 1; i < t->vertex_stack.count; i++)
+        {
+            face = add_face(&glyph->faces);
+            if (!face) return E_OUTOFMEMORY;
+            (*face)[0] = vtx_idx;
+            (*face)[f1] = last_pt;
+            (*face)[f2] = last_pt = t->vertex_stack.items[i];
+        }
+        t->vertex_stack.items[0] = last_pt;
+        t->vertex_stack.count = 1;
+    } else if (t->vertex_stack.count > 1) {
+        int i = t->vertex_stack.count - 1;
+        D3DXVECTOR2 *point = get_ordered_vertex(glyph, vtx_idx);
+        WORD top_idx = t->vertex_stack.items[i--];
+        D3DXVECTOR2 *top_pt = get_ordered_vertex(glyph, top_idx);
+
+        while (i >= 0)
+        {
+            WORD prev_idx = t->vertex_stack.items[i--];
+            D3DXVECTOR2 *prev_pt = get_ordered_vertex(glyph, prev_idx);
+
+            if (prev_pt->x != top_pt->x &&
+                ((to_top && get_line_to_point_y_distance(prev_pt, top_pt, point) > 0) ||
+                 (!to_top && get_line_to_point_y_distance(prev_pt, top_pt, point) < 0)))
+                break;
+
+            face = add_face(&glyph->faces);
+            if (!face) return E_OUTOFMEMORY;
+            (*face)[0] = vtx_idx;
+            (*face)[f1] = prev_idx;
+            (*face)[f2] = top_idx;
+
+            top_pt = prev_pt;
+            top_idx = prev_idx;
+            t->vertex_stack.count--;
+        }
+    }
+    t->last_on_top = to_top;
+
+    hr = add_vertex_index(&t->vertex_stack, vtx_idx);
+
+    if (hr == S_OK && t->merging) {
+        struct triangulation *t2;
+
+        t2 = to_top ? t - 1 : t + 1;
+        t2->merging = FALSE;
+        hr = triangulation_add_point(&t2, triangulations, vtx_idx, to_top);
+        if (hr != S_OK) return hr;
+        remove_triangulation(triangulations, t);
+        if (t2 > t)
+            t2--;
+        *t_ptr = t2;
+    }
+    return hr;
+}
+
+/* check if the point is next on the outline for either the top or bottom */
+static D3DXVECTOR2 *triangulation_get_next_point(struct triangulation *t, struct glyphinfo *glyph, BOOL on_top)
+{
+    int i = t->last_on_top == on_top ? t->vertex_stack.count - 1 : 0;
+    WORD idx = t->vertex_stack.items[i];
+    struct point2d_index *pt_idx = &glyph->ordered_vertices.items[idx];
+    struct outline *outline = pt_idx->outline;
+
+    if (on_top)
+        i = (pt_idx->vertex + outline->count - 1) % outline->count;
+    else
+        i = (pt_idx->vertex + 1) % outline->count;
+
+    return &outline->items[i].pos;
+}
+
+static int compare_vertex_indices(const void *a, const void *b)
+{
+    const struct point2d_index *idx1 = a, *idx2 = b;
+    const D3DXVECTOR2 *p1 = &idx1->outline->items[idx1->vertex].pos;
+    const D3DXVECTOR2 *p2 = &idx2->outline->items[idx2->vertex].pos;
+    float diff = p1->x - p2->x;
+
+    if (diff == 0.0f)
+        diff = p1->y - p2->y;
+
+    return diff == 0.0f ? 0 : (diff > 0.0f ? -1 : 1);
+}
+
+static HRESULT triangulate(struct triangulation_array *triangulations)
+{
+    int sweep_idx;
+    HRESULT hr;
+    struct glyphinfo *glyph = triangulations->glyph;
     int nb_vertices = 0;
     int i;
     struct point2d_index *idx_ptr;
@@ -1972,9 +2155,160 @@ static HRESULT triangulate(struct glyphinfo *glyph)
         }
     }
 
-    FIXME("triangulation of complex glyphs not yet implemented for D3DXCreateText.\n");
+    /* Perform 2D polygon triangulation for complex glyphs.
+     * Triangulation is performed using a sweep line concept, from right to left,
+     * by processing vertices in sorted order. Complex polygons are split into
+     * monotone polygons which are triangulated seperately. */
+    /* FIXME: The order of the faces is not consistent with the native implementation. */
 
-    return E_NOTIMPL;
+    /* Reserve space for maximum possible faces from triangulation.
+     * # faces for outer outlines = outline->count - 2
+     * # faces for inner outlines = outline->count + 2
+     * There must be at least 1 outer outline. */
+    glyph->faces.items = HeapAlloc(GetProcessHeap(), 0,
+            (nb_vertices + glyph->outlines.count * 2 - 4) * sizeof(glyph->faces.items[0]));
+    if (!glyph->faces.items)
+        return E_OUTOFMEMORY;
+
+    qsort(glyph->ordered_vertices.items, nb_vertices,
+          sizeof(glyph->ordered_vertices.items[0]), compare_vertex_indices);
+    for (sweep_idx = 0; sweep_idx < glyph->ordered_vertices.count; sweep_idx++)
+    {
+        int start = 0;
+        int end = triangulations->count;
+
+        while (start < end)
+        {
+            D3DXVECTOR2 *sweep_vtx = get_ordered_vertex(glyph, sweep_idx);
+            int current = (start + end) / 2;
+            struct triangulation *t = &triangulations->items[current];
+            BOOL on_top_outline = FALSE;
+            D3DXVECTOR2 *top_next, *bottom_next;
+            WORD top_idx, bottom_idx;
+
+            if (t->merging && t->last_on_top)
+                top_next = triangulation_get_next_point(t + 1, glyph, TRUE);
+            else
+                top_next = triangulation_get_next_point(t, glyph, TRUE);
+            if (sweep_vtx == top_next)
+            {
+                if (t->merging && t->last_on_top)
+                    t++;
+                hr = triangulation_add_point(&t, triangulations, sweep_idx, TRUE);
+                if (hr != S_OK) return hr;
+
+                if (t + 1 < &triangulations->items[triangulations->count] &&
+                    triangulation_get_next_point(t + 1, glyph, FALSE) == sweep_vtx)
+                {
+                    /* point also on bottom outline of higher triangulation */
+                    struct triangulation *t2 = t + 1;
+                    hr = triangulation_add_point(&t2, triangulations, sweep_idx, FALSE);
+                    if (hr != S_OK) return hr;
+
+                    t->merging = TRUE;
+                    t2->merging = TRUE;
+                }
+                on_top_outline = TRUE;
+            }
+
+            if (t->merging && !t->last_on_top)
+                bottom_next = triangulation_get_next_point(t - 1, glyph, FALSE);
+            else
+                bottom_next = triangulation_get_next_point(t, glyph, FALSE);
+            if (sweep_vtx == bottom_next)
+            {
+                if (t->merging && !t->last_on_top)
+                    t--;
+                if (on_top_outline) {
+                    /* outline finished */
+                    remove_triangulation(triangulations, t);
+                    break;
+                }
+
+                hr = triangulation_add_point(&t, triangulations, sweep_idx, FALSE);
+                if (hr != S_OK) return hr;
+
+                if (t > triangulations->items &&
+                    triangulation_get_next_point(t - 1, glyph, TRUE) == sweep_vtx)
+                {
+                    struct triangulation *t2 = t - 1;
+                    /* point also on top outline of lower triangulation */
+                    hr = triangulation_add_point(&t2, triangulations, sweep_idx, TRUE);
+                    if (hr != S_OK) return hr;
+                    t = t2 + 1; /* t may be invalidated by triangulation merging */
+
+                    t->merging = TRUE;
+                    t2->merging = TRUE;
+                }
+                break;
+            }
+            if (on_top_outline)
+                break;
+
+            if (t->last_on_top) {
+                top_idx = t->vertex_stack.items[t->vertex_stack.count - 1];
+                bottom_idx = t->vertex_stack.items[0];
+            } else {
+                top_idx = t->vertex_stack.items[0];
+                bottom_idx = t->vertex_stack.items[t->vertex_stack.count - 1];
+            }
+
+            /* check if the point is inside or outside this polygon */
+            if (get_line_to_point_y_distance(get_ordered_vertex(glyph, top_idx),
+                                             top_next, sweep_vtx) > 0)
+            { /* above */
+                start = current + 1;
+            } else if (get_line_to_point_y_distance(get_ordered_vertex(glyph, bottom_idx),
+                                                    bottom_next, sweep_vtx) < 0)
+            { /* below */
+                end = current;
+            } else if (t->merging) {
+                /* inside, so cancel merging */
+                struct triangulation *t2 = t->last_on_top ? t + 1 : t - 1;
+                t->merging = FALSE;
+                t2->merging = FALSE;
+                hr = triangulation_add_point(&t, triangulations, sweep_idx, t->last_on_top);
+                if (hr != S_OK) return hr;
+                hr = triangulation_add_point(&t2, triangulations, sweep_idx, t2->last_on_top);
+                if (hr != S_OK) return hr;
+                break;
+            } else {
+                /* inside, so split polygon into two monotone parts */
+                struct triangulation *t2 = add_triangulation(triangulations);
+                if (!t2) return E_OUTOFMEMORY;
+                MoveMemory(t + 1, t, (char*)(t2 + 1) - (char*)t);
+                if (t->last_on_top) {
+                    t2 = t + 1;
+                } else {
+                    t2 = t;
+                    t++;
+                }
+
+                ZeroMemory(&t2->vertex_stack, sizeof(t2->vertex_stack));
+                hr = add_vertex_index(&t2->vertex_stack, t->vertex_stack.items[t->vertex_stack.count - 1]);
+                if (hr != S_OK) return hr;
+                hr = add_vertex_index(&t2->vertex_stack, sweep_idx);
+                if (hr != S_OK) return hr;
+                t2->last_on_top = !t->last_on_top;
+
+                hr = triangulation_add_point(&t, triangulations, sweep_idx, t->last_on_top);
+                if (hr != S_OK) return hr;
+                break;
+            }
+        }
+        if (start >= end)
+        {
+            struct triangulation *t;
+            struct triangulation *t2 = add_triangulation(triangulations);
+            if (!t2) return E_OUTOFMEMORY;
+            t = &triangulations->items[start];
+            MoveMemory(t + 1, t, (char*)(t2 + 1) - (char*)t);
+            ZeroMemory(t, sizeof(*t));
+            hr = add_vertex_index(&t->vertex_stack, sweep_idx);
+            if (hr != S_OK) return hr;
+        }
+    }
+    return S_OK;
 }
 
 HRESULT WINAPI D3DXCreateTextW(LPDIRECT3DDEVICE9 device,
@@ -1999,6 +2333,7 @@ HRESULT WINAPI D3DXCreateTextW(LPDIRECT3DDEVICE9 device,
     int bufsize = 0;
     struct glyphinfo *glyphs = NULL;
     GLYPHMETRICS gm;
+    struct triangulation_array triangulations = {0, 0, NULL};
     int i;
     struct vertex *vertex_ptr;
     face *face_ptr;
@@ -2075,8 +2410,13 @@ HRESULT WINAPI D3DXCreateTextW(LPDIRECT3DDEVICE9 device,
                             max_deviation_sq, otm.otmEMSquare, &cos_table);
         if (hr != S_OK) goto error;
 
-        hr = triangulate(&glyphs[i]);
+        triangulations.glyph = &glyphs[i];
+        hr = triangulate(&triangulations);
         if (hr != S_OK) goto error;
+        if (triangulations.count) {
+            ERR("%d incomplete triangulations of glyph (%u).\n", triangulations.count, text[i]);
+            triangulations.count = 0;
+        }
 
         if (glyphmetrics)
         {
@@ -2301,6 +2641,12 @@ error:
             HeapFree(GetProcessHeap(), 0, glyphs[i].ordered_vertices.items);
         }
         HeapFree(GetProcessHeap(), 0, glyphs);
+    }
+    if (triangulations.items) {
+        int i;
+        for (i = 0; i < triangulations.count; i++)
+            HeapFree(GetProcessHeap(), 0, triangulations.items[i].vertex_stack.items);
+        HeapFree(GetProcessHeap(), 0, triangulations.items);
     }
     HeapFree(GetProcessHeap(), 0, raw_outline);
     if (oldfont) SelectObject(hdc, oldfont);
