@@ -277,7 +277,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetSubResourceDesc(IWineD3DVolum
         return WINED3DERR_INVALIDCALL;
     }
 
-    IWineD3DVolume_GetDesc((IWineD3DVolume *)volume_from_resource(sub_resource), desc);
+    wined3d_resource_get_desc(sub_resource, desc);
 
     return WINED3D_OK;
 }

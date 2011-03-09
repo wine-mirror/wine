@@ -226,16 +226,7 @@ static void WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, struct wine
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    desc->format = volume->resource.format->id;
-    desc->resource_type = volume->resource.resourceType;
-    desc->usage = volume->resource.usage;
-    desc->pool = volume->resource.pool;
-    desc->size = volume->resource.size; /* dx8 only */
-    desc->multisample_type = WINED3DMULTISAMPLE_NONE;
-    desc->multisample_quality = 0;
-    desc->width = volume->resource.width;
-    desc->height = volume->resource.height;
-    desc->depth = volume->resource.depth;
+    wined3d_resource_get_desc(&volume->resource, desc);
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,

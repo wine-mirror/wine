@@ -340,7 +340,7 @@ static HRESULT WINAPI IWineD3DCubeTextureImpl_GetSubResourceDesc(IWineD3DCubeTex
         return WINED3DERR_INVALIDCALL;
     }
 
-    IWineD3DSurface_GetDesc((IWineD3DSurface *)surface_from_resource(sub_resource), desc);
+    wined3d_resource_get_desc(sub_resource, desc);
 
     return WINED3D_OK;
 }

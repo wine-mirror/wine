@@ -163,16 +163,7 @@ void WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, struct wined
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    desc->format = surface->resource.format->id;
-    desc->resource_type = surface->resource.resourceType;
-    desc->usage = surface->resource.usage;
-    desc->pool = surface->resource.pool;
-    desc->size = surface->resource.size; /* dx8 only */
-    desc->multisample_type = surface->resource.multisample_type;
-    desc->multisample_quality = surface->resource.multisample_quality;
-    desc->width = surface->resource.width;
-    desc->height = surface->resource.height;
-    desc->depth = surface->resource.depth;
+    wined3d_resource_get_desc(&surface->resource, desc);
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD flags)

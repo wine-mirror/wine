@@ -282,3 +282,17 @@ void * CDECL wined3d_resource_get_parent(const struct wined3d_resource *resource
 {
     return resource->parent;
 }
+
+void wined3d_resource_get_desc(const struct wined3d_resource *resource, struct wined3d_resource_desc *desc)
+{
+    desc->resource_type = resource->resourceType;
+    desc->format = resource->format->id;
+    desc->multisample_type = resource->multisample_type;
+    desc->multisample_quality = resource->multisample_quality;
+    desc->usage = resource->usage;
+    desc->pool = resource->pool;
+    desc->width = resource->width;
+    desc->height = resource->height;
+    desc->depth = resource->depth;
+    desc->size = resource->size;
+}

@@ -1824,6 +1824,8 @@ struct wined3d_resource
 
 void resource_cleanup(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 HRESULT resource_free_private_data(struct wined3d_resource *resource, REFGUID guid) DECLSPEC_HIDDEN;
+void wined3d_resource_get_desc(const struct wined3d_resource *resource,
+        struct wined3d_resource_desc *desc) DECLSPEC_HIDDEN;
 DWORD resource_get_priority(const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 HRESULT resource_get_private_data(const struct wined3d_resource *resource, REFGUID guid,
         void *data, DWORD *data_size) DECLSPEC_HIDDEN;
