@@ -298,7 +298,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
 
         if (IMAPISession_PrepareForm(session, NULL, msg, &token) == S_OK)
         {
-            ULONG access = 0, status = 0, flags = 0, pc = 0;
+            ULONG access = 0, status = 0, message_flags = 0, pc = 0;
             ULONG pT[2] = {1, PR_MSG_STATUS};
 
             /* Retrieve message status, flags, access rights and class */
@@ -313,7 +313,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
 
             if (IMessage_GetProps(msg, (LPSPropTagArray) pT, 0, &pc, &props) == S_OK)
             {
-                flags = props->Value.ul;
+                message_flags = props->Value.ul;
                 MAPIFreeBuffer(props);
             }
 
@@ -332,7 +332,7 @@ static ULONG sendmail_extended_mapi(LHANDLE mapi_session, ULONG_PTR uiparam, lpM
                 /* Show the message form (edit window) */
 
                 ret = IMAPISession_ShowForm(session, 0, msg_store, draft_folder, NULL,
-                                            token, NULL, 0, status, flags, access,
+                                            token, NULL, 0, status, message_flags, access,
                                             props->Value.lpszA);
 
                 switch (ret)
