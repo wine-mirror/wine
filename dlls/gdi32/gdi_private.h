@@ -135,8 +135,8 @@ typedef struct tagDC_FUNCS
     BOOL     (CDECL *pModifyWorldTransform)(PHYSDEV,const XFORM*,DWORD);
     BOOL     (CDECL *pMoveTo)(PHYSDEV,INT,INT);
     INT      (CDECL *pOffsetClipRgn)(PHYSDEV,INT,INT);
-    INT      (CDECL *pOffsetViewportOrg)(PHYSDEV,INT,INT);
-    INT      (CDECL *pOffsetWindowOrg)(PHYSDEV,INT,INT);
+    BOOL     (CDECL *pOffsetViewportOrgEx)(PHYSDEV,INT,INT,POINT*);
+    BOOL     (CDECL *pOffsetWindowOrgEx)(PHYSDEV,INT,INT,POINT*);
     BOOL     (CDECL *pPaintRgn)(PHYSDEV,HRGN);
     BOOL     (CDECL *pPatBlt)(PHYSDEV,INT,INT,INT,INT,DWORD);
     BOOL     (CDECL *pPie)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
@@ -155,8 +155,8 @@ typedef struct tagDC_FUNCS
     BOOL     (CDECL *pRestoreDC)(PHYSDEV,INT);
     BOOL     (CDECL *pRoundRect)(PHYSDEV,INT,INT,INT,INT,INT,INT);
     INT      (CDECL *pSaveDC)(PHYSDEV);
-    INT      (CDECL *pScaleViewportExt)(PHYSDEV,INT,INT,INT,INT);
-    INT      (CDECL *pScaleWindowExt)(PHYSDEV,INT,INT,INT,INT);
+    BOOL     (CDECL *pScaleViewportExtEx)(PHYSDEV,INT,INT,INT,INT,SIZE*);
+    BOOL     (CDECL *pScaleWindowExtEx)(PHYSDEV,INT,INT,INT,INT,SIZE*);
     HBITMAP  (CDECL *pSelectBitmap)(PHYSDEV,HBITMAP);
     HBRUSH   (CDECL *pSelectBrush)(PHYSDEV,HBRUSH);
     BOOL     (CDECL *pSelectClipPath)(PHYSDEV,INT);
@@ -187,10 +187,10 @@ typedef struct tagDC_FUNCS
     INT      (CDECL *pSetTextCharacterExtra)(PHYSDEV,INT);
     DWORD    (CDECL *pSetTextColor)(PHYSDEV,DWORD);
     INT      (CDECL *pSetTextJustification)(PHYSDEV,INT,INT);
-    INT      (CDECL *pSetViewportExt)(PHYSDEV,INT,INT);
-    INT      (CDECL *pSetViewportOrg)(PHYSDEV,INT,INT);
-    INT      (CDECL *pSetWindowExt)(PHYSDEV,INT,INT);
-    INT      (CDECL *pSetWindowOrg)(PHYSDEV,INT,INT);
+    BOOL     (CDECL *pSetViewportExtEx)(PHYSDEV,INT,INT,SIZE*);
+    BOOL     (CDECL *pSetViewportOrgEx)(PHYSDEV,INT,INT,POINT*);
+    BOOL     (CDECL *pSetWindowExtEx)(PHYSDEV,INT,INT,SIZE*);
+    BOOL     (CDECL *pSetWindowOrgEx)(PHYSDEV,INT,INT,POINT*);
     BOOL     (CDECL *pSetWorldTransform)(PHYSDEV,const XFORM*);
     INT      (CDECL *pStartDoc)(PHYSDEV,const DOCINFOW*);
     INT      (CDECL *pStartPage)(PHYSDEV);
@@ -521,10 +521,19 @@ extern BOOL CDECL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT wid
 extern INT  CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_InvertRgn( PHYSDEV dev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern INT  CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL CDECL nulldrv_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
+extern BOOL CDECL nulldrv_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_PolyBezier( PHYSDEV dev, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count ) DECLSPEC_HIDDEN;
+extern BOOL CDECL nulldrv_ScaleViewportExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size ) DECLSPEC_HIDDEN;
+extern BOOL CDECL nulldrv_ScaleWindowExtEx( PHYSDEV dev, INT x_num, INT x_denom, INT y_num, INT y_denom, SIZE *size ) DECLSPEC_HIDDEN;
+extern INT  CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
+extern BOOL CDECL nulldrv_SetViewportExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size ) DECLSPEC_HIDDEN;
+extern BOOL CDECL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
+extern BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size ) DECLSPEC_HIDDEN;
+extern BOOL CDECL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 
 static inline DC *get_nulldrv_dc( PHYSDEV dev )
 {

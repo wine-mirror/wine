@@ -846,10 +846,18 @@ static void test_mf_SaveDC(void)
     /* Need to write something to the emf, otherwise Windows won't play it back */
     LineTo(hdcMetafile, 150, 150);
 
-    SetWindowOrgEx(hdcMetafile, 0, 0, NULL);
-    SetViewportOrgEx(hdcMetafile, 0, 0, NULL);
-    SetWindowExtEx(hdcMetafile, 110, 110, NULL );
-    SetViewportExtEx(hdcMetafile, 120, 120, NULL );
+    pt.x = pt.y = 5555;
+    SetWindowOrgEx(hdcMetafile, 0, 0, &pt);
+    ok( pt.x == 5555 && pt.y == 5555, "wrong origin %d,%d\n", pt.x, pt.y);
+    pt.x = pt.y = 5555;
+    SetViewportOrgEx(hdcMetafile, 0, 0, &pt);
+    ok( pt.x == 5555 && pt.y == 5555, "wrong origin %d,%d\n", pt.x, pt.y);
+    size.cx = size.cy = 5555;
+    SetWindowExtEx(hdcMetafile, 110, 110, &size );
+    ok( size.cx == 5555 && size.cy == 5555, "wrong size %d,%d\n", size.cx, size.cy );
+    size.cx = size.cy = 5555;
+    SetViewportExtEx(hdcMetafile, 120, 120, &size );
+    ok( size.cx == 5555 && size.cy == 5555, "wrong size %d,%d\n", size.cx, size.cy );
 
     /* Force Win9x to update DC state */
     SetPixelV(hdcMetafile, 50, 50, 0);

@@ -31,95 +31,77 @@
  */
 INT CDECL MFDRV_SetMapMode( PHYSDEV dev, INT mode )
 {
-    if(!MFDRV_MetaParam1( dev, META_SETMAPMODE, mode ))
-        return FALSE;
-    return GDI_NO_MORE_WORK;
+    return MFDRV_MetaParam1( dev, META_SETMAPMODE, mode );
 }
 
 
 /***********************************************************************
- *           MFDRV_SetViewportExt
+ *           MFDRV_SetViewportExtEx
  */
-INT CDECL MFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y )
+BOOL CDECL MFDRV_SetViewportExtEx( PHYSDEV dev, INT x, INT y, SIZE *size )
 {
-    if(!MFDRV_MetaParam2( dev, META_SETVIEWPORTEXT, x, y ))
-        return FALSE;
-    return GDI_NO_MORE_WORK;
+    return MFDRV_MetaParam2( dev, META_SETVIEWPORTEXT, x, y );
 }
 
 
 /***********************************************************************
- *           MFDRV_SetViewportOrg
+ *           MFDRV_SetViewportOrgEx
  */
-INT CDECL MFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
+BOOL CDECL MFDRV_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
-    if(!MFDRV_MetaParam2( dev, META_SETVIEWPORTORG, x, y ))
-        return FALSE;
-    return GDI_NO_MORE_WORK;
+    return MFDRV_MetaParam2( dev, META_SETVIEWPORTORG, x, y );
 }
 
 
 /***********************************************************************
- *           MFDRV_SetWindowExt
+ *           MFDRV_SetWindowExtEx
  */
-INT CDECL MFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y )
+BOOL CDECL MFDRV_SetWindowExtEx( PHYSDEV dev, INT x, INT y, SIZE *size )
 {
-    if(!MFDRV_MetaParam2( dev, META_SETWINDOWEXT, x, y ))
-        return FALSE;
-    return GDI_NO_MORE_WORK;
+    return MFDRV_MetaParam2( dev, META_SETWINDOWEXT, x, y );
 }
 
 
 /***********************************************************************
- *           MFDRV_SetWindowOrg
+ *           MFDRV_SetWindowOrgEx
  */
-INT CDECL MFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
+BOOL CDECL MFDRV_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
-    if(!MFDRV_MetaParam2( dev, META_SETWINDOWORG, x, y ))
-        return FALSE;
-    return GDI_NO_MORE_WORK;
+    return MFDRV_MetaParam2( dev, META_SETWINDOWORG, x, y );
 }
 
 
 /***********************************************************************
- *           MFDRV_OffsetViewportOrg
+ *           MFDRV_OffsetViewportOrgEx
  */
-INT CDECL MFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y )
+BOOL CDECL MFDRV_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
-    if(!MFDRV_MetaParam2( dev, META_OFFSETVIEWPORTORG, x, y ))
-        return FALSE;
-    return GDI_NO_MORE_WORK;
+    return MFDRV_MetaParam2( dev, META_OFFSETVIEWPORTORG, x, y );
 }
 
 
 /***********************************************************************
- *           MFDRV_OffsetWindowOrg
+ *           MFDRV_OffsetWindowOrgEx
  */
-INT CDECL MFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y )
+BOOL CDECL MFDRV_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
-    if(!MFDRV_MetaParam2( dev, META_OFFSETWINDOWORG, x, y ))
-        return FALSE;
-    return GDI_NO_MORE_WORK;
+    return MFDRV_MetaParam2( dev, META_OFFSETWINDOWORG, x, y );
 }
 
 
 /***********************************************************************
- *           MFDRV_ScaleViewportExt
+ *           MFDRV_ScaleViewportExtEx
  */
-INT CDECL MFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom )
+BOOL CDECL MFDRV_ScaleViewportExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size )
 {
-    if(!MFDRV_MetaParam4( dev, META_SCALEVIEWPORTEXT, xNum, xDenom, yNum, yDenom ))
-        return FALSE;
-    return GDI_NO_MORE_WORK;
+    return MFDRV_MetaParam4( dev, META_SCALEVIEWPORTEXT, xNum, xDenom, yNum, yDenom );
 }
 
 
 /***********************************************************************
- *           MFDRV_ScaleWindowExt
+ *           MFDRV_ScaleWindowExtEx
  */
-INT CDECL MFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom )
+BOOL CDECL MFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size )
 {
-    if(!MFDRV_MetaParam4( dev, META_SCALEWINDOWEXT, xNum, xDenom, yNum, yDenom ))
-        return FALSE;
-    return GDI_NO_MORE_WORK;
+    return MFDRV_MetaParam4( dev, META_SCALEWINDOWEXT, xNum, xDenom, yNum, yDenom );
 }

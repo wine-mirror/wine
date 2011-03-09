@@ -92,8 +92,8 @@ extern BOOL  CDECL MFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_MoveTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern INT   CDECL MFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
-extern INT   CDECL MFDRV_OffsetViewportOrg( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
-extern INT   CDECL MFDRV_OffsetWindowOrg( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL  CDECL MFDRV_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
+extern BOOL  CDECL MFDRV_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_PatBlt( PHYSDEV dev, INT left, INT top, INT width, INT height,
                                  DWORD rop ) DECLSPEC_HIDDEN;
@@ -113,10 +113,10 @@ extern BOOL  CDECL MFDRV_RoundRect( PHYSDEV dev, INT left, INT top,
                                     INT right, INT bottom, INT ell_width,
                                     INT ell_height ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_SaveDC( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern INT  CDECL MFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
-                                          INT yDenom ) DECLSPEC_HIDDEN;
-extern INT  CDECL MFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
-                                        INT yDenom ) DECLSPEC_HIDDEN;
+extern BOOL CDECL MFDRV_ScaleViewportExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
+                                            INT yDenom, SIZE *size ) DECLSPEC_HIDDEN;
+extern BOOL CDECL MFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
+                                          INT yDenom, SIZE *size ) DECLSPEC_HIDDEN;
 extern HBITMAP  CDECL MFDRV_SelectBitmap( PHYSDEV dev, HBITMAP handle ) DECLSPEC_HIDDEN;
 extern HBRUSH  CDECL MFDRV_SelectBrush( PHYSDEV dev, HBRUSH handle ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_SelectClipPath( PHYSDEV dev, INT iMode ) DECLSPEC_HIDDEN;
@@ -137,10 +137,10 @@ extern UINT  CDECL MFDRV_SetTextAlign( PHYSDEV dev, UINT align ) DECLSPEC_HIDDEN
 extern INT  CDECL MFDRV_SetTextCharacterExtra( PHYSDEV dev, INT extra ) DECLSPEC_HIDDEN;
 extern COLORREF  CDECL MFDRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_SetTextJustification( PHYSDEV dev, INT extra, INT breaks ) DECLSPEC_HIDDEN;
-extern INT  CDECL MFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
-extern INT  CDECL MFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
-extern INT  CDECL MFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
-extern INT  CDECL MFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL CDECL MFDRV_SetViewportExtEx( PHYSDEV dev, INT x, INT y, SIZE *size ) DECLSPEC_HIDDEN;
+extern BOOL CDECL MFDRV_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
+extern BOOL CDECL MFDRV_SetWindowExtEx( PHYSDEV dev, INT x, INT y, SIZE *size ) DECLSPEC_HIDDEN;
+extern BOOL CDECL MFDRV_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL  CDECL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
                                      INT heightDst, PHYSDEV devSrc, INT xSrc, INT ySrc,
                                      INT widthSrc, INT heightSrc, DWORD rop ) DECLSPEC_HIDDEN;

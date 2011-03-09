@@ -126,8 +126,8 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(MoveTo);
         GET_FUNC(ModifyWorldTransform);
         GET_FUNC(OffsetClipRgn);
-        GET_FUNC(OffsetViewportOrg);
-        GET_FUNC(OffsetWindowOrg);
+        GET_FUNC(OffsetViewportOrgEx);
+        GET_FUNC(OffsetWindowOrgEx);
         GET_FUNC(PaintRgn);
         GET_FUNC(PatBlt);
         GET_FUNC(Pie);
@@ -146,8 +146,8 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(RestoreDC);
         GET_FUNC(RoundRect);
         GET_FUNC(SaveDC);
-        GET_FUNC(ScaleViewportExt);
-        GET_FUNC(ScaleWindowExt);
+        GET_FUNC(ScaleViewportExtEx);
+        GET_FUNC(ScaleWindowExtEx);
         GET_FUNC(SelectBitmap);
         GET_FUNC(SelectBrush);
         GET_FUNC(SelectClipPath);
@@ -177,10 +177,10 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(SetTextCharacterExtra);
         GET_FUNC(SetTextColor);
         GET_FUNC(SetTextJustification);
-        GET_FUNC(SetViewportExt);
-        GET_FUNC(SetViewportOrg);
-        GET_FUNC(SetWindowExt);
-        GET_FUNC(SetWindowOrg);
+        GET_FUNC(SetViewportExtEx);
+        GET_FUNC(SetViewportOrgEx);
+        GET_FUNC(SetWindowExtEx);
+        GET_FUNC(SetWindowOrgEx);
         GET_FUNC(SetWorldTransform);
         GET_FUNC(StartDoc);
         GET_FUNC(StartPage);
@@ -483,8 +483,8 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pModifyWorldTransform */
     nulldrv_MoveTo,                     /* pMoveTo */
     nulldrv_OffsetClipRgn,              /* pOffsetClipRgn */
-    NULL,                               /* pOffsetViewportOrg */
-    NULL,                               /* pOffsetWindowOrg */
+    nulldrv_OffsetViewportOrgEx,        /* pOffsetViewportOrg */
+    nulldrv_OffsetWindowOrgEx,          /* pOffsetWindowOrg */
     nulldrv_PaintRgn,                   /* pPaintRgn */
     NULL,                               /* pPatBlt */
     nulldrv_Pie,                        /* pPie */
@@ -503,8 +503,8 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pRestoreDC */
     nulldrv_RoundRect,                  /* pRoundRect */
     NULL,                               /* pSaveDC */
-    NULL,                               /* pScaleViewportExt */
-    NULL,                               /* pScaleWindowExt */
+    nulldrv_ScaleViewportExtEx,         /* pScaleViewportExt */
+    nulldrv_ScaleWindowExtEx,           /* pScaleWindowExt */
     NULL,                               /* pSelectBitmap */
     NULL,                               /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
@@ -522,7 +522,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pSetDIBitsToDevice */
     nulldrv_SetDeviceClipping,          /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
-    NULL,                               /* pSetMapMode */
+    nulldrv_SetMapMode,                 /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     nulldrv_SetPixel,                   /* pSetPixel */
     NULL,                               /* pSetPixelFormat */
@@ -534,10 +534,10 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
     NULL,                               /* pSetTextJustification */
-    NULL,                               /* pSetViewportExt */
-    NULL,                               /* pSetViewportOrg */
-    NULL,                               /* pSetWindowExt */
-    NULL,                               /* pSetWindowOrg */
+    nulldrv_SetViewportExtEx,           /* pSetViewportExt */
+    nulldrv_SetViewportOrgEx,           /* pSetViewportOrg */
+    nulldrv_SetWindowExtEx,             /* pSetWindowExt */
+    nulldrv_SetWindowOrgEx,             /* pSetWindowOrg */
     NULL,                               /* pSetWorldTransform */
     nulldrv_StartDoc,                   /* pStartDoc */
     nulldrv_StartPage,                  /* pStartPage */

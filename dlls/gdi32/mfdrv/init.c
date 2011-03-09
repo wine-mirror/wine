@@ -86,8 +86,8 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pModifyWorldTransform */
     MFDRV_MoveTo,                    /* pMoveTo */
     MFDRV_OffsetClipRgn,             /* pOffsetClipRgn */
-    MFDRV_OffsetViewportOrg,         /* pOffsetViewportOrg */
-    MFDRV_OffsetWindowOrg,           /* pOffsetWindowOrg */
+    MFDRV_OffsetViewportOrgEx,       /* pOffsetViewportOrgEx */
+    MFDRV_OffsetWindowOrgEx,         /* pOffsetWindowOrgEx */
     MFDRV_PaintRgn,                  /* pPaintRgn */
     MFDRV_PatBlt,                    /* pPatBlt */
     MFDRV_Pie,                       /* pPie */
@@ -106,8 +106,8 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_RestoreDC,                 /* pRestoreDC */
     MFDRV_RoundRect,                 /* pRoundRect */
     MFDRV_SaveDC,                    /* pSaveDC */
-    MFDRV_ScaleViewportExt,          /* pScaleViewportExt */
-    MFDRV_ScaleWindowExt,            /* pScaleWindowExt */
+    MFDRV_ScaleViewportExtEx,        /* pScaleViewportExtEx */
+    MFDRV_ScaleWindowExtEx,          /* pScaleWindowExtEx */
     MFDRV_SelectBitmap,              /* pSelectBitmap */
     MFDRV_SelectBrush,               /* pSelectBrush */
     MFDRV_SelectClipPath,            /* pSelectClipPath */
@@ -137,10 +137,10 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SetTextCharacterExtra,     /* pSetTextCharacterExtra */
     MFDRV_SetTextColor,              /* pSetTextColor */
     MFDRV_SetTextJustification,      /* pSetTextJustification */
-    MFDRV_SetViewportExt,            /* pSetViewportExt */
-    MFDRV_SetViewportOrg,            /* pSetViewportOrg */
-    MFDRV_SetWindowExt,              /* pSetWindowExt */
-    MFDRV_SetWindowOrg,              /* pSetWindowOrg */
+    MFDRV_SetViewportExtEx,          /* pSetViewportExtEx */
+    MFDRV_SetViewportOrgEx,          /* pSetViewportOrgEx */
+    MFDRV_SetWindowExtEx,            /* pSetWindowExtEx */
+    MFDRV_SetWindowOrgEx,            /* pSetWindowOrgEx */
     NULL,                            /* pSetWorldTransform */
     NULL,                            /* pStartDoc */
     NULL,                            /* pStartPage */
