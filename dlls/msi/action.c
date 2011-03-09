@@ -3252,7 +3252,19 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         squash_guid(comp->ComponentId,squished_cc);
 
         msi_free(comp->FullKeypath);
-        comp->FullKeypath = resolve_keypath( package, comp );
+        if (comp->assembly)
+        {
+            const WCHAR prefixW[] = {'<','\\',0};
+            DWORD len = strlenW( prefixW ) + strlenW( comp->assembly->display_name );
+
+            comp->FullKeypath = msi_alloc( (len + 1) * sizeof(WCHAR) );
+            if (comp->FullKeypath)
+            {
+                strcpyW( comp->FullKeypath, prefixW );
+                strcatW( comp->FullKeypath, comp->assembly->display_name );
+            }
+        }
+        else comp->FullKeypath = resolve_keypath( package, comp );
 
         ACTION_RefCountComponent( package, comp );
 
