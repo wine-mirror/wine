@@ -387,13 +387,15 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
 
     if ((brush = GDI_GetObjPtr( handle, OBJ_BRUSH )))
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectBrush );
+
         if (brush->logbrush.lbStyle == BS_PATTERN)
             BITMAP_SetOwnerDC( (HBITMAP)brush->logbrush.lbHatch, dc );
 
         GDI_inc_ref_count( handle );
         GDI_ReleaseObj( handle );
 
-        if (dc->funcs->pSelectBrush && !dc->funcs->pSelectBrush( dc->physDev, handle ))
+        if (!physdev->funcs->pSelectBrush( physdev, handle ))
         {
             GDI_dec_ref_count( handle );
         }

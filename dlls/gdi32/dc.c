@@ -2057,7 +2057,8 @@ COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
         {
             /* If DC_BRUSH is selected, update driver pen color */
             HBRUSH hBrush = CreateSolidBrush( crColor );
-            dc->funcs->pSelectBrush( dc->physDev, hBrush );
+            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectBrush );
+            physdev->funcs->pSelectBrush( physdev, hBrush );
 	    DeleteObject( hBrush );
 	}
 
@@ -2122,7 +2123,8 @@ COLORREF WINAPI SetDCPenColor(HDC hdc, COLORREF crColor)
             /* If DC_PEN is selected, update the driver pen color */
             LOGPEN logpen = { PS_SOLID, { 0, 0 }, crColor };
             HPEN hPen = CreatePenIndirect( &logpen );
-            dc->funcs->pSelectPen( dc->physDev, hPen );
+            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectPen );
+            physdev->funcs->pSelectPen( physdev, hPen );
 	    DeleteObject( hPen );
 	}
 

@@ -845,12 +845,10 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
         if(dc)
         {
-            if(dc->funcs->pDeleteObject)
-            {
-                GDI_ReleaseObj( obj );  /* release the GDI lock */
-                dc->funcs->pDeleteObject( dc->physDev, obj );
-                header = GDI_GetObjPtr( obj, 0 );  /* and grab it again */
-            }
+            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pDeleteObject );
+            GDI_ReleaseObj( obj );  /* release the GDI lock */
+            physdev->funcs->pDeleteObject( physdev, obj );
+            header = GDI_GetObjPtr( obj, 0 );  /* and grab it again */
             release_dc_ptr( dc );
         }
         HeapFree(GetProcessHeap(), 0, hdcs_head);

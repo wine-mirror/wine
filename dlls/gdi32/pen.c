@@ -219,6 +219,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
  */
 static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
 {
+    PHYSDEV physdev;
     HGDIOBJ ret = 0;
     DC *dc = get_dc_ptr( hdc );
 
@@ -234,7 +235,8 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
         return 0;
     }
 
-    if (dc->funcs->pSelectPen && !dc->funcs->pSelectPen( dc->physDev, handle ))
+    physdev = GET_DC_PHYSDEV( dc, pSelectPen );
+    if (!physdev->funcs->pSelectPen( physdev, handle ))
     {
         GDI_dec_ref_count( handle );
     }

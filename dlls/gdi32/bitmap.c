@@ -600,6 +600,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
     HGDIOBJ ret;
     BITMAPOBJ *bitmap;
     DC *dc;
+    PHYSDEV physdev;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
@@ -632,7 +633,8 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
         goto done;
     }
 
-    if (dc->funcs->pSelectBitmap && !dc->funcs->pSelectBitmap( dc->physDev, handle ))
+    physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
+    if (!physdev->funcs->pSelectBitmap( physdev, handle ))
     {
         GDI_ReleaseObj( handle );
         ret = 0;

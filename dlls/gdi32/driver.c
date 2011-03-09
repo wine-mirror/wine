@@ -329,6 +329,11 @@ static BOOL CDECL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT 
     return TRUE;
 }
 
+static BOOL CDECL nulldrv_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
+{
+    return TRUE;
+}
+
 static BOOL CDECL nulldrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     return TRUE;
@@ -406,6 +411,31 @@ static BOOL CDECL nulldrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, 
                                      INT ell_width, INT ell_height )
 {
     return TRUE;
+}
+
+static HBITMAP CDECL nulldrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
+{
+    return bitmap;
+}
+
+static HBRUSH CDECL nulldrv_SelectBrush( PHYSDEV dev, HBRUSH brush )
+{
+    return brush;
+}
+
+static HFONT CDECL nulldrv_SelectFont( PHYSDEV dev, HFONT font, HANDLE gdi_font )
+{
+    return 0;
+}
+
+static HPALETTE CDECL nulldrv_SelectPalette( PHYSDEV dev, HPALETTE palette, BOOL bkgnd )
+{
+    return palette;
+}
+
+static HPEN CDECL nulldrv_SelectPen( PHYSDEV dev, HPEN pen )
+{
+    return pen;
 }
 
 static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
@@ -506,7 +536,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pCreateDIBSection */
     NULL,                               /* pDeleteBitmap */
     NULL,                               /* pDeleteDC */
-    NULL,                               /* pDeleteObject */
+    nulldrv_DeleteObject,               /* pDeleteObject */
     NULL,                               /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
     nulldrv_Ellipse,                    /* pEllipse */
@@ -566,12 +596,12 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pSaveDC */
     nulldrv_ScaleViewportExtEx,         /* pScaleViewportExt */
     nulldrv_ScaleWindowExtEx,           /* pScaleWindowExt */
-    NULL,                               /* pSelectBitmap */
-    NULL,                               /* pSelectBrush */
+    nulldrv_SelectBitmap,               /* pSelectBitmap */
+    nulldrv_SelectBrush,                /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
-    NULL,                               /* pSelectFont */
-    NULL,                               /* pSelectPalette */
-    NULL,                               /* pSelectPen */
+    nulldrv_SelectFont,                 /* pSelectFont */
+    nulldrv_SelectPalette,              /* pSelectPalette */
+    nulldrv_SelectPen,                  /* pSelectPen */
     NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBitmapBits */
     NULL,                               /* pSetBkColor */

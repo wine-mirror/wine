@@ -529,6 +529,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
 {
     HGDIOBJ ret = 0;
     DC *dc = get_dc_ptr( hdc );
+    PHYSDEV physdev;
 
     if (!dc) return 0;
 
@@ -541,7 +542,8 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
     if (GetDeviceCaps( dc->hSelf, TEXTCAPS ) & TC_VA_ABLE)
         dc->gdiFont = WineEngCreateFontInstance( dc, handle );
 
-    if (dc->funcs->pSelectFont) ret = dc->funcs->pSelectFont( dc->physDev, handle, dc->gdiFont );
+    physdev = GET_DC_PHYSDEV( dc, pSelectFont );
+    ret = physdev->funcs->pSelectFont( physdev, handle, dc->gdiFont );
 
     if (ret && dc->gdiFont) dc->gdiFont = 0;
 
