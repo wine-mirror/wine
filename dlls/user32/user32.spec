@@ -674,7 +674,6 @@
 @ stdcall SetWindowPos(long long long long long long long)
 @ stdcall SetWindowRgn(long long long)
 @ stdcall SetWindowStationUser(long long)
-@ stdcall SetWindowText(long str) SetWindowTextA
 @ stdcall SetWindowTextA(long str)
 @ stdcall SetWindowTextW(long wstr)
 @ stdcall SetWindowWord(long long long)
