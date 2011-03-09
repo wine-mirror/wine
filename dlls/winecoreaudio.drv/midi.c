@@ -694,8 +694,8 @@ static DWORD MIDIIn_AddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	LPMIDIHDR ptr;
 	for (ptr = sources[wDevID].lpQueueHdr;
 	     ptr->lpNext != 0;
-	     ptr = (LPMIDIHDR)ptr->lpNext);
-	ptr->lpNext = (struct midihdr_tag*)lpMidiHdr;
+	     ptr = ptr->lpNext);
+	ptr->lpNext = lpMidiHdr;
     }
     LeaveCriticalSection(&midiInLock);
 
@@ -806,11 +806,12 @@ static DWORD MIDIIn_Reset(WORD wDevID)
 
     EnterCriticalSection(&midiInLock);
     while (sources[wDevID].lpQueueHdr) {
-	sources[wDevID].lpQueueHdr->dwFlags &= ~MHDR_INQUEUE;
-	sources[wDevID].lpQueueHdr->dwFlags |= MHDR_DONE;
+	LPMIDIHDR lpMidiHdr = sources[wDevID].lpQueueHdr;
+	sources[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
+	lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+	lpMidiHdr->dwFlags |= MHDR_DONE;
 	/* FIXME: when called from 16 bit, lpQueueHdr needs to be a segmented ptr */
-	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)sources[wDevID].lpQueueHdr, dwTime);
-	sources[wDevID].lpQueueHdr = (LPMIDIHDR)sources[wDevID].lpQueueHdr->lpNext;
+	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD)lpMidiHdr, dwTime);
     }
     LeaveCriticalSection(&midiInLock);
 
