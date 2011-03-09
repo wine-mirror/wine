@@ -962,7 +962,7 @@ static const char* dwarf2_get_cpp_name(dwarf2_parse_context_t* ctx, dwarf2_debug
     if (di->abbrev->tag == DW_TAG_compile_unit) return name;
     if (!ctx->cpp_name)
         ctx->cpp_name = pool_alloc(&ctx->pool, MAX_SYM_NAME);
-    last = ctx->cpp_name + MAX_SYM_NAME - strlen(name);
+    last = ctx->cpp_name + MAX_SYM_NAME - strlen(name) - 1;
     strcpy(last, name);
 
     /* if the di is a definition, but has also a (previous) declaration, then scope must
