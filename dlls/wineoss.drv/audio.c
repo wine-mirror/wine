@@ -1427,7 +1427,7 @@ static int OSS_PeekRingMessage(OSS_MSG_RING* omr,
 /**************************************************************************
  * 			wodNotifyClient			[internal]
  */
-static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+static void wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     TRACE("wMsg = 0x%04x (%s) dwParm1 = %04lx dwParam2 = %04lx\n", wMsg,
         wMsg == WOM_OPEN ? "WOM_OPEN" : wMsg == WOM_CLOSE ? "WOM_CLOSE" :
@@ -1442,14 +1442,11 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD_PTR dwParam1, D
 			    (HDRVR)wwo->waveDesc.hWave, wMsg,
 			    wwo->waveDesc.dwInstance, dwParam1, dwParam2)) {
 	    WARN("can't notify client !\n");
-	    return MMSYSERR_ERROR;
 	}
 	break;
     default:
 	FIXME("Unknown callback message %u\n", wMsg);
-        return MMSYSERR_INVALPARAM;
     }
-    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -1665,7 +1662,7 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	lpWaveHdr->dwFlags |= WHDR_DONE;
 
-	wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
+	wodNotifyClient(wwo, WOM_DONE, (DWORD_PTR)lpWaveHdr, 0);
     }
 #else
     for (;;)
@@ -2128,7 +2125,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	  wwo->waveFormat.Format.nSamplesPerSec, wwo->waveFormat.Format.nChannels,
 	  wwo->waveFormat.Format.nBlockAlign);
 
-    return wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
+    wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -2136,7 +2134,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
  */
 static DWORD wodClose(WORD wDevID)
 {
-    DWORD		ret = MMSYSERR_NOERROR;
     WINE_WAVEOUT*	wwo;
 
     TRACE("(%u);\n", wDevID);
@@ -2149,7 +2146,7 @@ static DWORD wodClose(WORD wDevID)
     wwo = &WOutDev[wDevID];
     if (wwo->lpQueuePtr) {
 	WARN("buffers still playing !\n");
-	ret = WAVERR_STILLPLAYING;
+	return WAVERR_STILLPLAYING;
     } else {
 	if (wwo->hThread != INVALID_HANDLE_VALUE) {
 	    OSS_AddRingMessage(&wwo->msgRing, WINE_WM_CLOSING, 0, TRUE);
@@ -2160,9 +2157,9 @@ static DWORD wodClose(WORD wDevID)
         OSS_CloseDevice(&wwo->ossdev);
 	wwo->state = WINE_WS_CLOSED;
 	wwo->dwFragmentSize = 0;
-	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
+	wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
-    return ret;
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -2464,7 +2461,7 @@ DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 /**************************************************************************
  * 			widNotifyClient			[internal]
  */
-static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+static void widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     TRACE("wMsg = 0x%04x (%s) dwParm1 = %04lx dwParam2 = %04lx\n", wMsg,
         wMsg == WIM_OPEN ? "WIM_OPEN" : wMsg == WIM_CLOSE ? "WIM_CLOSE" :
@@ -2479,14 +2476,11 @@ static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD_PTR dwParam1, DW
 			    (HDRVR)wwi->waveDesc.hWave, wMsg,
 			    wwi->waveDesc.dwInstance, dwParam1, dwParam2)) {
 	    WARN("can't notify client !\n");
-	    return MMSYSERR_ERROR;
 	}
 	break;
     default:
 	FIXME("Unknown callback message %u\n", wMsg);
-	return MMSYSERR_INVALPARAM;
     }
-    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -2998,7 +2992,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     CloseHandle(wwi->hStartUpEvent);
     wwi->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    return widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
+    widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -3026,7 +3021,8 @@ static DWORD widClose(WORD wDevID)
     wwi->state = WINE_WS_CLOSED;
     wwi->dwFragmentSize = 0;
     OSS_DestroyRingMessage(&wwi->msgRing);
-    return widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
+    widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
