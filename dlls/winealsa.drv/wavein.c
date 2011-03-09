@@ -369,7 +369,6 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return MMSYSERR_ALLOCATED;
     }
 
-    wwi->pcm = 0;
     flags = SND_PCM_NONBLOCK;
 
     if ( (err=snd_pcm_open(&pcm, wwi->pcmname, SND_PCM_STREAM_CAPTURE, flags)) < 0 )
@@ -393,7 +392,11 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     hw_params = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_hw_params_sizeof() );
     sw_params = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_sw_params_sizeof() );
-
+    if (!hw_params || !sw_params)
+    {
+        ret = MMSYSERR_NOMEM;
+        goto error;
+    }
     snd_pcm_hw_params_any(pcm, hw_params);
 
 #define EXIT_ON_ERROR(f,e,txt) do \
@@ -488,14 +491,9 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	ALSA_TraceParameters(hw_params, sw_params, FALSE);
 
     /* now, we can save all required data for later use... */
-    if ( wwi->hw_params )
-	snd_pcm_hw_params_free(wwi->hw_params);
-    snd_pcm_hw_params_malloc(&(wwi->hw_params));
-    snd_pcm_hw_params_copy(wwi->hw_params, hw_params);
 
     wwi->dwBufferSize = snd_pcm_frames_to_bytes(pcm, buffer_size);
     wwi->lpQueuePtr = wwi->lpPlayPtr = wwi->lpLoopPtr = NULL;
-    wwi->pcm = pcm;
 
     ALSA_InitRingMessage(&wwi->msgRing);
 
@@ -519,8 +517,10 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     CloseHandle(wwi->hStartUpEvent);
     wwi->hStartUpEvent = NULL;
 
-    HeapFree( GetProcessHeap(), 0, hw_params );
     HeapFree( GetProcessHeap(), 0, sw_params );
+    wwi->hw_params = hw_params;
+    wwi->pcm = pcm;
+
     widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
     return MMSYSERR_NOERROR;
 
@@ -548,12 +548,12 @@ static DWORD widClose(WORD wDevID)
 	return MMSYSERR_BADDEVICEID;
     }
 
-    if (WInDev[wDevID].pcm == NULL) {
+    wwi = &WInDev[wDevID];
+    if (wwi->pcm == NULL) {
 	WARN("Requested to close already closed device %d!\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
 
-    wwi = &WInDev[wDevID];
     if (wwi->lpQueuePtr) {
 	WARN("buffers still playing !\n");
 	return WAVERR_STILLPLAYING;
@@ -563,7 +563,7 @@ static DWORD widClose(WORD wDevID)
 	}
         ALSA_DestroyRingMessage(&wwi->msgRing);
 
-	snd_pcm_hw_params_free(wwi->hw_params);
+	HeapFree( GetProcessHeap(), 0, wwi->hw_params );
 	wwi->hw_params = NULL;
 
         snd_pcm_close(wwi->pcm);
