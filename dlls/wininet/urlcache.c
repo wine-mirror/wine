@@ -2473,6 +2473,11 @@ static BOOL CommitUrlCacheEntryInternal(
         debugstr_w(lpszFileExtension),
         debugstr_w(lpszOriginalUrl));
 
+    if (CacheEntryType & STICKY_CACHE_ENTRY && !lpszLocalFileName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     if (lpszOriginalUrl)
         WARN(": lpszOriginalUrl ignored\n");
 
@@ -2612,7 +2617,13 @@ static BOOL CommitUrlCacheEntryInternal(
     pUrlEntry->CacheDir = cDirectory;
     pUrlEntry->CacheEntryType = CacheEntryType;
     pUrlEntry->dwHeaderInfoSize = dwHeaderSize;
-    pUrlEntry->dwExemptDelta = 0;
+    if (CacheEntryType & STICKY_CACHE_ENTRY)
+    {
+        /* Sticky entries have a default exempt time of one day */
+        pUrlEntry->dwExemptDelta = 86400;
+    }
+    else
+        pUrlEntry->dwExemptDelta = 0;
     pUrlEntry->dwHitRate = 0;
     pUrlEntry->dwOffsetFileExtension = dwOffsetFileExtension;
     pUrlEntry->dwOffsetHeaderInfo = dwOffsetHeader;
@@ -2653,8 +2664,12 @@ static BOOL CommitUrlCacheEntryInternal(
     {
         if (pUrlEntry->CacheDir < pHeader->DirectoryCount)
             pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles++;
-        pHeader->CacheUsage.QuadPart += file_size.QuadPart;
-        if (pHeader->CacheUsage.QuadPart > pHeader->CacheLimit.QuadPart)
+        if (CacheEntryType & STICKY_CACHE_ENTRY)
+            pHeader->ExemptUsage.QuadPart += file_size.QuadPart;
+        else
+            pHeader->CacheUsage.QuadPart += file_size.QuadPart;
+        if (pHeader->CacheUsage.QuadPart + pHeader->ExemptUsage.QuadPart >
+            pHeader->CacheLimit.QuadPart)
             FIXME("file of size %s bytes fills cache\n", wine_dbgstr_longlong(file_size.QuadPart));
     }
 
@@ -3032,10 +3047,20 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
         if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
             pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles--;
     }
-    if (pUrlEntry->size.QuadPart < pHeader->CacheUsage.QuadPart)
-        pHeader->CacheUsage.QuadPart -= pUrlEntry->size.QuadPart;
+    if (pUrlEntry->CacheEntryType & STICKY_CACHE_ENTRY)
+    {
+        if (pUrlEntry->size.QuadPart < pHeader->ExemptUsage.QuadPart)
+            pHeader->ExemptUsage.QuadPart -= pUrlEntry->size.QuadPart;
+        else
+            pHeader->ExemptUsage.QuadPart = 0;
+    }
     else
-        pHeader->CacheUsage.QuadPart = 0;
+    {
+        if (pUrlEntry->size.QuadPart < pHeader->CacheUsage.QuadPart)
+            pHeader->CacheUsage.QuadPart -= pUrlEntry->size.QuadPart;
+        else
+            pHeader->CacheUsage.QuadPart = 0;
+    }
 
     URLCache_DeleteEntry(pHeader, pEntry);
 
@@ -3115,10 +3140,20 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
         if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
             pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles--;
     }
-    if (pUrlEntry->size.QuadPart < pHeader->CacheUsage.QuadPart)
-        pHeader->CacheUsage.QuadPart -= pUrlEntry->size.QuadPart;
+    if (pUrlEntry->CacheEntryType & STICKY_CACHE_ENTRY)
+    {
+        if (pUrlEntry->size.QuadPart < pHeader->ExemptUsage.QuadPart)
+            pHeader->ExemptUsage.QuadPart -= pUrlEntry->size.QuadPart;
+        else
+            pHeader->ExemptUsage.QuadPart = 0;
+    }
     else
-        pHeader->CacheUsage.QuadPart = 0;
+    {
+        if (pUrlEntry->size.QuadPart < pHeader->CacheUsage.QuadPart)
+            pHeader->CacheUsage.QuadPart -= pUrlEntry->size.QuadPart;
+        else
+            pHeader->CacheUsage.QuadPart = 0;
+    }
 
     URLCache_DeleteEntry(pHeader, pEntry);
 

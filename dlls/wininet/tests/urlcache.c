@@ -512,20 +512,16 @@ static void test_urlcacheA(void)
     ret = CommitUrlCacheEntry(TEST_URL, NULL, filetime_zero, filetime_zero,
             STICKY_CACHE_ENTRY, (LPBYTE)ok_header, strlen(ok_header), "html",
             NULL);
-    todo_wine {
     ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
     SetLastError(0xdeadbeef);
     ret = CommitUrlCacheEntry(TEST_URL, NULL, filetime_zero, filetime_zero,
             NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY,
             (LPBYTE)ok_header, strlen(ok_header), "html", NULL);
-    todo_wine {
     ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
     ret = CreateUrlCacheEntry(TEST_URL, 0, "html", filenameA, 0);
     ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
     create_and_write_file(filenameA, &zero_byte, sizeof(zero_byte));
@@ -545,7 +541,6 @@ static void test_urlcacheA(void)
     ok(lpCacheEntryInfo->CacheEntryType & (NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY),
        "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %d (0x%08x)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
-    todo_wine
     ok(lpCacheEntryInfo->dwExemptDelta == 86400,
        "expected dwExemptDelta 864000, got %d\n",
        lpCacheEntryInfo->dwExemptDelta);
@@ -578,7 +573,6 @@ static void test_urlcacheA(void)
     ok(lpCacheEntryInfo->CacheEntryType & (NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY),
        "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %d (0x%08x)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
-    todo_wine
     ok(lpCacheEntryInfo->dwExemptDelta == 86400,
        "expected dwExemptDelta 864000, got %d\n",
        lpCacheEntryInfo->dwExemptDelta);
