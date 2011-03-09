@@ -79,7 +79,8 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
 
     dc->funcs               = funcs;
     dc->nulldrv.funcs       = &null_driver;
-    dc->physDev             = NULL;
+    dc->nulldrv.next        = NULL;
+    dc->physDev             = &dc->nulldrv;
     dc->thread              = GetCurrentThreadId();
     dc->refcount            = 1;
     dc->dirty               = 0;
@@ -225,6 +226,34 @@ void update_dc( DC *dc )
 {
     if (InterlockedExchange( &dc->dirty, 0 ) && dc->hookProc)
         dc->hookProc( dc->hSelf, DCHC_INVALIDVISRGN, dc->dwHookData, 0 );
+}
+
+
+/***********************************************************************
+ *           push_dc_driver
+ *
+ * Push a driver on top of the DC driver stack.
+ */
+void push_dc_driver( DC * dc, PHYSDEV physdev )
+{
+    physdev->next = dc->physDev;
+    physdev->hdc = dc->hSelf;
+    dc->physDev = physdev;
+    dc->funcs = physdev->funcs;
+}
+
+
+/***********************************************************************
+ *           pop_dc_driver
+ *
+ * Pop the top driver from the DC driver stack.
+ */
+void pop_dc_driver( DC * dc, PHYSDEV physdev )
+{
+    assert( physdev == dc->physDev );
+    assert( physdev != &dc->nulldrv );
+    dc->physDev = physdev->next;
+    dc->funcs = dc->physDev->funcs;
 }
 
 
@@ -633,6 +662,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 {
     HDC hdc;
     DC * dc;
+    PHYSDEV physdev;
     const DC_FUNCTIONS *funcs;
     WCHAR buf[300];
 
@@ -663,14 +693,15 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
           debugstr_w(driver), debugstr_w(device), debugstr_w(output), dc->hSelf );
 
     if (dc->funcs->pCreateDC &&
-        !dc->funcs->pCreateDC( hdc, &dc->physDev, buf, device, output, initData ))
+        !dc->funcs->pCreateDC( hdc, &physdev, buf, device, output, initData ))
     {
         WARN("creation aborted by device\n" );
         goto error;
     }
 
-    dc->physDev->funcs = funcs;
-    dc->physDev->hdc = hdc;
+    physdev->funcs = funcs;
+    push_dc_driver( dc, physdev );
+
     dc->vis_rect.left   = 0;
     dc->vis_rect.top    = 0;
     dc->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
@@ -782,21 +813,20 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     dc->vis_rect.bottom = 1;
     if (!(dc->hVisRgn = CreateRectRgn( 0, 0, 1, 1 ))) goto error;   /* default bitmap is 1x1 */
 
-    /* Copy the driver-specific physical device info into
-     * the new DC. The driver may use this read-only info
-     * while creating the compatible DC below. */
-    dc->physDev = physDev;
     ret = dc->hSelf;
 
+    /* Pass the driver-specific physical device info into
+     * the new DC. The driver may use this read-only info
+     * while creating the compatible DC. */
     if (dc->funcs->pCreateDC &&
-        !dc->funcs->pCreateDC( dc->hSelf, &dc->physDev, NULL, NULL, NULL, NULL ))
+        !dc->funcs->pCreateDC( dc->hSelf, &physDev, NULL, NULL, NULL, NULL ))
     {
         WARN("creation aborted by device\n");
         goto error;
     }
 
-    dc->physDev->funcs = funcs;
-    dc->physDev->hdc = hdc;
+    physDev->funcs = funcs;
+    push_dc_driver( dc, physDev );
     DC_InitDC( dc );
     release_dc_ptr( dc );
     return ret;

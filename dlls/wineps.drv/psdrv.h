@@ -353,7 +353,7 @@ typedef struct {
 
 typedef struct
 {
-    void               *reserved[2];    /* reserved for gdi */
+    void               *reserved[3];    /* reserved for gdi */
     HDC                 hdc;
     PSFONT		font;		/* Current PS font */
     DOWNLOAD            *downloaded_fonts;

@@ -144,7 +144,7 @@ struct xrender_info;
   /* X physical device */
 typedef struct
 {
-    void         *reserved[2];  /* reserved for gdi */
+    void         *reserved[3];  /* reserved for gdi */
     HDC           hdc;
     GC            gc;          /* X Window GC */
     Drawable      drawable;

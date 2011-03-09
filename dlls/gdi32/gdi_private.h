@@ -75,6 +75,7 @@ typedef struct tagGDIOBJHDR
 typedef struct gdi_physdev
 {
     const struct tagDC_FUNCS *funcs;
+    struct gdi_physdev       *next;
     HDC                       hdc;
 } *PHYSDEV;
 
@@ -377,6 +378,8 @@ extern BOOL free_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
 extern DC *get_dc_ptr( HDC hdc ) DECLSPEC_HIDDEN;
 extern void release_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
 extern void update_dc( DC *dc ) DECLSPEC_HIDDEN;
+extern void push_dc_driver( DC * dc, PHYSDEV physdev ) DECLSPEC_HIDDEN;
+extern void pop_dc_driver( DC * dc, PHYSDEV physdev ) DECLSPEC_HIDDEN;
 extern void DC_InitDC( DC * dc ) DECLSPEC_HIDDEN;
 extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;
 extern INT save_dc_state( HDC hdc ) DECLSPEC_HIDDEN;
@@ -395,7 +398,14 @@ extern const DC_FUNCTIONS *DRIVER_get_display_driver(void) DECLSPEC_HIDDEN;
 extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
 extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;
 
-#define GET_DC_PHYSDEV(dc,func) ((dc)->physDev->funcs->func ? (dc)->physDev : &(dc)->nulldrv)
+static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
+{
+    while (!((void **)dev->funcs)[offset / sizeof(void *)]) dev = dev->next;
+    return dev;
+}
+
+#define GET_DC_PHYSDEV(dc,func) get_physdev_entry_point( (dc)->physDev, FIELD_OFFSET(DC_FUNCTIONS,func))
+#define GET_NEXT_PHYSDEV(dev,func) get_physdev_entry_point( (dev)->next, FIELD_OFFSET(DC_FUNCTIONS,func))
 
 /* enhmetafile.c */
 extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk ) DECLSPEC_HIDDEN;
