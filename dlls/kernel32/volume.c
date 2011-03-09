@@ -1621,6 +1621,16 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
 }
 
 /***********************************************************************
+ *           GetVolumePathNamesForVolumeNameA   (KERNEL32.@)
+ */
+BOOL WINAPI GetVolumePathNamesForVolumeNameA(LPCSTR volumename, LPSTR volumepathname, DWORD buflen, PDWORD returnlen)
+{
+    FIXME("(%s, %p, %d, %p), stub!\n", debugstr_a(volumename), volumepathname, buflen, returnlen);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *           GetVolumePathNamesForVolumeNameW   (KERNEL32.@)
  */
 BOOL WINAPI GetVolumePathNamesForVolumeNameW(LPCWSTR volumename, LPWSTR volumepathname, DWORD buflen, PDWORD returnlen)
