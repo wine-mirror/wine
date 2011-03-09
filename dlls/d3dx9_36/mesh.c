@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Ivan Gyurdiev
  * Copyright (C) 2009 David Adam
  * Copyright (C) 2010 Tony Wasserka
+ * Copyright (C) 2011 Dylan Smith
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,6 +30,7 @@
 #include "wingdi.h"
 #include "d3dx9.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "d3dx9_36_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
@@ -1506,8 +1508,471 @@ HRESULT WINAPI D3DXCreateTextA(LPDIRECT3DDEVICE9 device,
                                LPD3DXMESH *mesh, LPD3DXBUFFER *adjacency,
                                LPGLYPHMETRICSFLOAT glyphmetrics)
 {
-    FIXME("(%p, %p, %s, %f, %f, %p, %p, %p): stub\n", device, hdc,
+    HRESULT hr;
+    int len;
+    LPWSTR textW;
+
+    TRACE("(%p, %p, %s, %f, %f, %p, %p, %p)\n", device, hdc,
           debugstr_a(text), deviation, extrusion, mesh, adjacency, glyphmetrics);
+
+    if (!text)
+        return D3DERR_INVALIDCALL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, text, -1, NULL, 0);
+    textW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, text, -1, textW, len);
+
+    hr = D3DXCreateTextW(device, hdc, textW, deviation, extrusion,
+                         mesh, adjacency, glyphmetrics);
+    HeapFree(GetProcessHeap(), 0, textW);
+
+    return hr;
+}
+
+enum pointtype {
+    POINTTYPE_CURVE = 0,
+    POINTTYPE_CORNER,
+    POINTTYPE_CURVE_START,
+    POINTTYPE_CURVE_END,
+    POINTTYPE_CURVE_MIDDLE,
+};
+
+struct point2d
+{
+    D3DXVECTOR2 pos;
+    enum pointtype corner;
+};
+
+struct dynamic_array
+{
+    int count, capacity;
+    void *items;
+};
+
+/* is a dynamic_array */
+struct outline
+{
+    int count, capacity;
+    struct point2d *items;
+};
+
+/* is a dynamic_array */
+struct outline_array
+{
+    int count, capacity;
+    struct outline *items;
+};
+
+struct face_array
+{
+    int count;
+    face *items;
+};
+
+struct point2d_index
+{
+    struct outline *outline;
+    int vertex;
+};
+
+struct point2d_index_array
+{
+    int count;
+    struct point2d_index *items;
+};
+
+struct glyphinfo
+{
+    struct outline_array outlines;
+    struct face_array faces;
+    struct point2d_index_array ordered_vertices;
+    float offset_x;
+};
+
+static BOOL reserve(struct dynamic_array *array, int count, int itemsize)
+{
+    if (count > array->capacity) {
+        void *new_buffer;
+        int new_capacity;
+        if (array->items && array->capacity) {
+            new_capacity = max(array->capacity * 2, count);
+            new_buffer = HeapReAlloc(GetProcessHeap(), 0, array->items, new_capacity * itemsize);
+        } else {
+            new_capacity = max(16, count);
+            new_buffer = HeapAlloc(GetProcessHeap(), 0, new_capacity * itemsize);
+        }
+        if (!new_buffer)
+            return FALSE;
+        array->items = new_buffer;
+        array->capacity = new_capacity;
+    }
+    return TRUE;
+}
+
+static struct point2d *add_points(struct outline *array, int num)
+{
+    struct point2d *item;
+
+    if (!reserve((struct dynamic_array *)array, array->count + num, sizeof(array->items[0])))
+        return NULL;
+
+    item = &array->items[array->count];
+    array->count += num;
+    return item;
+}
+
+static struct outline *add_outline(struct outline_array *array)
+{
+    struct outline *item;
+
+    if (!reserve((struct dynamic_array *)array, array->count + 1, sizeof(array->items[0])))
+        return NULL;
+
+    item = &array->items[array->count++];
+    ZeroMemory(item, sizeof(*item));
+    return item;
+}
+
+/* assume fixed point numbers can be converted to float point in place */
+C_ASSERT(sizeof(FIXED) == sizeof(float));
+C_ASSERT(sizeof(POINTFX) == sizeof(D3DXVECTOR2));
+
+static inline D3DXVECTOR2 *convert_fixed_to_float(POINTFX *pt, int count, float emsquare)
+{
+    D3DXVECTOR2 *ret = (D3DXVECTOR2*)pt;
+    while (count--) {
+        D3DXVECTOR2 *pt_flt = (D3DXVECTOR2*)pt;
+        pt_flt->x = (pt->x.value + pt->x.fract / (float)0x10000) / emsquare;
+        pt_flt->y = (pt->y.value + pt->y.fract / (float)0x10000) / emsquare;
+        pt++;
+    }
+    return ret;
+}
+
+static HRESULT add_bezier_points(struct outline *outline, const D3DXVECTOR2 *p1,
+                                 const D3DXVECTOR2 *p2, const D3DXVECTOR2 *p3,
+                                 float max_deviation_sq)
+{
+    D3DXVECTOR2 split1 = {0, 0}, split2 = {0, 0}, middle, vec;
+    float deviation_sq;
+
+    D3DXVec2Scale(&split1, D3DXVec2Add(&split1, p1, p2), 0.5f);
+    D3DXVec2Scale(&split2, D3DXVec2Add(&split2, p2, p3), 0.5f);
+    D3DXVec2Scale(&middle, D3DXVec2Add(&middle, &split1, &split2), 0.5f);
+
+    deviation_sq = D3DXVec2LengthSq(D3DXVec2Subtract(&vec, &middle, p2));
+    if (deviation_sq < max_deviation_sq) {
+        struct point2d *pt = add_points(outline, 1);
+        if (!pt) return E_OUTOFMEMORY;
+        pt->pos = *p2;
+        pt->corner = POINTTYPE_CURVE;
+        /* the end point is omitted because the end line merges into the next segment of
+         * the split bezier curve, and the end of the split bezier curve is added outside
+         * this recursive function. */
+    } else {
+        HRESULT hr = add_bezier_points(outline, p1, &split1, &middle, max_deviation_sq);
+        if (hr != S_OK) return hr;
+        hr = add_bezier_points(outline, &middle, &split2, p3, max_deviation_sq);
+        if (hr != S_OK) return hr;
+    }
+
+    return S_OK;
+}
+
+static inline BOOL is_direction_similar(D3DXVECTOR2 *dir1, D3DXVECTOR2 *dir2, float cos_theta)
+{
+    /* dot product = cos(theta) */
+    return D3DXVec2Dot(dir1, dir2) > cos_theta;
+}
+
+static inline D3DXVECTOR2 *unit_vec2(D3DXVECTOR2 *dir, const D3DXVECTOR2 *pt1, const D3DXVECTOR2 *pt2)
+{
+    return D3DXVec2Normalize(D3DXVec2Subtract(dir, pt2, pt1), dir);
+}
+
+struct cos_table
+{
+    float cos_half;
+    float cos_45;
+    float cos_90;
+};
+
+static BOOL attempt_line_merge(struct outline *outline,
+                               int pt_index,
+                               const D3DXVECTOR2 *nextpt,
+                               BOOL to_curve,
+                               const struct cos_table *table)
+{
+    D3DXVECTOR2 curdir, lastdir;
+    struct point2d *prevpt, *pt;
+    BOOL ret = FALSE;
+
+    pt = &outline->items[pt_index];
+    pt_index = (pt_index - 1 + outline->count) % outline->count;
+    prevpt = &outline->items[pt_index];
+
+    if (to_curve)
+        pt->corner = pt->corner != POINTTYPE_CORNER ? POINTTYPE_CURVE_MIDDLE : POINTTYPE_CURVE_START;
+
+    if (outline->count < 2)
+        return FALSE;
+
+    /* remove last point if the next line continues the last line */
+    unit_vec2(&lastdir, &prevpt->pos, &pt->pos);
+    unit_vec2(&curdir, &pt->pos, nextpt);
+    if (is_direction_similar(&lastdir, &curdir, table->cos_half))
+    {
+        outline->count--;
+        if (pt->corner == POINTTYPE_CURVE_END)
+            prevpt->corner = pt->corner;
+        if (prevpt->corner == POINTTYPE_CURVE_END && to_curve)
+            prevpt->corner = POINTTYPE_CURVE_MIDDLE;
+        pt = prevpt;
+
+        ret = TRUE;
+        if (outline->count < 2)
+            return ret;
+
+        pt_index = (pt_index - 1 + outline->count) % outline->count;
+        prevpt = &outline->items[pt_index];
+        unit_vec2(&lastdir, &prevpt->pos, &pt->pos);
+        unit_vec2(&curdir, &pt->pos, nextpt);
+    }
+    return ret;
+}
+
+static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int datasize,
+                              float max_deviation_sq, float emsquare, const struct cos_table *cos_table)
+{
+    TTPOLYGONHEADER *header = (TTPOLYGONHEADER *)raw_outline;
+
+    while ((char *)header < (char *)raw_outline + datasize)
+    {
+        TTPOLYCURVE *curve = (TTPOLYCURVE *)(header + 1);
+        struct point2d *lastpt, *pt;
+        D3DXVECTOR2 lastdir;
+        D3DXVECTOR2 *pt_flt;
+        int j;
+        struct outline *outline = add_outline(&glyph->outlines);
+
+        if (!outline)
+            return E_OUTOFMEMORY;
+
+        pt = add_points(outline, 1);
+        if (!pt)
+            return E_OUTOFMEMORY;
+        pt_flt = convert_fixed_to_float(&header->pfxStart, 1, emsquare);
+        pt->pos = *pt_flt;
+        pt->corner = POINTTYPE_CORNER;
+
+        if (header->dwType != TT_POLYGON_TYPE)
+            FIXME("Unknown header type %d\n", header->dwType);
+
+        while ((char *)curve < (char *)header + header->cb)
+        {
+            D3DXVECTOR2 bezier_start = outline->items[outline->count - 1].pos;
+            BOOL to_curve = curve->wType != TT_PRIM_LINE && curve->cpfx > 1;
+
+            if (!curve->cpfx) {
+                curve = (TTPOLYCURVE *)&curve->apfx[curve->cpfx];
+                continue;
+            }
+
+            pt_flt = convert_fixed_to_float(curve->apfx, curve->cpfx, emsquare);
+
+            attempt_line_merge(outline, outline->count - 1, &pt_flt[0], to_curve, cos_table);
+
+            if (to_curve)
+            {
+                HRESULT hr;
+                int count = curve->cpfx;
+                j = 0;
+
+                while (count > 2)
+                {
+                    D3DXVECTOR2 bezier_end;
+
+                    D3DXVec2Scale(&bezier_end, D3DXVec2Add(&bezier_end, &pt_flt[j], &pt_flt[j+1]), 0.5f);
+                    hr = add_bezier_points(outline, &bezier_start, &pt_flt[j], &bezier_end, max_deviation_sq);
+                    if (hr != S_OK)
+                        return hr;
+                    bezier_start = bezier_end;
+                    count--;
+                    j++;
+                }
+                hr = add_bezier_points(outline, &bezier_start, &pt_flt[j], &pt_flt[j+1], max_deviation_sq);
+                if (hr != S_OK)
+                    return hr;
+
+                pt = add_points(outline, 1);
+                if (!pt)
+                    return E_OUTOFMEMORY;
+                j++;
+                pt->pos = pt_flt[j];
+                pt->corner = POINTTYPE_CURVE_END;
+            } else {
+                pt = add_points(outline, curve->cpfx);
+                if (!pt)
+                    return E_OUTOFMEMORY;
+                for (j = 0; j < curve->cpfx; j++)
+                {
+                    pt->pos = pt_flt[j];
+                    pt->corner = POINTTYPE_CORNER;
+                    pt++;
+                }
+            }
+
+            curve = (TTPOLYCURVE *)&curve->apfx[curve->cpfx];
+        }
+
+        /* remove last point if the next line continues the last line */
+        if (outline->count >= 3) {
+            BOOL to_curve;
+
+            lastpt = &outline->items[outline->count - 1];
+            pt = &outline->items[0];
+            if (pt->pos.x == lastpt->pos.x && pt->pos.y == lastpt->pos.y) {
+                if (lastpt->corner == POINTTYPE_CURVE_END)
+                {
+                    if (pt->corner == POINTTYPE_CURVE_START)
+                        pt->corner = POINTTYPE_CURVE_MIDDLE;
+                    else
+                        pt->corner = POINTTYPE_CURVE_END;
+                }
+                outline->count--;
+                lastpt = &outline->items[outline->count - 1];
+            } else {
+                /* outline closed with a line from end to start point */
+                attempt_line_merge(outline, outline->count - 1, &pt->pos, FALSE, cos_table);
+            }
+            lastpt = &outline->items[0];
+            to_curve = lastpt->corner != POINTTYPE_CORNER && lastpt->corner != POINTTYPE_CURVE_END;
+            if (lastpt->corner == POINTTYPE_CURVE_START)
+                lastpt->corner = POINTTYPE_CORNER;
+            pt = &outline->items[1];
+            if (attempt_line_merge(outline, 0, &pt->pos, to_curve, cos_table))
+                *lastpt = outline->items[outline->count];
+        }
+
+        lastpt = &outline->items[outline->count - 1];
+        pt = &outline->items[0];
+        unit_vec2(&lastdir, &lastpt->pos, &pt->pos);
+        for (j = 0; j < outline->count; j++)
+        {
+            D3DXVECTOR2 curdir;
+
+            lastpt = pt;
+            pt = &outline->items[(j + 1) % outline->count];
+            unit_vec2(&curdir, &lastpt->pos, &pt->pos);
+
+            switch (lastpt->corner)
+            {
+                case POINTTYPE_CURVE_START:
+                case POINTTYPE_CURVE_END:
+                    if (!is_direction_similar(&lastdir, &curdir, cos_table->cos_45))
+                        lastpt->corner = POINTTYPE_CORNER;
+                    break;
+                case POINTTYPE_CURVE_MIDDLE:
+                    if (!is_direction_similar(&lastdir, &curdir, cos_table->cos_90))
+                        lastpt->corner = POINTTYPE_CORNER;
+                    else
+                        lastpt->corner = POINTTYPE_CURVE;
+                    break;
+                default:
+                    break;
+            }
+            lastdir = curdir;
+        }
+
+        header = (TTPOLYGONHEADER *)((char *)header + header->cb);
+    }
+    return S_OK;
+}
+
+static D3DXVECTOR2 *get_indexed_point(struct point2d_index *pt_idx)
+{
+    return &pt_idx->outline->items[pt_idx->vertex].pos;
+}
+
+static D3DXVECTOR2 *get_ordered_vertex(struct glyphinfo *glyph, WORD index)
+{
+    return get_indexed_point(&glyph->ordered_vertices.items[index]);
+}
+
+static HRESULT triangulate(struct glyphinfo *glyph)
+{
+    int nb_vertices = 0;
+    int i;
+    struct point2d_index *idx_ptr;
+
+    for (i = 0; i < glyph->outlines.count; i++)
+        nb_vertices += glyph->outlines.items[i].count;
+
+    glyph->ordered_vertices.items = HeapAlloc(GetProcessHeap(), 0,
+            nb_vertices * sizeof(*glyph->ordered_vertices.items));
+    if (!glyph->ordered_vertices.items)
+        return E_OUTOFMEMORY;
+
+    idx_ptr = glyph->ordered_vertices.items;
+    for (i = 0; i < glyph->outlines.count; i++)
+    {
+        struct outline *outline = &glyph->outlines.items[i];
+        int j;
+
+        idx_ptr->outline = outline;
+        idx_ptr->vertex = 0;
+        idx_ptr++;
+        for (j = outline->count - 1; j > 0; j--)
+        {
+            idx_ptr->outline = outline;
+            idx_ptr->vertex = j;
+            idx_ptr++;
+        }
+    }
+    glyph->ordered_vertices.count = nb_vertices;
+
+    /* Native implementation seems to try to create a triangle fan from
+     * the first outline point if the glyph only has one outline. */
+    if (glyph->outlines.count == 1)
+    {
+        struct outline *outline = glyph->outlines.items;
+        D3DXVECTOR2 *base = &outline->items[0].pos;
+        D3DXVECTOR2 *last = &outline->items[1].pos;
+        float ccw = 0;
+
+        for (i = 2; i < outline->count; i++)
+        {
+            D3DXVECTOR2 *next = &outline->items[i].pos;
+            D3DXVECTOR2 v1 = {0.0f, 0.0f};
+            D3DXVECTOR2 v2 = {0.0f, 0.0f};
+
+            D3DXVec2Subtract(&v1, base, last);
+            D3DXVec2Subtract(&v2, last, next);
+            ccw = D3DXVec2CCW(&v1, &v2);
+            if (ccw > 0.0f)
+                break;
+
+            last = next;
+        }
+        if (ccw <= 0)
+        {
+            glyph->faces.items = HeapAlloc(GetProcessHeap(), 0,
+                    (outline->count - 2) * sizeof(glyph->faces.items[0]));
+            if (!glyph->faces.items)
+                return E_OUTOFMEMORY;
+
+            glyph->faces.count = outline->count - 2;
+            for (i = 0; i < glyph->faces.count; i++)
+            {
+                glyph->faces.items[i][0] = 0;
+                glyph->faces.items[i][1] = i + 1;
+                glyph->faces.items[i][2] = i + 2;
+            }
+            return S_OK;
+        }
+    }
+
+    FIXME("triangulation of complex glyphs not yet implemented for D3DXCreateText.\n");
 
     return E_NOTIMPL;
 }
@@ -1515,11 +1980,331 @@ HRESULT WINAPI D3DXCreateTextA(LPDIRECT3DDEVICE9 device,
 HRESULT WINAPI D3DXCreateTextW(LPDIRECT3DDEVICE9 device,
                                HDC hdc, LPCWSTR text,
                                FLOAT deviation, FLOAT extrusion,
-                               LPD3DXMESH *mesh, LPD3DXBUFFER *adjacency,
+                               LPD3DXMESH *mesh_ptr, LPD3DXBUFFER *adjacency,
                                LPGLYPHMETRICSFLOAT glyphmetrics)
 {
-    FIXME("(%p, %p, %s, %f, %f, %p, %p, %p): stub\n", device, hdc,
-          debugstr_w(text), deviation, extrusion, mesh, adjacency, glyphmetrics);
+    HRESULT hr;
+    ID3DXMesh *mesh = NULL;
+    DWORD nb_vertices, nb_faces;
+    DWORD nb_front_faces, nb_corners, nb_outline_points;
+    struct vertex *vertices = NULL;
+    face *faces = NULL;
+    int textlen = 0;
+    float offset_x;
+    LOGFONTW lf;
+    OUTLINETEXTMETRICW otm;
+    HFONT font = NULL, oldfont = NULL;
+    const MAT2 identity = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
+    void *raw_outline = NULL;
+    int bufsize = 0;
+    struct glyphinfo *glyphs = NULL;
+    GLYPHMETRICS gm;
+    int i;
+    struct vertex *vertex_ptr;
+    face *face_ptr;
+    float max_deviation_sq;
+    const struct cos_table cos_table = {
+        cos(D3DXToRadian(0.5f)),
+        cos(D3DXToRadian(45.0f)),
+        cos(D3DXToRadian(90.0f)),
+    };
+    int f1, f2;
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %s, %f, %f, %p, %p, %p)\n", device, hdc,
+          debugstr_w(text), deviation, extrusion, mesh_ptr, adjacency, glyphmetrics);
+
+    if (!device || !hdc || !text || !*text || deviation < 0.0f || extrusion < 0.0f || !mesh_ptr)
+        return D3DERR_INVALIDCALL;
+
+    if (adjacency)
+    {
+        FIXME("Case of adjacency != NULL not implemented.\n");
+        return E_NOTIMPL;
+    }
+
+    if (!GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf) ||
+        !GetOutlineTextMetricsW(hdc, sizeof(otm), &otm))
+    {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (deviation == 0.0f)
+        deviation = 1.0f / otm.otmEMSquare;
+    max_deviation_sq = deviation * deviation;
+
+    lf.lfHeight = otm.otmEMSquare;
+    lf.lfWidth = 0;
+    font = CreateFontIndirectW(&lf);
+    if (!font) {
+        hr = E_OUTOFMEMORY;
+        goto error;
+    }
+    oldfont = SelectObject(hdc, font);
+
+    textlen = strlenW(text);
+    for (i = 0; i < textlen; i++)
+    {
+        int datasize = GetGlyphOutlineW(hdc, text[i], GGO_NATIVE, &gm, 0, NULL, &identity);
+        if (datasize < 0)
+            return D3DERR_INVALIDCALL;
+        if (bufsize < datasize)
+            bufsize = datasize;
+    }
+    if (!bufsize) { /* e.g. text == " " */
+        hr = D3DERR_INVALIDCALL;
+        goto error;
+    }
+
+    glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, textlen * sizeof(*glyphs));
+    raw_outline = HeapAlloc(GetProcessHeap(), 0, bufsize);
+    if (!glyphs || !raw_outline) {
+        hr = E_OUTOFMEMORY;
+        goto error;
+    }
+
+    offset_x = 0.0f;
+    for (i = 0; i < textlen; i++)
+    {
+        /* get outline points from data returned from GetGlyphOutline */
+        int datasize;
+
+        glyphs[i].offset_x = offset_x;
+
+        datasize = GetGlyphOutlineW(hdc, text[i], GGO_NATIVE, &gm, bufsize, raw_outline, &identity);
+        hr = create_outline(&glyphs[i], raw_outline, datasize,
+                            max_deviation_sq, otm.otmEMSquare, &cos_table);
+        if (hr != S_OK) goto error;
+
+        hr = triangulate(&glyphs[i]);
+        if (hr != S_OK) goto error;
+
+        if (glyphmetrics)
+        {
+            glyphmetrics[i].gmfBlackBoxX = gm.gmBlackBoxX / (float)otm.otmEMSquare;
+            glyphmetrics[i].gmfBlackBoxY = gm.gmBlackBoxY / (float)otm.otmEMSquare;
+            glyphmetrics[i].gmfptGlyphOrigin.x = gm.gmptGlyphOrigin.x / (float)otm.otmEMSquare;
+            glyphmetrics[i].gmfptGlyphOrigin.y = gm.gmptGlyphOrigin.y / (float)otm.otmEMSquare;
+            glyphmetrics[i].gmfCellIncX = gm.gmCellIncX / (float)otm.otmEMSquare;
+            glyphmetrics[i].gmfCellIncY = gm.gmCellIncY / (float)otm.otmEMSquare;
+        }
+        offset_x += gm.gmCellIncX / (float)otm.otmEMSquare;
+    }
+
+    /* corner points need an extra vertex for the different side faces normals */
+    nb_corners = 0;
+    nb_outline_points = 0;
+    nb_front_faces = 0;
+    for (i = 0; i < textlen; i++)
+    {
+        int j;
+        nb_outline_points += glyphs[i].ordered_vertices.count;
+        nb_front_faces += glyphs[i].faces.count;
+        for (j = 0; j < glyphs[i].outlines.count; j++)
+        {
+            int k;
+            struct outline *outline = &glyphs[i].outlines.items[j];
+            nb_corners++; /* first outline point always repeated as a corner */
+            for (k = 1; k < outline->count; k++)
+                if (outline->items[k].corner)
+                    nb_corners++;
+        }
+    }
+
+    nb_vertices = (nb_outline_points + nb_corners) * 2 + nb_outline_points * 2;
+    nb_faces = nb_outline_points * 2 + nb_front_faces * 2;
+
+
+    hr = D3DXCreateMeshFVF(nb_faces, nb_vertices, D3DXMESH_MANAGED,
+                           D3DFVF_XYZ | D3DFVF_NORMAL, device, &mesh);
+    if (FAILED(hr))
+        goto error;
+
+    hr = mesh->lpVtbl->LockVertexBuffer(mesh, D3DLOCK_DISCARD, (LPVOID *)&vertices);
+    if (FAILED(hr))
+        goto error;
+
+    hr = mesh->lpVtbl->LockIndexBuffer(mesh, D3DLOCK_DISCARD, (LPVOID *)&faces);
+    if (FAILED(hr))
+        goto error;
+
+    /* convert 2D vertices and faces into 3D mesh */
+    vertex_ptr = vertices;
+    face_ptr = faces;
+    if (extrusion == 0.0f) {
+        f1 = 1;
+        f2 = 2;
+    } else {
+        f1 = 2;
+        f2 = 1;
+    }
+    for (i = 0; i < textlen; i++)
+    {
+        int j;
+        int count;
+        struct vertex *back_vertices;
+        face *back_faces;
+
+        /* side vertices and faces */
+        for (j = 0; j < glyphs[i].outlines.count; j++)
+        {
+            struct vertex *outline_vertices = vertex_ptr;
+            struct outline *outline = &glyphs[i].outlines.items[j];
+            int k;
+            struct point2d *prevpt = &outline->items[outline->count - 1];
+            struct point2d *pt = &outline->items[0];
+
+            for (k = 1; k <= outline->count; k++)
+            {
+                struct vertex vtx;
+                struct point2d *nextpt = &outline->items[k % outline->count];
+                WORD vtx_idx = vertex_ptr - vertices;
+                D3DXVECTOR2 vec;
+
+                if (pt->corner == POINTTYPE_CURVE_START)
+                    D3DXVec2Subtract(&vec, &pt->pos, &prevpt->pos);
+                else if (pt->corner)
+                    D3DXVec2Subtract(&vec, &nextpt->pos, &pt->pos);
+                else
+                    D3DXVec2Subtract(&vec, &nextpt->pos, &prevpt->pos);
+                D3DXVec2Normalize(&vec, &vec);
+                vtx.normal.x = -vec.y;
+                vtx.normal.y = vec.x;
+                vtx.normal.z = 0;
+
+                vtx.position.x = pt->pos.x + glyphs[i].offset_x;
+                vtx.position.y = pt->pos.y;
+                vtx.position.z = 0;
+                *vertex_ptr++ = vtx;
+
+                vtx.position.z = -extrusion;
+                *vertex_ptr++ = vtx;
+
+                vtx.position.x = nextpt->pos.x + glyphs[i].offset_x;
+                vtx.position.y = nextpt->pos.y;
+                if (pt->corner && nextpt->corner && nextpt->corner != POINTTYPE_CURVE_END) {
+                    vtx.position.z = -extrusion;
+                    *vertex_ptr++ = vtx;
+                    vtx.position.z = 0;
+                    *vertex_ptr++ = vtx;
+
+                    (*face_ptr)[0] = vtx_idx;
+                    (*face_ptr)[1] = vtx_idx + 2;
+                    (*face_ptr)[2] = vtx_idx + 1;
+                    face_ptr++;
+
+                    (*face_ptr)[0] = vtx_idx;
+                    (*face_ptr)[1] = vtx_idx + 3;
+                    (*face_ptr)[2] = vtx_idx + 2;
+                    face_ptr++;
+                } else {
+                    if (nextpt->corner) {
+                        if (nextpt->corner == POINTTYPE_CURVE_END) {
+                            D3DXVECTOR2 *nextpt2 = &outline->items[(k + 1) % outline->count].pos;
+                            D3DXVec2Subtract(&vec, nextpt2, &nextpt->pos);
+                        } else {
+                            D3DXVec2Subtract(&vec, &nextpt->pos, &pt->pos);
+                        }
+                        D3DXVec2Normalize(&vec, &vec);
+                        vtx.normal.x = -vec.y;
+                        vtx.normal.y = vec.x;
+
+                        vtx.position.z = 0;
+                        *vertex_ptr++ = vtx;
+                        vtx.position.z = -extrusion;
+                        *vertex_ptr++ = vtx;
+                    }
+
+                    (*face_ptr)[0] = vtx_idx;
+                    (*face_ptr)[1] = vtx_idx + 3;
+                    (*face_ptr)[2] = vtx_idx + 1;
+                    face_ptr++;
+
+                    (*face_ptr)[0] = vtx_idx;
+                    (*face_ptr)[1] = vtx_idx + 2;
+                    (*face_ptr)[2] = vtx_idx + 3;
+                    face_ptr++;
+                }
+
+                prevpt = pt;
+                pt = nextpt;
+            }
+            if (!pt->corner) {
+                *vertex_ptr++ = *outline_vertices++;
+                *vertex_ptr++ = *outline_vertices++;
+            }
+        }
+
+        /* back vertices and faces */
+        back_faces = face_ptr;
+        back_vertices = vertex_ptr;
+        for (j = 0; j < glyphs[i].ordered_vertices.count; j++)
+        {
+            D3DXVECTOR2 *pt = get_ordered_vertex(&glyphs[i], j);
+            vertex_ptr->position.x = pt->x + glyphs[i].offset_x;
+            vertex_ptr->position.y = pt->y;
+            vertex_ptr->position.z = 0;
+            vertex_ptr->normal.x = 0;
+            vertex_ptr->normal.y = 0;
+            vertex_ptr->normal.z = 1;
+            vertex_ptr++;
+        }
+        count = back_vertices - vertices;
+        for (j = 0; j < glyphs[i].faces.count; j++)
+        {
+            face *f = &glyphs[i].faces.items[j];
+            (*face_ptr)[0] = (*f)[0] + count;
+            (*face_ptr)[1] = (*f)[1] + count;
+            (*face_ptr)[2] = (*f)[2] + count;
+            face_ptr++;
+        }
+
+        /* front vertices and faces */
+        j = count = vertex_ptr - back_vertices;
+        while (j--)
+        {
+            vertex_ptr->position.x = back_vertices->position.x;
+            vertex_ptr->position.y = back_vertices->position.y;
+            vertex_ptr->position.z = -extrusion;
+            vertex_ptr->normal.x = 0;
+            vertex_ptr->normal.y = 0;
+            vertex_ptr->normal.z = extrusion == 0.0f ? 1.0f : -1.0f;
+            vertex_ptr++;
+            back_vertices++;
+        }
+        j = face_ptr - back_faces;
+        while (j--)
+        {
+            (*face_ptr)[0] = (*back_faces)[0] + count;
+            (*face_ptr)[1] = (*back_faces)[f1] + count;
+            (*face_ptr)[2] = (*back_faces)[f2] + count;
+            face_ptr++;
+            back_faces++;
+        }
+    }
+
+    *mesh_ptr = mesh;
+    hr = D3D_OK;
+error:
+    if (mesh) {
+        if (faces) mesh->lpVtbl->UnlockIndexBuffer(mesh);
+        if (vertices) mesh->lpVtbl->UnlockVertexBuffer(mesh);
+        if (hr != D3D_OK) mesh->lpVtbl->Release(mesh);
+    }
+    if (glyphs) {
+        for (i = 0; i < textlen; i++)
+        {
+            int j;
+            for (j = 0; j < glyphs[i].outlines.count; j++)
+                HeapFree(GetProcessHeap(), 0, glyphs[i].outlines.items[j].items);
+            HeapFree(GetProcessHeap(), 0, glyphs[i].outlines.items);
+            HeapFree(GetProcessHeap(), 0, glyphs[i].faces.items);
+            HeapFree(GetProcessHeap(), 0, glyphs[i].ordered_vertices.items);
+        }
+        HeapFree(GetProcessHeap(), 0, glyphs);
+    }
+    HeapFree(GetProcessHeap(), 0, raw_outline);
+    if (oldfont) SelectObject(hdc, oldfont);
+    if (font) DeleteObject(font);
+
+    return hr;
 }
