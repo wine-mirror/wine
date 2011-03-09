@@ -19,6 +19,7 @@
  */
 
 #include <stdio.h>
+#include <float.h>
 #include "wine/test.h"
 #include "d3dx9.h"
 
@@ -27,6 +28,13 @@
 #define compare_vertex_sizes(type, exp) \
     got=D3DXGetFVFVertexSize(type); \
     ok(got==exp, "Expected: %d, Got: %d\n", exp, got);
+
+#define compare_float(got, exp) \
+    do { \
+        float _got = (got); \
+        float _exp = (exp); \
+        ok(_got == _exp, "Expected: %g, Got: %g\n", _exp, _got); \
+    } while (0)
 
 static BOOL compare(FLOAT u, FLOAT v)
 {
@@ -2004,6 +2012,180 @@ static void D3DXCreateCylinderTest(void)
     DestroyWindow(wnd);
 }
 
+static void test_createtext(IDirect3DDevice9 *device, HDC hdc, LPCSTR text, FLOAT deviation, FLOAT extrusion)
+{
+    HRESULT hr;
+    ID3DXMesh *d3dxmesh;
+    char name[256];
+    OUTLINETEXTMETRIC otm;
+    GLYPHMETRICS gm;
+    GLYPHMETRICSFLOAT *glyphmetrics_float = malloc(sizeof(GLYPHMETRICSFLOAT) * strlen(text));
+    int i;
+    LOGFONT lf;
+    HFONT font = NULL, oldfont = NULL;
+
+    sprintf(name, "text ('%s', %f, %f)", text, deviation, extrusion);
+
+    hr = D3DXCreateText(device, hdc, text, deviation, extrusion, &d3dxmesh, NULL, glyphmetrics_float);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    if (hr != D3D_OK)
+    {
+        skip("Couldn't create text with D3DXCreateText\n");
+        return;
+    }
+
+    /* must select a modified font having lfHeight = otm.otmEMSquare before
+     * calling GetGlyphOutline to get the expected values */
+    if (!GetObject(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf) ||
+        !GetOutlineTextMetrics(hdc, sizeof(otm), &otm))
+    {
+        d3dxmesh->lpVtbl->Release(d3dxmesh);
+        skip("Couldn't get text outline\n");
+        return;
+    }
+    lf.lfHeight = otm.otmEMSquare;
+    lf.lfWidth = 0;
+    font = CreateFontIndirect(&lf);
+    if (!font) {
+        d3dxmesh->lpVtbl->Release(d3dxmesh);
+        skip("Couldn't create the modified font\n");
+        return;
+    }
+    oldfont = SelectObject(hdc, font);
+
+    for (i = 0; i < strlen(text); i++)
+    {
+        const MAT2 identity = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
+        GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, 0, NULL, &identity);
+        compare_float(glyphmetrics_float[i].gmfBlackBoxX, gm.gmBlackBoxX / (float)otm.otmEMSquare);
+        compare_float(glyphmetrics_float[i].gmfBlackBoxY, gm.gmBlackBoxY / (float)otm.otmEMSquare);
+        compare_float(glyphmetrics_float[i].gmfptGlyphOrigin.x, gm.gmptGlyphOrigin.x / (float)otm.otmEMSquare);
+        compare_float(glyphmetrics_float[i].gmfptGlyphOrigin.y, gm.gmptGlyphOrigin.y / (float)otm.otmEMSquare);
+        compare_float(glyphmetrics_float[i].gmfCellIncX, gm.gmCellIncX / (float)otm.otmEMSquare);
+        compare_float(glyphmetrics_float[i].gmfCellIncY, gm.gmCellIncY / (float)otm.otmEMSquare);
+    }
+
+    d3dxmesh->lpVtbl->Release(d3dxmesh);
+    SelectObject(hdc, oldfont);
+}
+
+static void D3DXCreateTextTest(void)
+{
+    HRESULT hr;
+    HWND wnd;
+    HDC hdc;
+    IDirect3D9* d3d;
+    IDirect3DDevice9* device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    ID3DXMesh* d3dxmesh = NULL;
+    HFONT hFont;
+    OUTLINETEXTMETRIC otm;
+    int number_of_vertices;
+    int number_of_faces;
+
+    wnd = CreateWindow("static", "d3dx9_test", WS_POPUP, 0, 0, 1000, 1000, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!wnd)
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    if (!d3d)
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    hdc = CreateCompatibleDC(NULL);
+
+    hFont = CreateFont(12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+                       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
+                       "Arial");
+    SelectObject(hdc, hFont);
+    GetOutlineTextMetrics(hdc, sizeof(otm), &otm);
+
+    hr = D3DXCreateText(device, hdc, "wine", 0.001f, 0.4f, NULL, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    /* D3DXCreateTextA page faults from passing NULL text */
+
+    hr = D3DXCreateTextW(device, hdc, NULL, 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateText(device, hdc, "", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateText(device, hdc, " ", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateText(NULL, hdc, "wine", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateText(device, NULL, "wine", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateText(device, hdc, "wine", -FLT_MIN, 0.4f, &d3dxmesh, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateText(device, hdc, "wine", 0.001f, -FLT_MIN, &d3dxmesh, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    /* deviation = 0.0f treated as if deviation = 1.0f / otm.otmEMSquare */
+    hr = D3DXCreateText(device, hdc, "wine", 1.0f / otm.otmEMSquare, 0.4f, &d3dxmesh, NULL, NULL);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    number_of_vertices = d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh);
+    number_of_faces = d3dxmesh->lpVtbl->GetNumFaces(d3dxmesh);
+    if (SUCCEEDED(hr) && d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
+
+    hr = D3DXCreateText(device, hdc, "wine", 0.0f, 0.4f, &d3dxmesh, NULL, NULL);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(number_of_vertices == d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh),
+       "Got %d vertices, expected %d\n",
+       d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh), number_of_vertices);
+    ok(number_of_faces == d3dxmesh->lpVtbl->GetNumFaces(d3dxmesh),
+       "Got %d faces, expected %d\n",
+       d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh), number_of_faces);
+    if (SUCCEEDED(hr) && d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
+
+#if 0
+    /* too much detail requested, so will appear to hang */
+    trace("Waiting for D3DXCreateText to finish with deviation = FLT_MIN ...\n");
+    hr = D3DXCreateText(device, hdc, "wine", FLT_MIN, 0.4f, &d3dxmesh, NULL, NULL);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    if (SUCCEEDED(hr) && d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
+    trace("D3DXCreateText finish with deviation = FLT_MIN\n");
+#endif
+
+    hr = D3DXCreateText(device, hdc, "wine", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
+    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    if (SUCCEEDED(hr) && d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
+
+    test_createtext(device, hdc, "wine", FLT_MAX, 0.4f);
+    test_createtext(device, hdc, "wine", 0.001f, FLT_MIN);
+    test_createtext(device, hdc, "wine", 0.001f, 0.0f);
+    test_createtext(device, hdc, "wine", 0.001f, FLT_MAX);
+    test_createtext(device, hdc, "wine", 0.0f, 1.0f);
+
+    DeleteDC(hdc);
+
+    IDirect3DDevice9_Release(device);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(wnd);
+}
+
 static void test_get_decl_length(void)
 {
     static const D3DVERTEXELEMENT9 declaration1[] =
@@ -2138,6 +2320,7 @@ START_TEST(mesh)
     D3DXCreateBoxTest();
     D3DXCreateSphereTest();
     D3DXCreateCylinderTest();
+    D3DXCreateTextTest();
     test_get_decl_length();
     test_get_decl_vertex_size();
     test_fvf_decl_conversion();
