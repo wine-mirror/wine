@@ -2490,11 +2490,11 @@ HRESULT WINAPI VarFormatCurrency(LPVARIANT pVarIn, INT nDigits, INT nLeading,
 
     if (nGrouping == -2)
     {
-      WCHAR nGrouping[16];
-      nGrouping[2] = '\0';
-      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, nGrouping,
-                     sizeof(nGrouping)/sizeof(WCHAR));
-      numfmt.Grouping = nGrouping[2] == '2' ? 32 : nGrouping[0] - '0';
+      WCHAR grouping[16];
+      grouping[2] = '\0';
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, grouping,
+                     sizeof(grouping)/sizeof(WCHAR));
+      numfmt.Grouping = grouping[2] == '2' ? 32 : grouping[0] - '0';
     }
     else if (nGrouping == -1)
       numfmt.Grouping = 3; /* 3 = "n,nnn.nn" */
