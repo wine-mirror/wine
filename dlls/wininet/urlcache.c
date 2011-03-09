@@ -96,8 +96,7 @@ typedef struct _URL_CACHEFILE_ENTRY
     WORD wExpiredDate; /* expire date in dos format */
     WORD wExpiredTime; /* expire time in dos format */
     DWORD dwUnknown1; /* usually zero */
-    DWORD dwSizeLow; /* see INTERNET_CACHE_ENTRY_INFO::dwSizeLow */
-    DWORD dwSizeHigh; /* see INTERNET_CACHE_ENTRY_INFO::dwSizeHigh */
+    ULARGE_INTEGER size; /* see INTERNET_CACHE_ENTRY_INFO::dwSizeLow/High */
     DWORD dwUnknown2; /* usually zero */
     DWORD dwExemptDelta; /* see INTERNET_CACHE_ENTRY_INFO::dwExemptDelta */
     DWORD dwUnknown3; /* usually 0x60 */
@@ -959,8 +958,8 @@ static DWORD URLCache_CopyEntry(
         lpCacheEntryInfo->u.dwExemptDelta = pUrlEntry->dwExemptDelta;
         lpCacheEntryInfo->dwHeaderInfoSize = pUrlEntry->dwHeaderInfoSize;
         lpCacheEntryInfo->dwHitRate = pUrlEntry->dwHitRate;
-        lpCacheEntryInfo->dwSizeHigh = pUrlEntry->dwSizeHigh;
-        lpCacheEntryInfo->dwSizeLow = pUrlEntry->dwSizeLow;
+        lpCacheEntryInfo->dwSizeHigh = pUrlEntry->size.u.HighPart;
+        lpCacheEntryInfo->dwSizeLow = pUrlEntry->size.u.LowPart;
         lpCacheEntryInfo->dwStructSize = sizeof(*lpCacheEntryInfo);
         lpCacheEntryInfo->dwUseCount = pUrlEntry->dwUseCount;
         DosDateTimeToFileTime(pUrlEntry->wExpiredDate, pUrlEntry->wExpiredTime, &lpCacheEntryInfo->ExpireTime);
@@ -2432,8 +2431,7 @@ static BOOL CommitUrlCacheEntryInternal(
     DWORD dwOffsetLocalFileName = 0;
     DWORD dwOffsetHeader = 0;
     DWORD dwOffsetFileExtension = 0;
-    DWORD dwFileSizeLow = 0;
-    DWORD dwFileSizeHigh = 0;
+    LARGE_INTEGER file_size;
     BYTE cDirectory = 0;
     char achFile[MAX_PATH];
     LPSTR lpszUrlNameA = NULL;
@@ -2452,7 +2450,8 @@ static BOOL CommitUrlCacheEntryInternal(
 
     if (lpszOriginalUrl)
         WARN(": lpszOriginalUrl ignored\n");
- 
+
+    file_size.QuadPart = 0;
     if (lpszLocalFileName)
     {
         HANDLE hFile;
@@ -2465,8 +2464,7 @@ static BOOL CommitUrlCacheEntryInternal(
         }
 
         /* Get file size */
-        dwFileSizeLow = GetFileSize(hFile, &dwFileSizeHigh);
-        if ((dwFileSizeLow == INVALID_FILE_SIZE) && (GetLastError() != NO_ERROR))
+        if (!GetFileSizeEx(hFile, &file_size))
         {
             ERR("couldn't get file size (error is %d)\n", GetLastError());
             CloseHandle(hFile);
@@ -2595,9 +2593,7 @@ static BOOL CommitUrlCacheEntryInternal(
     pUrlEntry->dwOffsetHeaderInfo = dwOffsetHeader;
     pUrlEntry->dwOffsetLocalName = dwOffsetLocalFileName;
     pUrlEntry->dwOffsetUrl = DWORD_ALIGN(sizeof(*pUrlEntry));
-    pUrlEntry->dwSizeHigh = 0;
-    pUrlEntry->dwSizeLow = dwFileSizeLow;
-    pUrlEntry->dwSizeHigh = dwFileSizeHigh;
+    pUrlEntry->size.QuadPart = file_size.QuadPart;
     pUrlEntry->dwUseCount = 0;
     GetSystemTimeAsFileTime(&pUrlEntry->LastAccessTime);
     pUrlEntry->LastModifiedTime = LastModifiedTime;
