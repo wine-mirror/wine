@@ -73,6 +73,7 @@ static inline RECT get_clip_rect( DC * dc, int left, int top, int right, int bot
 void CLIPPING_UpdateGCRegion( DC * dc )
 {
     HRGN clip_rgn;
+    PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceClipping );
 
     /* update the intersection of meta and clip regions */
     if (dc->hMetaRgn && dc->hClipRgn)
@@ -87,9 +88,7 @@ void CLIPPING_UpdateGCRegion( DC * dc )
         dc->hMetaClipRgn = 0;
         clip_rgn = dc->hMetaRgn ? dc->hMetaRgn : dc->hClipRgn;
     }
-
-    if (dc->funcs->pSetDeviceClipping)
-        dc->funcs->pSetDeviceClipping( dc->physDev, dc->hVisRgn, clip_rgn );
+    physdev->funcs->pSetDeviceClipping( physdev, dc->hVisRgn, clip_rgn );
 }
 
 /***********************************************************************
@@ -119,6 +118,105 @@ static inline void create_default_clip_region( DC * dc )
 
 
 /***********************************************************************
+ *           null driver fallback implementations
+ */
+
+INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
+{
+    DC *dc = get_nulldrv_dc( dev );
+    INT ret;
+
+    if (!rgn)
+    {
+        if (mode != RGN_COPY)
+        {
+            FIXME("Unimplemented: hrgn NULL in mode: %d\n", mode);
+            return ERROR;
+        }
+        if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
+        dc->hClipRgn = 0;
+        ret = SIMPLEREGION;
+    }
+    else
+    {
+        HRGN mirrored = 0;
+
+        if (dc->layout & LAYOUT_RTL)
+        {
+            if (!(mirrored = CreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
+            mirror_region( mirrored, rgn, dc->vis_rect.right - dc->vis_rect.left );
+            rgn = mirrored;
+        }
+
+        if (!dc->hClipRgn)
+            create_default_clip_region( dc );
+
+        if (mode == RGN_COPY)
+            ret = CombineRgn( dc->hClipRgn, rgn, 0, mode );
+        else
+            ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, mode);
+
+        if (mirrored) DeleteObject( mirrored );
+    }
+    CLIPPING_UpdateGCRegion( dc );
+    return ret;
+}
+
+INT CDECL nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+{
+    DC *dc = get_nulldrv_dc( dev );
+    RECT rect = get_clip_rect( dc, left, top, right, bottom );
+    INT ret;
+    HRGN rgn;
+
+    if (!(rgn = CreateRectRgnIndirect( &rect ))) return ERROR;
+    if (!dc->hClipRgn) create_default_clip_region( dc );
+    ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_DIFF );
+    DeleteObject( rgn );
+    if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
+    return ret;
+}
+
+INT CDECL nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+{
+    DC *dc = get_nulldrv_dc( dev );
+    RECT rect = get_clip_rect( dc, left, top, right, bottom );
+    INT ret;
+    HRGN rgn;
+
+    if (!dc->hClipRgn)
+    {
+        dc->hClipRgn = CreateRectRgnIndirect( &rect );
+        ret = SIMPLEREGION;
+    }
+    else
+    {
+        if (!(rgn = CreateRectRgnIndirect( &rect ))) return ERROR;
+        ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_AND );
+        DeleteObject( rgn );
+    }
+    if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
+    return ret;
+}
+
+INT CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
+{
+    DC *dc = get_nulldrv_dc( dev );
+    INT ret = NULLREGION;
+
+    if (dc->hClipRgn)
+    {
+        x = MulDiv( x, dc->vportExtX, dc->wndExtX );
+        y = MulDiv( y, dc->vportExtY, dc->wndExtY );
+        if (dc->layout & LAYOUT_RTL) x = -x;
+        ret = OffsetRgn( dc->hClipRgn, x, y );
+	CLIPPING_UpdateGCRegion( dc );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
  *           SelectClipRgn    (GDI32.@)
  */
 INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
@@ -132,65 +230,19 @@ INT WINAPI SelectClipRgn( HDC hdc, HRGN hrgn )
  */
 INT WINAPI ExtSelectClipRgn( HDC hdc, HRGN hrgn, INT fnMode )
 {
-    INT retval;
-    RECT rect;
+    INT retval = ERROR;
     DC * dc = get_dc_ptr( hdc );
-    if (!dc) return ERROR;
 
     TRACE("%p %p %d\n", hdc, hrgn, fnMode );
 
-    update_dc( dc );
-    if (dc->funcs->pExtSelectClipRgn)
+    if (dc)
     {
-        retval = dc->funcs->pExtSelectClipRgn( dc->physDev, hrgn, fnMode );
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pExtSelectClipRgn );
+        update_dc( dc );
+        retval = physdev->funcs->pExtSelectClipRgn( physdev, hrgn, fnMode );
         release_dc_ptr( dc );
-        return retval;
     }
-
-    if (!hrgn)
-    {
-        if (fnMode == RGN_COPY)
-        {
-            if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
-            dc->hClipRgn = 0;
-        }
-        else
-        {
-            FIXME("Unimplemented: hrgn NULL in mode: %d\n", fnMode);
-            release_dc_ptr( dc );
-            return ERROR;
-        }
-    }
-    else
-    {
-        HRGN mirrored = 0;
-
-        if (dc->layout & LAYOUT_RTL)
-        {
-            if (!(mirrored = CreateRectRgn( 0, 0, 0, 0 )))
-            {
-                release_dc_ptr( dc );
-                return ERROR;
-            }
-            mirror_region( mirrored, hrgn, dc->vis_rect.right - dc->vis_rect.left );
-            hrgn = mirrored;
-        }
-
-        if (!dc->hClipRgn)
-            create_default_clip_region( dc );
-
-        if(fnMode == RGN_COPY)
-            CombineRgn( dc->hClipRgn, hrgn, 0, fnMode );
-        else
-            CombineRgn( dc->hClipRgn, dc->hClipRgn, hrgn, fnMode);
-
-        if (mirrored) DeleteObject( mirrored );
-    }
-
-    CLIPPING_UpdateGCRegion( dc );
-    release_dc_ptr( dc );
-
-    return GetClipBox(hdc, &rect);
+    return retval;
 }
 
 /***********************************************************************
@@ -222,26 +274,18 @@ void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect )
  */
 INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 {
-    INT ret = SIMPLEREGION;
+    INT ret = ERROR;
     DC *dc = get_dc_ptr( hdc );
-    if (!dc) return ERROR;
 
     TRACE("%p %d,%d\n", hdc, x, y );
 
-    update_dc( dc );
-    if(dc->funcs->pOffsetClipRgn)
+    if (dc)
     {
-        ret = dc->funcs->pOffsetClipRgn( dc->physDev, x, y );
-        /* FIXME: ret is just a success flag, we should return a proper value */
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pOffsetClipRgn );
+        update_dc( dc );
+        ret = physdev->funcs->pOffsetClipRgn( physdev, x, y );
+        release_dc_ptr( dc );
     }
-    else if (dc->hClipRgn) {
-        x = MulDiv( x, dc->vportExtX, dc->wndExtX );
-        y = MulDiv( y, dc->vportExtY, dc->wndExtY );
-        if (dc->layout & LAYOUT_RTL) x = -x;
-        ret = OffsetRgn( dc->hClipRgn, x, y );
-	CLIPPING_UpdateGCRegion( dc );
-    }
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -252,34 +296,18 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
 INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
                                 INT right, INT bottom )
 {
-    HRGN newRgn;
-    INT ret;
+    INT ret = ERROR;
     DC *dc = get_dc_ptr( hdc );
-    if (!dc) return ERROR;
 
-    TRACE("%p %dx%d,%dx%d\n", hdc, left, top, right, bottom );
+    TRACE("%p %d,%d-%d,%d\n", hdc, left, top, right, bottom );
 
-    update_dc( dc );
-    if(dc->funcs->pExcludeClipRect)
+    if (dc)
     {
-        ret = dc->funcs->pExcludeClipRect( dc->physDev, left, top, right, bottom );
-        /* FIXME: ret is just a success flag, we should return a proper value */
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pExcludeClipRect );
+        update_dc( dc );
+        ret = physdev->funcs->pExcludeClipRect( physdev, left, top, right, bottom );
+        release_dc_ptr( dc );
     }
-    else
-    {
-        RECT rect = get_clip_rect( dc, left, top, right, bottom );
-
-        if (!(newRgn = CreateRectRgnIndirect( &rect ))) ret = ERROR;
-        else
-        {
-            if (!dc->hClipRgn)
-                create_default_clip_region( dc );
-            ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, newRgn, RGN_DIFF );
-            DeleteObject( newRgn );
-        }
-        if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
-    }
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -289,41 +317,18 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
  */
 INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
-    INT ret;
+    INT ret = ERROR;
     DC *dc = get_dc_ptr( hdc );
-    if (!dc) return ERROR;
 
     TRACE("%p %d,%d - %d,%d\n", hdc, left, top, right, bottom );
 
-    update_dc( dc );
-    if(dc->funcs->pIntersectClipRect)
+    if (dc)
     {
-        ret = dc->funcs->pIntersectClipRect( dc->physDev, left, top, right, bottom );
-        /* FIXME: ret is just a success flag, we should return a proper value */
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pIntersectClipRect );
+        update_dc( dc );
+        ret = physdev->funcs->pIntersectClipRect( physdev, left, top, right, bottom );
+        release_dc_ptr( dc );
     }
-    else
-    {
-        RECT rect = get_clip_rect( dc, left, top, right, bottom );
-
-        if (!dc->hClipRgn)
-        {
-            dc->hClipRgn = CreateRectRgnIndirect( &rect );
-            ret = SIMPLEREGION;
-        }
-        else
-        {
-            HRGN newRgn;
-
-            if (!(newRgn = CreateRectRgnIndirect( &rect ))) ret = ERROR;
-            else
-            {
-                ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, newRgn, RGN_AND );
-                DeleteObject( newRgn );
-            }
-        }
-        if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
-    }
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -362,7 +367,7 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
     HRGN clip;
     DC *dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
-    TRACE("%p %d,%dx%d,%d\n", hdc, rect->left, rect->top, rect->right, rect->bottom );
+    TRACE("%p %s\n", hdc, wine_dbgstr_rect( rect ));
 
     tmpRect = *rect;
     LPtoDP( hdc, (POINT *)&tmpRect, 2 );

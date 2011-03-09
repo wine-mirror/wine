@@ -408,6 +408,10 @@ static BOOL CDECL nulldrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, 
     return TRUE;
 }
 
+static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
+{
+}
+
 static COLORREF CDECL nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     return color;
@@ -450,11 +454,11 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pEndPath */
     NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pEnumDeviceFonts */
-    NULL,                               /* pExcludeClipRect */
+    nulldrv_ExcludeClipRect,            /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
     nulldrv_ExtFloodFill,               /* pExtFloodFill */
-    NULL,                               /* pExtSelectClipRgn */
+    nulldrv_ExtSelectClipRgn,           /* pExtSelectClipRgn */
     NULL,                               /* pExtTextOut */
     NULL,                               /* pFillPath */
     nulldrv_FillRgn,                    /* pFillRgn */
@@ -473,12 +477,12 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextExtentExPoint */
     NULL,                               /* pGetTextMetrics */
-    NULL,                               /* pIntersectClipRect */
+    nulldrv_IntersectClipRect,          /* pIntersectClipRect */
     nulldrv_InvertRgn,                  /* pInvertRgn */
     nulldrv_LineTo,                     /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     nulldrv_MoveTo,                     /* pMoveTo */
-    NULL,                               /* pOffsetClipRgn */
+    nulldrv_OffsetClipRgn,              /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */
     nulldrv_PaintRgn,                   /* pPaintRgn */
@@ -516,7 +520,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pSetDIBColorTable */
     NULL,                               /* pSetDIBits */
     NULL,                               /* pSetDIBitsToDevice */
-    NULL,                               /* pSetDeviceClipping */
+    nulldrv_SetDeviceClipping,          /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
