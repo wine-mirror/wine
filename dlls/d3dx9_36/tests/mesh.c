@@ -2542,7 +2542,7 @@ error:
     return hr == D3D_OK;
 }
 
-static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mesh, int textlen)
+static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mesh, int textlen, float extrusion)
 {
     HRESULT hr;
     DWORD number_of_vertices, number_of_faces;
@@ -2652,6 +2652,7 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
     {
         int nb_outline_vertices1, nb_outline_faces1;
         int nb_outline_vertices2, nb_outline_faces2;
+        int nb_back_vertices, nb_back_faces;
         int first_vtx1, first_vtx2;
         int first_face1, first_face2;
         int j;
@@ -2726,20 +2727,106 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
         face_idx1 = first_face1 + nb_outline_faces1;
         face_idx2 = first_face2 + nb_outline_faces2;
 
-        /* skip to the outline for the next glyph */
+        /* partial test on back vertices and faces  */
+        first_vtx1 = vtx_idx1;
         for (; vtx_idx1 < number_of_vertices; vtx_idx1++) {
-            if (vertices[vtx_idx1].normal.z == 0)
+            struct vertex vtx;
+
+            if (vertices[vtx_idx1].normal.z != 1.0f)
                 break;
+
+            vtx.position.z = 0.0f;
+            vtx.normal.x = 0.0f;
+            vtx.normal.y = 0.0f;
+            vtx.normal.z = 1.0f;
+            ok(compare(vertices[vtx_idx1].position.z, vtx.position.z),
+               "Test %s, glyph %d, vertex position.z %d, result %g, expected %g\n", name, i, vtx_idx1,
+               vertices[vtx_idx1].position.z, vtx.position.z);
+            ok(compare_vec3(vertices[vtx_idx1].normal, vtx.normal),
+               "Test %s, glyph %d, vertex normal %d, result (%g, %g, %g), expected (%g, %g, %g)\n", name, i, vtx_idx1,
+               vertices[vtx_idx1].normal.x, vertices[vtx_idx1].normal.y, vertices[vtx_idx1].normal.z,
+               vtx.normal.x, vtx.normal.y, vtx.normal.z);
         }
-        for (; vtx_idx2 < mesh->number_of_vertices; vtx_idx2++) {
-            if (mesh->vertices[vtx_idx2].normal.z == 0)
-                break;
-        }
+        nb_back_vertices = vtx_idx1 - first_vtx1;
+        first_face1 = face_idx1;
         for (; face_idx1 < number_of_faces; face_idx1++)
         {
+            const D3DXVECTOR3 *vtx1, *vtx2, *vtx3;
+            D3DXVECTOR3 normal;
+            D3DXVECTOR3 v1 = {0, 0, 0};
+            D3DXVECTOR3 v2 = {0, 0, 0};
+            D3DXVECTOR3 forward = {0.0f, 0.0f, 1.0f};
+
             if (faces[face_idx1][0] >= vtx_idx1 ||
                 faces[face_idx1][1] >= vtx_idx1 ||
                 faces[face_idx1][2] >= vtx_idx1)
+                break;
+
+            vtx1 = &vertices[faces[face_idx1][0]].position;
+            vtx2 = &vertices[faces[face_idx1][1]].position;
+            vtx3 = &vertices[faces[face_idx1][2]].position;
+
+            D3DXVec3Subtract(&v1, vtx2, vtx1);
+            D3DXVec3Subtract(&v2, vtx3, vtx2);
+            D3DXVec3Cross(&normal, &v1, &v2);
+            D3DXVec3Normalize(&normal, &normal);
+            ok(compare_vec3(normal, forward),
+               "Test %s, glyph %d, face %d normal, result (%g, %g, %g), expected (%g, %g, %g)\n", name, i, face_idx1,
+               normal.x, normal.y, normal.z, forward.x, forward.y, forward.z);
+        }
+        nb_back_faces = face_idx1 - first_face1;
+
+        /* compare front and back faces & vertices */
+        if (extrusion == 0.0f) {
+            /* Oddly there are only back faces in this case */
+            nb_back_vertices /= 2;
+            nb_back_faces /= 2;
+            face_idx1 -= nb_back_faces;
+            vtx_idx1 -= nb_back_vertices;
+        }
+        for (j = 0; j < nb_back_vertices; j++)
+        {
+            struct vertex vtx = vertices[first_vtx1];
+            vtx.position.z = -extrusion;
+            vtx.normal.x = 0.0f;
+            vtx.normal.y = 0.0f;
+            vtx.normal.z = extrusion == 0.0f ? 1.0f : -1.0f;
+            ok(compare_vec3(vertices[vtx_idx1].position, vtx.position),
+               "Test %s, glyph %d, vertex position %d, result (%g, %g, %g), expected (%g, %g, %g)\n", name, i, vtx_idx1,
+               vertices[vtx_idx1].position.x, vertices[vtx_idx1].position.y, vertices[vtx_idx1].position.z,
+               vtx.position.x, vtx.position.y, vtx.position.z);
+            ok(compare_vec3(vertices[vtx_idx1].normal, vtx.normal),
+               "Test %s, glyph %d, vertex normal %d, result (%g, %g, %g), expected (%g, %g, %g)\n", name, i, vtx_idx1,
+               vertices[vtx_idx1].normal.x, vertices[vtx_idx1].normal.y, vertices[vtx_idx1].normal.z,
+               vtx.normal.x, vtx.normal.y, vtx.normal.z);
+            vtx_idx1++;
+            first_vtx1++;
+        }
+        for (j = 0; j < nb_back_faces; j++)
+        {
+            int f1, f2;
+            if (extrusion == 0.0f) {
+                f1 = 1;
+                f2 = 2;
+            } else {
+                f1 = 2;
+                f2 = 1;
+            }
+            ok(faces[face_idx1][0] == faces[first_face1][0] + nb_back_vertices &&
+               faces[face_idx1][1] == faces[first_face1][f1] + nb_back_vertices &&
+               faces[face_idx1][2] == faces[first_face1][f2] + nb_back_vertices,
+               "Test %s, glyph %d, face %d, result (%d, %d, %d), expected (%d, %d, %d)\n", name, i, face_idx1,
+               faces[face_idx1][0], faces[face_idx1][1], faces[face_idx1][2],
+               faces[first_face1][0] - nb_back_faces,
+               faces[first_face1][f1] - nb_back_faces,
+               faces[first_face1][f2] - nb_back_faces);
+            first_face1++;
+            face_idx1++;
+        }
+
+        /* skip to the outline for the next glyph */
+        for (; vtx_idx2 < mesh->number_of_vertices; vtx_idx2++) {
+            if (mesh->vertices[vtx_idx2].normal.z == 0)
                 break;
         }
         for (; face_idx2 < mesh->number_of_faces; face_idx2++)
@@ -2820,7 +2907,7 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, LPCSTR text, FLOA
     }
     mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
 
-    compare_text_outline_mesh(name, d3dxmesh, &mesh, strlen(text));
+    compare_text_outline_mesh(name, d3dxmesh, &mesh, strlen(text), extrusion);
 
     free_mesh(&mesh);
 
