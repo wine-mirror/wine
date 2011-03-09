@@ -134,16 +134,16 @@ HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
     }
 
     if(!typeinfos[tid]) {
-        ITypeInfo *typeinfo;
+        ITypeInfo *ti;
 
-        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &typeinfo);
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
         if(FAILED(hres)) {
             ERR("GetTypeInfoOfGuid failed: %08x\n", hres);
             return hres;
         }
 
-        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), typeinfo, NULL))
-            ITypeInfo_Release(typeinfo);
+        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), ti, NULL))
+            ITypeInfo_Release(ti);
     }
 
     *typeinfo = typeinfos[tid];
