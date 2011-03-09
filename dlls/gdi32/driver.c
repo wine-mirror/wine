@@ -427,6 +427,67 @@ static INT CDECL nulldrv_StartPage( PHYSDEV dev )
     return 1;
 }
 
+static BOOL CDECL nulldrv_wglCopyContext( HGLRC ctx_src, HGLRC ctx_dst, UINT mask )
+{
+    return FALSE;
+}
+
+static HGLRC CDECL nulldrv_wglCreateContext( PHYSDEV dev )
+{
+    return 0;
+}
+
+static HGLRC CDECL nulldrv_wglCreateContextAttribsARB( PHYSDEV dev, HGLRC share_ctx, const int *attribs )
+{
+    return 0;
+}
+
+static BOOL CDECL nulldrv_wglDeleteContext( HGLRC ctx )
+{
+    return FALSE;
+}
+
+static PROC CDECL nulldrv_wglGetProcAddress( LPCSTR name )
+{
+    return NULL;
+}
+
+static HDC CDECL nulldrv_wglGetPbufferDCARB( PHYSDEV dev, void *pbuffer )
+{
+    return 0;
+}
+
+static BOOL CDECL nulldrv_wglMakeCurrent( PHYSDEV dev, HGLRC ctx )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_wglMakeContextCurrentARB( PHYSDEV dev_draw, PHYSDEV dev_read, HGLRC ctx )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_wglSetPixelFormatWINE( PHYSDEV dev, INT format,
+                                                 const PIXELFORMATDESCRIPTOR *descr )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_wglShareLists( HGLRC ctx1, HGLRC ctx2 )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_wglUseFontBitmapsA( PHYSDEV dev, DWORD start, DWORD count, DWORD base )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_wglUseFontBitmapsW( PHYSDEV dev, DWORD start, DWORD count, DWORD base )
+{
+    return FALSE;
+}
+
 const DC_FUNCTIONS null_driver =
 {
     nulldrv_AbortDoc,                   /* pAbortDoc */
@@ -548,18 +609,18 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* pwglCopyContext */
-    NULL,                               /* pwglCreateContext */
-    NULL,                               /* pwglCreateContextAttribsARB */
-    NULL,                               /* pwglDeleteContext */
-    NULL,                               /* pwglGetProcAddress */
-    NULL,                               /* pwglGetPbufferDCARB */
-    NULL,                               /* pwglMakeCurrent */
-    NULL,                               /* pwglMakeContextCurrentARB */
-    NULL,                               /* pwglSetPixelFormatWINE */
-    NULL,                               /* pwglShareLists */
-    NULL,                               /* pwglUseFontBitmapsA */
-    NULL,                               /* pwglUseFontBitmapsW */
+    nulldrv_wglCopyContext,             /* pwglCopyContext */
+    nulldrv_wglCreateContext,           /* pwglCreateContext */
+    nulldrv_wglCreateContextAttribsARB, /* pwglCreateContextAttribsARB */
+    nulldrv_wglDeleteContext,           /* pwglDeleteContext */
+    nulldrv_wglGetProcAddress,          /* pwglGetProcAddress */
+    nulldrv_wglGetPbufferDCARB,         /* pwglGetPbufferDCARB */
+    nulldrv_wglMakeCurrent,             /* pwglMakeCurrent */
+    nulldrv_wglMakeContextCurrentARB,   /* pwglMakeContextCurrentARB */
+    nulldrv_wglSetPixelFormatWINE,      /* pwglSetPixelFormatWINE */
+    nulldrv_wglShareLists,              /* pwglShareLists */
+    nulldrv_wglUseFontBitmapsA,         /* pwglUseFontBitmapsA */
+    nulldrv_wglUseFontBitmapsW,         /* pwglUseFontBitmapsW */
 };
 
 
