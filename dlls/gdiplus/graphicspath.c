@@ -384,8 +384,7 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurve2(GpPath *path, GDIPCONST GpPointF *po
 
     /* close figure */
     if(stat == Ok){
-        INT count = path->pathdata.Count;
-        path->pathdata.Types[count - 1] |= PathPointTypeCloseSubpath;
+        path->pathdata.Types[path->pathdata.Count - 1] |= PathPointTypeCloseSubpath;
         path->newfigure = TRUE;
     }
 
