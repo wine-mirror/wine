@@ -2488,6 +2488,10 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 return OutOfMemory;
             }
 
+            apply_image_attributes(imageAttributes, src_data,
+                src_area.Width, src_area.Height,
+                src_stride, ColorAdjustTypeBitmap);
+
             /* Transform the bits as needed to the destination. */
             GdipTransformMatrixPoints(dst_to_src, dst_to_src_points, 3);
 
@@ -2522,11 +2526,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             GdipDeleteMatrix(dst_to_src);
 
             GdipFree(src_data);
-
-            apply_image_attributes(imageAttributes, dst_data,
-                dst_area.right - dst_area.left,
-                dst_area.bottom - dst_area.top,
-                dst_stride, ColorAdjustTypeBitmap);
 
             stat = alpha_blend_pixels(graphics, dst_area.left, dst_area.top,
                 dst_data, dst_area.right - dst_area.left, dst_area.bottom - dst_area.top, dst_stride);
