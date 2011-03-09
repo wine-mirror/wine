@@ -97,8 +97,6 @@ static DWORD last_time_modified;
 static XContext cursor_context;
 static Cursor create_cursor( HANDLE handle );
 
-BOOL CDECL X11DRV_SetCursorPos( INT x, INT y );
-
 
 /***********************************************************************
  *		X11DRV_Xcursor_Init
