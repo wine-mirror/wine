@@ -228,12 +228,12 @@ BOOL DESKTOP_SetPattern( LPCWSTR pattern )
                     &pat[0], &pat[1], &pat[2], &pat[3],
                     &pat[4], &pat[5], &pat[6], &pat[7] ))
         {
-            WORD pattern[8];
+            WORD ptrn[8];
             HBITMAP hbitmap;
             int i;
 
-            for (i = 0; i < 8; i++) pattern[i] = pat[i] & 0xffff;
-            hbitmap = CreateBitmap( 8, 8, 1, 1, pattern );
+            for (i = 0; i < 8; i++) ptrn[i] = pat[i] & 0xffff;
+            hbitmap = CreateBitmap( 8, 8, 1, 1, ptrn );
             hbrushPattern = CreatePatternBrush( hbitmap );
             DeleteObject( hbitmap );
         }
