@@ -3266,15 +3266,10 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
         if (comp->ActionRequest == INSTALLSTATE_LOCAL ||
             comp->ActionRequest == INSTALLSTATE_SOURCE)
         {
-            if (!comp->FullKeypath)
-                continue;
-
             if (package->Context == MSIINSTALLCONTEXT_MACHINE)
-                rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, szLocalSid,
-                                                     &hkey, TRUE);
+                rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, szLocalSid, &hkey, TRUE);
             else
-                rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, NULL,
-                                                     &hkey, TRUE);
+                rc = MSIREG_OpenUserDataComponentKey(comp->ComponentId, NULL, &hkey, TRUE);
 
             if (rc != ERROR_SUCCESS)
                 continue;
