@@ -68,7 +68,7 @@ DWORD            ALSA_WidNumDevs;
 /**************************************************************************
 * 			widNotifyClient			[internal]
 */
-static DWORD widNotifyClient(WINE_WAVEDEV* wwi, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+static void widNotifyClient(WINE_WAVEDEV* wwi, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
 
@@ -80,14 +80,11 @@ static DWORD widNotifyClient(WINE_WAVEDEV* wwi, WORD wMsg, DWORD_PTR dwParam1, D
 	   !DriverCallback(wwi->waveDesc.dwCallback, wwi->wFlags, (HDRVR)wwi->waveDesc.hWave,
 			   wMsg, wwi->waveDesc.dwInstance, dwParam1, dwParam2)) {
 	   WARN("can't notify client !\n");
-	   return MMSYSERR_ERROR;
        }
        break;
    default:
        FIXME("Unknown callback message %u\n", wMsg);
-       return MMSYSERR_INVALPARAM;
    }
-   return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -524,7 +521,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     HeapFree( GetProcessHeap(), 0, hw_params );
     HeapFree( GetProcessHeap(), 0, sw_params );
-    return widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
+    widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
+    return MMSYSERR_NOERROR;
 
 error:
     snd_pcm_close(pcm);
@@ -541,7 +539,6 @@ error:
  */
 static DWORD widClose(WORD wDevID)
 {
-    DWORD		ret = MMSYSERR_NOERROR;
     WINE_WAVEDEV*	wwi;
 
     TRACE("(%u);\n", wDevID);
@@ -559,7 +556,7 @@ static DWORD widClose(WORD wDevID)
     wwi = &WInDev[wDevID];
     if (wwi->lpQueuePtr) {
 	WARN("buffers still playing !\n");
-	ret = WAVERR_STILLPLAYING;
+	return WAVERR_STILLPLAYING;
     } else {
 	if (wwi->hThread) {
 	    ALSA_AddRingMessage(&wwi->msgRing, WINE_WM_CLOSING, 0, TRUE);
@@ -572,10 +569,10 @@ static DWORD widClose(WORD wDevID)
         snd_pcm_close(wwi->pcm);
 	wwi->pcm = NULL;
 
-	ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
+	widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
     }
 
-    return ret;
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************

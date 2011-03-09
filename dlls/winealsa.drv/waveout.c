@@ -69,7 +69,7 @@ DWORD            ALSA_WodNumDevs;
 /**************************************************************************
  * 			wodNotifyClient			[internal]
  */
-static DWORD wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+static void wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     TRACE("wMsg = 0x%04x dwParm1 = %lx dwParam2 = %lx\n", wMsg, dwParam1, dwParam2);
 
@@ -81,14 +81,11 @@ static DWORD wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD_PTR dwParam1, D
 	    !DriverCallback(wwo->waveDesc.dwCallback, wwo->wFlags, (HDRVR)wwo->waveDesc.hWave,
 			    wMsg, wwo->waveDesc.dwInstance, dwParam1, dwParam2)) {
 	    WARN("can't notify client !\n");
-	    return MMSYSERR_ERROR;
 	}
 	break;
     default:
 	FIXME("Unknown callback message %u\n", wMsg);
-        return MMSYSERR_INVALPARAM;
     }
-    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -364,7 +361,7 @@ static	void	wodPlayer_Reset(WINE_WAVEDEV* wwo, BOOL reset)
             ((LPWAVEHDR)param)->dwFlags &= ~WHDR_INQUEUE;
             ((LPWAVEHDR)param)->dwFlags |= WHDR_DONE;
 
-                wodNotifyClient(wwo, WOM_DONE, param, 0);
+            wodNotifyClient(wwo, WOM_DONE, param, 0);
         }
         ALSA_ResetRingMessage(&wwo->msgRing);
         LeaveCriticalSection(&wwo->msgRing.msg_crst);
@@ -806,7 +803,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	snd_pcm_hw_params_free(wwo->hw_params);
     wwo->hw_params = hw_params;
 
-    return wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
+    wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
+    return MMSYSERR_NOERROR;
 
 errexit:
     if (pcm)
@@ -834,7 +832,6 @@ errexit:
  */
 static DWORD wodClose(WORD wDevID)
 {
-    DWORD		ret = MMSYSERR_NOERROR;
     WINE_WAVEDEV*	wwo;
 
     TRACE("(%u);\n", wDevID);
@@ -852,7 +849,7 @@ static DWORD wodClose(WORD wDevID)
     wwo = &WOutDev[wDevID];
     if (wwo->lpQueuePtr) {
 	WARN("buffers still playing !\n");
-	ret = WAVERR_STILLPLAYING;
+	return WAVERR_STILLPLAYING;
     } else {
 	if (wwo->hThread) {
 	    ALSA_AddRingMessage(&wwo->msgRing, WINE_WM_CLOSING, 0, TRUE);
@@ -874,10 +871,10 @@ static DWORD wodClose(WORD wDevID)
         }
 	wwo->hctl = NULL;
 
-	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
+	wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
 
-    return ret;
+    return MMSYSERR_NOERROR;
 }
 
 
