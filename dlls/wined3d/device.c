@@ -5124,11 +5124,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
 
             for (i = 0; i < level_count; ++i)
             {
-                IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)src_texture, i, &src_surface);
-                IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)dst_texture, i, &dst_surface);
+                src_surface = (IWineD3DSurface *)surface_from_resource(basetexture_get_sub_resource(
+                        (IWineD3DBaseTextureImpl *)src_texture, i));
+                dst_surface = (IWineD3DSurface *)surface_from_resource(basetexture_get_sub_resource(
+                        (IWineD3DBaseTextureImpl *)dst_texture, i));
                 hr = IWineD3DDevice_UpdateSurface(iface, src_surface, NULL, dst_surface, NULL);
-                IWineD3DSurface_Release(dst_surface);
-                IWineD3DSurface_Release(src_surface);
                 if (FAILED(hr))
                 {
                     WARN("IWineD3DDevice_UpdateSurface failed, hr %#x.\n", hr);
@@ -5145,13 +5145,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
 
             for (i = 0; i < level_count * 6; ++i)
             {
-                hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)src_texture, i, &src_surface);
-                if (FAILED(hr)) ERR("Failed to get src cube sub-resource %u, hr %#x.\n", i, hr);
-                hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)dst_texture, i, &dst_surface);
-                if (FAILED(hr)) ERR("Failed to get dst cube sub-resource %u, hr %#x.\n", i, hr);
+                src_surface = (IWineD3DSurface *)surface_from_resource(basetexture_get_sub_resource(
+                        (IWineD3DBaseTextureImpl *)src_texture, i));
+                dst_surface = (IWineD3DSurface *)surface_from_resource(basetexture_get_sub_resource(
+                        (IWineD3DBaseTextureImpl *)dst_texture, i));
                 hr = IWineD3DDevice_UpdateSurface(iface, src_surface, NULL, dst_surface, NULL);
-                IWineD3DSurface_Release(dst_surface);
-                IWineD3DSurface_Release(src_surface);
                 if (FAILED(hr))
                 {
                     WARN("IWineD3DDevice_UpdateSurface failed, hr %#x.\n", hr);
@@ -5168,11 +5166,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
 
             for (i = 0; i < level_count; ++i)
             {
-                IWineD3DVolumeTexture_GetVolumeLevel((IWineD3DVolumeTexture *)src_texture, i, &src_volume);
-                IWineD3DVolumeTexture_GetVolumeLevel((IWineD3DVolumeTexture *)dst_texture, i, &dst_volume);
+                src_volume = (IWineD3DVolume *)surface_from_resource(basetexture_get_sub_resource(
+                        (IWineD3DBaseTextureImpl *)src_texture, i));
+                dst_volume = (IWineD3DVolume *)surface_from_resource(basetexture_get_sub_resource(
+                        (IWineD3DBaseTextureImpl *)dst_texture, i));
                 hr = IWineD3DDeviceImpl_UpdateVolume(iface, src_volume, dst_volume);
-                IWineD3DVolume_Release(dst_volume);
-                IWineD3DVolume_Release(src_volume);
                 if (FAILED(hr))
                 {
                     WARN("IWineD3DDeviceImpl_UpdateVolume failed, hr %#x.\n", hr);

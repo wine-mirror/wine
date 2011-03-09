@@ -2366,6 +2366,9 @@ interface IWineD3DBaseTexture : IWineD3DResource
         [in] UINT sub_resource_idx,
         [out] struct wined3d_resource_desc *desc
     );
+    struct wined3d_resource *GetSubResource(
+        [in] UINT sub_resource_idx
+    );
 }
 
 [
@@ -2375,10 +2378,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
 ]
 interface IWineD3DTexture : IWineD3DBaseTexture
 {
-    HRESULT GetSurfaceLevel(
-        [in] UINT sub_resource_idx,
-        [out] IWineD3DSurface **surface
-    );
     HRESULT Map(
         [in] UINT sub_resource_idx,
         [out] WINED3DLOCKED_RECT *locked_rect,
@@ -2400,10 +2399,6 @@ interface IWineD3DTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DCubeTexture : IWineD3DBaseTexture
 {
-    HRESULT GetCubeMapSurface(
-        [in] UINT sub_resource_idx,
-        [out] IWineD3DSurface **surface
-    );
     HRESULT Map(
         [in] UINT sub_resource_idx,
         [out] WINED3DLOCKED_RECT *locked_rect,
@@ -2426,10 +2421,6 @@ interface IWineD3DCubeTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 {
-    HRESULT GetVolumeLevel(
-        [in] UINT sub_resource_idx,
-        [out] IWineD3DVolume **volume
-    );
     HRESULT Map(
         [in] UINT sub_resource_idx,
         [out] WINED3DLOCKED_BOX *locked_box,

@@ -253,25 +253,25 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetLevelDesc(IDirect3DVolumeTe
 }
 
 static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetVolumeLevel(IDirect3DVolumeTexture8 *iface,
-        UINT Level, IDirect3DVolume8 **ppVolumeLevel)
+        UINT level, IDirect3DVolume8 **volume)
 {
-    IDirect3DVolumeTexture8Impl *This = (IDirect3DVolumeTexture8Impl *)iface;
-    IWineD3DVolume *myVolume = NULL;
-    HRESULT hr;
+    IDirect3DVolumeTexture8Impl *texture = (IDirect3DVolumeTexture8Impl *)iface;
+    struct wined3d_resource *sub_resource;
 
-    TRACE("iface %p, level %u, volume %p.\n", iface, Level, ppVolumeLevel);
+    TRACE("iface %p, level %u, volume %p.\n", iface, level, volume);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolumeTexture_GetVolumeLevel(This->wineD3DVolumeTexture, Level, &myVolume);
-    if (SUCCEEDED(hr) && ppVolumeLevel)
+    if (!(sub_resource = IWineD3DVolumeTexture_GetSubResource(texture->wineD3DVolumeTexture, level)))
     {
-        *ppVolumeLevel = IWineD3DVolumeTexture_GetParent(myVolume);
-        IDirect3DVolume8_AddRef(*ppVolumeLevel);
-        IWineD3DVolumeTexture_Release(myVolume);
+        wined3d_mutex_unlock();
+        return D3DERR_INVALIDCALL;
     }
+
+    *volume = wined3d_resource_get_parent(sub_resource);
+    IDirect3DVolume8_AddRef(*volume);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DVolumeTexture8Impl_LockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level, D3DLOCKED_BOX *pLockedVolume, CONST D3DBOX *pBox, DWORD Flags) {
