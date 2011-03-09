@@ -2497,18 +2497,19 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
                 HRESULT hr;
                 BOOL tex_alpha = FALSE;
                 IWineD3DBaseTexture *tex = NULL;
-                struct wined3d_resource_desc desc;
                 DDPIXELFORMAT ddfmt;
 
-                hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
-                                            0,
-                                            &tex);
+                hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, 0, &tex);
 
                 if(hr == WINED3D_OK && tex)
                 {
-                    hr = IWineD3DBaseTexture_GetSubResourceDesc(tex, 0, &desc);
-                    if (SUCCEEDED(hr))
+                    struct wined3d_resource *sub_resource;
+
+                    if ((sub_resource = IWineD3DBaseTexture_GetSubResource(tex, 0)))
                     {
+                        struct wined3d_resource_desc desc;
+
+                        wined3d_resource_get_desc(sub_resource, &desc);
                         ddfmt.dwSize = sizeof(ddfmt);
                         PixelFormat_WineD3DtoDD(&ddfmt, desc.format);
                         if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
@@ -2805,19 +2806,19 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                 {
                     BOOL tex_alpha = FALSE;
                     IWineD3DBaseTexture *tex = NULL;
-                    struct wined3d_resource_desc desc;
                     DDPIXELFORMAT ddfmt;
 
-                    hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
-                                                0,
-                                                &tex);
+                    hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, 0, &tex);
 
                     if(hr == WINED3D_OK && tex)
                     {
-                        memset(&desc, 0, sizeof(desc));
-                        hr = IWineD3DBaseTexture_GetSubResourceDesc(tex, 0, &desc);
-                        if (SUCCEEDED(hr))
+                        struct wined3d_resource *sub_resource;
+
+                        if ((sub_resource = IWineD3DBaseTexture_GetSubResource(tex, 0)))
                         {
+                            struct wined3d_resource_desc desc;
+
+                            wined3d_resource_get_desc(sub_resource, &desc);
                             ddfmt.dwSize = sizeof(ddfmt);
                             PixelFormat_WineD3DtoDD(&ddfmt, desc.format);
                             if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
@@ -4575,22 +4576,22 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
     {
         /* This fixup is required by the way D3DTBLEND_MODULATE maps to texture stage states.
            See IDirect3DDeviceImpl_3_SetRenderState for details. */
-        struct wined3d_resource_desc desc;
         BOOL tex_alpha = FALSE;
         IWineD3DBaseTexture *tex = NULL;
         DDPIXELFORMAT ddfmt;
         HRESULT result;
 
-        result = IWineD3DDevice_GetTexture(This->wineD3DDevice,
-                                    0,
-                                    &tex);
+        result = IWineD3DDevice_GetTexture(This->wineD3DDevice, 0, &tex);
 
         if(result == WINED3D_OK && tex)
         {
-            memset(&desc, 0, sizeof(desc));
-            result = IWineD3DBaseTexture_GetSubResourceDesc(tex, 0, &desc);
-            if (SUCCEEDED(result))
+            struct wined3d_resource *sub_resource;
+
+            if ((sub_resource = IWineD3DBaseTexture_GetSubResource(tex, 0)))
             {
+                struct wined3d_resource_desc desc;
+
+                wined3d_resource_get_desc(sub_resource, &desc);
                 ddfmt.dwSize = sizeof(ddfmt);
                 PixelFormat_WineD3DtoDD(&ddfmt, desc.format);
                 if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;

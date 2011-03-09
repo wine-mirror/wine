@@ -265,18 +265,20 @@ static void WINAPI IDirect3DTexture9Impl_GenerateMipSubLevels(LPDIRECT3DTEXTURE9
 static HRESULT WINAPI IDirect3DTexture9Impl_GetLevelDesc(IDirect3DTexture9 *iface,
         UINT level, D3DSURFACE_DESC *desc)
 {
-    IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
-    struct wined3d_resource_desc wined3d_desc;
-    HRESULT hr;
+    IDirect3DTexture9Impl *texture = (IDirect3DTexture9Impl *)iface;
+    struct wined3d_resource *sub_resource;
+    HRESULT hr = D3D_OK;
 
     TRACE("iface %p, level %u, desc %p.\n", iface, level, desc);
 
     wined3d_mutex_lock();
-    hr = IWineD3DTexture_GetSubResourceDesc(This->wineD3DTexture, level, &wined3d_desc);
-    wined3d_mutex_unlock();
-
-    if (SUCCEEDED(hr))
+    if (!(sub_resource = IWineD3DTexture_GetSubResource(texture->wineD3DTexture, level)))
+        hr = D3DERR_INVALIDCALL;
+    else
     {
+        struct wined3d_resource_desc wined3d_desc;
+
+        wined3d_resource_get_desc(sub_resource, &wined3d_desc);
         desc->Format = d3dformat_from_wined3dformat(wined3d_desc.format);
         desc->Type = wined3d_desc.resource_type;
         desc->Usage = wined3d_desc.usage;
@@ -286,6 +288,7 @@ static HRESULT WINAPI IDirect3DTexture9Impl_GetLevelDesc(IDirect3DTexture9 *ifac
         desc->Width = wined3d_desc.width;
         desc->Height = wined3d_desc.height;
     }
+    wined3d_mutex_unlock();
 
     return hr;
 }

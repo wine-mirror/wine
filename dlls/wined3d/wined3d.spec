@@ -59,6 +59,7 @@
 @ cdecl wined3d_query_incref(ptr)
 @ cdecl wined3d_query_issue(ptr long)
 
+@ cdecl wined3d_resource_get_desc(ptr ptr)
 @ cdecl wined3d_resource_get_parent(ptr)
 
 @ cdecl wined3d_stateblock_apply(ptr)

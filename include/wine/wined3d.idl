@@ -2362,10 +2362,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
     );
     BOOL IsCondNP2(
     );
-    HRESULT GetSubResourceDesc(
-        [in] UINT sub_resource_idx,
-        [out] struct wined3d_resource_desc *desc
-    );
     struct wined3d_resource *GetSubResource(
         [in] UINT sub_resource_idx
     );
@@ -3215,6 +3211,8 @@ WINED3DQUERYTYPE __cdecl wined3d_query_get_type(const struct wined3d_query *quer
 ULONG __cdecl wined3d_query_incref(struct wined3d_query *query);
 HRESULT __cdecl wined3d_query_issue(struct wined3d_query *query, DWORD flags);
 
+void __cdecl wined3d_resource_get_desc(const struct wined3d_resource *resource,
+        struct wined3d_resource_desc *desc);
 void * __cdecl wined3d_resource_get_parent(const struct wined3d_resource *resource);
 
 HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock);

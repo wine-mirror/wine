@@ -263,25 +263,6 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *if
     return FALSE;
 }
 
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetSubResourceDesc(IWineD3DVolumeTexture *iface,
-        UINT sub_resource_idx, struct wined3d_resource_desc *desc)
-{
-    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    struct wined3d_resource *sub_resource;
-
-    TRACE("iface %p, sub_resource_idx %u, desc %p.\n", iface, sub_resource_idx, desc);
-
-    if (!(sub_resource = basetexture_get_sub_resource(texture, sub_resource_idx)))
-    {
-        WARN("Failed to get sub-resource.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    wined3d_resource_get_desc(sub_resource, desc);
-
-    return WINED3D_OK;
-}
-
 static struct wined3d_resource * WINAPI IWineD3DVolumeTextureImpl_GetSubResource(IWineD3DVolumeTexture *iface,
         UINT sub_resource_idx)
 {
@@ -369,7 +350,6 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_GetAutoGenFilterType,
     IWineD3DVolumeTextureImpl_GenerateMipSubLevels,
     IWineD3DVolumeTextureImpl_IsCondNP2,
-    IWineD3DVolumeTextureImpl_GetSubResourceDesc,
     IWineD3DVolumeTextureImpl_GetSubResource,
     /* volume texture */
     IWineD3DVolumeTextureImpl_Map,
