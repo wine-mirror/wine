@@ -399,14 +399,14 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValu
   if (memchrW(firstModifier, '$', modifierLen) != NULL) {
     /* Special Case: Search envar specified in $[envvar] for outputparam
        Note both $ and : are guaranteed otherwise check above would fail */
-    WCHAR *start = strchrW(firstModifier, '$') + 1;
+    WCHAR *begin = strchrW(firstModifier, '$') + 1;
     WCHAR *end   = strchrW(firstModifier, ':');
     WCHAR env[MAX_PATH];
     WCHAR fullpath[MAX_PATH];
 
     /* Extract the env var */
-    memcpy(env, start, (end-start) * sizeof(WCHAR));
-    env[(end-start)] = 0x00;
+    memcpy(env, begin, (end-begin) * sizeof(WCHAR));
+    env[(end-begin)] = 0x00;
 
     /* If env var not found, return empty string */
     if ((GetEnvironmentVariableW(env, fullpath, MAX_PATH) == 0) ||
