@@ -787,9 +787,9 @@ void CoreAudio_WaveRelease(void)
 /**************************************************************************
 * 			wodNotifyClient			[internal]
 */
-static void wodNotifyClient(WINE_WAVEOUT_INSTANCE* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static void wodNotifyClient(WINE_WAVEOUT_INSTANCE* wwo, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04x dwParam2 = %04x\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %04lx dwParam2 = %04lx\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
         case WOM_OPEN:
@@ -1178,7 +1178,7 @@ static void wodHelper_NotifyDoneForList(WINE_WAVEOUT_INSTANCE* wwo, LPWAVEHDR lp
         lpWaveHdr->lpNext = NULL;
         lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
         lpWaveHdr->dwFlags |= WHDR_DONE;
-        wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
+        wodNotifyClient(wwo, WOM_DONE, (DWORD_PTR)lpWaveHdr, 0);
 
         lpWaveHdr = lpNext;
     }
@@ -1746,9 +1746,9 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
 /**************************************************************************
  *                      widNotifyClient                 [internal]
  */
-static void widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static void widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg)
     {
@@ -1816,7 +1816,7 @@ static void widHelper_NotifyCompletions(WINE_WAVEIN* wwi)
         lpWaveHdr->lpNext = NULL;
         lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
         lpWaveHdr->dwFlags |= WHDR_DONE;
-        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+        widNotifyClient(wwi, WIM_DATA, (DWORD_PTR)lpWaveHdr, 0);
 
         lpWaveHdr = lpNext;
     }
@@ -2265,7 +2265,7 @@ static DWORD widStop(WORD wDevID)
         lpWaveHdr->lpNext = NULL;
         lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
         lpWaveHdr->dwFlags |= WHDR_DONE;
-        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+        widNotifyClient(wwi, WIM_DATA, (DWORD_PTR)lpWaveHdr, 0);
     }
 
     return ret;
@@ -2345,7 +2345,7 @@ static DWORD widReset(WORD wDevID)
         lpWaveHdr->lpNext = NULL;
         lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
         lpWaveHdr->dwFlags |= WHDR_DONE;
-        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+        widNotifyClient(wwi, WIM_DATA, (DWORD_PTR)lpWaveHdr, 0);
 
         lpWaveHdr = lpNext;
     }
