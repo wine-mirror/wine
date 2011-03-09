@@ -604,12 +604,15 @@ NTSTATUS WINAPI RtlGetDaclSecurityDescriptor(
 
 	if ( (*lpbDaclPresent = (SE_DACL_PRESENT & lpsd->Control) ? 1 : 0) )
 	{
-	  if ((SE_SELF_RELATIVE & lpsd->Control) && lpsd->Dacl)
-            *pDacl = (PACL)SELF_RELATIVE_FIELD( lpsd, Dacl );
-	  else
-	    *pDacl = lpsd->Dacl;
+            if (lpsd->Control & SE_SELF_RELATIVE)
+            {
+                SECURITY_DESCRIPTOR_RELATIVE *sdr = pSecurityDescriptor;
+                if (sdr->Dacl) *pDacl = (PACL)SELF_RELATIVE_FIELD( sdr, Dacl );
+                else *pDacl = NULL;
+            }
+            else *pDacl = lpsd->Dacl;
 
-	  *lpbDaclDefaulted = (( SE_DACL_DEFAULTED & lpsd->Control ) ? 1 : 0);
+            *lpbDaclDefaulted = (lpsd->Control & SE_DACL_DEFAULTED) != 0;
         }
         else
         {
@@ -673,12 +676,15 @@ NTSTATUS WINAPI RtlGetSaclSecurityDescriptor(
 
 	if ( (*lpbSaclPresent = (SE_SACL_PRESENT & lpsd->Control) ? 1 : 0) )
 	{
-	  if ((SE_SELF_RELATIVE & lpsd->Control) && lpsd->Sacl)
-            *pSacl = (PACL)SELF_RELATIVE_FIELD( lpsd, Sacl );
-	  else
-	    *pSacl = lpsd->Sacl;
+            if (lpsd->Control & SE_SELF_RELATIVE)
+            {
+                SECURITY_DESCRIPTOR_RELATIVE *sdr = pSecurityDescriptor;
+                if (sdr->Sacl) *pSacl = (PACL)SELF_RELATIVE_FIELD( sdr, Sacl );
+                else *pSacl = NULL;
+            }
+            else *pSacl = lpsd->Sacl;
 
-	  *lpbSaclDefaulted = (( SE_SACL_DEFAULTED & lpsd->Control ) ? 1 : 0);
+            *lpbSaclDefaulted = (lpsd->Control & SE_SACL_DEFAULTED) != 0;
 	}
 	return STATUS_SUCCESS;
 }
