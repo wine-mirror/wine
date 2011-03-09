@@ -1197,7 +1197,7 @@ static HRESULT WINAPI timeoutFunc_Invoke(IDispatchEx *iface, DISPID dispIdMember
     return S_OK;
 }
 
-static IDispatchExVtbl timeoutFuncVtbl = {
+static const IDispatchExVtbl timeoutFuncVtbl = {
     DispatchEx_QueryInterface,
     DispatchEx_AddRef,
     DispatchEx_Release,
@@ -1231,7 +1231,7 @@ static HRESULT WINAPI div_onclick_disp_Invoke(IDispatchEx *iface, DISPID id,
     return S_OK;
 }
 
-static IDispatchExVtbl div_onclick_dispVtbl = {
+static const IDispatchExVtbl div_onclick_dispVtbl = {
     Dispatch_QueryInterface,
     DispatchEx_AddRef,
     DispatchEx_Release,
@@ -2208,7 +2208,7 @@ static HRESULT WINAPI PropertyNotifySink_OnRequestEdit(IPropertyNotifySink *ifac
     return E_NOTIMPL;
 }
 
-static IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
+static const IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
     PropertyNotifySink_QueryInterface,
     PropertyNotifySink_AddRef,
     PropertyNotifySink_Release,
@@ -2410,6 +2410,7 @@ static void test_empty_document(void)
     ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
 
     IHTMLDocument2_Release(windows_doc);
+    IHTMLDocument2_Release(doc);
 }
 
 START_TEST(events)
