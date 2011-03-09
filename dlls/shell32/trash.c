@@ -423,10 +423,10 @@ static HRESULT TRASH_GetDetails(const TRASH_BUCKET *bucket, LPCSTR filename, WIN
     else
     {
         /* show only the file name */
-        char *filename = strrchr(original_file_name, '/');
-        if (filename == NULL)
-            filename = original_file_name;
-        MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, data->cFileName, MAX_PATH);
+        char *file = strrchr(original_file_name, '/');
+        if (file == NULL)
+            file = original_file_name;
+        MultiByteToWideChar(CP_UNIXCP, 0, file, -1, data->cFileName, MAX_PATH);
     }
     
     deletion_date = XDG_GetStringValue(parsed, trashinfo_group, "DeletionDate", 0);
