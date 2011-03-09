@@ -2334,27 +2334,27 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
         }
 
         for (i = 0; i < con->dwOptionCount; i++) {
-            INTERNET_PER_CONN_OPTIONW *option = con->pOptions + i;
+            INTERNET_PER_CONN_OPTIONW *optionW = con->pOptions + i;
             INTERNET_PER_CONN_OPTIONA *optionA = conA->pOptions + i;
 
-            switch (option->dwOption) {
+            switch (optionW->dwOption) {
             case INTERNET_PER_CONN_FLAGS:
                 if(pi.dwProxyEnabled)
-                    option->Value.dwValue = PROXY_TYPE_PROXY;
+                    optionW->Value.dwValue = PROXY_TYPE_PROXY;
                 else
-                    option->Value.dwValue = PROXY_TYPE_DIRECT;
+                    optionW->Value.dwValue = PROXY_TYPE_DIRECT;
                 break;
 
             case INTERNET_PER_CONN_PROXY_SERVER:
                 if (unicode)
-                    option->Value.pszValue = heap_strdupW(pi.lpszProxyServer);
+                    optionW->Value.pszValue = heap_strdupW(pi.lpszProxyServer);
                 else
                     optionA->Value.pszValue = heap_strdupWtoA(pi.lpszProxyServer);
                 break;
 
             case INTERNET_PER_CONN_PROXY_BYPASS:
                 if (unicode)
-                    option->Value.pszValue = heap_strdupW(pi.lpszProxyBypass);
+                    optionW->Value.pszValue = heap_strdupW(pi.lpszProxyBypass);
                 else
                     optionA->Value.pszValue = heap_strdupWtoA(pi.lpszProxyBypass);
                 break;
@@ -2365,12 +2365,12 @@ DWORD INET_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *
             case INTERNET_PER_CONN_AUTOCONFIG_RELOAD_DELAY_MINS:
             case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_TIME:
             case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_URL:
-                FIXME("Unhandled dwOption %d\n", option->dwOption);
-                memset(&option->Value, 0, sizeof(option->Value));
+                FIXME("Unhandled dwOption %d\n", optionW->dwOption);
+                memset(&optionW->Value, 0, sizeof(optionW->Value));
                 break;
 
             default:
-                FIXME("Unknown dwOption %d\n", option->dwOption);
+                FIXME("Unknown dwOption %d\n", optionW->dwOption);
                 res = ERROR_INVALID_PARAMETER;
                 break;
             }
