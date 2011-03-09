@@ -787,9 +787,9 @@ void CoreAudio_WaveRelease(void)
 /**************************************************************************
 * 			wodNotifyClient			[internal]
 */
-static DWORD wodNotifyClient(WINE_WAVEOUT_INSTANCE* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static void wodNotifyClient(WINE_WAVEOUT_INSTANCE* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE_(coreaudio)("wMsg = 0x%04x dwParm1 = %04x dwParam2 = %04x\n", wMsg, dwParam1, dwParam2);
+    TRACE("wMsg = 0x%04x dwParm1 = %04x dwParam2 = %04x\n", wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
         case WOM_OPEN:
@@ -800,15 +800,12 @@ static DWORD wodNotifyClient(WINE_WAVEOUT_INSTANCE* wwo, WORD wMsg, DWORD dwPara
                                 (HDRVR)wwo->waveDesc.hWave, wMsg, wwo->waveDesc.dwInstance,
                                 dwParam1, dwParam2))
             {
-                ERR("can't notify client !\n");
-                return MMSYSERR_ERROR;
+                WARN("can't notify client !\n");
             }
             break;
         default:
-            ERR("Unknown callback message %u\n", wMsg);
-            return MMSYSERR_INVALPARAM;
+            FIXME("Unknown callback message %u\n", wMsg);
     }
-    return MMSYSERR_NOERROR;
 }
 
 
@@ -975,9 +972,9 @@ static DWORD wodOpen(WORD wDevID, WINE_WAVEOUT_INSTANCE** pInstance, LPWAVEOPEND
     *pInstance = wwo;
     TRACE("opened instance %p\n", wwo);
 
-    ret = wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
+    wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
     
-    return ret;
+    return MMSYSERR_NOERROR;
 
 error:
     if (audioUnit)
@@ -1015,7 +1012,7 @@ static DWORD wodClose(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo)
     {
         OSSpinLockUnlock(&wwo->lock);
         WARN("buffers still playing !\n");
-        ret = WAVERR_STILLPLAYING;
+        return WAVERR_STILLPLAYING;
     } else
     {
         OSStatus err;
@@ -1045,7 +1042,7 @@ static DWORD wodClose(WORD wDevID, WINE_WAVEOUT_INSTANCE* wwo)
         list_remove(&wwo->entry);
         OSSpinLockUnlock(&WOutDev[wDevID].lock);
 
-        ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
+        wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
 
         HeapFree(GetProcessHeap(), 0, wwo);
     }
@@ -1749,7 +1746,7 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
 /**************************************************************************
  *                      widNotifyClient                 [internal]
  */
-static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static void widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
     TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
 
@@ -1764,14 +1761,11 @@ static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD 
                                 dwParam1, dwParam2))
             {
                 WARN("can't notify client !\n");
-                return MMSYSERR_ERROR;
             }
             break;
         default:
             FIXME("Unknown callback message %u\n", wMsg);
-            return MMSYSERR_INVALPARAM;
     }
-    return MMSYSERR_NOERROR;
 }
 
 
@@ -2029,7 +2023,9 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     OSSpinLockUnlock(&wwi->lock);
 
-    return widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
+    widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
+
+    return MMSYSERR_NOERROR;
 }
 
 
@@ -2099,7 +2095,7 @@ static DWORD widClose(WORD wDevID)
     wwi->state = WINE_WS_CLOSED;
     OSSpinLockUnlock(&wwi->lock);
 
-    ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
+    widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
 
     return ret;
 }
