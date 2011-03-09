@@ -895,6 +895,26 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
     }
+    case IOCTL_DISK_GET_DRIVE_GEOMETRY_EX:
+    {
+        DISK_GEOMETRY_EX info;
+        DWORD len = min( sizeof(info), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+
+        FIXME("The DISK_PARTITION_INFO and DISK_DETECTION_INFO structures will not be filled\n");
+
+        info.Geometry.Cylinders.QuadPart = 10000;
+        info.Geometry.MediaType = (dev->devnum.DeviceType == FILE_DEVICE_DISK) ? FixedMedia : RemovableMedia;
+        info.Geometry.TracksPerCylinder = 255;
+        info.Geometry.SectorsPerTrack = 63;
+        info.Geometry.BytesPerSector = 512;
+        info.DiskSize.QuadPart = info.Geometry.Cylinders.QuadPart * info.Geometry.TracksPerCylinder *
+                                 info.Geometry.SectorsPerTrack * info.Geometry.BytesPerSector;
+        info.Data[0]  = 0;
+        memcpy( irp->MdlAddress->StartVa, &info, len );
+        irp->IoStatus.Information = len;
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        break;
+    }
     case IOCTL_STORAGE_GET_DEVICE_NUMBER:
     {
         DWORD len = min( sizeof(dev->devnum), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
