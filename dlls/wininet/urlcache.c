@@ -2039,6 +2039,47 @@ BOOL WINAPI RetrieveUrlCacheEntryFileW(
     return TRUE;
 }
 
+static BOOL DeleteUrlCacheEntryInternal(LPURLCACHE_HEADER pHeader,
+        struct _HASH_ENTRY *pHashEntry)
+{
+    CACHEFILE_ENTRY * pEntry;
+    URL_CACHEFILE_ENTRY * pUrlEntry;
+
+    pEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
+    if (pEntry->dwSignature != URL_SIGNATURE)
+    {
+        FIXME("Trying to delete entry of unknown format %s\n",
+              debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+    pUrlEntry = (URL_CACHEFILE_ENTRY *)pEntry;
+    if (pUrlEntry->CacheDir < pHeader->DirectoryCount)
+    {
+        if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
+            pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles--;
+    }
+    if (pUrlEntry->CacheEntryType & STICKY_CACHE_ENTRY)
+    {
+        if (pUrlEntry->size.QuadPart < pHeader->ExemptUsage.QuadPart)
+            pHeader->ExemptUsage.QuadPart -= pUrlEntry->size.QuadPart;
+        else
+            pHeader->ExemptUsage.QuadPart = 0;
+    }
+    else
+    {
+        if (pUrlEntry->size.QuadPart < pHeader->CacheUsage.QuadPart)
+            pHeader->CacheUsage.QuadPart -= pUrlEntry->size.QuadPart;
+        else
+            pHeader->CacheUsage.QuadPart = 0;
+    }
+
+    URLCache_DeleteEntry(pHeader, pEntry);
+
+    URLCache_DeleteEntryFromHash(pHashEntry);
+    return TRUE;
+}
+
 /***********************************************************************
  *           UnlockUrlCacheEntryFileA (WININET.@)
  *
@@ -3001,9 +3042,8 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
     URLCACHECONTAINER * pContainer;
     LPURLCACHE_HEADER pHeader;
     struct _HASH_ENTRY * pHashEntry;
-    CACHEFILE_ENTRY * pEntry;
-    const URL_CACHEFILE_ENTRY * pUrlEntry;
     DWORD error;
+    BOOL ret;
 
     TRACE("(%s)\n", debugstr_a(lpszUrlName));
 
@@ -3032,43 +3072,11 @@ BOOL WINAPI DeleteUrlCacheEntryA(LPCSTR lpszUrlName)
         return FALSE;
     }
 
-    pEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
-    if (pEntry->dwSignature != URL_SIGNATURE)
-    {
-        URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        FIXME("Trying to delete entry of unknown format %s\n",
-              debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-    pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
-    if (pUrlEntry->CacheDir < pHeader->DirectoryCount)
-    {
-        if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
-            pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles--;
-    }
-    if (pUrlEntry->CacheEntryType & STICKY_CACHE_ENTRY)
-    {
-        if (pUrlEntry->size.QuadPart < pHeader->ExemptUsage.QuadPart)
-            pHeader->ExemptUsage.QuadPart -= pUrlEntry->size.QuadPart;
-        else
-            pHeader->ExemptUsage.QuadPart = 0;
-    }
-    else
-    {
-        if (pUrlEntry->size.QuadPart < pHeader->CacheUsage.QuadPart)
-            pHeader->CacheUsage.QuadPart -= pUrlEntry->size.QuadPart;
-        else
-            pHeader->CacheUsage.QuadPart = 0;
-    }
-
-    URLCache_DeleteEntry(pHeader, pEntry);
-
-    URLCache_DeleteEntryFromHash(pHashEntry);
+    ret = DeleteUrlCacheEntryInternal(pHeader, pHashEntry);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
@@ -3080,10 +3088,9 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     URLCACHECONTAINER * pContainer;
     LPURLCACHE_HEADER pHeader;
     struct _HASH_ENTRY * pHashEntry;
-    CACHEFILE_ENTRY * pEntry;
-    const URL_CACHEFILE_ENTRY * pUrlEntry;
     LPSTR urlA;
     DWORD error;
+    BOOL ret;
 
     TRACE("(%s)\n", debugstr_w(lpszUrlName));
 
@@ -3125,44 +3132,12 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
         return FALSE;
     }
 
-    pEntry = (CACHEFILE_ENTRY *)((LPBYTE)pHeader + pHashEntry->dwOffsetEntry);
-    if (pEntry->dwSignature != URL_SIGNATURE)
-    {
-        URLCacheContainer_UnlockIndex(pContainer, pHeader);
-        FIXME("Trying to delete entry of unknown format %s\n",
-              debugstr_an((LPCSTR)&pEntry->dwSignature, sizeof(DWORD)));
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
-    pUrlEntry = (const URL_CACHEFILE_ENTRY *)pEntry;
-    if (pUrlEntry->CacheDir < pHeader->DirectoryCount)
-    {
-        if (pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles)
-            pHeader->directory_data[pUrlEntry->CacheDir].dwNumFiles--;
-    }
-    if (pUrlEntry->CacheEntryType & STICKY_CACHE_ENTRY)
-    {
-        if (pUrlEntry->size.QuadPart < pHeader->ExemptUsage.QuadPart)
-            pHeader->ExemptUsage.QuadPart -= pUrlEntry->size.QuadPart;
-        else
-            pHeader->ExemptUsage.QuadPart = 0;
-    }
-    else
-    {
-        if (pUrlEntry->size.QuadPart < pHeader->CacheUsage.QuadPart)
-            pHeader->CacheUsage.QuadPart -= pUrlEntry->size.QuadPart;
-        else
-            pHeader->CacheUsage.QuadPart = 0;
-    }
-
-    URLCache_DeleteEntry(pHeader, pEntry);
-
-    URLCache_DeleteEntryFromHash(pHashEntry);
+    ret = DeleteUrlCacheEntryInternal(pHeader, pHashEntry);
 
     URLCacheContainer_UnlockIndex(pContainer, pHeader);
 
     HeapFree(GetProcessHeap(), 0, urlA);
-    return TRUE;
+    return ret;
 }
 
 BOOL WINAPI DeleteUrlCacheContainerA(DWORD d1, DWORD d2)
