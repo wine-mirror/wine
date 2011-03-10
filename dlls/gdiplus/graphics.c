@@ -3355,9 +3355,8 @@ GpStatus WINGDIPAPI GdipFillClosedCurveI(GpGraphics *graphics, GpBrush *brush,
 GpStatus WINGDIPAPI GdipFillEllipse(GpGraphics *graphics, GpBrush *brush, REAL x,
     REAL y, REAL width, REAL height)
 {
-    INT save_state;
-    GpPointF ptf[2];
-    POINT pti[2];
+    GpStatus stat;
+    GpPath *path;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f)\n", graphics, brush, x, y, width, height);
 
@@ -3367,31 +3366,19 @@ GpStatus WINGDIPAPI GdipFillEllipse(GpGraphics *graphics, GpBrush *brush, REAL x
     if(graphics->busy)
         return ObjectBusy;
 
-    if(!graphics->hdc)
+    stat = GdipCreatePath(FillModeAlternate, &path);
+
+    if (stat == Ok)
     {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
+        stat = GdipAddPathEllipse(path, x, y, width, height);
+
+        if (stat == Ok)
+            stat = GdipFillPath(graphics, brush, path);
+
+        GdipDeletePath(path);
     }
 
-    ptf[0].X = x;
-    ptf[0].Y = y;
-    ptf[1].X = x + width;
-    ptf[1].Y = y + height;
-
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-
-    transform_and_round_points(graphics, pti, ptf, 2);
-
-    BeginPath(graphics->hdc);
-    Ellipse(graphics->hdc, pti[0].x, pti[0].y, pti[1].x, pti[1].y);
-    EndPath(graphics->hdc);
-
-    brush_fill_path(graphics, brush);
-
-    RestoreDC(graphics->hdc, save_state);
-
-    return Ok;
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipFillEllipseI(GpGraphics *graphics, GpBrush *brush, INT x,
