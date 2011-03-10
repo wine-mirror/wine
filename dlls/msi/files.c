@@ -997,7 +997,6 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
     UINT ret = ERROR_SUCCESS;
 
     component = MSI_RecordGetString(row, 2);
-    filename = strdupW( MSI_RecordGetString(row, 3) );
     dirprop = MSI_RecordGetString(row, 4);
     install_mode = MSI_RecordGetInteger(row, 5);
 
@@ -1026,7 +1025,7 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
         return ERROR_OUTOFMEMORY;
 
     size = 0;
-    if (filename)
+    if ((filename = strdupW( MSI_RecordGetString(row, 3) )))
     {
         reduce_to_longfilename( filename );
         size = lstrlenW( filename );
