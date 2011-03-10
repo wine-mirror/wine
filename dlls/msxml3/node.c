@@ -162,7 +162,7 @@ HRESULT node_set_content(xmlnode *This, LPCWSTR value)
     xmlChar *str;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(value));
-    str = xmlChar_from_wchar(value);
+    str = xmlchar_from_wchar(value);
     if(!str)
         return E_OUTOFMEMORY;
 
@@ -176,7 +176,7 @@ static HRESULT node_set_content_escaped(xmlnode *This, LPCWSTR value)
     xmlChar *str, *escaped;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(value));
-    str = xmlChar_from_wchar(value);
+    str = xmlchar_from_wchar(value);
     if(!str)
         return E_OUTOFMEMORY;
 
@@ -641,7 +641,7 @@ HRESULT node_put_text(xmlnode *This, BSTR text)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(text));
 
-    str = xmlChar_from_wchar(text);
+    str = xmlchar_from_wchar(text);
 
     /* Escape the string. */
     str2 = xmlEncodeEntitiesReentrant(This->node->doc, str);
@@ -1029,7 +1029,7 @@ HRESULT node_select_nodes(const xmlnode *This, BSTR query, IXMLDOMNodeList **nod
 
     if (!query || !nodes) return E_INVALIDARG;
 
-    str = xmlChar_from_wchar(query);
+    str = xmlchar_from_wchar(query);
     hr = queryresult_create(This->node, str, nodes);
     heap_free(str);
 

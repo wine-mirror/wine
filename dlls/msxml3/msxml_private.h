@@ -157,6 +157,43 @@ extern HINSTANCE MSXML_hInstance;
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
 
+/* memory allocation functions */
+
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline void *heap_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline void *heap_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
+static inline BOOL heap_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline LPWSTR heap_strdupW(LPCWSTR str)
+{
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = heap_alloc(size);
+        memcpy(ret, str, size);
+    }
+
+    return ret;
+}
+
 #ifdef HAVE_LIBXML2
 
 extern void schemasInit(void);
@@ -354,6 +391,17 @@ static inline HRESULT return_null_bstr(BSTR *p)
     return S_FALSE;
 }
 
+static inline xmlChar *xmlchar_from_wchar( LPCWSTR str )
+{
+    xmlChar *xmlstr;
+    DWORD len = WideCharToMultiByte( CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL );
+
+    xmlstr = heap_alloc( len );
+    if ( xmlstr )
+        WideCharToMultiByte( CP_UTF8, 0, str, -1, (LPSTR) xmlstr, len, NULL, NULL );
+    return xmlstr;
+}
+
 #endif
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
@@ -395,43 +443,6 @@ HRESULT bind_url(LPCWSTR, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, 
 void detach_bsc(bsc_t*);
 
 const char *debugstr_variant(const VARIANT*);
-
-/* memory allocation functions */
-
-static inline void *heap_alloc(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), 0, len);
-}
-
-static inline void *heap_alloc_zero(size_t len)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-}
-
-static inline void *heap_realloc(void *mem, size_t len)
-{
-    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
-}
-
-static inline BOOL heap_free(void *mem)
-{
-    return HeapFree(GetProcessHeap(), 0, mem);
-}
-
-static inline LPWSTR heap_strdupW(LPCWSTR str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD size;
-
-        size = (strlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
-        memcpy(ret, str, size);
-    }
-
-    return ret;
-}
 
 /* Error Codes - not defined anywhere in the public headers */
 #define E_XML_ELEMENT_UNDECLARED            0xC00CE00D

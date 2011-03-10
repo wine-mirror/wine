@@ -189,18 +189,6 @@ static HRESULT WINAPI xmlnodemap_Invoke(
     return hr;
 }
 
-xmlChar *xmlChar_from_wchar( LPCWSTR str )
-{
-    DWORD len;
-    xmlChar *xmlstr;
-
-    len = WideCharToMultiByte( CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL );
-    xmlstr = heap_alloc( len );
-    if ( xmlstr )
-        WideCharToMultiByte( CP_UTF8, 0, str, -1, (LPSTR) xmlstr, len, NULL, NULL );
-    return xmlstr;
-}
-
 static HRESULT WINAPI xmlnodemap_getNamedItem(
     IXMLDOMNamedNodeMap *iface,
     BSTR name,
@@ -334,13 +322,13 @@ static HRESULT WINAPI xmlnodemap_getQualifiedItem(
 
     if (namespaceURI && *namespaceURI)
     {
-        href = xmlChar_from_wchar(namespaceURI);
+        href = xmlchar_from_wchar(namespaceURI);
         if (!href) return E_OUTOFMEMORY;
     }
     else
         href = NULL;
 
-    name = xmlChar_from_wchar(baseName);
+    name = xmlchar_from_wchar(baseName);
     if (!name)
     {
         heap_free(href);
@@ -380,13 +368,13 @@ static HRESULT WINAPI xmlnodemap_removeQualifiedItem(
 
     if (namespaceURI && *namespaceURI)
     {
-        href = xmlChar_from_wchar(namespaceURI);
+        href = xmlchar_from_wchar(namespaceURI);
         if (!href) return E_OUTOFMEMORY;
     }
     else
         href = NULL;
 
-    name = xmlChar_from_wchar(baseName);
+    name = xmlchar_from_wchar(baseName);
     if (!name)
     {
         heap_free(href);

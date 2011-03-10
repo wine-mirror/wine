@@ -237,8 +237,8 @@ static HRESULT WINAPI xmlelem_setAttribute(IXMLElement *iface, BSTR strPropertyN
     if (!strPropertyName || V_VT(&PropertyValue) != VT_BSTR)
         return E_INVALIDARG;
 
-    name = xmlChar_from_wchar(strPropertyName);
-    value = xmlChar_from_wchar(V_BSTR(&PropertyValue));
+    name = xmlchar_from_wchar(strPropertyName);
+    value = xmlchar_from_wchar(V_BSTR(&PropertyValue));
     attr = xmlSetProp(This->node, name, value);
 
     heap_free(name);
@@ -276,7 +276,7 @@ static HRESULT WINAPI xmlelem_getAttribute(IXMLElement *iface, BSTR name,
         xmlAttrPtr attr;
         xmlChar *xml_name;
 
-        xml_name = xmlChar_from_wchar(name);
+        xml_name = xmlchar_from_wchar(name);
         attr = This->node->properties;
         while (attr)
         {
@@ -321,7 +321,7 @@ static HRESULT WINAPI xmlelem_removeAttribute(IXMLElement *iface, BSTR strProper
     if (!strPropertyName)
         return E_INVALIDARG;
 
-    name = xmlChar_from_wchar(strPropertyName);
+    name = xmlchar_from_wchar(strPropertyName);
     attr = xmlHasProp(This->node, name);
     if (!attr)
         goto done;
@@ -414,7 +414,7 @@ static HRESULT WINAPI xmlelem_put_text(IXMLElement *iface, BSTR p)
     if (This->node->type == XML_ELEMENT_NODE)
         return E_NOTIMPL;
 
-    content = xmlChar_from_wchar(p);
+    content = xmlchar_from_wchar(p);
     xmlNodeSetContent(This->node, content);
 
     heap_free(content);

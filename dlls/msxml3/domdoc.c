@@ -1984,9 +1984,9 @@ static HRESULT WINAPI domdoc_createNode(
         break;
     }
 
-    xml_name = xmlChar_from_wchar(name);
+    xml_name = xmlchar_from_wchar(name);
     /* prevent empty href to be allocated */
-    href = namespaceURI ? xmlChar_from_wchar(namespaceURI) : NULL;
+    href = namespaceURI ? xmlchar_from_wchar(namespaceURI) : NULL;
 
     switch(node_type)
     {
@@ -2853,8 +2853,7 @@ static HRESULT WINAPI domdoc_setProperty(
         pNsList = &(This->properties->selectNsList);
         clear_selectNsList(pNsList);
         heap_free(nsStr);
-        nsStr = xmlChar_from_wchar(bstr);
-
+        nsStr = xmlchar_from_wchar(bstr);
 
         TRACE("Setting SelectionNamespaces property to: %s\n", nsStr);
 

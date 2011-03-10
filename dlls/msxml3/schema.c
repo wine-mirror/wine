@@ -1061,7 +1061,7 @@ static HRESULT WINAPI schema_cache_Invoke(IXMLDOMSchemaCollection2* iface,
 static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri, VARIANT var)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    xmlChar* name = uri ? xmlChar_from_wchar(uri) : xmlChar_from_wchar(emptyW);
+    xmlChar* name = uri ? xmlchar_from_wchar(uri) : xmlchar_from_wchar(emptyW);
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(uri), debugstr_variant(&var));
 
     switch (V_VT(&var))
@@ -1162,7 +1162,7 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection2* iface, BSTR uri
     if (!node)
         return E_POINTER;
 
-    name = uri ? xmlChar_from_wchar(uri) : xmlChar_from_wchar(emptyW);
+    name = uri ? xmlchar_from_wchar(uri) : xmlchar_from_wchar(emptyW);
     entry = (cache_entry*) xmlHashLookup(This->cache, name);
     heap_free(name);
 
@@ -1177,7 +1177,7 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection2* iface, BSTR uri
 static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection2* iface, BSTR uri)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    xmlChar* name = uri ? xmlChar_from_wchar(uri) : xmlChar_from_wchar(emptyW);
+    xmlChar* name = uri ? xmlchar_from_wchar(uri) : xmlchar_from_wchar(emptyW);
     TRACE("(%p)->(%s)\n", This, wine_dbgstr_w(uri));
 
     xmlHashRemoveEntry(This->cache, name, cache_free);

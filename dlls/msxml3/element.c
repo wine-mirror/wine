@@ -1056,7 +1056,7 @@ static HRESULT WINAPI domelem_getAttribute(
     V_BSTR(value) = NULL;
     V_VT(value) = VT_NULL;
 
-    xml_name = xmlChar_from_wchar( name );
+    xml_name = xmlchar_from_wchar( name );
 
     if(!xmlValidateNameValue(xml_name))
         hr = E_FAIL;
@@ -1099,8 +1099,8 @@ static HRESULT WINAPI domelem_setAttribute(
         return hr;
     }
 
-    xml_name = xmlChar_from_wchar( name );
-    xml_value = xmlChar_from_wchar( V_BSTR(&var) );
+    xml_name = xmlchar_from_wchar( name );
+    xml_value = xmlchar_from_wchar( V_BSTR(&var) );
 
     if(!xmlSetNsProp(element, NULL,  xml_name, xml_value))
         hr = E_FAIL;
@@ -1153,7 +1153,7 @@ static HRESULT WINAPI domelem_getAttributeNode(
     if ( !element )
         return E_FAIL;
 
-    xml_name = xmlChar_from_wchar(p);
+    xml_name = xmlchar_from_wchar(p);
 
     if(!xmlValidateNameValue(xml_name))
     {
@@ -1228,8 +1228,8 @@ static HRESULT WINAPI domelem_setAttributeNode(
         SysFreeString(prefix);
     }
 
-    name = xmlChar_from_wchar(nameW);
-    value = xmlChar_from_wchar(V_BSTR(&valueW));
+    name = xmlchar_from_wchar(nameW);
+    value = xmlchar_from_wchar(V_BSTR(&valueW));
 
     if (!name || !value)
     {
