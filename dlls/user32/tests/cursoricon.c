@@ -65,6 +65,7 @@ typedef struct
 #define ANI_seq__ID RIFF_FOURCC('s', 'e', 'q', ' ')
 #define ANI_fram_ID RIFF_FOURCC('f', 'r', 'a', 'm')
 #define ANI_icon_ID RIFF_FOURCC('i', 'c', 'o', 'n')
+#define ANI_rate_ID RIFF_FOURCC('r', 'a', 't', 'e')
 
 #define ANI_FLAG_ICON       0x1
 #define ANI_FLAG_SEQUENCE   0x2
@@ -124,8 +125,63 @@ typedef struct {
     DWORD                chunk_type; /* ANI_ACON_ID */
     riff_header_t        header;     /* RIFF animated cursor header */
     riff_list_t          frame_list; /* RIFF animated cursor frame list info */
-    riff_icon32x32x32_t  frames[3];  /* array of animated cursor frames */
+    riff_icon32x32x32_t  frames[3];  /* array of three animated cursor frames */
 } riff_cursor3_t;
+
+typedef struct {
+    DWORD                chunk_id;   /* ANI_rate_ID */
+    DWORD                chunk_size; /* actual size of data */
+    DWORD                rate[3];    /* animated cursor rate data */
+} riff_rate3_t;
+
+typedef struct {
+    DWORD                chunk_id;   /* ANI_RIFF_ID */
+    DWORD                chunk_size; /* actual size of data */
+    DWORD                chunk_type; /* ANI_ACON_ID */
+    riff_header_t        header;     /* RIFF animated cursor header */
+    riff_rate3_t         rates;      /* rate data for three cursor frames */
+    riff_list_t          frame_list; /* RIFF animated cursor frame list info */
+    riff_icon32x32x32_t  frames[3];  /* array of three animated cursor frames */
+} riff_cursor3_rate_t;
+
+#define EMPTY_ICON32 \
+{ \
+    ANI_icon_ID, \
+    sizeof(ani_frame32x32x32), \
+    { \
+        { \
+            0x0, /* reserved */ \
+            0,   /* type: icon(1), cursor(2) */ \
+            1,   /* count */ \
+            { \
+                { \
+                    32,                        /* width */ \
+                    32,                        /* height */ \
+                    0,                         /* color count */ \
+                    0x0,                       /* reserved */ \
+                    16,                        /* x hotspot */ \
+                    16,                        /* y hotspot */ \
+                    sizeof(ani_data32x32x32),  /* DIB size */ \
+                    sizeof(CURSORICONFILEDIR)  /* DIB offset */ \
+                } \
+            } \
+        }, \
+        { \
+              sizeof(BITMAPINFOHEADER),  /* structure for DIB-type data */ \
+              32,                        /* width */ \
+              32*2,                      /* actual height times two */ \
+              1,                         /* planes */ \
+              32,                        /* bpp */ \
+              BI_RGB,                    /* compression */ \
+              0,                         /* image size */ \
+              0,                         /* biXPelsPerMeter */ \
+              0,                         /* biYPelsPerMeter */ \
+              0,                         /* biClrUsed */ \
+              0                          /* biClrImportant */ \
+        }, \
+        { /* DIB data: left uninitialized */ } \
+    } \
+}
 
 riff_cursor1_t empty_anicursor = {
     ANI_RIFF_ID,
@@ -152,43 +208,7 @@ riff_cursor1_t empty_anicursor = {
         ANI_fram_ID,
     },
     {
-        {
-            ANI_icon_ID,
-            sizeof(ani_frame32x32x32),
-            {
-                {
-                    0x0, /* reserved */
-                    0,   /* type: icon(1), cursor(2) */
-                    1,   /* count */
-                    {
-                        {
-                            32,                        /* width */
-                            32,                        /* height */
-                            0,                         /* color count */
-                            0x0,                       /* reserved */
-                            16,                        /* x hotspot */
-                            16,                        /* y hotspot */
-                            sizeof(ani_data32x32x32),  /* DIB size */
-                            sizeof(CURSORICONFILEDIR)  /* DIB offset */
-                        }
-                    }
-                },
-                {
-                      sizeof(BITMAPINFOHEADER),  /* structure for DIB-type data */
-                      32,                        /* width */
-                      32*2,                      /* actual height times two */
-                      1,                         /* planes */
-                      32,                        /* bpp */
-                      BI_RGB,                    /* compression */
-                      0,                         /* image size */
-                      0,                         /* biXPelsPerMeter */
-                      0,                         /* biYPelsPerMeter */
-                      0,                         /* biClrUsed */
-                      0                          /* biClrImportant */
-                },
-                { /* DIB data: left uninitialized */ }
-            }
-        }
+        EMPTY_ICON32
     }
 };
 
@@ -217,117 +237,45 @@ riff_cursor3_t empty_anicursor3 = {
         ANI_fram_ID,
     },
     {
+        EMPTY_ICON32,
+        EMPTY_ICON32,
+        EMPTY_ICON32
+    }
+};
+
+riff_cursor3_rate_t empty_anicursor3_rate = {
+    ANI_RIFF_ID,
+    sizeof(empty_anicursor3_rate) - sizeof(DWORD)*2,
+    ANI_ACON_ID,
+    {
+        ANI_anih_ID,
+        sizeof(ani_header),
         {
-            ANI_icon_ID,
-            sizeof(ani_frame32x32x32),
-            {
-                {
-                    0x0, /* reserved */
-                    0,   /* type: icon(1), cursor(2) */
-                    1,   /* count */
-                    {
-                        {
-                            32,                        /* width */
-                            32,                        /* height */
-                            0,                         /* color count */
-                            0x0,                       /* reserved */
-                            16,                        /* x hotspot */
-                            16,                        /* y hotspot */
-                            sizeof(ani_data32x32x32),  /* DIB size */
-                            sizeof(CURSORICONFILEDIR)  /* DIB offset */
-                        }
-                    }
-                },
-                {
-                      sizeof(BITMAPINFOHEADER),  /* structure for DIB-type data */
-                      32,                        /* width */
-                      32*2,                      /* actual height times two */
-                      1,                         /* planes */
-                      32,                        /* bpp */
-                      BI_RGB,                    /* compression */
-                      0,                         /* image size */
-                      0,                         /* biXPelsPerMeter */
-                      0,                         /* biYPelsPerMeter */
-                      0,                         /* biClrUsed */
-                      0                          /* biClrImportant */
-                },
-                { /* DIB data: left uninitialized */ }
-            }
-        },
-        {
-            ANI_icon_ID,
-            sizeof(ani_frame32x32x32),
-            {
-                {
-                    0x0, /* reserved */
-                    0,   /* type: icon(1), cursor(2) */
-                    1,   /* count */
-                    {
-                        {
-                            32,                        /* width */
-                            32,                        /* height */
-                            0,                         /* color count */
-                            0x0,                       /* reserved */
-                            16,                        /* x hotspot */
-                            16,                        /* y hotspot */
-                            sizeof(ani_data32x32x32),  /* DIB size */
-                            sizeof(CURSORICONFILEDIR)  /* DIB offset */
-                        }
-                    }
-                },
-                {
-                      sizeof(BITMAPINFOHEADER),  /* structure for DIB-type data */
-                      32,                        /* width */
-                      32*2,                      /* actual height times two */
-                      1,                         /* planes */
-                      32,                        /* bpp */
-                      BI_RGB,                    /* compression */
-                      0,                         /* image size */
-                      0,                         /* biXPelsPerMeter */
-                      0,                         /* biYPelsPerMeter */
-                      0,                         /* biClrUsed */
-                      0                          /* biClrImportant */
-                },
-                { /* DIB data: left uninitialized */ }
-            }
-        },
-        {
-            ANI_icon_ID,
-            sizeof(ani_frame32x32x32),
-            {
-                {
-                    0x0, /* reserved */
-                    0,   /* type: icon(1), cursor(2) */
-                    1,   /* count */
-                    {
-                        {
-                            32,                        /* width */
-                            32,                        /* height */
-                            0,                         /* color count */
-                            0x0,                       /* reserved */
-                            16,                        /* x hotspot */
-                            16,                        /* y hotspot */
-                            sizeof(ani_data32x32x32),  /* DIB size */
-                            sizeof(CURSORICONFILEDIR)  /* DIB offset */
-                        }
-                    }
-                },
-                {
-                      sizeof(BITMAPINFOHEADER),  /* structure for DIB-type data */
-                      32,                        /* width */
-                      32*2,                      /* actual height times two */
-                      1,                         /* planes */
-                      32,                        /* bpp */
-                      BI_RGB,                    /* compression */
-                      0,                         /* image size */
-                      0,                         /* biXPelsPerMeter */
-                      0,                         /* biYPelsPerMeter */
-                      0,                         /* biClrUsed */
-                      0                          /* biClrImportant */
-                },
-                { /* DIB data: left uninitialized */ }
-            }
+            sizeof(ani_header),
+            3,            /* frames */
+            3,            /* steps */
+            32,           /* width */
+            32,           /* height */
+            32,           /* depth */
+            1,            /* planes */
+            0xbeef,       /* display rate in jiffies */
+            ANI_FLAG_ICON /* flags */
         }
+    },
+    {
+        ANI_rate_ID,
+        sizeof(riff_rate3_t) - sizeof(DWORD)*2,
+        { 0xc0de, 0xcafe, 0xbabe}
+    },
+    {
+        ANI_LIST_ID,
+        sizeof(riff_icon32x32x32_t)*(3 /*frames*/) + sizeof(DWORD),
+        ANI_fram_ID,
+    },
+    {
+        EMPTY_ICON32,
+        EMPTY_ICON32,
+        EMPTY_ICON32
     }
 };
 
@@ -1630,6 +1578,44 @@ static void test_GetCursorFrameInfo(void)
         "GetCursorFrameInfo() unexpected param 5 value (%d != 0xdead).\n", unk4);
 
     /* Clean up multi-frame animated cursor. */
+    ret = DestroyCursor(h1);
+    ok(ret, "DestroyCursor() failed.\n");
+
+    /* Creating a multi-frame animated cursor with rate data. */
+    for (i=0; i<empty_anicursor3_rate.header.header.num_frames; i++)
+    {
+        empty_anicursor3_rate.frames[i].data.icon_info.idType = 2; /* type: cursor */
+        empty_anicursor3_rate.frames[i].data.icon_info.idEntries[0].xHotspot = 3;
+        empty_anicursor3_rate.frames[i].data.icon_info.idEntries[0].yHotspot = 3;
+    }
+    h1 = CreateIconFromResource((PBYTE) &empty_anicursor3_rate, sizeof(empty_anicursor3_rate), FALSE, 0x00030000);
+    ok(h1 != NULL, "Create cursor failed.\n");
+
+    /* Check number of steps in multi-frame animated cursor with rate data */
+    i=0;
+    while (DrawIconEx(hdc, 0, 0, h1, 32, 32, i, NULL, DI_NORMAL))
+        i++;
+    ok(i == empty_anicursor3_rate.header.header.num_steps,
+        "Unexpected number of steps in cursor (%d != %d)\n",
+        i, empty_anicursor3_rate.header.header.num_steps);
+
+    /* Check GetCursorFrameInfo behavior on a multi-frame animated cursor with rate data */
+    for (i=0; i<empty_anicursor3_rate.header.header.num_frames; i++)
+    {
+        unk1 = unk2 = unk3 = unk4 = 0xdead;
+        h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)i, &unk3, &unk4);
+        ok(h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p != 0).\n", h1, h2);
+        ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
+        ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
+        ok(unk3 == empty_anicursor3_rate.rates.rate[i],
+            "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x%x).\n",
+            unk3, empty_anicursor3_rate.rates.rate[i]);
+        ok(unk4 == empty_anicursor3_rate.header.header.num_steps,
+            "GetCursorFrameInfo() unexpected param 5 value (%d != %d).\n",
+            unk4, empty_anicursor3_rate.header.header.num_steps);
+    }
+
+    /* Clean up multi-frame animated cursor with rate data. */
     ret = DestroyCursor(h1);
     ok(ret, "DestroyCursor() failed.\n");
 

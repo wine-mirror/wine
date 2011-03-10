@@ -83,6 +83,7 @@ static struct list icon_cache = LIST_INIT( icon_cache );
 
 struct cursoricon_frame
 {
+    UINT               delay;    /* frame-specific delay between this frame and the next (in jiffies) */
     HBITMAP            color;    /* color bitmap */
     HBITMAP            alpha;    /* pre-multiplied alpha bitmap for 32-bpp icons */
     HBITMAP            mask;     /* mask bitmap (followed by color for 1-bpp icons) */
@@ -102,7 +103,7 @@ struct cursoricon_object
     POINT                   hotspot;
     UINT                    num_frames; /* number of frames in the icon/cursor */
     UINT                    num_steps;  /* number of sequence steps in the icon/cursor */
-    UINT                    delay;      /* delay between frames (in jiffies) */
+    UINT                    delay;      /* global delay between frames (in jiffies) */
     struct cursoricon_frame frames[1];  /* icon frame information */
 };
 
@@ -850,6 +851,7 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi, HMODULE module, LPCW
         info->hotspot = hotspot;
         info->width   = width;
         info->height  = height;
+        info->frames[0].delay = ~0;
         info->frames[0].color = color;
         info->frames[0].mask  = mask;
         info->frames[0].alpha = alpha;
@@ -989,6 +991,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
                                              INT width, INT height, INT depth, UINT loadflags )
 {
     struct cursoricon_object *info;
+    DWORD *frame_rates = NULL;
     ani_header header = {0};
     HCURSOR cursor = 0;
     UINT i, error = 0;
@@ -1029,8 +1032,10 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
         FIXME("Animated icon/cursor sequence data is not currently supported, frames may appear out of sequence.\n");
 
     riff_find_chunk( ANI_rate_ID, 0, &ACON_chunk, &rate_chunk );
-    if (rate_chunk.data)
-        FIXME("Animated icon/cursor multiple frame-frate data not currently supported.\n");
+    if (rate_chunk.data && header.num_steps == header.num_frames)
+        frame_rates = (DWORD *) rate_chunk.data;
+    else if (rate_chunk.data && header.num_steps != 1)
+        FIXME("Animated icon/cursor rate data for sequence-based cursors not supported.\n");
 
     riff_find_chunk( ANI_fram_ID, ANI_LIST_ID, &ACON_chunk, &fram_chunk );
     if (!fram_chunk.data)
@@ -1075,6 +1080,10 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
             header.width = entry->bWidth;
             header.height = entry->bHeight;
         }
+        if (frame_rates)
+            frame->delay = frame_rates[i];
+        else
+            frame->delay = ~0;
 
         /* Grab a frame from the animation */
         if (!create_icon_bitmaps( bmi, header.width, header.height,
@@ -1419,6 +1428,7 @@ HICON WINAPI CopyIcon( HICON hIcon )
         ptrNew->width   = ptrOld->width;
         ptrNew->height  = ptrOld->height;
         ptrNew->hotspot = ptrOld->hotspot;
+        ptrNew->frames[0].delay = ptrOld->frames[0].delay;
         ptrNew->frames[0].mask  = copy_bitmap( ptrOld->frames[0].mask );
         ptrNew->frames[0].color = copy_bitmap( ptrOld->frames[0].color );
         ptrNew->frames[0].alpha = copy_bitmap( ptrOld->frames[0].alpha );
@@ -1752,7 +1762,11 @@ HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD istep, DWOR
                 *num_steps = ~0;
             else
                 *num_steps = ptr->num_steps;
-            *rate_jiffies = ptr->delay;
+            /* If this specific frame does not have a delay then use the global delay */
+            if (ptr->frames[istep].delay == ~0)
+                *rate_jiffies = ptr->delay;
+            else
+                *rate_jiffies = ptr->frames[istep].delay;
         }
     }
 
@@ -1957,6 +1971,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         info->is_icon = iconinfo->fIcon;
         info->width   = width;
         info->height  = height;
+        info->frames[0].delay = ~0;
         info->frames[0].color = color;
         info->frames[0].mask  = mask;
         info->frames[0].alpha = create_alpha_bitmap( iconinfo->hbmColor, mask, NULL, NULL );
