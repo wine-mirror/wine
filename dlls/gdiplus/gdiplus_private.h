@@ -216,6 +216,7 @@ struct GpTexture{
     GpMatrix *transform;
     GpImage *image;
     GpImageAttributes *imageattributes;
+    BYTE *bitmap_bits; /* image bits converted to ARGB and run through imageattributes */
 };
 
 struct GpPath{

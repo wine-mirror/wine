@@ -1022,6 +1022,7 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
             GdipDeleteMatrix(((GpTexture*)brush)->transform);
             GdipDisposeImage(((GpTexture*)brush)->image);
             GdipDisposeImageAttributes(((GpTexture*)brush)->imageattributes);
+            GdipFree(((GpTexture*)brush)->bitmap_bits);
             break;
         default:
             break;

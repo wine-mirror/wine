@@ -750,6 +750,7 @@ static INT brush_can_fill_pixels(GpBrush *brush)
     case BrushTypeSolidColor:
     case BrushTypeHatchFill:
     case BrushTypeLinearGradient:
+    case BrushTypeTextureFill:
         return 1;
     default:
         return 0;
@@ -850,6 +851,115 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
                     REAL pos = draw_points[0].X + x * x_delta + y * y_delta;
 
                     argb_pixels[x + y*cdwStride] = blend_line_gradient(fill, pos);
+                }
+            }
+        }
+
+        return stat;
+    }
+    case BrushTypeTextureFill:
+    {
+        GpTexture *fill = (GpTexture*)brush;
+        GpPointF draw_points[3];
+        GpStatus stat;
+        GpMatrix *world_to_texture;
+        int x, y;
+        GpBitmap *bitmap;
+        int src_stride;
+        GpRect src_area;
+
+        if (fill->image->type != ImageTypeBitmap)
+        {
+            FIXME("metafile texture brushes not implemented\n");
+            return NotImplemented;
+        }
+
+        bitmap = (GpBitmap*)fill->image;
+        src_stride = sizeof(ARGB) * bitmap->width;
+
+        src_area.X = src_area.Y = 0;
+        src_area.Width = bitmap->width;
+        src_area.Height = bitmap->height;
+
+        draw_points[0].X = fill_area->X;
+        draw_points[0].Y = fill_area->Y;
+        draw_points[1].X = fill_area->X+1;
+        draw_points[1].Y = fill_area->Y;
+        draw_points[2].X = fill_area->X;
+        draw_points[2].Y = fill_area->Y+1;
+
+        /* Transform the points to the co-ordinate space of the bitmap. */
+        stat = GdipTransformPoints(graphics, CoordinateSpaceWorld,
+            CoordinateSpaceDevice, draw_points, 3);
+
+        if (stat == Ok)
+        {
+            stat = GdipCloneMatrix(fill->transform, &world_to_texture);
+        }
+
+        if (stat == Ok)
+        {
+            stat = GdipInvertMatrix(world_to_texture);
+
+            if (stat == Ok)
+                stat = GdipTransformMatrixPoints(world_to_texture, draw_points, 3);
+
+            GdipDeleteMatrix(world_to_texture);
+        }
+
+        if (stat == Ok && !fill->bitmap_bits)
+        {
+            BitmapData lockeddata;
+
+            fill->bitmap_bits = GdipAlloc(sizeof(ARGB) * bitmap->width * bitmap->height);
+            if (!fill->bitmap_bits)
+                stat = OutOfMemory;
+
+            if (stat == Ok)
+            {
+                lockeddata.Width = bitmap->width;
+                lockeddata.Height = bitmap->height;
+                lockeddata.Stride = src_stride;
+                lockeddata.PixelFormat = PixelFormat32bppARGB;
+                lockeddata.Scan0 = fill->bitmap_bits;
+
+                stat = GdipBitmapLockBits(bitmap, &src_area, ImageLockModeRead|ImageLockModeUserInputBuf,
+                    PixelFormat32bppARGB, &lockeddata);
+            }
+
+            if (stat == Ok)
+                stat = GdipBitmapUnlockBits(bitmap, &lockeddata);
+
+            if (stat == Ok)
+                apply_image_attributes(fill->imageattributes, fill->bitmap_bits,
+                    bitmap->width, bitmap->height,
+                    src_stride, ColorAdjustTypeBitmap);
+
+            if (stat != Ok)
+            {
+                GdipFree(fill->bitmap_bits);
+                fill->bitmap_bits = NULL;
+            }
+        }
+
+        if (stat == Ok)
+        {
+            REAL x_dx = draw_points[1].X - draw_points[0].X;
+            REAL x_dy = draw_points[1].Y - draw_points[0].Y;
+            REAL y_dx = draw_points[2].X - draw_points[0].X;
+            REAL y_dy = draw_points[2].Y - draw_points[0].Y;
+
+            for (y=0; y<fill_area->Height; y++)
+            {
+                for (x=0; x<fill_area->Width; x++)
+                {
+                    GpPointF point;
+                    point.X = draw_points[0].X + x * x_dx + y * y_dx;
+                    point.Y = draw_points[0].Y + y * x_dy + y * y_dy;
+
+                    argb_pixels[x + y*cdwStride] = resample_bitmap_pixel(
+                        &src_area, fill->bitmap_bits, bitmap->width, bitmap->height,
+                        &point, fill->imageattributes, graphics->interpolation);
                 }
             }
         }
