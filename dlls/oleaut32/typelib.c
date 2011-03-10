@@ -1095,7 +1095,6 @@ typedef struct tagTLBImplType
     int implflags;          /* IMPLFLAG_*s */
     int ctCustData;
     TLBCustData * pCustData;/* linked list to custom data; */
-    struct tagTLBImplType *next;
 } TLBImplType;
 
 /* internal TypeInfo data */
@@ -1125,7 +1124,7 @@ typedef struct tagITypeInfoImpl
     TLBVarDesc * varlist;       /* linked list with variable descriptions */
 
     /* Implemented Interfaces  */
-    TLBImplType * impltypelist;
+    TLBImplType *impltypes;
 
     int ctCustData;
     TLBCustData * pCustData;        /* linked list to cust data; */
@@ -1334,13 +1333,15 @@ static void dump_TLBRefType(const ITypeLibImpl *pTL)
     }
 }
 
-static void dump_TLBImplType(const TLBImplType * impl)
+static void dump_TLBImplType(const TLBImplType * impl, UINT n)
 {
-    while (impl) {
-        TRACE_(typelib)(
-		"implementing/inheriting interface hRef = %x implflags %x\n",
-		impl->hRef, impl->implflags);
-	impl = impl->next;
+    if(!impl)
+        return;
+    while (n) {
+        TRACE_(typelib)("implementing/inheriting interface hRef = %x implflags %x\n",
+            impl->hRef, impl->implflags);
+        ++impl;
+        --n;
     }
 }
 
@@ -1434,7 +1435,7 @@ static void dump_TypeInfo(const ITypeInfoImpl * pty)
     if (TRACE_ON(ole))
         dump_TLBFuncDesc(pty->funcdescs, pty->TypeAttr.cFuncs);
     dump_TLBVarDesc(pty->varlist);
-    dump_TLBImplType(pty->impltypelist);
+    dump_TLBImplType(pty->impltypes, pty->TypeAttr.cImplTypes);
 }
 
 static void dump_VARDESC(const VARDESC *v)
@@ -2224,21 +2225,22 @@ static void MSFT_DoImplTypes(TLBContext *pcx, ITypeInfoImpl *pTI, int count,
 {
     int i;
     MSFT_RefRecord refrec;
-    TLBImplType **ppImpl = &pTI->impltypelist;
+    TLBImplType *pImpl;
 
     TRACE_(typelib)("\n");
 
+    pTI->impltypes = heap_alloc_zero(count * sizeof(TLBImplType));
+    pImpl = pTI->impltypes;
     for(i=0;i<count;i++){
         if(offset<0) break; /* paranoia */
-        *ppImpl = heap_alloc_zero(sizeof(**ppImpl));
         MSFT_ReadLEDWords(&refrec,sizeof(refrec),pcx,offset+pcx->pTblDir->pRefTab.offset);
         MSFT_DoRefType(pcx, pTI->pTypeLib, refrec.reftype);
-	(*ppImpl)->hRef = refrec.reftype;
-	(*ppImpl)->implflags=refrec.flags;
-        (*ppImpl)->ctCustData=
-            MSFT_CustData(pcx, refrec.oCustData, &(*ppImpl)->pCustData);
+        pImpl->hRef = refrec.reftype;
+        pImpl->implflags=refrec.flags;
+        pImpl->ctCustData=
+            MSFT_CustData(pcx, refrec.oCustData, &pImpl->pCustData);
         offset=refrec.onext;
-        ppImpl=&((*ppImpl)->next);
+        ++pImpl;
     }
 }
 /*
@@ -2324,15 +2326,15 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
 
             if (tiBase.datatype1 != -1)
             {
-                ptiRet->impltypelist = heap_alloc_zero(sizeof(TLBImplType));
-                ptiRet->impltypelist->hRef = tiBase.datatype1;
+                ptiRet->impltypes = heap_alloc_zero(sizeof(TLBImplType));
+                ptiRet->impltypes[0].hRef = tiBase.datatype1;
                 MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
             }
-          break;
+            break;
         default:
-            ptiRet->impltypelist = heap_alloc_zero(sizeof(TLBImplType));
+            ptiRet->impltypes = heap_alloc_zero(sizeof(TLBImplType));
             MSFT_DoRefType(pcx, pLibInfo, tiBase.datatype1);
-	    ptiRet->impltypelist->hRef = tiBase.datatype1;
+            ptiRet->impltypes[0].hRef = tiBase.datatype1;
             break;
        }
     }
@@ -3401,7 +3403,7 @@ static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
 			  BOOL OneOnly, const sltg_ref_lookup_t *ref_lookup)
 {
     SLTG_ImplInfo *info;
-    TLBImplType **ppImplType = &pTI->impltypelist;
+    TLBImplType *pImplType;
     /* I don't really get this structure, usually it's 0x16 bytes
        long, but iuser.tlb contains some that are 0x18 bytes long.
        That's ok because we can use the next ptr to jump to the next
@@ -3410,14 +3412,22 @@ static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
        the last one is the regular 0x16 bytes. */
 
     info = (SLTG_ImplInfo*)pBlk;
-    while(1) {
-	*ppImplType = heap_alloc_zero(sizeof(**ppImplType));
-        sltg_get_typelib_ref(ref_lookup, info->ref, &(*ppImplType)->hRef);
-	(*ppImplType)->implflags = info->impltypeflags;
-	pTI->TypeAttr.cImplTypes++;
-	ppImplType = &(*ppImplType)->next;
-
+    while(1){
+        pTI->TypeAttr.cImplTypes++;
         if(info->next == 0xffff)
+            break;
+        info = (SLTG_ImplInfo*)(pBlk + info->next);
+    }
+
+    info = (SLTG_ImplInfo*)pBlk;
+    pTI->impltypes = heap_alloc_zero(pTI->TypeAttr.cImplTypes * sizeof(TLBImplType));
+    pImplType = pTI->impltypes;
+    while(1) {
+	sltg_get_typelib_ref(ref_lookup, info->ref, &pImplType->hRef);
+	pImplType->implflags = info->impltypeflags;
+	++pImplType;
+
+	if(info->next == 0xffff)
 	    break;
 	if(OneOnly)
 	    FIXME_(typelib)("Interface inheriting more than one interface\n");
@@ -4982,8 +4992,7 @@ static ULONG WINAPI ITypeInfo_fnAddRef( ITypeInfo2 *iface)
 static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
 {
     TLBVarDesc *pVInfo, *pVInfoNext;
-    TLBImplType *pImpl, *pImplNext;
-    UINT fdc;
+    UINT fdc, itc;
 
     TRACE("destroying ITypeInfo(%p)\n",This);
 
@@ -5034,12 +5043,15 @@ static void ITypeInfoImpl_Destroy(ITypeInfoImpl *This)
         pVInfoNext = pVInfo->next;
         heap_free(pVInfo);
     }
-    for (pImpl = This->impltypelist; pImpl; pImpl = pImplNext)
-    {
-        TLB_FreeCustData(pImpl->pCustData);
-        pImplNext = pImpl->next;
-        heap_free(pImpl);
+
+    if(This->impltypes){
+        for (itc = 0; itc < This->TypeAttr.cImplTypes; ++itc){
+            TLBImplType *pImpl = &This->impltypes[itc];
+            TLB_FreeCustData(pImpl->pCustData);
+        }
+        heap_free(This->impltypes);
     }
+
     TLB_FreeCustData(This->pCustData);
 
     heap_free(This);
@@ -5269,12 +5281,12 @@ static HRESULT ITypeInfoImpl_GetInternalDispatchFuncDesc( ITypeInfo *iface,
     else
         *hrefoffset = DISPATCH_HREF_OFFSET;
 
-    if(This->impltypelist)
+    if(This->impltypes)
     {
         ITypeInfo *pSubTypeInfo;
         UINT sub_funcs;
 
-        hr = ITypeInfo_GetRefTypeInfo(iface, This->impltypelist->hRef, &pSubTypeInfo);
+        hr = ITypeInfo_GetRefTypeInfo(iface, This->impltypes[0].hRef, &pSubTypeInfo);
         if (FAILED(hr))
             return hr;
 
@@ -5485,12 +5497,12 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
       }
       else
       {
-        if(This->impltypelist &&
+        if(This->impltypes &&
 	   (This->TypeAttr.typekind==TKIND_INTERFACE || This->TypeAttr.typekind==TKIND_DISPATCH)) {
           /* recursive search */
           ITypeInfo *pTInfo;
           HRESULT result;
-          result=ITypeInfo_GetRefTypeInfo(iface, This->impltypelist->hRef,
+          result=ITypeInfo_GetRefTypeInfo(iface, This->impltypes[0].hRef,
 					  &pTInfo);
           if(SUCCEEDED(result))
 	  {
@@ -5526,9 +5538,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
 	HREFTYPE  *pRefType)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    UINT i;
     HRESULT hr = S_OK;
-    const TLBImplType *pImpl = This->impltypelist;
 
     TRACE("(%p) index %d\n", This, index);
     if (TRACE_ON(ole)) dump_TypeInfo(This);
@@ -5556,16 +5566,10 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeOfImplType(
     }
     else
     {
-      /* get element n from linked list */
-      for(i=0; pImpl && i<index; i++)
-      {
-        pImpl = pImpl->next;
-      }
-
-      if (pImpl)
-        *pRefType = pImpl->hRef;
-      else
-        hr = TYPE_E_ELEMENTNOTFOUND;
+        if(index >= This->TypeAttr.cImplTypes)
+            hr = TYPE_E_ELEMENTNOTFOUND;
+        else
+            *pRefType = This->impltypes[index].hRef;
     }
 
     if(TRACE_ON(ole))
@@ -5588,24 +5592,20 @@ static HRESULT WINAPI ITypeInfo_fnGetImplTypeFlags( ITypeInfo2 *iface,
         UINT index, INT  *pImplTypeFlags)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    UINT i;
-    TLBImplType *pImpl;
 
     TRACE("(%p) index %d\n", This, index);
-    for(i=0, pImpl=This->impltypelist; i<index && pImpl;
-	i++, pImpl=pImpl->next)
-        ;
-    if(i==index && pImpl){
-        *pImplTypeFlags=pImpl->implflags;
+
+    if(This->TypeAttr.typekind == TKIND_DISPATCH && index == 0){
+        *pImplTypeFlags = 0;
         return S_OK;
     }
-    *pImplTypeFlags=0;
 
-    if(This->TypeAttr.typekind==TKIND_DISPATCH && !index)
-        return S_OK;
+    if(index >= This->TypeAttr.cImplTypes)
+        return TYPE_E_ELEMENTNOTFOUND;
 
-    WARN("ImplType %d not found\n", index);
-    return TYPE_E_ELEMENTNOTFOUND;
+    *pImplTypeFlags = This->impltypes[index].implflags;
+
+    return S_OK;
 }
 
 /* GetIDsOfNames
@@ -5652,11 +5652,11 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
         }
     }
     /* not found, see if it can be found in an inherited interface */
-    if(This->impltypelist) {
+    if(This->impltypes) {
         /* recursive search */
         ITypeInfo *pTInfo;
         ret=ITypeInfo_GetRefTypeInfo(iface,
-                This->impltypelist->hRef, &pTInfo);
+                This->impltypes[0].hRef, &pTInfo);
         if(SUCCEEDED(ret)){
             ret=ITypeInfo_GetIDsOfNames(pTInfo, rgszNames, cNames, pMemId );
             ITypeInfo_Release(pTInfo);
@@ -6639,10 +6639,10 @@ func_fail:
     /* not found, look for it in inherited interfaces */
     ITypeInfo2_GetTypeKind(iface, &type_kind);
     if(type_kind == TKIND_INTERFACE || type_kind == TKIND_DISPATCH) {
-        if(This->impltypelist) {
+        if(This->impltypes) {
             /* recursive search */
             ITypeInfo *pTInfo;
-            hres = ITypeInfo_GetRefTypeInfo(iface, This->impltypelist->hRef, &pTInfo);
+            hres = ITypeInfo_GetRefTypeInfo(iface, This->impltypes[0].hRef, &pTInfo);
             if(SUCCEEDED(hres)){
                 hres = ITypeInfo_Invoke(pTInfo,pIUnk,memid,wFlags,pDispParams,pVarResult,pExcepInfo,pArgErr);
                 ITypeInfo_Release(pTInfo);
@@ -6705,12 +6705,12 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
         }
     }
 
-    if(This->impltypelist &&
+    if(This->impltypes &&
        (This->TypeAttr.typekind==TKIND_INTERFACE || This->TypeAttr.typekind==TKIND_DISPATCH)) {
         /* recursive search */
         ITypeInfo *pTInfo;
         HRESULT result;
-        result = ITypeInfo_GetRefTypeInfo(iface, This->impltypelist->hRef,
+        result = ITypeInfo_GetRefTypeInfo(iface, This->impltypes[0].hRef,
                                         &pTInfo);
         if(SUCCEEDED(result)) {
             result = ITypeInfo_GetDocumentation(pTInfo, memid, pBstrName,
@@ -6781,11 +6781,11 @@ static HRESULT ITypeInfoImpl_GetDispatchRefTypeInfo( ITypeInfo *iface,
 
     TRACE("%p, 0x%x\n", iface, *hRefType);
 
-    if (This->impltypelist && (*hRefType & DISPATCH_HREF_MASK))
+    if (This->impltypes && (*hRefType & DISPATCH_HREF_MASK))
     {
         ITypeInfo *pSubTypeInfo;
 
-        hr = ITypeInfo_GetRefTypeInfo(iface, This->impltypelist->hRef, &pSubTypeInfo);
+        hr = ITypeInfo_GetRefTypeInfo(iface, This->impltypes[0].hRef, &pSubTypeInfo);
         if (FAILED(hr))
             return hr;
 
@@ -7345,17 +7345,14 @@ static HRESULT WINAPI ITypeInfo2_fnGetImplTypeCustData(
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData=NULL;
-    TLBImplType * pRDesc;
-    UINT i;
+    TLBImplType *pRDesc = &This->impltypes[index];
 
-    for(i=0, pRDesc=This->impltypelist; i!=index && pRDesc; i++, pRDesc=pRDesc->next);
+    if(index >= This->TypeAttr.cImplTypes)
+        return TYPE_E_ELEMENTNOTFOUND;
 
-    if(pRDesc)
+    for(pCData = pRDesc->pCustData; pCData; pCData = pCData->next)
     {
-      for(pCData=pRDesc->pCustData; pCData; pCData = pCData->next)
-      {
         if( IsEqualIID(guid, &pCData->guid)) break;
-      }
     }
 
     TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
@@ -7366,7 +7363,8 @@ static HRESULT WINAPI ITypeInfo2_fnGetImplTypeCustData(
         VariantCopy( pVarVal, &pCData->data);
         return S_OK;
     }
-    return E_INVALIDARG;  /* FIXME: correct? */
+
+    return TYPE_E_ELEMENTNOTFOUND;
 }
 
 /* ITypeInfo2::GetDocumentation2
@@ -7582,30 +7580,25 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllImplTypeCustData(
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData;
-    TLBImplType * pRDesc;
+    TLBImplType *pRDesc = &This->impltypes[index];
     UINT i;
+
     TRACE("(%p) index %d\n", This, index);
-    for(i=0, pRDesc=This->impltypelist; i!=index && pRDesc; i++,
-            pRDesc=pRDesc->next)
-        ;
-    if(pRDesc){
-        pCustData->prgCustData =
-            heap_alloc_zero(pRDesc->ctCustData * sizeof(CUSTDATAITEM));
-        if(pCustData->prgCustData ){
-            pCustData->cCustData=pRDesc->ctCustData;
-            for(i=0, pCData=pRDesc->pCustData; pCData; i++,
-                    pCData = pCData->next){
-                pCustData->prgCustData[i].guid=pCData->guid;
-                VariantCopy(& pCustData->prgCustData[i].varValue,
-                        & pCData->data);
-            }
-        }else{
-            ERR(" OUT OF MEMORY!\n");
-            return E_OUTOFMEMORY;
-        }
-        return S_OK;
+
+    if(index >= This->TypeAttr.cImplTypes)
+        return TYPE_E_ELEMENTNOTFOUND;
+
+    pCustData->prgCustData = heap_alloc_zero(pRDesc->ctCustData * sizeof(CUSTDATAITEM));
+    if(!pCustData->prgCustData)
+        return E_OUTOFMEMORY;
+
+    pCustData->cCustData=pRDesc->ctCustData;
+    for(i = 0, pCData = pRDesc->pCustData; pCData; i++, pCData = pCData->next){
+        pCustData->prgCustData[i].guid = pCData->guid;
+        VariantCopy(&pCustData->prgCustData[i].varValue, &pCData->data);
     }
-    return TYPE_E_ELEMENTNOTFOUND;
+
+    return S_OK;
 }
 
 static const ITypeInfo2Vtbl tinfvt =
@@ -7758,8 +7751,8 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTIClass->TypeAttr.cVars = 0;
     pTIClass->TypeAttr.wTypeFlags = 0;
 
-    pTIClass->impltypelist = heap_alloc_zero(sizeof(*pTIClass->impltypelist));
-    pTIClass->impltypelist->hRef = 0;
+    pTIClass->impltypes = heap_alloc_zero(sizeof(*pTIClass->impltypes));
+    pTIClass->impltypes[0].hRef = 0;
 
     ref = heap_alloc_zero(sizeof(*ref));
     ref->index = 0;
@@ -7857,12 +7850,12 @@ static HRESULT WINAPI ITypeComp_fnBind(
         }
     }
     /* FIXME: search each inherited interface, not just the first */
-    if (hr == DISP_E_MEMBERNOTFOUND && This->impltypelist) {
+    if (hr == DISP_E_MEMBERNOTFOUND && This->impltypes) {
         /* recursive search */
         ITypeInfo *pTInfo;
         ITypeComp *pTComp;
         HRESULT hr;
-        hr=ITypeInfo_GetRefTypeInfo((ITypeInfo *)&This->lpVtbl, This->impltypelist->hRef, &pTInfo);
+        hr=ITypeInfo_GetRefTypeInfo((ITypeInfo *)&This->lpVtbl, This->impltypes[0].hRef, &pTInfo);
         if (SUCCEEDED(hr))
         {
             hr = ITypeInfo_GetTypeComp(pTInfo,&pTComp);
