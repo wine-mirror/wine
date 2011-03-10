@@ -35,6 +35,9 @@ HBRUSH CDECL PSDRV_SelectBrush( PSDRV_PDEVICE *physDev, HBRUSH hbrush )
 
     TRACE("hbrush = %p\n", hbrush);
 
+    if (hbrush == GetStockObject( DC_BRUSH ))
+        logbrush.lbColor = GetDCBrushColor( physDev->hdc );
+
     switch(logbrush.lbStyle) {
 
     case BS_SOLID:
@@ -59,6 +62,20 @@ HBRUSH CDECL PSDRV_SelectBrush( PSDRV_PDEVICE *physDev, HBRUSH hbrush )
 
     physDev->brush.set = FALSE;
     return hbrush;
+}
+
+
+/***********************************************************************
+ *           SetDCBrushColor (WINEPS.@)
+ */
+COLORREF CDECL PSDRV_SetDCBrushColor( PSDRV_PDEVICE *physDev, COLORREF color )
+{
+    if (GetCurrentObject( physDev->hdc, OBJ_BRUSH ) == GetStockObject( DC_BRUSH ))
+    {
+        PSDRV_CreateColor( physDev, &physDev->brush.color, color );
+        physDev->brush.set = FALSE;
+    }
+    return color;
 }
 
 

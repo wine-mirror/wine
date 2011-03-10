@@ -69,6 +69,8 @@ HPEN CDECL PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
         physDev->pen.width = PSDRV_XWStoDS( physDev, physDev->pen.width );
         if(physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     }
+    if (hpen == GetStockObject( DC_PEN ))
+        logpen.lopnColor = GetDCPenColor( physDev->hdc );
 
     switch (logpen.lopnStyle & PS_JOIN_MASK)
     {
@@ -121,6 +123,17 @@ HPEN CDECL PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
 
     physDev->pen.set = FALSE;
     return hpen;
+}
+
+
+/***********************************************************************
+ *           SetDCPenColor (WINEPS.@)
+ */
+COLORREF CDECL PSDRV_SetDCPenColor( PSDRV_PDEVICE *physDev, COLORREF color )
+{
+    if (GetCurrentObject( physDev->hdc, OBJ_PEN ) == GetStockObject( DC_PEN ))
+        PSDRV_CreateColor( physDev, &physDev->pen.color, color );
+    return color;
 }
 
 
