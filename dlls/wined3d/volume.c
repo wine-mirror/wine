@@ -220,13 +220,11 @@ static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *ifa
     return resource_get_type(&((IWineD3DVolumeImpl *)iface)->resource);
 }
 
-static void WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, struct wined3d_resource_desc *desc)
+struct wined3d_resource * WINAPI IWineD3DVolumeImpl_GetResource(IWineD3DVolume *iface)
 {
-    IWineD3DVolumeImpl *volume = (IWineD3DVolumeImpl *)iface;
+    TRACE("iface %p.\n", iface);
 
-    TRACE("iface %p, desc %p.\n", iface, desc);
-
-    wined3d_resource_get_desc(&volume->resource, desc);
+    return &((IWineD3DVolumeImpl *)iface)->resource;
 }
 
 static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
@@ -309,7 +307,7 @@ static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_PreLoad,
     IWineD3DVolumeImpl_GetType,
     /* IWineD3DVolume */
-    IWineD3DVolumeImpl_GetDesc,
+    IWineD3DVolumeImpl_GetResource,
     IWineD3DVolumeImpl_Map,
     IWineD3DVolumeImpl_Unmap,
 };

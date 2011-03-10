@@ -180,13 +180,13 @@ static HRESULT WINAPI IDirect3DVolume9Impl_GetDesc(IDirect3DVolume9 *iface, D3DV
 {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
     struct wined3d_resource_desc wined3d_desc;
+    struct wined3d_resource *wined3d_resource;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
     wined3d_mutex_lock();
-
-    IWineD3DVolume_GetDesc(This->wineD3DVolume, &wined3d_desc);
-
+    wined3d_resource = IWineD3DVolume_GetResource(This->wineD3DVolume);
+    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     wined3d_mutex_unlock();
 
     desc->Format = d3dformat_from_wined3dformat(wined3d_desc.format);

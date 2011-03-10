@@ -2324,8 +2324,7 @@ interface IWineD3DSurface : IWineD3DResource
 ]
 interface IWineD3DVolume : IWineD3DResource
 {
-    void GetDesc(
-        [out] struct wined3d_resource_desc *desc
+    struct wined3d_resource *GetResource(
     );
     HRESULT Map(
         [out] WINED3DLOCKED_BOX *locked_box,
