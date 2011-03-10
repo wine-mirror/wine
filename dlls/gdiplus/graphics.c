@@ -538,6 +538,40 @@ static ARGB resample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT 
         if (!fixme++)
             FIXME("Unimplemented interpolation %i\n", interpolation);
         /* fall-through */
+    case InterpolationModeBilinear:
+    {
+        REAL leftxf, topyf;
+        INT leftx, rightx, topy, bottomy;
+        ARGB topleft, topright, bottomleft, bottomright;
+        ARGB top, bottom;
+        float x_offset;
+
+        leftxf = floorf(point->X);
+        leftx = (INT)leftxf;
+        rightx = (INT)ceilf(point->X);
+        topyf = floorf(point->Y);
+        topy = (INT)topyf;
+        bottomy = (INT)ceilf(point->Y);
+
+        if (leftx == rightx && topy == bottomy)
+            return sample_bitmap_pixel(src_rect, bits, width, height,
+                leftx, topy, attributes);
+
+        topleft = sample_bitmap_pixel(src_rect, bits, width, height,
+            leftx, topy, attributes);
+        topright = sample_bitmap_pixel(src_rect, bits, width, height,
+            rightx, topy, attributes);
+        bottomleft = sample_bitmap_pixel(src_rect, bits, width, height,
+            leftx, bottomy, attributes);
+        bottomright = sample_bitmap_pixel(src_rect, bits, width, height,
+            rightx, bottomy, attributes);
+
+        x_offset = point->X - leftxf;
+        top = blend_colors(topleft, topright, x_offset);
+        bottom = blend_colors(bottomleft, bottomright, x_offset);
+
+        return blend_colors(top, bottom, point->Y - topyf);
+    }
     case InterpolationModeNearestNeighbor:
         return sample_bitmap_pixel(src_rect, bits, width, height,
             roundr(point->X), roundr(point->Y), attributes);
