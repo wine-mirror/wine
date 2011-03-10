@@ -120,8 +120,8 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     NULL,                            /* pSetBitmapBits */
     EMFDRV_SetBkColor,               /* pSetBkColor */
     EMFDRV_SetBkMode,                /* pSetBkMode */
-    NULL,                            /* pSetDCBrushColor */
-    NULL,                            /* pSetDCPenColor */
+    EMFDRV_SetDCBrushColor,          /* pSetDCBrushColor*/
+    EMFDRV_SetDCPenColor,            /* pSetDCPenColor*/
     NULL,                            /* pSetDIBColorTable */
     NULL,                            /* pSetDIBits */
     EMFDRV_SetDIBitsToDevice,        /* pSetDIBitsToDevice */
@@ -341,7 +341,8 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->handles_size = HANDLE_LIST_INC;
     physDev->cur_handles = 1;
     physDev->hFile = 0;
-
+    physDev->dc_brush = 0;
+    physDev->dc_pen = 0;
     physDev->horzres = GetDeviceCaps(hRefDC, HORZRES);
     physDev->vertres = GetDeviceCaps(hRefDC, VERTRES);
     physDev->logpixelsx = GetDeviceCaps(hRefDC, LOGPIXELSX);
@@ -454,6 +455,9 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 
     if(dc->saveLevel)
         RestoreDC(hdc, 1);
+
+    if (physDev->dc_brush) DeleteObject( physDev->dc_brush );
+    if (physDev->dc_pen) DeleteObject( physDev->dc_pen );
 
     emr.emr.iType = EMR_EOF;
     emr.emr.nSize = sizeof(emr);

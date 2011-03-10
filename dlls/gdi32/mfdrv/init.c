@@ -118,8 +118,8 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pSetBitmapBits */
     MFDRV_SetBkColor,                /* pSetBkColor */
     MFDRV_SetBkMode,                 /* pSetBkMode */
-    NULL,                            /* pSetDCBrushColor*/
-    NULL,                            /* pSetDCPenColor*/
+    MFDRV_SetDCBrushColor,           /* pSetDCBrushColor*/
+    MFDRV_SetDCPenColor,             /* pSetDCPenColor*/
     NULL,                            /* pSetDIBColorTable */
     NULL,                            /* pSetDIBits */
     MFDRV_SetDIBitsToDevice,         /* pSetDIBitsToDevice */

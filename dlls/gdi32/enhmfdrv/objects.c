@@ -287,7 +287,7 @@ HBRUSH CDECL EMFDRV_SelectBrush(PHYSDEV dev, HBRUSH hBrush )
      * We do however have to handle setting the higher order bit to
      * designate that this is a stock object.
      */
-    for (i = WHITE_BRUSH; i <= NULL_BRUSH; i++)
+    for (i = WHITE_BRUSH; i <= DC_BRUSH; i++)
     {
         if (hBrush == GetStockObject(i))
         {
@@ -448,7 +448,7 @@ HPEN CDECL EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
      * designate that this is a stock object.
      */
 
-    for (i = WHITE_PEN; i <= NULL_PEN; i++)
+    for (i = WHITE_PEN; i <= DC_PEN; i++)
     {
         if (hPen == GetStockObject(i))
         {
@@ -528,6 +528,48 @@ found:
     return EMFDRV_WriteRecord( dev, &emr.emr ) ? hPal : 0;
 }
 
+/******************************************************************
+ *         EMFDRV_SetDCBrushColor
+ */
+COLORREF CDECL EMFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color )
+{
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
+    EMRSELECTOBJECT emr;
+    DWORD index;
+
+    if (GetCurrentObject( physDev->hdc, OBJ_BRUSH ) != GetStockObject( DC_BRUSH )) return color;
+
+    if (physDev->dc_brush) DeleteObject( physDev->dc_brush );
+    if (!(physDev->dc_brush = CreateSolidBrush( color ))) return CLR_INVALID;
+    if (!(index = EMFDRV_CreateBrushIndirect(dev, physDev->dc_brush ))) return CLR_INVALID;
+    GDI_hdc_using_object( physDev->dc_brush, physDev->hdc );
+    emr.emr.iType = EMR_SELECTOBJECT;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihObject = index;
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
+}
+
+/******************************************************************
+ *         EMFDRV_SetDCPenColor
+ */
+COLORREF CDECL EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
+{
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
+    EMRSELECTOBJECT emr;
+    DWORD index;
+    LOGPEN logpen = { PS_SOLID, { 0, 0 }, color };
+
+    if (GetCurrentObject( physDev->hdc, OBJ_PEN ) != GetStockObject( DC_PEN )) return color;
+
+    if (physDev->dc_pen) DeleteObject( physDev->dc_pen );
+    if (!(physDev->dc_pen = CreatePenIndirect( &logpen ))) return CLR_INVALID;
+    if (!(index = EMFDRV_CreatePenIndirect(dev, physDev->dc_pen))) return CLR_INVALID;
+    GDI_hdc_using_object( physDev->dc_pen, physDev->hdc );
+    emr.emr.iType = EMR_SELECTOBJECT;
+    emr.emr.nSize = sizeof(emr);
+    emr.ihObject = index;
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
+}
 
 /******************************************************************
  *         EMFDRV_GdiComment

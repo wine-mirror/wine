@@ -144,3 +144,13 @@ BOOL  CDECL MFDRV_WidenPath( PHYSDEV dev )
 {
     return FALSE;
 }
+
+COLORREF CDECL MFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color )
+{
+    return CLR_INVALID;
+}
+
+COLORREF CDECL MFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
+{
+    return CLR_INVALID;
+}

@@ -38,6 +38,8 @@ typedef struct
     UINT       handles_size, cur_handles;
     HGDIOBJ   *handles;
     HANDLE     hFile;              /* Handle for disk based MetaFile */
+    HBRUSH     dc_brush;
+    HPEN       dc_pen;
     INT        horzres, vertres;
     INT        horzsize, vertsize;
     INT        logpixelsx, logpixelsy;
@@ -128,6 +130,8 @@ extern HPALETTE CDECL EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL for
 extern INT      CDECL EMFDRV_SetArcDirection( PHYSDEV dev, INT arcDirection ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern INT      CDECL EMFDRV_SetBkMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL EMFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern INT      CDECL EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest,
                                                 DWORD cx, DWORD cy, INT xSrc,
                                                 INT ySrc, UINT startscan, UINT lines,
