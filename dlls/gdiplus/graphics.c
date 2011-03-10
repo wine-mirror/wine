@@ -3856,39 +3856,90 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
 
     if (stat == Ok)
     {
-        UINT max_size=0;
-
-        for (i=0; i<scans_count; i++)
+        if (!graphics->image)
         {
-            UINT size = scans[i].Width * scans[i].Height;
+            /* If we have to go through gdi32, use as few alpha blends as possible. */
+            INT min_x, min_y, max_x, max_y;
+            UINT data_width, data_height;
 
-            if (size > max_size)
-                max_size = size;
-        }
+            min_x = scans[0].X;
+            min_y = scans[0].Y;
+            max_x = scans[0].X+scans[0].Width;
+            max_y = scans[0].Y+scans[0].Height;
 
-        pixel_data = GdipAlloc(sizeof(*pixel_data) * max_size);
-        if (!pixel_data)
-            stat = OutOfMemory;
-
-        if (stat == Ok)
-        {
-            for (i=0; i<scans_count; i++)
+            for (i=1; i<scans_count; i++)
             {
-                stat = brush_fill_pixels(graphics, brush, pixel_data, &scans[i],
-                    scans[i].Width);
+                min_x = min(min_x, scans[i].X);
+                min_y = min(min_y, scans[i].Y);
+                max_x = max(max_x, scans[i].X+scans[i].Width);
+                max_y = max(max_y, scans[i].Y+scans[i].Height);
+            }
+
+            data_width = max_x - min_x;
+            data_height = max_y - min_y;
+
+            pixel_data = GdipAlloc(sizeof(*pixel_data) * data_width * data_height);
+            if (!pixel_data)
+                stat = OutOfMemory;
+
+            if (stat == Ok)
+            {
+                for (i=0; i<scans_count; i++)
+                {
+                    stat = brush_fill_pixels(graphics, brush,
+                        pixel_data + (scans[i].X - min_x) + (scans[i].Y - min_y) * data_width,
+                        &scans[i], data_width);
+
+                    if (stat != Ok)
+                        break;
+                }
 
                 if (stat == Ok)
                 {
-                    stat = alpha_blend_pixels(graphics, scans[i].X, scans[i].Y,
-                        (BYTE*)pixel_data, scans[i].Width, scans[i].Height,
-                        scans[i].Width * 4);
+                    stat = alpha_blend_pixels(graphics, min_x, min_y,
+                        (BYTE*)pixel_data, data_width, data_height,
+                        data_width * 4);
                 }
 
-                if (stat != Ok)
-                    break;
+                GdipFree(pixel_data);
+            }
+        }
+        else
+        {
+            UINT max_size=0;
+
+            for (i=0; i<scans_count; i++)
+            {
+                UINT size = scans[i].Width * scans[i].Height;
+
+                if (size > max_size)
+                    max_size = size;
             }
 
-            GdipFree(pixel_data);
+            pixel_data = GdipAlloc(sizeof(*pixel_data) * max_size);
+            if (!pixel_data)
+                stat = OutOfMemory;
+
+            if (stat == Ok)
+            {
+                for (i=0; i<scans_count; i++)
+                {
+                    stat = brush_fill_pixels(graphics, brush, pixel_data, &scans[i],
+                        scans[i].Width);
+
+                    if (stat == Ok)
+                    {
+                        stat = alpha_blend_pixels(graphics, scans[i].X, scans[i].Y,
+                            (BYTE*)pixel_data, scans[i].Width, scans[i].Height,
+                            scans[i].Width * 4);
+                    }
+
+                    if (stat != Ok)
+                        break;
+                }
+
+                GdipFree(pixel_data);
+            }
         }
 
         GdipFree(scans);
