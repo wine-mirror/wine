@@ -845,6 +845,7 @@ BOOL WINAPI SQLRemoveDriverW(LPCWSTR lpszDriver, BOOL fRemoveDSN,
 {
     clear_errors();
     FIXME("stub\n");
+    if (lpdwUsageCount) *lpdwUsageCount = 1;
     return TRUE;
 }
 
@@ -853,6 +854,7 @@ BOOL WINAPI SQLRemoveDriver(LPCSTR lpszDriver, BOOL fRemoveDSN,
 {
     clear_errors();
     FIXME("stub\n");
+    if (lpdwUsageCount) *lpdwUsageCount = 1;
     return TRUE;
 }
 
@@ -860,6 +862,7 @@ BOOL WINAPI SQLRemoveDriverManager(LPDWORD pdwUsageCount)
 {
     clear_errors();
     FIXME("stub\n");
+    if (pdwUsageCount) *pdwUsageCount = 1;
     return TRUE;
 }
 
