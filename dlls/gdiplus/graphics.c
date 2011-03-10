@@ -2465,10 +2465,18 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         else
             return NotImplemented;
 
+        srcx = srcx * dx;
+        srcy = srcy * dy;
+        srcwidth = srcwidth * dx;
+        srcheight = srcheight * dy;
+
         if (imageAttributes ||
             (graphics->image && graphics->image->type == ImageTypeBitmap) ||
             !((GpBitmap*)image)->hbitmap ||
-            ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X)
+            ptf[1].Y != ptf[0].Y || ptf[2].X != ptf[0].X ||
+            ptf[1].X - ptf[0].X != srcwidth || ptf[2].Y - ptf[0].Y != srcheight ||
+            srcx < 0 || srcy < 0 ||
+            srcx + srcwidth > bitmap->width || srcy + srcheight > bitmap->height)
             use_software = 1;
 
         if (use_software)
@@ -2487,11 +2495,6 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             if (!imageAttributes)
                 imageAttributes = &defaultImageAttributes;
-
-            srcx = srcx * dx;
-            srcy = srcy * dy;
-            srcwidth = srcwidth * dx;
-            srcheight = srcheight * dy;
 
             dst_area.left = dst_area.right = pti[0].x;
             dst_area.top = dst_area.bottom = pti[0].y;
@@ -2672,12 +2675,12 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 bf.AlphaFormat = AC_SRC_ALPHA;
 
                 GdiAlphaBlend(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
-                    hdc, srcx*dx, srcy*dy, srcwidth*dx, srcheight*dy, bf);
+                    hdc, srcx, srcy, srcwidth, srcheight, bf);
             }
             else
             {
                 StretchBlt(graphics->hdc, pti[0].x, pti[0].y, pti[1].x-pti[0].x, pti[2].y-pti[0].y,
-                    hdc, srcx*dx, srcy*dy, srcwidth*dx, srcheight*dy, SRCCOPY);
+                    hdc, srcx, srcy, srcwidth, srcheight, SRCCOPY);
             }
 
             if (temp_hdc)
