@@ -2015,12 +2015,17 @@ DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
     DC * dc = get_dc_ptr( hdc );
     if (dc)
     {
-        oldlayout = dc->layout;
-        dc->layout = layout;
-        if (layout != oldlayout)
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetLayout );
+        layout = physdev->funcs->pSetLayout( physdev, layout );
+        if (layout != GDI_ERROR)
         {
-            if (layout & LAYOUT_RTL) dc->MapMode = MM_ANISOTROPIC;
-            DC_UpdateXforms( dc );
+            oldlayout = dc->layout;
+            dc->layout = layout;
+            if (layout != oldlayout)
+            {
+                if (layout & LAYOUT_RTL) dc->MapMode = MM_ANISOTROPIC;
+                DC_UpdateXforms( dc );
+            }
         }
         release_dc_ptr( dc );
     }

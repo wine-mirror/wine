@@ -467,6 +467,11 @@ static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN cli
 {
 }
 
+static DWORD CDECL nulldrv_SetLayout( PHYSDEV dev, DWORD layout )
+{
+    return layout;
+}
+
 static DWORD CDECL nulldrv_SetMapperFlags( PHYSDEV dev, DWORD flags )
 {
     return flags;
@@ -683,6 +688,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pSetDIBitsToDevice */
     nulldrv_SetDeviceClipping,          /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
+    nulldrv_SetLayout,                  /* pSetLayout */
     nulldrv_SetMapMode,                 /* pSetMapMode */
     nulldrv_SetMapperFlags,             /* pSetMapperFlags */
     nulldrv_SetPixel,                   /* pSetPixel */

@@ -175,6 +175,7 @@ typedef struct tagDC_FUNCS
                                            const BITMAPINFO*,UINT);
     VOID     (CDECL *pSetDeviceClipping)(PHYSDEV,HRGN,HRGN);
     BOOL     (CDECL *pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
+    DWORD    (CDECL *pSetLayout)(PHYSDEV,DWORD);
     INT      (CDECL *pSetMapMode)(PHYSDEV,INT);
     DWORD    (CDECL *pSetMapperFlags)(PHYSDEV,DWORD);
     COLORREF (CDECL *pSetPixel)(PHYSDEV,INT,INT,COLORREF);

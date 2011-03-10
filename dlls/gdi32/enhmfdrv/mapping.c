@@ -120,6 +120,16 @@ BOOL CDECL EMFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
     return next->funcs->pScaleWindowExtEx( next, xNum, xDenom, yNum, yDenom, size );
 }
 
+DWORD CDECL EMFDRV_SetLayout( PHYSDEV dev, DWORD layout )
+{
+    EMRSETLAYOUT emr;
+
+    emr.emr.iType = EMR_SETLAYOUT;
+    emr.emr.nSize = sizeof(emr);
+    emr.iMode = layout;
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? layout : GDI_ERROR;
+}
+
 BOOL CDECL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform)
 {
     EMRSETWORLDTRANSFORM emr;
