@@ -498,11 +498,11 @@ GpStatus WINGDIPAPI GdipBitmapSetPixel(GpBitmap* bitmap, INT x, INT y,
     return Ok;
 }
 
-GpStatus convert_pixels(UINT width, UINT height,
+GpStatus convert_pixels(INT width, INT height,
     INT dst_stride, BYTE *dst_bits, PixelFormat dst_format,
     INT src_stride, const BYTE *src_bits, PixelFormat src_format, ARGB *src_palette)
 {
-    UINT x, y;
+    INT x, y;
 
     if (src_format == dst_format ||
         (dst_format == PixelFormat32bppRGB && PIXELFORMATBPP(src_format) == 32))

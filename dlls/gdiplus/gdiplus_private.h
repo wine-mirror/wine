@@ -112,7 +112,7 @@ extern const char *debugstr_pointf(CONST PointF* pt);
 extern void convert_32bppARGB_to_32bppPARGB(UINT width, UINT height,
     BYTE *dst_bits, INT dst_stride, const BYTE *src_bits, INT src_stride);
 
-extern GpStatus convert_pixels(UINT width, UINT height,
+extern GpStatus convert_pixels(INT width, INT height,
     INT dst_stride, BYTE *dst_bits, PixelFormat dst_format,
     INT src_stride, const BYTE *src_bits, PixelFormat src_format, ARGB *src_palette);
 
