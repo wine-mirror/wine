@@ -891,6 +891,7 @@ static HICON CURSORICON_CreateIconFromBMI( BITMAPINFO *bmi, HMODULE module, LPCW
 #define ANI_anih_ID RIFF_FOURCC('a', 'n', 'i', 'h')
 #define ANI_seq__ID RIFF_FOURCC('s', 'e', 'q', ' ')
 #define ANI_fram_ID RIFF_FOURCC('f', 'r', 'a', 'm')
+#define ANI_rate_ID RIFF_FOURCC('r', 'a', 't', 'e')
 
 #define ANI_FLAG_ICON       0x1
 #define ANI_FLAG_SEQUENCE   0x2
@@ -996,6 +997,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
     riff_chunk_t ACON_chunk = {0};
     riff_chunk_t anih_chunk = {0};
     riff_chunk_t fram_chunk = {0};
+    riff_chunk_t rate_chunk = {0};
     const unsigned char *icon_chunk;
     const unsigned char *icon_data;
 
@@ -1016,6 +1018,19 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
     }
     memcpy( &header, anih_chunk.data, sizeof(header) );
     dump_ani_header( &header );
+
+    if (!(header.flags & ANI_FLAG_ICON))
+    {
+        FIXME("Raw animated icon/cursor data is not currently supported.\n");
+        return 0;
+    }
+
+    if (header.flags & ANI_FLAG_SEQUENCE)
+        FIXME("Animated icon/cursor sequence data is not currently supported, frames may appear out of sequence.\n");
+
+    riff_find_chunk( ANI_rate_ID, 0, &ACON_chunk, &rate_chunk );
+    if (rate_chunk.data)
+        FIXME("Animated icon/cursor multiple frame-frate data not currently supported.\n");
 
     riff_find_chunk( ANI_fram_ID, ANI_LIST_ID, &ACON_chunk, &fram_chunk );
     if (!fram_chunk.data)
