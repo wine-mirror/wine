@@ -315,14 +315,32 @@ static HRESULT WINAPI dom_pi_get_nextSibling(
 
 static HRESULT WINAPI dom_pi_get_attributes(
     IXMLDOMProcessingInstruction *iface,
-    IXMLDOMNamedNodeMap** attributeMap)
+    IXMLDOMNamedNodeMap** map)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
+    static const WCHAR xmlW[] = {'x','m','l',0};
+    HRESULT hr;
+    BSTR name;
 
-    TRACE("(%p)->(%p)\n", This, attributeMap);
+    TRACE("(%p)->(%p)\n", This, map);
 
-    *attributeMap = create_nodemap((IXMLDOMNode*)&This->IXMLDOMProcessingInstruction_iface);
-    return S_OK;
+    if (!map) return E_INVALIDARG;
+
+    *map = NULL;
+
+    hr = node_get_nodeName(&This->node, &name);
+    if (hr != S_OK) return hr;
+
+    if (!strcmpW(name, xmlW))
+    {
+        FIXME("not implemented for <?xml..?> declaration\n");
+        SysFreeString(name);
+        return E_NOTIMPL;
+    }
+
+    SysFreeString(name);
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI dom_pi_insertBefore(
