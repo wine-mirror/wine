@@ -2231,7 +2231,7 @@ static void test_fromMemoryBitmap(void)
     GdipDeleteGraphics(graphics);
 
     /* drawing writes to the memory provided */
-    todo_wine expect(0x68, bits[10]);
+    expect(0x68, bits[10]);
 
     status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
     expect(Ok, status);

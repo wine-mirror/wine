@@ -3585,9 +3585,8 @@ GpStatus WINGDIPAPI GdipFillPolygon2I(GpGraphics *graphics, GpBrush *brush,
 GpStatus WINGDIPAPI GdipFillRectangle(GpGraphics *graphics, GpBrush *brush,
     REAL x, REAL y, REAL width, REAL height)
 {
-    INT save_state;
-    GpPointF ptf[4];
-    POINT pti[4];
+    GpStatus stat;
+    GpPath *path;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f)\n", graphics, brush, x, y, width, height);
 
@@ -3597,81 +3596,27 @@ GpStatus WINGDIPAPI GdipFillRectangle(GpGraphics *graphics, GpBrush *brush,
     if(graphics->busy)
         return ObjectBusy;
 
-    if(!graphics->hdc)
+    stat = GdipCreatePath(FillModeAlternate, &path);
+
+    if (stat == Ok)
     {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
+        stat = GdipAddPathRectangle(path, x, y, width, height);
+
+        if (stat == Ok)
+            stat = GdipFillPath(graphics, brush, path);
+
+        GdipDeletePath(path);
     }
 
-    ptf[0].X = x;
-    ptf[0].Y = y;
-    ptf[1].X = x + width;
-    ptf[1].Y = y;
-    ptf[2].X = x + width;
-    ptf[2].Y = y + height;
-    ptf[3].X = x;
-    ptf[3].Y = y + height;
-
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-
-    transform_and_round_points(graphics, pti, ptf, 4);
-
-    BeginPath(graphics->hdc);
-    Polygon(graphics->hdc, pti, 4);
-    EndPath(graphics->hdc);
-
-    brush_fill_path(graphics, brush);
-
-    RestoreDC(graphics->hdc, save_state);
-
-    return Ok;
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipFillRectangleI(GpGraphics *graphics, GpBrush *brush,
     INT x, INT y, INT width, INT height)
 {
-    INT save_state;
-    GpPointF ptf[4];
-    POINT pti[4];
-
     TRACE("(%p, %p, %d, %d, %d, %d)\n", graphics, brush, x, y, width, height);
 
-    if(!graphics || !brush)
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
-    if(!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
-
-    ptf[0].X = x;
-    ptf[0].Y = y;
-    ptf[1].X = x + width;
-    ptf[1].Y = y;
-    ptf[2].X = x + width;
-    ptf[2].Y = y + height;
-    ptf[3].X = x;
-    ptf[3].Y = y + height;
-
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-
-    transform_and_round_points(graphics, pti, ptf, 4);
-
-    BeginPath(graphics->hdc);
-    Polygon(graphics->hdc, pti, 4);
-    EndPath(graphics->hdc);
-
-    brush_fill_path(graphics, brush);
-
-    RestoreDC(graphics->hdc, save_state);
-
-    return Ok;
+    return GdipFillRectangle(graphics, brush, x, y, width, height);
 }
 
 GpStatus WINGDIPAPI GdipFillRectangles(GpGraphics *graphics, GpBrush *brush, GDIPCONST GpRectF *rects,
