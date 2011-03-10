@@ -3919,9 +3919,6 @@ GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     if (stat == NotImplemented)
         stat = SOFTWARE_GdipFillRegion(graphics, brush, region);
 
-    if (stat == NotImplemented && graphics->image)
-        stat = GDI32_GdipFillRegion(graphics, brush, region);
-
     if (stat == NotImplemented)
     {
         FIXME("not implemented for brushtype %i\n", brush->bt);
