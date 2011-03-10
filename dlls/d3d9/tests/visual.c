@@ -11661,6 +11661,111 @@ static void srgbwrite_format_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(backbuffer);
 }
 
+static void ds_size_test(IDirect3DDevice9 *device)
+{
+    IDirect3DSurface9 *ds, *rt, *old_rt, *old_ds, *readback;
+    HRESULT hr;
+    DWORD color;
+    DWORD num_passes;
+    struct
+    {
+        float x, y, z;
+    }
+    quad[] =
+    {
+        {-1.0,  -1.0,   0.0 },
+        {-1.0,   1.0,   0.0 },
+        { 1.0,  -1.0,   0.0 },
+        { 1.0,   1.0,   0.0 }
+    };
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 64, 64, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 32, 32, D3DFMT_D24X8, D3DMULTISAMPLE_NONE, 0, TRUE, &ds, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &readback, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateOffscreenPlainSurface failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILENABLE, FALSE);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_ValidateDevice(device, &num_passes);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_ValidateDevice failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &old_rt);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_GetRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device, &old_ds);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_GetDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_ValidateDevice(device, &num_passes);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_ValidateDevice failed, hr %#x.\n", hr);
+
+    /* The D3DCLEAR_TARGET clear works. D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER returns OK,
+     * but does not change the surface's contents. */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x000000FF, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Target clear failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_ZBUFFER, 0x00000000, 0.2f, 0);
+    ok(SUCCEEDED(hr), "Z Buffer clear failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00ff0000, 0.5f, 0);
+    ok(SUCCEEDED(hr), "Target and Z Buffer clear failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTargetData(device, rt, readback);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_GetRenderTargetData failed, hr %#x.\n", hr);
+    color = getPixelColorFromSurface(readback, 2, 2);
+    ok(color == 0x000000FF, "DS size test: Pixel (2, 2) after clear is %#x, expected 0x000000FF\n", color);
+    color = getPixelColorFromSurface(readback, 31, 31);
+    ok(color == 0x000000FF, "DS size test: Pixel (31, 31) after clear is %#x, expected 0x000000FF\n", color);
+    color = getPixelColorFromSurface(readback, 32, 32);
+    ok(color == 0x000000FF, "DS size test: Pixel (32, 32) after clear is %#x, expected 0x000000FF\n", color);
+    color = getPixelColorFromSurface(readback, 63, 63);
+    ok(color == 0x000000FF, "DS size test: Pixel (63, 63) after clear is %#x, expected 0x000000FF\n", color);
+
+    /* Turning on any depth-related state results in a ValidateDevice failure */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_ValidateDevice(device, &num_passes);
+    ok(hr == D3DERR_CONFLICTINGRENDERSTATE, "IDirect3DDevice9_ValidateDevice returned %#x, expected "
+        "D3DERR_CONFLICTINGRENDERSTATE.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_ValidateDevice(device, &num_passes);
+    ok(hr == D3DERR_CONFLICTINGRENDERSTATE, "IDirect3DDevice9_ValidateDevice returned %#x, expected "
+        "D3DERR_CONFLICTINGRENDERSTATE.\n", hr);
+
+    /* Try to draw with the device in an invalid state */
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetFVF failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_BeginScene failed, hr %#x.\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_DrawPrimitiveUP failed, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_EndScene failed, hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, old_rt);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, old_ds);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_ValidateDevice(device, &num_passes);
+    ok(SUCCEEDED(hr), "IDirect3DDevice9_ValidateDevice failed, hr %#x.\n", hr);
+
+    IDirect3DSurface9_Release(readback);
+    IDirect3DSurface9_Release(ds);
+    IDirect3DSurface9_Release(rt);
+    IDirect3DSurface9_Release(old_rt);
+    IDirect3DSurface9_Release(old_ds);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -11738,6 +11843,7 @@ START_TEST(visual)
         skip("No mipmap support\n");
     }
     offscreen_test(device_ptr);
+    ds_size_test(device_ptr);
     alpha_test(device_ptr);
     shademode_test(device_ptr);
     srgbtexture_test(device_ptr);
