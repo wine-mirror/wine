@@ -3472,7 +3472,8 @@ GpStatus WINGDIPAPI GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *p
 GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
     REAL y, REAL width, REAL height, REAL startAngle, REAL sweepAngle)
 {
-    INT save_state;
+    GpStatus stat;
+    GpPath *path;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n",
             graphics, brush, x, y, width, height, startAngle, sweepAngle);
@@ -3483,24 +3484,19 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
     if(graphics->busy)
         return ObjectBusy;
 
-    if(!graphics->hdc)
+    stat = GdipCreatePath(FillModeAlternate, &path);
+
+    if (stat == Ok)
     {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
+        stat = GdipAddPathPie(path, x, y, width, height, startAngle, sweepAngle);
+
+        if (stat == Ok)
+            stat = GdipFillPath(graphics, brush, path);
+
+        GdipDeletePath(path);
     }
 
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-
-    BeginPath(graphics->hdc);
-    draw_pie(graphics, x, y, width, height, startAngle, sweepAngle);
-    EndPath(graphics->hdc);
-
-    brush_fill_path(graphics, brush);
-
-    RestoreDC(graphics->hdc, save_state);
-
-    return Ok;
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipFillPieI(GpGraphics *graphics, GpBrush *brush, INT x,
