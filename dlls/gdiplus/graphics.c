@@ -526,6 +526,24 @@ static ARGB sample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT wi
     return ((DWORD*)(bits))[(x - src_rect->X) + (y - src_rect->Y) * src_rect->Width];
 }
 
+static ARGB resample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT width,
+    UINT height, GpPointF *point, GDIPCONST GpImageAttributes *attributes,
+    InterpolationMode interpolation)
+{
+    static int fixme;
+
+    switch (interpolation)
+    {
+    default:
+        if (!fixme++)
+            FIXME("Unimplemented interpolation %i\n", interpolation);
+        /* fall-through */
+    case InterpolationModeNearestNeighbor:
+        return sample_bitmap_pixel(src_rect, bits, width, height,
+            roundr(point->X), roundr(point->Y), attributes);
+    }
+}
+
 static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
 {
     switch (brush->bt)
@@ -2528,19 +2546,15 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 for (y=dst_area.top; y<dst_area.bottom; y++)
                 {
                     GpPointF src_pointf;
-                    INT src_x, src_y;
                     ARGB *dst_color;
 
                     src_pointf.X = dst_to_src_points[0].X + x * x_dx + y * y_dx;
                     src_pointf.Y = dst_to_src_points[0].Y + x * x_dy + y * y_dy;
 
-                    src_x = roundr(src_pointf.X);
-                    src_y = roundr(src_pointf.Y);
-
                     dst_color = (ARGB*)(dst_data + dst_stride * (y - dst_area.top) + sizeof(ARGB) * (x - dst_area.left));
 
                     if (src_pointf.X >= srcx && src_pointf.X < srcx + srcwidth && src_pointf.Y >= srcy && src_pointf.Y < srcy+srcheight)
-                        *dst_color = sample_bitmap_pixel(&src_area, src_data, bitmap->width, bitmap->height, src_x, src_y, imageAttributes);
+                        *dst_color = resample_bitmap_pixel(&src_area, src_data, bitmap->width, bitmap->height, &src_pointf, imageAttributes, interpolation);
                     else
                         *dst_color = 0;
                 }
