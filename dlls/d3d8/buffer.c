@@ -210,11 +210,13 @@ static HRESULT WINAPI d3d8_vertexbuffer_GetDesc(IDirect3DVertexBuffer8 *iface, D
 {
     IDirect3DVertexBuffer8Impl *buffer = (IDirect3DVertexBuffer8Impl *)iface;
     struct wined3d_resource_desc wined3d_desc;
+    struct wined3d_resource *wined3d_resource;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
     wined3d_mutex_lock();
-    wined3d_buffer_get_desc(buffer->wineD3DVertexBuffer, &wined3d_desc);
+    wined3d_resource = wined3d_buffer_get_resource(buffer->wineD3DVertexBuffer);
+    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     wined3d_mutex_unlock();
 
     desc->Type = D3DRTYPE_VERTEXBUFFER;
@@ -472,11 +474,13 @@ static HRESULT WINAPI d3d8_indexbuffer_GetDesc(IDirect3DIndexBuffer8 *iface, D3D
 {
     IDirect3DIndexBuffer8Impl *buffer = (IDirect3DIndexBuffer8Impl *)iface;
     struct wined3d_resource_desc wined3d_desc;
+    struct wined3d_resource *wined3d_resource;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
     wined3d_mutex_lock();
-    wined3d_buffer_get_desc(buffer->wineD3DIndexBuffer, &wined3d_desc);
+    wined3d_resource = wined3d_buffer_get_resource(buffer->wineD3DIndexBuffer);
+    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     wined3d_mutex_unlock();
 
     desc->Format = d3dformat_from_wined3dformat(buffer->format);

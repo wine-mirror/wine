@@ -21,7 +21,6 @@
 
 @ cdecl wined3d_buffer_decref(ptr)
 @ cdecl wined3d_buffer_free_private_data(ptr ptr)
-@ cdecl wined3d_buffer_get_desc(ptr ptr)
 @ cdecl wined3d_buffer_get_parent(ptr)
 @ cdecl wined3d_buffer_get_priority(ptr)
 @ cdecl wined3d_buffer_get_private_data(ptr ptr ptr ptr)

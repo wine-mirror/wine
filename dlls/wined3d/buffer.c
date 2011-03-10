@@ -1395,13 +1395,6 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
     }
 }
 
-void CDECL wined3d_buffer_get_desc(const struct wined3d_buffer *buffer, struct wined3d_resource_desc *desc)
-{
-    TRACE("buffer %p, desc %p.\n", buffer, desc);
-
-    wined3d_resource_get_desc(&buffer->resource, desc);
-}
-
 static const struct wined3d_resource_ops buffer_resource_ops =
 {
     buffer_unload,

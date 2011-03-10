@@ -3162,7 +3162,6 @@ HRESULT __cdecl wined3d_register_software_device(struct wined3d *wined3d, void *
 
 ULONG __cdecl wined3d_buffer_decref(struct wined3d_buffer *buffer);
 HRESULT __cdecl wined3d_buffer_free_private_data(struct wined3d_buffer *buffer, REFGUID guid);
-void __cdecl wined3d_buffer_get_desc(const struct wined3d_buffer *buffer, struct wined3d_resource_desc *desc);
 void * __cdecl wined3d_buffer_get_parent(const struct wined3d_buffer *buffer);
 DWORD __cdecl wined3d_buffer_get_priority(const struct wined3d_buffer *buffer);
 HRESULT __cdecl wined3d_buffer_get_private_data(const struct wined3d_buffer *buffer,

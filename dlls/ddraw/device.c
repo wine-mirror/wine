@@ -4147,6 +4147,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
     IDirect3DVertexBufferImpl *vb = (IDirect3DVertexBufferImpl *)D3DVertexBuf;
     DWORD stride = get_flexible_vertex_size(vb->fvf);
+    struct wined3d_resource *wined3d_resource;
     struct wined3d_resource_desc desc;
     WORD *LockedIndices;
     HRESULT hr;
@@ -4174,7 +4175,8 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     /* check that the buffer is large enough to hold the indices,
      * reallocate if necessary. */
-    wined3d_buffer_get_desc(This->indexbuffer, &desc);
+    wined3d_resource = wined3d_buffer_get_resource(This->indexbuffer);
+    wined3d_resource_get_desc(wined3d_resource, &desc);
     if (desc.size < IndexCount * sizeof(WORD))
     {
         UINT size = max(desc.size * 2, IndexCount * sizeof(WORD));
