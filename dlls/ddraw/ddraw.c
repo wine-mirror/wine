@@ -2516,6 +2516,7 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
 {
     IDirectDrawSurfaceImpl *surfImpl = (IDirectDrawSurfaceImpl *)surf;
     struct wined3d_resource_desc wined3d_desc;
+    struct wined3d_resource *wined3d_resource;
     IDirectDrawImpl *This = surfImpl->ddraw;
     struct wined3d_clipper *clipper = NULL;
     IWineD3DSurface *wineD3DSurface;
@@ -2540,7 +2541,8 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     IWineD3DSurface_GetClipper(wineD3DSurface, &clipper);
 
     /* Get the surface properties */
-    IWineD3DSurface_GetDesc(wineD3DSurface, &wined3d_desc);
+    wined3d_resource = IWineD3DSurface_GetResource(wineD3DSurface);
+    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
 
     parent = IWineD3DSurface_GetParent(wineD3DSurface);
     hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, wined3d_desc.width, wined3d_desc.height,

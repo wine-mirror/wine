@@ -1292,7 +1292,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         {
             struct wined3d_resource_desc desc;
 
-            IWineD3DSurface_GetDesc(backbuffer, &desc);
+            wined3d_resource_get_desc(&((IWineD3DSurfaceImpl *)backbuffer)->resource, &desc);
             IWineD3DSurface_Release(backbuffer);
 
             /* Set the default scissor rect values */

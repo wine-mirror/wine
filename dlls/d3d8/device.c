@@ -931,6 +931,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
     IDirect3DSurface8Impl *Dest = (IDirect3DSurface8Impl *) pDestinationSurface;
     enum wined3d_format_id srcFormat, destFormat;
     struct wined3d_resource_desc wined3d_desc;
+    struct wined3d_resource *wined3d_resource;
 
     TRACE("iface %p, src_surface %p, src_rects %p, rect_count %u, dst_surface %p, dst_points %p.\n",
             iface, pSourceSurface, pSourceRects, cRects, pDestinationSurface, pDestPoints);
@@ -939,10 +940,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
      * destination texture is in WINED3DPOOL_DEFAULT. */
 
     wined3d_mutex_lock();
-    IWineD3DSurface_GetDesc(Source->wineD3DSurface, &wined3d_desc);
+    wined3d_resource = IWineD3DSurface_GetResource(Source->wineD3DSurface);
+    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     srcFormat = wined3d_desc.format;
 
-    IWineD3DSurface_GetDesc(Dest->wineD3DSurface, &wined3d_desc);
+    wined3d_resource = IWineD3DSurface_GetResource(Dest->wineD3DSurface);
+    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     destFormat = wined3d_desc.format;
 
     /* Check that the source and destination formats match */

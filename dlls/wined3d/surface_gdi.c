@@ -452,7 +452,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetType,
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetResource,
-    IWineD3DBaseSurfaceImpl_GetDesc,
     IWineGDISurfaceImpl_Map,
     IWineGDISurfaceImpl_Unmap,
     IWineGDISurfaceImpl_GetDC,

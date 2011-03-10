@@ -157,15 +157,6 @@ struct wined3d_resource * WINAPI IWineD3DBaseSurfaceImpl_GetResource(IWineD3DSur
     return &((IWineD3DSurfaceImpl *)iface)->resource;
 }
 
-void WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, struct wined3d_resource_desc *desc)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, desc %p.\n", iface, desc);
-
-    wined3d_resource_get_desc(&surface->resource, desc);
-}
-
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD flags)
 {
     TRACE("iface %p, flags %#x.\n", iface, flags);

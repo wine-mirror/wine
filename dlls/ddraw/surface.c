@@ -3500,6 +3500,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
         DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type)
 {
     struct wined3d_resource_desc wined3d_desc;
+    struct wined3d_resource *wined3d_resource;
     WINED3DPOOL pool = WINED3DPOOL_DEFAULT;
     enum wined3d_format_id format;
     DWORD usage = 0;
@@ -3588,7 +3589,8 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     }
 
     surface->surface_desc.dwFlags |= DDSD_PIXELFORMAT;
-    IWineD3DSurface_GetDesc(surface->WineD3DSurface, &wined3d_desc);
+    wined3d_resource = IWineD3DSurface_GetResource(surface->WineD3DSurface);
+    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
 
     format = wined3d_desc.format;
     if (format == WINED3DFMT_UNKNOWN)

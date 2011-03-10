@@ -1070,6 +1070,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ColorFill(IDirect3DDevice9Ex *iface,
     };
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DSurface9Impl *surface = (IDirect3DSurface9Impl *)pSurface;
+    struct wined3d_resource *wined3d_resource;
     struct wined3d_resource_desc desc;
     HRESULT hr;
 
@@ -1077,7 +1078,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ColorFill(IDirect3DDevice9Ex *iface,
 
     wined3d_mutex_lock();
 
-    IWineD3DSurface_GetDesc(surface->wineD3DSurface, &desc);
+    wined3d_resource = IWineD3DSurface_GetResource(surface->wineD3DSurface);
+    wined3d_resource_get_desc(wined3d_resource, &desc);
 
     /* This method is only allowed with surfaces that are render targets, or
      * offscreen plain surfaces in D3DPOOL_DEFAULT. */

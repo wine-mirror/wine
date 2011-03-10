@@ -2200,7 +2200,6 @@ DWORD WINAPI IWineD3DBaseSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD P
 DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPriority(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
 WINED3DRESOURCETYPE WINAPI IWineD3DBaseSurfaceImpl_GetType(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
 struct wined3d_resource * WINAPI IWineD3DBaseSurfaceImpl_GetResource(IWineD3DSurface *iface) DECLSPEC_HIDDEN;
-void WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, struct wined3d_resource_desc *desc) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD flags) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD flags) DECLSPEC_HIDDEN;
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_IsLost(IWineD3DSurface *iface) DECLSPEC_HIDDEN;

@@ -2226,9 +2226,6 @@ interface IWineD3DSurface : IWineD3DResource
 {
     struct wined3d_resource *GetResource(
     );
-    void GetDesc(
-        [out] struct wined3d_resource_desc *desc
-    );
     HRESULT Map(
         [out] WINED3DLOCKED_RECT *locked_rect,
         [in] const RECT *rect,
