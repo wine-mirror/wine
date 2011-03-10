@@ -578,6 +578,21 @@ static ARGB resample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT 
     }
 }
 
+static INT brush_can_fill_path(GpBrush *brush)
+{
+    switch (brush->bt)
+    {
+    case BrushTypeSolidColor:
+    case BrushTypeHatchFill:
+        return 1;
+    case BrushTypeLinearGradient:
+    case BrushTypeTextureFill:
+    /* Gdi32 isn't much help with these, so we should use brush_fill_pixels instead. */
+    default:
+        return 0;
+    }
+}
+
 static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
 {
     switch (brush->bt)
@@ -3745,7 +3760,7 @@ static GpStatus GDI32_GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     HRGN hrgn;
     RECT rc;
 
-    if(!graphics->hdc)
+    if(!graphics->hdc || !brush_can_fill_path(brush))
         return NotImplemented;
 
     status = GdipGetRegionHRgn(region, graphics, &hrgn);
