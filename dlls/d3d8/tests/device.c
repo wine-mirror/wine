@@ -767,6 +767,7 @@ cleanup:
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
     if (pD3d) IDirect3D8_Release(pD3d);
+    DestroyWindow(hwnd);
 }
 
 static void test_states(void)
@@ -812,6 +813,7 @@ cleanup:
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
     if (pD3d) IDirect3D8_Release(pD3d);
+    DestroyWindow(hwnd);
 }
 
 static void test_shader_versions(void)
@@ -935,7 +937,7 @@ cleanup:
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
     if (pD3d) IDirect3D8_Release(pD3d);
-    if(hwnd) DestroyWindow(hwnd);
+    DestroyWindow(hwnd);
 }
 
 static void test_shader(void)
@@ -1184,7 +1186,7 @@ cleanup:
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
     if (pD3d) IDirect3D8_Release(pD3d);
-    if(hwnd) DestroyWindow(hwnd);
+    DestroyWindow(hwnd);
 }
 
 static void test_limits(void)
@@ -1250,7 +1252,7 @@ cleanup:
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
     if (pD3d) IDirect3D8_Release(pD3d);
-    if(hwnd) DestroyWindow(hwnd);
+    DestroyWindow(hwnd);
 }
 
 static void test_lights(void)
@@ -1325,6 +1327,7 @@ cleanup:
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
     if (d3d8) IDirect3D8_Release(d3d8);
+    DestroyWindow(hwnd);
 }
 
 static void test_render_zero_triangles(void)
@@ -1399,6 +1402,7 @@ cleanup:
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
     if (d3d8) IDirect3D8_Release(d3d8);
+    DestroyWindow(hwnd);
 }
 
 static void test_depth_stencil_reset(void)
@@ -1516,6 +1520,7 @@ cleanup:
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
     if (d3d8) IDirect3D8_Release(d3d8);
+    DestroyWindow(hwnd);
 }
 
 static HWND filter_messages;
@@ -2109,6 +2114,7 @@ static void test_ApplyStateBlock(void)
     IDirect3DDevice8_Release(device);
 cleanup:
     if (d3d8) IDirect3D8_Release(d3d8);
+    DestroyWindow(hwnd);
 }
 
 START_TEST(device)
