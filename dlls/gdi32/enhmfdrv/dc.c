@@ -68,7 +68,7 @@ UINT CDECL EMFDRV_SetTextAlign( PHYSDEV dev, UINT align )
     emr.emr.iType = EMR_SETTEXTALIGN;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = align;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? align : GDI_ERROR;
 }
 
 BOOL CDECL EMFDRV_SetTextJustification(PHYSDEV dev, INT nBreakExtra, INT nBreakCount)
@@ -87,7 +87,7 @@ INT CDECL EMFDRV_SetBkMode( PHYSDEV dev, INT mode )
     emr.emr.iType = EMR_SETBKMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? mode : 0;
 }
 
 INT CDECL EMFDRV_SetROP2( PHYSDEV dev, INT rop )
@@ -96,7 +96,7 @@ INT CDECL EMFDRV_SetROP2( PHYSDEV dev, INT rop )
     emr.emr.iType = EMR_SETROP2;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = rop;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? rop : 0;
 }
 
 INT CDECL EMFDRV_SetPolyFillMode( PHYSDEV dev, INT mode )
@@ -105,7 +105,7 @@ INT CDECL EMFDRV_SetPolyFillMode( PHYSDEV dev, INT mode )
     emr.emr.iType = EMR_SETPOLYFILLMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? mode : 0;
 }
 
 INT CDECL EMFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )
@@ -114,7 +114,7 @@ INT CDECL EMFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )
     emr.emr.iType = EMR_SETSTRETCHBLTMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? mode : 0;
 }
 
 INT CDECL EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
@@ -186,7 +186,7 @@ DWORD CDECL EMFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )
     emr.emr.nSize = sizeof(emr);
     emr.dwFlags   = flags;
 
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? flags : GDI_ERROR;
 }
 
 BOOL CDECL EMFDRV_AbortPath( PHYSDEV dev )

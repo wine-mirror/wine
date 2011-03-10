@@ -185,8 +185,8 @@ typedef struct tagDC_FUNCS
     INT      (CDECL *pSetStretchBltMode)(PHYSDEV,INT);
     UINT     (CDECL *pSetTextAlign)(PHYSDEV,UINT);
     INT      (CDECL *pSetTextCharacterExtra)(PHYSDEV,INT);
-    DWORD    (CDECL *pSetTextColor)(PHYSDEV,DWORD);
-    INT      (CDECL *pSetTextJustification)(PHYSDEV,INT,INT);
+    COLORREF (CDECL *pSetTextColor)(PHYSDEV,COLORREF);
+    BOOL     (CDECL *pSetTextJustification)(PHYSDEV,INT,INT);
     BOOL     (CDECL *pSetViewportExtEx)(PHYSDEV,INT,INT,SIZE*);
     BOOL     (CDECL *pSetViewportOrgEx)(PHYSDEV,INT,INT,POINT*);
     BOOL     (CDECL *pSetWindowExtEx)(PHYSDEV,INT,INT,SIZE*);
@@ -298,6 +298,7 @@ typedef struct tagDC
     short         brushOrgX;
     short         brushOrgY;
 
+    DWORD         mapperFlags;       /* Font mapper flags */
     WORD          textAlign;         /* Text alignment from SetTextAlign() */
     INT           charExtra;         /* Spacing from SetTextCharacterExtra() */
     INT           breakExtra;        /* breakTotalExtra / breakCount */

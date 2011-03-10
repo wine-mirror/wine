@@ -122,6 +122,7 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
     dc->textColor           = RGB( 0, 0, 0 );
     dc->brushOrgX           = 0;
     dc->brushOrgY           = 0;
+    dc->mapperFlags         = 0;
     dc->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
     dc->charExtra           = 0;
     dc->breakExtra          = 0;
@@ -399,6 +400,7 @@ INT save_dc_state( HDC hdc )
     newdc->dcPenColor       = dc->dcPenColor;
     newdc->brushOrgX        = dc->brushOrgX;
     newdc->brushOrgY        = dc->brushOrgY;
+    newdc->mapperFlags      = dc->mapperFlags;
     newdc->textAlign        = dc->textAlign;
     newdc->charExtra        = dc->charExtra;
     newdc->breakExtra       = dc->breakExtra;
@@ -535,6 +537,7 @@ BOOL restore_dc_state( HDC hdc, INT level )
     dc->dcPenColor       = dcs->dcPenColor;
     dc->brushOrgX        = dcs->brushOrgX;
     dc->brushOrgY        = dcs->brushOrgY;
+    dc->mapperFlags      = dcs->mapperFlags;
     dc->textAlign        = dcs->textAlign;
     dc->charExtra        = dcs->charExtra;
     dc->breakExtra       = dcs->breakExtra;
@@ -994,25 +997,23 @@ COLORREF WINAPI GetBkColor( HDC hdc )
  */
 COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
 {
-    COLORREF oldColor;
+    COLORREF ret = CLR_INVALID;
     DC * dc = get_dc_ptr( hdc );
 
     TRACE("hdc=%p color=0x%08x\n", hdc, color);
 
-    if (!dc) return CLR_INVALID;
-    oldColor = dc->backgroundColor;
-    if (dc->funcs->pSetBkColor)
+    if (dc)
     {
-        color = dc->funcs->pSetBkColor(dc->physDev, color);
-        if (color == CLR_INVALID)  /* don't change it */
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetBkColor );
+        color = physdev->funcs->pSetBkColor( physdev, color );
+        if (color != CLR_INVALID)
         {
-            color = oldColor;
-            oldColor = CLR_INVALID;
+            ret = dc->backgroundColor;
+            dc->backgroundColor = color;
         }
+        release_dc_ptr( dc );
     }
-    dc->backgroundColor = color;
-    release_dc_ptr( dc );
-    return oldColor;
+    return ret;
 }
 
 
@@ -1037,25 +1038,23 @@ COLORREF WINAPI GetTextColor( HDC hdc )
  */
 COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
 {
-    COLORREF oldColor;
+    COLORREF ret = CLR_INVALID;
     DC * dc = get_dc_ptr( hdc );
 
     TRACE(" hdc=%p color=0x%08x\n", hdc, color);
 
-    if (!dc) return CLR_INVALID;
-    oldColor = dc->textColor;
-    if (dc->funcs->pSetTextColor)
+    if (dc)
     {
-        color = dc->funcs->pSetTextColor(dc->physDev, color);
-        if (color == CLR_INVALID)  /* don't change it */
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetTextColor );
+        color = physdev->funcs->pSetTextColor( physdev, color );
+        if (color != CLR_INVALID)
         {
-            color = oldColor;
-            oldColor = CLR_INVALID;
+            ret = dc->textColor;
+            dc->textColor = color;
         }
+        release_dc_ptr( dc );
     }
-    dc->textColor = color;
-    release_dc_ptr( dc );
-    return oldColor;
+    return ret;
 }
 
 
@@ -1080,19 +1079,22 @@ UINT WINAPI GetTextAlign( HDC hdc )
  */
 UINT WINAPI SetTextAlign( HDC hdc, UINT align )
 {
-    UINT ret;
+    UINT ret = GDI_ERROR;
     DC *dc = get_dc_ptr( hdc );
 
     TRACE("hdc=%p align=%d\n", hdc, align);
 
-    if (!dc) return 0x0;
-    ret = dc->textAlign;
-    if (dc->funcs->pSetTextAlign)
-        if (!dc->funcs->pSetTextAlign(dc->physDev, align))
-            ret = GDI_ERROR;
-    if (ret != GDI_ERROR)
-	dc->textAlign = align;
-    release_dc_ptr( dc );
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetTextAlign );
+        align = physdev->funcs->pSetTextAlign( physdev, align );
+        if (align != GDI_ERROR)
+        {
+            ret = dc->textAlign;
+            dc->textAlign = align;
+        }
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -1171,12 +1173,12 @@ INT WINAPI GetArcDirection( HDC hdc )
 /***********************************************************************
  *           SetArcDirection    (GDI32.@)
  */
-INT WINAPI SetArcDirection( HDC hdc, INT nDirection )
+INT WINAPI SetArcDirection( HDC hdc, INT dir )
 {
     DC * dc;
-    INT nOldDirection = 0;
+    INT ret = 0;
 
-    if (nDirection!=AD_COUNTERCLOCKWISE && nDirection!=AD_CLOCKWISE)
+    if (dir != AD_COUNTERCLOCKWISE && dir != AD_CLOCKWISE)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
@@ -1184,15 +1186,16 @@ INT WINAPI SetArcDirection( HDC hdc, INT nDirection )
 
     if ((dc = get_dc_ptr( hdc )))
     {
-        if (dc->funcs->pSetArcDirection)
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetArcDirection );
+        dir = physdev->funcs->pSetArcDirection( physdev, dir );
+        if (dir)
         {
-            dc->funcs->pSetArcDirection(dc->physDev, nDirection);
+            ret = dc->ArcDirection;
+            dc->ArcDirection = dir;
         }
-        nOldDirection = dc->ArcDirection;
-        dc->ArcDirection = nDirection;
         release_dc_ptr( dc );
     }
-    return nOldDirection;
+    return ret;
 }
 
 
@@ -1694,22 +1697,25 @@ INT WINAPI GetBkMode( HDC hdc )
  */
 INT WINAPI SetBkMode( HDC hdc, INT mode )
 {
-    INT ret;
+    INT ret = 0;
     DC *dc;
+
     if ((mode <= 0) || (mode > BKMODE_LAST))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
-    if (!(dc = get_dc_ptr( hdc ))) return 0;
-
-    ret = dc->backgroundMode;
-    if (dc->funcs->pSetBkMode)
-        if (!dc->funcs->pSetBkMode( dc->physDev, mode ))
-            ret = 0;
-    if (ret)
-        dc->backgroundMode = mode;
-    release_dc_ptr( dc );
+    if ((dc = get_dc_ptr( hdc )))
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetBkMode );
+        mode = physdev->funcs->pSetBkMode( physdev, mode );
+        if (mode)
+        {
+            ret = dc->backgroundMode;
+            dc->backgroundMode = mode;
+        }
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -1735,21 +1741,25 @@ INT WINAPI GetROP2( HDC hdc )
  */
 INT WINAPI SetROP2( HDC hdc, INT mode )
 {
-    INT ret;
+    INT ret = 0;
     DC *dc;
+
     if ((mode < R2_BLACK) || (mode > R2_WHITE))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
-    if (!(dc = get_dc_ptr( hdc ))) return 0;
-    ret = dc->ROPmode;
-    if (dc->funcs->pSetROP2)
-        if (!dc->funcs->pSetROP2( dc->physDev, mode ))
-            ret = 0;
-    if (ret)
-        dc->ROPmode = mode;
-    release_dc_ptr( dc );
+    if ((dc = get_dc_ptr( hdc )))
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetROP2 );
+        mode = physdev->funcs->pSetROP2( physdev, mode );
+        if (mode)
+        {
+            ret = dc->ROPmode;
+            dc->ROPmode = mode;
+        }
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -1759,22 +1769,25 @@ INT WINAPI SetROP2( HDC hdc, INT mode )
  */
 INT WINAPI SetRelAbs( HDC hdc, INT mode )
 {
-    INT ret;
+    INT ret = 0;
     DC *dc;
+
     if ((mode != ABSOLUTE) && (mode != RELATIVE))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
-    if (!(dc = get_dc_ptr( hdc ))) return 0;
-    if (dc->funcs->pSetRelAbs)
-        ret = dc->funcs->pSetRelAbs( dc->physDev, mode );
-    else
+    if ((dc = get_dc_ptr( hdc )))
     {
-        ret = dc->relAbsMode;
-        dc->relAbsMode = mode;
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetRelAbs );
+        mode = physdev->funcs->pSetRelAbs( physdev, mode );
+        if (mode)
+        {
+            ret = dc->relAbsMode;
+            dc->relAbsMode = mode;
+        }
+        release_dc_ptr( dc );
     }
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -1800,21 +1813,25 @@ INT WINAPI GetPolyFillMode( HDC hdc )
  */
 INT WINAPI SetPolyFillMode( HDC hdc, INT mode )
 {
-    INT ret;
+    INT ret = 0;
     DC *dc;
+
     if ((mode <= 0) || (mode > POLYFILL_LAST))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
-    if (!(dc = get_dc_ptr( hdc ))) return 0;
-    ret = dc->polyFillMode;
-    if (dc->funcs->pSetPolyFillMode)
-        if (!dc->funcs->pSetPolyFillMode( dc->physDev, mode ))
-            ret = 0;
-    if (ret)
-        dc->polyFillMode = mode;
-    release_dc_ptr( dc );
+    if ((dc = get_dc_ptr( hdc )))
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetPolyFillMode );
+        mode = physdev->funcs->pSetPolyFillMode( physdev, mode );
+        if (mode)
+        {
+            ret = dc->polyFillMode;
+            dc->polyFillMode = mode;
+        }
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -1840,21 +1857,25 @@ INT WINAPI GetStretchBltMode( HDC hdc )
  */
 INT WINAPI SetStretchBltMode( HDC hdc, INT mode )
 {
-    INT ret;
+    INT ret = 0;
     DC *dc;
+
     if ((mode <= 0) || (mode > MAXSTRETCHBLTMODE))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
-    if (!(dc = get_dc_ptr( hdc ))) return 0;
-    ret = dc->stretchBltMode;
-    if (dc->funcs->pSetStretchBltMode)
-        if (!dc->funcs->pSetStretchBltMode( dc->physDev, mode ))
-            ret = 0;
-    if (ret)
-        dc->stretchBltMode = mode;
-    release_dc_ptr( dc );
+    if ((dc = get_dc_ptr( hdc )))
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetStretchBltMode );
+        mode = physdev->funcs->pSetStretchBltMode( physdev, mode );
+        if (mode)
+        {
+            ret = dc->stretchBltMode;
+            dc->stretchBltMode = mode;
+        }
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 

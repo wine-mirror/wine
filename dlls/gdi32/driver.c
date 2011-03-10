@@ -438,6 +438,21 @@ static HPEN CDECL nulldrv_SelectPen( PHYSDEV dev, HPEN pen )
     return pen;
 }
 
+static INT CDECL nulldrv_SetArcDirection( PHYSDEV dev, INT dir )
+{
+    return dir;
+}
+
+static COLORREF CDECL nulldrv_SetBkColor( PHYSDEV dev, COLORREF color )
+{
+    return color;
+}
+
+static INT CDECL nulldrv_SetBkMode( PHYSDEV dev, INT mode )
+{
+    return mode;
+}
+
 static COLORREF CDECL nulldrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
 {
     return color;
@@ -452,9 +467,54 @@ static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN cli
 {
 }
 
+static DWORD CDECL nulldrv_SetMapperFlags( PHYSDEV dev, DWORD flags )
+{
+    return flags;
+}
+
 static COLORREF CDECL nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     return color;
+}
+
+static INT CDECL nulldrv_SetPolyFillMode( PHYSDEV dev, INT mode )
+{
+    return mode;
+}
+
+static INT CDECL nulldrv_SetROP2( PHYSDEV dev, INT rop )
+{
+    return rop;
+}
+
+static INT CDECL nulldrv_SetRelAbs( PHYSDEV dev, INT mode )
+{
+    return mode;
+}
+
+static INT CDECL nulldrv_SetStretchBltMode( PHYSDEV dev, INT mode )
+{
+    return mode;
+}
+
+static UINT CDECL nulldrv_SetTextAlign( PHYSDEV dev, UINT align )
+{
+    return align;
+}
+
+static INT CDECL nulldrv_SetTextCharacterExtra( PHYSDEV dev, INT extra )
+{
+    return extra;
+}
+
+static COLORREF CDECL nulldrv_SetTextColor( PHYSDEV dev, COLORREF color )
+{
+    return color;
+}
+
+static BOOL CDECL nulldrv_SetTextJustification( PHYSDEV dev, INT extra, INT breaks )
+{
+    return TRUE;
 }
 
 static INT CDECL nulldrv_StartDoc( PHYSDEV dev, const DOCINFOW *info )
@@ -612,10 +672,10 @@ const DC_FUNCTIONS null_driver =
     nulldrv_SelectFont,                 /* pSelectFont */
     nulldrv_SelectPalette,              /* pSelectPalette */
     nulldrv_SelectPen,                  /* pSelectPen */
-    NULL,                               /* pSetArcDirection */
+    nulldrv_SetArcDirection,            /* pSetArcDirection */
     NULL,                               /* pSetBitmapBits */
-    NULL,                               /* pSetBkColor */
-    NULL,                               /* pSetBkMode */
+    nulldrv_SetBkColor,                 /* pSetBkColor */
+    nulldrv_SetBkMode,                  /* pSetBkMode */
     nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */
     nulldrv_SetDCPenColor,              /* pSetDCPenColor */
     NULL,                               /* pSetDIBColorTable */
@@ -624,17 +684,17 @@ const DC_FUNCTIONS null_driver =
     nulldrv_SetDeviceClipping,          /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
     nulldrv_SetMapMode,                 /* pSetMapMode */
-    NULL,                               /* pSetMapperFlags */
+    nulldrv_SetMapperFlags,             /* pSetMapperFlags */
     nulldrv_SetPixel,                   /* pSetPixel */
     NULL,                               /* pSetPixelFormat */
-    NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetROP2 */
-    NULL,                               /* pSetRelAbs */
-    NULL,                               /* pSetStretchBltMode */
-    NULL,                               /* pSetTextAlign */
-    NULL,                               /* pSetTextCharacterExtra */
-    NULL,                               /* pSetTextColor */
-    NULL,                               /* pSetTextJustification */
+    nulldrv_SetPolyFillMode,            /* pSetPolyFillMode */
+    nulldrv_SetROP2,                    /* pSetROP2 */
+    nulldrv_SetRelAbs,                  /* pSetRelAbs */
+    nulldrv_SetStretchBltMode,          /* pSetStretchBltMode */
+    nulldrv_SetTextAlign,               /* pSetTextAlign */
+    nulldrv_SetTextCharacterExtra,      /* pSetTextCharacterExtra */
+    nulldrv_SetTextColor,               /* pSetTextColor */
+    nulldrv_SetTextJustification,       /* pSetTextJustification */
     nulldrv_SetViewportExtEx,           /* pSetViewportExt */
     nulldrv_SetViewportOrgEx,           /* pSetViewportOrg */
     nulldrv_SetWindowExtEx,             /* pSetWindowExt */

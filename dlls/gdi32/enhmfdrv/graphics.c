@@ -866,9 +866,5 @@ INT CDECL EMFDRV_SetArcDirection(PHYSDEV dev, INT arcDirection)
     emr.emr.iType = EMR_SETARCDIRECTION;
     emr.emr.nSize = sizeof(emr);
     emr.iArcDirection = arcDirection;
-
-    EMFDRV_WriteRecord(dev, &emr.emr);
-
-    /* We don't know the old arc direction and we don't care... */ 
-    return 0;
+    return EMFDRV_WriteRecord(dev, &emr.emr) ? arcDirection : 0;
 }

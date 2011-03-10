@@ -32,32 +32,32 @@ BOOL  CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level )
 
 UINT  CDECL MFDRV_SetTextAlign( PHYSDEV dev, UINT align )
 {
-    return MFDRV_MetaParam2( dev, META_SETTEXTALIGN, HIWORD(align), LOWORD(align));
+    return MFDRV_MetaParam2( dev, META_SETTEXTALIGN, HIWORD(align), LOWORD(align)) ? align : GDI_ERROR;
 }
 
 INT  CDECL MFDRV_SetBkMode( PHYSDEV dev, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETBKMODE, (WORD)mode);
+    return MFDRV_MetaParam1( dev, META_SETBKMODE, (WORD)mode) ? mode : 0;
 }
 
 INT  CDECL MFDRV_SetROP2( PHYSDEV dev, INT rop )
 {
-    return MFDRV_MetaParam1( dev, META_SETROP2, (WORD)rop);
+    return MFDRV_MetaParam1( dev, META_SETROP2, (WORD)rop) ? rop : 0;
 }
 
 INT  CDECL MFDRV_SetRelAbs( PHYSDEV dev, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETRELABS, (WORD)mode);
+    return MFDRV_MetaParam1( dev, META_SETRELABS, (WORD)mode) ? mode : 0;
 }
 
 INT  CDECL MFDRV_SetPolyFillMode( PHYSDEV dev, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETPOLYFILLMODE, (WORD)mode);
+    return MFDRV_MetaParam1( dev, META_SETPOLYFILLMODE, (WORD)mode) ? mode : 0;
 }
 
 INT  CDECL MFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETSTRETCHBLTMODE, (WORD)mode);
+    return MFDRV_MetaParam1( dev, META_SETSTRETCHBLTMODE, (WORD)mode) ? mode : 0;
 }
 
 INT  CDECL MFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
@@ -77,22 +77,20 @@ INT  CDECL MFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
     return MFDRV_MetaParam2( dev, META_OFFSETCLIPRGN, x, y );
 }
 
-INT  CDECL MFDRV_SetTextJustification( PHYSDEV dev, INT extra, INT breaks )
+BOOL CDECL MFDRV_SetTextJustification( PHYSDEV dev, INT extra, INT breaks )
 {
     return MFDRV_MetaParam2( dev, META_SETTEXTJUSTIFICATION, extra, breaks );
 }
 
 INT  CDECL MFDRV_SetTextCharacterExtra( PHYSDEV dev, INT extra )
 {
-    if(!MFDRV_MetaParam1( dev, META_SETTEXTCHAREXTRA, extra ))
-        return 0x80000000;
-    return TRUE;
+    return MFDRV_MetaParam1( dev, META_SETTEXTCHAREXTRA, extra ) ? extra : 0x80000000;
 }
 
 DWORD  CDECL MFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )
 {
     return MFDRV_MetaParam2( dev, META_SETMAPPERFLAGS, HIWORD(flags),
-			     LOWORD(flags) );
+			     LOWORD(flags) ) ? flags : GDI_ERROR;
 }
 
 BOOL  CDECL MFDRV_AbortPath( PHYSDEV dev )

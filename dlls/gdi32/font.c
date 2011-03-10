@@ -806,18 +806,21 @@ INT WINAPI GetTextCharacterExtra( HDC hdc )
  */
 INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
 {
-    INT prev;
+    INT ret = 0x80000000;
     DC * dc = get_dc_ptr( hdc );
-    if (!dc) return 0x80000000;
-    if (dc->funcs->pSetTextCharacterExtra)
-        prev = dc->funcs->pSetTextCharacterExtra( dc->physDev, extra );
-    else
+
+    if (dc)
     {
-        prev = dc->charExtra;
-        dc->charExtra = extra;
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetTextCharacterExtra );
+        extra = physdev->funcs->pSetTextCharacterExtra( physdev, extra );
+        if (extra != 0x80000000)
+        {
+            ret = dc->charExtra;
+            dc->charExtra = extra;
+        }
+        release_dc_ptr( dc );
     }
-    release_dc_ptr( dc );
-    return prev;
+    return ret;
 }
 
 
@@ -826,12 +829,15 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
  */
 BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
 {
-    BOOL ret = TRUE;
+    BOOL ret;
+    PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
+
     if (!dc) return FALSE;
-    if (dc->funcs->pSetTextJustification)
-        ret = dc->funcs->pSetTextJustification( dc->physDev, extra, breaks );
-    else
+
+    physdev = GET_DC_PHYSDEV( dc, pSetTextJustification );
+    ret = physdev->funcs->pSetTextJustification( physdev, extra, breaks );
+    if (ret)
     {
         extra = abs((extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX);
         if (!extra) breaks = 0;
@@ -2314,19 +2320,22 @@ BOOL WINAPI PolyTextOutW( HDC hdc, const POLYTEXTW *pptxt, INT cStrings )
 /***********************************************************************
  *           SetMapperFlags    (GDI32.@)
  */
-DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
+DWORD WINAPI SetMapperFlags( HDC hdc, DWORD flags )
 {
-    DC *dc = get_dc_ptr( hDC );
-    DWORD ret = 0;
-    if(!dc) return 0;
-    if(dc->funcs->pSetMapperFlags)
+    DC *dc = get_dc_ptr( hdc );
+    DWORD ret = GDI_ERROR;
+
+    if (dc)
     {
-        ret = dc->funcs->pSetMapperFlags( dc->physDev, dwFlag );
-        /* FIXME: ret is just a success flag, we should return a proper value */
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetMapperFlags );
+        flags = physdev->funcs->pSetMapperFlags( physdev, flags );
+        if (flags != GDI_ERROR)
+        {
+            ret = dc->mapperFlags;
+            dc->mapperFlags = flags;
+        }
+        release_dc_ptr( dc );
     }
-    else
-        FIXME("(%p, 0x%08x): stub - harmless\n", hDC, dwFlag);
-    release_dc_ptr( dc );
     return ret;
 }
 
