@@ -3511,10 +3511,8 @@ GpStatus WINGDIPAPI GdipFillPieI(GpGraphics *graphics, GpBrush *brush, INT x,
 GpStatus WINGDIPAPI GdipFillPolygon(GpGraphics *graphics, GpBrush *brush,
     GDIPCONST GpPointF *points, INT count, GpFillMode fillMode)
 {
-    INT save_state;
-    GpPointF *ptf = NULL;
-    POINT *pti = NULL;
-    GpStatus retval = Ok;
+    GpStatus stat;
+    GpPath *path;
 
     TRACE("(%p, %p, %p, %d, %d)\n", graphics, brush, points, count, fillMode);
 
@@ -3524,41 +3522,19 @@ GpStatus WINGDIPAPI GdipFillPolygon(GpGraphics *graphics, GpBrush *brush,
     if(graphics->busy)
         return ObjectBusy;
 
-    if(!graphics->hdc)
+    stat = GdipCreatePath(fillMode, &path);
+
+    if (stat == Ok)
     {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
+        stat = GdipAddPathPolygon(path, points, count);
+
+        if (stat == Ok)
+            stat = GdipFillPath(graphics, brush, path);
+
+        GdipDeletePath(path);
     }
 
-    ptf = GdipAlloc(count * sizeof(GpPointF));
-    pti = GdipAlloc(count * sizeof(POINT));
-    if(!ptf || !pti){
-        retval = OutOfMemory;
-        goto end;
-    }
-
-    memcpy(ptf, points, count * sizeof(GpPointF));
-
-    save_state = SaveDC(graphics->hdc);
-    EndPath(graphics->hdc);
-    SetPolyFillMode(graphics->hdc, (fillMode == FillModeAlternate ? ALTERNATE
-                                                                  : WINDING));
-
-    transform_and_round_points(graphics, pti, ptf, count);
-
-    BeginPath(graphics->hdc);
-    Polygon(graphics->hdc, pti, count);
-    EndPath(graphics->hdc);
-
-    brush_fill_path(graphics, brush);
-
-    RestoreDC(graphics->hdc, save_state);
-
-end:
-    GdipFree(ptf);
-    GdipFree(pti);
-
-    return retval;
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipFillPolygonI(GpGraphics *graphics, GpBrush *brush,
