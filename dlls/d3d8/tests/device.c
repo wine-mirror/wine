@@ -2117,6 +2117,44 @@ cleanup:
     DestroyWindow(hwnd);
 }
 
+static void test_depth_stencil_size(void)
+{
+    IDirect3DDevice8 *device;
+    IDirect3DSurface8 *ds, *rt, *ds_bigger;
+    IDirect3D8 *d3d8;
+    HRESULT hr;
+    HWND hwnd;
+
+    d3d8 = pDirect3DCreate8( D3D_SDK_VERSION );
+    ok(d3d8 != NULL, "Failed to create IDirect3D8 object\n");
+    hwnd = CreateWindow( "d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!d3d8 || !hwnd) goto cleanup;
+
+    device = create_device(d3d8, hwnd, hwnd, TRUE);
+    if (!device) goto cleanup;
+
+    hr = IDirect3DDevice8_CreateRenderTarget(device, 64, 64, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, FALSE, &rt);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateDepthStencilSurface(device, 32, 32, D3DFMT_D24X8, D3DMULTISAMPLE_NONE, &ds);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateDepthStencilSurface(device, 128, 128, D3DFMT_D24X8, D3DMULTISAMPLE_NONE, &ds_bigger);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateDepthStencilSurface failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, rt, ds);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_SetRenderTarget returned %#x, expected D3DERR_INVALIDCALL.\n", hr);
+    hr = IDirect3DDevice8_SetRenderTarget(device, rt, ds_bigger);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateDepthStencilSurface failed, hr %#x.\n", hr);
+
+    IDirect3DSurface8_Release(rt);
+    IDirect3DSurface8_Release(ds);
+    IDirect3DSurface8_Release(ds_bigger);
+
+cleanup:
+    if (d3d8) IDirect3D8_Release(d3d8);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -2164,6 +2202,7 @@ START_TEST(device)
         test_depth_stencil_reset();
         test_wndproc();
         test_wndproc_windowed();
+        test_depth_stencil_size();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
