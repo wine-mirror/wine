@@ -3402,24 +3402,13 @@ GpStatus WINGDIPAPI GdipFillEllipseI(GpGraphics *graphics, GpBrush *brush, INT x
     return GdipFillEllipse(graphics,brush,(REAL)x,(REAL)y,(REAL)width,(REAL)height);
 }
 
-GpStatus WINGDIPAPI GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *path)
+static GpStatus GDI32_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *path)
 {
     INT save_state;
     GpStatus retval;
 
-    TRACE("(%p, %p, %p)\n", graphics, brush, path);
-
-    if(!brush || !graphics || !path)
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
-    if(!graphics->hdc)
-    {
-        FIXME("graphics object has no HDC\n");
-        return Ok;
-    }
+    if(!graphics->hdc || !brush_can_fill_path(brush))
+        return NotImplemented;
 
     save_state = SaveDC(graphics->hdc);
     EndPath(graphics->hdc);
@@ -3442,6 +3431,55 @@ end:
     RestoreDC(graphics->hdc, save_state);
 
     return retval;
+}
+
+static GpStatus SOFTWARE_GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *path)
+{
+    GpStatus stat;
+    GpRegion *rgn;
+
+    if (!brush_can_fill_pixels(brush))
+        return NotImplemented;
+
+    /* FIXME: This could probably be done more efficiently without regions. */
+
+    stat = GdipCreateRegionPath(path, &rgn);
+
+    if (stat == Ok)
+    {
+        stat = GdipFillRegion(graphics, brush, rgn);
+
+        GdipDeleteRegion(rgn);
+    }
+
+    return stat;
+}
+
+GpStatus WINGDIPAPI GdipFillPath(GpGraphics *graphics, GpBrush *brush, GpPath *path)
+{
+    GpStatus stat = NotImplemented;
+
+    TRACE("(%p, %p, %p)\n", graphics, brush, path);
+
+    if(!brush || !graphics || !path)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    if (!graphics->image)
+        stat = GDI32_GdipFillPath(graphics, brush, path);
+
+    if (stat == NotImplemented)
+        stat = SOFTWARE_GdipFillPath(graphics, brush, path);
+
+    if (stat == NotImplemented)
+    {
+        FIXME("Not implemented for brushtype %i\n", brush->bt);
+        stat = Ok;
+    }
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
