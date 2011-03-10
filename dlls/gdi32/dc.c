@@ -2011,10 +2011,6 @@ DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
 
 /***********************************************************************
  *           GetDCBrushColor    (GDI32.@)
- *
- * Retrieves the current brush color for the specified device
- * context (DC).
- *
  */
 COLORREF WINAPI GetDCBrushColor(HDC hdc)
 {
@@ -2035,11 +2031,6 @@ COLORREF WINAPI GetDCBrushColor(HDC hdc)
 
 /***********************************************************************
  *           SetDCBrushColor    (GDI32.@)
- *
- * Sets the current device context (DC) brush color to the specified
- * color value. If the device cannot represent the specified color
- * value, the color is set to the nearest physical color.
- *
  */
 COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
 {
@@ -2051,23 +2042,13 @@ COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
     dc = get_dc_ptr( hdc );
     if (dc)
     {
-        if (dc->funcs->pSetDCBrushColor)
-            crColor = dc->funcs->pSetDCBrushColor( dc->physDev, crColor );
-        else if (dc->hBrush == GetStockObject( DC_BRUSH ))
-        {
-            /* If DC_BRUSH is selected, update driver pen color */
-            HBRUSH hBrush = CreateSolidBrush( crColor );
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectBrush );
-            physdev->funcs->pSelectBrush( physdev, hBrush );
-	    DeleteObject( hBrush );
-	}
-
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDCBrushColor );
+        crColor = physdev->funcs->pSetDCBrushColor( physdev, crColor );
         if (crColor != CLR_INVALID)
         {
             oldClr = dc->dcBrushColor;
             dc->dcBrushColor = crColor;
         }
-
         release_dc_ptr( dc );
     }
 
@@ -2076,10 +2057,6 @@ COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
 
 /***********************************************************************
  *           GetDCPenColor    (GDI32.@)
- *
- * Retrieves the current pen color for the specified device
- * context (DC).
- *
  */
 COLORREF WINAPI GetDCPenColor(HDC hdc)
 {
@@ -2100,11 +2077,6 @@ COLORREF WINAPI GetDCPenColor(HDC hdc)
 
 /***********************************************************************
  *           SetDCPenColor    (GDI32.@)
- *
- * Sets the current device context (DC) pen color to the specified
- * color value. If the device cannot represent the specified color
- * value, the color is set to the nearest physical color.
- *
  */
 COLORREF WINAPI SetDCPenColor(HDC hdc, COLORREF crColor)
 {
@@ -2116,24 +2088,13 @@ COLORREF WINAPI SetDCPenColor(HDC hdc, COLORREF crColor)
     dc = get_dc_ptr( hdc );
     if (dc)
     {
-        if (dc->funcs->pSetDCPenColor)
-            crColor = dc->funcs->pSetDCPenColor( dc->physDev, crColor );
-        else if (dc->hPen == GetStockObject( DC_PEN ))
-        {
-            /* If DC_PEN is selected, update the driver pen color */
-            LOGPEN logpen = { PS_SOLID, { 0, 0 }, crColor };
-            HPEN hPen = CreatePenIndirect( &logpen );
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectPen );
-            physdev->funcs->pSelectPen( physdev, hPen );
-	    DeleteObject( hPen );
-	}
-
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDCPenColor );
+        crColor = physdev->funcs->pSetDCPenColor( physdev, crColor );
         if (crColor != CLR_INVALID)
         {
             oldClr = dc->dcPenColor;
             dc->dcPenColor = crColor;
         }
-
         release_dc_ptr( dc );
     }
 

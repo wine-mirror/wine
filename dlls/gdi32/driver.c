@@ -438,6 +438,16 @@ static HPEN CDECL nulldrv_SelectPen( PHYSDEV dev, HPEN pen )
     return pen;
 }
 
+static COLORREF CDECL nulldrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
+{
+    return color;
+}
+
+static COLORREF CDECL nulldrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
+{
+    return color;
+}
+
 static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
 {
 }
@@ -606,8 +616,8 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pSetBitmapBits */
     NULL,                               /* pSetBkColor */
     NULL,                               /* pSetBkMode */
-    NULL,                               /* pSetDCBrushColor */
-    NULL,                               /* pSetDCPenColor */
+    nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */
+    nulldrv_SetDCPenColor,              /* pSetDCPenColor */
     NULL,                               /* pSetDIBColorTable */
     NULL,                               /* pSetDIBits */
     NULL,                               /* pSetDIBitsToDevice */
