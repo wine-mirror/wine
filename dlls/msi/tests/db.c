@@ -5266,6 +5266,7 @@ static void test_select_markers(void)
 static void test_viewmodify_update(void)
 {
     MSIHANDLE hdb = 0, hview = 0, hrec = 0;
+    UINT i, test_max, offset, count;
     const char *query;
     UINT r;
 
@@ -5426,6 +5427,90 @@ static void test_viewmodify_update(void)
 
     r = MsiViewFetch(hview, &hrec);
     ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    query = "CREATE TABLE `table2` (`A` INT, `B` INT PRIMARY KEY `A`)";
+    r = run_query( hdb, 0, query );
+    ok(r == ERROR_SUCCESS, "query failed\n");
+
+    query = "INSERT INTO `table2` (`A`, `B`) VALUES (?, ?)";
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+
+    test_max = 100;
+    offset = 1234;
+    for(i = 0; i < test_max; i++)
+    {
+
+        hrec = MsiCreateRecord( 2 );
+        MsiRecordSetInteger( hrec, 1, test_max - i );
+        MsiRecordSetInteger( hrec, 2, i );
+
+        r = MsiViewExecute( hview, hrec );
+        ok(r == ERROR_SUCCESS, "Got %d\n", r);
+
+        r = MsiCloseHandle( hrec );
+        ok(r == ERROR_SUCCESS, "Got %d\n", r);
+    }
+
+    r = MsiViewClose( hview );
+    ok(r == ERROR_SUCCESS, "Got %d\n", r);
+    r = MsiCloseHandle( hview );
+    ok(r == ERROR_SUCCESS, "Got %d\n", r);
+
+    /* Update. */
+    query = "SELECT * FROM `table2` ORDER BY `B`";
+    r = MsiDatabaseOpenView( hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute( hview, 0 );
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    count = 0;
+    while (MsiViewFetch( hview, &hrec ) == ERROR_SUCCESS)
+    {
+        UINT b = MsiRecordGetInteger( hrec, 2 );
+
+        r = MsiRecordSetInteger( hrec, 2, b + offset);
+        ok(r == ERROR_SUCCESS, "Got %d\n", r);
+
+        r = MsiViewModify( hview, MSIMODIFY_UPDATE, hrec );
+        ok(r == ERROR_SUCCESS, "Got %d\n", r);
+
+        r = MsiCloseHandle(hrec);
+        ok(r == ERROR_SUCCESS, "failed to close record\n");
+        count++;
+    }
+    ok(count == test_max, "Got count %d\n", count);
+
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* Recheck. */
+    query = "SELECT * FROM `table2` ORDER BY `B`";
+    r = MsiDatabaseOpenView( hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute( hview, 0 );
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    count = 0;
+    while (MsiViewFetch( hview, &hrec ) == ERROR_SUCCESS)
+    {
+        UINT a = MsiRecordGetInteger( hrec, 1 );
+        UINT b = MsiRecordGetInteger( hrec, 2 );
+        ok( ( test_max - a + offset) == b, "Got (%d, %d), expected (%d, %d)\n",
+            a, b, test_max - a + offset, b);
+
+        r = MsiCloseHandle(hrec);
+        ok(r == ERROR_SUCCESS, "failed to close record\n");
+        count++;
+    }
+    ok(count == test_max, "Got count %d\n", count);
 
     r = MsiViewClose(hview);
     ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");

@@ -1776,6 +1776,9 @@ static UINT msi_table_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
     if (row != new_row + 1)
         return ERROR_FUNCTION_FAILED;
 
+    if(tv->order)
+        new_row = tv->order->reorder[new_row];
+
     return TABLE_set_row(view, new_row, rec, (1 << tv->num_cols) - 1);
 }
 
