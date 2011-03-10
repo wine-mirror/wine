@@ -294,7 +294,7 @@ static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HA
                                            int width, int height, int istep )
 {
     XcursorImage *image, *ret = NULL;
-    DWORD delay_jiffies, is_static;
+    DWORD delay_jiffies, num_steps;
     int x, y, i, has_alpha;
     XcursorPixel *ptr;
 
@@ -310,12 +310,11 @@ static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HA
     image->xhot = iinfo->xHotspot;
     image->yhot = iinfo->yHotspot;
 
-    /* TODO: Handle animated cursors that use multiple rates */
     image->delay = 100; /* fallback delay, 100 ms */
-    if (GetCursorFrameInfo(icon, 0x0 /* unknown parameter */, 0 /* obtain first rate */, &delay_jiffies, &is_static) != 0)
+    if (GetCursorFrameInfo(icon, 0x0 /* unknown parameter */, istep, &delay_jiffies, &num_steps) != 0)
         image->delay = (100 * delay_jiffies) / 6; /* convert jiffies (1/60s) to milliseconds */
     else
-        WARN("Failed to retrieve animated cursor framerate.\n");
+        WARN("Failed to retrieve animated cursor frame-rate for frame %d.\n", istep);
 
     /* draw the cursor frame to a temporary buffer then copy it into the XcursorImage */
     memset( color_bits, 0x00, color_size );
@@ -366,14 +365,16 @@ static Cursor create_xcursor_cursor( HDC hdc, const ICONINFOEXW *iinfo, HANDLE i
 {
     unsigned char *color_bits, *mask_bits;
     HBITMAP hbmColor = 0, hbmMask = 0;
-    XcursorImage **imgs, *image;
+    DWORD nFrames, delay_jiffies, i;
     int color_size, mask_size;
     BITMAPINFO *info = NULL;
     XcursorImages *images;
+    XcursorImage **imgs;
     Cursor cursor = 0;
-    int nFrames = 0;
 
-    if (!(imgs = HeapAlloc( GetProcessHeap(), 0, sizeof(XcursorImage*) ))) return 0;
+    /* Retrieve the number of frames to render */
+    if (!GetCursorFrameInfo(icon, 0x0 /* unknown parameter */, 0, &delay_jiffies, &nFrames)) return 0;
+    if (!(imgs = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(XcursorImage*)*nFrames ))) return 0;
 
     /* Allocate all of the resources necessary to obtain a cursor frame */
     if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) goto cleanup;
@@ -406,19 +407,13 @@ static Cursor create_xcursor_cursor( HDC hdc, const ICONINFOEXW *iinfo, HANDLE i
     }
 
     /* Create an XcursorImage for each frame of the cursor */
-    while (1)
+    for (i=0; i<nFrames; i++)
     {
-        XcursorImage **imgstmp;
-
-        image = create_xcursor_frame( hdc, iinfo, icon,
-                                      hbmColor, color_bits, color_size,
-                                      hbmMask, mask_bits, mask_size,
-                                      width, height, nFrames );
-        if (!image) break; /* no more drawable frames */
-
-        imgs[nFrames++] = image;
-        if (!(imgstmp = HeapReAlloc( GetProcessHeap(), 0, imgs, (nFrames+1)*sizeof(XcursorImage*) ))) goto cleanup;
-        imgs = imgstmp;
+        imgs[i] = create_xcursor_frame( hdc, iinfo, icon,
+                                        hbmColor, color_bits, color_size,
+                                        hbmMask, mask_bits, mask_size,
+                                        width, height, i );
+        if (!imgs[i]) goto cleanup;
     }
 
     /* Build an X cursor out of all of the frames */
@@ -436,8 +431,8 @@ cleanup:
     if (imgs)
     {
         /* Failed to produce a cursor, free previously allocated frames */
-        for (nFrames--; nFrames >= 0; nFrames--)
-            pXcursorImageDestroy( imgs[nFrames] );
+        for (i=0; i<nFrames && imgs[i]; i++)
+            pXcursorImageDestroy( imgs[i] );
         HeapFree( GetProcessHeap(), 0, imgs );
     }
     /* Cleanup all of the resources used to obtain the frame data */
