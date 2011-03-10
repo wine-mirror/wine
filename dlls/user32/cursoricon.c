@@ -101,6 +101,7 @@ struct cursoricon_object
     UINT                    height;
     POINT                   hotspot;
     UINT                    num_frames; /* number of frames in the icon/cursor */
+    UINT                    num_steps;  /* number of sequence steps in the icon/cursor */
     UINT                    delay;      /* delay between frames (in jiffies) */
     struct cursoricon_frame frames[1];  /* icon frame information */
 };
@@ -112,6 +113,7 @@ static HICON alloc_icon_handle( UINT num_frames )
 
     if (!obj) return 0;
     obj->delay = 0;
+    obj->num_steps = num_frames; /* changed later for some animated cursors */
     obj->num_frames = num_frames;
     return alloc_user_handle( &obj->obj, USER_ICON );
 }
@@ -1027,6 +1029,13 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
 
     info = get_icon_ptr( cursor );
     info->is_icon = FALSE;
+    if (header.num_steps > header.num_frames)
+    {
+        FIXME("More steps than frames and sequence-based cursors not yet supported.\n");
+        info->num_steps = header.num_frames;
+    }
+    else
+        info->num_steps = header.num_steps;
 
     /* The .ANI stores the display rate in jiffies (1/60s) */
     info->delay = header.display_rate;
@@ -1085,6 +1094,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
             if (info->frames[i].alpha) DeleteObject( info->frames[i].alpha );
         }
         info->num_frames = 1;
+        info->num_steps = 1;
         info->delay = 0;
     }
     info->width = header.width;
@@ -1700,28 +1710,33 @@ HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
 /**********************************************************************
  *              GetCursorFrameInfo (USER32.@)
  */
-HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD rate_index_num, DWORD *rate_jiffies, DWORD *is_static)
+HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD istep, DWORD *rate_jiffies, DWORD *num_steps)
 {
     struct cursoricon_object *ptr;
     HCURSOR ret = 0;
 
-    if (rate_jiffies == NULL || is_static == NULL) return 0;
+    if (rate_jiffies == NULL || num_steps == NULL) return 0;
 
     if (!(ptr = get_icon_ptr( hCursor ))) return 0;
 
-    FIXME("semi-stub! %p => %d %d %p %p\n", hCursor, unk1, rate_index_num, rate_jiffies, is_static);
+    FIXME("semi-stub! %p => %d %d %p %p\n", hCursor, unk1, istep, rate_jiffies, num_steps);
 
-    if (ptr->num_frames == 1 || rate_index_num == 0)
+    /* Important Note: Sequences are not currently supported, so this implementation
+     * will not properly handle all cases. */
+    if (istep < ptr->num_steps || ptr->num_frames == 1)
     {
         ret = hCursor;
         if (ptr->num_frames == 1)
         {
             *rate_jiffies = 0;
-            *is_static = 1;
+            *num_steps = 1;
         }
         else
         {
-            *is_static = ~0;
+            if (ptr->num_steps == 1)
+                *num_steps = ~0;
+            else
+                *num_steps = ptr->num_steps;
             *rate_jiffies = ptr->delay;
         }
     }
@@ -1983,7 +1998,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
                  hdc,x0,y0,hIcon,cxWidth,cyWidth,istep,hbr,flags );
 
     if (!(ptr = get_icon_ptr( hIcon ))) return FALSE;
-    if (istep >= ptr->num_frames)
+    if (istep >= ptr->num_steps)
     {
         TRACE_(icon)("Stepped past end of animated frames=%d\n", istep);
         release_icon_ptr( hIcon, ptr );
