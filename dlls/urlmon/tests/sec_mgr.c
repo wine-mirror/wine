@@ -1,6 +1,7 @@
 /*
  * Copyright 2005-2006 Jacek Caban for CodeWeavers
  * Copyright 2009-2010 Detlef Riekenberg
+ * Copyright 2011 Thomas Mullaly for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,6 +35,8 @@
 #include "urlmon.h"
 
 #include "initguid.h"
+
+#define URLZONE_CUSTOM URLZONE_USER_MIN+1
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -98,6 +101,8 @@ static const WCHAR security_urlW[] = {'w','i','n','e','t','e','s','t',':','t','e
 static const WCHAR security_url2W[] = {'w','i','n','e','t','e','s','t',':','t','e','s','t','i','n','g','2',0};
 static const WCHAR security_expectedW[] = {'w','i','n','e','t','e','s','t',':','z','i','p',0};
 static const WCHAR winetest_to_httpW[] = {'w','i','n','e','t','e','s','t',':','h',0};
+
+static const char *szZoneMapDomainsKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains";
 
 static const BYTE secid1[] = {'f','i','l','e',':',0,0,0,0};
 static const BYTE secid5[] = {'h','t','t','p',':','w','w','w','.','z','o','n','e','3',
@@ -451,6 +456,69 @@ static void test_polices(void)
 
     IInternetSecurityManager_Release(secmgr);
     IInternetZoneManager_Release(zonemgr);
+}
+
+/* IE (or at least newer versions of it) seem to cache the keys in ZoneMap
+ * when urlmon.dll is loaded and it doesn't seem to update its cache, unless
+ * SetZoneMapping is used.
+ */
+static void test_zone_domain_cache(void)
+{
+    HRESULT hres;
+    DWORD res, zone;
+    IInternetSecurityManager *secmgr = NULL;
+    HKEY domains, domain;
+
+    static const WCHAR testing_domain_urlW[] = {'h','t','t','p',':','/','/','t','e','s','t','i','n','g','.',
+            'd','o','m','a','i','n','/',0};
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, szZoneMapDomainsKey, &domains);
+    ok(res == ERROR_SUCCESS, "RegOpenKey failed: %d\n", res);
+    if(res != ERROR_SUCCESS)
+        return;
+
+    res = RegCreateKeyA(domains, "testing.domain", &domain);
+    ok(res == ERROR_SUCCESS, "RegCreateKey failed: %d\n", res);
+    if(res != ERROR_SUCCESS) {
+        RegCloseKey(domains);
+        return;
+    }
+
+    zone = URLZONE_CUSTOM;
+    res = RegSetValueExA(domain, "http", 0, REG_DWORD, (BYTE*)&zone, sizeof(DWORD));
+    ok(res == ERROR_SUCCESS, "RegSetValueEx failed: %d\n", res);
+
+    RegCloseKey(domain);
+
+    hres = pCoInternetCreateSecurityManager(NULL, &secmgr, 0);
+    ok(hres == S_OK, "CoInternetCreateSecurityManager failed: %08x\n", hres);
+
+    zone = URLZONE_INVALID;
+    hres = IInternetSecurityManager_MapUrlToZone(secmgr, testing_domain_urlW, &zone, 0);
+    ok(hres == S_OK, "MapUrlToZone failed: %08x\n", hres);
+    ok(zone == URLZONE_INTERNET, "Got %d, expected URLZONE_INTERNET\n", zone);
+
+    /* FIXME: Play nice with ZoneMaps that existed before the test is run. */
+    res = RegDeleteKeyA(domains, "testing.domain");
+    ok(res == ERROR_SUCCESS, "RegDeleteKey failed: %d\n", res);
+
+    RegCloseKey(domains);
+    IInternetSecurityManager_Release(secmgr);
+}
+
+static void test_zone_domains(void)
+{
+    if(is_ie_hardened()) {
+        skip("IE running in Enhanced Security Configuration\n");
+        return;
+    } else if(!pCreateUri) {
+        win_skip("Skipping zone domain tests, IE too old\n");
+        return;
+    }
+
+    trace("testing zone domains...\n");
+
+    test_zone_domain_cache();
 }
 
 static void test_CoInternetCreateZoneManager(void)
@@ -1202,6 +1270,7 @@ START_TEST(sec_mgr)
 
     test_SecurityManager();
     test_polices();
+    test_zone_domains();
     test_CoInternetCreateZoneManager();
     test_CreateZoneEnumerator();
     test_GetZoneActionPolicy();
