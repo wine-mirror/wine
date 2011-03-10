@@ -481,17 +481,40 @@ static void get_bitmap_sample_size(InterpolationMode interpolation, WrapMode wra
 static ARGB sample_bitmap_pixel(GDIPCONST GpRect *src_rect, LPBYTE bits, UINT width,
     UINT height, INT x, INT y, GDIPCONST GpImageAttributes *attributes)
 {
-    static int fixme[4];
-
-    switch (attributes->wrap)
+    if (attributes->wrap == WrapModeClamp)
     {
-    default:
-        if (!fixme[attributes->wrap]++)
-            FIXME("not implemented for wrap mode %i\n", attributes->wrap);
-    case WrapModeClamp:
         if (x < 0 || y < 0 || x >= width || y >= height)
             return attributes->outside_color;
-        break;
+    }
+    else
+    {
+        /* Tiling. Make sure co-ordinates are positive as it simplifies the math. */
+        if (x < 0)
+            x = width*2 + x % (width * 2);
+        if (y < 0)
+            y = height*2 + y % (height * 2);
+
+        if ((attributes->wrap & 1) == 1)
+        {
+            /* Flip X */
+            if ((x / width) % 2 == 0)
+                x = x % width;
+            else
+                x = width - 1 - x % width;
+        }
+        else
+            x = x % width;
+
+        if ((attributes->wrap & 2) == 2)
+        {
+            /* Flip Y */
+            if ((y / height) % 2 == 0)
+                y = y % height;
+            else
+                y = height - 1 - y % height;
+        }
+        else
+            y = y % height;
     }
 
     if (x < src_rect->X || y < src_rect->Y || x >= src_rect->X + src_rect->Width || y >= src_rect->Y + src_rect->Height)
