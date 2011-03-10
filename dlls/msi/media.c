@@ -748,23 +748,44 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
     if (r != ERROR_SUCCESS)
         return r;
 
-    index = 0;
-    volumesz = MAX_PATH;
-    promptsz = MAX_PATH;
-
     if (last_type[0] == 'n')
     {
-        while (MsiSourceListEnumSourcesW(package->ProductCode, NULL,
-                                        package->Context,
-                                        MSISOURCETYPE_NETWORK, index++,
-                                        volume, &volumesz) == ERROR_SUCCESS)
+        WCHAR cabinet_file[MAX_PATH];
+        BOOL check_all = FALSE;
+
+        while(TRUE)
         {
-            if (!strncmpiW(source, volume, strlenW(source)))
+            index = 0;
+            volumesz = MAX_PATH;
+            while (MsiSourceListEnumSourcesW(package->ProductCode, NULL,
+                                             package->Context,
+                                             MSISOURCETYPE_NETWORK, index++,
+                                             volume, &volumesz) == ERROR_SUCCESS)
             {
-                lstrcpyW(mi->sourcedir, source);
-                TRACE("Found network source %s\n", debugstr_w(mi->sourcedir));
-                return ERROR_SUCCESS;
+                if (check_all || !strncmpiW(source, volume, strlenW(source)))
+                {
+                    lstrcpyW(cabinet_file, volume);
+                    PathAddBackslashW(cabinet_file);
+                    lstrcatW(cabinet_file, mi->cabinet);
+
+                    if (GetFileAttributesW(cabinet_file) == INVALID_FILE_ATTRIBUTES)
+                    {
+                        volumesz = MAX_PATH;
+                        if(!check_all)
+                            break;
+                        continue;
+                    }
+
+                    lstrcpyW(mi->sourcedir, volume);
+                    TRACE("Found network source %s\n", debugstr_w(mi->sourcedir));
+                    return ERROR_SUCCESS;
+                }
             }
+
+            if (!check_all)
+                check_all = TRUE;
+            else
+                break;
         }
     }
 
