@@ -1970,7 +1970,6 @@ static inline void context_set_render_offscreen(struct wined3d_context *context,
 
     Context_MarkStateDirty(context, STATE_POINTSPRITECOORDORIGIN, StateTable);
     Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
-    Context_MarkStateDirty(context, STATE_VDECL, StateTable);
     Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
     Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
     Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
