@@ -186,7 +186,7 @@ extern IUnknown         *create_pi( xmlNodePtr pi );
 extern IUnknown         *create_comment( xmlNodePtr comment );
 extern IUnknown         *create_cdata( xmlNodePtr text );
 extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr );
-extern IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node );
+extern IXMLDOMNamedNodeMap *create_nodemap( const xmlNodePtr );
 extern IUnknown         *create_doc_Implementation(void);
 extern IUnknown         *create_doc_fragment( xmlNodePtr fragment );
 extern IUnknown         *create_doc_entity_ref( xmlNodePtr entity );

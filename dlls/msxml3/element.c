@@ -314,13 +314,13 @@ static HRESULT WINAPI domelem_get_nextSibling(
 
 static HRESULT WINAPI domelem_get_attributes(
     IXMLDOMElement *iface,
-    IXMLDOMNamedNodeMap** attributeMap)
+    IXMLDOMNamedNodeMap** map)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
 
-    TRACE("(%p)->(%p)\n", This, attributeMap);
+    TRACE("(%p)->(%p)\n", This, map);
 
-    *attributeMap = create_nodemap((IXMLDOMNode*)&This->IXMLDOMElement_iface);
+    *map = create_nodemap(This->node.node);
     return S_OK;
 }
 

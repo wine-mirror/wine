@@ -8329,6 +8329,7 @@ static void test_get_nodeTypeString(void)
         ok(!lstrcmpW(str, _bstr_(entry->string)), "got string %s, expected %s. node type %d\n",
             wine_dbgstr_w(str), entry->string, entry->type);
         SysFreeString(str);
+        IXMLDOMNode_Release(node);
 
         entry++;
     }
@@ -8358,14 +8359,15 @@ static void test_get_attributes(void)
     const get_attributes_t *entry = get_attributes;
     IXMLDOMNamedNodeMap *map;
     IXMLDOMDocument *doc;
-    IXMLDOMNode *node;
+    IXMLDOMNode *node, *node2;
     VARIANT_BOOL b;
     HRESULT hr;
     BSTR str;
+    LONG length;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
-    str = SysAllocString( szComplete3 );
+    str = SysAllocString( szComplete4 );
     hr = IXMLDOMDocument_loadXML(doc, str, &b);
     SysFreeString(str);
 
@@ -8403,6 +8405,43 @@ static void test_get_attributes(void)
 
     IXMLDOMNode_Release(node);
 
+    /* last child is element */
+    EXPECT_REF(doc, 1);
+    hr = IXMLDOMDocument_get_lastChild(doc, &node);
+    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_REF(doc, 1);
+
+    EXPECT_REF(node, 1);
+    hr = IXMLDOMNode_get_attributes(node, &map);
+    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_REF(node, 1);
+    EXPECT_REF(doc, 1);
+
+    EXPECT_REF(map, 1);
+    hr = IXMLDOMNamedNodeMap_get_item(map, 0, &node2);
+    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_REF(node, 1);
+    EXPECT_REF(node2, 1);
+    EXPECT_REF(map, 1);
+    EXPECT_REF(doc, 1);
+    IXMLDOMNode_Release(node2);
+
+    /* release node before map release, map still works */
+    IXMLDOMNode_Release(node);
+
+    length = 0;
+    hr = IXMLDOMNamedNodeMap_get_length(map, &length);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(length == 1, "got %d\n", length);
+
+    node2 = NULL;
+    hr = IXMLDOMNamedNodeMap_get_item(map, 0, &node2);
+    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_REF(node2, 1);
+    IXMLDOMNode_Release(node2);
+
+    IXMLDOMNamedNodeMap_Release(map);
+
     while (entry->type)
     {
         VARIANT var;
@@ -8422,6 +8461,8 @@ static void test_get_attributes(void)
         ok(hr == entry->hr, "got 0x%08x, expected 0x%08x. node type %d\n",
             hr, entry->hr, entry->type);
         ok(map == NULL, "got %p\n", map);
+
+        IXMLDOMNode_Release(node);
 
         entry++;
     }
