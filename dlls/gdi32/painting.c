@@ -545,12 +545,12 @@ INT WINAPI ChoosePixelFormat( HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd )
 
     TRACE("(%p,%p)\n",hdc,ppfd);
 
-    if (!dc) return 0;
-
-    if (!dc->funcs->pChoosePixelFormat) FIXME(" :stub\n");
-    else ret = dc->funcs->pChoosePixelFormat(dc->physDev,ppfd);
-
-    release_dc_ptr( dc );
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pChoosePixelFormat );
+        ret = physdev->funcs->pChoosePixelFormat( physdev, ppfd );
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -576,13 +576,13 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT iPixelFormat,
 
     TRACE("(%p,%d,%p)\n",hdc,iPixelFormat,ppfd);
 
-    if (!dc) return 0;
-
-    update_dc( dc );
-    if (!dc->funcs->pSetPixelFormat) FIXME(" :stub\n");
-    else bRet = dc->funcs->pSetPixelFormat(dc->physDev,iPixelFormat,ppfd);
-
-    release_dc_ptr( dc );
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetPixelFormat );
+        update_dc( dc );
+        bRet = physdev->funcs->pSetPixelFormat( physdev, iPixelFormat, ppfd );
+        release_dc_ptr( dc );
+    }
     return bRet;
 }
 
@@ -605,13 +605,13 @@ INT WINAPI GetPixelFormat( HDC hdc )
 
     TRACE("(%p)\n",hdc);
 
-    if (!dc) return 0;
-
-    update_dc( dc );
-    if (!dc->funcs->pGetPixelFormat) FIXME(" :stub\n");
-    else ret = dc->funcs->pGetPixelFormat(dc->physDev);
-
-    release_dc_ptr( dc );
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetPixelFormat );
+        update_dc( dc );
+        ret = physdev->funcs->pGetPixelFormat( physdev );
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -638,19 +638,13 @@ INT WINAPI DescribePixelFormat( HDC hdc, INT iPixelFormat, UINT nBytes,
 
     TRACE("(%p,%d,%d,%p): stub\n",hdc,iPixelFormat,nBytes,ppfd);
 
-    if (!dc) return 0;
-
-    update_dc( dc );
-    if (!dc->funcs->pDescribePixelFormat)
+    if (dc)
     {
-        FIXME(" :stub\n");
-        ppfd->nSize = nBytes;
-        ppfd->nVersion = 1;
-	ret = 3;
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pDescribePixelFormat );
+        update_dc( dc );
+        ret = physdev->funcs->pDescribePixelFormat( physdev, iPixelFormat, nBytes, ppfd );
+        release_dc_ptr( dc );
     }
-    else ret = dc->funcs->pDescribePixelFormat(dc->physDev,iPixelFormat,nBytes,ppfd);
-
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -673,17 +667,13 @@ BOOL WINAPI SwapBuffers( HDC hdc )
 
     TRACE("(%p)\n",hdc);
 
-    if (!dc) return TRUE;
-
-    update_dc( dc );
-    if (!dc->funcs->pSwapBuffers)
+    if (dc)
     {
-        FIXME(" :stub\n");
-	bRet = TRUE;
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSwapBuffers );
+        update_dc( dc );
+        bRet = physdev->funcs->pSwapBuffers( physdev );
+        release_dc_ptr( dc );
     }
-    else bRet = dc->funcs->pSwapBuffers(dc->physDev);
-
-    release_dc_ptr( dc );
     return bRet;
 }
 

@@ -323,6 +323,11 @@ static BOOL CDECL nulldrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bo
     return TRUE;
 }
 
+static INT CDECL nulldrv_ChoosePixelFormat( PHYSDEV dev, const PIXELFORMATDESCRIPTOR *descr )
+{
+    return 0;
+}
+
 static BOOL CDECL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                  INT xstart, INT ystart, INT xend, INT yend )
 {
@@ -332,6 +337,12 @@ static BOOL CDECL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT 
 static BOOL CDECL nulldrv_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
 {
     return TRUE;
+}
+
+static INT CDECL nulldrv_DescribePixelFormat( PHYSDEV dev, INT format,
+                                              UINT size, PIXELFORMATDESCRIPTOR * descr )
+{
+    return 0;
 }
 
 static DWORD CDECL nulldrv_DeviceCapabilities( LPSTR buffer, LPCSTR device, LPCSTR port,
@@ -378,6 +389,11 @@ static BOOL CDECL nulldrv_GdiComment( PHYSDEV dev, UINT size, const BYTE *data )
 }
 
 static COLORREF CDECL nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
+{
+    return 0;
+}
+
+static INT CDECL nulldrv_GetPixelFormat( PHYSDEV dev )
 {
     return 0;
 }
@@ -505,6 +521,11 @@ static COLORREF CDECL nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF colo
     return color;
 }
 
+static BOOL CDECL nulldrv_SetPixelFormat( PHYSDEV dev, INT format, const PIXELFORMATDESCRIPTOR *descr )
+{
+    return FALSE;
+}
+
 static INT CDECL nulldrv_SetPolyFillMode( PHYSDEV dev, INT mode )
 {
     return mode;
@@ -553,6 +574,11 @@ static INT CDECL nulldrv_StartDoc( PHYSDEV dev, const DOCINFOW *info )
 static INT CDECL nulldrv_StartPage( PHYSDEV dev )
 {
     return 1;
+}
+
+static BOOL CDECL nulldrv_SwapBuffers( PHYSDEV dev )
+{
+    return TRUE;
 }
 
 static BOOL CDECL nulldrv_wglCopyContext( HGLRC ctx_src, HGLRC ctx_dst, UINT mask )
@@ -626,7 +652,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_ArcTo,                      /* pArcTo */
     NULL,                               /* pBeginPath */
     NULL,                               /* pBitBlt */
-    NULL,                               /* pChoosePixelFormat */
+    nulldrv_ChoosePixelFormat,          /* pChoosePixelFormat */
     nulldrv_Chord,                      /* pChord */
     NULL,                               /* pCloseFigure */
     NULL,                               /* pCreateBitmap */
@@ -635,7 +661,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pDeleteBitmap */
     NULL,                               /* pDeleteDC */
     nulldrv_DeleteObject,               /* pDeleteObject */
-    NULL,                               /* pDescribePixelFormat */
+    nulldrv_DescribePixelFormat,        /* pDescribePixelFormat */
     nulldrv_DeviceCapabilities,         /* pDeviceCapabilities */
     nulldrv_Ellipse,                    /* pEllipse */
     nulldrv_EndDoc,                     /* pEndDoc */
@@ -662,7 +688,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pGetICMProfile */
     NULL,                               /* pGetNearestColor */
     nulldrv_GetPixel,                   /* pGetPixel */
-    NULL,                               /* pGetPixelFormat */
+    nulldrv_GetPixelFormat,             /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextExtentExPoint */
     NULL,                               /* pGetTextMetrics */
@@ -715,7 +741,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_SetMapMode,                 /* pSetMapMode */
     nulldrv_SetMapperFlags,             /* pSetMapperFlags */
     nulldrv_SetPixel,                   /* pSetPixel */
-    NULL,                               /* pSetPixelFormat */
+    nulldrv_SetPixelFormat,             /* pSetPixelFormat */
     nulldrv_SetPolyFillMode,            /* pSetPolyFillMode */
     nulldrv_SetROP2,                    /* pSetROP2 */
     nulldrv_SetRelAbs,                  /* pSetRelAbs */
@@ -735,7 +761,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pStretchDIBits */
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
-    NULL,                               /* pSwapBuffers */
+    nulldrv_SwapBuffers,                /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
     nulldrv_wglCopyContext,             /* pwglCopyContext */
