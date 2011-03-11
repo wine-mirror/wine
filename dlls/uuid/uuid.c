@@ -62,6 +62,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "mlang.h"
 #include "mshtml.h"
 #include "mshtmhst.h"
+#include "docobjectservice.h"
 #include "richole.h"
 #include "downloadmgr.h"
 #include "objsel.h"

@@ -30,6 +30,7 @@ PUBLIC_IDL_H_SRCS = \
 	dimm.idl \
 	dispex.idl \
 	docobj.idl \
+	docobjectservice.idl \
 	downloadmgr.idl \
 	dxgi.idl \
 	dxgitype.idl \

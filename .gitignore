@@ -167,6 +167,7 @@ include/devicetopology.h
 include/dimm.h
 include/dispex.h
 include/docobj.h
+include/docobjectservice.h
 include/downloadmgr.h
 include/dxgi.h
 include/dxgitype.h
