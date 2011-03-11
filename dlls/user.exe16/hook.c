@@ -192,7 +192,7 @@ void call_WH_CALLWNDPROC_hook( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPARAM lp )
     CWPSTRUCT16 cwp;
     struct hook16_queue_info *info = get_hook_info( FALSE );
 
-    if (!info->proc[WH_CALLWNDPROC - WH_MINHOOK]) return;
+    if (!info || !info->proc[WH_CALLWNDPROC - WH_MINHOOK]) return;
 
     cwp.hwnd    = hwnd;
     cwp.message = msg;
