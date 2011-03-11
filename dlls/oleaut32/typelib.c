@@ -1614,6 +1614,17 @@ static inline TLBVarDesc *TLB_get_vardesc_by_name(TLBVarDesc *vardescs,
     return NULL;
 }
 
+static inline TLBCustData *TLB_get_custdata_by_guid(TLBCustData **custdata_list, REFGUID guid)
+{
+    TLBCustData *cust_data = *custdata_list;
+    while(cust_data){
+        if(IsEqualIID(&cust_data->guid, guid))
+            return cust_data;
+        cust_data = cust_data->next;
+    }
+    return NULL;
+}
+
 /**********************************************************************
  *
  *  Functions for reading MSFT typelibs (those created by CreateTypeLib2)
@@ -4599,20 +4610,16 @@ static HRESULT WINAPI ITypeLib2_fnGetCustData(
     ITypeLibImpl *This = (ITypeLibImpl *)iface;
     TLBCustData *pCData;
 
-    for(pCData=This->pCustData; pCData; pCData = pCData->next)
-    {
-      if( IsEqualIID(guid, &pCData->guid)) break;
-    }
+    TRACE("%p %s %p\n", This, debugstr_guid(guid), pVarVal);
 
-    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
+    pCData = TLB_get_custdata_by_guid(&This->pCustData, guid);
+    if(!pCData)
+        return TYPE_E_ELEMENTNOTFOUND;
 
-    if(pCData)
-    {
-        VariantInit( pVarVal);
-        VariantCopy( pVarVal, &pCData->data);
-        return S_OK;
-    }
-    return E_INVALIDARG;  /* FIXME: correct? */
+    VariantInit(pVarVal);
+    VariantCopy(pVarVal, &pCData->data);
+
+    return S_OK;
 }
 
 /* ITypeLib2::GetLibStatistics
@@ -7236,10 +7243,9 @@ static HRESULT WINAPI ITypeInfo2_fnGetCustData(
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     TLBCustData *pCData;
 
-    for(pCData=This->pCustData; pCData; pCData = pCData->next)
-        if( IsEqualIID(guid, &pCData->guid)) break;
+    TRACE("%p %s %p\n", This, debugstr_guid(guid), pVarVal);
 
-    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
+    pCData = TLB_get_custdata_by_guid(&This->pCustData, guid);
 
     VariantInit( pVarVal);
     if (pCData)
@@ -7260,23 +7266,22 @@ static HRESULT WINAPI ITypeInfo2_fnGetFuncCustData(
 	VARIANT *pVarVal)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    TLBCustData *pCData=NULL;
+    TLBCustData *pCData;
     TLBFuncDesc *pFDesc = &This->funcdescs[index];
+
+    TRACE("%p %u %s %p\n", This, index, debugstr_guid(guid), pVarVal);
 
     if(index >= This->TypeAttr.cFuncs)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    for(pCData=pFDesc->pCustData; pCData; pCData = pCData->next)
-        if( IsEqualIID(guid, &pCData->guid)) break;
+    pCData = TLB_get_custdata_by_guid(&pFDesc->pCustData, guid);
+    if(!pCData)
+        return TYPE_E_ELEMENTNOTFOUND;
 
-    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
+    VariantInit(pVarVal);
+    VariantCopy(pVarVal, &pCData->data);
 
-    if(pCData){
-        VariantInit( pVarVal);
-        VariantCopy( pVarVal, &pCData->data);
-        return S_OK;
-    }
-    return TYPE_E_ELEMENTNOTFOUND;
+    return S_OK;
 }
 
 /* ITypeInfo2::GetParamCustData
@@ -7294,25 +7299,23 @@ static HRESULT WINAPI ITypeInfo2_fnGetParamCustData(
     TLBCustData *pCData;
     TLBFuncDesc *pFDesc = &This->funcdescs[indexFunc];
 
+    TRACE("%p %u %u %s %p\n", This, indexFunc, indexParam,
+            debugstr_guid(guid), pVarVal);
+
     if(indexFunc >= This->TypeAttr.cFuncs)
         return TYPE_E_ELEMENTNOTFOUND;
 
     if(indexParam >= pFDesc->funcdesc.cParams)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    for(pCData=pFDesc->pParamDesc[indexParam].pCustData; pCData;
-            pCData = pCData->next)
-        if( IsEqualIID(guid, &pCData->guid)) break;
+    pCData = TLB_get_custdata_by_guid(&pFDesc->pParamDesc[indexParam].pCustData, guid);
+    if(!pCData)
+        return TYPE_E_ELEMENTNOTFOUND;
 
-    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
+    VariantInit(pVarVal);
+    VariantCopy(pVarVal, &pCData->data);
 
-    if(pCData)
-    {
-        VariantInit( pVarVal);
-        VariantCopy( pVarVal, &pCData->data);
-        return S_OK;
-    }
-    return TYPE_E_ELEMENTNOTFOUND;
+    return S_OK;
 }
 
 /* ITypeInfo2::GetVarCustData
@@ -7326,7 +7329,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetVarCustData(
 	VARIANT *pVarVal)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    TLBCustData *pCData=NULL;
+    TLBCustData *pCData;
     TLBVarDesc *pVDesc = &This->vardescs[index];
 
     TRACE("%p %s %p\n", This, debugstr_guid(guid), pVarVal);
@@ -7334,14 +7337,13 @@ static HRESULT WINAPI ITypeInfo2_fnGetVarCustData(
     if(index >= This->TypeAttr.cVars)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    for(pCData=pVDesc->pCustData; pCData; pCData = pCData->next)
-        if(IsEqualIID(guid, &pCData->guid))
-            break;
+    pCData = TLB_get_custdata_by_guid(&pVDesc->pCustData, guid);
     if(!pCData)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    VariantInit( pVarVal);
-    VariantCopy( pVarVal, &pCData->data);
+    VariantInit(pVarVal);
+    VariantCopy(pVarVal, &pCData->data);
+
     return S_OK;
 }
 
@@ -7356,27 +7358,22 @@ static HRESULT WINAPI ITypeInfo2_fnGetImplTypeCustData(
 	VARIANT *pVarVal)
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
-    TLBCustData *pCData=NULL;
+    TLBCustData *pCData;
     TLBImplType *pRDesc = &This->impltypes[index];
+
+    TRACE("%p %u %s %p\n", This, index, debugstr_guid(guid), pVarVal);
 
     if(index >= This->TypeAttr.cImplTypes)
         return TYPE_E_ELEMENTNOTFOUND;
 
-    for(pCData = pRDesc->pCustData; pCData; pCData = pCData->next)
-    {
-        if( IsEqualIID(guid, &pCData->guid)) break;
-    }
+    pCData = TLB_get_custdata_by_guid(&pRDesc->pCustData, guid);
+    if(!pCData)
+        return TYPE_E_ELEMENTNOTFOUND;
 
-    TRACE("(%p) guid %s %s found!x)\n", This, debugstr_guid(guid), pCData? "" : "NOT");
+    VariantInit(pVarVal);
+    VariantCopy(pVarVal, &pCData->data);
 
-    if(pCData)
-    {
-        VariantInit( pVarVal);
-        VariantCopy( pVarVal, &pCData->data);
-        return S_OK;
-    }
-
-    return TYPE_E_ELEMENTNOTFOUND;
+    return S_OK;
 }
 
 /* ITypeInfo2::GetDocumentation2
