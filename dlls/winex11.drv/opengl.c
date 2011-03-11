@@ -1977,22 +1977,27 @@ BOOL CDECL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEV
         if (NULL == pglXMakeContextCurrent) {
             ret = FALSE;
         } else {
-            Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
             Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
             Drawable d_draw = get_glxdrawable(pDrawDev);
             Drawable d_read = get_glxdrawable(pReadDev);
 
-            if (prev_ctx) prev_ctx->tid = 0;
-
-            ctx->has_been_current = TRUE;
-            ctx->tid = GetCurrentThreadId();
-            ctx->hdc = pDrawDev->hdc;
-            ctx->read_hdc = pReadDev->hdc;
-            ctx->drawables[0] = d_draw;
-            ctx->drawables[1] = d_read;
-            ctx->refresh_drawables = FALSE;
             ret = pglXMakeContextCurrent(gdi_display, d_draw, d_read, ctx->ctx);
-            NtCurrentTeb()->glContext = ctx;
+            if (ret)
+            {
+                Wine_GLContext *prev_ctx = NtCurrentTeb()->glContext;
+                if (prev_ctx) prev_ctx->tid = 0;
+
+                ctx->has_been_current = TRUE;
+                ctx->tid = GetCurrentThreadId();
+                ctx->hdc = pDrawDev->hdc;
+                ctx->read_hdc = pReadDev->hdc;
+                ctx->drawables[0] = d_draw;
+                ctx->drawables[1] = d_read;
+                ctx->refresh_drawables = FALSE;
+                NtCurrentTeb()->glContext = ctx;
+            }
+            else
+                SetLastError(ERROR_INVALID_HANDLE);
         }
     }
     wine_tsx11_unlock();
