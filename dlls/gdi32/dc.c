@@ -274,7 +274,8 @@ static BOOL DC_DeleteObject( HGDIOBJ handle )
  */
 void DC_InitDC( DC* dc )
 {
-    if (dc->funcs->pRealizeDefaultPalette) dc->funcs->pRealizeDefaultPalette( dc->physDev );
+    PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRealizeDefaultPalette );
+    physdev->funcs->pRealizeDefaultPalette( physdev );
     SetTextColor( dc->hSelf, dc->textColor );
     SetBkColor( dc->hSelf, dc->backgroundColor );
     SelectObject( dc->hSelf, dc->hPen );

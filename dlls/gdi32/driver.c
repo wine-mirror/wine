@@ -413,6 +413,12 @@ static INT CDECL nulldrv_GetPixelFormat( PHYSDEV dev )
     return 0;
 }
 
+static UINT CDECL nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start,
+                                                   UINT count, PALETTEENTRY *entries )
+{
+    return 0;
+}
+
 static BOOL CDECL nulldrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
     return TRUE;
@@ -454,6 +460,16 @@ static BOOL CDECL nulldrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
 static BOOL CDECL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
 {
     return TRUE;
+}
+
+static UINT CDECL nulldrv_RealizeDefaultPalette( PHYSDEV dev )
+{
+    return 0;
+}
+
+static UINT CDECL nulldrv_RealizePalette( PHYSDEV dev, HPALETTE palette, BOOL primary )
+{
+    return 0;
 }
 
 static BOOL CDECL nulldrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
@@ -706,10 +722,10 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pGetDeviceCaps */
     nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */
     nulldrv_GetICMProfile,              /* pGetICMProfile */
-    NULL,                               /* pGetNearestColor */
+    nulldrv_GetNearestColor,            /* pGetNearestColor */
     nulldrv_GetPixel,                   /* pGetPixel */
     nulldrv_GetPixelFormat,             /* pGetPixelFormat */
-    NULL,                               /* pGetSystemPaletteEntries */
+    nulldrv_GetSystemPaletteEntries,    /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextExtentExPoint */
     NULL,                               /* pGetTextMetrics */
     nulldrv_IntersectClipRect,          /* pIntersectClipRect */
@@ -731,8 +747,8 @@ const DC_FUNCTIONS null_driver =
     nulldrv_Polygon,                    /* pPolygon */
     nulldrv_Polyline,                   /* pPolyline */
     nulldrv_PolylineTo,                 /* pPolylineTo */
-    NULL,                               /* pRealizeDefaultPalette */
-    NULL,                               /* pRealizePalette */
+    nulldrv_RealizeDefaultPalette,      /* pRealizeDefaultPalette */
+    nulldrv_RealizePalette,             /* pRealizePalette */
     nulldrv_Rectangle,                  /* pRectangle */
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
