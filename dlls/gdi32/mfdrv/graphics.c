@@ -430,28 +430,6 @@ INT CDECL MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
 
 
 /**********************************************************************
- *          MFDRV_SetBkColor
- */
-COLORREF CDECL
-MFDRV_SetBkColor( PHYSDEV dev, COLORREF color )
-{
-    return MFDRV_MetaParam2(dev, META_SETBKCOLOR, HIWORD(color),
-                            LOWORD(color)) ? color : CLR_INVALID;
-}
-
-
-/**********************************************************************
- *          MFDRV_SetTextColor
- */
-COLORREF CDECL
-MFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
-{
-    return MFDRV_MetaParam2(dev, META_SETTEXTCOLOR, HIWORD(color),
-                            LOWORD(color)) ? color : CLR_INVALID;
-}
-
-
-/**********************************************************************
  *          MFDRV_PolyBezier
  * Since MetaFiles don't record Beziers and they don't even record
  * approximations to them using lines, we need this stub function.

@@ -32,7 +32,6 @@ C_SRCS = \
 	mfdrv/dc.c \
 	mfdrv/graphics.c \
 	mfdrv/init.c \
-	mfdrv/mapping.c \
 	mfdrv/objects.c \
 	mfdrv/text.c \
 	opengl.c \
