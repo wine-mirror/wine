@@ -4780,11 +4780,24 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD rect
     TRACE("iface %p, rect_count %u, rects %p, flags %#x, color 0x%08x, depth %.8e, stencil %u.\n",
             iface, rect_count, rects, flags, color, depth, stencil);
 
-    if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL) && !device->depth_stencil)
+    if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
     {
-        WARN("Clearing depth and/or stencil without a depth stencil buffer attached, returning WINED3DERR_INVALIDCALL\n");
-        /* TODO: What about depth stencil buffers without stencil bits? */
-        return WINED3DERR_INVALIDCALL;
+        IWineD3DSurfaceImpl *ds = device->depth_stencil;
+        if (!ds)
+        {
+            WARN("Clearing depth and/or stencil without a depth stencil buffer attached, returning WINED3DERR_INVALIDCALL\n");
+            /* TODO: What about depth stencil buffers without stencil bits? */
+            return WINED3DERR_INVALIDCALL;
+        }
+        else if (flags & WINED3DCLEAR_TARGET)
+        {
+            if(ds->resource.width < device->render_targets[0]->resource.width ||
+               ds->resource.height < device->render_targets[0]->resource.height)
+            {
+                WARN("Silently ignoring depth and target clear with mismatching sizes\n");
+                return WINED3D_OK;
+            }
+        }
     }
 
     device_get_draw_rect(device, &draw_rect);
