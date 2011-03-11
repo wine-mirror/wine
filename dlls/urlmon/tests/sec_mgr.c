@@ -28,6 +28,7 @@
 #include <wine/test.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -36,7 +37,8 @@
 
 #include "initguid.h"
 
-#define URLZONE_CUSTOM URLZONE_USER_MIN+1
+#define URLZONE_CUSTOM  URLZONE_USER_MIN+1
+#define URLZONE_CUSTOM2 URLZONE_CUSTOM+1
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -506,6 +508,225 @@ static void test_zone_domain_cache(void)
     IInternetSecurityManager_Release(secmgr);
 }
 
+typedef struct {
+    const char  *domain;
+    const char  *subdomain;
+    const char  *scheme;
+    DWORD       zone;
+} zone_domain_mapping;
+
+/* FIXME: Move these into SetZoneMapping tests when the day comes... */
+static const zone_domain_mapping zone_domain_mappings[] = {
+    /* Implicitly means "*.yabadaba.do". */
+    {"yabadaba.do",NULL,"http",URLZONE_CUSTOM},
+    /* The '*' doesn't count as a wildcard, since its not the first component of the subdomain. */
+    {"super.cool","testing.*","ftp",URLZONE_CUSTOM2},
+    /* The '*' counts since it's the first component of the subdomain. */
+    {"super.cool","*.testing","ftp",URLZONE_CUSTOM2},
+    /* All known scheme types apply to wildcard schemes. */
+    {"tests.test",NULL,"*",URLZONE_CUSTOM},
+    /* Due to a defect with how windows checks the mappings, unknown scheme types
+     * never seem to get mapped properly. */
+    {"tests.test",NULL,"zip",URLZONE_CUSTOM},
+    {"www.testing.com",NULL,"http",URLZONE_CUSTOM},
+    {"www.testing.com","testing","http",URLZONE_CUSTOM2},
+    {"org",NULL,"http",URLZONE_CUSTOM},
+    {"org","testing","http",URLZONE_CUSTOM2}
+};
+
+static void register_zone_domains(void)
+{
+    HKEY domains;
+    DWORD res, i;
+
+    /* Some Windows versions don't seem to have a "Domains" key in their HKLM. */
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, szZoneMapDomainsKey, &domains);
+    ok(res == ERROR_SUCCESS || broken(res == ERROR_FILE_NOT_FOUND), "RegOpenKey failed: %d\n", res);
+    if(res == ERROR_SUCCESS) {
+        HKEY domain;
+        DWORD zone = URLZONE_CUSTOM;
+
+        res = RegCreateKeyA(domains, "local.machine", &domain);
+        ok(res == ERROR_SUCCESS, "RegCreateKey failed: %d\n", res);
+
+        res = RegSetValueExA(domain, "http", 0, REG_DWORD, (BYTE*)&zone, sizeof(DWORD));
+        ok(res == ERROR_SUCCESS, "RegSetValueEx failed: %d\n", res);
+
+        RegCloseKey(domain);
+        RegCloseKey(domains);
+    }
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, szZoneMapDomainsKey, &domains);
+    ok(res == ERROR_SUCCESS, "RegOpenKey failed: %d\n", res);
+
+    for(i = 0; i < sizeof(zone_domain_mappings)/sizeof(zone_domain_mappings[0]); ++i) {
+        const zone_domain_mapping *test = zone_domain_mappings+i;
+        HKEY domain;
+
+        res = RegCreateKeyA(domains, test->domain, &domain);
+        ok(res == ERROR_SUCCESS, "RegCreateKey failed with %d on test %d\n", res, i);
+
+        /* Only set the value if there's no subdomain. */
+        if(!test->subdomain) {
+            res = RegSetValueExA(domain, test->scheme, 0, REG_DWORD, (BYTE*)&test->zone, sizeof(DWORD));
+            ok(res == ERROR_SUCCESS, "RegSetValueEx failed with %d on test %d\n", res, i);
+        } else {
+            HKEY subdomain;
+
+            res = RegCreateKeyA(domain, test->subdomain, &subdomain);
+            ok(res == ERROR_SUCCESS, "RegCreateKey failed with %d on test %d\n", res, i);
+
+            res = RegSetValueExA(subdomain, test->scheme, 0, REG_DWORD, (BYTE*)&test->zone, sizeof(DWORD));
+            ok(res == ERROR_SUCCESS, "RegSetValueEx failed with %d on test %d\n", res, i);
+
+            RegCloseKey(subdomain);
+        }
+
+        RegCloseKey(domain);
+    }
+
+    RegCloseKey(domains);
+}
+
+static void unregister_zone_domains(void)
+{
+    HKEY domains;
+    DWORD res, i;
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, szZoneMapDomainsKey, &domains);
+    ok(res == ERROR_SUCCESS || broken(res == ERROR_FILE_NOT_FOUND), "RegOpenKey failed: %d\n", res);
+    if(res == ERROR_SUCCESS) {
+        RegDeleteKeyA(domains, "local.machine");
+        RegCloseKey(domains);
+    }
+
+    res = RegOpenKeyA(HKEY_CURRENT_USER, szZoneMapDomainsKey, &domains);
+    ok(res == ERROR_SUCCESS, "RegOpenKey failed: %d\n", res);
+
+    for(i = 0; i < sizeof(zone_domain_mappings)/sizeof(zone_domain_mappings[0]); ++i) {
+        const zone_domain_mapping *test = zone_domain_mappings+i;
+
+        /* FIXME: Uses the "cludge" approach to remove the test data from the registry!
+         *        Although, if domain names are... unique, this shouldn't cause any harm
+         *        to keys (if any) that existed before the tests.
+         */
+        if(test->subdomain) {
+            HKEY domain;
+
+            res = RegOpenKeyA(domains, test->domain, &domain);
+            if(res == ERROR_SUCCESS) {
+                RegDeleteKeyA(domain, test->subdomain);
+                RegCloseKey(domain);
+            }
+        }
+        RegDeleteKeyA(domains, test->domain);
+    }
+
+    RegCloseKey(domains);
+}
+
+static void run_child_process(void)
+{
+    char cmdline[MAX_PATH];
+    char path[MAX_PATH];
+    char **argv;
+    PROCESS_INFORMATION pi;
+    STARTUPINFO si = { 0 };
+    BOOL ret;
+
+    GetModuleFileNameA(NULL, path, MAX_PATH);
+
+    si.cb = sizeof(si);
+    winetest_get_mainargs(&argv);
+    sprintf(cmdline, "\"%s\" %s domain_tests", argv[0], argv[1]);
+    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "Failed to spawn child process: %u\n", GetLastError());
+    winetest_wait_child_process(pi.hProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+}
+
+typedef struct {
+    const char  *url;
+    DWORD       zone;
+    BOOL        todo;
+    DWORD       broken_zone;
+} zone_mapping_test;
+
+static const zone_mapping_test zone_mapping_tests[] = {
+    /* Tests for "yabadaba.do" zone mappings. */
+    {"http://yabadaba.do/",URLZONE_CUSTOM,TRUE},
+    {"http://google.yabadaba.do/",URLZONE_CUSTOM,TRUE},
+    {"zip://yabadaba.do/",URLZONE_INTERNET},
+    /* Tests for "super.cool" zone mappings. */
+    {"ftp://testing.google.super.cool/",URLZONE_INTERNET},
+    {"ftp://testing.*.super.cool/",URLZONE_CUSTOM2,TRUE},
+    {"ftp://google.testing.super.cool/",URLZONE_CUSTOM2,TRUE},
+    /* Tests for "tests.test" zone mappings. */
+    {"http://tests.test/",URLZONE_CUSTOM,TRUE},
+    {"http://www.tests.test/",URLZONE_CUSTOM,TRUE},
+    {"ftp://tests.test/",URLZONE_CUSTOM,TRUE},
+    {"ftp://www.tests.test/",URLZONE_CUSTOM,TRUE},
+    {"test://www.tests.test/",URLZONE_INTERNET},
+    {"test://tests.test/",URLZONE_INTERNET},
+    {"zip://www.tests.test/",URLZONE_INTERNET},
+    {"zip://tests.test/",URLZONE_INTERNET},
+    /* Tests for "www.testing.com" zone mappings. */
+    {"http://google.www.testing.com/",URLZONE_INTERNET},
+    {"http://www.testing.com/",URLZONE_CUSTOM,TRUE,URLZONE_INTERNET},
+    {"http://testing.www.testing.com/",URLZONE_CUSTOM2,TRUE,URLZONE_INTERNET},
+    /* Tests for "org" zone mappings. */
+    {"http://google.org/",URLZONE_INTERNET,FALSE,URLZONE_CUSTOM},
+    {"http://org/",URLZONE_CUSTOM,TRUE},
+    {"http://testing.org/",URLZONE_CUSTOM2,TRUE}
+};
+
+static void test_zone_domain_mappings(void)
+{
+    HRESULT hres;
+    DWORD i, res;
+    IInternetSecurityManager *secmgr = NULL;
+    HKEY domains;
+    DWORD zone = URLZONE_INVALID;
+
+    trace("testing zone domain mappings...\n");
+
+    hres = pCoInternetCreateSecurityManager(NULL, &secmgr, 0);
+    ok(hres == S_OK, "CoInternetCreateSecurityManager failed: %08x\n", hres);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, szZoneMapDomainsKey, &domains);
+    if(res == ERROR_SUCCESS) {
+        static const WCHAR local_machineW[] = {'h','t','t','p',':','/','/','t','e','s','t','.','l','o','c','a','l',
+                '.','m','a','c','h','i','n','e','/',0};
+
+        hres = IInternetSecurityManager_MapUrlToZone(secmgr, local_machineW, &zone, 0);
+        ok(hres == S_OK, "MapUrlToZone failed: %08x\n", hres);
+        todo_wine ok(zone == URLZONE_CUSTOM, "Expected URLZONE_CUSTOM, but got %d\n", zone);
+
+        RegCloseKey(domains);
+    }
+
+    for(i = 0; i < sizeof(zone_mapping_tests)/sizeof(zone_mapping_tests[0]); ++i) {
+        const zone_mapping_test *test = zone_mapping_tests+i;
+        LPWSTR urlW = a2w(test->url);
+        zone = URLZONE_INVALID;
+
+        hres = IInternetSecurityManager_MapUrlToZone(secmgr, urlW, &zone, 0);
+        ok(hres == S_OK, "MapUrlToZone failed: %08x\n", hres);
+        if(test->todo)
+            todo_wine
+                ok(zone == test->zone || broken(test->broken_zone == zone),
+                    "Expected %d, but got %d on test %d\n", test->zone, zone, i);
+        else
+            ok(zone == test->zone || broken(test->broken_zone == zone),
+                "Expected %d, but got %d on test %d\n", test->zone, zone, i);
+
+        heap_free(urlW);
+    }
+
+    IInternetSecurityManager_Release(secmgr);
+}
+
 static void test_zone_domains(void)
 {
     if(is_ie_hardened()) {
@@ -519,6 +740,10 @@ static void test_zone_domains(void)
     trace("testing zone domains...\n");
 
     test_zone_domain_cache();
+
+    register_zone_domains();
+    run_child_process();
+    unregister_zone_domains();
 }
 
 static void test_CoInternetCreateZoneManager(void)
@@ -1241,6 +1466,8 @@ static void test_InternetGetSecurityUrlEx_Pluggable(void)
 START_TEST(sec_mgr)
 {
     HMODULE hurlmon;
+    int argc;
+    char **argv;
 
     hurlmon = GetModuleHandle("urlmon.dll");
     pCoInternetCreateSecurityManager = (void*) GetProcAddress(hurlmon, "CoInternetCreateSecurityManager");
@@ -1253,6 +1480,12 @@ START_TEST(sec_mgr)
     if (!pCoInternetCreateSecurityManager || !pCoInternetCreateZoneManager ||
         !pCoInternetGetSecurityUrl) {
         win_skip("Various CoInternet* functions not present in IE 4.0\n");
+        return;
+    }
+
+    argc = winetest_get_mainargs(&argv);
+    if(argc > 2 && !strcmp(argv[2], "domain_tests")) {
+        test_zone_domain_mappings();
         return;
     }
 
