@@ -681,16 +681,16 @@ static BOOL CDECL nulldrv_wglUseFontBitmapsW( PHYSDEV dev, DWORD start, DWORD co
 const DC_FUNCTIONS null_driver =
 {
     nulldrv_AbortDoc,                   /* pAbortDoc */
-    NULL,                               /* pAbortPath */
+    nulldrv_AbortPath,                  /* pAbortPath */
     NULL,                               /* pAlphaBlend */
     nulldrv_AngleArc,                   /* pAngleArc */
     nulldrv_Arc,                        /* pArc */
     nulldrv_ArcTo,                      /* pArcTo */
-    NULL,                               /* pBeginPath */
+    nulldrv_BeginPath,                  /* pBeginPath */
     NULL,                               /* pBitBlt */
     nulldrv_ChoosePixelFormat,          /* pChoosePixelFormat */
     nulldrv_Chord,                      /* pChord */
-    NULL,                               /* pCloseFigure */
+    nulldrv_CloseFigure,                /* pCloseFigure */
     NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateDC */
     NULL,                               /* pCreateDIBSection */
@@ -702,7 +702,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_Ellipse,                    /* pEllipse */
     nulldrv_EndDoc,                     /* pEndDoc */
     nulldrv_EndPage,                    /* pEndPage */
-    NULL,                               /* pEndPath */
+    nulldrv_EndPath,                    /* pEndPath */
     nulldrv_EnumICMProfiles,            /* pEnumICMProfiles */
     NULL,                               /* pEnumDeviceFonts */
     nulldrv_ExcludeClipRect,            /* pExcludeClipRect */
@@ -711,9 +711,9 @@ const DC_FUNCTIONS null_driver =
     nulldrv_ExtFloodFill,               /* pExtFloodFill */
     nulldrv_ExtSelectClipRgn,           /* pExtSelectClipRgn */
     NULL,                               /* pExtTextOut */
-    NULL,                               /* pFillPath */
+    nulldrv_FillPath,                   /* pFillPath */
     nulldrv_FillRgn,                    /* pFillRgn */
-    NULL,                               /* pFlattenPath */
+    nulldrv_FlattenPath,                /* pFlattenPath */
     nulldrv_FrameRgn,                   /* pFrameRgn */
     nulldrv_GdiComment,                 /* pGdiComment */
     NULL,                               /* pGetBitmapBits */
@@ -758,7 +758,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_ScaleWindowExtEx,           /* pScaleWindowExt */
     nulldrv_SelectBitmap,               /* pSelectBitmap */
     nulldrv_SelectBrush,                /* pSelectBrush */
-    NULL,                               /* pSelectClipPath */
+    nulldrv_SelectClipPath,             /* pSelectClipPath */
     nulldrv_SelectFont,                 /* pSelectFont */
     nulldrv_SelectPalette,              /* pSelectPalette */
     nulldrv_SelectPen,                  /* pSelectPen */
@@ -795,11 +795,11 @@ const DC_FUNCTIONS null_driver =
     nulldrv_StartPage,                  /* pStartPage */
     NULL,                               /* pStretchBlt */
     NULL,                               /* pStretchDIBits */
-    NULL,                               /* pStrokeAndFillPath */
-    NULL,                               /* pStrokePath */
+    nulldrv_StrokeAndFillPath,          /* pStrokeAndFillPath */
+    nulldrv_StrokePath,                 /* pStrokePath */
     nulldrv_SwapBuffers,                /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
-    NULL,                               /* pWidenPath */
+    nulldrv_WidenPath,                  /* pWidenPath */
     nulldrv_wglCopyContext,             /* pwglCopyContext */
     nulldrv_wglCreateContext,           /* pwglCreateContext */
     nulldrv_wglCreateContextAttribsARB, /* pwglCreateContextAttribsARB */

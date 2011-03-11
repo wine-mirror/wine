@@ -129,27 +129,15 @@ static inline void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
  */
 BOOL WINAPI BeginPath(HDC hdc)
 {
-    BOOL ret = TRUE;
+    BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
 
-    if(!dc) return FALSE;
-
-    if(dc->funcs->pBeginPath)
-        ret = dc->funcs->pBeginPath(dc->physDev);
-    else
+    if (dc)
     {
-        /* If path is already open, do nothing */
-        if(dc->path.state != PATH_Open)
-        {
-            /* Make sure that path is empty */
-            PATH_EmptyPath(&dc->path);
-
-            /* Initialize variables for new path */
-            dc->path.newStroke=TRUE;
-            dc->path.state=PATH_Open;
-        }
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pBeginPath );
+        ret = physdev->funcs->pBeginPath( physdev );
+        release_dc_ptr( dc );
     }
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -159,25 +147,15 @@ BOOL WINAPI BeginPath(HDC hdc)
  */
 BOOL WINAPI EndPath(HDC hdc)
 {
-    BOOL ret = TRUE;
+    BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
 
-    if(!dc) return FALSE;
-
-    if(dc->funcs->pEndPath)
-        ret = dc->funcs->pEndPath(dc->physDev);
-    else
+    if (dc)
     {
-        /* Check that path is currently being constructed */
-        if(dc->path.state!=PATH_Open)
-        {
-            SetLastError(ERROR_CAN_NOT_COMPLETE);
-            ret = FALSE;
-        }
-        /* Set flag to indicate that path is finished */
-        else dc->path.state=PATH_Closed;
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pEndPath );
+        ret = physdev->funcs->pEndPath( physdev );
+        release_dc_ptr( dc );
     }
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -198,16 +176,15 @@ BOOL WINAPI EndPath(HDC hdc)
  */
 BOOL WINAPI AbortPath( HDC hdc )
 {
-    BOOL ret = TRUE;
+    BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
 
-    if(!dc) return FALSE;
-
-    if(dc->funcs->pAbortPath)
-        ret = dc->funcs->pAbortPath(dc->physDev);
-    else /* Remove all entries from the path */
-        PATH_EmptyPath( &dc->path );
-    release_dc_ptr( dc );
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pAbortPath );
+        ret = physdev->funcs->pAbortPath( physdev );
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -219,33 +196,15 @@ BOOL WINAPI AbortPath( HDC hdc )
  */
 BOOL WINAPI CloseFigure(HDC hdc)
 {
-    BOOL ret = TRUE;
+    BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
 
-    if(!dc) return FALSE;
-
-    if(dc->funcs->pCloseFigure)
-        ret = dc->funcs->pCloseFigure(dc->physDev);
-    else
+    if (dc)
     {
-        /* Check that path is open */
-        if(dc->path.state!=PATH_Open)
-        {
-            SetLastError(ERROR_CAN_NOT_COMPLETE);
-            ret = FALSE;
-        }
-        else
-        {
-            /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
-            /* It is not necessary to draw a line, PT_CLOSEFIGURE is a virtual closing line itself */
-            if(dc->path.numEntriesUsed)
-            {
-                dc->path.pFlags[dc->path.numEntriesUsed-1]|=PT_CLOSEFIGURE;
-                dc->path.newStroke=TRUE;
-            }
-        }
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pCloseFigure );
+        ret = physdev->funcs->pCloseFigure( physdev );
+        release_dc_ptr( dc );
     }
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -340,16 +299,6 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
    XFORM xform;
    HRGN  hrgn;
 
-   if(dc->funcs->pFillPath)
-       return dc->funcs->pFillPath(dc->physDev);
-
-   /* Check that path is closed */
-   if(pPath->state!=PATH_Closed)
-   {
-      SetLastError(ERROR_CAN_NOT_COMPLETE);
-      return FALSE;
-   }
-
    /* Construct a region from the path and fill it */
    if(PATH_PathToRegion(pPath, dc->polyFillMode, &hrgn))
    {
@@ -414,25 +363,16 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
  */
 BOOL WINAPI FillPath(HDC hdc)
 {
+    BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
-    BOOL bRet = FALSE;
 
-    if(!dc) return FALSE;
-
-    if(dc->funcs->pFillPath)
-        bRet = dc->funcs->pFillPath(dc->physDev);
-    else
+    if (dc)
     {
-        bRet = PATH_FillPath(dc, &dc->path);
-        if(bRet)
-        {
-            /* FIXME: Should the path be emptied even if conversion
-               failed? */
-            PATH_EmptyPath(&dc->path);
-        }
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pFillPath );
+        ret = physdev->funcs->pFillPath( physdev );
+        release_dc_ptr( dc );
     }
-    release_dc_ptr( dc );
-    return bRet;
+    return ret;
 }
 
 
@@ -443,36 +383,16 @@ BOOL WINAPI FillPath(HDC hdc)
  */
 BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
 {
-   GdiPath *pPath;
-   HRGN  hrgnPath;
-   BOOL  success = FALSE;
-   DC *dc = get_dc_ptr( hdc );
+    BOOL ret = FALSE;
+    DC *dc = get_dc_ptr( hdc );
 
-   if(!dc) return FALSE;
-
-   if(dc->funcs->pSelectClipPath)
-     success = dc->funcs->pSelectClipPath(dc->physDev, iMode);
-   else
-   {
-       pPath = &dc->path;
-
-       /* Check that path is closed */
-       if(pPath->state!=PATH_Closed)
-           SetLastError(ERROR_CAN_NOT_COMPLETE);
-       /* Construct a region from the path */
-       else if(PATH_PathToRegion(pPath, GetPolyFillMode(hdc), &hrgnPath))
-       {
-           success = ExtSelectClipRgn( hdc, hrgnPath, iMode ) != ERROR;
-           DeleteObject(hrgnPath);
-
-           /* Empty the path */
-           if(success)
-               PATH_EmptyPath(pPath);
-           /* FIXME: Should this function delete the path even if it failed? */
-       }
-   }
-   release_dc_ptr( dc );
-   return success;
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectClipPath );
+        ret = physdev->funcs->pSelectClipPath( physdev, iMode );
+        release_dc_ptr( dc );
+    }
+    return ret;
 }
 
 
@@ -1688,16 +1608,12 @@ BOOL WINAPI FlattenPath(HDC hdc)
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
 
-    if(!dc) return FALSE;
-
-    if(dc->funcs->pFlattenPath) ret = dc->funcs->pFlattenPath(dc->physDev);
-    else
+    if (dc)
     {
-	GdiPath *pPath = &dc->path;
-        if(pPath->state != PATH_Closed)
-	    ret = PATH_FlattenPath(pPath);
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pFlattenPath );
+        ret = physdev->funcs->pFlattenPath( physdev );
+        release_dc_ptr( dc );
     }
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -1712,12 +1628,6 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     XFORM xform;
     BOOL ret = TRUE;
 
-    if(dc->funcs->pStrokePath)
-        return dc->funcs->pStrokePath(dc->physDev);
-
-    if(pPath->state != PATH_Closed)
-        return FALSE;
-    
     /* Save the mapping mode info */
     mapMode=GetMapMode(dc->hSelf);
     GetViewportExtEx(dc->hSelf, &szViewportExt);
@@ -1847,11 +1757,6 @@ static BOOL PATH_WidenPath(DC *dc)
     DWORD obj_type, joint, endcap, penType;
 
     pPath = &dc->path;
-
-    if(pPath->state == PATH_Open) {
-       SetLastError(ERROR_CAN_NOT_COMPLETE);
-       return FALSE;
-    }
 
     PATH_FlattenPath(pPath);
 
@@ -2156,21 +2061,16 @@ static BOOL PATH_WidenPath(DC *dc)
  */
 BOOL WINAPI StrokeAndFillPath(HDC hdc)
 {
-   DC *dc = get_dc_ptr( hdc );
-   BOOL bRet = FALSE;
+    BOOL ret = FALSE;
+    DC *dc = get_dc_ptr( hdc );
 
-   if(!dc) return FALSE;
-
-   if(dc->funcs->pStrokeAndFillPath)
-       bRet = dc->funcs->pStrokeAndFillPath(dc->physDev);
-   else
-   {
-       bRet = PATH_FillPath(dc, &dc->path);
-       if(bRet) bRet = PATH_StrokePath(dc, &dc->path);
-       if(bRet) PATH_EmptyPath(&dc->path);
-   }
-   release_dc_ptr( dc );
-   return bRet;
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pStrokeAndFillPath );
+        ret = physdev->funcs->pStrokeAndFillPath( physdev );
+        release_dc_ptr( dc );
+    }
+    return ret;
 }
 
 
@@ -2181,23 +2081,16 @@ BOOL WINAPI StrokeAndFillPath(HDC hdc)
  */
 BOOL WINAPI StrokePath(HDC hdc)
 {
+    BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
-    GdiPath *pPath;
-    BOOL bRet = FALSE;
 
-    TRACE("(%p)\n", hdc);
-    if(!dc) return FALSE;
-
-    if(dc->funcs->pStrokePath)
-        bRet = dc->funcs->pStrokePath(dc->physDev);
-    else
+    if (dc)
     {
-        pPath = &dc->path;
-        bRet = PATH_StrokePath(dc, pPath);
-        PATH_EmptyPath(pPath);
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pStrokePath );
+        ret = physdev->funcs->pStrokePath( physdev );
+        release_dc_ptr( dc );
     }
-    release_dc_ptr( dc );
-    return bRet;
+    return ret;
 }
 
 
@@ -2208,15 +2101,160 @@ BOOL WINAPI StrokePath(HDC hdc)
  */
 BOOL WINAPI WidenPath(HDC hdc)
 {
-   DC *dc = get_dc_ptr( hdc );
-   BOOL ret = FALSE;
+    BOOL ret = FALSE;
+    DC *dc = get_dc_ptr( hdc );
 
-   if(!dc) return FALSE;
+    if (dc)
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pWidenPath );
+        ret = physdev->funcs->pWidenPath( physdev );
+        release_dc_ptr( dc );
+    }
+    return ret;
+}
 
-   if(dc->funcs->pWidenPath)
-      ret = dc->funcs->pWidenPath(dc->physDev);
-   else
-      ret = PATH_WidenPath(dc);
-   release_dc_ptr( dc );
-   return ret;
+
+/***********************************************************************
+ *           null driver fallback implementations
+ */
+
+BOOL CDECL nulldrv_BeginPath( PHYSDEV dev )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    /* If path is already open, do nothing */
+    if (dc->path.state != PATH_Open)
+    {
+        PATH_EmptyPath(&dc->path);
+        dc->path.newStroke = TRUE;
+        dc->path.state = PATH_Open;
+    }
+    return TRUE;
+}
+
+BOOL CDECL nulldrv_EndPath( PHYSDEV dev )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    if (dc->path.state != PATH_Open)
+    {
+        SetLastError( ERROR_CAN_NOT_COMPLETE );
+        return FALSE;
+    }
+    dc->path.state = PATH_Closed;
+    return TRUE;
+}
+
+BOOL CDECL nulldrv_AbortPath( PHYSDEV dev )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    PATH_EmptyPath( &dc->path );
+    return TRUE;
+}
+
+BOOL CDECL nulldrv_CloseFigure( PHYSDEV dev )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    if (dc->path.state != PATH_Open)
+    {
+        SetLastError( ERROR_CAN_NOT_COMPLETE );
+        return FALSE;
+    }
+    /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
+    /* It is not necessary to draw a line, PT_CLOSEFIGURE is a virtual closing line itself */
+    if (dc->path.numEntriesUsed)
+    {
+        dc->path.pFlags[dc->path.numEntriesUsed - 1] |= PT_CLOSEFIGURE;
+        dc->path.newStroke = TRUE;
+    }
+    return TRUE;
+}
+
+BOOL CDECL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
+{
+    BOOL ret;
+    HRGN hrgn;
+    DC *dc = get_nulldrv_dc( dev );
+
+    if (dc->path.state != PATH_Closed)
+    {
+        SetLastError( ERROR_CAN_NOT_COMPLETE );
+        return FALSE;
+    }
+    if (!PATH_PathToRegion( &dc->path, GetPolyFillMode(dev->hdc), &hrgn )) return FALSE;
+    ret = ExtSelectClipRgn( dev->hdc, hrgn, mode ) != ERROR;
+    if (ret) PATH_EmptyPath( &dc->path );
+    /* FIXME: Should this function delete the path even if it failed? */
+    DeleteObject( hrgn );
+    return ret;
+}
+
+BOOL CDECL nulldrv_FillPath( PHYSDEV dev )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    if (dc->path.state != PATH_Closed)
+    {
+        SetLastError( ERROR_CAN_NOT_COMPLETE );
+        return FALSE;
+    }
+    if (!PATH_FillPath( dc, &dc->path )) return FALSE;
+    /* FIXME: Should the path be emptied even if conversion failed? */
+    PATH_EmptyPath( &dc->path );
+    return TRUE;
+}
+
+BOOL CDECL nulldrv_StrokeAndFillPath( PHYSDEV dev )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    if (dc->path.state != PATH_Closed)
+    {
+        SetLastError( ERROR_CAN_NOT_COMPLETE );
+        return FALSE;
+    }
+    if (!PATH_FillPath( dc, &dc->path )) return FALSE;
+    if (!PATH_StrokePath( dc, &dc->path )) return FALSE;
+    PATH_EmptyPath( &dc->path );
+    return TRUE;
+}
+
+BOOL CDECL nulldrv_StrokePath( PHYSDEV dev )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    if (dc->path.state != PATH_Closed)
+    {
+        SetLastError( ERROR_CAN_NOT_COMPLETE );
+        return FALSE;
+    }
+    if (!PATH_StrokePath( dc, &dc->path )) return FALSE;
+    PATH_EmptyPath( &dc->path );
+    return TRUE;
+}
+
+BOOL CDECL nulldrv_FlattenPath( PHYSDEV dev )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    if (dc->path.state == PATH_Closed)
+    {
+        SetLastError( ERROR_CAN_NOT_COMPLETE );
+        return FALSE;
+    }
+    return PATH_FlattenPath( &dc->path );
+}
+
+BOOL CDECL nulldrv_WidenPath( PHYSDEV dev )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    if (dc->path.state == PATH_Open)
+    {
+        SetLastError( ERROR_CAN_NOT_COMPLETE );
+        return FALSE;
+    }
+    return PATH_WidenPath( dc );
 }
