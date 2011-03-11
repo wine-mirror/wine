@@ -334,6 +334,12 @@ static BOOL CDECL nulldrv_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
     return TRUE;
 }
 
+static DWORD CDECL nulldrv_DeviceCapabilities( LPSTR buffer, LPCSTR device, LPCSTR port,
+                                               WORD cap, LPSTR output, DEVMODEA *devmode )
+{
+    return -1;
+}
+
 static BOOL CDECL nulldrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     return TRUE;
@@ -349,9 +355,26 @@ static INT CDECL nulldrv_EndPage( PHYSDEV dev )
     return 0;
 }
 
+static INT CDECL nulldrv_ExtDeviceMode( LPSTR buffer, HWND hwnd, DEVMODEA *output, LPSTR device,
+                                        LPSTR port, DEVMODEA *input, LPSTR profile, DWORD mode )
+{
+    return -1;
+}
+
+static INT CDECL nulldrv_ExtEscape( PHYSDEV dev, INT escape, INT in_size, const void *in_data,
+                                    INT out_size, void *out_data )
+{
+    return 0;
+}
+
 static BOOL CDECL nulldrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
 {
     return TRUE;
+}
+
+static BOOL CDECL nulldrv_GdiComment( PHYSDEV dev, UINT size, const BYTE *data )
+{
+    return FALSE;
 }
 
 static COLORREF CDECL nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
@@ -613,7 +636,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pDeleteDC */
     nulldrv_DeleteObject,               /* pDeleteObject */
     NULL,                               /* pDescribePixelFormat */
-    NULL,                               /* pDeviceCapabilities */
+    nulldrv_DeviceCapabilities,         /* pDeviceCapabilities */
     nulldrv_Ellipse,                    /* pEllipse */
     nulldrv_EndDoc,                     /* pEndDoc */
     nulldrv_EndPage,                    /* pEndPage */
@@ -621,8 +644,8 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pEnumDeviceFonts */
     nulldrv_ExcludeClipRect,            /* pExcludeClipRect */
-    NULL,                               /* pExtDeviceMode */
-    NULL,                               /* pExtEscape */
+    nulldrv_ExtDeviceMode,              /* pExtDeviceMode */
+    nulldrv_ExtEscape,                  /* pExtEscape */
     nulldrv_ExtFloodFill,               /* pExtFloodFill */
     nulldrv_ExtSelectClipRgn,           /* pExtSelectClipRgn */
     NULL,                               /* pExtTextOut */
@@ -630,7 +653,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_FillRgn,                    /* pFillRgn */
     NULL,                               /* pFlattenPath */
     nulldrv_FrameRgn,                   /* pFrameRgn */
-    NULL,                               /* pGdiComment */
+    nulldrv_GdiComment,                 /* pGdiComment */
     NULL,                               /* pGetBitmapBits */
     NULL,                               /* pGetCharWidth */
     NULL,                               /* pGetDIBits */
@@ -887,9 +910,9 @@ INT WINAPI GDI_CallExtDeviceMode16( HWND hwnd,
 
     if ((dc = get_dc_ptr( hdc )))
     {
-        if (dc->funcs->pExtDeviceMode)
-	    ret = dc->funcs->pExtDeviceMode( buf, hwnd, lpdmOutput, lpszDevice, lpszPort,
-                                             lpdmInput, lpszProfile, fwMode );
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pExtDeviceMode );
+        ret = physdev->funcs->pExtDeviceMode( buf, hwnd, lpdmOutput, lpszDevice, lpszPort,
+                                              lpdmInput, lpszProfile, fwMode );
 	release_dc_ptr( dc );
     }
     DeleteDC( hdc );
@@ -941,9 +964,9 @@ DWORD WINAPI GDI_CallDeviceCapabilities16( LPCSTR lpszDevice, LPCSTR lpszPort,
 
     if ((dc = get_dc_ptr( hdc )))
     {
-        if (dc->funcs->pDeviceCapabilities)
-            ret = dc->funcs->pDeviceCapabilities( buf, lpszDevice, lpszPort,
-                                                  fwCapability, lpszOutput, lpdm );
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pDeviceCapabilities );
+        ret = physdev->funcs->pDeviceCapabilities( buf, lpszDevice, lpszPort,
+                                                   fwCapability, lpszOutput, lpdm );
         release_dc_ptr( dc );
     }
     DeleteDC( hdc );
@@ -1069,10 +1092,11 @@ INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput, LPCSTR lpszInData,
 {
     INT ret = 0;
     DC * dc = get_dc_ptr( hdc );
+
     if (dc)
     {
-        if (dc->funcs->pExtEscape)
-            ret = dc->funcs->pExtEscape( dc->physDev, nEscape, cbInput, lpszInData, cbOutput, lpszOutData );
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pExtEscape );
+        ret = physdev->funcs->pExtEscape( physdev, nEscape, cbInput, lpszInData, cbOutput, lpszOutData );
         release_dc_ptr( dc );
     }
     return ret;
