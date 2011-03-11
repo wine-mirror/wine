@@ -1032,6 +1032,24 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(IDirect3DDevice8 *ifa
 
     wined3d_mutex_lock();
 
+    if (pZSurface)
+    {
+        struct wined3d_resource_desc ds_desc, rt_desc;
+        struct wined3d_resource *wined3d_resource;
+
+        wined3d_resource = IWineD3DSurface_GetResource(pZSurface->wineD3DSurface);
+        wined3d_resource_get_desc(wined3d_resource, &ds_desc);
+        wined3d_resource = IWineD3DSurface_GetResource(pSurface->wineD3DSurface);
+        wined3d_resource_get_desc(wined3d_resource, &rt_desc);
+
+        if (ds_desc.width < rt_desc.width || ds_desc.height < rt_desc.height)
+        {
+            WARN("Depth stencil is smaller than the render target, returning D3DERR_INVALIDCALL\n");
+            wined3d_mutex_unlock();
+            return D3DERR_INVALIDCALL;
+        }
+    }
+
     hr = IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice, &original_ds);
     if (hr == WINED3D_OK || hr == WINED3DERR_NOTFOUND)
     {
