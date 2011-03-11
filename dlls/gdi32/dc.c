@@ -1509,8 +1509,8 @@ BOOL WINAPI GetDeviceGammaRamp(HDC hDC, LPVOID ptr)
 
     if( dc )
     {
-	if (dc->funcs->pGetDeviceGammaRamp)
-	    ret = dc->funcs->pGetDeviceGammaRamp(dc->physDev, ptr);
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDeviceGammaRamp );
+        ret = physdev->funcs->pGetDeviceGammaRamp( physdev, ptr );
 	release_dc_ptr( dc );
     }
     return ret;
@@ -1526,8 +1526,8 @@ BOOL WINAPI SetDeviceGammaRamp(HDC hDC, LPVOID ptr)
 
     if( dc )
     {
-	if (dc->funcs->pSetDeviceGammaRamp)
-	    ret = dc->funcs->pSetDeviceGammaRamp(dc->physDev, ptr);
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceGammaRamp );
+        ret = physdev->funcs->pSetDeviceGammaRamp( physdev, ptr );
 	release_dc_ptr( dc );
     }
     return ret;

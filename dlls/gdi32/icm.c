@@ -40,30 +40,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(icm);
 
 struct enum_profiles
 {
-    BOOL unicode;
-    union
-    {
-        ICMENUMPROCA funcA;
-        ICMENUMPROCW funcW;
-    } callback;
+    ICMENUMPROCA funcA;
     LPARAM data;
 };
 
-INT CALLBACK enum_profiles_callback( LPWSTR filename, LPARAM lparam )
+static INT CALLBACK enum_profiles_callbackA( LPWSTR filename, LPARAM lparam )
 {
     int len, ret = -1;
     struct enum_profiles *ep = (struct enum_profiles *)lparam;
     char *filenameA;
-
-    if (ep->unicode)
-        return ep->callback.funcW( filename, ep->data );
 
     len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
     filenameA = HeapAlloc( GetProcessHeap(), 0, len );
     if (filenameA)
     {
         WideCharToMultiByte( CP_ACP, 0, filename, -1, filenameA, len, NULL, NULL );
-        ret = ep->callback.funcA( filenameA, ep->data );
+        ret = ep->funcA( filenameA, ep->data );
         HeapFree( GetProcessHeap(), 0, filenameA );
     }
     return ret;
@@ -74,26 +66,12 @@ INT CALLBACK enum_profiles_callback( LPWSTR filename, LPARAM lparam )
  */
 INT WINAPI EnumICMProfilesA(HDC hdc, ICMENUMPROCA func, LPARAM lparam)
 {
-    DC *dc;
-    INT ret = -1;
-
-    TRACE("%p, %p, 0x%08lx\n", hdc, func, lparam);
+    struct enum_profiles ep;
 
     if (!func) return -1;
-    if ((dc = get_dc_ptr(hdc)))
-    {
-        if (dc->funcs->pEnumICMProfiles)
-        {
-            struct enum_profiles ep;
-
-            ep.unicode        = FALSE;
-            ep.callback.funcA = func;
-            ep.data           = lparam;
-            ret = dc->funcs->pEnumICMProfiles(dc->physDev, enum_profiles_callback, (LPARAM)&ep);
-        }
-        release_dc_ptr(dc);
-    }
-    return ret;
+    ep.funcA = func;
+    ep.data  = lparam;
+    return EnumICMProfilesW( hdc, enum_profiles_callbackA, (LPARAM)&ep );
 }
 
 /***********************************************************************
@@ -109,15 +87,8 @@ INT WINAPI EnumICMProfilesW(HDC hdc, ICMENUMPROCW func, LPARAM lparam)
     if (!func) return -1;
     if ((dc = get_dc_ptr(hdc)))
     {
-        if (dc->funcs->pEnumICMProfiles)
-        {
-            struct enum_profiles ep;
-
-            ep.unicode        = TRUE;
-            ep.callback.funcW = func;
-            ep.data           = lparam;
-            ret = dc->funcs->pEnumICMProfiles(dc->physDev, enum_profiles_callback, (LPARAM)&ep);
-        }
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pEnumICMProfiles );
+        ret = physdev->funcs->pEnumICMProfiles( physdev, func, lparam );
         release_dc_ptr(dc);
     }
     return ret;
@@ -173,8 +144,8 @@ BOOL WINAPI GetICMProfileW(HDC hdc, LPDWORD size, LPWSTR filename)
 
     if (dc)
     {
-        if (dc->funcs->pGetICMProfile)
-            ret = dc->funcs->pGetICMProfile(dc->physDev, size, filename);
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetICMProfile );
+        ret = physdev->funcs->pGetICMProfile( physdev, size, filename );
         release_dc_ptr(dc);
     }
     return ret;

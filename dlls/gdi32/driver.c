@@ -366,6 +366,11 @@ static INT CDECL nulldrv_EndPage( PHYSDEV dev )
     return 0;
 }
 
+static INT CDECL nulldrv_EnumICMProfiles( PHYSDEV dev, ICMENUMPROCW func, LPARAM lparam )
+{
+    return -1;
+}
+
 static INT CDECL nulldrv_ExtDeviceMode( LPSTR buffer, HWND hwnd, DEVMODEA *output, LPSTR device,
                                         LPSTR port, DEVMODEA *input, LPSTR profile, DWORD mode )
 {
@@ -384,6 +389,16 @@ static BOOL CDECL nulldrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF colo
 }
 
 static BOOL CDECL nulldrv_GdiComment( PHYSDEV dev, UINT size, const BYTE *data )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
 {
     return FALSE;
 }
@@ -509,6 +524,11 @@ static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN cli
 static DWORD CDECL nulldrv_SetLayout( PHYSDEV dev, DWORD layout )
 {
     return layout;
+}
+
+static BOOL CDECL nulldrv_SetDeviceGammaRamp( PHYSDEV dev, void *ramp )
+{
+    return FALSE;
 }
 
 static DWORD CDECL nulldrv_SetMapperFlags( PHYSDEV dev, DWORD flags )
@@ -667,7 +687,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_EndDoc,                     /* pEndDoc */
     nulldrv_EndPage,                    /* pEndPage */
     NULL,                               /* pEndPath */
-    NULL,                               /* pEnumICMProfiles */
+    nulldrv_EnumICMProfiles,            /* pEnumICMProfiles */
     NULL,                               /* pEnumDeviceFonts */
     nulldrv_ExcludeClipRect,            /* pExcludeClipRect */
     nulldrv_ExtDeviceMode,              /* pExtDeviceMode */
@@ -684,8 +704,8 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pGetCharWidth */
     NULL,                               /* pGetDIBits */
     NULL,                               /* pGetDeviceCaps */
-    NULL,                               /* pGetDeviceGammaRamp */
-    NULL,                               /* pGetICMProfile */
+    nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */
+    nulldrv_GetICMProfile,              /* pGetICMProfile */
     NULL,                               /* pGetNearestColor */
     nulldrv_GetPixel,                   /* pGetPixel */
     nulldrv_GetPixelFormat,             /* pGetPixelFormat */
@@ -736,7 +756,7 @@ const DC_FUNCTIONS null_driver =
     NULL,                               /* pSetDIBits */
     NULL,                               /* pSetDIBitsToDevice */
     nulldrv_SetDeviceClipping,          /* pSetDeviceClipping */
-    NULL,                               /* pSetDeviceGammaRamp */
+    nulldrv_SetDeviceGammaRamp,         /* pSetDeviceGammaRamp */
     nulldrv_SetLayout,                  /* pSetLayout */
     nulldrv_SetMapMode,                 /* pSetMapMode */
     nulldrv_SetMapperFlags,             /* pSetMapperFlags */
