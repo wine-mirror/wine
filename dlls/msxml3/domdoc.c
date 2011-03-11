@@ -73,6 +73,7 @@ static const WCHAR PropertyProhibitDTDW[] = {'P','r','o','h','i','b','i','t','D'
 static const WCHAR PropertyNewParserW[] = {'N','e','w','P','a','r','s','e','r',0};
 static const WCHAR PropValueXPathW[] = {'X','P','a','t','h',0};
 static const WCHAR PropValueXSLPatternW[] = {'X','S','L','P','a','t','t','e','r','n',0};
+static const WCHAR PropertyResolveExternalsW[] = {'R','e','s','o','l','v','e','E','x','t','e','r','n','a','l','s',0};
 
 /* Anything that passes the test_get_ownerDocument()
  * tests can go here (data shared between all instances).
@@ -2952,7 +2953,8 @@ static HRESULT WINAPI domdoc_setProperty(
         return hr;
     }
     else if (lstrcmpiW(p, PropertyProhibitDTDW) == 0 ||
-             lstrcmpiW(p, PropertyNewParserW) == 0)
+             lstrcmpiW(p, PropertyNewParserW) == 0 ||
+             lstrcmpiW(p, PropertyResolveExternalsW) == 0)
     {
         /* Ignore */
         FIXME("Ignoring property %s, value %d\n", debugstr_w(p), V_BOOL(&var));
