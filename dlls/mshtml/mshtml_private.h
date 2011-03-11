@@ -18,6 +18,7 @@
 
 #include "wingdi.h"
 #include "docobj.h"
+#include "docobjectservice.h"
 #include "comcat.h"
 #include "mshtml.h"
 #include "mshtmhst.h"
@@ -424,6 +425,7 @@ struct HTMLDocumentObj {
     IOleInPlaceFrame *frame;
     IOleInPlaceUIWindow *ip_window;
     IAdviseSink *view_sink;
+    IDocObjectService *doc_object_service;
 
     DOCHOSTUIINFO hostinfo;
 
@@ -881,6 +883,8 @@ DEFINE_GUID(CLSID_ResProtocol, 0x3050F3BC, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,
 DEFINE_GUID(CLSID_SysimageProtocol, 0x76E67A63, 0x06E9, 0x11D2, 0xA8,0x40, 0x00,0x60,0x08,0x05,0x93,0x82);
 
 DEFINE_GUID(CLSID_CMarkup,0x3050f4fb,0x98b5,0x11cf,0xbb,0x82,0x00,0xaa,0x00,0xbd,0xce,0x0b);
+
+DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 
 /* memory allocation functions */
 

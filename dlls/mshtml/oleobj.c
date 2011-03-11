@@ -28,17 +28,16 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "shlguid.h"
+#include "shdeprecated.h"
 #include "mshtmdid.h"
 #include "idispids.h"
 
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
-#include "initguid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
 #define DOCHOST_DOCCANNAVIGATE  0
 
 /**********************************************************
@@ -99,6 +98,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     HTMLDocument *This = impl_from_IOleObject(iface);
     IOleCommandTarget *cmdtrg = NULL;
     IOleWindow *ole_window;
+    IServiceProvider *sp;
     BOOL hostui_setup;
     VARIANT silent;
     HWND hwnd;
@@ -120,6 +120,11 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         This->doc_obj->hostui = NULL;
     }
 
+    if(This->doc_obj->doc_object_service) {
+        IDocObjectService_Release(This->doc_obj->doc_object_service);
+        This->doc_obj->doc_object_service = NULL;
+    }
+
     memset(&This->doc_obj->hostinfo, 0, sizeof(DOCHOSTUIINFO));
 
     if(!pClientSite)
@@ -127,6 +132,25 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 
     IOleClientSite_AddRef(pClientSite);
     This->doc_obj->client = pClientSite;
+
+    hres = IOleClientSite_QueryInterface(pClientSite, &IID_IServiceProvider, (void**)&sp);
+    if(SUCCEEDED(hres)) {
+        IBrowserService *browser_service;
+        IDocObjectService *doc_object_service;
+
+        hres = IServiceProvider_QueryService(sp, &IID_IShellBrowser,
+                &IID_IBrowserService, (void**)&browser_service);
+        if(SUCCEEDED(hres)) {
+            hres = IBrowserService_QueryInterface(browser_service,
+                    &IID_IDocObjectService, (void**)&doc_object_service);
+            if(SUCCEEDED(hres))
+                This->doc_obj->doc_object_service = doc_object_service;
+
+            IBrowserService_Release(browser_service);
+        }
+
+        IServiceProvider_Release(sp);
+    }
 
     hostui_setup = This->doc_obj->hostui_setup;
 
