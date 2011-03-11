@@ -1106,13 +1106,39 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
     int iCluster = -1;
     int clust_size = 1;
     float special_size = 0.0;
+    int iMaxPos = 0;
+    BOOL rtl = FALSE;
 
     TRACE("(%d,%d,%d,%d,%p,%p,%p,%p,%p)\n",
           iCP, fTrailing, cChars, cGlyphs, pwLogClust, psva, piAdvance,
           psa, piX);
 
+    if (psa->fRTL && ! psa->fLogicalOrder)
+        rtl = TRUE;
+
     if (fTrailing)
-        iCP++;
+    {
+        if (rtl)
+            iCP--;
+        else
+            iCP++;
+    }
+
+    if (rtl)
+    {
+        int max_clust = pwLogClust[0];
+
+        for (item=0; item < cGlyphs; item++)
+            if (pwLogClust[item] > max_clust)
+            {
+                ERR("We do not handle non reversed clusters properly\n");
+                break;
+            }
+
+        iMaxPos = 0;
+        for (item = max_clust; item >=0; item --)
+            iMaxPos += piAdvance[item];
+    }
 
     iPosX = 0.0;
     for (item=0; item < iCP && item < cGlyphs; item++)
@@ -1136,7 +1162,7 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
                 else break;
             }
 
-            if (check >= cGlyphs)
+            if (check >= cGlyphs && !iMaxPos)
             {
                 for (check = clust; check < cGlyphs; check++)
                     special_size += piAdvance[check];
@@ -1151,6 +1177,13 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
             iPosX += special_size;
         else /* (iCluster != -1) */
             iPosX += piAdvance[pwLogClust[iCluster]] / (float)clust_size;
+    }
+
+    if (iMaxPos > 0)
+    {
+        iPosX = iMaxPos - iPosX;
+        if (iPosX < 0)
+            iPosX = 0;
     }
 
     *piX = iPosX;
