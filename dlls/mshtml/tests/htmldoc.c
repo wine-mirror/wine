@@ -3533,7 +3533,6 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
     str2 = a2bstr("");
     V_VT(&vempty) = VT_EMPTY;
     hres = IHTMLPrivateWindow_SuperNavigate(priv_window, str, str2, NULL, NULL, &vempty, &vempty, 0);
-    SysFreeString(str);
     SysFreeString(str2);
     ok(hres == S_OK, "SuperNavigate failed: %08x\n", hres);
 
@@ -3548,9 +3547,20 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
         test_GetCurMoniker(doc_unk, doc_mon, NULL);
         doc_mon = NULL;
     }
-    IHTMLPrivateWindow_Release(priv_window);
+    hres = IHTMLPrivateWindow_GetAddressBarUrl(priv_window, &str2);
+    ok(hres == S_OK, "GetAddressBarUrl failed: %08x\n", hres);
+    ok(!strcmp_wa(str2, use_replace?"about:blank":"http://www.winehq.org/"),
+                "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
+    SysFreeString(str2);
 
     test_download(DWL_VERBDONE);
+
+    hres = IHTMLPrivateWindow_GetAddressBarUrl(priv_window, &str2);
+    ok(hres == S_OK, "GetAddressBarUrl failed: %08x\n", hres);
+    ok(!lstrcmpW(str2, str), "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
+    SysFreeString(str2);
+    SysFreeString(str);
+    IHTMLPrivateWindow_Release(priv_window);
 }
 
 static void test_open_window(IHTMLDocument2 *doc)

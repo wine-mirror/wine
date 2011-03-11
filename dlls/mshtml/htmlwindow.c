@@ -1777,8 +1777,13 @@ static HRESULT WINAPI HTMLPrivateWindow_FindWindowByName(IHTMLPrivateWindow *ifa
 static HRESULT WINAPI HTMLPrivateWindow_GetAddressBar(IHTMLPrivateWindow *iface, BSTR *url)
 {
     HTMLWindow *This = impl_from_IHTMLPrivateWindow(iface);
-    FIXME("(%p)->(%p)\n", This, url);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, url);
+
+    if(!url)
+        return E_INVALIDARG;
+
+    *url = SysAllocString(This->url);
+    return S_OK;
 }
 
 static const IHTMLPrivateWindowVtbl HTMLPrivateWindowVtbl = {
