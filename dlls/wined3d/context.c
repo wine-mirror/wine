@@ -399,6 +399,16 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
 
+    if (depth_stencil && render_targets && render_targets[0])
+    {
+        if (depth_stencil->resource.width < render_targets[0]->resource.width ||
+            depth_stencil->resource.height < render_targets[0]->resource.height)
+        {
+            WARN("Depth stencil is smaller than the primary color buffer, disabling\n");
+            depth_stencil = NULL;
+        }
+    }
+
     LIST_FOR_EACH_ENTRY(entry, &context->fbo_list, struct fbo_entry, entry)
     {
         if (!memcmp(entry->render_targets,
