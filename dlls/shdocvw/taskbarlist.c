@@ -27,9 +27,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 struct taskbar_list
 {
-    const struct ITaskbarListVtbl *lpVtbl;
+    ITaskbarList ITaskbarList_iface;
     LONG refcount;
 };
+
+static inline struct taskbar_list *impl_from_ITaskbarList(ITaskbarList *iface)
+{
+    return CONTAINING_RECORD(iface, struct taskbar_list, ITaskbarList_iface);
+}
 
 /* IUnknown methods */
 
@@ -53,7 +58,7 @@ static HRESULT STDMETHODCALLTYPE taskbar_list_QueryInterface(ITaskbarList *iface
 
 static ULONG STDMETHODCALLTYPE taskbar_list_AddRef(ITaskbarList *iface)
 {
-    struct taskbar_list *This = (struct taskbar_list *)iface;
+    struct taskbar_list *This = impl_from_ITaskbarList(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -63,7 +68,7 @@ static ULONG STDMETHODCALLTYPE taskbar_list_AddRef(ITaskbarList *iface)
 
 static ULONG STDMETHODCALLTYPE taskbar_list_Release(ITaskbarList *iface)
 {
-    struct taskbar_list *This = (struct taskbar_list *)iface;
+    struct taskbar_list *This = impl_from_ITaskbarList(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -150,12 +155,12 @@ HRESULT TaskbarList_Create(IUnknown *outer, REFIID riid, void **taskbar_list)
         return E_OUTOFMEMORY;
     }
 
-    object->lpVtbl = &taskbar_list_vtbl;
+    object->ITaskbarList_iface.lpVtbl = &taskbar_list_vtbl;
     object->refcount = 0;
 
     TRACE("Created ITaskbarList %p\n", object);
 
-    hr = ITaskbarList_QueryInterface((ITaskbarList *)object, riid, taskbar_list);
+    hr = ITaskbarList_QueryInterface(&object->ITaskbarList_iface, riid, taskbar_list);
     if (FAILED(hr))
     {
         HeapFree(GetProcessHeap(), 0, object);
