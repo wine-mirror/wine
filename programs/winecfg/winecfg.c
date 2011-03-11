@@ -113,7 +113,7 @@ static WCHAR *get_config_key (HKEY root, const WCHAR *subkey, const WCHAR *name,
     WINE_TRACE("subkey=%s, name=%s, def=%s\n", wine_dbgstr_w(subkey),
                wine_dbgstr_w(name), wine_dbgstr_w(def));
 
-    res = RegOpenKeyW(root, subkey, &hSubKey);
+    res = RegOpenKeyExW(root, subkey, 0, MAXIMUM_ALLOWED, &hSubKey);
     if (res != ERROR_SUCCESS)
     {
         if (res == ERROR_FILE_NOT_FOUND)
@@ -146,7 +146,7 @@ static WCHAR *get_config_key (HKEY root, const WCHAR *subkey, const WCHAR *name,
 
     WINE_TRACE("buffer=%s\n", wine_dbgstr_w(buffer));
 end:
-    if (hSubKey && hSubKey != root) RegCloseKey(hSubKey);
+    RegCloseKey(hSubKey);
 
     return buffer;
 }
@@ -471,7 +471,7 @@ static WCHAR **enumerate_valuesW(HKEY root, WCHAR *path)
     WCHAR **values = NULL;
     struct list *cursor;
 
-    res = RegOpenKeyW(root, path, &key);
+    res = RegOpenKeyExW(root, path, 0, MAXIMUM_ALLOWED, &key);
     if (res == ERROR_SUCCESS)
     {
         while (TRUE)
@@ -641,7 +641,7 @@ static void process_setting(struct setting *s)
     else
     {
 	WINE_TRACE("Removing %s:%s\n", wine_dbgstr_w(s->path), wine_dbgstr_w(s->name));
-        if (!RegOpenKeyW( s->root, s->path, &key ))
+        if (!RegOpenKeyExW( s->root, s->path, 0, MAXIMUM_ALLOWED, &key ))
         {
             /* NULL name means remove that path/section entirely */
             if (s->name) RegDeleteValueW( key, s->name );
