@@ -1767,12 +1767,19 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
             }
             else
             {
+                TRACE("no CRL found\n");
                 error = CRYPT_E_NO_REVOCATION_CHECK;
                 pRevStatus->dwIndex = index;
             }
         }
         else
         {
+            if (!pRevPara)
+                WARN("no CERT_REVOCATION_PARA\n");
+            else if (!pRevPara->hCrlStore)
+                WARN("no dist points/aia extension and no CRL store\n");
+            else if (!pRevPara->pIssuerCert)
+                WARN("no dist points/aia extension and no issuer\n");
             error = CRYPT_E_NO_REVOCATION_CHECK;
             pRevStatus->dwIndex = index;
         }
