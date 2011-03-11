@@ -3582,21 +3582,18 @@ static void HTTP_InsertCookies(http_request_t *request)
 
 static WORD HTTP_ParseDay(LPCWSTR day)
 {
-    static const WCHAR sun[] = { 's','u','n',0 };
-    static const WCHAR mon[] = { 'm','o','n',0 };
-    static const WCHAR tue[] = { 't','u','e',0 };
-    static const WCHAR wed[] = { 'w','e','d',0 };
-    static const WCHAR thu[] = { 't','h','u',0 };
-    static const WCHAR fri[] = { 'f','r','i',0 };
-    static const WCHAR sat[] = { 's','a','t',0 };
+    static const WCHAR days[7][4] = {{ 's','u','n',0 },
+                                     { 'm','o','n',0 },
+                                     { 't','u','e',0 },
+                                     { 'w','e','d',0 },
+                                     { 't','h','u',0 },
+                                     { 'f','r','i',0 },
+                                     { 's','a','t',0 }};
+    int i;
+    for (i = 0; i < sizeof(days)/sizeof(*days); i++)
+        if (!strcmpiW(day, days[i]))
+            return i;
 
-    if (!strcmpiW(day, sun)) return 0;
-    if (!strcmpiW(day, mon)) return 1;
-    if (!strcmpiW(day, tue)) return 2;
-    if (!strcmpiW(day, wed)) return 3;
-    if (!strcmpiW(day, thu)) return 4;
-    if (!strcmpiW(day, fri)) return 5;
-    if (!strcmpiW(day, sat)) return 6;
     /* Invalid */
     return 7;
 }
