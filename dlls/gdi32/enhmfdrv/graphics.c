@@ -678,43 +678,6 @@ EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 }
 
 /**********************************************************************
- *          EMFDRV_SetBkColor
- */
-COLORREF CDECL
-EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color )
-{
-    EMRSETBKCOLOR emr;
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
-
-    if (physDev->restoring) return color;  /* don't output records during RestoreDC */
-
-    emr.emr.iType = EMR_SETBKCOLOR;
-    emr.emr.nSize = sizeof(emr);
-    emr.crColor = color;
-
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
-}
-
-
-/**********************************************************************
- *          EMFDRV_SetTextColor
- */
-COLORREF CDECL
-EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
-{
-    EMRSETTEXTCOLOR emr;
-    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
-
-    if (physDev->restoring) return color;  /* don't output records during RestoreDC */
-
-    emr.emr.iType = EMR_SETTEXTCOLOR;
-    emr.emr.nSize = sizeof(emr);
-    emr.crColor = color;
-
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
-}
-
-/**********************************************************************
  *          EMFDRV_ExtTextOut
  */
 BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
@@ -854,17 +817,4 @@ no_bounds:
     ret = EMFDRV_WriteRecord( dev, &pemr->emr );
     HeapFree( GetProcessHeap(), 0, pemr );
     return ret;
-}
-
-/**********************************************************************
- *          EMFDRV_SetArcDirection
- */
-INT CDECL EMFDRV_SetArcDirection(PHYSDEV dev, INT arcDirection)
-{
-    EMRSETARCDIRECTION emr;
-
-    emr.emr.iType = EMR_SETARCDIRECTION;
-    emr.emr.nSize = sizeof(emr);
-    emr.iArcDirection = arcDirection;
-    return EMFDRV_WriteRecord(dev, &emr.emr) ? arcDirection : 0;
 }
