@@ -5222,40 +5222,55 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface,
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DBaseTextureImpl *texture;
     DWORD i;
+    const struct wined3d_state *state = &This->stateBlock->state;
 
     TRACE("(%p) : %p\n", This, pNumPasses);
 
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
     {
-        if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MINFILTER] == WINED3DTEXF_NONE)
+        if (state->sampler_states[i][WINED3DSAMP_MINFILTER] == WINED3DTEXF_NONE)
         {
             WARN("Sampler state %u has minfilter D3DTEXF_NONE, returning D3DERR_UNSUPPORTEDTEXTUREFILTER\n", i);
             return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
         }
-        if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MAGFILTER] == WINED3DTEXF_NONE)
+        if (state->sampler_states[i][WINED3DSAMP_MAGFILTER] == WINED3DTEXF_NONE)
         {
             WARN("Sampler state %u has magfilter D3DTEXF_NONE, returning D3DERR_UNSUPPORTEDTEXTUREFILTER\n", i);
             return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
         }
 
-        texture = This->stateBlock->state.textures[i];
+        texture = state->textures[i];
         if (!texture || texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING) continue;
 
-        if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MAGFILTER] != WINED3DTEXF_POINT)
+        if (state->sampler_states[i][WINED3DSAMP_MAGFILTER] != WINED3DTEXF_POINT)
         {
             WARN("Non-filterable texture and mag filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
         }
-        if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MINFILTER] != WINED3DTEXF_POINT)
+        if (state->sampler_states[i][WINED3DSAMP_MINFILTER] != WINED3DTEXF_POINT)
         {
             WARN("Non-filterable texture and min filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
         }
-        if (This->stateBlock->state.sampler_states[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_NONE
-                && This->stateBlock->state.sampler_states[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_POINT)
+        if (state->sampler_states[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_NONE
+                && state->sampler_states[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_POINT)
         {
             WARN("Non-filterable texture and mip filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
+        }
+    }
+
+    if (state->render_states[WINED3DRS_ZENABLE] || state->render_states[WINED3DRS_ZWRITEENABLE] ||
+        state->render_states[WINED3DRS_STENCILENABLE])
+    {
+        IWineD3DSurfaceImpl *ds = This->depth_stencil;
+        IWineD3DSurfaceImpl *target = This->render_targets[0];
+
+        if(ds && target
+                && (ds->resource.width < target->resource.width || ds->resource.height < target->resource.height))
+        {
+            WARN("Depth stencil is smaller than the color buffer, returning D3DERR_CONFLICTINGRENDERSTATE\n");
+            return WINED3DERR_CONFLICTINGRENDERSTATE;
         }
     }
 
