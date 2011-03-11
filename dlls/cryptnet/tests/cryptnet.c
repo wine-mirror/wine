@@ -367,7 +367,7 @@ static void test_retrieveObjectByUrl(void)
      NULL, NULL, NULL, NULL);
     /* w2k3,XP, newer w2k: CRYPT_E_NO_MATCH, older w2k: CRYPT_E_ASN1_BADTAG */
     ok(!ret && (GetLastError() == CRYPT_E_NO_MATCH ||
-                broken(GetLastError() == CRYPT_E_NO_MATCH)),
+                broken(GetLastError() == CRYPT_E_ASN1_BADTAG)),
         "got 0x%x/%u (expected CRYPT_E_NO_MATCH)\n", GetLastError(), GetLastError());
 
     /* only newer versions of cryptnet do the cleanup */
