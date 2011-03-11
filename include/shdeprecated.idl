@@ -19,6 +19,251 @@
  */
 
 import "objidl.idl";
+import "ocidl.idl";
+import "shobjidl.idl";
+
+cpp_quote("#define TLOG_BACK    -1")
+cpp_quote("#define TLOG_FORE    1")
+
+cpp_quote("#define TLMENUF_INCLUDECURRENT   0x00000001")
+cpp_quote("#define TLMENUF_CHECKCURRENT     (TLMENUF_INCLUDECURRENT | 0x00000002)")
+cpp_quote("#define TLMENUF_BACK             0x00000010")
+cpp_quote("#define TLMENUF_FORE             0x00000020")
+cpp_quote("#define TLMENUF_BACKANDFORTH     (TLMENUF_BACK | TLMENUF_FORE | TLMENUF_INCLUDECURRENT)")
+
+[
+    hidden,
+    local,
+    object,
+    uuid(F46EDB3B-BC2F-11d0-9412-00AA00A3EBD3)
+]
+interface ITravelEntry : IUnknown
+{
+    HRESULT Invoke(
+        [in] IUnknown *punk);
+
+    HRESULT Update(
+        [in] IUnknown *punk,
+        [in] BOOL fIsLocalAnchor);
+
+    HRESULT GetPidl(
+        [out] LPITEMIDLIST *ppidl);
+};
+
+[
+    hidden,
+    local,
+    object,
+    uuid(66A9CB08-4802-11d2-A561-00A0C92DBFE8)
+]
+interface ITravelLog : IUnknown
+{
+    HRESULT AddEntry(
+        [in] IUnknown *punk,
+        [in] BOOL fIsLocalAnchor);
+
+    HRESULT UpdateEntry(
+        [in] IUnknown *punk,
+        [in] BOOL fIsLocalAnchor);
+
+    HRESULT UpdateExternal(
+        [in] IUnknown *punk,
+        [in] IUnknown *punkHLBrowseContext);
+
+    HRESULT Travel(
+        [in] IUnknown *punk,
+        [in] int iOffset);
+
+    HRESULT GetTravelEntry(
+        [in]  IUnknown *punk,
+        [in]  int iOffset,
+        [optional, out] ITravelEntry **ppte);
+
+    HRESULT FindTravelEntry(
+        [in]  IUnknown *punk,
+        [in]  LPCITEMIDLIST pidl,
+        [out] ITravelEntry **ppte);
+
+    HRESULT GetToolTipText(
+        [in]  IUnknown *punk,
+        [in]  int iOffset,
+        [in]  int idsTemplate,
+        [out, size_is(cchText)] LPWSTR pwzText,
+        [in]  DWORD cchText);
+
+    HRESULT InsertMenuEntries(
+        [in] IUnknown *punk,
+        [in] HMENU hmenu,
+        [in] int nPos,
+        [in] int idFirst,
+        [in] int idLast,
+        [in] DWORD dwFlags);
+
+    HRESULT Clone(
+        [out] ITravelLog **pptl);
+
+    DWORD CountEntries(
+        [in] IUnknown *punk);
+
+    HRESULT Revert();
+};
+
+typedef enum tagBNSTATE
+{
+    BNS_NORMAL = 0,
+    BNS_BEGIN_NAVIGATE = 1,
+    BNS_NAVIGATE = 2
+
+} BNSTATE;
+
+enum {
+    SBSC_HIDE = 0,
+    SBSC_SHOW = 1,
+    SBSC_TOGGLE = 2,
+    SBSC_QUERY =  3
+};
+
+cpp_quote("#define BSF_REGISTERASDROPTARGET     0x00000001")
+cpp_quote("#define BSF_THEATERMODE              0x00000002")
+cpp_quote("#define BSF_NOLOCALFILEWARNING       0x00000010")
+cpp_quote("#define BSF_UISETBYAUTOMATION        0x00000100")
+cpp_quote("#define BSF_RESIZABLE                0x00000200")
+cpp_quote("#define BSF_CANMAXIMIZE              0x00000400")
+cpp_quote("#define BSF_TOPBROWSER               0x00000800")
+cpp_quote("#define BSF_NAVNOHISTORY             0x00001000")
+cpp_quote("#define BSF_HTMLNAVCANCELED          0x00002000")
+cpp_quote("#define BSF_DONTSHOWNAVCANCELPAGE    0x00004000")
+cpp_quote("#define BSF_SETNAVIGATABLECODEPAGE   0x00008000")
+cpp_quote("#define BSF_DELEGATEDNAVIGATION      0x00010000")
+cpp_quote("#define BSF_TRUSTEDFORACTIVEX        0x00020000")
+
+cpp_quote("#define HLNF_CALLERUNTRUSTED             0x00200000")
+cpp_quote("#define HLNF_TRUSTEDFORACTIVEX           0x00400000")
+cpp_quote("#define HLNF_DISABLEWINDOWRESTRICTIONS   0x00800000")
+cpp_quote("#define HLNF_TRUSTFIRSTDOWNLOAD          0x01000000")
+cpp_quote("#define HLNF_UNTRUSTEDFORDOWNLOAD        0x02000000")
+cpp_quote("#define SHHLNF_NOAUTOSELECT              0x04000000")
+cpp_quote("#define SHHLNF_WRITENOHISTORY            0x08000000")
+cpp_quote("#define HLNF_EXTERNALNAVIGATE            0x10000000")
+cpp_quote("#define HLNF_ALLOW_AUTONAVIGATE          0x20000000")
+cpp_quote("#define HLNF_NEWWINDOWSMANAGED           0x80000000")
+
+[
+    local,
+    object,
+    uuid(02ba3b52-0547-11d1-b833-00c04fc9b31f)
+]
+interface IBrowserService : IUnknown
+{
+    HRESULT GetParentSite(
+        [out] IOleInPlaceSite **ppipsite);
+
+    HRESULT SetTitle(
+        [in] IShellView *psv,
+        [in] LPCWSTR pszName);
+
+    HRESULT GetTitle(
+        [in] IShellView *psv,
+        [out, size_is(cchName)] LPWSTR pszName,
+        [in] DWORD cchName);
+
+    HRESULT GetOleObject(
+        [out] IOleObject **ppobjv);
+
+    HRESULT GetTravelLog(
+        [out, optional] ITravelLog **pptl);
+
+    HRESULT ShowControlWindow(
+        [in] UINT id,
+        [in] BOOL fShow);
+
+    HRESULT IsControlWindowShown(
+        [in] UINT id,
+        [out] BOOL *pfShown);
+
+    HRESULT IEGetDisplayName(
+        [in] PCIDLIST_ABSOLUTE pidl,
+        [out] LPWSTR pwszName,
+        [in] UINT uFlags);
+
+    HRESULT IEParseDisplayName(
+        [in] UINT uiCP,
+        [in] LPCWSTR pwszPath,
+        [out] PIDLIST_ABSOLUTE *ppidlOut);
+
+    HRESULT DisplayParseError(
+        [in] HRESULT hres,
+        [in] LPCWSTR pwszPath);
+
+    HRESULT NavigateToPidl(
+        [in] PCIDLIST_ABSOLUTE pidl,
+        [in] DWORD grfHLNF);
+
+    HRESULT SetNavigateState(
+        [in] BNSTATE bnstate);
+
+    HRESULT GetNavigateState(
+        [out] BNSTATE *pbnstate);
+
+    HRESULT NotifyRedirect(
+        [in] IShellView *psv,
+        [in] PCIDLIST_ABSOLUTE pidl,
+        [out] BOOL *pfDidBrowse);
+
+    HRESULT UpdateWindowList();
+
+    HRESULT UpdateBackForwardState();
+
+    HRESULT SetFlags(
+        [in] DWORD dwFlags,
+        [in] DWORD dwFlagMask);
+
+    HRESULT GetFlags(
+        [out] DWORD *pdwFlags);
+
+    HRESULT CanNavigateNow();
+
+    HRESULT GetPidl(
+        [out] PIDLIST_ABSOLUTE *ppidl);
+
+    HRESULT SetReferrer(
+        [in] PCIDLIST_ABSOLUTE pidl);
+
+    DWORD GetBrowserIndex();
+
+    HRESULT GetBrowserByIndex(
+        [in] DWORD dwID,
+        [out] IUnknown **ppunk);
+
+    HRESULT GetHistoryObject(
+        [out] IOleObject **ppole,
+        [out] IStream **pstm,
+        [out] IBindCtx **ppbc);
+
+    HRESULT SetHistoryObject(
+        [in] IOleObject *pole,
+        [in] BOOL fIsLocalAnchor);
+
+    HRESULT CacheOLEServer(
+        [in] IOleObject *pole);
+
+    HRESULT GetSetCodePage(
+        [in] VARIANT *pvarIn,
+        [out] VARIANT *pvarOut);
+
+    HRESULT OnHttpEquiv(
+        [in] IShellView *psv,
+        [in] BOOL fDone,
+        [in] VARIANT *pvarargIn,
+        [out] VARIANT *pvarargOut);
+
+    HRESULT GetPalette(
+        [out] HPALETTE *hpal);
+
+    HRESULT RegisterWindow(
+        [in] BOOL fForceRegister,
+        [in] int swc);
+}
 
 [
     object,
