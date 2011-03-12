@@ -1099,6 +1099,27 @@ void WINAPI KeInitializeMutex(PRKMUTEX Mutex, ULONG Level)
 }
 
 
+ /***********************************************************************
+ *           KeWaitForMutexObject   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI KeWaitForMutexObject(PRKMUTEX Mutex, KWAIT_REASON WaitReason, KPROCESSOR_MODE WaitMode,
+                                     BOOLEAN Alertable, PLARGE_INTEGER Timeout)
+{
+    FIXME( "stub: %p, %d, %d, %d, %p\n", Mutex, WaitReason, WaitMode, Alertable, Timeout );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+ /***********************************************************************
+ *           KeReleaseMutex   (NTOSKRNL.EXE.@)
+ */
+LONG WINAPI KeReleaseMutex(PRKMUTEX Mutex, BOOLEAN Wait)
+{
+    FIXME( "stub: %p, %d\n", Mutex, Wait );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
 /***********************************************************************
  *           KeInitializeSemaphore   (NTOSKRNL.EXE.@)
  */

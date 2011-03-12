@@ -587,7 +587,7 @@
 @ stub KeRegisterBugCheckReasonCallback
 @ stub KeReleaseInterruptSpinLock
 @ stub KeReleaseMutant
-@ stub KeReleaseMutex
+@ stdcall KeReleaseMutex(ptr long)
 @ stdcall KeReleaseSemaphore(ptr long long long)
 @ stub KeReleaseSpinLockFromDpcLevel
 @ stub KeRemoveByKeyDeviceQueue
@@ -628,7 +628,7 @@
 @ stub KeUpdateSystemTime
 @ stub KeUserModeCallback
 @ stub KeWaitForMultipleObjects
-@ stub KeWaitForMutexObject
+@ stdcall KeWaitForMutexObject(ptr long long long ptr)
 @ stdcall KeWaitForSingleObject(ptr long long long ptr)
 @ stub KiBugCheckData
 @ stub KiCoprocessorError
