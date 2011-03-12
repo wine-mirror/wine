@@ -146,7 +146,7 @@ static HRESULT register_d3d10core_layers(HMODULE d3d10core)
             return E_FAIL;
         }
 
-        d3d10core_register_layers = (HRESULT (WINAPI *)(void))GetProcAddress(mod, "D3D10CoreRegisterLayers");
+        d3d10core_register_layers = (void *)GetProcAddress(mod, "D3D10CoreRegisterLayers");
         hr = d3d10core_register_layers();
         if (FAILED(hr))
         {
