@@ -196,7 +196,7 @@ static FDI_Int *get_fdi_ptr( HFDI hfdi )
 {
     FDI_Int *fdi= (FDI_Int *)hfdi;
 
-    if (!fdi || !fdi->magic == FDI_INT_MAGIC)
+    if (!fdi || fdi->magic != FDI_INT_MAGIC)
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
