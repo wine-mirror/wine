@@ -151,7 +151,7 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
     if (!(dc->hSelf = alloc_gdi_handle( &dc->header, magic, &dc_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, dc );
-        dc = NULL;
+        return NULL;
     }
     dc->nulldrv.hdc = dc->hSelf;
     return dc;
