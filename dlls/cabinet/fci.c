@@ -205,7 +205,7 @@ static FCI_Int *get_fci_ptr( HFCI hfci )
 {
     FCI_Int *fci= (FCI_Int *)hfci;
 
-    if (!fci || !fci->magic == FCI_INT_MAGIC)
+    if (!fci || fci->magic != FCI_INT_MAGIC)
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
