@@ -1278,7 +1278,7 @@ static HRESULT WINAPI domelem_getElementsByTagName(
     XPath = is_xpathmode(get_element(This)->doc);
     set_xpathmode(get_element(This)->doc, TRUE);
     query = tagName_to_XPath(tagName);
-    hr = queryresult_create(get_element(This), query, resultList);
+    hr = create_selection(get_element(This), query, resultList);
     xmlFree(query);
     set_xpathmode(get_element(This)->doc, XPath);
 

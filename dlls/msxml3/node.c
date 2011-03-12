@@ -1032,7 +1032,7 @@ HRESULT node_select_nodes(const xmlnode *This, BSTR query, IXMLDOMNodeList **nod
     if (!query || !nodes) return E_INVALIDARG;
 
     str = xmlchar_from_wchar(query);
-    hr = queryresult_create(This->node, str, nodes);
+    hr = create_selection(This->node, str, nodes);
     heap_free(str);
 
     return hr;

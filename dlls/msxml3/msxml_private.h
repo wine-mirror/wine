@@ -213,23 +213,22 @@ static inline xmlNodePtr wine_xmlFirstElementChild(xmlNodePtr parent)
 #endif
 
 /* constructors */
-extern IUnknown         *create_domdoc( xmlNodePtr document );
+extern IUnknown         *create_domdoc( xmlNodePtr );
 extern IUnknown         *create_xmldoc( void );
-extern IXMLDOMNode      *create_node( xmlNodePtr node );
-extern IUnknown         *create_element( xmlNodePtr element );
-extern IUnknown         *create_attribute( xmlNodePtr attribute );
-extern IUnknown         *create_text( xmlNodePtr text );
-extern IUnknown         *create_pi( xmlNodePtr pi );
-extern IUnknown         *create_comment( xmlNodePtr comment );
-extern IUnknown         *create_cdata( xmlNodePtr text );
+extern IXMLDOMNode      *create_node( xmlNodePtr );
+extern IUnknown         *create_element( xmlNodePtr );
+extern IUnknown         *create_attribute( xmlNodePtr );
+extern IUnknown         *create_text( xmlNodePtr );
+extern IUnknown         *create_pi( xmlNodePtr );
+extern IUnknown         *create_comment( xmlNodePtr );
+extern IUnknown         *create_cdata( xmlNodePtr );
 extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr );
 extern IXMLDOMNamedNodeMap *create_nodemap( const xmlNodePtr );
 extern IUnknown         *create_doc_Implementation(void);
-extern IUnknown         *create_doc_fragment( xmlNodePtr fragment );
-extern IUnknown         *create_doc_entity_ref( xmlNodePtr entity );
-extern IUnknown         *create_doc_type( xmlNodePtr doctype );
-
-extern HRESULT queryresult_create( xmlNodePtr node, xmlChar* szQuery, IXMLDOMNodeList** out );
+extern IUnknown         *create_doc_fragment( xmlNodePtr );
+extern IUnknown         *create_doc_entity_ref( xmlNodePtr );
+extern IUnknown         *create_doc_type( xmlNodePtr );
+extern HRESULT           create_selection( xmlNodePtr, xmlChar*, IXMLDOMNodeList** );
 
 /* data accessors */
 xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );

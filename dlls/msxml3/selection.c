@@ -47,7 +47,7 @@
  * They are different because the list returned by XPath queries:
  *  - is static - gives the results for the XML tree as it existed during the
  *    execution of the query
- *  - supports IXMLDOMSelection (TODO)
+ *  - supports IXMLDOMSelection
  *
  */
 
@@ -58,29 +58,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 int registerNamespaces(xmlXPathContextPtr ctxt);
 xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str);
 
-typedef struct _queryresult
+typedef struct _domselection
 {
     DispatchEx dispex;
-    const struct IXMLDOMNodeListVtbl *lpVtbl;
+    IXMLDOMSelection IXMLDOMSelection_iface;
     LONG ref;
     xmlNodePtr node;
     xmlXPathObjectPtr result;
     int resultPos;
-} queryresult;
+} domselection;
 
-static inline queryresult *impl_from_IXMLDOMNodeList( IXMLDOMNodeList *iface )
+static inline domselection *impl_from_IXMLDOMSelection( IXMLDOMSelection *iface )
 {
-    return (queryresult *)((char*)iface - FIELD_OFFSET(queryresult, lpVtbl));
+    return CONTAINING_RECORD(iface, domselection, IXMLDOMSelection_iface);
 }
 
-#define XMLQUERYRES(x)  ((IXMLDOMNodeList*)&(x)->lpVtbl)
-
-static HRESULT WINAPI queryresult_QueryInterface(
-    IXMLDOMNodeList *iface,
+static HRESULT WINAPI domselection_QueryInterface(
+    IXMLDOMSelection *iface,
     REFIID riid,
     void** ppvObject )
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
 
     TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppvObject);
 
@@ -88,9 +86,10 @@ static HRESULT WINAPI queryresult_QueryInterface(
         return E_INVALIDARG;
 
     if ( IsEqualGUID( riid, &IID_IUnknown ) ||
-         IsEqualGUID( riid, &IID_IXMLDOMNodeList ) )
+         IsEqualGUID( riid, &IID_IXMLDOMNodeList ) ||
+         IsEqualGUID( riid, &IID_IXMLDOMSelection ))
     {
-        *ppvObject = iface;
+        *ppvObject = &This->IXMLDOMSelection_iface;
     }
     else if(dispex_query_interface(&This->dispex, riid, ppvObject))
     {
@@ -103,25 +102,27 @@ static HRESULT WINAPI queryresult_QueryInterface(
         return E_NOINTERFACE;
     }
 
-    IXMLDOMNodeList_AddRef( iface );
+    IXMLDOMSelection_AddRef( iface );
 
     return S_OK;
 }
 
-static ULONG WINAPI queryresult_AddRef(
-    IXMLDOMNodeList *iface )
+static ULONG WINAPI domselection_AddRef(
+    IXMLDOMSelection *iface )
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
-    return InterlockedIncrement( &This->ref );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
-static ULONG WINAPI queryresult_Release(
-    IXMLDOMNodeList *iface )
+static ULONG WINAPI domselection_Release(
+    IXMLDOMSelection *iface )
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
-    ULONG ref;
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
         xmlXPathFreeObject(This->result);
@@ -132,11 +133,11 @@ static ULONG WINAPI queryresult_Release(
     return ref;
 }
 
-static HRESULT WINAPI queryresult_GetTypeInfoCount(
-    IXMLDOMNodeList *iface,
+static HRESULT WINAPI domselection_GetTypeInfoCount(
+    IXMLDOMSelection *iface,
     UINT* pctinfo )
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
 
     TRACE("(%p)->(%p)\n", This, pctinfo);
 
@@ -145,31 +146,31 @@ static HRESULT WINAPI queryresult_GetTypeInfoCount(
     return S_OK;
 }
 
-static HRESULT WINAPI queryresult_GetTypeInfo(
-    IXMLDOMNodeList *iface,
+static HRESULT WINAPI domselection_GetTypeInfo(
+    IXMLDOMSelection *iface,
     UINT iTInfo,
     LCID lcid,
     ITypeInfo** ppTInfo )
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
     HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IXMLDOMNodeList_tid, ppTInfo);
+    hr = get_typeinfo(IXMLDOMSelection_tid, ppTInfo);
 
     return hr;
 }
 
-static HRESULT WINAPI queryresult_GetIDsOfNames(
-    IXMLDOMNodeList *iface,
+static HRESULT WINAPI domselection_GetIDsOfNames(
+    IXMLDOMSelection *iface,
     REFIID riid,
     LPOLESTR* rgszNames,
     UINT cNames,
     LCID lcid,
     DISPID* rgDispId )
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
     ITypeInfo *typeinfo;
     HRESULT hr;
 
@@ -179,7 +180,7 @@ static HRESULT WINAPI queryresult_GetIDsOfNames(
     if(!rgszNames || cNames == 0 || !rgDispId)
         return E_INVALIDARG;
 
-    hr = get_typeinfo(IXMLDOMNodeList_tid, &typeinfo);
+    hr = get_typeinfo(IXMLDOMSelection_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
@@ -189,8 +190,8 @@ static HRESULT WINAPI queryresult_GetIDsOfNames(
     return hr;
 }
 
-static HRESULT WINAPI queryresult_Invoke(
-    IXMLDOMNodeList *iface,
+static HRESULT WINAPI domselection_Invoke(
+    IXMLDOMSelection *iface,
     DISPID dispIdMember,
     REFIID riid,
     LCID lcid,
@@ -200,17 +201,17 @@ static HRESULT WINAPI queryresult_Invoke(
     EXCEPINFO* pExcepInfo,
     UINT* puArgErr )
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
     ITypeInfo *typeinfo;
     HRESULT hr;
 
     TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    hr = get_typeinfo(IXMLDOMNodeList_tid, &typeinfo);
+    hr = get_typeinfo(IXMLDOMSelection_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMSelection_iface, dispIdMember, wFlags, pDispParams,
                 pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
@@ -218,12 +219,12 @@ static HRESULT WINAPI queryresult_Invoke(
     return hr;
 }
 
-static HRESULT WINAPI queryresult_get_item(
-        IXMLDOMNodeList* iface,
+static HRESULT WINAPI domselection_get_item(
+        IXMLDOMSelection* iface,
         LONG index,
         IXMLDOMNode** listItem)
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
 
     TRACE("(%p)->(%d %p)\n", This, index, listItem);
 
@@ -241,11 +242,11 @@ static HRESULT WINAPI queryresult_get_item(
     return S_OK;
 }
 
-static HRESULT WINAPI queryresult_get_length(
-        IXMLDOMNodeList* iface,
+static HRESULT WINAPI domselection_get_length(
+        IXMLDOMSelection* iface,
         LONG* listLength)
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
 
     TRACE("(%p)->(%p)\n", This, listLength);
 
@@ -256,11 +257,11 @@ static HRESULT WINAPI queryresult_get_length(
     return S_OK;
 }
 
-static HRESULT WINAPI queryresult_nextNode(
-        IXMLDOMNodeList* iface,
+static HRESULT WINAPI domselection_nextNode(
+        IXMLDOMSelection* iface,
         IXMLDOMNode** nextItem)
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
 
     TRACE("(%p)->(%p)\n", This, nextItem );
 
@@ -277,45 +278,156 @@ static HRESULT WINAPI queryresult_nextNode(
     return S_OK;
 }
 
-static HRESULT WINAPI queryresult_reset(
-        IXMLDOMNodeList* iface)
+static HRESULT WINAPI domselection_reset(
+        IXMLDOMSelection* iface)
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
 
     TRACE("%p\n", This);
     This->resultPos = 0;
     return S_OK;
 }
 
-static HRESULT WINAPI queryresult__newEnum(
-        IXMLDOMNodeList* iface,
+static HRESULT WINAPI domselection_get__newEnum(
+        IXMLDOMSelection* iface,
         IUnknown** ppUnk)
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( iface );
+    domselection *This = impl_from_IXMLDOMSelection( iface );
     FIXME("(%p)->(%p)\n", This, ppUnk);
     return E_NOTIMPL;
 }
 
-
-static const struct IXMLDOMNodeListVtbl queryresult_vtbl =
+static HRESULT WINAPI domselection_get_expr(
+        IXMLDOMSelection* iface,
+        BSTR *p)
 {
-    queryresult_QueryInterface,
-    queryresult_AddRef,
-    queryresult_Release,
-    queryresult_GetTypeInfoCount,
-    queryresult_GetTypeInfo,
-    queryresult_GetIDsOfNames,
-    queryresult_Invoke,
-    queryresult_get_item,
-    queryresult_get_length,
-    queryresult_nextNode,
-    queryresult_reset,
-    queryresult__newEnum,
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domselection_put_expr(
+        IXMLDOMSelection* iface,
+        BSTR p)
+{
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)->(%s)\n", This, debugstr_w(p));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domselection_get_context(
+        IXMLDOMSelection* iface,
+        IXMLDOMNode **node)
+{
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domselection_putref_context(
+        IXMLDOMSelection* iface,
+        IXMLDOMNode *node)
+{
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domselection_peekNode(
+        IXMLDOMSelection* iface,
+        IXMLDOMNode **node)
+{
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domselection_matches(
+        IXMLDOMSelection* iface,
+        IXMLDOMNode *node,
+        IXMLDOMNode **out_node)
+{
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)->(%p %p)\n", This, node, out_node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domselection_removeNext(
+        IXMLDOMSelection* iface,
+        IXMLDOMNode **node)
+{
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domselection_removeAll(
+        IXMLDOMSelection* iface)
+{
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domselection_clone(
+        IXMLDOMSelection* iface,
+        IXMLDOMSelection **node)
+{
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)->(%p)\n", This, node);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domselection_getProperty(
+        IXMLDOMSelection* iface,
+        BSTR p,
+        VARIANT *var)
+{
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(p), var);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI domselection_setProperty(
+        IXMLDOMSelection* iface,
+        BSTR p,
+        VARIANT var)
+{
+    domselection *This = impl_from_IXMLDOMSelection( iface );
+    FIXME("(%p)->(%s %s)\n", This, debugstr_w(p), debugstr_variant(&var));
+    return E_NOTIMPL;
+}
+
+static const struct IXMLDOMSelectionVtbl domselection_vtbl =
+{
+    domselection_QueryInterface,
+    domselection_AddRef,
+    domselection_Release,
+    domselection_GetTypeInfoCount,
+    domselection_GetTypeInfo,
+    domselection_GetIDsOfNames,
+    domselection_Invoke,
+    domselection_get_item,
+    domselection_get_length,
+    domselection_nextNode,
+    domselection_reset,
+    domselection_get__newEnum,
+    domselection_get_expr,
+    domselection_put_expr,
+    domselection_get_context,
+    domselection_putref_context,
+    domselection_peekNode,
+    domselection_matches,
+    domselection_removeNext,
+    domselection_removeAll,
+    domselection_clone,
+    domselection_getProperty,
+    domselection_setProperty
 };
 
-static HRESULT queryresult_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
+static HRESULT domselection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( (IXMLDOMNodeList*)iface );
+    domselection *This = impl_from_IXMLDOMSelection( (IXMLDOMSelection*)iface );
     WCHAR *ptr;
     int idx = 0;
 
@@ -332,10 +444,10 @@ static HRESULT queryresult_get_dispid(IUnknown *iface, BSTR name, DWORD flags, D
     return S_OK;
 }
 
-static HRESULT queryresult_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+static HRESULT domselection_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
         VARIANT *res, EXCEPINFO *ei)
 {
-    queryresult *This = impl_from_IXMLDOMNodeList( (IXMLDOMNodeList*)iface );
+    domselection *This = impl_from_IXMLDOMSelection( (IXMLDOMSelection*)iface );
 
     TRACE("(%p)->(%x %x %x %p %p %p)\n", This, id, lcid, flags, params, res, ei);
 
@@ -348,7 +460,7 @@ static HRESULT queryresult_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fl
         {
             IXMLDOMNode *disp = NULL;
 
-            queryresult_get_item(XMLQUERYRES(This), id - MSXML_DISPID_CUSTOM_MIN, &disp);
+            domselection_get_item(&This->IXMLDOMSelection_iface, id - MSXML_DISPID_CUSTOM_MIN, &disp);
             V_DISPATCH(res) = (IDispatch*)disp;
             break;
         }
@@ -364,20 +476,20 @@ static HRESULT queryresult_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD fl
     return S_OK;
 }
 
-static const dispex_static_data_vtbl_t queryresult_dispex_vtbl = {
-    queryresult_get_dispid,
-    queryresult_invoke
+static const dispex_static_data_vtbl_t domselection_dispex_vtbl = {
+    domselection_get_dispid,
+    domselection_invoke
 };
 
-static const tid_t queryresult_iface_tids[] = {
-    IXMLDOMNodeList_tid,
+static const tid_t domselection_iface_tids[] = {
+    IXMLDOMSelection_tid,
     0
 };
-static dispex_static_data_t queryresult_dispex = {
-    &queryresult_dispex_vtbl,
+static dispex_static_data_t domselection_dispex = {
+    &domselection_dispex_vtbl,
     IXMLDOMSelection_tid,
     NULL,
-    queryresult_iface_tids
+    domselection_iface_tids
 };
 
 #define XSLPATTERN_CHECK_ARGS(n) \
@@ -488,25 +600,25 @@ void XSLPattern_OP_IGEq(xmlXPathParserContextPtr pctx, int nargs)
 
 static void query_serror(void* ctx, xmlErrorPtr err)
 {
-    LIBXML2_CALLBACK_SERROR(queryresult_create, err);
+    LIBXML2_CALLBACK_SERROR(domselection_create, err);
 }
 
-HRESULT queryresult_create(xmlNodePtr node, xmlChar* szQuery, IXMLDOMNodeList **out)
+HRESULT create_selection(xmlNodePtr node, xmlChar* query, IXMLDOMNodeList **out)
 {
-    queryresult *This = heap_alloc_zero(sizeof(queryresult));
+    domselection *This = heap_alloc_zero(sizeof(domselection));
     xmlXPathContextPtr ctxt = xmlXPathNewContext(node->doc);
     HRESULT hr;
 
-    TRACE("(%p, %s, %p)\n", node, wine_dbgstr_a((char const*)szQuery), out);
+    TRACE("(%p, %s, %p)\n", node, wine_dbgstr_a((char const*)query), out);
 
     *out = NULL;
-    if (This == NULL || ctxt == NULL || szQuery == NULL)
+    if (!This || !ctxt || !query)
     {
         hr = E_OUTOFMEMORY;
         goto cleanup;
     }
 
-    This->lpVtbl = &queryresult_vtbl;
+    This->IXMLDOMSelection_iface.lpVtbl = &domselection_vtbl;
     This->ref = 1;
     This->resultPos = 0;
     This->node = node;
@@ -519,11 +631,11 @@ HRESULT queryresult_create(xmlNodePtr node, xmlChar* szQuery, IXMLDOMNodeList **
     if (is_xpathmode(This->node->doc))
     {
         xmlXPathRegisterAllFunctions(ctxt);
-        This->result = xmlXPathEvalExpression(szQuery, ctxt);
+        This->result = xmlXPathEvalExpression(query, ctxt);
     }
     else
     {
-        xmlChar* xslpQuery = XSLPattern_to_XPath(ctxt, szQuery);
+        xmlChar* pattern_query = XSLPattern_to_XPath(ctxt, query);
 
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"not", xmlXPathNotFunction);
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"boolean", xmlXPathBooleanFunction);
@@ -539,8 +651,8 @@ HRESULT queryresult_create(xmlNodePtr node, xmlChar* szQuery, IXMLDOMNodeList **
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"OP_IGt", XSLPattern_OP_IGt);
         xmlXPathRegisterFunc(ctxt, (xmlChar const*)"OP_IGEq", XSLPattern_OP_IGEq);
 
-        This->result = xmlXPathEvalExpression(xslpQuery, ctxt);
-        xmlFree(xslpQuery);
+        This->result = xmlXPathEvalExpression(pattern_query, ctxt);
+        xmlFree(pattern_query);
     }
 
     if (!This->result || This->result->type != XPATH_NODESET)
@@ -549,15 +661,15 @@ HRESULT queryresult_create(xmlNodePtr node, xmlChar* szQuery, IXMLDOMNodeList **
         goto cleanup;
     }
 
-    init_dispex(&This->dispex, (IUnknown*)&This->lpVtbl, &queryresult_dispex);
+    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMSelection_iface, &domselection_dispex);
 
-    *out = (IXMLDOMNodeList *) &This->lpVtbl;
+    *out = (IXMLDOMNodeList*)&This->IXMLDOMSelection_iface;
     hr = S_OK;
     TRACE("found %d matches\n", xmlXPathNodeSetGetLength(This->result->nodesetval));
 
 cleanup:
-    if (This != NULL && FAILED(hr))
-        IXMLDOMNodeList_Release( (IXMLDOMNodeList*) &This->lpVtbl );
+    if (This && FAILED(hr))
+        IXMLDOMSelection_Release( &This->IXMLDOMSelection_iface );
     xmlXPathFreeContext(ctxt);
     return hr;
 }

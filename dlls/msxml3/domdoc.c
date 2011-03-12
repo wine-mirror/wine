@@ -1926,7 +1926,7 @@ static HRESULT WINAPI domdoc_getElementsByTagName(
     XPath = This->properties->XPath;
     This->properties->XPath = TRUE;
     query = tagName_to_XPath(tagName);
-    hr = queryresult_create((xmlNodePtr)get_doc(This), query, resultList);
+    hr = create_selection((xmlNodePtr)get_doc(This), query, resultList);
     xmlFree(query);
     This->properties->XPath = XPath;
 

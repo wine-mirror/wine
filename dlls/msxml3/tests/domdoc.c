@@ -8603,6 +8603,40 @@ static void test_get_attributes(void)
     free_bstrs();
 }
 
+static void test_selection(void)
+{
+    IXMLDOMSelection *selection;
+    IXMLDOMNodeList *list;
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_selectNodes(doc, _bstr_("root"), &list);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMNodeList_QueryInterface(list, &IID_IXMLDOMSelection, (void**)&selection);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMSelection_Release(selection);
+
+    IXMLDOMNodeList_Release(list);
+
+    hr = IXMLDOMDocument_get_childNodes(doc, &list);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMNodeList_QueryInterface(list, &IID_IXMLDOMSelection, (void**)&selection);
+    EXPECT_HR(hr, E_NOINTERFACE);
+
+    IXMLDOMNodeList_Release(list);
+
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -8674,6 +8708,8 @@ START_TEST(domdoc)
     test_get_dataType();
     test_get_nodeTypeString();
     test_get_attributes();
+    test_selection();
+
     test_xsltemplate();
 
     CoUninitialize();

@@ -24,9 +24,9 @@ C_SRCS = \
 	nodemap.c \
 	parseerror.c \
 	pi.c \
-	queryresult.c \
 	saxreader.c \
 	schema.c \
+	selection.c \
 	stylesheet.c \
 	text.c \
 	uuid.c \
