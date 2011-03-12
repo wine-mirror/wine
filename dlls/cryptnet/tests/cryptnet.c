@@ -733,7 +733,6 @@ static void test_verifyRevocation(void)
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      1, (void **)&certs[1], 0, &revPara, &status);
-    todo_wine
     ok(!ret && (GetLastError() == CRYPT_E_REVOKED ||
      broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
      "expected CRYPT_E_REVOKED, got %08x\n", GetLastError());
@@ -748,7 +747,6 @@ static void test_verifyRevocation(void)
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      1, (void **)&certs[1], 0, &revPara, &status);
-    todo_wine
     ok(!ret && (GetLastError() == CRYPT_E_REVOCATION_OFFLINE ||
      broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
      "expected CRYPT_E_REVOCATION_OFFLINE, got %08x\n", GetLastError());
@@ -764,7 +762,6 @@ static void test_verifyRevocation(void)
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      1, (void **)&certs[1], 0, &revPara, &status);
-    todo_wine
     ok(!ret && (GetLastError() == CRYPT_E_REVOCATION_OFFLINE ||
      broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
      "expected CRYPT_E_REVOCATION_OFFLINE, got %08x\n", GetLastError());
@@ -772,7 +769,6 @@ static void test_verifyRevocation(void)
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      1, (void **)&certs[1], 0, &revPara, &status);
-    todo_wine
     ok(!ret && (GetLastError() == CRYPT_E_REVOCATION_OFFLINE ||
      broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
      "expected CRYPT_E_REVOCATION_OFFLINE, got %08x\n", GetLastError());
@@ -780,7 +776,6 @@ static void test_verifyRevocation(void)
     SetLastError(0xdeadbeef);
     ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
      1, (void **)&certs[1], 0, &revPara, &status);
-    todo_wine
     ok(!ret && (GetLastError() == CRYPT_E_REVOCATION_OFFLINE ||
      broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
      "expected CRYPT_E_REVOCATION_OFFLINE, got %08x\n", GetLastError());

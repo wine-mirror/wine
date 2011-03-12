@@ -1557,29 +1557,25 @@ BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
     return ret;
 }
 
-static DWORD verify_cert_revocation_with_crl(PCCERT_CONTEXT cert,
+static DWORD verify_cert_revocation_with_crl_online(PCCERT_CONTEXT cert,
  PCCRL_CONTEXT crl, DWORD index, FILETIME *pTime,
  PCERT_REVOCATION_STATUS pRevStatus)
 {
     DWORD error;
+    PCRL_ENTRY entry = NULL;
 
-    if (CertVerifyCRLTimeValidity(pTime, crl->pCrlInfo))
+    CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
+    if (entry)
     {
-        /* The CRL isn't time valid */
-        error = CRYPT_E_NO_REVOCATION_CHECK;
+        error = CRYPT_E_REVOKED;
+        pRevStatus->dwIndex = index;
     }
     else
     {
-        PCRL_ENTRY entry = NULL;
-
-        CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
-        if (entry)
-        {
-            error = CRYPT_E_REVOKED;
-            pRevStatus->dwIndex = index;
-        }
-        else
-            error = ERROR_SUCCESS;
+        /* Since the CRL was retrieved for the cert being checked, then it's
+         * guaranteed to be fresh, and the cert is not revoked.
+         */
+        error = ERROR_SUCCESS;
     }
     return error;
 }
@@ -1625,8 +1621,8 @@ static DWORD verify_cert_revocation_from_dist_points_ext(
                  NULL, NULL, NULL, NULL);
                 if (ret)
                 {
-                    error = verify_cert_revocation_with_crl(cert, crl, index,
-                     pTime, pRevStatus);
+                    error = verify_cert_revocation_with_crl_online(cert, crl,
+                     index, pTime, pRevStatus);
                     if (!error && timeout)
                     {
                         DWORD time = GetTickCount();
@@ -1696,6 +1692,45 @@ static DWORD verify_cert_revocation_from_aia_ext(
     return error;
 }
 
+static DWORD verify_cert_revocation_with_crl_offline(PCCERT_CONTEXT cert,
+ PCCRL_CONTEXT crl, DWORD index, FILETIME *pTime,
+ PCERT_REVOCATION_STATUS pRevStatus)
+{
+    DWORD error;
+    LONG valid;
+
+    valid = CompareFileTime(pTime, &crl->pCrlInfo->ThisUpdate);
+    if (valid <= 0)
+    {
+        /* If this CRL is not older than the time being verified, there's no
+         * way to know whether the certificate was revoked.
+         */
+        TRACE("CRL not old enough\n");
+        error = CRYPT_E_REVOCATION_OFFLINE;
+    }
+    else
+    {
+        PCRL_ENTRY entry = NULL;
+
+        CertFindCertificateInCRL(cert, crl, 0, NULL, &entry);
+        if (entry)
+        {
+            error = CRYPT_E_REVOKED;
+            pRevStatus->dwIndex = index;
+        }
+        else
+        {
+            /* Since the CRL was not retrieved for the cert being checked,
+             * there's no guarantee it's fresh, so the cert *might* be okay,
+             * but it's safer not to guess.
+             */
+            TRACE("certificate not found\n");
+            error = CRYPT_E_REVOCATION_OFFLINE;
+        }
+    }
+    return error;
+}
+
 static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
  FILETIME *pTime, DWORD dwFlags, PCERT_REVOCATION_PARA pRevPara,
  PCERT_REVOCATION_STATUS pRevStatus)
@@ -1761,8 +1796,8 @@ static DWORD verify_cert_revocation(PCCERT_CONTEXT cert, DWORD index,
             }
             if (crl)
             {
-                error = verify_cert_revocation_with_crl(cert, crl, index,
-                 pTime, pRevStatus);
+                error = verify_cert_revocation_with_crl_offline(cert, crl,
+                 index, pTime, pRevStatus);
                 CertFreeCRLContext(crl);
             }
             else
