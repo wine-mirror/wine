@@ -94,7 +94,7 @@ nsIDOMWindow *get_nsdoc_window(nsIDOMDocument *nsdoc)
     }
 
     nsres = nsIDOMDocumentView_GetDefaultView(nsdocview, &nsview);
-    nsIDOMDocumentView_Release(nsview);
+    nsIDOMDocumentView_Release(nsdocview);
     if(NS_FAILED(nsres)) {
         ERR("GetDefaultView failed: %08x\n", nsres);
         return NULL;
