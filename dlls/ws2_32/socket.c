@@ -3483,6 +3483,10 @@ INT WINAPI WSAIoctl(SOCKET s,
        HeapFree(GetProcessHeap(), 0, ipAddrTable);
        return 0;
    }
+   case WS_SIO_SET_COMPATIBILITY_MODE:
+       TRACE("WS_SIO_SET_COMPATIBILITY_MODE ignored\n");
+       WSASetLastError(WSAEOPNOTSUPP);
+       return SOCKET_ERROR;
    case WS_SIO_UDP_CONNRESET:
        FIXME("WS_SIO_UDP_CONNRESET stub\n");
        break;
