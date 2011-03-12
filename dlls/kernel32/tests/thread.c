@@ -865,7 +865,7 @@ static VOID test_thread_processor(void)
      }
 
      error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS);
-     ok(error==0, "SetThreadIdealProcessor returned an incorrect value\n");
+     ok(error!=-1, "SetThreadIdealProcessor failed\n");
    }
 }
 
