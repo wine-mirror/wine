@@ -145,6 +145,11 @@ static void release_icon_frame( struct cursoricon_object *obj, int istep, struct
     /* placeholder */
 }
 
+static UINT get_icon_steps( struct cursoricon_object *obj )
+{
+    return obj->num_steps;
+}
+
 static BOOL free_icon_handle( HICON handle )
 {
     struct cursoricon_object *obj = free_user_handle( handle, USER_ICON );
@@ -1794,7 +1799,7 @@ HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD istep, DWOR
 
     /* Important Note: Sequences are not currently supported, so this implementation
      * will not properly handle all cases. */
-    if (istep < ptr->num_steps || ptr->num_frames == 1)
+    if (istep < get_icon_steps(ptr) || ptr->num_frames == 1)
     {
         ret = hCursor;
         if (ptr->num_frames == 1)
@@ -1807,10 +1812,10 @@ HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD istep, DWOR
             struct cursoricon_frame *frame;
 
             frame = get_icon_frame( ptr, istep );
-            if (ptr->num_steps == 1)
+            if (get_icon_steps(ptr) == 1)
                 *num_steps = ~0;
             else
-                *num_steps = ptr->num_steps;
+                *num_steps = get_icon_steps(ptr);
             /* If this specific frame does not have a delay then use the global delay */
             if (frame->delay == ~0)
                 *rate_jiffies = ptr->delay;
@@ -2092,7 +2097,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
                  hdc,x0,y0,hIcon,cxWidth,cyWidth,istep,hbr,flags );
 
     if (!(ptr = get_icon_ptr( hIcon ))) return FALSE;
-    if (istep >= ptr->num_steps)
+    if (istep >= get_icon_steps( ptr ))
     {
         TRACE_(icon)("Stepped past end of animated frames=%d\n", istep);
         release_icon_ptr( hIcon, ptr );
