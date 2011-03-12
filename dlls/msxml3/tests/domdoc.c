@@ -4,6 +4,7 @@
  * Copyright 2005 Mike McCormack for CodeWeavers
  * Copyright 2007-2008 Alistair Leslie-Hughes
  * Copyright 2010 Adam Martinson for CodeWeavers
+ * Copyright 2010-2011 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -179,6 +180,21 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     IUnknown_Release(obj);
     ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
 }
+
+#define EXPECT_LIST_LEN(list,len) _expect_list_len(list, len, __LINE__)
+static void _expect_list_len(IXMLDOMNodeList *list, LONG len, int line)
+{
+    LONG length;
+    HRESULT hr;
+
+    length = 0;
+    hr = IXMLDOMNodeList_get_length(list, &length);
+    ok_(__FILE__,line)(hr == S_OK, "got 0x%08x\n", hr);
+    ok_(__FILE__,line)(length == len, "got %d, expected %d\n", length, len);
+}
+
+#define EXPECT_HR(hr,hr_exp) \
+    ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
 static const WCHAR szEmpty[] = { 0 };
 static const WCHAR szIncomplete[] = {
@@ -3985,32 +4001,46 @@ static void test_XPath(void)
     VARIANT var;
     VARIANT_BOOL b;
     IXMLDOMDocument2 *doc;
+    IXMLDOMDocument *doc2;
     IXMLDOMNode *rootNode;
     IXMLDOMNode *elem1Node;
     IXMLDOMNode *node;
     IXMLDOMNodeList *list;
+    IXMLDOMElement *elem;
+    IXMLDOMAttribute *attr;
+    HRESULT hr;
+    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument2);
     if (!doc) return;
 
-    ole_check(IXMLDOMDocument_loadXML(doc, _bstr_(szExampleXML), &b));
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b));
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
 
     /* switch to XPath */
     ole_check(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), _variantbstr_("XPath")));
 
     /* some simple queries*/
-    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("root"), &list));
-    ole_check(IXMLDOMNodeList_get_item(list, 0, &rootNode));
-    ole_check(IXMLDOMNodeList_reset(list));
-    expect_list_and_release(list, "E2.D1");
-    if (rootNode == NULL)
-        return;
+    EXPECT_REF(doc, 1);
+    hr = IXMLDOMDocument2_selectNodes(doc, _bstr_("root"), &list);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(doc, 1);
+    EXPECT_LIST_LEN(list, 1);
 
-    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("root//c"), &list));
+    EXPECT_REF(list, 1);
+    hr = IXMLDOMNodeList_get_item(list, 0, &rootNode);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(list, 1);
+    EXPECT_REF(rootNode, 1);
+
+    hr = IXMLDOMNodeList_reset(list);
+    EXPECT_HR(hr, S_OK);
+    expect_list_and_release(list, "E2.D1");
+
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//c"), &list));
     expect_list_and_release(list, "E3.E1.E2.D1 E3.E2.E2.D1");
 
-    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("//c[@type]"), &list));
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("//c[@type]"), &list));
     expect_list_and_release(list, "E3.E2.E2.D1");
 
     ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_("elem"), &list));
@@ -4054,7 +4084,7 @@ static void test_XPath(void)
     expect_list_and_release(list, "");
 
     /* foo undeclared in document node */
-    ole_expect(IXMLDOMDocument_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
+    ole_expect(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
     /* undeclared in <root> node */
     ole_expect(IXMLDOMNode_selectNodes(rootNode, _bstr_(".//foo:c"), &list), E_FAIL);
     /* undeclared in <elem> node */
@@ -4068,7 +4098,7 @@ static void test_XPath(void)
         _variantbstr_("xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'")));
 
     /* now the namespace can be used */
-    ole_check(IXMLDOMDocument_selectNodes(doc, _bstr_("root//test:c"), &list));
+    ole_check(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//test:c"), &list));
     expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
     ole_check(IXMLDOMNode_selectNodes(rootNode, _bstr_(".//test:c"), &list));
     expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
@@ -4081,7 +4111,7 @@ static void test_XPath(void)
     ole_expect(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
         _variantbstr_("xmlns:test='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29' xmlns:foo=###")), E_FAIL);
 
-    ole_expect(IXMLDOMDocument_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
+    ole_expect(IXMLDOMDocument2_selectNodes(doc, _bstr_("root//foo:c"), &list), E_FAIL);
 
     VariantInit(&var);
     ole_check(IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionNamespaces"), &var));
@@ -4096,7 +4126,109 @@ static void test_XPath(void)
 
     IXMLDOMNode_Release(rootNode);
     IXMLDOMNode_Release(elem1Node);
-    IXMLDOMDocument_Release(doc);
+
+    /* alter document with already built list */
+    hr = IXMLDOMDocument2_selectNodes(doc, _bstr_("root"), &list);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_LIST_LEN(list, 1);
+
+    hr = IXMLDOMDocument2_get_lastChild(doc, &rootNode);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(rootNode, 1);
+    EXPECT_REF(doc, 1);
+
+    hr = IXMLDOMDocument2_removeChild(doc, rootNode, NULL);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMNode_Release(rootNode);
+
+    EXPECT_LIST_LEN(list, 1);
+
+    hr = IXMLDOMNodeList_get_item(list, 0, &rootNode);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(rootNode, 1);
+
+    IXMLDOMNodeList_Release(list);
+
+    hr = IXMLDOMNode_get_nodeName(rootNode, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("root")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    IXMLDOMNode_Release(rootNode);
+
+    /* alter node from list and get it another time */
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    hr = IXMLDOMDocument2_selectNodes(doc, _bstr_("root"), &list);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_LIST_LEN(list, 1);
+
+    hr = IXMLDOMNodeList_get_item(list, 0, &rootNode);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMNode_QueryInterface(rootNode, &IID_IXMLDOMElement, (void**)&elem);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&var) = VT_I2;
+    V_I2(&var) = 1;
+    hr = IXMLDOMElement_setAttribute(elem, _bstr_("attrtest"), var);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMElement_Release(elem);
+    IXMLDOMNode_Release(rootNode);
+
+    /* now check attribute to be present */
+    hr = IXMLDOMNodeList_get_item(list, 0, &rootNode);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMNode_QueryInterface(rootNode, &IID_IXMLDOMElement, (void**)&elem);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("attrtest"), &attr);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMAttribute_Release(attr);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMNode_Release(rootNode);
+
+    /* and now check for attribute in original document */
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("attrtest"), &attr);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMAttribute_Release(attr);
+
+    IXMLDOMElement_Release(elem);
+
+    /* attach node from list to another document */
+    doc2 = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(szExampleXML), &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    hr = IXMLDOMDocument2_selectNodes(doc, _bstr_("root"), &list);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_LIST_LEN(list, 1);
+
+    hr = IXMLDOMNodeList_get_item(list, 0, &rootNode);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(rootNode, 1);
+
+    hr = IXMLDOMDocument_appendChild(doc2, rootNode, NULL);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(rootNode, 1);
+    EXPECT_REF(doc2, 1);
+    EXPECT_REF(list, 1);
+
+    EXPECT_LIST_LEN(list, 1);
+
+    IXMLDOMNode_Release(rootNode);
+    IXMLDOMNodeList_Release(list);
+    IXMLDOMDocument_Release(doc2);
+
+    IXMLDOMDocument2_Release(doc);
     free_bstrs();
 }
 

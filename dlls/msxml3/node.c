@@ -354,6 +354,8 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
         }
         doc = node_obj->node->doc;
         xmldoc_add_ref(This->node->doc);
+        /* xmlAddChild doesn't unlink node from previous parent */
+        xmlUnlinkNode(node_obj->node);
         xmlAddChild(This->node, node_obj->node);
         xmldoc_release(doc);
         node_obj->parent = This->iface;
