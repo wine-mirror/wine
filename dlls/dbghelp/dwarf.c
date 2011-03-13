@@ -2658,7 +2658,7 @@ static int valid_reg(ULONG_PTR reg)
 static void execute_cfa_instructions(dwarf2_traverse_context_t* ctx,
                                      ULONG_PTR last_ip, struct frame_info *info)
 {
-    while (ctx->data < ctx->end_data && info->ip < last_ip + info->signal_frame)
+    while (ctx->data < ctx->end_data && info->ip <= last_ip + info->signal_frame)
     {
         enum dwarf_call_frame_info op = dwarf2_parse_byte(ctx);
 
