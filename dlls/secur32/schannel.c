@@ -89,6 +89,23 @@ static SECURITY_STATUS schan_imp_send(gnutls_session_t s, const void *buffer,
     return SEC_E_OK;
 }
 
+static SECURITY_STATUS schan_imp_recv(gnutls_session_t s, void *buffer,
+                                      size_t *length)
+{
+    ssize_t ret = pgnutls_record_recv(s, buffer, *length);
+    if (ret >= 0)
+        *length = ret;
+    else if (ret == GNUTLS_E_AGAIN)
+        return SEC_I_CONTINUE_NEEDED;
+    else
+    {
+        pgnutls_perror(ret);
+        return SEC_E_INTERNAL_ERROR;
+    }
+
+    return SEC_E_OK;
+}
+
 
 #define SCHAN_INVALID_HANDLE ~0UL
 
@@ -1245,7 +1262,6 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     char *data;
     unsigned expected_size;
     ssize_t received = 0;
-    ssize_t ret;
     int idx;
     unsigned char *buf_ptr;
 
@@ -1291,32 +1307,28 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
 
     while (received < data_size)
     {
-        ret = pgnutls_record_recv(ctx->session, data + received, data_size - received);
-        if (ret < 0)
+        size_t length = data_size - received;
+        SECURITY_STATUS status = schan_imp_recv(ctx->session, data + received, &length);
+        if (status == SEC_I_CONTINUE_NEEDED)
         {
-            if (ret == GNUTLS_E_AGAIN)
+            if (!received)
             {
-                if (!received)
-                {
-                    pgnutls_perror(ret);
-                    HeapFree(GetProcessHeap(), 0, data);
-                    TRACE("Returning SEC_E_INCOMPLETE_MESSAGE\n");
-                    return SEC_E_INCOMPLETE_MESSAGE;
-                }
-                break;
-            }
-            else
-            {
-                pgnutls_perror(ret);
                 HeapFree(GetProcessHeap(), 0, data);
-                ERR("Returning SEC_E_INTERNAL_ERROR\n");
-                return SEC_E_INTERNAL_ERROR;
+                TRACE("Returning SEC_E_INCOMPLETE_MESSAGE\n");
+                return SEC_E_INCOMPLETE_MESSAGE;
             }
+            break;
         }
-        else if (!ret)
+        else if (status != SEC_E_OK)
+        {
+            HeapFree(GetProcessHeap(), 0, data);
+            ERR("Returning %d\n", status);
+            return status;
+        }
+        else if (!length)
             break;
 
-        received += ret;
+        received += length;
     }
 
     TRACE("Received %zd bytes\n", received);
