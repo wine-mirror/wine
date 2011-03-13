@@ -853,7 +853,8 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
             }
             else
             {
-               loc->kind = loc_dwarf2_block;
+                dwarf2_parse_byte(ctx);
+                loc->kind = loc_dwarf2_block;
             }
             break;
         case DW_OP_stack_value:
