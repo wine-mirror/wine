@@ -322,19 +322,23 @@ static HRESULT WINAPI IDirect3DCubeTexture9Impl_GetCubeMapSurface(IDirect3DCubeT
 }
 
 static HRESULT WINAPI IDirect3DCubeTexture9Impl_LockRect(IDirect3DCubeTexture9 *iface,
-        D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
+        D3DCUBEMAP_FACES face, UINT level, D3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
-    IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
+    IDirect3DCubeTexture9Impl *texture = (IDirect3DCubeTexture9Impl *)iface;
+    struct wined3d_resource *sub_resource;
     UINT sub_resource_idx;
     HRESULT hr;
 
     TRACE("iface %p, face %#x, level %u, locked_rect %p, rect %p, flags %#x.\n",
-            iface, FaceType, Level, pLockedRect, pRect, Flags);
+            iface, face, level, locked_rect, rect, flags);
 
     wined3d_mutex_lock();
-    sub_resource_idx = IWineD3DCubeTexture_GetLevelCount(This->wineD3DCubeTexture) * FaceType + Level;
-    hr = IWineD3DCubeTexture_Map(This->wineD3DCubeTexture, sub_resource_idx,
-            (WINED3DLOCKED_RECT *)pLockedRect, pRect, Flags);
+    sub_resource_idx = IWineD3DCubeTexture_GetLevelCount(texture->wineD3DCubeTexture) * face + level;
+    if (!(sub_resource = IWineD3DCubeTexture_GetSubResource(texture->wineD3DCubeTexture, sub_resource_idx)))
+        hr = D3DERR_INVALIDCALL;
+    else
+        hr = IDirect3DSurface9_LockRect((IDirect3DSurface9 *)wined3d_resource_get_parent(sub_resource),
+                locked_rect, rect, flags);
     wined3d_mutex_unlock();
 
     return hr;
