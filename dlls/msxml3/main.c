@@ -193,7 +193,9 @@ static void init_libxslt(void)
     if (!libxslt_handle)
         return;
 
-#define LOAD_FUNCPTR(f, needed) if ((p##f = wine_dlsym(libxslt_handle, #f, NULL, 0)) == NULL && needed) { WARN("Can't find symbol %s\n", #f); goto sym_not_found; }
+#define LOAD_FUNCPTR(f, needed) \
+    if ((p##f = wine_dlsym(libxslt_handle, #f, NULL, 0)) == NULL) \
+        if (needed) { WARN("Can't find symbol %s\n", #f); goto sym_not_found; }
     LOAD_FUNCPTR(xsltInit, 0);
     LOAD_FUNCPTR(xsltApplyStylesheet, 1);
     LOAD_FUNCPTR(xsltCleanupGlobals, 1);
