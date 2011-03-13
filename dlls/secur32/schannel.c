@@ -72,6 +72,15 @@ MAKE_FUNCPTR(gnutls_transport_set_push_function);
 #undef MAKE_FUNCPTR
 
 
+struct schan_transport;
+
+
+static void schan_imp_set_session_transport(gnutls_session_t s,
+                                            struct schan_transport *t)
+{
+    pgnutls_transport_set_ptr(s, (gnutls_transport_ptr_t)t);
+}
+
 static SECURITY_STATUS schan_imp_handshake(gnutls_session_t s)
 {
     int err = pgnutls_handshake(s);
@@ -305,8 +314,6 @@ struct schan_context
     gnutls_session_t session;
     ULONG req_ctx_attr;
 };
-
-struct schan_transport;
 
 struct schan_buffers
 {
@@ -977,7 +984,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     transport.ctx = ctx;
     init_schan_buffers(&transport.in, pInput, schan_init_sec_ctx_get_next_buffer);
     init_schan_buffers(&transport.out, pOutput, schan_init_sec_ctx_get_next_buffer);
-    pgnutls_transport_set_ptr(ctx->session, &transport);
+    schan_imp_set_session_transport(ctx->session, &transport);
 
     /* Perform the TLS handshake */
     ret = schan_imp_handshake(ctx->session);
@@ -1192,7 +1199,7 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
         init_schan_buffers(&transport.out, message, schan_encrypt_message_get_next_buffer);
     else
         init_schan_buffers(&transport.out, message, schan_encrypt_message_get_next_buffer_token);
-    pgnutls_transport_set_ptr(ctx->session, &transport);
+    schan_imp_set_session_transport(ctx->session, &transport);
 
     while (sent < data_size)
     {
@@ -1334,7 +1341,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     init_schan_buffers(&transport.in, message, schan_decrypt_message_get_next_buffer);
     transport.in.limit = expected_size;
     init_schan_buffers(&transport.out, NULL, NULL);
-    pgnutls_transport_set_ptr(ctx->session, (gnutls_transport_ptr_t)&transport);
+    schan_imp_set_session_transport(ctx->session, &transport);
 
     while (received < data_size)
     {
