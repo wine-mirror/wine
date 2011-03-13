@@ -75,6 +75,33 @@ MAKE_FUNCPTR(gnutls_transport_set_push_function);
 struct schan_transport;
 
 
+static BOOL schan_imp_create_session(gnutls_session_t *s, BOOL is_server)
+{
+    int err = pgnutls_init(s, is_server ? GNUTLS_SERVER : GNUTLS_CLIENT);
+    if (err != GNUTLS_E_SUCCESS)
+    {
+        pgnutls_perror(err);
+        return FALSE;
+    }
+
+    /* FIXME: We should be using the information from the credentials here. */
+    FIXME("Using hardcoded \"NORMAL\" priority\n");
+    err = pgnutls_set_default_priority(*s);
+    if (err != GNUTLS_E_SUCCESS)
+    {
+        pgnutls_perror(err);
+        pgnutls_deinit(*s);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void schan_imp_dispose_session(gnutls_session_t s)
+{
+    pgnutls_deinit(s);
+}
+
 static void schan_imp_set_session_transport(gnutls_session_t s,
                                             struct schan_transport *t)
 {
@@ -939,31 +966,18 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             return SEC_E_INTERNAL_ERROR;
         }
 
-        err = pgnutls_init(&ctx->session, GNUTLS_CLIENT);
-        if (err != GNUTLS_E_SUCCESS)
+        if (!schan_imp_create_session(&ctx->session, FALSE))
         {
-            pgnutls_perror(err);
             schan_free_handle(handle, SCHAN_HANDLE_CTX);
             HeapFree(GetProcessHeap(), 0, ctx);
             return SEC_E_INTERNAL_ERROR;
-        }
-
-        /* FIXME: We should be using the information from the credentials here. */
-        FIXME("Using hardcoded \"NORMAL\" priority\n");
-        err = pgnutls_set_default_priority(ctx->session);
-        if (err != GNUTLS_E_SUCCESS)
-        {
-            pgnutls_perror(err);
-            pgnutls_deinit(ctx->session);
-            schan_free_handle(handle, SCHAN_HANDLE_CTX);
-            HeapFree(GetProcessHeap(), 0, ctx);
         }
 
         err = pgnutls_credentials_set(ctx->session, GNUTLS_CRD_CERTIFICATE, cred->credentials);
         if (err != GNUTLS_E_SUCCESS)
         {
             pgnutls_perror(err);
-            pgnutls_deinit(ctx->session);
+            schan_imp_dispose_session(ctx->session);
             schan_free_handle(handle, SCHAN_HANDLE_CTX);
             HeapFree(GetProcessHeap(), 0, ctx);
         }
@@ -1401,7 +1415,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context
     ctx = schan_free_handle(context_handle->dwLower, SCHAN_HANDLE_CTX);
     if (!ctx) return SEC_E_INVALID_HANDLE;
 
-    pgnutls_deinit(ctx->session);
+    schan_imp_dispose_session(ctx->session);
     HeapFree(GetProcessHeap(), 0, ctx);
 
     return SEC_E_OK;
@@ -1601,7 +1615,7 @@ void SECUR32_deinitSchannelSP(void)
         if (schan_handle_table[i].type == SCHAN_HANDLE_CTX)
         {
             struct schan_context *ctx = schan_free_handle(i, SCHAN_HANDLE_CTX);
-            pgnutls_deinit(ctx->session);
+            schan_imp_dispose_session(ctx->session);
             HeapFree(GetProcessHeap(), 0, ctx);
         }
     }
