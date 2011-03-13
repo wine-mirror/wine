@@ -383,6 +383,7 @@ AC_CHECK_HEADERS(\
 	OpenAL/al.h \
 	OpenCL/opencl.h \
 	QuickTime/ImageCompression.h \
+	Security/Security.h \
 	alias.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \
