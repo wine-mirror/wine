@@ -72,6 +72,37 @@ MAKE_FUNCPTR(gnutls_transport_set_push_function);
 #undef MAKE_FUNCPTR
 
 
+static SECURITY_STATUS schan_imp_handshake(gnutls_session_t s)
+{
+    int err = pgnutls_handshake(s);
+    switch(err)
+    {
+        case GNUTLS_E_SUCCESS:
+            TRACE("Handshake completed\n");
+            return SEC_E_OK;
+
+        case GNUTLS_E_AGAIN:
+            TRACE("Continue...\n");
+            return SEC_I_CONTINUE_NEEDED;
+
+        case GNUTLS_E_WARNING_ALERT_RECEIVED:
+        case GNUTLS_E_FATAL_ALERT_RECEIVED:
+        {
+            gnutls_alert_description_t alert = pgnutls_alert_get(s);
+            const char *alert_name = pgnutls_alert_get_name(alert);
+            WARN("ALERT: %d %s\n", alert, alert_name);
+            return SEC_E_INTERNAL_ERROR;
+        }
+
+        default:
+            pgnutls_perror(err);
+            return SEC_E_INTERNAL_ERROR;
+    }
+
+    /* Never reached */
+    return SEC_E_OK;
+}
+
 static unsigned int schannel_get_cipher_block_size(gnutls_cipher_algorithm_t cipher)
 {
     const struct
@@ -867,6 +898,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     struct schan_credentials *cred;
     struct schan_transport transport;
     int err;
+    SECURITY_STATUS ret;
 
     TRACE("%p %p %s 0x%08x %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
@@ -948,7 +980,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     pgnutls_transport_set_ptr(ctx->session, &transport);
 
     /* Perform the TLS handshake */
-    err = pgnutls_handshake(ctx->session);
+    ret = schan_imp_handshake(ctx->session);
 
     if(transport.in.offset && transport.in.offset != pInput->pBuffers[0].cbBuffer) {
         if(pInput->cBuffers<2 || pInput->pBuffers[1].BufferType!=SECBUFFER_EMPTY)
@@ -969,29 +1001,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     if (ctx->req_ctx_attr & ISC_REQ_ALLOCATE_MEMORY)
         *pfContextAttr |= ISC_RET_ALLOCATED_MEMORY;
 
-    switch(err)
-    {
-        case GNUTLS_E_SUCCESS:
-            TRACE("Handshake completed\n");
-            return SEC_E_OK;
-
-        case GNUTLS_E_AGAIN:
-            TRACE("Continue...\n");
-            return SEC_I_CONTINUE_NEEDED;
-
-        case GNUTLS_E_WARNING_ALERT_RECEIVED:
-        case GNUTLS_E_FATAL_ALERT_RECEIVED:
-        {
-            gnutls_alert_description_t alert = pgnutls_alert_get(ctx->session);
-            const char *alert_name = pgnutls_alert_get_name(alert);
-            WARN("ALERT: %d %s\n", alert, alert_name);
-            return SEC_E_INTERNAL_ERROR;
-        }
-
-        default:
-            pgnutls_perror(err);
-            return SEC_E_INTERNAL_ERROR;
-    }
+    return ret;
 }
 
 /***********************************************************************
