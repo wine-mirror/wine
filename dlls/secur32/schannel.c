@@ -391,6 +391,86 @@ static void schan_imp_free_certificate_credentials(schan_imp_certificate_credent
     pgnutls_certificate_free_credentials((gnutls_certificate_credentials)c);
 }
 
+static void schan_gnutls_log(int level, const char *msg)
+{
+    TRACE("<%d> %s", level, msg);
+}
+
+static BOOL schan_imp_init(void)
+{
+    int ret;
+
+    libgnutls_handle = wine_dlopen(SONAME_LIBGNUTLS, RTLD_NOW, NULL, 0);
+    if (!libgnutls_handle)
+    {
+        WARN("Failed to load libgnutls.\n");
+        return FALSE;
+    }
+
+#define LOAD_FUNCPTR(f) \
+    if (!(p##f = wine_dlsym(libgnutls_handle, #f, NULL, 0))) \
+    { \
+        ERR("Failed to load %s\n", #f); \
+        goto fail; \
+    }
+
+    LOAD_FUNCPTR(gnutls_alert_get)
+    LOAD_FUNCPTR(gnutls_alert_get_name)
+    LOAD_FUNCPTR(gnutls_certificate_allocate_credentials)
+    LOAD_FUNCPTR(gnutls_certificate_free_credentials)
+    LOAD_FUNCPTR(gnutls_certificate_get_peers)
+    LOAD_FUNCPTR(gnutls_cipher_get)
+    LOAD_FUNCPTR(gnutls_cipher_get_key_size)
+    LOAD_FUNCPTR(gnutls_credentials_set)
+    LOAD_FUNCPTR(gnutls_deinit)
+    LOAD_FUNCPTR(gnutls_global_deinit)
+    LOAD_FUNCPTR(gnutls_global_init)
+    LOAD_FUNCPTR(gnutls_global_set_log_function)
+    LOAD_FUNCPTR(gnutls_global_set_log_level)
+    LOAD_FUNCPTR(gnutls_handshake)
+    LOAD_FUNCPTR(gnutls_init)
+    LOAD_FUNCPTR(gnutls_kx_get)
+    LOAD_FUNCPTR(gnutls_mac_get)
+    LOAD_FUNCPTR(gnutls_mac_get_key_size)
+    LOAD_FUNCPTR(gnutls_perror)
+    LOAD_FUNCPTR(gnutls_protocol_get_version)
+    LOAD_FUNCPTR(gnutls_set_default_priority)
+    LOAD_FUNCPTR(gnutls_record_recv);
+    LOAD_FUNCPTR(gnutls_record_send);
+    LOAD_FUNCPTR(gnutls_transport_set_errno)
+    LOAD_FUNCPTR(gnutls_transport_set_ptr)
+    LOAD_FUNCPTR(gnutls_transport_set_pull_function)
+    LOAD_FUNCPTR(gnutls_transport_set_push_function)
+#undef LOAD_FUNCPTR
+
+    ret = pgnutls_global_init();
+    if (ret != GNUTLS_E_SUCCESS)
+    {
+        pgnutls_perror(ret);
+        goto fail;
+    }
+
+    if (TRACE_ON(secur32))
+    {
+        pgnutls_global_set_log_level(4);
+        pgnutls_global_set_log_function(schan_gnutls_log);
+    }
+
+    return TRUE;
+
+fail:
+    wine_dlclose(libgnutls_handle, NULL, 0);
+    libgnutls_handle = NULL;
+    return FALSE;
+}
+
+static void schan_imp_deinit(void)
+{
+    pgnutls_global_deinit();
+    wine_dlclose(libgnutls_handle, NULL, 0);
+    libgnutls_handle = NULL;
+}
+
 
 #define SCHAN_INVALID_HANDLE ~0UL
 
@@ -1520,11 +1600,6 @@ static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context
     return SEC_E_OK;
 }
 
-static void schan_gnutls_log(int level, const char *msg)
-{
-    TRACE("<%d> %s", level, msg);
-}
-
 static const SecurityFunctionTableA schanTableA = {
     1,
     NULL, /* EnumerateSecurityPackagesA */
@@ -1616,63 +1691,9 @@ void SECUR32_initSchannelSP(void)
             (SEC_WCHAR *)schannelComment },
     };
     SecureProvider *provider;
-    int ret;
 
-    libgnutls_handle = wine_dlopen(SONAME_LIBGNUTLS, RTLD_NOW, NULL, 0);
-    if (!libgnutls_handle)
-    {
-        WARN("Failed to load libgnutls.\n");
+    if (!schan_imp_init())
         return;
-    }
-
-#define LOAD_FUNCPTR(f) \
-    if (!(p##f = wine_dlsym(libgnutls_handle, #f, NULL, 0))) \
-    { \
-        ERR("Failed to load %s\n", #f); \
-        goto fail; \
-    }
-
-    LOAD_FUNCPTR(gnutls_alert_get)
-    LOAD_FUNCPTR(gnutls_alert_get_name)
-    LOAD_FUNCPTR(gnutls_certificate_allocate_credentials)
-    LOAD_FUNCPTR(gnutls_certificate_free_credentials)
-    LOAD_FUNCPTR(gnutls_certificate_get_peers)
-    LOAD_FUNCPTR(gnutls_cipher_get)
-    LOAD_FUNCPTR(gnutls_cipher_get_key_size)
-    LOAD_FUNCPTR(gnutls_credentials_set)
-    LOAD_FUNCPTR(gnutls_deinit)
-    LOAD_FUNCPTR(gnutls_global_deinit)
-    LOAD_FUNCPTR(gnutls_global_init)
-    LOAD_FUNCPTR(gnutls_global_set_log_function)
-    LOAD_FUNCPTR(gnutls_global_set_log_level)
-    LOAD_FUNCPTR(gnutls_handshake)
-    LOAD_FUNCPTR(gnutls_init)
-    LOAD_FUNCPTR(gnutls_kx_get)
-    LOAD_FUNCPTR(gnutls_mac_get)
-    LOAD_FUNCPTR(gnutls_mac_get_key_size)
-    LOAD_FUNCPTR(gnutls_perror)
-    LOAD_FUNCPTR(gnutls_protocol_get_version)
-    LOAD_FUNCPTR(gnutls_set_default_priority)
-    LOAD_FUNCPTR(gnutls_record_recv);
-    LOAD_FUNCPTR(gnutls_record_send);
-    LOAD_FUNCPTR(gnutls_transport_set_errno)
-    LOAD_FUNCPTR(gnutls_transport_set_ptr)
-    LOAD_FUNCPTR(gnutls_transport_set_pull_function)
-    LOAD_FUNCPTR(gnutls_transport_set_push_function)
-#undef LOAD_FUNCPTR
-
-    ret = pgnutls_global_init();
-    if (ret != GNUTLS_E_SUCCESS)
-    {
-        pgnutls_perror(ret);
-        goto fail;
-    }
-
-    if (TRACE_ON(secur32))
-    {
-        pgnutls_global_set_log_level(4);
-        pgnutls_global_set_log_function(schan_gnutls_log);
-    }
 
     schan_handle_table = HeapAlloc(GetProcessHeap(), 0, 64 * sizeof(*schan_handle_table));
     if (!schan_handle_table)
@@ -1696,8 +1717,7 @@ void SECUR32_initSchannelSP(void)
 fail:
     HeapFree(GetProcessHeap(), 0, schan_handle_table);
     schan_handle_table = NULL;
-    wine_dlclose(libgnutls_handle, NULL, 0);
-    libgnutls_handle = NULL;
+    schan_imp_deinit();
     return;
 }
 
@@ -1705,7 +1725,7 @@ void SECUR32_deinitSchannelSP(void)
 {
     SIZE_T i = schan_handle_count;
 
-    if (!libgnutls_handle) return;
+    if (!schan_handle_table) return;
 
     /* deinitialized sessions first because a pointer to the credentials
      * may be stored for the session. */
@@ -1730,8 +1750,7 @@ void SECUR32_deinitSchannelSP(void)
         }
     }
     HeapFree(GetProcessHeap(), 0, schan_handle_table);
-    pgnutls_global_deinit();
-    wine_dlclose(libgnutls_handle, NULL, 0);
+    schan_imp_deinit();
 }
 
 #else /* SONAME_LIBGNUTLS */
