@@ -775,6 +775,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
                 module->module.SymType = SymDeferred;
             else
                 pe_load_debug_info(pcs, module);
+            module->reloc_delta = base - modfmt->u.pe_info->fmap.u.pe.ntheader.OptionalHeader.ImageBase;
         }
         else
         {
