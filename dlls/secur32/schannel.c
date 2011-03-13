@@ -72,6 +72,102 @@ MAKE_FUNCPTR(gnutls_transport_set_push_function);
 #undef MAKE_FUNCPTR
 
 
+static unsigned int schannel_get_cipher_block_size(gnutls_cipher_algorithm_t cipher)
+{
+    const struct
+    {
+        gnutls_cipher_algorithm_t cipher;
+        unsigned int block_size;
+    }
+    algorithms[] =
+    {
+        {GNUTLS_CIPHER_3DES_CBC, 8},
+        {GNUTLS_CIPHER_AES_128_CBC, 16},
+        {GNUTLS_CIPHER_AES_256_CBC, 16},
+        {GNUTLS_CIPHER_ARCFOUR_128, 1},
+        {GNUTLS_CIPHER_ARCFOUR_40, 1},
+        {GNUTLS_CIPHER_DES_CBC, 8},
+        {GNUTLS_CIPHER_NULL, 1},
+        {GNUTLS_CIPHER_RC2_40_CBC, 8},
+    };
+    unsigned int i;
+
+    for (i = 0; i < sizeof(algorithms) / sizeof(*algorithms); ++i)
+    {
+        if (algorithms[i].cipher == cipher)
+            return algorithms[i].block_size;
+    }
+
+    FIXME("Unknown cipher %#x, returning 1\n", cipher);
+
+    return 1;
+}
+
+static DWORD schannel_get_protocol(gnutls_protocol_t proto)
+{
+    /* FIXME: currently schannel only implements client connections, but
+     * there's no reason it couldn't be used for servers as well.  The
+     * context doesn't tell us which it is, so assume client for now.
+     */
+    switch (proto)
+    {
+    case GNUTLS_SSL3: return SP_PROT_SSL3_CLIENT;
+    case GNUTLS_TLS1_0: return SP_PROT_TLS1_CLIENT;
+    default:
+        FIXME("unknown protocol %d\n", proto);
+        return 0;
+    }
+}
+
+static ALG_ID schannel_get_cipher_algid(gnutls_cipher_algorithm_t cipher)
+{
+    switch (cipher)
+    {
+    case GNUTLS_CIPHER_UNKNOWN:
+    case GNUTLS_CIPHER_NULL: return 0;
+    case GNUTLS_CIPHER_ARCFOUR_40:
+    case GNUTLS_CIPHER_ARCFOUR_128: return CALG_RC4;
+    case GNUTLS_CIPHER_DES_CBC:
+    case GNUTLS_CIPHER_3DES_CBC: return CALG_DES;
+    case GNUTLS_CIPHER_AES_128_CBC:
+    case GNUTLS_CIPHER_AES_256_CBC: return CALG_AES;
+    case GNUTLS_CIPHER_RC2_40_CBC: return CALG_RC2;
+    default:
+        FIXME("unknown algorithm %d\n", cipher);
+        return 0;
+    }
+}
+
+static ALG_ID schannel_get_mac_algid(gnutls_mac_algorithm_t mac)
+{
+    switch (mac)
+    {
+    case GNUTLS_MAC_UNKNOWN:
+    case GNUTLS_MAC_NULL: return 0;
+    case GNUTLS_MAC_MD5: return CALG_MD5;
+    case GNUTLS_MAC_SHA1:
+    case GNUTLS_MAC_SHA256:
+    case GNUTLS_MAC_SHA384:
+    case GNUTLS_MAC_SHA512: return CALG_SHA;
+    default:
+        FIXME("unknown algorithm %d\n", mac);
+        return 0;
+    }
+}
+
+static ALG_ID schannel_get_kx_algid(gnutls_kx_algorithm_t kx)
+{
+    switch (kx)
+    {
+        case GNUTLS_KX_RSA: return CALG_RSA_KEYX;
+        case GNUTLS_KX_DHE_DSS:
+        case GNUTLS_KX_DHE_RSA: return CALG_DH_EPHEM;
+    default:
+        FIXME("unknown algorithm %d\n", kx);
+        return 0;
+    }
+}
+
 static SECURITY_STATUS schan_imp_get_session_peer_certificate(gnutls_session_t s,
                                                               PCCERT_CONTEXT *cert)
 {
@@ -903,102 +999,6 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
     HeapFree(GetProcessHeap(), 0, target_name);
 
     return ret;
-}
-
-static unsigned int schannel_get_cipher_block_size(gnutls_cipher_algorithm_t cipher)
-{
-    const struct
-    {
-        gnutls_cipher_algorithm_t cipher;
-        unsigned int block_size;
-    }
-    algorithms[] =
-    {
-        {GNUTLS_CIPHER_3DES_CBC, 8},
-        {GNUTLS_CIPHER_AES_128_CBC, 16},
-        {GNUTLS_CIPHER_AES_256_CBC, 16},
-        {GNUTLS_CIPHER_ARCFOUR_128, 1},
-        {GNUTLS_CIPHER_ARCFOUR_40, 1},
-        {GNUTLS_CIPHER_DES_CBC, 8},
-        {GNUTLS_CIPHER_NULL, 1},
-        {GNUTLS_CIPHER_RC2_40_CBC, 8},
-    };
-    unsigned int i;
-
-    for (i = 0; i < sizeof(algorithms) / sizeof(*algorithms); ++i)
-    {
-        if (algorithms[i].cipher == cipher)
-            return algorithms[i].block_size;
-    }
-
-    FIXME("Unknown cipher %#x, returning 1\n", cipher);
-
-    return 1;
-}
-
-static DWORD schannel_get_protocol(gnutls_protocol_t proto)
-{
-    /* FIXME: currently schannel only implements client connections, but
-     * there's no reason it couldn't be used for servers as well.  The
-     * context doesn't tell us which it is, so assume client for now.
-     */
-    switch (proto)
-    {
-    case GNUTLS_SSL3: return SP_PROT_SSL3_CLIENT;
-    case GNUTLS_TLS1_0: return SP_PROT_TLS1_CLIENT;
-    default:
-        FIXME("unknown protocol %d\n", proto);
-        return 0;
-    }
-}
-
-static ALG_ID schannel_get_cipher_algid(gnutls_cipher_algorithm_t cipher)
-{
-    switch (cipher)
-    {
-    case GNUTLS_CIPHER_UNKNOWN:
-    case GNUTLS_CIPHER_NULL: return 0;
-    case GNUTLS_CIPHER_ARCFOUR_40:
-    case GNUTLS_CIPHER_ARCFOUR_128: return CALG_RC4;
-    case GNUTLS_CIPHER_DES_CBC:
-    case GNUTLS_CIPHER_3DES_CBC: return CALG_DES;
-    case GNUTLS_CIPHER_AES_128_CBC:
-    case GNUTLS_CIPHER_AES_256_CBC: return CALG_AES;
-    case GNUTLS_CIPHER_RC2_40_CBC: return CALG_RC2;
-    default:
-        FIXME("unknown algorithm %d\n", cipher);
-        return 0;
-    }
-}
-
-static ALG_ID schannel_get_mac_algid(gnutls_mac_algorithm_t mac)
-{
-    switch (mac)
-    {
-    case GNUTLS_MAC_UNKNOWN:
-    case GNUTLS_MAC_NULL: return 0;
-    case GNUTLS_MAC_MD5: return CALG_MD5;
-    case GNUTLS_MAC_SHA1:
-    case GNUTLS_MAC_SHA256:
-    case GNUTLS_MAC_SHA384:
-    case GNUTLS_MAC_SHA512: return CALG_SHA;
-    default:
-        FIXME("unknown algorithm %d\n", mac);
-        return 0;
-    }
-}
-
-static ALG_ID schannel_get_kx_algid(gnutls_kx_algorithm_t kx)
-{
-    switch (kx)
-    {
-        case GNUTLS_KX_RSA: return CALG_RSA_KEYX;
-        case GNUTLS_KX_DHE_DSS:
-        case GNUTLS_KX_DHE_RSA: return CALG_DH_EPHEM;
-    default:
-        FIXME("unknown algorithm %d\n", kx);
-        return 0;
-    }
 }
 
 static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
