@@ -2370,12 +2370,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
 ]
 interface IWineD3DTexture : IWineD3DBaseTexture
 {
-    HRESULT Map(
-        [in] UINT sub_resource_idx,
-        [out] WINED3DLOCKED_RECT *locked_rect,
-        [in] const RECT *rect,
-        [in] DWORD flags
-    );
     HRESULT Unmap(
         [in] UINT sub_resource_idx
     );

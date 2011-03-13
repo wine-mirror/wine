@@ -300,17 +300,22 @@ static HRESULT WINAPI IDirect3DTexture8Impl_GetSurfaceLevel(IDirect3DTexture8 *i
     return D3D_OK;
 }
 
-static HRESULT WINAPI IDirect3DTexture8Impl_LockRect(IDirect3DTexture8 *iface, UINT Level,
-        D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
+static HRESULT WINAPI IDirect3DTexture8Impl_LockRect(IDirect3DTexture8 *iface, UINT level,
+        D3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
-    IDirect3DTexture8Impl *This = impl_from_IDirect3DTexture8(iface);
+    IDirect3DTexture8Impl *texture = impl_from_IDirect3DTexture8(iface);
+    struct wined3d_resource *sub_resource;
     HRESULT hr;
 
     TRACE("iface %p, level %u, locked_rect %p, rect %p, flags %#x.\n",
-            iface, Level, pLockedRect, pRect, Flags);
+            iface, level, locked_rect, rect, flags);
 
     wined3d_mutex_lock();
-    hr = IWineD3DTexture_Map(This->wineD3DTexture, Level, (WINED3DLOCKED_RECT *)pLockedRect, pRect, Flags);
+    if (!(sub_resource = IWineD3DTexture_GetSubResource(texture->wineD3DTexture, level)))
+        hr = D3DERR_INVALIDCALL;
+    else
+        hr = IDirect3DSurface8_LockRect((IDirect3DSurface8 *)wined3d_resource_get_parent(sub_resource),
+                locked_rect, rect, flags);
     wined3d_mutex_unlock();
 
     return hr;
