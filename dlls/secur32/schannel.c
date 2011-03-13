@@ -72,6 +72,26 @@ MAKE_FUNCPTR(gnutls_transport_set_push_function);
 #undef MAKE_FUNCPTR
 
 
+static SECURITY_STATUS schan_imp_get_session_peer_certificate(gnutls_session_t s,
+                                                              PCCERT_CONTEXT *cert)
+{
+    unsigned int list_size;
+    const gnutls_datum_t *datum;
+
+    datum = pgnutls_certificate_get_peers(s, &list_size);
+    if (datum)
+    {
+        *cert = CertCreateCertificateContext(X509_ASN_ENCODING, datum->data,
+                                             datum->size);
+        if (!*cert)
+            return GetLastError();
+        else
+            return SEC_E_OK;
+    }
+    else
+        return SEC_E_INTERNAL_ERROR;
+}
+
 static SECURITY_STATUS schan_imp_send(gnutls_session_t s, const void *buffer,
                                       size_t *length)
 {
@@ -1014,23 +1034,8 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         }
         case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
         {
-            unsigned int list_size;
-            const gnutls_datum_t *datum;
-
-            datum = pgnutls_certificate_get_peers(ctx->session, &list_size);
-            if (datum)
-            {
-                PCCERT_CONTEXT *cert = buffer;
-
-                *cert = CertCreateCertificateContext(X509_ASN_ENCODING,
-                        datum->data, datum->size);
-                if (!*cert)
-                    return GetLastError();
-                else
-                    return SEC_E_OK;
-            }
-            else
-                return SEC_E_INTERNAL_ERROR;
+            PCCERT_CONTEXT *cert = buffer;
+            return schan_imp_get_session_peer_certificate(ctx->session, cert);
         }
         case SECPKG_ATTR_CONNECTION_INFO:
         {
