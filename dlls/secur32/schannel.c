@@ -1041,20 +1041,25 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
     {
         case SECPKG_ATTR_STREAM_SIZES:
         {
-            SecPkgContext_StreamSizes *stream_sizes = buffer;
-            gnutls_mac_algorithm_t mac = pgnutls_mac_get(ctx->session);
-            size_t mac_size = pgnutls_mac_get_key_size(mac);
-            unsigned int block_size = schan_imp_get_session_cipher_block_size(ctx->session);
+            SecPkgContext_ConnectionInfo info;
+            SECURITY_STATUS status = schan_imp_get_connection_info(ctx->session, &info);
+            if (status == SEC_E_OK)
+            {
+                SecPkgContext_StreamSizes *stream_sizes = buffer;
+                size_t mac_size = info.dwHashStrength;
+                unsigned int block_size = schan_imp_get_session_cipher_block_size(ctx->session);
 
-            TRACE("Using %zu mac bytes, block size %u\n", mac_size, block_size);
+                TRACE("Using %zu mac bytes, block size %u\n", mac_size, block_size);
 
-            /* These are defined by the TLS RFC */
-            stream_sizes->cbHeader = 5;
-            stream_sizes->cbTrailer = mac_size + 256; /* Max 255 bytes padding + 1 for padding size */
-            stream_sizes->cbMaximumMessage = 1 << 14;
-            stream_sizes->cbBuffers = 4;
-            stream_sizes->cbBlockSize = block_size;
-            return SEC_E_OK;
+                /* These are defined by the TLS RFC */
+                stream_sizes->cbHeader = 5;
+                stream_sizes->cbTrailer = mac_size + 256; /* Max 255 bytes padding + 1 for padding size */
+                stream_sizes->cbMaximumMessage = 1 << 14;
+                stream_sizes->cbBuffers = 4;
+                stream_sizes->cbBlockSize = block_size;
+            }
+
+            return status;
         }
         case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
         {
