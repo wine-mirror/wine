@@ -111,12 +111,12 @@ enum st_mode {stm_start, stm_64bit, stm_done};
 
 /* indexes in Reserved array */
 #define __CurrentMode     0
-#define __CurrentSwitch   1
-#define __NextSwitch      2
+#define __CurrentCount    1
+/* #define __     2 (unused) */
 
 #define curr_mode   (frame->Reserved[__CurrentMode])
-#define curr_switch (frame->Reserved[__CurrentSwitch])
-#define next_switch (frame->Reserved[__NextSwitch])
+#define curr_count  (frame->Reserved[__CurrentCount])
+/* #define ??? (frame->Reserved[__]) (unused) */
 
 #ifdef __x86_64__
 union handler_data
@@ -468,22 +468,58 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
     return default_unwind(csw, context);
 }
 
+/* fetch_next_frame()
+ *
+ * modify (at least) context.{rip, rsp, rbp} using unwind information
+ * either out of PE exception handlers, debug info (dwarf), or simple stack unwind
+ */
+static BOOL fetch_next_frame(struct cpu_stack_walk* csw, CONTEXT* context,
+                             DWORD_PTR curr_pc, void** prtf)
+{
+    DWORD_PTR               cfa;
+    RUNTIME_FUNCTION*       rtf;
+    DWORD64                 base;
+
+    if (!curr_pc || !(base = sw_module_base(csw, curr_pc))) return FALSE;
+    rtf = sw_table_access(csw, curr_pc);
+    if (prtf) *prtf = rtf;
+    if (rtf)
+    {
+        return interpret_function_table_entry(csw, context, rtf, base);
+    }
+    else if (dwarf2_virtual_unwind(csw, curr_pc, context, &cfa))
+    {
+        context->Rsp = cfa;
+        TRACE("next function rip=%016lx\n", context->Rip);
+        TRACE("  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+              context->Rax, context->Rbx, context->Rcx, context->Rdx);
+        TRACE("  rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+              context->Rsi, context->Rdi, context->Rbp, context->Rsp);
+        TRACE("   r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+              context->R8, context->R9, context->R10, context->R11);
+        TRACE("  r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+              context->R12, context->R13, context->R14, context->R15);
+        return TRUE;
+    }
+    else
+        return default_unwind(csw, context);
+}
+
 static BOOL x86_64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context)
 {
-    DWORD64     base;
-    DWORD_PTR   cfa;
-    unsigned    deltapc = 0;
+    unsigned    deltapc = curr_count <= 1 ? 0 : 1;
 
     /* sanity check */
     if (curr_mode >= stm_done) return FALSE;
     assert(!csw->is32);
 
-    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s\n",
+    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
-          curr_mode == stm_start ? "start" : "64bit");
+          curr_mode == stm_start ? "start" : "64bit",
+          wine_dbgstr_longlong(curr_count));
 
     if (curr_mode == stm_start)
     {
@@ -496,7 +532,6 @@ static BOOL x86_64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, 
 
         /* Init done */
         curr_mode = stm_64bit;
-        curr_switch = 0;
         frame->AddrReturn.Mode = frame->AddrStack.Mode = AddrModeFlat;
         /* don't set up AddrStack on first call. Either the caller has set it up, or
          * we will get it in the next frame
@@ -506,51 +541,41 @@ static BOOL x86_64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, 
     else
     {
         if (context->Rsp != frame->AddrStack.Offset) FIXME("inconsistent Stack Pointer\n");
+        if (context->Rip != frame->AddrPC.Offset) FIXME("inconsistent Instruction Pointer\n");
 
         if (frame->AddrReturn.Offset == 0) goto done_err;
-        frame->AddrPC = frame->AddrReturn;
+        if (!fetch_next_frame(csw, context, frame->AddrPC.Offset - deltapc, &frame->FuncTableEntry))
+            goto done_err;
         deltapc = 1;
     }
-
-    if (!frame->AddrPC.Offset || !(base = sw_module_base(csw, frame->AddrPC.Offset))) goto done_err;
-    frame->FuncTableEntry = sw_table_access(csw, frame->AddrPC.Offset);
-    frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
-    if (frame->FuncTableEntry)
-    {
-        if (!interpret_function_table_entry(csw, context, frame->FuncTableEntry, base))
-            goto done_err;
-    }
-    else if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, &cfa))
-    {
-        context->Rsp = cfa;
-        TRACE("next function rip=%016lx\n", context->Rip);
-        TRACE("  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
-              context->Rax, context->Rbx, context->Rcx, context->Rdx);
-        TRACE("  rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
-              context->Rsi, context->Rdi, context->Rbp, context->Rsp);
-        TRACE("   r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
-              context->R8, context->R9, context->R10, context->R11);
-        TRACE("  r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
-              context->R12, context->R13, context->R14, context->R15);
-    }
-    else if (!default_unwind(csw, context)) goto done_err;
 
     memset(&frame->Params, 0, sizeof(frame->Params));
 
     /* set frame information */
     frame->AddrStack.Offset = context->Rsp;
     frame->AddrFrame.Offset = context->Rbp;
-    frame->AddrReturn.Offset = context->Rip;
+    frame->AddrPC.Offset = context->Rip;
+    if (1)
+    {
+        CONTEXT         newctx = *context;
+
+        if (!fetch_next_frame(csw, &newctx, frame->AddrPC.Offset - deltapc, NULL))
+            goto done_err;
+        frame->AddrReturn.Mode = AddrModeFlat;
+        frame->AddrReturn.Offset = newctx.Rip;
+    }
 
     frame->Far = TRUE;
     frame->Virtual = TRUE;
+    curr_count++;
 
-    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s FuncTable=%p\n",
+    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s FuncTable=%p\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
           curr_mode == stm_start ? "start" : "64bit",
+          wine_dbgstr_longlong(curr_count),
           frame->FuncTableEntry);
 
     return TRUE;
