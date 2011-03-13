@@ -76,6 +76,7 @@ struct schan_transport;
 
 
 static int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len);
+static int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len);
 
 static gnutls_session_t schan_session_for_transport(struct schan_transport* t);
 
@@ -87,6 +88,22 @@ static ssize_t schan_pull_adapter(gnutls_transport_ptr_t transport,
     gnutls_session_t s = schan_session_for_transport(t);
 
     int ret = schan_pull(transport, buff, &buff_len);
+    if (ret)
+    {
+        pgnutls_transport_set_errno(s, ret);
+        return -1;
+    }
+
+    return buff_len;
+}
+
+static ssize_t schan_push_adapter(gnutls_transport_ptr_t transport,
+                                      const void *buff, size_t buff_len)
+{
+    struct schan_transport *t = (struct schan_transport*)transport;
+    gnutls_session_t s = schan_session_for_transport(t);
+
+    int ret = schan_push(transport, buff, &buff_len);
     if (ret)
     {
         pgnutls_transport_set_errno(s, ret);
@@ -896,26 +913,43 @@ static int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
     return 0;
 }
 
-static ssize_t schan_push(gnutls_transport_ptr_t transport, const void *buff, size_t buff_len)
+/* schan_push
+ *      Write data to the transport output buffer.
+ *
+ * t - The session transport object.
+ * buff - The buffer of data to write.  Must be at least *buff_len bytes in length.
+ * buff_len - On input, *buff_len is the desired length to write.  On successful
+ *            return, *buff_len is the number of bytes actually written.
+ *
+ * Returns:
+ *  0 on success
+ *      *buff_len will be > 0 indicating how much data was written.  May be less
+ *          than what was requested, in which case the caller should call again
+            if/when they want to write more.
+ *  EAGAIN when no data could be written without blocking
+ *  another errno-style error value on failure
+ *
+ */
+static int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len)
 {
-    struct schan_transport *t = transport;
     char *b;
+    size_t local_len = *buff_len;
 
-    TRACE("Push %zu bytes\n", buff_len);
+    TRACE("Push %zu bytes\n", local_len);
 
-    b = schan_get_buffer(t, &t->out, &buff_len);
+    *buff_len = 0;
+
+    b = schan_get_buffer(t, &t->out, &local_len);
     if (!b)
-    {
-        pgnutls_transport_set_errno(t->ctx->session, EAGAIN);
-        return -1;
-    }
+        return EAGAIN;
 
-    memcpy(b, buff, buff_len);
-    t->out.offset += buff_len;
+    memcpy(b, buff, local_len);
+    t->out.offset += local_len;
 
-    TRACE("Wrote %zu bytes\n", buff_len);
+    TRACE("Wrote %zu bytes\n", local_len);
 
-    return buff_len;
+    *buff_len = local_len;
+    return 0;
 }
 
 static gnutls_session_t schan_session_for_transport(struct schan_transport* t)
@@ -1025,7 +1059,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         }
 
         pgnutls_transport_set_pull_function(ctx->session, schan_pull_adapter);
-        pgnutls_transport_set_push_function(ctx->session, schan_push);
+        pgnutls_transport_set_push_function(ctx->session, schan_push_adapter);
 
         phNewContext->dwLower = handle;
         phNewContext->dwUpper = 0;
