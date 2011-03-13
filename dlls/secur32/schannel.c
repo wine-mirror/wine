@@ -168,6 +168,12 @@ static ALG_ID schannel_get_kx_algid(gnutls_kx_algorithm_t kx)
     }
 }
 
+static unsigned int schan_imp_get_session_cipher_block_size(gnutls_session_t s)
+{
+    gnutls_cipher_algorithm_t cipher = pgnutls_cipher_get(s);
+    return schannel_get_cipher_block_size(cipher);
+}
+
 static SECURITY_STATUS schan_imp_get_session_peer_certificate(gnutls_session_t s,
                                                               PCCERT_CONTEXT *cert)
 {
@@ -1019,8 +1025,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
             SecPkgContext_StreamSizes *stream_sizes = buffer;
             gnutls_mac_algorithm_t mac = pgnutls_mac_get(ctx->session);
             size_t mac_size = pgnutls_mac_get_key_size(mac);
-            gnutls_cipher_algorithm_t cipher = pgnutls_cipher_get(ctx->session);
-            unsigned int block_size = schannel_get_cipher_block_size(cipher);
+            unsigned int block_size = schan_imp_get_session_cipher_block_size(ctx->session);
 
             TRACE("Using %zu mac bytes, block size %u\n", mac_size, block_size);
 
