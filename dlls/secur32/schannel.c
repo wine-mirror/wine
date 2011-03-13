@@ -16,8 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * This file implements the schannel provider, or, the SSL/TLS implementations.
- * FIXME: It should be rather obvious that this file is empty of any
- * implementation.
  */
 #include "config.h"
 #include "wine/port.h"
