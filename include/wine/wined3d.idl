@@ -2382,9 +2382,6 @@ interface IWineD3DTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DCubeTexture : IWineD3DBaseTexture
 {
-    HRESULT Unmap(
-        [in] UINT sub_resource_idx
-    );
     HRESULT AddDirtyRect(
         [in] WINED3DCUBEMAP_FACES face,
         [in] const RECT *dirty_rect
