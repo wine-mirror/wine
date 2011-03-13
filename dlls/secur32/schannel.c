@@ -113,7 +113,8 @@ static ssize_t schan_push_adapter(gnutls_transport_ptr_t transport,
     return buff_len;
 }
 
-static BOOL schan_imp_create_session(gnutls_session_t *s, BOOL is_server)
+static BOOL schan_imp_create_session(gnutls_session_t *s, BOOL is_server,
+                                     gnutls_certificate_credentials cred)
 {
     int err = pgnutls_init(s, is_server ? GNUTLS_SERVER : GNUTLS_CLIENT);
     if (err != GNUTLS_E_SUCCESS)
@@ -125,6 +126,14 @@ static BOOL schan_imp_create_session(gnutls_session_t *s, BOOL is_server)
     /* FIXME: We should be using the information from the credentials here. */
     FIXME("Using hardcoded \"NORMAL\" priority\n");
     err = pgnutls_set_default_priority(*s);
+    if (err != GNUTLS_E_SUCCESS)
+    {
+        pgnutls_perror(err);
+        pgnutls_deinit(*s);
+        return FALSE;
+    }
+
+    err = pgnutls_credentials_set(*s, GNUTLS_CRD_CERTIFICATE, cred);
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
@@ -1010,7 +1019,6 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     struct schan_buffers *out_buffers;
     struct schan_credentials *cred;
     struct schan_transport transport;
-    int err;
     SECURITY_STATUS ret;
 
     TRACE("%p %p %s 0x%08x %d %d %p %d %p %p %p %p\n", phCredential, phContext,
@@ -1045,20 +1053,11 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             return SEC_E_INTERNAL_ERROR;
         }
 
-        if (!schan_imp_create_session(&ctx->session, FALSE))
+        if (!schan_imp_create_session(&ctx->session, FALSE, cred->credentials))
         {
             schan_free_handle(handle, SCHAN_HANDLE_CTX);
             HeapFree(GetProcessHeap(), 0, ctx);
             return SEC_E_INTERNAL_ERROR;
-        }
-
-        err = pgnutls_credentials_set(ctx->session, GNUTLS_CRD_CERTIFICATE, cred->credentials);
-        if (err != GNUTLS_E_SUCCESS)
-        {
-            pgnutls_perror(err);
-            schan_imp_dispose_session(ctx->session);
-            schan_free_handle(handle, SCHAN_HANDLE_CTX);
-            HeapFree(GetProcessHeap(), 0, ctx);
         }
 
         phNewContext->dwLower = handle;
@@ -1685,7 +1684,7 @@ void SECUR32_deinitSchannelSP(void)
     if (!libgnutls_handle) return;
 
     /* deinitialized sessions first because a pointer to the credentials
-     * are stored for the session by calling gnutls_credentials_set. */
+     * may be stored for the session. */
     while (i--)
     {
         if (schan_handle_table[i].type == SCHAN_HANDLE_CTX)
