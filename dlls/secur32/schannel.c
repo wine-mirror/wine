@@ -75,6 +75,27 @@ MAKE_FUNCPTR(gnutls_transport_set_push_function);
 struct schan_transport;
 
 
+static int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len);
+
+static gnutls_session_t schan_session_for_transport(struct schan_transport* t);
+
+
+static ssize_t schan_pull_adapter(gnutls_transport_ptr_t transport,
+                                      void *buff, size_t buff_len)
+{
+    struct schan_transport *t = (struct schan_transport*)transport;
+    gnutls_session_t s = schan_session_for_transport(t);
+
+    int ret = schan_pull(transport, buff, &buff_len);
+    if (ret)
+    {
+        pgnutls_transport_set_errno(s, ret);
+        return -1;
+    }
+
+    return buff_len;
+}
+
 static BOOL schan_imp_create_session(gnutls_session_t *s, BOOL is_server)
 {
     int err = pgnutls_init(s, is_server ? GNUTLS_SERVER : GNUTLS_CLIENT);
@@ -827,36 +848,52 @@ static char *schan_get_buffer(const struct schan_transport *t, struct schan_buff
     return (char *)buffer->pvBuffer + s->offset;
 }
 
-static ssize_t schan_pull(gnutls_transport_ptr_t transport, void *buff, size_t buff_len)
+/* schan_pull
+ *      Read data from the transport input buffer.
+ *
+ * t - The session transport object.
+ * buff - The buffer into which to store the read data.  Must be at least
+ *        *buff_len bytes in length.
+ * buff_len - On input, *buff_len is the desired length to read.  On successful
+ *            return, *buff_len is the number of bytes actually read.
+ *
+ * Returns:
+ *  0 on success, in which case:
+ *      *buff_len == 0 indicates end of file.
+ *      *buff_len > 0 indicates that some data was read.  May be less than
+ *          what was requested, in which case the caller should call again if/
+ *          when they want more.
+ *  EAGAIN when no data could be read without blocking
+ *  another errno-style error value on failure
+ *
+ */
+static int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
 {
-    struct schan_transport *t = transport;
     char *b;
+    size_t local_len = *buff_len;
 
-    TRACE("Pull %zu bytes\n", buff_len);
+    TRACE("Pull %zu bytes\n", local_len);
 
-    b = schan_get_buffer(t, &t->in, &buff_len);
+    *buff_len = 0;
+
+    b = schan_get_buffer(t, &t->in, &local_len);
     if (!b)
+        return EAGAIN;
+
+    if (t->in.limit != 0 && t->in.offset + local_len >= t->in.limit)
     {
-        pgnutls_transport_set_errno(t->ctx->session, EAGAIN);
-        return -1;
+        local_len = t->in.limit - t->in.offset;
+        if (local_len == 0)
+            return EAGAIN;
     }
 
-    if (t->in.limit != 0 && t->in.offset + buff_len >= t->in.limit)
-    {
-        buff_len = t->in.limit - t->in.offset;
-        if (buff_len == 0)
-        {
-            pgnutls_transport_set_errno(t->ctx->session, EAGAIN);
-            return -1;
-        }
-    }
+    memcpy(buff, b, local_len);
+    t->in.offset += local_len;
 
-    memcpy(buff, b, buff_len);
-    t->in.offset += buff_len;
+    TRACE("Read %zu bytes\n", local_len);
 
-    TRACE("Read %zu bytes\n", buff_len);
-
-    return buff_len;
+    *buff_len = local_len;
+    return 0;
 }
 
 static ssize_t schan_push(gnutls_transport_ptr_t transport, const void *buff, size_t buff_len)
@@ -879,6 +916,11 @@ static ssize_t schan_push(gnutls_transport_ptr_t transport, const void *buff, si
     TRACE("Wrote %zu bytes\n", buff_len);
 
     return buff_len;
+}
+
+static gnutls_session_t schan_session_for_transport(struct schan_transport* t)
+{
+    return t->ctx->session;
 }
 
 static int schan_init_sec_ctx_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
@@ -982,7 +1024,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             HeapFree(GetProcessHeap(), 0, ctx);
         }
 
-        pgnutls_transport_set_pull_function(ctx->session, schan_pull);
+        pgnutls_transport_set_pull_function(ctx->session, schan_pull_adapter);
         pgnutls_transport_set_push_function(ctx->session, schan_push);
 
         phNewContext->dwLower = handle;
