@@ -12,6 +12,7 @@ C_SRCS = \
 	negotiate.c \
 	ntlm.c \
 	schannel.c \
+	schannel_gnutls.c \
 	secur32.c \
 	thunks.c \
 	util.c \

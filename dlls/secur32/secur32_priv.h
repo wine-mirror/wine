@@ -22,7 +22,9 @@
 #define __SECUR32_PRIV_H__
 
 #include <sys/types.h>
+#include <limits.h>
 #include "wine/list.h"
+#include "schannel.h"
 
 typedef struct _SecureProvider
 {
@@ -173,4 +175,39 @@ void SECUR32_arc4Cleanup(arc4_info *a4i);
 #define NTLMSSP_NEGOTIATE_128                       0x20000000
 #define NTLMSSP_NEGOTIATE_KEY_EXCHANGE              0x40000000
 #define NTLMSSP_NEGOTIATE_56                        0x80000000
+
+
+/* schannel internal interface */
+typedef struct schan_imp_session_opaque *schan_imp_session;
+typedef struct schan_imp_certificate_credentials_opaque *schan_imp_certificate_credentials;
+
+struct schan_transport;
+
+extern int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len);
+extern int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len);
+
+extern schan_imp_session schan_session_for_transport(struct schan_transport* t);
+
+/* schannel implementation interface */
+extern BOOL schan_imp_create_session(schan_imp_session *session, BOOL is_server,
+                                     schan_imp_certificate_credentials cred);
+extern void schan_imp_dispose_session(schan_imp_session session);
+extern void schan_imp_set_session_transport(schan_imp_session session,
+                                            struct schan_transport *t);
+extern SECURITY_STATUS schan_imp_handshake(schan_imp_session session);
+extern unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session);
+extern SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
+                                                     SecPkgContext_ConnectionInfo *info);
+extern SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session,
+                                                              PCCERT_CONTEXT *cert);
+extern SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
+                                      size_t *length);
+extern SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
+                                      size_t *length);
+extern BOOL schan_imp_allocate_certificate_credentials(schan_imp_certificate_credentials *c);
+extern void schan_imp_free_certificate_credentials(schan_imp_certificate_credentials c);
+extern BOOL schan_imp_init(void);
+extern void schan_imp_deinit(void);
+
+
 #endif /* ndef __SECUR32_PRIV_H__ */
