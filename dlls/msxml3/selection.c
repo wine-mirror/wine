@@ -605,7 +605,7 @@ static void query_serror(void* ctx, xmlErrorPtr err)
 
 HRESULT create_selection(xmlNodePtr node, xmlChar* query, IXMLDOMNodeList **out)
 {
-    domselection *This = heap_alloc_zero(sizeof(domselection));
+    domselection *This = heap_alloc(sizeof(domselection));
     xmlXPathContextPtr ctxt = xmlXPathNewContext(node->doc);
     HRESULT hr;
 
