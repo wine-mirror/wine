@@ -71,6 +71,25 @@ MAKE_FUNCPTR(gnutls_transport_set_pull_function);
 MAKE_FUNCPTR(gnutls_transport_set_push_function);
 #undef MAKE_FUNCPTR
 
+
+static SECURITY_STATUS schan_imp_send(gnutls_session_t s, const void *buffer,
+                                      size_t *length)
+{
+    ssize_t ret = pgnutls_record_send(s, buffer, *length);
+    if (ret >= 0)
+        *length = ret;
+    else if (ret == GNUTLS_E_AGAIN)
+        return SEC_I_CONTINUE_NEEDED;
+    else
+    {
+        pgnutls_perror(ret);
+        return SEC_E_INTERNAL_ERROR;
+    }
+
+    return SEC_E_OK;
+}
+
+
 #define SCHAN_INVALID_HANDLE ~0UL
 
 enum schan_handle_type
@@ -1097,7 +1116,6 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     SIZE_T data_size;
     char *data;
     ssize_t sent = 0;
-    ssize_t ret;
     int idx;
 
     TRACE("context_handle %p, quality %d, message %p, message_seq_no %d\n",
@@ -1130,19 +1148,18 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
 
     while (sent < data_size)
     {
-        ret = pgnutls_record_send(ctx->session, data + sent, data_size - sent);
-        if (ret < 0)
+        size_t length = data_size - sent;
+        SECURITY_STATUS status = schan_imp_send(ctx->session, data + sent, &length);
+        if (status == SEC_I_CONTINUE_NEEDED)
+            break;
+        else if (status != SEC_E_OK)
         {
-            if (ret != GNUTLS_E_AGAIN)
-            {
-                pgnutls_perror(ret);
-                HeapFree(GetProcessHeap(), 0, data);
-                ERR("Returning SEC_E_INTERNAL_ERROR\n");
-                return SEC_E_INTERNAL_ERROR;
-            }
-            else break;
+            HeapFree(GetProcessHeap(), 0, data);
+            ERR("Returning %d\n", status);
+            return status;
         }
-        sent += ret;
+
+        sent += length;
     }
 
     TRACE("Sent %zd bytes\n", sent);
