@@ -132,6 +132,9 @@ static BOOL schan_imp_create_session(gnutls_session_t *s, BOOL is_server)
         return FALSE;
     }
 
+    pgnutls_transport_set_pull_function(*s, schan_pull_adapter);
+    pgnutls_transport_set_push_function(*s, schan_push_adapter);
+
     return TRUE;
 }
 
@@ -1057,9 +1060,6 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             schan_free_handle(handle, SCHAN_HANDLE_CTX);
             HeapFree(GetProcessHeap(), 0, ctx);
         }
-
-        pgnutls_transport_set_pull_function(ctx->session, schan_pull_adapter);
-        pgnutls_transport_set_push_function(ctx->session, schan_push_adapter);
 
         phNewContext->dwLower = handle;
         phNewContext->dwUpper = 0;
