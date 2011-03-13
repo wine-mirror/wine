@@ -349,21 +349,18 @@ static BOOL is_inside_epilog(struct cpu_stack_walk* csw, DWORD64 pc)
     }
 }
 
-static BOOL default_unwind(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context)
+static BOOL default_unwind(struct cpu_stack_walk* csw, CONTEXT* context)
 {
-    if (!sw_read_mem(csw, frame->AddrStack.Offset,
-                     &frame->AddrReturn.Offset, sizeof(DWORD64)))
+    if (!sw_read_mem(csw, context->Rsp, &context->Rip, sizeof(DWORD64)))
     {
-        WARN("Cannot read new frame offset %s\n", wine_dbgstr_longlong(frame->AddrStack.Offset));
+        WARN("Cannot read new frame offset %s\n", wine_dbgstr_longlong(context->Rsp));
         return FALSE;
     }
-    context->Rip = frame->AddrReturn.Offset;
-    frame->AddrStack.Offset += sizeof(DWORD64);
     context->Rsp += sizeof(DWORD64);
     return TRUE;
 }
 
-static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame,
+static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw,
                                            CONTEXT* context, RUNTIME_FUNCTION* function, DWORD64 base)
 {
     char                buffer[sizeof(UNWIND_INFO) + 256 * sizeof(UNWIND_CODE)];
@@ -375,9 +372,7 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw, LPSTACKFR
 
     /* FIXME: we have some assumptions here */
     assert(context);
-    if (context->Rsp != frame->AddrStack.Offset) FIXME("unconsistent Stack Pointer\n");
-    if (context->Rip != frame->AddrPC.Offset) FIXME("unconsistent Instruction Pointer\n");
-    dump_unwind_info(csw->hProcess, sw_module_base(csw, frame->AddrPC.Offset), frame->FuncTableEntry);
+    dump_unwind_info(csw->hProcess, sw_module_base(csw, context->Rip), function);
     newframe = context->Rsp;
     for (;;)
     {
@@ -399,15 +394,15 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw, LPSTACKFR
             newframe = get_int_reg(context, info->FrameRegister) - info->FrameOffset * 16;
 
         /* check if in prolog */
-        if (frame->AddrPC.Offset >= base + function->BeginAddress &&
-            frame->AddrPC.Offset < base + function->BeginAddress + info->SizeOfProlog)
+        if (context->Rip >= base + function->BeginAddress &&
+            context->Rip < base + function->BeginAddress + info->SizeOfProlog)
         {
-            prolog_offset = frame->AddrPC.Offset - base - function->BeginAddress;
+            prolog_offset = context->Rip - base - function->BeginAddress;
         }
         else
         {
             prolog_offset = ~0;
-            if (is_inside_epilog(csw, frame->AddrPC.Offset))
+            if (is_inside_epilog(csw, context->Rip))
             {
                 FIXME("epilog management not fully done\n");
                 /* interpret_epilog((const BYTE*)frame->AddrPC.Offset, context); */
@@ -470,8 +465,7 @@ static BOOL interpret_function_table_entry(struct cpu_stack_walk* csw, LPSTACKFR
                          &handler_data, sizeof(handler_data))) return FALSE;
         function = &handler_data.chain;  /* restart with the chained info */
     }
-    frame->AddrStack.Offset = context->Rsp;
-    return default_unwind(csw, frame, context);
+    return default_unwind(csw, context);
 }
 
 static BOOL x86_64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context)
@@ -511,6 +505,8 @@ static BOOL x86_64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, 
     }
     else
     {
+        if (context->Rsp != frame->AddrStack.Offset) FIXME("inconsistent Stack Pointer\n");
+
         if (frame->AddrReturn.Offset == 0) goto done_err;
         frame->AddrPC = frame->AddrReturn;
         deltapc = 1;
@@ -521,13 +517,12 @@ static BOOL x86_64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, 
     frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
     if (frame->FuncTableEntry)
     {
-        if (!interpret_function_table_entry(csw, frame, context, frame->FuncTableEntry, base))
+        if (!interpret_function_table_entry(csw, context, frame->FuncTableEntry, base))
             goto done_err;
     }
     else if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, &cfa))
     {
-        frame->AddrStack.Offset = context->Rsp = cfa;
-        frame->AddrReturn.Offset = context->Rip;
+        context->Rsp = cfa;
         TRACE("next function rip=%016lx\n", context->Rip);
         TRACE("  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
               context->Rax, context->Rbx, context->Rcx, context->Rdx);
@@ -538,9 +533,14 @@ static BOOL x86_64_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, 
         TRACE("  r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
               context->R12, context->R13, context->R14, context->R15);
     }
-    else if (!default_unwind(csw, frame, context)) goto done_err;
+    else if (!default_unwind(csw, context)) goto done_err;
 
     memset(&frame->Params, 0, sizeof(frame->Params));
+
+    /* set frame information */
+    frame->AddrStack.Offset = context->Rsp;
+    frame->AddrFrame.Offset = context->Rbp;
+    frame->AddrReturn.Offset = context->Rip;
 
     frame->Far = TRUE;
     frame->Virtual = TRUE;
