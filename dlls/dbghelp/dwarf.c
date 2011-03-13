@@ -677,10 +677,12 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
              */
             if (!piece_found)
             {
+                DWORD   cvreg = dwarf2_map_register(op - DW_OP_reg0);
                 if (loc->reg != Wine_DW_no_register)
-                    FIXME("Only supporting one reg (%d -> %d)\n",
-                          loc->reg, dwarf2_map_register(op - DW_OP_reg0));
-                loc->reg = dwarf2_map_register(op - DW_OP_reg0);
+                    FIXME("Only supporting one reg (%s/%d -> %s/%d)\n",
+                          dbghelp_current_cpu->fetch_regname(loc->reg), loc->reg,
+                          dbghelp_current_cpu->fetch_regname(cvreg), cvreg);
+                loc->reg = cvreg;
             }
             loc->kind = loc_register;
         }
@@ -692,10 +694,12 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
              */
             if (!piece_found)
             {
+                DWORD   cvreg = dwarf2_map_register(op - DW_OP_breg0);
                 if (loc->reg != Wine_DW_no_register)
-                    FIXME("Only supporting one breg (%d -> %d)\n",
-                          loc->reg, dwarf2_map_register(op - DW_OP_breg0));
-                loc->reg = dwarf2_map_register(op - DW_OP_breg0);
+                    FIXME("Only supporting one breg (%s/%d -> %s/%d)\n",
+                          dbghelp_current_cpu->fetch_regname(loc->reg), loc->reg,
+                          dbghelp_current_cpu->fetch_regname(cvreg), cvreg);
+                loc->reg = cvreg;
             }
             stack[++stk] = dwarf2_leb128_as_signed(ctx);
             loc->kind = loc_regrel;
@@ -763,7 +767,8 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
             break;
         case DW_OP_fbreg:
             if (loc->reg != Wine_DW_no_register)
-                FIXME("Only supporting one reg (%d -> -2)\n", loc->reg);
+                FIXME("Only supporting one reg (%s/%d -> -2)\n",
+                      dbghelp_current_cpu->fetch_regname(loc->reg), loc->reg);
             if (frame && frame->kind == loc_register)
             {
                 loc->kind = loc_regrel;
