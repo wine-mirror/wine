@@ -135,13 +135,17 @@ static BOOL fetch_next_frame32(struct cpu_stack_walk* csw,
 enum st_mode {stm_start, stm_32bit, stm_16bit, stm_done};
 
 /* indexes in Reserved array */
-#define __CurrentMode     0
-#define __CurrentSwitch   1
-#define __NextSwitch      2
+#define __CurrentModeCount      0
+#define __CurrentSwitch         1
+#define __NextSwitch            2
 
-#define curr_mode   (frame->Reserved[__CurrentMode])
+#define curr_mode   (frame->Reserved[__CurrentModeCount] & 0x0F)
+#define curr_count  (frame->Reserved[__CurrentModeCount] >> 4)
 #define curr_switch (frame->Reserved[__CurrentSwitch])
 #define next_switch (frame->Reserved[__NextSwitch])
+
+#define set_curr_mode(m) {frame->Reserved[__CurrentModeCount] &= ~0x0F; frame->Reserved[__CurrentModeCount] |= (m & 0x0F);}
+#define inc_curr_count() (frame->Reserved[__CurrentModeCount] += 0x10)
 
 static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context)
 {
@@ -153,7 +157,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
     WORD                val16;
     DWORD               val32;
     BOOL                do_switch;
-    unsigned            deltapc = 1;
+    unsigned            deltapc;
 #ifdef __i386__
     CONTEXT             _context;
 #endif
@@ -161,13 +165,24 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
     /* sanity check */
     if (curr_mode >= stm_done) return FALSE;
 
-    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%p nSwitch=%p\n",
+    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s cSwitch=%p nSwitch=%p\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
           curr_mode == stm_start ? "start" : (curr_mode == stm_16bit ? "16bit" : "32bit"),
+          wine_dbgstr_longlong(curr_count),
           (void*)(DWORD_PTR)curr_switch, (void*)(DWORD_PTR)next_switch);
+
+    /* if we're at first call (which doesn't actually unwind, it just computes ReturnPC,
+     * or if we're doing the first real unwind (count == 1), then we can directly use
+     * eip. otherwise, eip is *after* the insn that actually made the call to
+     * previous frame, so decrease eip by delta pc (1!) so that we're inside previous
+     * insn.
+     * Doing so, we ensure that the pc used for unwinding is always inside the function
+     * we want to use for next frame
+     */
+    deltapc = curr_count <= 1 ? 0 : 1;
 
 #ifdef __i386__
     if (!context)
@@ -196,8 +211,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
         }
 
         /* Init done */
-        curr_mode = (frame->AddrPC.Mode == AddrModeFlat) ? stm_32bit : stm_16bit;
-        deltapc = 0;
+        set_curr_mode((frame->AddrPC.Mode == AddrModeFlat) ? stm_32bit : stm_16bit);
 
         /* cur_switch holds address of WOW32Reserved field in TEB in debuggee
          * address space
@@ -307,7 +321,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
                     goto done_err;
                 }
                 curr_switch = (DWORD_PTR)frame16.frame32;
-                curr_mode = stm_32bit;
+                set_curr_mode(stm_32bit);
                 if (!sw_read_mem(csw, curr_switch, &ch, sizeof(ch)))
                     curr_switch = 0;
             }
@@ -365,7 +379,7 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
 
                 if (!sw_read_mem(csw, sw_xlat_addr(csw, &tmp), &ch, sizeof(ch)))
                     curr_switch = 0;
-                curr_mode = stm_16bit;
+                set_curr_mode(stm_16bit);
             }
         }
         else
@@ -483,17 +497,19 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
     else
         frame->FuncTableEntry = NULL;
 
-    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%p nSwitch=%p FuncTable=%p\n",
+    inc_curr_count();
+    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s Count=%s cSwitch=%p nSwitch=%p FuncTable=%p\n",
           wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack),
           curr_mode == stm_start ? "start" : (curr_mode == stm_16bit ? "16bit" : "32bit"),
+          wine_dbgstr_longlong(curr_count),
           (void*)(DWORD_PTR)curr_switch, (void*)(DWORD_PTR)next_switch, frame->FuncTableEntry);
 
     return TRUE;
 done_err:
-    curr_mode = stm_done;
+    set_curr_mode(stm_done);
     return FALSE;
 }
 
