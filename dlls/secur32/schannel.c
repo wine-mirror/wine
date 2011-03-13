@@ -1757,7 +1757,7 @@ void SECUR32_deinitSchannelSP(void)
 
 void SECUR32_initSchannelSP(void)
 {
-    ERR("libgnutls not found, SSL connections will fail\n");
+    ERR("TLS library not found, SSL connections will fail\n");
 }
 
 void SECUR32_deinitSchannelSP(void) {}
