@@ -217,26 +217,23 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
         {
             DWORD_PTR           xframe;
             struct pdb_cmd_pair cpair[4];
+            CONTEXT             newctx = *context;
 
-            if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, &xframe))
+            if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, &newctx, &xframe))
             {
-                frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
-                frame->AddrStack.Offset = context->Esp = xframe;
-                frame->AddrFrame.Offset = context->Ebp;
-                frame->AddrReturn.Offset = context->Eip;
+                frame->AddrReturn.Mode = AddrModeFlat;
+                frame->AddrReturn.Offset = newctx.Eip;
                 goto done_pep;
             }
-            cpair[0].name = "$ebp"; cpair[0].pvalue = &context->Ebp;
-            cpair[1].name = "$esp"; cpair[1].pvalue = &context->Esp;
-            cpair[2].name = "$eip"; cpair[2].pvalue = &context->Eip;
-            cpair[3].name = NULL;   cpair[3].pvalue = NULL;
+            cpair[0].name = "$ebp";      cpair[0].pvalue = &newctx.Ebp;
+            cpair[1].name = "$esp";      cpair[1].pvalue = &newctx.Esp;
+            cpair[2].name = "$eip";      cpair[2].pvalue = &newctx.Eip;
+            cpair[3].name = NULL;        cpair[3].pvalue = NULL;
 
-            if (pdb_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, cpair))
+            if (pdb_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, &newctx, cpair))
             {
-                frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
-                frame->AddrStack.Offset = context->Esp;
-                frame->AddrFrame.Offset = context->Ebp;
-                frame->AddrReturn.Offset = context->Eip;
+                frame->AddrReturn.Mode = AddrModeFlat;
+                frame->AddrReturn.Offset = newctx.Eip;
                 goto done_pep;
             }
         }
