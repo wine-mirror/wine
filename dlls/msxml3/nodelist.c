@@ -79,7 +79,7 @@ static HRESULT WINAPI xmlnodelist_QueryInterface(
     }
     else
     {
-        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        TRACE("interface %s not implemented\n", debugstr_guid(riid));
         *ppvObject = NULL;
         return E_NOINTERFACE;
     }

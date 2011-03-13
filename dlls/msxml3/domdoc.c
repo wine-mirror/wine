@@ -916,14 +916,9 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument3 *iface, REFIID rii
     {
         *ppvObject = &This->lpVtblConnectionPointContainer;
     }
-    else if(IsEqualGUID(&IID_IRunnableObject, riid))
-    {
-        TRACE("IID_IRunnableObject not supported returning NULL\n");
-        return E_NOINTERFACE;
-    }
     else
     {
-        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        TRACE("interface %s not implemented\n", debugstr_guid(riid));
         return E_NOINTERFACE;
     }
 

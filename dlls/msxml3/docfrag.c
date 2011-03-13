@@ -75,7 +75,7 @@ static HRESULT WINAPI domfrag_QueryInterface(
     }
     else
     {
-        FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+        TRACE("Unsupported interface %s\n", debugstr_guid(riid));
         *ppvObject = NULL;
         return E_NOINTERFACE;
     }
