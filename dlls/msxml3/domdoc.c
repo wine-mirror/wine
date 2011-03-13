@@ -421,19 +421,22 @@ static inline BOOL strn_isspace(xmlChar const* str, int len)
 
 static void sax_characters(void *ctx, const xmlChar *ch, int len)
 {
-    xmlParserCtxtPtr pctx;
-    domdoc const* This;
+    xmlParserCtxtPtr ctxt;
+    const domdoc *This;
 
-    pctx = (xmlParserCtxtPtr) ctx;
-    This = (domdoc const*) pctx->_private;
+    ctxt = (xmlParserCtxtPtr) ctx;
+    This = (const domdoc*) ctxt->_private;
 
-    /* during domdoc_loadXML() the xmlDocPtr->_private data is not available */
-    if (!This->properties->preserving &&
-        !is_preserving_whitespace(pctx->node) &&
-        strn_isspace(ch, len))
-        return;
+    if (ctxt->node)
+    {
+        /* during domdoc_loadXML() the xmlDocPtr->_private data is not available */
+        if (!This->properties->preserving &&
+            !is_preserving_whitespace(ctxt->node) &&
+            strn_isspace(ch, len))
+            return;
+    }
 
-    xmlSAX2Characters(ctx, ch, len);
+    xmlSAX2Characters(ctxt, ch, len);
 }
 
 static void LIBXML2_LOG_CALLBACK sax_error(void* ctx, char const* msg, ...)
