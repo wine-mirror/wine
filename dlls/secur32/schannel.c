@@ -73,6 +73,7 @@ MAKE_FUNCPTR(gnutls_transport_set_push_function);
 
 
 typedef struct schan_imp_session_opaque *schan_imp_session;
+typedef struct schan_imp_certificate_credentials_opaque *schan_imp_certificate_credentials;
 
 struct schan_transport;
 
@@ -116,7 +117,7 @@ static ssize_t schan_push_adapter(gnutls_transport_ptr_t transport,
 }
 
 static BOOL schan_imp_create_session(schan_imp_session *session, BOOL is_server,
-                                     gnutls_certificate_credentials cred)
+                                     schan_imp_certificate_credentials cred)
 {
     gnutls_session_t *s = (gnutls_session_t*)session;
 
@@ -137,7 +138,8 @@ static BOOL schan_imp_create_session(schan_imp_session *session, BOOL is_server,
         return FALSE;
     }
 
-    err = pgnutls_credentials_set(*s, GNUTLS_CRD_CERTIFICATE, cred);
+    err = pgnutls_credentials_set(*s, GNUTLS_CRD_CERTIFICATE,
+                                  (gnutls_certificate_credentials)cred);
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
@@ -376,6 +378,19 @@ static SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
     return SEC_E_OK;
 }
 
+static BOOL schan_imp_allocate_certificate_credentials(schan_imp_certificate_credentials *c)
+{
+    int ret = pgnutls_certificate_allocate_credentials((gnutls_certificate_credentials*)c);
+    if (ret != GNUTLS_E_SUCCESS)
+        pgnutls_perror(ret);
+    return (ret == GNUTLS_E_SUCCESS);
+}
+
+static void schan_imp_free_certificate_credentials(schan_imp_certificate_credentials c)
+{
+    pgnutls_certificate_free_credentials((gnutls_certificate_credentials)c);
+}
+
 
 #define SCHAN_INVALID_HANDLE ~0UL
 
@@ -395,7 +410,7 @@ struct schan_handle
 struct schan_credentials
 {
     ULONG credential_use;
-    gnutls_certificate_credentials credentials;
+    schan_imp_certificate_credentials credentials;
 };
 
 struct schan_context
@@ -666,7 +681,6 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
     if (st == SEC_E_OK)
     {
         ULONG_PTR handle;
-        int ret;
 
         creds = HeapAlloc(GetProcessHeap(), 0, sizeof(*creds));
         if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
@@ -675,10 +689,8 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
         if (handle == SCHAN_INVALID_HANDLE) goto fail;
 
         creds->credential_use = SECPKG_CRED_OUTBOUND;
-        ret = pgnutls_certificate_allocate_credentials(&creds->credentials);
-        if (ret != GNUTLS_E_SUCCESS)
+        if (!schan_imp_allocate_certificate_credentials(&creds->credentials))
         {
-            pgnutls_perror(ret);
             schan_free_handle(handle, SCHAN_HANDLE_CRED);
             goto fail;
         }
@@ -785,7 +797,7 @@ static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
     if (!creds) return SEC_E_INVALID_HANDLE;
 
     if (creds->credential_use == SECPKG_CRED_OUTBOUND)
-        pgnutls_certificate_free_credentials(creds->credentials);
+        schan_imp_free_certificate_credentials(creds->credentials);
     HeapFree(GetProcessHeap(), 0, creds);
 
     return SEC_E_OK;
@@ -1713,7 +1725,7 @@ void SECUR32_deinitSchannelSP(void)
         {
             struct schan_credentials *cred;
             cred = schan_free_handle(i, SCHAN_HANDLE_CRED);
-            pgnutls_certificate_free_credentials(cred->credentials);
+            schan_imp_free_certificate_credentials(cred->credentials);
             HeapFree(GetProcessHeap(), 0, cred);
         }
     }
