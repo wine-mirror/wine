@@ -72,20 +72,22 @@ MAKE_FUNCPTR(gnutls_transport_set_push_function);
 #undef MAKE_FUNCPTR
 
 
+typedef struct schan_imp_session_opaque *schan_imp_session;
+
 struct schan_transport;
 
 
 static int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len);
 static int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len);
 
-static gnutls_session_t schan_session_for_transport(struct schan_transport* t);
+static schan_imp_session schan_session_for_transport(struct schan_transport* t);
 
 
 static ssize_t schan_pull_adapter(gnutls_transport_ptr_t transport,
                                       void *buff, size_t buff_len)
 {
     struct schan_transport *t = (struct schan_transport*)transport;
-    gnutls_session_t s = schan_session_for_transport(t);
+    gnutls_session_t s = (gnutls_session_t)schan_session_for_transport(t);
 
     int ret = schan_pull(transport, buff, &buff_len);
     if (ret)
@@ -101,7 +103,7 @@ static ssize_t schan_push_adapter(gnutls_transport_ptr_t transport,
                                       const void *buff, size_t buff_len)
 {
     struct schan_transport *t = (struct schan_transport*)transport;
-    gnutls_session_t s = schan_session_for_transport(t);
+    gnutls_session_t s = (gnutls_session_t)schan_session_for_transport(t);
 
     int ret = schan_push(transport, buff, &buff_len);
     if (ret)
@@ -113,9 +115,11 @@ static ssize_t schan_push_adapter(gnutls_transport_ptr_t transport,
     return buff_len;
 }
 
-static BOOL schan_imp_create_session(gnutls_session_t *s, BOOL is_server,
+static BOOL schan_imp_create_session(schan_imp_session *session, BOOL is_server,
                                      gnutls_certificate_credentials cred)
 {
+    gnutls_session_t *s = (gnutls_session_t*)session;
+
     int err = pgnutls_init(s, is_server ? GNUTLS_SERVER : GNUTLS_CLIENT);
     if (err != GNUTLS_E_SUCCESS)
     {
@@ -147,19 +151,22 @@ static BOOL schan_imp_create_session(gnutls_session_t *s, BOOL is_server,
     return TRUE;
 }
 
-static void schan_imp_dispose_session(gnutls_session_t s)
+static void schan_imp_dispose_session(schan_imp_session session)
 {
+    gnutls_session_t s = (gnutls_session_t)session;
     pgnutls_deinit(s);
 }
 
-static void schan_imp_set_session_transport(gnutls_session_t s,
+static void schan_imp_set_session_transport(schan_imp_session session,
                                             struct schan_transport *t)
 {
+    gnutls_session_t s = (gnutls_session_t)session;
     pgnutls_transport_set_ptr(s, (gnutls_transport_ptr_t)t);
 }
 
-static SECURITY_STATUS schan_imp_handshake(gnutls_session_t s)
+static SECURITY_STATUS schan_imp_handshake(schan_imp_session session)
 {
+    gnutls_session_t s = (gnutls_session_t)session;
     int err = pgnutls_handshake(s);
     switch(err)
     {
@@ -285,15 +292,17 @@ static ALG_ID schannel_get_kx_algid(gnutls_kx_algorithm_t kx)
     }
 }
 
-static unsigned int schan_imp_get_session_cipher_block_size(gnutls_session_t s)
+static unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session)
 {
+    gnutls_session_t s = (gnutls_session_t)session;
     gnutls_cipher_algorithm_t cipher = pgnutls_cipher_get(s);
     return schannel_get_cipher_block_size(cipher);
 }
 
-static SECURITY_STATUS schan_imp_get_connection_info(gnutls_session_t s,
+static SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
                                                      SecPkgContext_ConnectionInfo *info)
 {
+    gnutls_session_t s = (gnutls_session_t)session;
     gnutls_protocol_t proto = pgnutls_protocol_get_version(s);
     gnutls_cipher_algorithm_t alg = pgnutls_cipher_get(s);
     gnutls_mac_algorithm_t mac = pgnutls_mac_get(s);
@@ -310,9 +319,10 @@ static SECURITY_STATUS schan_imp_get_connection_info(gnutls_session_t s,
     return SEC_E_OK;
 }
 
-static SECURITY_STATUS schan_imp_get_session_peer_certificate(gnutls_session_t s,
+static SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session,
                                                               PCCERT_CONTEXT *cert)
 {
+    gnutls_session_t s = (gnutls_session_t)session;
     unsigned int list_size;
     const gnutls_datum_t *datum;
 
@@ -330,9 +340,10 @@ static SECURITY_STATUS schan_imp_get_session_peer_certificate(gnutls_session_t s
         return SEC_E_INTERNAL_ERROR;
 }
 
-static SECURITY_STATUS schan_imp_send(gnutls_session_t s, const void *buffer,
+static SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
                                       size_t *length)
 {
+    gnutls_session_t s = (gnutls_session_t)session;
     ssize_t ret = pgnutls_record_send(s, buffer, *length);
     if (ret >= 0)
         *length = ret;
@@ -347,9 +358,10 @@ static SECURITY_STATUS schan_imp_send(gnutls_session_t s, const void *buffer,
     return SEC_E_OK;
 }
 
-static SECURITY_STATUS schan_imp_recv(gnutls_session_t s, void *buffer,
+static SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
                                       size_t *length)
 {
+    gnutls_session_t s = (gnutls_session_t)session;
     ssize_t ret = pgnutls_record_recv(s, buffer, *length);
     if (ret >= 0)
         *length = ret;
@@ -388,7 +400,7 @@ struct schan_credentials
 
 struct schan_context
 {
-    gnutls_session_t session;
+    schan_imp_session session;
     ULONG req_ctx_attr;
 };
 
@@ -964,7 +976,7 @@ static int schan_push(struct schan_transport *t, const void *buff, size_t *buff_
     return 0;
 }
 
-static gnutls_session_t schan_session_for_transport(struct schan_transport* t)
+static schan_imp_session schan_session_for_transport(struct schan_transport* t)
 {
     return t->ctx->session;
 }
