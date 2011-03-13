@@ -105,7 +105,8 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
     char                ch;
     ADDRESS64           tmp;
     DWORD               p;
-    WORD                val;
+    WORD                val16;
+    DWORD               val32;
     BOOL                do_switch;
     unsigned            deltapc = 1;
 #ifdef __i386__
@@ -360,9 +361,9 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
                 frame->AddrStack.Offset = frame->AddrFrame.Offset + 2 * sizeof(WORD);
                 /* "pop up" previous BP value */
                 if (!sw_read_mem(csw, sw_xlat_addr(csw, &frame->AddrFrame),
-                                 &val, sizeof(WORD)))
+                                 &val16, sizeof(WORD)))
                     goto done_err;
-                frame->AddrFrame.Offset = val;
+                frame->AddrFrame.Offset = val16;
             }
             else
             {
@@ -394,9 +395,9 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
 #endif
                 frame->AddrStack.Offset = frame->AddrFrame.Offset + 2 * sizeof(DWORD);
                 /* "pop up" previous EBP value */
-                if (!sw_read_mem(csw, frame->AddrFrame.Offset,
-                                 &frame->AddrFrame.Offset, sizeof(DWORD)))
+                if (!sw_read_mem(csw, frame->AddrFrame.Offset, &val32, sizeof(DWORD)))
                     goto done_err;
+                frame->AddrFrame.Offset = val32;
             }
         }
     }
@@ -406,30 +407,30 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
         unsigned int     i;
 
         p = sw_xlat_addr(csw, &frame->AddrFrame);
-        if (!sw_read_mem(csw, p + sizeof(WORD), &val, sizeof(WORD)))
+        if (!sw_read_mem(csw, p + sizeof(WORD), &val16, sizeof(WORD)))
             goto done_err;
-        frame->AddrReturn.Offset = val;
+        frame->AddrReturn.Offset = val16;
         /* get potential cs if a far call was used */
-        if (!sw_read_mem(csw, p + 2 * sizeof(WORD), &val, sizeof(WORD)))
+        if (!sw_read_mem(csw, p + 2 * sizeof(WORD), &val16, sizeof(WORD)))
             goto done_err;
         if (frame->AddrFrame.Offset & 1)
-            frame->AddrReturn.Segment = val; /* far call assumed */
+            frame->AddrReturn.Segment = val16; /* far call assumed */
         else
         {
             /* not explicitly marked as far call,
              * but check whether it could be anyway
              */
-            if ((val & 7) == 7 && val != frame->AddrReturn.Segment)
+            if ((val16 & 7) == 7 && val16 != frame->AddrReturn.Segment)
             {
                 LDT_ENTRY	le;
 
-                if (GetThreadSelectorEntry(csw->hThread, val, &le) &&
+                if (GetThreadSelectorEntry(csw->hThread, val16, &le) &&
                     (le.HighWord.Bits.Type & 0x08)) /* code segment */
                 {
                     /* it is very uncommon to push a code segment cs as
                      * a parameter, so this should work in most cases
                      */
-                    frame->AddrReturn.Segment = val;
+                    frame->AddrReturn.Segment = val16;
                 }
 	    }
 	}
@@ -440,21 +441,25 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
          */
         for (i = 0; i < sizeof(frame->Params) / sizeof(frame->Params[0]); i++)
         {
-            sw_read_mem(csw, p + (2 + i) * sizeof(WORD), &val, sizeof(val));
-            frame->Params[i] = val;
+            sw_read_mem(csw, p + (2 + i) * sizeof(WORD), &val16, sizeof(val16));
+            frame->Params[i] = val16;
         }
     }
     else
     {
-        if (!sw_read_mem(csw, frame->AddrFrame.Offset + sizeof(DWORD),
-                         &frame->AddrReturn.Offset, sizeof(DWORD)))
+        unsigned int     i;
+        if (!sw_read_mem(csw, frame->AddrFrame.Offset + sizeof(DWORD), &val32, sizeof(DWORD)))
         {
             WARN("Cannot read new frame offset %p\n",
                  (void*)(DWORD_PTR)(frame->AddrFrame.Offset + (int)sizeof(DWORD)));
             goto done_err;
         }
-        sw_read_mem(csw, frame->AddrFrame.Offset + 2 * sizeof(DWORD),
-                    frame->Params, sizeof(frame->Params));
+        frame->AddrReturn.Offset = val32;
+        for (i = 0; i < sizeof(frame->Params) / sizeof(frame->Params[0]); i++)
+        {
+            sw_read_mem(csw, frame->AddrFrame.Offset + (2 + i) * sizeof(DWORD), &val32, sizeof(val32));
+            frame->Params[i] = val32;
+        }
     }
 #ifdef __i386__
     if (context)
