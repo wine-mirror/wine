@@ -2924,10 +2924,15 @@ static BOOL  pev_get_val(struct pevaluator* pev, const char* str, DWORD_PTR* val
     case '$':
     case '.':
         hash_table_iter_init(&pev->values, &hti, str);
-        if (!(ptr = hash_table_iter_up(&hti)))
-            return PEV_ERROR1(pev, "get_zvalue: no value found (%s)", str);
-        *val = GET_ENTRY(ptr, struct zvalue, elt)->value;
-        return TRUE;
+        while ((ptr = hash_table_iter_up(&hti)))
+        {
+            if (!strcmp(GET_ENTRY(ptr, struct zvalue, elt)->elt.name, str))
+            {
+                *val = GET_ENTRY(ptr, struct zvalue, elt)->value;
+                return TRUE;
+            }
+        }
+        return PEV_ERROR1(pev, "get_zvalue: no value found (%s)", str);
     default:
         *val = strtol(str, &n, 10);
         if (n == str || *n != '\0')
@@ -2974,7 +2979,15 @@ static BOOL  pev_set_value(struct pevaluator* pev, const char* name, DWORD_PTR v
     void*                       ptr;
 
     hash_table_iter_init(&pev->values, &hti, name);
-    if (!(ptr = hash_table_iter_up(&hti)))
+    while ((ptr = hash_table_iter_up(&hti)))
+    {
+        if (!strcmp(GET_ENTRY(ptr, struct zvalue, elt)->elt.name, name))
+        {
+            GET_ENTRY(ptr, struct zvalue, elt)->value = val;
+            break;
+        }
+    }
+    if (!ptr)
     {
         struct zvalue* zv = pool_alloc(&pev->pool, sizeof(*zv));
         if (!zv) return PEV_ERROR(pev, "set_value: out of memory");
@@ -2983,7 +2996,6 @@ static BOOL  pev_set_value(struct pevaluator* pev, const char* name, DWORD_PTR v
         zv->elt.name = pool_strdup(&pev->pool, name);
         hash_table_add(&pev->values, &zv->elt);
     }
-    else GET_ENTRY(ptr, struct zvalue, elt)->value = val;
     return TRUE;
 }
 
@@ -3158,7 +3170,7 @@ BOOL         pdb_virtual_unwind(struct cpu_stack_walk* csw, DWORD_PTR ip,
                       fpoext[i].str_offset < strsize ?
                           wine_dbgstr_a(strbase + 12 + fpoext[i].str_offset) : "<out of bounds>");
                 if (fpoext[i].str_offset < strsize)
-                    ret = pdb_parse_cmd_string(csw, fpoext, strbase + 12 + fpoext[i].str_offset, cpair);
+                    ret = pdb_parse_cmd_string(csw, &fpoext[i], strbase + 12 + fpoext[i].str_offset, cpair);
                 else
                     ret = FALSE;
                 break;
