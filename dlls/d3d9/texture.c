@@ -336,14 +336,19 @@ static HRESULT WINAPI IDirect3DTexture9Impl_LockRect(IDirect3DTexture9 *iface,
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DTexture9Impl_UnlockRect(LPDIRECT3DTEXTURE9 iface, UINT Level) {
-    IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
+static HRESULT WINAPI IDirect3DTexture9Impl_UnlockRect(IDirect3DTexture9 *iface, UINT level)
+{
+    IDirect3DTexture9Impl *texture = (IDirect3DTexture9Impl *)iface;
+    struct wined3d_resource *sub_resource;
     HRESULT hr;
 
-    TRACE("iface %p, level %u.\n", iface, Level);
+    TRACE("iface %p, level %u.\n", iface, level);
 
     wined3d_mutex_lock();
-    hr = IWineD3DTexture_Unmap(This->wineD3DTexture, Level);
+    if (!(sub_resource = IWineD3DTexture_GetSubResource(texture->wineD3DTexture, level)))
+        hr = D3DERR_INVALIDCALL;
+    else
+        hr = IDirect3DSurface9_UnlockRect((IDirect3DSurface9 *)wined3d_resource_get_parent(sub_resource));
     wined3d_mutex_unlock();
 
     return hr;

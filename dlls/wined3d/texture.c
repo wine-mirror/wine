@@ -361,22 +361,6 @@ static struct wined3d_resource * WINAPI IWineD3DTextureImpl_GetSubResource(IWine
     return basetexture_get_sub_resource(texture, sub_resource_idx);
 }
 
-static HRESULT WINAPI IWineD3DTextureImpl_Unmap(IWineD3DTexture *iface, UINT sub_resource_idx)
-{
-    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    struct wined3d_resource *sub_resource;
-
-    TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
-
-    if (!(sub_resource = basetexture_get_sub_resource(texture, sub_resource_idx)))
-    {
-        WARN("Failed to get sub-resource.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    return IWineD3DSurface_Unmap((IWineD3DSurface *)surface_from_resource(sub_resource));
-}
-
 static HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, const RECT *dirty_rect)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
@@ -421,7 +405,6 @@ static const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_IsCondNP2,
     IWineD3DTextureImpl_GetSubResource,
     /* IWineD3DTexture */
-    IWineD3DTextureImpl_Unmap,
     IWineD3DTextureImpl_AddDirtyRect
 };
 
