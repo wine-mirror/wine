@@ -33,7 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
-#ifdef SONAME_LIBGNUTLS
+#if defined(SONAME_LIBGNUTLS) || defined (HAVE_SECURITY_SECURITY_H)
 
 #define SCHAN_INVALID_HANDLE ~0UL
 
@@ -1316,7 +1316,7 @@ void SECUR32_deinitSchannelSP(void)
     schan_imp_deinit();
 }
 
-#else /* SONAME_LIBGNUTLS */
+#else /* SONAME_LIBGNUTLS || HAVE_SECURITY_SECURITY_H */
 
 void SECUR32_initSchannelSP(void)
 {
@@ -1325,4 +1325,4 @@ void SECUR32_initSchannelSP(void)
 
 void SECUR32_deinitSchannelSP(void) {}
 
-#endif /* SONAME_LIBGNUTLS */
+#endif /* SONAME_LIBGNUTLS || HAVE_SECURITY_SECURITY_H */

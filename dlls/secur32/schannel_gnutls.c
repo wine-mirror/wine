@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
-#ifdef SONAME_LIBGNUTLS
+#if defined(SONAME_LIBGNUTLS) && !defined(HAVE_SECURITY_SECURITY_H)
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -459,4 +459,4 @@ void schan_imp_deinit(void)
     libgnutls_handle = NULL;
 }
 
-#endif /* SONAME_LIBGNUTLS */
+#endif /* SONAME_LIBGNUTLS && !HAVE_SECURITY_SECURITY_H */

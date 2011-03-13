@@ -3,6 +3,7 @@ IMPORTLIB = secur32
 IMPORTS   = netapi32 advapi32
 DELAYIMPORTS = crypt32
 EXTRAINCL = @GNUTLSINCL@
+EXTRALIBS = @SECURITYLIB@
 
 C_SRCS = \
 	base64_codec.c \
@@ -13,6 +14,7 @@ C_SRCS = \
 	ntlm.c \
 	schannel.c \
 	schannel_gnutls.c \
+	schannel_macosx.c \
 	secur32.c \
 	thunks.c \
 	util.c \
