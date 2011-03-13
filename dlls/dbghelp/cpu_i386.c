@@ -87,6 +87,51 @@ static unsigned i386_get_addr(HANDLE hThread, const CONTEXT* ctx,
     return FALSE;
 }
 
+#ifdef __i386__
+/* fetch_next_frame32()
+ *
+ * modify (at least) context.{eip, esp, ebp} using unwind information
+ * either out of debug info (dwarf, pdb), or simple stack unwind
+ */
+static BOOL fetch_next_frame32(struct cpu_stack_walk* csw,
+                               CONTEXT* context, DWORD_PTR curr_pc)
+{
+    DWORD_PTR               xframe;
+    struct pdb_cmd_pair     cpair[4];
+    DWORD                   val32;
+
+    if (dwarf2_virtual_unwind(csw, curr_pc, context, &xframe))
+    {
+        context->Esp = xframe;
+        return TRUE;
+    }
+    cpair[0].name = "$ebp";      cpair[0].pvalue = &context->Ebp;
+    cpair[1].name = "$esp";      cpair[1].pvalue = &context->Esp;
+    cpair[2].name = "$eip";      cpair[2].pvalue = &context->Eip;
+    cpair[3].name = NULL;        cpair[3].pvalue = NULL;
+
+    if (!pdb_virtual_unwind(csw, curr_pc, context, cpair))
+    {
+        /* do a simple unwind using ebp
+         * we assume a "regular" prologue in the function has been used
+         */
+        context->Esp = context->Ebp + 2 * sizeof(DWORD);
+        if (!sw_read_mem(csw, context->Ebp + sizeof(DWORD), &val32, sizeof(DWORD)))
+        {
+            WARN("Cannot read new frame offset %p\n",
+                 (void*)(DWORD_PTR)(context->Ebp + (int)sizeof(DWORD)));
+            return FALSE;
+        }
+        context->Eip = val32;
+        /* "pop up" previous EBP value */
+        if (!sw_read_mem(csw, context->Ebp, &val32, sizeof(DWORD)))
+            return FALSE;
+        context->Ebp = val32;
+    }
+    return TRUE;
+}
+#endif
+
 enum st_mode {stm_start, stm_32bit, stm_16bit, stm_done};
 
 /* indexes in Reserved array */
@@ -197,7 +242,6 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
                     goto done_err;
                 }
                 curr_switch = (DWORD_PTR)frame16.frame32;
-
                 if (!sw_read_mem(csw, curr_switch, &ch, sizeof(ch)))
                     curr_switch = 0xFFFFFFFF;
             }
@@ -212,32 +256,6 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
          * we will get it in the next frame
          */
         memset(&frame->AddrBStore, 0, sizeof(frame->AddrBStore));
-#ifdef __i386__
-        if (curr_mode == stm_32bit)
-        {
-            DWORD_PTR           xframe;
-            struct pdb_cmd_pair cpair[4];
-            CONTEXT             newctx = *context;
-
-            if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, &newctx, &xframe))
-            {
-                frame->AddrReturn.Mode = AddrModeFlat;
-                frame->AddrReturn.Offset = newctx.Eip;
-                goto done_pep;
-            }
-            cpair[0].name = "$ebp";      cpair[0].pvalue = &newctx.Ebp;
-            cpair[1].name = "$esp";      cpair[1].pvalue = &newctx.Esp;
-            cpair[2].name = "$eip";      cpair[2].pvalue = &newctx.Eip;
-            cpair[3].name = NULL;        cpair[3].pvalue = NULL;
-
-            if (pdb_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, &newctx, cpair))
-            {
-                frame->AddrReturn.Mode = AddrModeFlat;
-                frame->AddrReturn.Offset = newctx.Eip;
-                goto done_pep;
-            }
-        }
-#endif
     }
     else
     {
@@ -352,9 +370,9 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
         }
         else
         {
-            frame->AddrPC = frame->AddrReturn;
             if (curr_mode == stm_16bit)
             {
+                frame->AddrPC = frame->AddrReturn;
                 frame->AddrStack.Offset = frame->AddrFrame.Offset + 2 * sizeof(WORD);
                 /* "pop up" previous BP value */
                 if (!sw_read_mem(csw, sw_xlat_addr(csw, &frame->AddrFrame),
@@ -365,36 +383,17 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
             else
             {
 #ifdef __i386__
-                DWORD_PTR               xframe;
-                struct pdb_cmd_pair     cpair[4];
-
-                if (dwarf2_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, &xframe))
-                {
-                    frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
-                    frame->AddrStack.Offset = context->Esp = xframe;
-                    frame->AddrFrame.Offset = context->Ebp;
-                    frame->AddrReturn.Offset = context->Eip;
-                    goto done_pep;
-                }
-                cpair[0].name = "$ebp"; cpair[0].pvalue = &context->Ebp;
-                cpair[1].name = "$esp"; cpair[1].pvalue = &context->Esp;
-                cpair[2].name = "$eip"; cpair[2].pvalue = &context->Eip;
-                cpair[3].name = NULL;   cpair[3].pvalue = NULL;
-
-                if (pdb_virtual_unwind(csw, frame->AddrPC.Offset - deltapc, context, cpair))
-                {
-                    frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrReturn.Mode = AddrModeFlat;
-                    frame->AddrStack.Offset = context->Esp;
-                    frame->AddrFrame.Offset = context->Ebp;
-                    frame->AddrReturn.Offset = context->Eip;
-                    goto done_pep;
-                }
-#endif
-                frame->AddrStack.Offset = frame->AddrFrame.Offset + 2 * sizeof(DWORD);
-                /* "pop up" previous EBP value */
-                if (!sw_read_mem(csw, frame->AddrFrame.Offset, &val32, sizeof(DWORD)))
+                if (!fetch_next_frame32(csw, context, sw_xlat_addr(csw, &frame->AddrPC) - deltapc))
                     goto done_err;
-                frame->AddrFrame.Offset = val32;
+
+                frame->AddrStack.Mode = frame->AddrFrame.Mode = frame->AddrPC.Mode = AddrModeFlat;
+                frame->AddrStack.Offset = context->Esp;
+                frame->AddrFrame.Offset = context->Ebp;
+                if (frame->AddrReturn.Offset != context->Eip)
+                    FIXME("new PC=%s different from Eip=%x\n",
+                          wine_dbgstr_longlong(frame->AddrReturn.Offset), context->Eip);
+                frame->AddrPC.Offset = context->Eip;
+#endif
             }
         }
     }
@@ -441,40 +440,40 @@ static BOOL i386_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CO
             sw_read_mem(csw, p + (2 + i) * sizeof(WORD), &val16, sizeof(val16));
             frame->Params[i] = val16;
         }
+#ifdef __i386__
+        if (context)
+        {
+#define SET(field, seg, reg) \
+            switch (frame->field.Mode) \
+            { \
+            case AddrModeFlat: context->reg = frame->field.Offset; break; \
+            case AddrMode1616: context->seg = frame->field.Segment; context->reg = frame->field.Offset; break; \
+            default: assert(0); \
+            }
+            SET(AddrStack,  SegSs, Esp);
+            SET(AddrFrame,  SegSs, Ebp);
+            SET(AddrReturn, SegCs, Eip);
+#undef SET
+        }
+#endif
     }
     else
     {
-        unsigned int     i;
-        if (!sw_read_mem(csw, frame->AddrFrame.Offset + sizeof(DWORD), &val32, sizeof(DWORD)))
-        {
-            WARN("Cannot read new frame offset %p\n",
-                 (void*)(DWORD_PTR)(frame->AddrFrame.Offset + (int)sizeof(DWORD)));
+        unsigned int    i;
+#ifdef __i386__
+        CONTEXT         newctx = *context;
+
+        if (!fetch_next_frame32(csw, &newctx, frame->AddrPC.Offset - deltapc))
             goto done_err;
-        }
-        frame->AddrReturn.Offset = val32;
+        frame->AddrReturn.Mode = AddrModeFlat;
+        frame->AddrReturn.Offset = newctx.Eip;
+#endif
         for (i = 0; i < sizeof(frame->Params) / sizeof(frame->Params[0]); i++)
         {
             sw_read_mem(csw, frame->AddrFrame.Offset + (2 + i) * sizeof(DWORD), &val32, sizeof(val32));
             frame->Params[i] = val32;
         }
     }
-#ifdef __i386__
-    if (context)
-    {
-#define SET(field, seg, reg) \
-        switch (frame->field.Mode) \
-        { \
-        case AddrModeFlat: context->reg = frame->field.Offset; break; \
-        case AddrMode1616: context->seg = frame->field.Segment; context->reg = frame->field.Offset; break; \
-        default: assert(0); \
-        }
-        SET(AddrStack,  SegSs, Esp);
-        SET(AddrFrame,  SegSs, Ebp);
-        SET(AddrReturn, SegCs, Eip);
-#undef SET
-    }
-done_pep:
-#endif
 
     frame->Far = TRUE;
     frame->Virtual = TRUE;

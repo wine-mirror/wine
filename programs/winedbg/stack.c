@@ -214,7 +214,7 @@ unsigned stack_fetch_frames(const CONTEXT* _ctx)
     /* as native stackwalk can modify the context passed to it, simply copy
      * it to avoid any damage
      */
-    CONTEXT      ctx = *_ctx, prevctx = ctx;
+    CONTEXT      ctx = *_ctx;
 
     HeapFree(GetProcessHeap(), 0, dbg_curr_thread->frames);
     dbg_curr_thread->frames = NULL;
@@ -244,7 +244,7 @@ unsigned stack_fetch_frames(const CONTEXT* _ctx)
         dbg_curr_thread->frames[nf].linear_frame = (DWORD_PTR)memory_to_linear_addr(&sf.AddrFrame);
         dbg_curr_thread->frames[nf].addr_stack   = sf.AddrStack;
         dbg_curr_thread->frames[nf].linear_stack = (DWORD_PTR)memory_to_linear_addr(&sf.AddrStack);
-        dbg_curr_thread->frames[nf].context      = prevctx;
+        dbg_curr_thread->frames[nf].context      = ctx;
         /* FIXME: can this heuristic be improved: we declare first context always valid, and next ones
          * if it has been modified by the call to StackWalk...
          */
@@ -252,7 +252,6 @@ unsigned stack_fetch_frames(const CONTEXT* _ctx)
             (nf == 0 ||
              (dbg_curr_thread->frames[nf - 1].is_ctx_valid &&
               memcmp(&dbg_curr_thread->frames[nf - 1].context, &ctx, sizeof(ctx))));
-        prevctx = ctx;
         nf++;
         /* we've probably gotten ourselves into an infinite loop so bail */
         if (nf > 200) break;
