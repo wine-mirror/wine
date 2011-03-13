@@ -174,6 +174,25 @@ static unsigned int schan_imp_get_session_cipher_block_size(gnutls_session_t s)
     return schannel_get_cipher_block_size(cipher);
 }
 
+static SECURITY_STATUS schan_imp_get_connection_info(gnutls_session_t s,
+                                                     SecPkgContext_ConnectionInfo *info)
+{
+    gnutls_protocol_t proto = pgnutls_protocol_get_version(s);
+    gnutls_cipher_algorithm_t alg = pgnutls_cipher_get(s);
+    gnutls_mac_algorithm_t mac = pgnutls_mac_get(s);
+    gnutls_kx_algorithm_t kx = pgnutls_kx_get(s);
+
+    info->dwProtocol = schannel_get_protocol(proto);
+    info->aiCipher = schannel_get_cipher_algid(alg);
+    info->dwCipherStrength = pgnutls_cipher_get_key_size(alg);
+    info->aiHash = schannel_get_mac_algid(mac);
+    info->dwHashStrength = pgnutls_mac_get_key_size(mac);
+    info->aiExch = schannel_get_kx_algid(kx);
+    /* FIXME: info->dwExchStrength? */
+    info->dwExchStrength = 0;
+    return SEC_E_OK;
+}
+
 static SECURITY_STATUS schan_imp_get_session_peer_certificate(gnutls_session_t s,
                                                               PCCERT_CONTEXT *cert)
 {
@@ -1045,20 +1064,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_CONNECTION_INFO:
         {
             SecPkgContext_ConnectionInfo *info = buffer;
-            gnutls_protocol_t proto = pgnutls_protocol_get_version(ctx->session);
-            gnutls_cipher_algorithm_t alg = pgnutls_cipher_get(ctx->session);
-            gnutls_mac_algorithm_t mac = pgnutls_mac_get(ctx->session);
-            gnutls_kx_algorithm_t kx = pgnutls_kx_get(ctx->session);
-
-            info->dwProtocol = schannel_get_protocol(proto);
-            info->aiCipher = schannel_get_cipher_algid(alg);
-            info->dwCipherStrength = pgnutls_cipher_get_key_size(alg);
-            info->aiHash = schannel_get_mac_algid(mac);
-            info->dwHashStrength = pgnutls_mac_get_key_size(mac);
-            info->aiExch = schannel_get_kx_algid(kx);
-            /* FIXME: info->dwExchStrength? */
-            info->dwExchStrength = 0;
-            return SEC_E_OK;
+            return schan_imp_get_connection_info(ctx->session, info);
         }
 
         default:
