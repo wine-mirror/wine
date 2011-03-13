@@ -2064,8 +2064,13 @@ static void test_classesroot(void)
         delete_key( hkey );
         RegCloseKey( hkey );
     }
-    if (RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Classes\\WineTestCls", 0, NULL, 0,
-                         KEY_QUERY_VALUE|KEY_SET_VALUE, NULL, &hkey, NULL )) return;
+    res = RegCreateKeyExA( HKEY_CURRENT_USER, "Software\\Classes\\WineTestCls", 0, NULL, 0,
+                           KEY_QUERY_VALUE|KEY_SET_VALUE, NULL, &hkey, NULL );
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("not enough privileges to add a user class\n");
+        return;
+    }
 
     /* try to open that key in hkcr */
     res = RegOpenKeyExA( HKEY_CLASSES_ROOT, "WineTestCls", 0,
@@ -2075,7 +2080,7 @@ static void test_classesroot(void)
                  "test key not found in hkcr: %d\n", res);
     if (res)
     {
-        trace( "HKCR key merging not supported\n" );
+        skip("HKCR key merging not supported\n");
         delete_key( hkey );
         RegCloseKey( hkey );
         return;
