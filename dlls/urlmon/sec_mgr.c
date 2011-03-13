@@ -4,6 +4,7 @@
  * Copyright (c) 2004 Huw D M Davies
  * Copyright 2004 Jacek Caban
  * Copyright 2009 Detlef Riekenberg
+ * Copyright 2011 Thomas Mullaly for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -48,6 +49,13 @@ static const WCHAR wszZonesKey[] = {'S','o','f','t','w','a','r','e','\\',
                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                     'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
                                     'Z','o','n','e','s','\\',0};
+static const WCHAR wszZoneMapDomainsKey[] = {'S','o','f','t','w','a','r','e','\\',
+                                             'M','i','c','r','o','s','o','f','t','\\',
+                                             'W','i','n','d','o','w','s','\\',
+                                             'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                             'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
+                                             'Z','o','n','e','M','a','p','\\',
+                                             'D','o','m','a','i','n','s',0};
 
 /********************************************************************
  * get_string_from_reg [internal]
@@ -143,6 +151,350 @@ static HRESULT get_zone_from_reg(LPCWSTR schema, DWORD *zone)
     return S_OK;
 }
 
+/********************************************************************
+ * matches_domain_pattern [internal]
+ *
+ * Checks if the given string matches the specified domain pattern.
+ *
+ * This function looks for explicit wildcard domain components iff
+ * they appear at the very beginning of the 'pattern' string
+ *
+ *  pattern = "*.google.com"
+ */
+static BOOL matches_domain_pattern(LPCWSTR pattern, LPCWSTR str, BOOL implicit_wildcard, LPCWSTR *matched)
+{
+    BOOL matches = FALSE;
+    DWORD pattern_len = strlenW(pattern);
+    DWORD str_len = strlenW(str);
+
+    TRACE("(%d) Checking if %s matches %s\n", implicit_wildcard, debugstr_w(str), debugstr_w(pattern));
+
+    *matched = NULL;
+    if(str_len >= pattern_len) {
+        /* Check if there's an explicit wildcard in the pattern. */
+        if(pattern[0] == '*' && pattern[1] == '.') {
+            /* Make sure that 'str' matches the wildcard pattern.
+             *
+             * Example:
+             *  pattern = "*.google.com"
+             *
+             * So in this case 'str' would have to end with ".google.com" in order
+             * to map to this pattern.
+             */
+            if(str_len >= pattern_len+1 && !strcmpiW(str+(str_len-pattern_len+1), pattern+1)) {
+                /* Check if there's another '.' inside of the "unmatched" portion
+                 * of 'str'.
+                 *
+                 * Example:
+                 *  pattern = "*.google.com"
+                 *  str     = "test.testing.google.com"
+                 *
+                 * The currently matched portion is ".google.com" in 'str', we need
+                 * see if there's a '.' inside of the unmatched portion ("test.testing"), because
+                 * if there is and 'implicit_wildcard' isn't set, then this isn't
+                 * a match.
+                 */
+                const WCHAR *ptr;
+                if(str_len > pattern_len+1 && (ptr = memrchrW(str, '.', str_len-pattern_len-2))) {
+                    if(implicit_wildcard) {
+                        matches = TRUE;
+                        *matched = ptr+1;
+                    }
+                } else {
+                    matches = TRUE;
+                    *matched = str;
+                }
+            }
+        } else if(implicit_wildcard && str_len > pattern_len) {
+            /* When the pattern has an implicit wildcard component, it means
+             * that anything goes in 'str' as long as it ends with the pattern
+             * and that the beginning of the match has a '.' before it.
+             *
+             * Example:
+             *  pattern = "google.com"
+             *  str     = "www.google.com"
+             *
+             * Implicitly matches the pattern, where as:
+             *
+             *  pattern = "google.com"
+             *  str     = "wwwgoogle.com"
+             *
+             * Doesn't match the pattern.
+             */
+            if(str_len > pattern_len) {
+                if(str[str_len-pattern_len-1] == '.' && !strcmpiW(str+(str_len-pattern_len), pattern)) {
+                    matches = TRUE;
+                    *matched = str+(str_len-pattern_len);
+                }
+            }
+        } else {
+            /* The pattern doesn't have an implicit wildcard, or an explicit wildcard,
+             * so 'str' has to be an exact match to the 'pattern'.
+             */
+            if(!strcmpiW(str, pattern)) {
+                matches = TRUE;
+                *matched = str;
+            }
+        }
+    }
+
+    if(matches)
+        TRACE("Found a match: matched=%s\n", debugstr_w(*matched));
+    else
+        TRACE("No match found\n");
+
+    return matches;
+}
+
+static BOOL get_zone_for_scheme(HKEY key, LPCWSTR schema, DWORD *zone)
+{
+    static const WCHAR wildcardW[] = {'*',0};
+
+    DWORD res;
+    DWORD size = sizeof(DWORD);
+    DWORD type;
+
+    /* See if the key contains a value for the scheme first. */
+    res = RegQueryValueExW(key, schema, NULL, &type, (BYTE*)zone, &size);
+    if(type != REG_DWORD)
+        WARN("Unexpected value type %d for value %s, expected REG_DWORD\n", type, debugstr_w(schema));
+
+    if(res != ERROR_SUCCESS || type != REG_DWORD) {
+        /* Try to get the zone for the wildcard scheme. */
+        size = sizeof(DWORD);
+        res = RegQueryValueExW(key, wildcardW, NULL, &type, (BYTE*)zone, &size);
+        if(type != REG_DWORD)
+            WARN("Unexpected value type %d for value %s, expected REG_DWORD\n", type, debugstr_w(wildcardW));
+    }
+
+    return res == ERROR_SUCCESS && type == REG_DWORD;
+}
+
+/********************************************************************
+ * search_domain_for_zone [internal]
+ *
+ * Searches the specified 'domain' registry key to see if 'host' maps into it, or any
+ * of it's subdomain registry keys.
+ *
+ * Returns S_OK if a match is found, S_FALSE if no matches were found, or an error code.
+ */
+static HRESULT search_domain_for_zone(HKEY domains, LPCWSTR domain, DWORD domain_len, LPCWSTR schema,
+                                      LPCWSTR host, DWORD host_len, DWORD *zone)
+{
+    BOOL found = FALSE;
+    HKEY domain_key;
+    DWORD res;
+    LPCWSTR matched;
+
+    if(host_len >= domain_len && matches_domain_pattern(domain, host, TRUE, &matched)) {
+        res = RegOpenKeyW(domains, domain, &domain_key);
+        if(res != ERROR_SUCCESS) {
+            ERR("Failed to open domain key %s: %d\n", debugstr_w(domain), res);
+            return E_UNEXPECTED;
+        }
+
+        if(matched == host)
+            found = get_zone_for_scheme(domain_key, schema, zone);
+        else {
+            INT domain_offset;
+            DWORD subdomain_count, subdomain_len;
+            BOOL check_domain = TRUE;
+
+            find_domain_name(domain, domain_len, &domain_offset);
+
+            res = RegQueryInfoKeyW(domain_key, NULL, NULL, NULL, &subdomain_count, &subdomain_len,
+                                   NULL, NULL, NULL, NULL, NULL, NULL);
+            if(res != ERROR_SUCCESS) {
+                ERR("Unable to query info for key %s: %d\n", debugstr_w(domain), res);
+                RegCloseKey(domain_key);
+                return E_UNEXPECTED;
+            }
+
+            if(subdomain_count) {
+                WCHAR *subdomain;
+                WCHAR *component;
+                DWORD i;
+
+                subdomain = heap_alloc((subdomain_len+1)*sizeof(WCHAR));
+                if(!subdomain) {
+                    RegCloseKey(domain_key);
+                    return E_OUTOFMEMORY;
+                }
+
+                component = heap_strndupW(host, matched-host-1);
+                if(!component) {
+                    heap_free(subdomain);
+                    RegCloseKey(domain_key);
+                    return E_OUTOFMEMORY;
+                }
+
+                for(i = 0; i < subdomain_count; ++i) {
+                    DWORD len = subdomain_len+1;
+                    const WCHAR *sub_matched;
+
+                    res = RegEnumKeyExW(domain_key, i, subdomain, &len, NULL, NULL, NULL, NULL);
+                    if(res != ERROR_SUCCESS) {
+                        heap_free(component);
+                        heap_free(subdomain);
+                        RegCloseKey(domain_key);
+                        return E_UNEXPECTED;
+                    }
+
+                    if(matches_domain_pattern(subdomain, component, FALSE, &sub_matched)) {
+                        HKEY subdomain_key;
+
+                        res = RegOpenKeyW(domain_key, subdomain, &subdomain_key);
+                        if(res != ERROR_SUCCESS) {
+                            ERR("Unable to open subdomain key %s of %s: %d\n", debugstr_w(subdomain),
+                                debugstr_w(domain), res);
+                            heap_free(component);
+                            heap_free(subdomain);
+                            RegCloseKey(domain_key);
+                            return E_UNEXPECTED;
+                        }
+
+                        found = get_zone_for_scheme(subdomain_key, schema, zone);
+                        check_domain = FALSE;
+                        RegCloseKey(subdomain_key);
+                        break;
+                    }
+                }
+                heap_free(subdomain);
+                heap_free(component);
+            }
+
+            /* There's a chance that 'host' implicitly mapped into 'domain', in
+             * which case we check to see if 'domain' contains zone information.
+             *
+             * This can only happen if 'domain' is it's own domain name.
+             *  Example:
+             *      "google.com" (domain name = "google.com")
+             *
+             *  So if:
+             *      host = "www.google.com"
+             *
+             *  Then host would map directly into the "google.com" domain key.
+             *
+             * If 'domain' has more than just it's domain name, or it does not
+             * have a domain name, then we don't perform the check. The reason
+             * for this is that these domains don't allow implicit mappings.
+             *  Example:
+             *      domain = "org" (has no domain name)
+             *      host   = "www.org"
+             *
+             *  The mapping would only happen if the "org" key had an explicit subkey
+             *  called "www".
+             */
+            if(check_domain && !domain_offset && !strchrW(host, matched-host-1))
+                found = get_zone_for_scheme(domain_key, schema, zone);
+        }
+        RegCloseKey(domain_key);
+    }
+
+    return found ? S_OK : S_FALSE;
+}
+
+static HRESULT search_for_domain_mapping(HKEY domains, LPCWSTR schema, LPCWSTR host, DWORD host_len, DWORD *zone)
+{
+    WCHAR *domain;
+    DWORD domain_count, domain_len, i;
+    DWORD res;
+    HRESULT hres = S_FALSE;
+
+    res = RegQueryInfoKeyW(domains, NULL, NULL, NULL, &domain_count, &domain_len,
+                           NULL, NULL, NULL, NULL, NULL, NULL);
+    if(res != ERROR_SUCCESS) {
+        WARN("Failed to retrieve information about key\n");
+        return E_UNEXPECTED;
+    }
+
+    if(!domain_count)
+        return S_FALSE;
+
+    domain = heap_alloc((domain_len+1)*sizeof(WCHAR));
+    if(!domain)
+        return E_OUTOFMEMORY;
+
+    for(i = 0; i < domain_count; ++i) {
+        DWORD len = domain_len+1;
+
+        res = RegEnumKeyExW(domains, i, domain, &len, NULL, NULL, NULL, NULL);
+        if(res != ERROR_SUCCESS) {
+            heap_free(domain);
+            return E_UNEXPECTED;
+        }
+
+        hres = search_domain_for_zone(domains, domain, len, schema, host, host_len, zone);
+        if(FAILED(hres) || hres == S_OK)
+            break;
+    }
+
+    heap_free(domain);
+    return hres;
+}
+
+static HRESULT get_zone_from_domains(LPCWSTR url, LPCWSTR schema, DWORD *zone)
+{
+    HRESULT hres;
+    WCHAR *host_name;
+    DWORD host_len = lstrlenW(url)+1;
+    DWORD res;
+    HKEY domains;
+
+    host_name = heap_alloc(host_len*sizeof(WCHAR));
+    if(!host_name)
+        return E_OUTOFMEMORY;
+
+    hres = CoInternetParseUrl(url, PARSE_DOMAIN, 0, host_name, host_len, &host_len, 0);
+    if(hres == S_FALSE) {
+        WCHAR *tmp = heap_realloc(host_name, (host_len+1)*sizeof(WCHAR));
+        if(!tmp) {
+            heap_free(host_name);
+            return E_OUTOFMEMORY;
+        }
+
+        host_name = tmp;
+        hres = CoInternetParseUrl(url, PARSE_DOMAIN, 0, host_name, host_len+1, &host_len, 0);
+    }
+
+    /* Windows doesn't play nice with unknown scheme types when it tries
+     * to check if a host name maps into any domains.
+     *
+     * The reason is with how CoInternetParseUrl handles unknown scheme types
+     * when it's parsing the domain of a URL (IE it always returns E_FAIL).
+     *
+     * Windows doesn't compenstate for this and simply doesn't check if
+     * the URL maps into any domains.
+     */
+    if(hres != S_OK) {
+        heap_free(host_name);
+        if(hres == E_FAIL)
+            return S_FALSE;
+        return hres;
+    }
+
+    /* First try CURRENT_USER. */
+    res = RegOpenKeyW(HKEY_CURRENT_USER, wszZoneMapDomainsKey, &domains);
+    if(res == ERROR_SUCCESS) {
+        hres = search_for_domain_mapping(domains, schema, host_name, host_len, zone);
+        RegCloseKey(domains);
+    } else
+        WARN("Failed to open HKCU's %s key\n", debugstr_w(wszZoneMapDomainsKey));
+
+    /* If that doesn't work try LOCAL_MACHINE. */
+    if(hres == S_FALSE) {
+        res = RegOpenKeyW(HKEY_LOCAL_MACHINE, wszZoneMapDomainsKey, &domains);
+        if(res == ERROR_SUCCESS) {
+            hres = search_for_domain_mapping(domains, schema, host_name, host_len, zone);
+            RegCloseKey(domains);
+        } else
+            WARN("Failed to open HKLM's %s key\n", debugstr_w(wszZoneMapDomainsKey));
+    }
+
+    heap_free(host_name);
+    return hres;
+}
+
 static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
 {
     LPWSTR secur_url;
@@ -207,8 +559,9 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
     }
 
     if(*zone == URLZONE_INVALID) {
-        WARN("domains are not yet implemented\n");
-        hres = get_zone_from_reg(schema, zone);
+        hres = get_zone_from_domains(secur_url, schema, zone);
+        if(hres == S_FALSE)
+            hres = get_zone_from_reg(schema, zone);
     }
 
     if(FAILED(hres) || !ret_url)

@@ -498,7 +498,7 @@ static void test_zone_domain_cache(void)
     zone = URLZONE_INVALID;
     hres = IInternetSecurityManager_MapUrlToZone(secmgr, testing_domain_urlW, &zone, 0);
     ok(hres == S_OK, "MapUrlToZone failed: %08x\n", hres);
-    ok(zone == URLZONE_INTERNET, "Got %d, expected URLZONE_INTERNET\n", zone);
+    todo_wine ok(zone == URLZONE_INTERNET, "Got %d, expected URLZONE_INTERNET\n", zone);
 
     /* FIXME: Play nice with ZoneMaps that existed before the test is run. */
     res = RegDeleteKeyA(domains, "testing.domain");
@@ -655,30 +655,30 @@ typedef struct {
 
 static const zone_mapping_test zone_mapping_tests[] = {
     /* Tests for "yabadaba.do" zone mappings. */
-    {"http://yabadaba.do/",URLZONE_CUSTOM,TRUE},
-    {"http://google.yabadaba.do/",URLZONE_CUSTOM,TRUE},
+    {"http://yabadaba.do/",URLZONE_CUSTOM},
+    {"http://google.yabadaba.do/",URLZONE_CUSTOM},
     {"zip://yabadaba.do/",URLZONE_INTERNET},
     /* Tests for "super.cool" zone mappings. */
     {"ftp://testing.google.super.cool/",URLZONE_INTERNET},
-    {"ftp://testing.*.super.cool/",URLZONE_CUSTOM2,TRUE},
-    {"ftp://google.testing.super.cool/",URLZONE_CUSTOM2,TRUE},
+    {"ftp://testing.*.super.cool/",URLZONE_CUSTOM2},
+    {"ftp://google.testing.super.cool/",URLZONE_CUSTOM2},
     /* Tests for "tests.test" zone mappings. */
-    {"http://tests.test/",URLZONE_CUSTOM,TRUE},
-    {"http://www.tests.test/",URLZONE_CUSTOM,TRUE},
-    {"ftp://tests.test/",URLZONE_CUSTOM,TRUE},
-    {"ftp://www.tests.test/",URLZONE_CUSTOM,TRUE},
+    {"http://tests.test/",URLZONE_CUSTOM},
+    {"http://www.tests.test/",URLZONE_CUSTOM},
+    {"ftp://tests.test/",URLZONE_CUSTOM},
+    {"ftp://www.tests.test/",URLZONE_CUSTOM},
     {"test://www.tests.test/",URLZONE_INTERNET},
     {"test://tests.test/",URLZONE_INTERNET},
     {"zip://www.tests.test/",URLZONE_INTERNET},
     {"zip://tests.test/",URLZONE_INTERNET},
     /* Tests for "www.testing.com" zone mappings. */
     {"http://google.www.testing.com/",URLZONE_INTERNET},
-    {"http://www.testing.com/",URLZONE_CUSTOM,TRUE,URLZONE_INTERNET},
-    {"http://testing.www.testing.com/",URLZONE_CUSTOM2,TRUE,URLZONE_INTERNET},
+    {"http://www.testing.com/",URLZONE_CUSTOM,FALSE,URLZONE_INTERNET},
+    {"http://testing.www.testing.com/",URLZONE_CUSTOM2,FALSE,URLZONE_INTERNET},
     /* Tests for "org" zone mappings. */
     {"http://google.org/",URLZONE_INTERNET,FALSE,URLZONE_CUSTOM},
-    {"http://org/",URLZONE_CUSTOM,TRUE},
-    {"http://testing.org/",URLZONE_CUSTOM2,TRUE}
+    {"http://org/",URLZONE_CUSTOM},
+    {"http://testing.org/",URLZONE_CUSTOM2}
 };
 
 static void test_zone_domain_mappings(void)
@@ -701,7 +701,7 @@ static void test_zone_domain_mappings(void)
 
         hres = IInternetSecurityManager_MapUrlToZone(secmgr, local_machineW, &zone, 0);
         ok(hres == S_OK, "MapUrlToZone failed: %08x\n", hres);
-        todo_wine ok(zone == URLZONE_CUSTOM, "Expected URLZONE_CUSTOM, but got %d\n", zone);
+        ok(zone == URLZONE_CUSTOM, "Expected URLZONE_CUSTOM, but got %d\n", zone);
 
         RegCloseKey(domains);
     }

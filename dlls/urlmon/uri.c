@@ -607,7 +607,7 @@ static inline void pct_encode_val(WCHAR val, WCHAR *dest) {
  * It's implied that if there is a domain name its range is:
  * [host+domain_start, host+host_len).
  */
-static void find_domain_name(const WCHAR *host, DWORD host_len,
+void find_domain_name(const WCHAR *host, DWORD host_len,
                              INT *domain_start) {
     const WCHAR *last_tld, *sec_last_tld, *end;
 

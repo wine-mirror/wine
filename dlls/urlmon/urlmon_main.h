@@ -149,6 +149,8 @@ HRESULT protocol_unlock_request(Protocol*);
 HRESULT protocol_abort(Protocol*,HRESULT);
 void protocol_close_connection(Protocol*);
 
+void find_domain_name(const WCHAR*,DWORD,INT*);
+
 typedef struct {
     IInternetProtocol     IInternetProtocol_iface;
     IInternetProtocolSink IInternetProtocolSink_iface;
