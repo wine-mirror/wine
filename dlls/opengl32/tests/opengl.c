@@ -949,6 +949,8 @@ static void test_destroy(HDC oldhdc)
     glFinish();
     glerr = glGetError();
     ok(glerr == GL_NO_ERROR, "Failed glClear, error %#x.\n", glerr);
+    ret = SwapBuffers(dc);
+    ok(ret, "Failed SwapBuffers, error %#x.\n", GetLastError());
 
     ret = DestroyWindow(window);
     ok(ret, "Failed to destroy window, last error %#x.\n", GetLastError());
@@ -960,6 +962,10 @@ static void test_destroy(HDC oldhdc)
     err = GetLastError();
     ok(!ret && err == ERROR_INVALID_HANDLE,
             "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
+    SetLastError(0xdeadbeef);
+    ret = SwapBuffers(dc);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#x.\n", err);
 
     ok(wglGetCurrentContext() == ctx, "Wrong current context.\n");
 
@@ -967,6 +973,10 @@ static void test_destroy(HDC oldhdc)
     glFinish();
     glerr = glGetError();
     ok(glerr == GL_NO_ERROR, "Failed glClear, error %#x.\n", glerr);
+    SetLastError(0xdeadbeef);
+    ret = SwapBuffers(dc);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#x.\n", err);
 
     ret = wglMakeCurrent(NULL, NULL);
     ok(ret, "Failed to clear current context, last error %#x.\n", GetLastError());
@@ -975,6 +985,10 @@ static void test_destroy(HDC oldhdc)
     glFinish();
     glerr = glGetError();
     todo_wine ok(glerr == GL_INVALID_OPERATION, "Failed glClear, error %#x.\n", glerr);
+    SetLastError(0xdeadbeef);
+    ret = SwapBuffers(dc);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#x.\n", err);
 
     SetLastError(0xdeadbeef);
     ret = wglMakeCurrent(dc, ctx);
@@ -1087,6 +1101,8 @@ static void test_destroy_read(HDC oldhdc)
     glFinish();
     glerr = glGetError();
     ok(glerr == GL_NO_ERROR, "Failed glCopyPixel, error %#x.\n", glerr);
+    ret = SwapBuffers(draw_dc);
+    ok(ret, "Failed SwapBuffers, error %#x.\n", GetLastError());
 
     ret = DestroyWindow(read_window);
     ok(ret, "Failed to destroy window, last error %#x.\n", GetLastError());
@@ -1105,6 +1121,8 @@ static void test_destroy_read(HDC oldhdc)
     glFinish();
     glerr = glGetError();
     ok(glerr == GL_NO_ERROR, "Failed glClear, error %#x.\n", glerr);
+    ret = SwapBuffers(draw_dc);
+    ok(ret, "Failed SwapBuffers, error %#x.\n", GetLastError());
 
     ret = wglMakeCurrent(NULL, NULL);
     ok(ret, "Failed to clear current context, last error %#x.\n", GetLastError());
@@ -1125,6 +1143,10 @@ static void test_destroy_read(HDC oldhdc)
     glFinish();
     glerr = glGetError();
     todo_wine ok(glerr == GL_INVALID_OPERATION, "Failed glClear, error %#x.\n", glerr);
+    SetLastError(0xdeadbeef);
+    ret = SwapBuffers(draw_dc);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_HANDLE, "Unexpected behavior with SwapBuffer, last error %#x.\n", err);
 
     SetLastError(0xdeadbeef);
     ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
