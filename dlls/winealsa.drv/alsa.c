@@ -351,7 +351,7 @@ void ALSA_copyFormat(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
 {
     unsigned int iLength;
 
-    ZeroMemory(wf2, sizeof(wf2));
+    ZeroMemory(wf2, sizeof(*wf2));
     if (wf1->wFormatTag == WAVE_FORMAT_PCM)
         iLength = sizeof(PCMWAVEFORMAT);
     else if (wf1->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
