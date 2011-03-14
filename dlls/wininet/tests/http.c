@@ -31,7 +31,7 @@
 
 #include "wine/test.h"
 
-#define TEST_URL "http://test.winehq.org/hello.html"
+#define TEST_URL "http://test.winehq.org/tests/hello.html"
 
 static BOOL first_connection_to_test_url = TRUE;
 
@@ -121,10 +121,10 @@ typedef struct {
 
 static const test_data_t test_data[] = {
     {
-        "http://test.winehq.org/testredirect",
-        "http://test.winehq.org/hello.html",
+        "http://test.winehq.org/tests/redirect",
+        "http://test.winehq.org/tests/hello.html",
         "test.winehq.org",
-        "/testredirect",
+        "/tests/redirect",
         "",
         TESTF_REDIRECT
     },
@@ -629,7 +629,7 @@ static void InternetReadFile_chunked_test(void)
     if (hic == 0x0) goto abort;
 
     trace("HttpOpenRequestA <--\n");
-    hor = HttpOpenRequestA(hic, "GET", "/testchunked", NULL, NULL, types,
+    hor = HttpOpenRequestA(hic, "GET", "/tests/chunked", NULL, NULL, types,
                            INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE,
                            0xdeadbead);
     if (hor == 0x0 && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED) {
@@ -748,7 +748,7 @@ static void InternetReadFileExA_test(int flags)
     SET_EXPECT(INTERNET_STATUS_HANDLE_CREATED);
 
     trace("HttpOpenRequestA <--\n");
-    hor = HttpOpenRequestA(hic, "GET", "/testredirect", NULL, NULL, types,
+    hor = HttpOpenRequestA(hic, "GET", "/tests/redirect", NULL, NULL, types,
                            INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_RESYNCHRONIZE,
                            0xdeadbead);
     if (hor == 0x0 && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED) {
@@ -1150,7 +1150,7 @@ static void test_http_cache(void)
                               INTERNET_SERVICE_HTTP, 0, 0);
     ok(connect != NULL, "Unable to connect to http://test.winehq.org with error %d\n", GetLastError());
 
-    request = HttpOpenRequestA(connect, NULL, "/hello.html", NULL, NULL, types, INTERNET_FLAG_NEED_FILE, 0);
+    request = HttpOpenRequestA(connect, NULL, "/tests/hello.html", NULL, NULL, types, INTERNET_FLAG_NEED_FILE, 0);
     if (!request && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
     {
         skip( "Network unreachable, skipping test\n" );
@@ -1165,7 +1165,7 @@ static void test_http_cache(void)
     size = sizeof(url);
     ret = InternetQueryOptionA(request, INTERNET_OPTION_URL, url, &size);
     ok(ret, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
-    ok(!strcmp(url, "http://test.winehq.org/hello.html"), "Wrong URL %s\n", url);
+    ok(!strcmp(url, "http://test.winehq.org/tests/hello.html"), "Wrong URL %s\n", url);
 
     size = sizeof(file_name);
     ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
@@ -2913,7 +2913,7 @@ static void test_user_agent_header(void)
     con = InternetConnect(ses, "test.winehq.org", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
     ok(con != NULL, "InternetConnect failed\n");
 
-    req = HttpOpenRequest(con, "GET", "/hello.html", "HTTP/1.0", NULL, NULL, 0, 0);
+    req = HttpOpenRequest(con, "GET", "/tests/hello.html", "HTTP/1.0", NULL, NULL, 0, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     size = sizeof(buffer);
