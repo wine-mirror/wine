@@ -31,7 +31,34 @@ static const struct ID3DXEffectVtbl ID3DXEffect_Vtbl;
 typedef struct ID3DXEffectImpl {
     ID3DXEffect ID3DXEffect_iface;
     LONG ref;
+
+    UINT parameter_count;
+    UINT technique_count;
 } ID3DXEffectImpl;
+
+static inline void read_dword(const char **ptr, DWORD *d)
+{
+    memcpy(d, *ptr, sizeof(*d));
+    *ptr += sizeof(*d);
+}
+
+static void skip_dword_unknown(const char **ptr, unsigned int count)
+{
+    unsigned int i;
+    DWORD d;
+
+    FIXME("Skipping %u unknown DWORDs:\n", count);
+    for (i = 0; i < count; ++i)
+    {
+        read_dword(ptr, &d);
+        FIXME("\t0x%08x\n", d);
+    }
+}
+
+static inline DWORD d3dx9_effect_version(DWORD major, DWORD minor)
+{
+    return (0xfeff0000 | ((major) << 8) | (minor));
+}
 
 static inline ID3DXEffectImpl *impl_from_ID3DXEffect(ID3DXEffect *iface)
 {
@@ -853,6 +880,61 @@ static const struct ID3DXEffectVtbl ID3DXEffect_Vtbl =
     ID3DXEffectImpl_SetRawValue
 };
 
+static HRESULT d3dx9_parse_effect(ID3DXEffectImpl *effect, const char *data, UINT data_size, DWORD start)
+{
+    const char *ptr = data + start;
+
+    read_dword(&ptr, &effect->parameter_count);
+    TRACE("Parameter count: %u\n", effect->parameter_count);
+
+    read_dword(&ptr, &effect->technique_count);
+    TRACE("Technique count: %u\n", effect->technique_count);
+
+    skip_dword_unknown(&ptr, 2);
+
+    /* todo: Parse parameter */
+
+    /* todo: Parse techniques */
+
+    return S_OK;
+}
+
+static HRESULT d3dx9_effect_init(ID3DXEffectImpl *effect, const char *data, SIZE_T data_size)
+{
+    DWORD tag, offset;
+    const char *ptr = data;
+    HRESULT hr;
+
+    effect->ID3DXEffect_iface.lpVtbl = &ID3DXEffect_Vtbl;
+    effect->ref = 1;
+
+    read_dword(&ptr, &tag);
+    TRACE("Tag: %x\n", tag);
+
+    if (tag != d3dx9_effect_version(9, 1))
+    {
+        /* todo: compile hlsl ascii code */
+        FIXME("HLSL ascii effects not supported, yet\n");
+
+        /* Show the start of the shader for debugging info. */
+        TRACE("effect:\n%s\n", debugstr_an(data, data_size > 40 ? 40 : data_size));
+    }
+    else
+    {
+        read_dword(&ptr, &offset);
+        TRACE("Offset: %x\n", offset);
+
+        hr = d3dx9_parse_effect(effect, ptr, data_size, offset);
+        if (hr != S_OK)
+        {
+            FIXME("Failed to parse effect.\n");
+            return hr;
+        }
+    }
+
+    return S_OK;
+}
+
 HRESULT WINAPI D3DXCreateEffectEx(LPDIRECT3DDEVICE9 device,
                                   LPCVOID srcdata,
                                   UINT srcdatalen,
@@ -864,7 +946,8 @@ HRESULT WINAPI D3DXCreateEffectEx(LPDIRECT3DDEVICE9 device,
                                   LPD3DXEFFECT* effect,
                                   LPD3DXBUFFER* compilation_errors)
 {
-    ID3DXEffectImpl* object;
+    ID3DXEffectImpl *object;
+    HRESULT hr;
 
     FIXME("(%p, %p, %u, %p, %p, %p, %#x, %p, %p, %p): semi-stub\n", device, srcdata, srcdatalen, defines, include,
         skip_constants, flags, pool, effect, compilation_errors);
@@ -879,17 +962,24 @@ HRESULT WINAPI D3DXCreateEffectEx(LPDIRECT3DDEVICE9 device,
     if (!effect)
         return D3D_OK;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXEffectImpl));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
         ERR("Out of memory\n");
         return E_OUTOFMEMORY;
     }
 
-    object->ID3DXEffect_iface.lpVtbl = &ID3DXEffect_Vtbl;
-    object->ref = 1;
+    hr = d3dx9_effect_init(object, srcdata, srcdatalen);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize shader reflection\n");
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
     *effect = &object->ID3DXEffect_iface;
+
+    TRACE("Created ID3DXEffect %p\n", object);
 
     return D3D_OK;
 }
