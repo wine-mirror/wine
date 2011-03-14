@@ -258,7 +258,7 @@ static void init_gzip_stream(http_request_t *req)
     gzip_stream_t *gzip_stream;
     int index, zres;
 
-    gzip_stream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(gzip_stream_t));
+    gzip_stream = heap_alloc_zero(sizeof(gzip_stream_t));
     gzip_stream->zstream.zalloc = wininet_zalloc;
     gzip_stream->zstream.zfree = wininet_zfree;
 
@@ -276,11 +276,23 @@ static void init_gzip_stream(http_request_t *req)
         HTTP_DeleteCustomHeader(req, index);
 }
 
+static void release_gzip_stream(http_request_t *req)
+{
+    if(!req->gzip_stream->end_of_data)
+        inflateEnd(&req->gzip_stream->zstream);
+    heap_free(req->gzip_stream);
+    req->gzip_stream = NULL;
+}
+
 #else
 
 static void init_gzip_stream(http_request_t *req)
 {
     ERR("gzip stream not supported, missing zlib.\n");
+}
+
+static void release_gzip_stream(http_request_t *req)
+{
 }
 
 #endif
@@ -1605,13 +1617,8 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
         HeapFree(GetProcessHeap(), 0, request->custHeaders[i].lpszValue);
     }
 
-#ifdef HAVE_ZLIB
-    if(request->gzip_stream) {
-        if(!request->gzip_stream->end_of_data)
-            inflateEnd(&request->gzip_stream->zstream);
-        HeapFree(GetProcessHeap(), 0, request->gzip_stream);
-    }
-#endif
+    if(request->gzip_stream)
+        release_gzip_stream(request);
 
     HeapFree(GetProcessHeap(), 0, request->custHeaders);
 }
@@ -4997,6 +5004,8 @@ static DWORD HTTP_OpenConnection(http_request_t *request)
 lend:
     request->read_pos = request->read_size = 0;
     request->read_chunked = FALSE;
+    if(request->gzip_stream)
+        release_gzip_stream(request);
 
     TRACE("%d <--\n", res);
     return res;
