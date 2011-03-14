@@ -229,6 +229,7 @@ void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
 void HlinkFrame_Init(HlinkFrame*,IUnknown*,DocHost*);
 BOOL HlinkFrame_QI(HlinkFrame*,REFIID,void**);
 
+HRESULT ShellBrowser_Create(IShellBrowser**);
 HRESULT WebBrowserV1_Create(IUnknown*,REFIID,void**);
 HRESULT WebBrowserV2_Create(IUnknown*,REFIID,void**);
 

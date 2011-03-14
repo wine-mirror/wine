@@ -622,6 +622,21 @@ static HRESULT WINAPI ClServiceProvider_QueryService(IServiceProvider *iface, RE
         return IDispatch_QueryInterface(This->disp, riid, ppv);
     }
 
+    if(IsEqualGUID(&IID_IShellBrowser, guidService)) {
+        IShellBrowser *sb;
+        HRESULT hres;
+
+        TRACE("(%p)->(IID_IShellBrowser %s %p)\n", This, debugstr_guid(riid), ppv);
+
+        hres = ShellBrowser_Create(&sb);
+        if(FAILED(hres))
+            return hres;
+
+        hres = IShellBrowser_QueryInterface(sb, riid, ppv);
+        IShellBrowser_Release(sb);
+        return hres;
+    }
+
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
     return E_NOINTERFACE;

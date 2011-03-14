@@ -18,6 +18,7 @@ C_SRCS = \
 	oleobject.c \
 	persist.c \
 	shdocvw_main.c \
+	shellbrowser.c \
 	shlinstobj.c \
 	taskbarlist.c \
 	urlhist.c \
