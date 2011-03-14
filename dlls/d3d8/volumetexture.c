@@ -298,14 +298,19 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_LockBox(IDirect3DVolumeTexture
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DVolumeTexture8Impl_UnlockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level) {
-    IDirect3DVolumeTexture8Impl *This = (IDirect3DVolumeTexture8Impl *)iface;
+static HRESULT WINAPI IDirect3DVolumeTexture8Impl_UnlockBox(IDirect3DVolumeTexture8 *iface, UINT level)
+{
+    IDirect3DVolumeTexture8Impl *texture = (IDirect3DVolumeTexture8Impl *)iface;
+    struct wined3d_resource *sub_resource;
     HRESULT hr;
 
-    TRACE("iface %p, level %u.\n", iface, Level);
+    TRACE("iface %p, level %u.\n", iface, level);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolumeTexture_Unmap(This->wineD3DVolumeTexture, Level);
+    if (!(sub_resource = IWineD3DVolumeTexture_GetSubResource(texture->wineD3DVolumeTexture, level)))
+        hr = D3DERR_INVALIDCALL;
+    else
+        hr = IDirect3DVolume8_UnlockBox((IDirect3DVolume8 *)wined3d_resource_get_parent(sub_resource));
     wined3d_mutex_unlock();
 
     return hr;

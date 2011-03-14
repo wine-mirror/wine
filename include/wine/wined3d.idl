@@ -2395,9 +2395,6 @@ interface IWineD3DCubeTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 {
-    HRESULT Unmap(
-        [in] UINT sub_resource_idx
-    );
     HRESULT AddDirtyBox(
         [in] const WINED3DBOX *dirty_box
     );
