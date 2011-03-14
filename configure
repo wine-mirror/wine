@@ -657,12 +657,12 @@ QUICKTIMELIB
 LIBOPENCL
 FRAMEWORK_OPENAL
 COREAUDIO
+SECURITYLIB
 DISKARBITRATIONLIB
 LDEXECFLAGS
 APPLICATIONSERVICESLIB
 IOKITLIB
 COREFOUNDATIONLIB
-SECURITYLIB
 DLLWRAP
 DLLTOOL
 LDD
@@ -6519,9 +6519,7 @@ fi
     LDSHARED="\$(CC) -dynamiclib"
     STRIP="$STRIP -x"
     LDRPATH_LOCAL="&& install_name_tool -change @executable_path/\`\$(RELPATH) \$(bindir) \$(libdir)\`/libwine.1.dylib @executable_path/\$(top_builddir)/libs/wine/libwine.1.dylib \$@ || \$(RM) \$@"
-        SECURITYLIB="-framework Security -framework CoreFoundation"
-
-    COREFOUNDATIONLIB="-framework CoreFoundation"
+        COREFOUNDATIONLIB="-framework CoreFoundation"
 
     IOKITLIB="-framework IOKit -framework CoreFoundation"
 
@@ -6533,6 +6531,12 @@ fi
     then
                 DISKARBITRATIONLIB="-framework DiskArbitration -framework CoreFoundation"
 
+    fi
+    if test "$ac_cv_header_Security_Security_h" = "yes"
+    then
+        SECURITYLIB="-framework Security -framework CoreFoundation"
+
+        with_gnutls=${with_gnutls:-no}
     fi
     if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
     then

@@ -40,7 +40,7 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "crypt32_private.h"
-#ifdef __APPLE__
+#ifdef HAVE_SECURITY_SECURITY_H
 #include <Security/Security.h>
 #endif
 
@@ -746,7 +746,7 @@ static void read_trusted_roots_from_known_locations(HCERTSTORE store)
         DWORD i;
         BOOL ret = FALSE;
 
-#ifdef __APPLE__
+#ifdef HAVE_SECURITY_SECURITY_H
         OSStatus status;
         CFArrayRef rootCerts;
 
