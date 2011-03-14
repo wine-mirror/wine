@@ -752,15 +752,19 @@ end:
 
 struct InstalledRuntimeEnum
 {
-    const struct IEnumUnknownVtbl *Vtbl;
+    IEnumUnknown IEnumUnknown_iface;
     LONG ref;
     ULONG pos;
 };
 
 const struct IEnumUnknownVtbl InstalledRuntimeEnum_Vtbl;
 
-static HRESULT WINAPI InstalledRuntimeEnum_QueryInterface(IEnumUnknown* iface,
-        REFIID riid,
+static inline struct InstalledRuntimeEnum *impl_from_IEnumUnknown(IEnumUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct InstalledRuntimeEnum, IEnumUnknown_iface);
+}
+
+static HRESULT WINAPI InstalledRuntimeEnum_QueryInterface(IEnumUnknown* iface, REFIID riid,
         void **ppvObject)
 {
     TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
@@ -783,7 +787,7 @@ static HRESULT WINAPI InstalledRuntimeEnum_QueryInterface(IEnumUnknown* iface,
 
 static ULONG WINAPI InstalledRuntimeEnum_AddRef(IEnumUnknown* iface)
 {
-    struct InstalledRuntimeEnum *This = (struct InstalledRuntimeEnum*)iface;
+    struct InstalledRuntimeEnum *This = impl_from_IEnumUnknown(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -793,7 +797,7 @@ static ULONG WINAPI InstalledRuntimeEnum_AddRef(IEnumUnknown* iface)
 
 static ULONG WINAPI InstalledRuntimeEnum_Release(IEnumUnknown* iface)
 {
-    struct InstalledRuntimeEnum *This = (struct InstalledRuntimeEnum*)iface;
+    struct InstalledRuntimeEnum *This = impl_from_IEnumUnknown(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) refcount=%u\n", iface, ref);
@@ -809,7 +813,7 @@ static ULONG WINAPI InstalledRuntimeEnum_Release(IEnumUnknown* iface)
 static HRESULT WINAPI InstalledRuntimeEnum_Next(IEnumUnknown *iface, ULONG celt,
     IUnknown **rgelt, ULONG *pceltFetched)
 {
-    struct InstalledRuntimeEnum *This = (struct InstalledRuntimeEnum*)iface;
+    struct InstalledRuntimeEnum *This = impl_from_IEnumUnknown(iface);
     int num_fetched = 0;
     HRESULT hr=S_OK;
     IUnknown *item;
@@ -841,7 +845,7 @@ static HRESULT WINAPI InstalledRuntimeEnum_Next(IEnumUnknown *iface, ULONG celt,
 
 static HRESULT WINAPI InstalledRuntimeEnum_Skip(IEnumUnknown *iface, ULONG celt)
 {
-    struct InstalledRuntimeEnum *This = (struct InstalledRuntimeEnum*)iface;
+    struct InstalledRuntimeEnum *This = impl_from_IEnumUnknown(iface);
     int num_fetched = 0;
     HRESULT hr=S_OK;
 
@@ -866,7 +870,7 @@ static HRESULT WINAPI InstalledRuntimeEnum_Skip(IEnumUnknown *iface, ULONG celt)
 
 static HRESULT WINAPI InstalledRuntimeEnum_Reset(IEnumUnknown *iface)
 {
-    struct InstalledRuntimeEnum *This = (struct InstalledRuntimeEnum*)iface;
+    struct InstalledRuntimeEnum *This = impl_from_IEnumUnknown(iface);
 
     TRACE("(%p)\n", iface);
 
@@ -877,7 +881,7 @@ static HRESULT WINAPI InstalledRuntimeEnum_Reset(IEnumUnknown *iface)
 
 static HRESULT WINAPI InstalledRuntimeEnum_Clone(IEnumUnknown *iface, IEnumUnknown **ppenum)
 {
-    struct InstalledRuntimeEnum *This = (struct InstalledRuntimeEnum*)iface;
+    struct InstalledRuntimeEnum *This = impl_from_IEnumUnknown(iface);
     struct InstalledRuntimeEnum *new_enum;
 
     TRACE("(%p)\n", iface);
@@ -886,11 +890,11 @@ static HRESULT WINAPI InstalledRuntimeEnum_Clone(IEnumUnknown *iface, IEnumUnkno
     if (!new_enum)
         return E_OUTOFMEMORY;
 
-    new_enum->Vtbl = &InstalledRuntimeEnum_Vtbl;
+    new_enum->IEnumUnknown_iface.lpVtbl = &InstalledRuntimeEnum_Vtbl;
     new_enum->ref = 1;
     new_enum->pos = This->pos;
 
-    *ppenum = (IEnumUnknown*)new_enum;
+    *ppenum = &new_enum->IEnumUnknown_iface;
 
     return S_OK;
 }
@@ -907,10 +911,10 @@ const struct IEnumUnknownVtbl InstalledRuntimeEnum_Vtbl = {
 
 struct CLRMetaHost
 {
-    const struct ICLRMetaHostVtbl *CLRMetaHost_vtbl;
+    ICLRMetaHost ICLRMetaHost_iface;
 };
 
-static const struct CLRMetaHost GlobalCLRMetaHost;
+static struct CLRMetaHost GlobalCLRMetaHost;
 
 static HRESULT WINAPI CLRMetaHost_QueryInterface(ICLRMetaHost* iface,
         REFIID riid,
@@ -1069,11 +1073,11 @@ static HRESULT WINAPI CLRMetaHost_EnumerateInstalledRuntimes(ICLRMetaHost* iface
     if (!new_enum)
         return E_OUTOFMEMORY;
 
-    new_enum->Vtbl = &InstalledRuntimeEnum_Vtbl;
+    new_enum->IEnumUnknown_iface.lpVtbl = &InstalledRuntimeEnum_Vtbl;
     new_enum->ref = 1;
     new_enum->pos = 0;
 
-    *ppEnumerator = (IEnumUnknown*)new_enum;
+    *ppEnumerator = &new_enum->IEnumUnknown_iface;
 
     return S_OK;
 }
@@ -1123,13 +1127,13 @@ static const struct ICLRMetaHostVtbl CLRMetaHost_vtbl =
     CLRMetaHost_ExitProcess
 };
 
-static const struct CLRMetaHost GlobalCLRMetaHost = {
-    &CLRMetaHost_vtbl
+static struct CLRMetaHost GlobalCLRMetaHost = {
+    { &CLRMetaHost_vtbl }
 };
 
 extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj)
 {
-    return ICLRMetaHost_QueryInterface((ICLRMetaHost*)&GlobalCLRMetaHost, riid, ppobj);
+    return ICLRMetaHost_QueryInterface(&GlobalCLRMetaHost.ICLRMetaHost_iface, riid, ppobj);
 }
 
 static MonoAssembly* mono_assembly_search_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data)
