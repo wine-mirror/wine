@@ -333,7 +333,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(IDirect3DVolume
     }
 
     *volume = wined3d_resource_get_parent(sub_resource);
-    IDirect3DVolumeTexture9_AddRef(*volume);
+    IDirect3DVolume9_AddRef(*volume);
     wined3d_mutex_unlock();
 
     return D3D_OK;
