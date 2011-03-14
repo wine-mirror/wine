@@ -471,8 +471,6 @@ struct font_mapping
 
 static struct list mappings_list = LIST_INIT( mappings_list );
 
-static BOOL have_installed_roman_font = FALSE; /* CreateFontInstance will fail if this is still FALSE */
-
 static CRITICAL_SECTION freetype_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -1522,9 +1520,6 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                     }
                 }
             }
-
-            if (!(face->fs.fsCsb[0] & FS_SYMBOL))
-                have_installed_roman_font = TRUE;
 
             AddFaceToFamily(face, family);
 
@@ -3527,12 +3522,6 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     if(list_empty(&font_list)) /* No fonts installed */
     {
 	TRACE("No fonts installed\n");
-        LeaveCriticalSection( &freetype_cs );
-	return NULL;
-    }
-    if(!have_installed_roman_font)
-    {
-	TRACE("No roman font installed\n");
         LeaveCriticalSection( &freetype_cs );
 	return NULL;
     }
