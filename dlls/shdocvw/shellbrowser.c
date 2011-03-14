@@ -21,12 +21,14 @@
 #include "wine/debug.h"
 #include "shdocvw.h"
 #include "shdeprecated.h"
+#include "docobjectservice.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 typedef struct {
     IShellBrowser IShellBrowser_iface;
     IBrowserService IBrowserService_iface;
+    IDocObjectService IDocObjectService_iface;
 
     LONG ref;
 } ShellBrowser;
@@ -49,6 +51,8 @@ static HRESULT WINAPI ShellBrowser_QueryInterface(
         *ppvObject = &This->IShellBrowser_iface;
     else if(IsEqualGUID(&IID_IBrowserService, riid))
         *ppvObject = &This->IBrowserService_iface;
+    else if(IsEqualGUID(&IID_IDocObjectService, riid))
+        *ppvObject = &This->IDocObjectService_iface;
 
     if(*ppvObject) {
         TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
@@ -606,6 +610,153 @@ static const IBrowserServiceVtbl BrowserServiceVtbl = {
     BrowserService_RegisterWindow
 };
 
+static inline ShellBrowser *impl_from_IDocObjectService(IDocObjectService *iface)
+{
+    return CONTAINING_RECORD(iface, ShellBrowser, IDocObjectService_iface);
+}
+
+static HRESULT WINAPI DocObjectService_QueryInterface(
+        IDocObjectService* iface,
+        REFIID riid,
+        void **ppvObject)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    return IShellBrowser_QueryInterface(&This->IShellBrowser_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI DocObjectService_AddRef(
+        IDocObjectService* iface)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    return IShellBrowser_AddRef(&This->IShellBrowser_iface);
+}
+
+static ULONG WINAPI DocObjectService_Release(
+        IDocObjectService* iface)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    return IShellBrowser_Release(&This->IShellBrowser_iface);
+}
+
+static HRESULT WINAPI DocObjectService_FireBeforeNavigate2(
+        IDocObjectService* iface,
+        IDispatch *pDispatch,
+        LPCWSTR lpszUrl,
+        DWORD dwFlags,
+        LPCWSTR lpszFrameName,
+        BYTE *pPostData,
+        DWORD cbPostData,
+        LPCWSTR lpszHeaders,
+        BOOL fPlayNavSound,
+        BOOL *pfCancel)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    FIXME("%p %p %s %x %s %p %d %s %d %p\n", This, pDispatch, debugstr_w(lpszUrl),
+            dwFlags, debugstr_w(lpszFrameName), pPostData, cbPostData,
+            debugstr_w(lpszHeaders), fPlayNavSound, pfCancel);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocObjectService_FireNavigateComplete2(
+        IDocObjectService* iface,
+        IHTMLWindow2 *pHTMLWindow2,
+        DWORD dwFlags)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    FIXME("%p %p %x\n", This, pHTMLWindow2, dwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocObjectService_FireDownloadBegin(
+        IDocObjectService* iface)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocObjectService_FireDownloadComplete(
+        IDocObjectService* iface)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocObjectService_FireDocumentComplete(
+        IDocObjectService* iface,
+        IHTMLWindow2 *pHTMLWindow,
+        DWORD dwFlags)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    FIXME("%p %p %x\n", This, pHTMLWindow, dwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocObjectService_UpdateDesktopComponent(
+        IDocObjectService* iface,
+        IHTMLWindow2 *pHTMLWindow)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    FIXME("%p %p\n", This, pHTMLWindow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocObjectService_GetPendingUrl(
+        IDocObjectService* iface,
+        BSTR *pbstrPendingUrl)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    FIXME("%p %p\n", This, pbstrPendingUrl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocObjectService_ActiveElementChanged(
+        IDocObjectService* iface,
+        IHTMLElement *pHTMLElement)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    FIXME("%p %p\n", This, pHTMLElement);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocObjectService_GetUrlSearchComponent(
+        IDocObjectService* iface,
+        BSTR *pbstrSearch)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    FIXME("%p %p\n", This, pbstrSearch);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocObjectService_IsErrorUrl(
+        IDocObjectService* iface,
+        LPCWSTR lpszUrl,
+        BOOL *pfIsError)
+{
+    ShellBrowser *This = impl_from_IDocObjectService(iface);
+    FIXME("%p %s %p\n", This, debugstr_w(lpszUrl), pfIsError);
+
+    *pfIsError = FALSE;
+    return S_OK;
+}
+
+static const IDocObjectServiceVtbl DocObjectServiceVtbl = {
+    DocObjectService_QueryInterface,
+    DocObjectService_AddRef,
+    DocObjectService_Release,
+    DocObjectService_FireBeforeNavigate2,
+    DocObjectService_FireNavigateComplete2,
+    DocObjectService_FireDownloadBegin,
+    DocObjectService_FireDownloadComplete,
+    DocObjectService_FireDocumentComplete,
+    DocObjectService_UpdateDesktopComponent,
+    DocObjectService_GetPendingUrl,
+    DocObjectService_ActiveElementChanged,
+    DocObjectService_GetUrlSearchComponent,
+    DocObjectService_IsErrorUrl
+};
+
 HRESULT ShellBrowser_Create(IShellBrowser **ppv)
 {
     ShellBrowser *sb = heap_alloc(sizeof(ShellBrowser));
@@ -614,6 +765,7 @@ HRESULT ShellBrowser_Create(IShellBrowser **ppv)
 
     sb->IShellBrowser_iface.lpVtbl = &ShellBrowserVtbl;
     sb->IBrowserService_iface.lpVtbl = &BrowserServiceVtbl;
+    sb->IDocObjectService_iface.lpVtbl = &DocObjectServiceVtbl;
 
     sb->ref = 1;
 
