@@ -20,11 +20,13 @@
 
 #include "wine/debug.h"
 #include "shdocvw.h"
+#include "shdeprecated.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 typedef struct {
     IShellBrowser IShellBrowser_iface;
+    IBrowserService IBrowserService_iface;
 
     LONG ref;
 } ShellBrowser;
@@ -45,6 +47,8 @@ static HRESULT WINAPI ShellBrowser_QueryInterface(
     if(IsEqualGUID(&IID_IShellBrowser, riid) || IsEqualGUID(&IID_IOleWindow, riid)
         || IsEqualGUID(&IID_IUnknown, riid))
         *ppvObject = &This->IShellBrowser_iface;
+    else if(IsEqualGUID(&IID_IBrowserService, riid))
+        *ppvObject = &This->IBrowserService_iface;
 
     if(*ppvObject) {
         TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
@@ -249,6 +253,359 @@ static const IShellBrowserVtbl ShellBrowserVtbl = {
     ShellBrowser_SetToolbarItems
 };
 
+static inline ShellBrowser *impl_from_IBrowserService(IBrowserService *iface)
+{
+    return CONTAINING_RECORD(iface, ShellBrowser, IBrowserService_iface);
+}
+
+static HRESULT WINAPI BrowserService_QueryInterface(
+        IBrowserService* iface,
+        REFIID riid,
+        void **ppvObject)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    return IShellBrowser_QueryInterface(&This->IShellBrowser_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI BrowserService_AddRef(
+        IBrowserService *iface)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    return IShellBrowser_AddRef(&This->IShellBrowser_iface);
+}
+
+static ULONG WINAPI BrowserService_Release(
+        IBrowserService* iface)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    return IShellBrowser_Release(&This->IShellBrowser_iface);
+}
+
+static HRESULT WINAPI BrowserService_GetParentSite(
+        IBrowserService* iface,
+        IOleInPlaceSite **ppipsite)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p\n", This, ppipsite);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_SetTitle(
+        IBrowserService* iface,
+        IShellView *psv,
+        LPCWSTR pszName)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p %s\n", This, psv, debugstr_w(pszName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetTitle(
+        IBrowserService* iface,
+        IShellView *psv,
+        LPWSTR pszName,
+        DWORD cchName)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p %p %d\n", This, psv, pszName, cchName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetOleObject(
+        IBrowserService* iface,
+        IOleObject **ppobjv)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p\n", This, ppobjv);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetTravelLog(
+        IBrowserService* iface,
+        ITravelLog **pptl)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p\n", This, pptl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_ShowControlWindow(
+        IBrowserService* iface,
+        UINT id,
+        BOOL fShow)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %u %d\n", This, id, fShow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_IsControlWindowShown(
+        IBrowserService* iface,
+        UINT id,
+        BOOL *pfShown)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %u %p\n", This, id, pfShown);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_IEGetDisplayName(
+        IBrowserService* iface,
+        PCIDLIST_ABSOLUTE pidl,
+        LPWSTR pwszName,
+        UINT uFlags)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p %p %u\n", This, pidl, pwszName, uFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_IEParseDisplayName(
+        IBrowserService* iface,
+        UINT uiCP,
+        LPCWSTR pwszPath,
+        PIDLIST_ABSOLUTE *ppidlOut)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %u %s %p\n", This, uiCP, debugstr_w(pwszPath), ppidlOut);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_DisplayParseError(
+        IBrowserService* iface,
+        HRESULT hres,
+        LPCWSTR pwszPath)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %x %s\n", This, hres, debugstr_w(pwszPath));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_NavigateToPidl(
+        IBrowserService* iface,
+        PCIDLIST_ABSOLUTE pidl,
+        DWORD grfHLNF)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p %d\n", This, pidl, grfHLNF);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_SetNavigateState(
+        IBrowserService* iface,
+        BNSTATE bnstate)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %d\n", This, bnstate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetNavigateState(
+        IBrowserService* iface,
+        BNSTATE *pbnstate)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p\n", This, pbnstate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_NotifyRedirect(
+        IBrowserService* iface,
+        IShellView *psv,
+        PCIDLIST_ABSOLUTE pidl,
+        BOOL *pfDidBrowse)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p %p %p\n", This, psv, pidl, pfDidBrowse);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_UpdateWindowList(
+        IBrowserService* iface)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_UpdateBackForwardState(
+        IBrowserService* iface)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_SetFlags(
+        IBrowserService* iface,
+        DWORD dwFlags,
+        DWORD dwFlagMask)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %x %x\n", This, dwFlags, dwFlagMask);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetFlags(
+        IBrowserService* iface,
+        DWORD *pdwFlags)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p\n", This, pdwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_CanNavigateNow(
+        IBrowserService* iface)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetPidl(
+        IBrowserService* iface,
+        PIDLIST_ABSOLUTE *ppidl)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p\n", This, ppidl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_SetReferrer(
+        IBrowserService* iface,
+        PCIDLIST_ABSOLUTE pidl)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p\n", This, pidl);
+    return E_NOTIMPL;
+}
+
+static DWORD WINAPI BrowserService_GetBrowserIndex(
+        IBrowserService* iface)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetBrowserByIndex(
+        IBrowserService* iface,
+        DWORD dwID,
+        IUnknown **ppunk)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %x %p\n", This, dwID, ppunk);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetHistoryObject(
+        IBrowserService* iface,
+        IOleObject **ppole,
+        IStream **pstm,
+        IBindCtx **ppbc)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p %p %p\n", This, ppole, pstm, ppbc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_SetHistoryObject(
+        IBrowserService* iface,
+        IOleObject *pole,
+        BOOL fIsLocalAnchor)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p %d\n", This, pole, fIsLocalAnchor);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_CacheOLEServer(
+        IBrowserService* iface,
+        IOleObject *pole)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p\n", This, pole);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetSetCodePage(
+        IBrowserService* iface,
+        VARIANT *pvarIn,
+        VARIANT *pvarOut)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p %p\n", This, pvarIn, pvarOut);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_OnHttpEquiv(
+        IBrowserService* iface,
+        IShellView *psv,
+        BOOL fDone,
+        VARIANT *pvarargIn,
+        VARIANT *pvarargOut)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p %d %p %p\n", This, psv, fDone, pvarargIn, pvarargOut);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetPalette(
+        IBrowserService* iface,
+        HPALETTE *hpal)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %p\n", This, hpal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_RegisterWindow(
+        IBrowserService* iface,
+        BOOL fForceRegister,
+        int swc)
+{
+    ShellBrowser *This = impl_from_IBrowserService(iface);
+    FIXME("%p %d %d\n", This, fForceRegister, swc);
+    return E_NOTIMPL;
+}
+
+static const IBrowserServiceVtbl BrowserServiceVtbl = {
+    BrowserService_QueryInterface,
+    BrowserService_AddRef,
+    BrowserService_Release,
+    BrowserService_GetParentSite,
+    BrowserService_SetTitle,
+    BrowserService_GetTitle,
+    BrowserService_GetOleObject,
+    BrowserService_GetTravelLog,
+    BrowserService_ShowControlWindow,
+    BrowserService_IsControlWindowShown,
+    BrowserService_IEGetDisplayName,
+    BrowserService_IEParseDisplayName,
+    BrowserService_DisplayParseError,
+    BrowserService_NavigateToPidl,
+    BrowserService_SetNavigateState,
+    BrowserService_GetNavigateState,
+    BrowserService_NotifyRedirect,
+    BrowserService_UpdateWindowList,
+    BrowserService_UpdateBackForwardState,
+    BrowserService_SetFlags,
+    BrowserService_GetFlags,
+    BrowserService_CanNavigateNow,
+    BrowserService_GetPidl,
+    BrowserService_SetReferrer,
+    BrowserService_GetBrowserIndex,
+    BrowserService_GetBrowserByIndex,
+    BrowserService_GetHistoryObject,
+    BrowserService_SetHistoryObject,
+    BrowserService_CacheOLEServer,
+    BrowserService_GetSetCodePage,
+    BrowserService_OnHttpEquiv,
+    BrowserService_GetPalette,
+    BrowserService_RegisterWindow
+};
+
 HRESULT ShellBrowser_Create(IShellBrowser **ppv)
 {
     ShellBrowser *sb = heap_alloc(sizeof(ShellBrowser));
@@ -256,6 +613,7 @@ HRESULT ShellBrowser_Create(IShellBrowser **ppv)
         return E_OUTOFMEMORY;
 
     sb->IShellBrowser_iface.lpVtbl = &ShellBrowserVtbl;
+    sb->IBrowserService_iface.lpVtbl = &BrowserServiceVtbl;
 
     sb->ref = 1;
 
