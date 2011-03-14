@@ -478,7 +478,7 @@ static NullRendererImpl *from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface) {
     return (NullRendererImpl*)((char*)iface - offsetof(NullRendererImpl, IAMFilterMiscFlags_vtbl));
 }
 
-static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, const REFIID riid, void **ppv) {
+static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv) {
     NullRendererImpl *This = from_IAMFilterMiscFlags(iface);
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
 }

@@ -1357,7 +1357,7 @@ static AsyncReader *from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface) {
     return (AsyncReader*)((char*)iface - offsetof(AsyncReader, IAMFilterMiscFlags_vtbl));
 }
 
-static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, const REFIID riid, void **ppv) {
+static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv) {
     AsyncReader *This = from_IAMFilterMiscFlags(iface);
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
 }
