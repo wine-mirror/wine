@@ -1203,7 +1203,7 @@ static void test_http_cache(void)
     CloseHandle(file);
 
     /* Send the same request, requiring it to be retrieved from the cache */
-    request = HttpOpenRequest(connect, "GET", "/hello.html", NULL, NULL, NULL, INTERNET_FLAG_FROM_CACHE, 0);
+    request = HttpOpenRequest(connect, "GET", "/tests/hello.html", NULL, NULL, NULL, INTERNET_FLAG_FROM_CACHE, 0);
 
     ret = HttpSendRequest(request, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
