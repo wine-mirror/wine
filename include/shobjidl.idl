@@ -1308,6 +1308,27 @@ interface ICommDlgBrowser3 : ICommDlgBrowser2
         [in] IShellView *ppshv);
 }
 
+/*****************************************************************************
+ * IDockingWindow interface
+ */
+[
+    object,
+    uuid(012dd920-7b26-11d0-8ca9-00a0c92dbfe8)
+]
+interface IDockingWindow : IOleWindow
+{
+    HRESULT ShowDW(
+        [in] BOOL fShow);
+
+    HRESULT CloseDW(
+        [in] DWORD dwReserved);
+
+    HRESULT ResizeBorderDW(
+        [in] LPCRECT prcBorder,
+        [in] IUnknown *punkToolbarSite,
+        [in] BOOL fReserved);
+};
+
 
 /*****************************************************************************
  * IDockingWindowFrame interface
