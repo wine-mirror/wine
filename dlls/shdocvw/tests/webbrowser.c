@@ -41,6 +41,7 @@
 #include "exdispid.h"
 #include "mimeinfo.h"
 #include "hlink.h"
+#include "docobjectservice.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
@@ -2961,6 +2962,18 @@ static void test_dochost_qs(IUnknown *unk)
     hres = IServiceProvider_QueryService(serv_prov, &IID_IWebBrowserApp, &IID_IHlinkFrame, (void**)&service);
     ok(hres == S_OK, "QueryService failed: %08x\n", hres);
     ok(iface_cmp(service, unk), "service != unk\n");
+    IUnknown_Release(service);
+
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IShellBrowser, &IID_IShellBrowser, (void**)&service);
+    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    IUnknown_Release(service);
+
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IShellBrowser, &IID_IBrowserService, (void**)&service);
+    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
+    IUnknown_Release(service);
+
+    hres = IServiceProvider_QueryService(serv_prov, &IID_IShellBrowser, &IID_IDocObjectService, (void**)&service);
+    ok(hres == S_OK, "QueryService failed: %08x\n", hres);
     IUnknown_Release(service);
 
     IServiceProvider_Release(serv_prov);
