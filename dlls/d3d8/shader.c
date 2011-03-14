@@ -22,6 +22,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d8);
 
+static inline IDirect3DVertexShader8Impl *impl_from_IDirect3DVertexShader8(IDirect3DVertexShader8 *iface)
+{
+  return CONTAINING_RECORD(iface, IDirect3DVertexShader8Impl, IDirect3DVertexShader8_iface);
+}
+
 static HRESULT WINAPI d3d8_vertexshader_QueryInterface(IDirect3DVertexShader8 *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
@@ -42,7 +47,7 @@ static HRESULT WINAPI d3d8_vertexshader_QueryInterface(IDirect3DVertexShader8 *i
 
 static ULONG WINAPI d3d8_vertexshader_AddRef(IDirect3DVertexShader8 *iface)
 {
-    IDirect3DVertexShader8Impl *shader = (IDirect3DVertexShader8Impl *)iface;
+    IDirect3DVertexShader8Impl *shader = impl_from_IDirect3DVertexShader8(iface);
     ULONG refcount = InterlockedIncrement(&shader->ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
@@ -66,7 +71,7 @@ static void STDMETHODCALLTYPE d3d8_vertexshader_wined3d_object_destroyed(void *p
 
 static ULONG WINAPI d3d8_vertexshader_Release(IDirect3DVertexShader8 *iface)
 {
-    IDirect3DVertexShader8Impl *shader = (IDirect3DVertexShader8Impl *)iface;
+    IDirect3DVertexShader8Impl *shader = impl_from_IDirect3DVertexShader8(iface);
     ULONG refcount = InterlockedDecrement(&shader->ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
@@ -157,7 +162,7 @@ HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Im
     }
 
     shader->ref = 1;
-    shader->lpVtbl = &d3d8_vertexshader_vtbl;
+    shader->IDirect3DVertexShader8_iface.lpVtbl = &d3d8_vertexshader_vtbl;
 
     hr = d3d8_vertexshader_create_vertexdeclaration(device, declaration, shader_handle, &shader->vertex_declaration);
     if (FAILED(hr))
@@ -187,6 +192,11 @@ HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Im
     return D3D_OK;
 }
 
+static inline IDirect3DPixelShader8Impl *impl_from_IDirect3DPixelShader8(IDirect3DPixelShader8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DPixelShader8Impl, IDirect3DPixelShader8_iface);
+}
+
 static HRESULT WINAPI d3d8_pixelshader_QueryInterface(IDirect3DPixelShader8 *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
@@ -207,7 +217,7 @@ static HRESULT WINAPI d3d8_pixelshader_QueryInterface(IDirect3DPixelShader8 *ifa
 
 static ULONG WINAPI d3d8_pixelshader_AddRef(IDirect3DPixelShader8 *iface)
 {
-    IDirect3DPixelShader8Impl *shader = (IDirect3DPixelShader8Impl *)iface;
+    IDirect3DPixelShader8Impl *shader = impl_from_IDirect3DPixelShader8(iface);
     ULONG refcount = InterlockedIncrement(&shader->ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
@@ -224,7 +234,7 @@ static ULONG WINAPI d3d8_pixelshader_AddRef(IDirect3DPixelShader8 *iface)
 
 static ULONG WINAPI d3d8_pixelshader_Release(IDirect3DPixelShader8 *iface)
 {
-    IDirect3DPixelShader8Impl *shader = (IDirect3DPixelShader8Impl *)iface;
+    IDirect3DPixelShader8Impl *shader = impl_from_IDirect3DPixelShader8(iface);
     ULONG refcount = InterlockedDecrement(&shader->ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
@@ -263,7 +273,7 @@ HRESULT pixelshader_init(IDirect3DPixelShader8Impl *shader, IDirect3DDevice8Impl
     HRESULT hr;
 
     shader->ref = 1;
-    shader->lpVtbl = &d3d8_pixelshader_vtbl;
+    shader->IDirect3DPixelShader8_iface.lpVtbl = &d3d8_pixelshader_vtbl;
     shader->handle = shader_handle;
 
     wined3d_mutex_lock();

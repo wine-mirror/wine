@@ -2146,7 +2146,7 @@ static HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(IDirect3DDevice8
 
     wined3d_mutex_unlock();
 
-    if (IUnknown_Release((IUnknown *)shader))
+    if (IDirect3DVertexShader8_Release(&shader->IDirect3DVertexShader8_iface))
     {
         ERR("Shader %p has references left, this shouldn't happen.\n", shader);
     }
@@ -2471,7 +2471,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(IDirect3DDevice8 *i
 
     wined3d_mutex_unlock();
 
-    if (IUnknown_Release((IUnknown *)shader))
+    if (IDirect3DPixelShader8_Release(&shader->IDirect3DPixelShader8_iface))
     {
         ERR("Shader %p has references left, this shouldn't happen.\n", shader);
     }

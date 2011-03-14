@@ -484,8 +484,8 @@ DECLARE_INTERFACE_(IDirect3DPixelShader8,IUnknown)
  */
 
 struct IDirect3DVertexShader8Impl {
-  const IDirect3DVertexShader8Vtbl *lpVtbl;
-  LONG ref;
+  IDirect3DVertexShader8            IDirect3DVertexShader8_iface;
+  LONG                              ref;
 
   IDirect3DVertexDeclaration8      *vertex_declaration;
   IWineD3DVertexShader             *wineD3DVertexShader;
@@ -500,7 +500,7 @@ HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Im
  * IDirect3DPixelShader implementation structure
  */
 typedef struct IDirect3DPixelShader8Impl {
-    const IDirect3DPixelShader8Vtbl *lpVtbl;
+    IDirect3DPixelShader8            IDirect3DPixelShader8_iface;
     LONG                             ref;
 
     DWORD                            handle;
