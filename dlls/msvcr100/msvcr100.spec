@@ -392,7 +392,7 @@
 @ cdecl __crtCompareStringW(long long wstr long wstr long) msvcrt.__crtCompareStringW
 @ cdecl __crtLCMapStringA(long long str long ptr long long long) msvcrt.__crtLCMapStringA
 @ cdecl __crtLCMapStringW(long long wstr long ptr long long long) msvcrt.__crtLCMapStringW
-@ stub __daylight
+@ cdecl __daylight() msvcrt.__daylight
 @ cdecl __dllonexit(ptr ptr ptr) msvcrt.__dllonexit
 @ cdecl __doserrno() msvcrt.__doserrno
 @ stub __dstbias

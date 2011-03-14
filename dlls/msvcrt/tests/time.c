@@ -42,6 +42,8 @@ static errno_t    (__cdecl *p_strtime_s)(char*,size_t);
 static errno_t    (__cdecl *p_strdate_s)(char*,size_t);
 static errno_t    (__cdecl *p_localtime32_s)(struct tm*, __time32_t*);
 static errno_t    (__cdecl *p_localtime64_s)(struct tm*, __time64_t*);
+static int*       (__cdecl *p__daylight)(void);
+static int*       (__cdecl *p___p__daylight)(void);
 
 static void init(void)
 {
@@ -54,6 +56,8 @@ static void init(void)
     p_strdate_s = (void*)GetProcAddress(hmod, "_strdate_s");
     p_localtime32_s = (void*)GetProcAddress(hmod, "_localtime32_s");
     p_localtime64_s = (void*)GetProcAddress(hmod, "_localtime64_s");
+    p__daylight = (void*)GetProcAddress(hmod, "__daylight");
+    p___p__daylight = (void*)GetProcAddress(hmod, "__p__daylight");
 }
 
 static int get_test_year(time_t *start)
@@ -543,6 +547,27 @@ static void test_localtime64_s(void)
        tm.tm_isdst);
 }
 
+static void test_daylight(void)
+{
+    int *ret1, *ret2;
+
+    if (!p__daylight)
+    {
+        win_skip("__daylight() not available\n");
+        return;
+    }
+
+    if (!p___p__daylight)
+    {
+        win_skip("__p__daylight not available\n");
+        return;
+    }
+
+    ret1 = p__daylight();
+    ret2 = p___p__daylight();
+    ok(ret1 && ret1 == ret2, "got %p\n", ret1);
+}
+
 START_TEST(time)
 {
     init();
@@ -557,4 +582,5 @@ START_TEST(time)
     test_wstrtime();
     test_localtime32_s();
     test_localtime64_s();
+    test_daylight();
 }
