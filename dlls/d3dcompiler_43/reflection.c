@@ -1203,7 +1203,7 @@ static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type 
     DWORD temp;
     D3D11_SHADER_TYPE_DESC *desc;
     unsigned int i;
-    struct d3dcompiler_shader_reflection_type_member *members;
+    struct d3dcompiler_shader_reflection_type_member *members = NULL;
     HRESULT hr;
     DWORD member_offset;
 
