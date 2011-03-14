@@ -277,6 +277,11 @@ static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
     return WINED3D_OK;
 }
 
+IWineD3DVolume * CDECL wined3d_volume_from_resource(struct wined3d_resource *resource)
+{
+    return (IWineD3DVolume *)volume_from_resource(resource);
+}
+
 static HRESULT WINAPI IWineD3DVolumeImpl_Unmap(IWineD3DVolume *iface)
 {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;

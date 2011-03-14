@@ -277,16 +277,22 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetVolumeLevel(IDirect3DVolume
     return D3D_OK;
 }
 
-static HRESULT WINAPI IDirect3DVolumeTexture8Impl_LockBox(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level, D3DLOCKED_BOX *pLockedVolume, CONST D3DBOX *pBox, DWORD Flags) {
-    IDirect3DVolumeTexture8Impl *This = (IDirect3DVolumeTexture8Impl *)iface;
+static HRESULT WINAPI IDirect3DVolumeTexture8Impl_LockBox(IDirect3DVolumeTexture8 *iface,
+        UINT level, D3DLOCKED_BOX *locked_box, const D3DBOX *box, DWORD flags)
+{
+    IDirect3DVolumeTexture8Impl *texture = (IDirect3DVolumeTexture8Impl *)iface;
+    struct wined3d_resource *sub_resource;
     HRESULT hr;
 
     TRACE("iface %p, level %u, locked_box %p, box %p, flags %#x.\n",
-            iface, Level, pLockedVolume, pBox, Flags);
+            iface, level, locked_box, box, flags);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolumeTexture_Map(This->wineD3DVolumeTexture, Level,
-            (WINED3DLOCKED_BOX *)pLockedVolume, (const WINED3DBOX *)pBox, Flags);
+    if (!(sub_resource = IWineD3DVolumeTexture_GetSubResource(texture->wineD3DVolumeTexture, level)))
+        hr = D3DERR_INVALIDCALL;
+    else
+        hr = IDirect3DVolume8_LockBox((IDirect3DVolume8 *)wined3d_resource_get_parent(sub_resource),
+                locked_box, box, flags);
     wined3d_mutex_unlock();
 
     return hr;

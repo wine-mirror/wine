@@ -2395,12 +2395,6 @@ interface IWineD3DCubeTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 {
-    HRESULT Map(
-        [in] UINT sub_resource_idx,
-        [out] WINED3DLOCKED_BOX *locked_box,
-        [in] const WINED3DBOX *box,
-        [in] DWORD flags
-    );
     HRESULT Unmap(
         [in] UINT sub_resource_idx
     );
@@ -3200,3 +3194,5 @@ ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration *declaration);
 void * __cdecl wined3d_vertex_declaration_get_parent(const struct wined3d_vertex_declaration *declaration);
 ULONG __cdecl wined3d_vertex_declaration_incref(struct wined3d_vertex_declaration *declaration);
+
+IWineD3DVolume * __cdecl wined3d_volume_from_resource(struct wined3d_resource *resource);

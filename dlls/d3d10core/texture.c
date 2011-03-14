@@ -346,31 +346,31 @@ static UINT STDMETHODCALLTYPE d3d10_texture3d_GetEvictionPriority(ID3D10Texture3
     return 0;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UINT sub_resource,
+static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UINT sub_resource_idx,
         D3D10_MAP map_type, UINT map_flags, D3D10_MAPPED_TEXTURE3D *mapped_texture)
 {
     struct d3d10_texture3d *texture = (struct d3d10_texture3d *)iface;
+    struct wined3d_resource *sub_resource;
     WINED3DLOCKED_BOX wined3d_map_desc;
     HRESULT hr;
 
-    TRACE("iface %p, sub_resource %u, map_type %u, map_flags %#x, mapped_texture %p.\n",
-            iface, sub_resource, map_type, map_flags, mapped_texture);
+    TRACE("iface %p, sub_resource_idx %u, map_type %u, map_flags %#x, mapped_texture %p.\n",
+            iface, sub_resource_idx, map_type, map_flags, mapped_texture);
 
     if (map_type != D3D10_MAP_READ_WRITE)
         FIXME("Ignoring map_type %#x.\n", map_type);
     if (map_flags)
         FIXME("Ignoring map_flags %#x.\n", map_flags);
 
-    hr = IWineD3DVolumeTexture_Map(texture->wined3d_texture, sub_resource, &wined3d_map_desc, NULL, 0);
-    if (FAILED(hr))
+    if (!(sub_resource = IWineD3DVolumeTexture_GetSubResource(texture->wined3d_texture, sub_resource_idx)))
+        hr = E_INVALIDARG;
+    else if (SUCCEEDED(hr = IWineD3DVolume_Map(wined3d_volume_from_resource(sub_resource),
+            &wined3d_map_desc, NULL, 0)))
     {
-        WARN("Failed to map texture, hr %#x.\n", hr);
-        return hr;
+        mapped_texture->pData = wined3d_map_desc.pBits;
+        mapped_texture->RowPitch = wined3d_map_desc.RowPitch;
+        mapped_texture->DepthPitch = wined3d_map_desc.SlicePitch;
     }
-
-    mapped_texture->pData = wined3d_map_desc.pBits;
-    mapped_texture->RowPitch = wined3d_map_desc.RowPitch;
-    mapped_texture->DepthPitch = wined3d_map_desc.SlicePitch;
 
     return hr;
 }

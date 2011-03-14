@@ -273,25 +273,6 @@ static struct wined3d_resource * WINAPI IWineD3DVolumeTextureImpl_GetSubResource
     return basetexture_get_sub_resource(texture, sub_resource_idx);
 }
 
-static HRESULT WINAPI IWineD3DVolumeTextureImpl_Map(IWineD3DVolumeTexture *iface,
-        UINT sub_resource_idx, WINED3DLOCKED_BOX *locked_box, const WINED3DBOX *box, DWORD flags)
-{
-    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    struct wined3d_resource *sub_resource;
-
-    TRACE("iface %p, sub_resource_idx %u, locked_box %p, box %p, flags %#x.\n",
-            iface, sub_resource_idx, locked_box, box, flags);
-
-    if (!(sub_resource = basetexture_get_sub_resource(texture, sub_resource_idx)))
-    {
-        WARN("Failed to get sub-resource.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    return IWineD3DVolume_Map((IWineD3DVolume *)volume_from_resource(sub_resource),
-            locked_box, box, flags);
-}
-
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_Unmap(IWineD3DVolumeTexture *iface, UINT sub_resource_idx)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
@@ -352,7 +333,6 @@ static const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_IsCondNP2,
     IWineD3DVolumeTextureImpl_GetSubResource,
     /* volume texture */
-    IWineD3DVolumeTextureImpl_Map,
     IWineD3DVolumeTextureImpl_Unmap,
     IWineD3DVolumeTextureImpl_AddDirtyBox
 };
