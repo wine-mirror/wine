@@ -696,7 +696,7 @@ static void test_FileSecurity(void)
     DWORD sdSize;
     DWORD retSize;
     BYTE *sd;
-    SECURITY_INFORMATION const request = OWNER_SECURITY_INFORMATION
+    const SECURITY_INFORMATION request = OWNER_SECURITY_INFORMATION
                                        | GROUP_SECURITY_INFORMATION
                                        | DACL_SECURITY_INFORMATION;
 
