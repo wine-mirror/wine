@@ -1725,16 +1725,27 @@ static nsresult NSAPI nsURI_GetScheme(nsIURL *iface, nsACString *aScheme)
 static nsresult NSAPI nsURI_SetScheme(nsIURL *iface, const nsACString *aScheme)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    const char *schemea;
+    WCHAR *scheme;
+    HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aScheme));
 
-    if(This->nsuri) {
-        invalidate_uri(This);
-        return nsIURI_SetScheme(This->nsuri, aScheme);
-    }
+    if(!ensure_uri_builder(This))
+        return NS_ERROR_UNEXPECTED;
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsACString_GetData(aScheme, &schemea);
+    scheme = heap_strdupAtoW(schemea);
+    if(!scheme)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    hres = IUriBuilder_SetSchemeName(This->uri_builder, scheme);
+    heap_free(scheme);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
+
+    sync_wine_url(This);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_GetUserPass(nsIURL *iface, nsACString *aUserPass)
