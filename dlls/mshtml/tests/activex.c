@@ -101,7 +101,7 @@ static const char object_ax_str[] =
     "</object>"
     "</body></html>";
 
-static const REFIID pluginhost_iids[] = {
+static REFIID pluginhost_iids[] = {
     &IID_IOleClientSite,
     &IID_IAdviseSink,
     &IID_IAdviseSinkEx,
