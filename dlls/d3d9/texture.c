@@ -354,14 +354,29 @@ static HRESULT WINAPI IDirect3DTexture9Impl_UnlockRect(IDirect3DTexture9 *iface,
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DTexture9Impl_AddDirtyRect(LPDIRECT3DTEXTURE9 iface, CONST RECT* pDirtyRect) {
-    IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
+static HRESULT WINAPI IDirect3DTexture9Impl_AddDirtyRect(IDirect3DTexture9 *iface, const RECT *dirty_rect)
+{
+    IDirect3DTexture9Impl *texture = (IDirect3DTexture9Impl *)iface;
     HRESULT hr;
 
-    TRACE("iface %p, dirty_rect %p.\n", iface, pDirtyRect);
+    TRACE("iface %p, dirty_rect %s.\n",
+            iface, wine_dbgstr_rect(dirty_rect));
 
     wined3d_mutex_lock();
-    hr = IWineD3DTexture_AddDirtyRect(This->wineD3DTexture, pDirtyRect);
+    if (!dirty_rect)
+        hr = IWineD3DTexture_AddDirtyRegion(texture->wineD3DTexture, 0, NULL);
+    else
+    {
+        WINED3DBOX dirty_region;
+
+        dirty_region.Left = dirty_rect->left;
+        dirty_region.Top = dirty_rect->top;
+        dirty_region.Right = dirty_rect->right;
+        dirty_region.Bottom = dirty_rect->bottom;
+        dirty_region.Front = 0;
+        dirty_region.Back = 1;
+        hr = IWineD3DTexture_AddDirtyRegion(texture->wineD3DTexture, 0, &dirty_region);
+    }
     wined3d_mutex_unlock();
 
     return hr;

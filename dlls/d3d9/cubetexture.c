@@ -365,19 +365,34 @@ static HRESULT WINAPI IDirect3DCubeTexture9Impl_UnlockRect(IDirect3DCubeTexture9
     return hr;
 }
 
-static HRESULT  WINAPI IDirect3DCubeTexture9Impl_AddDirtyRect(LPDIRECT3DCUBETEXTURE9 iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
-    IDirect3DCubeTexture9Impl *This = (IDirect3DCubeTexture9Impl *)iface;
+static HRESULT  WINAPI IDirect3DCubeTexture9Impl_AddDirtyRect(IDirect3DCubeTexture9 *iface,
+        D3DCUBEMAP_FACES face, const RECT *dirty_rect)
+{
+    IDirect3DCubeTexture9Impl *texture = (IDirect3DCubeTexture9Impl *)iface;
     HRESULT hr;
 
-    TRACE("iface %p, face %#x, dirty_rect %p.\n", iface, FaceType, pDirtyRect);
+    TRACE("iface %p, face %#x, dirty_rect %s.\n",
+            iface, face, wine_dbgstr_rect(dirty_rect));
 
     wined3d_mutex_lock();
-    hr = IWineD3DCubeTexture_AddDirtyRect(This->wineD3DCubeTexture, (WINED3DCUBEMAP_FACES) FaceType, pDirtyRect);
+    if (!dirty_rect)
+        hr = IWineD3DCubeTexture_AddDirtyRegion(texture->wineD3DCubeTexture, face, NULL);
+    else
+    {
+        WINED3DBOX dirty_region;
+
+        dirty_region.Left = dirty_rect->left;
+        dirty_region.Top = dirty_rect->top;
+        dirty_region.Right = dirty_rect->right;
+        dirty_region.Bottom = dirty_rect->bottom;
+        dirty_region.Front = 0;
+        dirty_region.Back = 1;
+        hr = IWineD3DCubeTexture_AddDirtyRegion(texture->wineD3DCubeTexture, face, &dirty_region);
+    }
     wined3d_mutex_unlock();
 
     return hr;
 }
-
 
 static const IDirect3DCubeTexture9Vtbl Direct3DCubeTexture9_Vtbl =
 {

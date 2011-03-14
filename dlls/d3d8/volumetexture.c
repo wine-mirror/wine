@@ -316,14 +316,16 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_UnlockBox(IDirect3DVolumeTextu
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE8 iface, CONST D3DBOX *pDirtyBox) {
-    IDirect3DVolumeTexture8Impl *This = (IDirect3DVolumeTexture8Impl *)iface;
+static HRESULT WINAPI IDirect3DVolumeTexture8Impl_AddDirtyBox(IDirect3DVolumeTexture8 *iface,
+        const D3DBOX *dirty_box)
+{
+    IDirect3DVolumeTexture8Impl *texture = (IDirect3DVolumeTexture8Impl *)iface;
     HRESULT hr;
 
-    TRACE("iface %p, dirty_box %p.\n", iface, pDirtyBox);
+    TRACE("iface %p, dirty_box %p.\n", iface, dirty_box);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolumeTexture_AddDirtyBox(This->wineD3DVolumeTexture, (CONST WINED3DBOX *) pDirtyBox);
+    hr = IWineD3DVolumeTexture_AddDirtyRegion(texture->wineD3DVolumeTexture, 0, (const WINED3DBOX *)dirty_box);
     wined3d_mutex_unlock();
 
     return hr;

@@ -2361,6 +2361,10 @@ interface IWineD3DBaseTexture : IWineD3DResource
     struct wined3d_resource *GetSubResource(
         [in] UINT sub_resource_idx
     );
+    HRESULT AddDirtyRegion(
+        [in] UINT layer,
+        [in] const WINED3DBOX *dirty_region
+    );
 }
 
 [
@@ -2370,9 +2374,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
 ]
 interface IWineD3DTexture : IWineD3DBaseTexture
 {
-    HRESULT AddDirtyRect(
-        [in] const RECT *dirty_rect
-    );
 }
 
 [
@@ -2382,10 +2383,6 @@ interface IWineD3DTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DCubeTexture : IWineD3DBaseTexture
 {
-    HRESULT AddDirtyRect(
-        [in] WINED3DCUBEMAP_FACES face,
-        [in] const RECT *dirty_rect
-    );
 }
 
 [
@@ -2395,9 +2392,6 @@ interface IWineD3DCubeTexture : IWineD3DBaseTexture
 ]
 interface IWineD3DVolumeTexture : IWineD3DBaseTexture
 {
-    HRESULT AddDirtyBox(
-        [in] const WINED3DBOX *dirty_box
-    );
 }
 
 [

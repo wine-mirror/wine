@@ -1188,9 +1188,9 @@ GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface)
 }
 
 /* Slightly inefficient way to handle multiple dirty rects but it works :) */
-void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect)
+void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const WINED3DBOX *dirty_rect)
 {
-    TRACE("surface %p, dirty_rect %s.\n", surface, wine_dbgstr_rect(dirty_rect));
+    TRACE("surface %p, dirty_rect %p.\n", surface, dirty_rect);
 
     if (!(surface->flags & SFLAG_INSYSMEM) && (surface->flags & SFLAG_INTEXTURE))
         /* No partial locking for textures yet. */
@@ -1199,10 +1199,10 @@ void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect
     surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
     if (dirty_rect)
     {
-        surface->dirtyRect.left = min(surface->dirtyRect.left, dirty_rect->left);
-        surface->dirtyRect.top = min(surface->dirtyRect.top, dirty_rect->top);
-        surface->dirtyRect.right = max(surface->dirtyRect.right, dirty_rect->right);
-        surface->dirtyRect.bottom = max(surface->dirtyRect.bottom, dirty_rect->bottom);
+        surface->dirtyRect.left = min(surface->dirtyRect.left, dirty_rect->Left);
+        surface->dirtyRect.top = min(surface->dirtyRect.top, dirty_rect->Top);
+        surface->dirtyRect.right = max(surface->dirtyRect.right, dirty_rect->Right);
+        surface->dirtyRect.bottom = max(surface->dirtyRect.bottom, dirty_rect->Bottom);
     }
     else
     {
@@ -1924,7 +1924,22 @@ lock_end:
     }
 
     if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
-        surface_add_dirty_rect(This, pRect);
+    {
+        if (!pRect)
+            surface_add_dirty_rect(This, NULL);
+        else
+        {
+            WINED3DBOX b;
+
+            b.Left = pRect->left;
+            b.Top = pRect->top;
+            b.Right = pRect->right;
+            b.Bottom = pRect->bottom;
+            b.Front = 0;
+            b.Back = 1;
+            surface_add_dirty_rect(This, &b);
+        }
+    }
 
     return IWineD3DBaseSurfaceImpl_Map(iface, pLockedRect, pRect, flags);
 }

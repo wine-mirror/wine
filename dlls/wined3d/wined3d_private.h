@@ -2158,7 +2158,7 @@ static inline GLuint surface_get_texture_name(IWineD3DSurfaceImpl *surface,
             ? surface->texture_name_srgb : surface->texture_name;
 }
 
-void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const RECT *dirty_rect) DECLSPEC_HIDDEN;
+void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const WINED3DBOX *dirty_rect) DECLSPEC_HIDDEN;
 void surface_bind(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info, BOOL srgb) DECLSPEC_HIDDEN;
 HRESULT surface_color_fill(IWineD3DSurfaceImpl *s, const RECT *rect, const WINED3DCOLORVALUE *color) DECLSPEC_HIDDEN;
 void surface_gdi_cleanup(IWineD3DSurfaceImpl *This) DECLSPEC_HIDDEN;

@@ -336,24 +336,22 @@ static struct wined3d_resource * WINAPI IWineD3DCubeTextureImpl_GetSubResource(I
     return basetexture_get_sub_resource(texture, sub_resource_idx);
 }
 
-static HRESULT WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface,
-        WINED3DCUBEMAP_FACES face, const RECT *dirty_rect)
+static HRESULT WINAPI IWineD3DCubeTextureImpl_AddDirtyRegion(IWineD3DCubeTexture *iface,
+        UINT layer, const WINED3DBOX *dirty_region)
 {
     IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    UINT sub_resource_idx = face * texture->baseTexture.level_count;
     struct wined3d_resource *sub_resource;
 
-    TRACE("iface %p, face %u, dirty_rect %s.\n",
-            iface, face, wine_dbgstr_rect(dirty_rect));
+    TRACE("iface %p, layer %u, dirty_region %p.\n", iface, layer, dirty_region);
 
-    if (!(sub_resource = basetexture_get_sub_resource(texture, sub_resource_idx)))
+    if (!(sub_resource = basetexture_get_sub_resource(texture, layer * texture->baseTexture.level_count)))
     {
         WARN("Failed to get sub-resource.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
     basetexture_set_dirty(texture, TRUE);
-    surface_add_dirty_rect(surface_from_resource(sub_resource), dirty_rect);
+    surface_add_dirty_rect(surface_from_resource(sub_resource), dirty_region);
 
     return WINED3D_OK;
 }
@@ -382,8 +380,7 @@ static const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_GenerateMipSubLevels,
     IWineD3DCubeTextureImpl_IsCondNP2,
     IWineD3DCubeTextureImpl_GetSubResource,
-    /* IWineD3DCubeTexture */
-    IWineD3DCubeTextureImpl_AddDirtyRect
+    IWineD3DCubeTextureImpl_AddDirtyRegion,
 };
 
 HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UINT levels,

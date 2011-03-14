@@ -351,15 +351,29 @@ static HRESULT WINAPI IDirect3DCubeTexture8Impl_UnlockRect(IDirect3DCubeTexture8
 }
 
 static HRESULT WINAPI IDirect3DCubeTexture8Impl_AddDirtyRect(IDirect3DCubeTexture8 *iface,
-        D3DCUBEMAP_FACES FaceType, const RECT *pDirtyRect)
+        D3DCUBEMAP_FACES face, const RECT *dirty_rect)
 {
-    IDirect3DCubeTexture8Impl *This = impl_from_IDirect3DCubeTexture8(iface);
+    IDirect3DCubeTexture8Impl *texture = impl_from_IDirect3DCubeTexture8(iface);
     HRESULT hr;
 
-    TRACE("iface %p, face %#x, dirty_rect %p.\n", iface, FaceType, pDirtyRect);
+    TRACE("iface %p, face %#x, dirty_rect %s.\n",
+            iface, face, wine_dbgstr_rect(dirty_rect));
 
     wined3d_mutex_lock();
-    hr = IWineD3DCubeTexture_AddDirtyRect(This->wineD3DCubeTexture, (WINED3DCUBEMAP_FACES) FaceType, pDirtyRect);
+    if (!dirty_rect)
+        hr = IWineD3DCubeTexture_AddDirtyRegion(texture->wineD3DCubeTexture, face, NULL);
+    else
+    {
+        WINED3DBOX dirty_region;
+
+        dirty_region.Left = dirty_rect->left;
+        dirty_region.Top = dirty_rect->top;
+        dirty_region.Right = dirty_rect->right;
+        dirty_region.Bottom = dirty_rect->bottom;
+        dirty_region.Front = 0;
+        dirty_region.Back = 1;
+        hr = IWineD3DCubeTexture_AddDirtyRegion(texture->wineD3DCubeTexture, face, &dirty_region);
+    }
     wined3d_mutex_unlock();
 
     return hr;
