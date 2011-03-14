@@ -797,7 +797,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     case BINDSTATUS_REDIRECTING:
         CHECK_EXPECT(ReportProgress_REDIRECTING);
         if(test_redirect)
-            ok(!strcmp_wa(szStatusText, "http://test.winehq.org/hello.html"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
+            ok(!strcmp_wa(szStatusText, "http://test.winehq.org/tests/hello.html"), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         else
             ok(szStatusText == NULL, "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
@@ -2901,7 +2901,7 @@ static void test_http_protocol(void)
          'p','o','s','t','t','e','s','t','.','p','h','p',0};
     static const WCHAR redirect_url[] =
         {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
-         't','e','s','t','r','e','d','i','r','e','c','t',0};
+         't','e','s','t','s','/','r','e','d','i','r','e','c','t',0};
     static const WCHAR winetest_url[] =
         {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/','d','a','t','a','/',0};
 
