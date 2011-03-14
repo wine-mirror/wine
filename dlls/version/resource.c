@@ -220,7 +220,7 @@ static BOOL find_pe_resource( HFILE lzfd, DWORD *resLen, DWORD *resOff )
     PIMAGE_DATA_DIRECTORY resDataDir;
     PIMAGE_SECTION_HEADER sections;
     LPBYTE resSection;
-    DWORD resSectionSize;
+    DWORD section_size, data_size;
     const void *resDir;
     const IMAGE_RESOURCE_DIRECTORY *resPtr;
     const IMAGE_RESOURCE_DATA_ENTRY *resData;
@@ -282,8 +282,9 @@ static BOOL find_pe_resource( HFILE lzfd, DWORD *resLen, DWORD *resOff )
     }
 
     /* Read in resource section */
-    resSectionSize = sections[i].SizeOfRawData;
-    resSection = HeapAlloc( GetProcessHeap(), 0, resSectionSize );
+    data_size = sections[i].SizeOfRawData;
+    section_size = max( data_size, sections[i].Misc.VirtualSize );
+    resSection = HeapAlloc( GetProcessHeap(), 0, section_size );
     if ( !resSection )
     {
         HeapFree( GetProcessHeap(), 0, sections );
@@ -291,7 +292,8 @@ static BOOL find_pe_resource( HFILE lzfd, DWORD *resLen, DWORD *resOff )
     }
 
     LZSeek( lzfd, sections[i].PointerToRawData, SEEK_SET );
-    if ( resSectionSize != LZRead( lzfd, (char*)resSection, resSectionSize ) ) goto done;
+    if (data_size != LZRead( lzfd, (char*)resSection, data_size )) goto done;
+    if (data_size < section_size) memset( (char *)resSection + data_size, 0, section_size - data_size );
 
     /* Find resource */
     resDir = resSection + (resDataDir->VirtualAddress - sections[i].VirtualAddress);
