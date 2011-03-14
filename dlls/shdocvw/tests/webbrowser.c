@@ -36,6 +36,7 @@
 #include "olectl.h"
 #include "mshtmdid.h"
 #include "shobjidl.h"
+#include "shdeprecated.h"
 #include "shlguid.h"
 #include "exdispid.h"
 #include "mimeinfo.h"
@@ -2643,8 +2644,6 @@ static void test_IServiceProvider(IUnknown *unk)
     IServiceProvider *servprov = (void*)0xdeadbeef;
     HRESULT hres;
     IUnknown *ret = NULL;
-    static const IID IID_IBrowserService2 =
-        {0x68BD21CC,0x438B,0x11d2,{0xA5,0x60,0x00,0xA0,0xC,0x2D,0xBF,0xE8}};
 
     hres = IUnknown_QueryInterface(unk, &IID_IServiceProvider, (void**)&servprov);
     ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);

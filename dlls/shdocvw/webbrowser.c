@@ -23,6 +23,7 @@
 #include "shdocvw.h"
 #include "exdispid.h"
 #include "mshtml.h"
+#include "shdeprecated.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -1140,8 +1141,6 @@ static HRESULT STDMETHODCALLTYPE WBServiceProvider_QueryService(IServiceProvider
             REFGUID guidService, REFIID riid, void **ppv)
 {
     WebBrowser *This = impl_from_IServiceProvider(iface);
-    static const IID IID_IBrowserService2 =
-        {0x68BD21CC,0x438B,0x11d2,{0xA5,0x60,0x00,0xA0,0xC,0x2D,0xBF,0xE8}};
 
     if(*ppv)
         ppv = NULL;
