@@ -2161,8 +2161,8 @@ static void _elem_get_scroll_left(unsigned line, IUnknown *unk)
     ok(l == l2, "unexpected left %d, expected %d\n", l2, l);
 }
 
-#define test_img_src(i,s) _test_img_src(__LINE__,i,s)
-static void _test_img_src(unsigned line, IUnknown *unk, const char *exsrc)
+#define test_img_src(a,b,c) _test_img_src(__LINE__,a,b,c)
+static void _test_img_src(unsigned line, IUnknown *unk, const char *exsrc, const char *broken_src)
 {
     IHTMLImgElement *img = _get_img_iface(line, unk);
     BSTR src;
@@ -2171,7 +2171,8 @@ static void _test_img_src(unsigned line, IUnknown *unk, const char *exsrc)
     hres = IHTMLImgElement_get_src(img, &src);
     IHTMLImgElement_Release(img);
     ok_(__FILE__,line) (hres == S_OK, "get_src failed: %08x\n", hres);
-    ok_(__FILE__,line) (!strcmp_wa(src, exsrc), "get_src returned %s expected %s\n", wine_dbgstr_w(src), exsrc);
+    ok_(__FILE__,line) (!strcmp_wa(src, exsrc) || (broken_src && broken(!strcmp_wa(src, broken_src))),
+        "get_src returned %s expected %s\n", wine_dbgstr_w(src), exsrc);
     SysFreeString(src);
 }
 
@@ -2187,8 +2188,6 @@ static void _test_img_set_src(unsigned line, IUnknown *unk, const char *src)
     IHTMLImgElement_Release(img);
     SysFreeString(tmp);
     ok_(__FILE__,line) (hres == S_OK, "put_src failed: %08x\n", hres);
-
-    _test_img_src(line, unk, src);
 }
 
 #define test_img_alt(u,a) _test_img_alt(__LINE__,u,a)
@@ -6574,8 +6573,9 @@ static void test_elems(IHTMLDocument2 *doc)
 
     elem = get_elem_by_id(doc, "imgid", TRUE);
     if(elem) {
-        test_img_src((IUnknown*)elem, "");
+        test_img_src((IUnknown*)elem, "", NULL);
         test_img_set_src((IUnknown*)elem, "about:blank");
+        test_img_src((IUnknown*)elem, "about:blank", NULL);
         test_img_alt((IUnknown*)elem, NULL);
         test_img_set_alt((IUnknown*)elem, "alt test");
         test_img_name((IUnknown*)elem, "WineImg");
@@ -6852,6 +6852,31 @@ static void test_attr(IHTMLElement *elem)
     IHTMLDOMAttribute_Release(attr);
 }
 
+static void test_blocked(IHTMLDocument2 *doc, IHTMLElement *outer_elem)
+{
+    IHTMLElement *elem;
+
+    test_elem_set_innerhtml((IUnknown*)outer_elem,
+            "<img id=\"imgid\" src=\"BLOCKED::http://www.winehq.org/img.png\" />");
+    elem = get_elem_by_id(doc, "imgid", TRUE);
+    if(elem) {
+        test_img_src((IUnknown*)elem, "BLOCKED::", "blocked::http://www.winehq.org/img.png");
+        IHTMLElement_Release(elem);
+    }
+
+    test_elem_set_innerhtml((IUnknown*)outer_elem,
+            "<img id=\"imgid\" src=\"BLOCKE::http://www.winehq.org/img.png\" />");
+    elem = get_elem_by_id(doc, "imgid", TRUE);
+    if(elem) {
+        test_img_src((IUnknown*)elem, "blocke::http://www.winehq.org/img.png", NULL);
+        test_img_set_src((IUnknown*)elem, "BLOCKED:http://www.winehq.org/img.png");
+        test_img_src((IUnknown*)elem, "blocked:http://www.winehq.org/img.png", NULL);
+        test_img_set_src((IUnknown*)elem, "blocked::http://www.winehq.org/img.png");
+        test_img_src((IUnknown*)elem, "BLOCKED::", "blocked::http://www.winehq.org/img.png");
+        IHTMLElement_Release(elem);
+    }
+}
+
 static void test_elems2(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem, *elem2, *div;
@@ -6913,6 +6938,7 @@ static void test_elems2(IHTMLDocument2 *doc)
 
     test_attr(div);
     test_style_filters(div);
+    test_blocked(doc, div);
 
     IHTMLElement_Release(div);
 }

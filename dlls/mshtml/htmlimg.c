@@ -287,21 +287,31 @@ static HRESULT WINAPI HTMLImgElement_get_src(IHTMLImgElement *iface, BSTR *p)
     const PRUnichar *src;
     nsAString src_str;
     nsresult nsres;
-    HRESULT hres;
+    HRESULT hres = S_OK;
+
+    static const WCHAR blockedW[] = {'B','L','O','C','K','E','D',':',':',0};
 
     TRACE("(%p)->(%p)\n", This, p);
 
     nsAString_Init(&src_str, NULL);
     nsres = nsIDOMHTMLImageElement_GetSrc(This->nsimg, &src_str);
-    if(NS_FAILED(nsres)) {
+    if(NS_SUCCEEDED(nsres)) {
+        nsAString_GetData(&src_str, &src);
+
+        if(!strncmpiW(src, blockedW, sizeof(blockedW)/sizeof(WCHAR)-1)) {
+            TRACE("returning BLOCKED::\n");
+            *p = SysAllocString(blockedW);
+            if(!*p)
+                hres = E_OUTOFMEMORY;
+        }else {
+            hres = nsuri_to_url(src, TRUE, p);
+        }
+    }else {
         ERR("GetSrc failed: %08x\n", nsres);
-        return E_FAIL;
+        hres = E_FAIL;
     }
 
-    nsAString_GetData(&src_str, &src);
-    hres = nsuri_to_url(src, TRUE, p);
     nsAString_Finish(&src_str);
-
     return hres;
 }
 
