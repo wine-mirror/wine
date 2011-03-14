@@ -240,6 +240,7 @@ HRESULT navigate_url(DocHost*,LPCWSTR,const VARIANT*,const VARIANT*,VARIANT*,VAR
 HRESULT go_home(DocHost*);
 void set_doc_state(DocHost*,READYSTATE);
 HRESULT get_location_url(DocHost*,BSTR*);
+void handle_navigation_error(DocHost*,HRESULT,BSTR,IHTMLWindow2*);
 
 #define WM_DOCHOSTTASK (WM_USER+0x300)
 void push_dochost_task(DocHost*,task_header_t*,task_proc_t,BOOL);

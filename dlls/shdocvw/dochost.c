@@ -472,6 +472,40 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
             This->doc_navigate = V_UNKNOWN(pvaIn);
             return S_OK;
 
+        case 1: {
+            IHTMLWindow2 *win2;
+            SAFEARRAY *sa = V_ARRAY(pvaIn);
+            VARIANT status_code, url, htmlwindow;
+            LONG ind;
+            HRESULT hres;
+
+            if(V_VT(pvaIn) != VT_ARRAY || !sa)
+                return E_INVALIDARG;
+
+            ind = 0;
+            hres = SafeArrayGetElement(sa, &ind, &status_code);
+            if(FAILED(hres) || V_VT(&status_code)!=VT_I4)
+                return E_INVALIDARG;
+
+            ind = 1;
+            hres = SafeArrayGetElement(sa, &ind, &url);
+            if(FAILED(hres) || V_VT(&url)!=VT_BSTR)
+                return E_INVALIDARG;
+
+            ind = 3;
+            hres = SafeArrayGetElement(sa, &ind, &htmlwindow);
+            if(FAILED(hres) || V_VT(&htmlwindow)!=VT_UNKNOWN || !V_UNKNOWN(&htmlwindow))
+                return E_INVALIDARG;
+
+            hres = IUnknown_QueryInterface(V_UNKNOWN(&htmlwindow), &IID_IHTMLWindow2, (void**)&win2);
+            if(FAILED(hres))
+                return E_INVALIDARG;
+
+            handle_navigation_error(This, V_I4(&status_code), V_BSTR(&url), win2);
+            IHTMLWindow2_Release(win2);
+            return S_OK;
+        }
+
         default:
             FIXME("unsupported command %d of CGID_DocHostCmdPriv\n", nCmdID);
             return E_NOTIMPL;
