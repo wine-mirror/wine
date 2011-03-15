@@ -72,7 +72,7 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
 
     pInstance = WDML_GetInstance(idInst);
 
-    if (pInstance == NULL || pInstance->links == NULL)
+    if (pInstance == NULL)
         return FALSE;
 
     atom = WDML_MakeAtomFromHsz(hszItem);
