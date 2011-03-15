@@ -528,7 +528,7 @@ static LRESULT iewnd_OnNotify(InternetExplorer *This, WPARAM wparam, LPARAM lpar
     {
         NMCBEENDEDITW* info = (NMCBEENDEDITW*)lparam;
 
-        if(info->fChanged && info->iWhy == CBENF_RETURN && info->szText)
+        if(info->fChanged && info->iWhy == CBENF_RETURN)
         {
             VARIANT vt;
 
