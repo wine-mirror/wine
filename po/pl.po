@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: N/A\n"
-"Last-Translator: Automatically generated\n"
+"PO-Revision-Date: 2011-03-15 12:40+0100\n"
+"Last-Translator: Łukasz Wojniłowicz\n"
 "Language-Team: none\n"
 "Language: Polish\n"
 "MIME-Version: 1.0\n"
@@ -155,13 +155,8 @@ msgid "Document Folders"
 msgstr "Katalog Dokumentów"
 
 #: comdlg32.rc:31 shell32.rc:187
-#, fuzzy
 msgid "My Documents"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Moje dokumenty\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Moje Dokumenty"
+msgstr "Moje Dokumenty"
 
 #: comdlg32.rc:32
 msgid "My Favorites"
@@ -384,17 +379,12 @@ msgid "Cannot find the printer."
 msgstr "Nie można odnaleźć drukarki."
 
 #: comdlg32.rc:80 progman.rc:78
-#, fuzzy
 msgid "Out of memory."
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Pamięć wyczerpana.\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Za mało pamięci dla tej operacji."
+msgstr "Wyczerpano pamięć."
 
 #: comdlg32.rc:81
 msgid "An error occurred."
-msgstr "Podczas tej operacji wystąpił błąd."
+msgstr "Wystąpił błąd."
 
 #: comdlg32.rc:82
 msgid "Unknown printer driver."
@@ -966,13 +956,8 @@ msgid "CA Encryption Certificate"
 msgstr "Certyfikat szyfrowania CA"
 
 #: crypt32.rc:119 cryptui.rc:145
-#, fuzzy
 msgid "Key Recovery Agent"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Agent odzyskiwania klucza\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Agent odzyskiwania kluczy"
+msgstr "Agent odzyskiwania kluczy"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
@@ -1031,17 +1016,12 @@ msgid "Query Pending"
 msgstr "Query Pending"
 
 #: crypt32.rc:134 cryptui.rc:92
-#, fuzzy
 msgid "Certificate Trust List"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Zaufana lista certyfikatu\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Lista zaufania certyfikatu"
+msgstr "Lista zaufania certyfikatu"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
-msgstr "Zarchiwisowany Hash klucza certyfikatu"
+msgstr "Zarchiwizowany Hash klucza certyfikatu"
 
 #: crypt32.rc:136
 msgid "Private Key Usage Period"
@@ -1148,13 +1128,8 @@ msgid "File Recovery"
 msgstr "Odzyskiwanie plików"
 
 #: crypt32.rc:162 cryptui.rc:134
-#, fuzzy
 msgid "Root List Signer"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Moduł podpisywania listy głównej\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Główna lista podpisujących"
+msgstr "Moduł podpisywania listy głównej"
 
 #: crypt32.rc:163
 msgid "All application policies"
@@ -1165,13 +1140,8 @@ msgid "Directory Service Email Replication"
 msgstr "Replikacja poczty e-mail usługi katalogowej"
 
 #: crypt32.rc:165 cryptui.rc:142
-#, fuzzy
 msgid "Certificate Request Agent"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Agencja żądania certyfikatu\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Agent żądania certyfikatu"
+msgstr "Agencja żądania certyfikatu"
 
 #: crypt32.rc:166 cryptui.rc:138
 msgid "Lifetime Signing"
@@ -1207,7 +1177,7 @@ msgstr "Niezaufani wydawcy"
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr "ID Klucza="
+msgstr "Identyfikator klucza="
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
@@ -1438,44 +1408,40 @@ msgid "Signature CA"
 msgstr "Podpis CA"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
 msgstr "Zasady certyfikatu"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
 msgstr "Identyfikator klucza urzędu"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Informacje o kwalifikatorze zasad"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Identyfikator kwalifikatora zasad"
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Kwalifikator"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr ""
+msgstr "Odwołanie do uwagi"
 
 #: cryptdlg.rc:35
-#, fuzzy
 msgid "Organization="
-msgstr "Organizacja"
+msgstr "Organizacja="
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
-msgstr "Numer seryjny certyfikatu="
+msgstr "Numer uwagi="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Tekst Uwagi="
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2061,23 +2027,16 @@ msgid "&Back"
 msgstr "&Wstecz"
 
 #: hhctrl.rc:72
-#, fuzzy
 msgid "&Forward"
-msgstr "Dalej"
+msgstr "&Dalej"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgid "&Home"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Start\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Strona główna"
+msgstr "&Start"
 
 #: hhctrl.rc:74
-#, fuzzy
 msgid "&Stop"
-msgstr "Zatrzymaj"
+msgstr "Z&atrzymaj"
 
 #: hhctrl.rc:75 shdoclc.rc:56
 msgid "&Refresh"
@@ -2085,10 +2044,9 @@ msgstr "&Odśwież"
 
 #: hhctrl.rc:76 winefile.rc:38
 msgid "&Print..."
-msgstr "&Drukuj..."
+msgstr "Dr&ukuj..."
 
 #: hhctrl.rc:28 notepad.rc:58 progman.rc:53
-#, fuzzy
 msgid "&Contents"
 msgstr "&Spis treści"
 
@@ -2101,21 +2059,21 @@ msgstr "&Indeks"
 msgid "&Search"
 msgstr ""
 "#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Wyszukaj\n"
+"Wyszu&kaj\n"
 "#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
 "&Znajdź"
 
 #: hhctrl.rc:31
 msgid "Favor&ites"
-msgstr "&Ulubione"
+msgstr "Ulubio&ne"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "Ukryj &karty"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "Pokaż &karty"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -2130,26 +2088,16 @@ msgid "Stop"
 msgstr "Zatrzymaj"
 
 #: hhctrl.rc:42 shdocvw.rc:66 shell32.rc:59
-#, fuzzy
 msgid "Refresh"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Odśwież\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Odświerz"
+msgstr "Odśwież"
 
 #: hhctrl.rc:43 shdocvw.rc:63
 msgid "Back"
 msgstr "Wstecz"
 
 #: hhctrl.rc:44 shdocvw.rc:67
-#, fuzzy
 msgid "Home"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Start\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Strona główna"
+msgstr "Strona główna"
 
 #: hhctrl.rc:45
 msgid "Sync"
@@ -3163,9 +3111,8 @@ msgid "Invalid key\n"
 msgstr "Niepoprawny klucz\n"
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key\n"
-msgstr "Nie można odczytać klucza rejestru\n"
+msgstr "Nie można otworzyć klucza rejestru\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key\n"
@@ -3329,21 +3276,19 @@ msgstr "Różne konto usługi\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected\n"
-msgstr ""
+msgstr "Nie można wykryć niepowodzenia sterownika"
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected\n"
-msgstr "Proces przerwany\n"
+msgstr "Nie można wykryć przerwania procesu\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service\n"
-msgstr ""
+msgstr "Brak programu odzyskującego dla usługi\n"
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe\n"
-msgstr "Drukowanie niezaimplementowane"
+msgstr "Usługa niezaimplementowana przez plik wykonywalny exe\n"
 
 #: winerror.mc:1296
 msgid "End of media\n"
@@ -3351,7 +3296,7 @@ msgstr "Koniec nośnika\n"
 
 #: winerror.mc:1301
 msgid "Filemark detected\n"
-msgstr "Filemark wykryty\n"
+msgstr "Znacznik pliku wykryty\n"
 
 #: winerror.mc:1306
 msgid "Beginning of media\n"
@@ -3375,19 +3320,19 @@ msgstr "Niepoprawna długość bloku\n"
 
 #: winerror.mc:1331
 msgid "Device not partitioned\n"
-msgstr "Urządzenie nie partycjonowane\n"
+msgstr "Urządzenie niepartycjonowane\n"
 
 #: winerror.mc:1336
 msgid "Unable to lock media\n"
-msgstr "Unable to lock media\n"
+msgstr "Nie można zablokować nośnika\n"
 
 #: winerror.mc:1341
 msgid "Unable to unload media\n"
-msgstr "Niezdolny do pozbycia się nośnika\n"
+msgstr "Nie można wysunąć nośnika\n"
 
 #: winerror.mc:1346
 msgid "Media changed\n"
-msgstr "Nośnik zmieniony\n"
+msgstr "Zmieniono nośnik\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset\n"
@@ -3403,7 +3348,7 @@ msgstr "Brak tłumaczenia unicode\n"
 
 #: winerror.mc:1366
 msgid "DLL init failed\n"
-msgstr "DLL init nieudane\n"
+msgstr "Nieudana initializacja biblioteki DLL\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress\n"
@@ -3435,7 +3380,7 @@ msgstr "Czas wygaśnięcia licznika szeregowych operacji WE/WY\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found\n"
-msgstr "Floppy ID address mark not found\n"
+msgstr "Nie znaleziono znacznika adresu dla identyfikatora dyskietki\n"
 
 #: winerror.mc:1411
 msgid "Floppy reports wrong cylinder\n"
@@ -3522,110 +3467,96 @@ msgid "DLL not found\n"
 msgstr "Nie znaleziono biblioteki DLL\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles\n"
-msgstr "Nie ma więcej uchwytów do wyszukiwania\n"
+msgstr "Wyczerpano uchwyty użytkownika\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
-msgstr ""
+msgstr "Wiadomość może być użyta tylko w wywołaniach synchronicznych\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty\n"
-msgstr ""
+msgstr "Element źródła jest pusty\n"
 
 #: winerror.mc:1531
-#, fuzzy
 msgid "The destination element is full\n"
-msgstr "Operacja zakończona pomyślnie\n"
+msgstr "Element przeznaczenia jest pełny\n"
 
 #: winerror.mc:1536
-#, fuzzy
 msgid "The element address is invalid\n"
-msgstr "Uchwyt podanego urządzenia jest niepoprawny."
+msgstr "Adres elementu jest niepoprawny\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present\n"
-msgstr ""
+msgstr "Magazyn nie istnieje\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
-msgstr ""
+msgstr "Urządzenie potrzebuje reinitializacji\n"
 
 #: winerror.mc:1551
-#, fuzzy
 msgid "The device requires cleaning\n"
-msgstr "Serwis %s jest uruchamiany...\n"
+msgstr "Urządzenie potrzebuje czyszczenia\n"
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open\n"
-msgstr "Klapka drukarki jest otwarta; "
+msgstr "Klapka urządzenia jest otwarta\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected\n"
-msgstr "Pipe not connected\n"
+msgstr "Urządzenie jest niepodłączone\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found\n"
-msgstr "Nie znaleziono entry\n"
+msgstr "Nie znaleziono elementu\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found\n"
-msgstr "Nie znaleziono ścieżki\n"
+msgstr "Nie znaleziono odpowiednika\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found\n"
-msgstr "Nie znaleziono procedury\n"
+msgstr "Nie znaleziono zestawu właściwości\n"
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found\n"
-msgstr "Nie znaleziono ścieżki\n"
+msgstr "Nie znaleziono punktu\n"
 
 #: winerror.mc:1586
-#, fuzzy
 msgid "No running tracking service\n"
-msgstr "Nieznana usługa uwierzytelnienia\n"
+msgstr "Nie jest uruchomiona żadna usługa śledząca\n"
 
 #: winerror.mc:1591
-#, fuzzy
 msgid "No such volume ID\n"
-msgstr "Nie ma takiego użytkownika\n"
+msgstr "Brak takiego identyfikatora woluminu\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced\n"
-msgstr ""
+msgstr "Nie moża usunąć pliku, który ma być zamieniony\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place\n"
-msgstr ""
+msgstr "Nie można przenieść pliku zamiennego\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed\n"
-msgstr ""
+msgstr "Przeniesienie pliku zamiennego nie powiodło się\n"
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted\n"
-msgstr "Nazwa sieci usunięta\n"
+msgstr "Dziennik jest usuwany\n"
 
 #: winerror.mc:1616
-#, fuzzy
 msgid "The journal is not active\n"
-msgstr "Usługa nieaktywna\n"
+msgstr "Dziennik jest nieaktywny\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found\n"
-msgstr ""
+msgstr "Znaleziono potencjalnie pasujący plik\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted\n"
-msgstr ""
+msgstr "Wpis w dzienniku został usunięty\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name\n"
@@ -3820,36 +3751,32 @@ msgid "No more local devices\n"
 msgstr "Nie ma więcej urządzeń lokalnych\n"
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist\n"
-msgstr "Urządzenie nie istnieje\n"
+msgstr "Strona nie istnieje\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists\n"
-msgstr "Domena już istnieje\n"
+msgstr "Kontroler domeny już istnieje\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected\n"
-msgstr "Pipe not connected\n"
+msgstr "Wspierane tylko gdy podłączone\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed\n"
-msgstr ""
+msgstr "Wykonaj operację nawet gdy nic się nie zmieniło\n"
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid\n"
-msgstr "Uchwyt podanego urządzenia jest niepoprawny."
+msgstr "Profil użytkownika jest niepoprawny."
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
-msgstr ""
+msgstr "Nie wspierane na Small Business Server\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned\n"
-msgstr "Nie wszystkie prawa przydzielone\n"
+msgstr "Nie przydzielono wszystkich praw\n"
 
 #: winerror.mc:1911
 msgid "Some security IDs not mapped\n"
@@ -4224,18 +4151,16 @@ msgid "Licence quota exceeded\n"
 msgstr "Przydział licencji przekroczony\n"
 
 #: winerror.mc:2381
-#, fuzzy
 msgid "Wrong target name\n"
-msgstr "Brak nazwy entry\n"
+msgstr "Zła nazwa miejsca docelowego\n"
 
 #: winerror.mc:2386
-#, fuzzy
 msgid "Mutual authentication failed\n"
-msgstr "Niepoprawna tożsamość poświadczająca\n"
+msgstr "Nieudane wzajemne uwierzytelnianie\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server\n"
-msgstr ""
+msgstr "Przekrzywienie czasu pomiędzy klientem a serwerem\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
@@ -4466,9 +4391,8 @@ msgid "Menu item not found\n"
 msgstr "Nie znaleziono elementu menu\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle\n"
-msgstr "Niepoprawny uchwyt celu\n"
+msgstr "Niepoprawny uchwyt klawiatury\n"
 
 #: winerror.mc:2686
 #, fuzzy
@@ -4480,99 +4404,84 @@ msgid "Interactive window station required\n"
 msgstr ""
 
 #: winerror.mc:2696
-#, fuzzy
 msgid "Timeout\n"
-msgstr "Limit czasu"
+msgstr "Limit czasu\n"
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle\n"
-msgstr "Niepoprawny uchwyt menu\n"
+msgstr "Niepoprawny uchwyt monitora\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
-msgstr "Plik logu zdarzeń zepsuty\n"
+msgstr "Uszkodzony plik dziennika zdarzeń\n"
 
 #: winerror.mc:2711
 msgid "Event log can't start\n"
-msgstr "Log zdarzeń nie może wystartować\n"
+msgstr "Dziennik zdarzeń nie może wystartować\n"
 
 #: winerror.mc:2716
 msgid "Event log file full\n"
-msgstr "Plik logu zdarzeń pełen\n"
+msgstr "Dziennik zdarzeń pełen\n"
 
 #: winerror.mc:2721
 msgid "Event log file changed\n"
-msgstr "Plik logu zdarzeń zmieniony\n"
+msgstr "Plik dziennika zdarzeń zmieniony\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "Niepoprawna nazwa usługi\n"
+msgstr "Usługa instalatora zakończyła niepowodzeniem\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user\n"
-msgstr "Programy instalacyjne"
+msgstr "Instalacja przerwana przez użytkownika\n"
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure\n"
-msgstr "Niepowodzenie partycji\n"
+msgstr "Niepowodzenie instalacji\n"
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended\n"
-msgstr "Programy instalacyjne"
+msgstr "Instalacja wstrzymana\n"
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product\n"
-msgstr "Nieznany port\n"
+msgstr "Nieznany produkt\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature\n"
-msgstr "Nieznana własność w %s"
+msgstr "Nieznana funkcja\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component\n"
-msgstr "Nieznany port\n"
+msgstr "Nieznany komponent\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknonw property\n"
-msgstr "Nieznany port\n"
+msgstr "Nieznana właściwość\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state\n"
-msgstr "Niepoprawny uchwyt\n"
+msgstr "Niepoprawny stan uchwytu\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration\n"
-msgstr "Konfiguracje Wine"
+msgstr "Zła konfiguracja\n"
 
 #: winerror.mc:2776
 msgid "Index is missing\n"
-msgstr ""
+msgstr "Brakuje wskaźnika\n"
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing\n"
-msgstr "źródło danych zawierające żądanę funkcję jest niedostępne"
+msgstr "Brakuje źródła instalacyjnego\n"
 
 #: winerror.mc:2786
-#, fuzzy
 msgid "Wrong installation package version\n"
-msgstr "Wrong serialising package version\n"
+msgstr "Zła wersja paczki instalacyjnej\n"
 
 #: winerror.mc:2791
-#, fuzzy
 msgid "Product uninstalled\n"
-msgstr "Hook procedure not installed\n"
+msgstr "Produkt odinstalowany\n"
 
 #: winerror.mc:2796
 #, fuzzy
@@ -4580,131 +4489,108 @@ msgid "Invalid query syntax\n"
 msgstr "Niepoprawna nazwa składni\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field\n"
-msgstr "Niepoprawny czas\n"
+msgstr "Niepoprawne pole\n"
 
 #: winerror.mc:2806
-#, fuzzy
 msgid "Device removed\n"
-msgstr "Urządzenie już jest przeczłonkowane\n"
+msgstr "Urządzenie usunięte\n"
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running\n"
-msgstr "Usługa już działa\n"
+msgstr "Instalacja już jest uruchomiona\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr ""
+msgstr "Niepowodzenie przy otwieraniu paczki instalacyjnej"
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid\n"
-msgstr "Programy instalacyjne"
+msgstr "Paczka instalacyjna jest niepoprawna\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
-msgstr ""
+msgstr "Niepowodzenie interfejsu użytkownika instalatora\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"
-msgstr ""
+msgstr "Niepowodzenie przy otwarciu pliku dziennika instalacyjnego\n"
 
 #: winerror.mc:2836
-#, fuzzy
 msgid "Installation language not supported\n"
-msgstr "Operacja niewspierana\n"
+msgstr "Język instalacji niewspierany\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
-msgstr ""
+msgstr "Nieudane zastosowanie transformacji instalacji"
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected\n"
-msgstr "Programy instalacyjne"
+msgstr "Paczka instalacyjna odrzucona\n"
 
 #: winerror.mc:2851
-#, fuzzy
 msgid "Function could not be called\n"
-msgstr "Liczba limitu połączeń osiągnięta\n"
+msgstr "Funkcja nie mogła być wywołana\n"
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed\n"
-msgstr "Oczekiwana funkcja"
+msgstr "Funkcja zakończyła niepowodzeniem"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table\n"
-msgstr "Invalid tag\n"
+msgstr "Niepoprawna tabela\n"
 
 #: winerror.mc:2866
-#, fuzzy
 msgid "Data type mismatch\n"
-msgstr "Typ maszyny niedopasowany\n"
+msgstr "Niezgodność typu danych\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type\n"
 msgstr "Niewspierany typ\n"
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed\n"
-msgstr "Niepowodzenie otworzenia\n"
+msgstr "Utworzenie zakończone niepowodzeniem\n"
 
 #: winerror.mc:2881
-#, fuzzy
 msgid "Temporary directory not writable\n"
-msgstr "Plik lub folder zepsuty\n"
+msgstr "Katalog tymczasowy niezapisywalny\n"
 
 #: winerror.mc:2886
-#, fuzzy
 msgid "Installation platform not supported\n"
-msgstr "Operacja niewspierana\n"
+msgstr "Platforma instalacyjna niewspierana\n"
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used\n"
-msgstr "Nie znaleziono interfejsu\n"
+msgstr "Instalator nie użyty\n"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Nieudane otwarcie '%s'\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Nie udało się otworzyć '%s'\n"
+msgstr "Nieudane otwarcie paczki łatającej\n"
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package\n"
-msgstr "Invalid tag\n"
+msgstr "Niepoprawna paczka łatająca\n"
 
 #: winerror.mc:2906
-#, fuzzy
 msgid "Unsupported patch package\n"
-msgstr "Niewspierany typ\n"
+msgstr "Niewspierana paczka łatająca\n"
 
 #: winerror.mc:2911
-#, fuzzy
 msgid "Another version is installed\n"
-msgstr "Sterownik drukarki już jest zainstalowany\n"
+msgstr "Inna wersja jest już zainstalowana\n"
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line\n"
-msgstr "Niepoprawne polecenie GW\n"
+msgstr "Niepoprawne polecenie lini komend\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
-msgstr ""
+msgstr "Zdalna instalacja niedozwolona\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install\n"
-msgstr ""
+msgstr "Ponowne uruchomienie rozpoczęte po udanej instalacji\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
@@ -5280,91 +5166,76 @@ msgid "Invalid object resolver set\n"
 msgstr "Niepoprawny obiekt\n"
 
 #: winerror.mc:3651
-#, fuzzy
 msgid "Incomplete RPC send\n"
-msgstr "Niekompletna nazwa\n"
+msgstr "Wysłano niekompletne RPC\n"
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle\n"
-msgstr "Invalid hook handle\n"
+msgstr "Niepoprawny asynchroniczny uchwyt RPC\n"
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call\n"
-msgstr "Invalid hook handle\n"
+msgstr "Niepoprawe asynchroniczne wywołanie RPC\n"
 
 #: winerror.mc:3666
-#, fuzzy
 msgid "RPC pipe closed\n"
-msgstr "Pipe closed\n"
+msgstr "Kanał RPC zamknięty\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
-msgstr ""
+msgstr "Błąd dyscypliny na kanale RPC"
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr "To nie jest błąd RPC\n"
+msgstr "Brak danych na kanale RPC\n"
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available\n"
-msgstr "Brak dostępnego kontekstu zabezpieczeń\n"
+msgstr "Nazwa sieci niedostępna\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed\n"
-msgstr ""
+msgstr "Nie mozna uzyskać dostępu do pliku\n"
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved\n"
-msgstr "Nie znaleziono nazwy użytkownika\n"
+msgstr "Nie można rozbić nazwy pliku\n"
 
 #: winerror.mc:3696
-#, fuzzy
 msgid "RPC entry type mismatch\n"
-msgstr "Typ maszyny niedopasowany\n"
+msgstr "Typ wpisu RPC niezgodny\n"
 
 #: winerror.mc:3701
-#, fuzzy
 msgid "Not all objects could be exported\n"
-msgstr "Nie wszystkie obiekty niewyeksportowane\n"
+msgstr "Nie można było wyeksportować wszystkich obiektów\n"
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported\n"
-msgstr "Nie znaleziono nazwy użytkownika\n"
+msgstr "Nie można było wyeksportować interfejsu\n"
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added\n"
-msgstr "Nie znaleziono nazwy użytkownika\n"
+msgstr "Nie można było dodać profilu\n"
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added\n"
-msgstr "Nie znaleziono nazwy użytkownika\n"
+msgstr "Nie można było dodać elementu profilu\n"
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed\n"
-msgstr "Nie znaleziono nazwy użytkownika\n"
+msgstr "Nie można było usunąć elementu profilu\n"
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added\n"
-msgstr "Nie znaleziono nazwy użytkownika\n"
+msgstr "Nie można było dodać elementu grupy\n"
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed\n"
-msgstr "Nie znaleziono nazwy użytkownika\n"
+msgstr "Nie można było usunąć elementu grupy\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found\n"
-msgstr "Nie znaleziono nazwy użytkownika\n"
+msgstr "Nie można było znaleźć użytkownika\n"
 
 #: localspl.rc:28 localui.rc:28 winspool.rc:27
 msgid "Local Port"
@@ -5795,13 +5666,8 @@ msgid "split button"
 msgstr "przycisk rozdzielania"
 
 #: oleacc.rc:90 ipconfig.rc:33
-#, fuzzy
 msgid "IP address"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Adres IP\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"adres IP"
+msgstr "Adres IP"
 
 #: oleacc.rc:91
 msgid "outline button"
@@ -5952,13 +5818,8 @@ msgid "The file '%s' on %s is needed"
 msgstr "Potrzebny plik o nazwie '%s' znajdujący się  na %s"
 
 #: setupapi.rc:29 ipconfig.rc:31
-#, fuzzy
 msgid "Unknown"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Nieznane\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Nieznany"
+msgstr "Nieznane"
 
 #: setupapi.rc:30
 msgid "Copy files from:"
@@ -5969,13 +5830,8 @@ msgid "Type the path where the file is located, and then click OK."
 msgstr "Podaj ścieżkę do pliku, a następnie naciśnij przycisk OK."
 
 #: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
-#, fuzzy
 msgid "Default"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Domyślne\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Domyślnie"
+msgstr "Domyślnie"
 
 #: shdoclc.rc:39
 msgid "F&orward"
@@ -6003,13 +5859,8 @@ msgstr "&Zaznacz wszystko"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
 #: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
-#, fuzzy
 msgid "&Paste"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Wkl&ej\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Wklej"
+msgstr "Wkl&ej"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -6032,13 +5883,8 @@ msgid "Pr&int"
 msgstr "D&rukuj"
 
 #: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
-#, fuzzy
 msgid "&Properties"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Ustawienia\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Właś&ciwości"
+msgstr "Właś&ciwości"
 
 #: shdoclc.rc:62
 msgid "Image"
@@ -6090,13 +5936,8 @@ msgstr "Ustaw jako &element pulpitu..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
 #: user32.rc:44 wordpad.rc:101
-#, fuzzy
 msgid "Cu&t"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Wyt&nij\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Wy&tnij"
+msgstr "Wyt&nij"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
 #: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
@@ -6120,13 +5961,8 @@ msgid "Control"
 msgstr "Sterowanie"
 
 #: shdoclc.rc:90 user32.rc:42
-#, fuzzy
 msgid "&Undo"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Confij\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Cofnij"
+msgstr "&Confij"
 
 #: shdoclc.rc:95 shell32.rc:90 user32.rc:47
 msgid "&Delete"
@@ -6137,13 +5973,8 @@ msgid "Table"
 msgstr "Tabela"
 
 #: shdoclc.rc:103 shell32.rc:82
-#, fuzzy
 msgid "&Select"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Zaznacz\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Wybierz"
+msgstr "Z&aznacz"
 
 #: shdoclc.rc:105
 msgid "&Cell"
@@ -6174,22 +6005,12 @@ msgid "1DSite Select"
 msgstr "1DSite Select"
 
 #: shdoclc.rc:120 shell32.rc:61
-#, fuzzy
 msgid "Paste"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Wkl&ej\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"W&klej"
+msgstr "Wkl&ej"
 
 #: shdoclc.rc:122 winhlp32.rc:31
-#, fuzzy
 msgid "&Print"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"D&rukuj\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Drukuj"
+msgstr "&Drukuj"
 
 #: shdoclc.rc:126
 msgid "Anchor"
@@ -6374,13 +6195,8 @@ msgid "&File"
 msgstr "&Plik"
 
 #: shdocvw.rc:27 regedit.rc:47 regedit.rc:98
-#, fuzzy
 msgid "&New"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Nowe\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Nowy"
+msgstr "&Nowy"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
@@ -6391,13 +6207,8 @@ msgid "&Open..."
 msgstr "&Otwórz..."
 
 #: shdocvw.rc:33 notepad.rc:30 wordpad.rc:31
-#, fuzzy
 msgid "Save &as..."
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Z&apisz jako...\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Zapisz &jako..."
+msgstr "Z&apisz jako..."
 
 #: shdocvw.rc:35
 msgid "Print &format..."
@@ -6414,20 +6225,15 @@ msgstr ""
 "#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
 "&Podgląd wydruku...\n"
 "#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Podglą&d wydruku..."
+"Podg&ląd wydruku..."
 
 #: shdocvw.rc:39
 msgid "&Properties..."
 msgstr "&Właściwości..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
-#, fuzzy
 msgid "&Close"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Zamknij\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Zamknij..."
+msgstr "&Zamknij"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
 #: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
@@ -6456,13 +6262,8 @@ msgstr "&Dodaj do ulubionych..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
 #: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
-#, fuzzy
 msgid "&Help"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Pomo&c\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Pomoc"
+msgstr "Pomo&c"
 
 #: shdocvw.rc:57
 msgid "&About Internet Explorer..."
@@ -6760,13 +6561,8 @@ msgid "Contacts"
 msgstr "Kontakty"
 
 #: shell32.rc:216 winefile.rc:166
-#, fuzzy
 msgid "Links"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Dowiązania\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Linki"
+msgstr "Dowiązania"
 
 #: shell32.rc:217
 msgid "Pictures\\Slide Shows"
@@ -7930,13 +7726,8 @@ msgid "Digi&tal"
 msgstr "C&yfrowy"
 
 #: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
-#, fuzzy
 msgid "&Font..."
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Czcionka...\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Czci&onka..."
+msgstr "&Czcionka..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -7956,7 +7747,7 @@ msgstr "&Zawsze na wierzchu"
 
 #: clock.rc:41
 msgid "Inf&o"
-msgstr "In&fo"
+msgstr "In&formacje"
 
 #: clock.rc:42
 msgid "&About Clock..."
@@ -8521,13 +8312,8 @@ msgid "Environment variable %s not defined\n"
 msgstr "Zmienna środowiskowa %s niezdefiniowana\n"
 
 #: cmd.rc:274 xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%s'\n"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Nieudane otwarcie '%s'\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Nie udało się otworzyć '%s'\n"
+msgstr "Nieudane otwarcie '%s'\n"
 
 #: cmd.rc:275
 msgid "Cannot call batch label outside of a batch script\n"
@@ -8781,13 +8567,8 @@ msgid "P&rinter Setup..."
 msgstr "Ustawienia &drukarki..."
 
 #: notepad.rc:38 regedit.rc:43 wineconsole.rc:25 winhlp32.rc:36 wordpad.rc:39
-#, fuzzy
 msgid "&Edit"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Edycja\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Edytuj"
+msgstr "&Edycja"
 
 #: notepad.rc:39 wordpad.rc:41
 msgid "&Undo\tCtrl+Z"
@@ -8841,13 +8622,8 @@ msgid "&Search next\tF3"
 msgstr "Z&najdź następny\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
-#, fuzzy
 msgid "&Replace...\tCtrl+H"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Zamień...\tCtrl+H\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Za&mień...\tCtrl+H"
+msgstr "Za&mień...\tCtrl+H"
 
 #: notepad.rc:59 progman.rc:54
 msgid "&Search..."
@@ -8855,11 +8631,11 @@ msgstr "&Szukaj..."
 
 #: notepad.rc:60 progman.rc:56 winhlp32.rc:61
 msgid "&Help on help"
-msgstr "&Pomoc"
+msgstr "Pomo&c"
 
 #: notepad.rc:62
 msgid "&About Notepad"
-msgstr "Notatnik - &informacje"
+msgstr "Notatnik - i&nformacje"
 
 #: notepad.rc:68
 msgid "&f"
@@ -8891,7 +8667,7 @@ msgstr "(bez tytułu)"
 
 #: notepad.rc:79
 msgid "Text files (*.txt)"
-msgstr "Pliki tekstowe (*.txt)"
+msgstr "Dokumenty tekstowe (*.txt)"
 
 #: notepad.rc:82
 msgid ""
@@ -8951,9 +8727,8 @@ msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
 #: notepad.rc:95
-#, fuzzy
 msgid "Unicode (UTF-8)"
-msgstr "Unicode (UTF-16)"
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:102
 msgid ""
@@ -9052,13 +8827,8 @@ msgid "&Toolbar"
 msgstr "Pasek &narzędzi"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:102
-#, fuzzy
 msgid "&Status Bar"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Pasek &statusu\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Pasek &stanu"
+msgstr "Pasek sta&nu"
 
 #: oleview.rc:67 regedit.rc:71 winefile.rc:127
 msgid "&Refresh\tF5"
@@ -9093,7 +8863,6 @@ msgid "version 1.0"
 msgstr "wersja 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 msgstr "Pliki TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
@@ -9269,7 +9038,7 @@ msgstr "&Otwórz\tEnter"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
-msgstr "&Przenieś...\tF7"
+msgstr "P&rzenieś...\tF7"
 
 #: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
@@ -9277,11 +9046,11 @@ msgstr "&Kopiuj...\tF8"
 
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
-msgstr "&Atrybuty...\tAlt+Enter"
+msgstr "Wł&aściwości...\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
-msgstr "&Uruchom..."
+msgstr "Urucho&m..."
 
 #: progman.rc:39
 msgid "E&xit Windows..."
@@ -9293,33 +9062,23 @@ msgstr "&Opcje"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
-msgstr "&Automatyczne rozmieszczenie"
+msgstr "&Autorozmieszczanie"
 
 #: progman.rc:43 winefile.rc:107
-#, fuzzy
 msgid "&Minimize on run"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Minimalizuj po uruchomieniu\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Zminimalizuj przy starcie"
+msgstr "&Minimalizuj podczas użytkowania"
 
 #: progman.rc:44 winefile.rc:108
-#, fuzzy
 msgid "&Save settings on exit"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Zapisuj ustawienia przed zakończeniem\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Z&apisz ustawienia przed zakończeniem"
+msgstr "&Zapisz ustawienia przy zakończeniu"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
 msgid "&Windows"
-msgstr "&Okna"
+msgstr "O&kno"
 
 #: progman.rc:47
 msgid "&Overlapped\tShift+F5"
-msgstr "&Zachodzące na siebie\tShift+F5"
+msgstr "&Kaskadowo\tShift+F5"
 
 #: progman.rc:48
 msgid "&Side by side\tShift+F4"
@@ -9327,7 +9086,7 @@ msgstr "&Sąsiadująco \tShift+F4"
 
 #: progman.rc:49
 msgid "&Arrange Icons"
-msgstr "&Uporządkuj ikony"
+msgstr "&Rozmieść ikony"
 
 #: progman.rc:57
 msgid "&Tutorial"
@@ -9347,28 +9106,23 @@ msgstr "Usuń"
 
 #: progman.rc:70
 msgid "Delete group `%s' ?"
-msgstr "Usunąć grupę `%s' ?"
+msgstr "Czy na pewno chcesz usunąć grupę `%s' ?"
 
 #: progman.rc:71
 msgid "Delete program `%s' ?"
-msgstr "Usunąć program `%s' ?"
+msgstr "Czy na pewno chcesz Usunąć program `%s' ?"
 
 #: progman.rc:72 winhlp32.rc:97
-#, fuzzy
 msgid "Not implemented"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Nie zaimplementowano\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Nie zaimplementowane"
+msgstr "Nie zaimplementowane"
 
 #: progman.rc:73
 msgid "Error reading `%s'."
-msgstr "Błąd podczas wszytywania `%s'."
+msgstr "Błąd wczytywania `%s'."
 
 #: progman.rc:74
 msgid "Error writing `%s'."
-msgstr "Błąd podczas zapisywania `%s'."
+msgstr "Błąd zapisywania `%s'."
 
 #: progman.rc:77
 msgid ""
@@ -9528,26 +9282,16 @@ msgid "Status &Bar"
 msgstr "&Pasek stanu"
 
 #: regedit.rc:69 winefile.rc:81
-#, fuzzy
 msgid "Sp&lit"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Połącz\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Po&dziel"
+msgstr "Po&dziel"
 
 #: regedit.rc:76
 msgid "&Remove Favorite..."
 msgstr "&Usuń ulubiony..."
 
 #: regedit.rc:80 winefile.rc:131
-#, fuzzy
 msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Tematu pomocy\tF1\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Tematy Pomocy\tF1"
+msgstr "&Tematy Pomocy\tF1"
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
@@ -9596,21 +9340,19 @@ msgstr "Edytor rejestru"
 
 #: regedit.rc:197
 msgid "Import Registry File"
-msgstr "Importuj plik rejestrów"
+msgstr "Importuje plik do rejestru"
 
 #: regedit.rc:198
 msgid "Export Registry File"
-msgstr "Eksportuj plik rejestrów"
+msgstr "Eksportuje całość lub część rejestru do pliku"
 
 #: regedit.rc:199
-#, fuzzy
 msgid "Registry files (*.reg)"
-msgstr "Pliki rejestrów (*.reg)"
+msgstr "Pliki rejestru (*.reg)"
 
 #: regedit.rc:200
-#, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr "Pliki rejestrów Win9x/NT4 (REGEDIT4)"
+msgstr "Pliki rejestru Win9x/NT4 (REGEDIT4)"
 
 #: regedit.rc:207
 msgid "(Default)"
@@ -9983,25 +9725,20 @@ msgid "&Show Kernel Times"
 msgstr "&Pokazuj czasy jądra"
 
 #: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
-#, fuzzy
 msgid "Tile &Horizontally"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Sąsiadująco w poziomie\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Tytuł pionowo"
+msgstr "&Sąsiadująco w poziomie"
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
-msgstr "Sąs&iadująco w poziomie"
+msgstr "Sąsi&adująco w poziomie"
 
 #: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
 msgid "&Minimize"
-msgstr "&Minimalizuj"
+msgstr "Mi&nimalizuj"
 
 #: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
 msgid "&Cascade"
-msgstr "&Kaskada"
+msgstr "&Kaskadowo"
 
 #: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
 msgid "&Bring To Front"
@@ -10009,11 +9746,11 @@ msgstr "&Przesuń na wierzch"
 
 #: taskmgr.rc:89
 msgid "Task Manager &Help Topics"
-msgstr "Menedżer zadań - &tematy pomocy"
+msgstr "Menedżer zadań - tematy &pomocy"
 
 #: taskmgr.rc:91
 msgid "&About Task Manager"
-msgstr "Menedżer zadań - &informacje"
+msgstr "Menedżer zadań - i&nformacje"
 
 #: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
 msgid "DUMMY"
@@ -10021,7 +9758,7 @@ msgstr "DUMMY"
 
 #: taskmgr.rc:121
 msgid "&Switch To"
-msgstr "&Przełącz na"
+msgstr "P&rzełącz na"
 
 #: taskmgr.rc:130
 msgid "&End Task"
@@ -10041,11 +9778,11 @@ msgstr "Zamknij &drzewo procesów"
 
 #: taskmgr.rc:153 winedbg.rc:29
 msgid "&Debug"
-msgstr "&Debuguj"
+msgstr "De&buguj"
 
 #: taskmgr.rc:155
 msgid "Set &Priority"
-msgstr "Ustal &priorytet"
+msgstr "&Ustaw priorytet"
 
 #: taskmgr.rc:157
 msgid "&Realtime"
@@ -10057,7 +9794,7 @@ msgstr "&Powyżej normalnego"
 
 #: taskmgr.rc:165
 msgid "&BelowNormal"
-msgstr "Pon&iżej normalnego"
+msgstr "Poniżej no&rmalnego"
 
 #: taskmgr.rc:170
 msgid "Set &Affinity..."
@@ -11078,13 +10815,8 @@ msgid "&Select Files..."
 msgstr "Z&aznacz pliki..."
 
 #: winefile.rc:46 winemine.rc:44
-#, fuzzy
 msgid "E&xit\tAlt+X"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"W&yjście\tAlt+X\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Wyjście\tAlt+X"
+msgstr "&Wyjście\tAlt+X"
 
 #: winefile.rc:52
 msgid "&Disk"
@@ -11135,7 +10867,6 @@ msgid "Expand &Tree\t*"
 msgstr "&Rozwiń drzewo\t*"
 
 #: winefile.rc:70
-#, fuzzy
 msgid "Expand &all\tCtrl+*"
 msgstr "Rozwiń &wszystko\tStrg+*"
 
