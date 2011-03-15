@@ -15,12 +15,12 @@ ok(len === 3, "init length = " + len);
 
 document.write("<script>"
     + "var len = document.getElementsByTagName('div').length;"
-    + "external.todo_wine_ok(len === 3, 'unexpected length ' + len);"
+    + "ok(len === 3, 'unexpected length ' + len);"
     + "executed = true;"
     + "<" + "/script>");
 
 len = document.getElementsByTagName('script').length;
-external.todo_wine_ok(len === 2, "script col length = " + len);
+ok(len === 2, "script col length = " + len);
 ok(executed, "writen script not executed");
 
 external.reportSuccess();

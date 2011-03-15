@@ -310,9 +310,10 @@ static nsresult run_end_load(HTMLDocumentNode *This, nsISupports *arg1, nsISuppo
     return NS_OK;
 }
 
-static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_iface, nsISupports *arg)
+static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_iface, nsISupports *parser_iface)
 {
     nsIDOMHTMLScriptElement *nsscript;
+    nsIParser *nsparser = NULL;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", doc, script_iface);
@@ -323,7 +324,24 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
         return nsres;
     }
 
+    if(parser_iface) {
+        nsres = nsISupports_QueryInterface(parser_iface, &IID_nsIParser, (void**)&nsparser);
+        if(NS_FAILED(nsres)) {
+            ERR("Could not get nsIParser iface: %08x\n", nsres);
+            nsparser = NULL;
+        }
+    }
+
+    if(nsparser)
+        nsIParser_BeginEvaluatingParserInsertedScript(nsparser);
+
     doc_insert_script(doc->basedoc.window, nsscript);
+
+    if(nsparser) {
+        nsIParser_EndEvaluatingParserInsertedScript(nsparser);
+        nsIParser_Release(nsparser);
+    }
+
     nsIDOMHTMLScriptElement_Release(nsscript);
     return NS_OK;
 }
@@ -649,7 +667,7 @@ static nsresult NSAPI nsDocumentObserver_DoneAddingChildren(nsIDocumentObserver 
     if(NS_SUCCEEDED(nsres)) {
         TRACE("script node\n");
 
-        add_script_runner(This, run_insert_script, (nsISupports*)nsscript, NULL);
+        add_script_runner(This, run_insert_script, (nsISupports*)nsscript, (nsISupports*)aParser);
         nsIDOMHTMLScriptElement_Release(nsscript);
     }
 

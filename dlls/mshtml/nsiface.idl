@@ -150,7 +150,9 @@ typedef nsISupports nsIControllers;
 typedef nsISupports nsIDOMValidityState;
 typedef nsISupports nsIPluginInstanceOwner;
 typedef nsISupports nsIPluginStreamListener;
-typedef nsISupports nsIParser;
+typedef nsISupports nsIContentSink;
+typedef nsISupports nsIParserFilter;
+typedef nsISupports nsIDTD;
 
 [
     object,
@@ -2956,6 +2958,51 @@ interface nsIMutationObserver : nsISupports
                         PRInt32 aIndexInContainer, nsIContent *aPreviousSibling);
     void NodeWillBeDestroyed(const nsINode *aNode);
     void ParentChainChanged(nsIContent *aContent);
+}
+
+[
+    object,
+    uuid(cbc0cbd8-bbb7-46d6-a551-378a6953a714),
+    local
+]
+interface nsIParser : nsISupports
+{
+    typedef int nsDTDMode;
+    typedef int eParserCommands;
+
+    void SetContentSink(nsIContentSink *aSink);
+    nsIContentSink *GetContentSink();
+    void GetCommand(nsACString *aCommand);
+    void SetCommand2(const char *aCommand);
+    void SetCommand(eParserCommands aParserCommand);
+    void SetDocumentCharset(const nsACString *aCharset, PRInt32 aSource);
+    void GetDocumentCharset(nsACString *oCharset, PRInt32 *oSource);
+    void SetParserFilter(nsIParserFilter *aFilter);
+    nsresult GetChannel(nsIChannel **aChannel);
+    nsresult GetDTD(nsIDTD **aDTD);
+    nsresult GetStreamListener(nsIStreamListener **aListener);
+    nsresult ContinueInterruptedParsing();
+    void BlockParser();
+    void UnblockParser();
+    PRBool IsParserEnabled();
+    PRBool IsComplete();
+    nsresult Parse(nsIURI *aURL, nsIRequestObserver *aListener, void *aKey, nsDTDMode aMode);
+    nsresult Parse2(const nsAString *aSourceBuffer, void *aKey, const nsACString *aMimeType, PRBool aLastCall, nsDTDMode aMode);
+    void *GetRootContextKey();
+    nsresult Terminate();
+    nsresult ParseFragment(const nsAString *aSourceBuffer, void *aKey, void /*nsTArray<nsString>*/ *aTagStack,
+            PRBool aXMLMode, const nsACString *aContentType, nsDTDMode aMode);
+    nsresult ParseFragment2(const nsAString *aSourceBuffer, nsIContent *aTargetNode, nsIAtom *aContextLocalName,
+            PRInt32 aContextNamespace, PRBool aQuirks);
+    nsresult BuildModel();
+    nsresult CancelParsingEvents();
+    void Reset();
+    PRBool CanInterrupt();
+    PRBool IsInsertionPointDefined();
+    void BeginEvaluatingParserInsertedScript();
+    void EndEvaluatingParserInsertedScript();
+    void MarkAsNotScriptCreated();
+    PRBool IsScriptCreated();
 }
 
 [
