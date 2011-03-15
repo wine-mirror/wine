@@ -5629,10 +5629,15 @@ static void test_nodeTypeTests( void )
     free_bstrs();
 }
 
-static void test_DocumentSaveToDocument(void)
+static void test_save(void)
 {
     IXMLDOMDocument *doc, *doc2;
-    IXMLDOMElement *pRoot;
+    IXMLDOMElement *root;
+    VARIANT file, vDoc;
+    BSTR sOrig, sNew;
+    char buffer[100];
+    DWORD read = 0;
+    HANDLE hfile;
     HRESULT hr;
 
     doc = create_document(&IID_IXMLDOMDocument);
@@ -5645,86 +5650,53 @@ static void test_DocumentSaveToDocument(void)
         return;
     }
 
-    hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    if(hr == S_OK)
-    {
-        hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)pRoot, NULL);
-        ok(hr == S_OK, "ret %08x\n", hr );
-        if(hr == S_OK)
-        {
-            VARIANT vDoc;
-            BSTR sOrig;
-            BSTR sNew;
+    /* save to IXMLDOMDocument */
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &root);
+    EXPECT_HR(hr, S_OK);
 
-            V_VT(&vDoc) = VT_UNKNOWN;
-            V_UNKNOWN(&vDoc) = (IUnknown*)doc2;
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)root, NULL);
+    EXPECT_HR(hr, S_OK);
 
-            hr = IXMLDOMDocument_save(doc, vDoc);
-            ok(hr == S_OK, "ret %08x\n", hr );
+    V_VT(&vDoc) = VT_UNKNOWN;
+    V_UNKNOWN(&vDoc) = (IUnknown*)doc2;
 
-            hr = IXMLDOMDocument_get_xml(doc, &sOrig);
-            ok(hr == S_OK, "ret %08x\n", hr );
+    hr = IXMLDOMDocument_save(doc, vDoc);
+    EXPECT_HR(hr, S_OK);
 
-            hr = IXMLDOMDocument_get_xml(doc2, &sNew);
-            ok(hr == S_OK, "ret %08x\n", hr );
+    hr = IXMLDOMDocument_get_xml(doc, &sOrig);
+    EXPECT_HR(hr, S_OK);
 
-            ok( !lstrcmpW( sOrig, sNew ), "New document is not the same as origial\n");
+    hr = IXMLDOMDocument_get_xml(doc2, &sNew);
+    EXPECT_HR(hr, S_OK);
 
-            SysFreeString(sOrig);
-            SysFreeString(sNew);
-        }
-        IXMLDOMElement_Release(pRoot);
-    }
+    ok( !lstrcmpW( sOrig, sNew ), "New document is not the same as origial\n");
 
+    SysFreeString(sOrig);
+    SysFreeString(sNew);
+
+    IXMLDOMElement_Release(root);
     IXMLDOMDocument_Release(doc2);
-    IXMLDOMDocument_Release(doc);
-}
 
-static void test_DocumentSaveToFile(void)
-{
-    IXMLDOMDocument *doc;
-    IXMLDOMElement *pRoot;
-    HANDLE file;
-    char buffer[100];
-    DWORD read = 0;
-    HRESULT hr;
+    /* save to path */
+    V_VT(&file) = VT_BSTR;
+    V_BSTR(&file) = _bstr_("test.xml");
 
-    doc = create_document(&IID_IXMLDOMDocument);
-    if (!doc) return;
+    hr = IXMLDOMDocument_save(doc, file);
+    EXPECT_HR(hr, S_OK);
 
-    hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &pRoot);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    if(hr == S_OK)
-    {
-        hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)pRoot, NULL);
-        ok(hr == S_OK, "ret %08x\n", hr );
-        if(hr == S_OK)
-        {
-            VARIANT vFile;
-
-            V_VT(&vFile) = VT_BSTR;
-            V_BSTR(&vFile) = _bstr_("test.xml");
-
-            hr = IXMLDOMDocument_save(doc, vFile);
-            ok(hr == S_OK, "ret %08x\n", hr );
-        }
-    }
-
-    IXMLDOMElement_Release(pRoot);
     IXMLDOMDocument_Release(doc);
 
-    file = CreateFile("test.xml", GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
-    ok(file != INVALID_HANDLE_VALUE, "Could not open file: %u\n", GetLastError());
-    if(file == INVALID_HANDLE_VALUE)
-        return;
+    hfile = CreateFile("test.xml", GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok(hfile != INVALID_HANDLE_VALUE, "Could not open file: %u\n", GetLastError());
+    if(hfile == INVALID_HANDLE_VALUE) return;
 
-    ReadFile(file, buffer, sizeof(buffer), &read, NULL);
+    ReadFile(hfile, buffer, sizeof(buffer), &read, NULL);
     ok(read != 0, "could not read file\n");
     ok(buffer[0] != '<' || buffer[1] != '?', "File contains processing instruction\n");
 
-    CloseHandle(file);
+    CloseHandle(hfile);
     DeleteFile("test.xml");
+    free_bstrs();
 }
 
 static void test_testTransforms(void)
@@ -8678,8 +8650,7 @@ START_TEST(domdoc)
     test_cloneNode();
     test_xmlTypes();
     test_nodeTypeTests();
-    test_DocumentSaveToDocument();
-    test_DocumentSaveToFile();
+    test_save();
     test_testTransforms();
     test_Namespaces();
     test_FormattingXML();
