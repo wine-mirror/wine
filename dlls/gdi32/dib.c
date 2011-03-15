@@ -341,6 +341,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 {
     DC *dc = get_dc_ptr( hdc );
     BOOL delete_hdc = FALSE;
+    PHYSDEV physdev;
     BITMAPOBJ *bitmap;
     INT result = 0;
 
@@ -362,19 +363,10 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         return 0;
     }
 
-    if (!bitmap->funcs && !BITMAP_SetOwnerDC( hbitmap, dc )) goto done;
+    physdev = GET_DC_PHYSDEV( dc, pSetDIBits );
+    if (BITMAP_SetOwnerDC( hbitmap, physdev ))
+        result = physdev->funcs->pSetDIBits( physdev, hbitmap, startscan, lines, bits, info, coloruse );
 
-    result = lines;
-    if (bitmap->funcs)
-    {
-        if (bitmap->funcs != dc->funcs)
-            ERR( "not supported: DDB bitmap %p not belonging to device %p\n", hbitmap, hdc );
-        else if (dc->funcs->pSetDIBits)
-            result = dc->funcs->pSetDIBits( dc->physDev, hbitmap, startscan, lines,
-                                            bits, info, coloruse );
-    }
-
- done:
     GDI_ReleaseObj( hbitmap );
     release_dc_ptr( dc );
     if (delete_hdc) DeleteDC(hdc);
@@ -1081,15 +1073,10 @@ INT WINAPI GetDIBits(
         /* Otherwise, get bits from the XImage */
         else
         {
-            if (!bmp->funcs && !BITMAP_SetOwnerDC( hbitmap, dc )) lines = 0;
-            else
-            {
-                if (bmp->funcs && bmp->funcs->pGetDIBits)
-                    lines = bmp->funcs->pGetDIBits( dc->physDev, hbitmap, startscan,
-                                                    lines, bits, info, coloruse );
-                else
-                    lines = 0;  /* FIXME: should copy from bmp->bitmap.bmBits */
-            }
+            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDIBits );
+            if (!BITMAP_SetOwnerDC( hbitmap, physdev )) lines = 0;
+            else lines = physdev->funcs->pGetDIBits( physdev, hbitmap, startscan,
+                                                     lines, bits, info, coloruse );
         }
     }
     else lines = abs(height);
@@ -1128,7 +1115,6 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     LONG height;
     WORD planes, bpp;
     DWORD compr, size;
-    DC *dc;
 
     if (!header) return 0;
 
@@ -1160,16 +1146,6 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
                 DeleteObject( handle );
                 handle = 0;
             }
-        }
-
-        else if (hdc && ((dc = get_dc_ptr( hdc )) != NULL) )
-        {
-            if (!BITMAP_SetOwnerDC( handle, dc ))
-            {
-                DeleteObject( handle );
-                handle = 0;
-            }
-            release_dc_ptr( dc );
         }
     }
 

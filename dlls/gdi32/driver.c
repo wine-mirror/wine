@@ -334,6 +334,16 @@ static BOOL CDECL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT 
     return TRUE;
 }
 
+static BOOL CDECL nulldrv_CreateBitmap( PHYSDEV dev, HBITMAP bitmap, LPVOID bits )
+{
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_DeleteBitmap( HBITMAP bitmap )
+{
+    return TRUE;
+}
+
 static BOOL CDECL nulldrv_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
 {
     return TRUE;
@@ -691,10 +701,10 @@ const DC_FUNCTIONS null_driver =
     nulldrv_ChoosePixelFormat,          /* pChoosePixelFormat */
     nulldrv_Chord,                      /* pChord */
     nulldrv_CloseFigure,                /* pCloseFigure */
-    NULL,                               /* pCreateBitmap */
+    nulldrv_CreateBitmap,               /* pCreateBitmap */
     NULL,                               /* pCreateDC */
     NULL,                               /* pCreateDIBSection */
-    NULL,                               /* pDeleteBitmap */
+    nulldrv_DeleteBitmap,               /* pDeleteBitmap */
     NULL,                               /* pDeleteDC */
     nulldrv_DeleteObject,               /* pDeleteObject */
     nulldrv_DescribePixelFormat,        /* pDescribePixelFormat */
@@ -716,9 +726,9 @@ const DC_FUNCTIONS null_driver =
     nulldrv_FlattenPath,                /* pFlattenPath */
     nulldrv_FrameRgn,                   /* pFrameRgn */
     nulldrv_GdiComment,                 /* pGdiComment */
-    NULL,                               /* pGetBitmapBits */
+    nulldrv_GetBitmapBits,              /* pGetBitmapBits */
     NULL,                               /* pGetCharWidth */
-    NULL,                               /* pGetDIBits */
+    nulldrv_GetDIBits,                  /* pGetDIBits */
     NULL,                               /* pGetDeviceCaps */
     nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */
     nulldrv_GetICMProfile,              /* pGetICMProfile */
@@ -763,13 +773,13 @@ const DC_FUNCTIONS null_driver =
     nulldrv_SelectPalette,              /* pSelectPalette */
     nulldrv_SelectPen,                  /* pSelectPen */
     nulldrv_SetArcDirection,            /* pSetArcDirection */
-    NULL,                               /* pSetBitmapBits */
+    nulldrv_SetBitmapBits,              /* pSetBitmapBits */
     nulldrv_SetBkColor,                 /* pSetBkColor */
     nulldrv_SetBkMode,                  /* pSetBkMode */
     nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */
     nulldrv_SetDCPenColor,              /* pSetDCPenColor */
     NULL,                               /* pSetDIBColorTable */
-    NULL,                               /* pSetDIBits */
+    nulldrv_SetDIBits,                  /* pSetDIBits */
     NULL,                               /* pSetDIBitsToDevice */
     nulldrv_SetDeviceClipping,          /* pSetDeviceClipping */
     nulldrv_SetDeviceGammaRamp,         /* pSetDeviceGammaRamp */
