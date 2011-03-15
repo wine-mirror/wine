@@ -151,7 +151,7 @@ static void cubetexture_unload(struct wined3d_resource *resource)
         struct wined3d_resource *sub_resource = texture->baseTexture.sub_resources[i];
         IWineD3DSurfaceImpl *surface = surface_from_resource(sub_resource);
 
-        resource->resource_ops->resource_unload(sub_resource);
+        sub_resource->resource_ops->resource_unload(sub_resource);
         surface_set_texture_name(surface, 0, TRUE);
         surface_set_texture_name(surface, 0, FALSE);
     }
