@@ -270,7 +270,8 @@ static ULONG STDMETHODCALLTYPE d3d10_texture3d_AddRef(ID3D10Texture3D *iface)
 
     TRACE("%p increasing refcount to %u.\n", texture, refcount);
 
-    if (refcount == 1) IWineD3DVolumeTexture_AddRef(texture->wined3d_texture);
+    if (refcount == 1)
+        IWineD3DBaseTexture_AddRef(texture->wined3d_texture);
 
     return refcount;
 }
@@ -288,9 +289,7 @@ static ULONG STDMETHODCALLTYPE d3d10_texture3d_Release(ID3D10Texture3D *iface)
     TRACE("%p decreasing refcount to %u.\n", texture, refcount);
 
     if (!refcount)
-    {
-        IWineD3DVolumeTexture_Release(texture->wined3d_texture);
-    }
+        IWineD3DBaseTexture_Release(texture->wined3d_texture);
 
     return refcount;
 }
@@ -362,7 +361,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
     if (map_flags)
         FIXME("Ignoring map_flags %#x.\n", map_flags);
 
-    if (!(sub_resource = IWineD3DVolumeTexture_GetSubResource(texture->wined3d_texture, sub_resource_idx)))
+    if (!(sub_resource = IWineD3DBaseTexture_GetSubResource(texture->wined3d_texture, sub_resource_idx)))
         hr = E_INVALIDARG;
     else if (SUCCEEDED(hr = IWineD3DVolume_Map(wined3d_volume_from_resource(sub_resource),
             &wined3d_map_desc, NULL, 0)))
@@ -382,7 +381,7 @@ static void STDMETHODCALLTYPE d3d10_texture3d_Unmap(ID3D10Texture3D *iface, UINT
 
     TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
 
-    if (!(sub_resource = IWineD3DVolumeTexture_GetSubResource(texture->wined3d_texture, sub_resource_idx)))
+    if (!(sub_resource = IWineD3DBaseTexture_GetSubResource(texture->wined3d_texture, sub_resource_idx)))
         return;
 
     IWineD3DVolume_Unmap(wined3d_volume_from_resource(sub_resource));

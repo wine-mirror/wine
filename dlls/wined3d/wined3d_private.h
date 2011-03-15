@@ -2006,13 +2006,10 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
 void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
 void volume_set_container(IWineD3DVolumeImpl *volume, struct IWineD3DVolumeTextureImpl *container) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IWineD3DVolumeTexture implementation structure (extends IWineD3DBaseTextureImpl)
- */
 typedef struct IWineD3DVolumeTextureImpl
 {
     /* IUnknown & WineD3DResource/WineD3DBaseTexture Information     */
-    const IWineD3DVolumeTextureVtbl *lpVtbl;
+    const IWineD3DBaseTextureVtbl *lpVtbl;
     struct wined3d_resource resource;
     IWineD3DBaseTextureClass  baseTexture;
 } IWineD3DVolumeTextureImpl;

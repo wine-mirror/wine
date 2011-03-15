@@ -382,15 +382,10 @@ HRESULT texture_init(IDirect3DTexture8Impl *texture, IDirect3DDevice8Impl *devic
  */
 struct IDirect3DVolumeTexture8Impl
 {
-    /* IUnknown fields */
     const IDirect3DVolumeTexture8Vtbl *lpVtbl;
     LONG                   ref;
-
-    /* IDirect3DResource8 fields */
-    IWineD3DVolumeTexture             *wineD3DVolumeTexture;
-
-    /* Parent reference */
-    LPDIRECT3DDEVICE8                  parentDevice;
+    IWineD3DBaseTexture *wined3d_texture;
+    IDirect3DDevice8 *parentDevice;
 };
 
 HRESULT volumetexture_init(IDirect3DVolumeTexture8Impl *texture, IDirect3DDevice8Impl *device,
