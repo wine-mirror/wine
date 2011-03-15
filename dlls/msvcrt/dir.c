@@ -542,6 +542,23 @@ int CDECL MSVCRT__findnext(MSVCRT_intptr_t hand, struct MSVCRT__finddata_t * ft)
 }
 
 /*********************************************************************
+ *               _findnext32 (MSVCRT.@)
+ */
+int CDECL MSVCRT__findnext32(MSVCRT_intptr_t hand, struct MSVCRT__finddata32_t * ft)
+{
+  WIN32_FIND_DATAA find_data;
+
+  if (!FindNextFileA((HANDLE)hand, &find_data))
+  {
+    *MSVCRT__errno() = MSVCRT_ENOENT;
+    return -1;
+  }
+
+  msvcrt_fttofd32(&find_data, ft);
+  return 0;
+}
+
+/*********************************************************************
  *		_wfindnext (MSVCRT.@)
  *
  * Unicode version of _findnext.

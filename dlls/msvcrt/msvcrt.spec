@@ -416,6 +416,7 @@
 @ cdecl _findfirst64i32(str ptr) MSVCRT__findfirst64i32
 @ cdecl _findfirsti64(str ptr) MSVCRT__findfirsti64
 @ cdecl _findnext(long ptr) MSVCRT__findnext
+@ cdecl _findnext32(long ptr) MSVCRT__findnext32
 @ cdecl _findnext64(long ptr) MSVCRT__findnext64
 @ cdecl _findnext64i32(long ptr) MSVCRT__findnext64i32
 @ cdecl _findnexti64(long ptr) MSVCRT__findnexti64

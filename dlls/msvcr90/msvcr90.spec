@@ -454,7 +454,7 @@
 @ stub _findfirst32i64
 @ cdecl _findfirst64(str ptr) msvcrt._findfirst64
 @ cdecl _findfirst64i32(str ptr) msvcrt._findfirst64i32
-@ stub _findnext32
+@ cdecl _findnext32(long ptr) msvcrt._findnext32
 @ stub _findnext32i64
 @ cdecl _findnext64(long ptr) msvcrt._findnext64
 @ cdecl _findnext64i32(long ptr) msvcrt._findnext64i32
