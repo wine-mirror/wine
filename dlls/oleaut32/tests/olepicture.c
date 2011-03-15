@@ -25,6 +25,7 @@
 #include <float.h>
 
 #define COBJMACROS
+#define CONST_VTABLE
 #define NONAMELESSUNION
 
 #include "wine/test.h"
@@ -169,17 +170,17 @@ static const unsigned char enhmetafile[] = {
 };
 
 
-struct NoStatStreamImpl
+typedef struct NoStatStreamImpl
 {
-	const IStreamVtbl	*lpVtbl;   
+	IStream			IStream_iface;
 	LONG			ref;
 
 	HGLOBAL			supportHandle;
 	ULARGE_INTEGER		streamSize;
 	ULARGE_INTEGER		currentPosition;
-};
-typedef struct NoStatStreamImpl NoStatStreamImpl;
-static NoStatStreamImpl* NoStatStreamImpl_Construct(HGLOBAL hGlobal);
+} NoStatStreamImpl;
+
+static IStream* NoStatStream_Construct(HGLOBAL hGlobal);
 
 static void
 test_pic_with_stream(LPSTREAM stream, unsigned int imgsize)
@@ -282,7 +283,7 @@ test_pic(const unsigned char *imgdata, unsigned int imgsize)
 	IStream_Release(stream);
 
 	/* again with Non Statable and Non Seekable stream */
-	stream = (LPSTREAM)NoStatStreamImpl_Construct(hglob);
+	stream = NoStatStream_Construct(hglob);
 	hglob = 0;  /* Non-statable impl always deletes on release */
 	test_pic_with_stream(stream, 0);
 
@@ -313,7 +314,7 @@ test_pic(const unsigned char *imgdata, unsigned int imgsize)
 		IStream_Release(stream);
 
 		/* again with Non Statable and Non Seekable stream */
-		stream = (LPSTREAM)NoStatStreamImpl_Construct(hglob);
+		stream = NoStatStream_Construct(hglob);
 		hglob = 0;  /* Non-statable impl always deletes on release */
 		test_pic_with_stream(stream, 0);
 
@@ -1002,6 +1003,11 @@ START_TEST(olepicture)
 /* Helper functions only ... */
 
 
+static inline NoStatStreamImpl *impl_from_IStream(IStream *iface)
+{
+  return CONTAINING_RECORD(iface, NoStatStreamImpl, IStream_iface);
+}
+
 static void NoStatStreamImpl_Destroy(NoStatStreamImpl* This)
 {
   GlobalFree(This->supportHandle);
@@ -1012,7 +1018,7 @@ static void NoStatStreamImpl_Destroy(NoStatStreamImpl* This)
 static ULONG WINAPI NoStatStreamImpl_AddRef(
 		IStream* iface)
 {
-  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  NoStatStreamImpl* const This = impl_from_IStream(iface);
   return InterlockedIncrement(&This->ref);
 }
 
@@ -1021,7 +1027,7 @@ static HRESULT WINAPI NoStatStreamImpl_QueryInterface(
 		  REFIID         riid,	      /* [in] */
 		  void**         ppvObject)   /* [iid_is][out] */
 {
-  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  NoStatStreamImpl* const This = impl_from_IStream(iface);
   if (ppvObject==0) return E_INVALIDARG;
   *ppvObject = 0;
   if (IsEqualIID(&IID_IUnknown, riid))
@@ -1042,7 +1048,7 @@ static HRESULT WINAPI NoStatStreamImpl_QueryInterface(
 static ULONG WINAPI NoStatStreamImpl_Release(
 		IStream* iface)
 {
-  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  NoStatStreamImpl* const This = impl_from_IStream(iface);
   ULONG newRef = InterlockedDecrement(&This->ref);
   if (newRef==0)
     NoStatStreamImpl_Destroy(This);
@@ -1055,7 +1061,7 @@ static HRESULT WINAPI NoStatStreamImpl_Read(
 		  ULONG          cb,        /* [in] */
 		  ULONG*         pcbRead)   /* [out] */
 {
-  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  NoStatStreamImpl* const This = impl_from_IStream(iface);
   void* supportBuffer;
   ULONG bytesReadBuffer;
   ULONG bytesToReadFromBuffer;
@@ -1079,7 +1085,7 @@ static HRESULT WINAPI NoStatStreamImpl_Write(
 		  ULONG          cb,          /* [in] */
 		  ULONG*         pcbWritten)  /* [out] */
 {
-  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  NoStatStreamImpl* const This = impl_from_IStream(iface);
   void*          supportBuffer;
   ULARGE_INTEGER newSize;
   ULONG          bytesWritten = 0;
@@ -1107,7 +1113,7 @@ static HRESULT WINAPI NoStatStreamImpl_Seek(
 		  DWORD           dwOrigin,         /* [in] */
 		  ULARGE_INTEGER* plibNewPosition) /* [out] */
 {
-  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  NoStatStreamImpl* const This = impl_from_IStream(iface);
   ULARGE_INTEGER newPosition;
   switch (dwOrigin)
   {
@@ -1136,7 +1142,7 @@ static HRESULT WINAPI NoStatStreamImpl_SetSize(
 				     IStream*      iface,
 				     ULARGE_INTEGER  libNewSize)   /* [in] */
 {
-  NoStatStreamImpl* const This=(NoStatStreamImpl*)iface;
+  NoStatStreamImpl* const This = impl_from_IStream(iface);
   HGLOBAL supportHandle;
   if (libNewSize.u.HighPart != 0)
     return STG_E_INVALIDFUNCTION;
@@ -1249,14 +1255,14 @@ static const IStreamVtbl NoStatStreamImpl_Vtbl;
     In any case the object takes ownership of memory handle and will free it on
     object release.
  */
-static NoStatStreamImpl* NoStatStreamImpl_Construct(HGLOBAL hGlobal)
+static IStream* NoStatStream_Construct(HGLOBAL hGlobal)
 {
   NoStatStreamImpl* newStream;
 
   newStream = HeapAlloc(GetProcessHeap(), 0, sizeof(NoStatStreamImpl));
   if (newStream!=0)
   {
-    newStream->lpVtbl = &NoStatStreamImpl_Vtbl;
+    newStream->IStream_iface.lpVtbl = &NoStatStreamImpl_Vtbl;
     newStream->ref    = 1;
     newStream->supportHandle = hGlobal;
 
@@ -1268,7 +1274,7 @@ static NoStatStreamImpl* NoStatStreamImpl_Construct(HGLOBAL hGlobal)
     newStream->streamSize.u.HighPart = 0;
     newStream->streamSize.u.LowPart  = GlobalSize(newStream->supportHandle);
   }
-  return newStream;
+  return &newStream->IStream_iface;
 }
 
 
