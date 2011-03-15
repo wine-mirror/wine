@@ -411,6 +411,7 @@
 @ cdecl _fileno(ptr) MSVCRT__fileno
 @ cdecl _findclose(long) MSVCRT__findclose
 @ cdecl _findfirst(str ptr) MSVCRT__findfirst
+@ cdecl _findfirst32(str ptr) MSVCRT__findfirst32
 @ cdecl _findfirst64(str ptr) MSVCRT__findfirst64
 @ cdecl _findfirst64i32(str ptr) MSVCRT__findfirst64i32
 @ cdecl _findfirsti64(str ptr) MSVCRT__findfirsti64

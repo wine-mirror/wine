@@ -617,7 +617,7 @@
 @ cdecl -ret64 _filelengthi64(long) msvcrt._filelengthi64
 @ cdecl _fileno(ptr) msvcrt._fileno
 @ cdecl _findclose(long) msvcrt._findclose
-@ stub _findfirst32
+@ cdecl _findfirst32(str ptr) msvcrt._findfirst32
 @ stub _findfirst32i64
 @ cdecl _findfirst64(str ptr) msvcrt._findfirst64
 @ cdecl _findfirst64i32(str ptr) msvcrt._findfirst64i32
