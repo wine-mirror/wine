@@ -265,6 +265,42 @@ BOOL CDECL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     return TRUE;
 }
 
+BOOL CDECL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    switch (mode)
+    {
+    case MWT_IDENTITY:
+        dc->xformWorld2Wnd.eM11 = 1.0f;
+        dc->xformWorld2Wnd.eM12 = 0.0f;
+        dc->xformWorld2Wnd.eM21 = 0.0f;
+        dc->xformWorld2Wnd.eM22 = 1.0f;
+        dc->xformWorld2Wnd.eDx  = 0.0f;
+        dc->xformWorld2Wnd.eDy  = 0.0f;
+        break;
+    case MWT_LEFTMULTIPLY:
+        CombineTransform( &dc->xformWorld2Wnd, xform, &dc->xformWorld2Wnd );
+        break;
+    case MWT_RIGHTMULTIPLY:
+        CombineTransform( &dc->xformWorld2Wnd, &dc->xformWorld2Wnd, xform );
+        break;
+    default:
+        return FALSE;
+    }
+    DC_UpdateXforms( dc );
+    return TRUE;
+}
+
+BOOL CDECL nulldrv_SetWorldTransform( PHYSDEV dev, const XFORM *xform )
+{
+    DC *dc = get_nulldrv_dc( dev );
+
+    dc->xformWorld2Wnd = *xform;
+    DC_UpdateXforms( dc );
+    return TRUE;
+}
+
 /***********************************************************************
  *           DPtoLP    (GDI32.@)
  */
@@ -482,6 +518,53 @@ BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT xNum, INT xDenom,
     }
     return ret;
 }
+
+
+/****************************************************************************
+ *           ModifyWorldTransform   (GDI32.@)
+ */
+BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
+{
+    BOOL ret = FALSE;
+    DC *dc;
+
+    if (!xform && mode != MWT_IDENTITY) return FALSE;
+    if ((dc = get_dc_ptr( hdc )))
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pModifyWorldTransform );
+        if (dc->GraphicsMode == GM_ADVANCED)
+            ret = physdev->funcs->pModifyWorldTransform( physdev, xform, mode );
+        release_dc_ptr( dc );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SetWorldTransform    (GDI32.@)
+ */
+BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
+{
+    BOOL ret = FALSE;
+    DC *dc;
+
+    if (!xform) return FALSE;
+    /* The transform must conform to (eM11 * eM22 != eM12 * eM21) requirement */
+    if (xform->eM11 * xform->eM22 == xform->eM12 * xform->eM21) return FALSE;
+
+    TRACE("eM11 %f eM12 %f eM21 %f eM22 %f eDx %f eDy %f\n",
+        xform->eM11, xform->eM12, xform->eM21, xform->eM22, xform->eDx, xform->eDy);
+
+    if ((dc = get_dc_ptr( hdc )))
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetWorldTransform );
+        if (dc->GraphicsMode == GM_ADVANCED)
+            ret = physdev->funcs->pSetWorldTransform( physdev, xform );
+        release_dc_ptr( dc );
+    }
+    return ret;
+}
+
 
 /***********************************************************************
  *           SetVirtualResolution   (GDI32.@)

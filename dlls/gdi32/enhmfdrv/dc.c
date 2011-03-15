@@ -327,17 +327,20 @@ DWORD CDECL EMFDRV_SetLayout( PHYSDEV dev, DWORD layout )
 
 BOOL CDECL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform)
 {
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetWorldTransform );
     EMRSETWORLDTRANSFORM emr;
 
     emr.emr.iType = EMR_SETWORLDTRANSFORM;
     emr.emr.nSize = sizeof(emr);
     emr.xform = *xform;
 
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
+    return next->funcs->pSetWorldTransform( next, xform );
 }
 
 BOOL CDECL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode)
 {
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pModifyWorldTransform );
     EMRMODIFYWORLDTRANSFORM emr;
 
     emr.emr.iType = EMR_MODIFYWORLDTRANSFORM;
@@ -345,7 +348,8 @@ BOOL CDECL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD m
     emr.xform = *xform;
     emr.iMode = mode;
 
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
+    return next->funcs->pModifyWorldTransform( next, xform, mode );
 }
 
 BOOL CDECL EMFDRV_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )

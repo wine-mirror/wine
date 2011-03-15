@@ -731,7 +731,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_IntersectClipRect,          /* pIntersectClipRect */
     nulldrv_InvertRgn,                  /* pInvertRgn */
     nulldrv_LineTo,                     /* pLineTo */
-    NULL,                               /* pModifyWorldTransform */
+    nulldrv_ModifyWorldTransform,       /* pModifyWorldTransform */
     nulldrv_MoveTo,                     /* pMoveTo */
     nulldrv_OffsetClipRgn,              /* pOffsetClipRgn */
     nulldrv_OffsetViewportOrgEx,        /* pOffsetViewportOrg */
@@ -790,7 +790,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_SetViewportOrgEx,           /* pSetViewportOrg */
     nulldrv_SetWindowExtEx,             /* pSetWindowExt */
     nulldrv_SetWindowOrgEx,             /* pSetWindowOrg */
-    NULL,                               /* pSetWorldTransform */
+    nulldrv_SetWorldTransform,          /* pSetWorldTransform */
     nulldrv_StartDoc,                   /* pStartDoc */
     nulldrv_StartPage,                  /* pStartPage */
     NULL,                               /* pStretchBlt */
