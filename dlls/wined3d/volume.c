@@ -85,7 +85,7 @@ void volume_add_dirty_box(struct IWineD3DVolumeImpl *volume, const WINED3DBOX *d
     }
 }
 
-void volume_set_container(IWineD3DVolumeImpl *volume, struct IWineD3DVolumeTextureImpl *container)
+void volume_set_container(IWineD3DVolumeImpl *volume, struct IWineD3DBaseTextureImpl *container)
 {
     TRACE("volume %p, container %p.\n", volume, container);
 

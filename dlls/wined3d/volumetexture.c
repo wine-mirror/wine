@@ -1,6 +1,4 @@
 /*
- * IWineD3DVolumeTexture implementation
- *
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2005 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
@@ -113,7 +111,7 @@ static const struct wined3d_resource_ops volumetexture_resource_ops =
     volumetexture_unload,
 };
 
-static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
+static void volumetexture_cleanup(IWineD3DBaseTextureImpl *This)
 {
     unsigned int i;
 
@@ -141,7 +139,7 @@ static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This)
 
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_QueryInterface(IWineD3DBaseTexture *iface, REFIID riid, LPVOID *ppobj)
 {
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IWineD3DBase)
@@ -158,7 +156,7 @@ static HRESULT WINAPI IWineD3DVolumeTextureImpl_QueryInterface(IWineD3DBaseTextu
 
 static ULONG WINAPI IWineD3DVolumeTextureImpl_AddRef(IWineD3DBaseTexture *iface)
 {
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     TRACE("(%p) : AddRef increasing from %d\n", This, This->resource.ref);
     return InterlockedIncrement(&This->resource.ref);
 }
@@ -166,7 +164,7 @@ static ULONG WINAPI IWineD3DVolumeTextureImpl_AddRef(IWineD3DBaseTexture *iface)
 /* Do not call while under the GL lock. */
 static ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DBaseTexture *iface)
 {
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     ULONG ref;
     TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
@@ -182,28 +180,28 @@ static ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DBaseTexture *iface
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_SetPrivateData(IWineD3DBaseTexture *iface,
         REFGUID riid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data(&((IWineD3DVolumeTextureImpl *)iface)->resource, riid, data, data_size, flags);
+    return resource_set_private_data(&((IWineD3DBaseTextureImpl *)iface)->resource, riid, data, data_size, flags);
 }
 
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetPrivateData(IWineD3DBaseTexture *iface,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data(&((IWineD3DVolumeTextureImpl *)iface)->resource, guid, data, data_size);
+    return resource_get_private_data(&((IWineD3DBaseTextureImpl *)iface)->resource, guid, data, data_size);
 }
 
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_FreePrivateData(IWineD3DBaseTexture *iface, REFGUID refguid)
 {
-    return resource_free_private_data(&((IWineD3DVolumeTextureImpl *)iface)->resource, refguid);
+    return resource_free_private_data(&((IWineD3DBaseTextureImpl *)iface)->resource, refguid);
 }
 
 static DWORD WINAPI IWineD3DVolumeTextureImpl_SetPriority(IWineD3DBaseTexture *iface, DWORD priority)
 {
-    return resource_set_priority(&((IWineD3DVolumeTextureImpl *)iface)->resource, priority);
+    return resource_set_priority(&((IWineD3DBaseTextureImpl *)iface)->resource, priority);
 }
 
 static DWORD WINAPI IWineD3DVolumeTextureImpl_GetPriority(IWineD3DBaseTexture *iface)
 {
-    return resource_get_priority(&((IWineD3DVolumeTextureImpl *)iface)->resource);
+    return resource_get_priority(&((IWineD3DBaseTextureImpl *)iface)->resource);
 }
 
 static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DBaseTexture *iface)
@@ -213,14 +211,14 @@ static void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DBaseTexture *iface)
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeTextureImpl_GetType(IWineD3DBaseTexture *iface)
 {
-    return resource_get_type(&((IWineD3DVolumeTextureImpl *)iface)->resource);
+    return resource_get_type(&((IWineD3DBaseTextureImpl *)iface)->resource);
 }
 
 static void * WINAPI IWineD3DVolumeTextureImpl_GetParent(IWineD3DBaseTexture *iface)
 {
     TRACE("iface %p\n", iface);
 
-    return ((IWineD3DVolumeTextureImpl *)iface)->resource.parent;
+    return ((IWineD3DBaseTextureImpl *)iface)->resource.parent;
 }
 
 static DWORD WINAPI IWineD3DVolumeTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LODNew)
@@ -318,7 +316,7 @@ static const IWineD3DBaseTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_AddDirtyRegion,
 };
 
-HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT height,
+HRESULT volumetexture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT height,
         UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops)
 {

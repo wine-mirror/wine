@@ -1965,6 +1965,10 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
+HRESULT volumetexture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT height,
+        UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
+        WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+
 /*****************************************************************************
  * IWineD3DCubeTexture implementation structure (extends IWineD3DBaseTextureImpl)
  */
@@ -1986,7 +1990,7 @@ typedef struct IWineD3DVolumeImpl
     const IWineD3DVolumeVtbl  *lpVtbl;
     struct wined3d_resource resource;
 
-    struct IWineD3DVolumeTextureImpl *container;
+    struct IWineD3DBaseTextureImpl *container;
     BOOL                    lockable;
     BOOL                    locked;
     WINED3DBOX              lockedBox;
@@ -2004,19 +2008,7 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
         UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
-void volume_set_container(IWineD3DVolumeImpl *volume, struct IWineD3DVolumeTextureImpl *container) DECLSPEC_HIDDEN;
-
-typedef struct IWineD3DVolumeTextureImpl
-{
-    /* IUnknown & WineD3DResource/WineD3DBaseTexture Information     */
-    const IWineD3DBaseTextureVtbl *lpVtbl;
-    struct wined3d_resource resource;
-    IWineD3DBaseTextureClass  baseTexture;
-} IWineD3DVolumeTextureImpl;
-
-HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT height,
-        UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
-        WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+void volume_set_container(IWineD3DVolumeImpl *volume, struct IWineD3DBaseTextureImpl *container) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * Structure for DIB Surfaces (GetDC and GDI surfaces)

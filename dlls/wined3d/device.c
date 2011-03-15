@@ -1139,8 +1139,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool,
         void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DBaseTexture **ppVolumeTexture)
 {
-    IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVolumeTextureImpl *object;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DBaseTextureImpl *object;
     HRESULT hr;
 
     TRACE("(%p) : W(%u) H(%u) D(%u), Lvl(%u) Usage(%#x), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
