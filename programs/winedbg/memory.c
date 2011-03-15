@@ -29,6 +29,7 @@
 
 #include "debugger.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
@@ -393,18 +394,23 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             dbg_printf("%Lf", val_real);
             break;
         case btChar:
+        case btWChar:
+            /* sometimes WCHAR is defined as btChar with size = 2, so discrimate
+             * Ansi/Unicode based on size, not on basetype
+             */
             if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
-            /* FIXME: should do the same for a Unicode character (size == 2) */
         print_char:
-            if (size == 1 && (val_int < 0x20 || val_int > 0x80))
-                dbg_printf("%d", (int)val_int);
-            else if (size == 2)
+            if (size == 1 && isprint((char)val_int))
+                dbg_printf("'%c'", (char)val_int);
+            else if (size == 2 && isprintW((WCHAR)val_int))
             {
                 WCHAR   wch = (WCHAR)val_int;
+                dbg_printf("'");
                 dbg_outputW(&wch, 1);
+                dbg_printf("'");
             }
             else
-                dbg_printf("'%c'", (char)val_int);
+                dbg_printf("%d", (int)val_int);
             break;
         case btBool:
             if (!be_cpu->fetch_integer(lvalue, size, TRUE, &val_int)) return;
