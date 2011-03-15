@@ -3936,6 +3936,10 @@ static void test_params(void)
     HWND hwnd;
     INT rc;
 
+    ok(!IsWindow(0), "IsWindow(0)\n");
+    ok(!IsWindow(HWND_BROADCAST), "IsWindow(HWND_BROADCAST)\n");
+    ok(!IsWindow(HWND_TOPMOST), "IsWindow(HWND_TOPMOST)\n");
+
     /* Just a param check */
     if (pGetMonitorInfoA)
     {
