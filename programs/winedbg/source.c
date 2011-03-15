@@ -199,31 +199,39 @@ static int source_display(const char* sourcefile, int start, int end)
             if (dbg_interactiveP)
             {
                 char zbuf[256];
-                /*
-                 * Still couldn't find it.  Ask user for path to add.
-                 */
-                snprintf(zbuf, sizeof(zbuf), "Enter path to file '%s': ", sourcefile);
-                input_read_line(zbuf, tmppath, sizeof(tmppath));
 
-                if (tmppath[strlen(tmppath) - 1] != '/')
+                for (;;)
                 {
-                    strcat(tmppath, "/");
-                }
-                /*
-                 * Now append the base file name.
-                 */
-                strcat(tmppath, basename);
-            }
-            else tmppath[0] = '\0';
+                    size_t      len;
+                    /*
+                     * Still couldn't find it.  Ask user for path to add.
+                     */
+                    snprintf(zbuf, sizeof(zbuf), "Enter path to file '%s' (<cr> to end search): ", sourcefile);
+                    input_read_line(zbuf, tmppath, sizeof(tmppath));
+                    if (!(len = strlen(tmppath))) break;
 
-            if (GetFileAttributesA(tmppath) == INVALID_FILE_ATTRIBUTES)
+                    /* append '/' if missing at the end */
+                    if (tmppath[len - 1] != '/' && tmppath[len - 1] != '\\')
+                        tmppath[len++] = '/';
+                    strcpy(&tmppath[len], basename);
+                    if (GetFileAttributesA(tmppath) != INVALID_FILE_ATTRIBUTES)
+                        break;
+                    dbg_printf("Unable to access file '%s'\n", tmppath);
+                }
+            }
+            else
+            {
+                dbg_printf("Unable to access file '%s'\n", sourcefile);
+                tmppath[0] = '\0';
+            }
+
+            if (!tmppath[0])
             {
                 /*
                  * OK, I guess the user doesn't really want to see it
                  * after all.
                  */
                 ol = source_add_file(sourcefile, NULL);
-                dbg_printf("Unable to open file '%s'\n", tmppath);
                 return FALSE;
             }
         }
