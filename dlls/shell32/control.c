@@ -129,13 +129,13 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
           but proper data in CPL_NEWINQUIRE. if we get an empty string or a null
           icon, see what we can get from CPL_NEWINQUIRE */
 
-       if ((applet->info[i].szName == 0) || (lstrlenW(applet->info[i].szName) == 0))
+       if (lstrlenW(applet->info[i].szName) == 0)
            info.idName = CPL_DYNAMIC_RES;
 
        /* zero-length szInfo may not be a buggy applet, but it doesn't hurt for us
           to check anyway */
 
-       if ((applet->info[i].szInfo == 0) || (lstrlenW(applet->info[i].szInfo) == 0))
+       if (lstrlenW(applet->info[i].szInfo) == 0)
            info.idInfo = CPL_DYNAMIC_RES;
 
        if (applet->info[i].hIcon == NULL)
