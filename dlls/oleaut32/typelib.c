@@ -977,7 +977,7 @@ typedef struct tagTLBImpLib
 
     struct tagITypeLibImpl *pImpTypeLib; /* pointer to loaded typelib, or
 					    NULL if not yet loaded */
-    struct tagTLBImpLib * next;
+    struct list entry;
 } TLBImpLib;
 
 /* internal ITypeLib data */
@@ -1000,7 +1000,7 @@ typedef struct tagITypeLibImpl
     int TypeInfoCount;          /* nr of typeinfo's in librarry */
     struct tagITypeInfoImpl **typeinfos;
     struct list custdata_list;
-    TLBImpLib   * pImpLibs;     /* linked list to all imported typelibs */
+    struct list implib_list;
     int ctTypeDesc;             /* number of items in type desc array */
     TYPEDESC * pTypeDesc;       /* array of TypeDescriptions found in the
 				   library. Only used while reading MSFT
@@ -2275,17 +2275,18 @@ static void MSFT_DoRefType(TLBContext *pcx, ITypeLibImpl *pTL,
     if(!MSFT_HREFTYPE_INTHISFILE( offset)) {
         /* external typelib */
         MSFT_ImpInfo impinfo;
-        TLBImpLib *pImpLib=(pcx->pLibInfo->pImpLibs);
+        TLBImpLib *pImpLib;
 
         TRACE_(typelib)("offset %x, masked offset %x\n", offset, offset + (offset & 0xfffffffc));
 
         MSFT_ReadLEDWords(&impinfo, sizeof(impinfo), pcx,
                           pcx->pTblDir->pImpInfo.offset + (offset & 0xfffffffc));
-        while (pImpLib){   /* search the known offsets of all import libraries */
-            if(pImpLib->offset==impinfo.oImpFile) break;
-            pImpLib=pImpLib->next;
-        }
-        if(pImpLib){
+
+        LIST_FOR_EACH_ENTRY(pImpLib, &pcx->pLibInfo->implib_list, TLBImpLib, entry)
+            if(pImpLib->offset==impinfo.oImpFile)
+                break;
+
+        if(&pImpLib->entry != &pcx->pLibInfo->implib_list){
             ref->reference = offset;
             ref->pImpTLInfo = pImpLib;
             if(impinfo.flags & MSFT_IMPINFO_OFFSET_IS_GUID) {
@@ -2979,6 +2980,7 @@ static ITypeLibImpl* TypeLibImpl_Constructor(void)
     pTypeLibImpl->lpVtblTypeComp = &tlbtcvt;
     pTypeLibImpl->ref = 1;
 
+    list_init(&pTypeLibImpl->implib_list);
     list_init(&pTypeLibImpl->custdata_list);
     list_init(&pTypeLibImpl->ref_list);
     pTypeLibImpl->dispatch_href = -1;
@@ -3140,7 +3142,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     /* imported type libs */
     if(tlbSegDir.pImpFiles.offset>0)
     {
-        TLBImpLib **ppImpLib = &(pTypeLibImpl->pImpLibs);
+        TLBImpLib *pImpLib;
         int oGuid, offset = tlbSegDir.pImpFiles.offset;
         UINT16 size;
 
@@ -3148,25 +3150,25 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
 	{
             char *name;
 
-            *ppImpLib = heap_alloc_zero(sizeof(TLBImpLib));
-            (*ppImpLib)->offset = offset - tlbSegDir.pImpFiles.offset;
+            pImpLib = heap_alloc_zero(sizeof(TLBImpLib));
+            pImpLib->offset = offset - tlbSegDir.pImpFiles.offset;
             MSFT_ReadLEDWords(&oGuid, sizeof(INT), &cx, offset);
 
-            MSFT_ReadLEDWords(&(*ppImpLib)->lcid,         sizeof(LCID),   &cx, DO_NOT_SEEK);
-            MSFT_ReadLEWords(&(*ppImpLib)->wVersionMajor, sizeof(WORD),   &cx, DO_NOT_SEEK);
-            MSFT_ReadLEWords(&(*ppImpLib)->wVersionMinor, sizeof(WORD),   &cx, DO_NOT_SEEK);
+            MSFT_ReadLEDWords(&pImpLib->lcid,         sizeof(LCID),   &cx, DO_NOT_SEEK);
+            MSFT_ReadLEWords(&pImpLib->wVersionMajor, sizeof(WORD),   &cx, DO_NOT_SEEK);
+            MSFT_ReadLEWords(&pImpLib->wVersionMinor, sizeof(WORD),   &cx, DO_NOT_SEEK);
             MSFT_ReadLEWords(& size,                      sizeof(UINT16), &cx, DO_NOT_SEEK);
 
             size >>= 2;
             name = heap_alloc_zero(size+1);
             MSFT_Read(name, size, &cx, DO_NOT_SEEK);
-            (*ppImpLib)->name = TLB_MultiByteToBSTR(name);
+            pImpLib->name = TLB_MultiByteToBSTR(name);
             heap_free(name);
 
-            MSFT_ReadGuid(&(*ppImpLib)->guid, oGuid, &cx);
+            MSFT_ReadGuid(&pImpLib->guid, oGuid, &cx);
             offset = (offset + sizeof(INT) + sizeof(DWORD) + sizeof(LCID) + sizeof(UINT16) + size + 3) & ~3;
 
-            ppImpLib = &(*ppImpLib)->next;
+            list_add_tail(&pTypeLibImpl->implib_list, &pImpLib->entry);
         }
     }
 
@@ -3434,25 +3436,24 @@ static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 	if(sscanf(refname, "*\\R%x*#%x", &lib_offs, &type_num) != 2)
 	    FIXME_(typelib)("Can't sscanf ref\n");
 	if(lib_offs != 0xffff) {
-	    TLBImpLib **import = &pTL->pImpLibs;
+	    TLBImpLib *import;
 
-	    while(*import) {
-	        if((*import)->offset == lib_offs)
-		    break;
-		import = &(*import)->next;
-	    }
-	    if(!*import) {
+            LIST_FOR_EACH_ENTRY(import, &pTL->implib_list, TLBImpLib, entry)
+                if(import->offset == lib_offs)
+                    break;
+
+            if(&import->entry == &pTL->implib_list) {
 	        char fname[MAX_PATH+1];
 		int len;
 
-		*import = heap_alloc_zero(sizeof(**import));
-		(*import)->offset = lib_offs;
+		import = heap_alloc_zero(sizeof(*import));
+		import->offset = lib_offs;
 		TLB_GUIDFromString( pNameTable + lib_offs + 4,
-				    &(*import)->guid);
+				    &import->guid);
 		if(sscanf(pNameTable + lib_offs + 40, "}#%hd.%hd#%x#%s",
-			  &(*import)->wVersionMajor,
-			  &(*import)->wVersionMinor,
-			  &(*import)->lcid, fname) != 4) {
+			  &import->wVersionMajor,
+			  &import->wVersionMinor,
+			  &import->lcid, fname) != 4) {
 		  FIXME_(typelib)("can't sscanf ref %s\n",
 			pNameTable + lib_offs + 40);
 		}
@@ -3460,12 +3461,13 @@ static sltg_ref_lookup_t *SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeLibImpl *pTL,
 		if(fname[len-1] != '#')
 		    FIXME("fname = %s\n", fname);
 		fname[len-1] = '\0';
-		(*import)->name = TLB_MultiByteToBSTR(fname);
+		import->name = TLB_MultiByteToBSTR(fname);
+		list_add_tail(&pTL->implib_list, &import->entry);
 	    }
-	    ref_type->pImpTLInfo = *import;
+	    ref_type->pImpTLInfo = import;
 
             /* Store a reference to IDispatch */
-            if(pTL->dispatch_href == -1 && IsEqualGUID(&(*import)->guid, &IID_StdOle) && type_num == 4)
+            if(pTL->dispatch_href == -1 && IsEqualGUID(&import->guid, &IID_StdOle) && type_num == 4)
                 pTL->dispatch_href = typelib_ref;
 
 	} else { /* internal ref */
@@ -4281,13 +4283,13 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
 
       heap_free(This->pTypeDesc);
 
-      for (pImpLib = This->pImpLibs; pImpLib; pImpLib = pImpLibNext)
+      LIST_FOR_EACH_ENTRY_SAFE(pImpLib, pImpLibNext, &This->implib_list, TLBImpLib, entry)
       {
           if (pImpLib->pImpTypeLib)
               ITypeLib_Release((ITypeLib *)pImpLib->pImpTypeLib);
           SysFreeString(pImpLib->name);
 
-          pImpLibNext = pImpLib->next;
+          list_remove(&pImpLib->entry);
           heap_free(pImpLib);
       }
 
