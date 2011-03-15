@@ -507,8 +507,8 @@ int input_read_line(const char* pfx, char* buf, int size)
 
     int len = input_fetch_entire_line(pfx, &line);
     if (len < 0) return 0;
-    /* remove trailing \n */
-    if (len > 0 && line[len - 1] == '\n') len--;
+    /* remove trailing \n and \r */
+    while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r')) len--;
     len = min(size - 1, len);
     memcpy(buf, line, len);
     buf[len] = '\0';
