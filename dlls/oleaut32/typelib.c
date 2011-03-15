@@ -1010,7 +1010,7 @@ typedef struct tagITypeLibImpl
 
 
     /* typelibs are cached, keyed by path and index, so store the linked list info within them */
-    struct tagITypeLibImpl *next, *prev;
+    struct list entry;
     WCHAR *path;
     INT index;
 } ITypeLibImpl;
@@ -2443,7 +2443,7 @@ static ITypeInfoImpl * MSFT_DoTypeInfo(
  * place. This will cause a deliberate memory leak, but generally losing RAM for cycles is an acceptable
  * tradeoff here.
  */
-static ITypeLibImpl *tlb_cache_first;
+static struct list tlb_cache = LIST_INIT(tlb_cache);
 static CRITICAL_SECTION cache_section;
 static CRITICAL_SECTION_DEBUG cache_section_debug =
 {
@@ -2905,7 +2905,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
 
     /* We look the path up in the typelib cache. If found, we just addref it, and return the pointer. */
     EnterCriticalSection(&cache_section);
-    for (entry = tlb_cache_first; entry != NULL; entry = entry->next)
+    LIST_FOR_EACH_ENTRY(entry, &tlb_cache, ITypeLibImpl, entry)
     {
         if (!strcmpiW(entry->path, pszPath) && entry->index == index)
         {
@@ -2956,9 +2956,7 @@ static HRESULT TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath
 
         /* FIXME: check if it has added already in the meantime */
         EnterCriticalSection(&cache_section);
-        if ((impl->next = tlb_cache_first) != NULL) impl->next->prev = impl;
-        impl->prev = NULL;
-        tlb_cache_first = impl;
+        list_add_head(&tlb_cache, &impl->entry);
         LeaveCriticalSection(&cache_section);
         ret = S_OK;
     } else
@@ -4255,9 +4253,8 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
       {
           TRACE("removing from cache list\n");
           EnterCriticalSection(&cache_section);
-          if (This->next) This->next->prev = This->prev;
-          if (This->prev) This->prev->next = This->next;
-          else tlb_cache_first = This->next;
+          if(This->entry.next)
+              list_remove(&This->entry);
           LeaveCriticalSection(&cache_section);
           heap_free(This->path);
       }
