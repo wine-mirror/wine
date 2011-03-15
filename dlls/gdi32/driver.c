@@ -487,6 +487,11 @@ static BOOL CDECL nulldrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, 
     return TRUE;
 }
 
+static HDC CDECL nulldrv_ResetDC( PHYSDEV dev, const DEVMODEW *devmode )
+{
+    return 0;
+}
+
 static BOOL CDECL nulldrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                      INT ell_width, INT ell_height )
 {
@@ -760,10 +765,10 @@ const DC_FUNCTIONS null_driver =
     nulldrv_RealizeDefaultPalette,      /* pRealizeDefaultPalette */
     nulldrv_RealizePalette,             /* pRealizePalette */
     nulldrv_Rectangle,                  /* pRectangle */
-    NULL,                               /* pResetDC */
-    NULL,                               /* pRestoreDC */
+    nulldrv_ResetDC,                    /* pResetDC */
+    nulldrv_RestoreDC,                  /* pRestoreDC */
     nulldrv_RoundRect,                  /* pRoundRect */
-    NULL,                               /* pSaveDC */
+    nulldrv_SaveDC,                     /* pSaveDC */
     nulldrv_ScaleViewportExtEx,         /* pScaleViewportExt */
     nulldrv_ScaleWindowExtEx,           /* pScaleWindowExt */
     nulldrv_SelectBitmap,               /* pSelectBitmap */

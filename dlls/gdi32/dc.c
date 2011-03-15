@@ -368,20 +368,14 @@ void DC_UpdateXforms( DC *dc )
 
 
 /***********************************************************************
- *           save_dc_state
+ *           nulldrv_SaveDC
  */
-INT save_dc_state( HDC hdc )
+INT CDECL nulldrv_SaveDC( PHYSDEV dev )
 {
-    DC * newdc, * dc;
+    DC *newdc, *dc = get_nulldrv_dc( dev );
     INT ret;
 
-    if (!(dc = get_dc_ptr( hdc ))) return 0;
-    if (!(newdc = HeapAlloc( GetProcessHeap(), 0, sizeof(*newdc ))))
-    {
-      release_dc_ptr( dc );
-      return 0;
-    }
-
+    if (!(newdc = HeapAlloc( GetProcessHeap(), 0, sizeof(*newdc )))) return 0;
     newdc->flags            = dc->flags | DC_SAVED;
     newdc->layout           = dc->layout;
     newdc->hPen             = dc->hPen;
@@ -441,7 +435,6 @@ INT save_dc_state( HDC hdc )
     if (!(newdc->hSelf = alloc_gdi_handle( &newdc->header, dc->header.type, &dc_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, newdc );
-        release_dc_ptr( dc );
         return 0;
     }
 
@@ -474,7 +467,6 @@ INT save_dc_state( HDC hdc )
     dc->saved_dc = newdc->hSelf;
     ret = ++dc->saveLevel;
     release_dc_ptr( newdc );
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -482,45 +474,30 @@ INT save_dc_state( HDC hdc )
 /***********************************************************************
  *           restore_dc_state
  */
-BOOL restore_dc_state( HDC hdc, INT level )
+BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 {
+    DC *dcs, *dc = get_nulldrv_dc( dev );
     HDC hdcs, first_dcs;
-    DC *dc, *dcs;
     INT save_level;
-
-    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
 
     /* find the state level to restore */
 
-    if (abs(level) > dc->saveLevel || level == 0)
-    {
-        release_dc_ptr( dc );
-        return FALSE;
-    }
+    if (abs(level) > dc->saveLevel || level == 0) return FALSE;
     if (level < 0) level = dc->saveLevel + level + 1;
     first_dcs = dc->saved_dc;
     for (hdcs = first_dcs, save_level = dc->saveLevel; save_level > level; save_level--)
     {
-	if (!(dcs = get_dc_ptr( hdcs )))
-	{
-            release_dc_ptr( dc );
-            return FALSE;
-	}
+	if (!(dcs = get_dc_ptr( hdcs ))) return FALSE;
         hdcs = dcs->saved_dc;
         release_dc_ptr( dcs );
     }
 
     /* restore the state */
 
-    if (!(dcs = get_dc_ptr( hdcs )))
-    {
-        release_dc_ptr( dc );
-        return FALSE;
-    }
+    if (!(dcs = get_dc_ptr( hdcs ))) return FALSE;
     if (!PATH_AssignGdiPath( &dc->path, &dcs->path ))
     {
         release_dc_ptr( dcs );
-        release_dc_ptr( dc );
         return FALSE;
     }
 
@@ -588,13 +565,13 @@ BOOL restore_dc_state( HDC hdc, INT level )
     DC_UpdateXforms( dc );
     CLIPPING_UpdateGCRegion( dc );
 
-    SelectObject( hdc, dcs->hBitmap );
-    SelectObject( hdc, dcs->hBrush );
-    SelectObject( hdc, dcs->hFont );
-    SelectObject( hdc, dcs->hPen );
-    SetBkColor( hdc, dcs->backgroundColor);
-    SetTextColor( hdc, dcs->textColor);
-    GDISelectPalette( hdc, dcs->hPalette, FALSE );
+    SelectObject( dev->hdc, dcs->hBitmap );
+    SelectObject( dev->hdc, dcs->hBrush );
+    SelectObject( dev->hdc, dcs->hFont );
+    SelectObject( dev->hdc, dcs->hPen );
+    SetBkColor( dev->hdc, dcs->backgroundColor);
+    SetTextColor( dev->hdc, dcs->textColor);
+    GDISelectPalette( dev->hdc, dcs->hPalette, FALSE );
 
     dc->saved_dc  = dcs->saved_dc;
     dcs->saved_dc = 0;
@@ -611,7 +588,6 @@ BOOL restore_dc_state( HDC hdc, INT level )
         free_dc_ptr( dcs );
         first_dcs = hdcs;
     }
-    release_dc_ptr( dc );
     return TRUE;
 }
 
@@ -622,16 +598,14 @@ BOOL restore_dc_state( HDC hdc, INT level )
 INT WINAPI SaveDC( HDC hdc )
 {
     DC * dc;
-    INT ret;
+    INT ret = 0;
 
-    if (!(dc = get_dc_ptr( hdc ))) return 0;
-
-    if(dc->funcs->pSaveDC)
-        ret = dc->funcs->pSaveDC( dc->physDev );
-    else
-        ret = save_dc_state( hdc );
-
-    release_dc_ptr( dc );
+    if ((dc = get_dc_ptr( hdc )))
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSaveDC );
+        ret = physdev->funcs->pSaveDC( physdev );
+        release_dc_ptr( dc );
+    }
     return ret;
 }
 
@@ -642,18 +616,16 @@ INT WINAPI SaveDC( HDC hdc )
 BOOL WINAPI RestoreDC( HDC hdc, INT level )
 {
     DC *dc;
-    BOOL success;
+    BOOL success = FALSE;
 
     TRACE("%p %d\n", hdc, level );
-    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
-    update_dc( dc );
-
-    if(dc->funcs->pRestoreDC)
-        success = dc->funcs->pRestoreDC( dc->physDev, level );
-    else
-        success = restore_dc_state( hdc, level );
-
-    release_dc_ptr( dc );
+    if ((dc = get_dc_ptr( hdc )))
+    {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRestoreDC );
+        update_dc( dc );
+        success = physdev->funcs->pRestoreDC( physdev, level );
+        release_dc_ptr( dc );
+    }
     return success;
 }
 
@@ -898,24 +870,22 @@ BOOL WINAPI DeleteDC( HDC hdc )
 HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 {
     DC *dc;
-    HDC ret = hdc;
+    HDC ret = 0;
 
     if ((dc = get_dc_ptr( hdc )))
     {
-        if (dc->funcs->pResetDC)
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pResetDC );
+        ret = physdev->funcs->pResetDC( physdev, devmode );
+        if (ret)  /* reset the visible region */
         {
-            ret = dc->funcs->pResetDC( dc->physDev, devmode );
-            if (ret)  /* reset the visible region */
-            {
-                dc->dirty = 0;
-                dc->vis_rect.left   = 0;
-                dc->vis_rect.top    = 0;
-                dc->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
-                dc->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
-                SetRectRgn( dc->hVisRgn, dc->vis_rect.left, dc->vis_rect.top,
-                            dc->vis_rect.right, dc->vis_rect.bottom );
-                CLIPPING_UpdateGCRegion( dc );
-            }
+            dc->dirty = 0;
+            dc->vis_rect.left   = 0;
+            dc->vis_rect.top    = 0;
+            dc->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
+            dc->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
+            SetRectRgn( dc->hVisRgn, dc->vis_rect.left, dc->vis_rect.top,
+                        dc->vis_rect.right, dc->vis_rect.bottom );
+            CLIPPING_UpdateGCRegion( dc );
         }
         release_dc_ptr( dc );
     }
