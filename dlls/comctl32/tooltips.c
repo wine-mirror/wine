@@ -2051,7 +2051,7 @@ TOOLTIPS_OnWMGetText (const TOOLTIPS_INFO *infoPtr, WPARAM size, LPWSTR pszText)
 {
     LRESULT res;
 
-    if(!infoPtr->szTipText || !size)
+    if(!size)
         return 0;
 
     res = min(strlenW(infoPtr->szTipText)+1, size);
