@@ -1923,7 +1923,7 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
         detach_plugin_host(LIST_ENTRY(list_head(&This->plugin_hosts), PluginHost, entry));
 
     if(This->nsdoc) {
-        release_mutation(This);
+        release_document_mutation(This);
         nsIDOMHTMLDocument_Release(This->nsdoc);
     }
 
@@ -2024,7 +2024,7 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
 
     nsIDOMHTMLDocument_AddRef(nsdoc);
     doc->nsdoc = nsdoc;
-    init_mutation(doc);
+    init_document_mutation(doc);
 
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
     doc->node.vtbl = &HTMLDocumentNodeImplVtbl;

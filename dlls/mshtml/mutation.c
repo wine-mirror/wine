@@ -39,6 +39,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define IE_MAJOR_VERSION 7
 #define IE_MINOR_VERSION 0
 
+static const IID NS_ICONTENTUTILS_CID =
+    {0x762C4AE7,0xB923,0x422F,{0xB9,0x7E,0xB9,0xBF,0xC1,0xEF,0x7B,0xF0}};
+
+static nsIContentUtils *content_utils;
+
 static BOOL handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *comment)
 {
     DWORD len;
@@ -410,9 +415,7 @@ static const nsIRunnableVtbl nsRunnableVtbl = {
 
 static void add_script_runner(HTMLDocumentNode *This, runnable_proc_t proc, nsISupports *arg1, nsISupports *arg2)
 {
-    nsIDOMNSDocument *nsdoc;
     nsRunnable *runnable;
-    nsresult nsres;
 
     runnable = heap_alloc_zero(sizeof(*runnable));
     if(!runnable)
@@ -433,13 +436,7 @@ static void add_script_runner(HTMLDocumentNode *This, runnable_proc_t proc, nsIS
         nsISupports_AddRef(arg2);
     runnable->arg2 = arg2;
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(This->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
-    if(NS_SUCCEEDED(nsres)) {
-        nsIDOMNSDocument_WineAddScriptRunner(nsdoc, &runnable->nsIRunnable_iface);
-        nsIDOMNSDocument_Release(nsdoc);
-    }else {
-        ERR("Could not get nsIDOMNSDocument: %08x\n", nsres);
-    }
+    nsIContentUtils_AddScriptRunner(content_utils, &runnable->nsIRunnable_iface);
 
     nsIRunnable_Release(&runnable->nsIRunnable_iface);
 }
@@ -557,12 +554,12 @@ static void NSAPI nsDocumentObserver_EndLoad(nsIDocumentObserver *iface, nsIDocu
 }
 
 static void NSAPI nsDocumentObserver_ContentStatesChanged(nsIDocumentObserver *iface, nsIDocument *aDocument,
-        nsIContent *aContent1, nsIContent *aContent2, PRInt32 aStateMask)
+        nsIContent *aContent1, nsIContent *aContent2, nsEventStates aStateMask)
 {
 }
 
 static void NSAPI nsDocumentObserver_DocumentStatesChanged(nsIDocumentObserver *iface, nsIDocument *aDocument,
-        PRInt32 aStateMask)
+        nsEventStates aStateMask)
 {
 }
 
@@ -639,8 +636,8 @@ static void NSAPI nsDocumentObserver_BindToDocument(nsIDocumentObserver *iface, 
     }
 }
 
-static void NSAPI nsDocumentObserver_DoneAddingChildren(nsIDocumentObserver *iface, nsIContent *aContent,
-        PRBool aHaveNotified)
+static nsresult NSAPI nsDocumentObserver_DoneAddingChildren(nsIDocumentObserver *iface, nsIContent *aContent,
+        PRBool aHaveNotified, nsIParser *aParser)
 {
     HTMLDocumentNode *This = impl_from_nsIDocumentObserver(iface);
     nsIDOMHTMLScriptElement *nsscript;
@@ -655,6 +652,8 @@ static void NSAPI nsDocumentObserver_DoneAddingChildren(nsIDocumentObserver *ifa
         add_script_runner(This, run_insert_script, (nsISupports*)nsscript, NULL);
         nsIDOMHTMLScriptElement_Release(nsscript);
     }
+
+    return NS_OK;
 }
 
 static const nsIDocumentObserverVtbl nsDocumentObserverVtbl = {
@@ -686,34 +685,60 @@ static const nsIDocumentObserverVtbl nsDocumentObserverVtbl = {
     nsDocumentObserver_DoneAddingChildren
 };
 
-void init_mutation(HTMLDocumentNode *doc)
+void init_document_mutation(HTMLDocumentNode *doc)
 {
-    nsIDOMNSDocument *nsdoc;
+    nsIDocument *nsdoc;
     nsresult nsres;
 
     doc->nsIDocumentObserver_iface.lpVtbl = &nsDocumentObserverVtbl;
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
+    nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDocument, (void**)&nsdoc);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNSDocument: %08x\n", nsres);
+        ERR("Could not get nsIDocument: %08x\n", nsres);
         return;
     }
 
-    nsIDOMNSDocument_WineAddObserver(nsdoc, &doc->nsIDocumentObserver_iface);
-    nsIDOMNSDocument_Release(nsdoc);
+    nsIContentUtils_AddDocumentObserver(content_utils, nsdoc, &doc->nsIDocumentObserver_iface);
+    nsIDocument_Release(nsdoc);
 }
 
-void release_mutation(HTMLDocumentNode *doc)
+void release_document_mutation(HTMLDocumentNode *doc)
 {
-    nsIDOMNSDocument *nsdoc;
+    nsIDocument *nsdoc;
     nsresult nsres;
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
+    nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDocument, (void**)&nsdoc);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNSDocument: %08x\n", nsres);
+        ERR("Could not get nsIDocument: %08x\n", nsres);
         return;
     }
 
-    nsIDOMNSDocument_WineRemoveObserver(nsdoc, &doc->nsIDocumentObserver_iface);
-    nsIDOMNSDocument_Release(nsdoc);
+    nsIContentUtils_RemoveDocumentObserver(content_utils, nsdoc, &doc->nsIDocumentObserver_iface);
+    nsIDocument_Release(nsdoc);
+}
+
+void init_mutation(nsIComponentManager *component_manager)
+{
+    nsIFactory *factory;
+    nsresult nsres;
+
+    if(!component_manager) {
+        if(content_utils) {
+            nsIContentUtils_Release(content_utils);
+            content_utils = NULL;
+        }
+        return;
+    }
+
+    nsres = nsIComponentManager_GetClassObject(component_manager, &NS_ICONTENTUTILS_CID,
+            &IID_nsIFactory, (void**)&factory);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not create nsIContentUtils service: %08x\n", nsres);
+        return;
+    }
+
+    nsres = nsIFactory_CreateInstance(factory, NULL, &IID_nsIContentUtils, (void**)&content_utils);
+    nsIFactory_Release(factory);
+    if(NS_FAILED(nsres))
+        ERR("Could not create nsIContentUtils instance: %08x\n", nsres);
 }

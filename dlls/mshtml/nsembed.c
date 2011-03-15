@@ -394,7 +394,7 @@ static BOOL load_wine_gecko_v(PRUnichar *gre_path, HKEY mshtml_key,
         {'G','e','c','k','o','P','a','t','h',0};
 
     if(version) {
-        /* @@ Wine registry key: HKCU\Software\Wine\MSHTML\<version> */
+        /* @@ Wine registry key: HKLM\Software\Wine\MSHTML\<version> */
         res = RegOpenKeyA(mshtml_key, version, &hkey);
         if(res != ERROR_SUCCESS)
             return FALSE;
@@ -422,8 +422,8 @@ static BOOL load_wine_gecko(PRUnichar *gre_path)
         'S','o','f','t','w','a','r','e','\\','W','i','n','e',
         '\\','M','S','H','T','M','L',0};
 
-    /* @@ Wine registry key: HKCU\Software\Wine\MSHTML */
-    res = RegOpenKeyW(HKEY_CURRENT_USER, wszMshtmlKey, &hkey);
+    /* @@ Wine registry key: HKLM\Software\Wine\MSHTML */
+    res = RegOpenKeyW(HKEY_LOCAL_MACHINE, wszMshtmlKey, &hkey);
     if(res != ERROR_SUCCESS)
         return FALSE;
 
@@ -598,6 +598,8 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
         init_nsio(pCompMgr, registrar);
     else
         ERR("NS_GetComponentRegistrar failed: %08x\n", nsres);
+
+    init_mutation(pCompMgr);
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_APPSTARTUPNOTIFIER_CONTRACTID,
             NULL, &IID_nsIObserver, (void**)&pStartNotif);
@@ -947,6 +949,7 @@ void close_gecko(void)
     TRACE("()\n");
 
     release_nsio();
+    init_mutation(NULL);
 
     if(profile_directory) {
         nsIFile_Release(profile_directory);

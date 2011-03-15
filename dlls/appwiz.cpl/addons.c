@@ -51,20 +51,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 
-#define GECKO_VERSION "1.1.0"
+#define GECKO_VERSION "1.2.0"
 
 #ifdef __i386__
 #define ARCH_STRING "x86"
-#define GECKO_SHA "1b6c637207b6f032ae8a52841db9659433482714"
+#define GECKO_SHA "6964d1877668ab7da07a60f6dcf23fb0e261a808"
 #elif defined(__x86_64__)
 #define ARCH_STRING "x86_64"
-#define GECKO_SHA "55b4b60cd2a48631d6236fb411c3a94d806d9906"
+#define GECKO_SHA "3ac3c3e880e40f7763824866372ffc56128f0abd"
 #else
 #define ARCH_STRING ""
 #define GECKO_SHA "???"
 #endif
 
-#define GECKO_FILE_NAME "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".cab"
+#define GECKO_FILE_NAME "wine_gecko-" GECKO_VERSION "-" ARCH_STRING ".msi"
 
 static const WCHAR mshtml_keyW[] =
     {'S','o','f','t','w','a','r','e',

@@ -661,8 +661,9 @@ NSContainer *NSContainer_Create(HTMLDocumentObj*,NSContainer*);
 void NSContainer_Release(NSContainer*);
 nsresult create_chrome_window(nsIWebBrowserChrome*,nsIWebBrowserChrome**);
 
-void init_mutation(HTMLDocumentNode*);
-void release_mutation(HTMLDocumentNode*);
+void init_mutation(nsIComponentManager*);
+void init_document_mutation(HTMLDocumentNode*);
+void release_document_mutation(HTMLDocumentNode*);
 
 void HTMLDocument_LockContainer(HTMLDocumentObj*,BOOL);
 void show_context_menu(HTMLDocumentObj*,DWORD,POINT*,IDispatch*);

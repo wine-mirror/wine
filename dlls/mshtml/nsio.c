@@ -1462,6 +1462,24 @@ static nsresult NSAPI nsHttpChannelInternal_GetCanceled(nsIHttpChannelInternal *
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+static nsresult NSAPI nsHttpChannelInternal_GetChannelIsForDownload(nsIHttpChannelInternal *iface, PRBool *aCanceled)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+
+    FIXME("(%p)->(%p)\n", This, aCanceled);
+
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsHttpChannelInternal_SetChannelIsForDownload(nsIHttpChannelInternal *iface, PRBool aCanceled)
+{
+    nsChannel *This = impl_from_nsIHttpChannelInternal(iface);
+
+    FIXME("(%p)->(%x)\n", This, aCanceled);
+
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_QueryInterface,
     nsHttpChannelInternal_AddRef,
@@ -1474,7 +1492,9 @@ static const nsIHttpChannelInternalVtbl nsHttpChannelInternalVtbl = {
     nsHttpChannelInternal_SetupFallbackChannel,
     nsHttpChannelInternal_GetForceAllowThirdPartyCookie,
     nsHttpChannelInternal_SetForceAllowThirdPartyCookie,
-    nsHttpChannelInternal_GetCanceled
+    nsHttpChannelInternal_GetCanceled,
+    nsHttpChannelInternal_GetChannelIsForDownload,
+    nsHttpChannelInternal_SetChannelIsForDownload
 };
 
 static BOOL ensure_uri(nsWineURI *This)
