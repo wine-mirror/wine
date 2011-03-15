@@ -3219,10 +3219,7 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
                  ILD_TRANSPARENT );
 
   /* Draw the associated text */
-  if(sfi.szDisplayName)
-    TextOutW(pDIStruct->hDC,rectText.left,rectText.top,sfi.szDisplayName,lstrlenW(sfi.szDisplayName));
-
-
+  TextOutW(pDIStruct->hDC,rectText.left,rectText.top,sfi.szDisplayName,lstrlenW(sfi.szDisplayName));
   return NOERROR;
 }
 
