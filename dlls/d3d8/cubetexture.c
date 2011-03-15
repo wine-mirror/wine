@@ -229,7 +229,7 @@ static DWORD WINAPI IDirect3DCubeTexture8Impl_GetLOD(IDirect3DCubeTexture8 *ifac
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    lod = IWineD3DCubeTexture_GetLOD((LPDIRECT3DBASETEXTURE8) This);
+    lod = IWineD3DCubeTexture_GetLOD(This->wineD3DCubeTexture);
     wined3d_mutex_unlock();
 
     return lod;
