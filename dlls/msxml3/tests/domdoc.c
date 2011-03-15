@@ -5686,7 +5686,7 @@ static void test_save(void)
 
     IXMLDOMDocument_Release(doc);
 
-    hfile = CreateFile("test.xml", GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+    hfile = CreateFileA("test.xml", GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
     ok(hfile != INVALID_HANDLE_VALUE, "Could not open file: %u\n", GetLastError());
     if(hfile == INVALID_HANDLE_VALUE) return;
 
@@ -6097,7 +6097,7 @@ static void test_TransformWithLoadingLocalFile(void)
     GetTempPathA(MAX_PATH, lpPathBuffer);
     strcat(lpPathBuffer, "customers.xml" );
 
-    file = CreateFile(lpPathBuffer, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+    file = CreateFileA(lpPathBuffer, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
     ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
     if(file == INVALID_HANDLE_VALUE)
         return;
@@ -8609,6 +8609,58 @@ static void test_selection(void)
     free_bstrs();
 }
 
+static void test_load(void)
+{
+    IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
+    HANDLE hfile;
+    VARIANT src;
+    HRESULT hr;
+    BOOL ret;
+    BSTR path;
+    DWORD written;
+
+    /* prepare a file */
+    hfile = CreateFileA("test.xml", GENERIC_WRITE|GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to create test file\n");
+    if(hfile == INVALID_HANDLE_VALUE) return;
+
+    ret = WriteFile(hfile, szNonUnicodeXML, sizeof(szNonUnicodeXML)-1, &written, NULL);
+    ok(ret, "WriteFile failed\n");
+
+    CloseHandle(hfile);
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    path = _bstr_("test.xml");
+
+    /* load from path: VT_BSTR */
+    V_VT(&src) = VT_BSTR;
+    V_BSTR(&src) = path;
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    /* load from a path: VT_BSTR|VT_BYREF */
+    V_VT(&src) = VT_BSTR | VT_BYREF;
+    V_BSTRREF(&src) = &path;
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    /* load from a path: VT_BSTR|VT_BYREF, null ptr */
+    V_VT(&src) = VT_BSTR | VT_BYREF;
+    V_BSTRREF(&src) = NULL;
+    hr = IXMLDOMDocument_load(doc, src, &b);
+    EXPECT_HR(hr, E_INVALIDARG);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
+
+    IXMLDOMDocument_Release(doc);
+
+    DeleteFileA("test.xml");
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -8680,6 +8732,7 @@ START_TEST(domdoc)
     test_get_nodeTypeString();
     test_get_attributes();
     test_selection();
+    test_load();
 
     test_xsltemplate();
 

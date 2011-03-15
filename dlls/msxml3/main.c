@@ -286,6 +286,9 @@ const char *debugstr_variant(const VARIANT *v)
         return wine_dbg_sprintf("{VT_UNKNOWN: %p}", V_UNKNOWN(v));
     case VT_UINT:
         return wine_dbg_sprintf("{VT_UINT: %u}", V_UINT(v));
+    case VT_BSTR|VT_BYREF:
+        return wine_dbg_sprintf("{VT_BSTR|VT_BYREF: ptr %p, data %s}",
+            V_BSTRREF(v), V_BSTRREF(v) ? debugstr_w(*V_BSTRREF(v)) : NULL);
     default:
         return wine_dbg_sprintf("{vt %d}", V_VT(v));
     }

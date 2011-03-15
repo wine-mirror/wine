@@ -2104,7 +2104,7 @@ static HRESULT doread( domdoc *This, LPWSTR filename )
 
 static HRESULT WINAPI domdoc_load(
     IXMLDOMDocument3 *iface,
-    VARIANT xmlSource,
+    VARIANT source,
     VARIANT_BOOL* isSuccessful )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
@@ -2114,19 +2114,23 @@ static HRESULT WINAPI domdoc_load(
     IStream *pStream = NULL;
     xmlDocPtr xmldoc;
 
-    TRACE("(%p)->type %d\n", This, V_VT(&xmlSource) );
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&source));
 
     *isSuccessful = VARIANT_FALSE;
 
     assert( &This->node );
 
-    switch( V_VT(&xmlSource) )
+    switch( V_VT(&source) )
     {
     case VT_BSTR:
-        filename = V_BSTR(&xmlSource);
+        filename = V_BSTR(&source);
+        break;
+    case VT_BSTR|VT_BYREF:
+        if (!V_BSTRREF(&source)) return E_INVALIDARG;
+        filename = *V_BSTRREF(&source);
         break;
     case VT_UNKNOWN:
-        hr = IUnknown_QueryInterface(V_UNKNOWN(&xmlSource), &IID_IXMLDOMDocument3, (void**)&pNewDoc);
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IXMLDOMDocument3, (void**)&pNewDoc);
         if(hr == S_OK)
         {
             if(pNewDoc)
@@ -2141,7 +2145,7 @@ static HRESULT WINAPI domdoc_load(
                 return hr;
             }
         }
-        hr = IUnknown_QueryInterface(V_UNKNOWN(&xmlSource), &IID_IStream, (void**)&pStream);
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&source), &IID_IStream, (void**)&pStream);
         if(hr == S_OK)
         {
             IPersistStream *pDocStream;
@@ -2170,14 +2174,12 @@ static HRESULT WINAPI domdoc_load(
         else
         {
             /* ISequentialStream */
-            FIXME("Unknown type not supported (%d) (%p)(%p)\n", hr, pNewDoc, V_UNKNOWN(&xmlSource)->lpVtbl);
+            FIXME("Unknown type not supported (%d) (%p)(%p)\n", hr, pNewDoc, V_UNKNOWN(&source)->lpVtbl);
         }
         break;
      default:
-            FIXME("VT type not supported (%d)\n", V_VT(&xmlSource));
-     }
-
-    TRACE("filename (%s)\n", debugstr_w(filename));
+            FIXME("VT type not supported (%d)\n", V_VT(&source));
+    }
 
     if ( filename )
     {
