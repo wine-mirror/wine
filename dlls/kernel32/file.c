@@ -1272,9 +1272,10 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         return INVALID_HANDLE_VALUE;
     }
 
-    TRACE("%s %s%s%s%s%s%s creation %d attributes 0x%x\n", debugstr_w(filename),
+    TRACE("%s %s%s%s%s%s%s%s creation %d attributes 0x%x\n", debugstr_w(filename),
           (access & GENERIC_READ)?"GENERIC_READ ":"",
           (access & GENERIC_WRITE)?"GENERIC_WRITE ":"",
+          (access & GENERIC_EXECUTE)?"GENERIC_EXECUTE ":"",
           (!access)?"QUERY_ACCESS ":"",
           (sharing & FILE_SHARE_READ)?"FILE_SHARE_READ ":"",
           (sharing & FILE_SHARE_WRITE)?"FILE_SHARE_WRITE ":"",
