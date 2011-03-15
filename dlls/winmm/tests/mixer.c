@@ -1004,6 +1004,7 @@ static void mixer_testsW(void)
 static void test_mixerOpen(void)
 {
     HMIXER mix;
+    HANDLE event;
     MMRESULT rc;
     UINT ndev, d;
 
@@ -1031,7 +1032,7 @@ static void test_mixerOpen(void)
 
         rc = mixerOpen(&mix, d, 0xdeadbeef, 0, CALLBACK_WINDOW);
         ok(rc == MMSYSERR_INVALPARAM ||
-           rc == MMSYSERR_NOERROR, /* 98 */
+           broken(rc == MMSYSERR_NOERROR /* 98 */),
            "mixerOpen: MMSYSERR_INVALPARAM expected, got %s\n",
            mmsys_error(rc));
         if (rc == MMSYSERR_NOERROR)
@@ -1042,7 +1043,35 @@ static void test_mixerOpen(void)
         ok(rc == MMSYSERR_NOERROR,
            "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",
            mmsys_error(rc));
+        if (rc == MMSYSERR_NOERROR)
+            test_mixerClose(mix);
 
+        rc = mixerOpen(&mix, d, 0, 0, CALLBACK_THREAD);
+        ok(rc == MMSYSERR_NOERROR /* since w2k */ ||
+           rc == MMSYSERR_NOTSUPPORTED, /* 98 */
+           "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
+        if (rc == MMSYSERR_NOERROR)
+            test_mixerClose(mix);
+
+        rc = mixerOpen(&mix, d, 0, 0, CALLBACK_EVENT);
+        ok(rc == MMSYSERR_NOERROR /* since w2k */ ||
+           rc == MMSYSERR_NOTSUPPORTED, /* 98 */
+           "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
+        if (rc == MMSYSERR_NOERROR)
+            test_mixerClose(mix);
+
+        event = CreateEvent(NULL, FALSE, FALSE, NULL);
+        ok(event != NULL, "CreateEvent(): error=%d\n", GetLastError());
+
+        /* NOTSUPPORTED is not broken, but it enables the todo_wine marker. */
+        rc = mixerOpen(&mix, d, (DWORD_PTR)event, 0, CALLBACK_EVENT);
+        todo_wine
+        ok(rc == MMSYSERR_NOERROR /* since w2k */ ||
+           broken(rc == MMSYSERR_NOTSUPPORTED), /* 98 */
+           "mixerOpen: MMSYSERR_NOERROR expected, got %s\n",
+           mmsys_error(rc));
         if (rc == MMSYSERR_NOERROR)
             test_mixerClose(mix);
 
@@ -1054,6 +1083,10 @@ static void test_mixerOpen(void)
 
         if (rc == MMSYSERR_NOERROR)
             test_mixerClose(mix);
+
+        rc = WaitForSingleObject(event, 0);
+        ok(rc == WAIT_TIMEOUT, "WaitEvent %d\n", rc);
+        CloseHandle(event);
     }
 }
 

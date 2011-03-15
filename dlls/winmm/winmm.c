@@ -173,6 +173,35 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 }
 
 /**************************************************************************
+ * 			WINMM_CheckCallback			[internal]
+ */
+static MMRESULT WINMM_CheckCallback(DWORD_PTR dwCallback, DWORD fdwOpen, BOOL mixer)
+{
+    switch (fdwOpen & CALLBACK_TYPEMASK) {
+    case CALLBACK_NULL:     /* dwCallback need not be NULL */
+        break;
+    case CALLBACK_WINDOW:
+        if (dwCallback && !IsWindow((HWND)dwCallback))
+            return MMSYSERR_INVALPARAM;
+        break;
+
+    case CALLBACK_FUNCTION:
+        /* a NULL cb is acceptable since w2k, MMSYSERR_INVALPARAM earlier */
+        if (mixer)
+            return MMSYSERR_INVALFLAG; /* since w2k, MMSYSERR_NOTSUPPORTED earlier */
+        break;
+    case CALLBACK_THREAD:
+    case CALLBACK_EVENT:
+        if (mixer) /* FIXME: mixer supports THREAD+EVENT since w2k */
+            return MMSYSERR_NOTSUPPORTED; /* w9X */
+        break;
+    default:
+        WARN("Unknown callback type %d\n", HIWORD(fdwOpen));
+    }
+    return MMSYSERR_NOERROR;
+}
+
+/**************************************************************************
  * 	Mixer devices. New to Win95
  */
 
@@ -297,35 +326,27 @@ UINT WINAPI mixerOpen(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
 {
     HANDLE		hMix;
     LPWINE_MLD		wmld;
-    DWORD		dwRet = 0;
+    DWORD		dwRet;
     MIXEROPENDESC	mod;
 
     TRACE("(%p, %d, %08lx, %08lx, %08x)\n",
 	  lphMix, uDeviceID, dwCallback, dwInstance, fdwOpen);
 
+    dwRet = WINMM_CheckCallback(dwCallback, fdwOpen, TRUE);
+    if (dwRet != MMSYSERR_NOERROR)
+        return dwRet;
+
     mod.dwCallback = (DWORD_PTR)MIXER_WCallback;
-    mod.dwInstance = 0;
-
-/* If callback is a function,
- * dwCallback contains function pointer
- * dwInstance private data
- *
- * if callback is a window
- * dwCallback contains a window handle
- */
-    switch (fdwOpen & CALLBACK_TYPEMASK) {
-    default:
-        return MMSYSERR_INVALFLAG;
-
-    case CALLBACK_NULL:
-        break;
-
-    case CALLBACK_WINDOW:
+    if ((fdwOpen & CALLBACK_TYPEMASK) == CALLBACK_WINDOW)
         mod.dwInstance = dwCallback;
-        if (dwCallback && !IsWindow((HWND)dwCallback))
-            return MMSYSERR_INVALPARAM;
-        break;
-    }
+    else
+        mod.dwInstance = 0;
+
+    /* We're remapping to CALLBACK_FUNCTION because that's what old winmm is
+     * documented to do when opening the mixer driver.
+     * FIXME: Native supports CALLBACK_EVENT + CALLBACK_THREAD flags since w2k.
+     * FIXME: The non ALSA drivers ignore callback requests - bug.
+     */
 
     wmld = MMDRV_Alloc(sizeof(WINE_MIXER), MMDRV_MIXER, &hMix, &fdwOpen,
 		       &dwCallback, &dwInstance);
@@ -901,19 +922,16 @@ UINT WINAPI midiOutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID,
 {
     HMIDIOUT		hMidiOut;
     LPWINE_MIDI		lpwm;
-    UINT		dwRet = 0;
+    UINT		dwRet;
 
     TRACE("(%p, %d, %08lX, %08lX, %08X);\n",
 	  lphMidiOut, uDeviceID, dwCallback, dwInstance, dwFlags);
 
     if (lphMidiOut != NULL) *lphMidiOut = 0;
 
-    switch (dwFlags & CALLBACK_TYPEMASK) {
-    case CALLBACK_WINDOW:
-        if (dwCallback && !IsWindow((HWND)dwCallback))
-            return MMSYSERR_INVALPARAM;
-        break;
-    }
+    dwRet = WINMM_CheckCallback(dwCallback, dwFlags, FALSE);
+    if (dwRet != MMSYSERR_NOERROR)
+	return dwRet;
 
     lpwm = MIDI_OutAlloc(&hMidiOut, &dwCallback, &dwInstance, &dwFlags, 0, NULL);
 
@@ -1200,12 +1218,16 @@ UINT WINAPI midiInOpen(HMIDIIN* lphMidiIn, UINT uDeviceID,
 {
     HANDLE		hMidiIn;
     LPWINE_MIDI		lpwm;
-    DWORD		dwRet = 0;
+    DWORD		dwRet;
 
     TRACE("(%p, %d, %08lX, %08lX, %08X);\n",
 	  lphMidiIn, uDeviceID, dwCallback, dwInstance, dwFlags);
 
     if (lphMidiIn != NULL) *lphMidiIn = 0;
+
+    dwRet = WINMM_CheckCallback(dwCallback, dwFlags, FALSE);
+    if (dwRet != MMSYSERR_NOERROR)
+	return dwRet;
 
     lpwm = (LPWINE_MIDI)MMDRV_Alloc(sizeof(WINE_MIDI), MMDRV_MIDIIN, &hMidiIn,
 				    &dwFlags, &dwCallback, &dwInstance);
@@ -1758,12 +1780,9 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     if (cMidi != 1 || lphMidiStrm == NULL || lpuDeviceID == NULL)
 	return MMSYSERR_INVALPARAM;
 
-    switch (fdwOpen & CALLBACK_TYPEMASK) {
-    case CALLBACK_WINDOW:
-        if (dwCallback && !IsWindow((HWND)dwCallback))
-            return MMSYSERR_INVALPARAM;
-        break;
-    }
+    ret = WINMM_CheckCallback(dwCallback, fdwOpen, FALSE);
+    if (ret != MMSYSERR_NOERROR)
+	return ret;
 
     lpMidiStrm = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_MIDIStream));
     if (!lpMidiStrm)
@@ -2012,7 +2031,7 @@ static UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
 {
     HANDLE		handle;
     LPWINE_MLD		wmld;
-    DWORD		dwRet = MMSYSERR_NOERROR;
+    DWORD		dwRet;
     WAVEOPENDESC	wod;
 
     TRACE("(%p, %d, %s, %p, %08lX, %08lX, %08X);\n",
@@ -2021,6 +2040,10 @@ static UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
 
     if (dwFlags & WAVE_FORMAT_QUERY)
         TRACE("WAVE_FORMAT_QUERY requested !\n");
+
+    dwRet = WINMM_CheckCallback(dwCallback, dwFlags, FALSE);
+    if (dwRet != MMSYSERR_NOERROR)
+        return dwRet;
 
     if (lpFormat == NULL) {
         WARN("bad format\n");
@@ -2039,7 +2062,6 @@ static UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
 
     if ((wmld = MMDRV_Alloc(sizeof(WINE_WAVE), uType, &handle,
 			    &dwFlags, &dwCallback, &dwInstance)) == NULL) {
-        WARN("no memory\n");
 	return MMSYSERR_NOMEM;
     }
 
