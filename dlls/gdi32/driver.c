@@ -376,6 +376,12 @@ static INT CDECL nulldrv_EndPage( PHYSDEV dev )
     return 0;
 }
 
+static BOOL CDECL nulldrv_EnumDeviceFonts( PHYSDEV dev, LOGFONTW *logfont,
+                                           FONTENUMPROCW proc, LPARAM lParam )
+{
+    return FALSE;
+}
+
 static INT CDECL nulldrv_EnumICMProfiles( PHYSDEV dev, ICMENUMPROCW func, LPARAM lparam )
 {
     return -1;
@@ -398,7 +404,18 @@ static BOOL CDECL nulldrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF colo
     return TRUE;
 }
 
+static BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
+                                      LPCWSTR str, UINT count, const INT *dx )
+{
+    return TRUE;
+}
+
 static BOOL CDECL nulldrv_GdiComment( PHYSDEV dev, UINT size, const BYTE *data )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT *buffer )
 {
     return FALSE;
 }
@@ -427,6 +444,17 @@ static UINT CDECL nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start,
                                                    UINT count, PALETTEENTRY *entries )
 {
     return 0;
+}
+
+static BOOL CDECL nulldrv_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count, INT max_ext,
+                                                INT *fit, INT *dx, SIZE *size )
+{
+    return FALSE;
+}
+
+static BOOL CDECL nulldrv_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
+{
+    return FALSE;
 }
 
 static BOOL CDECL nulldrv_LineTo( PHYSDEV dev, INT x, INT y )
@@ -718,21 +746,21 @@ const DC_FUNCTIONS null_driver =
     nulldrv_EndDoc,                     /* pEndDoc */
     nulldrv_EndPage,                    /* pEndPage */
     nulldrv_EndPath,                    /* pEndPath */
+    nulldrv_EnumDeviceFonts,            /* pEnumDeviceFonts */
     nulldrv_EnumICMProfiles,            /* pEnumICMProfiles */
-    NULL,                               /* pEnumDeviceFonts */
     nulldrv_ExcludeClipRect,            /* pExcludeClipRect */
     nulldrv_ExtDeviceMode,              /* pExtDeviceMode */
     nulldrv_ExtEscape,                  /* pExtEscape */
     nulldrv_ExtFloodFill,               /* pExtFloodFill */
     nulldrv_ExtSelectClipRgn,           /* pExtSelectClipRgn */
-    NULL,                               /* pExtTextOut */
+    nulldrv_ExtTextOut,                 /* pExtTextOut */
     nulldrv_FillPath,                   /* pFillPath */
     nulldrv_FillRgn,                    /* pFillRgn */
     nulldrv_FlattenPath,                /* pFlattenPath */
     nulldrv_FrameRgn,                   /* pFrameRgn */
     nulldrv_GdiComment,                 /* pGdiComment */
     nulldrv_GetBitmapBits,              /* pGetBitmapBits */
-    NULL,                               /* pGetCharWidth */
+    nulldrv_GetCharWidth,               /* pGetCharWidth */
     nulldrv_GetDIBits,                  /* pGetDIBits */
     NULL,                               /* pGetDeviceCaps */
     nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */
@@ -741,8 +769,8 @@ const DC_FUNCTIONS null_driver =
     nulldrv_GetPixel,                   /* pGetPixel */
     nulldrv_GetPixelFormat,             /* pGetPixelFormat */
     nulldrv_GetSystemPaletteEntries,    /* pGetSystemPaletteEntries */
-    NULL,                               /* pGetTextExtentExPoint */
-    NULL,                               /* pGetTextMetrics */
+    nulldrv_GetTextExtentExPoint,       /* pGetTextExtentExPoint */
+    nulldrv_GetTextMetrics,             /* pGetTextMetrics */
     nulldrv_IntersectClipRect,          /* pIntersectClipRect */
     nulldrv_InvertRgn,                  /* pInvertRgn */
     nulldrv_LineTo,                     /* pLineTo */
