@@ -4063,7 +4063,7 @@ static HRESULT WINAPI fsbd_GetFindData_nul(IFileSystemBindData *fsbd,
 static HRESULT WINAPI fsbd_GetFindData_junk(IFileSystemBindData *fsbd,
         WIN32_FIND_DATAW *pfd)
 {
-    memset(pfd, 0xdeadbeef, sizeof(WIN32_FIND_DATAW));
+    memset(pfd, 0xef, sizeof(WIN32_FIND_DATAW));
     return S_OK;
 }
 
