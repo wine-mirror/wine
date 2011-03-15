@@ -1129,10 +1129,10 @@ static void test_destroy_read(HDC oldhdc)
     SetLastError(0xdeadbeef);
     ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
     err = GetLastError();
-    todo_wine ok(!ret && (err == ERROR_INVALID_HANDLE || err == 0xc0070006),
+    ok(!ret && (err == ERROR_INVALID_HANDLE || err == 0xc0070006),
             "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
 
-    todo_wine ok(wglGetCurrentContext() == NULL, "Wrong current context.\n");
+    ok(wglGetCurrentContext() == NULL, "Wrong current context.\n");
 
     wglMakeCurrent(NULL, NULL);
 
@@ -1142,10 +1142,10 @@ static void test_destroy_read(HDC oldhdc)
     SetLastError(0xdeadbeef);
     ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
     err = GetLastError();
-    todo_wine ok(!ret && (err == ERROR_INVALID_HANDLE || err == 0xc0070006),
+    ok(!ret && (err == ERROR_INVALID_HANDLE || err == 0xc0070006),
             "Unexpected behavior when making context current, last error %#x.\n", err);
 
-    todo_wine ok(wglGetCurrentContext() == oldctx, "Wrong current context.\n");
+    ok(wglGetCurrentContext() == oldctx, "Wrong current context.\n");
 
     ret = wglDeleteContext(ctx);
     ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());

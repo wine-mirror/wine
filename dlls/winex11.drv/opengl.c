@@ -1972,6 +1972,12 @@ BOOL CDECL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEV
         ret = pglXMakeCurrent(gdi_display, None, NULL);
         NtCurrentTeb()->glContext = NULL;
     }
+    else if (!pDrawDev->current_pf)
+    {
+        WARN("Trying to use an invalid drawable\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+        ret = FALSE;
+    }
     else
     {
         if (NULL == pglXMakeContextCurrent) {
