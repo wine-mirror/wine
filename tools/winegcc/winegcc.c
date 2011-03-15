@@ -185,6 +185,7 @@ struct options
     enum target_cpu target_cpu;
     enum target_platform target_platform;
     const char *target;
+    const char *version;
     int shared;
     int use_msvcrt;
     int nostdinc;
@@ -282,30 +283,49 @@ static char* get_temp_file(const char* prefix, const char* suffix)
     return tmp;
 }
 
+static char* build_tool_name(struct options *opts, const char* base, const char* deflt)
+{
+    char* str;
+
+    if (opts->target && opts->version)
+    {
+        str = strmake("%s-%s-%s", opts->target, base, opts->version);
+    }
+    else if (opts->target)
+    {
+        str = strmake("%s-%s", opts->target, base);
+    }
+    else if (opts->version)
+    {
+        str = strmake("%s-%s", base, opts->version);
+    }
+    else
+        str = xstrdup(deflt);
+    return str;
+}
+
 static const strarray* get_translator(struct options *opts)
 {
-    const char *str = NULL;
+    char *str = NULL;
     strarray *ret;
 
     switch(opts->processor)
     {
     case proc_cpp:
-        if (opts->target) str = strmake( "%s-cpp", opts->target );
-        else str = CPP;
+        str = build_tool_name(opts, "cpp", CPP);
         break;
     case proc_cc:
     case proc_as:
-        if (opts->target) str = strmake( "%s-gcc", opts->target );
-        else str = CC;
+        str = build_tool_name(opts, "gcc", CC);
         break;
     case proc_cxx:
-        if (opts->target) str = strmake( "%s-g++", opts->target );
-        else str = CXX;
+        str = build_tool_name(opts, "g++", CXX);
         break;
     default:
         assert(0);
     }
     ret = strarray_fromstring( str, " " );
+    free(str);
     if (opts->force_pointer_size)
         strarray_add( ret, strmake("-m%u", 8 * opts->force_pointer_size ));
     return ret;
@@ -378,6 +398,8 @@ static void compile(struct options* opts, const char* lang)
     strarray* comp_args = strarray_alloc();
     unsigned int j;
     int gcc_defs = 0;
+    char* gcc;
+    char* gpp;
 
     strarray_addall(comp_args, get_translator(opts));
     switch(opts->processor)
@@ -388,12 +410,16 @@ static void compile(struct options* opts, const char* lang)
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
 	case proc_cc:
 	case proc_cxx:
+            gcc = build_tool_name(opts, "gcc", CC);
+            gpp = build_tool_name(opts, "g++", CXX);
             for ( j = 0; !gcc_defs && j < comp_args->size; j++ )
             {
                 const char *cc = comp_args->base[j];
 
-                gcc_defs = strendswith(cc, "gcc") || strendswith(cc, "g++");
+                gcc_defs = strendswith(cc, gcc) || strendswith(cc, gpp);
             }
+            free(gcc);
+            free(gpp);
             break;
     }
 
@@ -1099,7 +1125,7 @@ static int is_linker_arg(const char* arg)
  */
 static int is_target_arg(const char* arg)
 {
-    return arg[1] == 'b' || arg[2] == 'V';
+    return arg[1] == 'b' || arg[1] == 'V';
 }
 
 
@@ -1276,7 +1302,7 @@ int main(int argc, char **argv)
 		raw_linker_arg = 0;
 	    if (argv[i][1] == 'c' || argv[i][1] == 'L')
 		raw_compiler_arg = 0;
-	    if (argv[i][1] == 'o' || argv[i][1] == 'b')
+	    if (argv[i][1] == 'o' || argv[i][1] == 'b' || argv[i][1] == 'V')
 		raw_compiler_arg = raw_linker_arg = 0;
 
 	    /* do a bit of semantic analysis */
@@ -1298,6 +1324,9 @@ int main(int argc, char **argv)
 		    break;
                 case 'b':
                     parse_target_option( &opts, option_arg );
+                    break;
+                case 'V':
+                    opts.version = xstrdup( option_arg );
                     break;
                 case 'c':        /* compile or assemble */
 		    if (argv[i][2] == 0) opts.compile_only = 1;
