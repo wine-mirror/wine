@@ -1917,7 +1917,7 @@ static void test_LookupAccountName(void)
     domain_size = domain_save;
     sid_size = sid_save;
 
-    if (GetSystemDefaultLangID() != LANG_ENGLISH)
+    if (PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH)
     {
         skip("Non-english locale (test with hardcoded 'Everyone')\n");
     }
@@ -2055,7 +2055,7 @@ static void test_LookupAccountName(void)
         return;
     }
 
-    if (GetSystemDefaultLangID() != LANG_ENGLISH)
+    if (PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH)
     {
         skip("Non-english locale (skipping well known name creation tests)\n");
         return;
@@ -2542,7 +2542,7 @@ static void test_SetEntriesInAclW(void)
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
 
-    if (GetSystemDefaultLangID() != LANG_ENGLISH)
+    if (PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH)
     {
         skip("Non-english locale (test with hardcoded 'Everyone')\n");
     }
@@ -2673,7 +2673,7 @@ static void test_SetEntriesInAclA(void)
     ok(NewAcl != NULL, "returned acl was NULL\n");
     LocalFree(NewAcl);
 
-    if (GetSystemDefaultLangID() != LANG_ENGLISH)
+    if (PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH)
     {
         skip("Non-english locale (test with hardcoded 'Everyone')\n");
     }
