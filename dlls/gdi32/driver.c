@@ -339,6 +339,12 @@ static BOOL CDECL nulldrv_CreateBitmap( PHYSDEV dev, HBITMAP bitmap, LPVOID bits
     return TRUE;
 }
 
+static HBITMAP CDECL nulldrv_CreateDIBSection( PHYSDEV dev, HBITMAP bitmap,
+                                               const BITMAPINFO *info, UINT usage )
+{
+    return bitmap;
+}
+
 static BOOL CDECL nulldrv_DeleteBitmap( HBITMAP bitmap )
 {
     return TRUE;
@@ -576,6 +582,18 @@ static COLORREF CDECL nulldrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
     return color;
 }
 
+static UINT CDECL nulldrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RGBQUAD *colors )
+{
+    return 0;
+}
+
+static INT CDECL nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD width, DWORD height,
+                                            INT x_src, INT y_src, UINT start, UINT lines,
+                                            const void *bits, const BITMAPINFO *info, UINT coloruse )
+{
+    return 0;
+}
+
 static void CDECL nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
 {
 }
@@ -736,7 +754,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_CloseFigure,                /* pCloseFigure */
     nulldrv_CreateBitmap,               /* pCreateBitmap */
     NULL,                               /* pCreateDC */
-    NULL,                               /* pCreateDIBSection */
+    nulldrv_CreateDIBSection,           /* pCreateDIBSection */
     nulldrv_DeleteBitmap,               /* pDeleteBitmap */
     NULL,                               /* pDeleteDC */
     nulldrv_DeleteObject,               /* pDeleteObject */
@@ -811,9 +829,9 @@ const DC_FUNCTIONS null_driver =
     nulldrv_SetBkMode,                  /* pSetBkMode */
     nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */
     nulldrv_SetDCPenColor,              /* pSetDCPenColor */
-    NULL,                               /* pSetDIBColorTable */
+    nulldrv_SetDIBColorTable,           /* pSetDIBColorTable */
     nulldrv_SetDIBits,                  /* pSetDIBits */
-    NULL,                               /* pSetDIBitsToDevice */
+    nulldrv_SetDIBitsToDevice,          /* pSetDIBitsToDevice */
     nulldrv_SetDeviceClipping,          /* pSetDeviceClipping */
     nulldrv_SetDeviceGammaRamp,         /* pSetDeviceGammaRamp */
     nulldrv_SetLayout,                  /* pSetLayout */

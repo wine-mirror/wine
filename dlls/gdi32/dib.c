@@ -382,26 +382,19 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
                            UINT lines, LPCVOID bits, const BITMAPINFO *info,
                            UINT coloruse )
 {
-    INT ret;
+    INT ret = 0;
     DC *dc;
 
     if (!bits) return 0;
 
-    if (!(dc = get_dc_ptr( hdc ))) return 0;
-
-    if(dc->funcs->pSetDIBitsToDevice)
+    if ((dc = get_dc_ptr( hdc )))
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDIBitsToDevice );
         update_dc( dc );
-        ret = dc->funcs->pSetDIBitsToDevice( dc->physDev, xDest, yDest, cx, cy, xSrc,
-					     ySrc, startscan, lines, bits,
-					     info, coloruse );
+        ret = physdev->funcs->pSetDIBitsToDevice( physdev, xDest, yDest, cx, cy, xSrc,
+                                                  ySrc, startscan, lines, bits, info, coloruse );
+        release_dc_ptr( dc );
     }
-    else {
-        FIXME("unimplemented on hdc %p\n", hdc);
-	ret = 0;
-    }
-
-    release_dc_ptr( dc );
     return ret;
 }
 
@@ -418,6 +411,8 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
 
     if ((bitmap = GDI_GetObjPtr( dc->hBitmap, OBJ_BITMAP )))
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDIBColorTable );
+
         /* Check if currently selected bitmap is a DIB */
         if (bitmap->color_table)
         {
@@ -429,11 +424,8 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
             }
         }
         GDI_ReleaseObj( dc->hBitmap );
+        physdev->funcs->pSetDIBColorTable( physdev, startpos, entries, colors );
     }
-
-    if (dc->funcs->pSetDIBColorTable)
-        dc->funcs->pSetDIBColorTable(dc->physDev, startpos, entries, colors);
-
     release_dc_ptr( dc );
     return result;
 }
@@ -1361,19 +1353,17 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
 
     if (ret && ((bmp = GDI_GetObjPtr(ret, OBJ_BITMAP))))
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pCreateDIBSection );
         bmp->dib = dib;
-        bmp->funcs = dc->funcs;
+        bmp->funcs = physdev->funcs;
         /* create local copy of DIB palette */
         if (bpp <= 8) DIB_CopyColorTable( dc, bmp, usage, bmi );
         GDI_ReleaseObj( ret );
 
-        if (dc->funcs->pCreateDIBSection)
+        if (!physdev->funcs->pCreateDIBSection( physdev, ret, bmi, usage ))
         {
-            if (!dc->funcs->pCreateDIBSection(dc->physDev, ret, bmi, usage))
-            {
-                DeleteObject( ret );
-                ret = 0;
-            }
+            DeleteObject( ret );
+            ret = 0;
         }
     }
 
