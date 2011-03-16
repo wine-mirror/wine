@@ -85,9 +85,6 @@ struct IDxDiagContainerImpl {
   IDxDiagProvider *pProv;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(PDXDIAGCONTAINER iface, REFIID riid, LPVOID *ppobj);
-
 /**
  * factories
  */

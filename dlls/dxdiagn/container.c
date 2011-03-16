@@ -29,7 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
 /* IDxDiagContainer IUnknown parts follow: */
-HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(PDXDIAGCONTAINER iface, REFIID riid, LPVOID *ppobj)
+static HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(PDXDIAGCONTAINER iface, REFIID riid, LPVOID *ppobj)
 {
     IDxDiagContainerImpl *This = (IDxDiagContainerImpl *)iface;
 
