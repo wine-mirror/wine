@@ -191,7 +191,7 @@ static const struct wined3d_resource_ops texture_resource_ops =
     texture_unload,
 };
 
-static void texture_cleanup(IWineD3DTextureImpl *This)
+static void texture_cleanup(IWineD3DBaseTextureImpl *This)
 {
     unsigned int i;
 
@@ -221,7 +221,7 @@ static void texture_cleanup(IWineD3DTextureImpl *This)
 
 static HRESULT WINAPI IWineD3DTextureImpl_QueryInterface(IWineD3DBaseTexture *iface, REFIID riid, LPVOID *ppobj)
 {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IWineD3DBase)
@@ -238,7 +238,7 @@ static HRESULT WINAPI IWineD3DTextureImpl_QueryInterface(IWineD3DBaseTexture *if
 
 static ULONG WINAPI IWineD3DTextureImpl_AddRef(IWineD3DBaseTexture *iface)
 {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     TRACE("(%p) : AddRef increasing from %d\n", This, This->resource.ref);
     return InterlockedIncrement(&This->resource.ref);
 }
@@ -246,7 +246,7 @@ static ULONG WINAPI IWineD3DTextureImpl_AddRef(IWineD3DBaseTexture *iface)
 /* Do not call while under the GL lock. */
 static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DBaseTexture *iface)
 {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     ULONG ref;
     TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
@@ -262,28 +262,28 @@ static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DBaseTexture *iface)
 static HRESULT WINAPI IWineD3DTextureImpl_SetPrivateData(IWineD3DBaseTexture *iface,
         REFGUID riid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data(&((IWineD3DTextureImpl *)iface)->resource, riid, data, data_size, flags);
+    return resource_set_private_data(&((IWineD3DBaseTextureImpl *)iface)->resource, riid, data, data_size, flags);
 }
 
 static HRESULT WINAPI IWineD3DTextureImpl_GetPrivateData(IWineD3DBaseTexture *iface,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data(&((IWineD3DTextureImpl *)iface)->resource, guid, data, data_size);
+    return resource_get_private_data(&((IWineD3DBaseTextureImpl *)iface)->resource, guid, data, data_size);
 }
 
 static HRESULT WINAPI IWineD3DTextureImpl_FreePrivateData(IWineD3DBaseTexture *iface, REFGUID refguid)
 {
-    return resource_free_private_data(&((IWineD3DTextureImpl *)iface)->resource, refguid);
+    return resource_free_private_data(&((IWineD3DBaseTextureImpl *)iface)->resource, refguid);
 }
 
 static DWORD WINAPI IWineD3DTextureImpl_SetPriority(IWineD3DBaseTexture *iface, DWORD priority)
 {
-    return resource_set_priority(&((IWineD3DTextureImpl *)iface)->resource, priority);
+    return resource_set_priority(&((IWineD3DBaseTextureImpl *)iface)->resource, priority);
 }
 
 static DWORD WINAPI IWineD3DTextureImpl_GetPriority(IWineD3DBaseTexture *iface)
 {
-    return resource_get_priority(&((IWineD3DTextureImpl *)iface)->resource);
+    return resource_get_priority(&((IWineD3DBaseTextureImpl *)iface)->resource);
 }
 
 /* Do not call while under the GL lock. */
@@ -294,14 +294,14 @@ static void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DBaseTexture *iface)
 
 static WINED3DRESOURCETYPE WINAPI IWineD3DTextureImpl_GetType(IWineD3DBaseTexture *iface)
 {
-    return resource_get_type(&((IWineD3DTextureImpl *)iface)->resource);
+    return resource_get_type(&((IWineD3DBaseTextureImpl *)iface)->resource);
 }
 
 static void * WINAPI IWineD3DTextureImpl_GetParent(IWineD3DBaseTexture *iface)
 {
     TRACE("iface %p.\n", iface);
 
-    return ((IWineD3DTextureImpl *)iface)->resource.parent;
+    return ((IWineD3DBaseTextureImpl *)iface)->resource.parent;
 }
 
 static DWORD WINAPI IWineD3DTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LODNew)
@@ -337,10 +337,10 @@ static void WINAPI IWineD3DTextureImpl_GenerateMipSubLevels(IWineD3DBaseTexture 
 
 static BOOL WINAPI IWineD3DTextureImpl_IsCondNP2(IWineD3DBaseTexture *iface)
 {
-    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     TRACE("(%p)\n", This);
 
-    return This->cond_np2;
+    return This->baseTexture.cond_np2;
 }
 
 static struct wined3d_resource * WINAPI IWineD3DTextureImpl_GetSubResource(IWineD3DBaseTexture *iface,
@@ -400,7 +400,7 @@ static const IWineD3DBaseTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_AddDirtyRegion,
 };
 
-HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT levels,
+HRESULT texture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT height, UINT levels,
         IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -488,7 +488,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         texture->baseTexture.pow2Matrix[10] = 1.0f;
         texture->baseTexture.pow2Matrix[15] = 1.0f;
         texture->baseTexture.target = GL_TEXTURE_2D;
-        texture->cond_np2 = TRUE;
+        texture->baseTexture.cond_np2 = TRUE;
         texture->baseTexture.minMipLookup = minMipLookup_noFilter;
     }
     else if (gl_info->supported[ARB_TEXTURE_RECTANGLE] && (width != pow2_width || height != pow2_height)
@@ -502,7 +502,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         texture->baseTexture.pow2Matrix[10] = 1.0f;
         texture->baseTexture.pow2Matrix[15] = 1.0f;
         texture->baseTexture.target = GL_TEXTURE_RECTANGLE_ARB;
-        texture->cond_np2 = TRUE;
+        texture->baseTexture.cond_np2 = TRUE;
 
         if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
         {
@@ -530,7 +530,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
         texture->baseTexture.pow2Matrix[10] = 1.0f;
         texture->baseTexture.pow2Matrix[15] = 1.0f;
         texture->baseTexture.target = GL_TEXTURE_2D;
-        texture->cond_np2 = FALSE;
+        texture->baseTexture.cond_np2 = FALSE;
     }
     TRACE("xf(%f) yf(%f)\n", texture->baseTexture.pow2Matrix[0], texture->baseTexture.pow2Matrix[5]);
 

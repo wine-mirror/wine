@@ -1104,7 +1104,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DBaseTexture **texture)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DTextureImpl *object;
+    IWineD3DBaseTextureImpl *object;
     HRESULT hr;
 
     TRACE("(%p) : Width %d, Height %d, Levels %d, Usage %#x\n", This, Width, Height, Levels, Usage);
@@ -4472,7 +4472,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
     }
 
     /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH */
-    if (texture && ((IWineD3DTextureImpl *)texture)->resource.pool == WINED3DPOOL_SCRATCH)
+    if (texture && ((IWineD3DBaseTextureImpl *)texture)->resource.pool == WINED3DPOOL_SCRATCH)
     {
         WARN("Rejecting attempt to set scratch texture.\n");
         return WINED3DERR_INVALIDCALL;
