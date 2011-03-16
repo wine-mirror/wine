@@ -1701,7 +1701,7 @@ static HRESULT WINAPI InPlaceSiteWindowless_GetWindowContext(
         memcpy(lprcClipRect, &rect, sizeof(RECT));
     ok(lpFrameInfo != NULL, "lpFrameInfo = NULL\n");
     if(lpFrameInfo) {
-        lpFrameInfo->cb = sizeof(*lpFrameInfo);
+        ok(lpFrameInfo->cb == sizeof(*lpFrameInfo), "lpFrameInfo->cb = %u, expected %u\n", lpFrameInfo->cb, (unsigned)sizeof(*lpFrameInfo));
         lpFrameInfo->fMDIApp = FALSE;
         lpFrameInfo->hwndFrame = container_hwnd;
         lpFrameInfo->haccel = NULL;

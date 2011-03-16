@@ -889,6 +889,7 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
 
     ip_frame = NULL;
     ip_uiwindow = NULL;
+    frame_info.cb = sizeof(OLEINPLACEFRAMEINFO);
     hres = IOleInPlaceSiteEx_GetWindowContext(ip_site, &ip_frame, &ip_uiwindow, &pos_rect, &clip_rect, &frame_info);
     ok(hres == S_OK, "GetWindowContext failed: %08x\n", hres);
     ok(ip_frame != NULL, "ip_frame == NULL\n");
@@ -1534,7 +1535,6 @@ static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSite *iface,
     *lprcPosRect = rect;
     *lprcClipRect = rect;
 
-    lpFrameInfo->cb = sizeof(*lpFrameInfo);
     lpFrameInfo->fMDIApp = FALSE;
     lpFrameInfo->hwndFrame = container_hwnd;
     lpFrameInfo->haccel = NULL;
