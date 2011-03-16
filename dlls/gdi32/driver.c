@@ -440,6 +440,28 @@ static BOOL CDECL nulldrv_GetCharWidth( PHYSDEV dev, UINT first, UINT last, INT 
     return FALSE;
 }
 
+static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
+{
+    switch (cap)  /* return meaningful values for some entries */
+    {
+    case HORZRES:     return 640;
+    case VERTRES:     return 480;
+    case BITSPIXEL:   return 1;
+    case PLANES:      return 1;
+    case NUMCOLORS:   return 2;
+    case ASPECTX:     return 36;
+    case ASPECTY:     return 36;
+    case ASPECTXY:    return 51;
+    case LOGPIXELSX:  return 72;
+    case LOGPIXELSY:  return 72;
+    case SIZEPALETTE: return 2;
+    case TEXTCAPS:    return (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
+                              TC_CR_ANY | TC_SF_X_YINDEP | TC_SA_DOUBLE | TC_SA_INTEGER |
+                              TC_SA_CONTIN | TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE | TC_VA_ABLE);
+    default:          return 0;
+    }
+}
+
 static BOOL CDECL nulldrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
 {
     return FALSE;
@@ -794,7 +816,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_GetBitmapBits,              /* pGetBitmapBits */
     nulldrv_GetCharWidth,               /* pGetCharWidth */
     nulldrv_GetDIBits,                  /* pGetDIBits */
-    NULL,                               /* pGetDeviceCaps */
+    nulldrv_GetDeviceCaps,              /* pGetDeviceCaps */
     nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */
     nulldrv_GetICMProfile,              /* pGetICMProfile */
     nulldrv_GetNearestColor,            /* pGetNearestColor */

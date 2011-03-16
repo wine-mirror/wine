@@ -898,26 +898,8 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 
     if ((dc = get_dc_ptr( hdc )))
     {
-        if (dc->funcs->pGetDeviceCaps) ret = dc->funcs->pGetDeviceCaps( dc->physDev, cap );
-        else switch(cap)  /* return meaningful values for some entries */
-        {
-        case HORZRES:     ret = 640; break;
-        case VERTRES:     ret = 480; break;
-        case BITSPIXEL:   ret = 1; break;
-        case PLANES:      ret = 1; break;
-        case NUMCOLORS:   ret = 2; break;
-        case ASPECTX:     ret = 36; break;
-        case ASPECTY:     ret = 36; break;
-        case ASPECTXY:    ret = 51; break;
-        case LOGPIXELSX:  ret = 72; break;
-        case LOGPIXELSY:  ret = 72; break;
-        case SIZEPALETTE: ret = 2; break;
-        case TEXTCAPS:
-            ret = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
-                   TC_CR_ANY | TC_SF_X_YINDEP | TC_SA_DOUBLE | TC_SA_INTEGER |
-                   TC_SA_CONTIN | TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE | TC_VA_ABLE);
-            break;
-        }
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDeviceCaps );
+        ret = physdev->funcs->pGetDeviceCaps( physdev, cap );
         release_dc_ptr( dc );
     }
     return ret;
