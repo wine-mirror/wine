@@ -111,7 +111,7 @@ BOOL NavigateToUrl(HHInfo *info, LPCWSTR surl)
     return ret;
 }
 
-BOOL AppendFullPathURL(LPCWSTR file, LPWSTR buf, LPCWSTR index)
+static BOOL AppendFullPathURL(LPCWSTR file, LPWSTR buf, LPCWSTR index)
 {
     static const WCHAR url_format[] =
         {'m','k',':','@','M','S','I','T','S','t','o','r','e',':','%','s',':',':','%','s','%','s',0};
