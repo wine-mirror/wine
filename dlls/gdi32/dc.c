@@ -160,18 +160,27 @@ DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
 
 
 /***********************************************************************
- *           free_dc_ptr
+ *           free_dc_state
  */
-BOOL free_dc_ptr( DC *dc )
+static void free_dc_state( DC *dc )
 {
-    assert( dc->refcount == 1 );
-    if (free_gdi_handle( dc->hSelf ) != dc) return FALSE;  /* shouldn't happen */
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
     if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
     if (dc->hMetaClipRgn) DeleteObject( dc->hMetaClipRgn );
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     PATH_DestroyGdiPath( &dc->path );
-    return HeapFree( GetProcessHeap(), 0, dc );
+    HeapFree( GetProcessHeap(), 0, dc );
+}
+
+
+/***********************************************************************
+ *           free_dc_ptr
+ */
+void free_dc_ptr( DC *dc )
+{
+    assert( dc->refcount == 1 );
+    free_gdi_handle( dc->hSelf );
+    free_dc_state( dc );
 }
 
 
@@ -373,7 +382,6 @@ void DC_UpdateXforms( DC *dc )
 INT CDECL nulldrv_SaveDC( PHYSDEV dev )
 {
     DC *newdc, *dc = get_nulldrv_dc( dev );
-    INT ret;
 
     if (!(newdc = HeapAlloc( GetProcessHeap(), 0, sizeof(*newdc )))) return 0;
     newdc->flags            = dc->flags | DC_SAVED;
@@ -422,21 +430,7 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->BoundsRect       = dc->BoundsRect;
     newdc->gdiFont          = dc->gdiFont;
 
-    newdc->thread    = GetCurrentThreadId();
-    newdc->refcount  = 1;
-    newdc->saveLevel = 0;
-    newdc->saved_dc  = 0;
-
     PATH_InitGdiPath( &newdc->path );
-
-    newdc->pAbortProc = NULL;
-    newdc->hookProc   = NULL;
-
-    if (!(newdc->hSelf = alloc_gdi_handle( &newdc->header, dc->header.type, &dc_funcs )))
-    {
-        HeapFree( GetProcessHeap(), 0, newdc );
-        return 0;
-    }
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
@@ -454,20 +448,19 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
         newdc->hMetaRgn = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( newdc->hMetaRgn, dc->hMetaRgn, 0, RGN_COPY );
     }
+
     /* don't bother recomputing hMetaClipRgn, we'll do that in SetDCState */
 
     if (!PATH_AssignGdiPath( &newdc->path, &dc->path ))
     {
         release_dc_ptr( dc );
-        free_dc_ptr( newdc );
+        free_dc_state( newdc );
 	return 0;
     }
 
     newdc->saved_dc = dc->saved_dc;
-    dc->saved_dc = newdc->hSelf;
-    ret = ++dc->saveLevel;
-    release_dc_ptr( newdc );
-    return ret;
+    dc->saved_dc = newdc;
+    return ++dc->saveLevel;
 }
 
 
@@ -476,8 +469,7 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
  */
 BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 {
-    DC *dcs, *dc = get_nulldrv_dc( dev );
-    HDC hdcs, first_dcs;
+    DC *dcs, *first_dcs, *dc = get_nulldrv_dc( dev );
     INT save_level;
 
     /* find the state level to restore */
@@ -485,21 +477,12 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     if (abs(level) > dc->saveLevel || level == 0) return FALSE;
     if (level < 0) level = dc->saveLevel + level + 1;
     first_dcs = dc->saved_dc;
-    for (hdcs = first_dcs, save_level = dc->saveLevel; save_level > level; save_level--)
-    {
-	if (!(dcs = get_dc_ptr( hdcs ))) return FALSE;
-        hdcs = dcs->saved_dc;
-        release_dc_ptr( dcs );
-    }
+    for (dcs = first_dcs, save_level = dc->saveLevel; save_level > level; save_level--)
+        dcs = dcs->saved_dc;
 
     /* restore the state */
 
-    if (!(dcs = get_dc_ptr( hdcs ))) return FALSE;
-    if (!PATH_AssignGdiPath( &dc->path, &dcs->path ))
-    {
-        release_dc_ptr( dcs );
-        return FALSE;
-    }
+    if (!PATH_AssignGdiPath( &dc->path, &dcs->path )) return FALSE;
 
     dc->flags            = dcs->flags & ~DC_SAVED;
     dc->layout           = dcs->layout;
@@ -577,16 +560,13 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dcs->saved_dc = 0;
     dc->saveLevel = save_level - 1;
 
-    release_dc_ptr( dcs );
-
     /* now destroy all the saved DCs */
 
     while (first_dcs)
     {
-	if (!(dcs = get_dc_ptr( first_dcs ))) break;
-        hdcs = dcs->saved_dc;
-        free_dc_ptr( dcs );
-        first_dcs = hdcs;
+        DC *next = first_dcs->saved_dc;
+        free_dc_state( first_dcs );
+        first_dcs = next;
     }
     return TRUE;
 }
@@ -841,12 +821,10 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
     while (dc->saveLevel)
     {
-        DC * dcs;
-        HDC hdcs = dc->saved_dc;
-        if (!(dcs = get_dc_ptr( hdcs ))) break;
+        DC *dcs = dc->saved_dc;
         dc->saved_dc = dcs->saved_dc;
         dc->saveLevel--;
-        free_dc_ptr( dcs );
+        free_dc_state( dcs );
     }
 
     if (!(dc->flags & DC_SAVED))

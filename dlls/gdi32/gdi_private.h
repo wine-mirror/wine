@@ -253,7 +253,7 @@ typedef struct tagDC
     LONG         refcount;        /* thread refcount */
     LONG         dirty;           /* dirty flag */
     INT          saveLevel;
-    HDC          saved_dc;
+    struct tagDC *saved_dc;
     DWORD_PTR    dwHookData;
     DCHOOKPROC   hookProc;         /* DC hook */
 
@@ -376,7 +376,7 @@ extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
 
 /* dc.c */
 extern DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic ) DECLSPEC_HIDDEN;
-extern BOOL free_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
+extern void free_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
 extern DC *get_dc_ptr( HDC hdc ) DECLSPEC_HIDDEN;
 extern void release_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
 extern void update_dc( DC *dc ) DECLSPEC_HIDDEN;
