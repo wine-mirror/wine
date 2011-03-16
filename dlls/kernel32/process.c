@@ -2166,55 +2166,11 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
 }
 
 
-/**********************************************************************
- *       CreateProcessA          (KERNEL32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
-                                              LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit,
-                                              DWORD flags, LPVOID env, LPCSTR cur_dir,
-                                              LPSTARTUPINFOA startup_info, LPPROCESS_INFORMATION info )
-{
-    BOOL ret = FALSE;
-    WCHAR *app_nameW = NULL, *cmd_lineW = NULL, *cur_dirW = NULL;
-    UNICODE_STRING desktopW, titleW;
-    STARTUPINFOW infoW;
-
-    desktopW.Buffer = NULL;
-    titleW.Buffer = NULL;
-    if (app_name && !(app_nameW = FILE_name_AtoW( app_name, TRUE ))) goto done;
-    if (cmd_line && !(cmd_lineW = FILE_name_AtoW( cmd_line, TRUE ))) goto done;
-    if (cur_dir && !(cur_dirW = FILE_name_AtoW( cur_dir, TRUE ))) goto done;
-
-    if (startup_info->lpDesktop) RtlCreateUnicodeStringFromAsciiz( &desktopW, startup_info->lpDesktop );
-    if (startup_info->lpTitle) RtlCreateUnicodeStringFromAsciiz( &titleW, startup_info->lpTitle );
-
-    memcpy( &infoW, startup_info, sizeof(infoW) );
-    infoW.lpDesktop = desktopW.Buffer;
-    infoW.lpTitle = titleW.Buffer;
-
-    if (startup_info->lpReserved)
-      FIXME("StartupInfo.lpReserved is used, please report (%s)\n",
-            debugstr_a(startup_info->lpReserved));
-
-    ret = CreateProcessW( app_nameW, cmd_lineW, process_attr, thread_attr,
-                          inherit, flags, env, cur_dirW, &infoW, info );
-done:
-    HeapFree( GetProcessHeap(), 0, app_nameW );
-    HeapFree( GetProcessHeap(), 0, cmd_lineW );
-    HeapFree( GetProcessHeap(), 0, cur_dirW );
-    RtlFreeUnicodeString( &desktopW );
-    RtlFreeUnicodeString( &titleW );
-    return ret;
-}
-
-
-/**********************************************************************
- *       CreateProcessW          (KERNEL32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
-                                              LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit, DWORD flags,
-                                              LPVOID env, LPCWSTR cur_dir, LPSTARTUPINFOW startup_info,
-                                              LPPROCESS_INFORMATION info )
+/* Steam hotpatches CreateProcessA and W, so to prevent it from crashing use an internal function */
+static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
+                                 LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit, DWORD flags,
+                                 LPVOID env, LPCWSTR cur_dir, LPSTARTUPINFOW startup_info,
+                                 LPPROCESS_INFORMATION info )
 {
     BOOL retv = FALSE;
     HANDLE hFile = 0;
@@ -2342,6 +2298,61 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line,
     if (retv)
         TRACE( "started process pid %04x tid %04x\n", info->dwProcessId, info->dwThreadId );
     return retv;
+}
+
+
+/**********************************************************************
+ *       CreateProcessA          (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
+                                              LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit,
+                                              DWORD flags, LPVOID env, LPCSTR cur_dir,
+                                              LPSTARTUPINFOA startup_info, LPPROCESS_INFORMATION info )
+{
+    BOOL ret = FALSE;
+    WCHAR *app_nameW = NULL, *cmd_lineW = NULL, *cur_dirW = NULL;
+    UNICODE_STRING desktopW, titleW;
+    STARTUPINFOW infoW;
+
+    desktopW.Buffer = NULL;
+    titleW.Buffer = NULL;
+    if (app_name && !(app_nameW = FILE_name_AtoW( app_name, TRUE ))) goto done;
+    if (cmd_line && !(cmd_lineW = FILE_name_AtoW( cmd_line, TRUE ))) goto done;
+    if (cur_dir && !(cur_dirW = FILE_name_AtoW( cur_dir, TRUE ))) goto done;
+
+    if (startup_info->lpDesktop) RtlCreateUnicodeStringFromAsciiz( &desktopW, startup_info->lpDesktop );
+    if (startup_info->lpTitle) RtlCreateUnicodeStringFromAsciiz( &titleW, startup_info->lpTitle );
+
+    memcpy( &infoW, startup_info, sizeof(infoW) );
+    infoW.lpDesktop = desktopW.Buffer;
+    infoW.lpTitle = titleW.Buffer;
+
+    if (startup_info->lpReserved)
+      FIXME("StartupInfo.lpReserved is used, please report (%s)\n",
+            debugstr_a(startup_info->lpReserved));
+
+    ret = create_process_impl( app_nameW, cmd_lineW, process_attr, thread_attr,
+                               inherit, flags, env, cur_dirW, &infoW, info );
+done:
+    HeapFree( GetProcessHeap(), 0, app_nameW );
+    HeapFree( GetProcessHeap(), 0, cmd_lineW );
+    HeapFree( GetProcessHeap(), 0, cur_dirW );
+    RtlFreeUnicodeString( &desktopW );
+    RtlFreeUnicodeString( &titleW );
+    return ret;
+}
+
+
+/**********************************************************************
+ *       CreateProcessW          (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIBUTES process_attr,
+                                              LPSECURITY_ATTRIBUTES thread_attr, BOOL inherit, DWORD flags,
+                                              LPVOID env, LPCWSTR cur_dir, LPSTARTUPINFOW startup_info,
+                                              LPPROCESS_INFORMATION info )
+{
+    return create_process_impl( app_name, cmd_line, process_attr, thread_attr,
+                                inherit, flags, env, cur_dir, startup_info, info);
 }
 
 
