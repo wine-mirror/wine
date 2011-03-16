@@ -155,7 +155,7 @@ action, and can therefore be used as a comment in a batch file.\n"
 
   WCMD_REN,
 "REN <filename> is the short version of RENAME. It renames a file.\n"
-  WCMD_RENAME, "RENAME <filename> renames a file\n"
+  WCMD_RENAME, "RENAME <filename> renames a file.\n"
   WCMD_RD,
 "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
   WCMD_RMDIR,  "RMDIR <dir> deletes a subdirectory.\n"
@@ -201,7 +201,7 @@ VERIFY\t\tDisplays ON or OFF as appropriate.\n\
 The verify flag has no function in Wine.\n"
 
   WCMD_VER,
-"VER displays the version of cmd you are running\n"
+"VER displays the version of cmd you are running.\n"
 
   WCMD_VOL,    "VOL shows the volume label of a disk device.\n"
 
