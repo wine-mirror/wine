@@ -371,7 +371,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info)
 {
-    BOOL cond_np2 = IWineD3DBaseTexture_IsCondNP2((IWineD3DBaseTexture *)texture);
+    BOOL cond_np2 = texture->baseTexture.cond_np2;
     GLenum textureDimensions = texture->baseTexture.target;
     DWORD state;
     DWORD aniso;

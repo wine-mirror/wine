@@ -57,7 +57,7 @@ static HRESULT texture_bind(IWineD3DBaseTextureImpl *texture,
          * state. The same applies to filtering. Even if the texture has only
          * one mip level, the default LINEAR_MIPMAP_LINEAR filter causes a SW
          * fallback on macos. */
-        if (IWineD3DBaseTexture_IsCondNP2((IWineD3DBaseTexture *)texture))
+        if (texture->baseTexture.cond_np2)
         {
             GLenum target = texture->baseTexture.target;
 
@@ -335,14 +335,6 @@ static void WINAPI IWineD3DTextureImpl_GenerateMipSubLevels(IWineD3DBaseTexture 
     basetexture_generate_mipmaps((IWineD3DBaseTextureImpl *)iface);
 }
 
-static BOOL WINAPI IWineD3DTextureImpl_IsCondNP2(IWineD3DBaseTexture *iface)
-{
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    TRACE("(%p)\n", This);
-
-    return This->baseTexture.cond_np2;
-}
-
 static struct wined3d_resource * WINAPI IWineD3DTextureImpl_GetSubResource(IWineD3DBaseTexture *iface,
         UINT sub_resource_idx)
 {
@@ -395,7 +387,6 @@ static const IWineD3DBaseTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_SetAutoGenFilterType,
     IWineD3DTextureImpl_GetAutoGenFilterType,
     IWineD3DTextureImpl_GenerateMipSubLevels,
-    IWineD3DTextureImpl_IsCondNP2,
     IWineD3DTextureImpl_GetSubResource,
     IWineD3DTextureImpl_AddDirtyRegion,
 };

@@ -252,13 +252,6 @@ static void WINAPI IWineD3DVolumeTextureImpl_GenerateMipSubLevels(IWineD3DBaseTe
     basetexture_generate_mipmaps((IWineD3DBaseTextureImpl *)iface);
 }
 
-static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DBaseTexture *iface)
-{
-    TRACE("iface %p.\n", iface);
-
-    return FALSE;
-}
-
 static struct wined3d_resource * WINAPI IWineD3DVolumeTextureImpl_GetSubResource(IWineD3DBaseTexture *iface,
         UINT sub_resource_idx)
 {
@@ -311,7 +304,6 @@ static const IWineD3DBaseTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_SetAutoGenFilterType,
     IWineD3DVolumeTextureImpl_GetAutoGenFilterType,
     IWineD3DVolumeTextureImpl_GenerateMipSubLevels,
-    IWineD3DVolumeTextureImpl_IsCondNP2,
     IWineD3DVolumeTextureImpl_GetSubResource,
     IWineD3DVolumeTextureImpl_AddDirtyRegion,
 };

@@ -2356,8 +2356,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
     );
     void GenerateMipSubLevels(
     );
-    BOOL IsCondNP2(
-    );
     struct wined3d_resource *GetSubResource(
         [in] UINT sub_resource_idx
     );
