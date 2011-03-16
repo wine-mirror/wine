@@ -31,19 +31,19 @@ STRINGTABLE
 	"Usage:\n" \
 	"msiexec command {required parameter} [optional parameter]\n\n" \
 	"Install a product:\n" \
-	"\t/i {package|productcode} [property]\n" \
-	"\t/package {package|productcode} [property]\n" \
+	"\t/i {package|product_code} [property]\n" \
+	"\t/package {package|product_code} [property]\n" \
 	"\t/a package [property]\n" \
 	"Repair an installation:\n" \
-	"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n" \
+	"\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n" \
 	"Uninstall a product:\n" \
-	"\t/uninstall {package|productcode} [property]\n" \
-	"\t/x {package|productcode} [property]\n" \
+	"\t/uninstall {package|product_code} [property]\n" \
+	"\t/x {package|product_code} [property]\n" \
 	"Advertise a product:\n" \
 	"\t/j[u|m] package [/t transform] [/g languageid]\n" \
 	"Apply a patch:\n" \
-	"\t/p patchpackage [property]\n" \
-	"\t/p patchpackage /a package [property]\n" \
+	"\t/p patch_package [property]\n" \
+	"\t/p patch_package /a package [property]\n" \
 	"Log and UI Modifiers for above commands:\n" \
 	"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n" \
 	"\t/q{|n|b|r|f|n+|b+|b-}\n" \
