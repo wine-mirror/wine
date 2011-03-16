@@ -3151,9 +3151,6 @@ static UINT ACTION_WriteSharedDLLsCount(LPCWSTR path, UINT count)
     return count;
 }
 
-/*
- * Return TRUE if the count should be written out and FALSE if not
- */
 static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
 {
     MSIFEATURE *feature;
@@ -3162,6 +3159,7 @@ static void ACTION_RefCountComponent( MSIPACKAGE* package, MSICOMPONENT *comp )
 
     /* only refcount DLLs */
     if (comp->KeyPath == NULL || 
+        comp->assembly ||
         comp->Attributes & msidbComponentAttributesRegistryKeyPath || 
         comp->Attributes & msidbComponentAttributesODBCDataSource)
         write = FALSE;
