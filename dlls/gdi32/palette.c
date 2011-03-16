@@ -38,10 +38,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(palette);
 
+typedef BOOL (CDECL *unrealize_function)(HPALETTE);
+
 typedef struct tagPALETTEOBJ
 {
     GDIOBJHDR           header;
-    const DC_FUNCTIONS *funcs;      /* DC function table */
+    unrealize_function  unrealize;
     WORD                version;    /* palette version */
     WORD                count;      /* count of palette entries */
     PALETTEENTRY       *entries;
@@ -152,7 +154,7 @@ HPALETTE WINAPI CreatePalette(
     size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
 
     if (!(palettePtr = HeapAlloc( GetProcessHeap(), 0, sizeof(*palettePtr) ))) return 0;
-    palettePtr->funcs   = NULL;
+    palettePtr->unrealize = NULL;
     palettePtr->version = palette->palVersion;
     palettePtr->count   = palette->palNumEntries;
     size = palettePtr->count * sizeof(*palettePtr->entries);
@@ -410,7 +412,6 @@ BOOL WINAPI AnimatePalette(
         PALETTEOBJ * palPtr;
         UINT pal_entries;
         const PALETTEENTRY *pptr = PaletteColors;
-        const DC_FUNCTIONS *funcs;
 
         palPtr = GDI_GetObjPtr( hPal, OBJ_PAL );
         if (!palPtr) return 0;
@@ -436,9 +437,8 @@ BOOL WINAPI AnimatePalette(
             TRACE("Not animating entry %d -- not PC_RESERVED\n", StartIndex);
           }
         }
-        funcs = palPtr->funcs;
         GDI_ReleaseObj( hPal );
-        if (funcs && funcs->pRealizePalette) funcs->pRealizePalette( NULL, hPal, hPal == hPrimaryPalette );
+        /* FIXME: check for palette selected in active window */
     }
     return TRUE;
 }
@@ -650,10 +650,10 @@ static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle )
 
     if (palette)
     {
-        const DC_FUNCTIONS *funcs = palette->funcs;
-        palette->funcs = NULL;
+        unrealize_function unrealize = palette->unrealize;
+        palette->unrealize = NULL;
         GDI_ReleaseObj( handle );
-        if (funcs && funcs->pUnrealizePalette) funcs->pUnrealizePalette( handle );
+        if (unrealize) unrealize( handle );
     }
 
     if (InterlockedCompareExchangePointer( (void **)&hLastRealizedPalette, 0, handle ) == handle)
@@ -733,7 +733,7 @@ UINT WINAPI GDIRealizePalette( HDC hdc )
         {
             realized = physdev->funcs->pRealizePalette( physdev, dc->hPalette,
                                                         (dc->hPalette == hPrimaryPalette) );
-            palPtr->funcs = dc->funcs;
+            palPtr->unrealize = physdev->funcs->pUnrealizePalette;
             GDI_ReleaseObj( dc->hPalette );
         }
     }

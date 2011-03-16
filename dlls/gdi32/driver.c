@@ -714,6 +714,11 @@ static BOOL CDECL nulldrv_SwapBuffers( PHYSDEV dev )
     return TRUE;
 }
 
+static BOOL CDECL nulldrv_UnrealizePalette( HPALETTE palette )
+{
+    return FALSE;
+}
+
 static BOOL CDECL nulldrv_wglCopyContext( HGLRC ctx_src, HGLRC ctx_dst, UINT mask )
 {
     return FALSE;
@@ -895,7 +900,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_StrokeAndFillPath,          /* pStrokeAndFillPath */
     nulldrv_StrokePath,                 /* pStrokePath */
     nulldrv_SwapBuffers,                /* pSwapBuffers */
-    NULL,                               /* pUnrealizePalette */
+    nulldrv_UnrealizePalette,           /* pUnrealizePalette */
     nulldrv_WidenPath,                  /* pWidenPath */
     nulldrv_wglCopyContext,             /* pwglCopyContext */
     nulldrv_wglCreateContext,           /* pwglCreateContext */
