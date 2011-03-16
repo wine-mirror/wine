@@ -157,93 +157,7 @@ static void set_status(DWORD id)
     SendMessageW(status, WM_SETTEXT, 0, (LPARAM)buf);
 }
 
-static void set_registry(const WCHAR *install_dir)
-{
-    WCHAR mshtml_key[100];
-    LPWSTR gecko_path;
-    HKEY hkey;
-    DWORD res, len;
-
-    static const WCHAR wszGeckoPath[] = {'G','e','c','k','o','P','a','t','h',0};
-    static const WCHAR wszWineGecko[] = {'w','i','n','e','_','g','e','c','k','o',0};
-
-    memcpy(mshtml_key, mshtml_keyW, sizeof(mshtml_keyW));
-    mshtml_key[sizeof(mshtml_keyW)/sizeof(WCHAR)-1] = '\\';
-    MultiByteToWideChar(CP_ACP, 0, GECKO_VERSION, sizeof(GECKO_VERSION),
-            mshtml_key+sizeof(mshtml_keyW)/sizeof(WCHAR),
-            (sizeof(mshtml_key)-sizeof(mshtml_keyW))/sizeof(WCHAR));
-
-    /* @@ Wine registry key: HKCU\Software\Wine\MSHTML\<version> */
-    res = RegCreateKeyW(HKEY_CURRENT_USER, mshtml_key, &hkey);
-    if(res != ERROR_SUCCESS) {
-        ERR("Faild to create MSHTML key: %d\n", res);
-        return;
-    }
-
-    len = strlenW(install_dir);
-    gecko_path = heap_alloc((len+1)*sizeof(WCHAR)+sizeof(wszWineGecko));
-    memcpy(gecko_path, install_dir, len*sizeof(WCHAR));
-
-    if (len && gecko_path[len-1] != '\\')
-        gecko_path[len++] = '\\';
-
-    memcpy(gecko_path+len, wszWineGecko, sizeof(wszWineGecko));
-
-    res = RegSetValueExW(hkey, wszGeckoPath, 0, REG_SZ, (LPVOID)gecko_path,
-                       len*sizeof(WCHAR)+sizeof(wszWineGecko));
-    heap_free(gecko_path);
-    RegCloseKey(hkey);
-    if(res != ERROR_SUCCESS)
-        ERR("Failed to set GeckoPath value: %08x\n", res);
-}
-
-static BOOL install_cab(LPCWSTR file_name)
-{
-    char *install_dir_a, *file_name_a;
-    WCHAR install_dir[MAX_PATH];
-    DWORD res, len;
-    HRESULT hres;
-
-    static const WCHAR gecko_subdirW[] = {'\\','g','e','c','k','o','\\',0};
-
-    TRACE("(%s)\n", debugstr_w(file_name));
-
-    GetSystemDirectoryW(install_dir, sizeof(install_dir)/sizeof(WCHAR));
-    strcatW(install_dir, gecko_subdirW);
-    res = CreateDirectoryW(install_dir, NULL);
-    if(!res && GetLastError() != ERROR_ALREADY_EXISTS) {
-        ERR("Could not create directory: %08u\n", GetLastError());
-        return FALSE;
-    }
-
-    len = strlenW(install_dir);
-    MultiByteToWideChar(CP_ACP, 0, GECKO_VERSION, -1, install_dir+len, sizeof(install_dir)/sizeof(WCHAR)-len);
-    res = CreateDirectoryW(install_dir, NULL);
-    if(!res && GetLastError() != ERROR_ALREADY_EXISTS) {
-        ERR("Could not create directory: %08u\n", GetLastError());
-        return FALSE;
-    }
-
-
-    /* FIXME: Use ExtractFilesW once it's implemented */
-    file_name_a = heap_strdupWtoA(file_name);
-    install_dir_a = heap_strdupWtoA(install_dir);
-    if(file_name_a && install_dir_a)
-        hres = ExtractFilesA(file_name_a, install_dir_a, 0, NULL, NULL, 0);
-    else
-        hres = E_OUTOFMEMORY;
-    heap_free(file_name_a);
-    heap_free(install_dir_a);
-    if(FAILED(hres)) {
-        ERR("Could not extract package: %08x\n", hres);
-        return FALSE;
-    }
-
-    set_registry(install_dir);
-    return TRUE;
-}
-
-static BOOL install_msi_file(const WCHAR *file_name)
+static BOOL install_file(const WCHAR *file_name)
 {
     ULONG res;
 
@@ -254,33 +168,6 @@ static BOOL install_msi_file(const WCHAR *file_name)
     }
 
     return TRUE;
-}
-
-static BOOL install_file(const WCHAR *file_name)
-{
-    BYTE magic[4];
-    HANDLE file;
-    DWORD size;
-    BOOL res;
-
-    static const BYTE msi_magic[] = {0xd0,0xcf,0x11,0xe0};
-
-    file = CreateFileW(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
-    if(file == INVALID_HANDLE_VALUE)
-        return FALSE;
-
-    res = ReadFile(file, magic, sizeof(magic), &size, NULL);
-    CloseHandle(file);
-    if(!res || size != sizeof(magic))
-        return INET_E_DOWNLOAD_FAILURE;
-
-    if(!memcmp(magic, "MSCF", sizeof(magic)))
-        return install_cab(file_name);
-    else if(!memcmp(magic, msi_magic, sizeof(magic)))
-        return install_msi_file(file_name);
-
-    ERR("Unknown file magic\n");
-    return FALSE;
 }
 
 static BOOL install_from_unix_file(const char *file_name)
