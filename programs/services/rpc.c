@@ -1212,7 +1212,7 @@ DWORD svcctl_EnumServicesStatusW(
     return ERROR_SUCCESS;
 }
 
-struct service_entry *find_service_by_group(struct scmdatabase *db, const WCHAR *group)
+static struct service_entry *find_service_by_group(struct scmdatabase *db, const WCHAR *group)
 {
     struct service_entry *service;
     LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
