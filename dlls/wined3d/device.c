@@ -5179,9 +5179,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
 
             for (i = 0; i < level_count; ++i)
             {
-                src_volume = (IWineD3DVolume *)surface_from_resource(basetexture_get_sub_resource(
+                src_volume = (IWineD3DVolume *)volume_from_resource(basetexture_get_sub_resource(
                         (IWineD3DBaseTextureImpl *)src_texture, i));
-                dst_volume = (IWineD3DVolume *)surface_from_resource(basetexture_get_sub_resource(
+                dst_volume = (IWineD3DVolume *)volume_from_resource(basetexture_get_sub_resource(
                         (IWineD3DBaseTextureImpl *)dst_texture, i));
                 hr = IWineD3DDeviceImpl_UpdateVolume(iface, src_volume, dst_volume);
                 if (FAILED(hr))
