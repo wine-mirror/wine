@@ -218,35 +218,35 @@
 @ cdecl -arch=i386 __libm_sse2_tan()
 @ cdecl -arch=i386 __libm_sse2_tanf()
 @ extern __mb_cur_max MSVCRT___mb_cur_max
-@ cdecl -arch=i386 __p___argc()
-@ cdecl -arch=i386 __p___argv()
-@ cdecl -arch=i386 __p___initenv()
-@ cdecl -arch=i386 __p___mb_cur_max() MSVCRT____mb_cur_max_func
-@ cdecl -arch=i386 __p___wargv()
-@ cdecl -arch=i386 __p___winitenv()
-@ cdecl -arch=i386 __p__acmdln()
-@ cdecl -arch=i386 __p__amblksiz()
-@ cdecl -arch=i386 __p__commode()
-@ cdecl -arch=i386 __p__daylight() MSVCRT___p__daylight
-@ cdecl -arch=i386 __p__dstbias()
-@ cdecl -arch=i386 __p__environ()
-@ stub -arch=i386 __p__fileinfo #()
-@ cdecl -arch=i386 __p__fmode()
-@ cdecl -arch=i386 __p__iob() MSVCRT___iob_func
-@ stub -arch=i386 __p__mbcasemap #()
-@ cdecl -arch=i386 __p__mbctype()
-@ cdecl -arch=i386 __p__osver()
-@ cdecl -arch=i386 __p__pctype() MSVCRT___pctype_func
-@ cdecl -arch=i386 __p__pgmptr()
-@ stub -arch=i386 __p__pwctype #()
-@ cdecl -arch=i386 __p__timezone() MSVCRT___p__timezone
-@ cdecl -arch=i386 __p__tzname()
-@ cdecl -arch=i386 __p__wcmdln()
-@ cdecl -arch=i386 __p__wenviron()
-@ cdecl -arch=i386 __p__winmajor()
-@ cdecl -arch=i386 __p__winminor()
-@ cdecl -arch=i386 __p__winver()
-@ cdecl -arch=i386 __p__wpgmptr()
+@ cdecl __p___argc()
+@ cdecl __p___argv()
+@ cdecl __p___initenv()
+@ cdecl __p___mb_cur_max() MSVCRT____mb_cur_max_func
+@ cdecl __p___wargv()
+@ cdecl __p___winitenv()
+@ cdecl __p__acmdln()
+@ cdecl __p__amblksiz()
+@ cdecl __p__commode()
+@ cdecl __p__daylight() MSVCRT___p__daylight
+@ cdecl __p__dstbias()
+@ cdecl __p__environ()
+@ stub __p__fileinfo #()
+@ cdecl __p__fmode()
+@ cdecl __p__iob() MSVCRT___iob_func
+@ stub __p__mbcasemap #()
+@ cdecl __p__mbctype()
+@ cdecl __p__osver()
+@ cdecl __p__pctype() MSVCRT___pctype_func
+@ cdecl __p__pgmptr()
+@ stub __p__pwctype #()
+@ cdecl __p__timezone() MSVCRT___p__timezone
+@ cdecl __p__tzname()
+@ cdecl __p__wcmdln()
+@ cdecl __p__wenviron()
+@ cdecl __p__winmajor()
+@ cdecl __p__winminor()
+@ cdecl __p__winver()
+@ cdecl __p__wpgmptr()
 @ cdecl __pctype_func() MSVCRT___pctype_func
 @ extern __pioinfo MSVCRT___pioinfo
 # stub __pwctype_func
