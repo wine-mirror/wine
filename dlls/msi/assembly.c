@@ -282,8 +282,11 @@ MSIASSEMBLY *load_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
 
     if (a->application)
     {
-        FIXME("we should probably check the manifest file here\n");
-        a->installed = (msi_get_property_int( package->db, szInstalled, 0 ) != 0);
+        /* We can't check the manifest here because the target path may still change.
+           So we assume that the assembly is not installed and lean on the InstallFiles
+           action to determine which files need to be installed.
+         */
+        a->installed = FALSE;
     }
     else
     {

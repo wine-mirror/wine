@@ -74,7 +74,7 @@ static msi_file_state calculate_install_state( MSIFILE *file )
         TRACE("file %s is not scheduled for install\n", debugstr_w(file->File));
         return msifs_skipped;
     }
-    if ((comp->assembly && !comp->assembly->installed) ||
+    if ((comp->assembly && !comp->assembly->application && !comp->assembly->installed) ||
         GetFileAttributesW( file->TargetPath ) == INVALID_FILE_ATTRIBUTES)
     {
         TRACE("file %s is missing\n", debugstr_w(file->File));
