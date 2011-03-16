@@ -220,7 +220,7 @@ static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *ifa
     return resource_get_type(&((IWineD3DVolumeImpl *)iface)->resource);
 }
 
-struct wined3d_resource * WINAPI IWineD3DVolumeImpl_GetResource(IWineD3DVolume *iface)
+static struct wined3d_resource * WINAPI IWineD3DVolumeImpl_GetResource(IWineD3DVolume *iface)
 {
     TRACE("iface %p.\n", iface);
 
