@@ -1093,7 +1093,7 @@
 @ cdecl _wcsupr(wstr) ntdll._wcsupr
 # stub _wcsupr_l
 @ cdecl _wcsupr_s(wstr long) MSVCRT__wcsupr_s
-# stub _wcsupr_s_l
+@ cdecl _wcsupr_s_l(wstr long ptr) MSVCRT__wcsupr_s_l
 # stub _wcsxfrm_l
 @ cdecl _wctime(ptr) MSVCRT__wctime
 @ cdecl _wctime32(ptr) MSVCRT__wctime32
