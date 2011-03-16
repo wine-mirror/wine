@@ -39,6 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+static MSVCRT_security_error_handler security_error_handler;
+
 /* VC++ extensions to Win32 SEH */
 typedef struct _SCOPETABLE
 {
@@ -819,4 +821,16 @@ int CDECL _abnormal_termination(void)
 BOOL CDECL MSVCRT___uncaught_exception(void)
 {
     return FALSE;
+}
+
+/* _set_security_error_handler - not exported in native msvcrt, added in msvcr70 */
+MSVCRT_security_error_handler CDECL _set_security_error_handler(
+    MSVCRT_security_error_handler handler )
+{
+    MSVCRT_security_error_handler old = security_error_handler;
+
+    TRACE("(%p)\n", handler);
+
+    security_error_handler = handler;
+    return old;
 }

@@ -1487,6 +1487,7 @@
 @ cdecl _set_abort_behavior(long long) MSVCRT__set_abort_behavior
 @ cdecl _set_invalid_parameter_handler(ptr)
 @ cdecl _set_purecall_handler(ptr)
+@ cdecl _set_security_error_handler(ptr)
 @ cdecl -arch=i386 _statusfp2(ptr ptr)
 @ cdecl _wcstod_l(wstr ptr) MSVCRT__wcstod_l
 @ cdecl _wdupenv_s(ptr ptr str)

@@ -512,7 +512,7 @@
 @ cdecl _set_error_mode(long) msvcrt._set_error_mode
 @ cdecl _set_purecall_handler(ptr) msvcrt._set_purecall_handler
 @ cdecl _set_sbh_threshold(long) msvcrt._set_sbh_threshold
-@ stub _set_security_error_handler
+@ cdecl _set_security_error_handler(ptr) msvcrt._set_security_error_handler
 @ cdecl _seterrormode(long) msvcrt._seterrormode
 @ cdecl -arch=i386,x86_64 _setjmp(ptr) msvcrt._setjmp
 @ cdecl -i386 _setjmp3(ptr long) msvcrt._setjmp3
