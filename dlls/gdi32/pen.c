@@ -182,7 +182,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
             return 0;
         }
 
-        if (brush->lbHatch && ((brush->lbStyle == BS_SOLID) || (brush->lbStyle == BS_HOLLOW)))
+        if (brush->lbHatch && ((brush->lbStyle != BS_SOLID) && (brush->lbStyle != BS_HOLLOW)))
         {
             static int fixme_hatches_shown;
             if (!fixme_hatches_shown++) FIXME("Hatches not implemented\n");
