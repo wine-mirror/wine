@@ -1101,21 +1101,21 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         UINT Width, UINT Height, UINT Levels, DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool,
-        void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DTexture **ppTexture)
+        void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DBaseTexture **texture)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DTextureImpl *object;
     HRESULT hr;
 
     TRACE("(%p) : Width %d, Height %d, Levels %d, Usage %#x\n", This, Width, Height, Levels, Usage);
-    TRACE("Format %#x (%s), Pool %#x, ppTexture %p, parent %p\n",
-            Format, debug_d3dformat(Format), Pool, ppTexture, parent);
+    TRACE("Format %#x (%s), Pool %#x, texture %p, parent %p\n",
+            Format, debug_d3dformat(Format), Pool, texture, parent);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
         ERR("Out of memory\n");
-        *ppTexture = NULL;
+        *texture = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -1124,11 +1124,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
     {
         WARN("Failed to initialize texture, returning %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppTexture = NULL;
+        *texture = NULL;
         return hr;
     }
 
-    *ppTexture = (IWineD3DTexture *)object;
+    *texture = (IWineD3DBaseTexture *)object;
 
     TRACE("(%p) : Created texture %p\n", This, object);
 

@@ -1953,17 +1953,11 @@ void basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty) DECLSPE
 DWORD basetexture_set_lod(IWineD3DBaseTextureImpl *texture, DWORD lod) DECLSPEC_HIDDEN;
 void basetexture_unload(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IWineD3DTexture implementation structure (extends IWineD3DBaseTextureImpl)
- */
 typedef struct IWineD3DTextureImpl
 {
-    /* IUnknown & WineD3DResource/WineD3DBaseTexture Information     */
-    const IWineD3DTextureVtbl *lpVtbl;
+    const IWineD3DBaseTextureVtbl *lpVtbl;
     struct wined3d_resource resource;
     IWineD3DBaseTextureClass  baseTexture;
-
-    /* IWineD3DTexture */
     BOOL                      cond_np2;
 
 } IWineD3DTextureImpl;

@@ -2370,15 +2370,6 @@ interface IWineD3DBaseTexture : IWineD3DResource
 [
     object,
     local,
-    uuid(3e72cc1c-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DTexture : IWineD3DBaseTexture
-{
-}
-
-[
-    object,
-    local,
     uuid(41752900-6f30-11d9-c687-00046142c14f)
 ]
 interface IWineD3DCubeTexture : IWineD3DBaseTexture
@@ -2542,7 +2533,7 @@ interface IWineD3DDevice : IUnknown
         [in] WINED3DPOOL pool,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DTexture **texture
+        [out] IWineD3DBaseTexture **texture
     );
     HRESULT CreateVolumeTexture(
         [in] UINT width,

@@ -3444,8 +3444,7 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         else
         {
             hr = IWineD3DDevice_CreateTexture(ddraw->wineD3DDevice, DDSD->dwWidth, DDSD->dwHeight,
-                    levels, 0, Format, Pool, object, &ddraw_null_wined3d_parent_ops,
-                    (IWineD3DTexture **)&object->wineD3DTexture);
+                    levels, 0, Format, Pool, object, &ddraw_null_wined3d_parent_ops, &object->wineD3DTexture);
         }
         ddraw->tex_root = NULL;
     }
