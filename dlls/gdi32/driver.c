@@ -22,6 +22,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
@@ -339,6 +340,13 @@ static BOOL CDECL nulldrv_CreateBitmap( PHYSDEV dev, HBITMAP bitmap, LPVOID bits
     return TRUE;
 }
 
+static BOOL CDECL nulldrv_CreateDC( HDC hdc, PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
+                                    LPCWSTR output, const DEVMODEW *devmode )
+{
+    assert(0);  /* should never be called */
+    return FALSE;
+}
+
 static HBITMAP CDECL nulldrv_CreateDIBSection( PHYSDEV dev, HBITMAP bitmap,
                                                const BITMAPINFO *info, UINT usage )
 {
@@ -347,6 +355,12 @@ static HBITMAP CDECL nulldrv_CreateDIBSection( PHYSDEV dev, HBITMAP bitmap,
 
 static BOOL CDECL nulldrv_DeleteBitmap( HBITMAP bitmap )
 {
+    return TRUE;
+}
+
+static BOOL CDECL nulldrv_DeleteDC( PHYSDEV dev )
+{
+    assert(0);  /* should never be called */
     return TRUE;
 }
 
@@ -753,10 +767,10 @@ const DC_FUNCTIONS null_driver =
     nulldrv_Chord,                      /* pChord */
     nulldrv_CloseFigure,                /* pCloseFigure */
     nulldrv_CreateBitmap,               /* pCreateBitmap */
-    NULL,                               /* pCreateDC */
+    nulldrv_CreateDC,                   /* pCreateDC */
     nulldrv_CreateDIBSection,           /* pCreateDIBSection */
     nulldrv_DeleteBitmap,               /* pDeleteBitmap */
-    NULL,                               /* pDeleteDC */
+    nulldrv_DeleteDC,                   /* pDeleteDC */
     nulldrv_DeleteObject,               /* pDeleteObject */
     nulldrv_DescribePixelFormat,        /* pDescribePixelFormat */
     nulldrv_DeviceCapabilities,         /* pDeviceCapabilities */

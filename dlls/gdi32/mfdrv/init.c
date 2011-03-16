@@ -30,6 +30,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
+static BOOL MFDRV_DeleteDC( PHYSDEV dev );
+
 static const DC_FUNCTIONS MFDRV_Funcs =
 {
     NULL,                            /* pAbortDoc */
@@ -47,7 +49,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
     NULL,                            /* pDeleteBitmap */
-    NULL,                            /* pDeleteDC */
+    MFDRV_DeleteDC,                  /* pDeleteDC */
     MFDRV_DeleteObject,              /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */
     NULL,                            /* pDeviceCapabilities */
@@ -164,7 +166,7 @@ static DC *MFDRV_AllocMetaFile(void)
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
 
-    if (!(dc = alloc_dc_ptr( &MFDRV_Funcs, OBJ_METADC ))) return NULL;
+    if (!(dc = alloc_dc_ptr( OBJ_METADC ))) return NULL;
 
     physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev)
@@ -172,16 +174,15 @@ static DC *MFDRV_AllocMetaFile(void)
         free_dc_ptr( dc );
         return NULL;
     }
-    physDev->dev.funcs = &MFDRV_Funcs;
-    push_dc_driver( dc, &physDev->dev );
-    physDev->hdc = dc->hSelf;
-
     if (!(physDev->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev->mh) )))
     {
         HeapFree( GetProcessHeap(), 0, physDev );
         free_dc_ptr( dc );
         return NULL;
     }
+
+    push_dc_driver( dc, &physDev->dev, &MFDRV_Funcs );
+    physDev->hdc = dc->hSelf;
 
     physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
     physDev->handles_size = HANDLE_LIST_INC;
@@ -205,9 +206,9 @@ static DC *MFDRV_AllocMetaFile(void)
 /**********************************************************************
  *	     MFDRV_DeleteDC
  */
-static BOOL MFDRV_DeleteDC( DC *dc )
+static BOOL MFDRV_DeleteDC( PHYSDEV dev )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     DWORD index;
 
     HeapFree( GetProcessHeap(), 0, physDev->mh );
@@ -216,8 +217,6 @@ static BOOL MFDRV_DeleteDC( DC *dc )
             GDI_hdc_not_using_object(physDev->handles[index], physDev->hdc);
     HeapFree( GetProcessHeap(), 0, physDev->handles );
     HeapFree( GetProcessHeap(), 0, physDev );
-    dc->physDev = NULL;
-    free_dc_ptr( dc );
     return TRUE;
 }
 
@@ -251,12 +250,12 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
         physDev->mh->mtType = METAFILE_DISK;
         if ((hFile = CreateFileW(filename, GENERIC_WRITE, 0, NULL,
 				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
-            MFDRV_DeleteDC( dc );
+            free_dc_ptr( dc );
             return 0;
         }
         if (!WriteFile( hFile, physDev->mh, sizeof(*physDev->mh), NULL,
 			NULL )) {
-            MFDRV_DeleteDC( dc );
+            free_dc_ptr( dc );
             return 0;
 	}
 	physDev->hFile = hFile;
@@ -328,21 +327,21 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 
     if (!MFDRV_MetaParam0(dc->physDev, META_EOF))
     {
-        MFDRV_DeleteDC( dc );
+        free_dc_ptr( dc );
 	return 0;
     }
 
     if (physDev->mh->mtType == METAFILE_DISK)  /* disk based metafile */
     {
         if (SetFilePointer(physDev->hFile, 0, NULL, FILE_BEGIN) != 0) {
-            MFDRV_DeleteDC( dc );
+            free_dc_ptr( dc );
             return 0;
         }
 
 	physDev->mh->mtType = METAFILE_MEMORY; /* This is what windows does */
         if (!WriteFile(physDev->hFile, physDev->mh, sizeof(*physDev->mh),
                        NULL, NULL)) {
-            MFDRV_DeleteDC( dc );
+            free_dc_ptr( dc );
             return 0;
         }
         CloseHandle(physDev->hFile);
@@ -377,7 +376,7 @@ HMETAFILE WINAPI CloseMetaFile(HDC hdc)
     hmf = MF_Create_HMETAFILE( physDev->mh );
 
     physDev->mh = NULL;  /* So it won't be deleted */
-    MFDRV_DeleteDC( dc );
+    free_dc_ptr( dc );
     return hmf;
 }
 

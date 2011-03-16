@@ -374,12 +374,12 @@ extern INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp ) DECLSPEC_HIDDEN;
 extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
 
 /* dc.c */
-extern DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic ) DECLSPEC_HIDDEN;
+extern DC *alloc_dc_ptr( WORD magic ) DECLSPEC_HIDDEN;
 extern void free_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
 extern DC *get_dc_ptr( HDC hdc ) DECLSPEC_HIDDEN;
 extern void release_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
 extern void update_dc( DC *dc ) DECLSPEC_HIDDEN;
-extern void push_dc_driver( DC * dc, PHYSDEV physdev ) DECLSPEC_HIDDEN;
+extern void push_dc_driver( DC * dc, PHYSDEV physdev, const DC_FUNCTIONS *funcs ) DECLSPEC_HIDDEN;
 extern void pop_dc_driver( DC * dc, PHYSDEV physdev ) DECLSPEC_HIDDEN;
 extern void DC_InitDC( DC * dc ) DECLSPEC_HIDDEN;
 extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;

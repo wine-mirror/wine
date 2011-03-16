@@ -71,13 +71,13 @@ static inline DC *get_dc_obj( HDC hdc )
 /***********************************************************************
  *           alloc_dc_ptr
  */
-DC *alloc_dc_ptr( const DC_FUNCTIONS *funcs, WORD magic )
+DC *alloc_dc_ptr( WORD magic )
 {
     DC *dc;
 
     if (!(dc = HeapAlloc( GetProcessHeap(), 0, sizeof(*dc) ))) return NULL;
 
-    dc->funcs               = funcs;
+    dc->funcs               = &null_driver;
     dc->nulldrv.funcs       = &null_driver;
     dc->nulldrv.next        = NULL;
     dc->physDev             = &dc->nulldrv;
@@ -179,6 +179,8 @@ static void free_dc_state( DC *dc )
 void free_dc_ptr( DC *dc )
 {
     assert( dc->refcount == 1 );
+
+    while (dc->physDev != &dc->nulldrv) pop_dc_driver( dc, dc->physDev );
     free_gdi_handle( dc->hSelf );
     free_dc_state( dc );
 }
@@ -244,8 +246,9 @@ void update_dc( DC *dc )
  *
  * Push a driver on top of the DC driver stack.
  */
-void push_dc_driver( DC * dc, PHYSDEV physdev )
+void push_dc_driver( DC * dc, PHYSDEV physdev, const DC_FUNCTIONS *funcs )
 {
+    physdev->funcs = funcs;
     physdev->next = dc->physDev;
     physdev->hdc = dc->hSelf;
     dc->physDev = physdev;
@@ -264,6 +267,7 @@ void pop_dc_driver( DC * dc, PHYSDEV physdev )
     assert( physdev != &dc->nulldrv );
     dc->physDev = physdev->next;
     dc->funcs = dc->physDev->funcs;
+    physdev->funcs->pDeleteDC( physdev );
 }
 
 
@@ -618,7 +622,6 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 {
     HDC hdc;
     DC * dc;
-    PHYSDEV physdev;
     const DC_FUNCTIONS *funcs;
     WCHAR buf[300];
 
@@ -639,7 +642,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;
     }
-    if (!(dc = alloc_dc_ptr( funcs, OBJ_DC ))) goto error;
+    if (!(dc = alloc_dc_ptr( OBJ_DC ))) goto error;
     hdc = dc->hSelf;
 
     dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
@@ -648,15 +651,16 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     TRACE("(driver=%s, device=%s, output=%s): returning %p\n",
           debugstr_w(driver), debugstr_w(device), debugstr_w(output), dc->hSelf );
 
-    if (dc->funcs->pCreateDC &&
-        !dc->funcs->pCreateDC( hdc, &physdev, buf, device, output, initData ))
+    if (funcs->pCreateDC)
     {
-        WARN("creation aborted by device\n" );
-        goto error;
+        PHYSDEV physdev;
+        if (!funcs->pCreateDC( hdc, &physdev, buf, device, output, initData ))
+        {
+            WARN("creation aborted by device\n" );
+            goto error;
+        }
+        push_dc_driver( dc, physdev, funcs );
     }
-
-    physdev->funcs = funcs;
-    push_dc_driver( dc, physdev );
 
     dc->vis_rect.left   = 0;
     dc->vis_rect.top    = 0;
@@ -750,15 +754,15 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         if (!(origDC = get_dc_ptr( hdc ))) return 0;
         if (GetObjectType( hdc ) == OBJ_DC)
         {
-            funcs = origDC->funcs;
             physDev = origDC->physDev;
+            funcs = physDev->funcs;
         }
         release_dc_ptr( origDC );
     }
 
     if (!funcs && !(funcs = DRIVER_get_display_driver())) return 0;
 
-    if (!(dc = alloc_dc_ptr( funcs, OBJ_MEMDC ))) goto error;
+    if (!(dc = alloc_dc_ptr( OBJ_MEMDC ))) goto error;
 
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
@@ -774,15 +778,15 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     /* Pass the driver-specific physical device info into
      * the new DC. The driver may use this read-only info
      * while creating the compatible DC. */
-    if (dc->funcs->pCreateDC &&
-        !dc->funcs->pCreateDC( dc->hSelf, &physDev, NULL, NULL, NULL, NULL ))
+    if (funcs->pCreateDC)
     {
-        WARN("creation aborted by device\n");
-        goto error;
+        if (!funcs->pCreateDC( dc->hSelf, &physDev, NULL, NULL, NULL, NULL ))
+        {
+            WARN("creation aborted by device\n");
+            goto error;
+        }
+        push_dc_driver( dc, physDev, funcs );
     }
-
-    physDev->funcs = funcs;
-    push_dc_driver( dc, physDev );
     DC_InitDC( dc );
     release_dc_ptr( dc );
     return ret;
@@ -832,8 +836,6 @@ BOOL WINAPI DeleteDC( HDC hdc )
     SelectObject( hdc, GetStockObject(SYSTEM_FONT) );
     SelectObject( hdc, GetStockObject(DEFAULT_BITMAP) );
 
-    if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc->physDev);
-    dc->physDev = NULL;
     free_dc_ptr( dc );
     return TRUE;
 }
