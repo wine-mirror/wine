@@ -707,7 +707,7 @@ typedef struct
     RECT *prcButtons;
 } tbsize_result_t;
 
-tbsize_result_t init_tbsize_result(int nButtonsAlloc, int cleft, int ctop, int cright, int cbottom, int minx, int miny) {
+static tbsize_result_t init_tbsize_result(int nButtonsAlloc, int cleft, int ctop, int cright, int cbottom, int minx, int miny) {
     tbsize_result_t ret;
 
     SetRect(&ret.rcClient, cleft, ctop, cright, cbottom);
@@ -719,7 +719,7 @@ tbsize_result_t init_tbsize_result(int nButtonsAlloc, int cleft, int ctop, int c
     return ret;
 }
 
-void tbsize_addbutton(tbsize_result_t *tbsr, int left, int top, int right, int bottom) {
+static void tbsize_addbutton(tbsize_result_t *tbsr, int left, int top, int right, int bottom) {
     SetRect(&tbsr->prcButtons[tbsr->nButtons], left, top, right, bottom);
     tbsr->nButtons++;
 }
