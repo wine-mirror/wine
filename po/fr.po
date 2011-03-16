@@ -2807,7 +2807,6 @@ msgid "Signal pending\n"
 msgstr "Signal déjà en attente\n"
 
 #: winerror.mc:681
-#, fuzzy
 msgid "Max system-wide thread count reached\n"
 msgstr "Nombre maximal de threads du système atteint\n"
 
@@ -4240,7 +4239,6 @@ msgid "Private dialog index\n"
 msgstr "Index de fenêtre de dialogue privé\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
 msgstr "ID de liste de choix non trouvée\n"
 
@@ -4305,7 +4303,6 @@ msgid "Hook procedure not installed\n"
 msgstr "Procédure accrochée pas installée\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
 msgstr "Message de liste de choix invalide\n"
 
@@ -4314,7 +4311,6 @@ msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "LB_SETCOUNT invalide envoyé\n"
 
 #: winerror.mc:2566
-#, fuzzy
 msgid "No tab stops on this list box\n"
 msgstr "Aucune marque de tabulation dans cette liste de choix\n"
 
@@ -4384,7 +4380,6 @@ msgid "No system resources\n"
 msgstr "Ressources système insuffisantes\n"
 
 #: winerror.mc:2651
-#, fuzzy
 msgid "No non-paged system resources\n"
 msgstr "Ressources système non paginées insuffisantes\n"
 
@@ -4397,7 +4392,6 @@ msgid "No working set quota\n"
 msgstr "Quota insuffisant pour l'espace de travail\n"
 
 #: winerror.mc:2666
-#, fuzzy
 msgid "No page file quota\n"
 msgstr "Quota insuffisant pour le fichier d'échange\n"
 
@@ -4474,7 +4468,6 @@ msgid "Unknown component\n"
 msgstr "Composant inconnu\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property\n"
 msgstr "Propriété inconnue\n"
 
@@ -5007,7 +5000,6 @@ msgid "Invalid printer command\n"
 msgstr "Commande d'imprimante invalide\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
 msgstr "Type de donnée invalide\n"
 
@@ -5323,7 +5315,6 @@ msgid "insert disk %s"
 msgstr "insérez le disque %s"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -6921,7 +6912,6 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "Un paramètre non valide a été passé à une fonction système."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -7128,7 +7118,6 @@ msgstr ""
 "commande."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -7615,11 +7604,9 @@ msgstr "Problème de déréférencement d'alias"
 msgid "Inappropriate Authentication"
 msgstr "Authentification inappropriée"
 
-# informations d'authentification? d'identification?
 #: wldap32.rc:76
-#, fuzzy
 msgid "Invalid Credentials"
-msgstr "Autorisations invalides"
+msgstr "Informations d'authentification invalides"
 
 #: wldap32.rc:77
 msgid "Insufficient Rights"
@@ -8083,7 +8070,6 @@ msgstr ""
 "REN <fichier> est la version courte de RENAME. Elle renomme un fichier.\n"
 
 #: cmd.rc:158
-#, fuzzy
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <fichier> renomme un fichier.\n"
 
@@ -8185,7 +8171,6 @@ msgstr ""
 "L'indicateur de vérification n'a pas de fonction dans Wine.\n"
 
 #: cmd.rc:204
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER affiche la version de cmd utilisée.\n"
 
@@ -10487,7 +10472,6 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -11405,7 +11389,6 @@ msgid "&System\tCtrl+1"
 msgstr "&Système\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
 msgstr "&Jaune pâle\tCtrl+2"
 
