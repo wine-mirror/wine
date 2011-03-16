@@ -1452,7 +1452,7 @@ static void test_GetCursorFrameInfo(void)
     /* Creating a static cursor. */
     SetLastError(0xdeadbeef);
     h1 = CreateIconFromResource((PBYTE) hotspot, CRSR_RES_SIZE, FALSE, 0x00030000);
-    ok(h1 != NULL, "Create cursor failed.\n");
+    ok(h1 != NULL, "Create cursor failed (error = %d).\n", GetLastError());
 
     /* Check GetCursorFrameInfo behavior on a static cursor */
     unk1 = unk2 = unk3 = unk4 = 0xdead;
@@ -1464,15 +1464,17 @@ static void test_GetCursorFrameInfo(void)
     ok(unk4 == 1, "GetCursorFrameInfo() unexpected param 5 value (%d != 1).\n", unk4);
 
     /* Clean up static cursor. */
+    SetLastError(0xdeadbeef);
     ret = DestroyCursor(h1);
-    ok(ret, "DestroyCursor() failed.\n");
+    ok(ret, "DestroyCursor() failed (error = %d).\n", GetLastError());
 
     /* Creating a single-frame animated cursor. */
     empty_anicursor.frames[0].data.icon_info.idType = 2; /* type: cursor */
     empty_anicursor.frames[0].data.icon_info.idEntries[0].xHotspot = 3;
     empty_anicursor.frames[0].data.icon_info.idEntries[0].yHotspot = 3;
+    SetLastError(0xdeadbeef);
     h1 = CreateIconFromResource((PBYTE) &empty_anicursor, sizeof(empty_anicursor), FALSE, 0x00030000);
-    ok(h1 != NULL, "Create cursor failed.\n");
+    ok(h1 != NULL, "Create cursor failed (error = %d).\n", GetLastError());
 
     /* Check GetCursorFrameInfo behavior on a single-frame animated cursor */
     unk1 = unk2 = unk3 = unk4 = 0xdead;
@@ -1485,8 +1487,9 @@ static void test_GetCursorFrameInfo(void)
         "GetCursorFrameInfo() unexpected param 5 value (%d != 1).\n", unk4);
 
     /* Clean up single-frame animated cursor. */
+    SetLastError(0xdeadbeef);
     ret = DestroyCursor(h1);
-    ok(ret, "DestroyCursor() failed.\n");
+    ok(ret, "DestroyCursor() failed (error = %d).\n", GetLastError());
 
     /* Creating a multi-frame animated cursor. */
     for (i=0; i<empty_anicursor3.header.header.num_frames; i++)
@@ -1495,8 +1498,9 @@ static void test_GetCursorFrameInfo(void)
         empty_anicursor3.frames[i].data.icon_info.idEntries[0].xHotspot = 3;
         empty_anicursor3.frames[i].data.icon_info.idEntries[0].yHotspot = 3;
     }
+    SetLastError(0xdeadbeef);
     h1 = CreateIconFromResource((PBYTE) &empty_anicursor3, sizeof(empty_anicursor3), FALSE, 0x00030000);
-    ok(h1 != NULL, "Create cursor failed.\n");
+    ok(h1 != NULL, "Create cursor failed (error = %d).\n", GetLastError());
 
     /* Check number of steps in multi-frame animated cursor */
     i=0;
@@ -1536,13 +1540,15 @@ static void test_GetCursorFrameInfo(void)
         "GetCursorFrameInfo() unexpected param 5 value (0x%x != 0xdead).\n", unk4);
 
     /* Clean up multi-frame animated cursor. */
+    SetLastError(0xdeadbeef);
     ret = DestroyCursor(h1);
-    ok(ret, "DestroyCursor() failed.\n");
+    ok(ret, "DestroyCursor() failed (error = %d).\n", GetLastError());
 
     /* Create a multi-frame animated cursor with num_steps == 1 */
     empty_anicursor3.header.header.num_steps = 1;
+    SetLastError(0xdeadbeef);
     h1 = CreateIconFromResource((PBYTE) &empty_anicursor3, sizeof(empty_anicursor3), FALSE, 0x00030000);
-    ok(h1 != NULL, "Create cursor failed.\n");
+    ok(h1 != NULL, "Create cursor failed (error = %d).\n", GetLastError());
 
     /* Check number of steps in multi-frame animated cursor (mismatch between steps and frames) */
     i=0;
@@ -1578,8 +1584,9 @@ static void test_GetCursorFrameInfo(void)
         "GetCursorFrameInfo() unexpected param 5 value (%d != 0xdead).\n", unk4);
 
     /* Clean up multi-frame animated cursor. */
+    SetLastError(0xdeadbeef);
     ret = DestroyCursor(h1);
-    ok(ret, "DestroyCursor() failed.\n");
+    ok(ret, "DestroyCursor() failed (error = %d).\n", GetLastError());
 
     /* Creating a multi-frame animated cursor with rate data. */
     for (i=0; i<empty_anicursor3_rate.header.header.num_frames; i++)
@@ -1588,8 +1595,9 @@ static void test_GetCursorFrameInfo(void)
         empty_anicursor3_rate.frames[i].data.icon_info.idEntries[0].xHotspot = 3;
         empty_anicursor3_rate.frames[i].data.icon_info.idEntries[0].yHotspot = 3;
     }
+    SetLastError(0xdeadbeef);
     h1 = CreateIconFromResource((PBYTE) &empty_anicursor3_rate, sizeof(empty_anicursor3_rate), FALSE, 0x00030000);
-    ok(h1 != NULL, "Create cursor failed.\n");
+    ok(h1 != NULL, "Create cursor failed (error = %x).\n", GetLastError());
 
     /* Check number of steps in multi-frame animated cursor with rate data */
     i=0;
@@ -1616,8 +1624,9 @@ static void test_GetCursorFrameInfo(void)
     }
 
     /* Clean up multi-frame animated cursor with rate data. */
+    SetLastError(0xdeadbeef);
     ret = DestroyCursor(h1);
-    ok(ret, "DestroyCursor() failed.\n");
+    ok(ret, "DestroyCursor() failed (error = %d).\n", GetLastError());
 
 cleanup:
     if(bmpOld) SelectObject(hdc, bmpOld);
