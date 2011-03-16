@@ -3295,7 +3295,7 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
     ConnectionPoint_EnumConnections
 };
 
-void ConnectionPoint_Init(ConnectionPoint *cp, struct domdoc *doc, REFIID riid)
+static void ConnectionPoint_Init(ConnectionPoint *cp, struct domdoc *doc, REFIID riid)
 {
     cp->lpVtblConnectionPoint = &ConnectionPointVtbl;
     cp->doc = doc;

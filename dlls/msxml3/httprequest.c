@@ -152,7 +152,7 @@ static inline BindStatusCallback *impl_from_IHttpNegotiate( IHttpNegotiate *ifac
     return CONTAINING_RECORD(iface, BindStatusCallback, IHttpNegotiate_iface);
 }
 
-void BindStatusCallback_Detach(BindStatusCallback *bsc)
+static void BindStatusCallback_Detach(BindStatusCallback *bsc)
 {
     if (bsc)
     {
