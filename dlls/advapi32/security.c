@@ -3471,7 +3471,7 @@ BOOL WINAPI SetAclInformation( PACL pAcl, LPVOID pAclInformation,
     return TRUE;
 }
 
-DWORD trustee_name_A_to_W(TRUSTEE_FORM form, char *trustee_nameA, WCHAR **ptrustee_nameW)
+static DWORD trustee_name_A_to_W(TRUSTEE_FORM form, char *trustee_nameA, WCHAR **ptrustee_nameW)
 {
     DWORD len;
 
@@ -3552,7 +3552,7 @@ error:
     }
 }
 
-void free_trustee_name(TRUSTEE_FORM form, WCHAR *trustee_nameW)
+static void free_trustee_name(TRUSTEE_FORM form, WCHAR *trustee_nameW)
 {
     switch (form)
     {
