@@ -3673,7 +3673,7 @@ static void test_ShellItemBindToHandler(void)
     pILFree(pidl_desktop);
 }
 
-void test_ShellItemGetAttributes(void)
+static void test_ShellItemGetAttributes(void)
 {
     IShellItem *psi;
     LPITEMIDLIST pidl_desktop;
