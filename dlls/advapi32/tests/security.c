@@ -2,6 +2,7 @@
  * Unit tests for security functions
  *
  * Copyright (c) 2004 Mike McCormack
+ * Copyright (c) 2011 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -691,11 +692,12 @@ static void test_FileSecurity(void)
     char wintmpdir [MAX_PATH];
     char path [MAX_PATH];
     char file [MAX_PATH];
-    BOOL rc;
-    HANDLE fh;
-    DWORD sdSize;
-    DWORD retSize;
+    HANDLE fh, token;
+    DWORD sdSize, retSize, rc, granted, priv_set_len;
+    PRIVILEGE_SET priv_set;
+    BOOL status;
     BYTE *sd;
+    GENERIC_MAPPING mapping = { FILE_READ_DATA, FILE_WRITE_DATA, FILE_EXECUTE, FILE_ALL_ACCESS };
     const SECURITY_INFORMATION request = OWNER_SECURITY_INFORMATION
                                        | GROUP_SECURITY_INFORMATION
                                        | DACL_SECURITY_INFORMATION;
@@ -810,6 +812,113 @@ cleanup:
     /* Remove temporary file and directory */
     DeleteFileA(file);
     RemoveDirectoryA(path);
+
+
+    SetLastError(0xdeadbeef);
+    rc = GetTempPath(sizeof(wintmpdir), wintmpdir);
+    ok(rc, "GetTempPath error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    rc = GetTempFileName(wintmpdir, "tmp", 0, file);
+    ok(rc, "GetTempFileName error %d\n", GetLastError());
+
+    rc = GetFileAttributes(file);
+    rc &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+    ok(rc == FILE_ATTRIBUTE_ARCHIVE, "expected FILE_ATTRIBUTE_ARCHIVE got %#x\n", rc);
+
+    retSize = 0xdeadbeef;
+    rc = GetFileSecurity(file, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
+                         NULL, 0, &sdSize);
+    ok(!rc, "GetFileSecurity should fail\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "expected ERROR_INSUFFICIENT_BUFFER got %d\n", GetLastError());
+    ok(sdSize > sizeof(SECURITY_DESCRIPTOR), "got sd size %d\n", sdSize);
+
+    sd = HeapAlloc(GetProcessHeap (), 0, sdSize);
+    retSize = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = GetFileSecurity(file, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
+                         sd, sdSize, &retSize);
+    ok(rc, "GetFileSecurity error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    rc = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, &token);
+    ok(!rc, "OpenThreadToken should fail\n");
+    ok(GetLastError() == ERROR_NO_TOKEN, "expected ERROR_NO_TOKEN, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    rc = ImpersonateSelf(SecurityIdentification);
+    ok(rc, "ImpersonateSelf error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    rc = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, &token);
+    ok(rc, "OpenThreadToken error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    rc = RevertToSelf();
+    ok(rc, "RevertToSelf error %d\n", GetLastError());
+
+    priv_set_len = sizeof(priv_set);
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, FILE_READ_DATA, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == FILE_READ_DATA, "expected FILE_READ_DATA, got %#x\n", granted);
+
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, FILE_WRITE_DATA, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == FILE_WRITE_DATA, "expected FILE_WRITE_DATA, got %#x\n", granted);
+
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, FILE_EXECUTE, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+todo_wine {
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == FILE_EXECUTE, "expected FILE_EXECUTE, got %#x\n", granted);
+}
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, FILE_DELETE_CHILD, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+todo_wine {
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == FILE_DELETE_CHILD, "expected FILE_DELETE_CHILD, got %#x\n", granted);
+}
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, 0x1ff, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+todo_wine {
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == 0x1ff, "expected 0x1ff, got %#x\n", granted);
+}
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, FILE_ALL_ACCESS, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+todo_wine {
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", granted);
+}
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, 0xffffffff, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(!rc, "AccessCheck should fail\n");
+    ok(GetLastError() == ERROR_GENERIC_NOT_MAPPED, "expected ERROR_GENERIC_NOT_MAPPED, got %d\n", GetLastError());
+
+    CloseHandle(token);
+    HeapFree(GetProcessHeap (), 0, sd);
+    DeleteFile(file);
 }
 
 static void test_AccessCheck(void)
