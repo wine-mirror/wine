@@ -974,7 +974,7 @@ typedef struct _tagTT_NAME_RECORD {
  * Code based off of code located here
  * http://www.codeproject.com/gdi/fontnamefromfile.asp
  */
-WCHAR *load_ttf_name_id( const char *mem, DWORD_PTR size, DWORD id, WCHAR *ret, DWORD len )
+static WCHAR *load_ttf_name_id( const char *mem, DWORD_PTR size, DWORD id, WCHAR *ret, DWORD len )
 {
     const TT_TABLE_DIRECTORY *tblDir;
     TT_OFFSET_TABLE ttOffsetTable;
