@@ -684,7 +684,7 @@ static HRESULT WINAPI VfwPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDI
     return hr;
 }
 
-LONG WINAPI VfwPin_GetMediaTypeVersion(BasePin *iface)
+static LONG WINAPI VfwPin_GetMediaTypeVersion(BasePin *iface)
 {
     return 1;
 }
