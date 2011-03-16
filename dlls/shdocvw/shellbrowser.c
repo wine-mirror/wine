@@ -759,8 +759,10 @@ static const IDocObjectServiceVtbl DocObjectServiceVtbl = {
 
 HRESULT ShellBrowser_Create(IShellBrowser **ppv)
 {
-    ShellBrowser *sb = heap_alloc(sizeof(ShellBrowser));
-    if(!*ppv)
+    ShellBrowser *sb;
+
+    sb = heap_alloc(sizeof(ShellBrowser));
+    if(!sb)
         return E_OUTOFMEMORY;
 
     sb->IShellBrowser_iface.lpVtbl = &ShellBrowserVtbl;
