@@ -2852,7 +2852,7 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, LPCSTR text, FLOA
     char name[256];
     OUTLINETEXTMETRIC otm;
     GLYPHMETRICS gm;
-    GLYPHMETRICSFLOAT *glyphmetrics_float = malloc(sizeof(GLYPHMETRICSFLOAT) * strlen(text));
+    GLYPHMETRICSFLOAT *glyphmetrics_float = HeapAlloc(GetProcessHeap(), 0, sizeof(GLYPHMETRICSFLOAT) * strlen(text));
     int i;
     LOGFONT lf;
     HFONT font = NULL, oldfont = NULL;
@@ -2913,6 +2913,7 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, LPCSTR text, FLOA
 
     d3dxmesh->lpVtbl->Release(d3dxmesh);
     SelectObject(hdc, oldfont);
+    HeapFree(GetProcessHeap(), 0, glyphmetrics_float);
 }
 
 static void D3DXCreateTextTest(void)
