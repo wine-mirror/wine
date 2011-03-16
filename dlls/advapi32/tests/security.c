@@ -889,10 +889,9 @@ todo_wine {
     SetLastError(0xdeadbeef);
     rc = AccessCheck(sd, token, FILE_DELETE_CHILD, &mapping, &priv_set, &priv_set_len, &granted, &status);
     ok(rc, "AccessCheck error %d\n", GetLastError());
-todo_wine {
     ok(status == 1, "expected 1, got %d\n", status);
     ok(granted == FILE_DELETE_CHILD, "expected FILE_DELETE_CHILD, got %#x\n", granted);
-}
+
     granted = 0xdeadbeef;
     status = 0xdeadbeef;
     SetLastError(0xdeadbeef);

@@ -360,7 +360,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
         if (mode & S_IRUSR)
             aaa->Mask |= FILE_GENERIC_READ;
         if (mode & S_IWUSR)
-            aaa->Mask |= FILE_GENERIC_WRITE | DELETE;
+            aaa->Mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
         if (mode & S_IXUSR)
             aaa->Mask |= FILE_GENERIC_EXECUTE;
         sid = (SID *)&aaa->SidStart;
@@ -381,7 +381,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
         if (!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH)))
             ada->Mask |= FILE_GENERIC_READ;
         if (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IROTH)))
-            ada->Mask |= FILE_GENERIC_WRITE | DELETE;
+            ada->Mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
         if (!(mode & S_IXUSR) && (mode & (S_IXGRP|S_IXOTH)))
             ada->Mask |= FILE_GENERIC_EXECUTE;
         ada->Mask &= ~STANDARD_RIGHTS_ALL; /* never deny standard rights */
@@ -401,7 +401,7 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
         if (mode & S_IROTH)
             aaa->Mask |= FILE_GENERIC_READ;
         if (mode & S_IWOTH)
-            aaa->Mask |= FILE_GENERIC_WRITE | DELETE;
+            aaa->Mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
         if (mode & S_IXOTH)
             aaa->Mask |= FILE_GENERIC_EXECUTE;
         sid = (SID *)&aaa->SidStart;
