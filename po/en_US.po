@@ -2787,8 +2787,8 @@ msgid "Signal pending\n"
 msgstr "Signal pending\n"
 
 #: winerror.mc:681
-msgid "Max systemwide thread count reached\n"
-msgstr "Max systemwide thread count reached\n"
+msgid "Max system-wide thread count reached\n"
+msgstr "Max system-wide thread count reached\n"
 
 #: winerror.mc:686
 msgid "Lock failed\n"
@@ -4215,8 +4215,8 @@ msgid "Private dialog index\n"
 msgstr "Private dialog index\n"
 
 #: winerror.mc:2476
-msgid "Listbox ID not found\n"
-msgstr "Listbox ID not found\n"
+msgid "List box ID not found\n"
+msgstr "List box ID not found\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters\n"
@@ -4279,16 +4279,16 @@ msgid "Hook procedure not installed\n"
 msgstr "Hook procedure not installed\n"
 
 #: winerror.mc:2556
-msgid "Invalid listbox message\n"
-msgstr "Invalid listbox message\n"
+msgid "Invalid list box message\n"
+msgstr "Invalid list box message\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "Invalid LB_SETCOUNT sent\n"
 
 #: winerror.mc:2566
-msgid "No tabstops on this listbox\n"
-msgstr "No tabstops on this listbox\n"
+msgid "No tab stops on this list box\n"
+msgstr "No tab stops on this list box\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread\n"
@@ -4303,8 +4303,8 @@ msgid "Window has no system menu\n"
 msgstr "Window has no system menu\n"
 
 #: winerror.mc:2586
-msgid "Invalid messagebox style\n"
-msgstr "Invalid messagebox style\n"
+msgid "Invalid message box style\n"
+msgstr "Invalid message box style\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter\n"
@@ -4355,8 +4355,8 @@ msgid "No system resources\n"
 msgstr "No system resources\n"
 
 #: winerror.mc:2651
-msgid "No nonpaged system resources\n"
-msgstr "No nonpaged system resources\n"
+msgid "No non-paged system resources\n"
+msgstr "No non-paged system resources\n"
 
 #: winerror.mc:2656
 msgid "No paged system resources\n"
@@ -4367,8 +4367,8 @@ msgid "No working set quota\n"
 msgstr "No working set quota\n"
 
 #: winerror.mc:2666
-msgid "No pagefile quota\n"
-msgstr "No pagefile quota\n"
+msgid "No page file quota\n"
+msgstr "No page file quota\n"
 
 #: winerror.mc:2671
 msgid "Exceeded commitment limit\n"
@@ -4443,8 +4443,8 @@ msgid "Unknown component\n"
 msgstr "Unknown component\n"
 
 #: winerror.mc:2761
-msgid "Unknonw property\n"
-msgstr "Unknonw property\n"
+msgid "Unknown property\n"
+msgstr "Unknown property\n"
 
 #: winerror.mc:2766
 msgid "Invalid handle state\n"
@@ -4975,8 +4975,8 @@ msgid "Invalid printer command\n"
 msgstr "Invalid printer command\n"
 
 #: winerror.mc:3431
-msgid "Invalid datatype\n"
-msgstr "Invalid datatype\n"
+msgid "Invalid data type\n"
+msgstr "Invalid data type\n"
 
 #: winerror.mc:3436
 msgid "Invalid environment\n"
@@ -5294,19 +5294,19 @@ msgid ""
 "msiexec command {required parameter} [optional parameter]\n"
 "\n"
 "Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
+"\t/i {package|product_code} [property]\n"
+"\t/package {package|product_code} [property]\n"
 "\t/a package [property]\n"
 "Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n"
 "Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
+"\t/uninstall {package|product_code} [property]\n"
+"\t/x {package|product_code} [property]\n"
 "Advertise a product:\n"
 "\t/j[u|m] package [/t transform] [/g languageid]\n"
 "Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
+"\t/p patch_package [property]\n"
+"\t/p patch_package /a package [property]\n"
 "Log and UI Modifiers for above commands:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
@@ -5324,19 +5324,19 @@ msgstr ""
 "msiexec command {required parameter} [optional parameter]\n"
 "\n"
 "Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
+"\t/i {package|product_code} [property]\n"
+"\t/package {package|product_code} [property]\n"
 "\t/a package [property]\n"
 "Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n"
 "Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
+"\t/uninstall {package|product_code} [property]\n"
+"\t/x {package|product_code} [property]\n"
 "Advertise a product:\n"
 "\t/j[u|m] package [/t transform] [/g languageid]\n"
 "Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
+"\t/p patch_package [property]\n"
+"\t/p patch_package /a package [property]\n"
 "Log and UI Modifiers for above commands:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
@@ -6873,10 +6873,10 @@ msgstr "An invalid parameter was passed to a system function."
 #: winmm.rc:42
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
-"Capabilities function to determine the supported formats"
+"Capabilities function to determine the supported formats."
 msgstr ""
 "The specified format is not supported or cannot be translated. Use the "
-"Capabilities function to determine the supported formats"
+"Capabilities function to determine the supported formats."
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
@@ -7068,10 +7068,10 @@ msgstr "Cannot use 'all' as the device name with the specified command."
 #: winmm.rc:77
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
-"separately to determine which devices caused the error"
+"separately to determine which devices caused the error."
 msgstr ""
 "Errors occurred in more than one device. Specify each command and device "
-"separately to determine which devices caused the error"
+"separately to determine which devices caused the error."
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
@@ -7982,8 +7982,8 @@ msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN <filename> is the short version of RENAME. It renames a file.\n"
 
 #: cmd.rc:158
-msgid "RENAME <filename> renames a file\n"
-msgstr "RENAME <filename> renames a file\n"
+msgid "RENAME <filename> renames a file.\n"
+msgstr "RENAME <filename> renames a file.\n"
 
 #: cmd.rc:160
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
@@ -8074,8 +8074,8 @@ msgstr ""
 "The verify flag has no function in Wine.\n"
 
 #: cmd.rc:204
-msgid "VER displays the version of cmd you are running\n"
-msgstr "VER displays the version of cmd you are running\n"
+msgid "VER displays the version of cmd you are running.\n"
+msgstr "VER displays the version of cmd you are running.\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
@@ -10339,11 +10339,11 @@ msgstr "CD-ROM"
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
-"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
 "You cannot add any more drives.\n"
 "\n"
-"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26."
 
 #: winecfg.rc:87
 msgid "System drive"
@@ -11247,8 +11247,8 @@ msgid "&System\tCtrl+1"
 msgstr "&System\tCtrl+1"
 
 #: wordpad.rc:88
-msgid "&PostThat yellowish\tCtrl+2"
-msgstr "&PostThat yellowish\tCtrl+2"
+msgid "&Pale yellow\tCtrl+2"
+msgstr "&Pale yellow\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"

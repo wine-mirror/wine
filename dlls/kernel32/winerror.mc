@@ -676,7 +676,7 @@ Signal pending
 MessageId=164
 SymbolicName=ERROR_MAX_THRDS_REACHED
 Language=ENU
-Max systemwide thread count reached
+Max system-wide thread count reached
 .
 MessageId=167
 SymbolicName=ERROR_LOCK_FAILED
@@ -2471,7 +2471,7 @@ Private dialog index
 MessageId=1416
 SymbolicName=ERROR_LISTBOX_ID_NOT_FOUND
 Language=ENU
-Listbox ID not found
+List box ID not found
 .
 MessageId=1417
 SymbolicName=ERROR_NO_WILDCARD_CHARACTERS
@@ -2551,7 +2551,7 @@ Hook procedure not installed
 MessageId=1432
 SymbolicName=ERROR_INVALID_LB_MESSAGE
 Language=ENU
-Invalid listbox message
+Invalid list box message
 .
 MessageId=1433
 SymbolicName=ERROR_SETCOUNT_ON_BAD_LB
@@ -2561,7 +2561,7 @@ Invalid LB_SETCOUNT sent
 MessageId=1434
 SymbolicName=ERROR_LB_WITHOUT_TABSTOPS
 Language=ENU
-No tabstops on this listbox
+No tab stops on this list box
 .
 MessageId=1435
 SymbolicName=ERROR_DESTROY_OBJECT_OF_OTHER_THREAD
@@ -2581,7 +2581,7 @@ Window has no system menu
 MessageId=1438
 SymbolicName=ERROR_INVALID_MSGBOX_STYLE
 Language=ENU
-Invalid messagebox style
+Invalid message box style
 .
 MessageId=1439
 SymbolicName=ERROR_INVALID_SPI_VALUE
@@ -2646,7 +2646,7 @@ No system resources
 MessageId=1451
 SymbolicName=ERROR_NONPAGED_SYSTEM_RESOURCES
 Language=ENU
-No nonpaged system resources
+No non-paged system resources
 .
 MessageId=1452
 SymbolicName=ERROR_PAGED_SYSTEM_RESOURCES
@@ -2661,7 +2661,7 @@ No working set quota
 MessageId=1454
 SymbolicName=ERROR_PAGEFILE_QUOTA
 Language=ENU
-No pagefile quota
+No page file quota
 .
 MessageId=1455
 SymbolicName=ERROR_COMMITMENT_LIMIT
@@ -2756,7 +2756,7 @@ Unknown component
 MessageId=1608
 SymbolicName=ERROR_UNKNOWN_PROPERTY
 Language=ENU
-Unknonw property
+Unknown property
 .
 MessageId=1609
 SymbolicName=ERROR_INVALID_HANDLE_STATE
@@ -3426,7 +3426,7 @@ Invalid printer command
 MessageId=1804
 SymbolicName=ERROR_INVALID_DATATYPE
 Language=ENU
-Invalid datatype
+Invalid data type
 .
 MessageId=1805
 SymbolicName=ERROR_INVALID_ENVIRONMENT

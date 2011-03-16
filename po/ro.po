@@ -2992,7 +2992,7 @@ msgid "Signal pending\n"
 msgstr ""
 
 #: winerror.mc:681
-msgid "Max systemwide thread count reached\n"
+msgid "Max system-wide thread count reached\n"
 msgstr ""
 
 #: winerror.mc:686
@@ -4551,7 +4551,7 @@ msgstr ""
 
 #: winerror.mc:2476
 #, fuzzy
-msgid "Listbox ID not found\n"
+msgid "List box ID not found\n"
 msgstr "calea %s nu a fost găsită"
 
 #: winerror.mc:2481
@@ -4619,15 +4619,16 @@ msgid "Hook procedure not installed\n"
 msgstr ""
 
 #: winerror.mc:2556
-msgid "Invalid listbox message\n"
-msgstr ""
+#, fuzzy
+msgid "Invalid list box message\n"
+msgstr "Sintaxă nevalidă"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
 msgstr ""
 
 #: winerror.mc:2566
-msgid "No tabstops on this listbox\n"
+msgid "No tab stops on this list box\n"
 msgstr ""
 
 #: winerror.mc:2571
@@ -4643,8 +4644,9 @@ msgid "Window has no system menu\n"
 msgstr ""
 
 #: winerror.mc:2586
-msgid "Invalid messagebox style\n"
-msgstr ""
+#, fuzzy
+msgid "Invalid message box style\n"
+msgstr "Eroare: Nume de cheie nevalid\n"
 
 #: winerror.mc:2591
 #, fuzzy
@@ -4699,7 +4701,7 @@ msgid "No system resources\n"
 msgstr ""
 
 #: winerror.mc:2651
-msgid "No nonpaged system resources\n"
+msgid "No non-paged system resources\n"
 msgstr ""
 
 #: winerror.mc:2656
@@ -4711,7 +4713,7 @@ msgid "No working set quota\n"
 msgstr ""
 
 #: winerror.mc:2666
-msgid "No pagefile quota\n"
+msgid "No page file quota\n"
 msgstr ""
 
 #: winerror.mc:2671
@@ -4800,7 +4802,7 @@ msgstr "Eroare necunoscută"
 
 #: winerror.mc:2761
 #, fuzzy
-msgid "Unknonw property\n"
+msgid "Unknown property\n"
 msgstr "Eroare necunoscută"
 
 #: winerror.mc:2766
@@ -5390,7 +5392,7 @@ msgstr "Formatul de număr nu este valid."
 
 #: winerror.mc:3431
 #, fuzzy
-msgid "Invalid datatype\n"
+msgid "Invalid data type\n"
 msgstr "Sintaxă nevalidă"
 
 #: winerror.mc:3436
@@ -5735,6 +5737,7 @@ msgid "insert disk %s"
 msgstr "inserați discul %s"
 
 #: msi.rc:30
+#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5742,19 +5745,19 @@ msgid ""
 "msiexec command {required parameter} [optional parameter]\n"
 "\n"
 "Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
+"\t/i {package|product_code} [property]\n"
+"\t/package {package|product_code} [property]\n"
 "\t/a package [property]\n"
 "Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n"
 "Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
+"\t/uninstall {package|product_code} [property]\n"
+"\t/x {package|product_code} [property]\n"
 "Advertise a product:\n"
 "\t/j[u|m] package [/t transform] [/g languageid]\n"
 "Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
+"\t/p patch_package [property]\n"
+"\t/p patch_package /a package [property]\n"
 "Log and UI Modifiers for above commands:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
@@ -7403,9 +7406,10 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "Sa pasat un parametru nevalid unei funcții a sistemului."
 
 #: winmm.rc:42
+#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
-"Capabilities function to determine the supported formats"
+"Capabilities function to determine the supported formats."
 msgstr ""
 "Formatul specificat nu este suportat sau nu poate fi interpretat. Utilizați "
 "funcția Capabilities pentru a determina formatele suportate."
@@ -7603,9 +7607,10 @@ msgstr ""
 "Nu se poate utiliza „toate” ca nume de dispozitiv pentru comanda specificată."
 
 #: winmm.rc:77
+#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
-"separately to determine which devices caused the error"
+"separately to determine which devices caused the error."
 msgstr ""
 "Au survenit erori în mai multe dispozitive. Specificați separat fiecare "
 "comandă și dispozitiv pentru a determina care dispozitive au provocat eroarea"
@@ -8537,7 +8542,8 @@ msgstr ""
 "REN <fișier> este versiunea scurtă pentru RENAME. REN redenumește fișierul.\n"
 
 #: cmd.rc:158
-msgid "RENAME <filename> renames a file\n"
+#, fuzzy
+msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <fișier> redenumește fișierul.\n"
 
 #: cmd.rc:160
@@ -8629,7 +8635,8 @@ msgstr ""
 "Indicatorul de verificare nu are nici o funcție în Wine.\n"
 
 #: cmd.rc:204
-msgid "VER displays the version of cmd you are running\n"
+#, fuzzy
+msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER afișează versiunea de cmd utilizată\n"
 
 #: cmd.rc:206
@@ -10976,10 +10983,11 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
+#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
-"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
 "Nu mai puteți adăuga nici o unitate.\n"
 "\n"
@@ -11895,7 +11903,8 @@ msgid "&System\tCtrl+1"
 msgstr "&Sistem\tCtrl+1"
 
 #: wordpad.rc:88
-msgid "&PostThat yellowish\tCtrl+2"
+#, fuzzy
+msgid "&Pale yellow\tCtrl+2"
 msgstr "Gălbui de &post-it\tCtrl+2"
 
 #: wordpad.rc:93

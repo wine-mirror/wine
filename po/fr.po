@@ -2807,7 +2807,8 @@ msgid "Signal pending\n"
 msgstr "Signal déjà en attente\n"
 
 #: winerror.mc:681
-msgid "Max systemwide thread count reached\n"
+#, fuzzy
+msgid "Max system-wide thread count reached\n"
 msgstr "Nombre maximal de threads du système atteint\n"
 
 #: winerror.mc:686
@@ -4239,7 +4240,8 @@ msgid "Private dialog index\n"
 msgstr "Index de fenêtre de dialogue privé\n"
 
 #: winerror.mc:2476
-msgid "Listbox ID not found\n"
+#, fuzzy
+msgid "List box ID not found\n"
 msgstr "ID de liste de choix non trouvée\n"
 
 #: winerror.mc:2481
@@ -4303,7 +4305,8 @@ msgid "Hook procedure not installed\n"
 msgstr "Procédure accrochée pas installée\n"
 
 #: winerror.mc:2556
-msgid "Invalid listbox message\n"
+#, fuzzy
+msgid "Invalid list box message\n"
 msgstr "Message de liste de choix invalide\n"
 
 #: winerror.mc:2561
@@ -4311,7 +4314,8 @@ msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "LB_SETCOUNT invalide envoyé\n"
 
 #: winerror.mc:2566
-msgid "No tabstops on this listbox\n"
+#, fuzzy
+msgid "No tab stops on this list box\n"
 msgstr "Aucune marque de tabulation dans cette liste de choix\n"
 
 #: winerror.mc:2571
@@ -4327,7 +4331,8 @@ msgid "Window has no system menu\n"
 msgstr "La fenêtre ne comporte pas de menu système\n"
 
 #: winerror.mc:2586
-msgid "Invalid messagebox style\n"
+#, fuzzy
+msgid "Invalid message box style\n"
 msgstr "Style de boîte de message invalide\n"
 
 #: winerror.mc:2591
@@ -4379,7 +4384,8 @@ msgid "No system resources\n"
 msgstr "Ressources système insuffisantes\n"
 
 #: winerror.mc:2651
-msgid "No nonpaged system resources\n"
+#, fuzzy
+msgid "No non-paged system resources\n"
 msgstr "Ressources système non paginées insuffisantes\n"
 
 #: winerror.mc:2656
@@ -4391,7 +4397,8 @@ msgid "No working set quota\n"
 msgstr "Quota insuffisant pour l'espace de travail\n"
 
 #: winerror.mc:2666
-msgid "No pagefile quota\n"
+#, fuzzy
+msgid "No page file quota\n"
 msgstr "Quota insuffisant pour le fichier d'échange\n"
 
 #: winerror.mc:2671
@@ -4467,7 +4474,8 @@ msgid "Unknown component\n"
 msgstr "Composant inconnu\n"
 
 #: winerror.mc:2761
-msgid "Unknonw property\n"
+#, fuzzy
+msgid "Unknown property\n"
 msgstr "Propriété inconnue\n"
 
 #: winerror.mc:2766
@@ -4999,7 +5007,8 @@ msgid "Invalid printer command\n"
 msgstr "Commande d'imprimante invalide\n"
 
 #: winerror.mc:3431
-msgid "Invalid datatype\n"
+#, fuzzy
+msgid "Invalid data type\n"
 msgstr "Type de donnée invalide\n"
 
 #: winerror.mc:3436
@@ -5314,6 +5323,7 @@ msgid "insert disk %s"
 msgstr "insérez le disque %s"
 
 #: msi.rc:30
+#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5321,19 +5331,19 @@ msgid ""
 "msiexec command {required parameter} [optional parameter]\n"
 "\n"
 "Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
+"\t/i {package|product_code} [property]\n"
+"\t/package {package|product_code} [property]\n"
 "\t/a package [property]\n"
 "Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n"
 "Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
+"\t/uninstall {package|product_code} [property]\n"
+"\t/x {package|product_code} [property]\n"
 "Advertise a product:\n"
 "\t/j[u|m] package [/t transform] [/g languageid]\n"
 "Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
+"\t/p patch_package [property]\n"
+"\t/p patch_package /a package [property]\n"
 "Log and UI Modifiers for above commands:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
@@ -6911,9 +6921,10 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "Un paramètre non valide a été passé à une fonction système."
 
 #: winmm.rc:42
+#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
-"Capabilities function to determine the supported formats"
+"Capabilities function to determine the supported formats."
 msgstr ""
 "Le format choisi ne peut être traduit ou utilisé. Utilisez Capacités pour "
 "voir les formats pris en charge."
@@ -7117,9 +7128,10 @@ msgstr ""
 "commande."
 
 #: winmm.rc:77
+#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
-"separately to determine which devices caused the error"
+"separately to determine which devices caused the error."
 msgstr ""
 "Des erreurs se sont produites dans plusieurs périphériques. Spécifiez chaque "
 "commande et chaque périphérique séparément afin de déterminer les "
@@ -8071,7 +8083,8 @@ msgstr ""
 "REN <fichier> est la version courte de RENAME. Elle renomme un fichier.\n"
 
 #: cmd.rc:158
-msgid "RENAME <filename> renames a file\n"
+#, fuzzy
+msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <fichier> renomme un fichier.\n"
 
 #: cmd.rc:160
@@ -8172,7 +8185,8 @@ msgstr ""
 "L'indicateur de vérification n'a pas de fonction dans Wine.\n"
 
 #: cmd.rc:204
-msgid "VER displays the version of cmd you are running\n"
+#, fuzzy
+msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER affiche la version de cmd utilisée.\n"
 
 #: cmd.rc:206
@@ -10473,10 +10487,11 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
+#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
-"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
 "Impossible d'ajouter des lecteurs supplémentaires !\n"
 "\n"
@@ -11390,7 +11405,8 @@ msgid "&System\tCtrl+1"
 msgstr "&Système\tCtrl+1"
 
 #: wordpad.rc:88
-msgid "&PostThat yellowish\tCtrl+2"
+#, fuzzy
+msgid "&Pale yellow\tCtrl+2"
 msgstr "&Jaune pâle\tCtrl+2"
 
 #: wordpad.rc:93

@@ -2824,7 +2824,8 @@ msgid "Signal pending\n"
 msgstr "Venter på signal\n"
 
 #: winerror.mc:681
-msgid "Max systemwide thread count reached\n"
+#, fuzzy
+msgid "Max system-wide thread count reached\n"
 msgstr "Maks systemsider for trådantal nået\n"
 
 #: winerror.mc:686
@@ -4277,7 +4278,8 @@ msgid "Private dialog index\n"
 msgstr "Private dialog indeks\n"
 
 #: winerror.mc:2476
-msgid "Listbox ID not found\n"
+#, fuzzy
+msgid "List box ID not found\n"
 msgstr "Listbox ID ikke fundet\n"
 
 #: winerror.mc:2481
@@ -4341,7 +4343,8 @@ msgid "Hook procedure not installed\n"
 msgstr "Hook procedure ikke installeret\n"
 
 #: winerror.mc:2556
-msgid "Invalid listbox message\n"
+#, fuzzy
+msgid "Invalid list box message\n"
 msgstr "Ugyldig listbox besked\n"
 
 #: winerror.mc:2561
@@ -4349,7 +4352,8 @@ msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "Ugyldig LB_SETCOUNT sendt\n"
 
 #: winerror.mc:2566
-msgid "No tabstops on this listbox\n"
+#, fuzzy
+msgid "No tab stops on this list box\n"
 msgstr "Ingen tabstops på denne listbox\n"
 
 #: winerror.mc:2571
@@ -4365,7 +4369,8 @@ msgid "Window has no system menu\n"
 msgstr "Vindue har ikke en system menu\n"
 
 #: winerror.mc:2586
-msgid "Invalid messagebox style\n"
+#, fuzzy
+msgid "Invalid message box style\n"
 msgstr "Ugyldig messagebox stil\n"
 
 #: winerror.mc:2591
@@ -4417,7 +4422,8 @@ msgid "No system resources\n"
 msgstr "Ingen system ressourcer\n"
 
 #: winerror.mc:2651
-msgid "No nonpaged system resources\n"
+#, fuzzy
+msgid "No non-paged system resources\n"
 msgstr "Ingen nonpaged system ressourcer\n"
 
 #: winerror.mc:2656
@@ -4429,7 +4435,8 @@ msgid "No working set quota\n"
 msgstr "Ingen working set kvota\n"
 
 #: winerror.mc:2666
-msgid "No pagefile quota\n"
+#, fuzzy
+msgid "No page file quota\n"
 msgstr "Ingen sidefils kvota\n"
 
 #: winerror.mc:2671
@@ -4517,7 +4524,7 @@ msgstr "Ukendt port\n"
 
 #: winerror.mc:2761
 #, fuzzy
-msgid "Unknonw property\n"
+msgid "Unknown property\n"
 msgstr "Ukendt port\n"
 
 #: winerror.mc:2766
@@ -5074,7 +5081,8 @@ msgid "Invalid printer command\n"
 msgstr "Ugyldig printer kommando\n"
 
 #: winerror.mc:3431
-msgid "Invalid datatype\n"
+#, fuzzy
+msgid "Invalid data type\n"
 msgstr "Ugyldig data type\n"
 
 #: winerror.mc:3436
@@ -5403,6 +5411,7 @@ msgid "insert disk %s"
 msgstr "indsæt disk '%s'"
 
 #: msi.rc:30
+#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5410,19 +5419,19 @@ msgid ""
 "msiexec command {required parameter} [optional parameter]\n"
 "\n"
 "Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
+"\t/i {package|product_code} [property]\n"
+"\t/package {package|product_code} [property]\n"
 "\t/a package [property]\n"
 "Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n"
 "Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
+"\t/uninstall {package|product_code} [property]\n"
+"\t/x {package|product_code} [property]\n"
 "Advertise a product:\n"
 "\t/j[u|m] package [/t transform] [/g languageid]\n"
 "Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
+"\t/p patch_package [property]\n"
+"\t/p patch_package /a package [property]\n"
 "Log and UI Modifiers for above commands:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
@@ -7117,9 +7126,10 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "En ugyldig parameter blev overført til en systemfunktion."
 
 #: winmm.rc:42
+#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
-"Capabilities function to determine the supported formats"
+"Capabilities function to determine the supported formats."
 msgstr ""
 "Det specificerede format understøttes ikke eller kan ikke oversættes. Brug "
 "funktionen 'Capabilities' for at se de understøttede formater."
@@ -7310,9 +7320,10 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Kan ikke bruge 'all' som enhedsnafn med den specificerede kommando."
 
 #: winmm.rc:77
+#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
-"separately to determine which devices caused the error"
+"separately to determine which devices caused the error."
 msgstr ""
 "Der opstod fejl i mere end en enhed. Angiv hver kommando og enhed seperat "
 "for at finde ud hvilken enhed som forårsagede fejlen."
@@ -8218,7 +8229,8 @@ msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "Hjælp til REN\n"
 
 #: cmd.rc:158
-msgid "RENAME <filename> renames a file\n"
+#, fuzzy
+msgid "RENAME <filename> renames a file.\n"
 msgstr "Hjælp til RENAME\n"
 
 #: cmd.rc:160
@@ -8314,7 +8326,8 @@ msgstr ""
 "«Verify»-flagget har ingen funksion i Wine.\n"
 
 #: cmd.rc:204
-msgid "VER displays the version of cmd you are running\n"
+#, fuzzy
+msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER viser CMD's versionnummer\n"
 
 #: cmd.rc:206
@@ -10642,10 +10655,11 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
+#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
-"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
 "Du kan ikke tilføje flere drev.\n"
 "\n"
@@ -11556,7 +11570,8 @@ msgid "&System\tCtrl+1"
 msgstr "&System\tCtrl+1"
 
 #: wordpad.rc:88
-msgid "&PostThat yellowish\tCtrl+2"
+#, fuzzy
+msgid "&Pale yellow\tCtrl+2"
 msgstr "&Huskeseddel\tCtrl+2"
 
 #: wordpad.rc:93

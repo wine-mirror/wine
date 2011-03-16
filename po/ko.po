@@ -2782,7 +2782,8 @@ msgid "Signal pending\n"
 msgstr "시그널 대기중\n"
 
 #: winerror.mc:681
-msgid "Max systemwide thread count reached\n"
+#, fuzzy
+msgid "Max system-wide thread count reached\n"
 msgstr "최대 시스템 전역 쓰레드 카운트 도달\n"
 
 #: winerror.mc:686
@@ -4210,7 +4211,8 @@ msgid "Private dialog index\n"
 msgstr "비공개 다이얼로그 색인\n"
 
 #: winerror.mc:2476
-msgid "Listbox ID not found\n"
+#, fuzzy
+msgid "List box ID not found\n"
 msgstr "목록상자 ID를 찾을 수 없습니다\n"
 
 #: winerror.mc:2481
@@ -4274,7 +4276,8 @@ msgid "Hook procedure not installed\n"
 msgstr "설치되어 있지 않은 후크 프로 시저\n"
 
 #: winerror.mc:2556
-msgid "Invalid listbox message\n"
+#, fuzzy
+msgid "Invalid list box message\n"
 msgstr "올바르지 않은 목록상자 메세지\n"
 
 #: winerror.mc:2561
@@ -4282,7 +4285,8 @@ msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "올바르지 않은 LB_SETCOUNT 보내기\n"
 
 #: winerror.mc:2566
-msgid "No tabstops on this listbox\n"
+#, fuzzy
+msgid "No tab stops on this list box\n"
 msgstr "목록상자에는 탭정지가 없음\n"
 
 #: winerror.mc:2571
@@ -4298,7 +4302,8 @@ msgid "Window has no system menu\n"
 msgstr "창은 시스템 메뉴를 가지고 있지 않습니다\n"
 
 #: winerror.mc:2586
-msgid "Invalid messagebox style\n"
+#, fuzzy
+msgid "Invalid message box style\n"
 msgstr "올바르지 않은 메세지 박스 스타일\n"
 
 #: winerror.mc:2591
@@ -4350,7 +4355,8 @@ msgid "No system resources\n"
 msgstr "시스템 리소스가 없습니다\n"
 
 #: winerror.mc:2651
-msgid "No nonpaged system resources\n"
+#, fuzzy
+msgid "No non-paged system resources\n"
 msgstr "페이지되지 않은 시스템 자원이 없음\n"
 
 #: winerror.mc:2656
@@ -4362,7 +4368,8 @@ msgid "No working set quota\n"
 msgstr "작동하는 할당령 설정이 없음\n"
 
 #: winerror.mc:2666
-msgid "No pagefile quota\n"
+#, fuzzy
+msgid "No page file quota\n"
 msgstr "페이지파일 할당량이 없음\n"
 
 #: winerror.mc:2671
@@ -4438,7 +4445,8 @@ msgid "Unknown component\n"
 msgstr "알 수 없는 컴포넌트\n"
 
 #: winerror.mc:2761
-msgid "Unknonw property\n"
+#, fuzzy
+msgid "Unknown property\n"
 msgstr "알 수 없는 속성\n"
 
 #: winerror.mc:2766
@@ -4970,7 +4978,8 @@ msgid "Invalid printer command\n"
 msgstr "올바르지 않은 프린터 명령\n"
 
 #: winerror.mc:3431
-msgid "Invalid datatype\n"
+#, fuzzy
+msgid "Invalid data type\n"
 msgstr "올바르지 않은 데이타 형식\n"
 
 #: winerror.mc:3436
@@ -5281,6 +5290,7 @@ msgid "insert disk %s"
 msgstr "디스크 %s 삽입"
 
 #: msi.rc:30
+#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5288,19 +5298,19 @@ msgid ""
 "msiexec command {required parameter} [optional parameter]\n"
 "\n"
 "Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
+"\t/i {package|product_code} [property]\n"
+"\t/package {package|product_code} [property]\n"
 "\t/a package [property]\n"
 "Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n"
 "Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
+"\t/uninstall {package|product_code} [property]\n"
+"\t/x {package|product_code} [property]\n"
 "Advertise a product:\n"
 "\t/j[u|m] package [/t transform] [/g languageid]\n"
 "Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
+"\t/p patch_package [property]\n"
+"\t/p patch_package /a package [property]\n"
 "Log and UI Modifiers for above commands:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
@@ -6857,9 +6867,10 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "잘못된 매개변수는 시스템 함수에서 무시했습니다."
 
 #: winmm.rc:42
+#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
-"Capabilities function to determine the supported formats"
+"Capabilities function to determine the supported formats."
 msgstr ""
 "지정된 형식은 지원하지 않거나 전송할 수 없습니다. 지원하는 형식을 결정하는 가"
 "능한 함수를 사용하십시오"
@@ -7047,9 +7058,10 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "지정된 명령의 장치 이름으로  'all'은 사용할 수 없습니다."
 
 #: winmm.rc:77
+#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
-"separately to determine which devices caused the error"
+"separately to determine which devices caused the error."
 msgstr ""
 "하나나 더 많은 장치에서 에러 발생. 장치가 발생시키는 에러를 처리 할수 있도록 "
 "각가의 장치에 명령을 지정하십시오."
@@ -7951,7 +7963,8 @@ msgstr ""
 "다.\n"
 
 #: cmd.rc:158
-msgid "RENAME <filename> renames a file\n"
+#, fuzzy
+msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <파일이름> 은 파일의 이름을 바꿈\n"
 
 #: cmd.rc:160
@@ -8044,7 +8057,8 @@ msgstr ""
 "이 검증 플래그는 Wine에서는 아무 기능을 안함.\n"
 
 #: cmd.rc:204
-msgid "VER displays the version of cmd you are running\n"
+#, fuzzy
+msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER  당신이 실행시킨 cmd 버젼 보여줌\n"
 
 #: cmd.rc:206
@@ -10298,10 +10312,11 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
+#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
-"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
 "당신은 더 이상 드라이브를 추가할 수 없습니다.\n"
 "\n"
@@ -11208,7 +11223,8 @@ msgid "&System\tCtrl+1"
 msgstr "시스템(&S)\tCtrl+1"
 
 #: wordpad.rc:88
-msgid "&PostThat yellowish\tCtrl+2"
+#, fuzzy
+msgid "&Pale yellow\tCtrl+2"
 msgstr "노랑색으로(&P)\tCtrl+2"
 
 #: wordpad.rc:93

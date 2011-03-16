@@ -2765,7 +2765,7 @@ msgid "Signal pending\n"
 msgstr ""
 
 #: winerror.mc:681
-msgid "Max systemwide thread count reached\n"
+msgid "Max system-wide thread count reached\n"
 msgstr ""
 
 #: winerror.mc:686
@@ -4230,7 +4230,7 @@ msgstr ""
 
 #: winerror.mc:2476
 #, fuzzy
-msgid "Listbox ID not found\n"
+msgid "List box ID not found\n"
 msgstr "Súbor nenájdený"
 
 #: winerror.mc:2481
@@ -4297,15 +4297,16 @@ msgid "Hook procedure not installed\n"
 msgstr ""
 
 #: winerror.mc:2556
-msgid "Invalid listbox message\n"
-msgstr ""
+#, fuzzy
+msgid "Invalid list box message\n"
+msgstr "Invalid character(s) in path"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
 msgstr ""
 
 #: winerror.mc:2566
-msgid "No tabstops on this listbox\n"
+msgid "No tab stops on this list box\n"
 msgstr ""
 
 #: winerror.mc:2571
@@ -4321,8 +4322,9 @@ msgid "Window has no system menu\n"
 msgstr ""
 
 #: winerror.mc:2586
-msgid "Invalid messagebox style\n"
-msgstr ""
+#, fuzzy
+msgid "Invalid message box style\n"
+msgstr "Invalid character(s) in path"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter\n"
@@ -4373,7 +4375,7 @@ msgid "No system resources\n"
 msgstr ""
 
 #: winerror.mc:2651
-msgid "No nonpaged system resources\n"
+msgid "No non-paged system resources\n"
 msgstr ""
 
 #: winerror.mc:2656
@@ -4385,7 +4387,7 @@ msgid "No working set quota\n"
 msgstr ""
 
 #: winerror.mc:2666
-msgid "No pagefile quota\n"
+msgid "No page file quota\n"
 msgstr ""
 
 #: winerror.mc:2671
@@ -4470,7 +4472,7 @@ msgstr "Neznámy ovládač tlačiarne"
 
 #: winerror.mc:2761
 #, fuzzy
-msgid "Unknonw property\n"
+msgid "Unknown property\n"
 msgstr "Neznámy ovládač tlačiarne"
 
 #: winerror.mc:2766
@@ -5025,8 +5027,9 @@ msgid "Invalid printer command\n"
 msgstr ""
 
 #: winerror.mc:3431
-msgid "Invalid datatype\n"
-msgstr ""
+#, fuzzy
+msgid "Invalid data type\n"
+msgstr "Invalid character(s) in path"
 
 #: winerror.mc:3436
 msgid "Invalid environment\n"
@@ -5348,19 +5351,19 @@ msgid ""
 "msiexec command {required parameter} [optional parameter]\n"
 "\n"
 "Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
+"\t/i {package|product_code} [property]\n"
+"\t/package {package|product_code} [property]\n"
 "\t/a package [property]\n"
 "Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {package|product_code}\n"
 "Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
+"\t/uninstall {package|product_code} [property]\n"
+"\t/x {package|product_code} [property]\n"
 "Advertise a product:\n"
 "\t/j[u|m] package [/t transform] [/g languageid]\n"
 "Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
+"\t/p patch_package [property]\n"
+"\t/p patch_package /a package [property]\n"
 "Log and UI Modifiers for above commands:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
@@ -6906,9 +6909,10 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "An invalid parameter was passed to a system function."
 
 #: winmm.rc:42
+#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
-"Capabilities function to determine the supported formats"
+"Capabilities function to determine the supported formats."
 msgstr ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats"
@@ -7101,9 +7105,10 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Cannot use 'all' as the device name with the specified command."
 
 #: winmm.rc:77
+#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
-"separately to determine which devices caused the error"
+"separately to determine which devices caused the error."
 msgstr ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error"
@@ -7929,7 +7934,7 @@ msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 
 #: cmd.rc:158
-msgid "RENAME <filename> renames a file\n"
+msgid "RENAME <filename> renames a file.\n"
 msgstr ""
 
 #: cmd.rc:160
@@ -7993,7 +7998,7 @@ msgid ""
 msgstr ""
 
 #: cmd.rc:204
-msgid "VER displays the version of cmd you are running\n"
+msgid "VER displays the version of cmd you are running.\n"
 msgstr ""
 
 #: cmd.rc:206
@@ -10129,7 +10134,7 @@ msgstr ""
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
-"Each drive must have a letter, from A to Z, so you cannot have more than 26"
+"Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
 
 #: winecfg.rc:87
@@ -11031,7 +11036,7 @@ msgid "&System\tCtrl+1"
 msgstr ""
 
 #: wordpad.rc:88
-msgid "&PostThat yellowish\tCtrl+2"
+msgid "&Pale yellow\tCtrl+2"
 msgstr ""
 
 #: wordpad.rc:93
