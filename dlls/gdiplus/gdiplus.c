@@ -116,16 +116,17 @@ void WINAPI GdiplusNotificationUnhook(ULONG_PTR token)
 /*****************************************************
  *      GdiplusShutdown [GDIPLUS.@]
  */
-void WINAPI GdiplusShutdown(ULONG_PTR token)
-{
-    /* FIXME: no object tracking */
-}
-
-/* "bricksntiles" expects a return value of 0, which native coincidentally gives */
 ULONG WINAPI GdiplusShutdown_wrapper(ULONG_PTR token)
 {
-    GdiplusShutdown(token);
+    /* Notice the slightly different prototype from the official
+     * signature which forces us to use the the _wrapper suffix.
+     */
 
+    /* FIXME: no object tracking */
+
+    /* "bricksntiles" expects a return value of 0, which native
+     * coincidentally gives.
+     */
     return 0;
 }
 
