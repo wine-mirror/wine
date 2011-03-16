@@ -671,6 +671,52 @@ static inline HRESULT VARIANT_from_DT(XDR_DT dt, xmlChar* str, VARIANT* v)
     return hr;
 }
 
+static XDR_DT element_get_dt(xmlNodePtr node)
+{
+    XDR_DT dt = DT_INVALID;
+
+    TRACE("(%p)\n", node);
+    if(node->type != XML_ELEMENT_NODE)
+    {
+        FIXME("invalid element node\n");
+        return dt;
+    }
+
+    if (node->ns && xmlStrEqual(node->ns->href, DT_nsURI))
+    {
+        dt = str_to_dt(node->name, -1);
+    }
+    else
+    {
+        xmlChar* pVal = xmlGetNsProp(node, BAD_CAST "dt", DT_nsURI);
+        if (pVal)
+        {
+            dt = str_to_dt(pVal, -1);
+            xmlFree(pVal);
+        }
+        else if (node->doc)
+        {
+            IXMLDOMDocument3* doc = (IXMLDOMDocument3*)create_domdoc((xmlNodePtr)node->doc);
+            if (doc)
+            {
+                VARIANT v;
+                VariantInit(&v);
+
+                if (IXMLDOMDocument3_get_schemas(doc, &v) == S_OK &&
+                    V_VT(&v) == VT_DISPATCH)
+                {
+                    dt = SchemaCache_get_node_dt((IXMLDOMSchemaCollection2*)V_DISPATCH(&v), node);
+                }
+                VariantClear(&v);
+                IXMLDOMDocument3_Release(doc);
+            }
+        }
+    }
+
+    TRACE("=> dt:%s\n", dt_to_str(dt));
+    return dt;
+}
+
 static HRESULT WINAPI domelem_get_nodeTypedValue(
     IXMLDOMElement *iface,
     VARIANT* var1)
@@ -728,52 +774,6 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
     }
 
     return hr;
-}
-
-XDR_DT element_get_dt(xmlNodePtr node)
-{
-    XDR_DT dt = DT_INVALID;
-
-    TRACE("(%p)\n", node);
-    if(node->type != XML_ELEMENT_NODE)
-    {
-        FIXME("invalid element node\n");
-        return dt;
-    }
-
-    if (node->ns && xmlStrEqual(node->ns->href, DT_nsURI))
-    {
-        dt = str_to_dt(node->name, -1);
-    }
-    else
-    {
-        xmlChar* pVal = xmlGetNsProp(node, BAD_CAST "dt", DT_nsURI);
-        if (pVal)
-        {
-            dt = str_to_dt(pVal, -1);
-            xmlFree(pVal);
-        }
-        else if (node->doc)
-        {
-            IXMLDOMDocument3* doc = (IXMLDOMDocument3*)create_domdoc((xmlNodePtr)node->doc);
-            if (doc)
-            {
-                VARIANT v;
-                VariantInit(&v);
-
-                if (IXMLDOMDocument3_get_schemas(doc, &v) == S_OK &&
-                    V_VT(&v) == VT_DISPATCH)
-                {
-                    dt = SchemaCache_get_node_dt((IXMLDOMSchemaCollection2*)V_DISPATCH(&v), node);
-                }
-                VariantClear(&v);
-                IXMLDOMDocument3_Release(doc);
-            }
-        }
-    }
-
-    TRACE("=> dt:%s\n", dt_to_str(dt));
-    return dt;
 }
 
 static HRESULT WINAPI domelem_get_dataType(
