@@ -426,7 +426,7 @@ HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
     return hr;
 }
 
-HRESULT WINAPI AVIDec_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI AVIDec_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
     HRESULT hr;
     AVIDecImpl *This = (AVIDecImpl *)iface;

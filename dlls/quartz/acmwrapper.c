@@ -405,7 +405,7 @@ HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
     return hr;
 }
 
-HRESULT WINAPI ACMWrapper_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI ACMWrapper_QueryInterface(IBaseFilter * iface, REFIID riid, LPVOID * ppv)
 {
     HRESULT hr;
     ACMWrapperImpl *This = (ACMWrapperImpl *)iface;
