@@ -1478,7 +1478,7 @@ static void test_GetCursorFrameInfo(void)
 
     /* Check GetCursorFrameInfo behavior on a single-frame animated cursor */
     unk1 = unk2 = unk3 = unk4 = 0xdead;
-    h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)0, &unk3, &unk4);
+    h2 = pGetCursorFrameInfo(h1, &unk1, NULL, &unk3, &unk4);
     ok(h1 == h2, "GetCursorFrameInfo() failed: (%p != %p).\n", h1, h2);
     ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
     ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
@@ -1560,7 +1560,7 @@ static void test_GetCursorFrameInfo(void)
 
     /* Check GetCursorFrameInfo behavior on rate 0 for a multi-frame animated cursor (with num_steps == 1) */
     unk1 = unk2 = unk3 = unk4 = 0xdead;
-    h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)0, &unk3, &unk4);
+    h2 = pGetCursorFrameInfo(h1, &unk1, NULL, &unk3, &unk4);
     ok(h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p == 0).\n", h1, h2);
     ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
     ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
