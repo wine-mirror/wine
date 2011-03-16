@@ -99,7 +99,7 @@ static BOOL init_assembly_caches( MSIPACKAGE *package )
     return FALSE;
 }
 
-MSIRECORD *get_assembly_record( MSIPACKAGE *package, const WCHAR *comp )
+static MSIRECORD *get_assembly_record( MSIPACKAGE *package, const WCHAR *comp )
 {
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
