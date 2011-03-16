@@ -1316,8 +1316,3 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
 
     return CLR_E_SHIM_RUNTIME;
 }
-
-HRESULT force_get_runtime_info(ICLRRuntimeInfo **result)
-{
-    return IUnknown_QueryInterface((IUnknown*)&runtimes[0], &IID_ICLRRuntimeInfo, (void**)result);
-}

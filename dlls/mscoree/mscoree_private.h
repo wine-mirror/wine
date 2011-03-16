@@ -51,8 +51,6 @@ typedef struct CLRRuntimeInfo
 extern HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
     DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy, ICLRRuntimeInfo **result);
 
-extern HRESULT force_get_runtime_info(ICLRRuntimeInfo **result);
-
 extern HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result);
 
 extern HRESULT MetaDataDispenser_CreateInstance(IUnknown **ppUnk);
