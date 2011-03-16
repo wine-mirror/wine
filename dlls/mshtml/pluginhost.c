@@ -125,7 +125,7 @@ static void update_readystate(PluginHost *host)
 }
 
 /* FIXME: We shouldn't need this function and we should embed plugin directly in the main document */
-void get_pos_rect(PluginHost *host, RECT *ret)
+static void get_pos_rect(PluginHost *host, RECT *ret)
 {
     ret->top = 0;
     ret->left = 0;
