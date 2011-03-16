@@ -1148,7 +1148,7 @@ static void test_Option_PerConnectionOptionA(void)
 #define FLAG_NEEDREQ  0x2
 #define FLAG_UNIMPL   0x4
 
-void test_InternetErrorDlg(void)
+static void test_InternetErrorDlg(void)
 {
     HINTERNET ses, con, req;
     DWORD res, flags;
