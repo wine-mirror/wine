@@ -318,7 +318,6 @@ typedef struct tagDC
 } DC;
 
   /* DC flags */
-#define DC_SAVED         0x0002   /* It is a saved DC */
 #define DC_BOUNDS_ENABLE 0x0008   /* Bounding rectangle tracking is enabled */
 #define DC_BOUNDS_SET    0x0010   /* Bounding rectangle has been set */
 

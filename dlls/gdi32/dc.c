@@ -384,7 +384,7 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     DC *newdc, *dc = get_nulldrv_dc( dev );
 
     if (!(newdc = HeapAlloc( GetProcessHeap(), 0, sizeof(*newdc )))) return 0;
-    newdc->flags            = dc->flags | DC_SAVED;
+    newdc->flags            = dc->flags;
     newdc->layout           = dc->layout;
     newdc->hPen             = dc->hPen;
     newdc->hBrush           = dc->hBrush;
@@ -484,7 +484,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 
     if (!PATH_AssignGdiPath( &dc->path, &dcs->path )) return FALSE;
 
-    dc->flags            = dcs->flags & ~DC_SAVED;
+    dc->flags            = dcs->flags;
     dc->layout           = dcs->layout;
     dc->hDevice          = dcs->hDevice;
     dc->ROPmode          = dcs->ROPmode;
@@ -827,16 +827,13 @@ BOOL WINAPI DeleteDC( HDC hdc )
         free_dc_state( dcs );
     }
 
-    if (!(dc->flags & DC_SAVED))
-    {
-	SelectObject( hdc, GetStockObject(BLACK_PEN) );
-	SelectObject( hdc, GetStockObject(WHITE_BRUSH) );
-	SelectObject( hdc, GetStockObject(SYSTEM_FONT) );
-        SelectObject( hdc, GetStockObject(DEFAULT_BITMAP) );
-        if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc->physDev);
-        dc->physDev = NULL;
-    }
+    SelectObject( hdc, GetStockObject(BLACK_PEN) );
+    SelectObject( hdc, GetStockObject(WHITE_BRUSH) );
+    SelectObject( hdc, GetStockObject(SYSTEM_FONT) );
+    SelectObject( hdc, GetStockObject(DEFAULT_BITMAP) );
 
+    if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc->physDev);
+    dc->physDev = NULL;
     free_dc_ptr( dc );
     return TRUE;
 }
@@ -1273,11 +1270,8 @@ BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC hookProc, DWORD_PTR dwHookData )
 
     if (!dc) return FALSE;
 
-    if (!(dc->flags & DC_SAVED))
-    {
-        dc->dwHookData = dwHookData;
-        dc->hookProc = hookProc;
-    }
+    dc->dwHookData = dwHookData;
+    dc->hookProc = hookProc;
     release_dc_ptr( dc );
     return TRUE;
 }
