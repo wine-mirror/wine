@@ -1896,6 +1896,12 @@ BOOL CDECL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
         ret = pglXMakeCurrent(gdi_display, None, NULL);
         NtCurrentTeb()->glContext = NULL;
     }
+    else if (!physDev->current_pf)
+    {
+        WARN("Trying to use an invalid drawable\n");
+        SetLastError(ERROR_INVALID_HANDLE);
+        ret = FALSE;
+    }
     else if (ctx->fmt->iPixelFormat != physDev->current_pf)
     {
         WARN( "mismatched pixel format hdc %p %u ctx %p %u\n",

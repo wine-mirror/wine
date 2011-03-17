@@ -956,7 +956,7 @@ static void test_destroy(HDC oldhdc)
     SetLastError(0xdeadbeef);
     ret = wglMakeCurrent(dc, ctx);
     err = GetLastError();
-    todo_wine ok(!ret && err == ERROR_INVALID_HANDLE,
+    ok(!ret && err == ERROR_INVALID_HANDLE,
             "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
 
     ok(wglGetCurrentContext() == ctx, "Wrong current context.\n");
@@ -977,7 +977,7 @@ static void test_destroy(HDC oldhdc)
     SetLastError(0xdeadbeef);
     ret = wglMakeCurrent(dc, ctx);
     err = GetLastError();
-    todo_wine ok(!ret && err == ERROR_INVALID_HANDLE,
+    ok(!ret && err == ERROR_INVALID_HANDLE,
             "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
 
     ok(wglGetCurrentContext() == NULL, "Wrong current context.\n");
@@ -989,7 +989,7 @@ static void test_destroy(HDC oldhdc)
     SetLastError(0xdeadbeef);
     ret = wglMakeCurrent(dc, ctx);
     err = GetLastError();
-    todo_wine ok(!ret && err == ERROR_INVALID_HANDLE,
+    ok(!ret && err == ERROR_INVALID_HANDLE,
             "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
 
     ok(wglGetCurrentContext() == oldctx, "Wrong current context.\n");
