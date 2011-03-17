@@ -35,6 +35,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitblt);
 
+static inline BOOL rop_uses_src( DWORD rop )
+{
+    return ((rop >> 2) & 0x330000) != (rop & 0x330000);
+}
 
 /***********************************************************************
  *           PatBlt    (GDI32.@)
@@ -42,10 +46,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(bitblt);
 BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
                         INT width, INT height, DWORD rop)
 {
-    DC * dc = get_dc_ptr( hdc );
+    DC * dc;
     BOOL bRet = FALSE;
 
-    if (!dc) return FALSE;
+    if (rop_uses_src( rop )) return FALSE;
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
 
     TRACE("%p %d,%d %dx%d %06x\n", hdc, left, top, width, height, rop );
 
@@ -77,10 +82,15 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
           hdcSrc, xSrc, ySrc, hdcDst, xDst, yDst, width, height, rop);
 
     if (!(dcDst = get_dc_ptr( hdcDst ))) return FALSE;
+    update_dc( dcDst );
 
-    if (dcDst->funcs->pBitBlt || dcDst->funcs->pStretchBlt)
+    if (!rop_uses_src( rop ) && dcDst->funcs->pPatBlt)
     {
-        update_dc( dcDst );
+        ret = dcDst->funcs->pPatBlt( dcDst->physDev, xDst, yDst, width, height, rop );
+        release_dc_ptr( dcDst );
+    }
+    else if (dcDst->funcs->pBitBlt || dcDst->funcs->pStretchBlt)
+    {
         dcSrc = get_dc_ptr( hdcSrc );
         if (dcSrc) update_dc( dcSrc );
 
@@ -163,20 +173,25 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
 
 
     if (!(dcDst = get_dc_ptr( hdcDst ))) return FALSE;
+    update_dc( dcDst );
 
-    if (dcDst->funcs->pStretchBlt)
+    if (!rop_uses_src( rop ) && dcDst->funcs->pPatBlt)
+    {
+        ret = dcDst->funcs->pPatBlt( dcDst->physDev, xDst, yDst, widthDst, heightDst, rop );
+        release_dc_ptr( dcDst );
+    }
+    else if (dcDst->funcs->pStretchBlt)
     {
         if ((dcSrc = get_dc_ptr( hdcSrc )))
         {
-            update_dc( dcDst );
             update_dc( dcSrc );
 
             ret = dcDst->funcs->pStretchBlt( dcDst->physDev, xDst, yDst, widthDst, heightDst,
                                              dcSrc->physDev, xSrc, ySrc, widthSrc, heightSrc,
                                              rop );
-            release_dc_ptr( dcDst );
             release_dc_ptr( dcSrc );
         }
+        release_dc_ptr( dcDst );
     }
     else if (dcDst->funcs->pStretchDIBits)
     {
