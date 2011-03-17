@@ -2062,7 +2062,7 @@ static BOOL end_of_read_data( http_request_t *req )
 }
 
 /* fetch some more data into the read buffer (the read section must be held) */
-static DWORD refill_buffer( http_request_t *req )
+static DWORD refill_read_buffer( http_request_t *req )
 {
     int len = sizeof(req->read_buf);
     DWORD res;
@@ -2092,7 +2092,7 @@ static DWORD read_gzip_data(http_request_t *req, BYTE *buf, int size, BOOL sync,
 
     while(read < size && !req->gzip_stream->end_of_data) {
         if(!req->read_size) {
-            if(!sync || refill_buffer(req) != ERROR_SUCCESS)
+            if((!sync && read) || (ret = refill_read_buffer(req)) != ERROR_SUCCESS)
                 break;
         }
 
@@ -2126,13 +2126,13 @@ static DWORD read_gzip_data(http_request_t *req, BYTE *buf, int size, BOOL sync,
     return ret;
 }
 
-static void refill_gzip_buffer(http_request_t *req)
+static DWORD refill_gzip_buffer(http_request_t *req)
 {
     DWORD res;
     int len;
 
-    if(!req->gzip_stream || !req->read_size || req->gzip_stream->buf_size == sizeof(req->gzip_stream->buf))
-        return;
+    if(req->gzip_stream->buf_size == sizeof(req->gzip_stream->buf))
+        return ERROR_SUCCESS;
 
     if(req->gzip_stream->buf_pos) {
         if(req->gzip_stream->buf_size)
@@ -2144,15 +2144,20 @@ static void refill_gzip_buffer(http_request_t *req)
             sizeof(req->gzip_stream->buf) - req->gzip_stream->buf_size, FALSE, &len);
     if(res == ERROR_SUCCESS)
         req->gzip_stream->buf_size += len;
+
+    return res;
+}
+
+static DWORD refill_buffer( http_request_t *req )
+{
+    return req->gzip_stream ? refill_gzip_buffer(req) : refill_read_buffer(req);
 }
 
 /* return the size of data available to be read immediately (the read section must be held) */
 static DWORD get_avail_data( http_request_t *req )
 {
-    if (req->gzip_stream) {
-        refill_gzip_buffer(req);
+    if (req->gzip_stream)
         return req->gzip_stream->buf_size;
-    }
     if (req->read_chunked && (req->contentLength == ~0u || req->contentLength == req->contentRead))
         return 0;
     return min( req->read_size, req->contentLength - req->contentRead );
