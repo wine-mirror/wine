@@ -1878,8 +1878,23 @@ HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
 
 /**********************************************************************
  *              GetCursorFrameInfo (USER32.@)
+ *
+ * NOTES
+ *    So far no use has been found for the second parameter, it is currently presumed
+ *    that this parameter is reserved for future use.
+ *
+ * PARAMS
+ *    hCursor      [I] Handle to cursor for which to retrieve information
+ *    reserved     [I] No purpose has been found for this parameter (may be NULL)
+ *    istep        [I] The step of the cursor for which to retrieve information
+ *    rate_jiffies [O] Pointer to DWORD that receives the frame-specific delay (cannot be NULL)
+ *    num_steps    [O] Pointer to DWORD that receives the number of steps in the cursor (cannot be NULL)
+ *
+ * RETURNS
+ *    Success: Handle to a frame of the cursor (specified by istep)
+ *    Failure: NULL cursor (0)
  */
-HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD istep, DWORD *rate_jiffies, DWORD *num_steps)
+HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD reserved, DWORD istep, DWORD *rate_jiffies, DWORD *num_steps)
 {
     struct cursoricon_object *ptr;
     HCURSOR ret = 0;
@@ -1889,7 +1904,9 @@ HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD istep, DWOR
 
     if (!(ptr = get_icon_ptr( hCursor ))) return 0;
 
-    FIXME("semi-stub! %p => %d %d %p %p\n", hCursor, unk1, istep, rate_jiffies, num_steps);
+    TRACE("%p => %d %d %p %p\n", hCursor, reserved, istep, rate_jiffies, num_steps);
+    if (reserved != 0)
+        FIXME("Second parameter non-zero (%d), please report this!\n", reserved);
 
     icon_steps = get_icon_steps(ptr);
     if (istep < icon_steps || !ptr->is_ani)
