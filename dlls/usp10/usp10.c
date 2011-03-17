@@ -1117,12 +1117,7 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
         rtl = TRUE;
 
     if (fTrailing)
-    {
-        if (rtl)
-            iCP--;
-        else
-            iCP++;
-    }
+        iCP++;
 
     if (rtl)
     {
