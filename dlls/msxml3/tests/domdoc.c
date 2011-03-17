@@ -373,6 +373,8 @@ static const CHAR szTypeValueXML[] =
 "   <uuid dt:dt=\"uuid\">333C7BC4-460F-11D0-BC04-0080C7055a83</uuid>\n"
 "   <binhex dt:dt=\"bin.hex\">fffca012003c</binhex>\n"
 "   <binbase64 dt:dt=\"bin.base64\">YmFzZTY0IHRlc3Q=</binbase64>\n"
+"   <binbase64_1 dt:dt=\"bin.base64\">\nYmFzZTY0\nIHRlc3Q=\n</binbase64_1>\n"
+"   <binbase64_2 dt:dt=\"bin.base64\">\nYmF\r\t z  ZTY0\nIHRlc3Q=\n</binbase64_2>\n"
 "</root>";
 
 static const CHAR szBasicTransformSSXMLPart1[] =
@@ -5867,6 +5869,9 @@ static const nodetypedvalue_t get_nodetypedvalue[] = {
     { "root/r8",        VT_R8,   "0.412" },
     { "root/float",     VT_R8,   "41221.421" },
     { "root/uuid",      VT_BSTR, "333C7BC4-460F-11D0-BC04-0080C7055a83" },
+    { "root/binbase64", VT_ARRAY|VT_UI1, "base64 test" },
+    { "root/binbase64_1", VT_ARRAY|VT_UI1, "base64 test" },
+    { "root/binbase64_2", VT_ARRAY|VT_UI1, "base64 test" },
     { 0 }
 };
 
@@ -5933,21 +5938,6 @@ static void test_nodeTypedValue(void)
         ok(V_VT(&value) == (VT_ARRAY|VT_UI1), "incorrect type\n");
         ok(V_ARRAY(&value)->rgsabound[0].cElements == 6, "incorrect array size\n");
         if(V_ARRAY(&value)->rgsabound[0].cElements == 6)
-            ok(!memcmp(bytes, V_ARRAY(&value)->pvData, sizeof(bytes)), "incorrect value\n");
-        VariantClear(&value);
-        IXMLDOMNode_Release(node);
-    }
-
-    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("root/binbase64"), &node);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    {
-        BYTE bytes[] = {0x62,0x61,0x73,0x65,0x36,0x34,0x20,0x74,0x65,0x73,0x74};
-
-        hr = IXMLDOMNode_get_nodeTypedValue(node, &value);
-        ok(hr == S_OK, "ret %08x\n", hr );
-        ok(V_VT(&value) == (VT_ARRAY|VT_UI1), "incorrect type\n");
-        ok(V_ARRAY(&value)->rgsabound[0].cElements == 11, "incorrect array size\n");
-        if(V_ARRAY(&value)->rgsabound[0].cElements == 11)
             ok(!memcmp(bytes, V_ARRAY(&value)->pvData, sizeof(bytes)), "incorrect value\n");
         VariantClear(&value);
         IXMLDOMNode_Release(node);
@@ -6042,6 +6032,12 @@ static void test_nodeTypedValue(void)
         ok(hr == S_OK, "ret %08x\n", hr );
         ok(V_VT(&value) == entry->type, "incorrect type, expected %d, got %d\n", entry->type, V_VT(&value));
 
+        if (entry->type == (VT_ARRAY|VT_UI1))
+        {
+            ok(V_ARRAY(&value)->rgsabound[0].cElements == strlen(entry->value),
+              "incorrect array size, got %d, expected %d\n", V_ARRAY(&value)->rgsabound[0].cElements, strlen(entry->value));
+        }
+
         if (entry->type != VT_BSTR)
         {
            if (entry->type == VT_DATE ||
@@ -6064,8 +6060,15 @@ static void test_nodeTypedValue(void)
                ok(hr == S_OK, "ret %08x\n", hr );
            }
 
-           ok(lstrcmpW( V_BSTR(&value), _bstr_(entry->value)) == 0,
-              "expected %s, got %s\n", entry->value, wine_dbgstr_w(V_BSTR(&value)));
+           /* for byte array from VT_ARRAY|VT_UI1 it's not a WCHAR buffer */
+           if (entry->type == (VT_ARRAY|VT_UI1))
+           {
+               ok(!memcmp( V_BSTR(&value), entry->value, strlen(entry->value)),
+                  "expected %s", entry->value);
+           }
+           else
+               ok(lstrcmpW( V_BSTR(&value), _bstr_(entry->value)) == 0,
+                  "expected %s, got %s\n", entry->value, wine_dbgstr_w(V_BSTR(&value)));
         }
         else
            ok(lstrcmpW( V_BSTR(&value), _bstr_(entry->value)) == 0,

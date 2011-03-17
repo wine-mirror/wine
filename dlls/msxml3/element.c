@@ -459,7 +459,7 @@ static inline BYTE base64_to_byte(xmlChar c)
     return c-'a'+26;
 }
 
-static inline HRESULT VARIANT_from_DT(XDR_DT dt, xmlChar* str, VARIANT* v)
+static inline HRESULT variant_from_dt(XDR_DT dt, xmlChar* str, VARIANT* v)
 {
     VARIANT src;
     HRESULT hr = S_OK;
@@ -571,9 +571,25 @@ static inline HRESULT VARIANT_from_DT(XDR_DT dt, xmlChar* str, VARIANT* v)
     case DT_BIN_BASE64:
         {
             SAFEARRAYBOUND sab;
+            xmlChar *c1, *c2;
             int i, len;
 
-            len  = xmlStrlen(str);
+            /* remove all formatting chars */
+            c1 = c2 = str;
+            len = 0;
+            while (*c2)
+            {
+                if ( *c2 == ' '  || *c2 == '\t' ||
+                     *c2 == '\n' || *c2 == '\r' )
+                {
+                    c2++;
+                    continue;
+                }
+                *c1++ = *c2++;
+                len++;
+            }
+
+            /* skip padding */
             if(str[len-2] == '=') i = 2;
             else if(str[len-1] == '=') i = 1;
             else i = 0;
@@ -719,23 +735,22 @@ static XDR_DT element_get_dt(xmlNodePtr node)
 
 static HRESULT WINAPI domelem_get_nodeTypedValue(
     IXMLDOMElement *iface,
-    VARIANT* var1)
+    VARIANT* v)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
     XDR_DT dt;
     xmlChar* content;
     HRESULT hr;
 
-    TRACE("(%p)->(%p)\n", This, var1);
+    TRACE("(%p)->(%p)\n", This, v);
 
-    if(!var1)
-        return E_INVALIDARG;
+    if(!v) return E_INVALIDARG;
 
-    V_VT(var1) = VT_NULL;
+    V_VT(v) = VT_NULL;
 
     dt = element_get_dt(get_element(This));
     content = xmlNodeGetContent(get_element(This));
-    hr = VARIANT_from_DT(dt, content, var1);
+    hr = variant_from_dt(dt, content, v);
     xmlFree(content);
 
     return hr;
