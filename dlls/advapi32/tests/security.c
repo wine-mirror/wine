@@ -813,7 +813,7 @@ cleanup:
     DeleteFileA(file);
     RemoveDirectoryA(path);
 
-
+    /* Test file access permissions for a file with FILE_ATTRIBUTE_ARCHIVE */
     SetLastError(0xdeadbeef);
     rc = GetTempPath(sizeof(wintmpdir), wintmpdir);
     ok(rc, "GetTempPath error %d\n", GetLastError());
@@ -840,6 +840,7 @@ cleanup:
     rc = GetFileSecurity(file, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
                          sd, sdSize, &retSize);
     ok(rc, "GetFileSecurity error %d\n", GetLastError());
+    ok(retSize == sdSize || broken(retSize == 0) /* NT4 */, "expected %d, got %d\n", sdSize, retSize);
 
     SetLastError(0xdeadbeef);
     rc = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, &token);
@@ -887,6 +888,14 @@ todo_wine {
     granted = 0xdeadbeef;
     status = 0xdeadbeef;
     SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, DELETE, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == DELETE, "expected DELETE, got %#x\n", granted);
+
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
     rc = AccessCheck(sd, token, FILE_DELETE_CHILD, &mapping, &priv_set, &priv_set_len, &granted, &status);
     ok(rc, "AccessCheck error %d\n", GetLastError());
     ok(status == 1, "expected 1, got %d\n", status);
@@ -915,9 +924,130 @@ todo_wine {
     ok(!rc, "AccessCheck should fail\n");
     ok(GetLastError() == ERROR_GENERIC_NOT_MAPPED, "expected ERROR_GENERIC_NOT_MAPPED, got %d\n", GetLastError());
 
+    /* Test file access permissions for a file with FILE_ATTRIBUTE_READONLY */
+    SetLastError(0xdeadbeef);
+    fh = CreateFile(file, FILE_READ_DATA, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0);
+    ok(fh != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    retSize = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = WriteFile(fh, "1", 1, &retSize, NULL);
+    ok(!rc, "WriteFile should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+    ok(retSize == 0, "expected 0, got %d\n", retSize);
+    CloseHandle(fh);
+
+    rc = GetFileAttributes(file);
+    rc &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+todo_wine
+    ok(rc == (FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY),
+       "expected FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY got %#x\n", rc);
+
+    SetLastError(0xdeadbeef);
+    rc = SetFileAttributes(file, FILE_ATTRIBUTE_ARCHIVE);
+    ok(rc, "SetFileAttributes error %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    rc = DeleteFile(file);
+    ok(rc, "DeleteFile error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    fh = CreateFile(file, FILE_READ_DATA, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_READONLY, 0);
+    ok(fh != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    retSize = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = WriteFile(fh, "1", 1, &retSize, NULL);
+    ok(!rc, "WriteFile should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+    ok(retSize == 0, "expected 0, got %d\n", retSize);
+    CloseHandle(fh);
+
+    rc = GetFileAttributes(file);
+    rc &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+    ok(rc == (FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY),
+       "expected FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY got %#x\n", rc);
+
+    retSize = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = GetFileSecurity(file, OWNER_SECURITY_INFORMATION|GROUP_SECURITY_INFORMATION|DACL_SECURITY_INFORMATION,
+                         sd, sdSize, &retSize);
+    ok(rc, "GetFileSecurity error %d\n", GetLastError());
+    ok(retSize == sdSize || broken(retSize == 0) /* NT4 */, "expected %d, got %d\n", sdSize, retSize);
+
+    priv_set_len = sizeof(priv_set);
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, FILE_READ_DATA, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == FILE_READ_DATA, "expected FILE_READ_DATA, got %#x\n", granted);
+
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, FILE_WRITE_DATA, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+todo_wine {
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == FILE_WRITE_DATA, "expected FILE_WRITE_DATA, got %#x\n", granted);
+}
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, FILE_EXECUTE, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+todo_wine {
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == FILE_EXECUTE, "expected FILE_EXECUTE, got %#x\n", granted);
+}
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, DELETE, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+todo_wine {
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == DELETE, "expected DELETE, got %#x\n", granted);
+}
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, FILE_DELETE_CHILD, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+todo_wine {
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == FILE_DELETE_CHILD, "expected FILE_DELETE_CHILD, got %#x\n", granted);
+}
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, 0x1ff, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+todo_wine {
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == 0x1ff, "expected 0x1ff, got %#x\n", granted);
+}
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, FILE_ALL_ACCESS, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+todo_wine {
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", granted);
+}
+    SetLastError(0xdeadbeef);
+    rc = DeleteFile(file);
+    ok(!rc, "DeleteFile should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    rc = SetFileAttributes(file, FILE_ATTRIBUTE_ARCHIVE);
+    ok(rc, "SetFileAttributes error %d\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    rc = DeleteFile(file);
+    ok(rc, "DeleteFile error %d\n", GetLastError());
+
     CloseHandle(token);
-    HeapFree(GetProcessHeap (), 0, sd);
-    DeleteFile(file);
+    HeapFree(GetProcessHeap(), 0, sd);
 }
 
 static void test_AccessCheck(void)
