@@ -686,27 +686,34 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "MM_JOY2BUTTONDOWN",
     "MM_JOY1BUTTONUP",
     "MM_JOY2BUTTONUP",
-    "MM_MCINOTIFY",
+    "MM_MCINOTIFY",       /* 0x03B9 */
                 NULL,
-    "MM_WOM_OPEN",
-    "MM_WOM_CLOSE",
-    "MM_WOM_DONE",
-    "MM_WIM_OPEN",
-    "MM_WIM_CLOSE",
+    "MM_WOM_OPEN",        /* 0x03BB */
+    "MM_WOM_CLOSE",       /* 0x03BC */
+    "MM_WOM_DONE",        /* 0x03BD */
+    "MM_WIM_OPEN",        /* 0x03BE */
+    "MM_WIM_CLOSE",       /* 0x03BF */
 
     /* 0x03c0 */
-    "MM_WIM_DATA",
-    "MM_MIM_OPEN",
-    "MM_MIM_CLOSE",
-    "MM_MIM_DATA",
-    "MM_MIM_LONGDATA",
-    "MM_MIM_ERROR",
-    "MM_MIM_LONGERROR",
-    "MM_MOM_OPEN",
-    "MM_MOM_CLOSE",
-    "MM_MOM_DONE",
+    "MM_WIM_DATA",        /* 0x03C0 */
+    "MM_MIM_OPEN",        /* 0x03C1 */
+    "MM_MIM_CLOSE",       /* 0x03C2 */
+    "MM_MIM_DATA",        /* 0x03C3 */
+    "MM_MIM_LONGDATA",    /* 0x03C4 */
+    "MM_MIM_ERROR",       /* 0x03C5 */
+    "MM_MIM_LONGERROR",   /* 0x03C6 */
+    "MM_MOM_OPEN",        /* 0x03C7 */
+    "MM_MOM_CLOSE",       /* 0x03C8 */
+    "MM_MOM_DONE",        /* 0x03C9 */
+    "MM_MOM_POSITIONCB",  /* 0x03CA */
+    "MM_MCISIGNAL",       /* 0x03CB */
+    "MM_MIM_MOREDATA",    /* 0x03CC */
+                                  NULL, NULL, NULL,
+
+    /* 0x03d0 */
+    "MM_MIXM_LINE_CHANGE",
+    "MM_MIXM_CONTROL_CHANGE",
                 NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
     /* 0x03e0 */
