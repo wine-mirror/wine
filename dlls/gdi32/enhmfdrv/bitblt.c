@@ -65,12 +65,8 @@ BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, INT left, INT top,
     return ret;
 }
 
-/* Utilitarian function used by EMFDRV_BitBlt and EMFDRV_StretchBlt */
-
-static BOOL EMFDRV_BitBlockTransfer( 
-    PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,  
-    PHYSDEV devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop,
-    DWORD emrType)
+BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                              PHYSDEV devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop )
 {
     BOOL ret;
     PEMRBITBLT pEMR;
@@ -83,13 +79,18 @@ static BOOL EMFDRV_BitBlockTransfer(
     LPBITMAPINFOHEADER lpBmiH;
     EMFDRV_PDEVICE* physDevSrc = (EMFDRV_PDEVICE*)devSrc;
     HBITMAP hBitmap = NULL;
+    DWORD emrType;
 
-    if (emrType == EMR_BITBLT)
+    if (widthSrc == widthDst && heightSrc == heightDst)
+    {
+        emrType = EMR_BITBLT;
         emrSize = sizeof(EMRBITBLT);
-    else if (emrType == EMR_STRETCHBLT)
-        emrSize = sizeof(EMRSTRETCHBLT);
+    }
     else
-        return FALSE;
+    {
+        emrType = EMR_STRETCHBLT;
+        emrSize = sizeof(EMRSTRETCHBLT);
+    }
 
     hBitmap = GetCurrentObject(physDevSrc->hdc, OBJ_BITMAP);
 
@@ -166,24 +167,6 @@ static BOOL EMFDRV_BitBlockTransfer(
 
     HeapFree( GetProcessHeap(), 0, pEMR);
     return ret;
-}
-
-BOOL CDECL EMFDRV_BitBlt(
-    PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
-    PHYSDEV devSrc, INT xSrc, INT ySrc, DWORD rop)
-{
-    return EMFDRV_BitBlockTransfer( devDst, xDst, yDst, width, height,  
-                                    devSrc, xSrc, ySrc, width, height, 
-                                    rop, EMR_BITBLT );
-}
-
-BOOL CDECL EMFDRV_StretchBlt(
-    PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,  
-    PHYSDEV devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop )
-{
-    return EMFDRV_BitBlockTransfer( devDst, xDst, yDst, widthDst, heightDst,  
-                                    devSrc, xSrc, ySrc, widthSrc, heightSrc, 
-                                    rop, EMR_STRETCHBLT );
 }
 
 INT CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,

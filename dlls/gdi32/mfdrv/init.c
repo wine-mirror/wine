@@ -41,7 +41,6 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_Arc,                       /* pArc */
     NULL,                            /* pArcTo */
     MFDRV_BeginPath,                 /* pBeginPath */
-    NULL,                            /* pBitBlt */
     NULL,                            /* pChoosePixelFormat */
     MFDRV_Chord,                     /* pChord */
     MFDRV_CloseFigure,               /* pCloseFigure */

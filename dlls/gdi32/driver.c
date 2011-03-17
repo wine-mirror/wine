@@ -81,7 +81,6 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(Arc);
         GET_FUNC(ArcTo);
         GET_FUNC(BeginPath);
-        GET_FUNC(BitBlt);
         GET_FUNC(ChoosePixelFormat);
         GET_FUNC(Chord);
         GET_FUNC(CloseFigure);
@@ -794,7 +793,6 @@ const DC_FUNCTIONS null_driver =
     nulldrv_Arc,                        /* pArc */
     nulldrv_ArcTo,                      /* pArcTo */
     nulldrv_BeginPath,                  /* pBeginPath */
-    NULL,                               /* pBitBlt */
     nulldrv_ChoosePixelFormat,          /* pChoosePixelFormat */
     nulldrv_Chord,                      /* pChord */
     nulldrv_CloseFigure,                /* pCloseFigure */

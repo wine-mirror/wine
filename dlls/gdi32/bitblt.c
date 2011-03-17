@@ -68,80 +68,9 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop
 BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
                     INT height, HDC hdcSrc, INT xSrc, INT ySrc, DWORD rop )
 {
-    BOOL ret = FALSE;
-    DC *dcDst, *dcSrc;
-
     if (!rop_uses_src( rop )) return PatBlt( hdcDst, xDst, yDst, width, height, rop );
-
-    TRACE("hdcSrc=%p %d,%d -> hdcDest=%p %d,%d %dx%d rop=%06x\n",
-          hdcSrc, xSrc, ySrc, hdcDst, xDst, yDst, width, height, rop);
-
-    if (!(dcDst = get_dc_ptr( hdcDst ))) return FALSE;
-    update_dc( dcDst );
-
-    if (dcDst->funcs->pBitBlt || dcDst->funcs->pStretchBlt)
-    {
-        dcSrc = get_dc_ptr( hdcSrc );
-        if (dcSrc) update_dc( dcSrc );
-
-        if (dcDst->funcs->pBitBlt)
-            ret = dcDst->funcs->pBitBlt( dcDst->physDev, xDst, yDst, width, height,
-                                         dcSrc ? dcSrc->physDev : NULL, xSrc, ySrc, rop );
-        else
-            ret = dcDst->funcs->pStretchBlt( dcDst->physDev, xDst, yDst, width, height,
-                                             dcSrc ? dcSrc->physDev : NULL, xSrc, ySrc,
-                                             width, height, rop );
-
-        release_dc_ptr( dcDst );
-        if (dcSrc) release_dc_ptr( dcSrc );
-    }
-    else if (dcDst->funcs->pStretchDIBits)
-    {
-        BITMAP bm;
-        BITMAPINFOHEADER info_hdr;
-        HBITMAP hbm;
-        LPVOID bits;
-        INT lines;
-
-        release_dc_ptr( dcDst );
-
-        if(GetObjectType( hdcSrc ) != OBJ_MEMDC)
-        {
-            FIXME("hdcSrc isn't a memory dc.  Don't yet cope with this\n");
-            return FALSE;
-        }
-
-        GetObjectW(GetCurrentObject(hdcSrc, OBJ_BITMAP), sizeof(bm), &bm);
- 
-        info_hdr.biSize = sizeof(info_hdr);
-        info_hdr.biWidth = bm.bmWidth;
-        info_hdr.biHeight = bm.bmHeight;
-        info_hdr.biPlanes = 1;
-        info_hdr.biBitCount = 32;
-        info_hdr.biCompression = BI_RGB;
-        info_hdr.biSizeImage = 0;
-        info_hdr.biXPelsPerMeter = 0;
-        info_hdr.biYPelsPerMeter = 0;
-        info_hdr.biClrUsed = 0;
-        info_hdr.biClrImportant = 0;
-
-        if(!(bits = HeapAlloc(GetProcessHeap(), 0, bm.bmHeight * bm.bmWidth * 4)))
-            return FALSE;
-
-        /* Select out the src bitmap before calling GetDIBits */
-        hbm = SelectObject(hdcSrc, GetStockObject(DEFAULT_BITMAP));
-        GetDIBits(hdcSrc, hbm, 0, bm.bmHeight, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS);
-        SelectObject(hdcSrc, hbm);
-
-        lines = StretchDIBits(hdcDst, xDst, yDst, width, height, xSrc, bm.bmHeight - height - ySrc,
-                              width, height, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop);
-
-        HeapFree(GetProcessHeap(), 0, bits);
-        return (lines == height);
-    }
-    else release_dc_ptr( dcDst );
-
-    return ret;
+    else return StretchBlt( hdcDst, xDst, yDst, width, height,
+                            hdcSrc, xSrc, ySrc, width, height, rop );
 }
 
 
