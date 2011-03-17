@@ -514,6 +514,11 @@ static BOOL CDECL nulldrv_PaintRgn( PHYSDEV dev, HRGN rgn )
     return TRUE;
 }
 
+static BOOL CDECL nulldrv_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWORD rop )
+{
+    return TRUE;
+}
+
 static BOOL CDECL nulldrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                INT xstart, INT ystart, INT xend, INT yend )
 {
@@ -839,7 +844,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_OffsetViewportOrgEx,        /* pOffsetViewportOrg */
     nulldrv_OffsetWindowOrgEx,          /* pOffsetWindowOrg */
     nulldrv_PaintRgn,                   /* pPaintRgn */
-    NULL,                               /* pPatBlt */
+    nulldrv_PatBlt,                     /* pPatBlt */
     nulldrv_Pie,                        /* pPie */
     nulldrv_PolyBezier,                 /* pPolyBezier */
     nulldrv_PolyBezierTo,               /* pPolyBezierTo */

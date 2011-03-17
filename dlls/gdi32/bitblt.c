@@ -43,28 +43,21 @@ static inline BOOL rop_uses_src( DWORD rop )
 /***********************************************************************
  *           PatBlt    (GDI32.@)
  */
-BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
-                        INT width, INT height, DWORD rop)
+BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop)
 {
     DC * dc;
     BOOL bRet = FALSE;
 
-    if (rop_uses_src( rop )) return FALSE;
-    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
-
     TRACE("%p %d,%d %dx%d %06x\n", hdc, left, top, width, height, rop );
 
-    if (dc->funcs->pPatBlt)
+    if (rop_uses_src( rop )) return FALSE;
+    if ((dc = get_dc_ptr( hdc )))
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPatBlt );
         update_dc( dc );
-        bRet = dc->funcs->pPatBlt( dc->physDev, left, top, width, height, rop );
+        bRet = physdev->funcs->pPatBlt( physdev, left, top, width, height, rop );
+        release_dc_ptr( dc );
     }
-    else if (dc->funcs->pStretchBlt)
-    {
-        update_dc( dc );
-        bRet = dc->funcs->pStretchBlt( dc->physDev, left, top, width, height, NULL, 0, 0, 0, 0, rop );
-    }
-    release_dc_ptr( dc );
     return bRet;
 }
 
@@ -78,18 +71,15 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
     BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
 
+    if (!rop_uses_src( rop )) return PatBlt( hdcDst, xDst, yDst, width, height, rop );
+
     TRACE("hdcSrc=%p %d,%d -> hdcDest=%p %d,%d %dx%d rop=%06x\n",
           hdcSrc, xSrc, ySrc, hdcDst, xDst, yDst, width, height, rop);
 
     if (!(dcDst = get_dc_ptr( hdcDst ))) return FALSE;
     update_dc( dcDst );
 
-    if (!rop_uses_src( rop ) && dcDst->funcs->pPatBlt)
-    {
-        ret = dcDst->funcs->pPatBlt( dcDst->physDev, xDst, yDst, width, height, rop );
-        release_dc_ptr( dcDst );
-    }
-    else if (dcDst->funcs->pBitBlt || dcDst->funcs->pStretchBlt)
+    if (dcDst->funcs->pBitBlt || dcDst->funcs->pStretchBlt)
     {
         dcSrc = get_dc_ptr( hdcSrc );
         if (dcSrc) update_dc( dcSrc );
@@ -158,14 +148,13 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
 /***********************************************************************
  *           StretchBlt    (GDI32.@)
  */
-BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
-                            INT widthDst, INT heightDst,
-                            HDC hdcSrc, INT xSrc, INT ySrc,
-                            INT widthSrc, INT heightSrc,
-			DWORD rop )
+BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                        HDC hdcSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop )
 {
     BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
+
+    if (!rop_uses_src( rop )) return PatBlt( hdcDst, xDst, yDst, widthDst, heightDst, rop );
 
     TRACE("%p %d,%d %dx%d -> %p %d,%d %dx%d rop=%06x\n",
           hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
@@ -175,12 +164,7 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
     if (!(dcDst = get_dc_ptr( hdcDst ))) return FALSE;
     update_dc( dcDst );
 
-    if (!rop_uses_src( rop ) && dcDst->funcs->pPatBlt)
-    {
-        ret = dcDst->funcs->pPatBlt( dcDst->physDev, xDst, yDst, widthDst, heightDst, rop );
-        release_dc_ptr( dcDst );
-    }
-    else if (dcDst->funcs->pStretchBlt)
+    if (dcDst->funcs->pStretchBlt)
     {
         if ((dcSrc = get_dc_ptr( hdcSrc )))
         {
