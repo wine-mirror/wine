@@ -1387,9 +1387,51 @@ static void test_CreateIconFromResource(void)
     ok(error == 0xdeadbeef, "Last error: %u\n", error);
 }
 
+static int check_cursor_data( HDC hdc, HCURSOR hCursor, void *data, int length)
+{
+    char *image = NULL;
+    BITMAPINFO *info;
+    ICONINFO iinfo;
+    DWORD ret;
+
+    ret = GetIconInfo( hCursor, &iinfo );
+    ok(ret, "GetIconInfo() failed\n");
+    if (!ret) return 0;
+    ret = 0;
+    info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+    ok(info != NULL, "HeapAlloc() failed\n");
+    if (!info) return 0;
+
+    info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    info->bmiHeader.biWidth = 32;
+    info->bmiHeader.biHeight = 32;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biBitCount = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biSizeImage = 32 * 32 * 4;
+    info->bmiHeader.biXPelsPerMeter = 0;
+    info->bmiHeader.biYPelsPerMeter = 0;
+    info->bmiHeader.biClrUsed = 0;
+    info->bmiHeader.biClrImportant = 0;
+    image = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage );
+    ok(image != NULL, "HeapAlloc() failed\n");
+    if (!image) goto cleanup;
+    ret = GetDIBits( hdc, iinfo.hbmColor, 0, 32, image, info, DIB_RGB_COLORS );
+    ok(ret, "GetDIBits() failed\n");
+    if (!ret) goto cleanup;
+    ret = (memcmp(image, data, length) == 0);
+    ok(ret, "Expected 0x%x, actually 0x%x (first 4 bytes only)\n", *(DWORD *)data, *(DWORD *)image);
+
+cleanup:
+    HeapFree( GetProcessHeap(), 0, image );
+    HeapFree( GetProcessHeap(), 0, info );
+    return ret;
+}
+
 static HCURSOR WINAPI (*pGetCursorFrameInfo)(HCURSOR hCursor, VOID *unk1, VOID *unk2, VOID *unk3, VOID *unk4);
 static void test_GetCursorFrameInfo(void)
 {
+    DWORD frame_identifier[] = { 0x10Ad, 0xc001, 0x1c05 };
     HBITMAP bmp = NULL, bmpOld = NULL;
     DWORD unk1, unk2, unk3, unk4;
     BITMAPINFOHEADER *icon_header;
@@ -1472,6 +1514,7 @@ static void test_GetCursorFrameInfo(void)
     empty_anicursor.frames[0].data.icon_info.idType = 2; /* type: cursor */
     empty_anicursor.frames[0].data.icon_info.idEntries[0].xHotspot = 3;
     empty_anicursor.frames[0].data.icon_info.idEntries[0].yHotspot = 3;
+    memcpy( &empty_anicursor.frames[0].data.bmi_data.data[0], &frame_identifier[0], sizeof(DWORD) );
     SetLastError(0xdeadbeef);
     h1 = CreateIconFromResource((PBYTE) &empty_anicursor, sizeof(empty_anicursor), FALSE, 0x00030000);
     ok(h1 != NULL, "Create cursor failed (error = %d).\n", GetLastError());
@@ -1480,6 +1523,8 @@ static void test_GetCursorFrameInfo(void)
     unk1 = unk2 = unk3 = unk4 = 0xdead;
     h2 = pGetCursorFrameInfo(h1, &unk1, NULL, &unk3, &unk4);
     ok(h1 == h2, "GetCursorFrameInfo() failed: (%p != %p).\n", h1, h2);
+    ret = check_cursor_data( hdc, h2, &frame_identifier[0], sizeof(DWORD) );
+    ok(ret, "GetCursorFrameInfo() returned wrong cursor data for frame 0.\n");
     ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
     ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
     ok(unk3 == 0x0, "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x0).\n", unk3);
@@ -1497,6 +1542,7 @@ static void test_GetCursorFrameInfo(void)
         empty_anicursor3.frames[i].data.icon_info.idType = 2; /* type: cursor */
         empty_anicursor3.frames[i].data.icon_info.idEntries[0].xHotspot = 3;
         empty_anicursor3.frames[i].data.icon_info.idEntries[0].yHotspot = 3;
+        memcpy( &empty_anicursor3.frames[i].data.bmi_data.data[0], &frame_identifier[i], sizeof(DWORD) );
     }
     SetLastError(0xdeadbeef);
     h1 = CreateIconFromResource((PBYTE) &empty_anicursor3, sizeof(empty_anicursor3), FALSE, 0x00030000);
@@ -1515,7 +1561,9 @@ static void test_GetCursorFrameInfo(void)
     {
         unk1 = unk2 = unk3 = unk4 = 0xdead;
         h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)i, &unk3, &unk4);
-        ok(h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p == 0).\n", h1, h2);
+        ok(h1 != h2 && h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p, %p).\n", h1, h1, h2);
+        ret = check_cursor_data( hdc, h2, &frame_identifier[i], sizeof(DWORD) );
+        ok(ret, "GetCursorFrameInfo() returned wrong cursor data for frame %d.\n", i);
         ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
         ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
         ok(unk3 == empty_anicursor3.header.header.display_rate,
@@ -1561,7 +1609,9 @@ static void test_GetCursorFrameInfo(void)
     /* Check GetCursorFrameInfo behavior on rate 0 for a multi-frame animated cursor (with num_steps == 1) */
     unk1 = unk2 = unk3 = unk4 = 0xdead;
     h2 = pGetCursorFrameInfo(h1, &unk1, NULL, &unk3, &unk4);
-    ok(h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p == 0).\n", h1, h2);
+    ok(h1 != h2 && h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p, %p).\n", h1, h1, h2);
+    ret = check_cursor_data( hdc, h2, &frame_identifier[0], sizeof(DWORD) );
+    ok(ret, "GetCursorFrameInfo() returned wrong cursor data for frame 0.\n");
     ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
     ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
     ok(unk3 == empty_anicursor3.header.header.display_rate,
@@ -1594,6 +1644,7 @@ static void test_GetCursorFrameInfo(void)
         empty_anicursor3_rate.frames[i].data.icon_info.idType = 2; /* type: cursor */
         empty_anicursor3_rate.frames[i].data.icon_info.idEntries[0].xHotspot = 3;
         empty_anicursor3_rate.frames[i].data.icon_info.idEntries[0].yHotspot = 3;
+        memcpy( &empty_anicursor3_rate.frames[i].data.bmi_data.data[0], &frame_identifier[i], sizeof(DWORD) );
     }
     SetLastError(0xdeadbeef);
     h1 = CreateIconFromResource((PBYTE) &empty_anicursor3_rate, sizeof(empty_anicursor3_rate), FALSE, 0x00030000);
@@ -1612,7 +1663,9 @@ static void test_GetCursorFrameInfo(void)
     {
         unk1 = unk2 = unk3 = unk4 = 0xdead;
         h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)i, &unk3, &unk4);
-        ok(h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p != 0).\n", h1, h2);
+        ok(h1 != h2 && h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p, %p).\n", h1, h1, h2);
+        ret = check_cursor_data( hdc, h2, &frame_identifier[i], sizeof(DWORD) );
+        ok(ret, "GetCursorFrameInfo() returned wrong cursor data for frame %d.\n", i);
         ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
         ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
         ok(unk3 == empty_anicursor3_rate.rates.rate[i],

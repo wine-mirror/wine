@@ -1848,8 +1848,8 @@ HICON WINAPI LoadIconA(HINSTANCE hInstance, LPCSTR name)
 HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD istep, DWORD *rate_jiffies, DWORD *num_steps)
 {
     struct cursoricon_object *ptr;
-    UINT icon_frames = 1;
     HCURSOR ret = 0;
+    UINT icon_steps;
 
     if (rate_jiffies == NULL || num_steps == NULL) return 0;
 
@@ -1857,27 +1857,35 @@ HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD istep, DWOR
 
     FIXME("semi-stub! %p => %d %d %p %p\n", hCursor, unk1, istep, rate_jiffies, num_steps);
 
-    if (ptr->is_ani)
-    {
-        struct animated_cursoricon_object *ani_icon_data;
-
-        ani_icon_data = (struct animated_cursoricon_object *) ptr;
-        icon_frames = ani_icon_data->num_frames;
-    }
+    icon_steps = get_icon_steps(ptr);
     /* Important Note: Sequences are not currently supported, so this implementation
      * will not properly handle all cases. */
-    if (istep < get_icon_steps(ptr) || icon_frames == 1)
+    if (istep < icon_steps || !ptr->is_ani)
     {
-        ret = hCursor;
+        struct animated_cursoricon_object *ani_icon_data = (struct animated_cursoricon_object *) ptr;
+        UINT icon_frames = 1;
+
+        if (ptr->is_ani)
+            icon_frames = ani_icon_data->num_frames;
+        if (ptr->is_ani && icon_frames > 1)
+            ret = ani_icon_data->frames[istep];
+        else
+            ret = hCursor;
         if (icon_frames == 1)
         {
             *rate_jiffies = 0;
             *num_steps = 1;
         }
-        else
+        else if (icon_steps == 1)
+        {
+            *num_steps = ~0;
+            *rate_jiffies = ptr->delay;
+        }
+        else if (istep < icon_steps)
         {
             struct cursoricon_frame *frame;
 
+            *num_steps = icon_steps;
             frame = get_icon_frame( ptr, istep );
             if (get_icon_steps(ptr) == 1)
                 *num_steps = ~0;
