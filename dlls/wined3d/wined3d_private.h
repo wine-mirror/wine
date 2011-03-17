@@ -1962,13 +1962,9 @@ HRESULT volumetexture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT he
         UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IWineD3DCubeTexture implementation structure (extends IWineD3DBaseTextureImpl)
- */
 typedef struct IWineD3DCubeTextureImpl
 {
-    /* IUnknown & WineD3DResource/WineD3DBaseTexture Information     */
-    const IWineD3DCubeTextureVtbl *lpVtbl;
+    const IWineD3DBaseTextureVtbl *lpVtbl;
     struct wined3d_resource resource;
     IWineD3DBaseTextureClass  baseTexture;
 } IWineD3DCubeTextureImpl;

@@ -330,15 +330,10 @@ typedef struct IDirect3DBaseTexture9Impl
  */
 typedef struct IDirect3DCubeTexture9Impl
 {
-    /* IUnknown fields */
     const IDirect3DCubeTexture9Vtbl *lpVtbl;
     LONG                    ref;
-
-    /* IDirect3DResource9 fields */
-    IWineD3DCubeTexture    *wineD3DCubeTexture;
-
-    /* Parent reference */
-    LPDIRECT3DDEVICE9EX       parentDevice;
+    IWineD3DBaseTexture *wined3d_texture;
+    IDirect3DDevice9Ex *parentDevice;
 }  IDirect3DCubeTexture9Impl;
 
 HRESULT cubetexture_init(IDirect3DCubeTexture9Impl *texture, IDirect3DDevice9Impl *device,

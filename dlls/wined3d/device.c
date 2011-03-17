@@ -1204,7 +1204,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, UIN
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength, UINT Levels,
         DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops, IWineD3DCubeTexture **ppCubeTexture)
+        const struct wined3d_parent_ops *parent_ops, IWineD3DBaseTexture **texture)
 {
     IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DCubeTextureImpl *object; /** NOTE: impl ref allowed since this is a create function **/
@@ -1214,7 +1214,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     if (!object)
     {
         ERR("Out of memory\n");
-        *ppCubeTexture = NULL;
+        *texture = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -1223,12 +1223,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     {
         WARN("Failed to initialize cubetexture, returning %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppCubeTexture = NULL;
+        *texture = NULL;
         return hr;
     }
 
     TRACE("(%p) : Created Cube Texture %p\n", This, object);
-    *ppCubeTexture = (IWineD3DCubeTexture *)object;
+    *texture = (IWineD3DBaseTexture *)object;
 
     return WINED3D_OK;
 }

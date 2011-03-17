@@ -340,12 +340,8 @@ struct IDirect3DCubeTexture8Impl
 {
     IDirect3DCubeTexture8   IDirect3DCubeTexture8_iface;
     LONG                    ref;
-
-    /* IDirect3DResource8 fields */
-    IWineD3DCubeTexture    *wineD3DCubeTexture;
-
-    /* Parent reference */
-    IDirect3DDevice8       *parentDevice;
+    IWineD3DBaseTexture *wined3d_texture;
+    IDirect3DDevice8 *parentDevice;
 };
 
 HRESULT cubetexture_init(IDirect3DCubeTexture8Impl *texture, IDirect3DDevice8Impl *device,
