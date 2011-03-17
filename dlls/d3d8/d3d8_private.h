@@ -378,8 +378,8 @@ HRESULT texture_init(IDirect3DTexture8Impl *texture, IDirect3DDevice8Impl *devic
  */
 struct IDirect3DVolumeTexture8Impl
 {
-    const IDirect3DVolumeTexture8Vtbl *lpVtbl;
-    LONG                   ref;
+    IDirect3DVolumeTexture8 IDirect3DVolumeTexture8_iface;
+    LONG ref;
     IWineD3DBaseTexture *wined3d_texture;
     IDirect3DDevice8 *parentDevice;
 };
