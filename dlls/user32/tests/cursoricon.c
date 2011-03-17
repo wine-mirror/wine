@@ -135,14 +135,21 @@ typedef struct {
 } riff_rate3_t;
 
 typedef struct {
+    DWORD                chunk_id;   /* ANI_seq__ID */
+    DWORD                chunk_size; /* actual size of data */
+    DWORD                order[3];   /* animated cursor sequence data */
+} riff_seq3_t;
+
+typedef struct {
     DWORD                chunk_id;   /* ANI_RIFF_ID */
     DWORD                chunk_size; /* actual size of data */
     DWORD                chunk_type; /* ANI_ACON_ID */
     riff_header_t        header;     /* RIFF animated cursor header */
+    riff_seq3_t          seq;        /* sequence data for three cursor frames */
     riff_rate3_t         rates;      /* rate data for three cursor frames */
     riff_list_t          frame_list; /* RIFF animated cursor frame list info */
     riff_icon32x32x32_t  frames[3];  /* array of three animated cursor frames */
-} riff_cursor3_rate_t;
+} riff_cursor3_seq_t;
 
 #define EMPTY_ICON32 \
 { \
@@ -243,24 +250,29 @@ riff_cursor3_t empty_anicursor3 = {
     }
 };
 
-riff_cursor3_rate_t empty_anicursor3_rate = {
+riff_cursor3_seq_t empty_anicursor3_seq = {
     ANI_RIFF_ID,
-    sizeof(empty_anicursor3_rate) - sizeof(DWORD)*2,
+    sizeof(empty_anicursor3_seq) - sizeof(DWORD)*2,
     ANI_ACON_ID,
     {
         ANI_anih_ID,
         sizeof(ani_header),
         {
             sizeof(ani_header),
-            3,            /* frames */
-            3,            /* steps */
-            32,           /* width */
-            32,           /* height */
-            32,           /* depth */
-            1,            /* planes */
-            0xbeef,       /* display rate in jiffies */
-            ANI_FLAG_ICON /* flags */
+            3,                              /* frames */
+            3,                              /* steps */
+            32,                             /* width */
+            32,                             /* height */
+            32,                             /* depth */
+            1,                              /* planes */
+            0xbeef,                         /* display rate in jiffies */
+            ANI_FLAG_ICON|ANI_FLAG_SEQUENCE /* flags */
         }
+    },
+    {
+        ANI_seq__ID,
+        sizeof(riff_seq3_t) - sizeof(DWORD)*2,
+        { 2, 0, 1} /* show frames in a uniquely identifiable order */
     },
     {
         ANI_rate_ID,
@@ -1639,41 +1651,43 @@ static void test_GetCursorFrameInfo(void)
     ok(ret, "DestroyCursor() failed (error = %d).\n", GetLastError());
 
     /* Creating a multi-frame animated cursor with rate data. */
-    for (i=0; i<empty_anicursor3_rate.header.header.num_frames; i++)
+    for (i=0; i<empty_anicursor3_seq.header.header.num_frames; i++)
     {
-        empty_anicursor3_rate.frames[i].data.icon_info.idType = 2; /* type: cursor */
-        empty_anicursor3_rate.frames[i].data.icon_info.idEntries[0].xHotspot = 3;
-        empty_anicursor3_rate.frames[i].data.icon_info.idEntries[0].yHotspot = 3;
-        memcpy( &empty_anicursor3_rate.frames[i].data.bmi_data.data[0], &frame_identifier[i], sizeof(DWORD) );
+        empty_anicursor3_seq.frames[i].data.icon_info.idType = 2; /* type: cursor */
+        empty_anicursor3_seq.frames[i].data.icon_info.idEntries[0].xHotspot = 3;
+        empty_anicursor3_seq.frames[i].data.icon_info.idEntries[0].yHotspot = 3;
+        memcpy( &empty_anicursor3_seq.frames[i].data.bmi_data.data[0], &frame_identifier[i], sizeof(DWORD) );
     }
     SetLastError(0xdeadbeef);
-    h1 = CreateIconFromResource((PBYTE) &empty_anicursor3_rate, sizeof(empty_anicursor3_rate), FALSE, 0x00030000);
+    h1 = CreateIconFromResource((PBYTE) &empty_anicursor3_seq, sizeof(empty_anicursor3_seq), FALSE, 0x00030000);
     ok(h1 != NULL, "Create cursor failed (error = %x).\n", GetLastError());
 
     /* Check number of steps in multi-frame animated cursor with rate data */
     i=0;
     while (DrawIconEx(hdc, 0, 0, h1, 32, 32, i, NULL, DI_NORMAL))
         i++;
-    ok(i == empty_anicursor3_rate.header.header.num_steps,
+    ok(i == empty_anicursor3_seq.header.header.num_steps,
         "Unexpected number of steps in cursor (%d != %d)\n",
-        i, empty_anicursor3_rate.header.header.num_steps);
+        i, empty_anicursor3_seq.header.header.num_steps);
 
     /* Check GetCursorFrameInfo behavior on a multi-frame animated cursor with rate data */
-    for (i=0; i<empty_anicursor3_rate.header.header.num_frames; i++)
+    for (i=0; i<empty_anicursor3_seq.header.header.num_frames; i++)
     {
+        int frame_id = empty_anicursor3_seq.seq.order[i];
+
         unk1 = unk2 = unk3 = unk4 = 0xdead;
         h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)i, &unk3, &unk4);
         ok(h1 != h2 && h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p, %p).\n", h1, h1, h2);
-        ret = check_cursor_data( hdc, h2, &frame_identifier[i], sizeof(DWORD) );
+        ret = check_cursor_data( hdc, h2, &frame_identifier[frame_id], sizeof(DWORD) );
         ok(ret, "GetCursorFrameInfo() returned wrong cursor data for frame %d.\n", i);
         ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
         ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
-        ok(unk3 == empty_anicursor3_rate.rates.rate[i],
+        ok(unk3 == empty_anicursor3_seq.rates.rate[i],
             "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x%x).\n",
-            unk3, empty_anicursor3_rate.rates.rate[i]);
-        ok(unk4 == empty_anicursor3_rate.header.header.num_steps,
+            unk3, empty_anicursor3_seq.rates.rate[i]);
+        ok(unk4 == empty_anicursor3_seq.header.header.num_steps,
             "GetCursorFrameInfo() unexpected param 5 value (%d != %d).\n",
-            unk4, empty_anicursor3_rate.header.header.num_steps);
+            unk4, empty_anicursor3_seq.header.header.num_steps);
     }
 
     /* Clean up multi-frame animated cursor with rate data. */

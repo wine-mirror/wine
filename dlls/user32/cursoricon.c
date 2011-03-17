@@ -119,13 +119,13 @@ struct animated_cursoricon_object
     HICON                    frames[1];  /* list of animated cursor frames */
 };
 
-static HICON alloc_icon_handle( BOOL is_ani, UINT num_frames )
+static HICON alloc_icon_handle( BOOL is_ani, UINT num_steps )
 {
     struct cursoricon_object *obj;
     int icon_size;
 
     if (is_ani)
-        icon_size = FIELD_OFFSET( struct animated_cursoricon_object, frames[num_frames] );
+        icon_size = FIELD_OFFSET( struct animated_cursoricon_object, frames[num_steps] );
     else
         icon_size = sizeof( struct static_cursoricon_object );
     obj = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, icon_size );
@@ -136,8 +136,8 @@ static HICON alloc_icon_handle( BOOL is_ani, UINT num_frames )
     {
         struct animated_cursoricon_object *ani_icon_data = (struct animated_cursoricon_object *) obj;
 
-        ani_icon_data->num_steps = num_frames; /* changed later for some animated cursors */
-        ani_icon_data->num_frames = num_frames;
+        ani_icon_data->num_steps = num_steps;
+        ani_icon_data->num_frames = num_steps; /* changed later for some animated cursors */
     }
     return alloc_user_handle( &obj->obj, USER_ICON );
 }
@@ -228,8 +228,22 @@ static BOOL free_icon_handle( HICON handle )
         {
             struct animated_cursoricon_object *ani_icon_data = (struct animated_cursoricon_object *) obj;
 
-            for (i=0; i<ani_icon_data->num_frames; i++)
-                free_icon_handle( ani_icon_data->frames[i] );
+            for (i=0; i<ani_icon_data->num_steps; i++)
+            {
+                HICON hFrame = ani_icon_data->frames[i];
+
+                if (hFrame)
+                {
+                    UINT j;
+
+                    free_icon_handle( ani_icon_data->frames[i] );
+                    for (j=0; j<ani_icon_data->num_steps; j++)
+                    {
+                        if (ani_icon_data->frames[j] == hFrame)
+                            ani_icon_data->frames[j] = 0;
+                    }
+                }
+            }
         }
         if (!IS_INTRESOURCE( obj->resname )) HeapFree( GetProcessHeap(), 0, obj->resname );
         HeapFree( GetProcessHeap(), 0, obj );
@@ -1070,15 +1084,19 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
     struct animated_cursoricon_object *ani_icon_data;
     struct cursoricon_object *info;
     DWORD *frame_rates = NULL;
+    DWORD *frame_seq = NULL;
     ani_header header = {0};
+    BOOL use_seq = FALSE;
     HCURSOR cursor = 0;
     UINT i, error = 0;
+    HICON *frames;
 
     riff_chunk_t root_chunk = { bits_size, bits };
     riff_chunk_t ACON_chunk = {0};
     riff_chunk_t anih_chunk = {0};
     riff_chunk_t fram_chunk = {0};
     riff_chunk_t rate_chunk = {0};
+    riff_chunk_t seq_chunk = {0};
     const unsigned char *icon_chunk;
     const unsigned char *icon_data;
 
@@ -1107,13 +1125,23 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
     }
 
     if (header.flags & ANI_FLAG_SEQUENCE)
-        FIXME("Animated icon/cursor sequence data is not currently supported, frames may appear out of sequence.\n");
+    {
+        riff_find_chunk( ANI_seq__ID, 0, &ACON_chunk, &seq_chunk );
+        if (seq_chunk.data)
+        {
+            frame_seq = (DWORD *) seq_chunk.data;
+            use_seq = TRUE;
+        }
+        else
+        {
+            FIXME("Sequence data expected but not found, assuming steps == frames.\n");
+            header.num_steps = header.num_frames;
+        }
+    }
 
     riff_find_chunk( ANI_rate_ID, 0, &ACON_chunk, &rate_chunk );
-    if (rate_chunk.data && header.num_steps == header.num_frames)
+    if (rate_chunk.data)
         frame_rates = (DWORD *) rate_chunk.data;
-    else if (rate_chunk.data && header.num_steps != 1)
-        FIXME("Animated icon/cursor rate data for sequence-based cursors not supported.\n");
 
     riff_find_chunk( ANI_fram_ID, ANI_LIST_ID, &ACON_chunk, &fram_chunk );
     if (!fram_chunk.data)
@@ -1122,19 +1150,19 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
         return 0;
     }
 
-    cursor = alloc_icon_handle( TRUE, header.num_frames );
+    cursor = alloc_icon_handle( TRUE, header.num_steps );
     if (!cursor) return 0;
+    frames = HeapAlloc( GetProcessHeap(), 0, sizeof(DWORD)*header.num_frames );
+    if (!frames)
+    {
+        free_icon_handle( cursor );
+        return 0;
+    }
 
     info = get_icon_ptr( cursor );
     ani_icon_data = (struct animated_cursoricon_object *) info;
     info->is_icon = FALSE;
-    if (header.num_steps > header.num_frames)
-    {
-        FIXME("More steps than frames and sequence-based cursors not yet supported.\n");
-        ani_icon_data->num_steps = header.num_frames;
-    }
-    else
-        ani_icon_data->num_steps = header.num_steps;
+    ani_icon_data->num_frames = header.num_frames;
 
     /* The .ANI stores the display rate in jiffies (1/60s) */
     info->delay = header.display_rate;
@@ -1145,10 +1173,8 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
     {
         const DWORD chunk_size = *(const DWORD *)(icon_chunk + sizeof(DWORD));
         const CURSORICONFILEDIRENTRY *entry;
-        struct cursoricon_frame *frame;
         INT frameWidth, frameHeight;
         const BITMAPINFO *bmi;
-        HICON hIconFrame;
 
         entry = CURSORICON_FindBestIconFile((const CURSORICONFILEDIR *) icon_data,
                                             width, height, depth, loadflags );
@@ -1168,9 +1194,9 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
         }
 
         /* Grab a frame from the animation */
-        hIconFrame = create_icon_from_bmi( (BITMAPINFO *)bmi, NULL, NULL, NULL, info->hotspot,
-                                           FALSE, frameWidth, frameHeight, loadflags );
-        if (!hIconFrame)
+        frames[i] = create_icon_from_bmi( (BITMAPINFO *)bmi, NULL, NULL, NULL, info->hotspot,
+                                          FALSE, frameWidth, frameHeight, loadflags );
+        if (!frames[i])
         {
             FIXME_(cursor)("failed to convert animated cursor frame.\n");
             error = TRUE;
@@ -1180,19 +1206,11 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
                 ani_icon_data->num_frames = 0;
                 release_icon_ptr( cursor, info );
                 free_icon_handle( cursor );
+                HeapFree( GetProcessHeap(), 0, frames );
                 return 0;
             }
             break;
         }
-
-        /* Setup the animated frame */
-        ani_icon_data->frames[i] = hIconFrame;
-        frame = get_icon_frame( info, i );
-        if (frame_rates)
-            frame->delay = frame_rates[i];
-        else
-            frame->delay = ~0;
-        release_icon_frame( info, i, frame );
 
         /* Advance to the next chunk */
         icon_chunk += chunk_size + (2 * sizeof(DWORD));
@@ -1205,10 +1223,33 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
         FIXME_(cursor)("Error creating animated cursor, only using first frame!\n");
         for (i=1; i<ani_icon_data->num_frames; i++)
             free_icon_handle( ani_icon_data->frames[i] );
+        use_seq = FALSE;
         info->delay = 0;
         ani_icon_data->num_steps = 1;
         ani_icon_data->num_frames = 1;
     }
+
+    /* Setup the animated frames in the correct sequence */
+    for (i=0; i<ani_icon_data->num_steps; i++)
+    {
+        DWORD frame_id = use_seq ? frame_seq[i] : i;
+        struct cursoricon_frame *frame;
+
+        if (frame_id >= ani_icon_data->num_frames)
+        {
+            frame_id = ani_icon_data->num_frames-1;
+            ERR_(cursor)("Sequence indicates frame past end of list, corrupt?\n");
+        }
+        ani_icon_data->frames[i] = frames[frame_id];
+        frame = get_icon_frame( info, i );
+        if (frame_rates)
+            frame->delay = frame_rates[i];
+        else
+            frame->delay = ~0;
+        release_icon_frame( info, i, frame );
+    }
+
+    HeapFree( GetProcessHeap(), 0, frames );
     release_icon_ptr( cursor, info );
 
     return cursor;
@@ -1851,8 +1892,6 @@ HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD unk1, DWORD istep, DWOR
     FIXME("semi-stub! %p => %d %d %p %p\n", hCursor, unk1, istep, rate_jiffies, num_steps);
 
     icon_steps = get_icon_steps(ptr);
-    /* Important Note: Sequences are not currently supported, so this implementation
-     * will not properly handle all cases. */
     if (istep < icon_steps || !ptr->is_ani)
     {
         struct animated_cursoricon_object *ani_icon_data = (struct animated_cursoricon_object *) ptr;
