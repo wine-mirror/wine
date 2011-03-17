@@ -1406,13 +1406,90 @@ static BOOL same_format(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst)
 }
 
 /***********************************************************************
+ *           X11DRV_PatBlt
+ */
+BOOL CDECL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, DWORD rop )
+{
+    BOOL usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
+    const BYTE *opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
+    struct bitblt_coords dst;
+
+    dst.x      = x;
+    dst.y      = y;
+    dst.width  = width;
+    dst.height = height;
+    dst.layout = GetLayout( physDev->hdc );
+
+    if (rop & NOMIRRORBITMAP)
+    {
+        dst.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
+        rop &= ~NOMIRRORBITMAP;
+    }
+
+    if (!BITBLT_GetVisRectangles( physDev, NULL, &dst, NULL )) return TRUE;
+    if (usePat && !X11DRV_SetupGCForBrush( physDev )) return TRUE;
+
+    TRACE( "rect=%d,%d %dx%d org=%d,%d vis=%s\n",
+          dst.x, dst.y, dst.width, dst.height,
+          physDev->dc_rect.left, physDev->dc_rect.top, wine_dbgstr_rect( &dst.visrect ) );
+
+    width  = dst.visrect.right - dst.visrect.left;
+    height = dst.visrect.bottom - dst.visrect.top;
+
+    X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
+
+    wine_tsx11_lock();
+    XSetFunction( gdi_display, physDev->gc, OP_ROP(*opcode) );
+
+    switch(rop)  /* a few special cases */
+    {
+    case BLACKNESS:  /* 0x00 */
+    case WHITENESS:  /* 0xff */
+        if ((physDev->depth != 1) && X11DRV_PALETTE_PaletteToXPixel)
+        {
+            XSetFunction( gdi_display, physDev->gc, GXcopy );
+            if (rop == BLACKNESS)
+                XSetForeground( gdi_display, physDev->gc, X11DRV_PALETTE_PaletteToXPixel[0] );
+            else
+                XSetForeground( gdi_display, physDev->gc,
+                                WhitePixel( gdi_display, DefaultScreen(gdi_display) ));
+            XSetFillStyle( gdi_display, physDev->gc, FillSolid );
+        }
+        break;
+    case DSTINVERT:  /* 0x55 */
+        if (!(X11DRV_PALETTE_PaletteFlags & (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_VIRTUAL)))
+        {
+            /* Xor is much better when we do not have full colormap.   */
+            /* Using white^black ensures that we invert at least black */
+            /* and white. */
+            unsigned long xor_pix = (WhitePixel( gdi_display, DefaultScreen(gdi_display) ) ^
+                                     BlackPixel( gdi_display, DefaultScreen(gdi_display) ));
+            XSetFunction( gdi_display, physDev->gc, GXxor );
+            XSetForeground( gdi_display, physDev->gc, xor_pix);
+            XSetFillStyle( gdi_display, physDev->gc, FillSolid );
+        }
+        break;
+    }
+    XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
+                    physDev->dc_rect.left + dst.visrect.left,
+                    physDev->dc_rect.top + dst.visrect.top,
+                    dst.visrect.right - dst.visrect.left,
+                    dst.visrect.bottom - dst.visrect.top );
+    wine_tsx11_unlock();
+
+    X11DRV_UnlockDIBSection( physDev, TRUE );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           X11DRV_StretchBlt
  */
 BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
                               X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
                               DWORD rop )
 {
-    BOOL usePat, useSrc, useDst, destUsed, fStretch, fNullBrush;
+    BOOL usePat, useDst, destUsed, fStretch, fNullBrush;
     struct bitblt_coords src, dst;
     INT width, height;
     INT sDst, sSrc = DIB_Status_None;
@@ -1421,9 +1498,7 @@ BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, IN
     GC tmpGC = 0;
 
     usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
-    useSrc = (((rop >> 2) & 0x330000) != (rop & 0x330000));
     useDst = (((rop >> 1) & 0x550000) != (rop & 0x550000));
-    if (!physDevSrc && useSrc) return FALSE;
 
     src.x      = xSrc;
     src.y      = ySrc;
@@ -1443,29 +1518,19 @@ BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, IN
         rop &= ~NOMIRRORBITMAP;
     }
 
-    if (useSrc)
-    {
-        if (!BITBLT_GetVisRectangles( physDevDst, physDevSrc, &dst, &src ))
-            return TRUE;
-        fStretch = (src.width != dst.width) || (src.height != dst.height);
+    if (!BITBLT_GetVisRectangles( physDevDst, physDevSrc, &dst, &src ))
+        return TRUE;
+    fStretch = (src.width != dst.width) || (src.height != dst.height);
 
-        if (physDevDst != physDevSrc)
-            sSrc = X11DRV_LockDIBSection( physDevSrc, DIB_Status_None );
-    }
-    else
-    {
-        fStretch = FALSE;
-        if (!BITBLT_GetVisRectangles( physDevDst, NULL, &dst, NULL ))
-            return TRUE;
-    }
+    if (physDevDst != physDevSrc)
+        sSrc = X11DRV_LockDIBSection( physDevSrc, DIB_Status_None );
 
     TRACE("    rectdst=%d,%d %dx%d orgdst=%d,%d visdst=%s\n",
           dst.x, dst.y, dst.width, dst.height,
           physDevDst->dc_rect.left, physDevDst->dc_rect.top, wine_dbgstr_rect( &dst.visrect ) );
-    if (useSrc)
-        TRACE("    rectsrc=%d,%d %dx%d orgsrc=%d,%d vissrc=%s\n",
-              src.x, src.y, src.width, src.height,
-              physDevSrc->dc_rect.left, physDevSrc->dc_rect.top, wine_dbgstr_rect( &src.visrect ) );
+    TRACE("    rectsrc=%d,%d %dx%d orgsrc=%d,%d vissrc=%s\n",
+          src.x, src.y, src.width, src.height,
+          physDevSrc->dc_rect.left, physDevSrc->dc_rect.top, wine_dbgstr_rect( &src.visrect ) );
 
     width  = dst.visrect.right - dst.visrect.left;
     height = dst.visrect.bottom - dst.visrect.top;
@@ -1488,116 +1553,56 @@ BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, IN
     opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
 
     /* a few optimizations for single-op ROPs */
-    if (!fStretch && !opcode[1])
+    if (!fStretch && !opcode[1] && OP_SRCDST(opcode[0]) == OP_ARGS(SRC,DST))
     {
-        if (OP_SRCDST(*opcode) == OP_ARGS(PAT,DST))
+        if (same_format(physDevSrc, physDevDst))
         {
-            switch(rop)  /* a few special cases */
+            wine_tsx11_lock();
+            XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
+            wine_tsx11_unlock();
+
+            if (physDevSrc != physDevDst)
             {
-            case BLACKNESS:  /* 0x00 */
-            case WHITENESS:  /* 0xff */
-                if ((physDevDst->depth != 1) && X11DRV_PALETTE_PaletteToXPixel)
+                if (sSrc == DIB_Status_AppMod)
                 {
-                    wine_tsx11_lock();
-                    XSetFunction( gdi_display, physDevDst->gc, GXcopy );
-                    if (rop == BLACKNESS)
-                        XSetForeground( gdi_display, physDevDst->gc, X11DRV_PALETTE_PaletteToXPixel[0] );
-                    else
-                        XSetForeground( gdi_display, physDevDst->gc,
-                                        WhitePixel( gdi_display, DefaultScreen(gdi_display) ));
-                    XSetFillStyle( gdi_display, physDevDst->gc, FillSolid );
-                    XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-                                    physDevDst->dc_rect.left + dst.visrect.left,
-                                    physDevDst->dc_rect.top + dst.visrect.top,
-                                    width, height );
-                    wine_tsx11_unlock();
+                    X11DRV_DIB_CopyDIBSection( physDevSrc, physDevDst, src.visrect.left, src.visrect.top,
+                                               dst.visrect.left, dst.visrect.top, width, height );
                     goto done;
                 }
-                break;
-            case DSTINVERT:  /* 0x55 */
-                if (!(X11DRV_PALETTE_PaletteFlags & (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_VIRTUAL)))
-                {
-                    /* Xor is much better when we do not have full colormap.   */
-                    /* Using white^black ensures that we invert at least black */
-                    /* and white. */
-                    unsigned long xor_pix = (WhitePixel( gdi_display, DefaultScreen(gdi_display) ) ^
-                                             BlackPixel( gdi_display, DefaultScreen(gdi_display) ));
-                    wine_tsx11_lock();
-                    XSetFunction( gdi_display, physDevDst->gc, GXxor );
-                    XSetForeground( gdi_display, physDevDst->gc, xor_pix);
-                    XSetFillStyle( gdi_display, physDevDst->gc, FillSolid );
-                    XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-                                    physDevDst->dc_rect.left + dst.visrect.left,
-                                    physDevDst->dc_rect.top + dst.visrect.top,
-                                    width, height );
-                    wine_tsx11_unlock();
-                    goto done;
-                }
-                break;
+                X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
             }
-            if (!usePat || X11DRV_SetupGCForBrush( physDevDst ))
-            {
-                wine_tsx11_lock();
-                XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
-                XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-                                physDevDst->dc_rect.left + dst.visrect.left,
-                                physDevDst->dc_rect.top + dst.visrect.top,
-                                width, height );
-                wine_tsx11_unlock();
-            }
+            wine_tsx11_lock();
+            XCopyArea( gdi_display, physDevSrc->drawable,
+                       physDevDst->drawable, physDevDst->gc,
+                       physDevSrc->dc_rect.left + src.visrect.left,
+                       physDevSrc->dc_rect.top + src.visrect.top,
+                       width, height,
+                       physDevDst->dc_rect.left + dst.visrect.left,
+                       physDevDst->dc_rect.top + dst.visrect.top );
+            physDevDst->exposures++;
+            wine_tsx11_unlock();
             goto done;
         }
-        else if (OP_SRCDST(*opcode) == OP_ARGS(SRC,DST))
+        if (physDevSrc->depth == 1)
         {
-            if (same_format(physDevSrc, physDevDst))
-            {
-                wine_tsx11_lock();
-                XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
-                wine_tsx11_unlock();
+            int fg, bg;
 
-                if (physDevSrc != physDevDst)
-                {
-                    if (sSrc == DIB_Status_AppMod)
-                    {
-                        X11DRV_DIB_CopyDIBSection( physDevSrc, physDevDst, src.visrect.left, src.visrect.top,
-                                                   dst.visrect.left, dst.visrect.top, width, height );
-                        goto done;
-                    }
-                    X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
-                }
-                wine_tsx11_lock();
-                XCopyArea( gdi_display, physDevSrc->drawable,
-                           physDevDst->drawable, physDevDst->gc,
-                           physDevSrc->dc_rect.left + src.visrect.left,
-                           physDevSrc->dc_rect.top + src.visrect.top,
-                           width, height,
-                           physDevDst->dc_rect.left + dst.visrect.left,
-                           physDevDst->dc_rect.top + dst.visrect.top );
-                physDevDst->exposures++;
-                wine_tsx11_unlock();
-                goto done;
-            }
-            if (physDevSrc->depth == 1)
-            {
-                int fg, bg;
-
-                X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
-                get_colors(physDevDst, physDevSrc, &fg, &bg);
-                wine_tsx11_lock();
-                XSetBackground( gdi_display, physDevDst->gc, fg );
-                XSetForeground( gdi_display, physDevDst->gc, bg );
-                XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
-                XCopyPlane( gdi_display, physDevSrc->drawable,
-                            physDevDst->drawable, physDevDst->gc,
-                            physDevSrc->dc_rect.left + src.visrect.left,
-                            physDevSrc->dc_rect.top + src.visrect.top,
-                            width, height,
-                            physDevDst->dc_rect.left + dst.visrect.left,
-                            physDevDst->dc_rect.top + dst.visrect.top, 1 );
-                physDevDst->exposures++;
-                wine_tsx11_unlock();
-                goto done;
-            }
+            X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
+            get_colors(physDevDst, physDevSrc, &fg, &bg);
+            wine_tsx11_lock();
+            XSetBackground( gdi_display, physDevDst->gc, fg );
+            XSetForeground( gdi_display, physDevDst->gc, bg );
+            XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
+            XCopyPlane( gdi_display, physDevSrc->drawable,
+                        physDevDst->drawable, physDevDst->gc,
+                        physDevSrc->dc_rect.left + src.visrect.left,
+                        physDevSrc->dc_rect.top + src.visrect.top,
+                        width, height,
+                        physDevDst->dc_rect.left + dst.visrect.left,
+                        physDevDst->dc_rect.top + dst.visrect.top, 1 );
+            physDevDst->exposures++;
+            wine_tsx11_unlock();
+            goto done;
         }
     }
 
@@ -1607,24 +1612,18 @@ BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, IN
     XSetGraphicsExposures( gdi_display, tmpGC, False );
     pixmaps[DST] = XCreatePixmap( gdi_display, root_window, width, height,
                                   physDevDst->depth );
+    pixmaps[SRC] = XCreatePixmap( gdi_display, root_window, width, height,
+                                  physDevDst->depth );
     wine_tsx11_unlock();
 
-    if (useSrc)
+    if (physDevDst != physDevSrc) X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
+
+    if(!X11DRV_XRender_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src, &dst ))
     {
-        wine_tsx11_lock();
-        pixmaps[SRC] = XCreatePixmap( gdi_display, root_window, width, height,
-                                      physDevDst->depth );
-        wine_tsx11_unlock();
-
-        if (physDevDst != physDevSrc) X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
-
-        if(!X11DRV_XRender_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src, &dst ))
-        {
-            if (fStretch)
-                BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src, &dst );
-            else
-                BITBLT_GetSrcArea( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src.visrect );
-        }
+        if (fStretch)
+            BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src, &dst );
+        else
+            BITBLT_GetSrcArea( physDevSrc, physDevDst, pixmaps[SRC], tmpGC, &src.visrect );
     }
 
     if (useDst) BITBLT_GetDstArea( physDevDst, pixmaps[DST], tmpGC, &dst.visrect );
@@ -1649,10 +1648,9 @@ BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, IN
         case OP_ARGS(SRC,DST):
         case OP_ARGS(TMP,SRC):
         case OP_ARGS(TMP,DST):
-	    if (useSrc)
-		XCopyArea( gdi_display, pixmaps[OP_SRC(*opcode)],
-			   pixmaps[OP_DST(*opcode)], tmpGC,
-			   0, 0, width, height, 0, 0 );
+            XCopyArea( gdi_display, pixmaps[OP_SRC(*opcode)],
+                       pixmaps[OP_DST(*opcode)], tmpGC,
+                       0, 0, width, height, 0, 0 );
             break;
 
         case OP_ARGS(PAT,TMP):
@@ -1677,7 +1675,7 @@ BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, IN
     wine_tsx11_unlock();
 
 done:
-    if (useSrc && physDevDst != physDevSrc) X11DRV_UnlockDIBSection( physDevSrc, FALSE );
+    if (physDevDst != physDevSrc) X11DRV_UnlockDIBSection( physDevSrc, FALSE );
     X11DRV_UnlockDIBSection( physDevDst, TRUE );
     return TRUE;
 }
