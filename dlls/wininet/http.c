@@ -4333,7 +4333,6 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
 {
     INT responseLen;
     DWORD dwBufferSize;
-    INTERNET_ASYNC_RESULT iar;
     DWORD res = ERROR_SUCCESS;
 
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
@@ -4382,12 +4381,16 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
         }
     }
 
-    iar.dwResult = (res==ERROR_SUCCESS ? (DWORD_PTR)request->hdr.hInternet : 0);
-    iar.dwError = res;
+    if (res == ERROR_SUCCESS) {
+        HTTP_ReceiveRequestData(request, TRUE);
+    }else {
+        INTERNET_ASYNC_RESULT iar = {0, res};
 
-    INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
-                          INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                          sizeof(INTERNET_ASYNC_RESULT));
+        INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
+                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                              sizeof(INTERNET_ASYNC_RESULT));
+    }
+
     return res;
 }
 
