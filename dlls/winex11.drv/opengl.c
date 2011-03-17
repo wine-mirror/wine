@@ -3818,6 +3818,20 @@ BOOL CDECL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev)
 
   TRACE("(%p)\n", physDev);
 
+  if (!ctx)
+  {
+      WARN("Using a NULL context, skipping\n");
+      SetLastError(ERROR_INVALID_HANDLE);
+      return FALSE;
+  }
+
+  if (!physDev->current_pf)
+  {
+      WARN("Using an invalid drawable, skipping\n");
+      SetLastError(ERROR_INVALID_HANDLE);
+      return FALSE;
+  }
+
   drawable = get_glxdrawable(physDev);
 
   wine_tsx11_lock();
