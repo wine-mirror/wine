@@ -30,7 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
-static BOOL MFDRV_DeleteDC( PHYSDEV dev );
+static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev );
 
 static const DC_FUNCTIONS MFDRV_Funcs =
 {
@@ -205,7 +205,7 @@ static DC *MFDRV_AllocMetaFile(void)
 /**********************************************************************
  *	     MFDRV_DeleteDC
  */
-static BOOL MFDRV_DeleteDC( PHYSDEV dev )
+static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev )
 {
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     DWORD index;
