@@ -2595,7 +2595,7 @@ static void dump_record( MSIRECORD *rec )
     n = MSI_RecordGetFieldCount( rec );
     for( i=1; i<=n; i++ )
     {
-        LPCWSTR sval = MSI_RecordGetString( rec, i );
+        LPCWSTR sval;
 
         if( MSI_RecordIsNull( rec, i ) )
             TRACE("row -> []\n");
