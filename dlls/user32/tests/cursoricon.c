@@ -1440,12 +1440,12 @@ cleanup:
     return ret;
 }
 
-static HCURSOR WINAPI (*pGetCursorFrameInfo)(HCURSOR hCursor, VOID *unk1, VOID *unk2, VOID *unk3, VOID *unk4);
+static HCURSOR (WINAPI *pGetCursorFrameInfo)(HCURSOR hCursor, DWORD unk1, DWORD istep, DWORD *rate, DWORD *steps);
 static void test_GetCursorFrameInfo(void)
 {
     DWORD frame_identifier[] = { 0x10Ad, 0xc001, 0x1c05 };
     HBITMAP bmp = NULL, bmpOld = NULL;
-    DWORD unk1, unk2, unk3, unk4;
+    DWORD rate, steps;
     BITMAPINFOHEADER *icon_header;
     BITMAPINFO bitmapInfo;
     HDC hdc = NULL;
@@ -1509,13 +1509,11 @@ static void test_GetCursorFrameInfo(void)
     ok(h1 != NULL, "Create cursor failed (error = %d).\n", GetLastError());
 
     /* Check GetCursorFrameInfo behavior on a static cursor */
-    unk1 = unk2 = unk3 = unk4 = 0xdead;
-    h2 = pGetCursorFrameInfo(h1, &unk1, &unk2, &unk3, &unk4);
+    rate = steps = 0xdead;
+    h2 = pGetCursorFrameInfo(h1, 0xdead, 0xdead, &rate, &steps);
     ok(h1 == h2, "GetCursorFrameInfo() failed: (%p != %p).\n", h1, h2);
-    ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
-    ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
-    ok(unk3 == 0, "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x0).\n", unk3);
-    ok(unk4 == 1, "GetCursorFrameInfo() unexpected param 5 value (%d != 1).\n", unk4);
+    ok(rate == 0, "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x0).\n", rate);
+    ok(steps == 1, "GetCursorFrameInfo() unexpected param 5 value (%d != 1).\n", steps);
 
     /* Clean up static cursor. */
     SetLastError(0xdeadbeef);
@@ -1532,16 +1530,14 @@ static void test_GetCursorFrameInfo(void)
     ok(h1 != NULL, "Create cursor failed (error = %d).\n", GetLastError());
 
     /* Check GetCursorFrameInfo behavior on a single-frame animated cursor */
-    unk1 = unk2 = unk3 = unk4 = 0xdead;
-    h2 = pGetCursorFrameInfo(h1, &unk1, NULL, &unk3, &unk4);
+    rate = steps = 0xdead;
+    h2 = pGetCursorFrameInfo(h1, 0xdead, 0, &rate, &steps);
     ok(h1 == h2, "GetCursorFrameInfo() failed: (%p != %p).\n", h1, h2);
     ret = check_cursor_data( hdc, h2, &frame_identifier[0], sizeof(DWORD) );
     ok(ret, "GetCursorFrameInfo() returned wrong cursor data for frame 0.\n");
-    ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
-    ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
-    ok(unk3 == 0x0, "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x0).\n", unk3);
-    ok(unk4 == empty_anicursor.header.header.num_steps,
-        "GetCursorFrameInfo() unexpected param 5 value (%d != 1).\n", unk4);
+    ok(rate == 0x0, "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x0).\n", rate);
+    ok(steps == empty_anicursor.header.header.num_steps,
+        "GetCursorFrameInfo() unexpected param 5 value (%d != 1).\n", steps);
 
     /* Clean up single-frame animated cursor. */
     SetLastError(0xdeadbeef);
@@ -1571,33 +1567,29 @@ static void test_GetCursorFrameInfo(void)
     /* Check GetCursorFrameInfo behavior on a multi-frame animated cursor */
     for (i=0; i<empty_anicursor3.header.header.num_frames; i++)
     {
-        unk1 = unk2 = unk3 = unk4 = 0xdead;
-        h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)i, &unk3, &unk4);
+        rate = steps = 0xdead;
+        h2 = pGetCursorFrameInfo(h1, 0xdead, i, &rate, &steps);
         ok(h1 != h2 && h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p, %p).\n", h1, h1, h2);
         ret = check_cursor_data( hdc, h2, &frame_identifier[i], sizeof(DWORD) );
         ok(ret, "GetCursorFrameInfo() returned wrong cursor data for frame %d.\n", i);
-        ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
-        ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
-        ok(unk3 == empty_anicursor3.header.header.display_rate,
+        ok(rate == empty_anicursor3.header.header.display_rate,
             "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x%x).\n",
-            unk3, empty_anicursor3.header.header.display_rate);
-        ok(unk4 == empty_anicursor3.header.header.num_steps,
+            rate, empty_anicursor3.header.header.display_rate);
+        ok(steps == empty_anicursor3.header.header.num_steps,
             "GetCursorFrameInfo() unexpected param 5 value (%d != %d).\n",
-            unk4, empty_anicursor3.header.header.num_steps);
+            steps, empty_anicursor3.header.header.num_steps);
     }
 
     /* Check GetCursorFrameInfo behavior on rate 3 of a multi-frame animated cursor */
-    unk1 = unk2 = unk3 = unk4 = 0xdead;
-    h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)3, &unk3, &unk4);
+    rate = steps = 0xdead;
+    h2 = pGetCursorFrameInfo(h1, 0xdead, 3, &rate, &steps);
     ok(h2 == 0, "GetCursorFrameInfo() failed for cursor %p: (%p != 0).\n", h1, h2);
-    ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
-    ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
-    ok(unk3 == 0xdead || broken(unk3 == empty_anicursor3.header.header.display_rate) /*win2k*/
-       || broken(unk3 == ~0) /*win2k (sporadic)*/,
-        "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0xdead).\n", unk3);
-    ok(unk4 == 0xdead || broken(unk4 == empty_anicursor3.header.header.num_steps) /*win2k*/
-       || broken(unk4 == 0) /*win2k (sporadic)*/,
-        "GetCursorFrameInfo() unexpected param 5 value (0x%x != 0xdead).\n", unk4);
+    ok(rate == 0xdead || broken(rate == empty_anicursor3.header.header.display_rate) /*win2k*/
+       || broken(rate == ~0) /*win2k (sporadic)*/,
+        "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0xdead).\n", rate);
+    ok(steps == 0xdead || broken(steps == empty_anicursor3.header.header.num_steps) /*win2k*/
+       || broken(steps == 0) /*win2k (sporadic)*/,
+        "GetCursorFrameInfo() unexpected param 5 value (0x%x != 0xdead).\n", steps);
 
     /* Clean up multi-frame animated cursor. */
     SetLastError(0xdeadbeef);
@@ -1619,31 +1611,27 @@ static void test_GetCursorFrameInfo(void)
         i, empty_anicursor3.header.header.num_steps);
 
     /* Check GetCursorFrameInfo behavior on rate 0 for a multi-frame animated cursor (with num_steps == 1) */
-    unk1 = unk2 = unk3 = unk4 = 0xdead;
-    h2 = pGetCursorFrameInfo(h1, &unk1, NULL, &unk3, &unk4);
+    rate = steps = 0xdead;
+    h2 = pGetCursorFrameInfo(h1, 0xdead, 0, &rate, &steps);
     ok(h1 != h2 && h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p, %p).\n", h1, h1, h2);
     ret = check_cursor_data( hdc, h2, &frame_identifier[0], sizeof(DWORD) );
     ok(ret, "GetCursorFrameInfo() returned wrong cursor data for frame 0.\n");
-    ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
-    ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
-    ok(unk3 == empty_anicursor3.header.header.display_rate,
+    ok(rate == empty_anicursor3.header.header.display_rate,
         "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x%x).\n",
-        unk3, empty_anicursor3.header.header.display_rate);
-    ok(unk4 == ~0 || broken(unk4 == empty_anicursor3.header.header.num_steps) /*win2k*/,
-        "GetCursorFrameInfo() unexpected param 5 value (%d != ~0).\n", unk4);
+        rate, empty_anicursor3.header.header.display_rate);
+    ok(steps == ~0 || broken(steps == empty_anicursor3.header.header.num_steps) /*win2k*/,
+        "GetCursorFrameInfo() unexpected param 5 value (%d != ~0).\n", steps);
 
     /* Check GetCursorFrameInfo behavior on rate 1 for a multi-frame animated cursor (with num_steps == 1) */
-    unk1 = unk2 = unk3 = unk4 = 0xdead;
-    h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)1, &unk3, &unk4);
+    rate = steps = 0xdead;
+    h2 = pGetCursorFrameInfo(h1, 0xdead, 1, &rate, &steps);
     ok(h2 == 0, "GetCursorFrameInfo() failed for cursor %p: (%p != 0).\n", h1, h2);
-    ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
-    ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
-    ok(unk3 == 0xdead || broken(unk3 == empty_anicursor3.header.header.display_rate) /*win2k*/
-       || broken(unk3 == ~0) /*win2k (sporadic)*/,
-        "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0xdead).\n", unk3);
-    ok(unk4 == 0xdead || broken(unk4 == empty_anicursor3.header.header.num_steps) /*win2k*/
-       || broken(unk4 == 0) /*win2k (sporadic)*/,
-        "GetCursorFrameInfo() unexpected param 5 value (%d != 0xdead).\n", unk4);
+    ok(rate == 0xdead || broken(rate == empty_anicursor3.header.header.display_rate) /*win2k*/
+       || broken(rate == ~0) /*win2k (sporadic)*/,
+        "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0xdead).\n", rate);
+    ok(steps == 0xdead || broken(steps == empty_anicursor3.header.header.num_steps) /*win2k*/
+       || broken(steps == 0) /*win2k (sporadic)*/,
+        "GetCursorFrameInfo() unexpected param 5 value (%d != 0xdead).\n", steps);
 
     /* Clean up multi-frame animated cursor. */
     SetLastError(0xdeadbeef);
@@ -1675,19 +1663,17 @@ static void test_GetCursorFrameInfo(void)
     {
         int frame_id = empty_anicursor3_seq.seq.order[i];
 
-        unk1 = unk2 = unk3 = unk4 = 0xdead;
-        h2 = pGetCursorFrameInfo(h1, &unk1, (VOID*)i, &unk3, &unk4);
+        rate = steps = 0xdead;
+        h2 = pGetCursorFrameInfo(h1, 0xdead, i, &rate, &steps);
         ok(h1 != h2 && h2 != 0, "GetCursorFrameInfo() failed for cursor %p: (%p, %p).\n", h1, h1, h2);
         ret = check_cursor_data( hdc, h2, &frame_identifier[frame_id], sizeof(DWORD) );
         ok(ret, "GetCursorFrameInfo() returned wrong cursor data for frame %d.\n", i);
-        ok(unk1 == 0xdead, "GetCursorFrameInfo() unexpected param 2 value (0x%x != 0xdead).\n", unk1);
-        ok(unk2 == 0xdead, "GetCursorFrameInfo() unexpected param 3 value (0x%x != 0xdead).\n", unk2);
-        ok(unk3 == empty_anicursor3_seq.rates.rate[i],
+        ok(rate == empty_anicursor3_seq.rates.rate[i],
             "GetCursorFrameInfo() unexpected param 4 value (0x%x != 0x%x).\n",
-            unk3, empty_anicursor3_seq.rates.rate[i]);
-        ok(unk4 == empty_anicursor3_seq.header.header.num_steps,
+            rate, empty_anicursor3_seq.rates.rate[i]);
+        ok(steps == empty_anicursor3_seq.header.header.num_steps,
             "GetCursorFrameInfo() unexpected param 5 value (%d != %d).\n",
-            unk4, empty_anicursor3_seq.header.header.num_steps);
+            steps, empty_anicursor3_seq.header.header.num_steps);
     }
 
     /* Clean up multi-frame animated cursor with rate data. */
