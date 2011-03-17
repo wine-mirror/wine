@@ -27,7 +27,7 @@ msgstr ""
 
 #: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
 msgid "Applications"
-msgstr "어플리케이션"
+msgstr "응용프로그램"
 
 #: appwiz.rc:32
 msgid ""
@@ -2782,7 +2782,6 @@ msgid "Signal pending\n"
 msgstr "시그널 대기중\n"
 
 #: winerror.mc:681
-#, fuzzy
 msgid "Max system-wide thread count reached\n"
 msgstr "최대 시스템 전역 쓰레드 카운트 도달\n"
 
@@ -4211,7 +4210,6 @@ msgid "Private dialog index\n"
 msgstr "비공개 다이얼로그 색인\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
 msgstr "목록상자 ID를 찾을 수 없습니다\n"
 
@@ -4276,7 +4274,6 @@ msgid "Hook procedure not installed\n"
 msgstr "설치되어 있지 않은 후크 프로 시저\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
 msgstr "올바르지 않은 목록상자 메세지\n"
 
@@ -4285,7 +4282,6 @@ msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "올바르지 않은 LB_SETCOUNT 보내기\n"
 
 #: winerror.mc:2566
-#, fuzzy
 msgid "No tab stops on this list box\n"
 msgstr "목록상자에는 탭정지가 없음\n"
 
@@ -4302,7 +4298,6 @@ msgid "Window has no system menu\n"
 msgstr "창은 시스템 메뉴를 가지고 있지 않습니다\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
 msgstr "올바르지 않은 메세지 박스 스타일\n"
 
@@ -4355,7 +4350,6 @@ msgid "No system resources\n"
 msgstr "시스템 리소스가 없습니다\n"
 
 #: winerror.mc:2651
-#, fuzzy
 msgid "No non-paged system resources\n"
 msgstr "페이지되지 않은 시스템 자원이 없음\n"
 
@@ -4368,7 +4362,6 @@ msgid "No working set quota\n"
 msgstr "작동하는 할당령 설정이 없음\n"
 
 #: winerror.mc:2666
-#, fuzzy
 msgid "No page file quota\n"
 msgstr "페이지파일 할당량이 없음\n"
 
@@ -4445,7 +4438,6 @@ msgid "Unknown component\n"
 msgstr "알 수 없는 컴포넌트\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property\n"
 msgstr "알 수 없는 속성\n"
 
@@ -4978,7 +4970,6 @@ msgid "Invalid printer command\n"
 msgstr "올바르지 않은 프린터 명령\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
 msgstr "올바르지 않은 데이타 형식\n"
 
@@ -5290,7 +5281,6 @@ msgid "insert disk %s"
 msgstr "디스크 %s 삽입"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -6867,7 +6857,6 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "잘못된 매개변수는 시스템 함수에서 무시했습니다."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -7058,7 +7047,6 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "지정된 명령의 장치 이름으로  'all'은 사용할 수 없습니다."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -7963,7 +7951,6 @@ msgstr ""
 "다.\n"
 
 #: cmd.rc:158
-#, fuzzy
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <파일이름> 은 파일의 이름을 바꿈\n"
 
@@ -8057,7 +8044,6 @@ msgstr ""
 "이 검증 플래그는 Wine에서는 아무 기능을 안함.\n"
 
 #: cmd.rc:204
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER  당신이 실행시킨 cmd 버젼 보여줌\n"
 
@@ -10312,7 +10298,6 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -11223,7 +11208,6 @@ msgid "&System\tCtrl+1"
 msgstr "시스템(&S)\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
 msgstr "노랑색으로(&P)\tCtrl+2"
 
