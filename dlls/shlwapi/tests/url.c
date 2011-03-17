@@ -56,6 +56,8 @@ static HRESULT (WINAPI *pHashData)(LPBYTE, DWORD, LPBYTE, DWORD);
 static const char* TEST_URL_1 = "http://www.winehq.org/tests?date=10/10/1923";
 static const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1923";
 static const char* TEST_URL_3 = "http://foo:bar@localhost:21/internal.php?query=x&return=y";
+static const char* TEST_URL_4 = "http://foo:bar@google.*.com:21/internal.php?query=x&return=y";
+
 static const WCHAR winehqW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
 static const  CHAR winehqA[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/',0};
 
@@ -689,6 +691,8 @@ static void test_UrlGetPart(void)
   test_url_part(TEST_URL_3, URL_PART_PASSWORD, 0, "bar");
   test_url_part(TEST_URL_3, URL_PART_SCHEME, 0, "http");
   test_url_part(TEST_URL_3, URL_PART_QUERY, 0, "?query=x&return=y");
+
+  test_url_part(TEST_URL_4, URL_PART_HOSTNAME, 0, "google.*.com");
 
   test_url_part(file_url, URL_PART_HOSTNAME, 0, "h o s t");
 

@@ -2049,7 +2049,8 @@ static LPCWSTR  URL_ScanID(LPCWSTR start, LPDWORD size, WINE_URL_SCAN_TYPE type)
 	    if (isalnumW(*start) ||
                 (*start == '-') ||
                 (*start == '.') ||
-                (*start == ' ') ) {
+                (*start == ' ') ||
+                (*start == '*') ) {
 		start++;
 		(*size)++;
 	    }
