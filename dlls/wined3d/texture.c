@@ -159,6 +159,12 @@ static void texture_preload(IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB s
     gl_tex->dirty = FALSE;
 }
 
+static void texture_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
+        const WINED3DBOX *dirty_region)
+{
+    surface_add_dirty_rect(surface_from_resource(sub_resource), dirty_region);
+}
+
 /* Do not call while under the GL lock. */
 static void texture_unload(struct wined3d_resource *resource)
 {
@@ -184,6 +190,7 @@ static const struct wined3d_texture_ops texture_ops =
 {
     texture_bind,
     texture_preload,
+    texture_sub_resource_add_dirty_region,
 };
 
 static const struct wined3d_resource_ops texture_resource_ops =
@@ -348,21 +355,7 @@ static struct wined3d_resource * WINAPI IWineD3DTextureImpl_GetSubResource(IWine
 static HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRegion(IWineD3DBaseTexture *iface,
         UINT layer, const WINED3DBOX *dirty_region)
 {
-    IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl *)iface;
-    struct wined3d_resource *sub_resource;
-
-    TRACE("iface %p, layer %u, dirty_region %p.\n", iface, layer, dirty_region);
-
-    if (!(sub_resource = basetexture_get_sub_resource(texture, layer * texture->baseTexture.level_count)))
-    {
-        WARN("Failed to get sub-resource.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    basetexture_set_dirty(texture, TRUE);
-    surface_add_dirty_rect(surface_from_resource(sub_resource), dirty_region);
-
-    return WINED3D_OK;
+    return basetexture_add_dirty_region((IWineD3DBaseTextureImpl *)iface, layer, dirty_region);
 }
 
 static const IWineD3DBaseTextureVtbl IWineD3DTexture_Vtbl =

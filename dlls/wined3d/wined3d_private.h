@@ -1888,6 +1888,8 @@ struct wined3d_texture_ops
     HRESULT (*texture_bind)(struct IWineD3DBaseTextureImpl *texture,
             const struct wined3d_gl_info *gl_info, BOOL srgb);
     void (*texture_preload)(struct IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb);
+    void (*texture_sub_resource_add_dirty_region)(struct wined3d_resource *sub_resource,
+            const WINED3DBOX *dirty_region);
 };
 
 typedef struct IWineD3DBaseTextureClass
@@ -1932,6 +1934,8 @@ static inline struct gl_texture *basetexture_get_gl_texture(IWineD3DBaseTextureI
             : &texture->baseTexture.texture_rgb;
 }
 
+HRESULT basetexture_add_dirty_region(IWineD3DBaseTextureImpl *texture,
+        UINT layer, const WINED3DBOX *dirty_region) DECLSPEC_HIDDEN;
 void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;

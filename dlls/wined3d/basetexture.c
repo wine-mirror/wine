@@ -338,6 +338,25 @@ HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture,
     return hr;
 }
 
+HRESULT basetexture_add_dirty_region(IWineD3DBaseTextureImpl *texture,
+        UINT layer, const WINED3DBOX *dirty_region)
+{
+    struct wined3d_resource *sub_resource;
+
+    TRACE("texture %p, layer %u, dirty_region %p.\n", texture, layer, dirty_region);
+
+    if (!(sub_resource = basetexture_get_sub_resource(texture, layer * texture->baseTexture.level_count)))
+    {
+        WARN("Failed to get sub-resource.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    basetexture_set_dirty(texture, TRUE);
+    texture->baseTexture.texture_ops->texture_sub_resource_add_dirty_region(sub_resource, dirty_region);
+
+    return WINED3D_OK;
+}
+
 /* GL locking is done by the caller */
 static void apply_wrap(const struct wined3d_gl_info *gl_info, GLenum target,
         WINED3DTEXTUREADDRESS d3d_wrap, GLenum param, BOOL cond_np2)
