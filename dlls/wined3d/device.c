@@ -1206,9 +1206,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, IWineD3DBaseTexture **texture)
 {
-    IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DCubeTextureImpl *object; /** NOTE: impl ref allowed since this is a create function **/
-    HRESULT                  hr;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DBaseTextureImpl *object;
+    HRESULT hr;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)

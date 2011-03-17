@@ -1954,6 +1954,10 @@ void basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty) DECLSPE
 DWORD basetexture_set_lod(IWineD3DBaseTextureImpl *texture, DWORD lod) DECLSPEC_HIDDEN;
 void basetexture_unload(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 
+HRESULT cubetexture_init(IWineD3DBaseTextureImpl *texture, UINT edge_length, UINT levels,
+        IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
+        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+
 HRESULT texture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT height, UINT levels,
         IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
@@ -1961,17 +1965,6 @@ HRESULT texture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT height, 
 HRESULT volumetexture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT height,
         UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-
-typedef struct IWineD3DCubeTextureImpl
-{
-    const IWineD3DBaseTextureVtbl *lpVtbl;
-    struct wined3d_resource resource;
-    IWineD3DBaseTextureClass  baseTexture;
-} IWineD3DCubeTextureImpl;
-
-HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UINT levels,
-        IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
-        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 typedef struct IWineD3DVolumeImpl
 {
