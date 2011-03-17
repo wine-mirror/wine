@@ -165,6 +165,19 @@ static void texture_sub_resource_add_dirty_region(struct wined3d_resource *sub_r
     surface_add_dirty_rect(surface_from_resource(sub_resource), dirty_region);
 }
 
+static void texture_sub_resource_cleanup(struct wined3d_resource *sub_resource)
+{
+    IWineD3DSurfaceImpl *surface = surface_from_resource(sub_resource);
+
+    /* Clean out the texture name we gave to the surface so that the
+     * surface doesn't try and release it */
+    surface_set_texture_name(surface, 0, TRUE);
+    surface_set_texture_name(surface, 0, FALSE);
+    surface_set_texture_target(surface, 0);
+    surface_set_container(surface, WINED3D_CONTAINER_NONE, NULL);
+    IWineD3DSurface_Release((IWineD3DSurface *)surface);
+}
+
 /* Do not call while under the GL lock. */
 static void texture_unload(struct wined3d_resource *resource)
 {
@@ -191,40 +204,13 @@ static const struct wined3d_texture_ops texture_ops =
     texture_bind,
     texture_preload,
     texture_sub_resource_add_dirty_region,
+    texture_sub_resource_cleanup,
 };
 
 static const struct wined3d_resource_ops texture_resource_ops =
 {
     texture_unload,
 };
-
-static void texture_cleanup(IWineD3DBaseTextureImpl *This)
-{
-    unsigned int i;
-
-    TRACE("(%p) : Cleaning up\n", This);
-
-    for (i = 0; i < This->baseTexture.level_count; ++i)
-    {
-        struct wined3d_resource *sub_resource = This->baseTexture.sub_resources[i];
-
-        if (sub_resource)
-        {
-            IWineD3DSurfaceImpl *surface = surface_from_resource(sub_resource);
-
-            /* Clean out the texture name we gave to the surface so that the
-             * surface doesn't try and release it */
-            surface_set_texture_name(surface, 0, TRUE);
-            surface_set_texture_name(surface, 0, FALSE);
-            surface_set_texture_target(surface, 0);
-            surface_set_container(surface, WINED3D_CONTAINER_NONE, NULL);
-            IWineD3DSurface_Release((IWineD3DSurface *)surface);
-        }
-    }
-
-    TRACE("(%p) : Cleaning up base texture\n", This);
-    basetexture_cleanup((IWineD3DBaseTextureImpl *)This);
-}
 
 static HRESULT WINAPI IWineD3DTextureImpl_QueryInterface(IWineD3DBaseTexture *iface, REFIID riid, LPVOID *ppobj)
 {
@@ -259,7 +245,7 @@ static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DBaseTexture *iface)
     ref = InterlockedDecrement(&This->resource.ref);
     if (!ref)
     {
-        texture_cleanup(This);
+        basetexture_cleanup(This);
         This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -531,7 +517,7 @@ HRESULT texture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT height, 
         if (FAILED(hr))
         {
             FIXME("Failed to create surface %p, hr %#x\n", texture, hr);
-            texture_cleanup(texture);
+            basetexture_cleanup(texture);
             return hr;
         }
 

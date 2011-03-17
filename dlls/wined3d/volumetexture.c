@@ -89,6 +89,15 @@ static void volumetexture_sub_resource_add_dirty_region(struct wined3d_resource 
     volume_add_dirty_box(volume_from_resource(sub_resource), dirty_region);
 }
 
+static void volumetexture_sub_resource_cleanup(struct wined3d_resource *sub_resource)
+{
+    IWineD3DVolumeImpl *volume = volume_from_resource(sub_resource);
+
+    /* Cleanup the container. */
+    volume_set_container(volume, NULL);
+    IWineD3DVolume_Release((IWineD3DVolume *)volume);
+}
+
 /* Do not call while under the GL lock. */
 static void volumetexture_unload(struct wined3d_resource *resource)
 {
@@ -111,38 +120,13 @@ static const struct wined3d_texture_ops volumetexture_ops =
     volumetexture_bind,
     volumetexture_preload,
     volumetexture_sub_resource_add_dirty_region,
+    volumetexture_sub_resource_cleanup,
 };
 
 static const struct wined3d_resource_ops volumetexture_resource_ops =
 {
     volumetexture_unload,
 };
-
-static void volumetexture_cleanup(IWineD3DBaseTextureImpl *This)
-{
-    unsigned int i;
-
-    TRACE("(%p) : Cleaning up.\n", This);
-
-    for (i = 0; i < This->baseTexture.level_count; ++i)
-    {
-        struct wined3d_resource *sub_resource = This->baseTexture.sub_resources[i];
-
-        if (sub_resource)
-        {
-            IWineD3DVolumeImpl *volume = volume_from_resource(sub_resource);
-
-            /* Cleanup the container. */
-            volume_set_container(volume, NULL);
-            IWineD3DVolume_Release((IWineD3DVolume *)volume);
-        }
-    }
-    basetexture_cleanup((IWineD3DBaseTextureImpl *)This);
-}
-
-/* *******************************************
-   IWineD3DTexture IUnknown parts follow
-   ******************************************* */
 
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_QueryInterface(IWineD3DBaseTexture *iface, REFIID riid, LPVOID *ppobj)
 {
@@ -177,7 +161,7 @@ static ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DBaseTexture *iface
     ref = InterlockedDecrement(&This->resource.ref);
     if (!ref)
     {
-        volumetexture_cleanup(This);
+        basetexture_cleanup(This);
         This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -381,7 +365,7 @@ HRESULT volumetexture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT he
         if (FAILED(hr))
         {
             ERR("Creating a volume for the volume texture failed, hr %#x.\n", hr);
-            volumetexture_cleanup(texture);
+            basetexture_cleanup(texture);
             return hr;
         }
 

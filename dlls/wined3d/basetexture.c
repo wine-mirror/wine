@@ -78,6 +78,19 @@ HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, const struct wined3d_
 
 void basetexture_cleanup(IWineD3DBaseTextureImpl *texture)
 {
+    UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
+    UINT i;
+
+    TRACE("texture %p.\n", texture);
+
+    for (i = 0; i < sub_count; ++i)
+    {
+        struct wined3d_resource *sub_resource = texture->baseTexture.sub_resources[i];
+
+        if (sub_resource)
+            texture->baseTexture.texture_ops->texture_sub_resource_cleanup(sub_resource);
+    }
+
     basetexture_unload(texture);
     HeapFree(GetProcessHeap(), 0, texture->baseTexture.sub_resources);
     resource_cleanup(&texture->resource);

@@ -1890,6 +1890,7 @@ struct wined3d_texture_ops
     void (*texture_preload)(struct IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb);
     void (*texture_sub_resource_add_dirty_region)(struct wined3d_resource *sub_resource,
             const WINED3DBOX *dirty_region);
+    void (*texture_sub_resource_cleanup)(struct wined3d_resource *sub_resource);
 };
 
 typedef struct IWineD3DBaseTextureClass
