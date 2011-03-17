@@ -235,11 +235,11 @@ static void test_IsUrlCacheEntryExpiredA(void)
     info = HeapAlloc(GetProcessHeap(), 0, size);
     ret = GetUrlCacheEntryInfo(TEST_URL, info, &size);
     GetSystemTimeAsFileTime(&info->ExpireTime);
-    exp_time.LowPart = info->ExpireTime.dwLowDateTime;
-    exp_time.HighPart = info->ExpireTime.dwHighDateTime;
+    exp_time.u.LowPart = info->ExpireTime.dwLowDateTime;
+    exp_time.u.HighPart = info->ExpireTime.dwHighDateTime;
     exp_time.QuadPart -= 10 * 60 * (ULONGLONG)10000000;
-    info->ExpireTime.dwLowDateTime = exp_time.LowPart;
-    info->ExpireTime.dwHighDateTime = exp_time.HighPart;
+    info->ExpireTime.dwLowDateTime = exp_time.u.LowPart;
+    info->ExpireTime.dwHighDateTime = exp_time.u.HighPart;
     ret = SetUrlCacheEntryInfo(TEST_URL, info, CACHE_ENTRY_EXPTIME_FC);
     ok(ret, "SetUrlCacheEntryInfo failed: %d\n", GetLastError());
     ft.dwLowDateTime = 0xdeadbeef;
@@ -253,8 +253,8 @@ static void test_IsUrlCacheEntryExpiredA(void)
        ft.dwLowDateTime, ft.dwHighDateTime);
     /* Set the expire time to a point in the future.. */
     exp_time.QuadPart += 20 * 60 * (ULONGLONG)10000000;
-    info->ExpireTime.dwLowDateTime = exp_time.LowPart;
-    info->ExpireTime.dwHighDateTime = exp_time.HighPart;
+    info->ExpireTime.dwLowDateTime = exp_time.u.LowPart;
+    info->ExpireTime.dwHighDateTime = exp_time.u.HighPart;
     ret = SetUrlCacheEntryInfo(TEST_URL, info, CACHE_ENTRY_EXPTIME_FC);
     ok(ret, "SetUrlCacheEntryInfo failed: %d\n", GetLastError());
     ft.dwLowDateTime = 0xdeadbeef;
@@ -376,8 +376,8 @@ static void test_urlcacheA(void)
        broken(lpCacheEntryInfo->CacheEntryType == NORMAL_CACHE_ENTRY /* NT4/W2k */),
        "expected type NORMAL_CACHE_ENTRY|URLHISTORY_CACHE_ENTRY, got %08x\n",
        lpCacheEntryInfo->CacheEntryType);
-    ok(!lpCacheEntryInfo->dwExemptDelta, "expected dwExemptDelta 0, got %d\n",
-       lpCacheEntryInfo->dwExemptDelta);
+    ok(!U(*lpCacheEntryInfo).dwExemptDelta, "expected dwExemptDelta 0, got %d\n",
+       U(*lpCacheEntryInfo).dwExemptDelta);
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
     /* A subsequent commit with a different time/type doesn't change the type */
@@ -653,9 +653,9 @@ static void test_urlcacheA(void)
     ok(lpCacheEntryInfo->CacheEntryType & (NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY),
        "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %d (0x%08x)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
-    ok(lpCacheEntryInfo->dwExemptDelta == 86400,
+    ok(U(*lpCacheEntryInfo).dwExemptDelta == 86400,
        "expected dwExemptDelta 864000, got %d\n",
-       lpCacheEntryInfo->dwExemptDelta);
+       U(*lpCacheEntryInfo).dwExemptDelta);
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
     if (pDeleteUrlCacheEntryA)
     {
@@ -685,17 +685,17 @@ static void test_urlcacheA(void)
     ok(lpCacheEntryInfo->CacheEntryType & (NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY),
        "expected cache entry type NORMAL_CACHE_ENTRY | STICKY_CACHE_ENTRY, got %d (0x%08x)\n",
        lpCacheEntryInfo->CacheEntryType, lpCacheEntryInfo->CacheEntryType);
-    ok(lpCacheEntryInfo->dwExemptDelta == 86400,
+    ok(U(*lpCacheEntryInfo).dwExemptDelta == 86400,
        "expected dwExemptDelta 864000, got %d\n",
-       lpCacheEntryInfo->dwExemptDelta);
-    lpCacheEntryInfo->dwExemptDelta = 0;
+       U(*lpCacheEntryInfo).dwExemptDelta);
+    U(*lpCacheEntryInfo).dwExemptDelta = 0;
     ret = SetUrlCacheEntryInfoA(TEST_URL, lpCacheEntryInfo,
             CACHE_ENTRY_EXEMPT_DELTA_FC);
     ok(ret, "SetUrlCacheEntryInfo failed: %d\n", GetLastError());
     ret = GetUrlCacheEntryInfo(TEST_URL, lpCacheEntryInfo, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
-    ok(!lpCacheEntryInfo->dwExemptDelta, "expected dwExemptDelta 0, got %d\n",
-       lpCacheEntryInfo->dwExemptDelta);
+    ok(!U(*lpCacheEntryInfo).dwExemptDelta, "expected dwExemptDelta 0, got %d\n",
+       U(*lpCacheEntryInfo).dwExemptDelta);
     /* See whether a sticky cache entry has the flag cleared once the exempt
      * delta is meaningless.
      */
