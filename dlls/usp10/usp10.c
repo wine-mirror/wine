@@ -1201,40 +1201,126 @@ HRESULT WINAPI ScriptXtoCP(int iX,
                            int *piTrailing)
 {
     int item;
-    int iPosX;
-    float fMaxPosX = 1;
-    float fAvePosX;
+    float iPosX;
+    float iLastPosX;
+    int iSpecial = -1;
+    int iCluster = -1;
+    int clust_size = 1;
+    float special_size = 0.0;
+    int direction = 1;
+
     TRACE("(%d,%d,%d,%p,%p,%p,%p,%p,%p)\n",
           iX, cChars, cGlyphs, pwLogClust, psva, piAdvance,
           psa, piCP, piTrailing);
-    if  (iX < 0)                                    /* iX is before start of run */
+
+    if (psa->fRTL && ! psa->fLogicalOrder)
+        direction = -1;
+
+    if (direction<0)
+    {
+        int max_clust = pwLogClust[0];
+
+        if (iX < 0)
+        {
+            *piCP = cGlyphs;
+            *piTrailing = 0;
+            return S_OK;
+        }
+
+        for (item=0; item < cGlyphs; item++)
+            if (pwLogClust[item] > max_clust)
+            {
+                ERR("We do not handle non reversed clusters properly\n");
+                break;
+            }
+    }
+
+    if (iX < 0)
     {
         *piCP = -1;
-        *piTrailing = TRUE;
+        *piTrailing = 1;
         return S_OK;
     }
 
-    for (item=0; item < cGlyphs; item++)            /* total piAdvance           */
-        fMaxPosX += piAdvance[item];
-
-    if  (iX >= fMaxPosX)                            /* iX too large              */
-    {
-        *piCP = cChars;
-        *piTrailing = FALSE;
-        return S_OK;
-    }
-
-    fAvePosX = fMaxPosX / cGlyphs;
-    iPosX = fAvePosX;
-    for (item = 1; item < cGlyphs  && iPosX < iX; item++)
-        iPosX += fAvePosX;
-    if  (iPosX - iX > fAvePosX/2)
-        *piTrailing = 0;
+    iPosX = iLastPosX = 0;
+    if (direction > 0)
+        item = 0;
     else
-        *piTrailing = 1;                            /* yep we are over halfway */
+        item = cGlyphs - 1;
+    for (; iPosX <= iX && item < cGlyphs && item >= 0; item+=direction)
+    {
+        iLastPosX = iPosX;
+        if (iSpecial == -1 &&
+             (iCluster == -1 ||
+              (iCluster != -1 &&
+                 ((direction > 0 && iCluster+clust_size <= item) ||
+                  (direction < 0 && iCluster-clust_size >= item))
+              )
+             )
+            )
+        {
+            int check;
+            int clust = pwLogClust[item];
 
-    *piCP = item -1;                                /* Return character position */
-    TRACE("*piCP=%d iPposX=%d\n", *piCP, iPosX);
+            clust_size = 1;
+            iCluster = -1;
+
+            for (check = item+direction; check < cGlyphs && check >= 0; check+=direction)
+            {
+                if (pwLogClust[check] == clust)
+                {
+                    clust_size ++;
+                    if (iCluster == -1)
+                        iCluster = item;
+                }
+                else break;
+            }
+
+            if (check >= cGlyphs && direction > 0)
+            {
+                for (check = clust; check < cGlyphs; check++)
+                    special_size += piAdvance[check];
+                iSpecial = item;
+                special_size /= (cChars - item);
+                iPosX += special_size;
+            }
+            else
+                iPosX += piAdvance[clust] / (float)clust_size;
+        }
+        else if (iSpecial != -1)
+            iPosX += special_size;
+        else /* (iCluster != -1) */
+            iPosX += piAdvance[pwLogClust[iCluster]] / (float)clust_size;
+    }
+
+    if (direction > 0)
+    {
+        if (iPosX > iX)
+            item--;
+        if (item < cGlyphs && ((iPosX - iLastPosX) / 2.0) + iX > iPosX)
+            *piTrailing = 1;
+        else
+            *piTrailing = 0;
+    }
+    else
+    {
+        if (iX == iLastPosX)
+            item++;
+        if (iX >= iLastPosX && iX <= iPosX)
+            item++;
+
+        if (iLastPosX == iX)
+            *piTrailing = 0;
+        else if (item < 0 || ((iLastPosX - iPosX) / 2.0) + iX <= iLastPosX)
+            *piTrailing = 1;
+        else
+            *piTrailing = 0;
+    }
+
+    *piCP = item;
+
+    TRACE("*piCP=%d\n", *piCP);
+    TRACE("*piTrailing=%d\n", *piTrailing);
     return S_OK;
 }
 
