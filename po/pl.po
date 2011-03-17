@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-03-15 12:40+0100\n"
+"PO-Revision-Date: 2011-03-16 19:00+0100\n"
 "Last-Translator: Łukasz Wojniłowicz\n"
 "Language-Team: none\n"
 "Language: Polish\n"
@@ -368,7 +368,7 @@ msgstr ""
 
 #: comdlg32.rc:77
 msgid "A printer error occurred."
-msgstr "Błąd drukowania"
+msgstr "Błąd drukowania."
 
 #: comdlg32.rc:78
 msgid "No default printer defined."
@@ -380,11 +380,11 @@ msgstr "Nie można odnaleźć drukarki."
 
 #: comdlg32.rc:80 progman.rc:78
 msgid "Out of memory."
-msgstr "Wyczerpano pamięć."
+msgstr "Za mało pamięci dla tej operacji."
 
 #: comdlg32.rc:81
 msgid "An error occurred."
-msgstr "Wystąpił błąd."
+msgstr "Podczas tej operacji wystąpił błąd."
 
 #: comdlg32.rc:82
 msgid "Unknown printer driver."
@@ -425,11 +425,11 @@ msgstr "Otwórz plik"
 
 #: comdlg32.rc:93 oleview.rc:95
 msgid "Ready"
-msgstr "Gotowy"
+msgstr "Gotowe"
 
 #: comdlg32.rc:94
 msgid "Paused; "
-msgstr "Przerwany; "
+msgstr "Wstrzymane; "
 
 #: comdlg32.rc:95
 msgid "Error; "
@@ -437,23 +437,23 @@ msgstr "Błąd; "
 
 #: comdlg32.rc:96
 msgid "Pending deletion; "
-msgstr "Kasowanie"
+msgstr "Oczekiwanie na usunięcie"
 
 #: comdlg32.rc:97
 msgid "Paper jam; "
-msgstr "Problemy z papierem; "
+msgstr "Zakleszczenie papieru; "
 
 #: comdlg32.rc:98
 msgid "Out of paper; "
-msgstr "Koniec papieru; "
+msgstr "Brak papieru; "
 
 #: comdlg32.rc:99
 msgid "Feed paper manual; "
-msgstr "Włóż papier; "
+msgstr "Podawanie ręczne; "
 
 #: comdlg32.rc:100
 msgid "Paper problem; "
-msgstr "Problemy z papierem; "
+msgstr "Problem z papierem; "
 
 #: comdlg32.rc:101
 msgid "Printer offline; "
@@ -461,39 +461,39 @@ msgstr "Drukarka jest offline; "
 
 #: comdlg32.rc:102
 msgid "I/O Active; "
-msgstr "Aktywność I/O; "
+msgstr "We/Wy aktywne; "
 
 #: comdlg32.rc:103
 msgid "Busy; "
-msgstr "Zajęta; "
+msgstr "Zajęty; "
 
 #: comdlg32.rc:104
 msgid "Printing; "
-msgstr "Drukuje; "
+msgstr "Drukowanie; "
 
 #: comdlg32.rc:105
 msgid "Output tray is full; "
-msgstr "Pojemnik jest zapełniony; "
+msgstr "Pojemnik wyjściowy jest zapełniony; "
 
 #: comdlg32.rc:106
 msgid "Not available; "
-msgstr "Nie osiągalna; "
+msgstr "Niedostępne; "
 
 #: comdlg32.rc:107
 msgid "Waiting; "
-msgstr "Oczekuje; "
+msgstr "Oczekiwanie; "
 
 #: comdlg32.rc:108
 msgid "Processing; "
-msgstr "Zajęta; "
+msgstr "Przetwarzanie; "
 
 #: comdlg32.rc:109
 msgid "Initialising; "
-msgstr "Inicjuje; "
+msgstr "Inicjowanie; "
 
 #: comdlg32.rc:110
 msgid "Warming up; "
-msgstr "Uruchamianie; "
+msgstr "Rozgrzewanie; "
 
 #: comdlg32.rc:111
 msgid "Toner low; "
@@ -505,7 +505,7 @@ msgstr "Brak toneru; "
 
 #: comdlg32.rc:113
 msgid "Page punt; "
-msgstr "Page punt; "
+msgstr "Strona wysłana; "
 
 #: comdlg32.rc:114
 msgid "Interrupted by user; "
@@ -609,7 +609,7 @@ msgstr "Alternatywna nazwa wystawcy"
 
 #: crypt32.rc:32
 msgid "Basic Constraints"
-msgstr "Podstawowe ograniczenia"
+msgstr "Podstawowe warunki ograniczające"
 
 #: crypt32.rc:33
 msgid "Key Usage"
@@ -637,7 +637,7 @@ msgstr "Użycie klucza rozszerzonego"
 
 #: crypt32.rc:39
 msgid "Authority Information Access"
-msgstr "Authority Information Access"
+msgstr "Dostęp do informacji o urzędach"
 
 #: crypt32.rc:40
 msgid "Certificate Extensions"
@@ -645,11 +645,11 @@ msgstr "Rozszerzenia certyfikatu"
 
 #: crypt32.rc:41
 msgid "Next Update Location"
-msgstr "Położenie kolejnej aktualizacji"
+msgstr "Lokalizacja następnej aktualizacji"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr "Zaufać albo niezaufać"
+msgstr "Zaufanie Tak lub Nie"
 
 #: crypt32.rc:43
 msgid "Email Address"
@@ -657,7 +657,7 @@ msgstr "Adres e-mail"
 
 #: crypt32.rc:44
 msgid "Unstructured Name"
-msgstr "Niezaufana nazwa"
+msgstr "Nazwa bez struktury"
 
 #: crypt32.rc:45
 msgid "Content Type"
@@ -665,31 +665,31 @@ msgstr "Typ zawartości"
 
 #: crypt32.rc:46
 msgid "Message Digest"
-msgstr "Message Digest"
+msgstr "Odtwarzanie wiadomości"
 
 #: crypt32.rc:47
 msgid "Signing Time"
-msgstr "Czas podpisywania"
+msgstr "Czas podpisu"
 
 #: crypt32.rc:48
 msgid "Counter Sign"
-msgstr "Counter Sign"
+msgstr "Znak licznika"
 
 #: crypt32.rc:49
 msgid "Challenge Password"
-msgstr "Challenge Password"
+msgstr "Hasło wezwania"
 
 #: crypt32.rc:50
 msgid "Unstructured Address"
-msgstr "Unstructured Address"
+msgstr "Adres bez struktury"
 
 #: crypt32.rc:51
 msgid "SMIME Capabilities"
-msgstr "Możliwości SMIME"
+msgstr "Możliwości edytora SMIME"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr "Preferuj podpisane dane"
+msgstr "Preferuj dane podpisane"
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgid "CPS"
@@ -697,19 +697,19 @@ msgstr "CPS"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr "Uwagi użytkowanika"
+msgstr "Powiadomienie użytkownika"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr "On-line Certificate Status Protocol"
+msgstr "Protokół stanu certyfikatu online"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
-msgstr "Certification Authority Issuer"
+msgstr "Urząd certyfikacji - wystawca"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr "Certification Template Name"
+msgstr "Nazwa szablonu certyfikatu"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
@@ -717,7 +717,7 @@ msgstr "Typ certyfikatu"
 
 #: crypt32.rc:59
 msgid "Certificate Manifold"
-msgstr "Certificate Manifold"
+msgstr "Wielokrotność certyfikatu"
 
 #: crypt32.rc:60
 msgid "Netscape Cert Type"
@@ -733,7 +733,7 @@ msgstr "Adres URL odwoływania Netscape"
 
 #: crypt32.rc:63
 msgid "Netscape CA Revocation URL"
-msgstr "Adres URL odwoływania CA Netscape"
+msgstr "Adres URL odwoływania UC Netscape"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
@@ -741,7 +741,7 @@ msgstr "Adres URL odnowienia certyfikatu Netscape"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
-msgstr "Adres URL zasad CA Netscape"
+msgstr "Adres URL zasad UC Netscape"
 
 #: crypt32.rc:66
 msgid "Netscape SSL ServerName"
@@ -777,15 +777,15 @@ msgstr "Jednostka organizacyjna"
 
 #: crypt32.rc:74
 msgid "Common Name"
-msgstr "Powrzechna nazwa"
+msgstr "Przydomek"
 
 #: crypt32.rc:75
 msgid "Locality"
-msgstr "Lokalność"
+msgstr "Miasto"
 
 #: crypt32.rc:76
 msgid "State or Province"
-msgstr "Państwo albo prowincja"
+msgstr "Województwo"
 
 #: crypt32.rc:77
 msgid "Title"
@@ -793,7 +793,7 @@ msgstr "Tytuł"
 
 #: crypt32.rc:78
 msgid "Given Name"
-msgstr "Nadana nazwa"
+msgstr "Imię"
 
 #: crypt32.rc:79
 msgid "Initials"
@@ -817,7 +817,7 @@ msgstr "Numer seryjny"
 
 #: crypt32.rc:84
 msgid "CA Version"
-msgstr "Wersja CA"
+msgstr "Wersja urzędu certyfikacji"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
@@ -825,11 +825,11 @@ msgstr "Wersja krzyżowa CA"
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr "Numer seryjny seryjnego podpisu"
+msgstr "Numer seryjny podpisu"
 
 #: crypt32.rc:87
 msgid "Principal Name"
-msgstr "Główna nazwa"
+msgstr "Nazwa główna"
 
 #: crypt32.rc:88
 msgid "Windows Product Update"
@@ -837,43 +837,43 @@ msgstr "Aktualizacja produktu Windows"
 
 #: crypt32.rc:89
 msgid "Enrollment Name Value Pair"
-msgstr "Enrollment Name Value Pair"
+msgstr "Para wartości nazwy rejestracyjnej"
 
 #: crypt32.rc:90
 msgid "OS Version"
-msgstr "Wersja OS"
+msgstr "Wersja systemu operacyjnego"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr "Enrollment CSP"
+msgstr "Dostawca usług kryptograficznych rejestracji"
 
 #: crypt32.rc:92
 msgid "CRL Number"
-msgstr "Numer CRL"
+msgstr "Numer listy CRL"
 
 #: crypt32.rc:93
 msgid "Delta CRL Indicator"
-msgstr "Delta CRL Indicator"
+msgstr "Wskaźnik różnicowej listy CRL"
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr "Wydający punkt dystrybucji"
+msgstr "Wystawianie punktu dystrybucji"
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
-msgstr "Njaświeższy CRL"
+msgstr "Njanowsza lista CRL"
 
 #: crypt32.rc:96
 msgid "Name Constraints"
-msgstr "Ograniczenia nazwy"
+msgstr "Warunki ograniczające nazw"
 
 #: crypt32.rc:97
 msgid "Policy Mappings"
-msgstr "Policy Mappings"
+msgstr "Mapowanie zasad"
 
 #: crypt32.rc:98
 msgid "Policy Constraints"
-msgstr "Zasady ograniczeń"
+msgstr "Warunki ograniczające zasad"
 
 #: crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
@@ -881,15 +881,15 @@ msgstr "Punkty dystrybucji certyfikatów krzyżowych"
 
 #: crypt32.rc:100
 msgid "Application Policies"
-msgstr "Zazady aplikacji"
+msgstr "Zasady aplikacji"
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr "Application Policy Mappings"
+msgstr "Mapowania zasad aplikacji"
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr "Ograniczenia zasad aplikacji"
+msgstr "Warunki ograniczające zasad aplikacji"
 
 #: crypt32.rc:103
 msgid "CMC Data"
@@ -905,7 +905,7 @@ msgstr "Niepodpisane żądanie CMC"
 
 #: crypt32.rc:106
 msgid "CMC Status Info"
-msgstr "Informacje stanu CMC"
+msgstr "Informacja o stanie CMC"
 
 #: crypt32.rc:107
 msgid "CMC Extensions"
@@ -917,43 +917,43 @@ msgstr "Atrybuty CMC"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Data"
-msgstr "PKCS 7 Dane"
+msgstr "Dane certyfikatu PKCS 7"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr "PKCS 7 Podpisany"
+msgstr "Podpisany certyfikat PKCS 7"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr "PKCS 7 Enveloped"
+msgstr "Opakowany certyfikat PKCS 7"
 
 #: crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr "PKCS 7 Signed Enveloped"
+msgstr "Opakowany podpisany certyfikat PKCS 7"
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
-msgstr "PKCS 7 Digested"
+msgstr "Porządkowany certyfikat PKCS 7"
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr "PKCS 7 Szyfrowany"
+msgstr "Szyfrowany certyfikat PKCS 7"
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr "Poprzedni Hash certyfikatu CA"
+msgstr "Hash certyfiaktu poprzedniego urzędu certyfikującego"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
-msgstr "Virtual Base CRL Number"
+msgstr "Numer wirtualnej listy podstawowej CRL"
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr "Next CRL Publish"
+msgstr "Publikowanie następnej listy CRL"
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr "Certyfikat szyfrowania CA"
+msgstr "Certyfikat szyfrowania urzędu certyfikacji"
 
 #: crypt32.rc:119 cryptui.rc:145
 msgid "Key Recovery Agent"
@@ -965,7 +965,7 @@ msgstr "Informacje o szablonie certyfikatu"
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr "Enterprise Root OID"
+msgstr "Główny identyfikator OID przedsiębiorstwa"
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
@@ -973,15 +973,15 @@ msgstr "Fikcyjny podpisujący"
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
-msgstr "Prywatny zaszyfrowany klucz"
+msgstr "Szyfrowany klucz prywatny"
 
 #: crypt32.rc:124
 msgid "Published CRL Locations"
-msgstr "Opublikowane położenia CRL"
+msgstr "Publikowane lokalizacje listy CRL"
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr "Enforce Certificate Chain Policy"
+msgstr "Zasada wymuszania łańcucha certyfikatów"
 
 #: crypt32.rc:126
 msgid "Transaction Id"
@@ -1229,7 +1229,7 @@ msgstr "Typ podmiotu="
 
 #: crypt32.rc:195
 msgid "CA"
-msgstr "CA"
+msgstr "UC"
 
 #: crypt32.rc:196
 msgid "End Entity"
@@ -1413,7 +1413,7 @@ msgstr "Zasady certyfikatu"
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "Identyfikator klucza urzędu"
+msgstr "Identyfikator zasad"
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
@@ -1421,7 +1421,7 @@ msgstr "Informacje o kwalifikatorze zasad"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr "Identyfikator kwalifikatora zasad"
+msgstr "Identyfikator kwalifikatora zasad="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
@@ -1580,7 +1580,7 @@ msgstr "%s (%d bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr "SHA1 hash"
+msgstr "Odcisk palca"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
@@ -2463,7 +2463,7 @@ msgstr "Zbyt dużo poleceń\n"
 
 #: winerror.mc:251
 msgid "Adaptor hardware error\n"
-msgstr "Adaptor hardware error\n"
+msgstr "Sprzętowy błąd adaptera\n"
 
 #: winerror.mc:256
 msgid "Bad network response\n"
@@ -2475,7 +2475,7 @@ msgstr "Nieoczekiwany błąd sieciowy\n"
 
 #: winerror.mc:266
 msgid "Bad remote adaptor\n"
-msgstr "Bad remote adaptor\n"
+msgstr "Złu zdalny adapter\n"
 
 #: winerror.mc:271
 msgid "Print queue full\n"
@@ -2555,7 +2555,7 @@ msgstr "Niepoprawny parametr\n"
 
 #: winerror.mc:366
 msgid "Net write fault\n"
-msgstr "Net write fault\n"
+msgstr "Błąd zapisu Net\n"
 
 #: winerror.mc:371
 msgid "No process slots\n"
@@ -2579,7 +2579,7 @@ msgstr "Zbyt dużo żądań semafor\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time\n"
-msgstr "Invalid at interrupt time\n"
+msgstr "Niepoprawny w czasie przerywania\n"
 
 #: winerror.mc:401
 msgid "Semaphore owner died\n"
@@ -2599,7 +2599,7 @@ msgstr "Napęd zablokowany\n"
 
 #: winerror.mc:421
 msgid "Broken pipe\n"
-msgstr "Broken pipe\n"
+msgstr "Uszkodzony symbol potoku\n"
 
 #: winerror.mc:426
 msgid "Open failed\n"
@@ -2623,7 +2623,7 @@ msgstr "Niepoprawne IOCTL\n"
 
 #: winerror.mc:456
 msgid "Invalid verify switch\n"
-msgstr "Invalid verify switch\n"
+msgstr "Niepoprawny przełącznik weryfikujący\n"
 
 #: winerror.mc:461
 msgid "Bad driver level\n"
@@ -2763,7 +2763,7 @@ msgstr "Niepoprawna lista DosSemMuxWait\n"
 
 #: winerror.mc:636
 msgid "Volume label too long\n"
-msgstr "Etykieta dysku zbyt długa\n"
+msgstr "Zbyt długa etykieta dysku\n"
 
 #: winerror.mc:641
 msgid "Too many TCBs\n"
@@ -2798,9 +2798,8 @@ msgid "Signal pending\n"
 msgstr "Sygnał w toku\n"
 
 #: winerror.mc:681
-#, fuzzy
 msgid "Max system-wide thread count reached\n"
-msgstr "Max systemwide thread count reached\n"
+msgstr "Max syste-mwide thread count reached\n"
 
 #: winerror.mc:686
 msgid "Lock failed\n"
@@ -2944,19 +2943,19 @@ msgstr "Typ maszyny niedopasowany\n"
 
 #: winerror.mc:861
 msgid "Bad pipe\n"
-msgstr "Bad pipe\n"
+msgstr "Zły symbol potoku\n"
 
 #: winerror.mc:866
 msgid "Pipe busy\n"
-msgstr "Pipe busy\n"
+msgstr "Symbol potoku zajęty\n"
 
 #: winerror.mc:871
 msgid "Pipe closed\n"
-msgstr "Pipe closed\n"
+msgstr "Symbol potoku zamknięty\n"
 
 #: winerror.mc:876
 msgid "Pipe not connected\n"
-msgstr "Pipe not connected\n"
+msgstr "Symbol potoku niepodłączony\n"
 
 #: winerror.mc:881
 msgid "More data available\n"
@@ -3020,12 +3019,11 @@ msgstr "Read/WriteProcessMemory częściowo ukończyło\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted\n"
-msgstr ""
+msgstr "Oplock nie został przyznany\n"
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received\n"
-msgstr "Niepoprawna nazwa wiadomości\n"
+msgstr "Otrzymano niepoprawną wiadomość oplock\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -3041,11 +3039,11 @@ msgstr "Arytmetyczne przepełnienie górne\n"
 
 #: winerror.mc:981
 msgid "Pipe connected\n"
-msgstr "Pipe connected\n"
+msgstr "Symbol potoku podłączony\n"
 
 #: winerror.mc:986
 msgid "Pipe listening\n"
-msgstr "Pipe listening\n"
+msgstr "Symbol potoku nasłuchuje\n"
 
 #: winerror.mc:991
 msgid "Extended attribute access denied\n"
@@ -3101,11 +3099,11 @@ msgstr "Nie można uruchomić w trybie pełnoekranowym\n"
 
 #: winerror.mc:1056
 msgid "Nonexistent token\n"
-msgstr "Nonexistent token\n"
+msgstr "Nieistniejący token\n"
 
 #: winerror.mc:1061
 msgid "Registry corrupt\n"
-msgstr "Rejestr zepsuty\n"
+msgstr "Rejestr uszkodzony\n"
 
 #: winerror.mc:1066
 msgid "Invalid key\n"
@@ -3961,7 +3959,7 @@ msgstr "Bad impersonation level\n"
 
 #: winerror.mc:2136
 msgid "Can't open anonymous security token\n"
-msgstr "Can't open anonymous security token\n"
+msgstr "Nie można otworzyć anonimowego tokena bezpieczeństwa\n"
 
 #: winerror.mc:2141
 msgid "Bad validation class\n"
@@ -3969,7 +3967,7 @@ msgstr "Bad validation class\n"
 
 #: winerror.mc:2146
 msgid "Bad token type\n"
-msgstr "Bad token type\n"
+msgstr "Zły typ tokena\n"
 
 #: winerror.mc:2151
 msgid "No security on object\n"
@@ -4073,7 +4071,7 @@ msgstr "Grupa jest główną dla użytkownika\n"
 
 #: winerror.mc:2276
 msgid "Token already in use\n"
-msgstr "Token already in use\n"
+msgstr "Token jest już używany\n"
 
 #: winerror.mc:2281
 msgid "No such local group\n"
@@ -4097,7 +4095,7 @@ msgstr "Logowanie nie przyznane\n"
 
 #: winerror.mc:2306
 msgid "Too many secrets\n"
-msgstr "Too many secrets\n"
+msgstr "Zbyt dużo secretów\n"
 
 #: winerror.mc:2311
 msgid "Secret too long\n"
@@ -4181,7 +4179,7 @@ msgstr "Invalid accelerator table handle\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle\n"
-msgstr "Invalid hook handle\n"
+msgstr "Niepoprawny uchwyt zaczepu\n"
 
 #: winerror.mc:2421
 msgid "Invalid DWP handle\n"
@@ -4216,6 +4214,7 @@ msgid "Class has open windows\n"
 msgstr "Klasa ma otwarte okna\n"
 
 #: winerror.mc:2461
+
 msgid "Invalid index\n"
 msgstr "Niepoprawny index\n"
 
@@ -4228,7 +4227,6 @@ msgid "Private dialog index\n"
 msgstr "Index prywatnego dialogu\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
 msgstr "Nie znaleziono identyfikatora listbox'a\n"
 
@@ -4270,7 +4268,7 @@ msgstr "Nie znaleziono DC\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter\n"
-msgstr "Invalid hook filter\n"
+msgstr "Niepoprawny filtr zaczepu\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure\n"
@@ -4278,22 +4276,21 @@ msgstr "Niepoprawna procedura filtrowania\n"
 
 #: winerror.mc:2536
 msgid "Hook procedure needs module handle\n"
-msgstr "Hook procedure needs module handle\n"
+msgstr "Procedura zaczepu potrzebuje uchwytu modułu\n"
 
 #: winerror.mc:2541
 msgid "Global-only hook procedure\n"
-msgstr "Global-only hook procedure\n"
+msgstr "Procedura zaczepu tylko-globalna\n"
 
 #: winerror.mc:2546
 msgid "Journal hook already set\n"
-msgstr "Journal hook already set\n"
+msgstr "Zaczep dziennika już jest ustawiony\n"
 
 #: winerror.mc:2551
 msgid "Hook procedure not installed\n"
-msgstr "Hook procedure not installed\n"
+msgstr "Procedura zaczepu niezainstalowana\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
 msgstr "Niepoprawna wiadomość listbox'a\n"
 
@@ -4302,8 +4299,7 @@ msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "Wysłano niepoprawny LB_SETCOUNT\n"
 
 #: winerror.mc:2566
-#, fuzzy
-msgid "No tab stops on this list box\n"
+msgid "No tab stops on this listbox\n"
 msgstr "Brak punktów tabulacyjnych w tym listbox'ie\n"
 
 #: winerror.mc:2571
@@ -4319,7 +4315,6 @@ msgid "Window has no system menu\n"
 msgstr "Okno nie ma menu systemowego\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
 msgstr "Niepoprawny styl messagebox'a\n"
 
@@ -4372,7 +4367,6 @@ msgid "No system resources\n"
 msgstr "Brak zasobów systemowych\n"
 
 #: winerror.mc:2651
-#, fuzzy
 msgid "No non-paged system resources\n"
 msgstr "Brak niestronicowanych zasobów systemowych\n"
 
@@ -4385,7 +4379,6 @@ msgid "No working set quota\n"
 msgstr "No working set quota\n"
 
 #: winerror.mc:2666
-#, fuzzy
 msgid "No page file quota\n"
 msgstr "Brak przydziału pliku stronicowania\n"
 
@@ -4402,9 +4395,8 @@ msgid "Invalid keyboard handle\n"
 msgstr "Niepoprawny uchwyt klawiatury\n"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr "Logowanie nie przyznane\n"
+msgstr "Typ zaczepu niedozwolony\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
@@ -4463,7 +4455,6 @@ msgid "Unknown component\n"
 msgstr "Nieznany komponent\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property\n"
 msgstr "Nieznana właściwość\n"
 
@@ -4492,9 +4483,8 @@ msgid "Product uninstalled\n"
 msgstr "Produkt odinstalowany\n"
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax\n"
-msgstr "Niepoprawna nazwa składni\n"
+msgstr "Niepoprawne składnia kwerendy\n"
 
 #: winerror.mc:2801
 msgid "Invalid field\n"
@@ -4722,11 +4712,11 @@ msgstr "Niewspierana składnia transferu\n"
 
 #: winerror.mc:3086
 msgid "Invalid tag\n"
-msgstr "Invalid tag\n"
+msgstr "Niepoprawny tag\n"
 
 #: winerror.mc:3091
 msgid "Invalid array bounds\n"
-msgstr "Invalid array bounds\n"
+msgstr "Niepoprawne granice macierzy\n"
 
 #: winerror.mc:3096
 msgid "No entry name\n"
@@ -4754,7 +4744,7 @@ msgstr "Nieznany typ poświadczenia\n"
 
 #: winerror.mc:3126
 msgid "Maximum calls too low\n"
-msgstr "Maximum calls too low\n"
+msgstr "Maksymalna liczba wywołań zbyt mała\n"
 
 #: winerror.mc:3131
 msgid "String too long\n"
@@ -4997,7 +4987,6 @@ msgid "Invalid printer command\n"
 msgstr "Niepoprawne polecenie drukarki\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
 msgstr "Niepoprawny typ danych\n"
 
@@ -5075,7 +5064,7 @@ msgstr "Brak zarejestrowanej nazwy głównej\n"
 
 #: winerror.mc:3526
 msgid "Not an RPC error\n"
-msgstr "To nie jest błąd RPC\n"
+msgstr "Błąd nie-RPC\n"
 
 #: winerror.mc:3531
 msgid "UUID is local only\n"
@@ -5103,15 +5092,15 @@ msgstr "Nieprawidłowa wersja stub\n"
 
 #: winerror.mc:3561
 msgid "Invalid pipe object\n"
-msgstr "Invalid pipe object\n"
+msgstr "Niepoprawny obiekt symbolu potoku\n"
 
 #: winerror.mc:3566
 msgid "Wrong pipe order\n"
-msgstr "Nieprawidłowa kolejność pipe\n"
+msgstr "Nieprawidłowa kolejność symbolu potoku\n"
 
 #: winerror.mc:3571
 msgid "Wrong pipe version\n"
-msgstr "Nieprawidłowa wersja pipe\n"
+msgstr "Nieprawidłowa wersja symbolu potoku\n"
 
 #: winerror.mc:3576
 msgid "Group member not found\n"
@@ -5131,11 +5120,11 @@ msgstr "Niepoprawny czas\n"
 
 #: winerror.mc:3596
 msgid "Invalid form name\n"
-msgstr "Niepoprawna nazwa formy\n"
+msgstr "Niepoprawna nazwa formularza\n"
 
 #: winerror.mc:3601
 msgid "Invalid form size\n"
-msgstr "Niepoprawny rozmiar formy\n"
+msgstr "Niepoprawny rozmiar formularza\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle\n"
@@ -5159,7 +5148,7 @@ msgstr "Nie znaleziono kontrolera domeny\n"
 
 #: winerror.mc:3631
 msgid "Account locked out\n"
-msgstr "Account locked out\n"
+msgstr "Konto zamknięte\n"
 
 #: winerror.mc:3636
 msgid "Invalid pixel format\n"
@@ -5188,15 +5177,15 @@ msgstr "Niepoprawe asynchroniczne wywołanie RPC\n"
 
 #: winerror.mc:3666
 msgid "RPC pipe closed\n"
-msgstr "Kanał RPC zamknięty\n"
+msgstr "Symbol potoku RPC zamknięty\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
-msgstr "Błąd dyscypliny na kanale RPC"
+msgstr "Błąd dyscypliny na symbolu potoku RPC"
 
 #: winerror.mc:3676
 msgid "No data on RPC pipe\n"
-msgstr "Brak danych na kanale RPC\n"
+msgstr "Brak danych na symbolu potoku RPC\n"
 
 #: winerror.mc:3681
 msgid "No site name available\n"
@@ -5313,7 +5302,6 @@ msgid "insert disk %s"
 msgstr "włóż dysk '%s'"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5347,31 +5335,31 @@ msgid ""
 msgstr ""
 "Windows Installer %s\n"
 "\n"
-"Usage:\n"
-"msiexec command {required parameter} [optional parammeter]\n"
+"Użycie:\n"
+"polecenie msiexec {wymagany parametr} [opcjonalny parametr]\n"
 "\n"
-"Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
-"\t/a package [property]\n"
-"Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
-"Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
-"Advertise a product:\n"
-"\t/j[u|m] package [/t transform] [/g languageid]\n"
-"Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
-"Log and UI Modifiers for above commands:\n"
-"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
+"Zainstaluj produkt:\n"
+"\t/i {paczka|kodproduktu} [właściwość]\n"
+"\t/package {paczka|kodproduktu} [właściwość]\n"
+"\t/a paczka [właściwość]\n"
+"Napraw instalację:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {paczka|kodproduktu}\n"
+"Odinstaluj produkt:\n"
+"\t/uninstall {paczka|kodproduktu} [właściwość]\n"
+"\t/x {paczka|kodproduktu} [właściwość]\n"
+"Ogłoś produkt:\n"
+"\t/j[u|m] paczka [/t pakiettransformujący] [/g identyfikatorjęzyka]\n"
+"Zastosuj łatkę:\n"
+"\t/p paczkałatki [właściwość]\n"
+"\t/p paczkałatki /a paczka [właściwość]\n"
+"Modyfikatory dziennika i interfejsu użytkownika dla powyższych poleceń:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] plikdziennika\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Register MSI Service:\n"
+"Zarejestruj usługę MSI:\n"
 "\t/y\n"
-"Unregister MSI Service:\n"
+"Wyrejestruj usługę MSI:\n"
 "\t/z\n"
-"Display this help:\n"
+"Wyświetl tą pomoc:\n"
 "\t/help\n"
 "\t/?\n"
 
@@ -5469,7 +5457,7 @@ msgstr "klient"
 
 #: oleacc.rc:38
 msgid "popup menu"
-msgstr "menu rozwijane"
+msgstr "menu podręczne"
 
 #: oleacc.rc:39
 msgid "menu item"
@@ -5489,7 +5477,7 @@ msgstr "dokument"
 
 #: oleacc.rc:43
 msgid "pane"
-msgstr "wycinek"
+msgstr "okienko"
 
 #: oleacc.rc:44
 msgid "chart"
@@ -5497,7 +5485,7 @@ msgstr "wykres"
 
 #: oleacc.rc:45
 msgid "dialog"
-msgstr "dialog"
+msgstr "okno dialogowe"
 
 #: oleacc.rc:46
 msgid "border"
@@ -5573,7 +5561,7 @@ msgstr "element zarysu"
 
 #: oleacc.rc:64
 msgid "page tab"
-msgstr "zakładka strony"
+msgstr "karta strony"
 
 #: oleacc.rc:65
 msgid "property page"
@@ -5605,7 +5593,7 @@ msgstr "przycisk zaznaczany"
 
 #: oleacc.rc:72
 msgid "radio button"
-msgstr "przycisk opcji"
+msgstr "przycisk radiowy"
 
 #: oleacc.rc:73
 msgid "combo box"
@@ -5625,7 +5613,7 @@ msgstr "wybieranie"
 
 #: oleacc.rc:77
 msgid "hot key field"
-msgstr "pole gorącego klawisza"
+msgstr "pole klawisza skrótu"
 
 #: oleacc.rc:78
 msgid "slider"
@@ -5633,7 +5621,7 @@ msgstr "suwak"
 
 #: oleacc.rc:79
 msgid "spin box"
-msgstr "pole przewijane"
+msgstr "pole pokrętła"
 
 #: oleacc.rc:80
 msgid "diagram"
@@ -5649,7 +5637,7 @@ msgstr "równanie"
 
 #: oleacc.rc:83
 msgid "drop down button"
-msgstr "przycisk rozwijany"
+msgstr "przycisk listy rozwijanej"
 
 #: oleacc.rc:84
 msgid "menu button"
@@ -5657,15 +5645,15 @@ msgstr "przycisk menu"
 
 #: oleacc.rc:85
 msgid "grid drop down button"
-msgstr "siatka przycisków rozwijanych"
+msgstr "przycisk siatki rozwijanej"
 
 #: oleacc.rc:86
 msgid "white space"
-msgstr "biała spacja"
+msgstr "światło"
 
 #: oleacc.rc:87
 msgid "page tab list"
-msgstr "lista zakładek stron"
+msgstr "lista kart stron"
 
 #: oleacc.rc:88
 msgid "clock"
@@ -5673,11 +5661,11 @@ msgstr "zegar"
 
 #: oleacc.rc:89
 msgid "split button"
-msgstr "przycisk rozdzielania"
+msgstr "przycisk podziału"
 
 #: oleacc.rc:90 ipconfig.rc:33
 msgid "IP address"
-msgstr "Adres IP"
+msgstr "adres IP"
 
 #: oleacc.rc:91
 msgid "outline button"
@@ -6210,7 +6198,7 @@ msgstr "&Nowy"
 
 #: shdocvw.rc:29 winefile.rc:118
 msgid "&Window"
-msgstr "&Okno"
+msgstr "O&kno"
 
 #: shdocvw.rc:31
 msgid "&Open..."
@@ -6285,23 +6273,13 @@ msgstr "Adres"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
 #: taskmgr.rc:111 taskmgr.rc:253
-#, fuzzy
 msgid "Lar&ge Icons"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Duże ikony\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Duże Ikony"
+msgstr "Duż&e ikony"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
 #: taskmgr.rc:112 taskmgr.rc:254
-#, fuzzy
 msgid "S&mall Icons"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Małe ikony\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Małe Ikony"
+msgstr "M&ałe ikony"
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:109 shell32.rc:149
 msgid "&List"
@@ -6314,23 +6292,23 @@ msgstr "&Szczegóły"
 
 #: shell32.rc:48
 msgid "Arrange &Icons"
-msgstr "Rozmieść &ikony według"
+msgstr "&Rozmieść ikony"
 
 #: shell32.rc:50
 msgid "By &Name"
-msgstr "&Nazwy"
+msgstr "Według &nazw"
 
 #: shell32.rc:51
 msgid "By &Type"
-msgstr "&Typu"
+msgstr "Według &typów"
 
 #: shell32.rc:52
 msgid "By &Size"
-msgstr "&Wielkości"
+msgstr "Według &rozmiarów"
 
 #: shell32.rc:53
 msgid "By &Date"
-msgstr "&Daty"
+msgstr "Według &dat"
 
 #: shell32.rc:55
 msgid "&Auto Arrange"
@@ -6338,11 +6316,11 @@ msgstr "&Autorozmieszczanie"
 
 #: shell32.rc:57
 msgid "Line up Icons"
-msgstr "&Wyrównaj ikony"
+msgstr "Szereguj i&kony"
 
 #: shell32.rc:62
 msgid "Paste as Link"
-msgstr "Wklej s&krót"
+msgstr "Wklej &skrót"
 
 #: shell32.rc:64
 msgid "New"
@@ -6366,7 +6344,7 @@ msgstr "&Eksploruj"
 
 #: shell32.rc:86
 msgid "C&ut"
-msgstr "&Wytnij"
+msgstr "Wy&tnij"
 
 #: shell32.rc:89
 msgid "Create &Link"
@@ -6374,7 +6352,7 @@ msgstr "Utwórz &skrót"
 
 #: shell32.rc:91 regedit.rc:94
 msgid "&Rename"
-msgstr "&Zmień nazwę"
+msgstr "Z&mień nazwę"
 
 #: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:41 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
@@ -6392,7 +6370,7 @@ msgstr "&O panelu sterowania..."
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:161
 msgid "Size"
-msgstr "Wielkość"
+msgstr "Rozmiar"
 
 #: shell32.rc:124 regedit.rc:125
 msgid "Type"
@@ -6400,7 +6378,7 @@ msgstr "Typ"
 
 #: shell32.rc:125
 msgid "Modified"
-msgstr "Modyfikacja"
+msgstr "Zmodyfikowany"
 
 #: shell32.rc:126 winefile.rc:167
 msgid "Attributes"
@@ -6472,7 +6450,7 @@ msgstr "Menu Start\\Programy\\AutoStart"
 
 #: shell32.rc:190
 msgid "Recent"
-msgstr "Recent"
+msgstr "Historia"
 
 #: shell32.rc:191
 msgid "SendTo"
@@ -6808,7 +6786,7 @@ msgstr "&Przywróć"
 
 #: user32.rc:28
 msgid "&Move"
-msgstr "Prze&suń"
+msgstr "Prz&enieś"
 
 #: user32.rc:29
 msgid "&Size"
@@ -6816,20 +6794,15 @@ msgstr "&Rozmiar"
 
 #: user32.rc:30
 msgid "Mi&nimize"
-msgstr "Do &ikony"
+msgstr "Mi&nimalizuj"
 
 #: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
-#, fuzzy
 msgid "Ma&ximize"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"M&aksymalizuj\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Pełny &ekran"
+msgstr "&Maksymalizuj"
 
 #: user32.rc:33
 msgid "&Close\tAlt-F4"
-msgstr "&Zamknij\tAlt-F4"
+msgstr "Zam&knij\tAlt-F4"
 
 #: user32.rc:35
 msgid "&About Wine..."
@@ -6870,7 +6843,7 @@ msgstr "Wykonano podane polecenie."
 
 #: winmm.rc:29
 msgid "Undefined external error."
-msgstr "Niezdefiniowany zewnętrzny błąd."
+msgstr "Nieokreślony błąd zewnętrzny."
 
 #: winmm.rc:30
 msgid "A device ID has been used that is out of range for your system."
@@ -6928,7 +6901,6 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "Przekazano niepoprawny parametr do funkcji systemowej."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -7021,6 +6993,7 @@ msgid ""
 msgstr ""
 "Wystąpił problem z twoim urządzeniem multimedialnym. Upewnij się, że działa "
 "poprawnie lub skontaktuj się z producentem urządzenia."
+
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
@@ -7130,7 +7103,6 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Nie można użyć 'all' jako nazwy urządzenia z określonym poleceniem."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -7563,7 +7535,7 @@ msgstr "Naruszenie więzów"
 
 #: wldap32.rc:47
 msgid "Attribute Or Value Exists"
-msgstr "Atrybut lub wartość już isnieją"
+msgstr "Atrybut lub wartość isnieje"
 
 #: wldap32.rc:48
 msgid "Invalid Syntax"
@@ -7579,7 +7551,7 @@ msgstr "Problem aliasu"
 
 #: wldap32.rc:61
 msgid "Invalid DN Syntax"
-msgstr "Błąd składni DN"
+msgstr "Niepoprawna składnia DN"
 
 #: wldap32.rc:62
 msgid "Is Leaf"
@@ -7591,11 +7563,11 @@ msgstr "Problem z odwołaniem do aliasu"
 
 #: wldap32.rc:75
 msgid "Inappropriate Authentication"
-msgstr "Niewłaściwe uwierzytelnienie"
+msgstr "Nieodpowiednie uwierzytelnienie"
 
 #: wldap32.rc:76
 msgid "Invalid Credentials"
-msgstr "Nieprawidłowe poświadczenie"
+msgstr "Nieprawidłowe poświadczenia"
 
 #: wldap32.rc:77
 msgid "Insufficient Rights"
@@ -7647,7 +7619,7 @@ msgstr "Już istnieje"
 
 #: wldap32.rc:96
 msgid "No Object Class Mods"
-msgstr "Nie można modyfikować klasy obiektu"
+msgstr "Brak modułów klas obiektów"
 
 #: wldap32.rc:97
 msgid "Results Too Large"
@@ -7655,7 +7627,7 @@ msgstr "Wynik zbyt duży"
 
 #: wldap32.rc:98
 msgid "Affects Multiple DSAs"
-msgstr "Dotyczy wielu DSA"
+msgstr "Ma wpływ na wiele agentów DSA"
 
 #: wldap32.rc:107
 msgid "Other"
@@ -7695,7 +7667,7 @@ msgstr "Akcja anulowana przez użytkownika"
 
 #: wldap32.rc:116
 msgid "Parameter Error"
-msgstr "Błędny parametr"
+msgstr "Błąd parametru"
 
 #: wldap32.rc:117
 msgid "No Memory"
@@ -7715,7 +7687,7 @@ msgstr "Brak określonego formantu w wiadomości"
 
 #: wldap32.rc:121
 msgid "No result present in message"
-msgstr "Brak wyników z wiadomości"
+msgstr "Brak wyników w wiadomości"
 
 #: wldap32.rc:122
 msgid "More results returned"
@@ -7723,7 +7695,7 @@ msgstr "Zwrócono więcej wyników"
 
 #: wldap32.rc:123
 msgid "Loop while handling referrals"
-msgstr "Natrafiono na pętlę podczas obsługi odwołań"
+msgstr "Pętla przed obsługą odwołań"
 
 #: wldap32.rc:124
 msgid "Referral hop limit exceeded"
@@ -7771,7 +7743,7 @@ msgstr "Zegar"
 
 #: cmd.rc:30
 msgid "ATTRIB shows or changes DOS file attributes.\n"
-msgstr "Pomoc o ATTRIB\n"
+msgstr "ATTRIB pokazuje lub zmienia atrybuty plików DOS.\n"
 
 #: cmd.rc:38
 msgid ""
@@ -7795,11 +7767,13 @@ msgstr ""
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
-msgstr "Pomoc do CD\n"
+msgstr ""
+"CD <katalog> jest krótką wersją CHDIR. Zmienia aktualny\n"
+"domyślny katalog.\n"
 
 #: cmd.rc:42
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "Pomoc do CHDIR\n"
+msgstr "CHDIR <katalog> zmienia aktualny domyślny katalog.\n"
 
 #: cmd.rc:44
 msgid "CLS clears the console screen.\n"
@@ -7807,23 +7781,23 @@ msgstr "CLS czyści ekran konsoli\n"
 
 #: cmd.rc:46
 msgid "COPY <filename> copies a file.\n"
-msgstr "Pomoc do COPY\n"
+msgstr "COPY <nazwapliku> kopiuje plik.\n"
 
 #: cmd.rc:47
 msgid "CTTY changes the input/output device.\n"
-msgstr "Pomoc do  CTTY\n"
+msgstr "CTTY zmienia urządzenie wejścia/wyjścia.\n"
 
 #: cmd.rc:48
 msgid "DATE shows or changes the system date.\n"
-msgstr "Pomoc do  DATE\n"
+msgstr "DATE pokazuje lub zmienia datę systemową.\n"
 
 #: cmd.rc:49
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "Pomoc do  DEL\n"
+msgstr "DEL <nazwapliku> usuwa plik lub zestaw plików.\n"
 
 #: cmd.rc:50
 msgid "DIR lists the contents of a directory.\n"
-msgstr "Pomoc do  DIR\n"
+msgstr "DIR wyświetla wykaz zawartości katalogu.\n"
 
 #: cmd.rc:60
 msgid ""
@@ -7847,7 +7821,7 @@ msgstr ""
 
 #: cmd.rc:62
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "Pomoc o  ERASE\n"
+msgstr "ERASE <nazwapliku> usuwa plik lub zestaw plików.\n"
 
 #: cmd.rc:70
 msgid ""
@@ -7890,7 +7864,9 @@ msgstr ""
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "Pomoc o HELP\n"
+msgstr ""
+"HELP <polecenie> pokazuje krótką pomoc na dany temat.\n"
+"HELP bez argumentu pokazuje wszystkie wbudowane polecenia CMD.\n"
 
 #: cmd.rc:95
 msgid ""
@@ -7929,11 +7905,11 @@ msgstr ""
 
 #: cmd.rc:104
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "Pomoc o MD\n"
+msgstr "MD <nazwa> jest krótką wersją MKDIR. Tworzy podkatalog.\n"
 
 #: cmd.rc:105
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "Pomoc o MKDIR\n"
+msgstr "MKDIR <nazwa> tworzy podkatalog.\n"
 
 #: cmd.rc:112
 msgid ""
@@ -8035,20 +8011,19 @@ msgstr ""
 
 #: cmd.rc:157
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "Pomoc o REN\n"
+msgstr "REN <filename> jest krótką wersją RENAME. Zmienia nazwę pliku.\n"
 
 #: cmd.rc:158
-#, fuzzy
-msgid "RENAME <filename> renames a file.\n"
-msgstr "Pomoc o RENAME\n"
+msgid "RENAME <filename> renames a file\n"
+msgstr "RENAME <nazwapliku> zmienia nazwę pliku\n"
 
 #: cmd.rc:160
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "Pomoc o RD\n"
+msgstr "RD <katalog> jest krótką wersją RMDIR. usuwa podkatalog.\n"
 
 #: cmd.rc:161
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "Pomoc o RMDIR\n"
+msgstr "RMDIR <katalog> usuwa podkatalog.\n"
 
 #: cmd.rc:179
 msgid ""
@@ -8098,7 +8073,7 @@ msgstr ""
 
 #: cmd.rc:186
 msgid "TIME sets or shows the current system time.\n"
-msgstr "Pomoc o TIME\n"
+msgstr "TIME ustawia lub pokazuje aktualny czas systemowy.\n"
 
 #: cmd.rc:188
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
@@ -8132,13 +8107,12 @@ msgstr ""
 "Ustawienia flagi nic nie zmieniają pod Wine'em.\n"
 
 #: cmd.rc:204
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER wyświetla wersję cmd.\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "Pomoc o VOL\n"
+msgstr "VOL pokazuje etykietę woluminu urządzenia dyskowego.\n"
 
 #: cmd.rc:209
 msgid ""
@@ -8607,13 +8581,8 @@ msgstr "Wkl&ej\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
 #: winefile.rc:30
-#, fuzzy
 msgid "&Delete\tDel"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Usuń\tDel\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"U&suń\tDel"
+msgstr "&Usuń\tDel"
 
 #: notepad.rc:46
 msgid "Select &all\tCtrl+A"
@@ -8842,7 +8811,7 @@ msgstr "Pasek &narzędzi"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:102
 msgid "&Status Bar"
-msgstr "Pasek sta&nu"
+msgstr "Pasek &stanu"
 
 #: oleview.rc:67 regedit.rc:71 winefile.rc:127
 msgid "&Refresh\tF5"
@@ -9052,7 +9021,7 @@ msgstr "&Otwórz\tEnter"
 
 #: progman.rc:32 winefile.rc:27
 msgid "&Move...\tF7"
-msgstr "P&rzenieś...\tF7"
+msgstr "&Przenieś...\tF7"
 
 #: progman.rc:33 winefile.rc:28
 msgid "&Copy...\tF8"
@@ -9060,7 +9029,7 @@ msgstr "&Kopiuj...\tF8"
 
 #: progman.rc:35
 msgid "&Attributes...\tAlt+Enter"
-msgstr "Wł&aściwości...\tAlt+Enter"
+msgstr "&Właściwości...\tAlt+Enter"
 
 #: progman.rc:37
 msgid "&Execute..."
@@ -9068,7 +9037,7 @@ msgstr "Urucho&m..."
 
 #: progman.rc:39
 msgid "E&xit Windows..."
-msgstr "&Zakończ Windows..."
+msgstr "&Zakończ..."
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
@@ -9229,15 +9198,15 @@ msgstr "Błąd: System nie mógł znaleźć podanej wartości lub klucza rejestr
 
 #: regedit.rc:31
 msgid "&Registry"
-msgstr "&Rejestr"
+msgstr "&Rejest"
 
 #: regedit.rc:33
 msgid "&Import Registry File..."
-msgstr "&Importuj rejestr..."
+msgstr "&Importuj plik rejestru..."
 
 #: regedit.rc:34
 msgid "&Export Registry File..."
-msgstr "&Eksportuj rejestr..."
+msgstr "&Eksportuj plik rejestru..."
 
 #: regedit.rc:36
 msgid "&Connect Network Registry..."
@@ -9261,15 +9230,15 @@ msgstr "&Klucz"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&String Value"
-msgstr "&Dana tekstowa"
+msgstr "&Wartość ciągu"
 
 #: regedit.rc:52 regedit.rc:103
 msgid "&Binary Value"
-msgstr "&Dana binarna"
+msgstr "Wartość &binarna"
 
 #: regedit.rc:53 regedit.rc:104
 msgid "&DWORD Value"
-msgstr "&Dana liczbowa (DWORD)"
+msgstr "Wartość &DWORD"
 
 #: regedit.rc:54 regedit.rc:105
 msgid "&Multi String Value"
@@ -9362,6 +9331,7 @@ msgstr "Eksportuje całość lub część rejestru do pliku"
 
 #: regedit.rc:199
 msgid "Registry files (*.reg)"
+
 msgstr "Pliki rejestru (*.reg)"
 
 #: regedit.rc:200
@@ -9506,7 +9476,7 @@ msgstr "Nowy klucz #%d"
 
 #: regedit.rc:191
 msgid "New Value #%d"
-msgstr "Nowa dana #%d"
+msgstr "Nowa wartość #%d"
 
 #: regedit.rc:183
 msgid "Can't query key '%s'"
@@ -10347,7 +10317,7 @@ msgstr "Uwaga: biblioteka systemowa"
 
 #: winecfg.rc:62
 msgid "native"
-msgstr "zewnętrzna"
+msgstr "natywna"
 
 #: winecfg.rc:63
 msgid "builtin"
@@ -10355,11 +10325,11 @@ msgstr "wbudowana"
 
 #: winecfg.rc:64
 msgid "native, builtin"
-msgstr "zewnętrzna, wbudowana"
+msgstr "natywna, wbudowana"
 
 #: winecfg.rc:65
 msgid "builtin, native"
-msgstr "wbudowana, zewnętrzna"
+msgstr "wbudowana, natywna"
 
 #: winecfg.rc:66
 msgid "disabled"
@@ -10406,7 +10376,6 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -10414,7 +10383,7 @@ msgid ""
 msgstr ""
 "Nie możesz dodać kolejnego dysku.\n"
 "\n"
-"Każdy dysk musi mieć literę od A do Z, co ogranicza ich liczbę do 26"
+"Każdy dysk musi mieć literę od A do Z, co ogranicza ich liczbę do 26."
 
 #: winecfg.rc:87
 msgid "System drive"
@@ -10795,11 +10764,11 @@ msgstr "W s&chowku...\tF9"
 
 #: winefile.rc:31
 msgid "Re&name..."
-msgstr "&Zmień nazwę..."
+msgstr "Zmień &nazwę..."
 
 #: winefile.rc:32
 msgid "Propert&ies...\tAlt+Enter"
-msgstr "Właśc&iwości...\tAlt+Enter"
+msgstr "&Właściwości...\tAlt+Enter"
 
 #: winefile.rc:34
 msgid "C&ompress..."
@@ -10811,7 +10780,7 @@ msgstr "D&ekompresja..."
 
 #: winefile.rc:37
 msgid "&Run..."
-msgstr "U&ruchom..."
+msgstr "Urucho&m..."
 
 #: winefile.rc:39
 msgid "Associate..."
@@ -10819,15 +10788,15 @@ msgstr "Skojarz..."
 
 #: winefile.rc:41
 msgid "Cr&eate Directory..."
-msgstr "U&twórz folder..."
+msgstr "U&twórz katalog..."
 
 #: winefile.rc:42
 msgid "Searc&h..."
-msgstr "&Szukaj..."
+msgstr "Wyszuk&aj..."
 
 #: winefile.rc:43
 msgid "&Select Files..."
-msgstr "Z&aznacz pliki..."
+msgstr "Wy&bierz pliki..."
 
 #: winefile.rc:46 winemine.rc:44
 msgid "E&xit\tAlt+X"
@@ -10839,7 +10808,7 @@ msgstr "&Dysk"
 
 #: winefile.rc:53
 msgid "&Copy Disk..."
-msgstr "&Kopiuj dusk..."
+msgstr "&Kopiuj dysk..."
 
 #: winefile.rc:54
 msgid "&Label Disk..."
@@ -10851,11 +10820,11 @@ msgstr "&Formatuj dysk..."
 
 #: winefile.rc:58
 msgid "Connect &Network Drive"
-msgstr "&Podłącz Dysk Sieciowy"
+msgstr "Podłącz &dysk sieciowy..."
 
 #: winefile.rc:59
 msgid "&Disconnect Network Drive"
-msgstr "&Odłącz Dysk Sieciowy"
+msgstr "&Odłącz dysk sieciowy..."
 
 #: winefile.rc:61
 msgid "Share as..."
@@ -10863,31 +10832,31 @@ msgstr "Udostępnij jako..."
 
 #: winefile.rc:62
 msgid "&Remove Share..."
-msgstr "&Nie udostępniaj..."
+msgstr "&Usuń udział..."
 
 #: winefile.rc:64
 msgid "&Select Drive..."
-msgstr "Wybór &dysku..."
+msgstr "&Wybierz dysk..."
 
 #: winefile.rc:67
 msgid "Di&rectories"
-msgstr "&Katalogi"
+msgstr "D&rzewo"
 
 #: winefile.rc:68
 msgid "&Next Level\t+"
-msgstr "&Następny poziom\t+"
+msgstr "&Rozwiń jeden poziom\t+"
 
 #: winefile.rc:69
 msgid "Expand &Tree\t*"
-msgstr "&Rozwiń drzewo\t*"
+msgstr "R&ozwiń gałąź\t*"
 
 #: winefile.rc:70
 msgid "Expand &all\tCtrl+*"
-msgstr "Rozwiń &wszystko\tStrg+*"
+msgstr "Rozwiń &wszystkie\tCtrl+*"
 
 #: winefile.rc:71
 msgid "Collapse &Tree\t-"
-msgstr "&Zwiń drzewo\t-"
+msgstr "Zwiń &gałąź\t-"
 
 #: winefile.rc:73
 msgid "&Mark Children"
@@ -10895,43 +10864,43 @@ msgstr "Zaznacz &podkatalogi"
 
 #: winefile.rc:77
 msgid "T&ree and Directory"
-msgstr "&Drzewo i katalogi"
+msgstr "Drzewo i &katalog"
 
 #: winefile.rc:78
 msgid "Tr&ee Only"
-msgstr "D&rzewo"
+msgstr "Tylk&o drzewo"
 
 #: winefile.rc:79
 msgid "Directory &Only"
-msgstr "&Katalogi"
+msgstr "Tylko k&atalog"
 
 #: winefile.rc:83
 msgid "&Name"
-msgstr "&Nazwa"
+msgstr "Na&zwa"
 
 #: winefile.rc:84
 msgid "&All File Details"
-msgstr "&Wszystkie atrybuty pliku"
+msgstr "Wszystki&e informacje o pliku"
 
 #: winefile.rc:85
 msgid "&Partial Details..."
-msgstr "Wybrane &atrybuty pliku..."
+msgstr "&Częściowe informacje..."
 
 #: winefile.rc:87
 msgid "&Sort by Name"
-msgstr "P&osortuj alfabetycznie"
+msgstr "Sortuj według &nazw"
 
 #: winefile.rc:88
 msgid "Sort &by Type"
-msgstr "Posortuj po &typie"
+msgstr "Sortuj według &typów"
 
 #: winefile.rc:89
 msgid "Sort by Si&ze"
-msgstr "Posortuj po wie&lkości"
+msgstr "Sortuj według &rozmiarów"
 
 #: winefile.rc:90
 msgid "Sort by &Date"
-msgstr "Po&sortuj po dacie"
+msgstr "Sortuj według &dat"
 
 #: winefile.rc:92
 msgid "Filter by &..."
@@ -10943,7 +10912,7 @@ msgstr "&Potwierdzenie..."
 
 #: winefile.rc:98
 msgid "Customize Tool&bar..."
-msgstr "&Ustawienia paska narzędzi..."
+msgstr "Dostosuj pasek nar&zędzi..."
 
 #: winefile.rc:101
 msgid "&Drivebar"
@@ -10975,15 +10944,15 @@ msgstr "&Nowe okno"
 
 #: winefile.rc:120
 msgid "Cascading\tCtrl+F5"
-msgstr "&Kaskadująco\tCtrl+F5"
+msgstr "&Kaskada\tCtrl+F5"
 
 #: winefile.rc:122
 msgid "Tile &Vertically\tCtrl+F4"
-msgstr "Tytuł &poziomo\tCtrl+F4"
+msgstr "&Sąsiadująco w poziomie\tCtrl+F4"
 
 #: winefile.rc:124
 msgid "Arrange Automatically"
-msgstr "Rozmieść automatycznie"
+msgstr "&Rozmieść ikony"
 
 #: winefile.rc:126
 msgid "Arrange &Symbols"
@@ -10999,7 +10968,7 @@ msgstr "&Używanie pomocy"
 
 #: winefile.rc:135
 msgid "&About Winefile..."
-msgstr "&Winefile..."
+msgstr "Menadżer plików Wine - i&nformacje..."
 
 #: winefile.rc:141
 msgid "Applying font settings"
@@ -11011,7 +10980,7 @@ msgstr "Błąd przy wybieraniu czcionki"
 
 #: winefile.rc:147
 msgid "Wine File Manager"
-msgstr "Winefile"
+msgstr "Menadżer plików Wine"
 
 #: winefile.rc:149
 msgid "root fs"
@@ -11067,7 +11036,7 @@ msgstr "&Nowa\tF2"
 
 #: winemine.rc:37
 msgid "&Mark Question"
-msgstr "&Znaczniki"
+msgstr "Zna&czniki(?)"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -11075,7 +11044,7 @@ msgstr "&Początkujący"
 
 #: winemine.rc:40
 msgid "&Advanced"
-msgstr "Z&aawansowany"
+msgstr "&Zaawansowany"
 
 #: winemine.rc:41
 msgid "&Expert"
@@ -11083,7 +11052,7 @@ msgstr "&Ekspert"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "&Użytkownika"
+msgstr "Plansza &użytkownika..."
 
 #: winemine.rc:46
 msgid "&Info"
@@ -11091,19 +11060,19 @@ msgstr "&Info"
 
 #: winemine.rc:47
 msgid "&Fastest Times..."
-msgstr "&Najlepsze Wyniki"
+msgstr "Najlepsze &wyniki"
 
 #: winemine.rc:48
 msgid "&About"
-msgstr "&O Programie"
+msgstr "Saper Wine - i&nformacje"
 
 #: winemine.rc:27
 msgid "WineMine"
-msgstr "WineMine"
+msgstr "Saper Wine"
 
 #: winemine.rc:28
 msgid "Nobody"
-msgstr "Anonim"
+msgstr "Anonimowy"
 
 #: winemine.rc:29
 msgid "Copyright 2000 Joshua Thielen"
@@ -11119,27 +11088,27 @@ msgstr "&Kopiuj..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
-msgstr "&Skomentuj..."
+msgstr "&Adnotuj..."
 
 #: winhlp32.rc:41
 msgid "&Bookmark"
-msgstr "&Zakładka"
+msgstr "Z&akładka"
 
 #: winhlp32.rc:42
 msgid "&Define..."
-msgstr "&Zdefiniuj..."
+msgstr "&Definiuj..."
 
 #: winhlp32.rc:45 winhlp32.rc:81
 msgid "Help always visible"
-msgstr "Pomoc zawsze widoczna"
+msgstr "Pomoc zawsze na wierzchu"
 
 #: winhlp32.rc:48 winhlp32.rc:84
 msgid "Visible"
-msgstr "Widoczna"
+msgstr "Na wierzchu"
 
 #: winhlp32.rc:49 winhlp32.rc:85
 msgid "Non visible"
-msgstr "Niewidoczna"
+msgstr "Nie na wierzchu"
 
 #: winhlp32.rc:51
 msgid "History"
@@ -11191,11 +11160,11 @@ msgstr "Błąd w trakcie odczytu pliku pomocy `%s'"
 
 #: winhlp32.rc:100
 msgid "Summary"
-msgstr "&Szukaj"
+msgstr "&Znajdź"
 
 #: winhlp32.rc:99
 msgid "&Index"
-msgstr "&Zawartość"
+msgstr "&Indeks"
 
 #: winhlp32.rc:103
 msgid "Help files (*.hlp)"
@@ -11320,9 +11289,8 @@ msgid "&System\tCtrl+1"
 msgstr "&System\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "&PostThat (żółty)\tCtrl+2"
+msgstr "&Jasny żółty\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
