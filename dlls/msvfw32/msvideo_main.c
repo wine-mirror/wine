@@ -530,7 +530,6 @@ LRESULT VFWAPI ICGetInfo(HIC hic, ICINFO *picinfo, DWORD cb)
 
     TRACE("(%p,%p,%d)\n", hic, picinfo, cb);
 
-    whic = MSVIDEO_GetHicPtr(hic);
     if (!whic) return ICERR_BADHANDLE;
     if (!picinfo) return MMSYSERR_INVALPARAM;
 
