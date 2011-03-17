@@ -38,6 +38,12 @@ my $FLAG_APAIR      = 16; # The A version of a matching W function
 my $FLAG_WPAIR      = 32; # The W version of a matching A function
 my $FLAG_64PAIR     = 64; # The 64 bit version of a matching 32 bit function
 
+# Export list slot labels.
+my $EXPORT_ORDINAL  = 0;  # Ordinal.
+my $EXPORT_CALL     = 1;  # Call type.
+my $EXPORT_EXPNAME  = 2;  # Export name.
+my $EXPORT_IMPNAME  = 3;  # Implementation name.
+my $EXPORT_FLAGS    = 4;  # Flags - see above.
 
 # Options
 my $opt_output_directory = "man3w"; # All default options are for nroff (man pages)
@@ -595,9 +601,9 @@ sub process_comment($)
     # Find the name from the .spec file
     for (@{$spec_details->{EXPORTS}})
     {
-      if (@$_[0] eq $comment->{ORDINAL})
+      if (@$_[$EXPORT_ORDINAL] eq $comment->{ORDINAL})
       {
-        $comment->{COMMENT_NAME} = @$_[2];
+        $comment->{COMMENT_NAME} = @$_[$EXPORT_EXPNAME];
         $found = 1;
       }
     }
@@ -644,7 +650,7 @@ sub process_comment($)
         print "Info: Found alternate name '",$1,"\n";
       }
       my $alt_export = @{$spec_details->{EXPORTS}}[$alt_index];
-      @$alt_export[4] |= $FLAG_DOCUMENTED;
+      @$alt_export[$EXPORT_FLAGS] |= $FLAG_DOCUMENTED;
       $spec_details->{NUM_DOCS}++;
       ${$comment->{TEXT}}[1] = "";
     }
@@ -668,12 +674,12 @@ sub process_comment($)
 
   # We want our docs generated using the implementation name, so they are unique
   my $export = @{$spec_details->{EXPORTS}}[$export_index];
-  $comment->{COMMENT_NAME} = @$export[3];
-  $comment->{ALT_NAME} = @$export[2];
+  $comment->{COMMENT_NAME} = @$export[$EXPORT_IMPNAME];
+  $comment->{ALT_NAME} = @$export[$EXPORT_EXPNAME];
 
   # Mark the function as documented
   $spec_details->{NUM_DOCS}++;
-  @$export[4] |= $FLAG_DOCUMENTED;
+  @$export[$EXPORT_FLAGS] |= $FLAG_DOCUMENTED;
 
   # This file is used by the DLL - Make sure we get our contributors right
   push (@{$spec_details->{SOURCES}},$comment->{FILE});
@@ -774,11 +780,11 @@ sub process_comment($)
               else
               {
                 my $ascii_export = @{$spec_details->{EXPORTS}}[$ascii_export_index];
-                if (@$ascii_export[4] & $FLAG_DOCUMENTED)
+                if (@$ascii_export[$EXPORT_FLAGS] & $FLAG_DOCUMENTED)
                 {
                   # Flag these functions as an A/W pair
-                  @$ascii_export[4] |= $FLAG_APAIR;
-                  @$export[4] |= $FLAG_WPAIR;
+                  @$ascii_export[$EXPORT_FLAGS] |= $FLAG_APAIR;
+                  @$export[$EXPORT_FLAGS] |= $FLAG_WPAIR;
                 }
               }
             }
@@ -786,12 +792,12 @@ sub process_comment($)
           }
           elsif ( /^Unicode version of ([A-Za-z0-9_]+)\.$/ )
           {
-            @$export[4] |= $FLAG_WPAIR; # Explicitly marked as W version
+            @$export[$EXPORT_FLAGS] |= $FLAG_WPAIR; # Explicitly marked as W version
             $found_returns = 1;
           }
           elsif ( /^64\-bit version of ([A-Za-z0-9_]+)\.$/ )
           {
-            @$export[4] |= $FLAG_64PAIR; # Explicitly marked as 64 bit version
+            @$export[$EXPORT_FLAGS] |= $FLAG_64PAIR; # Explicitly marked as 64 bit version
             $found_returns = 1;
           }
           $found_description_text = 1;
@@ -810,7 +816,7 @@ sub process_comment($)
               "description and/or RETURNS section, skipping\n";
       }
       $spec_details->{NUM_DOCS}--;
-      @$export[4] &= ~$FLAG_DOCUMENTED;
+      @$export[$EXPORT_FLAGS] &= ~$FLAG_DOCUMENTED;
       return;
     }
   }
@@ -844,7 +850,7 @@ sub process_comment($)
 
   # Find header file
   my $h_file = "";
-  if (@$export[4] & $FLAG_NONAME)
+  if (@$export[$EXPORT_FLAGS] & $FLAG_NONAME)
   {
     $h_file = "Exported by ordinal only. Use GetProcAddress() to obtain a pointer to the function.";
   }
@@ -913,11 +919,11 @@ sub process_comment($)
   # Add the implementation details
   push (@{$comment->{TEXT}}, "IMPLEMENTATION","",$h_file,"",$c_file);
 
-  if (@$export[4] & $FLAG_I386)
+  if (@$export[$EXPORT_FLAGS] & $FLAG_I386)
   {
     push (@{$comment->{TEXT}}, "", "Available on x86 platforms only.");
   }
-  if (@$export[4] & $FLAG_REGISTER)
+  if (@$export[$EXPORT_FLAGS] & $FLAG_REGISTER)
   {
     push (@{$comment->{TEXT}}, "", "This function passes one or more arguments in registers. ",
           "For more details, please read the source code.");
@@ -1209,57 +1215,57 @@ sub output_spec($)
       my $line = "";
 
       # @$_ => ordinal, call convention, exported name, implementation name, flags;
-      if (@$_[1] eq "forward")
+      if (@$_[$EXPORT_CALL] eq "forward")
       {
-        my $forward_dll = @$_[3];
+        my $forward_dll = @$_[$EXPORT_IMPNAME];
         $forward_dll =~ s/\.(.*)//;
-        $line = @$_[2]." (forward to ".$1."() in ".$forward_dll."())";
+        $line = @$_[$EXPORT_EXPNAME]." (forward to ".$1."() in ".$forward_dll."())";
       }
-      elsif (@$_[1] eq "extern")
+      elsif (@$_[$EXPORT_CALL] eq "extern")
       {
-        $line = @$_[2]." (extern)";
+        $line = @$_[$EXPORT_EXPNAME]." (extern)";
       }
-      elsif (@$_[1] eq "stub")
+      elsif (@$_[$EXPORT_CALL] eq "stub")
       {
-        $line = @$_[2]." (stub)";
+        $line = @$_[$EXPORT_EXPNAME]." (stub)";
       }
-      elsif (@$_[1] eq "fake")
+      elsif (@$_[$EXPORT_CALL] eq "fake")
       {
         # Don't add this function here, it gets listed with the extra documentation
-        if (!(@$_[4] & $FLAG_WPAIR))
+        if (!(@$_[$EXPORT_FLAGS] & $FLAG_WPAIR))
         {
           # This function should be indexed
-          push (@index_entries_list, @$_[3].",".@$_[3]);
+          push (@index_entries_list, @$_[$EXPORT_IMPNAME].",".@$_[$EXPORT_IMPNAME]);
         }
       }
-      elsif (@$_[1] eq "equate" || @$_[1] eq "variable")
+      elsif (@$_[$EXPORT_CALL] eq "equate" || @$_[$EXPORT_CALL] eq "variable")
       {
-        $line = @$_[2]." (data)";
+        $line = @$_[$EXPORT_EXPNAME]." (data)";
       }
       else
       {
         # A function
-        if (@$_[4] & $FLAG_DOCUMENTED)
+        if (@$_[$EXPORT_FLAGS] & $FLAG_DOCUMENTED)
         {
           # Documented
-          $line = @$_[2]." (implemented as ".@$_[3]."())";
-          if (@$_[2] ne @$_[3])
+          $line = @$_[$EXPORT_EXPNAME]." (implemented as ".@$_[$EXPORT_IMPNAME]."())";
+          if (@$_[$EXPORT_EXPNAME] ne @$_[$EXPORT_IMPNAME])
           {
-            $line = @$_[2]." (implemented as ".@$_[3]."())";
+            $line = @$_[$EXPORT_EXPNAME]." (implemented as ".@$_[$EXPORT_IMPNAME]."())";
           }
           else
           {
-            $line = @$_[2]."()";
+            $line = @$_[$EXPORT_EXPNAME]."()";
           }
-          if (!(@$_[4] & $FLAG_WPAIR))
+          if (!(@$_[$EXPORT_FLAGS] & $FLAG_WPAIR))
           {
             # This function should be indexed
-            push (@index_entries_list, @$_[2].",".@$_[3]);
+            push (@index_entries_list, @$_[$EXPORT_EXPNAME].",".@$_[$EXPORT_IMPNAME]);
           }
         }
         else
         {
-          $line = @$_[2]." (not documented)";
+          $line = @$_[$EXPORT_EXPNAME]." (not documented)";
         }
       }
       if ($line ne "")
@@ -1981,11 +1987,13 @@ sub output_sgml_dll_file($)
   for (@$exports)
   {
     # @$_ => ordinal, call convention, exported name, implementation name, documented;
-    if (@$_[1] ne "forward" && @$_[1] ne "extern" && @$_[1] ne "stub" && @$_[1] ne "equate" &&
-        @$_[1] ne "variable" && @$_[1] ne "fake" && @$_[4] & 1)
+    if (@$_[$EXPORT_CALL] ne "forward" && @$_[$EXPORT_CALL] ne "extern" &&
+        @$_[$EXPORT_CALL] ne "stub" && @$_[$EXPORT_CALL] ne "equate" &&
+        @$_[$EXPORT_CALL] ne "variable" && @$_[$EXPORT_CALL] ne "fake" &&
+        @$_[$EXPORT_FLAGS] & $FLAGS_DOCUMENTED)
     {
       # A documented function
-      push (@source_files,@$_[3]);
+      push (@source_files,@$_[$EXPORT_IMPNAME]);
     }
   }
 
@@ -2025,11 +2033,13 @@ sub output_xml_dll_file($)
   for (@$exports)
   {
     # @$_ => ordinal, call convention, exported name, implementation name, documented;
-    if (@$_[1] ne "forward" && @$_[1] ne "extern" && @$_[1] ne "stub" && @$_[1] ne "equate" &&
-        @$_[1] ne "variable" && @$_[1] ne "fake" && @$_[4] & 1)
+    if (@$_[$EXPORT_CALL] ne "forward" && @$_[$EXPORT_CALL] ne "extern" &&
+        @$_[$EXPORT_CALL] ne "stub" && @$_[$EXPORT_CALL] ne "equate" &&
+        @$_[$EXPORT_CALL] ne "variable" && @$_[$EXPORT_CALL] ne "fake" &&
+        @$_[$EXPORT_FLAGS] & $FLAG_DOCUMENTED)
     {
       # A documented function
-      push (@source_files,@$_[3]);
+      push (@source_files,@$_[$EXPORT_IMPNAME]);
     }
   }
 
@@ -2341,7 +2351,8 @@ if ($opt_verbose > 3)
         my $exports = $spec_details->{EXPORTS};
         for (@$exports)
         {
-           print @$_[0].",".@$_[1].",".@$_[2].",".@$_[3]."\n";
+           print @$_[$EXPORT_ORDINAL].",".@$_[$EXPORT_CALL].", ".
+                 @$_[$EXPORT_EXPNAME].",".@$_[$EXPORT_IMPNAME]."\n";
         }
     }
 }
