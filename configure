@@ -12070,6 +12070,16 @@ _ACEOF
 
 fi
 
+test -n "$ALSALIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
+test -n "$COREAUDIO" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
+test -n "$NASLIBS" || enable_winenas_drv=${enable_winenas_drv:-no}
+test -n "$ESDLIBS" || enable_wineesd_drv=${enable_wineesd_drv:-no}
+test -n "$ac_cv_lib_soname_jack" || enable_winejack_drv=${enable_winejack_drv:-no}
+test "$ac_cv_header_sys_soundcard_h" = "yes" -o \
+     "$ac_cv_header_machine_soundcard_h" = "yes" -o \
+     "$ac_cv_header_soundcard_h" = "yes" || enable_wineoss_drv=${enable_wineoss_drv:-no}
+test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
+
 if test "x$ALSALIBS$COREAUDIO$NASLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
         "$ac_cv_header_sys_soundcard_h" != "yes" -a \
         "$ac_cv_header_machine_soundcard_h" != "yes" -a \
