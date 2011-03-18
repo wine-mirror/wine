@@ -800,6 +800,9 @@ static BOOL context_set_pixel_format(const struct wined3d_gl_info *gl_info, HDC 
 
 static void context_update_window(struct wined3d_context *context)
 {
+    if (context->win_handle == context->swapchain->win_handle)
+        return;
+
     TRACE("Updating context %p window from %p to %p.\n",
             context, context->win_handle, context->swapchain->win_handle);
 
@@ -842,22 +845,6 @@ err:
 }
 
 /* Do not call while under the GL lock. */
-static void context_validate(struct wined3d_context *context)
-{
-    HWND wnd = WindowFromDC(context->hdc);
-
-    if (wnd != context->win_handle)
-    {
-        WARN("DC %p belongs to window %p instead of %p.\n",
-                context->hdc, wnd, context->win_handle);
-        context->valid = 0;
-    }
-
-    if (context->win_handle != context->swapchain->win_handle)
-        context_update_window(context);
-}
-
-/* Do not call while under the GL lock. */
 static void context_destroy_gl_resources(struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -871,8 +858,9 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     restore_ctx = pwglGetCurrentContext();
     restore_dc = pwglGetCurrentDC();
 
-    context_validate(context);
-    if (context->valid && restore_ctx != context->glCtx) pwglMakeCurrent(context->hdc, context->glCtx);
+    context_update_window(context);
+    if (context->valid && restore_ctx != context->glCtx)
+        context->valid = !!pwglMakeCurrent(context->hdc, context->glCtx);
     else restore_ctx = NULL;
 
     ENTER_GL();
@@ -1900,7 +1888,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
 
     if (current_context && current_context->current_rt == target)
     {
-        context_validate(current_context);
+        context_update_window(current_context);
         return current_context;
     }
 
@@ -1922,7 +1910,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
             context = swapchain_get_context(This->swapchains[0]);
     }
 
-    context_validate(context);
+    context_update_window(context);
 
     return context;
 }
