@@ -373,6 +373,7 @@ BYTE DMA_ioport_in( WORD port )
         /* Status */
         TRACE("Status Register Read\n");
         res = DMA_Status[(port==0x08)?0:1];
+        break;
 
     case 0x0D:
     case 0xDA:
