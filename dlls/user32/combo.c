@@ -2192,6 +2192,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 	case CB_LIMITTEXT:
 		if( lphc->wState & CBF_EDIT )
 			return SendMessageW(lphc->hWndEdit, EM_LIMITTEXT, wParam, lParam);
+		return  TRUE;
 	default:
 		if (message >= WM_USER)
 		    WARN("unknown msg WM_USER+%04x wp=%04lx lp=%08lx\n",
