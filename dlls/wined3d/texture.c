@@ -521,7 +521,7 @@ HRESULT texture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT height, 
             return hr;
         }
 
-        surface_set_container((IWineD3DSurfaceImpl *)surface, WINED3D_CONTAINER_TEXTURE, (IWineD3DBase *)texture);
+        surface_set_container((IWineD3DSurfaceImpl *)surface, WINED3D_CONTAINER_TEXTURE, texture);
         surface_set_texture_target((IWineD3DSurfaceImpl *)surface, texture->baseTexture.target);
         texture->baseTexture.sub_resources[i] = &((IWineD3DSurfaceImpl *)surface)->resource;
         TRACE("Created surface level %u @ %p.\n", i, surface);

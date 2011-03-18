@@ -92,7 +92,7 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
     resource_cleanup(&This->resource);
 }
 
-void surface_set_container(IWineD3DSurfaceImpl *surface, enum wined3d_container_type type, IWineD3DBase *container)
+void surface_set_container(IWineD3DSurfaceImpl *surface, enum wined3d_container_type type, void *container)
 {
     TRACE("surface %p, container %p.\n", surface, container);
 

@@ -2044,9 +2044,9 @@ struct wined3d_subresource_container
     enum wined3d_container_type type;
     union
     {
-        struct IWineD3DBase *base;
         struct IWineD3DSwapChainImpl *swapchain;
         struct IWineD3DBaseTextureImpl *texture;
+        void *base;
     } u;
 };
 
@@ -2157,7 +2157,7 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface,
 void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface,
         unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
 void surface_set_container(IWineD3DSurfaceImpl *surface,
-        enum wined3d_container_type type, IWineD3DBase *container) DECLSPEC_HIDDEN;
+        enum wined3d_container_type type, void *container) DECLSPEC_HIDDEN;
 void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;
 void surface_set_texture_target(IWineD3DSurfaceImpl *surface, GLenum target) DECLSPEC_HIDDEN;
 void surface_translate_drawable_coords(IWineD3DSurfaceImpl *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
