@@ -999,6 +999,7 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
             }
             }
         }
+        break;
     }
 
     case WM_DESTROY:
