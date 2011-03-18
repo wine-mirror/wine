@@ -131,8 +131,10 @@ static BOOL dns_fqdn ( char *name, int *size )
         {
         case ENAMETOOLONG:
             SetLastError ( ERROR_MORE_DATA );
+            break;
         default:
             SetLastError ( ERROR_INVALID_PARAMETER );
+            break;
         }
         return FALSE;
     }
