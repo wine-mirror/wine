@@ -1017,12 +1017,20 @@ BOOL context_set_current(struct wined3d_context *ctx)
 
     if (ctx)
     {
+        if (!ctx->valid)
+        {
+            ERR("Trying to make invalid context %p current\n", ctx);
+            return FALSE;
+        }
+
         TRACE("Switching to D3D context %p, GL context %p, device context %p.\n", ctx, ctx->glCtx, ctx->hdc);
         if (!pwglMakeCurrent(ctx->hdc, ctx->glCtx))
         {
             DWORD err = GetLastError();
             ERR("Failed to make GL context %p current on device context %p, last error %#x.\n",
                     ctx->glCtx, ctx->hdc, err);
+            ctx->valid = 0;
+            pwglMakeCurrent(NULL, NULL);
             TlsSetValue(wined3d_context_tls_idx, NULL);
             return FALSE;
         }
@@ -1063,6 +1071,7 @@ void context_release(struct wined3d_context *context)
             DWORD err = GetLastError();
             ERR("Failed to restore GL context %p on device context %p, last error %#x.\n",
                     context->restore_ctx, context->restore_dc, err);
+            context_set_current(NULL);
         }
         context->restore_ctx = NULL;
         context->restore_dc = NULL;
@@ -2305,6 +2314,8 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurf
             DWORD err = GetLastError();
             ERR("Failed to make GL context %p current on device context %p, last error %#x.\n",
                     context->glCtx, context->hdc, err);
+            context->valid = 0;
+            pwglMakeCurrent(NULL, NULL);
         }
     }
 
