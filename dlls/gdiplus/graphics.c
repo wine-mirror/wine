@@ -4427,7 +4427,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 {
     HFONT oldfont;
     struct measure_string_args args;
-    HDC temp_hdc=NULL;
+    HDC temp_hdc=NULL, hdc;
 
     TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
         debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
@@ -4438,9 +4438,11 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 
     if(!graphics->hdc)
     {
-        temp_hdc = CreateCompatibleDC(0);
+        hdc = temp_hdc = CreateCompatibleDC(0);
         if (!temp_hdc) return OutOfMemory;
     }
+    else
+        hdc = graphics->hdc;
 
     if(linesfilled) *linesfilled = 0;
     if(codepointsfitted) *codepointsfitted = 0;
@@ -4448,7 +4450,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     if(format)
         TRACE("may be ignoring some format flags: attr %x\n", format->attr);
 
-    oldfont = SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
+    oldfont = SelectObject(hdc, CreateFontIndirectW(&font->lfw));
 
     bounds->X = rect->X;
     bounds->Y = rect->Y;
@@ -4459,10 +4461,10 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     args.codepointsfitted = codepointsfitted;
     args.linesfilled = linesfilled;
 
-    gdip_format_string(graphics->hdc ? graphics->hdc : temp_hdc, string, length, font, rect, format,
+    gdip_format_string(hdc, string, length, font, rect, format,
         measure_string_callback, &args);
 
-    DeleteObject(SelectObject(graphics->hdc, oldfont));
+    DeleteObject(SelectObject(hdc, oldfont));
 
     if (temp_hdc)
         DeleteDC(temp_hdc);
