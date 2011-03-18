@@ -164,7 +164,7 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
             change_state(This, SCRIPTSTATE_DISCONNECTED);
             if(state == SCRIPTSTATE_DISCONNECTED)
                 return;
-
+            /* FALLTHROUGH */
         case SCRIPTSTATE_STARTED:
         case SCRIPTSTATE_DISCONNECTED:
             clear_script_queue(This);
@@ -173,7 +173,7 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
                 change_state(This, SCRIPTSTATE_INITIALIZED);
             if(state == SCRIPTSTATE_INITIALIZED)
                 return;
-
+            /* FALLTHROUGH */
         case SCRIPTSTATE_INITIALIZED:
             if(This->ctx->host_global) {
                 IDispatch_Release(This->ctx->host_global);
@@ -211,7 +211,7 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
                 jsdisp_release(This->ctx->global);
                 This->ctx->global = NULL;
             }
-
+            /* FALLTHROUGH */
         case SCRIPTSTATE_UNINITIALIZED:
             change_state(This, state);
             break;
