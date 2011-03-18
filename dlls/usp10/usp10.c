@@ -202,6 +202,7 @@ typedef struct {
     SCRIPT_VISATTR* psva;
     GOFFSET* pGoffset;
     ABC* abc;
+    int iMaxPosX;
 } StringGlyphs;
 
 typedef struct {
@@ -824,6 +825,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
         analysis->glyphs[i].psva = psva;
         analysis->glyphs[i].pGoffset = pGoffset;
         analysis->glyphs[i].abc = abc;
+        analysis->glyphs[i].iMaxPosX= -1;
     }
 
     *pssa = analysis;
@@ -932,11 +934,9 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
  */
 HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrailing, int* pX)
 {
-    int i, j;
+    int i;
     int runningX = 0;
-    int runningCp = 0;
     StringAnalysis* analysis = ssa;
-    BOOL itemTrailing;
 
     TRACE("(%p), %d, %d, (%p)\n", ssa, icp, fTrailing, pX);
 
@@ -951,25 +951,35 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
 
     for(i=0; i<analysis->numItems; i++)
     {
-        if (analysis->pItem[i].a.fRTL)
-            itemTrailing = !fTrailing;
-        else
-            itemTrailing = fTrailing;
-        for(j=0; j<analysis->glyphs[i].numGlyphs; j++)
+        int CP = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
+        int offset;
+        /* initialize max extents for uninitialized runs */
+        if (analysis->glyphs[i].iMaxPosX == -1)
         {
-            if(runningCp == icp && itemTrailing == FALSE)
-            {
-                *pX = runningX;
-                return S_OK;
-            }
-            runningX += analysis->glyphs[i].piAdvance[j];
-            if(runningCp == icp && itemTrailing == TRUE)
-            {
-                *pX = runningX;
-                return S_OK;
-            }
-            runningCp++;
+            if (analysis->pItem[i].a.fRTL)
+                ScriptCPtoX(0, FALSE, CP, analysis->glyphs[i].numGlyphs, analysis->glyphs[i].pwLogClust,
+                            analysis->glyphs[i].psva, analysis->glyphs[i].piAdvance,
+                            &analysis->pItem[i].a, &analysis->glyphs[i].iMaxPosX);
+            else
+                ScriptCPtoX(CP, TRUE, CP, analysis->glyphs[i].numGlyphs, analysis->glyphs[i].pwLogClust,
+                            analysis->glyphs[i].psva, analysis->glyphs[i].piAdvance,
+                            &analysis->pItem[i].a, &analysis->glyphs[i].iMaxPosX);
         }
+
+        if (icp >= CP)
+        {
+            runningX += analysis->glyphs[i].iMaxPosX;
+            icp -= CP;
+            continue;
+        }
+
+        ScriptCPtoX(icp, fTrailing, CP, analysis->glyphs[i].numGlyphs, analysis->glyphs[i].pwLogClust,
+                    analysis->glyphs[i].psva, analysis->glyphs[i].piAdvance,
+                    &analysis->pItem[i].a, &offset);
+        runningX += offset;
+
+        *pX = runningX;
+        return S_OK;
     }
 
     /* icp out of range */
