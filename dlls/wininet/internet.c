@@ -2839,6 +2839,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
                 break;
             case INTERNET_PER_CONN_AUTOCONFIG_LAST_DETECT_TIME:
                 optW->Value.ftValue = optA->Value.ftValue;
+                break;
             default:
                 WARN("Unknown PER_CONN dwOption: %d, guessing at conversion to Wide\n", optA->dwOption);
                 optW->Value.dwValue = optA->Value.dwValue;
