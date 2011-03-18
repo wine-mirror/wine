@@ -136,6 +136,7 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
         case GCW_ATOM:
             req->flags = SET_CLASS_ATOM;
             req->atom = LOWORD(newval);
+            break;
         case GCL_STYLE:
             req->flags = SET_CLASS_STYLE;
             req->style = newval;
