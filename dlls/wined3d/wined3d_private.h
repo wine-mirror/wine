@@ -1935,29 +1935,12 @@ static inline struct gl_texture *basetexture_get_gl_texture(IWineD3DBaseTextureI
             : &texture->baseTexture.texture_rgb;
 }
 
-HRESULT basetexture_add_dirty_region(IWineD3DBaseTextureImpl *texture,
-        UINT layer, const WINED3DBOX *dirty_region) DECLSPEC_HIDDEN;
 void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-HRESULT basetexture_bind(IWineD3DBaseTextureImpl *texture,
-        const struct wined3d_gl_info *gl_info, BOOL srgb, BOOL *set_surface_desc) DECLSPEC_HIDDEN;
-void basetexture_cleanup(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
-void basetexture_generate_mipmaps(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
-WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
-DWORD basetexture_get_level_count(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
-DWORD basetexture_get_lod(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 struct wined3d_resource *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture,
         UINT sub_resource_idx) DECLSPEC_HIDDEN;
-HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, const struct wined3d_texture_ops *texture_ops,
-        UINT layer_count, UINT level_count, WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device,
-        DWORD usage, const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops, const struct wined3d_resource_ops *resource_ops) DECLSPEC_HIDDEN;
-HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTextureImpl *texture,
-        WINED3DTEXTUREFILTERTYPE filter_type) DECLSPEC_HIDDEN;
 void basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty) DECLSPEC_HIDDEN;
-DWORD basetexture_set_lod(IWineD3DBaseTextureImpl *texture, DWORD lod) DECLSPEC_HIDDEN;
-void basetexture_unload(IWineD3DBaseTextureImpl *texture) DECLSPEC_HIDDEN;
 
 HRESULT cubetexture_init(IWineD3DBaseTextureImpl *texture, UINT edge_length, UINT levels,
         IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,

@@ -5,11 +5,9 @@ IMPORTS   = uuid user32 gdi32 advapi32
 C_SRCS = \
 	arb_program_shader.c \
 	ati_fragment_shader.c \
-	basetexture.c \
 	buffer.c \
 	clipper.c \
 	context.c \
-	cubetexture.c \
 	device.c \
 	directx.c \
 	drawprim.c \
@@ -35,7 +33,6 @@ C_SRCS = \
 	vertexdeclaration.c \
 	view.c \
 	volume.c \
-	volumetexture.c \
 	wined3d_main.c
 
 RC_SRCS = version.rc
