@@ -85,7 +85,7 @@ void volume_add_dirty_box(struct IWineD3DVolumeImpl *volume, const WINED3DBOX *d
     }
 }
 
-void volume_set_container(IWineD3DVolumeImpl *volume, struct IWineD3DBaseTextureImpl *container)
+void volume_set_container(IWineD3DVolumeImpl *volume, struct wined3d_texture *container)
 {
     TRACE("volume %p, container %p.\n", volume, container);
 
@@ -269,7 +269,7 @@ static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
     if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
     {
         volume_add_dirty_box(This, &This->lockedBox);
-        basetexture_set_dirty((IWineD3DBaseTextureImpl *)This->container, TRUE);
+        wined3d_texture_set_dirty(This->container, TRUE);
     }
 
     This->locked = TRUE;

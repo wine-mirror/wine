@@ -352,10 +352,9 @@ static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
          * of the sublevels, which destroys the WineD3DSurfaces.
          * Set the surfaces to NULL to avoid destroying them again later
          */
-        if(This->wineD3DTexture)
-        {
-            IWineD3DBaseTexture_Release(This->wineD3DTexture);
-        }
+        if (This->wined3d_texture)
+            wined3d_texture_decref(This->wined3d_texture);
+
         /* If it's the RenderTarget, destroy the d3ddevice */
         else if(This->wineD3DSwapChain)
         {
@@ -2352,15 +2351,14 @@ static HRESULT WINAPI ddraw_surface7_SetLOD(IDirectDrawSurface7 *iface, DWORD Ma
         return DDERR_INVALIDOBJECT;
     }
 
-    if(!This->wineD3DTexture)
+    if (!This->wined3d_texture)
     {
         ERR("(%p) The DirectDraw texture has no WineD3DTexture!\n", This);
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDOBJECT;
     }
 
-    hr = IWineD3DBaseTexture_SetLOD(This->wineD3DTexture,
-                                    MaxLOD);
+    hr = wined3d_texture_set_lod(This->wined3d_texture, MaxLOD);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -2395,7 +2393,7 @@ static HRESULT WINAPI ddraw_surface7_GetLOD(IDirectDrawSurface7 *iface, DWORD *M
         return DDERR_INVALIDOBJECT;
     }
 
-    *MaxLOD = IWineD3DBaseTexture_GetLOD(This->wineD3DTexture);
+    *MaxLOD = wined3d_texture_get_lod(This->wined3d_texture);
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }

@@ -313,12 +313,9 @@ HRESULT indexbuffer_init(IDirect3DIndexBuffer9Impl *buffer, IDirect3DDevice9Impl
  */
 typedef struct IDirect3DBaseTexture9Impl
 {
-    /* IUnknown fields */
     const IDirect3DBaseTexture9Vtbl *lpVtbl;
     LONG                    ref;
-
-    /* IDirect3DResource9 fields */
-    IWineD3DBaseTexture    *wineD3DBaseTexture;
+    struct wined3d_texture *wined3d_texture;
 } IDirect3DBaseTexture9Impl;
 
 /* --------------------- */
@@ -332,7 +329,7 @@ typedef struct IDirect3DCubeTexture9Impl
 {
     const IDirect3DCubeTexture9Vtbl *lpVtbl;
     LONG                    ref;
-    IWineD3DBaseTexture *wined3d_texture;
+    struct wined3d_texture *wined3d_texture;
     IDirect3DDevice9Ex *parentDevice;
 }  IDirect3DCubeTexture9Impl;
 
@@ -350,7 +347,7 @@ typedef struct IDirect3DTexture9Impl
 {
     const IDirect3DTexture9Vtbl *lpVtbl;
     LONG                    ref;
-    IWineD3DBaseTexture *wined3d_texture;
+    struct wined3d_texture *wined3d_texture;
     IDirect3DDevice9Ex *parentDevice;
 } IDirect3DTexture9Impl;
 
@@ -368,7 +365,7 @@ typedef struct IDirect3DVolumeTexture9Impl
 {
     const IDirect3DVolumeTexture9Vtbl *lpVtbl;
     LONG                    ref;
-    IWineD3DBaseTexture *wined3d_texture;
+    struct wined3d_texture *wined3d_texture;
     IDirect3DDevice9Ex *parentDevice;
 } IDirect3DVolumeTexture9Impl;
 

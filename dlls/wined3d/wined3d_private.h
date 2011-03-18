@@ -55,8 +55,9 @@
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
+typedef struct wined3d_texture IWineD3DBaseTextureImpl;
+typedef struct wined3d_texture IWineD3DBaseTexture;
 struct IWineD3DBaseShaderImpl;
-struct IWineD3DBaseTextureImpl;
 
 /* Texture format fixups */
 
@@ -1885,9 +1886,9 @@ struct gl_texture
 
 struct wined3d_texture_ops
 {
-    HRESULT (*texture_bind)(struct IWineD3DBaseTextureImpl *texture,
+    HRESULT (*texture_bind)(struct wined3d_texture *texture,
             const struct wined3d_gl_info *gl_info, BOOL srgb);
-    void (*texture_preload)(struct IWineD3DBaseTextureImpl *texture, enum WINED3DSRGB srgb);
+    void (*texture_preload)(struct wined3d_texture *texture, enum WINED3DSRGB srgb);
     void (*texture_sub_resource_add_dirty_region)(struct wined3d_resource *sub_resource,
             const WINED3DBOX *dirty_region);
     void (*texture_sub_resource_cleanup)(struct wined3d_resource *sub_resource);
@@ -1913,21 +1914,18 @@ typedef struct IWineD3DBaseTextureClass
     GLenum target;
 } IWineD3DBaseTextureClass;
 
-typedef struct IWineD3DBaseTextureImpl
+struct wined3d_texture
 {
-    /* IUnknown & WineD3DResource Information     */
-    const IWineD3DBaseTextureVtbl *lpVtbl;
     struct wined3d_resource resource;
     IWineD3DBaseTextureClass  baseTexture;
+};
 
-} IWineD3DBaseTextureImpl;
-
-static inline IWineD3DBaseTextureImpl *basetexture_from_resource(struct wined3d_resource *resource)
+static inline struct wined3d_texture *wined3d_texture_from_resource(struct wined3d_resource *resource)
 {
     return CONTAINING_RECORD(resource, IWineD3DBaseTextureImpl, resource);
 }
 
-static inline struct gl_texture *basetexture_get_gl_texture(IWineD3DBaseTextureImpl *texture,
+static inline struct gl_texture *wined3d_texture_get_gl_texture(struct wined3d_texture *texture,
         const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
     return srgb && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
@@ -1935,12 +1933,10 @@ static inline struct gl_texture *basetexture_get_gl_texture(IWineD3DBaseTextureI
             : &texture->baseTexture.texture_rgb;
 }
 
-void basetexture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
+void wined3d_texture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-struct wined3d_resource *basetexture_get_sub_resource(IWineD3DBaseTextureImpl *texture,
-        UINT sub_resource_idx) DECLSPEC_HIDDEN;
-void basetexture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty) DECLSPEC_HIDDEN;
+void wined3d_texture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty) DECLSPEC_HIDDEN;
 
 HRESULT cubetexture_init(IWineD3DBaseTextureImpl *texture, UINT edge_length, UINT levels,
         IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
@@ -1959,8 +1955,7 @@ typedef struct IWineD3DVolumeImpl
     /* IUnknown & WineD3DResource fields */
     const IWineD3DVolumeVtbl  *lpVtbl;
     struct wined3d_resource resource;
-
-    struct IWineD3DBaseTextureImpl *container;
+    struct wined3d_texture *container;
     BOOL                    lockable;
     BOOL                    locked;
     WINED3DBOX              lockedBox;
@@ -1978,7 +1973,7 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
         UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
-void volume_set_container(IWineD3DVolumeImpl *volume, struct IWineD3DBaseTextureImpl *container) DECLSPEC_HIDDEN;
+void volume_set_container(IWineD3DVolumeImpl *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * Structure for DIB Surfaces (GetDC and GDI surfaces)
@@ -2028,7 +2023,7 @@ struct wined3d_subresource_container
     union
     {
         struct IWineD3DSwapChainImpl *swapchain;
-        struct IWineD3DBaseTextureImpl *texture;
+        struct wined3d_texture *texture;
         void *base;
     } u;
 };

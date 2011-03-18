@@ -60,7 +60,7 @@ static ULONG WINAPI IDirect3DVolumeTexture8Impl_AddRef(IDirect3DVolumeTexture8 *
     {
         IDirect3DDevice8_AddRef(This->parentDevice);
         wined3d_mutex_lock();
-        IWineD3DBaseTexture_AddRef(This->wined3d_texture);
+        wined3d_texture_incref(This->wined3d_texture);
         wined3d_mutex_unlock();
     }
 
@@ -78,7 +78,7 @@ static ULONG WINAPI IDirect3DVolumeTexture8Impl_Release(IDirect3DVolumeTexture8 
         IDirect3DDevice8 *parentDevice = This->parentDevice;
 
         wined3d_mutex_lock();
-        IWineD3DBaseTexture_Release(This->wined3d_texture);
+        wined3d_texture_decref(This->wined3d_texture);
         wined3d_mutex_unlock();
 
         /* Release the device last, as it may cause the device to be destroyed. */
@@ -113,7 +113,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_SetPrivateData(IDirect3DVolume
             iface, debugstr_guid(refguid), pData, SizeOfData, Flags);
 
     wined3d_mutex_lock();
-    hr = IWineD3DBaseTexture_SetPrivateData(This->wined3d_texture, refguid, pData, SizeOfData, Flags);
+    hr = wined3d_texture_set_private_data(This->wined3d_texture, refguid, pData, SizeOfData, Flags);
     wined3d_mutex_unlock();
 
     return hr;
@@ -129,7 +129,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetPrivateData(IDirect3DVolume
             iface, debugstr_guid(refguid), pData, pSizeOfData);
 
     wined3d_mutex_lock();
-    hr = IWineD3DBaseTexture_GetPrivateData(This->wined3d_texture, refguid, pData, pSizeOfData);
+    hr = wined3d_texture_get_private_data(This->wined3d_texture, refguid, pData, pSizeOfData);
     wined3d_mutex_unlock();
 
     return hr;
@@ -144,7 +144,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_FreePrivateData(IDirect3DVolum
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(refguid));
 
     wined3d_mutex_lock();
-    hr = IWineD3DBaseTexture_FreePrivateData(This->wined3d_texture, refguid);
+    hr = wined3d_texture_free_private_data(This->wined3d_texture, refguid);
     wined3d_mutex_unlock();
 
     return hr;
@@ -159,7 +159,7 @@ static DWORD WINAPI IDirect3DVolumeTexture8Impl_SetPriority(IDirect3DVolumeTextu
     TRACE("iface %p, priority %u.\n", iface, PriorityNew);
 
     wined3d_mutex_lock();
-    ret = IWineD3DBaseTexture_SetPriority(This->wined3d_texture, PriorityNew);
+    ret = wined3d_texture_set_priority(This->wined3d_texture, PriorityNew);
     wined3d_mutex_unlock();
 
     return ret;
@@ -173,7 +173,7 @@ static DWORD WINAPI IDirect3DVolumeTexture8Impl_GetPriority(IDirect3DVolumeTextu
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    ret = IWineD3DBaseTexture_GetPriority(This->wined3d_texture);
+    ret = wined3d_texture_get_priority(This->wined3d_texture);
     wined3d_mutex_unlock();
 
     return ret;
@@ -186,7 +186,7 @@ static void WINAPI IDirect3DVolumeTexture8Impl_PreLoad(IDirect3DVolumeTexture8 *
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    IWineD3DBaseTexture_PreLoad(This->wined3d_texture);
+    wined3d_texture_preload(This->wined3d_texture);
     wined3d_mutex_unlock();
 }
 
@@ -198,7 +198,7 @@ static D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture8Impl_GetType(IDirect3DVolum
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    type = IWineD3DBaseTexture_GetType(This->wined3d_texture);
+    type = wined3d_texture_get_type(This->wined3d_texture);
     wined3d_mutex_unlock();
 
     return type;
@@ -213,7 +213,7 @@ static DWORD WINAPI IDirect3DVolumeTexture8Impl_SetLOD(IDirect3DVolumeTexture8 *
     TRACE("iface %p, lod %u.\n", iface, LODNew);
 
     wined3d_mutex_lock();
-    ret = IWineD3DBaseTexture_SetLOD(This->wined3d_texture, LODNew);
+    ret = wined3d_texture_set_lod(This->wined3d_texture, LODNew);
     wined3d_mutex_unlock();
 
     return ret;
@@ -227,7 +227,7 @@ static DWORD WINAPI IDirect3DVolumeTexture8Impl_GetLOD(IDirect3DVolumeTexture8 *
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    ret = IWineD3DBaseTexture_GetLOD(This->wined3d_texture);
+    ret = wined3d_texture_get_lod(This->wined3d_texture);
     wined3d_mutex_unlock();
 
     return ret;
@@ -241,7 +241,7 @@ static DWORD WINAPI IDirect3DVolumeTexture8Impl_GetLevelCount(IDirect3DVolumeTex
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    ret = IWineD3DBaseTexture_GetLevelCount(This->wined3d_texture);
+    ret = wined3d_texture_get_level_count(This->wined3d_texture);
     wined3d_mutex_unlock();
 
     return ret;
@@ -250,14 +250,14 @@ static DWORD WINAPI IDirect3DVolumeTexture8Impl_GetLevelCount(IDirect3DVolumeTex
 static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetLevelDesc(IDirect3DVolumeTexture8 *iface,
         UINT level, D3DVOLUME_DESC *desc)
 {
-    IDirect3DVolumeTexture8Impl *This = impl_from_IDirect3DVolumeTexture8(iface);
+    IDirect3DVolumeTexture8Impl *texture = impl_from_IDirect3DVolumeTexture8(iface);
     struct wined3d_resource *sub_resource;
     HRESULT hr = D3D_OK;
 
     TRACE("iface %p, level %u, desc %p.\n", iface, level, desc);
 
     wined3d_mutex_lock();
-    if (!(sub_resource = IWineD3DBaseTexture_GetSubResource(This->wined3d_texture, level)))
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, level)))
         hr = D3DERR_INVALIDCALL;
     else
     {
@@ -281,13 +281,13 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetLevelDesc(IDirect3DVolumeTe
 static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetVolumeLevel(IDirect3DVolumeTexture8 *iface,
         UINT level, IDirect3DVolume8 **volume)
 {
-    IDirect3DVolumeTexture8Impl *This = impl_from_IDirect3DVolumeTexture8(iface);
+    IDirect3DVolumeTexture8Impl *texture = impl_from_IDirect3DVolumeTexture8(iface);
     struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, level %u, volume %p.\n", iface, level, volume);
 
     wined3d_mutex_lock();
-    if (!(sub_resource = IWineD3DBaseTexture_GetSubResource(This->wined3d_texture, level)))
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, level)))
     {
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
@@ -303,7 +303,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetVolumeLevel(IDirect3DVolume
 static HRESULT WINAPI IDirect3DVolumeTexture8Impl_LockBox(IDirect3DVolumeTexture8 *iface,
         UINT level, D3DLOCKED_BOX *locked_box, const D3DBOX *box, DWORD flags)
 {
-    IDirect3DVolumeTexture8Impl *This = impl_from_IDirect3DVolumeTexture8(iface);
+    IDirect3DVolumeTexture8Impl *texture = impl_from_IDirect3DVolumeTexture8(iface);
     struct wined3d_resource *sub_resource;
     HRESULT hr;
 
@@ -311,7 +311,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_LockBox(IDirect3DVolumeTexture
             iface, level, locked_box, box, flags);
 
     wined3d_mutex_lock();
-    if (!(sub_resource = IWineD3DBaseTexture_GetSubResource(This->wined3d_texture, level)))
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, level)))
         hr = D3DERR_INVALIDCALL;
     else
         hr = IDirect3DVolume8_LockBox((IDirect3DVolume8 *)wined3d_resource_get_parent(sub_resource),
@@ -324,14 +324,14 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_LockBox(IDirect3DVolumeTexture
 static HRESULT WINAPI IDirect3DVolumeTexture8Impl_UnlockBox(IDirect3DVolumeTexture8 *iface,
         UINT level)
 {
-    IDirect3DVolumeTexture8Impl *This = impl_from_IDirect3DVolumeTexture8(iface);
+    IDirect3DVolumeTexture8Impl *texture = impl_from_IDirect3DVolumeTexture8(iface);
     struct wined3d_resource *sub_resource;
     HRESULT hr;
 
     TRACE("iface %p, level %u.\n", iface, level);
 
     wined3d_mutex_lock();
-    if (!(sub_resource = IWineD3DBaseTexture_GetSubResource(This->wined3d_texture, level)))
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, level)))
         hr = D3DERR_INVALIDCALL;
     else
         hr = IDirect3DVolume8_UnlockBox((IDirect3DVolume8 *)wined3d_resource_get_parent(sub_resource));
@@ -343,13 +343,13 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_UnlockBox(IDirect3DVolumeTextu
 static HRESULT WINAPI IDirect3DVolumeTexture8Impl_AddDirtyBox(IDirect3DVolumeTexture8 *iface,
         const D3DBOX *dirty_box)
 {
-    IDirect3DVolumeTexture8Impl *This = impl_from_IDirect3DVolumeTexture8(iface);
+    IDirect3DVolumeTexture8Impl *texture = impl_from_IDirect3DVolumeTexture8(iface);
     HRESULT hr;
 
     TRACE("iface %p, dirty_box %p.\n", iface, dirty_box);
 
     wined3d_mutex_lock();
-    hr = IWineD3DBaseTexture_AddDirtyRegion(This->wined3d_texture, 0, (const WINED3DBOX *)dirty_box);
+    hr = wined3d_texture_add_dirty_region(texture->wined3d_texture, 0, (const WINED3DBOX *)dirty_box);
     wined3d_mutex_unlock();
 
     return hr;

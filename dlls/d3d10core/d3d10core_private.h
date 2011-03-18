@@ -100,7 +100,7 @@ struct d3d10_texture3d
     const struct ID3D10Texture3DVtbl *vtbl;
     LONG refcount;
 
-    IWineD3DBaseTexture *wined3d_texture;
+    struct wined3d_texture *wined3d_texture;
     D3D10_TEXTURE3D_DESC desc;
 };
 

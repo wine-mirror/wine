@@ -3438,12 +3438,12 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
         {
             hr = IWineD3DDevice_CreateCubeTexture(ddraw->wineD3DDevice, DDSD->dwWidth, levels, 0,
-                    Format, Pool, object, &ddraw_null_wined3d_parent_ops, &object->wineD3DTexture);
+                    Format, Pool, object, &ddraw_null_wined3d_parent_ops, &object->wined3d_texture);
         }
         else
         {
             hr = IWineD3DDevice_CreateTexture(ddraw->wineD3DDevice, DDSD->dwWidth, DDSD->dwHeight,
-                    levels, 0, Format, Pool, object, &ddraw_null_wined3d_parent_ops, &object->wineD3DTexture);
+                    levels, 0, Format, Pool, object, &ddraw_null_wined3d_parent_ops, &object->wined3d_texture);
         }
         ddraw->tex_root = NULL;
     }

@@ -128,13 +128,12 @@ static void context_apply_attachment_filter_states(const struct wined3d_context 
         {
             case SFLAG_INTEXTURE:
             case SFLAG_INSRGBTEX:
-                gl_tex = basetexture_get_gl_texture(texture,
+                gl_tex = wined3d_texture_get_gl_texture(texture,
                         context->gl_info, location == SFLAG_INSRGBTEX);
                 break;
 
             default:
                 ERR("Unsupported location %s (%#x).\n", debug_surflocation(location), location);
-                IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture);
                 return;
         }
 

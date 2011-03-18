@@ -2097,6 +2097,7 @@ struct wined3d_palette;
 struct wined3d_query;
 struct wined3d_resource;
 struct wined3d_stateblock;
+struct wined3d_texture;
 struct wined3d_vertex_declaration;
 
 [
@@ -2338,36 +2339,6 @@ interface IWineD3DVolume : IWineD3DResource
 [
     object,
     local,
-    uuid(3c2aebf6-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DBaseTexture : IWineD3DResource
-{
-    DWORD SetLOD(
-        [in] DWORD new_lod
-    );
-    DWORD GetLOD(
-    );
-    DWORD GetLevelCount(
-    );
-    HRESULT SetAutoGenFilterType(
-        WINED3DTEXTUREFILTERTYPE filter_type
-    );
-    WINED3DTEXTUREFILTERTYPE GetAutoGenFilterType(
-    );
-    void GenerateMipSubLevels(
-    );
-    struct wined3d_resource *GetSubResource(
-        [in] UINT sub_resource_idx
-    );
-    HRESULT AddDirtyRegion(
-        [in] UINT layer,
-        [in] const WINED3DBOX *dirty_region
-    );
-}
-
-[
-    object,
-    local,
     uuid(34d01b10-6f30-11d9-c687-00046142c14f)
 ]
 interface IWineD3DSwapChain : IWineD3DBase
@@ -2522,7 +2493,7 @@ interface IWineD3DDevice : IUnknown
         [in] WINED3DPOOL pool,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DBaseTexture **texture
+        [out] struct wined3d_texture **texture
     );
     HRESULT CreateVolumeTexture(
         [in] UINT width,
@@ -2534,7 +2505,7 @@ interface IWineD3DDevice : IUnknown
         [in] WINED3DPOOL pool,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DBaseTexture **texture
+        [out] struct wined3d_texture **texture
     );
     HRESULT CreateVolume(
         [in] UINT width,
@@ -2555,7 +2526,7 @@ interface IWineD3DDevice : IUnknown
         [in] WINED3DPOOL pool,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DBaseTexture **texture
+        [out] struct wined3d_texture **texture
     );
     HRESULT CreateQuery(
         [in] WINED3DQUERYTYPE type,
@@ -2855,11 +2826,11 @@ interface IWineD3DDevice : IUnknown
     );
     HRESULT SetTexture(
         [in] DWORD stage,
-        [in] IWineD3DBaseTexture *texture
+        [in] struct wined3d_texture *texture
     );
     HRESULT GetTexture(
         [in] DWORD stage,
-        [out] IWineD3DBaseTexture **texture
+        [out] struct wined3d_texture **texture
     );
     HRESULT SetTextureStageState(
         [in] DWORD stage,
@@ -3025,8 +2996,8 @@ interface IWineD3DDevice : IUnknown
         [in] const WINED3DCOLORVALUE *color
     );
     HRESULT UpdateTexture(
-        [in] IWineD3DBaseTexture *src_texture,
-        [in] IWineD3DBaseTexture *dst_texture
+        [in] struct wined3d_texture *src_texture,
+        [in] struct wined3d_texture *dst_texture
     );
     HRESULT UpdateSurface(
         [in] IWineD3DSurface *src_surface,
@@ -3152,6 +3123,30 @@ HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateb
 HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_stateblock_decref(struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
+
+HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
+        UINT layer, const WINED3DBOX *dirty_region);
+ULONG __cdecl wined3d_texture_decref(struct wined3d_texture *texture);
+HRESULT __cdecl wined3d_texture_free_private_data(struct wined3d_texture *texture, REFGUID guid);
+void __cdecl wined3d_texture_generate_mipmaps(struct wined3d_texture *texture);
+WINED3DTEXTUREFILTERTYPE __cdecl wined3d_texture_get_autogen_filter_type(const struct wined3d_texture *texture);
+DWORD __cdecl wined3d_texture_get_level_count(const struct wined3d_texture *texture);
+DWORD __cdecl wined3d_texture_get_lod(const struct wined3d_texture *texture);
+void * __cdecl wined3d_texture_get_parent(const struct wined3d_texture *texture);
+DWORD __cdecl wined3d_texture_get_priority(const struct wined3d_texture *texture);
+HRESULT __cdecl wined3d_texture_get_private_data(const struct wined3d_texture *texture,
+        REFGUID guid, void *data, DWORD *data_size);
+struct wined3d_resource * __cdecl wined3d_texture_get_sub_resource(struct wined3d_texture *texture,
+        UINT sub_resource_idx);
+WINED3DRESOURCETYPE __cdecl wined3d_texture_get_type(const struct wined3d_texture *texture);
+ULONG __cdecl wined3d_texture_incref(struct wined3d_texture *texture);
+void __cdecl wined3d_texture_preload(struct wined3d_texture *texture);
+HRESULT __cdecl wined3d_texture_set_autogen_filter_type(struct wined3d_texture *texture,
+        WINED3DTEXTUREFILTERTYPE filter_type);
+DWORD __cdecl wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod);
+DWORD __cdecl wined3d_texture_set_priority(struct wined3d_texture *texture, DWORD priority);
+HRESULT __cdecl wined3d_texture_set_private_data(struct wined3d_texture *texture,
+        REFGUID guid, const void *data, DWORD data_size, DWORD flags);
 
 ULONG __cdecl wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration *declaration);
 void * __cdecl wined3d_vertex_declaration_get_parent(const struct wined3d_vertex_declaration *declaration);

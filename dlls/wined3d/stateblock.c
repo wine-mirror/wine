@@ -482,7 +482,7 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
         for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++)
         {
             if (stateblock->state.textures[counter])
-                IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)stateblock->state.textures[counter]);
+                wined3d_texture_decref(stateblock->state.textures[counter]);
         }
 
         for (counter = 0; counter < MAX_STREAMS; ++counter)
@@ -840,9 +840,9 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
                 i, src_state->textures[i], stateblock->state.textures[i]);
 
         if (src_state->textures[i])
-            IWineD3DBaseTexture_AddRef((IWineD3DBaseTexture *)src_state->textures[i]);
+            wined3d_texture_incref(src_state->textures[i]);
         if (stateblock->state.textures[i])
-            IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)stateblock->state.textures[i]);
+            wined3d_texture_decref(stateblock->state.textures[i]);
         stateblock->state.textures[i] = src_state->textures[i];
     }
 

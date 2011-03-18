@@ -984,15 +984,17 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_UpdateTexture(IDirect3DDevice8 *iface,
-        IDirect3DBaseTexture8 *pSourceTexture, IDirect3DBaseTexture8 *pDestinationTexture)
+        IDirect3DBaseTexture8 *src_texture, IDirect3DBaseTexture8 *dst_texture)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     HRESULT hr;
 
-    TRACE("iface %p, src_texture %p, dst_texture %p.\n", iface, pSourceTexture, pDestinationTexture);
+    TRACE("iface %p, src_texture %p, dst_texture %p.\n", iface, src_texture, dst_texture);
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_UpdateTexture(This->WineD3DDevice,  ((IDirect3DBaseTexture8Impl *)pSourceTexture)->wineD3DBaseTexture, ((IDirect3DBaseTexture8Impl *)pDestinationTexture)->wineD3DBaseTexture);
+    hr = IWineD3DDevice_UpdateTexture(This->WineD3DDevice,
+            ((IDirect3DBaseTexture8Impl *)src_texture)->wined3d_texture,
+            ((IDirect3DBaseTexture8Impl *)dst_texture)->wined3d_texture);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1608,7 +1610,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetTexture(IDirect3DDevice8 *iface,
         DWORD Stage, IDirect3DBaseTexture8 **ppTexture)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DBaseTexture *retTexture;
+    struct wined3d_texture *wined3d_texture;
     HRESULT hr;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, Stage, ppTexture);
@@ -1618,7 +1620,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetTexture(IDirect3DDevice8 *iface,
     }
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_GetTexture(This->WineD3DDevice, Stage, &retTexture);
+    hr = IWineD3DDevice_GetTexture(This->WineD3DDevice, Stage, &wined3d_texture);
     if (FAILED(hr))
     {
         WARN("Failed to get texture for stage %u, hr %#x.\n", Stage, hr);
@@ -1627,11 +1629,11 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetTexture(IDirect3DDevice8 *iface,
         return hr;
     }
 
-    if (retTexture)
+    if (wined3d_texture)
     {
-        *ppTexture = IWineD3DBaseTexture_GetParent(retTexture);
+        *ppTexture = wined3d_texture_get_parent(wined3d_texture);
         IDirect3DBaseTexture8_AddRef(*ppTexture);
-        IWineD3DBaseTexture_Release(retTexture);
+        wined3d_texture_decref(wined3d_texture);
     }
     else
     {
@@ -1652,7 +1654,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetTexture(IDirect3DDevice8 *iface, D
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_SetTexture(This->WineD3DDevice, Stage,
-                                   pTexture==NULL ? NULL : ((IDirect3DBaseTexture8Impl *)pTexture)->wineD3DBaseTexture);
+            pTexture ? ((IDirect3DBaseTexture8Impl *)pTexture)->wined3d_texture : NULL);
     wined3d_mutex_unlock();
 
     return hr;

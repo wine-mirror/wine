@@ -1212,11 +1212,11 @@ void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const WINED3DBOX *dirt
         surface->dirtyRect.bottom = surface->resource.height;
     }
 
-    /* if the container is a basetexture then mark it dirty. */
+    /* if the container is a texture then mark it dirty. */
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
         TRACE("Passing to container.\n");
-        basetexture_set_dirty(surface->container.u.texture, TRUE);
+        wined3d_texture_set_dirty(surface->container.u.texture, TRUE);
     }
 }
 
@@ -4340,7 +4340,7 @@ void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL pers
             if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
             {
                 TRACE("Passing to container.\n");
-                basetexture_set_dirty(surface->container.u.texture, TRUE);
+                wined3d_texture_set_dirty(surface->container.u.texture, TRUE);
             }
         }
         surface->flags &= ~SFLAG_LOCATIONS;
@@ -4362,7 +4362,7 @@ void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL pers
             if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
             {
                 TRACE("Passing to container\n");
-                basetexture_set_dirty(surface->container.u.texture, TRUE);
+                wined3d_texture_set_dirty(surface->container.u.texture, TRUE);
             }
         }
         surface->flags &= ~flag;

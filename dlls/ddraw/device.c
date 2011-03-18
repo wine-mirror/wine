@@ -2437,9 +2437,8 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
         case D3DRENDERSTATE_TEXTUREHANDLE:
         {
             /* This state is wrapped to SetTexture in SetRenderState, so
-             * it has to be wrapped to GetTexture here
-             */
-            IWineD3DBaseTexture *tex = NULL;
+             * it has to be wrapped to GetTexture here. */
+            struct wined3d_texture *tex = NULL;
             *lpdwRenderState = 0;
 
             EnterCriticalSection(&ddraw_cs);
@@ -2449,9 +2448,9 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
             {
                 /* The parent of the texture is the IDirectDrawSurface7
                  * interface of the ddraw surface. */
-                IDirectDrawSurfaceImpl *parent = IWineD3DBaseTexture_GetParent(tex);
+                IDirectDrawSurfaceImpl *parent = wined3d_texture_get_parent(tex);
                 if (parent) *lpdwRenderState = parent->Handle;
-                IWineD3DBaseTexture_Release(tex);
+                wined3d_texture_decref(tex);
             }
 
             LeaveCriticalSection(&ddraw_cs);
@@ -2494,9 +2493,9 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
             }
             else
             {
+                struct wined3d_texture *tex = NULL;
                 HRESULT hr;
                 BOOL tex_alpha = FALSE;
-                IWineD3DBaseTexture *tex = NULL;
                 DDPIXELFORMAT ddfmt;
 
                 hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, 0, &tex);
@@ -2505,7 +2504,7 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
                 {
                     struct wined3d_resource *sub_resource;
 
-                    if ((sub_resource = IWineD3DBaseTexture_GetSubResource(tex, 0)))
+                    if ((sub_resource = wined3d_texture_get_sub_resource(tex, 0)))
                     {
                         struct wined3d_resource_desc desc;
 
@@ -2515,7 +2514,7 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
                         if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
                     }
 
-                    IWineD3DBaseTexture_Release(tex);
+                    wined3d_texture_decref(tex);
                 }
 
                 if (!(colorop == WINED3DTOP_MODULATE && colorarg1 == WINED3DTA_TEXTURE && colorarg2 == WINED3DTA_CURRENT &&
@@ -2804,8 +2803,8 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
             {
                 case D3DTBLEND_MODULATE:
                 {
+                    struct wined3d_texture *tex = NULL;
                     BOOL tex_alpha = FALSE;
-                    IWineD3DBaseTexture *tex = NULL;
                     DDPIXELFORMAT ddfmt;
 
                     hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, 0, &tex);
@@ -2814,7 +2813,7 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     {
                         struct wined3d_resource *sub_resource;
 
-                        if ((sub_resource = IWineD3DBaseTexture_GetSubResource(tex, 0)))
+                        if ((sub_resource = wined3d_texture_get_sub_resource(tex, 0)))
                         {
                             struct wined3d_resource_desc desc;
 
@@ -2824,7 +2823,7 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                             if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
                         }
 
-                        IWineD3DBaseTexture_Release(tex);
+                        wined3d_texture_decref(tex);
                     }
 
                     if (tex_alpha)
@@ -4430,7 +4429,7 @@ IDirect3DDeviceImpl_7_GetTexture(IDirect3DDevice7 *iface,
                                  IDirectDrawSurface7 **Texture)
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
-    IWineD3DBaseTexture *Surf;
+    struct wined3d_texture *wined3d_texture;
     HRESULT hr;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, Stage, Texture);
@@ -4442,15 +4441,15 @@ IDirect3DDeviceImpl_7_GetTexture(IDirect3DDevice7 *iface,
     }
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, Stage, &Surf);
-    if( (hr != D3D_OK) || (!Surf) )
+    hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, Stage, &wined3d_texture);
+    if (FAILED(hr) || !wined3d_texture)
     {
         *Texture = NULL;
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
 
-    *Texture = IWineD3DBaseTexture_GetParent(Surf);
+    *Texture = wined3d_texture_get_parent(wined3d_texture);
     IDirectDrawSurface7_AddRef(*Texture);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
@@ -4526,8 +4525,7 @@ IDirect3DDeviceImpl_7_SetTexture(IDirect3DDevice7 *iface,
     /* Texture may be NULL here */
     EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DDevice_SetTexture(This->wineD3DDevice,
-                                   Stage,
-                                   surf ? surf->wineD3DTexture : NULL);
+            Stage, surf ? surf->wined3d_texture : NULL);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -4578,8 +4576,8 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
     {
         /* This fixup is required by the way D3DTBLEND_MODULATE maps to texture stage states.
            See IDirect3DDeviceImpl_3_SetRenderState for details. */
+        struct wined3d_texture *tex = NULL;
         BOOL tex_alpha = FALSE;
-        IWineD3DBaseTexture *tex = NULL;
         DDPIXELFORMAT ddfmt;
         HRESULT result;
 
@@ -4589,7 +4587,7 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
         {
             struct wined3d_resource *sub_resource;
 
-            if ((sub_resource = IWineD3DBaseTexture_GetSubResource(tex, 0)))
+            if ((sub_resource = wined3d_texture_get_sub_resource(tex, 0)))
             {
                 struct wined3d_resource_desc desc;
 
@@ -4599,7 +4597,7 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
                 if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
             }
 
-            IWineD3DBaseTexture_Release(tex);
+            wined3d_texture_decref(tex);
         }
 
         /* Arg 1/2 are already set to WINED3DTA_TEXTURE/WINED3DTA_CURRENT in case of D3DTBLEND_MODULATE */

@@ -324,9 +324,7 @@ struct IDirect3DBaseTexture8Impl
     /* IUnknown fields */
     const IDirect3DBaseTexture8Vtbl *lpVtbl;
     LONG                   ref;
-
-    /* IDirect3DResource8 fields */
-    IWineD3DBaseTexture             *wineD3DBaseTexture;
+    struct wined3d_texture *wined3d_texture;
 };
 
 /* --------------------- */
@@ -340,7 +338,7 @@ struct IDirect3DCubeTexture8Impl
 {
     IDirect3DCubeTexture8   IDirect3DCubeTexture8_iface;
     LONG                    ref;
-    IWineD3DBaseTexture *wined3d_texture;
+    struct wined3d_texture *wined3d_texture;
     IDirect3DDevice8 *parentDevice;
 };
 
@@ -358,7 +356,7 @@ struct IDirect3DTexture8Impl
 {
     IDirect3DTexture8   IDirect3DTexture8_iface;
     LONG                ref;
-    IWineD3DBaseTexture *wined3d_texture;
+    struct wined3d_texture *wined3d_texture;
     IDirect3DDevice8 *parentDevice;
 };
 
@@ -376,7 +374,7 @@ struct IDirect3DVolumeTexture8Impl
 {
     IDirect3DVolumeTexture8 IDirect3DVolumeTexture8_iface;
     LONG ref;
-    IWineD3DBaseTexture *wined3d_texture;
+    struct wined3d_texture *wined3d_texture;
     IDirect3DDevice8 *parentDevice;
 };
 

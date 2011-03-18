@@ -3592,7 +3592,7 @@ static void sampler_texmatrix(DWORD state, struct wined3d_stateblock *stateblock
 
     if(!texture) return;
     /* The fixed function np2 texture emulation uses the texture matrix to fix up the coordinates
-     * basetexture_apply_state_changes() multiplies the set matrix with a fixup matrix. Before the
+     * wined3d_texture_apply_state_changes() multiplies the set matrix with a fixup matrix. Before the
      * scaling is reapplied or removed, the texture matrix has to be reapplied
      *
      * The mapped stage is already active because the sampler() function below, which is part of the
@@ -3647,8 +3647,7 @@ static void sampler(DWORD state_id, struct wined3d_stateblock *stateblock, struc
         BOOL srgb = state->sampler_states[sampler][WINED3DSAMP_SRGBTEXTURE];
 
         texture->baseTexture.texture_ops->texture_bind(texture, gl_info, srgb);
-        basetexture_apply_state_changes(texture,
-                state->sampler_states[sampler], gl_info);
+        wined3d_texture_apply_state_changes(texture, state->sampler_states[sampler], gl_info);
 
         if (gl_info->supported[EXT_TEXTURE_LOD_BIAS])
         {
