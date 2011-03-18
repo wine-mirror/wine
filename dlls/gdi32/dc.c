@@ -77,7 +77,6 @@ DC *alloc_dc_ptr( WORD magic )
 
     if (!(dc = HeapAlloc( GetProcessHeap(), 0, sizeof(*dc) ))) return NULL;
 
-    dc->funcs               = &null_driver;
     dc->nulldrv.funcs       = &null_driver;
     dc->nulldrv.next        = NULL;
     dc->physDev             = &dc->nulldrv;
@@ -252,7 +251,6 @@ void push_dc_driver( DC * dc, PHYSDEV physdev, const DC_FUNCTIONS *funcs )
     physdev->next = dc->physDev;
     physdev->hdc = dc->hSelf;
     dc->physDev = physdev;
-    dc->funcs = physdev->funcs;
 }
 
 
@@ -266,7 +264,6 @@ void pop_dc_driver( DC * dc, PHYSDEV physdev )
     assert( physdev == dc->physDev );
     assert( physdev != &dc->nulldrv );
     dc->physDev = physdev->next;
-    dc->funcs = dc->physDev->funcs;
     physdev->funcs->pDeleteDC( physdev );
 }
 

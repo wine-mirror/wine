@@ -246,7 +246,6 @@ typedef struct tagDC
     GDIOBJHDR    header;
     HDC          hSelf;            /* Handle to this DC */
     struct gdi_physdev nulldrv;    /* physdev for the null driver */
-    const struct tagDC_FUNCS *funcs; /* DC function table */
     PHYSDEV      physDev;         /* Physical device (driver-specific) */
     DWORD        thread;          /* thread owning the DC */
     LONG         refcount;        /* thread refcount */
