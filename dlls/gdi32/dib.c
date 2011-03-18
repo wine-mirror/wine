@@ -178,140 +178,95 @@ int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
     return -1;
 }
 
+/* nulldrv fallback implementation using SetDIBits/StretchBlt */
+INT CDECL nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                                 INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
+                                 const BITMAPINFO *info, UINT coloruse, DWORD rop )
+{
+    DC *dc = get_nulldrv_dc( dev );
+    INT ret;
+    LONG width, height;
+    WORD planes, bpp;
+    DWORD compr, size;
+    HBITMAP hBitmap;
+    HDC hdcMem;
+
+    /* make sure we have a real implementation for StretchBlt and SetDIBits */
+    if (GET_DC_PHYSDEV( dc, pStretchBlt ) == dev || GET_DC_PHYSDEV( dc, pSetDIBits ) == dev)
+        return 0;
+
+    if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size ) == -1)
+        return 0;
+
+    if (width < 0) return 0;
+
+    if (xSrc == 0 && ySrc == 0 && widthDst == widthSrc && heightDst == heightSrc &&
+        info->bmiHeader.biCompression == BI_RGB)
+    {
+        /* Windows appears to have a fast case optimization
+         * that uses the wrong origin for top-down DIBs */
+        if (height < 0 && heightSrc < abs(height)) ySrc = abs(height) - heightSrc;
+
+        if (xDst == 0 && yDst == 0 && info->bmiHeader.biCompression == BI_RGB && rop == SRCCOPY)
+        {
+            BITMAP bm;
+            hBitmap = GetCurrentObject( dev->hdc, OBJ_BITMAP );
+            if (GetObjectW( hBitmap, sizeof(bm), &bm ) &&
+                bm.bmWidth == widthSrc && bm.bmHeight == heightSrc &&
+                bm.bmBitsPixel == bpp && bm.bmPlanes == planes)
+            {
+                /* fast path */
+                return SetDIBits( dev->hdc, hBitmap, 0, height, bits, info, coloruse );
+            }
+        }
+    }
+
+    hdcMem = CreateCompatibleDC( dev->hdc );
+    hBitmap = CreateCompatibleBitmap( dev->hdc, width, height );
+    SelectObject( hdcMem, hBitmap );
+    if (coloruse == DIB_PAL_COLORS)
+        SelectPalette( hdcMem, GetCurrentObject( dev->hdc, OBJ_PAL ), FALSE );
+
+    if (info->bmiHeader.biCompression == BI_RLE4 || info->bmiHeader.biCompression == BI_RLE8)
+    {
+        /* when RLE compression is used, there may be some gaps (ie the DIB doesn't
+         * contain all the rectangle described in bmiHeader, but only part of it.
+         * This mean that those undescribed pixels must be left untouched.
+         * So, we first copy on a memory bitmap the current content of the
+         * destination rectangle, blit the DIB bits on top of it - hence leaving
+         * the gaps untouched -, and blitting the rectangle back.
+         * This insure that gaps are untouched on the destination rectangle
+         */
+        StretchBlt( hdcMem, xSrc, abs(height) - heightSrc - ySrc, widthSrc, heightSrc,
+                    dev->hdc, xDst, yDst, widthDst, heightDst, rop );
+    }
+    ret = SetDIBits( hdcMem, hBitmap, 0, height, bits, info, coloruse );
+    if (ret) StretchBlt( dev->hdc, xDst, yDst, widthDst, heightDst,
+                         hdcMem, xSrc, abs(height) - heightSrc - ySrc, widthSrc, heightSrc, rop );
+    DeleteDC( hdcMem );
+    DeleteObject( hBitmap );
+    return ret;
+}
 
 /***********************************************************************
  *           StretchDIBits   (GDI32.@)
  */
-INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
-                       INT heightDst, INT xSrc, INT ySrc, INT widthSrc,
-                       INT heightSrc, const void *bits,
-                       const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
+INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                         INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
+                         const BITMAPINFO *info, UINT coloruse, DWORD rop )
 {
     DC *dc;
-    INT ret;
+    INT ret = 0;
 
-    if (!bits || !info)
-	return 0;
+    if (!bits || !info) return 0;
 
-    if (!(dc = get_dc_ptr( hdc ))) return 0;
-
-    if(dc->funcs->pStretchDIBits)
+    if ((dc = get_dc_ptr( hdc )))
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pStretchDIBits );
         update_dc( dc );
-        ret = dc->funcs->pStretchDIBits(dc->physDev, xDst, yDst, widthDst,
-                                        heightDst, xSrc, ySrc, widthSrc,
-                                        heightSrc, bits, info, wUsage, dwRop);
+        ret = physdev->funcs->pStretchDIBits( physdev, xDst, yDst, widthDst, heightDst,
+                                              xSrc, ySrc, widthSrc, heightSrc, bits, info, coloruse, rop );
         release_dc_ptr( dc );
-    }
-    else /* use StretchBlt */
-    {
-        LONG height;
-        LONG width;
-        WORD planes, bpp;
-        DWORD compr, size;
-        HBITMAP hBitmap;
-        BOOL fastpath = FALSE;
-
-        release_dc_ptr( dc );
-
-        if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size ) == -1)
-        {
-            ERR("Invalid bitmap\n");
-            return 0;
-        }
-
-        if (width < 0)
-        {
-            ERR("Bitmap has a negative width\n");
-            return 0;
-        }
-
-        if (xSrc == 0 && ySrc == 0 && widthDst == widthSrc && heightDst == heightSrc &&
-            info->bmiHeader.biCompression == BI_RGB)
-        {
-            /* Windows appears to have a fast case optimization
-             * that uses the wrong origin for top-down DIBs */
-            if (height < 0 && heightSrc < abs(height)) ySrc = abs(height) - heightSrc;
-        }
-
-        hBitmap = GetCurrentObject(hdc, OBJ_BITMAP);
-
-        if (xDst == 0 && yDst == 0 && xSrc == 0 && ySrc == 0 &&
-            widthDst == widthSrc && heightDst == heightSrc &&
-            info->bmiHeader.biCompression == BI_RGB &&
-            dwRop == SRCCOPY)
-        {
-            BITMAPOBJ *bmp;
-            if ((bmp = GDI_GetObjPtr( hBitmap, OBJ_BITMAP )))
-            {
-                if (bmp->bitmap.bmBitsPixel == bpp &&
-                    bmp->bitmap.bmWidth == widthSrc &&
-                    bmp->bitmap.bmHeight == heightSrc &&
-                    bmp->bitmap.bmPlanes == planes)
-                    fastpath = TRUE;
-                GDI_ReleaseObj( hBitmap );
-            }
-        }
-
-        if (fastpath)
-        {
-            /* fast path */
-            TRACE("using fast path\n");
-            ret = SetDIBits( hdc, hBitmap, 0, height, bits, info, wUsage);
-        }
-        else
-        {
-            /* slow path - need to use StretchBlt */
-            HBITMAP hOldBitmap;
-            HPALETTE hpal = NULL;
-            HDC hdcMem;
-
-            hdcMem = CreateCompatibleDC( hdc );
-            hBitmap = CreateCompatibleBitmap(hdc, width, height);
-            hOldBitmap = SelectObject( hdcMem, hBitmap );
-            if(wUsage == DIB_PAL_COLORS)
-            {
-                hpal = GetCurrentObject(hdc, OBJ_PAL);
-                hpal = SelectPalette(hdcMem, hpal, FALSE);
-            }
-
-            if (info->bmiHeader.biCompression == BI_RLE4 ||
-	            info->bmiHeader.biCompression == BI_RLE8) {
-
-                /* when RLE compression is used, there may be some gaps (ie the DIB doesn't
-                 * contain all the rectangle described in bmiHeader, but only part of it.
-                 * This mean that those undescribed pixels must be left untouched.
-                 * So, we first copy on a memory bitmap the current content of the
-                 * destination rectangle, blit the DIB bits on top of it - hence leaving
-                 * the gaps untouched -, and blitting the rectangle back.
-                 * This insure that gaps are untouched on the destination rectangle
-                 * Not doing so leads to trashed images (the gaps contain what was on the
-                 * memory bitmap => generally black or garbage)
-                 * Unfortunately, RLE DIBs without gaps will be slowed down. But this is
-                 * another speed vs correctness issue. Anyway, if speed is needed, then the
-                 * pStretchDIBits function shall be implemented.
-                 * ericP (2000/09/09)
-                 */
-
-                /* copy existing bitmap from destination dc */
-                StretchBlt( hdcMem, xSrc, abs(height) - heightSrc - ySrc,
-                            widthSrc, heightSrc, hdc, xDst, yDst, widthDst, heightDst,
-                            dwRop );
-            }
-
-            ret = SetDIBits(hdcMem, hBitmap, 0, height, bits, info, wUsage);
-
-            /* Origin for DIBitmap may be bottom left (positive biHeight) or top
-               left (negative biHeight) */
-            if (ret) StretchBlt( hdc, xDst, yDst, widthDst, heightDst,
-                                 hdcMem, xSrc, abs(height) - heightSrc - ySrc,
-                                 widthSrc, heightSrc, dwRop );
-            if(hpal)
-                SelectPalette(hdcMem, hpal, FALSE);
-            SelectObject( hdcMem, hOldBitmap );
-            DeleteDC( hdcMem );
-            DeleteObject( hBitmap );
-        }
     }
     return ret;
 }

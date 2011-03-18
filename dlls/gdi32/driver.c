@@ -899,7 +899,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_StartDoc,                   /* pStartDoc */
     nulldrv_StartPage,                  /* pStartPage */
     NULL,                               /* pStretchBlt */
-    NULL,                               /* pStretchDIBits */
+    nulldrv_StretchDIBits,              /* pStretchDIBits */
     nulldrv_StrokeAndFillPath,          /* pStrokeAndFillPath */
     nulldrv_StrokePath,                 /* pStrokePath */
     nulldrv_SwapBuffers,                /* pSwapBuffers */
