@@ -455,7 +455,7 @@ void device_update_stream_info(IWineD3DDeviceImpl *device, const struct wined3d_
 
 static void device_preload_texture(const struct wined3d_state *state, unsigned int idx)
 {
-    IWineD3DBaseTextureImpl *texture;
+    struct wined3d_texture *texture;
     enum WINED3DSRGB srgb;
 
     if (!(texture = state->textures[idx])) return;
@@ -1101,10 +1101,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         UINT Width, UINT Height, UINT Levels, DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool,
-        void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DBaseTexture **texture)
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseTextureImpl *object;
+    struct wined3d_texture *object;
     HRESULT hr;
 
     TRACE("(%p) : Width %d, Height %d, Levels %d, Usage %#x\n", This, Width, Height, Levels, Usage);
@@ -1128,7 +1128,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         return hr;
     }
 
-    *texture = (IWineD3DBaseTexture *)object;
+    *texture = object;
 
     TRACE("(%p) : Created texture %p\n", This, object);
 
@@ -1137,10 +1137,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
         UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool,
-        void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DBaseTexture **ppVolumeTexture)
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseTextureImpl *object;
+    struct wined3d_texture *object;
     HRESULT hr;
 
     TRACE("(%p) : W(%u) H(%u) D(%u), Lvl(%u) Usage(%#x), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
@@ -1150,7 +1150,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     if (!object)
     {
         ERR("Out of memory\n");
-        *ppVolumeTexture = NULL;
+        *texture = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -1159,12 +1159,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     {
         WARN("Failed to initialize volumetexture, returning %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *ppVolumeTexture = NULL;
+        *texture = NULL;
         return hr;
     }
 
     TRACE("(%p) : Created volume texture %p.\n", This, object);
-    *ppVolumeTexture = (IWineD3DBaseTexture *)object;
+    *texture = object;
 
     return WINED3D_OK;
 }
@@ -1204,10 +1204,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, UIN
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT EdgeLength, UINT Levels,
         DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops, IWineD3DBaseTexture **texture)
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseTextureImpl *object;
+    struct wined3d_texture *object;
     HRESULT hr;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -1228,7 +1228,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     }
 
     TRACE("(%p) : Created Cube Texture %p\n", This, object);
-    *texture = (IWineD3DBaseTexture *)object;
+    *texture = object;
 
     return WINED3D_OK;
 }
@@ -4449,15 +4449,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTextureStageState(IWineD3DDevice *if
     return WINED3D_OK;
 }
 
-/*****
- * Get / Set Texture
- *****/
 static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
-        DWORD stage, IWineD3DBaseTexture *texture)
+        DWORD stage, struct wined3d_texture *texture)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    IWineD3DBaseTexture *prev;
+    struct wined3d_texture *prev;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
 
@@ -4472,7 +4469,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
     }
 
     /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH */
-    if (texture && ((IWineD3DBaseTextureImpl *)texture)->resource.pool == WINED3DPOOL_SCRATCH)
+    if (texture && texture->resource.pool == WINED3DPOOL_SCRATCH)
     {
         WARN("Rejecting attempt to set scratch texture.\n");
         return WINED3DERR_INVALIDCALL;
@@ -4480,7 +4477,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
 
     This->updateStateBlock->changed.textures |= 1 << stage;
 
-    prev = (IWineD3DBaseTexture *)This->updateStateBlock->state.textures[stage];
+    prev = This->updateStateBlock->state.textures[stage];
     TRACE("Previous texture %p.\n", prev);
 
     if (texture == prev)
@@ -4490,7 +4487,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
     }
 
     TRACE("Setting new texture to %p.\n", texture);
-    This->updateStateBlock->state.textures[stage] = (IWineD3DBaseTextureImpl *)texture;
+    This->updateStateBlock->state.textures[stage] = texture;
 
     if (This->isRecordingState)
     {
@@ -4504,13 +4501,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
 
     if (texture)
     {
-        IWineD3DBaseTextureImpl *t = (IWineD3DBaseTextureImpl *)texture;
-        LONG bind_count = InterlockedIncrement(&t->baseTexture.bindCount);
-        GLenum dimensions = t->baseTexture.target;
+        LONG bind_count = InterlockedIncrement(&texture->baseTexture.bindCount);
 
         wined3d_texture_incref(texture);
 
-        if (!prev || dimensions != ((IWineD3DBaseTextureImpl *)prev)->baseTexture.target)
+        if (!prev || texture->baseTexture.target != prev->baseTexture.target)
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
 
         if (!prev && stage < gl_info->limits.texture_stages)
@@ -4522,13 +4517,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
         }
 
-        if (bind_count == 1) t->baseTexture.sampler = stage;
+        if (bind_count == 1)
+            texture->baseTexture.sampler = stage;
     }
 
     if (prev)
     {
-        IWineD3DBaseTextureImpl *t = (IWineD3DBaseTextureImpl *)prev;
-        LONG bind_count = InterlockedDecrement(&t->baseTexture.bindCount);
+        LONG bind_count = InterlockedDecrement(&prev->baseTexture.bindCount);
 
         wined3d_texture_decref(prev);
 
@@ -4538,7 +4533,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
         }
 
-        if (bind_count && t->baseTexture.sampler == stage)
+        if (bind_count && prev->baseTexture.sampler == stage)
         {
             unsigned int i;
 
@@ -4547,10 +4542,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
             TRACE("Searching for other stages the texture is bound to.\n");
             for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
             {
-                if (This->updateStateBlock->state.textures[i] == t)
+                if (This->updateStateBlock->state.textures[i] == prev)
                 {
                     TRACE("Texture is also bound to stage %u.\n", i);
-                    t->baseTexture.sampler = i;
+                    prev->baseTexture.sampler = i;
                     break;
                 }
             }
@@ -4562,26 +4557,27 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD Stage, IWineD3DBaseTexture** ppTexture) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface,
+        DWORD stage, struct wined3d_texture **texture)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    TRACE("(%p) : Stage %#x, ppTexture %p\n", This, Stage, ppTexture);
+    TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
 
-    if (Stage >= WINED3DVERTEXTEXTURESAMPLER0 && Stage <= WINED3DVERTEXTEXTURESAMPLER3) {
-        Stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
-    }
+    if (stage >= WINED3DVERTEXTEXTURESAMPLER0 && stage <= WINED3DVERTEXTEXTURESAMPLER3)
+        stage -= (WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS);
 
-    if (Stage >= sizeof(This->stateBlock->state.textures) / sizeof(*This->stateBlock->state.textures))
+    if (stage >= sizeof(This->stateBlock->state.textures) / sizeof(*This->stateBlock->state.textures))
     {
-        ERR("Current stage overflows textures array (stage %d)\n", Stage);
+        WARN("Current stage overflows textures array (stage %u).\n", stage);
         return WINED3D_OK; /* Windows accepts overflowing this array ... we do not. */
     }
 
-    *ppTexture = (IWineD3DBaseTexture *)This->stateBlock->state.textures[Stage];
-    if (*ppTexture)
-        wined3d_texture_incref(*ppTexture);
+    *texture = This->stateBlock->state.textures[stage];
+    if (*texture)
+        wined3d_texture_incref(*texture);
 
-    TRACE("(%p) : Returning %p\n", This, *ppTexture);
+    TRACE("Returning %p.\n", *texture);
 
     return WINED3D_OK;
 }
@@ -5086,7 +5082,7 @@ static HRESULT IWineD3DDeviceImpl_UpdateVolume(IWineD3DDevice *iface,
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
-        IWineD3DBaseTexture *src_texture, IWineD3DBaseTexture *dst_texture)
+        struct wined3d_texture *src_texture, struct wined3d_texture *dst_texture)
 {
     unsigned int level_count, i;
     WINED3DRESOURCETYPE type;
@@ -5124,8 +5120,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
     }
 
     /* Make sure that the destination texture is loaded. */
-    ((IWineD3DBaseTextureImpl *)dst_texture)->baseTexture.texture_ops->texture_preload(
-            (IWineD3DBaseTextureImpl *)dst_texture, SRGB_RGB);
+    dst_texture->baseTexture.texture_ops->texture_preload(dst_texture, SRGB_RGB);
 
     /* Update every surface level of the texture. */
     switch (type)
@@ -5216,11 +5211,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *ifac
     return hr;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface, DWORD* pNumPasses) {
+static HRESULT WINAPI IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface, DWORD *pNumPasses)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseTextureImpl *texture;
-    DWORD i;
     const struct wined3d_state *state = &This->stateBlock->state;
+    struct wined3d_texture *texture;
+    DWORD i;
 
     TRACE("(%p) : %p\n", This, pNumPasses);
 
@@ -5285,7 +5281,7 @@ static void dirtify_p8_texture_samplers(IWineD3DDeviceImpl *device)
 
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
     {
-        IWineD3DBaseTextureImpl *texture = device->stateBlock->state.textures[i];
+        struct wined3d_texture *texture = device->stateBlock->state.textures[i];
         if (texture && (texture->resource.format->id == WINED3DFMT_P8_UINT
                 || texture->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM))
         {

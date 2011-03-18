@@ -2777,7 +2777,8 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
 
     for (i = 0; i < gl_info->limits.texture_stages; ++i)
     {
-        IWineD3DBaseTextureImpl *texture;
+        const struct wined3d_texture *texture;
+
         settings->op[i].padding = 0;
         if (stateblock->state.texture_states[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE)
         {
@@ -2859,8 +2860,10 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
 
         if (!i && stateblock->state.textures[0] && stateblock->state.render_states[WINED3DRS_COLORKEYENABLE])
         {
-            IWineD3DBaseTextureImpl *texture = stateblock->state.textures[0];
-            GLenum texture_dimensions = texture->baseTexture.target;
+            GLenum texture_dimensions;
+
+            texture = stateblock->state.textures[0];
+            texture_dimensions = texture->baseTexture.target;
 
             if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
             {
@@ -3025,7 +3028,7 @@ void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *des
  * Requires the caller to activate the correct unit before
  */
 /* GL locking is done by the caller (state handler) */
-void texture_activate_dimensions(IWineD3DBaseTextureImpl *texture, const struct wined3d_gl_info *gl_info)
+void texture_activate_dimensions(const struct wined3d_texture *texture, const struct wined3d_gl_info *gl_info)
 {
     if (texture)
     {

@@ -326,7 +326,7 @@ void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, 
      * container about this to get the filters reset properly next draw. */
     if (src_surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
-        IWineD3DBaseTextureImpl *texture = src_surface->container.u.texture;
+        struct wined3d_texture *texture = src_surface->container.u.texture;
         texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
         texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
         texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
@@ -697,7 +697,7 @@ void surface_bind(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl
 
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
-        IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
+        struct wined3d_texture *texture = surface->container.u.texture;
 
         TRACE("Passing to container (%p).\n", texture);
         texture->baseTexture.texture_ops->texture_bind(texture, gl_info, srgb);
@@ -1362,7 +1362,7 @@ void surface_internal_preload(IWineD3DSurfaceImpl *surface, enum WINED3DSRGB srg
 
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
-        IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
+        struct wined3d_texture *texture = surface->container.u.texture;
 
         TRACE("Passing to container (%p).\n", texture);
         texture->baseTexture.texture_ops->texture_preload(texture, srgb);
@@ -1751,7 +1751,7 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
 {
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
-        IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
+        struct wined3d_texture *texture = surface->container.u.texture;
         UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
         UINT i;
 

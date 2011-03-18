@@ -118,7 +118,7 @@ static void context_apply_attachment_filter_states(const struct wined3d_context 
     /* Update base texture states array */
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
-        IWineD3DBaseTextureImpl *texture = surface->container.u.texture;
+        struct wined3d_texture *texture = surface->container.u.texture;
         IWineD3DDeviceImpl *device = surface->resource.device;
         BOOL update_minfilter = FALSE;
         BOOL update_magfilter = FALSE;

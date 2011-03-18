@@ -55,8 +55,6 @@
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
-typedef struct wined3d_texture IWineD3DBaseTextureImpl;
-typedef struct wined3d_texture IWineD3DBaseTexture;
 struct IWineD3DBaseShaderImpl;
 
 /* Texture format fixups */
@@ -1850,10 +1848,6 @@ void resource_unload(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 /* Tests show that the start address of resources is 32 byte aligned */
 #define RESOURCE_ALIGNMENT 16
 
-/*****************************************************************************
- * IWineD3DBaseTexture D3D- > openGL state map lookups
- */
-
 typedef enum winetexturestates {
     WINED3DTEXSTA_ADDRESSU       = 0,
     WINED3DTEXSTA_ADDRESSV       = 1,
@@ -1922,7 +1916,7 @@ struct wined3d_texture
 
 static inline struct wined3d_texture *wined3d_texture_from_resource(struct wined3d_resource *resource)
 {
-    return CONTAINING_RECORD(resource, IWineD3DBaseTextureImpl, resource);
+    return CONTAINING_RECORD(resource, struct wined3d_texture, resource);
 }
 
 static inline struct gl_texture *wined3d_texture_get_gl_texture(struct wined3d_texture *texture,
@@ -1933,20 +1927,20 @@ static inline struct gl_texture *wined3d_texture_get_gl_texture(struct wined3d_t
             : &texture->baseTexture.texture_rgb;
 }
 
-void wined3d_texture_apply_state_changes(IWineD3DBaseTextureImpl *texture,
+void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-void wined3d_texture_set_dirty(IWineD3DBaseTextureImpl *texture, BOOL dirty) DECLSPEC_HIDDEN;
+void wined3d_texture_set_dirty(struct wined3d_texture *texture, BOOL dirty) DECLSPEC_HIDDEN;
 
-HRESULT cubetexture_init(IWineD3DBaseTextureImpl *texture, UINT edge_length, UINT levels,
+HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_length, UINT levels,
         IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-HRESULT texture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT height, UINT levels,
+HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT height, UINT levels,
         IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-HRESULT volumetexture_init(IWineD3DBaseTextureImpl *texture, UINT width, UINT height,
+HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, UINT height,
         UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
@@ -2356,7 +2350,7 @@ struct wined3d_state
     INT ps_consts_i[MAX_CONST_I * 4];
     float *ps_consts_f;
 
-    IWineD3DBaseTextureImpl *textures[MAX_COMBINED_SAMPLERS];
+    struct wined3d_texture *textures[MAX_COMBINED_SAMPLERS];
     DWORD sampler_states[MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
     DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
     DWORD lowest_disabled_stage;
@@ -2632,7 +2626,7 @@ void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d
         INT texture_idx, DWORD dst) DECLSPEC_HIDDEN;
 void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords,
         BOOL transformed, enum wined3d_format_id coordtype, BOOL ffp_can_disable_proj) DECLSPEC_HIDDEN;
-void texture_activate_dimensions(IWineD3DBaseTextureImpl *texture,
+void texture_activate_dimensions(const struct wined3d_texture *texture,
         const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void sampler_texdim(DWORD state, struct wined3d_stateblock *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
@@ -2897,7 +2891,7 @@ HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *de
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps,
-        IWineD3DBaseTextureImpl * const *textures) DECLSPEC_HIDDEN;
+        struct wined3d_texture * const *textures) DECLSPEC_HIDDEN;
 void find_ps_compile_args(const struct wined3d_state *state,
         IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args) DECLSPEC_HIDDEN;
 

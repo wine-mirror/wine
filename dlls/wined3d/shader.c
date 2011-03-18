@@ -2063,7 +2063,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
         IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args)
 {
     IWineD3DDeviceImpl *device = shader->baseShader.device;
-    IWineD3DBaseTextureImpl *texture;
+    const struct wined3d_texture *texture;
     UINT i;
 
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
@@ -2313,7 +2313,7 @@ HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *de
     return WINED3D_OK;
 }
 
-void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, IWineD3DBaseTextureImpl * const *textures)
+void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, struct wined3d_texture * const *textures)
 {
     WINED3DSAMPLER_TEXTURE_TYPE *sampler_type = reg_maps->sampler_type;
     unsigned int i;

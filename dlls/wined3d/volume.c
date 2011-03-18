@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 /* Context activation is done by the caller. */
 static void volume_bind_and_dirtify(struct IWineD3DVolumeImpl *volume, const struct wined3d_gl_info *gl_info)
 {
-    IWineD3DBaseTextureImpl *container = (IWineD3DBaseTextureImpl *)volume->container;
+    struct wined3d_texture *container = volume->container;
     DWORD active_sampler;
 
     /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.

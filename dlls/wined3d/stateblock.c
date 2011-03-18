@@ -1033,7 +1033,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
         if (!(map & 1)) continue;
 
         stage = i < MAX_FRAGMENT_SAMPLERS ? i : WINED3DVERTEXTEXTURESAMPLER0 + i - MAX_FRAGMENT_SAMPLERS;
-        IWineD3DDevice_SetTexture(device, stage, (IWineD3DBaseTexture *)stateblock->state.textures[i]);
+        IWineD3DDevice_SetTexture(device, stage, stateblock->state.textures[i]);
     }
 
     map = stateblock->changed.clipplane;

@@ -498,7 +498,7 @@ static void state_alpha(DWORD state, struct wined3d_stateblock *stateblock, stru
      */
     if (stateblock->state.textures[0])
     {
-        IWineD3DBaseTextureImpl *texture = stateblock->state.textures[0];
+        struct wined3d_texture *texture = stateblock->state.textures[0];
         GLenum texture_dimensions = texture->baseTexture.target;
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
@@ -3191,7 +3191,7 @@ void tex_alphaop(DWORD state, struct wined3d_stateblock *stateblock, struct wine
 
     if (stateblock->state.render_states[WINED3DRS_COLORKEYENABLE] && !stage && stateblock->state.textures[0])
     {
-        IWineD3DBaseTextureImpl *texture = stateblock->state.textures[0];
+        struct wined3d_texture *texture = stateblock->state.textures[0];
         GLenum texture_dimensions = texture->baseTexture.target;
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
@@ -3586,7 +3586,7 @@ static void tex_bumpenvlscale(DWORD state, struct wined3d_stateblock *stateblock
 static void sampler_texmatrix(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const DWORD sampler = state - STATE_SAMPLER(0);
-    IWineD3DBaseTextureImpl *texture = stateblock->state.textures[sampler];
+    struct wined3d_texture *texture = stateblock->state.textures[sampler];
 
     TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
 
@@ -3643,7 +3643,7 @@ static void sampler(DWORD state_id, struct wined3d_stateblock *stateblock, struc
 
     if (state->textures[sampler])
     {
-        IWineD3DBaseTextureImpl *texture = state->textures[sampler];
+        struct wined3d_texture *texture = state->textures[sampler];
         BOOL srgb = state->sampler_states[sampler][WINED3DSAMP_SRGBTEXTURE];
 
         texture->baseTexture.texture_ops->texture_bind(texture, gl_info, srgb);

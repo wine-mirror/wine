@@ -492,7 +492,7 @@ static void shader_arb_load_np2fixup_constants(void *shader_priv,
 
         for (i = 0; active; active >>= 1, ++i)
         {
-            const IWineD3DBaseTextureImpl *tex = state->textures[i];
+            const struct wined3d_texture *tex = state->textures[i];
             const unsigned char idx = fixup->super.idx[i];
             GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
 
@@ -1325,7 +1325,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     DWORD sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
-    IWineD3DBaseTextureImpl *texture;
+    const struct wined3d_texture *texture;
     const char *tex_type;
     BOOL np2_fixup = FALSE;
     struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;

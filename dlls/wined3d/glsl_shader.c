@@ -701,7 +701,7 @@ static void shader_glsl_load_np2fixup_constants(void *shader_priv,
 
         for (i = 0; fixup; fixup >>= 1, ++i)
         {
-            const IWineD3DBaseTextureImpl *tex = state->textures[i];
+            const struct wined3d_texture *tex = state->textures[i];
             const unsigned char idx = prog->np2Fixup_info->idx[i];
             GLfloat *tex_dim = &np2fixup_constants[(idx >> 1) * 4];
 
@@ -1051,7 +1051,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     {
         if (reg_maps->sampler_type[i])
         {
-            IWineD3DBaseTextureImpl *texture;
+            const struct wined3d_texture *texture;
 
             switch (reg_maps->sampler_type[i])
             {
@@ -3029,7 +3029,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
     glsl_sample_function_t sample_function;
-    IWineD3DBaseTextureImpl *texture;
+    const struct wined3d_texture *texture;
     DWORD sample_flags = 0;
     DWORD sampler_idx;
     DWORD mask = 0, swizzle;
@@ -3122,7 +3122,7 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
     DWORD sample_flags = WINED3D_GLSL_SAMPLE_GRAD;
     DWORD sampler_idx;
     DWORD swizzle = ins->src[1].swizzle;
-    IWineD3DBaseTextureImpl *texture;
+    const struct wined3d_texture *texture;
 
     if (!gl_info->supported[ARB_SHADER_TEXTURE_LOD] && !gl_info->supported[EXT_GPU_SHADER4])
     {
@@ -3155,7 +3155,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
     DWORD sample_flags = WINED3D_GLSL_SAMPLE_LOD;
     DWORD sampler_idx;
     DWORD swizzle = ins->src[1].swizzle;
-    IWineD3DBaseTextureImpl *texture;
+    const struct wined3d_texture *texture;
 
     sampler_idx = ins->src[1].reg.idx;
     texture = device->stateBlock->state.textures[sampler_idx];
