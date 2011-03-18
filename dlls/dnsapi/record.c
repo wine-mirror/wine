@@ -376,6 +376,7 @@ static LPVOID dns_strcpyX( LPCVOID src, DNS_CHARSET in, DNS_CHARSET out )
             WARN( "unhandled target charset: %d\n", out );
             break;
         }
+        break;
     }
     case DnsCharSetUtf8:
         switch (out)
@@ -387,6 +388,7 @@ static LPVOID dns_strcpyX( LPCVOID src, DNS_CHARSET in, DNS_CHARSET out )
             WARN( "unhandled target charset: %d\n", out );
             break;
         }
+        break;
     case DnsCharSetAnsi:
         switch (out)
         {
@@ -397,6 +399,7 @@ static LPVOID dns_strcpyX( LPCVOID src, DNS_CHARSET in, DNS_CHARSET out )
             WARN( "unhandled target charset: %d\n", out );
             break;
         }
+        break;
     default:
         WARN( "unhandled source charset: %d\n", in );
         break;
