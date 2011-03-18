@@ -24,8 +24,10 @@
 
 void WINAPI glClearColor(float red, float green, float blue, float alpha);
 void WINAPI glClear(unsigned int mask);
-void WINAPI glFinish(void);
+#define GL_COLOR 0x1800
 typedef unsigned int GLenum;
+void WINAPI glCopyPixels(int x, int y, int width, int height, GLenum type);
+void WINAPI glFinish(void);
 #define GL_NO_ERROR 0x0
 #define GL_INVALID_OPERATION 0x502
 GLenum WINAPI glGetError(void);
@@ -1003,6 +1005,157 @@ static void test_destroy(HDC oldhdc)
     ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
 }
 
+static void test_destroy_read(HDC oldhdc)
+{
+    PIXELFORMATDESCRIPTOR pf_desc =
+    {
+        sizeof(PIXELFORMATDESCRIPTOR),
+        1,                     /* version */
+        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+        PFD_TYPE_RGBA,
+        24,                    /* 24-bit color depth */
+        0, 0, 0, 0, 0, 0,      /* color bits */
+        0,                     /* alpha buffer */
+        0,                     /* shift bit */
+        0,                     /* accumulation buffer */
+        0, 0, 0, 0,            /* accum bits */
+        32,                    /* z-buffer */
+        0,                     /* stencil buffer */
+        0,                     /* auxiliary buffer */
+        PFD_MAIN_PLANE,        /* main layer */
+        0,                     /* reserved */
+        0, 0, 0                /* layer masks */
+    };
+    int pixel_format;
+    HWND draw_window, read_window;
+    HGLRC ctx;
+    BOOL ret;
+    HDC read_dc, draw_dc;
+    GLenum glerr;
+    DWORD err;
+    HGLRC oldctx = wglGetCurrentContext();
+
+    ok(!!oldctx, "Expected to find a valid current context\n");
+
+    draw_window = CreateWindowA("static", "opengl32_test",
+            WS_POPUP, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!draw_window, "Failed to create window, last error %#x.\n", GetLastError());
+
+    draw_dc = GetDC(draw_window);
+    ok(!!draw_dc, "Failed to get DC.\n");
+
+    pixel_format = ChoosePixelFormat(draw_dc, &pf_desc);
+    if (!pixel_format)
+    {
+        win_skip("Failed to find pixel format.\n");
+        ReleaseDC(draw_window, draw_dc);
+        DestroyWindow(draw_window);
+        return;
+    }
+
+    ret = SetPixelFormat(draw_dc, pixel_format, &pf_desc);
+    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+
+    read_window = CreateWindowA("static", "opengl32_test",
+            WS_POPUP, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!read_window, "Failed to create window, last error %#x.\n", GetLastError());
+
+    read_dc = GetDC(read_window);
+    ok(!!draw_dc, "Failed to get DC.\n");
+
+    pixel_format = ChoosePixelFormat(read_dc, &pf_desc);
+    if (!pixel_format)
+    {
+        win_skip("Failed to find pixel format.\n");
+        ReleaseDC(read_window, read_dc);
+        DestroyWindow(read_window);
+        ReleaseDC(draw_window, draw_dc);
+        DestroyWindow(draw_window);
+        return;
+    }
+
+    ret = SetPixelFormat(read_dc, pixel_format, &pf_desc);
+    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+
+    ctx = wglCreateContext(draw_dc);
+    ok(!!ctx, "Failed to create GL context, last error %#x.\n", GetLastError());
+
+    ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
+    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+
+    glCopyPixels(0, 0, 640, 480, GL_COLOR);
+    glFinish();
+    glerr = glGetError();
+    ok(glerr == GL_NO_ERROR, "Failed glCopyPixel, error %#x.\n", glerr);
+
+    ret = DestroyWindow(read_window);
+    ok(ret, "Failed to destroy window, last error %#x.\n", GetLastError());
+
+    ok(wglGetCurrentContext() == ctx, "Wrong current context.\n");
+
+    if (0) /* Crashes on AMD on Windows */
+    {
+        glCopyPixels(0, 0, 640, 480, GL_COLOR);
+        glFinish();
+        glerr = glGetError();
+        ok(glerr == GL_NO_ERROR, "Failed glCopyPixel, error %#x.\n", glerr);
+    }
+
+    glClear(GL_COLOR_BUFFER_BIT);
+    glFinish();
+    glerr = glGetError();
+    ok(glerr == GL_NO_ERROR, "Failed glClear, error %#x.\n", glerr);
+
+    ret = wglMakeCurrent(NULL, NULL);
+    ok(ret, "Failed to clear current context, last error %#x.\n", GetLastError());
+
+    if (0) /* This crashes with Nvidia drivers on Windows. */
+    {
+        SetLastError(0xdeadbeef);
+        ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
+        err = GetLastError();
+        ok(!ret && err == ERROR_INVALID_HANDLE,
+                "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
+    }
+
+    ret = DestroyWindow(draw_window);
+    ok(ret, "Failed to destroy window, last error %#x.\n", GetLastError());
+
+    glClear(GL_COLOR_BUFFER_BIT);
+    glFinish();
+    glerr = glGetError();
+    todo_wine ok(glerr == GL_INVALID_OPERATION, "Failed glClear, error %#x.\n", glerr);
+
+    SetLastError(0xdeadbeef);
+    ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
+    err = GetLastError();
+    todo_wine ok(!ret && (err == ERROR_INVALID_HANDLE || err == 0xc0070006),
+            "Unexpected behavior when making context current, ret %d, last error %#x.\n", ret, err);
+
+    todo_wine ok(wglGetCurrentContext() == NULL, "Wrong current context.\n");
+
+    wglMakeCurrent(NULL, NULL);
+
+    wglMakeCurrent(oldhdc, oldctx);
+    ok(wglGetCurrentContext() == oldctx, "Wrong current context.\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pwglMakeContextCurrentARB(draw_dc, read_dc, ctx);
+    err = GetLastError();
+    todo_wine ok(!ret && (err == ERROR_INVALID_HANDLE || err == 0xc0070006),
+            "Unexpected behavior when making context current, last error %#x.\n", err);
+
+    todo_wine ok(wglGetCurrentContext() == oldctx, "Wrong current context.\n");
+
+    ret = wglDeleteContext(ctx);
+    ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
+
+    ReleaseDC(read_window, read_dc);
+    ReleaseDC(draw_window, draw_dc);
+
+    wglMakeCurrent(oldhdc, oldctx);
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -1103,7 +1256,10 @@ START_TEST(opengl)
             test_opengl3(hdc);
 
         if(strstr(wgl_extensions, "WGL_ARB_make_current_read"))
+        {
             test_make_current_read(hdc);
+            test_destroy_read(hdc);
+        }
         else
             skip("WGL_ARB_make_current_read not supported, skipping test\n");
 
