@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-03-17 18:00+0100\n"
+"PO-Revision-Date: 2011-03-18 19:00+0100\n"
 "Last-Translator: Łukasz Wojniłowicz\n"
 "Language-Team: none\n"
 "Language: Polish\n"
@@ -625,7 +625,7 @@ msgstr "Identyfikator klucza podmiotu"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
-msgstr "CRL Reason Code"
+msgstr "Kod przyczyny listy CRL"
 
 #: crypt32.rc:37
 msgid "CRL Distribution Points"
@@ -1285,7 +1285,7 @@ msgstr "Nazwa RDN"
 
 #: crypt32.rc:210
 msgid "CRL Reason="
-msgstr "CRL Reason="
+msgstr "Przyczyna CRL="
 
 #: crypt32.rc:211
 msgid "CRL Issuer"
@@ -1357,7 +1357,7 @@ msgstr "Szyfrowanie danych"
 
 #: crypt32.rc:228
 msgid "Key Agreement"
-msgstr "Key Agreement"
+msgstr "Uzgadnianie klucza"
 
 #: crypt32.rc:229
 msgid "Certificate Signing"
@@ -1405,7 +1405,7 @@ msgstr "S/MIME CA"
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr "Podpis CA"
+msgstr "Urząd certyfikacji podpisu"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
@@ -1576,7 +1576,7 @@ msgstr "Klucz publiczny"
 
 #: cryptui.rc:58
 msgid "%s (%d bits)"
-msgstr "%s (%d bits)"
+msgstr "%s (%d bitów)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
