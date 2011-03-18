@@ -207,7 +207,7 @@ static void report_error(int code)
                 MessageBox(NULL, "No virtual drive C mapped!\n", "", MB_OK | MB_ICONEXCLAMATION);
             else
                 fprintf(stderr, "winecfg: no drive_c directory\n");
-
+            break;
         case NO_HOME:
             if (gui_mode)
                 MessageBox(NULL, "Could not ensure that your home directory was mapped.\n\n"
