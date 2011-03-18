@@ -5812,12 +5812,14 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
 
         case WINED3DTOP_SELECTARG2:
             arg1 = arg2;
+            /* FALLTHROUGH */
         case WINED3DTOP_SELECTARG1:
             shader_addline(buffer, "MOV %s%s, %s;\n", dstreg, dstmask, arg1);
             break;
 
         case WINED3DTOP_MODULATE4X:
             mul = 2;
+            /* FALLTHROUGH */
         case WINED3DTOP_MODULATE2X:
             mul *= 2;
             if (!strcmp(dstreg, "result.color"))
@@ -5825,6 +5827,7 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
                 dstreg = "ret";
                 mul_final_dest = TRUE;
             }
+            /* FALLTHROUGH */
         case WINED3DTOP_MODULATE:
             shader_addline(buffer, "MUL %s%s, %s, %s;\n", dstreg, dstmask, arg1, arg2);
             break;
@@ -5836,9 +5839,11 @@ static void gen_ffp_instr(struct wined3d_shader_buffer *buffer, unsigned int sta
                 dstreg = "ret";
                 mul_final_dest = TRUE;
             }
+            /* FALLTHROUGH */
         case WINED3DTOP_ADDSIGNED:
             shader_addline(buffer, "SUB arg2, %s, const.w;\n", arg2);
             arg2 = "arg2";
+            /* FALLTHROUGH */
         case WINED3DTOP_ADD:
             shader_addline(buffer, "ADD_SAT %s%s, %s, %s;\n", dstreg, dstmask, arg1, arg2);
             break;
