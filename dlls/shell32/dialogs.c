@@ -247,6 +247,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         EndDialog (hwnd, 0);
                         }
                     }
+                    return TRUE;
 
                 case IDCANCEL :
                     EndDialog (hwnd, 0) ;
