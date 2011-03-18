@@ -387,6 +387,7 @@ static BOOL fetch_value(const char* addr, unsigned sz, int* value)
         if (!dbg_read_memory(addr, &value16, sizeof(value16)))
             return FALSE;
         *value = value16;
+        break;
     case 32:
         if (!dbg_read_memory(addr, value, sizeof(*value)))
             return FALSE;
