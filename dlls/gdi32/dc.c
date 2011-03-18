@@ -752,11 +752,9 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     if (hdc)
     {
         if (!(origDC = get_dc_ptr( hdc ))) return 0;
-        if (GetObjectType( hdc ) == OBJ_DC)
-        {
-            physDev = origDC->physDev;
-            funcs = physDev->funcs;
-        }
+        physDev = GET_DC_PHYSDEV( origDC, pCreateDC );
+        if (physDev != &origDC->nulldrv) funcs = physDev->funcs;
+        else physDev = NULL;
         release_dc_ptr( origDC );
     }
 
