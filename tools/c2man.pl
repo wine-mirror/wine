@@ -1990,7 +1990,7 @@ sub output_sgml_dll_file($)
     if (@$_[$EXPORT_CALL] ne "forward" && @$_[$EXPORT_CALL] ne "extern" &&
         @$_[$EXPORT_CALL] ne "stub" && @$_[$EXPORT_CALL] ne "equate" &&
         @$_[$EXPORT_CALL] ne "variable" && @$_[$EXPORT_CALL] ne "fake" &&
-        @$_[$EXPORT_FLAGS] & $FLAGS_DOCUMENTED)
+        @$_[$EXPORT_FLAGS] & $FLAG_DOCUMENTED)
     {
       # A documented function
       push (@source_files,@$_[$EXPORT_IMPNAME]);
