@@ -991,14 +991,11 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
  *      ScriptStringXtoCP (USP10.@)
  *
  */
-HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, int* piTrailing) 
+HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, int* piTrailing)
 {
     StringAnalysis* analysis = ssa;
     int i;
-    int j;
-    int runningX = 0;
     int runningCp = 0;
-    int width;
 
     TRACE("(%p), %d, (%p), (%p)\n", ssa, iX, piCh, piTrailing);
 
@@ -1022,24 +1019,33 @@ HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, 
 
     for(i=0; i<analysis->numItems; i++)
     {
-        for(j=0; j<analysis->glyphs[i].numGlyphs; j++)
+        int CP = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
+        /* initialize max extents for uninitialized runs */
+        if (analysis->glyphs[i].iMaxPosX == -1)
         {
-            width = analysis->glyphs[i].piAdvance[j];
-            if(iX < (runningX + width))
-            {
-                *piCh = runningCp;
-                if((iX - runningX) > width/2)
-                    *piTrailing = TRUE;
-                else
-                    *piTrailing = FALSE;
-
-                if (analysis->pItem[i].a.fRTL)
-                    *piTrailing = !*piTrailing;
-                return S_OK;
-            }
-            runningX += width;
-            runningCp++;
+            if (analysis->pItem[i].a.fRTL)
+                ScriptCPtoX(0, FALSE, CP, analysis->glyphs[i].numGlyphs, analysis->glyphs[i].pwLogClust,
+                            analysis->glyphs[i].psva, analysis->glyphs[i].piAdvance,
+                            &analysis->pItem[i].a, &analysis->glyphs[i].iMaxPosX);
+            else
+                ScriptCPtoX(CP, TRUE, CP, analysis->glyphs[i].numGlyphs, analysis->glyphs[i].pwLogClust,
+                            analysis->glyphs[i].psva, analysis->glyphs[i].piAdvance,
+                            &analysis->pItem[i].a, &analysis->glyphs[i].iMaxPosX);
         }
+
+        if (iX > analysis->glyphs[i].iMaxPosX)
+        {
+            iX -= analysis->glyphs[i].iMaxPosX;
+            runningCp += CP;
+            continue;
+        }
+
+        ScriptXtoCP(iX, CP, analysis->glyphs[i].numGlyphs, analysis->glyphs[i].pwLogClust,
+                    analysis->glyphs[i].psva, analysis->glyphs[i].piAdvance,
+                    &analysis->pItem[i].a, piCh, piTrailing);
+        *piCh += runningCp;
+
+        return S_OK;
     }
 
     /* out of range */
