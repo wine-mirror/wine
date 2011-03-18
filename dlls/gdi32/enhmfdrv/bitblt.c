@@ -77,9 +77,10 @@ BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, 
     BITMAP  BM;
     WORD nBPP = 0;
     LPBITMAPINFOHEADER lpBmiH;
-    EMFDRV_PDEVICE* physDevSrc = (EMFDRV_PDEVICE*)devSrc;
     HBITMAP hBitmap = NULL;
     DWORD emrType;
+
+    if (devSrc->funcs == devDst->funcs) return FALSE;  /* can't use a metafile DC as source */
 
     if (widthSrc == widthDst && heightSrc == heightDst)
     {
@@ -92,7 +93,7 @@ BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, 
         emrSize = sizeof(EMRSTRETCHBLT);
     }
 
-    hBitmap = GetCurrentObject(physDevSrc->hdc, OBJ_BITMAP);
+    hBitmap = GetCurrentObject(devSrc->hdc, OBJ_BITMAP);
 
     if(sizeof(BITMAP) != GetObjectW(hBitmap, sizeof(BITMAP), &BM))
         return FALSE;
@@ -122,8 +123,8 @@ BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, 
     pEMR->dwRop = rop;
     pEMR->xSrc = xSrc;
     pEMR->ySrc = ySrc;
-    GetWorldTransform(physDevSrc->hdc, &pEMR->xformSrc);
-    pEMR->crBkColorSrc = GetBkColor(physDevSrc->hdc);
+    GetWorldTransform(devSrc->hdc, &pEMR->xformSrc);
+    pEMR->crBkColorSrc = GetBkColor(devSrc->hdc);
     pEMR->iUsageSrc = DIB_RGB_COLORS;
     pEMR->offBmiSrc = emrSize;
     pEMR->offBitsSrc = emrSize + bmiSize;
@@ -155,7 +156,7 @@ BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst, 
     lpBmiH->biClrImportant = 0;
 
     /* Initialize bitmap bits */
-    if (GetDIBits(physDevSrc->hdc, hBitmap, 0, (UINT)lpBmiH->biHeight,
+    if (GetDIBits(devSrc->hdc, hBitmap, 0, (UINT)lpBmiH->biHeight,
                   (BYTE*)pEMR + pEMR->offBitsSrc,
                   (LPBITMAPINFO)lpBmiH, DIB_RGB_COLORS))
     {

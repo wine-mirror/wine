@@ -141,10 +141,15 @@ typedef UINT	 X_PHYSFONT;
 
 struct xrender_info;
 
+typedef struct gdi_physdev
+{
+    void *reserved[3];
+} *PHYSDEV;
+
   /* X physical device */
 typedef struct
 {
-    void         *reserved[3];  /* reserved for gdi */
+    struct gdi_physdev dev;
     HDC           hdc;
     GC            gc;          /* X Window GC */
     Drawable      drawable;
@@ -186,10 +191,6 @@ extern GC get_bitmap_gc(int depth);
 
 /* Wine driver X11 functions */
 
-extern BOOL CDECL X11DRV_AlphaBlend( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                                     INT widthDst, INT heightDst,
-                                     X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
-                                     INT widthSrc, INT heightSrc, BLENDFUNCTION blendfn );
 extern BOOL CDECL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
                                           FONTENUMPROCW dfeproc, LPARAM lp );
 extern LONG CDECL X11DRV_GetBitmapBits( HBITMAP hbitmap, void *bits, LONG count );
@@ -198,10 +199,6 @@ extern BOOL CDECL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar,
 extern BOOL CDECL X11DRV_GetTextExtentExPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
                                                INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size );
 extern BOOL CDECL X11DRV_GetTextMetrics(X11DRV_PDEVICE *physDev, TEXTMETRICW *metrics);
-extern BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                                     INT widthDst, INT heightDst,
-                                     X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
-                                     INT widthSrc, INT heightSrc, DWORD rop );
 extern BOOL CDECL X11DRV_LineTo( X11DRV_PDEVICE *physDev, INT x, INT y);
 extern BOOL CDECL X11DRV_Arc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
                               INT bottom, INT xstart, INT ystart, INT xend, INT yend );

@@ -1486,9 +1486,10 @@ BOOL CDECL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT x, INT y, INT width, INT 
  *           X11DRV_StretchBlt
  */
 BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                              X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                              PHYSDEV src_dev, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
                               DWORD rop )
 {
+    X11DRV_PDEVICE *physDevSrc = (X11DRV_PDEVICE *)src_dev; /* FIXME: check that it's really an x11 dev */
     BOOL usePat, useDst, destUsed, fStretch, fNullBrush;
     struct bitblt_coords src, dst;
     INT width, height;
@@ -1504,7 +1505,7 @@ BOOL CDECL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, IN
     src.y      = ySrc;
     src.width  = widthSrc;
     src.height = heightSrc;
-    src.layout = physDevSrc ? GetLayout( physDevSrc->hdc ) : 0;
+    src.layout = GetLayout( physDevSrc->hdc );
     dst.x      = xDst;
     dst.y      = yDst;
     dst.width  = widthDst;
@@ -1685,9 +1686,10 @@ done:
  *           X11DRV_AlphaBlend
  */
 BOOL CDECL X11DRV_AlphaBlend( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                              X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                              PHYSDEV src_dev, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
                               BLENDFUNCTION blendfn )
 {
+    X11DRV_PDEVICE *physDevSrc = (X11DRV_PDEVICE *)src_dev; /* FIXME: check that it's really an x11 dev */
     struct bitblt_coords src, dst;
 
     src.x      = xSrc;

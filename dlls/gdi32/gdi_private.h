@@ -548,6 +548,8 @@ extern BOOL CDECL nulldrv_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt
 extern BOOL CDECL nulldrv_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_SetWorldTransform( PHYSDEV dev, const XFORM *xform ) DECLSPEC_HIDDEN;
+extern BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                                      PHYSDEV src_dev, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop ) DECLSPEC_HIDDEN;
 extern INT  CDECL nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                                          INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
                                          const BITMAPINFO *info, UINT coloruse, DWORD rop ) DECLSPEC_HIDDEN;

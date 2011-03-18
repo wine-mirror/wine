@@ -51,16 +51,17 @@ BOOL  CDECL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     DWORD len;
     METARECORD *mr;
     BITMAP BM;
-    METAFILEDRV_PDEVICE *physDevSrc = (METAFILEDRV_PDEVICE *)devSrc;
 #ifdef STRETCH_VIA_DIB
     LPBITMAPINFOHEADER lpBMI;
     WORD nBPP;
 #endif
-    HBITMAP hBitmap = GetCurrentObject(physDevSrc->hdc, OBJ_BITMAP);
+    HBITMAP hBitmap = GetCurrentObject(devSrc->hdc, OBJ_BITMAP);
+
+    if (devSrc->funcs == devDst->funcs) return FALSE;  /* can't use a metafile DC as source */
 
     if (GetObjectW(hBitmap, sizeof(BITMAP), &BM) != sizeof(BITMAP))
     {
-        WARN("bad bitmap object %p passed for hdc %p\n", hBitmap, physDevSrc->hdc);
+        WARN("bad bitmap object %p passed for hdc %p\n", hBitmap, devSrc->hdc);
         return FALSE;
     }
 #ifdef STRETCH_VIA_DIB
@@ -81,14 +82,14 @@ BOOL  CDECL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
     lpBMI->biSizeImage = DIB_GetDIBWidthBytes(BM.bmWidth, nBPP) * lpBMI->biHeight;
     lpBMI->biClrUsed   = nBPP <= 8 ? 1 << nBPP : 0;
     lpBMI->biCompression = BI_RGB;
-    lpBMI->biXPelsPerMeter = MulDiv(GetDeviceCaps(physDevSrc->hdc,LOGPIXELSX),3937,100);
-    lpBMI->biYPelsPerMeter = MulDiv(GetDeviceCaps(physDevSrc->hdc,LOGPIXELSY),3937,100);
+    lpBMI->biXPelsPerMeter = MulDiv(GetDeviceCaps(devSrc->hdc,LOGPIXELSX),3937,100);
+    lpBMI->biYPelsPerMeter = MulDiv(GetDeviceCaps(devSrc->hdc,LOGPIXELSY),3937,100);
     lpBMI->biClrImportant  = 0;                          /* 1 meter  = 39.37 inch */
 
     TRACE("MF_StretchBltViaDIB->len = %d  rop=%x  PixYPM=%d Caps=%d\n",
-	  len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(physDevSrc->hdc, LOGPIXELSY));
+	  len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(devSrc->hdc, LOGPIXELSY));
 
-    if (GetDIBits(physDevSrc->hdc, hBitmap, 0, (UINT)lpBMI->biHeight,
+    if (GetDIBits(devSrc->hdc, hBitmap, 0, (UINT)lpBMI->biHeight,
                   (LPSTR)lpBMI + bitmap_info_size( (BITMAPINFO *)lpBMI,
                                                      DIB_RGB_COLORS ),
                   (LPBITMAPINFO)lpBMI, DIB_RGB_COLORS))

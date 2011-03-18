@@ -40,6 +40,62 @@ static inline BOOL rop_uses_src( DWORD rop )
     return ((rop >> 2) & 0x330000) != (rop & 0x330000);
 }
 
+/* nulldrv fallback implementation using StretchDIBits */
+BOOL CDECL nulldrv_StretchBlt( PHYSDEV dst_dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                               PHYSDEV src_dev, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                               DWORD rop )
+{
+    DC *dc = get_nulldrv_dc( dst_dev );
+    BITMAP bm;
+    BITMAPINFOHEADER info_hdr;
+    HBITMAP hbm;
+    LPVOID bits;
+    INT lines;
+    POINT pts[2];
+
+    /* make sure we have a real implementation for StretchDIBits */
+    if (GET_DC_PHYSDEV( dc, pStretchDIBits ) == dst_dev) return 0;
+
+    pts[0].x = xSrc;
+    pts[0].y = ySrc;
+    pts[1].x = xSrc + widthSrc;
+    pts[1].y = ySrc + heightSrc;
+    LPtoDP( src_dev->hdc, pts, 2 );
+    xSrc      = pts[0].x;
+    ySrc      = pts[0].y;
+    widthSrc  = pts[1].x - pts[0].x;
+    heightSrc = pts[1].y - pts[0].y;
+
+    if (GetObjectType( src_dev->hdc ) != OBJ_MEMDC) return FALSE;
+    if (!GetObjectW( GetCurrentObject( src_dev->hdc, OBJ_BITMAP ), sizeof(bm), &bm )) return FALSE;
+
+    info_hdr.biSize = sizeof(info_hdr);
+    info_hdr.biWidth = bm.bmWidth;
+    info_hdr.biHeight = bm.bmHeight;
+    info_hdr.biPlanes = 1;
+    info_hdr.biBitCount = 32;
+    info_hdr.biCompression = BI_RGB;
+    info_hdr.biSizeImage = 0;
+    info_hdr.biXPelsPerMeter = 0;
+    info_hdr.biYPelsPerMeter = 0;
+    info_hdr.biClrUsed = 0;
+    info_hdr.biClrImportant = 0;
+
+    if (!(bits = HeapAlloc(GetProcessHeap(), 0, bm.bmHeight * bm.bmWidth * 4)))
+        return FALSE;
+
+    /* Select out the src bitmap before calling GetDIBits */
+    hbm = SelectObject( src_dev->hdc, GetStockObject(DEFAULT_BITMAP) );
+    lines = GetDIBits( src_dev->hdc, hbm, 0, bm.bmHeight, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS );
+    SelectObject( src_dev->hdc, hbm );
+
+    if (lines) lines = StretchDIBits( dst_dev->hdc, xDst, yDst, widthDst, heightDst,
+                                      xSrc, bm.bmHeight - heightSrc - ySrc, widthSrc, heightSrc,
+                                      bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop );
+    HeapFree( GetProcessHeap(), 0, bits );
+    return (lines == heightSrc);
+}
+
 /***********************************************************************
  *           PatBlt    (GDI32.@)
  */
@@ -89,76 +145,19 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT height
           hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
           hdcDst, xDst, yDst, widthDst, heightDst, rop );
 
-
     if (!(dcDst = get_dc_ptr( hdcDst ))) return FALSE;
-    update_dc( dcDst );
 
-    if (dcDst->funcs->pStretchBlt)
+    if ((dcSrc = get_dc_ptr( hdcSrc )))
     {
-        if ((dcSrc = get_dc_ptr( hdcSrc )))
-        {
-            update_dc( dcSrc );
-
-            ret = dcDst->funcs->pStretchBlt( dcDst->physDev, xDst, yDst, widthDst, heightDst,
-                                             dcSrc->physDev, xSrc, ySrc, widthSrc, heightSrc,
-                                             rop );
-            release_dc_ptr( dcSrc );
-        }
-        release_dc_ptr( dcDst );
+        PHYSDEV src_dev = GET_DC_PHYSDEV( dcSrc, pStretchBlt );
+        PHYSDEV dst_dev = GET_DC_PHYSDEV( dcDst, pStretchBlt );
+        update_dc( dcSrc );
+        update_dc( dcDst );
+        ret = dst_dev->funcs->pStretchBlt( dst_dev, xDst, yDst, widthDst, heightDst,
+                                           src_dev, xSrc, ySrc, widthSrc, heightSrc, rop );
+        release_dc_ptr( dcSrc );
     }
-    else if (dcDst->funcs->pStretchDIBits)
-    {
-        BITMAP bm;
-        BITMAPINFOHEADER info_hdr;
-        HBITMAP hbm;
-        LPVOID bits;
-        INT lines;
-        POINT pts[2];
-
-        pts[0].x = xSrc;
-        pts[0].y = ySrc;
-        pts[1].x = xSrc + widthSrc;
-        pts[1].y = ySrc + heightSrc;
-        LPtoDP(hdcSrc, pts, 2);
-        xSrc      = pts[0].x;
-        ySrc      = pts[0].y;
-        widthSrc  = pts[1].x - pts[0].x;
-        heightSrc = pts[1].y - pts[0].y;
-
-        release_dc_ptr( dcDst );
-
-        if(GetObjectType( hdcSrc ) != OBJ_MEMDC) return FALSE;
-
-        GetObjectW(GetCurrentObject(hdcSrc, OBJ_BITMAP), sizeof(bm), &bm);
- 
-        info_hdr.biSize = sizeof(info_hdr);
-        info_hdr.biWidth = bm.bmWidth;
-        info_hdr.biHeight = bm.bmHeight;
-        info_hdr.biPlanes = 1;
-        info_hdr.biBitCount = 32;
-        info_hdr.biCompression = BI_RGB;
-        info_hdr.biSizeImage = 0;
-        info_hdr.biXPelsPerMeter = 0;
-        info_hdr.biYPelsPerMeter = 0;
-        info_hdr.biClrUsed = 0;
-        info_hdr.biClrImportant = 0;
-
-        if(!(bits = HeapAlloc(GetProcessHeap(), 0, bm.bmHeight * bm.bmWidth * 4)))
-            return FALSE;
-
-        /* Select out the src bitmap before calling GetDIBits */
-        hbm = SelectObject(hdcSrc, GetStockObject(DEFAULT_BITMAP));
-        GetDIBits(hdcSrc, hbm, 0, bm.bmHeight, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS);
-        SelectObject(hdcSrc, hbm);
-
-        lines = StretchDIBits(hdcDst, xDst, yDst, widthDst, heightDst, xSrc, bm.bmHeight - heightSrc - ySrc,
-                              widthSrc, heightSrc, bits, (BITMAPINFO*)&info_hdr, DIB_RGB_COLORS, rop);
-
-        HeapFree(GetProcessHeap(), 0, bits);
-        return (lines == heightSrc);
-    }
-    else release_dc_ptr( dcDst );
-
+    release_dc_ptr( dcDst );
     return ret;
 }
 
@@ -456,22 +455,22 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
     BOOL ret = FALSE;
     DC *dcDst, *dcSrc;
 
+    TRACE( "%p %d,%d %dx%d -> %p %d,%d %dx%d op=%02x flags=%02x srcconstalpha=%02x alphafmt=%02x\n",
+           hdcSrc, xSrc, ySrc, widthSrc, heightSrc, hdcDst, xDst, yDst, widthDst, heightDst,
+           blendFunction.BlendOp, blendFunction.BlendFlags,
+           blendFunction.SourceConstantAlpha, blendFunction.AlphaFormat );
+
     dcSrc = get_dc_ptr( hdcSrc );
     if (!dcSrc) return FALSE;
 
     if ((dcDst = get_dc_ptr( hdcDst )))
     {
+        PHYSDEV src_dev = GET_DC_PHYSDEV( dcSrc, pAlphaBlend );
+        PHYSDEV dst_dev = GET_DC_PHYSDEV( dcDst, pAlphaBlend );
         update_dc( dcSrc );
         update_dc( dcDst );
-        TRACE("%p %d,%d %dx%d -> %p %d,%d %dx%d op=%02x flags=%02x srcconstalpha=%02x alphafmt=%02x\n",
-              hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
-              hdcDst, xDst, yDst, widthDst, heightDst,
-              blendFunction.BlendOp, blendFunction.BlendFlags,
-              blendFunction.SourceConstantAlpha, blendFunction.AlphaFormat);
-        if (dcDst->funcs->pAlphaBlend)
-            ret = dcDst->funcs->pAlphaBlend( dcDst->physDev, xDst, yDst, widthDst, heightDst,
-                                             dcSrc->physDev, xSrc, ySrc, widthSrc, heightSrc,
-                                             blendFunction );
+        ret = dst_dev->funcs->pAlphaBlend( dst_dev, xDst, yDst, widthDst, heightDst,
+                                           src_dev, xSrc, ySrc, widthSrc, heightSrc, blendFunction );
         release_dc_ptr( dcDst );
     }
     release_dc_ptr( dcSrc );

@@ -317,6 +317,13 @@ static INT CDECL nulldrv_AbortDoc( PHYSDEV dev )
     return 0;
 }
 
+static BOOL CDECL nulldrv_AlphaBlend( PHYSDEV dst_dev, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
+                                      PHYSDEV src_dev, INT x_src, INT y_src, INT width_src, INT height_src,
+                                      BLENDFUNCTION func)
+{
+    return TRUE;
+}
+
 static BOOL CDECL nulldrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                INT xstart, INT ystart, INT xend, INT yend )
 {
@@ -788,7 +795,7 @@ const DC_FUNCTIONS null_driver =
 {
     nulldrv_AbortDoc,                   /* pAbortDoc */
     nulldrv_AbortPath,                  /* pAbortPath */
-    NULL,                               /* pAlphaBlend */
+    nulldrv_AlphaBlend,                 /* pAlphaBlend */
     nulldrv_AngleArc,                   /* pAngleArc */
     nulldrv_Arc,                        /* pArc */
     nulldrv_ArcTo,                      /* pArcTo */
@@ -898,7 +905,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_SetWorldTransform,          /* pSetWorldTransform */
     nulldrv_StartDoc,                   /* pStartDoc */
     nulldrv_StartPage,                  /* pStartPage */
-    NULL,                               /* pStretchBlt */
+    nulldrv_StretchBlt,                 /* pStretchBlt */
     nulldrv_StretchDIBits,              /* pStretchDIBits */
     nulldrv_StrokeAndFillPath,          /* pStrokeAndFillPath */
     nulldrv_StrokePath,                 /* pStrokePath */
