@@ -2304,7 +2304,7 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurf
         {
             DWORD err = GetLastError();
             ERR("Failed to make GL context %p current on device context %p, last error %#x.\n",
-                    context->hdc, context->glCtx, err);
+                    context->glCtx, context->hdc, err);
         }
     }
 
