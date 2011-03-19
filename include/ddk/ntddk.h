@@ -107,7 +107,28 @@ typedef enum _CONFIGURATION_TYPE
     MaximunType
 } CONFIGURATION_TYPE, *PCONFIGURATION_TYPE;
 
+typedef struct _IMAGE_INFO
+{
+    union
+    {
+        ULONG Properties;
+        struct
+        {
+            ULONG ImageAddressingMode  : 8;
+            ULONG SystemModeImage      : 1;
+            ULONG ImageMappedToAllPids : 1;
+            ULONG ExtendedInfoPresent  : 1;
+            ULONG Reserved             : 21;
+        };
+    };
+    PVOID  ImageBase;
+    ULONG  ImageSelector;
+    SIZE_T ImageSize;
+    ULONG  ImageSectionNumber;
+} IMAGE_INFO, *PIMAGE_INFO;
+
 typedef VOID (WINAPI *PDRIVER_REINITIALIZE)(PDRIVER_OBJECT,PVOID,ULONG);
+typedef VOID (WINAPI *PLOAD_IMAGE_NOTIFY_ROUTINE)(PUNICODE_STRING,HANDLE,PIMAGE_INFO);
 typedef NTSTATUS (WINAPI *PIO_QUERY_DEVICE_ROUTINE)(PVOID,PUNICODE_STRING,INTERFACE_TYPE,ULONG,
             PKEY_VALUE_FULL_INFORMATION*,CONFIGURATION_TYPE,ULONG,PKEY_VALUE_FULL_INFORMATION*);
 
@@ -115,5 +136,6 @@ NTSTATUS  WINAPI IoQueryDeviceDescription(PINTERFACE_TYPE,PULONG,PCONFIGURATION_
                                   PCONFIGURATION_TYPE,PULONG,PIO_QUERY_DEVICE_ROUTINE,PVOID);
 void      WINAPI IoRegisterDriverReinitialization(PDRIVER_OBJECT,PDRIVER_REINITIALIZE,PVOID);
 NTSTATUS  WINAPI IoRegisterShutdownNotification(PDEVICE_OBJECT);
+NTSTATUS  WINAPI PsSetLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE);
 
 #endif
