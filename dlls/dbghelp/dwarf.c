@@ -2116,6 +2116,11 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     if (sections[section_line].address == IMAGE_NO_MAP)
         return FALSE;
 
+    if (offset + 4 > sections[section_line].size)
+    {
+        WARN("out of bounds offset\n");
+        return FALSE;
+    }
     traverse.data = sections[section_line].address + offset;
     traverse.end_data = traverse.data + 4;
     traverse.word_size = ctx->module->format_info[DFI_DWARF]->u.dwarf2_info->word_size;
@@ -2123,6 +2128,11 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     length = dwarf2_parse_u4(&traverse);
     traverse.end_data = sections[section_line].address + offset + length;
 
+    if (offset + 4 + length > sections[section_line].size)
+    {
+        WARN("out of bounds header\n");
+        return FALSE;
+    }
     version = dwarf2_parse_u2(&traverse);
     header_len = dwarf2_parse_u4(&traverse);
     insn_size = dwarf2_parse_byte(&traverse);
