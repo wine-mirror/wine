@@ -271,7 +271,8 @@ static const WCHAR url9[] =
      '/','s','i','t','e','/','a','b','o','u','t',0};
 static const WCHAR url10[] = {'f','i','l','e',':','/','/','s','o','m','e','%','2','0','f','i','l','e',
         '.','j','p','g',0};
-
+static const WCHAR url11[] = {'h','t','t','p',':','/','/','g','o','o','g','l','e','.','*','.',
+        'c','o','m',0};
 static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e',
         '.','j','p','g',0};
 
@@ -283,10 +284,13 @@ static const WCHAR wszFile[] = {'f','i','l','e',0};
 static const WCHAR wszHttp[] = {'h','t','t','p',0};
 static const WCHAR wszAbout[] = {'a','b','o','u','t',0};
 static const WCHAR wszEmpty[] = {0};
+static const WCHAR wszGoogle[] = {'g','o','o','g','l','e','.','*','.','c','o','m',0};
 
 static const WCHAR wszWineHQ[] = {'w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
 static const WCHAR wszHttpWineHQ[] = {'h','t','t','p',':','/','/','w','w','w','.',
     'w','i','n','e','h','q','.','o','r','g',0};
+static const WCHAR wszHttpGoogle[] = {'h','t','t','p',':','/','/','g','o','o','g','l','e',
+    '.','*','.','c','o','m',0};
 
 struct parse_test {
     LPCWSTR url;
@@ -308,6 +312,7 @@ static const struct parse_test parse_tests[] = {
     {url4, E_FAIL, url4e, S_OK, path4,        wszFile, wszEmpty, S_OK, NULL, E_FAIL},
     {url5, E_FAIL, url5,  E_INVALIDARG, NULL, wszHttp, wszWineHQ, S_OK, wszHttpWineHQ, S_OK},
     {url6, S_OK,   url6,  E_INVALIDARG, NULL, wszAbout, NULL, E_FAIL, NULL, E_FAIL},
+    {url11, E_FAIL, url11, E_INVALIDARG,        NULL, wszHttp, wszGoogle, S_OK, wszHttpGoogle, S_OK}
 };
 
 static void test_CoInternetParseUrl(void)
