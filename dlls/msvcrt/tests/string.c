@@ -77,6 +77,7 @@ static unsigned char *p_mbctype;
 static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
 static int (__cdecl *p_wcslwr_s)(wchar_t*,size_t);
 static errno_t (__cdecl *p_mbsupr_s)(unsigned char *str, size_t numberOfElements);
+static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -1769,6 +1770,63 @@ static void test__mbsupr_s(void)
 
 }
 
+static void test__mbslwr_s(void)
+{
+    errno_t ret;
+    unsigned char buffer[20];
+
+    if (!p_mbslwr_s)
+    {
+        win_skip("Skipping _mbslwr_s tests\n");
+        return;
+    }
+
+    errno = EBADF;
+    ret = p_mbslwr_s(NULL, 0);
+    ok(ret == 0, "Expected _mbslwr_s to return 0, got %d\n", ret);
+
+    errno = EBADF;
+    ret = p_mbslwr_s(NULL, sizeof(buffer));
+    ok(ret == EINVAL, "Expected _mbslwr_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    errno = EBADF;
+    ret = p_mbslwr_s(buffer, 0);
+    ok(ret == EINVAL, "Expected _mbslwr_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    memcpy(buffer, "ABCDEFGH", sizeof("ABCDEFGH"));
+    errno = EBADF;
+    ret = p_mbslwr_s(buffer, sizeof("ABCDEFGH"));
+    ok(ret == 0, "Expected _mbslwr_s to return 0, got %d\n", ret);
+    ok(!memcmp(buffer, "abcdefgh", sizeof("abcdefgh")),
+       "Expected the output buffer to be \"abcdefgh\", got \"%s\"\n",
+       buffer);
+
+    memcpy(buffer, "ABCDEFGH", sizeof("ABCDEFGH"));
+    errno = EBADF;
+    ret = p_mbslwr_s(buffer, sizeof(buffer));
+    ok(ret == 0, "Expected _mbslwr_s to return 0, got %d\n", ret);
+    ok(!memcmp(buffer, "abcdefgh", sizeof("abcdefgh")),
+       "Expected the output buffer to be \"abcdefgh\", got \"%s\"\n",
+       buffer);
+
+    memcpy(buffer, "ABCDEFGH", sizeof("ABCDEFGH"));
+    errno = EBADF;
+    ret = p_mbslwr_s(buffer, 4);
+    ok(ret == EINVAL, "Expected _mbslwr_s to return EINVAL, got %d\n", ret);
+    ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
+
+    memcpy(buffer, "ABCDEFGH\0IJKLMNOP", sizeof("ABCDEFGH\0IJKLMNOP"));
+    errno = EBADF;
+    ret = p_mbslwr_s(buffer, sizeof(buffer));
+    ok(ret == 0, "Expected _mbslwr_s to return 0, got %d\n", ret);
+    ok(!memcmp(buffer, "abcdefgh\0IJKLMNOP", sizeof("abcdefgh\0IJKLMNOP")),
+       "Expected the output buffer to be \"abcdefgh\\0IJKLMNOP\", got \"%s\"\n",
+       buffer);
+
+}
+
 static void test__ultoa_s(void)
 {
     errno_t ret;
@@ -1880,6 +1938,7 @@ START_TEST(string)
     p_set_invalid_parameter_handler = (void *) GetProcAddress(hMsvcrt, "_set_invalid_parameter_handler");
     p_wcslwr_s = (void*)GetProcAddress(hMsvcrt, "_wcslwr_s");
     p_mbsupr_s = (void*)GetProcAddress(hMsvcrt, "_mbsupr_s");
+    p_mbslwr_s = (void*)GetProcAddress(hMsvcrt, "_mbslwr_s");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -1921,4 +1980,5 @@ START_TEST(string)
     test__ultoa_s();
     test__wcslwr_s();
     test__mbsupr_s();
+    test__mbslwr_s();
 }

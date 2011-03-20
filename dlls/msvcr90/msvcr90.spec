@@ -755,7 +755,7 @@
 @ stub _mbslen_l
 @ cdecl _mbslwr(str) msvcrt._mbslwr
 @ stub _mbslwr_l
-@ stub _mbslwr_s
+@ cdecl _mbslwr_s(str long) msvcrt._mbslwr_s
 @ stub _mbslwr_s_l
 @ cdecl _mbsnbcat(str str long) msvcrt._mbsnbcat
 @ stub _mbsnbcat_l
