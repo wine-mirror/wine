@@ -783,7 +783,7 @@
 # stub _mbstrnlen_l
 @ cdecl _mbsupr(str)
 # stub _mbsupr_l
-# stub _mbsupr_s
+@ cdecl _mbsupr_s(str long)
 # stub _mbsupr_s_l
 # stub _mbtowc_l
 @ cdecl _memccpy(ptr ptr long long) ntdll._memccpy

@@ -1572,6 +1572,46 @@ unsigned char* CDECL _mbsupr(unsigned char* s)
 
 
 /*********************************************************************
+ *              _mbsupr_s(MSVCRT.@)
+ */
+int CDECL _mbsupr_s(unsigned char* s, MSVCRT_size_t len)
+{
+  if (!s && !len)
+  {
+    return 0;
+  }
+  else if (!s || !len)
+  {
+    *MSVCRT__errno() = MSVCRT_EINVAL;
+    return MSVCRT_EINVAL;
+  }
+  if (get_locale()->locinfo->mb_cur_max > 1)
+  {
+    unsigned int c;
+    for ( ; *s && len > 0; len--)
+    {
+      c = _mbctoupper(_mbsnextc(s));
+      /* Note that I assume that the size of the character is unchanged */
+      if (c > 255)
+      {
+          *s++=(c>>8);
+          c=c & 0xff;
+      }
+      *s++=c;
+    }
+  }
+  else for ( ; *s && len > 0; s++, len--) *s = toupper(*s);
+  if (*s)
+  {
+    *s = '\0';
+    *MSVCRT__errno() = MSVCRT_EINVAL;
+    return MSVCRT_EINVAL;
+  }
+  return 0;
+}
+
+
+/*********************************************************************
  *              _mbsspn (MSVCRT.@)
  */
 MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* set)

@@ -1001,7 +1001,7 @@
 @ stub _mbstrnlen_l
 @ cdecl _mbsupr(str) msvcrt._mbsupr
 @ stub _mbsupr_l
-@ stub _mbsupr_s
+@ cdecl _mbsupr_s(str long) msvcrt._mbsupr_s
 @ stub _mbsupr_s_l
 @ stub _mbtowc_l
 @ cdecl _memccpy(ptr ptr long long) msvcrt._memccpy
