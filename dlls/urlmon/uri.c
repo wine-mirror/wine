@@ -597,21 +597,6 @@ static inline void pct_encode_val(WCHAR val, WCHAR *dest) {
     dest[2] = hexDigits[val & 0xf];
 }
 
-/* Scans the range of characters [str, end] and returns the last occurrence
- * of 'ch' or returns NULL.
- */
-static const WCHAR *str_last_of(const WCHAR *str, const WCHAR *end, WCHAR ch) {
-    const WCHAR *ptr = end;
-
-    while(ptr >= str) {
-        if(*ptr == ch)
-            return ptr;
-        --ptr;
-    }
-
-    return NULL;
-}
-
 /* Attempts to parse the domain name from the host.
  *
  * This function also includes the Top-level Domain (TLD) name
@@ -636,12 +621,12 @@ static void find_domain_name(const WCHAR *host, DWORD host_len,
     if(host_len < 4)
         return;
 
-    last_tld = str_last_of(host, end, '.');
+    last_tld = memrchrW(host, '.', host_len);
     if(!last_tld)
         /* http://hostname -> has no domain name. */
         return;
 
-    sec_last_tld = str_last_of(host, last_tld-1, '.');
+    sec_last_tld = memrchrW(host, '.', last_tld-host);
     if(!sec_last_tld) {
         /* If the '.' is at the beginning of the host there
          * has to be at least 3 characters in the TLD for it
@@ -692,7 +677,7 @@ static void find_domain_name(const WCHAR *host, DWORD host_len,
         if(last_tld - (sec_last_tld+1) == 3) {
             for(i = 0; i < sizeof(recognized_tlds)/sizeof(recognized_tlds[0]); ++i) {
                 if(!StrCmpNIW(sec_last_tld+1, recognized_tlds[i].tld_name, 3)) {
-                    const WCHAR *domain = str_last_of(host, sec_last_tld-1, '.');
+                    const WCHAR *domain = memrchrW(host, '.', sec_last_tld-host);
 
                     if(!domain)
                         *domain_start = 0;
@@ -710,7 +695,7 @@ static void find_domain_name(const WCHAR *host, DWORD host_len,
              * part of the TLD.
              *  Ex: www.google.fo.uk -> google.fo.uk as the domain name.
              */
-            const WCHAR *domain = str_last_of(host, sec_last_tld-1, '.');
+            const WCHAR *domain = memrchrW(host, '.', sec_last_tld-host);
 
             if(!domain)
                 *domain_start = 0;
@@ -5801,10 +5786,10 @@ static HRESULT merge_paths(parse_data *data, const WCHAR *base, DWORD base_len, 
         /* Find the characters the will be copied over from
          * the base path.
          */
-        end = str_last_of(base, base+(base_len-1), '/');
+        end = memrchrW(base, '/', base_len);
         if(!end && data->scheme_type == URL_SCHEME_FILE)
             /* Try looking for a '\\'. */
-            end = str_last_of(base, base+(base_len-1), '\\');
+            end = memrchrW(base, '\\', base_len);
     }
 
     if(end) {
