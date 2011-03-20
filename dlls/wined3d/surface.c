@@ -3924,8 +3924,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
     }
 
     /* Special cases for RenderTargets */
-    if ((This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-            || (src && (src->resource.usage & WINED3DUSAGE_RENDERTARGET)))
+    if (This->resource.device->blit_priv && ((This->resource.usage & WINED3DUSAGE_RENDERTARGET)
+            || (src && (src->resource.usage & WINED3DUSAGE_RENDERTARGET))))
     {
         if (SUCCEEDED(IWineD3DSurfaceImpl_BltOverride(This, DestRect, src, SrcRect, flags, DDBltFx, Filter)))
             return WINED3D_OK;
