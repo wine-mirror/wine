@@ -199,7 +199,7 @@ static BOOL WINECON_SetEditionMode(HANDLE hConIn, int edition_mode)
  *
  * A change occurs, try to figure out which
  */
-int	WINECON_GrabChanges(struct inner_data* data)
+void	WINECON_GrabChanges(struct inner_data* data)
 {
     struct console_renderer_event	evts[256];
     int	i, num, ev_found;
@@ -213,7 +213,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
         else num = 0;
     }
     SERVER_END_REQ;
-    if (!num) {WINE_WARN("hmm renderer signaled but no events available\n"); return 1;}
+    if (!num) {WINE_WARN("hmm renderer signaled but no events available\n"); return;}
 
     /* FIXME: should do some event compression here (cursor pos, update) */
     /* step 1: keep only last cursor pos event */
@@ -344,15 +344,15 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	    }
 	    break;
 	case CONSOLE_RENDERER_EXIT_EVENT:
+            data->dying = TRUE;
 	    WINE_TRACE(". Exit!!\n");
-	    return 0;
+	    return;
 	default:
 	    WINE_FIXME("Unknown event type (%d)\n", evts[i].event);
 	}
     }
 
     WINE_TRACE(".\n");
-    return 1;
 }
 
 /******************************************************************

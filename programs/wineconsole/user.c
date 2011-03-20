@@ -1368,13 +1368,12 @@ static int WCUSER_MainLoop(struct inner_data* data)
     MSG		msg;
 
     ShowWindow(data->hWnd, data->nCmdShow);
-    for (;;)
+    while (!data->dying || !data->curcfg.exit_on_die)
     {
 	switch (MsgWaitForMultipleObjects(1, &data->hSynchro, FALSE, INFINITE, QS_ALLINPUT))
 	{
 	case WAIT_OBJECT_0:
-	    if (!WINECON_GrabChanges(data) && data->curcfg.exit_on_die)
-                PostQuitMessage(0);
+	    WINECON_GrabChanges(data);
 	    break;
 	case WAIT_OBJECT_0+1:
             /* need to use PeekMessageW loop instead of simple GetMessage:
@@ -1393,6 +1392,8 @@ static int WCUSER_MainLoop(struct inner_data* data)
 	    break;
 	}
     }
+    PostQuitMessage(0);
+    return 0;
 }
 
 /******************************************************************

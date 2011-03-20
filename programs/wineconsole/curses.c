@@ -1009,17 +1009,16 @@ static void WCCURSES_DeleteBackend(struct inner_data* data)
 static int WCCURSES_MainLoop(struct inner_data* data)
 {
     DWORD       id;
-    BOOL        cont = TRUE;
 
     WCCURSES_Resize(data);
 
     if (pipe( PRIVATE(data)->sync_pipe ) == -1) return 0;
     PRIVATE(data)->input_thread = CreateThread( NULL, 0, input_thread, data, 0, &id );
 
-    while (cont && WaitForSingleObject(data->hSynchro, INFINITE) == WAIT_OBJECT_0)
+    while (!data->dying && WaitForSingleObject(data->hSynchro, INFINITE) == WAIT_OBJECT_0)
     {
         EnterCriticalSection(&PRIVATE(data)->lock);
-        cont = WINECON_GrabChanges(data);
+        WINECON_GrabChanges(data);
         LeaveCriticalSection(&PRIVATE(data)->lock);
     }
 

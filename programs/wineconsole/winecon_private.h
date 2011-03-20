@@ -61,6 +61,7 @@ struct inner_data {
     HWND		hWnd;           /* handle of 'user' window or NULL for 'curses' */
     INT                 nCmdShow;       /* argument of WinMain */
     BOOL                in_set_config;  /* to handle re-entrant calls to WINECON_SetConfig */
+    BOOL                dying;          /* to TRUE when we've been notified by server that child has died */
 
     int			(*fnMainLoop)(struct inner_data* data);
     void		(*fnPosCursor)(const struct inner_data* data);
@@ -82,8 +83,8 @@ extern void WINECON_ResizeWithContainer(struct inner_data* data, int width, int 
 extern int  WINECON_GetHistorySize(HANDLE hConIn);
 extern int  WINECON_GetHistoryMode(HANDLE hConIn);
 extern BOOL WINECON_GetConsoleTitle(HANDLE hConIn, WCHAR* buffer, size_t len);
-extern int  WINECON_GrabChanges(struct inner_data* data);
-extern VOID WINECON_SetConfig(struct inner_data* data,
+extern void WINECON_GrabChanges(struct inner_data* data);
+extern void WINECON_SetConfig(struct inner_data* data,
                               const struct config_data* cfg);
 /* from registry.c */
 extern void WINECON_RegLoad(const WCHAR* appname, struct config_data* cfg);
