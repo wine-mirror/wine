@@ -673,7 +673,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
                 return DIERR_INVALIDPARAM;
             tsp = peff->lpvTypeSpecificParams;
 	    This->effect.u.ramp.start_level = (tsp->lStart / 10) * 32;
-	    This->effect.u.ramp.end_level = (tsp->lStart / 10) * 32;
+	    This->effect.u.ramp.end_level = (tsp->lEnd / 10) * 32;
 	} else if (type == DIEFT_CONDITION) {
             LPCDICONDITION tsp = peff->lpvTypeSpecificParams;
             if (peff->cbTypeSpecificParams == sizeof(DICONDITION)) {
