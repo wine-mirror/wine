@@ -683,17 +683,18 @@ GpStatus WINGDIPAPI GdipGetRegionBounds(GpRegion *region, GpGraphics *graphics, 
         return Ok;
     }
 
-    if(!GetRgnBox(hrgn, &r)){
-        DeleteObject(hrgn);
-        return GenericError;
+    if(GetRgnBox(hrgn, &r)){
+        rect->X = r.left;
+        rect->Y = r.top;
+        rect->Width  = r.right  - r.left;
+        rect->Height = r.bottom - r.top;
     }
+    else
+        status = GenericError;
 
-    rect->X = r.left;
-    rect->Y = r.top;
-    rect->Width  = r.right  - r.left;
-    rect->Height = r.bottom - r.top;
+    DeleteObject(hrgn);
 
-    return Ok;
+    return status;
 }
 
 /*****************************************************************************
