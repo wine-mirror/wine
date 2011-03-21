@@ -2533,7 +2533,7 @@ BOOL __cdecl FDICopy(
 
   /* check if it's really a cabfile. Note that this doesn't implement the bug */
   if (!FDI_read_entries(fdi, cabhf, &fdici, &(CAB(mii)))) {
-    ERR("FDIIsCabinet failed.\n");
+    ERR("FDIIsCabinet failed: %u.\n", fdi->perf->erfOper);
     fdi->free(decomp_state);
     fdi->close(cabhf);
     return FALSE;
