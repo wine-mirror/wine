@@ -426,7 +426,7 @@ HRESULT WINAPI DllRegisterServerEx(void)
  * Determines if a specified string is a valid URL.
  *
  * PARAMS
- *  pBC        [I] ignored, must be NULL.
+ *  pBC        [I] ignored, should be NULL.
  *  szURL      [I] string that represents the URL in question.
  *  dwReserved [I] reserved and must be zero.
  *
@@ -442,7 +442,7 @@ HRESULT WINAPI IsValidURL(LPBC pBC, LPCWSTR szURL, DWORD dwReserved)
 {
     FIXME("(%p, %s, %d): stub\n", pBC, debugstr_w(szURL), dwReserved);
 
-    if (pBC || dwReserved || !szURL)
+    if (dwReserved || !szURL)
         return E_INVALIDARG;
 
     return S_OK;

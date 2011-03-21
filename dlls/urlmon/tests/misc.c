@@ -1454,9 +1454,20 @@ static void test_MkParseDisplayNameEx(void)
 static void test_IsValidURL(void)
 {
     HRESULT hr;
+    IBindCtx *bctx = NULL;
 
     hr = IsValidURL(NULL, 0, 0);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
+
+    hr = IsValidURL(NULL, wszHttpWineHQ, 0);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    CreateBindCtx(0, &bctx);
+
+    hr = IsValidURL(bctx, wszHttpWineHQ, 0);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    IBindCtx_Release(bctx);
 }
 
 START_TEST(misc)
