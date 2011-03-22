@@ -3,6 +3,7 @@
  * Copyright 2007 Jeff Latimer
  * Copyright 2007 Andrey Turkin
  * Copyright 2008 Jeff Zaroyko
+ * Copyright 2011 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1554,6 +1555,102 @@ todo_wine
     CloseHandle( dir );
 }
 
+static void test_NtCreateFile(void)
+{
+    static const struct test_data
+    {
+        DWORD disposition, attrib_in, status, result, attrib_out, needs_cleanup;
+    } td[] =
+    {
+    /* 0*/{ FILE_CREATE, FILE_ATTRIBUTE_READONLY, 0, FILE_CREATED, FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY, FALSE },
+    /* 1*/{ FILE_CREATE, 0, STATUS_OBJECT_NAME_COLLISION, 0, 0, TRUE },
+    /* 2*/{ FILE_CREATE, 0, 0, FILE_CREATED, FILE_ATTRIBUTE_ARCHIVE, FALSE },
+    /* 3*/{ FILE_OPEN, FILE_ATTRIBUTE_READONLY, 0, FILE_OPENED, FILE_ATTRIBUTE_ARCHIVE, TRUE },
+    /* 4*/{ FILE_OPEN, FILE_ATTRIBUTE_READONLY, STATUS_OBJECT_NAME_NOT_FOUND, 0, 0, FALSE },
+    /* 5*/{ FILE_OPEN_IF, 0, 0, FILE_CREATED, FILE_ATTRIBUTE_ARCHIVE, FALSE },
+    /* 6*/{ FILE_OPEN_IF, FILE_ATTRIBUTE_READONLY, 0, FILE_OPENED, FILE_ATTRIBUTE_ARCHIVE, FALSE },
+    /* 7*/{ FILE_OVERWRITE, FILE_ATTRIBUTE_READONLY, 0, FILE_OVERWRITTEN, FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY, FALSE },
+    /* 8*/{ FILE_OVERWRITE_IF, 0, STATUS_ACCESS_DENIED, 0, 0, FALSE },
+    /* 9*/{ FILE_OVERWRITE_IF, FILE_ATTRIBUTE_READONLY, 0, FILE_OVERWRITTEN, FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY, FALSE },
+    /*10*/{ FILE_SUPERSEDE, 0, 0, FILE_SUPERSEDED, FILE_ATTRIBUTE_ARCHIVE, FALSE },
+    /*11*/{ FILE_SUPERSEDE, FILE_ATTRIBUTE_READONLY, 0, FILE_SUPERSEDED, FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY, TRUE },
+    /*12*/{ FILE_SUPERSEDE, FILE_ATTRIBUTE_READONLY, 0, FILE_CREATED, FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY, TRUE }
+    };
+    static const WCHAR fooW[] = {'f','o','o',0};
+    static const WCHAR dotW[] = {'.',0};
+    NTSTATUS status;
+    HANDLE handle;
+    WCHAR path[MAX_PATH];
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    UNICODE_STRING nameW;
+    DWORD ret, i;
+
+    GetTempFileNameW(dotW, fooW, 0, path);
+    DeleteFileW(path);
+    pRtlDosPathNameToNtPathName_U(path, &nameW, NULL, NULL);
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = NULL;
+    attr.ObjectName = &nameW;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        status = pNtCreateFile(&handle, GENERIC_READ, &attr, &io, NULL,
+                               td[i].attrib_in, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                               td[i].disposition, 0, NULL, 0);
+
+        /* FIXME: completely remove once Wine is fixed */
+        if (td[i].status == STATUS_ACCESS_DENIED)
+        {
+        todo_wine
+            ok(status == td[i].status, "%d: expected %#x got %#x\n", i, td[i].status, status);
+            CloseHandle(handle);
+            SetFileAttributesW(path, FILE_ATTRIBUTE_ARCHIVE);
+            continue;
+        }
+
+        ok(status == td[i].status, "%d: expected %#x got %#x\n", i, td[i].status, status);
+
+        if (status == STATUS_ACCESS_DENIED)
+        {
+            SetFileAttributesW(path, FILE_ATTRIBUTE_ARCHIVE);
+            continue;
+        }
+
+        if (!status)
+        {
+            ok(io.Information == td[i].result,"%d: expected %#x got %#lx\n", i, td[i].result, io.Information);
+
+            ret = GetFileAttributesW(path);
+            ret &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+            /* FIXME: leave only 'else' case below once Wine is fixed */
+            if (ret != td[i].attrib_out)
+            {
+            todo_wine
+                ok(ret == td[i].attrib_out, "%d: expected %#x got %#x\n", i, td[i].attrib_out, ret);
+                SetFileAttributesW(path, td[i].attrib_out);
+            }
+            else
+                ok(ret == td[i].attrib_out, "%d: expected %#x got %#x\n", i, td[i].attrib_out, ret);
+
+            CloseHandle(handle);
+        }
+
+        if (td[i].needs_cleanup)
+        {
+            SetFileAttributesW(path, FILE_ATTRIBUTE_ARCHIVE);
+            DeleteFileW(path);
+        }
+    }
+
+    SetFileAttributesW(path, FILE_ATTRIBUTE_ARCHIVE);
+    DeleteFileW( path );
+}
+
 START_TEST(file)
 {
     HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -1590,6 +1687,7 @@ START_TEST(file)
     pNtQueryDirectoryFile   = (void *)GetProcAddress(hntdll, "NtQueryDirectoryFile");
     pNtQueryVolumeInformationFile = (void *)GetProcAddress(hntdll, "NtQueryVolumeInformationFile");
 
+    test_NtCreateFile();
     create_file_test();
     open_file_test();
     delete_file_test();
