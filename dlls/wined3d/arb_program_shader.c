@@ -7128,6 +7128,9 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum bli
 {
     enum complex_fixup src_fixup;
 
+    if (!gl_info->supported[ARB_FRAGMENT_PROGRAM])
+        return FALSE;
+
     if (blit_op != BLIT_OP_BLIT)
     {
         TRACE("Unsupported blit_op=%d\n", blit_op);
