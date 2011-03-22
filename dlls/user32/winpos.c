@@ -1902,11 +1902,6 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     /* Check hwndInsertAfter */
     if (winpos->flags & SWP_NOZORDER) goto done;
 
-    /* fix sign extension */
-    if (winpos->hwndInsertAfter == (HWND)0xffff) winpos->hwndInsertAfter = HWND_TOPMOST;
-    else if (winpos->hwndInsertAfter == (HWND)0xfffe) winpos->hwndInsertAfter = HWND_NOTOPMOST;
-
-    /* hwndInsertAfter must be a sibling of the window */
     if (winpos->hwndInsertAfter == HWND_TOP)
     {
         if (GetWindow(winpos->hwnd, GW_HWNDFIRST) == winpos->hwnd)
@@ -1929,16 +1924,9 @@ static BOOL fixup_flags( WINDOWPOS *winpos )
     }
     else
     {
-        if (GetAncestor( winpos->hwndInsertAfter, GA_PARENT ) != parent) ret = FALSE;
-        else
-        {
-            /* don't need to change the Zorder of hwnd if it's already inserted
-             * after hwndInsertAfter or when inserting hwnd after itself.
-             */
-            if ((winpos->hwnd == winpos->hwndInsertAfter) ||
-                (winpos->hwnd == GetWindow( winpos->hwndInsertAfter, GW_HWNDNEXT )))
-                winpos->flags |= SWP_NOZORDER;
-        }
+        if ((winpos->hwnd == winpos->hwndInsertAfter) ||
+            (winpos->hwnd == GetWindow( winpos->hwndInsertAfter, GW_HWNDNEXT )))
+            winpos->flags |= SWP_NOZORDER;
     }
  done:
     WIN_ReleasePtr( wndPtr );
@@ -2033,8 +2021,29 @@ BOOL USER_SetWindowPos( WINDOWPOS * winpos )
     UINT orig_flags;
     
     orig_flags = winpos->flags;
-    
-    /* First make sure that coordinates are valid for WM_WINDOWPOSCHANGING */
+
+    /* First, check z-order arguments.  */
+    if (!(winpos->flags & SWP_NOZORDER))
+    {
+        /* fix sign extension */
+        if (winpos->hwndInsertAfter == (HWND)0xffff) winpos->hwndInsertAfter = HWND_TOPMOST;
+        else if (winpos->hwndInsertAfter == (HWND)0xfffe) winpos->hwndInsertAfter = HWND_NOTOPMOST;
+
+        if (!(winpos->hwndInsertAfter == HWND_TOP ||
+              winpos->hwndInsertAfter == HWND_BOTTOM ||
+              winpos->hwndInsertAfter == HWND_TOPMOST ||
+              winpos->hwndInsertAfter == HWND_NOTOPMOST))
+        {
+            HWND parent = GetAncestor( winpos->hwnd, GA_PARENT );
+            HWND insertafter_parent = GetAncestor( winpos->hwndInsertAfter, GA_PARENT );
+
+            /* hwndInsertAfter must be a sibling of the window */
+            if (!insertafter_parent) return FALSE;
+            if (insertafter_parent != parent) return TRUE;
+        }
+    }
+
+    /* Make sure that coordinates are valid for WM_WINDOWPOSCHANGING */
     if (!(winpos->flags & SWP_NOMOVE))
     {
         if (winpos->x < -32768) winpos->x = -32768;

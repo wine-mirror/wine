@@ -2064,7 +2064,7 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
 
     /* Returns TRUE also for windows that are not siblings */
     ret = SetWindowPos(hwnd_child, hwnd2, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
-    todo_wine ok(ret, "Got %d\n", ret);
+    ok(ret, "Got %d\n", ret);
     check_active_state(hwnd2, hwnd2, hwnd2);
 
     ret = SetWindowPos(hwnd2, hwnd_child, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
@@ -2074,7 +2074,7 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     /* Does not seem to do anything even without passing flags, still returns TRUE */
     GetWindowRect(hwnd_child, &rc1);
     ret = SetWindowPos(hwnd_child, hwnd2 , 1, 2, 3, 4, 0);
-    todo_wine ok(ret, "Got %d\n", ret);
+    ok(ret, "Got %d\n", ret);
     GetWindowRect(hwnd_child, &rc2);
     ok(rc1.left == rc2.left && rc1.top == rc2.top &&
        rc1.right == rc2.right && rc1.bottom == rc2.bottom,
@@ -2087,20 +2087,16 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     ret = SetWindowPos(hwnd2, hwnd_child, 1, 2, 3, 4, 0);
     ok(ret, "Got %d\n", ret);
     GetWindowRect(hwnd2, &rc2);
-    todo_wine
-        ok(rc1.left == rc2.left && rc1.top == rc2.top &&
-           rc1.right == rc2.right && rc1.bottom == rc2.bottom,
-           "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
-           rc1.left, rc1.top, rc1.right, rc1.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom);
+    ok(rc1.left == rc2.left && rc1.top == rc2.top &&
+       rc1.right == rc2.right && rc1.bottom == rc2.bottom,
+       "(%d, %d, %d, %d) != (%d, %d, %d, %d)\n",
+       rc1.left, rc1.top, rc1.right, rc1.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom);
     check_active_state(hwnd2, hwnd2, hwnd2);
-
-    /* Restore window */
-    SetWindowPos(hwnd2, HWND_TOP, rc1.left, rc1.top, rc1.right-rc1.left, rc1.bottom-rc1.top, 0);
 
     /* .. and with these windows. */
     GetWindowRect(hwnd_grandchild, &rc1);
     ret = SetWindowPos(hwnd_grandchild, hwnd_child2, 1, 2, 3, 4, 0);
-    todo_wine ok(ret, "Got %d\n", ret);
+    ok(ret, "Got %d\n", ret);
     GetWindowRect(hwnd_grandchild, &rc2);
     ok(rc1.left == rc2.left && rc1.top == rc2.top &&
        rc1.right == rc2.right && rc1.bottom == rc2.bottom,
@@ -2154,8 +2150,8 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     check_active_state(hwnd2, hwnd2, hwnd2);
 
     ret = SetWindowPos(hwnd, hwnd_desktop, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
-    todo_wine ok(!ret, "Got %d\n", ret);
-    todo_wine check_active_state(hwnd2, hwnd2, hwnd2);
+    ok(!ret, "Got %d\n", ret);
+    check_active_state(hwnd2, hwnd2, hwnd2);
 
     DestroyWindow(hwnd_grandchild);
     DestroyWindow(hwnd_child);
