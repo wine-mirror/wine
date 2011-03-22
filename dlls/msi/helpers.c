@@ -134,6 +134,20 @@ MSIFILE* get_loaded_file( MSIPACKAGE* package, LPCWSTR key )
     return NULL;
 }
 
+MSIFILEPATCH* get_loaded_filepatch( MSIPACKAGE* package, LPCWSTR key )
+{
+    MSIFILEPATCH *patch;
+
+    /* FIXME: There might be more than one patch */
+
+    LIST_FOR_EACH_ENTRY( patch, &package->filepatches, MSIFILEPATCH, entry )
+    {
+        if (!strcmpW( key, patch->File->File ))
+            return patch;
+    }
+    return NULL;
+}
+
 int track_tempfile( MSIPACKAGE *package, LPCWSTR path )
 {
     MSITEMPFILE *temp;

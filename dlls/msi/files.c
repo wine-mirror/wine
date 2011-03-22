@@ -25,7 +25,7 @@
  * InstallFiles
  * DuplicateFiles
  * MoveFiles
- * PatchFiles (TODO)
+ * PatchFiles
  * RemoveDuplicateFiles
  * RemoveFiles
  */
@@ -46,6 +46,9 @@
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
+
+static HMODULE hmspatcha;
+static BOOL (WINAPI *ApplyPatchToFileW)(LPCWSTR, LPCWSTR, LPCWSTR, ULONG);
 
 static void msi_file_update_ui( MSIPACKAGE *package, MSIFILE *f, const WCHAR *action )
 {
@@ -385,6 +388,155 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
 done:
     msi_free_media_info(mi);
+    return rc;
+}
+
+static BOOL load_mspatcha(void)
+{
+    hmspatcha = LoadLibraryA("mspatcha.dll");
+    if (!hmspatcha)
+    {
+        ERR("Failed to load mspatcha.dll: %d\n", GetLastError());
+        return FALSE;
+    }
+
+    ApplyPatchToFileW = (void*)GetProcAddress(hmspatcha, "ApplyPatchToFileW");
+    if(!ApplyPatchToFileW)
+    {
+        ERR("GetProcAddress(ApplyPatchToFileW) failed: %d.\n", GetLastError());
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void unload_mspatch(void)
+{
+    FreeLibrary(hmspatcha);
+}
+
+static BOOL patchfiles_cb(MSIPACKAGE *package, LPCWSTR file, DWORD action,
+                          LPWSTR *path, DWORD *attrs, PVOID user)
+{
+    static MSIFILEPATCH *p = NULL;
+    static WCHAR patch_path[MAX_PATH] = {0};
+    static WCHAR temp_folder[MAX_PATH] = {0};
+
+    if (action == MSICABEXTRACT_BEGINEXTRACT)
+    {
+        if (temp_folder[0] == '\0')
+            GetTempPathW(MAX_PATH, temp_folder);
+
+        p = get_loaded_filepatch(package, file);
+        if (!p)
+        {
+            TRACE("unknown file in cabinet (%s)\n", debugstr_w(file));
+            return FALSE;
+        }
+
+        msi_file_update_ui(package, p->File, szPatchFiles);
+
+        GetTempFileNameW(temp_folder, NULL, 0, patch_path);
+
+        *path = strdupW(patch_path);
+        *attrs = p->File->Attributes;
+    }
+    else if (action == MSICABEXTRACT_FILEEXTRACTED)
+    {
+        WCHAR patched_file[MAX_PATH];
+        BOOL br;
+
+        GetTempFileNameW(temp_folder, NULL, 0, patched_file);
+
+        br = ApplyPatchToFileW(patch_path, p->File->TargetPath, patched_file, 0);
+        if (br)
+        {
+            /* FIXME: baseline cache */
+
+            DeleteFileW( p->File->TargetPath );
+            MoveFileW( patched_file, p->File->TargetPath );
+
+            p->IsApplied = TRUE;
+        }
+        else
+            ERR("Failed patch %s: %d.\n", debugstr_w(p->File->TargetPath), GetLastError());
+
+        DeleteFileW(patch_path);
+        p = NULL;
+    }
+
+    return TRUE;
+}
+
+UINT ACTION_PatchFiles( MSIPACKAGE *package )
+{
+    MSIFILEPATCH *patch;
+    MSIMEDIAINFO *mi;
+    UINT rc = ERROR_SUCCESS;
+    BOOL mspatcha_loaded = FALSE;
+
+    TRACE("%p\n", package);
+
+    /* increment progress bar each time action data is sent */
+    ui_progress(package,1,1,0,0);
+
+    mi = msi_alloc_zero( sizeof(MSIMEDIAINFO) );
+
+    LIST_FOR_EACH_ENTRY( patch, &package->filepatches, MSIFILEPATCH, entry )
+    {
+        MSIFILE *file = patch->File;
+
+        rc = msi_load_media_info( package, patch->Sequence, mi );
+        if (rc != ERROR_SUCCESS)
+        {
+            ERR("Unable to load media info for %s (%u)\n", debugstr_w(file->File), rc);
+            return ERROR_FUNCTION_FAILED;
+        }
+        if (!file->Component->Enabled) continue;
+
+        if (!patch->IsApplied)
+        {
+            MSICABDATA data;
+
+            rc = ready_media( package, patch->Sequence, TRUE, mi );
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Failed to ready media for %s\n", debugstr_w(file->File));
+                goto done;
+            }
+
+            if (!mspatcha_loaded && !load_mspatcha())
+            {
+                rc = ERROR_FUNCTION_FAILED;
+                goto done;
+            }
+            mspatcha_loaded = TRUE;
+
+            data.mi = mi;
+            data.package = package;
+            data.cb = patchfiles_cb;
+            data.user = (PVOID)(UINT_PTR)mi->disk_id;
+
+            if (!msi_cabextract(package, mi, &data))
+            {
+                ERR("Failed to extract cabinet: %s\n", debugstr_w(mi->cabinet));
+                rc = ERROR_INSTALL_FAILURE;
+                goto done;
+            }
+        }
+
+        if (!patch->IsApplied && !(patch->Attributes & msidbPatchAttributesNonVital))
+        {
+            ERR("Failed to apply patch to file: %s\n", debugstr_w(file->File));
+            rc = ERROR_INSTALL_FAILURE;
+            goto done;
+        }
+    }
+
+done:
+    msi_free_media_info(mi);
+    if (mspatcha_loaded)
+        unload_mspatch();
     return rc;
 }
 

@@ -1065,6 +1065,7 @@ static MSIPACKAGE *msi_alloc_package( void )
         list_init( &package->components );
         list_init( &package->features );
         list_init( &package->files );
+        list_init( &package->filepatches );
         list_init( &package->tempfiles );
         list_init( &package->folders );
         list_init( &package->subscriptions );

@@ -115,8 +115,6 @@ static const WCHAR szInstallODBC[] =
     {'I','n','s','t','a','l','l','O','D','B','C',0};
 static const WCHAR szInstallServices[] = 
     {'I','n','s','t','a','l','l','S','e','r','v','i','c','e','s',0};
-static const WCHAR szPatchFiles[] =
-    {'P','a','t','c','h','F','i','l','e','s',0};
 static const WCHAR szPublishComponents[] = 
     {'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t','s',0};
 static const WCHAR szRegisterComPlus[] =
@@ -1847,6 +1845,70 @@ static UINT load_all_files(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
+static UINT load_patch(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = param;
+    MSIFILEPATCH *patch;
+    LPWSTR file_key;
+
+    patch = msi_alloc_zero( sizeof (MSIFILEPATCH) );
+    if (!patch)
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    file_key = msi_dup_record_field( row, 1 );
+    patch->File = get_loaded_file( package, file_key );
+    msi_free(file_key);
+
+    if( !patch->File )
+    {
+        ERR("Failed to find target for patch in File table\n");
+        msi_free(patch);
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    patch->Sequence = MSI_RecordGetInteger( row, 2 );
+
+    /* FIXME: The database should be properly transformed */
+    patch->Sequence += MSI_INITIAL_MEDIA_TRANSFORM_OFFSET;
+
+    patch->PatchSize = MSI_RecordGetInteger( row, 3 );
+    patch->Attributes = MSI_RecordGetInteger( row, 4 );
+    patch->IsApplied = FALSE;
+
+    /* FIXME:
+     * Header field - for patch validation.
+     * _StreamRef   - External key into MsiPatchHeaders (instead of the header field)
+     */
+
+    TRACE("Patch Loaded (%s)\n", debugstr_w(patch->File->File));
+
+    list_add_tail( &package->filepatches, &patch->entry );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT load_all_patches(MSIPACKAGE *package)
+{
+    MSIQUERY *view;
+    UINT rc;
+    static const WCHAR Query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','P','a','t','c','h','`',' ','O','R','D','E','R',' ','B','Y',' ',
+         '`','S','e','q','u','e','n','c','e','`',0};
+
+    if (!list_empty(&package->filepatches))
+        return ERROR_SUCCESS;
+
+    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords(view, NULL, load_patch, package);
+    msiobj_release(&view->hdr);
+
+    return ERROR_SUCCESS;
+}
+
 static UINT load_folder( MSIRECORD *row, LPVOID param )
 {
     MSIPACKAGE *package = param;
@@ -1955,6 +2017,7 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     load_all_components( package );
     load_all_features( package );
     load_all_files( package );
+    load_all_patches( package );
 
     return ERROR_SUCCESS;
 }
@@ -7349,12 +7412,6 @@ static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
               action, count, debugstr_w(table));
 
     return ERROR_SUCCESS;
-}
-
-static UINT ACTION_PatchFiles( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = { 'P','a','t','c','h',0 };
-    return msi_unimplemented_action_stub( package, "PatchFiles", table );
 }
 
 static UINT ACTION_BindImage( MSIPACKAGE *package )

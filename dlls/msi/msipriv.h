@@ -346,6 +346,7 @@ typedef struct tagMSIPACKAGE
     struct list components;
     struct list features;
     struct list files;
+    struct list filepatches;
     struct list tempfiles;
     struct list folders;
     struct list binaries;
@@ -530,6 +531,16 @@ typedef struct tagMSITEMPFILE
     struct list entry;
     LPWSTR Path;
 } MSITEMPFILE;
+
+typedef struct tagMSIFILEPATCH
+{
+    struct list entry;
+    MSIFILE *File;
+    INT Sequence;
+    INT PatchSize;
+    INT Attributes;
+    BOOL IsApplied;
+} MSIFILEPATCH;
 
 typedef struct tagMSIAPPID
 {
@@ -921,6 +932,7 @@ extern UINT ACTION_AppSearch(MSIPACKAGE *package);
 extern UINT ACTION_CCPSearch(MSIPACKAGE *package);
 extern UINT ACTION_FindRelatedProducts(MSIPACKAGE *package);
 extern UINT ACTION_InstallFiles(MSIPACKAGE *package);
+extern UINT ACTION_PatchFiles( MSIPACKAGE *package );
 extern UINT ACTION_RemoveFiles(MSIPACKAGE *package);
 extern UINT ACTION_MoveFiles(MSIPACKAGE *package);
 extern UINT ACTION_DuplicateFiles(MSIPACKAGE *package);
@@ -952,6 +964,7 @@ extern void msi_reset_folders( MSIPACKAGE *package, BOOL source );
 extern MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Component );
 extern MSIFEATURE *get_loaded_feature( MSIPACKAGE* package, LPCWSTR Feature );
 extern MSIFILE *get_loaded_file( MSIPACKAGE* package, LPCWSTR file );
+extern MSIFILEPATCH *get_loaded_filepatch( MSIPACKAGE* package, LPCWSTR key );
 extern MSIFOLDER *get_loaded_folder( MSIPACKAGE *package, LPCWSTR dir );
 extern int track_tempfile(MSIPACKAGE *package, LPCWSTR path);
 extern UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action);
@@ -1049,6 +1062,7 @@ static const WCHAR szRegisterMIMEInfo[] = {'R','e','g','i','s','t','e','r','M','
 static const WCHAR szDuplicateFiles[] = {'D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
 static const WCHAR szRemoveDuplicateFiles[] = {'R','e','m','o','v','e','D','u','p','l','i','c','a','t','e','F','i','l','e','s',0};
 static const WCHAR szInstallFiles[] = {'I','n','s','t','a','l','l','F','i','l','e','s',0};
+static const WCHAR szPatchFiles[] = {'P','a','t','c','h','F','i','l','e','s',0};
 static const WCHAR szRemoveFiles[] = {'R','e','m','o','v','e','F','i','l','e','s',0};
 static const WCHAR szFindRelatedProducts[] = {'F','i','n','d','R','e','l','a','t','e','d','P','r','o','d','u','c','t','s',0};
 static const WCHAR szAllUsers[] = {'A','L','L','U','S','E','R','S',0};
