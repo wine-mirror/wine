@@ -1,0 +1,6 @@
+MODULE = mspatcha.dll
+
+C_SRCS = \
+	mspatcha_main.c
+
+@MAKE_DLL_RULES@
