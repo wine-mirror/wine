@@ -2148,22 +2148,22 @@ static HRESULT HTMLWindow_invoke(DispatchEx *dispex, DISPID id, LCID lcid, WORD 
 
     switch(prop->type) {
     case GLOBAL_SCRIPTVAR: {
-        IDispatchEx *dispex;
+        IDispatchEx *iface;
         IDispatch *disp;
 
         disp = get_script_disp(prop->script_host);
         if(!disp)
             return E_UNEXPECTED;
 
-        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+        hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&iface);
         if(SUCCEEDED(hres)) {
             TRACE("%s >>>\n", debugstr_w(prop->name));
-            hres = IDispatchEx_InvokeEx(dispex, prop->id, lcid, flags, params, res, ei, caller);
+            hres = IDispatchEx_InvokeEx(iface, prop->id, lcid, flags, params, res, ei, caller);
             if(hres == S_OK)
                 TRACE("%s <<<\n", debugstr_w(prop->name));
             else
                 WARN("%s <<< %08x\n", debugstr_w(prop->name), hres);
-            IDispatchEx_Release(dispex);
+            IDispatchEx_Release(iface);
         }else {
             FIXME("No IDispatchEx\n");
         }
