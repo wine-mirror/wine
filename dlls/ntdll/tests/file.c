@@ -840,8 +840,8 @@ static void append_file_test(void)
     U(iosb).Status = STATUS_PENDING;
     iosb.Information = 0;
 
-    status = NtWriteFile(handle, NULL, NULL, NULL, &iosb,
-                         text, sizeof(text), NULL, NULL);
+    status = pNtWriteFile(handle, NULL, NULL, NULL, &iosb,
+                          text, sizeof(text), NULL, NULL);
 
     if (status == STATUS_PENDING)
     {
