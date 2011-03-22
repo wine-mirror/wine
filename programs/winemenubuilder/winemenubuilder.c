@@ -2191,7 +2191,7 @@ static BOOL write_freedesktop_association_entry(const char *desktopPath, const c
         fprintf(desktop, "Type=Application\n");
         fprintf(desktop, "Name=%s\n", friendlyAppName);
         fprintf(desktop, "MimeType=%s;\n", mimeType);
-        fprintf(desktop, "Exec=wine start /ProgIDOpen %s %%f\n", progId);
+        fprintf(desktop, "Exec=env WINEPREFIX=\"%s\" wine start /ProgIDOpen %s %%f\n", wine_get_config_dir(), progId);
         fprintf(desktop, "NoDisplay=true\n");
         fprintf(desktop, "StartupNotify=true\n");
         ret = TRUE;
