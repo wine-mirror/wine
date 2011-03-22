@@ -75,6 +75,8 @@ struct tagMSIOBJECTHDR
     msihandledestructor destructor;
 };
 
+#define MSI_INITIAL_MEDIA_TRANSFORM_OFFSET 10000
+
 typedef struct tagMSIDATABASE
 {
     MSIOBJECTHDR hdr;
@@ -85,6 +87,7 @@ typedef struct tagMSIDATABASE
     LPWSTR deletefile;
     LPWSTR localfile;
     LPCWSTR mode;
+    UINT media_transform_offset;
     struct list tables;
     struct list transforms;
     struct list streams;

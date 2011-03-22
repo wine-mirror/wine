@@ -417,6 +417,8 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
 
     db->path = strdupW( path );
 
+    db->media_transform_offset = MSI_INITIAL_MEDIA_TRANSFORM_OFFSET;
+
     if( TRACE_ON( msi ) )
         enum_stream_names( stg );
 

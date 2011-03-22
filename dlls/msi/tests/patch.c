@@ -957,11 +957,76 @@ static UINT find_entry( MSIHANDLE hdb, const char *table, const char *entry )
     return r;
 }
 
+static INT get_integer( MSIHANDLE hdb, UINT field, const char *query)
+{
+    UINT r;
+    INT ret = -1;
+    MSIHANDLE hview, hrec;
+
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewExecute( hview, 0 );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewFetch( hview, &hrec );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    if (r == ERROR_SUCCESS)
+    {
+        UINT r_tmp;
+        ret = MsiRecordGetInteger( hrec, field );
+
+        r_tmp = MsiViewFetch( hview, &hrec );
+        ok( r_tmp == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r);
+    }
+
+    MsiViewClose( hview );
+    MsiCloseHandle( hview );
+    MsiCloseHandle( hrec );
+
+    return ret;
+}
+
+static char *get_string( MSIHANDLE hdb, UINT field, const char *query)
+{
+    UINT r;
+    static char ret[MAX_PATH];
+    MSIHANDLE hview, hrec;
+
+    ret[0] = '\0';
+
+    r = MsiDatabaseOpenView( hdb, query, &hview );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewExecute( hview, 0 );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiViewFetch( hview, &hrec );
+    ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r );
+    if (r == ERROR_SUCCESS)
+    {
+        UINT size = MAX_PATH;
+        r = MsiRecordGetStringA( hrec, field, ret, &size );
+        ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+
+        r = MsiViewFetch( hview, &hrec );
+        ok( r == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r);
+    }
+
+    MsiViewClose( hview );
+    MsiCloseHandle( hview );
+    MsiCloseHandle( hrec );
+
+    return ret;
+}
+
 static void test_system_tables( void )
 {
     UINT r;
+    char *cr;
     const char *query;
     MSIHANDLE hproduct, hdb, hview, hrec;
+    static const char patchsource[] = "MSPSRC0F96CDC04CDF4304B2837B9264889EF7";
 
     if (!pMsiApplyPatchA)
     {
@@ -1105,6 +1170,18 @@ static void test_system_tables( void )
 
     r = find_entry( hdb, "_Tables", "PatchPackage" );
     ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
+
+    cr = get_string( hdb, 6, "SELECT * FROM `Media` WHERE `Source` IS NOT NULL");
+    todo_wine ok( !strcmp(cr, patchsource), "Expected %s, got %s\n", patchsource, cr );
+
+    r = get_integer( hdb, 1, "SELECT * FROM `Media` WHERE `Source` IS NOT NULL");
+    todo_wine ok( r == 100, "Got %u\n", r );
+
+    r = get_integer( hdb, 2, "SELECT * FROM `Media` WHERE `Source` IS NOT NULL");
+    todo_wine ok( r == 10000, "Got %u\n", r );
+
+    r = get_integer( hdb, 8, "SELECT * FROM `File` WHERE `File` = 'patch.txt'");
+    ok( r == 10000, "Got %u\n", r );
 
     MsiCloseHandle( hrec );
     MsiViewClose( hview );

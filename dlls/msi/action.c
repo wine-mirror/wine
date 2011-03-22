@@ -625,6 +625,253 @@ UINT msi_parse_patch_summary( MSISUMMARYINFO *si, MSIPATCHINFO **patch )
     return r;
 }
 
+struct msi_patch_offset
+{
+    struct list entry;
+    LPWSTR Name;
+    UINT Sequence;
+};
+
+struct msi_patch_offset_list
+{
+    struct list files;
+    UINT count, min, max;
+    UINT offset_to_apply;
+};
+
+static struct msi_patch_offset_list *msi_patch_offset_list_create(void)
+{
+    struct msi_patch_offset_list *pos = msi_alloc(sizeof(struct msi_patch_offset_list));
+    list_init( &pos->files );
+    pos->count = pos->max = 0;
+    pos->min = 999999;
+
+    return pos;
+}
+
+static void msi_patch_offset_list_free(struct msi_patch_offset_list *pos)
+{
+    struct msi_patch_offset *po, *po2;
+
+    LIST_FOR_EACH_ENTRY_SAFE( po, po2, &pos->files, struct msi_patch_offset, entry )
+    {
+        msi_free( po->Name );
+        msi_free( po );
+    }
+
+    msi_free( pos );
+}
+
+static void msi_patch_offset_get_patches(MSIDATABASE *db, UINT last_sequence, struct msi_patch_offset_list *pos)
+{
+    MSIQUERY *view;
+    MSIRECORD *rec;
+    UINT r;
+    static const WCHAR query_patch[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','P','a','t','c','h',' ',
+        'W','H','E','R','E',' ','S','e','q','u','e','n','c','e',' ','<','=',' ','?',' ',
+        'O','R','D','E','R',' ','B','Y',' ','S','e','q','u','e','n','c','e',0};
+
+    r = MSI_DatabaseOpenViewW( db, query_patch, &view );
+    if (r != ERROR_SUCCESS)
+        return;
+
+    rec = MSI_CreateRecord( 1 );
+    MSI_RecordSetInteger(rec, 1, last_sequence);
+
+    r = MSI_ViewExecute( view, rec );
+    msiobj_release( &rec->hdr );
+    if (r != ERROR_SUCCESS)
+        return;
+
+    while (MSI_ViewFetch(view, &rec) == ERROR_SUCCESS)
+    {
+        UINT sequence = MSI_RecordGetInteger( rec, 2 );
+
+        /* FIXME:
+         * We only use the max/min sequence numbers for now.
+         */
+
+        pos->min = min(pos->min, sequence);
+        pos->max = max(pos->max, sequence);
+        pos->count++;
+
+        msiobj_release( &rec->hdr );
+    }
+
+    msiobj_release( &view->hdr );
+}
+
+static void msi_patch_offset_get_files(MSIDATABASE *db, UINT last_sequence, struct msi_patch_offset_list *pos)
+{
+    MSIQUERY *view;
+    MSIRECORD *rec;
+    UINT r;
+    static const WCHAR query_files[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','F','i','l','e',' ',
+        'W','H','E','R','E',' ','S','e','q','u','e','n','c','e',' ','<','=',' ','?',' ',
+        'O','R','D','E','R',' ','B','Y',' ','S','e','q','u','e','n','c','e',0};
+
+    r = MSI_DatabaseOpenViewW( db, query_files, &view );
+    if (r != ERROR_SUCCESS)
+        return;
+
+    rec = MSI_CreateRecord( 1 );
+    MSI_RecordSetInteger(rec, 1, last_sequence);
+
+    r = MSI_ViewExecute( view, rec );
+    msiobj_release( &rec->hdr );
+    if (r != ERROR_SUCCESS)
+        return;
+
+    while (MSI_ViewFetch(view, &rec) == ERROR_SUCCESS)
+    {
+        UINT attributes = MSI_RecordGetInteger( rec, 7 );
+        if (attributes & msidbFileAttributesPatchAdded)
+        {
+            struct msi_patch_offset *po = msi_alloc(sizeof(struct msi_patch_offset));
+
+            po->Name = msi_dup_record_field( rec, 1 );
+            po->Sequence = MSI_RecordGetInteger( rec, 8 );
+
+            pos->min = min(pos->min, po->Sequence);
+            pos->max = max(pos->max, po->Sequence);
+
+            list_add_tail( &pos->files, &po->entry );
+            pos->count++;
+        }
+        msiobj_release( &rec->hdr );
+    }
+
+    msiobj_release( &view->hdr );
+}
+
+static UINT msi_patch_offset_modify_db(MSIDATABASE *db, struct msi_patch_offset_list *pos)
+{
+    static const WCHAR query_files[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','F','i','l','e',' ',
+         'W','H','E','R','E',' ','S','e','q','u','e','n','c','e',' ','>','=',' ','?',' ',
+         'A','N','D',' ','S','e','q','u','e','n','c','e',' ','<','=',' ','?',' ',
+         'O','R','D','E','R',' ','B','Y',' ','S','e','q','u','e','n','c','e',0};
+    struct msi_patch_offset *po;
+    MSIQUERY *view;
+    MSIRECORD *rec;
+    UINT r;
+
+    r = MSI_DatabaseOpenViewW( db, query_files, &view );
+    if (r != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rec = MSI_CreateRecord( 2 );
+    MSI_RecordSetInteger( rec, 1, pos->min );
+    MSI_RecordSetInteger( rec, 2, pos->max );
+
+    r = MSI_ViewExecute( view, rec );
+    msiobj_release( &rec->hdr );
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    LIST_FOR_EACH_ENTRY( po, &pos->files, struct msi_patch_offset, entry )
+    {
+        UINT r_fetch;
+        while ( (r_fetch = MSI_ViewFetch( view, &rec )) == ERROR_SUCCESS )
+        {
+            LPCWSTR file = MSI_RecordGetString( rec, 1 );
+            UINT seq;
+
+            if (!strcmpiW(file, po->Name))
+            {
+                /* Update record */
+                seq = MSI_RecordGetInteger( rec, 8 );
+                MSI_RecordSetInteger( rec, 8, seq + pos->offset_to_apply );
+                r = MSI_ViewModify( view, MSIMODIFY_UPDATE, rec );
+                if (r != ERROR_SUCCESS)
+                    ERR("Failed to update offset for file %s.\n", debugstr_w(file));
+
+                msiobj_release( &rec->hdr );
+                break;
+            }
+
+            msiobj_release( &rec->hdr );
+        }
+
+        if (r_fetch != ERROR_SUCCESS)
+            break;
+    }
+
+done:
+    msiobj_release( &view->hdr );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT msi_set_patch_offsets(MSIDATABASE *db)
+{
+    static const WCHAR query_media[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','M','e','d','i','a',' ',
+        'W','H','E','R','E',' ','S','o','u','r','c','e',' ','I','S',' ','N','O','T',' ','N','U','L','L',
+        ' ','A','N','D',' ','C','a','b','i','n','e','t',' ','I','S',' ','N','O','T',' ','N','U','L','L',' ',
+        'O','R','D','E','R',' ','B','Y',' ','D','i','s','k','I','d',0};
+    MSIQUERY *view = NULL;
+    MSIRECORD *rec = NULL;
+    UINT r;
+
+    r = MSI_DatabaseOpenViewW( db, query_media, &view );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MSI_ViewExecute( view, 0 );
+    if (r != ERROR_SUCCESS)
+        goto done;
+
+    while (MSI_ViewFetch( view, &rec ) == ERROR_SUCCESS)
+    {
+        UINT last_sequence = MSI_RecordGetInteger( rec, 2 );
+        struct msi_patch_offset_list *pos;
+
+        /* FIXME: Set/Check Source field instead? */
+        if (last_sequence >= MSI_INITIAL_MEDIA_TRANSFORM_OFFSET)
+        {
+            msiobj_release( &rec->hdr );
+            continue;
+        }
+
+        pos = msi_patch_offset_list_create();
+
+        msi_patch_offset_get_files( db, last_sequence, pos );
+        msi_patch_offset_get_patches( db, last_sequence, pos );
+
+        if (pos->count)
+        {
+            UINT offset = db->media_transform_offset - pos->min;
+            last_sequence = offset + pos->max;
+
+            /* FIXME:
+             * This is for the patch table, which is not yet properly transformed.
+             */
+            last_sequence += pos->min;
+
+            pos->offset_to_apply = offset;
+            msi_patch_offset_modify_db( db, pos );
+
+            MSI_RecordSetInteger( rec, 2, last_sequence );
+            r = MSI_ViewModify( view, MSIMODIFY_UPDATE, rec );
+            if (r != ERROR_SUCCESS)
+                ERR("Failed to update Media table entry, expect breakage (%u).\n", r);
+
+            db->media_transform_offset = last_sequence + 1;
+        }
+
+        msi_patch_offset_list_free( pos );
+        msiobj_release( &rec->hdr );
+    }
+
+done:
+    msiobj_release( &view->hdr );
+
+    return r;
+}
+
 UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINFO *patch )
 {
     UINT i, r = ERROR_SUCCESS;
@@ -633,7 +880,11 @@ UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINF
     /* apply substorage transforms */
     substorage = msi_split_string( patch->transforms, ';' );
     for (i = 0; substorage && substorage[i] && r == ERROR_SUCCESS; i++)
+    {
         r = msi_apply_substorage_transform( package, patch_db, substorage[i] );
+        if (r == ERROR_SUCCESS)
+            msi_set_patch_offsets( package->db );
+    }
 
     msi_free( substorage );
     if (r != ERROR_SUCCESS)
