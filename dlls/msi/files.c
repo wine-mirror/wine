@@ -302,7 +302,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        rc = msi_load_media_info( package, file, mi );
+        rc = msi_load_media_info( package, file->Sequence, mi );
         if (rc != ERROR_SUCCESS)
         {
             ERR("Unable to load media info for %s (%u)\n", debugstr_w(file->File), rc);
@@ -310,7 +310,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         }
         if (!file->Component->Enabled) continue;
 
-        if (file->state != msifs_hashmatch && (rc = ready_media( package, file, mi )))
+        if (file->state != msifs_hashmatch &&
+            (rc = ready_media( package, file->Sequence, file->IsCompressed, mi )))
         {
             ERR("Failed to ready media for %s\n", debugstr_w(file->File));
             goto done;

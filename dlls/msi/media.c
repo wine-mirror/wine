@@ -656,7 +656,7 @@ static UINT get_drive_type(const WCHAR *path)
     return GetDriveTypeW(root);
 }
 
-UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
+UINT msi_load_media_info(MSIPACKAGE *package, UINT Sequence, MSIMEDIAINFO *mi)
 {
     MSIRECORD *row;
     LPWSTR source_dir;
@@ -669,7 +669,7 @@ UINT msi_load_media_info(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
         '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',' ','%','i',
         ' ','O','R','D','E','R',' ','B','Y',' ','`','D','i','s','k','I','d','`',0};
 
-    row = MSI_QueryGetRecord(package->db, query, file->Sequence);
+    row = MSI_QueryGetRecord(package->db, query, Sequence);
     if (!row)
     {
         TRACE("Unable to query row\n");
@@ -815,7 +815,7 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
     return ERROR_FUNCTION_FAILED;
 }
 
-UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
+UINT ready_media(MSIPACKAGE *package, UINT Sequence, BOOL IsCompressed, MSIMEDIAINFO *mi)
 {
     UINT rc = ERROR_SUCCESS;
     WCHAR *cabinet_file;
@@ -831,7 +831,7 @@ UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
     cabinet_file = get_cabinet_filename(mi);
 
     /* package should be downloaded */
-    if (file->IsCompressed &&
+    if (IsCompressed &&
         GetFileAttributesW(cabinet_file) == INVALID_FILE_ATTRIBUTES &&
         package->BaseURL && UrlIsW(package->BaseURL, URLIS_URL))
     {
@@ -874,7 +874,7 @@ UINT ready_media(MSIPACKAGE *package, MSIFILE *file, MSIMEDIAINFO *mi)
         }
     }
 
-    if (file->IsCompressed &&
+    if (IsCompressed &&
         GetFileAttributesW(cabinet_file) == INVALID_FILE_ATTRIBUTES)
     {
         rc = find_published_source(package, mi);
