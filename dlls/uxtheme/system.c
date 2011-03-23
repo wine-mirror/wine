@@ -630,16 +630,19 @@ static LPWSTR UXTHEME_GetWindowProperty(HWND hwnd, ATOM aProp, LPWSTR pszBuffer,
 }
 
 /***********************************************************************
- *      OpenThemeData                                       (UXTHEME.@)
+ *      OpenThemeDataEx                                     (UXTHEME.61)
  */
-HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
+HTHEME WINAPI OpenThemeDataEx(HWND hwnd, LPCWSTR pszClassList, DWORD flags)
 {
     WCHAR szAppBuff[256];
     WCHAR szClassBuff[256];
     LPCWSTR pszAppName;
     LPCWSTR pszUseClassList;
     HTHEME hTheme = NULL;
-    TRACE("(%p,%s)\n", hwnd, debugstr_w(pszClassList));
+    TRACE("(%p,%s, %x)\n", hwnd, debugstr_w(pszClassList), flags);
+
+    if(flags)
+        FIXME("unhandled flags: %x\n", flags);
 
     if(bThemeActive)
     {
@@ -656,6 +659,14 @@ HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
         SetPropW(hwnd, (LPCWSTR)MAKEINTATOM(atWindowTheme), hTheme);
     TRACE(" = %p\n", hTheme);
     return hTheme;
+}
+
+/***********************************************************************
+ *      OpenThemeData                                       (UXTHEME.@)
+ */
+HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR classlist)
+{
+    return OpenThemeDataEx(hwnd, classlist, 0);
 }
 
 /***********************************************************************
