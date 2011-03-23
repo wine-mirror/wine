@@ -940,14 +940,22 @@ GpStatus WINGDIPAPI GdipCreateTextureIAI(GpImage *image, GDIPCONST GpImageAttrib
 GpStatus WINGDIPAPI GdipCreateTexture2I(GpImage *image, GpWrapMode wrapmode,
         INT x, INT y, INT width, INT height, GpTexture **texture)
 {
-    GpImageAttributes imageattr;
+    GpImageAttributes *imageattr;
+    GpStatus stat;
 
     TRACE("%p %d %d %d %d %d %p\n", image, wrapmode, x, y, width, height,
             texture);
 
-    imageattr.wrap = wrapmode;
+    stat = GdipCreateImageAttributes(&imageattr);
 
-    return GdipCreateTextureIA(image, &imageattr, x, y, width, height, texture);
+    if (stat == Ok)
+    {
+        imageattr->wrap = wrapmode;
+
+        stat = GdipCreateTextureIA(image, imageattr, x, y, width, height, texture);
+    }
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipGetBrushType(GpBrush *brush, GpBrushType *type)
