@@ -36,10 +36,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 typedef struct {
-    const IPropertyPageSiteVtbl *lpVtbl;
+    IPropertyPageSite IPropertyPageSite_iface;
     LCID lcid;
     LONG ref;
 } PropertyPageSite;
+
+static inline PropertyPageSite *impl_from_IPropertyPageSite(IPropertyPageSite *iface)
+{
+    return CONTAINING_RECORD(iface, PropertyPageSite, IPropertyPageSite_iface);
+}
 
 static INT_PTR CALLBACK property_sheet_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -86,7 +91,7 @@ static HRESULT WINAPI PropertyPageSite_QueryInterface(IPropertyPageSite*  iface,
 
 static ULONG WINAPI PropertyPageSite_AddRef(IPropertyPageSite* iface)
 {
-    PropertyPageSite *this = (PropertyPageSite*)iface;
+    PropertyPageSite *this = impl_from_IPropertyPageSite(iface);
     LONG ref = InterlockedIncrement(&this->ref);
 
     TRACE("(%p) ref=%d\n", this, ref);
@@ -95,7 +100,7 @@ static ULONG WINAPI PropertyPageSite_AddRef(IPropertyPageSite* iface)
 
 static ULONG WINAPI PropertyPageSite_Release(IPropertyPageSite* iface)
 {
-    PropertyPageSite *this = (PropertyPageSite *)iface;
+    PropertyPageSite *this = impl_from_IPropertyPageSite(iface);
     LONG ref = InterlockedDecrement(&this->ref);
 
     TRACE("(%p) ref=%d\n", this, ref);
@@ -114,7 +119,7 @@ static HRESULT WINAPI PropertyPageSite_OnStatusChange(
 static HRESULT WINAPI PropertyPageSite_GetLocaleID(
         IPropertyPageSite *iface, LCID *pLocaleID)
 {
-    PropertyPageSite *this = (PropertyPageSite *)iface;
+    PropertyPageSite *this = impl_from_IPropertyPageSite(iface);
 
     TRACE("(%p, %p)\n", iface, pLocaleID);
     *pLocaleID = this->lcid;
@@ -161,7 +166,7 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
         WORD title;
     } *dialogs;
     IPropertyPage **property_page;
-    IPropertyPageSite *property_page_site;
+    PropertyPageSite *property_page_site;
     HRESULT res;
     int i;
     HMODULE hcomctl;
@@ -270,12 +275,13 @@ HRESULT WINAPI OleCreatePropertyFrameIndirect(LPOCPFIPARAMS lpParams)
         property_page_site = HeapAlloc(GetProcessHeap(), 0, sizeof(PropertyPageSite));
         if(!property_page_site)
             continue;
-        ((PropertyPageSite*)property_page_site)->lpVtbl = &PropertyPageSiteVtbl;
-        ((PropertyPageSite*)property_page_site)->ref = 1;
-        ((PropertyPageSite*)property_page_site)->lcid = lpParams->lcid;
+        property_page_site->IPropertyPageSite_iface.lpVtbl = &PropertyPageSiteVtbl;
+        property_page_site->ref = 1;
+        property_page_site->lcid = lpParams->lcid;
 
-        res = IPropertyPage_SetPageSite(property_page[i], property_page_site);
-        IPropertyPageSite_Release(property_page_site);
+        res = IPropertyPage_SetPageSite(property_page[i],
+                &property_page_site->IPropertyPageSite_iface);
+        IPropertyPageSite_Release(&property_page_site->IPropertyPageSite_iface);
         if(FAILED(res))
             continue;
 
