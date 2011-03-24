@@ -881,10 +881,9 @@ cleanup:
     SetLastError(0xdeadbeef);
     rc = AccessCheck(sd, token, FILE_EXECUTE, &mapping, &priv_set, &priv_set_len, &granted, &status);
     ok(rc, "AccessCheck error %d\n", GetLastError());
-todo_wine {
     ok(status == 1, "expected 1, got %d\n", status);
     ok(granted == FILE_EXECUTE, "expected FILE_EXECUTE, got %#x\n", granted);
-}
+
     granted = 0xdeadbeef;
     status = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -906,19 +905,17 @@ todo_wine {
     SetLastError(0xdeadbeef);
     rc = AccessCheck(sd, token, 0x1ff, &mapping, &priv_set, &priv_set_len, &granted, &status);
     ok(rc, "AccessCheck error %d\n", GetLastError());
-todo_wine {
     ok(status == 1, "expected 1, got %d\n", status);
     ok(granted == 0x1ff, "expected 0x1ff, got %#x\n", granted);
-}
+
     granted = 0xdeadbeef;
     status = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     rc = AccessCheck(sd, token, FILE_ALL_ACCESS, &mapping, &priv_set, &priv_set_len, &granted, &status);
     ok(rc, "AccessCheck error %d\n", GetLastError());
-todo_wine {
     ok(status == 1, "expected 1, got %d\n", status);
     ok(granted == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", granted);
-}
+
     SetLastError(0xdeadbeef);
     rc = AccessCheck(sd, token, 0xffffffff, &mapping, &priv_set, &priv_set_len, &granted, &status);
     ok(!rc, "AccessCheck should fail\n");
@@ -995,10 +992,9 @@ todo_wine {
     SetLastError(0xdeadbeef);
     rc = AccessCheck(sd, token, FILE_EXECUTE, &mapping, &priv_set, &priv_set_len, &granted, &status);
     ok(rc, "AccessCheck error %d\n", GetLastError());
-todo_wine {
     ok(status == 1, "expected 1, got %d\n", status);
     ok(granted == FILE_EXECUTE, "expected FILE_EXECUTE, got %#x\n", granted);
-}
+
     granted = 0xdeadbeef;
     status = 0xdeadbeef;
     SetLastError(0xdeadbeef);

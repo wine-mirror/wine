@@ -358,11 +358,9 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
                               FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
         aaa->Mask = WRITE_DAC | WRITE_OWNER;
         if (mode & S_IRUSR)
-            aaa->Mask |= FILE_GENERIC_READ;
+            aaa->Mask |= FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
         if (mode & S_IWUSR)
             aaa->Mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
-        if (mode & S_IXUSR)
-            aaa->Mask |= FILE_GENERIC_EXECUTE;
         sid = (SID *)&aaa->SidStart;
         memcpy( sid, user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
     }
@@ -379,11 +377,9 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
                               FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
         ada->Mask = 0;
         if (!(mode & S_IRUSR) && (mode & (S_IRGRP|S_IROTH)))
-            ada->Mask |= FILE_GENERIC_READ;
+            ada->Mask |= FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
         if (!(mode & S_IWUSR) && (mode & (S_IWGRP|S_IROTH)))
             ada->Mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
-        if (!(mode & S_IXUSR) && (mode & (S_IXGRP|S_IXOTH)))
-            ada->Mask |= FILE_GENERIC_EXECUTE;
         ada->Mask &= ~STANDARD_RIGHTS_ALL; /* never deny standard rights */
         sid = (SID *)&ada->SidStart;
         memcpy( sid, user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
@@ -399,11 +395,9 @@ struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID 
                              FIELD_OFFSET(SID, SubAuthority[world_sid->SubAuthorityCount]);
         aaa->Mask = 0;
         if (mode & S_IROTH)
-            aaa->Mask |= FILE_GENERIC_READ;
+            aaa->Mask |= FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
         if (mode & S_IWOTH)
             aaa->Mask |= FILE_GENERIC_WRITE | DELETE | FILE_DELETE_CHILD;
-        if (mode & S_IXOTH)
-            aaa->Mask |= FILE_GENERIC_EXECUTE;
         sid = (SID *)&aaa->SidStart;
         memcpy( sid, world_sid, FIELD_OFFSET(SID, SubAuthority[world_sid->SubAuthorityCount]) );
     }
