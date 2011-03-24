@@ -260,7 +260,16 @@ static const IClassFactoryVtbl CDLGCF_Vtbl =
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
+    static IClassFactoryImpl FileOpenDlgClassFactory = {{&CDLGCF_Vtbl}, FileOpenDialog_Constructor};
+    static IClassFactoryImpl FileSaveDlgClassFactory = {{&CDLGCF_Vtbl}, FileSaveDialog_Constructor};
+
     TRACE("%s, %s, %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    if(IsEqualGUID(&CLSID_FileOpenDialog, rclsid))
+        return IClassFactory_QueryInterface(&FileOpenDlgClassFactory.IClassFactory_iface, riid, ppv);
+
+    if(IsEqualGUID(&CLSID_FileSaveDialog, rclsid))
+        return IClassFactory_QueryInterface(&FileSaveDlgClassFactory.IClassFactory_iface, riid, ppv);
 
     return CLASS_E_CLASSNOTAVAILABLE;
 }

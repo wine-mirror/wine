@@ -11,6 +11,7 @@ C_SRCS = \
 	filedlgbrowser.c \
 	finddlg.c \
 	fontdlg.c \
+	itemdlg.c \
 	printdlg.c
 
 RC_SRCS = \

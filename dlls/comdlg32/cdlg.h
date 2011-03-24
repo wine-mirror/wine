@@ -169,6 +169,10 @@ typedef struct {
 #include "shlobj.h"
 #include "shellapi.h"
 
+/* Constructors */
+HRESULT FileOpenDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv);
+HRESULT FileSaveDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv);
+
 /* ITEMIDLIST */
 
 extern LPITEMIDLIST (WINAPI *COMDLG32_PIDL_ILClone) (LPCITEMIDLIST);
