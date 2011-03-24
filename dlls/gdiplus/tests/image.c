@@ -2085,7 +2085,7 @@ static void test_gamma(void)
 
     stat = GdipBitmapGetPixel(bitmap2, 0, 0, &color);
     expect(Ok, stat);
-    todo_wine ok(color_match(0xff20ffff, color, 1), "Expected ff20ffff, got %.8x\n", color);
+    ok(color_match(0xff20ffff, color, 1), "Expected ff20ffff, got %.8x\n", color);
 
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap1);

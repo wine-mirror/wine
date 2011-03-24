@@ -467,9 +467,31 @@ static void apply_image_attributes(const GpImageAttributes *attributes, LPBYTE d
     if (attributes->gamma_enabled[type] ||
         attributes->gamma_enabled[ColorAdjustTypeDefault])
     {
-        static int fixme;
-        if (!fixme++)
-            FIXME("Gamma adjustment not implemented\n");
+        REAL gamma;
+
+        if (attributes->gamma_enabled[type])
+            gamma = attributes->gamma[type];
+        else
+            gamma = attributes->gamma[ColorAdjustTypeDefault];
+
+        for (x=0; x<width; x++)
+            for (y=0; y<height; y++)
+            {
+                ARGB *src_color;
+                BYTE blue, green, red;
+                src_color = (ARGB*)(data + stride * y + sizeof(ARGB) * x);
+
+                blue = *src_color&0xff;
+                green = (*src_color>>8)&0xff;
+                red = (*src_color>>16)&0xff;
+
+                /* FIXME: We should probably use a table for this. */
+                blue = floorf(powf(blue / 255.0, gamma) * 255.0);
+                green = floorf(powf(green / 255.0, gamma) * 255.0);
+                red = floorf(powf(red / 255.0, gamma) * 255.0);
+
+                *src_color = (*src_color & 0xff000000) | (red << 16) | (green << 8) | blue;
+            }
     }
 }
 
