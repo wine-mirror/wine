@@ -331,6 +331,45 @@ static ARGB blend_line_gradient(GpLineGradient* brush, REAL position)
     }
 }
 
+static ARGB transform_color(ARGB color, const ColorMatrix *matrix)
+{
+    REAL val[5], res[4];
+    int i, j;
+    unsigned char a, r, g, b;
+
+    val[0] = ((color >> 16) & 0xff) / 255.0; /* red */
+    val[1] = ((color >> 8) & 0xff) / 255.0; /* green */
+    val[2] = (color & 0xff) / 255.0; /* blue */
+    val[3] = ((color >> 24) & 0xff) / 255.0; /* alpha */
+    val[4] = 1.0; /* translation */
+
+    for (i=0; i<4; i++)
+    {
+        res[i] = 0.0;
+
+        for (j=0; j<5; j++)
+            res[i] += matrix->m[j][i] * val[j];
+    }
+
+    a = min(max(floorf(res[3]*255.0), 0.0), 255.0);
+    r = min(max(floorf(res[0]*255.0), 0.0), 255.0);
+    g = min(max(floorf(res[1]*255.0), 0.0), 255.0);
+    b = min(max(floorf(res[2]*255.0), 0.0), 255.0);
+
+    return (a << 24) | (r << 16) | (g << 8) | b;
+}
+
+static int color_is_gray(ARGB color)
+{
+    unsigned char r, g, b;
+
+    r = (color >> 16) & 0xff;
+    g = (color >> 8) & 0xff;
+    b = color & 0xff;
+
+    return (r == g) && (g == b);
+}
+
 static void apply_image_attributes(const GpImageAttributes *attributes, LPBYTE data,
     UINT width, UINT height, INT stride, ColorAdjustType type)
 {
@@ -400,9 +439,29 @@ static void apply_image_attributes(const GpImageAttributes *attributes, LPBYTE d
     if (attributes->colormatrices[type].enabled ||
         attributes->colormatrices[ColorAdjustTypeDefault].enabled)
     {
-        static int fixme;
-        if (!fixme++)
-            FIXME("Color transforms not implemented\n");
+        const struct color_matrix *colormatrices;
+
+        if (attributes->colormatrices[type].enabled)
+            colormatrices = &attributes->colormatrices[type];
+        else
+            colormatrices = &attributes->colormatrices[ColorAdjustTypeDefault];
+
+        for (x=0; x<width; x++)
+            for (y=0; y<height; y++)
+            {
+                ARGB *src_color;
+                src_color = (ARGB*)(data + stride * y + sizeof(ARGB) * x);
+
+                if (colormatrices->flags == ColorMatrixFlagsDefault ||
+                    !color_is_gray(*src_color))
+                {
+                    *src_color = transform_color(*src_color, &colormatrices->colormatrix);
+                }
+                else if (colormatrices->flags == ColorMatrixFlagsAltGray)
+                {
+                    *src_color = transform_color(*src_color, &colormatrices->graymatrix);
+                }
+            }
     }
 
     if (attributes->gamma_enabled[type] ||

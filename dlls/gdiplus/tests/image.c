@@ -1923,6 +1923,12 @@ static void test_colormatrix(void)
         {0.0,0.0,1.0,0.0,0.0},
         {0.0,0.0,0.0,1.0,0.0},
         {0.0,0.0,0.0,0.0,1.0}}};
+    const ColorMatrix asymmetric = {{
+        {0.0,1.0,0.0,0.0,0.0},
+        {0.0,0.0,1.0,0.0,0.0},
+        {0.0,0.0,0.0,1.0,0.0},
+        {1.0,0.0,0.0,0.0,0.0},
+        {0.0,0.0,0.0,0.0,1.0}}};
     GpBitmap *bitmap1, *bitmap2;
     GpGraphics *graphics;
     ARGB color;
@@ -1983,13 +1989,13 @@ static void test_colormatrix(void)
         TRUE, &colormatrix, NULL, ColorMatrixFlagsDefault);
     expect(Ok, stat);
 
-    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppRGB, NULL, &bitmap1);
+    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppARGB, NULL, &bitmap1);
     expect(Ok, stat);
 
-    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppRGB, NULL, &bitmap2);
+    stat = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat32bppARGB, NULL, &bitmap2);
     expect(Ok, stat);
 
-    stat = GdipBitmapSetPixel(bitmap1, 0, 0, 0xff40ffff);
+    stat = GdipBitmapSetPixel(bitmap1, 0, 0, 0xff40ccee);
     expect(Ok, stat);
 
     stat = GdipGetImageGraphicsContext((GpImage*)bitmap2, &graphics);
@@ -2001,7 +2007,23 @@ static void test_colormatrix(void)
 
     stat = GdipBitmapGetPixel(bitmap2, 0, 0, &color);
     expect(Ok, stat);
-    todo_wine expect(0xff80ffff, color);
+    expect(0xff80ccee, color);
+
+    colormatrix = asymmetric;
+    stat = GdipSetImageAttributesColorMatrix(imageattr, ColorAdjustTypeDefault,
+        TRUE, &colormatrix, NULL, ColorMatrixFlagsDefault);
+    expect(Ok, stat);
+
+    stat = GdipBitmapSetPixel(bitmap2, 0, 0, 0);
+    expect(Ok, stat);
+
+    stat = GdipDrawImageRectRectI(graphics, (GpImage*)bitmap1, 0,0,1,1, 0,0,1,1,
+        UnitPixel, imageattr, NULL, NULL);
+    expect(Ok, stat);
+
+    stat = GdipBitmapGetPixel(bitmap2, 0, 0, &color);
+    expect(Ok, stat);
+    ok(color_match(0xeeff40cc, color, 3), "expected 0xeeff40cc, got 0x%08x\n", color);
 
     GdipDeleteGraphics(graphics);
     GdipDisposeImage((GpImage*)bitmap1);
