@@ -21,6 +21,8 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -166,4 +168,99 @@ DWORD WINAPI CommDlgExtendedError(void)
 	  return (DWORD_PTR)TlsGetValue(COMDLG32_TlsIndex);
 	else
 	  return 0; /* we never set an error, so there isn't one */
+}
+
+/*************************************************************************
+ * Implement the CommDlg32 class factory
+ *
+ * (Taken from shdocvw/factory.c; based on implementation in
+ *  ddraw/main.c)
+ */
+typedef struct
+{
+    IClassFactory IClassFactory_iface;
+    HRESULT (*cf)(IUnknown*, REFIID, void**);
+} IClassFactoryImpl;
+
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
+
+/*************************************************************************
+ * CDLGCF_QueryInterface (IUnknown)
+ */
+static HRESULT WINAPI CDLGCF_QueryInterface(IClassFactory* iface,
+                                            REFIID riid, void **ppobj)
+{
+    TRACE("%p (%s %p)\n", iface, debugstr_guid(riid), ppobj);
+
+    if(!ppobj)
+        return E_POINTER;
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IClassFactory, riid))
+    {
+        *ppobj = iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("Interface not supported.\n");
+
+    *ppobj = NULL;
+    return E_NOINTERFACE;
+}
+
+/*************************************************************************
+ * CDLGCF_AddRef (IUnknown)
+ */
+static ULONG WINAPI CDLGCF_AddRef(IClassFactory *iface)
+{
+    return 2; /* non-heap based object */
+}
+
+/*************************************************************************
+ * CDLGCF_Release (IUnknown)
+ */
+static ULONG WINAPI CDLGCF_Release(IClassFactory *iface)
+{
+    return 1; /* non-heap based object */
+}
+
+/*************************************************************************
+ * CDLGCF_CreateInstance (IClassFactory)
+ */
+static HRESULT WINAPI CDLGCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+                                            REFIID riid, void **ppobj)
+{
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    return This->cf(pOuter, riid, ppobj);
+}
+
+/*************************************************************************
+ * CDLGCF_LockServer (IClassFactory)
+ */
+static HRESULT WINAPI CDLGCF_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    TRACE("%p (%d)\n", iface, dolock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl CDLGCF_Vtbl =
+{
+    CDLGCF_QueryInterface,
+    CDLGCF_AddRef,
+    CDLGCF_Release,
+    CDLGCF_CreateInstance,
+    CDLGCF_LockServer
+};
+
+/*************************************************************************
+ *              DllGetClassObject (COMMDLG32.@)
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
+{
+    TRACE("%s, %s, %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    return CLASS_E_CLASSNOTAVAILABLE;
 }

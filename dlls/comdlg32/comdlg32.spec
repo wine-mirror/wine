@@ -3,6 +3,7 @@
 @ stdcall ChooseFontA(ptr)
 @ stdcall ChooseFontW(ptr)
 @ stdcall CommDlgExtendedError()
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall FindTextA(ptr)
 @ stdcall FindTextW(ptr)
 @ stdcall GetFileTitleA(str ptr long)
