@@ -788,6 +788,32 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    /* Make sure already percent encoded characters don't get unencoded. */
+    {   "ftp://\"%20\"weird@ftp.google.com/\"%20\"weird", Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS, S_OK, FALSE,
+        {
+            {"ftp://\"%20\"weird@ftp.google.com/\"%20\"weird",S_OK,FALSE},
+            {"\"%20\"weird@ftp.google.com",S_OK,FALSE},
+            {"ftp://ftp.google.com/\"%20\"weird",S_OK,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ftp.google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/\"%20\"weird",S_OK,FALSE},
+            {"/\"%20\"weird",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"ftp://\"%20\"weird@ftp.google.com/\"%20\"weird",S_OK,FALSE},
+            {"ftp",S_OK,FALSE},
+            {"\"%20\"weird",S_OK,FALSE},
+            {"\"%20\"weird",S_OK,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {21,S_OK,FALSE},
+            {URL_SCHEME_FTP,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     /* Allowed to have invalid % encoded because its an unknown scheme type. */
     {   "zip://%xy:word@winehq.org/", 0, S_OK, FALSE,
         {
