@@ -343,8 +343,11 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     else
         win = root;
 
-    pglXMakeCurrent(gdi_display, win, ctx);
-
+    if(pglXMakeCurrent(gdi_display, win, ctx) == 0)
+    {
+        ERR_(winediag)( "Unable to activate OpenGL context, most likely your OpenGL drivers haven't been installed correctly\n" );
+        goto done;
+    }
     WineGLInfo.glVersion = (const char *) pglGetString(GL_VERSION);
     str = (const char *) pglGetString(GL_EXTENSIONS);
     WineGLInfo.glExtensions = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
