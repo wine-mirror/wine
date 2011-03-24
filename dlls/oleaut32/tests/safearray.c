@@ -1130,16 +1130,27 @@ static void test_SafeArrayGetPutElement_BSTR(void)
   SysFreeString(gotvalue);
 }
 
-static int tunk_xref = 0;
-static HRESULT WINAPI tunk_QueryInterface(LPUNKNOWN punk,REFIID riid, LPVOID *x) {
-	return E_FAIL;
-}
-static ULONG WINAPI tunk_AddRef(LPUNKNOWN punk) {
-	return ++tunk_xref;
+struct xtunk_impl {
+  IUnknown IUnknown_iface;
+  LONG ref;
+};
+static const IUnknownVtbl xtunk_vtbl;
+
+static struct xtunk_impl xtunk = {{&xtunk_vtbl}, 0};
+
+static HRESULT WINAPI tunk_QueryInterface(IUnknown *punk, REFIID riid, void **x)
+{
+  return E_FAIL;
 }
 
-static ULONG WINAPI tunk_Release(LPUNKNOWN punk) {
-	return --tunk_xref;
+static ULONG WINAPI tunk_AddRef(IUnknown *punk)
+{
+  return ++xtunk.ref;
+}
+
+static ULONG WINAPI tunk_Release(IUnknown *punk)
+{
+  return --xtunk.ref;
 }
 
 static const IUnknownVtbl xtunk_vtbl = {
@@ -1148,18 +1159,13 @@ static const IUnknownVtbl xtunk_vtbl = {
 	tunk_Release
 };
 
-static struct xtunk_iface {
-	const IUnknownVtbl *lpvtbl;
-} xtunk_iface;
-
-
 static void test_SafeArrayGetPutElement_IUnknown(void)
 {
   SAFEARRAYBOUND sab;
   LONG indices[1];
   SAFEARRAY *sa;
   HRESULT hres;
-  LPUNKNOWN value = 0, gotvalue;
+  IUnknown *gotvalue;
 
   sab.lLbound = 1;
   sab.cElements = 1;
@@ -1173,22 +1179,19 @@ static void test_SafeArrayGetPutElement_IUnknown(void)
     return;
 
   indices[0] = sab.lLbound;
-  xtunk_iface.lpvtbl = &xtunk_vtbl;
-  value = (LPUNKNOWN)&xtunk_iface;
-  tunk_xref = 1;
-  ok (value != NULL, "Expected non-NULL\n");
-  hres = SafeArrayPutElement(sa, indices, value);
+  xtunk.ref = 1;
+  hres = SafeArrayPutElement(sa, indices, &xtunk.IUnknown_iface);
   ok(hres == S_OK, "Failed to put bstr element hres 0x%x\n", hres);
-  ok(tunk_xref == 2,"Failed to increment refcount of iface.\n");
+  ok(xtunk.ref == 2,"Failed to increment refcount of iface.\n");
   gotvalue = NULL;
   hres = SafeArrayGetElement(sa, indices, &gotvalue);
-  ok(tunk_xref == 3,"Failed to increment refcount of iface.\n");
+  ok(xtunk.ref == 3,"Failed to increment refcount of iface.\n");
   ok(hres == S_OK, "Failed to get bstr element at hres 0x%x\n", hres);
   if (hres == S_OK)
-    ok(value == gotvalue, "Got %p instead of %p\n", gotvalue, value);
+    ok(gotvalue == &xtunk.IUnknown_iface, "Got %p instead of %p\n", gotvalue, &xtunk.IUnknown_iface);
   hres = SafeArrayDestroy(sa);
   ok(hres == S_OK, "got 0x%08x\n", hres);
-  ok(tunk_xref == 2,"Failed to decrement refcount of iface.\n");
+  ok(xtunk.ref == 2,"Failed to decrement refcount of iface.\n");
 }
 
 static void test_SafeArrayRedim_IUnknown(void)
@@ -1197,7 +1200,6 @@ static void test_SafeArrayRedim_IUnknown(void)
   LONG indices[1];
   SAFEARRAY *sa;
   HRESULT hres;
-  LPUNKNOWN value;
 
   sab.lLbound = 1;
   sab.cElements = 2;
@@ -1211,16 +1213,14 @@ static void test_SafeArrayRedim_IUnknown(void)
     return;
 
   indices[0] = 2;
-  xtunk_iface.lpvtbl = &xtunk_vtbl;
-  value = (LPUNKNOWN)&xtunk_iface;
-  tunk_xref = 1;
-  hres = SafeArrayPutElement(sa, indices, value);
+  xtunk.ref = 1;
+  hres = SafeArrayPutElement(sa, indices, &xtunk.IUnknown_iface);
   ok(hres == S_OK, "Failed to put IUnknown element hres 0x%x\n", hres);
-  ok(tunk_xref == 2,"Failed to increment refcount of iface.\n");
+  ok(xtunk.ref == 2,"Failed to increment refcount of iface.\n");
   sab.cElements = 1;
   hres = SafeArrayRedim(sa, &sab);
   ok(hres == S_OK, "Failed to shrink array hres 0x%x\n", hres);
-  ok(tunk_xref == 1, "Failed to decrement refcount\n");
+  ok(xtunk.ref == 1, "Failed to decrement refcount\n");
   hres = SafeArrayDestroy(sa);
   ok(hres == S_OK, "got 0x%08x\n", hres);
 }
