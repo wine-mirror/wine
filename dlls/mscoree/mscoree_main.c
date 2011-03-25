@@ -422,6 +422,12 @@ BOOL WINAPI StrongNameSignatureVerificationEx(LPCWSTR filename, BOOL forceVerifi
     return FALSE;
 }
 
+HRESULT WINAPI CreateConfigStream(LPCWSTR filename, IStream **stream)
+{
+    FIXME("(%s, %p): stub\n", debugstr_w(filename), stream);
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI CLRCreateInstance(REFCLSID clsid, REFIID riid, LPVOID *ppInterface)
 {
     TRACE("(%s,%s,%p)\n", debugstr_guid(clsid), debugstr_guid(riid), ppInterface);

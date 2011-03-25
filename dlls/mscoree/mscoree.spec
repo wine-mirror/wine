@@ -28,7 +28,7 @@
 @ stub CorIsLatestSvc
 @ stub CorMarkThreadInThreadPool
 @ stub CorTickleSvc
-@ stub CreateConfigStream
+@ stdcall CreateConfigStream(wstr ptr)
 @ stub CreateDebuggingInterfaceFromVersion
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
