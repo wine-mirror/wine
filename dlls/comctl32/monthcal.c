@@ -946,6 +946,46 @@ static void MONTHCAL_PaintFocusAndCircle(const MONTHCAL_INFO *infoPtr, HDC hdc, 
   }
 }
 
+/* months before first calendar month and after last calendar month */
+static void MONTHCAL_PaintLeadTrailMonths(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
+{
+  INT prev_month, mask, length;
+  SYSTEMTIME st_max, st;
+
+  if (infoPtr->dwStyle & MCS_NOTRAILINGDATES) return;
+
+  SetTextColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
+
+  prev_month = infoPtr->calendars[0].month.wMonth - 1;
+
+  /* draw prev month */
+  MONTHCAL_GetMinDate(infoPtr, &st);
+  mask = 1 << (st.wDay-1);
+  /* December and January both 31 days long, so no worries if wrapped */
+  length = MONTHCAL_MonthLength(infoPtr->calendars[0].month.wMonth - 1,
+                                infoPtr->calendars[0].month.wYear);
+  while(st.wDay <= length)
+  {
+      MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[0] & mask, ps);
+      mask <<= 1;
+      st.wDay++;
+  }
+
+  /* draw next month */
+  st = infoPtr->calendars[infoPtr->cal_num-1].month;
+  st.wDay = 1;
+  MONTHCAL_GetNextMonth(&st);
+  MONTHCAL_GetMaxDate(infoPtr, &st_max);
+  mask = 1;
+
+  while(st.wDay <= st_max.wDay)
+  {
+      MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[2] & mask, ps);
+      mask <<= 1;
+      st.wDay++;
+  }
+}
+
 /* paint a calendar area */
 static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps, INT calIdx)
 {
@@ -978,7 +1018,7 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   infoPtr->calendars[calIdx].wdays.left = infoPtr->calendars[calIdx].days.left =
       infoPtr->calendars[calIdx].weeknums.right;
 
-  /* 1. draw day abbreviations */
+  /* draw day abbreviations */
   SelectObject(hdc, infoPtr->hFont);
   SetBkColor(hdc, infoPtr->colors[MCSC_MONTHBK]);
   SetTextColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
@@ -993,47 +1033,7 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
     OffsetRect(&r, infoPtr->width_increment, 0);
   }
 
-  /* 2. previous and next months */
-  if (!(infoPtr->dwStyle & MCS_NOTRAILINGDATES) && (calIdx == 0 || calIdx == infoPtr->cal_num - 1))
-  {
-    SYSTEMTIME st_max;
-
-    SetTextColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
-
-    /* draw prev month */
-    if (calIdx == 0)
-    {
-      MONTHCAL_GetMinDate(infoPtr, &st);
-      mask = 1 << (st.wDay-1);
-      length = MONTHCAL_MonthLength(prev_month, date->wYear);
-
-      while(st.wDay <= length)
-      {
-        MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[0] & mask, ps);
-        mask <<= 1;
-        st.wDay++;
-      }
-    }
-
-    /* draw next month */
-    if (calIdx == infoPtr->cal_num - 1)
-    {
-      st = *date;
-      st.wDay = 1;
-      MONTHCAL_GetNextMonth(&st);
-      MONTHCAL_GetMaxDate(infoPtr, &st_max);
-      mask = 1;
-
-      while(st.wDay <= st_max.wDay)
-      {
-        MONTHCAL_DrawDay(infoPtr, hdc, &st, infoPtr->monthdayState[2] & mask, ps);
-        mask <<= 1;
-        st.wDay++;
-      }
-    }
-  }
-
-  /* 3. current month */
+  /* draw current month */
   SetTextColor(hdc, infoPtr->colors[MCSC_TEXT]);
   st = *date;
   st.wDay = 1;
@@ -1074,6 +1074,9 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT 
     /* week numbers */
     MONTHCAL_PaintWeeknumbers(infoPtr, hdc, ps, i);
   }
+
+  /* partially visible months */
+  MONTHCAL_PaintLeadTrailMonths(infoPtr, hdc, ps);
 
   /* focus and today rectangle */
   MONTHCAL_PaintFocusAndCircle(infoPtr, hdc, ps);
