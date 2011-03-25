@@ -2609,7 +2609,7 @@ while (@ARGV>0) {
   } elsif ($arg =~ /^-L/) {
     push @{$global_settings[$T_LIBRARY_PATH]},$arg;
   } elsif ($arg =~ /^-l/) {
-    push @{$global_settings[$T_LIBRARIES]},$';
+    push @{$global_settings[$T_LIBRARIES]},$arg;
 
   # 'Source'-based method options
   } elsif ($arg eq "--dll") {
