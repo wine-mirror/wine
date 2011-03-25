@@ -62,6 +62,7 @@ MAKE_FUNCPTR(TIFFGetField);
 MAKE_FUNCPTR(TIFFIsByteSwapped);
 MAKE_FUNCPTR(TIFFReadDirectory);
 MAKE_FUNCPTR(TIFFReadEncodedStrip);
+MAKE_FUNCPTR(TIFFReadEncodedTile);
 MAKE_FUNCPTR(TIFFSetDirectory);
 #undef MAKE_FUNCPTR
 
@@ -89,6 +90,7 @@ static void *load_libtiff(void)
         LOAD_FUNCPTR(TIFFIsByteSwapped);
         LOAD_FUNCPTR(TIFFReadDirectory);
         LOAD_FUNCPTR(TIFFReadEncodedStrip);
+        LOAD_FUNCPTR(TIFFReadEncodedTile);
         LOAD_FUNCPTR(TIFFSetDirectory);
 #undef LOAD_FUNCPTR
 
@@ -215,6 +217,8 @@ typedef struct {
     UINT tile_width, tile_height;
     UINT tile_stride;
     UINT tile_size;
+    int tiled;
+    UINT tiles_across;
 } tiff_decode_info;
 
 typedef struct {
@@ -248,6 +252,7 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     decode_info->indexed = 0;
     decode_info->reverse_bgr = 0;
     decode_info->invert_grayscale = 0;
+    decode_info->tiled = 0;
 
     ret = pTIFFGetField(tiff, TIFFTAG_PHOTOMETRIC, &photometric);
     if (!ret)
@@ -418,8 +423,28 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         return E_FAIL;
     }
 
-    ret = pTIFFGetField(tiff, TIFFTAG_ROWSPERSTRIP, &decode_info->tile_height);
-    if (ret)
+    if ((ret = pTIFFGetField(tiff, TIFFTAG_TILEWIDTH, &decode_info->tile_width)))
+    {
+        decode_info->tiled = 1;
+
+        if (!ret)
+        {
+            WARN("missing tile width\n");
+            return E_FAIL;
+        }
+
+        ret = pTIFFGetField(tiff, TIFFTAG_TILELENGTH, &decode_info->tile_height);
+        if (!ret)
+        {
+            WARN("missing tile height\n");
+            return E_FAIL;
+        }
+
+        decode_info->tile_stride = ((decode_info->bpp * decode_info->tile_width + 7)/8);
+        decode_info->tile_size = decode_info->tile_height * decode_info->tile_stride;
+        decode_info->tiles_across = (decode_info->width + decode_info->tile_width - 1) / decode_info->tile_width;
+    }
+    else if ((ret = pTIFFGetField(tiff, TIFFTAG_ROWSPERSTRIP, &decode_info->tile_height)))
     {
         if (decode_info->tile_height > decode_info->height)
             decode_info->tile_height = decode_info->height;
@@ -429,7 +454,6 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     }
     else
     {
-        /* Probably a tiled image */
         FIXME("missing RowsPerStrip value\n");
         return E_FAIL;
     }
@@ -797,7 +821,14 @@ static HRESULT TiffFrameDecode_ReadTile(TiffFrameDecode *This, UINT tile_x, UINT
 
     if (hr == S_OK)
     {
-        ret = pTIFFReadEncodedStrip(This->parent->tiff, tile_y, This->cached_tile, This->decode_info.tile_size);
+        if (This->decode_info.tiled)
+        {
+            ret = pTIFFReadEncodedTile(This->parent->tiff, tile_x + tile_y * This->decode_info.tiles_across, This->cached_tile, This->decode_info.tile_size);
+        }
+        else
+        {
+            ret = pTIFFReadEncodedStrip(This->parent->tiff, tile_y, This->cached_tile, This->decode_info.tile_size);
+        }
 
         if (ret == -1)
             hr = E_FAIL;
