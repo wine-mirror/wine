@@ -33,7 +33,6 @@
  * 
  * TODO:
  *    -- MCM_[GS]ETUNICODEFORMAT
- *    -- MONTHCAL_GetMonthRange
  *    -- handle resources better (doesn't work now); 
  *    -- take care of internationalization.
  *    -- keyboard handling.
@@ -1265,8 +1264,6 @@ MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
     }
     case GMR_DAYSTATE:
     {
-        /*FIXME: currently multicalendar feature isn't implemented,
-                 min date from previous month and max date from next one returned */
         MONTHCAL_GetMinDate(infoPtr, &st[0]);
         MONTHCAL_GetMaxDate(infoPtr, &st[1]);
         break;
