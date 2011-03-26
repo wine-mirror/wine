@@ -340,12 +340,22 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
           switch (((NMHDR*)lParam)->code)
           {
           case LVN_BEGINLABELEDIT:
+          {
+              HWND edit = NULL;
+
               /* subclass edit box */
               if (!blockEdit)
-                  subclass_editbox(((NMHDR*)lParam)->hwndFrom);
+                  edit = subclass_editbox(((NMHDR*)lParam)->hwndFrom);
+
+              if (edit)
+              {
+                  INT len = SendMessageA(edit, EM_GETLIMITTEXT, 0, 0);
+                  todo_wine ok(len == 259 || broken(len == 260) /* includes NULL in NT4 */,
+                      "text limit %d, expected 259\n", len);
+              }
 
               return blockEdit;
-
+          }
           case LVN_ENDLABELEDIT:
               {
               /* always accept new item text */
@@ -381,6 +391,13 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
                       dispinfo->hdr.code = LVN_GETDISPINFOW;
                       memcpy(dispinfo->item.pszText, testW, sizeof(testW));
                   }
+
+                  /* test control buffer size for text, 10 used to mask cases when control
+                     is using caller buffer to process LVM_GETITEM for example */
+                  if (dispinfo->item.mask & LVIF_TEXT && dispinfo->item.cchTextMax > 10)
+                      ok(dispinfo->item.cchTextMax == 260 ||
+                         broken(dispinfo->item.cchTextMax == 264) /* NT4 reports aligned size */,
+                      "buffer size %d\n", dispinfo->item.cchTextMax);
               }
               break;
           case NM_HOVER:
@@ -634,7 +651,6 @@ static void test_lvm_hittest_(HWND hwnd, INT x, INT y, INT item, UINT flags, UIN
     lpht.pt.y = y;
     lpht.iSubItem = 10;
 
-    trace("hittesting pt=(%d,%d)\n", lpht.pt.x, lpht.pt.y);
     ret = SendMessage(hwnd, LVM_HITTEST, 0, (LPARAM)&lpht);
 
     if (todo_item)
@@ -677,7 +693,6 @@ static void test_lvm_subitemhittest_(HWND hwnd, INT x, INT y, INT item, INT subi
     lpht.pt.x = x;
     lpht.pt.y = y;
 
-    trace("subhittesting pt=(%d,%d)\n", lpht.pt.x, lpht.pt.y);
     ret = SendMessage(hwnd, LVM_SUBITEMHITTEST, 0, (LPARAM)&lpht);
 
     if (todo_item)
@@ -1503,7 +1518,6 @@ static void test_redraw(void)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    trace("invalidate & update\n");
     InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);
     ok_sequence(sequences, LISTVIEW_SEQ_INDEX, redraw_listview_seq, "redraw listview", FALSE);
@@ -1637,8 +1651,6 @@ static void test_icon_spacing(void)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    trace("test icon spacing\n");
-
     r = SendMessage(hwnd, LVM_SETICONSPACING, 0, MAKELPARAM(20, 30));
     ok(r == MAKELONG(w, h) ||
        broken(r == MAKELONG(w, w)), /* win98 */
@@ -1679,7 +1691,6 @@ static void test_color(void)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    trace("test color seq\n");
     for (i = 0; i < 4; i++)
     {
         color = colors[i];
@@ -1742,8 +1753,6 @@ static void test_item_count(void)
     MoveWindow(hwnd, 0, 0, rect.right - rect.left, 5 * height, FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-
-    trace("test item count\n");
 
     r = SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
     expect(0, r);
@@ -1833,8 +1842,6 @@ static void test_item_position(void)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    trace("test item position\n");
-
     /* [item0] */
     item0.mask = LVIF_TEXT;
     item0.iItem = 0;
@@ -1896,7 +1903,7 @@ static void test_getorigin(void)
     hwnd = create_listview_control(LVS_ICON);
     ok(hwnd != NULL, "failed to create a listview window\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    trace("test get origin results\n");
+
     r = SendMessage(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
     expect(TRUE, r);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1905,7 +1912,7 @@ static void test_getorigin(void)
     hwnd = create_listview_control(LVS_SMALLICON);
     ok(hwnd != NULL, "failed to create a listview window\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    trace("test get origin results\n");
+
     r = SendMessage(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
     expect(TRUE, r);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1914,7 +1921,7 @@ static void test_getorigin(void)
     hwnd = create_listview_control(LVS_LIST);
     ok(hwnd != NULL, "failed to create a listview window\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    trace("test get origin results\n");
+
     r = SendMessage(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
     expect(FALSE, r);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1923,12 +1930,11 @@ static void test_getorigin(void)
     hwnd = create_listview_control(LVS_REPORT);
     ok(hwnd != NULL, "failed to create a listview window\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    trace("test get origin results\n");
+
     r = SendMessage(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
     expect(FALSE, r);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     DestroyWindow(hwnd);
-
 }
 
 static void test_multiselect(void)

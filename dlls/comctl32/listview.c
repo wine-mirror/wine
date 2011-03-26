@@ -360,7 +360,7 @@ typedef struct tagLISTVIEW_INFO
 #define SB_INTERNAL      -1
 
 /* maximum size of a label */
-#define DISP_TEXT_SIZE 512
+#define DISP_TEXT_SIZE 260
 
 /* padding for items in list and small icon display modes */
 #define WIDTH_PADDING 12
