@@ -1727,7 +1727,7 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
       {
 	  htinfo.uHit = MCHT_CALENDARDATEPREV;
 	  MONTHCAL_GetPrevMonth(&htinfo.st);
-	  htinfo.st.wDay = MONTHCAL_MonthLength(lpht->st.wMonth, lpht->st.wYear) + day;
+	  htinfo.st.wDay = MONTHCAL_MonthLength(htinfo.st.wMonth, htinfo.st.wYear) + day;
       }
       else if (day > MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear))
       {
