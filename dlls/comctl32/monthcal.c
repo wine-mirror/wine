@@ -95,6 +95,7 @@ typedef struct
     DWORD	dwStyle; /* cached GWL_STYLE */
 
     COLORREF    colors[MCSC_TRAILINGTEXT+1];
+    HBRUSH      brushes[MCSC_MONTHBK+1];
 
     HFONT	hFont;
     HFONT	hBoldFont;
@@ -754,13 +755,10 @@ static void MONTHCAL_PaintTitle(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRU
   RECT *title = &infoPtr->calendars[calIdx].title;
   const SYSTEMTIME *st = &infoPtr->calendars[calIdx].month;
   WCHAR buf_month[80], buf_fmt[80];
-  HBRUSH hbr;
   SIZE sz;
 
   /* fill header box */
-  hbr = CreateSolidBrush(infoPtr->colors[MCSC_TITLEBK]);
-  FillRect(hdc, title, hbr);
-  DeleteObject(hbr);
+  FillRect(hdc, title, infoPtr->brushes[MCSC_TITLEBK]);
 
   /* month/year string */
   SetBkColor(hdc, infoPtr->colors[MCSC_TITLEBK]);
@@ -792,7 +790,6 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
   INT i, prev_month;
   SYSTEMTIME st;
   WCHAR buf[80];
-  HBRUSH hbr;
   RECT r;
 
   if (!(infoPtr->dwStyle & MCS_WEEKNUMBERS)) return;
@@ -864,9 +861,7 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
   r = infoPtr->calendars[calIdx].weeknums;
 
   /* erase whole week numbers area */
-  hbr = CreateSolidBrush(infoPtr->colors[MCSC_MONTHBK]);
-  FillRect(hdc, &r, hbr);
-  DeleteObject(hbr);
+  FillRect(hdc, &r, infoPtr->brushes[MCSC_MONTHBK]);
 
   /* reduce rectangle to one week number */
   r.bottom = r.top + infoPtr->height_increment;
@@ -994,7 +989,6 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   RECT r, fill_bk_rect;
   SYSTEMTIME st;
   WCHAR buf[80];
-  HBRUSH hbr;
   int mask;
 
   /* fill whole days area - from week days area to today note rectangle */
@@ -1002,9 +996,7 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   fill_bk_rect.bottom = infoPtr->calendars[calIdx].days.bottom +
                           (infoPtr->todayrect.bottom - infoPtr->todayrect.top);
 
-  hbr = CreateSolidBrush(infoPtr->colors[MCSC_MONTHBK]);
-  FillRect(hdc, &fill_bk_rect, hbr);
-  DeleteObject(hbr);
+  FillRect(hdc, &fill_bk_rect, infoPtr->brushes[MCSC_MONTHBK]);
 
   /* draw line under day abbreviations */
   MoveToEx(hdc, infoPtr->calendars[calIdx].days.left + 3,
@@ -1135,6 +1127,13 @@ MONTHCAL_SetColor(MONTHCAL_INFO *infoPtr, UINT index, COLORREF color)
 
   prev = infoPtr->colors[index];
   infoPtr->colors[index] = color;
+
+  /* update cached brush */
+  if (index == MCSC_BACKGROUND || index == MCSC_TITLEBK || index == MCSC_MONTHBK)
+  {
+    DeleteObject(infoPtr->brushes[index]);
+    infoPtr->brushes[index] = CreateSolidBrush(color);
+  }
 
   InvalidateRect(infoPtr->hwndSelf, NULL, index == MCSC_BACKGROUND ? TRUE : FALSE);
   return prev;
@@ -2237,15 +2236,12 @@ MONTHCAL_Paint(MONTHCAL_INFO *infoPtr, HDC hdc_paint)
 static LRESULT
 MONTHCAL_EraseBkgnd(const MONTHCAL_INFO *infoPtr, HDC hdc)
 {
-  HBRUSH hbr;
   RECT rc;
 
   if (!GetClipBox(hdc, &rc)) return FALSE;
 
   /* fill background */
-  hbr = CreateSolidBrush (infoPtr->colors[MCSC_BACKGROUND]);
-  FillRect(hdc, &rc, hbr);
-  DeleteObject(hbr);
+  FillRect(hdc, &rc, infoPtr->brushes[MCSC_BACKGROUND]);
 
   return TRUE;
 }
@@ -2538,6 +2534,10 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->colors[MCSC_MONTHBK]      = comctl32_color.clrWindow;
   infoPtr->colors[MCSC_TRAILINGTEXT] = comctl32_color.clrGrayText;
 
+  infoPtr->brushes[MCSC_BACKGROUND]  = CreateSolidBrush(infoPtr->colors[MCSC_BACKGROUND]);
+  infoPtr->brushes[MCSC_TITLEBK]     = CreateSolidBrush(infoPtr->colors[MCSC_TITLEBK]);
+  infoPtr->brushes[MCSC_MONTHBK]     = CreateSolidBrush(infoPtr->colors[MCSC_MONTHBK]);
+
   infoPtr->minSel = infoPtr->todaysDate;
   infoPtr->maxSel = infoPtr->todaysDate;
   infoPtr->calendars[0].month = infoPtr->todaysDate;
@@ -2571,6 +2571,10 @@ MONTHCAL_Destroy(MONTHCAL_INFO *infoPtr)
 
   CloseThemeData (GetWindowTheme (infoPtr->hwndSelf));
   
+  DeleteObject(infoPtr->brushes[MCSC_BACKGROUND]);
+  DeleteObject(infoPtr->brushes[MCSC_TITLEBK]);
+  DeleteObject(infoPtr->brushes[MCSC_MONTHBK]);
+
   Free(infoPtr);
   return 0;
 }
