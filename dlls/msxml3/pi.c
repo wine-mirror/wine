@@ -333,9 +333,10 @@ static HRESULT WINAPI dom_pi_get_attributes(
 
     if (!strcmpW(name, xmlW))
     {
-        FIXME("not implemented for <?xml..?> declaration\n");
+        FIXME("created dummy map for <?xml ?>\n");
+        *map = create_nodemap(This->node.node);
         SysFreeString(name);
-        return E_NOTIMPL;
+        return S_OK;
     }
 
     SysFreeString(name);

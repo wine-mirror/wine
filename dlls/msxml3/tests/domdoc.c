@@ -9714,9 +9714,14 @@ static void test_get_attributes(void)
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = IXMLDOMNode_get_attributes(node, &map);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
-    if (hr == S_OK)
+    length = -1;
+    hr = IXMLDOMNamedNodeMap_get_length(map, &length);
+    EXPECT_HR(hr, S_OK);
+    todo_wine ok(length == 1, "got %d\n", length);
+
+    if (hr == S_OK && length == 1)
     {
         IXMLDOMAttribute *attr;
         DOMNodeType type;
