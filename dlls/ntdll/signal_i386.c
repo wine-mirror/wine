@@ -208,7 +208,7 @@ typedef struct trapframe SIGCONTEXT;
 
 #endif /* bsdi */
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
 
 #include <machine/trap.h>
 
