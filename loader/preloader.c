@@ -788,6 +788,8 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
     }
 
     /* Now process the load commands and map segments into memory.  */
+    if (!nloadcmds)
+        fatal_error( "%s: no segments to load\n", name );
     c = loadcmds;
 
     /* Length of the sections to be loaded.  */
