@@ -767,28 +767,6 @@ static int elf_new_wine_thunks(struct module* module, const struct hash_table* h
                  */
                 module->sortlist_valid = TRUE;
             }
-            else if (strcmp(ste->ht_elt.name, symt->hash_elt.name))
-            {
-                ULONG64 xaddr = 0, xsize = 0;
-                DWORD   kind = -1;
-
-                symt_get_address(&symt->symt, &xaddr);
-                symt_get_info(module, &symt->symt, TI_GET_LENGTH,   &xsize);
-                symt_get_info(module, &symt->symt, TI_GET_DATAKIND, &kind);
-
-                /* If none of symbols has a correct size, we consider they are both markers
-                 * Hence, we can silence this warning
-                 * Also, we check that we don't have two symbols, one local, the other 
-                 * global which is legal
-                 */
-                if ((xsize || ste->symp->st_size) &&
-                    (kind == (ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL) ? DataIsFileStatic : DataIsGlobal))
-                    FIXME("Duplicate in %s: %s<%08lx-%08x> %s<%s-%s>\n",
-                          debugstr_w(module->module.ModuleName),
-                          ste->ht_elt.name, addr, (unsigned int)ste->symp->st_size,
-                          symt->hash_elt.name,
-                          wine_dbgstr_longlong(xaddr), wine_dbgstr_longlong(xsize));
-            }
         }
     }
     /* see comment above */
