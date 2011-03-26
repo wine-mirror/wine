@@ -49,6 +49,7 @@ typedef struct tagWINE_PLAYSOUND
 } WINE_PLAYSOUND;
 
 static WINE_PLAYSOUND *PlaySoundList;
+static BOOL bPlaySoundStop;
 
 static HMMIO	get_mmioFromFile(LPCWSTR lpszName)
 {
@@ -426,7 +427,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 	mmioSeek(hmmio, mmckInfo.dwDataOffset, SEEK_SET);
 	while (left)
         {
-	    if (WaitForSingleObject(psStopEvent, 0) == WAIT_OBJECT_0)
+	    if (bPlaySoundStop)
             {
 		waveOutReset(hWave);
 		wps->bLoop = FALSE;
@@ -495,13 +496,13 @@ static BOOL MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSo
         ResetEvent(psLastEvent);
         /* FIXME: doc says we have to stop all instances of pszSound if it's non
          * NULL... as of today, we stop all playing instances */
-        SetEvent(psStopEvent);
+        bPlaySoundStop = TRUE;
 
         LeaveCriticalSection(&WINMM_cs);
         WaitForSingleObject(psLastEvent, INFINITE);
         EnterCriticalSection(&WINMM_cs);
 
-        ResetEvent(psStopEvent);
+        bPlaySoundStop = FALSE;
     }
 
     if (wps) wps->lpNext = PlaySoundList;
