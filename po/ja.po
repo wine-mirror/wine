@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-02-11 15:31+0900\n"
+"PO-Revision-Date: 2011-03-23 23:12+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -2781,7 +2781,6 @@ msgid "Signal pending\n"
 msgstr "シグナルは処理待ちです。\n"
 
 #: winerror.mc:681
-#, fuzzy
 msgid "Max system-wide thread count reached\n"
 msgstr "システム全体のスレッド数上限に達しました。\n"
 
@@ -4215,9 +4214,8 @@ msgid "Private dialog index\n"
 msgstr "プライベート ダイアログ インデックスです。\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
-msgstr "リストボックス識別子が見つかりません。\n"
+msgstr "リスト ボックス識別子が見つかりません。\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters\n"
@@ -4280,18 +4278,16 @@ msgid "Hook procedure not installed\n"
 msgstr "フック プロシジャは設定されていません。\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
-msgstr "リストボックス メッセージが正しくありません。\n"
+msgstr "リスト ボックス メッセージが正しくありません。\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "正しくない LB_SETCOUNT が送られました。\n"
 
 #: winerror.mc:2566
-#, fuzzy
 msgid "No tab stops on this list box\n"
-msgstr "このリストボックスにタブストップがありません。\n"
+msgstr "このリスト ボックスにタブ ストップがありません。\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread\n"
@@ -4306,9 +4302,8 @@ msgid "Window has no system menu\n"
 msgstr "ウィンドウにはシステムメニューがありません。\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
-msgstr "メッセージボックスのスタイルが正しくありません。\n"
+msgstr "メッセージ ボックスのスタイルが正しくありません。\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter\n"
@@ -4359,7 +4354,6 @@ msgid "No system resources\n"
 msgstr "システム リソースがありません。\n"
 
 #: winerror.mc:2651
-#, fuzzy
 msgid "No non-paged system resources\n"
 msgstr "非ページ システム リソースがありません。\n"
 
@@ -4372,7 +4366,6 @@ msgid "No working set quota\n"
 msgstr "ワーキング セットの割当量がありません。\n"
 
 #: winerror.mc:2666
-#, fuzzy
 msgid "No page file quota\n"
 msgstr "ページ ファイルの割当量がありません。\n"
 
@@ -4449,7 +4442,6 @@ msgid "Unknown component\n"
 msgstr "未知のコンポーネントです。\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property\n"
 msgstr "未知のプロパティです。\n"
 
@@ -4982,7 +4974,6 @@ msgid "Invalid printer command\n"
 msgstr "プリンタ　コマンドは正しくありません。\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
 msgstr "データの種類が正しくありません。\n"
 
@@ -5297,7 +5288,6 @@ msgid "insert disk %s"
 msgstr "ディスク %s を挿入"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -6875,7 +6865,6 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "システム関数に無効なパラメータが渡されました。"
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
@@ -7068,7 +7057,6 @@ msgstr ""
 "指定されたコマンドは「all」をデバイス名として使用することができません。"
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
@@ -7987,7 +7975,6 @@ msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN <ファイル名> は RENAME の短縮版です。ファイルを変名します。\n"
 
 #: cmd.rc:158
-#, fuzzy
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <ファイル名> はファイルを変名します。\n"
 
@@ -8083,9 +8070,8 @@ msgstr ""
 "Wine環境ではverifyフラグは意味を持ちません。\n"
 
 #: cmd.rc:204
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER は動作しているcmdのバージョンを表示します\n"
+msgstr "VER は動作しているcmdのバージョンを表示します。\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
@@ -10355,7 +10341,6 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -11269,9 +11254,8 @@ msgid "&System\tCtrl+1"
 msgstr "システム(&S)\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "&PostThat yellowish\tCtrl+2"
+msgstr "薄黄色(&P)\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
