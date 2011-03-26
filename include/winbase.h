@@ -1578,7 +1578,7 @@ WINBASEAPI BOOL        WINAPI FreeEnvironmentStringsA(LPSTR);
 WINBASEAPI BOOL        WINAPI FreeEnvironmentStringsW(LPWSTR);
 #define                       FreeEnvironmentStrings WINELIB_NAME_AW(FreeEnvironmentStrings)
 WINBASEAPI BOOL        WINAPI FreeLibrary(HMODULE);
-WINBASEAPI VOID        WINAPI FreeLibraryAndExitThread(HINSTANCE,DWORD);
+WINBASEAPI VOID DECLSPEC_NORETURN WINAPI FreeLibraryAndExitThread(HINSTANCE,DWORD);
 #define                       FreeModule(handle) FreeLibrary(handle)
 #define                       FreeProcInstance(proc) /*nothing*/
 WINBASEAPI BOOL        WINAPI FreeResource(HGLOBAL);
