@@ -1297,7 +1297,11 @@ int main(int argc, char **argv)
 			next_is_arg = 1;
 		    break;
 	    }
-	    if (next_is_arg) option_arg = argv[i+1];
+	    if (next_is_arg)
+            {
+                if (i + 1 >= argc) error("option -%c requires an argument\n", argv[i][1]);
+                option_arg = argv[i+1];
+            }
 
 	    /* determine what options go 'as is' to the linker & the compiler */
 	    raw_compiler_arg = raw_linker_arg = 0;
