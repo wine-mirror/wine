@@ -941,22 +941,24 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
 static struct symt* dwarf2_lookup_type(dwarf2_parse_context_t* ctx,
                                        const dwarf2_debug_info_t* di)
 {
-    struct attribute    attr;
+    struct attribute attr;
+    dwarf2_debug_info_t* type;
 
-    if (dwarf2_find_attribute(ctx, di, DW_AT_type, &attr))
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_type, &attr))
+        return NULL;
+    if (!(type = sparse_array_find(&ctx->debug_info_table, attr.u.uvalue)))
     {
-        dwarf2_debug_info_t*    type;
-        
-        type = sparse_array_find(&ctx->debug_info_table, attr.u.uvalue);
-        if (!type) FIXME("Unable to find back reference to type %lx\n", attr.u.uvalue);
-        if (!type->symt)
-        {
-            /* load the debug info entity */
-            dwarf2_load_one_entry(ctx, type);
-        }
-        return type->symt;
+        FIXME("Unable to find back reference to type %lx\n", attr.u.uvalue);
+        return NULL;
     }
-    return NULL;
+    if (!type->symt)
+    {
+        /* load the debug info entity */
+        dwarf2_load_one_entry(ctx, type);
+        if (!type->symt)
+            FIXME("Unable to load forward reference for tag %lx\n", type->abbrev->tag);
+    }
+    return type->symt;
 }
 
 static const char* dwarf2_get_cpp_name(dwarf2_parse_context_t* ctx, dwarf2_debug_info_t* di, const char* name)
