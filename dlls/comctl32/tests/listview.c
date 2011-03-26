@@ -350,7 +350,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
               if (edit)
               {
                   INT len = SendMessageA(edit, EM_GETLIMITTEXT, 0, 0);
-                  todo_wine ok(len == 259 || broken(len == 260) /* includes NULL in NT4 */,
+                  ok(len == 259 || broken(len == 260) /* includes NULL in NT4 */,
                       "text limit %d, expected 259\n", len);
               }
 

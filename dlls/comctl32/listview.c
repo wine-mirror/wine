@@ -5879,6 +5879,7 @@ static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, BOOL isW)
                SetWindowLongPtrA(hedit, GWLP_WNDPROC, (DWORD_PTR)EditLblWndProcA) );
 
     SendMessageW(hedit, WM_SETFONT, (WPARAM)infoPtr->hFont, FALSE);
+    SendMessageW(hedit, EM_SETLIMITTEXT, DISP_TEXT_SIZE-1, 0);
 
     return hedit;
 }
