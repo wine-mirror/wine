@@ -165,6 +165,7 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(SetDIBitsToDevice);
         GET_FUNC(SetDeviceClipping);
         GET_FUNC(SetDeviceGammaRamp);
+        GET_FUNC(SetLayout);
         GET_FUNC(SetMapMode);
         GET_FUNC(SetMapperFlags);
         GET_FUNC(SetPixel);
