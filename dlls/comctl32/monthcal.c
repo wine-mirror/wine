@@ -668,7 +668,6 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
   RECT r, r_temp;
   static BOOL bold_selected;
   BOOL selected_day = FALSE;
-  HBRUSH hbr;
   COLORREF oldCol = 0;
   COLORREF oldBk  = 0;
 
@@ -686,8 +685,7 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
     TRACE("%s\n", wine_dbgstr_rect(&r));
     oldCol = SetTextColor(hdc, infoPtr->colors[MCSC_MONTHBK]);
     oldBk = SetBkColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
-    hbr = GetSysColorBrush(COLOR_HIGHLIGHT);
-    FillRect(hdc, &r, hbr);
+    FillRect(hdc, &r, infoPtr->brushes[MCSC_TITLEBK]);
 
     selected_day = TRUE;
   }
@@ -1013,7 +1011,7 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   /* draw day abbreviations */
   SelectObject(hdc, infoPtr->hFont);
   SetBkColor(hdc, infoPtr->colors[MCSC_MONTHBK]);
-  SetTextColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
+  SetTextColor(hdc, infoPtr->colors[MCSC_TITLEBK]);
   /* rectangle to draw a single day abbreviation within */
   r = infoPtr->calendars[calIdx].wdays;
   r.right = r.left + infoPtr->width_increment;
