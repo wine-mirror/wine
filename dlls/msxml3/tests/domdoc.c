@@ -3901,52 +3901,77 @@ static void test_get_text(void)
 
 static void test_get_childNodes(void)
 {
-    HRESULT r;
     BSTR str;
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
     IXMLDOMElement *element;
     IXMLDOMNode *node, *node2;
     IXMLDOMNodeList *node_list, *node_list2;
+    HRESULT hr;
     LONG len;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
     str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
-    ok( r == S_OK, "loadXML failed\n");
+    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    EXPECT_HR(hr, S_OK);
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
-    r = IXMLDOMDocument_get_documentElement( doc, &element );
-    ok( r == S_OK, "ret %08x\n", r);
+    hr = IXMLDOMDocument_get_documentElement( doc, &element );
+    EXPECT_HR(hr, S_OK);
 
-    r = IXMLDOMElement_get_childNodes( element, &node_list );
-    ok( r == S_OK, "ret %08x\n", r);
+    hr = IXMLDOMElement_get_childNodes( element, &node_list );
+    EXPECT_HR(hr, S_OK);
 
-    r = IXMLDOMNodeList_get_length( node_list, &len );
-    ok( r == S_OK, "ret %08x\n", r);
+    hr = IXMLDOMNodeList_get_length( node_list, &len );
+    EXPECT_HR(hr, S_OK);
     ok( len == 4, "len %d\n", len);
 
-    r = IXMLDOMNodeList_get_item( node_list, 2, &node );
-    ok( r == S_OK, "ret %08x\n", r);
+    hr = IXMLDOMNodeList_get_item( node_list, 2, &node );
+    EXPECT_HR(hr, S_OK);
 
-    r = IXMLDOMNode_get_childNodes( node, &node_list2 );
-    ok( r == S_OK, "ret %08x\n", r);
+    hr = IXMLDOMNode_get_childNodes( node, &node_list2 );
+    EXPECT_HR(hr, S_OK);
 
-    r = IXMLDOMNodeList_get_length( node_list2, &len );
-    ok( r == S_OK, "ret %08x\n", r);
+    hr = IXMLDOMNodeList_get_length( node_list2, &len );
+    EXPECT_HR(hr, S_OK);
     ok( len == 0, "len %d\n", len);
 
-    r = IXMLDOMNodeList_get_item( node_list2, 0, &node2);
-    ok( r == S_FALSE, "ret %08x\n", r);
+    hr = IXMLDOMNodeList_get_item( node_list2, 0, &node2);
+    EXPECT_HR(hr, S_FALSE);
 
     IXMLDOMNodeList_Release( node_list2 );
     IXMLDOMNode_Release( node );
     IXMLDOMNodeList_Release( node_list );
     IXMLDOMElement_Release( element );
+
+    /* test for children of <?xml ..?> node */
+    hr = IXMLDOMDocument_get_firstChild(doc, &node);
+    EXPECT_HR(hr, S_OK);
+
+    str = NULL;
+    hr = IXMLDOMNode_get_nodeName(node, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("xml")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* it returns empty but valid node list */
+    node_list = (void*)0xdeadbeef;
+    hr = IXMLDOMNode_get_childNodes(node, &node_list);
+    EXPECT_HR(hr, S_OK);
+
+    len = -1;
+    hr = IXMLDOMNodeList_get_length(node_list, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 0, "got %d\n", len);
+
+    IXMLDOMNodeList_Release( node_list );
+    IXMLDOMNode_Release(node);
+
     IXMLDOMDocument_Release( doc );
+    free_bstrs();
 }
 
 static void test_get_firstChild(void)
@@ -3973,7 +3998,7 @@ static void test_get_firstChild(void)
     r = IXMLDOMNode_get_nodeName( node, &str );
     ok( r == S_OK, "ret %08x\n", r);
 
-    ok(memcmp(str, xmlW, sizeof(xmlW)) == 0, "expected \"xml\" node name\n");
+    ok(!lstrcmpW(str, xmlW), "expected \"xml\" node name, got %s\n", wine_dbgstr_w(str));
 
     SysFreeString(str);
     IXMLDOMNode_Release( node );
@@ -9693,19 +9718,101 @@ static void test_get_attributes(void)
 
     if (hr == S_OK)
     {
-        IXMLDOMNode_Release(node);
+        IXMLDOMAttribute *attr;
+        DOMNodeType type;
+        VARIANT v;
 
-        node = NULL;
-        hr = IXMLDOMNamedNodeMap_get_item(map, 0, &node);
-        ok(hr == S_OK, "got %08x\n", hr);
-        ok(node != NULL, "got %p\n", node);
+        node2 = NULL;
+        hr = IXMLDOMNamedNodeMap_get_item(map, 0, &node2);
+        EXPECT_HR(hr, S_OK);
+        ok(node != NULL, "got %p\n", node2);
 
-        hr = IXMLDOMNode_get_nodeName(node, &str);
-        ok(hr == S_OK, "got %08x\n", hr);
+        hr = IXMLDOMNode_get_nodeName(node2, &str);
+        EXPECT_HR(hr, S_OK);
         ok(!lstrcmpW(str, _bstr_("version")), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
+        length = -1;
+        hr = IXMLDOMNamedNodeMap_get_length(map, &length);
+        EXPECT_HR(hr, S_OK);
+        ok(length == 1, "got %d\n", length);
+
+        type = -1;
+        hr = IXMLDOMNode_get_nodeType(node2, &type);
+        EXPECT_HR(hr, S_OK);
+        ok(type == NODE_ATTRIBUTE, "got %d\n", type);
+
+        hr = IXMLDOMNode_get_xml(node, &str);
+        EXPECT_HR(hr, S_OK);
+        ok(!lstrcmpW(str, _bstr_("<?xml version=\"1.0\"?>")), "got %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMNode_get_text(node, &str);
+        EXPECT_HR(hr, S_OK);
+        ok(!lstrcmpW(str, _bstr_("version=\"1.0\"")), "got %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMNamedNodeMap_removeNamedItem(map, _bstr_("version"), NULL);
+        EXPECT_HR(hr, S_OK);
+
+        length = -1;
+        hr = IXMLDOMNamedNodeMap_get_length(map, &length);
+        EXPECT_HR(hr, S_OK);
+        ok(length == 0, "got %d\n", length);
+
+        hr = IXMLDOMNode_get_xml(node, &str);
+        EXPECT_HR(hr, S_OK);
+        ok(!lstrcmpW(str, _bstr_("<?xml version=\"1.0\"?>")), "got %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMNode_get_text(node, &str);
+        EXPECT_HR(hr, S_OK);
+        ok(!lstrcmpW(str, _bstr_("")), "got %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
         IXMLDOMNamedNodeMap_Release(map);
+
+        hr = IXMLDOMNode_get_attributes(node, &map);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        length = -1;
+        hr = IXMLDOMNamedNodeMap_get_length(map, &length);
+        EXPECT_HR(hr, S_OK);
+        ok(length == 0, "got %d\n", length);
+
+        hr = IXMLDOMDocument_createAttribute(doc, _bstr_("encoding"), &attr);
+        EXPECT_HR(hr, S_OK);
+
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = _bstr_("UTF-8");
+        hr = IXMLDOMAttribute_put_nodeValue(attr, v);
+        EXPECT_HR(hr, S_OK);
+
+        EXPECT_REF(attr, 2);
+        hr = IXMLDOMNamedNodeMap_setNamedItem(map, (IXMLDOMNode*)attr, NULL);
+        EXPECT_HR(hr, S_OK);
+        EXPECT_REF(attr, 2);
+
+        hr = IXMLDOMNode_get_attributes(node, &map);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        length = -1;
+        hr = IXMLDOMNamedNodeMap_get_length(map, &length);
+        EXPECT_HR(hr, S_OK);
+        ok(length == 1, "got %d\n", length);
+
+        hr = IXMLDOMNode_get_xml(node, &str);
+        EXPECT_HR(hr, S_OK);
+        ok(!lstrcmpW(str, _bstr_("<?xml version=\"1.0\"?>")), "got %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMNode_get_text(node, &str);
+        EXPECT_HR(hr, S_OK);
+        ok(!lstrcmpW(str, _bstr_("encoding=\"UTF-8\"")), "got %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        IXMLDOMNamedNodeMap_Release(map);
+        IXMLDOMNode_Release(node2);
     }
 
     IXMLDOMNode_Release(node);
