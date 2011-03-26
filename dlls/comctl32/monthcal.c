@@ -666,20 +666,18 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
   static const WCHAR fmtW[] = { '%','d',0 };
   WCHAR buf[10];
   RECT r, r_temp;
-  static BOOL bold_selected;
-  BOOL selected_day = FALSE;
   COLORREF oldCol = 0;
   COLORREF oldBk  = 0;
+  INT old_bkmode, selection;
 
-/* No need to check styles: when selection is not valid, it is set to zero.
- * 1<day<31, so everything is OK.
- */
-
+  /* no need to check styles: when selection is not valid, it is set to zero.
+     1 < day < 31, so everything is OK */
   MONTHCAL_CalcPosFromDay(infoPtr, st, &r);
   if(!IntersectRect(&r_temp, &(ps->rcPaint), &r)) return;
 
   if ((MONTHCAL_CompareDate(st, &infoPtr->minSel) >= 0) &&
-      (MONTHCAL_CompareDate(st, &infoPtr->maxSel) <= 0)) {
+      (MONTHCAL_CompareDate(st, &infoPtr->maxSel) <= 0))
+  {
 
     TRACE("%d %d %d\n", st->wDay, infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
     TRACE("%s\n", wine_dbgstr_rect(&r));
@@ -687,23 +685,20 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
     oldBk = SetBkColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
     FillRect(hdc, &r, infoPtr->brushes[MCSC_TITLEBK]);
 
-    selected_day = TRUE;
+    selection = 1;
   }
+  else
+    selection = 0;
 
-  if(bold && !bold_selected) {
-    SelectObject(hdc, infoPtr->hBoldFont);
-    bold_selected = TRUE;
-  }
-  if(!bold && bold_selected) {
-    SelectObject(hdc, infoPtr->hFont);
-    bold_selected = FALSE;
-  }
+  SelectObject(hdc, bold ? infoPtr->hBoldFont : infoPtr->hFont);
 
-  SetBkMode(hdc,TRANSPARENT);
+  old_bkmode = SetBkMode(hdc, TRANSPARENT);
   wsprintfW(buf, fmtW, st->wDay);
   DrawTextW(hdc, buf, -1, &r, DT_CENTER | DT_VCENTER | DT_SINGLELINE );
+  SetBkMode(hdc, old_bkmode);
 
-  if(selected_day) {
+  if (selection)
+  {
     SetTextColor(hdc, oldCol);
     SetBkColor(hdc, oldBk);
   }
