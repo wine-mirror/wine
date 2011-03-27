@@ -1303,13 +1303,28 @@ static HRESULT WINAPI ID3DXEffectImpl_SetArrayRange(ID3DXEffect *iface, D3DXHAND
 }
 
 /*** ID3DXEffect methods ***/
-static HRESULT WINAPI ID3DXEffectImpl_GetPool(ID3DXEffect* iface, LPD3DXEFFECTPOOL* pool)
+static HRESULT WINAPI ID3DXEffectImpl_GetPool(ID3DXEffect *iface, LPD3DXEFFECTPOOL *pool)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, pool);
+    TRACE("iface %p, pool %p\n", This, pool);
 
-    return E_NOTIMPL;
+    if (!pool)
+    {
+        WARN("Invalid argument supplied.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (This->pool)
+    {
+        This->pool->lpVtbl->AddRef(This->pool);
+    }
+
+    *pool = This->pool;
+
+    TRACE("Returning pool %p\n", *pool);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_SetTechnique(ID3DXEffect* iface, D3DXHANDLE technique)
