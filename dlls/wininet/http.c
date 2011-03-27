@@ -1437,8 +1437,8 @@ static WCHAR *HTTP_BuildProxyRequestUrl(http_request_t *req)
     else
     {
         static const WCHAR slash[] = { '/',0 };
-        static const WCHAR format[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
-        static const WCHAR formatSSL[] = { 'h','t','t','p','s',':','/','/','%','s',':','%','d',0 };
+        static const WCHAR format[] = { 'h','t','t','p',':','/','/','%','s',':','%','u',0 };
+        static const WCHAR formatSSL[] = { 'h','t','t','p','s',':','/','/','%','s',':','%','u',0 };
         http_session_t *session = req->session;
 
         size = 16; /* "https://" + sizeof(port#) + ":/\0" */
@@ -3424,7 +3424,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
             urlComponents.nPort != INTERNET_DEFAULT_HTTPS_PORT)
         {
             int len;
-            static const WCHAR fmt[] = {'%','s',':','%','i',0};
+            static const WCHAR fmt[] = {'%','s',':','%','u',0};
             len = lstrlenW(hostName);
             len += 7; /* 5 for strlen("65535") + 1 for ":" + 1 for '\0' */
             session->hostName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
@@ -3530,7 +3530,7 @@ static DWORD HTTP_SecureProxyConnect(http_request_t *request)
     char *ascii_req;
     DWORD res;
     static const WCHAR szConnect[] = {'C','O','N','N','E','C','T',0};
-    static const WCHAR szFormat[] = {'%','s',':','%','d',0};
+    static const WCHAR szFormat[] = {'%','s',':','%','u',0};
     http_session_t *session = request->session;
 
     TRACE("\n");
