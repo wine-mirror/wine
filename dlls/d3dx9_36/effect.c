@@ -723,7 +723,6 @@ static HRESULT WINAPI ID3DXEffectImpl_QueryInterface(ID3DXEffect *iface, REFIID 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_ID3DXBaseEffect) ||
         IsEqualGUID(riid, &IID_ID3DXEffect))
     {
         This->ID3DXEffect_iface.lpVtbl->AddRef(iface);
