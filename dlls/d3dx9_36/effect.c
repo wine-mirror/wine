@@ -1417,13 +1417,25 @@ static HRESULT WINAPI ID3DXEffectImpl_End(ID3DXEffect* iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_GetDevice(ID3DXEffect* iface, LPDIRECT3DDEVICE9* device)
+static HRESULT WINAPI ID3DXEffectImpl_GetDevice(ID3DXEffect *iface, LPDIRECT3DDEVICE9 *device)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, device);
+    TRACE("iface %p, device %p\n", This, device);
 
-    return E_NOTIMPL;
+    if (!device)
+    {
+        WARN("Invalid argument supplied.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    IDirect3DDevice9_AddRef(This->device);
+
+    *device = This->device;
+
+    TRACE("Returning device %p\n", *device);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_OnLostDevice(ID3DXEffect* iface)
