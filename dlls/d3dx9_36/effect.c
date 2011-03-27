@@ -32,6 +32,9 @@ typedef struct ID3DXEffectImpl {
     ID3DXEffect ID3DXEffect_iface;
     LONG ref;
 
+    LPDIRECT3DDEVICE9 device;
+    LPD3DXEFFECTPOOL pool;
+
     UINT parameter_count;
     UINT technique_count;
 } ID3DXEffectImpl;
@@ -53,6 +56,18 @@ static void skip_dword_unknown(const char **ptr, unsigned int count)
         read_dword(ptr, &d);
         FIXME("\t0x%08x\n", d);
     }
+}
+
+static void free_effect(struct ID3DXEffectImpl *effect)
+{
+    TRACE("Free effect %p\n", effect);
+
+    if (effect->pool)
+    {
+        effect->pool->lpVtbl->Release(effect->pool);
+    }
+
+    IDirect3DDevice9_Release(effect->device);
 }
 
 static inline DWORD d3dx9_effect_version(DWORD major, DWORD minor)
@@ -103,7 +118,10 @@ static ULONG WINAPI ID3DXEffectImpl_Release(ID3DXEffect* iface)
     TRACE("(%p)->(): Release from %u\n", This, ref + 1);
 
     if (!ref)
+    {
+        free_effect(This);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -899,14 +917,23 @@ static HRESULT d3dx9_parse_effect(ID3DXEffectImpl *effect, const char *data, UIN
     return S_OK;
 }
 
-static HRESULT d3dx9_effect_init(ID3DXEffectImpl *effect, const char *data, SIZE_T data_size)
+static HRESULT d3dx9_effect_init(ID3DXEffectImpl *effect, LPDIRECT3DDEVICE9 device,
+        const char *data, SIZE_T data_size, LPD3DXEFFECTPOOL pool)
 {
     DWORD tag, offset;
     const char *ptr = data;
     HRESULT hr;
 
+    TRACE("effect %p, device %p, data %p, data_size %lu, pool %p\n", effect, device, data, data_size, pool);
+
     effect->ID3DXEffect_iface.lpVtbl = &ID3DXEffect_Vtbl;
     effect->ref = 1;
+
+    if (pool) pool->lpVtbl->AddRef(pool);
+    effect->pool = pool;
+
+    IDirect3DDevice9_AddRef(device);
+    effect->device = device;
 
     read_dword(&ptr, &tag);
     TRACE("Tag: %x\n", tag);
@@ -928,11 +955,17 @@ static HRESULT d3dx9_effect_init(ID3DXEffectImpl *effect, const char *data, SIZE
         if (hr != S_OK)
         {
             FIXME("Failed to parse effect.\n");
-            return hr;
+            goto err_out;
         }
     }
 
     return S_OK;
+
+err_out:
+
+    free_effect(effect);
+
+    return hr;
 }
 
 HRESULT WINAPI D3DXCreateEffectEx(LPDIRECT3DDEVICE9 device,
@@ -969,7 +1002,7 @@ HRESULT WINAPI D3DXCreateEffectEx(LPDIRECT3DDEVICE9 device,
         return E_OUTOFMEMORY;
     }
 
-    hr = d3dx9_effect_init(object, srcdata, srcdatalen);
+    hr = d3dx9_effect_init(object, device, srcdata, srcdatalen, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize shader reflection\n");
