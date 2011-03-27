@@ -1084,7 +1084,7 @@ HRESULT WINAPI D3DXCreateEffectPool(LPD3DXEFFECTPOOL* pool)
     if (!pool)
         return D3DERR_INVALIDCALL;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXEffectImpl));
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
         ERR("Out of memory\n");
