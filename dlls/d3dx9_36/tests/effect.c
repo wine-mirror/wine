@@ -26,11 +26,14 @@ static const char effect_desc[] =
 "{\n"
 "}\n";
 
-static void test_create_effect(IDirect3DDevice9 *device)
+static void test_create_effect_and_pool(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     ID3DXEffect *effect;
+    ID3DXBaseEffect *base;
     ULONG count;
+    IDirect3DDevice9 *device2;
+    ID3DXEffectPool *pool = (ID3DXEffectPool *)0xdeadbeef, *pool2;
 
     hr = D3DXCreateEffect(NULL, effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
@@ -47,16 +50,27 @@ static void test_create_effect(IDirect3DDevice9 *device)
     hr = D3DXCreateEffect(device, effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, &effect, NULL);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
 
+    hr = effect->lpVtbl->QueryInterface(effect, &IID_ID3DXBaseEffect, (void **)&base);
+    ok(hr == E_NOINTERFACE, "QueryInterface failed, got %x, expected %x (E_NOINTERFACE)\n", hr, E_NOINTERFACE);
+
+    hr = effect->lpVtbl->GetPool(effect, &pool);
+    ok(hr == D3D_OK, "GetPool failed, got %x, expected 0 (D3D_OK)\n", hr);
+    ok(!pool, "GetPool failed, got %p\n", pool);
+
+    hr = effect->lpVtbl->GetPool(effect, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "GetPool failed, got %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = effect->lpVtbl->GetDevice(effect, &device2);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+
+    hr = effect->lpVtbl->GetDevice(effect, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "GetDevice failed, got %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    count = IDirect3DDevice9_Release(device2);
+    ok(count == 2, "Release failed, got %u, expected 2\n", count);
+
     count = effect->lpVtbl->Release(effect);
     ok(count == 0, "Release failed %u\n", count);
-}
-
-static void test_create_effect_pool(IDirect3DDevice9 *device)
-{
-    HRESULT hr;
-    ID3DXEffectPool *pool, *pool2;
-    ULONG count;
-    IDirect3DDevice9 *device2;
 
     hr = D3DXCreateEffectPool(NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
@@ -75,15 +89,29 @@ static void test_create_effect_pool(IDirect3DDevice9 *device)
 
     hr = pool->lpVtbl->QueryInterface(pool, &IID_ID3DXEffectPool, (void **)&pool2);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(pool == pool2, "Release failed, got %p, expected %p\n", pool2, pool);
 
     count = pool2->lpVtbl->Release(pool2);
     ok(count == 1, "Release failed, got %u, expected 1\n", count);
 
-    hr = device->lpVtbl->QueryInterface(device, &IID_IDirect3DDevice9, (void **)&device2);
+    hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9, (void **)&device2);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
 
-    count = device2->lpVtbl->Release(device2);
+    count = IDirect3DDevice9_Release(device2);
     ok(count == 1, "Release failed, got %u, expected 1\n", count);
+
+    hr = D3DXCreateEffect(device, effect_desc, sizeof(effect_desc), NULL, NULL, 0, pool, &effect, NULL);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+
+    hr = effect->lpVtbl->GetPool(effect, &pool);
+    ok(hr == D3D_OK, "GetPool failed, got %x, expected 0 (D3D_OK)\n", hr);
+    ok(pool == pool2, "GetPool failed, got %p, expected %p\n", pool2, pool);
+
+    count = pool2->lpVtbl->Release(pool2);
+    ok(count == 2, "Release failed, got %u, expected 2\n", count);
+
+    count = effect->lpVtbl->Release(effect);
+    ok(count == 0, "Release failed %u\n", count);
 
     count = pool->lpVtbl->Release(pool);
     ok(count == 0, "Release failed %u\n", count);
@@ -121,8 +149,7 @@ START_TEST(effect)
         return;
     }
 
-    test_create_effect(device);
-    test_create_effect_pool(device);
+    test_create_effect_and_pool(device);
 
     count = IDirect3DDevice9_Release(device);
     ok(count == 0, "The device was not properly freed: refcount %u\n", count);
