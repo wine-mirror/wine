@@ -92,10 +92,11 @@ static void test_create_effect_pool(IDirect3DDevice9 *device)
 START_TEST(effect)
 {
     HWND wnd;
-    IDirect3D9* d3d;
-    IDirect3DDevice9* device;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
     D3DPRESENT_PARAMETERS d3dpp;
     HRESULT hr;
+    ULONG count;
 
     wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -123,7 +124,11 @@ START_TEST(effect)
     test_create_effect(device);
     test_create_effect_pool(device);
 
-    IDirect3DDevice9_Release(device);
-    IDirect3D9_Release(d3d);
+    count = IDirect3DDevice9_Release(device);
+    ok(count == 0, "The device was not properly freed: refcount %u\n", count);
+
+    count = IDirect3D9_Release(d3d);
+    ok(count == 0, "Release failed %u\n", count);
+
     DestroyWindow(wnd);
 }
