@@ -29,6 +29,7 @@
 #include "ole2.h"
 #include "mshtml.h"
 #include "docobj.h"
+#include "docobjectservice.h"
 #include "wininet.h"
 #include "mshtmhst.h"
 #include "mshtmdid.h"
@@ -37,6 +38,7 @@
 #include "dispex.h"
 #include "idispids.h"
 #include "shlguid.h"
+#include "shdeprecated.h"
 #include "perhist.h"
 #include "shobjidl.h"
 #include "mshtml_test.h"
@@ -157,6 +159,8 @@ DEFINE_EXPECT(TranslateUrl);
 DEFINE_EXPECT(Advise_Close);
 DEFINE_EXPECT(OnViewChange);
 DEFINE_EXPECT(EvaluateNewWindow);
+DEFINE_EXPECT(GetTravelLog);
+DEFINE_EXPECT(UpdateBackForwardState);
 
 static IUnknown *doc_unk;
 static IMoniker *doc_mon;
@@ -2830,6 +2834,337 @@ static const IDispatchVtbl DispatchVtbl = {
 
 static IDispatch Dispatch = { &DispatchVtbl };
 
+DEFINE_GUID(IID_ITabBrowserService, 0x5E8FA523,0x83D4,0x4DBE,0x81,0x99,0x4C,0x18,0xE4,0x85,0x87,0x25);
+
+static HRESULT  WINAPI BrowserService_QueryInterface(
+        IBrowserService* This,
+        REFIID riid,
+        void **ppvObject)
+{
+    *ppvObject = NULL;
+
+    if(IsEqualGUID(&IID_IShellBrowser, riid))
+        return E_NOINTERFACE; /* TODO */
+
+    if(IsEqualGUID(&IID_IDocObjectService, riid))
+        return E_NOINTERFACE; /* TODO */
+
+    if(IsEqualGUID(&IID_ITabBrowserService, riid))
+        return E_NOINTERFACE; /* TODO */
+
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG  WINAPI BrowserService_AddRef(
+        IBrowserService* This)
+{
+    return 2;
+}
+
+static ULONG  WINAPI BrowserService_Release(
+        IBrowserService* This)
+{
+    return 1;
+}
+
+static HRESULT  WINAPI BrowserService_GetParentSite(
+        IBrowserService* This,
+        IOleInPlaceSite **ppipsite)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_SetTitle(
+        IBrowserService* This,
+        IShellView *psv,
+        LPCWSTR pszName)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_GetTitle(
+        IBrowserService* This,
+        IShellView *psv,
+        LPWSTR pszName,
+        DWORD cchName)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_GetOleObject(
+        IBrowserService* This,
+        IOleObject **ppobjv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_GetTravelLog(
+        IBrowserService* This,
+        ITravelLog **pptl)
+{
+    CHECK_EXPECT(GetTravelLog);
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_ShowControlWindow(
+        IBrowserService* This,
+        UINT id,
+        BOOL fShow)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_IsControlWindowShown(
+        IBrowserService* This,
+        UINT id,
+        BOOL *pfShown)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_IEGetDisplayName(
+        IBrowserService* This,
+        PCIDLIST_ABSOLUTE pidl,
+        LPWSTR pwszName,
+        UINT uFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_IEParseDisplayName(
+        IBrowserService* This,
+        UINT uiCP,
+        LPCWSTR pwszPath,
+        PIDLIST_ABSOLUTE *ppidlOut)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_DisplayParseError(
+        IBrowserService* This,
+        HRESULT hres,
+        LPCWSTR pwszPath)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_NavigateToPidl(
+        IBrowserService* This,
+        PCIDLIST_ABSOLUTE pidl,
+        DWORD grfHLNF)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_SetNavigateState(
+        IBrowserService* This,
+        BNSTATE bnstate)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_GetNavigateState(
+        IBrowserService* This,
+        BNSTATE *pbnstate)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_NotifyRedirect(
+        IBrowserService* This,
+        IShellView *psv,
+        PCIDLIST_ABSOLUTE pidl,
+        BOOL *pfDidBrowse)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_UpdateWindowList(
+        IBrowserService* This)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_UpdateBackForwardState(
+        IBrowserService* This)
+{
+    CHECK_EXPECT(UpdateBackForwardState);
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_SetFlags(
+        IBrowserService* This,
+        DWORD dwFlags,
+        DWORD dwFlagMask)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_GetFlags(
+        IBrowserService* This,
+        DWORD *pdwFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_CanNavigateNow(
+        IBrowserService* This)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_GetPidl(
+        IBrowserService* This,
+        PIDLIST_ABSOLUTE *ppidl)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_SetReferrer(
+        IBrowserService* This,
+        PCIDLIST_ABSOLUTE pidl)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static DWORD  WINAPI BrowserService_GetBrowserIndex(
+        IBrowserService* This)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_GetBrowserByIndex(
+        IBrowserService* This,
+        DWORD dwID,
+        IUnknown **ppunk)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_GetHistoryObject(
+        IBrowserService* This,
+        IOleObject **ppole,
+        IStream **pstm,
+        IBindCtx **ppbc)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_SetHistoryObject(
+        IBrowserService* This,
+        IOleObject *pole,
+        BOOL fIsLocalAnchor)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_CacheOLEServer(
+        IBrowserService* This,
+        IOleObject *pole)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_GetSetCodePage(
+        IBrowserService* This,
+        VARIANT *pvarIn,
+        VARIANT *pvarOut)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_OnHttpEquiv(
+        IBrowserService* This,
+        IShellView *psv,
+        BOOL fDone,
+        VARIANT *pvarargIn,
+        VARIANT *pvarargOut)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_GetPalette(
+        IBrowserService* This,
+        HPALETTE *hpal)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI BrowserService_RegisterWindow(
+        IBrowserService* This,
+        BOOL fForceRegister,
+        int swc)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static IBrowserServiceVtbl BrowserServiceVtbl = {
+    BrowserService_QueryInterface,
+    BrowserService_AddRef,
+    BrowserService_Release,
+    BrowserService_GetParentSite,
+    BrowserService_SetTitle,
+    BrowserService_GetTitle,
+    BrowserService_GetOleObject,
+    BrowserService_GetTravelLog,
+    BrowserService_ShowControlWindow,
+    BrowserService_IsControlWindowShown,
+    BrowserService_IEGetDisplayName,
+    BrowserService_IEParseDisplayName,
+    BrowserService_DisplayParseError,
+    BrowserService_NavigateToPidl,
+    BrowserService_SetNavigateState,
+    BrowserService_GetNavigateState,
+    BrowserService_NotifyRedirect,
+    BrowserService_UpdateWindowList,
+    BrowserService_UpdateBackForwardState,
+    BrowserService_SetFlags,
+    BrowserService_GetFlags,
+    BrowserService_CanNavigateNow,
+    BrowserService_GetPidl,
+    BrowserService_SetReferrer,
+    BrowserService_GetBrowserIndex,
+    BrowserService_GetBrowserByIndex,
+    BrowserService_GetHistoryObject,
+    BrowserService_SetHistoryObject,
+    BrowserService_CacheOLEServer,
+    BrowserService_GetSetCodePage,
+    BrowserService_OnHttpEquiv,
+    BrowserService_GetPalette,
+    BrowserService_RegisterWindow
+};
+
+static IBrowserService BrowserService = { &BrowserServiceVtbl };
+
 static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface,
                                                      REFIID riid, void **ppv)
 {
@@ -2883,6 +3218,12 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
     if(IsEqualGUID(&SID_SNewWindowManager, guidService)) {
         ok(IsEqualGUID(&IID_INewWindowManager, riid), "unexpected riid\n");
         *ppv = &NewWindowManager;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(&IID_IShellBrowser, guidService)) {
+        ok(IsEqualGUID(&IID_IBrowserService, riid), "unexpected riid\n");
+        *ppv = &BrowserService;
         return S_OK;
     }
 
@@ -3325,6 +3666,8 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         SET_EXPECT(Exec_ShellDocView_37);
     }
+    else
+        SET_EXPECT(GetTravelLog);
     load_state = LD_DOLOAD;
     expect_LockContainer_fLock = TRUE;
     readystate_set_loading = TRUE;
@@ -3367,6 +3710,8 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Exec_ShellDocView_37);
     }
+    else
+        todo_wine CHECK_CALLED(GetTravelLog);
 
     set_clientsite = container_locked = TRUE;
 
@@ -3439,6 +3784,7 @@ static void test_download(DWORD flags)
         SET_EXPECT(UpdateUI);
         SET_EXPECT(Exec_UPDATECOMMANDS);
         SET_EXPECT(Exec_SETTITLE);
+        SET_EXPECT(UpdateBackForwardState);
     }
     expect_status_text = (LPWSTR)0xdeadbeef; /* TODO */
 
@@ -3499,6 +3845,7 @@ static void test_download(DWORD flags)
         SET_CALLED(UpdateUI);
         SET_CALLED(Exec_UPDATECOMMANDS);
         SET_CALLED(Exec_SETTITLE);
+        todo_wine CHECK_CALLED(UpdateBackForwardState);
     }
 
     load_state = LD_COMPLETE;
@@ -4135,6 +4482,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         SET_EXPECT(Invoke_AMBIENT_SILENT);
         SET_EXPECT(Invoke_AMBIENT_USERAGENT);
         SET_EXPECT(Invoke_AMBIENT_PALETTE);
+        SET_EXPECT(GetTravelLog);
 
         hres = IOleObject_SetClientSite(oleobj, &ClientSite);
         ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
@@ -4157,6 +4505,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
         CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
         CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+        todo_wine CHECK_CALLED(GetTravelLog);
 
         set_clientsite = TRUE;
     }
@@ -5271,6 +5620,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
     SET_EXPECT(Exec_SETPROGRESSMAX);
     SET_EXPECT(Exec_SETPROGRESSPOS);
+    SET_EXPECT(GetTravelLog);
 
     hres = IOleObject_SetClientSite(oleobj, &ClientSite);
     ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
@@ -5290,6 +5640,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
     CHECK_CALLED(Exec_SETPROGRESSMAX);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
+    todo_wine CHECK_CALLED(GetTravelLog);
 
     hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
     ok(hres == S_OK, "GetInPlaceSite failed: %08x\n", hres);
