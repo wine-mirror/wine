@@ -10799,9 +10799,6 @@ if test "x$ac_cv_lib_esd_esd_open_sound" = x""yes; then :
 
              ESDLIBS="$ac_esd_libs"
 
-
-$as_echo "#define HAVE_ESD 1" >>confdefs.h
-
 fi
 
 fi

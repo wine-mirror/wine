@@ -104,9 +104,6 @@
 /* Define to 1 if you have the `epoll_create' function. */
 #undef HAVE_EPOLL_CREATE
 
-/* Define if you have EsounD sound server */
-#undef HAVE_ESD
-
 /* Define to 1 if you have the `ffs' function. */
 #undef HAVE_FFS
 

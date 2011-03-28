@@ -71,8 +71,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 #include <sys/errno.h>
 #endif
 
-#ifdef HAVE_ESD
-
 #include <esd.h>
 
 /* unless someone makes a wineserver kernel module, Unix pipes are faster than win32 events */
@@ -2100,26 +2098,25 @@ DWORD WINAPI ESD_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     return MMSYSERR_NOTSUPPORTED;
 }
 
-#else /* !HAVE_ESD */
-
 /**************************************************************************
- * 				wodMessage (WINEESD.@)
+ * 				DriverProc (WINEESD.@)
  */
-DWORD WINAPI ESD_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
-                            DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+LRESULT CALLBACK ESD_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                LPARAM dwParam1, LPARAM dwParam2)
 {
-    FIXME("(%u, %04X, %08X, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
+    switch(wMsg) {
+    case DRV_LOAD:
+    case DRV_FREE:
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_INSTALL:
+    case DRV_REMOVE:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
+    case DRV_QUERYCONFIGURE:
+        return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "EsounD MultiMedia Driver!", "EsounD Driver", MB_OK);	return 1;
+    default:
+	return 0;
+    }
 }
-
-/**************************************************************************
- * 				widMessage (WINEESD.6)
- */
-DWORD WINAPI ESD_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-                            DWORD_PTR dwParam1, DWORD_PTR dwParam2)
-{
-    FIXME("(%u, %04X, %08X, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
-}
-
-#endif /* HAVE_ESD */

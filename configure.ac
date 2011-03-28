@@ -1470,8 +1470,7 @@ then
     AC_CHECK_HEADER(esd.h,
         [AC_CHECK_LIB(esd,esd_open_sound,
             [AC_SUBST(ESDINCL, "$ac_esd_incl")
-             AC_SUBST(ESDLIBS, "$ac_esd_libs")
-             AC_DEFINE(HAVE_ESD, 1, [Define if you have EsounD sound server])],,
+             AC_SUBST(ESDLIBS, "$ac_esd_libs")],,
             [$ac_esd_libs])])
     CFLAGS="$save_CFLAGS"
 fi
