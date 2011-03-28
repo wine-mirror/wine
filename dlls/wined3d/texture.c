@@ -59,6 +59,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     texture->texture_srgb.dirty = TRUE;
     texture->is_srgb = FALSE;
     texture->pow2_matrix_identity = TRUE;
+    texture->flags = 0;
 
     if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
     {
@@ -262,7 +263,7 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
         const DWORD sampler_states[WINED3D_HIGHEST_SAMPLER_STATE + 1],
         const struct wined3d_gl_info *gl_info)
 {
-    BOOL cond_np2 = texture->cond_np2;
+    BOOL cond_np2 = texture->flags & WINED3D_TEXTURE_COND_NP2;
     GLenum target = texture->target;
     struct gl_texture *gl_tex;
     DWORD state;
@@ -666,7 +667,7 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
          * state. The same applies to filtering. Even if the texture has only
          * one mip level, the default LINEAR_MIPMAP_LINEAR filter causes a SW
          * fallback on macos. */
-        if (texture->cond_np2)
+        if (texture->flags & WINED3D_TEXTURE_COND_NP2)
         {
             GLenum target = texture->target;
 
@@ -1028,7 +1029,7 @@ HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT height, U
         texture->pow2_matrix[10] = 1.0f;
         texture->pow2_matrix[15] = 1.0f;
         texture->target = GL_TEXTURE_2D;
-        texture->cond_np2 = TRUE;
+        texture->flags |= WINED3D_TEXTURE_COND_NP2;
         texture->min_mip_lookup = minMipLookup_noFilter;
     }
     else if (gl_info->supported[ARB_TEXTURE_RECTANGLE] && (width != pow2_width || height != pow2_height)
@@ -1043,7 +1044,7 @@ HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT height, U
         texture->pow2_matrix[10] = 1.0f;
         texture->pow2_matrix[15] = 1.0f;
         texture->target = GL_TEXTURE_RECTANGLE_ARB;
-        texture->cond_np2 = TRUE;
+        texture->flags |= WINED3D_TEXTURE_COND_NP2;
 
         if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
             texture->min_mip_lookup = minMipLookup_noMip;
@@ -1067,7 +1068,6 @@ HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT height, U
         texture->pow2_matrix[10] = 1.0f;
         texture->pow2_matrix[15] = 1.0f;
         texture->target = GL_TEXTURE_2D;
-        texture->cond_np2 = FALSE;
     }
     TRACE("xf(%f) yf(%f)\n", texture->pow2_matrix[0], texture->pow2_matrix[5]);
 
