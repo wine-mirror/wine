@@ -329,6 +329,8 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocolEx *iface)
     if(!ref) {
         if(This->wininet_info)
             IWinInetInfo_Release(This->wininet_info);
+        if(This->wininet_http_info)
+            IWinInetHttpInfo_Release(This->wininet_http_info);
         if(This->protocol)
             IInternetProtocol_Release(This->protocol);
         if(This->bind_info)
@@ -523,8 +525,10 @@ static HRESULT WINAPI BindProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUr
 
     This->protocol = protocol;
 
-    if(urlmon_protocol)
+    if(urlmon_protocol) {
         IInternetProtocol_QueryInterface(protocol, &IID_IWinInetInfo, (void**)&This->wininet_info);
+        IInternetProtocol_QueryInterface(protocol, &IID_IWinInetHttpInfo, (void**)&This->wininet_http_info);
+    }
 
     set_binding_sink(This, pOIProtSink, pOIBindInfo);
 

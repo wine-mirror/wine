@@ -180,6 +180,7 @@ typedef struct {
     IInternetProtocolSink *protocol_sink;
     IServiceProvider *service_provider;
     IWinInetInfo *wininet_info;
+    IWinInetHttpInfo *wininet_http_info;
 
     struct {
         IInternetProtocol IInternetProtocol_iface;

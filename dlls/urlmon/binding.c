@@ -762,19 +762,11 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
 
         *ppv = &This->IWinInetHttpInfo_iface;
     }else if(IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
-        IWinInetHttpInfo *http_info;
-        HRESULT hres;
-
         TRACE("(%p)->(IID_IWinInetHttpInfo %p)\n", This, ppv);
 
-        if(!This->protocol->wininet_info)
+        if(!This->protocol->wininet_http_info)
             return E_NOINTERFACE;
 
-        hres = IWinInetInfo_QueryInterface(This->protocol->wininet_info, &IID_IWinInetHttpInfo, (void**)&http_info);
-        if(FAILED(hres))
-            return E_NOINTERFACE;
-
-        IWinInetHttpInfo_Release(http_info);
         *ppv = &This->IWinInetHttpInfo_iface;
     }
 
@@ -1259,16 +1251,26 @@ static HRESULT WINAPI WinInetHttpInfo_QueryOption(IWinInetHttpInfo *iface, DWORD
         void *pBuffer, DWORD *pcbBuffer)
 {
     Binding *This = impl_from_IWinInetHttpInfo(iface);
-    FIXME("(%p)->(%x %p %p)\n", This, dwOption, pBuffer, pcbBuffer);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%x %p %p)\n", This, dwOption, pBuffer, pcbBuffer);
+
+    if(!This->protocol->wininet_info)
+        return E_FAIL;
+
+    return IWinInetInfo_QueryOption(This->protocol->wininet_info,
+            dwOption, pBuffer, pcbBuffer);
 }
 
 static HRESULT WINAPI WinInetHttpInfo_QueryInfo(IWinInetHttpInfo *iface, DWORD dwOption,
         void *pBuffer, DWORD *pcbBuffer, DWORD *pdwFlags, DWORD *pdwReserved)
 {
     Binding *This = impl_from_IWinInetHttpInfo(iface);
-    FIXME("(%p)->(%x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%x %p %p %p %p)\n", This, dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
+
+    if(!This->protocol->wininet_http_info)
+        return E_FAIL;
+
+    return IWinInetHttpInfo_QueryInfo(This->protocol->wininet_http_info,
+            dwOption, pBuffer, pcbBuffer, pdwFlags, pdwReserved);
 }
 
 static const IWinInetHttpInfoVtbl WinInetHttpInfoVtbl = {
