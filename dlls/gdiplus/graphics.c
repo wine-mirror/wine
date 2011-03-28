@@ -5023,7 +5023,7 @@ GpStatus WINGDIPAPI GdipSetTextRenderingHint(GpGraphics *graphics,
 {
     TRACE("(%p, %d)\n", graphics, hint);
 
-    if(!graphics)
+    if(!graphics || hint > TextRenderingHintClearTypeGridFit)
         return InvalidParameter;
 
     if(graphics->busy)

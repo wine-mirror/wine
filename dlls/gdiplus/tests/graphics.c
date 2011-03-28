@@ -3113,6 +3113,54 @@ static void test_get_set_interpolation(void)
     ReleaseDC(hwnd, hdc);
 }
 
+static void test_get_set_textrenderinghint(void)
+{
+    GpGraphics *graphics;
+    HDC hdc = GetDC( hwnd );
+    GpStatus status;
+    TextRenderingHint hint;
+
+    ok(hdc != NULL, "Expected HDC to be initialized\n");
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    status = GdipGetTextRenderingHint(NULL, &hint);
+    expect(InvalidParameter, status);
+
+    status = GdipGetTextRenderingHint(graphics, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipSetTextRenderingHint(NULL, TextRenderingHintAntiAlias);
+    expect(InvalidParameter, status);
+
+    /* out of range */
+    status = GdipSetTextRenderingHint(graphics, TextRenderingHintClearTypeGridFit+1);
+    expect(InvalidParameter, status);
+
+    status = GdipGetTextRenderingHint(graphics, &hint);
+    expect(Ok, status);
+    expect(TextRenderingHintSystemDefault, hint);
+
+    status = GdipSetTextRenderingHint(graphics, TextRenderingHintSystemDefault);
+    expect(Ok, status);
+
+    status = GdipGetTextRenderingHint(graphics, &hint);
+    expect(Ok, status);
+    expect(TextRenderingHintSystemDefault, hint);
+
+    status = GdipSetTextRenderingHint(graphics, TextRenderingHintAntiAliasGridFit);
+    expect(Ok, status);
+
+    status = GdipGetTextRenderingHint(graphics, &hint);
+    expect(Ok, status);
+    expect(TextRenderingHintAntiAliasGridFit, hint);
+
+    GdipDeleteGraphics(graphics);
+
+    ReleaseDC(hwnd, hdc);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3172,6 +3220,7 @@ START_TEST(graphics)
     test_fromMemoryBitmap();
     test_string_functions();
     test_get_set_interpolation();
+    test_get_set_textrenderinghint();
 
     GdiplusShutdown(gdiplusToken);
     DestroyWindow( hwnd );
