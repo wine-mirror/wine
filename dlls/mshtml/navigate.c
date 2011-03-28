@@ -1110,11 +1110,105 @@ static HRESULT async_stop_request(nsChannelBSC *This)
     return S_OK;
 }
 
+static void handle_navigation_error(nsChannelBSC *This, DWORD result)
+{
+    HTMLDocumentObj *doc;
+    IOleCommandTarget *olecmd;
+    BOOL is_error_url;
+    SAFEARRAY *sa;
+    SAFEARRAYBOUND bound;
+    VARIANT var, varOut;
+    LONG ind;
+    BSTR url, unk;
+    HRESULT hres;
+
+    if(!This->window)
+        return;
+
+    doc = This->window->doc_obj;
+    if(!doc || !doc->doc_object_service || !doc->client)
+        return;
+
+    hres = IDocObjectService_IsErrorUrl(doc->doc_object_service,
+            This->window->url, &is_error_url);
+    if(FAILED(hres) || is_error_url)
+        return;
+
+    hres = IOleClientSite_QueryInterface(doc->client,
+            &IID_IOleCommandTarget, (void**)&olecmd);
+    if(FAILED(hres))
+        return;
+
+    bound.lLbound = 0;
+    bound.cElements = 8;
+    sa = SafeArrayCreate(VT_VARIANT, 1, &bound);
+    if(!sa) {
+        IOleCommandTarget_Release(olecmd);
+        return;
+    }
+
+    ind = 0;
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = result;
+    SafeArrayPutElement(sa, &ind, &var);
+
+    ind = 1;
+    V_VT(&var) = VT_BSTR;
+    url = SysAllocString(This->window->url);
+    V_BSTR(&var) = url;
+    SafeArrayPutElement(sa, &ind, &var);
+
+    ind = 3;
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = (IUnknown*)&This->window->IHTMLWindow2_iface;
+    SafeArrayPutElement(sa, &ind, &var);
+
+    /* FIXME: what are the following fields for? */
+    ind = 2;
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = NULL;
+    SafeArrayPutElement(sa, &ind, &var);
+
+    ind = 4;
+    V_VT(&var) = VT_BOOL;
+    V_BOOL(&var) = FALSE;
+    SafeArrayPutElement(sa, &ind, &var);
+
+    ind = 5;
+    V_VT(&var) = VT_BOOL;
+    V_BOOL(&var) = FALSE;
+    SafeArrayPutElement(sa, &ind, &var);
+
+    ind = 6;
+    V_VT(&var) = VT_BSTR;
+    unk = SysAllocString(NULL);
+    V_BSTR(&var) = unk;
+    SafeArrayPutElement(sa, &ind, &var);
+
+    ind = 7;
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = NULL;
+    SafeArrayPutElement(sa, &ind, &var);
+
+    V_VT(&var) = VT_ARRAY;
+    V_ARRAY(&var) = sa;
+    V_VT(&varOut) = VT_BOOL;
+    V_BOOL(&varOut) = VARIANT_TRUE;
+    IOleCommandTarget_Exec(olecmd, &CGID_DocHostCmdPriv, 1, 0, &var, FAILED(hres)?NULL:&varOut);
+
+    SysFreeString(url);
+    SysFreeString(unk);
+    SafeArrayDestroy(sa);
+    IOleCommandTarget_Release(olecmd);
+}
+
 static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
-    if(This->window && SUCCEEDED(result)) {
+    if(FAILED(result))
+        handle_navigation_error(This, result);
+    else if(This->window) {
         result = async_stop_request(This);
         if(SUCCEEDED(result))
            return S_OK;
@@ -1148,6 +1242,27 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
 
         /* FIXME: We should find a better way to handle this */
         set_wine_url(This->nschannel->uri, status_text);
+        break;
+    case BINDSTATUS_BEGINDOWNLOADDATA: {
+        IWinInetHttpInfo *http_info;
+        DWORD status, size = sizeof(DWORD);
+        HRESULT hres;
+
+        if(!This->bsc.binding)
+            break;
+
+        hres = IBinding_QueryInterface(This->bsc.binding, &IID_IWinInetHttpInfo, (void**)&http_info);
+        if(FAILED(hres))
+            break;
+
+        hres = IWinInetHttpInfo_QueryInfo(http_info,
+                HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL, NULL);
+        IWinInetHttpInfo_Release(http_info);
+        if(FAILED(hres) || status == HTTP_STATUS_OK)
+            break;
+
+        handle_navigation_error(This, status);
+    }
     }
 
     return S_OK;
