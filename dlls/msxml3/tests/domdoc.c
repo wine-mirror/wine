@@ -7258,7 +7258,7 @@ static void test_nodeTypedValue(void)
         if (entry->type == (VT_ARRAY|VT_UI1))
         {
             ok(V_ARRAY(&value)->rgsabound[0].cElements == strlen(entry->value),
-              "incorrect array size, got %d, expected %d\n", V_ARRAY(&value)->rgsabound[0].cElements, strlen(entry->value));
+               "incorrect array size %d\n", V_ARRAY(&value)->rgsabound[0].cElements);
         }
 
         if (entry->type != VT_BSTR)
