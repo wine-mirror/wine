@@ -141,7 +141,6 @@ NTSTATUS WINAPI NtQueryInformationProcess(
     UNIMPLEMENTED_INFO_CLASS(ProcessForegroundInformation);
     UNIMPLEMENTED_INFO_CLASS(ProcessLUIDDeviceMapsEnabled);
     UNIMPLEMENTED_INFO_CLASS(ProcessBreakOnTermination);
-    UNIMPLEMENTED_INFO_CLASS(ProcessDebugFlags);
     UNIMPLEMENTED_INFO_CLASS(ProcessHandleTracing);
 
     case ProcessBasicInformation:
@@ -306,6 +305,30 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                     if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
                     {
                         *(DWORD_PTR *)ProcessInformation = reply->debugger_present ? ~(DWORD_PTR)0 : 0;
+                    }
+                }
+                SERVER_END_REQ;
+            }
+        }
+        else
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    case ProcessDebugFlags:
+        len = sizeof(DWORD);
+        if (ProcessInformationLength == len)
+        {
+            if (!ProcessInformation)
+                ret = STATUS_ACCESS_VIOLATION;
+            else if (!ProcessHandle)
+                ret = STATUS_INVALID_HANDLE;
+            else
+            {
+                SERVER_START_REQ(get_process_info)
+                {
+                    req->handle = wine_server_obj_handle( ProcessHandle );
+                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                    {
+                        *(DWORD *)ProcessInformation = !reply->debugger_present;
                     }
                 }
                 SERVER_END_REQ;
