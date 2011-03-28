@@ -1352,6 +1352,51 @@ static IServiceProvider ServiceProvider = { &ServiceProviderVtbl };
 
 static IBindStatusCallbackEx objbsc;
 
+static void test_WinInetHttpInfo(IWinInetHttpInfo *http_info, DWORD progress)
+{
+    DWORD status, size;
+    HRESULT hres, expect;
+
+    /* QueryInfo changes it's behavior during this request */
+    if(progress == BINDSTATUS_SENDINGREQUEST)
+        return;
+
+    if(test_protocol==FTP_TEST && download_state==BEFORE_DOWNLOAD
+            && progress!=BINDSTATUS_MIMETYPEAVAILABLE)
+        expect = E_FAIL;
+    else if(test_protocol == FTP_TEST)
+        expect = S_FALSE;
+    else
+        expect = S_OK;
+
+    size = sizeof(DWORD);
+    hres = IWinInetHttpInfo_QueryInfo(http_info, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER,
+            &status, &size, NULL, NULL);
+    ok(hres == expect, "hres = %x, expected %x\n", hres, expect);
+    if(hres == S_OK) {
+        if(download_state==BEFORE_DOWNLOAD && progress!=BINDSTATUS_MIMETYPEAVAILABLE)
+            ok(status == 0, "status = %d\n", status);
+        else
+            ok(status == HTTP_STATUS_OK, "status = %d\n", status);
+        ok(size == sizeof(DWORD), "size = %d\n", size);
+    }
+
+    size = sizeof(DWORD);
+    hres = IWinInetHttpInfo_QueryOption(http_info, INTERNET_OPTION_HANDLE_TYPE, &status, &size);
+    if(test_protocol == FTP_TEST) {
+        if(download_state==BEFORE_DOWNLOAD && progress!=BINDSTATUS_MIMETYPEAVAILABLE)
+            ok(hres == E_FAIL, "hres = %x\n", hres);
+        else
+            ok(hres == S_OK, "hres = %x\n", hres);
+
+        if(hres == S_OK)
+            ok(status == INTERNET_HANDLE_TYPE_FTP_FILE, "status = %d\n", status);
+    } else {
+        ok(hres == S_OK, "hres = %x\n", hres);
+        ok(status == INTERNET_HANDLE_TYPE_HTTP_REQUEST, "status = %d\n", status);
+    }
+}
+
 static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REFIID riid, void **ppv)
 {
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
@@ -1658,9 +1703,10 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
         HRESULT hres;
 
         hres = IBinding_QueryInterface(current_binding, &IID_IWinInetHttpInfo, (void**)&http_info);
-        if(!emulate_protocol && test_protocol != FILE_TEST && is_urlmon_protocol(test_protocol))
+        if(!emulate_protocol && test_protocol != FILE_TEST && is_urlmon_protocol(test_protocol)) {
             ok(hres == S_OK, "Could not get IWinInetHttpInfo iface: %08x\n", hres);
-        else
+            test_WinInetHttpInfo(http_info, ulStatusCode);
+        } else
             ok(hres == E_NOINTERFACE,
                "QueryInterface(IID_IWinInetHttpInfo) returned: %08x, expected E_NOINTERFACE\n", hres);
         if(SUCCEEDED(hres))
