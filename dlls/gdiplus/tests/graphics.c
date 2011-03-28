@@ -1954,6 +1954,8 @@ static void test_GdipDrawString(void)
     LOGFONTA logfont;
     HDC hdc = GetDC( hwnd );
     static const WCHAR string[] = {'T','e','s','t',0};
+    static const PointF positions[4] = {{0,0}, {1,1}, {2,2}, {3,3}};
+    GpMatrix *matrix;
 
     memset(&logfont,0,sizeof(logfont));
     strcpy(logfont.lfFaceName,"Arial");
@@ -1985,6 +1987,36 @@ static void test_GdipDrawString(void)
     status = GdipDrawString(graphics, string, 4, fnt, &rect, format, brush);
     expect(Ok, status);
 
+    status = GdipCreateMatrix(&matrix);
+    expect(Ok, status);
+
+todo_wine {
+    status = GdipDrawDriverString(NULL, string, 4, fnt, brush, positions, DriverStringOptionsCmapLookup, matrix);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawDriverString(graphics, NULL, 4, fnt, brush, positions, DriverStringOptionsCmapLookup, matrix);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawDriverString(graphics, string, 4, NULL, brush, positions, DriverStringOptionsCmapLookup, matrix);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawDriverString(graphics, string, 4, fnt, NULL, positions, DriverStringOptionsCmapLookup, matrix);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawDriverString(graphics, string, 4, fnt, brush, NULL, DriverStringOptionsCmapLookup, matrix);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawDriverString(graphics, string, 4, fnt, brush, positions, DriverStringOptionsCmapLookup|0x10, matrix);
+    expect(Ok, status);
+
+    status = GdipDrawDriverString(graphics, string, 4, fnt, brush, positions, DriverStringOptionsCmapLookup, NULL);
+    expect(Ok, status);
+
+    status = GdipDrawDriverString(graphics, string, 4, fnt, brush, positions, DriverStringOptionsCmapLookup, matrix);
+    expect(Ok, status);
+}
+
+    GdipDeleteMatrix(matrix);
     GdipDeleteGraphics(graphics);
     GdipDeleteBrush(brush);
     GdipDeleteFont(fnt);

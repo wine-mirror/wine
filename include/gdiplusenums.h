@@ -42,6 +42,14 @@ enum BrushType
    BrushTypeLinearGradient   = 4
 };
 
+enum DriverStringOptions
+{
+   DriverStringOptionsCmapLookup      = 1,
+   DriverStringOptionsVertical        = 2,
+   DriverStringOptionsRealizedAdvance = 4,
+   DriverStringOptionsLimitSubpixel   = 4
+};
+
 enum FillMode
 {
     FillModeAlternate   = 0,
@@ -707,6 +715,7 @@ enum EmfPlusRecordType {
 
 typedef enum Unit Unit;
 typedef enum BrushType BrushType;
+typedef enum DriverStringOptions DriverStringOptions;
 typedef enum FillMode FillMode;
 typedef enum LineCap LineCap;
 typedef enum PathPointType PathPointType;
