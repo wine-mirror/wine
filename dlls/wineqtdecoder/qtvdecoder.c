@@ -413,10 +413,10 @@ static HRESULT WINAPI QTVDecoder_SetMediaType(TransformFilter *tf, PIN_DIRECTION
             goto failed;
 
         TRACE("Fourcc: %s\n", debugstr_an((const char *)&pmt->subtype.Data1, 4));
-        fourCC = ((const char *)&pmt->subtype.Data1)[0] |
-                 (((const char *)&pmt->subtype.Data1)[1]<<8) |
-                 (((const char *)&pmt->subtype.Data1)[2]<<16) |
-                 (((const char *)&pmt->subtype.Data1)[3]<<24);
+        fourCC = ((const char *)&pmt->subtype.Data1)[3] |
+                 (((const char *)&pmt->subtype.Data1)[2]<<8) |
+                 (((const char *)&pmt->subtype.Data1)[1]<<16) |
+                 (((const char *)&pmt->subtype.Data1)[0]<<24);
 
         err = FindCodec(fourCC,NULL,NULL,&dc);
         if (err != noErr || dc == 0x0)
