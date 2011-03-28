@@ -76,8 +76,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(joystick);
 
-#ifdef HAVE_LINUX_JOYSTICK_H
-
 #define MAXJOYSTICK (JOYSTICKID2 + 30)
 
 typedef struct tagWINE_JSTCK {
@@ -525,32 +523,3 @@ LRESULT CALLBACK JSTCK_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 }
-
-#else
-
-/**************************************************************************
- * 				DriverProc (JOYSTICK.@)
- */
-LRESULT CALLBACK JSTCK_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
-                                  LPARAM dwParam1, LPARAM dwParam2)
-{
-    /* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
-    /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
-
-    switch(wMsg) {
-    case DRV_LOAD:
-    case DRV_FREE:
-    case DRV_OPEN:
-    case DRV_CLOSE:
-    case DRV_ENABLE:
-    case DRV_DISABLE:
-    case DRV_QUERYCONFIGURE:	return 0;
-    case DRV_CONFIGURE:		MessageBoxA(0, "JoyStick MultiMedia Driver !", "JoyStick Driver", MB_OK);	return 1;
-    case DRV_INSTALL:		return DRVCNF_RESTART;
-    case DRV_REMOVE:		return DRVCNF_RESTART;
-    default:
-	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
-    }
-}
-
-#endif
