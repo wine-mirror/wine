@@ -333,7 +333,7 @@ static HRESULT WINAPI HTMLLocation_get_host(IHTMLLocation *iface, BSTR *p)
 
     if(url.nPort) {
         /* <hostname>:<port> */
-        const WCHAR format[] = {'%','d',0};
+        const WCHAR format[] = {'%','u',0};
         DWORD len = url.dwHostNameLength + 1 + 5 + 1;
         WCHAR buf[len];
 
@@ -406,7 +406,7 @@ static HRESULT WINAPI HTMLLocation_get_port(IHTMLLocation *iface, BSTR *p)
         return hres;
 
     if(url.nPort) {
-        const WCHAR format[] = {'%','d',0};
+        const WCHAR format[] = {'%','u',0};
         WCHAR buf[6];
         snprintfW(buf, 6, format, url.nPort);
         *p = SysAllocString(buf);
