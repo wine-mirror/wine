@@ -358,13 +358,14 @@ BOOL CDECL EMFDRV_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pOffsetViewportOrgEx );
     EMRSETVIEWPORTORGEX emr;
     EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
+    POINT prev;
 
-    GetViewportOrgEx(physDev->hdc, pt);
+    GetViewportOrgEx(physDev->hdc, &prev);
 
     emr.emr.iType = EMR_SETVIEWPORTORGEX;
     emr.emr.nSize = sizeof(emr);
-    emr.ptlOrigin.x = pt->x + x;
-    emr.ptlOrigin.y = pt->y + y;
+    emr.ptlOrigin.x = prev.x + x;
+    emr.ptlOrigin.y = prev.y + y;
 
     if (!EMFDRV_WriteRecord( dev, &emr.emr )) return 0;
     return next->funcs->pOffsetViewportOrgEx( next, x, y, pt );
@@ -375,13 +376,14 @@ BOOL CDECL EMFDRV_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pOffsetWindowOrgEx );
     EMRSETWINDOWORGEX emr;
     EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
+    POINT prev;
 
-    GetWindowOrgEx(physDev->hdc, pt);
+    GetWindowOrgEx(physDev->hdc, &prev);
 
     emr.emr.iType = EMR_SETWINDOWORGEX;
     emr.emr.nSize = sizeof(emr);
-    emr.ptlOrigin.x = pt->x + x;
-    emr.ptlOrigin.y = pt->y + y;
+    emr.ptlOrigin.x = prev.x + x;
+    emr.ptlOrigin.y = prev.y + y;
 
     if (!EMFDRV_WriteRecord( dev, &emr.emr )) return 0;
     return next->funcs->pOffsetWindowOrgEx( next, x, y, pt );
