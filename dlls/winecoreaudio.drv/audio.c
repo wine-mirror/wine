@@ -59,9 +59,6 @@
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
-
-#if defined(HAVE_COREAUDIO_COREAUDIO_H) && defined(HAVE_AUDIOUNIT_AUDIOUNIT_H)
-
 WINE_DECLARE_DEBUG_CHANNEL(coreaudio);
 
 /*
@@ -2547,27 +2544,3 @@ OSStatus CoreAudio_wiAudioUnitIOProc(void *inRefCon,
     if (needNotify) wodSendNotifyInputCompletionsMessage(wwi);
     return err;
 }
-
-#else
-
-/**************************************************************************
- *                              widMessage (WINECOREAUDIO.6)
- */
-DWORD WINAPI CoreAudio_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
-                            DWORD dwParam1, DWORD dwParam2)
-{
-    FIXME("(%u, %04X, %08X, %08X, %08X): CoreAudio support not compiled into wine\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
-}
-
-/**************************************************************************
-* 				wodMessage (WINECOREAUDIO.7)
-*/
-DWORD WINAPI CoreAudio_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
-                                  DWORD dwParam1, DWORD dwParam2)
-{
-    FIXME("(%u, %04X, %08X, %08X, %08X): CoreAudio support not compiled into wine\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
-}
-
-#endif

@@ -44,7 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
-#if defined(HAVE_COREAUDIO_COREAUDIO_H)
 #include <CoreAudio/CoreAudio.h>
 
 #define WINE_DEFINITIONS
@@ -1021,18 +1020,3 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dw
     }
     return MMSYSERR_NOTSUPPORTED;
 }
-#else
-
-DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2)
-{
-    TRACE("%08x, %08x, %08x, %08x, %08x\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
-}
-
-DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
-                                  DWORD dwParam1, DWORD dwParam2)
-{
-    TRACE("%08x, %08x, %08x, %08x, %08x\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
-}
-#endif

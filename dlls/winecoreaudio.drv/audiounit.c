@@ -20,8 +20,6 @@
 
 #include "config.h"
 
-#ifdef HAVE_AUDIOUNIT_AUDIOUNIT_H
-
 #define ULONG CoreFoundation_ULONG
 #define HRESULT CoreFoundation_HRESULT
 #ifndef HAVE_AUDIOUNIT_AUDIOCOMPONENT_H
@@ -503,5 +501,3 @@ int SynthUnit_Close(AUGraph graph)
 
     return 1;
 }
-
-#endif

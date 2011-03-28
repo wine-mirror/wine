@@ -43,7 +43,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mixer);
 
-#if defined(HAVE_COREAUDIO_COREAUDIO_H)
 #include <CoreAudio/CoreAudio.h>
 #include <CoreFoundation/CoreFoundation.h>
 
@@ -1027,13 +1026,3 @@ DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
             return MMSYSERR_NOTSUPPORTED;
     }
 }
-
-#else
-
-DWORD WINAPI CoreAudio_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
-                                  DWORD_PTR dwParam1, DWORD_PTR dwParam2)
-{
-    TRACE("(%04X, %04x, %08lX, %08lX, %08lX);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
-}
-#endif /* HAVE_COREAUDIO_COREAUDIO_H */

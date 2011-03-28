@@ -21,8 +21,6 @@
 
 #include "config.h"
 
-#ifdef HAVE_COREAUDIO_COREAUDIO_H
-
 #include <CoreMIDI/CoreMIDI.h>
 #include <mach/mach_time.h>
 
@@ -84,4 +82,3 @@ void MIDIOut_Send(MIDIPortRef port, MIDIEndpointRef dest, UInt8 *buffer, unsigne
     if (packet)
         MIDISend(port, dest, packetList);
 }
-#endif /* HAVE_COREAUDIO_COREAUDIO_H */

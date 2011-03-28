@@ -34,7 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
-#ifdef HAVE_COREAUDIO_COREAUDIO_H
 
 /**************************************************************************
  * 				CoreAudio_drvLoad       [internal]	
@@ -80,7 +79,6 @@ static DWORD CoreAudio_drvClose(DWORD dwDevID)
     TRACE("(%08x)\n", dwDevID);
     return 1;
 }
-#endif /* HAVE_COREAUDIO_COREAUDIO_H */
 
 /**************************************************************************
  * 				DriverProc (WINECOREAUDIO.1)
@@ -100,9 +98,8 @@ LRESULT CALLBACK CoreAudio_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
            wMsg == DRV_INSTALL ? "DRV_INSTALL" :
            wMsg == DRV_REMOVE ? "DRV_REMOVE" : "UNKNOWN", 
            wMsg, dwParam1, dwParam2);
-    
+
     switch(wMsg) {
-#ifdef HAVE_COREAUDIO_COREAUDIO_H
     case DRV_LOAD:		return CoreAudio_drvLoad();
     case DRV_FREE:		return CoreAudio_drvFree();
     case DRV_OPEN:		return CoreAudio_drvOpen((LPSTR)dwParam1);
@@ -113,7 +110,6 @@ LRESULT CALLBACK CoreAudio_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case DRV_CONFIGURE:		MessageBoxA(0, "CoreAudio driver!", "CoreAudio driver", MB_OK); return 1;
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
-#endif
     default:
 	return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
