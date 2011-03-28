@@ -1572,6 +1572,33 @@ static HRESULT shader_get_function(IWineD3DBaseShaderImpl *shader, void *data, U
     return WINED3D_OK;
 }
 
+/* Set local constants for d3d8 shaders. */
+static HRESULT shader_set_local_constants_float(IWineD3DBaseShaderImpl *shader,
+        UINT start_idx, const float *src_data, UINT count)
+{
+    UINT end_idx = start_idx + count;
+    UINT i;
+
+    if (end_idx > shader->baseShader.limits.constant_float)
+    {
+        WARN("end_idx %u > float constants limit %u.\n",
+                end_idx, shader->baseShader.limits.constant_float);
+        end_idx = shader->baseShader.limits.constant_float;
+    }
+
+    for (i = start_idx; i < end_idx; ++i)
+    {
+        local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
+        if (!lconst) return E_OUTOFMEMORY;
+
+        lconst->idx = i;
+        memcpy(lconst->value, src_data + (i - start_idx) * 4 /* 4 components */, 4 * sizeof(float));
+        list_add_head(&shader->baseShader.constantsF, &lconst->entry);
+    }
+
+    return WINED3D_OK;
+}
+
 static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *byte_code,
         const struct wined3d_shader_signature *output_signature, DWORD float_const_count)
 {
@@ -1679,34 +1706,13 @@ static HRESULT STDMETHODCALLTYPE vertexshader_GetFunction(IWineD3DVertexShader *
     return shader_get_function((IWineD3DBaseShaderImpl *)iface, data, data_size);
 }
 
-/* Set local constants for d3d8 shaders. */
 static HRESULT STDMETHODCALLTYPE vertexshader_SetLocalConstantsF(IWineD3DVertexShader *iface,
         UINT start_idx, const float *src_data, UINT count)
 {
-    IWineD3DVertexShaderImpl *shader =(IWineD3DVertexShaderImpl *)iface;
-    IWineD3DDeviceImpl *device = shader->baseShader.device;
-    UINT i, end_idx;
-
     TRACE("iface %p, start_idx %u, src_data %p, count %u.\n", iface, start_idx, src_data, count);
 
-    end_idx = start_idx + count;
-    if (end_idx > device->d3d_vshader_constantF)
-    {
-        WARN("end_idx %u > float constants limit %u.\n", end_idx, device->d3d_vshader_constantF);
-        end_idx = device->d3d_vshader_constantF;
-    }
-
-    for (i = start_idx; i < end_idx; ++i)
-    {
-        local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
-        if (!lconst) return E_OUTOFMEMORY;
-
-        lconst->idx = i;
-        memcpy(lconst->value, src_data + (i - start_idx) * 4 /* 4 components */, 4 * sizeof(float));
-        list_add_head(&shader->baseShader.constantsF, &lconst->entry);
-    }
-
-    return WINED3D_OK;
+    return shader_set_local_constants_float((IWineD3DBaseShaderImpl *)iface,
+            start_idx, src_data, count);
 }
 
 static const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
@@ -1719,7 +1725,6 @@ static const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     vertexshader_GetParent,
     /* IWineD3DBaseShader methods */
     vertexshader_GetFunction,
-    /* IWineD3DVertexShader methods */
     vertexshader_SetLocalConstantsF,
 };
 
@@ -1951,6 +1956,15 @@ static HRESULT STDMETHODCALLTYPE geometryshader_GetFunction(IWineD3DGeometryShad
     return shader_get_function((IWineD3DBaseShaderImpl *)iface, data, data_size);
 }
 
+static HRESULT STDMETHODCALLTYPE geometryshader_SetLocalConstantsF(IWineD3DGeometryShader *iface,
+        UINT start_idx, const float *src_data, UINT count)
+{
+    TRACE("iface %p, start_idx %u, src_data %p, count %u.\n", iface, start_idx, src_data, count);
+
+    return shader_set_local_constants_float((IWineD3DBaseShaderImpl *)iface,
+            start_idx, src_data, count);
+}
+
 static const IWineD3DGeometryShaderVtbl wined3d_geometryshader_vtbl =
 {
     /* IUnknown methods */
@@ -1961,6 +1975,7 @@ static const IWineD3DGeometryShaderVtbl wined3d_geometryshader_vtbl =
     geometryshader_GetParent,
     /* IWineD3DBaseShader methods */
     geometryshader_GetFunction,
+    geometryshader_SetLocalConstantsF,
 };
 
 HRESULT geometryshader_init(struct wined3d_geometryshader *shader, IWineD3DDeviceImpl *device,
@@ -2047,6 +2062,15 @@ static HRESULT STDMETHODCALLTYPE pixelshader_GetFunction(IWineD3DPixelShader *if
     return shader_get_function((IWineD3DBaseShaderImpl *)iface, data, data_size);
 }
 
+static HRESULT STDMETHODCALLTYPE pixelshader_SetLocalConstantsF(IWineD3DPixelShader *iface,
+        UINT start_idx, const float *src_data, UINT count)
+{
+    TRACE("iface %p, start_idx %u, src_data %p, count %u.\n", iface, start_idx, src_data, count);
+
+    return shader_set_local_constants_float((IWineD3DBaseShaderImpl *)iface,
+            start_idx, src_data, count);
+}
+
 static const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
 {
     /* IUnknown methods */
@@ -2056,7 +2080,8 @@ static const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
     /* IWineD3DBase methods */
     pixelshader_GetParent,
     /* IWineD3DBaseShader methods */
-    pixelshader_GetFunction
+    pixelshader_GetFunction,
+    pixelshader_SetLocalConstantsF,
 };
 
 void find_ps_compile_args(const struct wined3d_state *state,

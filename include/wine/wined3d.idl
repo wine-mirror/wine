@@ -2395,6 +2395,11 @@ interface IWineD3DBaseShader : IWineD3DBase
         [out] void *data,
         [in, out] UINT *data_size
     );
+    HRESULT SetLocalConstantsF(
+        [in] UINT start_idx,
+        [in] const float *src_data,
+        [in] UINT vector4f_count
+    );
 }
 
 [
@@ -2404,11 +2409,6 @@ interface IWineD3DBaseShader : IWineD3DBase
 ]
 interface IWineD3DVertexShader : IWineD3DBaseShader
 {
-    HRESULT SetLocalConstantsF(
-        [in] UINT start_idx,
-        [in] const float *src_data,
-        [in] UINT vector4f_count
-    );
 }
 
 [
