@@ -3524,12 +3524,6 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
     if(!hbm || !bitmap)
         return InvalidParameter;
 
-    /* TODO: Support for device-dependent bitmaps */
-    if(hpal){
-        FIXME("no support for device-dependent bitmaps\n");
-        return NotImplemented;
-    }
-
     if (GetObjectA(hbm, sizeof(bm), &bm) != sizeof(bm))
             return InvalidParameter;
 
@@ -3625,6 +3619,56 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
             }
 
             GdipBitmapUnlockBits(*bitmap, &lockeddata);
+        }
+
+        if (retval == Ok && hpal)
+        {
+            WORD num_palette_entries;
+            PALETTEENTRY *palette_entries=NULL;
+            ColorPalette *palette=NULL;
+            int i;
+
+            if (!GetObjectW(hpal, sizeof(num_palette_entries), &num_palette_entries))
+                retval = GenericError;
+
+            if (retval == Ok)
+            {
+                palette_entries = GdipAlloc(sizeof(PALETTEENTRY) * num_palette_entries);
+                palette = GdipAlloc(sizeof(ColorPalette) + sizeof(ARGB) * (num_palette_entries-1));
+
+                if (!palette_entries || !palette)
+                    retval = OutOfMemory;
+            }
+
+            if (retval == Ok)
+            {
+                if (!GetPaletteEntries(hpal, 0, num_palette_entries, palette_entries))
+                    retval = GenericError;
+            }
+
+            if (retval == Ok)
+            {
+                palette->Flags = 0;
+                palette->Count = num_palette_entries;
+
+                for (i=0; i<num_palette_entries; i++)
+                {
+                    PALETTEENTRY * entry = &palette_entries[i];
+                    palette->Entries[i] = 0xff000000 | entry->peRed << 16 |
+                        entry->peGreen << 8 | entry->peBlue;
+                }
+
+                retval = GdipSetImagePalette((GpImage*)*bitmap, palette);
+            }
+
+            GdipFree(palette_entries);
+            GdipFree(palette);
+        }
+
+        if (retval != Ok)
+        {
+            GdipDisposeImage((GpImage*)*bitmap);
+            *bitmap = NULL;
         }
     }
 

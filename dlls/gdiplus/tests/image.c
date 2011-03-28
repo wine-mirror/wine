@@ -917,10 +917,8 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     GdipFree(LogPal);
 
     stat = GdipCreateBitmapFromHBITMAP(hbm, hpal, &gpbm);
-    todo_wine
-    {
-        expect(Ok, stat);
-    }
+    expect(Ok, stat);
+
     if (stat == Ok)
         GdipDisposeImage((GpImage*)gpbm);
 
