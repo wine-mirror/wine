@@ -1212,6 +1212,10 @@ static void continue_binding(IBindStatusCallback *callback)
     hres = IBindStatusCallback_OnProgress(callback, sizeof(html_page)-1, sizeof(html_page)-1,
             BINDSTATUS_BEGINDOWNLOADDATA, doc_url);
     ok(hres == S_OK, "OnProgress(BINDSTATUS_BEGINDOWNLOADDATA) failed: %08x\n", hres);
+    if(status_code != HTTP_STATUS_OK) {
+        CHECK_CALLED(IsErrorUrl);
+        SET_EXPECT(IsErrorUrl);
+    }
 
     SET_EXPECT(Read);
     stgmedium.tymed = TYMED_ISTREAM;
@@ -2752,6 +2756,57 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             ok(V_VT(pvaIn) == VT_UNKNOWN, "V_VT(pvaIn) != VT_UNKNOWN\n");
             /* FIXME: test V_UNKNOWN(pvaIn) == window */
             return S_OK;
+        case 1: {
+            SAFEARRAY *sa;
+            UINT dim;
+            LONG ind=0;
+            VARIANT var;
+            HRESULT hres;
+
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
+            ok(pvaOut != NULL, "pvaOut != NULL\n");
+            ok(V_VT(pvaIn) == VT_ARRAY, "V_VT(pvaIn) = %d\n", V_VT(pvaIn));
+            ok(V_VT(pvaOut) == VT_BOOL, "V_VT(pvaOut) = %d\n", V_VT(pvaOut));
+            sa = V_ARRAY(pvaIn);
+
+            dim = SafeArrayGetDim(sa);
+            ok(dim == 1, "dim = %d\n", dim);
+            hres = SafeArrayGetLBound(sa, 1, &ind);
+            ok(hres == S_OK, "SafeArrayGetLBound failed: %x\n", hres);
+            ok(ind == 0, "Lower bound = %d\n", ind);
+            hres = SafeArrayGetUBound(sa, 1, &ind);
+            ok(hres == S_OK, "SafeArrayGetUBound failed: %x\n", hres);
+            ok(ind == 7 || broken(ind == 5), "Upper bound = %d\n", ind);
+
+            ind = 0;
+            SafeArrayGetElement(sa, &ind, &var);
+            ok(V_VT(&var) == VT_I4, "Incorrect data type: %d\n", V_VT(&var));
+            ok(V_I4(&var) == status_code, "Incorrect error code: %d\n", V_I4(&var));
+            VariantClear(&var);
+            ind = 1;
+            SafeArrayGetElement(sa, &ind, &var);
+            ok(V_VT(&var) == VT_BSTR, "Incorrect data type: %d\n", V_VT(&var));
+            ok(!strcmp_wa(V_BSTR(&var), "winetest:doc"), "Page address: %s\n", wine_dbgstr_w(V_BSTR(&var)));
+            VariantClear(&var);
+            ind = 2;
+            SafeArrayGetElement(sa, &ind, &var);
+            ok(V_VT(&var) == VT_UNKNOWN, "Incorrect data type: %d\n", V_VT(&var));
+            VariantClear(&var);
+            ind = 3;
+            SafeArrayGetElement(sa, &ind, &var);
+            ok(V_VT(&var) == VT_UNKNOWN, "Incorrect data type: %d\n", V_VT(&var));
+            VariantClear(&var);
+            ind = 4;
+            SafeArrayGetElement(sa, &ind, &var);
+            ok(V_VT(&var) == VT_BOOL, "Incorrect data type: %d\n", V_VT(&var));
+            ok(!V_BOOL(&var), "Unknown value is incorrect\n");
+            VariantClear(&var);
+            ind = 5;
+            SafeArrayGetElement(sa, &ind, &var);
+            ok(V_VT(&var) == VT_BOOL, "Incorrect data type: %d\n", V_VT(&var));
+            ok(!V_BOOL(&var), "Unknown value is incorrect\n");
+            VariantClear(&var);
+        }
         default:
             return E_FAIL; /* TODO */
         }
@@ -2967,7 +3022,8 @@ static HRESULT  WINAPI DocObjectService_IsErrorUrl(
         BOOL *pfIsError)
 {
     CHECK_EXPECT(IsErrorUrl);
-    return E_NOTIMPL;
+    *pfIsError = FALSE;
+    return S_OK;
 }
 
 static IDocObjectServiceVtbl DocObjectServiceVtbl = {
@@ -5353,7 +5409,7 @@ static void test_HTMLDocument(BOOL do_load)
     ok(!IsWindow(hwnd), "hwnd is not destroyed\n");
 }
 
-static void test_HTMLDocument_hlink(void)
+static void test_HTMLDocument_hlink(DWORD status)
 {
     IHTMLDocument2 *doc;
 
@@ -5372,7 +5428,9 @@ static void test_HTMLDocument_hlink(void)
     test_Persist(doc, &Moniker);
     test_Navigate(doc);
 
+    status_code = status;
     test_download(DWL_CSS|DWL_TRYCSS);
+    status_code = HTTP_STATUS_OK;
 
     test_IsDirty(doc, S_FALSE);
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
@@ -6000,7 +6058,11 @@ START_TEST(htmldoc)
     container_hwnd = create_container_window();
     register_protocol();
 
-    test_HTMLDocument_hlink();
+    asynchronous_binding = TRUE;
+    test_HTMLDocument_hlink(HTTP_STATUS_NOT_FOUND);
+
+    asynchronous_binding = FALSE;
+    test_HTMLDocument_hlink(HTTP_STATUS_OK);
     test_HTMLDocument(FALSE);
     test_HTMLDocument(TRUE);
     test_HTMLDocument_StreamLoad();
