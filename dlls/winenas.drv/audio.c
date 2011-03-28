@@ -89,8 +89,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 /* Allow 1% deviation for sample rates (some ES137x cards) */
 #define NEAR_MATCH(rate1,rate2) (((100*((int)(rate1)-(int)(rate2)))/(rate1))==0)
 
-#ifdef HAVE_NAS
-
 static AuServer         *AuServ;
 
 #define MAX_WAVEOUTDRV 	(1)
@@ -1489,14 +1487,27 @@ static int nas_end(void)
   return 1;
 }
 
-#else /* !HAVE_NAS */
 
 /**************************************************************************
- * 				wodMessage (WINENAS.@)
+ * 				DriverProc (WINENAS.@)
  */
-DWORD WINAPI NAS_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2)
+LRESULT CALLBACK NAS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                LPARAM dwParam1, LPARAM dwParam2)
 {
-    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
+    switch(wMsg) {
+    case DRV_LOAD:
+    case DRV_FREE:
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
+    case DRV_QUERYCONFIGURE:
+        return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "NAS MultiMedia Driver !", "NAS Driver", MB_OK);	return 1;
+    case DRV_INSTALL:
+    case DRV_REMOVE:
+        return DRV_SUCCESS;
+    default:
+	return 0;
+    }
 }
-#endif

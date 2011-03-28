@@ -4,7 +4,6 @@ EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = @NASLIBS@
 
 C_SRCS = \
-	audio.c \
-	nas.c
+	audio.c
 
 @MAKE_DLL_RULES@

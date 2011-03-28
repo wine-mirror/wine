@@ -503,9 +503,6 @@
 /* Define to 1 if you have the <mpg123.h> header file. */
 #undef HAVE_MPG123_H
 
-/* Define if you have NAS including devel headers */
-#undef HAVE_NAS
-
 /* Define to 1 if you have the <ncurses.h> header file. */
 #undef HAVE_NCURSES_H
 

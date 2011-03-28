@@ -9039,10 +9039,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_audio_AuCreateFlow" >&5
 $as_echo "$ac_cv_lib_audio_AuCreateFlow" >&6; }
 if test "x$ac_cv_lib_audio_AuCreateFlow" = x""yes; then :
-
-$as_echo "#define HAVE_NAS 1" >>confdefs.h
-
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XauGetBestAuthByAddr in -lXau" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XauGetBestAuthByAddr in -lXau" >&5
 $as_echo_n "checking for XauGetBestAuthByAddr in -lXau... " >&6; }
 if test "${ac_cv_lib_Xau_XauGetBestAuthByAddr+set}" = set; then :
   $as_echo_n "(cached) " >&6
