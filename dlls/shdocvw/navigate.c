@@ -40,6 +40,7 @@ typedef struct {
     LONG ref;
 
     DocHost *doc_host;
+    IBinding *binding;
 
     LPWSTR url;
     HGLOBAL post_data;
@@ -176,6 +177,8 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
     if(!ref) {
         if(This->doc_host)
             IOleClientSite_Release(&This->doc_host->IOleClientSite_iface);
+        if(This->binding)
+            IBinding_Release(This->binding);
         if(This->post_data)
             GlobalFree(This->post_data);
         SysFreeString(This->headers);
@@ -192,6 +195,9 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
     BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
 
     TRACE("(%p)->(%d %p)\n", This, dwReserved, pbind);
+
+    This->binding = pbind;
+    IBinding_AddRef(This->binding);
 
     return S_OK;
 }
@@ -212,10 +218,30 @@ static HRESULT WINAPI BindStatusCallback_OnLowResource(IBindStatusCallback *ifac
     return E_NOTIMPL;
 }
 
+static DWORD get_http_status_code(IBinding *binding)
+{
+    IWinInetHttpInfo *http_info;
+    DWORD status, size = sizeof(DWORD);
+    HRESULT hres;
+
+    hres = IBinding_QueryInterface(binding, &IID_IWinInetHttpInfo, (void**)&http_info);
+    if(FAILED(hres))
+        return HTTP_STATUS_OK;
+
+    hres = IWinInetHttpInfo_QueryInfo(http_info, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER,
+            &status, &size, NULL, NULL);
+    IWinInetHttpInfo_Release(http_info);
+
+    if(FAILED(hres))
+        return HTTP_STATUS_OK;
+    return status;
+}
+
 static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface,
         ULONG ulProgress, ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
 {
     BindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+    DWORD status_code;
 
     TRACE("(%p)->(%d %d %d %s)\n", This, ulProgress, ulProgressMax, ulStatusCode,
           debugstr_w(szStatusText));
@@ -225,6 +251,9 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface,
         return set_dochost_url(This->doc_host, szStatusText);
     case BINDSTATUS_BEGINDOWNLOADDATA:
         set_status_text(This, szStatusText); /* FIXME: "Start downloading from site: %s" */
+        status_code = get_http_status_code(This->binding);
+        if(status_code != HTTP_STATUS_OK)
+            handle_navigation_error(This->doc_host, status_code, This->url, NULL);
         return S_OK;
     case BINDSTATUS_ENDDOWNLOADDATA:
         set_status_text(This, szStatusText); /* FIXME: "Downloading from site: %s" */
@@ -298,12 +327,14 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
     if(!This->doc_host)
         return S_OK;
 
-    /* FIXME: Check HTTP status code */
     if(FAILED(hresult))
         handle_navigation_error(This->doc_host, hresult, This->url, NULL);
 
     IOleClientSite_Release(&This->doc_host->IOleClientSite_iface);
     This->doc_host = NULL;
+
+    IBinding_Release(This->binding);
+    This->binding = NULL;
 
     return S_OK;
 }
@@ -437,6 +468,8 @@ static BindStatusCallback *create_callback(DocHost *doc_host, LPCWSTR url, PBYTE
 
     ret->doc_host = doc_host;
     IOleClientSite_AddRef(&doc_host->IOleClientSite_iface);
+
+    ret->binding = NULL;
 
     if(post_data) {
         ret->post_data = GlobalAlloc(0, post_data_len);
