@@ -44,7 +44,6 @@ typedef struct tagWINE_PLAYSOUND
     LPCWSTR                     pszSound;
     HMODULE                     hMod;
     DWORD                       fdwSound;
-    HANDLE                      hThread;
     struct tagWINE_PLAYSOUND*   lpNext;
 } WINE_PLAYSOUND;
 
@@ -215,7 +214,6 @@ static void     PlaySound_Free(WINE_PLAYSOUND* wps)
     if (PlaySoundList == NULL) SetEvent(psLastEvent);
     LeaveCriticalSection(&WINMM_cs);
     if (wps->bAlloc) HeapFree(GetProcessHeap(), 0, (void*)wps->pszSound);
-    if (wps->hThread) CloseHandle(wps->hThread);
     HeapFree(GetProcessHeap(), 0, wps);
 }
 
@@ -258,7 +256,8 @@ static WINE_PLAYSOUND*  PlaySound_Alloc(const void* pszSound, HMODULE hmod,
 
     return wps;
  oom_error:
-    PlaySound_Free(wps);
+    if (wps->bAlloc) HeapFree(GetProcessHeap(), 0, (void*)wps->pszSound);
+    HeapFree(GetProcessHeap(), 0, wps);
     return NULL;
 }
 
@@ -377,6 +376,8 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 	  (LPSTR)&mmckInfo.ckid, mmckInfo.fccType, mmckInfo.cksize);
 
     lpWaveFormat = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
+    if (!lpWaveFormat)
+	goto errCleanUp;
     if (mmioRead(hmmio, (HPSTR)lpWaveFormat, mmckInfo.cksize) < sizeof(PCMWAVEFORMAT))
 	goto errCleanUp;
 
@@ -398,6 +399,8 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 	  (LPSTR)&mmckInfo.ckid, mmckInfo.fccType, mmckInfo.cksize);
 
     s.hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    if (!s.hEvent)
+	goto errCleanUp;
 
     if (waveOutOpen(&hWave, WAVE_MAPPER, lpWaveFormat, (DWORD_PTR)PlaySound_Callback,
 		    (DWORD_PTR)&s, CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
@@ -407,6 +410,8 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     bufsize = (((lpWaveFormat->nAvgBytesPerSec / 3) - 1) / lpWaveFormat->nBlockAlign + 1) *
 	lpWaveFormat->nBlockAlign;
     waveHdr = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(WAVEHDR) + 2 * bufsize);
+    if (!waveHdr)
+	goto errCleanUp;
     waveHdr[0].lpData = (char*)waveHdr + 2 * sizeof(WAVEHDR);
     waveHdr[1].lpData = (char*)waveHdr + 2 * sizeof(WAVEHDR) + bufsize;
     waveHdr[0].dwUser = waveHdr[1].dwUser = 0L;
@@ -458,10 +463,10 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 
 errCleanUp:
     TRACE("Done playing=%s => %s!\n", debugstr_w(wps->pszSound), bRet ? "ok" : "ko");
-    CloseHandle(s.hEvent);
-    HeapFree(GetProcessHeap(), 0, waveHdr);
     HeapFree(GetProcessHeap(), 0, lpWaveFormat);
     if (hWave)		while (waveOutClose(hWave) == WAVERR_STILLPLAYING) Sleep(100);
+    CloseHandle(s.hEvent);
+    HeapFree(GetProcessHeap(), 0, waveHdr);
     if (hmmio) 		mmioClose(hmmio, 0);
 
     PlaySound_Free(wps);
@@ -509,16 +514,15 @@ static BOOL MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSo
     PlaySoundList = wps;
     LeaveCriticalSection(&WINMM_cs);
 
-    if (!pszSound || (fdwSound & SND_PURGE)) return TRUE;
+    if (!wps) return TRUE;
 
     if (fdwSound & SND_ASYNC)
     {
-        DWORD       id;
         HANDLE      handle;
         wps->bLoop = (fdwSound & SND_LOOP) ? TRUE : FALSE;
-        if ((handle = CreateThread(NULL, 0, proc_PlaySound, wps, 0, &id)) != 0) {
-            wps->hThread = handle;
+        if ((handle = CreateThread(NULL, 0, proc_PlaySound, wps, 0, NULL)) != 0) {
             SetThreadPriority(handle, THREAD_PRIORITY_TIME_CRITICAL);
+            CloseHandle(handle);
             return TRUE;
         }
     }
