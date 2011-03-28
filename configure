@@ -10985,10 +10985,7 @@ int ret = snd_pcm_hw_params_get_access_mask(NULL, NULL)
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-
-$as_echo "#define HAVE_ALSA 1" >>confdefs.h
-
-                         ALSALIBS="-lasound"
+  ALSALIBS="-lasound"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi

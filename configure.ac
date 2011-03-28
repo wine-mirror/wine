@@ -1513,8 +1513,7 @@ then
 #elif defined(HAVE_SYS_ASOUNDLIB_H)
 #include <sys/asoundlib.h>
 #endif]], [[int ret = snd_pcm_hw_params_get_access_mask(NULL, NULL)]])],
-                        [AC_DEFINE(HAVE_ALSA,1,[Define if you have ALSA 1.x including devel headers])
-                         ALSALIBS="-lasound"],[])])
+                        [ALSALIBS="-lasound"])])
 fi
 
 dnl **** Check for capi4linux ****

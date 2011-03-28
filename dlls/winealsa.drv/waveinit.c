@@ -25,9 +25,6 @@
  */
 
 #include "config.h"
-
-#ifdef HAVE_ALSA
-
 #include "wine/port.h"
 
 #include <stdlib.h>
@@ -1014,5 +1011,3 @@ void ALSA_WaveInit(void)
     if (key)
         RegCloseKey(key);
 }
-
-#endif /* HAVE_ALSA */

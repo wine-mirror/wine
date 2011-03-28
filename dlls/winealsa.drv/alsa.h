@@ -24,7 +24,7 @@
 # error You must include config.h to use this header
 #endif
 
-#if defined(HAVE_ALSA) && !defined(__ALSA_H)
+#ifndef __ALSA_H
 #define __ALSA_H
 
 #ifdef interface

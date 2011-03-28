@@ -52,8 +52,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mixer);
 
-#ifdef HAVE_ALSA
-
 #define	WINE_MIXER_MANUF_ID      0xAA
 #define	WINE_MIXER_PRODUCT_ID    0x55
 #define	WINE_MIXER_VERSION       0x0100
@@ -1557,15 +1555,12 @@ static DWORD MIX_GetLineControls(UINT wDevID, LPMIXERLINECONTROLSW mlc, DWORD_PT
     return MMSYSERR_NOERROR;
 }
 
-#endif /*HAVE_ALSA*/
-
 /**************************************************************************
  *                        mxdMessage (WINEALSA.3)
  */
 DWORD WINAPI ALSA_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
                              DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-#ifdef HAVE_ALSA
     DWORD ret;
     TRACE("(%04X, %s, %08lX, %08lX, %08lX);\n", wDevID, getMessage(wMsg),
           dwUser, dwParam1, dwParam2);
@@ -1611,9 +1606,4 @@ DWORD WINAPI ALSA_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 
     TRACE("Returning %08X\n", ret);
     return ret;
-#else /*HAVE_ALSA*/
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-
-    return MMSYSERR_NOTENABLED;
-#endif /*HAVE_ALSA*/
 }

@@ -59,8 +59,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
-#ifdef HAVE_ALSA
-
 WINE_WAVEDEV	*WInDev;
 DWORD            ALSA_WidNumMallocedDevs;
 DWORD            ALSA_WidNumDevs;
@@ -778,17 +776,3 @@ DWORD WINAPI ALSA_widMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     }
     return MMSYSERR_NOTSUPPORTED;
 }
-
-#else /* HAVE_ALSA */
-
-/**************************************************************************
- * 				widMessage (WINEALSA.@)
- */
-DWORD WINAPI ALSA_widMessage(WORD wDevID, WORD wMsg, DWORD_PTR dwUser,
-                             DWORD_PTR dwParam1, DWORD_PTR dwParam2)
-{
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
-}
-
-#endif /* HAVE_ALSA */

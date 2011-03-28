@@ -58,8 +58,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-#ifdef HAVE_ALSA
-
 WINE_DEFAULT_DEBUG_CHANNEL(dsalsa);
 
 typedef struct IDsDriverImpl IDsDriverImpl;
@@ -959,5 +957,3 @@ DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
     *desc = WOutDev[wDevID].ds_desc;
     return MMSYSERR_NOERROR;
 }
-
-#endif /* HAVE_ALSA */

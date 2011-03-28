@@ -54,8 +54,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-#ifdef HAVE_ALSA
-
 /* Notify timer checks every 10 ms with a resolution of 2 ms */
 #define DS_TIME_DEL 10
 #define DS_TIME_RES 2
@@ -1092,5 +1090,3 @@ DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
     *desc = WInDev[wDevID].ds_desc;
     return MMSYSERR_NOERROR;
 }
-
-#endif /* HAVE_ALSA */

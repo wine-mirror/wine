@@ -39,8 +39,6 @@
 
 #include "alsa.h"
 
-#ifdef HAVE_ALSA
-
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -725,8 +723,6 @@ if (err<0) { \
 	return;
 }
 
-#endif
-
 /**************************************************************************
  * 				DriverProc (WINEALSA.@)
  */
@@ -737,7 +733,6 @@ LRESULT CALLBACK ALSA_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 /* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
 
     switch(wMsg) {
-#ifdef HAVE_ALSA
     case DRV_LOAD:
     case DRV_FREE:
     case DRV_OPEN:
@@ -750,7 +745,6 @@ LRESULT CALLBACK ALSA_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case DRV_INSTALL:
     case DRV_REMOVE:
         return DRV_SUCCESS;
-#endif
     default:
 	return 0;
     }

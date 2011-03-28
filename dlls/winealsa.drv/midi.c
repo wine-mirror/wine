@@ -53,8 +53,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
-#ifdef HAVE_ALSA
-
 #ifndef SND_SEQ_PORT_TYPE_PORT
 #define SND_SEQ_PORT_TYPE_PORT (1<<19)  /* Appears in version 1.0.12rc1 */
 #endif
@@ -1299,8 +1297,6 @@ static LONG ALSA_MidiInit(void)
     return TRUE;
 }
 
-#endif
-
 /**************************************************************************
  * 			midMessage (WINEALSA.@)
  */
@@ -1310,7 +1306,6 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
-#ifdef HAVE_ALSA
     case DRVM_INIT:
         ALSA_MidiInit();
     case DRVM_EXIT:
@@ -1338,7 +1333,6 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return midStart(wDevID);
     case MIDM_STOP:
 	return midStop(wDevID);
-#endif
     default:
 	TRACE("Unsupported message\n");
     }
@@ -1355,7 +1349,6 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-#ifdef HAVE_ALSA
     case DRVM_INIT:
         ALSA_MidiInit();
     case DRVM_EXIT:
@@ -1385,7 +1378,6 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return 0;
     case MODM_RESET:
 	return modReset(wDevID);
-#endif
     default:
 	TRACE("Unsupported message\n");
     }

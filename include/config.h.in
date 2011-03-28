@@ -12,9 +12,6 @@
 /* Define to 1 if you have the <alias.h> header file. */
 #undef HAVE_ALIAS_H
 
-/* Define if you have ALSA 1.x including devel headers */
-#undef HAVE_ALSA
-
 /* Define to 1 if you have the <alsa/asoundlib.h> header file. */
 #undef HAVE_ALSA_ASOUNDLIB_H
 
