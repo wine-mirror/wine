@@ -55,6 +55,16 @@
 #ifdef HAVE_SYS_POLL_H
 # include <sys/poll.h>
 #endif
+#if defined(HAVE_SYS_SOUNDCARD_H)
+# include <sys/soundcard.h>
+#elif defined(HAVE_MACHINE_SOUNDCARD_H)
+# include <machine/soundcard.h>
+#elif defined(HAVE_SOUNDCARD_H)
+# include <soundcard.h>
+#endif
+#ifdef HAVE_SYS_ERRNO_H
+#include <sys/errno.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -70,7 +80,6 @@
 #include "ksmedia.h"
 #include "initguid.h"
 #include "dsdriver.h"
-#include "oss.h"
 #include "wine/debug.h"
 
 #include "audio.h"
@@ -79,8 +88,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
 /* Allow 1% deviation for sample rates (some ES137x cards) */
 #define NEAR_MATCH(rate1,rate2) (((100*((int)(rate1)-(int)(rate2)))/(rate1))==0)
-
-#ifdef HAVE_OSS
 
 WINE_WAVEOUT    WOutDev[MAX_WAVEDRV];
 WINE_WAVEIN     WInDev[MAX_WAVEDRV];
@@ -3166,26 +3173,29 @@ DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD_PTR dwUser,
     return MMSYSERR_NOTSUPPORTED;
 }
 
-#else /* !HAVE_OSS */
-
 /**************************************************************************
- * 				wodMessage (WINEOSS.7)
+ * 				DriverProc (WINEOSS.1)
  */
-DWORD WINAPI OSS_wodMessage(WORD wDevID, WORD wMsg, DWORD_PTR dwUser,
-			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+LRESULT CALLBACK OSS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                LPARAM dwParam1, LPARAM dwParam2)
 {
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
-}
+     TRACE("(%08lX, %p, %08X, %08lX, %08lX)\n",
+           dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
-/**************************************************************************
- * 				widMessage (WINEOSS.6)
- */
-DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD_PTR dwUser,
-			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
-{
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    return MMSYSERR_NOTENABLED;
+    switch(wMsg) {
+    case DRV_LOAD:
+    case DRV_FREE:
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
+    case DRV_QUERYCONFIGURE:
+        return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "OSS MultiMedia Driver !", "OSS Driver", MB_OK);	return 1;
+    case DRV_INSTALL:
+    case DRV_REMOVE:
+        return DRV_SUCCESS;
+    default:
+	return 0;
+    }
 }
-
-#endif /* HAVE_OSS */

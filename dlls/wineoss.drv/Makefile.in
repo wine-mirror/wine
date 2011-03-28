@@ -8,7 +8,6 @@ C_SRCS = \
 	midi.c \
 	midipatch.c \
 	mixer.c \
-	mmaux.c \
-	oss.c
+	mmaux.c
 
 @MAKE_DLL_RULES@

@@ -45,6 +45,16 @@
 #ifdef HAVE_SYS_POLL_H
 # include <sys/poll.h>
 #endif
+#if defined(HAVE_SYS_SOUNDCARD_H)
+# include <sys/soundcard.h>
+#elif defined(HAVE_MACHINE_SOUNDCARD_H)
+# include <machine/soundcard.h>
+#elif defined(HAVE_SOUNDCARD_H)
+# include <soundcard.h>
+#endif
+#ifdef HAVE_SYS_ERRNO_H
+#include <sys/errno.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -55,14 +65,11 @@
 #include "mmreg.h"
 #include "dsound.h"
 #include "dsdriver.h"
-#include "oss.h"
 #include "wine/debug.h"
 
 #include "audio.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
-
-#ifdef HAVE_OSS
 
 /*======================================================================*
  *                  Low level DSOUND definitions                        *
@@ -963,5 +970,3 @@ DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
     *desc = WOutDev[wDevID].ossdev.ds_desc;
     return MMSYSERR_NOERROR;
 }
-
-#endif /* HAVE_OSS */

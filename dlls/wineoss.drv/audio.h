@@ -25,8 +25,6 @@
 # error You must include config.h to use this header
 #endif
 
-#ifdef HAVE_OSS
-
 /* unless someone makes a wineserver kernel module, Unix pipes are faster than win32 events */
 #define USE_PIPE_SYNC
 
@@ -183,5 +181,3 @@ extern DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc);
 /* dsrender.c */
 extern DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 extern DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
-
-#endif /* HAVE_OSS */

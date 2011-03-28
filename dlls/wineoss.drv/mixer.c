@@ -41,6 +41,16 @@
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
+#if defined(HAVE_SYS_SOUNDCARD_H)
+# include <sys/soundcard.h>
+#elif defined(HAVE_MACHINE_SOUNDCARD_H)
+# include <machine/soundcard.h>
+#elif defined(HAVE_SOUNDCARD_H)
+# include <soundcard.h>
+#endif
+#ifdef HAVE_SYS_ERRNO_H
+#include <sys/errno.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -48,13 +58,10 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "mmddk.h"
-#include "oss.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mixer);
-
-#ifdef HAVE_OSS
 
 #define MAX_MIXERDRV     (6)
 
@@ -1509,15 +1516,12 @@ static	DWORD	MIX_GetNumDevs(void)
     return MIX_NumMixers;
 }
 
-#endif /* HAVE_OSS */
-
 /**************************************************************************
  * 				mxdMessage (WINEOSS.3)
  */
 DWORD WINAPI OSS_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-#ifdef HAVE_OSS
     TRACE("(%04X, %s, %08lX, %08lX, %08lX);\n", wDevID, getMessage(wMsg),
           dwUser, dwParam1, dwParam2);
 
@@ -1552,10 +1556,4 @@ DWORD WINAPI OSS_mxdMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	WARN("unknown message %d!\n", wMsg);
 	return MMSYSERR_NOTSUPPORTED;
     }
-#else
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n", wDevID, wMsg,
-          dwUser, dwParam1, dwParam2);
-
-    return MMSYSERR_NOTENABLED;
-#endif
 }
