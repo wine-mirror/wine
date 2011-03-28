@@ -51,7 +51,6 @@
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"
-#include "jack.h"
 #include "wine/unicode.h"
 #include "wine/library.h"
 #include "wine/debug.h"
@@ -62,8 +61,6 @@
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
-
-#ifdef SONAME_LIBJACK
 
 #define MAKE_FUNCPTR(f) static typeof(f) * fp_##f = NULL;
 
@@ -85,6 +82,8 @@ MAKE_FUNCPTR(jack_get_ports);
 MAKE_FUNCPTR(jack_port_name);
 MAKE_FUNCPTR(jack_get_buffer_size);
 #undef MAKE_FUNCPTR
+
+static void *jackhandle;
 
 /* define the below to work around a bug in jack where closing a port */
 /* takes a very long time, so to get around this we actually don't */
@@ -2396,28 +2395,53 @@ DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
   return MMSYSERR_NOTSUPPORTED;
 }
 
-#else /* !SONAME_LIBJACK */
-
 /**************************************************************************
- * 				widMessage (WINEJACK.6)
+ * 				DriverProc (WINEJACK.1)
  */
-DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
-                             DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+LRESULT CALLBACK JACK_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg, 
+                                 LPARAM dwParam1, LPARAM dwParam2)
 {
-  FIXME("(%u, %04X, %08X, %08lX, %08lX):jack support not compiled into wine\n",
-        wDevID, wMsg, dwUser, dwParam1, dwParam2);
-  return MMSYSERR_NOTENABLED;
-}
+     TRACE("(%08lX, %p, %s (%08X), %08lX, %08lX)\n",
+           dwDevID, hDriv, wMsg == DRV_LOAD ? "DRV_LOAD" :
+           wMsg == DRV_FREE ? "DRV_FREE" :
+           wMsg == DRV_OPEN ? "DRV_OPEN" :
+           wMsg == DRV_CLOSE ? "DRV_CLOSE" :
+           wMsg == DRV_ENABLE ? "DRV_ENABLE" :
+           wMsg == DRV_DISABLE ? "DRV_DISABLE" :
+           wMsg == DRV_QUERYCONFIGURE ? "DRV_QUERYCONFIGURE" :
+           wMsg == DRV_CONFIGURE ? "DRV_CONFIGURE" :
+           wMsg == DRV_INSTALL ? "DRV_INSTALL" :
+           wMsg == DRV_REMOVE ? "DRV_REMOVE" : "UNKNOWN",
+           wMsg, dwParam1, dwParam2);
 
-/**************************************************************************
- * 				wodMessage (WINEJACK.7)
- */
-DWORD WINAPI JACK_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
-                             DWORD_PTR dwParam1, DWORD_PTR dwParam2)
-{
-  FIXME("(%u, %04X, %08X, %08lX, %08lX):jack support not compiled into wine\n",
-        wDevID, wMsg, dwUser, dwParam1, dwParam2);
-  return MMSYSERR_NOTENABLED;
+    switch(wMsg) {
+    case DRV_LOAD:
+        jackhandle = wine_dlopen(SONAME_LIBJACK, RTLD_NOW, NULL, 0);
+        if (!jackhandle)
+        {
+            FIXME("error loading the jack library %s, please install this library to use jack\n",
+                  SONAME_LIBJACK);
+            return 0;
+        }
+        return 1;
+    case DRV_FREE:
+        if (jackhandle)
+        {
+            TRACE("calling wine_dlclose() on jackhandle\n");
+            wine_dlclose(jackhandle, NULL, 0);
+            jackhandle = NULL;
+        }
+        return 1;
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_INSTALL:
+    case DRV_REMOVE:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
+    case DRV_QUERYCONFIGURE:
+        return 1;
+    case DRV_CONFIGURE:		MessageBoxA(0, "jack audio driver!", "jack driver", MB_OK);	return 1;
+    default:
+	return 0;
+    }
 }
-
-#endif /* SONAME_LIBJACK */
