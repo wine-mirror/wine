@@ -1889,6 +1889,7 @@ struct wined3d_texture_ops
 };
 
 #define WINED3D_TEXTURE_COND_NP2            0x1
+#define WINED3D_TEXTURE_POW2_MAT_IDENT      0x2
 
 struct wined3d_texture
 {
@@ -1905,7 +1906,6 @@ struct wined3d_texture
     DWORD sampler;
     BOOL is_srgb;
     DWORD flags;
-    BOOL pow2_matrix_identity;
     const struct min_lookup *min_mip_lookup;
     const GLenum *mag_lookup;
     GLenum target;

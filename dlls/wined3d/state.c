@@ -3600,7 +3600,7 @@ static void sampler_texmatrix(DWORD state, struct wined3d_stateblock *stateblock
      */
     if (sampler < MAX_TEXTURES)
     {
-        const BOOL texIsPow2 = !texture->pow2_matrix_identity;
+        const BOOL texIsPow2 = !(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT);
 
         if (texIsPow2 || (context->lastWasPow2Texture & (1 << sampler)))
         {
@@ -3671,10 +3671,8 @@ static void sampler(DWORD state_id, struct wined3d_stateblock *stateblock, struc
         }
 
         /* Trigger shader constant reloading (for NP2 texcoord fixup) */
-        if (!texture->pow2_matrix_identity)
-        {
+        if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
             device->shader_backend->shader_load_np2fixup_constants(device->shader_priv, gl_info, state);
-        }
     }
     else if (mapped_stage < gl_info->limits.textures)
     {

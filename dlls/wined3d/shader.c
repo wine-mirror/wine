@@ -2101,7 +2101,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
             args->shadow |= 1 << i;
 
         /* Flag samplers that need NP2 texcoord fixup. */
-        if (!texture->pow2_matrix_identity)
+        if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
             args->np2_fixup |= (1 << i);
     }
     if (shader->baseShader.reg_maps.shader_version.major >= 3)

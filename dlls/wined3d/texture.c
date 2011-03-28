@@ -58,8 +58,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     texture->texture_rgb.dirty = TRUE;
     texture->texture_srgb.dirty = TRUE;
     texture->is_srgb = FALSE;
-    texture->pow2_matrix_identity = TRUE;
-    texture->flags = 0;
+    texture->flags = WINED3D_TEXTURE_POW2_MAT_IDENT;
 
     if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
     {
@@ -900,7 +899,7 @@ HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_length, UINT
         texture->pow2_matrix[5] = ((float)edge_length) / ((float)pow2_edge_length);
         texture->pow2_matrix[10] = ((float)edge_length) / ((float)pow2_edge_length);
         texture->pow2_matrix[15] = 1.0f;
-        texture->pow2_matrix_identity = FALSE;
+        texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
     }
     texture->target = GL_TEXTURE_CUBE_MAP_ARB;
 
@@ -1037,7 +1036,7 @@ HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT height, U
             && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
     {
         if (width != 1 || height != 1)
-            texture->pow2_matrix_identity = FALSE;
+            texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
 
         texture->pow2_matrix[0] = (float)width;
         texture->pow2_matrix[5] = (float)height;
@@ -1055,9 +1054,9 @@ HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT height, U
     {
         if ((width != pow2_width) || (height != pow2_height))
         {
-            texture->pow2_matrix_identity = FALSE;
             texture->pow2_matrix[0] = (((float)width) / ((float)pow2_width));
             texture->pow2_matrix[5] = (((float)height) / ((float)pow2_height));
+            texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
         }
         else
         {
