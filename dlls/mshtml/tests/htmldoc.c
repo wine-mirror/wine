@@ -161,6 +161,11 @@ DEFINE_EXPECT(OnViewChange);
 DEFINE_EXPECT(EvaluateNewWindow);
 DEFINE_EXPECT(GetTravelLog);
 DEFINE_EXPECT(UpdateBackForwardState);
+DEFINE_EXPECT(FireNavigateComplete2);
+DEFINE_EXPECT(FireDocumentComplete);
+DEFINE_EXPECT(GetPendingUrl);
+DEFINE_EXPECT(ActiveElementChanged);
+DEFINE_EXPECT(IsErrorUrl);
 
 static IUnknown *doc_unk;
 static IMoniker *doc_mon;
@@ -2834,6 +2839,134 @@ static const IDispatchVtbl DispatchVtbl = {
 
 static IDispatch Dispatch = { &DispatchVtbl };
 
+static HRESULT  WINAPI DocObjectService_QueryInterface(
+        IDocObjectService* This,
+        REFIID riid,
+        void **ppvObject)
+{
+    /* F62D9369-75EF-4578-8856-232802C76468 (ITridentService2) */
+    return E_NOTIMPL;
+}
+
+static ULONG  WINAPI DocObjectService_AddRef(
+        IDocObjectService* This)
+{
+    return 2;
+}
+
+static ULONG  WINAPI DocObjectService_Release(
+        IDocObjectService* This)
+{
+    return 1;
+}
+
+static HRESULT  WINAPI DocObjectService_FireBeforeNavigate2(
+        IDocObjectService* This,
+        IDispatch *pDispatch,
+        LPCWSTR lpszUrl,
+        DWORD dwFlags,
+        LPCWSTR lpszFrameName,
+        BYTE *pPostData,
+        DWORD cbPostData,
+        LPCWSTR lpszHeaders,
+        BOOL fPlayNavSound,
+        BOOL *pfCancel)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_FireNavigateComplete2(
+        IDocObjectService* This,
+        IHTMLWindow2 *pHTMLWindow2,
+        DWORD dwFlags)
+{
+    CHECK_EXPECT(FireNavigateComplete2);
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_FireDownloadBegin(
+        IDocObjectService* This)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_FireDownloadComplete(
+        IDocObjectService* This)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_FireDocumentComplete(
+        IDocObjectService* This,
+        IHTMLWindow2 *pHTMLWindow,
+        DWORD dwFlags)
+{
+    CHECK_EXPECT(FireDocumentComplete);
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_UpdateDesktopComponent(
+        IDocObjectService* This,
+        IHTMLWindow2 *pHTMLWindow)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_GetPendingUrl(
+        IDocObjectService* This,
+        BSTR *pbstrPendingUrl)
+{
+    CHECK_EXPECT(GetPendingUrl);
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_ActiveElementChanged(
+        IDocObjectService* This,
+        IHTMLElement *pHTMLElement)
+{
+    CHECK_EXPECT(ActiveElementChanged);
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_GetUrlSearchComponent(
+        IDocObjectService* This,
+        BSTR *pbstrSearch)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT  WINAPI DocObjectService_IsErrorUrl(
+        IDocObjectService* This,
+        LPCWSTR lpszUrl,
+        BOOL *pfIsError)
+{
+    CHECK_EXPECT(IsErrorUrl);
+    return E_NOTIMPL;
+}
+
+static IDocObjectServiceVtbl DocObjectServiceVtbl = {
+    DocObjectService_QueryInterface,
+    DocObjectService_AddRef,
+    DocObjectService_Release,
+    DocObjectService_FireBeforeNavigate2,
+    DocObjectService_FireNavigateComplete2,
+    DocObjectService_FireDownloadBegin,
+    DocObjectService_FireDownloadComplete,
+    DocObjectService_FireDocumentComplete,
+    DocObjectService_UpdateDesktopComponent,
+    DocObjectService_GetPendingUrl,
+    DocObjectService_ActiveElementChanged,
+    DocObjectService_GetUrlSearchComponent,
+    DocObjectService_IsErrorUrl
+};
+
+static IDocObjectService DocObjectService = { &DocObjectServiceVtbl };
+
 DEFINE_GUID(IID_ITabBrowserService, 0x5E8FA523,0x83D4,0x4DBE,0x81,0x99,0x4C,0x18,0xE4,0x85,0x87,0x25);
 
 static HRESULT  WINAPI BrowserService_QueryInterface(
@@ -2846,8 +2979,10 @@ static HRESULT  WINAPI BrowserService_QueryInterface(
     if(IsEqualGUID(&IID_IShellBrowser, riid))
         return E_NOINTERFACE; /* TODO */
 
-    if(IsEqualGUID(&IID_IDocObjectService, riid))
-        return E_NOINTERFACE; /* TODO */
+    if(IsEqualGUID(&IID_IDocObjectService, riid)) {
+        *ppvObject = &DocObjectService;
+        return S_OK;
+    }
 
     if(IsEqualGUID(&IID_ITabBrowserService, riid))
         return E_NOINTERFACE; /* TODO */
@@ -3665,9 +3800,11 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         SET_EXPECT(Invoke_AMBIENT_SILENT);
         SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         SET_EXPECT(Exec_ShellDocView_37);
+        SET_EXPECT(IsErrorUrl);
     }
     else
         SET_EXPECT(GetTravelLog);
+    SET_EXPECT(GetPendingUrl);
     load_state = LD_DOLOAD;
     expect_LockContainer_fLock = TRUE;
     readystate_set_loading = TRUE;
@@ -3709,9 +3846,11 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Exec_ShellDocView_37);
+        todo_wine CHECK_CALLED(IsErrorUrl);
     }
     else
         todo_wine CHECK_CALLED(GetTravelLog);
+    todo_wine CHECK_CALLED(GetPendingUrl);
 
     set_clientsite = container_locked = TRUE;
 
@@ -3786,6 +3925,12 @@ static void test_download(DWORD flags)
         SET_EXPECT(Exec_SETTITLE);
         SET_EXPECT(UpdateBackForwardState);
     }
+    if(!editmode && !(flags & DWL_EMPTY))
+        SET_EXPECT(FireNavigateComplete2);
+    if(!editmode)
+        SET_EXPECT(FireDocumentComplete);
+    SET_EXPECT(ActiveElementChanged);
+    SET_EXPECT(IsErrorUrl);
     expect_status_text = (LPWSTR)0xdeadbeef; /* TODO */
 
     while(!called_Exec_HTTPEQUIV_DONE && GetMessage(&msg, NULL, 0, 0)) {
@@ -3847,6 +3992,12 @@ static void test_download(DWORD flags)
         SET_CALLED(Exec_SETTITLE);
         todo_wine CHECK_CALLED(UpdateBackForwardState);
     }
+    if(!editmode && !(flags & DWL_EMPTY))
+        todo_wine CHECK_CALLED(FireNavigateComplete2);
+    if(!editmode)
+        CHECK_CALLED(FireDocumentComplete);
+    todo_wine CHECK_CALLED(ActiveElementChanged);
+    todo_wine CHECK_CALLED(IsErrorUrl);
 
     load_state = LD_COMPLETE;
 
@@ -4957,6 +5108,7 @@ static void test_StreamLoad(IHTMLDocument2 *doc)
     SET_EXPECT(Exec_ShellDocView_37);
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Read);
+    SET_EXPECT(GetPendingUrl);
     readystate_set_loading = TRUE;
 
     hres = IPersistStreamInit_Load(init, &Stream);
@@ -4967,6 +5119,7 @@ static void test_StreamLoad(IHTMLDocument2 *doc)
     CHECK_CALLED(Exec_ShellDocView_37);
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Read);
+    todo_wine CHECK_CALLED(GetPendingUrl);
 
     test_timer(EXPECT_SETTITLE);
     test_GetCurMoniker((IUnknown*)doc, NULL, "about:blank");
@@ -4988,6 +5141,7 @@ static void test_StreamInitNew(IHTMLDocument2 *doc)
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_EXPECT(Exec_ShellDocView_37);
     SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(GetPendingUrl);
     readystate_set_loading = TRUE;
 
     hres = IPersistStreamInit_InitNew(init);
@@ -4997,6 +5151,7 @@ static void test_StreamInitNew(IHTMLDocument2 *doc)
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(Exec_ShellDocView_37);
     CHECK_CALLED(OnChanged_READYSTATE);
+    todo_wine CHECK_CALLED(GetPendingUrl);
 
     test_timer(EXPECT_SETTITLE);
     test_GetCurMoniker((IUnknown*)doc, NULL, "about:blank");

@@ -254,7 +254,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         update_title(doc_obj);
     }
 
-    if(doc_obj && doc_obj->doc_object_service)
+    if(doc_obj && doc_obj->usermode!=EDITMODE && doc_obj->doc_object_service)
         IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
                 &doc->basedoc.window->IHTMLWindow2_iface, 0);
 
