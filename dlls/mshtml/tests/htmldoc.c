@@ -177,6 +177,7 @@ static BOOL readystate_set_loading = FALSE, readystate_set_interactive = FALSE, 
 static BOOL editmode = FALSE;
 static BOOL inplace_deactivated, open_call;
 static DWORD status_code = HTTP_STATUS_OK;
+static BOOL asynchronous_binding = FALSE;
 static int stream_read, protocol_read;
 static enum load_state_t {
     LD_DOLOAD,
@@ -204,6 +205,7 @@ static const WCHAR http_urlW[] =
 static const WCHAR doc_url[] = {'w','i','n','e','t','e','s','t',':','d','o','c',0};
 
 #define DOCHOST_DOCCANNAVIGATE 0
+#define WM_CONTINUE_BINDING (WM_APP+1)
 
 static HRESULT QueryInterface(REFIID riid, void **ppv);
 static void test_MSHTML_QueryStatus(IHTMLDocument2*,DWORD);
@@ -1054,6 +1056,11 @@ static IWinInetHttpInfo WinInetHttpInfo = { &WinInetHttpInfoVtbl };
 
 static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void **ppv)
 {
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
     if(IsEqualGUID(&IID_IWinInetInfo, riid) || IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
         *ppv = &WinInetHttpInfo;
         return S_OK;
@@ -1076,6 +1083,8 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
 static HRESULT WINAPI Binding_Abort(IBinding *iface)
 {
     CHECK_EXPECT(Abort);
+    if(asynchronous_binding)
+        PeekMessage(NULL, container_hwnd, WM_CONTINUE_BINDING, WM_CONTINUE_BINDING, PM_REMOVE);
     return S_OK;
 }
 
@@ -1188,18 +1197,53 @@ static HRESULT WINAPI Moniker_BindToObject(IMoniker *iface, IBindCtx *pcb, IMoni
     return E_NOTIMPL;
 }
 
+static void continue_binding(IBindStatusCallback *callback)
+{
+    FORMATETC formatetc = {0xc02d, NULL, 1, -1, TYMED_ISTREAM};
+    STGMEDIUM stgmedium;
+    HRESULT hres;
+
+    static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
+
+    hres = IBindStatusCallback_OnProgress(callback, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE,
+            wszTextHtml);
+    ok(hres == S_OK, "OnProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
+
+    hres = IBindStatusCallback_OnProgress(callback, sizeof(html_page)-1, sizeof(html_page)-1,
+            BINDSTATUS_BEGINDOWNLOADDATA, doc_url);
+    ok(hres == S_OK, "OnProgress(BINDSTATUS_BEGINDOWNLOADDATA) failed: %08x\n", hres);
+
+    SET_EXPECT(Read);
+    stgmedium.tymed = TYMED_ISTREAM;
+    U(stgmedium).pstm = &Stream;
+    stgmedium.pUnkForRelease = (IUnknown*)&Moniker;
+    hres = IBindStatusCallback_OnDataAvailable(callback,
+            BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION,
+            sizeof(html_page)-1, &formatetc, &stgmedium);
+    ok(hres == S_OK, "OnDataAvailable failed: %08x\n", hres);
+    CHECK_CALLED(Read);
+
+    hres = IBindStatusCallback_OnProgress(callback, sizeof(html_page)-1, sizeof(html_page)-1,
+            BINDSTATUS_ENDDOWNLOADDATA, NULL);
+    ok(hres == S_OK, "OnProgress(BINDSTATUS_ENDDOWNLOADDATA) failed: %08x\n", hres);
+
+    SET_EXPECT(GetBindResult);
+    hres = IBindStatusCallback_OnStopBinding(callback, S_OK, NULL);
+    ok(hres == S_OK, "OnStopBinding failed: %08x\n", hres);
+    SET_CALLED(GetBindResult); /* IE7 */
+
+    IBindStatusCallback_Release(callback);
+}
+
 static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMoniker *pmkToLeft,
         REFIID riid, void **ppv)
 {
     IBindStatusCallback *callback = NULL;
-    FORMATETC formatetc = {0xc02d, NULL, 1, -1, TYMED_ISTREAM};
-    STGMEDIUM stgmedium;
     BINDINFO bindinfo;
     DWORD bindf;
     HRESULT hres;
 
     static OLECHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
-    static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 
     CHECK_EXPECT(BindToStorage);
 
@@ -1240,35 +1284,12 @@ static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMon
     hres = IBindStatusCallback_OnStartBinding(callback, 0, &Binding);
     ok(hres == S_OK, "OnStartBinding failed: %08x\n", hres);
 
-    hres = IBindStatusCallback_OnProgress(callback, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE,
-                                          wszTextHtml);
-    ok(hres == S_OK, "OnProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
+    if(asynchronous_binding) {
+        PostMessageW(container_hwnd, WM_CONTINUE_BINDING, (WPARAM)callback, 0);
+        return MK_S_ASYNCHRONOUS;
+    }
 
-    hres = IBindStatusCallback_OnProgress(callback, sizeof(html_page)-1, sizeof(html_page)-1,
-                                          BINDSTATUS_BEGINDOWNLOADDATA, doc_url);
-    ok(hres == S_OK, "OnProgress(BINDSTATUS_BEGINDOWNLOADDATA) failed: %08x\n", hres);
-
-    SET_EXPECT(Read);
-    stgmedium.tymed = TYMED_ISTREAM;
-    U(stgmedium).pstm = &Stream;
-    stgmedium.pUnkForRelease = (IUnknown*)iface;
-    hres = IBindStatusCallback_OnDataAvailable(callback,
-            BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION,
-            sizeof(html_page)-1, &formatetc, &stgmedium);
-    ok(hres == S_OK, "OnDataAvailable failed: %08x\n", hres);
-    CHECK_CALLED(Read);
-
-    hres = IBindStatusCallback_OnProgress(callback, sizeof(html_page)-1, sizeof(html_page)-1,
-            BINDSTATUS_ENDDOWNLOADDATA, NULL);
-    ok(hres == S_OK, "OnProgress(BINDSTATUS_ENDDOWNLOADDATA) failed: %08x\n", hres);
-
-    SET_EXPECT(GetBindResult);
-    hres = IBindStatusCallback_OnStopBinding(callback, S_OK, NULL);
-    ok(hres == S_OK, "OnStopBinding failed: %08x\n", hres);
-    SET_CALLED(GetBindResult); /* IE7 */
-
-    IBindStatusCallback_Release(callback);
-
+    continue_binding(callback);
     return S_OK;
 }
 
@@ -3533,6 +3554,11 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
 
 static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if(msg == WM_CONTINUE_BINDING) {
+        IBindStatusCallback *callback = (IBindStatusCallback*)wParam;
+        continue_binding(callback);
+    }
+
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
