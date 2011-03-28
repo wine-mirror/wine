@@ -1890,6 +1890,7 @@ struct wined3d_texture_ops
 
 #define WINED3D_TEXTURE_COND_NP2            0x1
 #define WINED3D_TEXTURE_POW2_MAT_IDENT      0x2
+#define WINED3D_TEXTURE_IS_SRGB             0x4
 
 struct wined3d_texture
 {
@@ -1904,7 +1905,6 @@ struct wined3d_texture
     WINED3DTEXTUREFILTERTYPE filter_type;
     LONG bind_count;
     DWORD sampler;
-    BOOL is_srgb;
     DWORD flags;
     const struct min_lookup *min_mip_lookup;
     const GLenum *mag_lookup;

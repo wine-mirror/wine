@@ -57,7 +57,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     texture->lod = 0;
     texture->texture_rgb.dirty = TRUE;
     texture->texture_srgb.dirty = TRUE;
-    texture->is_srgb = FALSE;
     texture->flags = WINED3D_TEXTURE_POW2_MAT_IDENT;
 
     if (texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING)
@@ -143,7 +142,12 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
 
     TRACE("texture %p, srgb %#x, set_surface_desc %p.\n", texture, srgb, set_surface_desc);
 
-    texture->is_srgb = srgb; /* sRGB mode cache for preload() calls outside drawprim. */
+    /* sRGB mode cache for preload() calls outside drawprim. */
+    if (srgb)
+        texture->flags |= WINED3D_TEXTURE_IS_SRGB;
+    else
+        texture->flags &= ~WINED3D_TEXTURE_IS_SRGB;
+
     gl_tex = wined3d_texture_get_gl_texture(texture, gl_info, srgb);
     target = texture->target;
 
@@ -270,7 +274,8 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
 
     TRACE("texture %p, sampler_states %p.\n", texture, sampler_states);
 
-    gl_tex = wined3d_texture_get_gl_texture(texture, gl_info, texture->is_srgb);
+    gl_tex = wined3d_texture_get_gl_texture(texture, gl_info,
+            texture->flags & WINED3D_TEXTURE_IS_SRGB);
 
     /* This function relies on the correct texture being bound and loaded. */
 
@@ -646,7 +651,8 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
     if (set_gl_texture_desc && SUCCEEDED(hr))
     {
         UINT sub_count = texture->level_count * texture->layer_count;
-        BOOL srgb_tex = !gl_info->supported[EXT_TEXTURE_SRGB_DECODE] && texture->is_srgb;
+        BOOL srgb_tex = !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
+                && (texture->flags & WINED3D_TEXTURE_IS_SRGB);
         struct gl_texture *gl_tex;
         UINT i;
 
@@ -718,7 +724,7 @@ static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
             break;
 
         default:
-            srgb_mode = texture->is_srgb;
+            srgb_mode = texture->flags & WINED3D_TEXTURE_IS_SRGB;
             break;
     }
 
@@ -1115,7 +1121,6 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
 {
     IWineD3DDeviceImpl *device = texture->resource.device;
     struct wined3d_context *context = NULL;
-    BOOL srgb_mode = texture->is_srgb;
     BOOL srgb_was_toggled = FALSE;
     unsigned int i;
 
@@ -1125,9 +1130,17 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
         context = context_acquire(device, NULL);
     else if (texture->bind_count > 0)
     {
-        srgb_mode = device->stateBlock->state.sampler_states[texture->sampler][WINED3DSAMP_SRGBTEXTURE];
-        srgb_was_toggled = texture->is_srgb != srgb_mode;
-        texture->is_srgb = srgb_mode;
+        BOOL texture_srgb = texture->flags & WINED3D_TEXTURE_IS_SRGB;
+        BOOL sampler_srgb = device->stateBlock->state.sampler_states[texture->sampler][WINED3DSAMP_SRGBTEXTURE];
+        srgb_was_toggled = !texture_srgb != !sampler_srgb;
+
+        if (srgb_was_toggled)
+        {
+            if (sampler_srgb)
+                texture->flags |= WINED3D_TEXTURE_IS_SRGB;
+            else
+                texture->flags &= ~WINED3D_TEXTURE_IS_SRGB;
+        }
     }
 
     /* If the texture is marked dirty or the sRGB sampler setting has changed
@@ -1136,7 +1149,8 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
     {
         for (i = 0; i < texture->level_count; ++i)
         {
-            volume_load(volume_from_resource(texture->sub_resources[i]), i, srgb_mode);
+            volume_load(volume_from_resource(texture->sub_resources[i]), i,
+                    texture->flags & WINED3D_TEXTURE_IS_SRGB);
         }
     }
     else if (srgb_was_toggled)
@@ -1145,7 +1159,7 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
         {
             IWineD3DVolumeImpl *volume = volume_from_resource(texture->sub_resources[i]);
             volume_add_dirty_box(volume, NULL);
-            volume_load(volume, i, srgb_mode);
+            volume_load(volume, i, texture->flags & WINED3D_TEXTURE_IS_SRGB);
         }
     }
     else
