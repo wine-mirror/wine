@@ -4068,7 +4068,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
     INTERNET_SCHEME nScheme;
 
     static const WCHAR slashSlashW[] = {'/','/'};
-    static const WCHAR percentD[] = {'%','d',0};
+    static const WCHAR fmtW[] = {'%','u',0};
 
     TRACE("(%p,%d,%p,%p)\n", lpUrlComponents, dwFlags, lpszUrl, lpdwUrlLength);
 
@@ -4155,7 +4155,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
         {
             WCHAR szPort[MAX_WORD_DIGITS+1];
 
-            sprintfW(szPort, percentD, lpUrlComponents->nPort);
+            sprintfW(szPort, fmtW, lpUrlComponents->nPort);
             *lpszUrl = ':';
             lpszUrl++;
             dwLen = strlenW(szPort);
