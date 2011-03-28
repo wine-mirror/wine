@@ -327,9 +327,9 @@ void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, 
     if (src_surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
         struct wined3d_texture *texture = src_surface->container.u.texture;
-        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
-        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
-        texture->baseTexture.texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
+        texture->texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3DTEXF_POINT;
+        texture->texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3DTEXF_POINT;
+        texture->texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3DTEXF_NONE;
     }
 }
 
@@ -700,7 +700,7 @@ void surface_bind(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl
         struct wined3d_texture *texture = surface->container.u.texture;
 
         TRACE("Passing to container (%p).\n", texture);
-        texture->baseTexture.texture_ops->texture_bind(texture, gl_info, srgb);
+        texture->texture_ops->texture_bind(texture, gl_info, srgb);
     }
     else
     {
@@ -1365,7 +1365,7 @@ void surface_internal_preload(IWineD3DSurfaceImpl *surface, enum WINED3DSRGB srg
         struct wined3d_texture *texture = surface->container.u.texture;
 
         TRACE("Passing to container (%p).\n", texture);
-        texture->baseTexture.texture_ops->texture_preload(texture, srgb);
+        texture->texture_ops->texture_preload(texture, srgb);
     }
     else
     {
@@ -1752,14 +1752,14 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
         struct wined3d_texture *texture = surface->container.u.texture;
-        UINT sub_count = texture->baseTexture.level_count * texture->baseTexture.layer_count;
+        UINT sub_count = texture->level_count * texture->layer_count;
         UINT i;
 
         TRACE("surface %p is a subresource of texture %p.\n", surface, texture);
 
         for (i = 0; i < sub_count; ++i)
         {
-            IWineD3DSurfaceImpl *s = surface_from_resource(texture->baseTexture.sub_resources[i]);
+            IWineD3DSurfaceImpl *s = surface_from_resource(texture->sub_resources[i]);
             surface_prepare_texture_internal(s, gl_info, srgb);
         }
 

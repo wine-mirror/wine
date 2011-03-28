@@ -460,7 +460,7 @@ static void device_preload_texture(const struct wined3d_state *state, unsigned i
 
     if (!(texture = state->textures[idx])) return;
     srgb = state->sampler_states[idx][WINED3DSAMP_SRGBTEXTURE] ? SRGB_SRGB : SRGB_RGB;
-    texture->baseTexture.texture_ops->texture_preload(texture, srgb);
+    texture->texture_ops->texture_preload(texture, srgb);
 }
 
 void device_preload_textures(IWineD3DDeviceImpl *device)
@@ -4501,11 +4501,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
 
     if (texture)
     {
-        LONG bind_count = InterlockedIncrement(&texture->baseTexture.bindCount);
+        LONG bind_count = InterlockedIncrement(&texture->bind_count);
 
         wined3d_texture_incref(texture);
 
-        if (!prev || texture->baseTexture.target != prev->baseTexture.target)
+        if (!prev || texture->target != prev->target)
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
 
         if (!prev && stage < gl_info->limits.texture_stages)
@@ -4518,12 +4518,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
         }
 
         if (bind_count == 1)
-            texture->baseTexture.sampler = stage;
+            texture->sampler = stage;
     }
 
     if (prev)
     {
-        LONG bind_count = InterlockedDecrement(&prev->baseTexture.bindCount);
+        LONG bind_count = InterlockedDecrement(&prev->bind_count);
 
         wined3d_texture_decref(prev);
 
@@ -4533,7 +4533,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
         }
 
-        if (bind_count && prev->baseTexture.sampler == stage)
+        if (bind_count && prev->sampler == stage)
         {
             unsigned int i;
 
@@ -4545,7 +4545,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface,
                 if (This->updateStateBlock->state.textures[i] == prev)
                 {
                     TRACE("Texture is also bound to stage %u.\n", i);
-                    prev->baseTexture.sampler = i;
+                    prev->sampler = i;
                     break;
                 }
             }
@@ -5120,7 +5120,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
     }
 
     /* Make sure that the destination texture is loaded. */
-    dst_texture->baseTexture.texture_ops->texture_preload(dst_texture, SRGB_RGB);
+    dst_texture->texture_ops->texture_preload(dst_texture, SRGB_RGB);
 
     /* Update every surface level of the texture. */
     switch (type)

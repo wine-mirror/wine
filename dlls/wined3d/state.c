@@ -499,11 +499,11 @@ static void state_alpha(DWORD state, struct wined3d_stateblock *stateblock, stru
     if (stateblock->state.textures[0])
     {
         struct wined3d_texture *texture = stateblock->state.textures[0];
-        GLenum texture_dimensions = texture->baseTexture.target;
+        GLenum texture_dimensions = texture->target;
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
         {
-            IWineD3DSurfaceImpl *surf = surface_from_resource(texture->baseTexture.sub_resources[0]);
+            IWineD3DSurfaceImpl *surf = surface_from_resource(texture->sub_resources[0]);
 
             if (surf->CKeyFlags & WINEDDSD_CKSRCBLT)
             {
@@ -3192,11 +3192,11 @@ void tex_alphaop(DWORD state, struct wined3d_stateblock *stateblock, struct wine
     if (stateblock->state.render_states[WINED3DRS_COLORKEYENABLE] && !stage && stateblock->state.textures[0])
     {
         struct wined3d_texture *texture = stateblock->state.textures[0];
-        GLenum texture_dimensions = texture->baseTexture.target;
+        GLenum texture_dimensions = texture->target;
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
         {
-            IWineD3DSurfaceImpl *surf = surface_from_resource(texture->baseTexture.sub_resources[0]);
+            IWineD3DSurfaceImpl *surf = surface_from_resource(texture->sub_resources[0]);
 
             if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format->alpha_mask)
             {
@@ -3307,7 +3307,7 @@ static void transform_texture(DWORD state_id, struct wined3d_stateblock *statebl
         if (!use_ps(state))
         {
             TRACE("Non power two matrix multiply fixup\n");
-            glMultMatrixf(state->textures[texUnit]->baseTexture.pow2Matrix);
+            glMultMatrixf(state->textures[texUnit]->pow2_matrix);
         }
     }
 }
@@ -3598,8 +3598,9 @@ static void sampler_texmatrix(DWORD state, struct wined3d_stateblock *stateblock
      * The mapped stage is already active because the sampler() function below, which is part of the
      * misc pipeline
      */
-    if(sampler < MAX_TEXTURES) {
-        const BOOL texIsPow2 = !texture->baseTexture.pow2Matrix_identity;
+    if (sampler < MAX_TEXTURES)
+    {
+        const BOOL texIsPow2 = !texture->pow2_matrix_identity;
 
         if (texIsPow2 || (context->lastWasPow2Texture & (1 << sampler)))
         {
@@ -3646,7 +3647,7 @@ static void sampler(DWORD state_id, struct wined3d_stateblock *stateblock, struc
         struct wined3d_texture *texture = state->textures[sampler];
         BOOL srgb = state->sampler_states[sampler][WINED3DSAMP_SRGBTEXTURE];
 
-        texture->baseTexture.texture_ops->texture_bind(texture, gl_info, srgb);
+        texture->texture_ops->texture_bind(texture, gl_info, srgb);
         wined3d_texture_apply_state_changes(texture, state->sampler_states[sampler], gl_info);
 
         if (gl_info->supported[EXT_TEXTURE_LOD_BIAS])
@@ -3670,7 +3671,7 @@ static void sampler(DWORD state_id, struct wined3d_stateblock *stateblock, struc
         }
 
         /* Trigger shader constant reloading (for NP2 texcoord fixup) */
-        if (!texture->baseTexture.pow2Matrix_identity)
+        if (!texture->pow2_matrix_identity)
         {
             device->shader_backend->shader_load_np2fixup_constants(device->shader_priv, gl_info, state);
         }

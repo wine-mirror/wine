@@ -2101,10 +2101,8 @@ void find_ps_compile_args(const struct wined3d_state *state,
             args->shadow |= 1 << i;
 
         /* Flag samplers that need NP2 texcoord fixup. */
-        if (!texture->baseTexture.pow2Matrix_identity)
-        {
+        if (!texture->pow2_matrix_identity)
             args->np2_fixup |= (1 << i);
-        }
     }
     if (shader->baseShader.reg_maps.shader_version.major >= 3)
     {
@@ -2332,7 +2330,7 @@ void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, struc
             continue;
         }
 
-        switch (textures[i]->baseTexture.target)
+        switch (textures[i]->target)
         {
             case GL_TEXTURE_RECTANGLE_ARB:
             case GL_TEXTURE_2D:
@@ -2351,8 +2349,7 @@ void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, struc
                 break;
 
             default:
-                FIXME("Unrecognized texture type %#x, using 2D.\n",
-                        textures[i]->baseTexture.target);
+                FIXME("Unrecognized texture type %#x, using 2D.\n", textures[i]->target);
                 sampler_type[i] = WINED3DSTT_2D;
         }
     }

@@ -45,7 +45,7 @@ static void nvts_activate_dimensions(const struct wined3d_state *state, DWORD st
 
     if (state->textures[stage])
     {
-        switch (state->textures[stage]->baseTexture.target)
+        switch (state->textures[stage]->target)
         {
             case GL_TEXTURE_2D:
                 glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, bumpmap ? GL_OFFSET_TEXTURE_2D_NV : GL_TEXTURE_2D);

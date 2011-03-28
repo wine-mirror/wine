@@ -711,10 +711,15 @@ static void shader_glsl_load_np2fixup_constants(void *shader_priv,
                 continue;
             }
 
-            if (idx % 2) {
-                tex_dim[2] = tex->baseTexture.pow2Matrix[0]; tex_dim[3] = tex->baseTexture.pow2Matrix[5];
-            } else {
-                tex_dim[0] = tex->baseTexture.pow2Matrix[0]; tex_dim[1] = tex->baseTexture.pow2Matrix[5];
+            if (idx % 2)
+            {
+                tex_dim[2] = tex->pow2_matrix[0];
+                tex_dim[3] = tex->pow2_matrix[5];
+            }
+            else
+            {
+                tex_dim[0] = tex->pow2_matrix[0];
+                tex_dim[1] = tex->pow2_matrix[5];
             }
         }
 
@@ -1065,14 +1070,14 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                     texture = state->textures[i];
                     if (pshader && ps_args->shadow & (1 << i))
                     {
-                        if (texture && texture->baseTexture.target == GL_TEXTURE_RECTANGLE_ARB)
+                        if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
                             shader_addline(buffer, "uniform sampler2DRectShadow %csampler%u;\n", prefix, i);
                         else
                             shader_addline(buffer, "uniform sampler2DShadow %csampler%u;\n", prefix, i);
                     }
                     else
                     {
-                        if (texture && texture->baseTexture.target == GL_TEXTURE_RECTANGLE_ARB)
+                        if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
                             shader_addline(buffer, "uniform sampler2DRect %csampler%u;\n", prefix, i);
                         else
                             shader_addline(buffer, "uniform sampler2D %csampler%u;\n", prefix, i);
@@ -3079,7 +3084,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
         }
     }
 
-    if (texture && texture->baseTexture.target == GL_TEXTURE_RECTANGLE_ARB)
+    if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
         sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
 
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, sample_flags, &sample_function);
@@ -3133,7 +3138,7 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 
     sampler_idx = ins->src[1].reg.idx;
     texture = device->stateBlock->state.textures[sampler_idx];
-    if (texture && texture->baseTexture.target == GL_TEXTURE_RECTANGLE_ARB)
+    if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
         sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
 
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, sample_flags, &sample_function);
@@ -3159,7 +3164,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 
     sampler_idx = ins->src[1].reg.idx;
     texture = device->stateBlock->state.textures[sampler_idx];
-    if (texture && texture->baseTexture.target == GL_TEXTURE_RECTANGLE_ARB)
+    if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
         sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
 
     shader_glsl_get_sample_function(ins->ctx, sampler_idx, sample_flags, &sample_function);

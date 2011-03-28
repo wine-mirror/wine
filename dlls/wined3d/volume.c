@@ -59,7 +59,7 @@ static void volume_bind_and_dirtify(struct IWineD3DVolumeImpl *volume, const str
         IWineD3DDeviceImpl_MarkStateDirty(volume->resource.device, STATE_SAMPLER(active_sampler));
     }
 
-    container->baseTexture.texture_ops->texture_bind(container, gl_info, FALSE);
+    container->texture_ops->texture_bind(container, gl_info, FALSE);
 }
 
 void volume_add_dirty_box(struct IWineD3DVolumeImpl *volume, const WINED3DBOX *dirty_box)

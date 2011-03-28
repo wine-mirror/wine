@@ -2803,7 +2803,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
             }
             else
             {
-                switch (texture->baseTexture.target)
+                switch (texture->target)
                 {
                     case GL_TEXTURE_1D:
                         settings->op[i].tex_type = tex_1d;
@@ -2863,11 +2863,11 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
             GLenum texture_dimensions;
 
             texture = stateblock->state.textures[0];
-            texture_dimensions = texture->baseTexture.target;
+            texture_dimensions = texture->target;
 
             if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
             {
-                IWineD3DSurfaceImpl *surf = surface_from_resource(texture->baseTexture.sub_resources[0]);
+                IWineD3DSurfaceImpl *surf = surface_from_resource(texture->sub_resources[0]);
 
                 if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format->alpha_mask)
                 {
@@ -3032,7 +3032,7 @@ void texture_activate_dimensions(const struct wined3d_texture *texture, const st
 {
     if (texture)
     {
-        switch (texture->baseTexture.target)
+        switch (texture->target)
         {
             case GL_TEXTURE_2D:
                 glDisable(GL_TEXTURE_3D);

@@ -151,10 +151,10 @@ static void context_apply_attachment_filter_states(const struct wined3d_context 
             update_magfilter = TRUE;
         }
 
-        if (texture->baseTexture.bindCount)
+        if (texture->bind_count)
         {
             WARN("Render targets should not be bound to a sampler\n");
-            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(texture->baseTexture.sampler));
+            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(texture->sampler));
         }
 
         if (update_minfilter || update_magfilter)

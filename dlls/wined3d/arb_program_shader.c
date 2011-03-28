@@ -503,10 +503,15 @@ static void shader_arb_load_np2fixup_constants(void *shader_priv,
                 continue;
             }
 
-            if (idx % 2) {
-                tex_dim[2] = tex->baseTexture.pow2Matrix[0]; tex_dim[3] = tex->baseTexture.pow2Matrix[5];
-            } else {
-                tex_dim[0] = tex->baseTexture.pow2Matrix[0]; tex_dim[1] = tex->baseTexture.pow2Matrix[5];
+            if (idx % 2)
+            {
+                tex_dim[2] = tex->pow2_matrix[0];
+                tex_dim[3] = tex->pow2_matrix[5];
+            }
+            else
+            {
+                tex_dim[0] = tex->pow2_matrix[0];
+                tex_dim[1] = tex->pow2_matrix[5];
             }
         }
 
@@ -1344,7 +1349,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
 
         case WINED3DSTT_2D:
             texture = device->stateBlock->state.textures[sampler_idx];
-            if (texture && texture->baseTexture.target == GL_TEXTURE_RECTANGLE_ARB)
+            if (texture && texture->target == GL_TEXTURE_RECTANGLE_ARB)
             {
                 tex_type = "RECT";
             } else {

@@ -1888,30 +1888,25 @@ struct wined3d_texture_ops
     void (*texture_sub_resource_cleanup)(struct wined3d_resource *sub_resource);
 };
 
-typedef struct IWineD3DBaseTextureClass
-{
-    const struct wined3d_texture_ops *texture_ops;
-    struct gl_texture       texture_rgb, texture_srgb;
-    struct wined3d_resource **sub_resources;
-    UINT layer_count;
-    UINT level_count;
-    float                   pow2Matrix[16];
-    UINT                    LOD;
-    WINED3DTEXTUREFILTERTYPE filterType;
-    LONG                    bindCount;
-    DWORD                   sampler;
-    BOOL                    is_srgb;
-    BOOL                    pow2Matrix_identity;
-    BOOL                    cond_np2;
-    const struct min_lookup *minMipLookup;
-    const GLenum            *magLookup;
-    GLenum target;
-} IWineD3DBaseTextureClass;
-
 struct wined3d_texture
 {
     struct wined3d_resource resource;
-    IWineD3DBaseTextureClass  baseTexture;
+    const struct wined3d_texture_ops *texture_ops;
+    struct gl_texture texture_rgb, texture_srgb;
+    struct wined3d_resource **sub_resources;
+    UINT layer_count;
+    UINT level_count;
+    float pow2_matrix[16];
+    UINT lod;
+    WINED3DTEXTUREFILTERTYPE filter_type;
+    LONG bind_count;
+    DWORD sampler;
+    BOOL is_srgb;
+    BOOL pow2_matrix_identity;
+    BOOL cond_np2;
+    const struct min_lookup *min_mip_lookup;
+    const GLenum *mag_lookup;
+    GLenum target;
 };
 
 static inline struct wined3d_texture *wined3d_texture_from_resource(struct wined3d_resource *resource)
@@ -1923,8 +1918,7 @@ static inline struct gl_texture *wined3d_texture_get_gl_texture(struct wined3d_t
         const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
     return srgb && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
-            ? &texture->baseTexture.texture_srgb
-            : &texture->baseTexture.texture_rgb;
+            ? &texture->texture_srgb : &texture->texture_rgb;
 }
 
 void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
