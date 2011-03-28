@@ -167,6 +167,7 @@ static BOOL set_clientsite, container_locked;
 static BOOL readystate_set_loading = FALSE, readystate_set_interactive = FALSE, load_from_stream;
 static BOOL editmode = FALSE;
 static BOOL inplace_deactivated, open_call;
+static DWORD status_code = HTTP_STATUS_OK;
 static int stream_read, protocol_read;
 static enum load_state_t {
     LD_DOLOAD,
@@ -981,13 +982,73 @@ static const IStreamVtbl StreamVtbl = {
 
 static IStream Stream = { &StreamVtbl };
 
+static HRESULT WINAPI WinInetHttpInfo_QueryInterface(
+        IWinInetHttpInfo* This,
+        REFIID riid,
+        void **ppvObject)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI WinInetHttpInfo_AddRef(
+        IWinInetHttpInfo* This)
+{
+    return 2;
+}
+
+static ULONG WINAPI WinInetHttpInfo_Release(
+        IWinInetHttpInfo* This)
+{
+    return 1;
+}
+
+static HRESULT WINAPI WinInetHttpInfo_QueryOption(
+        IWinInetHttpInfo* This,
+        DWORD dwOption,
+        LPVOID pBuffer,
+        DWORD *pcbBuf)
+{
+    return E_NOTIMPL; /* TODO */
+}
+
+static HRESULT WINAPI WinInetHttpInfo_QueryInfo(
+        IWinInetHttpInfo* This,
+        DWORD dwOption,
+        LPVOID pBuffer,
+        DWORD *pcbBuf,
+        DWORD *pdwFlags,
+        DWORD *pdwReserved)
+{
+    ok(pdwReserved == NULL, "pdwReserved != NULL\n");
+
+    if(dwOption == (HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER)) {
+        ok(pBuffer != NULL, "pBuffer == NULL\n");
+        ok(*pcbBuf == sizeof(DWORD), "*pcbBuf = %d\n", *pcbBuf);
+        ok(pdwFlags == NULL, "*pdwFlags != NULL\n");
+        *((DWORD*)pBuffer) = status_code;
+        return S_OK;
+    }
+
+    return E_NOTIMPL; /* TODO */
+}
+
+static const IWinInetHttpInfoVtbl WinInetHttpInfoVtbl = {
+    WinInetHttpInfo_QueryInterface,
+    WinInetHttpInfo_AddRef,
+    WinInetHttpInfo_Release,
+    WinInetHttpInfo_QueryOption,
+    WinInetHttpInfo_QueryInfo
+};
+
+static IWinInetHttpInfo WinInetHttpInfo = { &WinInetHttpInfoVtbl };
+
 static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void **ppv)
 {
-    if(IsEqualGUID(&IID_IWinInetHttpInfo, riid))
-        return E_NOINTERFACE; /* TODO */
-
-    if(IsEqualGUID(&IID_IWinInetInfo, riid))
-        return E_NOINTERFACE; /* TODO */
+    if(IsEqualGUID(&IID_IWinInetInfo, riid) || IsEqualGUID(&IID_IWinInetHttpInfo, riid)) {
+        *ppv = &WinInetHttpInfo;
+        return S_OK;
+    }
 
     ok(0, "unexpected call\n");
     return E_NOINTERFACE;
