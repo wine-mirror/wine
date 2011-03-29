@@ -1037,7 +1037,6 @@ static HRESULT WINAPI iframe_onreadystatechange(IDispatchEx *iface, DISPID id, L
 
     str = NULL;
     hres = IHTMLFrameBase2_get_readyState(iframe, &str);
-    IHTMLFrameBase2_Release(iframe);
     ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
     ok(str != NULL, "readyState == NULL\n");
     ok(!lstrcmpW(str, V_BSTR(&v)), "ready states differ\n");
