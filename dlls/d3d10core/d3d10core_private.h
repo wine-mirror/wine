@@ -169,7 +169,7 @@ struct d3d10_vertex_shader
     const struct ID3D10VertexShaderVtbl *vtbl;
     LONG refcount;
 
-    IWineD3DVertexShader *wined3d_shader;
+    IWineD3DBaseShader *wined3d_shader;
     struct wined3d_shader_signature output_signature;
 };
 

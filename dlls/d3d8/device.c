@@ -2076,7 +2076,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShader(IDirect3DDevice8 *ifa
 
     hr = IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice,
             ((IDirect3DVertexDeclaration8Impl *)shader->vertex_declaration)->wined3d_vertex_declaration);
-    if (SUCCEEDED(hr)) hr = IWineD3DDevice_SetVertexShader(This->WineD3DDevice, shader->wineD3DVertexShader);
+    if (SUCCEEDED(hr))
+        hr = IWineD3DDevice_SetVertexShader(This->WineD3DDevice, shader->wined3d_shader);
     wined3d_mutex_unlock();
 
     TRACE("Returning hr %#x\n", hr);
@@ -2125,7 +2126,7 @@ static HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(IDirect3DDevice8
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     IDirect3DVertexShader8Impl *shader;
-    IWineD3DVertexShader *cur;
+    IWineD3DBaseShader *cur;
 
     TRACE("iface %p, shader %#x.\n", iface, pShader);
 
@@ -2142,8 +2143,9 @@ static HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(IDirect3DDevice8
     cur = IWineD3DDevice_GetVertexShader(This->WineD3DDevice);
     if (cur)
     {
-        if (cur == shader->wineD3DVertexShader) IDirect3DDevice8_SetVertexShader(iface, 0);
-        IWineD3DVertexShader_Release(cur);
+        if (cur == shader->wined3d_shader)
+            IDirect3DDevice8_SetVertexShader(iface, 0);
+        IWineD3DBaseShader_Release(cur);
     }
 
     wined3d_mutex_unlock();
@@ -2259,14 +2261,14 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderFunction(IDirect3DDevi
         return D3DERR_INVALIDCALL;
     }
 
-    if (!shader->wineD3DVertexShader)
+    if (!shader->wined3d_shader)
     {
         wined3d_mutex_unlock();
         *pSizeOfData = 0;
         return D3D_OK;
     }
 
-    hr = IWineD3DVertexShader_GetFunction(shader->wineD3DVertexShader, pData, pSizeOfData);
+    hr = IWineD3DBaseShader_GetFunction(shader->wined3d_shader, pData, pSizeOfData);
     wined3d_mutex_unlock();
 
     return hr;

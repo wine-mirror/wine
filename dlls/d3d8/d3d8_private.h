@@ -471,9 +471,8 @@ DECLARE_INTERFACE_(IDirect3DPixelShader8,IUnknown)
 struct IDirect3DVertexShader8Impl {
   IDirect3DVertexShader8            IDirect3DVertexShader8_iface;
   LONG                              ref;
-
-  IDirect3DVertexDeclaration8      *vertex_declaration;
-  IWineD3DVertexShader             *wineD3DVertexShader;
+  IDirect3DVertexDeclaration8 *vertex_declaration;
+  IWineD3DBaseShader *wined3d_shader;
 };
 
 HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Impl *device,
@@ -497,7 +496,7 @@ HRESULT pixelshader_init(IDirect3DPixelShader8Impl *shader, IDirect3DDevice8Impl
 
 D3DFORMAT d3dformat_from_wined3dformat(enum wined3d_format_id format) DECLSPEC_HIDDEN;
 enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_HIDDEN;
-void load_local_constants(const DWORD *d3d8_elements, IWineD3DVertexShader *wined3d_vertex_shader) DECLSPEC_HIDDEN;
+void load_local_constants(const DWORD *d3d8_elements, IWineD3DBaseShader *wined3d_vertex_shader) DECLSPEC_HIDDEN;
 size_t parse_token(const DWORD *pToken) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

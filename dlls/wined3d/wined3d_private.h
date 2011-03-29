@@ -2815,11 +2815,9 @@ static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl* This, DWORD 
 /*****************************************************************************
  * IDirect3DVertexShader implementation structures
  */
-typedef struct IWineD3DVertexShaderImpl {
-    /* IUnknown parts */
-    const IWineD3DVertexShaderVtbl *lpVtbl;
-
-    /* IWineD3DBaseShader */
+typedef struct IWineD3DVertexShaderImpl
+{
+    const IWineD3DBaseShaderVtbl *lpVtbl;
     IWineD3DBaseShaderClass     baseShader;
 
     /* Vertex shader attributes. */

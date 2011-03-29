@@ -51,7 +51,7 @@ static ULONG WINAPI d3d9_vertexshader_AddRef(IDirect3DVertexShader9 *iface)
     {
         IDirect3DDevice9Ex_AddRef(shader->parentDevice);
         wined3d_mutex_lock();
-        IWineD3DVertexShader_AddRef(shader->wineD3DVertexShader);
+        IWineD3DBaseShader_AddRef(shader->wined3d_shader);
         wined3d_mutex_unlock();
     }
 
@@ -70,7 +70,7 @@ static ULONG WINAPI d3d9_vertexshader_Release(IDirect3DVertexShader9 *iface)
         IDirect3DDevice9Ex *device = shader->parentDevice;
 
         wined3d_mutex_lock();
-        IWineD3DVertexShader_Release(shader->wineD3DVertexShader);
+        IWineD3DBaseShader_Release(shader->wined3d_shader);
         wined3d_mutex_unlock();
 
         /* Release the device last, as it may cause the device to be destroyed. */
@@ -100,7 +100,7 @@ static HRESULT WINAPI d3d9_vertexshader_GetFunction(IDirect3DVertexShader9 *ifac
     TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVertexShader_GetFunction(((IDirect3DVertexShader9Impl *)iface)->wineD3DVertexShader, data, data_size);
+    hr = IWineD3DBaseShader_GetFunction(((IDirect3DVertexShader9Impl *)iface)->wined3d_shader, data, data_size);
     wined3d_mutex_unlock();
 
     return hr;
@@ -136,7 +136,7 @@ HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader, IDirect3DDevice9Im
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreateVertexShader(device->WineD3DDevice, byte_code, NULL,
-            shader, &d3d9_vertexshader_wined3d_parent_ops, &shader->wineD3DVertexShader);
+            shader, &d3d9_vertexshader_wined3d_parent_ops, &shader->wined3d_shader);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

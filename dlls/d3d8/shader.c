@@ -52,10 +52,10 @@ static ULONG WINAPI d3d8_vertexshader_AddRef(IDirect3DVertexShader8 *iface)
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
-    if (refcount == 1 && shader->wineD3DVertexShader)
+    if (refcount == 1 && shader->wined3d_shader)
     {
         wined3d_mutex_lock();
-        IWineD3DVertexShader_AddRef(shader->wineD3DVertexShader);
+        IWineD3DBaseShader_AddRef(shader->wined3d_shader);
         wined3d_mutex_unlock();
     }
 
@@ -78,10 +78,10 @@ static ULONG WINAPI d3d8_vertexshader_Release(IDirect3DVertexShader8 *iface)
 
     if (!refcount)
     {
-        if (shader->wineD3DVertexShader)
+        if (shader->wined3d_shader)
         {
             wined3d_mutex_lock();
-            IWineD3DVertexShader_Release(shader->wineD3DVertexShader);
+            IWineD3DBaseShader_Release(shader->wined3d_shader);
             wined3d_mutex_unlock();
         }
         else
@@ -177,7 +177,7 @@ HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Im
 
         wined3d_mutex_lock();
         hr = IWineD3DDevice_CreateVertexShader(device->WineD3DDevice, byte_code, NULL /* output signature */,
-                shader, &d3d8_vertexshader_wined3d_parent_ops, &shader->wineD3DVertexShader);
+                shader, &d3d8_vertexshader_wined3d_parent_ops, &shader->wined3d_shader);
         wined3d_mutex_unlock();
         if (FAILED(hr))
         {
@@ -186,7 +186,7 @@ HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Im
             return hr;
         }
 
-        load_local_constants(declaration, shader->wineD3DVertexShader);
+        load_local_constants(declaration, shader->wined3d_shader);
     }
 
     return D3D_OK;

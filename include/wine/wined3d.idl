@@ -2405,15 +2405,6 @@ interface IWineD3DBaseShader : IWineD3DBase
 [
     object,
     local,
-    uuid(7f7a2b60-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DVertexShader : IWineD3DBaseShader
-{
-}
-
-[
-    object,
-    local,
     uuid(8276c113-388b-49d1-ad8b-c9dd8bcbabcd)
 ]
 interface IWineD3DGeometryShader : IWineD3DBaseShader
@@ -2556,7 +2547,7 @@ interface IWineD3DDevice : IUnknown
         [in] const struct wined3d_shader_signature *output_signature,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DVertexShader **shader
+        [out] IWineD3DBaseShader **shader
     );
     HRESULT CreateGeometryShader(
         [in] const DWORD *byte_code,
@@ -2857,9 +2848,9 @@ interface IWineD3DDevice : IUnknown
         [out] struct wined3d_vertex_declaration **declaration
     );
     HRESULT SetVertexShader(
-        [in] IWineD3DVertexShader *shader
+        [in] IWineD3DBaseShader *shader
     );
-    IWineD3DVertexShader *GetVertexShader(
+    IWineD3DBaseShader *GetVertexShader(
     );
     HRESULT SetVertexShaderConstantB(
         [in] UINT start_register,

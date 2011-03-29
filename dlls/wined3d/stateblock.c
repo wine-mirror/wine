@@ -499,7 +499,7 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
         if (stateblock->state.index_buffer)
             wined3d_buffer_decref(stateblock->state.index_buffer);
         if (stateblock->state.vertex_shader)
-            IWineD3DVertexShader_Release((IWineD3DVertexShader *)stateblock->state.vertex_shader);
+            IWineD3DBaseShader_Release((IWineD3DBaseShader *)stateblock->state.vertex_shader);
         if (stateblock->state.pixel_shader)
             IWineD3DPixelShader_Release((IWineD3DPixelShader *)stateblock->state.pixel_shader);
 
@@ -599,9 +599,9 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
                 stateblock->state.vertex_shader, src_state->vertex_shader);
 
         if (src_state->vertex_shader)
-            IWineD3DVertexShader_AddRef((IWineD3DVertexShader *)src_state->vertex_shader);
+            IWineD3DBaseShader_AddRef((IWineD3DBaseShader *)src_state->vertex_shader);
         if (stateblock->state.vertex_shader)
-            IWineD3DVertexShader_Release((IWineD3DVertexShader *)stateblock->state.vertex_shader);
+            IWineD3DBaseShader_Release((IWineD3DBaseShader *)stateblock->state.vertex_shader);
         stateblock->state.vertex_shader = src_state->vertex_shader;
     }
 
@@ -901,7 +901,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     TRACE("Blocktype: %#x.\n", stateblock->blockType);
 
     if (stateblock->changed.vertexShader)
-        IWineD3DDevice_SetVertexShader(device, (IWineD3DVertexShader *)stateblock->state.vertex_shader);
+        IWineD3DDevice_SetVertexShader(device, (IWineD3DBaseShader *)stateblock->state.vertex_shader);
 
     /* Vertex Shader Constants. */
     for (i = 0; i < stateblock->num_contained_vs_consts_f; ++i)

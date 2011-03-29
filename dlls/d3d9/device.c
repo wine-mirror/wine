@@ -2233,7 +2233,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShader(IDirect3DDevice9Ex *i
 
     wined3d_mutex_lock();
     hr =  IWineD3DDevice_SetVertexShader(((IDirect3DDevice9Impl *)iface)->WineD3DDevice,
-            shader ? ((IDirect3DVertexShader9Impl *)shader)->wineD3DVertexShader : NULL);
+            shader ? ((IDirect3DVertexShader9Impl *)shader)->wined3d_shader : NULL);
     wined3d_mutex_unlock();
 
     return hr;
@@ -2242,7 +2242,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetVertexShader(IDirect3DDevice9Ex *i
 static HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShader(IDirect3DDevice9Ex *iface,
         IDirect3DVertexShader9 **shader)
 {
-    IWineD3DVertexShader *wined3d_shader;
+    IWineD3DBaseShader *wined3d_shader;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
 
@@ -2250,9 +2250,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetVertexShader(IDirect3DDevice9Ex *i
     wined3d_shader = IWineD3DDevice_GetVertexShader(((IDirect3DDevice9Impl *)iface)->WineD3DDevice);
     if (wined3d_shader)
     {
-        *shader = IWineD3DVertexShader_GetParent(wined3d_shader);
+        *shader = IWineD3DBaseShader_GetParent(wined3d_shader);
         IDirect3DVertexShader9_AddRef(*shader);
-        IWineD3DVertexShader_Release(wined3d_shader);
+        IWineD3DBaseShader_Release(wined3d_shader);
     }
     else
     {

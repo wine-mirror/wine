@@ -1644,12 +1644,11 @@ static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE vertexshader_QueryInterface(IWineD3DVertexShader *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE vertexshader_QueryInterface(IWineD3DBaseShader *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    if (IsEqualGUID(riid, &IID_IWineD3DVertexShader)
-            || IsEqualGUID(riid, &IID_IWineD3DBaseShader)
+    if (IsEqualGUID(riid, &IID_IWineD3DBaseShader)
             || IsEqualGUID(riid, &IID_IWineD3DBase)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
@@ -1664,7 +1663,7 @@ static HRESULT STDMETHODCALLTYPE vertexshader_QueryInterface(IWineD3DVertexShade
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE vertexshader_AddRef(IWineD3DVertexShader *iface)
+static ULONG STDMETHODCALLTYPE vertexshader_AddRef(IWineD3DBaseShader *iface)
 {
     IWineD3DVertexShaderImpl *shader = (IWineD3DVertexShaderImpl *)iface;
     ULONG refcount = InterlockedIncrement(&shader->baseShader.ref);
@@ -1675,7 +1674,7 @@ static ULONG STDMETHODCALLTYPE vertexshader_AddRef(IWineD3DVertexShader *iface)
 }
 
 /* Do not call while under the GL lock. */
-static ULONG STDMETHODCALLTYPE vertexshader_Release(IWineD3DVertexShader *iface)
+static ULONG STDMETHODCALLTYPE vertexshader_Release(IWineD3DBaseShader *iface)
 {
     IWineD3DVertexShaderImpl *shader = (IWineD3DVertexShaderImpl *)iface;
     ULONG refcount = InterlockedDecrement(&shader->baseShader.ref);
@@ -1692,21 +1691,21 @@ static ULONG STDMETHODCALLTYPE vertexshader_Release(IWineD3DVertexShader *iface)
     return refcount;
 }
 
-static void * STDMETHODCALLTYPE vertexshader_GetParent(IWineD3DVertexShader *iface)
+static void * STDMETHODCALLTYPE vertexshader_GetParent(IWineD3DBaseShader *iface)
 {
     TRACE("iface %p.\n", iface);
 
     return ((IWineD3DBaseShaderImpl *)iface)->baseShader.parent;
 }
 
-static HRESULT STDMETHODCALLTYPE vertexshader_GetFunction(IWineD3DVertexShader *iface, void *data, UINT *data_size)
+static HRESULT STDMETHODCALLTYPE vertexshader_GetFunction(IWineD3DBaseShader *iface, void *data, UINT *data_size)
 {
     TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
 
     return shader_get_function((IWineD3DBaseShaderImpl *)iface, data, data_size);
 }
 
-static HRESULT STDMETHODCALLTYPE vertexshader_SetLocalConstantsF(IWineD3DVertexShader *iface,
+static HRESULT STDMETHODCALLTYPE vertexshader_SetLocalConstantsF(IWineD3DBaseShader *iface,
         UINT start_idx, const float *src_data, UINT count)
 {
     TRACE("iface %p, start_idx %u, src_data %p, count %u.\n", iface, start_idx, src_data, count);
@@ -1715,7 +1714,7 @@ static HRESULT STDMETHODCALLTYPE vertexshader_SetLocalConstantsF(IWineD3DVertexS
             start_idx, src_data, count);
 }
 
-static const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
+static const IWineD3DBaseShaderVtbl IWineD3DVertexShader_Vtbl =
 {
     /* IUnknown methods */
     vertexshader_QueryInterface,

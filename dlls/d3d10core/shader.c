@@ -162,9 +162,7 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_AddRef(ID3D10VertexShader *if
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
     if (refcount == 1)
-    {
-        IWineD3DVertexShader_AddRef(This->wined3d_shader);
-    }
+        IWineD3DBaseShader_AddRef(This->wined3d_shader);
 
     return refcount;
 }
@@ -177,9 +175,7 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_Release(ID3D10VertexShader *i
     TRACE("%p decreasing refcount to %u\n", This, refcount);
 
     if (!refcount)
-    {
-        IWineD3DVertexShader_Release(This->wined3d_shader);
-    }
+        IWineD3DBaseShader_Release(This->wined3d_shader);
 
     return refcount;
 }

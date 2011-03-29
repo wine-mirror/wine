@@ -1513,7 +1513,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3D
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface,
         const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops,
-        IWineD3DVertexShader **ppVertexShader)
+        IWineD3DBaseShader **shader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexShaderImpl *object;
@@ -1538,7 +1538,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
     }
 
     TRACE("Created vertex shader %p.\n", object);
-    *ppVertexShader = (IWineD3DVertexShader *)object;
+    *shader = (IWineD3DBaseShader *)object;
 
     return WINED3D_OK;
 }
@@ -3339,43 +3339,51 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice *if
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3DVertexShader *pShader)
+static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3DBaseShader *shader)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexShader *oldShader = (IWineD3DVertexShader *)This->updateStateBlock->state.vertex_shader;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    IWineD3DBaseShader *prev = (IWineD3DBaseShader *)device->updateStateBlock->state.vertex_shader;
 
-    This->updateStateBlock->state.vertex_shader = (IWineD3DVertexShaderImpl *)pShader;
-    This->updateStateBlock->changed.vertexShader = TRUE;
+    device->updateStateBlock->state.vertex_shader = (IWineD3DVertexShaderImpl *)shader;
+    device->updateStateBlock->changed.vertexShader = TRUE;
 
-    if (This->isRecordingState) {
-        if(pShader) IWineD3DVertexShader_AddRef(pShader);
-        if(oldShader) IWineD3DVertexShader_Release(oldShader);
-        TRACE("Recording... not performing anything\n");
+    if (device->isRecordingState)
+    {
+        if (shader)
+            IWineD3DBaseShader_AddRef(shader);
+        if (prev)
+            IWineD3DBaseShader_Release(prev);
+        TRACE("Recording... not performing anything.\n");
         return WINED3D_OK;
-    } else if(oldShader == pShader) {
+    }
+    else if(prev == shader)
+    {
         /* Checked here to allow proper stateblock recording */
-        TRACE("App is setting the old shader over, nothing to do\n");
+        TRACE("App is setting the old shader over, nothing to do.\n");
         return WINED3D_OK;
     }
 
-    TRACE("(%p) : setting pShader(%p)\n", This, pShader);
-    if(pShader) IWineD3DVertexShader_AddRef(pShader);
-    if(oldShader) IWineD3DVertexShader_Release(oldShader);
+    TRACE("(%p) : setting shader(%p)\n", device, shader);
+    if (shader)
+        IWineD3DBaseShader_AddRef(shader);
+    if (prev)
+        IWineD3DBaseShader_Release(prev);
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VSHADER);
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VSHADER);
 
     return WINED3D_OK;
 }
 
-static IWineD3DVertexShader * WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface)
+static IWineD3DBaseShader * WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexShader *shader;
+    IWineD3DBaseShader *shader;
 
     TRACE("iface %p.\n", iface);
 
-    shader = (IWineD3DVertexShader *)device->stateBlock->state.vertex_shader;
-    if (shader) IWineD3DVertexShader_AddRef(shader);
+    shader = (IWineD3DBaseShader *)device->stateBlock->state.vertex_shader;
+    if (shader)
+        IWineD3DBaseShader_AddRef(shader);
 
     TRACE("Returning %p.\n", shader);
     return shader;
