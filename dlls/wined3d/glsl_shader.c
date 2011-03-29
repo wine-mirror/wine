@@ -3641,7 +3641,7 @@ static void shader_glsl_dp2add(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static void shader_glsl_input_pack(IWineD3DPixelShader *iface, struct wined3d_shader_buffer *buffer,
+static void shader_glsl_input_pack(IWineD3DBaseShader *iface, struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader_signature_element *input_signature, const struct wined3d_shader_reg_maps *reg_maps,
         enum vertexprocessing_mode vertexprocessing)
 {
@@ -4005,7 +4005,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     /* Pack 3.0 inputs */
     if (reg_maps->shader_version.major >= 3 && args->vp_mode != vertexshader)
     {
-        shader_glsl_input_pack((IWineD3DPixelShader *) This, buffer,
+        shader_glsl_input_pack((IWineD3DBaseShader *)This, buffer,
                 This->baseShader.input_signature, reg_maps, args->vp_mode);
     }
 

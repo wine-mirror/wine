@@ -2410,7 +2410,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetPixelShader(IDirect3DDevice8 *ifac
     }
 
     TRACE("(%p) : Setting shader %p\n", This, shader);
-    hr = IWineD3DDevice_SetPixelShader(This->WineD3DDevice, shader->wineD3DPixelShader);
+    hr = IWineD3DDevice_SetPixelShader(This->WineD3DDevice, shader->wined3d_shader);
     wined3d_mutex_unlock();
 
     return hr;
@@ -2419,7 +2419,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetPixelShader(IDirect3DDevice8 *ifac
 static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(IDirect3DDevice8 *iface, DWORD *ppShader)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DPixelShader *object;
+    IWineD3DBaseShader *object;
 
     TRACE("iface %p, shader %p.\n", iface, ppShader);
 
@@ -2433,8 +2433,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(IDirect3DDevice8 *ifac
     if (object)
     {
         IDirect3DPixelShader8Impl *d3d8_shader;
-        d3d8_shader = IWineD3DPixelShader_GetParent(object);
-        IWineD3DPixelShader_Release(object);
+        d3d8_shader = IWineD3DBaseShader_GetParent(object);
+        IWineD3DBaseShader_Release(object);
         *ppShader = d3d8_shader->handle;
     }
     else
@@ -2452,7 +2452,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(IDirect3DDevice8 *i
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     IDirect3DPixelShader8Impl *shader;
-    IWineD3DPixelShader *cur;
+    IWineD3DBaseShader *cur;
 
     TRACE("iface %p, shader %#x.\n", iface, pShader);
 
@@ -2469,8 +2469,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(IDirect3DDevice8 *i
     cur = IWineD3DDevice_GetPixelShader(This->WineD3DDevice);
     if (cur)
     {
-        if (cur == shader->wineD3DPixelShader) IDirect3DDevice8_SetPixelShader(iface, 0);
-        IWineD3DPixelShader_Release(cur);
+        if (cur == shader->wined3d_shader)
+            IDirect3DDevice8_SetPixelShader(iface, 0);
+        IWineD3DBaseShader_Release(cur);
     }
 
     wined3d_mutex_unlock();
@@ -2535,7 +2536,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShaderFunction(IDirect3DDevic
         return D3DERR_INVALIDCALL;
     }
 
-    hr = IWineD3DPixelShader_GetFunction(shader->wineD3DPixelShader, pData, pSizeOfData);
+    hr = IWineD3DBaseShader_GetFunction(shader->wined3d_shader, pData, pSizeOfData);
     wined3d_mutex_unlock();
 
     return hr;

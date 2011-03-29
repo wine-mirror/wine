@@ -453,12 +453,8 @@ typedef struct IDirect3DPixelShader9Impl {
   /* IUnknown fields */
     const IDirect3DPixelShader9Vtbl *lpVtbl;
     LONG                    ref;
-
-    /* IDirect3DPixelShader9 fields */
-    IWineD3DPixelShader    *wineD3DPixelShader;
-
-    /* Parent reference */
-    LPDIRECT3DDEVICE9EX       parentDevice;
+    IWineD3DBaseShader *wined3d_shader;
+    IDirect3DDevice9Ex *parentDevice;
 } IDirect3DPixelShader9Impl;
 
 HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader,

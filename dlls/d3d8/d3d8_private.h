@@ -486,9 +486,8 @@ HRESULT vertexshader_init(IDirect3DVertexShader8Impl *shader, IDirect3DDevice8Im
 typedef struct IDirect3DPixelShader8Impl {
     IDirect3DPixelShader8            IDirect3DPixelShader8_iface;
     LONG                             ref;
-
-    DWORD                            handle;
-    IWineD3DPixelShader             *wineD3DPixelShader;
+    DWORD handle;
+    IWineD3DBaseShader *wined3d_shader;
 } IDirect3DPixelShader8Impl;
 
 HRESULT pixelshader_init(IDirect3DPixelShader8Impl *shader, IDirect3DDevice8Impl *device,

@@ -225,7 +225,7 @@ static ULONG WINAPI d3d8_pixelshader_AddRef(IDirect3DPixelShader8 *iface)
     if (refcount == 1)
     {
         wined3d_mutex_lock();
-        IWineD3DPixelShader_AddRef(shader->wineD3DPixelShader);
+        IWineD3DBaseShader_AddRef(shader->wined3d_shader);
         wined3d_mutex_unlock();
     }
 
@@ -242,7 +242,7 @@ static ULONG WINAPI d3d8_pixelshader_Release(IDirect3DPixelShader8 *iface)
     if (!refcount)
     {
         wined3d_mutex_lock();
-        IWineD3DPixelShader_Release(shader->wineD3DPixelShader);
+        IWineD3DBaseShader_Release(shader->wined3d_shader);
         wined3d_mutex_unlock();
     }
 
@@ -278,7 +278,7 @@ HRESULT pixelshader_init(IDirect3DPixelShader8Impl *shader, IDirect3DDevice8Impl
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreatePixelShader(device->WineD3DDevice, byte_code, NULL, shader,
-            &d3d8_pixelshader_wined3d_parent_ops, &shader->wineD3DPixelShader);
+            &d3d8_pixelshader_wined3d_parent_ops, &shader->wined3d_shader);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

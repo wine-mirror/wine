@@ -2861,11 +2861,9 @@ struct ps_np2fixup_info {
     WORD              num_consts;
 };
 
-typedef struct IWineD3DPixelShaderImpl {
-    /* IUnknown parts */
-    const IWineD3DPixelShaderVtbl *lpVtbl;
-
-    /* IWineD3DBaseShader */
+typedef struct IWineD3DPixelShaderImpl
+{
+    const IWineD3DBaseShaderVtbl *lpVtbl;
     IWineD3DBaseShaderClass     baseShader;
 
     /* Pixel shader input semantics */

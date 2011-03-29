@@ -2405,15 +2405,6 @@ interface IWineD3DBaseShader : IWineD3DBase
 [
     object,
     local,
-    uuid(818503da-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DPixelShader : IWineD3DBaseShader
-{
-}
-
-[
-    object,
-    local,
     uuid(6d10a2ce-09d0-4a53-a427-11388f9f8ca5)
 ]
 interface IWineD3DDevice : IUnknown
@@ -2552,7 +2543,7 @@ interface IWineD3DDevice : IUnknown
         [in] const struct wined3d_shader_signature *output_signature,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DPixelShader **shader
+        [out] IWineD3DBaseShader **shader
     );
     HRESULT CreatePalette(
         [in] DWORD flags,
@@ -2714,9 +2705,9 @@ interface IWineD3DDevice : IUnknown
         [out] PALETTEENTRY *entries
     );
     HRESULT SetPixelShader(
-        [in] IWineD3DPixelShader *shader
+        [in] IWineD3DBaseShader *shader
     );
-    IWineD3DPixelShader *GetPixelShader(
+    IWineD3DBaseShader *GetPixelShader(
     );
     HRESULT SetPixelShaderConstantB(
         [in] UINT start_register,

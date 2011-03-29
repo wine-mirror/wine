@@ -195,7 +195,7 @@ struct d3d10_pixel_shader
     const struct ID3D10PixelShaderVtbl *vtbl;
     LONG refcount;
 
-    IWineD3DPixelShader *wined3d_shader;
+    IWineD3DBaseShader *wined3d_shader;
     struct wined3d_shader_signature output_signature;
 };
 

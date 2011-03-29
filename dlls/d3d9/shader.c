@@ -179,7 +179,7 @@ static ULONG WINAPI d3d9_pixelshader_AddRef(IDirect3DPixelShader9 *iface)
     {
         IDirect3DDevice9Ex_AddRef(shader->parentDevice);
         wined3d_mutex_lock();
-        IWineD3DPixelShader_AddRef(shader->wineD3DPixelShader);
+        IWineD3DBaseShader_AddRef(shader->wined3d_shader);
         wined3d_mutex_unlock();
     }
 
@@ -198,7 +198,7 @@ static ULONG WINAPI d3d9_pixelshader_Release(IDirect3DPixelShader9 *iface)
         IDirect3DDevice9Ex *device = shader->parentDevice;
 
         wined3d_mutex_lock();
-        IWineD3DPixelShader_Release(shader->wineD3DPixelShader);
+        IWineD3DBaseShader_Release(shader->wined3d_shader);
         wined3d_mutex_unlock();
 
         /* Release the device last, as it may cause the device to be destroyed. */
@@ -227,7 +227,7 @@ static HRESULT WINAPI d3d9_pixelshader_GetFunction(IDirect3DPixelShader9 *iface,
     TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
 
     wined3d_mutex_lock();
-    hr = IWineD3DPixelShader_GetFunction(((IDirect3DPixelShader9Impl *)iface)->wineD3DPixelShader, data, data_size);
+    hr = IWineD3DBaseShader_GetFunction(((IDirect3DPixelShader9Impl *)iface)->wined3d_shader, data, data_size);
     wined3d_mutex_unlock();
 
     return hr;
@@ -263,7 +263,7 @@ HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader, IDirect3DDevice9Impl
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreatePixelShader(device->WineD3DDevice, byte_code, NULL, shader,
-            &d3d9_pixelshader_wined3d_parent_ops, &shader->wineD3DPixelShader);
+            &d3d9_pixelshader_wined3d_parent_ops, &shader->wined3d_shader);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

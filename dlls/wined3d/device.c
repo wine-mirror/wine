@@ -1576,7 +1576,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateGeometryShader(IWineD3DDevice *if
 static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface,
         const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops,
-        IWineD3DPixelShader **ppPixelShader)
+        IWineD3DBaseShader **shader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DPixelShaderImpl *object;
@@ -1601,7 +1601,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
     }
 
     TRACE("Created pixel shader %p.\n", object);
-    *ppPixelShader = (IWineD3DPixelShader *)object;
+    *shader = (IWineD3DBaseShader *)object;
 
     return WINED3D_OK;
 }
@@ -3743,48 +3743,55 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This)
     if (vs) device_map_vsamplers(This, ps, gl_info);
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader *pShader)
+static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DBaseShader *shader)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DPixelShader *oldShader = (IWineD3DPixelShader *)This->updateStateBlock->state.pixel_shader;
-    This->updateStateBlock->state.pixel_shader = (IWineD3DPixelShaderImpl *)pShader;
-    This->updateStateBlock->changed.pixelShader = TRUE;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    IWineD3DBaseShader *prev = (IWineD3DBaseShader *)device->updateStateBlock->state.pixel_shader;
+
+    device->updateStateBlock->state.pixel_shader = (IWineD3DPixelShaderImpl *)shader;
+    device->updateStateBlock->changed.pixelShader = TRUE;
 
     /* Handle recording of state blocks */
-    if (This->isRecordingState) {
+    if (device->isRecordingState)
         TRACE("Recording... not performing anything\n");
-    }
 
-    if (This->isRecordingState) {
-        TRACE("Recording... not performing anything\n");
-        if(pShader) IWineD3DPixelShader_AddRef(pShader);
-        if(oldShader) IWineD3DPixelShader_Release(oldShader);
+    if (device->isRecordingState)
+    {
+        TRACE("Recording... not performing anything.\n");
+        if (shader)
+            IWineD3DBaseShader_AddRef(shader);
+        if (prev)
+            IWineD3DBaseShader_Release(prev);
         return WINED3D_OK;
     }
 
-    if(pShader == oldShader) {
-        TRACE("App is setting the old pixel shader over, nothing to do\n");
+    if (shader == prev)
+    {
+        TRACE("App is setting the old pixel shader over, nothing to do.\n");
         return WINED3D_OK;
     }
 
-    if(pShader) IWineD3DPixelShader_AddRef(pShader);
-    if(oldShader) IWineD3DPixelShader_Release(oldShader);
+    if (shader)
+        IWineD3DBaseShader_AddRef(shader);
+    if (prev)
+        IWineD3DBaseShader_Release(prev);
 
-    TRACE("(%p) : setting pShader(%p)\n", This, pShader);
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
+    TRACE("Setting shader %p.\n", shader);
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_PIXELSHADER);
 
     return WINED3D_OK;
 }
 
-static IWineD3DPixelShader * WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface)
+static IWineD3DBaseShader * WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
-    IWineD3DPixelShader *shader;
+    IWineD3DBaseShader *shader;
 
     TRACE("iface %p.\n", iface);
 
-    shader = (IWineD3DPixelShader *)device->stateBlock->state.pixel_shader;
-    if (shader) IWineD3DPixelShader_AddRef(shader);
+    shader = (IWineD3DBaseShader *)device->stateBlock->state.pixel_shader;
+    if (shader)
+        IWineD3DBaseShader_AddRef(shader);
 
     TRACE("Returning %p.\n", shader);
     return shader;

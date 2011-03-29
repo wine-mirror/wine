@@ -501,7 +501,7 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
         if (stateblock->state.vertex_shader)
             IWineD3DBaseShader_Release((IWineD3DBaseShader *)stateblock->state.vertex_shader);
         if (stateblock->state.pixel_shader)
-            IWineD3DPixelShader_Release((IWineD3DPixelShader *)stateblock->state.pixel_shader);
+            IWineD3DBaseShader_Release((IWineD3DBaseShader *)stateblock->state.pixel_shader);
 
         for (counter = 0; counter < LIGHTMAP_SIZE; ++counter)
         {
@@ -860,9 +860,9 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
     if (stateblock->changed.pixelShader && stateblock->state.pixel_shader != src_state->pixel_shader)
     {
         if (src_state->pixel_shader)
-            IWineD3DPixelShader_AddRef((IWineD3DPixelShader *)src_state->pixel_shader);
+            IWineD3DBaseShader_AddRef((IWineD3DBaseShader *)src_state->pixel_shader);
         if (stateblock->state.pixel_shader)
-            IWineD3DPixelShader_Release((IWineD3DPixelShader *)stateblock->state.pixel_shader);
+            IWineD3DBaseShader_Release((IWineD3DBaseShader *)stateblock->state.pixel_shader);
         stateblock->state.pixel_shader = src_state->pixel_shader;
     }
 
@@ -923,7 +923,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     apply_lights(device, &stateblock->state);
 
     if (stateblock->changed.pixelShader)
-        IWineD3DDevice_SetPixelShader(device, (IWineD3DPixelShader *)stateblock->state.pixel_shader);
+        IWineD3DDevice_SetPixelShader(device, (IWineD3DBaseShader *)stateblock->state.pixel_shader);
 
     /* Pixel Shader Constants. */
     for (i = 0; i < stateblock->num_contained_ps_consts_f; ++i)

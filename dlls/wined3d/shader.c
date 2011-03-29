@@ -1998,12 +1998,11 @@ HRESULT geometryshader_init(struct wined3d_geometryshader *shader, IWineD3DDevic
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE pixelshader_QueryInterface(IWineD3DPixelShader *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE pixelshader_QueryInterface(IWineD3DBaseShader *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    if (IsEqualGUID(riid, &IID_IWineD3DPixelShader)
-            || IsEqualGUID(riid, &IID_IWineD3DBaseShader)
+    if (IsEqualGUID(riid, &IID_IWineD3DBaseShader)
             || IsEqualGUID(riid, &IID_IWineD3DBase)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
@@ -2018,7 +2017,7 @@ static HRESULT STDMETHODCALLTYPE pixelshader_QueryInterface(IWineD3DPixelShader 
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE pixelshader_AddRef(IWineD3DPixelShader *iface)
+static ULONG STDMETHODCALLTYPE pixelshader_AddRef(IWineD3DBaseShader *iface)
 {
     IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)iface;
     ULONG refcount = InterlockedIncrement(&shader->baseShader.ref);
@@ -2029,7 +2028,7 @@ static ULONG STDMETHODCALLTYPE pixelshader_AddRef(IWineD3DPixelShader *iface)
 }
 
 /* Do not call while under the GL lock. */
-static ULONG STDMETHODCALLTYPE pixelshader_Release(IWineD3DPixelShader *iface)
+static ULONG STDMETHODCALLTYPE pixelshader_Release(IWineD3DBaseShader *iface)
 {
     IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)iface;
     ULONG refcount = InterlockedDecrement(&shader->baseShader.ref);
@@ -2046,21 +2045,21 @@ static ULONG STDMETHODCALLTYPE pixelshader_Release(IWineD3DPixelShader *iface)
     return refcount;
 }
 
-static void * STDMETHODCALLTYPE pixelshader_GetParent(IWineD3DPixelShader *iface)
+static void * STDMETHODCALLTYPE pixelshader_GetParent(IWineD3DBaseShader *iface)
 {
     TRACE("iface %p.\n", iface);
 
     return ((IWineD3DBaseShaderImpl *)iface)->baseShader.parent;
 }
 
-static HRESULT STDMETHODCALLTYPE pixelshader_GetFunction(IWineD3DPixelShader *iface, void *data, UINT *data_size)
+static HRESULT STDMETHODCALLTYPE pixelshader_GetFunction(IWineD3DBaseShader *iface, void *data, UINT *data_size)
 {
     TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
 
     return shader_get_function((IWineD3DBaseShaderImpl *)iface, data, data_size);
 }
 
-static HRESULT STDMETHODCALLTYPE pixelshader_SetLocalConstantsF(IWineD3DPixelShader *iface,
+static HRESULT STDMETHODCALLTYPE pixelshader_SetLocalConstantsF(IWineD3DBaseShader *iface,
         UINT start_idx, const float *src_data, UINT count)
 {
     TRACE("iface %p, start_idx %u, src_data %p, count %u.\n", iface, start_idx, src_data, count);
@@ -2069,7 +2068,7 @@ static HRESULT STDMETHODCALLTYPE pixelshader_SetLocalConstantsF(IWineD3DPixelSha
             start_idx, src_data, count);
 }
 
-static const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl =
+static const IWineD3DBaseShaderVtbl IWineD3DPixelShader_Vtbl =
 {
     /* IUnknown methods */
     pixelshader_QueryInterface,
