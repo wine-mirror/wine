@@ -1114,11 +1114,186 @@ HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     return ret;
 }
 
+typedef struct TiffEncoder {
+    IWICBitmapEncoder IWICBitmapEncoder_iface;
+    LONG ref;
+} TiffEncoder;
+
+static inline TiffEncoder *impl_from_IWICBitmapEncoder(IWICBitmapEncoder *iface)
+{
+    return CONTAINING_RECORD(iface, TiffEncoder, IWICBitmapEncoder_iface);
+}
+
+static HRESULT WINAPI TiffEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
+    void **ppv)
+{
+    TiffEncoder *This = impl_from_IWICBitmapEncoder(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapEncoder, iid))
+    {
+        *ppv = This;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI TiffEncoder_AddRef(IWICBitmapEncoder *iface)
+{
+    TiffEncoder *This = impl_from_IWICBitmapEncoder(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI TiffEncoder_Release(IWICBitmapEncoder *iface)
+{
+    TiffEncoder *This = impl_from_IWICBitmapEncoder(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI TiffEncoder_Initialize(IWICBitmapEncoder *iface,
+    IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
+{
+    FIXME("(%p,%p,%u): stub\n", iface, pIStream, cacheOption);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffEncoder_GetContainerFormat(IWICBitmapEncoder *iface,
+    GUID *pguidContainerFormat)
+{
+    FIXME("(%p,%s): stub\n", iface, debugstr_guid(pguidContainerFormat));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffEncoder_GetEncoderInfo(IWICBitmapEncoder *iface,
+    IWICBitmapEncoderInfo **ppIEncoderInfo)
+{
+    FIXME("(%p,%p): stub\n", iface, ppIEncoderInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffEncoder_SetColorContexts(IWICBitmapEncoder *iface,
+    UINT cCount, IWICColorContext **ppIColorContext)
+{
+    FIXME("(%p,%u,%p): stub\n", iface, cCount, ppIColorContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffEncoder_SetPalette(IWICBitmapEncoder *iface, IWICPalette *pIPalette)
+{
+    TRACE("(%p,%p)\n", iface, pIPalette);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI TiffEncoder_SetThumbnail(IWICBitmapEncoder *iface, IWICBitmapSource *pIThumbnail)
+{
+    TRACE("(%p,%p)\n", iface, pIThumbnail);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI TiffEncoder_SetPreview(IWICBitmapEncoder *iface, IWICBitmapSource *pIPreview)
+{
+    TRACE("(%p,%p)\n", iface, pIPreview);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
+    IWICBitmapFrameEncode **ppIFrameEncode, IPropertyBag2 **ppIEncoderOptions)
+{
+    FIXME("(%p,%p,%p): stub\n", iface, ppIFrameEncode, ppIEncoderOptions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffEncoder_Commit(IWICBitmapEncoder *iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffEncoder_GetMetadataQueryWriter(IWICBitmapEncoder *iface,
+    IWICMetadataQueryWriter **ppIMetadataQueryWriter)
+{
+    FIXME("(%p,%p): stub\n", iface, ppIMetadataQueryWriter);
+    return E_NOTIMPL;
+}
+
+static const IWICBitmapEncoderVtbl TiffEncoder_Vtbl = {
+    TiffEncoder_QueryInterface,
+    TiffEncoder_AddRef,
+    TiffEncoder_Release,
+    TiffEncoder_Initialize,
+    TiffEncoder_GetContainerFormat,
+    TiffEncoder_GetEncoderInfo,
+    TiffEncoder_SetColorContexts,
+    TiffEncoder_SetPalette,
+    TiffEncoder_SetThumbnail,
+    TiffEncoder_SetPreview,
+    TiffEncoder_CreateNewFrame,
+    TiffEncoder_Commit,
+    TiffEncoder_GetMetadataQueryWriter
+};
+
+HRESULT TiffEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+{
+    TiffEncoder *This;
+    HRESULT ret;
+
+    TRACE("(%p,%s,%p)\n", pUnkOuter, debugstr_guid(iid), ppv);
+
+    *ppv = NULL;
+
+    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
+
+    if (!load_libtiff())
+    {
+        ERR("Failed writing TIFF because unable to load %s\n",SONAME_LIBTIFF);
+        return E_FAIL;
+    }
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(TiffEncoder));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IWICBitmapEncoder_iface.lpVtbl = &TiffEncoder_Vtbl;
+    This->ref = 1;
+
+    ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
+    IUnknown_Release((IUnknown*)This);
+
+    return ret;
+}
+
 #else /* !SONAME_LIBTIFF */
 
 HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 {
     ERR("Trying to load TIFF picture, but Wine was compiled without TIFF support.\n");
+    return E_FAIL;
+}
+
+HRESULT TiffEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+{
+    ERR("Trying to save TIFF picture, but Wine was compiled without TIFF support.\n");
     return E_FAIL;
 }
 

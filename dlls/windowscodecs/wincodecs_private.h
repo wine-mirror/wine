@@ -38,6 +38,7 @@ extern HRESULT GifDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void*
 extern HRESULT IcoDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
+extern HRESULT TiffEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 extern HRESULT IcnsEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);
 
 extern HRESULT TgaDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv);

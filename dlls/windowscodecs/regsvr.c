@@ -761,12 +761,13 @@ static struct decoder_pattern const png_patterns[] = {
 static const BYTE tiff_magic_le[] = {0x49,0x49,42,0};
 static const BYTE tiff_magic_be[] = {0x4d,0x4d,0,42};
 
-static GUID const * const tiff_formats[] = {
+static GUID const * const tiff_decode_formats[] = {
     &GUID_WICPixelFormatBlackWhite,
     &GUID_WICPixelFormat4bppGray,
     &GUID_WICPixelFormat8bppGray,
     &GUID_WICPixelFormat4bppIndexed,
     &GUID_WICPixelFormat8bppIndexed,
+    &GUID_WICPixelFormat24bppBGR,
     &GUID_WICPixelFormat32bppBGR,
     &GUID_WICPixelFormat32bppBGRA,
     &GUID_WICPixelFormat32bppPBGRA,
@@ -870,7 +871,7 @@ static struct regsvr_decoder const decoder_list[] = {
 	&GUID_VendorMicrosoft,
 	"image/tiff",
 	".tif;.tiff",
-	tiff_formats,
+	tiff_decode_formats,
 	tiff_patterns
     },
     {   &CLSID_WineTgaDecoder,
@@ -908,6 +909,19 @@ static GUID const * const png_encode_formats[] = {
     NULL
 };
 
+static GUID const * const tiff_encode_formats[] = {
+    &GUID_WICPixelFormatBlackWhite,
+    &GUID_WICPixelFormat4bppGray,
+    &GUID_WICPixelFormat8bppGray,
+    &GUID_WICPixelFormat24bppBGR,
+    &GUID_WICPixelFormat32bppBGRA,
+    &GUID_WICPixelFormat32bppPBGRA,
+    &GUID_WICPixelFormat48bppRGB,
+    &GUID_WICPixelFormat64bppRGBA,
+    &GUID_WICPixelFormat64bppPRGBA,
+    NULL
+};
+
 static GUID const * const icns_encode_formats[] = {
     &GUID_WICPixelFormat32bppBGRA,
     NULL
@@ -931,6 +945,15 @@ static struct regsvr_encoder const encoder_list[] = {
 	"image/png",
 	".png",
 	png_encode_formats
+    },
+    {   &CLSID_WICTiffEncoder,
+	"The Wine Project",
+	"TIFF Encoder",
+	"1.0.0.0",
+	&GUID_VendorMicrosoft,
+	"image/tiff",
+	".tif;.tiff",
+	tiff_encode_formats
     },
     {   &CLSID_WICIcnsEncoder,
 	"The Wine Project",

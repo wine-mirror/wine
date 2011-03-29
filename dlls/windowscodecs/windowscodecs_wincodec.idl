@@ -82,6 +82,13 @@ coclass WICJpegDecoder { interface IWICBitmapDecoder; }
 coclass WICTiffDecoder { interface IWICBitmapDecoder; }
 
 [
+    helpstring("WIC TIFF Encoder"),
+    threading(both),
+    uuid(0131be10-2001-4c5f-a9b0-cc88fab64ce8)
+]
+coclass WICTiffEncoder { interface IWICBitmapEncoder; }
+
+[
     helpstring("WIC ICNS Encoder"),
     threading(both),
     uuid(312fb6f1-b767-409d-8a6d-0fc154d4f05c)
