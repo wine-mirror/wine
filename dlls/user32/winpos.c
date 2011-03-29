@@ -955,6 +955,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         /* fall through */
     case SW_SHOWNORMAL:
     case SW_RESTORE:
+    case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
         old_style = WIN_SetStyle( hwnd, 0, WS_MINIMIZE | WS_MAXIMIZE );
         if (old_style & WS_MINIMIZE)
         {
