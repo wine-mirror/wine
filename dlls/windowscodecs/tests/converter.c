@@ -473,5 +473,8 @@ START_TEST(converter)
     test_encoder(&testdata_24bppBGR, &CLSID_WICPngEncoder,
                  &testdata_24bppBGR, &CLSID_WICPngDecoder, "PNG encoder 24bppBGR");
 
+    test_encoder(&testdata_24bppBGR, &CLSID_WICTiffEncoder,
+                 &testdata_24bppBGR, &CLSID_WICTiffDecoder, "TIFF encoder 24bppBGR");
+
     CoUninitialize();
 }
