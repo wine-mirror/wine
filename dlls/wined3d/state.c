@@ -3569,7 +3569,7 @@ static void shaderconstant(DWORD state_id, struct wined3d_stateblock *stateblock
 static void tex_bumpenvlscale(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    IWineD3DPixelShaderImpl *ps = stateblock->state.pixel_shader;
+    IWineD3DBaseShaderImpl *ps = stateblock->state.pixel_shader;
 
     if (ps && stage && (ps->baseShader.reg_maps.luminanceparams & (1 << stage)))
     {
@@ -3740,7 +3740,7 @@ void apply_pixelshader(DWORD state_id, struct wined3d_stateblock *stateblock, st
 static void shader_bumpenvmat(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
-    IWineD3DPixelShaderImpl *ps = stateblock->state.pixel_shader;
+    IWineD3DBaseShaderImpl *ps = stateblock->state.pixel_shader;
 
     if (ps && stage && (ps->baseShader.reg_maps.bumpmat & (1 << stage)))
     {

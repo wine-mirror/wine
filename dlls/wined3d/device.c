@@ -1579,7 +1579,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
         IWineD3DBaseShader **shader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DPixelShaderImpl *object;
+    IWineD3DBaseShaderImpl *object;
     HRESULT hr;
 
     if (This->ps_selected_mode == SHADER_NONE)
@@ -3691,7 +3691,7 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps, const struct
 
     if (ps)
     {
-        IWineD3DPixelShaderImpl *pshader = This->stateBlock->state.pixel_shader;
+        IWineD3DBaseShaderImpl *pshader = This->stateBlock->state.pixel_shader;
 
         /* Note that we only care if a sampler is sampled or not, not the sampler's specific type.
          * Otherwise we'd need to call shader_update_samplers() here for 1.x pixelshaders. */
@@ -3748,7 +3748,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     IWineD3DBaseShader *prev = (IWineD3DBaseShader *)device->updateStateBlock->state.pixel_shader;
 
-    device->updateStateBlock->state.pixel_shader = (IWineD3DPixelShaderImpl *)shader;
+    device->updateStateBlock->state.pixel_shader = (IWineD3DBaseShaderImpl *)shader;
     device->updateStateBlock->changed.pixelShader = TRUE;
 
     /* Handle recording of state blocks */

@@ -2341,7 +2341,7 @@ struct wined3d_state
     INT vs_consts_i[MAX_CONST_I * 4];
     float *vs_consts_f;
 
-    struct IWineD3DPixelShaderImpl *pixel_shader;
+    struct IWineD3DBaseShaderImpl *pixel_shader;
     BOOL ps_consts_b[MAX_CONST_B];
     INT ps_consts_i[MAX_CONST_I * 4];
     float *ps_consts_f;
@@ -2725,6 +2725,19 @@ struct wined3d_vertex_shader
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
 };
 
+struct wined3d_pixel_shader
+{
+    /* Pixel shader input semantics */
+    DWORD input_reg_map[MAX_REG_INPUT];
+    BOOL input_reg_used[MAX_REG_INPUT];
+    unsigned int declared_in_count;
+
+    /* Some information about the shader behavior */
+    char vpos_uniform;
+    BOOL color0_mov;
+    DWORD color0_reg;
+};
+
 typedef struct IWineD3DBaseShaderImpl {
     /* IUnknown */
     const IWineD3DBaseShaderVtbl    *lpVtbl;
@@ -2735,12 +2748,21 @@ typedef struct IWineD3DBaseShaderImpl {
     union
     {
         struct wined3d_vertex_shader vs;
+        struct wined3d_pixel_shader ps;
     } u;
 } IWineD3DBaseShaderImpl;
 
 HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+
+HRESULT pixelshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps,
+        struct wined3d_texture * const *textures) DECLSPEC_HIDDEN;
+void find_ps_compile_args(const struct wined3d_state *state,
+        IWineD3DBaseShaderImpl *shader, struct ps_compile_args *args) DECLSPEC_HIDDEN;
 
 void find_vs_compile_args(const struct wined3d_state *state,
         IWineD3DBaseShaderImpl *shader, struct vs_compile_args *args) DECLSPEC_HIDDEN;
@@ -2832,10 +2854,6 @@ static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl* This, DWORD 
 
 }
 
-/*****************************************************************************
- * IDirect3DPixelShader implementation structure
- */
-
 /* Using additional shader constants (uniforms in GLSL / program environment
  * or local parameters in ARB) is costly:
  * ARB only knows float4 parameters and GLSL compiler are not really smart
@@ -2852,32 +2870,6 @@ struct ps_np2fixup_info {
     WORD              active; /* bitfield indicating if we can apply the fixup */
     WORD              num_consts;
 };
-
-typedef struct IWineD3DPixelShaderImpl
-{
-    const IWineD3DBaseShaderVtbl *lpVtbl;
-    IWineD3DBaseShaderClass     baseShader;
-
-    /* Pixel shader input semantics */
-    DWORD                 input_reg_map[MAX_REG_INPUT];
-    BOOL                  input_reg_used[MAX_REG_INPUT];
-    unsigned int declared_in_count;
-
-    /* Some information about the shader behavior */
-    char                        vpos_uniform;
-
-    BOOL                        color0_mov;
-    DWORD                       color0_reg;
-
-} IWineD3DPixelShaderImpl;
-
-HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *device,
-        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps,
-        struct wined3d_texture * const *textures) DECLSPEC_HIDDEN;
-void find_ps_compile_args(const struct wined3d_state *state,
-        IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args) DECLSPEC_HIDDEN;
 
 /* sRGB correction constants */
 static const float srgb_cmp = 0.0031308f;

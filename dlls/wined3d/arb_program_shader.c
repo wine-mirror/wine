@@ -1824,8 +1824,7 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
     }
     else if (ins->dst[0].reg.type == WINED3DSPR_COLOROUT && !ins->dst[0].reg.idx && pshader)
     {
-        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) shader;
-        if(ctx->cur_ps_args->super.srgb_correction && ps->color0_mov)
+        if (ctx->cur_ps_args->super.srgb_correction && shader->u.ps.color0_mov)
         {
             shader_addline(buffer, "#mov handled in srgb write code\n");
             return;
@@ -3421,8 +3420,8 @@ static const DWORD *find_loop_control_values(IWineD3DBaseShaderImpl *This, DWORD
     return NULL;
 }
 
-static void init_ps_input(const IWineD3DPixelShaderImpl *This, const struct arb_ps_compile_args *args,
-                          struct shader_arb_ctx_priv *priv)
+static void init_ps_input(const IWineD3DBaseShaderImpl *shader,
+        const struct arb_ps_compile_args *args, struct shader_arb_ctx_priv *priv)
 {
     static const char * const texcoords[8] =
     {
@@ -3430,7 +3429,7 @@ static void init_ps_input(const IWineD3DPixelShaderImpl *This, const struct arb_
         "fragment.texcoord[4]", "fragment.texcoord[5]", "fragment.texcoord[6]", "fragment.texcoord[7]"
     };
     unsigned int i;
-    const struct wined3d_shader_signature_element *sig = This->baseShader.input_signature;
+    const struct wined3d_shader_signature_element *sig = shader->baseShader.input_signature;
     const char *semantic_name;
     DWORD semantic_idx;
 
@@ -3496,20 +3495,20 @@ static void init_ps_input(const IWineD3DPixelShaderImpl *This, const struct arb_
 }
 
 /* GL locking is done by the caller */
-static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
+static GLuint shader_arb_generate_pshader(IWineD3DBaseShaderImpl *shader,
         const struct wined3d_gl_info *gl_info, struct wined3d_shader_buffer *buffer,
         const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
 {
-    const struct wined3d_shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
-    CONST DWORD *function = This->baseShader.function;
+    const struct wined3d_shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
+    const DWORD *function = shader->baseShader.function;
     const local_constant *lconst;
     GLuint retval;
     char fragcolor[16];
-    DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This), next_local, cur;
+    DWORD *lconst_map = local_const_mapping(shader), next_local, cur;
     struct shader_arb_ctx_priv priv_ctx;
     BOOL dcl_td = FALSE;
     BOOL want_nv_prog = FALSE;
-    struct arb_pshader_private *shader_priv = This->baseShader.backend_data;
+    struct arb_pshader_private *shader_priv = shader->baseShader.backend_data;
     GLint errPos;
     DWORD map;
 
@@ -3519,7 +3518,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
     {
         if (!(map & 1)
-                || (This->color0_mov && i == This->color0_reg)
+                || (shader->u.ps.color0_mov && i == shader->u.ps.color0_reg)
                 || (reg_maps->shader_version.major < 2 && !i))
             continue;
 
@@ -3557,7 +3556,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     priv_ctx.cur_ps_args = args;
     priv_ctx.compiled_fprog = compiled;
     priv_ctx.cur_np2fixup_info = &compiled->np2fixup_info;
-    init_ps_input(This, args, &priv_ctx);
+    init_ps_input(shader, args, &priv_ctx);
     list_init(&priv_ctx.control_frames);
 
     /* Avoid enabling NV_fragment_program* if we do not need it.
@@ -3636,11 +3635,17 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     if (reg_maps->shader_version.major < 2)
     {
         strcpy(fragcolor, "R0");
-    } else {
-        if(args->super.srgb_correction) {
-            if(This->color0_mov) {
-                sprintf(fragcolor, "R%u", This->color0_reg);
-            } else {
+    }
+    else
+    {
+        if (args->super.srgb_correction)
+        {
+            if (shader->u.ps.color0_mov)
+            {
+                sprintf(fragcolor, "R%u", shader->u.ps.color0_reg);
+            }
+            else
+            {
                 shader_addline(buffer, "TEMP TMP_COLOR;\n");
                 strcpy(fragcolor, "TMP_COLOR");
             }
@@ -3657,8 +3662,8 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     }
 
     /* Base Declarations */
-    next_local = shader_generate_arb_declarations((IWineD3DBaseShaderImpl *)This,
-            reg_maps, buffer, gl_info, lconst_map, NULL, &priv_ctx);
+    next_local = shader_generate_arb_declarations(shader, reg_maps,
+            buffer, gl_info, lconst_map, NULL, &priv_ctx);
 
     for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
     {
@@ -3696,7 +3701,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
         compiled->int_consts[i] = WINED3D_CONST_NUM_UNUSED;
         if (reg_maps->integer_constants & (1 << i) && priv_ctx.target_version >= NV2)
         {
-            const DWORD *control_values = find_loop_control_values((IWineD3DBaseShaderImpl *) This, i);
+            const DWORD *control_values = find_loop_control_values(shader, i);
 
             if(control_values)
             {
@@ -3778,7 +3783,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     }
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShaderImpl *)This, buffer, reg_maps, function, &priv_ctx);
+    shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
 
     if(args->super.srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, srgbtmp[0], srgbtmp[1], srgbtmp[2], srgbtmp[3],
@@ -3820,8 +3825,10 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     }
 
     /* Load immediate constants */
-    if(lconst_map) {
-        LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+    if (lconst_map)
+    {
+        LIST_FOR_EACH_ENTRY(lconst, &shader->baseShader.constantsF, local_constant, entry)
+        {
             const float *value = (const float *)lconst->value;
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, lconst_map[lconst->idx], value));
             checkGLcall("glProgramLocalParameter4fvARB");
@@ -4240,7 +4247,8 @@ static GLuint shader_arb_generate_vshader(IWineD3DBaseShaderImpl *shader,
 }
 
 /* GL locking is done by the caller */
-static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct arb_ps_compile_args *args)
+static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DBaseShaderImpl *shader,
+        const struct arb_ps_compile_args *args)
 {
     IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -4421,7 +4429,7 @@ static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DBaseShaderImpl *s
 }
 
 static void find_arb_ps_compile_args(const struct wined3d_state *state,
-        IWineD3DPixelShaderImpl *shader, struct arb_ps_compile_args *args)
+        IWineD3DBaseShaderImpl *shader, struct arb_ps_compile_args *args)
 {
     IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -4488,7 +4496,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     args->clip.boolclip_compare = 0;
     if (use_ps(state))
     {
-        IWineD3DPixelShaderImpl *ps = state->pixel_shader;
+        IWineD3DBaseShaderImpl *ps = state->pixel_shader;
         struct arb_pshader_private *shader_priv = ps->baseShader.backend_data;
         args->ps_signature = shader_priv->input_signature_idx;
 
@@ -4563,7 +4571,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
     /* Deal with pixel shaders first so the vertex shader arg function has the input signature ready */
     if (usePS)
     {
-        IWineD3DPixelShaderImpl *ps = state->pixel_shader;
+        IWineD3DBaseShaderImpl *ps = state->pixel_shader;
         struct arb_ps_compile_args compile_args;
         struct arb_ps_compiled_shader *compiled;
 
@@ -5656,7 +5664,7 @@ static void set_bumpmat_arbfp(DWORD state_id, struct wined3d_stateblock *statebl
 
     if (use_ps(state))
     {
-        IWineD3DPixelShaderImpl *ps = state->pixel_shader;
+        IWineD3DBaseShaderImpl *ps = state->pixel_shader;
         if (stage && (ps->baseShader.reg_maps.bumpmat & (1 << stage)))
         {
             /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
@@ -5695,7 +5703,7 @@ static void tex_bumpenvlum_arbfp(DWORD state_id,
 
     if (use_ps(state))
     {
-        IWineD3DPixelShaderImpl *ps = state->pixel_shader;
+        IWineD3DBaseShaderImpl *ps = state->pixel_shader;
         if (stage && (ps->baseShader.reg_maps.luminanceparams & (1 << stage)))
         {
             /* The pixel shader has to know the luminance offset. Do a constants update if it

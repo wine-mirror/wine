@@ -373,12 +373,12 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *shader, struct 
                     unsigned int i;
                     for (i = 0; i < MAX_REG_INPUT; ++i)
                     {
-                        ((IWineD3DPixelShaderImpl *)shader)->input_reg_used[i] = TRUE;
+                        shader->u.ps.input_reg_used[i] = TRUE;
                     }
                 }
                 else
                 {
-                    ((IWineD3DPixelShaderImpl *)shader)->input_reg_used[reg->idx] = TRUE;
+                    shader->u.ps.input_reg_used[reg->idx] = TRUE;
                 }
             }
             else reg_maps->input_registers |= 1 << reg->idx;
@@ -716,19 +716,16 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShaderImpl *shader, const s
 
                 if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
                 {
-                    IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)shader;
-
                     if (dst_param.reg.type == WINED3DSPR_COLOROUT && !dst_param.reg.idx)
                     {
-                    /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
-                     * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
-                     * the mov and perform the sRGB write correction from the source register.
-                     *
-                     * However, if the mov is only partial, we can't do this, and if the write
-                     * comes from an instruction other than MOV it is hard to do as well. If
-                     * COLOROUT 0 is overwritten partially later, the marker is dropped again. */
-
-                        ps->color0_mov = FALSE;
+                        /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
+                         * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
+                         * the mov and perform the sRGB write correction from the source register.
+                         *
+                         * However, if the mov is only partial, we can't do this, and if the write
+                         * comes from an instruction other than MOV it is hard to do as well. If
+                         * COLOROUT 0 is overwritten partially later, the marker is dropped again. */
+                        shader->u.ps.color0_mov = FALSE;
                         if (ins.handler_idx == WINED3DSIH_MOV
                                 && dst_param.write_mask == WINED3DSP_WRITEMASK_ALL)
                         {
@@ -739,9 +736,10 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShaderImpl *shader, const s
                     /* Also drop the MOV marker if the source register is overwritten prior to the shader
                      * end
                      */
-                    else if (dst_param.reg.type == WINED3DSPR_TEMP && dst_param.reg.idx == ps->color0_reg)
+                    else if (dst_param.reg.type == WINED3DSPR_TEMP
+                            && dst_param.reg.idx == shader->u.ps.color0_reg)
                     {
-                        ps->color0_mov = FALSE;
+                        shader->u.ps.color0_mov = FALSE;
                     }
                 }
 
@@ -811,12 +809,11 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShaderImpl *shader, const s
 
                 if (color0_mov)
                 {
-                    IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)shader;
                     if (src_param.reg.type == WINED3DSPR_TEMP
                             && src_param.swizzle == WINED3DSP_NOSWIZZLE)
                     {
-                        ps->color0_mov = TRUE;
-                        ps->color0_reg = src_param.reg.idx;
+                        shader->u.ps.color0_mov = TRUE;
+                        shader->u.ps.color0_reg = src_param.reg.idx;
                     }
                 }
             }
@@ -2018,7 +2015,7 @@ static HRESULT STDMETHODCALLTYPE pixelshader_QueryInterface(IWineD3DBaseShader *
 
 static ULONG STDMETHODCALLTYPE pixelshader_AddRef(IWineD3DBaseShader *iface)
 {
-    IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)iface;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     ULONG refcount = InterlockedIncrement(&shader->baseShader.ref);
 
     TRACE("%p increasing refcount to %u.\n", shader, refcount);
@@ -2029,14 +2026,14 @@ static ULONG STDMETHODCALLTYPE pixelshader_AddRef(IWineD3DBaseShader *iface)
 /* Do not call while under the GL lock. */
 static ULONG STDMETHODCALLTYPE pixelshader_Release(IWineD3DBaseShader *iface)
 {
-    IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)iface;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     ULONG refcount = InterlockedDecrement(&shader->baseShader.ref);
 
     TRACE("%p decreasing refcount to %u.\n", shader, refcount);
 
     if (!refcount)
     {
-        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
+        shader_cleanup(shader);
         shader->baseShader.parent_ops->wined3d_object_destroyed(shader->baseShader.parent);
         HeapFree(GetProcessHeap(), 0, shader);
     }
@@ -2081,7 +2078,7 @@ static const IWineD3DBaseShaderVtbl IWineD3DPixelShader_Vtbl =
 };
 
 void find_ps_compile_args(const struct wined3d_state *state,
-        IWineD3DPixelShaderImpl *shader, struct ps_compile_args *args)
+        IWineD3DBaseShaderImpl *shader, struct ps_compile_args *args)
 {
     IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_texture *texture;
@@ -2176,7 +2173,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
     }
 }
 
-static void pixelshader_set_limits(IWineD3DPixelShaderImpl *shader)
+static void pixelshader_set_limits(IWineD3DBaseShaderImpl *shader)
 {
     DWORD shader_version = WINED3D_SHADER_VERSION(shader->baseShader.reg_maps.shader_version.major,
             shader->baseShader.reg_maps.shader_version.minor);
@@ -2264,7 +2261,7 @@ static void pixelshader_set_limits(IWineD3DPixelShaderImpl *shader)
     }
 }
 
-HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *device,
+HRESULT pixelshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -2277,12 +2274,11 @@ HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *de
     shader->lpVtbl = &IWineD3DPixelShader_Vtbl;
     shader_init(&shader->baseShader, device, parent, parent_ops);
 
-    hr = shader_set_function((IWineD3DBaseShaderImpl *)shader, byte_code,
-            output_signature, device->d3d_pshader_constantF);
+    hr = shader_set_function(shader, byte_code, output_signature, device->d3d_pshader_constantF);
     if (FAILED(hr))
     {
         WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
+        shader_cleanup(shader);
         return hr;
     }
 
@@ -2290,7 +2286,7 @@ HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *de
 
     for (i = 0; i < MAX_REG_INPUT; ++i)
     {
-        if (shader->input_reg_used[i])
+        if (shader->u.ps.input_reg_used[i])
         {
             ++num_regs_used;
             highest_reg_used = i;
@@ -2312,18 +2308,19 @@ HRESULT pixelshader_init(IWineD3DPixelShaderImpl *shader, IWineD3DDeviceImpl *de
 
         for (i = 0; i < MAX_REG_INPUT; ++i)
         {
-            shader->input_reg_map[i] = i;
+            shader->u.ps.input_reg_map[i] = i;
         }
 
-        shader->declared_in_count = highest_reg_used + 1;
+        shader->u.ps.declared_in_count = highest_reg_used + 1;
     }
     else
     {
-        shader->declared_in_count = 0;
+        shader->u.ps.declared_in_count = 0;
         for (i = 0; i < MAX_REG_INPUT; ++i)
         {
-            if (shader->input_reg_used[i]) shader->input_reg_map[i] = shader->declared_in_count++;
-            else shader->input_reg_map[i] = ~0U;
+            if (shader->u.ps.input_reg_used[i])
+                shader->u.ps.input_reg_map[i] = shader->u.ps.declared_in_count++;
+            else shader->u.ps.input_reg_map[i] = ~0U;
         }
     }
 
