@@ -22,7 +22,6 @@
 #include <windows.h>
 #include <wine/test.h>
 
-#include "initguid.h"
 #include "shlguid.h"
 #define COBJMACROS
 #include "shobjidl.h"
