@@ -52,6 +52,7 @@
 
 @ stdcall FreeAddrInfoW(ptr)
 @ stdcall GetAddrInfoW(wstr wstr ptr ptr)
+@ stdcall GetNameInfoW(ptr long ptr long ptr long long)
 @ stdcall WSApSetPostRoutine(ptr)
 @ stdcall WPUCompleteOverlappedRequest(long ptr long long ptr)
 @ stdcall WSAAccept(long ptr ptr ptr long)

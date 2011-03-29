@@ -5104,6 +5104,31 @@ int WINAPI WS_getnameinfo(const SOCKADDR *sa, WS_socklen_t salen, PCHAR host,
 #endif
 }
 
+int WINAPI GetNameInfoW(const SOCKADDR *sa, WS_socklen_t salen, PWCHAR host,
+                        DWORD hostlen, PWCHAR serv, DWORD servlen, INT flags)
+{
+    int ret;
+    char *hostA = NULL, *servA = NULL;
+
+    if (host && (!(hostA = HeapAlloc(GetProcessHeap(), 0, hostlen)))) return EAI_MEMORY;
+    if (serv && (!(servA = HeapAlloc(GetProcessHeap(), 0, servlen))))
+    {
+        HeapFree(GetProcessHeap(), 0, hostA);
+        return EAI_MEMORY;
+    }
+
+    ret = WS_getnameinfo(sa, salen, hostA, hostlen, servA, servlen, flags);
+    if (!ret)
+    {
+        if (host) MultiByteToWideChar(CP_ACP, 0, hostA, -1, host, hostlen);
+        if (serv) MultiByteToWideChar(CP_ACP, 0, servA, -1, serv, servlen);
+    }
+
+    HeapFree(GetProcessHeap(), 0, hostA);
+    HeapFree(GetProcessHeap(), 0, servA);
+    return ret;
+}
+
 /***********************************************************************
  *		getservbyport		(WS2_32.56)
  */
