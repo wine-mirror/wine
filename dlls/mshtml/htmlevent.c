@@ -1343,7 +1343,8 @@ void release_event_target(event_target_t *event_target)
             if(event_target->event_table[i]->handler_prop)
                 IDispatch_Release(event_target->event_table[i]->handler_prop);
             for(j=0; j < event_target->event_table[i]->handler_cnt; j++)
-                IDispatch_Release(event_target->event_table[i]->handlers[j]);
+                if(event_target->event_table[i]->handlers[j])
+                    IDispatch_Release(event_target->event_table[i]->handlers[j]);
         }
     }
 
