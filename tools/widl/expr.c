@@ -94,6 +94,7 @@ static int is_signed_integer_type(const type_t *type)
         case TYPE_BASIC_HANDLE:
             return FALSE;
         }
+        /* FALLTHROUGH */
     default:
         return FALSE;
     }
