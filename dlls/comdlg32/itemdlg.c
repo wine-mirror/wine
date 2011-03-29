@@ -56,6 +56,12 @@ typedef struct FileDialogImpl {
     COMDLG_FILTERSPEC *filterspecs;
     UINT filterspec_count;
     UINT filetypeindex;
+
+    IShellItemArray *psia_selection;
+    IShellItemArray *psia_results;
+    IShellItem *psi_defaultfolder;
+    IShellItem *psi_setfolder;
+    IShellItem *psi_folder;
 } FileDialogImpl;
 
 /**************************************************************************
@@ -124,6 +130,12 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
             LocalFree((void*)This->filterspecs[i].pszSpec);
         }
         HeapFree(GetProcessHeap(), 0, This->filterspecs);
+
+        if(This->psi_defaultfolder) IShellItem_Release(This->psi_defaultfolder);
+        if(This->psi_setfolder)     IShellItem_Release(This->psi_setfolder);
+        if(This->psi_folder)        IShellItem_Release(This->psi_folder);
+        if(This->psia_selection)    IShellItemArray_Release(This->psia_selection);
+        if(This->psia_results)      IShellItemArray_Release(This->psia_results);
 
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -234,29 +246,77 @@ static HRESULT WINAPI IFileDialog2_fnGetOptions(IFileDialog2 *iface, FILEOPENDIA
 static HRESULT WINAPI IFileDialog2_fnSetDefaultFolder(IFileDialog2 *iface, IShellItem *psi)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, psi);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, psi);
+    if(This->psi_defaultfolder)
+        IShellItem_Release(This->psi_defaultfolder);
+
+    This->psi_defaultfolder = psi;
+
+    if(This->psi_defaultfolder)
+        IShellItem_AddRef(This->psi_defaultfolder);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetFolder(IFileDialog2 *iface, IShellItem *psi)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, psi);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, psi);
+    if(This->psi_setfolder)
+        IShellItem_Release(This->psi_setfolder);
+
+    This->psi_setfolder = psi;
+
+    if(This->psi_setfolder)
+        IShellItem_AddRef(This->psi_setfolder);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnGetFolder(IFileDialog2 *iface, IShellItem **ppsi)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, ppsi);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, ppsi);
+    if(!ppsi)
+        return E_INVALIDARG;
+
+    /* FIXME:
+       If the dialog is shown, return the current(ly selected) folder. */
+
+    *ppsi = NULL;
+    if(This->psi_folder)
+        *ppsi = This->psi_folder;
+    else if(This->psi_setfolder)
+        *ppsi = This->psi_setfolder;
+    else if(This->psi_defaultfolder)
+        *ppsi = This->psi_defaultfolder;
+
+    if(*ppsi)
+    {
+        IShellItem_AddRef(*ppsi);
+        return S_OK;
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI IFileDialog2_fnGetCurrentSelection(IFileDialog2 *iface, IShellItem **ppsi)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, ppsi);
-    return E_NOTIMPL;
+    HRESULT hr;
+    TRACE("%p (%p)\n", This, ppsi);
+
+    if(!ppsi)
+        return E_INVALIDARG;
+
+    if(This->psia_selection)
+    {
+        /* FIXME: Check filename edit box */
+        hr = IShellItemArray_GetItemAt(This->psia_selection, 0, ppsi);
+        return hr;
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetFileName(IFileDialog2 *iface, LPCWSTR pszName)
@@ -297,8 +357,29 @@ static HRESULT WINAPI IFileDialog2_fnSetFileNameLabel(IFileDialog2 *iface, LPCWS
 static HRESULT WINAPI IFileDialog2_fnGetResult(IFileDialog2 *iface, IShellItem **ppsi)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, ppsi);
-    return E_NOTIMPL;
+    HRESULT hr;
+    TRACE("%p (%p)\n", This, ppsi);
+
+    if(!ppsi)
+        return E_INVALIDARG;
+
+    if(This->psia_results)
+    {
+        UINT item_count;
+        hr = IShellItemArray_GetCount(This->psia_results, &item_count);
+        if(SUCCEEDED(hr))
+        {
+            if(item_count != 1)
+                return E_FAIL;
+
+            /* Adds a reference. */
+            hr = IShellItemArray_GetItemAt(This->psia_results, 0, ppsi);
+        }
+
+        return hr;
+    }
+
+    return E_UNEXPECTED;
 }
 
 static HRESULT WINAPI IFileDialog2_fnAddPlace(IFileDialog2 *iface, IShellItem *psi, FDAP fdap)
@@ -566,15 +647,32 @@ static HRESULT WINAPI IFileOpenDialog_fnSetFilter(IFileOpenDialog *iface, IShell
 static HRESULT WINAPI IFileOpenDialog_fnGetResults(IFileOpenDialog *iface, IShellItemArray **ppenum)
 {
     FileDialogImpl *This = impl_from_IFileOpenDialog(iface);
-    FIXME("stub - %p (%p)\n", This, ppenum);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, ppenum);
+
+    *ppenum = This->psia_results;
+
+    if(*ppenum)
+    {
+        IShellItemArray_AddRef(*ppenum);
+        return S_OK;
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI IFileOpenDialog_fnGetSelectedItems(IFileOpenDialog *iface, IShellItemArray **ppsai)
 {
     FileDialogImpl *This = impl_from_IFileOpenDialog(iface);
-    FIXME("stub - %p (%p)\n", This, ppsai);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, ppsai);
+
+    if(This->psia_selection)
+    {
+        *ppsai = This->psia_selection;
+        IShellItemArray_AddRef(*ppsai);
+        return S_OK;
+    }
+
+    return E_FAIL;
 }
 
 static const IFileOpenDialogVtbl vt_IFileOpenDialog = {
@@ -864,6 +962,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
 {
     FileDialogImpl *fdimpl;
     HRESULT hr;
+    IShellFolder *psf;
     TRACE("%p, %s, %p\n", pUnkOuter, debugstr_guid(riid), ppv);
 
     if(!ppv)
@@ -894,6 +993,15 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     fdimpl->filterspecs = NULL;
     fdimpl->filterspec_count = 0;
     fdimpl->filetypeindex = 0;
+
+    fdimpl->psia_selection = fdimpl->psia_results = NULL;
+    fdimpl->psi_setfolder = fdimpl->psi_folder = NULL;
+
+    /* FIXME: The default folder setting should be restored for the
+     * application if it was previously set. */
+    SHGetDesktopFolder(&psf);
+    SHGetItemFromObject((IUnknown*)psf, &IID_IShellItem, (void**)&fdimpl->psi_defaultfolder);
+    IShellFolder_Release(psf);
 
     hr = IUnknown_QueryInterface((IUnknown*)fdimpl, riid, ppv);
     IUnknown_Release((IUnknown*)fdimpl);

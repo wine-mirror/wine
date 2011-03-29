@@ -223,21 +223,18 @@ static void test_basics(void)
        "Unexpected default options: 0x%08x\n", fdoptions);
 
     /* GetResult */
-    todo_wine
-    {
     hr = IFileOpenDialog_GetResult(pfod, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
     hr = IFileSaveDialog_GetResult(pfsd, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
-    }
 
     psi = (void*)0xdeadbeef;
     hr = IFileOpenDialog_GetResult(pfod, &psi);
-    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     ok(psi == (void*)0xdeadbeef, "got %p.\n", psi);
     psi = (void*)0xdeadbeef;
     hr = IFileSaveDialog_GetResult(pfsd, &psi);
-    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     ok(psi == (void*)0xdeadbeef, "got %p.\n", psi);
 
     /* GetCurrentSelection */
@@ -336,13 +333,10 @@ static void test_basics(void)
     }
 
     /* SetFolder */
-    todo_wine
-    {
     hr = IFileOpenDialog_SetFolder(pfod, NULL);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     hr = IFileSaveDialog_SetFolder(pfsd, NULL);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
-    }
 
     /* SetDefaultExtension */
     todo_wine
@@ -363,8 +357,6 @@ static void test_basics(void)
     }
 
     /* SetDefaultFolder */
-    todo_wine
-    {
     hr = IFileOpenDialog_SetDefaultFolder(pfod, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileSaveDialog_SetDefaultFolder(pfsd, NULL);
@@ -374,7 +366,6 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileSaveDialog_SetDefaultFolder(pfsd, psidesktop);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    }
 
     if(0)
     {
@@ -385,10 +376,10 @@ static void test_basics(void)
 
     /* GetFolder / SetFolder */
     hr = IFileOpenDialog_GetFolder(pfod, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
 
     hr = IFileOpenDialog_GetFolder(pfod, &psi_original);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IFileOpenDialog_SetFolder(pfod, psidesktop);
@@ -399,7 +390,7 @@ static void test_basics(void)
     }
 
     hr = IFileSaveDialog_GetFolder(pfsd, &psi_original);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr))
     {
         hr = IFileSaveDialog_SetFolder(pfsd, psidesktop);
@@ -523,8 +514,8 @@ static void test_basics(void)
     }
     psia = (void*)0xdeadbeef;
     hr = IFileOpenDialog_GetResults(pfod, &psia);
-    todo_wine ok(hr == E_FAIL, "got 0x%08x.\n", hr);
-    todo_wine ok(psia == NULL, "got %p.\n", psia);
+    ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+    ok(psia == NULL, "got %p.\n", psia);
 
     /* GetSelectedItems */
     if(0)
