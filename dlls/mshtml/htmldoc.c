@@ -1912,8 +1912,6 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
         release_nsevents(This);
     if(This->catmgr)
         ICatInformation_Release(This->catmgr);
-    if(This->secmgr)
-        IInternetSecurityManager_Release(This->secmgr);
 
     detach_selection(This);
     detach_ranges(This);
@@ -2013,7 +2011,6 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLWindow *wi
 HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_obj, HTMLWindow *window, HTMLDocumentNode **ret)
 {
     HTMLDocumentNode *doc;
-    HRESULT hres;
 
     doc = alloc_doc_node(doc_obj, window);
     if(!doc)
@@ -2029,12 +2026,6 @@ HRESULT create_doc_from_nsdoc(nsIDOMHTMLDocument *nsdoc, HTMLDocumentObj *doc_ob
     HTMLDOMNode_Init(doc, &doc->node, (nsIDOMNode*)nsdoc);
     doc->node.vtbl = &HTMLDocumentNodeImplVtbl;
     doc->node.cp_container = &doc->basedoc.cp_container;
-
-    hres = CoInternetCreateSecurityManager(NULL, &doc->secmgr, 0);
-    if(FAILED(hres)) {
-        htmldoc_release(&doc->basedoc);
-        return hres;
-    }
 
     *ret = doc;
     return S_OK;

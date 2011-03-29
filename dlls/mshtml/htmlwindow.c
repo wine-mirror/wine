@@ -236,6 +236,9 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
         window_set_docnode(This, NULL);
         release_children(This);
 
+        if(This->secmgr)
+            IInternetSecurityManager_Release(This->secmgr);
+
         if(This->frame_element)
             This->frame_element->content_window = NULL;
 
@@ -2217,6 +2220,7 @@ static dispex_static_data_t HTMLWindow_dispex = {
 HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTMLWindow *parent, HTMLWindow **ret)
 {
     HTMLWindow *window;
+    HRESULT hres;
 
     window = heap_alloc_zero(sizeof(HTMLWindow));
     if(!window)
@@ -2250,6 +2254,12 @@ HRESULT HTMLWindow_Create(HTMLDocumentObj *doc_obj, nsIDOMWindow *nswindow, HTML
     window->scriptmode = parent ? parent->scriptmode : SCRIPTMODE_GECKO;
     window->readystate = READYSTATE_UNINITIALIZED;
     list_init(&window->script_hosts);
+
+    hres = CoInternetCreateSecurityManager(NULL, &window->secmgr, 0);
+    if(FAILED(hres)) {
+        IHTMLWindow2_Release(&window->IHTMLWindow2_iface);
+        return hres;
+    }
 
     window->task_magic = get_task_target_magic();
     update_window_doc(window);

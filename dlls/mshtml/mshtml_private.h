@@ -295,6 +295,8 @@ struct HTMLWindow {
     SCRIPTMODE scriptmode;
     struct list script_hosts;
 
+    IInternetSecurityManager *secmgr;
+
     HTMLOptionElementFactory *option_factory;
     HTMLImageElementFactory *image_factory;
     HTMLLocation *location;
@@ -611,7 +613,6 @@ struct HTMLDocumentNode {
     BOOL content_ready;
     event_target_t *body_event_target;
 
-    IInternetSecurityManager *secmgr;
     ICatInformation *catmgr;
     nsDocumentEventListener *nsevent_listener;
     BOOL *event_vector;

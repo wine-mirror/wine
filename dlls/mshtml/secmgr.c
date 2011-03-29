@@ -83,7 +83,7 @@ static HRESULT WINAPI InternetHostSecurityManager_ProcessUrlAction(IInternetHost
 
     url = This->basedoc.window->url ? This->basedoc.window->url : about_blankW;
 
-    return IInternetSecurityManager_ProcessUrlAction(This->secmgr, url, dwAction, pPolicy, cbPolicy,
+    return IInternetSecurityManager_ProcessUrlAction(This->basedoc.window->secmgr, url, dwAction, pPolicy, cbPolicy,
             pContext, cbContext, dwFlags, dwReserved);
 }
 
@@ -121,7 +121,7 @@ static HRESULT confirm_safety(HTMLDocumentNode *This, const WCHAR *url, struct C
 
     /* FIXME: Check URLACTION_ACTIVEX_OVERRIDE_SCRIPT_SAFETY */
 
-    hres = IInternetSecurityManager_ProcessUrlAction(This->secmgr, url, URLACTION_SCRIPT_SAFE_ACTIVEX,
+    hres = IInternetSecurityManager_ProcessUrlAction(This->basedoc.window->secmgr, url, URLACTION_SCRIPT_SAFE_ACTIVEX,
             (BYTE*)&policy, sizeof(policy), NULL, 0, 0, 0);
     if(FAILED(hres) || policy != URLPOLICY_ALLOW) {
         *ret = URLPOLICY_DISALLOW;
@@ -187,7 +187,7 @@ static HRESULT WINAPI InternetHostSecurityManager_QueryCustomPolicy(IInternetHos
 
     url = This->basedoc.window->url ? This->basedoc.window->url : about_blankW;
 
-    hres = IInternetSecurityManager_QueryCustomPolicy(This->secmgr, url, guidKey, ppPolicy, pcbPolicy,
+    hres = IInternetSecurityManager_QueryCustomPolicy(This->basedoc.window->secmgr, url, guidKey, ppPolicy, pcbPolicy,
             pContext, cbContext, dwReserved);
     if(hres != HRESULT_FROM_WIN32(ERROR_NOT_FOUND))
         return hres;
