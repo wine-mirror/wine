@@ -361,8 +361,8 @@ static void test_default_converter(void)
     DeleteTestBitmap(src_obj);
 }
 
-static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encoder,
-    const struct bitmap_data *dst, const CLSID *clsid_decoder, const char *name)
+static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* clsid_encoder,
+    const struct bitmap_data **dsts, const CLSID *clsid_decoder, const char *name)
 {
     HRESULT hr;
     IWICBitmapEncoder *encoder;
@@ -374,8 +374,7 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *framedecode;
     WICPixelFormatGUID pixelformat;
-
-    CreateTestBitmap(src, &src_obj);
+    int i;
 
     hr = CoCreateInstance(clsid_encoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapEncoder, (void**)&encoder);
@@ -395,32 +394,45 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
             hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
             ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
 
-            hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frameencode, &options);
-            ok(SUCCEEDED(hr), "CreateFrame failed, hr=%x\n", hr);
+            i=0;
+            while (SUCCEEDED(hr) && srcs[i])
+            {
+                CreateTestBitmap(srcs[i], &src_obj);
+
+                hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frameencode, &options);
+                ok(SUCCEEDED(hr), "CreateFrame failed, hr=%x\n", hr);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IWICBitmapFrameEncode_Initialize(frameencode, options);
+                    ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
+
+                    memcpy(&pixelformat, srcs[i]->format, sizeof(GUID));
+                    hr = IWICBitmapFrameEncode_SetPixelFormat(frameencode, &pixelformat);
+                    ok(SUCCEEDED(hr), "SetPixelFormat failed, hr=%x\n", hr);
+                    ok(IsEqualGUID(&pixelformat, srcs[i]->format), "SetPixelFormat changed the format\n");
+
+                    hr = IWICBitmapFrameEncode_SetSize(frameencode, srcs[i]->width, srcs[i]->height);
+                    ok(SUCCEEDED(hr), "SetSize failed, hr=%x\n", hr);
+
+                    hr = IWICBitmapFrameEncode_WriteSource(frameencode, &src_obj->IWICBitmapSource_iface, NULL);
+                    ok(SUCCEEDED(hr), "WriteSource failed, hr=%x\n", hr);
+
+                    hr = IWICBitmapFrameEncode_Commit(frameencode);
+                    ok(SUCCEEDED(hr), "Commit failed, hr=%x\n", hr);
+
+                    IWICBitmapFrameEncode_Release(frameencode);
+                    IPropertyBag2_Release(options);
+                }
+
+                DeleteTestBitmap(src_obj);
+
+                i++;
+            }
+
             if (SUCCEEDED(hr))
             {
-                hr = IWICBitmapFrameEncode_Initialize(frameencode, options);
-                ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
-
-                memcpy(&pixelformat, src->format, sizeof(GUID));
-                hr = IWICBitmapFrameEncode_SetPixelFormat(frameencode, &pixelformat);
-                ok(SUCCEEDED(hr), "SetPixelFormat failed, hr=%x\n", hr);
-                ok(IsEqualGUID(&pixelformat, src->format), "SetPixelFormat changed the format\n");
-
-                hr = IWICBitmapFrameEncode_SetSize(frameencode, src->width, src->height);
-                ok(SUCCEEDED(hr), "SetSize failed, hr=%x\n", hr);
-
-                hr = IWICBitmapFrameEncode_WriteSource(frameencode, &src_obj->IWICBitmapSource_iface, NULL);
-                ok(SUCCEEDED(hr), "WriteSource failed, hr=%x\n", hr);
-
-                hr = IWICBitmapFrameEncode_Commit(frameencode);
-                ok(SUCCEEDED(hr), "Commit failed, hr=%x\n", hr);
-
                 hr = IWICBitmapEncoder_Commit(encoder);
                 ok(SUCCEEDED(hr), "Commit failed, hr=%x\n", hr);
-
-                IWICBitmapFrameEncode_Release(frameencode);
-                IPropertyBag2_Release(options);
             }
 
             if (SUCCEEDED(hr))
@@ -435,14 +447,20 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
                 hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnDemand);
                 ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
 
-                hr = IWICBitmapDecoder_GetFrame(decoder, 0, &framedecode);
-                ok(SUCCEEDED(hr), "GetFrame failed, hr=%x\n", hr);
-
-                if (SUCCEEDED(hr))
+                i=0;
+                while (SUCCEEDED(hr) && dsts[i])
                 {
-                    compare_bitmap_data(dst, (IWICBitmapSource*)framedecode, name);
+                    hr = IWICBitmapDecoder_GetFrame(decoder, i, &framedecode);
+                    ok(SUCCEEDED(hr), "GetFrame failed, hr=%x\n", hr);
 
-                    IWICBitmapFrameDecode_Release(framedecode);
+                    if (SUCCEEDED(hr))
+                    {
+                        compare_bitmap_data(dsts[i], (IWICBitmapSource*)framedecode, name);
+
+                        IWICBitmapFrameDecode_Release(framedecode);
+                    }
+
+                    i++;
                 }
 
                 IWICBitmapDecoder_Release(decoder);
@@ -453,9 +471,26 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
 
         IWICBitmapEncoder_Release(encoder);
     }
-
-    DeleteTestBitmap(src_obj);
 }
+
+static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encoder,
+    const struct bitmap_data *dst, const CLSID *clsid_decoder, const char *name)
+{
+    const struct bitmap_data *srcs[2];
+    const struct bitmap_data *dsts[2];
+
+    srcs[0] = src;
+    srcs[1] = NULL;
+    dsts[0] = dst;
+    dsts[1] = NULL;
+
+    test_multi_encoder(srcs, clsid_encoder, dsts, clsid_decoder, name);
+}
+
+static const struct bitmap_data *multiple_frames[3] = {
+    &testdata_24bppBGR,
+    &testdata_24bppBGR,
+    NULL};
 
 START_TEST(converter)
 {
@@ -475,6 +510,9 @@ START_TEST(converter)
 
     test_encoder(&testdata_24bppBGR, &CLSID_WICTiffEncoder,
                  &testdata_24bppBGR, &CLSID_WICTiffDecoder, "TIFF encoder 24bppBGR");
+
+    test_multi_encoder(multiple_frames, &CLSID_WICTiffEncoder,
+                       multiple_frames, &CLSID_WICTiffDecoder, "TIFF encoder multi-frame");
 
     CoUninitialize();
 }
