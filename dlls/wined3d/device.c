@@ -1546,7 +1546,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateGeometryShader(IWineD3DDevice *iface,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops,
-        IWineD3DGeometryShader **shader)
+        IWineD3DBaseShader **shader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_geometryshader *object;
@@ -1568,7 +1568,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateGeometryShader(IWineD3DDevice *if
     }
 
     TRACE("Created geometry shader %p.\n", object);
-    *shader = (IWineD3DGeometryShader *)object;
+    *shader = (IWineD3DBaseShader *)object;
 
     return WINED3D_OK;
 }

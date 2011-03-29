@@ -307,9 +307,7 @@ static ULONG STDMETHODCALLTYPE d3d10_geometry_shader_Release(ID3D10GeometryShade
     TRACE("%p decreasing refcount to %u\n", This, refcount);
 
     if (!refcount)
-    {
-        IWineD3DGeometryShader_Release(This->wined3d_shader);
-    }
+        IWineD3DBaseShader_Release(This->wined3d_shader);
 
     return refcount;
 }

@@ -2832,7 +2832,7 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
 
 struct wined3d_geometryshader
 {
-    const struct IWineD3DGeometryShaderVtbl *vtbl;
+    const struct IWineD3DBaseShaderVtbl *vtbl;
     IWineD3DBaseShaderClass base_shader;
 };
 
