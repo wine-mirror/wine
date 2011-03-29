@@ -20,6 +20,7 @@
  */
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include "shlobj.h"
 #include "wine/test.h"
@@ -35,6 +36,117 @@ static void init_function_pointers(void)
     MAKEFUNC(SHCreateShellItem);
     MAKEFUNC(SHGetIDListFromObject);
 #undef MAKEFUNC
+}
+
+/**************************************************************************
+ * IFileDialogEvents implementation
+ */
+typedef struct {
+    IFileDialogEvents IFileDialogEvents_iface;
+    LONG ref;
+} IFileDialogEventsImpl;
+
+static inline IFileDialogEventsImpl *impl_from_IFileDialogEvents(IFileDialogEvents *iface)
+{
+    return CONTAINING_RECORD(iface, IFileDialogEventsImpl, IFileDialogEvents_iface);
+}
+
+static HRESULT WINAPI IFileDialogEvents_fnQueryInterface(IFileDialogEvents *iface, REFIID riid, void **ppv)
+{
+    /* Not called. */
+    ok(0, "Unexpectedly called.\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IFileDialogEvents_fnAddRef(IFileDialogEvents *iface)
+{
+    IFileDialogEventsImpl *This = impl_from_IFileDialogEvents(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI IFileDialogEvents_fnRelease(IFileDialogEvents *iface)
+{
+    IFileDialogEventsImpl *This = impl_from_IFileDialogEvents(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI IFileDialogEvents_fnOnFileOk(IFileDialogEvents *iface, IFileDialog *pfd)
+{
+    ok(0, "Unexpectedly called.\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI IFileDialogEvents_fnOnFolderChanging(IFileDialogEvents *iface,
+                                                           IFileDialog *pfd,
+                                                           IShellItem *psiFolder)
+{
+    ok(0, "Unexpectedly called.\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI IFileDialogEvents_fnOnFolderChange(IFileDialogEvents *iface, IFileDialog *pfd)
+{
+    ok(0, "Unexpectedly called.\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI IFileDialogEvents_fnOnSelectionChange(IFileDialogEvents *iface, IFileDialog *pfd)
+{
+    ok(0, "Unexpectedly called.\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI IFileDialogEvents_fnOnShareViolation(IFileDialogEvents *iface,
+                                                           IFileDialog *pfd,
+                                                           IShellItem *psi,
+                                                           FDE_SHAREVIOLATION_RESPONSE *pResponse)
+{
+    ok(0, "Unexpectedly called.\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI IFileDialogEvents_fnOnTypeChange(IFileDialogEvents *iface, IFileDialog *pfd)
+{
+    ok(0, "Unexpectedly called.\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI IFileDialogEvents_fnOnOverwrite(IFileDialogEvents *iface,
+                                                      IFileDialog *pfd,
+                                                      IShellItem *psi,
+                                                      FDE_OVERWRITE_RESPONSE *pResponse)
+{
+    ok(0, "Unexpectedly called.\n");
+    return S_OK;
+}
+
+static const IFileDialogEventsVtbl vt_IFileDialogEvents = {
+    IFileDialogEvents_fnQueryInterface,
+    IFileDialogEvents_fnAddRef,
+    IFileDialogEvents_fnRelease,
+    IFileDialogEvents_fnOnFileOk,
+    IFileDialogEvents_fnOnFolderChanging,
+    IFileDialogEvents_fnOnFolderChange,
+    IFileDialogEvents_fnOnSelectionChange,
+    IFileDialogEvents_fnOnShareViolation,
+    IFileDialogEvents_fnOnTypeChange,
+    IFileDialogEvents_fnOnOverwrite
+};
+
+static IFileDialogEvents *IFileDialogEvents_Constructor(void)
+{
+    IFileDialogEventsImpl *This;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(IFileDialogEventsImpl));
+    This->IFileDialogEvents_iface.lpVtbl = &vt_IFileDialogEvents;
+    This->ref = 1;
+
+    return &This->IFileDialogEvents_iface;
 }
 
 static BOOL test_instantiation(void)
@@ -635,6 +747,94 @@ static void test_basics(void)
     IFileSaveDialog_Release(pfsd);
 }
 
+static void test_advise_helper(IFileDialog *pfd)
+{
+    IFileDialogEventsImpl *pfdeimpl;
+    IFileDialogEvents *pfde;
+    DWORD cookie[10];
+    UINT i;
+    HRESULT hr;
+
+    pfde = IFileDialogEvents_Constructor();
+    pfdeimpl = impl_from_IFileDialogEvents(pfde);
+
+    hr = IFileDialog_Advise(pfd, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IFileDialog_Advise(pfd, pfde, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IFileDialog_Advise(pfd, NULL, &cookie[0]);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(pfdeimpl->ref == 1, "got ref %d\n", pfdeimpl->ref);
+
+    hr = IFileDialog_Unadvise(pfd, 0);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    for(i = 0; i < 10; i++) {
+        hr = IFileDialog_Advise(pfd, pfde, &cookie[i]);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(cookie[i] == i+1, "Got cookie: %d\n", cookie[i]);
+    }
+    ok(pfdeimpl->ref == 10+1, "got ref %d\n", pfdeimpl->ref);
+
+    for(i = 3; i < 7; i++) {
+        hr = IFileDialog_Unadvise(pfd, cookie[i]);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+    }
+    ok(pfdeimpl->ref == 6+1, "got ref %d\n", pfdeimpl->ref);
+
+    for(i = 0; i < 3; i++) {
+        hr = IFileDialog_Unadvise(pfd, cookie[i]);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+    }
+    ok(pfdeimpl->ref == 3+1, "got ref %d\n", pfdeimpl->ref);
+
+    for(i = 7; i < 10; i++) {
+        hr = IFileDialog_Unadvise(pfd, cookie[i]);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+    }
+    ok(pfdeimpl->ref == 1, "got ref %d\n", pfdeimpl->ref);
+
+    hr = IFileDialog_Unadvise(pfd, cookie[9]+1);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(pfdeimpl->ref == 1, "got ref %d\n", pfdeimpl->ref);
+
+    hr = IFileDialog_Advise(pfd, pfde, &cookie[0]);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok(cookie[0] == 1, "got cookie: %d\n", cookie[0]);
+    ok(pfdeimpl->ref == 1+1, "got ref %d\n", pfdeimpl->ref);
+
+    hr = IFileDialog_Unadvise(pfd, cookie[0]);
+
+    if(0)
+    {
+        /* Unadvising already unadvised cookies crashes on
+           Windows 7. */
+        IFileDialog_Unadvise(pfd, cookie[0]);
+    }
+
+
+    IFileDialogEvents_Release(pfde);
+}
+
+static void test_advise(void)
+{
+    IFileDialog *pfd;
+    HRESULT hr;
+
+    trace("Testing FileOpenDialog (advise)\n");
+    hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&pfd);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    test_advise_helper(pfd);
+    IFileDialog_Release(pfd);
+
+    trace("Testing FileSaveDialog (advise)\n");
+    hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&pfd);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    test_advise_helper(pfd);
+    IFileDialog_Release(pfd);
+}
+
 START_TEST(itemdlg)
 {
     OleInitialize(NULL);
@@ -643,6 +843,7 @@ START_TEST(itemdlg)
     if(test_instantiation())
     {
         test_basics();
+        test_advise();
     }
     else
         skip("Skipping all Item Dialog tests.\n");

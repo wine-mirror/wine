@@ -35,6 +35,7 @@
 #include "cdlg.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
@@ -42,6 +43,12 @@ enum ITEMDLG_TYPE {
     ITEMDLG_TYPE_OPEN,
     ITEMDLG_TYPE_SAVE
 };
+
+typedef struct {
+    struct list entry;
+    IFileDialogEvents *pfde;
+    DWORD cookie;
+} events_client;
 
 typedef struct FileDialogImpl {
     IFileDialog2 IFileDialog2_iface;
@@ -56,6 +63,9 @@ typedef struct FileDialogImpl {
     COMDLG_FILTERSPEC *filterspecs;
     UINT filterspec_count;
     UINT filetypeindex;
+
+    struct list events_clients;
+    DWORD events_next_cookie;
 
     IShellItemArray *psia_selection;
     IShellItemArray *psia_results;
@@ -209,15 +219,48 @@ static HRESULT WINAPI IFileDialog2_fnGetFileTypeIndex(IFileDialog2 *iface, UINT 
 static HRESULT WINAPI IFileDialog2_fnAdvise(IFileDialog2 *iface, IFileDialogEvents *pfde, DWORD *pdwCookie)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p, %p)\n", This, pfde, pdwCookie);
-    return E_NOTIMPL;
+    events_client *client;
+    TRACE("%p (%p, %p)\n", This, pfde, pdwCookie);
+
+    if(!pfde || !pdwCookie)
+        return E_INVALIDARG;
+
+    client = HeapAlloc(GetProcessHeap(), 0, sizeof(events_client));
+    client->pfde = pfde;
+    client->cookie = ++This->events_next_cookie;
+
+    IFileDialogEvents_AddRef(pfde);
+    *pdwCookie = client->cookie;
+
+    list_add_tail(&This->events_clients, &client->entry);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnUnadvise(IFileDialog2 *iface, DWORD dwCookie)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%d)\n", This, dwCookie);
-    return E_NOTIMPL;
+    events_client *client, *found = NULL;
+    TRACE("%p (%d)\n", This, dwCookie);
+
+    LIST_FOR_EACH_ENTRY(client, &This->events_clients, events_client, entry)
+    {
+        if(client->cookie == dwCookie)
+        {
+            found = client;
+            break;
+        }
+    }
+
+    if(found)
+    {
+        list_remove(&found->entry);
+        IFileDialogEvents_Release(found->pfde);
+        HeapFree(GetProcessHeap(), 0, found);
+        return S_OK;
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetOptions(IFileDialog2 *iface, FILEOPENDIALOGOPTIONS fos)
@@ -996,6 +1039,9 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
 
     fdimpl->psia_selection = fdimpl->psia_results = NULL;
     fdimpl->psi_setfolder = fdimpl->psi_folder = NULL;
+
+    list_init(&fdimpl->events_clients);
+    fdimpl->events_next_cookie = 0;
 
     /* FIXME: The default folder setting should be restored for the
      * application if it was previously set. */
