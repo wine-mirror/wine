@@ -34,6 +34,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -47,6 +48,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "mmddk.h"
 #include "dsound.h"
