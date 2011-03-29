@@ -2738,6 +2738,10 @@ typedef struct IWineD3DBaseShaderImpl {
     } u;
 } IWineD3DBaseShaderImpl;
 
+HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+
 void find_vs_compile_args(const struct wined3d_state *state,
         IWineD3DBaseShaderImpl *shader, struct vs_compile_args *args) DECLSPEC_HIDDEN;
 HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
@@ -2827,16 +2831,6 @@ static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl* This, DWORD 
     return FALSE;
 
 }
-
-struct wined3d_geometryshader
-{
-    const struct IWineD3DBaseShaderVtbl *vtbl;
-    IWineD3DBaseShaderClass base_shader;
-};
-
-HRESULT geometryshader_init(struct wined3d_geometryshader *shader, IWineD3DDeviceImpl *device,
-        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure

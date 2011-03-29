@@ -1549,7 +1549,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateGeometryShader(IWineD3DDevice *if
         IWineD3DBaseShader **shader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct wined3d_geometryshader *object;
+    IWineD3DBaseShaderImpl *object;
     HRESULT hr;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));

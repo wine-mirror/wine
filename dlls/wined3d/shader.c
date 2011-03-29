@@ -1913,8 +1913,8 @@ static HRESULT STDMETHODCALLTYPE geometryshader_QueryInterface(IWineD3DBaseShade
 
 static ULONG STDMETHODCALLTYPE geometryshader_AddRef(IWineD3DBaseShader *iface)
 {
-    struct wined3d_geometryshader *shader = (struct wined3d_geometryshader *)iface;
-    ULONG refcount = InterlockedIncrement(&shader->base_shader.ref);
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
+    ULONG refcount = InterlockedIncrement(&shader->baseShader.ref);
 
     TRACE("%p increasing refcount to %u.\n", shader, refcount);
 
@@ -1924,15 +1924,15 @@ static ULONG STDMETHODCALLTYPE geometryshader_AddRef(IWineD3DBaseShader *iface)
 /* Do not call while under the GL lock. */
 static ULONG STDMETHODCALLTYPE geometryshader_Release(IWineD3DBaseShader *iface)
 {
-    struct wined3d_geometryshader *shader = (struct wined3d_geometryshader *)iface;
-    ULONG refcount = InterlockedDecrement(&shader->base_shader.ref);
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
+    ULONG refcount = InterlockedDecrement(&shader->baseShader.ref);
 
     TRACE("%p decreasing refcount to %u.\n", shader, refcount);
 
     if (!refcount)
     {
-        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
-        shader->base_shader.parent_ops->wined3d_object_destroyed(shader->base_shader.parent);
+        shader_cleanup(shader);
+        shader->baseShader.parent_ops->wined3d_object_destroyed(shader->baseShader.parent);
         HeapFree(GetProcessHeap(), 0, shader);
     }
 
@@ -1975,24 +1975,24 @@ static const IWineD3DBaseShaderVtbl wined3d_geometryshader_vtbl =
     geometryshader_SetLocalConstantsF,
 };
 
-HRESULT geometryshader_init(struct wined3d_geometryshader *shader, IWineD3DDeviceImpl *device,
+HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     HRESULT hr;
 
-    shader->vtbl = &wined3d_geometryshader_vtbl;
-    shader_init(&shader->base_shader, device, parent, parent_ops);
+    shader->lpVtbl = &wined3d_geometryshader_vtbl;
+    shader_init(&shader->baseShader, device, parent, parent_ops);
 
-    hr = shader_set_function((IWineD3DBaseShaderImpl *)shader, byte_code, output_signature, 0);
+    hr = shader_set_function(shader, byte_code, output_signature, 0);
     if (FAILED(hr))
     {
         WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
+        shader_cleanup(shader);
         return hr;
     }
 
-    shader->base_shader.load_local_constsF = FALSE;
+    shader->baseShader.load_local_constsF = FALSE;
 
     return WINED3D_OK;
 }
