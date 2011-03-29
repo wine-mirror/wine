@@ -200,9 +200,13 @@ static void output_relay_debug( DLLSPEC *spec )
             switch (args)
             {
             default: output( "\tmovq %%%s,72(%%rsp)\n", is_float_arg( odp, 3 ) ? "xmm3" : "r9" );
+            /* fall through */
             case 3:  output( "\tmovq %%%s,64(%%rsp)\n", is_float_arg( odp, 2 ) ? "xmm2" : "r8" );
+            /* fall through */
             case 2:  output( "\tmovq %%%s,56(%%rsp)\n", is_float_arg( odp, 1 ) ? "xmm1" : "rdx" );
+            /* fall through */
             case 1:  output( "\tmovq %%%s,48(%%rsp)\n", is_float_arg( odp, 0 ) ? "xmm0" : "rcx" );
+            /* fall through */
             case 0:  break;
             }
             output( "\tleaq 40(%%rsp),%%r8\n" );
