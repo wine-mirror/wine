@@ -64,6 +64,7 @@ MAKE_FUNCPTR(TIFFReadDirectory);
 MAKE_FUNCPTR(TIFFReadEncodedStrip);
 MAKE_FUNCPTR(TIFFReadEncodedTile);
 MAKE_FUNCPTR(TIFFSetDirectory);
+MAKE_FUNCPTR(TIFFWriteDirectory);
 #undef MAKE_FUNCPTR
 
 static void *load_libtiff(void)
@@ -92,6 +93,7 @@ static void *load_libtiff(void)
         LOAD_FUNCPTR(TIFFReadEncodedStrip);
         LOAD_FUNCPTR(TIFFReadEncodedTile);
         LOAD_FUNCPTR(TIFFSetDirectory);
+        LOAD_FUNCPTR(TIFFWriteDirectory);
 #undef LOAD_FUNCPTR
 
     }
@@ -1118,15 +1120,170 @@ typedef struct TiffEncoder {
     IWICBitmapEncoder IWICBitmapEncoder_iface;
     LONG ref;
     IStream *stream;
-    CRITICAL_SECTION lock; /* Must be held when tiff is used or initiailzed is set */
+    CRITICAL_SECTION lock; /* Must be held when tiff is used or fields below are set */
     TIFF *tiff;
     BOOL initialized;
+    ULONG num_frames;
+    ULONG num_frames_committed;
 } TiffEncoder;
 
 static inline TiffEncoder *impl_from_IWICBitmapEncoder(IWICBitmapEncoder *iface)
 {
     return CONTAINING_RECORD(iface, TiffEncoder, IWICBitmapEncoder_iface);
 }
+
+typedef struct TiffFrameEncode {
+    IWICBitmapFrameEncode IWICBitmapFrameEncode_iface;
+    LONG ref;
+    TiffEncoder *parent;
+} TiffFrameEncode;
+
+static inline TiffFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEncode *iface)
+{
+    return CONTAINING_RECORD(iface, TiffFrameEncode, IWICBitmapFrameEncode_iface);
+}
+
+static HRESULT WINAPI TiffFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid,
+    void **ppv)
+{
+    TiffFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapFrameEncode, iid))
+    {
+        *ppv = &This->IWICBitmapFrameEncode_iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI TiffFrameEncode_AddRef(IWICBitmapFrameEncode *iface)
+{
+    TiffFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI TiffFrameEncode_Release(IWICBitmapFrameEncode *iface)
+{
+    TiffFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        IWICBitmapEncoder_Release(&This->parent->IWICBitmapEncoder_iface);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI TiffFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
+    IPropertyBag2 *pIEncoderOptions)
+{
+    FIXME("(%p,%p): stub\n", iface, pIEncoderOptions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
+    UINT uiWidth, UINT uiHeight)
+{
+    FIXME("(%p,%u,%u): stub\n", iface, uiWidth, uiHeight);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
+    double dpiX, double dpiY)
+{
+    FIXME("(%p,%0.2f,%0.2f): stub\n", iface, dpiX, dpiY);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *iface,
+    WICPixelFormatGUID *pPixelFormat)
+{
+    FIXME("(%p,%s)\n", iface, debugstr_guid(pPixelFormat));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameEncode_SetColorContexts(IWICBitmapFrameEncode *iface,
+    UINT cCount, IWICColorContext **ppIColorContext)
+{
+    FIXME("(%p,%u,%p): stub\n", iface, cCount, ppIColorContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameEncode_SetPalette(IWICBitmapFrameEncode *iface,
+    IWICPalette *pIPalette)
+{
+    FIXME("(%p,%p): stub\n", iface, pIPalette);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI TiffFrameEncode_SetThumbnail(IWICBitmapFrameEncode *iface,
+    IWICBitmapSource *pIThumbnail)
+{
+    FIXME("(%p,%p): stub\n", iface, pIThumbnail);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI TiffFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
+    UINT lineCount, UINT cbStride, UINT cbBufferSize, BYTE *pbPixels)
+{
+    FIXME("(%p,%u,%u,%u,%p): stub\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
+    IWICBitmapSource *pIBitmapSource, WICRect *prc)
+{
+    FIXME("(%p,%p,%p): stub\n", iface, pIBitmapSource, prc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameEncode_Commit(IWICBitmapFrameEncode *iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TiffFrameEncode_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface,
+    IWICMetadataQueryWriter **ppIMetadataQueryWriter)
+{
+    FIXME("(%p, %p): stub\n", iface, ppIMetadataQueryWriter);
+    return E_NOTIMPL;
+}
+
+static const IWICBitmapFrameEncodeVtbl TiffFrameEncode_Vtbl = {
+    TiffFrameEncode_QueryInterface,
+    TiffFrameEncode_AddRef,
+    TiffFrameEncode_Release,
+    TiffFrameEncode_Initialize,
+    TiffFrameEncode_SetSize,
+    TiffFrameEncode_SetResolution,
+    TiffFrameEncode_SetPixelFormat,
+    TiffFrameEncode_SetColorContexts,
+    TiffFrameEncode_SetPalette,
+    TiffFrameEncode_SetThumbnail,
+    TiffFrameEncode_WritePixels,
+    TiffFrameEncode_WriteSource,
+    TiffFrameEncode_Commit,
+    TiffFrameEncode_GetMetadataQueryWriter
+};
 
 static HRESULT WINAPI TiffEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
     void **ppv)
@@ -1257,8 +1414,57 @@ static HRESULT WINAPI TiffEncoder_SetPreview(IWICBitmapEncoder *iface, IWICBitma
 static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     IWICBitmapFrameEncode **ppIFrameEncode, IPropertyBag2 **ppIEncoderOptions)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, ppIFrameEncode, ppIEncoderOptions);
-    return E_NOTIMPL;
+    TiffEncoder *This = impl_from_IWICBitmapEncoder(iface);
+    TiffFrameEncode *result;
+
+    HRESULT hr=S_OK;
+
+    TRACE("(%p,%p,%p)\n", iface, ppIFrameEncode, ppIEncoderOptions);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->num_frames != This->num_frames_committed)
+    {
+        FIXME("New frame created before previous frame was committed\n");
+        hr = E_FAIL;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = CreatePropertyBag2(ppIEncoderOptions);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        result = HeapAlloc(GetProcessHeap(), 0, sizeof(*result));
+
+        if (result)
+        {
+            result->IWICBitmapFrameEncode_iface.lpVtbl = &TiffFrameEncode_Vtbl;
+            result->ref = 1;
+            result->parent = This;
+
+            IWICBitmapEncoder_AddRef(iface);
+            *ppIFrameEncode = &result->IWICBitmapFrameEncode_iface;
+
+            if (This->num_frames != 0)
+                pTIFFWriteDirectory(This->tiff);
+
+            This->num_frames++;
+        }
+        else
+            hr = E_OUTOFMEMORY;
+
+        if (FAILED(hr))
+        {
+            IPropertyBag2_Release(*ppIEncoderOptions);
+            *ppIEncoderOptions = NULL;
+        }
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI TiffEncoder_Commit(IWICBitmapEncoder *iface)
@@ -1317,6 +1523,8 @@ HRESULT TiffEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": TiffEncoder.lock");
     This->tiff = NULL;
     This->initialized = FALSE;
+    This->num_frames = 0;
+    This->num_frames_committed = 0;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
