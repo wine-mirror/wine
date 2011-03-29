@@ -865,8 +865,20 @@ static HRESULT WINAPI ResProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
 
         len = SearchPathW(NULL, file_part, NULL, sizeof(full_path)/sizeof(WCHAR), full_path, NULL);
         if(!len) {
-            WARN("Could not find file %s\n", debugstr_w(file_part));
-            return MK_E_SYNTAX;
+            HMODULE module;
+
+            /* SearchPath does not work well with winelib files (like our test executable),
+             * so we also try to load the library here */
+            module = LoadLibraryExW(file_part, NULL, LOAD_LIBRARY_AS_DATAFILE);
+            if(!module) {
+                WARN("Could not find file %s\n", debugstr_w(file_part));
+                return MK_E_SYNTAX;
+            }
+
+            len = GetModuleFileNameW(module, full_path, sizeof(full_path)/sizeof(WCHAR));
+            FreeLibrary(module);
+            if(!len)
+                return E_FAIL;
         }
 
         size = sizeof(wszFile)/sizeof(WCHAR) + len + 1;
