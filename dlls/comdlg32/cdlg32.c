@@ -27,6 +27,8 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "objbase.h"
+#include "rpcproxy.h"
 #include "commdlg.h"
 #include "cderr.h"
 #include "wine/debug.h"
@@ -272,4 +274,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
         return IClassFactory_QueryInterface(&FileSaveDlgClassFactory.IClassFactory_iface, riid, ppv);
 
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+/***********************************************************************
+ *          DllRegisterServer (COMMDLG32.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources(COMDLG32_hInstance, NULL);
+}
+
+/***********************************************************************
+ *          DllUnregisterServer (COMMDLG32.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources(COMDLG32_hInstance, NULL);
 }
