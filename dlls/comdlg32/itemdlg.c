@@ -49,6 +49,8 @@ typedef struct FileDialogImpl {
     } u;
     enum ITEMDLG_TYPE dlg_type;
     LONG ref;
+
+    FILEOPENDIALOGOPTIONS options;
 } FileDialogImpl;
 
 /**************************************************************************
@@ -160,15 +162,24 @@ static HRESULT WINAPI IFileDialog2_fnUnadvise(IFileDialog2 *iface, DWORD dwCooki
 static HRESULT WINAPI IFileDialog2_fnSetOptions(IFileDialog2 *iface, FILEOPENDIALOGOPTIONS fos)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (0x%x)\n", This, fos);
-    return E_NOTIMPL;
+    TRACE("%p (0x%x)\n", This, fos);
+
+    This->options = fos;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnGetOptions(IFileDialog2 *iface, FILEOPENDIALOGOPTIONS *pfos)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p\n", This);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, pfos);
+
+    if(!pfos)
+        return E_INVALIDARG;
+
+    *pfos = This->options;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetDefaultFolder(IFileDialog2 *iface, IShellItem *psi)
@@ -822,11 +833,13 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     {
         fdimpl->dlg_type = ITEMDLG_TYPE_OPEN;
         fdimpl->u.IFileOpenDialog_iface.lpVtbl = &vt_IFileOpenDialog;
+        fdimpl->options = FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST | FOS_NOCHANGEDIR;
     }
     else
     {
         fdimpl->dlg_type = ITEMDLG_TYPE_SAVE;
         fdimpl->u.IFileSaveDialog_iface.lpVtbl = &vt_IFileSaveDialog;
+        fdimpl->options = FOS_OVERWRITEPROMPT | FOS_NOREADONLYRETURN | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR;
     }
 
     hr = IUnknown_QueryInterface((IUnknown*)fdimpl, riid, ppv);

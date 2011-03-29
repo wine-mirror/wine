@@ -207,17 +207,12 @@ static void test_basics(void)
     }
 
     /* GetOptions */
-    todo_wine
-    {
     hr = IFileOpenDialog_GetOptions(pfod, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
     hr = IFileSaveDialog_GetOptions(pfsd, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
-    }
 
     /* Check default options */
-    todo_wine
-    {
     hr = IFileOpenDialog_GetOptions(pfod, &fdoptions);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     ok(fdoptions == (FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST | FOS_NOCHANGEDIR),
@@ -226,7 +221,6 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     ok(fdoptions == (FOS_OVERWRITEPROMPT | FOS_NOREADONLYRETURN | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR),
        "Unexpected default options: 0x%08x\n", fdoptions);
-    }
 
     /* GetResult */
     todo_wine
