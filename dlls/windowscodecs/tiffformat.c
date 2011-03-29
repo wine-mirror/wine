@@ -1117,6 +1117,10 @@ HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 typedef struct TiffEncoder {
     IWICBitmapEncoder IWICBitmapEncoder_iface;
     LONG ref;
+    IStream *stream;
+    CRITICAL_SECTION lock; /* Must be held when tiff is used or initiailzed is set */
+    TIFF *tiff;
+    BOOL initialized;
 } TiffEncoder;
 
 static inline TiffEncoder *impl_from_IWICBitmapEncoder(IWICBitmapEncoder *iface)
@@ -1166,6 +1170,10 @@ static ULONG WINAPI TiffEncoder_Release(IWICBitmapEncoder *iface)
 
     if (ref == 0)
     {
+        if (This->tiff) pTIFFClose(This->tiff);
+        if (This->stream) IStream_Release(This->stream);
+        This->lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->lock);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1175,8 +1183,36 @@ static ULONG WINAPI TiffEncoder_Release(IWICBitmapEncoder *iface)
 static HRESULT WINAPI TiffEncoder_Initialize(IWICBitmapEncoder *iface,
     IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
 {
-    FIXME("(%p,%p,%u): stub\n", iface, pIStream, cacheOption);
-    return E_NOTIMPL;
+    TiffEncoder *This = impl_from_IWICBitmapEncoder(iface);
+    TIFF *tiff;
+    HRESULT hr=S_OK;
+
+    TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOption);
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->initialized)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto exit;
+    }
+
+    tiff = tiff_open_stream(pIStream, "w");
+
+    if (!tiff)
+    {
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    This->tiff = tiff;
+    This->stream = pIStream;
+    IStream_AddRef(pIStream);
+    This->initialized = TRUE;
+
+exit:
+    LeaveCriticalSection(&This->lock);
+    return hr;
 }
 
 static HRESULT WINAPI TiffEncoder_GetContainerFormat(IWICBitmapEncoder *iface,
@@ -1276,6 +1312,11 @@ HRESULT TiffEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     This->IWICBitmapEncoder_iface.lpVtbl = &TiffEncoder_Vtbl;
     This->ref = 1;
+    This->stream = NULL;
+    InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": TiffEncoder.lock");
+    This->tiff = NULL;
+    This->initialized = FALSE;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
