@@ -109,7 +109,7 @@ struct glsl_shader_prog_link {
     GLint                       luminanceoffset_location[MAX_TEXTURES];
     GLint                       ycorrection_location;
     GLenum                      vertex_color_clamp;
-    IWineD3DVertexShaderImpl    *vshader;
+    IWineD3DBaseShaderImpl      *vshader;
     IWineD3DPixelShaderImpl     *pshader;
     struct vs_compile_args      vs_args;
     struct ps_compile_args      ps_args;
@@ -118,7 +118,7 @@ struct glsl_shader_prog_link {
 };
 
 typedef struct {
-    IWineD3DVertexShaderImpl *vshader;
+    IWineD3DBaseShaderImpl *vshader;
     IWineD3DPixelShaderImpl *pshader;
     struct ps_compile_args      ps_args;
     struct vs_compile_args      vs_args;
@@ -3710,7 +3710,7 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
 }
 
 static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_priv *priv,
-        IWineD3DVertexShaderImpl *vshader, IWineD3DPixelShaderImpl *pshader,
+        IWineD3DBaseShaderImpl *vshader, IWineD3DPixelShaderImpl *pshader,
         struct vs_compile_args *vs_args, struct ps_compile_args *ps_args)
 {
     struct wine_rb_entry *entry;
@@ -3838,7 +3838,7 @@ static void handle_ps3_input(struct wined3d_shader_buffer *buffer,
 
 /* GL locking is done by the caller */
 static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer *buffer,
-        IWineD3DVertexShaderImpl *vs, IWineD3DPixelShaderImpl *ps, const struct wined3d_gl_info *gl_info)
+        IWineD3DBaseShaderImpl *vs, IWineD3DPixelShaderImpl *ps, const struct wined3d_gl_info *gl_info)
 {
     GLhandleARB ret = 0;
     DWORD ps_major = ps ? ps->baseShader.reg_maps.shader_version.major : 0;
@@ -4070,12 +4070,12 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
 /* GL locking is done by the caller */
 static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context,
-        struct wined3d_shader_buffer *buffer, IWineD3DVertexShaderImpl *This,
+        struct wined3d_shader_buffer *buffer, IWineD3DBaseShaderImpl *shader,
         const struct vs_compile_args *args)
 {
-    const struct wined3d_shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+    const struct wined3d_shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    CONST DWORD *function = This->baseShader.function;
+    const DWORD *function = shader->baseShader.function;
     struct shader_glsl_ctx_priv priv_ctx;
 
     /* Create the hw GLSL shader program and assign it as the shader->prgId */
@@ -4090,10 +4090,10 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     priv_ctx.cur_vs_args = args;
 
     /* Base Declarations */
-    shader_generate_glsl_declarations(context, buffer, (IWineD3DBaseShaderImpl *)This, reg_maps, &priv_ctx);
+    shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShaderImpl *)This, buffer, reg_maps, function, &priv_ctx);
+    shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
 
     /* Unpack outputs */
     shader_addline(buffer, "order_ps_input(OUT);\n");
@@ -4217,7 +4217,7 @@ static inline BOOL vs_args_equal(const struct vs_compile_args *stored, const str
 }
 
 static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
-        struct wined3d_shader_buffer *buffer, IWineD3DVertexShaderImpl *shader,
+        struct wined3d_shader_buffer *buffer, IWineD3DBaseShaderImpl *shader,
         const struct vs_compile_args *args)
 {
     UINT i;
@@ -4292,7 +4292,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context,
         IWineD3DDeviceImpl *device, BOOL use_ps, BOOL use_vs)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
-    IWineD3DVertexShaderImpl *vshader = use_vs ? state->vertex_shader : NULL;
+    IWineD3DBaseShaderImpl *vshader = use_vs ? state->vertex_shader : NULL;
     IWineD3DPixelShaderImpl *pshader = use_ps ? state->pixel_shader : NULL;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = device->shader_priv;

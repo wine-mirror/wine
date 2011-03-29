@@ -1516,7 +1516,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
         IWineD3DBaseShader **shader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexShaderImpl *object;
+    IWineD3DBaseShaderImpl *object;
     HRESULT hr;
 
     if (This->vs_selected_mode == SHADER_NONE)
@@ -3344,7 +3344,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     IWineD3DBaseShader *prev = (IWineD3DBaseShader *)device->updateStateBlock->state.vertex_shader;
 
-    device->updateStateBlock->state.vertex_shader = (IWineD3DVertexShaderImpl *)shader;
+    device->updateStateBlock->state.vertex_shader = (IWineD3DBaseShaderImpl *)shader;
     device->updateStateBlock->changed.vertexShader = TRUE;
 
     if (device->isRecordingState)

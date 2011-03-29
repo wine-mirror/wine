@@ -1665,7 +1665,7 @@ static HRESULT STDMETHODCALLTYPE vertexshader_QueryInterface(IWineD3DBaseShader 
 
 static ULONG STDMETHODCALLTYPE vertexshader_AddRef(IWineD3DBaseShader *iface)
 {
-    IWineD3DVertexShaderImpl *shader = (IWineD3DVertexShaderImpl *)iface;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     ULONG refcount = InterlockedIncrement(&shader->baseShader.ref);
 
     TRACE("%p increasing refcount to %u.\n", shader, refcount);
@@ -1676,14 +1676,14 @@ static ULONG STDMETHODCALLTYPE vertexshader_AddRef(IWineD3DBaseShader *iface)
 /* Do not call while under the GL lock. */
 static ULONG STDMETHODCALLTYPE vertexshader_Release(IWineD3DBaseShader *iface)
 {
-    IWineD3DVertexShaderImpl *shader = (IWineD3DVertexShaderImpl *)iface;
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     ULONG refcount = InterlockedDecrement(&shader->baseShader.ref);
 
     TRACE("%p decreasing refcount to %u.\n", shader, refcount);
 
     if (!refcount)
     {
-        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
+        shader_cleanup(shader);
         shader->baseShader.parent_ops->wined3d_object_destroyed(shader->baseShader.parent);
         HeapFree(GetProcessHeap(), 0, shader);
     }
@@ -1728,7 +1728,7 @@ static const IWineD3DBaseShaderVtbl IWineD3DVertexShader_Vtbl =
 };
 
 void find_vs_compile_args(const struct wined3d_state *state,
-        IWineD3DVertexShaderImpl *shader, struct vs_compile_args *args)
+        IWineD3DBaseShaderImpl *shader, struct vs_compile_args *args)
 {
     args->fog_src = state->render_states[WINED3DRS_FOGTABLEMODE]
             == WINED3DFOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
@@ -1747,7 +1747,7 @@ static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_id
     return FALSE;
 }
 
-BOOL vshader_get_input(struct IWineD3DVertexShaderImpl *shader,
+BOOL vshader_get_input(struct IWineD3DBaseShaderImpl *shader,
         BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum)
 {
     WORD map = shader->baseShader.reg_maps.input_registers;
@@ -1757,8 +1757,8 @@ BOOL vshader_get_input(struct IWineD3DVertexShaderImpl *shader,
     {
         if (!(map & 1)) continue;
 
-        if (match_usage(shader->attributes[i].usage,
-                shader->attributes[i].usage_idx, usage_req, usage_idx_req))
+        if (match_usage(shader->u.vs.attributes[i].usage,
+                shader->u.vs.attributes[i].usage_idx, usage_req, usage_idx_req))
         {
             *regnum = i;
             return TRUE;
@@ -1767,7 +1767,7 @@ BOOL vshader_get_input(struct IWineD3DVertexShaderImpl *shader,
     return FALSE;
 }
 
-static void vertexshader_set_limits(IWineD3DVertexShaderImpl *shader)
+static void vertexshader_set_limits(IWineD3DBaseShaderImpl *shader)
 {
     DWORD shader_version = WINED3D_SHADER_VERSION(shader->baseShader.reg_maps.shader_version.major,
             shader->baseShader.reg_maps.shader_version.minor);
@@ -1841,7 +1841,7 @@ static void vertexshader_set_limits(IWineD3DVertexShaderImpl *shader)
     }
 }
 
-HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *device,
+HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -1855,12 +1855,11 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
     shader->lpVtbl = &IWineD3DVertexShader_Vtbl;
     shader_init(&shader->baseShader, device, parent, parent_ops);
 
-    hr = shader_set_function((IWineD3DBaseShaderImpl *)shader, byte_code,
-            output_signature, device->d3d_vshader_constantF);
+    hr = shader_set_function(shader, byte_code, output_signature, device->d3d_vshader_constantF);
     if (FAILED(hr))
     {
         WARN("Failed to set function, hr %#x.\n", hr);
-        shader_cleanup((IWineD3DBaseShaderImpl *)shader);
+        shader_cleanup(shader);
         return hr;
     }
 
@@ -1869,9 +1868,9 @@ HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *
     {
         if (!(map & 1) || !shader->baseShader.input_signature[i].semantic_name) continue;
 
-        shader->attributes[i].usage =
+        shader->u.vs.attributes[i].usage =
                 shader_usage_from_semantic_name(shader->baseShader.input_signature[i].semantic_name);
-        shader->attributes[i].usage_idx = shader->baseShader.input_signature[i].semantic_idx;
+        shader->u.vs.attributes[i].usage_idx = shader->baseShader.input_signature[i].semantic_idx;
     }
 
     if (output_signature)

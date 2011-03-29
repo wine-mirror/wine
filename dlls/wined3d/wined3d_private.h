@@ -2336,7 +2336,7 @@ struct wined3d_state
     INT load_base_vertex_index; /* Non-indexed drawing needs 0 here, indexed needs base_vertex_index. */
     GLenum gl_primitive_type;
 
-    struct IWineD3DVertexShaderImpl *vertex_shader;
+    struct IWineD3DBaseShaderImpl *vertex_shader;
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
     float *vs_consts_f;
@@ -2682,7 +2682,7 @@ int shader_addline(struct wined3d_shader_buffer *buffer, const char *fmt, ...) P
 int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *fmt, va_list args) DECLSPEC_HIDDEN;
 
 /* Vertex shader utility functions */
-extern BOOL vshader_get_input(struct IWineD3DVertexShaderImpl *shader,
+extern BOOL vshader_get_input(struct IWineD3DBaseShaderImpl *shader,
         BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -2720,13 +2720,29 @@ typedef struct IWineD3DBaseShaderClass
 
 } IWineD3DBaseShaderClass;
 
+struct wined3d_vertex_shader
+{
+    struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
+};
+
 typedef struct IWineD3DBaseShaderImpl {
     /* IUnknown */
     const IWineD3DBaseShaderVtbl    *lpVtbl;
 
     /* IWineD3DBaseShader */
     IWineD3DBaseShaderClass         baseShader;
+
+    union
+    {
+        struct wined3d_vertex_shader vs;
+    } u;
 } IWineD3DBaseShaderImpl;
+
+void find_vs_compile_args(const struct wined3d_state *state,
+        IWineD3DBaseShaderImpl *shader, struct vs_compile_args *args) DECLSPEC_HIDDEN;
+HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
+        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
+        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 void shader_buffer_clear(struct wined3d_shader_buffer *buffer) DECLSPEC_HIDDEN;
 BOOL shader_buffer_init(struct wined3d_shader_buffer *buffer) DECLSPEC_HIDDEN;
@@ -2811,24 +2827,6 @@ static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl* This, DWORD 
     return FALSE;
 
 }
-
-/*****************************************************************************
- * IDirect3DVertexShader implementation structures
- */
-typedef struct IWineD3DVertexShaderImpl
-{
-    const IWineD3DBaseShaderVtbl *lpVtbl;
-    IWineD3DBaseShaderClass     baseShader;
-
-    /* Vertex shader attributes. */
-    struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
-} IWineD3DVertexShaderImpl;
-
-void find_vs_compile_args(const struct wined3d_state *state,
-        IWineD3DVertexShaderImpl *shader, struct vs_compile_args *args) DECLSPEC_HIDDEN;
-HRESULT vertexshader_init(IWineD3DVertexShaderImpl *shader, IWineD3DDeviceImpl *device,
-        const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
-        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 struct wined3d_geometryshader
 {

@@ -3898,8 +3898,8 @@ static DWORD find_input_signature(struct shader_arb_priv *priv, const struct win
     return found_sig->idx;
 }
 
-static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_num, struct shader_arb_ctx_priv *priv_ctx,
-                                  struct arb_vs_compiled_shader *compiled)
+static void init_output_registers(IWineD3DBaseShaderImpl *shader, DWORD sig_num,
+        struct shader_arb_ctx_priv *priv_ctx, struct arb_vs_compiled_shader *compiled)
 {
     unsigned int i, j;
     static const char * const texcoords[8] =
@@ -4075,16 +4075,16 @@ static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_nu
 }
 
 /* GL locking is done by the caller */
-static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
+static GLuint shader_arb_generate_vshader(IWineD3DBaseShaderImpl *shader,
         const struct wined3d_gl_info *gl_info, struct wined3d_shader_buffer *buffer,
         const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled)
 {
-    const struct arb_vshader_private *shader_data = This->baseShader.backend_data;
-    const struct wined3d_shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
-    CONST DWORD *function = This->baseShader.function;
+    const struct arb_vshader_private *shader_data = shader->baseShader.backend_data;
+    const struct wined3d_shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
+    const DWORD *function = shader->baseShader.function;
     const local_constant *lconst;
     GLuint ret;
-    DWORD next_local, *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
+    DWORD next_local, *lconst_map = local_const_mapping(shader);
     struct shader_arb_ctx_priv priv_ctx;
     unsigned int i;
     GLint errPos;
@@ -4092,7 +4092,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
     list_init(&priv_ctx.control_frames);
-    init_output_registers(This, args->ps_signature, &priv_ctx, compiled);
+    init_output_registers(shader, args->ps_signature, &priv_ctx, compiled);
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
@@ -4129,15 +4129,15 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     shader_addline(buffer, "TEMP TA;\n");
 
     /* Base Declarations */
-    next_local = shader_generate_arb_declarations((IWineD3DBaseShaderImpl *)This,
-            reg_maps, buffer, gl_info, lconst_map, &priv_ctx.vs_clipplanes, &priv_ctx);
+    next_local = shader_generate_arb_declarations(shader, reg_maps, buffer,
+            gl_info, lconst_map, &priv_ctx.vs_clipplanes, &priv_ctx);
 
     for(i = 0; i < MAX_CONST_I; i++)
     {
         compiled->int_consts[i] = WINED3D_CONST_NUM_UNUSED;
         if(reg_maps->integer_constants & (1 << i) && priv_ctx.target_version >= NV2)
         {
-            const DWORD *control_values = find_loop_control_values((IWineD3DBaseShaderImpl *) This, i);
+            const DWORD *control_values = find_loop_control_values(shader, i);
 
             if(control_values)
             {
@@ -4170,7 +4170,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
      */
     if (!gl_info->supported[NV_VERTEX_PROGRAM])
     {
-        IWineD3DDeviceImpl *device = This->baseShader.device;
+        IWineD3DDeviceImpl *device = shader->baseShader.device;
         const char *color_init = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_0001);
         shader_addline(buffer, "MOV result.color.secondary, %s;\n", color_init);
 
@@ -4189,7 +4189,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     /* The shader starts with the main function */
     priv_ctx.in_main_func = TRUE;
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShaderImpl *)This, buffer, reg_maps, function, &priv_ctx);
+    shader_generate_main(shader, buffer, reg_maps, function, &priv_ctx);
 
     if (!priv_ctx.footer_written) vshader_add_footer(&priv_ctx,
             shader_data, args, reg_maps, gl_info, buffer);
@@ -4225,8 +4225,10 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
         if (!native) WARN("Program exceeds native resource limits.\n");
 
         /* Load immediate constants */
-        if(lconst_map) {
-            LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+        if (lconst_map)
+        {
+            LIST_FOR_EACH_ENTRY(lconst, &shader->baseShader.constantsF, local_constant, entry)
+            {
                 const float *value = (const float *)lconst->value;
                 GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, lconst_map[lconst->idx], value));
             }
@@ -4332,7 +4334,8 @@ static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const
     return !memcmp(stored->loop_ctrl, new->loop_ctrl, sizeof(stored->loop_ctrl));
 }
 
-static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl *shader, const struct arb_vs_compile_args *args)
+static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DBaseShaderImpl *shader,
+        const struct arb_vs_compile_args *args)
 {
     IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -4473,7 +4476,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
 }
 
 static void find_arb_vs_compile_args(const struct wined3d_state *state,
-        IWineD3DVertexShaderImpl *shader, struct arb_vs_compile_args *args)
+        IWineD3DBaseShaderImpl *shader, struct arb_vs_compile_args *args)
 {
     IWineD3DDeviceImpl *device = shader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -4618,7 +4621,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
 
     if (useVS)
     {
-        IWineD3DVertexShaderImpl *vs = state->vertex_shader;
+        IWineD3DBaseShaderImpl *vs = state->vertex_shader;
         struct arb_vs_compile_args compile_args;
         struct arb_vs_compiled_shader *compiled;
 
