@@ -1625,19 +1625,166 @@ BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD bu
  */
 BOOL WINAPI GetVolumePathNamesForVolumeNameA(LPCSTR volumename, LPSTR volumepathname, DWORD buflen, PDWORD returnlen)
 {
-    FIXME("(%s, %p, %d, %p), stub!\n", debugstr_a(volumename), volumepathname, buflen, returnlen);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    BOOL ret;
+    WCHAR *volumenameW = NULL, *volumepathnameW;
+
+    if (volumename && !(volumenameW = FILE_name_AtoW( volumename, TRUE ))) return FALSE;
+    if (!(volumepathnameW = HeapAlloc( GetProcessHeap(), 0, buflen * sizeof(WCHAR) )))
+    {
+        HeapFree( GetProcessHeap(), 0, volumenameW );
+        return FALSE;
+    }
+    if ((ret = GetVolumePathNamesForVolumeNameW( volumenameW, volumepathnameW, buflen, returnlen )))
+    {
+        char *path = volumepathname;
+        const WCHAR *pathW = volumepathnameW;
+
+        while (*pathW)
+        {
+            int len = strlenW( pathW ) + 1;
+            FILE_name_WtoA( pathW, len, path, buflen );
+            buflen -= len;
+            pathW += len;
+            path += len;
+        }
+        path[0] = 0;
+    }
+    HeapFree( GetProcessHeap(), 0, volumenameW );
+    HeapFree( GetProcessHeap(), 0, volumepathnameW );
+    return ret;
 }
 
+static MOUNTMGR_MOUNT_POINTS *query_mount_points( HANDLE mgr, MOUNTMGR_MOUNT_POINT *input, DWORD insize )
+{
+    MOUNTMGR_MOUNT_POINTS *output;
+    DWORD outsize = 1024;
+
+    for (;;)
+    {
+        if (!(output = HeapAlloc( GetProcessHeap(), 0, outsize )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return NULL;
+        }
+        if (DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_POINTS, input, insize, output, outsize, NULL, NULL )) break;
+        outsize = output->Size;
+        HeapFree( GetProcessHeap(), 0, output );
+        if (GetLastError() != ERROR_MORE_DATA) return NULL;
+    }
+    return output;
+}
 /***********************************************************************
  *           GetVolumePathNamesForVolumeNameW   (KERNEL32.@)
  */
 BOOL WINAPI GetVolumePathNamesForVolumeNameW(LPCWSTR volumename, LPWSTR volumepathname, DWORD buflen, PDWORD returnlen)
 {
-    FIXME("(%s, %p, %d, %p), stub!\n", debugstr_w(volumename), volumepathname, buflen, returnlen);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    static const WCHAR dosdevicesW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\'};
+    HANDLE mgr;
+    DWORD len, size;
+    MOUNTMGR_MOUNT_POINT *spec;
+    MOUNTMGR_MOUNT_POINTS *link, *target = NULL;
+    WCHAR *name, *path;
+    BOOL ret = FALSE;
+    UINT i, j;
+
+    TRACE("%s, %p, %u, %p\n", debugstr_w(volumename), volumepathname, buflen, returnlen);
+
+    if (!volumename || (len = strlenW( volumename )) != 49)
+    {
+        SetLastError( ERROR_INVALID_NAME );
+        return FALSE;
+    }
+    mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+    if (mgr == INVALID_HANDLE_VALUE) return FALSE;
+
+    size = sizeof(*spec) + sizeof(WCHAR) * (len - 1); /* remove trailing backslash */
+    if (!(spec = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) goto done;
+    spec->SymbolicLinkNameOffset = sizeof(*spec);
+    spec->SymbolicLinkNameLength = size - sizeof(*spec);
+    name = (WCHAR *)((char *)spec + spec->SymbolicLinkNameOffset);
+    memcpy( name, volumename, size - sizeof(*spec) );
+    name[1] = '?'; /* map \\?\ to \??\ */
+
+    target = query_mount_points( mgr, spec, size );
+    HeapFree( GetProcessHeap(), 0, spec );
+    if (!target)
+    {
+        goto done;
+    }
+    if (!target->NumberOfMountPoints)
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        goto done;
+    }
+    len = 0;
+    path = volumepathname;
+    for (i = 0; i < target->NumberOfMountPoints; i++)
+    {
+        link = NULL;
+        if (target->MountPoints[i].DeviceNameOffset)
+        {
+            const WCHAR *device = (const WCHAR *)((const char *)target + target->MountPoints[i].DeviceNameOffset);
+            USHORT device_len = target->MountPoints[i].DeviceNameLength;
+
+            size = sizeof(*spec) + device_len;
+            if (!(spec = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) goto done;
+            spec->DeviceNameOffset = sizeof(*spec);
+            spec->DeviceNameLength = device_len;
+            memcpy( (char *)spec + spec->DeviceNameOffset, device, device_len );
+
+            link = query_mount_points( mgr, spec, size );
+            HeapFree( GetProcessHeap(), 0, spec );
+        }
+        else if (target->MountPoints[i].UniqueIdOffset)
+        {
+            const WCHAR *id = (const WCHAR *)((const char *)target + target->MountPoints[i].UniqueIdOffset);
+            USHORT id_len = target->MountPoints[i].UniqueIdLength;
+
+            size = sizeof(*spec) + id_len;
+            if (!(spec = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) goto done;
+            spec->UniqueIdOffset = sizeof(*spec);
+            spec->UniqueIdLength = id_len;
+            memcpy( (char *)spec + spec->UniqueIdOffset, id, id_len );
+
+            link = query_mount_points( mgr, spec, size );
+            HeapFree( GetProcessHeap(), 0, spec );
+        }
+        if (!link) continue;
+        for (j = 0; j < link->NumberOfMountPoints; j++)
+        {
+            const WCHAR *linkname;
+
+            if (!link->MountPoints[j].SymbolicLinkNameOffset) continue;
+            linkname = (const WCHAR *)((const char *)link + link->MountPoints[j].SymbolicLinkNameOffset);
+
+            if (link->MountPoints[j].SymbolicLinkNameLength == sizeof(dosdevicesW) + 2 * sizeof(WCHAR) &&
+                !memicmpW( linkname, dosdevicesW, sizeof(dosdevicesW) / sizeof(WCHAR) ))
+            {
+                len += 4;
+                if (volumepathname && len < buflen)
+                {
+                    path[0] = linkname[sizeof(dosdevicesW) / sizeof(WCHAR)];
+                    path[1] = ':';
+                    path[2] = '\\';
+                    path[3] = 0;
+                    path += 4;
+                }
+            }
+        }
+        HeapFree( GetProcessHeap(), 0, link );
+    }
+    if (buflen <= len) SetLastError( ERROR_MORE_DATA );
+    else if (volumepathname)
+    {
+        volumepathname[len] = 0;
+        ret = TRUE;
+    }
+    if (returnlen) *returnlen = len + 1;
+
+done:
+    HeapFree( GetProcessHeap(), 0, target );
+    CloseHandle( mgr );
+    return ret;
 }
 
 /***********************************************************************

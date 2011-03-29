@@ -32,6 +32,8 @@ static BOOL (WINAPI *pFindVolumeClose)(HANDLE);
 static UINT (WINAPI *pGetLogicalDriveStringsA)(UINT,LPSTR);
 static UINT (WINAPI *pGetLogicalDriveStringsW)(UINT,LPWSTR);
 static BOOL (WINAPI *pGetVolumeInformationA)(LPCSTR, LPSTR, DWORD, LPDWORD, LPDWORD, LPDWORD, LPSTR, DWORD);
+static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameA)(LPCSTR, LPSTR, DWORD, LPDWORD);
+static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameW)(LPCWSTR, LPWSTR, DWORD, LPDWORD);
 
 /* ############################### */
 
@@ -525,6 +527,169 @@ static void test_disk_extents(void)
     CloseHandle( handle );
 }
 
+static void test_GetVolumePathNamesForVolumeNameA(void)
+{
+    BOOL ret;
+    char volume[MAX_PATH], buffer[MAX_PATH];
+    DWORD len, error;
+
+    if (!pGetVolumePathNamesForVolumeNameA || !pGetVolumeNameForVolumeMountPointA)
+    {
+        win_skip("required functions not found\n");
+        return;
+    }
+
+    ret = pGetVolumeNameForVolumeMountPointA( "c:\\", volume, sizeof(volume) );
+    ok(ret, "failed to get volume name %u\n", GetLastError());
+    trace("c:\\ -> %s\n", volume);
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameA( NULL, NULL, 0, NULL );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_NAME, "expected ERROR_INVALID_NAME got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameA( "", NULL, 0, NULL );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_NAME, "expected ERROR_INVALID_NAME got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameA( volume, NULL, 0, NULL );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_MORE_DATA, "expected ERROR_MORE_DATA got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameA( volume, buffer, 0, NULL );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_MORE_DATA, "expected ERROR_MORE_DATA got %u\n", error);
+
+    memset( buffer, 0xff, sizeof(buffer) );
+    ret = pGetVolumePathNamesForVolumeNameA( volume, buffer, sizeof(buffer), NULL );
+    ok(ret, "failed to get path names %u\n", GetLastError());
+    ok(!strcmp( "C:\\", buffer ), "expected \"\\C:\" got \"%s\"\n", buffer);
+    ok(!buffer[4], "expected double null-terminated buffer\n");
+
+    len = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameA( NULL, NULL, 0, &len );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_NAME, "expected ERROR_INVALID_NAME got %u\n", error);
+
+    len = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameA( NULL, NULL, sizeof(buffer), &len );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_NAME, "expected ERROR_INVALID_NAME got %u\n", error);
+
+    len = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameA( NULL, buffer, sizeof(buffer), &len );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_NAME, "expected ERROR_INVALID_NAME got %u\n", error);
+
+    len = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameA( NULL, buffer, sizeof(buffer), &len );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_NAME, "expected ERROR_INVALID_NAME got %u\n", error);
+
+    len = 0;
+    memset( buffer, 0xff, sizeof(buffer) );
+    ret = pGetVolumePathNamesForVolumeNameA( volume, buffer, sizeof(buffer), &len );
+    ok(ret, "failed to get path names %u\n", GetLastError());
+    ok(len == 5 || broken(len == 2), "expected 5 got %u\n", len);
+    ok(!strcmp( "C:\\", buffer ), "expected \"\\C:\" got \"%s\"\n", buffer);
+    ok(!buffer[4], "expected double null-terminated buffer\n");
+}
+
+static void test_GetVolumePathNamesForVolumeNameW(void)
+{
+    static const WCHAR empty[] = {0};
+    static const WCHAR drive_c[] = {'c',':','\\',0};
+    static const WCHAR volume_null[] = {'\\','\\','?','\\','V','o','l','u','m','e',
+        '{','0','0','0','0','0','0','0','0','-','0','0','0','0','-','0','0','0','0',
+        '-','0','0','0','0','-','0','0','0','0','0','0','0','0','0','0','0','0','}','\\',0};
+    BOOL ret;
+    WCHAR volume[MAX_PATH], buffer[MAX_PATH];
+    DWORD len, error;
+
+    if (!pGetVolumePathNamesForVolumeNameW || !pGetVolumeNameForVolumeMountPointW)
+    {
+        win_skip("required functions not found\n");
+        return;
+    }
+
+    ret = pGetVolumeNameForVolumeMountPointW( drive_c, volume, sizeof(volume)/sizeof(volume[0]) );
+    ok(ret, "failed to get volume name %u\n", GetLastError());
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameW( empty, NULL, 0, NULL );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_NAME, "expected ERROR_INVALID_NAME got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, NULL, 0, NULL );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_MORE_DATA, "expected ERROR_MORE_DATA got %u\n", error);
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, 0, NULL );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_MORE_DATA, "expected ERROR_MORE_DATA got %u\n", error);
+
+    if (0) { /* crash */
+    ret = pGetVolumePathNamesForVolumeNameW( volume, NULL, sizeof(buffer), NULL );
+    ok(ret, "failed to get path names %u\n", GetLastError());
+    }
+
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, sizeof(buffer), NULL );
+    ok(ret, "failed to get path names %u\n", GetLastError());
+
+    len = 0;
+    memset( buffer, 0xff, sizeof(buffer) );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, sizeof(buffer), &len );
+    ok(ret, "failed to get path names %u\n", GetLastError());
+    ok(len == 5, "expected 5 got %u\n", len);
+    ok(!buffer[4], "expected double null-terminated buffer\n");
+
+    len = 0;
+    volume[1] = '?';
+    volume[lstrlenW( volume ) - 1] = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, sizeof(buffer), &len );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_INVALID_NAME, "expected ERROR_INVALID_NAME got %u\n", error);
+
+    len = 0;
+    volume[0] = '\\';
+    volume[1] = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, sizeof(buffer), &len );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    todo_wine ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", error);
+
+    len = 0;
+    lstrcpyW( volume, volume_null );
+    SetLastError( 0xdeadbeef );
+    ret = pGetVolumePathNamesForVolumeNameW( volume, buffer, sizeof(buffer), &len );
+    error = GetLastError();
+    ok(!ret, "expected failure\n");
+    ok(error == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND got %u\n", error);
+}
+
 START_TEST(volume)
 {
     hdll = GetModuleHandleA("kernel32.dll");
@@ -536,6 +701,8 @@ START_TEST(volume)
     pGetLogicalDriveStringsA = (void *) GetProcAddress(hdll, "GetLogicalDriveStringsA");
     pGetLogicalDriveStringsW = (void *) GetProcAddress(hdll, "GetLogicalDriveStringsW");
     pGetVolumeInformationA = (void *) GetProcAddress(hdll, "GetVolumeInformationA");
+    pGetVolumePathNamesForVolumeNameA = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameA");
+    pGetVolumePathNamesForVolumeNameW = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameW");
 
     test_query_dos_deviceA();
     test_FindFirstVolume();
@@ -546,4 +713,6 @@ START_TEST(volume)
     test_GetVolumeInformationA();
     test_enum_vols();
     test_disk_extents();
+    test_GetVolumePathNamesForVolumeNameA();
+    test_GetVolumePathNamesForVolumeNameW();
 }
