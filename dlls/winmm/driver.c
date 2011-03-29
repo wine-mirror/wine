@@ -531,34 +531,44 @@ LRESULT WINAPI DefDriverProc(DWORD_PTR dwDriverIdentifier, HDRVR hDrv,
 }
 
 /**************************************************************************
+ *				DRIVER_getCallback		[internal]
+ */
+static const char* DRIVER_getCallback(DWORD uFlags)
+{
+    switch(uFlags & DCB_TYPEMASK) {
+    case DCB_NULL:     return "null";
+    case DCB_WINDOW:   return "window";
+    case DCB_TASK:     return "task";
+    case DCB_EVENT:    return "event";
+    case DCB_FUNCTION: return "32bit function";
+    default:           return "UNKNOWN";
+    }
+}
+
+/**************************************************************************
  * 				DriverCallback			[WINMM.@]
  */
 BOOL WINAPI DriverCallback(DWORD_PTR dwCallBack, DWORD uFlags, HDRVR hDev,
 			   DWORD wMsg, DWORD_PTR dwUser, DWORD_PTR dwParam1,
 			   DWORD_PTR dwParam2)
 {
-    TRACE("(%08lX, %04X, %p, %04X, %08lX, %08lX, %08lX)\n",
-	  dwCallBack, uFlags, hDev, wMsg, dwUser, dwParam1, dwParam2);
+    TRACE("(%08lX, %s %04X, %p, %04X, %08lX, %08lX, %08lX)\n",
+	  dwCallBack, DRIVER_getCallback(uFlags), uFlags, hDev, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (uFlags & DCB_TYPEMASK) {
     case DCB_NULL:
-	TRACE("Null !\n");
 	break;
     case DCB_WINDOW:
-	TRACE("Window(%04lX) handle=%p!\n", dwCallBack, hDev);
 	PostMessageA((HWND)dwCallBack, wMsg, (WPARAM)hDev, dwParam1);
 	break;
     case DCB_TASK: /* aka DCB_THREAD */
-	TRACE("Task(%04lx) !\n", dwCallBack);
 	PostThreadMessageA(dwCallBack, wMsg, (WPARAM)hDev, dwParam1);
 	break;
     case DCB_FUNCTION:
-	TRACE("Function (32 bit) !\n");
 	if (dwCallBack)
 	    ((LPDRVCALLBACK)dwCallBack)(hDev, wMsg, dwUser, dwParam1, dwParam2);
 	break;
     case DCB_EVENT:
-	TRACE("Event(%08lx) !\n", dwCallBack);
 	SetEvent((HANDLE)dwCallBack);
 	break;
 #if 0
