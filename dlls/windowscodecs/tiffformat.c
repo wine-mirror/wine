@@ -1136,6 +1136,8 @@ typedef struct TiffFrameEncode {
     IWICBitmapFrameEncode IWICBitmapFrameEncode_iface;
     LONG ref;
     TiffEncoder *parent;
+    /* fields below are protected by parent->lock */
+    BOOL initialized;
 } TiffFrameEncode;
 
 static inline TiffFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEncode *iface)
@@ -1195,8 +1197,22 @@ static ULONG WINAPI TiffFrameEncode_Release(IWICBitmapFrameEncode *iface)
 static HRESULT WINAPI TiffFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
     IPropertyBag2 *pIEncoderOptions)
 {
-    FIXME("(%p,%p): stub\n", iface, pIEncoderOptions);
-    return E_NOTIMPL;
+    TiffFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    TRACE("(%p,%p)\n", iface, pIEncoderOptions);
+
+    EnterCriticalSection(&This->parent->lock);
+
+    if (This->initialized)
+    {
+        LeaveCriticalSection(&This->parent->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    This->initialized = TRUE;
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
@@ -1443,6 +1459,7 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
             result->IWICBitmapFrameEncode_iface.lpVtbl = &TiffFrameEncode_Vtbl;
             result->ref = 1;
             result->parent = This;
+            result->initialized = FALSE;
 
             IWICBitmapEncoder_AddRef(iface);
             *ppIFrameEncode = &result->IWICBitmapFrameEncode_iface;
