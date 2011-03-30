@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Niet gespecificeerd"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:117
 msgid "Name"
 msgstr "Naam"
 
@@ -166,7 +166,7 @@ msgstr "Mijn Favorieten"
 msgid "System Path"
 msgstr "Systeem Pad"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:108
 msgid "Desktop"
 msgstr "Bureaublad"
 
@@ -2046,7 +2046,7 @@ msgstr "&Stop"
 msgid "&Refresh"
 msgstr "A&ctualiseren"
 
-#: hhctrl.rc:76 winefile.rc:38
+#: hhctrl.rc:76
 msgid "&Print..."
 msgstr "Af&drukken..."
 
@@ -6275,7 +6275,7 @@ msgstr "&Bestand"
 msgid "&New"
 msgstr "&Nieuw"
 
-#: shdocvw.rc:29 winefile.rc:118
+#: shdocvw.rc:29 winefile.rc:78
 msgid "&Window"
 msgstr "&Venster"
 
@@ -6308,7 +6308,7 @@ msgid "&Close"
 msgstr "&Afsluiten"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:51 wordpad.rc:66
 msgid "&View"
 msgstr "Bee&ld"
 
@@ -6333,7 +6333,7 @@ msgid "&Add to Favorites..."
 msgstr "&Toevoegen aan favorieten..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:87 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Help"
 
@@ -6437,7 +6437,7 @@ msgstr "&Afsluiten"
 msgid "&About Control Panel..."
 msgstr "&Over Configuratiescherm"
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:161
+#: shell32.rc:123 shell32.rc:127 winefile.rc:118
 msgid "Size"
 msgstr "Grootte"
 
@@ -6449,7 +6449,7 @@ msgstr "Type"
 msgid "Modified"
 msgstr "Gewijzigd"
 
-#: shell32.rc:126 winefile.rc:167
+#: shell32.rc:126 winefile.rc:124
 msgid "Attributes"
 msgstr "Attributen"
 
@@ -6617,7 +6617,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Contacten"
 
-#: shell32.rc:216 winefile.rc:166
+#: shell32.rc:216 winefile.rc:123
 msgid "Links"
 msgstr "Links"
 
@@ -6879,7 +6879,7 @@ msgstr "&Sluiten\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&Info over Wine..."
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:148
+#: user32.rc:55 regedit.rc:182 winefile.rc:105
 msgid "Error"
 msgstr "Fout"
 
@@ -7786,7 +7786,7 @@ msgstr "&Analoog"
 msgid "Digi&tal"
 msgstr "&Digitaal"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winefile.rc:66 wordpad.rc:81
 msgid "&Font..."
 msgstr "&Lettertype..."
 
@@ -8678,7 +8678,7 @@ msgid "&Paste\tCtrl+V"
 msgstr "&Plakken\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
-#: winefile.rc:30
+#: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr "Ver&wijderen\tDel"
 
@@ -8906,15 +8906,15 @@ msgstr "&Expertmodus"
 msgid "&Hidden component categories"
 msgstr "Ver&borgen componentcategorieën"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:68 wordpad.rc:68
 msgid "&Toolbar"
 msgstr "&Gereedschapsbalk"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:102
+#: oleview.rc:65 oleview.rc:87 winefile.rc:70
 msgid "&Status Bar"
 msgstr "&Statusbalk"
 
-#: oleview.rc:67 regedit.rc:71 winefile.rc:127
+#: oleview.rc:67 regedit.rc:71 winefile.rc:84
 msgid "&Refresh\tF5"
 msgstr "&Vernieuwen\tF5"
 
@@ -9142,7 +9142,7 @@ msgstr "&Uitvoeren..."
 msgid "E&xit Windows..."
 msgstr "&Afsluiten..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:65 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Opties"
 
@@ -9150,11 +9150,11 @@ msgstr "&Opties"
 msgid "&Arrange automatically"
 msgstr "&Automatisch rangschikken"
 
-#: progman.rc:43 winefile.rc:107
+#: progman.rc:43
 msgid "&Minimize on run"
 msgstr "Ge&minimaliseerd starten"
 
-#: progman.rc:44 winefile.rc:108
+#: progman.rc:44 winefile.rc:75
 msgid "&Save settings on exit"
 msgstr "&Instellingen opslaan bij afsluiten"
 
@@ -9371,7 +9371,7 @@ msgstr "Volgende Zoeken\tF3"
 msgid "Status &Bar"
 msgstr "&Statusbalk"
 
-#: regedit.rc:69 winefile.rc:81
+#: regedit.rc:69 winefile.rc:52
 msgid "Sp&lit"
 msgstr "Sp&litsen"
 
@@ -9379,7 +9379,7 @@ msgstr "Sp&litsen"
 msgid "&Remove Favorite..."
 msgstr "&Verwijderen uit favorieten..."
 
-#: regedit.rc:80 winefile.rc:131
+#: regedit.rc:80 winefile.rc:88
 msgid "&Help Topics\tF1"
 msgstr "&Help-onderwerpen\tF1"
 
@@ -9822,7 +9822,7 @@ msgstr "Eén grafiek &per CPU"
 msgid "&Show Kernel Times"
 msgstr "&Toon kerneltijden"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:81
 msgid "Tile &Horizontally"
 msgstr "&Boven elkaar"
 
@@ -10881,275 +10881,163 @@ msgstr "(onbekend)"
 msgid "&Open\tEnter"
 msgstr "&Openen\tEnter"
 
-#: winefile.rc:29
-msgid "&In Clipboard...\tF9"
-msgstr "Naar klem&bord...\tF9"
-
-#: winefile.rc:31
+#: winefile.rc:30
 msgid "Re&name..."
 msgstr "&Naam wijzigen..."
 
-#: winefile.rc:32
+#: winefile.rc:31
 msgid "Propert&ies...\tAlt+Enter"
 msgstr "&Eigenschappen...\tAlt+Enter"
 
-#: winefile.rc:34
-msgid "C&ompress..."
-msgstr "&Comprimeren..."
-
-#: winefile.rc:35
-msgid "Dec&ompress..."
-msgstr "&Dec&omprimeren..."
-
-#: winefile.rc:37
+#: winefile.rc:33
 msgid "&Run..."
 msgstr "&Starten..."
 
-#: winefile.rc:39
-msgid "Associate..."
-msgstr "Koppelen..."
-
-#: winefile.rc:41
+#: winefile.rc:35
 msgid "Cr&eate Directory..."
 msgstr "Nieuwe &map..."
 
-#: winefile.rc:42
-msgid "Searc&h..."
-msgstr "&Zoeken..."
-
-#: winefile.rc:43
-msgid "&Select Files..."
-msgstr "Bestanden s&electeren..."
-
-#: winefile.rc:46 winemine.rc:44
+#: winefile.rc:38 winemine.rc:44
 msgid "E&xit\tAlt+X"
 msgstr "&Afsluiten\tAlt+X"
 
-#: winefile.rc:52
+#: winefile.rc:44
 msgid "&Disk"
 msgstr "&Disk"
 
-#: winefile.rc:53
-msgid "&Copy Disk..."
-msgstr "Schijf &kopiëren..."
-
-#: winefile.rc:54
-msgid "&Label Disk..."
-msgstr "Schijflabel maken..."
-
-#: winefile.rc:56
+#: winefile.rc:45
 msgid "&Format Disk..."
 msgstr "Schijf &formatteren..."
 
-#: winefile.rc:58
+#: winefile.rc:47
 msgid "Connect &Network Drive"
 msgstr "Verbinding &maken met netwerkchijf"
 
-#: winefile.rc:59
+#: winefile.rc:48
 msgid "&Disconnect Network Drive"
 msgstr "Verbinding &verbreken met netwerkschijf"
 
-#: winefile.rc:61
-msgid "Share as..."
-msgstr "Schijf &delen..."
-
-#: winefile.rc:62
-msgid "&Remove Share..."
-msgstr "Delen &ongedaan maken..."
-
-#: winefile.rc:64
-msgid "&Select Drive..."
-msgstr "Schijf &selecteren..."
-
-#: winefile.rc:67
-msgid "Di&rectories"
-msgstr "&Mappen"
-
-#: winefile.rc:68
-msgid "&Next Level\t+"
-msgstr "&Volgende niveau\t+"
-
-#: winefile.rc:69
-msgid "Expand &Tree\t*"
-msgstr "&Uitklappen\t*"
-
-#: winefile.rc:70
-msgid "Expand &all\tCtrl+*"
-msgstr "&Alles uitklappen\tCtrl+*"
-
-#: winefile.rc:71
-msgid "Collapse &Tree\t-"
-msgstr "&Inklappen\t-"
-
-#: winefile.rc:73
-msgid "&Mark Children"
-msgstr "&Markeer mappen"
-
-#: winefile.rc:77
-msgid "T&ree and Directory"
-msgstr "&Hiërarchie en mapinhoud"
-
-#: winefile.rc:78
-msgid "Tr&ee Only"
-msgstr "Alleen h&iërarchie"
-
-#: winefile.rc:79
-msgid "Directory &Only"
-msgstr "Alleen &mapinhoud"
-
-#: winefile.rc:83
+#: winefile.rc:54
 msgid "&Name"
 msgstr "&Naam"
 
-#: winefile.rc:84
+#: winefile.rc:55
 msgid "&All File Details"
 msgstr "&Alle details"
 
-#: winefile.rc:85
-msgid "&Partial Details..."
-msgstr "&Gedeeltelijke details..."
-
-#: winefile.rc:87
+#: winefile.rc:57
 msgid "&Sort by Name"
 msgstr "&Sorteer op naam"
 
-#: winefile.rc:88
+#: winefile.rc:58
 msgid "Sort &by Type"
 msgstr "Sorteer op &type"
 
-#: winefile.rc:89
+#: winefile.rc:59
 msgid "Sort by Si&ze"
 msgstr "Sorteer op &grootte"
 
-#: winefile.rc:90
+#: winefile.rc:60
 msgid "Sort by &Date"
 msgstr "Sorteer op &datum"
 
-#: winefile.rc:92
+#: winefile.rc:62
 msgid "Filter by &..."
 msgstr "Sorteer op &..."
 
-#: winefile.rc:96
-msgid "&Confirmation..."
-msgstr "&Bevestiging..."
-
-#: winefile.rc:98
-msgid "Customize Tool&bar..."
-msgstr "Gereedschapsbalk &aanpassen..."
-
-#: winefile.rc:101
+#: winefile.rc:69
 msgid "&Drivebar"
 msgstr "&Schijfbalk"
 
-#: winefile.rc:104
+#: winefile.rc:72
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr "&Volledig scherm\tCtrl+Shift+S"
 
-#: winefile.rc:112
-msgid "&Security"
-msgstr "&Beveiliging"
-
-#: winefile.rc:113
-msgid "&Access..."
-msgstr "&Toegang..."
-
-#: winefile.rc:114
-msgid "&Logging..."
-msgstr "&Loggen..."
-
-#: winefile.rc:115
-msgid "&Owner..."
-msgstr "&Eigenaar..."
-
-#: winefile.rc:119
+#: winefile.rc:79
 msgid "New &Window"
 msgstr "&Nieuw venster"
 
-#: winefile.rc:120
+#: winefile.rc:80
 msgid "Cascading\tCtrl+F5"
 msgstr "Trapsgewijs\tCtrl+F5"
 
-#: winefile.rc:122
+#: winefile.rc:82
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "&Naast elkaar\tCtrl+F4"
 
-#: winefile.rc:124
-msgid "Arrange Automatically"
-msgstr "Automatisch schikken"
-
-#: winefile.rc:126
+#: winefile.rc:83
 msgid "Arrange &Symbols"
 msgstr "&Pictogrammen schikken"
 
-#: winefile.rc:132
+#: winefile.rc:89
 msgid "Help &Search...\tF1"
 msgstr "&Zoeken...\tF1"
 
-#: winefile.rc:133
+#: winefile.rc:90
 msgid "&Using Help\tF1"
 msgstr "&Instructie\tF1"
 
-#: winefile.rc:135
+#: winefile.rc:92
 msgid "&About Winefile..."
 msgstr "&Over Winefile..."
 
-#: winefile.rc:141
+#: winefile.rc:98
 msgid "Applying font settings"
 msgstr "Lettertype wordt toegepast"
 
-#: winefile.rc:142
+#: winefile.rc:99
 msgid "Error while selecting new font."
 msgstr "Probleem tijdens het selecteren van het nieuwe lettertype."
 
-#: winefile.rc:147
+#: winefile.rc:104
 msgid "Wine File Manager"
 msgstr "Winefile"
 
-#: winefile.rc:149
+#: winefile.rc:106
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:150
+#: winefile.rc:107
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:152
+#: winefile.rc:109
 msgid "Shell"
 msgstr "Shell"
 
-#: winefile.rc:153
+#: winefile.rc:110
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:154
+#: winefile.rc:111
 msgid "Not yet implemented"
 msgstr "Nog niet geimplementeerd"
 
-#: winefile.rc:155
+#: winefile.rc:112
 msgid "Wine File"
 msgstr "Winefile"
 
-#: winefile.rc:162
+#: winefile.rc:119
 msgid "CDate"
 msgstr "CDatum"
 
-#: winefile.rc:163
+#: winefile.rc:120
 msgid "ADate"
 msgstr "ADatum"
 
-#: winefile.rc:164
+#: winefile.rc:121
 msgid "MDate"
 msgstr "MDatum"
 
-#: winefile.rc:165
+#: winefile.rc:122
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:168
+#: winefile.rc:125
 msgid "Security"
 msgstr "Beveiliging"
 
-#: winefile.rc:170
+#: winefile.rc:127
 msgid "%s of %s free"
 msgstr "%s van %s vrij"
 

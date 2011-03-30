@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Inte angivet"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:117
 msgid "Name"
 msgstr "Namn"
 
@@ -165,7 +165,7 @@ msgstr "Mina Favoriter"
 msgid "System Path"
 msgstr "Systemsökväg"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:108
 msgid "Desktop"
 msgstr "Skrivbord"
 
@@ -2038,7 +2038,7 @@ msgstr "&Stopp"
 msgid "&Refresh"
 msgstr "Upp&datera"
 
-#: hhctrl.rc:76 winefile.rc:38
+#: hhctrl.rc:76
 msgid "&Print..."
 msgstr "Skriv &ut..."
 
@@ -6269,7 +6269,7 @@ msgstr "&Arkiv"
 msgid "&New"
 msgstr "&Ny"
 
-#: shdocvw.rc:29 winefile.rc:118
+#: shdocvw.rc:29 winefile.rc:78
 msgid "&Window"
 msgstr "&Fönster"
 
@@ -6302,7 +6302,7 @@ msgid "&Close"
 msgstr "St&äng"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:51 wordpad.rc:66
 msgid "&View"
 msgstr "&Visa"
 
@@ -6327,7 +6327,7 @@ msgid "&Add to Favorites..."
 msgstr "&Lägg till i favoriter..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:87 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Hjälp"
 
@@ -6431,7 +6431,7 @@ msgstr "A&vsluta"
 msgid "&About Control Panel..."
 msgstr "&Om Kontrollpanelen..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:161
+#: shell32.rc:123 shell32.rc:127 winefile.rc:118
 msgid "Size"
 msgstr "Storlek"
 
@@ -6443,7 +6443,7 @@ msgstr "Typ"
 msgid "Modified"
 msgstr "Ändrad"
 
-#: shell32.rc:126 winefile.rc:167
+#: shell32.rc:126 winefile.rc:124
 msgid "Attributes"
 msgstr "Attribut"
 
@@ -6611,7 +6611,7 @@ msgstr "Program (x86)\\Gemensamma filer"
 msgid "Contacts"
 msgstr "Kontakter"
 
-#: shell32.rc:216 winefile.rc:166
+#: shell32.rc:216 winefile.rc:123
 msgid "Links"
 msgstr "Länkar"
 
@@ -6868,7 +6868,7 @@ msgstr "A&vsluta\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&Om Wine..."
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:148
+#: user32.rc:55 regedit.rc:182 winefile.rc:105
 msgid "Error"
 msgstr "Fel"
 
@@ -7755,7 +7755,7 @@ msgstr "Ana&log"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winefile.rc:66 wordpad.rc:81
 msgid "&Font..."
 msgstr "T&ypsnitt..."
 
@@ -8636,7 +8636,7 @@ msgid "&Paste\tCtrl+V"
 msgstr "Klistra &in\tCtrl+V"
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
-#: winefile.rc:30
+#: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr "&Ta bort\tDel"
 
@@ -8864,15 +8864,15 @@ msgstr "&Expertläge"
 msgid "&Hidden component categories"
 msgstr "&Dolda komponentkategorier"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:68 wordpad.rc:68
 msgid "&Toolbar"
 msgstr "&Verktygsfält"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:102
+#: oleview.rc:65 oleview.rc:87 winefile.rc:70
 msgid "&Status Bar"
 msgstr "St&atusfält"
 
-#: oleview.rc:67 regedit.rc:71 winefile.rc:127
+#: oleview.rc:67 regedit.rc:71 winefile.rc:84
 msgid "&Refresh\tF5"
 msgstr "&Uppdatera\tF5"
 
@@ -9098,7 +9098,7 @@ msgstr "K&ör..."
 msgid "E&xit Windows..."
 msgstr "A&vsluta Windows..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:65 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Inställningar"
 
@@ -9106,11 +9106,11 @@ msgstr "&Inställningar"
 msgid "&Arrange automatically"
 msgstr "Ordna &automatiskt"
 
-#: progman.rc:43 winefile.rc:107
+#: progman.rc:43
 msgid "&Minimize on run"
 msgstr "&Minimera vid start"
 
-#: progman.rc:44 winefile.rc:108
+#: progman.rc:44 winefile.rc:75
 msgid "&Save settings on exit"
 msgstr "&Spara ändringar vid stängning"
 
@@ -9324,7 +9324,7 @@ msgstr "Sök Näst&a\tF3"
 msgid "Status &Bar"
 msgstr "&Statusrad"
 
-#: regedit.rc:69 winefile.rc:81
+#: regedit.rc:69 winefile.rc:52
 msgid "Sp&lit"
 msgstr "&Dela upp"
 
@@ -9332,7 +9332,7 @@ msgstr "&Dela upp"
 msgid "&Remove Favorite..."
 msgstr "&Ta bort favorit..."
 
-#: regedit.rc:80 winefile.rc:131
+#: regedit.rc:80 winefile.rc:88
 msgid "&Help Topics\tF1"
 msgstr "Ämnen i &hjälp\tF1"
 
@@ -9770,7 +9770,7 @@ msgstr "En graf &per processor"
 msgid "&Show Kernel Times"
 msgstr "Vi&sa kerneltider"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:81
 msgid "Tile &Horizontally"
 msgstr "Ordna &horisontellt"
 
@@ -10819,275 +10819,163 @@ msgstr "(oidentifierad)"
 msgid "&Open\tEnter"
 msgstr "&Öppna\tEnter"
 
-#: winefile.rc:29
-msgid "&In Clipboard...\tF9"
-msgstr "&I urklipp...\tF9"
-
-#: winefile.rc:31
+#: winefile.rc:30
 msgid "Re&name..."
 msgstr "&Byt namn..."
 
-#: winefile.rc:32
+#: winefile.rc:31
 msgid "Propert&ies...\tAlt+Enter"
 msgstr "&Egenskaper...\tAlt+Enter"
 
-#: winefile.rc:34
-msgid "C&ompress..."
-msgstr "K&omprimera..."
-
-#: winefile.rc:35
-msgid "Dec&ompress..."
-msgstr "Packa &upp..."
-
-#: winefile.rc:37
+#: winefile.rc:33
 msgid "&Run..."
 msgstr "&Kör..."
 
-#: winefile.rc:39
-msgid "Associate..."
-msgstr "Associera..."
-
-#: winefile.rc:41
+#: winefile.rc:35
 msgid "Cr&eate Directory..."
 msgstr "Sk&apa mapp..."
 
-#: winefile.rc:42
-msgid "Searc&h..."
-msgstr "&Sök..."
-
-#: winefile.rc:43
-msgid "&Select Files..."
-msgstr "&Välj filer..."
-
-#: winefile.rc:46 winemine.rc:44
+#: winefile.rc:38 winemine.rc:44
 msgid "E&xit\tAlt+X"
 msgstr "A&vsluta\tAlt+X"
 
-#: winefile.rc:52
+#: winefile.rc:44
 msgid "&Disk"
 msgstr "&Disk"
 
-#: winefile.rc:53
-msgid "&Copy Disk..."
-msgstr "&Kopiera disk..."
-
-#: winefile.rc:54
-msgid "&Label Disk..."
-msgstr "&Namnge disk..."
-
-#: winefile.rc:56
+#: winefile.rc:45
 msgid "&Format Disk..."
 msgstr "&Formatera disk..."
 
-#: winefile.rc:58
+#: winefile.rc:47
 msgid "Connect &Network Drive"
 msgstr "&Anslut nätverksenhet"
 
-#: winefile.rc:59
+#: winefile.rc:48
 msgid "&Disconnect Network Drive"
 msgstr "Koppla &ifrån nätverksenhet"
 
-#: winefile.rc:61
-msgid "Share as..."
-msgstr "Dela ut..."
-
-#: winefile.rc:62
-msgid "&Remove Share..."
-msgstr "&Ta bort utdelning..."
-
-#: winefile.rc:64
-msgid "&Select Drive..."
-msgstr "V&älj enhet..."
-
-#: winefile.rc:67
-msgid "Di&rectories"
-msgstr "&Träd"
-
-#: winefile.rc:68
-msgid "&Next Level\t+"
-msgstr "&Nästa nivå\t+"
-
-#: winefile.rc:69
-msgid "Expand &Tree\t*"
-msgstr "Utöka &träd\t*"
-
-#: winefile.rc:70
-msgid "Expand &all\tCtrl+*"
-msgstr "Utöka &alla\tCtrl+*"
-
-#: winefile.rc:71
-msgid "Collapse &Tree\t-"
-msgstr "&Kollapsa träd\t-"
-
-#: winefile.rc:73
-msgid "&Mark Children"
-msgstr "&Markera undermappar"
-
-#: winefile.rc:77
-msgid "T&ree and Directory"
-msgstr "&Träd och mapp"
-
-#: winefile.rc:78
-msgid "Tr&ee Only"
-msgstr "Endast tr&äd"
-
-#: winefile.rc:79
-msgid "Directory &Only"
-msgstr "Endast &mapp"
-
-#: winefile.rc:83
+#: winefile.rc:54
 msgid "&Name"
 msgstr "&Namn"
 
-#: winefile.rc:84
+#: winefile.rc:55
 msgid "&All File Details"
 msgstr "&Alla fildetaljer"
 
-#: winefile.rc:85
-msgid "&Partial Details..."
-msgstr "&Vissa detaljer..."
-
-#: winefile.rc:87
+#: winefile.rc:57
 msgid "&Sort by Name"
 msgstr "&Sortera efter namn"
 
-#: winefile.rc:88
+#: winefile.rc:58
 msgid "Sort &by Type"
 msgstr "Sortera efter t&yp"
 
-#: winefile.rc:89
+#: winefile.rc:59
 msgid "Sort by Si&ze"
 msgstr "Sortera efter st&orlek"
 
-#: winefile.rc:90
+#: winefile.rc:60
 msgid "Sort by &Date"
 msgstr "Sortera efter dat&um"
 
-#: winefile.rc:92
+#: winefile.rc:62
 msgid "Filter by &..."
 msgstr "Sortera efter &..."
 
-#: winefile.rc:96
-msgid "&Confirmation..."
-msgstr "&Bekräftelse..."
-
-#: winefile.rc:98
-msgid "Customize Tool&bar..."
-msgstr "&Konfigurera verktygsfält..."
-
-#: winefile.rc:101
+#: winefile.rc:69
 msgid "&Drivebar"
 msgstr "&Enhetsfält"
 
-#: winefile.rc:104
+#: winefile.rc:72
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr "&Helskärm\tCtrl+Shift+S"
 
-#: winefile.rc:112
-msgid "&Security"
-msgstr "&Säkerhet"
-
-#: winefile.rc:113
-msgid "&Access..."
-msgstr "&Åtkomst..."
-
-#: winefile.rc:114
-msgid "&Logging..."
-msgstr "&Loggning..."
-
-#: winefile.rc:115
-msgid "&Owner..."
-msgstr "&Ägare..."
-
-#: winefile.rc:119
+#: winefile.rc:79
 msgid "New &Window"
 msgstr "Nytt &fönster"
 
-#: winefile.rc:120
+#: winefile.rc:80
 msgid "Cascading\tCtrl+F5"
 msgstr "Överlappande\tCtrl+F5"
 
-#: winefile.rc:122
+#: winefile.rc:82
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Ordna &vertikalt\tCtrl+F4"
 
-#: winefile.rc:124
-msgid "Arrange Automatically"
-msgstr "Ordna automatiskt"
-
-#: winefile.rc:126
+#: winefile.rc:83
 msgid "Arrange &Symbols"
 msgstr "Ordna &symboler"
 
-#: winefile.rc:132
+#: winefile.rc:89
 msgid "Help &Search...\tF1"
 msgstr "&Sök i hjälp...\tF1"
 
-#: winefile.rc:133
+#: winefile.rc:90
 msgid "&Using Help\tF1"
 msgstr "&Använda hjälpen\tF1"
 
-#: winefile.rc:135
+#: winefile.rc:92
 msgid "&About Winefile..."
 msgstr "Information om &Winefile..."
 
-#: winefile.rc:141
+#: winefile.rc:98
 msgid "Applying font settings"
 msgstr "Verkställ teckensnittsinställningar"
 
-#: winefile.rc:142
+#: winefile.rc:99
 msgid "Error while selecting new font."
 msgstr "Ett fel uppstod när ett nytt teckensnitt valdes."
 
-#: winefile.rc:147
+#: winefile.rc:104
 msgid "Wine File Manager"
 msgstr "Winefile"
 
-#: winefile.rc:149
+#: winefile.rc:106
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:150
+#: winefile.rc:107
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:152
+#: winefile.rc:109
 msgid "Shell"
 msgstr "Skal"
 
-#: winefile.rc:153
+#: winefile.rc:110
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:154
+#: winefile.rc:111
 msgid "Not yet implemented"
 msgstr "Inte implementerat ännu"
 
-#: winefile.rc:155
+#: winefile.rc:112
 msgid "Wine File"
 msgstr "Winefile"
 
-#: winefile.rc:162
+#: winefile.rc:119
 msgid "CDate"
 msgstr "CDatum"
 
-#: winefile.rc:163
+#: winefile.rc:120
 msgid "ADate"
 msgstr "ADatum"
 
-#: winefile.rc:164
+#: winefile.rc:121
 msgid "MDate"
 msgstr "MDatum"
 
-#: winefile.rc:165
+#: winefile.rc:122
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:168
+#: winefile.rc:125
 msgid "Security"
 msgstr "Säkerhet"
 
-#: winefile.rc:170
+#: winefile.rc:127
 msgid "%s of %s free"
 msgstr "%s av %s ledigt"
 

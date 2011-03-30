@@ -37,7 +37,7 @@ msgstr ""
 msgid "Not specified"
 msgstr ""
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:160
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:117
 msgid "Name"
 msgstr ""
 
@@ -160,7 +160,7 @@ msgstr ""
 msgid "System Path"
 msgstr ""
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:151
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:108
 msgid "Desktop"
 msgstr ""
 
@@ -1976,7 +1976,7 @@ msgstr ""
 msgid "&Refresh"
 msgstr ""
 
-#: hhctrl.rc:76 winefile.rc:38
+#: hhctrl.rc:76
 #, fuzzy
 msgid "&Print..."
 msgstr "ఫాంట్... (&F)"
@@ -6076,7 +6076,7 @@ msgstr ""
 msgid "&New"
 msgstr ""
 
-#: shdocvw.rc:29 winefile.rc:118
+#: shdocvw.rc:29 winefile.rc:78
 msgid "&Window"
 msgstr ""
 
@@ -6113,7 +6113,7 @@ msgid "&Close"
 msgstr ""
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:65 taskmgr.rc:52 winefile.rc:76 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:51 wordpad.rc:66
 msgid "&View"
 msgstr ""
 
@@ -6138,7 +6138,7 @@ msgid "&Add to Favorites..."
 msgstr ""
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:78 taskmgr.rc:87 winefile.rc:130 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:87 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr ""
 
@@ -6246,7 +6246,7 @@ msgstr ""
 msgid "&About Control Panel..."
 msgstr "గడియారం గురించి... (&A)"
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:161
+#: shell32.rc:123 shell32.rc:127 winefile.rc:118
 msgid "Size"
 msgstr ""
 
@@ -6258,7 +6258,7 @@ msgstr ""
 msgid "Modified"
 msgstr ""
 
-#: shell32.rc:126 winefile.rc:167
+#: shell32.rc:126 winefile.rc:124
 msgid "Attributes"
 msgstr ""
 
@@ -6426,7 +6426,7 @@ msgstr ""
 msgid "Contacts"
 msgstr ""
 
-#: shell32.rc:216 winefile.rc:166
+#: shell32.rc:216 winefile.rc:123
 msgid "Links"
 msgstr ""
 
@@ -6661,7 +6661,7 @@ msgstr ""
 msgid "&About Wine..."
 msgstr "గడియారం గురించి... (&A)"
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:148
+#: user32.rc:55 regedit.rc:182 winefile.rc:105
 msgid "Error"
 msgstr ""
 
@@ -7439,7 +7439,7 @@ msgstr "ఎనలాగ్ (&l)"
 msgid "Digi&tal"
 msgstr "డిజిటల్ (&t)"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:97 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winefile.rc:66 wordpad.rc:81
 msgid "&Font..."
 msgstr "ఫాంట్... (&F)"
 
@@ -8133,7 +8133,7 @@ msgid "&Paste\tCtrl+V"
 msgstr ""
 
 #: notepad.rc:44 progman.rc:34 regedit.rc:57 regedit.rc:93 regedit.rc:108
-#: winefile.rc:30
+#: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr ""
 
@@ -8339,15 +8339,15 @@ msgstr ""
 msgid "&Hidden component categories"
 msgstr ""
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:100 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:68 wordpad.rc:68
 msgid "&Toolbar"
 msgstr ""
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:102
+#: oleview.rc:65 oleview.rc:87 winefile.rc:70
 msgid "&Status Bar"
 msgstr ""
 
-#: oleview.rc:67 regedit.rc:71 winefile.rc:127
+#: oleview.rc:67 regedit.rc:71 winefile.rc:84
 msgid "&Refresh\tF5"
 msgstr ""
 
@@ -8573,7 +8573,7 @@ msgstr ""
 msgid "E&xit Windows..."
 msgstr ""
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:95 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:65 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr ""
 
@@ -8581,11 +8581,11 @@ msgstr ""
 msgid "&Arrange automatically"
 msgstr ""
 
-#: progman.rc:43 winefile.rc:107
+#: progman.rc:43
 msgid "&Minimize on run"
 msgstr ""
 
-#: progman.rc:44 winefile.rc:108
+#: progman.rc:44 winefile.rc:75
 msgid "&Save settings on exit"
 msgstr ""
 
@@ -8790,7 +8790,7 @@ msgstr ""
 msgid "Status &Bar"
 msgstr ""
 
-#: regedit.rc:69 winefile.rc:81
+#: regedit.rc:69 winefile.rc:52
 msgid "Sp&lit"
 msgstr ""
 
@@ -8798,7 +8798,7 @@ msgstr ""
 msgid "&Remove Favorite..."
 msgstr ""
 
-#: regedit.rc:80 winefile.rc:131
+#: regedit.rc:80 winefile.rc:88
 msgid "&Help Topics\tF1"
 msgstr ""
 
@@ -9192,7 +9192,7 @@ msgstr ""
 msgid "&Show Kernel Times"
 msgstr ""
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:121
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:81
 msgid "Tile &Horizontally"
 msgstr ""
 
@@ -10191,279 +10191,167 @@ msgstr ""
 msgid "&Open\tEnter"
 msgstr ""
 
-#: winefile.rc:29
-msgid "&In Clipboard...\tF9"
-msgstr ""
-
-#: winefile.rc:31
+#: winefile.rc:30
 msgid "Re&name..."
 msgstr ""
 
-#: winefile.rc:32
+#: winefile.rc:31
 msgid "Propert&ies...\tAlt+Enter"
 msgstr ""
 
-#: winefile.rc:34
-msgid "C&ompress..."
-msgstr ""
-
-#: winefile.rc:35
-msgid "Dec&ompress..."
-msgstr ""
-
-#: winefile.rc:37
+#: winefile.rc:33
 msgid "&Run..."
 msgstr ""
 
-#: winefile.rc:39
-msgid "Associate..."
-msgstr ""
-
-#: winefile.rc:41
+#: winefile.rc:35
 msgid "Cr&eate Directory..."
 msgstr ""
 
-#: winefile.rc:42
-msgid "Searc&h..."
-msgstr ""
-
-#: winefile.rc:43
-msgid "&Select Files..."
-msgstr ""
-
-#: winefile.rc:46 winemine.rc:44
+#: winefile.rc:38 winemine.rc:44
 msgid "E&xit\tAlt+X"
 msgstr ""
 
-#: winefile.rc:52
+#: winefile.rc:44
 msgid "&Disk"
 msgstr ""
 
-#: winefile.rc:53
-msgid "&Copy Disk..."
-msgstr ""
-
-#: winefile.rc:54
-msgid "&Label Disk..."
-msgstr ""
-
-#: winefile.rc:56
+#: winefile.rc:45
 msgid "&Format Disk..."
 msgstr ""
 
-#: winefile.rc:58
+#: winefile.rc:47
 msgid "Connect &Network Drive"
 msgstr ""
 
-#: winefile.rc:59
+#: winefile.rc:48
 msgid "&Disconnect Network Drive"
 msgstr ""
 
-#: winefile.rc:61
-msgid "Share as..."
-msgstr ""
-
-#: winefile.rc:62
-msgid "&Remove Share..."
-msgstr ""
-
-#: winefile.rc:64
-msgid "&Select Drive..."
-msgstr ""
-
-#: winefile.rc:67
-msgid "Di&rectories"
-msgstr ""
-
-#: winefile.rc:68
-msgid "&Next Level\t+"
-msgstr ""
-
-#: winefile.rc:69
-msgid "Expand &Tree\t*"
-msgstr ""
-
-#: winefile.rc:70
-msgid "Expand &all\tCtrl+*"
-msgstr ""
-
-#: winefile.rc:71
-msgid "Collapse &Tree\t-"
-msgstr ""
-
-#: winefile.rc:73
-msgid "&Mark Children"
-msgstr ""
-
-#: winefile.rc:77
-msgid "T&ree and Directory"
-msgstr ""
-
-#: winefile.rc:78
-msgid "Tr&ee Only"
-msgstr ""
-
-#: winefile.rc:79
-msgid "Directory &Only"
-msgstr ""
-
-#: winefile.rc:83
+#: winefile.rc:54
 msgid "&Name"
 msgstr ""
 
-#: winefile.rc:84
+#: winefile.rc:55
 msgid "&All File Details"
 msgstr ""
 
-#: winefile.rc:85
-msgid "&Partial Details..."
-msgstr ""
-
-#: winefile.rc:87
+#: winefile.rc:57
 msgid "&Sort by Name"
 msgstr ""
 
-#: winefile.rc:88
+#: winefile.rc:58
 msgid "Sort &by Type"
 msgstr ""
 
-#: winefile.rc:89
+#: winefile.rc:59
 msgid "Sort by Si&ze"
 msgstr ""
 
-#: winefile.rc:90
+#: winefile.rc:60
 msgid "Sort by &Date"
 msgstr ""
 
-#: winefile.rc:92
+#: winefile.rc:62
 msgid "Filter by &..."
 msgstr ""
 
-#: winefile.rc:96
-msgid "&Confirmation..."
-msgstr ""
-
-#: winefile.rc:98
-msgid "Customize Tool&bar..."
-msgstr ""
-
-#: winefile.rc:101
+#: winefile.rc:69
 msgid "&Drivebar"
 msgstr ""
 
-#: winefile.rc:104
+#: winefile.rc:72
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr ""
 
-#: winefile.rc:112
-msgid "&Security"
-msgstr ""
-
-#: winefile.rc:113
-msgid "&Access..."
-msgstr ""
-
-#: winefile.rc:114
-msgid "&Logging..."
-msgstr ""
-
-#: winefile.rc:115
-msgid "&Owner..."
-msgstr ""
-
-#: winefile.rc:119
+#: winefile.rc:79
 msgid "New &Window"
 msgstr ""
 
-#: winefile.rc:120
+#: winefile.rc:80
 msgid "Cascading\tCtrl+F5"
 msgstr ""
 
-#: winefile.rc:122
+#: winefile.rc:82
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr ""
 
-#: winefile.rc:124
-msgid "Arrange Automatically"
-msgstr ""
-
-#: winefile.rc:126
+#: winefile.rc:83
 msgid "Arrange &Symbols"
 msgstr ""
 
-#: winefile.rc:132
+#: winefile.rc:89
 msgid "Help &Search...\tF1"
 msgstr ""
 
-#: winefile.rc:133
+#: winefile.rc:90
 msgid "&Using Help\tF1"
 msgstr ""
 
-#: winefile.rc:135
+#: winefile.rc:92
 #, fuzzy
 msgid "&About Winefile..."
 msgstr "గడియారం గురించి... (&A)"
 
-#: winefile.rc:141
+#: winefile.rc:98
 msgid "Applying font settings"
 msgstr ""
 
-#: winefile.rc:142
+#: winefile.rc:99
 msgid "Error while selecting new font."
 msgstr ""
 
-#: winefile.rc:147
+#: winefile.rc:104
 msgid "Wine File Manager"
 msgstr ""
 
-#: winefile.rc:149
+#: winefile.rc:106
 msgid "root fs"
 msgstr ""
 
-#: winefile.rc:150
+#: winefile.rc:107
 msgid "unixfs"
 msgstr ""
 
-#: winefile.rc:152
+#: winefile.rc:109
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:153
+#: winefile.rc:110
 msgid "%s - %s"
 msgstr ""
 
-#: winefile.rc:154
+#: winefile.rc:111
 msgid "Not yet implemented"
 msgstr ""
 
-#: winefile.rc:155
+#: winefile.rc:112
 msgid "Wine File"
 msgstr ""
 
-#: winefile.rc:162
+#: winefile.rc:119
 #, fuzzy
 msgid "CDate"
 msgstr "తేది (&D)"
 
-#: winefile.rc:163
+#: winefile.rc:120
 #, fuzzy
 msgid "ADate"
 msgstr "తేది (&D)"
 
-#: winefile.rc:164
+#: winefile.rc:121
 #, fuzzy
 msgid "MDate"
 msgstr "తేది (&D)"
 
-#: winefile.rc:165
+#: winefile.rc:122
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:168
+#: winefile.rc:125
 msgid "Security"
 msgstr ""
 
-#: winefile.rc:170
+#: winefile.rc:127
 msgid "%s of %s free"
 msgstr ""
 

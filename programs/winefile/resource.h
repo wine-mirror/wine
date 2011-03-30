@@ -53,7 +53,6 @@
 #define ID_DISCONNECT_NETWORK_DRIVE     253
 #define ID_VIEW_NAME                    401
 #define ID_VIEW_ALL_ATTRIBUTES          402
-#define ID_VIEW_SELECTED_ATTRIBUTES     403
 #define ID_VIEW_SORT_NAME               404
 #define ID_VIEW_SORT_TYPE               405
 #define ID_VIEW_SORT_SIZE               406
@@ -102,7 +101,6 @@
 
 /* winefile extensions */
 
-#define ID_WINDOW_AUTOSORT              0x8003
 #define ID_VIEW_FULLSCREEN              0x8004
 #define ID_PREFERRED_SIZES              0x8005
 

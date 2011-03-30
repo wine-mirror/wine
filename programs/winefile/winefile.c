@@ -3896,7 +3896,6 @@ static BOOL pane_command(Pane* pane, UINT cmd)
 				InvalidateRect(pane->hwnd, 0, TRUE);
 				CheckMenuItem(Globals.hMenuView, ID_VIEW_NAME, MF_BYCOMMAND|MF_CHECKED);
 				CheckMenuItem(Globals.hMenuView, ID_VIEW_ALL_ATTRIBUTES, MF_BYCOMMAND);
-				CheckMenuItem(Globals.hMenuView, ID_VIEW_SELECTED_ATTRIBUTES, MF_BYCOMMAND);
 			}
 			break;
 
@@ -3910,7 +3909,6 @@ static BOOL pane_command(Pane* pane, UINT cmd)
 				InvalidateRect(pane->hwnd, 0, TRUE);
 				CheckMenuItem(Globals.hMenuView, ID_VIEW_NAME, MF_BYCOMMAND);
 				CheckMenuItem(Globals.hMenuView, ID_VIEW_ALL_ATTRIBUTES, MF_BYCOMMAND|MF_CHECKED);
-				CheckMenuItem(Globals.hMenuView, ID_VIEW_SELECTED_ATTRIBUTES, MF_BYCOMMAND);
 			}
 			break;
 
