@@ -5,7 +5,7 @@
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Ivan Gyurdiev
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
- * Copyright 2009-2010 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -298,7 +298,7 @@ int shader_addline(struct wined3d_shader_buffer *buffer, const char *format, ...
     return ret;
 }
 
-static void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDeviceImpl *device,
+static void shader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     shader->ref = 1;
@@ -453,7 +453,7 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShaderImpl *shader, const s
         struct wined3d_shader_signature_element *output_signature, const DWORD *byte_code, DWORD constf_size)
 {
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
-    void *fe_data = shader->baseShader.frontend_data;
+    void *fe_data = shader->frontend_data;
     struct wined3d_shader_version shader_version;
     const DWORD *ptr = byte_code;
 
@@ -553,7 +553,7 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShaderImpl *shader, const s
                 else if (value[3] > 1.0f) value[3] = 1.0f;
             }
 
-            list_add_head(&shader->baseShader.constantsF, &lconst->entry);
+            list_add_head(&shader->constantsF, &lconst->entry);
         }
         else if (ins.handler_idx == WINED3DSIH_DEFI)
         {
@@ -569,7 +569,7 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShaderImpl *shader, const s
             memcpy(lconst->value, ptr, 4 * sizeof(DWORD));
             ptr += 4;
 
-            list_add_head(&shader->baseShader.constantsI, &lconst->entry);
+            list_add_head(&shader->constantsI, &lconst->entry);
             reg_maps->local_int_consts |= (1 << dst.reg.idx);
         }
         else if (ins.handler_idx == WINED3DSIH_DEFB)
@@ -586,7 +586,7 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShaderImpl *shader, const s
             memcpy(lconst->value, ptr, sizeof(DWORD));
             ++ptr;
 
-            list_add_head(&shader->baseShader.constantsB, &lconst->entry);
+            list_add_head(&shader->constantsB, &lconst->entry);
             reg_maps->local_bool_consts |= (1 << dst.reg.idx);
         }
         /* If there's a loop in the shader. */
@@ -821,7 +821,7 @@ static HRESULT shader_get_registers_used(IWineD3DBaseShaderImpl *shader, const s
     }
     reg_maps->loop_depth = max_loop_depth;
 
-    shader->baseShader.functionLength = ((const char *)ptr - (const char *)byte_code);
+    shader->functionLength = ((const char *)ptr - (const char *)byte_code);
 
     return WINED3D_OK;
 }
@@ -1162,9 +1162,9 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
 void shader_generate_main(IWineD3DBaseShaderImpl *shader, struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx)
 {
-    IWineD3DDeviceImpl *device = shader->baseShader.device;
-    const struct wined3d_shader_frontend *fe = shader->baseShader.frontend;
-    void *fe_data = shader->baseShader.frontend_data;
+    IWineD3DDeviceImpl *device = shader->device;
+    const struct wined3d_shader_frontend *fe = shader->frontend;
+    void *fe_data = shader->frontend_data;
     struct wined3d_shader_src_param dst_rel_addr[2];
     struct wined3d_shader_src_param src_rel_addr[4];
     struct wined3d_shader_dst_param dst_param[2];
@@ -1472,18 +1472,16 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
 
 static void shader_cleanup(IWineD3DBaseShaderImpl *shader)
 {
-    shader->baseShader.device->shader_backend->shader_destroy(shader);
-    HeapFree(GetProcessHeap(), 0, shader->baseShader.reg_maps.constf);
-    HeapFree(GetProcessHeap(), 0, shader->baseShader.function);
-    shader_delete_constant_list(&shader->baseShader.constantsF);
-    shader_delete_constant_list(&shader->baseShader.constantsB);
-    shader_delete_constant_list(&shader->baseShader.constantsI);
-    list_remove(&shader->baseShader.shader_list_entry);
+    shader->device->shader_backend->shader_destroy(shader);
+    HeapFree(GetProcessHeap(), 0, shader->reg_maps.constf);
+    HeapFree(GetProcessHeap(), 0, shader->function);
+    shader_delete_constant_list(&shader->constantsF);
+    shader_delete_constant_list(&shader->constantsB);
+    shader_delete_constant_list(&shader->constantsI);
+    list_remove(&shader->shader_list_entry);
 
-    if (shader->baseShader.frontend && shader->baseShader.frontend_data)
-    {
-        shader->baseShader.frontend->shader_free(shader->baseShader.frontend_data);
-    }
+    if (shader->frontend && shader->frontend_data)
+        shader->frontend->shader_free(shader->frontend_data);
 }
 
 static void shader_none_handle_instruction(const struct wined3d_shader_instruction *ins) {}
@@ -1552,11 +1550,11 @@ static HRESULT shader_get_function(IWineD3DBaseShaderImpl *shader, void *data, U
 {
     if (!data)
     {
-        *data_size = shader->baseShader.functionLength;
+        *data_size = shader->functionLength;
         return WINED3D_OK;
     }
 
-    if (*data_size < shader->baseShader.functionLength)
+    if (*data_size < shader->functionLength)
     {
         /* MSDN claims (for d3d8 at least) that if *pSizeOfData is smaller
          * than the required size we should write the required size and
@@ -1564,7 +1562,7 @@ static HRESULT shader_get_function(IWineD3DBaseShaderImpl *shader, void *data, U
         return WINED3DERR_INVALIDCALL;
     }
 
-    memcpy(data, shader->baseShader.function, shader->baseShader.functionLength);
+    memcpy(data, shader->function, shader->functionLength);
 
     return WINED3D_OK;
 }
@@ -1576,11 +1574,11 @@ static HRESULT shader_set_local_constants_float(IWineD3DBaseShaderImpl *shader,
     UINT end_idx = start_idx + count;
     UINT i;
 
-    if (end_idx > shader->baseShader.limits.constant_float)
+    if (end_idx > shader->limits.constant_float)
     {
         WARN("end_idx %u > float constants limit %u.\n",
-                end_idx, shader->baseShader.limits.constant_float);
-        end_idx = shader->baseShader.limits.constant_float;
+                end_idx, shader->limits.constant_float);
+        end_idx = shader->limits.constant_float;
     }
 
     for (i = start_idx; i < end_idx; ++i)
@@ -1590,7 +1588,7 @@ static HRESULT shader_set_local_constants_float(IWineD3DBaseShaderImpl *shader,
 
         lconst->idx = i;
         memcpy(lconst->value, src_data + (i - start_idx) * 4 /* 4 components */, 4 * sizeof(float));
-        list_add_head(&shader->baseShader.constantsF, &lconst->entry);
+        list_add_head(&shader->constantsF, &lconst->entry);
     }
 
     return WINED3D_OK;
@@ -1599,7 +1597,7 @@ static HRESULT shader_set_local_constants_float(IWineD3DBaseShaderImpl *shader,
 static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *byte_code,
         const struct wined3d_shader_signature *output_signature, DWORD float_const_count)
 {
-    struct wined3d_shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
+    struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     const struct wined3d_shader_frontend *fe;
     HRESULT hr;
 
@@ -1612,31 +1610,33 @@ static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *
         FIXME("Unable to find frontend for shader.\n");
         return WINED3DERR_INVALIDCALL;
     }
-    shader->baseShader.frontend = fe;
-    shader->baseShader.frontend_data = fe->shader_init(byte_code, output_signature);
-    if (!shader->baseShader.frontend_data)
+    shader->frontend = fe;
+    shader->frontend_data = fe->shader_init(byte_code, output_signature);
+    if (!shader->frontend_data)
     {
         FIXME("Failed to initialize frontend.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
     /* First pass: trace shader. */
-    if (TRACE_ON(d3d_shader)) shader_trace_init(fe, shader->baseShader.frontend_data, byte_code);
+    if (TRACE_ON(d3d_shader))
+        shader_trace_init(fe, shader->frontend_data, byte_code);
 
     /* Initialize immediate constant lists. */
-    list_init(&shader->baseShader.constantsF);
-    list_init(&shader->baseShader.constantsB);
-    list_init(&shader->baseShader.constantsI);
+    list_init(&shader->constantsF);
+    list_init(&shader->constantsB);
+    list_init(&shader->constantsI);
 
     /* Second pass: figure out which registers are used, what the semantics are, etc. */
     hr = shader_get_registers_used(shader, fe,
-            reg_maps, shader->baseShader.input_signature, shader->baseShader.output_signature,
+            reg_maps, shader->input_signature, shader->output_signature,
             byte_code, float_const_count);
     if (FAILED(hr)) return hr;
 
-    shader->baseShader.function = HeapAlloc(GetProcessHeap(), 0, shader->baseShader.functionLength);
-    if (!shader->baseShader.function) return E_OUTOFMEMORY;
-    memcpy(shader->baseShader.function, byte_code, shader->baseShader.functionLength);
+    shader->function = HeapAlloc(GetProcessHeap(), 0, shader->functionLength);
+    if (!shader->function)
+        return E_OUTOFMEMORY;
+    memcpy(shader->function, byte_code, shader->functionLength);
 
     return WINED3D_OK;
 }
@@ -1664,7 +1664,7 @@ static HRESULT STDMETHODCALLTYPE wined3d_shader_QueryInterface(IWineD3DBaseShade
 static ULONG STDMETHODCALLTYPE wined3d_shader_AddRef(IWineD3DBaseShader *iface)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
-    ULONG refcount = InterlockedIncrement(&shader->baseShader.ref);
+    ULONG refcount = InterlockedIncrement(&shader->ref);
 
     TRACE("%p increasing refcount to %u.\n", shader, refcount);
 
@@ -1675,14 +1675,14 @@ static ULONG STDMETHODCALLTYPE wined3d_shader_AddRef(IWineD3DBaseShader *iface)
 static ULONG STDMETHODCALLTYPE wined3d_shader_Release(IWineD3DBaseShader *iface)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
-    ULONG refcount = InterlockedDecrement(&shader->baseShader.ref);
+    ULONG refcount = InterlockedDecrement(&shader->ref);
 
     TRACE("%p decreasing refcount to %u.\n", shader, refcount);
 
     if (!refcount)
     {
         shader_cleanup(shader);
-        shader->baseShader.parent_ops->wined3d_object_destroyed(shader->baseShader.parent);
+        shader->parent_ops->wined3d_object_destroyed(shader->parent);
         HeapFree(GetProcessHeap(), 0, shader);
     }
 
@@ -1693,7 +1693,7 @@ static void * STDMETHODCALLTYPE wined3d_shader_GetParent(IWineD3DBaseShader *ifa
 {
     TRACE("iface %p.\n", iface);
 
-    return ((IWineD3DBaseShaderImpl *)iface)->baseShader.parent;
+    return ((IWineD3DBaseShaderImpl *)iface)->parent;
 }
 
 static HRESULT STDMETHODCALLTYPE wined3d_shader_GetFunction(IWineD3DBaseShader *iface, void *data, UINT *data_size)
@@ -1729,7 +1729,7 @@ void find_vs_compile_args(const struct wined3d_state *state,
             == WINED3DFOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
     args->clip_enabled = state->render_states[WINED3DRS_CLIPPING]
             && state->render_states[WINED3DRS_CLIPPLANEENABLE];
-    args->swizzle_map = shader->baseShader.device->strided_streams.swizzle_map;
+    args->swizzle_map = shader->device->strided_streams.swizzle_map;
 }
 
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2)
@@ -1745,7 +1745,7 @@ static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_id
 BOOL vshader_get_input(struct IWineD3DBaseShaderImpl *shader,
         BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum)
 {
-    WORD map = shader->baseShader.reg_maps.input_registers;
+    WORD map = shader->reg_maps.input_registers;
     unsigned int i;
 
     for (i = 0; map; map >>= 1, ++i)
@@ -1764,41 +1764,41 @@ BOOL vshader_get_input(struct IWineD3DBaseShaderImpl *shader,
 
 static void vertexshader_set_limits(IWineD3DBaseShaderImpl *shader)
 {
-    DWORD shader_version = WINED3D_SHADER_VERSION(shader->baseShader.reg_maps.shader_version.major,
-            shader->baseShader.reg_maps.shader_version.minor);
-    IWineD3DDeviceImpl *device = shader->baseShader.device;
+    DWORD shader_version = WINED3D_SHADER_VERSION(shader->reg_maps.shader_version.major,
+            shader->reg_maps.shader_version.minor);
+    IWineD3DDeviceImpl *device = shader->device;
 
-    shader->baseShader.limits.texcoord = 0;
-    shader->baseShader.limits.attributes = 16;
-    shader->baseShader.limits.packed_input = 0;
+    shader->limits.texcoord = 0;
+    shader->limits.attributes = 16;
+    shader->limits.packed_input = 0;
 
     switch (shader_version)
     {
         case WINED3D_SHADER_VERSION(1, 0):
         case WINED3D_SHADER_VERSION(1, 1):
-            shader->baseShader.limits.temporary = 12;
-            shader->baseShader.limits.constant_bool = 0;
-            shader->baseShader.limits.constant_int = 0;
-            shader->baseShader.limits.address = 1;
-            shader->baseShader.limits.packed_output = 12;
-            shader->baseShader.limits.sampler = 0;
-            shader->baseShader.limits.label = 0;
+            shader->limits.temporary = 12;
+            shader->limits.constant_bool = 0;
+            shader->limits.constant_int = 0;
+            shader->limits.address = 1;
+            shader->limits.packed_output = 12;
+            shader->limits.sampler = 0;
+            shader->limits.label = 0;
             /* TODO: vs_1_1 has a minimum of 96 constants. What happens when
              * a vs_1_1 shader is used on a vs_3_0 capable card that has 256
              * constants? */
-            shader->baseShader.limits.constant_float = min(256, device->d3d_vshader_constantF);
+            shader->limits.constant_float = min(256, device->d3d_vshader_constantF);
             break;
 
         case WINED3D_SHADER_VERSION(2, 0):
         case WINED3D_SHADER_VERSION(2, 1):
-            shader->baseShader.limits.temporary = 12;
-            shader->baseShader.limits.constant_bool = 16;
-            shader->baseShader.limits.constant_int = 16;
-            shader->baseShader.limits.address = 1;
-            shader->baseShader.limits.packed_output = 12;
-            shader->baseShader.limits.sampler = 0;
-            shader->baseShader.limits.label = 16;
-            shader->baseShader.limits.constant_float = min(256, device->d3d_vshader_constantF);
+            shader->limits.temporary = 12;
+            shader->limits.constant_bool = 16;
+            shader->limits.constant_int = 16;
+            shader->limits.address = 1;
+            shader->limits.packed_output = 12;
+            shader->limits.sampler = 0;
+            shader->limits.label = 16;
+            shader->limits.constant_float = min(256, device->d3d_vshader_constantF);
             break;
 
         case WINED3D_SHADER_VERSION(4, 0):
@@ -1806,33 +1806,33 @@ static void vertexshader_set_limits(IWineD3DBaseShaderImpl *shader)
             /* Fall through. */
 
         case WINED3D_SHADER_VERSION(3, 0):
-            shader->baseShader.limits.temporary = 32;
-            shader->baseShader.limits.constant_bool = 32;
-            shader->baseShader.limits.constant_int = 32;
-            shader->baseShader.limits.address = 1;
-            shader->baseShader.limits.packed_output = 12;
-            shader->baseShader.limits.sampler = 4;
-            shader->baseShader.limits.label = 16; /* FIXME: 2048 */
+            shader->limits.temporary = 32;
+            shader->limits.constant_bool = 32;
+            shader->limits.constant_int = 32;
+            shader->limits.address = 1;
+            shader->limits.packed_output = 12;
+            shader->limits.sampler = 4;
+            shader->limits.label = 16; /* FIXME: 2048 */
             /* DX10 cards on Windows advertise a d3d9 constant limit of 256
              * even though they are capable of supporting much more (GL
              * drivers advertise 1024). d3d9.dll and d3d8.dll clamp the
              * wined3d-advertised maximum. Clamp the constant limit for <= 3.0
              * shaders to 256. */
-            shader->baseShader.limits.constant_float = min(256, device->d3d_vshader_constantF);
+            shader->limits.constant_float = min(256, device->d3d_vshader_constantF);
             break;
 
         default:
-            shader->baseShader.limits.temporary = 12;
-            shader->baseShader.limits.constant_bool = 16;
-            shader->baseShader.limits.constant_int = 16;
-            shader->baseShader.limits.address = 1;
-            shader->baseShader.limits.packed_output = 12;
-            shader->baseShader.limits.sampler = 0;
-            shader->baseShader.limits.label = 16;
-            shader->baseShader.limits.constant_float = min(256, device->d3d_vshader_constantF);
+            shader->limits.temporary = 12;
+            shader->limits.constant_bool = 16;
+            shader->limits.constant_int = 16;
+            shader->limits.address = 1;
+            shader->limits.packed_output = 12;
+            shader->limits.sampler = 0;
+            shader->limits.label = 16;
+            shader->limits.constant_float = min(256, device->d3d_vshader_constantF);
             FIXME("Unrecognized vertex shader version \"%u.%u\".\n",
-                    shader->baseShader.reg_maps.shader_version.major,
-                    shader->baseShader.reg_maps.shader_version.minor);
+                    shader->reg_maps.shader_version.major,
+                    shader->reg_maps.shader_version.minor);
     }
 }
 
@@ -1840,7 +1840,7 @@ HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *de
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    struct wined3d_shader_reg_maps *reg_maps = &shader->baseShader.reg_maps;
+    struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     unsigned int i;
     HRESULT hr;
     WORD map;
@@ -1848,7 +1848,7 @@ HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *de
     if (!byte_code) return WINED3DERR_INVALIDCALL;
 
     shader->lpVtbl = &wined3d_shader_vtbl;
-    shader_init(&shader->baseShader, device, parent, parent_ops);
+    shader_init(shader, device, parent, parent_ops);
 
     hr = shader_set_function(shader, byte_code, output_signature, device->d3d_vshader_constantF);
     if (FAILED(hr))
@@ -1861,11 +1861,12 @@ HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *de
     map = reg_maps->input_registers;
     for (i = 0; map; map >>= 1, ++i)
     {
-        if (!(map & 1) || !shader->baseShader.input_signature[i].semantic_name) continue;
+        if (!(map & 1) || !shader->input_signature[i].semantic_name)
+            continue;
 
         shader->u.vs.attributes[i].usage =
-                shader_usage_from_semantic_name(shader->baseShader.input_signature[i].semantic_name);
-        shader->u.vs.attributes[i].usage_idx = shader->baseShader.input_signature[i].semantic_idx;
+                shader_usage_from_semantic_name(shader->input_signature[i].semantic_name);
+        shader->u.vs.attributes[i].usage_idx = shader->input_signature[i].semantic_idx;
     }
 
     if (output_signature)
@@ -1874,14 +1875,14 @@ HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *de
         {
             struct wined3d_shader_signature_element *e = &output_signature->elements[i];
             reg_maps->output_registers |= 1 << e->register_idx;
-            shader->baseShader.output_signature[e->register_idx] = *e;
+            shader->output_signature[e->register_idx] = *e;
         }
     }
 
     vertexshader_set_limits(shader);
 
-    shader->baseShader.load_local_constsF = reg_maps->usesrelconstF
-            && !list_empty(&shader->baseShader.constantsF);
+    shader->load_local_constsF = reg_maps->usesrelconstF
+            && !list_empty(&shader->constantsF);
 
     return WINED3D_OK;
 }
@@ -1893,7 +1894,7 @@ HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *
     HRESULT hr;
 
     shader->lpVtbl = &wined3d_shader_vtbl;
-    shader_init(&shader->baseShader, device, parent, parent_ops);
+    shader_init(shader, device, parent, parent_ops);
 
     hr = shader_set_function(shader, byte_code, output_signature, 0);
     if (FAILED(hr))
@@ -1903,7 +1904,7 @@ HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *
         return hr;
     }
 
-    shader->baseShader.load_local_constsF = FALSE;
+    shader->load_local_constsF = FALSE;
 
     return WINED3D_OK;
 }
@@ -1911,7 +1912,7 @@ HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *
 void find_ps_compile_args(const struct wined3d_state *state,
         IWineD3DBaseShaderImpl *shader, struct ps_compile_args *args)
 {
-    IWineD3DDeviceImpl *device = shader->baseShader.device;
+    IWineD3DDeviceImpl *device = shader->device;
     const struct wined3d_texture *texture;
     UINT i;
 
@@ -1922,8 +1923,8 @@ void find_ps_compile_args(const struct wined3d_state *state,
         if (rt->resource.format->flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
     }
 
-    if (shader->baseShader.reg_maps.shader_version.major == 1
-            && shader->baseShader.reg_maps.shader_version.minor <= 3)
+    if (shader->reg_maps.shader_version.major == 1
+            && shader->reg_maps.shader_version.minor <= 3)
     {
         for (i = 0; i < 4; ++i)
         {
@@ -1937,7 +1938,9 @@ void find_ps_compile_args(const struct wined3d_state *state,
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
     {
-        if (!shader->baseShader.reg_maps.sampler_type[i]) continue;
+        if (!shader->reg_maps.sampler_type[i])
+            continue;
+
         texture = state->textures[i];
         if (!texture)
         {
@@ -1953,7 +1956,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
         if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
             args->np2_fixup |= (1 << i);
     }
-    if (shader->baseShader.reg_maps.shader_version.major >= 3)
+    if (shader->reg_maps.shader_version.major >= 3)
     {
         if (device->strided_streams.position_transformed)
         {
@@ -2006,12 +2009,12 @@ void find_ps_compile_args(const struct wined3d_state *state,
 
 static void pixelshader_set_limits(IWineD3DBaseShaderImpl *shader)
 {
-    DWORD shader_version = WINED3D_SHADER_VERSION(shader->baseShader.reg_maps.shader_version.major,
-            shader->baseShader.reg_maps.shader_version.minor);
+    DWORD shader_version = WINED3D_SHADER_VERSION(shader->reg_maps.shader_version.major,
+            shader->reg_maps.shader_version.minor);
 
-    shader->baseShader.limits.attributes = 0;
-    shader->baseShader.limits.address = 0;
-    shader->baseShader.limits.packed_output = 0;
+    shader->limits.attributes = 0;
+    shader->limits.address = 0;
+    shader->limits.packed_output = 0;
 
     switch (shader_version)
     {
@@ -2019,47 +2022,47 @@ static void pixelshader_set_limits(IWineD3DBaseShaderImpl *shader)
         case WINED3D_SHADER_VERSION(1, 1):
         case WINED3D_SHADER_VERSION(1, 2):
         case WINED3D_SHADER_VERSION(1, 3):
-            shader->baseShader.limits.temporary = 2;
-            shader->baseShader.limits.constant_float = 8;
-            shader->baseShader.limits.constant_int = 0;
-            shader->baseShader.limits.constant_bool = 0;
-            shader->baseShader.limits.texcoord = 4;
-            shader->baseShader.limits.sampler = 4;
-            shader->baseShader.limits.packed_input = 0;
-            shader->baseShader.limits.label = 0;
+            shader->limits.temporary = 2;
+            shader->limits.constant_float = 8;
+            shader->limits.constant_int = 0;
+            shader->limits.constant_bool = 0;
+            shader->limits.texcoord = 4;
+            shader->limits.sampler = 4;
+            shader->limits.packed_input = 0;
+            shader->limits.label = 0;
             break;
 
         case WINED3D_SHADER_VERSION(1, 4):
-            shader->baseShader.limits.temporary = 6;
-            shader->baseShader.limits.constant_float = 8;
-            shader->baseShader.limits.constant_int = 0;
-            shader->baseShader.limits.constant_bool = 0;
-            shader->baseShader.limits.texcoord = 6;
-            shader->baseShader.limits.sampler = 6;
-            shader->baseShader.limits.packed_input = 0;
-            shader->baseShader.limits.label = 0;
+            shader->limits.temporary = 6;
+            shader->limits.constant_float = 8;
+            shader->limits.constant_int = 0;
+            shader->limits.constant_bool = 0;
+            shader->limits.texcoord = 6;
+            shader->limits.sampler = 6;
+            shader->limits.packed_input = 0;
+            shader->limits.label = 0;
             break;
 
         /* FIXME: Temporaries must match D3DPSHADERCAPS2_0.NumTemps. */
         case WINED3D_SHADER_VERSION(2, 0):
-            shader->baseShader.limits.temporary = 32;
-            shader->baseShader.limits.constant_float = 32;
-            shader->baseShader.limits.constant_int = 16;
-            shader->baseShader.limits.constant_bool = 16;
-            shader->baseShader.limits.texcoord = 8;
-            shader->baseShader.limits.sampler = 16;
-            shader->baseShader.limits.packed_input = 0;
+            shader->limits.temporary = 32;
+            shader->limits.constant_float = 32;
+            shader->limits.constant_int = 16;
+            shader->limits.constant_bool = 16;
+            shader->limits.texcoord = 8;
+            shader->limits.sampler = 16;
+            shader->limits.packed_input = 0;
             break;
 
         case WINED3D_SHADER_VERSION(2, 1):
-            shader->baseShader.limits.temporary = 32;
-            shader->baseShader.limits.constant_float = 32;
-            shader->baseShader.limits.constant_int = 16;
-            shader->baseShader.limits.constant_bool = 16;
-            shader->baseShader.limits.texcoord = 8;
-            shader->baseShader.limits.sampler = 16;
-            shader->baseShader.limits.packed_input = 0;
-            shader->baseShader.limits.label = 16;
+            shader->limits.temporary = 32;
+            shader->limits.constant_float = 32;
+            shader->limits.constant_int = 16;
+            shader->limits.constant_bool = 16;
+            shader->limits.texcoord = 8;
+            shader->limits.sampler = 16;
+            shader->limits.packed_input = 0;
+            shader->limits.label = 16;
             break;
 
         case WINED3D_SHADER_VERSION(4, 0):
@@ -2067,28 +2070,28 @@ static void pixelshader_set_limits(IWineD3DBaseShaderImpl *shader)
             /* Fall through. */
 
         case WINED3D_SHADER_VERSION(3, 0):
-            shader->baseShader.limits.temporary = 32;
-            shader->baseShader.limits.constant_float = 224;
-            shader->baseShader.limits.constant_int = 16;
-            shader->baseShader.limits.constant_bool = 16;
-            shader->baseShader.limits.texcoord = 0;
-            shader->baseShader.limits.sampler = 16;
-            shader->baseShader.limits.packed_input = 12;
-            shader->baseShader.limits.label = 16; /* FIXME: 2048 */
+            shader->limits.temporary = 32;
+            shader->limits.constant_float = 224;
+            shader->limits.constant_int = 16;
+            shader->limits.constant_bool = 16;
+            shader->limits.texcoord = 0;
+            shader->limits.sampler = 16;
+            shader->limits.packed_input = 12;
+            shader->limits.label = 16; /* FIXME: 2048 */
             break;
 
         default:
-            shader->baseShader.limits.temporary = 32;
-            shader->baseShader.limits.constant_float = 32;
-            shader->baseShader.limits.constant_int = 16;
-            shader->baseShader.limits.constant_bool = 16;
-            shader->baseShader.limits.texcoord = 8;
-            shader->baseShader.limits.sampler = 16;
-            shader->baseShader.limits.packed_input = 0;
-            shader->baseShader.limits.label = 0;
+            shader->limits.temporary = 32;
+            shader->limits.constant_float = 32;
+            shader->limits.constant_int = 16;
+            shader->limits.constant_bool = 16;
+            shader->limits.texcoord = 8;
+            shader->limits.sampler = 16;
+            shader->limits.packed_input = 0;
+            shader->limits.label = 0;
             FIXME("Unrecognized pixel shader version %u.%u\n",
-                    shader->baseShader.reg_maps.shader_version.major,
-                    shader->baseShader.reg_maps.shader_version.minor);
+                    shader->reg_maps.shader_version.major,
+                    shader->reg_maps.shader_version.minor);
     }
 }
 
@@ -2103,7 +2106,7 @@ HRESULT pixelshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *dev
     if (!byte_code) return WINED3DERR_INVALIDCALL;
 
     shader->lpVtbl = &wined3d_shader_vtbl;
-    shader_init(&shader->baseShader, device, parent, parent_ops);
+    shader_init(shader, device, parent, parent_ops);
 
     hr = shader_set_function(shader, byte_code, output_signature, device->d3d_pshader_constantF);
     if (FAILED(hr))
@@ -2155,7 +2158,7 @@ HRESULT pixelshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *dev
         }
     }
 
-    shader->baseShader.load_local_constsF = FALSE;
+    shader->load_local_constsF = FALSE;
 
     return WINED3D_OK;
 }

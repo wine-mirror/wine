@@ -472,7 +472,7 @@ void device_preload_textures(IWineD3DDeviceImpl *device)
     {
         for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i)
         {
-            if (state->vertex_shader->baseShader.reg_maps.sampler_type[i])
+            if (state->vertex_shader->reg_maps.sampler_type[i])
                 device_preload_texture(state, MAX_FRAGMENT_SAMPLERS + i);
         }
     }
@@ -481,7 +481,7 @@ void device_preload_textures(IWineD3DDeviceImpl *device)
     {
         for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
         {
-            if (state->pixel_shader->baseShader.reg_maps.sampler_type[i])
+            if (state->pixel_shader->reg_maps.sampler_type[i])
                 device_preload_texture(state, i);
         }
     }
@@ -3641,7 +3641,7 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This, const s
 static void device_map_psamplers(IWineD3DDeviceImpl *This, const struct wined3d_gl_info *gl_info)
 {
     const WINED3DSAMPLER_TEXTURE_TYPE *sampler_type =
-            This->stateBlock->state.pixel_shader->baseShader.reg_maps.sampler_type;
+            This->stateBlock->state.pixel_shader->reg_maps.sampler_type;
     unsigned int i;
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
@@ -3684,7 +3684,7 @@ static BOOL device_unit_free_for_vs(IWineD3DDeviceImpl *This, const WINED3DSAMPL
 static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps, const struct wined3d_gl_info *gl_info)
 {
     const WINED3DSAMPLER_TEXTURE_TYPE *vshader_sampler_type =
-            This->stateBlock->state.vertex_shader->baseShader.reg_maps.sampler_type;
+            This->stateBlock->state.vertex_shader->reg_maps.sampler_type;
     const WINED3DSAMPLER_TEXTURE_TYPE *pshader_sampler_type = NULL;
     int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
     int i;
@@ -3695,7 +3695,7 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps, const struct
 
         /* Note that we only care if a sampler is sampled or not, not the sampler's specific type.
          * Otherwise we'd need to call shader_update_samplers() here for 1.x pixelshaders. */
-        pshader_sampler_type = pshader->baseShader.reg_maps.sampler_type;
+        pshader_sampler_type = pshader->reg_maps.sampler_type;
     }
 
     for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
@@ -6258,7 +6258,7 @@ static void delete_opengl_contexts(IWineD3DDeviceImpl *device, IWineD3DSwapChain
     gl_info = context->gl_info;
 
     IWineD3DDevice_EnumResources((IWineD3DDevice *)device, device_unload_resource, NULL);
-    LIST_FOR_EACH_ENTRY(shader, &device->shaders, IWineD3DBaseShaderImpl, baseShader.shader_list_entry)
+    LIST_FOR_EACH_ENTRY(shader, &device->shaders, IWineD3DBaseShaderImpl, shader_list_entry)
     {
         device->shader_backend->shader_destroy(shader);
     }

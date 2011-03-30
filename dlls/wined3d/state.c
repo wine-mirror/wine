@@ -3571,7 +3571,7 @@ static void tex_bumpenvlscale(DWORD state, struct wined3d_stateblock *stateblock
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     IWineD3DBaseShaderImpl *ps = stateblock->state.pixel_shader;
 
-    if (ps && stage && (ps->baseShader.reg_maps.luminanceparams & (1 << stage)))
+    if (ps && stage && (ps->reg_maps.luminanceparams & (1 << stage)))
     {
         /* The pixel shader has to know the luminance scale. Do a constants update if it
          * isn't scheduled anyway
@@ -3742,7 +3742,7 @@ static void shader_bumpenvmat(DWORD state, struct wined3d_stateblock *stateblock
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     IWineD3DBaseShaderImpl *ps = stateblock->state.pixel_shader;
 
-    if (ps && stage && (ps->baseShader.reg_maps.bumpmat & (1 << stage)))
+    if (ps && stage && (ps->reg_maps.bumpmat & (1 << stage)))
     {
         /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
          * anyway

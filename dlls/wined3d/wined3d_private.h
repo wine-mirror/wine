@@ -2685,41 +2685,6 @@ int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *fmt, va_li
 extern BOOL vshader_get_input(struct IWineD3DBaseShaderImpl *shader,
         BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IDirect3DBaseShader implementation structure
- */
-typedef struct IWineD3DBaseShaderClass
-{
-    LONG                            ref;
-    SHADER_LIMITS                   limits;
-    DWORD                          *function;
-    UINT                            functionLength;
-    BOOL                            load_local_constsF;
-    const struct wined3d_shader_frontend *frontend;
-    void *frontend_data;
-    void *backend_data;
-
-    void *parent;
-    const struct wined3d_parent_ops *parent_ops;
-
-    /* Programs this shader is linked with */
-    struct list linked_programs;
-
-    /* Immediate constants (override global ones) */
-    struct list constantsB;
-    struct list constantsF;
-    struct list constantsI;
-    struct wined3d_shader_reg_maps reg_maps;
-
-    struct wined3d_shader_signature_element input_signature[max(MAX_ATTRIBS, MAX_REG_INPUT)];
-    struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
-
-    /* Pointer to the parent device */
-    struct IWineD3DDeviceImpl *device;
-    struct list     shader_list_entry;
-
-} IWineD3DBaseShaderClass;
-
 struct wined3d_vertex_shader
 {
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
@@ -2742,8 +2707,33 @@ typedef struct IWineD3DBaseShaderImpl {
     /* IUnknown */
     const IWineD3DBaseShaderVtbl    *lpVtbl;
 
-    /* IWineD3DBaseShader */
-    IWineD3DBaseShaderClass         baseShader;
+    LONG ref;
+    SHADER_LIMITS limits;
+    DWORD *function;
+    UINT functionLength;
+    BOOL load_local_constsF;
+    const struct wined3d_shader_frontend *frontend;
+    void *frontend_data;
+    void *backend_data;
+
+    void *parent;
+    const struct wined3d_parent_ops *parent_ops;
+
+    /* Programs this shader is linked with */
+    struct list linked_programs;
+
+    /* Immediate constants (override global ones) */
+    struct list constantsB;
+    struct list constantsF;
+    struct list constantsI;
+    struct wined3d_shader_reg_maps reg_maps;
+
+    struct wined3d_shader_signature_element input_signature[max(MAX_ATTRIBS, MAX_REG_INPUT)];
+    struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
+
+    /* Pointer to the parent device */
+    struct IWineD3DDeviceImpl *device;
+    struct list shader_list_entry;
 
     union
     {
@@ -2843,15 +2833,20 @@ static inline void shader_get_position_fixup(const struct wined3d_context *conte
     }
 }
 
-static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl* This, DWORD reg) {
-    local_constant* lconst;
+static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl *shader, DWORD reg)
+{
+    struct local_constant *lconst;
 
-    if(This->baseShader.load_local_constsF) return FALSE;
-    LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
-        if(lconst->idx == reg) return TRUE;
+    if (shader->load_local_constsF)
+        return FALSE;
+
+    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+    {
+        if (lconst->idx == reg)
+            return TRUE;
     }
-    return FALSE;
 
+    return FALSE;
 }
 
 /* Using additional shader constants (uniforms in GLSL / program environment
