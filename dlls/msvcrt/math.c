@@ -1306,17 +1306,17 @@ int CDECL _ecvt_s( char *buffer, MSVCRT_size_t length, double number, int ndigit
             (*sign) = 0;
         return 0;
     }
-    result = (char*)MSVCRT_malloc(max(ndigits + 7, 7));
+    /* handle cases with zero ndigits or less */
+    prec = ndigits;
+    if( prec < 1) prec = 2;
+    result = (char*)MSVCRT_malloc(prec + 7);
 
     if( number < 0) {
         *sign = TRUE;
         number = -number;
     } else
         *sign = FALSE;
-    /* handle cases with zero ndigits or less */
-    prec = ndigits;
-    if( prec < 1) prec = 2;
-    len = snprintf(result, 80, "%.*le", prec - 1, number);
+    len = snprintf(result, prec + 7, "%.*le", prec - 1, number);
     /* take the decimal "point away */
     if( prec != 1)
         memmove( result + 1, result + 2, len - 1 );
