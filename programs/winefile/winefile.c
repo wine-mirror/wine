@@ -2872,9 +2872,6 @@ static void calc_tabbed_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCWSTR
 {
 	RECT rt = {0, 0, 0, 0};
 
-/*	DRAWTEXTPARAMS dtp = {sizeof(DRAWTEXTPARAMS), 2};
-	DrawTextExW(dis->hDC, (LPWSTR)str, -1, &rt, DT_CALCRECT|DT_SINGLELINE|DT_NOPREFIX|DT_EXPANDTABS|DT_TABSTOP, &dtp);*/
-
 	DrawTextW(dis->hDC, str, -1, &rt, DT_CALCRECT|DT_SINGLELINE|DT_EXPANDTABS|DT_TABSTOP|(2<<8));
 	/*FIXME rt (0,0) ??? */
 
@@ -2905,9 +2902,6 @@ static void output_tabbed_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCWST
 	rt.top    = dis->rcItem.top;
 	rt.right  = x+pane->positions[col+1]-Globals.spaceSize.cx;
 	rt.bottom = dis->rcItem.bottom;
-
-/*	DRAWTEXTPARAMS dtp = {sizeof(DRAWTEXTPARAMS), 2};
-	DrawTextExW(dis->hDC, (LPWSTR)str, -1, &rt, DT_SINGLELINE|DT_NOPREFIX|DT_EXPANDTABS|DT_TABSTOP, &dtp);*/
 
 	DrawTextW(dis->hDC, str, -1, &rt, DT_SINGLELINE|DT_EXPANDTABS|DT_TABSTOP|(2<<8));
 }
@@ -3065,7 +3059,6 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 					hrgn_org = 0;
 				}
 
-				/* HGDIOBJ holdPen = SelectObject(dis->hDC, GetStockObject(BLACK_PEN)); */
 				ExtSelectClipRgn(dis->hDC, hrgn, RGN_AND);
 				DeleteObject(hrgn);
 
@@ -3103,7 +3096,6 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 				SelectClipRgn(dis->hDC, hrgn_org);
 				if (hrgn_org) DeleteObject(hrgn_org);
-				/* SelectObject(dis->hDC, holdPen); */
 			} else if (calcWidthCol==col || calcWidthCol==COLUMNS) {
 				int right = img_pos + IMAGE_WIDTH - TREE_LINE_DX;
 
@@ -3304,43 +3296,6 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 		col++;
 	}
-
-/*TODO
-	if (flags.security) {
-		static const WCHAR sSecTabs[] = {
-			' ','\t',' ','\t',' ','\t',' ',
-			' ','\t',' ',
-			' ','\t',' ','\t',' ','\t',' ',
-			' ','\t',' ',
-			' ','\t',' ','\t',' ','\t',' ',
-			'\0'
-		};
-
-		DWORD rights = get_access_mask();
-
-		lstrcpyW(buffer, sSecTabs);
-
-		if (rights & FILE_READ_DATA)			buffer[ 0] = 'R';
-		if (rights & FILE_WRITE_DATA)			buffer[ 2] = 'W';
-		if (rights & FILE_APPEND_DATA)			buffer[ 4] = 'A';
-		if (rights & FILE_READ_EA)				{buffer[6] = 'entry'; buffer[ 7] = 'R';}
-		if (rights & FILE_WRITE_EA)				{buffer[9] = 'entry'; buffer[10] = 'W';}
-		if (rights & FILE_EXECUTE)				buffer[12] = 'X';
-		if (rights & FILE_DELETE_CHILD)			buffer[14] = 'D';
-		if (rights & FILE_READ_ATTRIBUTES)		{buffer[16] = 'a'; buffer[17] = 'R';}
-		if (rights & FILE_WRITE_ATTRIBUTES)		{buffer[19] = 'a'; buffer[20] = 'W';}
-		if (rights & WRITE_DAC)					buffer[22] = 'C';
-		if (rights & WRITE_OWNER)				buffer[24] = 'O';
-		if (rights & SYNCHRONIZE)				buffer[26] = 'S';
-
-		output_text(dis, col++, buffer, DT_LEFT, 3, psize);
-	}
-
-	if (flags.description) {
-		get_description(buffer);
-		output_text(dis, col++, buffer, 0, psize);
-	}
-*/
 
 #ifdef _NO_EXTENSIONS
   }
@@ -4037,7 +3992,6 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 	BOOL executed = FALSE;
 
 	HRESULT hr = IShellFolder_GetUIObjectOf(shell_folder, hwndParent, cidl, apidl, &IID_IContextMenu, NULL, (LPVOID*)&pcm);
-/*	HRESULT hr = CDefFolderMenu_Create2(dir?dir->_pidl:DesktopFolder(), hwndParent, 1, &pidl, shell_folder, NULL, 0, NULL, &pcm); */
 
 	if (SUCCEEDED(hr)) {
 		HMENU hmenu = CreatePopupMenu();
@@ -4628,10 +4582,7 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCWSTR path)
 			{1, ID_WINDOW_CASCADE, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0},
 			{2, ID_WINDOW_TILE_HORZ, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0},
 			{3, ID_WINDOW_TILE_VERT, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0},
-/*TODO
-			{4, ID_... , TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0},
-			{5, ID_... , TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0},
-*/		};
+		};
 
 		Globals.htoolbar = CreateToolbarEx(Globals.hMainWnd, WS_CHILD|WS_VISIBLE,
 			IDW_TOOLBAR, 2, Globals.hInstance, IDB_TOOLBAR, toolbarBtns,
@@ -4641,11 +4592,6 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCWSTR path)
 
 	Globals.hstatusbar = CreateStatusWindowW(WS_CHILD|WS_VISIBLE, 0, Globals.hMainWnd, IDW_STATUSBAR);
 	CheckMenuItem(Globals.hMenuOptions, ID_VIEW_STATUSBAR, MF_BYCOMMAND|MF_CHECKED);
-
-/* CreateStatusWindowW does not accept WS_BORDER
-	Globals.hstatusbar = CreateWindowExW(WS_EX_NOPARENTNOTIFY, STATUSCLASSNAME, 0,
-					WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_BORDER|CCS_NODIVIDER, 0,0,0,0,
-					Globals.hMainWnd, (HMENU)IDW_STATUSBAR, hinstance, 0);*/
 
 	/*TODO: read paths from registry */
 
