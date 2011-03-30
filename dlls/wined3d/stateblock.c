@@ -901,7 +901,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     TRACE("Blocktype: %#x.\n", stateblock->blockType);
 
     if (stateblock->changed.vertexShader)
-        IWineD3DDevice_SetVertexShader(device, (IWineD3DBaseShader *)stateblock->state.vertex_shader);
+        IWineD3DDevice_SetVertexShader(device, stateblock->state.vertex_shader);
 
     /* Vertex Shader Constants. */
     for (i = 0; i < stateblock->num_contained_vs_consts_f; ++i)
@@ -923,7 +923,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     apply_lights(device, &stateblock->state);
 
     if (stateblock->changed.pixelShader)
-        IWineD3DDevice_SetPixelShader(device, (IWineD3DBaseShader *)stateblock->state.pixel_shader);
+        IWineD3DDevice_SetPixelShader(device, stateblock->state.pixel_shader);
 
     /* Pixel Shader Constants. */
     for (i = 0; i < stateblock->num_contained_ps_consts_f; ++i)

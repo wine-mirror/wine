@@ -55,8 +55,6 @@
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
-typedef struct wined3d_shader IWineD3DBaseShaderImpl;
-typedef struct wined3d_shader IWineD3DBaseShader;
 
 /* Texture format fixups */
 
@@ -2741,21 +2739,21 @@ struct wined3d_shader
     } u;
 };
 
-HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
+HRESULT geometryshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-HRESULT pixelshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
+HRESULT pixelshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps,
         struct wined3d_texture * const *textures) DECLSPEC_HIDDEN;
 void find_ps_compile_args(const struct wined3d_state *state,
-        IWineD3DBaseShaderImpl *shader, struct ps_compile_args *args) DECLSPEC_HIDDEN;
+        const struct wined3d_shader *shader, struct ps_compile_args *args) DECLSPEC_HIDDEN;
 
 void find_vs_compile_args(const struct wined3d_state *state,
-        IWineD3DBaseShaderImpl *shader, struct vs_compile_args *args) DECLSPEC_HIDDEN;
-HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
+        const struct wined3d_shader *shader, struct vs_compile_args *args) DECLSPEC_HIDDEN;
+HRESULT vertexshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
@@ -2768,7 +2766,7 @@ void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
         const struct wined3d_shader_version *shader_version) DECLSPEC_HIDDEN;
 unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_maps *reg_maps,
         unsigned int max) DECLSPEC_HIDDEN;
-void shader_generate_main(IWineD3DBaseShaderImpl *shader, struct wined3d_shader_buffer *buffer,
+void shader_generate_main(struct wined3d_shader *shader, struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *pFunction, void *backend_ctx) DECLSPEC_HIDDEN;
 BOOL shader_match_semantic(const char *semantic_name, WINED3DDECLUSAGE usage) DECLSPEC_HIDDEN;
 
@@ -2832,7 +2830,7 @@ static inline void shader_get_position_fixup(const struct wined3d_context *conte
     }
 }
 
-static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl *shader, DWORD reg)
+static inline BOOL shader_constant_is_local(const struct wined3d_shader *shader, DWORD reg)
 {
     struct local_constant *lconst;
 

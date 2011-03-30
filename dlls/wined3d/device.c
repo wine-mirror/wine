@@ -1513,10 +1513,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3D
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface,
         const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops,
-        IWineD3DBaseShader **shader)
+        struct wined3d_shader **shader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseShaderImpl *object;
+    struct wined3d_shader *object;
     HRESULT hr;
 
     if (This->vs_selected_mode == SHADER_NONE)
@@ -1538,7 +1538,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
     }
 
     TRACE("Created vertex shader %p.\n", object);
-    *shader = (IWineD3DBaseShader *)object;
+    *shader = object;
 
     return WINED3D_OK;
 }
@@ -1546,10 +1546,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateGeometryShader(IWineD3DDevice *iface,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops,
-        IWineD3DBaseShader **shader)
+        struct wined3d_shader **shader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseShaderImpl *object;
+    struct wined3d_shader *object;
     HRESULT hr;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -1568,7 +1568,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateGeometryShader(IWineD3DDevice *if
     }
 
     TRACE("Created geometry shader %p.\n", object);
-    *shader = (IWineD3DBaseShader *)object;
+    *shader = object;
 
     return WINED3D_OK;
 }
@@ -1576,10 +1576,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateGeometryShader(IWineD3DDevice *if
 static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface,
         const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops,
-        IWineD3DBaseShader **shader)
+        struct wined3d_shader **shader)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseShaderImpl *object;
+    struct wined3d_shader *object;
     HRESULT hr;
 
     if (This->ps_selected_mode == SHADER_NONE)
@@ -1601,7 +1601,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
     }
 
     TRACE("Created pixel shader %p.\n", object);
-    *shader = (IWineD3DBaseShader *)object;
+    *shader = object;
 
     return WINED3D_OK;
 }
@@ -3339,12 +3339,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexDeclaration(IWineD3DDevice *if
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, IWineD3DBaseShader *shader)
+static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, struct wined3d_shader *shader)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseShader *prev = (IWineD3DBaseShader *)device->updateStateBlock->state.vertex_shader;
+    struct wined3d_shader *prev = device->updateStateBlock->state.vertex_shader;
 
-    device->updateStateBlock->state.vertex_shader = (IWineD3DBaseShaderImpl *)shader;
+    device->updateStateBlock->state.vertex_shader = shader;
     device->updateStateBlock->changed.vertexShader = TRUE;
 
     if (device->isRecordingState)
@@ -3374,14 +3374,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
     return WINED3D_OK;
 }
 
-static IWineD3DBaseShader * WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface)
+static struct wined3d_shader * WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseShader *shader;
+    struct wined3d_shader *shader;
 
     TRACE("iface %p.\n", iface);
 
-    shader = (IWineD3DBaseShader *)device->stateBlock->state.vertex_shader;
+    shader = device->stateBlock->state.vertex_shader;
     if (shader)
         wined3d_shader_incref(shader);
 
@@ -3691,11 +3691,9 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps, const struct
 
     if (ps)
     {
-        IWineD3DBaseShaderImpl *pshader = This->stateBlock->state.pixel_shader;
-
         /* Note that we only care if a sampler is sampled or not, not the sampler's specific type.
          * Otherwise we'd need to call shader_update_samplers() here for 1.x pixelshaders. */
-        pshader_sampler_type = pshader->reg_maps.sampler_type;
+        pshader_sampler_type = This->stateBlock->state.pixel_shader->reg_maps.sampler_type;
     }
 
     for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
@@ -3743,12 +3741,12 @@ void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This)
     if (vs) device_map_vsamplers(This, ps, gl_info);
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DBaseShader *shader)
+static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, struct wined3d_shader *shader)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseShader *prev = (IWineD3DBaseShader *)device->updateStateBlock->state.pixel_shader;
+    struct wined3d_shader *prev = device->updateStateBlock->state.pixel_shader;
 
-    device->updateStateBlock->state.pixel_shader = (IWineD3DBaseShaderImpl *)shader;
+    device->updateStateBlock->state.pixel_shader = shader;
     device->updateStateBlock->changed.pixelShader = TRUE;
 
     /* Handle recording of state blocks */
@@ -3782,10 +3780,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
     return WINED3D_OK;
 }
 
-static IWineD3DBaseShader * WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface)
+static struct wined3d_shader * WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
-    IWineD3DBaseShader *shader;
+    struct wined3d_shader *shader;
 
     TRACE("iface %p.\n", iface);
 
@@ -6252,13 +6250,13 @@ static void delete_opengl_contexts(IWineD3DDeviceImpl *device, IWineD3DSwapChain
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
-    IWineD3DBaseShaderImpl *shader;
+    struct wined3d_shader *shader;
 
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
     IWineD3DDevice_EnumResources((IWineD3DDevice *)device, device_unload_resource, NULL);
-    LIST_FOR_EACH_ENTRY(shader, &device->shaders, IWineD3DBaseShaderImpl, shader_list_entry)
+    LIST_FOR_EACH_ENTRY(shader, &device->shaders, struct wined3d_shader, shader_list_entry)
     {
         device->shader_backend->shader_destroy(shader);
     }

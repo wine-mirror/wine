@@ -298,7 +298,7 @@ int shader_addline(struct wined3d_shader_buffer *buffer, const char *format, ...
     return ret;
 }
 
-static void shader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
+static void shader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     shader->ref = 1;
@@ -348,7 +348,7 @@ static inline void set_bitmap_bit(DWORD *bitmap, DWORD bit)
     bitmap[idx] |= (1 << shift);
 }
 
-static void shader_record_register_usage(IWineD3DBaseShaderImpl *shader, struct wined3d_shader_reg_maps *reg_maps,
+static void shader_record_register_usage(struct wined3d_shader *shader, struct wined3d_shader_reg_maps *reg_maps,
         const struct wined3d_shader_register *reg, enum wined3d_shader_type shader_type)
 {
     switch (reg->type)
@@ -448,7 +448,7 @@ static unsigned int get_instr_extra_regcount(enum WINED3D_SHADER_INSTRUCTION_HAN
 }
 
 /* Note that this does not count the loop register as an address register. */
-static HRESULT shader_get_registers_used(IWineD3DBaseShaderImpl *shader, const struct wined3d_shader_frontend *fe,
+static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const struct wined3d_shader_frontend *fe,
         struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_signature_element *input_signature,
         struct wined3d_shader_signature_element *output_signature, const DWORD *byte_code, DWORD constf_size)
 {
@@ -1159,7 +1159,7 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
 
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on MSDN. */
-void shader_generate_main(IWineD3DBaseShaderImpl *shader, struct wined3d_shader_buffer *buffer,
+void shader_generate_main(struct wined3d_shader *shader, struct wined3d_shader_buffer *buffer,
         const struct wined3d_shader_reg_maps *reg_maps, const DWORD *byte_code, void *backend_ctx)
 {
     IWineD3DDeviceImpl *device = shader->device;
@@ -1470,7 +1470,7 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
     }
 }
 
-static void shader_cleanup(IWineD3DBaseShaderImpl *shader)
+static void shader_cleanup(struct wined3d_shader *shader)
 {
     shader->device->shader_backend->shader_destroy(shader);
     HeapFree(GetProcessHeap(), 0, shader->reg_maps.constf);
@@ -1494,7 +1494,7 @@ static void shader_none_update_float_pixel_constants(IWineD3DDeviceImpl *device,
 static void shader_none_load_constants(const struct wined3d_context *context, char usePS, char useVS) {}
 static void shader_none_load_np2fixup_constants(void *shader_priv,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state) {}
-static void shader_none_destroy(IWineD3DBaseShaderImpl *shader) {}
+static void shader_none_destroy(struct wined3d_shader *shader) {}
 static HRESULT shader_none_alloc(IWineD3DDeviceImpl *device) {return WINED3D_OK;}
 static void shader_none_free(IWineD3DDeviceImpl *device) {}
 static BOOL shader_none_dirty_const(void) {return FALSE;}
@@ -1546,7 +1546,7 @@ const shader_backend_t none_shader_backend = {
     shader_none_color_fixup_supported,
 };
 
-static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *byte_code,
+static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *byte_code,
         const struct wined3d_shader_signature *output_signature, DWORD float_const_count)
 {
     struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
@@ -1681,7 +1681,7 @@ HRESULT CDECL wined3d_shader_set_local_constants_float(struct wined3d_shader *sh
 }
 
 void find_vs_compile_args(const struct wined3d_state *state,
-        IWineD3DBaseShaderImpl *shader, struct vs_compile_args *args)
+        const struct wined3d_shader *shader, struct vs_compile_args *args)
 {
     args->fog_src = state->render_states[WINED3DRS_FOGTABLEMODE]
             == WINED3DFOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
@@ -1720,7 +1720,7 @@ BOOL vshader_get_input(struct wined3d_shader *shader,
     return FALSE;
 }
 
-static void vertexshader_set_limits(IWineD3DBaseShaderImpl *shader)
+static void vertexshader_set_limits(struct wined3d_shader *shader)
 {
     DWORD shader_version = WINED3D_SHADER_VERSION(shader->reg_maps.shader_version.major,
             shader->reg_maps.shader_version.minor);
@@ -1794,7 +1794,7 @@ static void vertexshader_set_limits(IWineD3DBaseShaderImpl *shader)
     }
 }
 
-HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
+HRESULT vertexshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -1843,7 +1843,7 @@ HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *de
     return WINED3D_OK;
 }
 
-HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
+HRESULT geometryshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -1864,7 +1864,7 @@ HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *
 }
 
 void find_ps_compile_args(const struct wined3d_state *state,
-        IWineD3DBaseShaderImpl *shader, struct ps_compile_args *args)
+        const struct wined3d_shader *shader, struct ps_compile_args *args)
 {
     IWineD3DDeviceImpl *device = shader->device;
     const struct wined3d_texture *texture;
@@ -1961,7 +1961,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
     }
 }
 
-static void pixelshader_set_limits(IWineD3DBaseShaderImpl *shader)
+static void pixelshader_set_limits(struct wined3d_shader *shader)
 {
     DWORD shader_version = WINED3D_SHADER_VERSION(shader->reg_maps.shader_version.major,
             shader->reg_maps.shader_version.minor);
@@ -2049,7 +2049,7 @@ static void pixelshader_set_limits(IWineD3DBaseShaderImpl *shader)
     }
 }
 
-HRESULT pixelshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
+HRESULT pixelshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
