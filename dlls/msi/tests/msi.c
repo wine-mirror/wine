@@ -484,9 +484,7 @@ static void test_MsiGetFileHash(void)
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
         ret = memcmp(&hash, &hash_data[i].hash, HASHSIZE);
-        ok(ret == 0 ||
-           broken(ret != 0), /* win95 */
-           "Hash incorrect\n");
+        ok(!ret, "Hash incorrect\n");
 
         DeleteFile(name);
     }

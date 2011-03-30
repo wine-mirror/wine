@@ -2186,18 +2186,10 @@ static void test_msiimport(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = add_table_to_db(hdb, endlines1);
-    if (r == ERROR_FUNCTION_FAILED)
-    {
-        /* win9x doesn't handle this case */
-        skip("endlines not handled correctly.\n");
-        MsiCloseHandle(hdb);
-        DeleteFileA(msifile);
-        return;
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = add_table_to_db(hdb, endlines2);
-    ok(r == ERROR_FUNCTION_FAILED,
-       "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
+    ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
 
     query = "SELECT * FROM `TestTable`";
     r = MsiDatabaseOpenView(hdb, query, &view);
@@ -4984,7 +4976,6 @@ static void test_collation(void)
     static const WCHAR letter_D[] = {'D',0};
     static const WCHAR letter_a_ring[] = {'a',0x30a,0};
     static const WCHAR letter_a_with_ring[] = {0xe5,0};
-    static const WCHAR letter_a_broken[] = {'a',0xb0,0};
     const char *query;
     MSIHANDLE hdb = 0, hview = 0, hrec = 0;
     UINT r;
@@ -5063,8 +5054,7 @@ static void test_collation(void)
     sz = sizeof(bufferW) / sizeof(bufferW[0]);
     r = MsiRecordGetStringW(hrec, 1, bufferW, &sz);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!memcmp(bufferW, letter_a_ring, sizeof(letter_a_ring)) ||
-       broken(!memcmp(bufferW, letter_a_broken, sizeof(letter_a_broken))) /* win9x */,
+    ok(!memcmp(bufferW, letter_a_ring, sizeof(letter_a_ring)),
        "Expected %s, got %s\n", wine_dbgstr_w(letter_a_ring), wine_dbgstr_w(bufferW));
     sz = sizeof(bufferW) / sizeof(bufferW[0]);
     r = MsiRecordGetStringW(hrec, 2, bufferW, &sz);

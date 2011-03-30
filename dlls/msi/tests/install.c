@@ -55,7 +55,6 @@ static HMODULE hsrclient = 0;
 static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
 static BOOL (WINAPI *pSRSetRestorePointA)(RESTOREPOINTINFOA*, STATEMGRSTATUS*);
 
-static BOOL on_win9x = FALSE;
 static BOOL is_wow64;
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 
@@ -2088,19 +2087,6 @@ static BOOL is_process_limited(void)
     return FALSE;
 }
 
-static BOOL check_win9x(void)
-{
-    SC_HANDLE scm;
-
-    scm = OpenSCManager(NULL, NULL, GENERIC_ALL);
-    if (!scm && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
-        return TRUE;
-
-    CloseServiceHandle(scm);
-
-    return FALSE;
-}
-
 static BOOL check_record(MSIHANDLE rec, UINT field, LPCSTR val)
 {
     CHAR buffer[0x20];
@@ -2529,11 +2515,6 @@ static void test_MsiInstallProduct(void)
     DWORD num, size, type;
     REGSAM access = KEY_ALL_ACCESS;
 
-    if (on_win9x)
-    {
-        win_skip("Services are not implemented on Win9x and WinMe\n");
-        return;
-    }
     if (is_process_limited())
     {
         skip("process is limited\n");
@@ -3002,14 +2983,11 @@ static void test_continuouscabs(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
-    if (r == ERROR_SUCCESS) /* win9x has a problem with this */
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-        ok(delete_pf("msitest", FALSE), "File not installed\n");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     delete_cab_files();
     DeleteFile(msifile);
@@ -3176,14 +3154,11 @@ static void test_samesequence(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
-    if (r == ERROR_SUCCESS) /* win9x has a problem with this */
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-        ok(delete_pf("msitest", FALSE), "File not installed\n");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     delete_cab_files();
     DeleteFile(msifile);
@@ -3199,14 +3174,11 @@ static void test_uiLevelFlags(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
-    if (r == ERROR_SUCCESS) /* win9x has a problem with this */
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-        ok(!delete_pf("msitest\\maximus", TRUE), "UI install occurred, but execute-only was requested.\n");
-        ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
-        ok(delete_pf("msitest", FALSE), "File not installed\n");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(!delete_pf("msitest\\maximus", TRUE), "UI install occurred, but execute-only was requested.\n");
+    ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     delete_cab_files();
     DeleteFile(msifile);
@@ -4172,14 +4144,9 @@ static void test_missingcab(void)
         skip("Not enough rights to perform tests\n");
         goto error;
     }
-    ok(r == ERROR_SUCCESS ||
-       broken(r == ERROR_INSTALL_FAILURE), /* win9x */
-       "Expected ERROR_SUCCESS, got %u\n", r);
-    if (r == ERROR_SUCCESS)
-    {
-      ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
-      ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
     ok(compare_pf_data("msitest\\tiberius", "abcdefgh", sizeof("abcdefgh")), "Wrong file contents\n");
     ok(delete_pf("msitest\\tiberius", TRUE), "File not installed\n");
@@ -4790,11 +4757,6 @@ static void test_MsiConfigureProductEx(void)
     CHAR keypath[MAX_PATH * 2], localpack[MAX_PATH];
     REGSAM access = KEY_ALL_ACCESS;
 
-    if (on_win9x)
-    {
-        win_skip("Different registry keys on Win9x and WinMe\n");
-        return;
-    }
     if (is_process_limited())
     {
         skip("process is limited\n");
@@ -5578,31 +5540,7 @@ static void test_allusers_prop(void)
 
     /* ALLUSERS property set to 2, conditioned on ALLUSERS = 1 */
     r = MsiInstallProductA(msifile, "FULL=1");
-    if (r == ERROR_SUCCESS)
-    {
-        /* Win9x/WinMe */
-        win_skip("Win9x and WinMe act differently with respect to ALLUSERS\n");
-
-        ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\cabout\\new", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\cabout", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\changed", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\first", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\one.txt", TRUE), "File installed\n");
-        ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
-        ok(delete_pf("msitest", FALSE), "File not installed\n");
-
-        r = MsiInstallProductA(msifile, "REMOVE=ALL");
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-
-        delete_test_files();
-    }
-    else
-        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
 
 error:
     delete_test_files();
@@ -5707,11 +5645,6 @@ static void test_file_in_use(void)
     HKEY hkey;
     char path[MAX_PATH];
 
-    if (on_win9x)
-    {
-        win_skip("Pending file renaming is implemented differently on Win9x and WinMe\n");
-        return;
-    }
     if (is_process_limited())
     {
         skip("process is limited\n");
@@ -5771,11 +5704,6 @@ static void test_file_in_use_cab(void)
     HKEY hkey;
     char path[MAX_PATH];
 
-    if (on_win9x)
-    {
-        win_skip("Pending file renaming is implemented differently on Win9x and WinMe\n");
-        return;
-    }
     if (is_process_limited())
     {
         skip("process is limited\n");
@@ -5996,7 +5924,7 @@ static void test_icon_table(void)
     MSIHANDLE hdb = 0, record;
     LPCSTR query;
     UINT res;
-    CHAR path[MAX_PATH], win9xpath[MAX_PATH];
+    CHAR path[MAX_PATH];
     static const char prodcode[] = "{7DF88A49-996F-4EC8-A022-BF956F9B2CBB}";
 
     if (is_process_limited())
@@ -6027,7 +5955,6 @@ static void test_icon_table(void)
 
     res = MsiCloseHandle(record);
     ok(res == ERROR_SUCCESS, "Failed to close record handle: %d\n", res);
-    /* Delete the icon file after the handle is closed to make sure it's deleted on Win9x */
     DeleteFileA("icon.ico");
     res = MsiDatabaseCommit(hdb);
     ok(res == ERROR_SUCCESS, "Failed to commit database: %d\n", res);
@@ -6058,20 +5985,12 @@ static void test_icon_table(void)
     res = MsiInstallProductA(msifile, "PUBLISH_PRODUCT=1 ALLUSERS=1");
     ok(res == ERROR_SUCCESS, "Failed to system-wide install: %d\n", res);
 
-    /* win9x with MSI 2.0 installs the icon to a different folder, same as above */
-    lstrcpyA(win9xpath, APP_DATA_DIR);
-    lstrcatA(win9xpath, "\\");
-    lstrcatA(win9xpath, "Microsoft\\Installer\\");
-    lstrcatA(win9xpath, prodcode);
-    lstrcatA(win9xpath, "\\testicon");
-
     lstrcpyA(path, WINDOWS_DIR);
     lstrcatA(path, "\\");
     lstrcatA(path, "Installer\\");
     lstrcatA(path, prodcode);
     lstrcatA(path, "\\testicon");
-    ok(file_exists(path) || file_exists(win9xpath),
-            "System-wide icon file isn't where it's expected (%s)\n", path);
+    ok(file_exists(path), "System-wide icon file isn't where it's expected (%s)\n", path);
 
     res = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(res == ERROR_SUCCESS, "Failed to uninstall system-wide\n");
@@ -6084,11 +6003,6 @@ static void test_sourcedir_props(void)
 {
     UINT r;
 
-    if (on_win9x)
-    {
-        win_skip("skipping sourcedir tests on win9x\n");
-        return;
-    }
     if (is_process_limited())
     {
         skip("process is limited\n");
@@ -6472,8 +6386,6 @@ START_TEST(install)
     BOOL ret = FALSE;
 
     init_functionpointers();
-
-    on_win9x = check_win9x();
 
     if (pIsWow64Process)
         pIsWow64Process(GetCurrentProcess(), &is_wow64);

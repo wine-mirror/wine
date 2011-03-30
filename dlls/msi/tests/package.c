@@ -8754,12 +8754,6 @@ static void test_appsearch_reglocator(void)
     if (S(U(si)).wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
     {
         size = ExpandEnvironmentStringsA("%PATH%", NULL, 0);
-        if (size == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
-        {
-            /* Workaround for Win95 */
-            CHAR tempbuf[1];
-            size = ExpandEnvironmentStringsA("%PATH%", tempbuf, 0);
-        }
         pathvar = HeapAlloc(GetProcessHeap(), 0, size);
         ExpandEnvironmentStringsA("%PATH%", pathvar, size);
 
@@ -10044,14 +10038,10 @@ static void test_installprops(void)
         RegQueryValueEx(hkey2, "RegisteredOwner", NULL, &type, (LPBYTE)path, &size);
     }
 
-    /* win9x doesn't set this */
-    if (*path)
-    {
-        size = MAX_PATH;
-        r = MsiGetProperty(hpkg, "USERNAME", buf, &size);
-        ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
-        ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
-    }
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "USERNAME", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
 
     size = MAX_PATH;
     type = REG_SZ;
@@ -12304,9 +12294,7 @@ static void _test_file_access(LPCSTR file, const struct access_res *ares, DWORD 
                line, idx, ares[idx].gothandle,
                (hfile != INVALID_HANDLE_VALUE));
 
-            ok(lasterr == ares[idx].lasterr ||
-               lasterr == 0xdeadbeef, /* win9x */
-               "(%d, lasterr, %d): Expected %d, got %d\n",
+            ok(lasterr == ares[idx].lasterr, "(%d, lasterr, %d): Expected %d, got %d\n",
                line, idx, ares[idx].lasterr, lasterr);
 
             CloseHandle(hfile);
@@ -12529,16 +12517,7 @@ static void test_MsiGetProductProperty(void)
     DWORD size;
     LONG res;
     UINT r;
-    SC_HANDLE scm;
     REGSAM access = KEY_ALL_ACCESS;
-
-    scm = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
-    if (!scm && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
-    {
-        win_skip("Different registry keys on Win9x and WinMe\n");
-        return;
-    }
-    CloseServiceHandle(scm);
 
     GetCurrentDirectoryA(MAX_PATH, path);
     lstrcatA(path, "\\");
