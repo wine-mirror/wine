@@ -1716,7 +1716,7 @@ INT CDECL MSVCRT_wcsncat_s(MSVCRT_wchar_t *dst, MSVCRT_size_t elem,
     if (srclen < (elem - dststart))
     {
         memcpy(&dst[dststart], src, srclen*sizeof(MSVCRT_wchar_t));
-        dst[srclen] = '\0';
+        dst[dststart+srclen] = '\0';
         return ret;
     }
     MSVCRT_INVALID_PMT("dst[elem] is too small");
