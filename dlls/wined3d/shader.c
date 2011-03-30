@@ -1546,54 +1546,6 @@ const shader_backend_t none_shader_backend = {
     shader_none_color_fixup_supported,
 };
 
-static HRESULT shader_get_function(IWineD3DBaseShaderImpl *shader, void *data, UINT *data_size)
-{
-    if (!data)
-    {
-        *data_size = shader->functionLength;
-        return WINED3D_OK;
-    }
-
-    if (*data_size < shader->functionLength)
-    {
-        /* MSDN claims (for d3d8 at least) that if *pSizeOfData is smaller
-         * than the required size we should write the required size and
-         * return D3DERR_MOREDATA. That's not actually true. */
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    memcpy(data, shader->function, shader->functionLength);
-
-    return WINED3D_OK;
-}
-
-/* Set local constants for d3d8 shaders. */
-static HRESULT shader_set_local_constants_float(IWineD3DBaseShaderImpl *shader,
-        UINT start_idx, const float *src_data, UINT count)
-{
-    UINT end_idx = start_idx + count;
-    UINT i;
-
-    if (end_idx > shader->limits.constant_float)
-    {
-        WARN("end_idx %u > float constants limit %u.\n",
-                end_idx, shader->limits.constant_float);
-        end_idx = shader->limits.constant_float;
-    }
-
-    for (i = start_idx; i < end_idx; ++i)
-    {
-        local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
-        if (!lconst) return E_OUTOFMEMORY;
-
-        lconst->idx = i;
-        memcpy(lconst->value, src_data + (i - start_idx) * 4 /* 4 components */, 4 * sizeof(float));
-        list_add_head(&shader->constantsF, &lconst->entry);
-    }
-
-    return WINED3D_OK;
-}
-
 static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *byte_code,
         const struct wined3d_shader_signature *output_signature, DWORD float_const_count)
 {
@@ -1641,29 +1593,8 @@ static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE wined3d_shader_QueryInterface(IWineD3DBaseShader *iface,
-        REFIID riid, void **object)
+ULONG CDECL wined3d_shader_incref(struct wined3d_shader *shader)
 {
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
-
-    if (IsEqualGUID(riid, &IID_IWineD3DBaseShader)
-            || IsEqualGUID(riid, &IID_IWineD3DBase)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
-    }
-
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-
-    *object = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG STDMETHODCALLTYPE wined3d_shader_AddRef(IWineD3DBaseShader *iface)
-{
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     ULONG refcount = InterlockedIncrement(&shader->ref);
 
     TRACE("%p increasing refcount to %u.\n", shader, refcount);
@@ -1672,9 +1603,8 @@ static ULONG STDMETHODCALLTYPE wined3d_shader_AddRef(IWineD3DBaseShader *iface)
 }
 
 /* Do not call while under the GL lock. */
-static ULONG STDMETHODCALLTYPE wined3d_shader_Release(IWineD3DBaseShader *iface)
+ULONG CDECL wined3d_shader_decref(struct wined3d_shader *shader)
 {
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     ULONG refcount = InterlockedDecrement(&shader->ref);
 
     TRACE("%p decreasing refcount to %u.\n", shader, refcount);
@@ -1689,38 +1619,66 @@ static ULONG STDMETHODCALLTYPE wined3d_shader_Release(IWineD3DBaseShader *iface)
     return refcount;
 }
 
-static void * STDMETHODCALLTYPE wined3d_shader_GetParent(IWineD3DBaseShader *iface)
+void * CDECL wined3d_shader_get_parent(const struct wined3d_shader *shader)
 {
-    TRACE("iface %p.\n", iface);
+    TRACE("shader %p.\n", shader);
 
-    return ((IWineD3DBaseShaderImpl *)iface)->parent;
+    return shader->parent;
 }
 
-static HRESULT STDMETHODCALLTYPE wined3d_shader_GetFunction(IWineD3DBaseShader *iface, void *data, UINT *data_size)
+HRESULT CDECL wined3d_shader_get_byte_code(const struct wined3d_shader *shader,
+        void *byte_code, UINT *byte_code_size)
 {
-    TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
+    TRACE("shader %p, byte_code %p, byte_code_size %p.\n", shader, byte_code, byte_code_size);
 
-    return shader_get_function((IWineD3DBaseShaderImpl *)iface, data, data_size);
+    if (!byte_code)
+    {
+        *byte_code_size = shader->functionLength;
+        return WINED3D_OK;
+    }
+
+    if (*byte_code_size < shader->functionLength)
+    {
+        /* MSDN claims (for d3d8 at least) that if *byte_code_size is smaller
+         * than the required size we should write the required size and
+         * return D3DERR_MOREDATA. That's not actually true. */
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    memcpy(byte_code, shader->function, shader->functionLength);
+
+    return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE wined3d_shader_SetLocalConstantsF(IWineD3DBaseShader *iface,
+/* Set local constants for d3d8 shaders. */
+HRESULT CDECL wined3d_shader_set_local_constants_float(struct wined3d_shader *shader,
         UINT start_idx, const float *src_data, UINT count)
 {
-    TRACE("iface %p, start_idx %u, src_data %p, count %u.\n", iface, start_idx, src_data, count);
+    UINT end_idx = start_idx + count;
+    UINT i;
 
-    return shader_set_local_constants_float((IWineD3DBaseShaderImpl *)iface,
-            start_idx, src_data, count);
+    TRACE("shader %p, start_idx %u, src_data %p, count %u.\n", shader, start_idx, src_data, count);
+
+    if (end_idx > shader->limits.constant_float)
+    {
+        WARN("end_idx %u > float constants limit %u.\n",
+                end_idx, shader->limits.constant_float);
+        end_idx = shader->limits.constant_float;
+    }
+
+    for (i = start_idx; i < end_idx; ++i)
+    {
+        struct local_constant *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
+        if (!lconst)
+            return E_OUTOFMEMORY;
+
+        lconst->idx = i;
+        memcpy(lconst->value, src_data + (i - start_idx) * 4 /* 4 components */, 4 * sizeof(float));
+        list_add_head(&shader->constantsF, &lconst->entry);
+    }
+
+    return WINED3D_OK;
 }
-
-static const IWineD3DBaseShaderVtbl wined3d_shader_vtbl =
-{
-    wined3d_shader_QueryInterface,
-    wined3d_shader_AddRef,
-    wined3d_shader_Release,
-    wined3d_shader_GetParent,
-    wined3d_shader_GetFunction,
-    wined3d_shader_SetLocalConstantsF,
-};
 
 void find_vs_compile_args(const struct wined3d_state *state,
         IWineD3DBaseShaderImpl *shader, struct vs_compile_args *args)
@@ -1742,7 +1700,7 @@ static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_id
     return FALSE;
 }
 
-BOOL vshader_get_input(struct IWineD3DBaseShaderImpl *shader,
+BOOL vshader_get_input(struct wined3d_shader *shader,
         BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum)
 {
     WORD map = shader->reg_maps.input_registers;
@@ -1847,9 +1805,7 @@ HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *de
 
     if (!byte_code) return WINED3DERR_INVALIDCALL;
 
-    shader->lpVtbl = &wined3d_shader_vtbl;
     shader_init(shader, device, parent, parent_ops);
-
     hr = shader_set_function(shader, byte_code, output_signature, device->d3d_vshader_constantF);
     if (FAILED(hr))
     {
@@ -1893,9 +1849,7 @@ HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *
 {
     HRESULT hr;
 
-    shader->lpVtbl = &wined3d_shader_vtbl;
     shader_init(shader, device, parent, parent_ops);
-
     hr = shader_set_function(shader, byte_code, output_signature, 0);
     if (FAILED(hr))
     {
@@ -2105,9 +2059,7 @@ HRESULT pixelshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *dev
 
     if (!byte_code) return WINED3DERR_INVALIDCALL;
 
-    shader->lpVtbl = &wined3d_shader_vtbl;
     shader_init(shader, device, parent, parent_ops);
-
     hr = shader_set_function(shader, byte_code, output_signature, device->d3d_pshader_constantF);
     if (FAILED(hr))
     {

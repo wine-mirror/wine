@@ -61,6 +61,12 @@
 @ cdecl wined3d_resource_get_desc(ptr ptr)
 @ cdecl wined3d_resource_get_parent(ptr)
 
+@ cdecl wined3d_shader_decref(ptr)
+@ cdecl wined3d_shader_get_byte_code(ptr ptr ptr)
+@ cdecl wined3d_shader_get_parent(ptr)
+@ cdecl wined3d_shader_incref(ptr)
+@ cdecl wined3d_shader_set_local_constants_float(ptr long ptr long)
+
 @ cdecl wined3d_stateblock_apply(ptr)
 @ cdecl wined3d_stateblock_capture(ptr)
 @ cdecl wined3d_stateblock_decref(ptr)

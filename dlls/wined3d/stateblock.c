@@ -499,9 +499,9 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
         if (stateblock->state.index_buffer)
             wined3d_buffer_decref(stateblock->state.index_buffer);
         if (stateblock->state.vertex_shader)
-            IWineD3DBaseShader_Release((IWineD3DBaseShader *)stateblock->state.vertex_shader);
+            wined3d_shader_decref(stateblock->state.vertex_shader);
         if (stateblock->state.pixel_shader)
-            IWineD3DBaseShader_Release((IWineD3DBaseShader *)stateblock->state.pixel_shader);
+            wined3d_shader_decref(stateblock->state.pixel_shader);
 
         for (counter = 0; counter < LIGHTMAP_SIZE; ++counter)
         {
@@ -599,9 +599,9 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
                 stateblock->state.vertex_shader, src_state->vertex_shader);
 
         if (src_state->vertex_shader)
-            IWineD3DBaseShader_AddRef((IWineD3DBaseShader *)src_state->vertex_shader);
+            wined3d_shader_incref(src_state->vertex_shader);
         if (stateblock->state.vertex_shader)
-            IWineD3DBaseShader_Release((IWineD3DBaseShader *)stateblock->state.vertex_shader);
+            wined3d_shader_decref(stateblock->state.vertex_shader);
         stateblock->state.vertex_shader = src_state->vertex_shader;
     }
 
@@ -860,9 +860,9 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
     if (stateblock->changed.pixelShader && stateblock->state.pixel_shader != src_state->pixel_shader)
     {
         if (src_state->pixel_shader)
-            IWineD3DBaseShader_AddRef((IWineD3DBaseShader *)src_state->pixel_shader);
+            wined3d_shader_incref(src_state->pixel_shader);
         if (stateblock->state.pixel_shader)
-            IWineD3DBaseShader_Release((IWineD3DBaseShader *)stateblock->state.pixel_shader);
+            wined3d_shader_decref(stateblock->state.pixel_shader);
         stateblock->state.pixel_shader = src_state->pixel_shader;
     }
 

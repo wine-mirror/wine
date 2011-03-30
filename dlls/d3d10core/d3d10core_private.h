@@ -169,7 +169,7 @@ struct d3d10_vertex_shader
     const struct ID3D10VertexShaderVtbl *vtbl;
     LONG refcount;
 
-    IWineD3DBaseShader *wined3d_shader;
+    struct wined3d_shader *wined3d_shader;
     struct wined3d_shader_signature output_signature;
 };
 
@@ -182,7 +182,7 @@ struct d3d10_geometry_shader
     const struct ID3D10GeometryShaderVtbl *vtbl;
     LONG refcount;
 
-    IWineD3DBaseShader *wined3d_shader;
+    struct wined3d_shader *wined3d_shader;
     struct wined3d_shader_signature output_signature;
 };
 
@@ -195,7 +195,7 @@ struct d3d10_pixel_shader
     const struct ID3D10PixelShaderVtbl *vtbl;
     LONG refcount;
 
-    IWineD3DBaseShader *wined3d_shader;
+    struct wined3d_shader *wined3d_shader;
     struct wined3d_shader_signature output_signature;
 };
 

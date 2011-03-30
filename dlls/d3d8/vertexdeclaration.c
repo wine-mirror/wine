@@ -199,7 +199,7 @@ size_t parse_token(const DWORD* pToken)
     return tokenlen;
 }
 
-void load_local_constants(const DWORD *d3d8_elements, IWineD3DBaseShader *wined3d_vertex_shader)
+void load_local_constants(const DWORD *d3d8_elements, struct wined3d_shader *wined3d_vertex_shader)
 {
     const DWORD *token = d3d8_elements;
 
@@ -224,7 +224,7 @@ void load_local_constants(const DWORD *d3d8_elements, IWineD3DBaseShader *wined3
                             *(const float *)(token + i * 4 + 4));
                 }
             }
-            hr = IWineD3DBaseShader_SetLocalConstantsF(wined3d_vertex_shader,
+            hr = wined3d_shader_set_local_constants_float(wined3d_vertex_shader,
                     constant_idx, (const float *)token + 1, count);
             if (FAILED(hr)) ERR("Failed setting shader constants\n");
         }

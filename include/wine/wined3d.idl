@@ -2096,6 +2096,7 @@ struct wined3d_clipper;
 struct wined3d_palette;
 struct wined3d_query;
 struct wined3d_resource;
+struct wined3d_shader;
 struct wined3d_stateblock;
 struct wined3d_texture;
 struct wined3d_vertex_declaration;
@@ -2387,24 +2388,6 @@ interface IWineD3DSwapChain : IWineD3DBase
 [
     object,
     local,
-    uuid(eac93065-a4df-446f-86a1-9ef2bca40a3c)
-]
-interface IWineD3DBaseShader : IWineD3DBase
-{
-    HRESULT GetFunction(
-        [out] void *data,
-        [in, out] UINT *data_size
-    );
-    HRESULT SetLocalConstantsF(
-        [in] UINT start_idx,
-        [in] const float *src_data,
-        [in] UINT vector4f_count
-    );
-}
-
-[
-    object,
-    local,
     uuid(6d10a2ce-09d0-4a53-a427-11388f9f8ca5)
 ]
 interface IWineD3DDevice : IUnknown
@@ -2529,21 +2512,21 @@ interface IWineD3DDevice : IUnknown
         [in] const struct wined3d_shader_signature *output_signature,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DBaseShader **shader
+        [out] struct wined3d_shader **shader
     );
     HRESULT CreateGeometryShader(
         [in] const DWORD *byte_code,
         [in] const struct wined3d_shader_signature *output_signature,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DBaseShader **shader
+        [out] struct wined3d_shader **shader
     );
     HRESULT CreatePixelShader(
         [in] const DWORD *function,
         [in] const struct wined3d_shader_signature *output_signature,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DBaseShader **shader
+        [out] struct wined3d_shader **shader
     );
     HRESULT CreatePalette(
         [in] DWORD flags,
@@ -2705,9 +2688,9 @@ interface IWineD3DDevice : IUnknown
         [out] PALETTEENTRY *entries
     );
     HRESULT SetPixelShader(
-        [in] IWineD3DBaseShader *shader
+        [in] struct wined3d_shader *shader
     );
-    IWineD3DBaseShader *GetPixelShader(
+    struct wined3d_shader *GetPixelShader(
     );
     HRESULT SetPixelShaderConstantB(
         [in] UINT start_register,
@@ -2830,9 +2813,9 @@ interface IWineD3DDevice : IUnknown
         [out] struct wined3d_vertex_declaration **declaration
     );
     HRESULT SetVertexShader(
-        [in] IWineD3DBaseShader *shader
+        [in] struct wined3d_shader *shader
     );
-    IWineD3DBaseShader *GetVertexShader(
+    struct wined3d_shader *GetVertexShader(
     );
     HRESULT SetVertexShaderConstantB(
         [in] UINT start_register,
@@ -3091,6 +3074,14 @@ HRESULT __cdecl wined3d_query_issue(struct wined3d_query *query, DWORD flags);
 void __cdecl wined3d_resource_get_desc(const struct wined3d_resource *resource,
         struct wined3d_resource_desc *desc);
 void * __cdecl wined3d_resource_get_parent(const struct wined3d_resource *resource);
+
+ULONG __cdecl wined3d_shader_decref(struct wined3d_shader *shader);
+HRESULT __cdecl wined3d_shader_get_byte_code(const struct wined3d_shader *shader,
+        void *byte_code, UINT *byte_code_size);
+void * __cdecl wined3d_shader_get_parent(const struct wined3d_shader *shader);
+ULONG __cdecl wined3d_shader_incref(struct wined3d_shader *shader);
+HRESULT __cdecl wined3d_shader_set_local_constants_float(struct wined3d_shader *shader,
+        UINT start_idx, const float *src_data, UINT vector4f_count);
 
 HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);

@@ -9,7 +9,7 @@
  * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2006-2008 Henri Verbeet
  * Copyright 2007 Andrew Riedi
- * Copyright 2009-2010 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -3350,9 +3350,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
     if (device->isRecordingState)
     {
         if (shader)
-            IWineD3DBaseShader_AddRef(shader);
+            wined3d_shader_incref(shader);
         if (prev)
-            IWineD3DBaseShader_Release(prev);
+            wined3d_shader_decref(prev);
         TRACE("Recording... not performing anything.\n");
         return WINED3D_OK;
     }
@@ -3365,9 +3365,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
 
     TRACE("(%p) : setting shader(%p)\n", device, shader);
     if (shader)
-        IWineD3DBaseShader_AddRef(shader);
+        wined3d_shader_incref(shader);
     if (prev)
-        IWineD3DBaseShader_Release(prev);
+        wined3d_shader_decref(prev);
 
     IWineD3DDeviceImpl_MarkStateDirty(device, STATE_VSHADER);
 
@@ -3383,7 +3383,7 @@ static IWineD3DBaseShader * WINAPI IWineD3DDeviceImpl_GetVertexShader(IWineD3DDe
 
     shader = (IWineD3DBaseShader *)device->stateBlock->state.vertex_shader;
     if (shader)
-        IWineD3DBaseShader_AddRef(shader);
+        wined3d_shader_incref(shader);
 
     TRACE("Returning %p.\n", shader);
     return shader;
@@ -3759,9 +3759,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
     {
         TRACE("Recording... not performing anything.\n");
         if (shader)
-            IWineD3DBaseShader_AddRef(shader);
+            wined3d_shader_incref(shader);
         if (prev)
-            IWineD3DBaseShader_Release(prev);
+            wined3d_shader_decref(prev);
         return WINED3D_OK;
     }
 
@@ -3772,9 +3772,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
     }
 
     if (shader)
-        IWineD3DBaseShader_AddRef(shader);
+        wined3d_shader_incref(shader);
     if (prev)
-        IWineD3DBaseShader_Release(prev);
+        wined3d_shader_decref(prev);
 
     TRACE("Setting shader %p.\n", shader);
     IWineD3DDeviceImpl_MarkStateDirty(device, STATE_PIXELSHADER);
@@ -3789,9 +3789,9 @@ static IWineD3DBaseShader * WINAPI IWineD3DDeviceImpl_GetPixelShader(IWineD3DDev
 
     TRACE("iface %p.\n", iface);
 
-    shader = (IWineD3DBaseShader *)device->stateBlock->state.pixel_shader;
+    shader = device->stateBlock->state.pixel_shader;
     if (shader)
-        IWineD3DBaseShader_AddRef(shader);
+        wined3d_shader_incref(shader);
 
     TRACE("Returning %p.\n", shader);
     return shader;

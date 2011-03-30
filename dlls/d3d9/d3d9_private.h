@@ -432,7 +432,7 @@ typedef struct IDirect3DVertexShader9Impl {
   /* IUnknown fields */
   const IDirect3DVertexShader9Vtbl *lpVtbl;
   LONG ref;
-  IWineD3DBaseShader *wined3d_shader;
+  struct wined3d_shader *wined3d_shader;
   IDirect3DDevice9Ex *parentDevice;
 } IDirect3DVertexShader9Impl;
 
@@ -453,7 +453,7 @@ typedef struct IDirect3DPixelShader9Impl {
   /* IUnknown fields */
     const IDirect3DPixelShader9Vtbl *lpVtbl;
     LONG                    ref;
-    IWineD3DBaseShader *wined3d_shader;
+    struct wined3d_shader *wined3d_shader;
     IDirect3DDevice9Ex *parentDevice;
 } IDirect3DPixelShader9Impl;
 

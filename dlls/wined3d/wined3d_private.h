@@ -55,7 +55,8 @@
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
-struct IWineD3DBaseShaderImpl;
+typedef struct wined3d_shader IWineD3DBaseShaderImpl;
+typedef struct wined3d_shader IWineD3DBaseShader;
 
 /* Texture format fixups */
 
@@ -586,7 +587,7 @@ struct wined3d_shader_loop_state
 
 struct wined3d_shader_context
 {
-    struct IWineD3DBaseShaderImpl *shader;
+    struct wined3d_shader *shader;
     const struct wined3d_gl_info *gl_info;
     const struct wined3d_shader_reg_maps *reg_maps;
     struct wined3d_shader_buffer *buffer;
@@ -757,7 +758,7 @@ typedef struct {
     void (*shader_load_constants)(const struct wined3d_context *context, char usePS, char useVS);
     void (*shader_load_np2fixup_constants)(void *shader_priv, const struct wined3d_gl_info *gl_info,
             const struct wined3d_state *state);
-    void (*shader_destroy)(struct IWineD3DBaseShaderImpl *shader);
+    void (*shader_destroy)(struct wined3d_shader *shader);
     HRESULT (*shader_alloc_private)(IWineD3DDeviceImpl *device);
     void (*shader_free_private)(IWineD3DDeviceImpl *device);
     BOOL (*shader_dirtifyable_constants)(void);
@@ -2336,12 +2337,12 @@ struct wined3d_state
     INT load_base_vertex_index; /* Non-indexed drawing needs 0 here, indexed needs base_vertex_index. */
     GLenum gl_primitive_type;
 
-    struct IWineD3DBaseShaderImpl *vertex_shader;
+    struct wined3d_shader *vertex_shader;
     BOOL vs_consts_b[MAX_CONST_B];
     INT vs_consts_i[MAX_CONST_I * 4];
     float *vs_consts_f;
 
-    struct IWineD3DBaseShaderImpl *pixel_shader;
+    struct wined3d_shader *pixel_shader;
     BOOL ps_consts_b[MAX_CONST_B];
     INT ps_consts_i[MAX_CONST_I * 4];
     float *ps_consts_f;
@@ -2682,7 +2683,7 @@ int shader_addline(struct wined3d_shader_buffer *buffer, const char *fmt, ...) P
 int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *fmt, va_list args) DECLSPEC_HIDDEN;
 
 /* Vertex shader utility functions */
-extern BOOL vshader_get_input(struct IWineD3DBaseShaderImpl *shader,
+extern BOOL vshader_get_input(struct wined3d_shader *shader,
         BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum) DECLSPEC_HIDDEN;
 
 struct wined3d_vertex_shader
@@ -2703,10 +2704,8 @@ struct wined3d_pixel_shader
     DWORD color0_reg;
 };
 
-typedef struct IWineD3DBaseShaderImpl {
-    /* IUnknown */
-    const IWineD3DBaseShaderVtbl    *lpVtbl;
-
+struct wined3d_shader
+{
     LONG ref;
     SHADER_LIMITS limits;
     DWORD *function;
@@ -2740,7 +2739,7 @@ typedef struct IWineD3DBaseShaderImpl {
         struct wined3d_vertex_shader vs;
         struct wined3d_pixel_shader ps;
     } u;
-} IWineD3DBaseShaderImpl;
+};
 
 HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,

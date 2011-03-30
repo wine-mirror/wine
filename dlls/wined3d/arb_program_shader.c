@@ -944,7 +944,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
 {
     /* oPos, oFog and oPts in D3D */
     static const char * const rastout_reg_names[] = {"TMP_OUT", "result.fogcoord", "result.pointsize"};
-    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
+    struct wined3d_shader *shader = ins->ctx->shader;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     BOOL pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
@@ -1340,7 +1340,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     const struct wined3d_texture *texture;
     const char *tex_type;
     BOOL np2_fixup = FALSE;
-    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
+    struct wined3d_shader *shader = ins->ctx->shader;
     IWineD3DDeviceImpl *device = shader->device;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
     const char *mod;
@@ -1756,7 +1756,7 @@ static void shader_hw_nop(const struct wined3d_shader_instruction *ins)
 
 static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 {
-    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
+    struct wined3d_shader *shader = ins->ctx->shader;
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     BOOL pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
@@ -3206,7 +3206,7 @@ static void shader_hw_ret(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
-    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
+    struct wined3d_shader *shader = ins->ctx->shader;
     BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
 
     if(priv->target_version == ARB) return;
@@ -5257,7 +5257,7 @@ static void free_recorded_instruction(struct list *list)
 static void shader_arb_handle_instruction(const struct wined3d_shader_instruction *ins) {
     SHADER_HANDLER hw_fct;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
-    struct IWineD3DBaseShaderImpl *shader = ins->ctx->shader;
+    struct wined3d_shader *shader = ins->ctx->shader;
     struct control_frame *control_frame;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     BOOL bool_const;

@@ -55,7 +55,7 @@ static ULONG WINAPI d3d8_vertexshader_AddRef(IDirect3DVertexShader8 *iface)
     if (refcount == 1 && shader->wined3d_shader)
     {
         wined3d_mutex_lock();
-        IWineD3DBaseShader_AddRef(shader->wined3d_shader);
+        wined3d_shader_incref(shader->wined3d_shader);
         wined3d_mutex_unlock();
     }
 
@@ -81,7 +81,7 @@ static ULONG WINAPI d3d8_vertexshader_Release(IDirect3DVertexShader8 *iface)
         if (shader->wined3d_shader)
         {
             wined3d_mutex_lock();
-            IWineD3DBaseShader_Release(shader->wined3d_shader);
+            wined3d_shader_decref(shader->wined3d_shader);
             wined3d_mutex_unlock();
         }
         else
@@ -225,7 +225,7 @@ static ULONG WINAPI d3d8_pixelshader_AddRef(IDirect3DPixelShader8 *iface)
     if (refcount == 1)
     {
         wined3d_mutex_lock();
-        IWineD3DBaseShader_AddRef(shader->wined3d_shader);
+        wined3d_shader_incref(shader->wined3d_shader);
         wined3d_mutex_unlock();
     }
 
@@ -242,7 +242,7 @@ static ULONG WINAPI d3d8_pixelshader_Release(IDirect3DPixelShader8 *iface)
     if (!refcount)
     {
         wined3d_mutex_lock();
-        IWineD3DBaseShader_Release(shader->wined3d_shader);
+        wined3d_shader_decref(shader->wined3d_shader);
         wined3d_mutex_unlock();
     }
 
