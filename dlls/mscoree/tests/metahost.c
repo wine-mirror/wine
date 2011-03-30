@@ -34,7 +34,7 @@ static HRESULT (WINAPI *pCLRCreateInstance)(REFCLSID clsid, REFIID riid, LPVOID 
 
 static ICLRMetaHost *metahost;
 
-BOOL init_pointers(void)
+static BOOL init_pointers(void)
 {
     HRESULT hr = E_FAIL;
 
