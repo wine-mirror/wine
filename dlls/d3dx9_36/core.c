@@ -116,27 +116,45 @@ static const struct ID3DXBufferVtbl ID3DXBufferImpl_Vtbl =
     ID3DXBufferImpl_GetBufferSize
 };
 
+static HRESULT d3dx9_buffer_init(struct ID3DXBufferImpl *buffer, DWORD size)
+{
+    buffer->ID3DXBuffer_iface.lpVtbl = &ID3DXBufferImpl_Vtbl;
+    buffer->ref = 1;
+    buffer->size = size;
+
+    buffer->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    if (!buffer->buffer)
+    {
+        ERR("Failed to allocate buffer memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    return D3D_OK;
+}
+
 HRESULT WINAPI D3DXCreateBuffer(DWORD size, LPD3DXBUFFER *buffer)
 {
     struct ID3DXBufferImpl *object;
+    HRESULT hr;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (object == NULL)
+    if (!object)
     {
-        *buffer = NULL;
+        ERR("Failed to allocate buffer memory\n");
         return E_OUTOFMEMORY;
     }
-    object->ID3DXBuffer_iface.lpVtbl = &ID3DXBufferImpl_Vtbl;
-    object->ref = 1;
-    object->size = size;
-    object->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-    if (object->buffer == NULL)
+
+    hr = d3dx9_buffer_init(object, size);
+    if (FAILED(hr))
     {
+        WARN("Failed to initialize buffer, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *buffer = NULL;
-        return E_OUTOFMEMORY;
+        return hr;
     }
 
     *buffer = &object->ID3DXBuffer_iface;
+
+    TRACE("Created ID3DBuffer %p\n", *buffer);
+
     return D3D_OK;
 }
