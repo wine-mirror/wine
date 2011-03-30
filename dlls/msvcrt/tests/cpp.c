@@ -810,7 +810,8 @@ static void test_rtti(void)
   void *casted;
 
   if (bAncientVersion ||
-      !p__RTCastToVoid || !p__RTtypeid || !pexception_ctor || !pbad_typeid_ctor || !p__RTDynamicCast)
+      !p__RTCastToVoid || !p__RTtypeid || !pexception_ctor || !pbad_typeid_ctor
+      || !p__RTDynamicCast || !pexception_dtor || !pbad_typeid_dtor)
     return;
 
   call_func2(pexception_ctor, &e, &e_name);
@@ -834,6 +835,9 @@ static void test_rtti(void)
   /* dynamic_cast down */
   casted = p__RTDynamicCast(&e, 0, NULL, bti, 0);
   ok (casted == NULL, "Cast succeeded\n");
+
+  call_func1(pexception_dtor, &e);
+  call_func1(pbad_typeid_dtor, &b);
 }
 
 struct _demangle {
@@ -864,7 +868,8 @@ static void test_demangle_datatype(void)
 	    ok(name != NULL && !strcmp(name,demangle[i].result), "Got name \"%s\" for %d\n", name, i);
 	else
 	    todo_wine ok(name != NULL && !strcmp(name,demangle[i].result), "Got name %s for %d\n", name, i);
-	      
+        if(name)
+            pfree(name);
     }
 }
 
