@@ -42,7 +42,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Komut belirtilmemiş."
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:117
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:115
 msgid "Name"
 msgstr "Ad"
 
@@ -172,7 +172,7 @@ msgstr "Sık Kullanılanlar"
 msgid "System Path"
 msgstr "Sistem Yolu"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:108
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:106
 msgid "Desktop"
 msgstr "Masaüstü"
 
@@ -6509,7 +6509,7 @@ msgstr "&Dosya"
 msgid "&New"
 msgstr "&Yeni"
 
-#: shdocvw.rc:29 winefile.rc:78
+#: shdocvw.rc:29 winefile.rc:76
 msgid "&Window"
 msgstr "&Pencere"
 
@@ -6550,7 +6550,7 @@ msgid "&Close"
 msgstr "&Kapat"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:65 taskmgr.rc:52 winefile.rc:51 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&Görünüm"
 
@@ -6581,7 +6581,7 @@ msgid "&Add to Favorites..."
 msgstr "Sık Kullanılanlara Ekle..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:78 taskmgr.rc:87 winefile.rc:87 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Yardım"
 
@@ -6691,7 +6691,7 @@ msgstr ""
 msgid "&About Control Panel..."
 msgstr "&About Control Panel..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:118
+#: shell32.rc:123 shell32.rc:127 winefile.rc:116
 msgid "Size"
 msgstr "Boyut"
 
@@ -6703,7 +6703,7 @@ msgstr "Tür"
 msgid "Modified"
 msgstr "Düzenlenme"
 
-#: shell32.rc:126 winefile.rc:124
+#: shell32.rc:126 winefile.rc:122
 #, fuzzy
 msgid "Attributes"
 msgstr ""
@@ -6879,7 +6879,7 @@ msgstr "Program Files\\Common Files"
 msgid "Contacts"
 msgstr "&İçindekiler"
 
-#: shell32.rc:216 winefile.rc:123
+#: shell32.rc:216 winefile.rc:121
 msgid "Links"
 msgstr "Bağlantılar"
 
@@ -7150,7 +7150,7 @@ msgstr "&Kapat\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&Wine Hakkında..."
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:105
+#: user32.rc:55 regedit.rc:182 winefile.rc:103
 msgid "Error"
 msgstr "Hata"
 
@@ -8041,7 +8041,7 @@ msgstr "Ana&log"
 msgid "Digi&tal"
 msgstr "Sa&yısal"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:66 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
 #, fuzzy
 msgid "&Font..."
 msgstr ""
@@ -9144,7 +9144,7 @@ msgstr "&Uzman"
 msgid "&Hidden component categories"
 msgstr ""
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:68 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
 #, fuzzy
 msgid "&Toolbar"
 msgstr ""
@@ -9153,11 +9153,11 @@ msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "&Toolbar"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:70
+#: oleview.rc:65 oleview.rc:87 winefile.rc:68
 msgid "&Status Bar"
 msgstr "&Durum Çubuğu"
 
-#: oleview.rc:67 regedit.rc:71 winefile.rc:84
+#: oleview.rc:67 regedit.rc:71 winefile.rc:82
 #, fuzzy
 msgid "&Refresh\tF5"
 msgstr ""
@@ -9407,7 +9407,7 @@ msgstr "Çalı&ştır..."
 msgid "E&xit Windows..."
 msgstr "Windows'tan &Çık..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:65 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Seçenekler"
 
@@ -9424,7 +9424,7 @@ msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "Açılışta &küçült"
 
-#: progman.rc:44 winefile.rc:75
+#: progman.rc:44 winefile.rc:73
 #, fuzzy
 msgid "&Save settings on exit"
 msgstr ""
@@ -9641,7 +9641,7 @@ msgstr "&Sonrakini Bul\tF3"
 msgid "Status &Bar"
 msgstr "Durum &Çubuğu"
 
-#: regedit.rc:69 winefile.rc:52
+#: regedit.rc:69 winefile.rc:50
 #, fuzzy
 msgid "Sp&lit"
 msgstr ""
@@ -9654,7 +9654,7 @@ msgstr ""
 msgid "&Remove Favorite..."
 msgstr "Sık Kullanılanlardan Sil..."
 
-#: regedit.rc:80 winefile.rc:88
+#: regedit.rc:80 winefile.rc:86
 msgid "&Help Topics\tF1"
 msgstr "&Yardım Konuları\tF1"
 
@@ -10092,7 +10092,7 @@ msgstr "&Her MİB için Ayrı Grafik"
 msgid "&Show Kernel Times"
 msgstr "&Çekirdek Sürelerini Göster"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:81
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:79
 msgid "Tile &Horizontally"
 msgstr "&Yatay Döşe"
 
@@ -11173,138 +11173,134 @@ msgid "&Disk"
 msgstr "&Disk"
 
 #: winefile.rc:45
-msgid "&Format Disk..."
-msgstr "Disk Bi&çimlendir..."
-
-#: winefile.rc:47
 msgid "Connect &Network Drive"
 msgstr "&Ağ Sürücüsüne Bağlan"
 
-#: winefile.rc:48
+#: winefile.rc:46
 msgid "&Disconnect Network Drive"
 msgstr "Ağ Sürücüsüne Bağlantıyı &Kes"
 
-#: winefile.rc:54
+#: winefile.rc:52
 msgid "&Name"
 msgstr "&Ad"
 
-#: winefile.rc:55
+#: winefile.rc:53
 msgid "&All File Details"
 msgstr "&Tüm Dosya Ayrıntıları"
 
-#: winefile.rc:57
+#: winefile.rc:55
 msgid "&Sort by Name"
 msgstr "&Ada Göre Sırala"
 
-#: winefile.rc:58
+#: winefile.rc:56
 msgid "Sort &by Type"
 msgstr "&Türe Göre Sırala"
 
-#: winefile.rc:59
+#: winefile.rc:57
 msgid "Sort by Si&ze"
 msgstr "&Boyuta Göre Sırala"
 
-#: winefile.rc:60
+#: winefile.rc:58
 msgid "Sort by &Date"
 msgstr "&Tarihe Göre Sırala"
 
-#: winefile.rc:62
+#: winefile.rc:60
 msgid "Filter by &..."
 msgstr "Süzgeç &..."
 
-#: winefile.rc:69
+#: winefile.rc:67
 msgid "&Drivebar"
 msgstr "&Sürücü Çubuğu"
 
-#: winefile.rc:72
+#: winefile.rc:70
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr "&Tam Ekran\tCtrl+Shift+S"
 
-#: winefile.rc:79
+#: winefile.rc:77
 msgid "New &Window"
 msgstr "&Yeni Pencere"
 
-#: winefile.rc:80
+#: winefile.rc:78
 msgid "Cascading\tCtrl+F5"
 msgstr "Diz\tCtrl+F5"
 
-#: winefile.rc:82
+#: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Di&key Döşe\tCtrl+F4"
 
-#: winefile.rc:83
+#: winefile.rc:81
 msgid "Arrange &Symbols"
 msgstr "Simgeleri D&üzenle"
 
-#: winefile.rc:89
+#: winefile.rc:87
 msgid "Help &Search...\tF1"
 msgstr "Yardımda &Ara...\tF1"
 
-#: winefile.rc:90
+#: winefile.rc:88
 msgid "&Using Help\tF1"
 msgstr "Yardım &Kullanımı\tF1"
 
-#: winefile.rc:92
+#: winefile.rc:90
 msgid "&About Winefile..."
 msgstr "Winefile hakkında &bilgi..."
 
-#: winefile.rc:98
+#: winefile.rc:96
 msgid "Applying font settings"
 msgstr "Yazı tipi ayarları uygulanıyor"
 
-#: winefile.rc:99
+#: winefile.rc:97
 msgid "Error while selecting new font."
 msgstr "Yeni yazı tipi seçerken hata."
 
-#: winefile.rc:104
+#: winefile.rc:102
 msgid "Wine File Manager"
 msgstr "Winefile"
 
-#: winefile.rc:106
+#: winefile.rc:104
 msgid "root fs"
 msgstr "kök ds"
 
-#: winefile.rc:107
+#: winefile.rc:105
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:109
+#: winefile.rc:107
 msgid "Shell"
 msgstr "Kabuk"
 
-#: winefile.rc:110
+#: winefile.rc:108
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:111
+#: winefile.rc:109
 msgid "Not yet implemented"
 msgstr "Henüz tamamlanmadı"
 
-#: winefile.rc:112
+#: winefile.rc:110
 msgid "Wine File"
 msgstr "Wine Dosya Yöneticisi"
 
-#: winefile.rc:119
+#: winefile.rc:117
 msgid "CDate"
 msgstr "OTarihi"
 
-#: winefile.rc:120
+#: winefile.rc:118
 msgid "ADate"
 msgstr "ETarihi"
 
-#: winefile.rc:121
+#: winefile.rc:119
 msgid "MDate"
 msgstr "DTarihi"
 
-#: winefile.rc:122
+#: winefile.rc:120
 msgid "Index/Inode"
 msgstr "İndeks/Düğüm"
 
-#: winefile.rc:125
+#: winefile.rc:123
 msgid "Security"
 msgstr "Güvenlik"
 
-#: winefile.rc:127
+#: winefile.rc:125
 msgid "%s of %s free"
 msgstr "%s / %s boş"
 

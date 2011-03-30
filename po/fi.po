@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr ""
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:117
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:115
 msgid "Name"
 msgstr "Nimi"
 
@@ -165,7 +165,7 @@ msgstr "Suosikit"
 msgid "System Path"
 msgstr "Järjestelmäkansio"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:108
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:106
 msgid "Desktop"
 msgstr "Työpöytä"
 
@@ -6347,7 +6347,7 @@ msgstr "&Tiedosto"
 msgid "&New"
 msgstr "&Uusi\tF2"
 
-#: shdocvw.rc:29 winefile.rc:78
+#: shdocvw.rc:29 winefile.rc:76
 msgid "&Window"
 msgstr ""
 
@@ -6393,7 +6393,7 @@ msgid "&Close"
 msgstr ""
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:65 taskmgr.rc:52 winefile.rc:51 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&Näkymä"
 
@@ -6420,7 +6420,7 @@ msgid "&Add to Favorites..."
 msgstr "Lis&ää Suosikkeihin..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:78 taskmgr.rc:87 winefile.rc:87 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:60 wordpad.rc:91
 #, fuzzy
 msgid "&Help"
 msgstr ""
@@ -6535,7 +6535,7 @@ msgstr ""
 msgid "&About Control Panel..."
 msgstr "Ti&etoja Ohjauspaneelista..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:118
+#: shell32.rc:123 shell32.rc:127 winefile.rc:116
 msgid "Size"
 msgstr "Koko"
 
@@ -6547,7 +6547,7 @@ msgstr "Tyyppi"
 msgid "Modified"
 msgstr "Muokattu"
 
-#: shell32.rc:126 winefile.rc:124
+#: shell32.rc:126 winefile.rc:122
 msgid "Attributes"
 msgstr "Ominaisuudet"
 
@@ -6715,7 +6715,7 @@ msgstr "Ohjelmatiedostot (x86)\\Yhteiset tiedostot"
 msgid "Contacts"
 msgstr "Kontaktit"
 
-#: shell32.rc:216 winefile.rc:123
+#: shell32.rc:216 winefile.rc:121
 msgid "Links"
 msgstr "Linkit"
 
@@ -6973,7 +6973,7 @@ msgstr "&Sulje\tAlt+F4"
 msgid "&About Wine..."
 msgstr "&Tietoja Winestä..."
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:105
+#: user32.rc:55 regedit.rc:182 winefile.rc:103
 msgid "Error"
 msgstr "Virhe"
 
@@ -7755,7 +7755,7 @@ msgstr "&Analoginen"
 msgid "Digi&tal"
 msgstr "Di&gitaalinen"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:66 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
 #, fuzzy
 msgid "&Font..."
 msgstr ""
@@ -8694,15 +8694,15 @@ msgstr "&Expertti"
 msgid "&Hidden component categories"
 msgstr ""
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:68 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
 msgid "&Toolbar"
 msgstr ""
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:70
+#: oleview.rc:65 oleview.rc:87 winefile.rc:68
 msgid "&Status Bar"
 msgstr ""
 
-#: oleview.rc:67 regedit.rc:71 winefile.rc:84
+#: oleview.rc:67 regedit.rc:71 winefile.rc:82
 #, fuzzy
 msgid "&Refresh\tF5"
 msgstr "P&äivitä"
@@ -8937,7 +8937,7 @@ msgstr ""
 msgid "E&xit Windows..."
 msgstr ""
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:65 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
 #, fuzzy
 msgid "&Options"
 msgstr ""
@@ -8954,7 +8954,7 @@ msgstr ""
 msgid "&Minimize on run"
 msgstr ""
 
-#: progman.rc:44 winefile.rc:75
+#: progman.rc:44 winefile.rc:73
 msgid "&Save settings on exit"
 msgstr ""
 
@@ -9166,7 +9166,7 @@ msgstr ""
 msgid "Status &Bar"
 msgstr "Tila"
 
-#: regedit.rc:69 winefile.rc:52
+#: regedit.rc:69 winefile.rc:50
 msgid "Sp&lit"
 msgstr ""
 
@@ -9175,7 +9175,7 @@ msgstr ""
 msgid "&Remove Favorite..."
 msgstr "Lis&ää Suosikkeihin..."
 
-#: regedit.rc:80 winefile.rc:88
+#: regedit.rc:80 winefile.rc:86
 msgid "&Help Topics\tF1"
 msgstr ""
 
@@ -9582,7 +9582,7 @@ msgstr ""
 msgid "&Show Kernel Times"
 msgstr ""
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:81
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:79
 msgid "Tile &Horizontally"
 msgstr ""
 
@@ -10655,148 +10655,144 @@ msgid "&Disk"
 msgstr ""
 
 #: winefile.rc:45
-msgid "&Format Disk..."
-msgstr ""
-
-#: winefile.rc:47
 msgid "Connect &Network Drive"
 msgstr ""
 
-#: winefile.rc:48
+#: winefile.rc:46
 msgid "&Disconnect Network Drive"
 msgstr ""
 
-#: winefile.rc:54
+#: winefile.rc:52
 msgid "&Name"
 msgstr ""
 
-#: winefile.rc:55
+#: winefile.rc:53
 msgid "&All File Details"
 msgstr ""
 
-#: winefile.rc:57
+#: winefile.rc:55
 msgid "&Sort by Name"
 msgstr ""
 
-#: winefile.rc:58
+#: winefile.rc:56
 msgid "Sort &by Type"
 msgstr ""
 
-#: winefile.rc:59
+#: winefile.rc:57
 msgid "Sort by Si&ze"
 msgstr ""
 
-#: winefile.rc:60
+#: winefile.rc:58
 msgid "Sort by &Date"
 msgstr ""
 
-#: winefile.rc:62
+#: winefile.rc:60
 msgid "Filter by &..."
 msgstr ""
 
-#: winefile.rc:69
+#: winefile.rc:67
 msgid "&Drivebar"
 msgstr ""
 
-#: winefile.rc:72
+#: winefile.rc:70
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr ""
 
-#: winefile.rc:79
+#: winefile.rc:77
 #, fuzzy
 msgid "New &Window"
 msgstr "A&vaa Uudessa Ikkunassa"
 
-#: winefile.rc:80
+#: winefile.rc:78
 msgid "Cascading\tCtrl+F5"
 msgstr ""
 
-#: winefile.rc:82
+#: winefile.rc:80
 #, fuzzy
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "&Valitse kaikki"
 
-#: winefile.rc:83
+#: winefile.rc:81
 msgid "Arrange &Symbols"
 msgstr ""
 
-#: winefile.rc:89
+#: winefile.rc:87
 #, fuzzy
 msgid "Help &Search...\tF1"
 msgstr "&Etsi..."
 
-#: winefile.rc:90
+#: winefile.rc:88
 #, fuzzy
 msgid "&Using Help\tF1"
 msgstr "Wine Ohje"
 
-#: winefile.rc:92
+#: winefile.rc:90
 #, fuzzy
 msgid "&About Winefile..."
 msgstr "&About Notepad"
 
-#: winefile.rc:98
+#: winefile.rc:96
 msgid "Applying font settings"
 msgstr ""
 
-#: winefile.rc:99
+#: winefile.rc:97
 msgid "Error while selecting new font."
 msgstr ""
 
-#: winefile.rc:104
+#: winefile.rc:102
 msgid "Wine File Manager"
 msgstr ""
 
-#: winefile.rc:106
+#: winefile.rc:104
 msgid "root fs"
 msgstr ""
 
-#: winefile.rc:107
+#: winefile.rc:105
 msgid "unixfs"
 msgstr ""
 
-#: winefile.rc:109
+#: winefile.rc:107
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:110
+#: winefile.rc:108
 msgid "%s - %s"
 msgstr ""
 
-#: winefile.rc:111
+#: winefile.rc:109
 #, fuzzy
 msgid "Not yet implemented"
 msgstr "Ei käytettävissä"
 
-#: winefile.rc:112
+#: winefile.rc:110
 #, fuzzy
 msgid "Wine File"
 msgstr "WineMine"
 
-#: winefile.rc:119
+#: winefile.rc:117
 #, fuzzy
 msgid "CDate"
 msgstr "&Päivämäärä"
 
-#: winefile.rc:120
+#: winefile.rc:118
 #, fuzzy
 msgid "ADate"
 msgstr "&Päivämäärä"
 
-#: winefile.rc:121
+#: winefile.rc:119
 #, fuzzy
 msgid "MDate"
 msgstr "&Päivämäärä"
 
-#: winefile.rc:122
+#: winefile.rc:120
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:125
+#: winefile.rc:123
 msgid "Security"
 msgstr ""
 
-#: winefile.rc:127
+#: winefile.rc:125
 msgid "%s of %s free"
 msgstr ""
 

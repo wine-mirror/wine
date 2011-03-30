@@ -48,7 +48,6 @@
 #define ID_FILE_COPY                    107
 #define ID_FILE_DELETE                  108
 #define ID_FILE_EXIT                    115
-#define ID_FORMAT_DISK                  203
 #define ID_CONNECT_NETWORK_DRIVE        252
 #define ID_DISCONNECT_NETWORK_DRIVE     253
 #define ID_VIEW_NAME                    401

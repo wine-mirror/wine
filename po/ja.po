@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "指定されていません"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:117
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:115
 msgid "Name"
 msgstr "名前"
 
@@ -166,7 +166,7 @@ msgstr "お気に入り"
 msgid "System Path"
 msgstr "システム パス"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:108
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:106
 msgid "Desktop"
 msgstr "Desktop"
 
@@ -6178,7 +6178,7 @@ msgstr "ファイル(&F)"
 msgid "&New"
 msgstr "新規(&N)"
 
-#: shdocvw.rc:29 winefile.rc:78
+#: shdocvw.rc:29 winefile.rc:76
 msgid "&Window"
 msgstr "ウィンドウ(&W)"
 
@@ -6211,7 +6211,7 @@ msgid "&Close"
 msgstr "閉じる(&C)"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:65 taskmgr.rc:52 winefile.rc:51 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "表示(&V)"
 
@@ -6236,7 +6236,7 @@ msgid "&Add to Favorites..."
 msgstr "お気に入りに追加(&A)..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:78 taskmgr.rc:87 winefile.rc:87 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "ヘルプ(&H)"
 
@@ -6340,7 +6340,7 @@ msgstr "終了(&X)"
 msgid "&About Control Panel..."
 msgstr "コントロール パネルについて(&A)..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:118
+#: shell32.rc:123 shell32.rc:127 winefile.rc:116
 msgid "Size"
 msgstr "サイズ"
 
@@ -6352,7 +6352,7 @@ msgstr "型"
 msgid "Modified"
 msgstr "更新日時"
 
-#: shell32.rc:126 winefile.rc:124
+#: shell32.rc:126 winefile.rc:122
 msgid "Attributes"
 msgstr "属性"
 
@@ -6520,7 +6520,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Contacts"
 
-#: shell32.rc:216 winefile.rc:123
+#: shell32.rc:216 winefile.rc:121
 msgid "Links"
 msgstr "Links"
 
@@ -6775,7 +6775,7 @@ msgstr "閉じる(&C)\tAlt-F4"
 msgid "&About Wine..."
 msgstr "Wineについて(&A)..."
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:105
+#: user32.rc:55 regedit.rc:182 winefile.rc:103
 msgid "Error"
 msgstr "エラー"
 
@@ -7662,7 +7662,7 @@ msgstr "アナログ(&L)"
 msgid "Digi&tal"
 msgstr "デジタル(&T)"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:66 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
 msgstr "フォント(&F)..."
 
@@ -8768,15 +8768,15 @@ msgstr "上級モード(&E)"
 msgid "&Hidden component categories"
 msgstr "隠されたコンポーネントのカテゴリ(&H)"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:68 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
 msgid "&Toolbar"
 msgstr "ツール バー(&T)"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:70
+#: oleview.rc:65 oleview.rc:87 winefile.rc:68
 msgid "&Status Bar"
 msgstr "ステータス バー(&S)"
 
-#: oleview.rc:67 regedit.rc:71 winefile.rc:84
+#: oleview.rc:67 regedit.rc:71 winefile.rc:82
 msgid "&Refresh\tF5"
 msgstr "更新(&R)\tF5"
 
@@ -9001,7 +9001,7 @@ msgstr "実行(&E)..."
 msgid "E&xit Windows..."
 msgstr "Windowsの終了(&X)..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:65 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "オプション(&O)"
 
@@ -9013,7 +9013,7 @@ msgstr "自動整列(&A)"
 msgid "&Minimize on run"
 msgstr "実行時に最小化(&M)"
 
-#: progman.rc:44 winefile.rc:75
+#: progman.rc:44 winefile.rc:73
 msgid "&Save settings on exit"
 msgstr "終了時に設定を保存(&S)"
 
@@ -9225,7 +9225,7 @@ msgstr "次の検索候補(&x)\tF3"
 msgid "Status &Bar"
 msgstr "ステータスバー(&B)"
 
-#: regedit.rc:69 winefile.rc:52
+#: regedit.rc:69 winefile.rc:50
 msgid "Sp&lit"
 msgstr "分割(&L)"
 
@@ -9233,7 +9233,7 @@ msgstr "分割(&L)"
 msgid "&Remove Favorite..."
 msgstr "お気に入りから削除(&R)..."
 
-#: regedit.rc:80 winefile.rc:88
+#: regedit.rc:80 winefile.rc:86
 msgid "&Help Topics\tF1"
 msgstr "ヘルプ(&H)\tF1"
 
@@ -9671,7 +9671,7 @@ msgstr "CPU ごとに 1 グラフ(&P)"
 msgid "&Show Kernel Times"
 msgstr "カーネル時間を表示する(&S)"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:81
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:79
 msgid "Tile &Horizontally"
 msgstr "上下に並べて表示(&H)"
 
@@ -10750,138 +10750,134 @@ msgid "&Disk"
 msgstr "ディスク(&D)"
 
 #: winefile.rc:45
-msgid "&Format Disk..."
-msgstr "ディスクをフォーマット(&F)..."
-
-#: winefile.rc:47
 msgid "Connect &Network Drive"
 msgstr "ネットワークドライブに接続(&N)"
 
-#: winefile.rc:48
+#: winefile.rc:46
 msgid "&Disconnect Network Drive"
 msgstr "ネットワークドライブを切断(&D)"
 
-#: winefile.rc:54
+#: winefile.rc:52
 msgid "&Name"
 msgstr "名前(&N)"
 
-#: winefile.rc:55
+#: winefile.rc:53
 msgid "&All File Details"
 msgstr "すべてのファイル詳細(&A)"
 
-#: winefile.rc:57
+#: winefile.rc:55
 msgid "&Sort by Name"
 msgstr "名前で並べ替え(&S)"
 
-#: winefile.rc:58
+#: winefile.rc:56
 msgid "Sort &by Type"
 msgstr "種類で並べ替え(&B)"
 
-#: winefile.rc:59
+#: winefile.rc:57
 msgid "Sort by Si&ze"
 msgstr "サイズで並べ替え(&Z)"
 
-#: winefile.rc:60
+#: winefile.rc:58
 msgid "Sort by &Date"
 msgstr "日付で並べ替え(&D)"
 
-#: winefile.rc:62
+#: winefile.rc:60
 msgid "Filter by &..."
 msgstr "Filter by &..."
 
-#: winefile.rc:69
+#: winefile.rc:67
 msgid "&Drivebar"
 msgstr "ドライブバー(&D)"
 
-#: winefile.rc:72
+#: winefile.rc:70
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr "全画面表示(&U)\tCtrl+Shift+S"
 
-#: winefile.rc:79
+#: winefile.rc:77
 msgid "New &Window"
 msgstr "新規ウィンドウ(&W)"
 
-#: winefile.rc:80
+#: winefile.rc:78
 msgid "Cascading\tCtrl+F5"
 msgstr "重ねて表示\tCtrl+F5"
 
-#: winefile.rc:82
+#: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "左右に並べて表示(&V)\tCtrl+F4"
 
-#: winefile.rc:83
+#: winefile.rc:81
 msgid "Arrange &Symbols"
 msgstr "Arrange &Symbols"
 
-#: winefile.rc:89
+#: winefile.rc:87
 msgid "Help &Search...\tF1"
 msgstr "ヘルプの検索(&S)...\tF1"
 
-#: winefile.rc:90
+#: winefile.rc:88
 msgid "&Using Help\tF1"
 msgstr "ヘルプを使う(&U)\tF1"
 
-#: winefile.rc:92
+#: winefile.rc:90
 msgid "&About Winefile..."
 msgstr "Winefile について(&A)..."
 
-#: winefile.rc:98
+#: winefile.rc:96
 msgid "Applying font settings"
 msgstr "Applying font settings"
 
-#: winefile.rc:99
+#: winefile.rc:97
 msgid "Error while selecting new font."
 msgstr "Error while selecting new font."
 
-#: winefile.rc:104
+#: winefile.rc:102
 msgid "Wine File Manager"
 msgstr "Wine ファイルマネージャ"
 
-#: winefile.rc:106
+#: winefile.rc:104
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:107
+#: winefile.rc:105
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:109
+#: winefile.rc:107
 msgid "Shell"
 msgstr "シェル"
 
-#: winefile.rc:110
+#: winefile.rc:108
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:111
+#: winefile.rc:109
 msgid "Not yet implemented"
 msgstr "未実装"
 
-#: winefile.rc:112
+#: winefile.rc:110
 msgid "Wine File"
 msgstr "Wine File"
 
-#: winefile.rc:119
+#: winefile.rc:117
 msgid "CDate"
 msgstr "CDate"
 
-#: winefile.rc:120
+#: winefile.rc:118
 msgid "ADate"
 msgstr "ADate"
 
-#: winefile.rc:121
+#: winefile.rc:119
 msgid "MDate"
 msgstr "MDate"
 
-#: winefile.rc:122
+#: winefile.rc:120
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:125
+#: winefile.rc:123
 msgid "Security"
 msgstr "セキュリティ"
 
-#: winefile.rc:127
+#: winefile.rc:125
 msgid "%s of %s free"
 msgstr "%s of %s free"
 

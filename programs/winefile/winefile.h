@@ -44,7 +44,7 @@
 #include <time.h>
 
 #include <shellapi.h>   /* for ShellExecuteW() */
-#include <shlobj.h>     /* for SHFormatDrive() */
+#include <shlobj.h>
 
 #ifndef _NO_EXTENSIONS
 #define _SHELL_FOLDERS

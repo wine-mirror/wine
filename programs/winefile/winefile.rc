@@ -42,8 +42,6 @@ IDM_WINEFILE MENU
     }
 
     POPUP "&Disk"  {
-        MENUITEM "&Format Disk...",             ID_FORMAT_DISK
-        MENUITEM SEPARATOR
         MENUITEM "Connect &Network Drive",      ID_CONNECT_NETWORK_DRIVE
         MENUITEM "&Disconnect Network Drive",   ID_DISCONNECT_NETWORK_DRIVE
     }

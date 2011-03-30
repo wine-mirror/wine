@@ -39,7 +39,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Не зазначено"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:117
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:115
 msgid "Name"
 msgstr "Назва"
 
@@ -164,7 +164,7 @@ msgstr "Закладки"
 msgid "System Path"
 msgstr "Системний шлях"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:108
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:106
 msgid "Desktop"
 msgstr "Робочий стіл"
 
@@ -6204,7 +6204,7 @@ msgstr "&Файл"
 msgid "&New"
 msgstr "&Новий"
 
-#: shdocvw.rc:29 winefile.rc:78
+#: shdocvw.rc:29 winefile.rc:76
 msgid "&Window"
 msgstr "Ві&кно"
 
@@ -6237,7 +6237,7 @@ msgid "&Close"
 msgstr "За&крити"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:65 taskmgr.rc:52 winefile.rc:51 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&Вигляд"
 
@@ -6262,7 +6262,7 @@ msgid "&Add to Favorites..."
 msgstr "&Додати до Обраного..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:78 taskmgr.rc:87 winefile.rc:87 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "&Довідка"
 
@@ -6366,7 +6366,7 @@ msgstr "В&ихід"
 msgid "&About Control Panel..."
 msgstr "&Про панель керування..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:118
+#: shell32.rc:123 shell32.rc:127 winefile.rc:116
 msgid "Size"
 msgstr "Розмір"
 
@@ -6378,7 +6378,7 @@ msgstr "Тип"
 msgid "Modified"
 msgstr "Змінено"
 
-#: shell32.rc:126 winefile.rc:124
+#: shell32.rc:126 winefile.rc:122
 msgid "Attributes"
 msgstr "Атрибути"
 
@@ -6546,7 +6546,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Контакти"
 
-#: shell32.rc:216 winefile.rc:123
+#: shell32.rc:216 winefile.rc:121
 msgid "Links"
 msgstr "Посилання"
 
@@ -6801,7 +6801,7 @@ msgstr "&Закрити\tAlt-F4"
 msgid "&About Wine..."
 msgstr "Пр&о проект Wine..."
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:105
+#: user32.rc:55 regedit.rc:182 winefile.rc:103
 msgid "Error"
 msgstr "Помилка"
 
@@ -7692,7 +7692,7 @@ msgstr "&Анало&говий"
 msgid "Digi&tal"
 msgstr "&Ци&фровий"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:66 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
 msgstr "&Шрифт..."
 
@@ -8789,15 +8789,15 @@ msgstr "&Режим експерта"
 msgid "&Hidden component categories"
 msgstr "&Приховані категорії компонентів"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:68 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
 msgid "&Toolbar"
 msgstr "Панель &інструментів"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:70
+#: oleview.rc:65 oleview.rc:87 winefile.rc:68
 msgid "&Status Bar"
 msgstr "Рядок &стану"
 
-#: oleview.rc:67 regedit.rc:71 winefile.rc:84
+#: oleview.rc:67 regedit.rc:71 winefile.rc:82
 msgid "&Refresh\tF5"
 msgstr "&Оновити\tF5"
 
@@ -9023,7 +9023,7 @@ msgstr "&Виконати..."
 msgid "E&xit Windows..."
 msgstr "Ви&хід..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:65 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Параметри"
 
@@ -9035,7 +9035,7 @@ msgstr "&Впорядкувати автоматично"
 msgid "&Minimize on run"
 msgstr "З&горнути при старті"
 
-#: progman.rc:44 winefile.rc:75
+#: progman.rc:44 winefile.rc:73
 msgid "&Save settings on exit"
 msgstr "Зберегти &налаштування при виході"
 
@@ -9248,7 +9248,7 @@ msgstr "З&найти далі\tF3"
 msgid "Status &Bar"
 msgstr "Рядок С&тану"
 
-#: regedit.rc:69 winefile.rc:52
+#: regedit.rc:69 winefile.rc:50
 msgid "Sp&lit"
 msgstr "Розд&ілити"
 
@@ -9256,7 +9256,7 @@ msgstr "Розд&ілити"
 msgid "&Remove Favorite..."
 msgstr "&Видалити з Обраного..."
 
-#: regedit.rc:80 winefile.rc:88
+#: regedit.rc:80 winefile.rc:86
 msgid "&Help Topics\tF1"
 msgstr "&Розділи довідки\tF1"
 
@@ -9693,7 +9693,7 @@ msgstr "Графік для &кожного ЦП"
 msgid "&Show Kernel Times"
 msgstr "&Показати час ядра"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:81
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:79
 #, fuzzy
 msgid "Tile &Horizontally"
 msgstr ""
@@ -10774,138 +10774,134 @@ msgid "&Disk"
 msgstr "&Диск"
 
 #: winefile.rc:45
-msgid "&Format Disk..."
-msgstr "&Форматувати диск..."
-
-#: winefile.rc:47
 msgid "Connect &Network Drive"
 msgstr "&Підключити мережний диск"
 
-#: winefile.rc:48
+#: winefile.rc:46
 msgid "&Disconnect Network Drive"
 msgstr "&Відключити мережний диск"
 
-#: winefile.rc:54
+#: winefile.rc:52
 msgid "&Name"
 msgstr "&Ім'я"
 
-#: winefile.rc:55
+#: winefile.rc:53
 msgid "&All File Details"
 msgstr "Всі дані про фай&л"
 
-#: winefile.rc:57
+#: winefile.rc:55
 msgid "&Sort by Name"
 msgstr "&Сортувати за ім'ям"
 
-#: winefile.rc:58
+#: winefile.rc:56
 msgid "Sort &by Type"
 msgstr "Сортувати за &типом"
 
-#: winefile.rc:59
+#: winefile.rc:57
 msgid "Sort by Si&ze"
 msgstr "Сортувати за ро&зміром"
 
-#: winefile.rc:60
+#: winefile.rc:58
 msgid "Sort by &Date"
 msgstr "Сортувати за  д&атою"
 
-#: winefile.rc:62
+#: winefile.rc:60
 msgid "Filter by &..."
 msgstr "Сортувати за &..."
 
-#: winefile.rc:69
+#: winefile.rc:67
 msgid "&Drivebar"
 msgstr "Панель &дисків"
 
-#: winefile.rc:72
+#: winefile.rc:70
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr "В&есь екран\tCtrl+Shift+S"
 
-#: winefile.rc:79
+#: winefile.rc:77
 msgid "New &Window"
 msgstr "Нове &Вікно"
 
-#: winefile.rc:80
+#: winefile.rc:78
 msgid "Cascading\tCtrl+F5"
 msgstr "Вікна каскадом\tCtrl+F5"
 
-#: winefile.rc:82
+#: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Вікна зліва &направо\tCtrl+F4"
 
-#: winefile.rc:83
+#: winefile.rc:81
 msgid "Arrange &Symbols"
 msgstr "Розмістити &Символи"
 
-#: winefile.rc:89
+#: winefile.rc:87
 msgid "Help &Search...\tF1"
 msgstr "По&шук...\tF1"
 
-#: winefile.rc:90
+#: winefile.rc:88
 msgid "&Using Help\tF1"
 msgstr "&Користування довідкою\tF1"
 
-#: winefile.rc:92
+#: winefile.rc:90
 msgid "&About Winefile..."
 msgstr "&Про Winefile..."
 
-#: winefile.rc:98
+#: winefile.rc:96
 msgid "Applying font settings"
 msgstr "Застосування параметрів шрифта"
 
-#: winefile.rc:99
+#: winefile.rc:97
 msgid "Error while selecting new font."
 msgstr "Помилка при виборі нового шрифта."
 
-#: winefile.rc:104
+#: winefile.rc:102
 msgid "Wine File Manager"
 msgstr "Файловий Менеджер Wine"
 
-#: winefile.rc:106
+#: winefile.rc:104
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:107
+#: winefile.rc:105
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:109
+#: winefile.rc:107
 msgid "Shell"
 msgstr "Shell"
 
-#: winefile.rc:110
+#: winefile.rc:108
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:111
+#: winefile.rc:109
 msgid "Not yet implemented"
 msgstr "Ще не реалізовано"
 
-#: winefile.rc:112
+#: winefile.rc:110
 msgid "Wine File"
 msgstr "Wine File"
 
-#: winefile.rc:119
+#: winefile.rc:117
 msgid "CDate"
 msgstr "Дата створення"
 
-#: winefile.rc:120
+#: winefile.rc:118
 msgid "ADate"
 msgstr "Дата останнього доступу"
 
-#: winefile.rc:121
+#: winefile.rc:119
 msgid "MDate"
 msgstr "Дата останньої зміни"
 
-#: winefile.rc:122
+#: winefile.rc:120
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:125
+#: winefile.rc:123
 msgid "Security"
 msgstr "Безпека"
 
-#: winefile.rc:127
+#: winefile.rc:125
 msgid "%s of %s free"
 msgstr "%s з %s вільно"
 

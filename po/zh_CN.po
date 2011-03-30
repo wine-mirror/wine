@@ -37,7 +37,7 @@ msgstr "不能运行卸载程序 '%s'. 你想把这个卸载程序从注册表�
 msgid "Not specified"
 msgstr "没指定"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:117
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:115
 msgid "Name"
 msgstr "名称"
 
@@ -170,7 +170,7 @@ msgstr "收藏夹"
 msgid "System Path"
 msgstr "系统路径"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:108
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:106
 msgid "Desktop"
 msgstr "桌面"
 
@@ -6378,7 +6378,7 @@ msgstr "文件(&F)"
 msgid "&New"
 msgstr "新建(&N)"
 
-#: shdocvw.rc:29 winefile.rc:78
+#: shdocvw.rc:29 winefile.rc:76
 msgid "&Window"
 msgstr "窗口(&W)"
 
@@ -6415,7 +6415,7 @@ msgid "&Close"
 msgstr "关闭(&C)"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:65 taskmgr.rc:52 winefile.rc:51 wordpad.rc:66
+#: regedit.rc:65 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -6451,7 +6451,7 @@ msgid "&Add to Favorites..."
 msgstr "添加到收藏夹(&A)..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:78 taskmgr.rc:87 winefile.rc:87 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:78 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:60 wordpad.rc:91
 msgid "&Help"
 msgstr "帮助(&H)"
 
@@ -6576,7 +6576,7 @@ msgstr ""
 msgid "&About Control Panel..."
 msgstr "关于控制面板(&A)..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:118
+#: shell32.rc:123 shell32.rc:127 winefile.rc:116
 msgid "Size"
 msgstr "大小"
 
@@ -6588,7 +6588,7 @@ msgstr "类型"
 msgid "Modified"
 msgstr "修改"
 
-#: shell32.rc:126 winefile.rc:124
+#: shell32.rc:126 winefile.rc:122
 msgid "Attributes"
 msgstr "属性"
 
@@ -6756,7 +6756,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Contacts"
 
-#: shell32.rc:216 winefile.rc:123
+#: shell32.rc:216 winefile.rc:121
 msgid "Links"
 msgstr "Links"
 
@@ -7009,7 +7009,7 @@ msgstr "关闭(&N)\tAlt-F4"
 msgid "&About Wine..."
 msgstr "关于Wine (&A)..."
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:105
+#: user32.rc:55 regedit.rc:182 winefile.rc:103
 msgid "Error"
 msgstr "错误"
 
@@ -7792,7 +7792,7 @@ msgstr "模拟时钟(&L)"
 msgid "Digi&tal"
 msgstr "数字时钟(&T)"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:66 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
 #, fuzzy
 msgid "&Font..."
 msgstr ""
@@ -8727,7 +8727,7 @@ msgstr "专家模式(&E)"
 msgid "&Hidden component categories"
 msgstr "隐藏部件分类(&H)"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:68 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
 #, fuzzy
 msgid "&Toolbar"
 msgstr ""
@@ -8736,11 +8736,11 @@ msgstr ""
 "#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
 "工具栏(&T)"
 
-#: oleview.rc:65 oleview.rc:87 winefile.rc:70
+#: oleview.rc:65 oleview.rc:87 winefile.rc:68
 msgid "&Status Bar"
 msgstr "状态栏(&S)"
 
-#: oleview.rc:67 regedit.rc:71 winefile.rc:84
+#: oleview.rc:67 regedit.rc:71 winefile.rc:82
 msgid "&Refresh\tF5"
 msgstr "刷新(&R)\tF5"
 
@@ -8966,7 +8966,7 @@ msgstr "执行(&E)..."
 msgid "E&xit Windows..."
 msgstr "退出 Windows(&X)..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:65 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
 msgid "&Options"
 msgstr "选项(&O)"
 
@@ -8983,7 +8983,7 @@ msgstr ""
 "#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
 "启动后最小化(&M)"
 
-#: progman.rc:44 winefile.rc:75
+#: progman.rc:44 winefile.rc:73
 msgid "&Save settings on exit"
 msgstr "退出时保存设置(&S)"
 
@@ -9195,7 +9195,7 @@ msgstr "查找下一个(&X)\tF3"
 msgid "Status &Bar"
 msgstr "状态栏(&B)"
 
-#: regedit.rc:69 winefile.rc:52
+#: regedit.rc:69 winefile.rc:50
 #, fuzzy
 msgid "Sp&lit"
 msgstr ""
@@ -9208,7 +9208,7 @@ msgstr ""
 msgid "&Remove Favorite..."
 msgstr "删除收藏(&R)..."
 
-#: regedit.rc:80 winefile.rc:88
+#: regedit.rc:80 winefile.rc:86
 #, fuzzy
 msgid "&Help Topics\tF1"
 msgstr ""
@@ -9608,7 +9608,7 @@ msgstr "每一个 C&PU 各一张图"
 msgid "&Show Kernel Times"
 msgstr "显示内核时间(&S)"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:81
+#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:79
 #, fuzzy
 msgid "Tile &Horizontally"
 msgstr ""
@@ -10683,110 +10683,106 @@ msgid "&Disk"
 msgstr "磁盘(&D)"
 
 #: winefile.rc:45
-msgid "&Format Disk..."
-msgstr "格式化(&)..."
-
-#: winefile.rc:47
 msgid "Connect &Network Drive"
 msgstr "连接网络驱动器(&N)"
 
-#: winefile.rc:48
+#: winefile.rc:46
 msgid "&Disconnect Network Drive"
 msgstr "断开网络驱动器连接(&D)"
 
-#: winefile.rc:54
+#: winefile.rc:52
 msgid "&Name"
 msgstr "文件名称(&N)"
 
-#: winefile.rc:55
+#: winefile.rc:53
 msgid "&All File Details"
 msgstr "文件详情列表(&A)"
 
-#: winefile.rc:57
+#: winefile.rc:55
 msgid "&Sort by Name"
 msgstr "按文件名排序(&S)"
 
-#: winefile.rc:58
+#: winefile.rc:56
 msgid "Sort &by Type"
 msgstr "按类型排序(&B)"
 
-#: winefile.rc:59
+#: winefile.rc:57
 msgid "Sort by Si&ze"
 msgstr "按大小排序(&Z)"
 
-#: winefile.rc:60
+#: winefile.rc:58
 msgid "Sort by &Date"
 msgstr "按日期排序(&D)"
 
-#: winefile.rc:62
+#: winefile.rc:60
 msgid "Filter by &..."
 msgstr "定制排序..."
 
-#: winefile.rc:69
+#: winefile.rc:67
 msgid "&Drivebar"
 msgstr "驱动器列表(&D)"
 
-#: winefile.rc:72
+#: winefile.rc:70
 msgid "F&ull Screen\tCtrl+Shift+S"
 msgstr "全屏(&U)\tCtrl+Shift+S"
 
-#: winefile.rc:79
+#: winefile.rc:77
 msgid "New &Window"
 msgstr "新建(&W)"
 
-#: winefile.rc:80
+#: winefile.rc:78
 msgid "Cascading\tCtrl+F5"
 msgstr "层叠\tCtrl+F5"
 
-#: winefile.rc:82
+#: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "垂直平铺(&)\tCtrl+F4"
 
-#: winefile.rc:83
+#: winefile.rc:81
 msgid "Arrange &Symbols"
 msgstr "自动排列图标(&S)"
 
-#: winefile.rc:89
+#: winefile.rc:87
 msgid "Help &Search...\tF1"
 msgstr "搜索帮助(&S)...\tF1"
 
-#: winefile.rc:90
+#: winefile.rc:88
 msgid "&Using Help\tF1"
 msgstr "使用帮助(&U)\tF1"
 
-#: winefile.rc:92
+#: winefile.rc:90
 msgid "&About Winefile..."
 msgstr "&关于 Winefile..."
 
-#: winefile.rc:98
+#: winefile.rc:96
 msgid "Applying font settings"
 msgstr ""
 
-#: winefile.rc:99
+#: winefile.rc:97
 msgid "Error while selecting new font."
 msgstr ""
 
-#: winefile.rc:104
+#: winefile.rc:102
 msgid "Wine File Manager"
 msgstr ""
 
-#: winefile.rc:106
+#: winefile.rc:104
 msgid "root fs"
 msgstr ""
 
-#: winefile.rc:107
+#: winefile.rc:105
 msgid "unixfs"
 msgstr ""
 
-#: winefile.rc:109
+#: winefile.rc:107
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:110
+#: winefile.rc:108
 msgid "%s - %s"
 msgstr ""
 
-#: winefile.rc:111
+#: winefile.rc:109
 #, fuzzy
 msgid "Not yet implemented"
 msgstr ""
@@ -10795,36 +10791,36 @@ msgstr ""
 "#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
 "未实现"
 
-#: winefile.rc:112
+#: winefile.rc:110
 #, fuzzy
 msgid "Wine File"
 msgstr "Wine地雷"
 
-#: winefile.rc:119
+#: winefile.rc:117
 #, fuzzy
 msgid "CDate"
 msgstr "日期(&D)"
 
-#: winefile.rc:120
+#: winefile.rc:118
 #, fuzzy
 msgid "ADate"
 msgstr "日期(&D)"
 
-#: winefile.rc:121
+#: winefile.rc:119
 #, fuzzy
 msgid "MDate"
 msgstr "日期(&D)"
 
-#: winefile.rc:122
+#: winefile.rc:120
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:125
+#: winefile.rc:123
 #, fuzzy
 msgid "Security"
 msgstr "安全(&S)"
 
-#: winefile.rc:127
+#: winefile.rc:125
 msgid "%s of %s free"
 msgstr ""
 
