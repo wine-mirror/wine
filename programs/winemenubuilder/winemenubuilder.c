@@ -2055,7 +2055,7 @@ static BOOL cleanup_associations(void)
     {
         int i;
         BOOL done = FALSE;
-        for (i = 0; !done; i++)
+        for (i = 0; !done;)
         {
             WCHAR *extensionW = NULL;
             DWORD size = 1024;
@@ -2091,6 +2091,8 @@ static BOOL cleanup_associations(void)
                     hasChanged = TRUE;
                     HeapFree(GetProcessHeap(), 0, desktopFile);
                 }
+                else
+                    i++;
                 HeapFree(GetProcessHeap(), 0, command);
             }
             else
