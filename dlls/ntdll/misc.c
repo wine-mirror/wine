@@ -253,7 +253,6 @@ double CDECL NTDLL_tan( double d )
 }
 
 
-/* Merge Sort. Algorithm taken from http://www.linux-related.de/index.html?/coding/sort/sort_merge.htm */
 static void
 NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(const void *, const void *),
                  size_t left, size_t right )
@@ -265,25 +264,21 @@ NTDLL_mergesort( void *arr, void *barr, size_t elemsize, int(__cdecl *compar)(co
         NTDLL_mergesort( arr, barr, elemsize, compar, m+1, right);
 
 #define X(a,i) ((char*)a+elemsize*(i))
-        for (i=m+1; i>left; i--)
-            memcpy (X(barr,(i-1)),X(arr,(i-1)),elemsize);
-        for (j=m; j<right; j++)
-            memcpy (X(barr,(right+m-j)),X(arr,(j+1)),elemsize);
-
-        /* i=left; j=right; */
-        for (k=left; i<=m && j>m; k++) {
-            if (i==j || compar(X(barr,i),X(barr,j))<=0) {
-                memcpy(X(arr,k),X(barr,i),elemsize);
+        for (k=left, i=left, j=m+1; i<=m && j<=right; k++) {
+            if (compar(X(arr, i), X(arr,j)) <= 0) {
+                memcpy(X(barr,k), X(arr, i), elemsize);
                 i++;
             } else {
-                memcpy(X(arr,k),X(barr,j),elemsize);
-                j--;
+                memcpy(X(barr,k), X(arr, j), elemsize);
+                j++;
             }
         }
-        for (; i<=m; i++, k++)
-            memcpy(X(arr,k),X(barr,i),elemsize);
-        for (; j>m; j--, k++)
-            memcpy(X(arr,k),X(barr,j),elemsize);
+        if (i<=m)
+            memcpy(X(barr,k), X(arr,i), (m-i+1)*elemsize);
+        else
+            memcpy(X(barr,k), X(arr,j), (right-j+1)*elemsize);
+
+        memcpy(X(arr, left), X(barr, left), (right-left+1)*elemsize);
     }
 #undef X
 }
