@@ -51,6 +51,6 @@ int  xslpattern_lex_init(void**);
 int  xslpattern_lex_destroy(void*);
 void xslpattern_set_extra(parser_param*, void*);
 int  xslpattern_parse(parser_param*, void*);
-void xslpattern_error(parser_param* param, void const* scanner, char const* msg);
+
 
 #endif /* __XSLPATTERN__ */
