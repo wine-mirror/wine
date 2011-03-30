@@ -74,6 +74,12 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CHECK_CALLED_BROKEN(func) \
+    do { \
+        ok(called_ ## func || broken(!called_ ## func), "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 static IOleDocumentView *view = NULL;
 static HWND container_hwnd = NULL, hwnd = NULL, last_hwnd = NULL;
 
@@ -1213,7 +1219,7 @@ static void continue_binding(IBindStatusCallback *callback)
             BINDSTATUS_BEGINDOWNLOADDATA, doc_url);
     ok(hres == S_OK, "OnProgress(BINDSTATUS_BEGINDOWNLOADDATA) failed: %08x\n", hres);
     if(status_code != HTTP_STATUS_OK) {
-        CHECK_CALLED(IsErrorUrl);
+        CHECK_CALLED_BROKEN(IsErrorUrl);
         SET_EXPECT(IsErrorUrl);
     }
 
@@ -3928,7 +3934,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Exec_ShellDocView_37);
-        todo_wine CHECK_CALLED(IsErrorUrl);
+        todo_wine CHECK_CALLED_BROKEN(IsErrorUrl);
     }
     else
         todo_wine CHECK_CALLED(GetTravelLog);
@@ -4068,18 +4074,18 @@ static void test_download(DWORD flags)
     CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
     CHECK_CALLED(Exec_HTTPEQUIV_DONE);
     SET_CALLED(SetStatusText);
-    if(nav_url) { /* avoiding race, FIXME: fund better way */
+    if(nav_url) { /* avoiding race, FIXME: find better way */
         SET_CALLED(UpdateUI);
         SET_CALLED(Exec_UPDATECOMMANDS);
         SET_CALLED(Exec_SETTITLE);
-        todo_wine CHECK_CALLED(UpdateBackForwardState);
+        todo_wine CHECK_CALLED_BROKEN(UpdateBackForwardState);
     }
     if(!editmode && !(flags & DWL_EMPTY))
         todo_wine CHECK_CALLED(FireNavigateComplete2);
     if(!editmode)
         CHECK_CALLED(FireDocumentComplete);
     todo_wine CHECK_CALLED(ActiveElementChanged);
-    todo_wine CHECK_CALLED(IsErrorUrl);
+    todo_wine CHECK_CALLED_BROKEN(IsErrorUrl);
 
     load_state = LD_COMPLETE;
 
