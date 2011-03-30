@@ -2546,7 +2546,7 @@ static void test_register_product(void)
     res = RegOpenKeyA(HKEY_CURRENT_USER, userugkey, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall_32node, 0, KEY_ALL_ACCESS, &hkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -2653,7 +2653,7 @@ static void test_register_product(void)
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, userugkey, 0, access, &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, uninstall_32node, 0, KEY_ALL_ACCESS, &hkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -3616,7 +3616,7 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -3699,7 +3699,7 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -3759,7 +3759,7 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -3819,7 +3819,7 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -3902,7 +3902,7 @@ static void test_publish(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
     {
         res = RegOpenKeyExA(uninstall_32node, prodcode, 0, KEY_ALL_ACCESS, &prodkey);
         ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
@@ -4550,7 +4550,7 @@ static void test_write_registry_values(void)
     ok(delete_pf("msitest\\augustus", TRUE), "File installed\n");
     ok(delete_pf("msitest", FALSE), "File installed\n");
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wow6432Node\\Wine\\msitest", 0, KEY_ALL_ACCESS, &hkey);
     else
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", 0, KEY_ALL_ACCESS, &hkey);
@@ -5318,7 +5318,7 @@ static void test_remove_registry_values(void)
     ok(res == ERROR_SUCCESS, "key removed\n");
     RegCloseKey(key);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Wine\\key2", 0, KEY_ALL_ACCESS, &key);
         ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
@@ -5336,7 +5336,7 @@ static void test_remove_registry_values(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Wine\\key1", 0, KEY_ALL_ACCESS, &key);
         ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
@@ -5355,7 +5355,7 @@ static void test_remove_registry_values(void)
     ok(res == ERROR_SUCCESS, "key removed\n");
     RegCloseKey(key);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
     {
         res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wow6432Node\\Wine\\keyB", 0, KEY_ALL_ACCESS, &key);
         ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
@@ -5649,7 +5649,7 @@ static void test_register_class_info(void)
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
         res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Wow6432Node\\CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
     else
         res = RegOpenKeyA(HKEY_CLASSES_ROOT, "CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
@@ -5667,7 +5667,7 @@ static void test_register_class_info(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    if (is_64bit && !is_wow64)
+    if (is_64bit)
         res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Wow6432Node\\CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
     else
         res = RegOpenKeyA(HKEY_CLASSES_ROOT, "CLSID\\{110913E7-86D1-4BF3-9922-BA103FCDDDFA}", &hkey);
