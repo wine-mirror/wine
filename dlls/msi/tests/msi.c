@@ -11753,6 +11753,47 @@ static void test_MsiEnumProducts(void)
     LocalFree(usersid);
 }
 
+static void test_MsiGetFileSignatureInformation(void)
+{
+    HRESULT hr;
+    const CERT_CONTEXT *cert;
+    DWORD len;
+
+    hr = MsiGetFileSignatureInformationA( NULL, 0, NULL, NULL, NULL );
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG got 0x%08x\n", hr);
+
+    hr = MsiGetFileSignatureInformationA( NULL, 0, NULL, NULL, &len );
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG got 0x%08x\n", hr);
+
+    hr = MsiGetFileSignatureInformationA( NULL, 0, &cert, NULL, &len );
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG got 0x%08x\n", hr);
+
+    hr = MsiGetFileSignatureInformationA( "", 0, NULL, NULL, NULL );
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG got 0x%08x\n", hr);
+
+    hr = MsiGetFileSignatureInformationA( "signature.bin", 0, NULL, NULL, NULL );
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG got 0x%08x\n", hr);
+
+    hr = MsiGetFileSignatureInformationA( "signature.bin", 0, NULL, NULL, &len );
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG got 0x%08x\n", hr);
+
+    hr = MsiGetFileSignatureInformationA( "signature.bin", 0, &cert, NULL, &len );
+    todo_wine ok(hr == CRYPT_E_FILE_ERROR, "expected CRYPT_E_FILE_ERROR got 0x%08x\n", hr);
+
+    create_file( "signature.bin", "signature", sizeof("signature") );
+
+    hr = MsiGetFileSignatureInformationA( "signature.bin", 0, NULL, NULL, NULL );
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG got 0x%08x\n", hr);
+
+    hr = MsiGetFileSignatureInformationA( "signature.bin", 0, NULL, NULL, &len );
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG got 0x%08x\n", hr);
+
+    hr = MsiGetFileSignatureInformationA( "signature.bin", 0, &cert, NULL, &len );
+    todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FUNCTION_FAILED), "got 0x%08x\n", hr);
+
+    DeleteFileA( "signature.bin" );
+}
+
 START_TEST(msi)
 {
     init_functionpointers();
@@ -11786,6 +11827,6 @@ START_TEST(msi)
         test_MsiGetPatchInfo();
         test_MsiEnumProducts();
     }
-
     test_MsiGetFileVersion();
+    test_MsiGetFileSignatureInformation();
 }

@@ -28,7 +28,6 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "shlwapi.h"
-#include "wine/debug.h"
 #include "msi.h"
 #include "msidefs.h"
 #include "msiquery.h"
@@ -39,6 +38,10 @@
 #include "shlobj.h"
 #include "shobjidl.h"
 #include "objidl.h"
+#include "wintrust.h"
+#include "softpub.h"
+
+#include "wine/debug.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -2261,22 +2264,71 @@ UINT WINAPI MsiProvideComponentFromDescriptorW( LPCWSTR szDescriptor,
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-HRESULT WINAPI MsiGetFileSignatureInformationA( LPCSTR szSignedObjectPath,
-                DWORD dwFlags, PCCERT_CONTEXT* ppcCertContext, LPBYTE pbHashData,
-                LPDWORD pcbHashData)
+HRESULT WINAPI MsiGetFileSignatureInformationA( LPCSTR path, DWORD flags, PCCERT_CONTEXT *cert,
+                                                LPBYTE hash, LPDWORD hashlen )
 {
-    FIXME("%s %08x %p %p %p\n", debugstr_a(szSignedObjectPath), dwFlags,
-          ppcCertContext, pbHashData, pcbHashData);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    UINT r;
+    WCHAR *pathW = NULL;
+
+    TRACE("%s %08x %p %p %p\n", debugstr_a(path), flags, cert, hash, hashlen);
+
+    if (path && !(pathW = strdupAtoW( path ))) return ERROR_OUTOFMEMORY;
+    r = MsiGetFileSignatureInformationW( pathW, flags, cert, hash, hashlen );
+    msi_free( pathW );
+    return r;
 }
 
-HRESULT WINAPI MsiGetFileSignatureInformationW( LPCWSTR szSignedObjectPath,
-                DWORD dwFlags, PCCERT_CONTEXT* ppcCertContext, LPBYTE pbHashData,
-                LPDWORD pcbHashData)
+HRESULT WINAPI MsiGetFileSignatureInformationW( LPCWSTR path, DWORD flags, PCCERT_CONTEXT *cert,
+                                                LPBYTE hash, LPDWORD hashlen )
 {
-    FIXME("%s %08x %p %p %p\n", debugstr_w(szSignedObjectPath), dwFlags,
-          ppcCertContext, pbHashData, pcbHashData);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    static GUID generic_verify_v2 = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+    HRESULT hr;
+    WINTRUST_DATA data;
+    WINTRUST_FILE_INFO info;
+    CRYPT_PROVIDER_SGNR *signer;
+    CRYPT_PROVIDER_CERT *provider;
+
+    TRACE("%s %08x %p %p %p\n", debugstr_w(path), flags, cert, hash, hashlen);
+
+    if (!path || !cert) return E_INVALIDARG;
+
+    info.cbStruct       = sizeof(info);
+    info.pcwszFilePath  = path;
+    info.hFile          = NULL;
+    info.pgKnownSubject = NULL;
+
+    data.cbStruct            = sizeof(data);
+    data.pPolicyCallbackData = NULL;
+    data.pSIPClientData      = NULL;
+    data.dwUIChoice          = WTD_UI_NONE;
+    data.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
+    data.dwUnionChoice       = WTD_CHOICE_FILE;
+    data.u.pFile             = &info;
+    data.dwStateAction       = WTD_STATEACTION_VERIFY;
+    data.hWVTStateData       = NULL;
+    data.pwszURLReference    = NULL;
+    data.dwProvFlags         = 0;
+    data.dwUIContext         = WTD_UICONTEXT_INSTALL;
+    hr = WinVerifyTrustEx( INVALID_HANDLE_VALUE, &generic_verify_v2, &data );
+    if (FAILED(hr)) return hr;
+
+    signer = WTHelperGetProvSignerFromChain( data.hWVTStateData, 0, FALSE, 0 );
+    if (!signer) return TRUST_E_NOSIGNATURE;
+    if (hash)
+    {
+        DWORD len = signer->psSigner->EncryptedHash.cbData;
+        if (*hashlen < len)
+        {
+            *hashlen = len;
+            return HRESULT_FROM_WIN32(ERROR_MORE_DATA);
+        }
+        memcpy( hash, signer->psSigner->EncryptedHash.pbData, len );
+        *hashlen = len;
+    }
+    provider = WTHelperGetProvCertFromChain( signer, 0 );
+    if (!provider) return TRUST_E_PROVIDER_UNKNOWN;
+    *cert = CertDuplicateCertificateContext( provider->pCert );
+    return S_OK;
 }
 
 /******************************************************************
