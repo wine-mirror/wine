@@ -2684,7 +2684,7 @@ HRESULT WINAPI D3DXCreateEffectFromFileExA(LPDIRECT3DDEVICE9 device, LPCSTR srcf
         return D3DERR_INVALIDCALL;
 
     len = MultiByteToWideChar(CP_ACP, 0, srcfile, -1, NULL, 0);
-    srcfileW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len * sizeof(*srcfileW));
+    srcfileW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*srcfileW));
     MultiByteToWideChar(CP_ACP, 0, srcfile, -1, srcfileW, len);
 
     ret = D3DXCreateEffectFromFileExW(device, srcfileW, defines, include, skipconstants, flags, pool, effect, compilationerrors);
@@ -2821,7 +2821,7 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromFileA(LPCSTR srcfile, const D3DXMACRO
         return D3DERR_INVALIDCALL;
 
     len = MultiByteToWideChar(CP_ACP, 0, srcfile, -1, NULL, 0);
-    srcfileW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len * sizeof(*srcfileW));
+    srcfileW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*srcfileW));
     MultiByteToWideChar(CP_ACP, 0, srcfile, -1, srcfileW, len);
 
     ret = D3DXCreateEffectCompilerFromFileW(srcfileW, defines, include, flags, effectcompiler, parseerrors);
