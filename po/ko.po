@@ -8205,7 +8205,7 @@ msgid "Syntax error\n"
 msgstr "문법 에러\n"
 
 #: cmd.rc:266
-msgid "%s : File Not Found\n"
+msgid "%s: File Not Found\n"
 msgstr "%s :파일을 찾을 수 없습니다\n"
 
 #: cmd.rc:267
@@ -9019,11 +9019,11 @@ msgid "Delete"
 msgstr "지우기"
 
 #: progman.rc:70
-msgid "Delete group `%s' ?"
+msgid "Delete group `%s'?"
 msgstr "그룹 `%s'을 지우겠습니까 ?"
 
 #: progman.rc:71
-msgid "Delete program `%s' ?"
+msgid "Delete program `%s'?"
 msgstr "풀그림 `%s'을 지우겠습니까 ?"
 
 #: progman.rc:72 winhlp32.rc:97
@@ -10108,7 +10108,7 @@ msgstr "Wine 어플리케이션 제거하기"
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "언인스톨 명령 '%s' 실행 실패,  실행파일이 없는 것 같습니다.\n"
 "당신은 레지스트리에서 언인스톨 등록키를 제거하겠습니까 ?"

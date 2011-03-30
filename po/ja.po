@@ -8233,7 +8233,7 @@ msgid "Syntax error\n"
 msgstr "文法エラー\n"
 
 #: cmd.rc:266
-msgid "%s : File Not Found\n"
+msgid "%s: File Not Found\n"
 msgstr "%s : ファイルが見つかりません\n"
 
 #: cmd.rc:267
@@ -9050,11 +9050,11 @@ msgid "Delete"
 msgstr "削除"
 
 #: progman.rc:70
-msgid "Delete group `%s' ?"
+msgid "Delete group `%s'?"
 msgstr "グループ `%s' を削除しますか?"
 
 #: progman.rc:71
-msgid "Delete program `%s' ?"
+msgid "Delete program `%s'?"
 msgstr "プログラム `%s' を削除しますか?"
 
 #: progman.rc:72 winhlp32.rc:97
@@ -10150,7 +10150,7 @@ msgstr "Wine アプリケーション アンインストーラ"
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "アンインストール コマンド '%s' の実行に失敗しました。コマンドが存在しないため"
 "かもしれません。\n"

@@ -8461,7 +8461,8 @@ msgid "Syntax error\n"
 msgstr "Syntax error\n"
 
 #: cmd.rc:266
-msgid "%s : File Not Found\n"
+#, fuzzy
+msgid "%s: File Not Found\n"
 msgstr "%s : File Not Found\n"
 
 #: cmd.rc:267
@@ -9302,11 +9303,11 @@ msgid "Delete"
 msgstr "Smazat"
 
 #: progman.rc:70
-msgid "Delete group `%s' ?"
+msgid "Delete group `%s'?"
 msgstr "Smazat skupinu `%s' ?"
 
 #: progman.rc:71
-msgid "Delete program `%s' ?"
+msgid "Delete program `%s'?"
 msgstr "Smazat program `%s' ?"
 
 #: progman.rc:72 winhlp32.rc:97
@@ -10405,7 +10406,7 @@ msgstr "Deinstalátor"
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "Spuštění příkazu %s selhalo, možná příčína je chybějící aplikace.\n"
 "Přejete si odstranit instalační záznam z registru?"

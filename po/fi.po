@@ -8166,8 +8166,9 @@ msgid "Syntax error\n"
 msgstr ""
 
 #: cmd.rc:266
-msgid "%s : File Not Found\n"
-msgstr ""
+#, fuzzy
+msgid "%s: File Not Found\n"
+msgstr "Tiedostoa ei löydy"
 
 #: cmd.rc:267
 msgid "No help available for %s\n"
@@ -8993,11 +8994,11 @@ msgid "Delete"
 msgstr "P&oista"
 
 #: progman.rc:70
-msgid "Delete group `%s' ?"
+msgid "Delete group `%s'?"
 msgstr ""
 
 #: progman.rc:71
-msgid "Delete program `%s' ?"
+msgid "Delete program `%s'?"
 msgstr ""
 
 #: progman.rc:72 winhlp32.rc:97
@@ -10056,7 +10057,7 @@ msgstr "Wine Sovelluksen Poistaja"
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "Poistokomento '%s' epäonnistui, johtuen ehkä puuttuvasta tiedostosta.\n"
 "Haluatko poistaa ohjelman rekisteristä?"

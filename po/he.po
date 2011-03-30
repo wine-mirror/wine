@@ -8318,7 +8318,8 @@ msgid "Syntax error\n"
 msgstr "Syntax error\n"
 
 #: cmd.rc:266
-msgid "%s : File Not Found\n"
+#, fuzzy
+msgid "%s: File Not Found\n"
 msgstr "%s : File Not Found\n"
 
 #: cmd.rc:267
@@ -9131,11 +9132,13 @@ msgid "Delete"
 msgstr "Delete"
 
 #: progman.rc:70
-msgid "Delete group `%s' ?"
+#, fuzzy
+msgid "Delete group `%s'?"
 msgstr "Delete group `%s' ?"
 
 #: progman.rc:71
-msgid "Delete program `%s' ?"
+#, fuzzy
+msgid "Delete program `%s'?"
 msgstr "Delete program `%s' ?"
 
 #: progman.rc:72 winhlp32.rc:97
@@ -10223,7 +10226,7 @@ msgstr "מסיר התכניות מ־Wine"
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "הפעלת פקודת ההסרה '%s' נכשלה, כנראה עקב חוסר בקובץ הפעלה.\n"
 "האם ברצונך להסיר את רשומת ההסרה מרישומי המערכת ?"

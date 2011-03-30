@@ -8258,7 +8258,7 @@ msgid "Syntax error\n"
 msgstr "Синтаксична помилка\n"
 
 #: cmd.rc:266
-msgid "%s : File Not Found\n"
+msgid "%s: File Not Found\n"
 msgstr "%s : Файл не знайдено\n"
 
 #: cmd.rc:267
@@ -9072,11 +9072,11 @@ msgid "Delete"
 msgstr "Видалити"
 
 #: progman.rc:70
-msgid "Delete group `%s' ?"
+msgid "Delete group `%s'?"
 msgstr "Видалити групу `%s' ?"
 
 #: progman.rc:71
-msgid "Delete program `%s' ?"
+msgid "Delete program `%s'?"
 msgstr "Видалити програму `%s' ?"
 
 #: progman.rc:72 winhlp32.rc:97
@@ -10177,7 +10177,7 @@ msgstr "Видалення додатків Wine"
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "Помилка виконання команди видалення '%s', можливо через відсутність файлу.\n"
 "Видалити дані про встановлення з реєстру ?"

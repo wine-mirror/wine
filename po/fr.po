@@ -8335,7 +8335,7 @@ msgid "Syntax error\n"
 msgstr "Erreur de syntaxe\n"
 
 #: cmd.rc:266
-msgid "%s : File Not Found\n"
+msgid "%s: File Not Found\n"
 msgstr "%s : fichier non trouvé\n"
 
 #: cmd.rc:267
@@ -9160,11 +9160,11 @@ msgid "Delete"
 msgstr "Supprimer"
 
 #: progman.rc:70
-msgid "Delete group `%s' ?"
+msgid "Delete group `%s'?"
 msgstr "Voulez-vous supprimer le groupe « %s » ?"
 
 #: progman.rc:71
-msgid "Delete program `%s' ?"
+msgid "Delete program `%s'?"
 msgstr "Voulez-vous supprimer le programme « %s » ?"
 
 #: progman.rc:72 winhlp32.rc:97
@@ -10281,7 +10281,7 @@ msgstr "Désinstalleur d'applications de Wine"
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "L'exécution de la commande de désinstallation « %s » a échoué, peut-être du "
 "fait d'un exécutable introuvable.\n"

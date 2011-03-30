@@ -8332,7 +8332,7 @@ msgid "Syntax error\n"
 msgstr "Syntaxfel\n"
 
 #: cmd.rc:266
-msgid "%s : File Not Found\n"
+msgid "%s: File Not Found\n"
 msgstr "%s : kunde inte hitta filen\n"
 
 #: cmd.rc:267
@@ -9147,11 +9147,11 @@ msgid "Delete"
 msgstr "Ta bort"
 
 #: progman.rc:70
-msgid "Delete group `%s' ?"
+msgid "Delete group `%s'?"
 msgstr "Ta bort gruppen '%s'?"
 
 #: progman.rc:71
-msgid "Delete program `%s' ?"
+msgid "Delete program `%s'?"
 msgstr "Ta bort programmet '%s'?"
 
 #: progman.rc:72 winhlp32.rc:97
@@ -10247,7 +10247,7 @@ msgstr "Avinstallera Wine-program"
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"

@@ -7975,8 +7975,9 @@ msgid "Syntax error\n"
 msgstr ""
 
 #: cmd.rc:266
-msgid "%s : File Not Found\n"
-msgstr ""
+#, fuzzy
+msgid "%s: File Not Found\n"
+msgstr "ไม่พบแฟ้ม"
 
 #: cmd.rc:267
 msgid "No help available for %s\n"
@@ -8769,11 +8770,11 @@ msgid "Delete"
 msgstr "ลบ\tDel"
 
 #: progman.rc:70
-msgid "Delete group `%s' ?"
+msgid "Delete group `%s'?"
 msgstr ""
 
 #: progman.rc:71
-msgid "Delete program `%s' ?"
+msgid "Delete program `%s'?"
 msgstr ""
 
 #: progman.rc:72 winhlp32.rc:97
@@ -9813,7 +9814,7 @@ msgstr ""
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 
 #: view.rc:33

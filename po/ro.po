@@ -8795,7 +8795,7 @@ msgid "Syntax error\n"
 msgstr "Eroare de sintaxă\n"
 
 #: cmd.rc:266
-msgid "%s : File Not Found\n"
+msgid "%s: File Not Found\n"
 msgstr "%s : fișier negăsit\n"
 
 #: cmd.rc:267
@@ -9670,11 +9670,11 @@ msgid "Delete"
 msgstr "Șterge"
 
 #: progman.rc:70
-msgid "Delete group `%s' ?"
+msgid "Delete group `%s'?"
 msgstr "Se șterge grupul „%s” ?"
 
 #: progman.rc:71
-msgid "Delete program `%s' ?"
+msgid "Delete program `%s'?"
 msgstr "Se șterge programul „%s” ?"
 
 #: progman.rc:72 winhlp32.rc:97
@@ -10792,7 +10792,7 @@ msgstr "Programul de dezinstalare de aplicații Wine"
 msgid ""
 "Execution of uninstall command '%s' failed, perhaps due to missing "
 "executable.\n"
-"Do you want to remove the uninstall entry from the registry ?"
+"Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 "Execuția comenzi de dezinstalare '%s' a eșuat, probabil din lipsa fișierului "
 "executabil.\n"
