@@ -7287,7 +7287,7 @@ static void test_nodeTypedValue(void)
            if (entry->type == (VT_ARRAY|VT_UI1))
            {
                ok(!memcmp( V_BSTR(&value), entry->value, strlen(entry->value)),
-                  "expected %s", entry->value);
+                  "expected %s\n", entry->value);
            }
            else
                ok(lstrcmpW( V_BSTR(&value), _bstr_(entry->value)) == 0,
