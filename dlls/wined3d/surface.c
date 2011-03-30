@@ -1013,7 +1013,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, const struct wined3d_
         IWineD3DDeviceImpl *device = This->resource.device;
         unsigned int i;
 
-        for (i = 0; i < device->numContexts; ++i)
+        for (i = 0; i < device->context_count; ++i)
         {
             context_surface_update(device->contexts[i], This);
         }

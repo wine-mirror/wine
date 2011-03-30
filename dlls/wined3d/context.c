@@ -659,7 +659,7 @@ static void context_enum_surface_fbo_entries(IWineD3DDeviceImpl *device,
 {
     UINT i;
 
-    for (i = 0; i < device->numContexts; ++i)
+    for (i = 0; i < device->context_count; ++i)
     {
         struct wined3d_context *context = device->contexts[i];
         const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -1370,7 +1370,7 @@ struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain,
     }
 
     ctx = pwglCreateContext(hdc);
-    if (device->numContexts)
+    if (device->context_count)
     {
         if (!pwglShareLists(device->contexts[0]->glCtx, ctx))
         {

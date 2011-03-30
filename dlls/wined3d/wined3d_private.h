@@ -1759,7 +1759,7 @@ struct IWineD3DDeviceImpl
 
     /* Context management */
     struct wined3d_context **contexts;
-    UINT                    numContexts;
+    UINT context_count;
 
     /* High level patch management */
 #define PATCHMAP_SIZE 43

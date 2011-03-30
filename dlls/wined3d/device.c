@@ -504,7 +504,8 @@ BOOL device_context_add(IWineD3DDeviceImpl *device, struct wined3d_context *cont
     TRACE("Adding context %p.\n", context);
 
     if (!device->contexts) new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_array));
-    else new_array = HeapReAlloc(GetProcessHeap(), 0, device->contexts, sizeof(*new_array) * (device->numContexts + 1));
+    else new_array = HeapReAlloc(GetProcessHeap(), 0, device->contexts,
+            sizeof(*new_array) * (device->context_count + 1));
 
     if (!new_array)
     {
@@ -512,7 +513,7 @@ BOOL device_context_add(IWineD3DDeviceImpl *device, struct wined3d_context *cont
         return FALSE;
     }
 
-    new_array[device->numContexts++] = context;
+    new_array[device->context_count++] = context;
     device->contexts = new_array;
     return TRUE;
 }
@@ -525,7 +526,7 @@ void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *c
 
     TRACE("Removing context %p.\n", context);
 
-    for (i = 0; i < device->numContexts; ++i)
+    for (i = 0; i < device->context_count; ++i)
     {
         if (device->contexts[i] == context)
         {
@@ -540,15 +541,15 @@ void device_context_remove(IWineD3DDeviceImpl *device, struct wined3d_context *c
         return;
     }
 
-    if (!--device->numContexts)
+    if (!--device->context_count)
     {
         HeapFree(GetProcessHeap(), 0, device->contexts);
         device->contexts = NULL;
         return;
     }
 
-    memmove(&device->contexts[i], &device->contexts[i + 1], (device->numContexts - i) * sizeof(*device->contexts));
-    new_array = HeapReAlloc(GetProcessHeap(), 0, device->contexts, device->numContexts * sizeof(*device->contexts));
+    memmove(&device->contexts[i], &device->contexts[i + 1], (device->context_count - i) * sizeof(*device->contexts));
+    new_array = HeapReAlloc(GetProcessHeap(), 0, device->contexts, device->context_count * sizeof(*device->contexts));
     if (!new_array)
     {
         ERR("Failed to shrink context array. Oh well.\n");
@@ -6283,7 +6284,7 @@ static void delete_opengl_contexts(IWineD3DDeviceImpl *device, IWineD3DSwapChain
 
     context_release(context);
 
-    while (device->numContexts)
+    while (device->context_count)
     {
         context_destroy(device, device->contexts[0]);
     }
@@ -7065,7 +7066,8 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
     BYTE shift;
     UINT i;
 
-    for(i = 0; i < This->numContexts; i++) {
+    for (i = 0; i < This->context_count; ++i)
+    {
         context = This->contexts[i];
         if(isStateDirty(context, rep)) continue;
 
