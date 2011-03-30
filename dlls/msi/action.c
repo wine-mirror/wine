@@ -276,7 +276,7 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
                 break;
             case ' ':
                 state = state_whitespace;
-                if (!count || !len) goto done;
+                if (!count) goto done;
                 in_quotes = 1;
                 break;
             default:
@@ -317,7 +317,7 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
                              BOOL preserve_case )
 {
     LPCWSTR ptr, ptr2;
-    int quotes;
+    int num_quotes;
     DWORD len;
     WCHAR *prop, *val;
     UINT r;
@@ -345,10 +345,10 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
         ptr2++;
         while (*ptr2 == ' ') ptr2++;
 
-        quotes = 0;
+        num_quotes = 0;
         val = msi_alloc( (strlenW( ptr2 ) + 1) * sizeof(WCHAR) );
-        len = parse_prop( ptr2, val, &quotes );
-        if (quotes % 2)
+        len = parse_prop( ptr2, val, &num_quotes );
+        if (num_quotes % 2)
         {
             WARN("unbalanced quotes\n");
             msi_free( val );
