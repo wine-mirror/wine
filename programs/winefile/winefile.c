@@ -2105,6 +2105,7 @@ static BOOL activate_drive_window(LPCWSTR path)
 	return FALSE;
 }
 
+#ifndef _NO_EXTENSIONS
 static BOOL activate_fs_window(LPCWSTR filesys)
 {
 	HWND child_wnd;
@@ -2127,6 +2128,7 @@ static BOOL activate_fs_window(LPCWSTR filesys)
 
 	return FALSE;
 }
+#endif /* _NO_EXTENSIONS */
 
 static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
@@ -2562,6 +2564,7 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 }
 
 
+#ifndef _NO_EXTENSIONS
 /* calculate one preferred column width */
 
 static void calc_single_width(Pane* pane, int col)
@@ -2620,6 +2623,7 @@ static void calc_single_width(Pane* pane, int col)
 
 	SendMessageW(pane->hwnd, LB_SETHORIZONTALEXTENT, x, 0);
 }
+#endif /* _NO_EXTENSIONS */
 
 
 static BOOL pattern_match(LPCWSTR str, LPCWSTR pattern)
@@ -3314,7 +3318,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 		} else
 			hpen = CreatePen(PS_DOT, 0, RGB(255,255,255));
 
-		lastPen = SelectPen(dis->hDC, hpen);
+		lastPen = SelectObject(dis->hDC, hpen);
 		lastBrush = SelectObject(dis->hDC, GetStockObject(HOLLOW_BRUSH));
 		SetROP2(dis->hDC, R2_XORPEN);
 		Rectangle(dis->hDC, focusRect.left, focusRect.top, focusRect.right, focusRect.bottom);
@@ -3986,6 +3990,7 @@ static BOOL CtxMenu_HandleMenuMsg(UINT nmsg, WPARAM wparam, LPARAM lparam)
 }
 
 
+#ifndef _NO_EXTENSIONS
 static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParent, int cidl, LPCITEMIDLIST* apidl, int x, int y)
 {
 	IContextMenu* pcm;
@@ -4031,6 +4036,7 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 
 	return FAILED(hr)? hr: executed? S_OK: S_FALSE;
 }
+#endif /* _NO_EXTENSIONS */
 
 
 static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
@@ -4681,7 +4687,7 @@ static BOOL CALLBACK EnumWndProc(HWND hwnd, LPARAM lparam)
 {
 	WCHAR cls[128];
 
-	GetClassName(hwnd, cls, 128);
+	GetClassNameW(hwnd, cls, 128);
 
 	if (!lstrcmpW(cls, (LPCWSTR)lparam)) {
 		g_foundPrevInstance++;
