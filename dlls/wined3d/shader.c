@@ -1641,7 +1641,8 @@ static HRESULT shader_set_function(IWineD3DBaseShaderImpl *shader, const DWORD *
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE vertexshader_QueryInterface(IWineD3DBaseShader *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE wined3d_shader_QueryInterface(IWineD3DBaseShader *iface,
+        REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
@@ -1660,7 +1661,7 @@ static HRESULT STDMETHODCALLTYPE vertexshader_QueryInterface(IWineD3DBaseShader 
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE vertexshader_AddRef(IWineD3DBaseShader *iface)
+static ULONG STDMETHODCALLTYPE wined3d_shader_AddRef(IWineD3DBaseShader *iface)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     ULONG refcount = InterlockedIncrement(&shader->baseShader.ref);
@@ -1671,7 +1672,7 @@ static ULONG STDMETHODCALLTYPE vertexshader_AddRef(IWineD3DBaseShader *iface)
 }
 
 /* Do not call while under the GL lock. */
-static ULONG STDMETHODCALLTYPE vertexshader_Release(IWineD3DBaseShader *iface)
+static ULONG STDMETHODCALLTYPE wined3d_shader_Release(IWineD3DBaseShader *iface)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
     ULONG refcount = InterlockedDecrement(&shader->baseShader.ref);
@@ -1688,21 +1689,21 @@ static ULONG STDMETHODCALLTYPE vertexshader_Release(IWineD3DBaseShader *iface)
     return refcount;
 }
 
-static void * STDMETHODCALLTYPE vertexshader_GetParent(IWineD3DBaseShader *iface)
+static void * STDMETHODCALLTYPE wined3d_shader_GetParent(IWineD3DBaseShader *iface)
 {
     TRACE("iface %p.\n", iface);
 
     return ((IWineD3DBaseShaderImpl *)iface)->baseShader.parent;
 }
 
-static HRESULT STDMETHODCALLTYPE vertexshader_GetFunction(IWineD3DBaseShader *iface, void *data, UINT *data_size)
+static HRESULT STDMETHODCALLTYPE wined3d_shader_GetFunction(IWineD3DBaseShader *iface, void *data, UINT *data_size)
 {
     TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
 
     return shader_get_function((IWineD3DBaseShaderImpl *)iface, data, data_size);
 }
 
-static HRESULT STDMETHODCALLTYPE vertexshader_SetLocalConstantsF(IWineD3DBaseShader *iface,
+static HRESULT STDMETHODCALLTYPE wined3d_shader_SetLocalConstantsF(IWineD3DBaseShader *iface,
         UINT start_idx, const float *src_data, UINT count)
 {
     TRACE("iface %p, start_idx %u, src_data %p, count %u.\n", iface, start_idx, src_data, count);
@@ -1711,17 +1712,14 @@ static HRESULT STDMETHODCALLTYPE vertexshader_SetLocalConstantsF(IWineD3DBaseSha
             start_idx, src_data, count);
 }
 
-static const IWineD3DBaseShaderVtbl IWineD3DVertexShader_Vtbl =
+static const IWineD3DBaseShaderVtbl wined3d_shader_vtbl =
 {
-    /* IUnknown methods */
-    vertexshader_QueryInterface,
-    vertexshader_AddRef,
-    vertexshader_Release,
-    /* IWineD3DBase methods */
-    vertexshader_GetParent,
-    /* IWineD3DBaseShader methods */
-    vertexshader_GetFunction,
-    vertexshader_SetLocalConstantsF,
+    wined3d_shader_QueryInterface,
+    wined3d_shader_AddRef,
+    wined3d_shader_Release,
+    wined3d_shader_GetParent,
+    wined3d_shader_GetFunction,
+    wined3d_shader_SetLocalConstantsF,
 };
 
 void find_vs_compile_args(const struct wined3d_state *state,
@@ -1849,7 +1847,7 @@ HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *de
 
     if (!byte_code) return WINED3DERR_INVALIDCALL;
 
-    shader->lpVtbl = &IWineD3DVertexShader_Vtbl;
+    shader->lpVtbl = &wined3d_shader_vtbl;
     shader_init(&shader->baseShader, device, parent, parent_ops);
 
     hr = shader_set_function(shader, byte_code, output_signature, device->d3d_vshader_constantF);
@@ -1888,97 +1886,13 @@ HRESULT vertexshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *de
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE geometryshader_QueryInterface(IWineD3DBaseShader *iface,
-        REFIID riid, void **object)
-{
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
-
-    if (IsEqualGUID(riid, &IID_IWineD3DBaseShader)
-            || IsEqualGUID(riid, &IID_IWineD3DBase)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
-    }
-
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-
-    *object = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG STDMETHODCALLTYPE geometryshader_AddRef(IWineD3DBaseShader *iface)
-{
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
-    ULONG refcount = InterlockedIncrement(&shader->baseShader.ref);
-
-    TRACE("%p increasing refcount to %u.\n", shader, refcount);
-
-    return refcount;
-}
-
-/* Do not call while under the GL lock. */
-static ULONG STDMETHODCALLTYPE geometryshader_Release(IWineD3DBaseShader *iface)
-{
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
-    ULONG refcount = InterlockedDecrement(&shader->baseShader.ref);
-
-    TRACE("%p decreasing refcount to %u.\n", shader, refcount);
-
-    if (!refcount)
-    {
-        shader_cleanup(shader);
-        shader->baseShader.parent_ops->wined3d_object_destroyed(shader->baseShader.parent);
-        HeapFree(GetProcessHeap(), 0, shader);
-    }
-
-    return refcount;
-}
-
-static void * STDMETHODCALLTYPE geometryshader_GetParent(IWineD3DBaseShader *iface)
-{
-    TRACE("iface %p.\n", iface);
-
-    return ((IWineD3DBaseShaderImpl *)iface)->baseShader.parent;
-}
-
-static HRESULT STDMETHODCALLTYPE geometryshader_GetFunction(IWineD3DBaseShader *iface, void *data, UINT *data_size)
-{
-    TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
-
-    return shader_get_function((IWineD3DBaseShaderImpl *)iface, data, data_size);
-}
-
-static HRESULT STDMETHODCALLTYPE geometryshader_SetLocalConstantsF(IWineD3DBaseShader *iface,
-        UINT start_idx, const float *src_data, UINT count)
-{
-    TRACE("iface %p, start_idx %u, src_data %p, count %u.\n", iface, start_idx, src_data, count);
-
-    return shader_set_local_constants_float((IWineD3DBaseShaderImpl *)iface,
-            start_idx, src_data, count);
-}
-
-static const IWineD3DBaseShaderVtbl wined3d_geometryshader_vtbl =
-{
-    /* IUnknown methods */
-    geometryshader_QueryInterface,
-    geometryshader_AddRef,
-    geometryshader_Release,
-    /* IWineD3DBase methods */
-    geometryshader_GetParent,
-    /* IWineD3DBaseShader methods */
-    geometryshader_GetFunction,
-    geometryshader_SetLocalConstantsF,
-};
-
 HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     HRESULT hr;
 
-    shader->lpVtbl = &wined3d_geometryshader_vtbl;
+    shader->lpVtbl = &wined3d_shader_vtbl;
     shader_init(&shader->baseShader, device, parent, parent_ops);
 
     hr = shader_set_function(shader, byte_code, output_signature, 0);
@@ -1993,89 +1907,6 @@ HRESULT geometryshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *
 
     return WINED3D_OK;
 }
-
-static HRESULT STDMETHODCALLTYPE pixelshader_QueryInterface(IWineD3DBaseShader *iface, REFIID riid, void **object)
-{
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
-
-    if (IsEqualGUID(riid, &IID_IWineD3DBaseShader)
-            || IsEqualGUID(riid, &IID_IWineD3DBase)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
-    }
-
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-
-    *object = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG STDMETHODCALLTYPE pixelshader_AddRef(IWineD3DBaseShader *iface)
-{
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
-    ULONG refcount = InterlockedIncrement(&shader->baseShader.ref);
-
-    TRACE("%p increasing refcount to %u.\n", shader, refcount);
-
-    return refcount;
-}
-
-/* Do not call while under the GL lock. */
-static ULONG STDMETHODCALLTYPE pixelshader_Release(IWineD3DBaseShader *iface)
-{
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)iface;
-    ULONG refcount = InterlockedDecrement(&shader->baseShader.ref);
-
-    TRACE("%p decreasing refcount to %u.\n", shader, refcount);
-
-    if (!refcount)
-    {
-        shader_cleanup(shader);
-        shader->baseShader.parent_ops->wined3d_object_destroyed(shader->baseShader.parent);
-        HeapFree(GetProcessHeap(), 0, shader);
-    }
-
-    return refcount;
-}
-
-static void * STDMETHODCALLTYPE pixelshader_GetParent(IWineD3DBaseShader *iface)
-{
-    TRACE("iface %p.\n", iface);
-
-    return ((IWineD3DBaseShaderImpl *)iface)->baseShader.parent;
-}
-
-static HRESULT STDMETHODCALLTYPE pixelshader_GetFunction(IWineD3DBaseShader *iface, void *data, UINT *data_size)
-{
-    TRACE("iface %p, data %p, data_size %p.\n", iface, data, data_size);
-
-    return shader_get_function((IWineD3DBaseShaderImpl *)iface, data, data_size);
-}
-
-static HRESULT STDMETHODCALLTYPE pixelshader_SetLocalConstantsF(IWineD3DBaseShader *iface,
-        UINT start_idx, const float *src_data, UINT count)
-{
-    TRACE("iface %p, start_idx %u, src_data %p, count %u.\n", iface, start_idx, src_data, count);
-
-    return shader_set_local_constants_float((IWineD3DBaseShaderImpl *)iface,
-            start_idx, src_data, count);
-}
-
-static const IWineD3DBaseShaderVtbl IWineD3DPixelShader_Vtbl =
-{
-    /* IUnknown methods */
-    pixelshader_QueryInterface,
-    pixelshader_AddRef,
-    pixelshader_Release,
-    /* IWineD3DBase methods */
-    pixelshader_GetParent,
-    /* IWineD3DBaseShader methods */
-    pixelshader_GetFunction,
-    pixelshader_SetLocalConstantsF,
-};
 
 void find_ps_compile_args(const struct wined3d_state *state,
         IWineD3DBaseShaderImpl *shader, struct ps_compile_args *args)
@@ -2271,7 +2102,7 @@ HRESULT pixelshader_init(IWineD3DBaseShaderImpl *shader, IWineD3DDeviceImpl *dev
 
     if (!byte_code) return WINED3DERR_INVALIDCALL;
 
-    shader->lpVtbl = &IWineD3DPixelShader_Vtbl;
+    shader->lpVtbl = &wined3d_shader_vtbl;
     shader_init(&shader->baseShader, device, parent, parent_ops);
 
     hr = shader_set_function(shader, byte_code, output_signature, device->d3d_pshader_constantF);
