@@ -734,7 +734,6 @@ static BOOL is_not_current(FILETIME * ft)
  */
 static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
 {
-    WCHAR windirW[MAX_PATH];
     WCHAR buffer[MAX_PATH];
     HANDLE hFile = INVALID_HANDLE_VALUE;
     FILETIME LastWriteTime;
@@ -757,8 +756,6 @@ static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
           ZeroMemory(&MRUProfile[i]->LastWriteTime, sizeof(FILETIME));
        }
 
-    GetWindowsDirectoryW( windirW, MAX_PATH );
-
     if (!filename)
 	filename = wininiW;
 
@@ -766,6 +763,8 @@ static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
         !strchrW(filename, '\\') && !strchrW(filename, '/'))
     {
         static const WCHAR wszSeparator[] = {'\\', 0};
+        WCHAR windirW[MAX_PATH];
+        GetWindowsDirectoryW( windirW, MAX_PATH );
         strcpyW(buffer, windirW);
         strcatW(buffer, wszSeparator);
         strcatW(buffer, filename);
