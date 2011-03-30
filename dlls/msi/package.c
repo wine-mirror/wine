@@ -446,8 +446,10 @@ UINT msi_clone_properties(MSIPACKAGE *package)
  */
 static UINT set_installed_prop( MSIPACKAGE *package )
 {
-    HKEY hkey = 0;
+    HKEY hkey;
     UINT r;
+
+    if (!package->ProductCode) return ERROR_FUNCTION_FAILED;
 
     r = MSIREG_OpenUninstallKey( package->ProductCode, package->platform, &hkey, FALSE );
     if (r == ERROR_SUCCESS)
@@ -455,7 +457,6 @@ static UINT set_installed_prop( MSIPACKAGE *package )
         RegCloseKey( hkey );
         msi_set_property( package->db, szInstalled, szOne );
     }
-
     return r;
 }
 

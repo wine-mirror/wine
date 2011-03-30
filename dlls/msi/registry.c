@@ -44,206 +44,79 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
  * This module will be all the helper functions for registry access by the
  * installer bits. 
  */
-static const WCHAR szUserFeatures_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'F','e','a','t','u','r','e','s','\\',
-'%','s',0};
 
 static const WCHAR szUserDataFeatures_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','s','e','r','D','a','t','a','\\',
-'%','s','\\','P','r','o','d','u','c','t','s','\\',
-'%','s','\\','F','e','a','t','u','r','e','s',0};
-
-static const WCHAR szInstaller_Features_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'F','e','a','t','u','r','e','s','\\',
-'%','s',0};
-
-static const WCHAR szUser_Components_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'C','o','m','p','o','n','e','n','t','s','\\',
-'%','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a','\\',
+    '%','s','\\','P','r','o','d','u','c','t','s','\\','%','s','\\','F','e','a','t','u','r','e','s',0};
 
 static const WCHAR szUserDataComp_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','s','e','r','D','a','t','a','\\',
-'%','s','\\','C','o','m','p','o','n','e','n','t','s','\\','%','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a','\\',
+    '%','s','\\','C','o','m','p','o','n','e','n','t','s','\\','%','s',0};
 
 static const WCHAR szUserDataComponents_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','s','e','r','D','a','t','a','\\',
-'%','s','\\','C','o','m','p','o','n','e','n','t','s',0};
-
-static const WCHAR szUninstall_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'U','n','i','n','s','t','a','l','l','\\',
-'%','s',0 };
-
-static const WCHAR szUninstall_32node_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'W','o','w','6','4','3','2','N','o','d','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'U','n','i','n','s','t','a','l','l','\\',
-'%','s',0 };
-
-static const WCHAR szUserProduct_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'P','r','o','d','u','c','t','s','\\',
-'%','s',0};
-
-static const WCHAR szUserPatch_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'P','a','t','c','h','e','s','\\',
-'%','s',0};
-
-static const WCHAR szInstaller_UpgradeCodes_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','p','g','r','a','d','e','C','o','d','e','s','\\',
-'%','s',0};
-
-static const WCHAR szInstaller_UserUpgradeCodes_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','p','g','r','a','d','e','C','o','d','e','s','\\',
-'%','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a','\\',
+    '%','s','\\','C','o','m','p','o','n','e','n','t','s',0};
 
 static const WCHAR szUserDataProd_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','s','e','r','D','a','t','a','\\',
-'%','s','\\','P','r','o','d','u','c','t','s','\\','%','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a','\\',
+    '%','s','\\','P','r','o','d','u','c','t','s','\\','%','s',0};
 
 static const WCHAR szUserDataProducts_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','s','e','r','D','a','t','a','\\',
-'%','s','\\','P','r','o','d','u','c','t','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a','\\',
+    '%','s','\\','P','r','o','d','u','c','t','s',0};
 
 static const WCHAR szUserDataPatch_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','s','e','r','D','a','t','a','\\',
-'%','s','\\','P','a','t','c','h','e','s','\\','%','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a','\\',
+    '%','s','\\','P','a','t','c','h','e','s','\\','%','s',0};
 
 static const WCHAR szUserDataPatches_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','s','e','r','D','a','t','a','\\',
-'%','s','\\','P','a','t','c','h','e','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a','\\',
+    '%','s','\\','P','a','t','c','h','e','s',0};
 
 static const WCHAR szUserDataProductPatches_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','s','e','r','D','a','t','a','\\',
-'%','s','\\','P','r','o','d','u','c','t','s','\\','%','s','\\',
-'P','a','t','c','h','e','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a','\\',
+    '%','s','\\','P','r','o','d','u','c','t','s','\\','%','s','\\','P','a','t','c','h','e','s',0};
 
 static const WCHAR szInstallProperties_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','s','e','r','D','a','t','a','\\',
-'%','s','\\','P','r','o','d','u','c','t','s','\\','%','s','\\',
-'I','n','s','t','a','l','l','P','r','o','p','e','r','t','i','e','s',0};
-
-static const WCHAR szInstaller_LocalClassesProd_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'C','l','a','s','s','e','s','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'P','r','o','d','u','c','t','s','\\','%','s',0};
-
-static const WCHAR szInstaller_LocalClassesFeat_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'C','l','a','s','s','e','s','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'F','e','a','t','u','r','e','s','\\','%','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','s','e','r','D','a','t','a','\\',
+    '%','s','\\','P','r','o','d','u','c','t','s','\\','%','s','\\',
+    'I','n','s','t','a','l','l','P','r','o','p','e','r','t','i','e','s',0};
 
 static const WCHAR szInstaller_LocalManaged_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'M','a','n','a','g','e','d','\\','%','s','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'P','r','o','d','u','c','t','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','M','a','n','a','g','e','d','\\','%','s','\\',
+    'I','n','s','t','a','l','l','e','r','\\','P','r','o','d','u','c','t','s',0};
 
 static const WCHAR szInstaller_LocalManagedProd_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'M','a','n','a','g','e','d','\\','%','s','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'P','r','o','d','u','c','t','s','\\','%','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','M','a','n','a','g','e','d','\\','%','s','\\',
+    'I','n','s','t','a','l','l','e','r','\\','P','r','o','d','u','c','t','s','\\','%','s',0};
 
 static const WCHAR szInstaller_LocalManagedFeat_fmt[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'M','a','n','a','g','e','d','\\','%','s','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'F','e','a','t','u','r','e','s','\\','%','s',0};
-
-static const WCHAR szInstaller_ClassesUpgrade_fmt[] = {
-'I','n','s','t','a','l','l','e','r','\\',
-'U','p','g','r','a','d','e','C','o','d','e','s','\\',
-'%','s',0};
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','M','a','n','a','g','e','d','\\','%','s','\\',
+    'I','n','s','t','a','l','l','e','r','\\','F','e','a','t','u','r','e','s','\\','%','s',0};
 
 static const WCHAR szInstaller_Products[] = {
     'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
@@ -268,12 +141,59 @@ static const WCHAR szInstaller_LocalClassesFeatures[] = {
     'S','o','f','t','w','a','r','e','\\','C','l','a','s','s','e','s','\\',
     'I','n','s','t','a','l','l','e','r','\\','F','e','a','t','u','r','e','s',0};
 
+static const WCHAR szInstaller_LocalClassesProd[] = {
+    'S','o','f','t','w','a','r','e','\\','C','l','a','s','s','e','s','\\',
+    'I','n','s','t','a','l','l','e','r','\\','P','r','o','d','u','c','t','s','\\',0};
+
+static const WCHAR szInstaller_LocalClassesFeat[] = {
+    'S','o','f','t','w','a','r','e','\\','C','l','a','s','s','e','s','\\',
+    'I','n','s','t','a','l','l','e','r','\\','F','e','a','t','u','r','e','s','\\',0};
+
+static const WCHAR szInstaller_ClassesUpgradeCode[] = {
+    'I','n','s','t','a','l','l','e','r','\\','U','p','g','r','a','d','e','C','o','d','e','s','\\',0};
+
 static const WCHAR szInstaller_ClassesUpgradeCodes[] = {
     'I','n','s','t','a','l','l','e','r','\\','U','p','g','r','a','d','e','C','o','d','e','s',0};
 
-static const WCHAR szUserProduct[] = {
+static const WCHAR szInstaller_Features[] = {
     'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-    'I','n','s','t','a','l','l','e','r','\\','P','r','o','d','u','c','t','s',0};
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','F','e','a','t','u','r','e','s','\\',0};
+
+static const WCHAR szInstaller_UpgradeCodes[] = {
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','p','g','r','a','d','e','C','o','d','e','s','\\',0};
+
+static const WCHAR szInstaller_UserUpgradeCodes[] = {
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'I','n','s','t','a','l','l','e','r','\\','U','p','g','r','a','d','e','C','o','d','e','s','\\',0};
+
+static const WCHAR szUninstall[] = {
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'U','n','i','n','s','t','a','l','l','\\',0};
+
+static const WCHAR szUninstall_32node[] = {
+    'S','o','f','t','w','a','r','e','\\','W','o','w','6','4','3','2','N','o','d','e','\\',
+    'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
+    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','U','n','i','n','s','t','a','l','l','\\',0};
+
+static const WCHAR szUserComponents[] = {
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'I','n','s','t','a','l','l','e','r','\\','C','o','m','p','o','n','e','n','t','s','\\',0};
+
+static const WCHAR szUserFeatures[] = {
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'I','n','s','t','a','l','l','e','r','\\','F','e','a','t','u','r','e','s','\\',0};
+
+static const WCHAR szUserProducts[] = {
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'I','n','s','t','a','l','l','e','r','\\','P','r','o','d','u','c','t','s','\\',0};
+
+static const WCHAR szUserPatches[] = {
+    'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    'I','n','s','t','a','l','l','e','r','\\','P','a','t','c','h','e','s','\\',0};
 
 BOOL unsquash_guid(LPCWSTR in, LPWSTR out)
 {
@@ -543,10 +463,15 @@ UINT MSIREG_OpenUninstallKey(const WCHAR *product, enum platform platform, HKEY 
     TRACE("%s\n", debugstr_w(product));
 
     if (is_64bit && platform == PLATFORM_INTEL)
-        sprintfW(keypath, szUninstall_32node_fmt, product);
+    {
+        strcpyW(keypath, szUninstall_32node);
+        strcatW(keypath, product);
+    }
     else
-        sprintfW(keypath, szUninstall_fmt, product);
-
+    {
+        strcpyW(keypath, szUninstall);
+        strcatW(keypath, product);
+    }
     if (create) return RegCreateKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, KEY_ALL_ACCESS, NULL, key, NULL);
     return RegOpenKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, KEY_ALL_ACCESS, key);
 }
@@ -558,10 +483,15 @@ UINT MSIREG_DeleteUninstallKey(const WCHAR *product, enum platform platform)
     TRACE("%s\n", debugstr_w(product));
 
     if (is_64bit && platform == PLATFORM_INTEL)
-        sprintfW(keypath, szUninstall_32node_fmt, product);
+    {
+        strcpyW(keypath, szUninstall_32node);
+        strcatW(keypath, product);
+    }
     else
-        sprintfW(keypath, szUninstall_fmt, product);
-
+    {
+        strcpyW(keypath, szUninstall);
+        strcatW(keypath, product);
+    }
     return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
@@ -577,12 +507,14 @@ UINT MSIREG_OpenProductKey(LPCWSTR szProduct, LPCWSTR szUserSid, MSIINSTALLCONTE
 
     if (context == MSIINSTALLCONTEXT_MACHINE)
     {
-        sprintfW(keypath, szInstaller_LocalClassesProd_fmt, squished_pc);
+        strcpyW(keypath, szInstaller_LocalClassesProd);
+        strcatW(keypath, squished_pc);
     }
     else if (context == MSIINSTALLCONTEXT_USERUNMANAGED)
     {
         root = HKEY_CURRENT_USER;
-        sprintfW(keypath, szUserProduct_fmt, squished_pc);
+        strcpyW(keypath, szUserProducts);
+        strcatW(keypath, squished_pc);
     }
     else
     {
@@ -609,7 +541,8 @@ UINT MSIREG_DeleteUserProductKey(LPCWSTR szProduct)
     if (!squash_guid(szProduct, squished_pc)) return ERROR_FUNCTION_FAILED;
     TRACE("%s squished %s\n", debugstr_w(szProduct), debugstr_w(squished_pc));
 
-    sprintfW(keypath, szUserProduct_fmt, squished_pc);
+    strcpyW(keypath, szUserProducts);
+    strcatW(keypath, squished_pc);
     return RegDeleteTreeW(HKEY_CURRENT_USER, keypath);
 }
 
@@ -620,7 +553,8 @@ UINT MSIREG_OpenUserPatchesKey(LPCWSTR szPatch, HKEY *key, BOOL create)
     if (!squash_guid(szPatch, squished_pc)) return ERROR_FUNCTION_FAILED;
     TRACE("%s squished %s\n", debugstr_w(szPatch), debugstr_w(squished_pc));
 
-    sprintfW(keypath, szUserPatch_fmt, squished_pc);
+    strcpyW(keypath, szUserPatches);
+    strcatW(keypath, squished_pc);
 
     if (create) return RegCreateKeyW(HKEY_CURRENT_USER, keypath, key);
     return RegOpenKeyW(HKEY_CURRENT_USER, keypath, key);
@@ -638,12 +572,14 @@ UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context, HKEY *
 
     if (context == MSIINSTALLCONTEXT_MACHINE)
     {
-        sprintfW(keypath, szInstaller_LocalClassesFeat_fmt, squished_pc);
+        strcpyW(keypath, szInstaller_LocalClassesFeat);
+        strcatW(keypath, squished_pc);
     }
     else if (context == MSIINSTALLCONTEXT_USERUNMANAGED)
     {
         root = HKEY_CURRENT_USER;
-        sprintfW(keypath, szUserFeatures_fmt, squished_pc);
+        strcpyW(keypath, szUserFeatures);
+        strcatW(keypath, squished_pc);
     }
     else
     {
@@ -666,7 +602,8 @@ UINT MSIREG_DeleteUserFeaturesKey(LPCWSTR szProduct)
     if (!squash_guid(szProduct, squished_pc)) return ERROR_FUNCTION_FAILED;
     TRACE("%s squished %s\n", debugstr_w(szProduct), debugstr_w(squished_pc));
 
-    sprintfW(keypath, szUserFeatures_fmt, squished_pc);
+    strcpyW(keypath, szUserFeatures);
+    strcatW(keypath, squished_pc);
     return RegDeleteTreeW(HKEY_CURRENT_USER, keypath);
 }
 
@@ -678,7 +615,8 @@ static UINT MSIREG_OpenInstallerFeaturesKey(LPCWSTR szProduct, HKEY *key, BOOL c
     if (!squash_guid(szProduct, squished_pc)) return ERROR_FUNCTION_FAILED;
     TRACE("%s squished %s\n", debugstr_w(szProduct), debugstr_w(squished_pc));
 
-    sprintfW(keypath, szInstaller_Features_fmt, squished_pc);
+    strcpyW(keypath, szInstaller_Features);
+    strcatW(keypath, squished_pc);
 
     if (create) return RegCreateKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, key, NULL);
     return RegOpenKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, access, key);
@@ -718,7 +656,8 @@ UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY *key, BOOL create)
     if (!squash_guid(szComponent, squished_cc)) return ERROR_FUNCTION_FAILED;
     TRACE("%s squished %s\n", debugstr_w(szComponent), debugstr_w(squished_cc));
 
-    sprintfW(keypath, szUser_Components_fmt, squished_cc);
+    strcpyW(keypath, szUserComponents);
+    strcatW(keypath, squished_cc);
 
     if (create) return RegCreateKeyW(HKEY_CURRENT_USER, keypath, key);
     return RegOpenKeyW(HKEY_CURRENT_USER, keypath, key);
@@ -976,7 +915,8 @@ UINT MSIREG_OpenUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY *key, BOOL create)
     if (!squash_guid(szUpgradeCode, squished_pc)) return ERROR_FUNCTION_FAILED;
     TRACE("%s squished %s\n", debugstr_w(szUpgradeCode), debugstr_w(squished_pc));
 
-    sprintfW(keypath, szInstaller_UpgradeCodes_fmt, squished_pc);
+    strcpyW(keypath, szInstaller_UpgradeCodes);
+    strcatW(keypath, squished_pc);
 
     if (create) return RegCreateKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, key, NULL);
     return RegOpenKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, access, key);
@@ -989,7 +929,8 @@ UINT MSIREG_OpenUserUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY* key, BOOL creat
     if (!squash_guid(szUpgradeCode, squished_pc)) return ERROR_FUNCTION_FAILED;
     TRACE("%s squished %s\n", debugstr_w(szUpgradeCode), debugstr_w(squished_pc));
 
-    sprintfW(keypath, szInstaller_UserUpgradeCodes_fmt, squished_pc);
+    strcpyW(keypath, szInstaller_UserUpgradeCodes);
+    strcatW(keypath, squished_pc);
 
     if (create) return RegCreateKeyW(HKEY_CURRENT_USER, keypath, key);
     return RegOpenKeyW(HKEY_CURRENT_USER, keypath, key);
@@ -1002,7 +943,8 @@ UINT MSIREG_DeleteUserUpgradeCodesKey(LPCWSTR szUpgradeCode)
     if (!squash_guid(szUpgradeCode, squished_pc)) return ERROR_FUNCTION_FAILED;
     TRACE("%s squished %s\n", debugstr_w(szUpgradeCode), debugstr_w(squished_pc));
 
-    sprintfW(keypath, szInstaller_UserUpgradeCodes_fmt, squished_pc);
+    strcpyW(keypath, szInstaller_UserUpgradeCodes);
+    strcatW(keypath, squished_pc);
     return RegDeleteTreeW(HKEY_CURRENT_USER, keypath);
 }
 
@@ -1046,7 +988,8 @@ UINT MSIREG_OpenClassesUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY *key, BOOL cr
     if (!squash_guid(szUpgradeCode, squished_pc)) return ERROR_FUNCTION_FAILED;
     TRACE("%s squished %s\n", debugstr_w(szUpgradeCode), debugstr_w(squished_pc));
 
-    sprintfW(keypath, szInstaller_ClassesUpgrade_fmt, squished_pc);
+    strcpyW(keypath, szInstaller_ClassesUpgradeCode);
+    strcatW(keypath, squished_pc);
 
     if (create) return RegCreateKeyExW(HKEY_CLASSES_ROOT, keypath, 0, NULL, 0, access, NULL, key, NULL);
     return RegOpenKeyExW(HKEY_CLASSES_ROOT, keypath, 0, access, key);
@@ -1194,6 +1137,9 @@ UINT WINAPI MsiEnumProductsA(DWORD index, LPSTR lpguid)
 
 UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
 {
+    static const WCHAR pathW[] = {
+        'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+        'I','n','s','t','a','l','l','e','r','\\','P','r','o','d','u','c','t','s',0};
     UINT r;
     WCHAR szKeyName[SQUISH_GUID_SIZE];
     HKEY key;
@@ -1263,7 +1209,7 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
     RegCloseKey(key);
 
     key = 0;
-    r = RegCreateKeyW(HKEY_CURRENT_USER, szUserProduct, &key);
+    r = RegCreateKeyW(HKEY_CURRENT_USER, pathW, &key);
     if( r != ERROR_SUCCESS ) goto failed;
 
     r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &unmanaged_count, NULL, NULL,
