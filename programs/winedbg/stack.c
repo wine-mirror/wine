@@ -111,29 +111,6 @@ BOOL stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf)
     return stack_get_frame(dbg_curr_thread->curr_frame, ihsf);
 }
 
-BOOL stack_get_register_current_frame(unsigned regno, DWORD_PTR** pval)
-{
-    enum be_cpu_addr            kind;
-
-    if (dbg_curr_thread->frames == NULL) return FALSE;
-
-    if (!be_cpu->get_register_info(regno, &kind)) return FALSE;
-
-    switch (kind)
-    {
-    case be_cpu_addr_pc:
-        *pval = &dbg_curr_thread->frames[dbg_curr_thread->curr_frame].linear_pc;
-        break;
-    case be_cpu_addr_stack:
-        *pval = &dbg_curr_thread->frames[dbg_curr_thread->curr_frame].linear_stack;
-        break;
-    case be_cpu_addr_frame:
-        *pval = &dbg_curr_thread->frames[dbg_curr_thread->curr_frame].linear_frame;
-        break;
-    }
-    return TRUE;
-}
-
 BOOL stack_get_register_frame(const struct dbg_internal_var* div, DWORD_PTR** pval)
 {
     if (dbg_curr_thread->frames == NULL) return FALSE;
