@@ -1609,20 +1609,6 @@ static void test_NtCreateFile(void)
                                td[i].attrib_in, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                td[i].disposition, 0, NULL, 0);
 
-        /* FIXME: completely remove once Wine is fixed */
-        if (td[i].status == STATUS_ACCESS_DENIED)
-        {
-        todo_wine
-            ok(status == td[i].status, "%d: expected %#x got %#x\n", i, td[i].status, status);
-            CloseHandle(handle);
-            SetFileAttributesW(path, FILE_ATTRIBUTE_ARCHIVE);
-
-            if (td[i].needs_cleanup)
-                DeleteFileW(path);
-
-            continue;
-        }
-
         ok(status == td[i].status, "%d: expected %#x got %#x\n", i, td[i].status, status);
 
         if (!status)

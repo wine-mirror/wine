@@ -179,10 +179,12 @@ static struct object *create_file( struct fd *root, const char *nameptr, data_si
     {
     case FILE_CREATE:       flags = O_CREAT | O_EXCL; break;
     case FILE_OVERWRITE_IF: /* FIXME: the difference is whether we trash existing attr or not */
+                            access |= FILE_WRITE_ATTRIBUTES;
     case FILE_SUPERSEDE:    flags = O_CREAT | O_TRUNC; break;
     case FILE_OPEN:         flags = 0; break;
     case FILE_OPEN_IF:      flags = O_CREAT; break;
-    case FILE_OVERWRITE:    flags = O_TRUNC; break;
+    case FILE_OVERWRITE:    flags = O_TRUNC;
+                            access |= FILE_WRITE_ATTRIBUTES; break;
     default:                set_error( STATUS_INVALID_PARAMETER ); goto done;
     }
 
