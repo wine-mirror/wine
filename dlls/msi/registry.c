@@ -492,29 +492,37 @@ BOOL msi_reg_get_val_dword( HKEY hkey, LPCWSTR name, DWORD *val)
     return r == ERROR_SUCCESS && type == REG_DWORD;
 }
 
-static UINT get_user_sid(LPWSTR *usersid)
+static WCHAR *get_user_sid(void)
 {
     HANDLE token;
-    BYTE buf[1024];
-    DWORD size;
-    PTOKEN_USER user;
+    DWORD size = 256;
+    TOKEN_USER *user;
+    WCHAR *ret;
 
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
-        return ERROR_FUNCTION_FAILED;
-
-    size = sizeof(buf);
-    if (!GetTokenInformation(token, TokenUser, buf, size, &size)) {
-        CloseHandle(token);
-        return ERROR_FUNCTION_FAILED;
+    if (!OpenProcessToken( GetCurrentProcess(), TOKEN_QUERY, &token )) return NULL;
+    if (!(user = msi_alloc( size )))
+    {
+        CloseHandle( token );
+        return NULL;
     }
-
-    user = (PTOKEN_USER)buf;
-    if (!ConvertSidToStringSidW(user->User.Sid, usersid)) {
-        CloseHandle(token);
-        return ERROR_FUNCTION_FAILED;
+    if (!GetTokenInformation( token, TokenUser, user, size, &size ))
+    {
+        msi_free( user );
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER || !(user = msi_alloc( size )))
+        {
+            CloseHandle( token );
+            return NULL;
+        }
+        GetTokenInformation( token, TokenUser, user, size, &size );
     }
-    CloseHandle(token);
-    return ERROR_SUCCESS;
+    CloseHandle( token );
+    if (!ConvertSidToStringSidW( user->User.Sid, &ret ))
+    {
+        msi_free( user );
+        return NULL;
+    }
+    msi_free( user );
+    return ret;
 }
 
 UINT MSIREG_OpenUninstallKey(MSIPACKAGE *package, HKEY *key, BOOL create)
@@ -554,7 +562,6 @@ UINT MSIREG_DeleteUninstallKey(MSIPACKAGE *package)
 UINT MSIREG_OpenProductKey(LPCWSTR szProduct, LPCWSTR szUserSid,
                            MSIINSTALLCONTEXT context, HKEY *key, BOOL create)
 {
-    UINT r;
     LPWSTR usersid = NULL;
     HKEY root = HKEY_LOCAL_MACHINE;
     WCHAR squished_pc[GUID_SIZE];
@@ -580,18 +587,14 @@ UINT MSIREG_OpenProductKey(LPCWSTR szProduct, LPCWSTR szUserSid,
     {
         if (!szUserSid)
         {
-            r = get_user_sid(&usersid);
-            if (r != ERROR_SUCCESS || !usersid)
+            if (!(usersid = get_user_sid()))
             {
-                ERR("Failed to retrieve user SID: %d\n", r);
-                return r;
+                ERR("Failed to retrieve user SID\n");
+                return ERROR_FUNCTION_FAILED;
             }
-
             szUserSid = usersid;
         }
-
-        sprintfW(keypath, szInstaller_LocalManagedProd_fmt,
-                 szUserSid, squished_pc);
+        sprintfW(keypath, szInstaller_LocalManagedProd_fmt, szUserSid, squished_pc);
         LocalFree(usersid);
     }
 
@@ -640,7 +643,6 @@ UINT MSIREG_OpenUserPatchesKey(LPCWSTR szPatch, HKEY* key, BOOL create)
 UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context,
                             HKEY *key, BOOL create)
 {
-    UINT r;
     LPWSTR usersid;
     HKEY root = HKEY_LOCAL_MACHINE;
     WCHAR squished_pc[GUID_SIZE];
@@ -664,13 +666,11 @@ UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context,
     }
     else
     {
-        r = get_user_sid(&usersid);
-        if (r != ERROR_SUCCESS || !usersid)
+        if (!(usersid = get_user_sid()))
         {
-            ERR("Failed to retrieve user SID: %d\n", r);
-            return r;
+            ERR("Failed to retrieve user SID\n");
+            return ERROR_FUNCTION_FAILED;
         }
-
         sprintfW(keypath, szInstaller_LocalManagedFeat_fmt, usersid, squished_pc);
         LocalFree(usersid);
     }
@@ -719,7 +719,6 @@ static UINT MSIREG_OpenInstallerFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL c
 UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context,
                                     HKEY *key, BOOL create)
 {
-    UINT r;
     LPWSTR usersid;
     WCHAR squished_pc[GUID_SIZE];
     WCHAR keypath[0x200];
@@ -737,13 +736,11 @@ UINT MSIREG_OpenUserDataFeaturesKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context
     }
     else
     {
-        r = get_user_sid(&usersid);
-        if (r != ERROR_SUCCESS || !usersid)
+        if (!(usersid = get_user_sid()))
         {
-            ERR("Failed to retrieve user SID: %d\n", r);
-            return r;
+            ERR("Failed to retrieve user SID\n");
+            return ERROR_FUNCTION_FAILED;
         }
-
         sprintfW(keypath, szUserDataFeatures_fmt, usersid, squished_pc);
         LocalFree(usersid);
     }
@@ -790,11 +787,10 @@ UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid,
 
     if (!szUserSid)
     {
-        rc = get_user_sid(&usersid);
-        if (rc != ERROR_SUCCESS || !usersid)
+        if (!(usersid = get_user_sid()))
         {
-            ERR("Failed to retrieve user SID: %d\n", rc);
-            return rc;
+            ERR("Failed to retrieve user SID\n");
+            return ERROR_FUNCTION_FAILED;
         }
 
         sprintfW(keypath, szUserDataComp_fmt, usersid, comp);
@@ -813,7 +809,6 @@ UINT MSIREG_OpenUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid,
 
 UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid)
 {
-    UINT rc;
     WCHAR comp[GUID_SIZE];
     WCHAR keypath[0x200];
     LPWSTR usersid;
@@ -825,13 +820,11 @@ UINT MSIREG_DeleteUserDataComponentKey(LPCWSTR szComponent, LPCWSTR szUserSid)
 
     if (!szUserSid)
     {
-        rc = get_user_sid(&usersid);
-        if (rc != ERROR_SUCCESS || !usersid)
+        if (!(usersid = get_user_sid()))
         {
-            ERR("Failed to retrieve user SID: %d\n", rc);
-            return rc;
+            ERR("Failed to retrieve user SID\n");
+            return ERROR_FUNCTION_FAILED;
         }
-
         sprintfW(keypath, szUserDataComp_fmt, usersid, comp);
         LocalFree(usersid);
     }
@@ -860,11 +853,10 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContex
         sprintfW(keypath, szUserDataProd_fmt, szUserSid, squished_pc);
     else
     {
-        rc = get_user_sid(&usersid);
-        if (rc != ERROR_SUCCESS || !usersid)
+        if (!(usersid = get_user_sid()))
         {
-            ERR("Failed to retrieve user SID: %d\n", rc);
-            return rc;
+            ERR("Failed to retrieve user SID\n");
+            return ERROR_FUNCTION_FAILED;
         }
 
         sprintfW(keypath, szUserDataProd_fmt, usersid, squished_pc);
@@ -882,7 +874,6 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContex
 UINT MSIREG_OpenUserDataPatchKey(LPCWSTR szPatch, MSIINSTALLCONTEXT dwContext,
                                  HKEY *key, BOOL create)
 {
-    UINT rc;
     WCHAR squished_patch[GUID_SIZE];
     WCHAR keypath[0x200];
     LPWSTR usersid;
@@ -896,13 +887,11 @@ UINT MSIREG_OpenUserDataPatchKey(LPCWSTR szPatch, MSIINSTALLCONTEXT dwContext,
         sprintfW(keypath, szUserDataPatch_fmt, szLocalSid, squished_patch);
     else
     {
-        rc = get_user_sid(&usersid);
-        if (rc != ERROR_SUCCESS || !usersid)
+        if (!(usersid = get_user_sid()))
         {
-            ERR("Failed to retrieve user SID: %d\n", rc);
-            return rc;
+            ERR("Failed to retrieve user SID\n");
+            return ERROR_FUNCTION_FAILED;
         }
-
         sprintfW(keypath, szUserDataPatch_fmt, usersid, squished_patch);
         LocalFree(usersid);
     }
@@ -915,7 +904,6 @@ UINT MSIREG_OpenUserDataPatchKey(LPCWSTR szPatch, MSIINSTALLCONTEXT dwContext,
 
 UINT MSIREG_DeleteUserDataPatchKey(LPCWSTR patch, MSIINSTALLCONTEXT context)
 {
-    UINT r;
     WCHAR squished_patch[GUID_SIZE];
     WCHAR keypath[0x200];
     LPWSTR usersid;
@@ -929,13 +917,11 @@ UINT MSIREG_DeleteUserDataPatchKey(LPCWSTR patch, MSIINSTALLCONTEXT context)
         sprintfW(keypath, szUserDataPatch_fmt, szLocalSid, squished_patch);
     else
     {
-        r = get_user_sid(&usersid);
-        if (r != ERROR_SUCCESS || !usersid)
+        if (!(usersid = get_user_sid()))
         {
-            ERR("Failed to retrieve user SID: %d\n", r);
-            return r;
+            ERR("Failed to retrieve user SID\n");
+            return ERROR_FUNCTION_FAILED;
         }
-
         sprintfW(keypath, szUserDataPatch_fmt, usersid, squished_patch);
         LocalFree(usersid);
     }
@@ -946,7 +932,6 @@ UINT MSIREG_DeleteUserDataPatchKey(LPCWSTR patch, MSIINSTALLCONTEXT context)
 UINT MSIREG_OpenUserDataProductPatchesKey(LPCWSTR product, MSIINSTALLCONTEXT context,
                                           HKEY *key, BOOL create)
 {
-    UINT rc;
     WCHAR squished_product[GUID_SIZE];
     WCHAR keypath[0x200];
     LPWSTR usersid;
@@ -959,13 +944,11 @@ UINT MSIREG_OpenUserDataProductPatchesKey(LPCWSTR product, MSIINSTALLCONTEXT con
         sprintfW(keypath, szUserDataProductPatches_fmt, szLocalSid, squished_product);
     else
     {
-        rc = get_user_sid(&usersid);
-        if (rc != ERROR_SUCCESS || !usersid)
+        if (!(usersid = get_user_sid()))
         {
-            ERR("Failed to retrieve user SID: %d\n", rc);
-            return rc;
+            ERR("Failed to retrieve user SID\n");
+            return ERROR_FUNCTION_FAILED;
         }
-
         sprintfW(keypath, szUserDataProductPatches_fmt, usersid, squished_product);
         LocalFree(usersid);
     }
@@ -979,7 +962,6 @@ UINT MSIREG_OpenUserDataProductPatchesKey(LPCWSTR product, MSIINSTALLCONTEXT con
 UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContext,
                              LPCWSTR szUserSid, HKEY *key, BOOL create)
 {
-    UINT rc;
     LPWSTR usersid;
     WCHAR squished_pc[GUID_SIZE];
     WCHAR keypath[0x200];
@@ -995,13 +977,11 @@ UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContext,
         sprintfW(keypath, szInstallProperties_fmt, szUserSid, squished_pc);
     else
     {
-        rc = get_user_sid(&usersid);
-        if (rc != ERROR_SUCCESS || !usersid)
+        if (!(usersid = get_user_sid()))
         {
-            ERR("Failed to retrieve user SID: %d\n", rc);
-            return rc;
+            ERR("Failed to retrieve user SID\n");
+            return ERROR_FUNCTION_FAILED;
         }
-
         sprintfW(keypath, szInstallProperties_fmt, usersid, squished_pc);
         LocalFree(usersid);
     }
@@ -1014,7 +994,6 @@ UINT MSIREG_OpenInstallProps(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContext,
 
 UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)
 {
-    UINT rc;
     WCHAR squished_pc[GUID_SIZE];
     WCHAR keypath[0x200];
     LPWSTR usersid;
@@ -1024,16 +1003,14 @@ UINT MSIREG_DeleteUserDataProductKey(LPCWSTR szProduct)
         return ERROR_FUNCTION_FAILED;
     TRACE("squished (%s)\n", debugstr_w(squished_pc));
 
-    rc = get_user_sid(&usersid);
-    if (rc != ERROR_SUCCESS || !usersid)
+    if (!(usersid = get_user_sid()))
     {
-        ERR("Failed to retrieve user SID: %d\n", rc);
-        return rc;
+        ERR("Failed to retrieve user SID\n");
+        return ERROR_FUNCTION_FAILED;
     }
-
     sprintfW(keypath, szUserDataProd_fmt, usersid, squished_pc);
-
     LocalFree(usersid);
+
     return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
@@ -1362,12 +1339,11 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
     RegCloseKey(key);
 
     key = 0;
-    r = get_user_sid(&usersid);
-    if (r != ERROR_SUCCESS || !usersid)
+    if (!(usersid = get_user_sid()))
     {
-        ERR("Failed to retrieve user SID: %d\n", r);
+        ERR("Failed to retrieve user SID\n");
         last_index = 0;
-        return r;
+        return ERROR_FUNCTION_FAILED;
     }
     sprintfW(keypath, szInstaller_LocalManaged_fmt, usersid);
     LocalFree(usersid);
@@ -2089,8 +2065,8 @@ static UINT msi_enum_patches(LPCWSTR szProductCode, LPCWSTR szUserSid,
 
     if (!szUserSid)
     {
-        get_user_sid(&usersid);
-        szUserSid = usersid;
+        szUserSid = usersid = get_user_sid();
+        if (!usersid) return ERROR_FUNCTION_FAILED;
     }
 
     if (dwContext & MSIINSTALLCONTEXT_USERMANAGED)
