@@ -6851,7 +6851,7 @@ msgid "The specified device handle is invalid."
 msgstr "Nurodyta įrenginio rodyklė yra netinkama."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "Sistemoje nėra įdiegta tvarkyklė!\n"
 
 #: winmm.rc:35

@@ -6868,7 +6868,7 @@ msgid "The specified device handle is invalid."
 msgstr "Podane dojście urządzenia jest nieprawidłowe."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "Nie ma żadnego zainstalowanego sterownika w tym systemie !\n"
 
 #: winmm.rc:35

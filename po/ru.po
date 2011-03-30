@@ -6841,7 +6841,7 @@ msgid "The specified device handle is invalid."
 msgstr "Указанный идентификатор устройства (device handle) неверен."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "В системе не установлен драйвер!\n"
 
 #: winmm.rc:35

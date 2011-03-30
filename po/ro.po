@@ -7373,7 +7373,7 @@ msgid "The specified device handle is invalid."
 msgstr "Handle specificat pentru dispozitiv nu este valid."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "Nu este instalat nici un driver în sistem !\n"
 
 #: winmm.rc:35

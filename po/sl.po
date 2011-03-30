@@ -7188,7 +7188,7 @@ msgid "The specified device handle is invalid."
 msgstr "Navedena koda za dostop do naprave je neveljavna."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "Nameščen ni noben gonilnik!\n"
 
 #: winmm.rc:35

@@ -7013,7 +7013,7 @@ msgid "The specified device handle is invalid."
 msgstr "Das angegebende Gerätehandle ist ungültig."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "Es ist kein Treiber auf Ihrem System installiert !\n"
 
 #: winmm.rc:35

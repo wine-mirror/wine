@@ -7075,7 +7075,7 @@ msgid "The specified device handle is invalid."
 msgstr "Ukazatel na zařízení je neplatný."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "V systému není nainstalován žádný ovladač !\n"
 
 #: winmm.rc:35

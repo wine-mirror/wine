@@ -6825,7 +6825,7 @@ msgid "The specified device handle is invalid."
 msgstr "지정된 장치 핸들은 적합하지 않습니다."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "당신의 시스템에는 어떤 드라이버도 설치되어 있지 않습니다 !\n"
 
 #: winmm.rc:35

@@ -6880,7 +6880,7 @@ msgid "The specified device handle is invalid."
 msgstr "Le descripteur de périphérique spécifié est invalide."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "Aucun pilote n'est installé sur votre système !\n"
 
 #: winmm.rc:35

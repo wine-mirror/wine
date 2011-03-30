@@ -6940,7 +6940,7 @@ msgid "The specified device handle is invalid."
 msgstr "De gespecificeerde apparaatverwijzing is ongeldig."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "Er is geen driver geïnstalleerd op uw systeem !\n"
 
 #: winmm.rc:35

@@ -31,7 +31,7 @@ MMSYSERR_BADDEVICEID, 		"A device ID has been used that is out of range for your
 MMSYSERR_NOTENABLED, 		"The driver was not enabled."
 MMSYSERR_ALLOCATED, 		"The specified device is already in use. Wait until it is free, and then try again."
 MMSYSERR_INVALHANDLE, 		"The specified device handle is invalid."
-MMSYSERR_NODRIVER, 		"There is no driver installed on your system !\n"
+MMSYSERR_NODRIVER, 		"There is no driver installed on your system!\n"
 MMSYSERR_NOMEM, 		"Not enough memory available for this task. Quit one or more applications to increase available memory, and then try again."
 MMSYSERR_NOTSUPPORTED, 		"This function is not supported. Use the Capabilities function to determine which functions and messages the driver supports."
 MMSYSERR_BADERRNUM, 		"An error number was specified that is not defined in the system."

@@ -7208,7 +7208,7 @@ msgid "The specified device handle is invalid."
 msgstr "Belirtilen aygıt işleyici geçersiz."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system !\n"
+msgid "There is no driver installed on your system!\n"
 msgstr "Sisteminizde yüklü sürücü yok!\n"
 
 #: winmm.rc:35
