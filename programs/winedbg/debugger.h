@@ -367,7 +367,6 @@ extern void             memory_examine(const struct dbg_lvalue *lvalue, int coun
 extern void*            memory_to_linear_addr(const ADDRESS64* address);
 extern BOOL             memory_get_current_pc(ADDRESS64* address);
 extern BOOL             memory_get_current_stack(ADDRESS64* address);
-extern BOOL             memory_get_current_frame(ADDRESS64* address);
 extern BOOL             memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee, BOOL unicode, char* buffer, int size);
 extern BOOL             memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, WCHAR* buffer, int size);
 extern BOOL             memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len);

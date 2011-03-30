@@ -67,13 +67,6 @@ BOOL memory_get_current_stack(ADDRESS64* addr)
                             be_cpu_addr_stack, addr);
 }
 
-BOOL memory_get_current_frame(ADDRESS64* addr)
-{
-    assert(be_cpu->get_addr);
-    return be_cpu->get_addr(dbg_curr_thread->handle, &dbg_context, 
-                            be_cpu_addr_frame, addr);
-}
-
 static void	memory_report_invalid_addr(const void* addr)
 {
     ADDRESS64   address;
