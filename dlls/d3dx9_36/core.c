@@ -35,8 +35,8 @@ struct ID3DXBufferImpl
     ID3DXBuffer ID3DXBuffer_iface;
     LONG ref;
 
-    DWORD *buffer;
-    DWORD bufferSize;
+    void *buffer;
+    DWORD size;
 };
 
 static inline struct ID3DXBufferImpl *impl_from_ID3DXBuffer(ID3DXBuffer *iface)
@@ -94,39 +94,41 @@ static LPVOID WINAPI ID3DXBufferImpl_GetBufferPointer(ID3DXBuffer *iface)
 static DWORD WINAPI ID3DXBufferImpl_GetBufferSize(ID3DXBuffer *iface)
 {
     struct ID3DXBufferImpl *This = impl_from_ID3DXBuffer(iface);
-    return This->bufferSize;
+    return This->size;
 }
 
-const ID3DXBufferVtbl D3DXBuffer_Vtbl =
+static const struct ID3DXBufferVtbl ID3DXBufferImpl_Vtbl =
 {
+    /* IUnknown methods */
     ID3DXBufferImpl_QueryInterface,
     ID3DXBufferImpl_AddRef,
     ID3DXBufferImpl_Release,
+    /* ID3DXBuffer methods */
     ID3DXBufferImpl_GetBufferPointer,
     ID3DXBufferImpl_GetBufferSize
 };
 
-HRESULT WINAPI D3DXCreateBuffer(DWORD NumBytes, LPD3DXBUFFER* ppBuffer)
+HRESULT WINAPI D3DXCreateBuffer(DWORD size, LPD3DXBUFFER *buffer)
 {
     struct ID3DXBufferImpl *object;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (object == NULL)
     {
-        *ppBuffer = NULL;
+        *buffer = NULL;
         return E_OUTOFMEMORY;
     }
-    object->ID3DXBuffer_iface.lpVtbl = &D3DXBuffer_Vtbl;
+    object->ID3DXBuffer_iface.lpVtbl = &ID3DXBufferImpl_Vtbl;
     object->ref = 1;
-    object->bufferSize = NumBytes;
-    object->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, NumBytes);
+    object->size = size;
+    object->buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
     if (object->buffer == NULL)
     {
         HeapFree(GetProcessHeap(), 0, object);
-        *ppBuffer = NULL;
+        *buffer = NULL;
         return E_OUTOFMEMORY;
     }
 
-    *ppBuffer = &object->ID3DXBuffer_iface;
+    *buffer = &object->ID3DXBuffer_iface;
     return D3D_OK;
 }
