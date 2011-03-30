@@ -46,17 +46,18 @@ static inline struct ID3DXBufferImpl *impl_from_ID3DXBuffer(ID3DXBuffer *iface)
 
 static HRESULT WINAPI ID3DXBufferImpl_QueryInterface(ID3DXBuffer *iface, REFIID riid, void **ppobj)
 {
-    struct ID3DXBufferImpl *This = impl_from_ID3DXBuffer(iface);
+    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), ppobj);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
       || IsEqualGUID(riid, &IID_ID3DXBuffer))
     {
         IUnknown_AddRef(iface);
-        *ppobj = This;
+        *ppobj = iface;
         return D3D_OK;
     }
 
-    WARN("(%p)->(%s,%p),not found\n",This,debugstr_guid(riid),ppobj);
+    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
+
     return E_NOINTERFACE;
 }
 
@@ -65,7 +66,7 @@ static ULONG WINAPI ID3DXBufferImpl_AddRef(ID3DXBuffer *iface)
     struct ID3DXBufferImpl *This = impl_from_ID3DXBuffer(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p) : AddRef from %d\n", This, ref - 1);
+    TRACE("%p increasing refcount to %u\n", This, ref);
 
     return ref;
 }
@@ -75,25 +76,32 @@ static ULONG WINAPI ID3DXBufferImpl_Release(ID3DXBuffer *iface)
     struct ID3DXBufferImpl *This = impl_from_ID3DXBuffer(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p) : ReleaseRef to %d\n", This, ref);
+    TRACE("%p decreasing refcount to %u\n", This, ref);
 
     if (ref == 0)
     {
         HeapFree(GetProcessHeap(), 0, This->buffer);
         HeapFree(GetProcessHeap(), 0, This);
     }
+
     return ref;
 }
 
 static LPVOID WINAPI ID3DXBufferImpl_GetBufferPointer(ID3DXBuffer *iface)
 {
     struct ID3DXBufferImpl *This = impl_from_ID3DXBuffer(iface);
+
+    TRACE("iface %p\n", iface);
+
     return This->buffer;
 }
 
 static DWORD WINAPI ID3DXBufferImpl_GetBufferSize(ID3DXBuffer *iface)
 {
     struct ID3DXBufferImpl *This = impl_from_ID3DXBuffer(iface);
+
+    TRACE("iface %p\n", iface);
+
     return This->size;
 }
 
