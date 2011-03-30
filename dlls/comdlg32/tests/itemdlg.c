@@ -271,8 +271,6 @@ static void test_basics(void)
     }
 
     /* GetFileTypeIndex */
-    todo_wine
-    {
     hr = IFileOpenDialog_GetFileTypeIndex(pfod, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
     filetype = 0x12345;
@@ -285,11 +283,8 @@ static void test_basics(void)
     hr = IFileSaveDialog_GetFileTypeIndex(pfsd, &filetype);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     ok(filetype == 0, "got %d.\n", filetype);
-    }
 
     /* SetFileTypes / SetFileTypeIndex */
-    todo_wine
-    {
     hr = IFileOpenDialog_SetFileTypes(pfod, 0, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
     hr = IFileOpenDialog_SetFileTypes(pfod, 0, filterspec);
@@ -330,7 +325,6 @@ static void test_basics(void)
     ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     hr = IFileSaveDialog_SetFileTypes(pfsd, 1, &filterspec[1]);
     ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
-    }
 
     /* SetFilter */
     todo_wine

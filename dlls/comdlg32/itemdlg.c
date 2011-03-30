@@ -28,6 +28,8 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wingdi.h"
+#include "winreg.h"
+#include "shlwapi.h"
 
 #include "commdlg.h"
 #include "cdlg.h"
@@ -51,6 +53,9 @@ typedef struct FileDialogImpl {
     LONG ref;
 
     FILEOPENDIALOGOPTIONS options;
+    COMDLG_FILTERSPEC *filterspecs;
+    UINT filterspec_count;
+    UINT filetypeindex;
 } FileDialogImpl;
 
 /**************************************************************************
@@ -111,7 +116,17 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
     TRACE("%p - ref %d\n", This, ref);
 
     if(!ref)
+    {
+        UINT i;
+        for(i = 0; i < This->filterspec_count; i++)
+        {
+            LocalFree((void*)This->filterspecs[i].pszName);
+            LocalFree((void*)This->filterspecs[i].pszSpec);
+        }
+        HeapFree(GetProcessHeap(), 0, This->filterspecs);
+
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -127,22 +142,56 @@ static HRESULT WINAPI IFileDialog2_fnSetFileTypes(IFileDialog2 *iface, UINT cFil
                                                   const COMDLG_FILTERSPEC *rgFilterSpec)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%d, %p)\n", This, cFileTypes, rgFilterSpec);
-    return E_NOTIMPL;
+    UINT i;
+    TRACE("%p (%d, %p)\n", This, cFileTypes, rgFilterSpec);
+
+    if(This->filterspecs)
+        return E_UNEXPECTED;
+
+    if(!rgFilterSpec)
+        return E_INVALIDARG;
+
+    if(!cFileTypes)
+        return S_OK;
+
+    This->filterspecs = HeapAlloc(GetProcessHeap(), 0, sizeof(COMDLG_FILTERSPEC)*cFileTypes);
+    for(i = 0; i < cFileTypes; i++)
+    {
+        This->filterspecs[i].pszName = StrDupW(rgFilterSpec[i].pszName);
+        This->filterspecs[i].pszSpec = StrDupW(rgFilterSpec[i].pszSpec);
+    }
+    This->filterspec_count = cFileTypes;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetFileTypeIndex(IFileDialog2 *iface, UINT iFileType)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%d)\n", This, iFileType);
-    return E_NOTIMPL;
+    TRACE("%p (%d)\n", This, iFileType);
+
+    if(!This->filterspecs)
+        return E_FAIL;
+
+    if(iFileType >= This->filterspec_count)
+        This->filetypeindex = This->filterspec_count - 1;
+    else
+        This->filetypeindex = iFileType;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnGetFileTypeIndex(IFileDialog2 *iface, UINT *piFileType)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, piFileType);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, piFileType);
+
+    if(!piFileType)
+        return E_INVALIDARG;
+
+    *piFileType = This->filetypeindex;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnAdvise(IFileDialog2 *iface, IFileDialogEvents *pfde, DWORD *pdwCookie)
@@ -841,6 +890,10 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
         fdimpl->u.IFileSaveDialog_iface.lpVtbl = &vt_IFileSaveDialog;
         fdimpl->options = FOS_OVERWRITEPROMPT | FOS_NOREADONLYRETURN | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR;
     }
+
+    fdimpl->filterspecs = NULL;
+    fdimpl->filterspec_count = 0;
+    fdimpl->filetypeindex = 0;
 
     hr = IUnknown_QueryInterface((IUnknown*)fdimpl, riid, ppv);
     IUnknown_Release((IUnknown*)fdimpl);
