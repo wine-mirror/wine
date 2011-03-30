@@ -318,6 +318,14 @@ static int assign_thread_input( struct thread *thread, struct thread_input *new_
     return 1;
 }
 
+/* change the foreground input and reset the cursor clip rect */
+static void set_foreground_input( struct desktop *desktop, struct thread_input *input )
+{
+    if (desktop->foreground_input == input) return;
+    get_top_window_rectangle( desktop, &desktop->cursor_clip );
+    desktop->foreground_input = input;
+}
+
 /* get the hook table for a given thread */
 struct hook_table *get_queue_hooks( struct thread *thread )
 {
@@ -901,7 +909,7 @@ static void thread_input_destroy( struct object *obj )
     empty_msg_list( &input->msg_list );
     if (input->desktop)
     {
-        if (input->desktop->foreground_input == input) input->desktop->foreground_input = NULL;
+        if (input->desktop->foreground_input == input) set_foreground_input( input->desktop, NULL );
         release_object( input->desktop );
     }
 }
@@ -2445,7 +2453,7 @@ DECL_HANDLER(set_foreground_window)
         ((thread = get_window_thread( req->handle ))) &&
         (thread->queue->input->desktop == desktop))
     {
-        desktop->foreground_input = thread->queue->input;
+        set_foreground_input( desktop, thread->queue->input );
         reply->send_msg_new = (desktop->foreground_input != queue->input);
     }
     else set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
