@@ -829,8 +829,8 @@ extern BOOL unsquash_guid(LPCWSTR in, LPWSTR out);
 extern BOOL squash_guid(LPCWSTR in, LPWSTR out);
 extern BOOL encode_base85_guid(GUID *,LPWSTR);
 extern BOOL decode_base85_guid(LPCWSTR,GUID*);
-extern UINT MSIREG_OpenUninstallKey(MSIPACKAGE *package, HKEY *key, BOOL create);
-extern UINT MSIREG_DeleteUninstallKey(MSIPACKAGE *package);
+extern UINT MSIREG_OpenUninstallKey(const WCHAR *, enum platform, HKEY *, BOOL);
+extern UINT MSIREG_DeleteUninstallKey(const WCHAR *, enum platform);
 extern UINT MSIREG_OpenProductKey(LPCWSTR szProduct, LPCWSTR szUserSid,
                                   MSIINSTALLCONTEXT context, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenFeaturesKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context,

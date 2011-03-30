@@ -5286,7 +5286,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
 
-    rc = MSIREG_OpenUninstallKey(package, &hkey, TRUE);
+    rc = MSIREG_OpenUninstallKey(package->ProductCode, package->platform, &hkey, TRUE);
     if (rc != ERROR_SUCCESS)
         return rc;
 
@@ -5366,7 +5366,7 @@ static UINT msi_unpublish_product(MSIPACKAGE *package, WCHAR *remove)
 
     MSIREG_DeleteProductKey(package->ProductCode);
     MSIREG_DeleteUserDataProductKey(package->ProductCode);
-    MSIREG_DeleteUninstallKey(package);
+    MSIREG_DeleteUninstallKey(package->ProductCode, package->platform);
 
     MSIREG_DeleteLocalClassesProductKey(package->ProductCode);
     MSIREG_DeleteLocalClassesFeaturesKey(package->ProductCode);

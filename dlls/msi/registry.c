@@ -525,17 +525,17 @@ static WCHAR *get_user_sid(void)
     return ret;
 }
 
-UINT MSIREG_OpenUninstallKey(MSIPACKAGE *package, HKEY *key, BOOL create)
+UINT MSIREG_OpenUninstallKey(const WCHAR *product, enum platform platform, HKEY *key, BOOL create)
 {
     UINT rc;
     WCHAR keypath[0x200];
 
-    TRACE("%s\n", debugstr_w(package->ProductCode));
+    TRACE("%s\n", debugstr_w(product));
 
-    if (is_64bit && package->platform == PLATFORM_INTEL)
-        sprintfW(keypath, szUninstall_32node_fmt, package->ProductCode);
+    if (is_64bit && platform == PLATFORM_INTEL)
+        sprintfW(keypath, szUninstall_32node_fmt, product);
     else
-        sprintfW(keypath, szUninstall_fmt, package->ProductCode);
+        sprintfW(keypath, szUninstall_fmt, product);
 
     if (create)
         rc = RegCreateKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, KEY_ALL_ACCESS, NULL, key, NULL);
@@ -545,16 +545,16 @@ UINT MSIREG_OpenUninstallKey(MSIPACKAGE *package, HKEY *key, BOOL create)
     return rc;
 }
 
-UINT MSIREG_DeleteUninstallKey(MSIPACKAGE *package)
+UINT MSIREG_DeleteUninstallKey(const WCHAR *product, enum platform platform)
 {
     WCHAR keypath[0x200];
 
-    TRACE("%s\n", debugstr_w(package->ProductCode));
+    TRACE("%s\n", debugstr_w(product));
 
-    if (is_64bit && package->platform == PLATFORM_INTEL)
-        sprintfW(keypath, szUninstall_32node_fmt, package->ProductCode);
+    if (is_64bit && platform == PLATFORM_INTEL)
+        sprintfW(keypath, szUninstall_32node_fmt, product);
     else
-        sprintfW(keypath, szUninstall_fmt, package->ProductCode);
+        sprintfW(keypath, szUninstall_fmt, product);
 
     return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
