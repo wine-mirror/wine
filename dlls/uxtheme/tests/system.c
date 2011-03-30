@@ -421,7 +421,7 @@ static void test_OpenThemeDataEx(void)
             ok( GetLastError() == E_PROP_ID_UNSUPPORTED,
                 "Expected GLE() to be E_PROP_ID_UNSUPPORTED, got 0x%08x\n",
                 GetLastError());
-        skip("No active theme, skipping rest of OpenThemeData tests\n");
+        skip("No active theme, skipping rest of OpenThemeDataEx tests\n");
         return;
     }
 
