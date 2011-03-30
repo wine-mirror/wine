@@ -4364,26 +4364,21 @@ static UINT msi_publish_upgrade_code(MSIPACKAGE *package)
         return ERROR_SUCCESS;
 
     if (package->Context == MSIINSTALLCONTEXT_MACHINE)
-    {
         r = MSIREG_OpenClassesUpgradeCodesKey(upgrade, &hkey, TRUE);
-        if (r != ERROR_SUCCESS)
-            goto done;
-    }
     else
-    {
         r = MSIREG_OpenUserUpgradeCodesKey(upgrade, &hkey, TRUE);
-        if (r != ERROR_SUCCESS)
-            goto done;
-    }
 
+    if (r != ERROR_SUCCESS)
+    {
+        WARN("failed to open upgrade code key\n");
+        msi_free(upgrade);
+        return ERROR_SUCCESS;
+    }
     squash_guid(package->ProductCode, squashed_pc);
     msi_reg_set_val_str(hkey, squashed_pc, NULL);
-
     RegCloseKey(hkey);
-
-done:
     msi_free(upgrade);
-    return r;
+    return ERROR_SUCCESS;
 }
 
 static BOOL msi_check_publish(MSIPACKAGE *package)

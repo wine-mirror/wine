@@ -1191,6 +1191,53 @@ static const CHAR cl_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
                                               "InstallValidate\t\t1400\n"
                                               "InstallFinalize\t\t5000\n";
 
+static const CHAR uc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                  "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                  "File\tFile\n"
+                                  "upgradecode.txt\tupgradecode\tupgradecode.txt\t1000\t\t\t8192\t1\n";
+
+static const CHAR uc_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                     "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                     "Feature\tFeature\n"
+                                     "upgradecode\t\t\tupgradecode feature\t1\t2\tMSITESTDIR\t0\n";
+
+static const CHAR uc_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                          "s38\ts72\n"
+                                          "FeatureComponents\tFeature_\tComponent_\n"
+                                          "upgradecode\tupgradecode\n";
+
+static const CHAR uc_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                       "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                       "Component\tComponent\n"
+                                       "upgradecode\t{6952B732-2FCB-4E47-976F-989FCBD7EDFB}\tMSITESTDIR\t0\t\tupgradecode.txt\n";
+
+static const CHAR uc_property_dat[] = "Property\tValue\n"
+                                      "s72\tl0\n"
+                                      "Property\tProperty\n"
+                                      "INSTALLLEVEL\t3\n"
+                                      "ProductCode\t{E5FB1241-F547-4BA7-A60E-8E75797268D4}\n"
+                                      "ProductName\tMSITEST\n"
+                                      "ProductVersion\t1.1.1\n"
+                                      "UpgradeCode\t#UPGEADECODE#\n"
+                                      "MSIFASTINSTALL\t1\n";
+
+static const CHAR uc_install_exec_seq_dat[] = "Action\tCondition\tSequence\n"
+                                              "s72\tS255\tI2\n"
+                                              "InstallExecuteSequence\tAction\n"
+                                              "LaunchConditions\t\t100\n"
+                                              "CostInitialize\t\t200\n"
+                                              "FileCost\t\t300\n"
+                                              "CostFinalize\t\t400\n"
+                                              "InstallInitialize\t\t500\n"
+                                              "ProcessComponents\t\t600\n"
+                                              "InstallValidate\t\t700\n"
+                                              "RemoveFiles\t\t800\n"
+                                              "InstallFiles\t\t900\n"
+                                              "RegisterProduct\t\t1000\n"
+                                              "PublishFeatures\t\t1100\n"
+                                              "PublishProduct\t\t1200\n"
+                                              "InstallFinalize\t\t1300\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1868,6 +1915,18 @@ static const msi_table cl_tables[] =
     ADD_TABLE(cl_install_exec_seq),
     ADD_TABLE(media),
     ADD_TABLE(property)
+};
+
+static const msi_table uc_tables[] =
+{
+    ADD_TABLE(directory),
+    ADD_TABLE(uc_component),
+    ADD_TABLE(uc_feature),
+    ADD_TABLE(uc_feature_comp),
+    ADD_TABLE(uc_file),
+    ADD_TABLE(uc_install_exec_seq),
+    ADD_TABLE(media),
+    ADD_TABLE(uc_property)
 };
 
 /* cabinet definitions */
@@ -6373,6 +6432,38 @@ static void test_command_line_parsing(void)
     RemoveDirectory("msitest");
 }
 
+static void test_upgrade_code(void)
+{
+    UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\upgradecode.txt", 1000);
+    create_database(msifile, uc_tables, sizeof(uc_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(pf_exists("msitest\\upgradecode.txt"), "file not installed\n");
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(!delete_pf("msitest\\upgradecode.txt", TRUE), "file not removed\n");
+    ok(!delete_pf("msitest", FALSE), "directory not removed\n");
+
+    DeleteFileA("msitest\\upgradecode.txt");
+    RemoveDirectoryA("msitest");
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6463,6 +6554,7 @@ START_TEST(install)
     test_sourcedir_props();
     test_package_validation();
     test_command_line_parsing();
+    test_upgrade_code();
 
     DeleteFileA(log_file);
 
