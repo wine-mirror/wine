@@ -2491,6 +2491,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     pt.x = (short)LOWORD(dwPoint);
     pt.y = (short)HIWORD(dwPoint);
     capturePoint = pt;
+    ClipCursor( NULL );
 
     TRACE("hwnd %p command %04lx, hittest %d, pos %d,%d\n",
           hwnd, syscommand, hittest, pt.x, pt.y);
