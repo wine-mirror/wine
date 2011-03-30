@@ -511,6 +511,12 @@ HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5,Install,0x10003,1
 HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5,SP,0x10003,1
 HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5,Version,2,3.5.30729.01
 HKLM,Software\Microsoft\NET Framework Setup\NDP\v3.5\1033,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Client,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Client,Version,2,4.0.30319
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Client,TargetVersion,2,4.0.0
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Full,Install,0x10003,1
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Full,Version,2,4.0.30319
+HKLM,Software\Microsoft\NET Framework Setup\NDP\v4\Full,TargetVersion,2,4.0.0
 
 [Metrics]
 HKCU,%Metrics%,"ScrollWidth",2,"16"
