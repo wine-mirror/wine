@@ -1900,7 +1900,7 @@ int CDECL MSVCRT__mbstowcs_s_l(MSVCRT_size_t *ret, MSVCRT_wchar_t *wcstr,
     if(!wcstr && !size) {
         conv = MSVCRT__mbstowcs_l(NULL, mbstr, 0, locale);
         if(ret)
-            *ret = conv;
+            *ret = conv+1;
         return 0;
     }
 

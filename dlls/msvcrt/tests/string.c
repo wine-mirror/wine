@@ -1337,6 +1337,10 @@ static void test_mbstowcs(void)
     ok(ret == 3, "ret = %d\n", (int)ret);
     ok(!memcmp(wOut, wHiragana, sizeof(wHiragana)), "wOut = %s\n", wine_dbgstr_w(wOut));
 
+    err = pmbstowcs_s(&ret, NULL, 0, mHiragana, 1);
+    ok(err == 0, "err = %d\n", err);
+    ok(ret == 3, "ret = %d\n", (int)ret);
+
     err = pwcstombs_s(&ret, mOut, 6, wSimple, _TRUNCATE);
     ok(err == 0, "err = %d\n", err);
     ok(ret == 5, "ret = %d\n", (int)ret);
@@ -1346,6 +1350,10 @@ static void test_mbstowcs(void)
     ok(err == 0, "err = %d\n", err);
     ok(ret == 5, "ret = %d\n", (int)ret);
     ok(!memcmp(mOut, mHiragana, sizeof(mHiragana)), "mOut = %s\n", mOut);
+
+    err = pwcstombs_s(&ret, NULL, 0, wHiragana, 1);
+    ok(err == 0, "err = %d\n", err);
+    ok(ret == 5, "ret = %d\n", (int)ret);
 }
 
 static void test_gcvt(void)
