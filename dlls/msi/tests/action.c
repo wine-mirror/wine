@@ -1963,28 +1963,28 @@ static BOOL is_process_limited(void)
     return FALSE;
 }
 
-static LPSTR get_user_sid(LPSTR *usersid)
+static char *get_user_sid(void)
 {
     HANDLE token;
-    BYTE buf[1024];
-    DWORD size;
-    PTOKEN_USER user;
+    DWORD size = 0;
+    TOKEN_USER *user;
+    char *usersid = NULL;
 
     if (!pConvertSidToStringSidA)
     {
         win_skip("ConvertSidToStringSidA is not available\n");
         return NULL;
     }
+    OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    GetTokenInformation(token, TokenUser, NULL, size, &size);
 
-    *usersid = NULL;
-    pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
-    size = sizeof(buf);
-    pGetTokenInformation(token, TokenUser, buf, size, &size);
-    user = (PTOKEN_USER)buf;
-    pConvertSidToStringSidA(user->User.Sid, usersid);
-    ok(*usersid != NULL, "pConvertSidToStringSidA failed lre=%d\n", GetLastError());
+    user = HeapAlloc(GetProcessHeap(), 0, size);
+    GetTokenInformation(token, TokenUser, user, size, &size);
+    pConvertSidToStringSidA(user->User.Sid, &usersid);
+    HeapFree(GetProcessHeap(), 0, user);
+
     CloseHandle(token);
-    return *usersid;
+    return usersid;
 }
 
 static BOOL CDECL get_temp_file(char *pszTempName, int cbTempName, void *pv)
@@ -2516,7 +2516,7 @@ static void test_register_product(void)
         return;
     }
 
-    if (!get_user_sid(&usersid))
+    if (!(usersid = get_user_sid()))
         return;
 
     get_date_str(date);
@@ -2790,7 +2790,7 @@ static void test_publish_product(void)
         return;
     }
 
-    if (!get_user_sid(&usersid))
+    if (!(usersid = get_user_sid()))
         return;
 
     GetTempPath(MAX_PATH, temp);
@@ -3026,7 +3026,7 @@ static void test_publish_features(void)
         return;
     }
 
-    if (!get_user_sid(&usersid))
+    if (!(usersid = get_user_sid()))
         return;
 
     CreateDirectoryA("msitest", NULL);
@@ -3210,7 +3210,7 @@ static void test_register_user(void)
         return;
     }
 
-    if (!get_user_sid(&usersid))
+    if (!(usersid = get_user_sid()))
         return;
 
     get_owner_company(&owner, &company);
@@ -3308,7 +3308,7 @@ static void test_process_components(void)
         return;
     }
 
-    if (!get_user_sid(&usersid))
+    if (!(usersid = get_user_sid()))
         return;
 
     CreateDirectoryA("msitest", NULL);

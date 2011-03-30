@@ -542,23 +542,23 @@ static void create_test_guid(LPSTR prodcode, LPSTR squashed)
     WideCharToMultiByte(CP_ACP, 0, squashedW, -1, squashed, MAX_PATH, NULL, NULL);
 }
 
-static void get_user_sid(LPSTR *usersid)
+static char *get_user_sid(void)
 {
     HANDLE token;
-    DWORD size;
-    PTOKEN_USER user;
+    DWORD size = 0;
+    TOKEN_USER *user;
+    char *usersid = NULL;
 
     OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
-
-    size = 0;
     GetTokenInformation(token, TokenUser, NULL, size, &size);
+
     user = HeapAlloc(GetProcessHeap(), 0, size);
-
     GetTokenInformation(token, TokenUser, user, size, &size);
-    pConvertSidToStringSidA(user->User.Sid, usersid);
-
+    pConvertSidToStringSidA(user->User.Sid, &usersid);
     HeapFree(GetProcessHeap(), 0, user);
+
     CloseHandle(token);
+    return usersid;
 }
 
 static void test_MsiQueryProductState(void)
@@ -575,7 +575,7 @@ static void test_MsiQueryProductState(void)
     REGSAM access = KEY_ALL_ACCESS;
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -918,7 +918,7 @@ static void test_MsiQueryFeatureState(void)
     create_test_guid(prodcode, prod_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
     compose_base85_guid(component, comp_base85 + 20, comp_squashed2);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -1428,7 +1428,7 @@ static void test_MsiQueryComponentState(void)
 
     create_test_guid(prodcode, prod_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -1804,7 +1804,7 @@ static void test_MsiGetComponentPath(void)
 
     create_test_guid(prodcode, prod_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -2333,7 +2333,7 @@ static void test_MsiGetProductCode(void)
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(prodcode2, prod2_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -2600,7 +2600,7 @@ static void test_MsiEnumClients(void)
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(prodcode2, prod2_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -3049,7 +3049,7 @@ static void test_MsiGetProductInfo(void)
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(packcode, pack_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -4341,7 +4341,7 @@ static void test_MsiGetProductInfoEx(void)
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(packcode, pack_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -7094,7 +7094,7 @@ static void test_MsiGetUserInfo(void)
     REGSAM access = KEY_ALL_ACCESS;
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -7681,7 +7681,7 @@ static void test_MsiOpenProduct(void)
     lstrcatA(path, "\\");
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -9515,7 +9515,7 @@ static void test_MsiEnumPatchesEx(void)
     }
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     /* empty szProductCode */
     lstrcpyA(patchcode, "apple");
@@ -9776,7 +9776,7 @@ static void test_MsiEnumPatches(void)
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(patchcode, patch_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -10482,7 +10482,7 @@ static void test_MsiGetPatchInfoEx(void)
 
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(patchcode, patch_squashed);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
@@ -11685,7 +11685,7 @@ static void test_MsiEnumProducts(void)
     create_test_guid(product1, product_squashed1);
     create_test_guid(product2, product_squashed2);
     create_test_guid(product3, product_squashed3);
-    get_user_sid(&usersid);
+    usersid = get_user_sid();
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
