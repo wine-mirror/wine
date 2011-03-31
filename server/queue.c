@@ -318,11 +318,23 @@ static int assign_thread_input( struct thread *thread, struct thread_input *new_
     return 1;
 }
 
+/* set the cursor clip rectangle */
+static void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect )
+{
+    rectangle_t top_rect, new_rect;
+
+    get_top_window_rectangle( desktop, &top_rect );
+    if (!rect || !intersect_rect( &new_rect, &top_rect, rect )) new_rect = top_rect;
+    if (!memcmp( &desktop->cursor.clip, &new_rect, sizeof(new_rect) )) return;
+    desktop->cursor.clip = new_rect;
+    if (desktop->cursor.clip_msg) post_desktop_message( desktop, desktop->cursor.clip_msg, 0, 0 );
+}
+
 /* change the foreground input and reset the cursor clip rect */
 static void set_foreground_input( struct desktop *desktop, struct thread_input *input )
 {
     if (desktop->foreground_input == input) return;
-    get_top_window_rectangle( desktop, &desktop->cursor.clip );
+    set_clip_rectangle( desktop, NULL );
     desktop->foreground_input = input;
 }
 
@@ -2620,10 +2632,13 @@ DECL_HANDLER(set_cursor)
     }
     if (req->flags & SET_CURSOR_CLIP)
     {
-        rectangle_t top_rect;
-        get_top_window_rectangle( input->desktop, &top_rect );
-        if (!intersect_rect( &input->desktop->cursor.clip, &top_rect, &req->clip ))
-            input->desktop->cursor.clip = top_rect;
+        struct desktop *desktop = input->desktop;
+
+        /* only the desktop owner can set the message */
+        if (req->clip_msg && get_top_window_owner(desktop) == current->process)
+            desktop->cursor.clip_msg = req->clip_msg;
+
+        set_clip_rectangle( desktop, &req->clip );
     }
 
     reply->new_x       = input->desktop->cursor.x;

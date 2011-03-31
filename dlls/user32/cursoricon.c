@@ -1717,7 +1717,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH ClipCursor( const RECT *rect )
 
     SERVER_START_REQ( set_cursor )
     {
-        req->flags = SET_CURSOR_CLIP;
+        req->flags    = SET_CURSOR_CLIP;
+        req->clip_msg = WM_WINE_CLIPCURSOR;
         if (rect)
         {
             req->clip.left   = rect->left;

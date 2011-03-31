@@ -56,6 +56,7 @@ struct global_cursor
     int                  x;                /* cursor position */
     int                  y;
     rectangle_t          clip;             /* cursor clip rectangle */
+    unsigned int         clip_msg;         /* message to post for cursor clip changes */
     unsigned int         last_change;      /* time of last position change */
 };
 

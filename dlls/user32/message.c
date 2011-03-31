@@ -1869,6 +1869,12 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
 
         return call_current_hook( h_extra->handle, HC_ACTION, wparam, h_extra->lparam );
     }
+    case WM_WINE_CLIPCURSOR:
+    {
+        RECT rect;
+        GetClipCursor( &rect );
+        return USER_Driver->pClipCursor( &rect );
+    }
     default:
         if (msg >= WM_WINE_FIRST_DRIVER_MSG && msg <= WM_WINE_LAST_DRIVER_MSG)
             return USER_Driver->pWindowMessage( hwnd, msg, wparam, lparam );

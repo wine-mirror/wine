@@ -334,6 +334,7 @@ void manage_desktop( WCHAR *arg )
         if (name) set_desktop_window_title( hwnd, name );
         SystemParametersInfoA( SPI_SETDESKPATTERN, -1, NULL, FALSE );
         SetDeskWallPaper( (LPSTR)-1 );
+        ClipCursor( NULL );
         initialize_display_settings( hwnd );
         initialize_appbar();
         initialize_systray( using_root );
