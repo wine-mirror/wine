@@ -1281,6 +1281,7 @@ static void set_cursor_pos( struct desktop *desktop, int x, int y )
 {
     desktop->cursor.x = min( max( x, desktop->cursor.clip.left ), desktop->cursor.clip.right - 1 );
     desktop->cursor.y = min( max( y, desktop->cursor.clip.top ), desktop->cursor.clip.bottom - 1 );
+    desktop->cursor.last_change = get_tick_count();
 }
 
 /* queue a hardware message into a given thread input */
@@ -1411,9 +1412,10 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         WM_MOUSEHWHEEL   /* 0x1000 = MOUSEEVENTF_HWHEEL */
     };
 
+    desktop->cursor.last_change = get_tick_count();
     flags = input->mouse.flags;
     time  = input->mouse.time;
-    if (!time) time = get_tick_count();
+    if (!time) time = desktop->cursor.last_change;
 
     if (flags & MOUSEEVENTF_MOVE)
     {
@@ -2624,7 +2626,8 @@ DECL_HANDLER(set_cursor)
             input->desktop->cursor.clip = top_rect;
     }
 
-    reply->new_x    = input->desktop->cursor.x;
-    reply->new_y    = input->desktop->cursor.y;
-    reply->new_clip = input->desktop->cursor.clip;
+    reply->new_x       = input->desktop->cursor.x;
+    reply->new_y       = input->desktop->cursor.y;
+    reply->new_clip    = input->desktop->cursor.clip;
+    reply->last_change = input->desktop->cursor.last_change;
 }

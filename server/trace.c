@@ -3905,6 +3905,7 @@ static void dump_set_cursor_reply( const struct set_cursor_reply *req )
     fprintf( stderr, ", new_x=%d", req->new_x );
     fprintf( stderr, ", new_y=%d", req->new_y );
     dump_rectangle( ", new_clip=", &req->new_clip );
+    fprintf( stderr, ", last_change=%08x", req->last_change );
 }
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {

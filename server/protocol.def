@@ -3324,6 +3324,7 @@ enum coords_relative
     int            new_x;         /* new position */
     int            new_y;
     rectangle_t    new_clip;      /* new clip rectangle */
+    unsigned int   last_change;   /* time of last position change */
 @END
 #define SET_CURSOR_HANDLE 0x01
 #define SET_CURSOR_COUNT  0x02

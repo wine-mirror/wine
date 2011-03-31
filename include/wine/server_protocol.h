@@ -4807,6 +4807,8 @@ struct set_cursor_reply
     int            new_x;
     int            new_y;
     rectangle_t    new_clip;
+    unsigned int   last_change;
+    char __pad_44[4];
 };
 #define SET_CURSOR_HANDLE 0x01
 #define SET_CURSOR_COUNT  0x02
@@ -5559,6 +5561,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 417
+#define SERVER_PROTOCOL_VERSION 418
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

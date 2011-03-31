@@ -52,7 +52,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(keyboard);
 
-static DWORD last_mouse_event;
 
 /***********************************************************************
  *           get_key_state
@@ -124,10 +123,7 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
  */
 BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input )
 {
-    NTSTATUS status;
-
-    if (input->type == INPUT_MOUSE) last_mouse_event = GetTickCount();
-    status = send_hardware_message( hwnd, input, 0 );
+    NTSTATUS status = send_hardware_message( hwnd, input, 0 );
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
@@ -183,7 +179,6 @@ UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
         {
             /* we need to update the coordinates to what the server expects */
             INPUT input = inputs[i];
-            last_mouse_event = GetTickCount();
             update_mouse_coords( &input );
             if (!(status = send_hardware_message( 0, &input, SEND_HWMSG_INJECTED )))
             {
@@ -254,28 +249,24 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetCursorPos( POINT *pt )
 {
-    BOOL ret = FALSE;
+    BOOL ret;
+    DWORD last_change;
 
     if (!pt) return FALSE;
 
-    /* query new position from graphics driver if we haven't updated recently */
-    if (GetTickCount() - last_mouse_event > 100) ret = USER_Driver->pGetCursorPos( pt );
-
     SERVER_START_REQ( set_cursor )
     {
-        if (ret)  /* update it */
-        {
-            req->flags = SET_CURSOR_POS;
-            req->x     = pt->x;
-            req->y     = pt->y;
-        }
         if ((ret = !wine_server_call( req )))
         {
             pt->x = reply->new_x;
             pt->y = reply->new_y;
+            last_change = reply->last_change;
         }
     }
     SERVER_END_REQ;
+
+    /* query new position from graphics driver if we haven't updated recently */
+    if (ret && GetTickCount() - last_change > 100) ret = USER_Driver->pGetCursorPos( pt );
     return ret;
 }
 

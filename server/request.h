@@ -2103,7 +2103,8 @@ C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, prev_count) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_x) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_y) == 20 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_clip) == 24 );
-C_ASSERT( sizeof(struct set_cursor_reply) == 40 );
+C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, last_change) == 40 );
+C_ASSERT( sizeof(struct set_cursor_reply) == 48 );
 
 #endif  /* WANT_REQUEST_HANDLERS */
 
