@@ -770,7 +770,7 @@ static void
 DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
 {
     int fieldNum = infoPtr->select & DTHT_DATEFIELD;
-    int i, val=0;
+    int i, val=0, clamp_day=0;
     SYSTEMTIME date = infoPtr->date;
 
     if (infoPtr->select == -1 || infoPtr->nCharsEntered == 0)
@@ -785,14 +785,17 @@ DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
         case ONEDIGITYEAR:
         case TWODIGITYEAR:
             date.wYear = date.wYear - (date.wYear%100) + val;
+            clamp_day = 1;
             break;
         case INVALIDFULLYEAR:
         case FULLYEAR:
             date.wYear = val;
+            clamp_day = 1;
             break;
         case ONEDIGITMONTH:
         case TWODIGITMONTH:
             date.wMonth = val;
+            clamp_day = 1;
             break;
         case ONEDIGITDAY:
         case TWODIGITDAY:
@@ -814,6 +817,9 @@ DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
             date.wSecond = val;
             break;
     }
+
+    if (clamp_day && date.wDay > MONTHCAL_MonthLength(date.wMonth, date.wYear))
+        date.wDay = MONTHCAL_MonthLength(date.wMonth, date.wYear);
 
     if (DATETIME_SetSystemTime(infoPtr, GDT_VALID, &date))
         DATETIME_SendDateTimeChangeNotify (infoPtr);
