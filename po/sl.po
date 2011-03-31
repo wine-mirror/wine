@@ -67,7 +67,7 @@ msgid "Programs (*.exe)"
 msgstr "Programi (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Vse datoteke (*.*)"
 
@@ -133,7 +133,7 @@ msgstr "Preklicujem ..."
 msgid "Separator"
 msgstr "Ločilo"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
 msgid "None"
 msgstr "Brez"
 
@@ -386,7 +386,7 @@ msgstr "Privzeti tiskalnik ni nastavljen."
 msgid "Cannot find the printer."
 msgstr "Tiskalnika ni mogoče najti."
 
-#: comdlg32.rc:80 progman.rc:78
+#: comdlg32.rc:80 progman.rc:77
 msgid "Out of memory."
 msgstr "Zmanjkalo je pomnilnika."
 
@@ -8956,11 +8956,11 @@ msgstr ""
 "#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
 "Za&menjaj ...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:54
+#: notepad.rc:59
 msgid "&Search..."
 msgstr "&Iskanje ..."
 
-#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
+#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&O pomoči"
 
@@ -8980,15 +8980,15 @@ msgstr "Stran &p"
 msgid "Notepad"
 msgstr "Beležnica"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
+#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
 msgid "ERROR"
 msgstr "NAPAKA"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
+#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
 msgid "WARNING"
 msgstr "OPOZORILO"
 
-#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
+#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
 msgid "Information"
 msgstr "Informacija"
 
@@ -9477,43 +9477,43 @@ msgstr "&Razpostavi\tShift+F4"
 msgid "&Arrange Icons"
 msgstr "Razporedi &ikone"
 
-#: progman.rc:57
+#: progman.rc:56
 msgid "&Tutorial"
 msgstr "&Vadnica"
 
-#: progman.rc:59
+#: progman.rc:58
 msgid "&About Wine"
 msgstr "&O Wine"
 
-#: progman.rc:65
+#: progman.rc:64
 msgid "Program Manager"
 msgstr "Upravitelj programov"
 
-#: progman.rc:69
+#: progman.rc:68
 msgid "Delete"
 msgstr "Brisanje"
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Delete group `%s'?"
 msgstr "Ali ste prepričani, da želite izbrisati skupino '%s' ?"
 
-#: progman.rc:71
+#: progman.rc:70
 msgid "Delete program `%s'?"
 msgstr "Ali ste prepričani, da želite izbrisati program '%s' ?"
 
-#: progman.rc:72 winhlp32.rc:97
+#: progman.rc:71 winhlp32.rc:97
 msgid "Not implemented"
 msgstr "Ni (še) na voljo"
 
-#: progman.rc:73
+#: progman.rc:72
 msgid "Error reading `%s'."
 msgstr "Napaka pri branju iz '%s'."
 
-#: progman.rc:74
+#: progman.rc:73
 msgid "Error writing `%s'."
 msgstr "Napaka pri pisanju v '%s'."
 
-#: progman.rc:77
+#: progman.rc:76
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9521,35 +9521,35 @@ msgstr ""
 "Datoteke programske skupine '%s' ni mogoče odpreti.\n"
 "Ali želite, da jo poskusim naložiti tudi v prihodnje?"
 
-#: progman.rc:79
+#: progman.rc:78
 msgid "Help not available."
 msgstr "Pomoč ni na voljo."
 
-#: progman.rc:80
+#: progman.rc:79
 msgid "Unknown feature in %s"
 msgstr "Neznana možnost v %s"
 
-#: progman.rc:81
+#: progman.rc:80
 msgid "File `%s' exists. Not overwritten."
 msgstr "Datoteka '%s' že obstaja in ni bila prepisana."
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Shranite skupino kot '%s', da preprečite prepis originalne datoteke."
 
-#: progman.rc:85
+#: progman.rc:84
 msgid "Programs"
 msgstr "Programi"
 
-#: progman.rc:86
+#: progman.rc:85
 msgid "Libraries (*.dll)"
 msgstr "Knjižnice (*.dll)"
 
-#: progman.rc:87
+#: progman.rc:86
 msgid "Icon files"
 msgstr "Ikonske datoteke"
 
-#: progman.rc:88
+#: progman.rc:87
 msgid "Icons (*.ico)"
 msgstr "Ikone (*.ico)"
 

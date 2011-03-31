@@ -51,7 +51,6 @@ MAIN_MENU MENU
  
 POPUP "&Help" {
    MENUITEM "&Contents",         PM_CONTENTS
-   MENUITEM "&Search...",           PM_SEARCH
    MENUITEM SEPARATOR
    MENUITEM "&Help on help",     PM_HELPONHELP
    MENUITEM "&Tutorial",         PM_TUTORIAL

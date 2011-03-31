@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr ""
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Kaikki tiedostot (*.*)"
 
@@ -129,7 +129,7 @@ msgstr ""
 msgid "Separator"
 msgstr ""
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
 msgid "None"
 msgstr ""
 
@@ -377,7 +377,7 @@ msgstr "Oletustulostinta ei ole määritetty."
 msgid "Cannot find the printer."
 msgstr "Tulostinta ei löydy."
 
-#: comdlg32.rc:80 progman.rc:78
+#: comdlg32.rc:80 progman.rc:77
 msgid "Out of memory."
 msgstr "Muisti loppu."
 
@@ -8483,11 +8483,11 @@ msgstr "Etsi &seuraava\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Korvaa...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:54
+#: notepad.rc:59
 msgid "&Search..."
 msgstr "&Etsi..."
 
-#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
+#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "Apua &Opastuksesta"
 
@@ -8507,15 +8507,15 @@ msgstr "Sivu &p"
 msgid "Notepad"
 msgstr "Notepad"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
+#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
 msgid "ERROR"
 msgstr "VIRHE"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
+#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
 msgid "WARNING"
 msgstr "VAROITUS"
 
-#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
+#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
 #, fuzzy
 msgid "Information"
 msgstr ""
@@ -8975,79 +8975,79 @@ msgstr ""
 msgid "&Arrange Icons"
 msgstr ""
 
-#: progman.rc:57
+#: progman.rc:56
 msgid "&Tutorial"
 msgstr ""
 
-#: progman.rc:59
+#: progman.rc:58
 #, fuzzy
 msgid "&About Wine"
 msgstr "&About Notepad"
 
-#: progman.rc:65
+#: progman.rc:64
 msgid "Program Manager"
 msgstr ""
 
-#: progman.rc:69
+#: progman.rc:68
 #, fuzzy
 msgid "Delete"
 msgstr "P&oista"
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Delete group `%s'?"
 msgstr ""
 
-#: progman.rc:71
+#: progman.rc:70
 msgid "Delete program `%s'?"
 msgstr ""
 
-#: progman.rc:72 winhlp32.rc:97
+#: progman.rc:71 winhlp32.rc:97
 msgid "Not implemented"
 msgstr "Ei käytettävissä"
 
-#: progman.rc:73
+#: progman.rc:72
 msgid "Error reading `%s'."
 msgstr ""
 
-#: progman.rc:74
+#: progman.rc:73
 msgid "Error writing `%s'."
 msgstr ""
 
-#: progman.rc:77
+#: progman.rc:76
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
 
-#: progman.rc:79
+#: progman.rc:78
 msgid "Help not available."
 msgstr ""
 
-#: progman.rc:80
+#: progman.rc:79
 msgid "Unknown feature in %s"
 msgstr ""
 
-#: progman.rc:81
+#: progman.rc:80
 msgid "File `%s' exists. Not overwritten."
 msgstr ""
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr ""
 
-#: progman.rc:85
+#: progman.rc:84
 msgid "Programs"
 msgstr ""
 
-#: progman.rc:86
+#: progman.rc:85
 msgid "Libraries (*.dll)"
 msgstr ""
 
-#: progman.rc:87
+#: progman.rc:86
 msgid "Icon files"
 msgstr ""
 
-#: progman.rc:88
+#: progman.rc:87
 msgid "Icons (*.ico)"
 msgstr ""
 

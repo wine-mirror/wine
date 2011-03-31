@@ -71,7 +71,7 @@ msgid "Programs (*.exe)"
 msgstr "Programy"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Všechny soubory (*.*)"
 
@@ -139,7 +139,7 @@ msgstr ""
 msgid "Separator"
 msgstr "Oddělovač"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
 #, fuzzy
 msgid "None"
 msgstr ""
@@ -397,7 +397,7 @@ msgstr "Výchozí tiskárna neexistuje."
 msgid "Cannot find the printer."
 msgstr "Nemohu najít tiskárnu."
 
-#: comdlg32.rc:80 progman.rc:78
+#: comdlg32.rc:80 progman.rc:77
 #, fuzzy
 msgid "Out of memory."
 msgstr ""
@@ -8788,11 +8788,11 @@ msgstr "&Najdi další\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Nah&radit...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:54
+#: notepad.rc:59
 msgid "&Search..."
 msgstr "&Najít..."
 
-#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
+#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Pomoc k nápovědě"
 
@@ -8812,15 +8812,15 @@ msgstr "Strana &p"
 msgid "Notepad"
 msgstr "Notepad"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
+#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
 msgid "ERROR"
 msgstr "CHYBA"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
+#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
 msgid "WARNING"
 msgstr "VAROVÁNÍ"
 
-#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
+#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
 msgid "Information"
 msgstr "Informace"
 
@@ -9286,31 +9286,31 @@ msgstr "&Vedle sebe\tShift+F4"
 msgid "&Arrange Icons"
 msgstr "&Zarovnat ikony"
 
-#: progman.rc:57
+#: progman.rc:56
 msgid "&Tutorial"
 msgstr "&Tutorial"
 
-#: progman.rc:59
+#: progman.rc:58
 msgid "&About Wine"
 msgstr "&O Wine"
 
-#: progman.rc:65
+#: progman.rc:64
 msgid "Program Manager"
 msgstr "Program manager"
 
-#: progman.rc:69
+#: progman.rc:68
 msgid "Delete"
 msgstr "Smazat"
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Delete group `%s'?"
 msgstr "Smazat skupinu `%s' ?"
 
-#: progman.rc:71
+#: progman.rc:70
 msgid "Delete program `%s'?"
 msgstr "Smazat program `%s' ?"
 
-#: progman.rc:72 winhlp32.rc:97
+#: progman.rc:71 winhlp32.rc:97
 #, fuzzy
 msgid "Not implemented"
 msgstr ""
@@ -9319,15 +9319,15 @@ msgstr ""
 "#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
 "Není implementováno"
 
-#: progman.rc:73
+#: progman.rc:72
 msgid "Error reading `%s'."
 msgstr "Chyba při čtení `%s'."
 
-#: progman.rc:74
+#: progman.rc:73
 msgid "Error writing `%s'."
 msgstr "Chyba při zápisu `%s'."
 
-#: progman.rc:77
+#: progman.rc:76
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9335,35 +9335,35 @@ msgstr ""
 "Soubor skupiny `%s' nemůže být otevřen.\n"
 "Mám to zkusit znovu ?"
 
-#: progman.rc:79
+#: progman.rc:78
 msgid "Help not available."
 msgstr "Nápověda není dostupná."
 
-#: progman.rc:80
+#: progman.rc:79
 msgid "Unknown feature in %s"
 msgstr "Neznámá vlastnost v %s"
 
-#: progman.rc:81
+#: progman.rc:80
 msgid "File `%s' exists. Not overwritten."
 msgstr "Soubor `%s' existuje. Nebude přepsán."
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Uložit skupinu jako `%s', aby nebyly přepsán originální soubory."
 
-#: progman.rc:85
+#: progman.rc:84
 msgid "Programs"
 msgstr "Programy"
 
-#: progman.rc:86
+#: progman.rc:85
 msgid "Libraries (*.dll)"
 msgstr "Knihovny (*.dll)"
 
-#: progman.rc:87
+#: progman.rc:86
 msgid "Icon files"
 msgstr "Soubory ikon"
 
-#: progman.rc:88
+#: progman.rc:87
 msgid "Icons (*.ico)"
 msgstr "Ikony (*.ico)"
 

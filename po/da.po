@@ -67,7 +67,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmer (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 #, fuzzy
 msgid "All files (*.*)"
 msgstr ""
@@ -138,7 +138,7 @@ msgstr "Annullering..."
 msgid "Separator"
 msgstr "Separator"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
 msgid "None"
 msgstr "Ingen"
 
@@ -396,7 +396,7 @@ msgstr "Ingen standard printer defineret."
 msgid "Cannot find the printer."
 msgstr "Kan ikke finde printeren."
 
-#: comdlg32.rc:80 progman.rc:78
+#: comdlg32.rc:80 progman.rc:77
 #, fuzzy
 msgid "Out of memory."
 msgstr ""
@@ -8839,7 +8839,7 @@ msgstr ""
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "E&rstat...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:54
+#: notepad.rc:59
 #, fuzzy
 msgid "&Search..."
 msgstr ""
@@ -8848,7 +8848,7 @@ msgstr ""
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "&Søg..."
 
-#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
+#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Brug af Hjælp"
 
@@ -8868,7 +8868,7 @@ msgstr "Page &p"
 msgid "Notepad"
 msgstr "Notesblok"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
+#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
 #, fuzzy
 msgid "ERROR"
 msgstr ""
@@ -8877,11 +8877,11 @@ msgstr ""
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "FEIL"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
+#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
 msgid "WARNING"
 msgstr "ADVARSEL"
 
-#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
+#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
 msgid "Information"
 msgstr "Information"
 
@@ -9335,43 +9335,43 @@ msgstr "&Side ved side\tShift+F4"
 msgid "&Arrange Icons"
 msgstr "Arrangér &ikoner"
 
-#: progman.rc:57
+#: progman.rc:56
 msgid "&Tutorial"
 msgstr "&Vejledning"
 
-#: progman.rc:59
+#: progman.rc:58
 msgid "&About Wine"
 msgstr "&Om Wine"
 
-#: progman.rc:65
+#: progman.rc:64
 msgid "Program Manager"
 msgstr "Programbehandling"
 
-#: progman.rc:69
+#: progman.rc:68
 msgid "Delete"
 msgstr "Slet"
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Delete group `%s'?"
 msgstr "Slet gruppen '%s'?"
 
-#: progman.rc:71
+#: progman.rc:70
 msgid "Delete program `%s'?"
 msgstr "Slet programmet '%s'?"
 
-#: progman.rc:72 winhlp32.rc:97
+#: progman.rc:71 winhlp32.rc:97
 msgid "Not implemented"
 msgstr "Ikke implementeret"
 
-#: progman.rc:73
+#: progman.rc:72
 msgid "Error reading `%s'."
 msgstr "Fejl ved læsing af '%s'."
 
-#: progman.rc:74
+#: progman.rc:73
 msgid "Error writing `%s'."
 msgstr "Fejl ved skrivning til '%s'."
 
-#: progman.rc:77
+#: progman.rc:76
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9379,35 +9379,35 @@ msgstr ""
 "Kunne ikke ?pne gruppefilen '%s'.\n"
 "Vil du pr?ve mer?"
 
-#: progman.rc:79
+#: progman.rc:78
 msgid "Help not available."
 msgstr "hjælp er ikke tilgjengelig."
 
-#: progman.rc:80
+#: progman.rc:79
 msgid "Unknown feature in %s"
 msgstr "Ukendt feature i '%s'"
 
-#: progman.rc:81
+#: progman.rc:80
 msgid "File `%s' exists. Not overwritten."
 msgstr "Filen '%s' fandtes allerede, og blev ikke overskrevet."
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Gem gruppen som '%s' for at undgå at overskrive de originale filer."
 
-#: progman.rc:85
+#: progman.rc:84
 msgid "Programs"
 msgstr "Programmer"
 
-#: progman.rc:86
+#: progman.rc:85
 msgid "Libraries (*.dll)"
 msgstr "Biblioteker (*.dll)"
 
-#: progman.rc:87
+#: progman.rc:86
 msgid "Icon files"
 msgstr "Ikon filer"
 
-#: progman.rc:88
+#: progman.rc:87
 msgid "Icons (*.ico)"
 msgstr "Ikoner (*.ico)"
 

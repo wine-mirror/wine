@@ -259,7 +259,6 @@ extern CHAR STRING_EXECUTE[];
  */
 
 #define PM_CONTENTS         0x131
-#define PM_SEARCH           0x132
 #define PM_HELPONHELP       0x133
 #define PM_TUTORIAL         0x134
 

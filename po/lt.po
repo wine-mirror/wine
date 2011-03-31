@@ -65,7 +65,7 @@ msgid "Programs (*.exe)"
 msgstr "Programos (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Visi failai (*.*)"
 
@@ -133,7 +133,7 @@ msgstr "Atsisakoma..."
 msgid "Separator"
 msgstr "Skirtukas"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
 msgid "None"
 msgstr "Nėra"
 
@@ -381,7 +381,7 @@ msgstr "Nenurodytas pagrindinis spausdintuvas."
 msgid "Cannot find the printer."
 msgstr "Nepavyko rasti spausdintuvo."
 
-#: comdlg32.rc:80 progman.rc:78
+#: comdlg32.rc:80 progman.rc:77
 msgid "Out of memory."
 msgstr "Trūksta atminties."
 
@@ -8591,11 +8591,11 @@ msgstr "Ieškoti ki&to\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Pa&keisti...\tVald+H"
 
-#: notepad.rc:59 progman.rc:54
+#: notepad.rc:59
 msgid "&Search..."
 msgstr "&Paieška..."
 
-#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
+#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "Pa&galba apie žinyną"
 
@@ -8615,15 +8615,15 @@ msgstr "Puslapis &p"
 msgid "Notepad"
 msgstr "Užrašinė"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
+#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
 msgid "ERROR"
 msgstr "KLAIDA"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
+#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
 msgid "WARNING"
 msgstr "ĮSPĖJIMAS"
 
-#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
+#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
 msgid "Information"
 msgstr "Informacija"
 
@@ -9054,43 +9054,43 @@ msgstr "&Greta vienas kito\tLyg2+F4"
 msgid "&Arrange Icons"
 msgstr "&Išdėstyti piktogramas"
 
-#: progman.rc:57
+#: progman.rc:56
 msgid "&Tutorial"
 msgstr "&Mokymo programa"
 
-#: progman.rc:59
+#: progman.rc:58
 msgid "&About Wine"
 msgstr "Apie &Wine"
 
-#: progman.rc:65
+#: progman.rc:64
 msgid "Program Manager"
 msgstr "Programų tvarkytuvė"
 
-#: progman.rc:69
+#: progman.rc:68
 msgid "Delete"
 msgstr "Šalinti"
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Delete group `%s'?"
 msgstr "Šalinti grupę „%s“?"
 
-#: progman.rc:71
+#: progman.rc:70
 msgid "Delete program `%s'?"
 msgstr "Šalinti programą „%s“?"
 
-#: progman.rc:72 winhlp32.rc:97
+#: progman.rc:71 winhlp32.rc:97
 msgid "Not implemented"
 msgstr "Nerealizuota"
 
-#: progman.rc:73
+#: progman.rc:72
 msgid "Error reading `%s'."
 msgstr "Klaida skaitant „%s“."
 
-#: progman.rc:74
+#: progman.rc:73
 msgid "Error writing `%s'."
 msgstr "Klaida rašant „%s“."
 
-#: progman.rc:77
+#: progman.rc:76
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9098,35 +9098,35 @@ msgstr ""
 "Nepavyko atidaryti grupės failo „%s“.\n"
 "Mėginti atidaryti toliau?"
 
-#: progman.rc:79
+#: progman.rc:78
 msgid "Help not available."
 msgstr "Žinynas neprieinamas."
 
-#: progman.rc:80
+#: progman.rc:79
 msgid "Unknown feature in %s"
 msgstr "Nežinoma %s funkcija"
 
-#: progman.rc:81
+#: progman.rc:80
 msgid "File `%s' exists. Not overwritten."
 msgstr "Failas „%s“ egzistuoja. Neperrašytas."
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Išsaugoti grupę kaip „%s“, taip neperrašant originalių failų."
 
-#: progman.rc:85
+#: progman.rc:84
 msgid "Programs"
 msgstr "Programos"
 
-#: progman.rc:86
+#: progman.rc:85
 msgid "Libraries (*.dll)"
 msgstr "Bibliotekos (*.dll)"
 
-#: progman.rc:87
+#: progman.rc:86
 msgid "Icon files"
 msgstr "Piktogramų failai"
 
-#: progman.rc:88
+#: progman.rc:87
 msgid "Icons (*.ico)"
 msgstr "Piktogramos (*.ico)"
 

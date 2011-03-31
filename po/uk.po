@@ -60,7 +60,7 @@ msgid "Programs (*.exe)"
 msgstr "Програми (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
-#: oleview.rc:101 progman.rc:84 regedit.rc:201 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Всі файли (*.*)"
 
@@ -128,7 +128,7 @@ msgstr "Скасування..."
 msgid "Separator"
 msgstr "Роздільник"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:83 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
 msgid "None"
 msgstr "Немає"
 
@@ -376,7 +376,7 @@ msgstr "Немає принтера, поставленого за обумов�
 msgid "Cannot find the printer."
 msgstr "Не вдалось знайти принтер."
 
-#: comdlg32.rc:80 progman.rc:78
+#: comdlg32.rc:80 progman.rc:77
 msgid "Out of memory."
 msgstr "Замало пам'яті."
 
@@ -8593,11 +8593,11 @@ msgstr "Знайти &далі\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "За&мінити...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:54
+#: notepad.rc:59
 msgid "&Search..."
 msgstr "По&шук..."
 
-#: notepad.rc:60 progman.rc:56 winhlp32.rc:61
+#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Використання Довідки"
 
@@ -8617,15 +8617,15 @@ msgstr "Сторінка &p"
 msgid "Notepad"
 msgstr "Блокнот"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:94
+#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
 msgid "ERROR"
 msgstr "ПОМИЛКА"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:95
+#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
 msgid "WARNING"
 msgstr "УВАГА"
 
-#: notepad.rc:74 progman.rc:68 winhlp32.rc:96
+#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
 msgid "Information"
 msgstr "Інформація"
 
@@ -9055,43 +9055,43 @@ msgstr "&Поруч\tShift+F4"
 msgid "&Arrange Icons"
 msgstr "&Впорядкувати значки"
 
-#: progman.rc:57
+#: progman.rc:56
 msgid "&Tutorial"
 msgstr "По&сібник"
 
-#: progman.rc:59
+#: progman.rc:58
 msgid "&About Wine"
 msgstr "&Про Wine"
 
-#: progman.rc:65
+#: progman.rc:64
 msgid "Program Manager"
 msgstr "Диспетчер програм"
 
-#: progman.rc:69
+#: progman.rc:68
 msgid "Delete"
 msgstr "Видалити"
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Delete group `%s'?"
 msgstr "Видалити групу `%s' ?"
 
-#: progman.rc:71
+#: progman.rc:70
 msgid "Delete program `%s'?"
 msgstr "Видалити програму `%s' ?"
 
-#: progman.rc:72 winhlp32.rc:97
+#: progman.rc:71 winhlp32.rc:97
 msgid "Not implemented"
 msgstr "Не реалізовано"
 
-#: progman.rc:73
+#: progman.rc:72
 msgid "Error reading `%s'."
 msgstr "Помилка читання `%s'."
 
-#: progman.rc:74
+#: progman.rc:73
 msgid "Error writing `%s'."
 msgstr "Помикла запису `%s'."
 
-#: progman.rc:77
+#: progman.rc:76
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9099,35 +9099,35 @@ msgstr ""
 "Файл групи `%s' неможливо відкрити.\n"
 "Спробувати знов наступного разу?"
 
-#: progman.rc:79
+#: progman.rc:78
 msgid "Help not available."
 msgstr "Довідка не доступна."
 
-#: progman.rc:80
+#: progman.rc:79
 msgid "Unknown feature in %s"
 msgstr "Невідома ознака в %s"
 
-#: progman.rc:81
+#: progman.rc:80
 msgid "File `%s' exists. Not overwritten."
 msgstr "Файл `%s' існує. Він не був перезаписаний."
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Група зберігається як `%s' щоб уникнути перезапис оригіналів."
 
-#: progman.rc:85
+#: progman.rc:84
 msgid "Programs"
 msgstr "Програми"
 
-#: progman.rc:86
+#: progman.rc:85
 msgid "Libraries (*.dll)"
 msgstr "Бібліотеки (*.dll)"
 
-#: progman.rc:87
+#: progman.rc:86
 msgid "Icon files"
 msgstr "Файли значків"
 
-#: progman.rc:88
+#: progman.rc:87
 msgid "Icons (*.ico)"
 msgstr "Значки (*.ico)"
 
