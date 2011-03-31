@@ -2984,6 +2984,16 @@ typedef void (WINE_GLAPI *PGLFNBLENDEQUATIONSEPARATEEXTPROC)(GLenum modeRGB, GLe
 typedef void (WINE_GLAPI *PGLFNBLENDFUNCSEPARATEEXTPROC)(GLenum sfactorRGB, GLenum dfactorRGB,
         GLenum sfactorAlpha, GLenum dfactorAlpha);
 
+/* GL_EXT_blend_minmax */
+#ifndef GL_EXT_blend_minmax
+#define GL_EXT_blend_minmax 1
+#define GL_FUNC_ADD_EXT                                     0x8006
+#define GL_MIN_EXT                                          0x8007
+#define GL_MAX_EXT                                          0x8008
+#define GL_BLEND_EQUATION_EXT                               0x8009
+#endif
+typedef void (WINE_GLAPI *PGLFNBLENDEQUATIONEXTPROC)(GLenum mode);
+
 /* GL_EXT_depth_bounds_test */
 #ifndef GL_EXT_depth_bounds_test
 #define GL_EXT_depth_bounds_test 1
@@ -3892,11 +3902,6 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSWAPINTERVALEXTPROC)(int interval);
             glFramebufferTextureLayerARB,               ARB_GEOMETRY_SHADER4,           NULL) \
     USE_GL_FUNC(PGLFNFRAMEBUFFERTEXTUREFACEARBPROC, \
             glFramebufferTextureFaceARB,                ARB_GEOMETRY_SHADER4,           NULL) \
-    /* GL_ARB_imaging, GL_EXT_blend_minmax */ \
-    USE_GL_FUNC(PGLFNBLENDCOLORPROC, \
-            glBlendColorEXT,                            EXT_BLEND_COLOR,                NULL) \
-    USE_GL_FUNC(PGLFNBLENDEQUATIONPROC, \
-            glBlendEquationEXT,                         EXT_BLEND_MINMAX,               NULL) \
     /* GL_ARB_map_buffer_range */ \
     USE_GL_FUNC(PGLFNMAPBUFFERRANGEPROC, \
             glMapBufferRange,                           ARB_MAP_BUFFER_RANGE,           NULL) \
@@ -4231,12 +4236,18 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSWAPINTERVALEXTPROC)(int interval);
             glStencilOpSeparateATI,                     ATI_SEPARATE_STENCIL,           NULL) \
     USE_GL_FUNC(PGLFNSTENCILFUNCSEPARATEATIPROC, \
             glStencilFuncSeparateATI,                   ATI_SEPARATE_STENCIL,           NULL) \
+    /* GL_EXT_blend_color */ \
+    USE_GL_FUNC(PGLFNBLENDCOLORPROC, \
+            glBlendColorEXT,                            EXT_BLEND_COLOR,                NULL) \
     /* GL_EXT_blend_equation_separate */ \
     USE_GL_FUNC(PGLFNBLENDFUNCSEPARATEEXTPROC, \
             glBlendFuncSeparateEXT,                     EXT_BLEND_FUNC_SEPARATE,        NULL) \
     /* GL_EXT_blend_func_separate */ \
     USE_GL_FUNC(PGLFNBLENDEQUATIONSEPARATEEXTPROC, \
             glBlendEquationSeparateEXT,                 EXT_BLEND_EQUATION_SEPARATE,    NULL) \
+    /* GL_EXT_blend_minmax */ \
+    USE_GL_FUNC(PGLFNBLENDEQUATIONEXTPROC, \
+            glBlendEquationEXT,                         EXT_BLEND_MINMAX,               NULL) \
     /* GL_EXT_depth_bounds_test */ \
     USE_GL_FUNC(PGLFNDEPTHBOUNDSEXTPROC, \
             glDepthBoundsEXT,                           EXT_DEPTH_BOUNDS_TEST,          NULL) \
