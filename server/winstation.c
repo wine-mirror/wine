@@ -232,12 +232,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             desktop->close_timeout = NULL;
             desktop->foreground_input = NULL;
             desktop->users = 0;
-            desktop->cursor_x = 0;
-            desktop->cursor_y = 0;
-            desktop->cursor_clip.left   = 0;
-            desktop->cursor_clip.top    = 0;
-            desktop->cursor_clip.right  = 0;
-            desktop->cursor_clip.bottom = 0;
+            memset( &desktop->cursor, 0, sizeof(desktop->cursor) );
             memset( desktop->keystate, 0, sizeof(desktop->keystate) );
             list_add_tail( &winstation->desktops, &desktop->entry );
         }

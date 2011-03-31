@@ -51,6 +51,13 @@ struct winstation
     struct atom_table *atom_table;         /* global atom table */
 };
 
+struct global_cursor
+{
+    int                  x;                /* cursor position */
+    int                  y;
+    rectangle_t          clip;             /* cursor clip rectangle */
+};
+
 struct desktop
 {
     struct object        obj;              /* object header */
@@ -63,9 +70,7 @@ struct desktop
     struct timeout_user *close_timeout;    /* timeout before closing the desktop */
     struct thread_input *foreground_input; /* thread input of foreground thread */
     unsigned int         users;            /* processes and threads using this desktop */
-    int                  cursor_x;         /* cursor position */
-    int                  cursor_y;
-    rectangle_t          cursor_clip;      /* cursor clip rectangle */
+    struct global_cursor cursor;           /* global cursor information */
     unsigned char        keystate[256];    /* asynchronous key state */
 };
 

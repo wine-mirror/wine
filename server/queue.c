@@ -322,7 +322,7 @@ static int assign_thread_input( struct thread *thread, struct thread_input *new_
 static void set_foreground_input( struct desktop *desktop, struct thread_input *input )
 {
     if (desktop->foreground_input == input) return;
-    get_top_window_rectangle( desktop, &desktop->cursor_clip );
+    get_top_window_rectangle( desktop, &desktop->cursor.clip );
     desktop->foreground_input = input;
 }
 
@@ -1279,8 +1279,8 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
 /* set the cursor position, clipping to the cursor clip rect */
 static void set_cursor_pos( struct desktop *desktop, int x, int y )
 {
-    desktop->cursor_x = min( max( x, desktop->cursor_clip.left ), desktop->cursor_clip.right - 1 );
-    desktop->cursor_y = min( max( y, desktop->cursor_clip.top ), desktop->cursor_clip.bottom - 1 );
+    desktop->cursor.x = min( max( x, desktop->cursor.clip.left ), desktop->cursor.clip.right - 1 );
+    desktop->cursor.y = min( max( y, desktop->cursor.clip.top ), desktop->cursor.clip.bottom - 1 );
 }
 
 /* queue a hardware message into a given thread input */
@@ -1312,8 +1312,8 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
         if (desktop->keystate[VK_XBUTTON1] & 0x80) msg->wparam |= MK_XBUTTON1;
         if (desktop->keystate[VK_XBUTTON2] & 0x80) msg->wparam |= MK_XBUTTON2;
     }
-    data->x = desktop->cursor_x;
-    data->y = desktop->cursor_y;
+    data->x = desktop->cursor.x;
+    data->y = desktop->cursor.y;
 
     if (msg->win && (thread = get_window_thread( msg->win )))
     {
@@ -1422,19 +1422,19 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
             x = input->mouse.x;
             y = input->mouse.y;
             if (flags & ~(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE) &&
-                x == desktop->cursor_x && y == desktop->cursor_y)
+                x == desktop->cursor.x && y == desktop->cursor.y)
                 flags &= ~MOUSEEVENTF_MOVE;
         }
         else
         {
-            x = desktop->cursor_x + input->mouse.x;
-            y = desktop->cursor_y + input->mouse.y;
+            x = desktop->cursor.x + input->mouse.x;
+            y = desktop->cursor.y + input->mouse.y;
         }
     }
     else
     {
-        x = desktop->cursor_x;
-        y = desktop->cursor_y;
+        x = desktop->cursor.x;
+        y = desktop->cursor.y;
     }
 
     for (i = 0; i < sizeof(messages)/sizeof(messages[0]); i++)
@@ -2620,11 +2620,11 @@ DECL_HANDLER(set_cursor)
     {
         rectangle_t top_rect;
         get_top_window_rectangle( input->desktop, &top_rect );
-        if (!intersect_rect( &input->desktop->cursor_clip, &top_rect, &req->clip ))
-            input->desktop->cursor_clip = top_rect;
+        if (!intersect_rect( &input->desktop->cursor.clip, &top_rect, &req->clip ))
+            input->desktop->cursor.clip = top_rect;
     }
 
-    reply->new_x    = input->desktop->cursor_x;
-    reply->new_y    = input->desktop->cursor_y;
-    reply->new_clip = input->desktop->cursor_clip;
+    reply->new_x    = input->desktop->cursor.x;
+    reply->new_y    = input->desktop->cursor.y;
+    reply->new_clip = input->desktop->cursor.clip;
 }
