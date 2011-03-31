@@ -93,7 +93,7 @@ static void test__environ(void)
             "Expected _environ pointers to be identical\n" );
     }
     else
-        skip( "__p__environ() is not available\n" );
+        win_skip( "__p__environ() is not available\n" );
 
     /* Note that msvcrt from Windows versions older than Vista
      * expects the mode pointer parameter to be valid.*/
@@ -138,7 +138,7 @@ static void test__wenviron(void)
         ok( *p_wenviron == NULL, "Expected _wenviron to be NULL, got %p\n", *p_wenviron );
     else
     {
-        skip( "Pointer to _wenviron is not valid\n" );
+        win_skip( "Pointer to _wenviron is not valid\n" );
         return;
     }
 
@@ -149,7 +149,7 @@ static void test__wenviron(void)
             "Expected _wenviron pointers to be NULL\n" );
     }
     else
-        skip( "__p__wenviron() is not available\n" );
+        win_skip( "__p__wenviron() is not available\n" );
 
     /* __getmainargs doesn't initialize _wenviron. */
     __getmainargs(&argc, &argv, &envp, 0, &mode);
