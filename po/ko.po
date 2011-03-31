@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "지정되지 않음"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:115
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:114
 msgid "Name"
 msgstr "이름"
 
@@ -166,7 +166,7 @@ msgstr "내 즐겨찾기"
 msgid "System Path"
 msgstr "시스템 경로"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:106
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:105
 msgid "Desktop"
 msgstr "데스크탑"
 
@@ -6333,7 +6333,7 @@ msgstr "끝내기(&X)"
 msgid "&About Control Panel..."
 msgstr "제어판 정보(&A)..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:116
+#: shell32.rc:123 shell32.rc:127 winefile.rc:115
 msgid "Size"
 msgstr "크기"
 
@@ -6345,7 +6345,7 @@ msgstr "종류"
 msgid "Modified"
 msgstr "수정날짜"
 
-#: shell32.rc:126 winefile.rc:122
+#: shell32.rc:126 winefile.rc:121
 msgid "Attributes"
 msgstr "속성"
 
@@ -6513,7 +6513,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Contacts"
 
-#: shell32.rc:216 winefile.rc:121
+#: shell32.rc:216 winefile.rc:120
 msgid "Links"
 msgstr "링크"
 
@@ -6768,7 +6768,7 @@ msgstr "닫기(&C)\tAlt-F4"
 msgid "&About Wine..."
 msgstr "Wine에 관하여..."
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:103
+#: user32.rc:55 regedit.rc:182 winefile.rc:102
 msgid "Error"
 msgstr "에러"
 
@@ -10764,74 +10764,70 @@ msgid "Arrange &Symbols"
 msgstr "심벌로 정렬(&S)"
 
 #: winefile.rc:87
-msgid "Help &Search...\tF1"
-msgstr "도움말 찾기(&S)...\tF1"
-
-#: winefile.rc:88
 msgid "&Using Help\tF1"
 msgstr "도움말 사용법(&U)\tF1"
 
-#: winefile.rc:90
+#: winefile.rc:89
 msgid "&About Winefile..."
 msgstr "Winefile에 관하여(&I)..."
 
-#: winefile.rc:96
+#: winefile.rc:95
 msgid "Applying font settings"
 msgstr "글꼴 설정 적용"
 
-#: winefile.rc:97
+#: winefile.rc:96
 msgid "Error while selecting new font."
 msgstr "새 글꼴 선택 에러."
 
-#: winefile.rc:102
+#: winefile.rc:101
 msgid "Wine File Manager"
 msgstr "Winefile"
 
-#: winefile.rc:104
+#: winefile.rc:103
 msgid "root fs"
 msgstr "루트 파일시스템"
 
-#: winefile.rc:105
+#: winefile.rc:104
 msgid "unixfs"
 msgstr "유닉스 파일시스템"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "Shell"
 msgstr "셀"
 
-#: winefile.rc:108
+#: winefile.rc:107
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Not yet implemented"
 msgstr "아직 구현안됨"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Wine File"
 msgstr "Wine 파일"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "CDate"
 msgstr "시(CDate)"
 
-#: winefile.rc:118
+#: winefile.rc:117
 msgid "ADate"
 msgstr "초(ADate)"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "MDate"
 msgstr "분(MDate)"
 
-#: winefile.rc:120
+#: winefile.rc:119
 msgid "Index/Inode"
 msgstr "인덱스/아이노드"
 
-#: winefile.rc:123
+#: winefile.rc:122
 msgid "Security"
 msgstr "보안"
 
-#: winefile.rc:125
+#: winefile.rc:124
 msgid "%s of %s free"
 msgstr "%s of %s 사용가능"
 

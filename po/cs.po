@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nebyl zadán žádný příkaz."
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:115
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:114
 #, fuzzy
 msgid "Name"
 msgstr ""
@@ -180,7 +180,7 @@ msgstr "Oblíbené"
 msgid "System Path"
 msgstr "Systémový adresář"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:106
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:105
 msgid "Desktop"
 msgstr "Plocha"
 
@@ -6557,7 +6557,7 @@ msgstr "&Konec"
 msgid "&About Control Panel..."
 msgstr "&About Control Panel..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:116
+#: shell32.rc:123 shell32.rc:127 winefile.rc:115
 msgid "Size"
 msgstr "Velikost"
 
@@ -6569,7 +6569,7 @@ msgstr "Typ"
 msgid "Modified"
 msgstr "Změněno"
 
-#: shell32.rc:126 winefile.rc:122
+#: shell32.rc:126 winefile.rc:121
 msgid "Attributes"
 msgstr "Atributy"
 
@@ -6745,7 +6745,7 @@ msgstr ""
 msgid "Contacts"
 msgstr "&Obsah"
 
-#: shell32.rc:216 winefile.rc:121
+#: shell32.rc:216 winefile.rc:120
 msgid "Links"
 msgstr "Linky"
 
@@ -7016,7 +7016,7 @@ msgstr "&Zavři\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&O programu Wine"
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:103
+#: user32.rc:55 regedit.rc:182 winefile.rc:102
 msgid "Error"
 msgstr "Chyba"
 
@@ -11066,74 +11066,70 @@ msgid "Arrange &Symbols"
 msgstr "Zarovnat &symboly"
 
 #: winefile.rc:87
-msgid "Help &Search...\tF1"
-msgstr "Hledání v &nápovědě...\tF1"
-
-#: winefile.rc:88
 msgid "&Using Help\tF1"
 msgstr "&Jak používat nápovědu\tF1"
 
-#: winefile.rc:90
+#: winefile.rc:89
 msgid "&About Winefile..."
 msgstr "&Informace o Winefile..."
 
-#: winefile.rc:96
+#: winefile.rc:95
 msgid "Applying font settings"
 msgstr "Aplikování nastavení písma"
 
-#: winefile.rc:97
+#: winefile.rc:96
 msgid "Error while selecting new font."
 msgstr "Chyba při volbě nového písma."
 
-#: winefile.rc:102
+#: winefile.rc:101
 msgid "Wine File Manager"
 msgstr "Winefile"
 
-#: winefile.rc:104
+#: winefile.rc:103
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:105
+#: winefile.rc:104
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "Shell"
 msgstr "Příkazový řádek"
 
-#: winefile.rc:108
+#: winefile.rc:107
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Not yet implemented"
 msgstr "Zatím neimplementováno"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Wine File"
 msgstr "Wine File"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "CDate"
 msgstr "Datum vytvoření"
 
-#: winefile.rc:118
+#: winefile.rc:117
 msgid "ADate"
 msgstr "Datum posledního přístupu"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "MDate"
 msgstr "Datum poslední modifikace"
 
-#: winefile.rc:120
+#: winefile.rc:119
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:123
+#: winefile.rc:122
 msgid "Security"
 msgstr "Zabezpečení"
 
-#: winefile.rc:125
+#: winefile.rc:124
 msgid "%s of %s free"
 msgstr "%s z %s volného"
 

@@ -84,7 +84,6 @@ IDM_WINEFILE MENU
 
     POPUP "&Help"  {
         MENUITEM "&Help Topics\tF1",            ID_HELP
-        MENUITEM "Help &Search...\tF1",         ID_HELP
         MENUITEM "&Using Help\tF1",             ID_HELP_USING
         MENUITEM SEPARATOR
         MENUITEM "&About Winefile...",          ID_ABOUT

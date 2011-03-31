@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Non specificato"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:115
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:124 winefile.rc:114
 msgid "Name"
 msgstr "Nome"
 
@@ -171,7 +171,7 @@ msgstr "Preferiti"
 msgid "System Path"
 msgstr "Percorso di sistema"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:106
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:105
 #, fuzzy
 msgid "Desktop"
 msgstr ""
@@ -6619,7 +6619,7 @@ msgstr ""
 msgid "&About Control Panel..."
 msgstr "&Riguardo al pannello di controllo..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:116
+#: shell32.rc:123 shell32.rc:127 winefile.rc:115
 msgid "Size"
 msgstr "Dimensione"
 
@@ -6631,7 +6631,7 @@ msgstr "Tipo"
 msgid "Modified"
 msgstr "Modificato"
 
-#: shell32.rc:126 winefile.rc:122
+#: shell32.rc:126 winefile.rc:121
 msgid "Attributes"
 msgstr "Attributi"
 
@@ -6799,7 +6799,7 @@ msgstr "Programmi (x86)\\File Comuni"
 msgid "Contacts"
 msgstr "Contatti"
 
-#: shell32.rc:216 winefile.rc:121
+#: shell32.rc:216 winefile.rc:120
 msgid "Links"
 msgstr "Collegamenti"
 
@@ -7061,7 +7061,7 @@ msgstr "&Chiudi\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&Informazioni su Wine..."
 
-#: user32.rc:55 regedit.rc:182 winefile.rc:103
+#: user32.rc:55 regedit.rc:182 winefile.rc:102
 msgid "Error"
 msgstr "Errore"
 
@@ -11214,74 +11214,70 @@ msgid "Arrange &Symbols"
 msgstr "Disponi &simboli"
 
 #: winefile.rc:87
-msgid "Help &Search...\tF1"
-msgstr "&Cerca nella Guida...\tF1"
-
-#: winefile.rc:88
 msgid "&Using Help\tF1"
 msgstr "&Uso della Guida\tF1"
 
-#: winefile.rc:90
+#: winefile.rc:89
 msgid "&About Winefile..."
 msgstr "&Informazioni su Winefile..."
 
-#: winefile.rc:96
+#: winefile.rc:95
 msgid "Applying font settings"
 msgstr "Applica le impostazioni dei caratteri"
 
-#: winefile.rc:97
+#: winefile.rc:96
 msgid "Error while selecting new font."
 msgstr "Si è verificato un errore durante la selezione del nuovo carattere."
 
-#: winefile.rc:102
+#: winefile.rc:101
 msgid "Wine File Manager"
 msgstr "Gestore di file di Wine"
 
-#: winefile.rc:104
+#: winefile.rc:103
 msgid "root fs"
 msgstr "radice fs"
 
-#: winefile.rc:105
+#: winefile.rc:104
 msgid "unixfs"
 msgstr "unix fs"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "Shell"
 msgstr "Terminale"
 
-#: winefile.rc:108
+#: winefile.rc:107
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Not yet implemented"
 msgstr "Non ancora implementato"
 
-#: winefile.rc:110
+#: winefile.rc:109
 msgid "Wine File"
 msgstr "Wine File"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "CDate"
 msgstr "Data di creazione"
 
-#: winefile.rc:118
+#: winefile.rc:117
 msgid "ADate"
 msgstr "Data di ultimo accesso"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "MDate"
 msgstr "Data di ultima modifica"
 
-#: winefile.rc:120
+#: winefile.rc:119
 msgid "Index/Inode"
 msgstr "Indice/Inode"
 
-#: winefile.rc:123
+#: winefile.rc:122
 msgid "Security"
 msgstr "Sicurezza"
 
-#: winefile.rc:125
+#: winefile.rc:124
 msgid "%s of %s free"
 msgstr "liberi %s di %s"
 
