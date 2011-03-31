@@ -61,7 +61,6 @@ static const struct {
     {"GL_ARB_geometry_shader4",             ARB_GEOMETRY_SHADER4,           0                           },
     {"GL_ARB_half_float_pixel",             ARB_HALF_FLOAT_PIXEL,           0                           },
     {"GL_ARB_half_float_vertex",            ARB_HALF_FLOAT_VERTEX,          0                           },
-    {"GL_ARB_imaging",                      ARB_IMAGING,                    0                           },
     {"GL_ARB_map_buffer_range",             ARB_MAP_BUFFER_RANGE,           0                           },
     {"GL_ARB_multisample",                  ARB_MULTISAMPLE,                0                           }, /* needs GLX_ARB_MULTISAMPLE as well */
     {"GL_ARB_multitexture",                 ARB_MULTITEXTURE,               0                           },

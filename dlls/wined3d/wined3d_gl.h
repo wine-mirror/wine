@@ -1744,7 +1744,6 @@ typedef enum wined3d_gl_extension
     ARB_GEOMETRY_SHADER4,
     ARB_HALF_FLOAT_PIXEL,
     ARB_HALF_FLOAT_VERTEX,
-    ARB_IMAGING,
     ARB_MAP_BUFFER_RANGE,
     ARB_MULTISAMPLE,
     ARB_MULTITEXTURE,
@@ -2147,88 +2146,6 @@ typedef void (WINE_GLAPI *PGLFNFRAMEBUFFERTEXTUREFACEARBPROC)(GLenum target, GLe
 /* No _ARB, see extension spec */
 #define GL_HALF_FLOAT                                       0x140b
 #endif
-
-/* GL_ARB_imaging */
-#ifndef GL_ARB_imaging
-#define GL_ARB_imaging 1
-#define GL_CONSTANT_COLOR                                   0x8001
-#define GL_ONE_MINUS_CONSTANT_COLOR                         0x8002
-#define GL_CONSTANT_ALPHA                                   0x8003
-#define GL_ONE_MINUS_CONSTANT_ALPHA                         0x8004
-#define GL_BLEND_COLOR                                      0x8005
-#define GL_FUNC_ADD                                         0x8006
-#define GL_MIN                                              0x8007
-#define GL_MAX                                              0x8008
-#define GL_BLEND_EQUATION                                   0x8009
-#define GL_FUNC_SUBTRACT                                    0x800a
-#define GL_FUNC_REVERSE_SUBTRACT                            0x800b
-#define GL_CONVOLUTION_1D                                   0x8010
-#define GL_CONVOLUTION_2D                                   0x8011
-#define GL_SEPARABLE_2D                                     0x8012
-#define GL_CONVOLUTION_BORDER_MODE                          0x8013
-#define GL_CONVOLUTION_FILTER_SCALE                         0x8014
-#define GL_CONVOLUTION_FILTER_BIAS                          0x8015
-#define GL_REDUCE                                           0x8016
-#define GL_CONVOLUTION_FORMAT                               0x8017
-#define GL_CONVOLUTION_WIDTH                                0x8018
-#define GL_CONVOLUTION_HEIGHT                               0x8019
-#define GL_MAX_CONVOLUTION_WIDTH                            0x801a
-#define GL_MAX_CONVOLUTION_HEIGHT                           0x801b
-#define GL_POST_CONVOLUTION_RED_SCALE                       0x801d
-#define GL_POST_CONVOLUTION_GREEN_SCALE                     0x801f
-#define GL_POST_CONVOLUTION_BLUE_SCALE                      0x801e
-#define GL_POST_CONVOLUTION_ALPHA_SCALE                     0x801f
-#define GL_POST_CONVOLUTION_RED_BIAS                        0x8020
-#define GL_POST_CONVOLUTION_GREEN_BIAS                      0x8021
-#define GL_POST_CONVOLUTION_BLUE_BIAS                       0x8022
-#define GL_POST_CONVOLUTION_ALPHA_BIAS                      0x8023
-#define GL_HISTOGRAM                                        0x8024
-#define GL_PROXY_HISTOGRAM                                  0x8025
-#define GL_HISTOGRAM_WIDTH                                  0x8026
-#define GL_HISTOGRAM_FORMAT                                 0x8027
-#define GL_HISTOGRAM_RED_SIZE                               0x8028
-#define GL_HISTOGRAM_GREEN_SIZE                             0x8029
-#define GL_HISTOGRAM_BLUE_SIZE                              0x802a
-#define GL_HISTOGRAM_ALPHA_SIZE                             0x802b
-#define GL_HISTOGRAM_LUMINANCE_SIZE                         0x802c
-#define GL_HISTOGRAM_SINK                                   0x802d
-#define GL_MINMAX                                           0x802e
-#define GL_MINMAX_FORMAT                                    0x802f
-#define GL_MINMAX_SINK                                      0x8030
-#define GL_TABLE_TOO_LARGE                                  0x8031
-#define GL_COLOR_MATRIX                                     0x80b1
-#define GL_COLOR_MATRIX_STACK_DEPTH                         0x80b2
-#define GL_MAX_COLOR_MATRIX_STACK_DEPTH                     0x80b3
-#define GL_POST_COLOR_MATRIX_RED_SCALE                      0x80b4
-#define GL_POST_COLOR_MATRIX_GREEN_SCALE                    0x80b5
-#define GL_POST_COLOR_MATRIX_BLUE_SCALE                     0x80b6
-#define GL_POST_COLOR_MATRIX_ALPHA_SCALE                    0x80b7
-#define GL_POST_COLOR_MATRIX_RED_BIAS                       0x80b8
-#define GL_POST_COLOR_MATRIX_GREEN_BIAS                     0x80b9
-#define GL_POST_COLOR_MATRIX_BLUE_BIAS                      0x80ba
-#define GL_POST_COLOR_MATRIX_ALPHA_BIAS                     0x80bb
-#define GL_COLOR_TABLE                                      0x80d0
-#define GL_POST_CONVOLUTION_COLOR_TABLE                     0x80d1
-#define GL_POST_COLOR_MATRIX_COLOR_TABLE                    0x80d2
-#define GL_PROXY_COLOR_TABLE                                0x80d3
-#define GL_PROXY_POST_CONVOLUTION_COLOR_TABLE               0x80d4
-#define GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE              0x80d5
-#define GL_COLOR_TABLE_SCALE                                0x80d6
-#define GL_COLOR_TABLE_BIAS                                 0x80d7
-#define GL_COLOR_TABLE_FORMAT                               0x80d8
-#define GL_COLOR_TABLE_WIDTH                                0x80d9
-#define GL_COLOR_TABLE_RED_SIZE                             0x80da
-#define GL_COLOR_TABLE_GREEN_SIZE                           0x80db
-#define GL_COLOR_TABLE_BLUE_SIZE                            0x80dc
-#define GL_COLOR_TABLE_ALPHA_SIZE                           0x80dd
-#define GL_COLOR_TABLE_LUMINANCE_SIZE                       0x80de
-#define GL_COLOR_TABLE_INTENSITY_SIZE                       0x80df
-#define GL_CONSTANT_BORDER                                  0x8151
-#define GL_REPLICATE_BORDER                                 0x8153
-#define GL_CONVOLUTION_BORDER_COLOR                         0x8154
-#endif
-typedef void (WINE_GLAPI *PGLFNBLENDCOLORPROC)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-typedef void (WINE_GLAPI *PGLFNBLENDEQUATIONPROC)(GLenum mode);
 
 /* GL_ARB_map_buffer_range */
 #ifndef GL_ARB_map_buffer_range
