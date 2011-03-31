@@ -143,7 +143,8 @@ extern int rect_in_region( struct region *region, const rectangle_t *rect );
 
 extern struct process *get_top_window_owner( struct desktop *desktop );
 extern void get_top_window_rectangle( struct desktop *desktop, rectangle_t *rect );
-extern void close_desktop_window( struct desktop *desktop );
+extern void post_desktop_message( struct desktop *desktop, unsigned int message,
+                                  lparam_t wparam, lparam_t lparam );
 extern void destroy_window( struct window *win );
 extern void destroy_thread_windows( struct thread *thread );
 extern int is_child_window( user_handle_t parent, user_handle_t child );
