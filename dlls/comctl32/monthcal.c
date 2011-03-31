@@ -937,14 +937,12 @@ static void MONTHCAL_PaintFocusAndCircle(const MONTHCAL_INFO *infoPtr, HDC hdc, 
 /* months before first calendar month and after last calendar month */
 static void MONTHCAL_PaintLeadTrailMonths(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
 {
-  INT prev_month, mask, length;
+  INT mask, length;
   SYSTEMTIME st_max, st;
 
   if (infoPtr->dwStyle & MCS_NOTRAILINGDATES) return;
 
   SetTextColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
-
-  prev_month = infoPtr->calendars[0].month.wMonth - 1;
 
   /* draw prev month */
   MONTHCAL_GetMinDate(infoPtr, &st);
