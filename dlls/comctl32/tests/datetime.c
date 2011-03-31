@@ -600,6 +600,15 @@ static void test_dtm_set_and_get_system_time(void)
     r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
     expect(GDT_VALID, r);
     expect_systime(&ref, &getSt);
+    /* day invalid for current month */
+    st = ref;
+    st.wDay = 30;
+    st.wMonth = 2;
+    r = SendMessage(hWnd, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
+    expect(0, r);
+    r = SendMessage(hWnd, DTM_GETSYSTEMTIME, 0, (LPARAM)&getSt);
+    expect(GDT_VALID, r);
+    expect_systime(&ref, &getSt);
     /* day of week isn't validated */
     st = ref;
     st.wDayOfWeek = 10;

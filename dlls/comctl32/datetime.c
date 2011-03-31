@@ -167,7 +167,8 @@ DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *sy
     if (flag == GDT_VALID) {
       if (systime->wYear < 1601 || systime->wYear > 30827 ||
           systime->wMonth < 1 || systime->wMonth > 12 ||
-          systime->wDay < 1 || systime->wDay > 31 ||
+          systime->wDay < 1 ||
+          systime->wDay > MONTHCAL_MonthLength(systime->wMonth, systime->wYear) ||
           systime->wHour > 23 ||
           systime->wMinute > 59 ||
           systime->wSecond > 59 ||
