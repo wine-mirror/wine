@@ -33,6 +33,7 @@
 
 #include "commdlg.h"
 #include "cdlg.h"
+#include "filedlgbrowser.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -72,7 +73,284 @@ typedef struct FileDialogImpl {
     IShellItem *psi_defaultfolder;
     IShellItem *psi_setfolder;
     IShellItem *psi_folder;
+
+    HWND dlg_hwnd;
 } FileDialogImpl;
+
+/**************************************************************************
+ * Window related functions.
+ */
+static SIZE update_layout(FileDialogImpl *This)
+{
+    HDWP hdwp;
+    HWND hwnd;
+    RECT dialog_rc;
+    RECT cancel_rc, open_rc;
+    RECT filetype_rc, filename_rc, filenamelabel_rc;
+    int missing_width, missing_height;
+    static const UINT vspacing = 4, hspacing = 4;
+    SIZE ret;
+
+    GetClientRect(This->dlg_hwnd, &dialog_rc);
+
+    missing_width = max(0, 320 - dialog_rc.right);
+    missing_height = max(0, 200 - dialog_rc.bottom);
+
+    if(missing_width || missing_height)
+    {
+        TRACE("Missing (%d, %d)\n", missing_width, missing_height);
+        ret.cx = missing_width;
+        ret.cy = missing_height;
+        return ret;
+    }
+
+    /****
+     * Calculate the size of the dialog and all the parts.
+     */
+
+    /* Cancel button */
+    hwnd = GetDlgItem(This->dlg_hwnd, IDCANCEL);
+    if(hwnd)
+    {
+        int cancel_width, cancel_height;
+        GetWindowRect(hwnd, &cancel_rc);
+        cancel_width = cancel_rc.right - cancel_rc.left;
+        cancel_height = cancel_rc.bottom - cancel_rc.top;
+
+        cancel_rc.left = dialog_rc.right - cancel_width - hspacing;
+        cancel_rc.top = dialog_rc.bottom - cancel_height - vspacing;
+        cancel_rc.right = cancel_rc.left + cancel_width;
+        cancel_rc.bottom = cancel_rc.top + cancel_height;
+    }
+
+    /* Open/Save button */
+    if(hwnd)
+    {
+        int open_width, open_height;
+        GetWindowRect(hwnd, &open_rc);
+        open_width = open_rc.right - open_rc.left;
+        open_height = open_rc.bottom - open_rc.top;
+
+        open_rc.left = cancel_rc.left - open_width - hspacing;
+        open_rc.top = cancel_rc.top;
+        open_rc.right = open_rc.left + open_width;
+        open_rc.bottom = open_rc.top + open_height;
+    }
+
+    /* The filetype combobox. */
+    hwnd = GetDlgItem(This->dlg_hwnd, IDC_FILETYPE);
+    if(hwnd)
+    {
+        int filetype_width, filetype_height;
+        GetWindowRect(hwnd, &filetype_rc);
+
+        filetype_width = filetype_rc.right - filetype_rc.left;
+        filetype_height = filetype_rc.bottom - filetype_rc.top;
+
+        filetype_rc.right = cancel_rc.right;
+
+        filetype_rc.left = filetype_rc.right - filetype_width;
+        filetype_rc.top = cancel_rc.top - filetype_height - vspacing;
+        filetype_rc.bottom = filetype_rc.top + filetype_height;
+
+        if(!This->filterspec_count)
+            filetype_rc.left = filetype_rc.right;
+    }
+
+    /* Filename label. */
+    hwnd = GetDlgItem(This->dlg_hwnd, IDC_FILENAMESTATIC);
+    if(hwnd)
+    {
+        int filetypelabel_width, filetypelabel_height;
+        GetWindowRect(hwnd, &filenamelabel_rc);
+
+        filetypelabel_width = filenamelabel_rc.right - filenamelabel_rc.left;
+        filetypelabel_height = filenamelabel_rc.bottom - filenamelabel_rc.top;
+
+        filenamelabel_rc.left = 160; /* FIXME */
+        filenamelabel_rc.top = filetype_rc.top;
+        filenamelabel_rc.right = filenamelabel_rc.left + filetypelabel_width;
+        filenamelabel_rc.bottom = filenamelabel_rc.top + filetypelabel_height;
+    }
+
+    /* Filename edit box. */
+    hwnd = GetDlgItem(This->dlg_hwnd, IDC_FILENAME);
+    if(hwnd)
+    {
+        int filename_width, filename_height;
+        GetWindowRect(hwnd, &filename_rc);
+
+        filename_width = filetype_rc.left - filenamelabel_rc.right - hspacing*2;
+        filename_height = filename_rc.bottom - filename_rc.top;
+
+        filename_rc.left = filenamelabel_rc.right + hspacing;
+        filename_rc.top = filetype_rc.top;
+        filename_rc.right = filename_rc.left + filename_width;
+        filename_rc.bottom = filename_rc.top + filename_height;
+    }
+
+    /****
+     * Move everything to the right place.
+     */
+
+    /* FIXME: The Save Dialog uses a slightly different layout. */
+    hdwp = BeginDeferWindowPos(5);
+
+    /* The default controls */
+    if(hdwp && (hwnd = GetDlgItem(This->dlg_hwnd, IDC_FILETYPE)) )
+        DeferWindowPos(hdwp, hwnd, NULL, filetype_rc.left, filetype_rc.top, 0, 0,
+                       SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+
+    if(hdwp && (hwnd = GetDlgItem(This->dlg_hwnd, IDC_FILENAME)) )
+        DeferWindowPos(hdwp, hwnd, NULL, filename_rc.left, filename_rc.top,
+                       filename_rc.right - filename_rc.left, filename_rc.bottom - filename_rc.top,
+                       SWP_NOZORDER | SWP_NOACTIVATE);
+
+    if(hdwp && (hwnd = GetDlgItem(This->dlg_hwnd, IDC_FILENAMESTATIC)) )
+        DeferWindowPos(hdwp, hwnd, NULL, filenamelabel_rc.left, filenamelabel_rc.top, 0, 0,
+                       SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+
+    if(hdwp && (hwnd = GetDlgItem(This->dlg_hwnd, IDOK)) )
+        DeferWindowPos(hdwp, hwnd, NULL, open_rc.left, open_rc.top, 0, 0,
+                       SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+
+    if(hdwp && (hwnd = GetDlgItem(This->dlg_hwnd, IDCANCEL)) )
+        DeferWindowPos(hdwp, hwnd, NULL, cancel_rc.left, cancel_rc.top, 0, 0,
+                       SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+
+    if(hdwp)
+        EndDeferWindowPos(hdwp);
+    else
+        ERR("Failed to position dialog controls.\n");
+
+    ret.cx = 0; ret.cy = 0;
+    return ret;
+}
+
+static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
+{
+    FileDialogImpl *This = (FileDialogImpl*)lParam;
+    HWND hitem;
+
+    TRACE("(%p, %p)\n", This, hwnd);
+
+    SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LPARAM)This);
+    This->dlg_hwnd = hwnd;
+
+    hitem = GetDlgItem(This->dlg_hwnd, pshHelp);
+    if(hitem) ShowWindow(hitem, SW_HIDE);
+
+    hitem = GetDlgItem(This->dlg_hwnd, IDC_FILETYPESTATIC);
+    if(hitem) ShowWindow(hitem, SW_HIDE);
+
+    /* Fill filetypes combobox, or hide it. */
+    hitem = GetDlgItem(This->dlg_hwnd, IDC_FILETYPE);
+    if(This->filterspec_count)
+    {
+        UINT i;
+        for(i = 0; i < This->filterspec_count; i++)
+            SendMessageW(hitem, CB_ADDSTRING, 0, (LPARAM)This->filterspecs[i].pszName);
+
+        SendMessageW(hitem, CB_SETCURSEL, This->filetypeindex, 0);
+    }
+    else
+        ShowWindow(hitem, SW_HIDE);
+
+    update_layout(This);
+
+    return TRUE;
+}
+
+static LRESULT on_wm_size(FileDialogImpl *This)
+{
+    update_layout(This);
+    return FALSE;
+}
+
+static LRESULT on_wm_getminmaxinfo(FileDialogImpl *This, LPARAM lparam)
+{
+    MINMAXINFO *mmi = (MINMAXINFO*)lparam;
+    TRACE("%p (%p)\n", This, mmi);
+
+    /* FIXME */
+    mmi->ptMinTrackSize.x = 640;
+    mmi->ptMinTrackSize.y = 480;
+
+    return FALSE;
+}
+
+static LRESULT on_wm_destroy(FileDialogImpl *This)
+{
+    TRACE("%p\n", This);
+
+    This->dlg_hwnd = NULL;
+
+    return TRUE;
+}
+
+static LRESULT on_idok(FileDialogImpl *This)
+{
+    TRACE("%p\n", This);
+
+    EndDialog(This->dlg_hwnd, S_OK);
+
+    return FALSE;
+}
+
+static LRESULT on_idcancel(FileDialogImpl *This)
+{
+    TRACE("%p\n", This);
+
+    EndDialog(This->dlg_hwnd, HRESULT_FROM_WIN32(ERROR_CANCELLED));
+
+    return FALSE;
+}
+
+static LRESULT on_wm_command(FileDialogImpl *This, WPARAM wparam, LPARAM lparam)
+{
+    switch(wparam)
+    {
+    case IDOK:                return on_idok(This);
+    case IDCANCEL:            return on_idcancel(This);
+    default:                  TRACE("Unknown command.\n");
+    }
+    return FALSE;
+}
+
+static LRESULT CALLBACK itemdlg_dlgproc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
+{
+    FileDialogImpl *This = (FileDialogImpl*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+
+    switch(umessage)
+    {
+    case WM_INITDIALOG:       return on_wm_initdialog(hwnd, lparam);
+    case WM_COMMAND:          return on_wm_command(This, wparam, lparam);
+    case WM_SIZE:             return on_wm_size(This);
+    case WM_GETMINMAXINFO:    return on_wm_getminmaxinfo(This, lparam);
+    case WM_DESTROY:          return on_wm_destroy(This);
+    }
+
+    return FALSE;
+}
+
+static HRESULT create_dialog(FileDialogImpl *This, HWND parent)
+{
+    INT_PTR res;
+
+    SetLastError(0);
+    res = DialogBoxParamW(COMDLG32_hInstance,
+                          MAKEINTRESOURCEW(NEWFILEOPENV3ORD),
+                          parent, itemdlg_dlgproc, (LPARAM)This);
+    This->dlg_hwnd = NULL;
+    if(res == -1)
+    {
+        ERR("Failed to show dialog (LastError: %d)\n", GetLastError());
+        return E_FAIL;
+    }
+
+    TRACE("Returning 0x%08x\n", (HRESULT)res);
+    return (HRESULT)res;
+}
 
 /**************************************************************************
  * IFileDialog implementation
@@ -156,8 +434,9 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
 static HRESULT WINAPI IFileDialog2_fnShow(IFileDialog2 *iface, HWND hwndOwner)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, hwndOwner);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", iface, hwndOwner);
+
+    return create_dialog(This, hwndOwner);
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetFileTypes(IFileDialog2 *iface, UINT cFileTypes,
@@ -442,8 +721,12 @@ static HRESULT WINAPI IFileDialog2_fnSetDefaultExtension(IFileDialog2 *iface, LP
 static HRESULT WINAPI IFileDialog2_fnClose(IFileDialog2 *iface, HRESULT hr)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (0x%08x)\n", This, hr);
-    return E_NOTIMPL;
+    TRACE("%p (0x%08x)\n", This, hr);
+
+    if(This->dlg_hwnd)
+        EndDialog(This->dlg_hwnd, hr);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetClientGuid(IFileDialog2 *iface, REFGUID guid)
@@ -1042,6 +1325,8 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
 
     list_init(&fdimpl->events_clients);
     fdimpl->events_next_cookie = 0;
+
+    fdimpl->dlg_hwnd = NULL;
 
     /* FIXME: The default folder setting should be restored for the
      * application if it was previously set. */

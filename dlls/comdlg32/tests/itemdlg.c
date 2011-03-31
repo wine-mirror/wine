@@ -574,13 +574,10 @@ static void test_basics(void)
     }
 
     /* Close */
-    todo_wine
-    {
     hr = IFileOpenDialog_Close(pfod, S_FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileSaveDialog_Close(pfsd, S_FALSE);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    }
 
     /* SetOkButtonLabel */
     todo_wine
