@@ -296,6 +296,14 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       break;
 
       /* Menu Windows */
+    case PM_OVERLAP:
+      SendMessageW(Globals.hMDIWnd, WM_MDICASCADE, 0, 0);
+      break;
+
+    case PM_SIDE_BY_SIDE:
+      SendMessageW(Globals.hMDIWnd, WM_MDITILE, MDITILE_VERTICAL, 0);
+      break;
+
     case PM_ARRANGE:
 
       if (hActiveGroupWnd && !IsIconic(hActiveGroupWnd))
