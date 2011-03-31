@@ -314,8 +314,8 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
             FIXME("WINED3DRS_DESTBLEND = WINED3DBLEND_BOTHINVSRCALPHA, what to do?\n");
             break;
 
-        case WINED3DBLEND_BLENDFACTOR        : dstBlend = GL_CONSTANT_COLOR;   break;
-        case WINED3DBLEND_INVBLENDFACTOR     : dstBlend = GL_ONE_MINUS_CONSTANT_COLOR;  break;
+        case WINED3DBLEND_BLENDFACTOR        : dstBlend = GL_CONSTANT_COLOR_EXT;  break;
+        case WINED3DBLEND_INVBLENDFACTOR     : dstBlend = GL_ONE_MINUS_CONSTANT_COLOR_EXT;  break;
         default:
             FIXME("Unrecognized dst blend value %#x.\n",
                     stateblock->state.render_states[WINED3DRS_DESTBLEND]);
@@ -348,8 +348,8 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
             dstBlend = GL_SRC_ALPHA;
             break;
 
-        case WINED3DBLEND_BLENDFACTOR        : srcBlend = GL_CONSTANT_COLOR;   break;
-        case WINED3DBLEND_INVBLENDFACTOR     : srcBlend = GL_ONE_MINUS_CONSTANT_COLOR;  break;
+        case WINED3DBLEND_BLENDFACTOR        : srcBlend = GL_CONSTANT_COLOR_EXT;  break;
+        case WINED3DBLEND_INVBLENDFACTOR     : srcBlend = GL_ONE_MINUS_CONSTANT_COLOR_EXT;  break;
         default:
             FIXME("Unrecognized src blend value %#x.\n",
                     stateblock->state.render_states[WINED3DRS_SRCBLEND]);
@@ -417,8 +417,8 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
                 srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
                 FIXME("WINED3DRS_DESTBLENDALPHA = WINED3DBLEND_BOTHINVSRCALPHA, what to do?\n");
                 break;
-            case WINED3DBLEND_BLENDFACTOR        : dstBlendAlpha = GL_CONSTANT_COLOR;   break;
-            case WINED3DBLEND_INVBLENDFACTOR     : dstBlendAlpha = GL_ONE_MINUS_CONSTANT_COLOR;  break;
+            case WINED3DBLEND_BLENDFACTOR        : dstBlendAlpha = GL_CONSTANT_COLOR_EXT;  break;
+            case WINED3DBLEND_INVBLENDFACTOR     : dstBlendAlpha = GL_ONE_MINUS_CONSTANT_COLOR_EXT;  break;
             default:
                 FIXME("Unrecognized dst blend alpha value %#x.\n",
                         stateblock->state.render_states[WINED3DRS_DESTBLENDALPHA]);
@@ -445,8 +445,8 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
                 srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
                 dstBlendAlpha = GL_SRC_ALPHA;
                 break;
-            case WINED3DBLEND_BLENDFACTOR        : srcBlendAlpha = GL_CONSTANT_COLOR;   break;
-            case WINED3DBLEND_INVBLENDFACTOR     : srcBlendAlpha = GL_ONE_MINUS_CONSTANT_COLOR;  break;
+            case WINED3DBLEND_BLENDFACTOR        : srcBlendAlpha = GL_CONSTANT_COLOR_EXT;  break;
+            case WINED3DBLEND_INVBLENDFACTOR     : srcBlendAlpha = GL_ONE_MINUS_CONSTANT_COLOR_EXT;  break;
             default:
                 FIXME("Unrecognized src blend alpha value %#x.\n",
                         stateblock->state.render_states[WINED3DRS_SRCBLENDALPHA]);

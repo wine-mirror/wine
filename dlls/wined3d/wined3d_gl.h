@@ -2970,6 +2970,18 @@ typedef void (WINE_GLAPI *PGLFNSTENCILFUNCSEPARATEATIPROC)(GLenum, GLenum, GLint
 #define GL_MIRROR_CLAMP_TO_EDGE_ATI                         0x8743
 #endif
 
+/* GL_EXT_blend_color */
+#ifndef GL_EXT_blend_color
+#define GL_EXT_blend_color 1
+#define GL_CONSTANT_COLOR_EXT                               0x8001
+#define GL_ONE_MINUS_CONSTANT_COLOR_EXT                     0x8002
+#define GL_CONSTANT_ALPHA_EXT                               0x8003
+#define GL_ONE_MINUS_CONSTANT_ALPHA_EXT                     0x8004
+#define GL_BLEND_COLOR_EXT                                  0x8005
+#endif
+typedef GLvoid (WINE_GLAPI *PGLFNBLENDCOLOREXTPROC)(GLclampf red,
+        GLclampf green, GLclampf blue, GLclampf alpha);
+
 /* GL_EXT_blend_equation_separate */
 typedef void (WINE_GLAPI *PGLFNBLENDEQUATIONSEPARATEEXTPROC)(GLenum modeRGB, GLenum modeAlpha);
 
@@ -4237,7 +4249,7 @@ typedef BOOL (WINAPI *WINED3D_PFNWGLSWAPINTERVALEXTPROC)(int interval);
     USE_GL_FUNC(PGLFNSTENCILFUNCSEPARATEATIPROC, \
             glStencilFuncSeparateATI,                   ATI_SEPARATE_STENCIL,           NULL) \
     /* GL_EXT_blend_color */ \
-    USE_GL_FUNC(PGLFNBLENDCOLORPROC, \
+    USE_GL_FUNC(PGLFNBLENDCOLOREXTPROC, \
             glBlendColorEXT,                            EXT_BLEND_COLOR,                NULL) \
     /* GL_EXT_blend_equation_separate */ \
     USE_GL_FUNC(PGLFNBLENDFUNCSEPARATEEXTPROC, \
