@@ -12681,6 +12681,7 @@ static const struct message WmSetParentSeq_2[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE },
     { EVENT_OBJECT_HIDE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { HCBT_SETFOCUS, hook|optional },
     { WM_NCACTIVATE, sent|wparam, 0 },
     { WM_ACTIVATE, sent|wparam, 0 },
     { WM_ACTIVATEAPP, sent|wparam, 0 },
