@@ -5587,6 +5587,68 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
     return NotImplemented;
 }
 
+static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 *text, INT length,
+                                     GDIPCONST GpFont *font, GDIPCONST GpBrush *brush,
+                                     GDIPCONST PointF *positions, INT flags,
+                                     GDIPCONST GpMatrix *matrix )
+{
+    static const INT unsupported_flags = ~(DriverStringOptionsRealizedAdvance);
+    INT save_state;
+    GpPointF pt[4];
+    REAL angle, rel_width, rel_height;
+    LOGFONTW lfw;
+    HFONT unscaled_font, hfont;
+    TEXTMETRICW textmet;
+
+    if (flags & unsupported_flags)
+        FIXME("Ignoring flags %x\n", flags & unsupported_flags);
+
+    if (matrix)
+        FIXME("Ignoring matrix\n");
+
+    save_state = SaveDC(graphics->hdc);
+    SetBkMode(graphics->hdc, TRANSPARENT);
+    SetTextColor(graphics->hdc, brush->lb.lbColor);
+
+    pt[0].X = 0.0;
+    pt[0].Y = 0.0;
+    pt[1].X = 1.0;
+    pt[1].Y = 0.0;
+    pt[2].X = 0.0;
+    pt[2].Y = 1.0;
+    pt[3] = positions[0];
+    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 4);
+    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
+    rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
+                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
+    rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
+                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+
+    unscaled_font = CreateFontIndirectW(&font->lfw);
+
+    SelectObject(graphics->hdc, unscaled_font);
+    GetTextMetricsW(graphics->hdc, &textmet);
+
+    lfw = font->lfw;
+    lfw.lfHeight = roundr(((REAL)lfw.lfHeight) * rel_height);
+    lfw.lfWidth = roundr(textmet.tmAveCharWidth * rel_width);
+    lfw.lfEscapement = lfw.lfOrientation = roundr((angle / M_PI) * 1800.0);
+
+    hfont = CreateFontIndirectW(&lfw);
+    SelectObject(graphics->hdc, hfont);
+    DeleteObject(unscaled_font);
+
+    SetTextAlign(graphics->hdc, TA_BASELINE|TA_LEFT);
+
+    ExtTextOutW(graphics->hdc, roundr(pt[3].X), roundr(pt[3].Y), ETO_GLYPH_INDEX, NULL, text, length, NULL);
+
+    RestoreDC(graphics->hdc, save_state);
+
+    DeleteObject(hfont);
+
+    return Ok;
+}
+
 /*****************************************************************************
  * GdipDrawDriverString [GDIPLUS.@]
  */
@@ -5595,8 +5657,27 @@ GpStatus WINGDIPAPI GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 
                                          GDIPCONST PointF *positions, INT flags,
                                          GDIPCONST GpMatrix *matrix )
 {
-    FIXME("(%p %p %d %p %p %p %d %p): stub\n", graphics, text, length, font, brush, positions, flags, matrix);
-    return NotImplemented;
+    GpStatus stat=NotImplemented;
+
+    TRACE("(%p %s %p %p %p %d %p)\n", graphics, debugstr_wn(text, length), font, brush, positions, flags, matrix);
+
+    if (!graphics || !text || !font || !brush || !positions)
+        return InvalidParameter;
+
+    if (length == -1)
+        length = strlenW(text);
+
+    if (graphics->hdc &&
+        ((flags & DriverStringOptionsRealizedAdvance) || length <= 1) &&
+        brush->bt == BrushTypeSolidColor &&
+        (((GpSolidFill*)brush)->color & 0xff000000) == 0xff000000)
+        stat = GDI32_GdipDrawDriverString(graphics, text, length, font, brush,
+            positions, flags, matrix);
+
+    if (stat == NotImplemented)
+        FIXME("Not fully implemented\n");
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF *frameRect,

@@ -1990,7 +1990,6 @@ static void test_GdipDrawString(void)
     status = GdipCreateMatrix(&matrix);
     expect(Ok, status);
 
-todo_wine {
     status = GdipDrawDriverString(NULL, string, 4, fnt, brush, positions, DriverStringOptionsCmapLookup, matrix);
     expect(InvalidParameter, status);
 
@@ -2006,6 +2005,7 @@ todo_wine {
     status = GdipDrawDriverString(graphics, string, 4, fnt, brush, NULL, DriverStringOptionsCmapLookup, matrix);
     expect(InvalidParameter, status);
 
+todo_wine {
     status = GdipDrawDriverString(graphics, string, 4, fnt, brush, positions, DriverStringOptionsCmapLookup|0x10, matrix);
     expect(Ok, status);
 
