@@ -4000,8 +4000,11 @@ BOOL WINAPI IsOS(DWORD feature)
     case OS_ANYSERVER:
         ISOS_RETURN(platform == VER_PLATFORM_WIN32_NT)
     case OS_WOW6432:
-        FIXME("(OS_WOW6432) Should we check this?\n");
-        return FALSE;
+        {
+            BOOL is_wow64;
+            IsWow64Process(GetCurrentProcess(), &is_wow64);
+            return is_wow64;
+        }
     case OS_WEBSERVER:
         ISOS_RETURN(platform == VER_PLATFORM_WIN32_NT)
     case OS_SMALLBUSINESSSERVER:
