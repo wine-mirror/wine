@@ -58,6 +58,7 @@ typedef struct FileDialogImpl {
         IFileSaveDialog IFileSaveDialog_iface;
     } u;
     enum ITEMDLG_TYPE dlg_type;
+    IExplorerBrowserEvents IExplorerBrowserEvents_iface;
     LONG ref;
 
     FILEOPENDIALOGOPTIONS options;
@@ -381,6 +382,10 @@ static HRESULT WINAPI IFileDialog2_fnQueryInterface(IFileDialog2 *iface,
     else if(IsEqualGUID(riid, &IID_IFileSaveDialog) && This->dlg_type == ITEMDLG_TYPE_SAVE)
     {
         *ppvObject = &This->u.IFileSaveDialog_iface;
+    }
+    else if(IsEqualGUID(riid, &IID_IExplorerBrowserEvents))
+    {
+        *ppvObject = &This->IExplorerBrowserEvents_iface;
     }
     else
         FIXME("Unknown interface requested: %s.\n", debugstr_guid(riid));
@@ -1284,6 +1289,79 @@ static const IFileSaveDialogVtbl vt_IFileSaveDialog = {
     IFileSaveDialog_fnApplyProperties
 };
 
+/**************************************************************************
+ * IExplorerBrowserEvents implementation
+ */
+static inline FileDialogImpl *impl_from_IExplorerBrowserEvents(IExplorerBrowserEvents *iface)
+{
+    return CONTAINING_RECORD(iface, FileDialogImpl, IExplorerBrowserEvents_iface);
+}
+
+static HRESULT WINAPI IExplorerBrowserEvents_fnQueryInterface(IExplorerBrowserEvents *iface,
+                                                              REFIID riid, void **ppvObject)
+{
+    FileDialogImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    TRACE("%p (%s, %p)\n", This, debugstr_guid(riid), ppvObject);
+
+    return IFileDialog2_QueryInterface(&This->IFileDialog2_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI IExplorerBrowserEvents_fnAddRef(IExplorerBrowserEvents *iface)
+{
+    FileDialogImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    TRACE("%p\n", This);
+    return IFileDialog2_AddRef(&This->IFileDialog2_iface);
+}
+
+static ULONG WINAPI IExplorerBrowserEvents_fnRelease(IExplorerBrowserEvents *iface)
+{
+    FileDialogImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    TRACE("%p\n", This);
+    return IFileDialog2_Release(&This->IFileDialog2_iface);
+}
+
+static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationPending(IExplorerBrowserEvents *iface,
+                                                                   PCIDLIST_ABSOLUTE pidlFolder)
+{
+    FileDialogImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    TRACE("%p (%p)\n", This, pidlFolder);
+    return S_OK;
+}
+
+static HRESULT WINAPI IExplorerBrowserEvents_fnOnViewCreated(IExplorerBrowserEvents *iface,
+                                                             IShellView *psv)
+{
+    FileDialogImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    TRACE("%p (%p)\n", This, psv);
+    return S_OK;
+}
+
+static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationComplete(IExplorerBrowserEvents *iface,
+                                                                    PCIDLIST_ABSOLUTE pidlFolder)
+{
+    FileDialogImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    TRACE("%p (%p)\n", This, pidlFolder);
+    return S_OK;
+}
+
+static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationFailed(IExplorerBrowserEvents *iface,
+                                                                  PCIDLIST_ABSOLUTE pidlFolder)
+{
+    FileDialogImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    TRACE("%p (%p)\n", This, pidlFolder);
+    return S_OK;
+}
+
+static const IExplorerBrowserEventsVtbl vt_IExplorerBrowserEvents = {
+    IExplorerBrowserEvents_fnQueryInterface,
+    IExplorerBrowserEvents_fnAddRef,
+    IExplorerBrowserEvents_fnRelease,
+    IExplorerBrowserEvents_fnOnNavigationPending,
+    IExplorerBrowserEvents_fnOnViewCreated,
+    IExplorerBrowserEvents_fnOnNavigationComplete,
+    IExplorerBrowserEvents_fnOnNavigationFailed
+};
+
 static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv, enum ITEMDLG_TYPE type)
 {
     FileDialogImpl *fdimpl;
@@ -1302,6 +1380,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
 
     fdimpl->ref = 1;
     fdimpl->IFileDialog2_iface.lpVtbl = &vt_IFileDialog2;
+    fdimpl->IExplorerBrowserEvents_iface.lpVtbl = &vt_IExplorerBrowserEvents;
 
     if(type == ITEMDLG_TYPE_OPEN)
     {

@@ -212,7 +212,7 @@ static BOOL test_instantiation(void)
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IExplorerBrowserEvents, (void**)&punk);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IShellBrowser, (void**)&punk);
@@ -252,7 +252,7 @@ static BOOL test_instantiation(void)
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IExplorerBrowserEvents, (void**)&punk);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IShellBrowser, (void**)&punk);
