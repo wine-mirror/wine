@@ -59,6 +59,7 @@ typedef struct FileDialogImpl {
     } u;
     enum ITEMDLG_TYPE dlg_type;
     IExplorerBrowserEvents IExplorerBrowserEvents_iface;
+    IServiceProvider       IServiceProvider_iface;
     LONG ref;
 
     FILEOPENDIALOGOPTIONS options;
@@ -477,6 +478,10 @@ static HRESULT WINAPI IFileDialog2_fnQueryInterface(IFileDialog2 *iface,
     else if(IsEqualGUID(riid, &IID_IExplorerBrowserEvents))
     {
         *ppvObject = &This->IExplorerBrowserEvents_iface;
+    }
+    else if(IsEqualGUID(riid, &IID_IServiceProvider))
+    {
+        *ppvObject = &This->IServiceProvider_iface;
     }
     else
         FIXME("Unknown interface requested: %s.\n", debugstr_guid(riid));
@@ -1465,6 +1470,69 @@ static const IExplorerBrowserEventsVtbl vt_IExplorerBrowserEvents = {
     IExplorerBrowserEvents_fnOnNavigationFailed
 };
 
+/**************************************************************************
+ * IServiceProvider implementation
+ */
+static inline FileDialogImpl *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, FileDialogImpl, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI IServiceProvider_fnQueryInterface(IServiceProvider *iface,
+                                                        REFIID riid, void **ppvObject)
+{
+    FileDialogImpl *This = impl_from_IServiceProvider(iface);
+    TRACE("%p\n", This);
+    return IFileDialog2_QueryInterface(&This->IFileDialog2_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI IServiceProvider_fnAddRef(IServiceProvider *iface)
+{
+    FileDialogImpl *This = impl_from_IServiceProvider(iface);
+    TRACE("%p\n", This);
+    return IFileDialog2_AddRef(&This->IFileDialog2_iface);
+}
+
+static ULONG WINAPI IServiceProvider_fnRelease(IServiceProvider *iface)
+{
+    FileDialogImpl *This = impl_from_IServiceProvider(iface);
+    TRACE("%p\n", This);
+    return IFileDialog2_Release(&This->IFileDialog2_iface);
+}
+
+static HRESULT WINAPI IServiceProvider_fnQueryService(IServiceProvider *iface,
+                                                      REFGUID guidService,
+                                                      REFIID riid, void **ppv)
+{
+    FileDialogImpl *This = impl_from_IServiceProvider(iface);
+    HRESULT hr = E_FAIL;
+    TRACE("%p (%s, %s, %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+    if(IsEqualGUID(guidService, &SID_STopLevelBrowser) && This->peb)
+        hr = IExplorerBrowser_QueryInterface(This->peb, riid, ppv);
+    else if(IsEqualGUID(guidService, &SID_SExplorerBrowserFrame))
+        hr = IFileDialog2_QueryInterface(&This->IFileDialog2_iface, riid, ppv);
+    else
+        FIXME("Interface %s requested from unknown service %s\n",
+              debugstr_guid(riid), debugstr_guid(guidService));
+
+    if(SUCCEEDED(hr) && *ppv)
+    {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    return E_FAIL;
+}
+
+static const IServiceProviderVtbl vt_IServiceProvider = {
+    IServiceProvider_fnQueryInterface,
+    IServiceProvider_fnAddRef,
+    IServiceProvider_fnRelease,
+    IServiceProvider_fnQueryService
+};
+
 static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv, enum ITEMDLG_TYPE type)
 {
     FileDialogImpl *fdimpl;
@@ -1484,6 +1552,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     fdimpl->ref = 1;
     fdimpl->IFileDialog2_iface.lpVtbl = &vt_IFileDialog2;
     fdimpl->IExplorerBrowserEvents_iface.lpVtbl = &vt_IExplorerBrowserEvents;
+    fdimpl->IServiceProvider_iface.lpVtbl = &vt_IServiceProvider;
 
     if(type == ITEMDLG_TYPE_OPEN)
     {

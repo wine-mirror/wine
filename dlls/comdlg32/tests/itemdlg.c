@@ -181,7 +181,7 @@ static BOOL test_instantiation(void)
     if(SUCCEEDED(hr)) IFileOpenDialog_Release(pfsd);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IServiceProvider, (void**)&psp);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr))
     {
         IExplorerBrowser *peb;
