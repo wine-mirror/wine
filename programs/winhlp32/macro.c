@@ -488,7 +488,29 @@ void CALLBACK MACRO_HelpOn(void)
 
 void CALLBACK MACRO_HelpOnTop(void)
 {
-    WINE_FIXME("()\n");
+    static BOOL on_top = FALSE;
+    WINHELP_WINDOW *win;
+    HWND main_wnd = NULL;
+    HMENU menu;
+
+    for (win = Globals.win_list; win; win = win->next)
+        if (!lstrcmpi(win->info->name, "main"))
+            main_wnd = win->hMainWnd;
+    if (!main_wnd)
+    {
+        WINE_ERR("could not find the main window!\n");
+        return;
+    }
+    menu = GetMenu(main_wnd);
+
+    on_top = !on_top;
+    if (on_top) {
+        CheckMenuItem(menu, MNID_HELP_HELPTOP, MF_BYCOMMAND|MF_CHECKED);
+        SetWindowPos(main_wnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+    } else {
+        CheckMenuItem(menu, MNID_HELP_HELPTOP, MF_BYCOMMAND|MF_UNCHECKED);
+        SetWindowPos(main_wnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE);
+    }
 }
 
 void CALLBACK MACRO_History(void)
