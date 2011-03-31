@@ -2879,14 +2879,11 @@ static WCHAR *get_keypath( MSIPACKAGE *package, HKEY root, const WCHAR *path )
         UINT size;
         WCHAR *path_32node;
 
-        size = (strlenW( path ) + strlenW( szWow6432Node ) + 1) * sizeof(WCHAR);
-        path_32node = msi_alloc( size );
-        if (!path_32node)
-            return NULL;
+        size = (strlenW( path ) + strlenW( szWow6432Node ) + 2) * sizeof(WCHAR);
+        if (!(path_32node = msi_alloc( size ))) return NULL;
 
         memcpy( path_32node, path, len * sizeof(WCHAR) );
-        path_32node[len] = 0;
-        strcatW( path_32node, szWow6432Node );
+        strcpyW( path_32node + len, szWow6432Node );
         strcatW( path_32node, szBackSlash );
         strcatW( path_32node, path + len );
         return path_32node;
