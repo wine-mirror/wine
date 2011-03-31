@@ -60,7 +60,7 @@ msgstr "Programe de instalare"
 msgid "Programs (*.exe)"
 msgstr "Programe (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
 #: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Toate fișierele (*.*)"
@@ -9155,40 +9155,31 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Î&nlocuire...\tCtrl+H"
 
-#: notepad.rc:59
-#, fuzzy
-msgid "&Search..."
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Caută...\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Că&utare..."
-
-#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
+#: notepad.rc:59 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Ajutor la ajutor"
 
-#: notepad.rc:62
+#: notepad.rc:61
 msgid "&About Notepad"
 msgstr "&Despre notepad"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:69
+#: notepad.rc:68
 msgid "Page &p"
 msgstr "Pagina &p"
 
-#: notepad.rc:71
+#: notepad.rc:70
 msgid "Notepad"
 msgstr "Notepad"
 
-#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
+#: notepad.rc:71 progman.rc:65 winhlp32.rc:94
 msgid "ERROR"
 msgstr "EROARE"
 
-#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:95
 #, fuzzy
 msgid "WARNING"
 msgstr ""
@@ -9197,7 +9188,7 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "AVERTIZARE"
 
-#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:96
 #, fuzzy
 msgid "Information"
 msgstr ""
@@ -9206,15 +9197,15 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Informații"
 
-#: notepad.rc:76
+#: notepad.rc:75
 msgid "Untitled"
 msgstr "(fără titlu)"
 
-#: notepad.rc:79
+#: notepad.rc:78
 msgid "Text files (*.txt)"
 msgstr "Toate fișierele text (*.txt)"
 
-#: notepad.rc:82
+#: notepad.rc:81
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -9222,7 +9213,7 @@ msgstr ""
 "Fișierul '%s' este prea mare pentru notepad.\n"
 " Folosoți un alt editor."
 
-#: notepad.rc:84
+#: notepad.rc:83
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -9230,7 +9221,7 @@ msgstr ""
 "Nu ați introdus nici un text.\n"
 "Introduceți ceva și încercați din nou."
 
-#: notepad.rc:86
+#: notepad.rc:85
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -9241,7 +9232,7 @@ msgstr ""
 "\n"
 " Vreți să creați un fișier nou?"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -9252,11 +9243,11 @@ msgstr ""
 "\n"
 "Vreți să salvați modificările?"
 
-#: notepad.rc:89
+#: notepad.rc:88
 msgid "'%s' could not be found."
 msgstr "'%s' nu a fost găsit."
 
-#: notepad.rc:91
+#: notepad.rc:90
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -9264,20 +9255,20 @@ msgstr ""
 "Nu este destulă memorie pentru a completa această sarcină.\n"
 "Închideți una sau mai multe aplicații pentru a mări memoria liberă."
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:94
+#: notepad.rc:93
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
-#: notepad.rc:95
+#: notepad.rc:94
 #, fuzzy
 msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:102
+#: notepad.rc:101
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"

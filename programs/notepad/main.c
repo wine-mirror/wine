@@ -301,7 +301,6 @@ static int NOTEPAD_MenuCommand(WPARAM wParam)
     case CMD_FONT:             DIALOG_SelectFont(); break;
 
     case CMD_HELP_CONTENTS:    DIALOG_HelpContents(); break;
-    case CMD_HELP_SEARCH:      DIALOG_HelpSearch(); break;
     case CMD_HELP_ON_HELP:     DIALOG_HelpHelp(); break;
     case CMD_HELP_ABOUT_NOTEPAD: DIALOG_HelpAboutNotepad(); break;
 

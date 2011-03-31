@@ -1188,11 +1188,6 @@ VOID DIALOG_HelpContents(VOID)
     WinHelpW(Globals.hMainWnd, helpfileW, HELP_INDEX, 0);
 }
 
-VOID DIALOG_HelpSearch(VOID)
-{
-        /* Search Help */
-}
-
 VOID DIALOG_HelpHelp(VOID)
 {
     WinHelpW(Globals.hMainWnd, helpfileW, HELP_HELPONHELP, 0);

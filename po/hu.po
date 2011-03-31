@@ -62,7 +62,7 @@ msgstr "Telepítõ programok"
 msgid "Programs (*.exe)"
 msgstr "Programok (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
 #: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 #, fuzzy
 msgid "All files (*.*)"
@@ -8694,56 +8694,47 @@ msgstr "Köve&tkező keresése\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
-#: notepad.rc:59
-#, fuzzy
-msgid "&Search..."
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Keresés...\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Téma&körök keresése..."
-
-#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
+#: notepad.rc:59 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Használat"
 
-#: notepad.rc:62
+#: notepad.rc:61
 msgid "&About Notepad"
 msgstr "&About Notepad"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:69
+#: notepad.rc:68
 msgid "Page &p"
 msgstr "Oldalszám: &p."
 
-#: notepad.rc:71
+#: notepad.rc:70
 msgid "Notepad"
 msgstr "Jegyzettömb"
 
-#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
+#: notepad.rc:71 progman.rc:65 winhlp32.rc:94
 msgid "ERROR"
 msgstr "HIBA"
 
-#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:95
 msgid "WARNING"
 msgstr "FIGYELMEZTETÉS"
 
-#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:96
 msgid "Information"
 msgstr "Információ"
 
-#: notepad.rc:76
+#: notepad.rc:75
 msgid "Untitled"
 msgstr "(névtelen)"
 
-#: notepad.rc:79
+#: notepad.rc:78
 msgid "Text files (*.txt)"
 msgstr "Szövegfájlok (*.txt)"
 
-#: notepad.rc:82
+#: notepad.rc:81
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8751,7 +8742,7 @@ msgstr ""
 "'%s' fájl túl nagy méretű.\n"
 " Kérem használjon másik szövegszerkesztő programot."
 
-#: notepad.rc:84
+#: notepad.rc:83
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8759,7 +8750,7 @@ msgstr ""
 "A szöveg nem tartalmaz karaktert! \n"
 "Kérem gépeljen be néhány karaktert és próbálja újra!"
 
-#: notepad.rc:86
+#: notepad.rc:85
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8770,7 +8761,7 @@ msgstr ""
 "\n"
 " Kíván létrehozni új fájlt?"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8781,11 +8772,11 @@ msgstr ""
 "\n"
 " Szeretné menteni a változásokat?"
 
-#: notepad.rc:89
+#: notepad.rc:88
 msgid "'%s' could not be found."
 msgstr "'%s' nem található!"
 
-#: notepad.rc:91
+#: notepad.rc:90
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8793,19 +8784,19 @@ msgstr ""
 "Nincs elegendő szabad memória!\n"
 "Zárjon be néhány alkalmazást, ezzel növelve a szabad memória méretét!"
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16)"
 msgstr ""
 
-#: notepad.rc:94
+#: notepad.rc:93
 msgid "Unicode (UTF-16 big-endian)"
 msgstr ""
 
-#: notepad.rc:95
+#: notepad.rc:94
 msgid "Unicode (UTF-8)"
 msgstr ""
 
-#: notepad.rc:102
+#: notepad.rc:101
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"

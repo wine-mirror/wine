@@ -69,7 +69,7 @@ msgstr "Instalacioni programi"
 msgid "Programs (*.exe)"
 msgstr "Izvršne datoteke (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
 #: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 #, fuzzy
 msgid "All files (*.*)"
@@ -8591,31 +8591,27 @@ msgstr "&Pronađi sledeće\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Zameni...\tCtrl+H"
 
-#: notepad.rc:59
-msgid "&Search..."
-msgstr "&Pretraži..."
-
-#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
+#: notepad.rc:59 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Pomoć za pomoć"
 
-#: notepad.rc:62
+#: notepad.rc:61
 msgid "&About Notepad"
 msgstr "&O Beležnici"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:69
+#: notepad.rc:68
 msgid "Page &p"
 msgstr "Strana &p"
 
-#: notepad.rc:71
+#: notepad.rc:70
 msgid "Notepad"
 msgstr "Beležnica"
 
-#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
+#: notepad.rc:71 progman.rc:65 winhlp32.rc:94
 #, fuzzy
 msgid "ERROR"
 msgstr ""
@@ -8624,7 +8620,7 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "GREŠKA"
 
-#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:95
 #, fuzzy
 msgid "WARNING"
 msgstr ""
@@ -8633,7 +8629,7 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "UPOZORENJE"
 
-#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:96
 #, fuzzy
 msgid "Information"
 msgstr ""
@@ -8642,15 +8638,15 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "Informacija"
 
-#: notepad.rc:76
+#: notepad.rc:75
 msgid "Untitled"
 msgstr "Neimenovano"
 
-#: notepad.rc:79
+#: notepad.rc:78
 msgid "Text files (*.txt)"
 msgstr "Tekstualne datoteke (*.txt)"
 
-#: notepad.rc:82
+#: notepad.rc:81
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8658,7 +8654,7 @@ msgstr ""
 "Datoteka „%s“ je prevelika za Beležnicu.\n"
 "Koristite drugi uređivač teksta."
 
-#: notepad.rc:84
+#: notepad.rc:83
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8666,7 +8662,7 @@ msgstr ""
 "Niste uneli nikakav tekst.\n"
 "Unesite nešto i pokušajte ponovo"
 
-#: notepad.rc:86
+#: notepad.rc:85
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8676,7 +8672,7 @@ msgstr ""
 "\n"
 "Želite li da napravite novu datoteku?"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8686,11 +8682,11 @@ msgstr ""
 "\n"
 "Želite li da sačuvate izmene?"
 
-#: notepad.rc:89
+#: notepad.rc:88
 msgid "'%s' could not be found."
 msgstr "Datoteka „%s“ nije pronađena."
 
-#: notepad.rc:91
+#: notepad.rc:90
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8698,20 +8694,20 @@ msgstr ""
 "Nema dovoljno memorije za izvršavanje ovog zadatka.\n"
 "Zatvorite jedan ili više programa da biste povećali iznos slobodne memorije."
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16)"
 msgstr "Unikod (UTF-16)"
 
-#: notepad.rc:94
+#: notepad.rc:93
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unikod (UTF-16 big-endian)"
 
-#: notepad.rc:95
+#: notepad.rc:94
 #, fuzzy
 msgid "Unicode (UTF-8)"
 msgstr "Unikod (UTF-16)"
 
-#: notepad.rc:102
+#: notepad.rc:101
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"

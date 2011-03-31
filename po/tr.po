@@ -67,7 +67,7 @@ msgstr "Yeni bir program çalıştırır"
 msgid "Programs (*.exe)"
 msgstr "Programlar"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
 #: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Tüm dosyalar (*.*)"
@@ -8945,51 +8945,47 @@ msgstr "&Sonrakini bul\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
-#: notepad.rc:59
-msgid "&Search..."
-msgstr "&Ara..."
-
-#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
+#: notepad.rc:59 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&Yardım kullanımı"
 
-#: notepad.rc:62
+#: notepad.rc:61
 msgid "&About Notepad"
 msgstr "&About Notepad"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:69
+#: notepad.rc:68
 msgid "Page &p"
 msgstr "&p. Sayfa"
 
-#: notepad.rc:71
+#: notepad.rc:70
 msgid "Notepad"
 msgstr "Not Defteri"
 
-#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
+#: notepad.rc:71 progman.rc:65 winhlp32.rc:94
 msgid "ERROR"
 msgstr "HATA"
 
-#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:95
 msgid "WARNING"
 msgstr "UYARI"
 
-#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:96
 msgid "Information"
 msgstr "Bilgi"
 
-#: notepad.rc:76
+#: notepad.rc:75
 msgid "Untitled"
 msgstr "Adsız"
 
-#: notepad.rc:79
+#: notepad.rc:78
 msgid "Text files (*.txt)"
 msgstr "Metin Dosyaları (*.txt)"
 
-#: notepad.rc:82
+#: notepad.rc:81
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8997,7 +8993,7 @@ msgstr ""
 "'%s' dosyası not defteri için çok büyük.\n"
 " Lütfen değişik bir düzenleyici kullanın."
 
-#: notepad.rc:84
+#: notepad.rc:83
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -9005,7 +9001,7 @@ msgstr ""
 "Hiçbir metin yazmadınız. \n"
 "Lütfen birşey yazın ve tekrar deneyin"
 
-#: notepad.rc:86
+#: notepad.rc:85
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -9016,7 +9012,7 @@ msgstr ""
 "\n"
 " Yeni bir dosya oluşturmak ister misiniz?"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -9027,11 +9023,11 @@ msgstr ""
 "\n"
 " Değişiklikleri kaydetmek ister misiniz?"
 
-#: notepad.rc:89
+#: notepad.rc:88
 msgid "'%s' could not be found."
 msgstr "'%s' bulunamıyor."
 
-#: notepad.rc:91
+#: notepad.rc:90
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -9040,19 +9036,19 @@ msgstr ""
 "Bir veya daha fazla uygulamayı kapatarak boş bellek miktarını\n"
 "arttırmayı deneyin."
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16)"
 msgstr ""
 
-#: notepad.rc:94
+#: notepad.rc:93
 msgid "Unicode (UTF-16 big-endian)"
 msgstr ""
 
-#: notepad.rc:95
+#: notepad.rc:94
 msgid "Unicode (UTF-8)"
 msgstr ""
 
-#: notepad.rc:102
+#: notepad.rc:101
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"

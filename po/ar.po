@@ -57,7 +57,7 @@ msgstr ""
 msgid "Programs (*.exe)"
 msgstr ""
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
 #: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "كل الملفات (*.*)"
@@ -8239,51 +8239,47 @@ msgstr "اب&حث عن التالي\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "ا&ستبدل...\tCtrl+H"
 
-#: notepad.rc:59
-msgid "&Search..."
-msgstr "ا&بحث..."
-
-#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
+#: notepad.rc:59 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "&مساعدة المساعدة"
 
-#: notepad.rc:62
+#: notepad.rc:61
 msgid "&About Notepad"
 msgstr "&عن لوح الملاحظات"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:69
+#: notepad.rc:68
 msgid "Page &p"
 msgstr "صفحة &p"
 
-#: notepad.rc:71
+#: notepad.rc:70
 msgid "Notepad"
 msgstr "لوح الملاحظات"
 
-#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
+#: notepad.rc:71 progman.rc:65 winhlp32.rc:94
 msgid "ERROR"
 msgstr "خطأ"
 
-#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:95
 msgid "WARNING"
 msgstr "تحذير"
 
-#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:96
 msgid "Information"
 msgstr "معلومات"
 
-#: notepad.rc:76
+#: notepad.rc:75
 msgid "Untitled"
 msgstr "بلا عنوان"
 
-#: notepad.rc:79
+#: notepad.rc:78
 msgid "Text files (*.txt)"
 msgstr "ملفات النصوص (*.txt)"
 
-#: notepad.rc:82
+#: notepad.rc:81
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8291,7 +8287,7 @@ msgstr ""
 "الملف '%s' كبير جدا على لوح النصوص.\n"
 "من فضلك استخدم محررا آخر."
 
-#: notepad.rc:84
+#: notepad.rc:83
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8299,7 +8295,7 @@ msgstr ""
 "لم تكتب أي نص.\n"
 "من فضلك اكتب أي شيء ثم حاول ثانيا"
 
-#: notepad.rc:86
+#: notepad.rc:85
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8309,7 +8305,7 @@ msgstr ""
 "\n"
 "أتريد إنشاء ملف جديد؟"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8319,11 +8315,11 @@ msgstr ""
 "\n"
 "أتريد حفظ التغييرات؟"
 
-#: notepad.rc:89
+#: notepad.rc:88
 msgid "'%s' could not be found."
 msgstr "تعذّر إيجاد '%s'."
 
-#: notepad.rc:91
+#: notepad.rc:90
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8331,20 +8327,20 @@ msgstr ""
 "لا تكفي الذاكرة المتاحة لإنهاء هذه المهمة.\n"
 "أغلق واحدا أو أكثر من التطبيقات لزيادة الذاكرة المتاحة."
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16)"
 msgstr "يونيكود (UTF-16)"
 
-#: notepad.rc:94
+#: notepad.rc:93
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "يونيكود (UTF-16 Big Endian)"
 
-#: notepad.rc:95
+#: notepad.rc:94
 #, fuzzy
 msgid "Unicode (UTF-8)"
 msgstr "يونيكود (UTF-16)"
 
-#: notepad.rc:102
+#: notepad.rc:101
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"

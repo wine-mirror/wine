@@ -61,7 +61,7 @@ msgstr "Programy instalacyjne"
 msgid "Programs (*.exe)"
 msgstr "Programy (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:78
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
 #: oleview.rc:101 progman.rc:83 regedit.rc:201 winhlp32.rc:102
 msgid "All files (*.*)"
 msgstr "Wszystkie pliki (*.*)"
@@ -8608,51 +8608,47 @@ msgstr "Z&najdź następny\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Za&mień...\tCtrl+H"
 
-#: notepad.rc:59
-msgid "&Search..."
-msgstr "&Szukaj..."
-
-#: notepad.rc:60 progman.rc:55 winhlp32.rc:61
+#: notepad.rc:59 progman.rc:55 winhlp32.rc:61
 msgid "&Help on help"
 msgstr "Pomo&c"
 
-#: notepad.rc:62
+#: notepad.rc:61
 msgid "&About Notepad"
 msgstr "Notatnik - i&nformacje"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:69
+#: notepad.rc:68
 msgid "Page &p"
 msgstr "Strona &p"
 
-#: notepad.rc:71
+#: notepad.rc:70
 msgid "Notepad"
 msgstr "Notatnik"
 
-#: notepad.rc:72 progman.rc:65 winhlp32.rc:94
+#: notepad.rc:71 progman.rc:65 winhlp32.rc:94
 msgid "ERROR"
 msgstr "BŁĄD"
 
-#: notepad.rc:73 progman.rc:66 winhlp32.rc:95
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:95
 msgid "WARNING"
 msgstr "OSTRZEŻENIE"
 
-#: notepad.rc:74 progman.rc:67 winhlp32.rc:96
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:96
 msgid "Information"
 msgstr "Informacja"
 
-#: notepad.rc:76
+#: notepad.rc:75
 msgid "Untitled"
 msgstr "(bez tytułu)"
 
-#: notepad.rc:79
+#: notepad.rc:78
 msgid "Text files (*.txt)"
 msgstr "Dokumenty tekstowe (*.txt)"
 
-#: notepad.rc:82
+#: notepad.rc:81
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8660,7 +8656,7 @@ msgstr ""
 "Plik '%s' jest za duży dla notatnika.\n"
 " Proszę użyć innego edytora."
 
-#: notepad.rc:84
+#: notepad.rc:83
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8668,7 +8664,7 @@ msgstr ""
 "Nie wprowadziłeś żadnego tekstu. \n"
 "Proszę coś wpisać i spróbować ponownie."
 
-#: notepad.rc:86
+#: notepad.rc:85
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8678,7 +8674,7 @@ msgstr ""
 "\n"
 " Czy chcesz utworzyć nowy plik ?"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8689,11 +8685,11 @@ msgstr ""
 "\n"
 " Czy chcesz zachować zmiany ?"
 
-#: notepad.rc:89
+#: notepad.rc:88
 msgid "'%s' could not be found."
 msgstr "Nie można odnaleźć '%s'."
 
-#: notepad.rc:91
+#: notepad.rc:90
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8701,19 +8697,19 @@ msgstr ""
 "Za mało pamięci do wykonania tego zadania.\n"
 " Zamknij jedną lub więcej aplikacji aby zwiększyć ilość wolnej pamięci."
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:94
+#: notepad.rc:93
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
-#: notepad.rc:95
+#: notepad.rc:94
 msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-8)"
 
-#: notepad.rc:102
+#: notepad.rc:101
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
