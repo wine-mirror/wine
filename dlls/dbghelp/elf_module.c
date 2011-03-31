@@ -294,6 +294,7 @@ static BOOL elf_map_file(struct elf_map_file_data* emfd, struct image_file_map* 
         filename = NULL;
         break;
     default: assert(0);
+        return FALSE;
     }
 
     elf_reset_file_map(fmap);
