@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "プログラム(*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "すべてのファイル (*.*)"
 
@@ -170,7 +170,7 @@ msgstr "システム パス"
 msgid "Desktop"
 msgstr "Desktop"
 
-#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:68
 msgid "Fonts"
 msgstr "フォント"
 
@@ -2012,7 +2012,7 @@ msgstr "オプション"
 msgid "S&ync"
 msgstr "同期(&Y)"
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:87
 msgid "&Back"
 msgstr "戻る(&B)"
 
@@ -5809,7 +5809,7 @@ msgstr "コピー元:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "このファイルがあるパスを入力し、[OK]をクリックしてください。"
 
-#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
+#: shdoclc.rc:36
 msgid "Default"
 msgstr "Default"
 
@@ -6236,7 +6236,7 @@ msgid "&Add to Favorites..."
 msgstr "お気に入りに追加(&A)..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "ヘルプ(&H)"
 
@@ -8568,7 +8568,7 @@ msgstr "次を検索(&S)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "置換(&R)...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:55 winhlp32.rc:61
+#: notepad.rc:59 progman.rc:55 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "ヘルプの使い方(&H)"
 
@@ -8588,15 +8588,15 @@ msgstr "&p ページ"
 msgid "Notepad"
 msgstr "メモ帳"
 
-#: notepad.rc:71 progman.rc:65 winhlp32.rc:94
+#: notepad.rc:71 progman.rc:65 winhlp32.rc:80
 msgid "ERROR"
 msgstr "エラー"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:95
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:81
 msgid "WARNING"
 msgstr "警告"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:96
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:82
 msgid "Information"
 msgstr "情報"
 
@@ -9053,7 +9053,7 @@ msgstr "グループ `%s' を削除しますか?"
 msgid "Delete program `%s'?"
 msgstr "プログラム `%s' を削除しますか?"
 
-#: progman.rc:71 winhlp32.rc:97
+#: progman.rc:71 winhlp32.rc:83
 msgid "Not implemented"
 msgstr "未実装"
 
@@ -10925,87 +10925,71 @@ msgstr "しおり(&B)"
 msgid "&Define..."
 msgstr "定義(&D)..."
 
-#: winhlp32.rc:45 winhlp32.rc:81
-msgid "Help always visible"
-msgstr "Help always visible"
-
-#: winhlp32.rc:48 winhlp32.rc:84
-msgid "Visible"
-msgstr "Visible"
-
-#: winhlp32.rc:49 winhlp32.rc:85
-msgid "Non visible"
-msgstr "Non visible"
-
-#: winhlp32.rc:51
+#: winhlp32.rc:45
 msgid "History"
 msgstr "履歴"
 
-#: winhlp32.rc:54 winhlp32.rc:77
+#: winhlp32.rc:48 winhlp32.rc:70
 msgid "Small"
 msgstr "小"
 
-#: winhlp32.rc:55 winhlp32.rc:78
+#: winhlp32.rc:49 winhlp32.rc:71
 msgid "Normal"
 msgstr "標準"
 
-#: winhlp32.rc:56 winhlp32.rc:79
+#: winhlp32.rc:50 winhlp32.rc:72
 msgid "Large"
 msgstr "大"
 
-#: winhlp32.rc:58 winhlp32.rc:87
-msgid "Use system colors"
-msgstr "システム カラーを使う"
-
-#: winhlp32.rc:62
+#: winhlp32.rc:55
 msgid "Always on &top"
 msgstr "常に手前に表示(&T)"
 
-#: winhlp32.rc:64
+#: winhlp32.rc:57
 msgid "&About Wine Help"
 msgstr "情報(&I)..."
 
-#: winhlp32.rc:72
+#: winhlp32.rc:65
 msgid "Annotation..."
 msgstr "コメント..."
 
-#: winhlp32.rc:73
+#: winhlp32.rc:66
 msgid "Copy"
 msgstr "コピー"
 
-#: winhlp32.rc:74
+#: winhlp32.rc:67
 msgid "Print..."
 msgstr "印刷..."
 
-#: winhlp32.rc:93
+#: winhlp32.rc:79
 msgid "Wine Help"
 msgstr "Wine ヘルプ"
 
-#: winhlp32.rc:98
+#: winhlp32.rc:84
 msgid "Error while reading the help file `%s'"
 msgstr "ヘルプファイル `%s' を読み込んでいるときにエラー"
 
-#: winhlp32.rc:100
+#: winhlp32.rc:86
 msgid "Summary"
 msgstr "概要"
 
-#: winhlp32.rc:99
+#: winhlp32.rc:85
 msgid "&Index"
 msgstr "索引(&I)"
 
-#: winhlp32.rc:103
+#: winhlp32.rc:89
 msgid "Help files (*.hlp)"
 msgstr "ヘルプ ファイル (*.hlp)"
 
-#: winhlp32.rc:104
+#: winhlp32.rc:90
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
 msgstr "'%s' が見つかりません。自分でこのファイルを探しますか?"
 
-#: winhlp32.rc:105
+#: winhlp32.rc:91
 msgid "Cannot find a richedit implementation... Aborting"
 msgstr "リッチエディット実装が見つかりません... 終了します"
 
-#: winhlp32.rc:106
+#: winhlp32.rc:92
 msgid "Help topics: "
 msgstr "ヘルプ トピック: "
 

@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmes (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "Tous les fichiers (*.*)"
 
@@ -177,7 +177,7 @@ msgstr "Chemin système (path)"
 msgid "Desktop"
 msgstr "Bureau"
 
-#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:68
 msgid "Fonts"
 msgstr "Polices"
 
@@ -2032,7 +2032,7 @@ msgstr "Options"
 msgid "S&ync"
 msgstr "S&ynchroniser"
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:87
 msgid "&Back"
 msgstr "&Précédent"
 
@@ -5841,7 +5841,7 @@ msgstr "Copier les fichiers depuis :"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Saisissez le chemin du fichier, puis cliquez sur OK."
 
-#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
+#: shdoclc.rc:36
 #, fuzzy
 msgid "Default"
 msgstr ""
@@ -6274,7 +6274,7 @@ msgid "&Add to Favorites..."
 msgstr "&Ajouter aux favoris..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "Aid&e"
 
@@ -8673,7 +8673,7 @@ msgstr "&Suivant\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Rem&placer...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:55 winhlp32.rc:61
+#: notepad.rc:59 progman.rc:55 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "&Utiliser l'aide"
 
@@ -8693,15 +8693,15 @@ msgstr "Page &p"
 msgid "Notepad"
 msgstr "Bloc-notes"
 
-#: notepad.rc:71 progman.rc:65 winhlp32.rc:94
+#: notepad.rc:71 progman.rc:65 winhlp32.rc:80
 msgid "ERROR"
 msgstr "ERREUR"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:95
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:81
 msgid "WARNING"
 msgstr "ATTENTION"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:96
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:82
 msgid "Information"
 msgstr "Information"
 
@@ -9163,7 +9163,7 @@ msgstr "Voulez-vous supprimer le groupe « %s » ?"
 msgid "Delete program `%s'?"
 msgstr "Voulez-vous supprimer le programme « %s » ?"
 
-#: progman.rc:71 winhlp32.rc:97
+#: progman.rc:71 winhlp32.rc:83
 msgid "Not implemented"
 msgstr "Non implémenté"
 
@@ -11060,87 +11060,71 @@ msgstr "&Signets"
 msgid "&Define..."
 msgstr "&Définir..."
 
-#: winhlp32.rc:45 winhlp32.rc:81
-msgid "Help always visible"
-msgstr "Aide toujours visible"
-
-#: winhlp32.rc:48 winhlp32.rc:84
-msgid "Visible"
-msgstr "Visible"
-
-#: winhlp32.rc:49 winhlp32.rc:85
-msgid "Non visible"
-msgstr "Non visible"
-
-#: winhlp32.rc:51
+#: winhlp32.rc:45
 msgid "History"
 msgstr "Historique"
 
-#: winhlp32.rc:54 winhlp32.rc:77
+#: winhlp32.rc:48 winhlp32.rc:70
 msgid "Small"
 msgstr "Petite"
 
-#: winhlp32.rc:55 winhlp32.rc:78
+#: winhlp32.rc:49 winhlp32.rc:71
 msgid "Normal"
 msgstr "Normale"
 
-#: winhlp32.rc:56 winhlp32.rc:79
+#: winhlp32.rc:50 winhlp32.rc:72
 msgid "Large"
 msgstr "Grande"
 
-#: winhlp32.rc:58 winhlp32.rc:87
-msgid "Use system colors"
-msgstr "Utiliser les couleurs système"
-
-#: winhlp32.rc:62
+#: winhlp32.rc:55
 msgid "Always on &top"
 msgstr "&Toujours visible"
 
-#: winhlp32.rc:64
+#: winhlp32.rc:57
 msgid "&About Wine Help"
 msgstr "&A propos de l'Aide de Wine"
 
-#: winhlp32.rc:72
+#: winhlp32.rc:65
 msgid "Annotation..."
 msgstr "Annotation..."
 
-#: winhlp32.rc:73
+#: winhlp32.rc:66
 msgid "Copy"
 msgstr "Copier"
 
-#: winhlp32.rc:74
+#: winhlp32.rc:67
 msgid "Print..."
 msgstr "Imprimer la rubrique..."
 
-#: winhlp32.rc:93
+#: winhlp32.rc:79
 msgid "Wine Help"
 msgstr "Aide de Wine"
 
-#: winhlp32.rc:98
+#: winhlp32.rc:84
 msgid "Error while reading the help file `%s'"
 msgstr "Erreur lors de la lecture du fichier d'aide « %s »"
 
-#: winhlp32.rc:100
+#: winhlp32.rc:86
 msgid "Summary"
 msgstr "Sommaire"
 
-#: winhlp32.rc:99
+#: winhlp32.rc:85
 msgid "&Index"
 msgstr "&Index"
 
-#: winhlp32.rc:103
+#: winhlp32.rc:89
 msgid "Help files (*.hlp)"
 msgstr "Fichiers d'aide (*.hlp)"
 
-#: winhlp32.rc:104
+#: winhlp32.rc:90
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
 msgstr "« %s » introuvable. Souhaitez-vous rechercher ce fichier vous-même ?"
 
-#: winhlp32.rc:105
+#: winhlp32.rc:91
 msgid "Cannot find a richedit implementation... Aborting"
 msgstr "Aucune implémentation richedit détectée... Abandon"
 
-#: winhlp32.rc:106
+#: winhlp32.rc:92
 msgid "Help topics: "
 msgstr "Rubriques d'aide : "
 

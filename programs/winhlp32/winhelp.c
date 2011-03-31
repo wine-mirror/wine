@@ -1401,15 +1401,6 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                 WINHELP_SetupText(GetDlgItem(hWnd, CTL_ID_TEXT), win, 0 /* FIXME */);
             }
             break;
-        case MNID_OPTS_HELP_DEFAULT:
-        case MNID_OPTS_HELP_VISIBLE:
-        case MNID_OPTS_HELP_NONVISIBLE:
-        case MNID_OPTS_SYSTEM_COLORS:
-        case MNID_CTXT_HELP_DEFAULT:
-        case MNID_CTXT_HELP_VISIBLE:
-        case MNID_CTXT_HELP_NONVISIBLE:
-        case MNID_CTXT_SYSTEM_COLORS:
-            /* FIXME: NIY */
 
 	default:
             /* Buttons */

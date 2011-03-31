@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "프로그램 (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
 
@@ -170,7 +170,7 @@ msgstr "시스템 경로"
 msgid "Desktop"
 msgstr "데스크탑"
 
-#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:68
 msgid "Fonts"
 msgstr "글꼴"
 
@@ -2013,7 +2013,7 @@ msgstr "옵션"
 msgid "S&ync"
 msgstr "동기화(&Y)"
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:87
 msgid "&Back"
 msgstr "뒤로(&B)"
 
@@ -5802,7 +5802,7 @@ msgstr "복사할 파일이 위치한 곳:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "파일이 위치한 경로를 입력하고, 확인을 클릭하십시오."
 
-#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
+#: shdoclc.rc:36
 msgid "Default"
 msgstr "기본"
 
@@ -6229,7 +6229,7 @@ msgid "&Add to Favorites..."
 msgstr "즐겨찾기 추가(&A)..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "도움말(&H)"
 
@@ -8540,7 +8540,7 @@ msgstr "다음 찾기(&N)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr " 바꾸기(&R)...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:55 winhlp32.rc:61
+#: notepad.rc:59 progman.rc:55 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "도움말 사용법(&H)"
 
@@ -8560,15 +8560,15 @@ msgstr "&p 페이지"
 msgid "Notepad"
 msgstr "메모장"
 
-#: notepad.rc:71 progman.rc:65 winhlp32.rc:94
+#: notepad.rc:71 progman.rc:65 winhlp32.rc:80
 msgid "ERROR"
 msgstr "에러!!"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:95
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:81
 msgid "WARNING"
 msgstr "경고"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:96
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:82
 msgid "Information"
 msgstr "정보"
 
@@ -9022,7 +9022,7 @@ msgstr "그룹 `%s'을 지우겠습니까 ?"
 msgid "Delete program `%s'?"
 msgstr "풀그림 `%s'을 지우겠습니까 ?"
 
-#: progman.rc:71 winhlp32.rc:97
+#: progman.rc:71 winhlp32.rc:83
 msgid "Not implemented"
 msgstr "구현되지 않았음"
 
@@ -10879,87 +10879,71 @@ msgstr "책갈피(&B)"
 msgid "&Define..."
 msgstr "정의(&D)..."
 
-#: winhlp32.rc:45 winhlp32.rc:81
-msgid "Help always visible"
-msgstr "가능한 도움말 보이기"
-
-#: winhlp32.rc:48 winhlp32.rc:84
-msgid "Visible"
-msgstr "보이기"
-
-#: winhlp32.rc:49 winhlp32.rc:85
-msgid "Non visible"
-msgstr "보여주지 않기"
-
-#: winhlp32.rc:51
+#: winhlp32.rc:45
 msgid "History"
 msgstr "기록"
 
-#: winhlp32.rc:54 winhlp32.rc:77
+#: winhlp32.rc:48 winhlp32.rc:70
 msgid "Small"
 msgstr "작게"
 
-#: winhlp32.rc:55 winhlp32.rc:78
+#: winhlp32.rc:49 winhlp32.rc:71
 msgid "Normal"
 msgstr "보통"
 
-#: winhlp32.rc:56 winhlp32.rc:79
+#: winhlp32.rc:50 winhlp32.rc:72
 msgid "Large"
 msgstr "크게"
 
-#: winhlp32.rc:58 winhlp32.rc:87
-msgid "Use system colors"
-msgstr "시스템 색상 사용"
-
-#: winhlp32.rc:62
+#: winhlp32.rc:55
 msgid "Always on &top"
 msgstr "항상 위(&T)"
 
-#: winhlp32.rc:64
+#: winhlp32.rc:57
 msgid "&About Wine Help"
 msgstr "Wine 도움말 정보(&I)..."
 
-#: winhlp32.rc:72
+#: winhlp32.rc:65
 msgid "Annotation..."
 msgstr "주석..."
 
-#: winhlp32.rc:73
+#: winhlp32.rc:66
 msgid "Copy"
 msgstr "복사"
 
-#: winhlp32.rc:74
+#: winhlp32.rc:67
 msgid "Print..."
 msgstr "인쇄..."
 
-#: winhlp32.rc:93
+#: winhlp32.rc:79
 msgid "Wine Help"
 msgstr "Wine 도움말"
 
-#: winhlp32.rc:98
+#: winhlp32.rc:84
 msgid "Error while reading the help file `%s'"
 msgstr "도움말 파일 `%s'를 읽는 도중 오류 발생"
 
-#: winhlp32.rc:100
+#: winhlp32.rc:86
 msgid "Summary"
 msgstr "요약"
 
-#: winhlp32.rc:99
+#: winhlp32.rc:85
 msgid "&Index"
 msgstr "목차(&C)"
 
-#: winhlp32.rc:103
+#: winhlp32.rc:89
 msgid "Help files (*.hlp)"
 msgstr "도움말 파일 (*.hlp)"
 
-#: winhlp32.rc:104
+#: winhlp32.rc:90
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
 msgstr "%s을 찾을 수 없습니다'. 이 파일을 직접 찾겠습니까?"
 
-#: winhlp32.rc:105
+#: winhlp32.rc:91
 msgid "Cannot find a richedit implementation... Aborting"
 msgstr "richedit 구현을 찾을수 업습니다.. 취소중"
 
-#: winhlp32.rc:106
+#: winhlp32.rc:92
 msgid "Help topics: "
 msgstr "도움말 목차: "
 

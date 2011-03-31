@@ -42,12 +42,6 @@ MAIN_MENU MENU
    MENUITEM "&Define...", MNID_BKMK_DEFINE
  }
  POPUP "&Options" {
-   POPUP	"Help always visible"
-   BEGIN
-     MENUITEM "Default",	MNID_OPTS_HELP_DEFAULT
-     MENUITEM "Visible",	MNID_OPTS_HELP_VISIBLE
-     MENUITEM "Non visible",	MNID_OPTS_HELP_NONVISIBLE
-  END
   MENUITEM "History",		MNID_OPTS_HISTORY
   POPUP    "Fonts"
   BEGIN
@@ -55,7 +49,6 @@ MAIN_MENU MENU
     MENUITEM "Normal",    	MNID_OPTS_FONTS_NORMAL
     MENUITEM "Large",     	MNID_OPTS_FONTS_LARGE
   END
-  MENUITEM "Use system colors",	MNID_OPTS_SYSTEM_COLORS
  }
  POPUP "&Help" {
    MENUITEM "&Help on help", MNID_HELP_HELPON
@@ -78,13 +71,6 @@ BEGIN
 			MENUITEM "Normal",      MNID_CTXT_FONTS_NORMAL
 			MENUITEM "Large",       MNID_CTXT_FONTS_LARGE
 		END
-		POPUP   "Help always visible"
-		BEGIN
-			MENUITEM "Default",     MNID_CTXT_HELP_DEFAULT
-			MENUITEM "Visible",     MNID_CTXT_HELP_VISIBLE
-			MENUITEM "Non visible", MNID_CTXT_HELP_NONVISIBLE
-		END
-		MENUITEM "Use system colors",   MNID_CTXT_SYSTEM_COLORS
 	END
 END
 

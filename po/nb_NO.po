@@ -60,7 +60,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmer (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:102
+#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "Alle filer (*.*)"
 
@@ -166,7 +166,7 @@ msgstr "Systemsti"
 msgid "Desktop"
 msgstr "Skrivebord"
 
-#: comdlg32.rc:35 winhlp32.rc:52 winhlp32.rc:75
+#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:68
 #, fuzzy
 msgid "Fonts"
 msgstr ""
@@ -2114,7 +2114,7 @@ msgstr ""
 msgid "S&ync"
 msgstr ""
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:101
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:87
 msgid "&Back"
 msgstr "Til&bake"
 
@@ -5997,7 +5997,7 @@ msgstr "Kopier filer fra:"
 msgid "Type the path where the file is located, and then click OK."
 msgstr "Skriv inn plasseringen til filen, og trykk OK."
 
-#: shdoclc.rc:36 winhlp32.rc:47 winhlp32.rc:83
+#: shdoclc.rc:36
 msgid "Default"
 msgstr "Standard"
 
@@ -6470,7 +6470,7 @@ msgid "&Add to Favorites..."
 msgstr "Legg til i f&avoritter..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:60 wordpad.rc:91
+#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "&Hjelp"
 
@@ -8823,7 +8823,7 @@ msgstr "Søk etter nest&e\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "E&rstatt...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:55 winhlp32.rc:61
+#: notepad.rc:59 progman.rc:55 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "&Hjelp om hjelp"
 
@@ -8843,15 +8843,15 @@ msgstr "Side &s"
 msgid "Notepad"
 msgstr "Notisblokk"
 
-#: notepad.rc:71 progman.rc:65 winhlp32.rc:94
+#: notepad.rc:71 progman.rc:65 winhlp32.rc:80
 msgid "ERROR"
 msgstr "FEIL"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:95
+#: notepad.rc:72 progman.rc:66 winhlp32.rc:81
 msgid "WARNING"
 msgstr "ADVARSEL"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:96
+#: notepad.rc:73 progman.rc:67 winhlp32.rc:82
 msgid "Information"
 msgstr "Informasjon"
 
@@ -9317,7 +9317,7 @@ msgstr "Slette gruppen '%s'?"
 msgid "Delete program `%s'?"
 msgstr "Slette programmet '%s'?"
 
-#: progman.rc:71 winhlp32.rc:97
+#: progman.rc:71 winhlp32.rc:83
 msgid "Not implemented"
 msgstr "Ikke implementert"
 
@@ -11206,87 +11206,71 @@ msgstr "&Bokmerke"
 msgid "&Define..."
 msgstr "&Definer..."
 
-#: winhlp32.rc:45 winhlp32.rc:81
-msgid "Help always visible"
-msgstr "Synlighet"
-
-#: winhlp32.rc:48 winhlp32.rc:84
-msgid "Visible"
-msgstr "Synlig"
-
-#: winhlp32.rc:49 winhlp32.rc:85
-msgid "Non visible"
-msgstr "Ikke synlig"
-
-#: winhlp32.rc:51
+#: winhlp32.rc:45
 msgid "History"
 msgstr "Historikk"
 
-#: winhlp32.rc:54 winhlp32.rc:77
+#: winhlp32.rc:48 winhlp32.rc:70
 msgid "Small"
 msgstr "Liten"
 
-#: winhlp32.rc:55 winhlp32.rc:78
+#: winhlp32.rc:49 winhlp32.rc:71
 msgid "Normal"
 msgstr "Normal"
 
-#: winhlp32.rc:56 winhlp32.rc:79
+#: winhlp32.rc:50 winhlp32.rc:72
 msgid "Large"
 msgstr "Stor"
 
-#: winhlp32.rc:58 winhlp32.rc:87
-msgid "Use system colors"
-msgstr "Bruk systemfarger"
-
-#: winhlp32.rc:62
+#: winhlp32.rc:55
 msgid "Always on &top"
 msgstr "All&tid øverst"
 
-#: winhlp32.rc:64
+#: winhlp32.rc:57
 msgid "&About Wine Help"
 msgstr "&Informasjon..."
 
-#: winhlp32.rc:72
+#: winhlp32.rc:65
 msgid "Annotation..."
 msgstr "Kommentar..."
 
-#: winhlp32.rc:73
+#: winhlp32.rc:66
 msgid "Copy"
 msgstr "Kopier"
 
-#: winhlp32.rc:74
+#: winhlp32.rc:67
 msgid "Print..."
 msgstr "Skriv ut..."
 
-#: winhlp32.rc:93
+#: winhlp32.rc:79
 msgid "Wine Help"
 msgstr "Hjelp"
 
-#: winhlp32.rc:98
+#: winhlp32.rc:84
 msgid "Error while reading the help file `%s'"
 msgstr "Klarte ikke lese hjelpefilen «%s»"
 
-#: winhlp32.rc:100
+#: winhlp32.rc:86
 msgid "Summary"
 msgstr "&Oppsummering"
 
-#: winhlp32.rc:99
+#: winhlp32.rc:85
 msgid "&Index"
 msgstr "&Innhold"
 
-#: winhlp32.rc:103
+#: winhlp32.rc:89
 msgid "Help files (*.hlp)"
 msgstr "Hjelp-filer (*.hlp)"
 
-#: winhlp32.rc:104
+#: winhlp32.rc:90
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
 msgstr "Klarte ikke finne «%s». Vil du finne filen selv?"
 
-#: winhlp32.rc:105
+#: winhlp32.rc:91
 msgid "Cannot find a richedit implementation... Aborting"
 msgstr "Klarte ikke finne richedit; avbryter"
 
-#: winhlp32.rc:106
+#: winhlp32.rc:92
 msgid "Help topics: "
 msgstr "Emner i Hjelp: "
 
