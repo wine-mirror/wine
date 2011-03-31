@@ -474,6 +474,9 @@ DATETIME_IncreaseField (DATETIME_INFO *infoPtr, int number, int delta)
 	case TWODIGITYEAR:
 	case FULLYEAR:
 	    date->wYear = wrap(date->wYear, delta, 1752, 9999);
+	    if (date->wDay > MONTHCAL_MonthLength(date->wMonth, date->wYear))
+	        /* This can happen when moving away from a leap year. */
+	        date->wDay = MONTHCAL_MonthLength(date->wMonth, date->wYear);
 	    MONTHCAL_CalculateDayOfWeek(date, TRUE);
 	    break;
 	case ONEDIGITMONTH:
