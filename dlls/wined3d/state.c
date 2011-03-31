@@ -650,11 +650,11 @@ static void state_blendop(DWORD state, struct wined3d_stateblock *stateblock, st
 
     switch (stateblock->state.render_states[WINED3DRS_BLENDOP])
     {
-        case WINED3DBLENDOP_ADD              : blendEquation = GL_FUNC_ADD_EXT;          break;
-        case WINED3DBLENDOP_SUBTRACT         : blendEquation = GL_FUNC_SUBTRACT;         break;
-        case WINED3DBLENDOP_REVSUBTRACT      : blendEquation = GL_FUNC_REVERSE_SUBTRACT; break;
-        case WINED3DBLENDOP_MIN              : blendEquation = GL_MIN_EXT;               break;
-        case WINED3DBLENDOP_MAX              : blendEquation = GL_MAX_EXT;               break;
+        case WINED3DBLENDOP_ADD:         blendEquation = GL_FUNC_ADD_EXT;              break;
+        case WINED3DBLENDOP_SUBTRACT:    blendEquation = GL_FUNC_SUBTRACT_EXT;         break;
+        case WINED3DBLENDOP_REVSUBTRACT: blendEquation = GL_FUNC_REVERSE_SUBTRACT_EXT; break;
+        case WINED3DBLENDOP_MIN:         blendEquation = GL_MIN_EXT;                   break;
+        case WINED3DBLENDOP_MAX:         blendEquation = GL_MAX_EXT;                   break;
         default:
             FIXME("Unrecognized/Unhandled D3DBLENDOP value %#x.\n",
                     stateblock->state.render_states[WINED3DRS_BLENDOP]);
@@ -662,11 +662,11 @@ static void state_blendop(DWORD state, struct wined3d_stateblock *stateblock, st
 
     switch (stateblock->state.render_states[WINED3DRS_BLENDOPALPHA])
     {
-        case WINED3DBLENDOP_ADD              : blendEquationAlpha = GL_FUNC_ADD_EXT;          break;
-        case WINED3DBLENDOP_SUBTRACT         : blendEquationAlpha = GL_FUNC_SUBTRACT;         break;
-        case WINED3DBLENDOP_REVSUBTRACT      : blendEquationAlpha = GL_FUNC_REVERSE_SUBTRACT; break;
-        case WINED3DBLENDOP_MIN              : blendEquationAlpha = GL_MIN_EXT;               break;
-        case WINED3DBLENDOP_MAX              : blendEquationAlpha = GL_MAX_EXT;               break;
+        case WINED3DBLENDOP_ADD:         blendEquationAlpha = GL_FUNC_ADD_EXT;              break;
+        case WINED3DBLENDOP_SUBTRACT:    blendEquationAlpha = GL_FUNC_SUBTRACT_EXT;         break;
+        case WINED3DBLENDOP_REVSUBTRACT: blendEquationAlpha = GL_FUNC_REVERSE_SUBTRACT_EXT; break;
+        case WINED3DBLENDOP_MIN:         blendEquationAlpha = GL_MIN_EXT;                   break;
+        case WINED3DBLENDOP_MAX:         blendEquationAlpha = GL_MAX_EXT;                   break;
         default:
             FIXME("Unrecognized/Unhandled D3DBLENDOP value %#x\n",
                     stateblock->state.render_states[WINED3DRS_BLENDOPALPHA]);

@@ -105,6 +105,7 @@ static const struct {
     {"GL_EXT_blend_equation_separate",      EXT_BLEND_EQUATION_SEPARATE,    0                           },
     {"GL_EXT_blend_func_separate",          EXT_BLEND_FUNC_SEPARATE,        0                           },
     {"GL_EXT_blend_minmax",                 EXT_BLEND_MINMAX,               0                           },
+    {"GL_EXT_blend_subtract",               EXT_BLEND_SUBTRACT,             0                           },
     {"GL_EXT_depth_bounds_test",            EXT_DEPTH_BOUNDS_TEST,          0                           },
     {"GL_EXT_draw_buffers2",                EXT_DRAW_BUFFERS2,              0                           },
     {"GL_EXT_fog_coord",                    EXT_FOG_COORD,                  0                           },

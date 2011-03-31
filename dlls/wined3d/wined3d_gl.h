@@ -1786,6 +1786,7 @@ typedef enum wined3d_gl_extension
     EXT_BLEND_EQUATION_SEPARATE,
     EXT_BLEND_FUNC_SEPARATE,
     EXT_BLEND_MINMAX,
+    EXT_BLEND_SUBTRACT,
     EXT_DRAW_BUFFERS2,
     EXT_DEPTH_BOUNDS_TEST,
     EXT_FOG_COORD,
@@ -3005,6 +3006,13 @@ typedef void (WINE_GLAPI *PGLFNBLENDFUNCSEPARATEEXTPROC)(GLenum sfactorRGB, GLen
 #define GL_BLEND_EQUATION_EXT                               0x8009
 #endif
 typedef void (WINE_GLAPI *PGLFNBLENDEQUATIONEXTPROC)(GLenum mode);
+
+/* GL_EXT_blend_subtract */
+#ifndef GL_EXT_blend_subtract
+#define GL_EXT_blend_subtract 1
+#define GL_FUNC_SUBTRACT_EXT                                0x800a
+#define GL_FUNC_REVERSE_SUBTRACT_EXT                        0x800b
+#endif
 
 /* GL_EXT_depth_bounds_test */
 #ifndef GL_EXT_depth_bounds_test
