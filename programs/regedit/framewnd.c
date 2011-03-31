@@ -677,10 +677,6 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_REGISTRY_EXPORTREGISTRYFILE:
         ExportRegistryFile(hWnd);
         break;
-    case ID_REGISTRY_CONNECTNETWORKREGISTRY:
-        break;
-    case ID_REGISTRY_DISCONNECTNETWORKREGISTRY:
-        break;
     case ID_REGISTRY_PRINT:
     {
         const WCHAR empty = 0;

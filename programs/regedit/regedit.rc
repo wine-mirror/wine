@@ -33,10 +33,7 @@ BEGIN
         MENUITEM "&Import Registry File...",    ID_REGISTRY_IMPORTREGISTRYFILE
         MENUITEM "&Export Registry File...",    ID_REGISTRY_EXPORTREGISTRYFILE
         MENUITEM SEPARATOR
-        MENUITEM "&Connect Network Registry...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
-        MENUITEM "&Disconnect Network Registry...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
-        MENUITEM SEPARATOR
-        MENUITEM "&Print\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
+        MENUITEM "&Print\tCtrl+P",              ID_REGISTRY_PRINT
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_REGISTRY_EXIT
     END
@@ -152,10 +149,6 @@ BEGIN
     ID_REGISTRY_IMPORTREGISTRYFILE "Imports a text file into the registry"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Exports all or part of the registry to a text file"
-    ID_REGISTRY_CONNECTNETWORKREGISTRY
-                            "Connects to a remote computer's registry"
-    ID_REGISTRY_DISCONNECTNETWORKREGISTRY
-                            "Disconnects from a remote computer's registry"
     ID_REGISTRY_PRINT       "Prints all or part of the registry"
 /*    ID_HELP_HELPTOPICS      "Opens registry editor help" */
     ID_HELP_ABOUT           "Displays program information, version number and copyright"
