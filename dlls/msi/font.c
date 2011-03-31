@@ -84,7 +84,7 @@ static const WCHAR regfont2[] =
  * Code based off of code located here
  * http://www.codeproject.com/gdi/fontnamefromfile.asp
  */
-WCHAR *load_ttf_name_id( const WCHAR *filename, DWORD id )
+static WCHAR *load_ttf_name_id( const WCHAR *filename, DWORD id )
 {
     TT_TABLE_DIRECTORY tblDir;
     BOOL bFound = FALSE;
