@@ -85,8 +85,8 @@ int CDECL _isctype(int c, int type)
       *pconv++ = (UINT)c >> 8;
     *pconv++ = c & 0xff;
     *pconv = 0;
-    /* FIXME: Use ctype LCID, not lc_all */
-    if (GetStringTypeExA(get_locale()->locinfo->lc_handle[MSVCRT_LC_CTYPE],
+
+    if (GetStringTypeExA(locale->locinfo->lc_handle[MSVCRT_LC_CTYPE],
                 CT_CTYPE1, convert, convert[1] ? 2 : 1, &typeInfo))
       return typeInfo & type;
   }
