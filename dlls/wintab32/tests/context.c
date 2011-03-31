@@ -25,7 +25,6 @@
 #include "wine/test.h"
 
 static const CHAR wintab32Dll[] = "Wintab32.dll";
-static const CHAR defaultWindowName[] = "Wintab Test";
 static const CHAR wintabTestWindowClassName[] = "WintabTestWnd";
 static const CHAR contextName[] = "TestContext";
 static const UINT X = 0;
