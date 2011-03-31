@@ -60,6 +60,7 @@ typedef struct FileDialogImpl {
     enum ITEMDLG_TYPE dlg_type;
     IExplorerBrowserEvents IExplorerBrowserEvents_iface;
     IServiceProvider       IServiceProvider_iface;
+    ICommDlgBrowser3       ICommDlgBrowser3_iface;
     LONG ref;
 
     FILEOPENDIALOGOPTIONS options;
@@ -482,6 +483,12 @@ static HRESULT WINAPI IFileDialog2_fnQueryInterface(IFileDialog2 *iface,
     else if(IsEqualGUID(riid, &IID_IServiceProvider))
     {
         *ppvObject = &This->IServiceProvider_iface;
+    }
+    else if(IsEqualGUID(&IID_ICommDlgBrowser3, riid) ||
+            IsEqualGUID(&IID_ICommDlgBrowser2, riid) ||
+            IsEqualGUID(&IID_ICommDlgBrowser, riid))
+    {
+        *ppvObject = &This->ICommDlgBrowser3_iface;
     }
     else
         FIXME("Unknown interface requested: %s.\n", debugstr_guid(riid));
@@ -1533,6 +1540,123 @@ static const IServiceProviderVtbl vt_IServiceProvider = {
     IServiceProvider_fnQueryService
 };
 
+/**************************************************************************
+ * ICommDlgBrowser3 implementation
+ */
+static inline FileDialogImpl *impl_from_ICommDlgBrowser3(ICommDlgBrowser3 *iface)
+{
+    return CONTAINING_RECORD(iface, FileDialogImpl, ICommDlgBrowser3_iface);
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnQueryInterface(ICommDlgBrowser3 *iface,
+                                                        REFIID riid, void **ppvObject)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    TRACE("%p\n", This);
+    return IFileDialog2_QueryInterface(&This->IFileDialog2_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI ICommDlgBrowser3_fnAddRef(ICommDlgBrowser3 *iface)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    TRACE("%p\n", This);
+    return IFileDialog2_AddRef(&This->IFileDialog2_iface);
+}
+
+static ULONG WINAPI ICommDlgBrowser3_fnRelease(ICommDlgBrowser3 *iface)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    TRACE("%p\n", This);
+    return IFileDialog2_Release(&This->IFileDialog2_iface);
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnDefaultCommand(ICommDlgBrowser3 *iface,
+                                                          IShellView *shv)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("Stub: %p (%p)\n", This, shv);
+    return S_OK;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnStateChange(ICommDlgBrowser3 *iface,
+                                                       IShellView *shv, ULONG uChange )
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("Stub: %p (%p, %x)\n", This, shv, uChange);
+    return S_OK;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnIncludeObject(ICommDlgBrowser3 *iface,
+                                                       IShellView *shv, LPCITEMIDLIST pidl)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("Stub: %p (%p, %p)\n", This, shv, pidl);
+    return S_OK;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnNotify(ICommDlgBrowser3 *iface,
+                                                IShellView *ppshv, DWORD dwNotifyType)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("Stub: %p (%p, 0x%x)\n", This, ppshv, dwNotifyType);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnGetDefaultMenuText(ICommDlgBrowser3 *iface,
+                                                            IShellView *pshv,
+                                                            LPWSTR pszText, int cchMax)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("Stub: %p (%p, %p, %d)\n", This, pshv, pszText, cchMax);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnGetViewFlags(ICommDlgBrowser3 *iface, DWORD *pdwFlags)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("Stub: %p (%p)\n", This, pdwFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnColumnClicked(ICommDlgBrowser3 *iface,
+                                                         IShellView *pshv, int iColumn)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("Stub: %p (%p, %d)\n", This, pshv, iColumn);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnGetCurrentFilter(ICommDlgBrowser3 *iface,
+                                                          LPWSTR pszFileSpec, int cchFileSpec)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("Stub: %p (%p, %d)\n", This, pszFileSpec, cchFileSpec);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ICommDlgBrowser3_fnOnPreviewCreated(ICommDlgBrowser3 *iface,
+                                                          IShellView *pshv)
+{
+    FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
+    FIXME("Stub: %p (%p)\n", This, pshv);
+    return E_NOTIMPL;
+}
+
+static const ICommDlgBrowser3Vtbl vt_ICommDlgBrowser3 = {
+    ICommDlgBrowser3_fnQueryInterface,
+    ICommDlgBrowser3_fnAddRef,
+    ICommDlgBrowser3_fnRelease,
+    ICommDlgBrowser3_fnOnDefaultCommand,
+    ICommDlgBrowser3_fnOnStateChange,
+    ICommDlgBrowser3_fnIncludeObject,
+    ICommDlgBrowser3_fnNotify,
+    ICommDlgBrowser3_fnGetDefaultMenuText,
+    ICommDlgBrowser3_fnGetViewFlags,
+    ICommDlgBrowser3_fnOnColumnClicked,
+    ICommDlgBrowser3_fnGetCurrentFilter,
+    ICommDlgBrowser3_fnOnPreviewCreated
+};
+
 static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv, enum ITEMDLG_TYPE type)
 {
     FileDialogImpl *fdimpl;
@@ -1553,6 +1677,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     fdimpl->IFileDialog2_iface.lpVtbl = &vt_IFileDialog2;
     fdimpl->IExplorerBrowserEvents_iface.lpVtbl = &vt_IExplorerBrowserEvents;
     fdimpl->IServiceProvider_iface.lpVtbl = &vt_IServiceProvider;
+    fdimpl->ICommDlgBrowser3_iface.lpVtbl = &vt_ICommDlgBrowser3;
 
     if(type == ITEMDLG_TYPE_OPEN)
     {

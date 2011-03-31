@@ -196,8 +196,8 @@ static BOOL test_instantiation(void)
         hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_ICommDlgBrowser, (void**)&punk);
         ok(hr == E_FAIL, "got 0x%08x.\n", hr);
         if(SUCCEEDED(hr)) IUnknown_Release(punk);
-        hr = IServiceProvider_QueryService(psp, &SID_STopLevelBrowser, &IID_ICommDlgBrowser, (void**)&punk);
-        ok(hr == E_FAIL, "got 0x%08x.\n", hr);
+        hr = IServiceProvider_QueryService(psp, &SID_SExplorerBrowserFrame, &IID_ICommDlgBrowser, (void**)&punk);
+        ok(hr == S_OK, "got 0x%08x.\n", hr);
         if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
         IServiceProvider_Release(psp);
@@ -212,6 +212,10 @@ static BOOL test_instantiation(void)
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IExplorerBrowserEvents, (void**)&punk);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+    hr = IFileOpenDialog_QueryInterface(pfod, &IID_ICommDlgBrowser3, (void**)&punk);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
@@ -252,6 +256,10 @@ static BOOL test_instantiation(void)
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IExplorerBrowserEvents, (void**)&punk);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+    hr = IFileOpenDialog_QueryInterface(pfsd, &IID_ICommDlgBrowser3, (void**)&punk);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
