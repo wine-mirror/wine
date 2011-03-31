@@ -76,6 +76,8 @@ typedef struct FileDialogImpl {
     IShellItem *psi_folder;
 
     HWND dlg_hwnd;
+    IExplorerBrowser *peb;
+    DWORD ebevents_cookie;
 } FileDialogImpl;
 
 /**************************************************************************
@@ -88,6 +90,7 @@ static SIZE update_layout(FileDialogImpl *This)
     RECT dialog_rc;
     RECT cancel_rc, open_rc;
     RECT filetype_rc, filename_rc, filenamelabel_rc;
+    RECT ebrowser_rc;
     int missing_width, missing_height;
     static const UINT vspacing = 4, hspacing = 4;
     SIZE ret;
@@ -190,12 +193,21 @@ static SIZE update_layout(FileDialogImpl *This)
         filename_rc.bottom = filename_rc.top + filename_height;
     }
 
+    /* The ExplorerBrowser control. */
+    ebrowser_rc.left = dialog_rc.left + vspacing;
+    ebrowser_rc.top = 0;
+    ebrowser_rc.right = dialog_rc.right - vspacing;
+    ebrowser_rc.bottom = filename_rc.top - hspacing;
+
     /****
      * Move everything to the right place.
      */
 
     /* FIXME: The Save Dialog uses a slightly different layout. */
-    hdwp = BeginDeferWindowPos(5);
+    hdwp = BeginDeferWindowPos(6);
+
+    if(hdwp && This->peb)
+        IExplorerBrowser_SetRect(This->peb, &hdwp, ebrowser_rc);
 
     /* The default controls */
     if(hdwp && (hwnd = GetDlgItem(This->dlg_hwnd, IDC_FILETYPE)) )
@@ -228,11 +240,60 @@ static SIZE update_layout(FileDialogImpl *This)
     return ret;
 }
 
+static HRESULT init_explorerbrowser(FileDialogImpl *This)
+{
+    IShellItem *psi_folder;
+    FOLDERSETTINGS fos;
+    RECT rc = {0};
+    HRESULT hr;
+
+    /* Create ExplorerBrowser instance */
+    OleInitialize(NULL);
+
+    hr = CoCreateInstance(&CLSID_ExplorerBrowser, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IExplorerBrowser, (void**)&This->peb);
+    if(FAILED(hr))
+    {
+        ERR("Failed to instantiate ExplorerBrowser control.\n");
+        return hr;
+    }
+
+    IExplorerBrowser_SetOptions(This->peb, EBO_SHOWFRAMES);
+
+    hr = IExplorerBrowser_Initialize(This->peb, This->dlg_hwnd, &rc, NULL);
+    if(FAILED(hr))
+    {
+        ERR("Failed to initialize the ExplorerBrowser control.\n");
+        IExplorerBrowser_Release(This->peb);
+        This->peb = NULL;
+        return hr;
+    }
+    hr = IExplorerBrowser_Advise(This->peb, &This->IExplorerBrowserEvents_iface, &This->ebevents_cookie);
+    if(FAILED(hr))
+        ERR("Advise (ExplorerBrowser) failed.\n");
+
+    /* Get previous options? */
+    fos.ViewMode = fos.fFlags = 0;
+    if(!(This->options & FOS_ALLOWMULTISELECT))
+        fos.fFlags |= FWF_SINGLESEL;
+
+    IExplorerBrowser_SetFolderSettings(This->peb, &fos);
+
+    /* Browse somewhere */
+    psi_folder = This->psi_setfolder ? This->psi_setfolder : This->psi_defaultfolder;
+    IExplorerBrowser_BrowseToObject(This->peb, (IUnknown*)psi_folder, SBSP_DEFBROWSER);
+
+    hr = IUnknown_SetSite((IUnknown*)This->peb, (IUnknown*)This);
+    if(FAILED(hr))
+        ERR("SetSite (ExplorerBrowser) failed.\n");
+
+    return S_OK;
+}
+
 static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
 {
     FileDialogImpl *This = (FileDialogImpl*)lParam;
     HWND hitem;
-
     TRACE("(%p, %p)\n", This, hwnd);
 
     SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LPARAM)This);
@@ -257,6 +318,7 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
     else
         ShowWindow(hitem, SW_HIDE);
 
+    init_explorerbrowser(This);
     update_layout(This);
 
     return TRUE;
@@ -284,6 +346,13 @@ static LRESULT on_wm_destroy(FileDialogImpl *This)
 {
     TRACE("%p\n", This);
 
+    if(This->peb)
+    {
+        IExplorerBrowser_Destroy(This->peb);
+        IExplorerBrowser_Release(This->peb);
+        This->peb = NULL;
+    }
+
     This->dlg_hwnd = NULL;
 
     return TRUE;
@@ -307,12 +376,34 @@ static LRESULT on_idcancel(FileDialogImpl *This)
     return FALSE;
 }
 
+static LRESULT on_command_filetype(FileDialogImpl *This, WPARAM wparam, LPARAM lparam)
+{
+    if(HIWORD(wparam) == CBN_SELCHANGE)
+    {
+        IShellView *psv;
+        HRESULT hr;
+
+        This->filetypeindex = SendMessageW((HWND)lparam, CB_GETCURSEL, 0, 0);
+        TRACE("File type selection changed to %d.\n", This->filetypeindex);
+
+        hr = IExplorerBrowser_GetCurrentView(This->peb, &IID_IShellView, (void**)&psv);
+        if(SUCCEEDED(hr))
+        {
+            IShellView_Refresh(psv);
+            IShellView_Release(psv);
+        }
+    }
+
+    return FALSE;
+}
+
 static LRESULT on_wm_command(FileDialogImpl *This, WPARAM wparam, LPARAM lparam)
 {
     switch(wparam)
     {
     case IDOK:                return on_idok(This);
     case IDCANCEL:            return on_idcancel(This);
+    case IDC_FILETYPE:        return on_command_filetype(This, wparam, lparam);
     default:                  TRACE("Unknown command.\n");
     }
     return FALSE;
@@ -1340,7 +1431,19 @@ static HRESULT WINAPI IExplorerBrowserEvents_fnOnNavigationComplete(IExplorerBro
                                                                     PCIDLIST_ABSOLUTE pidlFolder)
 {
     FileDialogImpl *This = impl_from_IExplorerBrowserEvents(iface);
+    HRESULT hr;
     TRACE("%p (%p)\n", This, pidlFolder);
+
+    if(This->psi_folder)
+        IShellItem_Release(This->psi_folder);
+
+    hr = SHCreateItemFromIDList(pidlFolder, &IID_IShellItem, (void**)&This->psi_folder);
+    if(FAILED(hr))
+    {
+        ERR("Failed to get the current folder.\n");
+        This->psi_folder = NULL;
+    }
+
     return S_OK;
 }
 
@@ -1406,6 +1509,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     fdimpl->events_next_cookie = 0;
 
     fdimpl->dlg_hwnd = NULL;
+    fdimpl->peb = NULL;
 
     /* FIXME: The default folder setting should be restored for the
      * application if it was previously set. */
