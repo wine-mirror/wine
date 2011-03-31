@@ -746,6 +746,7 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
 
     if(lcid[MSVCRT_LC_CTYPE] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_CTYPE)) {
         CPINFO cp;
+        int j;
 
         if(update_threadlocinfo_category(lcid[MSVCRT_LC_CTYPE], loc, MSVCRT_LC_CTYPE)) {
             MSVCRT__free_locale(loc);
@@ -778,8 +779,11 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
 
             GetStringTypeA(lcid[MSVCRT_LC_CTYPE], CT_CTYPE1, buf,
                     1, loc->locinfo->ctype1+i);
-            loc->locinfo->ctype1[i] |= 0x200;
         }
+
+        for(i=0; cp.LeadByte[i+1]!=0; i+=2)
+            for(j=cp.LeadByte[i]; j<=cp.LeadByte[i+1]; j++)
+                loc->locinfo->ctype1[j+1] |= MSVCRT__LEADBYTE;
     } else {
         loc->locinfo->lc_clike = 1;
         loc->locinfo->mb_cur_max = 1;
@@ -787,8 +791,13 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
         loc->locinfo->lc_category[MSVCRT_LC_CTYPE].locale = _strdup("C");
     }
 
-    for(i=0; i<256; i++)
-        buf[i] = i;
+    for(i=0; i<256; i++) {
+        if(loc->locinfo->pctype[i] & MSVCRT__LEADBYTE)
+            buf[i] = ' ';
+        else
+            buf[i] = i;
+
+    }
 
     LCMapStringA(lcid[MSVCRT_LC_CTYPE], LCMAP_LOWERCASE, buf, 256,
             (char*)loc->locinfo->pclmap, 256);
