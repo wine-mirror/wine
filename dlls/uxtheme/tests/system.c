@@ -514,11 +514,6 @@ static void test_GetCurrentThemeName(void)
         "Expected 0xdeadbeef, got 0x%08x\n",
         GetLastError());
 
-    /* When the number of characters given is too small (not 0, see above), GetCurrentThemeName returns 0x8007007a.
-     * The only definition I found was in strsafe.h:
-     *
-     * #define STRSAFE_E_INSUFFICIENT_BUFFER       ((HRESULT)0x8007007AL)  // 0x7A = 122L = ERROR_INSUFFICIENT_BUFFER
-     */
     SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(currentTheme, 2, NULL, 0, NULL, 0);
     if (bThemeActive)
