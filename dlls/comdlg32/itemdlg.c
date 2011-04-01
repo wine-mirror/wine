@@ -38,6 +38,10 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 
+#define IDC_NAV_TOOLBAR      200
+#define IDC_NAVBACK          201
+#define IDC_NAVFORWARD       202
+
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 enum ITEMDLG_TYPE {
@@ -205,7 +209,7 @@ static SIZE update_layout(FileDialogImpl *This)
     RECT dialog_rc;
     RECT cancel_rc, open_rc;
     RECT filetype_rc, filename_rc, filenamelabel_rc;
-    RECT ebrowser_rc;
+    RECT toolbar_rc, ebrowser_rc;
     int missing_width, missing_height;
     static const UINT vspacing = 4, hspacing = 4;
     SIZE ret;
@@ -308,10 +312,17 @@ static SIZE update_layout(FileDialogImpl *This)
         filename_rc.bottom = filename_rc.top + filename_height;
     }
 
+    hwnd = GetDlgItem(This->dlg_hwnd, IDC_NAV_TOOLBAR);
+    if(hwnd)
+    {
+        GetWindowRect(hwnd, &toolbar_rc);
+        MapWindowPoints(NULL, This->dlg_hwnd, (POINT*)&toolbar_rc, 2);
+    }
+
     /* The ExplorerBrowser control. */
     ebrowser_rc.left = dialog_rc.left + vspacing;
-    ebrowser_rc.top = 0;
-    ebrowser_rc.right = dialog_rc.right - vspacing;
+    ebrowser_rc.top = toolbar_rc.bottom + vspacing;
+    ebrowser_rc.right = dialog_rc.right - hspacing;
     ebrowser_rc.bottom = filename_rc.top - hspacing;
 
     /****
@@ -405,10 +416,44 @@ static HRESULT init_explorerbrowser(FileDialogImpl *This)
     return S_OK;
 }
 
+static void init_toolbar(FileDialogImpl *This, HWND hwnd)
+{
+    HWND htoolbar;
+    TBADDBITMAP tbab;
+    TBBUTTON button[2];
+
+    htoolbar = CreateWindowExW(0, TOOLBARCLASSNAMEW, NULL, TBSTYLE_FLAT | WS_CHILD | WS_VISIBLE,
+                               0, 0, 0, 0,
+                               hwnd, (HMENU)IDC_NAV_TOOLBAR, NULL, NULL);
+
+    tbab.hInst = HINST_COMMCTRL;
+    tbab.nID = IDB_HIST_LARGE_COLOR;
+    SendMessageW(htoolbar, TB_ADDBITMAP, 0, (LPARAM)&tbab);
+
+    button[0].iBitmap = HIST_BACK;
+    button[0].idCommand = IDC_NAVBACK;
+    button[0].fsState = TBSTATE_ENABLED;
+    button[0].fsStyle = BTNS_BUTTON;
+    button[0].dwData = 0;
+    button[0].iString = 0;
+
+    button[1].iBitmap = HIST_FORWARD;
+    button[1].idCommand = IDC_NAVFORWARD;
+    button[1].fsState = TBSTATE_ENABLED;
+    button[1].fsStyle = BTNS_BUTTON;
+    button[1].dwData = 0;
+    button[1].iString = 0;
+
+    SendMessageW(htoolbar, TB_ADDBUTTONSW, 2, (LPARAM)&button);
+    SendMessageW(htoolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(24,24));
+    SendMessageW(htoolbar, TB_AUTOSIZE, 0, 0);
+}
+
 static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
 {
     FileDialogImpl *This = (FileDialogImpl*)lParam;
     HWND hitem;
+
     TRACE("(%p, %p)\n", This, hwnd);
 
     SetWindowLongPtrW(hwnd, GWLP_USERDATA, (LPARAM)This);
@@ -438,6 +483,7 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
         SendMessageW(hitem, WM_SETTEXT, 0, (LPARAM)This->set_filename);
 
     init_explorerbrowser(This);
+    init_toolbar(This, hwnd);
     update_layout(This);
 
     return TRUE;
@@ -495,6 +541,20 @@ static LRESULT on_idcancel(FileDialogImpl *This)
     return FALSE;
 }
 
+static LRESULT on_browse_back(FileDialogImpl *This)
+{
+    TRACE("%p\n", This);
+    IExplorerBrowser_BrowseToIDList(This->peb, NULL, SBSP_NAVIGATEBACK);
+    return FALSE;
+}
+
+static LRESULT on_browse_forward(FileDialogImpl *This)
+{
+    TRACE("%p\n", This);
+    IExplorerBrowser_BrowseToIDList(This->peb, NULL, SBSP_NAVIGATEFORWARD);
+    return FALSE;
+}
+
 static LRESULT on_command_filetype(FileDialogImpl *This, WPARAM wparam, LPARAM lparam)
 {
     if(HIWORD(wparam) == CBN_SELCHANGE)
@@ -522,6 +582,8 @@ static LRESULT on_wm_command(FileDialogImpl *This, WPARAM wparam, LPARAM lparam)
     {
     case IDOK:                return on_idok(This);
     case IDCANCEL:            return on_idcancel(This);
+    case IDC_NAVBACK:         return on_browse_back(This);
+    case IDC_NAVFORWARD:      return on_browse_forward(This);
     case IDC_FILETYPE:        return on_command_filetype(This, wparam, lparam);
     default:                  TRACE("Unknown command.\n");
     }
