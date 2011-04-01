@@ -175,6 +175,8 @@ HRESULT FileSaveDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 
 /* Shared helper functions */
 void COMDLG32_GetCanonicalPath(PCIDLIST_ABSOLUTE pidlAbsCurrent, LPWSTR lpstrFile, LPWSTR lpstrPathAndFile);
+int FILEDLG95_ValidatePathAction(LPWSTR lpstrPathAndFile, IShellFolder **ppsf,
+                                 HWND hwnd, DWORD flags, BOOL isSaveDlg, int defAction);
 
 /* ITEMIDLIST */
 
@@ -189,5 +191,9 @@ extern UINT (WINAPI *COMDLG32_PIDL_ILGetSize)(LPCITEMIDLIST);
 extern LPVOID (WINAPI *COMDLG32_SHAlloc)(DWORD);
 extern DWORD (WINAPI *COMDLG32_SHFree)(LPVOID);
 extern BOOL (WINAPI *COMDLG32_SHGetFolderPathW)(HWND,int,HANDLE,DWORD,LPWSTR);
+
+#define ONOPEN_BROWSE 1
+#define ONOPEN_OPEN   2
+#define ONOPEN_SEARCH 3
 
 #endif /* _WINE_DLL_CDLG_H */

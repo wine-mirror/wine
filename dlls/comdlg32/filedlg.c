@@ -2211,16 +2211,6 @@ static void FILEDLG95_MRU_load_filename(LPWSTR stored_path)
     TRACE("got MRU path: %s\n", wine_dbgstr_w(stored_path));
 }
 
-/***********************************************************************
- *      FILEDLG95_OnOpen
- *
- * Ok button WM_COMMAND message handler
- *
- * If the function succeeds, the return value is nonzero.
- */
-#define ONOPEN_BROWSE 1
-#define ONOPEN_OPEN   2
-#define ONOPEN_SEARCH 3
 static void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText)
 {
   WCHAR strMsgTitle[MAX_PATH];
@@ -2233,6 +2223,130 @@ static void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText)
   MessageBoxW(hwnd,strMsgText, strMsgTitle, MB_OK | MB_ICONHAND);
 }
 
+int FILEDLG95_ValidatePathAction(LPWSTR lpstrPathAndFile, IShellFolder **ppsf,
+                                 HWND hwnd, DWORD flags, BOOL isSaveDlg, int defAction)
+{
+    int nOpenAction = defAction;
+    LPWSTR lpszTemp, lpszTemp1;
+    LPITEMIDLIST pidl = NULL;
+    static const WCHAR szwInvalid[] = { '/',':','<','>','|', 0};
+
+    /* check for invalid chars */
+    if((strpbrkW(lpstrPathAndFile+3, szwInvalid) != NULL) && !(flags & OFN_NOVALIDATE))
+    {
+        FILEDLG95_OnOpenMessage(hwnd, IDS_INVALID_FILENAME_TITLE, IDS_INVALID_FILENAME);
+        return FALSE;
+    }
+
+    if (FAILED (SHGetDesktopFolder(ppsf))) return FALSE;
+
+    lpszTemp1 = lpszTemp = lpstrPathAndFile;
+    while (lpszTemp1)
+    {
+        LPSHELLFOLDER lpsfChild;
+        WCHAR lpwstrTemp[MAX_PATH];
+        DWORD dwEaten, dwAttributes;
+        LPWSTR p;
+
+        lstrcpyW(lpwstrTemp, lpszTemp);
+        p = PathFindNextComponentW(lpwstrTemp);
+
+        if (!p) break; /* end of path */
+
+        *p = 0;
+        lpszTemp = lpszTemp + lstrlenW(lpwstrTemp);
+
+        /* There are no wildcards when OFN_NOVALIDATE is set */
+        if(*lpszTemp==0 && !(flags & OFN_NOVALIDATE))
+        {
+            static const WCHAR wszWild[] = { '*', '?', 0 };
+            /* if the last element is a wildcard do a search */
+            if(strpbrkW(lpszTemp1, wszWild) != NULL)
+            {
+                nOpenAction = ONOPEN_SEARCH;
+                break;
+            }
+        }
+        lpszTemp1 = lpszTemp;
+
+        TRACE("parse now=%s next=%s sf=%p\n",debugstr_w(lpwstrTemp), debugstr_w(lpszTemp), *ppsf);
+
+        /* append a backslash to drive letters */
+        if(lstrlenW(lpwstrTemp)==2 && lpwstrTemp[1] == ':' &&
+           ((lpwstrTemp[0] >= 'a' && lpwstrTemp[0] <= 'z') ||
+            (lpwstrTemp[0] >= 'A' && lpwstrTemp[0] <= 'Z')))
+        {
+            PathAddBackslashW(lpwstrTemp);
+        }
+
+        dwAttributes = SFGAO_FOLDER;
+        if(SUCCEEDED(IShellFolder_ParseDisplayName(*ppsf, hwnd, NULL, lpwstrTemp, &dwEaten, &pidl, &dwAttributes)))
+        {
+            /* the path component is valid, we have a pidl of the next path component */
+            TRACE("parse OK attr=0x%08x pidl=%p\n", dwAttributes, pidl);
+            if(dwAttributes & SFGAO_FOLDER)
+            {
+                if(FAILED(IShellFolder_BindToObject(*ppsf, pidl, 0, &IID_IShellFolder, (LPVOID*)&lpsfChild)))
+                {
+                    ERR("bind to failed\n"); /* should not fail */
+                    break;
+                }
+                IShellFolder_Release(*ppsf);
+                *ppsf = lpsfChild;
+                lpsfChild = NULL;
+            }
+            else
+            {
+                TRACE("value\n");
+
+                /* end dialog, return value */
+                nOpenAction = ONOPEN_OPEN;
+                break;
+            }
+            COMDLG32_SHFree(pidl);
+            pidl = NULL;
+        }
+        else if (!(flags & OFN_NOVALIDATE))
+        {
+            if(*lpszTemp ||	/* points to trailing null for last path element */
+               (lpwstrTemp[strlenW(lpwstrTemp)-1] == '\\')) /* or if last element ends in '\' */
+            {
+                if(flags & OFN_PATHMUSTEXIST)
+                {
+                    FILEDLG95_OnOpenMessage(hwnd, 0, IDS_PATHNOTEXISTING);
+                    break;
+                }
+            }
+            else
+            {
+                if( (flags & OFN_FILEMUSTEXIST) && !isSaveDlg )
+                {
+                    FILEDLG95_OnOpenMessage(hwnd, 0, IDS_FILENOTEXISTING);
+                    break;
+                }
+            }
+            /* change to the current folder */
+            nOpenAction = ONOPEN_OPEN;
+            break;
+        }
+        else
+        {
+            nOpenAction = ONOPEN_OPEN;
+            break;
+        }
+    }
+    if(pidl) COMDLG32_SHFree(pidl);
+
+    return nOpenAction;
+}
+
+/***********************************************************************
+ *      FILEDLG95_OnOpen
+ *
+ * Ok button WM_COMMAND message handler
+ *
+ * If the function succeeds, the return value is nonzero.
+ */
 BOOL FILEDLG95_OnOpen(HWND hwnd)
 {
   LPWSTR lpstrFileList;
@@ -2294,120 +2408,12 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
   else
     nOpenAction = ONOPEN_BROWSE;
 
-  /* don't apply any checks with OFN_NOVALIDATE */
-  {
-    LPWSTR lpszTemp, lpszTemp1;
-    LPITEMIDLIST pidl = NULL;
-    static const WCHAR szwInvalid[] = { '/',':','<','>','|', 0};
-
-    /* check for invalid chars */
-    if((strpbrkW(lpstrPathAndFile+3, szwInvalid) != NULL) && !(fodInfos->ofnInfos->Flags & OFN_NOVALIDATE))
-    {
-      FILEDLG95_OnOpenMessage(hwnd, IDS_INVALID_FILENAME_TITLE, IDS_INVALID_FILENAME);
-      ret = FALSE;
+  nOpenAction = FILEDLG95_ValidatePathAction(lpstrPathAndFile, &lpsf, hwnd,
+                                             fodInfos->ofnInfos->Flags,
+                                             fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG,
+                                             nOpenAction);
+  if(!nOpenAction)
       goto ret;
-    }
-
-    if (FAILED (SHGetDesktopFolder(&lpsf))) return FALSE;
-
-    lpszTemp1 = lpszTemp = lpstrPathAndFile;
-    while (lpszTemp1)
-    {
-      LPSHELLFOLDER lpsfChild;
-      WCHAR lpwstrTemp[MAX_PATH];
-      DWORD dwEaten, dwAttributes;
-      LPWSTR p;
-
-      lstrcpyW(lpwstrTemp, lpszTemp);
-      p = PathFindNextComponentW(lpwstrTemp);
-
-      if (!p) break; /* end of path */
-
-      *p = 0;
-      lpszTemp = lpszTemp + lstrlenW(lpwstrTemp);
-
-      /* There are no wildcards when OFN_NOVALIDATE is set */
-      if(*lpszTemp==0 && !(fodInfos->ofnInfos->Flags & OFN_NOVALIDATE))
-      {
-        static const WCHAR wszWild[] = { '*', '?', 0 };
-	/* if the last element is a wildcard do a search */
-        if(strpbrkW(lpszTemp1, wszWild) != NULL)
-        {
-	  nOpenAction = ONOPEN_SEARCH;
-	  break;
-	}
-      }
-      lpszTemp1 = lpszTemp;
-
-      TRACE("parse now=%s next=%s sf=%p\n",debugstr_w(lpwstrTemp), debugstr_w(lpszTemp), lpsf);
-
-      /* append a backslash to drive letters */
-      if(lstrlenW(lpwstrTemp)==2 && lpwstrTemp[1] == ':' && 
-	 ((lpwstrTemp[0] >= 'a' && lpwstrTemp[0] <= 'z') ||
-	  (lpwstrTemp[0] >= 'A' && lpwstrTemp[0] <= 'Z'))) 
-      {
-        PathAddBackslashW(lpwstrTemp);
-      }
-
-      dwAttributes = SFGAO_FOLDER;
-      if(SUCCEEDED(IShellFolder_ParseDisplayName(lpsf, hwnd, NULL, lpwstrTemp, &dwEaten, &pidl, &dwAttributes)))
-      {
-        /* the path component is valid, we have a pidl of the next path component */
-        TRACE("parse OK attr=0x%08x pidl=%p\n", dwAttributes, pidl);
-        if(dwAttributes & SFGAO_FOLDER)
-        {
-          if(FAILED(IShellFolder_BindToObject(lpsf, pidl, 0, &IID_IShellFolder, (LPVOID*)&lpsfChild)))
-          {
-            ERR("bind to failed\n"); /* should not fail */
-            break;
-          }
-          IShellFolder_Release(lpsf);
-          lpsf = lpsfChild;
-          lpsfChild = NULL;
-        }
-        else
-        {
-          TRACE("value\n");
-
-	  /* end dialog, return value */
-          nOpenAction = ONOPEN_OPEN;
-	  break;
-        }
-	COMDLG32_SHFree(pidl);
-	pidl = NULL;
-      }
-      else if (!(fodInfos->ofnInfos->Flags & OFN_NOVALIDATE))
-      {
-	if(*lpszTemp ||	/* points to trailing null for last path element */
-           (lpwstrTemp[strlenW(lpwstrTemp)-1] == '\\')) /* or if last element ends in '\' */
-        {
-	  if(fodInfos->ofnInfos->Flags & OFN_PATHMUSTEXIST)
-	  {
-            FILEDLG95_OnOpenMessage(hwnd, 0, IDS_PATHNOTEXISTING);
-	    break;
-	  }
-	}
-        else
-	{
-          if( (fodInfos->ofnInfos->Flags & OFN_FILEMUSTEXIST) &&
-             !( fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG ) )
-	  {
-            FILEDLG95_OnOpenMessage(hwnd, 0, IDS_FILENOTEXISTING);
-	    break;
-	  }
-	}
-	/* change to the current folder */
-        nOpenAction = ONOPEN_OPEN;
-	break;
-      }
-      else
-      {
-	nOpenAction = ONOPEN_OPEN;
-	break;
-      }
-    }
-    if(pidl) COMDLG32_SHFree(pidl);
-  }
 
 /*
   Step 3: here we have a cleaned up and validated path
