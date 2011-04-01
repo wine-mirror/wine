@@ -141,9 +141,9 @@ struct d3dcompiler_shader_reflection
 
 static struct d3dcompiler_shader_reflection_type *get_reflection_type(struct d3dcompiler_shader_reflection *reflection, const char *data, DWORD offset);
 
-const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl;
-const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_variable_vtbl;
-const struct ID3D11ShaderReflectionTypeVtbl d3dcompiler_shader_reflection_type_vtbl;
+static const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl;
+static const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_variable_vtbl;
+static const struct ID3D11ShaderReflectionTypeVtbl d3dcompiler_shader_reflection_type_vtbl;
 
 /* null objects - needed for invalid calls */
 static struct d3dcompiler_shader_reflection_constant_buffer null_constant_buffer = {{&d3dcompiler_shader_reflection_constant_buffer_vtbl}};
@@ -687,7 +687,7 @@ static UINT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetThreadGroupSize(
     return 0;
 }
 
-const struct ID3D11ShaderReflectionVtbl d3dcompiler_shader_reflection_vtbl =
+static const struct ID3D11ShaderReflectionVtbl d3dcompiler_shader_reflection_vtbl =
 {
     /* IUnknown methods */
     d3dcompiler_shader_reflection_QueryInterface,
@@ -795,7 +795,7 @@ static ID3D11ShaderReflectionVariable * STDMETHODCALLTYPE d3dcompiler_shader_ref
     return &null_variable.ID3D11ShaderReflectionVariable_iface;
 }
 
-const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl =
+static const struct ID3D11ShaderReflectionConstantBufferVtbl d3dcompiler_shader_reflection_constant_buffer_vtbl =
 {
     /* ID3D11ShaderReflectionConstantBuffer methods */
     d3dcompiler_shader_reflection_constant_buffer_GetDesc,
@@ -866,7 +866,7 @@ static UINT STDMETHODCALLTYPE d3dcompiler_shader_reflection_variable_GetInterfac
     return 0;
 }
 
-const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_variable_vtbl =
+static const struct ID3D11ShaderReflectionVariableVtbl d3dcompiler_shader_reflection_variable_vtbl =
 {
     /* ID3D11ShaderReflectionVariable methods */
     d3dcompiler_shader_reflection_variable_GetDesc,
@@ -1041,7 +1041,7 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_type_ImplementsIn
     return E_NOTIMPL;
 }
 
-const struct ID3D11ShaderReflectionTypeVtbl d3dcompiler_shader_reflection_type_vtbl =
+static const struct ID3D11ShaderReflectionTypeVtbl d3dcompiler_shader_reflection_type_vtbl =
 {
     /* ID3D11ShaderReflectionType methods */
     d3dcompiler_shader_reflection_type_GetDesc,
