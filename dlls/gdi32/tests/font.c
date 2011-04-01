@@ -2169,6 +2169,62 @@ else
     ReleaseDC(0, hdc);
 }
 
+static INT CALLBACK enum_font_data_proc(const LOGFONT *lf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
+{
+    struct enum_font_data *efd = (struct enum_font_data *)lParam;
+
+    if (type != TRUETYPE_FONTTYPE) return 1;
+
+    if (efd->total < MAX_ENUM_FONTS)
+        efd->lf[efd->total++] = *lf;
+    else
+        trace("enum tests invalid; you have more than %d fonts\n", MAX_ENUM_FONTS);
+
+    return 1;
+}
+
+static void test_EnumFontFamiliesEx_default_charset(void)
+{
+    struct enum_font_data efd;
+    LOGFONT gui_font, enum_font;
+    DWORD ret;
+    HDC hdc;
+
+    ret = GetObject(GetStockObject(DEFAULT_GUI_FONT), sizeof(gui_font), &gui_font);
+    ok(ret, "GetObject failed.\n");
+    if (!ret)
+        return;
+
+    efd.total = 0;
+
+    hdc = GetDC(0);
+    memset(&enum_font, 0, sizeof(enum_font));
+    lstrcpy(enum_font.lfFaceName, gui_font.lfFaceName);
+    enum_font.lfCharSet = DEFAULT_CHARSET;
+    EnumFontFamiliesEx(hdc, &enum_font, enum_font_data_proc, (LPARAM)&efd, 0);
+    ReleaseDC(0, hdc);
+
+    if (efd.total == 0) {
+        skip("'%s' is not found or not a TrueType font.\n", gui_font.lfFaceName);
+        return;
+    }
+    trace("'%s' has %d charsets.\n", gui_font.lfFaceName, efd.total);
+
+    if (gui_font.lfCharSet != ANSI_CHARSET) {
+        todo_wine
+        ok(efd.lf[0].lfCharSet == gui_font.lfCharSet,
+           "(%s) got charset %d expected %d\n",
+           efd.lf[0].lfFaceName, efd.lf[0].lfCharSet, gui_font.lfCharSet);
+    }
+    else {
+        ok(efd.lf[0].lfCharSet == gui_font.lfCharSet,
+           "(%s) got charset %d expected %d\n",
+           efd.lf[0].lfFaceName, efd.lf[0].lfCharSet, gui_font.lfCharSet);
+    }
+
+    return;
+}
+
 static void test_negative_width(HDC hdc, const LOGFONTA *lf)
 {
     HFONT hfont, hfont_prev;
@@ -3615,6 +3671,7 @@ START_TEST(font)
     }
     else
         skip("Arial Black or Symbol/Wingdings is not installed\n");
+    test_EnumFontFamiliesEx_default_charset();
     test_GetTextMetrics();
     test_GdiRealizationInfo();
     test_GetTextFace();
