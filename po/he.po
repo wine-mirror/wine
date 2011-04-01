@@ -60,7 +60,7 @@ msgstr "תכניות התקנה"
 msgid "Programs (*.exe)"
 msgstr "תכניות (‎*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
 #: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "כל הקבצים (*.*)"
@@ -8654,47 +8654,43 @@ msgstr "חיפוש ה&בא\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "החל&פה...\tCtrl+H"
 
-#: notepad.rc:59 winhlp32.rc:54
-msgid "&Help on help"
-msgstr "ע&זרה לעזרה"
-
-#: notepad.rc:61
+#: notepad.rc:60
 msgid "&About Notepad"
 msgstr "על &אודות פנקס רשימות"
 
-#: notepad.rc:67
+#: notepad.rc:66
 msgid "&f"
 msgstr "&ע"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "Page &p"
 msgstr "עמוד &ת"
 
-#: notepad.rc:70
+#: notepad.rc:69
 msgid "Notepad"
 msgstr "פנקס רשימות"
 
-#: notepad.rc:71 progman.rc:62 winhlp32.rc:80
+#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 msgid "ERROR"
 msgstr "שגיאה"
 
-#: notepad.rc:72 progman.rc:63 winhlp32.rc:81
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
 msgid "WARNING"
 msgstr "אזהרה"
 
-#: notepad.rc:73 progman.rc:64 winhlp32.rc:82
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:82
 msgid "Information"
 msgstr "מידע"
 
-#: notepad.rc:75
+#: notepad.rc:74
 msgid "Untitled"
 msgstr "ללא שם"
 
-#: notepad.rc:78
+#: notepad.rc:77
 msgid "Text files (*.txt)"
 msgstr "קובצי טקסט (‎*.txt)"
 
-#: notepad.rc:81
+#: notepad.rc:80
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8702,7 +8698,7 @@ msgstr ""
 "הקובץ '%s' גדול מדי עבור פנקס רשימות.\n"
 "נא להשתמש בעורך אחר."
 
-#: notepad.rc:83
+#: notepad.rc:82
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8710,7 +8706,7 @@ msgstr ""
 "לא הוזן טקסט כלל.\n"
 "יש לכתוב משהו ולנסות שוב"
 
-#: notepad.rc:85
+#: notepad.rc:84
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8720,7 +8716,7 @@ msgstr ""
 "\n"
 "האם ברצונך ליצור קובץ חדש?"
 
-#: notepad.rc:87
+#: notepad.rc:86
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8730,11 +8726,11 @@ msgstr ""
 "\n"
 "האם ברצונך לשמור את השינויים?"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid "'%s' could not be found."
 msgstr "'%s' לא נמצא."
 
-#: notepad.rc:90
+#: notepad.rc:89
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8742,19 +8738,19 @@ msgstr ""
 "אין די זיכרון כדי להשלים משימה זו.\n"
 "נא לסגור יישום אחד או יותר כדי להגדיל את כמות הזיכרון החופשית."
 
-#: notepad.rc:92
+#: notepad.rc:91
 msgid "Unicode (UTF-16)"
 msgstr "יוניקוד (UTF-16)"
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "יוניקוד (UTF-16 big-endian)"
 
-#: notepad.rc:94
+#: notepad.rc:93
 msgid "Unicode (UTF-8)"
 msgstr "יוניקוד (UTF-8)"
 
-#: notepad.rc:101
+#: notepad.rc:100
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -11097,6 +11093,10 @@ msgstr "רגילים"
 #: winhlp32.rc:50 winhlp32.rc:72
 msgid "Large"
 msgstr "גדולים"
+
+#: winhlp32.rc:54
+msgid "&Help on help"
+msgstr "ע&זרה לעזרה"
 
 #: winhlp32.rc:55
 msgid "Always on &top"

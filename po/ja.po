@@ -61,7 +61,7 @@ msgstr "インストール プログラム"
 msgid "Programs (*.exe)"
 msgstr "プログラム(*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
 #: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "すべてのファイル (*.*)"
@@ -8568,47 +8568,43 @@ msgstr "次を検索(&S)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "置換(&R)...\tCtrl+H"
 
-#: notepad.rc:59 winhlp32.rc:54
-msgid "&Help on help"
-msgstr "ヘルプの使い方(&H)"
-
-#: notepad.rc:61
+#: notepad.rc:60
 msgid "&About Notepad"
 msgstr "メモ帳について(&A)"
 
-#: notepad.rc:67
+#: notepad.rc:66
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "Page &p"
 msgstr "&p ページ"
 
-#: notepad.rc:70
+#: notepad.rc:69
 msgid "Notepad"
 msgstr "メモ帳"
 
-#: notepad.rc:71 progman.rc:62 winhlp32.rc:80
+#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 msgid "ERROR"
 msgstr "エラー"
 
-#: notepad.rc:72 progman.rc:63 winhlp32.rc:81
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
 msgid "WARNING"
 msgstr "警告"
 
-#: notepad.rc:73 progman.rc:64 winhlp32.rc:82
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:82
 msgid "Information"
 msgstr "情報"
 
-#: notepad.rc:75
+#: notepad.rc:74
 msgid "Untitled"
 msgstr "(無題)"
 
-#: notepad.rc:78
+#: notepad.rc:77
 msgid "Text files (*.txt)"
 msgstr "テキストファイル (*.txt)"
 
-#: notepad.rc:81
+#: notepad.rc:80
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8616,7 +8612,7 @@ msgstr ""
 "ファイル '%s' のサイズは大きすぎるため、メモ帳では編集できません。\n"
 " 別のエディタを使用して下さい。"
 
-#: notepad.rc:83
+#: notepad.rc:82
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8624,7 +8620,7 @@ msgstr ""
 "何も入力されていません。\n"
 "何か入力してから実行して下さい。"
 
-#: notepad.rc:85
+#: notepad.rc:84
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8635,7 +8631,7 @@ msgstr ""
 "\n"
 " 新しいファイルを作成しますか ?"
 
-#: notepad.rc:87
+#: notepad.rc:86
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8646,11 +8642,11 @@ msgstr ""
 "\n"
 " 変更を保存しますか ?"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid "'%s' could not be found."
 msgstr "'%s' は見つかりませんでした"
 
-#: notepad.rc:90
+#: notepad.rc:89
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8659,19 +8655,19 @@ msgstr ""
 "メモリの空きを増やすためにいくつかのアプリケーションを\n"
 "終了して下さい。"
 
-#: notepad.rc:92
+#: notepad.rc:91
 msgid "Unicode (UTF-16)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
-#: notepad.rc:94
+#: notepad.rc:93
 msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-8)"
 
-#: notepad.rc:101
+#: notepad.rc:100
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10932,6 +10928,10 @@ msgstr "標準"
 #: winhlp32.rc:50 winhlp32.rc:72
 msgid "Large"
 msgstr "大"
+
+#: winhlp32.rc:54
+msgid "&Help on help"
+msgstr "ヘルプの使い方(&H)"
 
 #: winhlp32.rc:55
 msgid "Always on &top"

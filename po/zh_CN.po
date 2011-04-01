@@ -57,7 +57,7 @@ msgstr "安装程序"
 msgid "Programs (*.exe)"
 msgstr "程序 (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
 #: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "所有文件 (*.*)"
@@ -8534,47 +8534,43 @@ msgstr ""
 "#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
 "替换(&R)...\tCtrl+H"
 
-#: notepad.rc:59 winhlp32.rc:54
-msgid "&Help on help"
-msgstr "如何使用帮助(&H)"
-
-#: notepad.rc:61
+#: notepad.rc:60
 msgid "&About Notepad"
 msgstr "关于记事本(&A)"
 
-#: notepad.rc:67
+#: notepad.rc:66
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "Page &p"
 msgstr "第 &p 页"
 
-#: notepad.rc:70
+#: notepad.rc:69
 msgid "Notepad"
 msgstr "记事本"
 
-#: notepad.rc:71 progman.rc:62 winhlp32.rc:80
+#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 msgid "ERROR"
 msgstr "错误"
 
-#: notepad.rc:72 progman.rc:63 winhlp32.rc:81
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
 msgid "WARNING"
 msgstr "警告"
 
-#: notepad.rc:73 progman.rc:64 winhlp32.rc:82
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:82
 msgid "Information"
 msgstr "信息"
 
-#: notepad.rc:75
+#: notepad.rc:74
 msgid "Untitled"
 msgstr "（未命名）"
 
-#: notepad.rc:78
+#: notepad.rc:77
 msgid "Text files (*.txt)"
 msgstr "文本文件 (*.txt)"
 
-#: notepad.rc:81
+#: notepad.rc:80
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8582,7 +8578,7 @@ msgstr ""
 "记事本不能打开“%s“这么大的文件。\n"
 "请使用别的编辑器。"
 
-#: notepad.rc:83
+#: notepad.rc:82
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8590,7 +8586,7 @@ msgstr ""
 "您没有输入任何文本。\n"
 "请输入一些再试。"
 
-#: notepad.rc:85
+#: notepad.rc:84
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8600,7 +8596,7 @@ msgstr ""
 "\n"
 "您想新建一个文件吗？"
 
-#: notepad.rc:87
+#: notepad.rc:86
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8610,30 +8606,30 @@ msgstr ""
 "\n"
 "是否保存更改？"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid "'%s' could not be found."
 msgstr "找不到“%s”。"
 
-#: notepad.rc:90
+#: notepad.rc:89
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
 msgstr "没有足够的内存可以用来完成此项任务。请关闭一些程序后再试。"
 
-#: notepad.rc:92
+#: notepad.rc:91
 msgid "Unicode (UTF-16)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 大尾)"
 
-#: notepad.rc:94
+#: notepad.rc:93
 #, fuzzy
 msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:101
+#: notepad.rc:100
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10875,6 +10871,10 @@ msgstr "中号"
 #: winhlp32.rc:50 winhlp32.rc:72
 msgid "Large"
 msgstr "大号"
+
+#: winhlp32.rc:54
+msgid "&Help on help"
+msgstr "如何使用帮助(&H)"
 
 #: winhlp32.rc:55
 msgid "Always on &top"

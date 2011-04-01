@@ -66,7 +66,7 @@ msgstr "Installations Programmer"
 msgid "Programs (*.exe)"
 msgstr "Programmer (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
 #: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
 #, fuzzy
 msgid "All files (*.*)"
@@ -8839,27 +8839,23 @@ msgstr ""
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "E&rstat...\tCtrl+H"
 
-#: notepad.rc:59 winhlp32.rc:54
-msgid "&Help on help"
-msgstr "&Brug af Hjælp"
-
-#: notepad.rc:61
+#: notepad.rc:60
 msgid "&About Notepad"
 msgstr "&Om Notesblok"
 
-#: notepad.rc:67
+#: notepad.rc:66
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "Page &p"
 msgstr "Page &p"
 
-#: notepad.rc:70
+#: notepad.rc:69
 msgid "Notepad"
 msgstr "Notesblok"
 
-#: notepad.rc:71 progman.rc:62 winhlp32.rc:80
+#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 #, fuzzy
 msgid "ERROR"
 msgstr ""
@@ -8868,23 +8864,23 @@ msgstr ""
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "FEIL"
 
-#: notepad.rc:72 progman.rc:63 winhlp32.rc:81
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
 msgid "WARNING"
 msgstr "ADVARSEL"
 
-#: notepad.rc:73 progman.rc:64 winhlp32.rc:82
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:82
 msgid "Information"
 msgstr "Information"
 
-#: notepad.rc:75
+#: notepad.rc:74
 msgid "Untitled"
 msgstr "(ikke-navngivet)"
 
-#: notepad.rc:78
+#: notepad.rc:77
 msgid "Text files (*.txt)"
 msgstr "Tekst filer (*.txt)"
 
-#: notepad.rc:81
+#: notepad.rc:80
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8892,7 +8888,7 @@ msgstr ""
 "Filen '%s' er for stor til Notesblok. \n"
 "Brug en anden editor til at redigere filen."
 
-#: notepad.rc:83
+#: notepad.rc:82
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8900,7 +8896,7 @@ msgstr ""
 "Du har ikke skrevet noget tekst. \n"
 "Skriv noget tekst, og prøv så igen"
 
-#: notepad.rc:85
+#: notepad.rc:84
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8911,7 +8907,7 @@ msgstr ""
 "\n"
 " Ønsker du at oprette en ny fil ?"
 
-#: notepad.rc:87
+#: notepad.rc:86
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8922,11 +8918,11 @@ msgstr ""
 "\n"
 " Vil du gemme ændringerne ?"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid "'%s' could not be found."
 msgstr "Kan ikke finde '%s'."
 
-#: notepad.rc:90
+#: notepad.rc:89
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8935,20 +8931,20 @@ msgstr ""
 "Afslut et eller flere aktive programmer for at frigøre hukommelse, og prøv "
 "igen."
 
-#: notepad.rc:92
+#: notepad.rc:91
 msgid "Unicode (UTF-16)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
-#: notepad.rc:94
+#: notepad.rc:93
 #, fuzzy
 msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:101
+#: notepad.rc:100
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -11242,6 +11238,10 @@ msgstr "Normal"
 #: winhlp32.rc:50 winhlp32.rc:72
 msgid "Large"
 msgstr "Large"
+
+#: winhlp32.rc:54
+msgid "&Help on help"
+msgstr "&Brug af Hjælp"
 
 #: winhlp32.rc:55
 msgid "Always on &top"

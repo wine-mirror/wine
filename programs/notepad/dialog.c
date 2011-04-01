@@ -1188,11 +1188,6 @@ VOID DIALOG_HelpContents(VOID)
     WinHelpW(Globals.hMainWnd, helpfileW, HELP_INDEX, 0);
 }
 
-VOID DIALOG_HelpHelp(VOID)
-{
-    WinHelpW(Globals.hMainWnd, helpfileW, HELP_HELPONHELP, 0);
-}
-
 VOID DIALOG_HelpAboutNotepad(VOID)
 {
     static const WCHAR notepadW[] = { 'W','i','n','e',' ','N','o','t','e','p','a','d',0 };

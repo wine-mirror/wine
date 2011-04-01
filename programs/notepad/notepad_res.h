@@ -54,7 +54,6 @@
 #define CMD_FONT                0x140
 
 #define CMD_HELP_CONTENTS       0x130
-#define CMD_HELP_ON_HELP        0x132
 #define CMD_HELP_ABOUT_NOTEPAD  0x134
 
 /* Control IDs */

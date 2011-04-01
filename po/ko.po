@@ -61,7 +61,7 @@ msgstr "설치 프로그램"
 msgid "Programs (*.exe)"
 msgstr "프로그램 (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
 #: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
@@ -8540,47 +8540,43 @@ msgstr "다음 찾기(&N)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr " 바꾸기(&R)...\tCtrl+H"
 
-#: notepad.rc:59 winhlp32.rc:54
-msgid "&Help on help"
-msgstr "도움말 사용법(&H)"
-
-#: notepad.rc:61
+#: notepad.rc:60
 msgid "&About Notepad"
 msgstr "노트패드 정보(&A)"
 
-#: notepad.rc:67
+#: notepad.rc:66
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "Page &p"
 msgstr "&p 페이지"
 
-#: notepad.rc:70
+#: notepad.rc:69
 msgid "Notepad"
 msgstr "메모장"
 
-#: notepad.rc:71 progman.rc:62 winhlp32.rc:80
+#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 msgid "ERROR"
 msgstr "에러!!"
 
-#: notepad.rc:72 progman.rc:63 winhlp32.rc:81
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
 msgid "WARNING"
 msgstr "경고"
 
-#: notepad.rc:73 progman.rc:64 winhlp32.rc:82
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:82
 msgid "Information"
 msgstr "정보"
 
-#: notepad.rc:75
+#: notepad.rc:74
 msgid "Untitled"
 msgstr "제목 없음"
 
-#: notepad.rc:78
+#: notepad.rc:77
 msgid "Text files (*.txt)"
 msgstr "텍스트 문서 (*.txt)"
 
-#: notepad.rc:81
+#: notepad.rc:80
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8588,7 +8584,7 @@ msgstr ""
 "%s 파일이 너무 커서 메모장으로는 열 수 없습니다.\n"
 " 다른 편집기를 사용하십시오."
 
-#: notepad.rc:83
+#: notepad.rc:82
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8596,7 +8592,7 @@ msgstr ""
 "입력한 내용이 없습니다.\n"
 "내용을 입력한 후 재시도하십시오"
 
-#: notepad.rc:85
+#: notepad.rc:84
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8606,7 +8602,7 @@ msgstr ""
 "\n"
 " 파일을 새로 만드시겠습니까?"
 
-#: notepad.rc:87
+#: notepad.rc:86
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8616,11 +8612,11 @@ msgstr ""
 "\n"
 " 변경 내용을 저장하시겠습니까?"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid "'%s' could not be found."
 msgstr "%s 문자열을 찾을 수 없습니다."
 
-#: notepad.rc:90
+#: notepad.rc:89
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8629,19 +8625,19 @@ msgstr ""
 "사용 가능한 메모리의 양을 확보하기 위해 하나 이상의 응용 프로그램을 닫아 주십"
 "시오."
 
-#: notepad.rc:92
+#: notepad.rc:91
 msgid "Unicode (UTF-16)"
 msgstr "유니코드 (UTF-16)"
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "유니코드  (UTF-16 빅-엔디언)"
 
-#: notepad.rc:94
+#: notepad.rc:93
 msgid "Unicode (UTF-8)"
 msgstr "유니코드 (UTF-8)"
 
-#: notepad.rc:101
+#: notepad.rc:100
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10886,6 +10882,10 @@ msgstr "보통"
 #: winhlp32.rc:50 winhlp32.rc:72
 msgid "Large"
 msgstr "크게"
+
+#: winhlp32.rc:54
+msgid "&Help on help"
+msgstr "도움말 사용법(&H)"
 
 #: winhlp32.rc:55
 msgid "Always on &top"

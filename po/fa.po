@@ -57,7 +57,7 @@ msgstr ""
 msgid "Programs (*.exe)"
 msgstr ""
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
 #: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "همه‌ی پرونده‌ها (*.*)"
@@ -8241,47 +8241,43 @@ msgstr "جست‌و‌جوی &بعدی\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "جای&‌گزین کردن...\tCtrl+H"
 
-#: notepad.rc:59 winhlp32.rc:54
-msgid "&Help on help"
-msgstr "&کمک برای کمک"
-
-#: notepad.rc:61
+#: notepad.rc:60
 msgid "&About Notepad"
 msgstr "&درباره نت‌پد"
 
-#: notepad.rc:67
+#: notepad.rc:66
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:68
+#: notepad.rc:67
 msgid "Page &p"
 msgstr "صفحه &p"
 
-#: notepad.rc:70
+#: notepad.rc:69
 msgid "Notepad"
 msgstr "نت‌پد"
 
-#: notepad.rc:71 progman.rc:62 winhlp32.rc:80
+#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 msgid "ERROR"
 msgstr "خطا"
 
-#: notepad.rc:72 progman.rc:63 winhlp32.rc:81
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
 msgid "WARNING"
 msgstr "اخطار"
 
-#: notepad.rc:73 progman.rc:64 winhlp32.rc:82
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:82
 msgid "Information"
 msgstr "اطلاعات"
 
-#: notepad.rc:75
+#: notepad.rc:74
 msgid "Untitled"
 msgstr "نام‌گذاری نشده"
 
-#: notepad.rc:78
+#: notepad.rc:77
 msgid "Text files (*.txt)"
 msgstr "پرونده‌های متنی (*.txt)"
 
-#: notepad.rc:81
+#: notepad.rc:80
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8289,7 +8285,7 @@ msgstr ""
 "پرونده '%s' برای نت‌پد خیلی بزرگ است.\n"
 "لطفا از یک ویرایش‌گر دیگر استفاده کنید."
 
-#: notepad.rc:83
+#: notepad.rc:82
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8297,7 +8293,7 @@ msgstr ""
 "شما هیچ متنی را وارد نکرده‌اید.\\nلطفا یک متن را وارد کرده و دوباره امتحان "
 "کنید."
 
-#: notepad.rc:85
+#: notepad.rc:84
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8307,7 +8303,7 @@ msgstr ""
 "\n"
 "آیا می‌خواهید یک پرونده‌ی جدید ایجاد کنید؟"
 
-#: notepad.rc:87
+#: notepad.rc:86
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8317,11 +8313,11 @@ msgstr ""
 "\n"
 "آیا می‌خواهید که تغییرات را ذخیره کنید ؟"
 
-#: notepad.rc:88
+#: notepad.rc:87
 msgid "'%s' could not be found."
 msgstr "'%s' پیدا نشد."
 
-#: notepad.rc:90
+#: notepad.rc:89
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8330,20 +8326,20 @@ msgstr ""
 "یک یا چند ابزار و برنامه‌ی دیگر را ببندید تا مقدار آزاد حافظه‌ی موقت را افزایش "
 "دهید."
 
-#: notepad.rc:92
+#: notepad.rc:91
 msgid "Unicode (UTF-16)"
 msgstr "یونی‌کد (UTF-16)"
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "یونی‌کد (UTF-16 big-endian)"
 
-#: notepad.rc:94
+#: notepad.rc:93
 #, fuzzy
 msgid "Unicode (UTF-8)"
 msgstr "یونی‌کد (UTF-16)"
 
-#: notepad.rc:101
+#: notepad.rc:100
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10530,6 +10526,10 @@ msgstr ""
 #: winhlp32.rc:50 winhlp32.rc:72
 msgid "Large"
 msgstr ""
+
+#: winhlp32.rc:54
+msgid "&Help on help"
+msgstr "&کمک برای کمک"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
