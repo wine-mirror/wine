@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "Programma's (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:81 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "Alle bestanden (*.*)"
 
@@ -130,7 +130,7 @@ msgstr "Annuleren..."
 msgid "Separator"
 msgstr "Scheidingsteken"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:80 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:79 winecfg.rc:76
 msgid "None"
 msgstr "Geen"
 
@@ -377,7 +377,7 @@ msgstr "Er is geen standaardprinter"
 msgid "Cannot find the printer."
 msgstr "De printer werd niet gevonden"
 
-#: comdlg32.rc:80 progman.rc:75
+#: comdlg32.rc:80 progman.rc:74
 msgid "Out of memory."
 msgstr "Onvoldoende geheugen beschikbaar"
 
@@ -8706,7 +8706,7 @@ msgstr "V&olgende zoeken\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Vervangen...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:54 winhlp32.rc:54
+#: notepad.rc:59 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "H&ulp bij Help"
 
@@ -8726,15 +8726,15 @@ msgstr "Pagina &p"
 msgid "Notepad"
 msgstr "Kladblok"
 
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:80
+#: notepad.rc:71 progman.rc:62 winhlp32.rc:80
 msgid "ERROR"
 msgstr "FOUT"
 
-#: notepad.rc:72 progman.rc:64 winhlp32.rc:81
+#: notepad.rc:72 progman.rc:63 winhlp32.rc:81
 msgid "WARNING"
 msgstr "WAARSCHUWING"
 
-#: notepad.rc:73 progman.rc:65 winhlp32.rc:82
+#: notepad.rc:73 progman.rc:64 winhlp32.rc:82
 msgid "Information"
 msgstr "Informatie"
 
@@ -9170,39 +9170,39 @@ msgstr "&Naast elkaar\tShift+F4"
 msgid "&Arrange Icons"
 msgstr "&Pictogrammen schikken"
 
-#: progman.rc:56
+#: progman.rc:55
 msgid "&About Wine"
 msgstr "&Over Wine"
 
-#: progman.rc:62
+#: progman.rc:61
 msgid "Program Manager"
 msgstr "Programmabeheer"
 
-#: progman.rc:66
+#: progman.rc:65
 msgid "Delete"
 msgstr "Verwijderen"
 
-#: progman.rc:67
+#: progman.rc:66
 msgid "Delete group `%s'?"
 msgstr "Wilt u groep `%s' verwijderen?"
 
-#: progman.rc:68
+#: progman.rc:67
 msgid "Delete program `%s'?"
 msgstr "Wilt u programma `%s' verwijderen?"
 
-#: progman.rc:69 winhlp32.rc:83
+#: progman.rc:68 winhlp32.rc:83
 msgid "Not implemented"
 msgstr "Niet geïmplementeerd"
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Error reading `%s'."
 msgstr "Fout bij het lezen van `%s'."
 
-#: progman.rc:71
+#: progman.rc:70
 msgid "Error writing `%s'."
 msgstr "Fout bij het schrijven van `%s'."
 
-#: progman.rc:74
+#: progman.rc:73
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9210,37 +9210,37 @@ msgstr ""
 "Het groepsbestand `%s' kan niet worden geopend.\n"
 "Wilt u het nogmaals proberen?"
 
-#: progman.rc:76
+#: progman.rc:75
 msgid "Help not available."
 msgstr "Help is niet beschikbaar."
 
-#: progman.rc:77
+#: progman.rc:76
 msgid "Unknown feature in %s"
 msgstr "Onbekende eigenschap in %s"
 
-#: progman.rc:78
+#: progman.rc:77
 msgid "File `%s' exists. Not overwritten."
 msgstr "Het bestand `%s' bestaat reeds. Het is niet overschreven."
 
-#: progman.rc:79
+#: progman.rc:78
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr ""
 "Groep opslaan als `%s om het overschrijven van originele bestanden te "
 "voorkomen."
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Programs"
 msgstr "Programma's"
 
-#: progman.rc:83
+#: progman.rc:82
 msgid "Libraries (*.dll)"
 msgstr "Programmabibliotheekbestanden (*.dll)"
 
-#: progman.rc:84
+#: progman.rc:83
 msgid "Icon files"
 msgstr "Pictogrambestanden"
 
-#: progman.rc:85
+#: progman.rc:84
 msgid "Icons (*.ico)"
 msgstr "Pictogrammen (*.ico)"
 

@@ -65,7 +65,7 @@ msgid "Programs (*.exe)"
 msgstr "Извршне датотеке (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:81 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "Све датотеке (*.*)"
 
@@ -131,7 +131,7 @@ msgstr "Отказивање..."
 msgid "Separator"
 msgstr "Раздвајач"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:80 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:79 winecfg.rc:76
 msgid "None"
 msgstr "Ништа"
 
@@ -379,7 +379,7 @@ msgstr "Подразумевани штампач није изабран."
 msgid "Cannot find the printer."
 msgstr "Штампач није пронађен."
 
-#: comdlg32.rc:80 progman.rc:75
+#: comdlg32.rc:80 progman.rc:74
 msgid "Out of memory."
 msgstr "Нема више меморије."
 
@@ -8534,7 +8534,7 @@ msgstr "&Пронађи следеће\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Замени...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:54 winhlp32.rc:54
+#: notepad.rc:59 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "&Помоћ за помоћ"
 
@@ -8554,15 +8554,15 @@ msgstr "Страна &p"
 msgid "Notepad"
 msgstr "Бележница"
 
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:80
+#: notepad.rc:71 progman.rc:62 winhlp32.rc:80
 msgid "ERROR"
 msgstr "Грешка"
 
-#: notepad.rc:72 progman.rc:64 winhlp32.rc:81
+#: notepad.rc:72 progman.rc:63 winhlp32.rc:81
 msgid "WARNING"
 msgstr "Упозорење"
 
-#: notepad.rc:73 progman.rc:65 winhlp32.rc:82
+#: notepad.rc:73 progman.rc:64 winhlp32.rc:82
 msgid "Information"
 msgstr "Подаци"
 
@@ -9013,76 +9013,76 @@ msgstr ""
 msgid "&Arrange Icons"
 msgstr ""
 
-#: progman.rc:56
+#: progman.rc:55
 #, fuzzy
 msgid "&About Wine"
 msgstr "&О Бележници"
 
-#: progman.rc:62
+#: progman.rc:61
 msgid "Program Manager"
 msgstr ""
 
-#: progman.rc:66
+#: progman.rc:65
 #, fuzzy
 msgid "Delete"
 msgstr "&Избриши"
 
-#: progman.rc:67
+#: progman.rc:66
 msgid "Delete group `%s'?"
 msgstr ""
 
-#: progman.rc:68
+#: progman.rc:67
 msgid "Delete program `%s'?"
 msgstr ""
 
-#: progman.rc:69 winhlp32.rc:83
+#: progman.rc:68 winhlp32.rc:83
 msgid "Not implemented"
 msgstr ""
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Error reading `%s'."
 msgstr ""
 
-#: progman.rc:71
+#: progman.rc:70
 msgid "Error writing `%s'."
 msgstr ""
 
-#: progman.rc:74
+#: progman.rc:73
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
 
-#: progman.rc:76
+#: progman.rc:75
 #, fuzzy
 msgid "Help not available."
 msgstr "Недоступно"
 
-#: progman.rc:77
+#: progman.rc:76
 msgid "Unknown feature in %s"
 msgstr ""
 
-#: progman.rc:78
+#: progman.rc:77
 msgid "File `%s' exists. Not overwritten."
 msgstr ""
 
-#: progman.rc:79
+#: progman.rc:78
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr ""
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Programs"
 msgstr ""
 
-#: progman.rc:83
+#: progman.rc:82
 msgid "Libraries (*.dll)"
 msgstr ""
 
-#: progman.rc:84
+#: progman.rc:83
 msgid "Icon files"
 msgstr ""
 
-#: progman.rc:85
+#: progman.rc:84
 msgid "Icons (*.ico)"
 msgstr ""
 

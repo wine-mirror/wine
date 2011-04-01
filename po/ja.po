@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "プログラム(*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:81 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "すべてのファイル (*.*)"
 
@@ -130,7 +130,7 @@ msgstr "キャンセル…"
 msgid "Separator"
 msgstr "区切り"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:80 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:79 winecfg.rc:76
 msgid "None"
 msgstr "なし"
 
@@ -378,7 +378,7 @@ msgstr "既定のプリンタが定義されていません。"
 msgid "Cannot find the printer."
 msgstr "プリンタが見つかりません。"
 
-#: comdlg32.rc:80 progman.rc:75
+#: comdlg32.rc:80 progman.rc:74
 msgid "Out of memory."
 msgstr "メモリ不足です。"
 
@@ -8568,7 +8568,7 @@ msgstr "次を検索(&S)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "置換(&R)...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:54 winhlp32.rc:54
+#: notepad.rc:59 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "ヘルプの使い方(&H)"
 
@@ -8588,15 +8588,15 @@ msgstr "&p ページ"
 msgid "Notepad"
 msgstr "メモ帳"
 
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:80
+#: notepad.rc:71 progman.rc:62 winhlp32.rc:80
 msgid "ERROR"
 msgstr "エラー"
 
-#: notepad.rc:72 progman.rc:64 winhlp32.rc:81
+#: notepad.rc:72 progman.rc:63 winhlp32.rc:81
 msgid "WARNING"
 msgstr "警告"
 
-#: notepad.rc:73 progman.rc:65 winhlp32.rc:82
+#: notepad.rc:73 progman.rc:64 winhlp32.rc:82
 msgid "Information"
 msgstr "情報"
 
@@ -9029,39 +9029,39 @@ msgstr "並べて表示(&S)\tShift+F4"
 msgid "&Arrange Icons"
 msgstr "アイコンの並び替え(&A)"
 
-#: progman.rc:56
+#: progman.rc:55
 msgid "&About Wine"
 msgstr "Wineについて(&A)"
 
-#: progman.rc:62
+#: progman.rc:61
 msgid "Program Manager"
 msgstr "プログラム マネージャ"
 
-#: progman.rc:66
+#: progman.rc:65
 msgid "Delete"
 msgstr "削除"
 
-#: progman.rc:67
+#: progman.rc:66
 msgid "Delete group `%s'?"
 msgstr "グループ `%s' を削除しますか?"
 
-#: progman.rc:68
+#: progman.rc:67
 msgid "Delete program `%s'?"
 msgstr "プログラム `%s' を削除しますか?"
 
-#: progman.rc:69 winhlp32.rc:83
+#: progman.rc:68 winhlp32.rc:83
 msgid "Not implemented"
 msgstr "未実装"
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Error reading `%s'."
 msgstr "`%s' の読み込み中にエラー。"
 
-#: progman.rc:71
+#: progman.rc:70
 msgid "Error writing `%s'."
 msgstr "`%s' の書き込み中にエラー。"
 
-#: progman.rc:74
+#: progman.rc:73
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9069,35 +9069,35 @@ msgstr ""
 "グループ ファイル `%s' を開けません。\n"
 "続行しますか?"
 
-#: progman.rc:76
+#: progman.rc:75
 msgid "Help not available."
 msgstr "ヘルプは使えません。"
 
-#: progman.rc:77
+#: progman.rc:76
 msgid "Unknown feature in %s"
 msgstr "%s に不明な機能"
 
-#: progman.rc:78
+#: progman.rc:77
 msgid "File `%s' exists. Not overwritten."
 msgstr "`%s' が存在します。上書きしません。"
 
-#: progman.rc:79
+#: progman.rc:78
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "元のファイルを上書きしないため、グループを `%s' として保存しました。"
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Programs"
 msgstr "プログラム"
 
-#: progman.rc:83
+#: progman.rc:82
 msgid "Libraries (*.dll)"
 msgstr "ライブラリ (*.dll)"
 
-#: progman.rc:84
+#: progman.rc:83
 msgid "Icon files"
 msgstr "アイコン ファイル"
 
-#: progman.rc:85
+#: progman.rc:84
 msgid "Icons (*.ico)"
 msgstr "アイコン (*.ico)"
 

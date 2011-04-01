@@ -318,11 +318,6 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	MAIN_MessageBoxIDS(IDS_WINHELP_ERROR, IDS_ERROR, MB_OK);
       break;
 
-    case PM_HELPONHELP:
-      if (!WinHelp(Globals.hMainWnd, "progman.hlp", HELP_HELPONHELP, 0))
-	MAIN_MessageBoxIDS(IDS_WINHELP_ERROR, IDS_ERROR, MB_OK);
-      break;
-
     case PM_ABOUT_WINE:
       ShellAbout(hWnd, "WINE", "Program Manager", 0);
       break;

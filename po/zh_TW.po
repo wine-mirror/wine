@@ -63,7 +63,7 @@ msgid "Programs (*.exe)"
 msgstr "Programs (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:81 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "所有檔案 (*.*)"
 
@@ -129,7 +129,7 @@ msgstr "正在取消..."
 msgid "Separator"
 msgstr "分隔符"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:80 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:79 winecfg.rc:76
 #, fuzzy
 msgid "None"
 msgstr ""
@@ -383,7 +383,7 @@ msgstr "沒有默認印表機。"
 msgid "Cannot find the printer."
 msgstr "找不到印表機。"
 
-#: comdlg32.rc:80 progman.rc:75
+#: comdlg32.rc:80 progman.rc:74
 #, fuzzy
 msgid "Out of memory."
 msgstr ""
@@ -8583,7 +8583,7 @@ msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
 "替換(&R)...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:54 winhlp32.rc:54
+#: notepad.rc:59 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "如何使用幫助(&H)"
 
@@ -8603,15 +8603,15 @@ msgstr "&p 頁"
 msgid "Notepad"
 msgstr "記事本"
 
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:80
+#: notepad.rc:71 progman.rc:62 winhlp32.rc:80
 msgid "ERROR"
 msgstr "錯誤"
 
-#: notepad.rc:72 progman.rc:64 winhlp32.rc:81
+#: notepad.rc:72 progman.rc:63 winhlp32.rc:81
 msgid "WARNING"
 msgstr "警告"
 
-#: notepad.rc:73 progman.rc:65 winhlp32.rc:82
+#: notepad.rc:73 progman.rc:64 winhlp32.rc:82
 #, fuzzy
 msgid "Information"
 msgstr ""
@@ -9057,27 +9057,27 @@ msgstr "並排(&S)\tShift+F4"
 msgid "&Arrange Icons"
 msgstr "排列圖標(&A)"
 
-#: progman.rc:56
+#: progman.rc:55
 msgid "&About Wine"
 msgstr "關於 Wine(&A)"
 
-#: progman.rc:62
+#: progman.rc:61
 msgid "Program Manager"
 msgstr "程式管理器"
 
-#: progman.rc:66
+#: progman.rc:65
 msgid "Delete"
 msgstr "刪除"
 
-#: progman.rc:67
+#: progman.rc:66
 msgid "Delete group `%s'?"
 msgstr "是否刪除程式組 `%s' ？"
 
-#: progman.rc:68
+#: progman.rc:67
 msgid "Delete program `%s'?"
 msgstr "是否刪除程式組 `%s' ?"
 
-#: progman.rc:69 winhlp32.rc:83
+#: progman.rc:68 winhlp32.rc:83
 #, fuzzy
 msgid "Not implemented"
 msgstr ""
@@ -9086,15 +9086,15 @@ msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
 "未實現"
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Error reading `%s'."
 msgstr "讀取檔案 %s 時發生錯誤。"
 
-#: progman.rc:71
+#: progman.rc:70
 msgid "Error writing `%s'."
 msgstr "寫入檔案 %s 時發生錯誤。"
 
-#: progman.rc:74
+#: progman.rc:73
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9102,35 +9102,35 @@ msgstr ""
 "不能開啟組檔案 `%s' 。\n"
 "是否繼續嘗試？"
 
-#: progman.rc:76
+#: progman.rc:75
 msgid "Help not available."
 msgstr "沒有可用的幫助資訊。"
 
-#: progman.rc:77
+#: progman.rc:76
 msgid "Unknown feature in %s"
 msgstr "在 %s 中發現未知特性"
 
-#: progman.rc:78
+#: progman.rc:77
 msgid "File `%s' exists. Not overwritten."
 msgstr "檔案 %s 已經存在。不覆蓋已有檔案。"
 
-#: progman.rc:79
+#: progman.rc:78
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "將程式組儲存為 %s 可以避免復蓋已有的檔案。"
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Programs"
 msgstr "程式"
 
-#: progman.rc:83
+#: progman.rc:82
 msgid "Libraries (*.dll)"
 msgstr "動態連接庫 (*.dll)"
 
-#: progman.rc:84
+#: progman.rc:83
 msgid "Icon files"
 msgstr "圖標檔案"
 
-#: progman.rc:85
+#: progman.rc:84
 msgid "Icons (*.ico)"
 msgstr "圖標 (*.ico)"
 
