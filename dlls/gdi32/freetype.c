@@ -4101,6 +4101,51 @@ static BOOL face_matches(Face *face, const LOGFONTW *lf)
     return !strcmpiW(lf->lfFaceName, full_family_name);
 }
 
+static BOOL enum_face_charsets(Face *face, FONTENUMPROCW proc, LPARAM lparam)
+{
+    ENUMLOGFONTEXW elf;
+    NEWTEXTMETRICEXW ntm;
+    DWORD type = 0;
+    FONTSIGNATURE fs;
+    CHARSETINFO csi;
+    int i;
+
+    GetEnumStructs(face, &elf, &ntm, &type);
+    for(i = 0; i < 32; i++) {
+        if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
+            elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
+            strcpyW(elf.elfScript, OEM_DOSW);
+            i = 32; /* break out of loop */
+        } else if(!(face->fs.fsCsb[0] & (1L << i)))
+            continue;
+        else {
+            fs.fsCsb[0] = 1L << i;
+            fs.fsCsb[1] = 0;
+            if(!TranslateCharsetInfo(fs.fsCsb, &csi, TCI_SRCFONTSIG))
+                csi.ciCharset = DEFAULT_CHARSET;
+            if(i == 31) csi.ciCharset = SYMBOL_CHARSET;
+            if(csi.ciCharset != DEFAULT_CHARSET) {
+                elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = csi.ciCharset;
+                if(ElfScriptsW[i])
+                    strcpyW(elf.elfScript, ElfScriptsW[i]);
+                else
+                    FIXME("Unknown elfscript for bit %d\n", i);
+            }
+        }
+        TRACE("enuming face %s full %s style %s charset = %d type %d script %s it %d weight %d ntmflags %08x\n",
+              debugstr_w(elf.elfLogFont.lfFaceName),
+              debugstr_w(elf.elfFullName), debugstr_w(elf.elfStyle),
+              csi.ciCharset, type, debugstr_w(elf.elfScript),
+              elf.elfLogFont.lfItalic, elf.elfLogFont.lfWeight,
+              ntm.ntmTm.ntmFlags);
+        /* release section before callback (FIXME) */
+        LeaveCriticalSection( &freetype_cs );
+        if (!proc(&elf.elfLogFont, (TEXTMETRICW *)&ntm, type, lparam)) return FALSE;
+        EnterCriticalSection( &freetype_cs );
+    }
+    return TRUE;
+}
+
 /*************************************************************
  * WineEngEnumFonts
  *
@@ -4110,13 +4155,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
     Family *family;
     Face *face;
     struct list *family_elem_ptr, *face_elem_ptr;
-    ENUMLOGFONTEXW elf;
-    NEWTEXTMETRICEXW ntm;
-    DWORD type;
-    FONTSIGNATURE fs;
-    CHARSETINFO csi;
     LOGFONTW lf;
-    int i;
 
     if (!plf)
     {
@@ -4147,44 +4186,8 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
             if(family_matches(family, plf)) {
                 LIST_FOR_EACH(face_elem_ptr, &family->faces) {
                     face = LIST_ENTRY(face_elem_ptr, Face, entry);
-
                     if (!face_matches(face, plf)) continue;
-
-                    GetEnumStructs(face, &elf, &ntm, &type);
-                    for(i = 0; i < 32; i++) {
-                        if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
-                            elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
-                            strcpyW(elf.elfScript, OEM_DOSW);
-                            i = 32; /* break out of loop */
-                        } else if(!(face->fs.fsCsb[0] & (1L << i)))
-                            continue;
-                        else {
-                            fs.fsCsb[0] = 1L << i;
-                            fs.fsCsb[1] = 0;
-                            if(!TranslateCharsetInfo(fs.fsCsb, &csi,
-                                                     TCI_SRCFONTSIG))
-                                csi.ciCharset = DEFAULT_CHARSET;
-                            if(i == 31) csi.ciCharset = SYMBOL_CHARSET;
-                            if(csi.ciCharset != DEFAULT_CHARSET) {
-                                elf.elfLogFont.lfCharSet =
-                                    ntm.ntmTm.tmCharSet = csi.ciCharset;
-                                if(ElfScriptsW[i])
-                                    strcpyW(elf.elfScript, ElfScriptsW[i]);
-                                else
-                                    FIXME("Unknown elfscript for bit %d\n", i);
-                            }
-                        }
-                        TRACE("enuming face %s full %s style %s charset %d type %d script %s it %d weight %d ntmflags %08x\n",
-                              debugstr_w(elf.elfLogFont.lfFaceName),
-                              debugstr_w(elf.elfFullName), debugstr_w(elf.elfStyle),
-                              csi.ciCharset, type, debugstr_w(elf.elfScript),
-                              elf.elfLogFont.lfItalic, elf.elfLogFont.lfWeight,
-                              ntm.ntmTm.ntmFlags);
-                        /* release section before callback (FIXME) */
-                        LeaveCriticalSection( &freetype_cs );
-                        if (!proc(&elf.elfLogFont, (TEXTMETRICW *)&ntm, type, lparam)) return 0;
-                        EnterCriticalSection( &freetype_cs );
-		    }
+                    if (!enum_face_charsets(face, proc, lparam)) return 0;
 		}
 	    }
 	}
@@ -4193,41 +4196,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
             family = LIST_ENTRY(family_elem_ptr, Family, entry);
             face_elem_ptr = list_head(&family->faces);
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            GetEnumStructs(face, &elf, &ntm, &type);
-            for(i = 0; i < 32; i++) {
-                if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
-                    elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
-                    strcpyW(elf.elfScript, OEM_DOSW);
-                    i = 32; /* break out of loop */
-	        } else if(!(face->fs.fsCsb[0] & (1L << i)))
-                    continue;
-                else {
-		    fs.fsCsb[0] = 1L << i;
-		    fs.fsCsb[1] = 0;
-		    if(!TranslateCharsetInfo(fs.fsCsb, &csi,
-					     TCI_SRCFONTSIG))
-		        csi.ciCharset = DEFAULT_CHARSET;
-		    if(i == 31) csi.ciCharset = SYMBOL_CHARSET;
-		    if(csi.ciCharset != DEFAULT_CHARSET) {
-		        elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet =
-			  csi.ciCharset;
-			  if(ElfScriptsW[i])
-			      strcpyW(elf.elfScript, ElfScriptsW[i]);
-			  else
-			      FIXME("Unknown elfscript for bit %d\n", i);
-                    }
-                }
-                TRACE("enuming face %s full %s style %s charset = %d type %d script %s it %d weight %d ntmflags %08x\n",
-                      debugstr_w(elf.elfLogFont.lfFaceName),
-                      debugstr_w(elf.elfFullName), debugstr_w(elf.elfStyle),
-                      csi.ciCharset, type, debugstr_w(elf.elfScript),
-                      elf.elfLogFont.lfItalic, elf.elfLogFont.lfWeight,
-                      ntm.ntmTm.ntmFlags);
-                /* release section before callback (FIXME) */
-                LeaveCriticalSection( &freetype_cs );
-                if (!proc(&elf.elfLogFont, (TEXTMETRICW *)&ntm, type, lparam)) return 0;
-                EnterCriticalSection( &freetype_cs );
-	    }
+            if (!enum_face_charsets(face, proc, lparam)) return 0;
 	}
     }
     LeaveCriticalSection( &freetype_cs );
