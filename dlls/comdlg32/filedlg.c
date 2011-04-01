@@ -609,6 +609,54 @@ void COMDLG32_GetCanonicalPath(PCIDLIST_ABSOLUTE pidlAbsCurrent,
 }
 
 /***********************************************************************
+ *      COMDLG32_SplitFileNames [internal]
+ *
+ * Creates a delimited list of filenames.
+ */
+int COMDLG32_SplitFileNames(LPWSTR lpstrEdit, UINT nStrLen, LPWSTR *lpstrFileList, UINT *sizeUsed)
+{
+	UINT nStrCharCount = 0;	/* index in src buffer */
+	UINT nFileIndex = 0;	/* index in dest buffer */
+	UINT nFileCount = 0;	/* number of files */
+
+	/* we might get single filename without any '"',
+	 * so we need nStrLen + terminating \0 + end-of-list \0 */
+	*lpstrFileList = MemAlloc( (nStrLen+2)*sizeof(WCHAR) );
+	*sizeUsed = 0;
+
+	/* build delimited file list from filenames */
+	while ( nStrCharCount <= nStrLen )
+	{
+	  if ( lpstrEdit[nStrCharCount]=='"' )
+	  {
+	    nStrCharCount++;
+	    while ((lpstrEdit[nStrCharCount]!='"') && (nStrCharCount <= nStrLen))
+	    {
+	      (*lpstrFileList)[nFileIndex++] = lpstrEdit[nStrCharCount];
+	      nStrCharCount++;
+	    }
+	    (*lpstrFileList)[nFileIndex++] = 0;
+	    nFileCount++;
+	  }
+	  nStrCharCount++;
+	}
+
+	/* single, unquoted string */
+	if ((nStrLen > 0) && (nFileIndex == 0) )
+	{
+	  lstrcpyW(*lpstrFileList, lpstrEdit);
+	  nFileIndex = lstrlenW(lpstrEdit) + 1;
+	  nFileCount = 1;
+	}
+
+        /* trailing \0 */
+        (*lpstrFileList)[nFileIndex++] = '\0';
+
+        *sizeUsed = nFileIndex;
+	return nFileCount;
+}
+
+/***********************************************************************
  *      ArrangeCtrlPositions [internal]
  *
  * NOTE: Make sure to add testcases for any changes made here.
@@ -3642,14 +3690,10 @@ static HRESULT COMDLG32_StrRetToStrNW (LPWSTR dest, DWORD len, LPSTRRET src, con
  * FILEDLG95_FILENAME_GetFileNames
  *
  * Copies the filenames to a delimited string list.
- * The delimiter is specified by the parameter 'separator',
- *  usually either a space or a nul
  */
 static int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPWSTR * lpstrFileList, UINT * sizeUsed)
 {
 	FileOpenDlgInfos *fodInfos = GetPropA(hwnd,FileOpenDlgInfosStr);
-	UINT nStrCharCount = 0;	/* index in src buffer */
-	UINT nFileIndex = 0;	/* index in dest buffer */
 	UINT nFileCount = 0;	/* number of files */
 	UINT nStrLen = 0;	/* length of string in edit control */
 	LPWSTR lpstrEdit;	/* buffer for string from edit control */
@@ -3663,40 +3707,7 @@ static int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPWSTR * lpstrFileList, U
 
 	TRACE("nStrLen=%u str=%s\n", nStrLen, debugstr_w(lpstrEdit));
 
-	/* we might get single filename without any '"',
-	 * so we need nStrLen + terminating \0 + end-of-list \0 */
-	*lpstrFileList = MemAlloc( (nStrLen+2)*sizeof(WCHAR) );
-	*sizeUsed = 0;
-
-	/* build delimited file list from filenames */
-	while ( nStrCharCount <= nStrLen )
-	{
-	  if ( lpstrEdit[nStrCharCount]=='"' )
-	  {
-	    nStrCharCount++;
-	    while ((lpstrEdit[nStrCharCount]!='"') && (nStrCharCount <= nStrLen))
-	    {
-	      (*lpstrFileList)[nFileIndex++] = lpstrEdit[nStrCharCount];
-	      nStrCharCount++;
-	    }
-	    (*lpstrFileList)[nFileIndex++] = 0;
-	    nFileCount++;
-	  }
-	  nStrCharCount++;
-	}
-
-	/* single, unquoted string */
-	if ((nStrLen > 0) && (nFileIndex == 0) )
-	{
-	  lstrcpyW(*lpstrFileList, lpstrEdit);
-	  nFileIndex = lstrlenW(lpstrEdit) + 1;
-	  nFileCount = 1;
-	}
-
-        /* trailing \0 */
-        (*lpstrFileList)[nFileIndex++] = '\0';
-
-        *sizeUsed = nFileIndex;
+	nFileCount = COMDLG32_SplitFileNames(lpstrEdit, nStrLen, lpstrFileList, sizeUsed);
 	MemFree(lpstrEdit);
 	return nFileCount;
 }
