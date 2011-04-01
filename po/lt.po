@@ -44,7 +44,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nenurodyta"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:113
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:123 winefile.rc:113
 msgid "Name"
 msgstr "Vardas"
 
@@ -65,7 +65,7 @@ msgid "Programs (*.exe)"
 msgstr "Programos (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
-#: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:80 regedit.rc:196 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "Visi failai (*.*)"
 
@@ -177,7 +177,7 @@ msgstr "Darbalaukis"
 msgid "Fonts"
 msgstr "Šriftai"
 
-#: comdlg32.rc:36 shell32.rc:142 regedit.rc:199
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:201
 msgid "My Computer"
 msgstr "Kompiuteris"
 
@@ -6187,7 +6187,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&Failas"
 
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
+#: shdocvw.rc:27 regedit.rc:44 regedit.rc:96
 msgid "&New"
 msgstr "&Naujas"
 
@@ -6224,7 +6224,7 @@ msgid "&Close"
 msgstr "&Užverti"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:62 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&Rodymas"
 
@@ -6240,16 +6240,16 @@ msgstr "Į&prastinė juosta"
 msgid "&Address bar"
 msgstr "&Adreso juosta"
 
-#: shdocvw.rc:50 regedit.rc:70
+#: shdocvw.rc:50 regedit.rc:71
 msgid "&Favorites"
 msgstr "&Adresynas"
 
-#: shdocvw.rc:52 regedit.rc:72
+#: shdocvw.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
 msgstr "Į&rašyti į adresyną..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
+#: regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "&Žinynas"
 
@@ -6340,7 +6340,7 @@ msgstr "&Iškirpti"
 msgid "Create &Link"
 msgstr "Sukurti &nuorodą"
 
-#: shell32.rc:91 regedit.rc:91
+#: shell32.rc:91 regedit.rc:92
 msgid "&Rename"
 msgstr "&Pervadinti"
 
@@ -6357,7 +6357,7 @@ msgstr "&Apie valdymo skydelį..."
 msgid "Size"
 msgstr "Dydis"
 
-#: shell32.rc:124 regedit.rc:122
+#: shell32.rc:124 regedit.rc:124
 msgid "Type"
 msgstr "Tipas"
 
@@ -6791,7 +6791,7 @@ msgstr "&Užverti\tAlt-F4"
 msgid "&About Wine..."
 msgstr "Apie &Wine..."
 
-#: user32.rc:55 regedit.rc:175 winefile.rc:101
+#: user32.rc:55 regedit.rc:177 winefile.rc:101
 msgid "Error"
 msgstr "Klaida"
 
@@ -8562,7 +8562,7 @@ msgstr "&Kopijuoti\tVald+C"
 msgid "&Paste\tCtrl+V"
 msgstr "Į&dėti\tVald+V"
 
-#: notepad.rc:44 progman.rc:34 regedit.rc:54 regedit.rc:90 regedit.rc:105
+#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:91 regedit.rc:107
 #: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr "&Šalinti\tDel"
@@ -8789,7 +8789,7 @@ msgstr "&Įrankių juosta"
 msgid "&Status Bar"
 msgstr "&Būsenos juosta"
 
-#: oleview.rc:67 regedit.rc:68 winefile.rc:82
+#: oleview.rc:67 regedit.rc:69 winefile.rc:82
 msgid "&Refresh\tF5"
 msgstr "At&naujinti\tF5"
 
@@ -9183,51 +9183,56 @@ msgstr "E&ksportuoti registro failą..."
 msgid "&Print\tCtrl+P"
 msgstr "S&pausdinti\tVald+P"
 
-#: regedit.rc:42 regedit.rc:87
+#: regedit.rc:42 regedit.rc:88
 msgid "&Modify"
 msgstr "&Modifikuoti"
 
-#: regedit.rc:46 regedit.rc:97
+#: regedit.rc:46 regedit.rc:98
 msgid "&Key"
 msgstr "&Raktas"
 
-#: regedit.rc:48 regedit.rc:99
+#: regedit.rc:48 regedit.rc:100
 msgid "&String Value"
 msgstr "&Eilutės reikšmė"
 
-#: regedit.rc:49 regedit.rc:100
+#: regedit.rc:49 regedit.rc:101
 msgid "&Binary Value"
 msgstr "D&vejetainė reikšmė"
 
-#: regedit.rc:50 regedit.rc:101
+#: regedit.rc:50 regedit.rc:102
 msgid "&DWORD Value"
 msgstr "&DWORD reikšmė"
 
-#: regedit.rc:51 regedit.rc:102
+#: regedit.rc:51 regedit.rc:103
 msgid "&Multi String Value"
 msgstr "&Kelių eilučių reikšmė"
 
-#: regedit.rc:55 regedit.rc:106
+#: regedit.rc:52 regedit.rc:104
+#, fuzzy
+msgid "&Expandable String Value"
+msgstr "&Eilutės reikšmė"
+
+#: regedit.rc:56 regedit.rc:108
 msgid "&Rename\tF2"
 msgstr "&Pervadinti\tF2"
 
-#: regedit.rc:57 regedit.rc:109
+#: regedit.rc:58 regedit.rc:111
 msgid "&Copy Key Name"
 msgstr "Kopijuoti rakto &vardą"
 
-#: regedit.rc:59 regedit.rc:111
+#: regedit.rc:60 regedit.rc:113
 msgid "&Find\tCtrl+F"
 msgstr "&Ieškoti\tVald+F"
 
-#: regedit.rc:60
+#: regedit.rc:61
 msgid "Find Ne&xt\tF3"
 msgstr "Ieškoti &kito\tF3"
 
-#: regedit.rc:64
+#: regedit.rc:65
 msgid "Status &Bar"
 msgstr "&Būsenos juosta"
 
-#: regedit.rc:66 winefile.rc:50
+#: regedit.rc:67 winefile.rc:50
 #, fuzzy
 msgid "Sp&lit"
 msgstr ""
@@ -9236,217 +9241,217 @@ msgstr ""
 "#-#-#-#-#  lt.po (Wine)  #-#-#-#-#\n"
 "&Polangių skirtukas"
 
-#: regedit.rc:73
+#: regedit.rc:74
 msgid "&Remove Favorite..."
 msgstr "&Pašalinti iš adresyno..."
 
-#: regedit.rc:77 winefile.rc:86
+#: regedit.rc:78 winefile.rc:86
 msgid "&Help Topics\tF1"
 msgstr "&Žinyno temos\tF1"
 
-#: regedit.rc:79
+#: regedit.rc:80
 msgid "&About Registry Editor"
 msgstr "&Apie Registro tvarkytuvę"
 
-#: regedit.rc:88
+#: regedit.rc:89
 msgid "Modify Binary Data"
 msgstr "Modifikuoti dvejetainius duomenis"
 
-#: regedit.rc:108
+#: regedit.rc:110
 msgid "&Export..."
 msgstr "&Eksportuoti..."
 
-#: regedit.rc:133
+#: regedit.rc:135
 msgid "Contains commands for working with the whole registry"
 msgstr "Pateikiamos komandos darbui su visu registru"
 
-#: regedit.rc:134
+#: regedit.rc:136
 msgid "Contains commands for editing values or keys"
 msgstr "Pateikiamos komandos raktų ir reikšmių redagavimui"
 
-#: regedit.rc:135
+#: regedit.rc:137
 msgid "Contains commands for customising the registry window"
 msgstr "Pateikiamos komandos registro lango adaptavimui"
 
-#: regedit.rc:136
+#: regedit.rc:138
 msgid "Contains commands for accessing frequently used keys"
 msgstr "Pateikiamos komandos dažnai naudojamų raktų prieigai"
 
-#: regedit.rc:137
+#: regedit.rc:139
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
 "Pateikiamos komandos žinyno ir informacijos apie registro tvarkytuvę rodymui"
 
-#: regedit.rc:138
+#: regedit.rc:140
 msgid "Contains commands for creating new keys or values"
 msgstr "Pateikiamos komandos naujų raktų ir reikšmių kūrimui"
 
-#: regedit.rc:123
+#: regedit.rc:125
 msgid "Data"
 msgstr "Duomenys"
 
-#: regedit.rc:128
+#: regedit.rc:130
 msgid "Registry Editor"
 msgstr "Registro tvarkytuvė"
 
-#: regedit.rc:190
+#: regedit.rc:192
 msgid "Import Registry File"
 msgstr "Importuoti registro failą"
 
-#: regedit.rc:191
+#: regedit.rc:193
 msgid "Export Registry File"
 msgstr "Eksportuoti registro failą"
 
-#: regedit.rc:192
+#: regedit.rc:194
 msgid "Registry files (*.reg)"
 msgstr "Registro failai (*.reg)"
 
-#: regedit.rc:193
+#: regedit.rc:195
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 registro failai (REGEDIT4)"
 
-#: regedit.rc:200
+#: regedit.rc:202
 msgid "(Default)"
 msgstr "(numatytoji)"
 
-#: regedit.rc:201
+#: regedit.rc:203
 msgid "(value not set)"
 msgstr "(reikšmė nenustatyta)"
 
-#: regedit.rc:202
+#: regedit.rc:204
 msgid "(cannot display value)"
 msgstr "(negalima parodyti reikšmės)"
 
-#: regedit.rc:203
+#: regedit.rc:205
 msgid "(unknown %d)"
 msgstr "(nežinomas %d)"
 
-#: regedit.rc:159
+#: regedit.rc:161
 msgid "Quits the registry editor"
 msgstr "Išeina iš registro tvarkytuvės"
 
-#: regedit.rc:160
+#: regedit.rc:162
 msgid "Adds keys to the favorites list"
 msgstr "Prideda pasirinktą raktą į adresyną"
 
-#: regedit.rc:161
+#: regedit.rc:163
 msgid "Removes keys from the favorites list"
 msgstr "Pašalina nurodytus raktus iš adresyno"
 
-#: regedit.rc:162
+#: regedit.rc:164
 msgid "Shows or hides the status bar"
 msgstr "Parodo arba paslepia būsenos juostą"
 
-#: regedit.rc:163
+#: regedit.rc:165
 msgid "Change position of split between two panes"
 msgstr "Pakeičia polangių skirtuko poziciją tarp polangių"
 
-#: regedit.rc:164
+#: regedit.rc:166
 msgid "Refreshes the window"
 msgstr "Atnaujina langą"
 
-#: regedit.rc:165
+#: regedit.rc:167
 msgid "Deletes the selection"
 msgstr "Šalina atranką"
 
-#: regedit.rc:166
+#: regedit.rc:168
 msgid "Renames the selection"
 msgstr "Pervadina atranką"
 
-#: regedit.rc:167
+#: regedit.rc:169
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Kopijuoja pasirinkto rakto vardą į iškarpinę"
 
-#: regedit.rc:168
+#: regedit.rc:170
 msgid "Finds a text string in a key, value or data"
 msgstr "Ieško teksto eilutės raktuose, reikšmių varduose ar duomenyse"
 
-#: regedit.rc:169
+#: regedit.rc:171
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "Ieško ankstesnėje paieškoje nurodyto teksto kitos buvimo vietos"
 
-#: regedit.rc:143
+#: regedit.rc:145
 msgid "Modifies the value's data"
 msgstr "Modifikuoja reikšmės duomenis"
 
-#: regedit.rc:144
+#: regedit.rc:146
 msgid "Adds a new key"
 msgstr "Prideda naują raktą"
 
-#: regedit.rc:145
+#: regedit.rc:147
 msgid "Adds a new string value"
 msgstr "Prideda naują eilutės reikšmę"
 
-#: regedit.rc:146
+#: regedit.rc:148
 msgid "Adds a new binary value"
 msgstr "Prideda naują dvejetainę reikšmę"
 
-#: regedit.rc:147
+#: regedit.rc:149
 msgid "Adds a new double word value"
 msgstr "Prideda naują dvigubojo žodžio reikšmę"
 
-#: regedit.rc:149
+#: regedit.rc:151
 msgid "Imports a text file into the registry"
 msgstr "Importuoja tekstinį failą į registrą"
 
-#: regedit.rc:151
+#: regedit.rc:153
 msgid "Exports all or part of the registry to a text file"
 msgstr "Eksportuoja visą ar dalį registro į tekstinį failą"
 
-#: regedit.rc:152
+#: regedit.rc:154
 msgid "Prints all or part of the registry"
 msgstr "Atspausdina visą ar dalį registro"
 
-#: regedit.rc:154
+#: regedit.rc:156
 msgid "Displays program information, version number and copyright"
 msgstr "Parodo informaciją apie programą, versijos numerį ir autoriaus teises"
 
-#: regedit.rc:177
+#: regedit.rc:179
 msgid "Can't query value '%s'"
 msgstr "Nepavyko perskaityti reikšmės „%s“"
 
-#: regedit.rc:178
+#: regedit.rc:180
 msgid "Can't edit keys of this type (%u)"
 msgstr "Šio tipo raktų redaguoti negalima (%u)"
 
-#: regedit.rc:179
+#: regedit.rc:181
 msgid "Value is too big (%u)"
 msgstr "Reikšmė per didelė (%u)"
 
-#: regedit.rc:180
+#: regedit.rc:182
 msgid "Confirm Value Delete"
 msgstr "Reikšmės šalinimo patvirtinimas"
 
-#: regedit.rc:181
+#: regedit.rc:183
 msgid "Are you sure you want to delete value '%s'?"
 msgstr "Ar tikrai norite pašalinti reikšmę „%s“?"
 
-#: regedit.rc:185
+#: regedit.rc:187
 msgid "Search string '%s' not found"
 msgstr "Ieškoma eilutė „%s“ nerasta"
 
-#: regedit.rc:182
+#: regedit.rc:184
 msgid "Are you sure you want to delete these values?"
 msgstr "Ar tikrai norite pašalinti šias reikšmes?"
 
-#: regedit.rc:183
+#: regedit.rc:185
 msgid "New Key #%d"
 msgstr "Naujas raktas #%d"
 
-#: regedit.rc:184
+#: regedit.rc:186
 msgid "New Value #%d"
 msgstr "Nauja reikšmė #%d"
 
-#: regedit.rc:176
+#: regedit.rc:178
 msgid "Can't query key '%s'"
 msgstr "Nepavyko perskaityti rakto „%s“"
 
-#: regedit.rc:148
+#: regedit.rc:150
 msgid "Adds a new multi string value"
 msgstr "Prideda naują kelių eilučių reikšmę"
 
-#: regedit.rc:170
+#: regedit.rc:172
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Eksportuoja pasirinktą registro šaką į tekstinį failą"
 

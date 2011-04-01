@@ -46,7 +46,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ni navedeno"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:113
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:123 winefile.rc:113
 msgid "Name"
 msgstr "Ime"
 
@@ -67,7 +67,7 @@ msgid "Programs (*.exe)"
 msgstr "Programi (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
-#: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:80 regedit.rc:196 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "Vse datoteke (*.*)"
 
@@ -182,7 +182,7 @@ msgstr ""
 "#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
 "Pisave"
 
-#: comdlg32.rc:36 shell32.rc:142 regedit.rc:199
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:201
 msgid "My Computer"
 msgstr "Moj računalnik"
 
@@ -6468,7 +6468,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&Datoteka"
 
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
+#: shdocvw.rc:27 regedit.rc:44 regedit.rc:96
 #, fuzzy
 msgid "&New"
 msgstr ""
@@ -6520,7 +6520,7 @@ msgid "&Close"
 msgstr "&Zapri"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:62 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 #, fuzzy
 msgid "&View"
 msgstr ""
@@ -6541,7 +6541,7 @@ msgstr "&Statusna vrstica"
 msgid "&Address bar"
 msgstr "&Naslovna vrstica"
 
-#: shdocvw.rc:50 regedit.rc:70
+#: shdocvw.rc:50 regedit.rc:71
 #, fuzzy
 msgid "&Favorites"
 msgstr ""
@@ -6550,7 +6550,7 @@ msgstr ""
 "#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
 "Pri&ljubljene"
 
-#: shdocvw.rc:52 regedit.rc:72
+#: shdocvw.rc:52 regedit.rc:73
 #, fuzzy
 msgid "&Add to Favorites..."
 msgstr ""
@@ -6560,7 +6560,7 @@ msgstr ""
 "&Dodaj med Priljubljene ..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
+#: regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "&Pomoč"
 
@@ -6666,7 +6666,7 @@ msgstr "I&zreži"
 msgid "Create &Link"
 msgstr "Ustvari po&vezavo"
 
-#: shell32.rc:91 regedit.rc:91
+#: shell32.rc:91 regedit.rc:92
 #, fuzzy
 msgid "&Rename"
 msgstr ""
@@ -6688,7 +6688,7 @@ msgstr "&O Nadzorni plošči ..."
 msgid "Size"
 msgstr "Velikost"
 
-#: shell32.rc:124 regedit.rc:122
+#: shell32.rc:124 regedit.rc:124
 msgid "Type"
 msgstr "Vrsta"
 
@@ -7129,7 +7129,7 @@ msgstr "&Zapri\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&O Wine ..."
 
-#: user32.rc:55 regedit.rc:175 winefile.rc:101
+#: user32.rc:55 regedit.rc:177 winefile.rc:101
 msgid "Error"
 msgstr "Napaka"
 
@@ -8917,7 +8917,7 @@ msgstr "&Kopiraj\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Prilepi\tCtrl+V"
 
-#: notepad.rc:44 progman.rc:34 regedit.rc:54 regedit.rc:90 regedit.rc:105
+#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:91 regedit.rc:107
 #: winefile.rc:29
 #, fuzzy
 msgid "&Delete\tDel"
@@ -9167,7 +9167,7 @@ msgstr ""
 msgid "&Status Bar"
 msgstr "&Statusna vrstica"
 
-#: oleview.rc:67 regedit.rc:68 winefile.rc:82
+#: oleview.rc:67 regedit.rc:69 winefile.rc:82
 #, fuzzy
 msgid "&Refresh\tF5"
 msgstr ""
@@ -9606,51 +9606,56 @@ msgstr "&Izvozi registrsko datoteko ..."
 msgid "&Print\tCtrl+P"
 msgstr "Na&tisni\tCtrl+P"
 
-#: regedit.rc:42 regedit.rc:87
+#: regedit.rc:42 regedit.rc:88
 msgid "&Modify"
 msgstr "&Spremeni"
 
-#: regedit.rc:46 regedit.rc:97
+#: regedit.rc:46 regedit.rc:98
 msgid "&Key"
 msgstr "&Ključ"
 
-#: regedit.rc:48 regedit.rc:99
+#: regedit.rc:48 regedit.rc:100
 msgid "&String Value"
 msgstr "Znakovni &niz"
 
-#: regedit.rc:49 regedit.rc:100
+#: regedit.rc:49 regedit.rc:101
 msgid "&Binary Value"
 msgstr "&Binarna vrednost"
 
-#: regedit.rc:50 regedit.rc:101
+#: regedit.rc:50 regedit.rc:102
 msgid "&DWORD Value"
 msgstr "&DWORD vrednost"
 
-#: regedit.rc:51 regedit.rc:102
+#: regedit.rc:51 regedit.rc:103
 msgid "&Multi String Value"
 msgstr "&Več-nizna vrednost"
 
-#: regedit.rc:55 regedit.rc:106
+#: regedit.rc:52 regedit.rc:104
+#, fuzzy
+msgid "&Expandable String Value"
+msgstr "Znakovni &niz"
+
+#: regedit.rc:56 regedit.rc:108
 msgid "&Rename\tF2"
 msgstr "Prei&menuj\tF2"
 
-#: regedit.rc:57 regedit.rc:109
+#: regedit.rc:58 regedit.rc:111
 msgid "&Copy Key Name"
 msgstr "&Kopiraj ime ključa"
 
-#: regedit.rc:59 regedit.rc:111
+#: regedit.rc:60 regedit.rc:113
 msgid "&Find\tCtrl+F"
 msgstr "&Najdi\tCtrl+F"
 
-#: regedit.rc:60
+#: regedit.rc:61
 msgid "Find Ne&xt\tF3"
 msgstr "Najdi nas&lednje\tF3"
 
-#: regedit.rc:64
+#: regedit.rc:65
 msgid "Status &Bar"
 msgstr "&Vrstica stanja"
 
-#: regedit.rc:66 winefile.rc:50
+#: regedit.rc:67 winefile.rc:50
 #, fuzzy
 msgid "Sp&lit"
 msgstr ""
@@ -9659,218 +9664,218 @@ msgstr ""
 "#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
 "&Delilna črta"
 
-#: regedit.rc:73
+#: regedit.rc:74
 msgid "&Remove Favorite..."
 msgstr "&Odstrani iz Priljubljenih ..."
 
-#: regedit.rc:77 winefile.rc:86
+#: regedit.rc:78 winefile.rc:86
 msgid "&Help Topics\tF1"
 msgstr "&Teme pomoči\tF1"
 
-#: regedit.rc:79
+#: regedit.rc:80
 msgid "&About Registry Editor"
 msgstr "&O Urejevalniku registra"
 
-#: regedit.rc:88
+#: regedit.rc:89
 msgid "Modify Binary Data"
 msgstr "Spremeni binarno vrednost"
 
-#: regedit.rc:108
+#: regedit.rc:110
 msgid "&Export..."
 msgstr "&Izvozi ..."
 
-#: regedit.rc:133
+#: regedit.rc:135
 msgid "Contains commands for working with the whole registry"
 msgstr "Ukazi za delo s celotnim registrom"
 
-#: regedit.rc:134
+#: regedit.rc:136
 msgid "Contains commands for editing values or keys"
 msgstr "Ukazi za urejanje vrednosti in ključev"
 
-#: regedit.rc:135
+#: regedit.rc:137
 msgid "Contains commands for customising the registry window"
 msgstr "Ukazi za prilagajanje okna Urejevalniak registra"
 
-#: regedit.rc:136
+#: regedit.rc:138
 msgid "Contains commands for accessing frequently used keys"
 msgstr "Ukazi za dostop do pogosto uporabljanih ključev"
 
-#: regedit.rc:137
+#: regedit.rc:139
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr "Ukazi za prikaz pomoči in informacij o Urejevalniku registra"
 
-#: regedit.rc:138
+#: regedit.rc:140
 msgid "Contains commands for creating new keys or values"
 msgstr "Ukazi za ustvarjanje novih ključev in vrednosti"
 
-#: regedit.rc:123
+#: regedit.rc:125
 msgid "Data"
 msgstr "Vsebina"
 
-#: regedit.rc:128
+#: regedit.rc:130
 msgid "Registry Editor"
 msgstr "Urejevalnik registra"
 
-#: regedit.rc:190
+#: regedit.rc:192
 msgid "Import Registry File"
 msgstr "Uvozi registrsko datoteko"
 
-#: regedit.rc:191
+#: regedit.rc:193
 msgid "Export Registry File"
 msgstr "Izvozi registrsko datoteko"
 
-#: regedit.rc:192
+#: regedit.rc:194
 #, fuzzy
 msgid "Registry files (*.reg)"
 msgstr "Registrske datoteke (*.reg)"
 
-#: regedit.rc:193
+#: regedit.rc:195
 #, fuzzy
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 registrske datoteke (REGEDIT4)"
 
-#: regedit.rc:200
+#: regedit.rc:202
 msgid "(Default)"
 msgstr "(privzeto)"
 
-#: regedit.rc:201
+#: regedit.rc:203
 msgid "(value not set)"
 msgstr "(vsebina ni nastavljena)"
 
-#: regedit.rc:202
+#: regedit.rc:204
 msgid "(cannot display value)"
 msgstr "(vsebine ni mogoče prikazati)"
 
-#: regedit.rc:203
+#: regedit.rc:205
 msgid "(unknown %d)"
 msgstr "(neznana vrsta %d)"
 
-#: regedit.rc:159
+#: regedit.rc:161
 msgid "Quits the registry editor"
 msgstr "Konča program"
 
-#: regedit.rc:160
+#: regedit.rc:162
 msgid "Adds keys to the favorites list"
 msgstr "Doda ključe na seznam priljubljenih"
 
-#: regedit.rc:161
+#: regedit.rc:163
 msgid "Removes keys from the favorites list"
 msgstr "Odstrani ključe s seznama priljubljenih"
 
-#: regedit.rc:162
+#: regedit.rc:164
 msgid "Shows or hides the status bar"
 msgstr "Prikaže oz. skrije vrstico stanja"
 
-#: regedit.rc:163
+#: regedit.rc:165
 msgid "Change position of split between two panes"
 msgstr "Spremeni položaj delilne črte med podokni"
 
-#: regedit.rc:164
+#: regedit.rc:166
 msgid "Refreshes the window"
 msgstr "Osveži okno"
 
-#: regedit.rc:165
+#: regedit.rc:167
 msgid "Deletes the selection"
 msgstr "Izbriše izbor"
 
-#: regedit.rc:166
+#: regedit.rc:168
 msgid "Renames the selection"
 msgstr "Preimenuje izbor"
 
-#: regedit.rc:167
+#: regedit.rc:169
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Kopira ime izbranega ključa na odložišče"
 
-#: regedit.rc:168
+#: regedit.rc:170
 msgid "Finds a text string in a key, value or data"
 msgstr "Poišče znakovni niz v ključu, vrednosti ali vsebini vrednosti"
 
-#: regedit.rc:169
+#: regedit.rc:171
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "Poišče naslednjo ponovitev iskanega besedila"
 
-#: regedit.rc:143
+#: regedit.rc:145
 msgid "Modifies the value's data"
 msgstr "Spremeni vsebino"
 
-#: regedit.rc:144
+#: regedit.rc:146
 msgid "Adds a new key"
 msgstr "Doda nov ključ"
 
-#: regedit.rc:145
+#: regedit.rc:147
 msgid "Adds a new string value"
 msgstr "Doda nov znakovni niz"
 
-#: regedit.rc:146
+#: regedit.rc:148
 msgid "Adds a new binary value"
 msgstr "Doda novo binarno vrednost"
 
-#: regedit.rc:147
+#: regedit.rc:149
 msgid "Adds a new double word value"
 msgstr "Doda novo DWORD vrednost"
 
-#: regedit.rc:149
+#: regedit.rc:151
 msgid "Imports a text file into the registry"
 msgstr "Uvozi besedilno datoteko v register"
 
-#: regedit.rc:151
+#: regedit.rc:153
 msgid "Exports all or part of the registry to a text file"
 msgstr "Izvozi ves register oz. del registra v besedilno datoteko"
 
-#: regedit.rc:152
+#: regedit.rc:154
 msgid "Prints all or part of the registry"
 msgstr "Natisne ves register oz. del registra"
 
-#: regedit.rc:154
+#: regedit.rc:156
 msgid "Displays program information, version number and copyright"
 msgstr "Prikaže informacije o programu, njegovo različico ter avtorske pravice"
 
-#: regedit.rc:177
+#: regedit.rc:179
 msgid "Can't query value '%s'"
 msgstr "Ne morem pridobiti podatkov o vrednosti '%s'"
 
-#: regedit.rc:178
+#: regedit.rc:180
 msgid "Can't edit keys of this type (%u)"
 msgstr "Ključev te vrste (%u) ni mogoče spreminjati"
 
-#: regedit.rc:179
+#: regedit.rc:181
 msgid "Value is too big (%u)"
 msgstr "Vrednost (%u) je prevelika"
 
-#: regedit.rc:180
+#: regedit.rc:182
 msgid "Confirm Value Delete"
 msgstr "Potrditev brisanja vrednosti"
 
-#: regedit.rc:181
+#: regedit.rc:183
 msgid "Are you sure you want to delete value '%s'?"
 msgstr "Ali ste prepričani, da želite izbrisati vrednost '%s'?"
 
-#: regedit.rc:185
+#: regedit.rc:187
 msgid "Search string '%s' not found"
 msgstr "Iskanega niza '%s' ni mogoče najti"
 
-#: regedit.rc:182
+#: regedit.rc:184
 msgid "Are you sure you want to delete these values?"
 msgstr "Are ste prepričani, da želite izbrisati izbrane vrednosti?"
 
-#: regedit.rc:183
+#: regedit.rc:185
 msgid "New Key #%d"
 msgstr "Nov ključ #%d"
 
-#: regedit.rc:184
+#: regedit.rc:186
 msgid "New Value #%d"
 msgstr "Nova vrednost #%d"
 
-#: regedit.rc:176
+#: regedit.rc:178
 msgid "Can't query key '%s'"
 msgstr "Ne morem pridobiti podatkov o ključu '%s'"
 
-#: regedit.rc:148
+#: regedit.rc:150
 msgid "Adds a new multi string value"
 msgstr "Doda novo več-nizno vrednost"
 
-#: regedit.rc:170
+#: regedit.rc:172
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Izvozi izbrano vejo registra v tekstovno datoteko"
 

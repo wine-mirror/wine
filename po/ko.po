@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "지정되지 않음"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:113
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:123 winefile.rc:113
 msgid "Name"
 msgstr "이름"
 
@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "프로그램 (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
-#: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:80 regedit.rc:196 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
 
@@ -174,7 +174,7 @@ msgstr "데스크탑"
 msgid "Fonts"
 msgstr "글꼴"
 
-#: comdlg32.rc:36 shell32.rc:142 regedit.rc:199
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:201
 msgid "My Computer"
 msgstr "내 컴퓨터"
 
@@ -6167,7 +6167,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "파일(&F)"
 
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
+#: shdocvw.rc:27 regedit.rc:44 regedit.rc:96
 msgid "&New"
 msgstr "새로 만들기(&N)"
 
@@ -6204,7 +6204,7 @@ msgid "&Close"
 msgstr "닫기(&C)"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:62 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "보기(&V)"
 
@@ -6220,16 +6220,16 @@ msgstr "표준 바(&S)"
 msgid "&Address bar"
 msgstr "주소 바(&A)"
 
-#: shdocvw.rc:50 regedit.rc:70
+#: shdocvw.rc:50 regedit.rc:71
 msgid "&Favorites"
 msgstr "즐겨찾기(&F)"
 
-#: shdocvw.rc:52 regedit.rc:72
+#: shdocvw.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
 msgstr "즐겨찾기 추가(&A)..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
+#: regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "도움말(&H)"
 
@@ -6320,7 +6320,7 @@ msgstr "잘라내기(&U)"
 msgid "Create &Link"
 msgstr "링크 만들기(&L)"
 
-#: shell32.rc:91 regedit.rc:91
+#: shell32.rc:91 regedit.rc:92
 msgid "&Rename"
 msgstr "이름 바꾸기(&R)"
 
@@ -6337,7 +6337,7 @@ msgstr "제어판 정보(&A)..."
 msgid "Size"
 msgstr "크기"
 
-#: shell32.rc:124 regedit.rc:122
+#: shell32.rc:124 regedit.rc:124
 msgid "Type"
 msgstr "종류"
 
@@ -6768,7 +6768,7 @@ msgstr "닫기(&C)\tAlt-F4"
 msgid "&About Wine..."
 msgstr "Wine에 관하여..."
 
-#: user32.rc:55 regedit.rc:175 winefile.rc:101
+#: user32.rc:55 regedit.rc:177 winefile.rc:101
 msgid "Error"
 msgstr "에러"
 
@@ -8511,7 +8511,7 @@ msgstr "복사(&C)\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "붙여넣기(&P)\tCtrl+V"
 
-#: notepad.rc:44 progman.rc:34 regedit.rc:54 regedit.rc:90 regedit.rc:105
+#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:91 regedit.rc:107
 #: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr "지우기(&D)\tDel"
@@ -8737,7 +8737,7 @@ msgstr "도구바(&T)"
 msgid "&Status Bar"
 msgstr "상태바(&S)"
 
-#: oleview.rc:67 regedit.rc:68 winefile.rc:82
+#: oleview.rc:67 regedit.rc:69 winefile.rc:82
 msgid "&Refresh\tF5"
 msgstr "새로 고침(&R)\tF5"
 
@@ -9130,264 +9130,269 @@ msgstr "레지스트리 파일 내보내기(&E)..."
 msgid "&Print\tCtrl+P"
 msgstr "인쇄(&P)\tCtrl+P"
 
-#: regedit.rc:42 regedit.rc:87
+#: regedit.rc:42 regedit.rc:88
 msgid "&Modify"
 msgstr "수정(&M)"
 
-#: regedit.rc:46 regedit.rc:97
+#: regedit.rc:46 regedit.rc:98
 msgid "&Key"
 msgstr "&키(&K)"
 
-#: regedit.rc:48 regedit.rc:99
+#: regedit.rc:48 regedit.rc:100
 msgid "&String Value"
 msgstr "문자열 값(&S)"
 
-#: regedit.rc:49 regedit.rc:100
+#: regedit.rc:49 regedit.rc:101
 msgid "&Binary Value"
 msgstr "이진값(&B)"
 
-#: regedit.rc:50 regedit.rc:101
+#: regedit.rc:50 regedit.rc:102
 msgid "&DWORD Value"
 msgstr "DWORD 값(&D)"
 
-#: regedit.rc:51 regedit.rc:102
+#: regedit.rc:51 regedit.rc:103
 msgid "&Multi String Value"
 msgstr "다중 문자열 값(&M)"
 
-#: regedit.rc:55 regedit.rc:106
+#: regedit.rc:52 regedit.rc:104
+#, fuzzy
+msgid "&Expandable String Value"
+msgstr "문자열 값(&S)"
+
+#: regedit.rc:56 regedit.rc:108
 msgid "&Rename\tF2"
 msgstr "이름 바꾸기(&R)\tF2"
 
-#: regedit.rc:57 regedit.rc:109
+#: regedit.rc:58 regedit.rc:111
 msgid "&Copy Key Name"
 msgstr "키 이름 복사(&C)"
 
-#: regedit.rc:59 regedit.rc:111
+#: regedit.rc:60 regedit.rc:113
 msgid "&Find\tCtrl+F"
 msgstr "찾기(&F)\tCtrl+F"
 
-#: regedit.rc:60
+#: regedit.rc:61
 msgid "Find Ne&xt\tF3"
 msgstr "다음 찾기(&x)\tF3"
 
-#: regedit.rc:64
+#: regedit.rc:65
 msgid "Status &Bar"
 msgstr "상태 표기줄(&B)"
 
-#: regedit.rc:66 winefile.rc:50
+#: regedit.rc:67 winefile.rc:50
 msgid "Sp&lit"
 msgstr "나누기(&L)"
 
-#: regedit.rc:73
+#: regedit.rc:74
 msgid "&Remove Favorite..."
 msgstr "즐겨 찾기 제거(&R)..."
 
-#: regedit.rc:77 winefile.rc:86
+#: regedit.rc:78 winefile.rc:86
 msgid "&Help Topics\tF1"
 msgstr "도움말 항목(&H)\tF1"
 
-#: regedit.rc:79
+#: regedit.rc:80
 msgid "&About Registry Editor"
 msgstr "레지스트리 편집기 정보(&A)"
 
-#: regedit.rc:88
+#: regedit.rc:89
 msgid "Modify Binary Data"
 msgstr "이진값 고치기"
 
-#: regedit.rc:108
+#: regedit.rc:110
 msgid "&Export..."
 msgstr "내보내기(&E)..."
 
-#: regedit.rc:133
+#: regedit.rc:135
 msgid "Contains commands for working with the whole registry"
 msgstr "모든 레지스트리 작업 명령 포함"
 
-#: regedit.rc:134
+#: regedit.rc:136
 msgid "Contains commands for editing values or keys"
 msgstr "키의 값 편집 명령 포함"
 
-#: regedit.rc:135
+#: regedit.rc:137
 msgid "Contains commands for customising the registry window"
 msgstr "레지스트리 창 사용자 정의하는 명령 포함"
 
-#: regedit.rc:136
+#: regedit.rc:138
 msgid "Contains commands for accessing frequently used keys"
 msgstr "자주 사용하는 키 접근하는 명령 포함"
 
-#: regedit.rc:137
+#: regedit.rc:139
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr "레지스트리 편집기 정보와 도움말 보여주는 명령 포함"
 
-#: regedit.rc:138
+#: regedit.rc:140
 msgid "Contains commands for creating new keys or values"
 msgstr "새 키나 값 만드는 명령 포함"
 
-#: regedit.rc:123
+#: regedit.rc:125
 msgid "Data"
 msgstr "데이터"
 
-#: regedit.rc:128
+#: regedit.rc:130
 msgid "Registry Editor"
 msgstr "레지스트리 편집기"
 
-#: regedit.rc:190
+#: regedit.rc:192
 msgid "Import Registry File"
 msgstr "레이지스트 파일 불러오기"
 
-#: regedit.rc:191
+#: regedit.rc:193
 msgid "Export Registry File"
 msgstr "레지스트리 파일 내보내기"
 
-#: regedit.rc:192
+#: regedit.rc:194
 msgid "Registry files (*.reg)"
 msgstr "레지스트리 파일 (*.reg)"
 
-#: regedit.rc:193
+#: regedit.rc:195
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 레지스트리 파일 (REGEDIT4)"
 
-#: regedit.rc:200
+#: regedit.rc:202
 msgid "(Default)"
 msgstr "(기본)"
 
-#: regedit.rc:201
+#: regedit.rc:203
 msgid "(value not set)"
 msgstr "(값이 정해지지 않음)"
 
-#: regedit.rc:202
+#: regedit.rc:204
 msgid "(cannot display value)"
 msgstr "(값을 보여 줄수 없음)"
 
-#: regedit.rc:203
+#: regedit.rc:205
 msgid "(unknown %d)"
 msgstr "(알 수 없는 %d)"
 
-#: regedit.rc:159
+#: regedit.rc:161
 msgid "Quits the registry editor"
 msgstr "레지스트리 편집기 나가기"
 
-#: regedit.rc:160
+#: regedit.rc:162
 msgid "Adds keys to the favorites list"
 msgstr "즐겨 찾기 목록에 키 더하기"
 
-#: regedit.rc:161
+#: regedit.rc:163
 msgid "Removes keys from the favorites list"
 msgstr "즐겨 찾기 목록에 키 지우기"
 
-#: regedit.rc:162
+#: regedit.rc:164
 msgid "Shows or hides the status bar"
 msgstr "상태바 보여주거나 숨기기"
 
-#: regedit.rc:163
+#: regedit.rc:165
 msgid "Change position of split between two panes"
 msgstr "두 틀을 나누는 위치 바꾸기"
 
-#: regedit.rc:164
+#: regedit.rc:166
 msgid "Refreshes the window"
 msgstr "창 다시 읽기"
 
-#: regedit.rc:165
+#: regedit.rc:167
 msgid "Deletes the selection"
 msgstr "이 섹션 지우기"
 
-#: regedit.rc:166
+#: regedit.rc:168
 msgid "Renames the selection"
 msgstr "이 섹션 이름바꾸기"
 
-#: regedit.rc:167
+#: regedit.rc:169
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "선택된 키의 이름을 클립보드에 복사"
 
-#: regedit.rc:168
+#: regedit.rc:170
 msgid "Finds a text string in a key, value or data"
 msgstr "키,값이나 데이타에서 텍스트 문자열 찾기"
 
-#: regedit.rc:169
+#: regedit.rc:171
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "이전 찾기에서 지정된 문자열로 다시 찾기"
 
-#: regedit.rc:143
+#: regedit.rc:145
 msgid "Modifies the value's data"
 msgstr "값 데이타 고치기"
 
-#: regedit.rc:144
+#: regedit.rc:146
 msgid "Adds a new key"
 msgstr "새 키 더하기"
 
-#: regedit.rc:145
+#: regedit.rc:147
 msgid "Adds a new string value"
 msgstr "새 문자열 값 더하기"
 
-#: regedit.rc:146
+#: regedit.rc:148
 msgid "Adds a new binary value"
 msgstr "새 바이너리 값 더하기"
 
-#: regedit.rc:147
+#: regedit.rc:149
 msgid "Adds a new double word value"
 msgstr "새 더블 워드 값 더하기"
 
-#: regedit.rc:149
+#: regedit.rc:151
 msgid "Imports a text file into the registry"
 msgstr "텍스트 파일을 레지스트리에 끼워넣기"
 
-#: regedit.rc:151
+#: regedit.rc:153
 msgid "Exports all or part of the registry to a text file"
 msgstr "레지스트리의 전부나 일부분을 텍스트 파일로 내보내기"
 
-#: regedit.rc:152
+#: regedit.rc:154
 msgid "Prints all or part of the registry"
 msgstr "레지스트리 전부나 부분 인쇄하기"
 
-#: regedit.rc:154
+#: regedit.rc:156
 msgid "Displays program information, version number and copyright"
 msgstr "풀그림 정보,버젼, 저작권 보여주기"
 
-#: regedit.rc:177
+#: regedit.rc:179
 msgid "Can't query value '%s'"
 msgstr "값 '%s'를 질의할 수 없습니다"
 
-#: regedit.rc:178
+#: regedit.rc:180
 msgid "Can't edit keys of this type (%u)"
 msgstr "이 타입 (%u)의 키를 고칠 수 없습니다"
 
-#: regedit.rc:179
+#: regedit.rc:181
 msgid "Value is too big (%u)"
 msgstr "값이 너무 큽니다 (%u)"
 
-#: regedit.rc:180
+#: regedit.rc:182
 msgid "Confirm Value Delete"
 msgstr "값 지우기 확인"
 
-#: regedit.rc:181
+#: regedit.rc:183
 msgid "Are you sure you want to delete value '%s'?"
 msgstr "당신은 이 값 '%s'을 정말로 지우겠습니까?"
 
-#: regedit.rc:185
+#: regedit.rc:187
 msgid "Search string '%s' not found"
 msgstr "'%s'을 찾을 수 없습니다"
 
-#: regedit.rc:182
+#: regedit.rc:184
 msgid "Are you sure you want to delete these values?"
 msgstr "이 값들을 정말로 지우겠습니까?"
 
-#: regedit.rc:183
+#: regedit.rc:185
 msgid "New Key #%d"
 msgstr "새 키 #%d"
 
-#: regedit.rc:184
+#: regedit.rc:186
 msgid "New Value #%d"
 msgstr "새 값 #%d"
 
-#: regedit.rc:176
+#: regedit.rc:178
 msgid "Can't query key '%s'"
 msgstr "키 '%s'를 질의할 수 없습니다"
 
-#: regedit.rc:148
+#: regedit.rc:150
 msgid "Adds a new multi string value"
 msgstr "새 다중 문자열 값 더하기"
 
-#: regedit.rc:170
+#: regedit.rc:172
 msgid "Exports selected branch of the registry to a text file"
 msgstr "레지스트리의 선택된 부분을 텍스트 파일로 내보내기"
 

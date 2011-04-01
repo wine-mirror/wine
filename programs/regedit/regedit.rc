@@ -49,6 +49,7 @@ BEGIN
             MENUITEM "&Binary Value",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD Value",                ID_EDIT_NEW_DWORDVALUE
             MENUITEM "&Multi String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
+            MENUITEM "&Expandable String Value",    ID_EDIT_NEW_EXPANDVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
@@ -100,6 +101,7 @@ BEGIN
             MENUITEM "&Binary Value",               ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD Value",                ID_EDIT_NEW_DWORDVALUE
             MENUITEM "&Multi String Value",         ID_EDIT_NEW_MULTI_STRINGVALUE
+            MENUITEM "&Expandable String Value",    ID_EDIT_NEW_EXPANDVALUE
         END
         MENUITEM SEPARATOR
         MENUITEM "&Delete\tDel",                ID_EDIT_DELETE

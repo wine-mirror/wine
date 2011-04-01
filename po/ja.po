@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "指定されていません"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:113
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:123 winefile.rc:113
 msgid "Name"
 msgstr "名前"
 
@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "プログラム(*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
-#: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:80 regedit.rc:196 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "すべてのファイル (*.*)"
 
@@ -174,7 +174,7 @@ msgstr "Desktop"
 msgid "Fonts"
 msgstr "フォント"
 
-#: comdlg32.rc:36 shell32.rc:142 regedit.rc:199
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:201
 msgid "My Computer"
 msgstr "マイ コンピュータ"
 
@@ -6174,7 +6174,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "ファイル(&F)"
 
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
+#: shdocvw.rc:27 regedit.rc:44 regedit.rc:96
 msgid "&New"
 msgstr "新規(&N)"
 
@@ -6211,7 +6211,7 @@ msgid "&Close"
 msgstr "閉じる(&C)"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:62 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "表示(&V)"
 
@@ -6227,16 +6227,16 @@ msgstr "ステータス バー(&S)"
 msgid "&Address bar"
 msgstr "アドレス バー(&A)"
 
-#: shdocvw.rc:50 regedit.rc:70
+#: shdocvw.rc:50 regedit.rc:71
 msgid "&Favorites"
 msgstr "お気に入り(&F)"
 
-#: shdocvw.rc:52 regedit.rc:72
+#: shdocvw.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
 msgstr "お気に入りに追加(&A)..."
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
+#: regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "ヘルプ(&H)"
 
@@ -6327,7 +6327,7 @@ msgstr "切り取り(&U)"
 msgid "Create &Link"
 msgstr "ショートカットの作成(&L)"
 
-#: shell32.rc:91 regedit.rc:91
+#: shell32.rc:91 regedit.rc:92
 msgid "&Rename"
 msgstr "名前の変更(&R)"
 
@@ -6344,7 +6344,7 @@ msgstr "コントロール パネルについて(&A)..."
 msgid "Size"
 msgstr "サイズ"
 
-#: shell32.rc:124 regedit.rc:122
+#: shell32.rc:124 regedit.rc:124
 msgid "Type"
 msgstr "型"
 
@@ -6775,7 +6775,7 @@ msgstr "閉じる(&C)\tAlt-F4"
 msgid "&About Wine..."
 msgstr "Wineについて(&A)..."
 
-#: user32.rc:55 regedit.rc:175 winefile.rc:101
+#: user32.rc:55 regedit.rc:177 winefile.rc:101
 msgid "Error"
 msgstr "エラー"
 
@@ -8539,7 +8539,7 @@ msgstr "コピー(&C)\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "貼り付け(&P)\tCtrl+V"
 
-#: notepad.rc:44 progman.rc:34 regedit.rc:54 regedit.rc:90 regedit.rc:105
+#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:91 regedit.rc:107
 #: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr "削除(&D)\tDel"
@@ -8768,7 +8768,7 @@ msgstr "ツール バー(&T)"
 msgid "&Status Bar"
 msgstr "ステータス バー(&S)"
 
-#: oleview.rc:67 regedit.rc:68 winefile.rc:82
+#: oleview.rc:67 regedit.rc:69 winefile.rc:82
 msgid "&Refresh\tF5"
 msgstr "更新(&R)\tF5"
 
@@ -9161,264 +9161,269 @@ msgstr "レジストリのエクスポート(&E)..."
 msgid "&Print\tCtrl+P"
 msgstr "印刷(&P)\tCtrl+P"
 
-#: regedit.rc:42 regedit.rc:87
+#: regedit.rc:42 regedit.rc:88
 msgid "&Modify"
 msgstr "変更(&M)"
 
-#: regedit.rc:46 regedit.rc:97
+#: regedit.rc:46 regedit.rc:98
 msgid "&Key"
 msgstr "キー(&K)"
 
-#: regedit.rc:48 regedit.rc:99
+#: regedit.rc:48 regedit.rc:100
 msgid "&String Value"
 msgstr "文字列値(&S)"
 
-#: regedit.rc:49 regedit.rc:100
+#: regedit.rc:49 regedit.rc:101
 msgid "&Binary Value"
 msgstr "バイナリ値(&B)"
 
-#: regedit.rc:50 regedit.rc:101
+#: regedit.rc:50 regedit.rc:102
 msgid "&DWORD Value"
 msgstr "DWORD値(&D)"
 
-#: regedit.rc:51 regedit.rc:102
+#: regedit.rc:51 regedit.rc:103
 msgid "&Multi String Value"
 msgstr "複数行文字列値(&M)"
 
-#: regedit.rc:55 regedit.rc:106
+#: regedit.rc:52 regedit.rc:104
+#, fuzzy
+msgid "&Expandable String Value"
+msgstr "文字列値(&S)"
+
+#: regedit.rc:56 regedit.rc:108
 msgid "&Rename\tF2"
 msgstr "名前の変更(&R)\tF2"
 
-#: regedit.rc:57 regedit.rc:109
+#: regedit.rc:58 regedit.rc:111
 msgid "&Copy Key Name"
 msgstr "キー名をコピー(&C)"
 
-#: regedit.rc:59 regedit.rc:111
+#: regedit.rc:60 regedit.rc:113
 msgid "&Find\tCtrl+F"
 msgstr "検索(&F)\tCtrl+F"
 
-#: regedit.rc:60
+#: regedit.rc:61
 msgid "Find Ne&xt\tF3"
 msgstr "次の検索候補(&x)\tF3"
 
-#: regedit.rc:64
+#: regedit.rc:65
 msgid "Status &Bar"
 msgstr "ステータスバー(&B)"
 
-#: regedit.rc:66 winefile.rc:50
+#: regedit.rc:67 winefile.rc:50
 msgid "Sp&lit"
 msgstr "分割(&L)"
 
-#: regedit.rc:73
+#: regedit.rc:74
 msgid "&Remove Favorite..."
 msgstr "お気に入りから削除(&R)..."
 
-#: regedit.rc:77 winefile.rc:86
+#: regedit.rc:78 winefile.rc:86
 msgid "&Help Topics\tF1"
 msgstr "ヘルプ(&H)\tF1"
 
-#: regedit.rc:79
+#: regedit.rc:80
 msgid "&About Registry Editor"
 msgstr "バージョン情報(&A)"
 
-#: regedit.rc:88
+#: regedit.rc:89
 msgid "Modify Binary Data"
 msgstr "バイナリデータを変更"
 
-#: regedit.rc:108
+#: regedit.rc:110
 msgid "&Export..."
 msgstr "エクスポート(&E)..."
 
-#: regedit.rc:133
+#: regedit.rc:135
 msgid "Contains commands for working with the whole registry"
 msgstr "レジストリ全体を操作するコマンド"
 
-#: regedit.rc:134
+#: regedit.rc:136
 msgid "Contains commands for editing values or keys"
 msgstr "値とキーを編集するコマンド"
 
-#: regedit.rc:135
+#: regedit.rc:137
 msgid "Contains commands for customising the registry window"
 msgstr "レジストリ ウィンドウをカスタマイズするコマンド"
 
-#: regedit.rc:136
+#: regedit.rc:138
 msgid "Contains commands for accessing frequently used keys"
 msgstr "よく使うキーにアクセスするコマンド"
 
-#: regedit.rc:137
+#: regedit.rc:139
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr "レジストリエディタについてのヘルプや情報を表示するコマンド"
 
-#: regedit.rc:138
+#: regedit.rc:140
 msgid "Contains commands for creating new keys or values"
 msgstr "新しいキーや値を作成するコマンド"
 
-#: regedit.rc:123
+#: regedit.rc:125
 msgid "Data"
 msgstr "データ"
 
-#: regedit.rc:128
+#: regedit.rc:130
 msgid "Registry Editor"
 msgstr "レジストリエディタ"
 
-#: regedit.rc:190
+#: regedit.rc:192
 msgid "Import Registry File"
 msgstr "レジストリファイルのインポート"
 
-#: regedit.rc:191
+#: regedit.rc:193
 msgid "Export Registry File"
 msgstr "レジストリファイルのエクスポート"
 
-#: regedit.rc:192
+#: regedit.rc:194
 msgid "Registry files (*.reg)"
 msgstr "登録ファイル (*.reg)"
 
-#: regedit.rc:193
+#: regedit.rc:195
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 登録ファイル (REGEDIT4)"
 
-#: regedit.rc:200
+#: regedit.rc:202
 msgid "(Default)"
 msgstr "(既定)"
 
-#: regedit.rc:201
+#: regedit.rc:203
 msgid "(value not set)"
 msgstr "(値の設定なし)"
 
-#: regedit.rc:202
+#: regedit.rc:204
 msgid "(cannot display value)"
 msgstr "(値を表示できません)"
 
-#: regedit.rc:203
+#: regedit.rc:205
 msgid "(unknown %d)"
 msgstr "(不明 %d)"
 
-#: regedit.rc:159
+#: regedit.rc:161
 msgid "Quits the registry editor"
 msgstr "レジストリエディタを終了"
 
-#: regedit.rc:160
+#: regedit.rc:162
 msgid "Adds keys to the favorites list"
 msgstr "キーをお気に入りに追加"
 
-#: regedit.rc:161
+#: regedit.rc:163
 msgid "Removes keys from the favorites list"
 msgstr "キーをお気に入りから削除"
 
-#: regedit.rc:162
+#: regedit.rc:164
 msgid "Shows or hides the status bar"
 msgstr "ステータスバーを表示・隠す"
 
-#: regedit.rc:163
+#: regedit.rc:165
 msgid "Change position of split between two panes"
 msgstr "ペイン間のしきりの位置を変更"
 
-#: regedit.rc:164
+#: regedit.rc:166
 msgid "Refreshes the window"
 msgstr "ウィンドウをリフレッシュ"
 
-#: regedit.rc:165
+#: regedit.rc:167
 msgid "Deletes the selection"
 msgstr "選択した項目を削除"
 
-#: regedit.rc:166
+#: regedit.rc:168
 msgid "Renames the selection"
 msgstr "選択した項目の名前を変更"
 
-#: regedit.rc:167
+#: regedit.rc:169
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "選択したキーの名前をクリップボードにコピー"
 
-#: regedit.rc:168
+#: regedit.rc:170
 msgid "Finds a text string in a key, value or data"
 msgstr "キー、値、データから文字列を検索"
 
-#: regedit.rc:169
+#: regedit.rc:171
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "以前の検索条件において次の候補を検索"
 
-#: regedit.rc:143
+#: regedit.rc:145
 msgid "Modifies the value's data"
 msgstr "値のデータを変更"
 
-#: regedit.rc:144
+#: regedit.rc:146
 msgid "Adds a new key"
 msgstr "新しいキーを追加"
 
-#: regedit.rc:145
+#: regedit.rc:147
 msgid "Adds a new string value"
 msgstr "新しい文字列値を追加"
 
-#: regedit.rc:146
+#: regedit.rc:148
 msgid "Adds a new binary value"
 msgstr "新しいバイナリ値を追加"
 
-#: regedit.rc:147
+#: regedit.rc:149
 msgid "Adds a new double word value"
 msgstr "新しいDWORD値を追加"
 
-#: regedit.rc:149
+#: regedit.rc:151
 msgid "Imports a text file into the registry"
 msgstr "テキストファイルをレジストリにインポート"
 
-#: regedit.rc:151
+#: regedit.rc:153
 msgid "Exports all or part of the registry to a text file"
 msgstr "レジストリの一部または全部をテキストファイルにエクスポート"
 
-#: regedit.rc:152
+#: regedit.rc:154
 msgid "Prints all or part of the registry"
 msgstr "レジストリの一部または全部を印刷"
 
-#: regedit.rc:154
+#: regedit.rc:156
 msgid "Displays program information, version number and copyright"
 msgstr "プログラムの情報、バージョン、著作者を表示"
 
-#: regedit.rc:177
+#: regedit.rc:179
 msgid "Can't query value '%s'"
 msgstr "値 '%s' を削除できません"
 
-#: regedit.rc:178
+#: regedit.rc:180
 msgid "Can't edit keys of this type (%u)"
 msgstr "このタイプのキーは編集できません (%u)"
 
-#: regedit.rc:179
+#: regedit.rc:181
 msgid "Value is too big (%u)"
 msgstr "値が大きすぎます (%u)"
 
-#: regedit.rc:180
+#: regedit.rc:182
 msgid "Confirm Value Delete"
 msgstr "値の削除確認"
 
-#: regedit.rc:181
+#: regedit.rc:183
 msgid "Are you sure you want to delete value '%s'?"
 msgstr "本当に '%s'を削除しますか?"
 
-#: regedit.rc:185
+#: regedit.rc:187
 msgid "Search string '%s' not found"
 msgstr "検索文字列 '%s'が見つかりません"
 
-#: regedit.rc:182
+#: regedit.rc:184
 msgid "Are you sure you want to delete these values?"
 msgstr "これらの値を削除しますか?"
 
-#: regedit.rc:183
+#: regedit.rc:185
 msgid "New Key #%d"
 msgstr "新しいキー #%d"
 
-#: regedit.rc:184
+#: regedit.rc:186
 msgid "New Value #%d"
 msgstr "新しい値 #%d"
 
-#: regedit.rc:176
+#: regedit.rc:178
 msgid "Can't query key '%s'"
 msgstr "キー '%s' を削除できません"
 
-#: regedit.rc:148
+#: regedit.rc:150
 msgid "Adds a new multi string value"
 msgstr "新しい複数行文字列値を追加"
 
-#: regedit.rc:170
+#: regedit.rc:172
 msgid "Exports selected branch of the registry to a text file"
 msgstr "選択したレジストリ キー以下をテキストファイルに出力"
 

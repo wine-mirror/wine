@@ -788,6 +788,9 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_EDIT_NEW_STRINGVALUE:
 	valueType = REG_SZ;
 	goto create_value;
+    case ID_EDIT_NEW_EXPANDVALUE:
+	valueType = REG_EXPAND_SZ;
+	goto create_value;
     case ID_EDIT_NEW_MULTI_STRINGVALUE:
 	valueType = REG_MULTI_SZ;
 	goto create_value;

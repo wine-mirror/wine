@@ -40,7 +40,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "לא מוגדר"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:113
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:123 winefile.rc:113
 msgid "Name"
 msgstr "שם"
 
@@ -61,7 +61,7 @@ msgid "Programs (*.exe)"
 msgstr "תכניות (‎*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
-#: oleview.rc:101 progman.rc:80 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:80 regedit.rc:196 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "כל הקבצים (*.*)"
 
@@ -171,7 +171,7 @@ msgstr "שולחן העבודה"
 msgid "Fonts"
 msgstr "גופנים"
 
-#: comdlg32.rc:36 shell32.rc:142 regedit.rc:199
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:201
 msgid "My Computer"
 msgstr "המחשב שלי"
 
@@ -6376,7 +6376,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&קובץ"
 
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
+#: shdocvw.rc:27 regedit.rc:44 regedit.rc:96
 msgid "&New"
 msgstr "חד&ש"
 
@@ -6413,7 +6413,7 @@ msgid "&Close"
 msgstr "&סגירה"
 
 #: shdocvw.rc:42 shell32.rc:40 shell32.rc:105 oleview.rc:58 oleview.rc:82
-#: regedit.rc:62 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
+#: regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
 msgstr "&תצוגה"
 
@@ -6429,16 +6429,16 @@ msgstr "סרגל הכלים ה&רגיל"
 msgid "&Address bar"
 msgstr "סרגל ה&כתובות"
 
-#: shdocvw.rc:50 regedit.rc:70
+#: shdocvw.rc:50 regedit.rc:71
 msgid "&Favorites"
 msgstr "&מועדפים"
 
-#: shdocvw.rc:52 regedit.rc:72
+#: shdocvw.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
 msgstr "הו&ספה למועדפים…"
 
 #: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:75 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
+#: regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "ע&זרה"
 
@@ -6529,7 +6529,7 @@ msgstr "&גזירה"
 msgid "Create &Link"
 msgstr "&יצירת קישור"
 
-#: shell32.rc:91 regedit.rc:91
+#: shell32.rc:91 regedit.rc:92
 msgid "&Rename"
 msgstr "&שינוי שם"
 
@@ -6546,7 +6546,7 @@ msgstr "על &אודות לוח הבקרה..."
 msgid "Size"
 msgstr "גודל"
 
-#: shell32.rc:124 regedit.rc:122
+#: shell32.rc:124 regedit.rc:124
 msgid "Type"
 msgstr "סוג"
 
@@ -6974,7 +6974,7 @@ msgstr "&סגירה\tAlt-F4"
 msgid "&About Wine..."
 msgstr "על &אודות Wine..."
 
-#: user32.rc:55 regedit.rc:175 winefile.rc:101
+#: user32.rc:55 regedit.rc:177 winefile.rc:101
 msgid "Error"
 msgstr "שגיאה"
 
@@ -8625,7 +8625,7 @@ msgstr "ה&עתקה\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "ה&דבקה\tCtrl+V"
 
-#: notepad.rc:44 progman.rc:34 regedit.rc:54 regedit.rc:90 regedit.rc:105
+#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:91 regedit.rc:107
 #: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr "&מחיקה\tDel"
@@ -8850,7 +8850,7 @@ msgstr "סרגל &כלים"
 msgid "&Status Bar"
 msgstr "שורת מ&צב"
 
-#: oleview.rc:67 regedit.rc:68 winefile.rc:82
+#: oleview.rc:67 regedit.rc:69 winefile.rc:82
 msgid "&Refresh\tF5"
 msgstr "&רענון\tF5"
 
@@ -9247,264 +9247,269 @@ msgstr "י&צוא קובץ מרישום המערכת..."
 msgid "&Print\tCtrl+P"
 msgstr "ה&דפסה\tCtrlP"
 
-#: regedit.rc:42 regedit.rc:87
+#: regedit.rc:42 regedit.rc:88
 msgid "&Modify"
 msgstr "&שינוי"
 
-#: regedit.rc:46 regedit.rc:97
+#: regedit.rc:46 regedit.rc:98
 msgid "&Key"
 msgstr "&מפתח"
 
-#: regedit.rc:48 regedit.rc:99
+#: regedit.rc:48 regedit.rc:100
 msgid "&String Value"
 msgstr "ערך &מחרוזת"
 
-#: regedit.rc:49 regedit.rc:100
+#: regedit.rc:49 regedit.rc:101
 msgid "&Binary Value"
 msgstr "ערך &בינרי"
 
-#: regedit.rc:50 regedit.rc:101
+#: regedit.rc:50 regedit.rc:102
 msgid "&DWORD Value"
 msgstr "ערך &DWORD"
 
-#: regedit.rc:51 regedit.rc:102
+#: regedit.rc:51 regedit.rc:103
 msgid "&Multi String Value"
 msgstr "ערך מ&רובה מחרוזות"
 
-#: regedit.rc:55 regedit.rc:106
+#: regedit.rc:52 regedit.rc:104
+#, fuzzy
+msgid "&Expandable String Value"
+msgstr "ערך &מחרוזת"
+
+#: regedit.rc:56 regedit.rc:108
 msgid "&Rename\tF2"
 msgstr "שי&נוי שם\tF2"
 
-#: regedit.rc:57 regedit.rc:109
+#: regedit.rc:58 regedit.rc:111
 msgid "&Copy Key Name"
 msgstr "ה&עתקת שם המפתח"
 
-#: regedit.rc:59 regedit.rc:111
+#: regedit.rc:60 regedit.rc:113
 msgid "&Find\tCtrl+F"
 msgstr "&חיפוש\tCtrlF"
 
-#: regedit.rc:60
+#: regedit.rc:61
 msgid "Find Ne&xt\tF3"
 msgstr "חיפוש ה&בא\tF3"
 
-#: regedit.rc:64
+#: regedit.rc:65
 msgid "Status &Bar"
 msgstr "שורת ה&מצב"
 
-#: regedit.rc:66 winefile.rc:50
+#: regedit.rc:67 winefile.rc:50
 msgid "Sp&lit"
 msgstr "&פיצול"
 
-#: regedit.rc:73
+#: regedit.rc:74
 msgid "&Remove Favorite..."
 msgstr "ה&סרת מועדף..."
 
-#: regedit.rc:77 winefile.rc:86
+#: regedit.rc:78 winefile.rc:86
 msgid "&Help Topics\tF1"
 msgstr "נושאי הע&זרה\tF1"
 
-#: regedit.rc:79
+#: regedit.rc:80
 msgid "&About Registry Editor"
 msgstr "על &אודות עורך רישום המערכת"
 
-#: regedit.rc:88
+#: regedit.rc:89
 msgid "Modify Binary Data"
 msgstr "שינוי נתונים בינריים"
 
-#: regedit.rc:108
+#: regedit.rc:110
 msgid "&Export..."
 msgstr "י&צוא..."
 
-#: regedit.rc:133
+#: regedit.rc:135
 msgid "Contains commands for working with the whole registry"
 msgstr "מכיל פקודות לעבודה עם כל רישום המערכת"
 
-#: regedit.rc:134
+#: regedit.rc:136
 msgid "Contains commands for editing values or keys"
 msgstr "מכיל פקודות לעריכת ערכים או מפתחות"
 
-#: regedit.rc:135
+#: regedit.rc:137
 msgid "Contains commands for customising the registry window"
 msgstr "מכיל פקודות להתאמת חלון רישום המערכת"
 
-#: regedit.rc:136
+#: regedit.rc:138
 msgid "Contains commands for accessing frequently used keys"
 msgstr "מכיל פקודות לגישה למפתחות הנמצאים בשימוש תדיר"
 
-#: regedit.rc:137
+#: regedit.rc:139
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr "מכיל פקודות להצגת עזרה ומידע על אודות עורך רישום המערכת"
 
-#: regedit.rc:138
+#: regedit.rc:140
 msgid "Contains commands for creating new keys or values"
 msgstr "מכיל פקודות ליצירת מפתחות או ערכים חדשים"
 
-#: regedit.rc:123
+#: regedit.rc:125
 msgid "Data"
 msgstr "נתון"
 
-#: regedit.rc:128
+#: regedit.rc:130
 msgid "Registry Editor"
 msgstr "עורך רישום המערכת"
 
-#: regedit.rc:190
+#: regedit.rc:192
 msgid "Import Registry File"
 msgstr "יבוא קובץ רישום מערכת"
 
-#: regedit.rc:191
+#: regedit.rc:193
 msgid "Export Registry File"
 msgstr "יצוא קובץ רישום מערכת"
 
-#: regedit.rc:192
+#: regedit.rc:194
 msgid "Registry files (*.reg)"
 msgstr "קובצי רישום מערכת (‎*.reg)"
 
-#: regedit.rc:193
+#: regedit.rc:195
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "קובצי רישום מערכת של Win9x/NT4‏ (REGEDIT4)"
 
-#: regedit.rc:200
+#: regedit.rc:202
 msgid "(Default)"
 msgstr "(בררת המחדל)"
 
-#: regedit.rc:201
+#: regedit.rc:203
 msgid "(value not set)"
 msgstr "(לא הוגדר ערך)"
 
-#: regedit.rc:202
+#: regedit.rc:204
 msgid "(cannot display value)"
 msgstr "(לא ניתן להציג את הערך)"
 
-#: regedit.rc:203
+#: regedit.rc:205
 msgid "(unknown %d)"
 msgstr "(%d לא ידוע)"
 
-#: regedit.rc:159
+#: regedit.rc:161
 msgid "Quits the registry editor"
 msgstr "יציאה מעורך רישום המערכת"
 
-#: regedit.rc:160
+#: regedit.rc:162
 msgid "Adds keys to the favorites list"
 msgstr "הוספת מפתחות לרשימת המועדפים"
 
-#: regedit.rc:161
+#: regedit.rc:163
 msgid "Removes keys from the favorites list"
 msgstr "הסרת מפתחות מרשימת המועדפים"
 
-#: regedit.rc:162
+#: regedit.rc:164
 msgid "Shows or hides the status bar"
 msgstr "הצגה או הסתרה של שורת המצב"
 
-#: regedit.rc:163
+#: regedit.rc:165
 msgid "Change position of split between two panes"
 msgstr "שינוי מיקום הפיצול בין שתי החלוניות"
 
-#: regedit.rc:164
+#: regedit.rc:166
 msgid "Refreshes the window"
 msgstr "רענון החלון"
 
-#: regedit.rc:165
+#: regedit.rc:167
 msgid "Deletes the selection"
 msgstr "מחיקת הבחירה"
 
-#: regedit.rc:166
+#: regedit.rc:168
 msgid "Renames the selection"
 msgstr "שינוי שם הבחירה"
 
-#: regedit.rc:167
+#: regedit.rc:169
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "העתקת שם המפתח הנבחר ללוח הגזירים"
 
-#: regedit.rc:168
+#: regedit.rc:170
 msgid "Finds a text string in a key, value or data"
 msgstr "חיפוש מחרוזת טקסט בין מפתחות, ערכים ונתונים"
 
-#: regedit.rc:169
+#: regedit.rc:171
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "חיפוש המופע הבא של טקסט שצוין בחיפוש הקודם"
 
-#: regedit.rc:143
+#: regedit.rc:145
 msgid "Modifies the value's data"
 msgstr "שינוי נתוני הערך"
 
-#: regedit.rc:144
+#: regedit.rc:146
 msgid "Adds a new key"
 msgstr "הוספת מפתח חדש"
 
-#: regedit.rc:145
+#: regedit.rc:147
 msgid "Adds a new string value"
 msgstr "הוספת ערך מחרוזת חדש"
 
-#: regedit.rc:146
+#: regedit.rc:148
 msgid "Adds a new binary value"
 msgstr "הוספת ערך בינרי חדש"
 
-#: regedit.rc:147
+#: regedit.rc:149
 msgid "Adds a new double word value"
 msgstr "הוספת ערך חדש בגודל שני word"
 
-#: regedit.rc:149
+#: regedit.rc:151
 msgid "Imports a text file into the registry"
 msgstr "יבוא קובץ טקסט לתוך רישום המערכת"
 
-#: regedit.rc:151
+#: regedit.rc:153
 msgid "Exports all or part of the registry to a text file"
 msgstr "יצוא כל רישום המערכת או רק חלק ממנו לקובץ טקסט"
 
-#: regedit.rc:152
+#: regedit.rc:154
 msgid "Prints all or part of the registry"
 msgstr "הדפסת כל רישום המערכת או רק חלק ממנו"
 
-#: regedit.rc:154
+#: regedit.rc:156
 msgid "Displays program information, version number and copyright"
 msgstr "הצגת פרטים על אודות התכנה, מספר הגרסה וזכויות יוצרים"
 
-#: regedit.rc:177
+#: regedit.rc:179
 msgid "Can't query value '%s'"
 msgstr "לא ניתן לתשאל את הערך ׳%s׳"
 
-#: regedit.rc:178
+#: regedit.rc:180
 msgid "Can't edit keys of this type (%u)"
 msgstr "לא ניתן לערוך מפתחות מסוג זה (%u)"
 
-#: regedit.rc:179
+#: regedit.rc:181
 msgid "Value is too big (%u)"
 msgstr "הערך גדול מדי (%u)"
 
-#: regedit.rc:180
+#: regedit.rc:182
 msgid "Confirm Value Delete"
 msgstr "אישור מחיקת הערך"
 
-#: regedit.rc:181
+#: regedit.rc:183
 msgid "Are you sure you want to delete value '%s'?"
 msgstr "האם ברצונך למחוק את הערך '%s'?"
 
-#: regedit.rc:185
+#: regedit.rc:187
 msgid "Search string '%s' not found"
 msgstr "מחרוזת החיפוש ׳%s׳ לא נמצאה"
 
-#: regedit.rc:182
+#: regedit.rc:184
 msgid "Are you sure you want to delete these values?"
 msgstr "האם ברצונך למחוק ערכים אלו?"
 
-#: regedit.rc:183
+#: regedit.rc:185
 msgid "New Key #%d"
 msgstr "מפתח חדש מס׳%d"
 
-#: regedit.rc:184
+#: regedit.rc:186
 msgid "New Value #%d"
 msgstr "ערך חדש מס׳ %d"
 
-#: regedit.rc:176
+#: regedit.rc:178
 msgid "Can't query key '%s'"
 msgstr "לא ניתן לתשאל את המפתח ׳%s׳"
 
-#: regedit.rc:148
+#: regedit.rc:150
 msgid "Adds a new multi string value"
 msgstr "הוספת ערך מרובה מחרוזות חדש"
 
-#: regedit.rc:170
+#: regedit.rc:172
 msgid "Exports selected branch of the registry to a text file"
 msgstr "יצוא הענף הנבחר מרישום המערכת לקובץ טקסט"
 
