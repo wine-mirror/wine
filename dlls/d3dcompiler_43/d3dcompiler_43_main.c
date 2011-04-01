@@ -25,11 +25,8 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/debug.h"
 
 #include "d3dcompiler_private.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
 {
@@ -44,47 +41,4 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
             break;
     }
     return TRUE;
-}
-
-HRESULT WINAPI D3DGetBlobPart(const void *data, SIZE_T data_size, D3D_BLOB_PART part, UINT flags, ID3DBlob **blob)
-{
-    TRACE("data %p, data_size %lu, part %s, flags %#x, blob %p\n", data,
-           data_size, debug_d3dcompiler_d3d_blob_part(part), flags, blob);
-
-    return d3dcompiler_get_blob_part(data, data_size, part, flags, blob);
-}
-
-HRESULT WINAPI D3DGetInputSignatureBlob(const void *data, SIZE_T data_size, ID3DBlob **blob)
-{
-    TRACE("data %p, data_size %lu, blob %p\n", data, data_size, blob);
-
-    return d3dcompiler_get_blob_part(data, data_size, D3D_BLOB_INPUT_SIGNATURE_BLOB, 0, blob);
-}
-
-HRESULT WINAPI D3DGetOutputSignatureBlob(const void *data, SIZE_T data_size, ID3DBlob **blob)
-{
-    TRACE("data %p, data_size %lu, blob %p\n", data, data_size, blob);
-
-    return d3dcompiler_get_blob_part(data, data_size, D3D_BLOB_OUTPUT_SIGNATURE_BLOB, 0, blob);
-}
-
-HRESULT WINAPI D3DGetInputAndOutputSignatureBlob(const void *data, SIZE_T data_size, ID3DBlob **blob)
-{
-    TRACE("data %p, data_size %lu, blob %p\n", data, data_size, blob);
-
-    return d3dcompiler_get_blob_part(data, data_size, D3D_BLOB_INPUT_AND_OUTPUT_SIGNATURE_BLOB, 0, blob);
-}
-
-HRESULT WINAPI D3DGetDebugInfo(const void *data, SIZE_T data_size, ID3DBlob **blob)
-{
-    TRACE("data %p, data_size %lu, blob %p\n", data, data_size, blob);
-
-    return d3dcompiler_get_blob_part(data, data_size, D3D_BLOB_DEBUG_INFO, 0, blob);
-}
-
-HRESULT WINAPI D3DStripShader(const void *data, SIZE_T data_size, UINT flags, ID3D10Blob **blob)
-{
-    TRACE("data %p, data_size %lu, flags %#x, blob %p\n", data, data_size, flags, blob);
-
-    return d3dcompiler_strip_shader(data, data_size, flags, blob);
 }
