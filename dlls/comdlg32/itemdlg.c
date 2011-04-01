@@ -1746,8 +1746,47 @@ static HRESULT WINAPI ICommDlgBrowser3_fnIncludeObject(ICommDlgBrowser3 *iface,
                                                        IShellView *shv, LPCITEMIDLIST pidl)
 {
     FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("Stub: %p (%p, %p)\n", This, shv, pidl);
-    return S_OK;
+    IShellItem *psi;
+    LPWSTR filename;
+    LPITEMIDLIST parent_pidl;
+    HRESULT hr;
+    ULONG attr;
+    TRACE("%p (%p, %p)\n", This, shv, pidl);
+
+    if(!This->filterspec_count)
+        return S_OK;
+
+    hr = SHGetIDListFromObject((IUnknown*)shv, &parent_pidl);
+    if(SUCCEEDED(hr))
+    {
+        LPITEMIDLIST full_pidl = ILCombine(parent_pidl, pidl);
+        hr = SHCreateItemFromIDList(full_pidl, &IID_IShellItem, (void**)&psi);
+        ILFree(parent_pidl);
+        ILFree(full_pidl);
+    }
+    if(FAILED(hr))
+    {
+        ERR("Failed to get shellitem (%08x).\n", hr);
+        return S_OK;
+    }
+
+    hr = IShellItem_GetAttributes(psi, SFGAO_FOLDER|SFGAO_LINK, &attr);
+    if(FAILED(hr) || (attr & (SFGAO_FOLDER | SFGAO_LINK)))
+    {
+        IShellItem_Release(psi);
+        return S_OK;
+    }
+
+    hr = S_OK;
+    if(SUCCEEDED(IShellItem_GetDisplayName(psi, SIGDN_PARENTRELATIVEPARSING, &filename)))
+    {
+        if(!PathMatchSpecW(filename, This->filterspecs[This->filetypeindex].pszSpec))
+            hr = S_FALSE;
+        CoTaskMemFree(filename);
+    }
+
+    IShellItem_Release(psi);
+    return hr;
 }
 
 static HRESULT WINAPI ICommDlgBrowser3_fnNotify(ICommDlgBrowser3 *iface,
