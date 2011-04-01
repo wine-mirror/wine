@@ -125,6 +125,76 @@ static BOOL set_file_name(FileDialogImpl *This, LPCWSTR str)
     return SendMessageW(hwnd_edit, WM_SETTEXT, 0, (LPARAM)str);
 }
 
+static void fill_filename_from_selection(FileDialogImpl *This)
+{
+    IShellItem *psi;
+    LPWSTR *names;
+    HRESULT hr;
+    UINT item_count, valid_count;
+    UINT len_total, i;
+
+    if(!This->psia_selection)
+        return;
+
+    hr = IShellItemArray_GetCount(This->psia_selection, &item_count);
+    if(FAILED(hr) || !item_count)
+        return;
+
+    names = HeapAlloc(GetProcessHeap(), 0, item_count*sizeof(LPWSTR));
+
+    /* Get names of the selected items */
+    valid_count = 0; len_total = 0;
+    for(i = 0; i < item_count; i++)
+    {
+        hr = IShellItemArray_GetItemAt(This->psia_selection, i, &psi);
+        if(SUCCEEDED(hr))
+        {
+            UINT attr;
+
+            hr = IShellItem_GetAttributes(psi, SFGAO_FOLDER, &attr);
+            if(SUCCEEDED(hr) && (attr & SFGAO_FOLDER))
+                continue; /* FIXME: FOS_PICKFOLDERS */
+
+            hr = IShellItem_GetDisplayName(psi, SIGDN_PARENTRELATIVEPARSING, &names[valid_count]);
+            if(SUCCEEDED(hr))
+            {
+                len_total += lstrlenW(names[valid_count]) + 3;
+                valid_count++;
+            }
+            IShellItem_Release(psi);
+        }
+    }
+
+    if(valid_count == 1)
+    {
+        set_file_name(This, names[0]);
+        CoTaskMemFree(names[0]);
+    }
+    else if(valid_count > 1)
+    {
+        LPWSTR string = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*len_total);
+        LPWSTR cur_point = string;
+
+        for(i = 0; i < valid_count; i++)
+        {
+            LPWSTR file = names[i];
+            *cur_point++ = '\"';
+            lstrcpyW(cur_point, file);
+            cur_point += lstrlenW(file);
+            *cur_point++ = '\"';
+            *cur_point++ = ' ';
+            CoTaskMemFree(file);
+        }
+        *(cur_point-1) = '\0';
+
+        set_file_name(This, string);
+        HeapFree(GetProcessHeap(), 0, string);
+    }
+
+    HeapFree(GetProcessHeap(), 0, names);
+    return;
+}
+
 /**************************************************************************
  * Window related functions.
  */
@@ -1642,7 +1712,33 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnStateChange(ICommDlgBrowser3 *iface,
                                                        IShellView *shv, ULONG uChange )
 {
     FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("Stub: %p (%p, %x)\n", This, shv, uChange);
+    IDataObject *new_selection;
+    HRESULT hr;
+    TRACE("%p (%p, %x)\n", This, shv, uChange);
+
+    switch(uChange)
+    {
+    case CDBOSC_SELCHANGE:
+        if(This->psia_selection)
+        {
+            IShellItemArray_Release(This->psia_selection);
+            This->psia_selection = NULL;
+        }
+
+        hr = IShellView_GetItemObject(shv, SVGIO_SELECTION, &IID_IDataObject, (void**)&new_selection);
+        if(SUCCEEDED(hr))
+        {
+            hr = SHCreateShellItemArrayFromDataObject(new_selection, &IID_IShellItemArray,
+                                                      (void**)&This->psia_selection);
+            if(SUCCEEDED(hr))
+                fill_filename_from_selection(This);
+
+            IDataObject_Release(new_selection);
+        }
+        break;
+    default:
+        TRACE("Unhandled state change\n");
+    }
     return S_OK;
 }
 
