@@ -14,6 +14,7 @@ C_SRCS = \
 	clipping.c \
 	dc.c \
 	dib.c \
+	dibdrv/dc.c \
 	driver.c \
 	enhmetafile.c \
 	enhmfdrv/bitblt.c \
@@ -44,6 +45,7 @@ C_SRCS = \
 RC_SRCS = version.rc
 
 EXTRASUBDIRS = \
+	dibdrv \
 	enhmfdrv \
 	mfdrv
 

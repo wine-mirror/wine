@@ -79,6 +79,8 @@ DC *alloc_dc_ptr( WORD magic )
 
     dc->nulldrv.funcs       = &null_driver;
     dc->nulldrv.next        = NULL;
+    dc->dibdrv.dev.funcs    = &dib_driver;
+    dc->dibdrv.dev.next     = NULL;
     dc->physDev             = &dc->nulldrv;
     dc->thread              = GetCurrentThreadId();
     dc->refcount            = 1;

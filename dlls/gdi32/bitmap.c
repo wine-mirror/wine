@@ -592,7 +592,7 @@ BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev )
 
     if (!(bitmap = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return FALSE;
 
-    if (bitmap->funcs != physdev->funcs)
+    if (!bitmap->dib && bitmap->funcs != physdev->funcs)
     {
         /* we can only change from the null driver to some other driver */
         if (bitmap->funcs == &null_driver)
@@ -627,7 +627,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
     HGDIOBJ ret;
     BITMAPOBJ *bitmap;
     DC *dc;
-    PHYSDEV physdev;
+    PHYSDEV physdev = NULL, old_physdev = NULL;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
@@ -653,7 +653,17 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
         goto done;
     }
 
-    physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
+    old_physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
+    if(old_physdev == &dc->dibdrv.dev)
+        pop_dc_driver( dc, old_physdev );
+
+    if(bitmap->dib)
+    {
+        physdev = &dc->dibdrv.dev;
+        push_dc_driver( dc, physdev, physdev->funcs );
+    }
+    else
+        physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
 
     if (!BITMAP_SetOwnerDC( handle, physdev ))
     {
@@ -682,6 +692,11 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
     }
 
  done:
+    if(!ret)
+    {
+        if(physdev == &dc->dibdrv.dev) pop_dc_driver( dc, physdev );
+        if(old_physdev == &dc->dibdrv.dev) push_dc_driver( dc, old_physdev, old_physdev->funcs );
+    }
     release_dc_ptr( dc );
     return ret;
 }

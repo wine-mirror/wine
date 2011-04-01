@@ -2347,6 +2347,7 @@ WINE_CONFIG_SYMLINK(fonts/tahomabd.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(tools/l_intl.nls)
 WINE_CONFIG_SYMLINK(wine,tools/winewrapper)
 
+WINE_CONFIG_EXTRA_DIR(dlls/gdi32/dibdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/enhmfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/mfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/kernel32/nls)

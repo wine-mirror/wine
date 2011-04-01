@@ -79,6 +79,21 @@ typedef struct gdi_physdev
     HDC                       hdc;
 } *PHYSDEV;
 
+typedef struct
+{
+    int bit_count, width, height;
+    int stride; /* stride in bytes.  Will be -ve for bottom-up dibs (see bits). */
+    void *bits; /* points to the top-left corner of the dib. */
+
+    DWORD red_mask, green_mask, blue_mask;
+} dib_info;
+
+typedef struct dibdrv_physdev
+{
+    struct gdi_physdev dev;
+    dib_info dib;
+} dibdrv_physdev;
+
 typedef struct tagDC_FUNCS
 {
     INT      (CDECL *pAbortDoc)(PHYSDEV);
@@ -246,6 +261,7 @@ typedef struct tagDC
     GDIOBJHDR    header;
     HDC          hSelf;            /* Handle to this DC */
     struct gdi_physdev nulldrv;    /* physdev for the null driver */
+    struct dibdrv_physdev dibdrv;  /* physdev for the dib driver */
     PHYSDEV      physDev;         /* Physical device (driver-specific) */
     DWORD        thread;          /* thread owning the DC */
     LONG         refcount;        /* thread refcount */
@@ -391,6 +407,7 @@ extern int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
 
 /* driver.c */
 extern const DC_FUNCTIONS null_driver DECLSPEC_HIDDEN;
+extern const DC_FUNCTIONS dib_driver DECLSPEC_HIDDEN;
 extern const DC_FUNCTIONS *DRIVER_get_display_driver(void) DECLSPEC_HIDDEN;
 extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
 extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;

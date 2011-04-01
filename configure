@@ -14858,6 +14858,8 @@ test "$srcdir" = "." || wine_fn_config_symlink tools/l_intl.nls
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
 
+ac_config_commands="$ac_config_commands dlls/gdi32/dibdrv"
+
 ac_config_commands="$ac_config_commands dlls/gdi32/enhmfdrv"
 
 ac_config_commands="$ac_config_commands dlls/gdi32/mfdrv"
@@ -16320,6 +16322,7 @@ do
     "fonts/tahomabd.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahomabd.ttf:fonts/tahomabd.ttf" ;;
     "tools/l_intl.nls") CONFIG_LINKS="$CONFIG_LINKS tools/l_intl.nls:tools/l_intl.nls" ;;
     "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
+    "dlls/gdi32/dibdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/dibdrv" ;;
     "dlls/gdi32/enhmfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/enhmfdrv" ;;
     "dlls/gdi32/mfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/mfdrv" ;;
     "dlls/kernel32/nls") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel32/nls" ;;
@@ -16957,6 +16960,8 @@ $as_echo "$as_me: executing $ac_file commands" >&6;}
 
   case $ac_file$ac_mode in
     "include/stamp-h":C) echo timestamp > include/stamp-h ;;
+    "dlls/gdi32/dibdrv":C) test -d "dlls/gdi32/dibdrv" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/gdi32/dibdrv" >&5
+$as_echo "$as_me: creating dlls/gdi32/dibdrv" >&6;}; as_dir="dlls/gdi32/dibdrv"; as_fn_mkdir_p; } ;;
     "dlls/gdi32/enhmfdrv":C) test -d "dlls/gdi32/enhmfdrv" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/gdi32/enhmfdrv" >&5
 $as_echo "$as_me: creating dlls/gdi32/enhmfdrv" >&6;}; as_dir="dlls/gdi32/enhmfdrv"; as_fn_mkdir_p; } ;;
     "dlls/gdi32/mfdrv":C) test -d "dlls/gdi32/mfdrv" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/gdi32/mfdrv" >&5
