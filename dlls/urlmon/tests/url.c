@@ -297,10 +297,10 @@ static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
     if(mon1) IMoniker_Release(mon1);
 
     hr = CreateURLMoniker(NULL, url1, &mon1);
-    ok(SUCCEEDED(hr), "failed to create moniker: 0x%08x\n", hr);
-    if(SUCCEEDED(hr)) {
+    ok(hr == S_OK, "failed to create moniker: 0x%08x\n", hr);
+    if(hr == S_OK) {
         hr = CreateURLMoniker(mon1, url2, &mon2);
-        ok(SUCCEEDED(hr), "failed to create moniker: 0x%08x\n", hr);
+        ok(hr == S_OK, "failed to create moniker: 0x%08x\n", hr);
     }
     if(mon1) IMoniker_Release(mon1);
     if(mon2) IMoniker_Release(mon2);
@@ -2277,7 +2277,7 @@ static void test_CreateAsyncBindCtx(void)
 
     bindopts.cbStruct = sizeof(bindopts);
     hres = IBindCtx_GetBindOptions(bctx, &bindopts);
-    ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08x\n", hres);
+    ok(hres == S_OK, "IBindCtx_GetBindOptions failed: %08x\n", hres);
     ok(bindopts.grfFlags == BIND_MAYBOTHERUSER,
                 "bindopts.grfFlags = %08x, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
     ok(bindopts.grfMode == (STGM_READWRITE | STGM_SHARE_EXCLUSIVE),
@@ -2318,7 +2318,7 @@ static void test_CreateAsyncBindCtxEx(void)
     if(SUCCEEDED(hres)) {
         bindopts.cbStruct = sizeof(bindopts);
         hres = IBindCtx_GetBindOptions(bctx, &bindopts);
-        ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08x\n", hres);
+        ok(hres == S_OK, "IBindCtx_GetBindOptions failed: %08x\n", hres);
         ok(bindopts.grfFlags == BIND_MAYBOTHERUSER,
                 "bindopts.grfFlags = %08x, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
         ok(bindopts.grfMode == (STGM_READWRITE | STGM_SHARE_EXCLUSIVE),
@@ -2337,7 +2337,7 @@ static void test_CreateAsyncBindCtxEx(void)
     if(SUCCEEDED(hres)) {
         bindopts.cbStruct = sizeof(bindopts);
         hres = IBindCtx_GetBindOptions(bctx, &bindopts);
-        ok(SUCCEEDED(hres), "IBindCtx_GetBindOptions failed: %08x\n", hres);
+        ok(hres == S_OK, "IBindCtx_GetBindOptions failed: %08x\n", hres);
         ok(bindopts.grfFlags == BIND_MAYBOTHERUSER,
                 "bindopts.grfFlags = %08x, expected: BIND_MAYBOTHERUSER\n", bindopts.grfFlags);
         ok(bindopts.grfMode == (STGM_READWRITE | STGM_SHARE_EXCLUSIVE),
@@ -3024,13 +3024,13 @@ static void test_BindToObject(int protocol, DWORD flags)
 
     SET_EXPECT(QueryInterface_IServiceProvider);
     hres = CreateAsyncBindCtx(0, (IBindStatusCallback*)&objbsc, NULL, &bctx);
-    ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n\n", hres);
+    ok(hres == S_OK, "CreateAsyncBindCtx failed: %08x\n\n", hres);
     CHECK_CALLED(QueryInterface_IServiceProvider);
     if(FAILED(hres))
         return;
 
     hres = CreateURLMoniker(NULL, test_protocol == FILE_TEST ? file_url : urls[test_protocol], &mon);
-    ok(SUCCEEDED(hres), "failed to create moniker: %08x\n", hres);
+    ok(hres == S_OK, "failed to create moniker: %08x\n", hres);
     if(FAILED(hres)) {
         IBindCtx_Release(bctx);
         return;
