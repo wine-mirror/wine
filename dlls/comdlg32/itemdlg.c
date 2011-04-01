@@ -199,6 +199,113 @@ static void fill_filename_from_selection(FileDialogImpl *This)
     return;
 }
 
+static HRESULT on_default_action(FileDialogImpl *This)
+{
+    IShellFolder *psf_parent, *psf_desktop;
+    LPITEMIDLIST *pidla;
+    LPITEMIDLIST current_folder;
+    LPWSTR fn_iter, files, tmp_files;
+    UINT file_count = 0, len, i;
+    int open_action;
+    HRESULT hr, ret = E_FAIL;
+
+    len = get_file_name(This, &tmp_files);
+    if(len)
+    {
+        UINT size_used;
+        file_count = COMDLG32_SplitFileNames(tmp_files, len, &files, &size_used);
+    }
+    if(!file_count) return E_FAIL;
+
+    hr = SHGetIDListFromObject((IUnknown*)This->psi_folder, &current_folder);
+    if(FAILED(hr))
+    {
+        ERR("Failed to get pidl for current directory.\n");
+        return hr;
+    }
+
+    TRACE("Acting on %d file(s).\n", file_count);
+
+    pidla = HeapAlloc(GetProcessHeap(), 0, sizeof(LPITEMIDLIST) * file_count);
+    open_action = ONOPEN_OPEN;
+    fn_iter = files;
+
+    for(i = 0; i < file_count && open_action == ONOPEN_OPEN; i++)
+    {
+        WCHAR canon_filename[MAX_PATH];
+        psf_parent = NULL;
+
+        COMDLG32_GetCanonicalPath(current_folder, fn_iter, canon_filename);
+
+        if( (This->options & FOS_NOVALIDATE) &&
+            !(This->options & FOS_FILEMUSTEXIST) )
+            open_action = ONOPEN_OPEN;
+        else
+            open_action = ONOPEN_BROWSE;
+
+        open_action = FILEDLG95_ValidatePathAction(canon_filename, &psf_parent, This->dlg_hwnd,
+                                                   This->options, (This->dlg_type == ITEMDLG_TYPE_SAVE),
+                                                   open_action);
+
+        pidla[i] = COMDLG32_SHSimpleIDListFromPathAW(canon_filename);
+
+        if(psf_parent && !(open_action == ONOPEN_BROWSE))
+            IShellItem_Release(psf_parent);
+
+        fn_iter += (WCHAR)lstrlenW(fn_iter) + 1;
+    }
+
+    HeapFree(GetProcessHeap(), 0, files);
+    ILFree(current_folder);
+
+    if((This->options & FOS_PICKFOLDERS) && open_action == ONOPEN_BROWSE)
+        open_action = ONOPEN_OPEN; /* FIXME: Multiple folders? */
+
+    switch(open_action)
+    {
+    case ONOPEN_SEARCH:
+        FIXME("Filtering not implemented.\n");
+        break;
+
+    case ONOPEN_BROWSE:
+        hr = IExplorerBrowser_BrowseToObject(This->peb, (IUnknown*)psf_parent, SBSP_DEFBROWSER);
+        if(FAILED(hr))
+            ERR("Failed to browse to directory: %08x\n", hr);
+
+        IShellItem_Release(psf_parent);
+        break;
+
+    case ONOPEN_OPEN:
+        hr = SHGetDesktopFolder(&psf_desktop);
+        if(SUCCEEDED(hr))
+        {
+            if(This->psia_results)
+                IShellItemArray_Release(This->psia_results);
+
+            hr = SHCreateShellItemArray(NULL, psf_desktop, file_count, (PCUITEMID_CHILD_ARRAY)pidla,
+                                        &This->psia_results);
+
+            if(SUCCEEDED(hr))
+                ret = S_OK;
+
+            IShellFolder_Release(psf_desktop);
+        }
+        break;
+
+    default:
+        ERR("Failed.\n");
+        break;
+    }
+
+    /* Clean up */
+    for(i = 0; i < file_count; i++)
+        ILFree(pidla[i]);
+    HeapFree(GetProcessHeap(), 0, pidla);
+
+    /* Success closes the dialog */
+    return ret;
+}
+
 /**************************************************************************
  * Window related functions.
  */
@@ -527,7 +634,8 @@ static LRESULT on_idok(FileDialogImpl *This)
 {
     TRACE("%p\n", This);
 
-    EndDialog(This->dlg_hwnd, S_OK);
+    if(SUCCEEDED(on_default_action(This)))
+        EndDialog(This->dlg_hwnd, S_OK);
 
     return FALSE;
 }
@@ -1766,7 +1874,14 @@ static HRESULT WINAPI ICommDlgBrowser3_fnOnDefaultCommand(ICommDlgBrowser3 *ifac
                                                           IShellView *shv)
 {
     FileDialogImpl *This = impl_from_ICommDlgBrowser3(iface);
-    FIXME("Stub: %p (%p)\n", This, shv);
+    HRESULT hr;
+    TRACE("%p (%p)\n", This, shv);
+
+    hr = on_default_action(This);
+
+    if(SUCCEEDED(hr))
+        EndDialog(This->dlg_hwnd, S_OK);
+
     return S_OK;
 }
 

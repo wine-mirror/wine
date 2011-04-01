@@ -57,6 +57,7 @@ UINT (WINAPI *COMDLG32_PIDL_ILGetSize)(LPCITEMIDLIST);
 LPVOID (WINAPI *COMDLG32_SHAlloc)(DWORD);
 DWORD (WINAPI *COMDLG32_SHFree)(LPVOID);
 BOOL (WINAPI *COMDLG32_SHGetFolderPathW)(HWND,int,HANDLE,DWORD,LPWSTR);
+LPITEMIDLIST (WINAPI *COMDLG32_SHSimpleIDListFromPathAW)(LPCVOID);
 
 /***********************************************************************
  *	DllMain  (COMDLG32.init)
@@ -96,7 +97,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 		GPA(COMDLG32_PIDL_ILGetSize, SHELL32_hInstance, (LPCSTR)152L);
 
 		/* SHELL */
-
+		GPA(COMDLG32_SHSimpleIDListFromPathAW, SHELL32_hInstance, (LPCSTR)162);
 		GPA(COMDLG32_SHAlloc, SHELL32_hInstance, (LPCSTR)196L);
 		GPA(COMDLG32_SHFree, SHELL32_hInstance, (LPCSTR)195L);
 
