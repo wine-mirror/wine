@@ -5619,3 +5619,13 @@ BOOL WINAPI SaferGetPolicyInformation(DWORD scope, SAFER_POLICY_INFO_CLASS class
     FIXME("(%u %u %u %p %p %p) stub\n", scope, class, size, buffer, required, lpReserved);
     return FALSE;
 }
+
+/******************************************************************************
+ * SaferSetLevelInformation   [ADVAPI32.@]
+ */
+BOOL WINAPI SaferSetLevelInformation(SAFER_LEVEL_HANDLE handle, SAFER_OBJECT_INFO_CLASS infotype,
+                                     LPVOID buffer, DWORD size)
+{
+    FIXME("(%p %u %p %u) stub\n", handle, infotype, buffer, size);
+    return FALSE;
+}

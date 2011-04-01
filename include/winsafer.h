@@ -51,7 +51,27 @@ typedef enum _SAFER_POLICY_INFO_CLASS {
     SaferPolicyScopeFlags
 } SAFER_POLICY_INFO_CLASS;
 
+typedef enum _SAFER_OBJECT_INFO_CLASS {
+    SaferObjectLevelId = 1,
+    SaferObjectScopeId,
+    SaferObjectFriendlyName,
+    SaferObjectDescription,
+    SaferObjectBuiltin,
+    SaferObjectDisallowed,
+    SaferObjectDisableMaxPrivilege,
+    SaferObjectInvertDeletedPrivileges,
+    SaferObjectDeletedPrivileges,
+    SaferObjectDefaultOwner,
+    SaferObjectSidsToDisable,
+    SaferObjectRestrictedSidsInverted,
+    SaferObjectRestrictedSidsAdded,
+    SaferObjectAllIdentificationGuids,
+    SaferObjectSingleIdentification,
+    SaferObjectExtendedError
+} SAFER_OBJECT_INFO_CLASS;
+
 WINADVAPI BOOL WINAPI SaferGetPolicyInformation(DWORD,SAFER_POLICY_INFO_CLASS,DWORD,PVOID,PDWORD,LPVOID);
+WINADVAPI BOOL WINAPI SaferSetLevelInformation(SAFER_LEVEL_HANDLE,SAFER_OBJECT_INFO_CLASS,LPVOID,DWORD);
 
 #ifdef __cplusplus
 }

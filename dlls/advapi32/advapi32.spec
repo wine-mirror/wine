@@ -550,7 +550,7 @@
 @ stdcall SaferGetPolicyInformation(long long long ptr ptr ptr)
 # @ stub SaferIdentifyLevel
 # @ stub SaferRecordEventLogEntry
-# @ stub SaferSetLevelInformation
+@ stdcall SaferSetLevelInformation(ptr long ptr long)
 # @ stub SaferSetPolicyInformation
 # @ stub SaferiChangeRegistryScope
 # @ stub SaferiCompareTokenLevels
