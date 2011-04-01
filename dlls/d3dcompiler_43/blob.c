@@ -161,9 +161,9 @@ HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob **blob)
         return hr;
     }
 
-    *blob = (ID3DBlob *)object;
+    *blob = &object->ID3DBlob_iface;
 
-    TRACE("Created ID3DBlob %p\n", object);
+    TRACE("Created ID3DBlob %p\n", *blob);
 
     return S_OK;
 }
