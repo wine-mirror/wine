@@ -4121,10 +4121,7 @@ static BOOL enum_face_charsets(Face *face, FONTENUMPROCW proc, LPARAM lparam)
         else {
             fs.fsCsb[0] = 1L << i;
             fs.fsCsb[1] = 0;
-            if(!TranslateCharsetInfo(fs.fsCsb, &csi, TCI_SRCFONTSIG))
-                csi.ciCharset = DEFAULT_CHARSET;
-            if(i == 31) csi.ciCharset = SYMBOL_CHARSET;
-            if(csi.ciCharset != DEFAULT_CHARSET) {
+            if(TranslateCharsetInfo(fs.fsCsb, &csi, TCI_SRCFONTSIG))
                 elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = csi.ciCharset;
                 if(ElfScriptsW[i])
                     strcpyW(elf.elfScript, ElfScriptsW[i]);
