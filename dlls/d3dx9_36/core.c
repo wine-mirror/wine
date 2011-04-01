@@ -137,6 +137,12 @@ HRESULT WINAPI D3DXCreateBuffer(DWORD size, LPD3DXBUFFER *buffer)
     struct ID3DXBufferImpl *object;
     HRESULT hr;
 
+    if (!buffer)
+    {
+        WARN("Invalid buffer specified.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
