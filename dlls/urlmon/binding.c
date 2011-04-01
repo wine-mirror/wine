@@ -907,7 +907,7 @@ static Binding *get_bctx_binding(IBindCtx *bctx)
     if(FAILED(hres))
         return NULL;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IBinding, (void*)&binding);
+    hres = IUnknown_QueryInterface(unk, &IID_IBinding, (void**)&binding);
     IUnknown_Release(unk);
     if(FAILED(hres))
         return NULL;
@@ -1538,8 +1538,6 @@ HRESULT bind_to_storage(IUri *uri, IBindCtx *pbc, REFIID riid, void **ppv)
 {
     Binding *binding = NULL, *binding_ctx;
     HRESULT hres;
-
-    *ppv = NULL;
 
     binding_ctx = get_bctx_binding(pbc);
 

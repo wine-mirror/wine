@@ -237,6 +237,10 @@ static HRESULT WINAPI URLMoniker_BindToStorage(IMoniker* iface, IBindCtx* pbc,
 
     TRACE("(%p)->(%p %p %s %p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppvObject);
 
+    if(ppvObject) *ppvObject = NULL;
+
+    if(!pbc || !ppvObject) return E_INVALIDARG;
+
     if(pmkToLeft)
         FIXME("Unsupported pmkToLeft\n");
 

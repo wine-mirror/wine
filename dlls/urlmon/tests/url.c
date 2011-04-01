@@ -308,7 +308,51 @@ static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
 
 static void test_create(void)
 {
+    static const WCHAR relativeW[] = {'a','/','b','.','t','x','t',0};
+    IStream *stream;
+    IMoniker *mon;
+    IBindCtx *bctx;
+    HRESULT hr;
+
     test_CreateURLMoniker(TEST_URL_1, TEST_PART_URL_1);
+
+    mon = (void*)0xdeadbeef;
+    hr = CreateURLMoniker(NULL, relativeW, &mon);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = CreateBindCtx(0, &bctx);
+
+    stream = (void*)0xdeadbeef;
+    hr = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&stream);
+    todo_wine ok(hr == INET_E_UNKNOWN_PROTOCOL, "got 0x%08x\n", hr);
+    ok(stream == NULL, "got %p\n", stream);
+
+    hr = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    stream = (void*)0xdeadbeef;
+    hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IStream, (void**)&stream);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(stream == NULL || broken(stream == (void*)0xdeadbeef) /* starting XP SP3 it's set to null */,
+        "got %p\n", stream);
+
+    IMoniker_Release(mon);
+
+    mon = (void*)0xdaedbeef;
+    hr = CreateURLMoniker(NULL, TEST_URL_1, &mon);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    stream = (void*)0xdeadbeef;
+    hr = IMoniker_BindToStorage(mon, NULL, NULL, &IID_IStream, (void**)&stream);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(stream == NULL || broken(stream == (void*)0xdeadbeef) /* starting XP SP3 it's set to null */,
+        "got %p\n", stream);
+
+    hr = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    IMoniker_Release(mon);
+    IBindCtx_Release(bctx);
 }
 
 static HRESULT WINAPI Priority_QueryInterface(IInternetPriority *iface, REFIID riid, void **ppv)
@@ -3378,9 +3422,11 @@ static void test_BindToStorage_fail(void)
     hres = pCreateAsyncBindCtxEx(NULL, 0, NULL, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
 
+    unk = (void*)0xdeadbeef;
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
     ok(hres == MK_E_SYNTAX || hres == INET_E_DATA_NOT_AVAILABLE,
        "hres=%08x, expected MK_E_SYNTAX or INET_E_DATA_NOT_AVAILABLE\n", hres);
+    ok(unk == NULL, "got %p\n", unk);
 
     IBindCtx_Release(bctx);
 
