@@ -161,8 +161,26 @@ static void test_empty(void)
 
     hdc = CreateCompatibleDC(0);
 
+    stat = GdipRecordMetafile(NULL, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(InvalidParameter, stat);
+
+    stat = GdipRecordMetafile(hdc, MetafileTypeInvalid, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(InvalidParameter, stat);
+
+    stat = GdipRecordMetafile(hdc, MetafileTypeWmf, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(InvalidParameter, stat);
+
+    stat = GdipRecordMetafile(hdc, MetafileTypeWmfPlaceable, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(InvalidParameter, stat);
+
+    stat = GdipRecordMetafile(hdc, MetafileTypeEmfPlusDual+1, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(InvalidParameter, stat);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, NULL);
+    expect(InvalidParameter, stat);
+
     stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     DeleteDC(hdc);
 

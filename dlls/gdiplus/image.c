@@ -2143,12 +2143,7 @@ GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage *image,
     if(!image || !graphics)
         return InvalidParameter;
 
-    if(image->type != ImageTypeBitmap){
-        FIXME("not implemented for image type %d\n", image->type);
-        return NotImplemented;
-    }
-
-    if (((GpBitmap*)image)->hbitmap)
+    if (image->type == ImageTypeBitmap && ((GpBitmap*)image)->hbitmap)
     {
         hdc = ((GpBitmap*)image)->hdc;
 
@@ -2163,6 +2158,8 @@ GpStatus WINGDIPAPI GdipGetImageGraphicsContext(GpImage *image,
         if (stat == Ok)
             (*graphics)->image = image;
     }
+    else if (image->type == ImageTypeMetafile)
+        stat = METAFILE_GetGraphicsContext((GpMetafile*)image, graphics);
     else
         stat = graphics_from_image(image, graphics);
 

@@ -51,6 +51,9 @@ extern REAL convert_unit(REAL logpixels, GpUnit unit) DECLSPEC_HIDDEN;
 
 extern GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics) DECLSPEC_HIDDEN;
 
+extern GpStatus METAFILE_GetGraphicsContext(GpMetafile* metafile, GpGraphics **result) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile) DECLSPEC_HIDDEN;
+
 extern void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2) DECLSPEC_HIDDEN;
 extern void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
@@ -268,6 +271,13 @@ struct GpMetafile{
     GpImage image;
     GpRectF bounds;
     GpUnit unit;
+    MetafileType metafile_type;
+    HDC record_dc;
+    GpGraphics *record_graphics;
+    BYTE *comment_data;
+    DWORD comment_data_size;
+    DWORD comment_data_length;
+    HENHMETAFILE hemf;
 };
 
 struct GpBitmap{

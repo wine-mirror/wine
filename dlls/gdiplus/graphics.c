@@ -206,6 +206,11 @@ static GpStatus alpha_blend_pixels(GpGraphics *graphics, INT dst_x, INT dst_y,
 
         return Ok;
     }
+    else if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        ERR("This should not be used for metafiles; fix caller\n");
+        return NotImplemented;
+    }
     else
     {
         HDC hdc;
@@ -1967,10 +1972,18 @@ GpStatus WINGDIPAPI GdipCreateStreamOnFile(GDIPCONST WCHAR * filename,
 GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
 {
     GraphicsContainerItem *cont, *next;
+    GpStatus stat;
     TRACE("(%p)\n", graphics);
 
     if(!graphics) return InvalidParameter;
     if(graphics->busy) return ObjectBusy;
+
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        stat = METAFILE_GraphicsDeleted((GpMetafile*)graphics->image);
+        if (stat != Ok)
+            return stat;
+    }
 
     if(graphics->owndc)
         ReleaseDC(graphics->hwnd, graphics->hdc);
@@ -5873,23 +5886,6 @@ GpStatus WINGDIPAPI GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 
     return stat;
 }
 
-GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF *frameRect,
-                                       MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
-{
-    FIXME("(%p %d %p %d %p %p): stub\n", hdc, type, frameRect, frameUnit, desc, metafile);
-    return NotImplemented;
-}
-
-/*****************************************************************************
- * GdipRecordMetafileI [GDIPLUS.@]
- */
-GpStatus WINGDIPAPI GdipRecordMetafileI(HDC hdc, EmfType type, GDIPCONST GpRect *frameRect,
-                                        MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
-{
-    FIXME("(%p %d %p %d %p %p): stub\n", hdc, type, frameRect, frameUnit, desc, metafile);
-    return NotImplemented;
-}
-
 GpStatus WINGDIPAPI GdipRecordMetafileStream(IStream *stream, HDC hdc, EmfType type, GDIPCONST GpRect *frameRect,
                                         MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
 {
@@ -5918,16 +5914,4 @@ GpStatus WINGDIPAPI GdipIsVisibleClipEmpty(GpGraphics *graphics, BOOL *res)
 cleanup:
     GdipDeleteRegion(rgn);
     return stat;
-}
-
-GpStatus WINGDIPAPI GdipGetHemfFromMetafile(GpMetafile *metafile, HENHMETAFILE *hEmf)
-{
-    FIXME("(%p,%p): stub\n", metafile, hEmf);
-
-    if (!metafile || !hEmf)
-        return InvalidParameter;
-
-    *hEmf = NULL;
-
-    return NotImplemented;
 }

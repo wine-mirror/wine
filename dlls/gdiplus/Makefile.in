@@ -13,6 +13,7 @@ C_SRCS = \
 	image.c \
 	imageattributes.c \
 	matrix.c \
+	metafile.c \
 	pathiterator.c \
 	pen.c \
 	region.c \
