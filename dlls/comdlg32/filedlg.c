@@ -568,6 +568,46 @@ static BOOL COMDLG32_GetDisplayNameOf(LPCITEMIDLIST pidl, LPWSTR pwszPath) {
     return SUCCEEDED(StrRetToBufW(&strret, pidl, pwszPath, MAX_PATH));
 }
 
+/******************************************************************************
+ * COMDLG32_GetCanonicalPath [internal]
+ *
+ * Helper function to get the canonical path.
+ */
+void COMDLG32_GetCanonicalPath(PCIDLIST_ABSOLUTE pidlAbsCurrent,
+                               LPWSTR lpstrFile, LPWSTR lpstrPathAndFile)
+{
+  WCHAR lpstrTemp[MAX_PATH];
+
+  /* Get the current directory name */
+  if (!COMDLG32_GetDisplayNameOf(pidlAbsCurrent, lpstrPathAndFile))
+  {
+    /* last fallback */
+    GetCurrentDirectoryW(MAX_PATH, lpstrPathAndFile);
+  }
+  PathAddBackslashW(lpstrPathAndFile);
+
+  TRACE("current directory=%s\n", debugstr_w(lpstrPathAndFile));
+
+  /* if the user specified a fully qualified path use it */
+  if(PathIsRelativeW(lpstrFile))
+  {
+    lstrcatW(lpstrPathAndFile, lpstrFile);
+  }
+  else
+  {
+    /* does the path have a drive letter? */
+    if (PathGetDriveNumberW(lpstrFile) == -1)
+      lstrcpyW(lpstrPathAndFile+2, lpstrFile);
+    else
+      lstrcpyW(lpstrPathAndFile, lpstrFile);
+  }
+
+  /* resolve "." and ".." */
+  PathCanonicalizeW(lpstrTemp, lpstrPathAndFile );
+  lstrcpyW(lpstrPathAndFile, lpstrTemp);
+  TRACE("canon=%s\n", debugstr_w(lpstrPathAndFile));
+}
+
 /***********************************************************************
  *      ArrangeCtrlPositions [internal]
  *
@@ -2200,7 +2240,6 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
   UINT sizeUsed = 0;
   BOOL ret = TRUE;
   WCHAR lpstrPathAndFile[MAX_PATH];
-  WCHAR lpstrTemp[MAX_PATH];
   LPSHELLFOLDER lpsf = NULL;
   int nOpenAction;
   FileOpenDlgInfos *fodInfos = GetPropA(hwnd,FileOpenDlgInfosStr);
@@ -2234,35 +2273,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
   - the edit box contains ".." (or a path with ".." in it)
 */
 
-  /* Get the current directory name */
-  if (!COMDLG32_GetDisplayNameOf(fodInfos->ShellInfos.pidlAbsCurrent, lpstrPathAndFile))
-  {
-    /* last fallback */
-    GetCurrentDirectoryW(MAX_PATH, lpstrPathAndFile);
-  }
-  PathAddBackslashW(lpstrPathAndFile);
-
-  TRACE("current directory=%s\n", debugstr_w(lpstrPathAndFile));
-
-  /* if the user specified a fully qualified path use it */
-  if(PathIsRelativeW(lpstrFileList))
-  {
-    lstrcatW(lpstrPathAndFile, lpstrFileList);
-  }
-  else
-  {
-    /* does the path have a drive letter? */
-    if (PathGetDriveNumberW(lpstrFileList) == -1)
-      lstrcpyW(lpstrPathAndFile+2, lpstrFileList);
-    else
-      lstrcpyW(lpstrPathAndFile, lpstrFileList);
-  }
-
-  /* resolve "." and ".." */
-  PathCanonicalizeW(lpstrTemp, lpstrPathAndFile );
-  lstrcpyW(lpstrPathAndFile, lpstrTemp);
-  TRACE("canon=%s\n", debugstr_w(lpstrPathAndFile));
-
+  COMDLG32_GetCanonicalPath(fodInfos->ShellInfos.pidlAbsCurrent, lpstrFileList, lpstrPathAndFile);
   MemFree(lpstrFileList);
 
 /*
