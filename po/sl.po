@@ -46,7 +46,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Ni navedeno"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:114
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:113
 msgid "Name"
 msgstr "Ime"
 
@@ -169,7 +169,7 @@ msgstr "Priljubljene"
 msgid "System Path"
 msgstr "Sistemska pot"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:105
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:104
 msgid "Desktop"
 msgstr "Namizje"
 
@@ -6684,7 +6684,7 @@ msgstr "Iz&hod"
 msgid "&About Control Panel..."
 msgstr "&O Nadzorni plošči ..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:115
+#: shell32.rc:123 shell32.rc:127 winefile.rc:114
 msgid "Size"
 msgstr "Velikost"
 
@@ -6696,7 +6696,7 @@ msgstr "Vrsta"
 msgid "Modified"
 msgstr "Spremenjena"
 
-#: shell32.rc:126 winefile.rc:121
+#: shell32.rc:126 winefile.rc:120
 #, fuzzy
 msgid "Attributes"
 msgstr ""
@@ -6869,7 +6869,7 @@ msgstr "Programi (x86)\\Skupne datoteke"
 msgid "Contacts"
 msgstr "Kontakti"
 
-#: shell32.rc:216 winefile.rc:120
+#: shell32.rc:216 winefile.rc:119
 msgid "Links"
 msgstr "Povezave"
 
@@ -7129,7 +7129,7 @@ msgstr "&Zapri\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&O Wine ..."
 
-#: user32.rc:55 regedit.rc:175 winefile.rc:102
+#: user32.rc:55 regedit.rc:175 winefile.rc:101
 msgid "Error"
 msgstr "Napaka"
 
@@ -11228,71 +11228,67 @@ msgstr "&Vertikalna razporeditev\tCtrl+F4"
 msgid "Arrange &Symbols"
 msgstr "Razporedi &simbole"
 
-#: winefile.rc:87
-msgid "&Using Help\tF1"
-msgstr "&Uporaba pomoči\tF1"
-
-#: winefile.rc:89
+#: winefile.rc:88
 msgid "&About Winefile..."
 msgstr "&O Winefile ..."
 
-#: winefile.rc:95
+#: winefile.rc:94
 msgid "Applying font settings"
 msgstr "Uveljavljam nastavitve pisave"
 
-#: winefile.rc:96
+#: winefile.rc:95
 msgid "Error while selecting new font."
 msgstr "Napaka pri izbiranju nove pisave."
 
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Wine File Manager"
 msgstr "Winefile"
 
-#: winefile.rc:103
+#: winefile.rc:102
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:104
+#: winefile.rc:103
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:106
+#: winefile.rc:105
 msgid "Shell"
 msgstr "Shell"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:108
+#: winefile.rc:107
 msgid "Not yet implemented"
 msgstr "Ni (še) na voljo"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Wine File"
 msgstr "Wine File"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "CDate"
 msgstr "CDate"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "ADate"
 msgstr "ADate"
 
-#: winefile.rc:118
+#: winefile.rc:117
 msgid "MDate"
 msgstr "MDate"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Index/Inode"
 msgstr "Indeks/Inoda"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Security"
 msgstr "Varnost"
 
-#: winefile.rc:124
+#: winefile.rc:123
 msgid "%s of %s free"
 msgstr "Prosto: %s od %s"
 

@@ -42,7 +42,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Komut belirtilmemiş."
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:114
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:113
 msgid "Name"
 msgstr "Ad"
 
@@ -172,7 +172,7 @@ msgstr "Sık Kullanılanlar"
 msgid "System Path"
 msgstr "Sistem Yolu"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:105
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:104
 msgid "Desktop"
 msgstr "Masaüstü"
 
@@ -6691,7 +6691,7 @@ msgstr ""
 msgid "&About Control Panel..."
 msgstr "&About Control Panel..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:115
+#: shell32.rc:123 shell32.rc:127 winefile.rc:114
 msgid "Size"
 msgstr "Boyut"
 
@@ -6703,7 +6703,7 @@ msgstr "Tür"
 msgid "Modified"
 msgstr "Düzenlenme"
 
-#: shell32.rc:126 winefile.rc:121
+#: shell32.rc:126 winefile.rc:120
 #, fuzzy
 msgid "Attributes"
 msgstr ""
@@ -6879,7 +6879,7 @@ msgstr "Program Files\\Common Files"
 msgid "Contacts"
 msgstr "&İçindekiler"
 
-#: shell32.rc:216 winefile.rc:120
+#: shell32.rc:216 winefile.rc:119
 msgid "Links"
 msgstr "Bağlantılar"
 
@@ -7150,7 +7150,7 @@ msgstr "&Kapat\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&Wine Hakkında..."
 
-#: user32.rc:55 regedit.rc:175 winefile.rc:102
+#: user32.rc:55 regedit.rc:175 winefile.rc:101
 msgid "Error"
 msgstr "Hata"
 
@@ -11209,71 +11209,67 @@ msgstr "Di&key Döşe\tCtrl+F4"
 msgid "Arrange &Symbols"
 msgstr "Simgeleri D&üzenle"
 
-#: winefile.rc:87
-msgid "&Using Help\tF1"
-msgstr "Yardım &Kullanımı\tF1"
-
-#: winefile.rc:89
+#: winefile.rc:88
 msgid "&About Winefile..."
 msgstr "Winefile hakkında &bilgi..."
 
-#: winefile.rc:95
+#: winefile.rc:94
 msgid "Applying font settings"
 msgstr "Yazı tipi ayarları uygulanıyor"
 
-#: winefile.rc:96
+#: winefile.rc:95
 msgid "Error while selecting new font."
 msgstr "Yeni yazı tipi seçerken hata."
 
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Wine File Manager"
 msgstr "Winefile"
 
-#: winefile.rc:103
+#: winefile.rc:102
 msgid "root fs"
 msgstr "kök ds"
 
-#: winefile.rc:104
+#: winefile.rc:103
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:106
+#: winefile.rc:105
 msgid "Shell"
 msgstr "Kabuk"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:108
+#: winefile.rc:107
 msgid "Not yet implemented"
 msgstr "Henüz tamamlanmadı"
 
-#: winefile.rc:109
+#: winefile.rc:108
 msgid "Wine File"
 msgstr "Wine Dosya Yöneticisi"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "CDate"
 msgstr "OTarihi"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "ADate"
 msgstr "ETarihi"
 
-#: winefile.rc:118
+#: winefile.rc:117
 msgid "MDate"
 msgstr "DTarihi"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Index/Inode"
 msgstr "İndeks/Düğüm"
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Security"
 msgstr "Güvenlik"
 
-#: winefile.rc:124
+#: winefile.rc:123
 msgid "%s of %s free"
 msgstr "%s / %s boş"
 

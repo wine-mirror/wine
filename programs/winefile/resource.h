@@ -73,7 +73,6 @@
 #define ID_WINDOW_TILE_HORZ             0xE133
 #define ID_WINDOW_TILE_VERT             0xE134
 #define ID_WINDOW_SPLIT                 0xE135
-#define ID_HELP_USING                   0xE144
 #define ID_HELP                         0xE146
 
 #define IDC_VIEW_PATTERN                1000

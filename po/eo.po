@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr ""
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:114
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:121 winefile.rc:113
 msgid "Name"
 msgstr "Nomo"
 
@@ -165,7 +165,7 @@ msgstr "Miaj Favoritaj"
 msgid "System Path"
 msgstr "Sistemvojo"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:105
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:104
 msgid "Desktop"
 msgstr "Desktop"
 
@@ -6465,7 +6465,7 @@ msgstr ""
 msgid "&About Control Panel..."
 msgstr "&About Control Panel..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:115
+#: shell32.rc:123 shell32.rc:127 winefile.rc:114
 msgid "Size"
 msgstr "Gandeco"
 
@@ -6477,7 +6477,7 @@ msgstr "Tipo"
 msgid "Modified"
 msgstr "Modifita"
 
-#: shell32.rc:126 winefile.rc:121
+#: shell32.rc:126 winefile.rc:120
 msgid "Attributes"
 msgstr "Atributoj"
 
@@ -6648,7 +6648,7 @@ msgstr "Program Files\\Common Files"
 msgid "Contacts"
 msgstr "Enhavo"
 
-#: shell32.rc:216 winefile.rc:120
+#: shell32.rc:216 winefile.rc:119
 msgid "Links"
 msgstr ""
 
@@ -6897,7 +6897,7 @@ msgstr "&Fermu\tAlt-F4"
 msgid "&About Wine..."
 msgstr "&Pri Wine..."
 
-#: user32.rc:55 regedit.rc:175 winefile.rc:102
+#: user32.rc:55 regedit.rc:175 winefile.rc:101
 msgid "Error"
 msgstr "Eroro"
 
@@ -10574,78 +10574,73 @@ msgstr "Elek&tu æion\tCtrl+A"
 msgid "Arrange &Symbols"
 msgstr ""
 
-#: winefile.rc:87
-#, fuzzy
-msgid "&Using Help\tF1"
-msgstr "Wine Helpanto"
-
-#: winefile.rc:89
+#: winefile.rc:88
 #, fuzzy
 msgid "&About Winefile..."
 msgstr "Pri Notepad"
 
-#: winefile.rc:95
+#: winefile.rc:94
 msgid "Applying font settings"
 msgstr ""
 
-#: winefile.rc:96
+#: winefile.rc:95
 msgid "Error while selecting new font."
 msgstr ""
 
-#: winefile.rc:101
+#: winefile.rc:100
 msgid "Wine File Manager"
 msgstr ""
 
-#: winefile.rc:103
+#: winefile.rc:102
 msgid "root fs"
 msgstr ""
 
-#: winefile.rc:104
+#: winefile.rc:103
 msgid "unixfs"
 msgstr ""
 
-#: winefile.rc:106
+#: winefile.rc:105
 msgid "Shell"
 msgstr ""
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "%s - %s"
 msgstr ""
 
-#: winefile.rc:108
+#: winefile.rc:107
 #, fuzzy
 msgid "Not yet implemented"
 msgstr "Ne-implementata"
 
-#: winefile.rc:109
+#: winefile.rc:108
 #, fuzzy
 msgid "Wine File"
 msgstr "Wine Helpanto"
 
-#: winefile.rc:116
+#: winefile.rc:115
 #, fuzzy
 msgid "CDate"
 msgstr "&Dato"
 
-#: winefile.rc:117
+#: winefile.rc:116
 #, fuzzy
 msgid "ADate"
 msgstr "&Dato"
 
-#: winefile.rc:118
+#: winefile.rc:117
 #, fuzzy
 msgid "MDate"
 msgstr "&Dato"
 
-#: winefile.rc:119
+#: winefile.rc:118
 msgid "Index/Inode"
 msgstr ""
 
-#: winefile.rc:122
+#: winefile.rc:121
 msgid "Security"
 msgstr ""
 
-#: winefile.rc:124
+#: winefile.rc:123
 msgid "%s of %s free"
 msgstr ""
 
