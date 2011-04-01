@@ -2210,17 +2210,9 @@ static void test_EnumFontFamiliesEx_default_charset(void)
     }
     trace("'%s' has %d charsets.\n", gui_font.lfFaceName, efd.total);
 
-    if (gui_font.lfCharSet != ANSI_CHARSET) {
-        todo_wine
-        ok(efd.lf[0].lfCharSet == gui_font.lfCharSet,
-           "(%s) got charset %d expected %d\n",
-           efd.lf[0].lfFaceName, efd.lf[0].lfCharSet, gui_font.lfCharSet);
-    }
-    else {
-        ok(efd.lf[0].lfCharSet == gui_font.lfCharSet,
-           "(%s) got charset %d expected %d\n",
-           efd.lf[0].lfFaceName, efd.lf[0].lfCharSet, gui_font.lfCharSet);
-    }
+    ok(efd.lf[0].lfCharSet == gui_font.lfCharSet,
+       "(%s) got charset %d expected %d\n",
+       efd.lf[0].lfFaceName, efd.lf[0].lfCharSet, gui_font.lfCharSet);
 
     return;
 }

@@ -354,6 +354,17 @@ typedef struct {
     struct list links;
 } SYSTEM_LINKS;
 
+struct enum_charset_element {
+    DWORD mask;
+    DWORD charset;
+    LPCWSTR name;
+};
+
+struct enum_charset_list {
+    DWORD total;
+    struct enum_charset_element element[32];
+};
+
 #define GM_BLOCK_SIZE 128
 #define FONT_GM(font,idx) (&(font)->gm[(idx) / GM_BLOCK_SIZE][(idx) % GM_BLOCK_SIZE])
 
@@ -3951,6 +3962,59 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
     return ret;
 }
 
+/***************************************************
+ * create_enum_charset_list
+ *
+ * This function creates charset enumeration list because in DEFAULT_CHARSET
+ * case, the ANSI codepage's charset takes precedence over other charsets.
+ * This function works as a filter other than DEFAULT_CHARSET case.
+ */
+static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *list)
+{
+    CHARSETINFO csi;
+    DWORD n = 0;
+
+    if (TranslateCharsetInfo((DWORD*)charset, &csi, TCI_SRCCHARSET) &&
+        csi.fs.fsCsb[0] != 0) {
+        list->element[n].mask    = csi.fs.fsCsb[0];
+        list->element[n].charset = csi.ciCharset;
+        list->element[n].name    = ElfScriptsW[ffs(csi.fs.fsCsb[0]) - 1];
+        n++;
+    }
+    else { /* charset is DEFAULT_CHARSET or invalid. */
+        INT acp, i;
+
+        /* Set the current codepage's charset as the first element. */
+        acp = GetACP();
+        if (TranslateCharsetInfo((DWORD*)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE) &&
+            csi.fs.fsCsb[0] != 0) {
+            list->element[n].mask    = csi.fs.fsCsb[0];
+            list->element[n].charset = csi.ciCharset;
+            list->element[n].name    = ElfScriptsW[ffs(csi.fs.fsCsb[0]) - 1];
+            n++;
+        }
+
+        /* Fill out left elements. */
+        for (i = 0; i < 32; i++) {
+            FONTSIGNATURE fs;
+            fs.fsCsb[0] = 1L << i;
+            fs.fsCsb[1] = 0;
+            if (n > 0 && fs.fsCsb[0] == list->element[0].mask)
+                continue; /* skip, already added. */
+            if (!TranslateCharsetInfo(fs.fsCsb, &csi, TCI_SRCFONTSIG))
+                continue; /* skip, this is an invalid fsCsb bit. */
+
+            list->element[n].mask    = fs.fsCsb[0];
+            list->element[n].charset = csi.ciCharset;
+            list->element[n].name    = ElfScriptsW[i];
+            n++;
+        }
+    }
+    list->total = n;
+
+    return n;
+}
+
 static void GetEnumStructs(Face *face, LPENUMLOGFONTEXW pelf,
 			   NEWTEXTMETRICEXW *pntm, LPDWORD ptype)
 {
@@ -4101,38 +4165,33 @@ static BOOL face_matches(Face *face, const LOGFONTW *lf)
     return !strcmpiW(lf->lfFaceName, full_family_name);
 }
 
-static BOOL enum_face_charsets(Face *face, FONTENUMPROCW proc, LPARAM lparam)
+static BOOL enum_face_charsets(Face *face, struct enum_charset_list *list,
+                               FONTENUMPROCW proc, LPARAM lparam)
 {
     ENUMLOGFONTEXW elf;
     NEWTEXTMETRICEXW ntm;
     DWORD type = 0;
-    FONTSIGNATURE fs;
-    CHARSETINFO csi;
     int i;
 
     GetEnumStructs(face, &elf, &ntm, &type);
-    for(i = 0; i < 32; i++) {
+    for(i = 0; i < list->total; i++) {
         if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
             strcpyW(elf.elfScript, OEM_DOSW);
             i = 32; /* break out of loop */
-        } else if(!(face->fs.fsCsb[0] & (1L << i)))
+        } else if(!(face->fs.fsCsb[0] & list->element[i].mask))
             continue;
         else {
-            fs.fsCsb[0] = 1L << i;
-            fs.fsCsb[1] = 0;
-            if(TranslateCharsetInfo(fs.fsCsb, &csi, TCI_SRCFONTSIG))
-                elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = csi.ciCharset;
-                if(ElfScriptsW[i])
-                    strcpyW(elf.elfScript, ElfScriptsW[i]);
-                else
-                    FIXME("Unknown elfscript for bit %d\n", i);
-            }
+            elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = list->element[i].charset;
+            if(list->element[i].name)
+                strcpyW(elf.elfScript, list->element[i].name);
+            else
+                FIXME("Unknown elfscript for bit %d\n", ffs(list->element[i].mask) - 1);
         }
         TRACE("enuming face %s full %s style %s charset = %d type %d script %s it %d weight %d ntmflags %08x\n",
               debugstr_w(elf.elfLogFont.lfFaceName),
               debugstr_w(elf.elfFullName), debugstr_w(elf.elfStyle),
-              csi.ciCharset, type, debugstr_w(elf.elfScript),
+              list->element[i].charset, type, debugstr_w(elf.elfScript),
               elf.elfLogFont.lfItalic, elf.elfLogFont.lfWeight,
               ntm.ntmTm.ntmFlags);
         /* release section before callback (FIXME) */
@@ -4153,6 +4212,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
     Face *face;
     struct list *family_elem_ptr, *face_elem_ptr;
     LOGFONTW lf;
+    struct enum_charset_list enum_charsets;
 
     if (!plf)
     {
@@ -4163,6 +4223,8 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
     }
 
     TRACE("facename = %s charset %d\n", debugstr_w(plf->lfFaceName), plf->lfCharSet);
+
+    create_enum_charset_list(plf->lfCharSet, &enum_charsets);
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
@@ -4184,7 +4246,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
                 LIST_FOR_EACH(face_elem_ptr, &family->faces) {
                     face = LIST_ENTRY(face_elem_ptr, Face, entry);
                     if (!face_matches(face, plf)) continue;
-                    if (!enum_face_charsets(face, proc, lparam)) return 0;
+                    if (!enum_face_charsets(face, &enum_charsets, proc, lparam)) return 0;
 		}
 	    }
 	}
@@ -4193,7 +4255,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
             family = LIST_ENTRY(family_elem_ptr, Family, entry);
             face_elem_ptr = list_head(&family->faces);
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if (!enum_face_charsets(face, proc, lparam)) return 0;
+            if (!enum_face_charsets(face, &enum_charsets, proc, lparam)) return 0;
 	}
     }
     LeaveCriticalSection( &freetype_cs );
