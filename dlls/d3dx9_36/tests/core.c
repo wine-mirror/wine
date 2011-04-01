@@ -62,6 +62,35 @@ static inline void check_mat(D3DXMATRIX got, D3DXMATRIX exp)
        U(exp).m[3][0],U(exp).m[3][1],U(exp).m[3][2],U(exp).m[3][3]);
 }
 
+static void test_ID3DXBuffer(void)
+{
+    ID3DXBuffer *buffer;
+    HRESULT hr;
+    ULONG count;
+    DWORD size;
+
+    hr = D3DXCreateBuffer(10, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateBuffer failed, got %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateBuffer(0, &buffer);
+    ok(hr == D3D_OK, "D3DXCreateBuffer failed, got %#x, expected %#x\n", hr, D3D_OK);
+
+    size = ID3DXBuffer_GetBufferSize(buffer);
+    ok(!size, "GetBufferSize failed, got %u, expected %u\n", size, 0);
+
+    count = ID3DXBuffer_Release(buffer);
+    ok(!count, "ID3DBuffer has %u references left\n", count);
+
+    hr = D3DXCreateBuffer(3, &buffer);
+    ok(hr == D3D_OK, "D3DXCreateBuffer failed, got %#x, expected %#x\n", hr, D3D_OK);
+
+    size = ID3DXBuffer_GetBufferSize(buffer);
+    ok(size == 3, "GetBufferSize failed, got %u, expected %u\n", size, 3);
+
+    count = ID3DXBuffer_Release(buffer);
+    ok(!count, "ID3DBuffer has %u references left\n", count);
+}
+
 static void test_ID3DXSprite(IDirect3DDevice9 *device)
 {
     ID3DXSprite *sprite;
@@ -448,6 +477,7 @@ START_TEST(core)
         return;
     }
 
+    test_ID3DXBuffer();
     test_ID3DXSprite(device);
     test_ID3DXFont(device);
 
