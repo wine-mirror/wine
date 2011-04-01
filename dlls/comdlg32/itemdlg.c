@@ -281,13 +281,13 @@ static HRESULT init_explorerbrowser(FileDialogImpl *This)
 
     IExplorerBrowser_SetFolderSettings(This->peb, &fos);
 
-    /* Browse somewhere */
-    psi_folder = This->psi_setfolder ? This->psi_setfolder : This->psi_defaultfolder;
-    IExplorerBrowser_BrowseToObject(This->peb, (IUnknown*)psi_folder, SBSP_DEFBROWSER);
-
     hr = IUnknown_SetSite((IUnknown*)This->peb, (IUnknown*)This);
     if(FAILED(hr))
         ERR("SetSite (ExplorerBrowser) failed.\n");
+
+    /* Browse somewhere */
+    psi_folder = This->psi_setfolder ? This->psi_setfolder : This->psi_defaultfolder;
+    IExplorerBrowser_BrowseToObject(This->peb, (IUnknown*)psi_folder, SBSP_DEFBROWSER);
 
     return S_OK;
 }
