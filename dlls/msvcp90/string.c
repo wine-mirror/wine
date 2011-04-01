@@ -784,17 +784,22 @@ size_t __thiscall MSVCP_basic_string_char_length(basic_string_char *this)
 /* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@_K1@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_append_substr, 16)
 basic_string_char* __thiscall MSVCP_basic_string_char_append_substr(basic_string_char *this,
-        basic_string_char *append, size_t offset, size_t count)
+        const basic_string_char *append, size_t offset, size_t count)
 {
+    TRACE("%p %p %lu %lu\n", this, append, (unsigned long)offset, (unsigned long)count);
+
     if(append->size < offset)
         MSVCP__String_base_Xran();
 
     if(count > append->size-offset)
         count = append->size-offset;
 
+    if(MSVCP_basic_string_char_npos-this->size<=count || this->size+count<this->size)
+        MSVCP__String_base_Xlen();
+
     if(basic_string_char_grow(this, this->size+count, FALSE)) {
         MSVCP_char_traits_char__Copy_s(basic_string_char_ptr(this)+this->size,
-                this->res-this->size, basic_string_char_ptr(append)+offset, count);
+                this->res-this->size, basic_string_char_const_ptr(append)+offset, count);
         basic_string_char_eos(this, this->size+count);
     }
 
@@ -807,10 +812,80 @@ basic_string_char* __thiscall MSVCP_basic_string_char_append_substr(basic_string
 /* ??Y?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@AEBV01@@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_append, 8)
 basic_string_char* __thiscall MSVCP_basic_string_char_append(
-        basic_string_char *this, basic_string_char *append)
+        basic_string_char *this, const basic_string_char *append)
 {
     return MSVCP_basic_string_char_append_substr(this, append,
             0, MSVCP_basic_string_char_npos);
+}
+
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBDI@Z */
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@PEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_append_cstr_len, 12)
+basic_string_char* __thiscall MSVCP_basic_string_char_append_cstr_len(
+        basic_string_char *this, const char *append, size_t count)
+{
+    TRACE("%p %s %lu\n", this, append, (unsigned long)count);
+
+    if(basic_string_char_inside(this, append))
+        return MSVCP_basic_string_char_append_substr(this, this,
+                append-basic_string_char_ptr(this), count);
+
+    if(MSVCP_basic_string_char_npos-this->size<=count || this->size+count<this->size)
+        MSVCP__String_base_Xlen();
+
+    if(basic_string_char_grow(this, this->size+count, FALSE)) {
+        MSVCP_char_traits_char__Copy_s(basic_string_char_ptr(this)+this->size,
+                this->res-this->size, append, count);
+        basic_string_char_eos(this, this->size+count);
+    }
+
+    return this;
+}
+
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBD@Z */
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@PEBD@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_append_cstr, 8)
+basic_string_char* __thiscall MSVCP_basic_string_char_append_cstr(
+        basic_string_char *this, const char *append)
+{
+    return MSVCP_basic_string_char_append_cstr_len(this, append,
+            MSVCP_char_traits_char_length(append));
+}
+
+/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@PBD@Z */
+/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@PEBD@Z */
+basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_bstr_cstr(basic_string_char *ret,
+        const basic_string_char *left, const char *right)
+{
+    TRACE("%p %s\n", left, right);
+
+    MSVCP_basic_string_char_copy_ctor(ret, left);
+    MSVCP_basic_string_char_append_cstr(ret, right);
+    return ret;
+}
+
+/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBDABV10@@Z */
+/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBDAEBV10@@Z */
+basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_cstr_bstr(basic_string_char *ret,
+        const char *left, const basic_string_char *right)
+{
+    TRACE("%s %p\n", left, right);
+
+    MSVCP_basic_string_char_ctor_cstr(ret, left);
+    MSVCP_basic_string_char_append(ret, right);
+    return ret;
+}
+
+/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@0@Z */
+/* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@0@Z */
+basic_string_char* __cdecl MSVCP_basic_string_char_concatenate(basic_string_char *ret,
+        const basic_string_char *left, const basic_string_char *right)
+{
+    TRACE("%p %p\n", left, right);
+
+    MSVCP_basic_string_char_copy_ctor(ret, left);
+    MSVCP_basic_string_char_append(ret, right);
+    return ret;
 }
 
 /* ?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEHIIPBDI@Z */
