@@ -80,7 +80,50 @@ typedef struct FileDialogImpl {
     HWND dlg_hwnd;
     IExplorerBrowser *peb;
     DWORD ebevents_cookie;
+
+    LPWSTR set_filename;
 } FileDialogImpl;
+
+/**************************************************************************
+ * Helper functions.
+ */
+static UINT get_file_name(FileDialogImpl *This, LPWSTR *str)
+{
+    HWND hwnd_edit = GetDlgItem(This->dlg_hwnd, IDC_FILENAME);
+    UINT len;
+
+    if(!hwnd_edit)
+    {
+        if(This->set_filename)
+        {
+            len = lstrlenW(This->set_filename);
+            *str = CoTaskMemAlloc(sizeof(WCHAR)*(len+1));
+            lstrcpyW(*str, This->set_filename);
+            return len;
+        }
+        return FALSE;
+    }
+
+    len = SendMessageW(hwnd_edit, WM_GETTEXTLENGTH, 0, 0);
+    *str = CoTaskMemAlloc(sizeof(WCHAR)*(len+1));
+    if(!*str)
+        return FALSE;
+
+    SendMessageW(hwnd_edit, WM_GETTEXT, len+1, (LPARAM)*str);
+    return len;
+}
+
+static BOOL set_file_name(FileDialogImpl *This, LPCWSTR str)
+{
+    HWND hwnd_edit = GetDlgItem(This->dlg_hwnd, IDC_FILENAME);
+
+    if(This->set_filename)
+        LocalFree(This->set_filename);
+
+    This->set_filename = StrDupW(str);
+
+    return SendMessageW(hwnd_edit, WM_SETTEXT, 0, (LPARAM)str);
+}
 
 /**************************************************************************
  * Window related functions.
@@ -320,6 +363,10 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
     else
         ShowWindow(hitem, SW_HIDE);
 
+    if(This->set_filename &&
+       (hitem = GetDlgItem(This->dlg_hwnd, IDC_FILENAME)) )
+        SendMessageW(hitem, WM_SETTEXT, 0, (LPARAM)This->set_filename);
+
     init_explorerbrowser(This);
     update_layout(This);
 
@@ -532,6 +579,8 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
         if(This->psi_folder)        IShellItem_Release(This->psi_folder);
         if(This->psia_selection)    IShellItemArray_Release(This->psia_selection);
         if(This->psia_results)      IShellItemArray_Release(This->psia_results);
+
+        LocalFree(This->set_filename);
 
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -752,15 +801,26 @@ static HRESULT WINAPI IFileDialog2_fnGetCurrentSelection(IFileDialog2 *iface, IS
 static HRESULT WINAPI IFileDialog2_fnSetFileName(IFileDialog2 *iface, LPCWSTR pszName)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, pszName);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", iface, pszName);
+
+    set_file_name(This, pszName);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnGetFileName(IFileDialog2 *iface, LPWSTR *pszName)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, pszName);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", iface, pszName);
+
+    if(!pszName)
+        return E_INVALIDARG;
+
+    *pszName = NULL;
+    if(get_file_name(This, pszName))
+        return S_OK;
+    else
+        return E_FAIL;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetTitle(IFileDialog2 *iface, LPCWSTR pszTitle)
@@ -1704,6 +1764,8 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
 
     fdimpl->dlg_hwnd = NULL;
     fdimpl->peb = NULL;
+
+    fdimpl->set_filename = NULL;
 
     /* FIXME: The default folder setting should be restored for the
      * application if it was previously set. */

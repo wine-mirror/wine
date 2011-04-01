@@ -371,8 +371,6 @@ static void test_basics(void)
     }
 
     /* GetFileName */
-    todo_wine
-    {
     hr = IFileOpenDialog_GetFileName(pfod, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
     filename = (void*)0xdeadbeef;
@@ -385,7 +383,6 @@ static void test_basics(void)
     hr = IFileSaveDialog_GetFileName(pfsd, &filename);
     ok(hr == E_FAIL, "got 0x%08x.\n", hr);
     ok(filename == NULL, "got %p\n", filename);
-    }
 
     /* GetFileTypeIndex */
     hr = IFileOpenDialog_GetFileTypeIndex(pfod, NULL);
@@ -546,14 +543,16 @@ static void test_basics(void)
     }
 
     /* SetFileName */
-    todo_wine
-    {
     hr = IFileOpenDialog_SetFileName(pfod, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileOpenDialog_SetFileName(pfod, null);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileOpenDialog_SetFileName(pfod, txt);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IFileOpenDialog_GetFileName(pfod, &filename);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(!lstrcmpW(filename, txt), "Strings do not match.\n");
+    CoTaskMemFree(filename);
 
     hr = IFileSaveDialog_SetFileName(pfsd, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -561,7 +560,10 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileSaveDialog_SetFileName(pfsd, txt);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    }
+    hr = IFileSaveDialog_GetFileName(pfsd, &filename);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    ok(!lstrcmpW(filename, txt), "Strings do not match.\n");
+    CoTaskMemFree(filename);
 
     /* SetFileNameLabel */
     todo_wine
