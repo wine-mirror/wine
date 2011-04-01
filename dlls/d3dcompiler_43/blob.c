@@ -26,6 +26,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dcompiler);
 
+struct d3dcompiler_blob
+{
+    ID3DBlob ID3DBlob_iface;
+    LONG refcount;
+
+    SIZE_T size;
+    void *data;
+};
+
 static inline struct d3dcompiler_blob *impl_from_ID3DBlob(ID3DBlob *iface)
 {
     return CONTAINING_RECORD(iface, struct d3dcompiler_blob, ID3DBlob_iface);
@@ -108,7 +117,7 @@ static const struct ID3D10BlobVtbl d3dcompiler_blob_vtbl =
     d3dcompiler_blob_GetBufferSize,
 };
 
-HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_size)
+static HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_size)
 {
     blob->ID3DBlob_iface.lpVtbl = &d3dcompiler_blob_vtbl;
     blob->refcount = 1;
@@ -120,6 +129,41 @@ HRESULT d3dcompiler_blob_init(struct d3dcompiler_blob *blob, SIZE_T data_size)
         ERR("Failed to allocate D3D blob data memory\n");
         return E_OUTOFMEMORY;
     }
+
+    return S_OK;
+}
+
+HRESULT WINAPI D3DCreateBlob(SIZE_T data_size, ID3DBlob **blob)
+{
+    struct d3dcompiler_blob *object;
+    HRESULT hr;
+
+    TRACE("data_size %lu, blob %p\n", data_size, blob);
+
+    if (!blob)
+    {
+        WARN("Invalid blob specified.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate D3D blob object memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = d3dcompiler_blob_init(object, data_size);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize blob, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    *blob = (ID3DBlob *)object;
+
+    TRACE("Created ID3DBlob %p\n", object);
 
     return S_OK;
 }
