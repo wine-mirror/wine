@@ -1794,16 +1794,101 @@ UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, DWORD attributes)
     return ERROR_SUCCESS;
 }
 
-UINT WINAPI MsiEnumComponentCostsW(MSIHANDLE hInstall, LPCWSTR szComponent,
-                                   DWORD dwIndex, INSTALLSTATE iState,
-                                   LPWSTR lpDriveBuf, DWORD *pcchDriveBuf,
-                                   int *piCost, int *pTempCost)
+UINT WINAPI MsiEnumComponentCostsA( MSIHANDLE handle, LPCSTR component, DWORD index,
+                                    INSTALLSTATE state, LPSTR drive, DWORD *buflen,
+                                    int *cost, int *temp )
 {
-    FIXME("(%d, %s, %d, %d, %p, %p, %p %p): stub!\n", hInstall,
-          debugstr_w(szComponent), dwIndex, iState, lpDriveBuf,
-          pcchDriveBuf, piCost, pTempCost);
+    UINT r;
+    DWORD len;
+    WCHAR *driveW, *componentW = NULL;
 
-    return ERROR_NO_MORE_ITEMS;
+    TRACE("%d, %s, %u, %d, %p, %p, %p %p\n", handle, debugstr_a(component), index,
+          state, drive, buflen, cost, temp);
+
+    if (!drive || !buflen) return ERROR_INVALID_PARAMETER;
+    if (component && !(componentW = strdupAtoW( component ))) return ERROR_OUTOFMEMORY;
+
+    len = *buflen;
+    if (!(driveW = msi_alloc( len * sizeof(WCHAR) )))
+    {
+        msi_free( componentW );
+        return ERROR_OUTOFMEMORY;
+    }
+    r = MsiEnumComponentCostsW( handle, componentW, index, state, driveW, buflen, cost, temp );
+    if (!r)
+    {
+        WideCharToMultiByte( CP_ACP, 0, driveW, -1, drive, len, NULL, NULL );
+    }
+    msi_free( componentW );
+    msi_free( driveW );
+    return r;
+}
+
+UINT WINAPI MsiEnumComponentCostsW( MSIHANDLE handle, LPCWSTR component, DWORD index,
+                                    INSTALLSTATE state, LPWSTR drive, DWORD *buflen,
+                                    int *cost, int *temp )
+{
+    UINT r = ERROR_NO_MORE_ITEMS;
+    MSICOMPONENT *comp = NULL;
+    MSIPACKAGE *package;
+    MSIFILE *file;
+    STATSTG stat = {0};
+    WCHAR path[MAX_PATH];
+
+    TRACE("%d, %s, %u, %d, %p, %p, %p %p\n", handle, debugstr_w(component), index,
+          state, drive, buflen, cost, temp);
+
+    if (!drive || !buflen || !cost || !temp) return ERROR_INVALID_PARAMETER;
+    if (!(package = msihandle2msiinfo( handle, MSIHANDLETYPE_PACKAGE ))) return ERROR_INVALID_HANDLE;
+    if (!msi_get_property_int( package->db, szCostingComplete, 0 ))
+    {
+        msiobj_release( &package->hdr );
+        return ERROR_FUNCTION_NOT_CALLED;
+    }
+    if (component && component[0] && !(comp = get_loaded_component( package, component )))
+    {
+        msiobj_release( &package->hdr );
+        return ERROR_UNKNOWN_COMPONENT;
+    }
+    if (*buflen < 3)
+    {
+        *buflen = 2;
+        msiobj_release( &package->hdr );
+        return ERROR_MORE_DATA;
+    }
+    if (index)
+    {
+        msiobj_release( &package->hdr );
+        return ERROR_NO_MORE_ITEMS;
+    }
+
+    drive[0] = 0;
+    *cost = *temp = 0;
+    if (component && component[0])
+    {
+        *cost = max( 8, comp->Cost / 512 );
+        if (comp->assembly && !comp->assembly->application) *temp = comp->Cost;
+        if ((file = get_loaded_file( package, comp->KeyPath )))
+        {
+            drive[0] = file->TargetPath[0];
+            drive[1] = ':';
+            drive[2] = 0;
+            *buflen = 2;
+            r = ERROR_SUCCESS;
+        }
+    }
+    else if (IStorage_Stat( package->db->storage, &stat, STATFLAG_NONAME ) == S_OK)
+    {
+        *temp = max( 8, stat.cbSize.QuadPart / 512 );
+        GetWindowsDirectoryW( path, MAX_PATH );
+        drive[0] = path[0];
+        drive[1] = ':';
+        drive[2] = 0;
+        *buflen = 2;
+        r = ERROR_SUCCESS;
+    }
+    msiobj_release( &package->hdr );
+    return r;
 }
 
 UINT WINAPI MsiQueryComponentStateA(LPCSTR szProductCode,

@@ -12907,6 +12907,224 @@ static void test_MsiApplyPatch(void)
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
 }
 
+static void test_MsiEnumComponentCosts(void)
+{
+    MSIHANDLE hdb, hpkg;
+    char package[12], drive[3];
+    DWORD len;
+    UINT r;
+    int cost, temp;
+
+    hdb = create_package_db();
+    ok( hdb, "failed to create database\n" );
+
+    r = create_property_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Property table %u\n", r );
+
+    r = add_property_entry( hdb, "'ProductCode', '{379B1C47-40C1-42FA-A9BB-BEBB6F1B0172}'" );
+    ok( r == ERROR_SUCCESS, "cannot add property entry %u\n", r );
+
+    r = add_property_entry( hdb, "'MSIFASTINSTALL', '1'" );
+    ok( r == ERROR_SUCCESS, "cannot add property entry %u\n", r );
+
+    r = add_directory_entry( hdb, "'TARGETDIR', '', 'SourceDir'" );
+    ok( r == ERROR_SUCCESS, "failed to add directory entry %u\n" , r );
+
+    r = create_media_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Media table %u\n", r );
+
+    r = add_media_entry( hdb, "'1', '2', 'cabinet', '', '', ''");
+    ok( r == ERROR_SUCCESS, "cannot add media entry %u\n", r );
+
+    r = create_file_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create File table %u\n", r );
+
+    r = add_file_entry( hdb, "'one.txt', 'one', 'one.txt', 4096, '', '', 8192, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file %u\n", r );
+
+    r = add_file_entry( hdb, "'two.txt', 'two', 'two.txt', 8192, '', '', 8192, 2" );
+    ok( r == ERROR_SUCCESS, "cannot add file %u\n", r );
+
+    r = create_component_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Component table %u\n", r );
+
+    r = add_component_entry( hdb, "'one', '{B2F86B9D-8447-4BC5-8883-750C45AA31CA}', 'TARGETDIR', 0, '', 'one.txt'" );
+    ok( r == ERROR_SUCCESS, "cannot add component %u\n", r );
+
+    r = add_component_entry( hdb, "'two', '{62A09F6E-0B74-4829-BDB7-CAB66F42CCE8}', 'TARGETDIR', 0, '', 'two.txt'" );
+    ok( r == ERROR_SUCCESS, "cannot add component %u\n", r );
+
+    r = create_feature_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create Feature table %u\n", r );
+
+    r = add_feature_entry( hdb, "'one', '', '', '', 0, 1, '', 0" );
+    ok( r == ERROR_SUCCESS, "cannot add feature %u\n", r );
+
+    r = add_feature_entry( hdb, "'two', '', '', '', 0, 1, '', 0" );
+    ok( r == ERROR_SUCCESS, "cannot add feature %u\n", r );
+
+    r = create_feature_components_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table %u\n", r );
+
+    r = add_feature_components_entry( hdb, "'one', 'one'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature/component pair %u\n", r );
+
+    r = add_feature_components_entry( hdb, "'two', 'two'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature/component pair %u\n", r );
+
+    r = create_install_execute_sequence_table( hdb );
+    ok( r == ERROR_SUCCESS, "cannot create InstallExecuteSequence table %u\n", r );
+
+    r = add_install_execute_sequence_entry( hdb, "'CostInitialize', '', '800'" );
+    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry %u\n", r );
+
+    r = add_install_execute_sequence_entry( hdb, "'FileCost', '', '900'" );
+    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry %u\n", r );
+
+    r = add_install_execute_sequence_entry( hdb, "'CostFinalize', '', '1000'" );
+    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry %u\n", r );
+
+    r = add_install_execute_sequence_entry( hdb, "'InstallValidate', '', '1100'" );
+    ok( r == ERROR_SUCCESS, "cannot add install execute sequence entry %u\n", r );
+
+    MsiDatabaseCommit( hdb );
+
+    sprintf( package, "#%u", hdb );
+    r = MsiOpenPackageA( package, &hpkg );
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
+
+    r = MsiEnumComponentCostsA( 0, NULL, 0, INSTALLSTATE_UNKNOWN, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r );
+
+    r = MsiEnumComponentCostsA( hpkg, NULL, 0, INSTALLSTATE_UNKNOWN, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r );
+
+    r = MsiEnumComponentCostsA( hpkg, NULL, 0, INSTALLSTATE_UNKNOWN, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r );
+
+    r = MsiEnumComponentCostsA( hpkg, "", 0, INSTALLSTATE_UNKNOWN, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r );
+
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_UNKNOWN, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r );
+
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, NULL, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r );
+
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, NULL, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r );
+
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, &len, NULL, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r );
+
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, NULL );
+    ok( r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r );
+
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
+    todo_wine ok( r == ERROR_INVALID_HANDLE_STATE, "Expected ERROR_INVALID_HANDLE_STATE, got %u\n", r );
+
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, NULL, &len, &cost, &temp );
+    ok( r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r );
+
+    MsiSetInternalUI( INSTALLUILEVEL_NONE, NULL );
+
+    r = MsiDoAction( hpkg, "CostInitialize" );
+    ok( r == ERROR_SUCCESS, "CostInitialize failed %u\n", r );
+
+    r = MsiDoAction( hpkg, "FileCost" );
+    ok( r == ERROR_SUCCESS, "FileCost failed %u\n", r );
+
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
+    ok( r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %u\n", r );
+
+    r = MsiDoAction( hpkg, "CostFinalize" );
+    ok( r == ERROR_SUCCESS, "CostFinalize failed %u\n", r );
+
+    /* contrary to what msdn says InstallValidate must be called too */
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
+    todo_wine ok( r == ERROR_FUNCTION_NOT_CALLED, "Expected ERROR_FUNCTION_NOT_CALLED, got %u\n", r );
+
+    r = MsiDoAction( hpkg, "InstallValidate" );
+    ok( r == ERROR_SUCCESS, "InstallValidate failed %u\n", r );
+
+    len = 0;
+    r = MsiEnumComponentCostsA( hpkg, "three", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
+    ok( r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %u\n", r );
+
+    len = 0;
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
+    ok( r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %u\n", r );
+    ok( len == 2, "expected len == 2, got %u\n", len );
+
+    len = 2;
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
+    ok( r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %u\n", r );
+    ok( len == 2, "expected len == 2, got %u\n", len );
+
+    len = 2;
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_UNKNOWN, drive, &len, &cost, &temp );
+    ok( r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %u\n", r );
+    ok( len == 2, "expected len == 2, got %u\n", len );
+
+    /* install state doesn't seem to matter */
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_UNKNOWN, drive, &len, &cost, &temp );
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
+
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_ABSENT, drive, &len, &cost, &temp );
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
+
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_SOURCE, drive, &len, &cost, &temp );
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
+
+    len = sizeof(drive);
+    drive[0] = 0;
+    cost = temp = 0xdead;
+    r = MsiEnumComponentCostsA( hpkg, "one", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
+    ok( len == 2, "expected len == 2, got %u\n", len );
+    ok( drive[0], "expected a drive\n" );
+    ok( cost && cost != 0xdead, "expected cost > 0, got %d\n", cost );
+    ok( !temp, "expected temp == 0, got %d\n", temp );
+
+    len = sizeof(drive);
+    drive[0] = 0;
+    cost = temp = 0xdead;
+    r = MsiEnumComponentCostsA( hpkg, "", 0, INSTALLSTATE_UNKNOWN, drive, &len, &cost, &temp );
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
+    ok( len == 2, "expected len == 2, got %u\n", len );
+    ok( drive[0], "expected a drive\n" );
+    ok( !cost, "expected cost == 0, got %d\n", cost );
+    ok( temp && temp != 0xdead, "expected temp > 0, got %d\n", temp );
+
+    /* increased index */
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "one", 1, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
+    ok( r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %u\n", r );
+
+    len = sizeof(drive);
+    r = MsiEnumComponentCostsA( hpkg, "", 1, INSTALLSTATE_UNKNOWN, drive, &len, &cost, &temp );
+    ok( r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %u\n", r );
+
+    MsiCloseHandle( hpkg );
+error:
+    MsiCloseHandle( hdb );
+    DeleteFileA( msifile );
+}
+
 START_TEST(package)
 {
     STATEMGRSTATUS status;
@@ -12962,6 +13180,7 @@ START_TEST(package)
     test_MsiSetProperty();
     test_MsiApplyMultiplePatches();
     test_MsiApplyPatch();
+    test_MsiEnumComponentCosts();
 
     if (pSRSetRestorePointA && !pMsiGetComponentPathExA && ret)
     {

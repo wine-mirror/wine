@@ -213,7 +213,7 @@
 217 stdcall MsiGetShortcutTargetW(wstr ptr ptr ptr)
 218 stdcall MsiGetFileHashA(str long ptr)
 219 stdcall MsiGetFileHashW(wstr long ptr)
-220 stub MsiEnumComponentCostsA
+220 stdcall MsiEnumComponentCostsA(long str long long ptr ptr ptr ptr)
 221 stdcall MsiEnumComponentCostsW(long wstr long long ptr ptr ptr ptr)
 222 stdcall MsiCreateAndVerifyInstallerDirectory(long)
 223 stdcall MsiGetFileSignatureInformationA(str long ptr ptr ptr)

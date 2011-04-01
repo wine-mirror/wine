@@ -2007,10 +2007,7 @@ static UINT load_all_folders( MSIPACKAGE *package )
  */
 static UINT ACTION_CostInitialize(MSIPACKAGE *package)
 {
-    static const WCHAR szCosting[] =
-        {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
-
-    msi_set_property( package->db, szCosting, szZero );
+    msi_set_property( package->db, szCostingComplete, szZero );
     msi_set_property( package->db, cszRootDrive, c_colon );
 
     load_all_folders( package );
@@ -2639,8 +2636,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     static const WCHAR ConditionQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','C','o','n','d','i','t','i','o','n','`',0};
-    static const WCHAR szCosting[] =
-        {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
     static const WCHAR szlevel[] =
         {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szOutOfDiskSpace[] =
@@ -2691,7 +2686,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     TRACE("Calculating file cost\n");
     calculate_file_cost( package );
 
-    msi_set_property( package->db, szCosting, szOne );
+    msi_set_property( package->db, szCostingComplete, szOne );
     /* set default run level if not set */
     level = msi_dup_property( package->db, szlevel );
     if (!level)
