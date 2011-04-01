@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "Programas (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:81 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "Todos los archivos (*.*)"
 
@@ -128,7 +128,7 @@ msgstr "Cancelando..."
 msgid "Separator"
 msgstr "Separador"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:80 winecfg.rc:76
 #, fuzzy
 msgid "None"
 msgstr ""
@@ -387,7 +387,7 @@ msgstr "Ninguna impresora definida por defecto."
 msgid "Cannot find the printer."
 msgstr "No se encuentra la impresora."
 
-#: comdlg32.rc:80 progman.rc:77
+#: comdlg32.rc:80 progman.rc:75
 msgid "Out of memory."
 msgstr "Sin memoria."
 
@@ -8984,7 +8984,7 @@ msgstr "Buscar &siguiente\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Reemplazar...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:55 winhlp32.rc:54
+#: notepad.rc:59 progman.rc:54 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "A&yuda sobre la ayuda"
 
@@ -9004,11 +9004,11 @@ msgstr "Página &p"
 msgid "Notepad"
 msgstr "Bloc de notas"
 
-#: notepad.rc:71 progman.rc:65 winhlp32.rc:80
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:80
 msgid "ERROR"
 msgstr "ERROR"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:81
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:81
 #, fuzzy
 msgid "WARNING"
 msgstr ""
@@ -9017,7 +9017,7 @@ msgstr ""
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
 "ADVERTENCA"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:82
+#: notepad.rc:73 progman.rc:65 winhlp32.rc:82
 msgid "Information"
 msgstr "Información"
 
@@ -9485,30 +9485,26 @@ msgid "&Arrange Icons"
 msgstr "&Ordenar iconos"
 
 #: progman.rc:56
-msgid "&Tutorial"
-msgstr "&Tutorial"
-
-#: progman.rc:58
 msgid "&About Wine"
 msgstr "&Acerca de Wine"
 
-#: progman.rc:64
+#: progman.rc:62
 msgid "Program Manager"
 msgstr "Gestor de programas"
 
-#: progman.rc:68
+#: progman.rc:66
 msgid "Delete"
 msgstr "Eliminar"
 
-#: progman.rc:69
+#: progman.rc:67
 msgid "Delete group `%s'?"
 msgstr "¿Eliminar grupo `%s'?"
 
-#: progman.rc:70
+#: progman.rc:68
 msgid "Delete program `%s'?"
 msgstr "¿Eliminar programa `%s'?"
 
-#: progman.rc:71 winhlp32.rc:83
+#: progman.rc:69 winhlp32.rc:83
 #, fuzzy
 msgid "Not implemented"
 msgstr ""
@@ -9517,15 +9513,15 @@ msgstr ""
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
 "Aún no implementado"
 
-#: progman.rc:72
+#: progman.rc:70
 msgid "Error reading `%s'."
 msgstr "Error leyendo `%s'."
 
-#: progman.rc:73
+#: progman.rc:71
 msgid "Error writing `%s'."
 msgstr "Error escribiendo `%s'."
 
-#: progman.rc:76
+#: progman.rc:74
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9533,37 +9529,37 @@ msgstr ""
 "El archivo de grupo `%s' no se puede abrir.\n"
 "¿Debe volver a intentarse más adelante?"
 
-#: progman.rc:78
+#: progman.rc:76
 msgid "Help not available."
 msgstr "Ayuda no disponible."
 
-#: progman.rc:79
+#: progman.rc:77
 msgid "Unknown feature in %s"
 msgstr "Característica desconocida en %s"
 
-#: progman.rc:80
+#: progman.rc:78
 msgid "File `%s' exists. Not overwritten."
 msgstr "El archivo `%s' existe. No se ha sobreescrito."
 
-#: progman.rc:81
+#: progman.rc:79
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr ""
 "Guarde el grupo como `%s' para prevenir la sobreescritura de los archivos "
 "originales."
 
-#: progman.rc:84
+#: progman.rc:82
 msgid "Programs"
 msgstr "Programas"
 
-#: progman.rc:85
+#: progman.rc:83
 msgid "Libraries (*.dll)"
 msgstr "Librarías (*.dll)"
 
-#: progman.rc:86
+#: progman.rc:84
 msgid "Icon files"
 msgstr "Archivos de iconos"
 
-#: progman.rc:87
+#: progman.rc:85
 msgid "Icons (*.ico)"
 msgstr "Iconos (*.ico)"
 

@@ -323,10 +323,6 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	MAIN_MessageBoxIDS(IDS_WINHELP_ERROR, IDS_ERROR, MB_OK);
       break;
 
-    case PM_TUTORIAL:
-      WinExec("wintutor.exe", SW_SHOWNORMAL);
-      break;
-
     case PM_ABOUT_WINE:
       ShellAbout(hWnd, "WINE", "Program Manager", 0);
       break;

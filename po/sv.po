@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "Program (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:81 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "Alla filer (*.*)"
 
@@ -129,7 +129,7 @@ msgstr "Avbryter..."
 msgid "Separator"
 msgstr "Separator"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:80 winecfg.rc:76
 msgid "None"
 msgstr "Ingen"
 
@@ -377,7 +377,7 @@ msgstr "Det finns ingen standardskrivare."
 msgid "Cannot find the printer."
 msgstr "Kan inte hitta skrivare."
 
-#: comdlg32.rc:80 progman.rc:77
+#: comdlg32.rc:80 progman.rc:75
 msgid "Out of memory."
 msgstr "För lite minne."
 
@@ -8664,7 +8664,7 @@ msgstr "Sök &nästa\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Ersätt...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:55 winhlp32.rc:54
+#: notepad.rc:59 progman.rc:54 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "Användning &av hjälp"
 
@@ -8684,15 +8684,15 @@ msgstr "Sida &p"
 msgid "Notepad"
 msgstr "Anteckningar"
 
-#: notepad.rc:71 progman.rc:65 winhlp32.rc:80
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:80
 msgid "ERROR"
 msgstr "FEL"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:81
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:81
 msgid "WARNING"
 msgstr "VARNING"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:82
+#: notepad.rc:73 progman.rc:65 winhlp32.rc:82
 msgid "Information"
 msgstr "Information"
 
@@ -9127,42 +9127,38 @@ msgid "&Arrange Icons"
 msgstr "Ordna &ikoner"
 
 #: progman.rc:56
-msgid "&Tutorial"
-msgstr "&Guide"
-
-#: progman.rc:58
 msgid "&About Wine"
 msgstr "&Om Wine"
 
-#: progman.rc:64
+#: progman.rc:62
 msgid "Program Manager"
 msgstr "Programhanteraren"
 
-#: progman.rc:68
+#: progman.rc:66
 msgid "Delete"
 msgstr "Ta bort"
 
-#: progman.rc:69
+#: progman.rc:67
 msgid "Delete group `%s'?"
 msgstr "Ta bort gruppen '%s'?"
 
-#: progman.rc:70
+#: progman.rc:68
 msgid "Delete program `%s'?"
 msgstr "Ta bort programmet '%s'?"
 
-#: progman.rc:71 winhlp32.rc:83
+#: progman.rc:69 winhlp32.rc:83
 msgid "Not implemented"
 msgstr "Ej implementerat"
 
-#: progman.rc:72
+#: progman.rc:70
 msgid "Error reading `%s'."
 msgstr "Fel vid läsning av '%s'."
 
-#: progman.rc:73
+#: progman.rc:71
 msgid "Error writing `%s'."
 msgstr "Fel vid skrivning till '%s'."
 
-#: progman.rc:76
+#: progman.rc:74
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9170,35 +9166,35 @@ msgstr ""
 "Kunde inte öppna gruppfilen '%s'.\n"
 "Ska vidare försök göras?"
 
-#: progman.rc:78
+#: progman.rc:76
 msgid "Help not available."
 msgstr "Ingen hjälp finns tillgänglig."
 
-#: progman.rc:79
+#: progman.rc:77
 msgid "Unknown feature in %s"
 msgstr "Okänd egenskap i '%s'"
 
-#: progman.rc:80
+#: progman.rc:78
 msgid "File `%s' exists. Not overwritten."
 msgstr "Filen '%s' fanns redan, och skrevs ej över."
 
-#: progman.rc:81
+#: progman.rc:79
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Spara grupp som '%s' för att undvika att skriva över filer."
 
-#: progman.rc:84
+#: progman.rc:82
 msgid "Programs"
 msgstr "Program"
 
-#: progman.rc:85
+#: progman.rc:83
 msgid "Libraries (*.dll)"
 msgstr "Bibliotek (*.dll)"
 
-#: progman.rc:86
+#: progman.rc:84
 msgid "Icon files"
 msgstr "Ikonfiler"
 
-#: progman.rc:87
+#: progman.rc:85
 msgid "Icons (*.ico)"
 msgstr "Ikoner (*.ico)"
 

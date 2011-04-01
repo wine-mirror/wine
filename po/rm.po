@@ -59,7 +59,7 @@ msgid "Programs (*.exe)"
 msgstr ""
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:81 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "Tuot las datotecas (*.*)"
 
@@ -126,7 +126,7 @@ msgstr ""
 msgid "Separator"
 msgstr ""
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:80 winecfg.rc:76
 msgid "None"
 msgstr ""
 
@@ -363,7 +363,7 @@ msgstr ""
 msgid "Cannot find the printer."
 msgstr ""
 
-#: comdlg32.rc:80 progman.rc:77
+#: comdlg32.rc:80 progman.rc:75
 msgid "Out of memory."
 msgstr ""
 
@@ -8212,7 +8212,7 @@ msgstr ""
 msgid "&Replace...\tCtrl+H"
 msgstr ""
 
-#: notepad.rc:59 progman.rc:55 winhlp32.rc:54
+#: notepad.rc:59 progman.rc:54 winhlp32.rc:54
 #, fuzzy
 msgid "&Help on help"
 msgstr "&Douvrar l'ag�d"
@@ -8234,15 +8234,15 @@ msgstr ""
 msgid "Notepad"
 msgstr ""
 
-#: notepad.rc:71 progman.rc:65 winhlp32.rc:80
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:80
 msgid "ERROR"
 msgstr "SBAGL"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:81
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:81
 msgid "WARNING"
 msgstr "ATTENZIUN"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:82
+#: notepad.rc:73 progman.rc:65 winhlp32.rc:82
 msgid "Information"
 msgstr "INFUORMAZIUN"
 
@@ -8661,78 +8661,74 @@ msgid "&Arrange Icons"
 msgstr ""
 
 #: progman.rc:56
-msgid "&Tutorial"
-msgstr ""
-
-#: progman.rc:58
 #, fuzzy
 msgid "&About Wine"
 msgstr "I&nfuormaziuns"
 
-#: progman.rc:64
+#: progman.rc:62
 msgid "Program Manager"
 msgstr ""
 
-#: progman.rc:68
+#: progman.rc:66
 msgid "Delete"
 msgstr ""
 
-#: progman.rc:69
+#: progman.rc:67
 msgid "Delete group `%s'?"
 msgstr ""
 
-#: progman.rc:70
+#: progman.rc:68
 msgid "Delete program `%s'?"
 msgstr ""
 
-#: progman.rc:71 winhlp32.rc:83
+#: progman.rc:69 winhlp32.rc:83
 msgid "Not implemented"
 msgstr "Na implementa"
 
-#: progman.rc:72
+#: progman.rc:70
 #, fuzzy
 msgid "Error reading `%s'."
 msgstr "Sbagl cun leger la datoteca d'ag�d `%s'"
 
-#: progman.rc:73
+#: progman.rc:71
 msgid "Error writing `%s'."
 msgstr ""
 
-#: progman.rc:76
+#: progman.rc:74
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 msgstr ""
 
-#: progman.rc:78
+#: progman.rc:76
 msgid "Help not available."
 msgstr ""
 
-#: progman.rc:79
+#: progman.rc:77
 msgid "Unknown feature in %s"
 msgstr ""
 
-#: progman.rc:80
+#: progman.rc:78
 msgid "File `%s' exists. Not overwritten."
 msgstr ""
 
-#: progman.rc:81
+#: progman.rc:79
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr ""
 
-#: progman.rc:84
+#: progman.rc:82
 msgid "Programs"
 msgstr ""
 
-#: progman.rc:85
+#: progman.rc:83
 msgid "Libraries (*.dll)"
 msgstr ""
 
-#: progman.rc:86
+#: progman.rc:84
 msgid "Icon files"
 msgstr ""
 
-#: progman.rc:87
+#: progman.rc:85
 msgid "Icons (*.ico)"
 msgstr ""
 

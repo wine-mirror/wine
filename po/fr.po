@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "Programmes (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:81 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "Tous les fichiers (*.*)"
 
@@ -132,7 +132,7 @@ msgstr "Annulation..."
 msgid "Separator"
 msgstr "Séparateur"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:80 winecfg.rc:76
 #, fuzzy
 msgid "None"
 msgstr ""
@@ -385,7 +385,7 @@ msgstr "Imprimante par défaut non définie."
 msgid "Cannot find the printer."
 msgstr "Impossible de trouver l'imprimante."
 
-#: comdlg32.rc:80 progman.rc:77
+#: comdlg32.rc:80 progman.rc:75
 msgid "Out of memory."
 msgstr "Mémoire insuffisante."
 
@@ -8673,7 +8673,7 @@ msgstr "&Suivant\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Rem&placer...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:55 winhlp32.rc:54
+#: notepad.rc:59 progman.rc:54 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "&Utiliser l'aide"
 
@@ -8693,15 +8693,15 @@ msgstr "Page &p"
 msgid "Notepad"
 msgstr "Bloc-notes"
 
-#: notepad.rc:71 progman.rc:65 winhlp32.rc:80
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:80
 msgid "ERROR"
 msgstr "ERREUR"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:81
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:81
 msgid "WARNING"
 msgstr "ATTENTION"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:82
+#: notepad.rc:73 progman.rc:65 winhlp32.rc:82
 msgid "Information"
 msgstr "Information"
 
@@ -9140,42 +9140,38 @@ msgid "&Arrange Icons"
 msgstr "&Réorganiser les icônes"
 
 #: progman.rc:56
-msgid "&Tutorial"
-msgstr "Didacticiel &Windows"
-
-#: progman.rc:58
 msgid "&About Wine"
 msgstr "À &propos de Wine"
 
-#: progman.rc:64
+#: progman.rc:62
 msgid "Program Manager"
 msgstr "Gestionnaire de programmes"
 
-#: progman.rc:68
+#: progman.rc:66
 msgid "Delete"
 msgstr "Supprimer"
 
-#: progman.rc:69
+#: progman.rc:67
 msgid "Delete group `%s'?"
 msgstr "Voulez-vous supprimer le groupe « %s » ?"
 
-#: progman.rc:70
+#: progman.rc:68
 msgid "Delete program `%s'?"
 msgstr "Voulez-vous supprimer le programme « %s » ?"
 
-#: progman.rc:71 winhlp32.rc:83
+#: progman.rc:69 winhlp32.rc:83
 msgid "Not implemented"
 msgstr "Non implémenté"
 
-#: progman.rc:72
+#: progman.rc:70
 msgid "Error reading `%s'."
 msgstr "Impossible d'ouvrir « %s »."
 
-#: progman.rc:73
+#: progman.rc:71
 msgid "Error writing `%s'."
 msgstr "Impossible d'enregistrer « %s »."
 
-#: progman.rc:76
+#: progman.rc:74
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9183,36 +9179,36 @@ msgstr ""
 "Impossible d'ouvrir le fichier de groupe « %s ».\n"
 "Voulez-vous réessayer ?"
 
-#: progman.rc:78
+#: progman.rc:76
 msgid "Help not available."
 msgstr "Impossible d'afficher l'aide."
 
-#: progman.rc:79
+#: progman.rc:77
 msgid "Unknown feature in %s"
 msgstr "Caractéristique inconnue dans %s"
 
-#: progman.rc:80
+#: progman.rc:78
 msgid "File `%s' exists. Not overwritten."
 msgstr "Le fichier « %s » existe déjà. Pas d'écrasement."
 
-#: progman.rc:81
+#: progman.rc:79
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr ""
 "Groupe enregistré sous « %s » pour éviter l'écrasement du fichier original."
 
-#: progman.rc:84
+#: progman.rc:82
 msgid "Programs"
 msgstr "Programmes"
 
-#: progman.rc:85
+#: progman.rc:83
 msgid "Libraries (*.dll)"
 msgstr "Bibliothèques (*.dll)"
 
-#: progman.rc:86
+#: progman.rc:84
 msgid "Icon files"
 msgstr "Fichiers icônes"
 
-#: progman.rc:87
+#: progman.rc:85
 msgid "Icons (*.ico)"
 msgstr "Icônes (*.ico)"
 

@@ -62,7 +62,7 @@ msgid "Programs (*.exe)"
 msgstr "프로그램 (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:77
-#: oleview.rc:101 progman.rc:83 regedit.rc:194 winhlp32.rc:88
+#: oleview.rc:101 progman.rc:81 regedit.rc:194 winhlp32.rc:88
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
 
@@ -130,7 +130,7 @@ msgstr "취소하는 중.."
 msgid "Separator"
 msgstr "분리자"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:82 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:80 winecfg.rc:76
 msgid "None"
 msgstr "없음"
 
@@ -378,7 +378,7 @@ msgstr "어떤 기본 프린터도 정의되지 않았습니다."
 msgid "Cannot find the printer."
 msgstr "프린터를 찾을 수 없습니다."
 
-#: comdlg32.rc:80 progman.rc:77
+#: comdlg32.rc:80 progman.rc:75
 msgid "Out of memory."
 msgstr "메모리 부족"
 
@@ -8540,7 +8540,7 @@ msgstr "다음 찾기(&N)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr " 바꾸기(&R)...\tCtrl+H"
 
-#: notepad.rc:59 progman.rc:55 winhlp32.rc:54
+#: notepad.rc:59 progman.rc:54 winhlp32.rc:54
 msgid "&Help on help"
 msgstr "도움말 사용법(&H)"
 
@@ -8560,15 +8560,15 @@ msgstr "&p 페이지"
 msgid "Notepad"
 msgstr "메모장"
 
-#: notepad.rc:71 progman.rc:65 winhlp32.rc:80
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:80
 msgid "ERROR"
 msgstr "에러!!"
 
-#: notepad.rc:72 progman.rc:66 winhlp32.rc:81
+#: notepad.rc:72 progman.rc:64 winhlp32.rc:81
 msgid "WARNING"
 msgstr "경고"
 
-#: notepad.rc:73 progman.rc:67 winhlp32.rc:82
+#: notepad.rc:73 progman.rc:65 winhlp32.rc:82
 msgid "Information"
 msgstr "정보"
 
@@ -8999,42 +8999,38 @@ msgid "&Arrange Icons"
 msgstr "아이콘 정렬(&A)"
 
 #: progman.rc:56
-msgid "&Tutorial"
-msgstr "자습서(&T)"
-
-#: progman.rc:58
 msgid "&About Wine"
 msgstr "WINE 정보(&A)"
 
-#: progman.rc:64
+#: progman.rc:62
 msgid "Program Manager"
 msgstr "풀그림 관리자"
 
-#: progman.rc:68
+#: progman.rc:66
 msgid "Delete"
 msgstr "지우기"
 
-#: progman.rc:69
+#: progman.rc:67
 msgid "Delete group `%s'?"
 msgstr "그룹 `%s'을 지우겠습니까 ?"
 
-#: progman.rc:70
+#: progman.rc:68
 msgid "Delete program `%s'?"
 msgstr "풀그림 `%s'을 지우겠습니까 ?"
 
-#: progman.rc:71 winhlp32.rc:83
+#: progman.rc:69 winhlp32.rc:83
 msgid "Not implemented"
 msgstr "구현되지 않았음"
 
-#: progman.rc:72
+#: progman.rc:70
 msgid "Error reading `%s'."
 msgstr "`%s' 읽기 에러."
 
-#: progman.rc:73
+#: progman.rc:71
 msgid "Error writing `%s'."
 msgstr "`%s' 쓰기 에러."
 
-#: progman.rc:76
+#: progman.rc:74
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9042,36 +9038,36 @@ msgstr ""
 "그룹 파일 `%s'을 열 수 없습니다.\n"
 "다시 시도하겠습니까?"
 
-#: progman.rc:78
+#: progman.rc:76
 msgid "Help not available."
 msgstr "도움말은 가능하지않습니다."
 
-#: progman.rc:79
+#: progman.rc:77
 msgid "Unknown feature in %s"
 msgstr "%s의 알수 없는 특징"
 
-#: progman.rc:80
+#: progman.rc:78
 msgid "File `%s' exists. Not overwritten."
 msgstr "파일 %s' 는 존재하므로, 덮어 쓸 수 없습니다."
 
-#: progman.rc:81
+#: progman.rc:79
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr ""
 "`%s를 다른 이름으로 저장해야 원래 파일을 덮어 쓰는 걸 막을 수 있습니다."
 
-#: progman.rc:84
+#: progman.rc:82
 msgid "Programs"
 msgstr "풀그림"
 
-#: progman.rc:85
+#: progman.rc:83
 msgid "Libraries (*.dll)"
 msgstr "라이브러리 파일(*.dll)"
 
-#: progman.rc:86
+#: progman.rc:84
 msgid "Icon files"
 msgstr "아이콘 파일"
 
-#: progman.rc:87
+#: progman.rc:85
 msgid "Icons (*.ico)"
 msgstr "아이콘 (*.ico)"
 
