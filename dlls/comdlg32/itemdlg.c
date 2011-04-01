@@ -518,7 +518,7 @@ static LRESULT on_command_filetype(FileDialogImpl *This, WPARAM wparam, LPARAM l
 
 static LRESULT on_wm_command(FileDialogImpl *This, WPARAM wparam, LPARAM lparam)
 {
-    switch(wparam)
+    switch(LOWORD(wparam))
     {
     case IDOK:                return on_idok(This);
     case IDCANCEL:            return on_idcancel(This);
