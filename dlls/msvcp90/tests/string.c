@@ -49,6 +49,8 @@ typedef struct _basic_string_wchar
 } basic_string_wchar;
 
 static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
+static basic_string_char* (WINAPI *p_basic_string_char_concatenate)(basic_string_char*, const basic_string_char*, const basic_string_char*);
+static basic_string_char* (WINAPI *p_basic_string_char_concatenate_cstr)(basic_string_char*, const basic_string_char*, const char*);
 
 #ifdef __i386__
 static basic_string_char* (WINAPI *p_basic_string_char_ctor)(void);
@@ -375,6 +377,10 @@ static BOOL init(void)
                 "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAH_K0AEBV12@00@Z");
         p_basic_string_char_compare_substr_cstr_len = (void*)GetProcAddress(msvcp,
                 "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAH_K0PEBD0@Z");
+        p_basic_string_char_concatenate = (void*)GetProcAddress(msvcp,
+                "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@0@Z");
+        p_basic_string_char_concatenate_cstr = (void*)GetProcAddress(msvcp,
+                "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@PEBD@Z");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
@@ -429,6 +435,10 @@ static BOOL init(void)
                 "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEHIIABV12@II@Z");
         p_basic_string_char_compare_substr_cstr_len = (void*)GetProcAddress(msvcp,
                 "?compare@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEHIIPBDI@Z");
+        p_basic_string_char_concatenate = (void*)GetProcAddress(msvcp,
+                "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@0@Z");
+        p_basic_string_char_concatenate_cstr = (void*)GetProcAddress(msvcp,
+                "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@PBD@Z");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
@@ -644,6 +654,34 @@ static void test_basic_string_char_compare(void) {
     call_func1(p_basic_string_char_dtor, &str2);
 }
 
+static void test_basic_string_char_concatenate(void) {
+    basic_string_char str, ret;
+    const char *cstr;
+
+    if(!p_basic_string_char_ctor_cstr || !p_basic_string_char_concatenate
+            || !p_basic_string_char_concatenate_cstr || !p_basic_string_char_cstr
+            || !p_basic_string_char_dtor) {
+        win_skip("basic_string<wchar> unavailable\n");
+        return;
+    }
+
+    call_func2(p_basic_string_char_ctor_cstr, &str, "test ");
+    /* CDECL calling convention with return bigger than 8 bytes */
+    p_basic_string_char_concatenate(&ret, &str, &str);
+    cstr = call_func1(p_basic_string_char_cstr, &ret);
+    ok(cstr != NULL, "cstr = NULL\n");
+    ok(!strcmp(cstr, "test test "), "cstr = %s\n", cstr);
+    call_func1(p_basic_string_char_dtor, &ret);
+
+    p_basic_string_char_concatenate_cstr(&ret, &str, "passed");
+    cstr = call_func1(p_basic_string_char_cstr, &ret);
+    ok(cstr != NULL, "cstr = NULL\n");
+    ok(!strcmp(cstr, "test passed"), "cstr = %s\n", cstr);
+    call_func1(p_basic_string_char_dtor, &ret);
+
+    call_func1(p_basic_string_char_dtor, &str);
+}
+
 static void test_basic_string_wchar(void) {
     static const wchar_t test[] = { 't','e','s','t',0 };
 
@@ -768,6 +806,7 @@ START_TEST(string)
     test_basic_string_char_swap();
     test_basic_string_char_append();
     test_basic_string_char_compare();
+    test_basic_string_char_concatenate();
     test_basic_string_wchar();
     test_basic_string_wchar_swap();
 
