@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-03-18 12:34+0300\n"
+"PO-Revision-Date: 2011-04-01 18:46+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -9208,9 +9208,8 @@ msgid "&Multi String Value"
 msgstr "&Kelių eilučių reikšmė"
 
 #: regedit.rc:52 regedit.rc:104
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "&Eilutės reikšmė"
+msgstr "&Išskleidžiama eilutės reikšmė"
 
 #: regedit.rc:56 regedit.rc:108
 msgid "&Rename\tF2"
