@@ -258,7 +258,19 @@ typedef struct
 
 struct HttpAuthInfo;
 
-typedef struct gzip_stream_t gzip_stream_t;
+typedef struct data_stream_vtbl_t data_stream_vtbl_t;
+
+typedef struct {
+    const data_stream_vtbl_t *vtbl;
+}  data_stream_t;
+
+typedef struct {
+    data_stream_t data_stream;
+    DWORD content_length;
+    DWORD content_read;
+} netconn_stream_t;
+
+#define READ_BUFFER_SIZE 8192
 
 typedef struct
 {
@@ -283,14 +295,15 @@ typedef struct
 
     CRITICAL_SECTION read_section;  /* section to protect the following fields */
     DWORD contentLength;  /* total number of bytes to be read */
-    DWORD contentRead;    /* bytes of the content read so far */
     BOOL  read_chunked;   /* are we reading in chunked mode? */
+    BOOL  read_gzip;      /* are we reading in gzip mode? */
     DWORD read_pos;       /* current read position in read_buf */
     DWORD read_size;      /* valid data size in read_buf */
-    BYTE  read_buf[4096]; /* buffer for already read but not returned data */
+    BYTE  read_buf[READ_BUFFER_SIZE]; /* buffer for already read but not returned data */
 
     BOOL decoding;
-    gzip_stream_t *gzip_stream;
+    data_stream_t *data_stream;
+    netconn_stream_t netconn_stream;
 } http_request_t;
 
 
