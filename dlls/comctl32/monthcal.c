@@ -6,7 +6,7 @@
  * Copyright 1999 Chris Morgan <cmorgan@wpi.edu> and
  *		  James Abbatiello <abbeyj@wpi.edu>
  * Copyright 2000 Uwe Bonnes <bon@elektron.ikp.physik.tu-darmstadt.de>
- * Copyright 2009, 2010 Nikolay Sivov
+ * Copyright 2009-2011 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -855,6 +855,7 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
 
   /* erase whole week numbers area */
   FillRect(hdc, &r, infoPtr->brushes[MCSC_MONTHBK]);
+  SetTextColor(hdc, infoPtr->colors[MCSC_TITLEBK]);
 
   /* reduce rectangle to one week number */
   r.bottom = r.top + infoPtr->height_increment;
