@@ -1756,6 +1756,49 @@ static void test_get_set_border(void)
     DestroyWindow(hwnd);
 }
 
+static void test_MCM_SIZERECTTOMIN(void)
+{
+    HWND hwnd;
+    DWORD ret;
+    RECT r, r2;
+
+    hwnd = create_monthcal_control(0);
+
+    ret = SendMessageA(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r2);
+    if (ret == 0)
+    {
+        win_skip("Message MCM_GETMINREQRECT unsupported. Skipping.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    ret = SendMessageA(hwnd, MCM_SIZERECTTOMIN, 0, 0);
+    ok(ret == 0, "got %d\n", ret);
+
+    r.left = r.right = r.top = r.bottom = 0;
+    ret = SendMessageA(hwnd, MCM_SIZERECTTOMIN, 0, (LPARAM)&r);
+    if (ret == 0)
+    {
+        skip("Message MCM_SIZERECTTOMIN unsupported. Skipping.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+    ok(ret == 1, "got %d\n", ret);
+    ok(r.left == 0 && r.right > 0, "got %d, %d\n", r.left, r.right);
+
+    r = r2;
+    ret = SendMessageA(hwnd, MCM_SIZERECTTOMIN, 0, (LPARAM)&r);
+    ok(ret == 1, "got %d\n", ret);
+
+    r2.right = (r2.right - r2.left) * 3;
+    r2.bottom = (r2.bottom - r2.top) * 3;
+    r2.left = r2.top = 0;
+    ret = SendMessageA(hwnd, MCM_SIZERECTTOMIN, 0, (LPARAM)&r2);
+    ok(ret == 1, "got %d\n", ret);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(monthcal)
 {
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
@@ -1822,6 +1865,7 @@ START_TEST(monthcal)
 
     test_hittest_v6();
     test_get_set_border();
+    test_MCM_SIZERECTTOMIN();
 
     unload_v6_module(ctx_cookie, hCtx);
 
