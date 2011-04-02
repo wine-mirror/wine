@@ -636,28 +636,33 @@ static BOOL MONTHCAL_SetDayFocus(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *st)
   return TRUE;
 }
 
+/* draw today boundary box for specified rectangle */
+static void MONTHCAL_Circle(const MONTHCAL_INFO *infoPtr, HDC hdc, const RECT *r)
+{
+  HPEN red_pen = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
+  HPEN old_pen = SelectObject(hdc, red_pen);
+  HBRUSH old_brush;
+
+  old_brush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
+  Rectangle(hdc, r->left, r->top, r->right, r->bottom);
+
+  SelectObject(hdc, old_brush);
+  DeleteObject(red_pen);
+  SelectObject(hdc, old_pen);
+}
+
 /* Draw today day mark rectangle
  *
- * [I] hdc : context to draw in
- * [I] day : day to mark with rectangle
+ * [I] hdc  : context to draw in
+ * [I] date : day to mark with rectangle
  *
  */
 static void MONTHCAL_CircleDay(const MONTHCAL_INFO *infoPtr, HDC hdc,
                                const SYSTEMTIME *date)
 {
-  HPEN hRedPen = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
-  HPEN hOldPen2 = SelectObject(hdc, hRedPen);
-  HBRUSH hOldBrush;
   RECT day_rect;
-
   MONTHCAL_CalcPosFromDay(infoPtr, date, &day_rect);
-
-  hOldBrush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
-  Rectangle(hdc, day_rect.left, day_rect.top, day_rect.right, day_rect.bottom);
-
-  SelectObject(hdc, hOldBrush);
-  DeleteObject(hRedPen);
-  SelectObject(hdc, hOldPen2);
+  MONTHCAL_Circle(infoPtr, hdc, &day_rect);
 }
 
 static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEMTIME *st,
@@ -885,36 +890,41 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
 /* bottom today date */
 static void MONTHCAL_PaintTodayTitle(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
 {
-  if(!(infoPtr->dwStyle & MCS_NOTODAY))  {
+  static const WCHAR fmt_todayW[] = { '%','s',' ','%','s',0 };
+  WCHAR buf_todayW[30], buf_dateW[20], buf[80];
+  RECT text_rect, box_rect;
+  HFONT old_font;
+  INT col;
+
+  if(infoPtr->dwStyle & MCS_NOTODAY) return;
+
+  if (!LoadStringW(COMCTL32_hModule, IDM_TODAY, buf_todayW, countof(buf_todayW)))
+  {
     static const WCHAR todayW[] = { 'T','o','d','a','y',':',0 };
-    static const WCHAR fmt_todayW[] = { '%','s',' ','%','s',0 };
-    WCHAR buf_todayW[30], buf_dateW[20], buf[80];
-    RECT rtoday;
-
-    if(!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE)) {
-      SYSTEMTIME fake_st;
-
-      MONTHCAL_GetMaxDate(infoPtr, &fake_st);
-      /* this is always safe cause next month will never fully fit calendar */
-      fake_st.wDay += 1;
-      MONTHCAL_CircleDay(infoPtr, hdc, &fake_st);
-    }
-    if (!LoadStringW(COMCTL32_hModule, IDM_TODAY, buf_todayW, countof(buf_todayW)))
-    {
-	WARN("Can't load resource\n");
-	strcpyW(buf_todayW, todayW);
-    }
-    MONTHCAL_CalcDayRect(infoPtr, &rtoday, 1, 6);
-    GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &infoPtr->todaysDate, NULL,
-                                                        buf_dateW, countof(buf_dateW));
-    SelectObject(hdc, infoPtr->hBoldFont);
-
-    wsprintfW(buf, fmt_todayW, buf_todayW, buf_dateW);
-    DrawTextW(hdc, buf, -1, &rtoday, DT_CALCRECT | DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-    DrawTextW(hdc, buf, -1, &rtoday, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-
-    SelectObject(hdc, infoPtr->hFont);
+    WARN("Can't load resource\n");
+    strcpyW(buf_todayW, todayW);
   }
+
+  col = infoPtr->dwStyle & MCS_NOTODAYCIRCLE ? 0 : 1;
+  if (infoPtr->dwStyle & MCS_WEEKNUMBERS) col--;
+  MONTHCAL_CalcDayRect(infoPtr, &text_rect, col, 6);
+  box_rect = text_rect;
+
+  GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &infoPtr->todaysDate, NULL,
+                                                      buf_dateW, countof(buf_dateW));
+  old_font = SelectObject(hdc, infoPtr->hBoldFont);
+  SetTextColor(hdc, infoPtr->colors[MCSC_TEXT]);
+
+  wsprintfW(buf, fmt_todayW, buf_todayW, buf_dateW);
+  DrawTextW(hdc, buf, -1, &text_rect, DT_CALCRECT | DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+  DrawTextW(hdc, buf, -1, &text_rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+
+  if(!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE)) {
+    OffsetRect(&box_rect, -infoPtr->width_increment, 0);
+    MONTHCAL_Circle(infoPtr, hdc, &box_rect);
+  }
+
+  SelectObject(hdc, old_font);
 }
 
 /* today mark + focus */
