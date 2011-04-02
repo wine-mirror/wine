@@ -83,6 +83,14 @@ enum CachedPen
     PenLast
 };
 
+enum CachedBrush
+{
+    BrushTitle = 0,
+    BrushMonth,
+    BrushBackground,
+    BrushLast
+};
+
 /* single calendar data */
 typedef struct _CALENDAR_INFO
 {
@@ -102,7 +110,7 @@ typedef struct
     DWORD	dwStyle; /* cached GWL_STYLE */
 
     COLORREF    colors[MCSC_TRAILINGTEXT+1];
-    HBRUSH      brushes[MCSC_MONTHBK+1];
+    HBRUSH      brushes[BrushLast];
     HPEN        pens[PenLast];
 
     HFONT	hFont;
@@ -694,7 +702,7 @@ static void MONTHCAL_DrawDay(const MONTHCAL_INFO *infoPtr, HDC hdc, const SYSTEM
     TRACE("%s\n", wine_dbgstr_rect(&r));
     oldCol = SetTextColor(hdc, infoPtr->colors[MCSC_MONTHBK]);
     oldBk = SetBkColor(hdc, infoPtr->colors[MCSC_TRAILINGTEXT]);
-    FillRect(hdc, &r, infoPtr->brushes[MCSC_TITLEBK]);
+    FillRect(hdc, &r, infoPtr->brushes[BrushTitle]);
 
     selection = 1;
   }
@@ -762,7 +770,7 @@ static void MONTHCAL_PaintTitle(MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRU
   SIZE sz;
 
   /* fill header box */
-  FillRect(hdc, title, infoPtr->brushes[MCSC_TITLEBK]);
+  FillRect(hdc, title, infoPtr->brushes[BrushTitle]);
 
   /* month/year string */
   SetBkColor(hdc, infoPtr->colors[MCSC_TITLEBK]);
@@ -866,7 +874,7 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
   r = infoPtr->calendars[calIdx].weeknums;
 
   /* erase whole week numbers area */
-  FillRect(hdc, &r, infoPtr->brushes[MCSC_MONTHBK]);
+  FillRect(hdc, &r, infoPtr->brushes[BrushTitle]);
   SetTextColor(hdc, infoPtr->colors[MCSC_TITLEBK]);
 
   /* reduce rectangle to one week number */
@@ -1008,7 +1016,7 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   fill_bk_rect.bottom = infoPtr->calendars[calIdx].days.bottom +
                           (infoPtr->todayrect.bottom - infoPtr->todayrect.top);
 
-  FillRect(hdc, &fill_bk_rect, infoPtr->brushes[MCSC_MONTHBK]);
+  FillRect(hdc, &fill_bk_rect, infoPtr->brushes[BrushMonth]);
 
   /* draw line under day abbreviations */
   old_pen = SelectObject(hdc, infoPtr->pens[PenText]);
@@ -1133,6 +1141,7 @@ MONTHCAL_GetColor(const MONTHCAL_INFO *infoPtr, UINT index)
 static LRESULT
 MONTHCAL_SetColor(MONTHCAL_INFO *infoPtr, UINT index, COLORREF color)
 {
+  enum CachedBrush type;
   COLORREF prev;
 
   TRACE("%p, %d: color %08x\n", infoPtr, index, color);
@@ -1143,10 +1152,25 @@ MONTHCAL_SetColor(MONTHCAL_INFO *infoPtr, UINT index, COLORREF color)
   infoPtr->colors[index] = color;
 
   /* update cached brush */
-  if (index == MCSC_BACKGROUND || index == MCSC_TITLEBK || index == MCSC_MONTHBK)
+  switch (index)
   {
-    DeleteObject(infoPtr->brushes[index]);
-    infoPtr->brushes[index] = CreateSolidBrush(color);
+  case MCSC_BACKGROUND:
+    type = BrushBackground;
+    break;
+  case MCSC_TITLEBK:
+    type = BrushTitle;
+    break;
+  case MCSC_MONTHBK:
+    type = BrushMonth;
+    break;
+  default:
+    type = BrushLast;
+  }
+
+  if (type != BrushLast)
+  {
+    DeleteObject(infoPtr->brushes[type]);
+    infoPtr->brushes[type] = CreateSolidBrush(color);
   }
 
   /* update cached pen */
@@ -2261,8 +2285,7 @@ MONTHCAL_EraseBkgnd(const MONTHCAL_INFO *infoPtr, HDC hdc)
 
   if (!GetClipBox(hdc, &rc)) return FALSE;
 
-  /* fill background */
-  FillRect(hdc, &rc, infoPtr->brushes[MCSC_BACKGROUND]);
+  FillRect(hdc, &rc, infoPtr->brushes[BrushBackground]);
 
   return TRUE;
 }
@@ -2555,9 +2578,9 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->colors[MCSC_MONTHBK]      = comctl32_color.clrWindow;
   infoPtr->colors[MCSC_TRAILINGTEXT] = comctl32_color.clrGrayText;
 
-  infoPtr->brushes[MCSC_BACKGROUND]  = CreateSolidBrush(infoPtr->colors[MCSC_BACKGROUND]);
-  infoPtr->brushes[MCSC_TITLEBK]     = CreateSolidBrush(infoPtr->colors[MCSC_TITLEBK]);
-  infoPtr->brushes[MCSC_MONTHBK]     = CreateSolidBrush(infoPtr->colors[MCSC_MONTHBK]);
+  infoPtr->brushes[BrushBackground]  = CreateSolidBrush(infoPtr->colors[MCSC_BACKGROUND]);
+  infoPtr->brushes[BrushTitle]       = CreateSolidBrush(infoPtr->colors[MCSC_TITLEBK]);
+  infoPtr->brushes[BrushMonth]       = CreateSolidBrush(infoPtr->colors[MCSC_MONTHBK]);
 
   infoPtr->pens[PenRed]  = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
   infoPtr->pens[PenText] = CreatePen(PS_SOLID, 1, infoPtr->colors[MCSC_TEXT]);
@@ -2596,13 +2619,9 @@ MONTHCAL_Destroy(MONTHCAL_INFO *infoPtr)
   SetWindowLongPtrW(infoPtr->hwndSelf, 0, 0);
 
   CloseThemeData (GetWindowTheme (infoPtr->hwndSelf));
-  
-  DeleteObject(infoPtr->brushes[MCSC_BACKGROUND]);
-  DeleteObject(infoPtr->brushes[MCSC_TITLEBK]);
-  DeleteObject(infoPtr->brushes[MCSC_MONTHBK]);
 
-  for (i = PenRed; i < PenLast; i++)
-      DeleteObject(infoPtr->pens[i]);
+  for (i = 0; i < BrushLast; i++) DeleteObject(infoPtr->brushes[i]);
+  for (i = 0; i < PenLast; i++) DeleteObject(infoPtr->pens[i]);
 
   Free(infoPtr);
   return 0;
