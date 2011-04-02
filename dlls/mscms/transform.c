@@ -384,6 +384,7 @@ BOOL WINAPI TranslateColors( HTRANSFORM handle, PCOLOR in, DWORD count,
             ret = FALSE;
             break;
         }
+        break;
     }
     case COLOR_Lab:
     {
@@ -399,6 +400,7 @@ BOOL WINAPI TranslateColors( HTRANSFORM handle, PCOLOR in, DWORD count,
             ret = FALSE;
             break;
         }
+        break;
     }
     case COLOR_GRAY:
     {
@@ -414,6 +416,7 @@ BOOL WINAPI TranslateColors( HTRANSFORM handle, PCOLOR in, DWORD count,
             ret = FALSE;
             break;
         }
+        break;
     }
     case COLOR_CMYK:
     {
@@ -429,6 +432,7 @@ BOOL WINAPI TranslateColors( HTRANSFORM handle, PCOLOR in, DWORD count,
             ret = FALSE;
             break;
         }
+        break;
     }
     case COLOR_XYZ:
     {
@@ -444,6 +448,7 @@ BOOL WINAPI TranslateColors( HTRANSFORM handle, PCOLOR in, DWORD count,
             ret = FALSE;
             break;
         }
+        break;
     }
     default:
         FIXME("unhandled input/output pair: %d/%d\n", input_type, output_type);
