@@ -76,6 +76,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(monthcal);
 /* convert from days to 100 nanoseconds unit - used as FILETIME unit */
 #define DAYSTO100NSECS(days) (((ULONGLONG)(days))*24*60*60*10000000)
 
+enum CachedPen
+{
+    PenRed = 0,
+    PenText,
+    PenLast
+};
+
 /* single calendar data */
 typedef struct _CALENDAR_INFO
 {
@@ -96,6 +103,7 @@ typedef struct
 
     COLORREF    colors[MCSC_TRAILINGTEXT+1];
     HBRUSH      brushes[MCSC_MONTHBK+1];
+    HPEN        pens[PenLast];
 
     HFONT	hFont;
     HFONT	hBoldFont;
@@ -639,15 +647,13 @@ static BOOL MONTHCAL_SetDayFocus(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *st)
 /* draw today boundary box for specified rectangle */
 static void MONTHCAL_Circle(const MONTHCAL_INFO *infoPtr, HDC hdc, const RECT *r)
 {
-  HPEN red_pen = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
-  HPEN old_pen = SelectObject(hdc, red_pen);
+  HPEN old_pen = SelectObject(hdc, infoPtr->pens[PenRed]);
   HBRUSH old_brush;
 
   old_brush = SelectObject(hdc, GetStockObject(NULL_BRUSH));
   Rectangle(hdc, r->left, r->top, r->right, r->bottom);
 
   SelectObject(hdc, old_brush);
-  DeleteObject(red_pen);
   SelectObject(hdc, old_pen);
 }
 
@@ -788,6 +794,7 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
   INT i, prev_month;
   SYSTEMTIME st;
   WCHAR buf[80];
+  HPEN old_pen;
   RECT r;
 
   if (!(infoPtr->dwStyle & MCS_WEEKNUMBERS)) return;
@@ -883,8 +890,10 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
   }
 
   /* line separator for week numbers column */
+  old_pen = SelectObject(hdc, infoPtr->pens[PenText]);
   MoveToEx(hdc, infoPtr->calendars[calIdx].weeknums.right, infoPtr->calendars[calIdx].weeknums.top + 3 , NULL);
   LineTo(hdc,   infoPtr->calendars[calIdx].weeknums.right, infoPtr->calendars[calIdx].weeknums.bottom);
+  SelectObject(hdc, old_pen);
 }
 
 /* bottom today date */
@@ -991,6 +1000,7 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   RECT r, fill_bk_rect;
   SYSTEMTIME st;
   WCHAR buf[80];
+  HPEN old_pen;
   int mask;
 
   /* fill whole days area - from week days area to today note rectangle */
@@ -1001,10 +1011,12 @@ static void MONTHCAL_PaintCalendar(const MONTHCAL_INFO *infoPtr, HDC hdc, const 
   FillRect(hdc, &fill_bk_rect, infoPtr->brushes[MCSC_MONTHBK]);
 
   /* draw line under day abbreviations */
+  old_pen = SelectObject(hdc, infoPtr->pens[PenText]);
   MoveToEx(hdc, infoPtr->calendars[calIdx].days.left + 3,
                 infoPtr->calendars[calIdx].title.bottom + infoPtr->textHeight + 1, NULL);
   LineTo(hdc, infoPtr->calendars[calIdx].days.right - 3,
               infoPtr->calendars[calIdx].title.bottom + infoPtr->textHeight + 1);
+  SelectObject(hdc, old_pen);
 
   prev_month = date->wMonth - 1;
   if (prev_month == 0) prev_month = 12;
@@ -1135,6 +1147,13 @@ MONTHCAL_SetColor(MONTHCAL_INFO *infoPtr, UINT index, COLORREF color)
   {
     DeleteObject(infoPtr->brushes[index]);
     infoPtr->brushes[index] = CreateSolidBrush(color);
+  }
+
+  /* update cached pen */
+  if (index == MCSC_TEXT)
+  {
+    DeleteObject(infoPtr->pens[PenText]);
+    infoPtr->pens[PenText] = CreatePen(PS_SOLID, 1, infoPtr->colors[index]);
   }
 
   InvalidateRect(infoPtr->hwndSelf, NULL, index == MCSC_BACKGROUND ? TRUE : FALSE);
@@ -2540,6 +2559,9 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->brushes[MCSC_TITLEBK]     = CreateSolidBrush(infoPtr->colors[MCSC_TITLEBK]);
   infoPtr->brushes[MCSC_MONTHBK]     = CreateSolidBrush(infoPtr->colors[MCSC_MONTHBK]);
 
+  infoPtr->pens[PenRed]  = CreatePen(PS_SOLID, 1, RGB(255, 0, 0));
+  infoPtr->pens[PenText] = CreatePen(PS_SOLID, 1, infoPtr->colors[MCSC_TEXT]);
+
   infoPtr->minSel = infoPtr->todaysDate;
   infoPtr->maxSel = infoPtr->todaysDate;
   infoPtr->calendars[0].month = infoPtr->todaysDate;
@@ -2566,6 +2588,8 @@ fail:
 static LRESULT
 MONTHCAL_Destroy(MONTHCAL_INFO *infoPtr)
 {
+  INT i;
+
   /* free month calendar info data */
   Free(infoPtr->monthdayState);
   Free(infoPtr->calendars);
@@ -2576,6 +2600,9 @@ MONTHCAL_Destroy(MONTHCAL_INFO *infoPtr)
   DeleteObject(infoPtr->brushes[MCSC_BACKGROUND]);
   DeleteObject(infoPtr->brushes[MCSC_TITLEBK]);
   DeleteObject(infoPtr->brushes[MCSC_MONTHBK]);
+
+  for (i = PenRed; i < PenLast; i++)
+      DeleteObject(infoPtr->pens[i]);
 
   Free(infoPtr);
   return 0;
