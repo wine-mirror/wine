@@ -238,7 +238,7 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
         if (out_format == TYPE_Lab_16) cmsconvert = cmsCreateLabProfile( NULL );
     }
 
-    cmsprofiles = HeapAlloc( GetProcessHeap(), 0, (nprofiles + 1) * sizeof(cmsHPROFILE *) );
+    cmsprofiles = HeapAlloc( GetProcessHeap(), 0, (nprofiles + 1) * sizeof(cmsHPROFILE) );
     if (cmsprofiles)
     {
         cmsprofiles[0] = profile0->cmsprofile;
