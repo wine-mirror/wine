@@ -3673,7 +3673,7 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
     GpRectF graphics_bounds;
     UINT scans_count, i;
     INT dummy;
-    GpRect *scans;
+    GpRect *scans = NULL;
     DWORD *pixel_data;
 
     if (!brush_can_fill_pixels(brush))
