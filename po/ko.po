@@ -9155,9 +9155,8 @@ msgid "&Multi String Value"
 msgstr "다중 문자열 값(&M)"
 
 #: regedit.rc:52 regedit.rc:104
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "문자열 값(&S)"
+msgstr "확장가능한 문자열 값(&E)"
 
 #: regedit.rc:56 regedit.rc:108
 msgid "&Rename\tF2"
