@@ -295,7 +295,7 @@ static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HA
 {
     XcursorImage *image, *ret = NULL;
     DWORD delay_jiffies, num_steps;
-    int x, y, i, has_alpha;
+    int x, y, i, has_alpha = FALSE;
     XcursorPixel *ptr;
 
     wine_tsx11_lock();
