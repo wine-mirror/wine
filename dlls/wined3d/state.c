@@ -8,7 +8,7 @@
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Henri Verbeet
  * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
- * Copyright 2009-2010 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -634,6 +634,26 @@ static void state_blendop_w(DWORD state, struct wined3d_stateblock *stateblock, 
     WARN("Unsupported in local OpenGL implementation: glBlendEquation\n");
 }
 
+static GLenum gl_blend_op(WINED3DBLENDOP op)
+{
+    switch (op)
+    {
+        case WINED3DBLENDOP_ADD:
+            return GL_FUNC_ADD_EXT;
+        case WINED3DBLENDOP_SUBTRACT:
+            return GL_FUNC_SUBTRACT_EXT;
+        case WINED3DBLENDOP_REVSUBTRACT:
+            return GL_FUNC_REVERSE_SUBTRACT_EXT;
+        case WINED3DBLENDOP_MIN:
+            return GL_MIN_EXT;
+        case WINED3DBLENDOP_MAX:
+            return GL_MAX_EXT;
+        default:
+            FIXME("Unhandled blend op %#x.\n", op);
+            return GL_NONE;
+    }
+}
+
 static void state_blendop(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -648,29 +668,8 @@ static void state_blendop(DWORD state, struct wined3d_stateblock *stateblock, st
         return;
     }
 
-    switch (stateblock->state.render_states[WINED3DRS_BLENDOP])
-    {
-        case WINED3DBLENDOP_ADD:         blendEquation = GL_FUNC_ADD_EXT;              break;
-        case WINED3DBLENDOP_SUBTRACT:    blendEquation = GL_FUNC_SUBTRACT_EXT;         break;
-        case WINED3DBLENDOP_REVSUBTRACT: blendEquation = GL_FUNC_REVERSE_SUBTRACT_EXT; break;
-        case WINED3DBLENDOP_MIN:         blendEquation = GL_MIN_EXT;                   break;
-        case WINED3DBLENDOP_MAX:         blendEquation = GL_MAX_EXT;                   break;
-        default:
-            FIXME("Unrecognized/Unhandled D3DBLENDOP value %#x.\n",
-                    stateblock->state.render_states[WINED3DRS_BLENDOP]);
-    }
-
-    switch (stateblock->state.render_states[WINED3DRS_BLENDOPALPHA])
-    {
-        case WINED3DBLENDOP_ADD:         blendEquationAlpha = GL_FUNC_ADD_EXT;              break;
-        case WINED3DBLENDOP_SUBTRACT:    blendEquationAlpha = GL_FUNC_SUBTRACT_EXT;         break;
-        case WINED3DBLENDOP_REVSUBTRACT: blendEquationAlpha = GL_FUNC_REVERSE_SUBTRACT_EXT; break;
-        case WINED3DBLENDOP_MIN:         blendEquationAlpha = GL_MIN_EXT;                   break;
-        case WINED3DBLENDOP_MAX:         blendEquationAlpha = GL_MAX_EXT;                   break;
-        default:
-            FIXME("Unrecognized/Unhandled D3DBLENDOP value %#x\n",
-                    stateblock->state.render_states[WINED3DRS_BLENDOPALPHA]);
-    }
+    blendEquation = gl_blend_op(stateblock->state.render_states[WINED3DRS_BLENDOP]);
+    blendEquationAlpha = gl_blend_op(stateblock->state.render_states[WINED3DRS_BLENDOPALPHA]);
 
     if (stateblock->state.render_states[WINED3DRS_SEPARATEALPHABLENDENABLE])
     {
