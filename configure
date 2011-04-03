@@ -15279,6 +15279,7 @@ wine_fn_config_dll rstrtmgr enable_rstrtmgr
 wine_fn_config_dll rtutils enable_rtutils implib
 wine_fn_config_dll samlib enable_samlib
 wine_fn_config_dll sane.ds enable_sane_ds po
+wine_fn_config_dll scarddlg enable_scarddlg
 wine_fn_config_dll sccbase enable_sccbase
 wine_fn_config_dll schannel enable_schannel
 wine_fn_config_test dlls/schannel/tests schannel_test
