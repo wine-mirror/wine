@@ -104,7 +104,7 @@ static const char *arb_get_helper_value(enum wined3d_shader_type shader, enum ar
             case ARB_ZERO: return "ps_helper_const.x";
             case ARB_ONE: return "ps_helper_const.y";
             case ARB_TWO: return "coefmul.x";
-            case ARB_0001: return "helper_const.xxxy";
+            case ARB_0001: return "ps_helper_const.xxxy";
             case ARB_EPS: return "ps_helper_const.z";
             default: break;
         }
