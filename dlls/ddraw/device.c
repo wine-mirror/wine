@@ -288,14 +288,12 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         DWORD i;
 
         EnterCriticalSection(&ddraw_cs);
-        /* Free the index buffer. */
-        IWineD3DDevice_SetIndexBuffer(This->wineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
-        wined3d_buffer_decref(This->indexbuffer);
 
-        /* There is no need to unset the vertex buffer here, IWineD3DDevice_Uninit3D will do that when
-         * destroying the primary stateblock. If a vertex buffer is destroyed while it is bound
-         * IDirect3DVertexBuffer::Release will unset it.
-         */
+        /* There is no need to unset any resources here, wined3d will take
+         * care of that on Uninit3D(). */
+
+        /* Free the index buffer. */
+        wined3d_buffer_decref(This->indexbuffer);
 
         /* Set the device up to render to the front buffer since the back
          * buffer will vanish soon. */
