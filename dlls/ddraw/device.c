@@ -116,7 +116,7 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
         *obj = iface;
     }
 
-    /* Check DirectDraw Interfacs */
+    /* Check DirectDraw Interfaces. */
     else if( IsEqualGUID( &IID_IDirectDraw7, refiid ) )
     {
         *obj = &This->ddraw->IDirectDraw7_iface;
