@@ -1654,6 +1654,45 @@ end:
     return stat;
 }
 
+void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, HFONT *hfont)
+{
+    HDC hdc = CreateCompatibleDC(0);
+    GpPointF pt[3];
+    REAL angle, rel_width, rel_height;
+    LOGFONTW lfw;
+    HFONT unscaled_font;
+    TEXTMETRICW textmet;
+
+    pt[0].X = 0.0;
+    pt[0].Y = 0.0;
+    pt[1].X = 1.0;
+    pt[1].Y = 0.0;
+    pt[2].X = 0.0;
+    pt[2].Y = 1.0;
+    if (graphics)
+        GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
+    rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
+                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
+    rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
+                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+
+    unscaled_font = CreateFontIndirectW(&font->lfw);
+
+    SelectObject(hdc, unscaled_font);
+    GetTextMetricsW(hdc, &textmet);
+
+    lfw = font->lfw;
+    lfw.lfHeight = roundr(((REAL)lfw.lfHeight) * rel_height);
+    lfw.lfWidth = roundr(textmet.tmAveCharWidth * rel_width);
+    lfw.lfEscapement = lfw.lfOrientation = roundr((angle / M_PI) * 1800.0);
+
+    *hfont = CreateFontIndirectW(&lfw);
+
+    DeleteDC(hdc);
+    DeleteObject(unscaled_font);
+}
+
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 {
     TRACE("(%p, %p)\n", hdc, graphics);
@@ -4581,8 +4620,6 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 {
     HRGN rgn = NULL;
     HFONT gdifont;
-    LOGFONTW lfw;
-    TEXTMETRICW textmet;
     GpPointF pt[3], rectcpy[4];
     POINT corners[4];
     REAL angle, rel_width, rel_height;
@@ -4660,19 +4697,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         SelectClipRgn(graphics->hdc, rgn);
     }
 
-    /* Use gdi to find the font, then perform transformations on it (height,
-     * width, angle). */
-    SelectObject(graphics->hdc, CreateFontIndirectW(&font->lfw));
-    GetTextMetricsW(graphics->hdc, &textmet);
-    lfw = font->lfw;
-
-    lfw.lfHeight = roundr(((REAL)lfw.lfHeight) * rel_height);
-    lfw.lfWidth = roundr(textmet.tmAveCharWidth * rel_width);
-
-    lfw.lfEscapement = lfw.lfOrientation = roundr((angle / M_PI) * 1800.0);
-
-    gdifont = CreateFontIndirectW(&lfw);
-    DeleteObject(SelectObject(graphics->hdc, gdifont));
+    get_font_hfont(graphics, font, &gdifont);
+    SelectObject(graphics->hdc, gdifont);
 
     if (!format || format->align == StringAlignmentNear)
     {
@@ -5594,11 +5620,8 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
 {
     static const INT unsupported_flags = ~(DriverStringOptionsRealizedAdvance);
     INT save_state;
-    GpPointF pt[4];
-    REAL angle, rel_width, rel_height;
-    LOGFONTW lfw;
-    HFONT unscaled_font, hfont;
-    TEXTMETRICW textmet;
+    GpPointF pt;
+    HFONT hfont;
 
     if (flags & unsupported_flags)
         FIXME("Ignoring flags %x\n", flags & unsupported_flags);
@@ -5610,37 +5633,15 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
     SetBkMode(graphics->hdc, TRANSPARENT);
     SetTextColor(graphics->hdc, brush->lb.lbColor);
 
-    pt[0].X = 0.0;
-    pt[0].Y = 0.0;
-    pt[1].X = 1.0;
-    pt[1].Y = 0.0;
-    pt[2].X = 0.0;
-    pt[2].Y = 1.0;
-    pt[3] = positions[0];
-    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 4);
-    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
-    rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
-                     (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
-    rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
-                      (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
+    pt = positions[0];
+    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, &pt, 1);
 
-    unscaled_font = CreateFontIndirectW(&font->lfw);
-
-    SelectObject(graphics->hdc, unscaled_font);
-    GetTextMetricsW(graphics->hdc, &textmet);
-
-    lfw = font->lfw;
-    lfw.lfHeight = roundr(((REAL)lfw.lfHeight) * rel_height);
-    lfw.lfWidth = roundr(textmet.tmAveCharWidth * rel_width);
-    lfw.lfEscapement = lfw.lfOrientation = roundr((angle / M_PI) * 1800.0);
-
-    hfont = CreateFontIndirectW(&lfw);
+    get_font_hfont(graphics, font, &hfont);
     SelectObject(graphics->hdc, hfont);
-    DeleteObject(unscaled_font);
 
     SetTextAlign(graphics->hdc, TA_BASELINE|TA_LEFT);
 
-    ExtTextOutW(graphics->hdc, roundr(pt[3].X), roundr(pt[3].Y), ETO_GLYPH_INDEX, NULL, text, length, NULL);
+    ExtTextOutW(graphics->hdc, roundr(pt.X), roundr(pt.Y), ETO_GLYPH_INDEX, NULL, text, length, NULL);
 
     RestoreDC(graphics->hdc, save_state);
 

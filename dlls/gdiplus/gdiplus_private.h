@@ -58,6 +58,8 @@ extern void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
 
 extern void free_installed_fonts(void);
 
+extern void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, HFONT *hfont);
+
 extern BOOL lengthen_path(GpPath *path, INT len);
 
 extern GpStatus trace_path(GpGraphics *graphics, GpPath *path);
