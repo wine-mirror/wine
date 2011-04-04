@@ -2,6 +2,7 @@
  * IDxDiagProvider Implementation
  * 
  * Copyright 2004-2005 Raphael Junqueira
+ * Copyright 2010 Andrew Nguyen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,6 +37,7 @@
 #include "strmif.h"
 #include "initguid.h"
 #include "fil_data.h"
+#include "psapi.h"
 
 #include "wine/debug.h"
 
@@ -346,6 +348,98 @@ static inline HRESULT add_ull_as_bstr_property(IDxDiagContainerImpl_Container *n
     return S_OK;
 }
 
+/* Copied from programs/taskkill/taskkill.c. */
+static DWORD *enumerate_processes(DWORD *list_count)
+{
+    DWORD *pid_list, alloc_bytes = 1024 * sizeof(*pid_list), needed_bytes;
+
+    pid_list = HeapAlloc(GetProcessHeap(), 0, alloc_bytes);
+    if (!pid_list)
+        return NULL;
+
+    for (;;)
+    {
+        DWORD *realloc_list;
+
+        if (!EnumProcesses(pid_list, alloc_bytes, &needed_bytes))
+        {
+            HeapFree(GetProcessHeap(), 0, pid_list);
+            return NULL;
+        }
+
+        /* EnumProcesses can't signal an insufficient buffer condition, so the
+         * only way to possibly determine whether a larger buffer is required
+         * is to see whether the written number of bytes is the same as the
+         * buffer size. If so, the buffer will be reallocated to twice the
+         * size. */
+        if (alloc_bytes != needed_bytes)
+            break;
+
+        alloc_bytes *= 2;
+        realloc_list = HeapReAlloc(GetProcessHeap(), 0, pid_list, alloc_bytes);
+        if (!realloc_list)
+        {
+            HeapFree(GetProcessHeap(), 0, pid_list);
+            return NULL;
+        }
+        pid_list = realloc_list;
+    }
+
+    *list_count = needed_bytes / sizeof(*pid_list);
+    return pid_list;
+}
+
+/* Copied from programs/taskkill/taskkill.c. */
+static BOOL get_process_name_from_pid(DWORD pid, WCHAR *buf, DWORD chars)
+{
+    HANDLE process;
+    HMODULE module;
+    DWORD required_size;
+
+    process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (!process)
+        return FALSE;
+
+    if (!EnumProcessModules(process, &module, sizeof(module), &required_size))
+    {
+        CloseHandle(process);
+        return FALSE;
+    }
+
+    if (!GetModuleBaseNameW(process, module, buf, chars))
+    {
+        CloseHandle(process);
+        return FALSE;
+    }
+
+    CloseHandle(process);
+    return TRUE;
+}
+
+/* dxdiagn's detection scheme is simply to look for a process called conf.exe. */
+static BOOL is_netmeeting_running(void)
+{
+    static const WCHAR conf_exe[] = {'c','o','n','f','.','e','x','e',0};
+
+    DWORD list_count;
+    DWORD *pid_list = enumerate_processes(&list_count);
+
+    if (pid_list)
+    {
+        DWORD i;
+        WCHAR process_name[MAX_PATH];
+
+        for (i = 0; i < list_count; i++)
+        {
+            if (get_process_name_from_pid(pid_list[i], process_name, sizeof(process_name)/sizeof(WCHAR)) &&
+                !lstrcmpW(conf_exe, process_name))
+                return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static HRESULT fill_language_information(IDxDiagContainerImpl_Container *node)
 {
     static const WCHAR regional_setting_engW[] = {'R','e','g','i','o','n','a','l',' ','S','e','t','t','i','n','g',0};
@@ -394,6 +488,7 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     static const WCHAR ullPhysicalMemory[] = {'u','l','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
     static const WCHAR ullUsedPageFile[]   = {'u','l','l','U','s','e','d','P','a','g','e','F','i','l','e',0};
     static const WCHAR ullAvailPageFile[]  = {'u','l','l','A','v','a','i','l','P','a','g','e','F','i','l','e',0};
+    static const WCHAR bNetMeetingRunning[] = {'b','N','e','t','M','e','e','t','i','n','g','R','u','n','n','i','n','g',0};
     static const WCHAR szWindowsDir[] = {'s','z','W','i','n','d','o','w','s','D','i','r',0};
     static const WCHAR dwOSMajorVersion[] = {'d','w','O','S','M','a','j','o','r','V','e','r','s','i','o','n',0};
     static const WCHAR dwOSMinorVersion[] = {'d','w','O','S','M','i','n','o','r','V','e','r','s','i','o','n',0};
@@ -445,6 +540,10 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
         return hr;
 
     hr = add_ull_as_bstr_property(node, ullAvailPageFile, msex.ullAvailPageFile);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bool_property(node, bNetMeetingRunning, is_netmeeting_running());
     if (FAILED(hr))
         return hr;
 
