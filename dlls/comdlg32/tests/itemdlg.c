@@ -566,8 +566,6 @@ static void test_basics(void)
     CoTaskMemFree(filename);
 
     /* SetFileNameLabel */
-    todo_wine
-    {
     hr = IFileOpenDialog_SetFileNameLabel(pfod, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileOpenDialog_SetFileNameLabel(pfod, null);
@@ -581,7 +579,6 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileSaveDialog_SetFileNameLabel(pfsd, txt);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    }
 
     /* Close */
     hr = IFileOpenDialog_Close(pfod, S_FALSE);
@@ -590,8 +587,6 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* SetOkButtonLabel */
-    todo_wine
-    {
     hr = IFileOpenDialog_SetOkButtonLabel(pfod, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileOpenDialog_SetOkButtonLabel(pfod, null);
@@ -604,11 +599,8 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileSaveDialog_SetOkButtonLabel(pfsd, txt);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    }
 
     /* SetTitle */
-    todo_wine
-    {
     hr = IFileOpenDialog_SetTitle(pfod, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileOpenDialog_SetTitle(pfod, null);
@@ -621,7 +613,6 @@ static void test_basics(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileSaveDialog_SetTitle(pfsd, txt);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    }
 
     /** IFileOpenDialog specific **/
 
@@ -699,15 +690,12 @@ static void test_basics(void)
     if(SUCCEEDED(hr))
     {
         /* SetCancelButtonLabel */
-        todo_wine
-        {
         hr = IFileDialog2_SetOkButtonLabel(pfd2, NULL);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         hr = IFileDialog2_SetOkButtonLabel(pfd2, null);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         hr = IFileDialog2_SetOkButtonLabel(pfd2, txt);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        }
 
         /* SetNavigationRoot */
         todo_wine
@@ -726,15 +714,12 @@ static void test_basics(void)
     if(SUCCEEDED(hr))
     {
         /* SetCancelButtonLabel */
-        todo_wine
-        {
         hr = IFileDialog2_SetOkButtonLabel(pfd2, NULL);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         hr = IFileDialog2_SetOkButtonLabel(pfd2, null);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         hr = IFileDialog2_SetOkButtonLabel(pfd2, txt);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        }
 
         /* SetNavigationRoot */
         todo_wine

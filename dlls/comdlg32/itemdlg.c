@@ -86,6 +86,10 @@ typedef struct FileDialogImpl {
     DWORD ebevents_cookie;
 
     LPWSTR set_filename;
+    LPWSTR custom_title;
+    LPWSTR custom_okbutton;
+    LPWSTR custom_cancelbutton;
+    LPWSTR custom_filenamelabel;
 } FileDialogImpl;
 
 /**************************************************************************
@@ -304,6 +308,36 @@ static HRESULT on_default_action(FileDialogImpl *This)
 
     /* Success closes the dialog */
     return ret;
+}
+
+/**************************************************************************
+ * Control functions.
+ */
+static void ctrl_resize(HWND hctrl, UINT min_width, UINT max_width)
+{
+    LPWSTR text;
+    UINT len, final_width;
+    SIZE size;
+    RECT rc;
+    HDC hdc;
+
+    TRACE("\n");
+
+    len = SendMessageW(hctrl, WM_GETTEXTLENGTH, 0, 0);
+    text = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(len+1));
+    if(!text) return;
+    SendMessageW(hctrl, WM_GETTEXT, len+1, (LPARAM)text);
+
+    hdc = GetDC(hctrl);
+    GetTextExtentPoint32W(hdc, text, lstrlenW(text), &size);
+    ReleaseDC(hctrl, hdc);
+
+    GetWindowRect(hctrl, &rc);
+    final_width = min(max(size.cx, min_width) + 4, max_width);
+    SetWindowPos(hctrl, NULL, 0, 0, final_width, rc.bottom - rc.top,
+                 SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+
+    HeapFree(GetProcessHeap(), 0, text);
 }
 
 /**************************************************************************
@@ -557,6 +591,34 @@ static void init_toolbar(FileDialogImpl *This, HWND hwnd)
     SendMessageW(htoolbar, TB_AUTOSIZE, 0, 0);
 }
 
+static void update_control_text(FileDialogImpl *This)
+{
+    HWND hitem;
+    if(This->custom_title)
+        SetWindowTextW(This->dlg_hwnd, This->custom_title);
+
+    if(This->custom_okbutton &&
+       (hitem = GetDlgItem(This->dlg_hwnd, IDOK)))
+    {
+        SetWindowTextW(hitem, This->custom_okbutton);
+        ctrl_resize(hitem, 50, 250);
+    }
+
+    if(This->custom_cancelbutton &&
+       (hitem = GetDlgItem(This->dlg_hwnd, IDCANCEL)))
+    {
+        SetWindowTextW(hitem, This->custom_cancelbutton);
+        ctrl_resize(hitem, 50, 250);
+    }
+
+    if(This->custom_filenamelabel &&
+       (hitem = GetDlgItem(This->dlg_hwnd, IDC_FILENAMESTATIC)))
+    {
+        SetWindowTextW(hitem, This->custom_filenamelabel);
+        ctrl_resize(hitem, 50, 250);
+    }
+}
+
 static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
 {
     FileDialogImpl *This = (FileDialogImpl*)lParam;
@@ -592,6 +654,7 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
 
     init_explorerbrowser(This);
     init_toolbar(This, hwnd);
+    update_control_text(This);
     update_layout(This);
 
     return TRUE;
@@ -822,6 +885,10 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
         if(This->psia_results)      IShellItemArray_Release(This->psia_results);
 
         LocalFree(This->set_filename);
+        LocalFree(This->custom_title);
+        LocalFree(This->custom_okbutton);
+        LocalFree(This->custom_cancelbutton);
+        LocalFree(This->custom_filenamelabel);
 
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -1067,22 +1134,39 @@ static HRESULT WINAPI IFileDialog2_fnGetFileName(IFileDialog2 *iface, LPWSTR *ps
 static HRESULT WINAPI IFileDialog2_fnSetTitle(IFileDialog2 *iface, LPCWSTR pszTitle)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, pszTitle);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, pszTitle);
+
+    LocalFree(This->custom_title);
+    This->custom_title = StrDupW(pszTitle);
+    update_control_text(This);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetOkButtonLabel(IFileDialog2 *iface, LPCWSTR pszText)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, pszText);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, pszText);
+
+    LocalFree(This->custom_okbutton);
+    This->custom_okbutton = StrDupW(pszText);
+    update_control_text(This);
+    update_layout(This);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetFileNameLabel(IFileDialog2 *iface, LPCWSTR pszLabel)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%p)\n", This, pszLabel);
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, pszLabel);
+
+    LocalFree(This->custom_filenamelabel);
+    This->custom_filenamelabel = StrDupW(pszLabel);
+    update_control_text(This);
+    update_layout(This);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnGetResult(IFileDialog2 *iface, IShellItem **ppsi)
@@ -1162,8 +1246,14 @@ static HRESULT WINAPI IFileDialog2_fnSetFilter(IFileDialog2 *iface, IShellItemFi
 static HRESULT WINAPI IFileDialog2_fnSetCancelButtonLabel(IFileDialog2 *iface, LPCWSTR pszLabel)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
-    FIXME("stub - %p (%s)\n", This, debugstr_w(pszLabel));
-    return E_NOTIMPL;
+    TRACE("%p (%p)\n", This, pszLabel);
+
+    LocalFree(This->custom_cancelbutton);
+    This->custom_cancelbutton = StrDupW(pszLabel);
+    update_control_text(This);
+    update_layout(This);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetNavigationRoot(IFileDialog2 *iface, IShellItem *psi)
@@ -2057,12 +2147,18 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
         fdimpl->dlg_type = ITEMDLG_TYPE_OPEN;
         fdimpl->u.IFileOpenDialog_iface.lpVtbl = &vt_IFileOpenDialog;
         fdimpl->options = FOS_PATHMUSTEXIST | FOS_FILEMUSTEXIST | FOS_NOCHANGEDIR;
+        fdimpl->custom_title = fdimpl->custom_okbutton = NULL;
     }
     else
     {
+        WCHAR buf[16];
         fdimpl->dlg_type = ITEMDLG_TYPE_SAVE;
         fdimpl->u.IFileSaveDialog_iface.lpVtbl = &vt_IFileSaveDialog;
         fdimpl->options = FOS_OVERWRITEPROMPT | FOS_NOREADONLYRETURN | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR;
+
+        LoadStringW(COMDLG32_hInstance, IDS_SAVE, buf, sizeof(buf)/sizeof(WCHAR));
+        fdimpl->custom_title = StrDupW(buf);
+        fdimpl->custom_okbutton = StrDupW(buf);
     }
 
     fdimpl->filterspecs = NULL;
@@ -2079,6 +2175,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     fdimpl->peb = NULL;
 
     fdimpl->set_filename = NULL;
+    fdimpl->custom_cancelbutton = fdimpl->custom_filenamelabel = NULL;
 
     /* FIXME: The default folder setting should be restored for the
      * application if it was previously set. */
