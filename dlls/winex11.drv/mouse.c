@@ -93,7 +93,8 @@ static const UINT button_up_flags[NB_BUTTONS] =
 };
 
 static HWND cursor_window;
-static DWORD last_time_modified;
+static HCURSOR last_cursor;
+static DWORD last_cursor_change;
 static XContext cursor_context;
 static RECT clip_rect;
 static Cursor create_cursor( HANDLE handle );
@@ -157,7 +158,7 @@ static Cursor get_empty_cursor(void)
 /***********************************************************************
  *		set_window_cursor
  */
-void set_window_cursor( struct x11drv_win_data *data, HCURSOR handle )
+void set_window_cursor( Window window, HCURSOR handle )
 {
     Cursor cursor, prev;
 
@@ -184,10 +185,9 @@ void set_window_cursor( struct x11drv_win_data *data, HCURSOR handle )
         }
     }
 
-    XDefineCursor( gdi_display, data->whole_window, cursor );
+    XDefineCursor( gdi_display, window, cursor );
     /* make the change take effect immediately */
     XFlush( gdi_display );
-    data->cursor = handle;
     wine_tsx11_unlock();
 }
 
@@ -206,7 +206,11 @@ void sync_window_cursor( struct x11drv_win_data *data )
     }
     SERVER_END_REQ;
 
-    if (data->cursor != cursor) set_window_cursor( data, cursor );
+    if (data->cursor != cursor)
+    {
+        data->cursor = cursor;
+        set_window_cursor( data->whole_window, cursor );
+    }
 }
 
 /***********************************************************************
@@ -247,12 +251,11 @@ static void send_mouse_input( HWND hwnd, UINT flags, Window window, int x, int y
     MapWindowPoints( hwnd, 0, &pt, 1 );
 
     if (InterlockedExchangePointer( (void **)&cursor_window, hwnd ) != hwnd ||
-        GetTickCount() - last_time_modified > 100)
+        GetTickCount() - last_cursor_change > 100)
     {
-        cursor_window = hwnd;
         sync_window_cursor( data );
+        last_cursor_change = GetTickCount();
     }
-    last_time_modified = GetTickCount();
 
     if (hwnd != GetDesktopWindow()) hwnd = GetAncestor( hwnd, GA_ROOT );
 
@@ -877,7 +880,12 @@ void CDECL X11DRV_DestroyCursorIcon( HCURSOR handle )
  */
 void CDECL X11DRV_SetCursor( HCURSOR handle )
 {
-    if (cursor_window) SendNotifyMessageW( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
+    if (InterlockedExchangePointer( (void **)&last_cursor, handle ) != handle ||
+        GetTickCount() - last_cursor_change > 100)
+    {
+        last_cursor_change = GetTickCount();
+        if (cursor_window) SendNotifyMessageW( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
+    }
 }
 
 /***********************************************************************

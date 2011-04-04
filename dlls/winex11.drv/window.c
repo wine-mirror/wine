@@ -2699,7 +2699,11 @@ LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         X11DRV_resize_desktop( LOWORD(lp), HIWORD(lp) );
         return 0;
     case WM_X11DRV_SET_CURSOR:
-        if ((data = X11DRV_get_win_data( hwnd ))) set_window_cursor( data, (HCURSOR)lp );
+        if ((data = X11DRV_get_win_data( hwnd )) && data->whole_window)
+        {
+            data->cursor = (HCURSOR)lp;
+            set_window_cursor( data->whole_window, data->cursor );
+        }
         return 0;
     default:
         FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp );

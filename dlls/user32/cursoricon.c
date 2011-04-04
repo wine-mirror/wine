@@ -1651,9 +1651,7 @@ HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cu
     SERVER_END_REQ;
 
     if (!ret) return 0;
-
-    /* Change the cursor shape only if it is visible */
-    if (show_count >= 0 && hOldCursor != hCursor) USER_Driver->pSetCursor( hCursor );
+    USER_Driver->pSetCursor( show_count >= 0 ? hCursor : 0 );
 
     if (!(obj = get_icon_ptr( hOldCursor ))) return 0;
     release_icon_ptr( hOldCursor, obj );
