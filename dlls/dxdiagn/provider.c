@@ -511,6 +511,34 @@ static HRESULT fill_datetime_information(IDxDiagContainerImpl_Container *node)
     return S_OK;
 }
 
+static HRESULT fill_os_string_information(IDxDiagContainerImpl_Container *node, OSVERSIONINFOW *info)
+{
+    static const WCHAR winxpW[] = {'W','i','n','d','o','w','s',' ','X','P',' ','P','r','o','f','e','s','s','i','o','n','a','l',0};
+    static const WCHAR szOSLocalized[] = {'s','z','O','S','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szOSExLocalized[] = {'s','z','O','S','E','x','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szOSExLongLocalized[] = {'s','z','O','S','E','x','L','o','n','g','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szOSEnglish[] = {'s','z','O','S','E','n','g','l','i','s','h',0};
+    static const WCHAR szOSExEnglish[] = {'s','z','O','S','E','x','E','n','g','l','i','s','h',0};
+    static const WCHAR szOSExLongEnglish[] = {'s','z','O','S','E','x','L','o','n','g','E','n','g','l','i','s','h',0};
+
+    static const WCHAR *prop_list[] = {szOSLocalized, szOSExLocalized, szOSExLongLocalized,
+                                       szOSEnglish, szOSExEnglish, szOSExLongEnglish};
+
+    size_t i;
+    HRESULT hr;
+
+    /* FIXME: OS detection should be performed, and localized OS strings
+     * should contain translated versions of the "build" phrase. */
+    for (i = 0; i < sizeof(prop_list)/sizeof(prop_list[0]); i++)
+    {
+        hr = add_bstr_property(node, prop_list[i], winxpW);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    return S_OK;
+}
+
 static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
 {
     static const WCHAR dwDirectXVersionMajor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','a','j','o','r',0};
@@ -662,6 +690,10 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
         return hr;
 
     hr = fill_datetime_information(node);
+    if (FAILED(hr))
+        return hr;
+
+    hr = fill_os_string_information(node, &info);
     if (FAILED(hr))
         return hr;
 

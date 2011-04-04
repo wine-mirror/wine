@@ -791,6 +791,12 @@ static void test_DxDiag_SystemInfo(void)
     static const WCHAR szPhysicalMemoryEnglish[] = {'s','z','P','h','y','s','i','c','a','l','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
     static const WCHAR szPageFileLocalized[] = {'s','z','P','a','g','e','F','i','l','e','L','o','c','a','l','i','z','e','d',0};
     static const WCHAR szPageFileEnglish[] = {'s','z','P','a','g','e','F','i','l','e','E','n','g','l','i','s','h',0};
+    static const WCHAR szOSLocalized[] = {'s','z','O','S','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szOSExLocalized[] = {'s','z','O','S','E','x','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szOSExLongLocalized[] = {'s','z','O','S','E','x','L','o','n','g','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szOSEnglish[] = {'s','z','O','S','E','n','g','l','i','s','h',0};
+    static const WCHAR szOSExEnglish[] = {'s','z','O','S','E','x','E','n','g','l','i','s','h',0};
+    static const WCHAR szOSExLongEnglish[] = {'s','z','O','S','E','x','L','o','n','g','E','n','g','l','i','s','h',0};
 
     static const struct
     {
@@ -824,6 +830,12 @@ static void test_DxDiag_SystemInfo(void)
         {szPhysicalMemoryEnglish, VT_BSTR},
         {szPageFileLocalized, VT_BSTR},
         {szPageFileEnglish, VT_BSTR},
+        {szOSLocalized, VT_BSTR},
+        {szOSExLocalized, VT_BSTR},
+        {szOSExLongLocalized, VT_BSTR},
+        {szOSEnglish, VT_BSTR},
+        {szOSExEnglish, VT_BSTR},
+        {szOSExLongEnglish, VT_BSTR},
     };
 
     HRESULT hr;
