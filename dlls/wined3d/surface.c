@@ -4983,7 +4983,7 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
         return FALSE;
 
     if (!((src_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (src_usage & WINED3DUSAGE_RENDERTARGET))
-            && ((dst_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
+            || !((dst_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
         return FALSE;
 
     if (!(src_format->id == dst_format->id
