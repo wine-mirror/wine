@@ -34,7 +34,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxdiag);
 
-static HINSTANCE instance;
+HINSTANCE dxdiagn_instance = 0;
 
 LONG DXDIAGN_refCount = 0;
 
@@ -43,7 +43,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
   TRACE("%p,%x,%p\n", hInstDLL, fdwReason, lpvReserved);
   if (fdwReason == DLL_PROCESS_ATTACH) {
-      instance = hInstDLL;
+      dxdiagn_instance = hInstDLL;
       DisableThreadLibraryCalls(hInstDLL);
   }
   return TRUE;
@@ -143,7 +143,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( instance, NULL );
+    return __wine_register_resources( dxdiagn_instance, NULL );
 }
 
 /***********************************************************************
@@ -151,5 +151,5 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( instance, NULL );
+    return __wine_unregister_resources( dxdiagn_instance, NULL );
 }

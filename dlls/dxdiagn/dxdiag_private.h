@@ -100,4 +100,6 @@ extern LONG DXDIAGN_refCount;
 static inline void DXDIAGN_LockModule(void) { InterlockedIncrement( &DXDIAGN_refCount ); }
 static inline void DXDIAGN_UnlockModule(void) { InterlockedDecrement( &DXDIAGN_refCount ); }
 
+extern HINSTANCE dxdiagn_instance;
+
 #endif
