@@ -2009,6 +2009,10 @@ msgstr "デフォルト MidiOut デバイス"
 msgid "Regional Setting"
 msgstr "既定の設定"
 
+#: dxdiagn.rc:26
+msgid "%uMB used, %uMB available"
+msgstr ""
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "オプション"

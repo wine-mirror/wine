@@ -2032,6 +2032,10 @@ msgstr "Standard MidiOut Enhed"
 msgid "Regional Setting"
 msgstr "Standard indstillinger"
 
+#: dxdiagn.rc:26
+msgid "%uMB used, %uMB available"
+msgstr ""
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 #, fuzzy
 msgid "Options"

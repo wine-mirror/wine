@@ -534,16 +534,19 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     static const WCHAR dwOSPlatformID[] = {'d','w','O','S','P','l','a','t','f','o','r','m','I','D',0};
     static const WCHAR szCSDVersion[] = {'s','z','C','S','D','V','e','r','s','i','o','n',0};
     static const WCHAR szPhysicalMemoryEnglish[] = {'s','z','P','h','y','s','i','c','a','l','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
+    static const WCHAR szPageFileLocalized[] = {'s','z','P','a','g','e','F','i','l','e','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szPageFileEnglish[] = {'s','z','P','a','g','e','F','i','l','e','E','n','g','l','i','s','h',0};
     static const WCHAR szMachineNameLocalized[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','L','o','c','a','l','i','z','e','d',0};
     static const WCHAR szMachineNameEnglish[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','E','n','g','l','i','s','h',0};
 
+    static const WCHAR pagefile_fmtW[] = {'%','u','M','B',' ','u','s','e','d',',',' ','%','u','M','B',' ','a','v','a','i','l','a','b','l','e',0};
     static const WCHAR physmem_fmtW[] = {'%','u','M','B',' ','R','A','M',0};
 
     HRESULT hr;
     MEMORYSTATUSEX msex;
     OSVERSIONINFOW info;
-    DWORD count;
-    WCHAR buffer[MAX_PATH], computer_name[MAX_COMPUTERNAME_LENGTH + 1], print_buf[200];
+    DWORD count, usedpage_mb, availpage_mb;
+    WCHAR buffer[MAX_PATH], computer_name[MAX_COMPUTERNAME_LENGTH + 1], print_buf[200], localized_pagefile_fmt[200];
 
     hr = add_ui4_property(node, dwDirectXVersionMajor, 9);
     if (FAILED(hr))
@@ -618,6 +621,21 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     /* FIXME: Roundoff should not be done with truncated division. */
     snprintfW(print_buf, sizeof(print_buf)/sizeof(WCHAR), physmem_fmtW, (DWORD)(msex.ullTotalPhys / (1024 * 1024)));
     hr = add_bstr_property(node, szPhysicalMemoryEnglish, print_buf);
+    if (FAILED(hr))
+        return hr;
+
+    usedpage_mb = (DWORD)((msex.ullTotalPageFile - msex.ullAvailPageFile) / (1024 * 1024));
+    availpage_mb = (DWORD)(msex.ullAvailPageFile / (1024 * 1024));
+    LoadStringW(dxdiagn_instance, IDS_PAGE_FILE_FORMAT, localized_pagefile_fmt, sizeof(localized_pagefile_fmt)/sizeof(WCHAR));
+    snprintfW(print_buf, sizeof(print_buf)/sizeof(WCHAR), localized_pagefile_fmt, usedpage_mb, availpage_mb);
+
+    hr = add_bstr_property(node, szPageFileLocalized, print_buf);
+    if (FAILED(hr))
+        return hr;
+
+    snprintfW(print_buf, sizeof(print_buf)/sizeof(WCHAR), pagefile_fmtW, usedpage_mb, availpage_mb);
+
+    hr = add_bstr_property(node, szPageFileEnglish, print_buf);
     if (FAILED(hr))
         return hr;
 
