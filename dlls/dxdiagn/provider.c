@@ -474,6 +474,43 @@ static HRESULT fill_language_information(IDxDiagContainerImpl_Container *node)
     return S_OK;
 }
 
+static HRESULT fill_datetime_information(IDxDiagContainerImpl_Container *node)
+{
+    static const WCHAR date_fmtW[] = {'M','\'','/','\'','d','\'','/','\'','y','y','y','y',0};
+    static const WCHAR time_fmtW[] = {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
+    static const WCHAR datetime_fmtW[] = {'%','s',',',' ','%','s',0};
+    static const WCHAR szTimeLocalized[] = {'s','z','T','i','m','e','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szTimeEnglish[] = {'s','z','T','i','m','e','E','n','g','l','i','s','h',0};
+
+    SYSTEMTIME curtime;
+    WCHAR date_str[80], time_str[80], datetime_str[200];
+    HRESULT hr;
+
+    GetLocalTime(&curtime);
+
+    GetTimeFormatW(LOCALE_NEUTRAL, 0, &curtime, time_fmtW, time_str, sizeof(time_str)/sizeof(WCHAR));
+
+    /* szTimeLocalized */
+    GetDateFormatW(LOCALE_USER_DEFAULT, DATE_LONGDATE, &curtime, NULL, date_str, sizeof(date_str)/sizeof(WCHAR));
+
+    snprintfW(datetime_str, sizeof(datetime_str)/sizeof(WCHAR), datetime_fmtW, date_str, time_str);
+
+    hr = add_bstr_property(node, szTimeLocalized, datetime_str);
+    if (FAILED(hr))
+        return hr;
+
+    /* szTimeEnglish */
+    GetDateFormatW(LOCALE_NEUTRAL, 0, &curtime, date_fmtW, date_str, sizeof(date_str)/sizeof(WCHAR));
+
+    snprintfW(datetime_str, sizeof(datetime_str)/sizeof(WCHAR), datetime_fmtW, date_str, time_str);
+
+    hr = add_bstr_property(node, szTimeEnglish, datetime_str);
+    if (FAILED(hr))
+        return hr;
+
+    return S_OK;
+}
+
 static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
 {
     static const WCHAR dwDirectXVersionMajor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','a','j','o','r',0};
@@ -594,6 +631,10 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
         return hr;
 
     hr = fill_language_information(node);
+    if (FAILED(hr))
+        return hr;
+
+    hr = fill_datetime_information(node);
     if (FAILED(hr))
         return hr;
 

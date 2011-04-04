@@ -786,6 +786,8 @@ static void test_DxDiag_SystemInfo(void)
     static const WCHAR szMachineNameEnglish[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','E','n','g','l','i','s','h',0};
     static const WCHAR szLanguagesLocalized[] = {'s','z','L','a','n','g','u','a','g','e','s','L','o','c','a','l','i','z','e','d',0};
     static const WCHAR szLanguagesEnglish[] = {'s','z','L','a','n','g','u','a','g','e','s','E','n','g','l','i','s','h',0};
+    static const WCHAR szTimeLocalized[] = {'s','z','T','i','m','e','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szTimeEnglish[] = {'s','z','T','i','m','e','E','n','g','l','i','s','h',0};
 
     static const struct
     {
@@ -814,6 +816,8 @@ static void test_DxDiag_SystemInfo(void)
         {szMachineNameEnglish, VT_BSTR},
         {szLanguagesLocalized, VT_BSTR},
         {szLanguagesEnglish, VT_BSTR},
+        {szTimeLocalized, VT_BSTR},
+        {szTimeEnglish, VT_BSTR},
     };
 
     HRESULT hr;
