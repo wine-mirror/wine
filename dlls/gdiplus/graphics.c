@@ -5650,6 +5650,191 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
     return Ok;
 }
 
+static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 *text, INT length,
+                                         GDIPCONST GpFont *font, GDIPCONST GpBrush *brush,
+                                         GDIPCONST PointF *positions, INT flags,
+                                         GDIPCONST GpMatrix *matrix )
+{
+    static const INT unsupported_flags = ~(DriverStringOptionsCmapLookup);
+    GpStatus stat;
+    PointF *real_positions;
+    POINT *pti;
+    HFONT hfont;
+    HDC hdc;
+    int min_x=INT_MAX, min_y=INT_MAX, max_x=INT_MIN, max_y=INT_MIN, i, x, y;
+    DWORD max_glyphsize=0;
+    GLYPHMETRICS glyphmetrics;
+    static const MAT2 identity = {{0,1}, {0,0}, {0,0}, {0,1}};
+    BYTE *glyph_mask;
+    BYTE *text_mask;
+    int text_mask_stride;
+    BYTE *pixel_data;
+    int pixel_data_stride;
+    GpRect pixel_area;
+    UINT ggo_flags = GGO_GRAY8_BITMAP;
+
+    if (length <= 0)
+        return Ok;
+
+    if (flags & DriverStringOptionsRealizedAdvance)
+    {
+        FIXME("Not implemented for DriverStringOptionsRealizedAdvance\n");
+        return NotImplemented;
+    }
+
+    if (!(flags & DriverStringOptionsCmapLookup))
+        ggo_flags |= GGO_GLYPH_INDEX;
+
+    if (flags & unsupported_flags)
+        FIXME("Ignoring flags %x\n", flags & unsupported_flags);
+
+    if (matrix)
+        FIXME("Ignoring matrix\n");
+
+    real_positions = GdipAlloc(sizeof(PointF) * length);
+    if (!real_positions)
+        return OutOfMemory;
+
+    pti = GdipAlloc(sizeof(POINT) * length);
+    if (!pti)
+    {
+        GdipFree(real_positions);
+        return OutOfMemory;
+    }
+
+    memcpy(real_positions, positions, sizeof(PointF) * length);
+
+    transform_and_round_points(graphics, pti, real_positions, length);
+
+    GdipFree(real_positions);
+
+    get_font_hfont(graphics, font, &hfont);
+
+    hdc = CreateCompatibleDC(0);
+    SelectObject(hdc, hfont);
+
+    /* Get the boundaries of the text to be drawn */
+    for (i=0; i<length; i++)
+    {
+        DWORD glyphsize;
+        int left, top, right, bottom;
+
+        glyphsize = GetGlyphOutlineW(hdc, text[i], ggo_flags,
+            &glyphmetrics, 0, NULL, &identity);
+
+        if (glyphsize == GDI_ERROR)
+        {
+            ERR("GetGlyphOutlineW failed\n");
+            GdipFree(pti);
+            DeleteDC(hdc);
+            DeleteObject(hfont);
+            return GenericError;
+        }
+
+        if (glyphsize > max_glyphsize)
+            max_glyphsize = glyphsize;
+
+        left = pti[i].x - glyphmetrics.gmptGlyphOrigin.x;
+        top = pti[i].y - glyphmetrics.gmptGlyphOrigin.y;
+        right = pti[i].x - glyphmetrics.gmptGlyphOrigin.x + glyphmetrics.gmBlackBoxX;
+        bottom = pti[i].y - glyphmetrics.gmptGlyphOrigin.y + glyphmetrics.gmBlackBoxY;
+
+        if (left < min_x) min_x = left;
+        if (top < min_y) min_y = top;
+        if (right > max_x) max_x = right;
+        if (bottom > max_y) max_y = bottom;
+    }
+
+    glyph_mask = GdipAlloc(max_glyphsize);
+    text_mask = GdipAlloc((max_x - min_x) * (max_y - min_y));
+    text_mask_stride = max_x - min_x;
+
+    if (!(glyph_mask && text_mask))
+    {
+        GdipFree(glyph_mask);
+        GdipFree(text_mask);
+        GdipFree(pti);
+        DeleteDC(hdc);
+        DeleteObject(hfont);
+        return OutOfMemory;
+    }
+
+    /* Generate a mask for the text */
+    for (i=0; i<length; i++)
+    {
+        int left, top, stride;
+
+        GetGlyphOutlineW(hdc, text[i], ggo_flags,
+            &glyphmetrics, max_glyphsize, glyph_mask, &identity);
+
+        left = pti[i].x - glyphmetrics.gmptGlyphOrigin.x;
+        top = pti[i].y - glyphmetrics.gmptGlyphOrigin.y;
+        stride = (glyphmetrics.gmBlackBoxX + 3) & (~3);
+
+        for (y=0; y<glyphmetrics.gmBlackBoxY; y++)
+        {
+            BYTE *glyph_val = glyph_mask + y * stride;
+            BYTE *text_val = text_mask + (left - min_x) + (top - min_y + y) * text_mask_stride;
+            for (x=0; x<glyphmetrics.gmBlackBoxX; x++)
+            {
+                *text_val = min(64, *text_val + *glyph_val);
+                glyph_val++;
+                text_val++;
+            }
+        }
+    }
+
+    GdipFree(pti);
+    DeleteDC(hdc);
+    DeleteObject(hfont);
+    GdipFree(glyph_mask);
+
+    /* get the brush data */
+    pixel_data = GdipAlloc(4 * (max_x - min_x) * (max_y - min_y));
+    if (!pixel_data)
+    {
+        GdipFree(text_mask);
+        return OutOfMemory;
+    }
+
+    pixel_area.X = min_x;
+    pixel_area.Y = min_y;
+    pixel_area.Width = max_x - min_x;
+    pixel_area.Height = max_y - min_y;
+    pixel_data_stride = pixel_area.Width * 4;
+
+    stat = brush_fill_pixels(graphics, (GpBrush*)brush, (DWORD*)pixel_data, &pixel_area, pixel_area.Width);
+    if (stat != Ok)
+    {
+        GdipFree(text_mask);
+        GdipFree(pixel_data);
+        return stat;
+    }
+
+    /* multiply the brush data by the mask */
+    for (y=0; y<pixel_area.Height; y++)
+    {
+        BYTE *text_val = text_mask + text_mask_stride * y;
+        BYTE *pixel_val = pixel_data + pixel_data_stride * y + 3;
+        for (x=0; x<pixel_area.Width; x++)
+        {
+            *pixel_val = (*pixel_val) * (*text_val) / 64;
+            text_val++;
+            pixel_val+=4;
+        }
+    }
+
+    GdipFree(text_mask);
+
+    /* draw the result */
+    stat = alpha_blend_pixels(graphics, min_x, min_y, pixel_data, pixel_area.Width,
+        pixel_area.Height, pixel_data_stride);
+
+    GdipFree(pixel_data);
+
+    return stat;
+}
+
 /*****************************************************************************
  * GdipDrawDriverString [GDIPLUS.@]
  */
@@ -5676,7 +5861,8 @@ GpStatus WINGDIPAPI GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 
             positions, flags, matrix);
 
     if (stat == NotImplemented)
-        FIXME("Not fully implemented\n");
+        stat = SOFTWARE_GdipDrawDriverString(graphics, text, length, font, brush,
+            positions, flags, matrix);
 
     return stat;
 }
