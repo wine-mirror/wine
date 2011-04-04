@@ -126,27 +126,27 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     {
         case UnitWorld:
             /* FIXME: Figure out when World != Pixel */
-            lfw->lfHeight = emSize; break;
+            (*font)->pixel_size = emSize; break;
         case UnitDisplay:
             FIXME("Unknown behavior for UnitDisplay! Please report!\n");
             /* FIXME: Figure out how this works...
              * MSDN says that if "DISPLAY" is a monitor, then pixel should be
              * used. That's not what I got. Tests on Windows revealed no output,
              * and the tests in tests/font crash windows */
-            lfw->lfHeight = 0; break;
+            (*font)->pixel_size = 0; break;
         case UnitPixel:
-            lfw->lfHeight = emSize; break;
+            (*font)->pixel_size = emSize; break;
         case UnitPoint:
-            lfw->lfHeight = point_to_pixel(emSize); break;
+            (*font)->pixel_size = point_to_pixel(emSize); break;
         case UnitInch:
-            lfw->lfHeight = inch_to_pixel(emSize); break;
+            (*font)->pixel_size = inch_to_pixel(emSize); break;
         case UnitDocument:
-            lfw->lfHeight = document_to_pixel(emSize); break;
+            (*font)->pixel_size = document_to_pixel(emSize); break;
         case UnitMillimeter:
-            lfw->lfHeight = mm_to_pixel(emSize); break;
+            (*font)->pixel_size = mm_to_pixel(emSize); break;
     }
 
-    lfw->lfHeight *= -1;
+    lfw->lfHeight = (*font)->pixel_size * -1;
 
     lfw->lfWeight = style & FontStyleBold ? 700 : 400;
     lfw->lfItalic = style & FontStyleItalic;
@@ -190,7 +190,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     (*font)->lfw.lfUnderline = logfont->lfUnderline;
     (*font)->lfw.lfStrikeOut = logfont->lfStrikeOut;
 
-    (*font)->emSize = logfont->lfHeight;
+    (*font)->pixel_size = (*font)->emSize = logfont->lfHeight;
     (*font)->unit = UnitPixel;
 
     hfont = CreateFontIndirectW(&(*font)->lfw);

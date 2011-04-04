@@ -323,6 +323,7 @@ struct GpImageAttributes{
 struct GpFont{
     LOGFONTW lfw;
     REAL emSize;
+    REAL pixel_size;
     UINT height;
     LONG line_spacing;
     Unit unit;

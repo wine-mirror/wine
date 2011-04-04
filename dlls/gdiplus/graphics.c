@@ -1677,14 +1677,16 @@ void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, HFONT *hfont)
     rel_height = sqrt((pt[2].Y-pt[0].Y)*(pt[2].Y-pt[0].Y)+
                       (pt[2].X-pt[0].X)*(pt[2].X-pt[0].X));
 
-    unscaled_font = CreateFontIndirectW(&font->lfw);
+    lfw = font->lfw;
+    lfw.lfHeight = roundr(-font->pixel_size * rel_height);
+    unscaled_font = CreateFontIndirectW(&lfw);
 
     SelectObject(hdc, unscaled_font);
     GetTextMetricsW(hdc, &textmet);
 
     lfw = font->lfw;
-    lfw.lfHeight = roundr(((REAL)lfw.lfHeight) * rel_height);
-    lfw.lfWidth = roundr(textmet.tmAveCharWidth * rel_width);
+    lfw.lfHeight = roundr(-font->pixel_size * rel_height);
+    lfw.lfWidth = roundr(textmet.tmAveCharWidth * rel_width / rel_height);
     lfw.lfEscapement = lfw.lfOrientation = roundr((angle / M_PI) * 1800.0);
 
     *hfont = CreateFontIndirectW(&lfw);
