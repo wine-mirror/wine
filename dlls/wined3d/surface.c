@@ -4126,10 +4126,10 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl
     glDepthFunc(GL_ALWAYS);
     glDepthMask(GL_TRUE);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glViewport(0, 0, w, h);
+    glViewport(0, This->pow2Height - h, w, h);
 
     SetRect(&rect, 0, h, w, 0);
-    surface_get_blt_info(target, &rect, w, h, &info);
+    surface_get_blt_info(target, &rect, This->pow2Width, This->pow2Height, &info);
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
     glGetIntegerv(info.binding, &old_binding);
     glBindTexture(info.bind_target, texture);
@@ -4180,6 +4180,7 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
 {
     IWineD3DDeviceImpl *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    GLsizei w, h;
 
     TRACE("surface %p, new location %#x.\n", surface, location);
 
@@ -4188,8 +4189,15 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
 
     if (!(surface->flags & location))
     {
+        w = surface->ds_current_size.cx;
+        h = surface->ds_current_size.cy;
         surface->ds_current_size.cx = 0;
         surface->ds_current_size.cy = 0;
+    }
+    else
+    {
+        w = surface->resource.width;
+        h = surface->resource.height;
     }
 
     if (surface->ds_current_size.cx == surface->resource.width
@@ -4216,14 +4224,13 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
     {
         GLint old_binding = 0;
         GLenum bind_target;
-        GLsizei w, h;
 
         /* The render target is allowed to be smaller than the depth/stencil
          * buffer, so the onscreen depth/stencil buffer is potentially smaller
          * than the offscreen surface. Don't overwrite the offscreen surface
          * with undefined data. */
-        w = min(surface->resource.width, context->swapchain->presentParms.BackBufferWidth);
-        h = min(surface->resource.height, context->swapchain->presentParms.BackBufferHeight);
+        w = min(w, context->swapchain->presentParms.BackBufferWidth);
+        h = min(h, context->swapchain->presentParms.BackBufferHeight);
 
         TRACE("Copying onscreen depth buffer to depth texture.\n");
 
@@ -4298,7 +4305,7 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
 
         context_bind_fbo(context, GL_FRAMEBUFFER, NULL);
         surface_depth_blt(surface, gl_info, surface->texture_name,
-                surface->resource.width, surface->resource.height, surface->texture_target);
+                w, h, surface->texture_target);
         checkGLcall("depth_blt");
 
         if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER, &context->current_fbo->id);
