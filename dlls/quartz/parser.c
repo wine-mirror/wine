@@ -582,7 +582,7 @@ static HRESULT WINAPI Parser_OutputPin_DecideAllocator(BaseOutputPin *iface, IMe
     Parser_OutputPin *This = (Parser_OutputPin *)iface;
     HRESULT hr;
 
-    pAlloc = NULL;
+    *pAlloc = NULL;
 
     if (This->alloc)
         hr = IMemInputPin_NotifyAllocator(pPin, This->alloc, This->readonly);
