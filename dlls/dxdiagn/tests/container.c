@@ -28,6 +28,37 @@
 static IDxDiagProvider *pddp;
 static IDxDiagContainer *pddc;
 
+static const WCHAR DxDiag_SystemInfo[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','I','n','f','o',0};
+
+/* Based on debugstr_variant in dlls/jscript/jsutils.c. */
+static const char *debugstr_variant(const VARIANT *var)
+{
+    static char buf[400];
+
+    if (!var)
+        return "(null)";
+
+    switch (V_VT(var))
+    {
+    case VT_EMPTY:
+        return "{VT_EMPTY}";
+    case VT_BSTR:
+        sprintf(buf, "{VT_BSTR: %s}", wine_dbgstr_w(V_BSTR(var)));
+        break;
+    case VT_BOOL:
+        sprintf(buf, "{VT_BOOL: %x}", V_BOOL(var));
+        break;
+    case VT_UI4:
+        sprintf(buf, "{VT_UI4: %u}", V_UI4(var));
+        break;
+    default:
+        sprintf(buf, "{vt %d}", V_VT(var));
+        break;
+    }
+
+    return buf;
+}
+
 static BOOL create_root_IDxDiagContainer(void)
 {
     HRESULT hr;
@@ -658,7 +689,6 @@ cleanup:
 
 static void test_root_children(void)
 {
-    static const WCHAR DxDiag_SystemInfo[] = {'D','x','D','i','a','g','_','S','y','s','t','e','m','I','n','f','o',0};
     static const WCHAR DxDiag_DisplayDevices[] = {'D','x','D','i','a','g','_','D','i','s','p','l','a','y','D','e','v','i','c','e','s',0};
     static const WCHAR DxDiag_DirectSound[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','S','o','u','n','d',0};
     static const WCHAR DxDiag_DirectMusic[] = {'D','x','D','i','a','g','_','D','i','r','e','c','t','M','u','s','i','c',0};
@@ -733,6 +763,97 @@ cleanup:
     IDxDiagProvider_Release(pddp);
 }
 
+static void test_DxDiag_SystemInfo(void)
+{
+    static const WCHAR dwOSMajorVersion[] = {'d','w','O','S','M','a','j','o','r','V','e','r','s','i','o','n',0};
+    static const WCHAR dwOSMinorVersion[] = {'d','w','O','S','M','i','n','o','r','V','e','r','s','i','o','n',0};
+    static const WCHAR dwOSBuildNumber[] = {'d','w','O','S','B','u','i','l','d','N','u','m','b','e','r',0};
+    static const WCHAR dwOSPlatformID[] = {'d','w','O','S','P','l','a','t','f','o','r','m','I','D',0};
+    static const WCHAR dwDirectXVersionMajor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','a','j','o','r',0};
+    static const WCHAR dwDirectXVersionMinor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','i','n','o','r',0};
+    static const WCHAR szDirectXVersionLetter[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','e','t','t','e','r',0};
+    static const WCHAR bDebug[] = {'b','D','e','b','u','g',0};
+    static const WCHAR bNECPC98[] = {'b','N','E','C','P','C','9','8',0};
+    static const WCHAR ullPhysicalMemory[] = {'u','l','l','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
+    static const WCHAR ullUsedPageFile[] = {'u','l','l','U','s','e','d','P','a','g','e','F','i','l','e',0};
+    static const WCHAR ullAvailPageFile[] = {'u','l','l','A','v','a','i','l','P','a','g','e','F','i','l','e',0};
+    static const WCHAR szWindowsDir[] = {'s','z','W','i','n','d','o','w','s','D','i','r',0};
+    static const WCHAR szCSDVersion[] = {'s','z','C','S','D','V','e','r','s','i','o','n',0};
+    static const WCHAR szDirectXVersionEnglish[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','E','n','g','l','i','s','h',0};
+    static const WCHAR szDirectXVersionLongEnglish[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','o','n','g','E','n','g','l','i','s','h',0};
+    static const WCHAR bNetMeetingRunning[] = {'b','N','e','t','M','e','e','t','i','n','g','R','u','n','n','i','n','g',0};
+    static const WCHAR szMachineNameLocalized[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szMachineNameEnglish[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','E','n','g','l','i','s','h',0};
+    static const WCHAR szLanguagesLocalized[] = {'s','z','L','a','n','g','u','a','g','e','s','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szLanguagesEnglish[] = {'s','z','L','a','n','g','u','a','g','e','s','E','n','g','l','i','s','h',0};
+
+    static const struct
+    {
+        const WCHAR *prop;
+        VARTYPE vt;
+    } property_tests[] =
+    {
+        {dwOSMajorVersion, VT_UI4},
+        {dwOSMinorVersion, VT_UI4},
+        {dwOSBuildNumber, VT_UI4},
+        {dwOSPlatformID, VT_UI4},
+        {dwDirectXVersionMajor, VT_UI4},
+        {dwDirectXVersionMinor, VT_UI4},
+        {szDirectXVersionLetter, VT_BSTR},
+        {bDebug, VT_BOOL},
+        {bNECPC98, VT_BOOL},
+        {ullPhysicalMemory, VT_BSTR},
+        {ullUsedPageFile, VT_BSTR},
+        {ullAvailPageFile, VT_BSTR},
+        {szWindowsDir, VT_BSTR},
+        {szCSDVersion, VT_BSTR},
+        {szDirectXVersionEnglish, VT_BSTR},
+        {szDirectXVersionLongEnglish, VT_BSTR},
+        {bNetMeetingRunning, VT_BOOL},
+        {szMachineNameLocalized, VT_BSTR},
+        {szMachineNameEnglish, VT_BSTR},
+        {szLanguagesLocalized, VT_BSTR},
+        {szLanguagesEnglish, VT_BSTR},
+    };
+
+    HRESULT hr;
+    IDxDiagContainer *child = NULL;
+    VARIANT var;
+
+    if (!create_root_IDxDiagContainer())
+    {
+        skip("Unable to create the root IDxDiagContainer\n");
+        return;
+    }
+
+    hr = IDxDiagContainer_GetChildContainer(pddc, DxDiag_SystemInfo, &child);
+    ok(hr == S_OK, "Expected IDxDiagContainer::GetChildContainer to return S_OK, got 0x%08x\n", hr);
+
+    if (hr == S_OK)
+    {
+        int i;
+
+        /* Examine the variant types of obtained property values. */
+        for (i = 0; i < sizeof(property_tests)/sizeof(property_tests[0]); i++)
+        {
+            hr = IDxDiagContainer_GetProp(child, property_tests[i].prop, &var);
+            ok(hr == S_OK, "[%d] Expected IDxDiagContainer::GetProp to return S_OK, got 0x%08x\n", i, hr);
+
+            if (hr == S_OK)
+            {
+                ok(V_VT(&var) == property_tests[i].vt,
+                   "[%d] Expected variant type %d, got %d\n", i, property_tests[i].vt, V_VT(&var));
+                trace("%s = %s\n", wine_dbgstr_w(property_tests[i].prop), debugstr_variant(&var));
+                VariantClear(&var);
+            }
+        }
+    }
+
+    IDxDiagContainer_Release(child);
+    IDxDiagContainer_Release(pddc);
+    IDxDiagProvider_Release(pddp);
+}
+
 START_TEST(container)
 {
     CoInitialize(NULL);
@@ -745,5 +866,6 @@ START_TEST(container)
     test_GetProp();
 
     test_root_children();
+    test_DxDiag_SystemInfo();
     CoUninitialize();
 }
