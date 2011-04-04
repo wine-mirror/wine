@@ -586,6 +586,7 @@ static inline size_t get_property_size( int format, unsigned long count )
 extern Visual *visual;
 extern Window root_window;
 extern Window clip_window;
+extern int clipping_cursor;
 extern unsigned int screen_width;
 extern unsigned int screen_height;
 extern unsigned int screen_bpp;

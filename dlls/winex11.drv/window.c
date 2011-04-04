@@ -70,6 +70,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 /* cursor clipping window */
 Window clip_window = 0;
+int clipping_cursor = 0;
 
 /* X context to associate a hwnd to an X window */
 XContext winContext = 0;

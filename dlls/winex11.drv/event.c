@@ -91,6 +91,7 @@ static void X11DRV_FocusIn( HWND hwnd, XEvent *event );
 static void X11DRV_FocusOut( HWND hwnd, XEvent *event );
 static void X11DRV_Expose( HWND hwnd, XEvent *event );
 static void X11DRV_MapNotify( HWND hwnd, XEvent *event );
+static void X11DRV_UnmapNotify( HWND hwnd, XEvent *event );
 static void X11DRV_ReparentNotify( HWND hwnd, XEvent *event );
 static void X11DRV_ConfigureNotify( HWND hwnd, XEvent *event );
 static void X11DRV_PropertyNotify( HWND hwnd, XEvent *event );
@@ -124,7 +125,7 @@ static struct event_handler handlers[MAX_EVENT_HANDLERS] =
     /* VisibilityNotify */
     /* CreateNotify */
     { DestroyNotify,    X11DRV_DestroyNotify },
-    /* UnmapNotify */
+    { UnmapNotify,      X11DRV_UnmapNotify },
     { MapNotify,        X11DRV_MapNotify },
     /* MapRequest */
     { ReparentNotify,   X11DRV_ReparentNotify },
@@ -801,6 +802,11 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
 {
     struct x11drv_win_data *data;
 
+    if (event->xany.window == clip_window)
+    {
+        clipping_cursor = 1;
+        return;
+    }
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
     if (!data->mapped || data->embedded) return;
 
@@ -809,6 +815,15 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         HWND hwndFocus = GetFocus();
         if (hwndFocus && IsChild( hwnd, hwndFocus )) X11DRV_SetFocus(hwndFocus);  /* FIXME */
     }
+}
+
+
+/**********************************************************************
+ *		X11DRV_UnmapNotify
+ */
+static void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
+{
+    if (event->xany.window == clip_window) clipping_cursor = 0;
 }
 
 

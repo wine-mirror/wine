@@ -884,7 +884,8 @@ void CDECL X11DRV_SetCursor( HCURSOR handle )
         GetTickCount() - last_cursor_change > 100)
     {
         last_cursor_change = GetTickCount();
-        if (cursor_window) SendNotifyMessageW( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
+        if (clipping_cursor) set_window_cursor( clip_window, handle );
+        else if (cursor_window) SendNotifyMessageW( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
     }
 }
 
@@ -958,12 +959,14 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
             if (!XGrabPointer( display, clip_window, False,
                                PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
                                GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
+                clipping_cursor = 1;
+            wine_tsx11_unlock();
+
+            if (clipping_cursor)
             {
-                wine_tsx11_unlock();
                 clip_rect = *clip;
                 return TRUE;
             }
-            wine_tsx11_unlock();
         }
     }
 
@@ -972,6 +975,7 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
     wine_tsx11_lock();
     XUnmapWindow( display, clip_window );
     wine_tsx11_unlock();
+    clipping_cursor = 0;
     return TRUE;
 }
 
