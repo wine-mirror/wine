@@ -91,14 +91,12 @@ msgstr ""
 "l'installation d'un fichier corrompu."
 
 #: avifil32.rc:27
-#, fuzzy
 msgid "Waveform: %s"
-msgstr "Waveform : %s"
+msgstr "Forme d'onde : %s"
 
 #: avifil32.rc:28
-#, fuzzy
 msgid "Waveform"
-msgstr "Waveform"
+msgstr "Forme d'onde"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
@@ -2025,13 +2023,12 @@ msgid "Default MidiOut Device"
 msgstr "Périphérique MidiOut par défaut"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Paramètres par défaut"
+msgstr "Paramètres régionaux"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr ""
+msgstr "%u MB utilisés, %u MB disponibles"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
@@ -5851,13 +5848,8 @@ msgid "Type the path where the file is located, and then click OK."
 msgstr "Saisissez le chemin du fichier, puis cliquez sur OK."
 
 #: shdoclc.rc:36
-#, fuzzy
 msgid "Default"
-msgstr ""
-"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"Standard\n"
-"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"Par défaut"
+msgstr "Standard"
 
 #: shdoclc.rc:39
 msgid "F&orward"
@@ -8539,9 +8531,8 @@ msgid "Could not stop service %s\n"
 msgstr "Impossible d'arrêter le service %s\n"
 
 #: net.rc:32
-#, fuzzy
 msgid "Could not get handle to service control manager.\n"
-msgstr "Impossible d'obtenir le gestionnaire de contrôle de service.\n"
+msgstr "Impossible d'accéder au gestionnaire de contrôle de services.\n"
 
 #: net.rc:33
 msgid "Could not get handle to service.\n"
