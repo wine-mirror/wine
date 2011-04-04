@@ -788,6 +788,7 @@ static void test_DxDiag_SystemInfo(void)
     static const WCHAR szLanguagesEnglish[] = {'s','z','L','a','n','g','u','a','g','e','s','E','n','g','l','i','s','h',0};
     static const WCHAR szTimeLocalized[] = {'s','z','T','i','m','e','L','o','c','a','l','i','z','e','d',0};
     static const WCHAR szTimeEnglish[] = {'s','z','T','i','m','e','E','n','g','l','i','s','h',0};
+    static const WCHAR szPhysicalMemoryEnglish[] = {'s','z','P','h','y','s','i','c','a','l','M','e','m','o','r','y','E','n','g','l','i','s','h',0};
 
     static const struct
     {
@@ -818,6 +819,7 @@ static void test_DxDiag_SystemInfo(void)
         {szLanguagesEnglish, VT_BSTR},
         {szTimeLocalized, VT_BSTR},
         {szTimeEnglish, VT_BSTR},
+        {szPhysicalMemoryEnglish, VT_BSTR},
     };
 
     HRESULT hr;
