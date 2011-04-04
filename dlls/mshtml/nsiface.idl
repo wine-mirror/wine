@@ -153,6 +153,7 @@ typedef nsISupports nsIPluginStreamListener;
 typedef nsISupports nsIContentSink;
 typedef nsISupports nsIParserFilter;
 typedef nsISupports nsIDTD;
+typedef nsISupports nsIObserver;
 
 [
     object,
@@ -176,16 +177,6 @@ interface nsIFactory : nsISupports
 {
     nsresult CreateInstance(nsISupports *aOuter, const nsIID *iid, void **result);
     nsresult LockFactory(PRBool lock);
-}
-
-[
-    object,
-    uuid(db242e01-e4d9-11d2-9dde-000064657374),
-    local
-]
-interface nsIObserver : nsISupports
-{
-    nsresult Observe(nsISupports *aSubject, const char *aTopic, const PRUnichar *aData);
 }
 
 [

@@ -46,8 +46,6 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 #define NS_EDITORCONTROLLER_CONTRACTID "@mozilla.org/editor/editorcontroller;1"
 #define NS_PREFERENCES_CONTRACTID "@mozilla.org/preferences;1"
 
-#define APPSTARTUP_TOPIC "app-startup"
-
 #define PR_UINT32_MAX 0xffffffff
 
 #define NS_STRING_CONTAINER_INIT_DEPEND  0x0002
@@ -559,12 +557,11 @@ static void set_preferences(void)
 
 static BOOL init_xpcom(const PRUnichar *gre_path)
 {
-    nsresult nsres;
-    nsIObserver *pStartNotif;
     nsIComponentRegistrar *registrar = NULL;
     nsAString path;
     nsIFile *gre_dir;
     WCHAR *ptr;
+    nsresult nsres;
 
     nsAString_InitDepend(&path, gre_path);
     nsres = NS_NewLocalFile(&path, FALSE, &gre_dir);
@@ -600,19 +597,6 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
         ERR("NS_GetComponentRegistrar failed: %08x\n", nsres);
 
     init_mutation(pCompMgr);
-
-    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_APPSTARTUPNOTIFIER_CONTRACTID,
-            NULL, &IID_nsIObserver, (void**)&pStartNotif);
-    if(NS_SUCCEEDED(nsres)) {
-        nsres = nsIObserver_Observe(pStartNotif, NULL, APPSTARTUP_TOPIC, NULL);
-        if(NS_FAILED(nsres))
-            ERR("Observe failed: %08x\n", nsres);
-
-        nsIObserver_Release(pStartNotif);
-    }else {
-        ERR("could not get appstartup-notifier: %08x\n", nsres);
-    }
-
     set_preferences();
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr, NS_MEMORY_CONTRACTID,
