@@ -10026,6 +10026,50 @@ done:
     flush_events();
 }
 
+static INT_PTR CALLBACK wm_quit_dlg_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    struct recvd_message msg;
+
+    if (ignore_message( message )) return 0;
+
+    msg.hwnd = hwnd;
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    msg.wParam = wp;
+    msg.lParam = lp;
+    msg.descr = "dialog";
+    add_message(&msg);
+
+    switch (message)
+    {
+    case WM_INITDIALOG:
+        PostMessage(hwnd, WM_QUIT, 0x1234, 0x5678);
+        PostMessage(hwnd, WM_USER, 0xdead, 0xbeef);
+        return 0;
+
+    case WM_GETDLGCODE:
+        return 0;
+
+    case WM_USER:
+        EndDialog(hwnd, 0);
+        break;
+    }
+
+    return 1;
+}
+
+static const struct message WmQuitDialogSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_SETFONT, sent },
+    { WM_INITDIALOG, sent },
+    { WM_CHANGEUISTATE, sent|optional },
+    { HCBT_DESTROYWND, hook },
+    { 0x0090, sent|optional }, /* Vista */
+    { WM_DESTROY, sent },
+    { WM_NCDESTROY, sent },
+    { 0 }
+};
+
 static void test_quit_message(void)
 {
     MSG msg;
@@ -10076,6 +10120,22 @@ static void test_quit_message(void)
     ret = GetMessage(&msg, NULL, 0, 0);
     ok(ret > 0, "GetMessage failed with error %d\n", GetLastError());
     ok(msg.message == WM_USER, "Received message 0x%04x instead of WM_USER\n", msg.message);
+
+    flush_events();
+    flush_sequence();
+    ret = DialogBoxParam(GetModuleHandle(0), "TEST_EMPTY_DIALOG", 0, wm_quit_dlg_proc, 0);
+todo_wine
+    ok(ret == 1, "expected 1, got %d\n", ret);
+    ok_sequence(WmQuitDialogSeq, "WmQuitDialogSeq", TRUE);
+    memset(&msg, 0xab, sizeof(msg));
+    ret = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+todo_wine
+    ok(ret, "PeekMessage failed\n");
+if (ret) {
+    ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);
+    ok(msg.wParam == 0x1234, "wParam was 0x%lx instead of 0x1234\n", msg.wParam);
+    ok(msg.lParam == 0, "lParam was 0x%lx instead of 0\n", msg.lParam);
+}
 }
 
 static const struct message WmMouseHoverSeq[] = {
