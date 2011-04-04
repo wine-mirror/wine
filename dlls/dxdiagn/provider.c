@@ -481,6 +481,7 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     static const WCHAR szDirectXVersionLetter[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','e','t','t','e','r',0};
     static const WCHAR szDirectXVersionLetter_v[] = {'c',0};
     static const WCHAR bDebug[] = {'b','D','e','b','u','g',0};
+    static const WCHAR bNECPC98[] = {'b','N','E','C','P','C','9','8',0};
     static const WCHAR szDirectXVersionEnglish[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','E','n','g','l','i','s','h',0};
     static const WCHAR szDirectXVersionEnglish_v[] = {'4','.','0','9','.','0','0','0','0','.','0','9','0','4',0};
     static const WCHAR szDirectXVersionLongEnglish[] = {'s','z','D','i','r','e','c','t','X','V','e','r','s','i','o','n','L','o','n','g','E','n','g','l','i','s','h',0};
@@ -525,6 +526,10 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
         return hr;
 
     hr = add_bool_property(node, bDebug, FALSE);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bool_property(node, bNECPC98, FALSE);
     if (FAILED(hr))
         return hr;
 
