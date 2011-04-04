@@ -1760,28 +1760,12 @@ static BOOL CRYPT_KeyUsageValid(PCertificateChainEngine engine,
              * extensions as CA certs.  V1 and V2 certificates did not have
              * extensions, and many root certificates are V1 certificates, so
              * perhaps this is prudent.  On the other hand, MS also accepts V3
-             * certs without key usage extensions.  We are more restrictive:
-             * we accept locally installed V1 or V2 certs as CA certs.
-             * We also accept a lack of key usage extension on root certs,
-             * which is implied in RFC 5280, section 6.1:  the trust anchor's
-             * only requirement is that it was used to issue the next
-             * certificate in the chain.
+             * certs without key usage extensions.  Because some CAs, e.g.
+             * Certum, also do not include key usage extensions in their
+             * intermediate certificates, we are forced to accept V3
+             * certificates without key usage extensions as well.
              */
-            if (isRoot)
-                ret = TRUE;
-            else if (cert->pCertInfo->dwVersion == CERT_V1 ||
-             cert->pCertInfo->dwVersion == CERT_V2)
-            {
-                PCCERT_CONTEXT localCert = CRYPT_FindCertInStore(
-                 engine->hWorld, cert);
-
-                ret = localCert != NULL;
-                CertFreeCertificateContext(localCert);
-            }
-            else
-                ret = FALSE;
-            if (!ret)
-                WARN_(chain)("no key usage extension on a CA cert\n");
+            ret = TRUE;
         }
         else
         {
