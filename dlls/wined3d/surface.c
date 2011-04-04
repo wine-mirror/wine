@@ -1104,12 +1104,24 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, const struct win
  * render target dimensions. With FBOs, the dimensions have to be an exact match. */
 /* TODO: We should synchronize the renderbuffer's content with the texture's content. */
 /* GL locking is done by the caller */
-void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface, unsigned int width, unsigned int height)
+void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface, IWineD3DSurfaceImpl *rt)
 {
     const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
     renderbuffer_entry_t *entry;
     GLuint renderbuffer = 0;
     unsigned int src_width, src_height;
+    unsigned int width, height;
+
+    if (rt->resource.format->id != WINED3DFMT_NULL)
+    {
+        width = rt->pow2Width;
+        height = rt->pow2Height;
+    }
+    else
+    {
+        width = surface->pow2Width;
+        height = surface->pow2Height;
+    }
 
     src_width = surface->pow2Width;
     src_height = surface->pow2Height;

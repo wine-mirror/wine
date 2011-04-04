@@ -2121,8 +2121,7 @@ void surface_modify_ds_location(IWineD3DSurfaceImpl *surface, DWORD location, UI
 void surface_modify_location(IWineD3DSurfaceImpl *surface, DWORD flag, BOOL persistent) DECLSPEC_HIDDEN;
 void surface_prepare_texture(IWineD3DSurfaceImpl *surface,
         const struct wined3d_gl_info *gl_info, BOOL srgb) DECLSPEC_HIDDEN;
-void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface,
-        unsigned int width, unsigned int height) DECLSPEC_HIDDEN;
+void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface, IWineD3DSurfaceImpl *rt) DECLSPEC_HIDDEN;
 void surface_set_container(IWineD3DSurfaceImpl *surface,
         enum wined3d_container_type type, void *container) DECLSPEC_HIDDEN;
 void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;

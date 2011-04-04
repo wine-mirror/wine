@@ -455,10 +455,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
 
         /* Apply depth targets */
         if (entry->depth_stencil)
-        {
-            surface_set_compatible_renderbuffer(entry->depth_stencil,
-                    entry->render_targets[0]->pow2Width, entry->render_targets[0]->pow2Height);
-        }
+            surface_set_compatible_renderbuffer(entry->depth_stencil, entry->render_targets[0]);
         context_attach_depth_stencil_fbo(context, target, entry->depth_stencil, TRUE);
 
         entry->attached = TRUE;
