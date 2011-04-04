@@ -2020,6 +2020,11 @@ msgstr "Podrazumevani WaveOut uređaj"
 msgid "Default MidiOut Device"
 msgstr "Podrazumevani MidiOut uređaj"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Osnovno podešavanje"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Opcije"

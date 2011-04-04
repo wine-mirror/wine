@@ -2019,6 +2019,11 @@ msgstr "Privzeta WaveOut naprava"
 msgid "Default MidiOut Device"
 msgstr "Privzeta MidiOut naprava"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Privzete (sistemske) nastavitve"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Možnosti"

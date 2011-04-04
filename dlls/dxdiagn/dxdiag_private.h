@@ -29,6 +29,7 @@
 
 #include "wine/list.h"
 #include "dxdiag.h"
+#include "resource.h"
 
 /* DXDiag Interfaces: */
 typedef struct IDxDiagProviderImpl  IDxDiagProviderImpl;

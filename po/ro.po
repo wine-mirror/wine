@@ -2157,6 +2157,11 @@ msgstr "Dispozitiv WaveOut implicit"
 msgid "Default MidiOut Device"
 msgstr "Dispozitiv MidiOut implicit"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Setări implicite"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Opțiuni"

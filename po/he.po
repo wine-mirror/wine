@@ -1976,6 +1976,11 @@ msgstr "התקן ה־WaveOut כבררת מחדל"
 msgid "Default MidiOut Device"
 msgstr "התקן ה־MidiOut כבררת מחדל"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "תצורה - הגדרות בררת המחדל"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "אפשרויות"

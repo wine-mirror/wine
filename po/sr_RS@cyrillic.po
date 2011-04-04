@@ -1996,6 +1996,11 @@ msgstr "Подразумевани WaveOut уређај"
 msgid "Default MidiOut Device"
 msgstr "Подразумевани MidiOut уређај"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Поставке интернета"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Опције"

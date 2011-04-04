@@ -2017,6 +2017,11 @@ msgstr "Dispositivo WaveOut por defecto"
 msgid "Default MidiOut Device"
 msgstr "Dispositivo MidiOut por defecto"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Configuración por defecto"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Opciones"

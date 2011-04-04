@@ -2024,6 +2024,11 @@ msgstr "Périphérique WaveOut par défaut"
 msgid "Default MidiOut Device"
 msgstr "Périphérique MidiOut par défaut"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Paramètres par défaut"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Options"

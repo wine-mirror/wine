@@ -2011,6 +2011,11 @@ msgstr "Звуковий пристрій виводу по замовчуван
 msgid "Default MidiOut Device"
 msgstr "Пристрій виводу Midi по замовчуванні"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Стандартні налаштування"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Параметри"

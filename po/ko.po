@@ -2005,6 +2005,11 @@ msgstr "기본 웨이브 출력 장치"
 msgid "Default MidiOut Device"
 msgstr "기본 미디출력 장치"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "기본 설정"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "옵션"

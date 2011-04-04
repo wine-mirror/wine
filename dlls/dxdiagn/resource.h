@@ -1,5 +1,7 @@
 /*
- * Copyright 2004 Raphael Junqueira
+ * Resource identifiers for dxdiagn
+ *
+ * Copyright 2011 Andrew Nguyen
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,11 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define WINE_FILEDESCRIPTION_STR "Wine DxDiag 8"
-#define WINE_FILENAME_STR "dxdiagn.dll"
-#define WINE_FILEVERSION 5,3,1,904
-#define WINE_FILEVERSION_STR "5.3.1.904"
-#define WINE_PRODUCTVERSION 5,3,1,904
-#define WINE_PRODUCTVERSION_STR "5.3.1.904"
+#include <windef.h>
 
-#include "wine/wine_common_ver.rc"
+#define IDS_REGIONAL_SETTING 1

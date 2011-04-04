@@ -2014,6 +2014,11 @@ msgstr "Standardowe urządzenie WaveOut"
 msgid "Default MidiOut Device"
 msgstr "Standardowe urządzenie Device"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Ustawienia standardowe"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Opcje"

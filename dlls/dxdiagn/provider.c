@@ -346,6 +346,40 @@ static inline HRESULT add_ull_as_bstr_property(IDxDiagContainerImpl_Container *n
     return S_OK;
 }
 
+static HRESULT fill_language_information(IDxDiagContainerImpl_Container *node)
+{
+    static const WCHAR regional_setting_engW[] = {'R','e','g','i','o','n','a','l',' ','S','e','t','t','i','n','g',0};
+    static const WCHAR languages_fmtW[] = {'%','s',' ','(','%','s',':',' ','%','s',')',0};
+    static const WCHAR szLanguagesLocalized[] = {'s','z','L','a','n','g','u','a','g','e','s','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szLanguagesEnglish[] = {'s','z','L','a','n','g','u','a','g','e','s','E','n','g','l','i','s','h',0};
+
+    WCHAR system_lang[80], regional_setting[100], user_lang[80], language_str[300];
+    HRESULT hr;
+
+    /* szLanguagesLocalized */
+    GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SNATIVELANGNAME, system_lang, sizeof(system_lang)/sizeof(WCHAR));
+    LoadStringW(dxdiagn_instance, IDS_REGIONAL_SETTING, regional_setting, sizeof(regional_setting)/sizeof(WCHAR));
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SNATIVELANGNAME, user_lang, sizeof(user_lang)/sizeof(WCHAR));
+
+    snprintfW(language_str, sizeof(language_str)/sizeof(WCHAR), languages_fmtW, system_lang, regional_setting, user_lang);
+
+    hr = add_bstr_property(node, szLanguagesLocalized, language_str);
+    if (FAILED(hr))
+        return hr;
+
+    /* szLanguagesEnglish */
+    GetLocaleInfoW(LOCALE_SYSTEM_DEFAULT, LOCALE_SENGLANGUAGE, system_lang, sizeof(system_lang)/sizeof(WCHAR));
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SENGLANGUAGE, user_lang, sizeof(user_lang)/sizeof(WCHAR));
+
+    snprintfW(language_str, sizeof(language_str)/sizeof(WCHAR), languages_fmtW, system_lang, regional_setting_engW, user_lang);
+
+    hr = add_bstr_property(node, szLanguagesEnglish, language_str);
+    if (FAILED(hr))
+        return hr;
+
+    return S_OK;
+}
+
 static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
 {
     static const WCHAR dwDirectXVersionMajor[] = {'d','w','D','i','r','e','c','t','X','V','e','r','s','i','o','n','M','a','j','o','r',0};
@@ -452,6 +486,10 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
         return hr;
 
     hr = add_bstr_property(node, szMachineNameEnglish, computer_name);
+    if (FAILED(hr))
+        return hr;
+
+    hr = fill_language_information(node);
     if (FAILED(hr))
         return hr;
 

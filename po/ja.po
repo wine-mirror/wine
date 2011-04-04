@@ -2004,6 +2004,11 @@ msgstr "デフォルト WaveOut デバイス"
 msgid "Default MidiOut Device"
 msgstr "デフォルト MidiOut デバイス"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "既定の設定"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "オプション"

@@ -2022,6 +2022,11 @@ msgstr "Standardní zařízení WaveOut"
 msgid "Default MidiOut Device"
 msgstr "Standardní zařízení MidiOut"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Standardní nastavení"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Volby"

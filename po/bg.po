@@ -1977,6 +1977,11 @@ msgstr ""
 msgid "Default MidiOut Device"
 msgstr ""
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Default Settings"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr ""

@@ -2027,6 +2027,11 @@ msgstr "Standard WaveOut Enhed"
 msgid "Default MidiOut Device"
 msgstr "Standard MidiOut Enhed"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Standard indstillinger"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 #, fuzzy
 msgid "Options"

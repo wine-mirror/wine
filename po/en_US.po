@@ -2010,6 +2010,10 @@ msgstr "Default WaveOut Device"
 msgid "Default MidiOut Device"
 msgstr "Default MidiOut Device"
 
+#: dxdiagn.rc:25
+msgid "Regional Setting"
+msgstr "Regional Setting"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Options"

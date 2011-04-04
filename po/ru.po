@@ -2007,6 +2007,11 @@ msgstr "Звуковое устройство вывода по умолчани
 msgid "Default MidiOut Device"
 msgstr "Устройство вывода MIDI по умолчанию"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Установки по умолчанию"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
 msgstr "Настройки"

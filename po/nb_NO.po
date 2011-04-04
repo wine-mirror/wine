@@ -2101,6 +2101,11 @@ msgstr "Standard enhet for lydavspilling"
 msgid "Default MidiOut Device"
 msgstr "Standard enhet for MIDI-avspilling"
 
+#: dxdiagn.rc:25
+#, fuzzy
+msgid "Regional Setting"
+msgstr "Globale innstillinger"
+
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 #, fuzzy
 msgid "Options"
