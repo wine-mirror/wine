@@ -299,7 +299,7 @@ HBRUSH CDECL EMFDRV_SelectBrush(PHYSDEV dev, HBRUSH hBrush )
         goto found;
 
     if (!(index = EMFDRV_CreateBrushIndirect(dev, hBrush ))) return 0;
-    GDI_hdc_using_object(hBrush, physDev->hdc);
+    GDI_hdc_using_object(hBrush, dev->hdc);
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
@@ -380,7 +380,7 @@ HFONT CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, HANDLE gdiFont )
         goto found;
 
     if (!(index = EMFDRV_CreateFontIndirect(dev, hFont ))) return HGDI_ERROR;
-    GDI_hdc_using_object(hFont, physDev->hdc);
+    GDI_hdc_using_object(hFont, dev->hdc);
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
@@ -460,7 +460,7 @@ HPEN CDECL EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
         goto found;
 
     if (!(index = EMFDRV_CreatePenIndirect(dev, hPen))) return 0;
-    GDI_hdc_using_object(hPen, physDev->hdc);
+    GDI_hdc_using_object(hPen, dev->hdc);
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
@@ -519,7 +519,7 @@ HPALETTE CDECL EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force )
         goto found;
 
     if (!(index = EMFDRV_CreatePalette( dev, hPal ))) return 0;
-    GDI_hdc_using_object( hPal, physDev->hdc );
+    GDI_hdc_using_object( hPal, dev->hdc );
 
 found:
     emr.emr.iType = EMR_SELECTPALETTE;
@@ -537,12 +537,12 @@ COLORREF CDECL EMFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color )
     EMRSELECTOBJECT emr;
     DWORD index;
 
-    if (GetCurrentObject( physDev->hdc, OBJ_BRUSH ) != GetStockObject( DC_BRUSH )) return color;
+    if (GetCurrentObject( dev->hdc, OBJ_BRUSH ) != GetStockObject( DC_BRUSH )) return color;
 
     if (physDev->dc_brush) DeleteObject( physDev->dc_brush );
     if (!(physDev->dc_brush = CreateSolidBrush( color ))) return CLR_INVALID;
     if (!(index = EMFDRV_CreateBrushIndirect(dev, physDev->dc_brush ))) return CLR_INVALID;
-    GDI_hdc_using_object( physDev->dc_brush, physDev->hdc );
+    GDI_hdc_using_object( physDev->dc_brush, dev->hdc );
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
@@ -559,12 +559,12 @@ COLORREF CDECL EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color )
     DWORD index;
     LOGPEN logpen = { PS_SOLID, { 0, 0 }, color };
 
-    if (GetCurrentObject( physDev->hdc, OBJ_PEN ) != GetStockObject( DC_PEN )) return color;
+    if (GetCurrentObject( dev->hdc, OBJ_PEN ) != GetStockObject( DC_PEN )) return color;
 
     if (physDev->dc_pen) DeleteObject( physDev->dc_pen );
     if (!(physDev->dc_pen = CreatePenIndirect( &logpen ))) return CLR_INVALID;
     if (!(index = EMFDRV_CreatePenIndirect(dev, physDev->dc_pen))) return CLR_INVALID;
-    GDI_hdc_using_object( physDev->dc_pen, physDev->hdc );
+    GDI_hdc_using_object( physDev->dc_pen, dev->hdc );
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;

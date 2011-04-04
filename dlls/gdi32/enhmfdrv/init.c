@@ -169,7 +169,7 @@ static BOOL CDECL EMFDRV_DeleteDC( PHYSDEV dev )
     if (physDev->emh) HeapFree( GetProcessHeap(), 0, physDev->emh );
     for(index = 0; index < physDev->handles_size; index++)
         if(physDev->handles[index])
-	    GDI_hdc_not_using_object(physDev->handles[index], physDev->hdc);
+	    GDI_hdc_not_using_object(physDev->handles[index], dev->hdc);
     HeapFree( GetProcessHeap(), 0, physDev->handles );
     HeapFree( GetProcessHeap(), 0, physDev );
     return TRUE;
@@ -223,8 +223,8 @@ void EMFDRV_UpdateBBox( PHYSDEV dev, RECTL *rect )
     RECTL *bounds = &physDev->emh->rclBounds;
     RECTL vportRect = *rect;
 
-    LPtoDP(physDev->hdc, (LPPOINT)&vportRect, 2);
-    
+    LPtoDP( dev->hdc, (LPPOINT)&vportRect, 2 );
+
     /* The coordinate systems may be mirrored
        (LPtoDP handles points, not rectangles) */
     if (vportRect.left > vportRect.right)
@@ -334,7 +334,6 @@ HDC WINAPI CreateEnhMetaFileW(
     }
 
     push_dc_driver( dc, &physDev->dev, &EMFDRV_Funcs );
-    physDev->hdc = dc->hSelf;
 
     physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
     physDev->handles_size = HANDLE_LIST_INC;
@@ -356,7 +355,7 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->numcolors = GetDeviceCaps(hRefDC, NUMCOLORS);
     physDev->restoring = 0;
 
-    SetVirtualResolution(dc->hSelf, 0, 0, 0, 0);
+    SetVirtualResolution(physDev->dev.hdc, 0, 0, 0, 0);
 
     physDev->emh->iType = EMR_HEADER;
     physDev->emh->nSize = size;
@@ -415,8 +414,8 @@ HDC WINAPI CreateEnhMetaFileW(
 	physDev->hFile = hFile;
     }
 
-    TRACE("returning %p\n", dc->hSelf);
-    ret = dc->hSelf;
+    TRACE("returning %p\n", physDev->dev.hdc);
+    ret = physDev->dev.hdc;
     release_dc_ptr( dc );
 
     if( !hdc )
@@ -446,7 +445,7 @@ HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
     }
     if (dc->refcount != 1)
     {
-        FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
+        FIXME( "not deleting busy DC %p refcount %u\n", hdc, dc->refcount );
         release_dc_ptr( dc );
         return NULL;
     }

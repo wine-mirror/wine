@@ -42,7 +42,7 @@ BOOL CDECL EMFDRV_RestoreDC( PHYSDEV dev, INT level )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pRestoreDC );
     EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
-    DC *dc = get_dc_ptr( physDev->hdc );
+    DC *dc = get_dc_ptr( dev->hdc );
     EMRRESTOREDC emr;
     BOOL ret;
 
@@ -357,10 +357,9 @@ BOOL CDECL EMFDRV_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pOffsetViewportOrgEx );
     EMRSETVIEWPORTORGEX emr;
-    EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
     POINT prev;
 
-    GetViewportOrgEx(physDev->hdc, &prev);
+    GetViewportOrgEx( dev->hdc, &prev );
 
     emr.emr.iType = EMR_SETVIEWPORTORGEX;
     emr.emr.nSize = sizeof(emr);
@@ -375,10 +374,9 @@ BOOL CDECL EMFDRV_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pOffsetWindowOrgEx );
     EMRSETWINDOWORGEX emr;
-    EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
     POINT prev;
 
-    GetWindowOrgEx(physDev->hdc, &prev);
+    GetWindowOrgEx( dev->hdc, &prev );
 
     emr.emr.iType = EMR_SETWINDOWORGEX;
     emr.emr.nSize = sizeof(emr);
