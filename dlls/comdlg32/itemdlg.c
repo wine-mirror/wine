@@ -354,6 +354,7 @@ static SIZE update_layout(FileDialogImpl *This)
     }
 
     /* Open/Save button */
+    hwnd = GetDlgItem(This->dlg_hwnd, IDOK);
     if(hwnd)
     {
         int open_width, open_height;
