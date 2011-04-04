@@ -385,7 +385,6 @@ static void test_undefined_byte_char(void)
         ret = MultiByteToWideChar(testset[i].codepage, MB_ERR_INVALID_CHARS,
                                   testset[i].str, -1, NULL, 0);
         if (testset[i].is_error) {
-            todo_wine
             ok(ret == 0 && GetLastError() == ERROR_NO_UNICODE_TRANSLATION,
                "ret is %d, GetLastError is %u (cp %d)\n",
                ret, GetLastError(), testset[i].codepage);

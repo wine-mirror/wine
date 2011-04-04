@@ -39,6 +39,13 @@ static int get_decomposition( WCHAR src, WCHAR *dst, unsigned int dstlen )
     return res;
 }
 
+/* check the code whether it is in Unicode Private Use Area (PUA). */
+/* MB_ERR_INVALID_CHARS raises an error converting from 1-byte character to PUA. */
+static inline int is_private_use_area_char(WCHAR code)
+{
+    return (code >= 0xe000 && code <= 0xf8ff);
+}
+
 /* check src string for invalid chars; return non-zero if invalid char found */
 static inline int check_invalid_chars_sbcs( const struct sbcs_table *table, int flags,
                                             const unsigned char *src, unsigned int srclen )
@@ -49,7 +56,8 @@ static inline int check_invalid_chars_sbcs( const struct sbcs_table *table, int 
                                                      + (def_unicode_char & 0xff)];
     while (srclen)
     {
-        if (cp2uni[*src] == def_unicode_char && *src != def_char) break;
+        if ((cp2uni[*src] == def_unicode_char && *src != def_char) ||
+            is_private_use_area_char(cp2uni[*src])) break;
         src++;
         srclen--;
     }
@@ -167,7 +175,8 @@ static inline int check_invalid_chars_dbcs( const struct dbcs_table *table,
             src++;
             srclen--;
         }
-        else if (cp2uni[*src] == def_unicode_char && *src != def_char) break;
+        else if ((cp2uni[*src] == def_unicode_char && *src != def_char) ||
+                 is_private_use_area_char(cp2uni[*src])) break;
         src++;
         srclen--;
     }
