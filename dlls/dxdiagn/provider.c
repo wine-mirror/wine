@@ -366,11 +366,14 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     static const WCHAR dwOSBuildNumber[] = {'d','w','O','S','B','u','i','l','d','N','u','m','b','e','r',0};
     static const WCHAR dwOSPlatformID[] = {'d','w','O','S','P','l','a','t','f','o','r','m','I','D',0};
     static const WCHAR szCSDVersion[] = {'s','z','C','S','D','V','e','r','s','i','o','n',0};
+    static const WCHAR szMachineNameLocalized[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','L','o','c','a','l','i','z','e','d',0};
+    static const WCHAR szMachineNameEnglish[] = {'s','z','M','a','c','h','i','n','e','N','a','m','e','E','n','g','l','i','s','h',0};
 
     HRESULT hr;
     MEMORYSTATUSEX msex;
     OSVERSIONINFOW info;
-    WCHAR buffer[MAX_PATH];
+    DWORD count;
+    WCHAR buffer[MAX_PATH], computer_name[MAX_COMPUTERNAME_LENGTH + 1];
 
     hr = add_ui4_property(node, dwDirectXVersionMajor, 9);
     if (FAILED(hr))
@@ -437,6 +440,18 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     GetWindowsDirectoryW(buffer, MAX_PATH);
 
     hr = add_bstr_property(node, szWindowsDir, buffer);
+    if (FAILED(hr))
+        return hr;
+
+    count = sizeof(computer_name)/sizeof(WCHAR);
+    if (!GetComputerNameW(computer_name, &count))
+        return E_FAIL;
+
+    hr = add_bstr_property(node, szMachineNameLocalized, computer_name);
+    if (FAILED(hr))
+        return hr;
+
+    hr = add_bstr_property(node, szMachineNameEnglish, computer_name);
     if (FAILED(hr))
         return hr;
 
