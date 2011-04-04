@@ -181,7 +181,6 @@ static DC *MFDRV_AllocMetaFile(void)
     }
 
     push_dc_driver( dc, &physDev->dev, &MFDRV_Funcs );
-    physDev->hdc = dc->hSelf;
 
     physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
     physDev->handles_size = HANDLE_LIST_INC;
@@ -196,7 +195,7 @@ static DC *MFDRV_AllocMetaFile(void)
     physDev->mh->mtMaxRecord    = 0;
     physDev->mh->mtNoParameters = 0;
 
-    SetVirtualResolution(dc->hSelf, 0, 0, 0, 0);
+    SetVirtualResolution( physDev->dev.hdc, 0, 0, 0, 0);
 
     return dc;
 }
@@ -213,7 +212,7 @@ static BOOL CDECL MFDRV_DeleteDC( PHYSDEV dev )
     HeapFree( GetProcessHeap(), 0, physDev->mh );
     for(index = 0; index < physDev->handles_size; index++)
         if(physDev->handles[index])
-            GDI_hdc_not_using_object(physDev->handles[index], physDev->hdc);
+            GDI_hdc_not_using_object(physDev->handles[index], dev->hdc);
     HeapFree( GetProcessHeap(), 0, physDev->handles );
     HeapFree( GetProcessHeap(), 0, physDev );
     return TRUE;
@@ -265,8 +264,8 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
     else  /* memory based metafile */
 	physDev->mh->mtType = METAFILE_MEMORY;
 
-    TRACE("returning %p\n", dc->hSelf);
-    ret = dc->hSelf;
+    TRACE("returning %p\n", physDev->dev.hdc);
+    ret = physDev->dev.hdc;
     release_dc_ptr( dc );
     return ret;
 }
@@ -314,7 +313,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
     }
     if (dc->refcount != 1)
     {
-        FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
+        FIXME( "not deleting busy DC %p refcount %u\n", hdc, dc->refcount );
         release_dc_ptr( dc );
         return NULL;
     }

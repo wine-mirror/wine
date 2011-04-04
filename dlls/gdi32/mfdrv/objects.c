@@ -214,7 +214,6 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
     DWORD size;
     METARECORD *mr;
     LOGBRUSH logbrush;
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     BOOL r;
 
     if (!GetObjectA( hBrush, sizeof(logbrush), &logbrush )) return -1;
@@ -282,12 +281,12 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
             MFDRV_Reverse((LPBYTE)info + sizeof(BITMAPINFO) + sizeof(RGBQUAD),
 		      bm.bmWidth, bm.bmHeight);
 
-	    cref = GetTextColor(physDev->hdc);
+	    cref = GetTextColor( dev->hdc );
 	    info->bmiColors[0].rgbRed = GetRValue(cref);
 	    info->bmiColors[0].rgbGreen = GetGValue(cref);
 	    info->bmiColors[0].rgbBlue = GetBValue(cref);
 	    info->bmiColors[0].rgbReserved = 0;
-	    cref = GetBkColor(physDev->hdc);
+	    cref = GetBkColor( dev->hdc );
 	    info->bmiColors[1].rgbRed = GetRValue(cref);
 	    info->bmiColors[1].rgbGreen = GetGValue(cref);
 	    info->bmiColors[1].rgbBlue = GetBValue(cref);
@@ -341,7 +340,6 @@ done:
  */
 HBRUSH CDECL MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     INT16 index;
 
     index = MFDRV_FindObject(dev, hbrush);
@@ -350,7 +348,7 @@ HBRUSH CDECL MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
         index = MFDRV_CreateBrushIndirect( dev, hbrush );
         if( index < 0 )
             return 0;
-        GDI_hdc_using_object(hbrush, physDev->hdc);
+        GDI_hdc_using_object(hbrush, dev->hdc);
     }
     return MFDRV_SelectObject( dev, index ) ? hbrush : HGDI_ERROR;
 }
@@ -398,7 +396,6 @@ static UINT16 MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont, LOGFONTW *logfo
  */
 HFONT CDECL MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     LOGFONTW font;
     INT16 index;
 
@@ -410,7 +407,7 @@ HFONT CDECL MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
         index = MFDRV_CreateFontIndirect(dev, hfont, &font);
         if( index < 0 )
             return HGDI_ERROR;
-        GDI_hdc_using_object(hfont, physDev->hdc);
+        GDI_hdc_using_object(hfont, dev->hdc);
     }
     return MFDRV_SelectObject( dev, index ) ? hfont : HGDI_ERROR;
 }
@@ -437,7 +434,6 @@ static UINT16 MFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen, LOGPEN16 *logpen)
  */
 HPEN CDECL MFDRV_SelectPen( PHYSDEV dev, HPEN hpen )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     LOGPEN16 logpen;
     INT16 index;
 
@@ -476,7 +472,7 @@ HPEN CDECL MFDRV_SelectPen( PHYSDEV dev, HPEN hpen )
         index = MFDRV_CreatePenIndirect( dev, hpen, &logpen );
         if( index < 0 )
             return 0;
-        GDI_hdc_using_object(hpen, physDev->hdc);
+        GDI_hdc_using_object(hpen, dev->hdc);
     }
     return MFDRV_SelectObject( dev, index ) ? hpen : HGDI_ERROR;
 }

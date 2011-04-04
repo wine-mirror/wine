@@ -84,8 +84,7 @@ MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     LPSTR       ascii;
     DWORD len;
     CHARSETINFO csi;
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
-    int charset = GetTextCharset(physDev->hdc);
+    int charset = GetTextCharset( dev->hdc );
     UINT cp = CP_ACP;
 
     if(TranslateCharsetInfo(ULongToPtr(charset), &csi, TCI_SRCCHARSET))
