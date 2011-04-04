@@ -805,7 +805,13 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
                     /* No message present -> send ENTERIDLE and wait */
                     SendMessageW( ownerMsg, WM_ENTERIDLE, MSGF_DIALOGBOX, (LPARAM)hwnd );
                 }
-                if (!GetMessageW( &msg, 0, 0, 0 )) break;
+                GetMessageW( &msg, 0, 0, 0 );
+            }
+
+            if (msg.message == WM_QUIT)
+            {
+                PostQuitMessage( msg.wParam );
+                dlgInfo->flags |= DF_END;
             }
 
             if (!IsWindow( hwnd )) return 0;

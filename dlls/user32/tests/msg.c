@@ -10124,18 +10124,14 @@ static void test_quit_message(void)
     flush_events();
     flush_sequence();
     ret = DialogBoxParam(GetModuleHandle(0), "TEST_EMPTY_DIALOG", 0, wm_quit_dlg_proc, 0);
-todo_wine
     ok(ret == 1, "expected 1, got %d\n", ret);
-    ok_sequence(WmQuitDialogSeq, "WmQuitDialogSeq", TRUE);
+    ok_sequence(WmQuitDialogSeq, "WmQuitDialogSeq", FALSE);
     memset(&msg, 0xab, sizeof(msg));
     ret = PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
-todo_wine
     ok(ret, "PeekMessage failed\n");
-if (ret) {
     ok(msg.message == WM_QUIT, "Received message 0x%04x instead of WM_QUIT\n", msg.message);
     ok(msg.wParam == 0x1234, "wParam was 0x%lx instead of 0x1234\n", msg.wParam);
     ok(msg.lParam == 0, "lParam was 0x%lx instead of 0\n", msg.lParam);
-}
 }
 
 static const struct message WmMouseHoverSeq[] = {
