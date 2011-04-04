@@ -5620,16 +5620,20 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
                                      GDIPCONST PointF *positions, INT flags,
                                      GDIPCONST GpMatrix *matrix )
 {
-    static const INT unsupported_flags = ~(DriverStringOptionsRealizedAdvance);
+    static const INT unsupported_flags = ~(DriverStringOptionsRealizedAdvance|DriverStringOptionsCmapLookup);
     INT save_state;
     GpPointF pt;
     HFONT hfont;
+    UINT eto_flags=0;
 
     if (flags & unsupported_flags)
         FIXME("Ignoring flags %x\n", flags & unsupported_flags);
 
     if (matrix)
         FIXME("Ignoring matrix\n");
+
+    if (!(flags & DriverStringOptionsCmapLookup))
+        eto_flags |= ETO_GLYPH_INDEX;
 
     save_state = SaveDC(graphics->hdc);
     SetBkMode(graphics->hdc, TRANSPARENT);
@@ -5643,7 +5647,7 @@ static GpStatus GDI32_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT1
 
     SetTextAlign(graphics->hdc, TA_BASELINE|TA_LEFT);
 
-    ExtTextOutW(graphics->hdc, roundr(pt.X), roundr(pt.Y), ETO_GLYPH_INDEX, NULL, text, length, NULL);
+    ExtTextOutW(graphics->hdc, roundr(pt.X), roundr(pt.Y), eto_flags, NULL, text, length, NULL);
 
     RestoreDC(graphics->hdc, save_state);
 
