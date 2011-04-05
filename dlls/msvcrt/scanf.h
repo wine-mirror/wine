@@ -65,6 +65,23 @@
 #ifdef STRING
 #undef _EOF_
 #define _EOF_ 0
+#ifdef STRING_LEN
+#define _GETC_(file) (consumed==length ? '\0' : (consumed++, *file++))
+#define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
+#ifdef WIDE_SCANF
+#ifdef SECURE
+#define _FUNCTION_ static int MSVCRT_vsnwscanf_s_l(const MSVCRT_wchar_t *file, MSVCRT_size_t length, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list ap)
+#else  /* SECURE */
+#define _FUNCTION_ static int MSVCRT_vsnwscanf_l(const MSVCRT_wchar_t *file, MSVCRT_size_t length, const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list ap)
+#endif /* SECURE */
+#else /* WIDE_SCANF */
+#ifdef SECURE
+#define _FUNCTION_ static int MSVCRT_vsnscanf_s_l(const char *file, MSVCRT_size_t length, const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
+#else  /* SECURE */
+#define _FUNCTION_ static int MSVCRT_vsnscanf_l(const char *file, MSVCRT_size_t length, const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
+#endif /* SECURE */
+#endif /* WIDE_SCANF */
+#else /* STRING_LEN */
 #define _GETC_(file) (consumed++, *file++)
 #define _UNGETC_(nch, file) do { file--; consumed--; } while(0)
 #ifdef WIDE_SCANF
@@ -80,6 +97,7 @@
 #define _FUNCTION_ static int MSVCRT_vsscanf_l(const char *file, const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
 #endif /* WIDE_SCANF */
+#endif /* STRING_LEN */
 #else /* STRING */
 #ifdef WIDE_SCANF
 #define _GETC_(file) (consumed++, MSVCRT_fgetwc(file))

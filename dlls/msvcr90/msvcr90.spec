@@ -933,10 +933,10 @@
 @ stub _snprintf_l
 @ varargs _snprintf_s(ptr long long str) msvcrt._snprintf_s
 @ stub _snprintf_s_l
-@ stub _snscanf
-@ stub _snscanf_l
-@ stub _snscanf_s
-@ stub _snscanf_s_l
+@ varargs _snscanf(str long str) msvcrt._snscanf
+@ varargs _snscanf_l(str long str ptr) msvcrt._snscanf_l
+@ varargs _snscanf_s(str long str) msvcrt._snscanf_s
+@ varargs _snscanf_s_l(str long str ptr) msvcrt._snscanf_s_l
 @ varargs _snwprintf(ptr long wstr) msvcrt._snwprintf
 @ stub _snwprintf_l
 @ varargs _snwprintf_s(ptr long long wstr) msvcrt._snwprintf_s

@@ -91,6 +91,16 @@ static int wchar2digit(MSVCRT_wchar_t c, int base) {
 #define SECURE 1
 #include "scanf.h"
 
+/* vsnscanf_l */
+#undef SECURE
+#define STRING_LEN 1
+#include "scanf.h"
+
+/* vsnscanf_s_l */
+#define SECURE
+#include "scanf.h"
+#undef STRING_LEN
+
 /* vswscanf_l */
 #define WIDE_SCANF 1
 #undef CONSOLE
@@ -579,6 +589,64 @@ int CDECL _cwscanf_s_l(const char *format, MSVCRT__locale_t locale, ...)
 
     __ms_va_start(valist, locale);
     res = MSVCRT_vcwscanf_s_l(format, locale, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_snscanf (MSVCRT.@)
+ */
+int CDECL MSVCRT__snscanf(char *input, MSVCRT_size_t length, const char *format, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, format);
+    res = MSVCRT_vsnscanf_l(input, length, format, NULL, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_snscanf_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__snscanf_l(char *input, MSVCRT_size_t length,
+        const char *format, MSVCRT__locale_t locale, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, locale);
+    res = MSVCRT_vsnscanf_l(input, length, format, locale, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_snscanf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__snscanf_s(char *input, MSVCRT_size_t length, const char *format, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, format);
+    res = MSVCRT_vsnscanf_s_l(input, length, format, NULL, valist);
+    __ms_va_end(valist);
+    return res;
+}
+
+/*********************************************************************
+ *		_snscanf_s_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__snscanf_s_l(char *input, MSVCRT_size_t length,
+        const char *format, MSVCRT__locale_t locale, ...)
+{
+    __ms_va_list valist;
+    int res;
+
+    __ms_va_start(valist, locale);
+    res = MSVCRT_vsnscanf_s_l(input, length, format, locale, valist);
     __ms_va_end(valist);
     return res;
 }

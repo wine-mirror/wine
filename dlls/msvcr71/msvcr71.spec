@@ -522,7 +522,7 @@
 @ cdecl _setsystime(ptr long) msvcrt._setsystime
 @ cdecl _sleep(long) msvcrt._sleep
 @ varargs _snprintf(str long str) msvcrt._snprintf
-@ stub _snscanf
+@ varargs _snscanf(str long str) msvcrt._snscanf
 @ varargs _snwprintf(wstr long wstr) msvcrt._snwprintf
 @ stub _snwscanf
 @ varargs _sopen(str long long) msvcrt._sopen
