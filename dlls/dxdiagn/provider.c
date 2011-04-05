@@ -433,8 +433,12 @@ static BOOL is_netmeeting_running(void)
         {
             if (get_process_name_from_pid(pid_list[i], process_name, sizeof(process_name)/sizeof(WCHAR)) &&
                 !lstrcmpW(conf_exe, process_name))
+            {
+                HeapFree(GetProcessHeap(), 0, pid_list);
                 return TRUE;
+            }
         }
+        HeapFree(GetProcessHeap(), 0, pid_list);
     }
 
     return FALSE;
