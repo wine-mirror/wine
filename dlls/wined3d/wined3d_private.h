@@ -1170,6 +1170,7 @@ enum wined3d_blit_op
 {
     WINED3D_BLIT_OP_COLOR_BLIT,
     WINED3D_BLIT_OP_COLOR_FILL,
+    WINED3D_BLIT_OP_DEPTH_FILL,
 };
 
 /* Shaders for color conversions in blits. Do not do blit operations while
@@ -1185,6 +1186,7 @@ struct blit_shader
             const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format);
     HRESULT (*color_fill)(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
             const RECT *dst_rect, const WINED3DCOLORVALUE *color);
+    HRESULT (*depth_fill)(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *surface, const RECT *rect, float depth);
 };
 
 extern const struct blit_shader ffp_blit DECLSPEC_HIDDEN;

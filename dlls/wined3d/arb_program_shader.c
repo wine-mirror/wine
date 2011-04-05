@@ -7253,11 +7253,20 @@ static HRESULT arbfp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurface
     return WINED3DERR_INVALIDCALL;
 }
 
+/* Do not call while under the GL lock. */
+static HRESULT arbfp_blit_depth_fill(IWineD3DDeviceImpl *device,
+        IWineD3DSurfaceImpl *surface, const RECT *rect, float depth)
+{
+    FIXME("Depth filling not implemented by arbfp_blit.\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
 const struct blit_shader arbfp_blit = {
     arbfp_blit_alloc,
     arbfp_blit_free,
     arbfp_blit_set,
     arbfp_blit_unset,
     arbfp_blit_supported,
-    arbfp_blit_color_fill
+    arbfp_blit_color_fill,
+    arbfp_blit_depth_fill,
 };

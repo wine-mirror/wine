@@ -3897,10 +3897,19 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
 /* Do not call while under the GL lock. */
 static HRESULT wined3d_surface_depth_fill(IWineD3DSurfaceImpl *surface, const RECT *rect, float depth)
 {
-    const RECT draw_rect = {0, 0, surface->resource.width, surface->resource.height};
+    const struct wined3d_resource *resource = &surface->resource;
+    IWineD3DDeviceImpl *device = resource->device;
+    const struct blit_shader *blitter;
 
-    return device_clear_render_targets(surface->resource.device, 0, NULL, surface,
-            !!rect, rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
+    blitter = wined3d_select_blitter(&device->adapter->gl_info, WINED3D_BLIT_OP_DEPTH_FILL,
+            NULL, 0, 0, NULL, rect, resource->usage, resource->pool, resource->format);
+    if (!blitter)
+    {
+        FIXME("No blitter is capable of performing the requested depth fill operation.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    return blitter->depth_fill(device, surface, rect, depth);
 }
 
 /* Do not call while under the GL lock. */
@@ -3929,13 +3938,16 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
         if (flags & WINEDDBLT_DEPTHFILL)
         {
             float depth;
+            RECT rect;
 
             TRACE("Depth fill.\n");
+
+            surface_get_rect(This, DestRect, &rect);
 
             if (!surface_convert_depth_to_float(This, DDBltFx->u5.dwFillDepth, &depth))
                 return WINED3DERR_INVALIDCALL;
 
-            if (SUCCEEDED(wined3d_surface_depth_fill(This, DestRect, depth)))
+            if (SUCCEEDED(wined3d_surface_depth_fill(This, &rect, depth)))
                 return WINED3D_OK;
         }
         else
@@ -4862,51 +4874,54 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
 {
     enum complex_fixup src_fixup;
 
-    if (blit_op == WINED3D_BLIT_OP_COLOR_FILL)
+    switch (blit_op)
     {
-        if (!(dst_usage & WINED3DUSAGE_RENDERTARGET))
-        {
-            TRACE("Color fill not supported\n");
+        case WINED3D_BLIT_OP_COLOR_BLIT:
+            src_fixup = get_complex_fixup(src_format->color_fixup);
+            if (TRACE_ON(d3d_surface) && TRACE_ON(d3d))
+            {
+                TRACE("Checking support for fixup:\n");
+                dump_color_fixup_desc(src_format->color_fixup);
+            }
+
+            if (!is_identity_fixup(dst_format->color_fixup))
+            {
+                TRACE("Destination fixups are not supported\n");
+                return FALSE;
+            }
+
+            if (src_fixup == COMPLEX_FIXUP_P8 && gl_info->supported[EXT_PALETTED_TEXTURE])
+            {
+                TRACE("P8 fixup supported\n");
+                return TRUE;
+            }
+
+            /* We only support identity conversions. */
+            if (is_identity_fixup(src_format->color_fixup))
+            {
+                TRACE("[OK]\n");
+                return TRUE;
+            }
+
+            TRACE("[FAILED]\n");
             return FALSE;
-        }
 
-        return TRUE;
+        case WINED3D_BLIT_OP_COLOR_FILL:
+            if (!(dst_usage & WINED3DUSAGE_RENDERTARGET))
+            {
+                TRACE("Color fill not supported\n");
+                return FALSE;
+            }
+
+            return TRUE;
+
+        case WINED3D_BLIT_OP_DEPTH_FILL:
+            return TRUE;
+
+        default:
+            TRACE("Unsupported blit_op=%d\n", blit_op);
+            return FALSE;
     }
-
-    src_fixup = get_complex_fixup(src_format->color_fixup);
-    if (TRACE_ON(d3d_surface) && TRACE_ON(d3d))
-    {
-        TRACE("Checking support for fixup:\n");
-        dump_color_fixup_desc(src_format->color_fixup);
-    }
-
-    if (blit_op != WINED3D_BLIT_OP_COLOR_BLIT)
-    {
-        TRACE("Unsupported blit_op=%d\n", blit_op);
-        return FALSE;
-     }
-
-    if (!is_identity_fixup(dst_format->color_fixup))
-    {
-        TRACE("Destination fixups are not supported\n");
-        return FALSE;
-    }
-
-    if (src_fixup == COMPLEX_FIXUP_P8 && gl_info->supported[EXT_PALETTED_TEXTURE])
-    {
-        TRACE("P8 fixup supported\n");
-        return TRUE;
-    }
-
-    /* We only support identity conversions. */
-    if (is_identity_fixup(src_format->color_fixup))
-    {
-        TRACE("[OK]\n");
-        return TRUE;
-    }
-
-    TRACE("[FAILED]\n");
-    return FALSE;
 }
 
 /* Do not call while under the GL lock. */
@@ -4919,13 +4934,24 @@ static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceIm
             1, dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
 }
 
+/* Do not call while under the GL lock. */
+static HRESULT ffp_blit_depth_fill(IWineD3DDeviceImpl *device,
+        IWineD3DSurfaceImpl *surface, const RECT *rect, float depth)
+{
+    const RECT draw_rect = {0, 0, surface->resource.width, surface->resource.height};
+
+    return device_clear_render_targets(device, 0, NULL, surface,
+            1, rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
+}
+
 const struct blit_shader ffp_blit =  {
     ffp_blit_alloc,
     ffp_blit_free,
     ffp_blit_set,
     ffp_blit_unset,
     ffp_blit_supported,
-    ffp_blit_color_fill
+    ffp_blit_color_fill,
+    ffp_blit_depth_fill,
 };
 
 static HRESULT cpu_blit_alloc(IWineD3DDeviceImpl *device)
@@ -4974,13 +5000,22 @@ static HRESULT cpu_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceIm
             NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
 }
 
+/* Do not call while under the GL lock. */
+static HRESULT cpu_blit_depth_fill(IWineD3DDeviceImpl *device,
+        IWineD3DSurfaceImpl *surface, const RECT *rect, float depth)
+{
+    FIXME("Depth filling not implemented by cpu_blit.\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
 const struct blit_shader cpu_blit =  {
     cpu_blit_alloc,
     cpu_blit_free,
     cpu_blit_set,
     cpu_blit_unset,
     cpu_blit_supported,
-    cpu_blit_color_fill
+    cpu_blit_color_fill,
+    cpu_blit_depth_fill,
 };
 
 static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
