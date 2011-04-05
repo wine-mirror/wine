@@ -2006,13 +2006,12 @@ msgid "Default MidiOut Device"
 msgstr "기본 미디출력 장치"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "기본 설정"
+msgstr "지역 설정"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr ""
+msgstr "%uMB 사용됨, %uMB 가능함"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
