@@ -1167,6 +1167,7 @@ typedef struct TiffFrameEncode {
     /* fields below are protected by parent->lock */
     BOOL initialized;
     BOOL info_written;
+    BOOL committed;
     const struct tiff_encode_format *format;
     UINT width, height;
     double xres, yres;
@@ -1513,8 +1514,26 @@ static HRESULT WINAPI TiffFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
 
 static HRESULT WINAPI TiffFrameEncode_Commit(IWICBitmapFrameEncode *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    TiffFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+
+    TRACE("(%p)\n", iface);
+
+    EnterCriticalSection(&This->parent->lock);
+
+    if (!This->info_written || This->lines_written != This->height || This->committed)
+    {
+        LeaveCriticalSection(&This->parent->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    /* libtiff will commit the data when creating a new frame or closing the file */
+
+    This->committed = TRUE;
+    This->parent->num_frames_committed++;
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameEncode_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface,
@@ -1701,6 +1720,7 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
             result->parent = This;
             result->initialized = FALSE;
             result->info_written = FALSE;
+            result->committed = FALSE;
             result->format = NULL;
             result->width = 0;
             result->height = 0;
