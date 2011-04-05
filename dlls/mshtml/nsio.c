@@ -149,7 +149,7 @@ static BOOL before_async_open(nsChannel *channel, NSContainer *container)
     if(!hlnf && !exec_shldocvw_67(doc, channel->uri->wine_url))
         return FALSE;
 
-    hres = hlink_frame_navigate(&doc->basedoc, channel->uri->wine_url, channel->post_data_stream, hlnf, &cancel);
+    hres = hlink_frame_navigate(&doc->basedoc, channel->uri->wine_url, channel, hlnf, &cancel);
     return FAILED(hres) || cancel;
 }
 
@@ -1304,6 +1304,8 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
 
     TRACE("(%p)->(%p %s %d)\n", This, aStream, debugstr_nsacstr(aContentType), aContentLength);
 
+    This->post_data_contains_headers = TRUE;
+
     if(aContentType) {
         nsACString_GetData(aContentType, &content_type);
         if(*content_type) {
@@ -1316,6 +1318,7 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
             set_http_header(&This->request_headers, content_typeW,
                     sizeof(content_typeW)/sizeof(WCHAR), ct, strlenW(ct));
             heap_free(ct);
+            This->post_data_contains_headers = FALSE;
         }
     }
 

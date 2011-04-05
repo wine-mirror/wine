@@ -500,6 +500,7 @@ typedef struct {
 
     nsWineURI *uri;
     nsIInputStream *post_data_stream;
+    BOOL post_data_contains_headers;
     nsILoadGroup *load_group;
     nsIInterfaceRequestor *notif_callback;
     nsISupports *owner;
@@ -687,7 +688,7 @@ HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*);
 HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsWineURI**);
 HRESULT load_nsuri(HTMLWindow*,nsWineURI*,nsChannelBSC*,DWORD);
 
-HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsIInputStream*,DWORD,BOOL*);
+HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsChannel*,DWORD,BOOL*);
 HRESULT navigate_url(HTMLWindow*,const WCHAR*,const WCHAR*);
 HRESULT set_frame_doc(HTMLFrameBase*,nsIDOMDocument*);
 HRESULT set_moniker(HTMLDocument*,IMoniker*,IBindCtx*,nsChannelBSC*,BOOL);
