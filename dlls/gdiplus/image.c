@@ -3085,6 +3085,12 @@ static GpStatus encode_image_BMP(GpImage *image, IStream* stream,
     return encode_image_WIC(image, stream, &CLSID_WICBmpEncoder, params);
 }
 
+static GpStatus encode_image_tiff(GpImage *image, IStream* stream,
+    GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
+{
+    return encode_image_WIC(image, stream, &CLSID_WICTiffEncoder, params);
+}
+
 static GpStatus encode_image_png(GpImage *image, IStream* stream,
     GDIPCONST CLSID* clsid, GDIPCONST EncoderParameters* params)
 {
@@ -3303,14 +3309,14 @@ static const struct image_codec codecs[NUM_CODECS] = {
             /* FormatDescription */  tiff_format,
             /* FilenameExtension */  tiff_extension,
             /* MimeType */           tiff_mimetype,
-            /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsSupportBitmap | ImageCodecFlagsBuiltin,
+            /* Flags */              ImageCodecFlagsDecoder | ImageCodecFlagsEncoder | ImageCodecFlagsSupportBitmap | ImageCodecFlagsBuiltin,
             /* Version */            1,
             /* SigCount */           2,
             /* SigSize */            4,
             /* SigPattern */         tiff_sig_pattern,
             /* SigMask */            tiff_sig_mask,
         },
-        NULL,
+        encode_image_tiff,
         decode_image_tiff
     },
     {
