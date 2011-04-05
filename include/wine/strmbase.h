@@ -358,6 +358,7 @@ typedef struct tagOutputQueue {
     LONG lBatchSize;
     BOOL bBatchExact;
     BOOL bTerminate;
+    BOOL bSendAnyway;
 
     struct list *SampleList;
 
@@ -377,6 +378,8 @@ HRESULT WINAPI OutputQueue_Construct( BaseOutputPin *pInputPin, BOOL bAuto,
 HRESULT WINAPI OutputQueue_Destroy(OutputQueue *pOutputQueue);
 HRESULT WINAPI OutputQueue_ReceiveMultiple(OutputQueue *pOutputQueue, IMediaSample **ppSamples, LONG nSamples, LONG *nSamplesProcessed);
 HRESULT WINAPI OutputQueue_Receive(OutputQueue *pOutputQueue, IMediaSample *pSample);
+VOID WINAPI OutputQueue_EOS(OutputQueue *pOutputQueue);
+VOID WINAPI OutputQueue_SendAnyway(OutputQueue *pOutputQueue);
 DWORD WINAPI OutputQueueImpl_ThreadProc(OutputQueue *pOutputQueue);
 
 /* Dll Functions */
