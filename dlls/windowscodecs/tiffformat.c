@@ -1116,6 +1116,30 @@ HRESULT TiffDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     return ret;
 }
 
+struct tiff_encode_format {
+    const WICPixelFormatGUID *guid;
+    int photometric;
+    int bps;
+    int samples;
+    int bpp;
+    int extra_sample;
+    int extra_sample_type;
+    int reverse_bgr;
+};
+
+static const struct tiff_encode_format formats[] = {
+    {&GUID_WICPixelFormat24bppBGR, 2, 8, 3, 24, 0, 0, 1},
+    {&GUID_WICPixelFormatBlackWhite, 1, 1, 1, 1, 0, 0, 0},
+    {&GUID_WICPixelFormat4bppGray, 1, 4, 1, 4, 0, 0, 0},
+    {&GUID_WICPixelFormat8bppGray, 1, 8, 1, 8, 0, 0, 0},
+    {&GUID_WICPixelFormat32bppBGRA, 2, 8, 4, 32, 1, 2, 1},
+    {&GUID_WICPixelFormat32bppPBGRA, 2, 8, 4, 32, 1, 1, 1},
+    {&GUID_WICPixelFormat48bppRGB, 2, 16, 3, 48, 0, 0, 0},
+    {&GUID_WICPixelFormat64bppRGBA, 2, 16, 4, 64, 1, 2, 0},
+    {&GUID_WICPixelFormat64bppPRGBA, 2, 16, 4, 64, 1, 1, 0},
+    {0}
+};
+
 typedef struct TiffEncoder {
     IWICBitmapEncoder IWICBitmapEncoder_iface;
     LONG ref;
@@ -1138,6 +1162,8 @@ typedef struct TiffFrameEncode {
     TiffEncoder *parent;
     /* fields below are protected by parent->lock */
     BOOL initialized;
+    BOOL info_written;
+    const struct tiff_encode_format *format;
 } TiffFrameEncode;
 
 static inline TiffFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEncode *iface)
@@ -1232,8 +1258,33 @@ static HRESULT WINAPI TiffFrameEncode_SetResolution(IWICBitmapFrameEncode *iface
 static HRESULT WINAPI TiffFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%s)\n", iface, debugstr_guid(pPixelFormat));
-    return E_NOTIMPL;
+    TiffFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    int i;
+
+    TRACE("(%p,%s)\n", iface, debugstr_guid(pPixelFormat));
+
+    EnterCriticalSection(&This->parent->lock);
+
+    if (!This->initialized || This->info_written)
+    {
+        LeaveCriticalSection(&This->parent->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    for (i=0; formats[i].guid; i++)
+    {
+        if (memcmp(formats[i].guid, pPixelFormat, sizeof(GUID)) == 0)
+            break;
+    }
+
+    if (!formats[i].guid) i = 0;
+
+    This->format = &formats[i];
+    memcpy(pPixelFormat, This->format->guid, sizeof(GUID));
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameEncode_SetColorContexts(IWICBitmapFrameEncode *iface,
@@ -1460,6 +1511,8 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
             result->ref = 1;
             result->parent = This;
             result->initialized = FALSE;
+            result->info_written = FALSE;
+            result->format = NULL;
 
             IWICBitmapEncoder_AddRef(iface);
             *ppIFrameEncode = &result->IWICBitmapFrameEncode_iface;
