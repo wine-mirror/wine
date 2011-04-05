@@ -127,6 +127,8 @@
 #include "wine/debug.h"
 #include "wine/strmbase.h"
 
+#include "qtprivate.h"
+
 extern CLSID CLSID_QTVDecoder;
 
 WINE_DEFAULT_DEBUG_CHANNEL(qtdecoder);
@@ -142,16 +144,8 @@ typedef struct QTVDecoderImpl
     HRESULT decodeHR;
 
     DWORD outputSize;
-    DWORD outputWidth, outputHeight, outputDepth;
 
 } QTVDecoderImpl;
-
-typedef struct {
-      UInt8 a; /* Alpha Channel */
-      UInt8 r; /* red component */
-      UInt8 g; /* green component */
-      UInt8 b; /* blue component */
-} ARGBPixelRecord, *ARGBPixelPtr, **ARGBPixelHdl;
 
 static const IBaseFilterVtbl QTVDecoder_Vtbl;
 
@@ -172,11 +166,6 @@ static void trackingCallback(
     IMediaSample* pOutSample = NULL;
     LPBYTE pbDstStream;
     DWORD cbDstStream;
-    LPBYTE pPixels = NULL;
-    LPBYTE out = NULL;
-    size_t bytesPerRow = 0;
-
-    int i;
 
     if (result != noErr)
     {
@@ -213,24 +202,9 @@ static void trackingCallback(
         goto error;
     }
 
-    /* ACCESS THE PIXELS */
-    CVPixelBufferLockBaseAddress(pixelBuffer,0);
-    pPixels = (LPBYTE)CVPixelBufferGetBaseAddress(pixelBuffer);
-    bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer);
-
-    for (out = pbDstStream, i = 0; i < This->outputHeight; i++)
-    {
-        int j;
-        for (j = 0; j < This->outputWidth; j++)
-        {
-            *((DWORD*)out) = (((ARGBPixelPtr)pPixels)[j].r) << 16
-                          | (((ARGBPixelPtr)pPixels)[j].g) << 8
-                          | (((ARGBPixelPtr)pPixels)[j].b);
-            out+=This->outputDepth;
-        }
-        pPixels += bytesPerRow;
-    }
-    CVPixelBufferUnlockBaseAddress(pixelBuffer,0);
+    hr = AccessPixelBufferPixels(pixelBuffer, pbDstStream);
+    if (FAILED(hr))
+        goto error;
 
     IMediaSample_SetActualDataLength(pOutSample, This->outputSize);
 
@@ -404,6 +378,7 @@ static HRESULT WINAPI QTVDecoder_SetMediaType(TransformFilter *tf, PIN_DIRECTION
         OSType fourCC;
         DecompressorComponent dc;
         OSType format;
+        DWORD outputWidth, outputHeight, outputDepth;
 
         if (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo))
             bmi = &format1->bmiHeader;
@@ -425,12 +400,12 @@ static HRESULT WINAPI QTVDecoder_SetMediaType(TransformFilter *tf, PIN_DIRECTION
             goto failed;
         }
 
-        This->outputWidth = bmi->biWidth;
-        This->outputHeight = bmi->biHeight;
+        outputWidth = bmi->biWidth;
+        outputHeight = bmi->biHeight;
 
         (**This->hImageDescription).cType = fourCC;
-        (**This->hImageDescription).width = This->outputWidth;
-        (**This->hImageDescription).height = This->outputHeight;
+        (**This->hImageDescription).width = outputWidth;
+        (**This->hImageDescription).height = outputHeight;
         (**This->hImageDescription).depth = bmi->biBitCount;
         (**This->hImageDescription).hRes = 72<<16;
         (**This->hImageDescription).vRes = 72<<16;
@@ -445,11 +420,11 @@ static HRESULT WINAPI QTVDecoder_SetMediaType(TransformFilter *tf, PIN_DIRECTION
             goto failed;
         }
 
-        n = CFNumberCreate(NULL, kCFNumberIntType, &This->outputWidth);
+        n = CFNumberCreate(NULL, kCFNumberIntType, &outputWidth);
         CFDictionaryAddValue(This->outputBufferAttributes, kCVPixelBufferWidthKey, n);
         CFRelease(n);
 
-        n = CFNumberCreate(NULL, kCFNumberIntType, &This->outputHeight);
+        n = CFNumberCreate(NULL, kCFNumberIntType, &outputHeight);
         CFDictionaryAddValue(This->outputBufferAttributes, kCVPixelBufferHeightKey, n);
         CFRelease(n);
 
@@ -462,8 +437,8 @@ static HRESULT WINAPI QTVDecoder_SetMediaType(TransformFilter *tf, PIN_DIRECTION
         CFDictionaryAddValue(This->outputBufferAttributes, kCVPixelBufferCGBitmapContextCompatibilityKey, kCFBooleanTrue);
         CFDictionaryAddValue(This->outputBufferAttributes, kCVPixelBufferCGImageCompatibilityKey, kCFBooleanTrue);
 
-        This->outputDepth = 3;
-        This->outputSize = This->outputWidth * This->outputHeight * This->outputDepth;
+        outputDepth = 3;
+        This->outputSize = outputWidth * outputHeight * outputDepth;
         bmi->biCompression =  BI_RGB;
         bmi->biBitCount =  24;
         outpmt->subtype = MEDIASUBTYPE_RGB24;

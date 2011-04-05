@@ -4,6 +4,7 @@ EXTRALIBS = @QUICKTIMELIB@
 
 C_SRCS = \
 	main.c \
+	qtutils.c \
 	qtvdecoder.c
 
 @MAKE_DLL_RULES@
