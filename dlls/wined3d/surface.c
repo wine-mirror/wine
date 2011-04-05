@@ -2306,7 +2306,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck,
              * 8-bit blits need to be handled by the blit_shader.
              * TODO: get rid of this #if 0. */
 #if 0
-            blit_supported = device->blitter->blit_supported(&device->adapter->gl_info, BLIT_OP_BLIT,
+            blit_supported = device->blitter->blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                     &rect, This->resource.usage, This->resource.pool, This->resource.format,
                     &rect, This->resource.usage, This->resource.pool, This->resource.format);
 #endif
@@ -3262,7 +3262,7 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
 }
 
 /* Until the blit_shader is ready, define some prototypes here. */
-static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format);
 
@@ -3506,7 +3506,7 @@ HRESULT surface_color_fill(IWineD3DSurfaceImpl *s, const RECT *rect, const WINED
     IWineD3DDeviceImpl *device = s->resource.device;
     const struct blit_shader *blitter;
 
-    blitter = wined3d_select_blitter(&device->adapter->gl_info, BLIT_OP_COLOR_FILL,
+    blitter = wined3d_select_blitter(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_FILL,
             NULL, 0, 0, NULL, rect, s->resource.usage, s->resource.pool, s->resource.format);
     if (!blitter)
     {
@@ -3730,9 +3730,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
          *
          * If EXT_framebuffer_blit is supported that can be used instead. Note that EXT_framebuffer_blit implies
          * FBO support, so it doesn't really make sense to try and make it work with different offscreen rendering
-         * backends.
-         */
-        if (fbo_blit_supported(gl_info, BLIT_OP_BLIT,
+         * backends. */
+        if (fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
                 &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
         {
@@ -3773,7 +3772,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         TRACE("Blt from surface %p to rendertarget %p\n", src_surface, dst_surface);
 
         if (!(flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
-                && fbo_blit_supported(gl_info, BLIT_OP_BLIT,
+                && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                         &src_rect, src_surface->resource.usage, src_surface->resource.pool,
                         src_surface->resource.format,
                         &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
@@ -3790,16 +3789,17 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
         }
 
         if (!(flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
-                && arbfp_blit.blit_supported(gl_info, BLIT_OP_BLIT,
+                && arbfp_blit.blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                         &src_rect, src_surface->resource.usage, src_surface->resource.pool,
                         src_surface->resource.format,
                         &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool,
                         dst_surface->resource.format))
         {
-            return arbfp_blit_surface(device, src_surface, &src_rect, dst_surface, &dst_rect, BLIT_OP_BLIT, Filter);
+            return arbfp_blit_surface(device, src_surface, &src_rect, dst_surface, &dst_rect,
+                    WINED3D_BLIT_OP_COLOR_BLIT, Filter);
         }
 
-        if (!device->blitter->blit_supported(gl_info, BLIT_OP_BLIT,
+        if (!device->blitter->blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
                 &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
         {
@@ -4566,7 +4566,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
         }
         else if (surface->flags & (SFLAG_INSRGBTEX | SFLAG_INTEXTURE)
                 && (surface->resource.format->flags & attach_flags) == attach_flags
-                && fbo_blit_supported(gl_info, BLIT_OP_BLIT,
+                && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                         NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
                         NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
         {
@@ -4838,13 +4838,13 @@ static void ffp_blit_unset(const struct wined3d_gl_info *gl_info)
     LEAVE_GL();
 }
 
-static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
 {
     enum complex_fixup src_fixup;
 
-    if (blit_op == BLIT_OP_COLOR_FILL)
+    if (blit_op == WINED3D_BLIT_OP_COLOR_FILL)
     {
         if (!(dst_usage & WINED3DUSAGE_RENDERTARGET))
         {
@@ -4862,7 +4862,7 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
         dump_color_fixup_desc(src_format->color_fixup);
     }
 
-    if (blit_op != BLIT_OP_BLIT)
+    if (blit_op != WINED3D_BLIT_OP_COLOR_BLIT)
     {
         TRACE("Unsupported blit_op=%d\n", blit_op);
         return FALSE;
@@ -4931,11 +4931,11 @@ static void cpu_blit_unset(const struct wined3d_gl_info *gl_info)
 {
 }
 
-static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
 {
-    if (blit_op == BLIT_OP_COLOR_FILL)
+    if (blit_op == WINED3D_BLIT_OP_COLOR_FILL)
     {
         return TRUE;
     }
@@ -4965,7 +4965,7 @@ const struct blit_shader cpu_blit =  {
     cpu_blit_color_fill
 };
 
-static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
 {
@@ -4975,7 +4975,7 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_
     /* We only support blitting. Things like color keying / color fill should
      * be handled by other blitters.
      */
-    if (blit_op != BLIT_OP_BLIT)
+    if (blit_op != WINED3D_BLIT_OP_COLOR_BLIT)
         return FALSE;
 
     /* Source and/or destination need to be on the GL side */

@@ -3211,7 +3211,7 @@ void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected,
     else *ps_selected = SHADER_NONE;
 }
 
-const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
 {

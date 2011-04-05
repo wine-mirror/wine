@@ -7145,7 +7145,7 @@ static void arbfp_blit_unset(const struct wined3d_gl_info *gl_info)
     LEAVE_GL();
 }
 
-static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
 {
@@ -7154,7 +7154,7 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum bli
     if (!gl_info->supported[ARB_FRAGMENT_PROGRAM])
         return FALSE;
 
-    if (blit_op != BLIT_OP_BLIT)
+    if (blit_op != WINED3D_BLIT_OP_COLOR_BLIT)
     {
         TRACE("Unsupported blit_op=%d\n", blit_op);
         return FALSE;
@@ -7203,7 +7203,7 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum bli
 }
 
 HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surface, const RECT *src_rect,
-                           IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum blit_operation blit_op,
+                           IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum wined3d_blit_op blit_op,
                            DWORD Filter)
 {
     IWineD3DSwapChainImpl *dst_swapchain;

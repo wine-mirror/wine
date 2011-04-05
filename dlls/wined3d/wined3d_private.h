@@ -1166,10 +1166,10 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
         const struct wined3d_gl_info *gl_info, const struct StateEntryTemplate *vertex,
         const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc) DECLSPEC_HIDDEN;
 
-enum blit_operation
+enum wined3d_blit_op
 {
-    BLIT_OP_BLIT,
-    BLIT_OP_COLOR_FILL
+    WINED3D_BLIT_OP_COLOR_BLIT,
+    WINED3D_BLIT_OP_COLOR_FILL,
 };
 
 /* Shaders for color conversions in blits. Do not do blit operations while
@@ -1180,7 +1180,7 @@ struct blit_shader
     void (*free_private)(IWineD3DDeviceImpl *device);
     HRESULT (*set_shader)(void *blit_priv, const struct wined3d_gl_info *gl_info, IWineD3DSurfaceImpl *surface);
     void (*unset_shader)(const struct wined3d_gl_info *gl_info);
-    BOOL (*blit_supported)(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+    BOOL (*blit_supported)(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
             const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
             const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format);
     HRESULT (*color_fill)(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
@@ -1191,14 +1191,14 @@ extern const struct blit_shader ffp_blit DECLSPEC_HIDDEN;
 extern const struct blit_shader arbfp_blit DECLSPEC_HIDDEN;
 extern const struct blit_shader cpu_blit DECLSPEC_HIDDEN;
 
-const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info, enum blit_operation blit_op,
+const struct blit_shader *wined3d_select_blitter(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
         const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,
         const RECT *dst_rect, DWORD dst_usage, WINED3DPOOL dst_pool, const struct wined3d_format *dst_format)
         DECLSPEC_HIDDEN;
 
 /* Temporary blit_shader helper functions */
 HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surface, const RECT *src_rect,
-                           IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum blit_operation blit_op,
+                           IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum wined3d_blit_op blit_op,
                            DWORD Filter) DECLSPEC_HIDDEN;
 
 struct wined3d_context *context_acquire(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target) DECLSPEC_HIDDEN;
