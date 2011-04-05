@@ -10,7 +10,7 @@
  * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2007-2008 Henri Verbeet
  * Copyright 2006-2008 Roderick Colenbrander
- * Copyright 2009-2010 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1275,6 +1275,37 @@ static BOOL surface_convert_color_to_float(IWineD3DSurfaceImpl *surface, DWORD c
             float_color->g = D3DCOLOR_G(color);
             float_color->b = D3DCOLOR_B(color);
             float_color->a = D3DCOLOR_A(color);
+            break;
+
+        default:
+            ERR("Unhandled conversion from %s to floating point.\n", debug_d3dformat(format->id));
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL surface_convert_depth_to_float(IWineD3DSurfaceImpl *surface, DWORD depth, float *float_depth)
+{
+    const struct wined3d_format *format = surface->resource.format;
+
+    switch (format->id)
+    {
+        case WINED3DFMT_S1_UINT_D15_UNORM:
+            *float_depth = depth / (float)0x00007fff;
+            break;
+
+        case WINED3DFMT_D16_UNORM:
+            *float_depth = depth / (float)0x0000ffff;
+            break;
+
+        case WINED3DFMT_D24_UNORM_S8_UINT:
+        case WINED3DFMT_X8D24_UNORM:
+            *float_depth = depth / (float)0x00ffffff;
+            break;
+
+        case WINED3DFMT_D32_UNORM:
+            *float_depth = depth / (float)0xffffffff;
             break;
 
         default:
@@ -3863,42 +3894,22 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
     return WINED3DERR_INVALIDCALL;
 }
 
-static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *DestRect,
-        IWineD3DSurface *src_surface, const RECT *src_rect, DWORD flags, const WINEDDBLTFX *DDBltFx)
+/* Do not call while under the GL lock. */
+static HRESULT wined3d_surface_depth_fill(IWineD3DSurfaceImpl *surface, const RECT *rect, float depth)
 {
-    IWineD3DDeviceImpl *device = This->resource.device;
-    float depth;
+    IWineD3DDeviceImpl *device = surface->resource.device;
 
-    if (flags & WINEDDBLT_DEPTHFILL)
+    if (surface != device->depth_stencil)
     {
-        switch (This->resource.format->id)
-        {
-            case WINED3DFMT_D16_UNORM:
-                depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x0000ffff;
-                break;
-            case WINED3DFMT_S1_UINT_D15_UNORM:
-                depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x00007fff;
-                break;
-            case WINED3DFMT_D24_UNORM_S8_UINT:
-            case WINED3DFMT_X8D24_UNORM:
-                depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x00ffffff;
-                break;
-            case WINED3DFMT_D32_UNORM:
-                depth = (float) DDBltFx->u5.dwFillDepth / (float) 0xffffffff;
-                break;
-            default:
-                depth = 0.0f;
-                ERR("Unexpected format for depth fill: %s.\n", debug_d3dformat(This->resource.format->id));
-        }
-
-        return IWineD3DDevice_Clear((IWineD3DDevice *)device, DestRect ? 1 : 0, DestRect,
-                WINED3DCLEAR_ZBUFFER, 0x00000000, depth, 0x00000000);
+        FIXME("Depth fill is only implemented for the current depth / stencil buffer.\n");
+        return WINED3DERR_INVALIDCALL;
     }
 
-    FIXME("(%p): Unsupp depthstencil blit\n", This);
-    return WINED3DERR_INVALIDCALL;
+    return IWineD3DDevice_Clear((IWineD3DDevice *)device, !!rect, rect,
+            WINED3DCLEAR_ZBUFFER, 0x00000000, depth, 0);
 }
 
+/* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *DestRect,
         IWineD3DSurface *src_surface, const RECT *SrcRect, DWORD flags,
         const WINEDDBLTFX *DDBltFx, WINED3DTEXTUREFILTERTYPE Filter)
@@ -3918,20 +3929,33 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
         return WINEDDERR_SURFACEBUSY;
     }
 
-    /* Accessing the depth stencil is supposed to fail between a BeginScene and EndScene pair,
-     * except depth blits, which seem to work
-     */
-    if (This == device->depth_stencil || (src && src == device->depth_stencil))
+    if (This->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)
+            || (src && src->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
     {
-        if (device->inScene && !(flags & WINEDDBLT_DEPTHFILL))
+        if (flags & WINEDDBLT_DEPTHFILL)
         {
-            TRACE("Attempt to access the depth stencil surface in a BeginScene / EndScene pair, returning WINED3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
+            float depth;
+
+            TRACE("Depth fill.\n");
+
+            if (!surface_convert_depth_to_float(This, DDBltFx->u5.dwFillDepth, &depth))
+                return WINED3DERR_INVALIDCALL;
+
+            if (SUCCEEDED(wined3d_surface_depth_fill(This, DestRect, depth)))
+                return WINED3D_OK;
         }
-        else if (SUCCEEDED(IWineD3DSurfaceImpl_BltZ(This, DestRect, src_surface, SrcRect, flags, DDBltFx)))
+        else
         {
-            TRACE("Z Blit override handled the blit\n");
-            return WINED3D_OK;
+            /* Accessing depth / stencil surfaces is supposed to fail while in
+             * a scene, except for fills, which seem to work. */
+            if (device->inScene)
+            {
+                WARN("Rejecting depth / stencil access while in scene.\n");
+                return WINED3DERR_INVALIDCALL;
+            }
+
+            FIXME("Depth blits not implemeted.\n");
+            return WINED3DERR_INVALIDCALL;
         }
     }
 
