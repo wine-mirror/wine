@@ -1151,6 +1151,7 @@ typedef struct TiffEncoder {
     CRITICAL_SECTION lock; /* Must be held when tiff is used or fields below are set */
     TIFF *tiff;
     BOOL initialized;
+    BOOL committed;
     ULONG num_frames;
     ULONG num_frames_committed;
 } TiffEncoder;
@@ -1623,7 +1624,7 @@ static HRESULT WINAPI TiffEncoder_Initialize(IWICBitmapEncoder *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if (This->initialized)
+    if (This->initialized || This->committed)
     {
         hr = WINCODEC_ERR_WRONGSTATE;
         goto exit;
@@ -1698,7 +1699,11 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if (This->num_frames != This->num_frames_committed)
+    if (!This->initialized || This->committed)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+    }
+    else if (This->num_frames != This->num_frames_committed)
     {
         FIXME("New frame created before previous frame was committed\n");
         hr = E_FAIL;
@@ -1753,8 +1758,28 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
 static HRESULT WINAPI TiffEncoder_Commit(IWICBitmapEncoder *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    TiffEncoder *This = impl_from_IWICBitmapEncoder(iface);
+
+    TRACE("(%p)\n", iface);
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->initialized || This->committed)
+    {
+        LeaveCriticalSection(&This->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    pTIFFClose(This->tiff);
+    IStream_Release(This->stream);
+    This->stream = NULL;
+    This->tiff = NULL;
+
+    This->committed = TRUE;
+
+    LeaveCriticalSection(&This->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffEncoder_GetMetadataQueryWriter(IWICBitmapEncoder *iface,
@@ -1809,6 +1834,7 @@ HRESULT TiffEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     This->initialized = FALSE;
     This->num_frames = 0;
     This->num_frames_committed = 0;
+    This->committed = FALSE;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
