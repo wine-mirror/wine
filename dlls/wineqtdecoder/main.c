@@ -41,17 +41,25 @@
 
 #include "initguid.h"
 DEFINE_GUID(CLSID_QTVDecoder, 0x683DDACB, 0x4354, 0x490C, 0xA0,0x58, 0xE0,0x5A,0xD0,0xF2,0x05,0x37);
+DEFINE_GUID(CLSID_QTSplitter,    0xD0E70E49, 0x5927, 0x4894, 0xA3,0x86, 0x35,0x94,0x60,0xEE,0x87,0xC9);
 
 WINE_DEFAULT_DEBUG_CHANNEL(qtdecoder);
 
 extern IUnknown * CALLBACK QTVDecoder_create(IUnknown * pUnkOuter, HRESULT* phr);
+extern IUnknown * CALLBACK QTSplitter_create(IUnknown * pUnkOuter, HRESULT* phr);
 
 static const WCHAR wQTVName[] =
 {'Q','T',' ','V','i','d','e','o',' ','D','e','c','o','d','e','r',0};
+static const WCHAR wQTDName[] =
+{'Q','T',' ','V','i','d','e','o',' ','D','e','m','u','x',0};
 static WCHAR wNull[] = {'\0'};
 
 static const AMOVIESETUP_MEDIATYPE amfMTvideo[] =
 {   { &MEDIATYPE_Video, &MEDIASUBTYPE_NULL } };
+static const AMOVIESETUP_MEDIATYPE amfMTaudio[] =
+{   { &MEDIATYPE_Audio, &MEDIASUBTYPE_NULL } };
+static const AMOVIESETUP_MEDIATYPE amfMTstream[] =
+{   { &MEDIATYPE_Stream, &MEDIASUBTYPE_NULL } };
 
 static const AMOVIESETUP_PIN amfQTVPin[] =
 {   {   wNull,
@@ -71,12 +79,46 @@ static const AMOVIESETUP_PIN amfQTVPin[] =
     },
 };
 
+static const AMOVIESETUP_PIN amfQTDPin[] =
+{   {   wNull,
+        FALSE, FALSE, FALSE, FALSE,
+        &GUID_NULL,
+        NULL,
+        1,
+        amfMTstream
+    },
+    {
+        wNull,
+        FALSE, TRUE, TRUE, FALSE,
+        &GUID_NULL,
+        NULL,
+        1,
+        amfMTvideo
+    },
+    {
+        wNull,
+        FALSE, TRUE, TRUE, FALSE,
+        &GUID_NULL,
+        NULL,
+        1,
+        amfMTaudio
+    },
+};
+
 static const AMOVIESETUP_FILTER amfQTV =
 {   &CLSID_QTVDecoder,
     wQTVName,
     MERIT_NORMAL,
     2,
     amfQTVPin
+};
+
+static const AMOVIESETUP_FILTER amfQTD =
+{   &CLSID_QTSplitter,
+    wQTDName,
+    MERIT_NORMAL,
+    3,
+    amfQTDPin
 };
 
 FactoryTemplate const g_Templates[] = {
@@ -86,6 +128,13 @@ FactoryTemplate const g_Templates[] = {
         QTVDecoder_create,
         NULL,
         &amfQTV,
+    },
+    {
+        wQTDName,
+        &CLSID_QTSplitter,
+        QTSplitter_create,
+        NULL,
+        &amfQTD,
     }
 };
 
