@@ -346,6 +346,39 @@ typedef struct tagFactoryTemplate {
 HRESULT WINAPI AMovieDllRegisterServer2(BOOL bRegister);
 HRESULT WINAPI AMovieSetupRegisterFilter2(const AMOVIESETUP_FILTER *pFilter, IFilterMapper2  *pIFM2, BOOL  bRegister);
 
+/* Output Queue */
+typedef struct tagOutputQueue {
+    CRITICAL_SECTION csQueue;
+
+    BaseOutputPin * pInputPin;
+
+    HANDLE hThread;
+    HANDLE hProcessQueue;
+
+    LONG lBatchSize;
+    BOOL bBatchExact;
+    BOOL bTerminate;
+
+    struct list *SampleList;
+
+    const struct OutputQueueFuncTable* pFuncsTable;
+} OutputQueue;
+
+typedef DWORD (WINAPI *OutputQueue_ThreadProc)(OutputQueue *This);
+
+typedef struct OutputQueueFuncTable
+{
+    OutputQueue_ThreadProc pfnThreadProc;
+} OutputQueueFuncTable;
+
+HRESULT WINAPI OutputQueue_Construct( BaseOutputPin *pInputPin, BOOL bAuto,
+    BOOL bQueue, LONG lBatchSize, BOOL bBatchExact, DWORD dwPriority,
+    const OutputQueueFuncTable* pFuncsTable, OutputQueue **ppOutputQueue );
+HRESULT WINAPI OutputQueue_Destroy(OutputQueue *pOutputQueue);
+HRESULT WINAPI OutputQueue_ReceiveMultiple(OutputQueue *pOutputQueue, IMediaSample **ppSamples, LONG nSamples, LONG *nSamplesProcessed);
+HRESULT WINAPI OutputQueue_Receive(OutputQueue *pOutputQueue, IMediaSample *pSample);
+DWORD WINAPI OutputQueueImpl_ThreadProc(OutputQueue *pOutputQueue);
+
 /* Dll Functions */
 BOOL WINAPI STRMBASE_DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv);
 HRESULT WINAPI STRMBASE_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);

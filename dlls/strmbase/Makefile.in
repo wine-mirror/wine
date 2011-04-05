@@ -5,6 +5,7 @@ C_SRCS = \
 	enumpins.c \
 	filter.c \
 	mediatype.c \
+	outputqueue.c \
 	pin.c \
 	qualitycontrol.c \
 	seeking.c \
