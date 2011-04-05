@@ -338,3 +338,21 @@ const char * __thiscall MSVCRT_type_info_name_internal_method(type_info * _this,
     TRACE("(%p) returning %s\n", _this, _this->name);
     return _this->name;
 }
+
+/*********************************************************************
+ *              _CRT_RTC_INIT (MSVCR90.@)
+ */
+void* CDECL _CRT_RTC_INIT(void *unk1, void *unk2, int unk3, int unk4, int unk5)
+{
+    TRACE("%p %p %x %x %x\n", unk1, unk2, unk3, unk4, unk5);
+    return NULL;
+}
+
+/*********************************************************************
+ *              _CRT_RTC_INITW (MSVCR90.@)
+ */
+void* CDECL _CRT_RTC_INITW(void *unk1, void *unk2, int unk3, int unk4, int unk5)
+{
+    TRACE("%p %p %x %x %x\n", unk1, unk2, unk3, unk4, unk5);
+    return NULL;
+}
