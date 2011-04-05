@@ -1164,6 +1164,7 @@ typedef struct TiffFrameEncode {
     BOOL initialized;
     BOOL info_written;
     const struct tiff_encode_format *format;
+    UINT width, height;
 } TiffFrameEncode;
 
 static inline TiffFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEncode *iface)
@@ -1244,8 +1245,23 @@ static HRESULT WINAPI TiffFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI TiffFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
     UINT uiWidth, UINT uiHeight)
 {
-    FIXME("(%p,%u,%u): stub\n", iface, uiWidth, uiHeight);
-    return E_NOTIMPL;
+    TiffFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    TRACE("(%p,%u,%u)\n", iface, uiWidth, uiHeight);
+
+    EnterCriticalSection(&This->parent->lock);
+
+    if (!This->initialized || This->info_written)
+    {
+        LeaveCriticalSection(&This->parent->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    This->width = uiWidth;
+    This->height = uiHeight;
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
@@ -1513,6 +1529,8 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
             result->initialized = FALSE;
             result->info_written = FALSE;
             result->format = NULL;
+            result->width = 0;
+            result->height = 0;
 
             IWICBitmapEncoder_AddRef(iface);
             *ppIFrameEncode = &result->IWICBitmapFrameEncode_iface;
