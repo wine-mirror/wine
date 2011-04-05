@@ -68,6 +68,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 #define SWP_AGG_NOPOSCHANGE (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
 
+/* cursor clipping window */
+Window clip_window = 0;
+
 /* X context to associate a hwnd to an X window */
 XContext winContext = 0;
 
@@ -82,6 +85,7 @@ static const char foreign_window_prop[] = "__wine_x11_foreign_window";
 static const char whole_window_prop[] = "__wine_x11_whole_window";
 static const char client_window_prop[]= "__wine_x11_client_window";
 static const char icon_window_prop[]  = "__wine_x11_icon_window";
+static const char clip_window_prop[]  = "__wine_x11_clip_window";
 static const char fbconfig_id_prop[]  = "__wine_x11_fbconfig_id";
 static const char gl_drawable_prop[]  = "__wine_x11_gl_drawable";
 static const char pixmap_prop[]       = "__wine_x11_pixmap";
@@ -1962,13 +1966,35 @@ BOOL CDECL X11DRV_CreateDesktopWindow( HWND hwnd )
  */
 BOOL CDECL X11DRV_CreateWindow( HWND hwnd )
 {
-    if (hwnd == GetDesktopWindow() && root_window != DefaultRootWindow( gdi_display ))
-    {
-        Display *display = thread_init_display();
+    Display *display = thread_init_display();
 
-        /* the desktop win data can't be created lazily */
-        if (!create_desktop_win_data( display, hwnd )) return FALSE;
+    if (hwnd == GetDesktopWindow())
+    {
+        XSetWindowAttributes attr;
+
+        if (root_window != DefaultRootWindow( gdi_display ))
+        {
+            /* the desktop win data can't be created lazily */
+            if (!create_desktop_win_data( display, hwnd )) return FALSE;
+        }
+
+        /* create the cursor clipping window */
+        attr.override_redirect = TRUE;
+        attr.event_mask = StructureNotifyMask;
+        wine_tsx11_lock();
+        clip_window = XCreateWindow( display, root_window, 0, 0, 1, 1, 0, 0,
+                                     InputOnly, visual, CWOverrideRedirect | CWEventMask, &attr );
+        wine_tsx11_unlock();
+        SetPropA( hwnd, clip_window_prop, (HANDLE)clip_window );
     }
+    else if (!clip_window)
+    {
+        clip_window = (Window)GetPropA( GetDesktopWindow(), clip_window_prop );
+        wine_tsx11_lock();
+        XSelectInput( display, clip_window, StructureNotifyMask );
+        wine_tsx11_unlock();
+    }
+
     return TRUE;
 }
 

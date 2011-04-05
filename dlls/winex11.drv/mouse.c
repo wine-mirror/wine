@@ -95,6 +95,7 @@ static const UINT button_up_flags[NB_BUTTONS] =
 static HWND cursor_window;
 static DWORD last_time_modified;
 static XContext cursor_context;
+static RECT clip_rect;
 static Cursor create_cursor( HANDLE handle );
 
 
@@ -216,11 +217,18 @@ void sync_window_cursor( struct x11drv_win_data *data )
 static void send_mouse_input( HWND hwnd, UINT flags, Window window, int x, int y,
                               unsigned int state, DWORD mouse_data, Time time )
 {
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
+    struct x11drv_win_data *data;
     POINT pt;
     INPUT input;
 
-    if (!data) return;
+    if (!hwnd && window == clip_window)
+    {
+        pt.x = x + clip_rect.left;
+        pt.y = y + clip_rect.top;
+        goto done;
+    }
+
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
     if (window == data->whole_window)
     {
@@ -270,6 +278,7 @@ static void send_mouse_input( HWND hwnd, UINT flags, Window window, int x, int y
         SERVER_END_REQ;
     }
 
+done:
     input.type             = INPUT_MOUSE;
     input.u.mi.dx          = pt.x;
     input.u.mi.dy          = pt.y;
@@ -911,6 +920,49 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
     return ret;
 }
 
+/***********************************************************************
+ *		ClipCursor (X11DRV.@)
+ */
+BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
+{
+    Display *display = thread_init_display();
+
+    if (!clip_window) return TRUE;
+
+    /* we are clipping if the clip rectangle is smaller than the screen */
+    if (clip && (clip->left > virtual_screen_rect.left ||
+                 clip->right < virtual_screen_rect.right ||
+                 clip->top > virtual_screen_rect.top ||
+                 clip->bottom < virtual_screen_rect.bottom))
+    {
+        if (GetWindowThreadProcessId( GetDesktopWindow(), NULL ) == GetCurrentThreadId())
+            return TRUE;  /* don't clip in the desktop process */
+
+        TRACE( "clipping to %s\n", wine_dbgstr_rect(clip) );
+        wine_tsx11_lock();
+        XUnmapWindow( display, clip_window );
+        XMoveResizeWindow( display, clip_window,
+                           clip->left - virtual_screen_rect.left, clip->top - virtual_screen_rect.top,
+                           clip->right - clip->left, clip->bottom - clip->top );
+        XMapWindow( display, clip_window );
+        if (!XGrabPointer( display, clip_window, False,
+                           PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
+                           GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
+        {
+            wine_tsx11_unlock();
+            clip_rect = *clip;
+            return TRUE;
+        }
+        wine_tsx11_unlock();
+    }
+
+    /* release the grab if any */
+    TRACE( "no longer clipping\n" );
+    wine_tsx11_lock();
+    XUnmapWindow( display, clip_window );
+    wine_tsx11_unlock();
+    return TRUE;
+}
 
 /***********************************************************************
  *           X11DRV_ButtonPress
