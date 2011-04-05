@@ -377,6 +377,70 @@ static pascal ComponentResult myDataHPlaybackHints(DataHandler dh, long flags,
     return noErr;
 }
 
+static pascal ComponentResult myDataHGetFileSize64(DataHandler dh, wide * fileSize)
+{
+    Handle storage = GetComponentInstanceStorage(dh);
+    DHData *data = (DHData*)*storage;
+    LONGLONG total;
+    LONGLONG avaliable;
+    SInt64 total64;
+
+    TRACE("%p\n",dh);
+
+    IAsyncReader_Length(data->dataRef.pReader,&total,&avaliable);
+    total64 = total;
+    *fileSize = SInt64ToWide(total64);
+    return noErr;
+}
+
+static pascal ComponentResult myDataHGetAvailableFileSize64(DataHandler dh, wide * fileSize)
+{
+    Handle storage = GetComponentInstanceStorage(dh);
+    DHData *data = (DHData*)*storage;
+    LONGLONG total;
+    LONGLONG avaliable;
+    SInt64 total64;
+
+    TRACE("%p\n",dh);
+
+    IAsyncReader_Length(data->dataRef.pReader,&total,&avaliable);
+    total64 = avaliable;
+    *fileSize = SInt64ToWide(total64);
+    return noErr;
+}
+
+static pascal ComponentResult myDataHScheduleData64( DataHandler dh,
+                                          Ptr PlaceToPutDataPtr,
+                                          const wide * FileOffset,
+                                          long DataSize,
+                                          long RefCon,
+                                          DataHSchedulePtr scheduleRec,
+                                          DataHCompletionUPP CompletionRtn)
+{
+    Handle storage = GetComponentInstanceStorage(dh);
+    DHData *data = (DHData*)*storage;
+    HRESULT hr;
+    SInt64 fileOffset64 = WideToSInt64(*FileOffset);
+    LONGLONG offset = fileOffset64;
+    BYTE* buffer = (BYTE*)PlaceToPutDataPtr;
+
+    TRACE("%p %p %lli %li %li %p %p\n",dh, PlaceToPutDataPtr, offset, DataSize, RefCon, scheduleRec, CompletionRtn);
+
+    hr = IAsyncReader_SyncRead(data->dataRef.pReader, offset, DataSize, buffer);
+    TRACE("result %x\n",hr);
+    if (CompletionRtn)
+    {
+        if (data->AsyncCompletionRtn)
+            InvokeDataHCompletionUPP(data->AsyncPtr, data->AsyncRefCon, noErr, data->AsyncCompletionRtn);
+
+        data->AsyncPtr = PlaceToPutDataPtr;
+        data->AsyncRefCon = RefCon;
+        data->AsyncCompletionRtn = CompletionRtn;
+    }
+
+    return noErr;
+}
+
 static const struct { LPVOID proc; ProcInfoType type;} componentFunctions[] =
 {
     {NULL, 0}, /* 0 */
@@ -492,9 +556,22 @@ static const struct { LPVOID proc; ProcInfoType type;} componentFunctions[] =
             | STACK_ROUTINE_PARAMETER(1, SIZE_CODE(sizeof(DataHandler)))
             | STACK_ROUTINE_PARAMETER(2, SIZE_CODE(sizeof(UInt32*)))
 }, /* kDataHGetInfoFlagsSelect                   */
-    {NULL, 0}, /* kDataHScheduleData64Select                 */
+    {myDataHScheduleData64, kPascalStackBased
+            | RESULT_SIZE(SIZE_CODE(sizeof(ComponentResult)))
+            | STACK_ROUTINE_PARAMETER(1, SIZE_CODE(sizeof(DataHandler)))
+            | STACK_ROUTINE_PARAMETER(2, SIZE_CODE(sizeof(Ptr)))
+            | STACK_ROUTINE_PARAMETER(3, SIZE_CODE(sizeof(wide*)))
+            | STACK_ROUTINE_PARAMETER(4, SIZE_CODE(sizeof(long)))
+            | STACK_ROUTINE_PARAMETER(5, SIZE_CODE(sizeof(long)))
+            | STACK_ROUTINE_PARAMETER(6, SIZE_CODE(sizeof(DataHSchedulePtr)))
+            | STACK_ROUTINE_PARAMETER(7, SIZE_CODE(sizeof(DataHCompletionUPP)))
+}, /* kDataHScheduleData64Select                 */
     {NULL, 0}, /* kDataHWrite64Select                        */
-    {NULL, 0}, /* kDataHGetFileSize64Select     0x30         */
+    {myDataHGetFileSize64, kPascalStackBased
+            | RESULT_SIZE(SIZE_CODE(sizeof(ComponentResult)))
+            | STACK_ROUTINE_PARAMETER(1, SIZE_CODE(sizeof(DataHandler)))
+            | STACK_ROUTINE_PARAMETER(2, SIZE_CODE(sizeof(wide*)))
+}, /* kDataHGetFileSize64Select     0x30         */
     {NULL, 0}, /* kDataHPreextend64Select                    */
     {NULL, 0}, /* kDataHSetFileSize64Select                  */
     {NULL, 0}, /* kDataHGetFreeSpace64Select                 */
@@ -528,7 +605,11 @@ static const struct { LPVOID proc; ProcInfoType type;} componentFunctions[] =
     {NULL, 0}, /* 0x4B */
     {NULL, 0}, /* 0x4C */
     {NULL, 0}, /* 0x4D */
-    {NULL, 0}, /* kDataHGetAvailableFileSize64Select         */
+    {myDataHGetAvailableFileSize64, kPascalStackBased
+            | RESULT_SIZE(SIZE_CODE(sizeof(ComponentResult)))
+            | STACK_ROUTINE_PARAMETER(1, SIZE_CODE(sizeof(DataHandler)))
+            | STACK_ROUTINE_PARAMETER(2, SIZE_CODE(sizeof(wide*)))
+}, /* kDataHGetAvailableFileSize64Select         */
     {NULL, 0}, /* kDataHGetDataAvailability64Select          */
 };
 
