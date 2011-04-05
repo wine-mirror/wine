@@ -1,0 +1,6 @@
+MODULE = msvcp100.dll
+
+C_SRCS = \
+	msvcp100.c
+
+@MAKE_DLL_RULES@
