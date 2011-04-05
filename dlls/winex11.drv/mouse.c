@@ -938,22 +938,25 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
         if (GetWindowThreadProcessId( GetDesktopWindow(), NULL ) == GetCurrentThreadId())
             return TRUE;  /* don't clip in the desktop process */
 
-        TRACE( "clipping to %s\n", wine_dbgstr_rect(clip) );
-        wine_tsx11_lock();
-        XUnmapWindow( display, clip_window );
-        XMoveResizeWindow( display, clip_window,
-                           clip->left - virtual_screen_rect.left, clip->top - virtual_screen_rect.top,
-                           clip->right - clip->left, clip->bottom - clip->top );
-        XMapWindow( display, clip_window );
-        if (!XGrabPointer( display, clip_window, False,
-                           PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
-                           GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
+        if (grab_pointer)
         {
+            TRACE( "clipping to %s\n", wine_dbgstr_rect(clip) );
+            wine_tsx11_lock();
+            XUnmapWindow( display, clip_window );
+            XMoveResizeWindow( display, clip_window,
+                               clip->left - virtual_screen_rect.left, clip->top - virtual_screen_rect.top,
+                               clip->right - clip->left, clip->bottom - clip->top );
+            XMapWindow( display, clip_window );
+            if (!XGrabPointer( display, clip_window, False,
+                               PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
+                               GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
+            {
+                wine_tsx11_unlock();
+                clip_rect = *clip;
+                return TRUE;
+            }
             wine_tsx11_unlock();
-            clip_rect = *clip;
-            return TRUE;
         }
-        wine_tsx11_unlock();
     }
 
     /* release the grab if any */
