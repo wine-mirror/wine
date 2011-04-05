@@ -219,6 +219,8 @@ typedef struct {
     UINT tile_size;
     int tiled;
     UINT tiles_across;
+    UINT resolution_unit;
+    float xres, yres;
 } tiff_decode_info;
 
 typedef struct {
@@ -456,6 +458,25 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     {
         FIXME("missing RowsPerStrip value\n");
         return E_FAIL;
+    }
+
+    decode_info->resolution_unit = 0;
+    pTIFFGetField(tiff, TIFFTAG_RESOLUTIONUNIT, &decode_info->resolution_unit);
+    if (decode_info->resolution_unit != 0)
+    {
+        ret = pTIFFGetField(tiff, TIFFTAG_XRESOLUTION, &decode_info->xres);
+        if (!ret)
+        {
+            WARN("missing X resolution\n");
+            decode_info->resolution_unit = 0;
+        }
+
+        ret = pTIFFGetField(tiff, TIFFTAG_YRESOLUTION, &decode_info->yres);
+        if (!ret)
+        {
+            WARN("missing Y resolution\n");
+            decode_info->resolution_unit = 0;
+        }
     }
 
     return S_OK;
@@ -769,8 +790,33 @@ static HRESULT WINAPI TiffFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *ifac
 static HRESULT WINAPI TiffFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
     double *pDpiX, double *pDpiY)
 {
-    FIXME("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
-    return E_NOTIMPL;
+    TiffFrameDecode *This = impl_from_IWICBitmapFrameDecode(iface);
+
+    switch (This->decode_info.resolution_unit)
+    {
+    default:
+        FIXME("unknown resolution unit %i\n", This->decode_info.resolution_unit);
+        /* fall through */
+    case 0: /* Not set */
+        *pDpiX = *pDpiY = 96.0;
+        break;
+    case 1: /* Relative measurements */
+        *pDpiX = 96.0;
+        *pDpiY = 96.0 * This->decode_info.yres / This->decode_info.xres;
+        break;
+    case 2: /* Inch */
+        *pDpiX = This->decode_info.xres;
+        *pDpiY = This->decode_info.yres;
+        break;
+    case 3: /* Centimeter */
+        *pDpiX = This->decode_info.xres / 2.54;
+        *pDpiY = This->decode_info.yres / 2.54;
+        break;
+    }
+
+    TRACE("(%p) <-- %f,%f unit=%i\n", iface, *pDpiX, *pDpiY, This->decode_info.resolution_unit);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
