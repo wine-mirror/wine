@@ -652,15 +652,15 @@ static void prepare_ds_clear(IWineD3DSurfaceImpl *ds, struct wined3d_context *co
 
 /* Do not call while under the GL lock. */
 HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, IWineD3DSurfaceImpl **rts,
-        UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags,
-        const WINED3DCOLORVALUE *color, float depth, DWORD stencil)
+        IWineD3DSurfaceImpl *depth_stencil, UINT rect_count, const RECT *rects, const RECT *draw_rect,
+        DWORD flags, const WINED3DCOLORVALUE *color, float depth, DWORD stencil)
 {
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
-    IWineD3DSurfaceImpl *depth_stencil = device->depth_stencil;
-    IWineD3DSurfaceImpl *target = rts[0];
+    IWineD3DSurfaceImpl *target = rt_count ? rts[0] : NULL;
     UINT drawable_width, drawable_height;
     struct wined3d_context *context;
     GLbitfield clear_mask = 0;
+    BOOL render_offscreen;
     unsigned int i;
 
     /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
@@ -694,7 +694,17 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
         return WINED3D_OK;
     }
 
-    target->get_drawable_size(context, &drawable_width, &drawable_height);
+    if (target)
+    {
+        render_offscreen = context->render_offscreen;
+        target->get_drawable_size(context, &drawable_width, &drawable_height);
+    }
+    else
+    {
+        render_offscreen = FALSE;
+        drawable_width = depth_stencil->pow2Width;
+        drawable_height = depth_stencil->pow2Height;
+    }
 
     ENTER_GL();
 
@@ -715,7 +725,7 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
+        DWORD location = render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
 
         if (location == SFLAG_DS_ONSCREEN && depth_stencil != device->onscreen_depth_stencil)
         {
@@ -752,7 +762,7 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
 
     if (!clear_rect)
     {
-        if (context->render_offscreen)
+        if (render_offscreen)
         {
             glScissor(draw_rect->left, draw_rect->top,
                     draw_rect->right - draw_rect->left, draw_rect->bottom - draw_rect->top);
@@ -789,7 +799,7 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
                 continue;
             }
 
-            if (context->render_offscreen)
+            if (render_offscreen)
             {
                 glScissor(current_rect.left, current_rect.top,
                         current_rect.right - current_rect.left, current_rect.bottom - current_rect.top);
@@ -808,7 +818,8 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
 
     LEAVE_GL();
 
-    if (wined3d_settings.strict_draw_ordering || (target->container.type == WINED3D_CONTAINER_SWAPCHAIN
+    if (wined3d_settings.strict_draw_ordering || (flags & WINED3DCLEAR_TARGET
+            && target->container.type == WINED3D_CONTAINER_SWAPCHAIN
             && target->container.u.swapchain->front_buffer == target))
         wglFlush(); /* Flush to ensure ordering across contexts. */
 
@@ -4816,7 +4827,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD rect
     device_get_draw_rect(device, &draw_rect);
 
     return device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
-            device->render_targets, rect_count, rects, &draw_rect, flags, &c, depth, stencil);
+            device->render_targets, device->depth_stencil, rect_count, rects,
+            &draw_rect, flags, &c, depth, stencil);
 }
 
 /*****

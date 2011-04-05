@@ -1112,7 +1112,7 @@ void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface, IWineD3DS
     unsigned int src_width, src_height;
     unsigned int width, height;
 
-    if (rt->resource.format->id != WINED3DFMT_NULL)
+    if (rt && rt->resource.format->id != WINED3DFMT_NULL)
     {
         width = rt->pow2Width;
         height = rt->pow2Height;
@@ -3897,16 +3897,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
 /* Do not call while under the GL lock. */
 static HRESULT wined3d_surface_depth_fill(IWineD3DSurfaceImpl *surface, const RECT *rect, float depth)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    const RECT draw_rect = {0, 0, surface->resource.width, surface->resource.height};
 
-    if (surface != device->depth_stencil)
-    {
-        FIXME("Depth fill is only implemented for the current depth / stencil buffer.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    return IWineD3DDevice_Clear((IWineD3DDevice *)device, !!rect, rect,
-            WINED3DCLEAR_ZBUFFER, 0x00000000, depth, 0);
+    return device_clear_render_targets(surface->resource.device, 0, NULL, surface,
+            !!rect, rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
 }
 
 /* Do not call while under the GL lock. */
@@ -4921,8 +4915,8 @@ static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceIm
 {
     const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
 
-    return device_clear_render_targets(device, 1 /* rt_count */, &dst_surface, 1 /* rect_count */,
-            dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f /* depth */, 0 /* stencil */);
+    return device_clear_render_targets(device, 1, &dst_surface, NULL,
+            1, dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
 }
 
 const struct blit_shader ffp_blit =  {

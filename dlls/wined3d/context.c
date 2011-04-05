@@ -2,7 +2,7 @@
  * Context and render target management in wined3d
  *
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
- * Copyright 2009-2010 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1915,7 +1915,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
 /* Context activation is done by the caller. */
 static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_count, IWineD3DSurfaceImpl **rts)
 {
-    if (!surface_is_offscreen(rts[0]))
+    if (rt_count && !surface_is_offscreen(rts[0]))
     {
         ENTER_GL();
         glDrawBuffer(surface_get_gl_buffer(rts[0]));
@@ -1951,7 +1951,7 @@ static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_
         }
         else
         {
-            glDrawBuffer(rts[0]->resource.device->offscreenBuffer);
+            glDrawBuffer(rt_count ? rts[0]->resource.device->offscreenBuffer : GL_NONE);
             checkGLcall("glDrawBuffer()");
         }
         LEAVE_GL();
@@ -2086,7 +2086,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
 
         ENTER_GL();
 
-        if (surface_is_offscreen(rts[0]))
+        if (!rt_count || surface_is_offscreen(rts[0]))
         {
             for (i = 0; i < rt_count; ++i)
             {
