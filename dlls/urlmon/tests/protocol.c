@@ -215,25 +215,6 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     return lstrcmpA(stra, buf);
 }
 
-static BOOL proxy_active(void)
-{
-    HKEY internet_settings;
-    DWORD proxy_enable;
-    DWORD size;
-
-    if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
-                      0, KEY_QUERY_VALUE, &internet_settings) != ERROR_SUCCESS)
-        return FALSE;
-
-    size = sizeof(DWORD);
-    if (RegQueryValueExA(internet_settings, "ProxyEnable", NULL, NULL, (LPBYTE) &proxy_enable, &size) != ERROR_SUCCESS)
-        proxy_enable = 0;
-
-    RegCloseKey(internet_settings);
-
-    return proxy_enable != 0;
-}
-
 static HRESULT WINAPI HttpSecurity_QueryInterface(IHttpSecurity *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid)
@@ -593,11 +574,6 @@ static void call_continue(PROTOCOLDATA *protocol_data)
                 CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
                 CLEAR_CALLED(ReportProgress_CONNECTING);
                 CLEAR_CALLED(ReportProgress_PROXYDETECTING);
-            }else if(test_redirect) {
-                if (! proxy_active())
-                    CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
-                else
-                    CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
             }else todo_wine {
                 CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
                 /* IE7 does call this */
@@ -652,7 +628,7 @@ static void call_continue(PROTOCOLDATA *protocol_data)
             state = STATE_DOWNLOADING;
             if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
                 CHECK_CALLED(OnResponse);
-                if(tested_protocol == HTTPS_TEST || test_abort)
+                if(tested_protocol == HTTPS_TEST)
                     CHECK_CALLED(ReportProgress_ACCEPTRANGES);
                 else if(test_redirect)
                     CLEAR_CALLED(ReportProgress_ACCEPTRANGES);
@@ -2892,9 +2868,6 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
 
 static void test_http_protocol(void)
 {
-    static const WCHAR winehq_url[] =
-        {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.',
-            'o','r','g','/','s','i','t','e','/','a','b','o','u','t',0};
     static const WCHAR posttest_url[] =
         {'h','t','t','p',':','/','/','c','r','o','s','s','o','v','e','r','.',
          'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
@@ -2903,24 +2876,23 @@ static void test_http_protocol(void)
         {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
          't','e','s','t','s','/','r','e','d','i','r','e','c','t',0};
     static const WCHAR winetest_url[] =
-        {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/','d','a','t','a','/',0};
+        {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
+         't','e','s','t','s','/','d','a','t','a','.','p','h','p',0};
 
     trace("Testing http protocol (not from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
-    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_FIRST_HTTP, TYMED_NULL);
+    test_http_protocol_url(winetest_url, HTTP_TEST, TEST_FIRST_HTTP, TYMED_NULL);
 
     trace("Testing http protocol (from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
-    test_http_protocol_url(winehq_url, HTTP_TEST, 0, TYMED_NULL);
+    test_http_protocol_url(winetest_url, HTTP_TEST, 0, TYMED_NULL);
 
     trace("Testing http protocol (to file)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NEEDFILE;
-    test_http_protocol_url(winehq_url, HTTP_TEST, 0, TYMED_NULL);
+    test_http_protocol_url(winetest_url, HTTP_TEST, 0, TYMED_NULL);
 
     trace("Testing http protocol (post data)...\n");
-    /* Without this flag we get a ReportProgress_CACHEFILENAMEAVAILABLE
-     * notification with BINDVERB_POST */
-    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
+    bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
     test_http_protocol_url(posttest_url, HTTP_TEST, TEST_FIRST_HTTP|TEST_POST, TYMED_HGLOBAL);
 
     trace("Testing http protocol (post data stream)...\n");
@@ -2928,7 +2900,7 @@ static void test_http_protocol(void)
 
     trace("Testing http protocol (direct read)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
-    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_DIRECT_READ|TEST_USEIURI, TYMED_NULL);
+    test_http_protocol_url(winetest_url, HTTP_TEST, TEST_DIRECT_READ|TEST_USEIURI, TYMED_NULL);
 
     trace("Testing http protocol (redirected)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
