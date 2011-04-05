@@ -2507,10 +2507,8 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
         UINT size, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, GLenum bind_hint,
         const char *data, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-/* IWineD3DRendertargetView */
 struct wined3d_rendertarget_view
 {
-    const struct IWineD3DRendertargetViewVtbl *vtbl;
     LONG refcount;
 
     struct wined3d_resource *resource;

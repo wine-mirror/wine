@@ -2096,6 +2096,7 @@ struct wined3d_clipper;
 struct wined3d_palette;
 struct wined3d_query;
 struct wined3d_resource;
+struct wined3d_rendertarget_view;
 struct wined3d_shader;
 struct wined3d_stateblock;
 struct wined3d_texture;
@@ -2204,18 +2205,6 @@ interface IWineD3DResource : IWineD3DBase
     void PreLoad(
     );
     WINED3DRESOURCETYPE GetType(
-    );
-}
-
-[
-    object,
-    local,
-    uuid(f7d8abf4-fb93-43e4-9c96-4618cf9b3cbc)
-]
-interface IWineD3DRendertargetView : IWineD3DBase
-{
-    HRESULT GetResource(
-        [out] struct wined3d_resource **resource
     );
 }
 
@@ -2438,7 +2427,7 @@ interface IWineD3DDevice : IUnknown
     HRESULT CreateRendertargetView(
         [in] struct wined3d_resource *resource,
         [in] void *parent,
-        [out] IWineD3DRendertargetView **rendertarget_view
+        [out] struct wined3d_rendertarget_view **rendertarget_view
     );
     HRESULT CreateTexture(
         [in] UINT width,
@@ -2893,7 +2882,7 @@ interface IWineD3DDevice : IUnknown
         [in] DWORD stencil
     );
     void ClearRendertargetView(
-        [in] IWineD3DRendertargetView *rendertarget_view,
+        [in] struct wined3d_rendertarget_view *rendertarget_view,
         [in] const WINED3DCOLORVALUE *color
     );
     void SetPrimitiveType(
@@ -3074,6 +3063,11 @@ HRESULT __cdecl wined3d_query_issue(struct wined3d_query *query, DWORD flags);
 void __cdecl wined3d_resource_get_desc(const struct wined3d_resource *resource,
         struct wined3d_resource_desc *desc);
 void * __cdecl wined3d_resource_get_parent(const struct wined3d_resource *resource);
+
+ULONG __cdecl wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view *view);
+void * __cdecl wined3d_rendertarget_view_get_parent(const struct wined3d_rendertarget_view *view);
+struct wined3d_resource * __cdecl wined3d_rendertarget_view_get_resource(const struct wined3d_rendertarget_view *view);
+ULONG __cdecl wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view);
 
 ULONG __cdecl wined3d_shader_decref(struct wined3d_shader *shader);
 HRESULT __cdecl wined3d_shader_get_byte_code(const struct wined3d_shader *shader,

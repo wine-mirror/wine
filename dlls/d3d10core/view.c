@@ -328,7 +328,7 @@ static ULONG STDMETHODCALLTYPE d3d10_rendertarget_view_Release(ID3D10RenderTarge
 
     if (!refcount)
     {
-        IWineD3DRendertargetView_Release(This->wined3d_view);
+        wined3d_rendertarget_view_decref(This->wined3d_view);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -380,10 +380,10 @@ static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetResource(ID3D10RenderTa
 
     TRACE("iface %p, resource %p\n", iface, resource);
 
-    hr = IWineD3DRendertargetView_GetResource(This->wined3d_view, &wined3d_resource);
-    if (FAILED(hr))
+    wined3d_resource = wined3d_rendertarget_view_get_resource(This->wined3d_view);
+    if (!wined3d_resource)
     {
-        ERR("Failed to get wined3d resource, hr %#x\n", hr);
+        ERR("Failed to get wined3d resource.\n");
         *resource = NULL;
         return;
     }

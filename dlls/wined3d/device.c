@@ -1089,7 +1089,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *iface,
-        struct wined3d_resource *resource, void *parent, IWineD3DRendertargetView **rendertarget_view)
+        struct wined3d_resource *resource, void *parent, struct wined3d_rendertarget_view **rendertarget_view)
 {
     struct wined3d_rendertarget_view *object;
 
@@ -1106,7 +1106,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *
     wined3d_rendertarget_view_init(object, resource, parent);
 
     TRACE("Created render target view %p.\n", object);
-    *rendertarget_view = (IWineD3DRendertargetView *)object;
+    *rendertarget_view = object;
 
     return WINED3D_OK;
 }
@@ -5776,18 +5776,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
 
 /* Do not call while under the GL lock. */
 static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *iface,
-        IWineD3DRendertargetView *rendertarget_view, const WINED3DCOLORVALUE *color)
+        struct wined3d_rendertarget_view *rendertarget_view, const WINED3DCOLORVALUE *color)
 {
     struct wined3d_resource *resource;
     HRESULT hr;
 
-    hr = IWineD3DRendertargetView_GetResource(rendertarget_view, &resource);
-    if (FAILED(hr))
-    {
-        ERR("Failed to get resource, hr %#x\n", hr);
-        return;
-    }
-
+    resource = rendertarget_view->resource;
     if (resource->resourceType != WINED3DRTYPE_SURFACE)
     {
         FIXME("Only supported on surface resources\n");

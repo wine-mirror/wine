@@ -61,6 +61,11 @@
 @ cdecl wined3d_resource_get_desc(ptr ptr)
 @ cdecl wined3d_resource_get_parent(ptr)
 
+@ cdecl wined3d_rendertarget_view_decref(ptr)
+@ cdecl wined3d_rendertarget_view_get_parent(ptr)
+@ cdecl wined3d_rendertarget_view_get_resource(ptr)
+@ cdecl wined3d_rendertarget_view_incref(ptr)
+
 @ cdecl wined3d_shader_decref(ptr)
 @ cdecl wined3d_shader_get_byte_code(ptr ptr ptr)
 @ cdecl wined3d_shader_get_parent(ptr)
