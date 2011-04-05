@@ -64,7 +64,9 @@ MAKE_FUNCPTR(TIFFReadDirectory);
 MAKE_FUNCPTR(TIFFReadEncodedStrip);
 MAKE_FUNCPTR(TIFFReadEncodedTile);
 MAKE_FUNCPTR(TIFFSetDirectory);
+MAKE_FUNCPTR(TIFFSetField);
 MAKE_FUNCPTR(TIFFWriteDirectory);
+MAKE_FUNCPTR(TIFFWriteScanline);
 #undef MAKE_FUNCPTR
 
 static void *load_libtiff(void)
@@ -93,7 +95,9 @@ static void *load_libtiff(void)
         LOAD_FUNCPTR(TIFFReadEncodedStrip);
         LOAD_FUNCPTR(TIFFReadEncodedTile);
         LOAD_FUNCPTR(TIFFSetDirectory);
+        LOAD_FUNCPTR(TIFFSetField);
         LOAD_FUNCPTR(TIFFWriteDirectory);
+        LOAD_FUNCPTR(TIFFWriteScanline);
 #undef LOAD_FUNCPTR
 
     }
@@ -1166,6 +1170,7 @@ typedef struct TiffFrameEncode {
     const struct tiff_encode_format *format;
     UINT width, height;
     double xres, yres;
+    UINT lines_written;
 } TiffFrameEncode;
 
 static inline TiffFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEncode *iface)
@@ -1343,8 +1348,93 @@ static HRESULT WINAPI TiffFrameEncode_SetThumbnail(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI TiffFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
     UINT lineCount, UINT cbStride, UINT cbBufferSize, BYTE *pbPixels)
 {
-    FIXME("(%p,%u,%u,%u,%p): stub\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
-    return E_NOTIMPL;
+    TiffFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    BYTE *row_data, *swapped_data = NULL;
+    UINT i, j, line_size;
+
+    TRACE("(%p,%u,%u,%u,%p)\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
+
+    EnterCriticalSection(&This->parent->lock);
+
+    if (!This->initialized || !This->width || !This->height || !This->format)
+    {
+        LeaveCriticalSection(&This->parent->lock);
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    if (lineCount == 0 || lineCount + This->lines_written > This->height)
+    {
+        LeaveCriticalSection(&This->parent->lock);
+        return E_INVALIDARG;
+    }
+
+    line_size = ((This->width * This->format->bpp)+7)/8;
+
+    if (This->format->reverse_bgr)
+    {
+        swapped_data = HeapAlloc(GetProcessHeap(), 0, line_size);
+        if (!swapped_data)
+        {
+            LeaveCriticalSection(&This->parent->lock);
+            return E_OUTOFMEMORY;
+        }
+    }
+
+    if (!This->info_written)
+    {
+        pTIFFSetField(This->parent->tiff, TIFFTAG_PHOTOMETRIC, (uint16)This->format->photometric);
+        pTIFFSetField(This->parent->tiff, TIFFTAG_PLANARCONFIG, (uint16)1);
+        pTIFFSetField(This->parent->tiff, TIFFTAG_BITSPERSAMPLE, (uint16)This->format->bps);
+        pTIFFSetField(This->parent->tiff, TIFFTAG_SAMPLESPERPIXEL, (uint16)This->format->samples);
+
+        if (This->format->extra_sample)
+        {
+            uint16 extra_samples;
+            extra_samples = This->format->extra_sample_type;
+
+            pTIFFSetField(This->parent->tiff, TIFFTAG_EXTRASAMPLES, (uint16)1, &extra_samples);
+        }
+
+        pTIFFSetField(This->parent->tiff, TIFFTAG_IMAGEWIDTH, (uint32)This->width);
+        pTIFFSetField(This->parent->tiff, TIFFTAG_IMAGELENGTH, (uint32)This->height);
+
+        if (This->xres != 0.0 && This->yres != 0.0)
+        {
+            pTIFFSetField(This->parent->tiff, TIFFTAG_RESOLUTIONUNIT, (uint16)2); /* Inch */
+            pTIFFSetField(This->parent->tiff, TIFFTAG_XRESOLUTION, (float)This->xres);
+            pTIFFSetField(This->parent->tiff, TIFFTAG_YRESOLUTION, (float)This->yres);
+        }
+
+        This->info_written = TRUE;
+    }
+
+    for (i=0; i<lineCount; i++)
+    {
+        row_data = pbPixels + i * cbStride;
+
+        if (This->format->reverse_bgr && This->format->bps == 8)
+        {
+            memcpy(swapped_data, row_data, line_size);
+            for (j=0; j<line_size; j += This->format->samples)
+            {
+                BYTE temp;
+                temp = swapped_data[j];
+                swapped_data[j] = swapped_data[j+2];
+                swapped_data[j+2] = temp;
+            }
+            row_data = swapped_data;
+        }
+
+        pTIFFWriteScanline(This->parent->tiff, (tdata_t)row_data, i+This->lines_written, 0);
+    }
+
+    This->lines_written += lineCount;
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    HeapFree(GetProcessHeap(), 0, swapped_data);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TiffFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
@@ -1549,6 +1639,7 @@ static HRESULT WINAPI TiffEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
             result->height = 0;
             result->xres = 0.0;
             result->yres = 0.0;
+            result->lines_written = 0;
 
             IWICBitmapEncoder_AddRef(iface);
             *ppIFrameEncode = &result->IWICBitmapFrameEncode_iface;
