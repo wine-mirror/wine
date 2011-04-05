@@ -702,13 +702,11 @@ static void copy_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsize,
 
         for(x = 0;x < minwidth;x++) {
             /* extract source color components */
-            if(srcformat->type == FORMAT_ARGB) {
-                pixel = dword_from_bytes(srcptr, srcformat->bytes_per_pixel);
-                get_relevant_argb_components(&conv_info, pixel, channels);
-            }
+            pixel = dword_from_bytes(srcptr, srcformat->bytes_per_pixel);
+            get_relevant_argb_components(&conv_info, pixel, channels);
 
             /* recombine the components */
-            if(destformat->type == FORMAT_ARGB) val = make_argb_color(&conv_info, channels);
+            val = make_argb_color(&conv_info, channels);
 
             if(colorkey) {
                 get_relevant_argb_components(&ck_conv_info, pixel, channels);
@@ -769,13 +767,11 @@ static void point_filter_simple_data(CONST BYTE *src, UINT srcpitch, POINT srcsi
             DWORD val = 0;
 
             /* extract source color components */
-            if(srcformat->type == FORMAT_ARGB) {
-                pixel = dword_from_bytes(srcptr, srcformat->bytes_per_pixel);
-                get_relevant_argb_components(&conv_info, pixel, channels);
-            }
+            pixel = dword_from_bytes(srcptr, srcformat->bytes_per_pixel);
+            get_relevant_argb_components(&conv_info, pixel, channels);
 
             /* recombine the components */
-            if(destformat->type == FORMAT_ARGB) val = make_argb_color(&conv_info, channels);
+            val = make_argb_color(&conv_info, channels);
 
             if(colorkey) {
                 get_relevant_argb_components(&ck_conv_info, pixel, channels);
