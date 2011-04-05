@@ -912,25 +912,6 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
            hwnd, data->whole_window, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );
 
-    if (is_net_wm_state_maximized( event->display, data ))
-    {
-        if (!IsZoomed( data->hwnd ))
-        {
-            TRACE( "win %p/%lx is maximized\n", data->hwnd, data->whole_window );
-            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0 );
-            return;
-        }
-    }
-    else
-    {
-        if (IsZoomed( data->hwnd ))
-        {
-            TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
-            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
-            return;
-        }
-    }
-
     X11DRV_X_to_window_rect( data, &rect );
     if (root_coords) MapWindowPoints( 0, parent, (POINT *)&rect, 2 );
 
@@ -953,13 +934,36 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
          data->window_rect.bottom - data->window_rect.top == cy) ||
         (IsRectEmpty( &data->window_rect ) && event->width == 1 && event->height == 1))
     {
-        if (flags & SWP_NOMOVE) return;  /* if nothing changed, don't do anything */
+        if (flags & SWP_NOMOVE)  /* if nothing changed, don't do anything */
+        {
+            TRACE( "Nothing has changed, ignoring event\n" );
+            return;
+        }
         flags |= SWP_NOSIZE;
     }
     else
         TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
                hwnd, data->window_rect.right - data->window_rect.left,
                data->window_rect.bottom - data->window_rect.top, cx, cy );
+
+    if (is_net_wm_state_maximized( event->display, data ))
+    {
+        if (!IsZoomed( data->hwnd ))
+        {
+            TRACE( "win %p/%lx is maximized\n", data->hwnd, data->whole_window );
+            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0 );
+            return;
+        }
+    }
+    else
+    {
+        if (IsZoomed( data->hwnd ))
+        {
+            TRACE( "window %p/%lx is no longer maximized\n", data->hwnd, data->whole_window );
+            SendMessageW( data->hwnd, WM_SYSCOMMAND, SC_RESTORE, 0 );
+            return;
+        }
+    }
 
     SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
