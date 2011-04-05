@@ -86,6 +86,8 @@ typedef struct
     void *bits; /* points to the top-left corner of the dib. */
 
     DWORD red_mask, green_mask, blue_mask;
+
+    const struct primitive_funcs *funcs;
 } dib_info;
 
 typedef struct dibdrv_physdev

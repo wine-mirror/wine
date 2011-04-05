@@ -36,6 +36,13 @@ static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
     return 0;
 }
 
+static void init_bit_fields(dib_info *dib, const DWORD *bit_fields)
+{
+    dib->red_mask    = bit_fields[0];
+    dib->green_mask  = bit_fields[1];
+    dib->blue_mask   = bit_fields[2];
+}
+
 static BOOL init_dib(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields, void *bits)
 {
     dib->bit_count = bi->biBitCount;
@@ -55,8 +62,21 @@ static BOOL init_dib(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit
         dib->stride  = -dib->stride;
     }
 
+    dib->funcs = &funcs_null;
+
     switch(dib->bit_count)
     {
+    case 32:
+         init_bit_fields(dib, bit_fields);
+         if(dib->red_mask == 0xff0000 && dib->green_mask == 0x00ff00 && dib->blue_mask == 0x0000ff)
+             dib->funcs = &funcs_8888;
+         else
+         {
+             TRACE("32 bpp bitmasks not supported, will forward to graphics driver.\n");
+             return FALSE;
+         }
+         break;
+
     default:
         TRACE("bpp %d not supported, will forward to graphics driver.\n", dib->bit_count);
         return FALSE;

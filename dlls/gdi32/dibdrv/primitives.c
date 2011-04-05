@@ -1,5 +1,5 @@
 /*
- * DIB driver include file.
+ * DIB driver primitives.
  *
  * Copyright 2011 Huw Davies
  *
@@ -18,15 +18,25 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
+#include "gdi_private.h"
+#include "dibdrv.h"
+
+static DWORD colorref_to_pixel_888(const dib_info *dib, COLORREF color)
 {
-    return (dibdrv_physdev *)dev;
+    return ( ((color >> 16) & 0xff) | (color & 0xff00) | ((color << 16) & 0xff0000) );
 }
 
-typedef struct primitive_funcs
+static DWORD colorref_to_pixel_null(const dib_info *dib, COLORREF color)
 {
-    DWORD (* colorref_to_pixel)(const dib_info *dib, COLORREF color);
-} primitive_funcs;
+    return 0;
+}
 
-extern const primitive_funcs funcs_8888 DECLSPEC_HIDDEN;
-extern const primitive_funcs funcs_null DECLSPEC_HIDDEN;
+const primitive_funcs funcs_8888 =
+{
+    colorref_to_pixel_888
+};
+
+const primitive_funcs funcs_null =
+{
+    colorref_to_pixel_null
+};
