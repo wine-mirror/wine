@@ -2232,18 +2232,23 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 }
             }
         }
-
-        /* disable child features of unselected parent features */
+        /* disable child features of unselected parent or follow parent */
         LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
         {
             FeatureList *fl;
 
-            if (is_feature_selected( feature, level )) continue;
-
             LIST_FOR_EACH_ENTRY( fl, &feature->Children, FeatureList, entry )
             {
-                fl->feature->Action = INSTALLSTATE_UNKNOWN;
-                fl->feature->ActionRequest = INSTALLSTATE_UNKNOWN;
+                if (!is_feature_selected( feature, level ))
+                {
+                    fl->feature->Action = INSTALLSTATE_UNKNOWN;
+                    fl->feature->ActionRequest = INSTALLSTATE_UNKNOWN;
+                }
+                else if (fl->feature->Attributes & msidbFeatureAttributesFollowParent)
+                {
+                    fl->feature->Action = feature->Action;
+                    fl->feature->ActionRequest = feature->ActionRequest;
+                }
             }
         }
     }
@@ -2264,6 +2269,21 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 {
                     feature->Action = feature->Installed;
                     feature->ActionRequest = feature->Installed;
+                }
+            }
+        }
+        LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
+        {
+            FeatureList *fl;
+
+            if (!is_feature_selected( feature, level )) continue;
+
+            LIST_FOR_EACH_ENTRY( fl, &feature->Children, FeatureList, entry )
+            {
+                if (fl->feature->Attributes & msidbFeatureAttributesFollowParent)
+                {
+                    fl->feature->Action = feature->Action;
+                    fl->feature->ActionRequest = feature->ActionRequest;
                 }
             }
         }
