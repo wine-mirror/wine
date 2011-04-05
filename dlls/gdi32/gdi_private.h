@@ -86,6 +86,8 @@ typedef struct
     void *bits; /* points to the top-left corner of the dib. */
 
     DWORD red_mask, green_mask, blue_mask;
+    int red_shift, green_shift, blue_shift;
+    int red_len, green_len, blue_len;
 
     const struct primitive_funcs *funcs;
 } dib_info;

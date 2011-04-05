@@ -26,6 +26,31 @@ static DWORD colorref_to_pixel_888(const dib_info *dib, COLORREF color)
     return ( ((color >> 16) & 0xff) | (color & 0xff00) | ((color << 16) & 0xff0000) );
 }
 
+static inline DWORD put_field(DWORD field, int shift, int len)
+{
+    shift = shift - (8 - len);
+    if (len <= 8)
+        field &= (((1 << len) - 1) << (8 - len));
+    if (shift < 0)
+        field >>= -shift;
+    else
+        field <<= shift;
+    return field;
+}
+
+static DWORD colorref_to_pixel_masks(const dib_info *dib, COLORREF colour)
+{
+    DWORD r,g,b;
+
+    r = GetRValue(colour);
+    g = GetGValue(colour);
+    b = GetBValue(colour);
+
+    return put_field(r, dib->red_shift,   dib->red_len) |
+           put_field(g, dib->green_shift, dib->green_len) |
+           put_field(b, dib->blue_shift,  dib->blue_len);
+}
+
 static DWORD colorref_to_pixel_null(const dib_info *dib, COLORREF color)
 {
     return 0;
@@ -34,6 +59,11 @@ static DWORD colorref_to_pixel_null(const dib_info *dib, COLORREF color)
 const primitive_funcs funcs_8888 =
 {
     colorref_to_pixel_888
+};
+
+const primitive_funcs funcs_32 =
+{
+    colorref_to_pixel_masks
 };
 
 const primitive_funcs funcs_null =
