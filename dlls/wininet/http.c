@@ -254,7 +254,7 @@ typedef struct {
     DWORD chunk_size;
 } chunked_stream_t;
 
-static void inline destroy_data_stream(data_stream_t *stream)
+static inline void destroy_data_stream(data_stream_t *stream)
 {
     stream->vtbl->destroy(stream);
 }
