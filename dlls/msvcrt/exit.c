@@ -37,7 +37,7 @@ static MSVCRT_purecall_handler purecall_handler = NULL;
 static const char szMsgBoxTitle[] = "Wine C++ Runtime Library";
 
 extern int MSVCRT_app_type;
-extern char *MSVCRT__pgmptr;
+extern MSVCRT_wchar_t *MSVCRT__wpgmptr;
 
 static unsigned int MSVCRT_abort_behavior =  MSVCRT__WRITE_ABORT_MSG | MSVCRT__CALL_REPORTFAULT;
 static int MSVCRT_error_mode = MSVCRT__OUT_TO_DEFAULT;
@@ -103,30 +103,43 @@ void CDECL MSVCRT__exit(int exitcode)
 }
 
 /* Print out an error message with an option to debug */
-static void DoMessageBox(LPCSTR lead, LPCSTR message)
+static void DoMessageBoxW(const MSVCRT_wchar_t *lead, const MSVCRT_wchar_t *message)
 {
-  MSGBOXPARAMSA msgbox;
-  char text[2048];
+  static const MSVCRT_wchar_t message_format[] = {'%','s','\n','\n','P','r','o','g','r','a','m',':',' ','%','s','\n',
+    '%','s','\n','\n','P','r','e','s','s',' ','O','K',' ','t','o',' ','e','x','i','t',' ','t','h','e',' ',
+    'p','r','o','g','r','a','m',',',' ','o','r',' ','C','a','n','c','e','l',' ','t','o',' ','s','t','a','r','t',' ',
+    't','h','e',' ','W','i','n','e',' ','d','e','b','b','u','g','e','r','.','\n',0};
+
+  MSGBOXPARAMSW msgbox;
+  MSVCRT_wchar_t text[2048];
   INT ret;
 
-  snprintf(text,sizeof(text),"%s\n\nProgram: %s\n%s\n\n"
-               "Press OK to exit the program, or Cancel to start the Wine debugger.\n ",
-               lead, MSVCRT__pgmptr, message);
+  MSVCRT__snwprintf(text,sizeof(text),message_format, lead, MSVCRT__wpgmptr, message);
 
   msgbox.cbSize = sizeof(msgbox);
   msgbox.hwndOwner = GetActiveWindow();
   msgbox.hInstance = 0;
-  msgbox.lpszText = text;
-  msgbox.lpszCaption = szMsgBoxTitle;
+  msgbox.lpszText = (LPCWSTR)text;
+  msgbox.lpszCaption = (LPCWSTR)szMsgBoxTitle;
   msgbox.dwStyle = MB_OKCANCEL|MB_ICONERROR;
   msgbox.lpszIcon = NULL;
   msgbox.dwContextHelpId = 0;
   msgbox.lpfnMsgBoxCallback = NULL;
   msgbox.dwLanguageId = LANG_NEUTRAL;
 
-  ret = MessageBoxIndirectA(&msgbox);
+  ret = MessageBoxIndirectW(&msgbox);
   if (ret == IDCANCEL)
     DebugBreak();
+}
+
+static void DoMessageBox(const char *lead, const char *message)
+{
+  MSVCRT_wchar_t leadW[1024], messageW[1024];
+
+  MSVCRT_mbstowcs(leadW, lead, 1024);
+  MSVCRT_mbstowcs(messageW, message, 1024);
+
+  return DoMessageBoxW(leadW, messageW);
 }
 
 /*********************************************************************
@@ -188,23 +201,43 @@ unsigned int CDECL MSVCRT__set_abort_behavior(unsigned int flags, unsigned int m
 }
 
 /*********************************************************************
+ *              _wassert (MSVCRT.@)
+ */
+void CDECL MSVCRT__wassert(const MSVCRT_wchar_t* str, const MSVCRT_wchar_t* file, unsigned int line)
+{
+  static const MSVCRT_wchar_t assertion_failed[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d','!',0};
+  static const MSVCRT_wchar_t format_msgbox[] = {'F','i','l','e',':',' ','%','s','\n','L','i','n','e',':',' ','%','d',
+      '\n','\n','E','x','p','r','e','s','s','i','o','n',':',' ','\"','%','s','\"',0};
+  static const MSVCRT_wchar_t format_console[] = {'A','s','s','e','r','t','i','o','n',' ','f','a','i','l','e','d',':',' ',
+      '%','s',',',' ','f','i','l','e',' ','%','s',',',' ','l','i','n','e',' ','%','d','\n','\n',0};
+
+  TRACE("(%s,%s,%d)\n", debugstr_w(str), debugstr_w(file), line);
+
+  if ((MSVCRT_error_mode == MSVCRT__OUT_TO_MSGBOX) ||
+     ((MSVCRT_error_mode == MSVCRT__OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
+  {
+    MSVCRT_wchar_t text[2048];
+    MSVCRT__snwprintf(text, sizeof(text), format_msgbox, file, line, str);
+    DoMessageBoxW(assertion_failed, text);
+  }
+  else
+    _cwprintf(format_console, str, file, line);
+
+  MSVCRT_raise(MSVCRT_SIGABRT);
+  MSVCRT__exit(3);
+}
+
+/*********************************************************************
  *		_assert (MSVCRT.@)
  */
 void CDECL MSVCRT__assert(const char* str, const char* file, unsigned int line)
 {
-  TRACE("(%s,%s,%d)\n",str,file,line);
-  if ((MSVCRT_error_mode == MSVCRT__OUT_TO_MSGBOX) ||
-     ((MSVCRT_error_mode == MSVCRT__OUT_TO_DEFAULT) && (MSVCRT_app_type == 2)))
-  {
-    char text[2048];
-    snprintf(text, sizeof(text), "File: %s\nLine: %d\n\nExpression: \"%s\"", file, line, str);
-    DoMessageBox("Assertion failed!", text);
-  }
-  else
-    _cprintf("Assertion failed: %s, file %s, line %d\n\n",str, file, line);
-  MSVCRT_raise(MSVCRT_SIGABRT);
-  /* in case raise() returns */
-  MSVCRT__exit(3);
+    MSVCRT_wchar_t strW[1024], fileW[1024];
+
+    MSVCRT_mbstowcs(strW, str, 1024);
+    MSVCRT_mbstowcs(fileW, file, 1024);
+
+    MSVCRT__wassert(strW, fileW, line);
 }
 
 /*********************************************************************
