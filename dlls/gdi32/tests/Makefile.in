@@ -1,11 +1,12 @@
 TESTDLL   = gdi32.dll
-IMPORTS   = user32 gdi32
+IMPORTS   = user32 gdi32 advapi32
 
 C_SRCS = \
 	bitmap.c \
 	brush.c \
 	clipping.c \
 	dc.c \
+	dib.c \
 	font.c \
 	gdiobj.c \
 	generated.c \
