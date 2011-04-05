@@ -524,7 +524,7 @@
 @ varargs _snprintf(str long str) msvcrt._snprintf
 @ varargs _snscanf(str long str) msvcrt._snscanf
 @ varargs _snwprintf(wstr long wstr) msvcrt._snwprintf
-@ stub _snwscanf
+@ varargs _snwscanf(wstr long wstr) msvcrt._snwscanf
 @ varargs _sopen(str long long) msvcrt._sopen
 @ varargs _spawnl(long str str) msvcrt._spawnl
 @ varargs _spawnle(long str str) msvcrt._spawnle

@@ -1101,10 +1101,10 @@
 @ stub _snwprintf_l
 @ varargs _snwprintf_s(ptr long long wstr) msvcrt._snwprintf_s
 @ stub _snwprintf_s_l
-@ stub _snwscanf
-@ stub _snwscanf_l
-@ stub _snwscanf_s
-@ stub _snwscanf_s_l
+@ varargs _snwscanf(wstr long wstr) msvcrt._snwscanf
+@ varargs _snwscanf_l(wstr long wstr ptr) msvcrt._snwscanf_l
+@ varargs _snwscanf_s(wstr long wstr) msvcrt._snwscanf_s
+@ varargs _snwscanf_s_l(wstr long wstr ptr) msvcrt._snwscanf_s_l
 @ varargs _sopen(str long long) msvcrt._sopen
 @ cdecl _sopen_s(ptr str long long long) msvcrt._sopen_s
 @ varargs _spawnl(long str str) msvcrt._spawnl
