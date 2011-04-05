@@ -78,6 +78,7 @@ static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_in
 static int (__cdecl *p_wcslwr_s)(wchar_t*,size_t);
 static errno_t (__cdecl *p_mbsupr_s)(unsigned char *str, size_t numberOfElements);
 static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements);
+static int (__cdecl *p_wctob)(wint_t);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
@@ -1913,6 +1914,40 @@ static void test__ultoa_s(void)
        buffer);
 }
 
+static void test_wctob(void)
+{
+    int ret;
+
+    if(!p_wctob || !setlocale(LC_ALL, "chinese-traditional")) {
+        win_skip("Skipping wctob tests\n");
+        return;
+    }
+
+    ret = p_wctob(0x8141);
+    ok(ret == EOF, "ret = %x\n", ret);
+
+    ret = p_wctob(0x81);
+    ok(ret == EOF, "ret = %x\n", ret);
+
+    ret = p_wctob(0xe0);
+    ok(ret == 0x61, "ret = %x\n", ret);
+
+    _setmbcp(1250);
+    ret = p_wctob(0x81);
+    /* wctob should not be affected by _setmbcp */
+    todo_wine ok(ret == EOF, "ret = %x\n", ret);
+
+    setlocale(LC_ALL, "C");
+    ret = p_wctob(0x8141);
+    ok(ret == EOF, "ret = %x\n", ret);
+
+    ret = p_wctob(0x81);
+    ok(ret == (int)(char)0x81, "ret = %x\n", ret);
+
+    ret = p_wctob(0xe0);
+    ok(ret == (int)(char)0xe0, "ret = %x\n", ret);
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -1947,6 +1982,7 @@ START_TEST(string)
     p_wcslwr_s = (void*)GetProcAddress(hMsvcrt, "_wcslwr_s");
     p_mbsupr_s = (void*)GetProcAddress(hMsvcrt, "_mbsupr_s");
     p_mbslwr_s = (void*)GetProcAddress(hMsvcrt, "_mbslwr_s");
+    p_wctob = (void*)GetProcAddress(hMsvcrt, "wctob");
 
     /* MSVCRT memcpy behaves like memmove for overlapping moves,
        MFC42 CString::Insert seems to rely on that behaviour */
@@ -1989,4 +2025,7 @@ START_TEST(string)
     test__wcslwr_s();
     test__mbsupr_s();
     test__mbslwr_s();
+
+    /* This test is changing locale */
+    test_wctob();
 }

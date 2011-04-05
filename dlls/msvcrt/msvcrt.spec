@@ -1468,7 +1468,7 @@
 @ cdecl wcstombs_s(ptr ptr long wstr long) MSVCRT_wcstombs_s
 @ cdecl wcstoul(wstr ptr long) ntdll.wcstoul
 @ stub wcsxfrm #(ptr wstr long) MSVCRT_wcsxfrm
-# stub wctob
+@ cdecl wctob(long) MSVCRT_wctob
 @ cdecl wctomb(ptr long) MSVCRT_wctomb
 # stub wctomb_s
 @ varargs wprintf(wstr) MSVCRT_wprintf

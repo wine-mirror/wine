@@ -1659,7 +1659,7 @@
 @ cdecl wcstombs_s(ptr ptr long wstr long) msvcrt.wcstombs_s
 @ cdecl wcstoul(wstr ptr long) msvcrt.wcstoul
 @ stub wcsxfrm
-@ stub wctob
+@ cdecl wctob(long) msvcrt.wctob
 @ cdecl wctomb(ptr long) msvcrt.wctomb
 @ stub wctomb_s
 @ stub wmemcpy_s
