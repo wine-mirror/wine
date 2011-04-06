@@ -3459,6 +3459,98 @@ static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILT
     context_release(context);
 }
 
+static void wined3d_surface_depth_blt_fbo(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surface,
+        const RECT *src_rect, IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+    DWORD src_mask, dst_mask;
+    GLbitfield gl_mask;
+
+    TRACE("device %p, src_surface %p, src_rect %s, dst_surface %p, dst_rect %s.\n",
+            device, src_surface, wine_dbgstr_rect(src_rect),
+            dst_surface, wine_dbgstr_rect(dst_rect));
+
+    src_mask = src_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+    dst_mask = dst_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+
+    if (src_mask != dst_mask)
+    {
+        ERR("Incompatible formats %s and %s.\n",
+                debug_d3dformat(src_surface->resource.format->id),
+                debug_d3dformat(dst_surface->resource.format->id));
+        return;
+    }
+
+    if (!src_mask)
+    {
+        ERR("Not a depth / stencil format: %s.\n",
+                debug_d3dformat(src_surface->resource.format->id));
+        return;
+    }
+
+    gl_mask = 0;
+    if (src_mask & WINED3DFMT_FLAG_DEPTH)
+        gl_mask |= GL_DEPTH_BUFFER_BIT;
+    if (src_mask & WINED3DFMT_FLAG_STENCIL)
+        gl_mask |= GL_STENCIL_BUFFER_BIT;
+
+    /* Make sure the locations are up-to-date. Loading the destination
+     * surface isn't required if the entire surface is overwritten. */
+    surface_load_location(src_surface, SFLAG_INTEXTURE, NULL);
+    if (!surface_is_full_rect(dst_surface, dst_rect))
+        surface_load_location(dst_surface, SFLAG_INTEXTURE, NULL);
+
+    context = context_acquire(device, NULL);
+    if (!context->valid)
+    {
+        context_release(context);
+        WARN("Invalid context, skipping blit.\n");
+        return;
+    }
+
+    gl_info = context->gl_info;
+
+    ENTER_GL();
+
+    context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, NULL, src_surface, SFLAG_INTEXTURE);
+    glReadBuffer(GL_NONE);
+    checkGLcall("glReadBuffer()");
+
+    context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, NULL, dst_surface, SFLAG_INTEXTURE);
+    context_set_draw_buffer(context, GL_NONE);
+
+    if (gl_mask & GL_DEPTH_BUFFER_BIT)
+    {
+        glDepthMask(GL_TRUE);
+        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
+    }
+    if (gl_mask & GL_STENCIL_BUFFER_BIT)
+    {
+        if (context->gl_info->supported[EXT_STENCIL_TWO_SIDE])
+        {
+            glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
+        }
+        glStencilMask(~0U);
+        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
+    }
+
+    glDisable(GL_SCISSOR_TEST);
+    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+
+    gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
+            dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, gl_mask, GL_NEAREST);
+    checkGLcall("glBlitFramebuffer()");
+
+    LEAVE_GL();
+
+    if (wined3d_settings.strict_draw_ordering)
+        wglFlush(); /* Flush to ensure ordering across contexts. */
+
+    context_release(context);
+}
+
 static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
         WINED3DTEXTUREFILTERTYPE filter, BOOL color_key,
         IWineD3DSurfaceImpl *src_surface, const RECT *src_rect_in,
@@ -3912,6 +4004,25 @@ static HRESULT wined3d_surface_depth_fill(IWineD3DSurfaceImpl *surface, const RE
     return blitter->depth_fill(device, surface, rect, depth);
 }
 
+static HRESULT wined3d_surface_depth_blt(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect,
+        IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect)
+{
+    IWineD3DDeviceImpl *device = src_surface->resource.device;
+
+    if (!fbo_blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_DEPTH_BLIT,
+            src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
+            dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
+        return WINED3DERR_INVALIDCALL;
+
+    wined3d_surface_depth_blt_fbo(device, src_surface, src_rect, dst_surface, dst_rect);
+
+    surface_modify_ds_location(dst_surface, SFLAG_DS_OFFSCREEN,
+            dst_surface->ds_current_size.cx, dst_surface->ds_current_size.cy);
+    surface_modify_location(dst_surface, SFLAG_INDRAWABLE, TRUE);
+
+    return WINED3D_OK;
+}
+
 /* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *DestRect,
         IWineD3DSurface *src_surface, const RECT *SrcRect, DWORD flags,
@@ -3920,6 +4031,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSurfaceImpl *src = (IWineD3DSurfaceImpl *)src_surface;
     IWineD3DDeviceImpl *device = This->resource.device;
+    DWORD src_ds_flags, dst_ds_flags;
 
     TRACE("iface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             iface, wine_dbgstr_rect(DestRect), src_surface, wine_dbgstr_rect(SrcRect),
@@ -3932,8 +4044,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
         return WINEDDERR_SURFACEBUSY;
     }
 
-    if (This->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)
-            || (src && src->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+    dst_ds_flags = This->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+    if (src)
+        src_ds_flags = src->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
+    else
+        src_ds_flags = 0;
+
+    if (src_ds_flags || dst_ds_flags)
     {
         if (flags & WINEDDBLT_DEPTHFILL)
         {
@@ -3952,6 +4069,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
         }
         else
         {
+            RECT src_rect, dst_rect;
+
             /* Accessing depth / stencil surfaces is supposed to fail while in
              * a scene, except for fills, which seem to work. */
             if (device->inScene)
@@ -3960,8 +4079,42 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT
                 return WINED3DERR_INVALIDCALL;
             }
 
-            FIXME("Depth blits not implemeted.\n");
-            return WINED3DERR_INVALIDCALL;
+            if (src_ds_flags != dst_ds_flags)
+            {
+                WARN("Rejecting depth / stencil blit between incompatible formats.\n");
+                return WINED3DERR_INVALIDCALL;
+            }
+
+            if (SrcRect && (SrcRect->top || SrcRect->left
+                    || SrcRect->bottom != src->resource.height
+                    || SrcRect->right != src->resource.width))
+            {
+                WARN("Rejecting depth / stencil blit with invalid source rect %s.\n",
+                        wine_dbgstr_rect(SrcRect));
+                return WINED3DERR_INVALIDCALL;
+            }
+
+            if (DestRect && (DestRect->top || DestRect->left
+                    || DestRect->bottom != This->resource.height
+                    || DestRect->right != This->resource.width))
+            {
+                WARN("Rejecting depth / stencil blit with invalid destination rect %s.\n",
+                        wine_dbgstr_rect(SrcRect));
+                return WINED3DERR_INVALIDCALL;
+            }
+
+            if (src->resource.height != This->resource.height
+                    || src->resource.width != This->resource.width)
+            {
+                WARN("Rejecting depth / stencil blit with mismatched surface sizes.\n");
+                return WINED3DERR_INVALIDCALL;
+            }
+
+            surface_get_rect(src, SrcRect, &src_rect);
+            surface_get_rect(This, DestRect, &dst_rect);
+
+            if (SUCCEEDED(wined3d_surface_depth_blt(src, &src_rect, This, &dst_rect)))
+                return WINED3D_OK;
         }
     }
 
@@ -5025,19 +5178,29 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     if ((wined3d_settings.offscreen_rendering_mode != ORM_FBO) || !gl_info->fbo_ops.glBlitFramebuffer)
         return FALSE;
 
-    /* We only support blitting. Things like color keying / color fill should
-     * be handled by other blitters.
-     */
-    if (blit_op != WINED3D_BLIT_OP_COLOR_BLIT)
-        return FALSE;
-
     /* Source and/or destination need to be on the GL side */
     if (src_pool == WINED3DPOOL_SYSTEMMEM || dst_pool == WINED3DPOOL_SYSTEMMEM)
         return FALSE;
 
-    if (!((src_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (src_usage & WINED3DUSAGE_RENDERTARGET))
-            || !((dst_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
-        return FALSE;
+    switch (blit_op)
+    {
+        case WINED3D_BLIT_OP_COLOR_BLIT:
+            if (!((src_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (src_usage & WINED3DUSAGE_RENDERTARGET)))
+                return FALSE;
+            if (!((dst_format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE) || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
+                return FALSE;
+            break;
+
+        case WINED3D_BLIT_OP_DEPTH_BLIT:
+            if (!(src_format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+                return FALSE;
+            if (!(dst_format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
+                return FALSE;
+            break;
+
+        default:
+            return FALSE;
+    }
 
     if (!(src_format->id == dst_format->id
             || (is_identity_fixup(src_format->color_fixup)

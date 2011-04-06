@@ -1171,6 +1171,7 @@ enum wined3d_blit_op
     WINED3D_BLIT_OP_COLOR_BLIT,
     WINED3D_BLIT_OP_COLOR_FILL,
     WINED3D_BLIT_OP_DEPTH_FILL,
+    WINED3D_BLIT_OP_DEPTH_BLIT,
 };
 
 /* Shaders for color conversions in blits. Do not do blit operations while
