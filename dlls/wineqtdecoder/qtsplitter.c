@@ -460,6 +460,9 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
     WaitForSingleObject(This->runEvent, -1);
 
     This->state = State_Running;
+    /* Prime the pump:  Needed for MPEG streams */
+    GetMovieNextInterestingTime(This->pQTMovie, nextTimeEdgeOK | nextTimeStep, 0, NULL, movie_time, 1, &next_time, NULL);
+
     GetMovieTime(This->pQTMovie, &tr);
     do
     {
