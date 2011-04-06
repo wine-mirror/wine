@@ -295,6 +295,7 @@ static inline void cp_fields(const IDirectSoundBufferImpl *dsb, const BYTE *ibuf
 
     if (device->pwfx->nChannels == dsb->pwfx->nChannels ||
         (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 6) ||
+        (device->pwfx->nChannels == 8 && dsb->pwfx->nChannels == 2) ||
         (device->pwfx->nChannels == 6 && dsb->pwfx->nChannels == 2)) {
         dsb->convert(ibuf, obuf, istride, ostride, count, freqAcc, adj);
         if (device->pwfx->nChannels == 2 || dsb->pwfx->nChannels == 2)
