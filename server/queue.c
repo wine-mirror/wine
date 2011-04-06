@@ -203,7 +203,7 @@ static const struct object_ops thread_input_ops =
 /* pointer to input structure of foreground thread */
 static unsigned int last_input_time;
 
-static void queue_hardware_message( struct desktop *desktop, struct message *msg );
+static void queue_hardware_message( struct desktop *desktop, struct message *msg, int always_queue );
 static void free_message( struct message *msg );
 
 /* set the caret window in a given thread input */
@@ -343,7 +343,7 @@ static void set_cursor_pos( struct desktop *desktop, int x, int y )
     msg->data_size = sizeof(*msg_data);
     msg_data->x    = x;
     msg_data->y    = y;
-    queue_hardware_message( desktop, msg );
+    queue_hardware_message( desktop, msg, 1 );
 }
 
 /* set the cursor clip rectangle */
@@ -464,9 +464,10 @@ static inline unsigned int get_unique_id(void)
 static int merge_message( struct thread_input *input, const struct message *msg )
 {
     struct message *prev;
-    struct list *ptr = list_tail( &input->msg_list );
+    struct list *ptr;
 
-    if (!ptr) return 0;
+    if (msg->msg != WM_MOUSEMOVE) return 0;
+    if (!(ptr = list_tail( &input->msg_list ))) return 0;
     prev = LIST_ENTRY( ptr, struct message, entry );
     if (prev->result) return 0;
     if (prev->win && msg->win && prev->win != msg->win) return 0;
@@ -525,7 +526,7 @@ static void store_message_result( struct message_result *res, lparam_t result, u
         if (!error && result)  /* rejected by the hook */
             free_message( res->hardware_msg );
         else
-            queue_hardware_message( res->desktop, res->hardware_msg );
+            queue_hardware_message( res->desktop, res->hardware_msg, 0 );
 
         res->hardware_msg = NULL;
     }
@@ -1274,7 +1275,7 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
             if (owner->queue->input != input)
             {
                 list_remove( &msg->entry );
-                if (msg->msg == WM_MOUSEMOVE && merge_message( owner->queue->input, msg ))
+                if (merge_message( owner->queue->input, msg ))
                 {
                     free_message( msg );
                     release_object( owner );
@@ -1323,7 +1324,7 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
 }
 
 /* queue a hardware message into a given thread input */
-static void queue_hardware_message( struct desktop *desktop, struct message *msg )
+static void queue_hardware_message( struct desktop *desktop, struct message *msg, int always_queue )
 {
     user_handle_t win;
     struct thread *thread;
@@ -1333,6 +1334,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
 
     update_input_key_state( desktop, desktop->keystate, msg );
     last_input_time = get_tick_count();
+    if (msg->msg != WM_MOUSEMOVE) always_queue = 1;
 
     if (is_keyboard_msg( msg ))
     {
@@ -1344,8 +1346,11 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     {
         if (msg->msg == WM_MOUSEMOVE)
         {
-            desktop->cursor.x = min(max(data->x, desktop->cursor.clip.left), desktop->cursor.clip.right-1);
-            desktop->cursor.y = min(max(data->y, desktop->cursor.clip.top), desktop->cursor.clip.bottom-1);
+            int x = min( max( data->x, desktop->cursor.clip.left ), desktop->cursor.clip.right-1 );
+            int y = min( max( data->y, desktop->cursor.clip.top ), desktop->cursor.clip.bottom-1 );
+            if (desktop->cursor.x != x || desktop->cursor.y != y) always_queue = 1;
+            desktop->cursor.x = x;
+            desktop->cursor.y = y;
             desktop->cursor.last_change = get_tick_count();
         }
         if (desktop->keystate[VK_LBUTTON] & 0x80)  msg->wparam |= MK_LBUTTON;
@@ -1375,7 +1380,10 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     }
     input = thread->queue->input;
 
-    if (msg->msg == WM_MOUSEMOVE && merge_message( input, msg )) free_message( msg );
+    if (win != desktop->cursor.win) always_queue = 1;
+    desktop->cursor.win = win;
+
+    if (!always_queue || merge_message( input, msg )) free_message( msg );
     else
     {
         msg->unique_id = 0;  /* will be set once we return it to the app */
@@ -1514,10 +1522,10 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         if (!(flags & ((1 << sizeof(messages)/sizeof(messages[0])) - 1)))
         {
             if (!(wait = send_hook_ll_message( desktop, msg, input, sender )))
-                queue_hardware_message( desktop, msg );
+                queue_hardware_message( desktop, msg, 0 );
         }
         else if (!send_hook_ll_message( desktop, msg, input, NULL ))
-            queue_hardware_message( desktop, msg );
+            queue_hardware_message( desktop, msg, 0 );
     }
     return wait;
 }
@@ -1628,7 +1636,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         break;
     }
     if (!(wait = send_hook_ll_message( desktop, msg, input, sender )))
-        queue_hardware_message( desktop, msg );
+        queue_hardware_message( desktop, msg, 1 );
 
     return wait;
 }
@@ -1658,7 +1666,7 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
     msg->data      = msg_data;
     msg->data_size = sizeof(*msg_data);
 
-    queue_hardware_message( desktop, msg );
+    queue_hardware_message( desktop, msg, 1 );
 }
 
 /* check message filter for a hardware message */
