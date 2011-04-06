@@ -190,4 +190,5 @@ FONT 8, "MS Shell Dlg"
         MENUITEM "&Paste", 203
         MENUITEM "&Delete", 204
     }
+    MENUITEM "&Quit", 300
 }

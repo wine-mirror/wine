@@ -11965,6 +11965,33 @@ static const struct message wm_popup_menu_3[] =
     { 0 }
 };
 
+static const struct message wm_single_menu_item[] =
+{
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0x20000001 },
+    { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'Q', 0x20000001 },
+    { WM_SYSKEYDOWN, sent|wparam|lparam, 'Q', 0x20000001 },
+    { WM_SYSCHAR, sent|wparam|lparam, 'q', 0x20000001 },
+    { HCBT_SYSCOMMAND, hook|wparam|lparam, SC_KEYMENU, 'q' },
+    { WM_ENTERMENULOOP, sent|wparam|lparam, 0, 0 },
+    { WM_INITMENU, sent|lparam, 0, 0 },
+    { WM_MENUSELECT, sent|wparam|optional, MAKEWPARAM(300,MF_HILITE) },
+    { WM_MENUSELECT, sent|wparam|lparam, MAKEWPARAM(0,0xffff), 0 },
+    { WM_EXITMENULOOP, sent|wparam|lparam, 0, 0 },
+    { WM_MENUCOMMAND, sent },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'Q', 0xe0000001 },
+    { WM_SYSKEYUP, sent|wparam|lparam, 'Q', 0xe0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_ESCAPE, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_ESCAPE, 1 },
+    { WM_CHAR,  sent|wparam|lparam, VK_ESCAPE, 0x00000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_ESCAPE, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_ESCAPE, 0xc0000001 },
+    { 0 }
+};
+
 static LRESULT WINAPI parent_menu_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
     if (message == WM_ENTERIDLE ||
@@ -12122,6 +12149,21 @@ static void test_menu_messages(void)
         DispatchMessage(&msg);
     }
     ok_sequence(wm_popup_menu_2, "submenu of a popup menu command", FALSE);
+
+    trace("testing single menu item command\n");
+    flush_sequence();
+    keybd_event(VK_MENU, 0, 0, 0);
+    keybd_event('Q', 0, 0, 0);
+    keybd_event('Q', 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_ESCAPE, 0, 0, 0);
+    keybd_event(VK_ESCAPE, 0, KEYEVENTF_KEYUP, 0);
+    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+    ok_sequence(wm_single_menu_item, "single menu item command", TRUE);
 
     set_menu_style(hmenu, 0);
     style = get_menu_style(hmenu);
