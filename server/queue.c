@@ -1339,12 +1339,12 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     if (!win || !(thread = get_window_thread(win)))
     {
         if (input) update_input_key_state( input->desktop, input->keystate, msg );
-        free( msg );
+        free_message( msg );
         return;
     }
     input = thread->queue->input;
 
-    if (msg->msg == WM_MOUSEMOVE && merge_message( input, msg )) free( msg );
+    if (msg->msg == WM_MOUSEMOVE && merge_message( input, msg )) free_message( msg );
     else
     {
         msg->unique_id = 0;  /* will be set once we return it to the app */
