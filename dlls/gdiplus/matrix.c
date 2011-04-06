@@ -231,8 +231,10 @@ GpStatus WINGDIPAPI GdipMultiplyMatrix(GpMatrix *matrix, GDIPCONST GpMatrix* mat
 
     if(order == MatrixOrderAppend)
         matrix_multiply(matrix->matrix, matrix2->matrix, matrix->matrix);
-    else
+    else if (order == MatrixOrderPrepend)
         matrix_multiply(matrix2->matrix, matrix->matrix, matrix->matrix);
+    else
+        return InvalidParameter;
 
     return Ok;
 }
@@ -260,8 +262,10 @@ GpStatus WINGDIPAPI GdipRotateMatrix(GpMatrix *matrix, REAL angle,
 
     if(order == MatrixOrderAppend)
         matrix_multiply(matrix->matrix, rotate, matrix->matrix);
-    else
+    else if (order == MatrixOrderPrepend)
         matrix_multiply(rotate, matrix->matrix, matrix->matrix);
+    else
+        return InvalidParameter;
 
     return Ok;
 }
@@ -285,8 +289,10 @@ GpStatus WINGDIPAPI GdipScaleMatrix(GpMatrix *matrix, REAL scaleX, REAL scaleY,
 
     if(order == MatrixOrderAppend)
         matrix_multiply(matrix->matrix, scale, matrix->matrix);
-    else
+    else if (order == MatrixOrderPrepend)
         matrix_multiply(scale, matrix->matrix, matrix->matrix);
+    else
+        return InvalidParameter;
 
     return Ok;
 }
@@ -330,8 +336,10 @@ GpStatus WINGDIPAPI GdipShearMatrix(GpMatrix *matrix, REAL shearX, REAL shearY,
 
     if(order == MatrixOrderAppend)
         matrix_multiply(matrix->matrix, shear, matrix->matrix);
-    else
+    else if (order == MatrixOrderPrepend)
         matrix_multiply(shear, matrix->matrix, matrix->matrix);
+    else
+        return InvalidParameter;
 
     return Ok;
 }
@@ -410,8 +418,10 @@ GpStatus WINGDIPAPI GdipTranslateMatrix(GpMatrix *matrix, REAL offsetX,
 
     if(order == MatrixOrderAppend)
         matrix_multiply(matrix->matrix, translate, matrix->matrix);
-    else
+    else if (order == MatrixOrderPrepend)
         matrix_multiply(translate, matrix->matrix, matrix->matrix);
+    else
+        return InvalidParameter;
 
     return Ok;
 }
