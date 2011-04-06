@@ -76,6 +76,7 @@ static HRESULT (WINAPI *pReleaseBindInfo)(BINDINFO*);
 static HRESULT (WINAPI *pUrlMkGetSessionOption)(DWORD, LPVOID, DWORD, DWORD *, DWORD);
 static HRESULT (WINAPI *pCompareSecurityIds)(BYTE*,DWORD,BYTE*,DWORD,DWORD);
 static HRESULT (WINAPI *pCoInternetIsFeatureEnabled)(INTERNETFEATURELIST,DWORD);
+static HRESULT (WINAPI *pCoInternetSetFeatureEnabled)(INTERNETFEATURELIST,DWORD,BOOL);
 
 static void test_CreateFormatEnum(void)
 {
@@ -1538,13 +1539,61 @@ static void test_CoInternetIsFeatureEnabled(void) {
     ok(hres == E_FAIL, "CoInternetIsFeatureEnabled returned %08x, expected E_FAIL\n", hres);
 }
 
+static const struct {
+    INTERNETFEATURELIST feature;
+    DWORD               set_flags;
+    BOOL                enable;
+    HRESULT             set_expected;
+    BOOL                set_todo;
+    DWORD               get_flags;
+    HRESULT             get_expected;
+    BOOL                get_todo;
+} internet_feature_tests[] = {
+    {FEATURE_OBJECT_CACHING,SET_FEATURE_ON_PROCESS,FALSE,S_OK,TRUE,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_WEBOC_POPUPMANAGEMENT,SET_FEATURE_ON_PROCESS,TRUE,S_OK,TRUE,GET_FEATURE_FROM_PROCESS,S_OK,TRUE},
+    {FEATURE_LOCALMACHINE_LOCKDOWN,SET_FEATURE_ON_PROCESS,TRUE,S_OK,TRUE,GET_FEATURE_FROM_PROCESS,S_OK,TRUE}
+};
+
+static void test_CoInternetSetFeatureEnabled(void) {
+    HRESULT hres;
+    DWORD i;
+
+    hres = pCoInternetSetFeatureEnabled(FEATURE_ENTRY_COUNT,SET_FEATURE_ON_PROCESS,TRUE);
+    todo_wine
+    ok(hres == E_FAIL, "CoInternetSetFeatureEnabled returned %08x, expected E_FAIL\n", hres);
+
+    for(i = 0; i < sizeof(internet_feature_tests)/sizeof(internet_feature_tests[0]); ++i) {
+        hres = pCoInternetSetFeatureEnabled(internet_feature_tests[i].feature, internet_feature_tests[i].set_flags,
+                                            internet_feature_tests[i].enable);
+        if(internet_feature_tests[i].set_todo) {
+            todo_wine
+            ok(hres == internet_feature_tests[i].set_expected, "CoInternetSetFeatureEnabled returned %08x, expected %08x on test %d\n",
+                hres, internet_feature_tests[i].set_expected, i);
+        } else {
+            ok(hres == internet_feature_tests[i].set_expected, "CoInternetSetFeatureEnabled returned %08x, expected %08x on test %d\n",
+                hres, internet_feature_tests[i].set_expected, i);
+        }
+
+        hres = pCoInternetIsFeatureEnabled(internet_feature_tests[i].feature, internet_feature_tests[i].set_flags);
+        if(internet_feature_tests[i].get_todo) {
+            todo_wine
+            ok(hres == internet_feature_tests[i].get_expected, "CoInternetIsFeatureEnabled returned %08x, expected %08x on test %d\n",
+                hres, internet_feature_tests[i].get_expected, i);
+        } else {
+            ok(hres == internet_feature_tests[i].get_expected, "CoInternetIsFeatureEnabled returned %08x, expected %08x on test %d\n",
+                hres, internet_feature_tests[i].get_expected, i);
+        }
+    }
+}
+
 static void test_internet_features(void) {
-    if(!pCoInternetIsFeatureEnabled) {
+    if(!pCoInternetIsFeatureEnabled || !pCoInternetSetFeatureEnabled) {
         win_skip("Skipping internet feature tests, IE is too old\n");
         return;
     }
 
     test_CoInternetIsFeatureEnabled();
+    test_CoInternetSetFeatureEnabled();
 }
 
 START_TEST(misc)
@@ -1564,6 +1613,7 @@ START_TEST(misc)
     pUrlMkGetSessionOption = (void*) GetProcAddress(hurlmon, "UrlMkGetSessionOption");
     pCompareSecurityIds = (void*) GetProcAddress(hurlmon, "CompareSecurityIds");
     pCoInternetIsFeatureEnabled = (void*) GetProcAddress(hurlmon, "CoInternetIsFeatureEnabled");
+    pCoInternetSetFeatureEnabled = (void*) GetProcAddress(hurlmon, "CoInternetSetFeatureEnabled");
 
     if (!pCoInternetCompareUrl || !pCoInternetGetSecurityUrl ||
         !pCoInternetGetSession || !pCoInternetParseUrl || !pCompareSecurityIds) {
