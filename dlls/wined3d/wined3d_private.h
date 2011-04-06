@@ -1721,9 +1721,9 @@ struct IWineD3DDeviceImpl
     IWineD3DSurfaceImpl *depth_stencil;
 
     /* palettes texture management */
-    UINT                    NumberOfPalettes;
-    PALETTEENTRY            **palettes;
-    UINT                    currentPalette;
+    PALETTEENTRY **palettes;
+    UINT palette_count;
+    UINT currentPalette;
 
     /* For rendering to a texture using glCopyTexImage */
     GLuint                  depth_blt_texture;

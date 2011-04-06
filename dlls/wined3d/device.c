@@ -1910,7 +1910,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     This->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(*This->render_targets) * gl_info->limits.buffers);
 
-    This->NumberOfPalettes = 1;
+    This->palette_count = 1;
     This->palettes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PALETTEENTRY*));
     if (!This->palettes || !This->render_targets)
     {
@@ -2059,8 +2059,9 @@ err_out:
         HeapFree(GetProcessHeap(), 0, This->palettes[0]);
         HeapFree(GetProcessHeap(), 0, This->palettes);
     }
-    This->NumberOfPalettes = 0;
-    if(swapchain) {
+    This->palette_count = 0;
+    if (swapchain)
+    {
         IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
     }
     if (This->stateBlock)
@@ -2271,10 +2272,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     This->swapchains = NULL;
     This->NumberOfSwapChains = 0;
 
-    for (i = 0; i < This->NumberOfPalettes; i++) HeapFree(GetProcessHeap(), 0, This->palettes[i]);
+    for (i = 0; i < This->palette_count; ++i)
+        HeapFree(GetProcessHeap(), 0, This->palettes[i]);
     HeapFree(GetProcessHeap(), 0, This->palettes);
     This->palettes = NULL;
-    This->NumberOfPalettes = 0;
+    This->palette_count = 0;
 
     HeapFree(GetProcessHeap(), 0, This->render_targets);
     This->render_targets = NULL;
@@ -5319,7 +5321,9 @@ static void dirtify_p8_texture_samplers(IWineD3DDeviceImpl *device)
     }
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *iface, UINT PaletteNumber, CONST PALETTEENTRY* pEntries) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *iface,
+        UINT PaletteNumber, const PALETTEENTRY *pEntries)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     int j;
     UINT NewSize;
@@ -5332,8 +5336,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *ifa
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (PaletteNumber >= This->NumberOfPalettes) {
-        NewSize = This->NumberOfPalettes;
+    if (PaletteNumber >= This->palette_count)
+    {
+        NewSize = This->palette_count;
         do {
            NewSize *= 2;
         } while(PaletteNumber >= NewSize);
@@ -5343,7 +5348,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *ifa
             return E_OUTOFMEMORY;
         }
         This->palettes = palettes;
-        This->NumberOfPalettes = NewSize;
+        This->palette_count = NewSize;
     }
 
     if (!This->palettes[PaletteNumber]) {
@@ -5365,14 +5370,18 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetPaletteEntries(IWineD3DDevice *ifa
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_GetPaletteEntries(IWineD3DDevice *iface, UINT PaletteNumber, PALETTEENTRY* pEntries) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetPaletteEntries(IWineD3DDevice *iface,
+        UINT PaletteNumber, PALETTEENTRY *pEntries)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     int j;
     TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
-    if (PaletteNumber >= This->NumberOfPalettes || !This->palettes[PaletteNumber]) {
+
+    if (PaletteNumber >= This->palette_count || !This->palettes[PaletteNumber])
+    {
         /* What happens in such situation isn't documented; Native seems to silently abort
            on such conditions. Return Invalid Call. */
-        ERR("(%p) : (%u) Nonexistent palette. NumberOfPalettes %u\n", This, PaletteNumber, This->NumberOfPalettes);
+        ERR("(%p) : (%u) Nonexistent palette. Palette count %u.\n", This, PaletteNumber, This->palette_count);
         return WINED3DERR_INVALIDCALL;
     }
     for (j = 0; j < 256; ++j) {
@@ -5385,13 +5394,15 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetPaletteEntries(IWineD3DDevice *ifa
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCurrentTexturePalette(IWineD3DDevice *iface, UINT PaletteNumber) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetCurrentTexturePalette(IWineD3DDevice *iface, UINT PaletteNumber)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : PaletteNumber %u\n", This, PaletteNumber);
     /* Native appears to silently abort on attempt to make an uninitialized palette current and render.
        (tested with reference rasterizer). Return Invalid Call. */
-    if (PaletteNumber >= This->NumberOfPalettes || !This->palettes[PaletteNumber]) {
-        ERR("(%p) : (%u) Nonexistent palette. NumberOfPalettes %u\n", This, PaletteNumber, This->NumberOfPalettes);
+    if (PaletteNumber >= This->palette_count || !This->palettes[PaletteNumber])
+    {
+        ERR("(%p) : (%u) Nonexistent palette. Palette count %u.\n", This, PaletteNumber, This->palette_count);
         return WINED3DERR_INVALIDCALL;
     }
     /*TODO: stateblocks */
