@@ -2138,7 +2138,7 @@ static DWORD netconn_get_avail_data(data_stream_t *stream, http_request_t *req)
 static BOOL netconn_end_of_data(data_stream_t *stream, http_request_t *req)
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
-    return netconn_stream->content_read == netconn_stream->content_length;
+    return netconn_stream->content_read == netconn_stream->content_length || !NETCON_connected(&req->netConnection);
 }
 
 static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DWORD size,
