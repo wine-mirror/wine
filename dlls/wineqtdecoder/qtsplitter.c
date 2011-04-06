@@ -356,6 +356,9 @@ static OSErr QT_Create_Extract_Session(QTSplitter *filter)
 {
     AudioStreamBasicDescription aDesc;
     OSErr err;
+    WAVEFORMATEX* pvi;
+
+    pvi = (WAVEFORMATEX*)filter->pAudio_Pin->pmt->pbFormat;
 
     err = MovieAudioExtractionBegin(filter->pQTMovie, 0, &filter->aSession);
     if (err != noErr)
@@ -381,11 +384,11 @@ kQTMovieAudioExtractionAudioPropertyID_AudioStreamBasicDescription,
     aDesc.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger +
         kAudioFormatFlagIsPacked;
     aDesc.mFramesPerPacket = 1;
-    aDesc.mChannelsPerFrame = 2;
-    aDesc.mBitsPerChannel = 16;
+    aDesc.mChannelsPerFrame = pvi->nChannels;
+    aDesc.mBitsPerChannel = pvi->wBitsPerSample;
+    aDesc.mSampleRate = pvi->nSamplesPerSec;
     aDesc.mBytesPerFrame = (aDesc.mBitsPerChannel * aDesc.mChannelsPerFrame) / 8;
     aDesc.mBytesPerPacket = aDesc.mBytesPerFrame * aDesc.mFramesPerPacket;
-    aDesc.mSampleRate = 48000;
 
     err = MovieAudioExtractionSetProperty(filter->aSession,
         kQTPropertyClass_MovieAudioExtraction_Audio,
@@ -408,17 +411,17 @@ kQTMovieAudioExtractionAudioPropertyID_AudioStreamBasicDescription,
         ERR("Unhandled Frames per packet %li\n",aDesc.mFramesPerPacket);
         err = -1;
     }
-    if (aDesc.mChannelsPerFrame != 2)
+    if (aDesc.mChannelsPerFrame != pvi->nChannels)
     {
         ERR("Unhandled channel count %li\n",aDesc.mChannelsPerFrame);
         err = -1;
     }
-    if (aDesc.mBitsPerChannel != 16)
+    if (aDesc.mBitsPerChannel != pvi->wBitsPerSample)
     {
         ERR("Unhandled bits per channel %li\n",aDesc.mBitsPerChannel);
         err = -1;
     }
-    if (aDesc.mSampleRate != 48000)
+    if (aDesc.mSampleRate != pvi->nSamplesPerSec)
     {
         ERR("Unhandled sample rate %f\n",aDesc.mSampleRate);
         err = -1;
@@ -463,8 +466,6 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
         LONGLONG tStart=0, tStop=0;
         float time;
 
-        MoviesTask(This->pQTMovie,0);
-        QTVisualContextTask(This->vContext);
         GetMovieNextInterestingTime(This->pQTMovie, nextTimeStep, 0, NULL, movie_time, 1, &next_time, NULL);
 
         if (next_time == -1)
@@ -497,25 +498,8 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
             UInt32 frames;
             WAVEFORMATEX* pvi;
             float duration;
-            static int audio_frame_size = 0;
 
             pvi = (WAVEFORMATEX*)This->pAudio_Pin->pmt->pbFormat;
-
-            if (audio_frame_size == 0)
-                audio_frame_size = (pvi->wBitsPerSample * pvi->nChannels) / 8;
-
-            tr.value = SInt64ToWide(movie_time);
-
-            err = MovieAudioExtractionSetProperty(This->aSession,
-                    kQTPropertyClass_MovieAudioExtraction_Movie,
-                    kQTMovieAudioExtractionMoviePropertyID_CurrentTime,
-                    sizeof(TimeRecord), &tr);
-
-            if (err != noErr)
-            {
-                ERR("Failed to set audio media time\n");
-                goto audio_error;
-            }
 
             hr = BaseOutputPinImpl_GetDeliveryBuffer((BaseOutputPin*)This->pAudio_Pin, &sample, NULL, NULL, 0);
 
@@ -539,7 +523,7 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
             TRACE("Need audio for %f seconds (%li frames)\n",duration,frames);
 
             data_size = IMediaSample_GetSize(sample);
-            if (data_size < frames * audio_frame_size )
+            if (data_size < frames * pvi->nBlockAlign)
                 FIXME("Audio buffer is too small\n");
 
             aData.mNumberBuffers = 1;
@@ -550,7 +534,7 @@ static DWORD WINAPI QTSplitter_thread(LPVOID data)
             err = MovieAudioExtractionFillBuffer(This->aSession, &frames, &aData, &flags);
             TRACE("Got %i frames\n",(int)frames);
 
-            IMediaSample_SetActualDataLength(sample, frames * audio_frame_size);
+            IMediaSample_SetActualDataLength(sample, frames * pvi->nBlockAlign);
 
             IMediaSample_SetMediaTime(sample, &tStart, &tStop);
             if (tStart)
@@ -850,6 +834,12 @@ static HRESULT QT_Process_Audio_Track(QTSplitter* filter, Track trk)
     PIN_INFO piOutput;
     HRESULT hr = S_OK;
     static const WCHAR szwAudioOut[] = {'A','u','d','i','o',0};
+    Media audioMedia;
+
+    SoundDescriptionHandle  aDesc = (SoundDescriptionHandle) NewHandle(sizeof(SoundDescription));
+
+    audioMedia = GetTrackMedia(trk);
+    GetMediaSampleDescription(audioMedia, 1, (SampleDescriptionHandle)aDesc);
 
     ZeroMemory(&amt, sizeof(amt));
     amt.formattype = FORMAT_WaveFormatEx;
@@ -864,11 +854,19 @@ static HRESULT QT_Process_Audio_Track(QTSplitter* filter, Track trk)
 
     pvi->cbSize = sizeof(WAVEFORMATEX);
     pvi->wFormatTag = WAVE_FORMAT_PCM;
-    pvi->nChannels = 2;
-    pvi->nSamplesPerSec = 48000;
-    pvi->wBitsPerSample = 16;
+    pvi->nChannels = ((SoundDescription)**aDesc).numChannels;
+    if (pvi->nChannels < 1 || pvi->nChannels > 2)
+        pvi->nChannels = 2;
+    pvi->nSamplesPerSec = (((SoundDescription)**aDesc).sampleRate/65536);
+    if (pvi->nSamplesPerSec < 8000 || pvi->nChannels > 48000)
+        pvi->nSamplesPerSec = 44100;
+    pvi->wBitsPerSample = ((SoundDescription)**aDesc).sampleSize;
+    if (pvi->wBitsPerSample < 8 || pvi->wBitsPerSample > 32)
+        pvi->wBitsPerSample = 16;
     pvi->nBlockAlign = (pvi->nChannels * pvi->wBitsPerSample) / 8;
     pvi->nAvgBytesPerSec = pvi->nSamplesPerSec * pvi->nBlockAlign;
+
+    DisposeHandle((Handle)aDesc);
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = (IBaseFilter *)filter;
