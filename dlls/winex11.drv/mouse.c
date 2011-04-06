@@ -194,7 +194,7 @@ void set_window_cursor( Window window, HCURSOR handle )
 /***********************************************************************
  *              sync_window_cursor
  */
-void sync_window_cursor( struct x11drv_win_data *data )
+void sync_window_cursor( Window window )
 {
     HCURSOR cursor;
 
@@ -206,11 +206,7 @@ void sync_window_cursor( struct x11drv_win_data *data )
     }
     SERVER_END_REQ;
 
-    if (data->cursor != cursor)
-    {
-        data->cursor = cursor;
-        set_window_cursor( data->whole_window, cursor );
-    }
+    set_window_cursor( window, cursor );
 }
 
 /***********************************************************************
@@ -253,7 +249,7 @@ static void send_mouse_input( HWND hwnd, UINT flags, Window window, int x, int y
     if (InterlockedExchangePointer( (void **)&cursor_window, hwnd ) != hwnd ||
         GetTickCount() - last_cursor_change > 100)
     {
-        sync_window_cursor( data );
+        sync_window_cursor( data->whole_window );
         last_cursor_change = GetTickCount();
     }
 
@@ -964,6 +960,7 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 
             if (clipping_cursor)
             {
+                sync_window_cursor( clip_window );
                 clip_rect = *clip;
                 return TRUE;
             }
