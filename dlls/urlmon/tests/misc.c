@@ -75,7 +75,7 @@ static HRESULT (WINAPI *pObtainUserAgentString)(DWORD, LPSTR, DWORD*);
 static HRESULT (WINAPI *pReleaseBindInfo)(BINDINFO*);
 static HRESULT (WINAPI *pUrlMkGetSessionOption)(DWORD, LPVOID, DWORD, DWORD *, DWORD);
 static HRESULT (WINAPI *pCompareSecurityIds)(BYTE*,DWORD,BYTE*,DWORD,DWORD);
-
+static HRESULT (WINAPI *pCoInternetIsFeatureEnabled)(INTERNETFEATURELIST,DWORD);
 
 static void test_CreateFormatEnum(void)
 {
@@ -1475,6 +1475,78 @@ static void test_IsValidURL(void)
     IBindCtx_Release(bctx);
 }
 
+static const struct {
+    INTERNETFEATURELIST feature;
+    DWORD               get_flags;
+    HRESULT             expected;
+    BOOL                todo;
+} default_feature_tests[] = {
+    {FEATURE_OBJECT_CACHING,GET_FEATURE_FROM_PROCESS,S_OK,TRUE},
+    {FEATURE_ZONE_ELEVATION,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_MIME_HANDLING,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_MIME_SNIFFING,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_WINDOW_RESTRICTIONS,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_WEBOC_POPUPMANAGEMENT,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_BEHAVIORS,GET_FEATURE_FROM_PROCESS,S_OK,TRUE},
+    {FEATURE_DISABLE_MK_PROTOCOL,GET_FEATURE_FROM_PROCESS,S_OK,TRUE},
+    {FEATURE_LOCALMACHINE_LOCKDOWN,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_SECURITYBAND,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_RESTRICT_ACTIVEXINSTALL,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_VALIDATE_NAVIGATE_URL,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_RESTRICT_FILEDOWNLOAD,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_ADDON_MANAGEMENT,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_PROTOCOL_LOCKDOWN,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_HTTP_USERNAME_PASSWORD_DISABLE,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_SAFE_BINDTOOBJECT,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_UNC_SAVEDFILECHECK,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_GET_URL_DOM_FILEPATH_UNENCODED,GET_FEATURE_FROM_PROCESS,S_OK,TRUE},
+    {FEATURE_TABBED_BROWSING,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_SSLUX,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_DISABLE_NAVIGATION_SOUNDS,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_DISABLE_LEGACY_COMPRESSION,GET_FEATURE_FROM_PROCESS,S_OK,TRUE},
+    {FEATURE_FORCE_ADDR_AND_STATUS,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_XMLHTTP,GET_FEATURE_FROM_PROCESS,S_OK,TRUE},
+    {FEATURE_DISABLE_TELNET_PROTOCOL,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_FEEDS,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE},
+    {FEATURE_BLOCK_INPUT_PROMPTS,GET_FEATURE_FROM_PROCESS,S_FALSE,TRUE}
+};
+
+static void test_internet_feature_defaults(void) {
+    HRESULT hres;
+    DWORD i;
+
+    for(i = 0; i < sizeof(default_feature_tests)/sizeof(default_feature_tests[0]); ++i) {
+        hres = pCoInternetIsFeatureEnabled(default_feature_tests[i].feature, default_feature_tests[i].get_flags);
+        if(default_feature_tests[i].todo) {
+            todo_wine
+            ok(hres == default_feature_tests[i].expected, "CoInternetIsFeatureEnabled returned %08x, expected %08x on test %d\n",
+                hres, default_feature_tests[i].expected, i);
+        } else {
+            ok(hres == default_feature_tests[i].expected, "CoInternetIsFeatureEnabled returned %08x, expected %08x on test %d\n",
+                hres, default_feature_tests[i].expected, i);
+        }
+    }
+}
+
+static void test_CoInternetIsFeatureEnabled(void) {
+    HRESULT hres;
+
+    test_internet_feature_defaults();
+
+    hres = pCoInternetIsFeatureEnabled(FEATURE_ENTRY_COUNT, GET_FEATURE_FROM_PROCESS);
+    todo_wine
+    ok(hres == E_FAIL, "CoInternetIsFeatureEnabled returned %08x, expected E_FAIL\n", hres);
+}
+
+static void test_internet_features(void) {
+    if(!pCoInternetIsFeatureEnabled) {
+        win_skip("Skipping internet feature tests, IE is too old\n");
+        return;
+    }
+
+    test_CoInternetIsFeatureEnabled();
+}
+
 START_TEST(misc)
 {
     HMODULE hurlmon;
@@ -1491,6 +1563,7 @@ START_TEST(misc)
     pReleaseBindInfo = (void*) GetProcAddress(hurlmon, "ReleaseBindInfo");
     pUrlMkGetSessionOption = (void*) GetProcAddress(hurlmon, "UrlMkGetSessionOption");
     pCompareSecurityIds = (void*) GetProcAddress(hurlmon, "CompareSecurityIds");
+    pCoInternetIsFeatureEnabled = (void*) GetProcAddress(hurlmon, "CoInternetIsFeatureEnabled");
 
     if (!pCoInternetCompareUrl || !pCoInternetGetSecurityUrl ||
         !pCoInternetGetSession || !pCoInternetParseUrl || !pCompareSecurityIds) {
@@ -1516,6 +1589,7 @@ START_TEST(misc)
     test_user_agent();
     test_MkParseDisplayNameEx();
     test_IsValidURL();
+    test_internet_features();
 
     OleUninitialize();
 }
