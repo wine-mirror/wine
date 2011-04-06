@@ -318,6 +318,34 @@ static int assign_thread_input( struct thread *thread, struct thread_input *new_
     return 1;
 }
 
+/* set the cursor position and queue the corresponding mouse message */
+static void set_cursor_pos( struct desktop *desktop, int x, int y )
+{
+    struct hardware_msg_data *msg_data;
+    struct message *msg;
+
+    if (!(msg = mem_alloc( sizeof(*msg) ))) return;
+    if (!(msg_data = mem_alloc( sizeof(*msg_data) )))
+    {
+        free( msg );
+        return;
+    }
+    memset( msg_data, 0, sizeof(*msg_data) );
+
+    msg->type      = MSG_HARDWARE;
+    msg->win       = 0;
+    msg->msg       = WM_MOUSEMOVE;
+    msg->wparam    = 0;
+    msg->lparam    = 0;
+    msg->time      = get_tick_count();
+    msg->result    = NULL;
+    msg->data      = msg_data;
+    msg->data_size = sizeof(*msg_data);
+    msg_data->x    = x;
+    msg_data->y    = y;
+    queue_hardware_message( desktop, msg );
+}
+
 /* set the cursor clip rectangle */
 static void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect )
 {
@@ -1288,14 +1316,6 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
     return win;
 }
 
-/* set the cursor position, clipping to the cursor clip rect */
-static void set_cursor_pos( struct desktop *desktop, int x, int y )
-{
-    desktop->cursor.x = min( max( x, desktop->cursor.clip.left ), desktop->cursor.clip.right - 1 );
-    desktop->cursor.y = min( max( y, desktop->cursor.clip.top ), desktop->cursor.clip.bottom - 1 );
-    desktop->cursor.last_change = get_tick_count();
-}
-
 /* queue a hardware message into a given thread input */
 static void queue_hardware_message( struct desktop *desktop, struct message *msg )
 {
@@ -1316,7 +1336,12 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     }
     else
     {
-        if (msg->msg == WM_MOUSEMOVE) set_cursor_pos( desktop, data->x, data->y );
+        if (msg->msg == WM_MOUSEMOVE)
+        {
+            desktop->cursor.x = min(max(data->x, desktop->cursor.clip.left), desktop->cursor.clip.right-1);
+            desktop->cursor.y = min(max(data->y, desktop->cursor.clip.top), desktop->cursor.clip.bottom-1);
+            desktop->cursor.last_change = get_tick_count();
+        }
         if (desktop->keystate[VK_LBUTTON] & 0x80)  msg->wparam |= MK_LBUTTON;
         if (desktop->keystate[VK_MBUTTON] & 0x80)  msg->wparam |= MK_MBUTTON;
         if (desktop->keystate[VK_RBUTTON] & 0x80)  msg->wparam |= MK_RBUTTON;
