@@ -691,7 +691,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         if (dlgProc)
         {
             HWND focus = GetNextDlgTabItem( hwnd, 0, FALSE );
-            if (SendMessageW( hwnd, WM_INITDIALOG, (WPARAM)focus, param ) &&
+            if (SendMessageW( hwnd, WM_INITDIALOG, (WPARAM)focus, param ) && IsWindow( hwnd ) &&
                 ((~template.style & DS_CONTROL) || (template.style & WS_VISIBLE)))
             {
                 /* By returning TRUE, app has requested a default focus assignment.
@@ -811,15 +811,16 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
             if (msg.message == WM_QUIT)
             {
                 PostQuitMessage( msg.wParam );
-                dlgInfo->flags |= DF_END;
+                if (!IsWindow( hwnd )) return 0;
+                break;
             }
-
             if (!IsWindow( hwnd )) return 0;
             if (!(dlgInfo->flags & DF_END) && !IsDialogMessageW( hwnd, &msg))
             {
                 TranslateMessage( &msg );
                 DispatchMessageW( &msg );
             }
+            if (!IsWindow( hwnd )) return 0;
             if (dlgInfo->flags & DF_END) break;
 
             if (bFirstEmpty && msg.message == WM_TIMER)
