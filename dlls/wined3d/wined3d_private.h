@@ -1708,7 +1708,7 @@ struct IWineD3DDeviceImpl
     HWND focus_window;
 
     IWineD3DSwapChainImpl **swapchains;
-    UINT                    NumberOfSwapChains;
+    UINT swapchain_count;
 
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */

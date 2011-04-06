@@ -1308,19 +1308,22 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-/** NOTE: These are ahead of the other getters and setters to save using a forward declaration **/
-static UINT     WINAPI  IWineD3DDeviceImpl_GetNumberOfSwapChains(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p)\n", This);
+static UINT WINAPI IWineD3DDeviceImpl_GetNumberOfSwapChains(IWineD3DDevice *iface)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
 
-    return This->NumberOfSwapChains;
+    TRACE("iface %p.\n", iface);
+
+    return device->swapchain_count;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, UINT iSwapChain, IWineD3DSwapChain **pSwapChain) {
+static HRESULT WINAPI IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface,
+        UINT iSwapChain, IWineD3DSwapChain **pSwapChain)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : swapchain %d\n", This, iSwapChain);
 
-    if (iSwapChain < This->NumberOfSwapChains)
+    if (iSwapChain < This->swapchain_count)
     {
         *pSwapChain = (IWineD3DSwapChain *)This->swapchains[iSwapChain];
         IWineD3DSwapChain_AddRef(*pSwapChain);
@@ -1955,8 +1958,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
         goto err_out;
     }
 
-    This->NumberOfSwapChains = 1;
-    This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->NumberOfSwapChains * sizeof(*This->swapchains));
+    This->swapchain_count = 1;
+    This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->swapchain_count * sizeof(*This->swapchains));
     if (!This->swapchains)
     {
         ERR("Out of memory!\n");
@@ -2054,8 +2057,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
 err_out:
     HeapFree(GetProcessHeap(), 0, This->render_targets);
     HeapFree(GetProcessHeap(), 0, This->swapchains);
-    This->NumberOfSwapChains = 0;
-    if(This->palettes) {
+    This->swapchain_count = 0;
+    if (This->palettes)
+    {
         HeapFree(GetProcessHeap(), 0, This->palettes[0]);
         HeapFree(GetProcessHeap(), 0, This->palettes);
     }
@@ -2098,8 +2102,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_InitGDI(IWineD3DDevice *iface,
         goto err_out;
     }
 
-    This->NumberOfSwapChains = 1;
-    This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->NumberOfSwapChains * sizeof(*This->swapchains));
+    This->swapchain_count = 1;
+    This->swapchains = HeapAlloc(GetProcessHeap(), 0, This->swapchain_count * sizeof(*This->swapchains));
     if (!This->swapchains)
     {
         ERR("Out of memory!\n");
@@ -2259,7 +2263,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
 
     context_release(context);
 
-    for (i = 0; i < This->NumberOfSwapChains; ++i)
+    for (i = 0; i < This->swapchain_count; ++i)
     {
         TRACE("Releasing the implicit swapchain %u.\n", i);
         if (D3DCB_DestroySwapChain((IWineD3DSwapChain *)This->swapchains[i]) > 0)
@@ -2270,7 +2274,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
 
     HeapFree(GetProcessHeap(), 0, This->swapchains);
     This->swapchains = NULL;
-    This->NumberOfSwapChains = 0;
+    This->swapchain_count = 0;
 
     for (i = 0; i < This->palette_count; ++i)
         HeapFree(GetProcessHeap(), 0, This->palettes[i]);
@@ -2290,7 +2294,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UninitGDI(IWineD3DDevice *iface, D3DCB_
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     unsigned int i;
 
-    for (i = 0; i < This->NumberOfSwapChains; ++i)
+    for (i = 0; i < This->swapchain_count; ++i)
     {
         TRACE("Releasing the implicit swapchain %u.\n", i);
         if (D3DCB_DestroySwapChain((IWineD3DSwapChain *)This->swapchains[i]) > 0)
@@ -2301,7 +2305,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UninitGDI(IWineD3DDevice *iface, D3DCB_
 
     HeapFree(GetProcessHeap(), 0, This->swapchains);
     This->swapchains = NULL;
-    This->NumberOfSwapChains = 0;
+    This->swapchain_count = 0;
     return WINED3D_OK;
 }
 
