@@ -350,12 +350,18 @@ static void set_cursor_pos( struct desktop *desktop, int x, int y )
 static void set_clip_rectangle( struct desktop *desktop, const rectangle_t *rect )
 {
     rectangle_t top_rect, new_rect;
+    int x, y;
 
     get_top_window_rectangle( desktop, &top_rect );
     if (!rect || !intersect_rect( &new_rect, &top_rect, rect )) new_rect = top_rect;
     if (!memcmp( &desktop->cursor.clip, &new_rect, sizeof(new_rect) )) return;
     desktop->cursor.clip = new_rect;
     if (desktop->cursor.clip_msg) post_desktop_message( desktop, desktop->cursor.clip_msg, 0, 0 );
+
+    /* warp the mouse to be inside the clip rect */
+    x = min( max( desktop->cursor.x, desktop->cursor.clip.left ), desktop->cursor.clip.right-1 );
+    y = min( max( desktop->cursor.y, desktop->cursor.clip.top ), desktop->cursor.clip.bottom-1 );
+    if (x != desktop->cursor.x || y != desktop->cursor.y) set_cursor_pos( desktop, x, y );
 }
 
 /* change the foreground input and reset the cursor clip rect */
