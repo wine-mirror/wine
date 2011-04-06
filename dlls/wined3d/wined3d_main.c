@@ -355,8 +355,13 @@ static BOOL wined3d_dll_destroy(HINSTANCE hInstDLL)
 
     for (i = 0; i < wndproc_table.count; ++i)
     {
-        struct wined3d_wndproc *entry = &wndproc_table.entries[i];
-        SetWindowLongPtrW(entry->window, GWLP_WNDPROC, (LONG_PTR)entry->proc);
+        /* Trying to unregister these would be futile. These entries can only
+         * exist if either we skipped them in wined3d_unregister_window() due
+         * to the application replacing the wndproc after the entry was
+         * registered, or if the application still has an active wined3d
+         * device. In the latter case the application has bigger problems than
+         * these entries. */
+        WARN("Leftover wndproc table entry %p.\n", &wndproc_table.entries[i]);
     }
     HeapFree(GetProcessHeap(), 0, wndproc_table.entries);
 
