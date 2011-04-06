@@ -150,9 +150,11 @@ static const WCHAR szInstaller_LocalClassesFeat[] = {
     'I','n','s','t','a','l','l','e','r','\\','F','e','a','t','u','r','e','s','\\',0};
 
 static const WCHAR szInstaller_ClassesUpgradeCode[] = {
+    'S','o','f','t','w','a','r','e','\\','C','l','a','s','s','e','s','\\',
     'I','n','s','t','a','l','l','e','r','\\','U','p','g','r','a','d','e','C','o','d','e','s','\\',0};
 
 static const WCHAR szInstaller_ClassesUpgradeCodes[] = {
+    'S','o','f','t','w','a','r','e','\\','C','l','a','s','s','e','s','\\',
     'I','n','s','t','a','l','l','e','r','\\','U','p','g','r','a','d','e','C','o','d','e','s',0};
 
 static const WCHAR szInstaller_Features[] = {
@@ -991,8 +993,8 @@ UINT MSIREG_OpenClassesUpgradeCodesKey(LPCWSTR szUpgradeCode, HKEY *key, BOOL cr
     strcpyW(keypath, szInstaller_ClassesUpgradeCode);
     strcatW(keypath, squished_pc);
 
-    if (create) return RegCreateKeyExW(HKEY_CLASSES_ROOT, keypath, 0, NULL, 0, access, NULL, key, NULL);
-    return RegOpenKeyExW(HKEY_CLASSES_ROOT, keypath, 0, access, key);
+    if (create) return RegCreateKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, key, NULL);
+    return RegOpenKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, access, key);
 }
 
 UINT MSIREG_DeleteClassesUpgradeCodesKey(LPCWSTR szUpgradeCode)
@@ -1005,7 +1007,7 @@ UINT MSIREG_DeleteClassesUpgradeCodesKey(LPCWSTR szUpgradeCode)
     if (!squash_guid(szUpgradeCode, squished_pc)) return ERROR_FUNCTION_FAILED;
     TRACE("%s squished %s\n", debugstr_w(szUpgradeCode), debugstr_w(squished_pc));
 
-    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, szInstaller_ClassesUpgradeCodes, 0, access, &hkey)) return ERROR_SUCCESS;
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, szInstaller_ClassesUpgradeCodes, 0, access, &hkey)) return ERROR_SUCCESS;
     r = RegDeleteTreeW(hkey, squished_pc);
     RegCloseKey(hkey);
     return r;
@@ -1143,6 +1145,7 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
     UINT r;
     WCHAR szKeyName[SQUISH_GUID_SIZE];
     HKEY key;
+    REGSAM access = KEY_WOW64_64KEY | KEY_ALL_ACCESS;
     DWORD machine_count, managed_count, unmanaged_count;
     WCHAR keypath[MAX_PATH];
     LPWSTR usersid = NULL;
@@ -1158,7 +1161,7 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
         return ERROR_INVALID_PARAMETER;
 
     key = 0;
-    r = RegCreateKeyW(HKEY_LOCAL_MACHINE, szInstaller_LocalClassesProducts, &key);
+    r = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szInstaller_LocalClassesProducts, 0, NULL, 0, access, NULL, &key, NULL);
     if( r != ERROR_SUCCESS ) goto failed;
 
     r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &machine_count, NULL, NULL,
@@ -1188,7 +1191,7 @@ UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
     sprintfW(keypath, szInstaller_LocalManaged_fmt, usersid);
     LocalFree(usersid);
 
-    r = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, &key);
+    r = RegCreateKeyExW(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &key, NULL);
     if( r != ERROR_SUCCESS ) goto failed;
 
     r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &managed_count, NULL, NULL,
@@ -1301,21 +1304,22 @@ UINT WINAPI MsiEnumComponentsA(DWORD index, LPSTR lpguid)
 
 UINT WINAPI MsiEnumComponentsW(DWORD index, LPWSTR lpguid)
 {
-    HKEY hkeyComponents = 0;
-    DWORD r;
+    HKEY hkey;
+    REGSAM access = KEY_WOW64_64KEY | KEY_ALL_ACCESS;
     WCHAR szKeyName[SQUISH_GUID_SIZE];
+    DWORD r;
 
     TRACE("%d %p\n", index, lpguid);
 
-    r = RegCreateKeyW(HKEY_LOCAL_MACHINE, szInstaller_Components, &hkeyComponents);
+    r = RegCreateKeyExW(HKEY_LOCAL_MACHINE, szInstaller_Components, 0, NULL, 0, access, NULL, &hkey, NULL);
     if( r != ERROR_SUCCESS )
         return ERROR_NO_MORE_ITEMS;
 
-    r = RegEnumKeyW(hkeyComponents, index, szKeyName, SQUISH_GUID_SIZE);
+    r = RegEnumKeyW(hkey, index, szKeyName, SQUISH_GUID_SIZE);
     if( r == ERROR_SUCCESS )
         unsquash_guid(szKeyName, lpguid);
-    RegCloseKey(hkeyComponents);
 
+    RegCloseKey(hkey);
     return r;
 }
 

@@ -2781,8 +2781,8 @@ static void test_publish_product(void)
     static const CHAR badprod[] = "Software\\Microsoft\\Windows\\CurrentVersion"
                                   "\\Installer\\Products"
                                   "\\84A88FD7F6998CE40A22FB59F6B9C2BB";
-    static const CHAR machprod[] = "Installer\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB";
-    static const CHAR machup[] = "Installer\\UpgradeCodes\\51AAE0C44620A5E4788506E91F249BD2";
+    static const CHAR machprod[] = "Software\\Classes\\Installer\\Products\\84A88FD7F6998CE40A22FB59F6B9C2BB";
+    static const CHAR machup[] = "Software\\Classes\\Installer\\UpgradeCodes\\51AAE0C44620A5E4788506E91F249BD2";
 
     if (is_process_limited())
     {
@@ -2936,7 +2936,7 @@ currentuser:
     RegCloseKey(hkey);
 
 machprod:
-    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, machprod, 0, access, &hkey);
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, machprod, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_DEL_REG_STR(hkey, "ProductName", "MSITEST");
@@ -2982,7 +2982,7 @@ machprod:
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
     RegCloseKey(hkey);
 
-    res = RegOpenKeyExA(HKEY_CLASSES_ROOT, machup, 0, access, &hkey);
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, machup, 0, access, &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_DEL_REG_STR(hkey, "84A88FD7F6998CE40A22FB59F6B9C2BB", NULL);
