@@ -10927,6 +10927,133 @@ static void depth_buffer2_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 }
 
+static void depth_blit_test(IDirect3DDevice9 *device)
+{
+    static const struct vertex quad1[] =
+    {
+        { -1.0,  1.0, 0.50f, 0xff00ff00},
+        {  1.0,  1.0, 0.50f, 0xff00ff00},
+        { -1.0, -1.0, 0.50f, 0xff00ff00},
+        {  1.0, -1.0, 0.50f, 0xff00ff00},
+    };
+    static const struct vertex quad2[] =
+    {
+        { -1.0,  1.0, 0.66f, 0xff0000ff},
+        {  1.0,  1.0, 0.66f, 0xff0000ff},
+        { -1.0, -1.0, 0.66f, 0xff0000ff},
+        {  1.0, -1.0, 0.66f, 0xff0000ff},
+    };
+    static const DWORD expected_colors[4][4] =
+    {
+        {0x000000ff, 0x000000ff, 0x0000ff00, 0x00ff0000},
+        {0x000000ff, 0x000000ff, 0x0000ff00, 0x00ff0000},
+        {0x0000ff00, 0x0000ff00, 0x0000ff00, 0x00ff0000},
+        {0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000},
+    };
+
+    IDirect3DSurface9 *backbuffer, *ds1, *ds2;
+    RECT src_rect, dst_rect;
+    unsigned int i, j;
+    D3DVIEWPORT9 vp;
+    D3DCOLOR color;
+    HRESULT hr;
+
+    vp.X = 0;
+    vp.Y = 0;
+    vp.Width = 640;
+    vp.Height = 480;
+    vp.MinZ = 0.0;
+    vp.MaxZ = 1.0;
+
+    hr = IDirect3DDevice9_SetViewport(device, &vp);
+    ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &backbuffer);
+    ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device, &ds1);
+    ok(SUCCEEDED(hr), "GetDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8, 0, 0, FALSE, &ds2, NULL);
+    ok(SUCCEEDED(hr), "CreateDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds2);
+    ok(SUCCEEDED(hr), "SetDepthStencilSurface failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_ZBUFFER, 0, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+    SetRect(&dst_rect, 0, 0, 480, 360);
+    hr = IDirect3DDevice9_Clear(device, 1, (D3DRECT *)&dst_rect, D3DCLEAR_ZBUFFER, 0, 0.5f, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+    SetRect(&dst_rect, 0, 0, 320, 240);
+    hr = IDirect3DDevice9_Clear(device, 1, (D3DRECT *)&dst_rect, D3DCLEAR_ZBUFFER, 0, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+
+    /* Partial blit. */
+    SetRect(&src_rect, 0, 0, 320, 240);
+    SetRect(&dst_rect, 0, 0, 320, 240);
+    hr = IDirect3DDevice9_StretchRect(device, ds2, &src_rect, ds1, &dst_rect, D3DTEXF_POINT);
+    ok(hr == D3DERR_INVALIDCALL, "StretchRect returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    /* Flipped. */
+    SetRect(&src_rect, 0, 0, 640, 480);
+    SetRect(&dst_rect, 0, 480, 640, 0);
+    hr = IDirect3DDevice9_StretchRect(device, ds2, &src_rect, ds1, &dst_rect, D3DTEXF_POINT);
+    ok(hr == D3DERR_INVALIDCALL, "StretchRect returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    /* Full, explicit. */
+    SetRect(&src_rect, 0, 0, 640, 480);
+    SetRect(&dst_rect, 0, 0, 640, 480);
+    hr = IDirect3DDevice9_StretchRect(device, ds2, &src_rect, ds1, &dst_rect, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+    /* Filtered blit. */
+    hr = IDirect3DDevice9_StretchRect(device, ds2, NULL, ds1, NULL, D3DTEXF_LINEAR);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+    /* Depth -> color blit.*/
+    hr = IDirect3DDevice9_StretchRect(device, ds2, NULL, backbuffer, NULL, D3DTEXF_POINT);
+    ok(hr == D3DERR_INVALIDCALL, "StretchRect returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    IDirect3DSurface9_Release(backbuffer);
+
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds1);
+    ok(SUCCEEDED(hr), "SetDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_ZBUFFER | D3DCLEAR_TARGET, 0xffff0000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_StretchRect(device, ds2, NULL, ds1, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(ds2);
+    IDirect3DSurface9_Release(ds1);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, sizeof(*quad1));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad2, sizeof(*quad2));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    for (i = 0; i < 4; ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            unsigned int x = 80 * ((2 * j) + 1);
+            unsigned int y = 60 * ((2 * i) + 1);
+            color = getPixelColor(device, x, y);
+            ok(color_match(color, expected_colors[i][j], 0),
+                    "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected_colors[i][j], x, y, color);
+        }
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+}
+
 static void intz_test(IDirect3DDevice9 *device)
 {
     static const DWORD ps_code[] =
@@ -12027,6 +12154,7 @@ START_TEST(visual)
     dp3_alpha_test(device_ptr);
     depth_buffer_test(device_ptr);
     depth_buffer2_test(device_ptr);
+    depth_blit_test(device_ptr);
     intz_test(device_ptr);
     shadow_test(device_ptr);
     fp_special_test(device_ptr);
