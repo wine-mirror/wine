@@ -1024,13 +1024,20 @@ int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
             ProximityOut(the_device, proximity_out_type, event_list[event_number]);
             if (proximity_out_type) event_number++;
 
-            if (key_press_type) X11DRV_register_event_handler( key_press_type, key_event );
-            if (key_release_type) X11DRV_register_event_handler( key_release_type, key_event );
-            if (button_press_type) X11DRV_register_event_handler( button_press_type, button_event );
-            if (button_release_type) X11DRV_register_event_handler( button_release_type, button_event );
-            if (motion_type) X11DRV_register_event_handler( motion_type, motion_event );
-            if (proximity_in_type) X11DRV_register_event_handler( proximity_in_type, proximity_event );
-            if (proximity_out_type) X11DRV_register_event_handler( proximity_out_type, proximity_event );
+            if (key_press_type)
+                X11DRV_register_event_handler( key_press_type, key_event, "XInput KeyPress" );
+            if (key_release_type)
+                X11DRV_register_event_handler( key_release_type, key_event, "XInput KeyRelease" );
+            if (button_press_type)
+                X11DRV_register_event_handler( button_press_type, button_event, "XInput ButtonPress" );
+            if (button_release_type)
+                X11DRV_register_event_handler( button_release_type, button_event, "XInput ButtonRelease" );
+            if (motion_type)
+                X11DRV_register_event_handler( motion_type, motion_event, "XInput MotionNotify" );
+            if (proximity_in_type)
+                X11DRV_register_event_handler( proximity_in_type, proximity_event, "XInput ProximityIn" );
+            if (proximity_out_type)
+                X11DRV_register_event_handler( proximity_out_type, proximity_event, "XInput ProximityOut" );
 
             pXSelectExtensionEvent(data->display, win, event_list, event_number);
         }

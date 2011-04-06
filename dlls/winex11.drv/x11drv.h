@@ -719,7 +719,7 @@ extern Atom systray_atom;
 
 typedef void (*x11drv_event_handler)( HWND hwnd, XEvent *event );
 
-extern void X11DRV_register_event_handler( int type, x11drv_event_handler handler );
+extern void X11DRV_register_event_handler( int type, x11drv_event_handler handler, const char *name );
 
 extern void X11DRV_ButtonPress( HWND hwnd, XEvent *event );
 extern void X11DRV_ButtonRelease( HWND hwnd, XEvent *event );
