@@ -4778,22 +4778,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface)
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
-        const RECT *pSourceRect, const RECT *pDestRect,
-        HWND hDestWindowOverride, const RGNDATA *pDirtyRegion)
+static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface, const RECT *src_rect,
+        const RECT *dst_rect, HWND dst_window_override, const RGNDATA *dirty_region)
 {
-    IWineD3DSwapChain *swapChain = NULL;
-    int i;
-    int swapchains = IWineD3DDeviceImpl_GetNumberOfSwapChains(iface);
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    UINT i;
 
-    TRACE("iface %p.\n", iface);
+    TRACE("iface %p, src_rect %s, dst_rect %s, dst_window_override %p, dirty_region %p.\n",
+            iface, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect),
+            dst_window_override, dirty_region);
 
-    for(i = 0 ; i < swapchains ; i ++) {
-
-        IWineD3DDeviceImpl_GetSwapChain(iface, i, &swapChain);
-        TRACE("Presenting chain %d, %p.\n", i, swapChain);
-        IWineD3DSwapChain_Present(swapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, 0);
-        IWineD3DSwapChain_Release(swapChain);
+    for (i = 0; i < device->swapchain_count; ++i)
+    {
+        IWineD3DSwapChain_Present((IWineD3DSwapChain *)device->swapchains[i],
+                src_rect, dst_rect, dst_window_override, dirty_region, 0);
     }
 
     return WINED3D_OK;
