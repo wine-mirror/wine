@@ -56,6 +56,9 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         HeapFree( GetProcessHeap(), 0, elp );
     }
 
+    if (hpen == GetStockObject( DC_PEN ))
+        logpen.lopnColor = GetDCPenColor( dev->hdc );
+
     pdev->pen_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, logpen.lopnColor);
 
     pdev->defer |= DEFER_PEN;
@@ -72,4 +75,18 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     }
 
     return next->funcs->pSelectPen( next, hpen );
+}
+
+/***********************************************************************
+ *           dibdrv_SetDCPenColor
+ */
+COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDCPenColor );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+
+    if (GetCurrentObject(dev->hdc, OBJ_PEN) == GetStockObject( DC_PEN ))
+        pdev->pen_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, color);
+
+    return next->funcs->pSetDCPenColor( next, color );
 }

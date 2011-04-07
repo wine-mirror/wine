@@ -19,6 +19,7 @@
  */
 
 extern HPEN     CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 
 static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
 {

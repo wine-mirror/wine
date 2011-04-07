@@ -216,7 +216,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pSetBkColor */
     NULL,                               /* pSetBkMode */
     NULL,                               /* pSetDCBrushColor */
-    NULL,                               /* pSetDCPenColor */
+    dibdrv_SetDCPenColor,               /* pSetDCPenColor */
     NULL,                               /* pSetDIBColorTable */
     NULL,                               /* pSetDIBits */
     NULL,                               /* pSetDIBitsToDevice */
