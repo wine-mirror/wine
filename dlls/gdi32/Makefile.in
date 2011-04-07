@@ -15,6 +15,7 @@ C_SRCS = \
 	dc.c \
 	dib.c \
 	dibdrv/dc.c \
+	dibdrv/objects.c \
 	dibdrv/primitives.c \
 	driver.c \
 	enhmetafile.c \

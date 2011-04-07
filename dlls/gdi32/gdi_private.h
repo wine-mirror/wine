@@ -96,6 +96,9 @@ typedef struct dibdrv_physdev
 {
     struct gdi_physdev dev;
     dib_info dib;
+
+    /* pen */
+    DWORD pen_color;
 } dibdrv_physdev;
 
 typedef struct tagDC_FUNCS

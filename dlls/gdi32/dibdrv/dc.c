@@ -207,7 +207,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pSelectClipPath */
     NULL,                               /* pSelectFont */
     NULL,                               /* pSelectPalette */
-    NULL,                               /* pSelectPen */
+    dibdrv_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBitmapBits */
     NULL,                               /* pSetBkColor */

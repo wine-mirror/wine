@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+extern HPEN     CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
+
 static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
 {
     return (dibdrv_physdev *)dev;
