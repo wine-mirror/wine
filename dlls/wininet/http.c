@@ -2832,6 +2832,10 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 
     if ((res = NETCON_init(&request->netConnection, dwFlags & INTERNET_FLAG_SECURE)) != ERROR_SUCCESS)
         goto lend;
+    if (dwFlags & INTERNET_FLAG_IGNORE_CERT_CN_INVALID)
+        request->netConnection.security_flags |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+    if (dwFlags & INTERNET_FLAG_IGNORE_CERT_DATE_INVALID)
+        request->netConnection.security_flags |= SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
 
     if (lpszObjectName && *lpszObjectName) {
         HRESULT rc;
