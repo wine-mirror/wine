@@ -30,19 +30,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipping);
 
 
 /***********************************************************************
- *           get_clip_region
- *
- * Return the total clip region (if any).
- */
-static inline HRGN get_clip_region( DC * dc )
-{
-    if (dc->hMetaClipRgn) return dc->hMetaClipRgn;
-    if (dc->hMetaRgn) return dc->hMetaRgn;
-    return dc->hClipRgn;
-}
-
-
-/***********************************************************************
  *           get_clip_rect
  *
  * Compute a clip rectangle from its logical coordinates.

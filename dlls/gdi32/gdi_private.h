@@ -101,6 +101,7 @@ typedef struct dibdrv_physdev
 
     /* pen */
     DWORD pen_color, pen_and, pen_xor;
+    BOOL   (* pen_line)(struct dibdrv_physdev *pdev, POINT *start, POINT *end);
 } dibdrv_physdev;
 
 #define DEFER_FORMAT     1
@@ -398,6 +399,14 @@ extern INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp ) DECLSPEC_HIDDEN;
 
 /* clipping.c */
 extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
+
+/* Return the total clip region (if any) */
+static inline HRGN get_clip_region( DC * dc )
+{
+    if (dc->hMetaClipRgn) return dc->hMetaClipRgn;
+    if (dc->hMetaRgn) return dc->hMetaRgn;
+    return dc->hClipRgn;
+}
 
 /* dc.c */
 extern DC *alloc_dc_ptr( WORD magic ) DECLSPEC_HIDDEN;

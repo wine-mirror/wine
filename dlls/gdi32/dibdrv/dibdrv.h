@@ -18,12 +18,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+extern BOOL     CDECL dibdrv_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern HPEN     CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 
 static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
 {
     return (dibdrv_physdev *)dev;
+}
+
+static inline DC *get_dibdrv_dc( PHYSDEV dev )
+{
+    return CONTAINING_RECORD( dev, DC, dibdrv );
 }
 
 typedef struct primitive_funcs

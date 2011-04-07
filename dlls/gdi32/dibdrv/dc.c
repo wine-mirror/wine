@@ -192,7 +192,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pGetTextMetrics */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
-    NULL,                               /* pLineTo */
+    dibdrv_LineTo,                      /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     NULL,                               /* pMoveTo */
     NULL,                               /* pOffsetClipRgn */

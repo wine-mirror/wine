@@ -89,6 +89,54 @@ void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor)
     *xor = (color & rop2_xor_array[rop-1][0]) | ((~color) & rop2_xor_array[rop-1][1]);
 }
 
+static inline void order_end_points(int *s, int *e)
+{
+    if(*s > *e)
+    {
+        int tmp;
+        tmp = *s + 1;
+        *s = *e + 1;
+        *e = tmp;
+    }
+}
+
+static inline BOOL pt_in_rect( const RECT *rect, POINT pt )
+{
+    return ((pt.x >= rect->left) && (pt.x < rect->right) &&
+            (pt.y >= rect->top) && (pt.y < rect->bottom));
+}
+
+static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
+{
+    RECT rc;
+    DC *dc = get_dibdrv_dc( &pdev->dev );
+
+    if(get_clip_region(dc) || !pt_in_rect(&dc->vis_rect, *start) || !pt_in_rect(&dc->vis_rect, *end))
+        return FALSE;
+
+    rc.left   = start->x;
+    rc.top    = start->y;
+    rc.right  = end->x;
+    rc.bottom = end->y;
+
+    if(rc.top == rc.bottom)
+    {
+        order_end_points(&rc.left, &rc.right);
+        rc.bottom++;
+        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rc, pdev->pen_and, pdev->pen_xor);
+        return TRUE;
+    }
+    else if(rc.left == rc.right)
+    {
+        order_end_points(&rc.top, &rc.bottom);
+        rc.right++;
+        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rc, pdev->pen_and, pdev->pen_xor);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 /***********************************************************************
  *           dibdrv_SelectPen
  */
@@ -133,6 +181,7 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     case PS_SOLID:
         if(logpen.lopnStyle & PS_GEOMETRIC) break;
         if(logpen.lopnWidth.x > 1) break;
+        pdev->pen_line = solid_pen_line;
         pdev->defer &= ~DEFER_PEN;
         break;
     default:
