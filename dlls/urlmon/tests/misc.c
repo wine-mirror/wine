@@ -77,6 +77,7 @@ static HRESULT (WINAPI *pUrlMkGetSessionOption)(DWORD, LPVOID, DWORD, DWORD *, D
 static HRESULT (WINAPI *pCompareSecurityIds)(BYTE*,DWORD,BYTE*,DWORD,DWORD);
 static HRESULT (WINAPI *pCoInternetIsFeatureEnabled)(INTERNETFEATURELIST,DWORD);
 static HRESULT (WINAPI *pCoInternetSetFeatureEnabled)(INTERNETFEATURELIST,DWORD,BOOL);
+static HRESULT (WINAPI *pIEInstallScope)(DWORD*);
 
 static void test_CreateFormatEnum(void)
 {
@@ -1476,6 +1477,114 @@ static void test_IsValidURL(void)
     IBindCtx_Release(bctx);
 }
 
+/* With older versions of IE (IE 7 and earlier), urlmon caches
+ * the FeatureControl values from the registry when it's loaded
+ * into memory. Newer versions of IE conditionally cache the
+ * the FeatureControl registry values (i.e. When a call to
+ * CoInternetIsFeatureEnabled and a corresponding CoInternetSetFeatureEnabled
+ * call hasn't already been made for the specified Feature). Because of
+ * this we skip these tests on IE 7 and earlier.
+ */
+static void test_internet_features_registry(void) {
+    HRESULT hres;
+    DWORD res;
+    char module[MAX_PATH];
+    char *name;
+    HKEY feature_control;
+    HKEY feature;
+    DWORD value;
+    BOOL delete_feature_key = TRUE;
+    BOOL delete_feature_control_key = FALSE;
+
+    static const char* szFeatureControlKey = "Software\\Microsoft\\Internet Explorer\\Main\\FeatureControl";
+    static const char* szFeatureBehaviorsKey = "FEATURE_BEHAVIORS";
+    static const char* szFeatureZoneElevationKey = "FEATURE_ZONE_ELEVATION";
+
+    if(!pIEInstallScope) {
+        win_skip("Skipping internet feature registry tests, IE is too old...\n");
+        return;
+    }
+
+    res = GetModuleFileNameA(NULL, module, sizeof(module));
+    ok(res, "GetModuleFileName failed: %d\n", GetLastError());
+
+    name = strrchr(module, '\\')+1;
+
+    /* Some Windows machines don't have a FeatureControl key in HKCU. */
+    res = RegOpenKeyA(HKEY_CURRENT_USER, szFeatureControlKey, &feature_control);
+    if(res != ERROR_SUCCESS) {
+        res = RegCreateKeyA(HKEY_CURRENT_USER, szFeatureControlKey, &feature_control);
+        ok(res == ERROR_SUCCESS, "RegCreateKey failed: %d\n", res);
+        delete_feature_control_key = TRUE;
+    }
+
+    res = RegOpenKeyA(feature_control, szFeatureBehaviorsKey, &feature);
+    if(res == ERROR_SUCCESS)
+        /* FEATURE_BEHAVIORS already existed, so don't delete it when we're done. */
+        delete_feature_key = FALSE;
+    else {
+        res = RegCreateKeyA(feature_control, szFeatureBehaviorsKey, &feature);
+        ok(res == ERROR_SUCCESS, "RegCreateKey failed: %d\n", res);
+    }
+
+    value = 0;
+    res = RegSetValueExA(feature, name, 0, REG_DWORD, (BYTE*)&value, sizeof(DWORD));
+    ok(res == ERROR_SUCCESS, "RegSetValueEx failed: %d\n", res);
+
+    hres = pCoInternetIsFeatureEnabled(FEATURE_BEHAVIORS, GET_FEATURE_FROM_PROCESS);
+    todo_wine
+    ok(hres == S_FALSE, "CoInternetIsFeatureEnabled returned %08x, expected S_FALSE\n", hres);
+
+    if(delete_feature_key) {
+        RegCloseKey(feature);
+        RegDeleteKeyA(feature_control, szFeatureBehaviorsKey);
+    } else {
+        RegDeleteValue(feature, name);
+        RegCloseKey(feature);
+    }
+
+    /* IE's feature control cached the value it got from the registry earlier. */
+    hres = pCoInternetIsFeatureEnabled(FEATURE_BEHAVIORS, GET_FEATURE_FROM_PROCESS);
+    todo_wine
+    ok(hres == S_FALSE, "CoInternetIsFeatureEnabled returned %08x, expected S_FALSE\n", hres);
+
+    /* Restore this feature back to its default value. */
+    hres = pCoInternetSetFeatureEnabled(FEATURE_BEHAVIORS, SET_FEATURE_ON_PROCESS, TRUE);
+    todo_wine
+    ok(hres == S_OK, "CoInternetSetFeatureEnabled failed: %08x\n", hres);
+
+    RegCloseKey(feature_control);
+    if(delete_feature_control_key)
+        RegDeleteKeyA(HKEY_CURRENT_USER, szFeatureControlKey);
+
+    res = RegOpenKeyA(HKEY_LOCAL_MACHINE, szFeatureControlKey, &feature_control);
+    ok(res == ERROR_SUCCESS, "RegOpenKey failed: %d\n", res);
+
+    res = RegOpenKeyA(feature_control, szFeatureZoneElevationKey, &feature);
+    ok(res == ERROR_SUCCESS, "RegOpenKey failed: %d\n", res);
+
+    value = 1;
+    res = RegSetValueExA(feature, "*", 0, REG_DWORD, (BYTE*)&value, sizeof(DWORD));
+    ok(res == ERROR_SUCCESS, "RegSetValueEx failed: %d\n", res);
+
+    hres = pCoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, GET_FEATURE_FROM_PROCESS);
+    todo_wine
+    ok(hres == S_OK, "CoInternetIsFeatureEnabled returned %08x, expected S_OK\n", hres);
+
+    RegDeleteValueA(feature, "*");
+    RegCloseKey(feature);
+    RegCloseKey(feature_control);
+
+    /* Value is still cached from last time. */
+    hres = pCoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, GET_FEATURE_FROM_PROCESS);
+    todo_wine
+    ok(hres == S_OK, "CoInternetIsFeatureEnabled returned %08x, expected S_OK\n", hres);
+
+    hres = pCoInternetSetFeatureEnabled(FEATURE_ZONE_ELEVATION, SET_FEATURE_ON_PROCESS, FALSE);
+    todo_wine
+    ok(hres == S_OK, "CoInternetSetFeatureEnabled failed: %08x\n", hres);
+}
+
 static const struct {
     INTERNETFEATURELIST feature;
     DWORD               get_flags;
@@ -1592,6 +1701,7 @@ static void test_internet_features(void) {
         return;
     }
 
+    test_internet_features_registry();
     test_CoInternetIsFeatureEnabled();
     test_CoInternetSetFeatureEnabled();
 }
@@ -1614,6 +1724,7 @@ START_TEST(misc)
     pCompareSecurityIds = (void*) GetProcAddress(hurlmon, "CompareSecurityIds");
     pCoInternetIsFeatureEnabled = (void*) GetProcAddress(hurlmon, "CoInternetIsFeatureEnabled");
     pCoInternetSetFeatureEnabled = (void*) GetProcAddress(hurlmon, "CoInternetSetFeatureEnabled");
+    pIEInstallScope = (void*) GetProcAddress(hurlmon, "IEInstallScope");
 
     if (!pCoInternetCompareUrl || !pCoInternetGetSecurityUrl ||
         !pCoInternetGetSession || !pCoInternetParseUrl || !pCompareSecurityIds) {

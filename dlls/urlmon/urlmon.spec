@@ -58,6 +58,7 @@
 @ stdcall HlinkNavigateString(ptr wstr)
 @ stdcall HlinkSimpleNavigateToMoniker(ptr wstr wstr ptr ptr ptr long long)
 @ stdcall HlinkSimpleNavigateToString(wstr wstr wstr ptr ptr ptr long long)
+@ stub IEInstallScope
 @ stdcall IsAsyncMoniker(ptr)
 @ stdcall IsLoggingEnabledA(str)
 @ stdcall IsLoggingEnabledW(wstr)
