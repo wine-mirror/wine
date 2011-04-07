@@ -2554,28 +2554,6 @@ struct IWineD3DSwapChainImpl
 
 void x11_copy_to_screen(IWineD3DSwapChainImpl *This, const RECT *rc) DECLSPEC_HIDDEN;
 
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface,
-        REFIID riid, LPVOID *ppobj) DECLSPEC_HIDDEN;
-ULONG WINAPI IWineD3DBaseSwapChainImpl_AddRef(IWineD3DSwapChain *iface) DECLSPEC_HIDDEN;
-ULONG WINAPI IWineD3DBaseSwapChainImpl_Release(IWineD3DSwapChain *iface) DECLSPEC_HIDDEN;
-void * WINAPI IWineD3DBaseSwapChainImpl_GetParent(IWineD3DSwapChain *iface) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface,
-        IWineD3DSurface *dst_surface) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface, UINT iBackBuffer,
-        WINED3DBACKBUFFER_TYPE Type, IWineD3DSurface **ppBackBuffer) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface,
-        WINED3DRASTER_STATUS *pRasterStatus) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface,
-        WINED3DDISPLAYMODE *pMode) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDevice(IWineD3DSwapChain *iface,
-        IWineD3DDevice **device) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *iface,
-        WINED3DPRESENT_PARAMETERS *pPresentationParameters) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface,
-        DWORD flags, const WINED3DGAMMARAMP *pRamp) DECLSPEC_HIDDEN;
-HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface,
-        WINED3DGAMMARAMP *pRamp) DECLSPEC_HIDDEN;
-
 struct wined3d_context *swapchain_get_context(struct IWineD3DSwapChainImpl *swapchain) DECLSPEC_HIDDEN;
 HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, void *parent) DECLSPEC_HIDDEN;

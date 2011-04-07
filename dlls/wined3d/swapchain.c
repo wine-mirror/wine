@@ -22,14 +22,196 @@
 #include "config.h"
 #include "wined3d_private.h"
 
-
-/*TODO: some of the additional parameters may be required to
-    set the gamma ramp (for some weird reason microsoft have left swap gammaramp in device
-    but it operates on a swapchain, it may be a good idea to move it to IWineD3DSwapChain for IWineD3D)*/
-
-
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
+
+static HRESULT WINAPI IWineD3DBaseSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_IWineD3DSwapChain)
+            || IsEqualGUID(riid, &IID_IWineD3DBase)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IWineD3DBaseSwapChainImpl_AddRef(IWineD3DSwapChain *iface)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+    ULONG refcount = InterlockedIncrement(&swapchain->ref);
+
+    TRACE("%p increasing refcount to %u.\n", swapchain, refcount);
+
+    return refcount;
+}
+
+/* Do not call while under the GL lock. */
+static ULONG WINAPI IWineD3DBaseSwapChainImpl_Release(IWineD3DSwapChain *iface)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+    ULONG refcount = InterlockedDecrement(&swapchain->ref);
+
+    TRACE("%p decreasing refcount to %u.\n", swapchain, refcount);
+
+    if (!refcount)
+        IWineD3DSwapChain_Destroy(iface);
+
+    return refcount;
+}
+
+static void * WINAPI IWineD3DBaseSwapChainImpl_GetParent(IWineD3DSwapChain *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ((IWineD3DSwapChainImpl *)iface)->parent;
+}
+
+static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface,
+        IWineD3DSurface *dst_surface)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+    POINT offset = {0, 0};
+
+    TRACE("iface %p, dst_surface %p.\n", iface, dst_surface);
+
+    if (swapchain->presentParms.Windowed)
+        MapWindowPoints(swapchain->win_handle, NULL, &offset, 1);
+
+    IWineD3DSurface_BltFast(dst_surface, offset.x, offset.y,
+            (IWineD3DSurface *)swapchain->front_buffer, NULL, 0);
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface,
+        UINT back_buffer_idx, WINED3DBACKBUFFER_TYPE type, IWineD3DSurface **back_buffer)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+
+    TRACE("iface %p, back_buffer_idx %u, type %#x, back_buffer %p.\n",
+            iface, back_buffer_idx, type, back_buffer);
+
+    /* Return invalid if there is no backbuffer array, otherwise it will
+     * crash when ddraw is used (there swapchain->back_buffers is always
+     * NULL). We need this because this function is called from
+     * stateblock_init_default_state() to get the default scissorrect
+     * dimensions. */
+    if (!swapchain->back_buffers || back_buffer_idx >= swapchain->presentParms.BackBufferCount)
+    {
+        WARN("Invalid back buffer index.\n");
+        /* Native d3d9 doesn't set NULL here, just as wine's d3d9. But set it
+         * here in wined3d to avoid problems in other libs. */
+        *back_buffer = NULL;
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    *back_buffer = (IWineD3DSurface *)swapchain->back_buffers[back_buffer_idx];
+    if (*back_buffer) IWineD3DSurface_AddRef(*back_buffer);
+
+    TRACE("Returning back buffer %p.\n", *back_buffer);
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface,
+        WINED3DRASTER_STATUS *raster_status)
+{
+    static BOOL warned;
+    /* No OpenGL equivalent */
+    if (!warned)
+    {
+        FIXME("iface %p, raster_status %p stub!\n", iface, raster_status);
+        warned = TRUE;
+    }
+
+    /* Obtaining the raster status is a widely implemented but optional
+     * feature. When this method returns OK Starcraft 2 expects the
+     * raster_status->InVBlank value to actually change over time. To prevent
+     * Starcraft 2 from running in an infinite loop at startup this method
+     * returns INVALIDCALL. */
+    return WINED3DERR_INVALIDCALL;
+}
+
+static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WINED3DDISPLAYMODE *mode)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+    HRESULT hr;
+
+    TRACE("iface %p, mode %p.\n", iface, mode);
+
+    hr = wined3d_get_adapter_display_mode(swapchain->device->wined3d, swapchain->device->adapter->ordinal, mode);
+
+    TRACE("Returning w %u, h %u, refresh rate %u, format %s.\n",
+            mode->Width, mode->Height, mode->RefreshRate, debug_d3dformat(mode->Format));
+
+    return hr;
+}
+
+static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDevice(IWineD3DSwapChain *iface, IWineD3DDevice **device)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = (IWineD3DDevice *)swapchain->device;
+    IWineD3DDevice_AddRef(*device);
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *iface,
+        WINED3DPRESENT_PARAMETERS *present_parameters)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+
+    TRACE("iface %p, present_parameters %p.\n", iface, present_parameters);
+
+    *present_parameters = swapchain->presentParms;
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface,
+        DWORD flags, const WINED3DGAMMARAMP *ramp)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+    HDC dc;
+
+    TRACE("iface %p, flags %#x, ramp %p.\n", iface, flags, ramp);
+
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    dc = GetDC(swapchain->device_window);
+    SetDeviceGammaRamp(dc, (void *)ramp);
+    ReleaseDC(swapchain->device_window, dc);
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface,
+        WINED3DGAMMARAMP *ramp)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+    HDC dc;
+
+    TRACE("iface %p, ramp %p.\n", iface, ramp);
+
+    dc = GetDC(swapchain->device_window);
+    GetDeviceGammaRamp(dc, ramp);
+    ReleaseDC(swapchain->device_window, dc);
+
+    return WINED3D_OK;
+}
 
 /* Do not call while under the GL lock. */
 static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
