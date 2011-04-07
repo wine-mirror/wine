@@ -21,6 +21,10 @@
 #ifndef __D3DX9EFFECT_H__
 #define __D3DX9EFFECT_H__
 
+#define D3DX_PARAMETER_SHARED       1
+#define D3DX_PARAMETER_LITERAL      2
+#define D3DX_PARAMETER_ANNOTATION   4
+
 typedef struct _D3DXEFFECT_DESC {
     LPCSTR Creator;
     UINT Parameters;

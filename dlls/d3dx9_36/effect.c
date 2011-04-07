@@ -30,6 +30,16 @@ static const struct ID3DXEffectVtbl ID3DXEffect_Vtbl;
 static const struct ID3DXBaseEffectVtbl ID3DXBaseEffect_Vtbl;
 static const struct ID3DXEffectCompilerVtbl ID3DXEffectCompiler_Vtbl;
 
+struct d3dx_parameter
+{
+    struct ID3DXBaseEffectImpl *base;
+
+    UINT annotation_count;
+    DWORD flags;
+
+    D3DXHANDLE *annotation_handles;
+};
+
 struct ID3DXBaseEffectImpl
 {
     ID3DXBaseEffect ID3DXBaseEffect_iface;
@@ -39,6 +49,8 @@ struct ID3DXBaseEffectImpl
 
     UINT parameter_count;
     UINT technique_count;
+
+    D3DXHANDLE *parameter_handles;
 };
 
 struct ID3DXEffectImpl
@@ -76,6 +88,56 @@ static void skip_dword_unknown(const char **ptr, unsigned int count)
     {
         read_dword(ptr, &d);
         FIXME("\t0x%08x\n", d);
+    }
+}
+
+struct d3dx_parameter *get_parameter_struct(D3DXHANDLE handle)
+{
+    return (struct d3dx_parameter *) handle;
+}
+
+D3DXHANDLE get_parameter_handle(struct d3dx_parameter *parameter)
+{
+    return (D3DXHANDLE) parameter;
+}
+
+static void free_parameter(D3DXHANDLE handle)
+{
+    unsigned int i;
+    struct d3dx_parameter *param = get_parameter_struct(handle);
+
+    TRACE("Free parameter %p\n", param);
+
+    if (!param)
+    {
+        return;
+    }
+
+    if (param->annotation_handles)
+    {
+        for (i = 0; i < param->annotation_count; ++i)
+        {
+            free_parameter(param->annotation_handles[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, param->annotation_handles);
+    }
+
+    HeapFree(GetProcessHeap(), 0, param);
+}
+
+static void free_base_effect(struct ID3DXBaseEffectImpl *base)
+{
+    unsigned int i;
+
+    TRACE("Free base effect %p\n", base);
+
+    if (base->parameter_handles)
+    {
+        for (i = 0; i < base->parameter_count; ++i)
+        {
+            free_parameter(base->parameter_handles[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, base->parameter_handles);
     }
 }
 
@@ -154,6 +216,7 @@ static ULONG WINAPI ID3DXBaseEffectImpl_Release(ID3DXBaseEffect *iface)
 
     if (!ref)
     {
+        free_base_effect(This);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -2312,9 +2375,102 @@ static const struct ID3DXEffectCompilerVtbl ID3DXEffectCompiler_Vtbl =
     ID3DXEffectCompilerImpl_CompileShader,
 };
 
+static HRESULT d3dx9_parse_effect_annotation(struct d3dx_parameter *anno, const char *data, const char **ptr)
+{
+    DWORD offset;
+
+    read_dword(ptr, &offset);
+    TRACE("Typedef offset: %#x\n", offset);
+    /* todo: Parse typedef */
+
+    read_dword(ptr, &offset);
+    TRACE("Value offset: %#x\n", offset);
+    /* todo: Parse value */
+
+    anno->flags &= D3DX_PARAMETER_ANNOTATION;
+
+    return D3D_OK;
+}
+
+static HRESULT d3dx9_parse_effect_parameter(struct d3dx_parameter *param, const char *data, const char **ptr)
+{
+    DWORD offset;
+    HRESULT hr;
+    unsigned int i;
+    D3DXHANDLE *annotation_handles = NULL;
+
+    read_dword(ptr, &offset);
+    TRACE("Typedef offset: %#x\n", offset);
+    /* todo: Parse typedef */
+
+    read_dword(ptr, &offset);
+    TRACE("Value offset: %#x\n", offset);
+    /* todo: Parse value */
+
+    read_dword(ptr, &param->flags);
+    TRACE("Flags: %#x\n", param->flags);
+
+    read_dword(ptr, &param->annotation_count);
+    TRACE("Annotation count: %u\n", param->annotation_count);
+
+    if (param->annotation_count)
+    {
+        annotation_handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*annotation_handles) * param->annotation_count);
+        if (!annotation_handles)
+        {
+            ERR("Out of memory\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+
+        for (i = 0; i < param->annotation_count; ++i)
+        {
+            struct d3dx_parameter *annotation;
+
+            annotation = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*annotation));
+            if (!annotation)
+            {
+                ERR("Out of memory\n");
+                hr = E_OUTOFMEMORY;
+                goto err_out;
+            }
+
+            annotation_handles[i] = get_parameter_handle(annotation);
+            annotation->base = param->base;
+
+            hr = d3dx9_parse_effect_annotation(annotation, data, ptr);
+            if (hr != D3D_OK)
+            {
+                WARN("Failed to parse annotation\n");
+                goto err_out;
+            }
+        }
+    }
+
+    param->annotation_handles = annotation_handles;
+
+    return D3D_OK;
+
+err_out:
+
+    if (annotation_handles)
+    {
+        for (i = 0; i < param->annotation_count; ++i)
+        {
+            free_parameter(annotation_handles[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, annotation_handles);
+    }
+
+    return hr;
+}
+
 static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *data, UINT data_size, DWORD start)
 {
     const char *ptr = data + start;
+    D3DXHANDLE *parameter_handles = NULL;
+    HRESULT hr;
+    unsigned int i;
 
     read_dword(&ptr, &base->parameter_count);
     TRACE("Parameter count: %u\n", base->parameter_count);
@@ -2324,11 +2480,58 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
 
     skip_dword_unknown(&ptr, 2);
 
-    /* todo: Parse parameter */
+    if (base->parameter_count)
+    {
+        parameter_handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*parameter_handles) * base->parameter_count);
+        if (!parameter_handles)
+        {
+            ERR("Out of memory\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+
+        for (i = 0; i < base->parameter_count; ++i)
+        {
+            struct d3dx_parameter *parameter;
+
+            parameter = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*parameter));
+            if (!parameter)
+            {
+                ERR("Out of memory\n");
+                hr = E_OUTOFMEMORY;
+                goto err_out;
+            }
+
+            parameter_handles[i] = get_parameter_handle(parameter);
+            parameter->base = base;
+
+            hr = d3dx9_parse_effect_parameter(parameter, data, &ptr);
+            if (hr != D3D_OK)
+            {
+                WARN("Failed to parse parameter\n");
+                goto err_out;
+            }
+        }
+    }
 
     /* todo: Parse techniques */
 
+    base->parameter_handles = parameter_handles;
+
     return D3D_OK;
+
+err_out:
+
+    if (parameter_handles)
+    {
+        for (i = 0; i < base->parameter_count; ++i)
+        {
+            free_parameter(parameter_handles[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, parameter_handles);
+    }
+
+    return hr;
 }
 
 static HRESULT d3dx9_base_effect_init(struct ID3DXBaseEffectImpl *base,
