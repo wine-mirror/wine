@@ -100,7 +100,7 @@ typedef struct dibdrv_physdev
     DWORD defer;
 
     /* pen */
-    DWORD pen_color;
+    DWORD pen_color, pen_and, pen_xor;
 } dibdrv_physdev;
 
 #define DEFER_FORMAT     1

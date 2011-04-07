@@ -35,3 +35,5 @@ typedef struct primitive_funcs
 extern const primitive_funcs funcs_8888 DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_32   DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_null DECLSPEC_HIDDEN;
+
+extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;

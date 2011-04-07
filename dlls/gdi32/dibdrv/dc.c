@@ -128,6 +128,19 @@ static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     return next->funcs->pSelectBitmap( next, bitmap );
 }
 
+/***********************************************************************
+ *           dibdrv_SetROP2
+ */
+static INT CDECL dibdrv_SetROP2( PHYSDEV dev, INT rop )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetROP2 );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+
+    calc_and_xor_masks(rop, pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
+
+    return next->funcs->pSetROP2( next, rop );
+}
+
 const DC_FUNCTIONS dib_driver =
 {
     NULL,                               /* pAbortDoc */
@@ -228,7 +241,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pSetPixel */
     NULL,                               /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetROP2 */
+    dibdrv_SetROP2,                     /* pSetROP2 */
     NULL,                               /* pSetRelAbs */
     NULL,                               /* pSetStretchBltMode */
     NULL,                               /* pSetTextAlign */
