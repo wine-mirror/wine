@@ -146,11 +146,12 @@ DEFINE_EXPECT(GetWindow_IHttpSecurity);
 DEFINE_EXPECT(GetWindow_IWindowForBindingUI);
 DEFINE_EXPECT(OnSecurityProblem);
 
-static const WCHAR TEST_URL_1[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','\0'};
-static const WCHAR TEST_PART_URL_1[] = {'/','t','e','s','t','/','\0'};
+static const WCHAR winetest_data_urlW[] =
+    {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
+     't','e','s','t','s','/','d','a','t','a','.','p','h','p',0};
 
-static const WCHAR WINE_ABOUT_URL[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.',
-                                       'o','r','g','/','s','i','t','e','/','a','b','o','u','t',0};
+static const WCHAR TEST_PART_URL_1[] = {'/','t','e','s','t','s','/','d','a','t','a','.','p','h','p','\0'};
+
 static const WCHAR SHORT_RESPONSE_URL[] =
         {'h','t','t','p',':','/','/','c','r','o','s','s','o','v','e','r','.',
          'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
@@ -205,7 +206,7 @@ static BOOL only_check_prot_args = FALSE;
 static BOOL invalid_cn_accepted = FALSE;
 
 static LPCWSTR urls[] = {
-    WINE_ABOUT_URL,
+    winetest_data_urlW,
     ABOUT_BLANK,
     INDEX_HTML,
     ITS_URL,
@@ -314,7 +315,7 @@ static void test_create(void)
     IBindCtx *bctx;
     HRESULT hr;
 
-    test_CreateURLMoniker(TEST_URL_1, TEST_PART_URL_1);
+    test_CreateURLMoniker(winetest_data_urlW, TEST_PART_URL_1);
 
     mon = (void*)0xdeadbeef;
     hr = CreateURLMoniker(NULL, relativeW, &mon);
@@ -339,7 +340,7 @@ static void test_create(void)
     IMoniker_Release(mon);
 
     mon = (void*)0xdaedbeef;
-    hr = CreateURLMoniker(NULL, TEST_URL_1, &mon);
+    hr = CreateURLMoniker(NULL, winetest_data_urlW, &mon);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     stream = (void*)0xdeadbeef;
@@ -511,7 +512,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
             SET_EXPECT(Obj_OnProgress_REDIRECTING);
         else
             SET_EXPECT(OnProgress_REDIRECTING);
-        hres = IInternetProtocolSink_ReportProgress(protocol_sink, BINDSTATUS_REDIRECTING, WINE_ABOUT_URL);
+        hres = IInternetProtocolSink_ReportProgress(protocol_sink, BINDSTATUS_REDIRECTING, winetest_data_urlW);
         ok(hres == S_OK, "ReportProgress(BINDSTATUS_REFIRECTING) failed: %08x\n", hres);
         WaitForSingleObject(complete_event, INFINITE);
         if(bind_to_object)
@@ -1609,7 +1610,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             CHECK_EXPECT(Obj_OnProgress_REDIRECTING);
         else
             CHECK_EXPECT(OnProgress_REDIRECTING);
-        ok(!lstrcmpW(szStatusText, WINE_ABOUT_URL), "unexpected status text %s\n",
+        ok(!lstrcmpW(szStatusText, winetest_data_urlW), "unexpected status text %s\n",
            wine_dbgstr_w(szStatusText));
         if(emulate_protocol && (test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST)
                 && (!bind_to_object || iface == &objbsc))
@@ -2687,7 +2688,7 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     if(flags & BINDTEST_HTTPRESPONSE)
         urls[HTTP_TEST] = SHORT_RESPONSE_URL;
     else
-        urls[HTTP_TEST] = WINE_ABOUT_URL;
+        urls[HTTP_TEST] = winetest_data_urlW;
     if(flags & BINDTEST_INVALID_CN)
         urls[HTTPS_TEST] = https_invalid_cn_urlW;
     else
