@@ -25,6 +25,7 @@ static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
 
 typedef struct primitive_funcs
 {
+    void        (* solid_rects)(const dib_info *dib, int num, RECT *rc, DWORD and, DWORD xor);
     DWORD (* colorref_to_pixel)(const dib_info *dib, COLORREF color);
 } primitive_funcs;
 

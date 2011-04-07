@@ -21,6 +21,35 @@
 #include "gdi_private.h"
 #include "dibdrv.h"
 
+static inline DWORD *get_pixel_ptr_32(const dib_info *dib, int x, int y)
+{
+    return (DWORD *)((BYTE*)dib->bits + y * dib->stride + x * 4);
+}
+
+static inline void do_rop_32(DWORD *ptr, DWORD and, DWORD xor)
+{
+    *ptr = (*ptr & and) ^ xor;
+}
+
+static void solid_rects_32(const dib_info *dib, int num, RECT *rc, DWORD and, DWORD xor)
+{
+    DWORD *ptr, *start;
+    int x, y, i;
+
+    for(i = 0; i < num; i++, rc++)
+    {
+        start = ptr = get_pixel_ptr_32(dib, rc->left, rc->top);
+        for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
+            for(x = rc->left, ptr = start; x < rc->right; x++)
+                do_rop_32(ptr++, and, xor);
+    }
+}
+
+static void solid_rects_null(const dib_info *dib, int num, RECT *rc, DWORD and, DWORD xor)
+{
+    return;
+}
+
 static DWORD colorref_to_pixel_888(const dib_info *dib, COLORREF color)
 {
     return ( ((color >> 16) & 0xff) | (color & 0xff00) | ((color << 16) & 0xff0000) );
@@ -58,15 +87,18 @@ static DWORD colorref_to_pixel_null(const dib_info *dib, COLORREF color)
 
 const primitive_funcs funcs_8888 =
 {
+    solid_rects_32,
     colorref_to_pixel_888
 };
 
 const primitive_funcs funcs_32 =
 {
+    solid_rects_32,
     colorref_to_pixel_masks
 };
 
 const primitive_funcs funcs_null =
 {
+    solid_rects_null,
     colorref_to_pixel_null
 };
