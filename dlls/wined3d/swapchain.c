@@ -80,6 +80,7 @@ static void WINAPI IWineD3DBaseSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
         IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)swapchain->device, 0, &mode);
     }
 
+    swapchain->parent_ops->wined3d_object_destroyed(swapchain->parent);
     HeapFree(GetProcessHeap(), 0, swapchain->context);
     HeapFree(GetProcessHeap(), 0, swapchain);
 }
@@ -860,7 +861,8 @@ static const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl =
 
 /* Do not call while under the GL lock. */
 HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
-        IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, void *parent)
+        IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters,
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_adapter *adapter = device->adapter;
     const struct wined3d_format *format;
@@ -903,6 +905,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
 
     swapchain->device = device;
     swapchain->parent = parent;
+    swapchain->parent_ops = parent_ops;
     swapchain->ref = 1;
     swapchain->win_handle = window;
     swapchain->device_window = window;

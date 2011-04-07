@@ -53,6 +53,9 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_AddRef(IDXGISwapChain *iface)
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
+    if (refcount == 1)
+        IWineD3DSwapChain_AddRef(This->wined3d_swapchain);
+
     return refcount;
 }
 
@@ -91,8 +94,6 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_Release(IDXGISwapChain *iface)
                 ERR("Uninit3D failed, hr %#x\n", hr);
             }
         }
-
-        HeapFree(GetProcessHeap(), 0, This);
     }
 
     return refcount;
@@ -269,6 +270,16 @@ static const struct IDXGISwapChainVtbl dxgi_swapchain_vtbl =
     dxgi_swapchain_GetLastPresentCount,
 };
 
+static void STDMETHODCALLTYPE dxgi_swapchain_wined3d_object_released(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops dxgi_swapchain_wined3d_parent_ops =
+{
+    dxgi_swapchain_wined3d_object_released,
+};
+
 HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device *device,
         WINED3DPRESENT_PARAMETERS *present_parameters)
 {
@@ -278,7 +289,8 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
     swapchain->refcount = 1;
 
     hr = IWineD3DDevice_CreateSwapChain(device->wined3d_device, present_parameters,
-            SURFACE_OPENGL, swapchain, &swapchain->wined3d_swapchain);
+            SURFACE_OPENGL, swapchain, &dxgi_swapchain_wined3d_parent_ops,
+            &swapchain->wined3d_swapchain);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d swapchain, hr %#x.\n", hr);

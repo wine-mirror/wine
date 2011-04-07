@@ -50,7 +50,18 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_AddRef(LPDIRECT3DSWAPCHAIN9 iface) {
 
     TRACE("%p increasing refcount to %u.\n", iface, ref);
 
-    if(ref == 1 && This->parentDevice) IDirect3DDevice9Ex_AddRef(This->parentDevice);
+    if (ref == 1)
+    {
+        if (This->parentDevice)
+            IDirect3DDevice9Ex_AddRef(This->parentDevice);
+
+        if (!This->isImplicit)
+        {
+            wined3d_mutex_lock();
+            IWineD3DSwapChain_AddRef(This->wineD3DSwapChain);
+            wined3d_mutex_unlock();
+        }
+    }
 
     return ref;
 }
@@ -68,8 +79,6 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_Release(LPDIRECT3DSWAPCHAIN9 iface) 
             wined3d_mutex_lock();
             IWineD3DSwapChain_Destroy(This->wineD3DSwapChain);
             wined3d_mutex_unlock();
-
-            HeapFree(GetProcessHeap(), 0, This);
         }
 
         /* Release the device last, as it may cause the device to be destroyed. */
@@ -217,6 +226,16 @@ static const IDirect3DSwapChain9Vtbl Direct3DSwapChain9_Vtbl =
     IDirect3DSwapChain9Impl_GetPresentParameters
 };
 
+static void STDMETHODCALLTYPE d3d9_swapchain_wined3d_object_released(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d9_swapchain_wined3d_parent_ops =
+{
+    d3d9_swapchain_wined3d_object_released,
+};
+
 HRESULT swapchain_init(IDirect3DSwapChain9Impl *swapchain, IDirect3DDevice9Impl *device,
         D3DPRESENT_PARAMETERS *present_parameters)
 {
@@ -244,7 +263,8 @@ HRESULT swapchain_init(IDirect3DSwapChain9Impl *swapchain, IDirect3DDevice9Impl 
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreateSwapChain(device->WineD3DDevice, &wined3d_parameters,
-            SURFACE_OPENGL, swapchain, &swapchain->wineD3DSwapChain);
+            SURFACE_OPENGL, swapchain, &d3d9_swapchain_wined3d_parent_ops,
+            &swapchain->wineD3DSwapChain);
     wined3d_mutex_unlock();
 
     present_parameters->BackBufferWidth = wined3d_parameters.BackBufferWidth;

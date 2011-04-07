@@ -2530,6 +2530,7 @@ struct IWineD3DSwapChainImpl
     LONG                      ref;     /* Note: Ref counting not required */
 
     void *parent;
+    const struct wined3d_parent_ops *parent_ops;
     IWineD3DDeviceImpl *device;
 
     /* IWineD3DSwapChain fields */
@@ -2556,7 +2557,8 @@ void x11_copy_to_screen(IWineD3DSwapChainImpl *This, const RECT *rc) DECLSPEC_HI
 
 struct wined3d_context *swapchain_get_context(struct IWineD3DSwapChainImpl *swapchain) DECLSPEC_HIDDEN;
 HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
-        IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters, void *parent) DECLSPEC_HIDDEN;
+        IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters,
+        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 #define DEFAULT_REFRESH_RATE 0
 

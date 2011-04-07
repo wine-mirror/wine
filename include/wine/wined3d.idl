@@ -2481,6 +2481,7 @@ interface IWineD3DDevice : IUnknown
         [in] WINED3DPRESENT_PARAMETERS *present_parameters,
         [in] WINED3DSURFTYPE surface_type,
         [in] void *parent,
+        [in] const struct wined3d_parent_ops *parent_ops,
         [out] IWineD3DSwapChain **swapchain
     );
     HRESULT CreateVertexDeclaration(

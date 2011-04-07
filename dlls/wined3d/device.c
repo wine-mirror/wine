@@ -1278,7 +1278,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface,
 /* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
         WINED3DPRESENT_PARAMETERS *present_parameters, WINED3DSURFTYPE surface_type,
-        void *parent, IWineD3DSwapChain **swapchain)
+        void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DSwapChain **swapchain)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSwapChainImpl *object;
@@ -1294,7 +1294,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
         return E_OUTOFMEMORY;
     }
 
-    hr = swapchain_init(object, surface_type, This, present_parameters, parent);
+    hr = swapchain_init(object, surface_type, This, present_parameters, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize swapchain, hr %#x.\n", hr);

@@ -5905,7 +5905,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     TRACE("iface %p, present_parameters %p, swapchain %p\n", iface, present_parameters, swapchain);
 
     hr = IWineD3DDevice_CreateSwapChain(This->wineD3DDevice, present_parameters,
-            This->ImplType, NULL, swapchain);
+            This->ImplType, NULL, &ddraw_null_wined3d_parent_ops, swapchain);
     if (FAILED(hr))
     {
         FIXME("(%p) CreateSwapChain failed, returning %#x\n", iface, hr);

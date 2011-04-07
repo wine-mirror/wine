@@ -54,6 +54,15 @@ static ULONG WINAPI IDirect3DSwapChain8Impl_AddRef(IDirect3DSwapChain8 *iface)
 
     TRACE("%p increasing refcount to %u.\n", iface, ref);
 
+    if (ref == 1)
+    {
+        if (This->parentDevice)
+            IDirect3DDevice8_AddRef(This->parentDevice);
+        wined3d_mutex_lock();
+        IWineD3DSwapChain_AddRef(This->wineD3DSwapChain);
+        wined3d_mutex_unlock();
+    }
+
     return ref;
 }
 
@@ -64,13 +73,16 @@ static ULONG WINAPI IDirect3DSwapChain8Impl_Release(IDirect3DSwapChain8 *iface)
 
     TRACE("%p decreasing refcount to %u.\n", iface, ref);
 
-    if (ref == 0) {
+    if (!ref)
+    {
+        IDirect3DDevice8 *parentDevice = This->parentDevice;
+
         wined3d_mutex_lock();
         IWineD3DSwapChain_Destroy(This->wineD3DSwapChain);
         wined3d_mutex_unlock();
 
-        if (This->parentDevice) IUnknown_Release(This->parentDevice);
-        HeapFree(GetProcessHeap(), 0, This);
+        if (parentDevice)
+            IDirect3DDevice8_Release(parentDevice);
     }
     return ref;
 }
@@ -125,6 +137,16 @@ static const IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl =
     IDirect3DSwapChain8Impl_GetBackBuffer
 };
 
+static void STDMETHODCALLTYPE d3d8_swapchain_wined3d_object_released(void *parent)
+{
+    HeapFree(GetProcessHeap(), 0, parent);
+}
+
+static const struct wined3d_parent_ops d3d8_swapchain_wined3d_parent_ops =
+{
+    d3d8_swapchain_wined3d_object_released,
+};
+
 HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl *device,
         D3DPRESENT_PARAMETERS *present_parameters)
 {
@@ -152,7 +174,8 @@ HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl 
 
     wined3d_mutex_lock();
     hr = IWineD3DDevice_CreateSwapChain(device->WineD3DDevice, &wined3d_parameters,
-            SURFACE_OPENGL, swapchain, &swapchain->wineD3DSwapChain);
+            SURFACE_OPENGL, swapchain, &d3d8_swapchain_wined3d_parent_ops,
+            &swapchain->wineD3DSwapChain);
     wined3d_mutex_unlock();
 
     present_parameters->BackBufferWidth = wined3d_parameters.BackBufferWidth;
