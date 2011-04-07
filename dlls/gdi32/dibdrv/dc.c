@@ -90,12 +90,12 @@ static BOOL init_dib(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit
     switch(dib->bit_count)
     {
     case 32:
-         init_bit_fields(dib, bit_fields);
-         if(dib->red_mask == 0xff0000 && dib->green_mask == 0x00ff00 && dib->blue_mask == 0x0000ff)
-             dib->funcs = &funcs_8888;
-         else
-             dib->funcs = &funcs_32;
-         break;
+        init_bit_fields(dib, bit_fields);
+        if(dib->red_mask == 0xff0000 && dib->green_mask == 0x00ff00 && dib->blue_mask == 0x0000ff)
+            dib->funcs = &funcs_8888;
+        else
+            dib->funcs = &funcs_32;
+        break;
 
     default:
         TRACE("bpp %d not supported, will forward to graphics driver.\n", dib->bit_count);
@@ -118,7 +118,10 @@ static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     if (!bmp) return 0;
     assert(bmp->dib);
 
-    init_dib(&pdev->dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields, bmp->dib->dsBm.bmBits);
+    pdev->defer = 0;
+
+    if(!init_dib(&pdev->dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields, bmp->dib->dsBm.bmBits))
+        pdev->defer |= DEFER_FORMAT;
 
     GDI_ReleaseObj( bitmap );
 

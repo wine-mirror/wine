@@ -97,9 +97,14 @@ typedef struct dibdrv_physdev
     struct gdi_physdev dev;
     dib_info dib;
 
+    DWORD defer;
+
     /* pen */
     DWORD pen_color;
 } dibdrv_physdev;
+
+#define DEFER_FORMAT     1
+#define DEFER_PEN        2
 
 typedef struct tagDC_FUNCS
 {

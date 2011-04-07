@@ -58,5 +58,18 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
 
     pdev->pen_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, logpen.lopnColor);
 
+    pdev->defer |= DEFER_PEN;
+
+    switch(logpen.lopnStyle & PS_STYLE_MASK)
+    {
+    case PS_SOLID:
+        if(logpen.lopnStyle & PS_GEOMETRIC) break;
+        if(logpen.lopnWidth.x > 1) break;
+        pdev->defer &= ~DEFER_PEN;
+        break;
+    default:
+        break;
+    }
+
     return next->funcs->pSelectPen( next, hpen );
 }
