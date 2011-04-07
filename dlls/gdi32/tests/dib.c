@@ -34,6 +34,7 @@ static HCRYPTPROV crypt_prov;
 static const char *sha1_graphics_a8r8g8b8[] =
 {
     "a3cadd34d95d3d5cc23344f69aab1c2e55935fcf",
+    "2426172d9e8fec27d9228088f382ef3c93717da9",
     NULL
 };
 
@@ -105,9 +106,32 @@ static void compare_hash(BITMAPINFO *bmi, BYTE *bits, const char ***sha1, const 
 static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sha1)
 {
     DWORD dib_size = get_dib_size(bmi);
+    HPEN solid_pen, orig_pen;
+    INT i;
 
     memset(bits, 0xcc, dib_size);
     compare_hash(bmi, bits, sha1, "empty");
+
+    solid_pen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0xff));
+    orig_pen = SelectObject(hdc, solid_pen);
+
+    /* horizontal and vertical lines */
+    for(i = 1; i <= 16; i++)
+    {
+        SetROP2(hdc, i);
+        MoveToEx(hdc, 10, i * 3, NULL);
+        LineTo(hdc, 100, i * 3); /* l -> r */
+        MoveToEx(hdc, 100, 50 + i * 3, NULL);
+        LineTo(hdc, 10, 50 + i * 3); /* r -> l */
+        MoveToEx(hdc, 120 + i * 3, 10, NULL);
+        LineTo(hdc, 120 + i * 3, 100); /* t -> b */
+        MoveToEx(hdc, 170 + i * 3, 100, NULL);
+        LineTo(hdc, 170 + i * 3, 10); /* b -> t */
+    }
+    compare_hash(bmi, bits, sha1, "h and v solid lines");
+
+    SelectObject(hdc, orig_pen);
+    DeleteObject(solid_pen);
 }
 
 static void test_simple_graphics(void)
