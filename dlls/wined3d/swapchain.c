@@ -25,6 +25,65 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
+/* Do not call while under the GL lock. */
+static void WINAPI IWineD3DBaseSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+    WINED3DDISPLAYMODE mode;
+    UINT i;
+
+    TRACE("Destroying swapchain %p.\n", iface);
+
+    IWineD3DSwapChain_SetGammaRamp(iface, 0, &swapchain->orig_gamma);
+
+    /* Release the swapchain's draw buffers. Make sure swapchain->back_buffers[0]
+     * is the last buffer to be destroyed, FindContext() depends on that. */
+    if (swapchain->front_buffer)
+    {
+        surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_NONE, NULL);
+        if (IWineD3DSurface_Release((IWineD3DSurface *)swapchain->front_buffer))
+            WARN("Something's still holding the front buffer (%p).\n", swapchain->front_buffer);
+        swapchain->front_buffer = NULL;
+    }
+
+    if (swapchain->back_buffers)
+    {
+        i = swapchain->presentParms.BackBufferCount;
+
+        while (i--)
+        {
+            surface_set_container(swapchain->back_buffers[i], WINED3D_CONTAINER_NONE, NULL);
+            if (IWineD3DSurface_Release((IWineD3DSurface *)swapchain->back_buffers[i]))
+                WARN("Something's still holding back buffer %u (%p).\n", i, swapchain->back_buffers[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, swapchain->back_buffers);
+        swapchain->back_buffers = NULL;
+    }
+
+    for (i = 0; i < swapchain->num_contexts; ++i)
+    {
+        context_destroy(swapchain->device, swapchain->context[i]);
+    }
+
+    /* Restore the screen resolution if we rendered in fullscreen.
+     * This will restore the screen resolution to what it was before creating
+     * the swapchain. In case of d3d8 and d3d9 this will be the original
+     * desktop resolution. In case of d3d7 this will be a NOP because ddraw
+     * sets the resolution before starting up Direct3D, thus orig_width and
+     * orig_height will be equal to the modes in the presentation params. */
+    if (!swapchain->presentParms.Windowed && swapchain->presentParms.AutoRestoreDisplayMode)
+    {
+        mode.Width = swapchain->orig_width;
+        mode.Height = swapchain->orig_height;
+        mode.RefreshRate = 0;
+        mode.Format = swapchain->orig_fmt;
+        IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)swapchain->device, 0, &mode);
+    }
+
+    HeapFree(GetProcessHeap(), 0, swapchain->context);
+    HeapFree(GetProcessHeap(), 0, swapchain);
+}
+
 static HRESULT WINAPI IWineD3DBaseSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, void **object)
 {
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
@@ -63,7 +122,7 @@ static ULONG WINAPI IWineD3DBaseSwapChainImpl_Release(IWineD3DSwapChain *iface)
     TRACE("%p decreasing refcount to %u.\n", swapchain, refcount);
 
     if (!refcount)
-        IWineD3DSwapChain_Destroy(iface);
+        IWineD3DBaseSwapChainImpl_Destroy(iface);
 
     return refcount;
 }
@@ -211,67 +270,6 @@ static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *
     ReleaseDC(swapchain->device_window, dc);
 
     return WINED3D_OK;
-}
-
-/* Do not call while under the GL lock. */
-static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
-{
-    IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
-    WINED3DDISPLAYMODE mode;
-    unsigned int i;
-
-    TRACE("Destroying swapchain %p\n", iface);
-
-    IWineD3DSwapChain_SetGammaRamp(iface, 0, &This->orig_gamma);
-
-    /* Release the swapchain's draw buffers. Make sure This->back_buffers[0] is
-     * the last buffer to be destroyed, FindContext() depends on that. */
-    if (This->front_buffer)
-    {
-        surface_set_container(This->front_buffer, WINED3D_CONTAINER_NONE, NULL);
-        if (IWineD3DSurface_Release((IWineD3DSurface *)This->front_buffer))
-        {
-            WARN("(%p) Something's still holding the front buffer (%p).\n",
-                    This, This->front_buffer);
-        }
-        This->front_buffer = NULL;
-    }
-
-    if (This->back_buffers)
-    {
-        UINT i = This->presentParms.BackBufferCount;
-
-        while (i--)
-        {
-            surface_set_container(This->back_buffers[i], WINED3D_CONTAINER_NONE, NULL);
-            if (IWineD3DSurface_Release((IWineD3DSurface *)This->back_buffers[i]))
-                WARN("(%p) Something's still holding back buffer %u (%p).\n",
-                        This, i, This->back_buffers[i]);
-        }
-        HeapFree(GetProcessHeap(), 0, This->back_buffers);
-        This->back_buffers = NULL;
-    }
-
-    for (i = 0; i < This->num_contexts; ++i)
-    {
-        context_destroy(This->device, This->context[i]);
-    }
-    /* Restore the screen resolution if we rendered in fullscreen
-     * This will restore the screen resolution to what it was before creating the swapchain. In case of d3d8 and d3d9
-     * this will be the original desktop resolution. In case of d3d7 this will be a NOP because ddraw sets the resolution
-     * before starting up Direct3D, thus orig_width and orig_height will be equal to the modes in the presentation params
-     */
-    if (!This->presentParms.Windowed && This->presentParms.AutoRestoreDisplayMode)
-    {
-        mode.Width = This->orig_width;
-        mode.Height = This->orig_height;
-        mode.RefreshRate = 0;
-        mode.Format = This->orig_fmt;
-        IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)This->device, 0, &mode);
-    }
-
-    HeapFree(GetProcessHeap(), 0, This->context);
-    HeapFree(GetProcessHeap(), 0, This);
 }
 
 /* A GL context is provided by the caller */
@@ -658,7 +656,7 @@ static const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_Release,
     /* IWineD3DSwapChain */
     IWineD3DBaseSwapChainImpl_GetParent,
-    IWineD3DSwapChainImpl_Destroy,
+    IWineD3DBaseSwapChainImpl_Destroy,
     IWineD3DBaseSwapChainImpl_GetDevice,
     IWineD3DSwapChainImpl_Present,
     IWineD3DSwapChainImpl_SetDestWindowOverride,
@@ -670,55 +668,6 @@ static const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_SetGammaRamp,
     IWineD3DBaseSwapChainImpl_GetGammaRamp
 };
-
-static void WINAPI IWineGDISwapChainImpl_Destroy(IWineD3DSwapChain *iface)
-{
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
-    WINED3DDISPLAYMODE mode;
-
-    TRACE("Destroying swapchain %p.\n", iface);
-
-    IWineD3DSwapChain_SetGammaRamp(iface, 0, &swapchain->orig_gamma);
-
-    /* release the ref to the front and back buffer parents */
-    if (swapchain->front_buffer)
-    {
-        surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_NONE, NULL);
-        if (IWineD3DSurface_Release((IWineD3DSurface *)swapchain->front_buffer))
-            WARN("Something's still holding the front buffer.\n");
-    }
-
-    if (swapchain->back_buffers)
-    {
-        UINT i;
-
-        for (i = 0; i < swapchain->presentParms.BackBufferCount; ++i)
-        {
-            surface_set_container(swapchain->back_buffers[i], WINED3D_CONTAINER_NONE, NULL);
-            if (IWineD3DSurface_Release((IWineD3DSurface *)swapchain->back_buffers[i]))
-                WARN("Something's still holding the back buffer.\n");
-        }
-        HeapFree(GetProcessHeap(), 0, swapchain->back_buffers);
-    }
-
-    /* Restore the screen resolution if we rendered in fullscreen.
-     * This will restore the screen resolution to what it was before creating
-     * the swapchain. In case of d3d8 and d3d9 this will be the original
-     * desktop resolution. In case of d3d7 this will be a NOP because ddraw
-     * sets the resolution before starting up Direct3D, thus orig_width and
-     * orig_height will be equal to the modes in the presentation params. */
-    if (!swapchain->presentParms.Windowed && swapchain->presentParms.AutoRestoreDisplayMode)
-    {
-        mode.Width = swapchain->orig_width;
-        mode.Height = swapchain->orig_height;
-        mode.RefreshRate = 0;
-        mode.Format = swapchain->orig_fmt;
-        IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)swapchain->device, 0, &mode);
-    }
-
-    HeapFree(GetProcessHeap(), 0, swapchain->context);
-    HeapFree(GetProcessHeap(), 0, swapchain);
-}
 
 /* Helper function that blits the front buffer contents to the target window. */
 void x11_copy_to_screen(IWineD3DSwapChainImpl *swapchain, const RECT *rect)
@@ -896,7 +845,7 @@ static const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_Release,
     /* IWineD3DSwapChain */
     IWineD3DBaseSwapChainImpl_GetParent,
-    IWineGDISwapChainImpl_Destroy,
+    IWineD3DBaseSwapChainImpl_Destroy,
     IWineD3DBaseSwapChainImpl_GetDevice,
     IWineGDISwapChainImpl_Present,
     IWineGDISwapChainImpl_SetDestWindowOverride,
