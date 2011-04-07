@@ -2328,7 +2328,7 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
 
     /* todo: Parse techniques */
 
-    return S_OK;
+    return D3D_OK;
 }
 
 static HRESULT d3dx9_base_effect_init(struct ID3DXBaseEffectImpl *base,
@@ -2361,14 +2361,14 @@ static HRESULT d3dx9_base_effect_init(struct ID3DXBaseEffectImpl *base,
         TRACE("Offset: %x\n", offset);
 
         hr = d3dx9_parse_effect(base, ptr, data_size, offset);
-        if (hr != S_OK)
+        if (hr != D3D_OK)
         {
             FIXME("Failed to parse effect.\n");
             return hr;
         }
     }
 
-    return S_OK;
+    return D3D_OK;
 }
 
 static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, LPDIRECT3DDEVICE9 device,
@@ -2397,7 +2397,7 @@ static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, LPDIRECT3DDEVIC
     }
 
     hr = d3dx9_base_effect_init(object, data, data_size, effect);
-    if (hr != S_OK)
+    if (hr != D3D_OK)
     {
         FIXME("Failed to parse effect.\n");
         goto err_out;
@@ -2405,7 +2405,7 @@ static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, LPDIRECT3DDEVIC
 
     effect->base_effect = &object->ID3DXBaseEffect_iface;
 
-    return S_OK;
+    return D3D_OK;
 
 err_out:
 
@@ -2499,7 +2499,7 @@ static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compil
     }
 
     hr = d3dx9_base_effect_init(object, data, data_size, NULL);
-    if (hr != S_OK)
+    if (hr != D3D_OK)
     {
         FIXME("Failed to parse effect.\n");
         goto err_out;
@@ -2507,7 +2507,7 @@ static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compil
 
     compiler->base_effect = &object->ID3DXBaseEffect_iface;
 
-    return S_OK;
+    return D3D_OK;
 
 err_out:
 
