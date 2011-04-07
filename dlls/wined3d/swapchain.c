@@ -1,24 +1,22 @@
 /*
- *IDirect3DSwapChain9 implementation
+ * Copyright 2002-2003 Jason Edmeades
+ * Copyright 2002-2003 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber
+ * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
  *
- *Copyright 2002-2003 Jason Edmeades
- *Copyright 2002-2003 Raphael Junqueira
- *Copyright 2005 Oliver Stieber
- *Copyright 2007-2008 Stefan Dösinger for CodeWeavers
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  *
- *This library is free software; you can redistribute it and/or
- *modify it under the terms of the GNU Lesser General Public
- *License as published by the Free Software Foundation; either
- *version 2.1 of the License, or (at your option) any later version.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- *This library is distributed in the hope that it will be useful,
- *but WITHOUT ANY WARRANTY; without even the implied warranty of
- *MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *Lesser General Public License for more details.
- *
- *You should have received a copy of the GNU Lesser General Public
- *License along with this library; if not, write to the Free Software
- *Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 #include "config.h"
@@ -489,6 +487,244 @@ static const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_GetPresentParameters,
     IWineD3DBaseSwapChainImpl_SetGammaRamp,
     IWineD3DBaseSwapChainImpl_GetGammaRamp
+};
+
+static void WINAPI IWineGDISwapChainImpl_Destroy(IWineD3DSwapChain *iface)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+    WINED3DDISPLAYMODE mode;
+
+    TRACE("Destroying swapchain %p.\n", iface);
+
+    IWineD3DSwapChain_SetGammaRamp(iface, 0, &swapchain->orig_gamma);
+
+    /* release the ref to the front and back buffer parents */
+    if (swapchain->front_buffer)
+    {
+        surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_NONE, NULL);
+        if (IWineD3DSurface_Release((IWineD3DSurface *)swapchain->front_buffer))
+            WARN("Something's still holding the front buffer.\n");
+    }
+
+    if (swapchain->back_buffers)
+    {
+        UINT i;
+
+        for (i = 0; i < swapchain->presentParms.BackBufferCount; ++i)
+        {
+            surface_set_container(swapchain->back_buffers[i], WINED3D_CONTAINER_NONE, NULL);
+            if (IWineD3DSurface_Release((IWineD3DSurface *)swapchain->back_buffers[i]))
+                WARN("Something's still holding the back buffer.\n");
+        }
+        HeapFree(GetProcessHeap(), 0, swapchain->back_buffers);
+    }
+
+    /* Restore the screen resolution if we rendered in fullscreen.
+     * This will restore the screen resolution to what it was before creating
+     * the swapchain. In case of d3d8 and d3d9 this will be the original
+     * desktop resolution. In case of d3d7 this will be a NOP because ddraw
+     * sets the resolution before starting up Direct3D, thus orig_width and
+     * orig_height will be equal to the modes in the presentation params. */
+    if (!swapchain->presentParms.Windowed && swapchain->presentParms.AutoRestoreDisplayMode)
+    {
+        mode.Width = swapchain->orig_width;
+        mode.Height = swapchain->orig_height;
+        mode.RefreshRate = 0;
+        mode.Format = swapchain->orig_fmt;
+        IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)swapchain->device, 0, &mode);
+    }
+
+    HeapFree(GetProcessHeap(), 0, swapchain->context);
+    HeapFree(GetProcessHeap(), 0, swapchain);
+}
+
+/* Helper function that blits the front buffer contents to the target window. */
+void x11_copy_to_screen(IWineD3DSwapChainImpl *swapchain, const RECT *rect)
+{
+    IWineD3DSurfaceImpl *front;
+    POINT offset = {0, 0};
+    HDC src_dc, dst_dc;
+    RECT draw_rect;
+    HWND window;
+
+    TRACE("swapchain %p, rect %s.\n", swapchain, wine_dbgstr_rect(rect));
+
+    front = swapchain->front_buffer;
+    if (!(front->resource.usage & WINED3DUSAGE_RENDERTARGET))
+        return;
+
+    TRACE("Copying surface %p to screen.\n", front);
+
+    src_dc = front->hDC;
+    window = swapchain->win_handle;
+    dst_dc = GetDCEx(window, 0, DCX_CLIPSIBLINGS | DCX_CACHE);
+
+    /* Front buffer coordinates are screen coordinates. Map them to the
+     * destination window if not fullscreened. */
+    if (swapchain->presentParms.Windowed)
+        ClientToScreen(window, &offset);
+
+    TRACE("offset %s.\n", wine_dbgstr_point(&offset));
+
+#if 0
+    /* FIXME: This doesn't work... if users really want to run
+     * X in 8bpp, then we need to call directly into display.drv
+     * (or Wine's equivalent), and force a private colormap
+     * without default entries. */
+    if (front->palette)
+    {
+        SelectPalette(dst_dc, front->palette->hpal, FALSE);
+        RealizePalette(dst_dc); /* sends messages => deadlocks */
+    }
+#endif
+
+    draw_rect.left = 0;
+    draw_rect.right = front->resource.width;
+    draw_rect.top = 0;
+    draw_rect.bottom = front->resource.height;
+
+#if 0
+    /* TODO: Support clippers. */
+    if (front->clipper)
+    {
+        RECT xrc;
+        HWND hwnd = ((IWineD3DClipperImpl *)front->clipper)->hWnd;
+        if (hwnd && GetClientRect(hwnd,&xrc))
+        {
+            OffsetRect(&xrc, offset.x, offset.y);
+            IntersectRect(&draw_rect, &draw_rect, &xrc);
+        }
+    }
+#endif
+
+    if (!rect)
+    {
+        /* Only use this if the caller did not pass a rectangle, since
+         * due to double locking this could be the wrong one... */
+        if (front->lockedRect.left != front->lockedRect.right)
+            IntersectRect(&draw_rect, &draw_rect, &front->lockedRect);
+    }
+    else
+    {
+        IntersectRect(&draw_rect, &draw_rect, rect);
+    }
+
+    BitBlt(dst_dc, draw_rect.left - offset.x, draw_rect.top - offset.y,
+            draw_rect.right - draw_rect.left, draw_rect.bottom - draw_rect.top,
+            src_dc, draw_rect.left, draw_rect.top, SRCCOPY);
+    ReleaseDC(window, dst_dc);
+}
+
+static HRESULT WINAPI IWineGDISwapChainImpl_SetDestWindowOverride(IWineD3DSwapChain *iface, HWND window)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+
+    TRACE("iface %p, window %p.\n", iface, window);
+
+    swapchain->win_handle = window;
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineGDISwapChainImpl_Present(IWineD3DSwapChain *iface,
+        const RECT *pSourceRect, const RECT *pDestRect, HWND hDestWindowOverride,
+        const RGNDATA *pDirtyRegion, DWORD flags)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+    IWineD3DSurfaceImpl *front, *back;
+
+    if (!swapchain->back_buffers)
+    {
+        WARN("Swapchain doesn't have a backbuffer, returning WINED3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    front = swapchain->front_buffer;
+    back = swapchain->back_buffers[0];
+
+    /* Flip the DC. */
+    {
+        HDC tmp;
+        tmp = front->hDC;
+        front->hDC = back->hDC;
+        back->hDC = tmp;
+    }
+
+    /* Flip the DIBsection. */
+    {
+        HBITMAP tmp;
+        tmp = front->dib.DIBsection;
+        front->dib.DIBsection = back->dib.DIBsection;
+        back->dib.DIBsection = tmp;
+    }
+
+    /* Flip the surface data. */
+    {
+        void *tmp;
+
+        tmp = front->dib.bitmap_data;
+        front->dib.bitmap_data = back->dib.bitmap_data;
+        back->dib.bitmap_data = tmp;
+
+        tmp = front->resource.allocatedMemory;
+        front->resource.allocatedMemory = back->resource.allocatedMemory;
+        back->resource.allocatedMemory = tmp;
+
+        if (front->resource.heapMemory)
+            ERR("GDI Surface %p has heap memory allocated.\n", front);
+
+        if (back->resource.heapMemory)
+            ERR("GDI Surface %p has heap memory allocated.\n", back);
+    }
+
+    /* Client_memory should not be different, but just in case. */
+    {
+        BOOL tmp;
+        tmp = front->dib.client_memory;
+        front->dib.client_memory = back->dib.client_memory;
+        back->dib.client_memory = tmp;
+    }
+
+    /* FPS support */
+    if (TRACE_ON(fps))
+    {
+        static LONG prev_time, frames;
+        DWORD time = GetTickCount();
+
+        ++frames;
+
+        /* every 1.5 seconds */
+        if (time - prev_time > 1500)
+        {
+            TRACE_(fps)("@ approx %.2ffps\n", 1000.0 * frames / (time - prev_time));
+            prev_time = time;
+            frames = 0;
+        }
+    }
+
+    x11_copy_to_screen(swapchain, NULL);
+
+    return WINED3D_OK;
+}
+
+static const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl =
+{
+    /* IUnknown */
+    IWineD3DBaseSwapChainImpl_QueryInterface,
+    IWineD3DBaseSwapChainImpl_AddRef,
+    IWineD3DBaseSwapChainImpl_Release,
+    /* IWineD3DSwapChain */
+    IWineD3DBaseSwapChainImpl_GetParent,
+    IWineGDISwapChainImpl_Destroy,
+    IWineD3DBaseSwapChainImpl_GetDevice,
+    IWineGDISwapChainImpl_Present,
+    IWineGDISwapChainImpl_SetDestWindowOverride,
+    IWineD3DBaseSwapChainImpl_GetFrontBufferData,
+    IWineD3DBaseSwapChainImpl_GetBackBuffer,
+    IWineD3DBaseSwapChainImpl_GetRasterStatus,
+    IWineD3DBaseSwapChainImpl_GetDisplayMode,
+    IWineD3DBaseSwapChainImpl_GetPresentParameters,
+    IWineD3DBaseSwapChainImpl_SetGammaRamp,
+    IWineD3DBaseSwapChainImpl_GetGammaRamp,
 };
 
 /* Do not call while under the GL lock. */

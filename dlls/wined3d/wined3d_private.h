@@ -2552,7 +2552,6 @@ struct IWineD3DSwapChainImpl
     HWND device_window;
 };
 
-extern const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl DECLSPEC_HIDDEN;
 void x11_copy_to_screen(IWineD3DSwapChainImpl *This, const RECT *rc) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface,

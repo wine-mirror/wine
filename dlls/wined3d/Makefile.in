@@ -27,7 +27,6 @@ C_SRCS = \
 	surface_gdi.c \
 	swapchain.c \
 	swapchain_base.c \
-	swapchain_gdi.c \
 	texture.c \
 	utils.c \
 	vertexdeclaration.c \
