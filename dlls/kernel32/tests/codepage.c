@@ -356,7 +356,7 @@ static void test_string_conversion(LPBOOL bUsedDefaultChar)
 
 static void test_undefined_byte_char(void)
 {
-    struct tag_testset {
+    static const struct tag_testset {
         INT codepage;
         LPCSTR str;
         BOOL is_error;
