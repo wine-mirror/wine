@@ -44,9 +44,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 typedef struct
 {
-    IUniformResourceLocatorA uniformResourceLocatorA;
-    IUniformResourceLocatorW uniformResourceLocatorW;
-    IPersistFile persistFile;
+    IUniformResourceLocatorA IUniformResourceLocatorA_iface;
+    IUniformResourceLocatorW IUniformResourceLocatorW_iface;
+    IPersistFile IPersistFile_iface;
     IPropertySetStorage IPropertySetStorage_iface;
 
     LONG refCount;
@@ -61,17 +61,17 @@ typedef struct
 
 static inline InternetShortcut* impl_from_IUniformResourceLocatorA(IUniformResourceLocatorA *iface)
 {
-    return CONTAINING_RECORD(iface, InternetShortcut, uniformResourceLocatorA);
+    return CONTAINING_RECORD(iface, InternetShortcut, IUniformResourceLocatorA_iface);
 }
 
 static inline InternetShortcut* impl_from_IUniformResourceLocatorW(IUniformResourceLocatorW *iface)
 {
-    return CONTAINING_RECORD(iface, InternetShortcut, uniformResourceLocatorW);
+    return CONTAINING_RECORD(iface, InternetShortcut, IUniformResourceLocatorW_iface);
 }
 
 static inline InternetShortcut* impl_from_IPersistFile(IPersistFile *iface)
 {
-    return CONTAINING_RECORD(iface, InternetShortcut, persistFile);
+    return CONTAINING_RECORD(iface, InternetShortcut, IPersistFile_iface);
 }
 
 static inline InternetShortcut* impl_from_IPropertySetStorage(IPropertySetStorage *iface)
@@ -146,13 +146,13 @@ static HRESULT Unknown_QueryInterface(InternetShortcut *This, REFIID riid, PVOID
     TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppvObject);
     *ppvObject = NULL;
     if (IsEqualGUID(&IID_IUnknown, riid))
-        *ppvObject = &This->uniformResourceLocatorA;
+        *ppvObject = &This->IUniformResourceLocatorA_iface;
     else if (IsEqualGUID(&IID_IUniformResourceLocatorA, riid))
-        *ppvObject = &This->uniformResourceLocatorA;
+        *ppvObject = &This->IUniformResourceLocatorA_iface;
     else if (IsEqualGUID(&IID_IUniformResourceLocatorW, riid))
-        *ppvObject = &This->uniformResourceLocatorW;
+        *ppvObject = &This->IUniformResourceLocatorW_iface;
     else if (IsEqualGUID(&IID_IPersistFile, riid))
-        *ppvObject = &This->persistFile;
+        *ppvObject = &This->IPersistFile_iface;
     else if (IsEqualGUID(&IID_IPropertySetStorage, riid))
         *ppvObject = &This->IPropertySetStorage_iface;
     else if (IsEqualGUID(&IID_IShellLinkA, riid))
@@ -371,7 +371,7 @@ static HRESULT WINAPI UniformResourceLocatorA_InvokeCommand(IUniformResourceLoca
 
     wideCommandInfo.pcszVerb = wideVerb;
 
-    res = UniformResourceLocatorW_InvokeCommand(&This->uniformResourceLocatorW, &wideCommandInfo);
+    res = UniformResourceLocatorW_InvokeCommand(&This->IUniformResourceLocatorW_iface, &wideCommandInfo);
     heap_free(wideVerb);
 
     return res;
@@ -806,9 +806,9 @@ static InternetShortcut *create_shortcut(void)
         HRESULT hr;
         IPropertyStorage *dummy;
 
-        newshortcut->uniformResourceLocatorA.lpVtbl = &uniformResourceLocatorAVtbl;
-        newshortcut->uniformResourceLocatorW.lpVtbl = &uniformResourceLocatorWVtbl;
-        newshortcut->persistFile.lpVtbl = &persistFileVtbl;
+        newshortcut->IUniformResourceLocatorA_iface.lpVtbl = &uniformResourceLocatorAVtbl;
+        newshortcut->IUniformResourceLocatorW_iface.lpVtbl = &uniformResourceLocatorWVtbl;
+        newshortcut->IPersistFile_iface.lpVtbl = &persistFileVtbl;
         newshortcut->IPropertySetStorage_iface.lpVtbl = &propertySetStorageVtbl;
         newshortcut->refCount = 0;
         hr = StgCreateStorageEx(NULL, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, STGFMT_STORAGE, 0, NULL, NULL, &IID_IPropertySetStorage, (void **) &newshortcut->property_set_storage);
@@ -877,7 +877,7 @@ void WINAPI OpenURL(HWND hWnd, HINSTANCE hInst, LPCSTR lpcstrUrl, int nShowCmd)
         urlfilepath = heap_alloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpcstrUrl, -1, urlfilepath, len);
 
-        if(SUCCEEDED(IPersistFile_Load(&shortcut->persistFile, urlfilepath, 0)))
+        if(SUCCEEDED(IPersistFile_Load(&shortcut->IPersistFile_iface, urlfilepath, 0)))
         {
             URLINVOKECOMMANDINFOW ici;
 
@@ -886,7 +886,7 @@ void WINAPI OpenURL(HWND hWnd, HINSTANCE hInst, LPCSTR lpcstrUrl, int nShowCmd)
             ici.dwFlags = IURL_INVOKECOMMAND_FL_USE_DEFAULT_VERB;
             ici.hwndParent = hWnd;
 
-            if FAILED(UniformResourceLocatorW_InvokeCommand(&shortcut->uniformResourceLocatorW, (PURLINVOKECOMMANDINFOW) &ici))
+            if(FAILED(UniformResourceLocatorW_InvokeCommand(&shortcut->IUniformResourceLocatorW_iface, (PURLINVOKECOMMANDINFOW) &ici)))
                     TRACE("failed to open URL: %s\n", debugstr_a(lpcstrUrl));
         }
 
