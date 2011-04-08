@@ -10739,7 +10739,8 @@ msgid "Large"
 msgstr "Large"
 
 #: winhlp32.rc:54
-msgid "&Help on help"
+#, fuzzy
+msgid "&Help on help\tF1"
 msgstr "Pri Helpanto"
 
 #: winhlp32.rc:55

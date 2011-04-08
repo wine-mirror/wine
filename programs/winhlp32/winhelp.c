@@ -1347,7 +1347,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 
     case WM_COMMAND:
         win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
-        switch (wParam)
+        switch (LOWORD(wParam))
 	{
             /* Menu FILE */
 	case MNID_FILE_OPEN:    MACRO_FileOpen();       break;
@@ -1654,6 +1654,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     static CHAR         default_wndname[] = "main";
     LPSTR               wndname = default_wndname;
     WINHELP_DLL*        dll;
+    HACCEL              hAccel;
 
     Globals.hInstance = hInstance;
 
@@ -1725,10 +1726,15 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
                            WINHELP_GetWindowInfo(hlpfile, wndname), show);
 
     /* Message loop */
+    hAccel = LoadAcceleratorsW(hInstance, MAKEINTRESOURCEW(MAIN_ACCEL));
     while ((Globals.win_list || Globals.active_popup) && GetMessage(&msg, 0, 0, 0))
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        HWND hWnd = Globals.active_win ? Globals.active_win->hMainWnd : NULL;
+        if (!TranslateAcceleratorW(hWnd, hAccel, &msg))
+	{
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
     }
     for (dll = Globals.dlls; dll; dll = dll->next)
     {

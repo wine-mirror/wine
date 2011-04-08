@@ -10968,7 +10968,8 @@ msgid "Large"
 msgstr "Великий"
 
 #: winhlp32.rc:54
-msgid "&Help on help"
+#, fuzzy
+msgid "&Help on help\tF1"
 msgstr "&Використання Довідки"
 
 #: winhlp32.rc:55

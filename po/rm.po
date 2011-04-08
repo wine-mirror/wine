@@ -10490,7 +10490,7 @@ msgstr "Large"
 
 #: winhlp32.rc:54
 #, fuzzy
-msgid "&Help on help"
+msgid "&Help on help\tF1"
 msgstr "&Douvrar l'ag�d"
 
 #: winhlp32.rc:55

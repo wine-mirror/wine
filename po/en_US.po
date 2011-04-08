@@ -10935,8 +10935,8 @@ msgid "Large"
 msgstr "Large"
 
 #: winhlp32.rc:54
-msgid "&Help on help"
-msgstr "&Help on help"
+msgid "&Help on help\tF1"
+msgstr "&Help on help\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"

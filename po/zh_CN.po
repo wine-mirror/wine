@@ -10887,7 +10887,8 @@ msgid "Large"
 msgstr "大号"
 
 #: winhlp32.rc:54
-msgid "&Help on help"
+#, fuzzy
+msgid "&Help on help\tF1"
 msgstr "如何使用帮助(&H)"
 
 #: winhlp32.rc:55

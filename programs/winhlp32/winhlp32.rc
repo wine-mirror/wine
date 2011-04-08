@@ -51,7 +51,7 @@ MAIN_MENU MENU
   END
  }
  POPUP "&Help" {
-   MENUITEM "&Help on help", MNID_HELP_HELPON
+   MENUITEM "&Help on help\tF1", MNID_HELP_HELPON
    MENUITEM "Always on &top", MNID_HELP_HELPTOP
    MENUITEM SEPARATOR
    MENUITEM "&About Wine Help", MNID_HELP_ABOUT
@@ -93,6 +93,12 @@ STID_PSH_INDEX,		"Help topics: "
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+
+MAIN_ACCEL ACCELERATORS
+{
+    VK_F1, MNID_HELP_HELPON, VIRTKEY
+}
 
 /* @makedep: winhelp.ico */
 IDI_WINHELP ICON winhelp.ico
