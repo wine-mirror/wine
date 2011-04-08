@@ -44,6 +44,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
+typedef struct IKsPrivatePropertySetImpl
+{
+    IKsPropertySet IKsPropertySet_iface;
+    LONG ref;
+} IKsPrivatePropertySetImpl;
+
+static IKsPrivatePropertySetImpl *impl_from_IKsPropertySet(IKsPropertySet *iface)
+{
+    return CONTAINING_RECORD(iface, IKsPrivatePropertySetImpl, IKsPropertySet_iface);
+}
+
 /*******************************************************************************
  *              IKsPrivatePropertySet
  */
@@ -54,7 +65,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppobj )
 {
-    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
+    IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
@@ -69,7 +80,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QueryInterface(
 
 static ULONG WINAPI IKsPrivatePropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 {
-    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
+    IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
     ULONG ref = InterlockedIncrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
@@ -77,7 +88,7 @@ static ULONG WINAPI IKsPrivatePropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 
 static ULONG WINAPI IKsPrivatePropertySetImpl_Release(LPKSPROPERTYSET iface)
 {
-    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
+    IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
     ULONG ref = InterlockedDecrement(&(This->ref));
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
@@ -514,7 +525,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_Get(
     ULONG cbPropData,
     PULONG pcbReturned )
 {
-    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
+    IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
     TRACE("(iface=%p,guidPropSet=%s,dwPropID=%d,pInstanceData=%p,cbInstanceData=%d,pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
           This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData,pcbReturned);
 
@@ -561,7 +572,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_Set(
     LPVOID pPropData,
     ULONG cbPropData )
 {
-    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
+    IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
 
     FIXME("(%p,%s,%d,%p,%d,%p,%d), stub!\n",This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData);
     return E_PROP_ID_UNSUPPORTED;
@@ -573,7 +584,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QuerySupport(
     ULONG dwPropID,
     PULONG pTypeSupport )
 {
-    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
+    IKsPrivatePropertySetImpl *This = impl_from_IKsPropertySet(iface);
     TRACE("(%p,%s,%d,%p)\n",This,debugstr_guid(guidPropSet),dwPropID,pTypeSupport);
 
     if ( IsEqualGUID( &DSPROPSETID_DirectSoundDevice, guidPropSet) ) {
@@ -624,7 +635,7 @@ static const IKsPropertySetVtbl ikspvt = {
 
 HRESULT IKsPrivatePropertySetImpl_Create(
     REFIID riid,
-    IKsPrivatePropertySetImpl **piks)
+    IKsPropertySet **piks)
 {
     IKsPrivatePropertySetImpl *iks;
     TRACE("(%s, %p)\n", debugstr_guid(riid), piks);
@@ -637,8 +648,8 @@ HRESULT IKsPrivatePropertySetImpl_Create(
 
     iks = HeapAlloc(GetProcessHeap(),0,sizeof(*iks));
     iks->ref = 1;
-    iks->lpVtbl = &ikspvt;
+    iks->IKsPropertySet_iface.lpVtbl = &ikspvt;
 
-    *piks = iks;
+    *piks = &iks->IKsPropertySet_iface;
     return S_OK;
 }

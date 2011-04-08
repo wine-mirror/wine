@@ -57,7 +57,6 @@ typedef struct IDirectSoundCaptureNotifyImpl IDirectSoundCaptureNotifyImpl;
 typedef struct IDirectSound3DListenerImpl    IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl      IDirectSound3DBufferImpl;
 typedef struct IKsBufferPropertySetImpl      IKsBufferPropertySetImpl;
-typedef struct IKsPrivatePropertySetImpl     IKsPrivatePropertySetImpl;
 typedef struct PrimaryBufferImpl             PrimaryBufferImpl;
 typedef struct SecondaryBufferImpl           SecondaryBufferImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
@@ -329,19 +328,7 @@ HRESULT IKsBufferPropertySetImpl_Create(
 HRESULT IKsBufferPropertySetImpl_Destroy(
     IKsBufferPropertySetImpl *piks);
 
-/*****************************************************************************
- *  IKsPrivatePropertySet implementation structure
- */
-struct IKsPrivatePropertySetImpl
-{
-    /* IUnknown fields */
-    const IKsPropertySetVtbl   *lpVtbl;
-    LONG 			ref;
-};
-
-HRESULT IKsPrivatePropertySetImpl_Create(
-    REFIID riid,
-    IKsPrivatePropertySetImpl **piks);
+HRESULT IKsPrivatePropertySetImpl_Create(REFIID riid, IKsPropertySet **piks);
 
 /*****************************************************************************
  * IDirectSound3DBuffer implementation structure
