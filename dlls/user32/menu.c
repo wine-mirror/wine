@@ -784,8 +784,8 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu,
 	}
 	menuchar = SendMessageW( hwndOwner, WM_MENUCHAR,
                                  MAKEWPARAM( key, menu->wFlags ), (LPARAM)hmenu );
-	if (HIWORD(menuchar) == 2) return LOWORD(menuchar);
-	if (HIWORD(menuchar) == 1) return (UINT)(-2);
+	if (HIWORD(menuchar) == MNC_EXECUTE) return LOWORD(menuchar);
+	if (HIWORD(menuchar) == MNC_CLOSE) return (UINT)(-2);
     }
     return (UINT)(-1);
 }
