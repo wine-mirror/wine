@@ -3,11 +3,11 @@ Signature="$CHICAGO$"
 
 
 [RegisterDll]
-AddReg=Classes.Reg, URL.Reg
+AddReg=Classes.Reg
 
 
 [UnregisterDll]
-DelReg=Classes.Reg, URL.Reg
+DelReg=Classes.Reg
 
 
 [RegisterIE]
@@ -29,23 +29,6 @@ HKCR,"CLSID\%CLSID_Internet%\Shell",,,"OpenHomePage"
 HKCR,"CLSID\%CLSID_Internet%\Shell\OpenHomePage",,,"Open &Home Page"
 HKCR,"CLSID\%CLSID_Internet%\Shell\OpenHomePage\Command",,,"""%16422%\Internet Explorer\iexplore.exe"""
 HKCR,"CLSID\%CLSID_Internet%\ShellFolder",,2,"0x24"
-
-HKCR,"CLSID\%CLSID_InternetShortcut%\shellex\MayChangeDefaultMenu",,16
-HKCR,"InternetShortcut","EditFlags",2,"2"
-HKCR,"InternetShortcut","IsShortcut",,
-HKCR,"InternetShortcut","NeverShowExt",,
-HKCR,"InternetShortcut\DefaultIcon",,,"url.dll,0"
-HKCR,"InternetShortcut\shell\open\command",,,"rundll32.exe shdocvw.dll,OpenURL %l"
-HKCR,"InternetShortcut\shell\print\command",,,"rundll32.exe mshtml.dll,PrintHTML ""%1"""
-HKCR,"InternetShortcut\shell\printto\command",,,"rundll32.exe mshtml.dll,PrintHTML ""%1"" ""%2"" ""%3"" ""%4"""
-
-[URL.Reg]
-HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\DefaultPrefix",,,"http://"
-HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","ftp",,"ftp://"
-HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","gopher",,"gopher://"
-HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","home",,"http://"
-HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","mosaic",,"http://"
-HKLM,"Software\Microsoft\Windows\CurrentVersion\URL\Prefixes","www",,"http://"
 
 
 [Settings.Reg]
