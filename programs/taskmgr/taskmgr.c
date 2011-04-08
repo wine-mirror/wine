@@ -770,6 +770,7 @@ LPWSTR GetLastErrorText(LPWSTR lpwszBuf, DWORD dwSize)
 static INT_PTR CALLBACK
 TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    static const WCHAR wszTaskmgr[] = {'t','a','s','k','m','g','r',0};
     HDC             hdc;
     PAINTSTRUCT     ps;
     LPRECT          pRC;
@@ -903,6 +904,9 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         case ID_PROCESS_PAGE_DEBUGCHANNELS:
             ProcessPage_OnDebugChannels();
+            break;
+        case ID_HELP_TOPICS:
+            WinHelpW(hDlg, wszTaskmgr, HELP_FINDER, 0);
             break;
         case ID_HELP_ABOUT:
             OnAbout();
