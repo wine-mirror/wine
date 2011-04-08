@@ -1937,9 +1937,9 @@ static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_
             const struct wined3d_gl_info *gl_info = context->gl_info;
             unsigned int i;
 
-            for (i = 0; i < gl_info->limits.buffers; ++i)
+            for (i = 0; i < rt_count; ++i)
             {
-                if (i < rt_count && rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL)
+                if (rts[i] && rts[i]->resource.format->id != WINED3DFMT_NULL)
                     context->draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
                 else
                     context->draw_buffers[i] = GL_NONE;
@@ -1947,7 +1947,7 @@ static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_
 
             if (gl_info->supported[ARB_DRAW_BUFFERS])
             {
-                GL_EXTCALL(glDrawBuffersARB(gl_info->limits.buffers, context->draw_buffers));
+                GL_EXTCALL(glDrawBuffersARB(rt_count, context->draw_buffers));
                 checkGLcall("glDrawBuffers()");
             }
             else
