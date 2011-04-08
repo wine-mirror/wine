@@ -2628,15 +2628,17 @@ HRESULT WINAPI OleDoAutoConvert(LPSTORAGE pStg, LPCLSID pClsidNew)
 /******************************************************************************
  *              OleIsRunning        [OLE32.@]
  */
-BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
+BOOL WINAPI OleIsRunning(LPOLEOBJECT object)
 {
     IRunnableObject *pRunnable;
     HRESULT hr;
     BOOL running;
 
-    TRACE("(%p)\n", pObject);
+    TRACE("(%p)\n", object);
 
-    hr = IOleObject_QueryInterface(pObject, &IID_IRunnableObject, (void **)&pRunnable);
+    if (!object) return FALSE;
+
+    hr = IOleObject_QueryInterface(object, &IID_IRunnableObject, (void **)&pRunnable);
     if (FAILED(hr))
         return TRUE;
     running = IRunnableObject_IsRunning(pRunnable);
