@@ -299,7 +299,7 @@ static void context_attach_surface_fbo(const struct wined3d_context *context,
 }
 
 /* GL locking is done by the caller */
-static void context_check_fbo_status(struct wined3d_context *context, GLenum target)
+void context_check_fbo_status(struct wined3d_context *context, GLenum target)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum status;
@@ -499,8 +499,6 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
         context->current_fbo = NULL;
         context_bind_fbo(context, target, NULL);
     }
-
-    context_check_fbo_status(context, target);
 }
 
 /* GL locking is done by the caller */
@@ -2056,6 +2054,13 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
             context->draw_buffer_dirty = FALSE;
     }
 
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        ENTER_GL();
+        context_check_fbo_status(context, GL_FRAMEBUFFER);
+        LEAVE_GL();
+    }
+
     SetupForBlit(device, context);
 }
 
@@ -2118,6 +2123,13 @@ BOOL context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
 
     context_apply_draw_buffers(context, rt_count, rts);
     context->draw_buffer_dirty = TRUE;
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        ENTER_GL();
+        context_check_fbo_status(context, GL_FRAMEBUFFER);
+        LEAVE_GL();
+    }
 
     if (context->last_was_blit)
     {
@@ -2184,6 +2196,13 @@ BOOL context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
     {
         context_apply_draw_buffers(context, context->gl_info->limits.buffers, device->render_targets);
         context->draw_buffer_dirty = FALSE;
+    }
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        ENTER_GL();
+        context_check_fbo_status(context, GL_FRAMEBUFFER);
+        LEAVE_GL();
     }
 
     if (context->last_was_blit)

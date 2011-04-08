@@ -3416,6 +3416,7 @@ static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILT
         glReadBuffer(GL_COLOR_ATTACHMENT0);
         checkGLcall("glReadBuffer()");
     }
+    context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
     LEAVE_GL();
 
     if (dst_location == SFLAG_INDRAWABLE)
@@ -3438,6 +3439,7 @@ static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILT
         context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, dst_surface, NULL, dst_location);
         context_set_draw_buffer(context, GL_COLOR_ATTACHMENT0);
     }
+    context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
 
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
@@ -3516,9 +3518,11 @@ static void wined3d_surface_depth_blt_fbo(IWineD3DDeviceImpl *device, IWineD3DSu
     context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, NULL, src_surface, SFLAG_INTEXTURE);
     glReadBuffer(GL_NONE);
     checkGLcall("glReadBuffer()");
+    context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
 
     context_apply_fbo_state_blit(context, GL_DRAW_FRAMEBUFFER, NULL, dst_surface, SFLAG_INTEXTURE);
     context_set_draw_buffer(context, GL_NONE);
+    context_check_fbo_status(context, GL_DRAW_FRAMEBUFFER);
 
     if (gl_mask & GL_DEPTH_BUFFER_BIT)
     {

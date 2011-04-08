@@ -302,6 +302,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         ENTER_GL();
         context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, backbuffer, NULL, SFLAG_INTEXTURE);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
+        context_check_fbo_status(context, GL_READ_FRAMEBUFFER);
 
         context_bind_fbo(context, GL_DRAW_FRAMEBUFFER, NULL);
         context_set_draw_buffer(context, GL_BACK);
