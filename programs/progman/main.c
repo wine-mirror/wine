@@ -180,8 +180,8 @@ static LRESULT CALLBACK MAIN_MainWndProc(HWND hWnd, UINT msg,
       break;
 
     case WM_COMMAND:
-      if (wParam < PM_FIRST_CHILD){
-	MAIN_MenuCommand(hWnd, wParam, lParam);
+      if (LOWORD(wParam) < PM_FIRST_CHILD){
+	MAIN_MenuCommand(hWnd, LOWORD(wParam), lParam);
       }
       break;
 
