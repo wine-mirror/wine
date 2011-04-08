@@ -4939,14 +4939,10 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
             BYTE *src = ft_face->glyph->bitmap.buffer, *dst = buf;
             INT h = ft_face->glyph->bitmap.rows;
             INT x;
+            memset( buf, 0, needed );
             while(h--) {
-                for(x = 0; x < pitch; x++)
-                {
-                    if(x < ft_face->glyph->bitmap.width)
-                        dst[x] = (src[x / 8] & (1 << ( (7 - (x % 8))))) ? 0xff : 0;
-                    else
-                        dst[x] = 0;
-                }
+                for(x = 0; x < pitch && x < ft_face->glyph->bitmap.width; x++)
+                    if (src[x / 8] & (1 << ( (7 - (x % 8))))) dst[x] = 0xff;
                 src += ft_face->glyph->bitmap.pitch;
                 dst += pitch;
             }
@@ -5025,9 +5021,10 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
             src = ft_face->glyph->bitmap.buffer;
             src_pitch = ft_face->glyph->bitmap.pitch;
 
+            height = min( height, ft_face->glyph->bitmap.rows );
             while ( height-- )
             {
-                for (x = 0; x < width; x++)
+                for (x = 0; x < width && x < ft_face->glyph->bitmap.width; x++)
                 {
                     if ( src[x / 8] & (1 << ( (7 - (x % 8)))) )
                         ((unsigned int *)dst)[x] = ~0u;
