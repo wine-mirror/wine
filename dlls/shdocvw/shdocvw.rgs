@@ -60,4 +60,5 @@ HKCR
             }
         }
     }
+    ForceRemove '.url' = s 'InternetShortcut'
 }
