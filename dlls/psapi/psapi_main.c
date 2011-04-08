@@ -494,27 +494,6 @@ BOOL WINAPI GetPerformanceInfo( PPERFORMANCE_INFORMATION info, DWORD size )
 }
 
 /***********************************************************************
- *           GetProcessImageFileNameA (PSAPI.@)
- */
-DWORD WINAPI GetProcessImageFileNameA( HANDLE process, LPSTR file, DWORD size )
-{
-    FIXME("(%p, %p, %d) stub\n", process, file, size );
-    return 0;
-}
-
-/***********************************************************************
- *           GetProcessImageFileNameW (PSAPI.@)
- */
-DWORD WINAPI GetProcessImageFileNameW( HANDLE process, LPWSTR file, DWORD size )
-{
-    BOOL success = QueryFullProcessImageNameW(process, PROCESS_NAME_NATIVE, file, &size);
-    if (success)
-        return size;
-    else
-        return 0;
-}
-
-/***********************************************************************
  *           GetProcessMemoryInfo (PSAPI.@)
  *
  * Retrieve memory usage information for a given process

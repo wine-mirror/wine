@@ -16,8 +16,8 @@
 @ stdcall GetModuleFileNameExW(long long ptr long)
 @ stdcall GetModuleInformation(long long ptr long)
 @ stdcall GetPerformanceInfo(ptr long)
-@ stdcall GetProcessImageFileNameA(long ptr long)
-@ stdcall GetProcessImageFileNameW(long ptr long)
+@ stdcall GetProcessImageFileNameA(long ptr long) kernel32.K32GetProcessImageFileNameA
+@ stdcall GetProcessImageFileNameW(long ptr long) kernel32.K32GetProcessImageFileNameW
 @ stdcall GetProcessMemoryInfo(long ptr long)
 @ stdcall GetWsChanges(long ptr long)
 @ stdcall InitializeProcessForWsWatch(long)

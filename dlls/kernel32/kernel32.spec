@@ -767,6 +767,8 @@
 @ stdcall IsValidLocale(long long)
 # @ stub IsValidUILanguage
 @ stdcall IsWow64Process(ptr ptr)
+@ stdcall K32GetProcessImageFileNameA(long ptr long)
+@ stdcall K32GetProcessImageFileNameW(long ptr long)
 @ stdcall -i386 -private -register K32Thk1632Epilog() krnl386.exe16.K32Thk1632Epilog
 @ stdcall -i386 -private -register K32Thk1632Prolog() krnl386.exe16.K32Thk1632Prolog
 @ stdcall LCIDToLocaleName(long ptr long long)

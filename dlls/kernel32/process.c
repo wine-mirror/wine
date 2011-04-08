@@ -3439,6 +3439,23 @@ cleanup:
 }
 
 /***********************************************************************
+ *           K32GetProcessImageFileNameA (KERNEL32.@)
+ */
+DWORD WINAPI K32GetProcessImageFileNameA( HANDLE process, LPSTR file, DWORD size )
+{
+    FIXME("(%p, %p, %d) stub\n", process, file, size );
+    return 0;
+}
+
+/***********************************************************************
+ *           K32GetProcessImageFileNameW (KERNEL32.@)
+ */
+DWORD WINAPI K32GetProcessImageFileNameW( HANDLE process, LPWSTR file, DWORD size )
+{
+    return QueryFullProcessImageNameW(process, PROCESS_NAME_NATIVE, file, &size) ? size : 0;
+}
+
+/***********************************************************************
  * ProcessIdToSessionId   (KERNEL32.@)
  * This function is available on Terminal Server 4SP4 and Windows 2000
  */
