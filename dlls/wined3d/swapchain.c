@@ -1043,15 +1043,6 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
         displaymode_set = TRUE;
     }
 
-    swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(swapchain->context));
-    if (!swapchain->context)
-    {
-        ERR("Failed to create the context array.\n");
-        hr = E_OUTOFMEMORY;
-        goto err;
-    }
-    swapchain->num_contexts = 1;
-
     if (surface_type == SURFACE_OPENGL)
     {
         static const enum wined3d_format_id formats[] =
@@ -1064,6 +1055,15 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
         };
 
         const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+
+        swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(swapchain->context));
+        if (!swapchain->context)
+        {
+            ERR("Failed to create the context array.\n");
+            hr = E_OUTOFMEMORY;
+            goto err;
+        }
+        swapchain->num_contexts = 1;
 
         /* In WGL both color, depth and stencil are features of a pixel format. In case of D3D they are separate.
          * You are able to add a depth + stencil surface at a later stage when you need it.
@@ -1098,10 +1098,6 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
             FIXME("Add OpenGL context recreation support to context_validate_onscreen_formats\n");
         }
         context_release(swapchain->context[0]);
-    }
-    else
-    {
-        swapchain->context[0] = NULL;
     }
 
     if (swapchain->presentParms.BackBufferCount > 0)
