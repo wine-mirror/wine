@@ -254,7 +254,7 @@ typedef struct
     IUnknown IUnknown_iface;
 } testsite_t;
 
-static testsite_t testsite = { .IUnknown_iface.lpVtbl = &testsiteVtbl };
+static testsite_t testsite = { { &testsiteVtbl } };
 
 /* test IHTMLElementCollection */
 static HRESULT WINAPI htmlecoll_QueryInterface(IHTMLElementCollection *iface, REFIID riid, void **ppvObject)
@@ -361,7 +361,7 @@ typedef struct
     IHTMLElementCollection IHTMLElementCollection_iface;
 } testhtmlecoll_t;
 
-static testhtmlecoll_t htmlecoll = { .IHTMLElementCollection_iface.lpVtbl = &TestHTMLECollectionVtbl };
+static testhtmlecoll_t htmlecoll = { { &TestHTMLECollectionVtbl } };
 
 /* test IHTMLDocument2 */
 static HRESULT WINAPI htmldoc2_QueryInterface(IHTMLDocument2 *iface, REFIID riid, void **ppvObject)
@@ -1203,7 +1203,7 @@ typedef struct
     IHTMLDocument2 IHTMLDocument2_iface;
 } testhtmldoc2_t;
 
-static testhtmldoc2_t htmldoc2 = { .IHTMLDocument2_iface.lpVtbl = &TestHTMLDocumentVtbl };
+static testhtmldoc2_t htmldoc2 = { { &TestHTMLDocumentVtbl } };
 
 static HRESULT WINAPI sp_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppvObject)
 {
@@ -1282,7 +1282,7 @@ static const IServiceProviderVtbl testprovVtbl =
     sp_QueryService
 };
 
-testprov_t testprov = { .IServiceProvider_iface.lpVtbl = &testprovVtbl };
+testprov_t testprov = { { &testprovVtbl } };
 
 #define EXPECT_CHILDREN(node) _expect_children((IXMLDOMNode*)node, __LINE__)
 static void _expect_children(IXMLDOMNode *node, int line)
