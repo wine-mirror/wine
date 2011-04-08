@@ -67,7 +67,7 @@ struct FlagTableEntry {
 
 static const char menuName[]   = "CmdlgtstMenu";
 static const char className[]  = "CmdlgtstClass";
-static const char windowName[] = "Cmdlgtst Window";
+static const char windowName[] = "Common Dialog Test";
 
 /*
  * global hInstance variable.  This makes the code non-threadable,
