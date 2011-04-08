@@ -89,17 +89,17 @@ static void test_Aggregability(void)
     IUnknown *pUnknown = NULL;
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUnknown, (void**)&pUnknown);
-    ok(SUCCEEDED(hr), "could not create instance of CLSID_InternetShortcut with IID_IUnknown, hr = 0x%x\n", hr);
+    ok(hr == S_OK, "could not create instance of CLSID_InternetShortcut with IID_IUnknown, hr = 0x%x\n", hr);
     if (pUnknown)
         IUnknown_Release(pUnknown);
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&pUnknown);
-    ok(SUCCEEDED(hr), "could not create instance of CLSID_InternetShortcut with IID_IUniformResourceLocatorA, hr = 0x%x\n", hr);
+    ok(hr == S_OK, "could not create instance of CLSID_InternetShortcut with IID_IUniformResourceLocatorA, hr = 0x%x\n", hr);
     if (pUnknown)
         IUnknown_Release(pUnknown);
 
     hr = CoCreateInstance(&CLSID_InternetShortcut, &unknown, CLSCTX_ALL, &IID_IUnknown, (void**)&pUnknown);
-    ok(FAILED(hr), "aggregation didn't fail like it should, hr = 0x%x\n", hr);
+    ok(hr == CLASS_E_NOAGGREGATION, "aggregation didn't fail like it should, hr = 0x%x\n", hr);
     if (pUnknown)
         IUnknown_Release(pUnknown);
 }
@@ -109,7 +109,7 @@ static void can_query_interface(IUnknown *pUnknown, REFIID riid)
     HRESULT hr;
     IUnknown *newInterface;
     hr = IUnknown_QueryInterface(pUnknown, riid, (void**)&newInterface);
-    ok(SUCCEEDED(hr), "interface %s could not be queried\n", printGUID(riid));
+    ok(hr == S_OK, "interface %s could not be queried\n", printGUID(riid));
     if (SUCCEEDED(hr))
         IUnknown_Release(newInterface);
 }
@@ -128,32 +128,36 @@ static void test_QueryInterface(void)
     IUnknown_Release(pUnknown);
 }
 
-static CHAR *set_and_get_url(IUniformResourceLocatorA *urlA, LPCSTR input, DWORD flags)
+#define check_string_transform(a,b,c,d,e) _check_string_transform(__LINE__,a,b,c,d,e)
+static void _check_string_transform(unsigned line, IUniformResourceLocatorA *urlA, LPCSTR input, DWORD flags,
+        LPCSTR expectedOutput, BOOL is_todo)
 {
+    CHAR *output;
     HRESULT hr;
-    hr = urlA->lpVtbl->SetURL(urlA, input, flags);
-    if (SUCCEEDED(hr))
-    {
-        CHAR *output;
-        hr = urlA->lpVtbl->GetURL(urlA, &output);
-        if (SUCCEEDED(hr))
-            return output;
-        else
-            skip("GetUrl failed, hr=0x%x\n", hr);
-    }
-    else
-        skip("SetUrl (%s, 0x%x) failed, hr=0x%x\n", input, flags, hr);
-    return NULL;
-}
 
-static void check_string_transform(IUniformResourceLocatorA *urlA, LPCSTR input, DWORD flags, LPCSTR expectedOutput)
-{
-    CHAR *output = set_and_get_url(urlA, input, flags);
-    if (output != NULL)
-    {
-        ok(lstrcmpA(output, expectedOutput) == 0, "unexpected URL change %s -> %s (expected %s)\n",
+    hr = urlA->lpVtbl->SetURL(urlA, input, flags);
+    ok_(__FILE__,line)(hr == S_OK, "SetUrl failed, hr=0x%x\n", hr);
+    if (FAILED(hr))
+        return;
+
+    output = (void*)0xdeadbeef;
+    hr = urlA->lpVtbl->GetURL(urlA, &output);
+    if(expectedOutput) {
+        if(is_todo) {
+            todo_wine
+            ok_(__FILE__,line)(hr == S_OK, "GetUrl failed, hr=0x%x\n", hr);
+        }else {
+            ok_(__FILE__,line)(hr == S_OK, "GetUrl failed, hr=0x%x\n", hr);
+        }
+        todo_wine
+        ok_(__FILE__,line)(!lstrcmpA(output, expectedOutput), "unexpected URL change %s -> %s (expected %s)\n",
             input, output, expectedOutput);
         CoTaskMemFree(output);
+    }else {
+        todo_wine
+        ok_(__FILE__,line)(hr == S_FALSE, "GetUrl failed, hr=0x%x\n", hr);
+        todo_wine
+        ok_(__FILE__,line)(!output, "GetUrl returned %s\n", output);
     }
 }
 
@@ -297,14 +301,14 @@ static void test_NullURLs(void)
     ok(hr == S_OK, "Could not create InternetShortcut object: %08x\n", hr);
 
     hr = urlA->lpVtbl->GetURL(urlA, &url);
-    ok(SUCCEEDED(hr), "getting uninitialized URL unexpectedly failed, hr=0x%x\n", hr);
+    ok(hr == S_FALSE, "getting uninitialized URL unexpectedly failed, hr=0x%x\n", hr);
     ok(url == NULL, "uninitialized URL is not NULL but %s\n", url);
 
     hr = urlA->lpVtbl->SetURL(urlA, NULL, 0);
-    ok(SUCCEEDED(hr), "setting NULL URL unexpectedly failed, hr=0x%x\n", hr);
+    ok(hr == S_OK, "setting NULL URL unexpectedly failed, hr=0x%x\n", hr);
 
     hr = urlA->lpVtbl->GetURL(urlA, &url);
-    ok(SUCCEEDED(hr), "getting NULL URL unexpectedly failed, hr=0x%x\n", hr);
+    ok(hr == S_FALSE, "getting NULL URL unexpectedly failed, hr=0x%x\n", hr);
     ok(url == NULL, "URL unexpectedly not NULL but %s\n", url);
 
     urlA->lpVtbl->Release(urlA);
@@ -318,13 +322,11 @@ static void test_SetURLFlags(void)
     hr = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IUniformResourceLocatorA, (void**)&urlA);
     ok(hr == S_OK, "Could not create InternetShortcut object: %08x\n", hr);
 
-    check_string_transform(urlA, "somerandomstring", 0, "somerandomstring");
-    check_string_transform(urlA, "www.winehq.org", 0, "www.winehq.org");
+    check_string_transform(urlA, "somerandomstring", 0, NULL, TRUE);
+    check_string_transform(urlA, "www.winehq.org", 0, NULL, TRUE);
 
-    todo_wine
-    check_string_transform(urlA, "www.winehq.org", IURL_SETURL_FL_GUESS_PROTOCOL, "http://www.winehq.org/");
-    todo_wine
-    check_string_transform(urlA, "ftp.winehq.org", IURL_SETURL_FL_GUESS_PROTOCOL, "ftp://ftp.winehq.org/");
+    check_string_transform(urlA, "www.winehq.org", IURL_SETURL_FL_GUESS_PROTOCOL, "http://www.winehq.org/", FALSE);
+    check_string_transform(urlA, "ftp.winehq.org", IURL_SETURL_FL_GUESS_PROTOCOL, "ftp://ftp.winehq.org/", FALSE);
 
     urlA->lpVtbl->Release(urlA);
 }

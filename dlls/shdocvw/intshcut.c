@@ -238,18 +238,20 @@ static HRESULT WINAPI UniformResourceLocatorW_SetUrl(IUniformResourceLocatorW *u
 
 static HRESULT WINAPI UniformResourceLocatorW_GetUrl(IUniformResourceLocatorW *url, LPWSTR *ppszURL)
 {
-    HRESULT hr = S_OK;
     InternetShortcut *This = impl_from_IUniformResourceLocatorW(url);
+
     TRACE("(%p, %p)\n", url, ppszURL);
-    if (This->url == NULL)
+
+    if (!This->url) {
         *ppszURL = NULL;
-    else
-    {
-        *ppszURL = co_strdupW(This->url);
-        if (*ppszURL == NULL)
-            hr = E_OUTOFMEMORY;
+        return S_FALSE;
     }
-    return hr;
+
+    *ppszURL = co_strdupW(This->url);
+    if (!*ppszURL)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI UniformResourceLocatorW_InvokeCommand(IUniformResourceLocatorW *url, PURLINVOKECOMMANDINFOW pCommandInfo)
@@ -339,18 +341,21 @@ static HRESULT WINAPI UniformResourceLocatorA_SetUrl(IUniformResourceLocatorA *u
 
 static HRESULT WINAPI UniformResourceLocatorA_GetUrl(IUniformResourceLocatorA *url, LPSTR *ppszURL)
 {
-    HRESULT hr = S_OK;
     InternetShortcut *This = impl_from_IUniformResourceLocatorA(url);
+
     TRACE("(%p, %p)\n", url, ppszURL);
-    if (This->url == NULL)
+
+    if (!This->url) {
         *ppszURL = NULL;
-    else
-    {
-        *ppszURL = co_strdupWtoA(This->url);
-        if (*ppszURL == NULL)
-            hr = E_OUTOFMEMORY;
+        return S_FALSE;
+
     }
-    return hr;
+
+    *ppszURL = co_strdupWtoA(This->url);
+    if (!*ppszURL)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI UniformResourceLocatorA_InvokeCommand(IUniformResourceLocatorA *url, PURLINVOKECOMMANDINFOA pCommandInfo)
