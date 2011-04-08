@@ -1921,25 +1921,33 @@ static nsresult NSAPI nsURI_GetHost(nsIURL *iface, nsACString *aHost)
 
     TRACE("(%p)->(%p)\n", This, aHost);
 
-    if(This->nsuri)
-        return nsIURI_GetHost(This->nsuri, aHost);
-
     return get_uri_string(This, Uri_PROPERTY_HOST, aHost);
 }
 
 static nsresult NSAPI nsURI_SetHost(nsIURL *iface, const nsACString *aHost)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
+    const char *hosta;
+    WCHAR *host;
+    HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aHost));
 
-    if(This->nsuri) {
-        invalidate_uri(This);
-        return nsIURI_SetHost(This->nsuri, aHost);
-    }
+    if(!ensure_uri_builder(This))
+        return NS_ERROR_UNEXPECTED;
 
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsACString_GetData(aHost, &hosta);
+    host = heap_strdupAtoW(hosta);
+    if(!host)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    hres = IUriBuilder_SetHost(This->uri_builder, host);
+    heap_free(host);
+    if(FAILED(hres))
+        return NS_ERROR_UNEXPECTED;
+
+    sync_wine_url(This);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_GetPort(nsIURL *iface, PRInt32 *aPort)
