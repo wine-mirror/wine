@@ -1915,7 +1915,14 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
 /* Context activation is done by the caller. */
 static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_count, IWineD3DSurfaceImpl **rts)
 {
-    if (rt_count && !surface_is_offscreen(rts[0]))
+    if (!rt_count)
+    {
+        ENTER_GL();
+        glDrawBuffer(GL_NONE);
+        checkGLcall("glDrawBuffer()");
+        LEAVE_GL();
+    }
+    else if (!surface_is_offscreen(rts[0]))
     {
         ENTER_GL();
         glDrawBuffer(surface_get_gl_buffer(rts[0]));
@@ -1951,7 +1958,7 @@ static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_
         }
         else
         {
-            glDrawBuffer(rt_count ? rts[0]->resource.device->offscreenBuffer : GL_NONE);
+            glDrawBuffer(rts[0]->resource.device->offscreenBuffer);
             checkGLcall("glDrawBuffer()");
         }
         LEAVE_GL();
