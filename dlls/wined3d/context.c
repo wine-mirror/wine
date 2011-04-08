@@ -2105,6 +2105,8 @@ BOOL context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
                 ++i;
             }
             context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, depth_stencil, SFLAG_INTEXTURE);
+            glReadBuffer(GL_NONE);
+            checkGLcall("glReadBuffer");
         }
         else
         {
@@ -2172,6 +2174,8 @@ BOOL context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
             ENTER_GL();
             context_apply_fbo_state(context, GL_FRAMEBUFFER, device->render_targets,
                     device->depth_stencil, SFLAG_INTEXTURE);
+            glReadBuffer(GL_NONE);
+            checkGLcall("glReadBuffer");
             LEAVE_GL();
         }
     }
