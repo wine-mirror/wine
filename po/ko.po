@@ -10896,9 +10896,8 @@ msgid "Large"
 msgstr "크게"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "도움말 사용법(&H)"
+msgstr "도움말 사용법(&H)\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
