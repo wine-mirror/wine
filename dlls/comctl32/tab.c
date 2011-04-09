@@ -2500,7 +2500,7 @@ static void TAB_EnsureSelectionVisible(
 
   if (infoPtr->leftmostVisible >= iSelected)
   {
-    infoPtr->leftmostVisible = iSelected;
+    if (iSelected >= 0) infoPtr->leftmostVisible = iSelected;
   }
   else
   {

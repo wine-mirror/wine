@@ -1052,6 +1052,9 @@ static void test_insert_focus(HWND parent_wnd)
     hTab = createFilledTabControl(parent_wnd, TCS_FIXEDWIDTH, mask, 0);
     ok(hTab != NULL, "Failed to create tab control\n");
 
+    r = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
+    expect(-1, r);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     nTabsRetrieved = SendMessage(hTab, TCM_GETITEMCOUNT, 0, 0);
