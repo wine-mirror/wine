@@ -25,7 +25,15 @@
 static unsigned be_sparc_get_addr(HANDLE hThread, const CONTEXT* ctx,
                                  enum be_cpu_addr bca, ADDRESS64* addr)
 {
-    dbg_printf("not done for Sparc\n");
+    switch (bca)
+    {
+    case be_cpu_addr_pc:
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->pc);
+    case be_cpu_addr_stack:
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->o6);
+    case be_cpu_addr_frame:
+        return be_cpu_build_addr(hThread, ctx, addr, 0, ctx->i6);
+    }
     return FALSE;
 }
 
