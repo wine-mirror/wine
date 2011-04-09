@@ -800,8 +800,36 @@ static void test_CertStrToNameA(void)
      "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=1+2", 0, NULL, buf,
      &size, NULL);
-    todo_wine ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
      "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+    ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=1+2", CERT_NAME_STR_NO_PLUS_FLAG, NULL, buf,
+                          &size, NULL);
+    ok(ret && GetLastError() == ERROR_SUCCESS,
+                 "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
+    ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=1,2", CERT_NAME_STR_NO_QUOTING_FLAG, NULL, buf,
+                          &size, NULL);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+                 "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+    ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=\"1,2;3,4\"", CERT_NAME_STR_NO_QUOTING_FLAG, NULL, buf,
+                          &size, NULL);
+    ok(!ret && GetLastError() == CRYPT_E_INVALID_X500_STRING,
+                 "Expected CRYPT_E_INVALID_X500_STRING, got %08x\n", GetLastError());
+    ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=abc", 0, NULL, buf,
+                          &size, NULL);
+    ok(ret && GetLastError() == ERROR_SUCCESS,
+                 "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
+    ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=abc", CERT_NAME_STR_NO_QUOTING_FLAG, NULL, buf,
+                          &size, NULL);
+    ok(ret && GetLastError() == ERROR_SUCCESS,
+                 "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
+    ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=\"abc\"", 0, NULL, buf,
+                          &size, NULL);
+    ok(ret && GetLastError() == ERROR_SUCCESS,
+                 "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
+    ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=\"abc\"", CERT_NAME_STR_NO_QUOTING_FLAG, NULL, buf,
+                          &size, NULL);
+    todo_wine ok(!ret && GetLastError() == ERROR_MORE_DATA,
+                 "Expected ERROR_MORE_DATA, got %08x\n", GetLastError());
     for (i = 0; i < sizeof(namesA) / sizeof(namesA[0]); i++)
     {
         size = sizeof(buf);

@@ -1074,7 +1074,8 @@ BOOL WINAPI CertStrToNameW(DWORD dwCertEncodingType, LPCWSTR pszX500,
                     static const WCHAR commaSep[] = { ',',0 };
                     static const WCHAR semiSep[] = { ';',0 };
                     static const WCHAR crlfSep[] = { '\r','\n',0 };
-                    static const WCHAR allSeps[] = { ',',';','\r','\n',0 };
+                    static const WCHAR allSepsWithoutPlus[] = { ',',';','\r','\n',0 };
+                    static const WCHAR allSeps[] = { '+',',',';','\r','\n',0 };
                     LPCWSTR sep;
 
                     str++;
@@ -1084,6 +1085,8 @@ BOOL WINAPI CertStrToNameW(DWORD dwCertEncodingType, LPCWSTR pszX500,
                         sep = semiSep;
                     else if (dwStrType & CERT_NAME_STR_CRLF_FLAG)
                         sep = crlfSep;
+                    else if (dwStrType & CERT_NAME_STR_NO_PLUS_FLAG)
+                        sep = allSepsWithoutPlus;
                     else
                         sep = allSeps;
                     ret = CRYPT_GetNextValueW(str, dwStrType, sep, &token,
