@@ -1405,26 +1405,24 @@ msgid "Signature CA"
 msgstr "Підпис CA"
 
 #: cryptdlg.rc:27
-#, fuzzy
 msgid "Certificate Policy"
 msgstr "Політика Сертифікатів"
 
 #: cryptdlg.rc:28
-#, fuzzy
 msgid "Policy Identifier: "
-msgstr "Ідентифікатор ключа органу"
+msgstr "Ідентифікатор Політики: "
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr ""
+msgstr "Інфо Визначника Політики"
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr ""
+msgstr "Id Визначника Політики="
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr ""
+msgstr "Визначник"
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
@@ -1435,13 +1433,12 @@ msgid "Organization="
 msgstr "Організація="
 
 #: cryptdlg.rc:36
-#, fuzzy
 msgid "Notice Number="
-msgstr "Серійний номер сертифікату="
+msgstr "Номер Оповіщення="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr ""
+msgstr "Текст Оповіщення="
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -1574,11 +1571,11 @@ msgstr "Публічний ключ"
 
 #: cryptui.rc:58
 msgid "%s (%d bits)"
-msgstr "%s (%d bits)"
+msgstr "%s (%d біт)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
-msgstr "SHA1 hash"
+msgstr "SHA1 хеш"
 
 #: cryptui.rc:60
 msgid "Enhanced key usage (property)"
@@ -2012,13 +2009,12 @@ msgid "Default MidiOut Device"
 msgstr "Пристрій виводу Midi по замовчуванні"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Стандартні налаштування"
+msgstr "Регіональні Налаштування"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr ""
+msgstr "%uМБ використано, %uМБ доступно"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
@@ -2410,11 +2406,11 @@ msgstr "Загальна помилка\n"
 
 #: winerror.mc:186
 msgid "Sharing violation\n"
-msgstr "Sharing violation\n"
+msgstr "Порушення обміну\n"
 
 #: winerror.mc:191
 msgid "Lock violation\n"
-msgstr "Lock violation\n"
+msgstr "Порушення блокування\n"
 
 #: winerror.mc:196
 msgid "Wrong disk\n"
@@ -2422,7 +2418,7 @@ msgstr "Невірний диск\n"
 
 #: winerror.mc:201
 msgid "Sharing buffer exceeded\n"
-msgstr "Sharing buffer exceeded\n"
+msgstr "Буфер обміну перевещений\n"
 
 #: winerror.mc:206
 msgid "End of file\n"
@@ -2462,19 +2458,19 @@ msgstr "Забагато команд\n"
 
 #: winerror.mc:251
 msgid "Adaptor hardware error\n"
-msgstr "Adaptor hardware error\n"
+msgstr "Апаратна помилка адаптера\n"
 
 #: winerror.mc:256
 msgid "Bad network response\n"
-msgstr "Bad network response\n"
+msgstr "Погана відповідь мережі\n"
 
 #: winerror.mc:261
 msgid "Unexpected network error\n"
-msgstr "Unexpected network error\n"
+msgstr "Неочікувана помилка мережі\n"
 
 #: winerror.mc:266
 msgid "Bad remote adaptor\n"
-msgstr "Bad remote adaptor\n"
+msgstr "Поганий віддалений адаптер\n"
 
 #: winerror.mc:271
 msgid "Print queue full\n"
@@ -2514,7 +2510,7 @@ msgstr "Забагато мережних сеансів\n"
 
 #: winerror.mc:316
 msgid "Sharing paused\n"
-msgstr "Sharing paused\n"
+msgstr "Обмін призупинено\n"
 
 #: winerror.mc:321
 msgid "Request not accepted\n"
@@ -2542,7 +2538,7 @@ msgstr "Out of structures\n"
 
 #: winerror.mc:351
 msgid "Already assigned\n"
-msgstr "Already assigned\n"
+msgstr "Вже призначено\n"
 
 #: winerror.mc:356 winerror.mc:1711
 msgid "Invalid password\n"
@@ -2774,11 +2770,11 @@ msgstr "Signal refused\n"
 
 #: winerror.mc:651
 msgid "Segment discarded\n"
-msgstr "Segment discarded\n"
+msgstr "Сегмент відкинуто\n"
 
 #: winerror.mc:656
 msgid "Segment not locked\n"
-msgstr "Segment not locked\n"
+msgstr "Сегмент не заблокований\n"
 
 #: winerror.mc:661
 msgid "Bad thread ID address\n"
@@ -2794,12 +2790,11 @@ msgstr "Невірний шлях\n"
 
 #: winerror.mc:676
 msgid "Signal pending\n"
-msgstr "Signal pending\n"
+msgstr "Очікування сигналу\n"
 
 #: winerror.mc:681
-#, fuzzy
 msgid "Max system-wide thread count reached\n"
-msgstr "Max systemwide thread count reached\n"
+msgstr "Досягнуто максимум загальносистемних ниток\n"
 
 #: winerror.mc:686
 msgid "Lock failed\n"
@@ -2807,23 +2802,23 @@ msgstr "Блокування не вдалось\n"
 
 #: winerror.mc:691
 msgid "Resource in use\n"
-msgstr "Resource in use\n"
+msgstr "Ресурс використовується\n"
 
 #: winerror.mc:696
 msgid "Cancel violation\n"
-msgstr "Cancel violation\n"
+msgstr "Скасування порушення\n"
 
 #: winerror.mc:701
 msgid "Atomic locks not supported\n"
-msgstr "Atomic locks not supported\n"
+msgstr "Атомні замки не підтримуються\n"
 
 #: winerror.mc:706
 msgid "Invalid segment number\n"
-msgstr "Invalid segment number\n"
+msgstr "Невірний номер сегмента\n"
 
 #: winerror.mc:711
 msgid "Invalid ordinal for %1\n"
-msgstr "Invalid ordinal for %1\n"
+msgstr "Невірний порядковий номер для %1\n"
 
 #: winerror.mc:716
 msgid "File already exists\n"
@@ -2855,7 +2850,7 @@ msgstr "Недійсний підпис EXE в %1\n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid\n"
-msgstr "EXE %1 is marked invalid\n"
+msgstr "EXE %1 позначений недійсним\n"
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1\n"
@@ -3022,9 +3017,8 @@ msgid "The oplock wasn't granted\n"
 msgstr ""
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received\n"
-msgstr "Невірна назва повідомлення\n"
+msgstr "Отримане невірне oplock-повідомлення\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -3276,7 +3270,7 @@ msgstr "Different service account\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected\n"
-msgstr ""
+msgstr "Відмова драйвера не може бути виявлена\n"
 
 #: winerror.mc:1281
 msgid "Process abort cannot be detected\n"
@@ -3284,7 +3278,7 @@ msgstr "Скасування процесу не виявлене\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service\n"
-msgstr ""
+msgstr "Немає програми відновлення для служби\n"
 
 #: winerror.mc:1291
 msgid "Service not implemented by exe\n"
@@ -3766,7 +3760,7 @@ msgstr "Підтримується лише коли під'єднано\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed\n"
-msgstr ""
+msgstr "Виконати операцію, навіть якщо нічого не змінилося\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid\n"
@@ -3774,7 +3768,7 @@ msgstr "Невірний профіль користувача\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
-msgstr ""
+msgstr "Не підтримується на Small Business Server\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned\n"
@@ -3810,7 +3804,7 @@ msgstr "Недійсний власник\n"
 
 #: winerror.mc:1946
 msgid "Invalid primary group\n"
-msgstr "Invalid primary group\n"
+msgstr "Невірна основна група\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token\n"
@@ -3838,7 +3832,7 @@ msgstr "Privilege not held\n"
 
 #: winerror.mc:1981
 msgid "Invalid account name\n"
-msgstr "Invalid account name\n"
+msgstr "Невірне ім'я акаунта\n"
 
 #: winerror.mc:1986
 msgid "User already exists\n"
@@ -4229,9 +4223,8 @@ msgid "Private dialog index\n"
 msgstr "Private dialog index\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
-msgstr "Listbox ID not found\n"
+msgstr "ID списку не знайдено\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters\n"
@@ -4294,18 +4287,16 @@ msgid "Hook procedure not installed\n"
 msgstr "Hook procedure not installed\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
-msgstr "Invalid listbox message\n"
+msgstr "Невірне повідомлення списку\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "Invalid LB_SETCOUNT sent\n"
 
 #: winerror.mc:2566
-#, fuzzy
 msgid "No tab stops on this list box\n"
-msgstr "No tabstops on this listbox\n"
+msgstr "В цьому списку немає табуляції\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread\n"
@@ -4320,9 +4311,8 @@ msgid "Window has no system menu\n"
 msgstr "Вікно не має системного меню\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
-msgstr "Invalid messagebox style\n"
+msgstr "Невірний стиль повідомлення\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter\n"
@@ -4373,9 +4363,8 @@ msgid "No system resources\n"
 msgstr "Немає системних ресурсів\n"
 
 #: winerror.mc:2651
-#, fuzzy
 msgid "No non-paged system resources\n"
-msgstr "No nonpaged system resources\n"
+msgstr "Немає невивантажуваних системних ресурсів\n"
 
 #: winerror.mc:2656
 msgid "No paged system resources\n"
@@ -4386,9 +4375,8 @@ msgid "No working set quota\n"
 msgstr "No working set quota\n"
 
 #: winerror.mc:2666
-#, fuzzy
 msgid "No page file quota\n"
-msgstr "No pagefile quota\n"
+msgstr "Немає квоти файлу довантаження\n"
 
 #: winerror.mc:2671
 msgid "Exceeded commitment limit\n"
@@ -4438,7 +4426,6 @@ msgid "Event log file changed\n"
 msgstr "Event log file changed\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
 msgstr "Сервіс встановлення зламався.\n"
 
@@ -4467,7 +4454,6 @@ msgid "Unknown component\n"
 msgstr "Невідомий компонент\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property\n"
 msgstr "Невідома властивість\n"
 
@@ -5001,9 +4987,8 @@ msgid "Invalid printer command\n"
 msgstr "Invalid printer command\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
-msgstr "Invalid datatype\n"
+msgstr "Невірний тип даних\n"
 
 #: winerror.mc:3436
 msgid "Invalid environment\n"
@@ -5179,7 +5164,6 @@ msgid "Invalid object resolver set\n"
 msgstr "Невірний об'єкт\n"
 
 #: winerror.mc:3651
-#, fuzzy
 msgid "Incomplete RPC send\n"
 msgstr "Неповне відсилання RPC\n"
 
@@ -9680,13 +9664,8 @@ msgid "&Show Kernel Times"
 msgstr "&Показати час ядра"
 
 #: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:79
-#, fuzzy
 msgid "Tile &Horizontally"
-msgstr ""
-"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
-"З&ліва направо\n"
-"#-#-#-#-#  uk.po (Wine)  #-#-#-#-#\n"
-"Вікна &зверху вниз"
+msgstr "З&ліва направо"
 
 #: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
 msgid "Tile &Vertically"
@@ -10970,7 +10949,7 @@ msgstr "Великий"
 #: winhlp32.rc:54
 #, fuzzy
 msgid "&Help on help\tF1"
-msgstr "&Використання Довідки"
+msgstr "&Використання Довідки\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -11050,15 +11029,15 @@ msgstr "Знайти &далі\tF3"
 
 #: wordpad.rc:54
 msgid "Read-&only"
-msgstr ""
+msgstr "Лише&Читання"
 
 #: wordpad.rc:55
 msgid "&Modified"
-msgstr ""
+msgstr "&Змінено"
 
 #: wordpad.rc:57
 msgid "E&xtras"
-msgstr ""
+msgstr "Дода&тково"
 
 #: wordpad.rc:59
 msgid "Selection &info"
@@ -11066,7 +11045,7 @@ msgstr "&Інфо про виділення"
 
 #: wordpad.rc:60
 msgid "Character &format"
-msgstr ""
+msgstr "&Формат символів"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
@@ -11078,7 +11057,7 @@ msgstr ""
 
 #: wordpad.rc:63
 msgid "&Get text"
-msgstr ""
+msgstr "&Взяти текст"
 
 #: wordpad.rc:69
 msgid "&Formatbar"
@@ -11086,7 +11065,7 @@ msgstr ""
 
 #: wordpad.rc:70
 msgid "&Ruler"
-msgstr ""
+msgstr "&Лінійка"
 
 #: wordpad.rc:71
 msgid "&Statusbar"
@@ -11131,7 +11110,7 @@ msgstr "&Система\tCtrl+1"
 #: wordpad.rc:88
 #, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "Вибрати в&се\tCtrl+A"
+msgstr "&Блідо-жовтий\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
@@ -11191,7 +11170,7 @@ msgstr "Текст"
 
 #: wordpad.rc:157
 msgid "Rich text"
-msgstr ""
+msgstr "Збагачений Текст"
 
 #: wordpad.rc:163
 msgid "Next page"
