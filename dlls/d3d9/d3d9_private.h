@@ -146,7 +146,7 @@ extern const IDirect3D9ExVtbl Direct3D9_Vtbl DECLSPEC_HIDDEN;
 typedef struct IDirect3D9Impl
 {
     /* IUnknown fields */
-    const IDirect3D9ExVtbl   *lpVtbl;
+    IDirect3D9Ex            IDirect3D9Ex_iface;
     LONG                    ref;
 
     struct wined3d *WineD3D;
