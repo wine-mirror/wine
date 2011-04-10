@@ -12255,6 +12255,31 @@ $as_echo "$ac_cv_cflags__Wtype_limits" >&6; }
 if test $ac_cv_cflags__Wtype_limits = yes; then :
   EXTRACFLAGS="$EXTRACFLAGS -Wtype-limits"
 fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wunused-but-set-parameter" >&5
+$as_echo_n "checking whether the compiler supports -Wunused-but-set-parameter... " >&6; }
+if test "${ac_cv_cflags__Wunused_but_set_parameter+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wunused-but-set-parameter"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Wunused_but_set_parameter=yes
+else
+  ac_cv_cflags__Wunused_but_set_parameter=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wunused_but_set_parameter" >&5
+$as_echo "$ac_cv_cflags__Wunused_but_set_parameter" >&6; }
+if test $ac_cv_cflags__Wunused_but_set_parameter = yes; then :
+  EXTRACFLAGS="$EXTRACFLAGS -Wunused-but-set-parameter"
+fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wwrite-strings" >&5
 $as_echo_n "checking whether the compiler supports -Wwrite-strings... " >&6; }
 if test "${ac_cv_cflags__Wwrite_strings+set}" = set; then :
