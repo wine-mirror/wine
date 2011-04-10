@@ -55,9 +55,9 @@
 #include "wine/library.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
-WINE_DECLARE_DEBUG_CHANNEL(jpeg);
 
 #ifdef SONAME_LIBJPEG
+WINE_DECLARE_DEBUG_CHANNEL(jpeg);
 
 static void *libjpeg_handle;
 
