@@ -91,12 +91,12 @@ static void skip_dword_unknown(const char **ptr, unsigned int count)
     }
 }
 
-struct d3dx_parameter *get_parameter_struct(D3DXHANDLE handle)
+static struct d3dx_parameter *get_parameter_struct(D3DXHANDLE handle)
 {
     return (struct d3dx_parameter *) handle;
 }
 
-D3DXHANDLE get_parameter_handle(struct d3dx_parameter *parameter)
+static D3DXHANDLE get_parameter_handle(struct d3dx_parameter *parameter)
 {
     return (D3DXHANDLE) parameter;
 }
