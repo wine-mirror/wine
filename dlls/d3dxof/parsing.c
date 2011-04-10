@@ -475,7 +475,7 @@ static BOOL is_string(parse_buffer* buf)
   if (*buf->buffer != '"')
     return FALSE;
 
-  while (!is_separator(c = *(buf->buffer+pos+1)) && (pos < 99))
+  while (!is_operator(c = *(buf->buffer+pos+1)) && (pos < 99))
   {
     if (c == '"')
     {
