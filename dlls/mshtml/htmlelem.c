@@ -109,7 +109,7 @@ static inline HTMLFiltersCollection *impl_from_IHTMLFiltersCollection(IHTMLFilte
     return CONTAINING_RECORD(iface, HTMLFiltersCollection, IHTMLFiltersCollection_iface);
 }
 
-IHTMLFiltersCollection *HTMLFiltersCollection_Create(void);
+static IHTMLFiltersCollection *HTMLFiltersCollection_Create(void);
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
@@ -1971,7 +1971,7 @@ static dispex_static_data_t HTMLFiltersCollection_dispex = {
     HTMLFiltersCollection_iface_tids
 };
 
-IHTMLFiltersCollection *HTMLFiltersCollection_Create()
+static IHTMLFiltersCollection *HTMLFiltersCollection_Create(void)
 {
     HTMLFiltersCollection *ret = heap_alloc(sizeof(HTMLFiltersCollection));
 
