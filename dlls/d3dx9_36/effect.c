@@ -36,6 +36,7 @@ struct d3dx_parameter
 
     char *name;
     char *semantic;
+    void *data;
     D3DXPARAMETER_CLASS class;
     D3DXPARAMETER_TYPE  type;
     UINT rows;
@@ -111,23 +112,28 @@ static D3DXHANDLE get_parameter_handle(struct d3dx_parameter *parameter)
     return (D3DXHANDLE) parameter;
 }
 
-static void free_parameter(D3DXHANDLE handle, BOOL element)
+static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
 {
     unsigned int i;
     struct d3dx_parameter *param = get_parameter_struct(handle);
 
-    TRACE("Free parameter %p\n", param);
+    TRACE("Free parameter %p, child %s\n", param, child ? "yes" : "no");
 
     if (!param)
     {
         return;
     }
 
+    if (!child)
+    {
+        HeapFree(GetProcessHeap(), 0, param->data);
+    }
+
     if (param->annotation_handles)
     {
         for (i = 0; i < param->annotation_count; ++i)
         {
-            free_parameter(param->annotation_handles[i], FALSE);
+            free_parameter(param->annotation_handles[i], FALSE, FALSE);
         }
         HeapFree(GetProcessHeap(), 0, param->annotation_handles);
     }
@@ -141,7 +147,7 @@ static void free_parameter(D3DXHANDLE handle, BOOL element)
 
         for (i = 0; i < count; ++i)
         {
-            free_parameter(param->member_handles[i], param->element_count != 0);
+            free_parameter(param->member_handles[i], param->element_count != 0, TRUE);
         }
         HeapFree(GetProcessHeap(), 0, param->member_handles);
     }
@@ -166,7 +172,7 @@ static void free_base_effect(struct ID3DXBaseEffectImpl *base)
     {
         for (i = 0; i < base->parameter_count; ++i)
         {
-            free_parameter(base->parameter_handles[i], FALSE);
+            free_parameter(base->parameter_handles[i], FALSE, FALSE);
         }
         HeapFree(GetProcessHeap(), 0, base->parameter_handles);
     }
@@ -2406,6 +2412,100 @@ static const struct ID3DXEffectCompilerVtbl ID3DXEffectCompiler_Vtbl =
     ID3DXEffectCompilerImpl_CompileShader,
 };
 
+static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value)
+{
+    unsigned int i;
+    HRESULT hr;
+    UINT old_size = 0;
+
+    if (param->element_count)
+    {
+        param->data = value;
+
+        for (i = 0; i < param->element_count; ++i)
+        {
+            struct d3dx_parameter *member = get_parameter_struct(param->member_handles[i]);
+
+            hr = d3dx9_parse_value(member, (char *)value + old_size);
+            if (hr != D3D_OK)
+            {
+                WARN("Failed to parse value\n");
+                return hr;
+            }
+
+            old_size += member->bytes;
+        }
+
+        return D3D_OK;
+    }
+
+    switch(param->class)
+    {
+        case D3DXPC_SCALAR:
+        case D3DXPC_VECTOR:
+        case D3DXPC_MATRIX_ROWS:
+        case D3DXPC_MATRIX_COLUMNS:
+            param->data = value;
+            break;
+
+        case D3DXPC_STRUCT:
+            param->data = value;
+
+            for (i = 0; i < param->member_count; ++i)
+            {
+                struct d3dx_parameter *member = get_parameter_struct(param->member_handles[i]);
+
+                hr = d3dx9_parse_value(member, (char *)value + old_size);
+                if (hr != D3D_OK)
+                {
+                    WARN("Failed to parse value\n");
+                    return hr;
+                }
+
+                old_size += member->bytes;
+            }
+            break;
+
+        default:
+            FIXME("Unhandled class %s\n", debug_d3dxparameter_class(param->class));
+            break;
+    }
+
+    return D3D_OK;
+}
+
+
+static HRESULT d3dx9_parse_init_value(struct d3dx_parameter *param, const char *ptr)
+{
+    UINT size = param->bytes;
+    HRESULT hr;
+    void *value;
+
+    TRACE("param size: %u\n", size);
+
+    value = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!value)
+    {
+        ERR("Failed to allocate data memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    TRACE("Data: %s.\n", debugstr_an(ptr, size));
+    memcpy(value, ptr, size);
+
+    hr = d3dx9_parse_value(param, value);
+    if (hr != D3D_OK)
+    {
+        WARN("Failed to parse value\n");
+        HeapFree(GetProcessHeap(), 0, value);
+        return hr;
+    }
+
+    param->data = value;
+
+    return D3D_OK;
+}
+
 static HRESULT d3dx9_parse_name(char **name, const char *ptr)
 {
     DWORD size;
@@ -2609,7 +2709,7 @@ err_out:
 
         for (i = 0; i < count; ++i)
         {
-            free_parameter(member_handles[i], param->element_count != 0);
+            free_parameter(member_handles[i], param->element_count != 0, TRUE);
         }
         HeapFree(GetProcessHeap(), 0, member_handles);
     }
@@ -2645,7 +2745,12 @@ static HRESULT d3dx9_parse_effect_annotation(struct d3dx_parameter *anno, const 
 
     read_dword(ptr, &offset);
     TRACE("Value offset: %#x\n", offset);
-    /* todo: Parse value */
+    hr = d3dx9_parse_init_value(anno, data + offset);
+    if (hr != D3D_OK)
+    {
+        WARN("Failed to parse value\n");
+        return hr;
+    }
 
     return D3D_OK;
 }
@@ -2678,7 +2783,12 @@ static HRESULT d3dx9_parse_effect_parameter(struct d3dx_parameter *param, const 
         return hr;
     }
 
-    /* todo: Parse value */
+    hr = d3dx9_parse_init_value(param, data + offset);
+    if (hr != D3D_OK)
+    {
+        WARN("Failed to parse value\n");
+        return hr;
+    }
 
     if (param->annotation_count)
     {
@@ -2724,7 +2834,7 @@ err_out:
     {
         for (i = 0; i < param->annotation_count; ++i)
         {
-            free_parameter(annotation_handles[i], FALSE);
+            free_parameter(annotation_handles[i], FALSE, FALSE);
         }
         HeapFree(GetProcessHeap(), 0, annotation_handles);
     }
@@ -2793,7 +2903,7 @@ err_out:
     {
         for (i = 0; i < base->parameter_count; ++i)
         {
-            free_parameter(parameter_handles[i], FALSE);
+            free_parameter(parameter_handles[i], FALSE, FALSE);
         }
         HeapFree(GetProcessHeap(), 0, parameter_handles);
     }
