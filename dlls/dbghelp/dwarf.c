@@ -1301,9 +1301,13 @@ static struct symt* dwarf2_parse_const_type(dwarf2_parse_context_t* ctx,
 
     if (di->symt) return di->symt;
 
-    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
+    TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-    ref_type = dwarf2_lookup_type(ctx, di);
+    if (!(ref_type = dwarf2_lookup_type(ctx, di)))
+    {
+        ref_type = ctx->symt_cache[sc_void];
+        assert(ref_type);
+    }
     if (dwarf2_get_di_children(ctx, di)) FIXME("Unsupported children\n");
     di->symt = ref_type;
 
