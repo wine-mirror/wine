@@ -3974,7 +3974,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
     CHARSETINFO csi;
     DWORD n = 0;
 
-    if (TranslateCharsetInfo((DWORD*)charset, &csi, TCI_SRCCHARSET) &&
+    if (TranslateCharsetInfo(ULongToPtr(charset), &csi, TCI_SRCCHARSET) &&
         csi.fs.fsCsb[0] != 0) {
         list->element[n].mask    = csi.fs.fsCsb[0];
         list->element[n].charset = csi.ciCharset;
