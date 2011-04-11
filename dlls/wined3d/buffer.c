@@ -777,21 +777,20 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 
     buffer->flags &= ~(WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
 
-    context = context_acquire(device, NULL);
-    gl_info = context->gl_info;
-
     if (!buffer->buffer_object)
     {
         /* TODO: Make converting independent from VBOs */
         if (buffer->flags & WINED3D_BUFFER_CREATEBO)
         {
-            buffer_create_buffer_object(buffer, gl_info);
+            context = context_acquire(device, NULL);
+            buffer_create_buffer_object(buffer, context->gl_info);
+            context_release(context);
             buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
         }
         else
         {
             /* Not doing any conversion */
-            goto end;
+            return;
         }
     }
 
@@ -804,7 +803,6 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 
     if (!decl_changed && !(buffer->flags & WINED3D_BUFFER_HASDESC && buffer_is_dirty(buffer)))
     {
-        context_release(context);
         ++buffer->draw_count;
         if (buffer->draw_count > VB_RESETDECLCHANGE)
             buffer->decl_change_count = 0;
@@ -836,7 +834,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
              * reload. This happens only once per changed vertexbuffer and
              * should occur rather rarely. */
             IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
-            goto end;
+            return;
         }
 
         /* The declaration changed, reload the whole buffer */
@@ -845,7 +843,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
         if (!buffer_add_dirty_area(buffer, 0, 0))
         {
             ERR("buffer_add_dirty_area failed, this is not expected\n");
-            goto end;
+            return;
         }
         /* Avoid unfenced updates, we might overwrite more areas of the buffer than the application
          * cleared for unsynchronized updates
@@ -867,7 +865,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
                 buffer_unload(&buffer->resource);
                 buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
                 IWineD3DDeviceImpl_MarkStateDirty(device, STATE_STREAMSRC);
-                goto end;
+                return;
             }
         }
         else
@@ -895,17 +893,20 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
         /* Nothing to do because we locked directly into the vbo */
         if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
         {
-            context_release(context);
             return;
         }
 
+        context = context_acquire(device, NULL);
         buffer_direct_upload(buffer, context->gl_info, flags);
 
         context_release(context);
         return;
     }
 
-    if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
+    context = context_acquire(device, NULL);
+    gl_info = context->gl_info;
+
+    if(!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER))
     {
         buffer_get_sysmem(buffer, gl_info);
     }
@@ -957,8 +958,6 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
     }
 
     HeapFree(GetProcessHeap(), 0, data);
-
-end:
     context_release(context);
 }
 
