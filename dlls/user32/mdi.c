@@ -1464,7 +1464,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         return 0;
 
     case WM_MENUCHAR:
-        return 0x00010000; /* MDI children don't have menu bars */
+        return MAKELRESULT( 0, MNC_CLOSE ); /* MDI children don't have menu bars */
 
     case WM_CLOSE:
         SendMessageW( client, WM_MDIDESTROY, (WPARAM)hwnd, 0 );
