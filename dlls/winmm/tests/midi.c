@@ -325,6 +325,19 @@ static void test_midiOut_device(UINT udev, HWND hwnd)
     rc = midiOutClose(hm);
     ok(!rc, "midiOutClose rc=%s\n", mmsys_error(rc));
     test_notification(hwnd, "midiOutClose", MOM_CLOSE, 0);
+
+    rc = midiOutOpen(&hm, udev, 0, (DWORD_PTR)MYCBINST, CALLBACK_WINDOW);
+    ok(!rc, "midiOutOpen(dev=%d) 0 CALLBACK_WINDOW rc=%s\n", udev, mmsys_error(rc));
+    /* PostMessage(hwnd=0) redirects to PostThreadMessage(GetCurrentThreadId())
+     * which PeekMessage((HWND)-1) queries. */
+    test_notification((HWND)-1, "midiOutOpen WINDOW->THREAD", 0, WHATEVER);
+    test_notification(hwnd, "midiOutOpen WINDOW", 0, WHATEVER);
+    if (!rc) {
+        rc = midiOutClose(hm);
+        ok(!rc, "midiOutClose rc=%s\n", mmsys_error(rc));
+        test_notification((HWND)-1, "midiOutClose WINDOW->THREAD", 0, WHATEVER);
+        test_notification(hwnd, "midiOutClose", 0, WHATEVER);
+    }
     test_notification(hwnd, "midiOut over", 0, WHATEVER);
 }
 
