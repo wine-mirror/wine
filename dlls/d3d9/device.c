@@ -183,14 +183,9 @@ static UINT vertex_count_from_primitive_count(D3DPRIMITIVETYPE primitive_type, U
 
 static ULONG WINAPI D3D9CB_DestroySwapChain(IWineD3DSwapChain *swapchain)
 {
-    IDirect3DSwapChain9Impl *parent;
-
     TRACE("swapchain %p.\n", swapchain);
 
-    parent = IWineD3DSwapChain_GetParent(swapchain);
-    parent->isImplicit = FALSE;
-    IDirect3DSwapChain9_AddRef((IDirect3DSwapChain9 *)parent);
-    return IDirect3DSwapChain9_Release((IDirect3DSwapChain9 *)parent);
+    return IWineD3DSwapChain_Release(swapchain);
 }
 
 /* IDirect3D IUnknown parts follow: */
@@ -3174,8 +3169,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
         WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **swapchain)
 {
     struct IDirect3DDevice9Impl *This = device_from_device_parent(iface);
-    IDirect3DSwapChain9Impl *d3d_swapchain;
     D3DPRESENT_PARAMETERS local_parameters;
+    IDirect3DSwapChain9 *d3d_swapchain;
     HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p\n", iface, present_parameters, swapchain);
@@ -3197,7 +3192,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     local_parameters.PresentationInterval = present_parameters->PresentationInterval;
 
     hr = IDirect3DDevice9Impl_CreateAdditionalSwapChain((IDirect3DDevice9Ex *)This,
-            &local_parameters, (IDirect3DSwapChain9 **)&d3d_swapchain);
+            &local_parameters, &d3d_swapchain);
     if (FAILED(hr))
     {
         ERR("(%p) CreateAdditionalSwapChain failed, returning %#x\n", iface, hr);
@@ -3205,9 +3200,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
         return hr;
     }
 
-    *swapchain = d3d_swapchain->wineD3DSwapChain;
-    d3d_swapchain->isImplicit = TRUE;
-    /* Implicit swap chains are created with an refcount of 0 */
+    *swapchain = ((IDirect3DSwapChain9Impl *)d3d_swapchain)->wineD3DSwapChain;
+    IWineD3DSwapChain_AddRef(*swapchain);
     IDirect3DSwapChain9_Release((IDirect3DSwapChain9 *)d3d_swapchain);
 
     /* Copy back the presentation parameters */

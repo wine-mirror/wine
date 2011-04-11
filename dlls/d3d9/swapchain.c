@@ -55,12 +55,9 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_AddRef(LPDIRECT3DSWAPCHAIN9 iface) {
         if (This->parentDevice)
             IDirect3DDevice9Ex_AddRef(This->parentDevice);
 
-        if (!This->isImplicit)
-        {
-            wined3d_mutex_lock();
-            IWineD3DSwapChain_AddRef(This->wineD3DSwapChain);
-            wined3d_mutex_unlock();
-        }
+        wined3d_mutex_lock();
+        IWineD3DSwapChain_AddRef(This->wineD3DSwapChain);
+        wined3d_mutex_unlock();
     }
 
     return ref;
@@ -75,11 +72,9 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_Release(LPDIRECT3DSWAPCHAIN9 iface) 
     if (ref == 0) {
         IDirect3DDevice9Ex *parentDevice = This->parentDevice;
 
-        if (!This->isImplicit) {
-            wined3d_mutex_lock();
-            IWineD3DSwapChain_Destroy(This->wineD3DSwapChain);
-            wined3d_mutex_unlock();
-        }
+        wined3d_mutex_lock();
+        IWineD3DSwapChain_Release(This->wineD3DSwapChain);
+        wined3d_mutex_unlock();
 
         /* Release the device last, as it may cause the device to be destroyed. */
         if (parentDevice) IDirect3DDevice9Ex_Release(parentDevice);

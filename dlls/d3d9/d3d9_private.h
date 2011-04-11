@@ -222,9 +222,6 @@ typedef struct IDirect3DSwapChain9Impl
 
     /* Parent reference */
     LPDIRECT3DDEVICE9EX       parentDevice;
-
-    /* Flags an implicit swap chain */
-    BOOL                        isImplicit;
 } IDirect3DSwapChain9Impl;
 
 HRESULT swapchain_init(IDirect3DSwapChain9Impl *swapchain, IDirect3DDevice9Impl *device,
