@@ -34,10 +34,18 @@ struct d3dx_parameter
 {
     struct ID3DXBaseEffectImpl *base;
 
+    D3DXPARAMETER_CLASS class;
+    D3DXPARAMETER_TYPE  type;
+    UINT rows;
+    UINT columns;
+    UINT element_count;
     UINT annotation_count;
+    UINT member_count;
     DWORD flags;
+    UINT bytes;
 
     D3DXHANDLE *annotation_handles;
+    D3DXHANDLE *member_handles;
 };
 
 struct ID3DXBaseEffectImpl
@@ -120,6 +128,15 @@ static void free_parameter(D3DXHANDLE handle)
             free_parameter(param->annotation_handles[i]);
         }
         HeapFree(GetProcessHeap(), 0, param->annotation_handles);
+    }
+
+    if (param->member_handles)
+    {
+        for (i = 0; i < param->element_count; ++i)
+        {
+            free_parameter(param->member_handles[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, param->member_handles);
     }
 
     HeapFree(GetProcessHeap(), 0, param);
@@ -2375,19 +2392,156 @@ static const struct ID3DXEffectCompilerVtbl ID3DXEffectCompiler_Vtbl =
     ID3DXEffectCompilerImpl_CompileShader,
 };
 
+static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const char *data, const char **ptr, struct d3dx_parameter *parent)
+{
+    DWORD offset;
+    HRESULT hr;
+    D3DXHANDLE *member_handles = NULL;
+    UINT i;
+
+    if (!parent)
+    {
+        read_dword(ptr, &param->type);
+        TRACE("Type: %s\n", debug_d3dxparameter_type(param->type));
+
+        read_dword(ptr, &param->class);
+        TRACE("Class: %s\n", debug_d3dxparameter_class(param->class));
+
+        read_dword(ptr, &offset);
+        TRACE("Type name offset: %#x\n", offset);
+        /* todo: Parse name */
+
+        read_dword(ptr, &offset);
+        TRACE("Type semantic offset: %#x\n", offset);
+        /* todo: Parse semantic */
+
+        read_dword(ptr, &param->element_count);
+        TRACE("Elements: %u\n", param->element_count);
+
+        switch (param->class)
+        {
+            case D3DXPC_VECTOR:
+                read_dword(ptr, &param->columns);
+                TRACE("Columns: %u\n", param->columns);
+
+                read_dword(ptr, &param->rows);
+                TRACE("Rows: %u\n", param->rows);
+
+                /* sizeof(DWORD) * rows * columns */
+                param->bytes = 4 * param->rows * param->columns;
+                break;
+
+            case D3DXPC_SCALAR:
+            case D3DXPC_MATRIX_ROWS:
+            case D3DXPC_MATRIX_COLUMNS:
+                read_dword(ptr, &param->rows);
+                TRACE("Rows: %u\n", param->rows);
+
+                read_dword(ptr, &param->columns);
+                TRACE("Columns: %u\n", param->columns);
+
+                /* sizeof(DWORD) * rows * columns */
+                param->bytes = 4 * param->rows * param->columns;
+                break;
+
+            default:
+                FIXME("Unhandled class %s\n", debug_d3dxparameter_class(param->class));
+                break;
+        }
+    }
+    else
+    {
+        /* elements */
+        param->type = parent->type;
+        param->class = parent->class;
+        param->element_count = 0;
+        param->annotation_count = 0;
+        param->member_count = parent->member_count;
+        param->bytes = parent->bytes;
+        param->flags = parent->flags;
+        param->rows = parent->rows;
+        param->columns = parent->columns;
+    }
+
+    if (param->element_count)
+    {
+        unsigned int param_bytes = 0;
+
+        member_handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*member_handles) * param->element_count);
+        if (!member_handles)
+        {
+            ERR("Out of memory\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+
+        for (i = 0; i < param->element_count; ++i)
+        {
+            struct d3dx_parameter *member;
+
+            member = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*member));
+            if (!member)
+            {
+                ERR("Out of memory\n");
+                hr = E_OUTOFMEMORY;
+                goto err_out;
+            }
+
+            member_handles[i] = get_parameter_handle(member);
+            member->base = param->base;
+
+            hr = d3dx9_parse_effect_typedef(member, data, ptr, param);
+            if (hr != D3D_OK)
+            {
+                WARN("Failed to parse member\n");
+                goto err_out;
+            }
+
+            param_bytes += member->bytes;
+        }
+
+        param->bytes = param_bytes;
+    }
+
+    param->member_handles = member_handles;
+
+    return D3D_OK;
+
+err_out:
+
+    if (member_handles)
+    {
+        for (i = 0; i < param->element_count; ++i)
+        {
+            free_parameter(member_handles[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, member_handles);
+    }
+
+    return hr;
+}
+
 static HRESULT d3dx9_parse_effect_annotation(struct d3dx_parameter *anno, const char *data, const char **ptr)
 {
     DWORD offset;
+    const char *ptr2;
+    HRESULT hr;
+
+    anno->flags = D3DX_PARAMETER_ANNOTATION;
 
     read_dword(ptr, &offset);
     TRACE("Typedef offset: %#x\n", offset);
-    /* todo: Parse typedef */
+    ptr2 = data + offset;
+    hr = d3dx9_parse_effect_typedef(anno, data, &ptr2, NULL);
+    if (hr != D3D_OK)
+    {
+        WARN("Failed to parse type definition\n");
+        return hr;
+    }
 
     read_dword(ptr, &offset);
     TRACE("Value offset: %#x\n", offset);
     /* todo: Parse value */
-
-    anno->flags &= D3DX_PARAMETER_ANNOTATION;
 
     return D3D_OK;
 }
@@ -2398,20 +2552,29 @@ static HRESULT d3dx9_parse_effect_parameter(struct d3dx_parameter *param, const 
     HRESULT hr;
     unsigned int i;
     D3DXHANDLE *annotation_handles = NULL;
+    const char *ptr2;
 
     read_dword(ptr, &offset);
     TRACE("Typedef offset: %#x\n", offset);
-    /* todo: Parse typedef */
+    ptr2 = data + offset;
 
     read_dword(ptr, &offset);
     TRACE("Value offset: %#x\n", offset);
-    /* todo: Parse value */
 
     read_dword(ptr, &param->flags);
     TRACE("Flags: %#x\n", param->flags);
 
     read_dword(ptr, &param->annotation_count);
     TRACE("Annotation count: %u\n", param->annotation_count);
+
+    hr = d3dx9_parse_effect_typedef(param, data, &ptr2, NULL);
+    if (hr != D3D_OK)
+    {
+        WARN("Failed to parse type definition\n");
+        return hr;
+    }
+
+    /* todo: Parse value */
 
     if (param->annotation_count)
     {

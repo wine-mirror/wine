@@ -50,4 +50,8 @@ HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer,
 const PixelFormatDesc *get_format_info(D3DFORMAT format);
 const PixelFormatDesc *get_format_info_idx(int idx);
 
+/* debug helpers */
+const char *debug_d3dxparameter_class(D3DXPARAMETER_CLASS c);
+const char *debug_d3dxparameter_type(D3DXPARAMETER_TYPE t);
+
 #endif /* __WINE_D3DX9_36_PRIVATE_H */

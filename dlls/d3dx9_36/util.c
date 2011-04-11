@@ -20,6 +20,7 @@
 #include "wine/debug.h"
 #include "d3dx9_36_private.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 /************************************************************
  * pixel format table providing info about number of bytes per pixel,
@@ -161,3 +162,53 @@ const PixelFormatDesc *get_format_info_idx(int idx)
         return NULL;
     return &formats[idx];
 }
+
+#define WINE_D3DX_TO_STR(x) case x: return #x
+
+const char *debug_d3dxparameter_class(D3DXPARAMETER_CLASS c)
+{
+    switch (c)
+    {
+        WINE_D3DX_TO_STR(D3DXPC_SCALAR);
+        WINE_D3DX_TO_STR(D3DXPC_VECTOR);
+        WINE_D3DX_TO_STR(D3DXPC_MATRIX_ROWS);
+        WINE_D3DX_TO_STR(D3DXPC_MATRIX_COLUMNS);
+        WINE_D3DX_TO_STR(D3DXPC_OBJECT);
+        WINE_D3DX_TO_STR(D3DXPC_STRUCT);
+        default:
+            FIXME("Unrecognized D3DXPARAMETER_CLASS %#x.\n", c);
+            return "unrecognized";
+    }
+}
+
+const char *debug_d3dxparameter_type(D3DXPARAMETER_TYPE t)
+{
+    switch (t)
+    {
+        WINE_D3DX_TO_STR(D3DXPT_VOID);
+        WINE_D3DX_TO_STR(D3DXPT_BOOL);
+        WINE_D3DX_TO_STR(D3DXPT_INT);
+        WINE_D3DX_TO_STR(D3DXPT_FLOAT);
+        WINE_D3DX_TO_STR(D3DXPT_STRING);
+        WINE_D3DX_TO_STR(D3DXPT_TEXTURE);
+        WINE_D3DX_TO_STR(D3DXPT_TEXTURE1D);
+        WINE_D3DX_TO_STR(D3DXPT_TEXTURE2D);
+        WINE_D3DX_TO_STR(D3DXPT_TEXTURE3D);
+        WINE_D3DX_TO_STR(D3DXPT_TEXTURECUBE);
+        WINE_D3DX_TO_STR(D3DXPT_SAMPLER);
+        WINE_D3DX_TO_STR(D3DXPT_SAMPLER1D);
+        WINE_D3DX_TO_STR(D3DXPT_SAMPLER2D);
+        WINE_D3DX_TO_STR(D3DXPT_SAMPLER3D);
+        WINE_D3DX_TO_STR(D3DXPT_SAMPLERCUBE);
+        WINE_D3DX_TO_STR(D3DXPT_PIXELSHADER);
+        WINE_D3DX_TO_STR(D3DXPT_VERTEXSHADER);
+        WINE_D3DX_TO_STR(D3DXPT_PIXELFRAGMENT);
+        WINE_D3DX_TO_STR(D3DXPT_VERTEXFRAGMENT);
+        WINE_D3DX_TO_STR(D3DXPT_UNSUPPORTED);
+        default:
+           FIXME("Unrecognized D3DXPARAMETER_TYP %#x.\n", t);
+            return "unrecognized";
+    }
+}
+
+#undef WINE_D3DX_TO_STR
