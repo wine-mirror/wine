@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-01 18:46+0300\n"
+"PO-Revision-Date: 2011-04-11 21:43+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -2016,13 +2016,12 @@ msgid "Default MidiOut Device"
 msgstr "Numatytasis MidiOut įrenginys"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Numatytosios nuostatos"
+msgstr "Regiono nuostatos"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr ""
+msgstr "%u MB sunaudota, %u MB laisva"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
@@ -10971,9 +10970,8 @@ msgid "Large"
 msgstr "&Didelis"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "Pa&galba apie žinyną"
+msgstr "Pa&galba apie žinyną\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
