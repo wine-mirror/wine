@@ -132,7 +132,12 @@ static void free_parameter(D3DXHANDLE handle)
 
     if (param->member_handles)
     {
-        for (i = 0; i < param->element_count; ++i)
+        unsigned int count;
+
+        if (param->element_count) count = param->element_count;
+        else count = param->member_count;
+
+        for (i = 0; i < count; ++i)
         {
             free_parameter(param->member_handles[i]);
         }
@@ -2444,6 +2449,11 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
                 param->bytes = 4 * param->rows * param->columns;
                 break;
 
+            case D3DXPC_STRUCT:
+                read_dword(ptr, &param->member_count);
+                TRACE("Members: %u\n", param->member_count);
+                break;
+
             default:
                 FIXME("Unhandled class %s\n", debug_d3dxparameter_class(param->class));
                 break;
@@ -2502,6 +2512,41 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
 
         param->bytes = param_bytes;
     }
+    else if (param->member_count)
+    {
+        member_handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*member_handles) * param->member_count);
+        if (!member_handles)
+        {
+            ERR("Out of memory\n");
+            hr = E_OUTOFMEMORY;
+            goto err_out;
+        }
+
+        for (i = 0; i < param->member_count; ++i)
+        {
+            struct d3dx_parameter *member;
+
+            member = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*member));
+            if (!member)
+            {
+                ERR("Out of memory\n");
+                hr = E_OUTOFMEMORY;
+                goto err_out;
+            }
+
+            member_handles[i] = get_parameter_handle(member);
+            member->base = param->base;
+
+            hr = d3dx9_parse_effect_typedef(member, data, ptr, NULL);
+            if (hr != D3D_OK)
+            {
+                WARN("Failed to parse member\n");
+                goto err_out;
+            }
+
+            param->bytes += member->bytes;
+        }
+    }
 
     param->member_handles = member_handles;
 
@@ -2511,7 +2556,12 @@ err_out:
 
     if (member_handles)
     {
-        for (i = 0; i < param->element_count; ++i)
+        unsigned int count;
+
+        if (param->element_count) count = param->element_count;
+        else count = param->member_count;
+
+        for (i = 0; i < count; ++i)
         {
             free_parameter(member_handles[i]);
         }
