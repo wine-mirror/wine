@@ -78,7 +78,7 @@ static ULONG WINAPI IDirect3DSwapChain8Impl_Release(IDirect3DSwapChain8 *iface)
         IDirect3DDevice8 *parentDevice = This->parentDevice;
 
         wined3d_mutex_lock();
-        IWineD3DSwapChain_Destroy(This->wineD3DSwapChain);
+        IWineD3DSwapChain_Release(This->wineD3DSwapChain);
         wined3d_mutex_unlock();
 
         if (parentDevice)

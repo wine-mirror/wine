@@ -256,12 +256,9 @@ static void *d3d8_get_object(struct d3d8_handle_table *t, DWORD handle, enum d3d
 
 static ULONG WINAPI D3D8CB_DestroySwapChain(IWineD3DSwapChain *swapchain)
 {
-    IUnknown *parent;
-
     TRACE("swapchain %p.\n", swapchain);
 
-    parent = IWineD3DSwapChain_GetParent(swapchain);
-    return IUnknown_Release(parent);
+    return IWineD3DSwapChain_Release(swapchain);
 }
 
 static inline IDirect3DDevice8Impl *impl_from_IDirect3DDevice8(IDirect3DDevice8 *iface)
@@ -2913,8 +2910,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
         WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **swapchain)
 {
     IDirect3DDevice8Impl *This = impl_from_IWineD3DDeviceParent(iface);
-    IDirect3DSwapChain8Impl *d3d_swapchain;
     D3DPRESENT_PARAMETERS local_parameters;
+    IDirect3DSwapChain8 *d3d_swapchain;
     HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p\n", iface, present_parameters, swapchain);
@@ -2935,7 +2932,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     local_parameters.FullScreen_PresentationInterval = present_parameters->PresentationInterval;
 
     hr = IDirect3DDevice8_CreateAdditionalSwapChain(&This->IDirect3DDevice8_iface,
-            &local_parameters, (IDirect3DSwapChain8 **)&d3d_swapchain);
+            &local_parameters, &d3d_swapchain);
     if (FAILED(hr))
     {
         ERR("(%p) CreateAdditionalSwapChain failed, returning %#x\n", iface, hr);
@@ -2943,9 +2940,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
         return hr;
     }
 
-    *swapchain = d3d_swapchain->wineD3DSwapChain;
-    IUnknown_Release(d3d_swapchain->parentDevice);
-    d3d_swapchain->parentDevice = NULL;
+    *swapchain = ((IDirect3DSwapChain8Impl *)d3d_swapchain)->wineD3DSwapChain;
+    IWineD3DSwapChain_AddRef(*swapchain);
+    IDirect3DSwapChain8_Release(d3d_swapchain);
 
     /* Copy back the presentation parameters */
     present_parameters->BackBufferWidth = local_parameters.BackBufferWidth;
