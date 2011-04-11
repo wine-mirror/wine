@@ -40,7 +40,7 @@ BOOL CDECL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
 
     LPtoDP(dev->hdc, pts, 2);
 
-    if(pdev->defer || !pdev->pen_line(pdev, pts, pts + 1))
+    if(defer_pen(pdev) || !pdev->pen_line(pdev, pts, pts + 1))
         return next->funcs->pLineTo( next, x, y );
 
     return TRUE;

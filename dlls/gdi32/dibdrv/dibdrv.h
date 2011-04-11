@@ -19,7 +19,9 @@
  */
 
 extern BOOL     CDECL dibdrv_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
+extern HBRUSH   CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush ) DECLSPEC_HIDDEN;
 extern HPEN     CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
+extern COLORREF CDECL dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 
 static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
@@ -43,3 +45,14 @@ extern const primitive_funcs funcs_32   DECLSPEC_HIDDEN;
 extern const primitive_funcs funcs_null DECLSPEC_HIDDEN;
 
 extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;
+extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
+
+static inline BOOL defer_pen(dibdrv_physdev *pdev)
+{
+    return pdev->defer & (DEFER_FORMAT | DEFER_PEN);
+}
+
+static inline BOOL defer_brush(dibdrv_physdev *pdev)
+{
+    return pdev->defer & (DEFER_FORMAT | DEFER_BRUSH);
+}

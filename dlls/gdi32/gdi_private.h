@@ -102,10 +102,16 @@ typedef struct dibdrv_physdev
     /* pen */
     DWORD pen_color, pen_and, pen_xor;
     BOOL   (* pen_line)(struct dibdrv_physdev *pdev, POINT *start, POINT *end);
+
+    /* brush */
+    UINT brush_style;
+    DWORD brush_color, brush_and, brush_xor;
+    BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, int num, RECT *rects);
 } dibdrv_physdev;
 
 #define DEFER_FORMAT     1
 #define DEFER_PEN        2
+#define DEFER_BRUSH      4
 
 typedef struct tagDC_FUNCS
 {

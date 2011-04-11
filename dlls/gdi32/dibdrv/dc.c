@@ -137,6 +137,7 @@ static INT CDECL dibdrv_SetROP2( PHYSDEV dev, INT rop )
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
     calc_and_xor_masks(rop, pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
+    update_brush_rop(pdev, rop);
 
     return next->funcs->pSetROP2( next, rop );
 }
@@ -219,7 +220,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
     dibdrv_SelectBitmap,                /* pSelectBitmap */
-    NULL,                               /* pSelectBrush */
+    dibdrv_SelectBrush,                 /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     NULL,                               /* pSelectFont */
     NULL,                               /* pSelectPalette */
@@ -228,7 +229,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pSetBitmapBits */
     NULL,                               /* pSetBkColor */
     NULL,                               /* pSetBkMode */
-    NULL,                               /* pSetDCBrushColor */
+    dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */
     dibdrv_SetDCPenColor,               /* pSetDCPenColor */
     NULL,                               /* pSetDIBColorTable */
     NULL,                               /* pSetDIBits */

@@ -207,3 +207,86 @@ COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
 
     return next->funcs->pSetDCPenColor( next, color );
 }
+
+/**********************************************************************
+ *             solid_brush
+ *
+ * Fill a number of rectangles with the solid brush
+ * FIXME: Should we insist l < r && t < b?  Currently we assume this.
+ */
+static BOOL solid_brush(dibdrv_physdev *pdev, int num, RECT *rects)
+{
+    int i;
+    DC *dc = get_dibdrv_dc( &pdev->dev );
+
+    if(get_clip_region(dc)) return FALSE;
+
+    for(i = 0; i < num; i++) /* simple clip to extents */
+    {
+        if(rects[i].left   < dc->vis_rect.left)   rects[i].left   = dc->vis_rect.left;
+        if(rects[i].top    < dc->vis_rect.top)    rects[i].top    = dc->vis_rect.top;
+        if(rects[i].right  > dc->vis_rect.right)  rects[i].right  = dc->vis_rect.right;
+        if(rects[i].bottom > dc->vis_rect.bottom) rects[i].bottom = dc->vis_rect.bottom;
+    }
+
+    pdev->dib.funcs->solid_rects(&pdev->dib, num, rects, pdev->brush_and, pdev->brush_xor);
+    return TRUE;
+}
+
+void update_brush_rop( dibdrv_physdev *pdev, INT rop )
+{
+    if(pdev->brush_style == BS_SOLID)
+        calc_and_xor_masks(rop, pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
+}
+
+/***********************************************************************
+ *           dibdrv_SelectBrush
+ */
+HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectBrush );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    LOGBRUSH logbrush;
+
+    TRACE("(%p, %p)\n", dev, hbrush);
+
+    if (!GetObjectW( hbrush, sizeof(logbrush), &logbrush )) return 0;
+
+    if (hbrush == GetStockObject( DC_BRUSH ))
+        logbrush.lbColor = GetDCBrushColor( dev->hdc );
+
+    pdev->brush_style = logbrush.lbStyle;
+
+    pdev->defer |= DEFER_BRUSH;
+
+    switch(logbrush.lbStyle)
+    {
+    case BS_SOLID:
+        pdev->brush_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, logbrush.lbColor);
+        calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
+        pdev->brush_rects = solid_brush;
+        pdev->defer &= ~DEFER_BRUSH;
+        break;
+    default:
+        break;
+    }
+
+    return next->funcs->pSelectBrush( next, hbrush );
+}
+
+/***********************************************************************
+ *           dibdrv_SetDCBrushColor
+ */
+COLORREF CDECL dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDCBrushColor );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+
+    if (GetCurrentObject(dev->hdc, OBJ_BRUSH) == GetStockObject( DC_BRUSH ))
+    {
+        pdev->brush_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, color);
+        calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
+    }
+
+    return next->funcs->pSetDCBrushColor( next, color );
+}
