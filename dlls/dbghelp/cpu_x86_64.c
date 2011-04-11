@@ -799,6 +799,7 @@ static const char* x86_64_fetch_regname(unsigned regno)
 struct cpu cpu_x86_64 = {
     IMAGE_FILE_MACHINE_AMD64,
     8,
+    CV_AMD64_RSP,
     x86_64_get_addr,
     x86_64_stack_walk,
     x86_64_find_runtime_function,

@@ -75,6 +75,7 @@ static const char* ppc_fetch_regname(unsigned regno)
 struct cpu cpu_ppc = {
     IMAGE_FILE_MACHINE_POWERPC,
     4,
+    CV_REG_NONE, /* FIXME */
     ppc_get_addr,
     ppc_stack_walk,
     NULL,

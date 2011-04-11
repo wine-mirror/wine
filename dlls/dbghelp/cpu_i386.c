@@ -635,6 +635,7 @@ static const char* i386_fetch_regname(unsigned regno)
 struct cpu cpu_i386 = {
     IMAGE_FILE_MACHINE_I386,
     4,
+    CV_REG_EBP,
     i386_get_addr,
     i386_stack_walk,
     NULL,

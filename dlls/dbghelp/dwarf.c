@@ -1899,7 +1899,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     {
         /* on stack !! */
         subpgm.frame.kind = loc_regrel;
-        subpgm.frame.reg = 0;
+        subpgm.frame.reg = dbghelp_current_cpu->frame_regno;
         subpgm.frame.offset = 0;
     }
     subpgm.non_computed_variable = FALSE;

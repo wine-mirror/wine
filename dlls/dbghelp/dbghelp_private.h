@@ -470,6 +470,8 @@ struct cpu
 {
     DWORD       machine;
     DWORD       word_size;
+    DWORD       frame_regno;
+
     /* address manipulation */
     unsigned    (*get_addr)(HANDLE hThread, const CONTEXT* ctx,
                             enum cpu_addr, ADDRESS64* addr);

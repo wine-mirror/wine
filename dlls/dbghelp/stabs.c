@@ -1417,7 +1417,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                 struct symt*    param_type = stabs_parse_type(ptr);
                 stab_strcpy(symname, sizeof(symname), ptr);
                 loc.kind = loc_regrel;
-                loc.reg = 0; /* FIXME */
+                loc.reg = dbghelp_current_cpu->frame_regno;
                 loc.offset = stab_ptr->n_value;
                 symt_add_func_local(module, curr_func,
                                     (int)stab_ptr->n_value >= 0 ? DataIsParam : DataIsLocal,
@@ -1492,7 +1492,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
         case N_LSYM:
             /* These are local variables */
             loc.kind = loc_regrel;
-            loc.reg = 0; /* FIXME */
+            loc.reg = dbghelp_current_cpu->frame_regno;
             loc.offset = stab_ptr->n_value;
             if (curr_func != NULL) pending_add_var(&pending_block, ptr, DataIsLocal, &loc);
             break;

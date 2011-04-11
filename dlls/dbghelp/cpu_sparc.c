@@ -70,6 +70,7 @@ static const char* sparc_fetch_regname(unsigned regno)
 struct cpu cpu_sparc = {
     IMAGE_FILE_MACHINE_SPARC,
     4,
+    CV_REG_NONE, /* FIXME */
     sparc_get_addr,
     sparc_stack_walk,
     NULL,

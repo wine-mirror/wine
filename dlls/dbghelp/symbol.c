@@ -721,8 +721,9 @@ static void symt_fill_sym_info(struct module_pair* pair,
                         break;
                     case loc_regrel:
                         sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_REGREL;
-                        /* FIXME: it's i386 dependent !!! */
-                        sym_info->Register = loc.reg ? loc.reg : CV_REG_EBP;
+                        sym_info->Register = loc.reg;
+                        if (loc.reg == CV_REG_NONE || (int)loc.reg < 0 /* error */)
+                            FIXME("suspicious register value %x\n", loc.reg);
                         sym_info->Address = loc.offset;
                         break;
                     case loc_absolute:
