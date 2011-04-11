@@ -34,6 +34,8 @@ struct d3dx_parameter
 {
     struct ID3DXBaseEffectImpl *base;
 
+    char *name;
+    char *semantic;
     D3DXPARAMETER_CLASS class;
     D3DXPARAMETER_TYPE  type;
     UINT rows;
@@ -109,7 +111,7 @@ static D3DXHANDLE get_parameter_handle(struct d3dx_parameter *parameter)
     return (D3DXHANDLE) parameter;
 }
 
-static void free_parameter(D3DXHANDLE handle)
+static void free_parameter(D3DXHANDLE handle, BOOL element)
 {
     unsigned int i;
     struct d3dx_parameter *param = get_parameter_struct(handle);
@@ -125,7 +127,7 @@ static void free_parameter(D3DXHANDLE handle)
     {
         for (i = 0; i < param->annotation_count; ++i)
         {
-            free_parameter(param->annotation_handles[i]);
+            free_parameter(param->annotation_handles[i], FALSE);
         }
         HeapFree(GetProcessHeap(), 0, param->annotation_handles);
     }
@@ -139,9 +141,16 @@ static void free_parameter(D3DXHANDLE handle)
 
         for (i = 0; i < count; ++i)
         {
-            free_parameter(param->member_handles[i]);
+            free_parameter(param->member_handles[i], param->element_count != 0);
         }
         HeapFree(GetProcessHeap(), 0, param->member_handles);
+    }
+
+    /* only the parent has to release name and semantic */
+    if (!element)
+    {
+        HeapFree(GetProcessHeap(), 0, param->name);
+        HeapFree(GetProcessHeap(), 0, param->semantic);
     }
 
     HeapFree(GetProcessHeap(), 0, param);
@@ -157,7 +166,7 @@ static void free_base_effect(struct ID3DXBaseEffectImpl *base)
     {
         for (i = 0; i < base->parameter_count; ++i)
         {
-            free_parameter(base->parameter_handles[i]);
+            free_parameter(base->parameter_handles[i], FALSE);
         }
         HeapFree(GetProcessHeap(), 0, base->parameter_handles);
     }
@@ -2397,6 +2406,31 @@ static const struct ID3DXEffectCompilerVtbl ID3DXEffectCompiler_Vtbl =
     ID3DXEffectCompilerImpl_CompileShader,
 };
 
+static HRESULT d3dx9_parse_name(char **name, const char *ptr)
+{
+    DWORD size;
+
+    read_dword(&ptr, &size);
+    TRACE("Name size: %#x\n", size);
+
+    if (!size)
+    {
+        return D3D_OK;
+    }
+
+    *name = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!*name)
+    {
+        ERR("Failed to allocate name memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    TRACE("Name: %s.\n", debugstr_an(ptr, size));
+    memcpy(*name, ptr, size);
+
+    return D3D_OK;
+}
+
 static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const char *data, const char **ptr, struct d3dx_parameter *parent)
 {
     DWORD offset;
@@ -2414,11 +2448,21 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
 
         read_dword(ptr, &offset);
         TRACE("Type name offset: %#x\n", offset);
-        /* todo: Parse name */
+        hr = d3dx9_parse_name(&param->name, data + offset);
+        if (hr != D3D_OK)
+        {
+            WARN("Failed to parse name\n");
+            goto err_out;
+        }
 
         read_dword(ptr, &offset);
         TRACE("Type semantic offset: %#x\n", offset);
-        /* todo: Parse semantic */
+        hr = d3dx9_parse_name(&param->semantic, data + offset);
+        if (hr != D3D_OK)
+        {
+            WARN("Failed to parse semantic\n");
+            goto err_out;
+        }
 
         read_dword(ptr, &param->element_count);
         TRACE("Elements: %u\n", param->element_count);
@@ -2464,6 +2508,8 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
         /* elements */
         param->type = parent->type;
         param->class = parent->class;
+        param->name = parent->name;
+        param->semantic = parent->semantic;
         param->element_count = 0;
         param->annotation_count = 0;
         param->member_count = parent->member_count;
@@ -2563,10 +2609,18 @@ err_out:
 
         for (i = 0; i < count; ++i)
         {
-            free_parameter(member_handles[i]);
+            free_parameter(member_handles[i], param->element_count != 0);
         }
         HeapFree(GetProcessHeap(), 0, member_handles);
     }
+
+    if (!parent)
+    {
+        HeapFree(GetProcessHeap(), 0, param->name);
+        HeapFree(GetProcessHeap(), 0, param->semantic);
+    }
+    param->name = NULL;
+    param->semantic = NULL;
 
     return hr;
 }
@@ -2670,7 +2724,7 @@ err_out:
     {
         for (i = 0; i < param->annotation_count; ++i)
         {
-            free_parameter(annotation_handles[i]);
+            free_parameter(annotation_handles[i], FALSE);
         }
         HeapFree(GetProcessHeap(), 0, annotation_handles);
     }
@@ -2739,7 +2793,7 @@ err_out:
     {
         for (i = 0; i < base->parameter_count; ++i)
         {
-            free_parameter(parameter_handles[i]);
+            free_parameter(parameter_handles[i], FALSE);
         }
         HeapFree(GetProcessHeap(), 0, parameter_handles);
     }
