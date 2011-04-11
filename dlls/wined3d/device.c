@@ -701,7 +701,7 @@ HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, I
     }
     else
     {
-        render_offscreen = FALSE;
+        render_offscreen = TRUE;
         drawable_width = depth_stencil->pow2Width;
         drawable_height = depth_stencil->pow2Height;
     }
