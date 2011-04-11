@@ -1692,7 +1692,8 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
          */
 	case S_BPREL_V1:
             loc.kind = loc_regrel;
-            loc.reg = 0; /* FIXME */
+            /* Yes, it's i386 dependent, but that's the symbol purpose. S_REGREL is used on other CPUs */
+            loc.reg = CV_REG_EBP;
             loc.offset = sym->stack_v1.offset;
             symt_add_func_local(msc_dbg->module, curr_func, 
                                 sym->stack_v1.offset > 0 ? DataIsParam : DataIsLocal, 
@@ -1702,7 +1703,8 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             break;
 	case S_BPREL_V2:
             loc.kind = loc_regrel;
-            loc.reg = 0; /* FIXME */
+            /* Yes, it's i386 dependent, but that's the symbol purpose. S_REGREL is used on other CPUs */
+            loc.reg = CV_REG_EBP;
             loc.offset = sym->stack_v2.offset;
             symt_add_func_local(msc_dbg->module, curr_func, 
                                 sym->stack_v2.offset > 0 ? DataIsParam : DataIsLocal, 
@@ -1712,7 +1714,8 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             break;
 	case S_BPREL_V3:
             loc.kind = loc_regrel;
-            loc.reg = 0; /* FIXME */
+            /* Yes, it's i386 dependent, but that's the symbol purpose. S_REGREL is used on other CPUs */
+            loc.reg = CV_REG_EBP;
             loc.offset = sym->stack_v3.offset;
             symt_add_func_local(msc_dbg->module, curr_func, 
                                 sym->stack_v3.offset > 0 ? DataIsParam : DataIsLocal, 
