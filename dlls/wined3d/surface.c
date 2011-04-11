@@ -3456,7 +3456,10 @@ static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILT
 
     LEAVE_GL();
 
-    if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
+    if (wined3d_settings.strict_draw_ordering
+            || (dst_location == SFLAG_INDRAWABLE
+            && dst_surface->container.u.swapchain->front_buffer == dst_surface))
+        wglFlush();
 
     context_release(context);
 }
