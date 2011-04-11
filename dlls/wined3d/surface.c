@@ -2053,6 +2053,12 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *surface,
     checkGLcall("glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)");
 
     LEAVE_GL();
+
+    if (wined3d_settings.strict_draw_ordering
+            || (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
+            && surface->container.u.swapchain->front_buffer == surface))
+        wglFlush();
+
     context_release(context);
 }
 
