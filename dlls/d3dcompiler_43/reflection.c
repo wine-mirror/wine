@@ -235,6 +235,7 @@ static void d3dcompiler_shader_reflection_type_destroy(struct wine_rb_entry *ent
         {
             free_type_member(&t->members[i]);
         }
+        HeapFree(GetProcessHeap(), 0, t->members);
     }
 
     HeapFree(GetProcessHeap(), 0, t);
@@ -1235,7 +1236,7 @@ static HRESULT d3dcompiler_parse_type(struct d3dcompiler_shader_reflection_type 
     {
         const char *ptr2 = data + member_offset;
 
-        members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*members));
+        members = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*members) * desc->Members);
         if (!members)
         {
             ERR("Failed to allocate type memory.\n");
