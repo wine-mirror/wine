@@ -12163,7 +12163,7 @@ static void test_menu_messages(void)
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    ok_sequence(wm_single_menu_item, "single menu item command", TRUE);
+    ok_sequence(wm_single_menu_item, "single menu item command", FALSE);
 
     set_menu_style(hmenu, 0);
     style = get_menu_style(hmenu);

@@ -3397,7 +3397,7 @@ void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar)
         if( uItem == NO_SELECTED_ITEM )
             MENU_MoveSelection( hwnd, hTrackMenu, ITEM_NEXT );
         else
-            PostMessageW( hwnd, WM_KEYDOWN, VK_DOWN, 0L );
+            PostMessageW( hwnd, WM_KEYDOWN, VK_RETURN, 0 );
     }
 
 track_menu:
