@@ -26,15 +26,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 /* Do not call while under the GL lock. */
-static void WINAPI IWineD3DBaseSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
+static void swapchain_cleanup(IWineD3DSwapChainImpl *swapchain)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
     WINED3DDISPLAYMODE mode;
     UINT i;
 
-    TRACE("Destroying swapchain %p.\n", iface);
+    TRACE("Destroying swapchain %p.\n", swapchain);
 
-    IWineD3DSwapChain_SetGammaRamp(iface, 0, &swapchain->orig_gamma);
+    IWineD3DSwapChain_SetGammaRamp((IWineD3DSwapChain *)swapchain, 0, &swapchain->orig_gamma);
 
     /* Release the swapchain's draw buffers. Make sure swapchain->back_buffers[0]
      * is the last buffer to be destroyed, FindContext() depends on that. */
@@ -64,6 +63,7 @@ static void WINAPI IWineD3DBaseSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
     {
         context_destroy(swapchain->device, swapchain->context[i]);
     }
+    HeapFree(GetProcessHeap(), 0, swapchain->context);
 
     /* Restore the screen resolution if we rendered in fullscreen.
      * This will restore the screen resolution to what it was before creating
@@ -79,10 +79,6 @@ static void WINAPI IWineD3DBaseSwapChainImpl_Destroy(IWineD3DSwapChain *iface)
         mode.Format = swapchain->orig_fmt;
         IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)swapchain->device, 0, &mode);
     }
-
-    swapchain->parent_ops->wined3d_object_destroyed(swapchain->parent);
-    HeapFree(GetProcessHeap(), 0, swapchain->context);
-    HeapFree(GetProcessHeap(), 0, swapchain);
 }
 
 static HRESULT WINAPI IWineD3DBaseSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, void **object)
@@ -123,7 +119,11 @@ static ULONG WINAPI IWineD3DBaseSwapChainImpl_Release(IWineD3DSwapChain *iface)
     TRACE("%p decreasing refcount to %u.\n", swapchain, refcount);
 
     if (!refcount)
-        IWineD3DBaseSwapChainImpl_Destroy(iface);
+    {
+        swapchain_cleanup(swapchain);
+        swapchain->parent_ops->wined3d_object_destroyed(swapchain->parent);
+        HeapFree(GetProcessHeap(), 0, swapchain);
+    }
 
     return refcount;
 }
@@ -658,7 +658,6 @@ static const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_Release,
     /* IWineD3DSwapChain */
     IWineD3DBaseSwapChainImpl_GetParent,
-    IWineD3DBaseSwapChainImpl_Destroy,
     IWineD3DBaseSwapChainImpl_GetDevice,
     IWineD3DSwapChainImpl_Present,
     IWineD3DSwapChainImpl_SetDestWindowOverride,
@@ -847,7 +846,6 @@ static const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_Release,
     /* IWineD3DSwapChain */
     IWineD3DBaseSwapChainImpl_GetParent,
-    IWineD3DBaseSwapChainImpl_Destroy,
     IWineD3DBaseSwapChainImpl_GetDevice,
     IWineGDISwapChainImpl_Present,
     IWineGDISwapChainImpl_SetDestWindowOverride,

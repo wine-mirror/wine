@@ -2332,8 +2332,6 @@ interface IWineD3DVolume : IWineD3DResource
 ]
 interface IWineD3DSwapChain : IWineD3DBase
 {
-    void Destroy(
-    );
     HRESULT GetDevice(
         [out] IWineD3DDevice **device
     );
