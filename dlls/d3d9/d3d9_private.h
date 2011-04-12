@@ -377,15 +377,14 @@ HRESULT volumetexture_init(IDirect3DVolumeTexture9Impl *texture, IDirect3DDevice
  * IDirect3DStateBlock9 implementation structure
  */
 typedef struct  IDirect3DStateBlock9Impl {
-    /* IUnknown fields */
-    const IDirect3DStateBlock9Vtbl *lpVtbl;
+    IDirect3DStateBlock9    IDirect3DStateBlock9_iface;
     LONG                    ref;
 
     /* IDirect3DStateBlock9 fields */
     struct wined3d_stateblock *wined3d_stateblock;
 
     /* Parent reference */
-    LPDIRECT3DDEVICE9EX       parentDevice;
+    IDirect3DDevice9Ex      *parentDevice;
 } IDirect3DStateBlock9Impl;
 
 HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, IDirect3DDevice9Impl *device,

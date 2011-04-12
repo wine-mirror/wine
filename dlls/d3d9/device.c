@@ -1509,7 +1509,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateStateBlock(IDirect3DDevice9Ex *
     }
 
     TRACE("Created stateblock %p.\n", object);
-    *stateblock = (IDirect3DStateBlock9 *)object;
+    *stateblock = &object->IDirect3DStateBlock9_iface;
 
     return D3D_OK;
 }
@@ -1568,7 +1568,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_EndStateBlock(IDirect3DDevice9Ex *ifa
     }
 
     TRACE("Created stateblock %p.\n", object);
-    *stateblock = (IDirect3DStateBlock9 *)object;
+    *stateblock = &object->IDirect3DStateBlock9_iface;
 
     return D3D_OK;
 }
