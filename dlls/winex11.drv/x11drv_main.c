@@ -75,7 +75,6 @@ unsigned int screen_bpp;
 unsigned int screen_depth;
 RECT virtual_screen_rect;
 Window root_window;
-int dxgrab = 0;
 int usexvidmode = 1;
 int usexrandr = 1;
 int usexcomposite = 1;
@@ -405,9 +404,6 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "Decorated", buffer, sizeof(buffer) ))
         decorated_mode = IS_OPTION_TRUE( buffer[0] );
-
-    if (!get_config_key( hkey, appkey, "DXGrab", buffer, sizeof(buffer) ))
-        dxgrab = IS_OPTION_TRUE( buffer[0] );
 
     if (!get_config_key( hkey, appkey, "UseXVidMode", buffer, sizeof(buffer) ))
         usexvidmode = IS_OPTION_TRUE( buffer[0] );

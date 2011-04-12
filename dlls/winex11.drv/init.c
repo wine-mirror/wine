@@ -304,15 +304,6 @@ INT CDECL X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, L
         }
         break;
 
-    case DCICOMMAND:
-        if (in_data)
-        {
-            const DCICMD *lpCmd = in_data;
-            if (lpCmd->dwVersion != DD_VERSION) break;
-            return X11DRV_DCICommand(in_count, lpCmd, out_data);
-        }
-        break;
-
     case X11DRV_ESCAPE:
         if (in_data && in_count >= sizeof(enum x11drv_escape_codes))
         {

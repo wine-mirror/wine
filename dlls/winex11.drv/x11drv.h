@@ -466,8 +466,6 @@ extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *di
 extern void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                       DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
                                       DWORD width, DWORD height);
-struct _DCICMD;
-extern INT X11DRV_DCICommand(INT cbInput, const struct _DCICMD *lpCmd, LPVOID lpOutData);
 
 /**************************************************************************
  * X11 GDI driver
@@ -593,7 +591,6 @@ extern unsigned int screen_bpp;
 extern unsigned int screen_depth;
 extern RECT virtual_screen_rect;
 extern unsigned int text_caps;
-extern int dxgrab;
 extern int use_xkb;
 extern int use_take_focus;
 extern int use_primary_selection;
@@ -847,8 +844,6 @@ LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
                                             LONG (*pNewSCM)(int),
                                             unsigned int nmodes,
                                             int reserve_depths);
-
-extern void X11DRV_DDHAL_SwitchMode(DWORD dwModeIndex, LPVOID fb_addr, LPVIDMEM fb_mem);
 
 /* XIM support */
 extern BOOL X11DRV_InitXIM( const char *input_style ) DECLSPEC_HIDDEN;

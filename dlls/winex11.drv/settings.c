@@ -31,7 +31,6 @@
 #include "windef.h"
 #include "winreg.h"
 #include "wingdi.h"
-#include "ddrawi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11settings);
@@ -438,40 +437,4 @@ LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         devmode->dmPelsWidth, devmode->dmPelsHeight,
         devmode->dmBitsPerPel, devmode->dmDisplayFrequency, handler_name);
     return DISP_CHANGE_BADMODE;
-}
-
-
-
-
-/***********************************************************************
- * DirectDraw HAL interface
- *
- */
-static DWORD PASCAL X11DRV_Settings_SetMode(LPDDHAL_SETMODEDATA data)
-{
-    TRACE("Mode %d requested by DDHAL (%s)\n", data->dwModeIndex, handler_name);
-    switch (pSetCurrentMode(data->dwModeIndex))
-    {
-    case DISP_CHANGE_SUCCESSFUL:
-        X11DRV_DDHAL_SwitchMode(data->dwModeIndex, NULL, NULL);
-        data->ddRVal = DD_OK;
-        break;
-    case DISP_CHANGE_BADMODE:
-        data->ddRVal = DDERR_WRONGMODE;
-        break;
-    default:
-        data->ddRVal = DDERR_UNSUPPORTEDMODE;
-    }
-    return DDHAL_DRIVER_HANDLED;
-}
-int X11DRV_Settings_CreateDriver(LPDDHALINFO info)
-{
-    if (!dd_mode_count) return 0; /* no settings defined */
-
-    TRACE("Setting up display settings for DDRAW (%s)\n", handler_name);
-    info->dwNumModes = dd_mode_count;
-    info->lpModeInfo = dd_modes;
-    X11DRV_DDHAL_SwitchMode(pGetCurrentMode(), NULL, NULL);
-    info->lpDDCallbacks->SetMode = X11DRV_Settings_SetMode;
-    return TRUE;
 }

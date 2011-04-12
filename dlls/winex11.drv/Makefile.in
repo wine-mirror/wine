@@ -30,7 +30,6 @@ C_SRCS = \
 	text.c \
 	window.c \
 	wintab.c \
-	x11ddraw.c \
 	x11drv_main.c \
 	xdnd.c \
 	xfont.c \
