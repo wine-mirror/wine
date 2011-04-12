@@ -1132,14 +1132,25 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
 
     if (dib)
     {
-        X11DRV_PALETTE_ComputeColorShifts(&shifts, dib->dsBitfields[0], dib->dsBitfields[1], dib->dsBitfields[2]);
+        const DWORD *bitfields;
+        static const DWORD bitfields_32[3] = {0xff0000, 0x00ff00, 0x0000ff};
+        static const DWORD bitfields_16[3] = {0x7c00, 0x03e0, 0x001f};
+
+        if(dib->dsBmih.biCompression == BI_BITFIELDS)
+            bitfields = dib->dsBitfields;
+        else if(bits_pixel == 24 || bits_pixel == 32)
+            bitfields = bitfields_32;
+        else
+            bitfields = bitfields_16;
+
+        X11DRV_PALETTE_ComputeColorShifts(&shifts, bitfields[0], bitfields[1], bitfields[2]);
         fmt = get_xrender_format_from_color_shifts(dib->dsBm.bmBitsPixel, &shifts);
 
         /* Common formats should be in our picture format table. */
         if (!fmt)
         {
             TRACE("Unhandled dibsection format bpp=%d, redMask=%x, greenMask=%x, blueMask=%x\n",
-                dib->dsBm.bmBitsPixel, dib->dsBitfields[0], dib->dsBitfields[1], dib->dsBitfields[2]);
+                dib->dsBm.bmBitsPixel, bitfields[0], bitfields[1], bitfields[2]);
             return FALSE;
         }
     }
