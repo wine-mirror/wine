@@ -2706,8 +2706,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateQuery(IDirect3DDevice9Ex *iface
     }
 
     TRACE("Created query %p.\n", object);
-    if (query) *query = (IDirect3DQuery9 *)object;
-    else IDirect3DQuery9_Release((IDirect3DQuery9 *)object);
+    if (query) *query = &object->IDirect3DQuery9_iface;
+    else IDirect3DQuery9_Release(&object->IDirect3DQuery9_iface);
 
     return D3D_OK;
 }

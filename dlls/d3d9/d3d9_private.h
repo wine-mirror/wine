@@ -465,15 +465,14 @@ HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader,
  * IDirect3DPixelShader implementation structure
  */
 typedef struct IDirect3DQuery9Impl {
-    /* IUnknown fields */
-    const IDirect3DQuery9Vtbl *lpVtbl;
+    IDirect3DQuery9      IDirect3DQuery9_iface;
     LONG                 ref;
 
     /* IDirect3DQuery9 fields */
     struct wined3d_query *wineD3DQuery;
 
     /* Parent reference */
-    LPDIRECT3DDEVICE9EX    parentDevice;
+    IDirect3DDevice9Ex   *parentDevice;
 } IDirect3DQuery9Impl;
 
 HRESULT query_init(IDirect3DQuery9Impl *query, IDirect3DDevice9Impl *device,
