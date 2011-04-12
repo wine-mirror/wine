@@ -272,10 +272,8 @@ VOID PROGRAM_ExecuteProgram(HLOCAL hProgram)
 {
   PROGRAM *program = LocalLock(hProgram);
   LPSTR lpszCmdLine = LocalLock(program->hCmdLine);
-  LPSTR lpszWorkDir = LocalLock(program->hWorkDir);
 
-  /* FIXME set working directory */
-  lpszWorkDir = lpszWorkDir;
+  /* FIXME set working directory from program->hWorkDir */
 
   WinExec(lpszCmdLine, program->nCmdShow);
   if (Globals.bMinOnRun) CloseWindow(Globals.hMainWnd);
