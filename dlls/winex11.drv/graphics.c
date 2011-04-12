@@ -534,7 +534,7 @@ X11DRV_DrawArc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
     if (!width) width = 1;
     if(physDev->pen.style == PS_NULL) width = 0;
 
-    if ((physDev->pen.style == PS_INSIDEFRAME))
+    if (physDev->pen.style == PS_INSIDEFRAME)
     {
         if (2*width > (rc.right-rc.left)) width=(rc.right-rc.left + 1)/2;
         if (2*width > (rc.bottom-rc.top)) width=(rc.bottom-rc.top + 1)/2;
@@ -709,7 +709,7 @@ X11DRV_Ellipse( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT botto
     if (!width) width = 1;
     if(physDev->pen.style == PS_NULL) width = 0;
 
-    if ((physDev->pen.style == PS_INSIDEFRAME))
+    if (physDev->pen.style == PS_INSIDEFRAME)
     {
         if (2*width > (rc.right-rc.left)) width=(rc.right-rc.left + 1)/2;
         if (2*width > (rc.bottom-rc.top)) width=(rc.bottom-rc.top + 1)/2;
@@ -769,7 +769,7 @@ X11DRV_Rectangle(X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bott
     if (!width) width = 1;
     if(physDev->pen.style == PS_NULL) width = 0;
 
-    if ((physDev->pen.style == PS_INSIDEFRAME))
+    if (physDev->pen.style == PS_INSIDEFRAME)
     {
         if (2*width > (rc.right-rc.left)) width=(rc.right-rc.left + 1)/2;
         if (2*width > (rc.bottom-rc.top)) width=(rc.bottom-rc.top + 1)/2;
@@ -850,7 +850,7 @@ X11DRV_RoundRect( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
     if (!width) width = 1;
     if(physDev->pen.style == PS_NULL) width = 0;
 
-    if ((physDev->pen.style == PS_INSIDEFRAME))
+    if (physDev->pen.style == PS_INSIDEFRAME)
     {
         if (2*width > (rc.right-rc.left)) width=(rc.right-rc.left + 1)/2;
         if (2*width > (rc.bottom-rc.top)) width=(rc.bottom-rc.top + 1)/2;
