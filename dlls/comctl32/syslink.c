@@ -529,7 +529,7 @@ static PDOC_ITEM SYSLINK_GetFocusLink (const SYSLINK_INFO *infoPtr, int *LinkId)
 
     while(Current != NULL)
     {
-        if((Current->Type == slLink))
+        if(Current->Type == slLink)
         {
             if(Current->u.Link.state & LIS_FOCUSED)
             {
