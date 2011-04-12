@@ -321,7 +321,7 @@ static BOOL load_xul(const PRUnichar *gre_path)
 
     xul_handle = LoadLibraryExW(file_name, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
     if(!xul_handle) {
-        WARN("Could not load XPCOM: %d\n", GetLastError());
+        WARN("Could not load XUL: %d\n", GetLastError());
         return FALSE;
     }
 
