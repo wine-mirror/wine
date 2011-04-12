@@ -2562,13 +2562,12 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     /* If there's a swapchain, it owns the wined3d surfaces. So Destroy
      * the swapchain
      */
-    if(swapchain) {
+    if (swapchain)
+    {
         /* The backbuffers have the swapchain set as well, but the primary
-         * owns it and destroys it
-         */
-        if(surfImpl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) {
-            IWineD3DDevice_UninitGDI(This->wineD3DDevice, D3D7CB_DestroySwapChain);
-        }
+         * owns it and destroys it. */
+        if (surfImpl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+            IWineD3DDevice_UninitGDI(This->wineD3DDevice);
         surfImpl->isRenderTarget = FALSE;
     } else {
         if(IWineD3DSurface_Release(wineD3DSurface) == 0)
@@ -2603,7 +2602,7 @@ static HRESULT ddraw_recreate_surfaces(IDirectDrawImpl *This)
         /* Should happen almost never */
         FIXME("(%p) Switching to non-opengl surfaces with d3d started. Is this a bug?\n", This);
         /* Shutdown d3d */
-        IWineD3DDevice_Uninit3D(This->wineD3DDevice, D3D7CB_DestroySwapChain);
+        IWineD3DDevice_Uninit3D(This->wineD3DDevice);
     }
     /* Contrary: D3D starting is handled by the caller, because it knows the render target */
 
@@ -2612,13 +2611,6 @@ static HRESULT ddraw_recreate_surfaces(IDirectDrawImpl *This)
 
     return IDirectDraw7_EnumSurfaces(&This->IDirectDraw7_iface, 0, &desc, This,
             ddraw_recreate_surfaces_cb);
-}
-
-ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *swapchain)
-{
-    TRACE("swapchain %p.\n", swapchain);
-
-    return IWineD3DSwapChain_Release(swapchain);
 }
 
 /*****************************************************************************
@@ -2898,7 +2890,7 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
     {
         ERR("Error allocating an array for the converted vertex decls.\n");
         ddraw->declArraySize = 0;
-        hr = IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroySwapChain);
+        hr = IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice);
         return E_OUTOFMEMORY;
     }
 

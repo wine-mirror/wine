@@ -254,13 +254,6 @@ static void *d3d8_get_object(struct d3d8_handle_table *t, DWORD handle, enum d3d
     return entry->object;
 }
 
-static ULONG WINAPI D3D8CB_DestroySwapChain(IWineD3DSwapChain *swapchain)
-{
-    TRACE("swapchain %p.\n", swapchain);
-
-    return IWineD3DSwapChain_Release(swapchain);
-}
-
 static inline IDirect3DDevice8Impl *impl_from_IDirect3DDevice8(IDirect3DDevice8 *iface)
 {
     return CONTAINING_RECORD(iface, IDirect3DDevice8Impl, IDirect3DDevice8_iface);
@@ -327,7 +320,7 @@ static ULONG WINAPI IDirect3DDevice8Impl_Release(IDirect3DDevice8 *iface)
         }
         HeapFree(GetProcessHeap(), 0, This->decls);
 
-        IWineD3DDevice_Uninit3D(This->WineD3DDevice, D3D8CB_DestroySwapChain);
+        IWineD3DDevice_Uninit3D(This->WineD3DDevice);
         IWineD3DDevice_ReleaseFocusWindow(This->WineD3DDevice);
         IWineD3DDevice_Release(This->WineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This->handle_table.entries);
@@ -3104,7 +3097,7 @@ HRESULT device_init(IDirect3DDevice8Impl *device, struct wined3d *wined3d, UINT 
 
 err:
     wined3d_mutex_lock();
-    IWineD3DDevice_Uninit3D(device->WineD3DDevice, D3D8CB_DestroySwapChain);
+    IWineD3DDevice_Uninit3D(device->WineD3DDevice);
     IWineD3DDevice_ReleaseFocusWindow(device->WineD3DDevice);
     IWineD3DDevice_Release(device->WineD3DDevice);
     wined3d_mutex_unlock();

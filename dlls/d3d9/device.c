@@ -181,13 +181,6 @@ static UINT vertex_count_from_primitive_count(D3DPRIMITIVETYPE primitive_type, U
     }
 }
 
-static ULONG WINAPI D3D9CB_DestroySwapChain(IWineD3DSwapChain *swapchain)
-{
-    TRACE("swapchain %p.\n", swapchain);
-
-    return IWineD3DSwapChain_Release(swapchain);
-}
-
 /* IDirect3D IUnknown parts follow: */
 static HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(LPDIRECT3DDEVICE9EX iface, REFIID riid, LPVOID* ppobj) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
@@ -266,7 +259,7 @@ static ULONG WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Release(LPDIRECT3DDEV
       }
       HeapFree(GetProcessHeap(), 0, This->convertedDecls);
 
-      IWineD3DDevice_Uninit3D(This->WineD3DDevice, D3D9CB_DestroySwapChain);
+      IWineD3DDevice_Uninit3D(This->WineD3DDevice);
       IWineD3DDevice_ReleaseFocusWindow(This->WineD3DDevice);
       IWineD3DDevice_Release(This->WineD3DDevice);
       wined3d_mutex_unlock();
@@ -3377,7 +3370,7 @@ HRESULT device_init(IDirect3DDevice9Impl *device, struct wined3d *wined3d, UINT 
     {
         ERR("Failed to allocate FVF vertex declaration map memory.\n");
         wined3d_mutex_lock();
-        IWineD3DDevice_Uninit3D(device->WineD3DDevice, D3D9CB_DestroySwapChain);
+        IWineD3DDevice_Uninit3D(device->WineD3DDevice);
         IWineD3DDevice_ReleaseFocusWindow(device->WineD3DDevice);
         IWineD3DDevice_Release(device->WineD3DDevice);
         wined3d_mutex_unlock();

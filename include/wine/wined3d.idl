@@ -2162,7 +2162,6 @@ interface IWineD3DDeviceParent : IUnknown
         [out] IWineD3DSwapChain **swapchain
     );
 }
-typedef ULONG (__stdcall *D3DCB_DESTROYSWAPCHAINFN)(IWineD3DSwapChain *pSwapChain);
 typedef HRESULT (__stdcall *D3DCB_ENUMRESOURCES)(struct wined3d_resource *resource, void *pData);
 
 [
@@ -2531,10 +2530,8 @@ interface IWineD3DDevice : IUnknown
         [in] WINED3DPRESENT_PARAMETERS *present_parameters
     );
     HRESULT Uninit3D(
-        [in] D3DCB_DESTROYSWAPCHAINFN destroy_swapchain_callback
     );
     HRESULT UninitGDI(
-        [in] D3DCB_DESTROYSWAPCHAINFN destroy_swapchain_callback
     );
     void SetMultithreaded(
     );

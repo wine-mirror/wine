@@ -2126,8 +2126,7 @@ static HRESULT WINAPI device_unload_resource(struct wined3d_resource *resource, 
     return S_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
-        D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain)
+static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     const struct wined3d_gl_info *gl_info;
@@ -2266,7 +2265,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     for (i = 0; i < This->swapchain_count; ++i)
     {
         TRACE("Releasing the implicit swapchain %u.\n", i);
-        if (D3DCB_DestroySwapChain((IWineD3DSwapChain *)This->swapchains[i]) > 0)
+        if (IWineD3DSwapChain_Release((IWineD3DSwapChain *)This->swapchains[i]))
         {
             FIXME("(%p) Something's still holding the implicit swapchain\n", This);
         }
@@ -2290,14 +2289,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_UninitGDI(IWineD3DDevice *iface, D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain) {
+static HRESULT WINAPI IWineD3DDeviceImpl_UninitGDI(IWineD3DDevice *iface)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     unsigned int i;
 
     for (i = 0; i < This->swapchain_count; ++i)
     {
         TRACE("Releasing the implicit swapchain %u.\n", i);
-        if (D3DCB_DestroySwapChain((IWineD3DSwapChain *)This->swapchains[i]) > 0)
+        if (IWineD3DSwapChain_Release((IWineD3DSwapChain *)This->swapchains[i]))
         {
             FIXME("(%p) Something's still holding the implicit swapchain\n", This);
         }

@@ -51,9 +51,6 @@ typedef struct IDirect3DMaterialImpl      IDirect3DMaterialImpl;
 typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
 typedef struct IDirect3DVertexBufferImpl  IDirect3DVertexBufferImpl;
 
-/* Callbacks for implicit object destruction */
-extern ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) DECLSPEC_HIDDEN;
-
 /* Global critical section */
 extern CRITICAL_SECTION ddraw_cs DECLSPEC_HIDDEN;
 

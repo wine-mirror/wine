@@ -372,7 +372,7 @@ static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
                 HeapFree(GetProcessHeap(), 0, ddraw->decls);
                 ddraw->numConvertedDecls = 0;
 
-                if (FAILED(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroySwapChain)))
+                if (FAILED(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice)))
                 {
                     /* Not good */
                     ERR("(%p) Failed to uninit 3D\n", This);
@@ -392,8 +392,10 @@ static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
                 This->wineD3DSwapChain = NULL; /* Uninit3D releases the swapchain */
                 ddraw->d3d_initialized = FALSE;
                 ddraw->d3d_target = NULL;
-            } else {
-                IWineD3DDevice_UninitGDI(ddraw->wineD3DDevice, D3D7CB_DestroySwapChain);
+            }
+            else
+            {
+                IWineD3DDevice_UninitGDI(ddraw->wineD3DDevice);
                 This->wineD3DSwapChain = NULL;
             }
 
