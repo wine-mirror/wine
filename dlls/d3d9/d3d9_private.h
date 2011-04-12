@@ -324,8 +324,8 @@ typedef struct IDirect3DBaseTexture9Impl
  */
 typedef struct IDirect3DCubeTexture9Impl
 {
-    const IDirect3DCubeTexture9Vtbl *lpVtbl;
-    LONG                    ref;
+    IDirect3DCubeTexture9 IDirect3DCubeTexture9_iface;
+    LONG ref;
     struct wined3d_texture *wined3d_texture;
     IDirect3DDevice9Ex *parentDevice;
 }  IDirect3DCubeTexture9Impl;
