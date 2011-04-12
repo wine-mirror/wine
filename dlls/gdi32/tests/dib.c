@@ -204,10 +204,14 @@ static void test_simple_graphics(void)
 {
     char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
     BITMAPINFO *bmi = (BITMAPINFO *)bmibuf;
+    DWORD *bit_fields = (DWORD*)(bmibuf + sizeof(BITMAPINFOHEADER));
     HDC mem_dc;
     BYTE *bits;
     HBITMAP dib, orig_bm;
     const char **sha1;
+    DIBSECTION ds;
+
+    mem_dc = CreateCompatibleDC(NULL);
 
     /* a8r8g8b8 */
     trace("8888\n");
@@ -221,7 +225,12 @@ static void test_simple_graphics(void)
 
     dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(dib != NULL, "ret NULL\n");
-    mem_dc = CreateCompatibleDC(NULL);
+    ok(GetObjectW( dib, sizeof(ds), &ds ), "GetObject failed\n");
+    ok(ds.dsBitfields[0] == 0, "got %08x\n", ds.dsBitfields[0]);
+    ok(ds.dsBitfields[1] == 0, "got %08x\n", ds.dsBitfields[1]);
+    ok(ds.dsBitfields[2] == 0, "got %08x\n", ds.dsBitfields[2]);
+    ok(ds.dsBmih.biCompression == BI_RGB, "got %x\n", ds.dsBmih.biCompression);
+
     orig_bm = SelectObject(mem_dc, dib);
 
     sha1 = sha1_graphics_a8r8g8b8;
@@ -229,6 +238,47 @@ static void test_simple_graphics(void)
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
+
+    /* a8r8g8b8 - bitfields.  Should be the same as the regular 32 bit case.*/
+    trace("8888 - bitfields\n");
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biCompression = BI_BITFIELDS;
+    bit_fields[0] = 0xff0000;
+    bit_fields[1] = 0x00ff00;
+    bit_fields[2] = 0x0000ff;
+
+    dib = CreateDIBSection(mem_dc, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+    ok(GetObjectW( dib, sizeof(ds), &ds ), "GetObject failed\n");
+    ok(ds.dsBitfields[0] == 0xff0000, "got %08x\n", ds.dsBitfields[0]);
+    ok(ds.dsBitfields[1] == 0x00ff00, "got %08x\n", ds.dsBitfields[1]);
+    ok(ds.dsBitfields[2] == 0x0000ff, "got %08x\n", ds.dsBitfields[2]);
+    ok(ds.dsBmih.biCompression == BI_BITFIELDS, "got %x\n", ds.dsBmih.biCompression);
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    sha1 = sha1_graphics_a8r8g8b8;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
+
+    /* r5g5b5 */
+    bmi->bmiHeader.biBitCount = 16;
+    bmi->bmiHeader.biCompression = BI_RGB;
+
+    dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+    ok(GetObjectW( dib, sizeof(ds), &ds ), "GetObject failed\n");
+    ok(ds.dsBitfields[0] == 0x7c00, "got %08x\n", ds.dsBitfields[0]);
+    ok(ds.dsBitfields[1] == 0x03e0, "got %08x\n", ds.dsBitfields[1]);
+    ok(ds.dsBitfields[2] == 0x001f, "got %08x\n", ds.dsBitfields[2]);
+todo_wine
+    ok(ds.dsBmih.biCompression == BI_BITFIELDS, "got %x\n", ds.dsBmih.biCompression);
+
+    DeleteObject(dib);
+
     DeleteDC(mem_dc);
 }
 

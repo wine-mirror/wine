@@ -1216,8 +1216,9 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
 
     if (!(dib = HeapAlloc( GetProcessHeap(), 0, sizeof(*dib) ))) return 0;
 
-    TRACE("format (%d,%d), planes %d, bpp %d, size %d, %s\n",
-          width, height, planes, bpp, sizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
+    TRACE("format (%d,%d), planes %d, bpp %d, %s, size %d %s\n",
+          width, height, planes, bpp, compression == BI_BITFIELDS? "BI_BITFIELDS" : "BI_RGB",
+          sizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
 
     dib->dsBm.bmType       = 0;
     dib->dsBm.bmWidth      = width;
@@ -1255,24 +1256,24 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     dib->dsBmih.biSizeImage = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
 
     /* set dsBitfields values */
-    if (usage == DIB_PAL_COLORS || bpp <= 8)
+    dib->dsBitfields[0] = dib->dsBitfields[1] = dib->dsBitfields[2] = 0;
+
+    if((bpp == 15 || bpp == 16) && compression == BI_RGB)
     {
-        dib->dsBitfields[0] = dib->dsBitfields[1] = dib->dsBitfields[2] = 0;
+        /* In this case Windows changes biCompression to BI_BITFIELDS,
+           however for now we won't do this, as there are a lot
+           of places where BI_BITFIELDS is currently unsupported. */
+
+        /* dib->dsBmih.biCompression = compression = BI_BITFIELDS;*/
+        dib->dsBitfields[0] = 0x7c00;
+        dib->dsBitfields[1] = 0x03e0;
+        dib->dsBitfields[2] = 0x001f;
     }
-    else switch( bpp )
+    else if(compression == BI_BITFIELDS)
     {
-    case 15:
-    case 16:
-        dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? *(const DWORD *)bmi->bmiColors       : 0x7c00;
-        dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)bmi->bmiColors + 1) : 0x03e0;
-        dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)bmi->bmiColors + 2) : 0x001f;
-        break;
-    case 24:
-    case 32:
-        dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? *(const DWORD *)bmi->bmiColors       : 0xff0000;
-        dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)bmi->bmiColors + 1) : 0x00ff00;
-        dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)bmi->bmiColors + 2) : 0x0000ff;
-        break;
+        dib->dsBitfields[0] =  *(const DWORD *)bmi->bmiColors;
+        dib->dsBitfields[1] =  *((const DWORD *)bmi->bmiColors + 1);
+        dib->dsBitfields[2] =  *((const DWORD *)bmi->bmiColors + 2);
     }
 
     /* get storage location for DIB bits */
