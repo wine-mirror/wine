@@ -346,8 +346,6 @@ void X11DRV_XRender_Init(void)
     int event_base, i;
 
     if (client_side_with_render &&
-	wine_dlopen(SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL, NULL, 0) &&
-	wine_dlopen(SONAME_LIBXEXT, RTLD_NOW|RTLD_GLOBAL, NULL, 0) && 
 	(xrender_handle = wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW, NULL, 0)))
     {
 

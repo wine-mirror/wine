@@ -86,6 +86,9 @@ extern BOOL ximInComposeMode;
 #define XEMBED_UNREGISTER_ACCELERATOR 13
 #define XEMBED_ACTIVATE_ACCELERATOR   14
 
+Bool (*pXGetEventData)( Display *display, XEvent /*XGenericEventCookie*/ *event ) = NULL;
+void (*pXFreeEventData)( Display *display, XEvent /*XGenericEventCookie*/ *event ) = NULL;
+
   /* Event handlers */
 static void X11DRV_FocusIn( HWND hwnd, XEvent *event );
 static void X11DRV_FocusOut( HWND hwnd, XEvent *event );
@@ -140,8 +143,6 @@ static x11drv_event_handler handlers[MAX_EVENT_HANDLERS] =
     NULL                      /* 35 GenericEvent */
 };
 
-
-
 static const char * event_names[MAX_EVENT_HANDLERS] =
 {
     NULL, NULL, "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
@@ -152,13 +153,29 @@ static const char * event_names[MAX_EVENT_HANDLERS] =
     "CirculateNotify", "CirculateRequest", "PropertyNotify", "SelectionClear", "SelectionRequest",
     "SelectionNotify", "ColormapNotify", "ClientMessage", "MappingNotify", "GenericEvent"
 };
+
 /* return the name of an X event */
 static const char *dbgstr_event( int type )
 {
-    if (type < MAX_EVENT_HANDLERS && event_names[type]) return event_names[type - KeyPress];
+    if (type < MAX_EVENT_HANDLERS && event_names[type]) return event_names[type];
     return wine_dbg_sprintf( "Unknown event %d", type );
 }
 
+static inline void get_event_data( XEvent *event )
+{
+#if defined(GenericEvent) && defined(HAVE_XEVENT_XCOOKIE)
+    if (event->xany.type != GenericEvent) return;
+    if (!pXGetEventData || !pXGetEventData( event->xany.display, event )) event->xcookie.data = NULL;
+#endif
+}
+
+static inline void free_event_data( XEvent *event )
+{
+#if defined(GenericEvent) && defined(HAVE_XEVENT_XCOOKIE)
+    if (event->xany.type != GenericEvent) return;
+    if (event->xcookie.data) pXFreeEventData( event->xany.display, event );
+#endif
+}
 
 /***********************************************************************
  *           X11DRV_register_event_handler
@@ -333,22 +350,25 @@ static int process_events( Display *display, Bool (*filter)(Display*, XEvent*,XP
             else
                 continue;  /* filtered, ignore it */
         }
+        get_event_data( &event );
         if (prev_event.type) action = merge_events( &prev_event, &event );
         switch( action )
         {
-        case MERGE_DISCARD:  /* discard prev, keep new */
-            prev_event = event;
-            break;
         case MERGE_HANDLE:  /* handle prev, keep new */
             call_event_handler( display, &prev_event );
+            /* fall through */
+        case MERGE_DISCARD:  /* discard prev, keep new */
+            free_event_data( &prev_event );
             prev_event = event;
             break;
         case MERGE_KEEP:  /* handle new, keep prev for future merging */
             call_event_handler( display, &event );
+            free_event_data( &event );
             break;
         }
     }
     if (prev_event.type) call_event_handler( display, &prev_event );
+    free_event_data( &prev_event );
     XFlush( gdi_display );
     wine_tsx11_unlock();
     if (count) TRACE( "processed %d events\n", count );

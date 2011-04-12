@@ -729,6 +729,9 @@ extern void X11DRV_SelectionRequest( HWND hWnd, XEvent *event );
 extern void X11DRV_SelectionClear( HWND hWnd, XEvent *event );
 extern void X11DRV_MappingNotify( HWND hWnd, XEvent *event );
 
+extern Bool (*pXGetEventData)( Display *display, XEvent /*XGenericEventCookie*/ *event );
+extern void (*pXFreeEventData)( Display *display, XEvent /*XGenericEventCookie*/ *event );
+
 extern DWORD EVENT_x11_time_to_win32_time(Time time);
 
 /* X11 driver private messages, must be in the range 0x80001000..0x80001fff */

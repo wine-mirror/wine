@@ -8733,6 +8733,18 @@ _ACEOF
 
 
 fi
+ac_fn_c_check_member "$LINENO" "XEvent" "xcookie" "ac_cv_member_XEvent_xcookie" "#ifdef HAVE_X11_XLIB_H
+#include <X11/Xlib.h>
+#endif
+"
+if test "x$ac_cv_member_XEvent_xcookie" = x""yes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_XEVENT_XCOOKIE 1
+_ACEOF
+
+
+fi
 
 
 

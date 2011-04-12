@@ -529,7 +529,20 @@ sym_not_found:
  */
 static BOOL process_attach(void)
 {
+    char error[1024];
     Display *display;
+    void *libx11 = wine_dlopen( SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL, error, sizeof(error) );
+
+    if (!libx11)
+    {
+        ERR( "failed to load %s: %s\n", SONAME_LIBX11, error );
+        return FALSE;
+    }
+    pXGetEventData = wine_dlsym( libx11, "XGetEventData", NULL, 0 );
+    pXFreeEventData = wine_dlsym( libx11, "XFreeEventData", NULL, 0 );
+#ifdef SONAME_LIBXEXT
+    wine_dlopen( SONAME_LIBXEXT, RTLD_NOW|RTLD_GLOBAL, NULL, 0 );
+#endif
 
     setup_options();
 
