@@ -248,3 +248,12 @@ HRESULT WINAPI RegisterActiveObject16(
 	FIXME("(%p,%s,0x%08x,%p):stub\n",punk,debugstr_guid(rclsid),dwFlags,pdwRegister);
 	return E_NOTIMPL;
 }
+
+/******************************************************************************
+ * SetErrorInfo [OLE2DISP.110]
+ */
+HRESULT WINAPI SetErrorInfo16(ULONG dwReserved, IErrorInfo *perrinfo)
+{
+        FIXME("stub: (%d, %p)\n", dwReserved, perrinfo);
+        return E_INVALIDARG;
+}
