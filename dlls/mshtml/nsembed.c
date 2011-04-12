@@ -64,7 +64,7 @@ static nsresult (CDECL *NS_NewLocalFile)(const nsAString*,PRBool,nsIFile**);
 static PRUint32 (CDECL *NS_StringGetData)(const nsAString*,const PRUnichar **,PRBool*);
 static PRUint32 (CDECL *NS_CStringGetData)(const nsACString*,const char**,PRBool*);
 
-static HINSTANCE hXPCOM = NULL;
+static HINSTANCE xul_handle = NULL;
 
 static nsIServiceManager *pServMgr = NULL;
 static nsIComponentManager *pCompMgr = NULL;
@@ -307,26 +307,26 @@ static void set_environment(LPCWSTR gre_path)
     }
 }
 
-static BOOL load_xpcom(const PRUnichar *gre_path)
+static BOOL load_xul(const PRUnichar *gre_path)
 {
-    static const WCHAR strXPCOM[] = {'\\','x','p','c','o','m','.','d','l','l',0};
+    static const WCHAR xul_dllW[] = {'\\','x','u','l','.','d','l','l',0};
     WCHAR file_name[MAX_PATH];
 
     strcpyW(file_name, gre_path);
-    strcatW(file_name, strXPCOM);
+    strcatW(file_name, xul_dllW);
 
     TRACE("(%s)\n", debugstr_w(file_name));
 
     set_environment(gre_path);
 
-    hXPCOM = LoadLibraryExW(file_name, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
-    if(!hXPCOM) {
+    xul_handle = LoadLibraryExW(file_name, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+    if(!xul_handle) {
         WARN("Could not load XPCOM: %d\n", GetLastError());
         return FALSE;
     }
 
 #define NS_DLSYM(func) \
-    func = (void *)GetProcAddress(hXPCOM, #func); \
+    func = (void *)GetProcAddress(xul_handle, #func "_P"); \
     if(!func) \
         ERR("Could not GetProcAddress(" #func ") failed\n")
 
@@ -407,7 +407,7 @@ static BOOL load_wine_gecko_v(PRUnichar *gre_path, HKEY mshtml_key,
     if(!check_version(gre_path, version_string))
         return FALSE;
 
-    return load_xpcom(gre_path);
+    return load_xul(gre_path);
 }
 
 static BOOL load_wine_gecko(PRUnichar *gre_path)
@@ -568,14 +568,14 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
     nsAString_Finish(&path);
     if(NS_FAILED(nsres)) {
         ERR("NS_NewLocalFile failed: %08x\n", nsres);
-        FreeLibrary(hXPCOM);
+        FreeLibrary(xul_handle);
         return FALSE;
     }
 
     nsres = NS_InitXPCOM2(&pServMgr, gre_dir, &nsDirectoryServiceProvider);
     if(NS_FAILED(nsres)) {
         ERR("NS_InitXPCOM2 failed: %08x\n", nsres);
-        FreeLibrary(hXPCOM);
+        FreeLibrary(xul_handle);
         return FALSE;
     }
 
