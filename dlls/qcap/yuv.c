@@ -21,6 +21,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
 #include <stdarg.h>
 
 #include "windef.h"
@@ -29,6 +30,9 @@
 #include "strmif.h"
 #include "qcap_main.h"
 #include "wine/debug.h"
+
+/* This is not used if V4L support is missing */
+#ifdef HAVE_LINUX_VIDEODEV_H
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
@@ -192,3 +196,4 @@ void YUV_To_RGB24(enum YUV_Format format, unsigned char *target, const unsigned 
       }
    }
 }
+#endif
