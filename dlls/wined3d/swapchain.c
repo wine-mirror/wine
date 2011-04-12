@@ -80,6 +80,14 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
         mode.Format = swapchain->orig_fmt;
         IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)swapchain->device, 0, &mode);
     }
+
+    if (swapchain->backup_dc)
+    {
+        TRACE("Destroying backup wined3d window %p, dc %p.\n", swapchain->backup_wnd, swapchain->backup_dc);
+
+        ReleaseDC(swapchain->backup_wnd, swapchain->backup_dc);
+        DestroyWindow(swapchain->backup_wnd);
+    }
 }
 
 ULONG CDECL wined3d_swapchain_incref(struct wined3d_swapchain *swapchain)

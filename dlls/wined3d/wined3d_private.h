@@ -2543,6 +2543,9 @@ struct wined3d_swapchain
 
     HWND win_handle;
     HWND device_window;
+
+    HDC backup_dc;
+    HWND backup_wnd;
 };
 
 void x11_copy_to_screen(struct wined3d_swapchain *swapchain, const RECT *rect) DECLSPEC_HIDDEN;
