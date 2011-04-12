@@ -793,6 +793,29 @@ static BOOL context_set_pixel_format(const struct wined3d_gl_info *gl_info, HDC 
     return TRUE;
 }
 
+static BOOL context_set_gl_context(struct wined3d_context *ctx)
+{
+    if (!pwglMakeCurrent(ctx->hdc, ctx->glCtx))
+    {
+        WARN("Failed to make GL context %p current on device context %p, last error %#x.\n",
+                ctx->glCtx, ctx->hdc, GetLastError());
+        ctx->valid = 0;
+        context_set_current(NULL);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static void context_restore_gl_context(HDC dc, HGLRC gl_ctx)
+{
+    if (!pwglMakeCurrent(dc, gl_ctx))
+    {
+        ERR("Failed to restore GL context %p on device context %p, last error %#x.\n",
+                gl_ctx, dc, GetLastError());
+        context_set_current(NULL);
+    }
+}
+
 static void context_update_window(struct wined3d_context *context)
 {
     if (context->win_handle == context->swapchain->win_handle)
@@ -826,12 +849,7 @@ static void context_update_window(struct wined3d_context *context)
         goto err;
     }
 
-    if (!pwglMakeCurrent(context->hdc, context->glCtx))
-    {
-        ERR("Failed to make GL context %p current on device context %p, last error %#x.\n",
-                context->glCtx, context->hdc, GetLastError());
-        goto err;
-    }
+    context_set_gl_context(context);
 
     return;
 
@@ -855,7 +873,7 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
 
     context_update_window(context);
     if (context->valid && restore_ctx != context->glCtx)
-        context->valid = !!pwglMakeCurrent(context->hdc, context->glCtx);
+        context_set_gl_context(context);
     else restore_ctx = NULL;
 
     ENTER_GL();
@@ -937,12 +955,7 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
 
     if (restore_ctx)
     {
-        if (!pwglMakeCurrent(restore_dc, restore_ctx))
-        {
-            DWORD err = GetLastError();
-            ERR("Failed to restore GL context %p on device context %p, last error %#x.\n",
-                    restore_ctx, restore_dc, err);
-        }
+        context_restore_gl_context(restore_dc, restore_ctx);
     }
     else if (pwglGetCurrentContext() && !pwglMakeCurrent(NULL, NULL))
     {
@@ -1007,16 +1020,8 @@ BOOL context_set_current(struct wined3d_context *ctx)
         }
 
         TRACE("Switching to D3D context %p, GL context %p, device context %p.\n", ctx, ctx->glCtx, ctx->hdc);
-        if (!pwglMakeCurrent(ctx->hdc, ctx->glCtx))
-        {
-            DWORD err = GetLastError();
-            ERR("Failed to make GL context %p current on device context %p, last error %#x.\n",
-                    ctx->glCtx, ctx->hdc, err);
-            ctx->valid = 0;
-            pwglMakeCurrent(NULL, NULL);
-            TlsSetValue(wined3d_context_tls_idx, NULL);
+        if (!context_set_gl_context(ctx))
             return FALSE;
-        }
         ctx->current = 1;
     }
     else if(pwglGetCurrentContext())
@@ -1049,13 +1054,7 @@ void context_release(struct wined3d_context *context)
     if (!--context->level && context->restore_ctx)
     {
         TRACE("Restoring GL context %p on device context %p.\n", context->restore_ctx, context->restore_dc);
-        if (!pwglMakeCurrent(context->restore_dc, context->restore_ctx))
-        {
-            DWORD err = GetLastError();
-            ERR("Failed to restore GL context %p on device context %p, last error %#x.\n",
-                    context->restore_ctx, context->restore_dc, err);
-            context_set_current(NULL);
-        }
+        context_restore_gl_context(context->restore_dc, context->restore_ctx);
         context->restore_ctx = NULL;
         context->restore_dc = NULL;
     }
@@ -2324,14 +2323,7 @@ struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurf
     }
     else if (context->restore_ctx)
     {
-        if (!pwglMakeCurrent(context->hdc, context->glCtx))
-        {
-            DWORD err = GetLastError();
-            ERR("Failed to make GL context %p current on device context %p, last error %#x.\n",
-                    context->glCtx, context->hdc, err);
-            context->valid = 0;
-            pwglMakeCurrent(NULL, NULL);
-        }
+        context_set_gl_context(context);
     }
 
     return context;
