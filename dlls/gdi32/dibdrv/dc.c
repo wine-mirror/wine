@@ -40,6 +40,12 @@ static void calc_shift_and_len(DWORD mask, int *shift, int *len)
 {
     int s, l;
 
+    if(!mask)
+    {
+        *shift = *len = 0;
+        return;
+    }
+
     s = 0;
     while ((mask & 1) == 0)
     {
@@ -90,11 +96,16 @@ static BOOL init_dib(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit
     switch(dib->bit_count)
     {
     case 32:
-        init_bit_fields(dib, bit_fields);
-        if(dib->red_mask == 0xff0000 && dib->green_mask == 0x00ff00 && dib->blue_mask == 0x0000ff)
+        if(bi->biCompression == BI_RGB)
             dib->funcs = &funcs_8888;
         else
-            dib->funcs = &funcs_32;
+        {
+            init_bit_fields(dib, bit_fields);
+            if(dib->red_mask == 0xff0000 && dib->green_mask == 0x00ff00 && dib->blue_mask == 0x0000ff)
+                dib->funcs = &funcs_8888;
+            else
+                dib->funcs = &funcs_32;
+        }
         break;
 
     default:
