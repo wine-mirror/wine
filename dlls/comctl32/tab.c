@@ -2644,7 +2644,7 @@ TAB_InsertItemT (TAB_INFO *infoPtr, INT iItem, const TCITEMW *pti, BOOL bUnicode
 
   TAB_DumpItemExternalT(pti, iItem, bUnicode);
 
-  if (!(item = Alloc(sizeof(TAB_ITEM_SIZE(infoPtr))))) return FALSE;
+  if (!(item = Alloc(TAB_ITEM_SIZE(infoPtr)))) return FALSE;
   if (DPA_InsertPtr(infoPtr->items, iItem, item) == -1)
   {
       Free(item);
