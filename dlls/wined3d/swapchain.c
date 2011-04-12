@@ -757,6 +757,8 @@ static HRESULT WINAPI IWineGDISwapChainImpl_Present(IWineD3DSwapChain *iface,
     IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
     IWineD3DSurfaceImpl *front, *back;
 
+    IWineD3DBaseSwapChainImpl_SetDestWindowOverride(iface, hDestWindowOverride);
+
     if (!swapchain->back_buffers)
     {
         WARN("Swapchain doesn't have a backbuffer, returning WINED3DERR_INVALIDCALL\n");
