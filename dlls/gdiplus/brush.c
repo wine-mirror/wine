@@ -1253,10 +1253,15 @@ GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorsWithCount(GpPathGradient
 
 GpStatus WINGDIPAPI GdipGetPathGradientSurroundColorCount(GpPathGradient *brush, INT *count)
 {
+    static int calls;
+
     TRACE("(%p, %p)\n", brush, count);
 
     if (!brush || !count)
        return InvalidParameter;
+
+    if(!(calls++))
+        FIXME("not implemented\n");
 
     return NotImplemented;
 }
