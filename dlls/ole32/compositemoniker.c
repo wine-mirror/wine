@@ -841,7 +841,7 @@ CompositeMonikerImpl_CommonPrefixWith(IMoniker* iface, IMoniker* pmkOther,
 
     IMoniker_IsSystemMoniker(pmkOther,&mkSys);
 
-    if((mkSys==MKSYS_GENERICCOMPOSITE)){
+    if(mkSys==MKSYS_GENERICCOMPOSITE){
 
         IMoniker_Enum(iface,TRUE,&enumMoniker1);
         IMoniker_Enum(pmkOther,TRUE,&enumMoniker2);
