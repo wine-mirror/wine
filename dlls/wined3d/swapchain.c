@@ -135,6 +135,22 @@ static void * WINAPI IWineD3DBaseSwapChainImpl_GetParent(IWineD3DSwapChain *ifac
     return ((IWineD3DSwapChainImpl *)iface)->parent;
 }
 
+static HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetDestWindowOverride(IWineD3DSwapChain *iface, HWND window)
+{
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+
+    if (!window)
+        window = swapchain->device_window;
+    if (window == swapchain->win_handle)
+        return WINED3D_OK;
+
+    TRACE("Setting swapchain %p window from %p to %p.\n",
+            swapchain, swapchain->win_handle, window);
+    swapchain->win_handle = window;
+
+    return WINED3D_OK;
+}
+
 static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface,
         IWineD3DSurface *dst_surface)
 {
@@ -410,7 +426,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface,
     RECT src_rect, dst_rect;
     BOOL render_to_fbo;
 
-    IWineD3DSwapChain_SetDestWindowOverride(iface, hDestWindowOverride);
+    IWineD3DBaseSwapChainImpl_SetDestWindowOverride(iface, hDestWindowOverride);
 
     context = context_acquire(This->device, This->back_buffers[0]);
     if (!context->valid)
@@ -637,19 +653,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DSwapChainImpl_SetDestWindowOverride(IWineD3DSwapChain *iface, HWND window)
-{
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
-
-    if (!window) window = swapchain->device_window;
-    if (window == swapchain->win_handle) return WINED3D_OK;
-
-    TRACE("Setting swapchain %p window from %p to %p\n", swapchain, swapchain->win_handle, window);
-    swapchain->win_handle = window;
-
-    return WINED3D_OK;
-}
-
 static const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
 {
     /* IUnknown */
@@ -660,7 +663,7 @@ static const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_GetParent,
     IWineD3DBaseSwapChainImpl_GetDevice,
     IWineD3DSwapChainImpl_Present,
-    IWineD3DSwapChainImpl_SetDestWindowOverride,
+    IWineD3DBaseSwapChainImpl_SetDestWindowOverride,
     IWineD3DBaseSwapChainImpl_GetFrontBufferData,
     IWineD3DBaseSwapChainImpl_GetBackBuffer,
     IWineD3DBaseSwapChainImpl_GetRasterStatus,
@@ -745,17 +748,6 @@ void x11_copy_to_screen(IWineD3DSwapChainImpl *swapchain, const RECT *rect)
             draw_rect.right - draw_rect.left, draw_rect.bottom - draw_rect.top,
             src_dc, draw_rect.left, draw_rect.top, SRCCOPY);
     ReleaseDC(window, dst_dc);
-}
-
-static HRESULT WINAPI IWineGDISwapChainImpl_SetDestWindowOverride(IWineD3DSwapChain *iface, HWND window)
-{
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
-
-    TRACE("iface %p, window %p.\n", iface, window);
-
-    swapchain->win_handle = window;
-
-    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineGDISwapChainImpl_Present(IWineD3DSwapChain *iface,
@@ -848,7 +840,7 @@ static const IWineD3DSwapChainVtbl IWineGDISwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_GetParent,
     IWineD3DBaseSwapChainImpl_GetDevice,
     IWineGDISwapChainImpl_Present,
-    IWineGDISwapChainImpl_SetDestWindowOverride,
+    IWineD3DBaseSwapChainImpl_SetDestWindowOverride,
     IWineD3DBaseSwapChainImpl_GetFrontBufferData,
     IWineD3DBaseSwapChainImpl_GetBackBuffer,
     IWineD3DBaseSwapChainImpl_GetRasterStatus,
