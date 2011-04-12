@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-11 21:43+0300\n"
+"PO-Revision-Date: 2011-04-12 19:25+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -7723,9 +7723,8 @@ msgid "Inf&o"
 msgstr "&Informacija"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&Apie laikrodį..."
+msgstr "&Apie laikrodį"
 
 #: clock.rc:48
 msgid "Clock"
@@ -9056,9 +9055,8 @@ msgid "&Arrange Icons"
 msgstr "&Išdėstyti piktogramas"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Programų tvarkytuvė"
+msgstr "&Apie Programų tvarkytuvę"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -10824,9 +10822,8 @@ msgid "Arrange &Symbols"
 msgstr "Išdėstyti si&mbolius"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "&Apie Winefile..."
+msgstr "&Apie Wine failų tvarkytuvę"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10921,9 +10918,8 @@ msgid "&Fastest Times..."
 msgstr "&Geriausi laikai"
 
 #: winemine.rc:48
-#, fuzzy
 msgid "&About WineMine"
-msgstr "Apie &Wine"
+msgstr "&Apie Wine minas"
 
 #: winemine.rc:27
 msgid "WineMine"
