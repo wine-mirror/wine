@@ -128,7 +128,7 @@ int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD_PTR p
     HANDLE	hEvent = NULL;
 
     EnterCriticalSection(&omr->msg_crst);
-    if ((omr->msg_toget == ((omr->msg_tosave + 1) % omr->ring_buffer_size)))
+    if (omr->msg_toget == ((omr->msg_tosave + 1) % omr->ring_buffer_size))
     {
 	int old_ring_buffer_size = omr->ring_buffer_size;
 	omr->ring_buffer_size += ALSA_RING_BUFFER_INCREMENT;
