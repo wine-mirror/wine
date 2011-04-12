@@ -25,7 +25,7 @@ msgstr ""
 "Låter dig installera ny programvara, eller ta bort befintlig programvara "
 "från din dator."
 
-#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:38
 msgid "Applications"
 msgstr "Program"
 
@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Inte angivet"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:123 winefile.rc:113
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:122 winefile.rc:112
 msgid "Name"
 msgstr "Namn"
 
@@ -61,8 +61,8 @@ msgstr "Installationsprogram"
 msgid "Programs (*.exe)"
 msgstr "Program (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
-#: oleview.rc:101 progman.rc:80 regedit.rc:196 winhlp32.rc:88
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:75
+#: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Alla filer (*.*)"
 
@@ -129,7 +129,7 @@ msgstr "Avbryter..."
 msgid "Separator"
 msgstr "Separator"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:79 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
 msgid "None"
 msgstr "Ingen"
 
@@ -165,15 +165,15 @@ msgstr "Mina Favoriter"
 msgid "System Path"
 msgstr "Systemsökväg"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:104
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:103
 msgid "Desktop"
 msgstr "Skrivbord"
 
-#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:68
+#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"
 msgstr "Typsnitt"
 
-#: comdlg32.rc:36 shell32.rc:142 regedit.rc:201
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:200
 msgid "My Computer"
 msgstr "Den här datorn"
 
@@ -377,7 +377,7 @@ msgstr "Det finns ingen standardskrivare."
 msgid "Cannot find the printer."
 msgstr "Kan inte hitta skrivare."
 
-#: comdlg32.rc:80 progman.rc:74
+#: comdlg32.rc:80 progman.rc:73
 msgid "Out of memory."
 msgstr "För lite minne."
 
@@ -2027,7 +2027,7 @@ msgstr "Alternativ"
 msgid "S&ync"
 msgstr ""
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:87
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Bakåt"
 
@@ -6274,7 +6274,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&Arkiv"
 
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:96
+#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
 msgid "&New"
 msgstr "&Ny"
 
@@ -6306,7 +6306,7 @@ msgstr "&Förhandsgranskning..."
 msgid "&Properties..."
 msgstr "&Egenskaper..."
 
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
+#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
 msgstr "St&äng"
 
@@ -6349,12 +6349,12 @@ msgid "Address"
 msgstr "Adress"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
-#: taskmgr.rc:111 taskmgr.rc:253
+#: taskmgr.rc:110 taskmgr.rc:252
 msgid "Lar&ge Icons"
 msgstr "S&tora ikoner"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
-#: taskmgr.rc:112 taskmgr.rc:254
+#: taskmgr.rc:111 taskmgr.rc:253
 msgid "S&mall Icons"
 msgstr "S&må ikoner"
 
@@ -6363,7 +6363,7 @@ msgid "&List"
 msgstr "&Lista"
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:110 shell32.rc:150 taskmgr.rc:67
-#: taskmgr.rc:113 taskmgr.rc:255
+#: taskmgr.rc:112 taskmgr.rc:254
 msgid "&Details"
 msgstr "&Detaljer"
 
@@ -6427,7 +6427,7 @@ msgstr "Klipp &ut"
 msgid "Create &Link"
 msgstr "Skapa &länk"
 
-#: shell32.rc:91 regedit.rc:92
+#: shell32.rc:91 regedit.rc:91
 msgid "&Rename"
 msgstr "&Byt namn"
 
@@ -6440,11 +6440,11 @@ msgstr "A&vsluta"
 msgid "&About Control Panel..."
 msgstr "&Om Kontrollpanelen..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:114
+#: shell32.rc:123 shell32.rc:127 winefile.rc:113
 msgid "Size"
 msgstr "Storlek"
 
-#: shell32.rc:124 regedit.rc:124
+#: shell32.rc:124 regedit.rc:123
 msgid "Type"
 msgstr "Typ"
 
@@ -6452,7 +6452,7 @@ msgstr "Typ"
 msgid "Modified"
 msgstr "Ändrad"
 
-#: shell32.rc:126 winefile.rc:120
+#: shell32.rc:126 winefile.rc:119
 msgid "Attributes"
 msgstr "Attribut"
 
@@ -6620,7 +6620,7 @@ msgstr "Program (x86)\\Gemensamma filer"
 msgid "Contacts"
 msgstr "Kontakter"
 
-#: shell32.rc:216 winefile.rc:119
+#: shell32.rc:216 winefile.rc:118
 msgid "Links"
 msgstr "Länkar"
 
@@ -6636,7 +6636,7 @@ msgstr "Musik\\Playlists"
 msgid "Downloads"
 msgstr "Nedladdningar"
 
-#: shell32.rc:136 taskmgr.rc:327
+#: shell32.rc:136 taskmgr.rc:326
 msgid "Status"
 msgstr "Status"
 
@@ -6849,7 +6849,7 @@ msgstr " min"
 msgid " sec"
 msgstr " s"
 
-#: user32.rc:27 taskmgr.rc:139
+#: user32.rc:27 taskmgr.rc:138
 msgid "&Restore"
 msgstr "&Återställ"
 
@@ -6865,7 +6865,7 @@ msgstr "&Storlek"
 msgid "Mi&nimize"
 msgstr "Mi&nimera"
 
-#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
 msgstr "Ma&ximera"
 
@@ -6874,10 +6874,10 @@ msgid "&Close\tAlt-F4"
 msgstr "A&vsluta\tAlt-F4"
 
 #: user32.rc:35
-msgid "&About Wine..."
-msgstr "&Om Wine..."
+msgid "&About Wine"
+msgstr "&Om Wine"
 
-#: user32.rc:55 regedit.rc:177 winefile.rc:101
+#: user32.rc:55 regedit.rc:176 winefile.rc:100
 msgid "Error"
 msgstr "Fel"
 
@@ -7780,7 +7780,7 @@ msgstr "&Sekunder"
 msgid "&Date"
 msgstr "&Datum"
 
-#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:141
 msgid "&Always on Top"
 msgstr "&Alltid överst"
 
@@ -7789,7 +7789,8 @@ msgid "Inf&o"
 msgstr "Inf&o"
 
 #: clock.rc:42
-msgid "&About Clock..."
+#, fuzzy
+msgid "&About Clock"
 msgstr "&Om Klocka..."
 
 #: clock.rc:48
@@ -8644,7 +8645,7 @@ msgstr "&Kopiera\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "Klistra &in\tCtrl+V"
 
-#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:91 regedit.rc:107
+#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr "&Ta bort\tDel"
@@ -8673,43 +8674,43 @@ msgstr "Sök &nästa\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Ersätt...\tCtrl+H"
 
-#: notepad.rc:60
+#: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Om Anteckningar"
 
-#: notepad.rc:66
+#: notepad.rc:65
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:67
+#: notepad.rc:66
 msgid "Page &p"
 msgstr "Sida &p"
 
-#: notepad.rc:69
+#: notepad.rc:68
 msgid "Notepad"
 msgstr "Anteckningar"
 
-#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
+#: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 msgid "ERROR"
 msgstr "FEL"
 
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
+#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
 msgstr "VARNING"
 
-#: notepad.rc:72 progman.rc:64 winhlp32.rc:82
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
 msgid "Information"
 msgstr "Information"
 
-#: notepad.rc:74
+#: notepad.rc:73
 msgid "Untitled"
 msgstr "(namnlös)"
 
-#: notepad.rc:77
+#: notepad.rc:76
 msgid "Text files (*.txt)"
 msgstr "Textfiler (*.txt)"
 
-#: notepad.rc:80
+#: notepad.rc:79
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8717,7 +8718,7 @@ msgstr ""
 "Filen '%s' är för stor för Anteckningar.\n"
 " Använd en annan redigerare."
 
-#: notepad.rc:82
+#: notepad.rc:81
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8725,7 +8726,7 @@ msgstr ""
 "Du skrev inte in någon text. \n"
 "Skriv något och försök sedan igen"
 
-#: notepad.rc:84
+#: notepad.rc:83
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8736,7 +8737,7 @@ msgstr ""
 "\n"
 " Vill du skapa en ny fil?"
 
-#: notepad.rc:86
+#: notepad.rc:85
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8747,11 +8748,11 @@ msgstr ""
 "\n"
 " Vill du spara ändringarna?"
 
-#: notepad.rc:87
+#: notepad.rc:86
 msgid "'%s' could not be found."
 msgstr "'%s' hittades inte."
 
-#: notepad.rc:89
+#: notepad.rc:88
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8760,20 +8761,20 @@ msgstr ""
 "Avsluta ett eller flera program för att öka mängden\n"
 "ledigt minne."
 
-#: notepad.rc:91
+#: notepad.rc:90
 msgid "Unicode (UTF-16)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:92
+#: notepad.rc:91
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
-#: notepad.rc:93
+#: notepad.rc:92
 #, fuzzy
 msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:100
+#: notepad.rc:99
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -9115,7 +9116,7 @@ msgstr "&Minimera vid start"
 msgid "&Save settings on exit"
 msgstr "&Spara ändringar vid stängning"
 
-#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
 msgstr "&Fönster"
 
@@ -9131,39 +9132,40 @@ msgstr "&Sida vid sida\tShift+F4"
 msgid "&Arrange Icons"
 msgstr "Ordna &ikoner"
 
-#: progman.rc:55
-msgid "&About Wine"
-msgstr "&Om Wine"
+#: progman.rc:54
+#, fuzzy
+msgid "&About Program Manager"
+msgstr "Programhanteraren"
 
-#: progman.rc:61
+#: progman.rc:60
 msgid "Program Manager"
 msgstr "Programhanteraren"
 
-#: progman.rc:65
+#: progman.rc:64
 msgid "Delete"
 msgstr "Ta bort"
 
-#: progman.rc:66
+#: progman.rc:65
 msgid "Delete group `%s'?"
 msgstr "Ta bort gruppen '%s'?"
 
-#: progman.rc:67
+#: progman.rc:66
 msgid "Delete program `%s'?"
 msgstr "Ta bort programmet '%s'?"
 
-#: progman.rc:68 winhlp32.rc:83
+#: progman.rc:67 winhlp32.rc:82
 msgid "Not implemented"
 msgstr "Ej implementerat"
 
-#: progman.rc:69
+#: progman.rc:68
 msgid "Error reading `%s'."
 msgstr "Fel vid läsning av '%s'."
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Error writing `%s'."
 msgstr "Fel vid skrivning till '%s'."
 
-#: progman.rc:73
+#: progman.rc:72
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9171,35 +9173,35 @@ msgstr ""
 "Kunde inte öppna gruppfilen '%s'.\n"
 "Ska vidare försök göras?"
 
-#: progman.rc:75
+#: progman.rc:74
 msgid "Help not available."
 msgstr "Ingen hjälp finns tillgänglig."
 
-#: progman.rc:76
+#: progman.rc:75
 msgid "Unknown feature in %s"
 msgstr "Okänd egenskap i '%s'"
 
-#: progman.rc:77
+#: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
 msgstr "Filen '%s' fanns redan, och skrevs ej över."
 
-#: progman.rc:78
+#: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Spara grupp som '%s' för att undvika att skriva över filer."
 
-#: progman.rc:81
+#: progman.rc:80
 msgid "Programs"
 msgstr "Program"
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Libraries (*.dll)"
 msgstr "Bibliotek (*.dll)"
 
-#: progman.rc:83
+#: progman.rc:82
 msgid "Icon files"
 msgstr "Ikonfiler"
 
-#: progman.rc:84
+#: progman.rc:83
 msgid "Icons (*.ico)"
 msgstr "Ikoner (*.ico)"
 
@@ -9269,44 +9271,44 @@ msgstr "&Exportera Registerfil..."
 msgid "&Print\tCtrl+P"
 msgstr "Skriv &ut\tCtrl+P"
 
-#: regedit.rc:42 regedit.rc:88
+#: regedit.rc:42 regedit.rc:87
 msgid "&Modify"
 msgstr "&Ändra"
 
-#: regedit.rc:46 regedit.rc:98
+#: regedit.rc:46 regedit.rc:97
 msgid "&Key"
 msgstr "&Nyckel"
 
-#: regedit.rc:48 regedit.rc:100
+#: regedit.rc:48 regedit.rc:99
 msgid "&String Value"
 msgstr "&Strängvärde"
 
-#: regedit.rc:49 regedit.rc:101
+#: regedit.rc:49 regedit.rc:100
 msgid "&Binary Value"
 msgstr "&Binärt Värde"
 
-#: regedit.rc:50 regedit.rc:102
+#: regedit.rc:50 regedit.rc:101
 msgid "&DWORD Value"
 msgstr "&DWORD-värde"
 
-#: regedit.rc:51 regedit.rc:103
+#: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
 msgstr "&Flersträngsvärde"
 
-#: regedit.rc:52 regedit.rc:104
+#: regedit.rc:52 regedit.rc:103
 #, fuzzy
 msgid "&Expandable String Value"
 msgstr "&Strängvärde"
 
-#: regedit.rc:56 regedit.rc:108
+#: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
 msgstr "&Byt namn\tF2"
 
-#: regedit.rc:58 regedit.rc:111
+#: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
 msgstr "&Kopiera Nyckelnamn"
 
-#: regedit.rc:60 regedit.rc:113
+#: regedit.rc:60 regedit.rc:112
 msgid "&Find\tCtrl+F"
 msgstr "&Sök\tCtrl+F"
 
@@ -9330,209 +9332,209 @@ msgstr "&Ta bort favorit..."
 msgid "&Help Topics\tF1"
 msgstr "Ämnen i &hjälp\tF1"
 
-#: regedit.rc:80
+#: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "&Om Registereditorn"
 
-#: regedit.rc:89
+#: regedit.rc:88
 msgid "Modify Binary Data"
 msgstr "Ändra binärt data"
 
-#: regedit.rc:110
+#: regedit.rc:109
 msgid "&Export..."
 msgstr "&Exportera..."
 
-#: regedit.rc:135
+#: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
 msgstr "Innehåller kommandon för att arbeta med hela registret"
 
-#: regedit.rc:136
+#: regedit.rc:135
 msgid "Contains commands for editing values or keys"
 msgstr "Innehåller kommandon för att redigera värden och nycklar"
 
-#: regedit.rc:137
+#: regedit.rc:136
 msgid "Contains commands for customising the registry window"
 msgstr "Innehåller kommandon för att anpassa registerfönstret"
 
-#: regedit.rc:138
+#: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
 msgstr "Innehåller kommandon för att få tillgång till nycklar som används ofta"
 
-#: regedit.rc:139
+#: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
 "Innehåller kommandon för att visa hjälp och information om Registerredigering"
 
-#: regedit.rc:140
+#: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
 msgstr "Innehåller kommandon för att skapa nya nycklar eller värden"
 
-#: regedit.rc:125
+#: regedit.rc:124
 msgid "Data"
 msgstr "Data"
 
-#: regedit.rc:130
+#: regedit.rc:129
 msgid "Registry Editor"
 msgstr "Registereditorn"
 
-#: regedit.rc:192
+#: regedit.rc:191
 msgid "Import Registry File"
 msgstr "Importera registerfil"
 
-#: regedit.rc:193
+#: regedit.rc:192
 msgid "Export Registry File"
 msgstr "Exportera registerfil"
 
-#: regedit.rc:194
+#: regedit.rc:193
 msgid "Registry files (*.reg)"
 msgstr "Registerfiler (*.reg)"
 
-#: regedit.rc:195
+#: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x-/NT4-registerfiler (REGEDIT4)"
 
-#: regedit.rc:202
+#: regedit.rc:201
 msgid "(Default)"
 msgstr "(Standard)"
 
-#: regedit.rc:203
+#: regedit.rc:202
 msgid "(value not set)"
 msgstr "(värde ej angivet)"
 
-#: regedit.rc:204
+#: regedit.rc:203
 msgid "(cannot display value)"
 msgstr "(kunde inte visa värde)"
 
-#: regedit.rc:205
+#: regedit.rc:204
 msgid "(unknown %d)"
 msgstr "(okänt %d)"
 
-#: regedit.rc:161
+#: regedit.rc:160
 msgid "Quits the registry editor"
 msgstr "Avslutar Registereditorn"
 
-#: regedit.rc:162
+#: regedit.rc:161
 msgid "Adds keys to the favorites list"
 msgstr "Lägger till nycklar i favoritlistan"
 
-#: regedit.rc:163
+#: regedit.rc:162
 msgid "Removes keys from the favorites list"
 msgstr "Tar bort nycklar från favoritlistan"
 
-#: regedit.rc:164
+#: regedit.rc:163
 msgid "Shows or hides the status bar"
 msgstr "Visar eller döljer statusraden"
 
-#: regedit.rc:165
+#: regedit.rc:164
 msgid "Change position of split between two panes"
 msgstr "Ändrar position för avdelaren mellan de två rutorna"
 
-#: regedit.rc:166
+#: regedit.rc:165
 msgid "Refreshes the window"
 msgstr "Uppdaterar fönstret"
 
-#: regedit.rc:167
+#: regedit.rc:166
 msgid "Deletes the selection"
 msgstr "Tar bort markerat data"
 
-#: regedit.rc:168
+#: regedit.rc:167
 msgid "Renames the selection"
 msgstr "Byter namn på markerat data"
 
-#: regedit.rc:169
+#: regedit.rc:168
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Kopierar namnet på den valda nyckeln till utklipp"
 
-#: regedit.rc:170
+#: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
 msgstr "Söker en textsträng i nyckel, värde eller data"
 
-#: regedit.rc:171
+#: regedit.rc:170
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "Söker nästa träff till texten specificerad i föregående sökning"
 
-#: regedit.rc:145
+#: regedit.rc:144
 msgid "Modifies the value's data"
 msgstr "Ändrar värdets data"
 
-#: regedit.rc:146
+#: regedit.rc:145
 msgid "Adds a new key"
 msgstr "Lägger till en ny nyckel"
 
-#: regedit.rc:147
+#: regedit.rc:146
 msgid "Adds a new string value"
 msgstr "Lägger till ett nytt strängvärde"
 
-#: regedit.rc:148
+#: regedit.rc:147
 msgid "Adds a new binary value"
 msgstr "Lägger till ett nytt binärt värde"
 
-#: regedit.rc:149
+#: regedit.rc:148
 msgid "Adds a new double word value"
 msgstr "Lägger till ett nytt dubbelords-värde"
 
-#: regedit.rc:151
+#: regedit.rc:150
 msgid "Imports a text file into the registry"
 msgstr "Importerar en textfil till registret"
 
-#: regedit.rc:153
+#: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
 msgstr "Exporterar hela eller delar av registret till en textfil"
 
-#: regedit.rc:154
+#: regedit.rc:153
 msgid "Prints all or part of the registry"
 msgstr "Skriver ut hela eller delar av registret"
 
-#: regedit.rc:156
+#: regedit.rc:155
 msgid "Displays program information, version number and copyright"
 msgstr "Visar programinformation, versionsnummer samt copyright"
 
-#: regedit.rc:179
+#: regedit.rc:178
 msgid "Can't query value '%s'"
 msgstr "Kunde inte läsa värdet «%s»"
 
-#: regedit.rc:180
+#: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
 msgstr "Kan inte redigera nyckler av typen «%u»"
 
-#: regedit.rc:181
+#: regedit.rc:180
 msgid "Value is too big (%u)"
 msgstr "Värdet är for stort (%u)"
 
-#: regedit.rc:182
+#: regedit.rc:181
 msgid "Confirm Value Delete"
 msgstr "Bekräfta borttagning av värde"
 
-#: regedit.rc:183
+#: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
 msgstr "Vill du verkligen ta bort värdet «%s»?"
 
-#: regedit.rc:187
+#: regedit.rc:186
 msgid "Search string '%s' not found"
 msgstr "Hittade inte den sökta strängen «%s»"
 
-#: regedit.rc:184
+#: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
 msgstr "Vill du verkligen ta bort dessa värden?"
 
-#: regedit.rc:185
+#: regedit.rc:184
 msgid "New Key #%d"
 msgstr "Ny nyckel #%d"
 
-#: regedit.rc:186
+#: regedit.rc:185
 msgid "New Value #%d"
 msgstr "Nytt värde #%d"
 
-#: regedit.rc:178
+#: regedit.rc:177
 msgid "Can't query key '%s'"
 msgstr "Kunde inte läsa nyckeln «%s»"
 
-#: regedit.rc:150
+#: regedit.rc:149
 msgid "Adds a new multi string value"
 msgstr "Lägger till ett nytt flersträngsvärde"
 
-#: regedit.rc:172
+#: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Exporterar vald gren av registret till en textfil"
 
@@ -9692,7 +9694,7 @@ msgstr "Fel: Kunde inte avsluta processen \"%s\".\n"
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Fel: Processen får inte avsluta sig själv.\n"
 
-#: taskmgr.rc:37 taskmgr.rc:109
+#: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Ny aktivitet (Kör...)"
 
@@ -9708,7 +9710,7 @@ msgstr "&Minimera vid användning"
 msgid "&Hide When Minimized"
 msgstr "&Dölj vid minimering"
 
-#: taskmgr.rc:49 taskmgr.rc:258
+#: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
 msgstr "&Visa 16-bitarsaktiviteter"
 
@@ -9720,15 +9722,15 @@ msgstr "Uppd&atera nu"
 msgid "&Update Speed"
 msgstr "&Uppdateringsfrekvens"
 
-#: taskmgr.rc:57 taskmgr.rc:159
+#: taskmgr.rc:57 taskmgr.rc:158
 msgid "&High"
 msgstr "&Hög"
 
-#: taskmgr.rc:58 taskmgr.rc:163
+#: taskmgr.rc:58 taskmgr.rc:162
 msgid "&Normal"
 msgstr "&Normal"
 
-#: taskmgr.rc:60 taskmgr.rc:167
+#: taskmgr.rc:60 taskmgr.rc:166
 msgid "&Low"
 msgstr "&Låg"
 
@@ -9736,43 +9738,43 @@ msgstr "&Låg"
 msgid "&Paused"
 msgstr "&Pausad"
 
-#: taskmgr.rc:68 taskmgr.rc:257
+#: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
 msgstr "&Välj kolumner..."
 
-#: taskmgr.rc:69 taskmgr.rc:259
+#: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
 msgstr "&Processorhistorik"
 
-#: taskmgr.rc:71 taskmgr.rc:260
+#: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
 msgstr "En graf, alla pr&ocessorer"
 
-#: taskmgr.rc:73 taskmgr.rc:261
+#: taskmgr.rc:73 taskmgr.rc:260
 msgid "One Graph &Per CPU"
 msgstr "En graf &per processor"
 
-#: taskmgr.rc:76 taskmgr.rc:262
+#: taskmgr.rc:76 taskmgr.rc:261
 msgid "&Show Kernel Times"
 msgstr "Vi&sa kerneltider"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:79
+#: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:79
 msgid "Tile &Horizontally"
 msgstr "Ordna &horisontellt"
 
-#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+#: taskmgr.rc:81 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Vertically"
 msgstr "Ordna &vertikalt"
 
-#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+#: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
 msgid "&Minimize"
 msgstr "&Minimera"
 
-#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+#: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
 msgstr "&Överlappande"
 
-#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+#: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "V&isa överst"
 
@@ -9780,360 +9782,360 @@ msgstr "V&isa överst"
 msgid "Task Manager &Help Topics"
 msgstr "Ämnen i &hjälp för Aktivitetshanteraren"
 
-#: taskmgr.rc:91
+#: taskmgr.rc:90
 msgid "&About Task Manager"
 msgstr "&Om Aktivitetshanteraren"
 
-#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
 msgid "DUMMY"
 msgstr "DUMMY"
 
-#: taskmgr.rc:121
+#: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "B&yt till"
 
-#: taskmgr.rc:130
+#: taskmgr.rc:129
 msgid "&End Task"
 msgstr "Avsluta aktivit&et"
 
-#: taskmgr.rc:131
+#: taskmgr.rc:130
 msgid "&Go To Process"
 msgstr "&Gå till process"
 
-#: taskmgr.rc:150
+#: taskmgr.rc:149
 msgid "&End Process"
 msgstr "Avsluta proc&ess"
 
-#: taskmgr.rc:151
+#: taskmgr.rc:150
 msgid "End Process &Tree"
 msgstr "Avslu&ta processträd"
 
-#: taskmgr.rc:153 winedbg.rc:29
+#: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
 msgstr "&Felsök"
 
-#: taskmgr.rc:155
+#: taskmgr.rc:154
 msgid "Set &Priority"
 msgstr "Ange &prioritet"
 
-#: taskmgr.rc:157
+#: taskmgr.rc:156
 msgid "&Realtime"
 msgstr "&Realtid"
 
-#: taskmgr.rc:161
+#: taskmgr.rc:160
 msgid "&AboveNormal"
 msgstr "&Över normal"
 
-#: taskmgr.rc:165
+#: taskmgr.rc:164
 msgid "&BelowNormal"
 msgstr "&Under normal"
 
-#: taskmgr.rc:170
+#: taskmgr.rc:169
 msgid "Set &Affinity..."
 msgstr "Ställ in &släktskap..."
 
-#: taskmgr.rc:171
+#: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
 msgstr "&Redigera felsökningskanaler..."
 
-#: taskmgr.rc:181 taskmgr.rc:182
+#: taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
 msgstr "Aktivitetshanteraren"
 
-#: taskmgr.rc:183
+#: taskmgr.rc:182
 msgid "Create New Task"
 msgstr "Skapa ny aktivitet"
 
-#: taskmgr.rc:188
+#: taskmgr.rc:187
 msgid "Runs a new program"
 msgstr "Kör ett nytt program"
 
-#: taskmgr.rc:189
+#: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
 msgstr "Aktivitetshanteraren visas framför andra program om den inte minimeras"
 
-#: taskmgr.rc:191
+#: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr "Aktivitetshanteraren minimeras när du byter till en annan process"
 
-#: taskmgr.rc:192
+#: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
 msgstr "Aktivitetshanteraren döljs då den minimeras"
 
-#: taskmgr.rc:193
+#: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
 msgstr ""
 "Tvinga aktivitetshanteraren att uppdatera nu, oavsett uppdateringsfrekvens"
 
-#: taskmgr.rc:194
+#: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
 msgstr "Använder stora ikoner för att visa aktiviteter"
 
-#: taskmgr.rc:195
+#: taskmgr.rc:194
 msgid "Displays tasks by using small icons"
 msgstr "Använder små ikoner för att visa aktiviteter"
 
-#: taskmgr.rc:196
+#: taskmgr.rc:195
 msgid "Displays information about each task"
 msgstr "Visar information om varje aktivitet"
 
-#: taskmgr.rc:197
+#: taskmgr.rc:196
 msgid "Updates the display twice per second"
 msgstr "Uppdaterar displayen två gånger per sekund"
 
-#: taskmgr.rc:198
+#: taskmgr.rc:197
 msgid "Updates the display every two seconds"
 msgstr "Uppdaterar displayen varannan sekund"
 
-#: taskmgr.rc:199
+#: taskmgr.rc:198
 msgid "Updates the display every four seconds"
 msgstr "Uppdaterar displayen var fjärde sekund"
 
-#: taskmgr.rc:204
+#: taskmgr.rc:203
 msgid "Does not automatically update"
 msgstr "Uppdaterar inte automatiskt"
 
-#: taskmgr.rc:206
+#: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
 msgstr "Ställer upp fönstren horisontellt på skrivbordet"
 
-#: taskmgr.rc:207
+#: taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
 msgstr "Ställer upp fönstren vertikalt på skrivbordet"
 
-#: taskmgr.rc:208
+#: taskmgr.rc:207
 msgid "Minimizes the windows"
 msgstr "Minimerar fönstren"
 
-#: taskmgr.rc:209
+#: taskmgr.rc:208
 msgid "Maximizes the windows"
 msgstr "Maximerar fönstren"
 
-#: taskmgr.rc:210
+#: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
 msgstr "Visar fönstren på varandra diagonalt över skrivbordet"
 
-#: taskmgr.rc:211
+#: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
 msgstr "Tar fram fönstret, men sätter det inte i fokus"
 
-#: taskmgr.rc:212
+#: taskmgr.rc:211
 msgid "Displays Task Manager help topics"
 msgstr "Visar hjälpämnen om Aktivitetshanteraren"
 
-#: taskmgr.rc:213
+#: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
 msgstr "Visar programinformation, versionsnummer samt copyright"
 
-#: taskmgr.rc:214
+#: taskmgr.rc:213
 msgid "Exits the Task Manager application"
 msgstr "Avslutar Aktivitetshanteraren"
 
-#: taskmgr.rc:216
+#: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
 msgstr "Visar 16-bitarsprogram under 'ntvdm.exe'"
 
-#: taskmgr.rc:217
+#: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
 msgstr "Väljer vilka kolumner som visas på processidan"
 
-#: taskmgr.rc:218
+#: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
 msgstr "Visar kerneltid i prestandagraferna"
 
-#: taskmgr.rc:220
+#: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
 msgstr "En historiegraf visar total processoranvändning"
 
-#: taskmgr.rc:221
+#: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
 msgstr "Varje processor har en egen graf"
 
-#: taskmgr.rc:223
+#: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
 msgstr "Tar en aktivitet till förgrunden och sätter den i fokus"
 
-#: taskmgr.rc:228
+#: taskmgr.rc:227
 msgid "Tells the selected tasks to close"
 msgstr "Säger till den valda aktiviteten att avsluta"
 
-#: taskmgr.rc:229
+#: taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
 msgstr "Byter fokus till den valda aktivitetens process"
 
-#: taskmgr.rc:230
+#: taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
 msgstr "Återställer aktivitetshanteraren från dess dolda status"
 
-#: taskmgr.rc:231
+#: taskmgr.rc:230
 msgid "Removes the process from the system"
 msgstr "Tar bort processen från systemet"
 
-#: taskmgr.rc:233
+#: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
 msgstr "Tar bort den här processen och alla ättlingar från systemet"
 
-#: taskmgr.rc:234
+#: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
 msgstr "Kopplar debuggern till denna process"
 
-#: taskmgr.rc:236
+#: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
 msgstr "Kontrollerar vilka processorer processen tillåts köra på"
 
-#: taskmgr.rc:238
+#: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
 msgstr "Sätter processen till realtidsprioritet"
 
-#: taskmgr.rc:239
+#: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
 msgstr "Ger processen hög prioritet"
 
-#: taskmgr.rc:241
+#: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
 msgstr "Ger processen prioritet över normal"
 
-#: taskmgr.rc:243
+#: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
 msgstr "Ger processen normal prioritet"
 
-#: taskmgr.rc:245
+#: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
 msgstr "Ger processen prioritet under normal"
 
-#: taskmgr.rc:246
+#: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
 msgstr "Ger processen låg prioritet"
 
-#: taskmgr.rc:248
+#: taskmgr.rc:247
 msgid "Controls Debug Channels"
 msgstr "Ställer in felsökningskanaler"
 
-#: taskmgr.rc:264
+#: taskmgr.rc:263
 msgid "Processes"
 msgstr "Processer"
 
-#: taskmgr.rc:265
+#: taskmgr.rc:264
 msgid "Performance"
 msgstr "Prestanda"
 
-#: taskmgr.rc:266
+#: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
 msgstr "CPU-användning: %3d%%"
 
-#: taskmgr.rc:267
+#: taskmgr.rc:266
 msgid "Processes: %d"
 msgstr "Processer: %d"
 
-#: taskmgr.rc:268
+#: taskmgr.rc:267
 msgid "Mem Usage: %dK / %dK"
 msgstr "Minne använt: %dK / %dK"
 
-#: taskmgr.rc:273
+#: taskmgr.rc:272
 msgid "Image Name"
 msgstr "Image Name"
 
-#: taskmgr.rc:274
+#: taskmgr.rc:273
 msgid "PID"
 msgstr "PID"
 
-#: taskmgr.rc:275
+#: taskmgr.rc:274
 msgid "CPU"
 msgstr "CPU-användning"
 
-#: taskmgr.rc:276
+#: taskmgr.rc:275
 msgid "CPU Time"
 msgstr "CPU-tid"
 
-#: taskmgr.rc:277
+#: taskmgr.rc:276
 msgid "Mem Usage"
 msgstr "Minnesanvändning"
 
-#: taskmgr.rc:278
+#: taskmgr.rc:277
 msgid "Mem Delta"
 msgstr "Minnesdelta"
 
-#: taskmgr.rc:279
+#: taskmgr.rc:278
 msgid "Peak Mem Usage"
 msgstr "Högsta minnesanvändning"
 
-#: taskmgr.rc:280
+#: taskmgr.rc:279
 msgid "Page Faults"
 msgstr "Sidfel"
 
-#: taskmgr.rc:281
+#: taskmgr.rc:280
 msgid "USER Objects"
 msgstr "Användarobjekt"
 
-#: taskmgr.rc:282
+#: taskmgr.rc:281
 msgid "I/O Reads"
 msgstr "I/O-läsningar"
 
-#: taskmgr.rc:283
+#: taskmgr.rc:282
 msgid "I/O Read Bytes"
 msgstr "I/O byte lästa"
 
-#: taskmgr.rc:284
+#: taskmgr.rc:283
 msgid "Session ID"
 msgstr "Sessions-ID"
 
-#: taskmgr.rc:285
+#: taskmgr.rc:284
 msgid "Username"
 msgstr "Användare"
 
-#: taskmgr.rc:286
+#: taskmgr.rc:285
 msgid "PF Delta"
 msgstr "Sidfelsdelta"
 
-#: taskmgr.rc:287
+#: taskmgr.rc:286
 msgid "VM Size"
 msgstr "VM-storlek"
 
-#: taskmgr.rc:288
+#: taskmgr.rc:287
 msgid "Paged Pool"
 msgstr "Växlat minne"
 
-#: taskmgr.rc:289
+#: taskmgr.rc:288
 msgid "NP Pool"
 msgstr "Oväxlat minne"
 
-#: taskmgr.rc:290
+#: taskmgr.rc:289
 msgid "Base Pri"
 msgstr "Bas-prio"
 
-#: taskmgr.rc:291
+#: taskmgr.rc:290
 msgid "Handles"
 msgstr "Referenser"
 
-#: taskmgr.rc:292
+#: taskmgr.rc:291
 msgid "Threads"
 msgstr "Trådar"
 
-#: taskmgr.rc:293
+#: taskmgr.rc:292
 msgid "GDI Objects"
 msgstr "GDI-objekt"
 
-#: taskmgr.rc:294
+#: taskmgr.rc:293
 msgid "I/O Writes"
 msgstr "I/O-skrivningar"
 
-#: taskmgr.rc:295
+#: taskmgr.rc:294
 msgid "I/O Write Bytes"
 msgstr "I/O byte skrivna"
 
-#: taskmgr.rc:296
+#: taskmgr.rc:295
 msgid "I/O Other"
 msgstr "I/O övrigt"
 
-#: taskmgr.rc:297
+#: taskmgr.rc:296
 msgid "I/O Other Bytes"
 msgstr "I/O byte övrigt"
 
-#: taskmgr.rc:302
+#: taskmgr.rc:301
 msgid "Task Manager Warning"
 msgstr "Aktivitetshanterarvarning"
 
-#: taskmgr.rc:305
+#: taskmgr.rc:304
 msgid ""
 "WARNING: Changing the priority class of this process may\n"
 "cause undesired results including system instability. Are you\n"
@@ -10143,11 +10145,11 @@ msgstr ""
 "orsaka oönskade resultat som instabilitet i systemet. Är du\n"
 "säker att du vill ändra prioritetsklassen?"
 
-#: taskmgr.rc:306
+#: taskmgr.rc:305
 msgid "Unable to Change Priority"
 msgstr "Kunde inte ändra prioritet"
 
-#: taskmgr.rc:311
+#: taskmgr.rc:310
 msgid ""
 "WARNING: Terminating a process can cause undesired\n"
 "results including loss of data and system instability. The\n"
@@ -10161,11 +10163,11 @@ msgstr ""
 "eller data innan det avbryts. Är du säker du vill\n"
 "avbryta processen?"
 
-#: taskmgr.rc:312
+#: taskmgr.rc:311
 msgid "Unable to Terminate Process"
 msgstr "Kunde inte avbryta process"
 
-#: taskmgr.rc:314
+#: taskmgr.rc:313
 msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
@@ -10173,55 +10175,55 @@ msgstr ""
 "VARNING: Att felsöka denna process kan leda till förlust av data.\n"
 "Är du säker att du vill ansluta felsökaren?"
 
-#: taskmgr.rc:315
+#: taskmgr.rc:314
 msgid "Unable to Debug Process"
 msgstr "Kunde inte felsöka process"
 
-#: taskmgr.rc:316
+#: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
 msgstr "Processen måste ha släktskap med minst en processor"
 
-#: taskmgr.rc:317
+#: taskmgr.rc:316
 msgid "Invalid Option"
 msgstr "Ogiltigt val"
 
-#: taskmgr.rc:318
+#: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
 msgstr "Kan inte komma åt eller sätta process-släktskap"
 
-#: taskmgr.rc:323
+#: taskmgr.rc:322
 msgid "System Idle Process"
 msgstr "Systemets vänteprocess"
 
-#: taskmgr.rc:324
+#: taskmgr.rc:323
 msgid "Not Responding"
 msgstr "Svarar inte"
 
-#: taskmgr.rc:325
+#: taskmgr.rc:324
 msgid "Running"
 msgstr "Kör"
 
-#: taskmgr.rc:326
+#: taskmgr.rc:325
 msgid "Task"
 msgstr "Aktivitet"
 
-#: taskmgr.rc:328
+#: taskmgr.rc:327
 msgid "Debug Channels"
 msgstr "Felsökningskanaler"
 
-#: taskmgr.rc:329
+#: taskmgr.rc:328
 msgid "Fixme"
 msgstr "Fixme"
 
-#: taskmgr.rc:330
+#: taskmgr.rc:329
 msgid "Err"
 msgstr "Err"
 
-#: taskmgr.rc:331
+#: taskmgr.rc:330
 msgid "Warn"
 msgstr "Warn"
 
-#: taskmgr.rc:332
+#: taskmgr.rc:331
 msgid "Trace"
 msgstr "Trace"
 
@@ -10889,67 +10891,68 @@ msgstr "Ordna &vertikalt\tCtrl+F4"
 msgid "Arrange &Symbols"
 msgstr "Ordna &symboler"
 
-#: winefile.rc:88
-msgid "&About Winefile..."
+#: winefile.rc:87
+#, fuzzy
+msgid "&About Wine File"
 msgstr "Information om &Winefile..."
 
-#: winefile.rc:94
+#: winefile.rc:93
 msgid "Applying font settings"
 msgstr "Verkställ teckensnittsinställningar"
 
-#: winefile.rc:95
+#: winefile.rc:94
 msgid "Error while selecting new font."
 msgstr "Ett fel uppstod när ett nytt teckensnitt valdes."
 
-#: winefile.rc:100
+#: winefile.rc:99
 msgid "Wine File Manager"
 msgstr "Winefile"
 
-#: winefile.rc:102
+#: winefile.rc:101
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:103
+#: winefile.rc:102
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:105
+#: winefile.rc:104
 msgid "Shell"
 msgstr "Skal"
 
-#: winefile.rc:106
+#: winefile.rc:105
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "Not yet implemented"
 msgstr "Inte implementerat ännu"
 
-#: winefile.rc:108
+#: winefile.rc:107
 msgid "Wine File"
 msgstr "Winefile"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "CDate"
 msgstr "CDatum"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "ADate"
 msgstr "ADatum"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "MDate"
 msgstr "MDatum"
 
-#: winefile.rc:118
+#: winefile.rc:117
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "Security"
 msgstr "Säkerhet"
 
-#: winefile.rc:123
+#: winefile.rc:122
 msgid "%s of %s free"
 msgstr "%s av %s ledigt"
 
@@ -10986,8 +10989,9 @@ msgid "&Fastest Times..."
 msgstr "&Snabbaste tider..."
 
 #: winemine.rc:48
-msgid "&About"
-msgstr "&Om"
+#, fuzzy
+msgid "&About WineMine"
+msgstr "&Om Wine"
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -11025,15 +11029,15 @@ msgstr "&Definiera..."
 msgid "History"
 msgstr "Historik"
 
-#: winhlp32.rc:48 winhlp32.rc:70
+#: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
 msgstr "Litet"
 
-#: winhlp32.rc:49 winhlp32.rc:71
+#: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
 msgstr "Normalt"
 
-#: winhlp32.rc:50 winhlp32.rc:72
+#: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
 msgstr "Stort"
 
@@ -11046,51 +11050,51 @@ msgstr "Användning &av hjälp"
 msgid "Always on &top"
 msgstr "Alltid &överst"
 
-#: winhlp32.rc:57
+#: winhlp32.rc:56
 msgid "&About Wine Help"
 msgstr "&Info..."
 
-#: winhlp32.rc:65
+#: winhlp32.rc:64
 msgid "Annotation..."
 msgstr "Kommentar..."
 
-#: winhlp32.rc:66
+#: winhlp32.rc:65
 msgid "Copy"
 msgstr "Kopiera"
 
-#: winhlp32.rc:67
+#: winhlp32.rc:66
 msgid "Print..."
 msgstr "Skriv ut..."
 
-#: winhlp32.rc:79
+#: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Hjälp"
 
-#: winhlp32.rc:84
+#: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
 msgstr "Fel vid läsning av hjälpfilen `%s'"
 
-#: winhlp32.rc:86
+#: winhlp32.rc:85
 msgid "Summary"
 msgstr "Sammandrag"
 
-#: winhlp32.rc:85
+#: winhlp32.rc:84
 msgid "&Index"
 msgstr "&Innehåll"
 
-#: winhlp32.rc:89
+#: winhlp32.rc:88
 msgid "Help files (*.hlp)"
 msgstr "Hjälpfiler (*.hlp)"
 
-#: winhlp32.rc:90
+#: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
 msgstr "Kan inte hitta '%s'. Vill du söka efter denna fil?"
 
-#: winhlp32.rc:91
+#: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
 msgstr "Kan inte hitta en implementation av richedit... Avslutar"
 
-#: winhlp32.rc:92
+#: winhlp32.rc:91
 msgid "Help topics: "
 msgstr "Hjälprubriker: "
 

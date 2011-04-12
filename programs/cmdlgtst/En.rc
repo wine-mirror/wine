@@ -61,7 +61,7 @@ CmdlgtstMenu MENU
  POPUP "&Help"
  {
   MENUITEM "&Usage", CM_H_USAGE
-  MENUITEM "&About", CM_H_ABOUT
+  MENUITEM "&About Common Dialog Test", CM_H_ABOUT
  }
 
 }

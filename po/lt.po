@@ -28,7 +28,7 @@ msgstr ""
 "Leidžia įdiegti naują programinę įrangą, ar pašalinti jau įdiegtą iš jūsų "
 "kompiuterio."
 
-#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:38
 msgid "Applications"
 msgstr "Programos"
 
@@ -44,7 +44,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nenurodyta"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:123 winefile.rc:113
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:122 winefile.rc:112
 msgid "Name"
 msgstr "Vardas"
 
@@ -64,8 +64,8 @@ msgstr "Diegimo programos"
 msgid "Programs (*.exe)"
 msgstr "Programos (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
-#: oleview.rc:101 progman.rc:80 regedit.rc:196 winhlp32.rc:88
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:75
+#: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Visi failai (*.*)"
 
@@ -133,7 +133,7 @@ msgstr "Atsisakoma..."
 msgid "Separator"
 msgstr "Skirtukas"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:79 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
 msgid "None"
 msgstr "Nėra"
 
@@ -169,15 +169,15 @@ msgstr "Adresynas"
 msgid "System Path"
 msgstr "Sistemos kelias"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:104
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:103
 msgid "Desktop"
 msgstr "Darbalaukis"
 
-#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:68
+#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"
 msgstr "Šriftai"
 
-#: comdlg32.rc:36 shell32.rc:142 regedit.rc:201
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:200
 msgid "My Computer"
 msgstr "Kompiuteris"
 
@@ -381,7 +381,7 @@ msgstr "Nenurodytas pagrindinis spausdintuvas."
 msgid "Cannot find the printer."
 msgstr "Nepavyko rasti spausdintuvo."
 
-#: comdlg32.rc:80 progman.rc:74
+#: comdlg32.rc:80 progman.rc:73
 msgid "Out of memory."
 msgstr "Trūksta atminties."
 
@@ -2031,7 +2031,7 @@ msgstr "Parinktys"
 msgid "S&ync"
 msgstr "S&inchronizuoti"
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:87
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Atgal"
 
@@ -6195,7 +6195,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&Failas"
 
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:96
+#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
 msgid "&New"
 msgstr "&Naujas"
 
@@ -6227,7 +6227,7 @@ msgstr "Spaudinio pe&ržiūra..."
 msgid "&Properties..."
 msgstr "&Savybės..."
 
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
+#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
 msgstr "&Užverti"
 
@@ -6270,12 +6270,12 @@ msgid "Address"
 msgstr "Adresas"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
-#: taskmgr.rc:111 taskmgr.rc:253
+#: taskmgr.rc:110 taskmgr.rc:252
 msgid "Lar&ge Icons"
 msgstr "&Didelės piktogramos"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
-#: taskmgr.rc:112 taskmgr.rc:254
+#: taskmgr.rc:111 taskmgr.rc:253
 msgid "S&mall Icons"
 msgstr "&Mažos piktogramos"
 
@@ -6284,7 +6284,7 @@ msgid "&List"
 msgstr "&Sąrašas"
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:110 shell32.rc:150 taskmgr.rc:67
-#: taskmgr.rc:113 taskmgr.rc:255
+#: taskmgr.rc:112 taskmgr.rc:254
 msgid "&Details"
 msgstr "&Išsamus"
 
@@ -6348,7 +6348,7 @@ msgstr "&Iškirpti"
 msgid "Create &Link"
 msgstr "Sukurti &nuorodą"
 
-#: shell32.rc:91 regedit.rc:92
+#: shell32.rc:91 regedit.rc:91
 msgid "&Rename"
 msgstr "&Pervadinti"
 
@@ -6361,11 +6361,11 @@ msgstr "Iš&eiti"
 msgid "&About Control Panel..."
 msgstr "&Apie valdymo skydelį..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:114
+#: shell32.rc:123 shell32.rc:127 winefile.rc:113
 msgid "Size"
 msgstr "Dydis"
 
-#: shell32.rc:124 regedit.rc:124
+#: shell32.rc:124 regedit.rc:123
 msgid "Type"
 msgstr "Tipas"
 
@@ -6373,7 +6373,7 @@ msgstr "Tipas"
 msgid "Modified"
 msgstr "Modifikuotas"
 
-#: shell32.rc:126 winefile.rc:120
+#: shell32.rc:126 winefile.rc:119
 msgid "Attributes"
 msgstr "Požymiai"
 
@@ -6541,7 +6541,7 @@ msgstr "Programų failai (x86)\\Bendrieji failai"
 msgid "Contacts"
 msgstr "Kontaktai"
 
-#: shell32.rc:216 winefile.rc:119
+#: shell32.rc:216 winefile.rc:118
 msgid "Links"
 msgstr "Saitai"
 
@@ -6557,7 +6557,7 @@ msgstr "Muzika\\Grojaraščiai"
 msgid "Downloads"
 msgstr "Atsiuntimai"
 
-#: shell32.rc:136 taskmgr.rc:327
+#: shell32.rc:136 taskmgr.rc:326
 msgid "Status"
 msgstr "Būsena"
 
@@ -6771,7 +6771,7 @@ msgstr " min"
 msgid " sec"
 msgstr " sek"
 
-#: user32.rc:27 taskmgr.rc:139
+#: user32.rc:27 taskmgr.rc:138
 msgid "&Restore"
 msgstr "&Atkurti"
 
@@ -6787,7 +6787,7 @@ msgstr "D&ydis"
 msgid "Mi&nimize"
 msgstr "Su&skleisti"
 
-#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
 msgstr "Pa&didinti"
 
@@ -6796,10 +6796,10 @@ msgid "&Close\tAlt-F4"
 msgstr "&Užverti\tAlt-F4"
 
 #: user32.rc:35
-msgid "&About Wine..."
-msgstr "Apie &Wine..."
+msgid "&About Wine"
+msgstr "Apie &Wine"
 
-#: user32.rc:55 regedit.rc:177 winefile.rc:101
+#: user32.rc:55 regedit.rc:176 winefile.rc:100
 msgid "Error"
 msgstr "Klaida"
 
@@ -7714,7 +7714,7 @@ msgstr "S&ekundės"
 msgid "&Date"
 msgstr "&Data"
 
-#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:141
 msgid "&Always on Top"
 msgstr "&Visada viršuje"
 
@@ -7723,7 +7723,8 @@ msgid "Inf&o"
 msgstr "&Informacija"
 
 #: clock.rc:42
-msgid "&About Clock..."
+#, fuzzy
+msgid "&About Clock"
 msgstr "&Apie laikrodį..."
 
 #: clock.rc:48
@@ -8570,7 +8571,7 @@ msgstr "&Kopijuoti\tVald+C"
 msgid "&Paste\tCtrl+V"
 msgstr "Į&dėti\tVald+V"
 
-#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:91 regedit.rc:107
+#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr "&Šalinti\tDel"
@@ -8599,43 +8600,43 @@ msgstr "Ieškoti ki&to\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Pa&keisti...\tVald+H"
 
-#: notepad.rc:60
+#: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Apie užrašinę"
 
-#: notepad.rc:66
+#: notepad.rc:65
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:67
+#: notepad.rc:66
 msgid "Page &p"
 msgstr "Puslapis &p"
 
-#: notepad.rc:69
+#: notepad.rc:68
 msgid "Notepad"
 msgstr "Užrašinė"
 
-#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
+#: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 msgid "ERROR"
 msgstr "KLAIDA"
 
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
+#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
 msgstr "ĮSPĖJIMAS"
 
-#: notepad.rc:72 progman.rc:64 winhlp32.rc:82
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
 msgid "Information"
 msgstr "Informacija"
 
-#: notepad.rc:74
+#: notepad.rc:73
 msgid "Untitled"
 msgstr "Be pavadinimo"
 
-#: notepad.rc:77
+#: notepad.rc:76
 msgid "Text files (*.txt)"
 msgstr "Tekstiniai failai (*.txt)"
 
-#: notepad.rc:80
+#: notepad.rc:79
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8643,7 +8644,7 @@ msgstr ""
 "Failas „%s“ yra per didelis užrašinei.\n"
 "Prašome naudoti kitą tekstų rengyklę."
 
-#: notepad.rc:82
+#: notepad.rc:81
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8651,7 +8652,7 @@ msgstr ""
 "Jūs neįvedėte jokio teksto.\n"
 "Prašome ką nors įvesti ir mėginti dar kartą"
 
-#: notepad.rc:84
+#: notepad.rc:83
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8662,7 +8663,7 @@ msgstr ""
 "\n"
 "Ar norite sukurti naują failą?"
 
-#: notepad.rc:86
+#: notepad.rc:85
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8673,11 +8674,11 @@ msgstr ""
 "\n"
 "Ar norite išsaugoti pakeitimus?"
 
-#: notepad.rc:87
+#: notepad.rc:86
 msgid "'%s' could not be found."
 msgstr "Frazė „%s“ nerasta."
 
-#: notepad.rc:89
+#: notepad.rc:88
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8685,19 +8686,19 @@ msgstr ""
 "Neužtenka atminties operacijai užbaigti.\n"
 "Norėdami atlaisvinti atminties uždarykite vieną ar daugiau programų."
 
-#: notepad.rc:91
+#: notepad.rc:90
 msgid "Unicode (UTF-16)"
 msgstr "Unikodas (UTF-16)"
 
-#: notepad.rc:92
+#: notepad.rc:91
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unikodas (UTF-16 mažėjantys baitai)"
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-8)"
 msgstr "Unikodas (UTF-8)"
 
-#: notepad.rc:100
+#: notepad.rc:99
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -9038,7 +9039,7 @@ msgstr "&Suskleisti paleidžiant"
 msgid "&Save settings on exit"
 msgstr "Išsaugoti &nuostatas išeinant"
 
-#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
 msgstr "&Langai"
 
@@ -9054,39 +9055,40 @@ msgstr "&Greta vienas kito\tLyg2+F4"
 msgid "&Arrange Icons"
 msgstr "&Išdėstyti piktogramas"
 
-#: progman.rc:55
-msgid "&About Wine"
-msgstr "Apie &Wine"
+#: progman.rc:54
+#, fuzzy
+msgid "&About Program Manager"
+msgstr "Programų tvarkytuvė"
 
-#: progman.rc:61
+#: progman.rc:60
 msgid "Program Manager"
 msgstr "Programų tvarkytuvė"
 
-#: progman.rc:65
+#: progman.rc:64
 msgid "Delete"
 msgstr "Šalinti"
 
-#: progman.rc:66
+#: progman.rc:65
 msgid "Delete group `%s'?"
 msgstr "Šalinti grupę „%s“?"
 
-#: progman.rc:67
+#: progman.rc:66
 msgid "Delete program `%s'?"
 msgstr "Šalinti programą „%s“?"
 
-#: progman.rc:68 winhlp32.rc:83
+#: progman.rc:67 winhlp32.rc:82
 msgid "Not implemented"
 msgstr "Nerealizuota"
 
-#: progman.rc:69
+#: progman.rc:68
 msgid "Error reading `%s'."
 msgstr "Klaida skaitant „%s“."
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Error writing `%s'."
 msgstr "Klaida rašant „%s“."
 
-#: progman.rc:73
+#: progman.rc:72
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9094,35 +9096,35 @@ msgstr ""
 "Nepavyko atidaryti grupės failo „%s“.\n"
 "Mėginti atidaryti toliau?"
 
-#: progman.rc:75
+#: progman.rc:74
 msgid "Help not available."
 msgstr "Žinynas neprieinamas."
 
-#: progman.rc:76
+#: progman.rc:75
 msgid "Unknown feature in %s"
 msgstr "Nežinoma %s funkcija"
 
-#: progman.rc:77
+#: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
 msgstr "Failas „%s“ egzistuoja. Neperrašytas."
 
-#: progman.rc:78
+#: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Išsaugoti grupę kaip „%s“, taip neperrašant originalių failų."
 
-#: progman.rc:81
+#: progman.rc:80
 msgid "Programs"
 msgstr "Programos"
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Libraries (*.dll)"
 msgstr "Bibliotekos (*.dll)"
 
-#: progman.rc:83
+#: progman.rc:82
 msgid "Icon files"
 msgstr "Piktogramų failai"
 
-#: progman.rc:84
+#: progman.rc:83
 msgid "Icons (*.ico)"
 msgstr "Piktogramos (*.ico)"
 
@@ -9191,43 +9193,43 @@ msgstr "E&ksportuoti registro failą..."
 msgid "&Print\tCtrl+P"
 msgstr "S&pausdinti\tVald+P"
 
-#: regedit.rc:42 regedit.rc:88
+#: regedit.rc:42 regedit.rc:87
 msgid "&Modify"
 msgstr "&Modifikuoti"
 
-#: regedit.rc:46 regedit.rc:98
+#: regedit.rc:46 regedit.rc:97
 msgid "&Key"
 msgstr "&Raktas"
 
-#: regedit.rc:48 regedit.rc:100
+#: regedit.rc:48 regedit.rc:99
 msgid "&String Value"
 msgstr "&Eilutės reikšmė"
 
-#: regedit.rc:49 regedit.rc:101
+#: regedit.rc:49 regedit.rc:100
 msgid "&Binary Value"
 msgstr "D&vejetainė reikšmė"
 
-#: regedit.rc:50 regedit.rc:102
+#: regedit.rc:50 regedit.rc:101
 msgid "&DWORD Value"
 msgstr "&DWORD reikšmė"
 
-#: regedit.rc:51 regedit.rc:103
+#: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
 msgstr "&Kelių eilučių reikšmė"
 
-#: regedit.rc:52 regedit.rc:104
+#: regedit.rc:52 regedit.rc:103
 msgid "&Expandable String Value"
 msgstr "&Išskleidžiama eilutės reikšmė"
 
-#: regedit.rc:56 regedit.rc:108
+#: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
 msgstr "&Pervadinti\tF2"
 
-#: regedit.rc:58 regedit.rc:111
+#: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
 msgstr "Kopijuoti rakto &vardą"
 
-#: regedit.rc:60 regedit.rc:113
+#: regedit.rc:60 regedit.rc:112
 msgid "&Find\tCtrl+F"
 msgstr "&Ieškoti\tVald+F"
 
@@ -9256,209 +9258,209 @@ msgstr "&Pašalinti iš adresyno..."
 msgid "&Help Topics\tF1"
 msgstr "&Žinyno temos\tF1"
 
-#: regedit.rc:80
+#: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "&Apie Registro tvarkytuvę"
 
-#: regedit.rc:89
+#: regedit.rc:88
 msgid "Modify Binary Data"
 msgstr "Modifikuoti dvejetainius duomenis"
 
-#: regedit.rc:110
+#: regedit.rc:109
 msgid "&Export..."
 msgstr "&Eksportuoti..."
 
-#: regedit.rc:135
+#: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
 msgstr "Pateikiamos komandos darbui su visu registru"
 
-#: regedit.rc:136
+#: regedit.rc:135
 msgid "Contains commands for editing values or keys"
 msgstr "Pateikiamos komandos raktų ir reikšmių redagavimui"
 
-#: regedit.rc:137
+#: regedit.rc:136
 msgid "Contains commands for customising the registry window"
 msgstr "Pateikiamos komandos registro lango adaptavimui"
 
-#: regedit.rc:138
+#: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
 msgstr "Pateikiamos komandos dažnai naudojamų raktų prieigai"
 
-#: regedit.rc:139
+#: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
 "Pateikiamos komandos žinyno ir informacijos apie registro tvarkytuvę rodymui"
 
-#: regedit.rc:140
+#: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
 msgstr "Pateikiamos komandos naujų raktų ir reikšmių kūrimui"
 
-#: regedit.rc:125
+#: regedit.rc:124
 msgid "Data"
 msgstr "Duomenys"
 
-#: regedit.rc:130
+#: regedit.rc:129
 msgid "Registry Editor"
 msgstr "Registro tvarkytuvė"
 
-#: regedit.rc:192
+#: regedit.rc:191
 msgid "Import Registry File"
 msgstr "Importuoti registro failą"
 
-#: regedit.rc:193
+#: regedit.rc:192
 msgid "Export Registry File"
 msgstr "Eksportuoti registro failą"
 
-#: regedit.rc:194
+#: regedit.rc:193
 msgid "Registry files (*.reg)"
 msgstr "Registro failai (*.reg)"
 
-#: regedit.rc:195
+#: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 registro failai (REGEDIT4)"
 
-#: regedit.rc:202
+#: regedit.rc:201
 msgid "(Default)"
 msgstr "(numatytoji)"
 
-#: regedit.rc:203
+#: regedit.rc:202
 msgid "(value not set)"
 msgstr "(reikšmė nenustatyta)"
 
-#: regedit.rc:204
+#: regedit.rc:203
 msgid "(cannot display value)"
 msgstr "(negalima parodyti reikšmės)"
 
-#: regedit.rc:205
+#: regedit.rc:204
 msgid "(unknown %d)"
 msgstr "(nežinomas %d)"
 
-#: regedit.rc:161
+#: regedit.rc:160
 msgid "Quits the registry editor"
 msgstr "Išeina iš registro tvarkytuvės"
 
-#: regedit.rc:162
+#: regedit.rc:161
 msgid "Adds keys to the favorites list"
 msgstr "Prideda pasirinktą raktą į adresyną"
 
-#: regedit.rc:163
+#: regedit.rc:162
 msgid "Removes keys from the favorites list"
 msgstr "Pašalina nurodytus raktus iš adresyno"
 
-#: regedit.rc:164
+#: regedit.rc:163
 msgid "Shows or hides the status bar"
 msgstr "Parodo arba paslepia būsenos juostą"
 
-#: regedit.rc:165
+#: regedit.rc:164
 msgid "Change position of split between two panes"
 msgstr "Pakeičia polangių skirtuko poziciją tarp polangių"
 
-#: regedit.rc:166
+#: regedit.rc:165
 msgid "Refreshes the window"
 msgstr "Atnaujina langą"
 
-#: regedit.rc:167
+#: regedit.rc:166
 msgid "Deletes the selection"
 msgstr "Šalina atranką"
 
-#: regedit.rc:168
+#: regedit.rc:167
 msgid "Renames the selection"
 msgstr "Pervadina atranką"
 
-#: regedit.rc:169
+#: regedit.rc:168
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Kopijuoja pasirinkto rakto vardą į iškarpinę"
 
-#: regedit.rc:170
+#: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
 msgstr "Ieško teksto eilutės raktuose, reikšmių varduose ar duomenyse"
 
-#: regedit.rc:171
+#: regedit.rc:170
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "Ieško ankstesnėje paieškoje nurodyto teksto kitos buvimo vietos"
 
-#: regedit.rc:145
+#: regedit.rc:144
 msgid "Modifies the value's data"
 msgstr "Modifikuoja reikšmės duomenis"
 
-#: regedit.rc:146
+#: regedit.rc:145
 msgid "Adds a new key"
 msgstr "Prideda naują raktą"
 
-#: regedit.rc:147
+#: regedit.rc:146
 msgid "Adds a new string value"
 msgstr "Prideda naują eilutės reikšmę"
 
-#: regedit.rc:148
+#: regedit.rc:147
 msgid "Adds a new binary value"
 msgstr "Prideda naują dvejetainę reikšmę"
 
-#: regedit.rc:149
+#: regedit.rc:148
 msgid "Adds a new double word value"
 msgstr "Prideda naują dvigubojo žodžio reikšmę"
 
-#: regedit.rc:151
+#: regedit.rc:150
 msgid "Imports a text file into the registry"
 msgstr "Importuoja tekstinį failą į registrą"
 
-#: regedit.rc:153
+#: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
 msgstr "Eksportuoja visą ar dalį registro į tekstinį failą"
 
-#: regedit.rc:154
+#: regedit.rc:153
 msgid "Prints all or part of the registry"
 msgstr "Atspausdina visą ar dalį registro"
 
-#: regedit.rc:156
+#: regedit.rc:155
 msgid "Displays program information, version number and copyright"
 msgstr "Parodo informaciją apie programą, versijos numerį ir autoriaus teises"
 
-#: regedit.rc:179
+#: regedit.rc:178
 msgid "Can't query value '%s'"
 msgstr "Nepavyko perskaityti reikšmės „%s“"
 
-#: regedit.rc:180
+#: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
 msgstr "Šio tipo raktų redaguoti negalima (%u)"
 
-#: regedit.rc:181
+#: regedit.rc:180
 msgid "Value is too big (%u)"
 msgstr "Reikšmė per didelė (%u)"
 
-#: regedit.rc:182
+#: regedit.rc:181
 msgid "Confirm Value Delete"
 msgstr "Reikšmės šalinimo patvirtinimas"
 
-#: regedit.rc:183
+#: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
 msgstr "Ar tikrai norite pašalinti reikšmę „%s“?"
 
-#: regedit.rc:187
+#: regedit.rc:186
 msgid "Search string '%s' not found"
 msgstr "Ieškoma eilutė „%s“ nerasta"
 
-#: regedit.rc:184
+#: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
 msgstr "Ar tikrai norite pašalinti šias reikšmes?"
 
-#: regedit.rc:185
+#: regedit.rc:184
 msgid "New Key #%d"
 msgstr "Naujas raktas #%d"
 
-#: regedit.rc:186
+#: regedit.rc:185
 msgid "New Value #%d"
 msgstr "Nauja reikšmė #%d"
 
-#: regedit.rc:178
+#: regedit.rc:177
 msgid "Can't query key '%s'"
 msgstr "Nepavyko perskaityti rakto „%s“"
 
-#: regedit.rc:150
+#: regedit.rc:149
 msgid "Adds a new multi string value"
 msgstr "Prideda naują kelių eilučių reikšmę"
 
-#: regedit.rc:172
+#: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Eksportuoja pasirinktą registro šaką į tekstinį failą"
 
@@ -9621,7 +9623,7 @@ msgstr "Klaida: nepavyko nutraukti proceso „%s“.\n"
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Klaida: savo proceso priverstinis nutraukimas negalimas.\n"
 
-#: taskmgr.rc:37 taskmgr.rc:109
+#: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Nauja užduotis (vykdyti...)"
 
@@ -9637,7 +9639,7 @@ msgstr "&Suskleisti naudojant"
 msgid "&Hide When Minimized"
 msgstr "S&lėpti, kai suskleista"
 
-#: taskmgr.rc:49 taskmgr.rc:258
+#: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
 msgstr "&Rodyti 16-bitų užduotis"
 
@@ -9649,15 +9651,15 @@ msgstr "&Atnaujinti dabar"
 msgid "&Update Speed"
 msgstr "&Atnaujinimo greitis"
 
-#: taskmgr.rc:57 taskmgr.rc:159
+#: taskmgr.rc:57 taskmgr.rc:158
 msgid "&High"
 msgstr "&Didelis"
 
-#: taskmgr.rc:58 taskmgr.rc:163
+#: taskmgr.rc:58 taskmgr.rc:162
 msgid "&Normal"
 msgstr "&Normalus"
 
-#: taskmgr.rc:60 taskmgr.rc:167
+#: taskmgr.rc:60 taskmgr.rc:166
 msgid "&Low"
 msgstr "&Mažas"
 
@@ -9665,43 +9667,43 @@ msgstr "&Mažas"
 msgid "&Paused"
 msgstr "&Pristabdyta"
 
-#: taskmgr.rc:68 taskmgr.rc:257
+#: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
 msgstr "Iš&rinkti stulpelius..."
 
-#: taskmgr.rc:69 taskmgr.rc:259
+#: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
 msgstr "&CP istorija"
 
-#: taskmgr.rc:71 taskmgr.rc:260
+#: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
 msgstr "&Viena diagrama visiems CP"
 
-#: taskmgr.rc:73 taskmgr.rc:261
+#: taskmgr.rc:73 taskmgr.rc:260
 msgid "One Graph &Per CPU"
 msgstr "Po diagramą &kiekvienam CP"
 
-#: taskmgr.rc:76 taskmgr.rc:262
+#: taskmgr.rc:76 taskmgr.rc:261
 msgid "&Show Kernel Times"
 msgstr "&Rodyti branduolio laikus"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:79
+#: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:79
 msgid "Tile &Horizontally"
 msgstr "Iškloti &gulsčiai"
 
-#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+#: taskmgr.rc:81 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Vertically"
 msgstr "Iškloti &stačiai"
 
-#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+#: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
 msgid "&Minimize"
 msgstr "Susk&leisti"
 
-#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+#: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
 msgstr "Išdėstyti pa&kopomis"
 
-#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+#: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "Perkelti į &priekį"
 
@@ -9709,364 +9711,364 @@ msgstr "Perkelti į &priekį"
 msgid "Task Manager &Help Topics"
 msgstr "Užduočių tvarkytuvės &žinynas"
 
-#: taskmgr.rc:91
+#: taskmgr.rc:90
 msgid "&About Task Manager"
 msgstr "&Apie užduočių tvarkytuvę"
 
-#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
 msgid "DUMMY"
 msgstr "DUMMY"
 
-#: taskmgr.rc:121
+#: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "Per&jungti į"
 
-#: taskmgr.rc:130
+#: taskmgr.rc:129
 msgid "&End Task"
 msgstr "&Baigti užduotį"
 
-#: taskmgr.rc:131
+#: taskmgr.rc:130
 msgid "&Go To Process"
 msgstr "&Eiti į procesą"
 
-#: taskmgr.rc:150
+#: taskmgr.rc:149
 msgid "&End Process"
 msgstr "&Baigti procesą"
 
-#: taskmgr.rc:151
+#: taskmgr.rc:150
 msgid "End Process &Tree"
 msgstr "Baigti procesų &medį"
 
-#: taskmgr.rc:153 winedbg.rc:29
+#: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
 msgstr "&Derinti"
 
-#: taskmgr.rc:155
+#: taskmgr.rc:154
 msgid "Set &Priority"
 msgstr "Nustatyti &prioritetą"
 
-#: taskmgr.rc:157
+#: taskmgr.rc:156
 msgid "&Realtime"
 msgstr "&Tikralaikis"
 
-#: taskmgr.rc:161
+#: taskmgr.rc:160
 msgid "&AboveNormal"
 msgstr "&ViršNormalaus"
 
-#: taskmgr.rc:165
+#: taskmgr.rc:164
 msgid "&BelowNormal"
 msgstr "&ŽemiauNormalaus"
 
-#: taskmgr.rc:170
+#: taskmgr.rc:169
 msgid "Set &Affinity..."
 msgstr "Nustatyti &atitikimą..."
 
-#: taskmgr.rc:171
+#: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
 msgstr "Redaguoti derinimo &kanalus..."
 
-#: taskmgr.rc:181 taskmgr.rc:182
+#: taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
 msgstr "Užduočių tvarkytuvė"
 
-#: taskmgr.rc:183
+#: taskmgr.rc:182
 msgid "Create New Task"
 msgstr "Sukurti naują užduotį"
 
-#: taskmgr.rc:188
+#: taskmgr.rc:187
 msgid "Runs a new program"
 msgstr "Paleidžia naują programą"
 
-#: taskmgr.rc:189
+#: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
 msgstr ""
 "Užduočių tvarkytuvės langas lieka priekyje visų kitų langų, nebent "
 "suskleidžiamas"
 
-#: taskmgr.rc:191
+#: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr ""
 "Užduočių tvarkytuvė yra suskleidžiama, kai įvykdoma operacija „perjungti į“"
 
-#: taskmgr.rc:192
+#: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
 msgstr "Slepia užduočių tvarkytuvę, kai langas suskleidžiamas"
 
-#: taskmgr.rc:193
+#: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
 msgstr ""
 "Priverčia užduočių tvarkytuvę atnaujinti ekraną dabar, nepaisant atnaujinimo "
 "greičio nuostatos"
 
-#: taskmgr.rc:194
+#: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
 msgstr "Rodo užduotis didelėmis piktogramomis"
 
-#: taskmgr.rc:195
+#: taskmgr.rc:194
 msgid "Displays tasks by using small icons"
 msgstr "Rodo užduotis mažomis piktogramomis"
 
-#: taskmgr.rc:196
+#: taskmgr.rc:195
 msgid "Displays information about each task"
 msgstr "Rodo informaciją apie kiekvieną užduotį"
 
-#: taskmgr.rc:197
+#: taskmgr.rc:196
 msgid "Updates the display twice per second"
 msgstr "Atnaujina ekraną du kartus per sekundę"
 
-#: taskmgr.rc:198
+#: taskmgr.rc:197
 msgid "Updates the display every two seconds"
 msgstr "Atnaujina ekraną kas dvi sekundes"
 
-#: taskmgr.rc:199
+#: taskmgr.rc:198
 msgid "Updates the display every four seconds"
 msgstr "Atnaujina ekraną kas keturias sekundes"
 
-#: taskmgr.rc:204
+#: taskmgr.rc:203
 msgid "Does not automatically update"
 msgstr "Automatiškai neatnaujina"
 
-#: taskmgr.rc:206
+#: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
 msgstr "Iškloja langus gulsčiai ant darbalaukio"
 
-#: taskmgr.rc:207
+#: taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
 msgstr "Iškloja langus stačiai ant darbalaukio"
 
-#: taskmgr.rc:208
+#: taskmgr.rc:207
 msgid "Minimizes the windows"
 msgstr "Suskleidžia langus"
 
-#: taskmgr.rc:209
+#: taskmgr.rc:208
 msgid "Maximizes the windows"
 msgstr "Išskleidžia langus"
 
-#: taskmgr.rc:210
+#: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
 msgstr "Išdėsto langus pakopomis ant darbalaukio"
 
-#: taskmgr.rc:211
+#: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
 msgstr "Perkelia langą į priekį, bet į jį neperjungia"
 
-#: taskmgr.rc:212
+#: taskmgr.rc:211
 msgid "Displays Task Manager help topics"
 msgstr "Rodo užduočių tvarkytuvės žinyną"
 
-#: taskmgr.rc:213
+#: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
 msgstr "Rodo programos informaciją, versijos numerį ir autoriaus teises"
 
-#: taskmgr.rc:214
+#: taskmgr.rc:213
 msgid "Exits the Task Manager application"
 msgstr "Išeina iš užduočių tvarkytuvės"
 
-#: taskmgr.rc:216
+#: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
 msgstr "Rodo 16-bitų užduotis po susietu ntvdm.exe"
 
-#: taskmgr.rc:217
+#: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
 msgstr "Išrenka stulpelius, kurie bus matomi procesų puslapyje"
 
-#: taskmgr.rc:218
+#: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
 msgstr "Rodo branduolio laiką našumo diagramose"
 
-#: taskmgr.rc:220
+#: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
 msgstr "Viena istorijos diagrama rodo bendrą CP naudojimą"
 
-#: taskmgr.rc:221
+#: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
 msgstr "Kiekvienas CP turi savo atskirą istorijos diagramą"
 
-#: taskmgr.rc:223
+#: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
 msgstr "Perkelia užduotį priekio link ir perjungia židinį į ją"
 
-#: taskmgr.rc:228
+#: taskmgr.rc:227
 msgid "Tells the selected tasks to close"
 msgstr "Liepia pažymėtoms užduotims užsidaryti"
 
-#: taskmgr.rc:229
+#: taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
 msgstr "Perjungia židinį į pažymėtos užduoties procesą"
 
-#: taskmgr.rc:230
+#: taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
 msgstr "Atkuria užduočių tvarkytuvę iš paslėptos būsenos"
 
-#: taskmgr.rc:231
+#: taskmgr.rc:230
 msgid "Removes the process from the system"
 msgstr "Pašalina procesą iš sistemos"
 
-#: taskmgr.rc:233
+#: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
 msgstr "Pašalina procesą ir visus jo palikuonis iš sistemos"
 
-#: taskmgr.rc:234
+#: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
 msgstr "Prijungia derintuvę prie proceso"
 
-#: taskmgr.rc:236
+#: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
 msgstr "Kontroliuoja, kuriuos procesorius procesas galės naudoti vykdymui"
 
-#: taskmgr.rc:238
+#: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
 msgstr "Nustato procesui TIKRALAIKĘ prioriteto klasę"
 
-#: taskmgr.rc:239
+#: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
 msgstr "Nustato procesui AUKŠTĄ prioriteto klasę"
 
-#: taskmgr.rc:241
+#: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
 msgstr "Nustato procesui prioriteto klasę VIRŠ NORMALIOS"
 
-#: taskmgr.rc:243
+#: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
 msgstr "Nustato procesui NORMALIĄ prioriteto klasę"
 
-#: taskmgr.rc:245
+#: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
 msgstr "Nustato procesui prioriteto klasę ŽEMIAU NORMALIOS"
 
-#: taskmgr.rc:246
+#: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
 msgstr "Nustato procesui ŽEMĄ prioriteto klasę"
 
-#: taskmgr.rc:248
+#: taskmgr.rc:247
 msgid "Controls Debug Channels"
 msgstr "Kontroliuoja derinimo kanalus"
 
-#: taskmgr.rc:264
+#: taskmgr.rc:263
 msgid "Processes"
 msgstr "Procesai"
 
-#: taskmgr.rc:265
+#: taskmgr.rc:264
 msgid "Performance"
 msgstr "Našumas"
 
-#: taskmgr.rc:266
+#: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
 msgstr "CP naudojimas: %3d%%"
 
-#: taskmgr.rc:267
+#: taskmgr.rc:266
 msgid "Processes: %d"
 msgstr "Procesai: %d"
 
-#: taskmgr.rc:268
+#: taskmgr.rc:267
 msgid "Mem Usage: %dK / %dK"
 msgstr "Atminties naudojimas: %dK / %dK"
 
-#: taskmgr.rc:273
+#: taskmgr.rc:272
 msgid "Image Name"
 msgstr "Proceso vardas"
 
-#: taskmgr.rc:274
+#: taskmgr.rc:273
 msgid "PID"
 msgstr "PID"
 
-#: taskmgr.rc:275
+#: taskmgr.rc:274
 msgid "CPU"
 msgstr "CP"
 
-#: taskmgr.rc:276
+#: taskmgr.rc:275
 msgid "CPU Time"
 msgstr "CP laikas"
 
-#: taskmgr.rc:277
+#: taskmgr.rc:276
 msgid "Mem Usage"
 msgstr "Atm naudojimas"
 
-#: taskmgr.rc:278
+#: taskmgr.rc:277
 msgid "Mem Delta"
 msgstr "Atm pokytis"
 
-#: taskmgr.rc:279
+#: taskmgr.rc:278
 msgid "Peak Mem Usage"
 msgstr "Atm naud. pikas"
 
-#: taskmgr.rc:280
+#: taskmgr.rc:279
 msgid "Page Faults"
 msgstr "Puslap. klaidos"
 
-#: taskmgr.rc:281
+#: taskmgr.rc:280
 msgid "USER Objects"
 msgstr "USER objektai"
 
-#: taskmgr.rc:282
+#: taskmgr.rc:281
 msgid "I/O Reads"
 msgstr "I/O skaitymai"
 
-#: taskmgr.rc:283
+#: taskmgr.rc:282
 msgid "I/O Read Bytes"
 msgstr "I/O persk. baitų"
 
-#: taskmgr.rc:284
+#: taskmgr.rc:283
 msgid "Session ID"
 msgstr "Seanso ID"
 
-#: taskmgr.rc:285
+#: taskmgr.rc:284
 msgid "Username"
 msgstr "Naudotojas"
 
-#: taskmgr.rc:286
+#: taskmgr.rc:285
 msgid "PF Delta"
 msgstr "PK pokytis"
 
-#: taskmgr.rc:287
+#: taskmgr.rc:286
 msgid "VM Size"
 msgstr "VA dydis"
 
-#: taskmgr.rc:288
+#: taskmgr.rc:287
 msgid "Paged Pool"
 msgstr "Sukeič. telkinys"
 
-#: taskmgr.rc:289
+#: taskmgr.rc:288
 msgid "NP Pool"
 msgstr "Nesukeič. telkinys"
 
-#: taskmgr.rc:290
+#: taskmgr.rc:289
 msgid "Base Pri"
 msgstr "Baz. prioritetas"
 
-#: taskmgr.rc:291
+#: taskmgr.rc:290
 msgid "Handles"
 msgstr "Rodyklės"
 
-#: taskmgr.rc:292
+#: taskmgr.rc:291
 msgid "Threads"
 msgstr "Gijos"
 
-#: taskmgr.rc:293
+#: taskmgr.rc:292
 msgid "GDI Objects"
 msgstr "GDI objektai"
 
-#: taskmgr.rc:294
+#: taskmgr.rc:293
 msgid "I/O Writes"
 msgstr "I/O rašymai"
 
-#: taskmgr.rc:295
+#: taskmgr.rc:294
 msgid "I/O Write Bytes"
 msgstr "I/O įraš. baitų"
 
-#: taskmgr.rc:296
+#: taskmgr.rc:295
 msgid "I/O Other"
 msgstr "I/O kiti"
 
-#: taskmgr.rc:297
+#: taskmgr.rc:296
 msgid "I/O Other Bytes"
 msgstr "I/O kitų baitų"
 
-#: taskmgr.rc:302
+#: taskmgr.rc:301
 msgid "Task Manager Warning"
 msgstr "Užduočių tvarkytuvės įspėjimas"
 
-#: taskmgr.rc:305
+#: taskmgr.rc:304
 msgid ""
 "WARNING: Changing the priority class of this process may\n"
 "cause undesired results including system instability. Are you\n"
@@ -10076,11 +10078,11 @@ msgstr ""
 "sukelti nepageidaujamų pasekmių, tarp jų sistemos nestabilumą\n"
 "Ar tikrai norite pakeisti prioriteto klasę?"
 
-#: taskmgr.rc:306
+#: taskmgr.rc:305
 msgid "Unable to Change Priority"
 msgstr "Nepavyko pakeisti prioriteto klasės"
 
-#: taskmgr.rc:311
+#: taskmgr.rc:310
 msgid ""
 "WARNING: Terminating a process can cause undesired\n"
 "results including loss of data and system instability. The\n"
@@ -10093,11 +10095,11 @@ msgstr ""
 "Procesui nebus suteiktas šansas išsaugoti savo būseną ar\n"
 "duomenis prieš jo baigimą. Ar tikrai norite baigti procesą?"
 
-#: taskmgr.rc:312
+#: taskmgr.rc:311
 msgid "Unable to Terminate Process"
 msgstr "Nepavyko baigti proceso"
 
-#: taskmgr.rc:314
+#: taskmgr.rc:313
 msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
@@ -10105,55 +10107,55 @@ msgstr ""
 "ĮSPĖJIMAS: Šio proceso derinimas gali sukelti duomenų praradimą.\n"
 "Ar tikrai norite prijungti derintuvę?"
 
-#: taskmgr.rc:315
+#: taskmgr.rc:314
 msgid "Unable to Debug Process"
 msgstr "Nepavyko derinti proceso"
 
-#: taskmgr.rc:316
+#: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
 msgstr "Procesas privalo naudoti bent vieną procesorių"
 
-#: taskmgr.rc:317
+#: taskmgr.rc:316
 msgid "Invalid Option"
 msgstr "Neteisingi parametrai"
 
-#: taskmgr.rc:318
+#: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
 msgstr "Nepavyko prieiti prie ar nustatyti proceso atitikimo"
 
-#: taskmgr.rc:323
+#: taskmgr.rc:322
 msgid "System Idle Process"
 msgstr "Sistemos neveikos procesas"
 
-#: taskmgr.rc:324
+#: taskmgr.rc:323
 msgid "Not Responding"
 msgstr "Neatsako"
 
-#: taskmgr.rc:325
+#: taskmgr.rc:324
 msgid "Running"
 msgstr "Vykdoma"
 
-#: taskmgr.rc:326
+#: taskmgr.rc:325
 msgid "Task"
 msgstr "Užduotis"
 
-#: taskmgr.rc:328
+#: taskmgr.rc:327
 msgid "Debug Channels"
 msgstr "Derinimo kanalai"
 
-#: taskmgr.rc:329
+#: taskmgr.rc:328
 msgid "Fixme"
 msgstr "Fixme (pataisyk)"
 
-#: taskmgr.rc:330
+#: taskmgr.rc:329
 msgid "Err"
 msgstr "Err (klaida)"
 
-#: taskmgr.rc:331
+#: taskmgr.rc:330
 msgid "Warn"
 msgstr "Warn (įspėjimas)"
 
-#: taskmgr.rc:332
+#: taskmgr.rc:331
 msgid "Trace"
 msgstr "Trace (pėdsakas)"
 
@@ -10821,67 +10823,68 @@ msgstr "Iškloti &stačiai\tVald+F4"
 msgid "Arrange &Symbols"
 msgstr "Išdėstyti si&mbolius"
 
-#: winefile.rc:88
-msgid "&About Winefile..."
+#: winefile.rc:87
+#, fuzzy
+msgid "&About Wine File"
 msgstr "&Apie Winefile..."
 
-#: winefile.rc:94
+#: winefile.rc:93
 msgid "Applying font settings"
 msgstr "Pritaikomos šrifto nuostatos"
 
-#: winefile.rc:95
+#: winefile.rc:94
 msgid "Error while selecting new font."
 msgstr "Klaida parenkant naują šriftą."
 
-#: winefile.rc:100
+#: winefile.rc:99
 msgid "Wine File Manager"
 msgstr "Wine failų tvarkytuvė"
 
-#: winefile.rc:102
+#: winefile.rc:101
 msgid "root fs"
 msgstr "šakninė fs"
 
-#: winefile.rc:103
+#: winefile.rc:102
 msgid "unixfs"
 msgstr "unix fs"
 
-#: winefile.rc:105
+#: winefile.rc:104
 msgid "Shell"
 msgstr "Apvalkalas"
 
-#: winefile.rc:106
+#: winefile.rc:105
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "Not yet implemented"
 msgstr "Dar nerealizuota"
 
-#: winefile.rc:108
+#: winefile.rc:107
 msgid "Wine File"
 msgstr "Wine failas"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "CDate"
 msgstr "KData"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "ADate"
 msgstr "PData"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "MDate"
 msgstr "MData"
 
-#: winefile.rc:118
+#: winefile.rc:117
 msgid "Index/Inode"
 msgstr "Indeksas/Inode"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "Security"
 msgstr "Saugumas"
 
-#: winefile.rc:123
+#: winefile.rc:122
 msgid "%s of %s free"
 msgstr "%s iš %s laisva"
 
@@ -10918,8 +10921,9 @@ msgid "&Fastest Times..."
 msgstr "&Geriausi laikai"
 
 #: winemine.rc:48
-msgid "&About"
-msgstr "&Apie"
+#, fuzzy
+msgid "&About WineMine"
+msgstr "Apie &Wine"
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -10957,15 +10961,15 @@ msgstr "&Apibrėžti..."
 msgid "History"
 msgstr "Istorija"
 
-#: winhlp32.rc:48 winhlp32.rc:70
+#: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
 msgstr "&Mažas"
 
-#: winhlp32.rc:49 winhlp32.rc:71
+#: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
 msgstr "&Normalus"
 
-#: winhlp32.rc:50 winhlp32.rc:72
+#: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
 msgstr "&Didelis"
 
@@ -10977,51 +10981,51 @@ msgstr "Pa&galba apie žinyną\tF1"
 msgid "Always on &top"
 msgstr "&Visada viršuje"
 
-#: winhlp32.rc:57
+#: winhlp32.rc:56
 msgid "&About Wine Help"
 msgstr "&Informacija..."
 
-#: winhlp32.rc:65
+#: winhlp32.rc:64
 msgid "Annotation..."
 msgstr "Komentuoti..."
 
-#: winhlp32.rc:66
+#: winhlp32.rc:65
 msgid "Copy"
 msgstr "Kopijuoti"
 
-#: winhlp32.rc:67
+#: winhlp32.rc:66
 msgid "Print..."
 msgstr "Spausdinti..."
 
-#: winhlp32.rc:79
+#: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine žinynas"
 
-#: winhlp32.rc:84
+#: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
 msgstr "Klaida skaitant žinyno failą „%s“"
 
-#: winhlp32.rc:86
+#: winhlp32.rc:85
 msgid "Summary"
 msgstr "Santrauka"
 
-#: winhlp32.rc:85
+#: winhlp32.rc:84
 msgid "&Index"
 msgstr "&Rodyklė"
 
-#: winhlp32.rc:89
+#: winhlp32.rc:88
 msgid "Help files (*.hlp)"
 msgstr "Žinyno failai (*.hlp)"
 
-#: winhlp32.rc:90
+#: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
 msgstr "Nepavyko rasti „%s“. Ar norite rasti šį failą patys?"
 
-#: winhlp32.rc:91
+#: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
 msgstr "Nepavyko rasti RichEdit realizacijos... Nutraukiama"
 
-#: winhlp32.rc:92
+#: winhlp32.rc:91
 msgid "Help topics: "
 msgstr "Žinyno temos: "
 

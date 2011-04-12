@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr "Дозволяє встановити нове ПЗ та видалити наявне з вашого комп'ютера."
 
-#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:38
 msgid "Applications"
 msgstr "Додатки"
 
@@ -39,7 +39,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Не зазначено"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:123 winefile.rc:113
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:122 winefile.rc:112
 msgid "Name"
 msgstr "Назва"
 
@@ -59,8 +59,8 @@ msgstr "Програми встановлення"
 msgid "Programs (*.exe)"
 msgstr "Програми (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
-#: oleview.rc:101 progman.rc:80 regedit.rc:196 winhlp32.rc:88
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:75
+#: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Всі файли (*.*)"
 
@@ -128,7 +128,7 @@ msgstr "Скасування..."
 msgid "Separator"
 msgstr "Роздільник"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:79 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
 msgid "None"
 msgstr "Немає"
 
@@ -164,15 +164,15 @@ msgstr "Закладки"
 msgid "System Path"
 msgstr "Системний шлях"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:104
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:103
 msgid "Desktop"
 msgstr "Робочий стіл"
 
-#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:68
+#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"
 msgstr "Шрифти"
 
-#: comdlg32.rc:36 shell32.rc:142 regedit.rc:201
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:200
 msgid "My Computer"
 msgstr "Мій Комп'ютер"
 
@@ -376,7 +376,7 @@ msgstr "Немає принтера, поставленого за обумов�
 msgid "Cannot find the printer."
 msgstr "Не вдалось знайти принтер."
 
-#: comdlg32.rc:80 progman.rc:74
+#: comdlg32.rc:80 progman.rc:73
 msgid "Out of memory."
 msgstr "Замало пам'яті."
 
@@ -2024,7 +2024,7 @@ msgstr "Параметри"
 msgid "S&ync"
 msgstr ""
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:87
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Назад"
 
@@ -6193,7 +6193,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&Файл"
 
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:96
+#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
 msgid "&New"
 msgstr "&Новий"
 
@@ -6225,7 +6225,7 @@ msgstr "Попередній пе&регляд..."
 msgid "&Properties..."
 msgstr "В&ластивості..."
 
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
+#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
 msgstr "За&крити"
 
@@ -6268,12 +6268,12 @@ msgid "Address"
 msgstr "Адреса"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
-#: taskmgr.rc:111 taskmgr.rc:253
+#: taskmgr.rc:110 taskmgr.rc:252
 msgid "Lar&ge Icons"
 msgstr "Ве&ликі значки"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
-#: taskmgr.rc:112 taskmgr.rc:254
+#: taskmgr.rc:111 taskmgr.rc:253
 msgid "S&mall Icons"
 msgstr "&Малі Значки"
 
@@ -6282,7 +6282,7 @@ msgid "&List"
 msgstr "&Список"
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:110 shell32.rc:150 taskmgr.rc:67
-#: taskmgr.rc:113 taskmgr.rc:255
+#: taskmgr.rc:112 taskmgr.rc:254
 msgid "&Details"
 msgstr "&Детально"
 
@@ -6346,7 +6346,7 @@ msgstr "Ви&різати"
 msgid "Create &Link"
 msgstr "&Створити Посилання"
 
-#: shell32.rc:91 regedit.rc:92
+#: shell32.rc:91 regedit.rc:91
 msgid "&Rename"
 msgstr "Пере&йменувати"
 
@@ -6359,11 +6359,11 @@ msgstr "В&ихід"
 msgid "&About Control Panel..."
 msgstr "&Про панель керування..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:114
+#: shell32.rc:123 shell32.rc:127 winefile.rc:113
 msgid "Size"
 msgstr "Розмір"
 
-#: shell32.rc:124 regedit.rc:124
+#: shell32.rc:124 regedit.rc:123
 msgid "Type"
 msgstr "Тип"
 
@@ -6371,7 +6371,7 @@ msgstr "Тип"
 msgid "Modified"
 msgstr "Змінено"
 
-#: shell32.rc:126 winefile.rc:120
+#: shell32.rc:126 winefile.rc:119
 msgid "Attributes"
 msgstr "Атрибути"
 
@@ -6539,7 +6539,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "Контакти"
 
-#: shell32.rc:216 winefile.rc:119
+#: shell32.rc:216 winefile.rc:118
 msgid "Links"
 msgstr "Посилання"
 
@@ -6555,7 +6555,7 @@ msgstr "Музика\\Плейлисти"
 msgid "Downloads"
 msgstr "Завантаження"
 
-#: shell32.rc:136 taskmgr.rc:327
+#: shell32.rc:136 taskmgr.rc:326
 msgid "Status"
 msgstr "Стан"
 
@@ -6766,7 +6766,7 @@ msgstr " хв"
 msgid " sec"
 msgstr " сек."
 
-#: user32.rc:27 taskmgr.rc:139
+#: user32.rc:27 taskmgr.rc:138
 msgid "&Restore"
 msgstr "&Відновити"
 
@@ -6782,7 +6782,7 @@ msgstr "Роз&мір"
 msgid "Mi&nimize"
 msgstr "&Згорнути"
 
-#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
 msgstr "&Розгорнути"
 
@@ -6791,10 +6791,10 @@ msgid "&Close\tAlt-F4"
 msgstr "&Закрити\tAlt-F4"
 
 #: user32.rc:35
-msgid "&About Wine..."
-msgstr "Пр&о проект Wine..."
+msgid "&About Wine"
+msgstr "&Про Wine"
 
-#: user32.rc:55 regedit.rc:177 winefile.rc:101
+#: user32.rc:55 regedit.rc:176 winefile.rc:100
 msgid "Error"
 msgstr "Помилка"
 
@@ -7701,7 +7701,7 @@ msgstr "&Секунди"
 msgid "&Date"
 msgstr "&Дата"
 
-#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:141
 msgid "&Always on Top"
 msgstr "&Завжди зверху"
 
@@ -7710,7 +7710,8 @@ msgid "Inf&o"
 msgstr "&Довідка"
 
 #: clock.rc:42
-msgid "&About Clock..."
+#, fuzzy
+msgid "&About Clock"
 msgstr "&Про Годинник..."
 
 #: clock.rc:48
@@ -8557,7 +8558,7 @@ msgstr "&Копіювати\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Вставити\tCtrl+V"
 
-#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:91 regedit.rc:107
+#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr "Ви&далити\tDel"
@@ -8586,43 +8587,43 @@ msgstr "Знайти &далі\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "За&мінити...\tCtrl+H"
 
-#: notepad.rc:60
+#: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Про Notepad"
 
-#: notepad.rc:66
+#: notepad.rc:65
 msgid "&f"
 msgstr "&f"
 
-#: notepad.rc:67
+#: notepad.rc:66
 msgid "Page &p"
 msgstr "Сторінка &p"
 
-#: notepad.rc:69
+#: notepad.rc:68
 msgid "Notepad"
 msgstr "Блокнот"
 
-#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
+#: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 msgid "ERROR"
 msgstr "ПОМИЛКА"
 
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
+#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
 msgstr "УВАГА"
 
-#: notepad.rc:72 progman.rc:64 winhlp32.rc:82
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
 msgid "Information"
 msgstr "Інформація"
 
-#: notepad.rc:74
+#: notepad.rc:73
 msgid "Untitled"
 msgstr "Без назви"
 
-#: notepad.rc:77
+#: notepad.rc:76
 msgid "Text files (*.txt)"
 msgstr "Текстові файли (*.txt)"
 
-#: notepad.rc:80
+#: notepad.rc:79
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8630,7 +8631,7 @@ msgstr ""
 "Файл '%s' завеликий для блокноту.\n"
 "Використайте інший редактор."
 
-#: notepad.rc:82
+#: notepad.rc:81
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8638,7 +8639,7 @@ msgstr ""
 "Ви не ввели жодного тексту.\n"
 "Напишіть щось і спробуйте знов"
 
-#: notepad.rc:84
+#: notepad.rc:83
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8648,7 +8649,7 @@ msgstr ""
 "\n"
 "Створити новий файл?"
 
-#: notepad.rc:86
+#: notepad.rc:85
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8658,11 +8659,11 @@ msgstr ""
 "\n"
 "Хочете зберегти зміни?"
 
-#: notepad.rc:87
+#: notepad.rc:86
 msgid "'%s' could not be found."
 msgstr "'%s' не знайдений."
 
-#: notepad.rc:89
+#: notepad.rc:88
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8670,19 +8671,19 @@ msgstr ""
 "Замало пам'яті для завершення цього завдання.\n"
 "Закрийте одну чи кілька програм щоб звільнити пам'ять."
 
-#: notepad.rc:91
+#: notepad.rc:90
 msgid "Unicode (UTF-16)"
 msgstr "Юнікод (UTF-16)"
 
-#: notepad.rc:92
+#: notepad.rc:91
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Юнікод (UTF-16 big-endian)"
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-8)"
 msgstr "Юнікод (UTF-8)"
 
-#: notepad.rc:100
+#: notepad.rc:99
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -9024,7 +9025,7 @@ msgstr "З&горнути при старті"
 msgid "&Save settings on exit"
 msgstr "Зберегти &налаштування при виході"
 
-#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
 msgstr "&Вікна"
 
@@ -9040,39 +9041,40 @@ msgstr "&Поруч\tShift+F4"
 msgid "&Arrange Icons"
 msgstr "&Впорядкувати значки"
 
-#: progman.rc:55
-msgid "&About Wine"
-msgstr "&Про Wine"
+#: progman.rc:54
+#, fuzzy
+msgid "&About Program Manager"
+msgstr "Диспетчер програм"
 
-#: progman.rc:61
+#: progman.rc:60
 msgid "Program Manager"
 msgstr "Диспетчер програм"
 
-#: progman.rc:65
+#: progman.rc:64
 msgid "Delete"
 msgstr "Видалити"
 
-#: progman.rc:66
+#: progman.rc:65
 msgid "Delete group `%s'?"
 msgstr "Видалити групу `%s' ?"
 
-#: progman.rc:67
+#: progman.rc:66
 msgid "Delete program `%s'?"
 msgstr "Видалити програму `%s' ?"
 
-#: progman.rc:68 winhlp32.rc:83
+#: progman.rc:67 winhlp32.rc:82
 msgid "Not implemented"
 msgstr "Не реалізовано"
 
-#: progman.rc:69
+#: progman.rc:68
 msgid "Error reading `%s'."
 msgstr "Помилка читання `%s'."
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Error writing `%s'."
 msgstr "Помикла запису `%s'."
 
-#: progman.rc:73
+#: progman.rc:72
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9080,35 +9082,35 @@ msgstr ""
 "Файл групи `%s' неможливо відкрити.\n"
 "Спробувати знов наступного разу?"
 
-#: progman.rc:75
+#: progman.rc:74
 msgid "Help not available."
 msgstr "Довідка не доступна."
 
-#: progman.rc:76
+#: progman.rc:75
 msgid "Unknown feature in %s"
 msgstr "Невідома ознака в %s"
 
-#: progman.rc:77
+#: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
 msgstr "Файл `%s' існує. Він не був перезаписаний."
 
-#: progman.rc:78
+#: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Група зберігається як `%s' щоб уникнути перезапис оригіналів."
 
-#: progman.rc:81
+#: progman.rc:80
 msgid "Programs"
 msgstr "Програми"
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Libraries (*.dll)"
 msgstr "Бібліотеки (*.dll)"
 
-#: progman.rc:83
+#: progman.rc:82
 msgid "Icon files"
 msgstr "Файли значків"
 
-#: progman.rc:84
+#: progman.rc:83
 msgid "Icons (*.ico)"
 msgstr "Значки (*.ico)"
 
@@ -9177,44 +9179,44 @@ msgstr "&Експортувати файл реєстру..."
 msgid "&Print\tCtrl+P"
 msgstr "&Друк\tCtrl+P"
 
-#: regedit.rc:42 regedit.rc:88
+#: regedit.rc:42 regedit.rc:87
 msgid "&Modify"
 msgstr "&Змінити"
 
-#: regedit.rc:46 regedit.rc:98
+#: regedit.rc:46 regedit.rc:97
 msgid "&Key"
 msgstr "&Ключ"
 
-#: regedit.rc:48 regedit.rc:100
+#: regedit.rc:48 regedit.rc:99
 msgid "&String Value"
 msgstr "&Рядкове значення"
 
-#: regedit.rc:49 regedit.rc:101
+#: regedit.rc:49 regedit.rc:100
 msgid "&Binary Value"
 msgstr "&Двійкове значення"
 
-#: regedit.rc:50 regedit.rc:102
+#: regedit.rc:50 regedit.rc:101
 msgid "&DWORD Value"
 msgstr "&Значення DWORD"
 
-#: regedit.rc:51 regedit.rc:103
+#: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
 msgstr "&Багаторядкове значення"
 
-#: regedit.rc:52 regedit.rc:104
+#: regedit.rc:52 regedit.rc:103
 #, fuzzy
 msgid "&Expandable String Value"
 msgstr "&Рядкове значення"
 
-#: regedit.rc:56 regedit.rc:108
+#: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
 msgstr "&Перейменувати\tF2"
 
-#: regedit.rc:58 regedit.rc:111
+#: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
 msgstr "&Копіювати ім'я ключа"
 
-#: regedit.rc:60 regedit.rc:113
+#: regedit.rc:60 regedit.rc:112
 msgid "&Find\tCtrl+F"
 msgstr "&Знайти\tCtrl+F"
 
@@ -9238,209 +9240,209 @@ msgstr "&Видалити з Обраного..."
 msgid "&Help Topics\tF1"
 msgstr "&Розділи довідки\tF1"
 
-#: regedit.rc:80
+#: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "&Про Редактор реєстру"
 
-#: regedit.rc:89
+#: regedit.rc:88
 msgid "Modify Binary Data"
 msgstr "Змінити двійкові дані"
 
-#: regedit.rc:110
+#: regedit.rc:109
 msgid "&Export..."
 msgstr "&Експорт..."
 
-#: regedit.rc:135
+#: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
 msgstr "Містить команди для роботи з реєстром у цілому"
 
-#: regedit.rc:136
+#: regedit.rc:135
 msgid "Contains commands for editing values or keys"
 msgstr "Містить команди для редагування значень або ключів"
 
-#: regedit.rc:137
+#: regedit.rc:136
 msgid "Contains commands for customising the registry window"
 msgstr "Містить команди для налаштування вікна реєстру"
 
-#: regedit.rc:138
+#: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
 msgstr "Містить команди для доступу до ключів, що часто використовуються"
 
-#: regedit.rc:139
+#: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
 "Містить команди для відображення довідки та інформації про редактор реєстру"
 
-#: regedit.rc:140
+#: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
 msgstr "Містить команди для створення нових ключів або значень"
 
-#: regedit.rc:125
+#: regedit.rc:124
 msgid "Data"
 msgstr "Дані"
 
-#: regedit.rc:130
+#: regedit.rc:129
 msgid "Registry Editor"
 msgstr "Редактор реєстру"
 
-#: regedit.rc:192
+#: regedit.rc:191
 msgid "Import Registry File"
 msgstr "Імпортувати файл реєстру"
 
-#: regedit.rc:193
+#: regedit.rc:192
 msgid "Export Registry File"
 msgstr "Експортувати файл реєстру"
 
-#: regedit.rc:194
+#: regedit.rc:193
 msgid "Registry files (*.reg)"
 msgstr "Файли реєстру (*.reg)"
 
-#: regedit.rc:195
+#: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Файли реєстру Win9x/NT4 (REGEDIT4)"
 
-#: regedit.rc:202
+#: regedit.rc:201
 msgid "(Default)"
 msgstr "(Стандартно)"
 
-#: regedit.rc:203
+#: regedit.rc:202
 msgid "(value not set)"
 msgstr "(значення не задане)"
 
-#: regedit.rc:204
+#: regedit.rc:203
 msgid "(cannot display value)"
 msgstr "(неможливо відобразити значення)"
 
-#: regedit.rc:205
+#: regedit.rc:204
 msgid "(unknown %d)"
 msgstr "(невідомо %d)"
 
-#: regedit.rc:161
+#: regedit.rc:160
 msgid "Quits the registry editor"
 msgstr "Виходить з редактора реєстру"
 
-#: regedit.rc:162
+#: regedit.rc:161
 msgid "Adds keys to the favorites list"
 msgstr "Додає ключі до Обраного"
 
-#: regedit.rc:163
+#: regedit.rc:162
 msgid "Removes keys from the favorites list"
 msgstr "Видаляє ключі з Обраного"
 
-#: regedit.rc:164
+#: regedit.rc:163
 msgid "Shows or hides the status bar"
 msgstr "Відображує або ховає рядок стану"
 
-#: regedit.rc:165
+#: regedit.rc:164
 msgid "Change position of split between two panes"
 msgstr "Змінити позицію роздільника між двома панелями"
 
-#: regedit.rc:166
+#: regedit.rc:165
 msgid "Refreshes the window"
 msgstr "Оновлює вікно"
 
-#: regedit.rc:167
+#: regedit.rc:166
 msgid "Deletes the selection"
 msgstr "Видаляє вибір"
 
-#: regedit.rc:168
+#: regedit.rc:167
 msgid "Renames the selection"
 msgstr "Перейменовує вибір"
 
-#: regedit.rc:169
+#: regedit.rc:168
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "Копіює ім'я вибраного ключа до буфера"
 
-#: regedit.rc:170
+#: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
 msgstr "Шукає текстовий рядок у ключі, значенні або даних"
 
-#: regedit.rc:171
+#: regedit.rc:170
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "Шукає наступний збіг тексту, заданого в попередньому пошуку"
 
-#: regedit.rc:145
+#: regedit.rc:144
 msgid "Modifies the value's data"
 msgstr "Змінює дані значення"
 
-#: regedit.rc:146
+#: regedit.rc:145
 msgid "Adds a new key"
 msgstr "Додає новий ключ"
 
-#: regedit.rc:147
+#: regedit.rc:146
 msgid "Adds a new string value"
 msgstr "Додає нове рядкове значення"
 
-#: regedit.rc:148
+#: regedit.rc:147
 msgid "Adds a new binary value"
 msgstr "Додає нове двійкове значення"
 
-#: regedit.rc:149
+#: regedit.rc:148
 msgid "Adds a new double word value"
 msgstr "Додає нове DWORD значення"
 
-#: regedit.rc:151
+#: regedit.rc:150
 msgid "Imports a text file into the registry"
 msgstr "Імпортує текстовий файл до реєстру"
 
-#: regedit.rc:153
+#: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
 msgstr "Експортує весь реєстр або його частину в текстовий файл"
 
-#: regedit.rc:154
+#: regedit.rc:153
 msgid "Prints all or part of the registry"
 msgstr "Друкує весь реєстр або його частину"
 
-#: regedit.rc:156
+#: regedit.rc:155
 msgid "Displays program information, version number and copyright"
 msgstr "Відображає інформацію про програму, номер версії та авторство"
 
-#: regedit.rc:179
+#: regedit.rc:178
 msgid "Can't query value '%s'"
 msgstr "Не можу запросити значення '%s'"
 
-#: regedit.rc:180
+#: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
 msgstr "Неможливо редагувати ключі цього типу (%u)"
 
-#: regedit.rc:181
+#: regedit.rc:180
 msgid "Value is too big (%u)"
 msgstr "значення задовге (%u)"
 
-#: regedit.rc:182
+#: regedit.rc:181
 msgid "Confirm Value Delete"
 msgstr "Підтвердження видалення значення"
 
-#: regedit.rc:183
+#: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
 msgstr "Ви впевнені, що хочете видалити значення '%s'?"
 
-#: regedit.rc:187
+#: regedit.rc:186
 msgid "Search string '%s' not found"
 msgstr "Шукане значення '%s' не знайдене"
 
-#: regedit.rc:184
+#: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
 msgstr "Ви впевнені, що хочете видалити ці значення?"
 
-#: regedit.rc:185
+#: regedit.rc:184
 msgid "New Key #%d"
 msgstr "Новий ключ #%d"
 
-#: regedit.rc:186
+#: regedit.rc:185
 msgid "New Value #%d"
 msgstr "Нове значення #%d"
 
-#: regedit.rc:178
+#: regedit.rc:177
 msgid "Can't query key '%s'"
 msgstr "Не можу запросити ключ '%s'"
 
-#: regedit.rc:150
+#: regedit.rc:149
 msgid "Adds a new multi string value"
 msgstr "Додає нове багаторядкове значення"
 
-#: regedit.rc:172
+#: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
 msgstr "Експортує вибрану гілку реєстру до текстового файлу"
 
@@ -9599,7 +9601,7 @@ msgstr "Помилка: Не вдається завершити процес \"
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Помилка: Самоприпинення процесу не дозволене.\n"
 
-#: taskmgr.rc:37 taskmgr.rc:109
+#: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "&Нове завдання (Виконати...)"
 
@@ -9615,7 +9617,7 @@ msgstr "З&горнути після звертання"
 msgid "&Hide When Minimized"
 msgstr "&Приховати якщо згорнутий"
 
-#: taskmgr.rc:49 taskmgr.rc:258
+#: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
 msgstr "П&оказувати 16-бітні завдання"
 
@@ -9627,15 +9629,15 @@ msgstr "&Оновити"
 msgid "&Update Speed"
 msgstr "&Швидкість оновлення"
 
-#: taskmgr.rc:57 taskmgr.rc:159
+#: taskmgr.rc:57 taskmgr.rc:158
 msgid "&High"
 msgstr "&Висока"
 
-#: taskmgr.rc:58 taskmgr.rc:163
+#: taskmgr.rc:58 taskmgr.rc:162
 msgid "&Normal"
 msgstr "&Нормальна"
 
-#: taskmgr.rc:60 taskmgr.rc:167
+#: taskmgr.rc:60 taskmgr.rc:166
 msgid "&Low"
 msgstr "&Низька"
 
@@ -9643,43 +9645,43 @@ msgstr "&Низька"
 msgid "&Paused"
 msgstr "&Призупинити"
 
-#: taskmgr.rc:68 taskmgr.rc:257
+#: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
 msgstr "&Вибрати стовпці..."
 
-#: taskmgr.rc:69 taskmgr.rc:259
+#: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
 msgstr "&Історія ЦП"
 
-#: taskmgr.rc:71 taskmgr.rc:260
+#: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
 msgstr "&Один графік на всі ЦП"
 
-#: taskmgr.rc:73 taskmgr.rc:261
+#: taskmgr.rc:73 taskmgr.rc:260
 msgid "One Graph &Per CPU"
 msgstr "Графік для &кожного ЦП"
 
-#: taskmgr.rc:76 taskmgr.rc:262
+#: taskmgr.rc:76 taskmgr.rc:261
 msgid "&Show Kernel Times"
 msgstr "&Показати час ядра"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:79
+#: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:79
 msgid "Tile &Horizontally"
 msgstr "З&ліва направо"
 
-#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+#: taskmgr.rc:81 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Vertically"
 msgstr "З&верху вниз"
 
-#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+#: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
 msgid "&Minimize"
 msgstr "З&горнути"
 
-#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+#: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
 msgstr "&Каскадом"
 
-#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+#: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "&На передній план"
 
@@ -9687,362 +9689,362 @@ msgstr "&На передній план"
 msgid "Task Manager &Help Topics"
 msgstr "&Виклик довідки"
 
-#: taskmgr.rc:91
+#: taskmgr.rc:90
 msgid "&About Task Manager"
 msgstr "&Про програму"
 
-#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
 msgid "DUMMY"
 msgstr "DUMMY"
 
-#: taskmgr.rc:121
+#: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "&Переключитись"
 
-#: taskmgr.rc:130
+#: taskmgr.rc:129
 msgid "&End Task"
 msgstr "&Зняти завдання"
 
-#: taskmgr.rc:131
+#: taskmgr.rc:130
 msgid "&Go To Process"
 msgstr "Йти &до процесу"
 
-#: taskmgr.rc:150
+#: taskmgr.rc:149
 msgid "&End Process"
 msgstr "&Завершити процес"
 
-#: taskmgr.rc:151
+#: taskmgr.rc:150
 msgid "End Process &Tree"
 msgstr "Завершити &дерево процесів"
 
-#: taskmgr.rc:153 winedbg.rc:29
+#: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
 msgstr "&Налагодження"
 
-#: taskmgr.rc:155
+#: taskmgr.rc:154
 msgid "Set &Priority"
 msgstr "&Пріоритет"
 
-#: taskmgr.rc:157
+#: taskmgr.rc:156
 msgid "&Realtime"
 msgstr "&Реального часу"
 
-#: taskmgr.rc:161
+#: taskmgr.rc:160
 msgid "&AboveNormal"
 msgstr "&Вище середнього"
 
-#: taskmgr.rc:165
+#: taskmgr.rc:164
 msgid "&BelowNormal"
 msgstr "&Нижче середнього"
 
-#: taskmgr.rc:170
+#: taskmgr.rc:169
 msgid "Set &Affinity..."
 msgstr "Задати &відповідність..."
 
-#: taskmgr.rc:171
+#: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
 msgstr "Змінити &канали налагодження..."
 
-#: taskmgr.rc:181 taskmgr.rc:182
+#: taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
 msgstr "Диспетчер завдань"
 
-#: taskmgr.rc:183
+#: taskmgr.rc:182
 msgid "Create New Task"
 msgstr "Створити нове завдання"
 
-#: taskmgr.rc:188
+#: taskmgr.rc:187
 msgid "Runs a new program"
 msgstr "Запускає нову програму"
 
-#: taskmgr.rc:189
+#: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
 msgstr ""
 "Вікно диспетчера завдань залишається поверх інших вікон, якщо його не "
 "згорнуто"
 
-#: taskmgr.rc:191
+#: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr "Вікно диспетчера завдань згортається при переключенні"
 
-#: taskmgr.rc:192
+#: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
 msgstr "Приховування згорнутого вікна диспетчера завдань"
 
-#: taskmgr.rc:193
+#: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
 msgstr "Спричинює негайне оновлення вікна диспетчера завдань"
 
-#: taskmgr.rc:194
+#: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
 msgstr "Показує завдання великими значками"
 
-#: taskmgr.rc:195
+#: taskmgr.rc:194
 msgid "Displays tasks by using small icons"
 msgstr "Показує завдання малими значками"
 
-#: taskmgr.rc:196
+#: taskmgr.rc:195
 msgid "Displays information about each task"
 msgstr "Показує додаткові відомості про кожне завдання"
 
-#: taskmgr.rc:197
+#: taskmgr.rc:196
 msgid "Updates the display twice per second"
 msgstr "Оновлює зображення двічі на секунду"
 
-#: taskmgr.rc:198
+#: taskmgr.rc:197
 msgid "Updates the display every two seconds"
 msgstr "Оновлює зображення раз на дві секунди"
 
-#: taskmgr.rc:199
+#: taskmgr.rc:198
 msgid "Updates the display every four seconds"
 msgstr "Оновлює зображення раз на чотири секунди"
 
-#: taskmgr.rc:204
+#: taskmgr.rc:203
 msgid "Does not automatically update"
 msgstr "Не оновлювати автоматично"
 
-#: taskmgr.rc:206
+#: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
 msgstr "Розташовує вікна горизонтально на робочому столі"
 
-#: taskmgr.rc:207
+#: taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
 msgstr "Розташовує вікна вертикально на робочому столі"
 
-#: taskmgr.rc:208
+#: taskmgr.rc:207
 msgid "Minimizes the windows"
 msgstr "Згортає вікна"
 
-#: taskmgr.rc:209
+#: taskmgr.rc:208
 msgid "Maximizes the windows"
 msgstr "Розгортає вікна"
 
-#: taskmgr.rc:210
+#: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
 msgstr "Розташовує вікна каскадом на робочому столі"
 
-#: taskmgr.rc:211
+#: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
 msgstr "Переміщення вікна на передній план без переходу до нього"
 
-#: taskmgr.rc:212
+#: taskmgr.rc:211
 msgid "Displays Task Manager help topics"
 msgstr "Показує довідку диспетчера завдань"
 
-#: taskmgr.rc:213
+#: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
 msgstr "Показує відомості про програму, її версію та авторські права"
 
-#: taskmgr.rc:214
+#: taskmgr.rc:213
 msgid "Exits the Task Manager application"
 msgstr "Закриває диспетчер завдань"
 
-#: taskmgr.rc:216
+#: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
 msgstr "Показ 16-розрядних завдань, які обробляє ntvdm.exe"
 
-#: taskmgr.rc:217
+#: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
 msgstr "Виберіть стовпці, які слід відображати на вкладці Процеси"
 
-#: taskmgr.rc:218
+#: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
 msgstr "Показує час ядра на графіках продуктивності"
 
-#: taskmgr.rc:220
+#: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
 msgstr "Єдиний хронологічний графік загального використання ЦП"
 
-#: taskmgr.rc:221
+#: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
 msgstr "Кожний ЦП має власний хронологічний графік"
 
-#: taskmgr.rc:223
+#: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
 msgstr ""
 "Переміщення завдання на передній план і передача керування цьому завданню"
 
-#: taskmgr.rc:228
+#: taskmgr.rc:227
 msgid "Tells the selected tasks to close"
 msgstr "Наказує вибраним завданням закритися"
 
-#: taskmgr.rc:229
+#: taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
 msgstr "Передача фокусу до процесу вибраного завдання"
 
-#: taskmgr.rc:230
+#: taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
 msgstr "Відновлення прихованого вікна диспетчера завдань"
 
-#: taskmgr.rc:231
+#: taskmgr.rc:230
 msgid "Removes the process from the system"
 msgstr "Видаляє процес із системи"
 
-#: taskmgr.rc:233
+#: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
 msgstr "Видаляє з системи цей процес і всіх його нащадків"
 
-#: taskmgr.rc:234
+#: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
 msgstr "Застосовує налагоджувач до цього процесу"
 
-#: taskmgr.rc:236
+#: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
 msgstr "Визначає, які процесори може використовувати процес"
 
-#: taskmgr.rc:238
+#: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
 msgstr "Встановлює клас пріоритету РЕАЛЬНОГО ЧАСУ для процесу"
 
-#: taskmgr.rc:239
+#: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
 msgstr "Встановлює клас пріоритету ВИСОКИЙ для процесу"
 
-#: taskmgr.rc:241
+#: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
 msgstr "Встановлює клас пріоритету ВИЩЕ СЕРЕДНЬОГО для процесу"
 
-#: taskmgr.rc:243
+#: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
 msgstr "Установлює клас пріоритету СЕРЕДНІЙ для процесу"
 
-#: taskmgr.rc:245
+#: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
 msgstr "Установлює клас пріоритету НИЖЧЕ СЕРЕДНЬОГО для процесу"
 
-#: taskmgr.rc:246
+#: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
 msgstr "Установлює клас пріоритету НИЗЬКИЙ для процесу"
 
-#: taskmgr.rc:248
+#: taskmgr.rc:247
 msgid "Controls Debug Channels"
 msgstr "Керує каналами налагодження"
 
-#: taskmgr.rc:264
+#: taskmgr.rc:263
 msgid "Processes"
 msgstr "Процеси"
 
-#: taskmgr.rc:265
+#: taskmgr.rc:264
 msgid "Performance"
 msgstr "Швидкодія"
 
-#: taskmgr.rc:266
+#: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
 msgstr "Використ. ЦП: %3d%%"
 
-#: taskmgr.rc:267
+#: taskmgr.rc:266
 msgid "Processes: %d"
 msgstr "Процесів: %d"
 
-#: taskmgr.rc:268
+#: taskmgr.rc:267
 msgid "Mem Usage: %dK / %dK"
 msgstr "Використання пам'яті: %dK / %dK"
 
-#: taskmgr.rc:273
+#: taskmgr.rc:272
 msgid "Image Name"
 msgstr "Ім'я образу"
 
-#: taskmgr.rc:274
+#: taskmgr.rc:273
 msgid "PID"
 msgstr "PID"
 
-#: taskmgr.rc:275
+#: taskmgr.rc:274
 msgid "CPU"
 msgstr "ЦП"
 
-#: taskmgr.rc:276
+#: taskmgr.rc:275
 msgid "CPU Time"
 msgstr "Час ЦП"
 
-#: taskmgr.rc:277
+#: taskmgr.rc:276
 msgid "Mem Usage"
 msgstr "Пам'ять"
 
-#: taskmgr.rc:278
+#: taskmgr.rc:277
 msgid "Mem Delta"
 msgstr "Пам'ять (змін)"
 
-#: taskmgr.rc:279
+#: taskmgr.rc:278
 msgid "Peak Mem Usage"
 msgstr "Пікове використання пам'яті"
 
-#: taskmgr.rc:280
+#: taskmgr.rc:279
 msgid "Page Faults"
 msgstr "Помил. стор."
 
-#: taskmgr.rc:281
+#: taskmgr.rc:280
 msgid "USER Objects"
 msgstr "Об'єкти USER"
 
-#: taskmgr.rc:282
+#: taskmgr.rc:281
 msgid "I/O Reads"
 msgstr "Кількість читань"
 
-#: taskmgr.rc:283
+#: taskmgr.rc:282
 msgid "I/O Read Bytes"
 msgstr "Прочитано байтів"
 
-#: taskmgr.rc:284
+#: taskmgr.rc:283
 msgid "Session ID"
 msgstr "Код сеансу"
 
-#: taskmgr.rc:285
+#: taskmgr.rc:284
 msgid "Username"
 msgstr "Ім'я користувача"
 
-#: taskmgr.rc:286
+#: taskmgr.rc:285
 msgid "PF Delta"
 msgstr "Помил. стор. (змін)"
 
-#: taskmgr.rc:287
+#: taskmgr.rc:286
 msgid "VM Size"
 msgstr "Об'єм віртуальної пам'яті"
 
-#: taskmgr.rc:288
+#: taskmgr.rc:287
 msgid "Paged Pool"
 msgstr "Вивант. пул"
 
-#: taskmgr.rc:289
+#: taskmgr.rc:288
 msgid "NP Pool"
 msgstr "Невивант. пул"
 
-#: taskmgr.rc:290
+#: taskmgr.rc:289
 msgid "Base Pri"
 msgstr "Баз. пріор."
 
-#: taskmgr.rc:291
+#: taskmgr.rc:290
 msgid "Handles"
 msgstr "Дескрип."
 
-#: taskmgr.rc:292
+#: taskmgr.rc:291
 msgid "Threads"
 msgstr "Потоків"
 
-#: taskmgr.rc:293
+#: taskmgr.rc:292
 msgid "GDI Objects"
 msgstr "Об'єкти GDI"
 
-#: taskmgr.rc:294
+#: taskmgr.rc:293
 msgid "I/O Writes"
 msgstr "Кількість записів"
 
-#: taskmgr.rc:295
+#: taskmgr.rc:294
 msgid "I/O Write Bytes"
 msgstr "Записано байт"
 
-#: taskmgr.rc:296
+#: taskmgr.rc:295
 msgid "I/O Other"
 msgstr "Інший ввід-вивід"
 
-#: taskmgr.rc:297
+#: taskmgr.rc:296
 msgid "I/O Other Bytes"
 msgstr "Інших байтів при вводі-виводі"
 
-#: taskmgr.rc:302
+#: taskmgr.rc:301
 msgid "Task Manager Warning"
 msgstr "Попередження Диспетчера завдань"
 
-#: taskmgr.rc:305
+#: taskmgr.rc:304
 msgid ""
 "WARNING: Changing the priority class of this process may\n"
 "cause undesired results including system instability. Are you\n"
@@ -10052,11 +10054,11 @@ msgstr ""
 "може призвести до небажаних результатів, в тому числі до\n"
 "нестабільності системи. Змінити клас пріоритету?"
 
-#: taskmgr.rc:306
+#: taskmgr.rc:305
 msgid "Unable to Change Priority"
 msgstr "Неможливо змінити пріоритет"
 
-#: taskmgr.rc:311
+#: taskmgr.rc:310
 msgid ""
 "WARNING: Terminating a process can cause undesired\n"
 "results including loss of data and system instability. The\n"
@@ -10070,11 +10072,11 @@ msgstr ""
 "свою позицію чи дані. Ви справді хочете завершити\n"
 "процес?"
 
-#: taskmgr.rc:312
+#: taskmgr.rc:311
 msgid "Unable to Terminate Process"
 msgstr "Неможливо завершити процес"
 
-#: taskmgr.rc:314
+#: taskmgr.rc:313
 msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
@@ -10082,55 +10084,55 @@ msgstr ""
 "УВАГА: Налагодження цього процесу може спричинити втрату\n"
 "даних. Справді використати налагоджувач?"
 
-#: taskmgr.rc:315
+#: taskmgr.rc:314
 msgid "Unable to Debug Process"
 msgstr "Налагодження процесу неможливе"
 
-#: taskmgr.rc:316
+#: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
 msgstr "Процесу повинен відповідати хоча б один ЦП"
 
-#: taskmgr.rc:317
+#: taskmgr.rc:316
 msgid "Invalid Option"
 msgstr "Невірний параметр"
 
-#: taskmgr.rc:318
+#: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
 msgstr "Неможливо отримати доступ чи встановити відповідність процесу"
 
-#: taskmgr.rc:323
+#: taskmgr.rc:322
 msgid "System Idle Process"
 msgstr "Бездіяльність системи"
 
-#: taskmgr.rc:324
+#: taskmgr.rc:323
 msgid "Not Responding"
 msgstr "Не відповідає"
 
-#: taskmgr.rc:325
+#: taskmgr.rc:324
 msgid "Running"
 msgstr "Виконується"
 
-#: taskmgr.rc:326
+#: taskmgr.rc:325
 msgid "Task"
 msgstr "Завдання"
 
-#: taskmgr.rc:328
+#: taskmgr.rc:327
 msgid "Debug Channels"
 msgstr "Канали налагодження"
 
-#: taskmgr.rc:329
+#: taskmgr.rc:328
 msgid "Fixme"
 msgstr "Fixme"
 
-#: taskmgr.rc:330
+#: taskmgr.rc:329
 msgid "Err"
 msgstr "Err"
 
-#: taskmgr.rc:331
+#: taskmgr.rc:330
 msgid "Warn"
 msgstr "Warn"
 
-#: taskmgr.rc:332
+#: taskmgr.rc:331
 msgid "Trace"
 msgstr "Trace"
 
@@ -10798,67 +10800,68 @@ msgstr "Вікна зліва &направо\tCtrl+F4"
 msgid "Arrange &Symbols"
 msgstr "Розмістити &Символи"
 
-#: winefile.rc:88
-msgid "&About Winefile..."
+#: winefile.rc:87
+#, fuzzy
+msgid "&About Wine File"
 msgstr "&Про Winefile..."
 
-#: winefile.rc:94
+#: winefile.rc:93
 msgid "Applying font settings"
 msgstr "Застосування параметрів шрифта"
 
-#: winefile.rc:95
+#: winefile.rc:94
 msgid "Error while selecting new font."
 msgstr "Помилка при виборі нового шрифта."
 
-#: winefile.rc:100
+#: winefile.rc:99
 msgid "Wine File Manager"
 msgstr "Файловий Менеджер Wine"
 
-#: winefile.rc:102
+#: winefile.rc:101
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:103
+#: winefile.rc:102
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:105
+#: winefile.rc:104
 msgid "Shell"
 msgstr "Shell"
 
-#: winefile.rc:106
+#: winefile.rc:105
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "Not yet implemented"
 msgstr "Ще не реалізовано"
 
-#: winefile.rc:108
+#: winefile.rc:107
 msgid "Wine File"
 msgstr "Wine File"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "CDate"
 msgstr "Дата створення"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "ADate"
 msgstr "Дата останнього доступу"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "MDate"
 msgstr "Дата останньої зміни"
 
-#: winefile.rc:118
+#: winefile.rc:117
 msgid "Index/Inode"
 msgstr "Index/Inode"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "Security"
 msgstr "Безпека"
 
-#: winefile.rc:123
+#: winefile.rc:122
 msgid "%s of %s free"
 msgstr "%s з %s вільно"
 
@@ -10895,8 +10898,9 @@ msgid "&Fastest Times..."
 msgstr "&Кращий час..."
 
 #: winemine.rc:48
-msgid "&About"
-msgstr "&Про програму"
+#, fuzzy
+msgid "&About WineMine"
+msgstr "&Про Wine"
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -10934,15 +10938,15 @@ msgstr "&Задати..."
 msgid "History"
 msgstr "Історія"
 
-#: winhlp32.rc:48 winhlp32.rc:70
+#: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
 msgstr "Малий"
 
-#: winhlp32.rc:49 winhlp32.rc:71
+#: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
 msgstr "Нормальний"
 
-#: winhlp32.rc:50 winhlp32.rc:72
+#: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
 msgstr "Великий"
 
@@ -10955,51 +10959,51 @@ msgstr "&Використання Довідки\tF1"
 msgid "Always on &top"
 msgstr "Завжди &зверху"
 
-#: winhlp32.rc:57
+#: winhlp32.rc:56
 msgid "&About Wine Help"
 msgstr "&Інформація..."
 
-#: winhlp32.rc:65
+#: winhlp32.rc:64
 msgid "Annotation..."
 msgstr "Замітки..."
 
-#: winhlp32.rc:66
+#: winhlp32.rc:65
 msgid "Copy"
 msgstr "Копіювати"
 
-#: winhlp32.rc:67
+#: winhlp32.rc:66
 msgid "Print..."
 msgstr "Друк..."
 
-#: winhlp32.rc:79
+#: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Довідка Wine"
 
-#: winhlp32.rc:84
+#: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
 msgstr "Помилка читання файлу довідки `%s'"
 
-#: winhlp32.rc:86
+#: winhlp32.rc:85
 msgid "Summary"
 msgstr "Сумарно"
 
-#: winhlp32.rc:85
+#: winhlp32.rc:84
 msgid "&Index"
 msgstr "&Зміст"
 
-#: winhlp32.rc:89
+#: winhlp32.rc:88
 msgid "Help files (*.hlp)"
 msgstr "Файли довідки (*.hlp)"
 
-#: winhlp32.rc:90
+#: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
 msgstr "Не можу знайти '%s'. Хочете знайти цей файл самотужки?"
 
-#: winhlp32.rc:91
+#: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
 msgstr "Не можу знайти richedit... Скасовую"
 
-#: winhlp32.rc:92
+#: winhlp32.rc:91
 msgid "Help topics: "
 msgstr "Розділи Довідки: "
 

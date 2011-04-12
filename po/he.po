@@ -24,7 +24,7 @@ msgid ""
 msgstr ""
 "תכנית זו מאפשר לך להתקין תכניות חדשות או להסיר תכניות קיימות מהמחשב שלך."
 
-#: appwiz.rc:30 taskmgr.rc:263 winecfg.rc:38
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:38
 msgid "Applications"
 msgstr "יישומים"
 
@@ -40,7 +40,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "לא מוגדר"
 
-#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:123 winefile.rc:113
+#: appwiz.rc:35 shell32.rc:129 shell32.rc:238 regedit.rc:122 winefile.rc:112
 msgid "Name"
 msgstr "שם"
 
@@ -60,8 +60,8 @@ msgstr "תכניות התקנה"
 msgid "Programs (*.exe)"
 msgstr "תכניות (‎*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:76
-#: oleview.rc:101 progman.rc:80 regedit.rc:196 winhlp32.rc:88
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:183 notepad.rc:75
+#: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "כל הקבצים (*.*)"
 
@@ -127,7 +127,7 @@ msgstr "בהליכי ביטול..."
 msgid "Separator"
 msgstr "מפריד"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:79 winecfg.rc:76
+#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
 msgid "None"
 msgstr "ללא"
 
@@ -163,15 +163,15 @@ msgstr "המועדפים שלי"
 msgid "System Path"
 msgstr "נתיב המערכת"
 
-#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:104
+#: comdlg32.rc:34 shell32.rc:141 shell32.rc:195 winecfg.rc:122 winefile.rc:103
 msgid "Desktop"
 msgstr "שולחן העבודה"
 
-#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:68
+#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:67
 msgid "Fonts"
 msgstr "גופנים"
 
-#: comdlg32.rc:36 shell32.rc:142 regedit.rc:201
+#: comdlg32.rc:36 shell32.rc:142 regedit.rc:200
 msgid "My Computer"
 msgstr "המחשב שלי"
 
@@ -375,7 +375,7 @@ msgstr "לא הוגדרה מדפסת בררת מחדל."
 msgid "Cannot find the printer."
 msgstr "לא ניתן למצוא את המדפסת."
 
-#: comdlg32.rc:80 progman.rc:74
+#: comdlg32.rc:80 progman.rc:73
 msgid "Out of memory."
 msgstr "הזיכרון אזל."
 
@@ -1993,7 +1993,7 @@ msgstr "אפשרויות"
 msgid "S&ync"
 msgstr "&סנכרון"
 
-#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:87
+#: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "ח&זרה"
 
@@ -6385,7 +6385,7 @@ msgstr "&u&b&d"
 msgid "&File"
 msgstr "&קובץ"
 
-#: shdocvw.rc:27 regedit.rc:44 regedit.rc:96
+#: shdocvw.rc:27 regedit.rc:44 regedit.rc:95
 msgid "&New"
 msgstr "חד&ש"
 
@@ -6417,7 +6417,7 @@ msgstr "הצגה &לפני הדפסה..."
 msgid "&Properties..."
 msgstr "מ&אפיינים..."
 
-#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:140
+#: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
 msgstr "&סגירה"
 
@@ -6460,12 +6460,12 @@ msgid "Address"
 msgstr "כתובת"
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:107 shell32.rc:147 taskmgr.rc:65
-#: taskmgr.rc:111 taskmgr.rc:253
+#: taskmgr.rc:110 taskmgr.rc:252
 msgid "Lar&ge Icons"
 msgstr "סמלים &גדולים"
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:108 shell32.rc:148 taskmgr.rc:66
-#: taskmgr.rc:112 taskmgr.rc:254
+#: taskmgr.rc:111 taskmgr.rc:253
 msgid "S&mall Icons"
 msgstr "סמלים &קטנים"
 
@@ -6474,7 +6474,7 @@ msgid "&List"
 msgstr "&רשימה"
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:110 shell32.rc:150 taskmgr.rc:67
-#: taskmgr.rc:113 taskmgr.rc:255
+#: taskmgr.rc:112 taskmgr.rc:254
 msgid "&Details"
 msgstr "&פרטים"
 
@@ -6538,7 +6538,7 @@ msgstr "&גזירה"
 msgid "Create &Link"
 msgstr "&יצירת קישור"
 
-#: shell32.rc:91 regedit.rc:92
+#: shell32.rc:91 regedit.rc:91
 msgid "&Rename"
 msgstr "&שינוי שם"
 
@@ -6551,11 +6551,11 @@ msgstr "י&ציאה"
 msgid "&About Control Panel..."
 msgstr "על &אודות לוח הבקרה..."
 
-#: shell32.rc:123 shell32.rc:127 winefile.rc:114
+#: shell32.rc:123 shell32.rc:127 winefile.rc:113
 msgid "Size"
 msgstr "גודל"
 
-#: shell32.rc:124 regedit.rc:124
+#: shell32.rc:124 regedit.rc:123
 msgid "Type"
 msgstr "סוג"
 
@@ -6563,7 +6563,7 @@ msgstr "סוג"
 msgid "Modified"
 msgstr "תאריך השינוי"
 
-#: shell32.rc:126 winefile.rc:120
+#: shell32.rc:126 winefile.rc:119
 msgid "Attributes"
 msgstr "מאפיינים"
 
@@ -6731,7 +6731,7 @@ msgstr "Program Files (x86)\\Common Files"
 msgid "Contacts"
 msgstr "אנשי קשר"
 
-#: shell32.rc:216 winefile.rc:119
+#: shell32.rc:216 winefile.rc:118
 msgid "Links"
 msgstr "קישורים"
 
@@ -6747,7 +6747,7 @@ msgstr "מוזיקה\\רשימות השמעה"
 msgid "Downloads"
 msgstr "הורדות"
 
-#: shell32.rc:136 taskmgr.rc:327
+#: shell32.rc:136 taskmgr.rc:326
 msgid "Status"
 msgstr "מצב"
 
@@ -6955,7 +6955,7 @@ msgstr " דקות"
 msgid " sec"
 msgstr " שניות"
 
-#: user32.rc:27 taskmgr.rc:139
+#: user32.rc:27 taskmgr.rc:138
 msgid "&Restore"
 msgstr "&שחזור"
 
@@ -6971,7 +6971,7 @@ msgstr "ג&ודל"
 msgid "Mi&nimize"
 msgstr "מז&עור"
 
-#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:100 taskmgr.rc:127
+#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
 msgstr "ה&גדלה"
 
@@ -6980,10 +6980,10 @@ msgid "&Close\tAlt-F4"
 msgstr "&סגירה\tAlt-F4"
 
 #: user32.rc:35
-msgid "&About Wine..."
-msgstr "על &אודות Wine..."
+msgid "&About Wine"
+msgstr "על &אודות Wine"
 
-#: user32.rc:55 regedit.rc:177 winefile.rc:101
+#: user32.rc:55 regedit.rc:176 winefile.rc:100
 msgid "Error"
 msgstr "שגיאה"
 
@@ -7776,7 +7776,7 @@ msgstr "&שניות"
 msgid "&Date"
 msgstr "&תאריך"
 
-#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:142
+#: clock.rc:39 taskmgr.rc:43 taskmgr.rc:141
 msgid "&Always on Top"
 msgstr "תמיד &עליון"
 
@@ -7785,7 +7785,8 @@ msgid "Inf&o"
 msgstr "&פרטים"
 
 #: clock.rc:42
-msgid "&About Clock..."
+#, fuzzy
+msgid "&About Clock"
 msgstr "על &אודות השעון..."
 
 #: clock.rc:48
@@ -8634,7 +8635,7 @@ msgstr "ה&עתקה\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "ה&דבקה\tCtrl+V"
 
-#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:91 regedit.rc:107
+#: notepad.rc:44 progman.rc:34 regedit.rc:55 regedit.rc:90 regedit.rc:106
 #: winefile.rc:29
 msgid "&Delete\tDel"
 msgstr "&מחיקה\tDel"
@@ -8663,43 +8664,43 @@ msgstr "חיפוש ה&בא\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "החל&פה...\tCtrl+H"
 
-#: notepad.rc:60
+#: notepad.rc:59
 msgid "&About Notepad"
 msgstr "על &אודות פנקס רשימות"
 
-#: notepad.rc:66
+#: notepad.rc:65
 msgid "&f"
 msgstr "&ע"
 
-#: notepad.rc:67
+#: notepad.rc:66
 msgid "Page &p"
 msgstr "עמוד &ת"
 
-#: notepad.rc:69
+#: notepad.rc:68
 msgid "Notepad"
 msgstr "פנקס רשימות"
 
-#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
+#: notepad.rc:69 progman.rc:61 winhlp32.rc:79
 msgid "ERROR"
 msgstr "שגיאה"
 
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
+#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
 msgid "WARNING"
 msgstr "אזהרה"
 
-#: notepad.rc:72 progman.rc:64 winhlp32.rc:82
+#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
 msgid "Information"
 msgstr "מידע"
 
-#: notepad.rc:74
+#: notepad.rc:73
 msgid "Untitled"
 msgstr "ללא שם"
 
-#: notepad.rc:77
+#: notepad.rc:76
 msgid "Text files (*.txt)"
 msgstr "קובצי טקסט (‎*.txt)"
 
-#: notepad.rc:80
+#: notepad.rc:79
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8707,7 +8708,7 @@ msgstr ""
 "הקובץ '%s' גדול מדי עבור פנקס רשימות.\n"
 "נא להשתמש בעורך אחר."
 
-#: notepad.rc:82
+#: notepad.rc:81
 msgid ""
 "You didn't enter any text.\n"
 "Please type something and try again"
@@ -8715,7 +8716,7 @@ msgstr ""
 "לא הוזן טקסט כלל.\n"
 "יש לכתוב משהו ולנסות שוב"
 
-#: notepad.rc:84
+#: notepad.rc:83
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -8725,7 +8726,7 @@ msgstr ""
 "\n"
 "האם ברצונך ליצור קובץ חדש?"
 
-#: notepad.rc:86
+#: notepad.rc:85
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -8735,11 +8736,11 @@ msgstr ""
 "\n"
 "האם ברצונך לשמור את השינויים?"
 
-#: notepad.rc:87
+#: notepad.rc:86
 msgid "'%s' could not be found."
 msgstr "'%s' לא נמצא."
 
-#: notepad.rc:89
+#: notepad.rc:88
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
@@ -8747,19 +8748,19 @@ msgstr ""
 "אין די זיכרון כדי להשלים משימה זו.\n"
 "נא לסגור יישום אחד או יותר כדי להגדיל את כמות הזיכרון החופשית."
 
-#: notepad.rc:91
+#: notepad.rc:90
 msgid "Unicode (UTF-16)"
 msgstr "יוניקוד (UTF-16)"
 
-#: notepad.rc:92
+#: notepad.rc:91
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "יוניקוד (UTF-16 big-endian)"
 
-#: notepad.rc:93
+#: notepad.rc:92
 msgid "Unicode (UTF-8)"
 msgstr "יוניקוד (UTF-8)"
 
-#: notepad.rc:100
+#: notepad.rc:99
 msgid ""
 "%s\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -9100,7 +9101,7 @@ msgstr "מ&זעור עם ההפעלה"
 msgid "&Save settings on exit"
 msgstr "&שמירת ההגדרות עם היציאה"
 
-#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:256
+#: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
 msgstr "&חלונות"
 
@@ -9116,41 +9117,42 @@ msgstr "&זה לצד זה\tShift+F4"
 msgid "&Arrange Icons"
 msgstr "&סידור סמלים"
 
-#: progman.rc:55
-msgid "&About Wine"
-msgstr "על &אודות Wine"
+#: progman.rc:54
+#, fuzzy
+msgid "&About Program Manager"
+msgstr "Program Manager"
 
-#: progman.rc:61
+#: progman.rc:60
 msgid "Program Manager"
 msgstr "Program Manager"
 
-#: progman.rc:65
+#: progman.rc:64
 msgid "Delete"
 msgstr "Delete"
 
-#: progman.rc:66
+#: progman.rc:65
 #, fuzzy
 msgid "Delete group `%s'?"
 msgstr "Delete group `%s' ?"
 
-#: progman.rc:67
+#: progman.rc:66
 #, fuzzy
 msgid "Delete program `%s'?"
 msgstr "Delete program `%s' ?"
 
-#: progman.rc:68 winhlp32.rc:83
+#: progman.rc:67 winhlp32.rc:82
 msgid "Not implemented"
 msgstr "לא מוטמע"
 
-#: progman.rc:69
+#: progman.rc:68
 msgid "Error reading `%s'."
 msgstr "Error reading `%s'."
 
-#: progman.rc:70
+#: progman.rc:69
 msgid "Error writing `%s'."
 msgstr "Error writing `%s'."
 
-#: progman.rc:73
+#: progman.rc:72
 msgid ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
@@ -9158,35 +9160,35 @@ msgstr ""
 "The group file `%s' cannot be opened.\n"
 "Should it be tried further on?"
 
-#: progman.rc:75
+#: progman.rc:74
 msgid "Help not available."
 msgstr "Help not available."
 
-#: progman.rc:76
+#: progman.rc:75
 msgid "Unknown feature in %s"
 msgstr "Unknown feature in %s"
 
-#: progman.rc:77
+#: progman.rc:76
 msgid "File `%s' exists. Not overwritten."
 msgstr "File `%s' exists. Not overwritten."
 
-#: progman.rc:78
+#: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
 msgstr "Save group as `%s to prevent overwriting original files."
 
-#: progman.rc:81
+#: progman.rc:80
 msgid "Programs"
 msgstr "Programs"
 
-#: progman.rc:82
+#: progman.rc:81
 msgid "Libraries (*.dll)"
 msgstr "Libraries (*.dll)"
 
-#: progman.rc:83
+#: progman.rc:82
 msgid "Icon files"
 msgstr "Icon files"
 
-#: progman.rc:84
+#: progman.rc:83
 msgid "Icons (*.ico)"
 msgstr "Icons (*.ico)"
 
@@ -9256,44 +9258,44 @@ msgstr "י&צוא קובץ מרישום המערכת..."
 msgid "&Print\tCtrl+P"
 msgstr "ה&דפסה\tCtrlP"
 
-#: regedit.rc:42 regedit.rc:88
+#: regedit.rc:42 regedit.rc:87
 msgid "&Modify"
 msgstr "&שינוי"
 
-#: regedit.rc:46 regedit.rc:98
+#: regedit.rc:46 regedit.rc:97
 msgid "&Key"
 msgstr "&מפתח"
 
-#: regedit.rc:48 regedit.rc:100
+#: regedit.rc:48 regedit.rc:99
 msgid "&String Value"
 msgstr "ערך &מחרוזת"
 
-#: regedit.rc:49 regedit.rc:101
+#: regedit.rc:49 regedit.rc:100
 msgid "&Binary Value"
 msgstr "ערך &בינרי"
 
-#: regedit.rc:50 regedit.rc:102
+#: regedit.rc:50 regedit.rc:101
 msgid "&DWORD Value"
 msgstr "ערך &DWORD"
 
-#: regedit.rc:51 regedit.rc:103
+#: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
 msgstr "ערך מ&רובה מחרוזות"
 
-#: regedit.rc:52 regedit.rc:104
+#: regedit.rc:52 regedit.rc:103
 #, fuzzy
 msgid "&Expandable String Value"
 msgstr "ערך &מחרוזת"
 
-#: regedit.rc:56 regedit.rc:108
+#: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
 msgstr "שי&נוי שם\tF2"
 
-#: regedit.rc:58 regedit.rc:111
+#: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
 msgstr "ה&עתקת שם המפתח"
 
-#: regedit.rc:60 regedit.rc:113
+#: regedit.rc:60 regedit.rc:112
 msgid "&Find\tCtrl+F"
 msgstr "&חיפוש\tCtrlF"
 
@@ -9317,208 +9319,208 @@ msgstr "ה&סרת מועדף..."
 msgid "&Help Topics\tF1"
 msgstr "נושאי הע&זרה\tF1"
 
-#: regedit.rc:80
+#: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "על &אודות עורך רישום המערכת"
 
-#: regedit.rc:89
+#: regedit.rc:88
 msgid "Modify Binary Data"
 msgstr "שינוי נתונים בינריים"
 
-#: regedit.rc:110
+#: regedit.rc:109
 msgid "&Export..."
 msgstr "י&צוא..."
 
-#: regedit.rc:135
+#: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
 msgstr "מכיל פקודות לעבודה עם כל רישום המערכת"
 
-#: regedit.rc:136
+#: regedit.rc:135
 msgid "Contains commands for editing values or keys"
 msgstr "מכיל פקודות לעריכת ערכים או מפתחות"
 
-#: regedit.rc:137
+#: regedit.rc:136
 msgid "Contains commands for customising the registry window"
 msgstr "מכיל פקודות להתאמת חלון רישום המערכת"
 
-#: regedit.rc:138
+#: regedit.rc:137
 msgid "Contains commands for accessing frequently used keys"
 msgstr "מכיל פקודות לגישה למפתחות הנמצאים בשימוש תדיר"
 
-#: regedit.rc:139
+#: regedit.rc:138
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr "מכיל פקודות להצגת עזרה ומידע על אודות עורך רישום המערכת"
 
-#: regedit.rc:140
+#: regedit.rc:139
 msgid "Contains commands for creating new keys or values"
 msgstr "מכיל פקודות ליצירת מפתחות או ערכים חדשים"
 
-#: regedit.rc:125
+#: regedit.rc:124
 msgid "Data"
 msgstr "נתון"
 
-#: regedit.rc:130
+#: regedit.rc:129
 msgid "Registry Editor"
 msgstr "עורך רישום המערכת"
 
-#: regedit.rc:192
+#: regedit.rc:191
 msgid "Import Registry File"
 msgstr "יבוא קובץ רישום מערכת"
 
-#: regedit.rc:193
+#: regedit.rc:192
 msgid "Export Registry File"
 msgstr "יצוא קובץ רישום מערכת"
 
-#: regedit.rc:194
+#: regedit.rc:193
 msgid "Registry files (*.reg)"
 msgstr "קובצי רישום מערכת (‎*.reg)"
 
-#: regedit.rc:195
+#: regedit.rc:194
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "קובצי רישום מערכת של Win9x/NT4‏ (REGEDIT4)"
 
-#: regedit.rc:202
+#: regedit.rc:201
 msgid "(Default)"
 msgstr "(בררת המחדל)"
 
-#: regedit.rc:203
+#: regedit.rc:202
 msgid "(value not set)"
 msgstr "(לא הוגדר ערך)"
 
-#: regedit.rc:204
+#: regedit.rc:203
 msgid "(cannot display value)"
 msgstr "(לא ניתן להציג את הערך)"
 
-#: regedit.rc:205
+#: regedit.rc:204
 msgid "(unknown %d)"
 msgstr "(%d לא ידוע)"
 
-#: regedit.rc:161
+#: regedit.rc:160
 msgid "Quits the registry editor"
 msgstr "יציאה מעורך רישום המערכת"
 
-#: regedit.rc:162
+#: regedit.rc:161
 msgid "Adds keys to the favorites list"
 msgstr "הוספת מפתחות לרשימת המועדפים"
 
-#: regedit.rc:163
+#: regedit.rc:162
 msgid "Removes keys from the favorites list"
 msgstr "הסרת מפתחות מרשימת המועדפים"
 
-#: regedit.rc:164
+#: regedit.rc:163
 msgid "Shows or hides the status bar"
 msgstr "הצגה או הסתרה של שורת המצב"
 
-#: regedit.rc:165
+#: regedit.rc:164
 msgid "Change position of split between two panes"
 msgstr "שינוי מיקום הפיצול בין שתי החלוניות"
 
-#: regedit.rc:166
+#: regedit.rc:165
 msgid "Refreshes the window"
 msgstr "רענון החלון"
 
-#: regedit.rc:167
+#: regedit.rc:166
 msgid "Deletes the selection"
 msgstr "מחיקת הבחירה"
 
-#: regedit.rc:168
+#: regedit.rc:167
 msgid "Renames the selection"
 msgstr "שינוי שם הבחירה"
 
-#: regedit.rc:169
+#: regedit.rc:168
 msgid "Copies the name of the selected key to the clipboard"
 msgstr "העתקת שם המפתח הנבחר ללוח הגזירים"
 
-#: regedit.rc:170
+#: regedit.rc:169
 msgid "Finds a text string in a key, value or data"
 msgstr "חיפוש מחרוזת טקסט בין מפתחות, ערכים ונתונים"
 
-#: regedit.rc:171
+#: regedit.rc:170
 msgid "Finds next occurrence of text specified in previous search"
 msgstr "חיפוש המופע הבא של טקסט שצוין בחיפוש הקודם"
 
-#: regedit.rc:145
+#: regedit.rc:144
 msgid "Modifies the value's data"
 msgstr "שינוי נתוני הערך"
 
-#: regedit.rc:146
+#: regedit.rc:145
 msgid "Adds a new key"
 msgstr "הוספת מפתח חדש"
 
-#: regedit.rc:147
+#: regedit.rc:146
 msgid "Adds a new string value"
 msgstr "הוספת ערך מחרוזת חדש"
 
-#: regedit.rc:148
+#: regedit.rc:147
 msgid "Adds a new binary value"
 msgstr "הוספת ערך בינרי חדש"
 
-#: regedit.rc:149
+#: regedit.rc:148
 msgid "Adds a new double word value"
 msgstr "הוספת ערך חדש בגודל שני word"
 
-#: regedit.rc:151
+#: regedit.rc:150
 msgid "Imports a text file into the registry"
 msgstr "יבוא קובץ טקסט לתוך רישום המערכת"
 
-#: regedit.rc:153
+#: regedit.rc:152
 msgid "Exports all or part of the registry to a text file"
 msgstr "יצוא כל רישום המערכת או רק חלק ממנו לקובץ טקסט"
 
-#: regedit.rc:154
+#: regedit.rc:153
 msgid "Prints all or part of the registry"
 msgstr "הדפסת כל רישום המערכת או רק חלק ממנו"
 
-#: regedit.rc:156
+#: regedit.rc:155
 msgid "Displays program information, version number and copyright"
 msgstr "הצגת פרטים על אודות התכנה, מספר הגרסה וזכויות יוצרים"
 
-#: regedit.rc:179
+#: regedit.rc:178
 msgid "Can't query value '%s'"
 msgstr "לא ניתן לתשאל את הערך ׳%s׳"
 
-#: regedit.rc:180
+#: regedit.rc:179
 msgid "Can't edit keys of this type (%u)"
 msgstr "לא ניתן לערוך מפתחות מסוג זה (%u)"
 
-#: regedit.rc:181
+#: regedit.rc:180
 msgid "Value is too big (%u)"
 msgstr "הערך גדול מדי (%u)"
 
-#: regedit.rc:182
+#: regedit.rc:181
 msgid "Confirm Value Delete"
 msgstr "אישור מחיקת הערך"
 
-#: regedit.rc:183
+#: regedit.rc:182
 msgid "Are you sure you want to delete value '%s'?"
 msgstr "האם ברצונך למחוק את הערך '%s'?"
 
-#: regedit.rc:187
+#: regedit.rc:186
 msgid "Search string '%s' not found"
 msgstr "מחרוזת החיפוש ׳%s׳ לא נמצאה"
 
-#: regedit.rc:184
+#: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
 msgstr "האם ברצונך למחוק ערכים אלו?"
 
-#: regedit.rc:185
+#: regedit.rc:184
 msgid "New Key #%d"
 msgstr "מפתח חדש מס׳%d"
 
-#: regedit.rc:186
+#: regedit.rc:185
 msgid "New Value #%d"
 msgstr "ערך חדש מס׳ %d"
 
-#: regedit.rc:178
+#: regedit.rc:177
 msgid "Can't query key '%s'"
 msgstr "לא ניתן לתשאל את המפתח ׳%s׳"
 
-#: regedit.rc:150
+#: regedit.rc:149
 msgid "Adds a new multi string value"
 msgstr "הוספת ערך מרובה מחרוזות חדש"
 
-#: regedit.rc:172
+#: regedit.rc:171
 msgid "Exports selected branch of the registry to a text file"
 msgstr "יצוא הענף הנבחר מרישום המערכת לקובץ טקסט"
 
@@ -9674,7 +9676,7 @@ msgstr "Error: Unable to terminate process \"%s\".\n"
 msgid "Error: Process self-termination is not permitted.\n"
 msgstr "Error: Process self-termination is not permitted.\n"
 
-#: taskmgr.rc:37 taskmgr.rc:109
+#: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
 msgstr "משימה &חדשה (הפעלה...)"
 
@@ -9690,7 +9692,7 @@ msgstr "מזעור &בעת השימוש"
 msgid "&Hide When Minimized"
 msgstr "הסתרה &בעת מזעור"
 
-#: taskmgr.rc:49 taskmgr.rc:258
+#: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
 msgstr "ה&צגת משימות 16 סיביות"
 
@@ -9702,15 +9704,15 @@ msgstr "&רענון כעת"
 msgid "&Update Speed"
 msgstr "מהירות ה&עדכון"
 
-#: taskmgr.rc:57 taskmgr.rc:159
+#: taskmgr.rc:57 taskmgr.rc:158
 msgid "&High"
 msgstr "&גבוהה"
 
-#: taskmgr.rc:58 taskmgr.rc:163
+#: taskmgr.rc:58 taskmgr.rc:162
 msgid "&Normal"
 msgstr "&רגילה"
 
-#: taskmgr.rc:60 taskmgr.rc:167
+#: taskmgr.rc:60 taskmgr.rc:166
 msgid "&Low"
 msgstr "&נמוכה"
 
@@ -9718,43 +9720,43 @@ msgstr "&נמוכה"
 msgid "&Paused"
 msgstr "&מושהית"
 
-#: taskmgr.rc:68 taskmgr.rc:257
+#: taskmgr.rc:68 taskmgr.rc:256
 msgid "&Select Columns..."
 msgstr "&בחירת עמודות..."
 
-#: taskmgr.rc:69 taskmgr.rc:259
+#: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
 msgstr "היס&טוריית המעבד"
 
-#: taskmgr.rc:71 taskmgr.rc:260
+#: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
 msgstr "תרשים אחד ל&כול המעבדים"
 
-#: taskmgr.rc:73 taskmgr.rc:261
+#: taskmgr.rc:73 taskmgr.rc:260
 msgid "One Graph &Per CPU"
 msgstr "תרשים &אחד לכול מעבד"
 
-#: taskmgr.rc:76 taskmgr.rc:262
+#: taskmgr.rc:76 taskmgr.rc:261
 msgid "&Show Kernel Times"
 msgstr "הצגת זמני ה&קרנל"
 
-#: taskmgr.rc:80 taskmgr.rc:97 taskmgr.rc:124 winefile.rc:79
+#: taskmgr.rc:80 taskmgr.rc:96 taskmgr.rc:123 winefile.rc:79
 msgid "Tile &Horizontally"
 msgstr "פריסה או&פקית"
 
-#: taskmgr.rc:81 taskmgr.rc:98 taskmgr.rc:125
+#: taskmgr.rc:81 taskmgr.rc:97 taskmgr.rc:124
 msgid "Tile &Vertically"
 msgstr "פריסה &אנכית"
 
-#: taskmgr.rc:82 taskmgr.rc:99 taskmgr.rc:126
+#: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
 msgid "&Minimize"
 msgstr "מ&זעור"
 
-#: taskmgr.rc:84 taskmgr.rc:101 taskmgr.rc:128
+#: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
 msgstr "&דירוג"
 
-#: taskmgr.rc:85 taskmgr.rc:102 taskmgr.rc:122
+#: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "&קידום לחזית"
 
@@ -9762,359 +9764,359 @@ msgstr "&קידום לחזית"
 msgid "Task Manager &Help Topics"
 msgstr "&נושאי העזרה במנהל המשימות"
 
-#: taskmgr.rc:91
+#: taskmgr.rc:90
 msgid "&About Task Manager"
 msgstr "על &אודות מנהל המשימות"
 
-#: taskmgr.rc:107 taskmgr.rc:119 taskmgr.rc:137 taskmgr.rc:148
+#: taskmgr.rc:106 taskmgr.rc:118 taskmgr.rc:136 taskmgr.rc:147
 msgid "DUMMY"
 msgstr "DUMMY"
 
-#: taskmgr.rc:121
+#: taskmgr.rc:120
 msgid "&Switch To"
 msgstr "מע&בר אל"
 
-#: taskmgr.rc:130
+#: taskmgr.rc:129
 msgid "&End Task"
 msgstr "&סיום המשימה"
 
-#: taskmgr.rc:131
+#: taskmgr.rc:130
 msgid "&Go To Process"
 msgstr "מעבר ל&תהליך"
 
-#: taskmgr.rc:150
+#: taskmgr.rc:149
 msgid "&End Process"
 msgstr "&סיום תהליך"
 
-#: taskmgr.rc:151
+#: taskmgr.rc:150
 msgid "End Process &Tree"
 msgstr "סיום ע&ץ התהליך"
 
-#: taskmgr.rc:153 winedbg.rc:29
+#: taskmgr.rc:152 winedbg.rc:29
 msgid "&Debug"
 msgstr "&ניפוי שגיאות"
 
-#: taskmgr.rc:155
+#: taskmgr.rc:154
 msgid "Set &Priority"
 msgstr "הגדרת &עדיפות"
 
-#: taskmgr.rc:157
+#: taskmgr.rc:156
 msgid "&Realtime"
 msgstr "&זמן אמת"
 
-#: taskmgr.rc:161
+#: taskmgr.rc:160
 msgid "&AboveNormal"
 msgstr "יותר &מרגילה"
 
-#: taskmgr.rc:165
+#: taskmgr.rc:164
 msgid "&BelowNormal"
 msgstr "&פחות מרגילה"
 
-#: taskmgr.rc:170
+#: taskmgr.rc:169
 msgid "Set &Affinity..."
 msgstr "הגדרת &קירבה..."
 
-#: taskmgr.rc:171
+#: taskmgr.rc:170
 msgid "Edit Debug &Channels..."
 msgstr "עריכת &ערוצי ניפוי שגיאות..."
 
-#: taskmgr.rc:181 taskmgr.rc:182
+#: taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
 msgstr "מנהל המשימות"
 
-#: taskmgr.rc:183
+#: taskmgr.rc:182
 msgid "Create New Task"
 msgstr "יצירת משימה חדשה"
 
-#: taskmgr.rc:188
+#: taskmgr.rc:187
 msgid "Runs a new program"
 msgstr "הרצת תכנית חדשה"
 
-#: taskmgr.rc:189
+#: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
 msgstr "מנהל המשימות יישאר בקידמת החלונות האחרים אלא אם כן ימוזער"
 
-#: taskmgr.rc:191
+#: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr "מנהל המשימות ממוזער כאשר מתבצעת פעולת מעבר אל"
 
-#: taskmgr.rc:192
+#: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
 msgstr "הסתרת מנהל המשימות כאשר הוא ממוזער"
 
-#: taskmgr.rc:193
+#: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
 msgstr "אילוץ מנהל המשימות להתעדכן כעת, ללא כל תלות בהגדרות מהירות העדכון"
 
-#: taskmgr.rc:194
+#: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
 msgstr "הצגת משימות באמצעות סמלים גדולים"
 
-#: taskmgr.rc:195
+#: taskmgr.rc:194
 msgid "Displays tasks by using small icons"
 msgstr "הצגת משימות באמצעות סמלים קטנים"
 
-#: taskmgr.rc:196
+#: taskmgr.rc:195
 msgid "Displays information about each task"
 msgstr "הצגת פרטים על כל משימה"
 
-#: taskmgr.rc:197
+#: taskmgr.rc:196
 msgid "Updates the display twice per second"
 msgstr "עדכון התצוגה פעמיים בשנייה"
 
-#: taskmgr.rc:198
+#: taskmgr.rc:197
 msgid "Updates the display every two seconds"
 msgstr "עדכון התצוגה בכל שתי שניות"
 
-#: taskmgr.rc:199
+#: taskmgr.rc:198
 msgid "Updates the display every four seconds"
 msgstr "עדכון התצוגה בכל ארבע שניות"
 
-#: taskmgr.rc:204
+#: taskmgr.rc:203
 msgid "Does not automatically update"
 msgstr "ללא עדכון אוטומטי"
 
-#: taskmgr.rc:206
+#: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
 msgstr "פריסת החלונות אופקית על גבי שולחן העבודה"
 
-#: taskmgr.rc:207
+#: taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
 msgstr "פריסת החלונות אנכית על גבי שולחן העבודה"
 
-#: taskmgr.rc:208
+#: taskmgr.rc:207
 msgid "Minimizes the windows"
 msgstr "מזעור החלונות"
 
-#: taskmgr.rc:209
+#: taskmgr.rc:208
 msgid "Maximizes the windows"
 msgstr "הגדלת החלונות"
 
-#: taskmgr.rc:210
+#: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
 msgstr "דירוג החלונות באלכסון על גבי שולחן העבודה"
 
-#: taskmgr.rc:211
+#: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
 msgstr "קידום החלון לקידמה אך מבלי לעבור אליו"
 
-#: taskmgr.rc:212
+#: taskmgr.rc:211
 msgid "Displays Task Manager help topics"
 msgstr "הצגת נושאי העזרה של מנהל המשימות"
 
-#: taskmgr.rc:213
+#: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
 msgstr "מציג את מפרטי התכנית, מספר הגרסה ואת זכויות היוצרים"
 
-#: taskmgr.rc:214
+#: taskmgr.rc:213
 msgid "Exits the Task Manager application"
 msgstr "יציאה מיישום מנהל המשימות"
 
-#: taskmgr.rc:216
+#: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
 msgstr "הצגת משימות 16 סיביות תחת ה־ntvdm.exe המשוייך להן"
 
-#: taskmgr.rc:217
+#: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
 msgstr "בחירה אילו עמודות יופיעו בעמוד התהליכים"
 
-#: taskmgr.rc:218
+#: taskmgr.rc:217
 msgid "Displays kernel time in the performance graphs"
 msgstr "הצגת זמן הקרנל בתרשימי הביצועים"
 
-#: taskmgr.rc:220
+#: taskmgr.rc:219
 msgid "A single history graph shows total CPU usage"
 msgstr "תרשים היסטוריה יחיד שמציג את סך כל ניצולת המעבד"
 
-#: taskmgr.rc:221
+#: taskmgr.rc:220
 msgid "Each CPU has its own history graph"
 msgstr "לכל מעבד יש תרשים היסטוריה משלו"
 
-#: taskmgr.rc:223
+#: taskmgr.rc:222
 msgid "Brings a task to the foreground, switch focus to that task"
 msgstr "קידום משימה לקידמה, העברת המיקוד למשימה זו"
 
-#: taskmgr.rc:228
+#: taskmgr.rc:227
 msgid "Tells the selected tasks to close"
 msgstr "בקשה מהתהליכים הנבחרים להסתיים"
 
-#: taskmgr.rc:229
+#: taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
 msgstr "החלפת המיקוד לתהליך של המשימה הנבחרת"
 
-#: taskmgr.rc:230
+#: taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
 msgstr "שחזור מנהל המשימות ממצבו המוסתר"
 
-#: taskmgr.rc:231
+#: taskmgr.rc:230
 msgid "Removes the process from the system"
 msgstr "הסרת התהליך מהמערכת"
 
-#: taskmgr.rc:233
+#: taskmgr.rc:232
 msgid "Removes this process and all descendants from the system"
 msgstr "הסרת תהליך זה על כל צאצאיו מהמערכת"
 
-#: taskmgr.rc:234
+#: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
 msgstr "הצמדת מנפה השגיאות לתהליך זה"
 
-#: taskmgr.rc:236
+#: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
 msgstr "שליטה על אילו מעבדים יורשה התהליך לרוץ"
 
-#: taskmgr.rc:238
+#: taskmgr.rc:237
 msgid "Sets process to the REALTIME priority class"
 msgstr "הגדרת התהליך למחלקת עדיפות זמן אמת (REALTIME)"
 
-#: taskmgr.rc:239
+#: taskmgr.rc:238
 msgid "Sets process to the HIGH priority class"
 msgstr "הגדרת התהליך למחלקת עדיפות גבוהה (HIGH)"
 
-#: taskmgr.rc:241
+#: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
 msgstr "הגדרת התהליך למחלקת עדיפות יותר מרגילה (ABOVE NORMAL)"
 
-#: taskmgr.rc:243
+#: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
 msgstr "הגדרת התהליך למחלקת עדיפות רגילה (NORMAL)"
 
-#: taskmgr.rc:245
+#: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
 msgstr "הגדרת התהליך למחלקת עדיפות פחות מרגילה (BELOW NORMAL)"
 
-#: taskmgr.rc:246
+#: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
 msgstr "הגדרת התהליך למחלקת עדיפות נמוכה (LOW)"
 
-#: taskmgr.rc:248
+#: taskmgr.rc:247
 msgid "Controls Debug Channels"
 msgstr "שליטה בערוצי ניפוי השגיאות"
 
-#: taskmgr.rc:264
+#: taskmgr.rc:263
 msgid "Processes"
 msgstr "תהליכים"
 
-#: taskmgr.rc:265
+#: taskmgr.rc:264
 msgid "Performance"
 msgstr "ביצועים"
 
-#: taskmgr.rc:266
+#: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
 msgstr "שימוש במעבד: %3d%%"
 
-#: taskmgr.rc:267
+#: taskmgr.rc:266
 msgid "Processes: %d"
 msgstr "תהליכים: %d"
 
-#: taskmgr.rc:268
+#: taskmgr.rc:267
 msgid "Mem Usage: %dK / %dK"
 msgstr "שימוש בזיכרון: %d ק׳ / %d ק׳"
 
-#: taskmgr.rc:273
+#: taskmgr.rc:272
 msgid "Image Name"
 msgstr "שם התמונה"
 
-#: taskmgr.rc:274
+#: taskmgr.rc:273
 msgid "PID"
 msgstr "מזהה התהליך"
 
-#: taskmgr.rc:275
+#: taskmgr.rc:274
 msgid "CPU"
 msgstr "שימוש במעבד"
 
-#: taskmgr.rc:276
+#: taskmgr.rc:275
 msgid "CPU Time"
 msgstr "זמן מעבד"
 
-#: taskmgr.rc:277
+#: taskmgr.rc:276
 msgid "Mem Usage"
 msgstr "שימוש בזיכרון"
 
-#: taskmgr.rc:278
+#: taskmgr.rc:277
 msgid "Mem Delta"
 msgstr "שינוי השימוש בזיכרון"
 
-#: taskmgr.rc:279
+#: taskmgr.rc:278
 msgid "Peak Mem Usage"
 msgstr "שיא שימוש בזיכרון"
 
-#: taskmgr.rc:280
+#: taskmgr.rc:279
 msgid "Page Faults"
 msgstr "כשלי דפדוף"
 
-#: taskmgr.rc:281
+#: taskmgr.rc:280
 msgid "USER Objects"
 msgstr "עצמי USER"
 
-#: taskmgr.rc:282
+#: taskmgr.rc:281
 msgid "I/O Reads"
 msgstr "קלט/פלט קריאות"
 
-#: taskmgr.rc:283
+#: taskmgr.rc:282
 msgid "I/O Read Bytes"
 msgstr "קלט/פלט בתים שנקראו"
 
-#: taskmgr.rc:284
+#: taskmgr.rc:283
 msgid "Session ID"
 msgstr "מזהה הפעלה"
 
-#: taskmgr.rc:285
+#: taskmgr.rc:284
 msgid "Username"
 msgstr "שם משתמש"
 
-#: taskmgr.rc:286
+#: taskmgr.rc:285
 msgid "PF Delta"
 msgstr "שינוי בקובץ הדפדוף"
 
-#: taskmgr.rc:287
+#: taskmgr.rc:286
 msgid "VM Size"
 msgstr "גודל הזיכרון הווירטואלי"
 
-#: taskmgr.rc:288
+#: taskmgr.rc:287
 msgid "Paged Pool"
 msgstr "תור הדפדוף"
 
-#: taskmgr.rc:289
+#: taskmgr.rc:288
 msgid "NP Pool"
 msgstr "מאגר מחוץ לקובץ הדפדוף"
 
-#: taskmgr.rc:290
+#: taskmgr.rc:289
 msgid "Base Pri"
 msgstr "עדיפות בסיס"
 
-#: taskmgr.rc:291
+#: taskmgr.rc:290
 msgid "Handles"
 msgstr "מזהים ייחודיים"
 
-#: taskmgr.rc:292
+#: taskmgr.rc:291
 msgid "Threads"
 msgstr "תת־תהליכים"
 
-#: taskmgr.rc:293
+#: taskmgr.rc:292
 msgid "GDI Objects"
 msgstr "עצמי GDI"
 
-#: taskmgr.rc:294
+#: taskmgr.rc:293
 msgid "I/O Writes"
 msgstr "כתיבות קלט/פלט"
 
-#: taskmgr.rc:295
+#: taskmgr.rc:294
 msgid "I/O Write Bytes"
 msgstr "קלט/פלט בתים שנכתבו"
 
-#: taskmgr.rc:296
+#: taskmgr.rc:295
 msgid "I/O Other"
 msgstr "קלט/פלט אחר"
 
-#: taskmgr.rc:297
+#: taskmgr.rc:296
 msgid "I/O Other Bytes"
 msgstr "קלט/פלט בתים אחר"
 
-#: taskmgr.rc:302
+#: taskmgr.rc:301
 msgid "Task Manager Warning"
 msgstr "אזהרת מנהל המשימות"
 
-#: taskmgr.rc:305
+#: taskmgr.rc:304
 msgid ""
 "WARNING: Changing the priority class of this process may\n"
 "cause undesired results including system instability. Are you\n"
@@ -10124,11 +10126,11 @@ msgstr ""
 "אבדן נתונים ואבדן יציבות המערכת. האם אכן ברצונך לשנות\n"
 "את מחלקת העדיפות?"
 
-#: taskmgr.rc:306
+#: taskmgr.rc:305
 msgid "Unable to Change Priority"
 msgstr "לא ניתן לשנות את העדיפות"
 
-#: taskmgr.rc:311
+#: taskmgr.rc:310
 msgid ""
 "WARNING: Terminating a process can cause undesired\n"
 "results including loss of data and system instability. The\n"
@@ -10140,11 +10142,11 @@ msgstr ""
 "ואבדן יציבות המערכת. לתהליך לא תינתן ההזדמנות לשמור את מצבו או את\n"
 "הנתונים טרם סיומו. האם אכן ברצונך לסיים את התהליך?"
 
-#: taskmgr.rc:312
+#: taskmgr.rc:311
 msgid "Unable to Terminate Process"
 msgstr "לא ניתן לסיים את היישום"
 
-#: taskmgr.rc:314
+#: taskmgr.rc:313
 msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
@@ -10152,55 +10154,55 @@ msgstr ""
 "אזהרה: ניפוי שגיאות בתהליך זה עלול לגרום לאבדן נתונים.\n"
 "האם אכן ברצונך להצמיד את מנפה השגיאות?"
 
-#: taskmgr.rc:315
+#: taskmgr.rc:314
 msgid "Unable to Debug Process"
 msgstr "לא ניתן לנפות שגיאות בתהליך"
 
-#: taskmgr.rc:316
+#: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
 msgstr "לתהליך חייבת להיות קירבה למעבד אחד לפחות"
 
-#: taskmgr.rc:317
+#: taskmgr.rc:316
 msgid "Invalid Option"
 msgstr "אפשרות שגויה"
 
-#: taskmgr.rc:318
+#: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
 msgstr "לא ניתן לגשת או להגדיר קירבה לתהליך"
 
-#: taskmgr.rc:323
+#: taskmgr.rc:322
 msgid "System Idle Process"
 msgstr "תהליך חוסר פעילות המערכת"
 
-#: taskmgr.rc:324
+#: taskmgr.rc:323
 msgid "Not Responding"
 msgstr "לא מגיב"
 
-#: taskmgr.rc:325
+#: taskmgr.rc:324
 msgid "Running"
 msgstr "פעיל"
 
-#: taskmgr.rc:326
+#: taskmgr.rc:325
 msgid "Task"
 msgstr "משימה"
 
-#: taskmgr.rc:328
+#: taskmgr.rc:327
 msgid "Debug Channels"
 msgstr "ערוצי ניפוי"
 
-#: taskmgr.rc:329
+#: taskmgr.rc:328
 msgid "Fixme"
 msgstr "לתיקון"
 
-#: taskmgr.rc:330
+#: taskmgr.rc:329
 msgid "Err"
 msgstr "שגיאה"
 
-#: taskmgr.rc:331
+#: taskmgr.rc:330
 msgid "Warn"
 msgstr "אזהרה"
 
-#: taskmgr.rc:332
+#: taskmgr.rc:331
 msgid "Trace"
 msgstr "מעקב"
 
@@ -10960,67 +10962,68 @@ msgstr "פריסה &אופקית\tCtrl+F4"
 msgid "Arrange &Symbols"
 msgstr "סידור ה&סמלים"
 
-#: winefile.rc:88
-msgid "&About Winefile..."
+#: winefile.rc:87
+#, fuzzy
+msgid "&About Wine File"
 msgstr "על &אודות Winefile..."
 
-#: winefile.rc:94
+#: winefile.rc:93
 msgid "Applying font settings"
 msgstr "הגדרות הגופן חלות"
 
-#: winefile.rc:95
+#: winefile.rc:94
 msgid "Error while selecting new font."
 msgstr "שגיאה בעת הגדרת הגופן החדש."
 
-#: winefile.rc:100
+#: winefile.rc:99
 msgid "Wine File Manager"
 msgstr "מנהל הקבצים של Wine"
 
-#: winefile.rc:102
+#: winefile.rc:101
 msgid "root fs"
 msgstr "root fs"
 
-#: winefile.rc:103
+#: winefile.rc:102
 msgid "unixfs"
 msgstr "unixfs"
 
-#: winefile.rc:105
+#: winefile.rc:104
 msgid "Shell"
 msgstr "מעטפת"
 
-#: winefile.rc:106
+#: winefile.rc:105
 msgid "%s - %s"
 msgstr "%s - %s"
 
-#: winefile.rc:107
+#: winefile.rc:106
 msgid "Not yet implemented"
 msgstr "לא מוטמע עדיין"
 
-#: winefile.rc:108
+#: winefile.rc:107
 msgid "Wine File"
 msgstr "קובץ Wine"
 
-#: winefile.rc:115
+#: winefile.rc:114
 msgid "CDate"
 msgstr "ת.יצירה"
 
-#: winefile.rc:116
+#: winefile.rc:115
 msgid "ADate"
 msgstr "ת.גישה"
 
-#: winefile.rc:117
+#: winefile.rc:116
 msgid "MDate"
 msgstr "ת.שינוי"
 
-#: winefile.rc:118
+#: winefile.rc:117
 msgid "Index/Inode"
 msgstr "מפתח/Inode"
 
-#: winefile.rc:121
+#: winefile.rc:120
 msgid "Security"
 msgstr "אבטחה"
 
-#: winefile.rc:123
+#: winefile.rc:122
 msgid "%s of %s free"
 msgstr "%s מתוך %s פנויים"
 
@@ -11057,8 +11060,9 @@ msgid "&Fastest Times..."
 msgstr "&שיאים..."
 
 #: winemine.rc:48
-msgid "&About"
-msgstr "על &אודות"
+#, fuzzy
+msgid "&About WineMine"
+msgstr "על &אודות Wine"
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -11096,15 +11100,15 @@ msgstr "ה&גדרה..."
 msgid "History"
 msgstr "היסטוריה"
 
-#: winhlp32.rc:48 winhlp32.rc:70
+#: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
 msgstr "קטנים"
 
-#: winhlp32.rc:49 winhlp32.rc:71
+#: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
 msgstr "רגילים"
 
-#: winhlp32.rc:50 winhlp32.rc:72
+#: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
 msgstr "גדולים"
 
@@ -11117,51 +11121,51 @@ msgstr "ע&זרה לעזרה"
 msgid "Always on &top"
 msgstr "תמיד &עליון"
 
-#: winhlp32.rc:57
+#: winhlp32.rc:56
 msgid "&About Wine Help"
 msgstr "&מידע..."
 
-#: winhlp32.rc:65
+#: winhlp32.rc:64
 msgid "Annotation..."
 msgstr "הערות..."
 
-#: winhlp32.rc:66
+#: winhlp32.rc:65
 msgid "Copy"
 msgstr "העתקה"
 
-#: winhlp32.rc:67
+#: winhlp32.rc:66
 msgid "Print..."
 msgstr "הדפסה..."
 
-#: winhlp32.rc:79
+#: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "העזרה של Wine"
 
-#: winhlp32.rc:84
+#: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
 msgstr "אירעה שגיאה בעת קריאת קובץ העזרה `%s'"
 
-#: winhlp32.rc:86
+#: winhlp32.rc:85
 msgid "Summary"
 msgstr "תקציר"
 
-#: winhlp32.rc:85
+#: winhlp32.rc:84
 msgid "&Index"
 msgstr "מ&פתח"
 
-#: winhlp32.rc:89
+#: winhlp32.rc:88
 msgid "Help files (*.hlp)"
 msgstr "קובצי עזרה (‎*.hlp)"
 
-#: winhlp32.rc:90
+#: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
 msgstr "לא ניתן למצוא את '%s'. האם ברצונך למצוא קובץ זה בעצמך?"
 
-#: winhlp32.rc:91
+#: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
 msgstr "לא ניתן למצוא יישום של richedit... התכנית תצא"
 
-#: winhlp32.rc:92
+#: winhlp32.rc:91
 msgid "Help topics: "
 msgstr "נושאי העזרה: "
 

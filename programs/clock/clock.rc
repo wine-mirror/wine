@@ -39,7 +39,7 @@ MAIN_MENU MENU
   MENUITEM "&Always on Top", IDM_ONTOP
  }
  POPUP "Inf&o" {
-  MENUITEM "&About Clock...", IDM_ABOUT
+  MENUITEM "&About Clock", IDM_ABOUT
  }
 }
 

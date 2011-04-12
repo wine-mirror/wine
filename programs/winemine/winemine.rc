@@ -45,7 +45,7 @@ MENU_WINEMINE MENU
     }
     POPUP "&Info" {
         MENUITEM "&Fastest Times...", IDM_TIMES
-        MENUITEM "&About",         IDM_ABOUT
+        MENUITEM "&About WineMine",   IDM_ABOUT
     }
 }
 

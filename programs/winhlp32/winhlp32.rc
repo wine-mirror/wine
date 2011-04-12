@@ -53,7 +53,6 @@ MAIN_MENU MENU
  POPUP "&Help" {
    MENUITEM "&Help on help\tF1", MNID_HELP_HELPON
    MENUITEM "Always on &top", MNID_HELP_HELPTOP
-   MENUITEM SEPARATOR
    MENUITEM "&About Wine Help", MNID_HELP_ABOUT
  }
 }
