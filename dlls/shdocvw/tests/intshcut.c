@@ -128,6 +128,24 @@ static void test_QueryInterface(void)
     IUnknown_Release(pUnknown);
 }
 
+#define test_shortcut_url(a,b) _test_shortcut_url(__LINE__,a,b)
+static void _test_shortcut_url(unsigned line, IUnknown *unk, const char *exurl)
+{
+    IUniformResourceLocatorA *locator_a;
+    char *url_a;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IUniformResourceLocatorA, (void**)&locator_a);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IUniformResourceLocatorA iface: %08x\n", hres);
+
+    hres = locator_a->lpVtbl->GetURL(locator_a, &url_a);
+    ok_(__FILE__,line)(hres == S_OK, "GetURL failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp(url_a, exurl), "unexpected URL, got %s, expected %s\n", url_a, exurl);
+    CoTaskMemFree(url_a);
+
+    IUnknown_Release(locator_a);
+}
+
 #define check_string_transform(a,b,c,d,e) _check_string_transform(__LINE__,a,b,c,d,e)
 static void _check_string_transform(unsigned line, IUniformResourceLocatorA *urlA, LPCSTR input, DWORD flags,
         LPCSTR expectedOutput, BOOL is_todo)
@@ -314,6 +332,59 @@ static void test_NullURLs(void)
     urlA->lpVtbl->Release(urlA);
 }
 
+typedef struct {
+    const char *data;
+    const char *url;
+} load_test_t;
+
+static const load_test_t load_tests[] = {
+    {"[InternetShortcut]\n"
+     "URL=http://www.winehq.org/\n"
+     "HotKey=0\n"
+     "IDList=\n"
+     "[{000214A0-0000-0000-C000-000000000046}]\n"
+     "Prop0=1,2\n",
+
+     "http://www.winehq.org/"
+    }
+};
+
+static void test_Load(void)
+{
+    IPersistFile *persist_file;
+    const load_test_t *test;
+    WCHAR file_path[MAX_PATH];
+    DWORD size;
+    HANDLE file;
+    HRESULT hres;
+
+    static const WCHAR test_urlW[] = {'t','e','s','t','.','u','r','l',0};
+
+    GetTempPathW(MAX_PATH, file_path);
+    lstrcatW(file_path, test_urlW);
+
+    for(test = load_tests; test < load_tests + sizeof(load_tests)/sizeof(*load_tests); test++) {
+        file = CreateFileW(file_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        ok(file != INVALID_HANDLE_VALUE, "could not create test file\n");
+        if(file == INVALID_HANDLE_VALUE)
+            continue;
+
+        WriteFile(file, test->data, strlen(test->data), &size, NULL);
+        CloseHandle(file);
+
+        hres = CoCreateInstance(&CLSID_InternetShortcut, NULL, CLSCTX_ALL, &IID_IPersistFile, (void**)&persist_file);
+        ok(hres == S_OK, "Could not create InternetShortcut instance: %08x\n", hres);
+
+        hres = IPersistFile_Load(persist_file, file_path, 0);
+        ok(hres == S_OK, "Load failed: %08x\n", hres);
+
+        test_shortcut_url((IUnknown*)persist_file, test->url);
+
+        IPersistFile_Release(persist_file);
+        DeleteFileW(file_path);
+    }
+}
+
 static void test_SetURLFlags(void)
 {
     HRESULT hr;
@@ -347,6 +418,7 @@ static void test_InternetShortcut(void)
     test_NullURLs();
     test_SetURLFlags();
     test_ReadAndWriteProperties();
+    test_Load();
 }
 
 START_TEST(intshcut)
