@@ -61,4 +61,21 @@ HKCR
         }
     }
     ForceRemove '.url' = s 'InternetShortcut'
+
+    ftp
+    {
+        val 'URL Protocol' = s ''
+    }
+    http
+    {
+        val 'URL Protocol' = s ''
+    }
+    https
+    {
+        val 'URL Protocol' = s ''
+    }
+    mailto
+    {
+        val 'URL Protocol' = s ''
+    }
 }
