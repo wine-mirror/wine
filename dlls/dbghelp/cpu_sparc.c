@@ -32,15 +32,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 static unsigned sparc_get_addr(HANDLE hThread, const CONTEXT* ctx,
                              enum cpu_addr ca, ADDRESS64* addr)
 {
-   switch (ca)
+    addr->Mode    = AddrModeFlat;
+    addr->Segment = 0; /* don't need segment */
+    switch (ca)
     {
-    case cpu_addr_pc:
-    case cpu_addr_stack:
-    case cpu_addr_frame:
-    default:
-         FIXME("not done for Sparc\n");
+#ifdef __sparc__
+    case cpu_addr_pc:    addr->Offset = ctx->pc; return TRUE;
+    case cpu_addr_stack: addr->Offset = ctx->o6; return TRUE;
+    case cpu_addr_frame: addr->Offset = ctx->i6; return TRUE;
+#endif
+    default: addr->Mode = -1;
+        return FALSE;
     }
-    return FALSE;
 }
 
 static BOOL sparc_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CONTEXT* context)
