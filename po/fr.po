@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-02-10 15:38+0100\n"
+"PO-Revision-Date: 2011-04-13 23:40+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -2193,36 +2193,32 @@ msgstr ""
 "Configurer le navigateur internet de Wine et d'autres paramètres associés"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "&Enregistrer la configuration lors de la fermeture"
+msgstr "Paramètres de sécurité pour la zone : "
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Personnaliser"
+msgstr "Personnalisée"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Très basse"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "&Basse"
+msgstr "Basse"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Moyenne"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Augmentée"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&Haute"
+msgstr "Haute"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -4365,7 +4361,6 @@ msgid "Window has no system menu\n"
 msgstr "La fenêtre ne comporte pas de menu système\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
 msgstr "Style de boîte de message invalide\n"
 
@@ -7803,7 +7798,6 @@ msgid "&Always on Top"
 msgstr "&Toujours visible"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
 msgstr "À &propos de l'horloge"
 
@@ -8704,9 +8698,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "Rem&placer...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&Sommaire"
+msgstr "&Sommaire\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -9143,12 +9136,11 @@ msgstr "&Options"
 
 #: progman.rc:42
 msgid "&Arrange automatically"
-msgstr "Réorg&anisation automatique"
+msgstr "Réorganisation &automatique"
 
 #: progman.rc:43
-#, fuzzy
 msgid "&Minimize on run"
-msgstr "&Réduire à l'utilisation"
+msgstr "&Réduire lors de l'exécution"
 
 #: progman.rc:44 winefile.rc:73
 msgid "&Save settings on exit"
@@ -9171,9 +9163,8 @@ msgid "&Arrange Icons"
 msgstr "&Réorganiser les icônes"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Gestionnaire de programmes"
+msgstr "À &propos du gestionnaire de programmes"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -11101,9 +11092,8 @@ msgid "Large"
 msgstr "Grande"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "&Utiliser l'aide"
+msgstr "&Utiliser l'aide\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
