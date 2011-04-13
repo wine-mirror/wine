@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-01-12 20:41+0100\n"
-"Last-Translator: André Hentschel\n"
+"PO-Revision-Date: 2011-04-13 19:56+0200\n"
+"Last-Translator: Detlef Riekenberg\n"
 "Language-Team: none\n"
 "Language: German\n"
 "MIME-Version: 1.0\n"
@@ -2198,36 +2198,32 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "Wine Internet Browser und zugehörige Einstellungen anpassen."
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "&Einstellungen beim Beenden speichern"
+msgstr "Sicherheitseinstellungen für Zone: "
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Anpassen"
+msgstr "Benutzerdefiniert"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Sehr niedrig"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "Nie&drig"
+msgstr "Niedrig"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Mittelmäßig"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Erhöht"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&Hoch"
+msgstr "Hoch"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -8849,7 +8845,6 @@ msgid "&Replace...\tCtrl+H"
 msgstr "Erset&zen...\tStrg+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
 msgstr "&Inhalt"
 
@@ -9321,9 +9316,8 @@ msgid "&Arrange Icons"
 msgstr "&Symbole anordnen"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Programm-Manager"
+msgstr "Ü&ber Programm-Manager"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -11158,7 +11152,7 @@ msgstr "%s von %s frei"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "Spiel"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -11166,7 +11160,7 @@ msgstr "&Neu\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "&Merker"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -11185,14 +11179,12 @@ msgid "&Custom..."
 msgstr "Benutzer&definiert..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
 msgstr "&Beste Zeiten"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "Ü&ber Wine"
+msgstr "Ü&ber WineMine"
 
 #: winemine.rc:27
 msgid "WineMine"
