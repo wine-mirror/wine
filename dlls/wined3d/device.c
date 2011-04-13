@@ -1278,10 +1278,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface,
 /* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
         WINED3DPRESENT_PARAMETERS *present_parameters, WINED3DSURFTYPE surface_type,
-        void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DSwapChain **swapchain)
+        void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_swapchain **swapchain)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSwapChainImpl *object;
+    struct wined3d_swapchain *object;
     HRESULT hr;
 
     TRACE("iface %p, present_parameters %p, swapchain %p, parent %p, surface_type %#x.\n",
@@ -1303,7 +1304,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
     }
 
     TRACE("Created swapchain %p.\n", object);
-    *swapchain = (IWineD3DSwapChain *)object;
+    *swapchain = object;
 
     return WINED3D_OK;
 }
@@ -1318,22 +1319,27 @@ static UINT WINAPI IWineD3DDeviceImpl_GetNumberOfSwapChains(IWineD3DDevice *ifac
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface,
-        UINT iSwapChain, IWineD3DSwapChain **pSwapChain)
+        UINT swapchain_idx, struct wined3d_swapchain **swapchain)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : swapchain %d\n", This, iSwapChain);
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
 
-    if (iSwapChain < This->swapchain_count)
+    TRACE("iface %p, swapchain_idx %u, swapchain %p.\n",
+            iface, swapchain_idx, swapchain);
+
+    if (swapchain_idx >= device->swapchain_count)
     {
-        *pSwapChain = (IWineD3DSwapChain *)This->swapchains[iSwapChain];
-        wined3d_swapchain_incref(*pSwapChain);
-        TRACE("(%p) returning %p\n", This, *pSwapChain);
-        return WINED3D_OK;
-    } else {
-        TRACE("Swapchain out of range\n");
-        *pSwapChain = NULL;
+        WARN("swapchain_idx %u >= swapchain_count %u.\n",
+                swapchain_idx, device->swapchain_count);
+        *swapchain = NULL;
+
         return WINED3DERR_INVALIDCALL;
     }
+
+    *swapchain = device->swapchains[swapchain_idx];
+    wined3d_swapchain_incref(*swapchain);
+    TRACE("Returning %p.\n", *swapchain);
+
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice *iface,
@@ -1888,7 +1894,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
-    IWineD3DSwapChainImpl *swapchain = NULL;
+    struct wined3d_swapchain *swapchain = NULL;
     struct wined3d_context *context;
     HRESULT hr;
     DWORD state;
@@ -1951,7 +1957,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     /* Setup the implicit swapchain. This also initializes a context. */
     TRACE("Creating implicit swapchain\n");
     hr = IWineD3DDeviceParent_CreateSwapChain(This->device_parent,
-            pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
+            pPresentationParameters, &swapchain);
     if (FAILED(hr))
     {
         WARN("Failed to create implicit swapchain\n");
@@ -2087,13 +2093,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_InitGDI(IWineD3DDevice *iface,
         WINED3DPRESENT_PARAMETERS *pPresentationParameters)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DSwapChainImpl *swapchain = NULL;
+    struct wined3d_swapchain *swapchain = NULL;
     HRESULT hr;
 
     /* Setup the implicit swapchain */
     TRACE("Creating implicit swapchain\n");
     hr = IWineD3DDeviceParent_CreateSwapChain(This->device_parent,
-            pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
+            pPresentationParameters, &swapchain);
     if (FAILED(hr))
     {
         WARN("Failed to create implicit swapchain\n");
@@ -4616,7 +4622,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface,
 static HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UINT swapchain_idx,
         UINT backbuffer_idx, WINED3DBACKBUFFER_TYPE backbuffer_type, IWineD3DSurface **backbuffer)
 {
-    IWineD3DSwapChain *swapchain;
+    struct wined3d_swapchain *swapchain;
     HRESULT hr;
 
     TRACE("iface %p, swapchain_idx %u, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",
@@ -4649,36 +4655,37 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDeviceCaps(IWineD3DDevice *iface, WI
     return wined3d_get_device_caps(device->wined3d, device->adapter->ordinal, device->devType, caps);
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain, WINED3DDISPLAYMODE* pMode) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSwapChain *swapChain;
+static HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface,
+        UINT swapchain_idx, WINED3DDISPLAYMODE *mode)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_swapchain *swapchain;
     HRESULT hr;
 
-    if(iSwapChain > 0) {
-        hr = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapChain);
+    TRACE("iface %p, swapchain_idx %u, mode %p.\n", iface, swapchain_idx, mode);
+
+    if (swapchain_idx)
+    {
+        hr = IWineD3DDeviceImpl_GetSwapChain(iface, swapchain_idx, &swapchain);
         if (SUCCEEDED(hr))
         {
-            hr = wined3d_swapchain_get_display_mode(swapChain, pMode);
-            wined3d_swapchain_decref(swapChain);
-        }
-        else
-        {
-            FIXME("(%p) Error getting display mode\n", This);
+            hr = wined3d_swapchain_get_display_mode(swapchain, mode);
+            wined3d_swapchain_decref(swapchain);
         }
     }
     else
     {
-        /* Don't read the real display mode,
-           but return the stored mode instead. X11 can't change the color
-           depth, and some apps are pretty angry if they SetDisplayMode from
-           24 to 16 bpp and find out that GetDisplayMode still returns 24 bpp
-
-           Also don't relay to the swapchain because with ddraw it's possible
-           that there isn't a swapchain at all */
-        pMode->Width = This->ddraw_width;
-        pMode->Height = This->ddraw_height;
-        pMode->Format = This->ddraw_format;
-        pMode->RefreshRate = 0;
+        /* Don't read the real display mode, but return the stored mode
+         * instead. X11 can't change the color depth, and some apps are
+         * pretty angry if they SetDisplayMode from 24 to 16 bpp and find out
+         * that GetDisplayMode still returns 24 bpp.
+         *
+         * Also don't relay to the swapchain because with ddraw it's possible
+         * that there isn't a swapchain at all. */
+        mode->Width = device->ddraw_width;
+        mode->Height = device->ddraw_height;
+        mode->Format = device->ddraw_format;
+        mode->RefreshRate = 0;
         hr = WINED3D_OK;
     }
 
@@ -5229,7 +5236,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
 static HRESULT WINAPI IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *iface,
         UINT swapchain_idx, IWineD3DSurface *dst_surface)
 {
-    IWineD3DSwapChain *swapchain;
+    struct wined3d_swapchain *swapchain;
     HRESULT hr;
 
     TRACE("iface %p, swapchain_idx %u, dst_surface %p.\n", iface, swapchain_idx, dst_surface);
@@ -5457,7 +5464,7 @@ static BOOL     WINAPI  IWineD3DDeviceImpl_GetSoftwareVertexProcessing(IWineD3DD
 static HRESULT WINAPI IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface,
         UINT swapchain_idx, WINED3DRASTER_STATUS *raster_status)
 {
-    IWineD3DSwapChain *swapchain;
+    struct wined3d_swapchain *swapchain;
     HRESULT hr;
 
     TRACE("iface %p, swapchain_idx %u, raster_status %p.\n",
@@ -6268,7 +6275,7 @@ static BOOL is_display_mode_supported(IWineD3DDeviceImpl *This, const WINED3DPRE
 }
 
 /* Do not call while under the GL lock. */
-static void delete_opengl_contexts(IWineD3DDeviceImpl *device, IWineD3DSwapChainImpl *swapchain)
+static void delete_opengl_contexts(IWineD3DDeviceImpl *device, struct wined3d_swapchain *swapchain)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
@@ -6315,7 +6322,7 @@ static void delete_opengl_contexts(IWineD3DDeviceImpl *device, IWineD3DSwapChain
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT create_primary_opengl_context(IWineD3DDeviceImpl *device, IWineD3DSwapChainImpl *swapchain)
+static HRESULT create_primary_opengl_context(IWineD3DDeviceImpl *device, struct wined3d_swapchain *swapchain)
 {
     struct wined3d_context *context;
     HRESULT hr;
@@ -6383,14 +6390,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
         WINED3DPRESENT_PARAMETERS *pPresentationParameters)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    IWineD3DSwapChainImpl *swapchain;
+    struct wined3d_swapchain *swapchain;
     HRESULT hr;
     BOOL DisplayModeChanged = FALSE;
     WINED3DDISPLAYMODE mode;
     TRACE("(%p)\n", This);
 
-    hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **) &swapchain);
-    if(FAILED(hr)) {
+    hr = IWineD3DDevice_GetSwapChain(iface, 0, &swapchain);
+    if (FAILED(hr))
+    {
         ERR("Failed to get the first implicit swapchain\n");
         return hr;
     }
@@ -6662,7 +6670,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetCreationParameters(IWineD3DDevice 
 static void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice *iface,
         UINT iSwapChain, DWORD flags, const WINED3DGAMMARAMP *pRamp)
 {
-    IWineD3DSwapChain *swapchain;
+    struct wined3d_swapchain *swapchain;
 
     TRACE("Relaying  to swapchain\n");
 
@@ -6673,8 +6681,9 @@ static void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice *iface,
     }
 }
 
-static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT iSwapChain, WINED3DGAMMARAMP* pRamp) {
-    IWineD3DSwapChain *swapchain;
+static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT iSwapChain, WINED3DGAMMARAMP* pRamp)
+{
+    struct wined3d_swapchain *swapchain;
 
     TRACE("Relaying  to swapchain\n");
 
@@ -7109,7 +7118,7 @@ void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *h
 
 void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, UINT *height)
 {
-    IWineD3DSwapChainImpl *swapchain = context->swapchain;
+    struct wined3d_swapchain *swapchain = context->swapchain;
     /* The drawable size of a backbuffer / aux buffer offscreen target is the size of the
      * current context's drawable, which is the size of the back buffer of the swapchain
      * the active context belongs to. */

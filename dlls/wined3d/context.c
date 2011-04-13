@@ -1268,7 +1268,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
 }
 
 /* Do not call while under the GL lock. */
-struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain,
+struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         IWineD3DSurfaceImpl *target, const struct wined3d_format *ds_format)
 {
     IWineD3DDeviceImpl *device = swapchain->device;
@@ -1875,7 +1875,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
         }
         else
         {
-            IWineD3DSwapChainImpl *swapchain = This->swapchains[0];
+            struct wined3d_swapchain *swapchain = This->swapchains[0];
             if (swapchain->back_buffers) target = swapchain->back_buffers[0];
             else target = swapchain->front_buffer;
         }
@@ -2006,7 +2006,7 @@ static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device,
         struct wined3d_context *context, IWineD3DSurfaceImpl *depth_stencil)
 {
     /* Onscreen surfaces are always in a swapchain */
-    IWineD3DSwapChainImpl *swapchain = context->current_rt->container.u.swapchain;
+    struct wined3d_swapchain *swapchain = context->current_rt->container.u.swapchain;
 
     if (context->render_offscreen || !depth_stencil) return;
     if (match_depth_stencil_format(swapchain->ds_format, depth_stencil->resource.format)) return;

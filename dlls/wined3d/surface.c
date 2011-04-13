@@ -1169,7 +1169,7 @@ void surface_set_compatible_renderbuffer(IWineD3DSurfaceImpl *surface, IWineD3DS
 
 GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DSwapChainImpl *swapchain = surface->container.u.swapchain;
+    struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
 
     TRACE("surface %p.\n", surface);
 
@@ -2260,7 +2260,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
             pal = This->palette->palents;
         } else {
             IWineD3DSurfaceImpl *dds_primary;
-            IWineD3DSwapChainImpl *swapchain;
+            struct wined3d_swapchain *swapchain;
             swapchain = This->resource.device->swapchains[0];
             dds_primary = swapchain->front_buffer;
             if (dds_primary && dds_primary->palette)
@@ -2847,7 +2847,7 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) {
 static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD flags)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DSwapChainImpl *swapchain = NULL;
+    struct wined3d_swapchain *swapchain = NULL;
 
     TRACE("iface %p, override %p, flags %#x.\n", iface, override, flags);
 
@@ -3020,8 +3020,8 @@ static void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *dst_surface, IWine
         const RECT *src_rect, const RECT *dst_rect_in, WINED3DTEXTUREFILTERTYPE Filter)
 {
     IWineD3DDeviceImpl *device = dst_surface->resource.device;
+    struct wined3d_swapchain *src_swapchain = NULL;
     GLuint src, backup = 0;
-    IWineD3DSwapChainImpl *src_swapchain = NULL;
     float left, right, top, bottom; /* Texture coordinates */
     UINT fbwidth = src_surface->resource.width;
     UINT fbheight = src_surface->resource.height;
@@ -3568,7 +3568,7 @@ static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
         IWineD3DSurfaceImpl *src_surface, const RECT *src_rect_in,
         IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in)
 {
-    IWineD3DSwapChainImpl *swapchain = NULL;
+    struct wined3d_swapchain *swapchain = NULL;
     struct wined3d_context *context;
     RECT src_rect, dst_rect;
 
@@ -3660,7 +3660,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
 {
     IWineD3DDeviceImpl *device = dst_surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    IWineD3DSwapChainImpl *srcSwapchain = NULL, *dstSwapchain = NULL;
+    struct wined3d_swapchain *srcSwapchain = NULL, *dstSwapchain = NULL;
     RECT dst_rect, src_rect;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, blt_fx %p, filter %s.\n",
@@ -4918,7 +4918,7 @@ static WINED3DSURFTYPE WINAPI IWineD3DSurfaceImpl_GetImplType(IWineD3DSurface *i
 
 BOOL surface_is_offscreen(IWineD3DSurfaceImpl *surface)
 {
-    IWineD3DSwapChainImpl *swapchain = surface->container.u.swapchain;
+    struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
 
     /* Not on a swapchain - must be offscreen */
     if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN) return TRUE;

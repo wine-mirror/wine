@@ -54,8 +54,6 @@
 
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
-typedef struct wined3d_swapchain IWineD3DSwapChainImpl;
-typedef struct wined3d_swapchain IWineD3DSwapChain;
 
 /* Texture format fixups */
 
@@ -1050,7 +1048,7 @@ struct wined3d_context
     DWORD                   numDirtyEntries;
     DWORD isStateDirty[STATE_HIGHEST / (sizeof(DWORD) * CHAR_BIT) + 1]; /* Bitmap to find out quickly if a state is dirty */
 
-    IWineD3DSwapChainImpl *swapchain;
+    struct wined3d_swapchain *swapchain;
     IWineD3DSurfaceImpl *current_rt;
     DWORD                   tid;    /* Thread ID which owns this context at the moment */
 
@@ -1220,7 +1218,7 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, IWineD3DSurfaceImpl *depth_stencil, BOOL use_render_buffer) DECLSPEC_HIDDEN;
 void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fbo) DECLSPEC_HIDDEN;
 void context_check_fbo_status(struct wined3d_context *context, GLenum target) DECLSPEC_HIDDEN;
-struct wined3d_context *context_create(IWineD3DSwapChainImpl *swapchain, IWineD3DSurfaceImpl *target,
+struct wined3d_context *context_create(struct wined3d_swapchain *swapchain, IWineD3DSurfaceImpl *target,
         const struct wined3d_format *ds_format) DECLSPEC_HIDDEN;
 void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_free_event_query(struct wined3d_event_query *query) DECLSPEC_HIDDEN;
@@ -1709,7 +1707,7 @@ struct IWineD3DDeviceImpl
     WINED3DDEVTYPE                  devType;
     HWND focus_window;
 
-    IWineD3DSwapChainImpl **swapchains;
+    struct wined3d_swapchain **swapchains;
     UINT swapchain_count;
 
     struct list             resources; /* a linked list to track resources created by the device */
@@ -2551,10 +2549,10 @@ struct wined3d_swapchain
     HWND device_window;
 };
 
-void x11_copy_to_screen(IWineD3DSwapChainImpl *This, const RECT *rc) DECLSPEC_HIDDEN;
+void x11_copy_to_screen(struct wined3d_swapchain *swapchain, const RECT *rect) DECLSPEC_HIDDEN;
 
 struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
-HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
+HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTYPE surface_type,
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 

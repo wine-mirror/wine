@@ -1079,7 +1079,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         DWORD d;
     } tmpfloat;
     unsigned int i;
-    IWineD3DSwapChain *swapchain;
+    struct wined3d_swapchain *swapchain;
     IWineD3DSurface *backbuffer;
     HRESULT hr;
 
@@ -1305,8 +1305,8 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         /* Set the default viewport */
         state->viewport.X = 0;
         state->viewport.Y = 0;
-        state->viewport.Width = ((IWineD3DSwapChainImpl *)swapchain)->presentParms.BackBufferWidth;
-        state->viewport.Height = ((IWineD3DSwapChainImpl *)swapchain)->presentParms.BackBufferHeight;
+        state->viewport.Width = swapchain->presentParms.BackBufferWidth;
+        state->viewport.Height = swapchain->presentParms.BackBufferHeight;
         state->viewport.MinZ = 0.0f;
         state->viewport.MaxZ = 1.0f;
 

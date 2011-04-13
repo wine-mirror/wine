@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 /* Do not call while under the GL lock. */
-static void swapchain_cleanup(IWineD3DSwapChainImpl *swapchain)
+static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
 {
     WINED3DDISPLAYMODE mode;
     UINT i;
@@ -269,11 +269,11 @@ HRESULT CDECL wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *s
 }
 
 /* A GL context is provided by the caller */
-static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *context,
-        const RECT *src_rect, const RECT *dst_rect)
+static void swapchain_blit(struct wined3d_swapchain *swapchain,
+        struct wined3d_context *context, const RECT *src_rect, const RECT *dst_rect)
 {
-    IWineD3DDeviceImpl *device = This->device;
-    IWineD3DSurfaceImpl *backbuffer = This->back_buffers[0];
+    IWineD3DSurfaceImpl *backbuffer = swapchain->back_buffers[0];
+    IWineD3DDeviceImpl *device = swapchain->device;
     UINT src_w = src_rect->right - src_rect->left;
     UINT src_h = src_rect->bottom - src_rect->top;
     GLenum gl_filter;
@@ -282,14 +282,14 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
     UINT win_h;
 
     TRACE("swapchain %p, context %p, src_rect %s, dst_rect %s.\n",
-            This, context, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect));
+            swapchain, context, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect));
 
     if (src_w == dst_rect->right - dst_rect->left && src_h == dst_rect->bottom - dst_rect->top)
         gl_filter = GL_NEAREST;
     else
         gl_filter = GL_LINEAR;
 
-    GetClientRect(This->win_handle, &win_rect);
+    GetClientRect(swapchain->win_handle, &win_rect);
     win_h = win_rect.bottom - win_rect.top;
 
     if (gl_info->fbo_ops.glBlitFramebuffer && is_identity_fixup(backbuffer->resource.format->color_fixup))
@@ -309,7 +309,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
 
         glDisable(GL_SCISSOR_TEST);
-        IWineD3DDeviceImpl_MarkStateDirty(This->device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
         /* Note that the texture is upside down */
         gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,
@@ -326,7 +326,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
         float tex_right = src_rect->right;
         float tex_bottom = src_rect->bottom;
 
-        context2 = context_acquire(This->device, This->back_buffers[0]);
+        context2 = context_acquire(device, swapchain->back_buffers[0]);
         context_apply_blit_state(context2, device);
 
         if (backbuffer->flags & SFLAG_NORMCOORD)
@@ -395,7 +395,7 @@ static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *
     }
 }
 
-static HRESULT swapchain_gl_present(IWineD3DSwapChainImpl *swapchain, const RECT *src_rect_in,
+static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
         const RECT *dst_rect_in, const RGNDATA *dirty_region, DWORD flags)
 {
     const struct wined3d_gl_info *gl_info;
@@ -634,7 +634,7 @@ static const struct wined3d_swapchain_ops swapchain_gl_ops =
 };
 
 /* Helper function that blits the front buffer contents to the target window. */
-void x11_copy_to_screen(IWineD3DSwapChainImpl *swapchain, const RECT *rect)
+void x11_copy_to_screen(struct wined3d_swapchain *swapchain, const RECT *rect)
 {
     IWineD3DSurfaceImpl *front;
     POINT offset = {0, 0};
@@ -710,7 +710,7 @@ void x11_copy_to_screen(IWineD3DSwapChainImpl *swapchain, const RECT *rect)
     ReleaseDC(window, dst_dc);
 }
 
-static HRESULT swapchain_gdi_present(IWineD3DSwapChainImpl *swapchain, const RECT *src_rect_in,
+static HRESULT swapchain_gdi_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
         const RECT *dst_rect_in, const RGNDATA *dirty_region, DWORD flags)
 {
     IWineD3DSurfaceImpl *front, *back;
@@ -794,7 +794,7 @@ static const struct wined3d_swapchain_ops swapchain_gdi_ops =
 };
 
 /* Do not call while under the GL lock. */
-HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
+HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTYPE surface_type,
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {

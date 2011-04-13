@@ -87,7 +87,7 @@ static void gdi_surface_realize_palette(IWineD3DSurfaceImpl *surface)
     /* Tell the swapchain to update the screen. */
     if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
     {
-        IWineD3DSwapChainImpl *swapchain = surface->container.u.swapchain;
+        struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
         if (surface == swapchain->front_buffer)
         {
             x11_copy_to_screen(swapchain, NULL);
@@ -184,7 +184,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Unmap(IWineD3DSurface *iface)
     /* Tell the swapchain to update the screen */
     if (This->container.type == WINED3D_CONTAINER_SWAPCHAIN)
     {
-        IWineD3DSwapChainImpl *swapchain = This->container.u.swapchain;
+        struct wined3d_swapchain *swapchain = This->container.u.swapchain;
         if (This == swapchain->front_buffer)
         {
             x11_copy_to_screen(swapchain, &This->lockedRect);
@@ -213,7 +213,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Unmap(IWineD3DSurface *iface)
 static HRESULT WINAPI IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD flags)
 {
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DSwapChainImpl *swapchain;
+    struct wined3d_swapchain *swapchain;
     HRESULT hr;
 
     if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN)
@@ -279,7 +279,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
             pal = This->palette->palents;
         } else {
             IWineD3DSurfaceImpl *dds_primary;
-            IWineD3DSwapChainImpl *swapchain;
+            struct wined3d_swapchain *swapchain;
             swapchain = This->resource.device->swapchains[0];
             dds_primary = swapchain->front_buffer;
             if (dds_primary && dds_primary->palette)

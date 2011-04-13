@@ -7206,7 +7206,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
                            IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum wined3d_blit_op blit_op,
                            DWORD Filter)
 {
-    IWineD3DSwapChainImpl *dst_swapchain;
+    struct wined3d_swapchain *dst_swapchain;
     struct wined3d_context *context;
     RECT dst_rect = *dst_rect_in;
 
