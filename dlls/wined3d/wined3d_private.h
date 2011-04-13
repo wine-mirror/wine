@@ -2517,9 +2517,11 @@ struct wined3d_rendertarget_view
 void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
         struct wined3d_resource *resource, void *parent) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IWineD3DSwapChainImpl implementation structure (extends IUnknown)
- */
+struct wined3d_swapchain_ops
+{
+    HRESULT (*swapchain_present)(struct IWineD3DSwapChainImpl *swapchain, const RECT *src_rect,
+            const RECT *dst_rect, const RGNDATA *dirty_region, DWORD flags);
+};
 
 struct IWineD3DSwapChainImpl
 {
@@ -2529,6 +2531,7 @@ struct IWineD3DSwapChainImpl
 
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
+    const struct wined3d_swapchain_ops *swapchain_ops;
     IWineD3DDeviceImpl *device;
 
     /* IWineD3DSwapChain fields */
