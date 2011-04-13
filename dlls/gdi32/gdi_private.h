@@ -97,6 +97,7 @@ typedef struct dibdrv_physdev
     struct gdi_physdev dev;
     dib_info dib;
 
+    HRGN clip;
     DWORD defer;
 
     /* pen */

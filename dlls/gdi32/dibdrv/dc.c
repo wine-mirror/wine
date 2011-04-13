@@ -32,7 +32,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dib);
  */
 static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
 {
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p)\n", dev);
+    DeleteObject(pdev->clip);
     return 0;
 }
 
@@ -129,6 +131,7 @@ static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     if (!bmp) return 0;
     assert(bmp->dib);
 
+    pdev->clip = CreateRectRgn(0, 0, 0, 0);
     pdev->defer = 0;
 
     if(!init_dib(&pdev->dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields, bmp->dib->dsBm.bmBits))
@@ -137,6 +140,19 @@ static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     GDI_ReleaseObj( bitmap );
 
     return next->funcs->pSelectBitmap( next, bitmap );
+}
+
+/***********************************************************************
+ *           dibdrv_SetDeviceClipping
+ */
+static void CDECL dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    TRACE("(%p, %p, %p)\n", dev, vis_rgn, clip_rgn);
+
+    CombineRgn( pdev->clip, vis_rgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
+    return next->funcs->pSetDeviceClipping( next, vis_rgn, clip_rgn);
 }
 
 /***********************************************************************
@@ -245,7 +261,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pSetDIBColorTable */
     NULL,                               /* pSetDIBits */
     NULL,                               /* pSetDIBitsToDevice */
-    NULL,                               /* pSetDeviceClipping */
+    dibdrv_SetDeviceClipping,           /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
     NULL,                               /* pSetLayout */
     NULL,                               /* pSetMapMode */
