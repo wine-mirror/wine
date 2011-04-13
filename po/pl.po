@@ -2015,13 +2015,12 @@ msgid "Default MidiOut Device"
 msgstr "Standardowe urządzenie Device"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Ustawienia standardowe"
+msgstr "Ustawienia regionalne"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr ""
+msgstr "%uMB użytych, %uMB dostępnych"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
@@ -2029,7 +2028,7 @@ msgstr "Opcje"
 
 #: hhctrl.rc:70
 msgid "S&ync"
-msgstr ""
+msgstr "S&ynchronizuj"
 
 #: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
@@ -2187,36 +2186,32 @@ msgstr ""
 "ustawienia"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "&Zapisz ustawienia przy zakończeniu"
+msgstr "&Poziom zabezpieczeń dla tej strefy"
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
 msgstr "Dostosuj"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Najniższy"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "N&iska"
+msgstr "Niski"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Średni"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Wysoki"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&Wysoka"
+msgstr "Najwyższy"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -5199,9 +5194,8 @@ msgid "Invalid driver\n"
 msgstr "Niepoprawny sterownik\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "Niepoprawny obiekt\n"
+msgstr "Ustawiono niepoprawny przelicznik obiektu\n"
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send\n"
@@ -9270,9 +9264,8 @@ msgid "&Multi String Value"
 msgstr "&Dana wielotekstowa (MULTISZ)"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "&Wartość ciągu"
+msgstr "Wartość ciągu &rozwijalnego"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -11014,9 +11007,8 @@ msgid "Large"
 msgstr "Duże"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "Pomo&c"
+msgstr "Jak korzystać z pomo&cy\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
