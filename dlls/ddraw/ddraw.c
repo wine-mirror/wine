@@ -2520,7 +2520,7 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     IDirectDrawImpl *This = surfImpl->ddraw;
     struct wined3d_clipper *clipper = NULL;
     IWineD3DSurface *wineD3DSurface;
-    IWineD3DSwapChain *swapchain;
+    struct wined3d_swapchain *swapchain;
     void *parent;
     HRESULT hr;
 
@@ -2533,8 +2533,8 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     if(surfImpl->ImplType == This->ImplType) return DDENUMRET_OK; /* Continue */
 
     /* Get the objects */
-    swapchain = surfImpl->wineD3DSwapChain;
-    surfImpl->wineD3DSwapChain = NULL;
+    swapchain = surfImpl->wined3d_swapchain;
+    surfImpl->wined3d_swapchain = NULL;
     wineD3DSurface = surfImpl->WineD3DSurface;
 
     /* get the clipper */
@@ -2934,7 +2934,7 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
     if (FAILED(hr))
     {
         WARN("Failed to initialize GDI ddraw implementation, hr %#x.\n", hr);
-        primary->wineD3DSwapChain = NULL;
+        primary->wined3d_swapchain = NULL;
     }
 
     return hr;
@@ -5888,7 +5888,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDeviceParent *iface,
-        WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **swapchain)
+        WINED3DPRESENT_PARAMETERS *present_parameters, struct wined3d_swapchain **swapchain)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
     IDirectDrawSurfaceImpl *iterator;
@@ -5905,11 +5905,11 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
         return hr;
     }
 
-    This->d3d_target->wineD3DSwapChain = *swapchain;
+    This->d3d_target->wined3d_swapchain = *swapchain;
     iterator = This->d3d_target->complex_array[0];
     while (iterator)
     {
-        iterator->wineD3DSwapChain = *swapchain;
+        iterator->wined3d_swapchain = *swapchain;
         iterator = iterator->complex_array[0];
     }
 

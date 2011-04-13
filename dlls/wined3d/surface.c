@@ -2897,9 +2897,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     else
         swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_FOUR;
 
-    /* Flipping a OpenGL surface -> Use WineD3DDevice::Present */
-    return IWineD3DSwapChain_Present((IWineD3DSwapChain *)swapchain,
-            NULL, NULL, swapchain->win_handle, NULL, 0);
+    /* Flipping a OpenGL surface -> present. */
+    return wined3d_swapchain_present(swapchain, NULL, NULL, swapchain->win_handle, NULL, 0);
 }
 
 /* Does a direct frame buffer -> texture copy. Stretching is done
@@ -3795,9 +3794,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *dst_surface,
                 dstSwapchain->presentParms.SwapEffect = WINED3DSWAPEFFECT_COPY;
                 dstSwapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_IMMEDIATE;
 
-                TRACE("Full screen back buffer -> front buffer blt, performing a flip instead\n");
-                IWineD3DSwapChain_Present((IWineD3DSwapChain *)dstSwapchain,
-                        NULL, NULL, dstSwapchain->win_handle, NULL, 0);
+                TRACE("Full screen back buffer -> front buffer blt, performing a flip instead.\n");
+                wined3d_swapchain_present(dstSwapchain, NULL, NULL, dstSwapchain->win_handle, NULL, 0);
 
                 dstSwapchain->presentParms.SwapEffect = orig_swap;
 

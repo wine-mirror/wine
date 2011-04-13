@@ -1465,7 +1465,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDeviceParent *iface,
-        WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **swapchain)
+        WINED3DPRESENT_PARAMETERS *present_parameters, struct wined3d_swapchain **swapchain)
 {
     IWineDXGIDevice *wine_device;
     HRESULT hr;

@@ -282,7 +282,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_create_swapchain(IWineDXGIDevice *iface,
-        WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **wined3d_swapchain)
+        WINED3DPRESENT_PARAMETERS *present_parameters, struct wined3d_swapchain **wined3d_swapchain)
 {
     struct dxgi_swapchain *object;
     HRESULT hr;

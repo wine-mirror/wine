@@ -54,7 +54,8 @@
 
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
-typedef struct IWineD3DSwapChainImpl  IWineD3DSwapChainImpl;
+typedef struct wined3d_swapchain IWineD3DSwapChainImpl;
+typedef struct wined3d_swapchain IWineD3DSwapChain;
 
 /* Texture format fixups */
 
@@ -2015,7 +2016,7 @@ struct wined3d_subresource_container
     enum wined3d_container_type type;
     union
     {
-        struct IWineD3DSwapChainImpl *swapchain;
+        struct wined3d_swapchain *swapchain;
         struct wined3d_texture *texture;
         void *base;
     } u;
@@ -2519,44 +2520,40 @@ void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
 
 struct wined3d_swapchain_ops
 {
-    HRESULT (*swapchain_present)(struct IWineD3DSwapChainImpl *swapchain, const RECT *src_rect,
+    HRESULT (*swapchain_present)(struct wined3d_swapchain *swapchain, const RECT *src_rect,
             const RECT *dst_rect, const RGNDATA *dirty_region, DWORD flags);
 };
 
-struct IWineD3DSwapChainImpl
+struct wined3d_swapchain
 {
-    /*IUnknown part*/
-    const IWineD3DSwapChainVtbl *lpVtbl;
-    LONG                      ref;     /* Note: Ref counting not required */
-
+    LONG ref;
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
     const struct wined3d_swapchain_ops *swapchain_ops;
     IWineD3DDeviceImpl *device;
 
-    /* IWineD3DSwapChain fields */
     IWineD3DSurfaceImpl **back_buffers;
     IWineD3DSurfaceImpl *front_buffer;
     WINED3DPRESENT_PARAMETERS presentParms;
-    DWORD                     orig_width, orig_height;
+    DWORD orig_width, orig_height;
     enum wined3d_format_id orig_fmt;
-    WINED3DGAMMARAMP          orig_gamma;
-    BOOL                      render_to_fbo;
+    WINED3DGAMMARAMP orig_gamma;
+    BOOL render_to_fbo;
     const struct wined3d_format *ds_format;
 
     LONG prev_time, frames;   /* Performance tracking */
     unsigned int vSyncCounter;
 
     struct wined3d_context **context;
-    unsigned int            num_contexts;
+    unsigned int num_contexts;
 
-    HWND                    win_handle;
+    HWND win_handle;
     HWND device_window;
 };
 
 void x11_copy_to_screen(IWineD3DSwapChainImpl *This, const RECT *rc) DECLSPEC_HIDDEN;
 
-struct wined3d_context *swapchain_get_context(struct IWineD3DSwapChainImpl *swapchain) DECLSPEC_HIDDEN;
+struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface_type,
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;

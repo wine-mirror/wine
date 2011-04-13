@@ -54,7 +54,7 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_AddRef(IDXGISwapChain *iface)
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
     if (refcount == 1)
-        IWineD3DSwapChain_AddRef(This->wined3d_swapchain);
+        wined3d_swapchain_incref(This->wined3d_swapchain);
 
     return refcount;
 }
@@ -73,19 +73,11 @@ static ULONG STDMETHODCALLTYPE dxgi_swapchain_Release(IDXGISwapChain *iface)
 
         FIXME("Only a single swapchain is supported\n");
 
-        hr = IWineD3DSwapChain_GetDevice(This->wined3d_swapchain, &wined3d_device);
+        wined3d_device = wined3d_swapchain_get_device(This->wined3d_swapchain);
+        hr = IWineD3DDevice_Uninit3D(wined3d_device);
         if (FAILED(hr))
         {
-            ERR("Failed to get the wined3d device, hr %#x\n", hr);
-        }
-        else
-        {
-            hr = IWineD3DDevice_Uninit3D(wined3d_device);
-            IWineD3DDevice_Release(wined3d_device);
-            if (FAILED(hr))
-            {
-                ERR("Uninit3D failed, hr %#x\n", hr);
-            }
+            ERR("Uninit3D failed, hr %#x\n", hr);
         }
     }
 
@@ -145,7 +137,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_Present(IDXGISwapChain *iface, U
     if (sync_interval) FIXME("Unimplemented sync interval %u\n", sync_interval);
     if (flags) FIXME("Unimplemented flags %#x\n", flags);
 
-    return IWineD3DSwapChain_Present(This->wined3d_swapchain, NULL, NULL, NULL, NULL, 0);
+    return wined3d_swapchain_present(This->wined3d_swapchain, NULL, NULL, NULL, NULL, 0);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
@@ -161,7 +153,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
 
     EnterCriticalSection(&dxgi_cs);
 
-    hr = IWineD3DSwapChain_GetBackBuffer(This->wined3d_swapchain, buffer_idx, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    hr = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain,
+            buffer_idx, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&dxgi_cs);

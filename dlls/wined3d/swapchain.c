@@ -3,6 +3,7 @@
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,7 +34,7 @@ static void swapchain_cleanup(IWineD3DSwapChainImpl *swapchain)
 
     TRACE("Destroying swapchain %p.\n", swapchain);
 
-    IWineD3DSwapChain_SetGammaRamp((IWineD3DSwapChain *)swapchain, 0, &swapchain->orig_gamma);
+    wined3d_swapchain_set_gamma_ramp(swapchain, 0, &swapchain->orig_gamma);
 
     /* Release the swapchain's draw buffers. Make sure swapchain->back_buffers[0]
      * is the last buffer to be destroyed, FindContext() depends on that. */
@@ -81,28 +82,8 @@ static void swapchain_cleanup(IWineD3DSwapChainImpl *swapchain)
     }
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_QueryInterface(IWineD3DSwapChain *iface, REFIID riid, void **object)
+ULONG CDECL wined3d_swapchain_incref(struct wined3d_swapchain *swapchain)
 {
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
-
-    if (IsEqualGUID(riid, &IID_IWineD3DSwapChain)
-            || IsEqualGUID(riid, &IID_IWineD3DBase)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
-    }
-
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-
-    *object = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI IWineD3DBaseSwapChainImpl_AddRef(IWineD3DSwapChain *iface)
-{
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
     ULONG refcount = InterlockedIncrement(&swapchain->ref);
 
     TRACE("%p increasing refcount to %u.\n", swapchain, refcount);
@@ -111,9 +92,8 @@ static ULONG WINAPI IWineD3DBaseSwapChainImpl_AddRef(IWineD3DSwapChain *iface)
 }
 
 /* Do not call while under the GL lock. */
-static ULONG WINAPI IWineD3DBaseSwapChainImpl_Release(IWineD3DSwapChain *iface)
+ULONG CDECL wined3d_swapchain_decref(struct wined3d_swapchain *swapchain)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
     ULONG refcount = InterlockedDecrement(&swapchain->ref);
 
     TRACE("%p decreasing refcount to %u.\n", swapchain, refcount);
@@ -128,17 +108,15 @@ static ULONG WINAPI IWineD3DBaseSwapChainImpl_Release(IWineD3DSwapChain *iface)
     return refcount;
 }
 
-static void * WINAPI IWineD3DBaseSwapChainImpl_GetParent(IWineD3DSwapChain *iface)
+void * CDECL wined3d_swapchain_get_parent(const struct wined3d_swapchain *swapchain)
 {
-    TRACE("iface %p.\n", iface);
+    TRACE("swapchain %p.\n", swapchain);
 
-    return ((IWineD3DSwapChainImpl *)iface)->parent;
+    return swapchain->parent;
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetDestWindowOverride(IWineD3DSwapChain *iface, HWND window)
+HRESULT CDECL wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWND window)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
-
     if (!window)
         window = swapchain->device_window;
     if (window == swapchain->win_handle)
@@ -151,29 +129,26 @@ static HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetDestWindowOverride(IWineD3DSw
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_Present(IWineD3DSwapChain *iface,
+HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
         const RGNDATA *dirty_region, DWORD flags)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
-
-    TRACE("iface %p, src_rect %s, dst_rect %s, dst_window_override %p, dirty_region %p, flags %#x.\n",
-            iface, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect),
+    TRACE("swapchain %p, src_rect %s, dst_rect %s, dst_window_override %p, dirty_region %p, flags %#x.\n",
+            swapchain, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect),
             dst_window_override, dirty_region, flags);
 
-    IWineD3DBaseSwapChainImpl_SetDestWindowOverride(iface, dst_window_override);
+    wined3d_swapchain_set_window(swapchain, dst_window_override);
 
     return swapchain->swapchain_ops->swapchain_present(swapchain,
             src_rect, dst_rect, dirty_region, flags);
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface,
+HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapchain *swapchain,
         IWineD3DSurface *dst_surface)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
     POINT offset = {0, 0};
 
-    TRACE("iface %p, dst_surface %p.\n", iface, dst_surface);
+    TRACE("swapchain %p, dst_surface %p.\n", swapchain, dst_surface);
 
     if (swapchain->presentParms.Windowed)
         MapWindowPoints(swapchain->win_handle, NULL, &offset, 1);
@@ -184,13 +159,11 @@ static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetFrontBufferData(IWineD3DSwapC
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *iface,
+HRESULT CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
         UINT back_buffer_idx, WINED3DBACKBUFFER_TYPE type, IWineD3DSurface **back_buffer)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
-
-    TRACE("iface %p, back_buffer_idx %u, type %#x, back_buffer %p.\n",
-            iface, back_buffer_idx, type, back_buffer);
+    TRACE("swapchain %p, back_buffer_idx %u, type %#x, back_buffer %p.\n",
+            swapchain, back_buffer_idx, type, back_buffer);
 
     /* Return invalid if there is no backbuffer array, otherwise it will
      * crash when ddraw is used (there swapchain->back_buffers is always
@@ -214,14 +187,14 @@ static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetBackBuffer(IWineD3DSwapChain 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetRasterStatus(IWineD3DSwapChain *iface,
+HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain *swapchain,
         WINED3DRASTER_STATUS *raster_status)
 {
     static BOOL warned;
     /* No OpenGL equivalent */
     if (!warned)
     {
-        FIXME("iface %p, raster_status %p stub!\n", iface, raster_status);
+        FIXME("swapchain %p, raster_status %p stub!\n", swapchain, raster_status);
         warned = TRUE;
     }
 
@@ -233,12 +206,11 @@ static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetRasterStatus(IWineD3DSwapChai
     return WINED3DERR_INVALIDCALL;
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *iface, WINED3DDISPLAYMODE *mode)
+HRESULT CDECL wined3d_swapchain_get_display_mode(const struct wined3d_swapchain *swapchain, WINED3DDISPLAYMODE *mode)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
     HRESULT hr;
 
-    TRACE("iface %p, mode %p.\n", iface, mode);
+    TRACE("swapchain %p, mode %p.\n", swapchain, mode);
 
     hr = wined3d_get_adapter_display_mode(swapchain->device->wined3d, swapchain->device->adapter->ordinal, mode);
 
@@ -248,37 +220,29 @@ static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDisplayMode(IWineD3DSwapChain
     return hr;
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetDevice(IWineD3DSwapChain *iface, IWineD3DDevice **device)
+IWineD3DDevice * CDECL wined3d_swapchain_get_device(const struct wined3d_swapchain *swapchain)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
+    TRACE("swapchain %p.\n", swapchain);
 
-    TRACE("iface %p, device %p.\n", iface, device);
-
-    *device = (IWineD3DDevice *)swapchain->device;
-    IWineD3DDevice_AddRef(*device);
-
-    return WINED3D_OK;
+    return (IWineD3DDevice *)swapchain->device;
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetPresentParameters(IWineD3DSwapChain *iface,
+HRESULT CDECL wined3d_swapchain_get_present_parameters(const struct wined3d_swapchain *swapchain,
         WINED3DPRESENT_PARAMETERS *present_parameters)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
-
-    TRACE("iface %p, present_parameters %p.\n", iface, present_parameters);
+    TRACE("swapchain %p, present_parameters %p.\n", swapchain, present_parameters);
 
     *present_parameters = swapchain->presentParms;
 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface,
+HRESULT CDECL wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *swapchain,
         DWORD flags, const WINED3DGAMMARAMP *ramp)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
     HDC dc;
 
-    TRACE("iface %p, flags %#x, ramp %p.\n", iface, flags, ramp);
+    TRACE("swapchain %p, flags %#x, ramp %p.\n", swapchain, flags, ramp);
 
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
@@ -290,13 +254,12 @@ static HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface,
+HRESULT CDECL wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *swapchain,
         WINED3DGAMMARAMP *ramp)
 {
-    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)iface;
     HDC dc;
 
-    TRACE("iface %p, ramp %p.\n", iface, ramp);
+    TRACE("swapchain %p, ramp %p.\n", swapchain, ramp);
 
     dc = GetDC(swapchain->device_window);
     GetDeviceGammaRamp(dc, ramp);
@@ -304,24 +267,6 @@ static HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *
 
     return WINED3D_OK;
 }
-
-static const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
-{
-    IWineD3DBaseSwapChainImpl_QueryInterface,
-    IWineD3DBaseSwapChainImpl_AddRef,
-    IWineD3DBaseSwapChainImpl_Release,
-    IWineD3DBaseSwapChainImpl_GetParent,
-    IWineD3DBaseSwapChainImpl_GetDevice,
-    IWineD3DBaseSwapChainImpl_Present,
-    IWineD3DBaseSwapChainImpl_SetDestWindowOverride,
-    IWineD3DBaseSwapChainImpl_GetFrontBufferData,
-    IWineD3DBaseSwapChainImpl_GetBackBuffer,
-    IWineD3DBaseSwapChainImpl_GetRasterStatus,
-    IWineD3DBaseSwapChainImpl_GetDisplayMode,
-    IWineD3DBaseSwapChainImpl_GetPresentParameters,
-    IWineD3DBaseSwapChainImpl_SetGammaRamp,
-    IWineD3DBaseSwapChainImpl_GetGammaRamp
-};
 
 /* A GL context is provided by the caller */
 static void swapchain_blit(IWineD3DSwapChainImpl *This, struct wined3d_context *context,
@@ -875,8 +820,6 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
                 "Please configure the application to use double buffering (1 back buffer) if possible.\n");
     }
 
-    swapchain->lpVtbl = &IWineD3DSwapChain_Vtbl;
-
     switch (surface_type)
     {
         case SURFACE_GDI:
@@ -1093,7 +1036,7 @@ HRESULT swapchain_init(IWineD3DSwapChainImpl *swapchain, WINED3DSURFTYPE surface
         }
     }
 
-    IWineD3DSwapChain_GetGammaRamp((IWineD3DSwapChain *)swapchain, &swapchain->orig_gamma);
+    wined3d_swapchain_get_gamma_ramp(swapchain, &swapchain->orig_gamma);
 
     return WINED3D_OK;
 
@@ -1140,7 +1083,7 @@ err:
 }
 
 /* Do not call while under the GL lock. */
-static struct wined3d_context *swapchain_create_context(struct IWineD3DSwapChainImpl *swapchain)
+static struct wined3d_context *swapchain_create_context(struct wined3d_swapchain *swapchain)
 {
     struct wined3d_context **newArray;
     struct wined3d_context *ctx;
@@ -1170,7 +1113,7 @@ static struct wined3d_context *swapchain_create_context(struct IWineD3DSwapChain
     return ctx;
 }
 
-struct wined3d_context *swapchain_get_context(struct IWineD3DSwapChainImpl *swapchain)
+struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchain)
 {
     DWORD tid = GetCurrentThreadId();
     unsigned int i;

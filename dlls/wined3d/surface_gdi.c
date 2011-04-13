@@ -223,8 +223,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     }
 
     swapchain = surface->container.u.swapchain;
-    hr = IWineD3DSwapChain_Present((IWineD3DSwapChain *)swapchain,
-            NULL, NULL, swapchain->win_handle, NULL, 0);
+    hr = wined3d_swapchain_present(swapchain, NULL, NULL, swapchain->win_handle, NULL, 0);
 
     return hr;
 }

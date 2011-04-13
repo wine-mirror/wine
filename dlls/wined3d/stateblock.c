@@ -1287,7 +1287,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     hr = IWineD3DDevice_GetSwapChain((IWineD3DDevice *)device, 0, &swapchain);
     if (SUCCEEDED(hr) && swapchain)
     {
-        hr = IWineD3DSwapChain_GetBackBuffer(swapchain, 0, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);
+        hr = wined3d_swapchain_get_back_buffer(swapchain, 0, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);
         if (SUCCEEDED(hr) && backbuffer)
         {
             struct wined3d_resource_desc desc;
@@ -1310,7 +1310,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         state->viewport.MinZ = 0.0f;
         state->viewport.MaxZ = 1.0f;
 
-        IWineD3DSwapChain_Release(swapchain);
+        wined3d_swapchain_decref(swapchain);
     }
 
     TRACE("Done.\n");

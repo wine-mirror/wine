@@ -162,7 +162,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
         IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
 {
     WINED3DPRESENT_PARAMETERS present_parameters;
-    IWineD3DSwapChain *wined3d_swapchain;
+    struct wined3d_swapchain *wined3d_swapchain;
     IWineD3DDevice *wined3d_device;
     IWineDXGIDevice *dxgi_device;
     UINT count;
@@ -235,8 +235,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
         return hr;
     }
 
-    *swapchain = IWineD3DSwapChain_GetParent(wined3d_swapchain);
-    IUnknown_Release(wined3d_swapchain);
+    *swapchain = wined3d_swapchain_get_parent(wined3d_swapchain);
+    wined3d_swapchain_decref(wined3d_swapchain);
 
     /* FIXME? The swapchain is created with refcount 1 by the wined3d device,
      * but the wined3d device can't hold a real reference. */

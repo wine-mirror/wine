@@ -229,12 +229,8 @@ struct IDirect3DSwapChain8Impl
     /* IUnknown fields */
     IDirect3DSwapChain8 IDirect3DSwapChain8_iface;
     LONG                ref;
-
-    /* IDirect3DSwapChain8 fields */
-    IWineD3DSwapChain  *wineD3DSwapChain;
-
-    /* Parent reference */
-    IDirect3DDevice8   *parentDevice;
+    struct wined3d_swapchain *wined3d_swapchain;
+    IDirect3DDevice8 *parentDevice;
 };
 
 HRESULT swapchain_init(IDirect3DSwapChain8Impl *swapchain, IDirect3DDevice8Impl *device,

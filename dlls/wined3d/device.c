@@ -1326,7 +1326,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface,
     if (iSwapChain < This->swapchain_count)
     {
         *pSwapChain = (IWineD3DSwapChain *)This->swapchains[iSwapChain];
-        IWineD3DSwapChain_AddRef(*pSwapChain);
+        wined3d_swapchain_incref(*pSwapChain);
         TRACE("(%p) returning %p\n", This, *pSwapChain);
         return WINED3D_OK;
     } else {
@@ -2065,9 +2065,7 @@ err_out:
     }
     This->palette_count = 0;
     if (swapchain)
-    {
-        IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
-    }
+        wined3d_swapchain_decref(swapchain);
     if (This->stateBlock)
     {
         wined3d_stateblock_decref(This->stateBlock);
@@ -2113,7 +2111,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_InitGDI(IWineD3DDevice *iface,
     return WINED3D_OK;
 
 err_out:
-    IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+    wined3d_swapchain_decref(swapchain);
     return hr;
 }
 
@@ -2265,10 +2263,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface)
     for (i = 0; i < This->swapchain_count; ++i)
     {
         TRACE("Releasing the implicit swapchain %u.\n", i);
-        if (IWineD3DSwapChain_Release((IWineD3DSwapChain *)This->swapchains[i]))
-        {
-            FIXME("(%p) Something's still holding the implicit swapchain\n", This);
-        }
+        if (wined3d_swapchain_decref(This->swapchains[i]))
+            FIXME("Something's still holding the implicit swapchain.\n");
     }
 
     HeapFree(GetProcessHeap(), 0, This->swapchains);
@@ -2297,10 +2293,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UninitGDI(IWineD3DDevice *iface)
     for (i = 0; i < This->swapchain_count; ++i)
     {
         TRACE("Releasing the implicit swapchain %u.\n", i);
-        if (IWineD3DSwapChain_Release((IWineD3DSwapChain *)This->swapchains[i]))
-        {
-            FIXME("(%p) Something's still holding the implicit swapchain\n", This);
-        }
+        if (wined3d_swapchain_decref(This->swapchains[i]))
+            FIXME("Something's still holding the implicit swapchain.\n");
     }
 
     HeapFree(GetProcessHeap(), 0, This->swapchains);
@@ -4635,8 +4629,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UI
         return hr;
     }
 
-    hr = IWineD3DSwapChain_GetBackBuffer(swapchain, backbuffer_idx, backbuffer_type, backbuffer);
-    IWineD3DSwapChain_Release(swapchain);
+    hr = wined3d_swapchain_get_back_buffer(swapchain, backbuffer_idx, backbuffer_type, backbuffer);
+    wined3d_swapchain_decref(swapchain);
     if (FAILED(hr))
     {
         WARN("Failed to get backbuffer %u, hr %#x.\n", backbuffer_idx, hr);
@@ -4662,13 +4656,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, U
 
     if(iSwapChain > 0) {
         hr = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapChain);
-        if (hr == WINED3D_OK) {
-            hr = IWineD3DSwapChain_GetDisplayMode(swapChain, pMode);
-            IWineD3DSwapChain_Release(swapChain);
-        } else {
+        if (SUCCEEDED(hr))
+        {
+            hr = wined3d_swapchain_get_display_mode(swapChain, pMode);
+            wined3d_swapchain_decref(swapChain);
+        }
+        else
+        {
             FIXME("(%p) Error getting display mode\n", This);
         }
-    } else {
+    }
+    else
+    {
         /* Don't read the real display mode,
            but return the stored mode instead. X11 can't change the color
            depth, and some apps are pretty angry if they SetDisplayMode from
@@ -4790,8 +4789,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface, const RE
 
     for (i = 0; i < device->swapchain_count; ++i)
     {
-        IWineD3DSwapChain_Present((IWineD3DSwapChain *)device->swapchains[i],
-                src_rect, dst_rect, dst_window_override, dirty_region, 0);
+        wined3d_swapchain_present(device->swapchains[i], src_rect,
+                dst_rect, dst_window_override, dirty_region, 0);
     }
 
     return WINED3D_OK;
@@ -5238,8 +5237,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *ifac
     hr = IWineD3DDeviceImpl_GetSwapChain(iface, swapchain_idx, &swapchain);
     if (FAILED(hr)) return hr;
 
-    hr = IWineD3DSwapChain_GetFrontBufferData(swapchain, dst_surface);
-    IWineD3DSwapChain_Release(swapchain);
+    hr = wined3d_swapchain_get_front_buffer_data(swapchain, dst_surface);
+    wined3d_swapchain_decref(swapchain);
 
     return hr;
 }
@@ -5471,8 +5470,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface,
         return hr;
     }
 
-    hr = IWineD3DSwapChain_GetRasterStatus(swapchain, raster_status);
-    IWineD3DSwapChain_Release(swapchain);
+    hr = wined3d_swapchain_get_raster_status(swapchain, raster_status);
+    wined3d_swapchain_decref(swapchain);
     if (FAILED(hr))
     {
         WARN("Failed to get raster status, hr %#x.\n", hr);
@@ -6400,7 +6399,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
         WARN("Rejecting Reset() call because the requested display mode is not supported\n");
         WARN("Requested mode: %d, %d\n", pPresentationParameters->BackBufferWidth,
              pPresentationParameters->BackBufferHeight);
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+        wined3d_swapchain_decref(swapchain);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -6460,10 +6459,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
                 pPresentationParameters->MultiSampleQuality,
                 FALSE,
                 (IWineD3DSurface **)&This->auto_depth_stencil);
-
-        if (FAILED(hrc)) {
-            ERR("Failed to create the depth stencil buffer\n");
-            IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+        if (FAILED(hrc))
+        {
+            ERR("Failed to create the depth stencil buffer.\n");
+            wined3d_swapchain_decref(swapchain);
             return WINED3DERR_INVALIDCALL;
         }
     }
@@ -6514,7 +6513,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
         hr = updateSurfaceDesc(swapchain->front_buffer, pPresentationParameters);
         if(FAILED(hr))
         {
-            IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+            wined3d_swapchain_decref(swapchain);
             return hr;
         }
 
@@ -6523,7 +6522,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
             hr = updateSurfaceDesc(swapchain->back_buffers[i], pPresentationParameters);
             if(FAILED(hr))
             {
-                IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+                wined3d_swapchain_decref(swapchain);
                 return hr;
             }
         }
@@ -6532,7 +6531,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
             hr = updateSurfaceDesc(This->auto_depth_stencil, pPresentationParameters);
             if(FAILED(hr))
             {
-                IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+                wined3d_swapchain_decref(swapchain);
                 return hr;
             }
         }
@@ -6555,7 +6554,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
                 if (FAILED(hr = IWineD3DDevice_AcquireFocusWindow(iface, focus_window)))
                 {
                     ERR("Failed to acquire focus window, hr %#x.\n", hr);
-                    IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+                    wined3d_swapchain_decref(swapchain);
                     return hr;
                 }
 
@@ -6634,7 +6633,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
     }
 
     hr = create_primary_opengl_context(This, swapchain);
-    IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+    wined3d_swapchain_decref(swapchain);
 
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
      * first use
@@ -6667,10 +6666,10 @@ static void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice *iface,
 
     TRACE("Relaying  to swapchain\n");
 
-    if (IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain) == WINED3D_OK)
+    if (SUCCEEDED(IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain)))
     {
-        IWineD3DSwapChain_SetGammaRamp(swapchain, flags, pRamp);
-        IWineD3DSwapChain_Release(swapchain);
+        wined3d_swapchain_set_gamma_ramp(swapchain, flags, pRamp);
+        wined3d_swapchain_decref(swapchain);
     }
 }
 
@@ -6679,9 +6678,10 @@ static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT i
 
     TRACE("Relaying  to swapchain\n");
 
-    if (IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain) == WINED3D_OK) {
-        IWineD3DSwapChain_GetGammaRamp(swapchain, pRamp);
-        IWineD3DSwapChain_Release(swapchain);
+    if (SUCCEEDED(IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain)))
+    {
+        wined3d_swapchain_get_gamma_ramp(swapchain, pRamp);
+        wined3d_swapchain_decref(swapchain);
     }
 }
 

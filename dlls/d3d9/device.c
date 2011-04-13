@@ -481,7 +481,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_CreateAdditionalSwa
 static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_GetSwapChain(IDirect3DDevice9Ex *iface,
         UINT swapchain_idx, IDirect3DSwapChain9 **swapchain)
 {
-    IWineD3DSwapChain *wined3d_swapchain = NULL;
+    struct wined3d_swapchain *wined3d_swapchain = NULL;
     HRESULT hr;
 
     TRACE("iface %p, swapchain_idx %u, swapchain %p.\n", iface, swapchain_idx, swapchain);
@@ -491,9 +491,9 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_GetSwapChain(IDirec
             swapchain_idx, &wined3d_swapchain);
     if (SUCCEEDED(hr) && wined3d_swapchain)
     {
-       *swapchain = IWineD3DSwapChain_GetParent(wined3d_swapchain);
+       *swapchain = wined3d_swapchain_get_parent(wined3d_swapchain);
        IDirect3DSwapChain9_AddRef(*swapchain);
-       IWineD3DSwapChain_Release(wined3d_swapchain);
+       wined3d_swapchain_decref(wined3d_swapchain);
     }
     else
     {
@@ -3159,7 +3159,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
 }
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDeviceParent *iface,
-        WINED3DPRESENT_PARAMETERS *present_parameters, IWineD3DSwapChain **swapchain)
+        WINED3DPRESENT_PARAMETERS *present_parameters, struct wined3d_swapchain **swapchain)
 {
     struct IDirect3DDevice9Impl *This = device_from_device_parent(iface);
     D3DPRESENT_PARAMETERS local_parameters;
@@ -3193,8 +3193,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
         return hr;
     }
 
-    *swapchain = ((IDirect3DSwapChain9Impl *)d3d_swapchain)->wineD3DSwapChain;
-    IWineD3DSwapChain_AddRef(*swapchain);
+    *swapchain = ((IDirect3DSwapChain9Impl *)d3d_swapchain)->wined3d_swapchain;
+    wined3d_swapchain_incref(*swapchain);
     IDirect3DSwapChain9_Release((IDirect3DSwapChain9 *)d3d_swapchain);
 
     /* Copy back the presentation parameters */

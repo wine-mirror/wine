@@ -2088,7 +2088,6 @@ struct wined3d_parent_ops
 
 interface IWineD3DSurface;
 interface IWineD3DVolume;
-interface IWineD3DSwapChain;
 interface IWineD3DDevice;
 struct wined3d;
 struct wined3d_buffer;
@@ -2099,6 +2098,7 @@ struct wined3d_resource;
 struct wined3d_rendertarget_view;
 struct wined3d_shader;
 struct wined3d_stateblock;
+struct wined3d_swapchain;
 struct wined3d_texture;
 struct wined3d_vertex_declaration;
 
@@ -2159,7 +2159,7 @@ interface IWineD3DDeviceParent : IUnknown
 
     HRESULT CreateSwapChain(
         [in, out] WINED3DPRESENT_PARAMETERS *present_parameters,
-        [out] IWineD3DSwapChain **swapchain
+        [out] struct wined3d_swapchain **swapchain
     );
 }
 typedef HRESULT (__stdcall *D3DCB_ENUMRESOURCES)(struct wined3d_resource *resource, void *pData);
@@ -2328,52 +2328,6 @@ interface IWineD3DVolume : IWineD3DResource
 [
     object,
     local,
-    uuid(34d01b10-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DSwapChain : IWineD3DBase
-{
-    HRESULT GetDevice(
-        [out] IWineD3DDevice **device
-    );
-    HRESULT Present(
-        [in] const RECT *src_rect,
-        [in] const RECT *dst_rect,
-        [in] HWND dst_window_override,
-        [in] const RGNDATA *dirty_region,
-        [in] DWORD flags
-    );
-    HRESULT SetDestWindowOverride(
-        [in] HWND window
-    );
-    HRESULT GetFrontBufferData(
-        [in] IWineD3DSurface *dst_surface
-    );
-    HRESULT GetBackBuffer(
-        [in] UINT backbuffer_idx,
-        [in] WINED3DBACKBUFFER_TYPE backbuffer_type,
-        [out] IWineD3DSurface **backbuffer
-    );
-    HRESULT GetRasterStatus(
-        [out] WINED3DRASTER_STATUS *raster_status
-    );
-    HRESULT GetDisplayMode(
-        [out] WINED3DDISPLAYMODE *mode
-    );
-    HRESULT GetPresentParameters(
-        [out] WINED3DPRESENT_PARAMETERS *present_parameters
-    );
-    HRESULT SetGammaRamp(
-        [in] DWORD flags,
-        [in] const WINED3DGAMMARAMP *ramp
-    );
-    HRESULT GetGammaRamp(
-        [out] WINED3DGAMMARAMP *ramp
-    );
-}
-
-[
-    object,
-    local,
     uuid(6d10a2ce-09d0-4a53-a427-11388f9f8ca5)
 ]
 interface IWineD3DDevice : IUnknown
@@ -2479,7 +2433,7 @@ interface IWineD3DDevice : IUnknown
         [in] WINED3DSURFTYPE surface_type,
         [in] void *parent,
         [in] const struct wined3d_parent_ops *parent_ops,
-        [out] IWineD3DSwapChain **swapchain
+        [out] struct wined3d_swapchain **swapchain
     );
     HRESULT CreateVertexDeclaration(
         [in] const WINED3DVERTEXELEMENT *elements,
@@ -2568,7 +2522,7 @@ interface IWineD3DDevice : IUnknown
     );
     HRESULT GetSwapChain(
         [in] UINT swapchain_idx,
-        [out] IWineD3DSwapChain **swapchain
+        [out] struct wined3d_swapchain **swapchain
     );
     HRESULT Reset(
         [in] WINED3DPRESENT_PARAMETERS *present_parameters
@@ -3077,6 +3031,29 @@ HRESULT __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateb
 HRESULT __cdecl wined3d_stateblock_capture(struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_stateblock_decref(struct wined3d_stateblock *stateblock);
 ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
+
+ULONG __cdecl wined3d_swapchain_decref(struct wined3d_swapchain *swapchain);
+HRESULT __cdecl wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
+        UINT backbuffer_idx, WINED3DBACKBUFFER_TYPE backbuffer_type, IWineD3DSurface **backbuffer);
+IWineD3DDevice * __cdecl wined3d_swapchain_get_device(const struct wined3d_swapchain *swapchain);
+HRESULT __cdecl wined3d_swapchain_get_display_mode(const struct wined3d_swapchain *swapchain,
+        WINED3DDISPLAYMODE *mode);
+HRESULT __cdecl wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapchain *swapchain,
+        IWineD3DSurface *dst_surface);
+HRESULT __cdecl wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *swapchain,
+        WINED3DGAMMARAMP *ramp);
+void * __cdecl wined3d_swapchain_get_parent(const struct wined3d_swapchain *swapchain);
+HRESULT __cdecl wined3d_swapchain_get_present_parameters(const struct wined3d_swapchain *swapchain,
+        WINED3DPRESENT_PARAMETERS *present_parameters);
+HRESULT __cdecl wined3d_swapchain_get_raster_status(const struct wined3d_swapchain *swapchain,
+        WINED3DRASTER_STATUS *raster_status);
+ULONG __cdecl wined3d_swapchain_incref(struct wined3d_swapchain *swapchain);
+HRESULT __cdecl wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
+        const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
+        const RGNDATA *dirty_region, DWORD flags);
+HRESULT __cdecl wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *swapchain,
+        DWORD flags, const WINED3DGAMMARAMP *ramp);
+HRESULT __cdecl wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWND window);
 
 HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         UINT layer, const WINED3DBOX *dirty_region);

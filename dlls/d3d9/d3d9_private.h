@@ -216,12 +216,8 @@ typedef struct IDirect3DSwapChain9Impl
     /* IUnknown fields */
     const IDirect3DSwapChain9Vtbl *lpVtbl;
     LONG                    ref;
-
-    /* IDirect3DSwapChain9 fields */
-    IWineD3DSwapChain      *wineD3DSwapChain;
-
-    /* Parent reference */
-    LPDIRECT3DDEVICE9EX       parentDevice;
+    struct wined3d_swapchain *wined3d_swapchain;
+    IDirect3DDevice9Ex *parentDevice;
 } IDirect3DSwapChain9Impl;
 
 HRESULT swapchain_init(IDirect3DSwapChain9Impl *swapchain, IDirect3DDevice9Impl *device,

@@ -356,7 +356,7 @@ static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
             wined3d_texture_decref(This->wined3d_texture);
 
         /* If it's the RenderTarget, destroy the d3ddevice */
-        else if(This->wineD3DSwapChain)
+        else if (This->wined3d_swapchain)
         {
             if((ddraw->d3d_initialized) && (This == ddraw->d3d_target)) {
                 TRACE("(%p) Destroying the render target, uninitializing D3D\n", This);
@@ -389,14 +389,14 @@ static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
                     /* Unset the pointers */
                 }
 
-                This->wineD3DSwapChain = NULL; /* Uninit3D releases the swapchain */
+                This->wined3d_swapchain = NULL; /* Uninit3D releases the swapchain */
                 ddraw->d3d_initialized = FALSE;
                 ddraw->d3d_target = NULL;
             }
             else
             {
                 IWineD3DDevice_UninitGDI(ddraw->wineD3DDevice);
-                This->wineD3DSwapChain = NULL;
+                This->wined3d_swapchain = NULL;
             }
 
             /* Reset to the default surface implementation type. This is needed if apps use
@@ -2569,19 +2569,17 @@ static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface, IDir
 
     hr = IWineD3DSurface_SetClipper(This->WineD3DSurface, This->clipper ? This->clipper->wineD3DClipper : NULL);
 
-    if(This->wineD3DSwapChain) {
+    if (This->wined3d_swapchain)
+    {
         clipWindow = NULL;
         if(Clipper) {
             IDirectDrawClipper_GetHWnd(Clipper, &clipWindow);
         }
 
-        if(clipWindow) {
-            IWineD3DSwapChain_SetDestWindowOverride(This->wineD3DSwapChain,
-                                                    clipWindow);
-        } else {
-            IWineD3DSwapChain_SetDestWindowOverride(This->wineD3DSwapChain,
-                                                    This->ddraw->d3d_window);
-        }
+        if (clipWindow)
+            wined3d_swapchain_set_window(This->wined3d_swapchain, clipWindow);
+        else
+            wined3d_swapchain_set_window(This->wined3d_swapchain, This->ddraw->d3d_window);
     }
 
     LeaveCriticalSection(&ddraw_cs);
