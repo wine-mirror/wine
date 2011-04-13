@@ -2540,7 +2540,6 @@ struct wined3d_swapchain
     const struct wined3d_format *ds_format;
 
     LONG prev_time, frames;   /* Performance tracking */
-    unsigned int vSyncCounter;
 
     struct wined3d_context **context;
     unsigned int num_contexts;
