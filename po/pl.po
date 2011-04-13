@@ -6267,8 +6267,8 @@ msgid "&Add to Favorites..."
 msgstr "&Dodaj do ulubionych..."
 
 #: shdocvw.rc:55 shell32.rc:113 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53
-#: wordpad.rc:91
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "Pomo&c"
 
@@ -9038,7 +9038,7 @@ msgstr "Urucho&m..."
 msgid "E&xit Windows..."
 msgstr "&Zakończ..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Opcje"
 
@@ -10765,7 +10765,7 @@ msgstr "Urucho&m..."
 msgid "Cr&eate Directory..."
 msgstr "U&twórz katalog..."
 
-#: winefile.rc:38 winemine.rc:44
+#: winefile.rc:38 winemine.rc:46
 msgid "E&xit\tAlt+X"
 msgstr "&Wyjście\tAlt+X"
 
@@ -10898,13 +10898,17 @@ msgstr "Prawa dostępu"
 msgid "%s of %s free"
 msgstr "%s z %s wolne"
 
+#: winemine.rc:34
+msgid "&Game"
+msgstr ""
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&Nowa\tF2"
 
 #: winemine.rc:37
-msgid "&Mark Question"
-msgstr "Zna&czniki(?)"
+msgid "Question &Marks"
+msgstr ""
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10922,15 +10926,12 @@ msgstr "&Ekspert"
 msgid "&Custom..."
 msgstr "Plansza &użytkownika..."
 
-#: winemine.rc:46
-msgid "&Info"
-msgstr "&Info"
-
-#: winemine.rc:47
-msgid "&Fastest Times..."
+#: winemine.rc:44
+#, fuzzy
+msgid "&Fastest Times"
 msgstr "Najlepsze &wyniki"
 
-#: winemine.rc:48
+#: winemine.rc:49
 #, fuzzy
 msgid "&About WineMine"
 msgstr "&Informacje o Wine"

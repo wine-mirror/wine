@@ -6253,8 +6253,8 @@ msgid "&Add to Favorites..."
 msgstr "&Добавить в избранное"
 
 #: shdocvw.rc:55 shell32.rc:113 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53
-#: wordpad.rc:91
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "&Справка"
 
@@ -9019,7 +9019,7 @@ msgstr "&Запустить..."
 msgid "E&xit Windows..."
 msgstr "Вы&ход из Wine..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Параметры"
 
@@ -10742,7 +10742,7 @@ msgstr "&Запустить..."
 msgid "Cr&eate Directory..."
 msgstr "Создать директорию..."
 
-#: winefile.rc:38 winemine.rc:44
+#: winefile.rc:38 winemine.rc:46
 msgid "E&xit\tAlt+X"
 msgstr "В&ыход\tAlt+X"
 
@@ -10875,13 +10875,17 @@ msgstr "Безопасность"
 msgid "%s of %s free"
 msgstr "%s из %s свободно"
 
+#: winemine.rc:34
+msgid "&Game"
+msgstr ""
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&Новая игра\tF2"
 
 #: winemine.rc:37
-msgid "&Mark Question"
-msgstr "&Вопросительные знаки"
+msgid "Question &Marks"
+msgstr ""
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10899,15 +10903,12 @@ msgstr "&Эксперт"
 msgid "&Custom..."
 msgstr "Нестандартные &параметры"
 
-#: winemine.rc:46
-msgid "&Info"
-msgstr "&Справка"
-
-#: winemine.rc:47
-msgid "&Fastest Times..."
+#: winemine.rc:44
+#, fuzzy
+msgid "&Fastest Times"
 msgstr "&Лучшее время"
 
-#: winemine.rc:48
+#: winemine.rc:49
 #, fuzzy
 msgid "&About WineMine"
 msgstr "&О Wine"

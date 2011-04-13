@@ -6237,8 +6237,8 @@ msgid "&Add to Favorites..."
 msgstr "즐겨찾기 추가(&A)..."
 
 #: shdocvw.rc:55 shell32.rc:113 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53
-#: wordpad.rc:91
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "도움말(&H)"
 
@@ -8968,7 +8968,7 @@ msgstr "실행(&E)..."
 msgid "E&xit Windows..."
 msgstr "창 종료(&X)..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
 msgstr "옵션(&O)"
 
@@ -10678,7 +10678,7 @@ msgstr "실행(&R)..."
 msgid "Cr&eate Directory..."
 msgstr "디렉토리 만들기(&E)..."
 
-#: winefile.rc:38 winemine.rc:44
+#: winefile.rc:38 winemine.rc:46
 msgid "E&xit\tAlt+X"
 msgstr "나가기(&X)\tAlt+X"
 
@@ -10811,13 +10811,17 @@ msgstr "보안"
 msgid "%s of %s free"
 msgstr "%s of %s 사용가능"
 
+#: winemine.rc:34
+msgid "&Game"
+msgstr ""
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "새 게임(&N)\tF2"
 
 #: winemine.rc:37
-msgid "&Mark Question"
-msgstr "물음표 표시(&M)"
+msgid "Question &Marks"
+msgstr ""
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10835,15 +10839,12 @@ msgstr "상급자(&E)"
 msgid "&Custom..."
 msgstr "사용자 정의(&C)"
 
-#: winemine.rc:46
-msgid "&Info"
-msgstr "도움말(&I)"
-
-#: winemine.rc:47
-msgid "&Fastest Times..."
+#: winemine.rc:44
+#, fuzzy
+msgid "&Fastest Times"
 msgstr "가장 빠른 시간(&F)"
 
-#: winemine.rc:48
+#: winemine.rc:49
 #, fuzzy
 msgid "&About WineMine"
 msgstr "WINE 정보(&A)"

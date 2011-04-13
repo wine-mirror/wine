@@ -6474,8 +6474,8 @@ msgid "&Add to Favorites..."
 msgstr "添加到我的最愛(&A)..."
 
 #: shdocvw.rc:55 shell32.rc:113 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53
-#: wordpad.rc:91
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "幫助(&H)"
 
@@ -9018,7 +9018,7 @@ msgstr "執行(&E)..."
 msgid "E&xit Windows..."
 msgstr "結束 Windows(&X)..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
 msgstr "選項(&O)"
 
@@ -10720,7 +10720,7 @@ msgstr "執行(&R)..."
 msgid "Cr&eate Directory..."
 msgstr "建立目錄(&E)..."
 
-#: winefile.rc:38 winemine.rc:44
+#: winefile.rc:38 winemine.rc:46
 msgid "E&xit\tAlt+X"
 msgstr "結束(&X)\tAlt+X"
 
@@ -10863,13 +10863,17 @@ msgstr "安全(&S)"
 msgid "%s of %s free"
 msgstr ""
 
+#: winemine.rc:34
+msgid "&Game"
+msgstr ""
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "新遊戲(&N)\tF2"
 
 #: winemine.rc:37
-msgid "&Mark Question"
-msgstr "標出問題(&M)"
+msgid "Question &Marks"
+msgstr ""
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10887,15 +10891,12 @@ msgstr "專家(&E)"
 msgid "&Custom..."
 msgstr "自定義(&C)"
 
-#: winemine.rc:46
-msgid "&Info"
-msgstr "資訊(&I)"
-
-#: winemine.rc:47
-msgid "&Fastest Times..."
+#: winemine.rc:44
+#, fuzzy
+msgid "&Fastest Times"
 msgstr "最快時間(&F)"
 
-#: winemine.rc:48
+#: winemine.rc:49
 #, fuzzy
 msgid "&About WineMine"
 msgstr "關於 Wine(&A)"

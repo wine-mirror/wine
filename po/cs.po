@@ -6461,8 +6461,8 @@ msgid "&Add to Favorites..."
 msgstr "Přid&at k oblíbeným..."
 
 #: shdocvw.rc:55 shell32.rc:113 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53
-#: wordpad.rc:91
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "&Nápověda"
 
@@ -9243,7 +9243,7 @@ msgstr "Sp&ustit..."
 msgid "E&xit Windows..."
 msgstr "&Konec Windows..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Nastavení"
 
@@ -10977,7 +10977,7 @@ msgstr "&Spustit..."
 msgid "Cr&eate Directory..."
 msgstr "V&ytvořit adresář..."
 
-#: winefile.rc:38 winemine.rc:44
+#: winefile.rc:38 winemine.rc:46
 #, fuzzy
 msgid "E&xit\tAlt+X"
 msgstr ""
@@ -11115,13 +11115,17 @@ msgstr "Zabezpečení"
 msgid "%s of %s free"
 msgstr "%s z %s volného"
 
+#: winemine.rc:34
+msgid "&Game"
+msgstr ""
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&Nová\tF2"
 
 #: winemine.rc:37
-msgid "&Mark Question"
-msgstr "&Označovat nerozhodnuté"
+msgid "Question &Marks"
+msgstr ""
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -11139,15 +11143,12 @@ msgstr "&Expert"
 msgid "&Custom..."
 msgstr "&Dle libosti"
 
-#: winemine.rc:46
-msgid "&Info"
-msgstr "&Informace"
-
-#: winemine.rc:47
-msgid "&Fastest Times..."
+#: winemine.rc:44
+#, fuzzy
+msgid "&Fastest Times"
 msgstr "Ne&jlepší časy"
 
-#: winemine.rc:48
+#: winemine.rc:49
 #, fuzzy
 msgid "&About WineMine"
 msgstr "&O Wine"

@@ -6257,8 +6257,8 @@ msgid "&Add to Favorites..."
 msgstr "Į&rašyti į adresyną..."
 
 #: shdocvw.rc:55 shell32.rc:113 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53
-#: wordpad.rc:91
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "&Žinynas"
 
@@ -9019,7 +9019,7 @@ msgstr "&Vykdyti..."
 msgid "E&xit Windows..."
 msgstr "Iš&eiti..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Parinktys"
 
@@ -10750,7 +10750,7 @@ msgstr "&Vykdyti..."
 msgid "Cr&eate Directory..."
 msgstr "Suk&urti katalogą..."
 
-#: winefile.rc:38 winemine.rc:44
+#: winefile.rc:38 winemine.rc:46
 msgid "E&xit\tAlt+X"
 msgstr "Iš&eiti\tAlt+X"
 
@@ -10882,13 +10882,17 @@ msgstr "Saugumas"
 msgid "%s of %s free"
 msgstr "%s iš %s laisva"
 
+#: winemine.rc:34
+msgid "&Game"
+msgstr ""
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&Naujas\tF2"
 
 #: winemine.rc:37
-msgid "&Mark Question"
-msgstr "&Žymėti klaustuku"
+msgid "Question &Marks"
+msgstr ""
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10906,15 +10910,12 @@ msgstr "Ek&spertas"
 msgid "&Custom..."
 msgstr "Pasirin&ktas..."
 
-#: winemine.rc:46
-msgid "&Info"
-msgstr "&Informacija"
-
-#: winemine.rc:47
-msgid "&Fastest Times..."
+#: winemine.rc:44
+#, fuzzy
+msgid "&Fastest Times"
 msgstr "&Geriausi laikai"
 
-#: winemine.rc:48
+#: winemine.rc:49
 msgid "&About WineMine"
 msgstr "&Apie Wine minas"
 

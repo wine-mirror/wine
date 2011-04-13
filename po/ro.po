@@ -6738,8 +6738,8 @@ msgid "&Add to Favorites..."
 msgstr "Adaugă la &favorite..."
 
 #: shdocvw.rc:55 shell32.rc:113 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53
-#: wordpad.rc:91
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
 #, fuzzy
 msgid "&Help"
 msgstr ""
@@ -9610,7 +9610,7 @@ msgstr "&Executare..."
 msgid "E&xit Windows..."
 msgstr "Î&nchidere Windows..."
 
-#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winemine.rc:34 winhlp32.rc:44
+#: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
 msgstr "&Opțiuni"
 
@@ -11364,7 +11364,7 @@ msgstr "E&xecutare..."
 msgid "Cr&eate Directory..."
 msgstr "Cr&eare director..."
 
-#: winefile.rc:38 winemine.rc:44
+#: winefile.rc:38 winemine.rc:46
 #, fuzzy
 msgid "E&xit\tAlt+X"
 msgstr ""
@@ -11502,13 +11502,17 @@ msgstr "Securitate"
 msgid "%s of %s free"
 msgstr "%s din %s liber"
 
+#: winemine.rc:34
+msgid "&Game"
+msgstr ""
+
 #: winemine.rc:35
 msgid "&New\tF2"
 msgstr "&Nou\tF2"
 
 #: winemine.rc:37
-msgid "&Mark Question"
-msgstr "&Mark Question"
+msgid "Question &Marks"
+msgstr ""
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -11526,15 +11530,12 @@ msgstr "&Expert"
 msgid "&Custom..."
 msgstr "&Personalizat"
 
-#: winemine.rc:46
-msgid "&Info"
-msgstr "&Informaţii"
-
-#: winemine.rc:47
-msgid "&Fastest Times..."
+#: winemine.rc:44
+#, fuzzy
+msgid "&Fastest Times"
 msgstr "&Scoruri maxime"
 
-#: winemine.rc:48
+#: winemine.rc:49
 #, fuzzy
 msgid "&About WineMine"
 msgstr "Des&pre Wine"

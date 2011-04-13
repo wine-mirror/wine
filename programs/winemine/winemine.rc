@@ -31,20 +31,21 @@ STRINGTABLE {
 
 MENU_WINEMINE MENU
 {
-    POPUP "&Options" {
+    POPUP "&Game" {
         MENUITEM "&New\tF2",       IDM_NEW
         MENUITEM SEPARATOR
-        MENUITEM "&Mark Question", IDM_MARKQ
+        MENUITEM "Question &Marks",IDM_MARKQ
         MENUITEM SEPARATOR
         MENUITEM "&Beginner",      IDM_BEGINNER
         MENUITEM "&Advanced",      IDM_ADVANCED
         MENUITEM "&Expert",        IDM_EXPERT
         MENUITEM "&Custom...",     IDM_CUSTOM
         MENUITEM SEPARATOR
+        MENUITEM "&Fastest Times", IDM_TIMES
+        MENUITEM SEPARATOR
         MENUITEM "E&xit\tAlt+X",   IDM_EXIT
     }
-    POPUP "&Info" {
-        MENUITEM "&Fastest Times...", IDM_TIMES
+    POPUP "&Help" {
         MENUITEM "&About WineMine",   IDM_ABOUT
     }
 }
