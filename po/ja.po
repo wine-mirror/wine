@@ -2169,6 +2169,38 @@ msgstr "インターネット設定"
 msgid "Configure Wine Internet Browser and related settings"
 msgstr "Wine インターネット ブラウザや関連する設定を構成します"
 
+#: inetcpl.rc:30
+#, fuzzy
+msgid "Security settings for zone: "
+msgstr "終了時に設定を保存(&S)"
+
+#: inetcpl.rc:31
+#, fuzzy
+msgid "Custom"
+msgstr "カスタマイズ"
+
+#: inetcpl.rc:32
+msgid "Very Low"
+msgstr ""
+
+#: inetcpl.rc:33
+#, fuzzy
+msgid "Low"
+msgstr "低(&L)"
+
+#: inetcpl.rc:34
+msgid "Medium"
+msgstr ""
+
+#: inetcpl.rc:35
+msgid "Increased"
+msgstr ""
+
+#: inetcpl.rc:36
+#, fuzzy
+msgid "High"
+msgstr "高(&H)"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "オブジェクトを基本型に変換できません"

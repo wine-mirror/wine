@@ -2216,6 +2216,41 @@ msgstr ""
 msgid "Configure Wine Internet Browser and related settings"
 msgstr ""
 
+#: inetcpl.rc:30
+#, fuzzy
+msgid "Security settings for zone: "
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Beállítások &mentése kilépéskor\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Megszüntetés a tárolás végén"
+
+#: inetcpl.rc:31
+#, fuzzy
+msgid "Custom"
+msgstr "Testreszabás"
+
+#: inetcpl.rc:32
+msgid "Very Low"
+msgstr ""
+
+#: inetcpl.rc:33
+#, fuzzy
+msgid "Low"
+msgstr "sor"
+
+#: inetcpl.rc:34
+msgid "Medium"
+msgstr ""
+
+#: inetcpl.rc:35
+msgid "Increased"
+msgstr ""
+
+#: inetcpl.rc:36
+msgid "High"
+msgstr ""
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Hiba az objektum primitív típusra való konvertálásánál"

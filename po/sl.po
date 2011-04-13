@@ -2201,6 +2201,42 @@ msgstr "Internetne možnosti"
 msgid "Configure Wine Internet Browser and related settings"
 msgstr "Konfiguriraj internetni brskalnik v Wine in sorodne nastavitve"
 
+#: inetcpl.rc:30
+#, fuzzy
+msgid "Security settings for zone: "
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"Shrani &nastavitve ob izhodu\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"S&hrani nastavitve ob izhodu"
+
+#: inetcpl.rc:31
+#, fuzzy
+msgid "Custom"
+msgstr "Prilagodi"
+
+#: inetcpl.rc:32
+msgid "Very Low"
+msgstr ""
+
+#: inetcpl.rc:33
+#, fuzzy
+msgid "Low"
+msgstr "&Nizka"
+
+#: inetcpl.rc:34
+msgid "Medium"
+msgstr ""
+
+#: inetcpl.rc:35
+msgid "Increased"
+msgstr ""
+
+#: inetcpl.rc:36
+#, fuzzy
+msgid "High"
+msgstr "&Viskoka"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Napaka med spreminjanjem v primitivni tip"

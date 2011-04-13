@@ -2172,6 +2172,38 @@ msgstr "Налаштування Інтернету"
 msgid "Configure Wine Internet Browser and related settings"
 msgstr "Налаштувати Wine Internet Browser та пов'язані параметри"
 
+#: inetcpl.rc:30
+#, fuzzy
+msgid "Security settings for zone: "
+msgstr "Зберегти &налаштування при виході"
+
+#: inetcpl.rc:31
+#, fuzzy
+msgid "Custom"
+msgstr "Налаштування"
+
+#: inetcpl.rc:32
+msgid "Very Low"
+msgstr ""
+
+#: inetcpl.rc:33
+#, fuzzy
+msgid "Low"
+msgstr "&Низька"
+
+#: inetcpl.rc:34
+msgid "Medium"
+msgstr ""
+
+#: inetcpl.rc:35
+msgid "Increased"
+msgstr ""
+
+#: inetcpl.rc:36
+#, fuzzy
+msgid "High"
+msgstr "&Висока"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Помилка конвертування об'єкту в примітивний тип"

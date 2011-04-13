@@ -2169,6 +2169,38 @@ msgstr "인터넷 설정"
 msgid "Configure Wine Internet Browser and related settings"
 msgstr "Wine 인터넷 브라우저와 관련 설정 처리"
 
+#: inetcpl.rc:30
+#, fuzzy
+msgid "Security settings for zone: "
+msgstr "나갈때 설정 저장(&S)"
+
+#: inetcpl.rc:31
+#, fuzzy
+msgid "Custom"
+msgstr "사용자정의"
+
+#: inetcpl.rc:32
+msgid "Very Low"
+msgstr ""
+
+#: inetcpl.rc:33
+#, fuzzy
+msgid "Low"
+msgstr "낮음(&L)"
+
+#: inetcpl.rc:34
+msgid "Medium"
+msgstr ""
+
+#: inetcpl.rc:35
+msgid "Increased"
+msgstr ""
+
+#: inetcpl.rc:36
+#, fuzzy
+msgid "High"
+msgstr "높음(&H)"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "객페를 기본 형식으로 변환하는 중에 에러 발생"

@@ -2174,6 +2174,34 @@ msgstr "Internet Settings"
 msgid "Configure Wine Internet Browser and related settings"
 msgstr "Configure Wine Internet Browser and related settings"
 
+#: inetcpl.rc:30
+msgid "Security settings for zone: "
+msgstr "Security settings for zone: "
+
+#: inetcpl.rc:31
+msgid "Custom"
+msgstr "Custom"
+
+#: inetcpl.rc:32
+msgid "Very Low"
+msgstr "Very Low"
+
+#: inetcpl.rc:33
+msgid "Low"
+msgstr "Low"
+
+#: inetcpl.rc:34
+msgid "Medium"
+msgstr "Medium"
+
+#: inetcpl.rc:35
+msgid "Increased"
+msgstr "Increased"
+
+#: inetcpl.rc:36
+msgid "High"
+msgstr "High"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Error converting object to primitive type"

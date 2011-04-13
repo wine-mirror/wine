@@ -2179,6 +2179,38 @@ msgstr "Interneto nuostatos"
 msgid "Configure Wine Internet Browser and related settings"
 msgstr "Konfigūruokite Wine interneto naršyklės ir susijusias nuostatas"
 
+#: inetcpl.rc:30
+#, fuzzy
+msgid "Security settings for zone: "
+msgstr "Išsaugoti &nuostatas išeinant"
+
+#: inetcpl.rc:31
+#, fuzzy
+msgid "Custom"
+msgstr "Adaptuoti"
+
+#: inetcpl.rc:32
+msgid "Very Low"
+msgstr ""
+
+#: inetcpl.rc:33
+#, fuzzy
+msgid "Low"
+msgstr "&Mažas"
+
+#: inetcpl.rc:34
+msgid "Medium"
+msgstr ""
+
+#: inetcpl.rc:35
+msgid "Increased"
+msgstr ""
+
+#: inetcpl.rc:36
+#, fuzzy
+msgid "High"
+msgstr "&Didelis"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Klaida keičiant objektą į primityvų tipą"

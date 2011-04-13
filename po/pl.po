@@ -2186,6 +2186,38 @@ msgstr ""
 "Pozwala skonfigurować przeglądarkę internetową Wine i odpowiadające jej "
 "ustawienia"
 
+#: inetcpl.rc:30
+#, fuzzy
+msgid "Security settings for zone: "
+msgstr "&Zapisz ustawienia przy zakończeniu"
+
+#: inetcpl.rc:31
+#, fuzzy
+msgid "Custom"
+msgstr "Dostosuj"
+
+#: inetcpl.rc:32
+msgid "Very Low"
+msgstr ""
+
+#: inetcpl.rc:33
+#, fuzzy
+msgid "Low"
+msgstr "N&iska"
+
+#: inetcpl.rc:34
+msgid "Medium"
+msgstr ""
+
+#: inetcpl.rc:35
+msgid "Increased"
+msgstr ""
+
+#: inetcpl.rc:36
+#, fuzzy
+msgid "High"
+msgstr "&Wysoka"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Błąd przy przekształcaniu obiektu do typu podstawowego"

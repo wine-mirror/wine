@@ -2210,6 +2210,42 @@ msgstr ""
 msgid "Configure Wine Internet Browser and related settings"
 msgstr ""
 
+#: inetcpl.rc:30
+#, fuzzy
+msgid "Security settings for zone: "
+msgstr ""
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Gem ændringer ved af&slutting\n"
+"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
+"Gem ind&stillinger ved afslutning"
+
+#: inetcpl.rc:31
+#, fuzzy
+msgid "Custom"
+msgstr "Tilpas"
+
+#: inetcpl.rc:32
+msgid "Very Low"
+msgstr ""
+
+#: inetcpl.rc:33
+#, fuzzy
+msgid "Low"
+msgstr "&Lav"
+
+#: inetcpl.rc:34
+msgid "Medium"
+msgstr ""
+
+#: inetcpl.rc:35
+msgid "Increased"
+msgstr ""
+
+#: inetcpl.rc:36
+#, fuzzy
+msgid "High"
+msgstr "&Høj"
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Fejl ved konvertering af objekt til primitiv type"

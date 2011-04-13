@@ -44,14 +44,111 @@ WINE_DEFAULT_DEBUG_CHANNEL(inetcpl);
 typedef struct secdlg_data_s {
     HWND hsec;  /* security propsheet */
     HWND hlv;   /* listview */
+    HWND htb;   /* trackbar */
     IInternetSecurityManager *sec_mgr;
     IInternetZoneManager *zone_mgr;
     DWORD zone_enumerator;
     DWORD num_zones;
     ZONEATTRIBUTES *zone_attr;
     DWORD *zones;
+    DWORD *levels;
     HIMAGELIST himages;
+    DWORD last_lv_index;
+    DWORD last_level;
 } secdlg_data;
+
+#define NUM_TRACKBAR_POS 5
+
+static WCHAR spaceW[] = {' ',0};
+static DWORD url_templates[] = {URLTEMPLATE_CUSTOM,
+                                URLTEMPLATE_LOW,
+                                URLTEMPLATE_MEDLOW,
+                                URLTEMPLATE_MEDIUM,
+                                URLTEMPLATE_MEDHIGH,
+                                URLTEMPLATE_HIGH};
+
+/*********************************************************************
+ * index_from_urltemplate [internal]
+ *
+ */
+static DWORD index_from_urltemplate(URLTEMPLATE value)
+{
+
+    DWORD index = sizeof(url_templates) / sizeof(url_templates[0]);
+
+    while((index > 0) && (url_templates[index-1] != value))
+        index--;
+
+    index--; /* table entries are 0 based */
+    if (!index && value)
+        FIXME("URLTEMPLATE 0x%x not supported\n", value);
+
+    TRACE("URLTEMPLATE 0x%08x=> Level %d\n", value, index);
+    return index;
+}
+
+/*********************************************************************
+ * update_security_level [internal]
+ *
+ */
+static void update_security_level(secdlg_data *sd, DWORD lv_index, DWORD tb_index)
+{
+    WCHAR name[512];
+    DWORD current_index;
+
+    TRACE("(%p, lv_index: %u, tb_index: %u)\n", sd, lv_index, tb_index);
+
+    if ((sd->levels[lv_index] != sd->last_level) || (tb_index > 0)) {
+        /* show or hide the trackbar */
+        if (!sd->levels[lv_index] || !sd->last_level)
+            ShowWindow(sd->htb, sd->levels[lv_index] ? SW_NORMAL : SW_HIDE);
+
+        current_index = (tb_index > 0) ? tb_index : index_from_urltemplate(sd->levels[lv_index]);
+
+        name[0] = 0;
+        LoadStringW(hcpl, IDS_SEC_LEVEL0 + current_index, name, sizeof(name)/sizeof(name[0]));
+        TRACE("new level #%d: %s\n", current_index, debugstr_w(name));
+        SetWindowTextW(GetDlgItem(sd->hsec, IDC_SEC_LEVEL), name);
+
+        name[0] = 0;
+        LoadStringW(hcpl, IDS_SEC_LEVEL0_INFO + (current_index * 0x10), name, sizeof(name)/sizeof(name[0]));
+        TRACE("new level info: %s\n", debugstr_w(name));
+        SetWindowTextW(GetDlgItem(sd->hsec, IDC_SEC_LEVEL_INFO), name);
+
+        if (current_index)
+            SendMessageW(sd->htb, TBM_SETPOS, TRUE, NUM_TRACKBAR_POS - current_index);
+
+        sd->last_level = sd->levels[lv_index];
+
+    }
+}
+
+/*********************************************************************
+ * update_zone_info [internal]
+ *
+ */
+static void update_zone_info(secdlg_data *sd, DWORD lv_index)
+{
+    ZONEATTRIBUTES *za = &sd->zone_attr[lv_index];
+    WCHAR name[MAX_PATH];
+    DWORD len;
+
+    SetWindowTextW(GetDlgItem(sd->hsec, IDC_SEC_ZONE_INFO), za->szDescription);
+
+    name[0] = ' ';
+    name[1] = 0;
+
+    LoadStringW(hcpl, IDS_SEC_SETTINGS, &name[1], sizeof(name)/sizeof(name[0]) - 3);
+    len = lstrlenW(name);
+    lstrcpynW(&name[len], za->szDisplayName, sizeof(name)/sizeof(name[0]) - len - 3);
+    lstrcatW(name, spaceW);
+
+    TRACE("new title: %s\n", debugstr_w(name));
+    SetWindowTextW(GetDlgItem(sd->hsec, IDC_SEC_GROUP), name);
+
+    update_security_level(sd, lv_index, 0);
+    sd->last_lv_index = lv_index;
+}
 
 /*********************************************************************
  * add_zone_to_listview [internal]
@@ -86,6 +183,8 @@ static void add_zone_to_listview(secdlg_data *sd, DWORD *pindex, DWORD zone)
             TRACE("item %d (zone %d): UI disabled for %s\n", lv_index, zone, debugstr_w(za->szDisplayName));
             return;
         }
+
+        sd->levels[lv_index] = za->dwTemplateCurrentLevel;
 
         lvitem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;
         lvitem.iItem = lv_index;
@@ -122,6 +221,8 @@ static void add_zone_to_listview(secdlg_data *sd, DWORD *pindex, DWORD zone)
                 lvitem.state = LVIS_FOCUSED | LVIS_SELECTED;
                 lvitem.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
                 SendMessageW(sd->hlv, LVM_SETITEMSTATE, 0, (LPARAM) &lvitem);
+                sd->last_level = ~0;
+                update_zone_info(sd, lv_index);
             }
             (*pindex)++;
         }
@@ -213,6 +314,14 @@ static INT_PTR security_on_initdialog(HWND hsec)
 
     sd->hsec = hsec;
     sd->hlv = GetDlgItem(hsec, IDC_SEC_LISTVIEW);
+    sd->htb = GetDlgItem(hsec, IDC_SEC_TRACKBAR);
+
+    EnableWindow(sd->htb, FALSE); /* not changeable yet */
+
+    TRACE("(%p)   (data: %p, listview: %p, trackbar: %p)\n", hsec, sd, sd->hlv, sd->htb);
+
+    SendMessageW(sd->htb, TBM_SETRANGE, FALSE, MAKELONG(0, NUM_TRACKBAR_POS - 1));
+    SendMessageW(sd->htb, TBM_SETTICFREQ, 1, 0 );
 
     /* Create the image lists for the listview */
     sd->himages = ImageList_Create(GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), ILC_COLOR32 | ILC_MASK, 1, 1);
@@ -240,12 +349,13 @@ static INT_PTR security_on_initdialog(HWND hsec)
         return FALSE;
     }
 
-    /* remember zone number for a listview entry */
-    sd->zones = heap_alloc(sizeof(DWORD) * sd->num_zones);
+    /* remember zone number and current security level for a listview entry */
+    sd->zones = heap_alloc((sizeof(DWORD) + sizeof(DWORD)) * sd->num_zones);
     if (!sd->zones) {
         security_on_destroy(sd);
         return FALSE;
     }
+    sd->levels = &sd->zones[sd->num_zones];
 
     /* use the same order as visible with native inetcpl.cpl */
     add_zone_to_listview(sd, &lv_index, URLZONE_INTERNET);
@@ -271,13 +381,21 @@ static INT_PTR security_on_initdialog(HWND hsec)
  * handle WM_NOTIFY
  *
  */
-static INT_PTR security_on_notify(WPARAM wparam, LPARAM lparam)
+static INT_PTR security_on_notify(secdlg_data *sd, WPARAM wparam, LPARAM lparam)
 {
     NMLISTVIEW *nm;
 
     nm = (NMLISTVIEW *) lparam;
     switch (nm->hdr.code)
     {
+        case LVN_ITEMCHANGED:
+            TRACE("LVN_ITEMCHANGED (0x%lx, 0x%lx) from %p with code: %d (item: %d, uNewState: %u)\n",
+                    wparam, lparam, nm->hdr.hwndFrom, nm->hdr.code, nm->iItem, nm->uNewState);
+            if ((nm->uNewState & LVIS_SELECTED) == LVIS_SELECTED) {
+                update_zone_info(sd, nm->iItem);
+            }
+            break;
+
         case PSN_APPLY:
             TRACE("PSN_APPLY (0x%lx, 0x%lx) from %p with code: %d\n", wparam, lparam,
                     nm->hdr.hwndFrom, nm->hdr.code);
@@ -308,7 +426,7 @@ INT_PTR CALLBACK security_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         switch (msg)
         {
             case WM_NOTIFY:
-                return security_on_notify(wparam, lparam);
+                return security_on_notify(sd, wparam, lparam);
 
             case WM_NCDESTROY:
                 return security_on_destroy(sd);

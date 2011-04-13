@@ -2203,6 +2203,36 @@ msgstr "Postavke interneta"
 msgid "Configure Wine Internet Browser and related settings"
 msgstr "Podesi Wine internet pregledač i srodne postavke"
 
+#: inetcpl.rc:30
+msgid "Security settings for zone: "
+msgstr ""
+
+#: inetcpl.rc:31
+#, fuzzy
+msgid "Custom"
+msgstr "Prilagodi"
+
+#: inetcpl.rc:32
+msgid "Very Low"
+msgstr ""
+
+#: inetcpl.rc:33
+#, fuzzy
+msgid "Low"
+msgstr "red"
+
+#: inetcpl.rc:34
+msgid "Medium"
+msgstr ""
+
+#: inetcpl.rc:35
+msgid "Increased"
+msgstr ""
+
+#: inetcpl.rc:36
+msgid "High"
+msgstr ""
+
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
 msgstr "Greška u pretvaranju objekta u osnovnu vrstu"

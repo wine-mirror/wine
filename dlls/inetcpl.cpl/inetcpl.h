@@ -58,6 +58,19 @@ static inline BOOL heap_free( void *mem )
 /* strings */
 #define IDS_CPL_NAME        1
 #define IDS_CPL_INFO        2
+#define IDS_SEC_SETTINGS    0x10
+#define IDS_SEC_LEVEL0      0x100
+#define IDS_SEC_LEVEL1      0x101
+#define IDS_SEC_LEVEL2      0x102
+#define IDS_SEC_LEVEL3      0x103
+#define IDS_SEC_LEVEL4      0x104
+#define IDS_SEC_LEVEL5      0x105
+#define IDS_SEC_LEVEL0_INFO 0x200
+#define IDS_SEC_LEVEL1_INFO 0x210
+#define IDS_SEC_LEVEL2_INFO 0x220
+#define IDS_SEC_LEVEL3_INFO 0x230
+#define IDS_SEC_LEVEL4_INFO 0x240
+#define IDS_SEC_LEVEL5_INFO 0x250
 
 /* dialogs */
 #define IDC_STATIC          -1
@@ -79,6 +92,11 @@ static inline BOOL heap_free( void *mem )
 
 #define IDD_SECURITY        2000
 #define IDC_SEC_LISTVIEW    2001
+#define IDC_SEC_ZONE_INFO   2002
+#define IDC_SEC_GROUP       2003
+#define IDC_SEC_TRACKBAR    2004
+#define IDC_SEC_LEVEL       2005
+#define IDC_SEC_LEVEL_INFO  2006
 
 #define IDD_CONTENT         4000
 #define IDC_CERT            4100
