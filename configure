@@ -806,6 +806,7 @@ with_xcomposite
 with_xcursor
 with_xinerama
 with_xinput
+with_xinput2
 with_xml
 with_xrandr
 with_xrender
@@ -1497,6 +1498,7 @@ Optional Packages:
   --without-xcursor       do not use the Xcursor extension
   --without-xinerama      do not use Xinerama (multi-monitor support)
   --without-xinput        do not use the Xinput extension
+  --without-xinput2       do not use the Xinput 2 extension
   --without-xml           do not use XML
   --without-xrandr        do not use Xrandr (resolution changes)
   --without-xrender       do not use the Xrender extension
@@ -2719,6 +2721,12 @@ fi
 # Check whether --with-xinput was given.
 if test "${with_xinput+set}" = set; then :
   withval=$with_xinput; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_XInput_h=no; fi
+fi
+
+
+# Check whether --with-xinput2 was given.
+if test "${with_xinput2+set}" = set; then :
+  withval=$with_xinput2; if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_XInput2_h=no; fi
 fi
 
 
@@ -8035,6 +8043,7 @@ fi
                       X11/Xcursor/Xcursor.h \
                       X11/extensions/shape.h \
                       X11/extensions/XInput.h \
+                      X11/extensions/XInput2.h \
                       X11/extensions/XShm.h \
                       X11/extensions/Xcomposite.h \
                       X11/extensions/Xinerama.h \
@@ -8230,6 +8239,18 @@ fi
 This is an error since --with-xinput was requested." "$LINENO" 5  ;;
 esac
 fi
+
+                if test "x$ac_cv_lib_soname_Xi" != x
+        then
+            if test "$ac_cv_header_X11_extensions_XInput2_h" != "yes"; then :
+  case "x$with_xinput2" in
+  x)   as_fn_append wine_notices "|XInput2 headers not found, the XInput 2 extension won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "XInput2 headers not found, the XInput 2 extension won't be supported.
+This is an error since --with-xinput2 was requested." "$LINENO" 5  ;;
+esac
+fi
+        fi
 
                 if test "$ac_cv_header_X11_extensions_XShm_h" = "yes"
         then
