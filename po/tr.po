@@ -6589,8 +6589,9 @@ msgstr "&Sık Kullanılanlar"
 msgid "&Add to Favorites..."
 msgstr "Sık Kullanılanlara Ekle..."
 
-#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 clock.rc:41 notepad.rc:57 oleview.rc:69
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53
+#: wordpad.rc:91
 msgid "&Help"
 msgstr "&Yardım"
 
@@ -8074,10 +8075,6 @@ msgstr "&Tarih"
 #: clock.rc:39 taskmgr.rc:43 taskmgr.rc:141
 msgid "&Always on Top"
 msgstr "&Her zaman üstte"
-
-#: clock.rc:41
-msgid "Inf&o"
-msgstr "B&ilgi"
 
 #: clock.rc:42
 #, fuzzy

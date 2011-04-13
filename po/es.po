@@ -6606,8 +6606,9 @@ msgstr ""
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
 "&Añadir a favoritos"
 
-#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 clock.rc:41 notepad.rc:57 oleview.rc:69
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53
+#: wordpad.rc:91
 msgid "&Help"
 msgstr "A&yuda"
 
@@ -8107,10 +8108,6 @@ msgstr "Fe&cha"
 #: clock.rc:39 taskmgr.rc:43 taskmgr.rc:141
 msgid "&Always on Top"
 msgstr "Siempre &visible"
-
-#: clock.rc:41
-msgid "Inf&o"
-msgstr "&Info"
 
 #: clock.rc:42
 #, fuzzy

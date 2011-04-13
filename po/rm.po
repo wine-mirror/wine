@@ -6184,8 +6184,9 @@ msgstr ""
 msgid "&Add to Favorites..."
 msgstr ""
 
-#: shdocvw.rc:55 shell32.rc:113 notepad.rc:57 oleview.rc:69 progman.rc:52
-#: regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53 wordpad.rc:91
+#: shdocvw.rc:55 shell32.rc:113 clock.rc:41 notepad.rc:57 oleview.rc:69
+#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winhlp32.rc:53
+#: wordpad.rc:91
 msgid "&Help"
 msgstr "&Ag�d"
 
@@ -7514,10 +7515,6 @@ msgstr ""
 #, fuzzy
 msgid "&Always on Top"
 msgstr "Ad�na da&vant"
-
-#: clock.rc:41
-msgid "Inf&o"
-msgstr ""
 
 #: clock.rc:42
 #, fuzzy
