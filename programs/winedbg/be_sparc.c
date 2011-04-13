@@ -125,8 +125,13 @@ static void be_sparc_clear_watchpoint(CONTEXT* ctx, unsigned idx)
 
 static int be_sparc_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 {
-    dbg_printf("not done for Sparc\n");
-    return 0;
+    if (way)
+    {
+        ctx->pc--;
+        return -1;
+    }
+    ctx->pc++;
+    return 1;
 }
 
 static int be_sparc_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
