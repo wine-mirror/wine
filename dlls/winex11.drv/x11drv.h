@@ -258,6 +258,7 @@ extern void X11DRV_OpenGL_Cleanup(void);
 extern void X11DRV_Xcursor_Init(void);
 extern void X11DRV_BITMAP_Init(void);
 extern void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y );
+extern void X11DRV_XInput2_Init(void);
 
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse );
 extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth );
@@ -550,6 +551,7 @@ struct x11drv_thread_data
     XFontSet font_set;             /* international text drawing font set */
     Window   selection_wnd;        /* window used for selection interactions */
     HKL      kbd_layout;           /* active keyboard layout */
+    enum { xi_unavailable = -1, xi_unknown, xi_disabled, xi_enabled } xi2_state; /* XInput2 state */
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void);
@@ -823,6 +825,7 @@ extern void X11DRV_ResetSelectionOwner(void);
 extern void CDECL X11DRV_SetFocus( HWND hwnd );
 extern void set_window_cursor( Window window, HCURSOR handle );
 extern void sync_window_cursor( Window window );
+extern void clipping_window_unmapped(void);
 extern BOOL CDECL X11DRV_ClipCursor( LPCRECT clip );
 extern void X11DRV_InitKeyboard( Display *display );
 extern DWORD CDECL X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,

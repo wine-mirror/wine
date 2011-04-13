@@ -128,6 +128,17 @@ static XContext cursor_context;
 static RECT clip_rect;
 static Cursor create_cursor( HANDLE handle );
 
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+static BOOL xinput2_available;
+static int xinput2_opcode;
+static int xinput2_core_pointer;
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(XIFreeDeviceInfo);
+MAKE_FUNCPTR(XIQueryDevice);
+MAKE_FUNCPTR(XIQueryVersion);
+MAKE_FUNCPTR(XISelectEvents);
+#undef MAKE_FUNCPTR
+#endif
 
 /***********************************************************************
  *		X11DRV_Xcursor_Init
@@ -239,6 +250,124 @@ void sync_window_cursor( Window window )
 }
 
 /***********************************************************************
+ *              enable_xinput2
+ */
+static void enable_xinput2(void)
+{
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+    struct x11drv_thread_data *data = x11drv_thread_data();
+    XIDeviceInfo *devices;
+    XIEventMask mask;
+    unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
+    int i, count;
+
+    if (!xinput2_available) return;
+
+    if (data->xi2_state == xi_unknown)
+    {
+        int major = 2, minor = 0;
+        wine_tsx11_lock();
+        if (!pXIQueryVersion( data->display, &major, &minor )) data->xi2_state = xi_disabled;
+        else
+        {
+            data->xi2_state = xi_unavailable;
+            WARN( "X Input 2 not available\n" );
+        }
+        wine_tsx11_unlock();
+    }
+    if (data->xi2_state == xi_unavailable) return;
+
+    wine_tsx11_lock();
+    devices = pXIQueryDevice( data->display, XIAllDevices, &count );
+    for (i = 0; i < count; ++i)
+    {
+        if (devices[i].use != XIMasterPointer) continue;
+        TRACE( "Using %u (%s) as core pointer\n",
+               devices[i].deviceid, debugstr_a(devices[i].name) );
+        xinput2_core_pointer = devices[i].deviceid;
+        break;
+    }
+
+    mask.mask     = mask_bits;
+    mask.mask_len = sizeof(mask_bits);
+    memset( mask_bits, 0, sizeof(mask_bits) );
+
+    XISetMask( mask_bits, XI_RawButtonPress );
+    XISetMask( mask_bits, XI_RawButtonRelease );
+    XISetMask( mask_bits, XI_RawMotion );
+
+    for (i = 0; i < count; ++i)
+    {
+        if (devices[i].use == XISlavePointer && devices[i].attachment == xinput2_core_pointer)
+        {
+            TRACE( "Device %u (%s) is attached to the core pointer\n",
+                   devices[i].deviceid, debugstr_a(devices[i].name) );
+            mask.deviceid = devices[i].deviceid;
+            pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
+            data->xi2_state = xi_enabled;
+        }
+    }
+
+    pXIFreeDeviceInfo( devices );
+    wine_tsx11_unlock();
+#endif
+}
+
+/***********************************************************************
+ *              disable_xinput2
+ */
+static void disable_xinput2(void)
+{
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+    struct x11drv_thread_data *data = x11drv_thread_data();
+    XIEventMask mask;
+    XIDeviceInfo *devices;
+    int i, count;
+
+    if (data->xi2_state != xi_enabled) return;
+
+    TRACE( "disabling\n" );
+    data->xi2_state = xi_disabled;
+
+    mask.mask = NULL;
+    mask.mask_len = 0;
+
+    wine_tsx11_lock();
+    devices = pXIQueryDevice( data->display, XIAllDevices, &count );
+    for (i = 0; i < count; ++i)
+    {
+        if (devices[i].use == XISlavePointer && devices[i].attachment == xinput2_core_pointer)
+        {
+            mask.deviceid = devices[i].deviceid;
+            pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
+        }
+    }
+    pXIFreeDeviceInfo( devices );
+    wine_tsx11_unlock();
+#endif
+}
+
+/***********************************************************************
+ *		clipping_window_unmapped
+ *
+ * Turn off clipping when the window got unmapped.
+ */
+void clipping_window_unmapped(void)
+{
+    struct x11drv_thread_data *data = x11drv_thread_data();
+
+    clipping_cursor = 0;
+    if (data->xi2_state == xi_enabled)
+    {
+        RECT rect;
+        GetClipCursor( &rect );
+        if (EqualRect( &rect, &clip_rect )) return;  /* still clipped */
+        disable_xinput2();
+    }
+}
+
+
+/***********************************************************************
  *		send_mouse_input
  *
  * Update the various window states on a mouse event.
@@ -254,7 +383,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
     {
         input->u.mi.dx += clip_rect.left;
         input->u.mi.dy += clip_rect.top;
-        __wine_send_input( hwnd, input );
+        if (x11drv_thread_data()->xi2_state != xi_enabled) __wine_send_input( hwnd, input );
         return;
     }
 
@@ -913,14 +1042,16 @@ void CDECL X11DRV_SetCursor( HCURSOR handle )
  */
 BOOL CDECL X11DRV_SetCursorPos( INT x, INT y )
 {
-    Display *display = thread_init_display();
+    struct x11drv_thread_data *data = x11drv_init_thread_data();
+
+    if (data->xi2_state == xi_enabled) return TRUE;
 
     TRACE( "warping to (%d,%d)\n", x, y );
 
     wine_tsx11_lock();
-    XWarpPointer( display, root_window, root_window, 0, 0, 0, 0,
+    XWarpPointer( data->display, root_window, root_window, 0, 0, 0, 0,
                   x - virtual_screen_rect.left, y - virtual_screen_rect.top );
-    XFlush( display ); /* avoids bad mouse lag in games that do their own mouse warping */
+    XFlush( data->display ); /* avoids bad mouse lag in games that do their own mouse warping */
     wine_tsx11_unlock();
     return TRUE;
 }
@@ -983,6 +1114,7 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 
             if (clipping_cursor)
             {
+                enable_xinput2();
                 sync_window_cursor( clip_window );
                 clip_rect = *clip;
                 return TRUE;
@@ -996,6 +1128,7 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
     XUnmapWindow( display, clip_window );
     wine_tsx11_unlock();
     clipping_cursor = 0;
+    disable_xinput2();
     return TRUE;
 }
 
@@ -1175,6 +1308,42 @@ static void X11DRV_RawMotion( XIRawEvent *event )
 
 
 /***********************************************************************
+ *              X11DRV_XInput2_Init
+ */
+void X11DRV_XInput2_Init(void)
+{
+#if defined(SONAME_LIBXI) && defined(HAVE_X11_EXTENSIONS_XINPUT2_H)
+    int event, error;
+    void *libxi_handle = wine_dlopen( SONAME_LIBXI, RTLD_NOW, NULL, 0 );
+
+    if (!libxi_handle)
+    {
+        WARN( "couldn't load %s\n", SONAME_LIBXI );
+        return;
+    }
+#define LOAD_FUNCPTR(f) \
+    if (!(p##f = wine_dlsym( libxi_handle, #f, NULL, 0))) \
+    { \
+        WARN("Failed to load %s.\n", #f); \
+        return; \
+    }
+
+    LOAD_FUNCPTR(XIFreeDeviceInfo);
+    LOAD_FUNCPTR(XIQueryDevice);
+    LOAD_FUNCPTR(XIQueryVersion);
+    LOAD_FUNCPTR(XISelectEvents);
+#undef LOAD_FUNCPTR
+
+    wine_tsx11_lock();
+    xinput2_available = XQueryExtension( gdi_display, "XInputExtension", &xinput2_opcode, &event, &error );
+    wine_tsx11_unlock();
+#else
+    TRACE( "X Input 2 support not compiled in.\n" );
+#endif
+}
+
+
+/***********************************************************************
  *           X11DRV_GenericEvent
  */
 void X11DRV_GenericEvent( HWND hwnd, XEvent *xev )
@@ -1183,6 +1352,7 @@ void X11DRV_GenericEvent( HWND hwnd, XEvent *xev )
     XGenericEventCookie *event = &xev->xcookie;
 
     if (!event->data) return;
+    if (event->extension != xinput2_opcode) return;
 
     switch (event->evtype)
     {
