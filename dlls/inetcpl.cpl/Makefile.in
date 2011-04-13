@@ -1,11 +1,12 @@
 MODULE    = inetcpl.cpl
 IMPORTS   = comctl32 shlwapi user32 advapi32
-DELAYIMPORTS = cryptui wininet
+DELAYIMPORTS = cryptui wininet ole32 urlmon
 
 C_SRCS = \
 	content.c \
 	general.c \
-	inetcpl.c
+	inetcpl.c \
+	security.c
 
 RC_SRCS = \
 	cpl_De.rc \

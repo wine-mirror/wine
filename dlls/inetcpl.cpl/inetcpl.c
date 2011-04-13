@@ -20,6 +20,8 @@
  */
 
 #define NONAMELESSUNION
+#define COBJMACROS
+#define CONST_VTABLE
 
 #include <stdarg.h>
 #include <windef.h>
@@ -28,6 +30,7 @@
 #include <winuser.h>
 #include <commctrl.h>
 #include <cpl.h>
+#include "ole2.h"
 
 #include "wine/debug.h"
 
@@ -82,9 +85,16 @@ static int CALLBACK propsheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
  */
 static void display_cpl_sheets(HWND parent)
 {
+    INITCOMMONCONTROLSEX icex;
     PROPSHEETPAGEW psp[NUM_PROPERTY_PAGES];
     PROPSHEETHEADERW psh;
     DWORD id = 0;
+
+    OleInitialize(NULL);
+    /* Initialize common controls */
+    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    icex.dwICC = ICC_LISTVIEW_CLASSES | ICC_BAR_CLASSES;
+    InitCommonControlsEx(&icex);
 
     ZeroMemory(&psh, sizeof(psh));
     ZeroMemory(psp, sizeof(psp));
@@ -94,6 +104,12 @@ static void display_cpl_sheets(HWND parent)
     psp[id].hInstance = hcpl;
     psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_GENERAL);
     psp[id].pfnDlgProc = general_dlgproc;
+    id++;
+
+    psp[id].dwSize = sizeof (PROPSHEETPAGEW);
+    psp[id].hInstance = hcpl;
+    psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_SECURITY);
+    psp[id].pfnDlgProc = security_dlgproc;
     id++;
 
     psp[id].dwSize = sizeof (PROPSHEETPAGEW);
@@ -115,6 +131,8 @@ static void display_cpl_sheets(HWND parent)
 
     /* display the dialog */
     PropertySheetW(&psh);
+
+    OleUninitialize();
 }
 
 /*********************************************************************

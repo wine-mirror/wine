@@ -24,11 +24,31 @@
 
 #include <windef.h>
 #include <winuser.h>
-
+#include <commctrl.h>
 
 extern HMODULE hcpl;
 INT_PTR CALLBACK content_dlgproc(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
 INT_PTR CALLBACK general_dlgproc(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
+INT_PTR CALLBACK security_dlgproc(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
+
+/* ## Memory allocation functions ## */
+
+static inline void * __WINE_ALLOC_SIZE(1) heap_alloc( size_t len )
+{
+    return HeapAlloc( GetProcessHeap(), 0, len );
+}
+
+static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero( size_t len )
+{
+    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
+}
+
+static inline BOOL heap_free( void *mem )
+{
+    return HeapFree( GetProcessHeap(), 0, mem );
+}
+
+/* ######### */
 
 #define NUM_PROPERTY_PAGES 8
 
@@ -56,6 +76,9 @@ INT_PTR CALLBACK general_dlgproc(HWND, UINT, WPARAM, LPARAM) DECLSPEC_HIDDEN;
 #define IDC_DELETE_HISTORY     1013
 #define IDC_DELETE_FORM_DATA   1014
 #define IDC_DELETE_PASSWORDS   1015
+
+#define IDD_SECURITY        2000
+#define IDC_SEC_LISTVIEW    2001
 
 #define IDD_CONTENT         4000
 #define IDC_CERT            4100
