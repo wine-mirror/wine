@@ -2165,7 +2165,7 @@ msgstr "Actuali&zar"
 msgid "&Print..."
 msgstr "&Imprimir..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "&Conteúdo"
 
@@ -8936,6 +8936,11 @@ msgstr "Localizar &próxima\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Substituir...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "&Conteúdo"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Acerca do Notepad..."
@@ -9613,15 +9618,6 @@ msgstr "&Dividir"
 msgid "&Remove Favorite..."
 msgstr "&Remover Favorito"
 
-#: regedit.rc:78 winefile.rc:86
-#, fuzzy
-msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Tópicos da ajuda\tF1\n"
-"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
-"&Tópicos da Ajuda"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "&Acerca do Editor de Registo"
@@ -10075,10 +10071,6 @@ msgstr "&Em cascata"
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "&Trazer para a frente"
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
-msgstr "&Tópicos de ajuda do Gestor de Tarefas"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"

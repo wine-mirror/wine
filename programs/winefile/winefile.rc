@@ -83,7 +83,7 @@ IDM_WINEFILE MENU
     }
 
     POPUP "&Help"  {
-        MENUITEM "&Help Topics\tF1",            ID_HELP
+        MENUITEM "&Contents\tF1",               ID_HELP
         MENUITEM "&About Wine File",            ID_ABOUT
     }
 }

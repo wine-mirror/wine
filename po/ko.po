@@ -2045,7 +2045,7 @@ msgstr "다시 읽기(&R)"
 msgid "&Print..."
 msgstr "인쇄(&P)..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "목차(&C)"
 
@@ -8546,6 +8546,11 @@ msgstr "다음 찾기(&N)\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr " 바꾸기(&R)...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "목차(&C)"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "노트패드 정보(&A)"
@@ -9193,10 +9198,6 @@ msgstr "나누기(&L)"
 msgid "&Remove Favorite..."
 msgstr "즐겨 찾기 제거(&R)..."
 
-#: regedit.rc:78 winefile.rc:86
-msgid "&Help Topics\tF1"
-msgstr "도움말 항목(&H)\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "레지스트리 편집기 정보(&A)"
@@ -9634,10 +9635,6 @@ msgstr "정렬(&C)"
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "앞으로 가져오기(&B)"
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
-msgstr "작업 관리자 도움말 목차(&H)"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"

@@ -2201,7 +2201,7 @@ msgstr "&Actualizează"
 msgid "&Print..."
 msgstr "Im&primare..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "&Conținut"
 
@@ -9162,6 +9162,11 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Î&nlocuire...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "&Conținut"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Despre notepad"
@@ -9849,15 +9854,6 @@ msgstr ""
 msgid "&Remove Favorite..."
 msgstr "Elimina&re favorită..."
 
-#: regedit.rc:78 winefile.rc:86
-#, fuzzy
-msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Subiecte în ajutor...\tF1\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Subiecte în a&jutor\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "Des&pre editorul de registru"
@@ -10309,10 +10305,6 @@ msgstr "&Cascadă"
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "Vizi&bil mereu"
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
-msgstr "Subiecte în A&jutor pentru Administratorul de sarcini"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"

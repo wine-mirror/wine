@@ -2067,7 +2067,7 @@ msgstr "Obnovit"
 msgid "&Print..."
 msgstr "&Tisknout..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "&Obsah"
 
@@ -8795,6 +8795,11 @@ msgstr "&Najdi další\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Nah&radit...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "&Obsah"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&About Notepad..."
@@ -9484,15 +9489,6 @@ msgstr ""
 msgid "&Remove Favorite..."
 msgstr "Odeb&rat oblíbené..."
 
-#: regedit.rc:78 winefile.rc:86
-#, fuzzy
-msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"&Témata nápovědy\tF1\n"
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"Obsa&h\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "&O aplikaci Registry Editor"
@@ -9938,10 +9934,6 @@ msgstr ""
 
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
-msgstr ""
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
 msgstr ""
 
 #: taskmgr.rc:90

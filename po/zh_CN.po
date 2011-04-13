@@ -2036,7 +2036,7 @@ msgstr "刷新(&R)"
 msgid "&Print..."
 msgstr "打印(&P)..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "内容(&C)"
 
@@ -8541,6 +8541,11 @@ msgstr ""
 "#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
 "替换(&R)...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "内容(&C)"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "关于记事本(&A)"
@@ -9201,15 +9206,6 @@ msgstr ""
 msgid "&Remove Favorite..."
 msgstr "删除收藏(&R)..."
 
-#: regedit.rc:78 winefile.rc:86
-#, fuzzy
-msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"帮助主题(&H)\tF1\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"帮助内容(&H)\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "关于注册表编辑器(&A)"
@@ -9617,10 +9613,6 @@ msgstr "层叠(&C)"
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "移到最前面(&B)"
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
-msgstr "帮助内容(&H)"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"

@@ -2062,7 +2062,7 @@ msgstr "Actualis&er"
 msgid "&Print..."
 msgstr "&Imprimer..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "&Sommaire"
 
@@ -8671,6 +8671,11 @@ msgstr "&Suivant\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Rem&placer...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "&Sommaire"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "À &propos du Bloc-notes"
@@ -9331,10 +9336,6 @@ msgstr "&Séparateur"
 msgid "&Remove Favorite..."
 msgstr "&Supprimer des favoris..."
 
-#: regedit.rc:78 winefile.rc:86
-msgid "&Help Topics\tF1"
-msgstr "Rubri&ques d'aide\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "À &propos de l'éditeur du registre"
@@ -9791,10 +9792,6 @@ msgstr "&Cascade"
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "Toujours &visible"
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
-msgstr "Rubriques d'aide du Gestionnaire des tâches"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"

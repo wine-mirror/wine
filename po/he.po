@@ -2017,7 +2017,7 @@ msgstr "&רענון"
 msgid "&Print..."
 msgstr "ה&דפסה..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "&תכנים"
 
@@ -8661,6 +8661,11 @@ msgstr "חיפוש ה&בא\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "החל&פה...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "&תכנים"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "על &אודות פנקס רשימות"
@@ -9312,10 +9317,6 @@ msgstr "&פיצול"
 msgid "&Remove Favorite..."
 msgstr "ה&סרת מועדף..."
 
-#: regedit.rc:78 winefile.rc:86
-msgid "&Help Topics\tF1"
-msgstr "נושאי הע&זרה\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "על &אודות עורך רישום המערכת"
@@ -9756,10 +9757,6 @@ msgstr "&דירוג"
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "&קידום לחזית"
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
-msgstr "&נושאי העזרה במנהל המשימות"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"

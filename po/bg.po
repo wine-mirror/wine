@@ -2026,7 +2026,7 @@ msgstr "Опр&есни"
 msgid "&Print..."
 msgstr "&Печат"
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "&Съдържание"
 
@@ -8421,6 +8421,11 @@ msgstr "Намери &следващ\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Замяна...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "&Съдържание"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&About Notepad"
@@ -9076,10 +9081,6 @@ msgstr "&Разделител"
 msgid "&Remove Favorite..."
 msgstr "&Премахни отметка"
 
-#: regedit.rc:78 winefile.rc:86
-msgid "&Help Topics\tF1"
-msgstr "&Помощни теми\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "&Относно редактора на системния регистър"
@@ -9491,10 +9492,6 @@ msgstr ""
 
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
-msgstr ""
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
 msgstr ""
 
 #: taskmgr.rc:90

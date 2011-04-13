@@ -2051,7 +2051,7 @@ msgstr "Upp&datera"
 msgid "&Print..."
 msgstr "Skriv &ut..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "&Innehåll"
 
@@ -8671,6 +8671,11 @@ msgstr "Sök &nästa\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Ersätt...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "&Innehåll"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Om Anteckningar"
@@ -9325,10 +9330,6 @@ msgstr "&Dela upp"
 msgid "&Remove Favorite..."
 msgstr "&Ta bort favorit..."
 
-#: regedit.rc:78 winefile.rc:86
-msgid "&Help Topics\tF1"
-msgstr "Ämnen i &hjälp\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "&Om Registereditorn"
@@ -9774,10 +9775,6 @@ msgstr "&Överlappande"
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "V&isa överst"
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
-msgstr "Ämnen i &hjälp för Aktivitetshanteraren"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"

@@ -2059,7 +2059,7 @@ msgstr "A&ctualiseren"
 msgid "&Print..."
 msgstr "Af&drukken..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "Help-onder&werpen"
 
@@ -8713,6 +8713,11 @@ msgstr "V&olgende zoeken\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Vervangen...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "Help-onder&werpen"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Over Notepad"
@@ -9372,10 +9377,6 @@ msgstr "Sp&litsen"
 msgid "&Remove Favorite..."
 msgstr "&Verwijderen uit favorieten..."
 
-#: regedit.rc:78 winefile.rc:86
-msgid "&Help Topics\tF1"
-msgstr "&Help-onderwerpen\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "&Info"
@@ -9826,10 +9827,6 @@ msgstr "&Achter elkaar"
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "Naar de &voorgrond halen"
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
-msgstr "Taakbeheer &help-onderwerpen"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"

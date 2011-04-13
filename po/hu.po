@@ -2087,7 +2087,7 @@ msgstr "F&rissítés"
 msgid "&Print..."
 msgstr "&Nyomtatás..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "&Tartalom"
 
@@ -8701,6 +8701,11 @@ msgstr "Köve&tkező keresése\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "&Tartalom"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&About Notepad"
@@ -9389,15 +9394,6 @@ msgstr ""
 msgid "&Remove Favorite..."
 msgstr "Tö&rlés a kedvencekből..."
 
-#: regedit.rc:78 winefile.rc:86
-#, fuzzy
-msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Súgó témakörök\tF1\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"S&úgó témakörök\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "Regisztrációs &adatbázis szerkesztő névjegye"
@@ -9817,10 +9813,6 @@ msgstr ""
 
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
-msgstr ""
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
 msgstr ""
 
 #: taskmgr.rc:90

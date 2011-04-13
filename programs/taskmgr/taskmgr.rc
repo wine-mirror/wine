@@ -85,7 +85,7 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "Task Manager &Help Topics",   ID_HELP_TOPICS
+        MENUITEM "&Contents",                   ID_HELP_TOPICS
         MENUITEM "&About Task Manager",         ID_HELP_ABOUT
     END
 END

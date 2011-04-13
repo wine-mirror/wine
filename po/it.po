@@ -2163,7 +2163,7 @@ msgstr "A&ggiorna"
 msgid "&Print..."
 msgstr "&Stampa..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 #, fuzzy
 msgid "&Contents"
 msgstr ""
@@ -8916,6 +8916,15 @@ msgstr ""
 "#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
 "S&ostituisci...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr ""
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"&Contenuti\n"
+"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
+"&Sommario"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Informazioni sul Blocco Note"
@@ -9607,15 +9616,6 @@ msgstr "Di&vidi"
 msgid "&Remove Favorite..."
 msgstr "&Rimuovi dai Preferiti..."
 
-#: regedit.rc:78 winefile.rc:86
-#, fuzzy
-msgid "&Help Topics\tF1"
-msgstr ""
-"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
-"&Sommario della Guida\tF1\n"
-"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
-"&Sommario della Guida"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "&Informazioni sull'editor del Registro"
@@ -10068,10 +10068,6 @@ msgstr "&A cascata"
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "&Porta davanti"
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
-msgstr "&Guida per argomenti al Gestore dei Processi"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"

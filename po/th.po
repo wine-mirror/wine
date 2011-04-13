@@ -2008,7 +2008,7 @@ msgstr ""
 msgid "&Print..."
 msgstr "พิมพ์\tCtrl+P"
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "เนื้อหา"
 
@@ -8298,6 +8298,11 @@ msgstr "ค้นหาต่อไป\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replace...\tCtrl+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "เนื้อหา"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&About Notepad"
@@ -8938,10 +8943,6 @@ msgstr ""
 msgid "&Remove Favorite..."
 msgstr ""
 
-#: regedit.rc:78 winefile.rc:86
-msgid "&Help Topics\tF1"
-msgstr ""
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr ""
@@ -9347,10 +9348,6 @@ msgstr ""
 
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
-msgstr ""
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
 msgstr ""
 
 #: taskmgr.rc:90

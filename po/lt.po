@@ -2055,7 +2055,7 @@ msgstr "Atsiųsti iš &naujo"
 msgid "&Print..."
 msgstr "&Spausdinti..."
 
-#: hhctrl.rc:28 notepad.rc:58 progman.rc:53
+#: hhctrl.rc:28 taskmgr.rc:89
 msgid "&Contents"
 msgstr "&Turinys"
 
@@ -8596,6 +8596,11 @@ msgstr "Ieškoti ki&to\tF3"
 msgid "&Replace...\tCtrl+H"
 msgstr "Pa&keisti...\tVald+H"
 
+#: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
+#, fuzzy
+msgid "&Contents\tF1"
+msgstr "&Turinys"
+
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Apie užrašinę"
@@ -9249,10 +9254,6 @@ msgstr ""
 msgid "&Remove Favorite..."
 msgstr "&Pašalinti iš adresyno..."
 
-#: regedit.rc:78 winefile.rc:86
-msgid "&Help Topics\tF1"
-msgstr "&Žinyno temos\tF1"
-
 #: regedit.rc:79
 msgid "&About Registry Editor"
 msgstr "&Apie Registro tvarkytuvę"
@@ -9701,10 +9702,6 @@ msgstr "Išdėstyti pa&kopomis"
 #: taskmgr.rc:85 taskmgr.rc:101 taskmgr.rc:121
 msgid "&Bring To Front"
 msgstr "Perkelti į &priekį"
-
-#: taskmgr.rc:89
-msgid "Task Manager &Help Topics"
-msgstr "Užduočių tvarkytuvės &žinynas"
 
 #: taskmgr.rc:90
 msgid "&About Task Manager"

@@ -75,7 +75,7 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "&Help Topics\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM "&Contents\tF1",               ID_HELP_HELPTOPICS
         MENUITEM "&About Registry Editor",      ID_HELP_ABOUT
     END
 END

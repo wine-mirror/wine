@@ -50,7 +50,7 @@ MAIN_MENU MENU
  }
  
 POPUP "&Help" {
-   MENUITEM "&Contents",         PM_CONTENTS
+   MENUITEM "&Contents\tF1",            PM_CONTENTS
    MENUITEM "&About Program Manager",   PM_ABOUT_WINE
  }
 }
@@ -85,5 +85,6 @@ IDS_SYMBOLS_ICO,		"Icons (*.ico)"
 
 ACCEL ACCELERATORS
 {
+VK_F1,     PM_CONTENTS, VIRTKEY
 VK_RETURN, PM_ATTRIBUTES, VIRTKEY, ALT
 }
