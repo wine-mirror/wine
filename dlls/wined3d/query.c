@@ -241,7 +241,7 @@ ULONG CDECL wined3d_query_incref(struct wined3d_query *query)
 
 ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
 {
-    ULONG refcount = InterlockedIncrement(&query->ref);
+    ULONG refcount = InterlockedDecrement(&query->ref);
 
     TRACE("%p decreasing refcount to %u.\n", query, refcount);
 
