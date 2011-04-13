@@ -106,6 +106,19 @@ static inline BOOL pt_in_rect( const RECT *rect, POINT pt )
             (pt.y >= rect->top) && (pt.y < rect->bottom));
 }
 
+static void WINAPI solid_pen_line_callback(INT x, INT y, LPARAM lparam)
+{
+    dibdrv_physdev *pdev = (dibdrv_physdev *)lparam;
+    RECT rect;
+
+    rect.left   = x;
+    rect.right  = x + 1;
+    rect.top    = y;
+    rect.bottom = y + 1;
+    pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->pen_and, pdev->pen_xor);
+    return;
+}
+
 static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 {
     RECT rc;
@@ -124,17 +137,20 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
         order_end_points(&rc.left, &rc.right);
         rc.bottom++;
         pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rc, pdev->pen_and, pdev->pen_xor);
-        return TRUE;
     }
     else if(rc.left == rc.right)
     {
         order_end_points(&rc.top, &rc.bottom);
         rc.right++;
         pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rc, pdev->pen_and, pdev->pen_xor);
-        return TRUE;
     }
-
-    return FALSE;
+    else
+    {
+        /* FIXME: Optimize by moving Bresenham algorithm to the primitive functions,
+           or at least cache adjacent points in the callback */
+        LineDDA(start->x, start->y, end->x, end->y, solid_pen_line_callback, (LPARAM)pdev);
+    }
+    return TRUE;
 }
 
 /***********************************************************************

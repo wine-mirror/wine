@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -76,6 +77,7 @@ static const char *sha1_graphics_a8r8g8b8[] =
 {
     "a3cadd34d95d3d5cc23344f69aab1c2e55935fcf",
     "2426172d9e8fec27d9228088f382ef3c93717da9",
+    "9e8f27ca952cdba01dbf25d07c34e86a7820c012",
     "17b2c177bdce5e94433574a928bda5c94a8cdfa5",
     NULL
 };
@@ -172,6 +174,18 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         LineTo(hdc, 170 + i * 3, 10); /* b -> t */
     }
     compare_hash(bmi, bits, sha1, "h and v solid lines");
+    memset(bits, 0xcc, dib_size);
+
+    SetROP2(hdc, R2_COPYPEN);
+    for(i = 0; i < 16; i++)
+    {
+        double s = sin(M_PI * i / 8.0);
+        double c = cos(M_PI * i / 8.0);
+
+        MoveToEx(hdc, 200.5 + 10 * c, 200.5 + 10 * s, NULL);
+        LineTo(hdc, 200.5 + 100 * c, 200.5 + 100 * s);
+    }
+    compare_hash(bmi, bits, sha1, "diagonal solid lines");
     memset(bits, 0xcc, dib_size);
 
     solid_brush = CreateSolidBrush(RGB(0x33, 0xaa, 0xff));
