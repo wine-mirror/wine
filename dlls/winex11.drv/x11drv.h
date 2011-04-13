@@ -728,6 +728,7 @@ extern void X11DRV_DestroyNotify( HWND hwnd, XEvent *event );
 extern void X11DRV_SelectionRequest( HWND hWnd, XEvent *event );
 extern void X11DRV_SelectionClear( HWND hWnd, XEvent *event );
 extern void X11DRV_MappingNotify( HWND hWnd, XEvent *event );
+extern void X11DRV_GenericEvent( HWND hwnd, XEvent *event );
 
 extern Bool (*pXGetEventData)( Display *display, XEvent /*XGenericEventCookie*/ *event );
 extern void (*pXFreeEventData)( Display *display, XEvent /*XGenericEventCookie*/ *event );
