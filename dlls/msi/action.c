@@ -5293,8 +5293,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     WCHAR squashed_pc[SQUISH_GUID_SIZE];
     MSIRECORD *uirow;
     LPWSTR upgrade_code;
-    HKEY hkey, props;
-    HKEY upgrade;
+    HKEY hkey, props, upgrade_key;
     UINT rc;
 
     /* FIXME: also need to publish if the product is in advertise mode */
@@ -5325,11 +5324,14 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     upgrade_code = msi_dup_property(package->db, szUpgradeCode);
     if (upgrade_code)
     {
-        MSIREG_OpenUpgradeCodesKey(upgrade_code, &upgrade, TRUE);
-        squash_guid(package->ProductCode, squashed_pc);
-        msi_reg_set_val_str(upgrade, squashed_pc, NULL);
-        RegCloseKey(upgrade);
-        msi_free(upgrade_code);
+        rc = MSIREG_OpenUpgradeCodesKey( upgrade_code, &upgrade_key, TRUE );
+        if (rc == ERROR_SUCCESS)
+        {
+            squash_guid( package->ProductCode, squashed_pc );
+            msi_reg_set_val_str( upgrade_key, squashed_pc, NULL );
+            RegCloseKey( upgrade_key );
+        }
+        msi_free( upgrade_code );
     }
 
 done:
