@@ -806,18 +806,137 @@ done:
     return ERROR_SUCCESS;
 }
 
+static const WCHAR patch_media_query[] = {
+    'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','M','e','d','i','a','`',' ',
+    'W','H','E','R','E',' ','`','S','o','u','r','c','e','`',' ','I','S',' ','N','O','T',' ','N','U','L','L',' ',
+    'A','N','D',' ','`','C','a','b','i','n','e','t','`',' ','I','S',' ','N','O','T',' ','N','U','L','L',' ',
+    'O','R','D','E','R',' ','B','Y',' ','`','D','i','s','k','I','d','`',0};
+
+struct patch_media
+{
+    struct list entry;
+    UINT    disk_id;
+    UINT    last_sequence;
+    WCHAR  *prompt;
+    WCHAR  *cabinet;
+    WCHAR  *volume;
+    WCHAR  *source;
+};
+
+static UINT msi_add_patch_media( MSIPACKAGE *package, IStorage *patch )
+{
+    static const WCHAR delete_query[] = {
+        'D','E','L','E','T','E',' ','F','R','O','M',' ','`','M','e','d','i','a','`',' ',
+        'W','H','E','R','E',' ','`','D','i','s','k','I','d','`','=','?',0};
+    static const WCHAR insert_query[] = {
+        'I','N','S','E','R','T',' ','I','N','T','O',' ','`','M','e','d','i','a','`',' ',
+        '(','`','D','i','s','k','I','d','`',',','`','L','a','s','t','S','e','q','u','e','n','c','e','`',',',
+        '`','D','i','s','k','P','r','o','m','p','t','`',',','`','C','a','b','i','n','e','t','`',',',
+        '`','V','o','l','u','m','e','L','a','b','e','l','`',',','`','S','o','u','r','c','e','`',')',' ',
+        'V','A','L','U','E','S',' ','(','?',',','?',',','?',',','?',',','?',',','?',')',0};
+    MSIQUERY *view;
+    MSIRECORD *rec = NULL;
+    UINT r, disk_id;
+    struct list media_list;
+    struct patch_media *media, *next;
+
+    r = MSI_DatabaseOpenViewW( package->db, patch_media_query, &view );
+    if (r != ERROR_SUCCESS) return r;
+
+    r = MSI_ViewExecute( view, 0 );
+    if (r != ERROR_SUCCESS)
+    {
+        msiobj_release( &view->hdr );
+        TRACE("query failed %u\n", r);
+        return r;
+    }
+
+    list_init( &media_list );
+    while (MSI_ViewFetch( view, &rec ) == ERROR_SUCCESS)
+    {
+        disk_id = MSI_RecordGetInteger( rec, 1 );
+        TRACE("disk_id %u\n", disk_id);
+        if (disk_id >= MSI_INITIAL_MEDIA_TRANSFORM_DISKID)
+        {
+            msiobj_release( &rec->hdr );
+            continue;
+        }
+        if (!(media = msi_alloc( sizeof( *media )))) goto done;
+        media->disk_id = disk_id;
+        media->last_sequence = MSI_RecordGetInteger( rec, 2 );
+        media->prompt  = msi_dup_record_field( rec, 3 );
+        media->cabinet = msi_dup_record_field( rec, 4 );
+        media->volume  = msi_dup_record_field( rec, 5 );
+        media->source  = msi_dup_record_field( rec, 6 );
+
+        list_add_tail( &media_list, &media->entry );
+        msiobj_release( &rec->hdr );
+    }
+    LIST_FOR_EACH_ENTRY( media, &media_list, struct patch_media, entry )
+    {
+        MSIQUERY *delete_view, *insert_view;
+
+        r = MSI_DatabaseOpenViewW( package->db, delete_query, &delete_view );
+        if (r != ERROR_SUCCESS) goto done;
+
+        rec = MSI_CreateRecord( 1 );
+        MSI_RecordSetInteger( rec, 1, media->disk_id );
+
+        r = MSI_ViewExecute( delete_view, rec );
+        msiobj_release( &delete_view->hdr );
+        msiobj_release( &rec->hdr );
+        if (r != ERROR_SUCCESS) goto done;
+
+        r = MSI_DatabaseOpenViewW( package->db, insert_query, &insert_view );
+        if (r != ERROR_SUCCESS) goto done;
+
+        disk_id = package->db->media_transform_disk_id;
+        TRACE("disk id       %u\n", disk_id);
+        TRACE("last sequence %u\n", media->last_sequence);
+        TRACE("prompt        %s\n", debugstr_w(media->prompt));
+        TRACE("cabinet       %s\n", debugstr_w(media->cabinet));
+        TRACE("volume        %s\n", debugstr_w(media->volume));
+        TRACE("source        %s\n", debugstr_w(media->source));
+
+        rec = MSI_CreateRecord( 6 );
+        MSI_RecordSetInteger( rec, 1, disk_id );
+        MSI_RecordSetInteger( rec, 2, media->last_sequence );
+        MSI_RecordSetStringW( rec, 3, media->prompt );
+        MSI_RecordSetStringW( rec, 4, media->cabinet );
+        MSI_RecordSetStringW( rec, 5, media->volume );
+        MSI_RecordSetStringW( rec, 6, media->source );
+
+        r = MSI_ViewExecute( insert_view, rec );
+        msiobj_release( &insert_view->hdr );
+        msiobj_release( &rec->hdr );
+        if (r != ERROR_SUCCESS) goto done;
+
+        r = msi_add_cabinet_stream( package, disk_id, patch, media->cabinet );
+        if (r != ERROR_SUCCESS) WARN("failed to add cabinet stream %u\n", r);
+        package->db->media_transform_disk_id++;
+    }
+
+done:
+    msiobj_release( &view->hdr );
+    LIST_FOR_EACH_ENTRY_SAFE( media, next, &media_list, struct patch_media, entry )
+    {
+        list_remove( &media->entry );
+        msi_free( media->prompt );
+        msi_free( media->cabinet );
+        msi_free( media->volume );
+        msi_free( media->source );
+        msi_free( media );
+    }
+    return r;
+}
+
 static UINT msi_set_patch_offsets(MSIDATABASE *db)
 {
-    static const WCHAR query_media[] = {
-        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','M','e','d','i','a',' ',
-        'W','H','E','R','E',' ','S','o','u','r','c','e',' ','I','S',' ','N','O','T',' ','N','U','L','L',
-        ' ','A','N','D',' ','C','a','b','i','n','e','t',' ','I','S',' ','N','O','T',' ','N','U','L','L',' ',
-        'O','R','D','E','R',' ','B','Y',' ','D','i','s','k','I','d',0};
-    MSIQUERY *view = NULL;
+    MSIQUERY *view;
     MSIRECORD *rec = NULL;
     UINT r;
 
-    r = MSI_DatabaseOpenViewW( db, query_media, &view );
+    r = MSI_DatabaseOpenViewW( db, patch_media_query, &view );
     if (r != ERROR_SUCCESS)
         return r;
 
@@ -869,7 +988,6 @@ static UINT msi_set_patch_offsets(MSIDATABASE *db)
 
 done:
     msiobj_release( &view->hdr );
-
     return r;
 }
 
@@ -884,7 +1002,10 @@ UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINF
     {
         r = msi_apply_substorage_transform( package, patch_db, substorage[i] );
         if (r == ERROR_SUCCESS)
+        {
+            msi_add_patch_media( package, patch_db->storage );
             msi_set_patch_offsets( package->db );
+        }
     }
 
     msi_free( substorage );
@@ -892,12 +1013,6 @@ UINT msi_apply_patch_db( MSIPACKAGE *package, MSIDATABASE *patch_db, MSIPATCHINF
         return r;
 
     msi_set_media_source_prop( package );
-
-    /*
-     * There might be a CAB file in the patch package,
-     * so append it to the list of storages to search for streams.
-     */
-    append_storage_to_db( package->db, patch_db->storage );
 
     patch->state = MSIPATCHSTATE_APPLIED;
     list_add_tail( &package->patches, &patch->entry );
@@ -1848,6 +1963,34 @@ static UINT load_all_files(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
+static UINT load_media( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    UINT disk_id = MSI_RecordGetInteger( row, 1 );
+    const WCHAR *cabinet = MSI_RecordGetString( row, 4 );
+
+    /* FIXME: load external cabinets and directory sources too */
+    if (!cabinet || cabinet[0] != '#') return ERROR_SUCCESS;
+    msi_add_cabinet_stream( package, disk_id, package->db->storage, cabinet );
+    return ERROR_SUCCESS;
+}
+
+static UINT load_all_media( MSIPACKAGE *package )
+{
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','M','e','d','i','a','`',' ',
+         'O','R','D','E','R',' ','B','Y',' ','`','D','i','s','k','I','d','`',0};
+    MSIQUERY *view;
+    UINT r;
+
+    r = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (r != ERROR_SUCCESS) return ERROR_SUCCESS;
+
+    MSI_IterateRecords( view, NULL, load_media, package );
+    msiobj_release( &view->hdr );
+    return ERROR_SUCCESS;
+}
+
 static UINT load_patch(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
@@ -2018,6 +2161,7 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     load_all_features( package );
     load_all_files( package );
     load_all_patches( package );
+    load_all_media( package );
 
     return ERROR_SUCCESS;
 }

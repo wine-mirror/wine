@@ -364,7 +364,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             }
             msi_free(source);
         }
-        else if (file->state != msifs_installed)
+        else if (file->state != msifs_installed && !(file->Attributes & msidbFileAttributesPatchAdded))
         {
             ERR("compressed file wasn't installed (%s)\n", debugstr_w(file->TargetPath));
             rc = ERROR_INSTALL_FAILURE;

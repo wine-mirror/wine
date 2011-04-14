@@ -1095,6 +1095,9 @@ static void test_system_tables( void )
     r = find_entry( hdb, "_Tables", "Media" );
     ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
 
+    r = get_integer( hdb, 1, "SELECT * FROM `Media` WHERE `VolumeLabel`=\'DISK1\'");
+    ok( r == 1, "Got %u\n", r );
+
     r = find_entry( hdb, "_Tables", "_Property" );
     ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
 
@@ -1170,13 +1173,19 @@ static void test_system_tables( void )
     ok( r == ERROR_SUCCESS, "failed to find entry %u\n", r );
 
     cr = get_string( hdb, 6, "SELECT * FROM `Media` WHERE `Source` IS NOT NULL");
-    todo_wine ok( !strcmp(cr, patchsource), "Expected %s, got %s\n", patchsource, cr );
+    todo_wine ok( !strcmp(cr, patchsource), "Expected \"%s\", got \"%s\"\n", patchsource, cr );
 
     r = get_integer( hdb, 1, "SELECT * FROM `Media` WHERE `Source` IS NOT NULL");
     todo_wine ok( r == 100, "Got %u\n", r );
 
     r = get_integer( hdb, 2, "SELECT * FROM `Media` WHERE `Source` IS NOT NULL");
     todo_wine ok( r == 10000, "Got %u\n", r );
+
+    r = get_integer( hdb, 1, "SELECT * FROM `Media` WHERE `VolumeLabel`=\'DISK1\'");
+    ok( r == 1, "Got %u\n", r );
+
+    cr = get_string( hdb, 4, "SELECT * FROM `Media` WHERE `Source` IS NOT NULL");
+    ok( !strcmp(cr, "#CAB_msitest"), "Expected \"#CAB_msitest\", got \"%s\"\n", cr );
 
     r = get_integer( hdb, 8, "SELECT * FROM `File` WHERE `File` = 'patch.txt'");
     ok( r == 10000, "Got %u\n", r );

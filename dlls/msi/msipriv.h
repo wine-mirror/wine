@@ -76,6 +76,7 @@ struct tagMSIOBJECTHDR
 };
 
 #define MSI_INITIAL_MEDIA_TRANSFORM_OFFSET 10000
+#define MSI_INITIAL_MEDIA_TRANSFORM_DISKID 10000
 
 typedef struct tagMSIDATABASE
 {
@@ -88,6 +89,7 @@ typedef struct tagMSIDATABASE
     LPWSTR localfile;
     LPCWSTR mode;
     UINT media_transform_offset;
+    UINT media_transform_disk_id;
     struct list tables;
     struct list transforms;
     struct list streams;

@@ -198,27 +198,40 @@ static LONG CDECL cabinet_seek(INT_PTR hf, LONG dist, int seektype)
     return SetFilePointer(handle, dist, NULL, seektype);
 }
 
-struct cab_stream
+struct package_disk
 {
-    MSIDATABASE *db;
-    WCHAR       *name;
+    MSIPACKAGE *package;
+    UINT        id;
 };
 
-static struct cab_stream cab_stream;
+static struct package_disk package_disk;
 
 static INT_PTR CDECL cabinet_open_stream( char *pszFile, int oflag, int pmode )
 {
-    UINT r;
-    IStream *stm;
+    MSICABINETSTREAM *cab;
+    IStream *stream;
+    WCHAR *encoded;
+    HRESULT hr;
 
-    r = db_get_raw_stream( cab_stream.db, cab_stream.name, &stm );
-    if (r != ERROR_SUCCESS)
+    cab = msi_get_cabinet_stream( package_disk.package, package_disk.id );
+    if (!cab)
     {
-        WARN("Failed to get cabinet stream %u\n", r);
+        WARN("failed to get cabinet stream\n");
         return 0;
     }
-
-    return (INT_PTR)stm;
+    if (!cab->stream[0] || !(encoded = encode_streamname( FALSE, cab->stream + 1 )))
+    {
+        WARN("failed to encode stream name\n");
+        return 0;
+    }
+    hr = IStorage_OpenStream( cab->storage, encoded, NULL, STGM_READ|STGM_SHARE_EXCLUSIVE, 0, &stream );
+    msi_free( encoded );
+    if (FAILED(hr))
+    {
+        WARN("failed to open stream 0x%08x\n", hr);
+        return 0;
+    }
+    return (INT_PTR)stream;
 }
 
 static UINT CDECL cabinet_read_stream( INT_PTR hf, void *pv, UINT cb )
@@ -378,14 +391,9 @@ static INT_PTR cabinet_next_cabinet_stream( FDINOTIFICATIONTYPE fdint,
         ERR("Failed to get next cabinet information: %u\n", rc);
         return -1;
     }
+    package_disk.id = mi->disk_id;
 
-    msi_free( cab_stream.name );
-    cab_stream.name = encode_streamname( FALSE, mi->cabinet + 1 );
-    if (!cab_stream.name)
-        return -1;
-
-    TRACE("next cabinet is %s\n", debugstr_w(mi->cabinet));
-
+    TRACE("next cabinet is %s disk id %u\n", debugstr_w(mi->cabinet), mi->disk_id);
     return 0;
 }
 
@@ -553,7 +561,7 @@ static BOOL extract_cabinet( MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data 
     ERF erf;
     BOOL ret = FALSE;
 
-    TRACE("Extracting %s\n", debugstr_w(mi->cabinet));
+    TRACE("extracting %s disk id %u\n", debugstr_w(mi->cabinet), mi->disk_id);
 
     hfdi = FDICreate( cabinet_alloc, cabinet_free, cabinet_open, cabinet_read,
                       cabinet_write, cabinet_close, cabinet_seek, 0, &erf );
@@ -593,7 +601,7 @@ static BOOL extract_cabinet_stream( MSIPACKAGE *package, MSIMEDIAINFO *mi, LPVOI
     ERF erf;
     BOOL ret = FALSE;
 
-    TRACE("Extracting %s\n", debugstr_w(mi->cabinet));
+    TRACE("extracting %s disk id %u\n", debugstr_w(mi->cabinet), mi->disk_id);
 
     hfdi = FDICreate( cabinet_alloc, cabinet_free, cabinet_open_stream, cabinet_read_stream,
                       cabinet_write, cabinet_close_stream, cabinet_seek_stream, 0, &erf );
@@ -603,22 +611,14 @@ static BOOL extract_cabinet_stream( MSIPACKAGE *package, MSIMEDIAINFO *mi, LPVOI
         return FALSE;
     }
 
-    cab_stream.db = package->db;
-    cab_stream.name = encode_streamname( FALSE, mi->cabinet + 1 );
-    if (!cab_stream.name)
-        goto done;
+    package_disk.package = package;
+    package_disk.id      = mi->disk_id;
 
     ret = FDICopy( hfdi, filename, NULL, 0, cabinet_notify_stream, NULL, data );
-    if (!ret)
-        ERR("FDICopy failed\n");
+    if (!ret) ERR("FDICopy failed\n");
 
-done:
     FDIDestroy( hfdi );
-    msi_free( cab_stream.name );
-
-    if (ret)
-        mi->is_extracted = TRUE;
-
+    if (ret) mi->is_extracted = TRUE;
     return ret;
 }
 
