@@ -2869,9 +2869,8 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
 static void test_http_protocol(void)
 {
     static const WCHAR posttest_url[] =
-        {'h','t','t','p',':','/','/','c','r','o','s','s','o','v','e','r','.',
-         'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
-         'p','o','s','t','t','e','s','t','.','p','h','p',0};
+        {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
+         't','e','s','t','s','/','p','o','s','t','.','p','h','p',0};
     static const WCHAR redirect_url[] =
         {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
          't','e','s','t','s','/','r','e','d','i','r','e','c','t',0};

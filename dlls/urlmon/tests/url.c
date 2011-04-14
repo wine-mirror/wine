@@ -152,10 +152,9 @@ static const WCHAR winetest_data_urlW[] =
 
 static const WCHAR TEST_PART_URL_1[] = {'/','t','e','s','t','s','/','d','a','t','a','.','p','h','p','\0'};
 
-static const WCHAR SHORT_RESPONSE_URL[] =
-        {'h','t','t','p',':','/','/','c','r','o','s','s','o','v','e','r','.',
-         'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
-         'p','o','s','t','t','e','s','t','.','p','h','p',0};
+static const WCHAR winetest_post_urlW[] =
+        {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
+         't','e','s','t','s','/','p','o','s','t','.','p','h','p',0};
 static const WCHAR ABOUT_BLANK[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 static WCHAR INDEX_HTML[MAX_PATH];
 static const WCHAR ITS_URL[] =
@@ -2686,7 +2685,7 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     tymed = t;
     filedwl_api = (flags & BINDTEST_FILEDWLAPI) != 0;
     if(flags & BINDTEST_HTTPRESPONSE)
-        urls[HTTP_TEST] = SHORT_RESPONSE_URL;
+        urls[HTTP_TEST] = winetest_post_urlW;
     else
         urls[HTTP_TEST] = winetest_data_urlW;
     if(flags & BINDTEST_INVALID_CN)
@@ -3161,7 +3160,7 @@ static void test_BindToObject(int protocol, DWORD flags)
             CLEAR_CALLED(GetWindow_IWindowForBindingUI);
         }
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST) {
-            if(urls[test_protocol] == SHORT_RESPONSE_URL)
+            if(urls[test_protocol] == winetest_post_urlW)
                 CLEAR_CALLED(Obj_OnProgress_SENDINGREQUEST);
             else
                 CHECK_CALLED(Obj_OnProgress_SENDINGREQUEST);
@@ -3602,7 +3601,6 @@ START_TEST(url)
         test_BindToObject(HTTP_TEST, 0);
 
         trace("http test (short response)...\n");
-        http_is_first = TRUE;
         test_BindToStorage(HTTP_TEST, BINDTEST_HTTPRESPONSE, TYMED_ISTREAM);
 
         trace("http test (short response, to object)...\n");
