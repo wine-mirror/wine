@@ -320,7 +320,6 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
     process->priority        = PROCESS_PRIOCLASS_NORMAL;
-    process->affinity        = ~0;
     process->suspend         = 0;
     process->is_system       = 0;
     process->create_flags    = 0;
@@ -355,6 +354,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     {
         process->handles = alloc_handle_table( process, 0 );
         process->token = token_create_admin();
+        process->affinity = ~0;
     }
     else
     {
@@ -365,6 +365,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
         /* Note: for security reasons, starting a new process does not attempt
          * to use the current impersonation token for the new process */
         process->token = token_duplicate( parent->token, TRUE, 0 );
+        process->affinity = parent->affinity;
     }
     if (!process->handles || !process->token) goto error;
 
