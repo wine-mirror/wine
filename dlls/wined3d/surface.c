@@ -3568,15 +3568,11 @@ static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
         IWineD3DSurfaceImpl *src_surface, const RECT *src_rect_in,
         IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in)
 {
-    struct wined3d_swapchain *swapchain = NULL;
     struct wined3d_context *context;
     RECT src_rect, dst_rect;
 
     src_rect = *src_rect_in;
     dst_rect = *dst_rect_in;
-
-    if (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-        swapchain = dst_surface->container.u.swapchain;
 
     /* Make sure the surface is up-to-date. This should probably use
      * surface_load_location() and worry about the destination surface too,
@@ -3628,8 +3624,9 @@ static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
     /* Leave the opengl state valid for blitting */
     device->blitter->unset_shader(context->gl_info);
 
-    if (wined3d_settings.strict_draw_ordering || (swapchain
-            && (dst_surface == swapchain->front_buffer || swapchain->num_contexts > 1)))
+    if (wined3d_settings.strict_draw_ordering
+            || (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
+            && (dst_surface->container.u.swapchain->front_buffer == dst_surface)))
         wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);

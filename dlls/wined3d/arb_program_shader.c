@@ -7206,7 +7206,6 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
                            IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum wined3d_blit_op blit_op,
                            DWORD Filter)
 {
-    struct wined3d_swapchain *dst_swapchain;
     struct wined3d_context *context;
     RECT dst_rect = *dst_rect_in;
 
@@ -7232,11 +7231,9 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
     /* Leave the opengl state valid for blitting */
     arbfp_blit_unset(context->gl_info);
 
-    dst_swapchain = dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
-            ? dst_surface->container.u.swapchain : NULL;
-    if (wined3d_settings.strict_draw_ordering || (dst_swapchain
-            && (dst_surface == dst_swapchain->front_buffer
-            || dst_swapchain->num_contexts > 1)))
+    if (wined3d_settings.strict_draw_ordering
+            || (dst_surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
+            && (dst_surface->container.u.swapchain->front_buffer == dst_surface)))
         wglFlush(); /* Flush to ensure ordering across contexts. */
 
     context_release(context);
