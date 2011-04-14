@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-12 19:25+0300\n"
+"PO-Revision-Date: 2011-04-14 18:18+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -2180,36 +2180,32 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "Konfigūruokite Wine interneto naršyklės ir susijusias nuostatas"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "Išsaugoti &nuostatas išeinant"
+msgstr "Saugumo nuostatos zonai:"
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Adaptuoti"
+msgstr "Pritaikytos"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Labai žemos"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "&Mažas"
+msgstr "Žemos"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Vidutinės"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Padidintos"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&Didelis"
+msgstr "Aukštos"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -8629,9 +8625,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "Pa&keisti...\tVald+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&Turinys"
+msgstr "&Turinys\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -10913,7 +10908,7 @@ msgstr "%s iš %s laisva"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "Ž&aidimas"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -10921,7 +10916,7 @@ msgstr "&Naujas\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "&Klaustukai"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10940,7 +10935,6 @@ msgid "&Custom..."
 msgstr "Pasirin&ktas..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
 msgstr "&Geriausi laikai"
 
