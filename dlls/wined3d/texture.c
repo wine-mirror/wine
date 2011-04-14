@@ -1186,7 +1186,7 @@ static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource
 
     /* Cleanup the container. */
     volume_set_container(volume, NULL);
-    IWineD3DVolume_Release((IWineD3DVolume *)volume);
+    wined3d_volume_decref(volume);
 }
 
 /* Do not call while under the GL lock. */

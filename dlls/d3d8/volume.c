@@ -66,7 +66,7 @@ static ULONG WINAPI IDirect3DVolume8Impl_AddRef(IDirect3DVolume8 *iface)
         if (ref == 1)
         {
             wined3d_mutex_lock();
-            IWineD3DVolume_AddRef(This->wineD3DVolume);
+            wined3d_volume_incref(This->wined3d_volume);
             wined3d_mutex_unlock();
         }
 
@@ -93,7 +93,7 @@ static ULONG WINAPI IDirect3DVolume8Impl_Release(IDirect3DVolume8 *iface)
 
         if (ref == 0) {
             wined3d_mutex_lock();
-            IWineD3DVolume_Release(This->wineD3DVolume);
+            wined3d_volume_decref(This->wined3d_volume);
             wined3d_mutex_unlock();
         }
 
@@ -132,7 +132,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_SetPrivateData(IDirect3DVolume8 *ifac
             iface, debugstr_guid(refguid), pData, SizeOfData, Flags);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolume_SetPrivateData(This->wineD3DVolume, refguid, pData, SizeOfData, Flags);
+    hr = wined3d_volume_set_private_data(This->wined3d_volume, refguid, pData, SizeOfData, Flags);
     wined3d_mutex_unlock();
 
     return hr;
@@ -148,7 +148,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_GetPrivateData(IDirect3DVolume8 *ifac
             iface, debugstr_guid(refguid), pData, pSizeOfData);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolume_GetPrivateData(This->wineD3DVolume, refguid, pData, pSizeOfData);
+    hr = wined3d_volume_get_private_data(This->wined3d_volume, refguid, pData, pSizeOfData);
     wined3d_mutex_unlock();
 
     return hr;
@@ -162,7 +162,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_FreePrivateData(IDirect3DVolume8 *ifa
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(refguid));
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolume_FreePrivateData(This->wineD3DVolume, refguid);
+    hr = wined3d_volume_free_private_data(This->wined3d_volume, refguid);
     wined3d_mutex_unlock();
 
     return hr;
@@ -195,7 +195,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(IDirect3DVolume8 *iface, D3DV
     TRACE("iface %p, desc %p.\n", iface, desc);
 
     wined3d_mutex_lock();
-    wined3d_resource = IWineD3DVolume_GetResource(This->wineD3DVolume);
+    wined3d_resource = wined3d_volume_get_resource(This->wined3d_volume);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     wined3d_mutex_unlock();
 
@@ -221,7 +221,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_LockBox(IDirect3DVolume8 *iface,
             iface, pLockedVolume, pBox, Flags);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolume_Map(This->wineD3DVolume, (WINED3DLOCKED_BOX *)pLockedVolume,
+    hr = wined3d_volume_map(This->wined3d_volume, (WINED3DLOCKED_BOX *)pLockedVolume,
             (const WINED3DBOX *)pBox, Flags);
     wined3d_mutex_unlock();
 
@@ -236,7 +236,7 @@ static HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(IDirect3DVolume8 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = IWineD3DVolume_Unmap(This->wineD3DVolume);
+    hr = wined3d_volume_unmap(This->wined3d_volume);
     wined3d_mutex_unlock();
 
     return hr;
@@ -278,7 +278,7 @@ HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, 
     volume->ref = 1;
 
     hr = IWineD3DDevice_CreateVolume(device->WineD3DDevice, width, height, depth, usage,
-            format, pool, volume, &d3d8_volume_wined3d_parent_ops, &volume->wineD3DVolume);
+            format, pool, volume, &d3d8_volume_wined3d_parent_ops, &volume->wined3d_volume);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d volume, hr %#x.\n", hr);

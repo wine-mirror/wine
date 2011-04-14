@@ -2861,7 +2861,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent *iface,
         void *container_parent, UINT width, UINT height, UINT depth, enum wined3d_format_id format,
-        WINED3DPOOL pool, DWORD usage, IWineD3DVolume **volume)
+        WINED3DPOOL pool, DWORD usage, struct wined3d_volume **volume)
 {
     IDirect3DDevice8Impl *This = impl_from_IWineD3DDeviceParent(iface);
     IDirect3DVolume8Impl *object;
@@ -2887,8 +2887,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
         return hr;
     }
 
-    *volume = object->wineD3DVolume;
-    IWineD3DVolume_AddRef(*volume);
+    *volume = object->wined3d_volume;
+    wined3d_volume_incref(*volume);
     IDirect3DVolume8_Release(&object->IDirect3DVolume8_iface);
 
     object->container = container_parent;

@@ -190,15 +190,9 @@ typedef struct IDirect3DVolume9Impl
     /* IUnknown fields */
     const IDirect3DVolume9Vtbl *lpVtbl;
     LONG                    ref;
-
-    /* IDirect3DVolume9 fields */
-    IWineD3DVolume         *wineD3DVolume;
-
-    /* The volume container */
-    IUnknown                    *container;
-
-    /* If set forward refcounting to this object */
-    IUnknown                    *forwardReference;
+    struct wined3d_volume *wined3d_volume;
+    IUnknown *container;
+    IUnknown *forwardReference;
 } IDirect3DVolume9Impl;
 
 HRESULT volume_init(IDirect3DVolume9Impl *volume, IDirect3DDevice9Impl *device, UINT width, UINT height,

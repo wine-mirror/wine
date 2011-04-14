@@ -203,15 +203,9 @@ struct IDirect3DVolume8Impl
 {
     IDirect3DVolume8    IDirect3DVolume8_iface;
     LONG                ref;
-
-    /* IDirect3DVolume8 fields */
-    IWineD3DVolume     *wineD3DVolume;
-
-    /* The volume container */
-    IUnknown           *container;
-
-    /* If set forward refcounting to this object */
-    IUnknown           *forwardReference;
+    struct wined3d_volume *wined3d_volume;
+    IUnknown *container;
+    IUnknown *forwardReference;
 };
 
 HRESULT volume_init(IDirect3DVolume8Impl *volume, IDirect3DDevice8Impl *device, UINT width, UINT height,

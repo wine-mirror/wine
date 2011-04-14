@@ -4,7 +4,7 @@
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2005 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
- * Copyright 2009-2010 Henri Verbeet for CodeWeavers
+ * Copyright 2009-2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
 /* Context activation is done by the caller. */
-static void volume_bind_and_dirtify(struct IWineD3DVolumeImpl *volume, const struct wined3d_gl_info *gl_info)
+static void volume_bind_and_dirtify(struct wined3d_volume *volume, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_texture *container = volume->container;
     DWORD active_sampler;
@@ -62,7 +62,7 @@ static void volume_bind_and_dirtify(struct IWineD3DVolumeImpl *volume, const str
     container->texture_ops->texture_bind(container, gl_info, FALSE);
 }
 
-void volume_add_dirty_box(struct IWineD3DVolumeImpl *volume, const WINED3DBOX *dirty_box)
+void volume_add_dirty_box(struct wined3d_volume *volume, const WINED3DBOX *dirty_box)
 {
     volume->dirty = TRUE;
     if (dirty_box)
@@ -128,194 +128,159 @@ static void volume_unload(struct wined3d_resource *resource)
     resource_unload(resource);
 }
 
-/* *******************************************
-   IWineD3DVolume IUnknown parts follow
-   ******************************************* */
-static HRESULT WINAPI IWineD3DVolumeImpl_QueryInterface(IWineD3DVolume *iface, REFIID riid, void **object)
+ULONG CDECL wined3d_volume_incref(struct wined3d_volume *volume)
 {
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+    ULONG refcount = InterlockedIncrement(&volume->resource.ref);
 
-    if (IsEqualGUID(riid, &IID_IWineD3DVolume)
-            || IsEqualGUID(riid, &IID_IWineD3DResource)
-            || IsEqualGUID(riid, &IID_IWineD3DBase)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
-    }
+    TRACE("%p increasing refcount to %u.\n", volume, refcount);
 
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-
-    *object = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI IWineD3DVolumeImpl_AddRef(IWineD3DVolume *iface) {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %d\n", This, This->resource.ref);
-    return InterlockedIncrement(&This->resource.ref);
+    return refcount;
 }
 
 /* Do not call while under the GL lock. */
-static ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    ULONG ref;
-    TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
-    ref = InterlockedDecrement(&This->resource.ref);
+ULONG CDECL wined3d_volume_decref(struct wined3d_volume *volume)
+{
+    ULONG refcount = InterlockedDecrement(&volume->resource.ref);
 
-    if (!ref)
+    TRACE("%p decreasing refcount to %u.\n", volume, refcount);
+
+    if (!refcount)
     {
-        resource_cleanup(&This->resource);
-        This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
-        HeapFree(GetProcessHeap(), 0, This);
+        resource_cleanup(&volume->resource);
+        volume->resource.parent_ops->wined3d_object_destroyed(volume->resource.parent);
+        HeapFree(GetProcessHeap(), 0, volume);
     }
-    return ref;
+
+    return refcount;
 }
 
-/* ****************************************************
-   IWineD3DVolume IWineD3DResource parts follow
-   **************************************************** */
-static void * WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface)
+void * CDECL wined3d_volume_get_parent(const struct wined3d_volume *volume)
 {
-    TRACE("iface %p.\n", iface);
+    TRACE("volume %p.\n", volume);
 
-    return ((IWineD3DVolumeImpl *)iface)->resource.parent;
+    return volume->resource.parent;
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_SetPrivateData(IWineD3DVolume *iface,
-        REFGUID riid, const void *data, DWORD data_size, DWORD flags)
+HRESULT CDECL wined3d_volume_set_private_data(struct wined3d_volume *volume,
+        REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data(&((IWineD3DVolumeImpl *)iface)->resource, riid, data, data_size, flags);
+    return resource_set_private_data(&volume->resource, guid, data, data_size, flags);
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_GetPrivateData(IWineD3DVolume *iface,
+HRESULT CDECL wined3d_volume_get_private_data(const struct wined3d_volume *volume,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data(&((IWineD3DVolumeImpl *)iface)->resource, guid, data, data_size);
+    return resource_get_private_data(&volume->resource, guid, data, data_size);
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_FreePrivateData(IWineD3DVolume *iface, REFGUID refguid)
+HRESULT CDECL wined3d_volume_free_private_data(struct wined3d_volume *volume, REFGUID guid)
 {
-    return resource_free_private_data(&((IWineD3DVolumeImpl *)iface)->resource, refguid);
+    return resource_free_private_data(&volume->resource, guid);
 }
 
-static DWORD WINAPI IWineD3DVolumeImpl_SetPriority(IWineD3DVolume *iface, DWORD priority)
+DWORD CDECL wined3d_volume_set_priority(struct wined3d_volume *volume, DWORD priority)
 {
-    return resource_set_priority(&((IWineD3DVolumeImpl *)iface)->resource, priority);
+    return resource_set_priority(&volume->resource, priority);
 }
 
-static DWORD WINAPI IWineD3DVolumeImpl_GetPriority(IWineD3DVolume *iface)
+DWORD CDECL wined3d_volume_get_priority(const struct wined3d_volume *volume)
 {
-    return resource_get_priority(&((IWineD3DVolumeImpl *)iface)->resource);
+    return resource_get_priority(&volume->resource);
 }
 
 /* Do not call while under the GL lock. */
-static void WINAPI IWineD3DVolumeImpl_PreLoad(IWineD3DVolume *iface) {
-    FIXME("iface %p stub!\n", iface);
+void CDECL wined3d_volume_preload(struct wined3d_volume *volume)
+{
+    FIXME("volume %p stub!\n", volume);
 }
 
-static WINED3DRESOURCETYPE WINAPI IWineD3DVolumeImpl_GetType(IWineD3DVolume *iface)
+WINED3DRESOURCETYPE CDECL wined3d_volume_get_type(const struct wined3d_volume *volume)
 {
-    return resource_get_type(&((IWineD3DVolumeImpl *)iface)->resource);
+    return resource_get_type(&volume->resource);
 }
 
-static struct wined3d_resource * WINAPI IWineD3DVolumeImpl_GetResource(IWineD3DVolume *iface)
+struct wined3d_resource * CDECL wined3d_volume_get_resource(struct wined3d_volume *volume)
 {
-    TRACE("iface %p.\n", iface);
+    TRACE("volume %p.\n", volume);
 
-    return &((IWineD3DVolumeImpl *)iface)->resource;
+    return &volume->resource;
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_Map(IWineD3DVolume *iface,
-        WINED3DLOCKED_BOX *pLockedVolume, const WINED3DBOX *pBox, DWORD flags)
+HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
+        WINED3DLOCKED_BOX *locked_box, const WINED3DBOX *box, DWORD flags)
 {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    FIXME("(%p) : pBox=%p stub\n", This, pBox);
+    TRACE("volume %p, locked_box %p, box %p, flags %#x.\n",
+            volume, locked_box, box, flags);
 
-    if(!This->resource.allocatedMemory) {
-        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->resource.size);
-    }
+    if (!volume->resource.allocatedMemory)
+        volume->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, volume->resource.size);
 
-    /* fixme: should we really lock as such? */
-    TRACE("(%p) : box=%p, output pbox=%p, allMem=%p\n", This, pBox, pLockedVolume, This->resource.allocatedMemory);
+    TRACE("allocatedMemory %p.\n", volume->resource.allocatedMemory);
 
-    pLockedVolume->RowPitch = This->resource.format->byte_count * This->resource.width; /* Bytes / row */
-    pLockedVolume->SlicePitch = This->resource.format->byte_count
-            * This->resource.width * This->resource.height; /* Bytes / slice */
-    if (!pBox) {
+    locked_box->RowPitch = volume->resource.format->byte_count * volume->resource.width; /* Bytes / row */
+    locked_box->SlicePitch = volume->resource.format->byte_count
+            * volume->resource.width * volume->resource.height; /* Bytes / slice */
+    if (!box)
+    {
         TRACE("No box supplied - all is ok\n");
-        pLockedVolume->pBits = This->resource.allocatedMemory;
-        This->lockedBox.Left   = 0;
-        This->lockedBox.Top    = 0;
-        This->lockedBox.Front  = 0;
-        This->lockedBox.Right  = This->resource.width;
-        This->lockedBox.Bottom = This->resource.height;
-        This->lockedBox.Back   = This->resource.depth;
-    } else {
-        TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n", pBox, pBox->Left, pBox->Top, pBox->Right, pBox->Bottom, pBox->Front, pBox->Back);
-        pLockedVolume->pBits = This->resource.allocatedMemory
-                + (pLockedVolume->SlicePitch * pBox->Front)     /* FIXME: is front < back or vica versa? */
-                + (pLockedVolume->RowPitch * pBox->Top)
-                + (pBox->Left * This->resource.format->byte_count);
-        This->lockedBox.Left   = pBox->Left;
-        This->lockedBox.Top    = pBox->Top;
-        This->lockedBox.Front  = pBox->Front;
-        This->lockedBox.Right  = pBox->Right;
-        This->lockedBox.Bottom = pBox->Bottom;
-        This->lockedBox.Back   = pBox->Back;
+        locked_box->pBits = volume->resource.allocatedMemory;
+        volume->lockedBox.Left   = 0;
+        volume->lockedBox.Top    = 0;
+        volume->lockedBox.Front  = 0;
+        volume->lockedBox.Right  = volume->resource.width;
+        volume->lockedBox.Bottom = volume->resource.height;
+        volume->lockedBox.Back   = volume->resource.depth;
+    }
+    else
+    {
+        TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n",
+                box, box->Left, box->Top, box->Right, box->Bottom, box->Front, box->Back);
+        locked_box->pBits = volume->resource.allocatedMemory
+                + (locked_box->SlicePitch * box->Front)     /* FIXME: is front < back or vica versa? */
+                + (locked_box->RowPitch * box->Top)
+                + (box->Left * volume->resource.format->byte_count);
+        volume->lockedBox.Left   = box->Left;
+        volume->lockedBox.Top    = box->Top;
+        volume->lockedBox.Front  = box->Front;
+        volume->lockedBox.Right  = box->Right;
+        volume->lockedBox.Bottom = box->Bottom;
+        volume->lockedBox.Back   = box->Back;
     }
 
     if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
     {
-        volume_add_dirty_box(This, &This->lockedBox);
-        wined3d_texture_set_dirty(This->container, TRUE);
+        volume_add_dirty_box(volume, &volume->lockedBox);
+        wined3d_texture_set_dirty(volume->container, TRUE);
     }
 
-    This->locked = TRUE;
-    TRACE("returning memory@%p rpitch(%d) spitch(%d)\n", pLockedVolume->pBits, pLockedVolume->RowPitch, pLockedVolume->SlicePitch);
+    volume->locked = TRUE;
+
+    TRACE("Returning memory %p, row pitch %d, slice pitch %d.\n",
+            locked_box->pBits, locked_box->RowPitch, locked_box->SlicePitch);
+
     return WINED3D_OK;
 }
 
-IWineD3DVolume * CDECL wined3d_volume_from_resource(struct wined3d_resource *resource)
+struct wined3d_volume * CDECL wined3d_volume_from_resource(struct wined3d_resource *resource)
 {
-    return (IWineD3DVolume *)volume_from_resource(resource);
+    return volume_from_resource(resource);
 }
 
-static HRESULT WINAPI IWineD3DVolumeImpl_Unmap(IWineD3DVolume *iface)
+HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
 {
-    IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    if (!This->locked)
+    TRACE("volume %p.\n", volume);
+
+    if (!volume->locked)
     {
-        WARN("Trying to unlock unlocked volume %p.\n", iface);
+        WARN("Trying to unlock unlocked volume %p.\n", volume);
         return WINED3DERR_INVALIDCALL;
     }
-    TRACE("(%p) : unlocking volume\n", This);
-    This->locked = FALSE;
-    memset(&This->lockedBox, 0, sizeof(This->lockedBox));
+
+    volume->locked = FALSE;
+    memset(&volume->lockedBox, 0, sizeof(volume->lockedBox));
+
     return WINED3D_OK;
 }
-
-static const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
-{
-    /* IUnknown */
-    IWineD3DVolumeImpl_QueryInterface,
-    IWineD3DVolumeImpl_AddRef,
-    IWineD3DVolumeImpl_Release,
-    /* IWineD3DResource */
-    IWineD3DVolumeImpl_GetParent,
-    IWineD3DVolumeImpl_SetPrivateData,
-    IWineD3DVolumeImpl_GetPrivateData,
-    IWineD3DVolumeImpl_FreePrivateData,
-    IWineD3DVolumeImpl_SetPriority,
-    IWineD3DVolumeImpl_GetPriority,
-    IWineD3DVolumeImpl_PreLoad,
-    IWineD3DVolumeImpl_GetType,
-    /* IWineD3DVolume */
-    IWineD3DVolumeImpl_GetResource,
-    IWineD3DVolumeImpl_Map,
-    IWineD3DVolumeImpl_Unmap,
-};
 
 static const struct wined3d_resource_ops volume_resource_ops =
 {
@@ -335,8 +300,6 @@ HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT
         WARN("Volume cannot be created - no volume texture support.\n");
         return WINED3DERR_INVALIDCALL;
     }
-
-    volume->lpVtbl = &IWineD3DVolume_Vtbl;
 
     hr = resource_init(&volume->resource, device, WINED3DRTYPE_VOLUME, format,
             WINED3DMULTISAMPLE_NONE, 0, usage, pool, width, height, depth,

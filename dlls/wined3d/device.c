@@ -5100,22 +5100,22 @@ static HRESULT IWineD3DDeviceImpl_UpdateVolume(IWineD3DDevice *iface,
     /* TODO: Implement direct loading into the gl volume instead of using memcpy and
      * dirtification to improve loading performance.
      */
-    hr = IWineD3DVolume_Map(pSourceVolume, &src, NULL, WINED3DLOCK_READONLY);
+    hr = wined3d_volume_map(pSourceVolume, &src, NULL, WINED3DLOCK_READONLY);
     if (FAILED(hr)) return hr;
-    hr = IWineD3DVolume_Map(pDestinationVolume, &dst, NULL, WINED3DLOCK_DISCARD);
+    hr = wined3d_volume_map(pDestinationVolume, &dst, NULL, WINED3DLOCK_DISCARD);
     if (FAILED(hr))
     {
-        IWineD3DVolume_Unmap(pSourceVolume);
+        wined3d_volume_unmap(pSourceVolume);
         return hr;
     }
 
     memcpy(dst.pBits, src.pBits, ((IWineD3DVolumeImpl *) pDestinationVolume)->resource.size);
 
-    hr = IWineD3DVolume_Unmap(pDestinationVolume);
+    hr = wined3d_volume_unmap(pDestinationVolume);
     if (FAILED(hr))
-        IWineD3DVolume_Unmap(pSourceVolume);
+        wined3d_volume_unmap(pSourceVolume);
     else
-        hr = IWineD3DVolume_Unmap(pSourceVolume);
+        hr = wined3d_volume_unmap(pSourceVolume);
 
     return hr;
 }

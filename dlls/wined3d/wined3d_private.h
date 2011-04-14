@@ -54,6 +54,8 @@
 
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
+typedef struct wined3d_volume IWineD3DVolumeImpl;
+typedef struct wined3d_volume IWineD3DVolume;
 
 /* Texture format fixups */
 
@@ -1942,10 +1944,8 @@ HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, UINT hei
         UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-typedef struct IWineD3DVolumeImpl
+struct wined3d_volume
 {
-    /* IUnknown & WineD3DResource fields */
-    const IWineD3DVolumeVtbl  *lpVtbl;
     struct wined3d_resource resource;
     struct wined3d_texture *container;
     BOOL                    lockable;
@@ -1953,14 +1953,14 @@ typedef struct IWineD3DVolumeImpl
     WINED3DBOX              lockedBox;
     WINED3DBOX              dirtyBox;
     BOOL                    dirty;
-} IWineD3DVolumeImpl;
+};
 
 static inline IWineD3DVolumeImpl *volume_from_resource(struct wined3d_resource *resource)
 {
     return CONTAINING_RECORD(resource, IWineD3DVolumeImpl, resource);
 }
 
-void volume_add_dirty_box(struct IWineD3DVolumeImpl *volume, const WINED3DBOX *dirty_box) DECLSPEC_HIDDEN;
+void volume_add_dirty_box(struct wined3d_volume *volume, const WINED3DBOX *dirty_box) DECLSPEC_HIDDEN;
 HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,
         UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;

@@ -363,7 +363,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
 
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, sub_resource_idx)))
         hr = E_INVALIDARG;
-    else if (SUCCEEDED(hr = IWineD3DVolume_Map(wined3d_volume_from_resource(sub_resource),
+    else if (SUCCEEDED(hr = wined3d_volume_map(wined3d_volume_from_resource(sub_resource),
             &wined3d_map_desc, NULL, 0)))
     {
         mapped_texture->pData = wined3d_map_desc.pBits;
@@ -384,7 +384,7 @@ static void STDMETHODCALLTYPE d3d10_texture3d_Unmap(ID3D10Texture3D *iface, UINT
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, sub_resource_idx)))
         return;
 
-    IWineD3DVolume_Unmap(wined3d_volume_from_resource(sub_resource));
+    wined3d_volume_unmap(wined3d_volume_from_resource(sub_resource));
 }
 
 static void STDMETHODCALLTYPE d3d10_texture3d_GetDesc(ID3D10Texture3D *iface, D3D10_TEXTURE3D_DESC *desc)
