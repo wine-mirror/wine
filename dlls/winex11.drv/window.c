@@ -68,8 +68,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 #define SWP_AGG_NOPOSCHANGE (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
 
-/* cursor clipping window */
-Window clip_window = 0;
+/* is cursor clipping active? */
 int clipping_cursor = 0;
 
 /* X context to associate a hwnd to an X window */
@@ -1208,6 +1207,24 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
 
 
 /***********************************************************************
+ *     init_clip_window
+ */
+Window init_clip_window(void)
+{
+    struct x11drv_thread_data *data = x11drv_init_thread_data();
+
+    if (!data->clip_window &&
+        (data->clip_window = (Window)GetPropA( GetDesktopWindow(), clip_window_prop )))
+    {
+        wine_tsx11_lock();
+        XSelectInput( data->display, data->clip_window, StructureNotifyMask );
+        wine_tsx11_unlock();
+    }
+    return data->clip_window;
+}
+
+
+/***********************************************************************
  *     update_user_time
  */
 void update_user_time( Time time )
@@ -1711,6 +1728,8 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     if (!GetLayeredWindowAttributes( data->hwnd, &key, &alpha, &layered_flags )) layered_flags = 0;
     sync_window_opacity( display, data->whole_window, key, alpha, layered_flags );
 
+    init_clip_window();  /* make sure the clip window is initialized in this thread */
+
     wine_tsx11_lock();
     XFlush( display );  /* make sure the window exists before we start painting to it */
     wine_tsx11_unlock();
@@ -1964,35 +1983,26 @@ BOOL CDECL X11DRV_CreateDesktopWindow( HWND hwnd )
  */
 BOOL CDECL X11DRV_CreateWindow( HWND hwnd )
 {
-    Display *display = thread_init_display();
-
     if (hwnd == GetDesktopWindow())
     {
+        struct x11drv_thread_data *data = x11drv_init_thread_data();
         XSetWindowAttributes attr;
 
         if (root_window != DefaultRootWindow( gdi_display ))
         {
             /* the desktop win data can't be created lazily */
-            if (!create_desktop_win_data( display, hwnd )) return FALSE;
+            if (!create_desktop_win_data( data->display, hwnd )) return FALSE;
         }
 
         /* create the cursor clipping window */
         attr.override_redirect = TRUE;
         attr.event_mask = StructureNotifyMask;
         wine_tsx11_lock();
-        clip_window = XCreateWindow( display, root_window, 0, 0, 1, 1, 0, 0,
-                                     InputOnly, visual, CWOverrideRedirect | CWEventMask, &attr );
+        data->clip_window = XCreateWindow( data->display, root_window, 0, 0, 1, 1, 0, 0,
+                                           InputOnly, visual, CWOverrideRedirect | CWEventMask, &attr );
         wine_tsx11_unlock();
-        SetPropA( hwnd, clip_window_prop, (HANDLE)clip_window );
+        SetPropA( hwnd, clip_window_prop, (HANDLE)data->clip_window );
     }
-    else if (!clip_window)
-    {
-        clip_window = (Window)GetPropA( GetDesktopWindow(), clip_window_prop );
-        wine_tsx11_lock();
-        XSelectInput( display, clip_window, StructureNotifyMask );
-        wine_tsx11_unlock();
-    }
-
     return TRUE;
 }
 

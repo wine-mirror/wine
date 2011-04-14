@@ -379,7 +379,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
 
     input->type = INPUT_MOUSE;
 
-    if (!hwnd && window == clip_window)
+    if (!hwnd && window == x11drv_thread_data()->clip_window)
     {
         input->u.mi.dx += clip_rect.left;
         input->u.mi.dy += clip_rect.top;
@@ -1032,7 +1032,7 @@ void CDECL X11DRV_SetCursor( HCURSOR handle )
         GetTickCount() - last_cursor_change > 100)
     {
         last_cursor_change = GetTickCount();
-        if (clipping_cursor) set_window_cursor( clip_window, handle );
+        if (clipping_cursor) set_window_cursor( init_clip_window(), handle );
         else if (cursor_window) SendNotifyMessageW( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
     }
 }
@@ -1085,6 +1085,7 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
 BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 {
     Display *display = thread_init_display();
+    Window clip_window = init_clip_window();
 
     if (!clip_window) return TRUE;
 

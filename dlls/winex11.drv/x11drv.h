@@ -550,6 +550,7 @@ struct x11drv_thread_data
     HWND     last_xic_hwnd;        /* last xic window */
     XFontSet font_set;             /* international text drawing font set */
     Window   selection_wnd;        /* window used for selection interactions */
+    Window   clip_window;          /* window used for cursor clipping */
     HKL      kbd_layout;           /* active keyboard layout */
     enum { xi_unavailable = -1, xi_unknown, xi_disabled, xi_enabled } xi2_state; /* XInput2 state */
 };
@@ -585,7 +586,6 @@ static inline size_t get_property_size( int format, unsigned long count )
 
 extern Visual *visual;
 extern Window root_window;
-extern Window clip_window;
 extern int clipping_cursor;
 extern unsigned int screen_width;
 extern unsigned int screen_height;
@@ -800,6 +800,7 @@ extern Drawable create_glxpixmap( Display *display, XVisualInfo *vis, Pixmap par
 extern void flush_gl_drawable( X11DRV_PDEVICE *physDev );
 
 extern void wait_for_withdrawn_state( Display *display, struct x11drv_win_data *data, BOOL set );
+extern Window init_clip_window(void);
 extern void update_user_time( Time time );
 extern void update_net_wm_states( Display *display, struct x11drv_win_data *data );
 extern void make_window_embedded( Display *display, struct x11drv_win_data *data );
