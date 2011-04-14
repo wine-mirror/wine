@@ -2395,25 +2395,36 @@ HRESULT WINAPI MsiGetFileSignatureInformationW( LPCWSTR path, DWORD flags, PCCER
     data.dwProvFlags         = 0;
     data.dwUIContext         = WTD_UICONTEXT_INSTALL;
     hr = WinVerifyTrustEx( INVALID_HANDLE_VALUE, &generic_verify_v2, &data );
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr)) goto done;
 
-    signer = WTHelperGetProvSignerFromChain( data.hWVTStateData, 0, FALSE, 0 );
-    if (!signer) return TRUST_E_NOSIGNATURE;
+    if (!(signer = WTHelperGetProvSignerFromChain( data.hWVTStateData, 0, FALSE, 0 )))
+    {
+        hr = TRUST_E_NOSIGNATURE;
+        goto done;
+    }
     if (hash)
     {
         DWORD len = signer->psSigner->EncryptedHash.cbData;
         if (*hashlen < len)
         {
             *hashlen = len;
-            return HRESULT_FROM_WIN32(ERROR_MORE_DATA);
+            hr = HRESULT_FROM_WIN32(ERROR_MORE_DATA);
+            goto done;
         }
         memcpy( hash, signer->psSigner->EncryptedHash.pbData, len );
         *hashlen = len;
     }
-    provider = WTHelperGetProvCertFromChain( signer, 0 );
-    if (!provider) return TRUST_E_PROVIDER_UNKNOWN;
+    if (!(provider = WTHelperGetProvCertFromChain( signer, 0 )))
+    {
+        hr = TRUST_E_PROVIDER_UNKNOWN;
+        goto done;
+    }
     *cert = CertDuplicateCertificateContext( provider->pCert );
-    return S_OK;
+
+done:
+    data.dwStateAction = WTD_STATEACTION_CLOSE;
+    WinVerifyTrustEx( INVALID_HANDLE_VALUE, &generic_verify_v2, &data );
+    return hr;
 }
 
 /******************************************************************
