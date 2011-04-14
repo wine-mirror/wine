@@ -93,7 +93,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_QueryInterface(IWineD3DSurface *iface, RE
     TRACE("(%p)->(%s,%p)\n", This,debugstr_guid(riid),ppobj);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IWineD3DBase)
         || IsEqualGUID(riid, &IID_IWineD3DSurface)) {
         IUnknown_AddRef((IUnknown*)iface);
         *ppobj = This;

@@ -2167,21 +2167,12 @@ typedef HRESULT (__stdcall *D3DCB_ENUMRESOURCES)(struct wined3d_resource *resour
 [
     object,
     local,
-    uuid(46799311-8e0e-40ce-b2ec-ddb99f18fcb4)
+    uuid(37cd5526-6f30-11d9-c687-00046142c14f)
 ]
-interface IWineD3DBase : IUnknown
+interface IWineD3DSurface : IUnknown
 {
     void *GetParent(
     );
-}
-
-[
-    object,
-    local,
-    uuid(37cd5526-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DSurface : IWineD3DBase
-{
     HRESULT SetPrivateData(
         [in] REFGUID guid,
         [in] const void *data,
