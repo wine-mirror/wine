@@ -2178,9 +2178,9 @@ interface IWineD3DBase : IUnknown
 [
     object,
     local,
-    uuid(1f3bfb34-6f30-11d9-c687-00046142c14f)
+    uuid(37cd5526-6f30-11d9-c687-00046142c14f)
 ]
-interface IWineD3DResource : IWineD3DBase
+interface IWineD3DSurface : IWineD3DBase
 {
     HRESULT SetPrivateData(
         [in] REFGUID guid,
@@ -2205,15 +2205,6 @@ interface IWineD3DResource : IWineD3DBase
     );
     WINED3DRESOURCETYPE GetType(
     );
-}
-
-[
-    object,
-    local,
-    uuid(37cd5526-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DSurface : IWineD3DResource
-{
     struct wined3d_resource *GetResource(
     );
     HRESULT Map(
