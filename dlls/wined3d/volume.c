@@ -1,6 +1,4 @@
 /*
- * IWineD3DVolume implementation
- *
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2005 Raphael Junqueira
  * Copyright 2005 Oliver Stieber
@@ -85,7 +83,7 @@ void volume_add_dirty_box(struct wined3d_volume *volume, const WINED3DBOX *dirty
     }
 }
 
-void volume_set_container(IWineD3DVolumeImpl *volume, struct wined3d_texture *container)
+void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container)
 {
     TRACE("volume %p, container %p.\n", volume, container);
 
@@ -93,7 +91,7 @@ void volume_set_container(IWineD3DVolumeImpl *volume, struct wined3d_texture *co
 }
 
 /* Context activation is done by the caller. */
-void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode)
+void volume_load(struct wined3d_volume *volume, UINT level, BOOL srgb_mode)
 {
     const struct wined3d_gl_info *gl_info = &volume->resource.device->adapter->gl_info;
     const struct wined3d_format *format = volume->resource.format;
@@ -287,7 +285,7 @@ static const struct wined3d_resource_ops volume_resource_ops =
     volume_unload,
 };
 
-HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,
+HRESULT volume_init(struct wined3d_volume *volume, IWineD3DDeviceImpl *device, UINT width,
         UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {

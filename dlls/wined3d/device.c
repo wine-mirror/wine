@@ -1183,10 +1183,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, UINT Width, UINT Height,
         UINT Depth, DWORD Usage, enum wined3d_format_id Format, WINED3DPOOL Pool, void *parent,
-        const struct wined3d_parent_ops *parent_ops, IWineD3DVolume **ppVolume)
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_volume **volume)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVolumeImpl *object;
+    struct wined3d_volume *object;
     HRESULT hr;
 
     TRACE("(%p) : W(%d) H(%d) D(%d), Usage(%d), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
@@ -1196,7 +1196,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, UIN
     if (!object)
     {
         ERR("Out of memory\n");
-        *ppVolume = NULL;
+        *volume = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
@@ -1209,7 +1209,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface, UIN
     }
 
     TRACE("(%p) : Created volume %p.\n", This, object);
-    *ppVolume = (IWineD3DVolume *)object;
+    *volume = object;
 
     return WINED3D_OK;
 }
@@ -5088,34 +5088,33 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveStrided(IWineD3DDev
 
 /* This is a helper function for UpdateTexture, there is no UpdateVolume method in D3D. */
 static HRESULT IWineD3DDeviceImpl_UpdateVolume(IWineD3DDevice *iface,
-        IWineD3DVolume *pSourceVolume, IWineD3DVolume *pDestinationVolume)
+        struct wined3d_volume *src_volume, struct wined3d_volume *dst_volume)
 {
     WINED3DLOCKED_BOX src;
     WINED3DLOCKED_BOX dst;
     HRESULT hr;
 
     TRACE("iface %p, src_volume %p, dst_volume %p.\n",
-            iface, pSourceVolume, pDestinationVolume);
+            iface, src_volume, dst_volume);
 
-    /* TODO: Implement direct loading into the gl volume instead of using memcpy and
-     * dirtification to improve loading performance.
-     */
-    hr = wined3d_volume_map(pSourceVolume, &src, NULL, WINED3DLOCK_READONLY);
+    /* TODO: Implement direct loading into the gl volume instead of using
+     * memcpy and dirtification to improve loading performance. */
+    hr = wined3d_volume_map(src_volume, &src, NULL, WINED3DLOCK_READONLY);
     if (FAILED(hr)) return hr;
-    hr = wined3d_volume_map(pDestinationVolume, &dst, NULL, WINED3DLOCK_DISCARD);
+    hr = wined3d_volume_map(dst_volume, &dst, NULL, WINED3DLOCK_DISCARD);
     if (FAILED(hr))
     {
-        wined3d_volume_unmap(pSourceVolume);
+        wined3d_volume_unmap(src_volume);
         return hr;
     }
 
-    memcpy(dst.pBits, src.pBits, ((IWineD3DVolumeImpl *) pDestinationVolume)->resource.size);
+    memcpy(dst.pBits, src.pBits, dst_volume->resource.size);
 
-    hr = wined3d_volume_unmap(pDestinationVolume);
+    hr = wined3d_volume_unmap(dst_volume);
     if (FAILED(hr))
-        wined3d_volume_unmap(pSourceVolume);
+        wined3d_volume_unmap(src_volume);
     else
-        hr = wined3d_volume_unmap(pSourceVolume);
+        hr = wined3d_volume_unmap(src_volume);
 
     return hr;
 }
@@ -5208,14 +5207,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
 
         case WINED3DRTYPE_VOLUMETEXTURE:
         {
-            IWineD3DVolume *src_volume;
-            IWineD3DVolume *dst_volume;
-
             for (i = 0; i < level_count; ++i)
             {
-                src_volume = (IWineD3DVolume *)volume_from_resource(wined3d_texture_get_sub_resource(src_texture, i));
-                dst_volume = (IWineD3DVolume *)volume_from_resource(wined3d_texture_get_sub_resource(dst_texture, i));
-                hr = IWineD3DDeviceImpl_UpdateVolume(iface, src_volume, dst_volume);
+                hr = IWineD3DDeviceImpl_UpdateVolume(iface,
+                        volume_from_resource(wined3d_texture_get_sub_resource(src_texture, i)),
+                        volume_from_resource(wined3d_texture_get_sub_resource(dst_texture, i)));
                 if (FAILED(hr))
                 {
                     WARN("IWineD3DDeviceImpl_UpdateVolume failed, hr %#x.\n", hr);

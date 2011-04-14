@@ -54,8 +54,6 @@
 
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
-typedef struct wined3d_volume IWineD3DVolumeImpl;
-typedef struct wined3d_volume IWineD3DVolume;
 
 /* Texture format fixups */
 
@@ -1955,17 +1953,17 @@ struct wined3d_volume
     BOOL                    dirty;
 };
 
-static inline IWineD3DVolumeImpl *volume_from_resource(struct wined3d_resource *resource)
+static inline struct wined3d_volume *volume_from_resource(struct wined3d_resource *resource)
 {
-    return CONTAINING_RECORD(resource, IWineD3DVolumeImpl, resource);
+    return CONTAINING_RECORD(resource, struct wined3d_volume, resource);
 }
 
 void volume_add_dirty_box(struct wined3d_volume *volume, const WINED3DBOX *dirty_box) DECLSPEC_HIDDEN;
-HRESULT volume_init(IWineD3DVolumeImpl *volume, IWineD3DDeviceImpl *device, UINT width,
+HRESULT volume_init(struct wined3d_volume *volume, IWineD3DDeviceImpl *device, UINT width,
         UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-void volume_load(IWineD3DVolumeImpl *volume, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
-void volume_set_container(IWineD3DVolumeImpl *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
+void volume_load(struct wined3d_volume *volume, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
+void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * Structure for DIB Surfaces (GetDC and GDI surfaces)

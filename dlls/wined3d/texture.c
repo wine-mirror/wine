@@ -1157,7 +1157,7 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
     {
         for (i = 0; i < texture->level_count; ++i)
         {
-            IWineD3DVolumeImpl *volume = volume_from_resource(texture->sub_resources[i]);
+            struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i]);
             volume_add_dirty_box(volume, NULL);
             volume_load(volume, i, texture->flags & WINED3D_TEXTURE_IS_SRGB);
         }
@@ -1182,7 +1182,7 @@ static void texture3d_sub_resource_add_dirty_region(struct wined3d_resource *sub
 
 static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource)
 {
-    IWineD3DVolumeImpl *volume = volume_from_resource(sub_resource);
+    struct wined3d_volume *volume = volume_from_resource(sub_resource);
 
     /* Cleanup the container. */
     volume_set_container(volume, NULL);
@@ -1289,7 +1289,7 @@ HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, UINT hei
 
     for (i = 0; i < texture->level_count; ++i)
     {
-        IWineD3DVolume *volume;
+        struct wined3d_volume *volume;
 
         /* Create the volume. */
         hr = IWineD3DDeviceParent_CreateVolume(device->device_parent, parent,
@@ -1302,8 +1302,8 @@ HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, UINT hei
         }
 
         /* Set its container to this texture. */
-        volume_set_container((IWineD3DVolumeImpl *)volume, texture);
-        texture->sub_resources[i] = &((IWineD3DVolumeImpl *)volume)->resource;
+        volume_set_container(volume, texture);
+        texture->sub_resources[i] = &volume->resource;
 
         /* Calculate the next mipmap level. */
         tmp_w = max(1, tmp_w >> 1);
