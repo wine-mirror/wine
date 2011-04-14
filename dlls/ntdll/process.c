@@ -134,7 +134,6 @@ NTSTATUS WINAPI NtQueryInformationProcess(
     UNIMPLEMENTED_INFO_CLASS(ProcessEnableAlignmentFaultFixup);
     UNIMPLEMENTED_INFO_CLASS(ProcessPriorityClass);
     UNIMPLEMENTED_INFO_CLASS(ProcessWx86Information);
-    UNIMPLEMENTED_INFO_CLASS(ProcessAffinityMask);
     UNIMPLEMENTED_INFO_CLASS(ProcessPriorityBoost);
     UNIMPLEMENTED_INFO_CLASS(ProcessDeviceMap);
     UNIMPLEMENTED_INFO_CLASS(ProcessSessionInformation);
@@ -385,6 +384,24 @@ NTSTATUS WINAPI NtQueryInformationProcess(
             ret = STATUS_INFO_LENGTH_MISMATCH;
         }
         break;
+
+    case ProcessAffinityMask:
+        len = sizeof(ULONG_PTR);
+        if (ProcessInformationLength == len)
+        {
+            const ULONG_PTR system_mask = ((ULONG_PTR)1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+
+            SERVER_START_REQ(get_process_info)
+            {
+                req->handle = wine_server_obj_handle( ProcessHandle );
+                if (!(ret = wine_server_call( req )))
+                    *(ULONG_PTR *)ProcessInformation = reply->affinity & system_mask;
+            }
+            SERVER_END_REQ;
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
     case ProcessWow64Information:
         len = sizeof(DWORD);
         if (ProcessInformationLength == len)

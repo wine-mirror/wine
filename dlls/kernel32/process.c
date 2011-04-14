@@ -3137,24 +3137,18 @@ BOOL WINAPI SetProcessAffinityMask( HANDLE hProcess, DWORD_PTR affmask )
 /**********************************************************************
  *          GetProcessAffinityMask    (KERNEL32.@)
  */
-BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess,
-                                    PDWORD_PTR lpProcessAffinityMask,
-                                    PDWORD_PTR lpSystemAffinityMask )
+BOOL WINAPI GetProcessAffinityMask( HANDLE hProcess, PDWORD_PTR process_mask, PDWORD_PTR system_mask )
 {
-    PROCESS_BASIC_INFORMATION   pbi;
-    NTSTATUS                    status;
+    NTSTATUS status = STATUS_SUCCESS;
 
-    status = NtQueryInformationProcess(hProcess,
-                                       ProcessBasicInformation,
-                                       &pbi, sizeof(pbi), NULL);
-    if (status)
+    if (system_mask) *system_mask = (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
+    if (process_mask)
     {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return FALSE;
+        if ((status = NtQueryInformationProcess( hProcess, ProcessAffinityMask,
+                                                 process_mask, sizeof(*process_mask), NULL )))
+            SetLastError( RtlNtStatusToDosError(status) );
     }
-    if (lpProcessAffinityMask) *lpProcessAffinityMask = pbi.AffinityMask;
-    if (lpSystemAffinityMask)  *lpSystemAffinityMask = (1 << NtCurrentTeb()->Peb->NumberOfProcessors) - 1;
-    return TRUE;
+    return !status;
 }
 
 
