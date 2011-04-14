@@ -190,7 +190,6 @@ static inline void init_thread_structure( struct thread *thread )
     thread->state           = RUNNING;
     thread->exit_code       = 0;
     thread->priority        = 0;
-    thread->affinity        = ~0;
     thread->suspend         = 0;
     thread->desktop_users   = 0;
     thread->token           = NULL;
@@ -430,6 +429,24 @@ int set_thread_affinity( struct thread *thread, affinity_t affinity )
 #endif
     if (!ret) thread->affinity = affinity;
     return ret;
+}
+
+affinity_t get_thread_affinity( struct thread *thread )
+{
+    affinity_t mask = 0;
+#ifdef HAVE_SCHED_SETAFFINITY
+    if (thread->unix_tid != -1)
+    {
+        cpu_set_t set;
+        unsigned int i;
+
+        if (!sched_getaffinity( thread->unix_tid, sizeof(set), &set ))
+            for (i = 0; i < 8 * sizeof(mask); i++)
+                if (CPU_ISSET( i, &set )) mask |= 1 << i;
+    }
+#endif
+    if (!mask) mask = ~0;
+    return mask;
 }
 
 #define THREAD_PRIORITY_REALTIME_HIGHEST 6
@@ -1157,6 +1174,10 @@ DECL_HANDLER(init_thread)
         process->peb      = req->entry;
         process->cpu      = req->cpu;
         reply->info_size  = init_process( current );
+        if (!process->parent)
+            process->affinity = current->affinity = get_thread_affinity( current );
+        else
+            set_thread_affinity( current, current->affinity );
     }
     else
     {
@@ -1169,9 +1190,9 @@ DECL_HANDLER(init_thread)
             process->unix_pid = -1;  /* can happen with linuxthreads */
         if (current->suspend + process->suspend > 0) stop_thread( current );
         generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, &req->entry );
+        set_thread_affinity( current, current->affinity );
     }
     debug_level = max( debug_level, req->debug_level );
-    set_thread_affinity( current, current->affinity );
 
     reply->pid     = get_process_id( process );
     reply->tid     = get_thread_id( current );
