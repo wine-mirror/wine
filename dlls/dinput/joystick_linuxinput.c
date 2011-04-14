@@ -110,6 +110,8 @@ struct JoyDev {
 
 	/* data returned by the EVIOCGABS() ioctl */
         struct wine_input_absinfo       axes[ABS_MAX];
+
+        WORD vendor_id, product_id;
 };
 
 struct JoystickImpl
@@ -187,6 +189,7 @@ static void find_joydevs(void)
         int no_ff_check = 0;
         int j;
         struct JoyDev *new_joydevs;
+        struct input_id device_id = {0};
 
         snprintf(buf, sizeof(buf), EVDEVPREFIX"%d", i);
 
@@ -281,6 +284,14 @@ static void find_joydevs(void)
 		  );
 	    }
 	}
+
+        if (ioctl(fd, EVIOCGID, &device_id) == -1)
+            WARN("ioct(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
+        else
+        {
+            joydev.vendor_id = device_id.vendor;
+            joydev.product_id = device_id.product;
+        }
 
         if (!have_joydevs)
             new_joydevs = HeapAlloc(GetProcessHeap(), 0, sizeof(struct JoyDev));
@@ -943,6 +954,17 @@ static HRESULT WINAPI JoystickWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 
         pd->dwData = MulDiv(This->ff_gain, 10000, 0xFFFF);
         TRACE("DIPROP_FFGAIN(%d)\n", pd->dwData);
+        break;
+    }
+
+    case (DWORD_PTR) DIPROP_VIDPID:
+    {
+        LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
+
+        if (!This->joydev->product_id || !This->joydev->vendor_id)
+            return DIERR_UNSUPPORTED;
+        pd->dwData = MAKELONG(This->joydev->vendor_id, This->joydev->product_id);
+        TRACE("DIPROP_VIDPID(%08x)\n", pd->dwData);
         break;
     }
 
