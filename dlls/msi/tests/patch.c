@@ -975,6 +975,7 @@ static INT get_integer( MSIHANDLE hdb, UINT field, const char *query)
     {
         UINT r_tmp;
         ret = MsiRecordGetInteger( hrec, field );
+        MsiCloseHandle( hrec );
 
         r_tmp = MsiViewFetch( hview, &hrec );
         ok( r_tmp == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r);
@@ -982,8 +983,6 @@ static INT get_integer( MSIHANDLE hdb, UINT field, const char *query)
 
     MsiViewClose( hview );
     MsiCloseHandle( hview );
-    MsiCloseHandle( hrec );
-
     return ret;
 }
 
@@ -1008,6 +1007,7 @@ static char *get_string( MSIHANDLE hdb, UINT field, const char *query)
         UINT size = MAX_PATH;
         r = MsiRecordGetStringA( hrec, field, ret, &size );
         ok( r == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", r);
+        MsiCloseHandle( hrec );
 
         r = MsiViewFetch( hview, &hrec );
         ok( r == ERROR_NO_MORE_ITEMS, "expected ERROR_NO_MORE_ITEMS, got %u\n", r);
@@ -1015,8 +1015,6 @@ static char *get_string( MSIHANDLE hdb, UINT field, const char *query)
 
     MsiViewClose( hview );
     MsiCloseHandle( hview );
-    MsiCloseHandle( hrec );
-
     return ret;
 }
 
