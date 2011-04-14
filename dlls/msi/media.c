@@ -890,3 +890,43 @@ UINT ready_media(MSIPACKAGE *package, UINT Sequence, BOOL IsCompressed, MSIMEDIA
     msi_free(cabinet_file);
     return ERROR_SUCCESS;
 }
+
+UINT msi_add_cabinet_stream( MSIPACKAGE *package, UINT disk_id, IStorage *storage, const WCHAR *name )
+{
+    MSICABINETSTREAM *cab, *item;
+
+    TRACE("%p, %u, %p, %s\n", package, disk_id, storage, debugstr_w(name));
+
+    LIST_FOR_EACH_ENTRY( item, &package->cabinet_streams, MSICABINETSTREAM, entry )
+    {
+        if (item->disk_id == disk_id)
+        {
+            TRACE("duplicate disk id %u\n", disk_id);
+            return ERROR_FUNCTION_FAILED;
+        }
+    }
+    if (!(cab = msi_alloc( sizeof(*cab) ))) return ERROR_OUTOFMEMORY;
+    if (!(cab->stream = msi_alloc( (strlenW( name ) + 1) * sizeof(WCHAR ) )))
+    {
+        msi_free( cab );
+        return ERROR_OUTOFMEMORY;
+    }
+    strcpyW( cab->stream, name );
+    cab->disk_id = disk_id;
+    cab->storage = storage;
+    IStorage_AddRef( storage );
+    list_add_tail( &package->cabinet_streams, &cab->entry );
+
+    return ERROR_SUCCESS;
+}
+
+MSICABINETSTREAM *msi_get_cabinet_stream( MSIPACKAGE *package, UINT disk_id )
+{
+    MSICABINETSTREAM *cab;
+
+    LIST_FOR_EACH_ENTRY( cab, &package->cabinet_streams, MSICABINETSTREAM, entry )
+    {
+        if (cab->disk_id == disk_id) return cab;
+    }
+    return NULL;
+}

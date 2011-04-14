@@ -300,6 +300,16 @@ static void free_package_structures( MSIPACKAGE *package )
         msi_free( binary );
     }
 
+    LIST_FOR_EACH_SAFE( item, cursor, &package->cabinet_streams )
+    {
+        MSICABINETSTREAM *cab = LIST_ENTRY( item, MSICABINETSTREAM, entry );
+
+        list_remove( &cab->entry );
+        IStorage_Release( cab->storage );
+        msi_free( cab->stream );
+        msi_free( cab );
+    }
+
     msi_free( package->BaseURL );
     msi_free( package->PackagePath );
     msi_free( package->ProductCode );
@@ -1080,6 +1090,7 @@ static MSIPACKAGE *msi_alloc_package( void )
         list_init( &package->sourcelist_media );
         list_init( &package->patches );
         list_init( &package->binaries );
+        list_init( &package->cabinet_streams );
     }
 
     return package;

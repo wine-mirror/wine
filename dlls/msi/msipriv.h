@@ -157,6 +157,14 @@ typedef struct tagMSIMEDIAINFO
     WCHAR sourcedir[MAX_PATH];
 } MSIMEDIAINFO;
 
+typedef struct tagMSICABINETSTREAM
+{
+    struct list entry;
+    UINT disk_id;
+    IStorage *storage;
+    WCHAR *stream;
+} MSICABINETSTREAM;
+
 typedef struct tagMSIPATCHINFO
 {
     struct list entry;
@@ -350,6 +358,7 @@ typedef struct tagMSIPACKAGE
     struct list tempfiles;
     struct list folders;
     struct list binaries;
+    struct list cabinet_streams;
     LPWSTR ActionFormat;
     LPWSTR LastAction;
     HANDLE log_file;
@@ -1007,6 +1016,8 @@ extern UINT ready_media(MSIPACKAGE *package, UINT Sequence, BOOL IsCompressed, M
 extern UINT msi_load_media_info(MSIPACKAGE *package, UINT Sequence, MSIMEDIAINFO *mi);
 extern void msi_free_media_info(MSIMEDIAINFO *mi);
 extern BOOL msi_cabextract(MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data);
+extern MSICABINETSTREAM *msi_get_cabinet_stream(MSIPACKAGE *, UINT);
+extern UINT msi_add_cabinet_stream(MSIPACKAGE *, UINT, IStorage *, const WCHAR *);
 
 /* control event stuff */
 extern VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event,
