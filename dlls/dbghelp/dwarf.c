@@ -1751,6 +1751,9 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
         case DW_TAG_label:
             dwarf2_parse_subprogram_label(subpgm, child);
             break;
+        case DW_TAG_GNU_call_site:
+            /* this isn't properly supported by dbghelp interface. skip it for now */
+            break;
         default:
             FIXME("Unhandled Tag type 0x%lx at %s, for %s\n",
                   child->abbrev->tag, dwarf2_debug_ctx(subpgm->ctx),
@@ -1808,9 +1811,12 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
              * Skip it for now
              */
             break;
-            case DW_TAG_imported_module:
-                /* C++ stuff to be silenced (for now) */
-                break;
+        case DW_TAG_imported_module:
+            /* C++ stuff to be silenced (for now) */
+            break;
+        case DW_TAG_GNU_call_site:
+            /* this isn't properly supported by dbghelp interface. skip it for now */
+            break;
         case DW_TAG_label:
             dwarf2_parse_subprogram_label(subpgm, child);
             break;
@@ -1939,6 +1945,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
         case DW_TAG_unspecified_parameters:
         case DW_TAG_template_type_param:
         case DW_TAG_template_value_param:
+        case DW_TAG_GNU_call_site:
             /* FIXME: no support in dbghelp's internals so far */
             break;
         default:
