@@ -117,9 +117,13 @@ static HRESULT WINAPI FlipRotator_GetSize(IWICBitmapFlipRotator *iface,
 static HRESULT WINAPI FlipRotator_GetPixelFormat(IWICBitmapFlipRotator *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pPixelFormat);
+    FlipRotator *This = impl_from_IWICBitmapFlipRotator(iface);
+    TRACE("(%p,%p)\n", iface, pPixelFormat);
 
-    return E_NOTIMPL;
+    if (!This->source)
+        return WINCODEC_ERR_WRONGSTATE;
+    else
+        return IWICBitmapSource_GetPixelFormat(This->source, pPixelFormat);
 }
 
 static HRESULT WINAPI FlipRotator_GetResolution(IWICBitmapFlipRotator *iface,
