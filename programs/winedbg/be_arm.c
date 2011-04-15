@@ -52,7 +52,7 @@ static unsigned be_arm_get_register_info(int regno, enum be_cpu_addr* kind)
 
 static void be_arm_single_step(CONTEXT* ctx, unsigned enable)
 {
-    dbg_printf("not done\n");
+    dbg_printf("be_arm_single_step: not done\n");
 }
 
 static void be_arm_print_context(HANDLE hThread, const CONTEXT* ctx, int all_regs)
@@ -81,19 +81,19 @@ static struct dbg_internal_var be_arm_ctx[] =
 
 static unsigned be_arm_is_step_over_insn(const void* insn)
 {
-    dbg_printf("not done\n");
+    dbg_printf("be_arm_is_step_over_insn: not done\n");
     return FALSE;
 }
 
 static unsigned be_arm_is_function_return(const void* insn)
 {
-    dbg_printf("not done\n");
+    dbg_printf("be_arm_is_function_return: not done\n");
     return FALSE;
 }
 
 static unsigned be_arm_is_break_insn(const void* insn)
 {
-    dbg_printf("not done\n");
+    dbg_printf("be_arm_is_break_insn: not done\n");
     return FALSE;
 }
 
@@ -151,13 +151,13 @@ static unsigned be_arm_remove_Xpoint(HANDLE hProcess, const struct be_process_io
 
 static unsigned be_arm_is_watchpoint_set(const CONTEXT* ctx, unsigned idx)
 {
-    dbg_printf("not done\n");
+    dbg_printf("be_arm_is_watchpoint_set: not done\n");
     return FALSE;
 }
 
 static void be_arm_clear_watchpoint(CONTEXT* ctx, unsigned idx)
 {
-    dbg_printf("not done\n");
+    dbg_printf("be_arm_clear_watchpoint: not done\n");
 }
 
 static int be_arm_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
@@ -174,14 +174,14 @@ static int be_arm_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 static int be_arm_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
                                 unsigned ext_sign, LONGLONG* ret)
 {
-    dbg_printf("not done\n");
+    dbg_printf("be_arm_fetch_integer: not done\n");
     return FALSE;
 }
 
 static int be_arm_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
                               long double* ret)
 {
-    dbg_printf("not done\n");
+    dbg_printf("be_arm_fetch_float: not done\n");
     return FALSE;
 }
 
