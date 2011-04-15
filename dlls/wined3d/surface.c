@@ -4404,8 +4404,13 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
         return;
     }
 
-    if (!(surface->flags & SFLAG_LOCATIONS))
+    if (!(surface->flags & SFLAG_DS_LOCATIONS))
     {
+        /* This mostly happens when a depth / stencil is used without being
+         * cleared first. In principle we could upload from sysmem, or
+         * explicitly clear before first usage. For the moment there don't
+         * appear to be a lot of applications depending on this, so a FIXME
+         * should do. */
         FIXME("No up to date depth stencil location.\n");
         surface->flags |= location;
         return;
