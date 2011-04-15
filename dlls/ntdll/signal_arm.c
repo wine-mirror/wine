@@ -493,7 +493,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     }
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
     rec.ExceptionRecord  = NULL;
-    /*rec.ExceptionAddress = (LPVOID)context.Iar;*/
+    rec.ExceptionAddress = (LPVOID)context.Pc;
     rec.NumberParameters = 0;
     status = raise_exception( &rec, &context, TRUE );
     if (status) raise_status( status, &rec );
@@ -519,7 +519,7 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionCode    = CONTROL_C_EXIT;
         rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
         rec.ExceptionRecord  = NULL;
-        /*rec.ExceptionAddress = (LPVOID)context.Iar;*/
+        rec.ExceptionAddress = (LPVOID)context.Pc;
         rec.NumberParameters = 0;
         status = raise_exception( &rec, &context, TRUE );
         if (status) raise_status( status, &rec );
@@ -543,7 +543,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
     rec.ExceptionFlags   = EH_NONCONTINUABLE;
     rec.ExceptionRecord  = NULL;
-    /*rec.ExceptionAddress = (LPVOID)context.Iar;*/
+    rec.ExceptionAddress = (LPVOID)context.Pc;
     rec.NumberParameters = 0;
     status = raise_exception( &rec, &context, TRUE );
     if (status) raise_status( status, &rec );
@@ -726,7 +726,7 @@ void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
     NTSTATUS status;
 
     RtlCaptureContext( &context );
-    /*rec->ExceptionAddress = (void *)context.Iar;*/
+    rec->ExceptionAddress = (LPVOID)context.Pc;
     status = raise_exception( rec, &context, TRUE );
     if (status) raise_status( status, rec );
 }
