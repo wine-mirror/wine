@@ -93,6 +93,16 @@ static inline int dispatch_signal(unsigned int sig)
     return handlers[sig](sig);
 }
 
+/*******************************************************************
+ *         is_valid_frame
+ */
+static inline BOOL is_valid_frame( void *frame )
+{
+    if ((ULONG_PTR)frame & 3) return FALSE;
+    return (frame >= NtCurrentTeb()->Tib.StackLimit &&
+            (void **)frame < (void **)NtCurrentTeb()->Tib.StackBase - 1);
+}
+
 /***********************************************************************
  *           save_context
  *
@@ -305,14 +315,49 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
  */
 static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    EXCEPTION_POINTERS ptrs;
+    EXCEPTION_REGISTRATION_RECORD *frame, *dispatch, *nested_frame;
+    DWORD res;
 
-    FIXME( "not implemented on ARM, exceptioncode: %x\n", rec->ExceptionCode );
+    frame = NtCurrentTeb()->Tib.ExceptionList;
+    nested_frame = NULL;
+    while (frame != (EXCEPTION_REGISTRATION_RECORD*)~0UL)
+    {
+        /* Check frame address */
+        if (!is_valid_frame( frame ))
+        {
+            rec->ExceptionFlags |= EH_STACK_INVALID;
+            break;
+        }
 
-    /* hack: call unhandled exception filter directly */
-    ptrs.ExceptionRecord = rec;
-    ptrs.ContextRecord = context;
-    unhandled_exception_filter( &ptrs );
+        /* Call handler */
+        TRACE( "calling handler at %p code=%x flags=%x\n",
+               frame->Handler, rec->ExceptionCode, rec->ExceptionFlags );
+        res = frame->Handler( rec, frame, context, &dispatch );
+        TRACE( "handler at %p returned %x\n", frame->Handler, res );
+
+        if (frame == nested_frame)
+        {
+            /* no longer nested */
+            nested_frame = NULL;
+            rec->ExceptionFlags &= ~EH_NESTED_CALL;
+        }
+
+        switch(res)
+        {
+        case ExceptionContinueExecution:
+            if (!(rec->ExceptionFlags & EH_NONCONTINUABLE)) return STATUS_SUCCESS;
+            return STATUS_NONCONTINUABLE_EXCEPTION;
+        case ExceptionContinueSearch:
+            break;
+        case ExceptionNestedException:
+            if (nested_frame < dispatch) nested_frame = dispatch;
+            rec->ExceptionFlags |= EH_NESTED_CALL;
+            break;
+        default:
+            return STATUS_INVALID_DISPOSITION;
+        }
+        frame = frame->Prev;
+    }
     return STATUS_UNHANDLED_EXCEPTION;
 }
 
