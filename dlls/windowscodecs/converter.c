@@ -960,6 +960,7 @@ static HRESULT WINAPI FormatConverter_Initialize(IWICFormatConverter *iface,
     if (!srcinfo)
     {
         res = WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+        FIXME("Unsupported source format %s\n", debugstr_guid(&srcFormat));
         goto end;
     }
 
@@ -967,6 +968,7 @@ static HRESULT WINAPI FormatConverter_Initialize(IWICFormatConverter *iface,
     if (!dstinfo)
     {
         res = WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+        FIXME("Unsupported destination format %s\n", debugstr_guid(dstFormat));
         goto end;
     }
 
@@ -981,7 +983,10 @@ static HRESULT WINAPI FormatConverter_Initialize(IWICFormatConverter *iface,
         This->source = pISource;
     }
     else
+    {
+        FIXME("Unsupported conversion %s -> %s\n", debugstr_guid(&srcFormat), debugstr_guid(dstFormat));
         res = WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    }
 
 end:
 
@@ -1001,16 +1006,27 @@ static HRESULT WINAPI FormatConverter_CanConvert(IWICFormatConverter *iface,
         debugstr_guid(dstPixelFormat), pfCanConvert);
 
     srcinfo = get_formatinfo(srcPixelFormat);
-    if (!srcinfo) return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+    if (!srcinfo)
+    {
+        FIXME("Unsupported source format %s\n", debugstr_guid(srcPixelFormat));
+        return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+    }
 
     dstinfo = get_formatinfo(dstPixelFormat);
-    if (!dstinfo) return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+    if (!dstinfo)
+    {
+        FIXME("Unsupported destination format %s\n", debugstr_guid(dstPixelFormat));
+        return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+    }
 
     if (dstinfo->copy_function &&
         SUCCEEDED(dstinfo->copy_function(This, NULL, 0, 0, NULL, dstinfo->format)))
         *pfCanConvert = TRUE;
     else
+    {
+        FIXME("Unsupported conversion %s -> %s\n", debugstr_guid(srcPixelFormat), debugstr_guid(dstPixelFormat));
         *pfCanConvert = FALSE;
+    }
 
     return S_OK;
 }
