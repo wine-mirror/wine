@@ -899,8 +899,7 @@ static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, 
     IWineD3DDevice_CreateSurface((IWineD3DDevice *)source->resource.device, source->resource.width,
             source->resource.height, to_fmt, TRUE /* lockable */, TRUE /* discard  */, 0 /* level */,
             0 /* usage */, WINED3DPOOL_SCRATCH, WINED3DMULTISAMPLE_NONE /* TODO: Multisampled conversion */,
-            0 /* MultiSampleQuality */, IWineD3DSurface_GetImplType((IWineD3DSurface *) source),
-            NULL /* parent */, &wined3d_null_parent_ops, &ret);
+            0 /* MultiSampleQuality */, source->surface_type, NULL /* parent */, &wined3d_null_parent_ops, &ret);
     if(!ret) {
         ERR("Failed to create a destination surface for conversion\n");
         return NULL;

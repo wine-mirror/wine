@@ -4891,10 +4891,6 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
     return WINED3D_OK;
 }
 
-static WINED3DSURFTYPE WINAPI IWineD3DSurfaceImpl_GetImplType(IWineD3DSurface *iface) {
-    return SURFACE_OPENGL;
-}
-
 BOOL surface_is_offscreen(IWineD3DSurfaceImpl *surface)
 {
     struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
@@ -4952,7 +4948,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     /* Internal use: */
     IWineD3DSurfaceImpl_SetFormat,
     IWineD3DSurfaceImpl_PrivateSetup,
-    IWineD3DSurfaceImpl_GetImplType,
 };
 
 static HRESULT ffp_blit_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
@@ -5539,11 +5534,6 @@ static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *m
     return WINED3D_OK;
 }
 
-static WINED3DSURFTYPE WINAPI IWineGDISurfaceImpl_GetImplType(IWineD3DSurface *iface)
-{
-    return SURFACE_GDI;
-}
-
 static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
 {
     /* IUnknown */
@@ -5586,7 +5576,6 @@ static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     /* Internal use: */
     IWineD3DBaseSurfaceImpl_SetFormat,
     IWineGDISurfaceImpl_PrivateSetup,
-    IWineGDISurfaceImpl_GetImplType,
 };
 
 HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
@@ -5649,6 +5638,8 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     resource_size = wined3d_format_calculate_size(format, alignment, width, height);
     if (!resource_size)
         return WINED3DERR_INVALIDCALL;
+
+    surface->surface_type = surface_type;
 
     /* Look at the implementation and set the correct Vtable. */
     switch (surface_type)

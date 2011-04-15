@@ -2285,8 +2285,6 @@ interface IWineD3DSurface : IUnknown
     );
     HRESULT PrivateSetup(
     );
-    WINED3DSURFTYPE GetImplType(
-    );
 }
 
 [

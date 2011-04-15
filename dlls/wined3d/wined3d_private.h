@@ -2041,6 +2041,7 @@ struct IWineD3DSurfaceImpl
 
     DWORD flags;
 
+    WINED3DSURFTYPE surface_type;
     UINT                      pow2Width;
     UINT                      pow2Height;
 
