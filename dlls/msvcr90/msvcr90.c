@@ -66,8 +66,8 @@ typedef struct __type_info
   char        mangled[32]; /* Variable length, but we declare it large enough for static RTTI */
 } type_info;
 
-typedef void* (*__cdecl malloc_func_t)(size_t);
-typedef void  (*__cdecl free_func_t)(void*);
+typedef void* (__cdecl *malloc_func_t)(size_t);
+typedef void  (__cdecl *free_func_t)(void*);
 
 extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,unsigned short int);
 
