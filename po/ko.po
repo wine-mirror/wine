@@ -2170,34 +2170,30 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "Wine 인터넷 브라우저와 관련 설정 처리"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "나갈때 설정 저장(&S)"
+msgstr "영역에 대한 보안 설정: "
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
 msgstr "사용자정의"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "매우 낮음"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
 msgstr "낮음(&L)"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "중간"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "증가"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
 msgstr "높음(&H)"
 
@@ -7703,7 +7699,6 @@ msgid "&Always on Top"
 msgstr "항상 앞에 (&A)"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
 msgstr "시계 정보(&A)..."
 
@@ -8579,7 +8574,6 @@ msgid "&Replace...\tCtrl+H"
 msgstr " 바꾸기(&R)...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
 msgstr "목차(&C)"
 
@@ -9038,9 +9032,8 @@ msgid "&Arrange Icons"
 msgstr "아이콘 정렬(&A)"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "풀그림 관리자"
+msgstr "프로그램 관리자 정보(&A)"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -10776,9 +10769,8 @@ msgid "Arrange &Symbols"
 msgstr "심벌로 정렬(&S)"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "Winefile에 관하여(&I)..."
+msgstr "와인파일 정보(&A)"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10842,7 +10834,7 @@ msgstr "%s of %s 사용가능"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "게임(&G)"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -10850,7 +10842,7 @@ msgstr "새 게임(&N)\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "물음표(&M)"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10869,14 +10861,12 @@ msgid "&Custom..."
 msgstr "사용자 정의(&C)"
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
 msgstr "가장 빠른 시간(&F)"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "WINE 정보(&A)"
+msgstr "WINE지뢰찾기 정보(&A)"
 
 #: winemine.rc:27
 msgid "WineMine"
