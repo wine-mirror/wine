@@ -793,6 +793,39 @@ static HRESULT copypixels_to_32bppBGR(struct FormatConverter *This, const WICRec
     }
 }
 
+static HRESULT copypixels_to_32bppPBGRA(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    HRESULT hr;
+
+    switch (source_format)
+    {
+    case format_32bppPBGRA:
+        if (prc)
+            return IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+        return S_OK;
+    default:
+        hr = copypixels_to_32bppBGRA(This, prc, cbStride, cbBufferSize, pbBuffer, source_format);
+        if (SUCCEEDED(hr) && prc)
+        {
+            UINT x, y;
+
+            for (y=0; y<prc->Height; y++)
+                for (x=0; x<prc->Width; x++)
+                {
+                    BYTE alpha = pbBuffer[cbStride*y+4*x+3];
+                    if (alpha != 255)
+                    {
+                        pbBuffer[cbStride*y+4*x] = pbBuffer[cbStride*y+4*x] * alpha / 255;
+                        pbBuffer[cbStride*y+4*x+1] = pbBuffer[cbStride*y+4*x+1] * alpha / 255;
+                        pbBuffer[cbStride*y+4*x+2] = pbBuffer[cbStride*y+4*x+2] * alpha / 255;
+                    }
+                }
+        }
+        return hr;
+    }
+}
+
 static const struct pixelformatinfo supported_formats[] = {
     {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, NULL},
     {format_2bppIndexed, &GUID_WICPixelFormat2bppIndexed, NULL},
@@ -809,7 +842,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_24bppBGR, &GUID_WICPixelFormat24bppBGR, NULL},
     {format_32bppBGR, &GUID_WICPixelFormat32bppBGR, copypixels_to_32bppBGR},
     {format_32bppBGRA, &GUID_WICPixelFormat32bppBGRA, copypixels_to_32bppBGRA},
-    {format_32bppPBGRA, &GUID_WICPixelFormat32bppPBGRA, NULL},
+    {format_32bppPBGRA, &GUID_WICPixelFormat32bppPBGRA, copypixels_to_32bppPBGRA},
     {format_48bppRGB, &GUID_WICPixelFormat48bppRGB, NULL},
     {format_64bppRGBA, &GUID_WICPixelFormat64bppRGBA, NULL},
     {format_32bppCMYK, &GUID_WICPixelFormat32bppCMYK, NULL},
