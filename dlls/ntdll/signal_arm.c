@@ -160,11 +160,17 @@ static inline void restore_fpu( CONTEXT *context, const ucontext_t *sigcontext )
 /***********************************************************************
  *		RtlCaptureContext (NTDLL.@)
  */
-void WINAPI RtlCaptureContext( CONTEXT *context )
-{
-    FIXME("not implemented\n");
-    memset( context, 0, sizeof(*context) );
-}
+/* FIXME: Use the Stack instead of the actual register values */
+__ASM_STDCALL_FUNC( RtlCaptureContext, 4,
+                    "stmfd SP!, {r1}\n\t"
+                    "mov r1, #0x40\n\t"     /* CONTEXT_ARM */
+                    "add r1, r1, #0x3\n\t"  /* CONTEXT_FULL */
+                    "str r1, [r0]\n\t"      /* context->ContextFlags */
+                    "ldmfd SP!, {r1}\n\t"
+                    "stmib r0, {r0-pc}\n\t" /* Push registers to pointer */
+                    "mrs r1, CPSR\n\t"
+                    "stmib r0, {r1}\n\t"    /* context->Cpsr */
+                    )
 
 
 /***********************************************************************
