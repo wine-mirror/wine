@@ -886,7 +886,7 @@ static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)
     if(NS_FAILED(nsres))
         return E_FAIL;
 
-    post_data = data = GlobalAlloc(0, available+1);
+    post_data = data = GlobalAlloc(0, available);
     if(!data)
         return E_OUTOFMEMORY;
 
@@ -896,21 +896,22 @@ static HRESULT read_post_data_stream(nsChannelBSC *This, nsChannel *nschannel)
         return E_FAIL;
     }
 
-    data[data_len++] = 0;
-
     if(nschannel->post_data_contains_headers) {
-        if(data[0] == '\r' && data[1] == '\n') {
+        if(data_len >= 2 && data[0] == '\r' && data[1] == '\n') {
             post_data = data+2;
             data_len -= 2;
         }else {
             WCHAR *headers;
             DWORD size;
+            char *ptr;
 
-            post_data = strstr(data, "\r\n\r\n");
-            if(post_data)
-                post_data += 4;
-            else
-                post_data = data+data_len;
+            post_data += data_len;
+            for(ptr = data; ptr+4 < data+data_len; ptr++) {
+                if(!memcmp(ptr, "\r\n\r\n", 4)) {
+                    post_data = ptr+4;
+                    break;
+                }
+            }
 
             data_len -= post_data-data;
 
