@@ -54,8 +54,11 @@ static BOOL arm_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, CON
 
 static unsigned arm_map_dwarf_register(unsigned regno)
 {
-    FIXME("not done for ARM\n");
-    return 0;
+    if (regno <= 15) return CV_ARM_R0 + regno;
+    if (regno == 128) return CV_ARM_CPSR;
+
+    FIXME("Don't know how to map register %d\n", regno);
+    return CV_ARM_NOREG;
 }
 
 static void* arm_fetch_context_reg(CONTEXT* ctx, unsigned regno, unsigned* size)
