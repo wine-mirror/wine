@@ -128,7 +128,15 @@ static void volume_unload(struct wined3d_resource *resource)
 
 ULONG CDECL wined3d_volume_incref(struct wined3d_volume *volume)
 {
-    ULONG refcount = InterlockedIncrement(&volume->resource.ref);
+    ULONG refcount;
+
+    if (volume->container)
+    {
+        TRACE("Forwarding to container %p.\n", volume->container);
+        return wined3d_texture_incref(volume->container);
+    }
+
+    refcount = InterlockedIncrement(&volume->resource.ref);
 
     TRACE("%p increasing refcount to %u.\n", volume, refcount);
 
@@ -138,7 +146,15 @@ ULONG CDECL wined3d_volume_incref(struct wined3d_volume *volume)
 /* Do not call while under the GL lock. */
 ULONG CDECL wined3d_volume_decref(struct wined3d_volume *volume)
 {
-    ULONG refcount = InterlockedDecrement(&volume->resource.ref);
+    ULONG refcount;
+
+    if (volume->container)
+    {
+        TRACE("Forwarding to container %p.\n", volume->container);
+        return wined3d_texture_decref(volume->container);
+    }
+
+    refcount = InterlockedDecrement(&volume->resource.ref);
 
     TRACE("%p decreasing refcount to %u.\n", volume, refcount);
 
