@@ -69,6 +69,27 @@ static void* arm_fetch_context_reg(CONTEXT* ctx, unsigned regno, unsigned* size)
 
 static const char* arm_fetch_regname(unsigned regno)
 {
+    switch (regno)
+    {
+    case CV_ARM_R0 +  0: return "r0";
+    case CV_ARM_R0 +  1: return "r1";
+    case CV_ARM_R0 +  2: return "r2";
+    case CV_ARM_R0 +  3: return "r3";
+    case CV_ARM_R0 +  4: return "r4";
+    case CV_ARM_R0 +  5: return "r5";
+    case CV_ARM_R0 +  6: return "r6";
+    case CV_ARM_R0 +  7: return "r7";
+    case CV_ARM_R0 +  8: return "r8";
+    case CV_ARM_R0 +  9: return "r9";
+    case CV_ARM_R0 + 10: return "r10";
+    case CV_ARM_R0 + 11: return "r11";
+    case CV_ARM_R0 + 12: return "r12";
+
+    case CV_ARM_SP: return "sp";
+    case CV_ARM_LR: return "lr";
+    case CV_ARM_PC: return "pc";
+    case CV_ARM_CPSR: return "cpsr";
+    }
     FIXME("Unknown register %x\n", regno);
     return NULL;
 }
