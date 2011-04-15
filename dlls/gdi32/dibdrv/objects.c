@@ -275,20 +275,38 @@ COLORREF CDECL dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
  */
 static BOOL solid_brush(dibdrv_physdev *pdev, int num, RECT *rects)
 {
-    int i;
-    DC *dc = get_dibdrv_dc( &pdev->dev );
+    int i, j;
+    const WINEREGION *clip = get_wine_region(pdev->clip);
 
-    if(get_clip_region(dc)) return FALSE;
-
-    for(i = 0; i < num; i++) /* simple clip to extents */
+    for(i = 0; i < num; i++)
     {
-        if(rects[i].left   < dc->vis_rect.left)   rects[i].left   = dc->vis_rect.left;
-        if(rects[i].top    < dc->vis_rect.top)    rects[i].top    = dc->vis_rect.top;
-        if(rects[i].right  > dc->vis_rect.right)  rects[i].right  = dc->vis_rect.right;
-        if(rects[i].bottom > dc->vis_rect.bottom) rects[i].bottom = dc->vis_rect.bottom;
-    }
+        for(j = 0; j < clip->numRects; j++)
+        {
+            RECT rect = rects[i];
 
-    pdev->dib.funcs->solid_rects(&pdev->dib, num, rects, pdev->brush_and, pdev->brush_xor);
+            /* Optimize unclipped case */
+            if(clip->rects[j].top <= rect.top && clip->rects[j].bottom >= rect.bottom &&
+               clip->rects[j].left <= rect.left && clip->rects[j].right >= rect.right)
+            {
+                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->brush_and, pdev->brush_xor);
+                break;
+            }
+
+            if(clip->rects[j].top >= rect.bottom) break;
+            if(clip->rects[j].bottom <= rect.top) continue;
+
+            if(clip->rects[j].right > rect.left && clip->rects[j].left < rect.right)
+            {
+                rect.left   = max(rect.left,   clip->rects[j].left);
+                rect.top    = max(rect.top,    clip->rects[j].top);
+                rect.right  = min(rect.right,  clip->rects[j].right);
+                rect.bottom = min(rect.bottom, clip->rects[j].bottom);
+
+                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->brush_and, pdev->brush_xor);
+            }
+        }
+    }
+    release_wine_region(pdev->clip);
     return TRUE;
 }
 
