@@ -345,7 +345,12 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
         }
         else
         {
-            /* FIXME: dump context */
+            TRACE(" Pc:%04x Sp:%04x Lr:%04x Cpsr:%04x r0:%04x r1:%04x r2:%04x r3:%04x\n",
+                  context->Pc, context->Sp, context->Lr, context->Cpsr,
+                  context->R0, context->R1, context->R2, context->R3);
+            TRACE(" r4:%04x r5:%04x  r6:%04x  r7:%04x r8:%04x r9:%04x r10:%04x Fp:%04x Ip:%04x\n",
+                  context->R4, context->R5, context->R6, context->R7, context->R8,
+                  context->R9, context->R10, context->Fp, context->Ip );
         }
 
         status = send_debug_event( rec, TRUE, context );
