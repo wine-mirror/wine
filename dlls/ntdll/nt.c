@@ -1310,25 +1310,6 @@ void fill_cpu_info(void)
           cached_sci.Architecture, cached_sci.Level, cached_sci.Revision, cached_sci.FeatureSet);
 }
 
-static void fill_in_sppi(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi, DWORD64 idle, DWORD64 sys, DWORD64 usr)
-{
-    DWORD64 steal;
-    sppi->IdleTime.QuadPart = idle * 10000000 / sysconf(_SC_CLK_TCK);
-    sppi->KernelTime.QuadPart = sys * 10000000 / sysconf(_SC_CLK_TCK);
-    sppi->UserTime.QuadPart = usr * 10000000 / sysconf(_SC_CLK_TCK);
-
-    /* Add 1% from idle time to kernel time, to make .NET happy */
-    steal = sppi->IdleTime.QuadPart / 100;
-    sppi->IdleTime.QuadPart -= steal;
-    sppi->KernelTime.QuadPart += steal;
-
-    /* DPC time */
-    sppi->Reserved1[0].QuadPart = 0;
-    /* Interrupt time */
-    sppi->Reserved1[1].QuadPart = 0;
-    sppi->Reserved2 = 0;
-}
-
 /******************************************************************************
  * NtQuerySystemInformation [NTDLL.@]
  * ZwQuerySystemInformation [NTDLL.@]
@@ -1605,66 +1586,36 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 FILE *cpuinfo = fopen("/proc/stat", "r");
                 if (cpuinfo)
                 {
+                    unsigned long clk_tck = sysconf(_SC_CLK_TCK);
                     unsigned long usr,nice,sys,idle,remainder[8];
-                    int count;
-                    char name[10];
+                    int i, count;
+                    char name[32];
                     char line[255];
 
                     /* first line is combined usage */
-                    if (fgets(line,255,cpuinfo))
-                        count = sscanf(line, "%s %lu %lu %lu %lu "
-                                       "%lu %lu %lu %lu %lu %lu %lu %lu",
-                                    name, &usr, &nice, &sys, &idle,
-                                    &remainder[0], &remainder[1], &remainder[2],
-                                    &remainder[3], &remainder[4], &remainder[5],
-                                    &remainder[6], &remainder[7]);
-                    else
-                        count = 0;
-                    /* we set this up in the for older non-smp enabled kernels */
-                    if (count >= 5 && strcmp(name, "cpu") == 0)
+                    while (fgets(line,255,cpuinfo))
                     {
-                        int i;
-                        for (i = 0; i + 5 < count; ++i)
-                            sys += remainder[i];
-                        usr += nice;
-                        sppi = RtlAllocateHeap(GetProcessHeap(), 0,
-                                               sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
-                        fill_in_sppi(sppi, idle, sys, usr);
-                        cpus = 1;
-                        len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
-                    }
+                        count = sscanf(line, "%s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
+                                       name, &usr, &nice, &sys, &idle,
+                                       &remainder[0], &remainder[1], &remainder[2], &remainder[3],
+                                       &remainder[4], &remainder[5], &remainder[6], &remainder[7]);
 
-                    do
-                    {
-                        if (fgets(line, 255, cpuinfo))
-                            count = sscanf(line, "%s %lu %lu %lu %lu "
-                                        "%lu %lu %lu %lu %lu %lu %lu %lu",
-                                        name, &usr, &nice, &sys, &idle,
-                                        &remainder[0], &remainder[1], &remainder[2],
-                                        &remainder[3], &remainder[4], &remainder[5],
-                                        &remainder[6], &remainder[7]);
+                        if (count < 5 || strncmp( name, "cpu", 3 )) break;
+                        for (i = 0; i + 5 < count; ++i) sys += remainder[i];
+                        sys += idle;
+                        usr += nice;
+                        cpus = atoi( name + 3 ) + 1;
+                        if (cpus > out_cpus) break;
+                        len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * cpus;
+                        if (sppi)
+                            sppi = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sppi, len );
                         else
-                            count = 0;
-                        if (count >= 5 && strncmp(name, "cpu", 3)==0)
-                        {
-                            int i;
-                            for (i = 0; i + 5 < count; ++i)
-                                sys += remainder[i];
-                            usr += nice;
-                            out_cpus --;
-                            if (name[3]=='0') /* first cpu */
-                                fill_in_sppi(sppi, idle, sys, usr);
-                            else /* new cpu */
-                            {
-                                len = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * (cpus+1);
-                                sppi = RtlReAllocateHeap(GetProcessHeap(), 0, sppi, len);
-                                fill_in_sppi(sppi + cpus, idle, sys, usr);
-                                cpus++;
-                            }
-                        }
-                        else
-                            break;
-                    } while (out_cpus > 0);
+                            sppi = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
+
+                        sppi[cpus-1].IdleTime.QuadPart   = (ULONGLONG)idle * 10000000 / clk_tck;
+                        sppi[cpus-1].KernelTime.QuadPart = (ULONGLONG)sys * 10000000 / clk_tck;
+                        sppi[cpus-1].UserTime.QuadPart   = (ULONGLONG)usr * 10000000 / clk_tck;
+                    }
                     fclose(cpuinfo);
                 }
             }
