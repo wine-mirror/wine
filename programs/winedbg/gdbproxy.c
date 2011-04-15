@@ -441,6 +441,9 @@ static size_t cpu_register_map[] = {
     FIELD_OFFSET(CONTEXT, R10),
     FIELD_OFFSET(CONTEXT, Fp),
     FIELD_OFFSET(CONTEXT, Ip),
+    FIELD_OFFSET(CONTEXT, Sp),
+    FIELD_OFFSET(CONTEXT, Lr),
+    FIELD_OFFSET(CONTEXT, Pc),
 };
 #else
 # error Define the registers map for your CPU
