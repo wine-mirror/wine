@@ -495,6 +495,31 @@ interface nsIUploadChannel : nsISupports
 
 [
     object,
+    uuid(8d171460-a716-41f1-92be-8c659db39b45),
+    local
+]
+interface nsIAsyncVerifyRedirectCallback : nsISupports
+{
+    nsresult OnRedirectVerifyCallback(nsresult result);
+}
+
+[
+    object,
+    uuid(a430d870-df77-4502-9570-d46a8de33154),
+    local
+]
+interface nsIChannelEventSink : nsISupports
+{
+    cpp_quote("#define REDIRECT_TEMPORARY 1")
+    cpp_quote("#define REDIRECT_PERMANENT 2")
+    cpp_quote("#define REDIRECT_INTERNAL  4")
+
+    nsresult AsyncOnChannelRedirect(nsIChannel *oldChannel, nsIChannel *newChannel, PRUint32 flags,
+                                    nsIAsyncVerifyRedirectCallback *callback);
+}
+
+[
+    object,
     uuid(a6cf90c1-15b3-11d2-932e-00805f8add32),
     local
 ]
@@ -1856,8 +1881,9 @@ interface nsIBaseWindow : nsISupports
     nsresult SetTitle(const PRUnichar *aTitle);
 }
 
-cpp_quote("#define LOAD_FLAGS_NONE           0x00000")
-cpp_quote("#define LOAD_INITIAL_DOCUMENT_URI 0x80000")
+cpp_quote("#define LOAD_FLAGS_NONE           0x00000000")
+cpp_quote("#define LOAD_REPLACE              0x00040000")
+cpp_quote("#define LOAD_INITIAL_DOCUMENT_URI 0x00080000")
 
 [
     object,

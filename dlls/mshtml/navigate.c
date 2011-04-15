@@ -1089,6 +1089,118 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
     return S_OK;
 }
 
+typedef struct {
+    nsIAsyncVerifyRedirectCallback nsIAsyncVerifyRedirectCallback_iface;
+
+    LONG ref;
+
+    nsChannel *nschannel;
+    nsChannelBSC *bsc;
+} nsRedirectCallback;
+
+static nsRedirectCallback *impl_from_nsIAsyncVerifyRedirectCallback(nsIAsyncVerifyRedirectCallback *iface)
+{
+    return CONTAINING_RECORD(iface, nsRedirectCallback, nsIAsyncVerifyRedirectCallback_iface);
+}
+
+static nsresult NSAPI nsAsyncVerifyRedirectCallback_QueryInterface(nsIAsyncVerifyRedirectCallback *iface,
+        nsIIDRef riid, void **result)
+{
+    nsRedirectCallback *This = impl_from_nsIAsyncVerifyRedirectCallback(iface);
+
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(%p)->(IID_nsISuports %p)\n", This, result);
+        *result = &This->nsIAsyncVerifyRedirectCallback_iface;
+    }else if(IsEqualGUID(&IID_nsIAsyncVerifyRedirectCallback, riid)) {
+        TRACE("(%p)->(IID_nsIAsyncVerifyRedirectCallback %p)\n", This, result);
+        *result = &This->nsIAsyncVerifyRedirectCallback_iface;
+    }else {
+        *result = NULL;
+        WARN("unimplmented iface %s\n", debugstr_guid(riid));
+        return NS_NOINTERFACE;
+    }
+
+    nsISupports_AddRef((nsISupports*)*result);
+    return NS_OK;
+}
+
+static nsrefcnt NSAPI nsAsyncVerifyRedirectCallback_AddRef(nsIAsyncVerifyRedirectCallback *iface)
+{
+    nsRedirectCallback *This = impl_from_nsIAsyncVerifyRedirectCallback(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static nsrefcnt NSAPI nsAsyncVerifyRedirectCallback_Release(nsIAsyncVerifyRedirectCallback *iface)
+{
+    nsRedirectCallback *This = impl_from_nsIAsyncVerifyRedirectCallback(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        IBindStatusCallback_Release(&This->bsc->bsc.IBindStatusCallback_iface);
+        nsIChannel_Release(&This->nschannel->nsIHttpChannel_iface);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static nsresult NSAPI nsAsyncVerifyRedirectCallback_AsyncOnChannelRedirect(nsIAsyncVerifyRedirectCallback *iface, nsresult result)
+{
+    nsRedirectCallback *This = impl_from_nsIAsyncVerifyRedirectCallback(iface);
+
+    TRACE("(%p)->(%08x)\n", This, result);
+
+    if(This->bsc->nschannel)
+        nsIHttpChannel_Release(&This->bsc->nschannel->nsIHttpChannel_iface);
+    nsIChannel_AddRef(&This->nschannel->nsIHttpChannel_iface);
+    This->bsc->nschannel = This->nschannel;
+
+    if(This->nschannel->load_group) {
+        nsresult nsres;
+
+        nsres = nsILoadGroup_AddRequest(This->nschannel->load_group, (nsIRequest*)&This->nschannel->nsIHttpChannel_iface,
+                NULL);
+        if(NS_FAILED(nsres))
+            ERR("AddRequest failed: %08x\n", nsres);
+    }
+
+    return NS_OK;
+}
+
+static const nsIAsyncVerifyRedirectCallbackVtbl nsAsyncVerifyRedirectCallbackVtbl = {
+    nsAsyncVerifyRedirectCallback_QueryInterface,
+    nsAsyncVerifyRedirectCallback_AddRef,
+    nsAsyncVerifyRedirectCallback_Release,
+    nsAsyncVerifyRedirectCallback_AsyncOnChannelRedirect
+};
+
+static HRESULT create_redirect_callback(nsChannel *nschannel, nsChannelBSC *bsc, nsRedirectCallback **ret)
+{
+    nsRedirectCallback *callback;
+
+    callback = heap_alloc(sizeof(*callback));
+    if(!callback)
+        return E_OUTOFMEMORY;
+
+    callback->nsIAsyncVerifyRedirectCallback_iface.lpVtbl = &nsAsyncVerifyRedirectCallbackVtbl;
+    callback->ref = 1;
+
+    nsIChannel_AddRef(&nschannel->nsIHttpChannel_iface);
+    callback->nschannel = nschannel;
+
+    IBindStatusCallback_AddRef(&bsc->bsc.IBindStatusCallback_iface);
+    callback->bsc = bsc;
+
+    *ret = callback;
+    return S_OK;
+}
+
 static inline nsChannelBSC *nsChannelBSC_from_BSCallback(BSCallback *iface)
 {
     return CONTAINING_RECORD(iface, nsChannelBSC, bsc);
@@ -1279,6 +1391,45 @@ static HRESULT nsChannelBSC_read_data(BSCallback *bsc, IStream *stream)
     return read_stream_data(This, stream);
 }
 
+static HRESULT handle_redirect(nsChannelBSC *This, const WCHAR *new_url)
+{
+    nsRedirectCallback *callback;
+    nsIChannelEventSink *sink;
+    nsChannel *new_channel;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(new_url));
+
+    if(!This->nschannel || !This->nschannel->notif_callback)
+        return S_OK;
+
+    nsres = nsIInterfaceRequestor_GetInterface(This->nschannel->notif_callback, &IID_nsIChannelEventSink, (void**)&sink);
+    if(NS_FAILED(nsres))
+        return S_OK;
+
+    hres = create_redirect_nschannel(new_url, This->nschannel, &new_channel);
+    if(SUCCEEDED(hres)) {
+        hres = create_redirect_callback(new_channel, This, &callback);
+        nsIChannel_Release(&new_channel->nsIHttpChannel_iface);
+    }
+
+    if(SUCCEEDED(hres)) {
+        nsres = nsIChannelEventSink_AsyncOnChannelRedirect(sink, (nsIChannel*)&This->nschannel->nsIHttpChannel_iface,
+                (nsIChannel*)&callback->nschannel->nsIHttpChannel_iface, REDIRECT_TEMPORARY, /* FIXME */
+                &callback->nsIAsyncVerifyRedirectCallback_iface);
+
+        if(NS_FAILED(nsres))
+            FIXME("AsyncOnChannelRedirect failed: %08x\n", hres);
+        else if(This->nschannel != callback->nschannel)
+            FIXME("nschannel not updated\n");
+    }
+
+    nsIAsyncVerifyRedirectCallback_Release(&callback->nsIAsyncVerifyRedirectCallback_iface);
+    nsIChannelEventSink_Release(sink);
+    return hres;
+}
+
 static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCWSTR status_text)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
@@ -1292,11 +1443,7 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
         This->nschannel->content_type = heap_strdupWtoA(status_text);
         break;
     case BINDSTATUS_REDIRECTING:
-        TRACE("redirect to %s\n", debugstr_w(status_text));
-
-        /* FIXME: We should find a better way to handle this */
-        set_wine_url(This->nschannel->uri, status_text);
-        break;
+        return handle_redirect(This, status_text);
     case BINDSTATUS_BEGINDOWNLOADDATA: {
         IWinInetHttpInfo *http_info;
         DWORD status, size = sizeof(DWORD);

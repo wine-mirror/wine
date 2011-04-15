@@ -189,7 +189,7 @@ HRESULT load_nsuri(HTMLWindow *window, nsWineURI *uri, nsChannelBSC *channelbsc,
     return S_OK;
 }
 
-HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
+static HRESULT set_wine_url(nsWineURI *This, LPCWSTR url)
 {
     TRACE("(%p)->(%s)\n", This, debugstr_w(url));
 
@@ -2561,6 +2561,59 @@ static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
 
     *ret = channel;
     return NS_OK;
+}
+
+HRESULT create_redirect_nschannel(const WCHAR *url, nsChannel *orig_channel, nsChannel **ret)
+{
+    HTMLWindow *window = NULL;
+    nsChannel *channel;
+    nsWineURI *uri;
+    nsresult nsres;
+    HRESULT hres;
+
+    if(orig_channel->uri->window_ref)
+        window = orig_channel->uri->window_ref->window;
+    nsres = create_uri(NULL, window, NULL, &uri);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    hres = CreateUri(url, 0, 0, &uri->uri);
+    if(SUCCEEDED(hres))
+        nsres = create_nschannel(uri, &channel);
+    sync_wine_url(uri);
+    nsIURL_Release(&uri->nsIURL_iface);
+    if(FAILED(hres))
+        return hres;
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    if(orig_channel->load_group) {
+        nsILoadGroup_AddRef(orig_channel->load_group);
+        channel->load_group = orig_channel->load_group;
+    }
+
+    if(orig_channel->notif_callback) {
+        nsIInterfaceRequestor_AddRef(orig_channel->notif_callback);
+        channel->notif_callback = orig_channel->notif_callback;
+    }
+
+    channel->load_flags = orig_channel->load_flags | LOAD_REPLACE;
+
+    if(orig_channel->request_method == METHOD_POST)
+        FIXME("unsupported POST method\n");
+
+    if(orig_channel->original_uri) {
+        nsIURI_AddRef(orig_channel->original_uri);
+        channel->original_uri = orig_channel->original_uri;
+    }
+
+    if(orig_channel->referrer) {
+        nsIURI_AddRef(orig_channel->referrer);
+        channel->referrer = orig_channel->referrer;
+    }
+
+    *ret = channel;
+    return S_OK;
 }
 
 typedef struct {

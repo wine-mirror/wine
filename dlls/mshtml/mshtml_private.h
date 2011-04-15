@@ -481,7 +481,6 @@ struct NSContainer {
 
 typedef struct nsWineURI nsWineURI;
 
-HRESULT set_wine_url(nsWineURI*,LPCWSTR);
 nsresult on_start_uri_open(NSContainer*,nsIURI*,PRBool*);
 
 /* Keep sync with request_method_strings in nsio.c */
@@ -523,6 +522,7 @@ typedef struct {
 } http_header_t;
 
 HRESULT set_http_header(struct list*,const WCHAR*,int,const WCHAR*,int);
+HRESULT create_redirect_nschannel(const WCHAR*,nsChannel*,nsChannel**);
 
 typedef struct {
     HRESULT (*qi)(HTMLDOMNode*,REFIID,void**);
