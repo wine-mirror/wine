@@ -264,6 +264,9 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         case PROCESSOR_ARCHITECTURE_AMD64:
             str = "X86_64";
             break;
+        case PROCESSOR_ARCHITECTURE_ARM:
+            str = "ARM";
+            break;
         default:
             str = "???";
             break;
