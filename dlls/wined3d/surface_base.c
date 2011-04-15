@@ -102,11 +102,32 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_QueryInterface(IWineD3DSurface *iface, RE
         return E_NOINTERFACE;
 }
 
-ULONG WINAPI IWineD3DBaseSurfaceImpl_AddRef(IWineD3DSurface *iface) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    ULONG ref = InterlockedIncrement(&This->resource.ref);
-    TRACE("(%p) : AddRef increasing from %d\n", This,ref - 1);
-    return ref;
+ULONG WINAPI IWineD3DBaseSurfaceImpl_AddRef(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    ULONG refcount;
+
+    TRACE("Surface %p, container %p of type %#x.\n",
+            surface, surface->container.u.base, surface->container.type);
+
+    switch (surface->container.type)
+    {
+        case WINED3D_CONTAINER_TEXTURE:
+            return wined3d_texture_incref(surface->container.u.texture);
+
+        case WINED3D_CONTAINER_SWAPCHAIN:
+            return wined3d_swapchain_incref(surface->container.u.swapchain);
+
+        default:
+            ERR("Unhandled container type %#x.\n", surface->container.type);
+        case WINED3D_CONTAINER_NONE:
+            break;
+    }
+
+    refcount = InterlockedIncrement(&surface->resource.ref);
+    TRACE("%p increasing refcount to %u.\n", surface, refcount);
+
+    return refcount;
 }
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPrivateData(IWineD3DSurface *iface,

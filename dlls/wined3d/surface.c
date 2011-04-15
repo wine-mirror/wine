@@ -1376,20 +1376,39 @@ HRESULT surface_load(IWineD3DSurfaceImpl *surface, BOOL srgb)
 /* Do not call while under the GL lock. */
 static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
 {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    ULONG ref = InterlockedDecrement(&This->resource.ref);
-    TRACE("(%p) : Releasing from %d\n", This, ref + 1);
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    ULONG refcount;
 
-    if (!ref)
+    TRACE("Surface %p, container %p of type %#x.\n",
+            surface, surface->container.u.base, surface->container.type);
+
+    switch (surface->container.type)
     {
-        surface_cleanup(This);
-        This->resource.parent_ops->wined3d_object_destroyed(This->resource.parent);
+        case WINED3D_CONTAINER_TEXTURE:
+            return wined3d_texture_decref(surface->container.u.texture);
 
-        TRACE("(%p) Released.\n", This);
-        HeapFree(GetProcessHeap(), 0, This);
+        case WINED3D_CONTAINER_SWAPCHAIN:
+            return wined3d_swapchain_decref(surface->container.u.swapchain);
+
+        default:
+            ERR("Unhandled container type %#x.\n", surface->container.type);
+        case WINED3D_CONTAINER_NONE:
+            break;
     }
 
-    return ref;
+    refcount = InterlockedDecrement(&surface->resource.ref);
+    TRACE("%p decreasing refcount to %u.\n", surface, refcount);
+
+    if (!refcount)
+    {
+        surface_cleanup(surface);
+        surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
+
+        TRACE("Destroyed surface %p.\n", surface);
+        HeapFree(GetProcessHeap(), 0, surface);
+    }
+
+    return refcount;
 }
 
 /* ****************************************************
