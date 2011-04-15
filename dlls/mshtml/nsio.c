@@ -2532,6 +2532,37 @@ HRESULT create_doc_uri(HTMLWindow *window, WCHAR *url, nsWineURI **ret)
     return S_OK;
 }
 
+static nsresult create_nschannel(nsWineURI *uri, nsChannel **ret)
+{
+    nsChannel *channel;
+    HRESULT hres;
+
+    if(!ensure_uri(uri))
+        return NS_ERROR_UNEXPECTED;
+
+    channel = heap_alloc_zero(sizeof(nsChannel));
+    if(!channel)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    channel->nsIHttpChannel_iface.lpVtbl = &nsChannelVtbl;
+    channel->nsIUploadChannel_iface.lpVtbl = &nsUploadChannelVtbl;
+    channel->nsIHttpChannelInternal_iface.lpVtbl = &nsHttpChannelInternalVtbl;
+    channel->ref = 1;
+    channel->request_method = METHOD_GET;
+    list_init(&channel->response_headers);
+    list_init(&channel->request_headers);
+
+    nsIURL_AddRef(&uri->nsIURL_iface);
+    channel->uri = uri;
+
+    hres = IUri_GetScheme(uri->uri, &channel->url_scheme);
+    if(FAILED(hres))
+        channel->url_scheme = URL_SCHEME_UNKNOWN;
+
+    *ret = channel;
+    return NS_OK;
+}
+
 typedef struct {
     nsIProtocolHandler nsIProtocolHandler_iface;
 
@@ -2839,10 +2870,9 @@ static nsresult NSAPI nsIOService_NewFileURI(nsIIOService *iface, nsIFile *aFile
 static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI *aURI,
                                                      nsIChannel **_retval)
 {
-    nsChannel *ret;
     nsWineURI *wine_uri;
+    nsChannel *ret;
     nsresult nsres;
-    HRESULT hres;
 
     TRACE("(%p %p)\n", aURI, _retval);
 
@@ -2852,28 +2882,13 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
         return nsIIOService_NewChannelFromURI(nsio, aURI, _retval);
     }
 
-    if(!ensure_uri(wine_uri)) {
-        nsIURI_Release(&wine_uri->nsIURL_iface);
-        return NS_ERROR_UNEXPECTED;
-    }
-
-    ret = heap_alloc_zero(sizeof(nsChannel));
-
-    ret->nsIHttpChannel_iface.lpVtbl = &nsChannelVtbl;
-    ret->nsIUploadChannel_iface.lpVtbl = &nsUploadChannelVtbl;
-    ret->nsIHttpChannelInternal_iface.lpVtbl = &nsHttpChannelInternalVtbl;
-    ret->ref = 1;
-    ret->uri = wine_uri;
-    ret->request_method = METHOD_GET;
-    list_init(&ret->response_headers);
-    list_init(&ret->request_headers);
+    nsres = create_nschannel(wine_uri, &ret);
+    nsIURL_Release(&wine_uri->nsIURL_iface);
+    if(NS_FAILED(nsres))
+        return nsres;
 
     nsIURI_AddRef(aURI);
     ret->original_uri = aURI;
-
-    hres = IUri_GetScheme(wine_uri->uri, &ret->url_scheme);
-    if(FAILED(hres))
-        ret->url_scheme = URL_SCHEME_UNKNOWN;
 
     *_retval = (nsIChannel*)&ret->nsIHttpChannel_iface;
     return NS_OK;
