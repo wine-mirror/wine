@@ -78,6 +78,8 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "a3cadd34d95d3d5cc23344f69aab1c2e55935fcf",
     "2426172d9e8fec27d9228088f382ef3c93717da9",
     "9e8f27ca952cdba01dbf25d07c34e86a7820c012",
+    "76343ceb04e6295e0560019249d3c0318a23c8a6",
+    "6ecee6ba1c06dcb6b70ff42a8ea2df7803847860",
     "17b2c177bdce5e94433574a928bda5c94a8cdfa5",
     NULL
 };
@@ -147,12 +149,43 @@ static void compare_hash(BITMAPINFO *bmi, BYTE *bits, const char ***sha1, const 
     HeapFree(GetProcessHeap(), 0, hash);
 }
 
+static const RECT hline_clips[] =
+{
+    {120, 120, 140, 120}, /* unclipped */
+    {100, 122, 140, 122}, /* l edgecase */
+    { 99, 124, 140, 124}, /* l edgecase clipped */
+    {120, 126, 200, 126}, /* r edgecase */
+    {120, 128, 201, 128}, /* r edgecase clipped */
+    { 99, 130, 201, 130}, /* l and r clipped */
+    {120, 100, 140, 100}, /* t edgecase */
+    {120,  99, 140,  99}, /* t edgecase clipped */
+    {120, 199, 140, 199}, /* b edgecase */
+    {120, 200, 140, 200}, /* b edgecase clipped */
+    {120, 132, 310, 132}  /* inside two clip rects */
+};
+
+static const RECT vline_clips[] =
+{
+    {120, 120, 120, 140}, /* unclipped */
+    {100, 120, 100, 140}, /* l edgecase */
+    { 99, 120,  99, 140}, /* l edgecase clipped */
+    {199, 120, 199, 140}, /* r edgecase */
+    {200, 120, 200, 140}, /* r edgecase clipped */
+    {122,  99, 122, 201}, /* t and b clipped */
+    {124, 100, 124, 140}, /* t edgecase */
+    {126,  99, 126, 140}, /* t edgecase clipped */
+    {128, 120, 128, 200}, /* b edgecase */
+    {130, 120, 130, 201}, /* b edgecase clipped */
+    {132,  12, 132, 140}  /* inside two clip rects */
+};
+
 static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sha1)
 {
     DWORD dib_size = get_dib_size(bmi);
     HPEN solid_pen, orig_pen;
     HBRUSH solid_brush, orig_brush;
     INT i, y;
+    HRGN hrgn, hrgn2;
 
     memset(bits, 0xcc, dib_size);
     compare_hash(bmi, bits, sha1, "empty");
@@ -187,6 +220,33 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     }
     compare_hash(bmi, bits, sha1, "diagonal solid lines");
     memset(bits, 0xcc, dib_size);
+
+    hrgn = CreateRectRgn(10, 10, 200, 20);
+    hrgn2 = CreateRectRgn(100, 100, 200, 200);
+    CombineRgn(hrgn, hrgn, hrgn2, RGN_OR);
+    SetRectRgn(hrgn2, 290, 100, 300, 200);
+    CombineRgn(hrgn, hrgn, hrgn2, RGN_OR);
+    ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
+    DeleteObject(hrgn2);
+    DeleteObject(hrgn);
+
+    for(i = 0; i < sizeof(hline_clips)/sizeof(hline_clips[0]); i++)
+    {
+        MoveToEx(hdc, hline_clips[i].left, hline_clips[i].top, NULL);
+        LineTo(hdc, hline_clips[i].right, hline_clips[i].bottom);
+    }
+    compare_hash(bmi, bits, sha1, "clipped solid hlines");
+    memset(bits, 0xcc, dib_size);
+
+    for(i = 0; i < sizeof(vline_clips)/sizeof(vline_clips[0]); i++)
+    {
+        MoveToEx(hdc, vline_clips[i].left, vline_clips[i].top, NULL);
+        LineTo(hdc, vline_clips[i].right, vline_clips[i].bottom);
+    }
+    compare_hash(bmi, bits, sha1, "clipped solid vlines");
+    memset(bits, 0xcc, dib_size);
+
+    ExtSelectClipRgn(hdc, NULL, RGN_COPY);
 
     solid_brush = CreateSolidBrush(RGB(0x33, 0xaa, 0xff));
     orig_brush = SelectObject(hdc, solid_brush);

@@ -553,6 +553,19 @@ extern HPALETTE PALETTE_Init(void) DECLSPEC_HIDDEN;
 extern INT mirror_region( HRGN dst, HRGN src, INT width ) DECLSPEC_HIDDEN;
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y ) DECLSPEC_HIDDEN;
 
+typedef struct
+{
+    INT size;
+    INT numRects;
+    RECT *rects;
+    RECT extents;
+} WINEREGION;
+extern const WINEREGION *get_wine_region(HRGN rgn) DECLSPEC_HIDDEN;
+static inline void release_wine_region(HRGN rgn)
+{
+    GDI_ReleaseObj(rgn);
+}
+
 /* null driver entry points */
 extern BOOL CDECL nulldrv_AbortPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL nulldrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep ) DECLSPEC_HIDDEN;

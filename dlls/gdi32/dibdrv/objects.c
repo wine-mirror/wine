@@ -100,10 +100,10 @@ static inline void order_end_points(int *s, int *e)
     }
 }
 
-static inline BOOL pt_in_rect( const RECT *rect, POINT pt )
+static inline BOOL pt_in_rect( const RECT *rect, const POINT *pt )
 {
-    return ((pt.x >= rect->left) && (pt.x < rect->right) &&
-            (pt.y >= rect->top) && (pt.y < rect->bottom));
+    return ((pt->x >= rect->left) && (pt->x < rect->right) &&
+            (pt->y >= rect->top) && (pt->y < rect->bottom));
 }
 
 static void WINAPI solid_pen_line_callback(INT x, INT y, LPARAM lparam)
@@ -121,36 +121,79 @@ static void WINAPI solid_pen_line_callback(INT x, INT y, LPARAM lparam)
 
 static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 {
-    RECT rc;
-    DC *dc = get_dibdrv_dc( &pdev->dev );
+    const WINEREGION *clip = get_wine_region(pdev->clip);
+    BOOL ret = TRUE;
 
-    if(get_clip_region(dc) || !pt_in_rect(&dc->vis_rect, *start) || !pt_in_rect(&dc->vis_rect, *end))
-        return FALSE;
-
-    rc.left   = start->x;
-    rc.top    = start->y;
-    rc.right  = end->x;
-    rc.bottom = end->y;
-
-    if(rc.top == rc.bottom)
+    if(start->y == end->y)
     {
-        order_end_points(&rc.left, &rc.right);
-        rc.bottom++;
-        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rc, pdev->pen_and, pdev->pen_xor);
+        RECT rect;
+        int i;
+
+        rect.left   = start->x;
+        rect.top    = start->y;
+        rect.right  = end->x;
+        rect.bottom = end->y + 1;
+        order_end_points(&rect.left, &rect.right);
+        for(i = 0; i < clip->numRects; i++)
+        {
+            if(clip->rects[i].top >= rect.bottom) break;
+            if(clip->rects[i].bottom <= rect.top) continue;
+            /* Optimize the unclipped case */
+            if(clip->rects[i].left <= rect.left && clip->rects[i].right >= rect.right)
+            {
+                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->pen_and, pdev->pen_xor);
+                break;
+            }
+            if(clip->rects[i].right > rect.left && clip->rects[i].left < rect.right)
+            {
+                RECT tmp = rect;
+                tmp.left = max(rect.left, clip->rects[i].left);
+                tmp.right = min(rect.right, clip->rects[i].right);
+                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &tmp, pdev->pen_and, pdev->pen_xor);
+            }
+        }
     }
-    else if(rc.left == rc.right)
+    else if(start->x == end->x)
     {
-        order_end_points(&rc.top, &rc.bottom);
-        rc.right++;
-        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rc, pdev->pen_and, pdev->pen_xor);
+        RECT rect;
+        int i;
+
+        rect.left   = start->x;
+        rect.top    = start->y;
+        rect.right  = end->x + 1;
+        rect.bottom = end->y;
+        order_end_points(&rect.top, &rect.bottom);
+        for(i = 0; i < clip->numRects; i++)
+        {
+            /* Optimize unclipped case */
+            if(clip->rects[i].top <= rect.top && clip->rects[i].bottom >= rect.bottom &&
+               clip->rects[i].left <= rect.left && clip->rects[i].right >= rect.right)
+            {
+                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->pen_and, pdev->pen_xor);
+                break;
+            }
+            if(clip->rects[i].top >= rect.bottom) break;
+            if(clip->rects[i].bottom <= rect.top) continue;
+            if(clip->rects[i].right > rect.left && clip->rects[i].left < rect.right)
+            {
+                RECT tmp = rect;
+                tmp.top = max(rect.top, clip->rects[i].top);
+                tmp.bottom = min(rect.bottom, clip->rects[i].bottom);
+                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &tmp, pdev->pen_and, pdev->pen_xor);
+            }
+        }
     }
     else
     {
-        /* FIXME: Optimize by moving Bresenham algorithm to the primitive functions,
-           or at least cache adjacent points in the callback */
-        LineDDA(start->x, start->y, end->x, end->y, solid_pen_line_callback, (LPARAM)pdev);
+        if(clip->numRects == 1 && pt_in_rect(&clip->extents, start) && pt_in_rect(&clip->extents, end))
+            /* FIXME: Optimize by moving Bresenham algorithm to the primitive functions,
+               or at least cache adjacent points in the callback */
+            LineDDA(start->x, start->y, end->x, end->y, solid_pen_line_callback, (LPARAM)pdev);
+        else if(clip->numRects >= 1)
+            ret = FALSE;
     }
-    return TRUE;
+    release_wine_region(pdev->clip);
+    return ret;
 }
 
 /***********************************************************************

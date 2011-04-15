@@ -105,13 +105,6 @@ SOFTWARE.
 
 WINE_DEFAULT_DEBUG_CHANNEL(region);
 
-typedef struct {
-    INT size;
-    INT numRects;
-    RECT *rects;
-    RECT extents;
-} WINEREGION;
-
   /* GDI logical region object */
 typedef struct
 {
@@ -922,6 +915,20 @@ HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )
     return CreateRoundRectRgn( rect->left, rect->top, rect->right,
 				 rect->bottom, rect->right - rect->left,
 				 rect->bottom - rect->top );
+}
+
+/*********************************************************************
+ *   get_wine_region
+ *
+ * Return the region data without making a copy.  The caller
+ * must not alter anything and must call GDI_ReleaseObj() when
+ * they have finished with the data.
+ */
+const WINEREGION *get_wine_region(HRGN rgn)
+{
+    RGNOBJ *obj = GDI_GetObjPtr( rgn, OBJ_REGION );
+    if(!obj) return NULL;
+    return &obj->rgn;
 }
 
 /***********************************************************************
