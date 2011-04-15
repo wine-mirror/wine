@@ -24,7 +24,6 @@ C_SRCS = \
 	stateblock.c \
 	surface.c \
 	surface_base.c \
-	surface_gdi.c \
 	swapchain.c \
 	texture.c \
 	utils.c \

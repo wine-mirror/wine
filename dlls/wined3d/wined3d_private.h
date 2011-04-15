@@ -2088,7 +2088,6 @@ struct IWineD3DSurfaceImpl
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl DECLSPEC_HIDDEN;
-extern const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl DECLSPEC_HIDDEN;
 
 static inline IWineD3DSurfaceImpl *surface_from_resource(struct wined3d_resource *resource)
 {
@@ -2105,7 +2104,6 @@ static inline GLuint surface_get_texture_name(IWineD3DSurfaceImpl *surface,
 void surface_add_dirty_rect(IWineD3DSurfaceImpl *surface, const WINED3DBOX *dirty_rect) DECLSPEC_HIDDEN;
 void surface_bind(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info, BOOL srgb) DECLSPEC_HIDDEN;
 HRESULT surface_color_fill(IWineD3DSurfaceImpl *s, const RECT *rect, const WINED3DCOLORVALUE *color) DECLSPEC_HIDDEN;
-void surface_gdi_cleanup(IWineD3DSurfaceImpl *This) DECLSPEC_HIDDEN;
 GLenum surface_get_gl_buffer(IWineD3DSurfaceImpl *surface) DECLSPEC_HIDDEN;
 HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
         UINT width, UINT height, UINT level, BOOL lockable, BOOL discard, WINED3DMULTISAMPLE_TYPE multisample_type,
