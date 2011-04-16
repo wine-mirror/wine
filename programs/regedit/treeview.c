@@ -54,6 +54,7 @@ static BOOL get_item_path(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPWSTR* pKe
     TVITEMW item;
     int maxChars, chars;
     LPWSTR newStr;
+    HTREEITEM hParent;
 
     item.mask = TVIF_PARAM;
     item.hItem = hItem;
@@ -65,7 +66,8 @@ static BOOL get_item_path(HWND hwndTV, HTREEITEM hItem, HKEY* phKey, LPWSTR* pKe
     return TRUE;
     }
 
-    if(!get_item_path(hwndTV, TreeView_GetParent(hwndTV, hItem), phKey, pKeyPath, pPathLen, pMaxChars)) return FALSE;
+    hParent = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)hItem);
+    if(!get_item_path(hwndTV, hParent, phKey, pKeyPath, pPathLen, pMaxChars)) return FALSE;
     if (*pPathLen) {
         (*pKeyPath)[*pPathLen] = '\\';
         ++(*pPathLen);
@@ -102,7 +104,7 @@ LPWSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey)
     maxLen = HeapSize(GetProcessHeap(), 0, pathBuffer);
     if (maxLen == (SIZE_T) - 1) return NULL;
     maxLen = maxLen / sizeof(WCHAR);
-    if (!hItem) hItem = TreeView_GetSelection(hwndTV);
+    if (!hItem) hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0);
     if (!hItem) return NULL;
     if (!get_item_path(hwndTV, hItem, phRootKey, &pathBuffer, &pathLen, &maxLen)) return NULL;
     return pathBuffer;
@@ -133,9 +135,9 @@ HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName) {
     HTREEITEM hItem, hOldItem;
 
     buf[260] = '\0';
-    hItem = TreeView_GetRoot(hwndTV);
+    hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_ROOT, 0);
     SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
-    hItem = TreeView_GetChild(hwndTV, hItem);
+    hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hItem);
     hOldItem = hItem;
     while(1) {
         LPWSTR lpItemName = get_path_component(&lpKeyName);
@@ -155,10 +157,10 @@ HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName) {
                          return hItem;
                      }
                      hOldItem = hItem;
-                     hItem = TreeView_GetChild(hwndTV, hItem);
+                     hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hItem);
                      break;
                 }
-                hItem = TreeView_GetNextSibling(hwndTV, hItem);
+                hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)hItem);
             }
             HeapFree(GetProcessHeap(), 0, lpItemName);
             if (!hItem)
@@ -171,9 +173,9 @@ HTREEITEM FindPathInTree(HWND hwndTV, LPCWSTR lpKeyName) {
 
 BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem)
 {
-    if (!hItem) hItem = TreeView_GetSelection(hwndTV);
+    if (!hItem) hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0);
     if (!hItem) return FALSE;
-    return TreeView_DeleteItem(hwndTV, hItem);
+    return (BOOL)SendMessageW(hwndTV, TVM_DELETEITEM, 0, (LPARAM)hItem);
 }
 
 /* Add an entry to the tree. Only give hKey for root nodes (HKEY_ constants) */
@@ -301,10 +303,11 @@ HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, int 
     while(hLast) {
         /* first look in subtree */
         /* no children? maybe we haven't loaded them yet? */
-        if (!TreeView_GetChild(hwndTV, hLast)) {
-            UpdateExpandingTree(hwndTV, hLast, TreeView_GetItemState(hwndTV, hLast, -1));
+        if (!SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hLast)) {
+            UINT state = (UINT)SendMessageW(hwndTV, TVM_GETITEMSTATE, (WPARAM)hLast, -1);
+            UpdateExpandingTree(hwndTV, hLast, state);
         }
-        hTry = TreeView_GetChild(hwndTV, hLast);
+        hTry = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hLast);
         if (hTry) {
             if (match_item(hwndTV, hTry, sstring, mode, row))
                 return hTry;
@@ -312,7 +315,7 @@ HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, int 
             continue;
         }
         /* no more children, maybe there are any siblings? */
-        hTry = TreeView_GetNextSibling(hwndTV, hLast);
+        hTry = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)hLast);
         if (hTry) {
             if (match_item(hwndTV, hTry, sstring, mode, row))
                 return hTry;
@@ -320,11 +323,11 @@ HTREEITEM FindNext(HWND hwndTV, HTREEITEM hItem, LPCWSTR sstring, int mode, int 
             continue;
         }
         /* no more siblings, look at the next siblings in parent(s) */
-        hLast = TreeView_GetParent(hwndTV, hLast);
+        hLast = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)hLast);
         if (!hLast)
             return NULL;
-        while (hLast && (hTry = TreeView_GetNextSibling(hwndTV, hLast)) == NULL) {
-            hLast = TreeView_GetParent(hwndTV, hLast);
+        while (hLast && (hTry = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)hLast)) == NULL) {
+            hLast = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_PARENT, (LPARAM)hLast);
         }
         if (match_item(hwndTV, hTry, sstring, mode, row))
             return hTry;
@@ -371,7 +374,7 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     }
 
     /* We don't have to bother with the rest if it's not expanded. */
-    if (TreeView_GetItemState(hwndTV, hItem, TVIS_EXPANDED) == 0) {
+    if (SendMessageW(hwndTV, TVM_GETITEMSTATE, (WPARAM)hItem, TVIS_EXPANDED) == 0) {
         RegCloseKey(hKey);
         return TRUE;
     }
@@ -399,15 +402,15 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
         /* Find the number of children of the node. */
         dwSubCount = 0;
         if (RegOpenKeyExW(hKey, Name, 0, KEY_QUERY_VALUE, &hSubKey) == ERROR_SUCCESS) {
-            if (RegQueryInfoKey(hSubKey, 0, 0, 0, &dwSubCount, 0, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
+            if (RegQueryInfoKeyW(hSubKey, 0, 0, 0, &dwSubCount, 0, 0, 0, 0, 0, 0, 0) != ERROR_SUCCESS) {
                 dwSubCount = 0;
             }
             RegCloseKey(hSubKey);
         }
 
         /* Check if the node is already in there. */
-        for (childItem = TreeView_GetChild(hwndTV, hItem); childItem;
-                childItem = TreeView_GetNextSibling(hwndTV, childItem)) {
+        for (childItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hItem); childItem;
+                childItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)childItem)) {
             tvItem.mask = TVIF_TEXT;
             tvItem.hItem = childItem;
             if (!TreeView_GetItemW(hwndTV, &tvItem)) {
@@ -432,9 +435,9 @@ static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
     RegCloseKey(hKey);
 
     /* Now go through all the children in the tree, and check if any have to be removed. */
-    childItem = TreeView_GetChild(hwndTV, hItem);
+    childItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hItem);
     while (childItem) {
-        HTREEITEM nextItem = TreeView_GetNextSibling(hwndTV, childItem);
+        HTREEITEM nextItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)childItem);
         if (RefreshTreeItem(hwndTV, childItem) == FALSE) {
             SendMessageW(hwndTV, TVM_DELETEITEM, 0, (LPARAM)childItem);
         }
@@ -449,16 +452,18 @@ BOOL RefreshTreeView(HWND hwndTV)
     HTREEITEM hItem;
     HTREEITEM hSelectedItem;
     HCURSOR hcursorOld;
+    HTREEITEM hRoot;
 
     WINE_TRACE("\n");
-    hSelectedItem = TreeView_GetSelection(hwndTV);
-    hcursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
+    hSelectedItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0);
+    hcursorOld = SetCursor(LoadCursorW(NULL, (LPCWSTR)IDC_WAIT));
     SendMessageW(hwndTV, WM_SETREDRAW, FALSE, 0);
 
-    hItem = TreeView_GetChild(hwndTV, TreeView_GetRoot(hwndTV));
+    hRoot = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+    hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hRoot);
     while (hItem) {
         RefreshTreeItem(hwndTV, hItem);
-        hItem = TreeView_GetNextSibling(hwndTV, hItem);
+        hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)hItem);
     }
 
     SendMessageW(hwndTV, WM_SETREDRAW, TRUE, 0);
@@ -476,10 +481,10 @@ HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name)
     HTREEITEM hNewItem = 0;
     TVITEMEXW item;
 
-    if (!hItem) hItem = TreeView_GetSelection(hwndTV);
+    if (!hItem) hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0);
     if (!hItem) return FALSE;
-    if (TreeView_GetItemState(hwndTV, hItem, TVIS_EXPANDEDONCE)) {
-	hNewItem = AddEntryToTree(hwndTV, hItem, name, 0, 0);
+    if (SendMessageW(hwndTV, TVM_GETITEMSTATE, (WPARAM)hItem, TVIS_EXPANDEDONCE)) {
+        hNewItem = AddEntryToTree(hwndTV, hItem, name, 0, 0);
     } else {
 	item.mask = TVIF_CHILDREN | TVIF_HANDLE;
 	item.hItem = hItem;
@@ -489,14 +494,15 @@ HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name)
     }
     SendMessageW(hwndTV, TVM_EXPAND, TVE_EXPAND, (LPARAM)hItem );
     if (!hNewItem) {
-	for(hNewItem = TreeView_GetChild(hwndTV, hItem); hNewItem; hNewItem = TreeView_GetNextSibling(hwndTV, hNewItem)) {
-	    item.mask = TVIF_HANDLE | TVIF_TEXT;
-	    item.hItem = hNewItem;
-	    item.pszText = buf;
-	    item.cchTextMax = COUNT_OF(buf);
-	    if (!TreeView_GetItemW(hwndTV, &item)) continue;
-	    if (lstrcmpW(name, item.pszText) == 0) break;
-	}	
+        for(hNewItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CHILD, (LPARAM)hItem); hNewItem;
+            hNewItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_NEXT, (LPARAM)hNewItem)) {
+            item.mask = TVIF_HANDLE | TVIF_TEXT;
+            item.hItem = hNewItem;
+            item.pszText = buf;
+            item.cchTextMax = COUNT_OF(buf);
+            if (!TreeView_GetItemW(hwndTV, &item)) continue;
+            if (lstrcmpW(name, item.pszText) == 0) break;
+        }
     }
     if (hNewItem)
         SendMessageW(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hNewItem);
@@ -508,8 +514,8 @@ HWND StartKeyRename(HWND hwndTV)
 {
     HTREEITEM hItem;
 
-    if(!(hItem = TreeView_GetSelection(hwndTV))) return 0;
-    return TreeView_EditLabel(hwndTV, hItem);
+    if(!(hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0))) return 0;
+    return (HWND)SendMessageW(hwndTV, TVM_EDITLABELW, 0, (LPARAM)hItem);
 }
 
 static BOOL InitTreeViewItems(HWND hwndTV, LPWSTR pHostName)
@@ -598,6 +604,7 @@ BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state)
     LPWSTR Name;
     LONG errCode;
     HCURSOR hcursorOld;
+    TVITEMW item;
 
     static int expanding;
     if (expanding) return FALSE;
@@ -605,7 +612,7 @@ BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state)
         return TRUE;
     }
     expanding = TRUE;
-    hcursorOld = SetCursor(LoadCursor(NULL, IDC_WAIT));
+    hcursorOld = SetCursor(LoadCursorW(NULL, (LPCWSTR)IDC_WAIT));
     SendMessageW(hwndTV, WM_SETREDRAW, FALSE, 0);
 
     keyPath = GetItemPath(hwndTV, hItem, &hRoot);
@@ -641,7 +648,11 @@ BOOL UpdateExpandingTree(HWND hwndTV, HTREEITEM hItem, int state)
     HeapFree(GetProcessHeap(), 0, Name);
 
 done:
-    TreeView_SetItemState(hwndTV, hItem, TVIS_EXPANDEDONCE, TVIS_EXPANDEDONCE);
+    item.mask = TVIF_STATE;
+    item.hItem = hItem;
+    item.stateMask = TVIS_EXPANDEDONCE;
+    item.state = TVIS_EXPANDEDONCE;
+    SendMessageW(hwndTV, TVM_SETITEMW, 0, (LPARAM)&item);
     SendMessageW(hwndTV, WM_SETREDRAW, TRUE, 0);
     SetCursor(hcursorOld);
     expanding = FALSE;
