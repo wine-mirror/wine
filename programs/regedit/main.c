@@ -94,18 +94,6 @@ static BOOL RegisterWindowClasses(HINSTANCE hInstance, ATOM *hFrameWndClass, ATO
 
     return TRUE;
 }
-/*******************************************************************************
- *
- *
- *   FUNCTION: InitInstance(HANDLE, int)
- *
- *   PURPOSE: Saves instance handle and creates main window
- *
- *   COMMENTS:
- *
- *        In this function, we save the instance handle in a global variable and
- *        create and display the main program window.
- */
 
 static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
@@ -125,9 +113,6 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     HexEdit_Register();
 
     nClipboardFormat = RegisterClipboardFormat(strClipboardFormat);
-    /* if (nClipboardFormat == 0) {
-        DWORD dwError = GetLastError();
-    } */
 
     hFrameWnd = CreateWindowEx(0, MAKEINTRESOURCE(hFrameWndClass), szTitle,
                                WS_OVERLAPPEDWINDOW | WS_EX_CLIENTEDGE,
