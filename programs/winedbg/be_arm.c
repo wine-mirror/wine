@@ -41,7 +41,12 @@ static unsigned be_arm_get_addr(HANDLE hThread, const CONTEXT* ctx,
 
 static unsigned be_arm_get_register_info(int regno, enum be_cpu_addr* kind)
 {
-    dbg_printf("not done\n");
+    switch (regno)
+    {
+    case CV_ARM_PC:  *kind = be_cpu_addr_pc; return TRUE;
+    case CV_ARM_R0 + 11: *kind = be_cpu_addr_frame; return TRUE;
+    case CV_ARM_SP:  *kind = be_cpu_addr_stack; return TRUE;
+    }
     return FALSE;
 }
 
