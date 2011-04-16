@@ -828,7 +828,7 @@ static void test_CertStrToNameA(void)
                  "Expected ERROR_SUCCESS, got %08x\n", GetLastError());
     ret = pCertStrToNameA(X509_ASN_ENCODING, "CN=\"abc\"", CERT_NAME_STR_NO_QUOTING_FLAG, NULL, buf,
                           &size, NULL);
-    todo_wine ok(!ret && GetLastError() == ERROR_MORE_DATA,
+    ok(!ret && GetLastError() == ERROR_MORE_DATA,
                  "Expected ERROR_MORE_DATA, got %08x\n", GetLastError());
     for (i = 0; i < sizeof(namesA) / sizeof(namesA[0]); i++)
     {

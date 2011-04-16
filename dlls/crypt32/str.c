@@ -971,7 +971,7 @@ static BOOL CRYPT_EncodeValue(DWORD dwCertEncodingType,
 }
 
 static BOOL CRYPT_ValueToRDN(DWORD dwCertEncodingType, PCERT_NAME_INFO info,
- PCCRYPT_OID_INFO keyOID, struct X500TokenW *value, LPCWSTR *ppszError)
+ PCCRYPT_OID_INFO keyOID, struct X500TokenW *value, DWORD dwStrType, LPCWSTR *ppszError)
 {
     BOOL ret = FALSE;
 
@@ -1005,7 +1005,7 @@ static BOOL CRYPT_ValueToRDN(DWORD dwCertEncodingType, PCERT_NAME_INFO info,
                 types = defaultTypes;
 
             /* Remove surrounding quotes */
-            if (value->start[0] == '"')
+            if (value->start[0] == '"' && !(dwStrType & CERT_NAME_STR_NO_QUOTING_FLAG))
             {
                 value->start++;
                 value->end--;
@@ -1095,7 +1095,7 @@ BOOL WINAPI CertStrToNameW(DWORD dwCertEncodingType, LPCWSTR pszX500,
                     {
                         str = token.end;
                         ret = CRYPT_ValueToRDN(dwCertEncodingType, &info,
-                         keyOID, &token, ppszError);
+                         keyOID, &token, dwStrType, ppszError);
                     }
                 }
             }
