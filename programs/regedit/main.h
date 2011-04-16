@@ -40,7 +40,6 @@
 #define WM_NOTIFY_REFLECT (WM_USER+1024)
 
 /* HexEdit Class */
-#define HEXEDIT_CLASS TEXT("HexEdit")
 #define HEM_SETDATA (WM_USER+0)
 #define HEM_GETDATA (WM_USER+1)
 
@@ -90,6 +89,7 @@ extern enum OPTION_FLAGS Options;
 extern WCHAR szTitle[];
 extern const WCHAR szFrameClass[];
 extern const WCHAR szChildClass[];
+extern const WCHAR szHexEditClass[];
 extern WCHAR g_pszDefaultValueName[];
 
 /* Registry class names and their indexes */
@@ -127,7 +127,7 @@ extern BOOL IsDefaultValue(HWND hwndLV, int i);
 /* treeview.c */
 extern HWND CreateTreeView(HWND hwndParent, LPWSTR pHostName, UINT id);
 extern BOOL RefreshTreeView(HWND hWndTV);
-extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEW* pnmtv);
+extern BOOL OnTreeExpanding(HWND hWnd, NMTREEVIEWW* pnmtv);
 extern LPWSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
 extern BOOL DeleteNode(HWND hwndTV, HTREEITEM hItem);
 extern HTREEITEM InsertNode(HWND hwndTV, HTREEITEM hItem, LPWSTR name);

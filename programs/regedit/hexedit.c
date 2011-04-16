@@ -54,6 +54,8 @@ typedef struct tagHEXEDIT_INFO
     INT   nScrollPos; /* first visible line */
 } HEXEDIT_INFO;
 
+const WCHAR szHexEditClass[] = {'H','e','x','E','d','i','t',0};
+
 static inline LRESULT HexEdit_SetFont (HEXEDIT_INFO *infoPtr, HFONT hFont, BOOL redraw);
 
 static inline BYTE hexchar_to_byte(TCHAR ch)
@@ -331,7 +333,7 @@ HexEdit_Char (HEXEDIT_INFO *infoPtr, TCHAR ch)
 }
 
 static inline LRESULT
-HexEdit_Create (HEXEDIT_INFO *infoPtr, LPCREATESTRUCT lpcs)
+HexEdit_Create (HEXEDIT_INFO *infoPtr, LPCREATESTRUCTW lpcs)
 {
     HexEdit_SetFont(infoPtr, GetStockObject(SYSTEM_FONT), FALSE);
     HexEdit_UpdateScrollbars(infoPtr);
@@ -467,15 +469,15 @@ HexEdit_LButtonDown (HEXEDIT_INFO *infoPtr)
 }
 
 
-static inline LRESULT HexEdit_NCCreate (HWND hwnd, LPCREATESTRUCT lpcs)
+static inline LRESULT HexEdit_NCCreate (HWND hwnd, LPCREATESTRUCTW lpcs)
 {
     HEXEDIT_INFO *infoPtr;
-    SetWindowLong(hwnd, GWL_EXSTYLE, 
-                  lpcs->dwExStyle | WS_EX_CLIENTEDGE);
+    SetWindowLongW(hwnd, GWL_EXSTYLE,
+                   lpcs->dwExStyle | WS_EX_CLIENTEDGE);
 
     /* allocate memory for info structure */
     infoPtr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HEXEDIT_INFO));
-    SetWindowLongPtr(hwnd, 0, (DWORD_PTR)infoPtr);
+    SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
 
     /* initialize info structure */
     infoPtr->nCaretPos = 0;
@@ -484,7 +486,7 @@ static inline LRESULT HexEdit_NCCreate (HWND hwnd, LPCREATESTRUCT lpcs)
     infoPtr->bFocusHex = TRUE;
     infoPtr->bInsert = TRUE;
 
-    return DefWindowProc(infoPtr->hwndSelf, WM_NCCREATE, 0, (LPARAM)lpcs);
+    return DefWindowProcW(infoPtr->hwndSelf, WM_NCCREATE, 0, (LPARAM)lpcs);
 }
 
 static inline LRESULT
@@ -611,10 +613,10 @@ HexEdit_VScroll (HEXEDIT_INFO *infoPtr, INT action)
 static LRESULT WINAPI
 HexEdit_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    HEXEDIT_INFO *infoPtr = (HEXEDIT_INFO *)GetWindowLongPtr (hwnd, 0);
+    HEXEDIT_INFO *infoPtr = (HEXEDIT_INFO *)GetWindowLongPtrW(hwnd, 0);
 
     if (!infoPtr && (uMsg != WM_NCCREATE))
-        return DefWindowProc(hwnd, uMsg, wParam, lParam);
+        return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 
     switch (uMsg)
     {
@@ -625,10 +627,10 @@ HexEdit_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return HexEdit_GetData (infoPtr, (INT)wParam, (BYTE *)lParam);
 
 	case WM_CHAR:
-	    return HexEdit_Char (infoPtr, (TCHAR)wParam);
+	    return HexEdit_Char (infoPtr, (WCHAR)wParam);
 
 	case WM_CREATE:
-	    return HexEdit_Create (infoPtr, (LPCREATESTRUCT)lParam);
+	    return HexEdit_Create (infoPtr, (LPCREATESTRUCTW)lParam);
 
 	case WM_DESTROY:
 	    return HexEdit_Destroy (infoPtr);
@@ -652,7 +654,7 @@ HexEdit_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return HexEdit_LButtonDown (infoPtr);
 
 	case WM_NCCREATE:
-	    return HexEdit_NCCreate (hwnd, (LPCREATESTRUCT)lParam);
+	    return HexEdit_NCCreate (hwnd, (LPCREATESTRUCTW)lParam);
 
 	case WM_PAINT:
 	    HexEdit_Paint(infoPtr);
@@ -668,23 +670,23 @@ HexEdit_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return HexEdit_VScroll (infoPtr, (INT)wParam);
 
 	default:
-	    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+	    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
     }
     return 0;
 }
 
 void HexEdit_Register(void)
 {
-    WNDCLASS wndClass;
+    WNDCLASSW wndClass;
 
-    ZeroMemory(&wndClass, sizeof(WNDCLASS));
+    ZeroMemory(&wndClass, sizeof(WNDCLASSW));
     wndClass.style         = 0;
     wndClass.lpfnWndProc   = HexEdit_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(HEXEDIT_INFO *);
     wndClass.hCursor       = NULL;
     wndClass.hbrBackground = NULL;
-    wndClass.lpszClassName = HEXEDIT_CLASS;
+    wndClass.lpszClassName = szHexEditClass;
 
-    RegisterClass(&wndClass);
+    RegisterClassW(&wndClass);
 }

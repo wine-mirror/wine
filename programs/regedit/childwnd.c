@@ -388,7 +388,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         if (((int)wParam == TREE_WINDOW) && (g_pChildWnd != NULL)) {
             switch (((LPNMHDR)lParam)->code) {
             case TVN_ITEMEXPANDINGW:
-                return !OnTreeExpanding(g_pChildWnd->hTreeWnd, (NMTREEVIEW*)lParam);
+                return !OnTreeExpanding(g_pChildWnd->hTreeWnd, (NMTREEVIEWW*)lParam);
             case TVN_SELCHANGEDW:
                 OnTreeSelectionChanged(g_pChildWnd->hTreeWnd, g_pChildWnd->hListWnd,
                     ((NMTREEVIEWW *)lParam)->itemNew.hItem, TRUE);

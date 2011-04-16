@@ -650,7 +650,7 @@ done:
     return TRUE;
 }
 
-BOOL OnTreeExpanding(HWND hwndTV, NMTREEVIEW* pnmtv)
+BOOL OnTreeExpanding(HWND hwndTV, NMTREEVIEWW* pnmtv)
 {
     return UpdateExpandingTree(hwndTV, pnmtv->itemNew.hItem, pnmtv->itemNew.state);
 }
