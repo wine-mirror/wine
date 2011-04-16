@@ -141,29 +141,29 @@ static BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s)
 
                 if (strcmp(filename, "-") == 0)
                 {
-                    reg_file=stdin;
+                    reg_file = stdin;
                 }
                 else
                 {
                     int size;
 
-                    size=SearchPath(NULL, filename, NULL,0, NULL, NULL);
-                    if (size>0)
+                    size = SearchPathA(NULL, filename, NULL, 0, NULL, NULL);
+                    if (size > 0)
                     {
-                        realname=HeapAlloc(GetProcessHeap(), 0, size);
-                        size=SearchPath(NULL, filename, NULL, size, realname, NULL);
+                        realname = HeapAlloc(GetProcessHeap(), 0, size);
+                        size = SearchPathA(NULL, filename, NULL, size, realname, NULL);
                     }
-                    if (size==0)
+                    if (size == 0)
                     {
                         fprintf(stderr, "%s: File not found \"%s\" (%d)\n",
                                 getAppName(), filename, GetLastError());
                         exit(1);
                     }
                     reg_file = fopen(realname, "r");
-                    if (reg_file==NULL)
+                    if (reg_file == NULL)
                     {
                         perror("");
-                        fprintf(stderr,"%s: Can't open file \"%s\"\n", getAppName(), filename);
+                        fprintf(stderr, "%s: Can't open file \"%s\"\n", getAppName(), filename);
                         exit(1);
                     }
                 }

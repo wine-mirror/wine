@@ -890,8 +890,8 @@ static void REGPROC_print_error(void)
     int status;
 
     error_code = GetLastError ();
-    status = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                           NULL, error_code, 0, (LPTSTR) &lpMsgBuf, 0, NULL);
+    status = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                            NULL, error_code, 0, (LPSTR) &lpMsgBuf, 0, NULL);
     if (!status) {
         fprintf(stderr,"%s: Cannot display message for error %d, status %d\n",
                 getAppName(), error_code, GetLastError());
