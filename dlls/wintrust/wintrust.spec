@@ -50,7 +50,7 @@
 @ stdcall GenericChainFinalProv(ptr)
 @ stdcall HTTPSCertificateTrust(ptr)
 @ stdcall HTTPSFinalProv(ptr)
-@ stub IsCatalogFile
+@ stdcall IsCatalogFile(ptr wstr)
 @ stub MsCatConstructHashTag
 @ stub MsCatFreeHashTag
 @ stub OfficeCleanupPolicy
