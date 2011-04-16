@@ -95,9 +95,9 @@ UINT WINAPI WinGGetDIBColorTable( HDC hdc, UINT start, UINT end, RGBQUAD *colors
 }
 
 /***********************************************************************
- *           WinGCreateHalfTonePalette   (WING32.@)
+ *           WinGCreateHalftonePalette   (WING32.@)
  */
-HPALETTE WINAPI WinGCreateHalfTonePalette( void )
+HPALETTE WINAPI WinGCreateHalftonePalette( void )
 {
     HDC hdc;
     HPALETTE hpal;
@@ -110,9 +110,9 @@ HPALETTE WINAPI WinGCreateHalfTonePalette( void )
 }
 
 /***********************************************************************
- *           WinGCreateHalfToneBrush   (WING32.@)
+ *           WinGCreateHalftoneBrush   (WING32.@)
  */
-HBRUSH WINAPI WinGCreateHalfToneBrush( HDC hdc, COLORREF color, INT type )
+HBRUSH WINAPI WinGCreateHalftoneBrush( HDC hdc, COLORREF color, INT type )
 {
     return CreateSolidBrush( color );
 }
