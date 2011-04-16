@@ -106,13 +106,16 @@ static void error_code_messagebox(HWND hwnd, DWORD error_code)
 
 static BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
 {
-    TCHAR buf[128];
+    static const WCHAR percent_u[] = {'%','u',0};
+    static const WCHAR percent_x[] = {'%','x',0};
+
+    WCHAR buf[128];
     DWORD val;
 
-    if (!GetDlgItemText(hwndDlg, IDC_VALUE_DATA, buf, COUNT_OF(buf))) return FALSE;
-    if (!_stscanf(buf, toHex ? "%u" : "%x", &val)) return FALSE;
-    wsprintf(buf, toHex ? "%x" : "%u", val);
-    return SetDlgItemText(hwndDlg, IDC_VALUE_DATA, buf);    
+    if (!GetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, buf, COUNT_OF(buf))) return FALSE;
+    if (!swscanf(buf, toHex ? percent_u : percent_x, &val)) return FALSE;
+    wsprintfW(buf, toHex ? percent_x : percent_u, val);
+    return SetDlgItemTextW(hwndDlg, IDC_VALUE_DATA, buf);
 }
 
 static INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -163,18 +166,18 @@ static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wPara
     switch(uMsg) {
     case WM_INITDIALOG:
         params = (struct edit_params *)lParam;
-        SetWindowLongPtr(hwndDlg, DWLP_USER, (ULONG_PTR)params);
+        SetWindowLongPtrW(hwndDlg, DWLP_USER, (ULONG_PTR)params);
         if (params->lpszValueName)
             SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, params->lpszValueName);
         else
             SetDlgItemTextW(hwndDlg, IDC_VALUE_NAME, g_pszDefaultValueName);
-        SendDlgItemMessage(hwndDlg, IDC_VALUE_DATA, HEM_SETDATA, (WPARAM)params->cbData, (LPARAM)params->pData);
+        SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_SETDATA, (WPARAM)params->cbData, (LPARAM)params->pData);
         return TRUE;
     case WM_COMMAND:
         switch (LOWORD(wParam)) {
         case IDOK:
-            params = (struct edit_params *)GetWindowLongPtr(hwndDlg, DWLP_USER);
-            cbData = SendDlgItemMessage(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, 0, 0);
+            params = (struct edit_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
+            cbData = SendDlgItemMessageW(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, 0, 0);
             pData = HeapAlloc(GetProcessHeap(), 0, cbData);
 
             if (pData)
@@ -263,7 +266,7 @@ BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPWSTR keyName)
 	goto done;
     }
 
-    if (!LoadStringW(GetModuleHandle(0), IDS_NEWKEY, newKey, COUNT_OF(newKey))) goto done;
+    if (!LoadStringW(GetModuleHandleW(0), IDS_NEWKEY, newKey, COUNT_OF(newKey))) goto done;
 
     /* try to find out a name for the newly create key (max 100 times) */
     for (keyNum = 1; keyNum < 100; keyNum++) {
@@ -330,7 +333,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR valueName)
         params.lpszValueName = valueName;
         params.pData = stringValueData;
         params.cbData = len;
-        result = DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_EDIT_BINARY), hwnd,
+        result = DialogBoxParamW(NULL, MAKEINTRESOURCEW(IDD_EDIT_BINARY), hwnd,
             bin_modify_dlgproc, (LPARAM)&params);
     } else if ( type == REG_MULTI_SZ ) {
         WCHAR char1 = '\r', char2 = '\n';
@@ -467,7 +470,7 @@ BOOL CreateValue(HWND hwnd, HKEY hKeyRoot, LPCWSTR keyPath, DWORD valueType, LPW
 	return FALSE;
     }
 
-    if (!LoadStringW(GetModuleHandle(0), IDS_NEWVALUE, newValue, COUNT_OF(newValue))) goto done;
+    if (!LoadStringW(GetModuleHandleW(0), IDS_NEWVALUE, newValue, COUNT_OF(newValue))) goto done;
 
     /* try to find out a name for the newly create key (max 100 times) */
     for (valueNum = 1; valueNum < 100; valueNum++) {
