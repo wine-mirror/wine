@@ -85,7 +85,7 @@ LPCWSTR GetValueName(HWND hwndLV)
         HeapFree(GetProcessHeap(), 0,  g_valueName);
     g_valueName = NULL;
 
-    item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED);
+    item = SendMessageW(hwndLV, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_FOCUSED, 0));
     if (item == -1) return NULL;
 
     g_valueName = GetItemText(hwndLV, item);
@@ -133,7 +133,7 @@ static void AddEntryToList(HWND hwndLV, LPWSTR Name, DWORD dwValType,
     }
 
     item.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE | LVIF_IMAGE;
-    item.iItem = ListView_GetItemCount(hwndLV);/*idx;  */
+    item.iItem = SendMessageW(hwndLV, LVM_GETITEMCOUNT, 0, 0);
     item.iSubItem = 0;
     item.state = 0;
     item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
@@ -348,12 +348,12 @@ HWND StartValueRename(HWND hwndLV)
 {
     int item;
 
-    item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED | LVNI_SELECTED);
+    item = SendMessageW(hwndLV, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_FOCUSED | LVNI_SELECTED, 0));
     if (item < 1) { /* cannot rename default key */
         MessageBeep(MB_ICONHAND);
         return 0;
     }
-    return ListView_EditLabel(hwndLV, item);
+    return (HWND)SendMessageW(hwndLV, LVM_EDITLABELW, item, 0);
 }
 
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -372,7 +372,7 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
     switch (message) {
     case WM_COMMAND:
         if (!_CmdWndProc(hWnd, message, wParam, lParam)) {
-            return CallWindowProc(g_orgListWndProc, hWnd, message, wParam, lParam);
+            return CallWindowProcW(g_orgListWndProc, hWnd, message, wParam, lParam);
         }
         break;
     case WM_NOTIFY_REFLECT:
@@ -409,11 +409,11 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 		return 0;
 	    }
         case NM_RETURN: {
-                int cnt = ListView_GetNextItem(hWnd, -1, LVNI_FOCUSED | LVNI_SELECTED);
-	        if (cnt != -1)
-		    SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
-	    }
-	    break;
+            int cnt = SendMessageW(hWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_FOCUSED | LVNI_SELECTED, 0));
+            if (cnt != -1)
+                SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
+            }
+            break;
         case NM_DBLCLK: {
                 NMITEMACTIVATE* nmitem = (LPNMITEMACTIVATE)lParam;
                 LVHITTESTINFO info;
@@ -435,11 +435,18 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 #endif
                 info.pt.x = nmitem->ptAction.x;
                 info.pt.y = nmitem->ptAction.y;
-                if (ListView_HitTest(hWnd, &info) != -1) {
-                    ListView_SetItemState(hWnd, -1, 0, LVIS_FOCUSED|LVIS_SELECTED);
-                    ListView_SetItemState(hWnd, info.iItem, LVIS_FOCUSED|LVIS_SELECTED,
-                        LVIS_FOCUSED|LVIS_SELECTED);
-		    SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
+                if (SendMessageW(hWnd, LVM_HITTEST, 0, (LPARAM)&info) != -1) {
+                    LVITEMW item;
+
+                    item.state = 0;
+                    item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
+                    SendMessageW(hWnd, LVM_SETITEMSTATE, (UINT)-1, (LPARAM)&item);
+
+                    item.state = LVIS_FOCUSED | LVIS_SELECTED;
+                    item.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
+                    SendMessageW(hWnd, LVM_SETITEMSTATE, info.iItem, (LPARAM)&item);
+
+                    SendMessageW(hFrameWnd, WM_COMMAND, ID_EDIT_MODIFY, 0);
                 }
             }
             break;
@@ -449,14 +456,14 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
         }
         break;
     case WM_CONTEXTMENU: {
-        int cnt = ListView_GetNextItem(hWnd, -1, LVNI_SELECTED);
+        int cnt = SendMessageW(hWnd, LVM_GETNEXTITEM, -1, MAKELPARAM(LVNI_SELECTED, 0));
         TrackPopupMenu(GetSubMenu(hPopupMenus, cnt == -1 ? PM_NEW : PM_MODIFYVALUE),
                        TPM_RIGHTBUTTON, (short)LOWORD(lParam), (short)HIWORD(lParam),
                        0, hFrameWnd, NULL);
         break;
     }
     default:
-        return CallWindowProc(g_orgListWndProc, hWnd, message, wParam, lParam);
+        return CallWindowProcW(g_orgListWndProc, hWnd, message, wParam, lParam);
     }
     return 0;
 }
@@ -512,11 +519,11 @@ BOOL RefreshListView(HWND hwndLV, HKEY hKeyRoot, LPCWSTR keyPath, LPCWSTR highli
     errCode = RegOpenKeyExW(hKeyRoot, keyPath, 0, KEY_READ, &hKey);
     if (errCode != ERROR_SUCCESS) goto done;
 
-    count = ListView_GetItemCount(hwndLV);
+    count = SendMessageW(hwndLV, LVM_GETITEMCOUNT, 0, 0);
     for (i = 0; i < count; i++) {
         item.mask = LVIF_PARAM;
         item.iItem = i;
-        SendMessageW( hwndLV, LVM_GETITEM, 0, (LPARAM)&item );
+        SendMessageW( hwndLV, LVM_GETITEMW, 0, (LPARAM)&item );
         HeapFree(GetProcessHeap(), 0, ((LINE_INFO*)item.lParam)->name);
         HeapFree(GetProcessHeap(), 0, (void*)item.lParam);
     }
