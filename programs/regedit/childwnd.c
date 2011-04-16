@@ -131,7 +131,7 @@ static LPWSTR GetPathRoot(HWND hwndTV, HTREEITEM hItem, BOOL bFull) {
     WCHAR text[260];
     HKEY hRootKey = NULL;
     if (!hItem)
-        hItem = TreeView_GetSelection(hwndTV);
+        hItem = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0);
     HeapFree(GetProcessHeap(), 0, GetItemPath(hwndTV, hItem, &hRootKey));
     if (!bFull && !hRootKey)
         return NULL;
@@ -262,7 +262,9 @@ static void set_last_key(HWND hwndTV)
 
     if (RegCreateKeyExW(HKEY_CURRENT_USER, wszKeyName, 0, NULL, 0, KEY_WRITE, NULL, &hkey, NULL) == ERROR_SUCCESS)
     {
-        wszVal = GetItemFullPath(g_pChildWnd->hTreeWnd, TreeView_GetSelection(g_pChildWnd->hTreeWnd), FALSE);
+        HTREEITEM selection = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_CARET, 0);
+
+        wszVal = GetItemFullPath(g_pChildWnd->hTreeWnd, selection, FALSE);
         RegSetValueExW(hkey, wszLastKey, 0, REG_SZ, (LPBYTE)wszVal, (lstrlenW(wszVal) + 1) * sizeof(WCHAR));
         HeapFree(GetProcessHeap(), 0, wszVal);
         RegCloseKey(hkey);
@@ -309,7 +311,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             GetCursorPos(&pt);
             ScreenToClient(hWnd, &pt);
             if (pt.x>=g_pChildWnd->nSplitPos-SPLIT_WIDTH/2 && pt.x<g_pChildWnd->nSplitPos+SPLIT_WIDTH/2+1) {
-                SetCursor(LoadCursor(0, IDC_SIZEWE));
+                SetCursor(LoadCursorW(0, (LPCWSTR)IDC_SIZEWE));
                 return TRUE;
             }
         }
@@ -354,7 +356,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                 ResizeWnd(rt.right, rt.bottom);
                 last_split = -1;
                 ReleaseCapture();
-                SetCursor(LoadCursor(0, IDC_ARROW));
+                SetCursor(LoadCursorW(0, (LPCWSTR)IDC_ARROW));
             }
         break;
 
@@ -413,7 +415,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                     LPWSTR fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd,
                      dispInfo->item.pszText);
 		    item.mask = TVIF_HANDLE | TVIF_TEXT;
-		    item.hItem = TreeView_GetSelection(g_pChildWnd->hTreeWnd);
+		    item.hItem = (HTREEITEM)SendMessageW(g_pChildWnd->hTreeWnd, TVM_GETNEXTITEM, TVGN_CARET, 0);
 		    item.pszText = dispInfo->item.pszText;
                     SendMessageW( g_pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item );
                     SendMessageW(hStatusBar, SB_SETTEXTW, 0, (LPARAM)fullPath);
