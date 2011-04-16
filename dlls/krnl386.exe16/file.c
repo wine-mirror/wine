@@ -628,11 +628,11 @@ UINT16 WINAPI GetWindowsDirectory16( LPSTR path, UINT16 count )
  */
 UINT16 WINAPI GetSystemDirectory16( LPSTR path, UINT16 count )
 {
-    static const char * system16 = "\\SYSTEM";
+    static const char system16[] = "\\SYSTEM";
     char windir[MAX_PATH];
     UINT16 len;
 
-    len = GetWindowsDirectory16(windir, sizeof(windir) - sizeof(system16)) + sizeof(system16);
+    len = GetWindowsDirectory16(windir, sizeof(windir) - sizeof(system16) + 1) + sizeof(system16);
     if (count >= len)
     {
         lstrcpyA(path, windir);
