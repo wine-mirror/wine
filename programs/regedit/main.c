@@ -63,7 +63,37 @@ TCHAR szTitle[MAX_LOADSTRING];
 const TCHAR szFrameClass[] = {'R','E','G','E','D','I','T','_','F','R','A','M','E',0};
 const TCHAR szChildClass[] = {'R','E','G','E','D','I','T',0};
 
+static BOOL RegisterWindowClasses(HINSTANCE hInstance, ATOM *hFrameWndClass, ATOM *hChildWndClass)
+{
+    WNDCLASSEX wndclass = {0};
 
+    /* Frame class */
+    wndclass.cbSize = sizeof(WNDCLASSEX);
+    wndclass.style = CS_HREDRAW | CS_VREDRAW;
+    wndclass.lpfnWndProc = FrameWndProc;
+    wndclass.hInstance = hInstance;
+    wndclass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_REGEDIT));
+    wndclass.hCursor = LoadCursor(0, IDC_ARROW);
+    wndclass.lpszClassName = szFrameClass;
+    wndclass.hIconSm = LoadImage(hInstance, MAKEINTRESOURCE(IDI_REGEDIT), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON),
+                                 GetSystemMetrics(SM_CYSMICON), LR_SHARED);
+
+    if (!(*hFrameWndClass = RegisterClassEx(&wndclass)))
+        return FALSE;
+
+    /* Child class */
+    wndclass.lpfnWndProc = ChildWndProc;
+    wndclass.cbWndExtra = sizeof(HANDLE);
+    wndclass.lpszClassName = szChildClass;
+
+    if (!(*hChildWndClass = RegisterClassEx(&wndclass)))
+    {
+        UnregisterClass(szFrameClass, hInstance);
+        return FALSE;
+    }
+
+    return TRUE;
+}
 /*******************************************************************************
  *
  *
@@ -80,41 +110,10 @@ const TCHAR szChildClass[] = {'R','E','G','E','D','I','T',0};
 static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     WCHAR empty = 0;
-    WNDCLASSEX wcFrame = {
-                             sizeof(WNDCLASSEX),
-                             CS_HREDRAW | CS_VREDRAW/*style*/,
-                             FrameWndProc,
-                             0/*cbClsExtra*/,
-                             0/*cbWndExtra*/,
-                             hInstance,
-                             LoadIcon(hInstance, MAKEINTRESOURCE(IDI_REGEDIT)),
-                             LoadCursor(0, IDC_ARROW),
-                             0/*hbrBackground*/,
-                             0/*lpszMenuName*/,
-                             szFrameClass,
-                             LoadImage(hInstance, MAKEINTRESOURCE(IDI_REGEDIT), IMAGE_ICON,
-                                              GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED)
-                         };
-    ATOM hFrameWndClass = RegisterClassEx(&wcFrame); /* register frame window class */
+    ATOM hFrameWndClass, hChildWndClass;
 
-    WNDCLASSEX wcChild = {
-                             sizeof(WNDCLASSEX),
-                             CS_HREDRAW | CS_VREDRAW/*style*/,
-                             ChildWndProc,
-                             0/*cbClsExtra*/,
-                             sizeof(HANDLE)/*cbWndExtra*/,
-                             hInstance,
-                             LoadIcon(hInstance, MAKEINTRESOURCE(IDI_REGEDIT)),
-                             LoadCursor(0, IDC_ARROW),
-                             0/*hbrBackground*/,
-                             0/*lpszMenuName*/,
-                             szChildClass,
-                             LoadImage(hInstance, MAKEINTRESOURCE(IDI_REGEDIT), IMAGE_ICON,
-                                              GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED)
-
-                         };
-    ATOM hChildWndClass = RegisterClassEx(&wcChild); /* register child windows class */
-    hChildWndClass = hChildWndClass; /* warning eater */
+    if (!RegisterWindowClasses(hInstance, &hFrameWndClass, &hChildWndClass))
+        return FALSE;
 
     hMenuFrame = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDR_REGEDIT_MENU));
     hPopupMenus = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDR_POPUP_MENUS));
