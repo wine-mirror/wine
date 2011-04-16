@@ -114,11 +114,15 @@ static char *find_dosbox(void)
     const char *envpath = getenv( "PATH" );
     struct stat st;
     char *path, *p, *buffer, *dir;
+    size_t envpath_len;
 
     if (!envpath) return NULL;
-    path = HeapAlloc( GetProcessHeap(), 0, strlen(envpath) );
-    buffer = HeapAlloc( GetProcessHeap(), 0, strlen(path) + sizeof("/dosbox") );
+
+    envpath_len = strlen( envpath );
+    path = HeapAlloc( GetProcessHeap(), 0, envpath_len + 1 );
+    buffer = HeapAlloc( GetProcessHeap(), 0, envpath_len + sizeof("/dosbox") );
     strcpy( path, envpath );
+
     p = path;
     while (*p)
     {
@@ -126,7 +130,7 @@ static char *find_dosbox(void)
         if (!*p) break;
         dir = p;
         while (*p && *p != ':') p++;
-        *p++ = 0;
+        if (*p == ':') *p++ = 0;
         strcpy( buffer, dir );
         strcat( buffer, "/dosbox" );
         if (!stat( buffer, &st ))
