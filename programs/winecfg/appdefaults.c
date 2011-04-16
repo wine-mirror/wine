@@ -70,11 +70,12 @@ static const struct
 
 static const char szKey9x[] = "Software\\Microsoft\\Windows\\CurrentVersion";
 static const char szKeyNT[] = "Software\\Microsoft\\Windows NT\\CurrentVersion";
+static const char szKeyProdNT[] = "System\\CurrentControlSet\\Control\\ProductOptions";
 
 static int get_registry_version(void)
 {
     int i, best = -1, platform, major, minor = 0, build = 0;
-    char *p, *ver;
+    char *p, *ver, *type;
 
     if ((ver = get_reg_key( HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL )))
     {
@@ -82,8 +83,10 @@ static int get_registry_version(void)
 
         platform = VER_PLATFORM_WIN32_NT;
 
-	build_str = get_reg_key( HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL );
+        build_str = get_reg_key( HKEY_LOCAL_MACHINE, szKeyNT, "CurrentBuildNumber", NULL );
         build = atoi(build_str);
+
+        type = get_reg_key( HKEY_LOCAL_MACHINE, szKeyProdNT, "ProductType", NULL );
     }
     else if ((ver = get_reg_key( HKEY_LOCAL_MACHINE, szKey9x, "VersionNumber", NULL )))
         platform = VER_PLATFORM_WIN32_WINDOWS;
@@ -108,6 +111,7 @@ static int get_registry_version(void)
     {
         if (win_versions[i].dwPlatformId != platform) continue;
         if (win_versions[i].dwMajorVersion != major) continue;
+        if (type && strcasecmp(win_versions[i].szProductType, type)) continue;
         best = i;
         if ((win_versions[i].dwMinorVersion == minor) &&
             (win_versions[i].dwBuildNumber == build))
@@ -409,7 +413,6 @@ static void on_winver_change(HWND dialog)
     }
     else /* global version only */
     {
-        static const char szKeyProdNT[] = "System\\CurrentControlSet\\Control\\ProductOptions";
         static const char szKeyWindNT[] = "System\\CurrentControlSet\\Control\\Windows";
         static const char szKeyEnvNT[]  = "System\\CurrentControlSet\\Control\\Session Manager\\Environment";
         char Buffer[40];
