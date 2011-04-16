@@ -87,9 +87,9 @@ extern HMENU     hPopupMenus;
 extern HFONT     hFont;
 extern enum OPTION_FLAGS Options;
 
-extern TCHAR szTitle[];
-extern const TCHAR szFrameClass[];
-extern const TCHAR szChildClass[];
+extern WCHAR szTitle[];
+extern const WCHAR szFrameClass[];
+extern const WCHAR szChildClass[];
 extern WCHAR g_pszDefaultValueName[];
 
 /* Registry class names and their indexes */
