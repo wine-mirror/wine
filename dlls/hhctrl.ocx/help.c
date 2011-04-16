@@ -441,6 +441,7 @@ static LRESULT Child_OnSize(HWND hwnd)
 
     ResizeTabChild(info, TAB_CONTENTS);
     ResizeTabChild(info, TAB_INDEX);
+    ResizeTabChild(info, TAB_SEARCH);
     return 0;
 }
 
