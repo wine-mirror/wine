@@ -632,11 +632,13 @@ DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT *context )
 	      int seg = outp ? context->SegDs : context->SegEs;  /* FIXME: is this right? */
 
 	      if (outp)
+              {
 		/* FIXME: Check segment is readable.  */
-		;
+              }
 	      else
+              {
 		/* FIXME: Check segment is writable.  */
-		;
+              }
 
 	      if (repX)
               {
