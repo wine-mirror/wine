@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-02-11 05:35+0300\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"PO-Revision-Date: 2011-04-17 17:06+0300\n"
+"Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: none\n"
 "Language: Russian\n"
 "MIME-Version: 1.0\n"
@@ -2008,13 +2008,12 @@ msgid "Default MidiOut Device"
 msgstr "Устройство вывода MIDI по умолчанию"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Установки по умолчанию"
+msgstr "Региональные настройки"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr ""
+msgstr "%uМБ используется, %uМБ доступно"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
@@ -2173,36 +2172,32 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "Настройка браузера Wine и связанных параметров"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "&Сохранять настройки при выходе"
+msgstr "Настройки безопасности для зоны: "
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Персонализовать"
+msgstr "Пользовательский"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Очень низкий"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "&Низкая"
+msgstr "Низкий"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Средний"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Повышенный"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&Высокая"
+msgstr "Высокий"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -2825,9 +2820,8 @@ msgid "Signal pending\n"
 msgstr "Сигнал обрабатывается\n"
 
 #: winerror.mc:681
-#, fuzzy
 msgid "Max system-wide thread count reached\n"
-msgstr "Невозможно создать дополнительный поток\n"
+msgstr "Создано максимально возможное количество потоков\n"
 
 #: winerror.mc:686
 msgid "Lock failed\n"
@@ -4254,9 +4248,8 @@ msgid "Private dialog index\n"
 msgstr "Индекс частного диалога\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
-msgstr "Код списка не найден\n"
+msgstr "Идентификатор элемента \"Список\" не найден\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters\n"
@@ -4319,18 +4312,16 @@ msgid "Hook procedure not installed\n"
 msgstr "Процедура обработчика не установлена\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
-msgstr "Неверное сообщение для списка\n"
+msgstr "Неверное сообщение для элемента \"Список\"\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "Послано неверное сообщение LB_SETCOUNT\n"
 
 #: winerror.mc:2566
-#, fuzzy
 msgid "No tab stops on this list box\n"
-msgstr "Список не поддерживает позиции табуляции\n"
+msgstr "Элемент \"Список\" не имеет позиции табуляции\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread\n"
@@ -4345,9 +4336,8 @@ msgid "Window has no system menu\n"
 msgstr "У окна нет системного меню\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
-msgstr "Неверный стиль окна сообщения\n"
+msgstr "Неверный стиль окна-сообщения\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter\n"
@@ -4398,7 +4388,6 @@ msgid "No system resources\n"
 msgstr "Недостаточно системных ресурсов\n"
 
 #: winerror.mc:2651
-#, fuzzy
 msgid "No non-paged system resources\n"
 msgstr "Недостаточно невыгружаемых системных ресурсов\n"
 
@@ -4411,9 +4400,8 @@ msgid "No working set quota\n"
 msgstr "Превышена квота рабочего набора\n"
 
 #: winerror.mc:2666
-#, fuzzy
 msgid "No page file quota\n"
-msgstr "Превышена квота файла подкачки\n"
+msgstr "Не задана квота файла подкачки\n"
 
 #: winerror.mc:2671
 msgid "Exceeded commitment limit\n"
@@ -4488,7 +4476,6 @@ msgid "Unknown component\n"
 msgstr "Неизвестный компонент\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property\n"
 msgstr "Неизвестное свойство\n"
 
@@ -5021,7 +5008,6 @@ msgid "Invalid printer command\n"
 msgstr "Неверная команда принтеру\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
 msgstr "Неверный тип данных\n"
 
@@ -5334,7 +5320,6 @@ msgid "insert disk %s"
 msgstr "вставьте диск %s"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -6915,13 +6900,12 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "Недопустимый параметр передан системной функции."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
 msgstr ""
-"Указанный формат не поддерживается или не может быть оттранслирован. "
-"Используйте функцию Capabilities, чтобы определить поддерживаемые форматы."
+"Указанный формат не поддерживается или не может быть преобразован. "
+"Используйте функцию Возможности, чтобы определить поддерживаемые форматы."
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
@@ -7111,13 +7095,12 @@ msgstr ""
 "команде."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
 "Ошибки в нескольких устройствах. Укажите отдельно каждую команду и "
-"устройство, чтобы определить, какие устройства вызывали ошибки."
+"устройство, чтобы определить устройство, вызвавшее ошибку."
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
@@ -7738,9 +7721,8 @@ msgid "&Always on Top"
 msgstr "&Поверх всех"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&О программе..."
+msgstr "&О Часах"
 
 #: clock.rc:48
 msgid "Clock"
@@ -8029,9 +8011,8 @@ msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "Справка о REN\n"
 
 #: cmd.rc:158
-#, fuzzy
 msgid "RENAME <filename> renames a file.\n"
-msgstr "Справка о RENAME\n"
+msgstr "RENAME <имя файла> переименовывает файл.\n"
 
 #: cmd.rc:160
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
@@ -8127,9 +8108,8 @@ msgstr ""
 "Флаг verify не используется Wine.\n"
 
 #: cmd.rc:204
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER отображает версию запущенного cmd\n"
+msgstr "VER выводит версию используемого cmd\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
@@ -8627,9 +8607,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "&Заменить...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&Содержание"
+msgstr "&Содержание\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -9089,9 +9068,8 @@ msgid "&Arrange Icons"
 msgstr "&Упорядочить при выходе"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Диспетчер программ"
+msgstr "&О диспетчере программ"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -9251,9 +9229,8 @@ msgid "&Multi String Value"
 msgstr "&Многостроковый параметр"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "&Строковый параметр"
+msgstr "&Вычисляемый строковый параметр"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -10371,15 +10348,15 @@ msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:86
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
-"Невозможно создать новый диск.\n"
+"Невозможно добавить ещё один диск.\n"
 "\n"
-"У каждого диска должна быть буква - от A до Z, и у вас уже 26 дисков."
+"Каждый диск имеет букву - от A до Z, поэтому общее количество дисков "
+"ограничено 26-ю."
 
 #: winecfg.rc:87
 msgid "System drive"
@@ -10840,9 +10817,8 @@ msgid "Arrange &Symbols"
 msgstr "&Расположить"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "&О Winefile..."
+msgstr "&О Wine File"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10906,7 +10882,7 @@ msgstr "%s из %s свободно"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Игра"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -10914,7 +10890,7 @@ msgstr "&Новая игра\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "Вопросительные &знаки"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10933,14 +10909,12 @@ msgid "&Custom..."
 msgstr "Нестандартные &параметры"
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
-msgstr "&Лучшее время"
+msgstr "&Лучшие результаты"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&О Wine"
+msgstr "&О WineMine"
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -10991,9 +10965,8 @@ msgid "Large"
 msgstr "Крупный"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "&Использование справки"
+msgstr "&Справка о справочной программе"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -11152,9 +11125,8 @@ msgid "&System\tCtrl+1"
 msgstr "&Системный\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "&Желтоватый PostThat\tCtrl+2"
+msgstr "&Светло-жёлтый\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
