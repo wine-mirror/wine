@@ -718,6 +718,7 @@ IDirect3DDeviceImpl_1_Execute(IDirect3DDevice *iface,
     IDirect3DDeviceImpl *This = device_from_device1(iface);
     IDirect3DExecuteBufferImpl *Direct3DExecuteBufferImpl = (IDirect3DExecuteBufferImpl *)ExecuteBuffer;
     IDirect3DViewportImpl *Direct3DViewportImpl = (IDirect3DViewportImpl *)Viewport;
+    HRESULT hr;
 
     TRACE("iface %p, buffer %p, viewport %p, flags %#x.\n", iface, ExecuteBuffer, Viewport, Flags);
 
@@ -726,10 +727,10 @@ IDirect3DDeviceImpl_1_Execute(IDirect3DDevice *iface,
 
     /* Execute... */
     EnterCriticalSection(&ddraw_cs);
-    IDirect3DExecuteBufferImpl_Execute(Direct3DExecuteBufferImpl, This, Direct3DViewportImpl);
+    hr = d3d_execute_buffer_execute(Direct3DExecuteBufferImpl, This, Direct3DViewportImpl);
     LeaveCriticalSection(&ddraw_cs);
 
-    return D3D_OK;
+    return hr;
 }
 
 /*****************************************************************************

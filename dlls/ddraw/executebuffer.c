@@ -68,10 +68,8 @@ static void _dump_D3DEXECUTEBUFFERDESC(const D3DEXECUTEBUFFERDESC *lpDesc) {
  *  Viewport: Viewport for this operation
  *
  *****************************************************************************/
-void
-IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
-                                   IDirect3DDeviceImpl *lpDevice,
-                                   IDirect3DViewportImpl *lpViewport)
+HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
+        IDirect3DDeviceImpl *lpDevice, IDirect3DViewportImpl *lpViewport)
 {
     /* DWORD bs = This->desc.dwBufferSize; */
     DWORD vs = This->data.dwVertexOffset;
@@ -81,10 +79,14 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
 
     char *instr = (char *)This->desc.lpData + is;
 
-    /* Should check if the viewport was added or not to the device */
+    if (lpViewport->active_device != lpDevice)
+    {
+        WARN("Viewport %p active device is %p.\n",
+                lpViewport, lpViewport->active_device);
+        return DDERR_INVALIDPARAMS;
+    }
 
     /* Activate the viewport */
-    lpViewport->active_device = lpDevice;
     viewport_activate(lpViewport, FALSE);
 
     TRACE("ExecuteData :\n");
@@ -551,7 +553,7 @@ IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
     }
 
 end_of_buffer:
-    ;
+    return D3D_OK;
 }
 
 /*****************************************************************************

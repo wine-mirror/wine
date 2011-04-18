@@ -515,8 +515,8 @@ HRESULT d3d_execute_buffer_init(IDirect3DExecuteBufferImpl *execute_buffer,
         IDirect3DDeviceImpl *device, D3DEXECUTEBUFFERDESC *desc) DECLSPEC_HIDDEN;
 
 /* The execute function */
-void IDirect3DExecuteBufferImpl_Execute(IDirect3DExecuteBufferImpl *This,
-        IDirect3DDeviceImpl *Device, IDirect3DViewportImpl *ViewportImpl) DECLSPEC_HIDDEN;
+HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *execute_buffer,
+        IDirect3DDeviceImpl *device, IDirect3DViewportImpl *viewport) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirect3DVertexBuffer
