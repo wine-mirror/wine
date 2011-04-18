@@ -63,8 +63,9 @@ WCHAR szTitle[MAX_LOADSTRING];
 const WCHAR szFrameClass[] = {'R','E','G','E','D','I','T','_','F','R','A','M','E',0};
 const WCHAR szChildClass[] = {'R','E','G','E','D','I','T',0};
 
-static BOOL RegisterWindowClasses(HINSTANCE hInstance, ATOM *hFrameWndClass, ATOM *hChildWndClass)
+static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
+    WCHAR empty = 0;
     WNDCLASSEXW wndclass = {0};
 
     /* Frame class */
@@ -75,33 +76,15 @@ static BOOL RegisterWindowClasses(HINSTANCE hInstance, ATOM *hFrameWndClass, ATO
     wndclass.hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_REGEDIT));
     wndclass.hCursor = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     wndclass.lpszClassName = szFrameClass;
-    wndclass.hIconSm = LoadImageW(hInstance, MAKEINTRESOURCEW(IDI_REGEDIT), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON),
-                                  GetSystemMetrics(SM_CYSMICON), LR_SHARED);
-
-    if (!(*hFrameWndClass = RegisterClassExW(&wndclass)))
-        return FALSE;
+    wndclass.hIconSm = LoadImageW(hInstance, MAKEINTRESOURCEW(IDI_REGEDIT), IMAGE_ICON,
+                                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
+    RegisterClassExW(&wndclass);
 
     /* Child class */
     wndclass.lpfnWndProc = ChildWndProc;
     wndclass.cbWndExtra = sizeof(HANDLE);
     wndclass.lpszClassName = szChildClass;
-
-    if (!(*hChildWndClass = RegisterClassExW(&wndclass)))
-    {
-        UnregisterClassW(szFrameClass, hInstance);
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-    WCHAR empty = 0;
-    ATOM hFrameWndClass, hChildWndClass;
-
-    if (!RegisterWindowClasses(hInstance, &hFrameWndClass, &hChildWndClass))
-        return FALSE;
+    RegisterClassExW(&wndclass);
 
     hMenuFrame = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDR_REGEDIT_MENU));
     hPopupMenus = LoadMenuW(hInstance, MAKEINTRESOURCEW(IDR_POPUP_MENUS));
@@ -114,7 +97,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     nClipboardFormat = RegisterClipboardFormatW(strClipboardFormat);
 
-    hFrameWnd = CreateWindowExW(0, MAKEINTRESOURCEW(hFrameWndClass), szTitle,
+    hFrameWnd = CreateWindowExW(0, szFrameClass, szTitle,
                                 WS_OVERLAPPEDWINDOW | WS_EX_CLIENTEDGE,
                                 CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                                 NULL, hMenuFrame, hInstance, NULL/*lpParam*/);
