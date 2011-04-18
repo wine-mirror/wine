@@ -4390,6 +4390,8 @@ void surface_load_ds_location(IWineD3DSurfaceImpl *surface, struct wined3d_conte
          * should do. */
         FIXME("No up to date depth stencil location.\n");
         surface->flags |= location;
+        surface->ds_current_size.cx = surface->resource.width;
+        surface->ds_current_size.cy = surface->resource.height;
         return;
     }
 
