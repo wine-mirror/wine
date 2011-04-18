@@ -2136,7 +2136,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface)
     const struct wined3d_gl_info *gl_info;
     struct IWineD3DSurfaceImpl *surface;
     struct wined3d_context *context;
-    int sampler;
     UINT i;
     TRACE("(%p)\n", This);
 
@@ -2172,13 +2171,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface)
         glDeleteTextures(1, &This->cursorTexture);
         LEAVE_GL();
         This->cursorTexture = 0;
-    }
-
-    for (sampler = 0; sampler < MAX_FRAGMENT_SAMPLERS; ++sampler) {
-        IWineD3DDevice_SetTexture(iface, sampler, NULL);
-    }
-    for (sampler = 0; sampler < MAX_VERTEX_SAMPLERS; ++sampler) {
-        IWineD3DDevice_SetTexture(iface, WINED3DVERTEXTEXTURESAMPLER0 + sampler, NULL);
     }
 
     /* Destroy the depth blt resources, they will be invalid after the reset. Also free shader
