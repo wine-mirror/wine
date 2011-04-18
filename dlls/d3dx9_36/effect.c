@@ -2734,6 +2734,7 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
     if (param->element_count)
     {
         unsigned int param_bytes = 0;
+        const char *save_ptr = *ptr;
 
         member_handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*member_handles) * param->element_count);
         if (!member_handles)
@@ -2746,6 +2747,7 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
         for (i = 0; i < param->element_count; ++i)
         {
             struct d3dx_parameter *member;
+            *ptr = save_ptr;
 
             member = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*member));
             if (!member)
