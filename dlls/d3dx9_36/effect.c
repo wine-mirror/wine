@@ -589,9 +589,17 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetTechnique(ID3DXBaseEffect *iface
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
 
-    FIXME("iface %p, index %u stub\n", This, index);
+    TRACE("iface %p, index %u\n", This, index);
 
-    return NULL;
+    if (index >= This->technique_count)
+    {
+        WARN("Invalid argument specified.\n");
+        return NULL;
+    }
+
+    TRACE("Returning technique %p\n", This->technique_handles[index]);
+
+    return This->technique_handles[index];
 }
 
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetTechniqueByName(ID3DXBaseEffect *iface, LPCSTR name)
