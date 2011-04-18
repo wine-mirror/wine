@@ -117,6 +117,17 @@ static UINT msi_change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
     return r;
 }
 
+static MSICABINETSTREAM *msi_get_cabinet_stream( MSIPACKAGE *package, UINT disk_id )
+{
+    MSICABINETSTREAM *cab;
+
+    LIST_FOR_EACH_ENTRY( cab, &package->cabinet_streams, MSICABINETSTREAM, entry )
+    {
+        if (cab->disk_id == disk_id) return cab;
+    }
+    return NULL;
+}
+
 static void * CDECL cabinet_alloc(ULONG cb)
 {
     return msi_alloc(cb);
@@ -918,15 +929,4 @@ UINT msi_add_cabinet_stream( MSIPACKAGE *package, UINT disk_id, IStorage *storag
     list_add_tail( &package->cabinet_streams, &cab->entry );
 
     return ERROR_SUCCESS;
-}
-
-MSICABINETSTREAM *msi_get_cabinet_stream( MSIPACKAGE *package, UINT disk_id )
-{
-    MSICABINETSTREAM *cab;
-
-    LIST_FOR_EACH_ENTRY( cab, &package->cabinet_streams, MSICABINETSTREAM, entry )
-    {
-        if (cab->disk_id == disk_id) return cab;
-    }
-    return NULL;
 }
