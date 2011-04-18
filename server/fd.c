@@ -1471,6 +1471,48 @@ static void fd_destroy( struct object *obj )
     }
 }
 
+/* check if the desired access is possible without violating */
+/* the sharing mode of other opens of the same file */
+static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned int sharing,
+                                   unsigned int open_flags, unsigned int options )
+{
+    unsigned int existing_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    unsigned int existing_access = 0;
+    struct list *ptr;
+
+    fd->access = access;
+    fd->sharing = sharing;
+
+    LIST_FOR_EACH( ptr, &fd->inode->open )
+    {
+        struct fd *fd_ptr = LIST_ENTRY( ptr, struct fd, inode_entry );
+        if (fd_ptr != fd)
+        {
+            /* if access mode is 0, sharing mode is ignored */
+            if (fd_ptr->access) existing_sharing &= fd_ptr->sharing;
+            existing_access  |= fd_ptr->access;
+        }
+    }
+
+    if (((access & FILE_UNIX_READ_ACCESS) && !(existing_sharing & FILE_SHARE_READ)) ||
+        ((access & FILE_UNIX_WRITE_ACCESS) && !(existing_sharing & FILE_SHARE_WRITE)) ||
+        ((access & DELETE) && !(existing_sharing & FILE_SHARE_DELETE)))
+        return STATUS_SHARING_VIOLATION;
+    if (((existing_access & FILE_MAPPING_WRITE) && !(sharing & FILE_SHARE_WRITE)) ||
+        ((existing_access & FILE_MAPPING_IMAGE) && (access & FILE_UNIX_WRITE_ACCESS)))
+        return STATUS_SHARING_VIOLATION;
+    if ((existing_access & FILE_MAPPING_IMAGE) && (options & FILE_DELETE_ON_CLOSE))
+        return STATUS_CANNOT_DELETE;
+    if ((existing_access & FILE_MAPPING_ACCESS) && (open_flags & O_TRUNC))
+        return STATUS_USER_MAPPED_FILE;
+    if (!access) return 0;  /* if access mode is 0, sharing mode is ignored (except for mappings) */
+    if (((existing_access & FILE_UNIX_READ_ACCESS) && !(sharing & FILE_SHARE_READ)) ||
+        ((existing_access & FILE_UNIX_WRITE_ACCESS) && !(sharing & FILE_SHARE_WRITE)) ||
+        ((existing_access & DELETE) && !(sharing & FILE_SHARE_DELETE)))
+        return STATUS_SHARING_VIOLATION;
+    return 0;
+}
+
 /* set the events that select waits for on this fd */
 void set_fd_events( struct fd *fd, int events )
 {
@@ -1581,13 +1623,12 @@ struct fd *alloc_pseudo_fd( const struct fd_ops *fd_user_ops, struct object *use
 /* duplicate an fd object for a different user */
 struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sharing, unsigned int options )
 {
+    unsigned int err;
     struct fd *fd = alloc_fd_object();
 
     if (!fd) return NULL;
 
-    fd->access     = access;
     fd->options    = options;
-    fd->sharing    = sharing;
     fd->cacheable  = orig->cacheable;
 
     if (orig->unix_name)
@@ -1611,6 +1652,11 @@ struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sha
         fd->closed = closed;
         fd->inode = (struct inode *)grab_object( orig->inode );
         list_add_head( &fd->inode->open, &fd->inode_entry );
+        if ((err = check_sharing( fd, access, sharing, 0, options )))
+        {
+            set_error( err );
+            goto failed;
+        }
     }
     else if ((fd->unix_fd = dup( orig->unix_fd )) == -1)
     {
@@ -1628,48 +1674,6 @@ failed:
 void set_no_fd_status( struct fd *fd, unsigned int status )
 {
     fd->no_fd_status = status;
-}
-
-/* check if the desired access is possible without violating */
-/* the sharing mode of other opens of the same file */
-static unsigned int check_sharing( struct fd *fd, unsigned int access, unsigned int sharing,
-                                   unsigned int open_flags, unsigned int options )
-{
-    unsigned int existing_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
-    unsigned int existing_access = 0;
-    struct list *ptr;
-
-    fd->access = access;
-    fd->sharing = sharing;
-
-    LIST_FOR_EACH( ptr, &fd->inode->open )
-    {
-        struct fd *fd_ptr = LIST_ENTRY( ptr, struct fd, inode_entry );
-        if (fd_ptr != fd)
-        {
-            /* if access mode is 0, sharing mode is ignored */
-            if (fd_ptr->access) existing_sharing &= fd_ptr->sharing;
-            existing_access  |= fd_ptr->access;
-        }
-    }
-
-    if (((access & FILE_UNIX_READ_ACCESS) && !(existing_sharing & FILE_SHARE_READ)) ||
-        ((access & FILE_UNIX_WRITE_ACCESS) && !(existing_sharing & FILE_SHARE_WRITE)) ||
-        ((access & DELETE) && !(existing_sharing & FILE_SHARE_DELETE)))
-        return STATUS_SHARING_VIOLATION;
-    if (((existing_access & FILE_MAPPING_WRITE) && !(sharing & FILE_SHARE_WRITE)) ||
-        ((existing_access & FILE_MAPPING_IMAGE) && (access & FILE_SHARE_WRITE)))
-        return STATUS_SHARING_VIOLATION;
-    if ((existing_access & FILE_MAPPING_IMAGE) && (options & FILE_DELETE_ON_CLOSE))
-        return STATUS_CANNOT_DELETE;
-    if ((existing_access & FILE_MAPPING_ACCESS) && (open_flags & O_TRUNC))
-        return STATUS_USER_MAPPED_FILE;
-    if (!access) return 0;  /* if access mode is 0, sharing mode is ignored (except for mappings) */
-    if (((existing_access & FILE_UNIX_READ_ACCESS) && !(sharing & FILE_SHARE_READ)) ||
-        ((existing_access & FILE_UNIX_WRITE_ACCESS) && !(sharing & FILE_SHARE_WRITE)) ||
-        ((existing_access & DELETE) && !(sharing & FILE_SHARE_DELETE)))
-        return STATUS_SHARING_VIOLATION;
-    return 0;
 }
 
 /* sets the user of an fd that previously had no user */
