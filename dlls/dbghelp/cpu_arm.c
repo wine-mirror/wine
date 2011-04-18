@@ -120,7 +120,7 @@ static const char* arm_fetch_regname(unsigned regno)
 struct cpu cpu_arm = {
     IMAGE_FILE_MACHINE_ARM,
     4,
-    CV_ARM_NOREG, /* FIXME */
+    CV_ARM_R0 + 11,
     arm_get_addr,
     arm_stack_walk,
     NULL,
