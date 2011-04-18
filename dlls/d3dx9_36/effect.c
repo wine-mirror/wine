@@ -156,6 +156,21 @@ static inline D3DXHANDLE get_pass_handle(struct d3dx_pass *pass)
     return (D3DXHANDLE) pass;
 }
 
+struct d3dx_technique *is_valid_technique(struct ID3DXBaseEffectImpl *base, D3DXHANDLE technique)
+{
+    unsigned int i;
+
+    for (i = 0; i < base->technique_count; ++i)
+    {
+        if (base->technique_handles[i] == technique)
+        {
+            return get_technique_struct(technique);
+        }
+    }
+
+    return NULL;
+}
+
 static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
 {
     unsigned int i;
@@ -394,10 +409,21 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetParameterDesc(ID3DXBaseEffect *ifac
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetTechniqueDesc(ID3DXBaseEffect *iface, D3DXHANDLE technique, D3DXTECHNIQUE_DESC *desc)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_technique *tech = technique ? is_valid_technique(This, technique) : get_technique_struct(This->technique_handles[0]);
 
-    FIXME("iface %p, technique %p, desc %p stub\n", This, technique, desc);
+    TRACE("iface %p, technique %p, desc %p\n", This, technique, desc);
 
-    return E_NOTIMPL;
+    if (!desc || !tech)
+    {
+        WARN("Invalid argument specified.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    desc->Name = tech->name;
+    desc->Passes = tech->pass_count;
+    desc->Annotations = tech->annotation_count;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetPassDesc(ID3DXBaseEffect *iface, D3DXHANDLE pass, D3DXPASS_DESC *desc)
