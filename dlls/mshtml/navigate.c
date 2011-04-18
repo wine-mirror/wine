@@ -1589,13 +1589,6 @@ HRESULT create_channelbsc(IMoniker *mon, WCHAR *headers, BYTE *post_data, DWORD 
     return S_OK;
 }
 
-IMoniker *get_channelbsc_mon(nsChannelBSC *This)
-{
-    if(This->bsc.mon)
-        IMoniker_AddRef(This->bsc.mon);
-    return This->bsc.mon;
-}
-
 void set_window_bscallback(HTMLWindow *window, nsChannelBSC *callback)
 {
     if(window->bscallback) {

@@ -731,7 +731,6 @@ HRESULT bind_mon_to_buffer(HTMLDocumentNode*,IMoniker*,void**,DWORD*);
 HRESULT create_channelbsc(IMoniker*,WCHAR*,BYTE*,DWORD,nsChannelBSC**);
 HRESULT channelbsc_load_stream(nsChannelBSC*,IStream*);
 void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*);
-IMoniker *get_channelbsc_mon(nsChannelBSC*);
 
 void set_ready_state(HTMLWindow*,READYSTATE);
 
