@@ -474,6 +474,7 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
 
     if (!refcount)
     {
+        struct wined3d_buffer *buffer;
         int counter;
 
         if (stateblock->state.vertex_declaration)
@@ -481,23 +482,34 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
 
         for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++)
         {
-            if (stateblock->state.textures[counter])
-                wined3d_texture_decref(stateblock->state.textures[counter]);
+            struct wined3d_texture *texture = stateblock->state.textures[counter];
+            if (texture)
+            {
+                stateblock->state.textures[counter] = NULL;
+                wined3d_texture_decref(texture);
+            }
         }
 
         for (counter = 0; counter < MAX_STREAMS; ++counter)
         {
-            struct wined3d_buffer *buffer = stateblock->state.streams[counter].buffer;
+            buffer = stateblock->state.streams[counter].buffer;
             if (buffer)
             {
+                stateblock->state.streams[counter].buffer = NULL;
                 if (wined3d_buffer_decref(buffer))
                 {
                     WARN("Buffer %p still referenced by stateblock, stream %u.\n", buffer, counter);
                 }
             }
         }
-        if (stateblock->state.index_buffer)
-            wined3d_buffer_decref(stateblock->state.index_buffer);
+
+        buffer = stateblock->state.index_buffer;
+        if (buffer)
+        {
+            stateblock->state.index_buffer = NULL;
+            wined3d_buffer_decref(buffer);
+        }
+
         if (stateblock->state.vertex_shader)
             wined3d_shader_decref(stateblock->state.vertex_shader);
         if (stateblock->state.pixel_shader)
