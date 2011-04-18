@@ -1452,7 +1452,7 @@ static void load_builtin_callback( void *module, const char *filename )
 
     SERVER_START_REQ( load_dll )
     {
-        req->handle     = 0;
+        req->mapping    = 0;
         req->base       = wine_server_client_ptr( module );
         req->size       = nt->OptionalHeader.SizeOfImage;
         req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
@@ -1492,12 +1492,15 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     module = NULL;
     status = NtMapViewOfSection( mapping, NtCurrentProcess(),
                                  &module, 0, 0, &size, &len, ViewShare, 0, PAGE_READONLY );
-    NtClose( mapping );
-    if (status < 0) return status;
+    if (status < 0) goto done;
 
     /* create the MODREF */
 
-    if (!(wm = alloc_module( module, name ))) return STATUS_NO_MEMORY;
+    if (!(wm = alloc_module( module, name )))
+    {
+        status = STATUS_NO_MEMORY;
+        goto done;
+    }
 
     /* fixup imports */
 
@@ -1516,7 +1519,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
              * around with no problems, so we don't care.
              * As these might reference our wm, we don't free it.
              */
-            return status;
+            goto done;
         }
     }
 
@@ -1526,7 +1529,7 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 
     SERVER_START_REQ( load_dll )
     {
-        req->handle     = wine_server_obj_handle( file );
+        req->mapping    = wine_server_obj_handle( mapping );
         req->base       = wine_server_client_ptr( module );
         req->size       = nt->OptionalHeader.SizeOfImage;
         req->dbg_offset = nt->FileHeader.PointerToSymbolTable;
@@ -1543,7 +1546,10 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 
     wm->ldr.LoadCount = 1;
     *pwm = wm;
-    return STATUS_SUCCESS;
+    status = STATUS_SUCCESS;
+done:
+    NtClose( mapping );
+    return status;
 }
 
 

@@ -647,12 +647,6 @@ int get_file_unix_fd( struct file *file )
     return get_unix_fd( file->fd );
 }
 
-struct file *grab_file_unless_removable( struct file *file )
-{
-    if (is_fd_removable( file->fd )) return NULL;
-    return (struct file *)grab_object( file );
-}
-
 /* create a file */
 DECL_HANDLER(create_file)
 {

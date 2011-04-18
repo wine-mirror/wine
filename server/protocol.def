@@ -807,7 +807,7 @@ typedef union
 
 /* Notify the server that a dll has been loaded */
 @REQ(load_dll)
-    obj_handle_t handle;       /* file handle */
+    obj_handle_t mapping;      /* file mapping handle */
     mod_handle_t base;         /* base address */
     client_ptr_t name;         /* ptr to ptr to name (in process addr space) */
     data_size_t  size;         /* dll size */

@@ -33,6 +33,7 @@
 #include "winternl.h"
 
 #include "handle.h"
+#include "file.h"
 #include "process.h"
 #include "thread.h"
 #include "request.h"
@@ -157,9 +158,9 @@ static int fill_create_process_event( struct debug_event *event, const void *arg
     event->data.create_process.thread = handle;
 
     handle = 0;
-    if (exe_module->file &&
+    if (exe_module->mapping &&
         /* the doc says write access too, but this doesn't seem a good idea */
-        !(handle = alloc_handle( debugger, exe_module->file, GENERIC_READ, 0 )))
+        !(handle = open_mapping_file( debugger, exe_module->mapping, GENERIC_READ, 0 )))
     {
         close_handle( debugger, event->data.create_process.process );
         close_handle( debugger, event->data.create_process.thread );
@@ -196,7 +197,7 @@ static int fill_load_dll_event( struct debug_event *event, const void *arg )
     const struct process_dll *dll = arg;
     obj_handle_t handle = 0;
 
-    if (dll->file && !(handle = alloc_handle( debugger, dll->file, GENERIC_READ, 0 )))
+    if (dll->mapping && !(handle = open_mapping_file( debugger, dll->mapping, GENERIC_READ, 0 )))
         return 0;
     event->data.load_dll.handle     = handle;
     event->data.load_dll.base       = dll->base;
@@ -414,6 +415,7 @@ void generate_debug_event( struct thread *thread, int code, const void *arg )
             suspend_process( thread->process );
             release_object( event );
         }
+        clear_error();  /* ignore errors */
     }
 }
 

@@ -515,7 +515,7 @@ static inline struct process_dll *find_process_dll( struct process *process, mod
 }
 
 /* add a dll to a process list */
-static struct process_dll *process_load_dll( struct process *process, struct file *file,
+static struct process_dll *process_load_dll( struct process *process, struct mapping *mapping,
                                              mod_handle_t base, const WCHAR *filename,
                                              data_size_t name_len )
 {
@@ -530,7 +530,7 @@ static struct process_dll *process_load_dll( struct process *process, struct fil
 
     if ((dll = mem_alloc( sizeof(*dll) )))
     {
-        dll->file = NULL;
+        dll->mapping = NULL;
         dll->base = base;
         dll->filename = NULL;
         dll->namelen  = name_len;
@@ -539,7 +539,7 @@ static struct process_dll *process_load_dll( struct process *process, struct fil
             free( dll );
             return NULL;
         }
-        if (file) dll->file = grab_file_unless_removable( file );
+        if (mapping) dll->mapping = grab_mapping_unless_removable( mapping );
         list_add_tail( &process->dlls, &dll->entry );
     }
     return dll;
@@ -552,7 +552,7 @@ static void process_unload_dll( struct process *process, mod_handle_t base )
 
     if (dll && (&dll->entry != list_head( &process->dlls )))  /* main exe can't be unloaded */
     {
-        if (dll->file) release_object( dll->file );
+        if (dll->mapping) release_object( dll->mapping );
         free( dll->filename );
         list_remove( &dll->entry );
         free( dll );
@@ -637,7 +637,7 @@ static void process_killed( struct process *process )
     while ((ptr = list_head( &process->dlls )))
     {
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
-        if (dll->file) release_object( dll->file );
+        if (dll->mapping) release_object( dll->mapping );
         free( dll->filename );
         list_remove( &dll->entry );
         free( dll );
@@ -1160,12 +1160,12 @@ DECL_HANDLER(write_process_memory)
 DECL_HANDLER(load_dll)
 {
     struct process_dll *dll;
-    struct file *file = NULL;
+    struct mapping *mapping = NULL;
 
-    if (req->handle && !(file = get_file_obj( current->process, req->handle, FILE_READ_DATA )))
+    if (req->mapping && !(mapping = get_mapping_obj( current->process, req->mapping, SECTION_QUERY )))
         return;
 
-    if ((dll = process_load_dll( current->process, file, req->base,
+    if ((dll = process_load_dll( current->process, mapping, req->base,
                                  get_req_data(), get_req_data_size() )))
     {
         dll->size       = req->size;
@@ -1176,7 +1176,7 @@ DECL_HANDLER(load_dll)
         if (is_process_init_done( current->process ))
             generate_debug_event( current, LOAD_DLL_DEBUG_EVENT, dll );
     }
-    if (file) release_object( file );
+    if (mapping) release_object( mapping );
 }
 
 /* notify the server that a dll is being unloaded */

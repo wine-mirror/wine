@@ -884,7 +884,7 @@ struct resume_thread_reply
 struct load_dll_request
 {
     struct request_header __header;
-    obj_handle_t handle;
+    obj_handle_t mapping;
     mod_handle_t base;
     client_ptr_t name;
     data_size_t  size;
@@ -5563,6 +5563,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 419
+#define SERVER_PROTOCOL_VERSION 420
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
