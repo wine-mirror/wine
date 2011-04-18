@@ -141,6 +141,31 @@ struct file *create_file_for_fd( int fd, unsigned int access, unsigned int shari
     return file;
 }
 
+/* create a file by duplicating an fd object */
+struct file *create_file_for_fd_obj( struct fd *fd, unsigned int access, unsigned int sharing )
+{
+    struct file *file;
+    struct stat st;
+
+    if (fstat( get_unix_fd(fd), &st ) == -1)
+    {
+        file_set_error();
+        return NULL;
+    }
+
+    if ((file = alloc_object( &file_ops )))
+    {
+        file->mode = st.st_mode;
+        file->access = default_fd_map_access( &file->obj, access );
+        if (!(file->fd = dup_fd_object( fd, access, sharing, FILE_SYNCHRONOUS_IO_NONALERT )))
+        {
+            release_object( file );
+            return NULL;
+        }
+    }
+    return file;
+}
+
 static struct object *create_file_obj( struct fd *fd, unsigned int access, mode_t mode )
 {
     struct file *file = alloc_object( &file_ops );

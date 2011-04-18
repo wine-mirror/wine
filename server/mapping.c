@@ -565,6 +565,24 @@ static struct object *create_mapping( struct directory *root, const struct unico
     return NULL;
 }
 
+struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle, unsigned int access )
+{
+    return (struct mapping *)get_handle_obj( process, handle, access, &mapping_ops );
+}
+
+/* open a new file handle to the file backing the mapping */
+obj_handle_t open_mapping_file( struct process *process, struct mapping *mapping,
+                                unsigned int access, unsigned int sharing )
+{
+    obj_handle_t handle;
+    struct file *file = create_file_for_fd_obj( mapping->fd, access, sharing );
+
+    if (!file) return 0;
+    handle = alloc_handle( process, file, access, 0 );
+    release_object( file );
+    return handle;
+}
+
 static void mapping_dump( struct object *obj, int verbose )
 {
     struct mapping *mapping = (struct mapping *)obj;
@@ -682,8 +700,7 @@ DECL_HANDLER(get_mapping_info)
     struct mapping *mapping;
     struct fd *fd;
 
-    if ((mapping = (struct mapping *)get_handle_obj( current->process, req->handle,
-                                                     req->access, &mapping_ops )))
+    if ((mapping = get_mapping_obj( current->process, req->handle, req->access )))
     {
         reply->size        = mapping->size;
         reply->protect     = mapping->protect;
@@ -713,7 +730,7 @@ DECL_HANDLER(get_mapping_committed_range)
 {
     struct mapping *mapping;
 
-    if ((mapping = (struct mapping *)get_handle_obj( current->process, req->handle, 0, &mapping_ops )))
+    if ((mapping = get_mapping_obj( current->process, req->handle, 0 )))
     {
         if (!(req->offset & page_mask) && req->offset < mapping->size)
             reply->committed = find_committed_range( mapping, req->offset, &reply->size );
@@ -729,7 +746,7 @@ DECL_HANDLER(add_mapping_committed_range)
 {
     struct mapping *mapping;
 
-    if ((mapping = (struct mapping *)get_handle_obj( current->process, req->handle, 0, &mapping_ops )))
+    if ((mapping = get_mapping_obj( current->process, req->handle, 0 )))
     {
         if (!(req->size & page_mask) &&
             !(req->offset & page_mask) &&

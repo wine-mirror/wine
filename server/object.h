@@ -180,10 +180,6 @@ extern void generate_debug_event( struct thread *thread, int code, const void *a
 extern void generate_startup_debug_events( struct process *process, client_ptr_t entry );
 extern void debug_exit_thread( struct thread *thread );
 
-/* mapping functions */
-
-extern int get_page_size(void);
-
 /* registry functions */
 
 extern unsigned int get_prefix_cpu_mask(void);

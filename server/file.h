@@ -116,10 +116,19 @@ extern struct file *get_file_obj( struct process *process, obj_handle_t handle,
 extern int get_file_unix_fd( struct file *file );
 extern int is_same_file( struct file *file1, struct file *file2 );
 extern struct file *create_file_for_fd( int fd, unsigned int access, unsigned int sharing );
+extern struct file *create_file_for_fd_obj( struct fd *fd, unsigned int access, unsigned int sharing );
 extern struct file *grab_file_unless_removable( struct file *file );
 extern void file_set_error(void);
 extern struct security_descriptor *mode_to_sd( mode_t mode, const SID *user, const SID *group );
 extern mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner );
+
+/* file mapping functions */
+
+extern struct mapping *get_mapping_obj( struct process *process, obj_handle_t handle,
+                                        unsigned int access );
+extern obj_handle_t open_mapping_file( struct process *process, struct mapping *mapping,
+                                       unsigned int access, unsigned int sharing );
+extern int get_page_size(void);
 
 /* change notification functions */
 
