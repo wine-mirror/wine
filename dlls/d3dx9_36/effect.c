@@ -171,6 +171,90 @@ struct d3dx_technique *is_valid_technique(struct ID3DXBaseEffectImpl *base, D3DX
     return NULL;
 }
 
+struct d3dx_parameter *is_valid_sub_parameter(struct d3dx_parameter *param, D3DXHANDLE parameter)
+{
+    unsigned int i, count;
+    struct d3dx_parameter *p;
+
+    for (i = 0; i < param->annotation_count; ++i)
+    {
+        if (param->annotation_handles[i] == parameter)
+        {
+            return get_parameter_struct(parameter);
+        }
+
+        p = is_valid_sub_parameter(get_parameter_struct(param->annotation_handles[i]), parameter);
+        if (p) return p;
+    }
+
+    if (param->element_count) count = param->element_count;
+    else count = param->member_count;
+
+    for (i = 0; i < count; ++i)
+    {
+        if (param->member_handles[i] == parameter)
+        {
+            return get_parameter_struct(parameter);
+        }
+
+        p = is_valid_sub_parameter(get_parameter_struct(param->member_handles[i]), parameter);
+        if (p) return p;
+    }
+
+    return NULL;
+}
+
+struct d3dx_parameter *is_valid_parameter(struct ID3DXBaseEffectImpl *base, D3DXHANDLE parameter)
+{
+    unsigned int i, k, m;
+    struct d3dx_parameter *p;
+
+    for (i = 0; i < base->parameter_count; ++i)
+    {
+        if (base->parameter_handles[i] == parameter)
+        {
+            return get_parameter_struct(parameter);
+        }
+
+        p = is_valid_sub_parameter(get_parameter_struct(base->parameter_handles[i]), parameter);
+        if (p) return p;
+    }
+
+    for (i = 0; i < base->technique_count; ++i)
+    {
+        struct d3dx_technique *technique = get_technique_struct(base->technique_handles[i]);
+
+        for (k = 0; k < technique->pass_count; ++k)
+        {
+            struct d3dx_pass *pass = get_pass_struct(technique->pass_handles[k]);
+
+            for (m = 0; m < pass->annotation_count; ++m)
+            {
+                if (pass->annotation_handles[i] == parameter)
+                {
+                    return get_parameter_struct(parameter);
+                }
+
+                p = is_valid_sub_parameter(get_parameter_struct(pass->annotation_handles[m]), parameter);
+                if (p) return p;
+            }
+        }
+
+        for (k = 0; k < technique->annotation_count; ++k)
+        {
+            if (technique->annotation_handles[k] == parameter)
+            {
+                return get_parameter_struct(parameter);
+            }
+
+            p = is_valid_sub_parameter(get_parameter_struct(technique->annotation_handles[k]), parameter);
+            if (p) return p;
+        }
+    }
+
+    return NULL;
+}
+
 static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
 {
     unsigned int i;
@@ -448,7 +532,28 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameter(ID3DXBaseEffect *iface
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
 
-    FIXME("iface %p, parameter %p, index %u stub\n", This, parameter, index);
+    TRACE("iface %p, parameter %p, index %u\n", This, parameter, index);
+
+    if (!parameter)
+    {
+        if (index < This->parameter_count)
+        {
+            TRACE("Returning parameter %p\n", This->parameter_handles[index]);
+            return This->parameter_handles[index];
+        }
+    }
+    else
+    {
+        struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+
+        if (param && !param->element_count && index < param->member_count)
+        {
+            TRACE("Returning parameter %p\n", param->member_handles[index]);
+            return param->member_handles[index];
+        }
+    }
+
+    WARN("Invalid argument specified.\n");
 
     return NULL;
 }
