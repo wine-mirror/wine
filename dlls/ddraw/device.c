@@ -1742,7 +1742,12 @@ IDirect3DDeviceImpl_3_SetCurrentViewport(IDirect3DDevice3 *iface,
         return D3D_OK;
     }
 
-    /* Should check if the viewport was added or not */
+    if (vp->active_device != This)
+    {
+        WARN("Viewport %p active device is %p.\n", vp, vp->active_device);
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
+    }
 
     /* Release previous viewport and AddRef the new one */
     if (This->current_viewport)
@@ -1757,7 +1762,6 @@ IDirect3DDeviceImpl_3_SetCurrentViewport(IDirect3DDevice3 *iface,
     This->current_viewport = vp;
 
     /* Activate this viewport */
-    This->current_viewport->active_device = This;
     viewport_activate(This->current_viewport, FALSE);
 
     LeaveCriticalSection(&ddraw_cs);
