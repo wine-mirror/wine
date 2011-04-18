@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-01-20 17:53+01:00\n"
+"PO-Revision-Date: 2011-04-18 22:15+02:00\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjonet.se>\n"
 "Language-Team: none\n"
 "Language: Swedish\n"
@@ -198,7 +198,7 @@ msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
-"Filen finns inte\n"
+"Filen finns inte.\n"
 "Vill du skapa fil?"
 
 #: comdlg32.rc:46
@@ -2011,13 +2011,12 @@ msgid "Default MidiOut Device"
 msgstr "Förvald MidiOut-enhet"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Standardinställningar"
+msgstr "Regional inställning"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr ""
+msgstr "%uMB använda, %uMB tillgängliga"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
@@ -2025,7 +2024,7 @@ msgstr "Alternativ"
 
 #: hhctrl.rc:70
 msgid "S&ync"
-msgstr ""
+msgstr "S&ynkronisera"
 
 #: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
@@ -2069,11 +2068,11 @@ msgstr "Favor&iter"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "Dölj &flikar"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "Visa &flikar"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -2176,36 +2175,32 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "Konfigurera Wines webbläsare och tillhörande inställningar"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "&Spara ändringar vid stängning"
+msgstr "Säkerhetsinställning för zon: "
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "Anpassa"
+msgstr "Anpassad"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "Väldigt låg"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "&Låg"
+msgstr "Låg"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "Medium"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "Ökad"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "&Hög"
+msgstr "Hög"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -2828,7 +2823,6 @@ msgid "Signal pending\n"
 msgstr "Signal pending\n"
 
 #: winerror.mc:681
-#, fuzzy
 msgid "Max system-wide thread count reached\n"
 msgstr "Max antal trådar i systemet uppnått\n"
 
@@ -3053,9 +3047,8 @@ msgid "The oplock wasn't granted\n"
 msgstr ""
 
 #: winerror.mc:961
-#, fuzzy
 msgid "Invalid oplock message received\n"
-msgstr "Ogiltigt meddelandenamn\n"
+msgstr "Ogiltigt oplock-meddelande mottaget\n"
 
 #: winerror.mc:966
 msgid "Message 0x%1 not found in file %2\n"
@@ -3142,9 +3135,8 @@ msgid "Invalid key\n"
 msgstr "Ogiltig nyckel\n"
 
 #: winerror.mc:1071
-#, fuzzy
 msgid "Can't open registry key\n"
-msgstr "Kan inte läsa registernyckel\n"
+msgstr "Kan inte öppna registernyckel\n"
 
 #: winerror.mc:1076
 msgid "Can't read registry key\n"
@@ -3308,21 +3300,19 @@ msgstr "Annat tjänstkonto\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected\n"
-msgstr ""
+msgstr "Drivrutinsfel kan ej upptäckas\n"
 
 #: winerror.mc:1281
-#, fuzzy
 msgid "Process abort cannot be detected\n"
-msgstr "Processen avbröts\n"
+msgstr "Processavbrott kan ej upptäckas\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service\n"
-msgstr ""
+msgstr "Inget återställningsprogram för tjänsten\n"
 
 #: winerror.mc:1291
-#, fuzzy
 msgid "Service not implemented by exe\n"
-msgstr "Utskrift ej implementerat."
+msgstr "Tjänsten ej implementerad av exe\n"
 
 #: winerror.mc:1296
 msgid "End of media\n"
@@ -3501,27 +3491,24 @@ msgid "DLL not found\n"
 msgstr "DLL hittades inte\n"
 
 #: winerror.mc:1516
-#, fuzzy
 msgid "Out of user handles\n"
-msgstr "Inga fler sökreferenser\n"
+msgstr "Inga fler användarreferenser\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
-msgstr ""
+msgstr "Meddelande kan endast användas i synkrona anrop\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty\n"
-msgstr ""
+msgstr "Källelementet är tomt\n"
 
 #: winerror.mc:1531
-#, fuzzy
 msgid "The destination element is full\n"
-msgstr "Operation slutfördes utan problem\n"
+msgstr "Destinationselementet är fullt\n"
 
 #: winerror.mc:1536
-#, fuzzy
 msgid "The element address is invalid\n"
-msgstr "Angiven handle för enheten är ogiltig."
+msgstr "Elementets adress är ogiltig\n"
 
 #: winerror.mc:1541
 msgid "The magazine is not present\n"
@@ -3529,82 +3516,71 @@ msgstr ""
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
-msgstr ""
+msgstr "Enheten behöver återinitialiseras\n"
 
 #: winerror.mc:1551
-#, fuzzy
 msgid "The device requires cleaning\n"
-msgstr "Tjänsten %s startar.\n"
+msgstr "Enheten behöver rengöras\n"
 
 #: winerror.mc:1556
-#, fuzzy
 msgid "The device door is open\n"
-msgstr "Skrivardörren är öppen; "
+msgstr "Enhetsdörren är öppen\n"
 
 #: winerror.mc:1561
-#, fuzzy
 msgid "The device is not connected\n"
-msgstr "Pipa ej ansluten\n"
+msgstr "Enheten är ej ansluten\n"
 
 #: winerror.mc:1566
-#, fuzzy
 msgid "Element not found\n"
-msgstr "Posten hittades inte\n"
+msgstr "Elementet hittades inte\n"
 
 #: winerror.mc:1571
-#, fuzzy
 msgid "No match found\n"
-msgstr "Sökvägen hittades inte\n"
+msgstr "Ingen matchning hittades\n"
 
 #: winerror.mc:1576
-#, fuzzy
 msgid "Property set not found\n"
-msgstr "Proceduren hittades inte\n"
+msgstr "Egenskapsmängden hittades inte\n"
 
 #: winerror.mc:1581
-#, fuzzy
 msgid "Point not found\n"
-msgstr "Sökvägen hittades inte\n"
+msgstr "Punkten hittades inte\n"
 
 #: winerror.mc:1586
-#, fuzzy
 msgid "No running tracking service\n"
-msgstr "Okänd auktoriseringstjänst\n"
+msgstr "Ingen spårningstjänst körs\n"
 
 #: winerror.mc:1591
-#, fuzzy
 msgid "No such volume ID\n"
-msgstr "Ingen sådan användare\n"
+msgstr "Inget sådant volym-ID\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced\n"
-msgstr ""
+msgstr "Kan inte ta bort filen som ska ersättas\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place\n"
-msgstr ""
+msgstr "Kan inte flytta ersättningsfilen\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed\n"
-msgstr ""
+msgstr "Kunde inte flytta ersättningsfilen\n"
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted\n"
-msgstr "Nätverksnamn borttaget\n"
+msgstr "Journalen tas bort\n"
 
 #: winerror.mc:1616
-#, fuzzy
 msgid "The journal is not active\n"
-msgstr "Tjänst ej aktiv\n"
+msgstr "Jornalen är ej aktiv\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found\n"
-msgstr ""
+msgstr "Potentiellt matchande fil funnen\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted\n"
-msgstr ""
+msgstr "Journalinlägget togs bort\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name\n"
@@ -3799,32 +3775,28 @@ msgid "No more local devices\n"
 msgstr "Inga fler lokala enheter\n"
 
 #: winerror.mc:1876
-#, fuzzy
 msgid "The site does not exist\n"
-msgstr "Enheten existerar inte\n"
+msgstr "Sidan existerar inte\n"
 
 #: winerror.mc:1881
-#, fuzzy
 msgid "The domain controller already exists\n"
-msgstr "Domänen existerar redan\n"
+msgstr "Domänkontrollanten existerar redan\n"
 
 #: winerror.mc:1886
-#, fuzzy
 msgid "Supported only when connected\n"
-msgstr "Pipa ej ansluten\n"
+msgstr "Stöds endast medan ansluten\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed\n"
-msgstr ""
+msgstr "Utför operation även då inget ändrats\n"
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid\n"
-msgstr "Angiven handle för enheten är ogiltig."
+msgstr "Användarprofilen är ogiltig\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
-msgstr ""
+msgstr "Stöds ej på Small Business Server\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned\n"
@@ -4203,14 +4175,12 @@ msgid "Licence quota exceeded\n"
 msgstr "Licenskvot överskriden\n"
 
 #: winerror.mc:2381
-#, fuzzy
 msgid "Wrong target name\n"
-msgstr "Inget postnamn\n"
+msgstr "Felaktigt namn på mål\n"
 
 #: winerror.mc:2386
-#, fuzzy
 msgid "Mutual authentication failed\n"
-msgstr "Okänd autentiseringsidentitet\n"
+msgstr "Ömsesidig autentisering misslyckades\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server\n"
@@ -4281,9 +4251,8 @@ msgid "Private dialog index\n"
 msgstr "Privat dialogindex\n"
 
 #: winerror.mc:2476
-#, fuzzy
 msgid "List box ID not found\n"
-msgstr "Listrut-ID ej funnet\n"
+msgstr "Listrute-ID ej funnet\n"
 
 #: winerror.mc:2481
 msgid "No wildcard characters\n"
@@ -4346,7 +4315,6 @@ msgid "Hook procedure not installed\n"
 msgstr "Hook-procedur inte installerad\n"
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
 msgstr "Ogiltigt listrutemeddelande\n"
 
@@ -4355,7 +4323,6 @@ msgid "Invalid LB_SETCOUNT sent\n"
 msgstr "Ogiltig LB_SETCOUNT skickad\n"
 
 #: winerror.mc:2566
-#, fuzzy
 msgid "No tab stops on this list box\n"
 msgstr "Inga tabbstop på denna listruta\n"
 
@@ -4372,7 +4339,6 @@ msgid "Window has no system menu\n"
 msgstr "Fönstret har ingen systemmeny\n"
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
 msgstr "Ogiltig stil på meddelanderuta\n"
 
@@ -4425,7 +4391,6 @@ msgid "No system resources\n"
 msgstr "Inga systemresurser\n"
 
 #: winerror.mc:2651
-#, fuzzy
 msgid "No non-paged system resources\n"
 msgstr "Inga oväxlade systemresurser\n"
 
@@ -4435,10 +4400,9 @@ msgstr "Inga växlade systemresurser\n"
 
 #: winerror.mc:2661
 msgid "No working set quota\n"
-msgstr "Ingen fungerade kvot satt\n"
+msgstr "Ingen fungerande kvot satt\n"
 
 #: winerror.mc:2666
-#, fuzzy
 msgid "No page file quota\n"
 msgstr "Ingen växlingsfilkvot\n"
 
@@ -4451,28 +4415,24 @@ msgid "Menu item not found\n"
 msgstr "Menypost ej funnen\n"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle\n"
-msgstr "Ogiltig målreferens\n"
+msgstr "Ogiltig tangentbordsreferens\n"
 
 #: winerror.mc:2686
-#, fuzzy
 msgid "Hook type not allowed\n"
-msgstr "Inloggningstypen beviljades inte\n"
+msgstr "Hook-typen ej tillåten\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
 msgstr ""
 
 #: winerror.mc:2696
-#, fuzzy
 msgid "Timeout\n"
-msgstr "Tidsgräns överstigen"
+msgstr "Tidsgräns överstigen\n"
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle\n"
-msgstr "Ogiltig menyreferens\n"
+msgstr "Ogiltig skärmreferens\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4491,201 +4451,168 @@ msgid "Event log file changed\n"
 msgstr "Händelseloggfil ändrad\n"
 
 #: winerror.mc:2726
-#, fuzzy
 msgid "Installer service failed.\n"
-msgstr "Ogiltigt tjänstnamn\n"
+msgstr "Installationstjänsten misslyckades.\n"
 
 #: winerror.mc:2731
-#, fuzzy
 msgid "Installation aborted by user\n"
-msgstr "Installationsprogram"
+msgstr "Installation avbruten av användare\n"
 
 #: winerror.mc:2736
-#, fuzzy
 msgid "Installation failure\n"
-msgstr "Partitionsfel\n"
+msgstr "Installationsfel\n"
 
 #: winerror.mc:2741
-#, fuzzy
 msgid "Installation suspended\n"
-msgstr "Installationsprogram"
+msgstr "Installationen avbruten\n"
 
 #: winerror.mc:2746
-#, fuzzy
 msgid "Unknown product\n"
-msgstr "Okänd port\n"
+msgstr "Okänd produkt\n"
 
 #: winerror.mc:2751
-#, fuzzy
 msgid "Unknown feature\n"
-msgstr "Okänd egenskap i '%s'"
+msgstr "Okänd egenskap\n"
 
 #: winerror.mc:2756
-#, fuzzy
 msgid "Unknown component\n"
-msgstr "Okänd port\n"
+msgstr "Okänd komponent\n"
 
 #: winerror.mc:2761
-#, fuzzy
 msgid "Unknown property\n"
-msgstr "Okänd port\n"
+msgstr "Okänd egenskap\n"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state\n"
-msgstr "Ogiltig referens\n"
+msgstr "Ogiltigt referenstillstånd\n"
 
 #: winerror.mc:2771
-#, fuzzy
 msgid "Bad configuration\n"
-msgstr "Konfiguration av Wine"
+msgstr "Ogiltig konfiguration\n"
 
 #: winerror.mc:2776
 msgid "Index is missing\n"
-msgstr ""
+msgstr "Index saknas\n"
 
 #: winerror.mc:2781
-#, fuzzy
 msgid "Installation source is missing\n"
-msgstr "installationskälla för funktion saknar"
+msgstr "Installationskälla saknas\n"
 
 #: winerror.mc:2786
-#, fuzzy
 msgid "Wrong installation package version\n"
-msgstr "Fel serialiserande paketversion\n"
+msgstr "Fel version av installationspaket\n"
 
 #: winerror.mc:2791
-#, fuzzy
 msgid "Product uninstalled\n"
-msgstr "Hook-procedur inte installerad\n"
+msgstr "Produkten avinstallerad\n"
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax\n"
-msgstr "Ogiltigt namnsyntax\n"
+msgstr "Ogiltig frågesyntax\n"
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field\n"
-msgstr "Ogiltig tid\n"
+msgstr "Ogiltigt fält\n"
 
 #: winerror.mc:2806
-#, fuzzy
 msgid "Device removed\n"
-msgstr "Enhet redan ihågkommen\n"
+msgstr "Enhet borttagen\n"
 
 #: winerror.mc:2811
-#, fuzzy
 msgid "Installation already running\n"
-msgstr "Tjänsten körs redan\n"
+msgstr "Installationen körs redan\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr ""
+msgstr "Installationspaketet öppnades inte\n"
 
 #: winerror.mc:2821
-#, fuzzy
 msgid "Installation package is invalid\n"
-msgstr "Installationsprogram"
+msgstr "Installationspaketet är ogiltigt\n"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
-msgstr ""
+msgstr "Användargränssnittet för installationsprogrammet misslyckades"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"
-msgstr ""
+msgstr "Kunde inte öppna installationslogg\n"
 
 #: winerror.mc:2836
-#, fuzzy
 msgid "Installation language not supported\n"
-msgstr "Operationen stöds inte\n"
+msgstr "Installationsspråket stöds inte\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
 msgstr ""
 
 #: winerror.mc:2846
-#, fuzzy
 msgid "Installation package rejected\n"
-msgstr "Installationsprogram"
+msgstr "Installationspaketet avslogs\n"
 
 #: winerror.mc:2851
-#, fuzzy
 msgid "Function could not be called\n"
-msgstr "Gränsen för högsta antal anslutningar har nåtts\n"
+msgstr "Funktionen kunde inte anropas\n"
 
 #: winerror.mc:2856
-#, fuzzy
 msgid "Function failed\n"
-msgstr "Funktion förväntades"
+msgstr "Funktionen misslyckades\n"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table\n"
-msgstr "Ogiltig tagg\n"
+msgstr "Ogiltig tabell\n"
 
 #: winerror.mc:2866
-#, fuzzy
 msgid "Data type mismatch\n"
-msgstr "Arkitekturerna misstämmer\n"
+msgstr "Datatyperna misstämmer\n"
 
 #: winerror.mc:2871 winerror.mc:3081
 msgid "Unsupported type\n"
 msgstr "Ej stödd typ\n"
 
 #: winerror.mc:2876
-#, fuzzy
 msgid "Creation failed\n"
-msgstr "Kunde inte öppna\n"
+msgstr "Kunde inte skapa\n"
 
 #: winerror.mc:2881
-#, fuzzy
 msgid "Temporary directory not writable\n"
-msgstr "Fil eller katalog korrupt\n"
+msgstr "Tillfällig katalog ej skrivbar\n"
 
 #: winerror.mc:2886
-#, fuzzy
 msgid "Installation platform not supported\n"
-msgstr "Operationen stöds inte\n"
+msgstr "Installationsplattformen stöds inte\n"
 
 #: winerror.mc:2891
-#, fuzzy
 msgid "Installer not used\n"
-msgstr "Gränssnitt hittades inte\n"
+msgstr "Installationsprogrammet ej använt\n"
 
 #: winerror.mc:2896
-#, fuzzy
 msgid "Failed to open the patch package\n"
-msgstr "Misslyckades med att öppna '%s'\n"
+msgstr "Kunde inte öppna korrigeringspaketet\n"
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package\n"
-msgstr "Ogiltig tagg\n"
+msgstr "Ogiltigt korrigeringspaket\n"
 
 #: winerror.mc:2906
-#, fuzzy
 msgid "Unsupported patch package\n"
-msgstr "Ej stödd typ\n"
+msgstr "Ej stött korrigeringspaket\n"
 
 #: winerror.mc:2911
-#, fuzzy
 msgid "Another version is installed\n"
-msgstr "Skrivardrivrutin redan installerad\n"
+msgstr "En annan version är installerad\n"
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line\n"
-msgstr "Ogiltigt GW-kommando\n"
+msgstr "Ogiltig kommandorad\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
-msgstr ""
+msgstr "Fjärrinstallation ej tillåten\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install\n"
-msgstr ""
+msgstr "Omstart påbörjad efter lyckad installation\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
@@ -4821,7 +4748,7 @@ msgstr "Inget postnamn\n"
 
 #: winerror.mc:3101
 msgid "Invalid name syntax\n"
-msgstr "Ogiltigt namnsyntax\n"
+msgstr "Ogiltig namnsyntax\n"
 
 #: winerror.mc:3106
 msgid "Unsupported name syntax\n"
@@ -5084,7 +5011,6 @@ msgid "Invalid printer command\n"
 msgstr "Ogiltigt skrivarkommando\n"
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
 msgstr "Ogiltig datatyp\n"
 
@@ -5257,92 +5183,76 @@ msgid "Invalid driver\n"
 msgstr "Ogiltig drivrutin\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "Ogiltigt objekt\n"
+msgstr "Ogiltig objekt-resolver vald\n"
 
 #: winerror.mc:3651
-#, fuzzy
 msgid "Incomplete RPC send\n"
-msgstr "Inkomplett namn\n"
+msgstr "Inkomplett RPC send\n"
 
 #: winerror.mc:3656
-#, fuzzy
 msgid "Invalid asynchronous RPC handle\n"
-msgstr "Ogiltig hookreferens\n"
+msgstr "Ogiltig asynkron RPC-referens\n"
 
 #: winerror.mc:3661
-#, fuzzy
 msgid "Invalid asynchronous RPC call\n"
-msgstr "Ogiltig hookreferens\n"
+msgstr "Ogiltigt asynkront RPC-anrop\n"
 
 #: winerror.mc:3666
-#, fuzzy
 msgid "RPC pipe closed\n"
-msgstr "Pipa stängd\n"
+msgstr "RPC-pipa stängd\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
 msgstr ""
 
 #: winerror.mc:3676
-#, fuzzy
 msgid "No data on RPC pipe\n"
-msgstr "Inte ett RPC-fel\n"
+msgstr "Inget data på RPC-pipa\n"
 
 #: winerror.mc:3681
-#, fuzzy
 msgid "No site name available\n"
-msgstr "Ingen säkerhetskontext tillgänglig\n"
+msgstr "Inget sidnamn tillgängligt\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed\n"
-msgstr ""
+msgstr "Kommer inte åt filen\n"
 
 #: winerror.mc:3691
-#, fuzzy
 msgid "The filename cannot be resolved\n"
-msgstr "Användarnamnet kunde inte hittas\n"
+msgstr "Filnamnet kan inte hittas\n"
 
 #: winerror.mc:3696
-#, fuzzy
 msgid "RPC entry type mismatch\n"
-msgstr "Arkitekturerna misstämmer\n"
+msgstr "Posttyper för RPC misstämmer\n"
 
 #: winerror.mc:3701
-#, fuzzy
 msgid "Not all objects could be exported\n"
-msgstr "Alla objekt avexporterades inte\n"
+msgstr "Alla objekt kunde inte exporteras\n"
 
 #: winerror.mc:3706
-#, fuzzy
 msgid "The interface could not be exported\n"
-msgstr "Användarnamnet kunde inte hittas\n"
+msgstr "Gränssnittet kunde inte exporteras\n"
 
 #: winerror.mc:3711
-#, fuzzy
 msgid "The profile could not be added\n"
-msgstr "Användarnamnet kunde inte hittas\n"
+msgstr "Profilen kunde inte läggas till\n"
 
 #: winerror.mc:3716
-#, fuzzy
 msgid "The profile element could not be added\n"
-msgstr "Användarnamnet kunde inte hittas\n"
+msgstr "Profilelementet kunde inte läggas till\n"
 
 #: winerror.mc:3721
-#, fuzzy
 msgid "The profile element could not be removed\n"
-msgstr "Användarnamnet kunde inte hittas\n"
+msgstr "Profilelementet kunde inte tas bort\n"
 
 #: winerror.mc:3726
-#, fuzzy
 msgid "The group element could not be added\n"
-msgstr "Användarnamnet kunde inte hittas\n"
+msgstr "Gruppelementet kunde inte hittas\n"
 
 #: winerror.mc:3731
-#, fuzzy
 msgid "The group element could not be removed\n"
-msgstr "Användarnamnet kunde inte hittas\n"
+msgstr "Gruppelementet kunde inte tas bort\n"
 
 #: winerror.mc:3736
 msgid "The username could not be found\n"
@@ -5415,7 +5325,6 @@ msgid "insert disk %s"
 msgstr "mata in %s"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5449,31 +5358,31 @@ msgid ""
 msgstr ""
 "Windows Installer %s\n"
 "\n"
-"Usage:\n"
-"msiexec command {required parameter} [optional parammeter]\n"
+"Användning:\n"
+"msiexec kommando {obligatorisk parameter} [valfri parameter]\n"
 "\n"
-"Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
-"\t/a package [property]\n"
-"Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
-"Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
-"Advertise a product:\n"
-"\t/j[u|m] package [/t transform] [/g languageid]\n"
-"Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
-"Log and UI Modifiers for above commands:\n"
-"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
+"Installera en produkt:\n"
+"\t/i {paket|produktkod} [egenskap]\n"
+"\t/package {paket|produktkod} [egenskap]\n"
+"\t/a paket [egenskap]\n"
+"Laga en installation:\n"
+"\t/f[p|o|e|d|c|a|u|m|s|v] {paket|produktkod}\n"
+"Avinstallera en produkt:\n"
+"\t/uninstall {paket|produktkod} [egenskap]\n"
+"\t/x {paket|produktkod} [egenskap]\n"
+"Gör reklam för en produkt:\n"
+"\t/j[u|m] paket [/t transform] [/g språkID]\n"
+"Applicera en patch:\n"
+"\t/p patchpaket [egenskap]\n"
+"\t/p patchpaket /a paket [egenskap]\n"
+"Logg och UI-modifierare för ovanstående kommandon:\n"
+"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] loggfil\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Register MSI Service:\n"
+"Registrera MSI-tjänst:\n"
 "\t/y\n"
-"Unregister MSI Service:\n"
+"Avregistrera MSI-tjänst:\n"
 "\t/z\n"
-"Display this help:\n"
+"Visa denna hjälp:\n"
 "\t/help\n"
 "\t/?\n"
 
@@ -6999,13 +6908,12 @@ msgid "An invalid parameter was passed to a system function."
 msgstr "En ogiltig parameter skickades till en systemfunktion."
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
 msgstr ""
 "Angivet format stöds inte eller kan inte översättas. Använd funktionen "
-"Capabilities för att avgöra vilka format som stöds"
+"Capabilities för att avgöra vilka format som stöds."
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
@@ -7198,13 +7106,12 @@ msgid "Cannot use 'all' as the device name with the specified command."
 msgstr "Kan inte använda 'all' som enhetsnamn med det angivna kommandot."
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
 "Fel uppstod i mer än en enhet. Ange varje kommando och enhet separat för att "
-"avgöra vilka enheter som orsakade felet"
+"avgöra vilka enheter som orsakade felet."
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
@@ -7818,9 +7725,8 @@ msgid "&Always on Top"
 msgstr "&Alltid överst"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&Om Klocka..."
+msgstr "&Om Klocka"
 
 #: clock.rc:48
 msgid "Clock"
@@ -7941,10 +7847,10 @@ msgid ""
 "GOTO has no effect when used interactively.\n"
 msgstr ""
 "Kommandot GOTO överlåter exekvering till ett annat påstående\n"
-"inom en batch fil.\n"
+"i en batchfil.\n"
 "\n"
-"En etikett, som är GOTO-kommandots mål, kan innehålla upp till 255\n"
-"tecken, men blanksteg tillåts ej (till skillnad från andra operativsystem).\n"
+"En etikett som är målet för ett GOTO kan innehålla upp till 255 tecken,\n"
+"men blanksteg tillåts ej (till skillnad från andra operativsystem).\n"
 "Om två eller flera identiska etiketter existerar i en batchfil, så kommer\n"
 "alltid den första exekveras. Vid försök att använda GOTO till en icke\n"
 "existerande etikett så avbryts batchfilens exekvering.\n"
@@ -7977,7 +7883,7 @@ msgstr ""
 "IF [NOT] ERRORLEVEL nummer kommando\n"
 "\n"
 "I den andra IF-satsen måste sträng1 och sträng2 vara inom citattecken.\n"
-"IF bryr sej inte om stora eller små bokstäver. D.v.s. gemener och versaler.\n"
+"IF bryr sej inte om stora eller små bokstäver.\n"
 
 #: cmd.rc:101
 msgid ""
@@ -8113,7 +8019,6 @@ msgstr ""
 "REN döper om en fil.\n"
 
 #: cmd.rc:158
-#, fuzzy
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <filnamn> döper om en fil.\n"
 
@@ -8208,9 +8113,8 @@ msgstr ""
 "Det finns dock ingen användning för verifieraflaggor i Wine.\n"
 
 #: cmd.rc:204
-#, fuzzy
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER visar cmd:s version.\n"
+msgstr "VER visar körd version av cmd.\n"
 
 #: cmd.rc:206
 msgid "VOL shows the volume label of a disk device.\n"
@@ -8704,9 +8608,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "&Ersätt...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&Innehåll"
+msgstr "&Innehåll\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -8804,9 +8707,8 @@ msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
 #: notepad.rc:92
-#, fuzzy
 msgid "Unicode (UTF-8)"
-msgstr "Unicode (UTF-16)"
+msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:99
 msgid ""
@@ -9167,9 +9069,8 @@ msgid "&Arrange Icons"
 msgstr "Ordna &ikoner"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Programhanteraren"
+msgstr "&Om programhanteraren"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -9330,9 +9231,8 @@ msgid "&Multi String Value"
 msgstr "&Flersträngsvärde"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "&Strängvärde"
+msgstr "&Expanderbart strängvärde"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -10452,7 +10352,6 @@ msgid "CD-ROM"
 msgstr "Cd-rom"
 
 #: winecfg.rc:86
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
@@ -10460,7 +10359,7 @@ msgid ""
 msgstr ""
 "Du kan inte lägga till fler enheter.\n"
 "\n"
-"Varje enhet måste ha en bokstav, från A till Z, så du kan inte ha fler än 26"
+"Varje enhet måste ha en bokstav från A till Z, så du kan inte ha fler än 26."
 
 #: winecfg.rc:87
 msgid "System drive"
@@ -10918,9 +10817,8 @@ msgid "Arrange &Symbols"
 msgstr "Ordna &symboler"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "Information om &Winefile..."
+msgstr "&Om Winefile"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10984,7 +10882,7 @@ msgstr "%s av %s ledigt"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Spel"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -10992,7 +10890,7 @@ msgstr "&Nytt\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "&Frågetecken"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -11011,14 +10909,12 @@ msgid "&Custom..."
 msgstr "An&passad..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
-msgstr "&Snabbaste tider..."
+msgstr "Snabbaste &tider"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&Om Wine"
+msgstr "&Om Minor"
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -11069,9 +10965,8 @@ msgid "Large"
 msgstr "Stort"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "Användning &av hjälp"
+msgstr "&Hjälp om hjälp\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -11230,9 +11125,8 @@ msgid "&System\tCtrl+1"
 msgstr "&System\tCtrl+1"
 
 #: wordpad.rc:88
-#, fuzzy
 msgid "&Pale yellow\tCtrl+2"
-msgstr "Anteckningslapps-&gult\tCtrl+2"
+msgstr "Blek&gult\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
