@@ -2121,7 +2121,7 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
 {
     dwarf2_traverse_context_t   traverse;
     unsigned long               length;
-    unsigned                    version, header_len, insn_size, default_stmt;
+    unsigned                    insn_size, default_stmt;
     unsigned                    line_range, opcode_base;
     int                         line_base;
     const unsigned char*        opcode_len;
@@ -2150,8 +2150,8 @@ static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
         WARN("out of bounds header\n");
         return FALSE;
     }
-    version = dwarf2_parse_u2(&traverse);
-    header_len = dwarf2_parse_u4(&traverse);
+    dwarf2_parse_u2(&traverse); /* version */
+    dwarf2_parse_u4(&traverse); /* header_len */
     insn_size = dwarf2_parse_byte(&traverse);
     default_stmt = dwarf2_parse_byte(&traverse);
     line_base = (signed char)dwarf2_parse_byte(&traverse);
