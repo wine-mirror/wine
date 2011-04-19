@@ -718,7 +718,7 @@ static ULONG IEDocHost_release(DocHost *iface)
 
     if(!ref) {
         if(This->ie)
-            This->ie->doc_host = NULL;
+            ERR("This->ie is not NULL\n");
         heap_free(This);
     }
 
@@ -777,6 +777,7 @@ static HRESULT create_ie(InternetExplorer **ret_obj)
     }
 
     ret->ref = 1;
+    ret->doc_host->ref = 1;
     ret->doc_host->ie = ret;
 
     DocHost_Init(&ret->doc_host->doc_host, (IDispatch*)&ret->IWebBrowser2_iface, &DocHostContainerVtbl);
