@@ -6,7 +6,6 @@ EXTRALIBS = @LIBPOLL@
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 
 C_SRCS = \
-	be_alpha.c \
 	be_arm.c \
 	be_i386.c \
 	be_ppc.c \

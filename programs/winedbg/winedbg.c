@@ -614,8 +614,6 @@ struct backend_cpu* be_cpu;
 extern struct backend_cpu be_i386;
 #elif defined(__powerpc__)
 extern struct backend_cpu be_ppc;
-#elif defined(__ALPHA__)
-extern struct backend_cpu be_alpha;
 #elif defined(__x86_64__)
 extern struct backend_cpu be_x86_64;
 #elif defined(__sparc__)
@@ -636,8 +634,6 @@ int main(int argc, char** argv)
     be_cpu = &be_i386;
 #elif defined(__powerpc__)
     be_cpu = &be_ppc;
-#elif defined(__ALPHA__)
-    be_cpu = &be_alpha;
 #elif defined(__x86_64__)
     be_cpu = &be_x86_64;
 #elif defined(__sparc__)
