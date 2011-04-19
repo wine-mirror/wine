@@ -829,6 +829,7 @@ IDirect3DDeviceImpl_3_DeleteViewport(IDirect3DDevice3 *iface,
         {
             if (prev_viewport == NULL) This->viewport_list = cur_viewport->next;
             else prev_viewport->next = cur_viewport->next;
+            vp->active_device = NULL;
             /* TODO : add desactivate of the viewport and all associated lights... */
             LeaveCriticalSection(&ddraw_cs);
             return D3D_OK;
