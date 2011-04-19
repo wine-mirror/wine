@@ -3490,6 +3490,34 @@ static const struct IDirect3DTextureVtbl d3d_texture1_vtbl =
     d3d_texture1_Unload,
 };
 
+HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
+{
+    const DDSURFACEDESC2 *desc = &surface->surface_desc;
+    enum wined3d_format_id format;
+    WINED3DPOOL pool;
+    UINT levels;
+
+    if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
+        levels = desc->u2.dwMipMapCount;
+    else
+        levels = 1;
+
+    /* DDSCAPS_SYSTEMMEMORY textures are in WINED3DPOOL_SYSTEMMEM.
+     * Should I forward the MANAGED cap to the managed pool? */
+    if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
+        pool = WINED3DPOOL_SYSTEMMEM;
+    else
+        pool = WINED3DPOOL_DEFAULT;
+
+    format = PixelFormat_DD2WineD3D(&surface->surface_desc.u4.ddpfPixelFormat);
+    if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+        return IWineD3DDevice_CreateCubeTexture(surface->ddraw->wineD3DDevice, desc->dwWidth,
+                levels, 0, format, pool, surface, &ddraw_null_wined3d_parent_ops, &surface->wined3d_texture);
+    else
+        return IWineD3DDevice_CreateTexture(surface->ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight,
+                levels, 0, format, pool, surface, &ddraw_null_wined3d_parent_ops, &surface->wined3d_texture);
+}
+
 HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
         DDSURFACEDESC2 *desc, UINT mip_level, WINED3DSURFTYPE surface_type)
 {

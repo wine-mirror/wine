@@ -3395,48 +3395,10 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
     object->ifaceToRelease = (IUnknown *)&ddraw->IDirectDraw7_iface;
 
     /* Create a WineD3DTexture if a texture was requested */
-    if(desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+    if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
     {
-        enum wined3d_format_id Format;
-        UINT levels;
-        WINED3DPOOL Pool = WINED3DPOOL_DEFAULT;
-
         ddraw->tex_root = object;
-
-        if(desc2.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
-        {
-            /* a mipmap is created, create enough levels */
-            levels = desc2.u2.dwMipMapCount;
-        }
-        else
-        {
-            /* No mipmap is created, create one level */
-            levels = 1;
-        }
-
-        /* DDSCAPS_SYSTEMMEMORY textures are in WINED3DPOOL_SYSTEMMEM */
-        if(DDSD->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
-        {
-            Pool = WINED3DPOOL_SYSTEMMEM;
-        }
-        /* Should I forward the MANAGED cap to the managed pool ? */
-
-        /* Get the format. It's set already by CreateNewSurface */
-        Format = PixelFormat_DD2WineD3D(&object->surface_desc.u4.ddpfPixelFormat);
-
-        /* The surfaces are already created, the callback only
-         * passes the IWineD3DSurface to WineD3D
-         */
-        if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-        {
-            hr = IWineD3DDevice_CreateCubeTexture(ddraw->wineD3DDevice, DDSD->dwWidth, levels, 0,
-                    Format, Pool, object, &ddraw_null_wined3d_parent_ops, &object->wined3d_texture);
-        }
-        else
-        {
-            hr = IWineD3DDevice_CreateTexture(ddraw->wineD3DDevice, DDSD->dwWidth, DDSD->dwHeight,
-                    levels, 0, Format, Pool, object, &ddraw_null_wined3d_parent_ops, &object->wined3d_texture);
-        }
+        ddraw_surface_create_texture(object);
         ddraw->tex_root = NULL;
     }
 
