@@ -764,8 +764,7 @@ IDirect3DDeviceImpl_3_AddViewport(IDirect3DDevice3 *iface,
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    vp->next = This->viewport_list;
-    This->viewport_list = vp;
+    list_add_head(&This->viewport_list, &vp->entry);
     vp->active_device = This; /* Viewport must be usable for Clear() after AddViewport,
                                     so set active_device here. */
     LeaveCriticalSection(&ddraw_cs);
@@ -811,35 +810,27 @@ static HRESULT WINAPI IDirect3DDeviceImpl_1_AddViewport(IDirect3DDevice *iface,
  *  DDERR_INVALIDPARAMS if the viewport wasn't found in the list
  *
  *****************************************************************************/
-static HRESULT WINAPI
-IDirect3DDeviceImpl_3_DeleteViewport(IDirect3DDevice3 *iface,
-                                     IDirect3DViewport3 *Viewport)
+static HRESULT WINAPI IDirect3DDeviceImpl_3_DeleteViewport(IDirect3DDevice3 *iface, IDirect3DViewport3 *viewport)
 {
-    IDirect3DDeviceImpl *This = device_from_device3(iface);
-    IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *) Viewport;
-    IDirect3DViewportImpl *cur_viewport, *prev_viewport = NULL;
+    IDirect3DDeviceImpl *device = device_from_device3(iface);
+    IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)viewport;
 
-    TRACE("iface %p, viewport %p.\n", iface, Viewport);
+    TRACE("iface %p, viewport %p.\n", iface, viewport);
 
     EnterCriticalSection(&ddraw_cs);
-    cur_viewport = This->viewport_list;
-    while (cur_viewport != NULL)
+
+    if (vp->active_device != device)
     {
-        if (cur_viewport == vp)
-        {
-            if (prev_viewport == NULL) This->viewport_list = cur_viewport->next;
-            else prev_viewport->next = cur_viewport->next;
-            vp->active_device = NULL;
-            /* TODO : add desactivate of the viewport and all associated lights... */
-            LeaveCriticalSection(&ddraw_cs);
-            return D3D_OK;
-        }
-        prev_viewport = cur_viewport;
-        cur_viewport = cur_viewport->next;
+        WARN("Viewport %p active device is %p.\n", vp, vp->active_device);
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_INVALIDPARAMS;
     }
 
+    vp->active_device = NULL;
+    list_remove(&vp->entry);
+
     LeaveCriticalSection(&ddraw_cs);
-    return DDERR_INVALIDPARAMS;
+    return D3D_OK;
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_2_DeleteViewport(IDirect3DDevice2 *iface,
@@ -890,7 +881,7 @@ IDirect3DDeviceImpl_3_NextViewport(IDirect3DDevice3 *iface,
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
     IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)Viewport3;
-    IDirect3DViewportImpl *res = NULL;
+    struct list *entry;
 
     TRACE("iface %p, viewport %p, next %p, flags %#x.\n",
             iface, Viewport3, lplpDirect3DViewport3, Flags);
@@ -906,32 +897,29 @@ IDirect3DDeviceImpl_3_NextViewport(IDirect3DDevice3 *iface,
     switch (Flags)
     {
         case D3DNEXT_NEXT:
-        {
-            res = vp->next;
-        }
-        break;
+            entry = list_next(&This->viewport_list, &vp->entry);
+            break;
+
         case D3DNEXT_HEAD:
-        {
-            res = This->viewport_list;
-        }
-        break;
+            entry = list_head(&This->viewport_list);
+            break;
+
         case D3DNEXT_TAIL:
-        {
-            IDirect3DViewportImpl *cur_viewport = This->viewport_list;
-            if (cur_viewport != NULL)
-            {
-                while (cur_viewport->next != NULL) cur_viewport = cur_viewport->next;
-            }
-            res = cur_viewport;
-        }
-        break;
+            entry = list_tail(&This->viewport_list);
+            break;
+
         default:
+            WARN("Invalid flags %#x.\n", Flags);
             *lplpDirect3DViewport3 = NULL;
             LeaveCriticalSection(&ddraw_cs);
             return DDERR_INVALIDPARAMS;
     }
 
-    *lplpDirect3DViewport3 = (IDirect3DViewport3 *)res;
+    if (entry)
+        *lplpDirect3DViewport3 = (IDirect3DViewport3 *)LIST_ENTRY(entry, IDirect3DViewportImpl, entry);
+    else
+        *lplpDirect3DViewport3 = NULL;
+
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
@@ -6785,6 +6773,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
     device->ref = 1;
     device->ddraw = ddraw;
     device->target = target;
+    list_init(&device->viewport_list);
 
     if (!ddraw_handle_table_init(&device->handle_table, 64))
     {

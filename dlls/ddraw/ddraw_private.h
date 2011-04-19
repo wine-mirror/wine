@@ -290,7 +290,7 @@ struct IDirect3DDeviceImpl
     IDirectDrawSurfaceImpl  *target;
 
     /* Viewport management */
-    IDirect3DViewportImpl *viewport_list;
+    struct list viewport_list;
     IDirect3DViewportImpl *current_viewport;
     D3DVIEWPORT7 active_viewport;
 
@@ -471,8 +471,7 @@ struct IDirect3DViewportImpl
         D3DVIEWPORT2 vp2;
     } viewports;
 
-    /* Field used to chain viewports together */
-    IDirect3DViewportImpl     *next;
+    struct list entry;
 
     /* Lights list */
     IDirect3DLightImpl        *lights;
