@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2003 Marcus Meissner
  *                2004 Eric Pouech
- *                2010 André Hentschel
+ *                2010, 2011 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -164,11 +164,11 @@ static int be_arm_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 {
     if (way)
     {
-        ctx->Pc--;
-        return -1;
+        ctx->Pc-=4;
+        return -4;
     }
-    ctx->Pc++;
-    return 1;
+    ctx->Pc+=4;
+    return 4;
 }
 
 static int be_arm_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
