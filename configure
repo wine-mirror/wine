@@ -14474,6 +14474,32 @@ if test $ac_cv_cpp_def___powerpc__ = yes; then :
   CFLAGS="$CFLAGS -D__powerpc__"
   LINTFLAGS="$LINTFLAGS -D__powerpc__"
 fi ;;
+  *arm*)            { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we need to define __arm__" >&5
+$as_echo_n "checking whether we need to define __arm__... " >&6; }
+if test "${ac_cv_cpp_def___arm__+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __arm__
+yes
+#endif
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then :
+  ac_cv_cpp_def___arm__=yes
+else
+  ac_cv_cpp_def___arm__=no
+fi
+rm -f conftest*
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___arm__" >&5
+$as_echo "$ac_cv_cpp_def___arm__" >&6; }
+if test $ac_cv_cpp_def___arm__ = yes; then :
+  CFLAGS="$CFLAGS -D__arm__"
+  LINTFLAGS="$LINTFLAGS -D__arm__"
+fi ;;
 esac
 
 case $host_vendor in
