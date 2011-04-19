@@ -57,8 +57,6 @@
 static const unsigned int supported_cpus = CPU_FLAG(CPU_x86);
 #elif defined(__x86_64__)
 static const unsigned int supported_cpus = CPU_FLAG(CPU_x86_64) | CPU_FLAG(CPU_x86);
-#elif defined(__ALPHA__)
-static const unsigned int supported_cpus = CPU_FLAG(CPU_ALPHA);
 #elif defined(__powerpc__)
 static const unsigned int supported_cpus = CPU_FLAG(CPU_POWERPC);
 #elif defined(__sparc__)
@@ -1017,7 +1015,6 @@ static unsigned int get_context_system_regs( enum cpu_type cpu )
     {
     case CPU_x86:     return SERVER_CTX_DEBUG_REGISTERS;
     case CPU_x86_64:  return SERVER_CTX_DEBUG_REGISTERS;
-    case CPU_ALPHA:   return 0;
     case CPU_POWERPC: return 0;
     case CPU_ARM:     return 0;
     case CPU_SPARC:   return 0;
@@ -1043,9 +1040,6 @@ void break_thread( struct thread *thread )
         break;
     case CPU_x86_64:
         data.exception.address = thread->context->ctl.x86_64_regs.rip;
-        break;
-    case CPU_ALPHA:
-        data.exception.address = thread->context->ctl.alpha_regs.fir;
         break;
     case CPU_POWERPC:
         data.exception.address = thread->context->ctl.powerpc_regs.iar;

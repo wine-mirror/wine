@@ -113,7 +113,6 @@ static void dump_cpu_type( const char *prefix, const cpu_type_t *code )
 #define CASE(c) case CPU_##c: fprintf( stderr, "%s%s", prefix, #c ); break
         CASE(x86);
         CASE(x86_64);
-        CASE(ALPHA);
         CASE(POWERPC);
         CASE(SPARC);
         default: fprintf( stderr, "%s%u", prefix, *code ); break;
@@ -528,54 +527,6 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
                          (unsigned int)ctx.fp.x86_64_regs.fpregs[i].high,
                          (unsigned int)(ctx.fp.x86_64_regs.fpregs[i].low >> 32),
                          (unsigned int)ctx.fp.x86_64_regs.fpregs[i].low );
-        }
-        break;
-    case CPU_ALPHA:
-        if (ctx.flags & SERVER_CTX_CONTROL)
-        {
-            dump_uint64( ",fir=", &ctx.ctl.alpha_regs.fir );
-            fprintf( stderr, ",psr=%08x", ctx.ctl.alpha_regs.psr );
-        }
-        if (ctx.flags & SERVER_CTX_INTEGER)
-        {
-            dump_uint64( ",v0=",  &ctx.integer.alpha_regs.v0 );
-            dump_uint64( ",t0=",  &ctx.integer.alpha_regs.t0 );
-            dump_uint64( ",t1=",  &ctx.integer.alpha_regs.t1 );
-            dump_uint64( ",t2=",  &ctx.integer.alpha_regs.t2 );
-            dump_uint64( ",t3=",  &ctx.integer.alpha_regs.t3 );
-            dump_uint64( ",t4=",  &ctx.integer.alpha_regs.t4 );
-            dump_uint64( ",t5=",  &ctx.integer.alpha_regs.t5 );
-            dump_uint64( ",t6=",  &ctx.integer.alpha_regs.t6 );
-            dump_uint64( ",t7=",  &ctx.integer.alpha_regs.t7 );
-            dump_uint64( ",t8=",  &ctx.integer.alpha_regs.t8 );
-            dump_uint64( ",t9=",  &ctx.integer.alpha_regs.t9 );
-            dump_uint64( ",t10=", &ctx.integer.alpha_regs.t10 );
-            dump_uint64( ",t11=", &ctx.integer.alpha_regs.t11 );
-            dump_uint64( ",t12=", &ctx.integer.alpha_regs.t12 );
-            dump_uint64( ",s0=",  &ctx.integer.alpha_regs.s0 );
-            dump_uint64( ",s1=",  &ctx.integer.alpha_regs.s1 );
-            dump_uint64( ",s2=",  &ctx.integer.alpha_regs.s2 );
-            dump_uint64( ",s3=",  &ctx.integer.alpha_regs.s3 );
-            dump_uint64( ",s4=",  &ctx.integer.alpha_regs.s4 );
-            dump_uint64( ",s5=",  &ctx.integer.alpha_regs.s5 );
-            dump_uint64( ",s6=",  &ctx.integer.alpha_regs.s6 );
-            dump_uint64( ",a0=",  &ctx.integer.alpha_regs.a0 );
-            dump_uint64( ",a1=",  &ctx.integer.alpha_regs.a1 );
-            dump_uint64( ",a2=",  &ctx.integer.alpha_regs.a2 );
-            dump_uint64( ",a3=",  &ctx.integer.alpha_regs.a3 );
-            dump_uint64( ",a4=",  &ctx.integer.alpha_regs.a4 );
-            dump_uint64( ",a5=",  &ctx.integer.alpha_regs.a5 );
-            dump_uint64( ",at=",  &ctx.integer.alpha_regs.at );
-        }
-        if (ctx.flags & SERVER_CTX_FLOATING_POINT)
-        {
-            for (i = 0; i < 32; i++)
-            {
-                fprintf( stderr, ",f%u", i );
-                dump_uint64( "=", &ctx.fp.alpha_regs.f[i] );
-            }
-            dump_uint64( ",fpcr=", &ctx.fp.alpha_regs.fpcr );
-            dump_uint64( ",softfpcr=", &ctx.fp.alpha_regs.softfpcr );
         }
         break;
     case CPU_POWERPC:
