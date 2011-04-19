@@ -403,9 +403,11 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     driver = reg_driver_list;
     while(driver)
         if (!compare_fourcc(fccType, driver->fccType) &&
-            !compare_fourcc(fccHandler, driver->fccHandler))
+            !compare_fourcc(fccHandler, driver->fccHandler)) {
+	    fccType = driver->fccType;
+	    fccHandler = driver->fccHandler;
 	    break;
-        else
+        } else
             driver = driver->next;
 
     if (driver && driver->proc)
@@ -426,7 +428,13 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     icopen.dnDevNode            = 0; /* FIXME */
 	
     if (!driver) {
-        /* The driver is registered in the registry */
+        /* normalize to lower case as in 'vidc' */
+        ((char*)&fccType)[0] = tolower(((char*)&fccType)[0]);
+        ((char*)&fccType)[1] = tolower(((char*)&fccType)[1]);
+        ((char*)&fccType)[2] = tolower(((char*)&fccType)[2]);
+        ((char*)&fccType)[3] = tolower(((char*)&fccType)[3]);
+        icopen.fccType = fccType;
+        /* Seek the driver in the registry */
 	fourcc_to_string(codecname, fccType);
         codecname[4] = '.';
 	fourcc_to_string(codecname + 5, fccHandler);
