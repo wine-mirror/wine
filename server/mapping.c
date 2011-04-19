@@ -496,6 +496,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
 
     if (handle)
     {
+        const unsigned int sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
         unsigned int mapping_access = FILE_MAPPING_ACCESS;
 
         if (!(protect & VPROT_COMMITTED))
@@ -509,14 +510,16 @@ static struct object *create_mapping( struct directory *root, const struct unico
         /* file sharing rules for mappings are different so we use magic the access rights */
         if (protect & VPROT_IMAGE) mapping_access |= FILE_MAPPING_IMAGE;
         else if (protect & VPROT_WRITE) mapping_access |= FILE_MAPPING_WRITE;
-        mapping->fd = dup_fd_object( fd, mapping_access,
-                                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                     FILE_SYNCHRONOUS_IO_NONALERT );
+
+        if (!(mapping->fd = get_fd_object_for_mapping( fd, mapping_access, sharing )))
+        {
+            mapping->fd = dup_fd_object( fd, mapping_access, sharing, FILE_SYNCHRONOUS_IO_NONALERT );
+            if (mapping->fd) set_fd_user( mapping->fd, &mapping_fd_ops, NULL );
+        }
         release_object( file );
         release_object( fd );
         if (!mapping->fd) goto error;
 
-        set_fd_user( mapping->fd, &mapping_fd_ops, &mapping->obj );
         if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
         if (protect & VPROT_IMAGE)
         {

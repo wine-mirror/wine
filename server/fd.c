@@ -1670,6 +1670,20 @@ failed:
     return NULL;
 }
 
+/* find an existing fd object that can be reused for a mapping */
+struct fd *get_fd_object_for_mapping( struct fd *fd, unsigned int access, unsigned int sharing )
+{
+    struct fd *fd_ptr;
+
+    if (!fd->inode) return NULL;
+
+    LIST_FOR_EACH_ENTRY( fd_ptr, &fd->inode->open, struct fd, inode_entry )
+        if (fd_ptr->access == access && fd_ptr->sharing == sharing)
+            return (struct fd *)grab_object( fd_ptr );
+
+    return NULL;
+}
+
 /* set the status to return when the fd has no associated unix fd */
 void set_no_fd_status( struct fd *fd, unsigned int status )
 {
