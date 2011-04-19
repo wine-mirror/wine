@@ -2071,7 +2071,7 @@ static void
 msi_seltree_sync_item_state( HWND hwnd, MSIFEATURE *feature, HTREEITEM hItem )
 {
     TVITEMW tvi;
-    DWORD index = feature->Action;
+    DWORD index = feature->ActionRequest;
 
     TRACE("Feature %s -> %d %d %d\n", debugstr_w(feature->Title),
         feature->Installed, feature->Action, feature->ActionRequest);
