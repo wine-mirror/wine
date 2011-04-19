@@ -159,7 +159,6 @@ static const struct
     { "amd64",   CPU_x86_64 },
     { "x86_64",  CPU_x86_64 },
     { "sparc",   CPU_SPARC },
-    { "alpha",   CPU_ALPHA },
     { "powerpc", CPU_POWERPC },
     { "arm",     CPU_ARM }
 };
@@ -219,8 +218,6 @@ static const enum target_cpu build_cpu = CPU_x86;
 static const enum target_cpu build_cpu = CPU_x86_64;
 #elif defined(__sparc__)
 static const enum target_cpu build_cpu = CPU_SPARC;
-#elif defined(__ALPHA__)
-static const enum target_cpu build_cpu = CPU_ALPHA;
 #elif defined(__powerpc__)
 static const enum target_cpu build_cpu = CPU_POWERPC;
 #elif defined(__arm__)
