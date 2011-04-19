@@ -478,7 +478,7 @@ ULONG CDECL wined3d_stateblock_decref(struct wined3d_stateblock *stateblock)
         int counter;
 
         if (stateblock->state.vertex_declaration)
-            wined3d_vertex_declaration_incref(stateblock->state.vertex_declaration);
+            wined3d_vertex_declaration_decref(stateblock->state.vertex_declaration);
 
         for (counter = 0; counter < MAX_COMBINED_SAMPLERS; counter++)
         {
