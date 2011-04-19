@@ -3064,50 +3064,43 @@ static const char *debugstr_wsaioctl(DWORD ioctl)
  *              WSAIoctl                (WS2_32.50)
  *
  */
-INT WINAPI WSAIoctl(SOCKET s,
-                    DWORD   dwIoControlCode,
-                    LPVOID  lpvInBuffer,
-                    DWORD   cbInBuffer,
-                    LPVOID  lpbOutBuffer,
-                    DWORD   cbOutBuffer,
-                    LPDWORD lpcbBytesReturned,
-                    LPWSAOVERLAPPED lpOverlapped,
-                    LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
+INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID out_buff,
+                    DWORD out_size, LPDWORD ret_size, LPWSAOVERLAPPED overlapped,
+                    LPWSAOVERLAPPED_COMPLETION_ROUTINE completion )
 {
-   TRACE("%ld, 0x%08x, %p, %d, %p, %d, %p, %p, %p\n",
-       s, dwIoControlCode, lpvInBuffer, cbInBuffer, lpbOutBuffer,
-       cbOutBuffer, lpcbBytesReturned, lpOverlapped, lpCompletionRoutine);
+    TRACE("%ld, 0x%08x, %p, %d, %p, %d, %p, %p, %p\n",
+          s, code, in_buff, in_size, out_buff, out_size, ret_size, overlapped, completion);
 
-   switch( dwIoControlCode )
-   {
-   case WS_FIONBIO:
-        if (cbInBuffer != sizeof(WS_u_long)) {
+    switch (code)
+    {
+    case WS_FIONBIO:
+        if (in_size != sizeof(WS_u_long)) {
             WSASetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
-        return WS_ioctlsocket( s, WS_FIONBIO, lpvInBuffer);
+        return WS_ioctlsocket( s, WS_FIONBIO, in_buff);
 
    case WS_FIONREAD:
-        if (cbOutBuffer != sizeof(WS_u_long)) {
+        if (out_size != sizeof(WS_u_long)) {
             WSASetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
-        return WS_ioctlsocket( s, WS_FIONREAD, lpbOutBuffer);
+        return WS_ioctlsocket( s, WS_FIONREAD, out_buff);
 
    case WS_SIO_GET_INTERFACE_LIST:
        {
-           INTERFACE_INFO* intArray = (INTERFACE_INFO*)lpbOutBuffer;
+           INTERFACE_INFO* intArray = out_buff;
            DWORD size, numInt, apiReturn;
            int fd;
 
            TRACE("-> SIO_GET_INTERFACE_LIST request\n");
 
-           if (!lpbOutBuffer)
+           if (!out_buff)
            {
                WSASetLastError(WSAEFAULT);
                return SOCKET_ERROR;
            }
-           if (!lpcbBytesReturned)
+           if (!ret_size)
            {
                WSASetLastError(WSAEFAULT);
                return SOCKET_ERROR;
@@ -3131,9 +3124,9 @@ INT WINAPI WSAIoctl(SOCKET s,
                   {
                      PIP_ADAPTER_INFO ptr;
 
-                     if (size*sizeof(INTERFACE_INFO)/sizeof(IP_ADAPTER_INFO) > cbOutBuffer)
+                     if (size*sizeof(INTERFACE_INFO)/sizeof(IP_ADAPTER_INFO) > out_size)
                      {
-                        WARN("Buffer too small = %u, cbOutBuffer = %u\n", size, cbOutBuffer);
+                        WARN("Buffer too small = %u, out_size = %u\n", size, out_size);
                         HeapFree(GetProcessHeap(),0,table);
                         release_sock_fd( s, fd );
                         WSASetLastError(WSAEFAULT);
@@ -3218,7 +3211,7 @@ INT WINAPI WSAIoctl(SOCKET s,
                return SOCKET_ERROR;
            }
            /* Calculate the size of the array being returned */
-           *lpcbBytesReturned = sizeof(INTERFACE_INFO) * numInt;
+           *ret_size = sizeof(INTERFACE_INFO) * numInt;
            release_sock_fd( s, fd );
            break;
        }
@@ -3235,7 +3228,7 @@ INT WINAPI WSAIoctl(SOCKET s,
 
         TRACE("-> SIO_ADDRESS_LIST_QUERY request\n");
 
-        if (!lpcbBytesReturned)
+        if (!ret_size)
         {
             WSASetLastError(WSAEFAULT);
             return SOCKET_ERROR;
@@ -3258,20 +3251,20 @@ INT WINAPI WSAIoctl(SOCKET s,
 
             need = sizeof(SOCKET_ADDRESS_LIST) + sizeof(SOCKET_ADDRESS) * (num - 1);
             need += sizeof(SOCKADDR) * num;
-            *lpcbBytesReturned = need;
+            *ret_size = need;
 
-            if (need > cbOutBuffer)
+            if (need > out_size)
             {
                 HeapFree(GetProcessHeap(), 0, table);
                 WSASetLastError(WSAEFAULT);
                 return SOCKET_ERROR;
             }
 
-            if (lpbOutBuffer)
+            if (out_buff)
             {
                 unsigned int i;
                 SOCKET_ADDRESS *sa;
-                SOCKET_ADDRESS_LIST *sa_list = (SOCKET_ADDRESS_LIST *)lpbOutBuffer;
+                SOCKET_ADDRESS_LIST *sa_list = out_buff;
                 SOCKADDR_IN *sockaddr;
 
                 sa = sa_list->Address;
@@ -3317,44 +3310,44 @@ INT WINAPI WSAIoctl(SOCKET s,
         static const GUID wsarecvmsg_guid = WSAID_WSARECVMSG;
         static const GUID wsasendmsg_guid = WSAID_WSASENDMSG;
 
-        if ( IsEqualGUID(&connectex_guid, lpvInBuffer) )
+        if ( IsEqualGUID(&connectex_guid, in_buff) )
         {
-            *(LPFN_CONNECTEX *)lpbOutBuffer = WS2_ConnectEx;
+            *(LPFN_CONNECTEX *)out_buff = WS2_ConnectEx;
             return 0;
         }
-        else if ( IsEqualGUID(&disconnectex_guid, lpvInBuffer) )
+        else if ( IsEqualGUID(&disconnectex_guid, in_buff) )
         {
             FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER: unimplemented DisconnectEx\n");
         }
-        else if ( IsEqualGUID(&acceptex_guid, lpvInBuffer) )
+        else if ( IsEqualGUID(&acceptex_guid, in_buff) )
         {
-            *(LPFN_ACCEPTEX *)lpbOutBuffer = WS2_AcceptEx;
+            *(LPFN_ACCEPTEX *)out_buff = WS2_AcceptEx;
             return 0;
         }
-        else if ( IsEqualGUID(&getaccepexsockaddrs_guid, lpvInBuffer) )
+        else if ( IsEqualGUID(&getaccepexsockaddrs_guid, in_buff) )
         {
-            *(LPFN_GETACCEPTEXSOCKADDRS *)lpbOutBuffer = WS2_GetAcceptExSockaddrs;
+            *(LPFN_GETACCEPTEXSOCKADDRS *)out_buff = WS2_GetAcceptExSockaddrs;
             return 0;
         }
-        else if ( IsEqualGUID(&transmitfile_guid, lpvInBuffer) )
+        else if ( IsEqualGUID(&transmitfile_guid, in_buff) )
         {
             FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER: unimplemented TransmitFile\n");
         }
-        else if ( IsEqualGUID(&transmitpackets_guid, lpvInBuffer) )
+        else if ( IsEqualGUID(&transmitpackets_guid, in_buff) )
         {
             FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER: unimplemented TransmitPackets\n");
         }
-        else if ( IsEqualGUID(&wsarecvmsg_guid, lpvInBuffer) )
+        else if ( IsEqualGUID(&wsarecvmsg_guid, in_buff) )
         {
-            *(LPFN_WSARECVMSG *)lpbOutBuffer = WS2_WSARecvMsg;
+            *(LPFN_WSARECVMSG *)out_buff = WS2_WSARecvMsg;
             return 0;
         }
-        else if ( IsEqualGUID(&wsasendmsg_guid, lpvInBuffer) )
+        else if ( IsEqualGUID(&wsasendmsg_guid, in_buff) )
         {
             FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER: unimplemented WSASendMsg\n");
         }
         else
-            FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER %s: stub\n", debugstr_guid(lpvInBuffer));
+            FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER %s: stub\n", debugstr_guid(in_buff));
 
         WSASetLastError(WSAEOPNOTSUPP);
         return SOCKET_ERROR;
@@ -3363,12 +3356,12 @@ INT WINAPI WSAIoctl(SOCKET s,
    case WS_SIO_KEEPALIVE_VALS:
    {
         int fd;
-        struct tcp_keepalive *k = lpvInBuffer;
+        struct tcp_keepalive *k = in_buff;
         int keepalive = k->onoff ? 1 : 0;
         int keepidle = k->keepalivetime / 1000;
         int keepintvl = k->keepaliveinterval / 1000;
 
-        if (!lpvInBuffer)
+        if (!in_buff)
         {
             WSASetLastError(WSAEINVAL);
             return SOCKET_ERROR;
@@ -3405,31 +3398,31 @@ INT WINAPI WSAIoctl(SOCKET s,
    }
    case WS_SIO_ROUTING_INTERFACE_QUERY:
    {
-       struct WS_sockaddr *daddr = (struct WS_sockaddr *)lpvInBuffer;
+       struct WS_sockaddr *daddr = (struct WS_sockaddr *)in_buff;
        struct WS_sockaddr_in *daddr_in = (struct WS_sockaddr_in *)daddr;
-       struct WS_sockaddr_in *saddr_in = (struct WS_sockaddr_in *)lpbOutBuffer;
+       struct WS_sockaddr_in *saddr_in = out_buff;
        MIB_IPFORWARDROW row;
        PMIB_IPADDRTABLE ipAddrTable = NULL;
        DWORD size, i, found_index;
 
        TRACE("-> WS_SIO_ROUTING_INTERFACE_QUERY request\n");
 
-       if (!lpvInBuffer)
+       if (!in_buff)
        {
            WSASetLastError(WSAEFAULT);
            return SOCKET_ERROR;
        }
-       if (cbInBuffer < sizeof(struct WS_sockaddr))
+       if (in_size < sizeof(struct WS_sockaddr))
        {
            WSASetLastError(WSAEFAULT);
            return SOCKET_ERROR;
        }
-       if (!lpbOutBuffer)
+       if (!out_buff)
        {
            WSASetLastError(WSAEFAULT);
            return SOCKET_ERROR;
        }
-       if (!lpcbBytesReturned)
+       if (!ret_size)
        {
            WSASetLastError(WSAEFAULT);
            return SOCKET_ERROR;
@@ -3440,7 +3433,7 @@ INT WINAPI WSAIoctl(SOCKET s,
            WSASetLastError(WSAEAFNOSUPPORT);
            return SOCKET_ERROR;
        }
-       if (cbOutBuffer < sizeof(struct WS_sockaddr_in))
+       if (out_size < sizeof(struct WS_sockaddr_in))
        {
            WSASetLastError(WSAEFAULT);
            return SOCKET_ERROR;
@@ -3479,7 +3472,7 @@ INT WINAPI WSAIoctl(SOCKET s,
        saddr_in->sin_family = AF_INET;
        saddr_in->sin_addr.S_un.S_addr = ipAddrTable->table[found_index].dwAddr;
        saddr_in->sin_port = 0;
-       *lpcbBytesReturned = sizeof(struct WS_sockaddr_in);
+       *ret_size = sizeof(struct WS_sockaddr_in);
        HeapFree(GetProcessHeap(), 0, ipAddrTable);
        return 0;
    }
@@ -3491,8 +3484,7 @@ INT WINAPI WSAIoctl(SOCKET s,
        FIXME("WS_SIO_UDP_CONNRESET stub\n");
        break;
    default:
-       FIXME("unsupported WS_IOCTL cmd (%s)\n",
-             debugstr_wsaioctl(dwIoControlCode));
+       FIXME("unsupported WS_IOCTL cmd (%s)\n", debugstr_wsaioctl(code));
        WSASetLastError(WSAEOPNOTSUPP);
        return SOCKET_ERROR;
    }
