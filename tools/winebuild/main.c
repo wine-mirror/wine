@@ -55,8 +55,6 @@ enum target_cpu target_cpu = CPU_x86;
 enum target_cpu target_cpu = CPU_x86_64;
 #elif defined(__sparc__)
 enum target_cpu target_cpu = CPU_SPARC;
-#elif defined(__ALPHA__)
-enum target_cpu target_cpu = CPU_ALPHA;
 #elif defined(__powerpc__)
 enum target_cpu target_cpu = CPU_POWERPC;
 #elif defined(__arm__)

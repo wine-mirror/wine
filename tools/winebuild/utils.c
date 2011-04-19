@@ -57,7 +57,6 @@ static const struct
     { "amd64",   CPU_x86_64 },
     { "x86_64",  CPU_x86_64 },
     { "sparc",   CPU_SPARC },
-    { "alpha",   CPU_ALPHA },
     { "powerpc", CPU_POWERPC },
     { "arm", CPU_ARM }
 };
@@ -844,7 +843,6 @@ unsigned int get_alignment(unsigned int align)
         if (target_platform != PLATFORM_APPLE) return align;
         /* fall through */
     case CPU_POWERPC:
-    case CPU_ALPHA:
     case CPU_ARM:
         n = 0;
         while ((1u << n) != align) n++;
@@ -865,7 +863,6 @@ unsigned int get_page_size(void)
     case CPU_POWERPC: return 4096;
     case CPU_ARM:     return 4096;
     case CPU_SPARC:   return 8192;
-    case CPU_ALPHA:   return 8192;
     }
     /* unreached */
     assert(0);
@@ -880,7 +877,6 @@ unsigned int get_ptr_size(void)
     case CPU_x86:
     case CPU_POWERPC:
     case CPU_SPARC:
-    case CPU_ALPHA:
     case CPU_ARM:
         return 4;
     case CPU_x86_64:

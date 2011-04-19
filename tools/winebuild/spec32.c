@@ -34,7 +34,6 @@
 
 #define IMAGE_FILE_MACHINE_UNKNOWN 0
 #define IMAGE_FILE_MACHINE_I386    0x014c
-#define IMAGE_FILE_MACHINE_ALPHA   0x0184
 #define IMAGE_FILE_MACHINE_POWERPC 0x01f0
 #define IMAGE_FILE_MACHINE_AMD64   0x8664
 #define IMAGE_FILE_MACHINE_ARM     0x01C0
@@ -398,9 +397,6 @@ static void output_asm_constructor( const char *constructor )
             output( "\tcall %s\n", asm_name(constructor) );
             output( "\tnop\n" );
             break;
-        case CPU_ALPHA:
-            output( "\tjsr $26,%s\n", asm_name(constructor) );
-            break;
         case CPU_ARM:
         case CPU_POWERPC:
             output( "\tbl %s\n", asm_name(constructor) );
@@ -441,7 +437,6 @@ void output_module( DLLSPEC *spec )
         {
         case CPU_x86:
         case CPU_x86_64:
-        case CPU_ALPHA:
         case CPU_SPARC:
             output( "\tjmp 1f\n" );
             break;
@@ -470,7 +465,6 @@ void output_module( DLLSPEC *spec )
     case CPU_x86_64:  machine = IMAGE_FILE_MACHINE_AMD64; break;
     case CPU_ARM:     machine = IMAGE_FILE_MACHINE_ARM; break;
     case CPU_POWERPC: machine = IMAGE_FILE_MACHINE_POWERPC; break;
-    case CPU_ALPHA:   machine = IMAGE_FILE_MACHINE_ALPHA; break;
     case CPU_SPARC:   machine = IMAGE_FILE_MACHINE_UNKNOWN; break;
     }
     output( "\t%s 0x%04x\n",              /* Machine */
@@ -657,7 +651,6 @@ void output_fake_module( DLLSPEC *spec )
     case CPU_x86:     put_word( IMAGE_FILE_MACHINE_I386 ); break;
     case CPU_x86_64:  put_word( IMAGE_FILE_MACHINE_AMD64 ); break;
     case CPU_POWERPC: put_word( IMAGE_FILE_MACHINE_POWERPC ); break;
-    case CPU_ALPHA:   put_word( IMAGE_FILE_MACHINE_ALPHA ); break;
     case CPU_SPARC:   put_word( IMAGE_FILE_MACHINE_UNKNOWN ); break;
     case CPU_ARM:     put_word( IMAGE_FILE_MACHINE_ARM ); break;
     }
