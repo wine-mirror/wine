@@ -224,8 +224,12 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
     static const WCHAR wszIndex[] = {'i','n','d','e','x','.','d','a','t',0};
     static const WCHAR wszMappingFormat[] = {'%','s','%','s','_','%','l','u',0};
 
-    if (pContainer->hMapping)
+    WaitForSingleObject(pContainer->hMutex, INFINITE);
+
+    if (pContainer->hMapping) {
+        ReleaseMutex(pContainer->hMutex);
         return ERROR_SUCCESS;
+    }
 
     strcpyW(wszFilePath, pContainer->path);
     strcatW(wszFilePath, wszIndex);
@@ -240,13 +244,9 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
     if (hFile == INVALID_HANDLE_VALUE)
     {
         TRACE("Could not open or create cache index file \"%s\"\n", debugstr_w(wszFilePath));
+        ReleaseMutex(pContainer->hMutex);
         return GetLastError();
     }
-
-    /* At this stage we need the mutex because we may be about to create the
-     * file.
-     */
-    WaitForSingleObject(pContainer->hMutex, INFINITE);
 
     dwFileSize = GetFileSize(hFile, NULL);
     if (dwFileSize == INVALID_FILE_SIZE)
@@ -420,8 +420,6 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
 
     }
 
-    ReleaseMutex(pContainer->hMutex);
-
     wsprintfW(wszFilePath, wszMappingFormat, pContainer->path, wszIndex, dwFileSize);
     URLCache_PathToObjectName(wszFilePath, '_');
     pContainer->hMapping = OpenFileMappingW(FILE_MAP_WRITE, FALSE, wszFilePath);
@@ -431,8 +429,11 @@ static DWORD URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
     if (!pContainer->hMapping)
     {
         ERR("Couldn't create file mapping (error is %d)\n", GetLastError());
+        ReleaseMutex(pContainer->hMutex);
         return GetLastError();
     }
+
+    ReleaseMutex(pContainer->hMutex);
 
     return ERROR_SUCCESS;
 }
