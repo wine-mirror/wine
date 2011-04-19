@@ -75,7 +75,7 @@ static const char szKeyProdNT[] = "System\\CurrentControlSet\\Control\\ProductOp
 static int get_registry_version(void)
 {
     int i, best = -1, platform, major, minor = 0, build = 0;
-    char *p, *ver, *type;
+    char *p, *ver, *type = NULL;
 
     if ((ver = get_reg_key( HKEY_LOCAL_MACHINE, szKeyNT, "CurrentVersion", NULL )))
     {
