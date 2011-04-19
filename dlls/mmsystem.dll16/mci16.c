@@ -148,7 +148,6 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* l
     case MCI_CUE:
     case MCI_CUT:
     case MCI_DELETE:
-    case MCI_FREEZE:
     case MCI_GETDEVCAPS:
 	/* case MCI_INDEX: */
 	/* case MCI_MARK: */
@@ -156,7 +155,6 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* l
     case MCI_PASTE:
     case MCI_PAUSE:
     case MCI_PLAY:
-    case MCI_PUT:
     case MCI_REALIZE:
     case MCI_RECORD:
     case MCI_RESUME:
@@ -169,11 +167,31 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* l
     case MCI_STEP:
     case MCI_STOP:
 	/* case MCI_UNDO: */
-    case MCI_UNFREEZE:
     case MCI_UPDATE:
-    case MCI_WHERE:
 	*lParam = (DWORD)MapSL(*lParam);
 	return MMSYSTEM_MAP_OK;
+    case MCI_WHERE:
+    case MCI_FREEZE:
+    case MCI_UNFREEZE:
+    case MCI_PUT:
+        {
+            LPMCI_DGV_RECT_PARMS mdrp32 = HeapAlloc(GetProcessHeap(), 0,
+                sizeof(LPMCI_DGV_RECT_PARMS16) + sizeof(MCI_DGV_RECT_PARMS));
+            LPMCI_DGV_RECT_PARMS16 mdrp16 = MapSL(*lParam);
+            if (mdrp32) {
+                *(LPMCI_DGV_RECT_PARMS16*)(mdrp32) = mdrp16;
+                mdrp32 = (LPMCI_DGV_RECT_PARMS)((char*)mdrp32 + sizeof(LPMCI_DGV_RECT_PARMS16));
+                mdrp32->dwCallback = mdrp16->dwCallback;
+                mdrp32->rc.left = mdrp16->rc.left;
+                mdrp32->rc.top = mdrp16->rc.top;
+                mdrp32->rc.right = mdrp16->rc.right;
+                mdrp32->rc.bottom = mdrp16->rc.bottom;
+            } else {
+                return MMSYSTEM_MAP_NOMEM;
+            }
+            *lParam = (DWORD)mdrp32;
+        }
+        return MMSYSTEM_MAP_OKMEM;
     case MCI_WINDOW:
 	/* in fact, I would also need the dwFlags... to see
 	 * which members of lParam are effectively used
@@ -343,7 +361,6 @@ static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR
     case MCI_CUE:
     case MCI_CUT:
     case MCI_DELETE:
-    case MCI_FREEZE:
     case MCI_GETDEVCAPS:
 	/* case MCI_INDEX: */
 	/* case MCI_MARK: */
@@ -351,7 +368,6 @@ static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR
     case MCI_PASTE:
     case MCI_PAUSE:
     case MCI_PLAY:
-    case MCI_PUT:
     case MCI_REALIZE:
     case MCI_RECORD:
     case MCI_RESUME:
@@ -364,11 +380,24 @@ static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR
     case MCI_STEP:
     case MCI_STOP:
 	/* case MCI_UNDO: */
-    case MCI_UNFREEZE:
     case MCI_UPDATE:
-    case MCI_WHERE:
 	return MMSYSTEM_MAP_OK;
 
+    case MCI_WHERE:
+    case MCI_FREEZE:
+    case MCI_UNFREEZE:
+    case MCI_PUT:
+        if (lParam) {
+            LPMCI_DGV_RECT_PARMS16 mdrp16 = (LPMCI_DGV_RECT_PARMS16)lParam;
+            LPMCI_DGV_RECT_PARMS mdrp32 = (LPMCI_DGV_RECT_PARMS)((char*)lParam + sizeof(LPMCI_DGV_RECT_PARMS16));
+            mdrp16->dwCallback = mdrp32->dwCallback;
+            mdrp16->rc.left = mdrp32->rc.left;
+            mdrp16->rc.top = mdrp32->rc.top;
+            mdrp16->rc.right = mdrp32->rc.right;
+            mdrp16->rc.bottom = mdrp32->rc.bottom;
+            HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
+        }
+        return MMSYSTEM_MAP_OK;
     case MCI_WINDOW:
 	/* FIXME ?? see Map function */
 	return MMSYSTEM_MAP_OK;
