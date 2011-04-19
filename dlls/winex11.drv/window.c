@@ -1173,7 +1173,13 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
     /* size hints */
     set_size_hints( display, data, style );
 
-    window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
+    /* Only use dialog type for owned popups. Metacity allows making fullscreen
+     * only normal windows, and doesn't handle correctly TRANSIENT_FOR hint for
+     * dialogs owned by fullscreen windows.
+     */
+    if ((style & WS_POPUP) && owner) window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_DIALOG);
+    else window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
+
     XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
 		    XA_ATOM, 32, PropModeReplace, (unsigned char*)&window_type, 1);
 
