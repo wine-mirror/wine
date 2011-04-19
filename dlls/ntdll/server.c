@@ -90,8 +90,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(server);
 static const enum cpu_type client_cpu = CPU_x86;
 #elif defined(__x86_64__)
 static const enum cpu_type client_cpu = CPU_x86_64;
-#elif defined(__ALPHA__)
-static const enum cpu_type client_cpu = CPU_ALPHA;
 #elif defined(__powerpc__)
 static const enum cpu_type client_cpu = CPU_POWERPC;
 #elif defined(__sparc__)
