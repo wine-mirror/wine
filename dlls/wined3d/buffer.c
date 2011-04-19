@@ -1053,8 +1053,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
 
                 if (((DWORD_PTR)buffer->resource.allocatedMemory) & (RESOURCE_ALIGNMENT - 1))
                 {
-                    WARN("Pointer %p is not %u byte aligned, falling back to double buffered operation.\n",
-                            buffer->resource.allocatedMemory, RESOURCE_ALIGNMENT);
+                    WARN("Pointer %p is not %u byte aligned.\n", buffer->resource.allocatedMemory, RESOURCE_ALIGNMENT);
 
                     ENTER_GL();
                     GL_EXTCALL(glUnmapBufferARB(buffer->buffer_type_hint));
@@ -1062,7 +1061,21 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                     LEAVE_GL();
                     buffer->resource.allocatedMemory = NULL;
 
-                    buffer_get_sysmem(buffer, gl_info);
+                    if (buffer->resource.usage & WINED3DUSAGE_DYNAMIC)
+                    {
+                        /* The extra copy is more expensive than not using VBOs at
+                         * all on the Nvidia Linux driver, which is the only driver
+                         * that returns unaligned pointers
+                         */
+                        TRACE("Dynamic buffer, dropping VBO\n");
+                        buffer_unload(&buffer->resource);
+                        buffer->flags &= ~WINED3D_BUFFER_CREATEBO;
+                    }
+                    else
+                    {
+                        TRACE("Falling back to doublebuffered operation\n");
+                        buffer_get_sysmem(buffer, gl_info);
+                    }
                     TRACE("New pointer is %p.\n", buffer->resource.allocatedMemory);
                 }
                 context_release(context);
