@@ -268,63 +268,6 @@ void* interlocked_xchg_ptr( void** dest, void* val )
     return ret;
 }
 
-#elif defined(__ALPHA__) && defined(__GNUC__)
-
-__ASM_GLOBAL_FUNC(interlocked_cmpxchg,
-                  "L0cmpxchg:\n\t"
-                  "ldl_l $0,0($16)\n\t"
-                  "cmpeq $0,$18,$1\n\t"
-                  "beq   $1,L1cmpxchg\n\t"
-                  "mov   $17,$0\n\t"
-                  "stl_c $0,0($16)\n\t"
-                  "beq   $0,L0cmpxchg\n\t"
-                  "mov   $18,$0\n"
-                  "L1cmpxchg:\n\t"
-                  "mb")
-
-__ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
-                  "L0cmpxchg_ptr:\n\t"
-                  "ldq_l $0,0($16)\n\t"
-                  "cmpeq $0,$18,$1\n\t"
-                  "beq   $1,L1cmpxchg_ptr\n\t"
-                  "mov   $17,$0\n\t"
-                  "stq_c $0,0($16)\n\t"
-                  "beq   $0,L0cmpxchg_ptr\n\t"
-                  "mov   $18,$0\n"
-                  "L1cmpxchg_ptr:\n\t"
-                  "mb")
-
-__int64 interlocked_cmpxchg64(__int64 *dest, __int64 xchg, __int64 compare)
-{
-    /* FIXME: add code */
-    assert(0);
-}
-
-__ASM_GLOBAL_FUNC(interlocked_xchg,
-                  "L0xchg:\n\t"
-                  "ldl_l $0,0($16)\n\t"
-                  "mov   $17,$1\n\t"
-                  "stl_c $1,0($16)\n\t"
-                  "beq   $1,L0xchg\n\t"
-                  "mb")
-
-__ASM_GLOBAL_FUNC(interlocked_xchg_ptr,
-                  "L0xchg_ptr:\n\t"
-                  "ldq_l $0,0($16)\n\t"
-                  "mov   $17,$1\n\t"
-                  "stq_c $1,0($16)\n\t"
-                  "beq   $1,L0xchg_ptr\n\t"
-                  "mb")
-
-__ASM_GLOBAL_FUNC(interlocked_xchg_add,
-                  "L0xchg_add:\n\t"
-                  "ldl_l $0,0($16)\n\t"
-                  "addl  $0,$17,$1\n\t"
-                  "stl_c $1,0($16)\n\t"
-                  "beq   $1,L0xchg_add\n\t"
-                  "mb")
-
-
 #else
 
 #include <pthread.h>
