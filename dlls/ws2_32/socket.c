@@ -3068,30 +3068,62 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
                     DWORD out_size, LPDWORD ret_size, LPWSAOVERLAPPED overlapped,
                     LPWSAOVERLAPPED_COMPLETION_ROUTINE completion )
 {
+    int fd;
+
     TRACE("%ld, 0x%08x, %p, %d, %p, %d, %p, %p, %p\n",
           s, code, in_buff, in_size, out_buff, out_size, ret_size, overlapped, completion);
 
     switch (code)
     {
     case WS_FIONBIO:
-        if (in_size != sizeof(WS_u_long)) {
+        if (in_size != sizeof(WS_u_long) || IS_INTRESOURCE(in_buff))
+        {
             WSASetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
-        return WS_ioctlsocket( s, WS_FIONBIO, in_buff);
+        if (_get_sock_mask(s))
+        {
+            /* AsyncSelect()'ed sockets are always nonblocking */
+            if (*(WS_u_long *)in_buff) return 0;
+            SetLastError(WSAEINVAL);
+            return SOCKET_ERROR;
+        }
+        if (*(WS_u_long *)in_buff)
+            _enable_event(SOCKET2HANDLE(s), 0, FD_WINE_NONBLOCKING, 0);
+        else
+            _enable_event(SOCKET2HANDLE(s), 0, 0, FD_WINE_NONBLOCKING);
+        return 0;
 
-   case WS_FIONREAD:
-        if (out_size != sizeof(WS_u_long)) {
+    case WS_FIONREAD:
+    case WS_SIOCATMARK:
+    {
+        int cmd = code == WS_FIONREAD ? FIONREAD : SIOCATMARK;
+        if (out_size != sizeof(WS_u_long) || IS_INTRESOURCE(out_buff))
+        {
             WSASetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
-        return WS_ioctlsocket( s, WS_FIONREAD, out_buff);
+        if ((fd = get_sock_fd( s, 0, NULL )) == -1) return SOCKET_ERROR;
+        if (ioctl(fd, cmd, out_buff ) == -1)
+        {
+            SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+            release_sock_fd( s, fd );
+            return SOCKET_ERROR;
+        }
+        release_sock_fd( s, fd );
+        if (ret_size) *ret_size = sizeof(WS_u_long);
+        return 0;
+    }
+
+    case WS_FIOASYNC:
+        WARN("Warning: WS1.1 shouldn't be using async I/O\n");
+        SetLastError(WSAEINVAL);
+        return SOCKET_ERROR;
 
    case WS_SIO_GET_INTERFACE_LIST:
        {
            INTERFACE_INFO* intArray = out_buff;
            DWORD size, numInt, apiReturn;
-           int fd;
 
            TRACE("-> SIO_GET_INTERFACE_LIST request\n");
 
@@ -3355,7 +3387,6 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
    case WS_SIO_KEEPALIVE_VALS:
    {
-        int fd;
         struct tcp_keepalive *k = in_buff;
         int keepalive = k->onoff ? 1 : 0;
         int keepidle = k->keepalivetime / 1000;
@@ -3483,13 +3514,16 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
    case WS_SIO_UDP_CONNRESET:
        FIXME("WS_SIO_UDP_CONNRESET stub\n");
        break;
-   default:
-       FIXME("unsupported WS_IOCTL cmd (%s)\n", debugstr_wsaioctl(code));
-       WSASetLastError(WSAEOPNOTSUPP);
-       return SOCKET_ERROR;
-   }
+    case 0x667e: /* Netscape tries hard to use bogus ioctl 0x667e */
+        WSASetLastError(WSAEOPNOTSUPP);
+        return SOCKET_ERROR;
+    default:
+        FIXME("unsupported WS_IOCTL cmd (%s)\n", debugstr_wsaioctl(code));
+        WSASetLastError(WSAEOPNOTSUPP);
+        return SOCKET_ERROR;
+    }
 
-   return 0;
+    return 0;
 }
 
 
@@ -3498,74 +3532,8 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
  */
 int WINAPI WS_ioctlsocket(SOCKET s, LONG cmd, WS_u_long *argp)
 {
-    int fd;
-    LONG newcmd  = cmd;
-
-    TRACE("socket %04lx, cmd %08x, ptr %p\n", s, cmd, argp);
-    /* broken apps like defcon pass the argp value directly instead of a pointer to it */
-    if(IS_INTRESOURCE(argp))
-    {
-       SetLastError(WSAEFAULT);
-       return SOCKET_ERROR;
-    }
-
-    switch( cmd )
-    {
-    case WS_FIONREAD:
-        newcmd=FIONREAD;
-        break;
-
-    case WS_FIONBIO:
-        if( _get_sock_mask(s) )
-        {
-            /* AsyncSelect()'ed sockets are always nonblocking */
-            if (*argp) return 0;
-            SetLastError(WSAEINVAL);
-            return SOCKET_ERROR;
-        }
-        if (*argp)
-            _enable_event(SOCKET2HANDLE(s), 0, FD_WINE_NONBLOCKING, 0);
-        else
-            _enable_event(SOCKET2HANDLE(s), 0, 0, FD_WINE_NONBLOCKING);
-        return 0;
-
-    case WS_SIOCATMARK:
-        newcmd=SIOCATMARK;
-        break;
-
-    case WS_FIOASYNC:
-        WARN("Warning: WS1.1 shouldn't be using async I/O\n");
-        SetLastError(WSAEINVAL);
-        return SOCKET_ERROR;
-
-    case SIOCGIFBRDADDR:
-    case SIOCGIFNETMASK:
-    case SIOCGIFADDR:
-        /* These don't need any special handling.  They are used by
-           WsControl, and are here to suppress an unnecessary warning. */
-        break;
-
-    default:
-        /* Netscape tries hard to use bogus ioctl 0x667e */
-        /* FIXME: 0x667e above is ('f' << 8) | 126, and is a low word of
-         * FIONBIO (_IOW('f', 126, u_long)), how that should be handled?
-         */
-        WARN("\tunknown WS_IOCTL cmd (%08x)\n", cmd);
-        break;
-    }
-
-    fd = get_sock_fd( s, 0, NULL );
-    if (fd != -1)
-    {
-        if( ioctl(fd, newcmd, (char*)argp ) == 0 )
-        {
-            release_sock_fd( s, fd );
-            return 0;
-        }
-        SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
-        release_sock_fd( s, fd );
-    }
-    return SOCKET_ERROR;
+    DWORD ret_size;
+    return WSAIoctl( s, cmd, argp, sizeof(WS_u_long), argp, sizeof(WS_u_long), &ret_size, NULL, NULL );
 }
 
 /***********************************************************************
