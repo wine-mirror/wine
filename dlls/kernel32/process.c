@@ -3232,6 +3232,14 @@ BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T minset,
 }
 
 /***********************************************************************
+ *           K32EmptyWorkingSet (KERNEL32.@)
+ */
+BOOL WINAPI K32EmptyWorkingSet(HANDLE hProcess)
+{
+    return SetProcessWorkingSetSize(hProcess, (SIZE_T)-1, (SIZE_T)-1);
+}
+
+/***********************************************************************
  *           GetProcessWorkingSetSize    (KERNEL32.@)
  */
 BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess, PSIZE_T minset,

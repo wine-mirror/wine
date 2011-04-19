@@ -148,14 +148,6 @@ static BOOL PSAPI_GetLdrModule(HANDLE hProcess, HMODULE hModule,
 }
 
 /***********************************************************************
- *           EmptyWorkingSet (PSAPI.@)
- */
-BOOL WINAPI EmptyWorkingSet(HANDLE hProcess)
-{
-    return SetProcessWorkingSetSize(hProcess, 0xFFFFFFFF, 0xFFFFFFFF);
-}
-
-/***********************************************************************
  *           EnumDeviceDrivers (PSAPI.@)
  */
 BOOL WINAPI EnumDeviceDrivers(LPVOID *lpImageBase, DWORD cb, LPDWORD lpcbNeeded)

@@ -1,4 +1,4 @@
-@ stdcall EmptyWorkingSet(long)
+@ stdcall EmptyWorkingSet(long) kernel32.K32EmptyWorkingSet
 @ stdcall EnumDeviceDrivers(ptr long ptr)
 @ stdcall EnumPageFilesA(ptr ptr)
 @ stdcall EnumPageFilesW(ptr ptr)
