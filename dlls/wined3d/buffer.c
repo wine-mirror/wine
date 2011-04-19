@@ -1212,8 +1212,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
             debug_d3dformat(buffer->resource.format->id), buffer->resource.allocatedMemory, buffer);
 
-    /* GL_ARB_map_buffer_range is disabled for now due to numerous bugs and no gains */
-    dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE];
+    dynamic_buffer_ok = gl_info->supported[APPLE_FLUSH_BUFFER_RANGE] || gl_info->supported[ARB_MAP_BUFFER_RANGE];
 
     /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
      * drawStridedFast (half-life 2 and others).
