@@ -57,7 +57,7 @@
 @ stub GetPermissionRequests
 @ stub GetPrivateContextsPerfCounters
 @ stub GetProcessExecutableHeap
-@ stub GetRealProcAddress
+@ stdcall GetRealProcAddress(str ptr)
 @ stdcall GetRequestedRuntimeInfo(wstr wstr wstr long long ptr long ptr ptr long ptr)
 @ stub GetRequestedRuntimeVersion
 @ stub GetRequestedRuntimeVersionForCLSID

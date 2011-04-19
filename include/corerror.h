@@ -124,5 +124,6 @@
 #define CLDB_E_FILE_OLDVER              EMAKEHR(0x1107)
 
 #define CLR_E_SHIM_RUNTIME              EMAKEHR(0x1700)
+#define CLR_E_SHIM_RUNTIMEEXPORT        EMAKEHR(0x1701)
 
 #endif	/* __WINE_CORERROR_H */

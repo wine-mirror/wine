@@ -249,6 +249,12 @@ HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWST
     return ret;
 }
 
+HRESULT WINAPI GetRealProcAddress(LPCSTR procname, void **ppv)
+{
+    FIXME("(%s, %p)\n", debugstr_a(procname), ppv);
+    return CLR_E_SHIM_RUNTIMEEXPORT;
+}
+
 HRESULT WINAPI GetFileVersion(LPCWSTR szFilename, LPWSTR szBuffer, DWORD cchBuffer, DWORD *dwLength)
 {
     TRACE("(%s, %p, %d, %p)\n", debugstr_w(szFilename), szBuffer, cchBuffer, dwLength);
