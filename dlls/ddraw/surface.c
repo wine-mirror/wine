@@ -361,10 +361,6 @@ static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
             if((ddraw->d3d_initialized) && (This == ddraw->d3d_target)) {
                 TRACE("(%p) Destroying the render target, uninitializing D3D\n", This);
 
-                /* Unset any index buffer, just to be sure */
-                IWineD3DDevice_SetIndexBuffer(ddraw->wineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
-                IWineD3DDevice_SetDepthStencilSurface(ddraw->wineD3DDevice, NULL);
-                IWineD3DDevice_SetVertexDeclaration(ddraw->wineD3DDevice, NULL);
                 for (i = 0; i < ddraw->numConvertedDecls; ++i)
                 {
                     wined3d_vertex_declaration_decref(ddraw->decls[i].decl);
