@@ -1229,6 +1229,7 @@ _exit:
 
         buf->pxo->childs[buf->pxo->nb_childs] = &buf->pxo_tab[buf->pxo->root->nb_subobjects++];
         buf->pxo->childs[buf->pxo->nb_childs]->ptarget = &(buf->pxo_globals[i])[j];
+        buf->pxo->childs[buf->pxo->nb_childs]->binary = FALSE;
         buf->pxo->nb_childs++;
       }
       else if (check_TOKEN(buf) == TOKEN_NAME)
@@ -1274,6 +1275,7 @@ BOOL parse_object(parse_buffer * buf)
 
   buf->pxo->pos_data = buf->cur_pos_data;
   buf->pxo->ptarget = NULL;
+  buf->pxo->binary = FALSE;
   buf->pxo->root = buf->pxo_tab;
 
   if (get_TOKEN(buf) != TOKEN_NAME)
