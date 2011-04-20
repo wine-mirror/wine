@@ -301,6 +301,7 @@ BOOL WINAPI GetCursorInfo( PCURSORINFO pci )
 BOOL WINAPI DECLSPEC_HOTPATCH SetCursorPos( INT x, INT y )
 {
     BOOL ret;
+    INT prev_x, prev_y, new_x, new_y;
 
     SERVER_START_REQ( set_cursor )
     {
@@ -309,12 +310,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetCursorPos( INT x, INT y )
         req->y     = y;
         if ((ret = !wine_server_call( req )))
         {
-            x = reply->new_x;
-            y = reply->new_y;
+            prev_x = reply->prev_x;
+            prev_y = reply->prev_y;
+            new_x  = reply->new_x;
+            new_y  = reply->new_y;
         }
     }
     SERVER_END_REQ;
-    if (ret) USER_Driver->pSetCursorPos( x, y );
+    if (ret && (prev_x != new_x || prev_y != new_y)) USER_Driver->pSetCursorPos( new_x, new_y );
     return ret;
 }
 
