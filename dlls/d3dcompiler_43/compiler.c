@@ -390,7 +390,7 @@ cleanup:
     return hr;
 }
 
-static HRESULT assemble_shader(const char *preproc_shader, const char *preproc_messages,
+static HRESULT assemble_shader(const char *preproc_shader,
         ID3DBlob **shader_blob, ID3DBlob **error_messages)
 {
     struct bwriter_shader *shader;
@@ -403,26 +403,19 @@ static HRESULT assemble_shader(const char *preproc_shader, const char *preproc_m
 
     shader = SlAssembleShader(preproc_shader, &messages);
 
-    if (messages || preproc_messages)
+    if (messages)
     {
-        if (preproc_messages)
-        {
-            TRACE("Preprocessor messages:\n");
-            TRACE("%s", preproc_messages);
-        }
-        if (messages)
-        {
-            TRACE("Assembler messages:\n");
-            TRACE("%s", messages);
-        }
+        TRACE("Assembler messages:\n");
+        TRACE("%s", messages);
 
         TRACE("Shader source:\n");
         TRACE("%s\n", debugstr_a(preproc_shader));
 
         if (error_messages)
         {
-            size = (messages ? strlen(messages) : 0) +
-                (preproc_messages ? strlen(preproc_messages) : 0) + 1;
+            const char *preproc_messages = *error_messages ? ID3D10Blob_GetBufferPointer(*error_messages) : NULL;
+
+            size = strlen(messages) + (preproc_messages ? strlen(preproc_messages) : 0) + 1;
             hr = D3DCreateBlob(size, &buffer);
             if (FAILED(hr))
             {
@@ -436,9 +429,9 @@ static HRESULT assemble_shader(const char *preproc_shader, const char *preproc_m
                 CopyMemory(pos, preproc_messages, strlen(preproc_messages) + 1);
                 pos += strlen(preproc_messages);
             }
-            if (messages)
-                CopyMemory(pos, messages, strlen(messages) + 1);
+            CopyMemory(pos, messages, strlen(messages) + 1);
 
+            if (*error_messages) ID3D10Blob_Release(*error_messages);
             *error_messages = buffer;
         }
         HeapFree(GetProcessHeap(), 0, messages);
@@ -492,7 +485,7 @@ HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filena
 
     hr = preprocess_shader(data, datasize, defines, include, error_messages);
     if (SUCCEEDED(hr))
-        hr = assemble_shader(wpp_output, wpp_messages, shader, error_messages);
+        hr = assemble_shader(wpp_output, shader, error_messages);
 
     HeapFree(GetProcessHeap(), 0, wpp_output);
     LeaveCriticalSection(&wpp_mutex);
