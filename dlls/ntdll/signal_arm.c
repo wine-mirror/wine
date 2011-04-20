@@ -115,6 +115,7 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
     C(0); C(1); C(2); C(3); C(4); C(5); C(6); C(7); C(8); C(9); C(10);
 #undef C
 
+    context->ContextFlags = CONTEXT_FULL;
     context->Sp   = SP_sig(sigcontext);   /* Stack pointer */
     context->Lr   = LR_sig(sigcontext);   /* Link register */
     context->Pc   = PC_sig(sigcontext);   /* Program Counter */
@@ -218,6 +219,7 @@ void set_cpu_context( const CONTEXT *context )
  */
 void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
 {
+    flags &= ~CONTEXT_ARM;  /* get rid of CPU id */
     if (flags & CONTEXT_CONTROL)
     {
         to->Sp      = from->Sp;
@@ -251,7 +253,7 @@ void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
  */
 NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
 {
-    DWORD flags = from->ContextFlags;  /* no CPU id? */
+    DWORD flags = from->ContextFlags & ~CONTEXT_ARM;  /* get rid of CPU id */
 
     memset( to, 0, sizeof(*to) );
     to->cpu = CPU_ARM;
@@ -294,7 +296,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 {
     if (from->cpu != CPU_ARM) return STATUS_INVALID_PARAMETER;
 
-    to->ContextFlags = 0;  /* no CPU id? */
+    to->ContextFlags = CONTEXT_ARM;
     if (from->flags & SERVER_CTX_CONTROL)
     {
         to->ContextFlags |= CONTEXT_CONTROL;
