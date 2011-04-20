@@ -688,8 +688,29 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetPass(ID3DXBaseEffect *iface, D3D
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetPassByName(ID3DXBaseEffect *iface, D3DXHANDLE technique, LPCSTR name)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_technique *tech = is_valid_technique(This, technique);
 
-    FIXME("iface %p, technique %p, name %s stub\n", This, technique, debugstr_a(name));
+    TRACE("iface %p, technique %p, name %s\n", This, technique, debugstr_a(name));
+
+    if (!tech) tech = get_technique_struct(iface->lpVtbl->GetTechniqueByName(iface, technique));
+
+    if (tech && name)
+    {
+        unsigned int i;
+
+        for (i = 0; i < tech->pass_count; ++i)
+        {
+            struct d3dx_pass *pass = get_pass_struct(tech->pass_handles[i]);
+
+            if (!strcmp(pass->name, name))
+            {
+                TRACE("Returning pass %p\n", tech->pass_handles[i]);
+                return tech->pass_handles[i];
+            }
+        }
+    }
+
+    WARN("Invalid argument specified.\n");
 
     return NULL;
 }
