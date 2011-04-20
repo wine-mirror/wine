@@ -1078,8 +1078,8 @@ static void riff_find_chunk( DWORD chunk_id, DWORD chunk_type, const riff_chunk_
  *            |- ...
  *            \- CHUNK:icon
  */
-static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
-                                             INT width, INT height, INT depth, UINT loadflags )
+static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size, INT width, INT height,
+                                             INT depth, BOOL is_icon, UINT loadflags )
 {
     struct animated_cursoricon_object *ani_icon_data;
     struct cursoricon_object *info;
@@ -1161,7 +1161,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
 
     info = get_icon_ptr( cursor );
     ani_icon_data = (struct animated_cursoricon_object *) info;
-    info->is_icon = FALSE;
+    info->is_icon = is_icon;
     ani_icon_data->num_frames = header.num_frames;
 
     /* The .ANI stores the display rate in jiffies (1/60s) */
@@ -1195,7 +1195,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const LPBYTE bits, DWORD bits_size,
 
         /* Grab a frame from the animation */
         frames[i] = create_icon_from_bmi( (BITMAPINFO *)bmi, NULL, NULL, NULL, info->hotspot,
-                                          FALSE, frameWidth, frameHeight, loadflags );
+                                          is_icon, frameWidth, frameHeight, loadflags );
         if (!frames[i])
         {
             FIXME_(cursor)("failed to convert animated cursor frame.\n");
@@ -1284,7 +1284,8 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
 
     /* Check if the resource is an animated icon/cursor */
     if (!memcmp(bits, "RIFF", 4))
-        return CURSORICON_CreateIconFromANI( bits, cbSize, width, height, 0 /* default depth */, cFlag );
+        return CURSORICON_CreateIconFromANI( bits, cbSize, width, height,
+                                             0 /* default depth */, bIcon, cFlag );
 
     if (bIcon)
     {
@@ -1334,7 +1335,7 @@ static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
     /* Check for .ani. */
     if (memcmp( bits, "RIFF", 4 ) == 0)
     {
-        hIcon = CURSORICON_CreateIconFromANI( bits, filesize, width, height, depth, loadflags );
+        hIcon = CURSORICON_CreateIconFromANI( bits, filesize, width, height, depth, !fCursor, loadflags );
         goto end;
     }
 
