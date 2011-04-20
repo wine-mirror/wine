@@ -1743,14 +1743,17 @@ static void state_scissor(DWORD state, struct wined3d_stateblock *stateblock, st
  * convert from D3D to GL we need to divide the D3D depth bias by that value.
  * There's no practical way to retrieve that value from a given GL
  * implementation, but the D3D application has essentially the same problem,
- * which makes a guess of 1e-6f seem reasonable here. Note that
- * SLOPESCALEDEPTHBIAS is a scaling factor for the depth slope, and doesn't
- * need to be scaled. */
+ * which makes a guess of the depth buffer format's highest possible value a
+ * reasonable guess. Note that SLOPESCALEDEPTHBIAS is a scaling factor for the
+ * depth slope, and doesn't need to be scaled. */
 static void state_depthbias(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     if (stateblock->state.render_states[WINED3DRS_SLOPESCALEDEPTHBIAS]
             || stateblock->state.render_states[WINED3DRS_DEPTHBIAS])
     {
+        IWineD3DSurfaceImpl *depth = stateblock->device->depth_stencil;
+        float scale;
+
         union
         {
             DWORD d;
@@ -1763,7 +1766,21 @@ static void state_depthbias(DWORD state, struct wined3d_stateblock *stateblock, 
         glEnable(GL_POLYGON_OFFSET_FILL);
         checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
 
-        glPolygonOffset(scale_bias.f, const_bias.f * 1e6f);
+        if (depth)
+        {
+            const struct wined3d_format *fmt = depth->resource.format;
+            scale = powf(2, fmt->depth_size) - 1;
+            TRACE("Depth format %s, using depthbias scale of %f\n",
+                  debug_d3dformat(fmt->id), scale);
+        }
+        else
+        {
+            /* The context manager will reapply this state on a depth stencil change */
+            TRACE("No depth stencil, using depthbias scale of 0.0\n");
+            scale = 0;
+        }
+
+        glPolygonOffset(scale_bias.f, const_bias.f * scale);
         checkGLcall("glPolygonOffset(...)");
     } else {
         glDisable(GL_POLYGON_OFFSET_FILL);
