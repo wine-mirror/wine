@@ -657,10 +657,31 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetDesc(ID3DXBaseEffect *iface, D3DXEF
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetParameterDesc(ID3DXBaseEffect *iface, D3DXHANDLE parameter, D3DXPARAMETER_DESC *desc)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, desc %p stub\n", This, parameter, desc);
+    TRACE("iface %p, parameter %p, desc %p\n", This, parameter, desc);
 
-    return E_NOTIMPL;
+    if (!param) param = get_parameter_struct(iface->lpVtbl->GetParameterByName(iface, NULL, parameter));
+
+    if (!desc || !param)
+    {
+        WARN("Invalid argument specified.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    desc->Name = param->name;
+    desc->Semantic = param->semantic;
+    desc->Class = param->class;
+    desc->Type = param->type;
+    desc->Rows = param->rows;
+    desc->Columns = param->columns;
+    desc->Elements = param->element_count;
+    desc->Annotations = param->annotation_count;
+    desc->StructMembers = param->member_count;
+    desc->Flags = param->flags;
+    desc->Bytes = param->bytes;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetTechniqueDesc(ID3DXBaseEffect *iface, D3DXHANDLE technique, D3DXTECHNIQUE_DESC *desc)
