@@ -544,7 +544,7 @@ DWORD CDECL wined3d_texture_get_level_count(const struct wined3d_texture *textur
 HRESULT CDECL wined3d_texture_set_autogen_filter_type(struct wined3d_texture *texture,
         WINED3DTEXTUREFILTERTYPE filter_type)
 {
-    TRACE("texture %p, filter_type %s.\n", texture, debug_d3dtexturefiltertype(filter_type));
+    FIXME("texture %p, filter_type %s stub!\n", texture, debug_d3dtexturefiltertype(filter_type));
 
     if (!(texture->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP))
     {
@@ -552,39 +552,6 @@ HRESULT CDECL wined3d_texture_set_autogen_filter_type(struct wined3d_texture *te
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (texture->filter_type != filter_type)
-    {
-        GLenum target = texture->target;
-        struct wined3d_context *context;
-
-        context = context_acquire(texture->resource.device, NULL);
-
-        ENTER_GL();
-        glBindTexture(target, texture->texture_rgb.name);
-        checkGLcall("glBindTexture");
-        switch (filter_type)
-        {
-            case WINED3DTEXF_NONE:
-            case WINED3DTEXF_POINT:
-                glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_FASTEST);
-                checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_FASTEST)");
-                break;
-
-            case WINED3DTEXF_LINEAR:
-                glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
-                checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST)");
-                break;
-
-            default:
-                WARN("Unexpected filter type %#x, setting to GL_NICEST.\n", filter_type);
-                glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
-                checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST)");
-                break;
-        }
-        LEAVE_GL();
-
-        context_release(context);
-    }
     texture->filter_type = filter_type;
 
     return WINED3D_OK;
