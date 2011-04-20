@@ -180,10 +180,13 @@ static ULONG WINAPI ddraw_surface7_AddRef(IDirectDrawSurface7 *iface)
 
     TRACE("%p increasing refcount to %u.\n", This, refCount);
 
-    if (refCount == 1 && This->WineD3DSurface)
+    if (refCount == 1)
     {
         EnterCriticalSection(&ddraw_cs);
-        IWineD3DSurface_AddRef(This->WineD3DSurface);
+        if (This->WineD3DSurface)
+            IWineD3DSurface_AddRef(This->WineD3DSurface);
+        if (This->wined3d_texture)
+            wined3d_texture_incref(This->wined3d_texture);
         LeaveCriticalSection(&ddraw_cs);
     }
 
@@ -256,9 +259,7 @@ static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if (surface->wined3d_texture) /* If it's a texture, destroy the wined3d texture. */
-        wined3d_texture_decref(surface->wined3d_texture);
-    else if (surface->wined3d_swapchain)
+    if (surface->wined3d_swapchain)
     {
         IDirectDrawImpl *ddraw = surface->ddraw;
 
@@ -388,7 +389,10 @@ static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
             LeaveCriticalSection(&ddraw_cs);
             return ref;
         }
-        ddraw_surface_cleanup(This);
+        if (This->wined3d_texture) /* If it's a texture, destroy the wined3d texture. */
+            wined3d_texture_decref(This->wined3d_texture);
+        else
+            ddraw_surface_cleanup(This);
         LeaveCriticalSection(&ddraw_cs);
     }
 
@@ -3491,6 +3495,20 @@ const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops =
     ddraw_surface_wined3d_object_destroyed,
 };
 
+static void STDMETHODCALLTYPE ddraw_texture_wined3d_object_destroyed(void *parent)
+{
+    IDirectDrawSurfaceImpl *surface = parent;
+
+    TRACE("surface %p.\n", surface);
+
+    ddraw_surface_cleanup(surface);
+}
+
+static const struct wined3d_parent_ops ddraw_texture_wined3d_parent_ops =
+{
+    ddraw_texture_wined3d_object_destroyed,
+};
+
 HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
 {
     const DDSURFACEDESC2 *desc = &surface->surface_desc;
@@ -3513,10 +3531,10 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
     format = PixelFormat_DD2WineD3D(&surface->surface_desc.u4.ddpfPixelFormat);
     if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
         return IWineD3DDevice_CreateCubeTexture(surface->ddraw->wineD3DDevice, desc->dwWidth,
-                levels, 0, format, pool, surface, &ddraw_null_wined3d_parent_ops, &surface->wined3d_texture);
+                levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
     else
         return IWineD3DDevice_CreateTexture(surface->ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight,
-                levels, 0, format, pool, surface, &ddraw_null_wined3d_parent_ops, &surface->wined3d_texture);
+                levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
 }
 
 HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
