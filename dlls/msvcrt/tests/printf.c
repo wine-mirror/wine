@@ -625,6 +625,41 @@ static void test_snprintf (void)
     };
 }
 
+static void test_fprintf(void)
+{
+    static char file_name[] = "fprintf.tst";
+    FILE *fp = fopen(file_name, "wb");
+    char buf[1024];
+    int ret;
+
+    ret = fprintf(fp, "simple test\n");
+    ok(ret == 12, "ret = %d\n", ret);
+    ret = ftell(fp);
+    ok(ret == 12, "ftell returned %d\n", ret);
+
+    ret = fprintf(fp, "contains%cnull\n", '\0');
+    ok(ret == 14, "ret = %d\n", ret);
+    ret = ftell(fp);
+    ok(ret == 26, "ftell returned %d\n", ret);
+
+    fclose(fp);
+
+    fp = fopen(file_name, "rb");
+    ret = fscanf(fp, "%[^\n] ", buf);
+    ok(ret == 1, "ret = %d\n", ret);
+    ret = ftell(fp);
+    ok(ret == 12, "ftell returned %d\n", ret);
+    ok(!strcmp(buf, "simple test"), "buf = %s\n", buf);
+
+    fgets(buf, sizeof(buf), fp);
+    ret = ftell(fp);
+    ok(ret == 26, "ret = %d\n", ret);
+    ok(!memcmp(buf, "contains\0null\n", 14), "buf = %s\n", buf);
+
+    fclose(fp);
+    unlink(file_name);
+}
+
 static void test_fcvt(void)
 {
     char *str;
@@ -1036,6 +1071,7 @@ START_TEST(printf)
     test_sprintf();
     test_swprintf();
     test_snprintf();
+    test_fprintf();
     test_fcvt();
     test_xcvt();
     test_vsnwprintf();
