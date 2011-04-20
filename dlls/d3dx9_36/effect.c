@@ -801,8 +801,30 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterBySemantic(ID3DXBaseEff
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterElement(ID3DXBaseEffect *iface, D3DXHANDLE parameter, UINT index)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, index %u stub\n", This, parameter, index);
+    TRACE("iface %p, parameter %p, index %u\n", This, parameter, index);
+
+    if (!param) param = get_parameter_by_name(This, NULL, parameter, FALSE);
+
+    if (!param)
+    {
+        if (index < This->parameter_count)
+        {
+            TRACE("Returning parameter %p\n", This->parameter_handles[index]);
+            return This->parameter_handles[index];
+        }
+    }
+    else
+    {
+        if (index < param->element_count)
+        {
+            TRACE("Returning parameter %p\n", param->member_handles[index]);
+            return param->member_handles[index];
+        }
+    }
+
+    WARN("Invalid argument specified\n");
 
     return NULL;
 }
