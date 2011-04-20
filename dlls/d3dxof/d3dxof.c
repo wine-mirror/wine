@@ -728,13 +728,23 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetName(IDirectXFileData* iface, LPST
 
 {
   IDirectXFileDataImpl *This = (IDirectXFileDataImpl *)iface;
+  DWORD len;
 
   TRACE("(%p/%p)->(%p,%p)\n", This, iface, pstrNameBuf, pdwBufLen);
 
-  if (!pstrNameBuf)
+  if (!pdwBufLen)
     return DXFILEERR_BADVALUE;
 
-  strcpy(pstrNameBuf, This->pobj->name);
+  len = strlen(This->pobj->name);
+  if (len)
+    len++;
+
+  if (pstrNameBuf) {
+    if (*pdwBufLen < len)
+      return DXFILEERR_BADVALUE;
+    CopyMemory(pstrNameBuf, This->pobj->name, len);
+  }
+  *pdwBufLen = len;
 
   return DXFILE_OK;
 }
@@ -962,15 +972,25 @@ static ULONG WINAPI IDirectXFileDataReferenceImpl_Release(IDirectXFileDataRefere
 static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetName(IDirectXFileDataReference* iface, LPSTR pstrNameBuf, LPDWORD pdwBufLen)
 {
   IDirectXFileDataReferenceImpl *This = (IDirectXFileDataReferenceImpl *)iface;
+  DWORD len;
 
   TRACE("(%p/%p)->(%p,%p)\n", This, iface, pstrNameBuf, pdwBufLen);
 
-  if (!pstrNameBuf)
+  if (!pdwBufLen)
     return DXFILEERR_BADVALUE;
 
-  strcpy(pstrNameBuf, This->ptarget->name);
+  len = strlen(This->ptarget->name);
+  if (len)
+    len++;
 
-  return DXFILEERR_BADVALUE;
+  if (pstrNameBuf) {
+    if (*pdwBufLen < len)
+      return DXFILEERR_BADVALUE;
+    CopyMemory(pstrNameBuf, This->ptarget->name, len);
+  }
+  *pdwBufLen = len;
+
+  return DXFILE_OK;
 }
 
 static HRESULT WINAPI IDirectXFileDataReferenceImpl_GetId(IDirectXFileDataReference* iface, LPGUID pGuid)
