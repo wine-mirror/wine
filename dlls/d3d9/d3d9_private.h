@@ -332,8 +332,8 @@ HRESULT cubetexture_init(IDirect3DCubeTexture9Impl *texture, IDirect3DDevice9Imp
  */
 typedef struct IDirect3DTexture9Impl
 {
-    const IDirect3DTexture9Vtbl *lpVtbl;
-    LONG                    ref;
+    IDirect3DTexture9 IDirect3DTexture9_iface;
+    LONG ref;
     struct wined3d_texture *wined3d_texture;
     IDirect3DDevice9Ex *parentDevice;
 } IDirect3DTexture9Impl;

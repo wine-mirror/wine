@@ -769,7 +769,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateTexture(IDirect3DDevice9Ex *ifa
     }
 
     TRACE("Created texture %p.\n", object);
-    *texture = (IDirect3DTexture9 *)object;
+    *texture = &object->IDirect3DTexture9_iface;
 
     return D3D_OK;
 }
