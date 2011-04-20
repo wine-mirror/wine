@@ -35,6 +35,30 @@ typedef struct FUNC_NAME(pf_flags_t)
     APICHAR Format;
 } FUNC_NAME(pf_flags);
 
+struct FUNC_NAME(_str_ctx) {
+    MSVCRT_size_t len;
+    APICHAR *buf;
+};
+
+static int FUNC_NAME(puts_clbk_str)(void *ctx, int len, const APICHAR *str)
+{
+    struct FUNC_NAME(_str_ctx) *out = ctx;
+
+    if(!out->buf)
+        return len;
+
+    if(out->len < len) {
+        memcpy(out->buf, str, out->len);
+        out->buf += out->len;
+        out->len = 0;
+        return -1;
+    }
+
+    memcpy(out->buf, str, len*sizeof(APICHAR));
+    out->buf += len;
+    return len;
+}
+
 static inline const APICHAR* FUNC_NAME(pf_parse_int)(const APICHAR *fmt, int *val)
 {
     *val = 0;
