@@ -1144,7 +1144,7 @@ static void X11DRV_send_keyboard_input( HWND hwnd, WORD vkey, WORD scan, DWORD f
 {
     INPUT input;
 
-    TRACE_(key)( "vkey=%04x scan=%04x flags=%04x\n", vkey, scan, flags );
+    TRACE_(key)( "hwnd %p vkey=%04x scan=%04x flags=%04x\n", hwnd, vkey, scan, flags );
 
     input.type             = INPUT_KEYBOARD;
     input.u.ki.wVk         = vkey;
@@ -1295,13 +1295,13 @@ void X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     if (xic && event->type == KeyPress)
     {
         ascii_chars = XmbLookupString(xic, event, buf, sizeof(buf), &keysym, &status);
-        TRACE("XmbLookupString needs %i byte(s)\n", ascii_chars);
+        TRACE_(key)("XmbLookupString needs %i byte(s)\n", ascii_chars);
         if (status == XBufferOverflow)
         {
             Str = HeapAlloc(GetProcessHeap(), 0, ascii_chars);
             if (Str == NULL)
             {
-                ERR("Failed to allocate memory!\n");
+                ERR_(key)("Failed to allocate memory!\n");
                 wine_tsx11_unlock();
                 return;
             }
@@ -2402,16 +2402,16 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
 
     if (scanCode & 0x8000)
     {
-        TRACE("Key UP, doing nothing\n" );
+        TRACE_(key)("Key UP, doing nothing\n" );
         return 0;
     }
 
     if (!match_x11_keyboard_layout(hkl))
-        FIXME("keyboard layout %p is not supported\n", hkl);
+        FIXME_(key)("keyboard layout %p is not supported\n", hkl);
 
     if ((lpKeyState[VK_MENU] & 0x80) && (lpKeyState[VK_CONTROL] & 0x80))
     {
-        TRACE("Ctrl+Alt+[key] won't generate a character\n");
+        TRACE_(key)("Ctrl+Alt+[key] won't generate a character\n");
         return 0;
     }
 
@@ -2432,27 +2432,27 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
 
     if (lpKeyState[VK_SHIFT] & 0x80)
     {
-	TRACE("ShiftMask = %04x\n", ShiftMask);
+	TRACE_(key)("ShiftMask = %04x\n", ShiftMask);
 	e.state |= ShiftMask;
     }
     if (lpKeyState[VK_CAPITAL] & 0x01)
     {
-	TRACE("LockMask = %04x\n", LockMask);
+	TRACE_(key)("LockMask = %04x\n", LockMask);
 	e.state |= LockMask;
     }
     if (lpKeyState[VK_CONTROL] & 0x80)
     {
-	TRACE("ControlMask = %04x\n", ControlMask);
+	TRACE_(key)("ControlMask = %04x\n", ControlMask);
 	e.state |= ControlMask;
     }
     if (lpKeyState[VK_NUMLOCK] & 0x01)
     {
-	TRACE("NumLockMask = %04x\n", NumLockMask);
+	TRACE_(key)("NumLockMask = %04x\n", NumLockMask);
 	e.state |= NumLockMask;
     }
 
     /* Restore saved AltGr state */
-    TRACE("AltGrMask = %04x\n", AltGrMask);
+    TRACE_(key)("AltGrMask = %04x\n", AltGrMask);
     e.state |= AltGrMask;
 
     TRACE_(key)("(%04X, %04X) : faked state = 0x%04x\n",
@@ -2485,11 +2485,11 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
 
     if (!e.keycode && virtKey != VK_NONAME)
       {
-	WARN("Unknown virtual key %X !!!\n", virtKey);
+	WARN_(key)("Unknown virtual key %X !!!\n", virtKey);
         wine_tsx11_unlock();
 	return 0;
       }
-    else TRACE("Found keycode %u\n",e.keycode);
+    else TRACE_(key)("Found keycode %u\n",e.keycode);
 
     TRACE_(key)("type %d, window %lx, state 0x%04x, keycode %u\n",
 		e.type, e.window, e.state, e.keycode);
@@ -2500,13 +2500,13 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
     if (xic)
     {
         ret = XmbLookupString(xic, &e, buf, sizeof(buf), &keysym, &status);
-        TRACE("XmbLookupString needs %d byte(s)\n", ret);
+        TRACE_(key)("XmbLookupString needs %d byte(s)\n", ret);
         if (status == XBufferOverflow)
         {
             lpChar = HeapAlloc(GetProcessHeap(), 0, ret);
             if (lpChar == NULL)
             {
-                ERR("Failed to allocate memory!\n");
+                ERR_(key)("Failed to allocate memory!\n");
                 wine_tsx11_unlock();
                 return 0;
             }
@@ -2586,9 +2586,9 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
 		ksname = "No Name";
 	    if ((keysym >> 8) != 0xff)
 		{
-		WARN("no char for keysym %04lx (%s) :\n",
+		WARN_(key)("no char for keysym %04lx (%s) :\n",
                     keysym, ksname);
-		WARN("virtKey=%X, scanCode=%X, keycode=%u, state=%X\n",
+		WARN_(key)("virtKey=%X, scanCode=%X, keycode=%u, state=%X\n",
                     virtKey, scanCode, e.keycode, e.state);
 		}
 	    }
