@@ -943,11 +943,12 @@ typedef union _printf_arg
     LONGLONG get_longlong;
     double get_double;
 } printf_arg;
-typedef printf_arg (*args_clbk)(void*, int, size_t, __ms_va_list*);
+typedef printf_arg (*args_clbk)(void*, int, int, __ms_va_list*);
 int pf_printf_a(puts_clbk_a, void*, const char*, MSVCRT__locale_t,
         BOOL, BOOL, args_clbk, void*, __ms_va_list);
 int pf_printf_w(puts_clbk_w, void*, const MSVCRT_wchar_t*, MSVCRT__locale_t,
         BOOL, BOOL, args_clbk, void*, __ms_va_list);
+printf_arg arg_clbk_valist(void*, int, int, __ms_va_list*);
 
 #define MSVCRT__OVERFLOW  3
 #define MSVCRT__UNDERFLOW 4

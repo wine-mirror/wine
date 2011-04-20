@@ -298,37 +298,30 @@ int CDECL _kbhit(void)
   return retval;
 }
 
+static int puts_clbk_console_a(void *ctx, int len, const char *str)
+{
+    LOCK_CONSOLE;
+    if(!WriteConsoleA(MSVCRT_console_out, str, len, NULL, NULL))
+        len = -1;
+    UNLOCK_CONSOLE;
+    return len;
+}
+
+static int puts_clbk_console_w(void *ctx, int len, const MSVCRT_wchar_t *str)
+{
+    LOCK_CONSOLE;
+    if(!WriteConsoleW(MSVCRT_console_out, str, len, NULL, NULL))
+        len = -1;
+    UNLOCK_CONSOLE;
+    return len;
+}
 
 /*********************************************************************
  *		_vcprintf (MSVCRT.@)
  */
 int CDECL _vcprintf(const char* format, __ms_va_list valist)
 {
-  char buf[2048];
-  LPWSTR formatW = NULL;
-  DWORD sz;
-  pf_output out;
-  int retval;
-
-  out.unicode = FALSE;
-  out.buf.A = out.grow.A = buf;
-  out.used = 0;
-  out.len = sizeof(buf);
-
-  sz = MultiByteToWideChar( CP_ACP, 0, format, -1, NULL, 0 );
-  formatW = HeapAlloc( GetProcessHeap(), 0, sz*sizeof(WCHAR) );
-  MultiByteToWideChar( CP_ACP, 0, format, -1, formatW, sz );
-
-  if ((retval = pf_vsnprintf( &out, formatW, NULL, FALSE, valist )) > 0)
-  {
-      LOCK_CONSOLE;
-      retval = _cputs( out.buf.A );
-      UNLOCK_CONSOLE;
-  }
-  HeapFree( GetProcessHeap(), 0, formatW );
-  if (out.buf.A != buf)
-    MSVCRT_free (out.buf.A);
-  return retval;
+    return pf_printf_a(puts_clbk_console_a, NULL, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, valist);
 }
 
 /*********************************************************************
@@ -352,24 +345,7 @@ int CDECL _cprintf(const char* format, ...)
  */
 int CDECL _vcwprintf(const MSVCRT_wchar_t* format, __ms_va_list valist)
 {
-  MSVCRT_wchar_t buf[2048];
-  pf_output out;
-  int retval;
-
-  out.unicode = TRUE;
-  out.buf.W = out.grow.W = buf;
-  out.used = 0;
-  out.len = sizeof(buf) / sizeof(buf[0]);
-
-  if ((retval = pf_vsnprintf( &out, format, NULL, FALSE, valist )) >= 0)
-  {
-      LOCK_CONSOLE;
-      retval = _cputws( out.buf.W );
-      UNLOCK_CONSOLE;
-  }
-  if (out.buf.W != buf)
-    MSVCRT_free (out.buf.W);
-  return retval;
+    return pf_printf_w(puts_clbk_console_w, NULL, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, valist);
 }
 
 /*********************************************************************
