@@ -171,6 +171,26 @@ struct d3dx_technique *is_valid_technique(struct ID3DXBaseEffectImpl *base, D3DX
     return NULL;
 }
 
+struct d3dx_pass *is_valid_pass(struct ID3DXBaseEffectImpl *base, D3DXHANDLE pass)
+{
+    unsigned int i, k;
+
+    for (i = 0; i < base->technique_count; ++i)
+    {
+        struct d3dx_technique *technique = get_technique_struct(base->technique_handles[i]);
+
+        for (k = 0; k < technique->pass_count; ++k)
+        {
+            if (technique->pass_handles[k] == pass)
+            {
+                return get_pass_struct(pass);
+            }
+        }
+    }
+
+    return NULL;
+}
+
 struct d3dx_parameter *is_valid_sub_parameter(struct d3dx_parameter *param, D3DXHANDLE parameter)
 {
     unsigned int i, count;
@@ -513,10 +533,24 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetTechniqueDesc(ID3DXBaseEffect *ifac
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetPassDesc(ID3DXBaseEffect *iface, D3DXHANDLE pass, D3DXPASS_DESC *desc)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_pass *p = is_valid_pass(This, pass);
 
-    FIXME("iface %p, pass %p, desc %p stub\n", This, pass, desc);
+    TRACE("iface %p, pass %p, desc %p\n", This, pass, desc);
 
-    return E_NOTIMPL;
+    if (!desc || !p)
+    {
+        WARN("Invalid argument specified.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    desc->Name = p->name;
+    desc->Annotations = p->annotation_count;
+
+    FIXME("Pixel shader and vertex shader are not supported, yet.\n");
+    desc->pVertexShaderFunction = NULL;
+    desc->pVertexShaderFunction = NULL;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetFunctionDesc(ID3DXBaseEffect *iface, D3DXHANDLE shader, D3DXFUNCTION_DESC *desc)
