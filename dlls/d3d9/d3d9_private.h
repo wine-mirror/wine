@@ -188,8 +188,8 @@ HRESULT device_init(IDirect3DDevice9Impl *device, struct wined3d *wined3d, UINT 
 typedef struct IDirect3DVolume9Impl
 {
     /* IUnknown fields */
-    const IDirect3DVolume9Vtbl *lpVtbl;
-    LONG                    ref;
+    IDirect3DVolume9 IDirect3DVolume9_iface;
+    LONG ref;
     struct wined3d_volume *wined3d_volume;
     IUnknown *container;
     IUnknown *forwardReference;
