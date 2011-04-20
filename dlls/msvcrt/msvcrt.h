@@ -934,6 +934,21 @@ typedef struct pf_output_t
 int pf_vsnprintf( pf_output *out, const WCHAR *format,
                   MSVCRT__locale_t locale, BOOL valid, __ms_va_list valist );
 
+typedef int (*puts_clbk_a)(void*, int, const char*);
+typedef int (*puts_clbk_w)(void*, int, const MSVCRT_wchar_t*);
+typedef union _printf_arg
+{
+    void *get_ptr;
+    int get_int;
+    LONGLONG get_longlong;
+    double get_double;
+} printf_arg;
+typedef printf_arg (*args_clbk)(void*, int, size_t, __ms_va_list*);
+int pf_printf_a(puts_clbk_a, void*, const char*, MSVCRT__locale_t,
+        BOOL, BOOL, args_clbk, void*, __ms_va_list);
+int pf_printf_w(puts_clbk_w, void*, const MSVCRT_wchar_t*, MSVCRT__locale_t,
+        BOOL, BOOL, args_clbk, void*, __ms_va_list);
+
 #define MSVCRT__OVERFLOW  3
 #define MSVCRT__UNDERFLOW 4
 

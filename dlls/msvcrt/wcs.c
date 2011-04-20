@@ -27,11 +27,16 @@
 #include <assert.h>
 #include "msvcrt.h"
 #include "winnls.h"
+#include "wtypes.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+#include "printf.h"
+#define PRINTF_WIDE
+#include "printf.h"
+#undef PRINTF_WIDE
 
 /*********************************************************************
  *		_wcsdup (MSVCRT.@)
