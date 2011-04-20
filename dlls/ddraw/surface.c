@@ -244,6 +244,9 @@ void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
         WARN("(%p): Destroying surface with refount %d\n", This, This->ref);
     }
 
+    if (This->WineD3DSurface)
+        IWineD3DSurface_Release(This->WineD3DSurface);
+
     /* Check for attached surfaces and detach them */
     if(This->first_attached != This)
     {
@@ -275,10 +278,6 @@ void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
             assert(0);
         }
     }
-
-    /* Now destroy the surface. Wait: It could have been released if we are a texture */
-    if(This->WineD3DSurface)
-        IWineD3DSurface_Release(This->WineD3DSurface);
 
     /* Having a texture handle set implies that the device still exists */
     if(This->Handle)
