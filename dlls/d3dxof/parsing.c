@@ -340,7 +340,7 @@ static BOOL is_guid(parse_buffer* buf)
   if (buf->rem_bytes < 38 || *buf->buffer != '<')
     return FALSE;
   tmp[0] = '<';
-  while (*(buf->buffer+pos) != '>')
+  while (pos < sizeof(tmp) - 2 && *(buf->buffer+pos) != '>')
   {
     tmp[pos] = *(buf->buffer+pos);
     pos++;
@@ -381,7 +381,7 @@ static BOOL is_guid(parse_buffer* buf)
 
 static BOOL is_name(parse_buffer* buf)
 {
-  char tmp[50];
+  char tmp[512];
   DWORD pos = 0;
   char c;
   BOOL error = 0;
@@ -389,9 +389,11 @@ static BOOL is_name(parse_buffer* buf)
   {
     if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9')) || (c == '_') || (c == '-')))
       error = 1;
-    tmp[pos++] = c;
+    if (pos < sizeof(tmp))
+        tmp[pos] = c;
+    pos++;
   }
-  tmp[pos] = 0;
+  tmp[min(pos, sizeof(tmp) - 1)] = 0;
 
   if (error)
   {
@@ -410,7 +412,7 @@ static BOOL is_name(parse_buffer* buf)
 
 static BOOL is_float(parse_buffer* buf)
 {
-  char tmp[50];
+  char tmp[512];
   DWORD pos = 0;
   char c;
   float decimal;
@@ -422,9 +424,11 @@ static BOOL is_float(parse_buffer* buf)
       return FALSE;
     if (c == '.')
       dot = TRUE;
-    tmp[pos++] = c;
+    if (pos < sizeof(tmp))
+        tmp[pos] = c;
+    pos++;
   }
-  tmp[pos] = 0;
+  tmp[min(pos, sizeof(tmp) - 1)] = 0;
 
   buf->buffer += pos;
   buf->rem_bytes -= pos;
@@ -440,7 +444,7 @@ static BOOL is_float(parse_buffer* buf)
 
 static BOOL is_integer(parse_buffer* buf)
 {
-  char tmp[50];
+  char tmp[512];
   DWORD pos = 0;
   char c;
   DWORD integer;
@@ -449,9 +453,11 @@ static BOOL is_integer(parse_buffer* buf)
   {
     if (!((c >= '0') && (c <= '9')))
       return FALSE;
-    tmp[pos++] = c;
+    if (pos < sizeof(tmp))
+        tmp[pos] = c;
+    pos++;
   }
-  tmp[pos] = 0;
+  tmp[min(pos, sizeof(tmp) - 1)] = 0;
 
   buf->buffer += pos;
   buf->rem_bytes -= pos;
@@ -467,7 +473,7 @@ static BOOL is_integer(parse_buffer* buf)
 
 static BOOL is_string(parse_buffer* buf)
 {
-  char tmp[100];
+  char tmp[512];
   DWORD pos = 0;
   char c;
   BOOL ok = 0;
@@ -475,16 +481,18 @@ static BOOL is_string(parse_buffer* buf)
   if (*buf->buffer != '"')
     return FALSE;
 
-  while (pos < buf->rem_bytes && !is_operator(c = *(buf->buffer+pos+1)) && (pos < 99))
+  while (pos < buf->rem_bytes && !is_operator(c = *(buf->buffer+pos+1)))
   {
     if (c == '"')
     {
       ok = 1;
       break;
     }
-    tmp[pos++] = c;
+    if (pos < sizeof(tmp))
+        tmp[pos] = c;
+    pos++;
   }
-  tmp[pos] = 0;
+  tmp[min(pos, sizeof(tmp) - 1)] = 0;
 
   if (!ok)
   {
