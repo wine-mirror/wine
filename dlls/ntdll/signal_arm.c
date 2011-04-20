@@ -2,7 +2,7 @@
  * ARM signal handling routines
  *
  * Copyright 2002 Marcus Meissner, SuSE Linux AG
- * Copyright 2010 André Hentschel
+ * Copyright 2010, 2011 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -177,9 +177,25 @@ __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
                     "add r1, r1, #0x3\n\t"  /* CONTEXT_FULL */
                     "str r1, [r0]\n\t"      /* context->ContextFlags */
                     "ldmfd SP!, {r1}\n\t"
-                    "stmib r0, {r0-pc}\n\t" /* Push registers to pointer */
+                    "str r0, [r0, #0x4]\n\t"   /* context->R0 */
+                    "str r1, [r0, #0x8]\n\t"   /* context->R1 */
+                    "str r2, [r0, #0xc]\n\t"   /* context->R2 */
+                    "str r3, [r0, #0x10]\n\t"  /* context->R3 */
+                    "str r4, [r0, #0x14]\n\t"  /* context->R4 */
+                    "str r5, [r0, #0x18]\n\t"  /* context->R5 */
+                    "str r6, [r0, #0x1c]\n\t"  /* context->R6 */
+                    "str r7, [r0, #0x20]\n\t"  /* context->R7 */
+                    "str r8, [r0, #0x24]\n\t"  /* context->R8 */
+                    "str r9, [r0, #0x28]\n\t"  /* context->R9 */
+                    "str r10, [r0, #0x2c]\n\t" /* context->R10 */
+                    "str r11, [r0, #0x30]\n\t" /* context->Fp */
+                    "str IP, [r0, #0x34]\n\t"  /* context->Ip */
+                    "str SP, [r0, #0x38]\n\t"  /* context->Sp */
+                    "str LR, [r0, #0x3c]\n\t"  /* context->Lr */
+                    "str LR, [r0, #0x40]\n\t"  /* context->Pc */
                     "mrs r1, CPSR\n\t"
-                    "stmib r0, {r1}\n\t"    /* context->Cpsr */
+                    "str r1, [r0, #0x44]\n\t"  /* context->Cpsr */
+                    "mov PC, LR\n"
                     )
 
 
