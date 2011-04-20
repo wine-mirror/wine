@@ -436,6 +436,159 @@ static void free_effect_compiler(struct ID3DXEffectCompilerImpl *compiler)
     }
 }
 
+static LPSTR get_partial_string(LPCSTR name, char initial, char final)
+{
+    UINT length;
+    LPCSTR begin;
+    LPSTR part;
+
+    TRACE("name %s, initial %c, final %c\n", debugstr_a(name), initial, final);
+
+    begin = initial ? (strchr(name, initial) + 1) : name;
+    length = strchr(name, final) - begin;
+    if (length < 1)
+    {
+        WARN("Invalied argument specified.\n");
+        return NULL;
+    }
+
+    part = HeapAlloc(GetProcessHeap(), 0, length + 1);
+    if (!part)
+    {
+        ERR("Out of memory\n");
+        return NULL;
+    }
+    memcpy(part, begin, length);
+    part[length] = 0;
+
+    TRACE("part %s\n", debugstr_a(part));
+    return part;
+}
+
+static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *base, struct d3dx_parameter *parameter, LPCSTR name, BOOL is_annotation)
+{
+    unsigned int i;
+    struct d3dx_parameter *temp_parameter;
+    LPSTR part;
+
+    TRACE("base %p, parameter %p, name %s, is_annotation %s\n", base, parameter, debugstr_a(name), is_annotation ? "YES" : "NO");
+
+    if (!name) return NULL;
+
+    /* members */
+    if (strchr(name, '.'))
+    {
+        part = get_partial_string(name, 0, '.');
+        temp_parameter = get_parameter_by_name(base, parameter, part, is_annotation);
+        HeapFree(GetProcessHeap(), 0, part);
+
+        if (temp_parameter)
+        {
+            temp_parameter = get_parameter_by_name(base, temp_parameter, strchr(name, '.') + 1, FALSE);
+            TRACE("Returning sub parameter %p\n", temp_parameter);
+            return temp_parameter;
+        }
+
+        TRACE("Sub parameter not found\n");
+        return NULL;
+    }
+
+    /* annotations */
+    if (strchr(name, '@'))
+    {
+        part = get_partial_string(name, 0, '@');
+        temp_parameter = get_parameter_by_name(base, parameter, part, is_annotation);
+        HeapFree(GetProcessHeap(), 0, part);
+
+        if (temp_parameter)
+        {
+            temp_parameter = get_parameter_by_name(base, temp_parameter, strchr(name, '@') + 1, TRUE);
+            TRACE("Returning sub parameter %p\n", temp_parameter);
+            return temp_parameter;
+        }
+
+        TRACE("Sub parameter not found\n");
+        return NULL;
+    }
+
+    /* elements */
+    if (strchr(name, '['))
+    {
+        part = get_partial_string(name, 0, '[');
+        temp_parameter = get_parameter_by_name(base, parameter, part, is_annotation);
+        HeapFree(GetProcessHeap(), 0, part);
+
+        if (temp_parameter)
+        {
+            unsigned int index;
+
+            part = get_partial_string(name, '[', ']');
+            index = atoi(part);
+            HeapFree(GetProcessHeap(), 0, part);
+
+            if (index < temp_parameter->element_count)
+            {
+                TRACE("Returning sub parameter %p\n", get_parameter_struct(temp_parameter->member_handles[index]));
+                return get_parameter_struct(temp_parameter->member_handles[index]);
+            }
+        }
+
+        TRACE("Sub parameter not found\n");
+        return NULL;
+    }
+
+    if (!parameter)
+    {
+        for (i=0; i < base->parameter_count; i++)
+        {
+            temp_parameter = get_parameter_struct(base->parameter_handles[i]);
+
+            if (!strcmp(temp_parameter->name, name))
+            {
+                TRACE("Returning parameter %p\n", temp_parameter);
+                return temp_parameter;
+            }
+        }
+    }
+    else
+    {
+        if (is_annotation)
+        {
+            for (i = 0; i < parameter->annotation_count; i++)
+            {
+                temp_parameter = get_parameter_struct(parameter->annotation_handles[i]);
+
+                if (!strcmp(temp_parameter->name, name))
+                {
+                    TRACE("Returning parameter %p\n", temp_parameter);
+                    return temp_parameter;
+                }
+            }
+        }
+        else
+        {
+            unsigned int count;
+
+            if (parameter->element_count) count = parameter->element_count;
+            else count = parameter->member_count;
+
+            for (i = 0; i < count; i++)
+            {
+                temp_parameter = get_parameter_struct(parameter->member_handles[i]);
+
+                if (!strcmp(temp_parameter->name, name))
+                {
+                    TRACE("Returning parameter %p\n", temp_parameter);
+                    return temp_parameter;
+                }
+            }
+        }
+    }
+
+    TRACE("Parameter not found\n");
+    return NULL;
+}
+
 static inline DWORD d3dx9_effect_version(DWORD major, DWORD minor)
 {
     return (0xfeff0000 | ((major) << 8) | (minor));
@@ -595,10 +748,24 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameter(ID3DXBaseEffect *iface
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterByName(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPCSTR name)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    D3DXHANDLE handle;
 
-    FIXME("iface %p, parameter %p, name %s stub\n", This, parameter, debugstr_a(name));
+    TRACE("iface %p, parameter %p, name %s\n", This, parameter, debugstr_a(name));
 
-    return NULL;
+    if (!param) param = get_parameter_by_name(This, NULL, parameter, FALSE);
+
+    if (!name)
+    {
+        handle = get_parameter_handle(param);
+        TRACE("Returning parameter %p\n", handle);
+        return handle;
+    }
+
+    handle = get_parameter_handle(get_parameter_by_name(This, param, name, FALSE));
+    TRACE("Returning parameter %p\n", handle);
+
+    return handle;
 }
 
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterBySemantic(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPCSTR semantic)
