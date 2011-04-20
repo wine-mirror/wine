@@ -1479,7 +1479,7 @@ static HRESULT WINAPI ID3DXEffectImpl_GetVectorArray(ID3DXEffect *iface, D3DXHAN
 
     TRACE("Forward iface %p, base %p\n", This, base);
 
-    return ID3DXBaseEffectImpl_SetVectorArray(base, parameter, vector, count);
+    return ID3DXBaseEffectImpl_GetVectorArray(base, parameter, vector, count);
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_SetMatrix(ID3DXEffect *iface, D3DXHANDLE parameter, CONST D3DXMATRIX *matrix)
@@ -2382,7 +2382,7 @@ static HRESULT WINAPI ID3DXEffectCompilerImpl_GetVectorArray(ID3DXEffectCompiler
 
     TRACE("Forward iface %p, base %p\n", This, base);
 
-    return ID3DXBaseEffectImpl_SetVectorArray(base, parameter, vector, count);
+    return ID3DXBaseEffectImpl_GetVectorArray(base, parameter, vector, count);
 }
 
 static HRESULT WINAPI ID3DXEffectCompilerImpl_SetMatrix(ID3DXEffectCompiler *iface, D3DXHANDLE parameter, CONST D3DXMATRIX *matrix)
