@@ -293,6 +293,100 @@ void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
     HeapFree(GetProcessHeap(), 0, This);
 }
 
+static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
+{
+    IDirectDrawSurfaceImpl *surf;
+    IUnknown *ifaceToRelease;
+    UINT i;
+
+    TRACE("surface %p.\n", surface);
+
+    if (surface->wined3d_texture) /* If it's a texture, destroy the wined3d texture. */
+        wined3d_texture_decref(surface->wined3d_texture);
+    else if (surface->wined3d_swapchain)
+    {
+        IDirectDrawImpl *ddraw = surface->ddraw;
+
+        /* If it's the render target, destroy the D3D device. */
+        if (ddraw->d3d_initialized && surface == ddraw->d3d_target)
+        {
+            TRACE("Destroying the render target, uninitializing D3D.\n");
+
+            for (i = 0; i < ddraw->numConvertedDecls; ++i)
+            {
+                wined3d_vertex_declaration_decref(ddraw->decls[i].decl);
+            }
+            HeapFree(GetProcessHeap(), 0, ddraw->decls);
+            ddraw->numConvertedDecls = 0;
+
+            if (FAILED(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice)))
+            {
+                ERR("Failed to uninit 3D.\n");
+            }
+            else
+            {
+                /* Free the d3d window if one was created. */
+                if (ddraw->d3d_window && ddraw->d3d_window != ddraw->dest_window)
+                {
+                    TRACE("Destroying the hidden render window %p.\n", ddraw->d3d_window);
+                    DestroyWindow(ddraw->d3d_window);
+                    ddraw->d3d_window = 0;
+                }
+            }
+
+            ddraw->d3d_initialized = FALSE;
+            ddraw->d3d_target = NULL;
+        }
+        else
+        {
+            IWineD3DDevice_UninitGDI(ddraw->wineD3DDevice);
+        }
+
+        surface->wined3d_swapchain = NULL;
+
+        /* Reset to the default surface implementation type. This is needed
+         * if applications use non render target surfaces and expect blits to
+         * work after destroying the render target.
+         *
+         * TODO: Recreate existing offscreen surfaces. */
+        ddraw->ImplType = DefaultSurfaceType;
+
+        TRACE("D3D unloaded.\n");
+    }
+
+    /* The refcount test shows that the palette is detached when the surface
+     * is destroyed. */
+    IDirectDrawSurface7_SetPalette((IDirectDrawSurface7 *)surface, NULL);
+
+    /* Loop through all complex attached surfaces and destroy them.
+     *
+     * Yet again, only the root can have more than one complexly attached
+     * surface, all the others have a total of one. */
+    for (i = 0; i < MAX_COMPLEX_ATTACHED; ++i)
+    {
+        if (!surface->complex_array[i])
+            break;
+
+        surf = surface->complex_array[i];
+        surface->complex_array[i] = NULL;
+        while (surf)
+        {
+            IDirectDrawSurfaceImpl *destroy = surf;
+            surf = surf->complex_array[0];              /* Iterate through the "tree" */
+            ddraw_surface_destroy(destroy);             /* Destroy it */
+        }
+    }
+
+    ifaceToRelease = surface->ifaceToRelease;
+
+    /* Destroy the root surface. */
+    ddraw_surface_destroy(surface);
+
+    /* Reduce the ddraw refcount */
+    if (ifaceToRelease)
+        IUnknown_Release(ifaceToRelease);
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::Release
  *
@@ -331,12 +425,6 @@ static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
 
     if (ref == 0)
     {
-
-        IDirectDrawSurfaceImpl *surf;
-        IDirectDrawImpl *ddraw;
-        IUnknown *ifaceToRelease = This->ifaceToRelease;
-        UINT i;
-
         /* Complex attached surfaces are destroyed implicitly when the root is released */
         EnterCriticalSection(&ddraw_cs);
         if(!This->is_complex_root)
@@ -345,98 +433,7 @@ static ULONG WINAPI ddraw_surface7_Release(IDirectDrawSurface7 *iface)
             LeaveCriticalSection(&ddraw_cs);
             return ref;
         }
-        ddraw = This->ddraw;
-
-        /* If it's a texture, destroy the WineD3DTexture.
-         * WineD3D will destroy the IParent interfaces
-         * of the sublevels, which destroys the WineD3DSurfaces.
-         * Set the surfaces to NULL to avoid destroying them again later
-         */
-        if (This->wined3d_texture)
-            wined3d_texture_decref(This->wined3d_texture);
-
-        /* If it's the RenderTarget, destroy the d3ddevice */
-        else if (This->wined3d_swapchain)
-        {
-            if((ddraw->d3d_initialized) && (This == ddraw->d3d_target)) {
-                TRACE("(%p) Destroying the render target, uninitializing D3D\n", This);
-
-                for (i = 0; i < ddraw->numConvertedDecls; ++i)
-                {
-                    wined3d_vertex_declaration_decref(ddraw->decls[i].decl);
-                }
-                HeapFree(GetProcessHeap(), 0, ddraw->decls);
-                ddraw->numConvertedDecls = 0;
-
-                if (FAILED(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice)))
-                {
-                    /* Not good */
-                    ERR("(%p) Failed to uninit 3D\n", This);
-                }
-                else
-                {
-                    /* Free the d3d window if one was created */
-                    if(ddraw->d3d_window != 0 && ddraw->d3d_window != ddraw->dest_window)
-                    {
-                        TRACE(" (%p) Destroying the hidden render window %p\n", This, ddraw->d3d_window);
-                        DestroyWindow(ddraw->d3d_window);
-                        ddraw->d3d_window = 0;
-                    }
-                    /* Unset the pointers */
-                }
-
-                This->wined3d_swapchain = NULL; /* Uninit3D releases the swapchain */
-                ddraw->d3d_initialized = FALSE;
-                ddraw->d3d_target = NULL;
-            }
-            else
-            {
-                IWineD3DDevice_UninitGDI(ddraw->wineD3DDevice);
-                This->wined3d_swapchain = NULL;
-            }
-
-            /* Reset to the default surface implementation type. This is needed if apps use
-             * non render target surfaces and expect blits to work after destroying the render
-             * target.
-             *
-             * TODO: Recreate existing offscreen surfaces
-             */
-            ddraw->ImplType = DefaultSurfaceType;
-
-            /* Write a trace because D3D unloading was the reason for many
-             * crashes during development.
-             */
-            TRACE("(%p) D3D unloaded\n", This);
-        }
-
-        /* The refcount test shows that the palette is detached when the surface is destroyed */
-        IDirectDrawSurface7_SetPalette((IDirectDrawSurface7 *)This, NULL);
-
-        /* Loop through all complex attached surfaces,
-         * and destroy them.
-         *
-         * Yet again, only the root can have more than one complexly attached surface, all the others
-         * have a total of one;
-         */
-        for(i = 0; i < MAX_COMPLEX_ATTACHED; i++)
-        {
-            if(!This->complex_array[i]) break;
-
-            surf = This->complex_array[i];
-            This->complex_array[i] = NULL;
-            while(surf)
-            {
-                IDirectDrawSurfaceImpl *destroy = surf;
-                surf = surf->complex_array[0];              /* Iterate through the "tree" */
-                ddraw_surface_destroy(destroy);             /* Destroy it */
-            }
-        }
-
-        /* Destroy the root surface. */
-        ddraw_surface_destroy(This);
-
-        /* Reduce the ddraw refcount */
-        if(ifaceToRelease) IUnknown_Release(ifaceToRelease);
+        ddraw_surface_cleanup(This);
         LeaveCriticalSection(&ddraw_cs);
     }
 
