@@ -155,7 +155,7 @@ static void test_refcount(void)
     ref = getRefcount( (IUnknown *) lpdxfeo);
     ok(ref == 1, "Got refcount %d, expected 1\n", ref);
     ref = getRefcount( (IUnknown *) lpdxfd);
-    ok(ref == 2, "Got refcount %d, expected 1\n", ref);
+    ok(ref == 2, "Got refcount %d, expected 2\n", ref);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
     ok(ref == 0, "Got refcount %d, expected 0\n", ref);
