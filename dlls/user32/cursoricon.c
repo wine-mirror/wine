@@ -1403,7 +1403,15 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 
     if (!(hRsrc = FindResourceW( hInstance, name,
                                  (LPWSTR)(fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON) )))
-        return 0;
+    {
+        /* try animated resource */
+        if (!(hRsrc = FindResourceW( hInstance, name,
+                                    (LPWSTR)(fCursor ? RT_ANICURSOR : RT_ANIICON) ))) return 0;
+        if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
+        bits = LockResource( handle );
+        return CURSORICON_CreateIconFromANI( bits, SizeofResource( hInstance, handle ),
+                                             width, height, depth, !fCursor, loadflags );
+    }
 
     /* Find the best entry in the directory */
 
