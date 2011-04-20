@@ -246,50 +246,6 @@ void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
 
     if (This->WineD3DSurface)
         IWineD3DSurface_Release(This->WineD3DSurface);
-
-    /* Check for attached surfaces and detach them */
-    if(This->first_attached != This)
-    {
-        /* Well, this shouldn't happen: The surface being attached is addref()ed
-          * in AddAttachedSurface, so it shouldn't be released until DeleteAttachedSurface
-          * is called, because the refcount is held. It looks like the app released()
-          * it often enough to force this
-          */
-        IDirectDrawSurface7 *root = (IDirectDrawSurface7 *)This->first_attached;
-        IDirectDrawSurface7 *detach = (IDirectDrawSurface7 *)This;
-
-        FIXME("(%p) Freeing a surface that is attached to surface %p\n", This, This->first_attached);
-
-        /* The refcount will drop to -1 here */
-        if(IDirectDrawSurface7_DeleteAttachedSurface(root, 0, detach) != DD_OK)
-        {
-            ERR("(%p) DeleteAttachedSurface failed!\n", This);
-        }
-    }
-
-    while(This->next_attached != NULL)
-    {
-        IDirectDrawSurface7 *root = (IDirectDrawSurface7 *)This;
-        IDirectDrawSurface7 *detach = (IDirectDrawSurface7 *)This->next_attached;
-
-        if(IDirectDrawSurface7_DeleteAttachedSurface(root, 0, detach) != DD_OK)
-        {
-            ERR("(%p) DeleteAttachedSurface failed!\n", This);
-            assert(0);
-        }
-    }
-
-    /* Having a texture handle set implies that the device still exists */
-    if(This->Handle)
-    {
-        ddraw_free_handle(&This->ddraw->d3ddevice->handle_table, This->Handle - 1, DDRAW_HANDLE_SURFACE);
-    }
-
-    /* Reduce the ddraw surface count */
-    InterlockedDecrement(&This->ddraw->surfaces);
-    list_remove(&This->surface_list_entry);
-
-    HeapFree(GetProcessHeap(), 0, This);
 }
 
 static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
@@ -3486,6 +3442,55 @@ static const struct IDirect3DTextureVtbl d3d_texture1_vtbl =
     d3d_texture1_Unload,
 };
 
+static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *parent)
+{
+    IDirectDrawSurfaceImpl *surface = parent;
+
+    TRACE("surface %p.\n", surface);
+
+    /* Check for attached surfaces and detach them. */
+    if (surface->first_attached != surface)
+    {
+        IDirectDrawSurface7 *root = (IDirectDrawSurface7 *)surface->first_attached;
+        IDirectDrawSurface7 *detach = (IDirectDrawSurface7 *)surface;
+
+        /* Well, this shouldn't happen: The surface being attached is
+         * referenced in AddAttachedSurface(), so it shouldn't be released
+         * until DeleteAttachedSurface() is called, because the refcount is
+         * held. It looks like the application released it often enough to
+         * force this. */
+        WARN("Surface is still attached to surface %p.\n", surface->first_attached);
+
+        /* The refcount will drop to -1 here */
+        if (FAILED(IDirectDrawSurface7_DeleteAttachedSurface(root, 0, detach)))
+            ERR("DeleteAttachedSurface failed.\n");
+    }
+
+    while (surface->next_attached)
+    {
+        IDirectDrawSurface7 *root = (IDirectDrawSurface7 *)surface;
+        IDirectDrawSurface7 *detach = (IDirectDrawSurface7 *)surface->next_attached;
+
+        if (FAILED(IDirectDrawSurface7_DeleteAttachedSurface(root, 0, detach)))
+            ERR("DeleteAttachedSurface failed.\n");
+    }
+
+    /* Having a texture handle set implies that the device still exists. */
+    if (surface->Handle)
+        ddraw_free_handle(&surface->ddraw->d3ddevice->handle_table, surface->Handle - 1, DDRAW_HANDLE_SURFACE);
+
+    /* Reduce the ddraw surface count. */
+    InterlockedDecrement(&surface->ddraw->surfaces);
+    list_remove(&surface->surface_list_entry);
+
+    HeapFree(GetProcessHeap(), 0, surface);
+}
+
+const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops =
+{
+    ddraw_surface_wined3d_object_destroyed,
+};
+
 HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
 {
     const DDSURFACEDESC2 *desc = &surface->surface_desc;
@@ -3599,7 +3604,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     hr = IWineD3DDevice_CreateSurface(ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight, format,
             TRUE /* Lockable */, FALSE /* Discard */, mip_level, usage, pool,
             WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, surface_type, surface,
-            &ddraw_null_wined3d_parent_ops, &surface->WineD3DSurface);
+            &ddraw_surface_wined3d_parent_ops, &surface->WineD3DSurface);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d surface, hr %#x.\n", hr);

@@ -2548,7 +2548,7 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, wined3d_desc.width, wined3d_desc.height,
             wined3d_desc.format, TRUE, FALSE, surfImpl->mipmap_level, wined3d_desc.usage, wined3d_desc.pool,
             wined3d_desc.multisample_type, wined3d_desc.multisample_quality, This->ImplType,
-            parent, &ddraw_null_wined3d_parent_ops, &surfImpl->WineD3DSurface);
+            parent, &ddraw_surface_wined3d_parent_ops, &surfImpl->WineD3DSurface);
     if (FAILED(hr))
     {
         surfImpl->WineD3DSurface = wineD3DSurface;
