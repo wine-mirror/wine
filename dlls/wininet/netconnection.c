@@ -162,6 +162,7 @@ MAKE_FUNCPTR(ERR_free_strings);
 MAKE_FUNCPTR(ERR_get_error);
 MAKE_FUNCPTR(ERR_error_string);
 MAKE_FUNCPTR(X509_STORE_CTX_get_ex_data);
+MAKE_FUNCPTR(X509_STORE_CTX_get_chain);
 MAKE_FUNCPTR(i2d_X509);
 MAKE_FUNCPTR(sk_num);
 MAKE_FUNCPTR(sk_value);
@@ -328,13 +329,14 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
         X509 *cert;
         int i;
         PCCERT_CONTEXT endCert = NULL;
+        struct stack_st *chain = (struct stack_st *)pX509_STORE_CTX_get_chain( ctx );
 
         ret = TRUE;
-        for (i = 0; ret && i < psk_num((struct stack_st *)ctx->chain); i++)
+        for (i = 0; ret && i < psk_num(chain); i++)
         {
             PCCERT_CONTEXT context;
 
-            cert = (X509 *)psk_value((struct stack_st *)ctx->chain, i);
+            cert = (X509 *)psk_value(chain, i);
             if ((context = X509_to_cert_context(cert)))
             {
                 if (i == 0)
@@ -452,6 +454,7 @@ DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	DYNCRYPTO(ERR_get_error);
 	DYNCRYPTO(ERR_error_string);
 	DYNCRYPTO(X509_STORE_CTX_get_ex_data);
+	DYNCRYPTO(X509_STORE_CTX_get_chain);
 	DYNCRYPTO(i2d_X509);
 	DYNCRYPTO(sk_num);
 	DYNCRYPTO(sk_value);
