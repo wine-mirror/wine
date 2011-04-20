@@ -827,7 +827,7 @@
 # extern _pwctype
 @ cdecl _read(long ptr long) MSVCRT__read
 # stub _realloc_dbg
-# stub _resetstkoflw
+@ cdecl _resetstkoflw()
 @ cdecl _rmdir(str) MSVCRT__rmdir
 @ cdecl _rmtmp()
 @ cdecl _rotl(long long)

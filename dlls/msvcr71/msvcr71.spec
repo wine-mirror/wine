@@ -494,7 +494,7 @@
 @ cdecl _putws(wstr) msvcrt._putws
 @ extern _pwctype msvcrt._pwctype
 @ cdecl _read(long ptr long) msvcrt._read
-@ stub _resetstkoflw
+@ cdecl _resetstkoflw() msvcrt._resetstkoflw
 @ cdecl _rmdir(str) msvcrt._rmdir
 @ cdecl _rmtmp() msvcrt._rmtmp
 @ cdecl _rotl(long long) msvcrt._rotl

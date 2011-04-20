@@ -879,7 +879,7 @@
 @ cdecl _realloc_crt(ptr long) msvcrt.realloc
 @ cdecl _recalloc(ptr long long)
 @ stub _recalloc_crt
-@ stub _resetstkoflw
+@ cdecl _resetstkoflw() msvcrt._resetstkoflw
 @ cdecl _rmdir(str) msvcrt._rmdir
 @ cdecl _rmtmp() msvcrt._rmtmp
 @ cdecl _rotl(long long) msvcrt._rotl
