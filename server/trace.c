@@ -3854,6 +3854,8 @@ static void dump_set_cursor_reply( const struct set_cursor_reply *req )
 {
     fprintf( stderr, " prev_handle=%08x", req->prev_handle );
     fprintf( stderr, ", prev_count=%d", req->prev_count );
+    fprintf( stderr, ", prev_x=%d", req->prev_x );
+    fprintf( stderr, ", prev_y=%d", req->prev_y );
     fprintf( stderr, ", new_x=%d", req->new_x );
     fprintf( stderr, ", new_y=%d", req->new_y );
     dump_rectangle( ", new_clip=", &req->new_clip );

@@ -2650,6 +2650,8 @@ DECL_HANDLER(set_cursor)
 
     reply->prev_handle = input->cursor;
     reply->prev_count  = input->cursor_count;
+    reply->prev_x      = input->desktop->cursor.x;
+    reply->prev_y      = input->desktop->cursor.y;
 
     if (req->flags & SET_CURSOR_HANDLE)
     {

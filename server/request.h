@@ -2101,11 +2101,13 @@ C_ASSERT( FIELD_OFFSET(struct set_cursor_request, clip_msg) == 48 );
 C_ASSERT( sizeof(struct set_cursor_request) == 56 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, prev_handle) == 8 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, prev_count) == 12 );
-C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_x) == 16 );
-C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_y) == 20 );
-C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_clip) == 24 );
-C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, last_change) == 40 );
-C_ASSERT( sizeof(struct set_cursor_reply) == 48 );
+C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, prev_x) == 16 );
+C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, prev_y) == 20 );
+C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_x) == 24 );
+C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_y) == 28 );
+C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_clip) == 32 );
+C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, last_change) == 48 );
+C_ASSERT( sizeof(struct set_cursor_reply) == 56 );
 
 #endif  /* WANT_REQUEST_HANDLERS */
 

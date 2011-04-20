@@ -4801,11 +4801,13 @@ struct set_cursor_reply
     struct reply_header __header;
     user_handle_t  prev_handle;
     int            prev_count;
+    int            prev_x;
+    int            prev_y;
     int            new_x;
     int            new_y;
     rectangle_t    new_clip;
     unsigned int   last_change;
-    char __pad_44[4];
+    char __pad_52[4];
 };
 #define SET_CURSOR_HANDLE 0x01
 #define SET_CURSOR_COUNT  0x02
@@ -5558,6 +5560,6 @@ union generic_reply
     struct set_cursor_reply set_cursor_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 421
+#define SERVER_PROTOCOL_VERSION 422
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

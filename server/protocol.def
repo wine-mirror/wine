@@ -3317,6 +3317,8 @@ enum coords_relative
 @REPLY
     user_handle_t  prev_handle;   /* previous handle */
     int            prev_count;    /* previous show count */
+    int            prev_x;        /* previous position */
+    int            prev_y;
     int            new_x;         /* new position */
     int            new_y;
     rectangle_t    new_clip;      /* new clip rectangle */
