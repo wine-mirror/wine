@@ -71,6 +71,8 @@ static inline int dispatch_signal(unsigned int sig)
  */
 static void save_context( CONTEXT *context, ucontext_t *ucontext )
 {
+    context->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+
     /* Special registers */
     context->psr = ucontext->uc_mcontext.gregs[REG_PSR];
     context->pc  = ucontext->uc_mcontext.gregs[REG_PC];
