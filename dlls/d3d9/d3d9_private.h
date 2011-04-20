@@ -350,8 +350,8 @@ HRESULT texture_init(IDirect3DTexture9Impl *texture, IDirect3DDevice9Impl *devic
  */
 typedef struct IDirect3DVolumeTexture9Impl
 {
-    const IDirect3DVolumeTexture9Vtbl *lpVtbl;
-    LONG                    ref;
+    IDirect3DVolumeTexture9 IDirect3DVolumeTexture9_iface;
+    LONG ref;
     struct wined3d_texture *wined3d_texture;
     IDirect3DDevice9Ex *parentDevice;
 } IDirect3DVolumeTexture9Impl;

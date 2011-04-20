@@ -803,7 +803,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateVolumeTexture(IDirect3DDevice9E
     }
 
     TRACE("Created volume texture %p.\n", object);
-    *texture = (IDirect3DVolumeTexture9 *)object;
+    *texture = &object->IDirect3DVolumeTexture9_iface;
 
     return D3D_OK;
 }

@@ -24,9 +24,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
-/* IDirect3DVolumeTexture9 IUnknown parts follow: */
-static HRESULT WINAPI IDirect3DVolumeTexture9Impl_QueryInterface(LPDIRECT3DVOLUMETEXTURE9 iface, REFIID riid, LPVOID* ppobj) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static inline IDirect3DVolumeTexture9Impl *impl_from_IDirect3DVolumeTexture9(IDirect3DVolumeTexture9 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DVolumeTexture9Impl, IDirect3DVolumeTexture9_iface);
+}
+
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_QueryInterface(IDirect3DVolumeTexture9 *iface,
+        REFIID riid, void **ppobj)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
 
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), ppobj);
 
@@ -44,8 +50,9 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_QueryInterface(LPDIRECT3DVOLUM
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirect3DVolumeTexture9Impl_AddRef(LPDIRECT3DVOLUMETEXTURE9 iface) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static ULONG WINAPI IDirect3DVolumeTexture9Impl_AddRef(IDirect3DVolumeTexture9 *iface)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("%p increasing refcount to %u.\n", iface, ref);
@@ -61,8 +68,9 @@ static ULONG WINAPI IDirect3DVolumeTexture9Impl_AddRef(LPDIRECT3DVOLUMETEXTURE9 
     return ref;
 }
 
-static ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9 iface) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(IDirect3DVolumeTexture9 *iface)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p decreasing refcount to %u.\n", iface, ref);
@@ -80,10 +88,10 @@ static ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9
     return ref;
 }
 
-/* IDirect3DVolumeTexture9 IDirect3DResource9 Interface follow: */
-static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetDevice(IDirect3DVolumeTexture9 *iface, IDirect3DDevice9 **device)
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetDevice(IDirect3DVolumeTexture9 *iface,
+        IDirect3DDevice9 **device)
 {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
@@ -95,8 +103,10 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetDevice(IDirect3DVolumeTextu
     return D3D_OK;
 }
 
-static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetPrivateData(LPDIRECT3DVOLUMETEXTURE9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetPrivateData(IDirect3DVolumeTexture9 *iface,
+        REFGUID refguid, const void *pData, DWORD SizeOfData, DWORD Flags)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
@@ -109,8 +119,10 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetPrivateData(LPDIRECT3DVOLUM
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetPrivateData(LPDIRECT3DVOLUMETEXTURE9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetPrivateData(IDirect3DVolumeTexture9 *iface,
+        REFGUID refguid, void *pData, DWORD *pSizeOfData)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p, data_size %p.\n",
@@ -123,8 +135,10 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetPrivateData(LPDIRECT3DVOLUM
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DVolumeTexture9Impl_FreePrivateData(LPDIRECT3DVOLUMETEXTURE9 iface, REFGUID refguid) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_FreePrivateData(IDirect3DVolumeTexture9 *iface,
+        REFGUID refguid)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     HRESULT hr;
 
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(refguid));
@@ -136,8 +150,10 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_FreePrivateData(LPDIRECT3DVOLU
     return hr;
 }
 
-static DWORD WINAPI IDirect3DVolumeTexture9Impl_SetPriority(LPDIRECT3DVOLUMETEXTURE9 iface, DWORD PriorityNew) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static DWORD WINAPI IDirect3DVolumeTexture9Impl_SetPriority(IDirect3DVolumeTexture9 *iface,
+        DWORD PriorityNew)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     DWORD priority;
 
     TRACE("iface %p, priority %u.\n", iface, PriorityNew);
@@ -149,8 +165,9 @@ static DWORD WINAPI IDirect3DVolumeTexture9Impl_SetPriority(LPDIRECT3DVOLUMETEXT
     return priority;
 }
 
-static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetPriority(LPDIRECT3DVOLUMETEXTURE9 iface) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetPriority(IDirect3DVolumeTexture9 *iface)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     DWORD priority;
 
     TRACE("iface %p.\n", iface);
@@ -162,8 +179,9 @@ static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetPriority(LPDIRECT3DVOLUMETEXT
     return priority;
 }
 
-static void WINAPI IDirect3DVolumeTexture9Impl_PreLoad(LPDIRECT3DVOLUMETEXTURE9 iface) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static void WINAPI IDirect3DVolumeTexture9Impl_PreLoad(IDirect3DVolumeTexture9 *iface)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
 
     TRACE("iface %p.\n", iface);
 
@@ -172,8 +190,9 @@ static void WINAPI IDirect3DVolumeTexture9Impl_PreLoad(LPDIRECT3DVOLUMETEXTURE9 
     wined3d_mutex_unlock();
 }
 
-static D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture9Impl_GetType(LPDIRECT3DVOLUMETEXTURE9 iface) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture9Impl_GetType(IDirect3DVolumeTexture9 *iface)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     D3DRESOURCETYPE type;
 
     TRACE("iface %p.\n", iface);
@@ -185,9 +204,9 @@ static D3DRESOURCETYPE WINAPI IDirect3DVolumeTexture9Impl_GetType(LPDIRECT3DVOLU
     return type;
 }
 
-/* IDirect3DVolumeTexture9 IDirect3DBaseTexture9 Interface follow: */
-static DWORD WINAPI IDirect3DVolumeTexture9Impl_SetLOD(LPDIRECT3DVOLUMETEXTURE9 iface, DWORD LODNew) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static DWORD WINAPI IDirect3DVolumeTexture9Impl_SetLOD(IDirect3DVolumeTexture9 *iface, DWORD LODNew)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     DWORD lod;
 
     TRACE("iface %p, lod %u.\n", iface, LODNew);
@@ -199,8 +218,9 @@ static DWORD WINAPI IDirect3DVolumeTexture9Impl_SetLOD(LPDIRECT3DVOLUMETEXTURE9 
     return lod;
 }
 
-static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLOD(LPDIRECT3DVOLUMETEXTURE9 iface) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLOD(IDirect3DVolumeTexture9 *iface)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     DWORD lod;
 
     TRACE("iface %p.\n", iface);
@@ -212,8 +232,9 @@ static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLOD(LPDIRECT3DVOLUMETEXTURE9 
     return lod;
 }
 
-static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLevelCount(LPDIRECT3DVOLUMETEXTURE9 iface) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLevelCount(IDirect3DVolumeTexture9 *iface)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     DWORD level_count;
 
     TRACE("iface %p.\n", iface);
@@ -225,8 +246,10 @@ static DWORD WINAPI IDirect3DVolumeTexture9Impl_GetLevelCount(LPDIRECT3DVOLUMETE
     return level_count;
 }
 
-static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetAutoGenFilterType(LPDIRECT3DVOLUMETEXTURE9 iface, D3DTEXTUREFILTERTYPE FilterType) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetAutoGenFilterType(IDirect3DVolumeTexture9 *iface,
+        D3DTEXTUREFILTERTYPE FilterType)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     HRESULT hr;
 
     TRACE("iface %p, filter_type %#x.\n", iface, FilterType);
@@ -238,8 +261,9 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_SetAutoGenFilterType(LPDIRECT3
     return hr;
 }
 
-static D3DTEXTUREFILTERTYPE WINAPI IDirect3DVolumeTexture9Impl_GetAutoGenFilterType(LPDIRECT3DVOLUMETEXTURE9 iface) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static D3DTEXTUREFILTERTYPE WINAPI IDirect3DVolumeTexture9Impl_GetAutoGenFilterType(IDirect3DVolumeTexture9 *iface)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
     D3DTEXTUREFILTERTYPE filter_type;
 
     TRACE("iface %p.\n", iface);
@@ -251,8 +275,9 @@ static D3DTEXTUREFILTERTYPE WINAPI IDirect3DVolumeTexture9Impl_GetAutoGenFilterT
     return filter_type;
 }
 
-static void WINAPI IDirect3DVolumeTexture9Impl_GenerateMipSubLevels(LPDIRECT3DVOLUMETEXTURE9 iface) {
-    IDirect3DVolumeTexture9Impl *This = (IDirect3DVolumeTexture9Impl *)iface;
+static void WINAPI IDirect3DVolumeTexture9Impl_GenerateMipSubLevels(IDirect3DVolumeTexture9 *iface)
+{
+    IDirect3DVolumeTexture9Impl *This = impl_from_IDirect3DVolumeTexture9(iface);
 
     TRACE("iface %p.\n", iface);
 
@@ -264,7 +289,7 @@ static void WINAPI IDirect3DVolumeTexture9Impl_GenerateMipSubLevels(LPDIRECT3DVO
 static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetLevelDesc(IDirect3DVolumeTexture9 *iface,
         UINT level, D3DVOLUME_DESC *desc)
 {
-    IDirect3DVolumeTexture9Impl *texture = (IDirect3DVolumeTexture9Impl *)iface;
+    IDirect3DVolumeTexture9Impl *texture = impl_from_IDirect3DVolumeTexture9(iface);
     struct wined3d_resource *sub_resource;
     HRESULT hr = D3D_OK;
 
@@ -294,7 +319,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetLevelDesc(IDirect3DVolumeTe
 static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(IDirect3DVolumeTexture9 *iface,
         UINT level, IDirect3DVolume9 **volume)
 {
-    IDirect3DVolumeTexture9Impl *texture = (IDirect3DVolumeTexture9Impl *)iface;
+    IDirect3DVolumeTexture9Impl *texture = impl_from_IDirect3DVolumeTexture9(iface);
     struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, level %u, volume %p.\n", iface, level, volume);
@@ -316,7 +341,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_GetVolumeLevel(IDirect3DVolume
 static HRESULT WINAPI IDirect3DVolumeTexture9Impl_LockBox(IDirect3DVolumeTexture9 *iface,
         UINT level, D3DLOCKED_BOX *locked_box, const D3DBOX *box, DWORD flags)
 {
-    IDirect3DVolumeTexture9Impl *texture = (IDirect3DVolumeTexture9Impl *)iface;
+    IDirect3DVolumeTexture9Impl *texture = impl_from_IDirect3DVolumeTexture9(iface);
     struct wined3d_resource *sub_resource;
     HRESULT hr;
 
@@ -334,9 +359,10 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_LockBox(IDirect3DVolumeTexture
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DVolumeTexture9Impl_UnlockBox(IDirect3DVolumeTexture9 *iface, UINT level)
+static HRESULT WINAPI IDirect3DVolumeTexture9Impl_UnlockBox(IDirect3DVolumeTexture9 *iface,
+        UINT level)
 {
-    IDirect3DVolumeTexture9Impl *texture = (IDirect3DVolumeTexture9Impl *)iface;
+    IDirect3DVolumeTexture9Impl *texture = impl_from_IDirect3DVolumeTexture9(iface);
     struct wined3d_resource *sub_resource;
     HRESULT hr;
 
@@ -355,7 +381,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture9Impl_UnlockBox(IDirect3DVolumeTextu
 static HRESULT WINAPI IDirect3DVolumeTexture9Impl_AddDirtyBox(IDirect3DVolumeTexture9 *iface,
         const D3DBOX *dirty_box)
 {
-    IDirect3DVolumeTexture9Impl *texture = (IDirect3DVolumeTexture9Impl *)iface;
+    IDirect3DVolumeTexture9Impl *texture = impl_from_IDirect3DVolumeTexture9(iface);
     HRESULT hr;
 
     TRACE("iface %p, dirty_box %p.\n", iface, dirty_box);
@@ -413,7 +439,7 @@ HRESULT volumetexture_init(IDirect3DVolumeTexture9Impl *texture, IDirect3DDevice
 {
     HRESULT hr;
 
-    texture->lpVtbl = &Direct3DVolumeTexture9_Vtbl;
+    texture->IDirect3DVolumeTexture9_iface.lpVtbl = &Direct3DVolumeTexture9_Vtbl;
     texture->ref = 1;
 
     wined3d_mutex_lock();
