@@ -106,7 +106,31 @@ static inline BOOL pt_in_rect( const RECT *rect, const POINT *pt )
             (pt->y >= rect->top) && (pt->y < rect->bottom));
 }
 
-static void WINAPI solid_pen_line_callback(INT x, INT y, LPARAM lparam)
+/**********************************************************************
+ *                  get_octant_number
+ *
+ * Return the octant number starting clockwise from the +ve x-axis.
+ */
+static inline int get_octant_number(int dx, int dy)
+{
+    if(dy > 0)
+        if(dx > 0)
+            return ( dx >  dy) ? 1 : 2;
+        else
+            return (-dx >  dy) ? 4 : 3;
+    else
+        if(dx < 0)
+            return (-dx > -dy) ? 5 : 6;
+        else
+            return ( dx > -dy) ? 8 : 7;
+}
+
+static inline DWORD get_octant_mask(int dx, int dy)
+{
+    return 1 << (get_octant_number(dx, dy) - 1);
+}
+
+static void solid_pen_line_callback(INT x, INT y, LPARAM lparam)
 {
     dibdrv_physdev *pdev = (dibdrv_physdev *)lparam;
     RECT rect;
@@ -117,6 +141,61 @@ static void WINAPI solid_pen_line_callback(INT x, INT y, LPARAM lparam)
     rect.bottom = y + 1;
     pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->pen_and, pdev->pen_xor);
     return;
+}
+
+static void bres_line_with_bias(INT x1, INT y1, INT x2, INT y2, void (* callback)(INT,INT,LPARAM), LPARAM lParam)
+{
+    INT xadd = 1, yadd = 1;
+    INT err, erradd;
+    INT cnt;
+    INT dx = x2 - x1;
+    INT dy = y2 - y1;
+    DWORD octant = get_octant_mask(dx, dy);
+    INT bias = 0;
+
+    /* Octants 3, 5, 6 and 8 take a bias */
+    if(octant & 0xb4) bias = 1;
+
+    if (dx < 0)
+    {
+        dx = -dx;
+        xadd = -1;
+    }
+    if (dy < 0)
+    {
+        dy = -dy;
+        yadd = -1;
+    }
+    if (dx > dy)  /* line is "more horizontal" */
+    {
+        err = 2*dy - dx; erradd = 2*dy - 2*dx;
+        for(cnt = 0; cnt < dx; cnt++)
+        {
+            callback(x1, y1, lParam);
+            if (err + bias > 0)
+            {
+                y1 += yadd;
+                err += erradd;
+            }
+            else err += 2*dy;
+            x1 += xadd;
+        }
+    }
+    else   /* line is "more vertical" */
+    {
+        err = 2*dx - dy; erradd = 2*dx - 2*dy;
+        for(cnt = 0; cnt < dy; cnt++)
+        {
+            callback(x1, y1, lParam);
+            if (err + bias > 0)
+            {
+                x1 += xadd;
+                err += erradd;
+            }
+            else err += 2*dx;
+            y1 += yadd;
+        }
+    }
 }
 
 static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
@@ -188,7 +267,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
         if(clip->numRects == 1 && pt_in_rect(&clip->extents, start) && pt_in_rect(&clip->extents, end))
             /* FIXME: Optimize by moving Bresenham algorithm to the primitive functions,
                or at least cache adjacent points in the callback */
-            LineDDA(start->x, start->y, end->x, end->y, solid_pen_line_callback, (LPARAM)pdev);
+            bres_line_with_bias(start->x, start->y, end->x, end->y, solid_pen_line_callback, (LPARAM)pdev);
         else if(clip->numRects >= 1)
             ret = FALSE;
     }

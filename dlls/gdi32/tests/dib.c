@@ -78,6 +78,7 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "a3cadd34d95d3d5cc23344f69aab1c2e55935fcf",
     "2426172d9e8fec27d9228088f382ef3c93717da9",
     "9e8f27ca952cdba01dbf25d07c34e86a7820c012",
+    "664fac17803859a4015c6ae29e5538e314d5c827",
     "17b2c177bdce5e94433574a928bda5c94a8cdfa5",
     "fe6cc678fb13a3ead67839481bf22348adc69f52",
     "d51bd330cec510cdccf5394328bd8e5411901e9e",
@@ -149,6 +150,18 @@ static void compare_hash(BITMAPINFO *bmi, BYTE *bits, const char ***sha1, const 
 
     HeapFree(GetProcessHeap(), 0, hash);
 }
+
+static const RECT bias_check[] =
+{
+    {100, 100, 200, 150},
+    {100, 100, 150, 200},
+    {100, 100,  50, 200},
+    {100, 100,   0, 150},
+    {100, 100,   0,  50},
+    {100, 100,  50,   0},
+    {100, 100, 150,   0},
+    {100, 100, 200,  50}
+};
 
 static const RECT hline_clips[] =
 {
@@ -249,6 +262,14 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         LineTo(hdc, 200.5 + 100 * c, 200.5 + 100 * s);
     }
     compare_hash(bmi, bits, sha1, "diagonal solid lines");
+    memset(bits, 0xcc, dib_size);
+
+    for(i = 0; i < sizeof(bias_check) / sizeof(bias_check[0]); i++)
+    {
+        MoveToEx(hdc, bias_check[i].left, bias_check[i].top, NULL);
+        LineTo(hdc, bias_check[i].right, bias_check[i].bottom);
+    }
+    compare_hash(bmi, bits, sha1, "more diagonal solid lines");
     memset(bits, 0xcc, dib_size);
 
     /* solid brush PatBlt */
