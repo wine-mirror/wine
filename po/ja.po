@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-03-23 23:12+0900\n"
+"PO-Revision-Date: 2011-04-21 22:22+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -2005,13 +2005,12 @@ msgid "Default MidiOut Device"
 msgstr "デフォルト MidiOut デバイス"
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "既定の設定"
+msgstr "地域の設定"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr ""
+msgstr "%u MB 使用中、%u MB 使用可能"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
@@ -2170,36 +2169,32 @@ msgid "Configure Wine Internet Browser and related settings"
 msgstr "Wine インターネット ブラウザや関連する設定を構成します"
 
 #: inetcpl.rc:30
-#, fuzzy
 msgid "Security settings for zone: "
-msgstr "終了時に設定を保存(&S)"
+msgstr "ゾーンのセキュリティ設定: "
 
 #: inetcpl.rc:31
-#, fuzzy
 msgid "Custom"
-msgstr "カスタマイズ"
+msgstr "カスタム"
 
 #: inetcpl.rc:32
 msgid "Very Low"
-msgstr ""
+msgstr "超低"
 
 #: inetcpl.rc:33
-#, fuzzy
 msgid "Low"
-msgstr "低(&L)"
+msgstr "低"
 
 #: inetcpl.rc:34
 msgid "Medium"
-msgstr ""
+msgstr "中"
 
 #: inetcpl.rc:35
 msgid "Increased"
-msgstr ""
+msgstr "中高"
 
 #: inetcpl.rc:36
-#, fuzzy
 msgid "High"
-msgstr "高(&H)"
+msgstr "高"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -6284,7 +6279,7 @@ msgstr "ヘルプ(&H)"
 
 #: shdocvw.rc:57
 msgid "&About Internet Explorer..."
-msgstr "インターネット エクスプローラについて(&A)..."
+msgstr "バージョン情報(&A)..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -6380,7 +6375,7 @@ msgstr "終了(&X)"
 
 #: shell32.rc:115
 msgid "&About Control Panel..."
-msgstr "コントロール パネルについて(&A)..."
+msgstr "バージョン情報(&A)..."
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113
 msgid "Size"
@@ -7725,9 +7720,8 @@ msgid "&Always on Top"
 msgstr "常に手前に表示(&A)"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "時計について(&A)..."
+msgstr "バージョン情報(&A)"
 
 #: clock.rc:48
 msgid "Clock"
@@ -8273,7 +8267,7 @@ msgstr "文法エラー\n"
 
 #: cmd.rc:266
 msgid "%s: File Not Found\n"
-msgstr "%s : ファイルが見つかりません\n"
+msgstr "%s: ファイルが見つかりません\n"
 
 #: cmd.rc:267
 msgid "No help available for %s\n"
@@ -8608,13 +8602,12 @@ msgid "&Replace...\tCtrl+H"
 msgstr "置換(&R)...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "目次(&C)"
+msgstr "目次(&C)\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "メモ帳について(&A)"
+msgstr "バージョン情報(&A)"
 
 #: notepad.rc:65
 msgid "&f"
@@ -8818,7 +8811,7 @@ msgstr "更新(&R)\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
-msgstr "OleView について(&A)"
+msgstr "バージョン情報(&A)"
 
 #: oleview.rc:79
 msgid "&Save as..."
@@ -9070,9 +9063,8 @@ msgid "&Arrange Icons"
 msgstr "アイコンの並び替え(&A)"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "プログラム マネージャ"
+msgstr "バージョン情報(&A)"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -9231,9 +9223,8 @@ msgid "&Multi String Value"
 msgstr "複数行文字列値(&M)"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "文字列値(&S)"
+msgstr "展開可能な文字列値(&E)"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -10824,9 +10815,8 @@ msgid "Arrange &Symbols"
 msgstr "Arrange &Symbols"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "Winefile について(&A)..."
+msgstr "バージョン情報(&A)"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10890,7 +10880,7 @@ msgstr "%s of %s free"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "ゲーム(&G)"
 
 #: winemine.rc:35
 msgid "&New\tF2"
@@ -10898,7 +10888,7 @@ msgstr "スタート(&N)\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "?マークを使用(&M)"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -10917,14 +10907,12 @@ msgid "&Custom..."
 msgstr "盤面の変更(&C)"
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
 msgstr "ハイスコア(&F)"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "Wineについて(&A)"
+msgstr "バージョン情報(&A)"
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -10975,9 +10963,8 @@ msgid "Large"
 msgstr "大"
 
 #: winhlp32.rc:54
-#, fuzzy
 msgid "&Help on help\tF1"
-msgstr "ヘルプの使い方(&H)"
+msgstr "ヘルプの使い方(&H)\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
