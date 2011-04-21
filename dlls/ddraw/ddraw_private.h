@@ -416,8 +416,7 @@ struct IDirect3DLightImpl
 
     DWORD dwLightIndex;
 
-    /* Chained list used for adding / removing from viewports */
-    IDirect3DLightImpl        *next;
+    struct list entry;
 };
 
 /* Helper functions */
@@ -473,9 +472,7 @@ struct IDirect3DViewportImpl
     } viewports;
 
     struct list entry;
-
-    /* Lights list */
-    IDirect3DLightImpl        *lights;
+    struct list light_list;
 
     /* Background material */
     IDirect3DMaterialImpl     *background;
