@@ -171,77 +171,77 @@ struct oletls
 
 /* Global Interface Table Functions */
 
-extern void* StdGlobalInterfaceTable_Construct(void);
-extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv);
-extern void* StdGlobalInterfaceTableInstance;
+extern void* StdGlobalInterfaceTable_Construct(void) DECLSPEC_HIDDEN;
+extern HRESULT StdGlobalInterfaceTable_GetFactory(LPVOID *ppv) DECLSPEC_HIDDEN;
+extern void* StdGlobalInterfaceTableInstance DECLSPEC_HIDDEN;
 
-HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY *key);
-HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey);
-HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
-HRESULT FTMarshalCF_Create(REFIID riid, LPVOID *ppv);
+HRESULT COM_OpenKeyForCLSID(REFCLSID clsid, LPCWSTR keyname, REGSAM access, HKEY *key) DECLSPEC_HIDDEN;
+HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey) DECLSPEC_HIDDEN;
+HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv) DECLSPEC_HIDDEN;
+HRESULT FTMarshalCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 
 /* Stub Manager */
 
-ULONG stub_manager_int_release(struct stub_manager *This);
-struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object);
-ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak);
-ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tableweak, BOOL last_unlock_releases);
-struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, MSHLFLAGS flags);
-struct ifstub *stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHLFLAGS flags);
-struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid);
-struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object);
-BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid);
-BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid);
-void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak);
-HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt, IRpcStubBuffer **stub, IRpcChannelBuffer **chan, IID *iid, IUnknown **iface);
-HRESULT start_apartment_remote_unknown(void);
+ULONG stub_manager_int_release(struct stub_manager *This) DECLSPEC_HIDDEN;
+struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object) DECLSPEC_HIDDEN;
+ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak) DECLSPEC_HIDDEN;
+ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tableweak, BOOL last_unlock_releases) DECLSPEC_HIDDEN;
+struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, MSHLFLAGS flags) DECLSPEC_HIDDEN;
+struct ifstub *stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHLFLAGS flags) DECLSPEC_HIDDEN;
+struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid) DECLSPEC_HIDDEN;
+struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object) DECLSPEC_HIDDEN;
+BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid) DECLSPEC_HIDDEN;
+BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid) DECLSPEC_HIDDEN;
+void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak) DECLSPEC_HIDDEN;
+HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt, IRpcStubBuffer **stub, IRpcChannelBuffer **chan, IID *iid, IUnknown **iface) DECLSPEC_HIDDEN;
+HRESULT start_apartment_remote_unknown(void) DECLSPEC_HIDDEN;
 
-HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags);
+HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, MSHLFLAGS mshlflags) DECLSPEC_HIDDEN;
 
 /* RPC Backend */
 
 struct dispatch_params;
 
-void    RPC_StartRemoting(struct apartment *apt);
+void    RPC_StartRemoting(struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
                                 const OXID_INFO *oxid_info,
                                 DWORD dest_context, void *dest_context_data,
-                                IRpcChannelBuffer **chan);
-HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan);
-void    RPC_ExecuteCall(struct dispatch_params *params);
-HRESULT RPC_RegisterInterface(REFIID riid);
-void    RPC_UnregisterInterface(REFIID riid);
-HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration);
-void    RPC_StopLocalServer(void *registration);
-HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
-HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook);
-void    RPC_UnregisterAllChannelHooks(void);
-HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info);
+                                IRpcChannelBuffer **chan) DECLSPEC_HIDDEN;
+HRESULT RPC_CreateServerChannel(IRpcChannelBuffer **chan) DECLSPEC_HIDDEN;
+void    RPC_ExecuteCall(struct dispatch_params *params) DECLSPEC_HIDDEN;
+HRESULT RPC_RegisterInterface(REFIID riid) DECLSPEC_HIDDEN;
+void    RPC_UnregisterInterface(REFIID riid) DECLSPEC_HIDDEN;
+HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration) DECLSPEC_HIDDEN;
+void    RPC_StopLocalServer(void *registration) DECLSPEC_HIDDEN;
+HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv) DECLSPEC_HIDDEN;
+HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook) DECLSPEC_HIDDEN;
+void    RPC_UnregisterAllChannelHooks(void) DECLSPEC_HIDDEN;
+HRESULT RPC_ResolveOxid(OXID oxid, OXID_INFO *oxid_info) DECLSPEC_HIDDEN;
 
 /* This function initialize the Running Object Table */
-HRESULT WINAPI RunningObjectTableImpl_Initialize(void);
+HRESULT WINAPI RunningObjectTableImpl_Initialize(void) DECLSPEC_HIDDEN;
 
 /* This function uninitialize the Running Object Table */
-HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void);
+HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void) DECLSPEC_HIDDEN;
 
 /* Drag and drop */
-void OLEDD_UnInitialize(void);
+void OLEDD_UnInitialize(void) DECLSPEC_HIDDEN;
 
 /* Apartment Functions */
 
-APARTMENT *apartment_findfromoxid(OXID oxid, BOOL ref);
-APARTMENT *apartment_findfromtid(DWORD tid);
-DWORD apartment_release(struct apartment *apt);
-HRESULT apartment_disconnectproxies(struct apartment *apt);
-void apartment_disconnectobject(struct apartment *apt, void *object);
+APARTMENT *apartment_findfromoxid(OXID oxid, BOOL ref) DECLSPEC_HIDDEN;
+APARTMENT *apartment_findfromtid(DWORD tid) DECLSPEC_HIDDEN;
+DWORD apartment_release(struct apartment *apt) DECLSPEC_HIDDEN;
+HRESULT apartment_disconnectproxies(struct apartment *apt) DECLSPEC_HIDDEN;
+void apartment_disconnectobject(struct apartment *apt, void *object) DECLSPEC_HIDDEN;
 static inline HRESULT apartment_getoxid(const struct apartment *apt, OXID *oxid)
 {
     *oxid = apt->oxid;
     return S_OK;
 }
-HRESULT apartment_createwindowifneeded(struct apartment *apt);
-HWND apartment_getwindow(const struct apartment *apt);
-void apartment_joinmta(void);
+HRESULT apartment_createwindowifneeded(struct apartment *apt) DECLSPEC_HIDDEN;
+HWND apartment_getwindow(const struct apartment *apt) DECLSPEC_HIDDEN;
+void apartment_joinmta(void) DECLSPEC_HIDDEN;
 
 
 /* DCOM messages used by the apartment window (not compatible with native) */
@@ -294,19 +294,19 @@ extern HRESULT Handler_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *p
 extern HRESULT HandlerCF_Create(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
 
 /* Exported non-interface Data Advise Holder functions */
-HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDelegate);
-void DataAdviseHolder_OnDisconnect(IDataAdviseHolder *iface);
+HRESULT DataAdviseHolder_OnConnect(IDataAdviseHolder *iface, IDataObject *pDelegate) DECLSPEC_HIDDEN;
+void DataAdviseHolder_OnDisconnect(IDataAdviseHolder *iface) DECLSPEC_HIDDEN;
 
-extern UINT ownerlink_clipboard_format;
-extern UINT filename_clipboard_format;
-extern UINT filenameW_clipboard_format;
-extern UINT dataobject_clipboard_format;
-extern UINT embedded_object_clipboard_format;
-extern UINT embed_source_clipboard_format;
-extern UINT custom_link_source_clipboard_format;
-extern UINT link_source_clipboard_format;
-extern UINT object_descriptor_clipboard_format;
-extern UINT link_source_descriptor_clipboard_format;
-extern UINT ole_private_data_clipboard_format;
+extern UINT ownerlink_clipboard_format DECLSPEC_HIDDEN;
+extern UINT filename_clipboard_format DECLSPEC_HIDDEN;
+extern UINT filenameW_clipboard_format DECLSPEC_HIDDEN;
+extern UINT dataobject_clipboard_format DECLSPEC_HIDDEN;
+extern UINT embedded_object_clipboard_format DECLSPEC_HIDDEN;
+extern UINT embed_source_clipboard_format DECLSPEC_HIDDEN;
+extern UINT custom_link_source_clipboard_format DECLSPEC_HIDDEN;
+extern UINT link_source_clipboard_format DECLSPEC_HIDDEN;
+extern UINT object_descriptor_clipboard_format DECLSPEC_HIDDEN;
+extern UINT link_source_descriptor_clipboard_format DECLSPEC_HIDDEN;
+extern UINT ole_private_data_clipboard_format DECLSPEC_HIDDEN;
 
 #endif /* __WINE_OLE_COMPOBJ_H */
