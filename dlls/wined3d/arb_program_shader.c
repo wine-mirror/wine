@@ -340,7 +340,6 @@ static BOOL need_helper_const(const struct arb_vshader_private *shader_data,
     if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) return TRUE; /* Have to init texcoords. */
     if (!use_nv_clip(gl_info)) return TRUE; /* Init the clip texcoord */
     if (reg_maps->usesnrm) return TRUE; /* 0.0 */
-    if (reg_maps->usesrcp) return TRUE; /* EPS */
     return FALSE;
 }
 
@@ -2424,8 +2423,6 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
 static void shader_hw_rcp(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
-    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
-    const char *flt_eps = arb_get_helper_value(ins->ctx->reg_maps->shader_version.type, ARB_EPS);
 
     char dst[50];
     char src[50];
@@ -2440,23 +2437,7 @@ static void shader_hw_rcp(const struct wined3d_shader_instruction *ins)
         strcat(src, ".w");
     }
 
-    /* TODO: If the destination is readable, and not the same as the source, the destination
-     * can be used instead of TA
-     */
-    if (priv->target_version >= NV2)
-    {
-        shader_addline(buffer, "MOVC TA.x, %s;\n", src);
-        shader_addline(buffer, "MOV TA.x (EQ.x), %s;\n", flt_eps);
-        shader_addline(buffer, "RCP%s %s, TA.x;\n", shader_arb_get_modifier(ins), dst);
-    }
-    else
-    {
-        const char *zero = arb_get_helper_value(ins->ctx->reg_maps->shader_version.type, ARB_ZERO);
-        shader_addline(buffer, "ABS TA.x, %s;\n", src);
-        shader_addline(buffer, "SGE TA.y, -TA.x, %s;\n", zero);
-        shader_addline(buffer, "MAD TA.x, TA.y, %s, %s;\n", flt_eps, src);
-        shader_addline(buffer, "RCP%s %s, TA.x;\n", shader_arb_get_modifier(ins), dst);
-    }
+    shader_addline(buffer, "RCP%s %s, %s;\n", shader_arb_get_modifier(ins), dst, src);
 }
 
 static void shader_hw_scalar_op(const struct wined3d_shader_instruction *ins)
