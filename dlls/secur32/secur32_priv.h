@@ -97,63 +97,63 @@ typedef enum _sign_direction {
  * Returns a pointer to the stored provider entry, for use adding packages.
  */
 SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
- const SecurityFunctionTableW *fnTableW, PCWSTR moduleName);
+ const SecurityFunctionTableW *fnTableW, PCWSTR moduleName) DECLSPEC_HIDDEN;
 
 /* Allocates space for and adds toAdd packages with the given provider.
  * provider must not be NULL, and either infoA or infoW may be NULL, but not
  * both.
  */
 void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
- const SecPkgInfoA *infoA, const SecPkgInfoW *infoW);
+ const SecPkgInfoA *infoA, const SecPkgInfoW *infoW) DECLSPEC_HIDDEN;
 
 /* Tries to find the package named packageName.  If it finds it, implicitly
  * loads the package if it isn't already loaded.
  */
-SecurePackage *SECUR32_findPackageW(PCWSTR packageName);
+SecurePackage *SECUR32_findPackageW(PCWSTR packageName) DECLSPEC_HIDDEN;
 
 /* Tries to find the package named packageName.  (Thunks to _findPackageW)
  */
-SecurePackage *SECUR32_findPackageA(PCSTR packageName);
+SecurePackage *SECUR32_findPackageA(PCSTR packageName) DECLSPEC_HIDDEN;
 
 /* A few string helpers; will return NULL if str is NULL.  Free return with
  * HeapFree */
-PWSTR SECUR32_AllocWideFromMultiByte(PCSTR str);
-PSTR  SECUR32_AllocMultiByteFromWide(PCWSTR str);
+PWSTR SECUR32_AllocWideFromMultiByte(PCSTR str) DECLSPEC_HIDDEN;
+PSTR  SECUR32_AllocMultiByteFromWide(PCWSTR str) DECLSPEC_HIDDEN;
 
 /* Initialization functions for built-in providers */
-void SECUR32_initSchannelSP(void);
-void SECUR32_initNegotiateSP(void);
-void SECUR32_initNTLMSP(void);
+void SECUR32_initSchannelSP(void) DECLSPEC_HIDDEN;
+void SECUR32_initNegotiateSP(void) DECLSPEC_HIDDEN;
+void SECUR32_initNTLMSP(void) DECLSPEC_HIDDEN;
 
 /* Cleanup functions for built-in providers */
-void SECUR32_deinitSchannelSP(void);
+void SECUR32_deinitSchannelSP(void) DECLSPEC_HIDDEN;
 
 /* Functions from dispatcher.c used elsewhere in the code */
 SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
-        char * const argv[]);
+        char * const argv[]) DECLSPEC_HIDDEN;
 
 SECURITY_STATUS run_helper(PNegoHelper helper, char *buffer,
-        unsigned int max_buflen, int *buflen);
+        unsigned int max_buflen, int *buflen) DECLSPEC_HIDDEN;
 
-void cleanup_helper(PNegoHelper helper);
+void cleanup_helper(PNegoHelper helper) DECLSPEC_HIDDEN;
 
-void check_version(PNegoHelper helper);
+void check_version(PNegoHelper helper) DECLSPEC_HIDDEN;
 
 /* Functions from base64_codec.c used elsewhere */
 SECURITY_STATUS encodeBase64(PBYTE in_buf, int in_len, char* out_buf,
-        int max_len, int *out_len);
+        int max_len, int *out_len) DECLSPEC_HIDDEN;
 
 SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf,
-        int max_len, int *out_len);
+        int max_len, int *out_len) DECLSPEC_HIDDEN;
 
 /* Functions from util.c */
-ULONG ComputeCrc32(const BYTE *pData, INT iLen, ULONG initial_crc);
-SECURITY_STATUS SECUR32_CreateNTLM1SessionKey(PBYTE password, int len, PBYTE session_key);
-SECURITY_STATUS SECUR32_CreateNTLM2SubKeys(PNegoHelper helper);
-arc4_info *SECUR32_arc4Alloc(void);
-void SECUR32_arc4Init(arc4_info *a4i, const BYTE *key, unsigned int keyLen);
-void SECUR32_arc4Process(arc4_info *a4i, BYTE *inoutString, unsigned int length);
-void SECUR32_arc4Cleanup(arc4_info *a4i);
+ULONG ComputeCrc32(const BYTE *pData, INT iLen, ULONG initial_crc) DECLSPEC_HIDDEN;
+SECURITY_STATUS SECUR32_CreateNTLM1SessionKey(PBYTE password, int len, PBYTE session_key) DECLSPEC_HIDDEN;
+SECURITY_STATUS SECUR32_CreateNTLM2SubKeys(PNegoHelper helper) DECLSPEC_HIDDEN;
+arc4_info *SECUR32_arc4Alloc(void) DECLSPEC_HIDDEN;
+void SECUR32_arc4Init(arc4_info *a4i, const BYTE *key, unsigned int keyLen) DECLSPEC_HIDDEN;
+void SECUR32_arc4Process(arc4_info *a4i, BYTE *inoutString, unsigned int length) DECLSPEC_HIDDEN;
+void SECUR32_arc4Cleanup(arc4_info *a4i) DECLSPEC_HIDDEN;
 
 /* NTLMSSP flags indicating the negotiated features */
 #define NTLMSSP_NEGOTIATE_UNICODE                   0x00000001
@@ -183,31 +183,31 @@ typedef struct schan_imp_certificate_credentials_opaque *schan_imp_certificate_c
 
 struct schan_transport;
 
-extern int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len);
-extern int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len);
+extern int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len) DECLSPEC_HIDDEN;
+extern int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len) DECLSPEC_HIDDEN;
 
-extern schan_imp_session schan_session_for_transport(struct schan_transport* t);
+extern schan_imp_session schan_session_for_transport(struct schan_transport* t) DECLSPEC_HIDDEN;
 
 /* schannel implementation interface */
 extern BOOL schan_imp_create_session(schan_imp_session *session, BOOL is_server,
-                                     schan_imp_certificate_credentials cred);
-extern void schan_imp_dispose_session(schan_imp_session session);
+                                     schan_imp_certificate_credentials cred) DECLSPEC_HIDDEN;
+extern void schan_imp_dispose_session(schan_imp_session session) DECLSPEC_HIDDEN;
 extern void schan_imp_set_session_transport(schan_imp_session session,
-                                            struct schan_transport *t);
-extern SECURITY_STATUS schan_imp_handshake(schan_imp_session session);
-extern unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session);
+                                            struct schan_transport *t) DECLSPEC_HIDDEN;
+extern SECURITY_STATUS schan_imp_handshake(schan_imp_session session) DECLSPEC_HIDDEN;
+extern unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
-                                                     SecPkgContext_ConnectionInfo *info);
+                                                     SecPkgContext_ConnectionInfo *info) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session,
-                                                              PCCERT_CONTEXT *cert);
+                                                              PCCERT_CONTEXT *cert) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
-                                      size_t *length);
+                                      size_t *length) DECLSPEC_HIDDEN;
 extern SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
-                                      size_t *length);
-extern BOOL schan_imp_allocate_certificate_credentials(schan_imp_certificate_credentials *c);
-extern void schan_imp_free_certificate_credentials(schan_imp_certificate_credentials c);
-extern BOOL schan_imp_init(void);
-extern void schan_imp_deinit(void);
+                                      size_t *length) DECLSPEC_HIDDEN;
+extern BOOL schan_imp_allocate_certificate_credentials(schan_imp_certificate_credentials *c) DECLSPEC_HIDDEN;
+extern void schan_imp_free_certificate_credentials(schan_imp_certificate_credentials c) DECLSPEC_HIDDEN;
+extern BOOL schan_imp_init(void) DECLSPEC_HIDDEN;
+extern void schan_imp_deinit(void) DECLSPEC_HIDDEN;
 
 
 #endif /* ndef __SECUR32_PRIV_H__ */
