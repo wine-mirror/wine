@@ -236,6 +236,8 @@ extern	WDML_INSTANCE*	WDML_GetInstanceFromWnd(HWND hWnd) DECLSPEC_HIDDEN;
 extern	void		WDML_BroadcastDDEWindows(LPCWSTR clsName, UINT uMsg,
 						 WPARAM wParam, LPARAM lParam) DECLSPEC_HIDDEN;
 extern	void		WDML_NotifyThreadExit(DWORD tid) DECLSPEC_HIDDEN;
+extern	void 		WDML_NotifyThreadDetach(void) DECLSPEC_HIDDEN;
+
 
 static inline void WDML_ExtractAck(WORD status, DDEACK* da)
 {
