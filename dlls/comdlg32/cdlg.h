@@ -26,10 +26,10 @@
 /* Common dialogs implementation globals */
 #define COMDLG32_Atom	((ATOM)0xa000)	/* MS uses this one to identify props */
 
-extern HINSTANCE	COMDLG32_hInstance;
+extern HINSTANCE	COMDLG32_hInstance DECLSPEC_HIDDEN;
 
-void	COMDLG32_SetCommDlgExtendedError(DWORD err);
-LPVOID	COMDLG32_AllocMem(int size) __WINE_ALLOC_SIZE(1);
+void	COMDLG32_SetCommDlgExtendedError(DWORD err) DECLSPEC_HIDDEN;
+LPVOID	COMDLG32_AllocMem(int size) __WINE_ALLOC_SIZE(1) DECLSPEC_HIDDEN;
 
 /* handle<-handle16 conversion */
 #define HINSTANCE_32(h16)           ((HINSTANCE)(ULONG_PTR)(h16))
@@ -170,14 +170,14 @@ typedef struct {
 #include "shellapi.h"
 
 /* Constructors */
-HRESULT FileOpenDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv);
-HRESULT FileSaveDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv);
+HRESULT FileOpenDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
+HRESULT FileSaveDialog_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 
 /* Shared helper functions */
-void COMDLG32_GetCanonicalPath(PCIDLIST_ABSOLUTE pidlAbsCurrent, LPWSTR lpstrFile, LPWSTR lpstrPathAndFile);
+void COMDLG32_GetCanonicalPath(PCIDLIST_ABSOLUTE pidlAbsCurrent, LPWSTR lpstrFile, LPWSTR lpstrPathAndFile) DECLSPEC_HIDDEN;
 int FILEDLG95_ValidatePathAction(LPWSTR lpstrPathAndFile, IShellFolder **ppsf,
-                                 HWND hwnd, DWORD flags, BOOL isSaveDlg, int defAction);
-int COMDLG32_SplitFileNames(LPWSTR lpstrEdit, UINT nStrLen, LPWSTR *lpstrFileList, UINT *sizeUsed);
+                                 HWND hwnd, DWORD flags, BOOL isSaveDlg, int defAction) DECLSPEC_HIDDEN;
+int COMDLG32_SplitFileNames(LPWSTR lpstrEdit, UINT nStrLen, LPWSTR *lpstrFileList, UINT *sizeUsed) DECLSPEC_HIDDEN;
 
 /* ITEMIDLIST */
 
