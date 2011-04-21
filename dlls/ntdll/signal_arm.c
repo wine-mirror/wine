@@ -173,6 +173,7 @@ static inline void restore_fpu( CONTEXT *context, const ucontext_t *sigcontext )
  */
 /* FIXME: Use the Stack instead of the actual register values */
 __ASM_STDCALL_FUNC( RtlCaptureContext, 4,
+                    ".arm\n\t"
                     "stmfd SP!, {r1}\n\t"
                     "mov r1, #0x40\n\t"     /* CONTEXT_ARM */
                     "add r1, r1, #0x3\n\t"  /* CONTEXT_FULL */
