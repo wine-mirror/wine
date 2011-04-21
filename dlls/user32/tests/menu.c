@@ -2932,6 +2932,20 @@ static void test_menu_trackpopupmenu(void)
                 gflag_initmenupopup ? " WM_INITMENUPOPUP ": " ",
                 gflag_entermenuloop ? "WM_INITMENULOOP ": "",
                 gflag_initmenu ? "WM_INITMENU": "");
+
+        /* invalid window */
+        SetLastError(0xdeadbeef);
+        gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;
+        ret = MyTrackPopupMenu( Ex, hmenu, TPM_RETURNCMD, 100,100, 0, NULL);
+        gle = GetLastError();
+        ok( !ret, "TrackPopupMenu%s should have failed\n", Ex ? "Ex" : "");
+        ok( gle == ERROR_INVALID_WINDOW_HANDLE, "TrackPopupMenu%s error got %u\n", Ex ? "Ex" : "", gle );
+        ok( !(gflag_initmenupopup || gflag_entermenuloop || gflag_initmenu),
+                "got unexpected message(s)%s%s%s\n",
+                gflag_initmenupopup ? " WM_INITMENUPOPUP ": " ",
+                gflag_entermenuloop ? "WM_INITMENULOOP ": "",
+                gflag_initmenu ? "WM_INITMENU": "");
+
         /* now a somewhat successful call */
         SetLastError(0xdeadbeef);
         gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;

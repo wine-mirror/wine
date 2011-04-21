@@ -1848,6 +1848,11 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
     }
 
     /* store the owner for DrawItem */
+    if (!IsWindow( hwndOwner ))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
     menu->hwndOwner = hwndOwner;
 
     menu->nScrollPos = 0;
