@@ -28,8 +28,8 @@ BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);
 BOOL    WINAPI CloseConsoleHandle(HANDLE handle);
 HANDLE  WINAPI GetConsoleInputWaitHandle(void);
-BOOL           CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params);
-BOOL           CONSOLE_Exit(void);
+BOOL           CONSOLE_Init(RTL_USER_PROCESS_PARAMETERS *params) DECLSPEC_HIDDEN;
+BOOL           CONSOLE_Exit(void) DECLSPEC_HIDDEN;
 
 static inline BOOL is_console_handle(HANDLE h)
 {
@@ -52,15 +52,15 @@ static inline obj_handle_t console_handle_unmap(HANDLE h)
 #define KERNEL32_CONSOLE_ALLOC          ((HANDLE)1)
 #define KERNEL32_CONSOLE_SHELL          ((HANDLE)2)
 
-extern HMODULE kernel32_handle;
+extern HMODULE kernel32_handle DECLSPEC_HIDDEN;
 
-extern const WCHAR *DIR_Windows;
-extern const WCHAR *DIR_System;
-extern const WCHAR *DIR_SysWow64;
+extern const WCHAR *DIR_Windows DECLSPEC_HIDDEN;
+extern const WCHAR *DIR_System DECLSPEC_HIDDEN;
+extern const WCHAR *DIR_SysWow64 DECLSPEC_HIDDEN;
 
-extern void FILE_SetDosError(void);
-extern WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc );
-extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen );
+extern void FILE_SetDosError(void) DECLSPEC_HIDDEN;
+extern WCHAR *FILE_name_AtoW( LPCSTR name, BOOL alloc ) DECLSPEC_HIDDEN;
+extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen ) DECLSPEC_HIDDEN;
 
 /* return values for MODULE_GetBinaryType */
 enum binary_type
@@ -86,25 +86,25 @@ struct binary_info
 };
 
 /* module.c */
-extern WCHAR *MODULE_get_dll_load_path( LPCWSTR module );
-extern void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info );
+extern WCHAR *MODULE_get_dll_load_path( LPCWSTR module ) DECLSPEC_HIDDEN;
+extern void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info ) DECLSPEC_HIDDEN;
 
-extern BOOL NLS_IsUnicodeOnlyLcid(LCID);
+extern BOOL NLS_IsUnicodeOnlyLcid(LCID) DECLSPEC_HIDDEN;
 
 /* environ.c */
-extern void ENV_CopyStartupInformation(void);
+extern void ENV_CopyStartupInformation(void) DECLSPEC_HIDDEN;
 
 /* computername.c */
-extern void COMPUTERNAME_Init(void);
+extern void COMPUTERNAME_Init(void) DECLSPEC_HIDDEN;
 
 /* locale.c */
-extern void LOCALE_Init(void);
-extern void LOCALE_InitRegistry(void);
+extern void LOCALE_Init(void) DECLSPEC_HIDDEN;
+extern void LOCALE_InitRegistry(void) DECLSPEC_HIDDEN;
 
 /* oldconfig.c */
-extern void convert_old_config(void);
+extern void convert_old_config(void) DECLSPEC_HIDDEN;
 
 /* returns directory handle for named objects */
-extern HANDLE get_BaseNamedObjects_handle(void);
+extern HANDLE get_BaseNamedObjects_handle(void) DECLSPEC_HIDDEN;
 
 #endif
