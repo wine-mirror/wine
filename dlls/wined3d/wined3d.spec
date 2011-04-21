@@ -120,7 +120,6 @@
 @ cdecl wined3d_volume_get_priority(ptr)
 @ cdecl wined3d_volume_get_private_data(ptr ptr ptr ptr)
 @ cdecl wined3d_volume_get_resource(ptr)
-@ cdecl wined3d_volume_get_type(ptr)
 @ cdecl wined3d_volume_incref(ptr)
 @ cdecl wined3d_volume_map(ptr ptr ptr long)
 @ cdecl wined3d_volume_preload(ptr)

@@ -208,11 +208,6 @@ void CDECL wined3d_volume_preload(struct wined3d_volume *volume)
     FIXME("volume %p stub!\n", volume);
 }
 
-WINED3DRESOURCETYPE CDECL wined3d_volume_get_type(const struct wined3d_volume *volume)
-{
-    return resource_get_type(&volume->resource);
-}
-
 struct wined3d_resource * CDECL wined3d_volume_get_resource(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);

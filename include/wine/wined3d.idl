@@ -3052,7 +3052,6 @@ DWORD __cdecl wined3d_volume_get_priority(const struct wined3d_volume *volume);
 HRESULT __cdecl wined3d_volume_get_private_data(const struct wined3d_volume *volume,
         REFGUID guid, void *data, DWORD *data_size);
 struct wined3d_resource * __cdecl wined3d_volume_get_resource(struct wined3d_volume *volume);
-WINED3DRESOURCETYPE __cdecl wined3d_volume_get_type(const struct wined3d_volume *volume);
 ULONG __cdecl wined3d_volume_incref(struct wined3d_volume *volume);
 HRESULT __cdecl wined3d_volume_map(struct wined3d_volume *volume,
         WINED3DLOCKED_BOX *locked_box, const WINED3DBOX *box, DWORD flags);
