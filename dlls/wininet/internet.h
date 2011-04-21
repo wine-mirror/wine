@@ -450,64 +450,64 @@ typedef struct WORKREQ
 
 } WORKREQUEST, *LPWORKREQUEST;
 
-void *alloc_object(object_header_t*,const object_vtbl_t*,size_t);
-object_header_t *get_handle_object( HINTERNET hinternet );
-object_header_t *WININET_AddRef( object_header_t *info );
-BOOL WININET_Release( object_header_t *info );
+void *alloc_object(object_header_t*,const object_vtbl_t*,size_t) DECLSPEC_HIDDEN;
+object_header_t *get_handle_object( HINTERNET hinternet ) DECLSPEC_HIDDEN;
+object_header_t *WININET_AddRef( object_header_t *info ) DECLSPEC_HIDDEN;
+BOOL WININET_Release( object_header_t *info ) DECLSPEC_HIDDEN;
 
-DWORD INET_QueryOption( object_header_t *, DWORD, void *, DWORD *, BOOL );
+DWORD INET_QueryOption( object_header_t *, DWORD, void *, DWORD *, BOOL ) DECLSPEC_HIDDEN;
 
-time_t ConvertTimeString(LPCWSTR asctime);
+time_t ConvertTimeString(LPCWSTR asctime) DECLSPEC_HIDDEN;
 
 HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
-	DWORD dwInternalFlags);
+	DWORD dwInternalFlags) DECLSPEC_HIDDEN;
 
 DWORD HTTP_Connect(appinfo_t*,LPCWSTR,
         INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
         LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
-        DWORD dwInternalFlags, HINTERNET*);
+        DWORD dwInternalFlags, HINTERNET*) DECLSPEC_HIDDEN;
 
 BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
-	struct sockaddr *psa, socklen_t *sa_len);
+	struct sockaddr *psa, socklen_t *sa_len) DECLSPEC_HIDDEN;
 
-void INTERNET_SetLastError(DWORD dwError);
-DWORD INTERNET_GetLastError(void);
-DWORD INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest);
-LPSTR INTERNET_GetResponseBuffer(void);
-LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
+void INTERNET_SetLastError(DWORD dwError) DECLSPEC_HIDDEN;
+DWORD INTERNET_GetLastError(void) DECLSPEC_HIDDEN;
+DWORD INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest) DECLSPEC_HIDDEN;
+LPSTR INTERNET_GetResponseBuffer(void) DECLSPEC_HIDDEN;
+LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen) DECLSPEC_HIDDEN;
 
 VOID SendAsyncCallback(object_header_t *hdr, DWORD_PTR dwContext,
                        DWORD dwInternetStatus, LPVOID lpvStatusInfo,
-                       DWORD dwStatusInfoLength);
+                       DWORD dwStatusInfoLength) DECLSPEC_HIDDEN;
 
 VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
                            DWORD dwInternetStatus, LPVOID lpvStatusInfo,
-                           DWORD dwStatusInfoLength);
-BOOL INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto, WCHAR *foundProxy, DWORD *foundProxyLen);
+                           DWORD dwStatusInfoLength) DECLSPEC_HIDDEN;
+BOOL INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto, WCHAR *foundProxy, DWORD *foundProxyLen) DECLSPEC_HIDDEN;
 
-BOOL NETCON_connected(WININET_NETCONNECTION *connection);
-DWORD NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL);
-void NETCON_unload(void);
+BOOL NETCON_connected(WININET_NETCONNECTION *connection) DECLSPEC_HIDDEN;
+DWORD NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL) DECLSPEC_HIDDEN;
+void NETCON_unload(void) DECLSPEC_HIDDEN;
 DWORD NETCON_create(WININET_NETCONNECTION *connection, int domain,
-	      int type, int protocol);
-DWORD NETCON_close(WININET_NETCONNECTION *connection);
+	      int type, int protocol) DECLSPEC_HIDDEN;
+DWORD NETCON_close(WININET_NETCONNECTION *connection) DECLSPEC_HIDDEN;
 DWORD NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
-		    unsigned int addrlen);
-DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname);
+		    unsigned int addrlen) DECLSPEC_HIDDEN;
+DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname) DECLSPEC_HIDDEN;
 DWORD NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len, int flags,
-		int *sent /* out */);
+		int *sent /* out */) DECLSPEC_HIDDEN;
 DWORD NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
-		int *recvd /* out */);
-BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *available);
-LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection);
-int NETCON_GetCipherStrength(WININET_NETCONNECTION *connection);
-DWORD NETCON_set_timeout(WININET_NETCONNECTION *connection, BOOL send, int value);
-int sock_get_error(int);
+		int *recvd /* out */) DECLSPEC_HIDDEN;
+BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *available) DECLSPEC_HIDDEN;
+LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection) DECLSPEC_HIDDEN;
+int NETCON_GetCipherStrength(WININET_NETCONNECTION *connection) DECLSPEC_HIDDEN;
+DWORD NETCON_set_timeout(WININET_NETCONNECTION *connection, BOOL send, int value) DECLSPEC_HIDDEN;
+int sock_get_error(int) DECLSPEC_HIDDEN;
 
-extern void URLCacheContainers_CreateDefaults(void);
-extern void URLCacheContainers_DeleteAll(void);
+extern void URLCacheContainers_CreateDefaults(void) DECLSPEC_HIDDEN;
+extern void URLCacheContainers_DeleteAll(void) DECLSPEC_HIDDEN;
 
 #define MAX_REPLY_LEN	 	0x5B4
 
