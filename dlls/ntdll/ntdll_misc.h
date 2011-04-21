@@ -39,79 +39,79 @@ struct drive_info
     ino_t ino;
 };
 
-extern NTSTATUS close_handle( HANDLE );
+extern NTSTATUS close_handle( HANDLE ) DECLSPEC_HIDDEN;
 
 /* exceptions */
-extern void wait_suspend( CONTEXT *context );
-extern NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context );
-extern LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context );
-extern void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec ) DECLSPEC_NORETURN;
-extern void set_cpu_context( const CONTEXT *context );
-extern void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags );
-extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from );
-extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from );
-extern void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg ) DECLSPEC_NORETURN;
+extern void wait_suspend( CONTEXT *context ) DECLSPEC_HIDDEN;
+extern NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context ) DECLSPEC_HIDDEN;
+extern LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context ) DECLSPEC_HIDDEN;
+extern void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec ) DECLSPEC_NORETURN DECLSPEC_HIDDEN;
+extern void set_cpu_context( const CONTEXT *context ) DECLSPEC_HIDDEN;
+extern void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags ) DECLSPEC_HIDDEN;
+extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from ) DECLSPEC_HIDDEN;
+extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSPEC_HIDDEN;
+extern void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg ) DECLSPEC_NORETURN DECLSPEC_HIDDEN;
 
 /* debug helpers */
-extern LPCSTR debugstr_us( const UNICODE_STRING *str );
-extern LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa);
+extern LPCSTR debugstr_us( const UNICODE_STRING *str ) DECLSPEC_HIDDEN;
+extern LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa) DECLSPEC_HIDDEN;
 
-extern NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result );
+extern NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result ) DECLSPEC_HIDDEN;
 extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
-                                                 const LARGE_INTEGER *timeout, HANDLE signal_object );
+                                                 const LARGE_INTEGER *timeout, HANDLE signal_object ) DECLSPEC_HIDDEN;
 
 /* init routines */
-extern NTSTATUS signal_alloc_thread( TEB **teb );
-extern void signal_free_thread( TEB *teb );
-extern void signal_init_thread( TEB *teb );
-extern void signal_init_process(void);
-extern void version_init( const WCHAR *appname );
-extern void debug_init(void);
-extern HANDLE thread_init(void);
-extern void actctx_init(void);
-extern void virtual_init(void);
-extern void virtual_init_threading(void);
-extern void fill_cpu_info(void);
-extern void heap_set_debug_flags( HANDLE handle );
+extern NTSTATUS signal_alloc_thread( TEB **teb ) DECLSPEC_HIDDEN;
+extern void signal_free_thread( TEB *teb ) DECLSPEC_HIDDEN;
+extern void signal_init_thread( TEB *teb ) DECLSPEC_HIDDEN;
+extern void signal_init_process(void) DECLSPEC_HIDDEN;
+extern void version_init( const WCHAR *appname ) DECLSPEC_HIDDEN;
+extern void debug_init(void) DECLSPEC_HIDDEN;
+extern HANDLE thread_init(void) DECLSPEC_HIDDEN;
+extern void actctx_init(void) DECLSPEC_HIDDEN;
+extern void virtual_init(void) DECLSPEC_HIDDEN;
+extern void virtual_init_threading(void) DECLSPEC_HIDDEN;
+extern void fill_cpu_info(void) DECLSPEC_HIDDEN;
+extern void heap_set_debug_flags( HANDLE handle ) DECLSPEC_HIDDEN;
 
 /* server support */
-extern timeout_t server_start_time;
-extern unsigned int server_cpus;
-extern int is_wow64;
-extern void server_init_process(void);
-extern NTSTATUS server_init_process_done(void);
-extern size_t server_init_thread( void *entry_point );
-extern void DECLSPEC_NORETURN server_protocol_error( const char *err, ... );
-extern void DECLSPEC_NORETURN server_protocol_perror( const char *err );
-extern void DECLSPEC_NORETURN abort_thread( int status );
-extern void DECLSPEC_NORETURN terminate_thread( int status );
-extern void DECLSPEC_NORETURN exit_thread( int status );
-extern sigset_t server_block_set;
-extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset );
-extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset );
-extern int server_remove_fd_from_cache( HANDLE handle );
+extern timeout_t server_start_time DECLSPEC_HIDDEN;
+extern unsigned int server_cpus DECLSPEC_HIDDEN;
+extern int is_wow64 DECLSPEC_HIDDEN;
+extern void server_init_process(void) DECLSPEC_HIDDEN;
+extern NTSTATUS server_init_process_done(void) DECLSPEC_HIDDEN;
+extern size_t server_init_thread( void *entry_point ) DECLSPEC_HIDDEN;
+extern void DECLSPEC_NORETURN server_protocol_error( const char *err, ... ) DECLSPEC_HIDDEN;
+extern void DECLSPEC_NORETURN server_protocol_perror( const char *err ) DECLSPEC_HIDDEN;
+extern void DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
+extern void DECLSPEC_NORETURN terminate_thread( int status ) DECLSPEC_HIDDEN;
+extern void DECLSPEC_NORETURN exit_thread( int status ) DECLSPEC_HIDDEN;
+extern sigset_t server_block_set DECLSPEC_HIDDEN;
+extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
+extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset ) DECLSPEC_HIDDEN;
+extern int server_remove_fd_from_cache( HANDLE handle ) DECLSPEC_HIDDEN;
 extern int server_get_unix_fd( HANDLE handle, unsigned int access, int *unix_fd,
-                               int *needs_close, enum server_fd_type *type, unsigned int *options );
-extern int server_pipe( int fd[2] );
+                               int *needs_close, enum server_fd_type *type, unsigned int *options ) DECLSPEC_HIDDEN;
+extern int server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
 
 /* security descriptors */
 NTSTATUS NTDLL_create_struct_sd(PSECURITY_DESCRIPTOR nt_sd, struct security_descriptor **server_sd,
-                                data_size_t *server_sd_len);
-void NTDLL_free_struct_sd(struct security_descriptor *server_sd);
+                                data_size_t *server_sd_len) DECLSPEC_HIDDEN;
+void NTDLL_free_struct_sd(struct security_descriptor *server_sd) DECLSPEC_HIDDEN;
 
 /* module handling */
-extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
+extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved ) DECLSPEC_HIDDEN;
 extern FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                     DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user );
+                                     DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user ) DECLSPEC_HIDDEN;
 extern FARPROC SNOOP_GetProcAddress( HMODULE hmod, const IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
-                                     FARPROC origfun, DWORD ordinal, const WCHAR *user );
-extern void RELAY_SetupDLL( HMODULE hmod );
-extern void SNOOP_SetupDLL( HMODULE hmod );
-extern UNICODE_STRING windows_dir;
-extern UNICODE_STRING system_dir;
+                                     FARPROC origfun, DWORD ordinal, const WCHAR *user ) DECLSPEC_HIDDEN;
+extern void RELAY_SetupDLL( HMODULE hmod ) DECLSPEC_HIDDEN;
+extern void SNOOP_SetupDLL( HMODULE hmod ) DECLSPEC_HIDDEN;
+extern UNICODE_STRING windows_dir DECLSPEC_HIDDEN;
+extern UNICODE_STRING system_dir DECLSPEC_HIDDEN;
 
 typedef LONG (WINAPI *PUNHANDLED_EXCEPTION_FILTER)(PEXCEPTION_POINTERS);
-extern PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter;
+extern PUNHANDLED_EXCEPTION_FILTER unhandled_exception_filter DECLSPEC_HIDDEN;
 
 /* redefine these to make sure we don't reference kernel symbols */
 #define GetProcessHeap()       (NtCurrentTeb()->Peb->ProcessHeap)
@@ -125,60 +125,60 @@ extern NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
                                       PIO_STATUS_BLOCK piosb, 
                                       ULONG IoControlCode,
                                       LPVOID lpInBuffer, DWORD nInBufferSize,
-                                      LPVOID lpOutBuffer, DWORD nOutBufferSize);
+                                      LPVOID lpOutBuffer, DWORD nOutBufferSize) DECLSPEC_HIDDEN;
 extern NTSTATUS COMM_DeviceIoControl(HANDLE hDevice, 
                                      HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
                                      PVOID UserApcContext, 
                                      PIO_STATUS_BLOCK piosb, 
                                      ULONG IoControlCode,
                                      LPVOID lpInBuffer, DWORD nInBufferSize,
-                                     LPVOID lpOutBuffer, DWORD nOutBufferSize);
+                                     LPVOID lpOutBuffer, DWORD nOutBufferSize) DECLSPEC_HIDDEN;
 extern NTSTATUS TAPE_DeviceIoControl(HANDLE hDevice, 
                                      HANDLE hEvent, PIO_APC_ROUTINE UserApcRoutine,
                                      PVOID UserApcContext, 
                                      PIO_STATUS_BLOCK piosb, 
                                      ULONG IoControlCode,
                                      LPVOID lpInBuffer, DWORD nInBufferSize,
-                                     LPVOID lpOutBuffer, DWORD nOutBufferSize);
+                                     LPVOID lpOutBuffer, DWORD nOutBufferSize) DECLSPEC_HIDDEN;
 
 /* file I/O */
 struct stat;
-extern NTSTATUS FILE_GetNtStatus(void);
-extern NTSTATUS fill_stat_info( const struct stat *st, void *ptr, FILE_INFORMATION_CLASS class );
-extern NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name );
-extern void DIR_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir );
-extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
-extern NTSTATUS DIR_unmount_device( HANDLE handle );
-extern NTSTATUS DIR_get_unix_cwd( char **cwd );
-extern unsigned int DIR_get_drives_info( struct drive_info info[MAX_DOS_DRIVES] );
-extern NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name_ret );
+extern NTSTATUS FILE_GetNtStatus(void) DECLSPEC_HIDDEN;
+extern NTSTATUS fill_stat_info( const struct stat *st, void *ptr, FILE_INFORMATION_CLASS class ) DECLSPEC_HIDDEN;
+extern NTSTATUS server_get_unix_name( HANDLE handle, ANSI_STRING *unix_name ) DECLSPEC_HIDDEN;
+extern void DIR_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir ) DECLSPEC_HIDDEN;
+extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name ) DECLSPEC_HIDDEN;
+extern NTSTATUS DIR_unmount_device( HANDLE handle ) DECLSPEC_HIDDEN;
+extern NTSTATUS DIR_get_unix_cwd( char **cwd ) DECLSPEC_HIDDEN;
+extern unsigned int DIR_get_drives_info( struct drive_info info[MAX_DOS_DRIVES] ) DECLSPEC_HIDDEN;
+extern NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name_ret ) DECLSPEC_HIDDEN;
 extern NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, ANSI_STRING *unix_name_ret,
-                                           UINT disposition );
+                                           UINT disposition ) DECLSPEC_HIDDEN;
 
 /* virtual memory */
-extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info );
-extern NTSTATUS virtual_create_builtin_view( void *base );
-extern NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commit_size );
-extern void virtual_clear_thread_stack(void);
-extern BOOL virtual_handle_stack_fault( void *addr );
-extern NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err );
-extern BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size );
-extern BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size );
-extern void VIRTUAL_SetForceExec( BOOL enable );
-extern void virtual_release_address_space( BOOL free_high_mem );
-extern struct _KUSER_SHARED_DATA *user_shared_data;
+extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info ) DECLSPEC_HIDDEN;
+extern NTSTATUS virtual_create_builtin_view( void *base ) DECLSPEC_HIDDEN;
+extern NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commit_size ) DECLSPEC_HIDDEN;
+extern void virtual_clear_thread_stack(void) DECLSPEC_HIDDEN;
+extern BOOL virtual_handle_stack_fault( void *addr ) DECLSPEC_HIDDEN;
+extern NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err ) DECLSPEC_HIDDEN;
+extern BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size ) DECLSPEC_HIDDEN;
+extern BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size ) DECLSPEC_HIDDEN;
+extern void VIRTUAL_SetForceExec( BOOL enable ) DECLSPEC_HIDDEN;
+extern void virtual_release_address_space( BOOL free_high_mem ) DECLSPEC_HIDDEN;
+extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
 
 /* completion */
 extern NTSTATUS NTDLL_AddCompletion( HANDLE hFile, ULONG_PTR CompletionValue,
-                                     NTSTATUS CompletionStatus, ULONG Information );
+                                     NTSTATUS CompletionStatus, ULONG Information ) DECLSPEC_HIDDEN;
 
 /* code pages */
-extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen);
+extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst, int dstlen) DECLSPEC_HIDDEN;
 extern int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,
-                           const char* defchar, int *used );
+                           const char* defchar, int *used ) DECLSPEC_HIDDEN;
 
-extern int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, __ms_va_list args );
-extern int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, __ms_va_list args );
+extern int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, __ms_va_list args ) DECLSPEC_HIDDEN;
+extern int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, __ms_va_list args ) DECLSPEC_HIDDEN;
 
 /* load order */
 
@@ -193,7 +193,7 @@ enum loadorder
     LO_DEFAULT          /* nothing specified, use default strategy */
 };
 
-extern enum loadorder get_load_order( const WCHAR *app_name, const WCHAR *path );
+extern enum loadorder get_load_order( const WCHAR *app_name, const WCHAR *path ) DECLSPEC_HIDDEN;
 
 struct debug_info
 {
