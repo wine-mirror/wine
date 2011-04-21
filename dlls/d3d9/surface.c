@@ -210,17 +210,11 @@ static void WINAPI IDirect3DSurface9Impl_PreLoad(LPDIRECT3DSURFACE9 iface) {
     wined3d_mutex_unlock();
 }
 
-static D3DRESOURCETYPE WINAPI IDirect3DSurface9Impl_GetType(LPDIRECT3DSURFACE9 iface) {
-    IDirect3DSurface9Impl *This = (IDirect3DSurface9Impl *)iface;
-    D3DRESOURCETYPE ret;
-
+static D3DRESOURCETYPE WINAPI IDirect3DSurface9Impl_GetType(IDirect3DSurface9 *iface)
+{
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    ret = IWineD3DSurface_GetType(This->wineD3DSurface);
-    wined3d_mutex_unlock();
-
-    return ret;
+    return D3DRTYPE_SURFACE;
 }
 
 /* IDirect3DSurface9 Interface follow: */

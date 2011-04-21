@@ -2194,8 +2194,6 @@ interface IWineD3DSurface : IUnknown
     );
     void PreLoad(
     );
-    WINED3DRESOURCETYPE GetType(
-    );
     struct wined3d_resource *GetResource(
     );
     HRESULT Map(

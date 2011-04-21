@@ -157,11 +157,6 @@ DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPriority(IWineD3DSurface *iface)
     return resource_get_priority(&((IWineD3DSurfaceImpl *)iface)->resource);
 }
 
-WINED3DRESOURCETYPE WINAPI IWineD3DBaseSurfaceImpl_GetType(IWineD3DSurface *iface)
-{
-    return resource_get_type(&((IWineD3DSurfaceImpl *)iface)->resource);
-}
-
 void * WINAPI IWineD3DBaseSurfaceImpl_GetParent(IWineD3DSurface *iface)
 {
     TRACE("iface %p.\n", iface);
