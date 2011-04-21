@@ -41,33 +41,33 @@
 #define VERSION_MAGIC 0xdbc01001
 #define TENSION_CONST (0.3)
 
-COLORREF ARGB2COLORREF(ARGB color);
-HBITMAP ARGB2BMP(ARGB color);
+COLORREF ARGB2COLORREF(ARGB color) DECLSPEC_HIDDEN;
+HBITMAP ARGB2BMP(ARGB color) DECLSPEC_HIDDEN;
 extern INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
-    REAL startAngle, REAL sweepAngle);
-extern REAL gdiplus_atan2(REAL dy, REAL dx);
-extern GpStatus hresult_to_status(HRESULT res);
-extern REAL convert_unit(REAL logpixels, GpUnit unit);
+    REAL startAngle, REAL sweepAngle) DECLSPEC_HIDDEN;
+extern REAL gdiplus_atan2(REAL dy, REAL dx) DECLSPEC_HIDDEN;
+extern GpStatus hresult_to_status(HRESULT res) DECLSPEC_HIDDEN;
+extern REAL convert_unit(REAL logpixels, GpUnit unit) DECLSPEC_HIDDEN;
 
-extern GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics);
+extern GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics) DECLSPEC_HIDDEN;
 
 extern void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
-    REAL *y1, REAL *x2, REAL *y2);
+    REAL *y1, REAL *x2, REAL *y2) DECLSPEC_HIDDEN;
 extern void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
-    REAL tension, REAL *x, REAL *y);
+    REAL tension, REAL *x, REAL *y) DECLSPEC_HIDDEN;
 
-extern void free_installed_fonts(void);
+extern void free_installed_fonts(void) DECLSPEC_HIDDEN;
 
-extern void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, HFONT *hfont);
+extern void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font, HFONT *hfont) DECLSPEC_HIDDEN;
 
-extern BOOL lengthen_path(GpPath *path, INT len);
+extern BOOL lengthen_path(GpPath *path, INT len) DECLSPEC_HIDDEN;
 
-extern GpStatus trace_path(GpGraphics *graphics, GpPath *path);
+extern GpStatus trace_path(GpGraphics *graphics, GpPath *path) DECLSPEC_HIDDEN;
 
 typedef struct region_element region_element;
-extern void delete_element(region_element *element);
+extern void delete_element(region_element *element) DECLSPEC_HIDDEN;
 
-extern GpStatus get_hatch_data(HatchStyle hatchstyle, const char **result);
+extern GpStatus get_hatch_data(HatchStyle hatchstyle, const char **result) DECLSPEC_HIDDEN;
 
 static inline INT roundr(REAL x)
 {
@@ -107,16 +107,16 @@ static inline ARGB color_over(ARGB bg, ARGB fg)
     return (a<<24)|(r<<16)|(g<<8)|b;
 }
 
-extern const char *debugstr_rectf(CONST RectF* rc);
+extern const char *debugstr_rectf(CONST RectF* rc) DECLSPEC_HIDDEN;
 
-extern const char *debugstr_pointf(CONST PointF* pt);
+extern const char *debugstr_pointf(CONST PointF* pt) DECLSPEC_HIDDEN;
 
 extern void convert_32bppARGB_to_32bppPARGB(UINT width, UINT height,
-    BYTE *dst_bits, INT dst_stride, const BYTE *src_bits, INT src_stride);
+    BYTE *dst_bits, INT dst_stride, const BYTE *src_bits, INT src_stride) DECLSPEC_HIDDEN;
 
 extern GpStatus convert_pixels(INT width, INT height,
     INT dst_stride, BYTE *dst_bits, PixelFormat dst_format,
-    INT src_stride, const BYTE *src_bits, PixelFormat src_format, ARGB *src_palette);
+    INT src_stride, const BYTE *src_bits, PixelFormat src_format, ARGB *src_palette) DECLSPEC_HIDDEN;
 
 struct GpPen{
     UINT style;
@@ -409,6 +409,6 @@ typedef GpStatus (*gdip_format_string_callback)(HDC hdc,
 GpStatus gdip_format_string(HDC hdc,
     GDIPCONST WCHAR *string, INT length, GDIPCONST GpFont *font,
     GDIPCONST RectF *rect, GDIPCONST GpStringFormat *format,
-    gdip_format_string_callback callback, void *user_data);
+    gdip_format_string_callback callback, void *user_data) DECLSPEC_HIDDEN;
 
 #endif
