@@ -2374,6 +2374,20 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
             hr = DDERR_INVALIDPARAMS;
             break;
 
+        case D3DRENDERSTATE_ZBIAS:
+        {
+            union
+            {
+                DWORD d;
+                float f;
+            } wined3d_value;
+
+            hr = IWineD3DDevice_GetRenderState(This->wineD3DDevice,
+                                               WINED3DRS_DEPTHBIAS,
+                                               &wined3d_value.d);
+            if (SUCCEEDED(hr)) *Value = -wined3d_value.f * 16.0f;
+        }
+
         default:
             if (RenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00
                     && RenderStateType <= D3DRENDERSTATE_STIPPLEPATTERN31)
@@ -2687,6 +2701,20 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
             WARN("Render state %#x is invalid in d3d7.\n", RenderStateType);
             hr = DDERR_INVALIDPARAMS;
             break;
+
+        case D3DRENDERSTATE_ZBIAS:
+        {
+            union
+            {
+                DWORD d;
+                float f;
+            } wined3d_value;
+            wined3d_value.f = Value / -16.0;
+            hr = IWineD3DDevice_SetRenderState(This->wineD3DDevice,
+                                               WINED3DRS_DEPTHBIAS,
+                                               wined3d_value.d);
+            break;
+        }
 
         default:
             if (RenderStateType >= D3DRENDERSTATE_STIPPLEPATTERN00

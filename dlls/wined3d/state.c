@@ -1383,36 +1383,6 @@ static void state_linepattern(DWORD state, struct wined3d_stateblock *stateblock
     }
 }
 
-static void state_zbias(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
-{
-    union {
-        DWORD d;
-        float f;
-    } tmpvalue;
-
-    if (stateblock->state.render_states[WINED3DRS_ZBIAS])
-    {
-        tmpvalue.d = stateblock->state.render_states[WINED3DRS_ZBIAS];
-        TRACE("ZBias value %f\n", tmpvalue.f);
-        glPolygonOffset(0, -tmpvalue.f);
-        checkGLcall("glPolygonOffset(0, -Value)");
-        glEnable(GL_POLYGON_OFFSET_FILL);
-        checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL);");
-        glEnable(GL_POLYGON_OFFSET_LINE);
-        checkGLcall("glEnable(GL_POLYGON_OFFSET_LINE);");
-        glEnable(GL_POLYGON_OFFSET_POINT);
-        checkGLcall("glEnable(GL_POLYGON_OFFSET_POINT);");
-    } else {
-        glDisable(GL_POLYGON_OFFSET_FILL);
-        checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL);");
-        glDisable(GL_POLYGON_OFFSET_LINE);
-        checkGLcall("glDisable(GL_POLYGON_OFFSET_LINE);");
-        glDisable(GL_POLYGON_OFFSET_POINT);
-        checkGLcall("glDisable(GL_POLYGON_OFFSET_POINT);");
-    }
-}
-
-
 static void state_normalize(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     if(isStateDirty(context, STATE_VDECL)) {
@@ -5061,7 +5031,6 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_RENDER(WINED3DRS_SUBPIXEL),                   { STATE_RENDER(WINED3DRS_SUBPIXEL),                   state_subpixel      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_SUBPIXELX),                  { STATE_RENDER(WINED3DRS_SUBPIXELX),                  state_subpixelx     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_STIPPLEDALPHA),              { STATE_RENDER(WINED3DRS_STIPPLEDALPHA),              state_stippledalpha }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ZBIAS),                      { STATE_RENDER(WINED3DRS_ZBIAS),                      state_zbias         }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_STIPPLEENABLE),              { STATE_RENDER(WINED3DRS_STIPPLEENABLE),              state_stippleenable }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_MIPMAPLODBIAS),              { STATE_RENDER(WINED3DRS_MIPMAPLODBIAS),              state_mipmaplodbias }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3DRS_ANISOTROPY),                 { STATE_RENDER(WINED3DRS_ANISOTROPY),                 state_anisotropy    }, WINED3D_GL_EXT_NONE             },
@@ -5793,6 +5762,7 @@ static void validate_state_table(struct StateEntry *state_table)
         { 17,  18},
         { 21,  21},
         { 42,  45},
+        { 47,  47},
         { 61, 127},
         {149, 150},
         {169, 169},

@@ -1141,7 +1141,6 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     tmpfloat.f = 1.0f;
     state->render_states[WINED3DRS_FOGDENSITY] = tmpfloat.d;
     state->render_states[WINED3DRS_EDGEANTIALIAS] = FALSE;
-    state->render_states[WINED3DRS_ZBIAS] = 0;
     state->render_states[WINED3DRS_RANGEFOGENABLE] = FALSE;
     state->render_states[WINED3DRS_STENCILENABLE] = FALSE;
     state->render_states[WINED3DRS_STENCILFAIL] = WINED3DSTENCILOP_KEEP;

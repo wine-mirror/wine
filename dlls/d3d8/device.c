@@ -1373,11 +1373,25 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderState(IDirect3DDevice8 *ifac
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     HRESULT hr;
+    union
+    {
+        DWORD d;
+        float f;
+    } wined3d_value;
 
     TRACE("iface %p, state %#x, value %#x.\n", iface, State, Value);
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_SetRenderState(This->WineD3DDevice, State, Value);
+    switch (State)
+    {
+        case D3DRS_ZBIAS:
+            wined3d_value.f = Value / -16.0f;
+            hr = IWineD3DDevice_SetRenderState(This->WineD3DDevice, WINED3DRS_DEPTHBIAS, wined3d_value.d);
+            break;
+
+        default:
+            hr = IWineD3DDevice_SetRenderState(This->WineD3DDevice, State, Value);
+    }
     wined3d_mutex_unlock();
 
     return hr;
@@ -1388,11 +1402,25 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetRenderState(IDirect3DDevice8 *ifac
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     HRESULT hr;
+    union
+    {
+        DWORD d;
+        float f;
+    } wined3d_value;
 
     TRACE("iface %p, state %#x, value %p.\n", iface, State, pValue);
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_GetRenderState(This->WineD3DDevice, State, pValue);
+    switch (State)
+    {
+        case D3DRS_ZBIAS:
+            hr = IWineD3DDevice_GetRenderState(This->WineD3DDevice, WINED3DRS_DEPTHBIAS, &wined3d_value.d);
+            if (SUCCEEDED(hr)) *pValue = -wined3d_value.f * 16.0f;
+            break;
+
+        default:
+        hr = IWineD3DDevice_GetRenderState(This->WineD3DDevice, State, pValue);
+    }
     wined3d_mutex_unlock();
 
     return hr;
