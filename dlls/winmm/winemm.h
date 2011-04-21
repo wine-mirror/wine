@@ -127,34 +127,34 @@ typedef struct tagWINE_MMIO {
 
 /* function prototypes */
 
-LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr);
-BOOL		DRIVER_GetLibName(LPCWSTR keyName, LPCWSTR sectName, LPWSTR buf, int sz);
-LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCWSTR fn, LPARAM lParam2);
-void            DRIVER_UnloadAll(void);
+LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr) DECLSPEC_HIDDEN;
+BOOL		DRIVER_GetLibName(LPCWSTR keyName, LPCWSTR sectName, LPWSTR buf, int sz) DECLSPEC_HIDDEN;
+LPWINE_DRIVER	DRIVER_TryOpenDriver32(LPCWSTR fn, LPARAM lParam2) DECLSPEC_HIDDEN;
+void            DRIVER_UnloadAll(void) DECLSPEC_HIDDEN;
 
-void            MMDRV_Exit(void);
-UINT		MMDRV_GetNum(UINT);
+void            MMDRV_Exit(void) DECLSPEC_HIDDEN;
+UINT		MMDRV_GetNum(UINT) DECLSPEC_HIDDEN;
 LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
-                            DWORD_PTR* dwCallback, DWORD_PTR* dwInstance);
-void		MMDRV_Free(HANDLE hndl, LPWINE_MLD mld);
-DWORD		MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD dwParam2);
-DWORD		MMDRV_Close(LPWINE_MLD mld, UINT wMsg);
-LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID);
-LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType, BOOL bSrcCanBeID, UINT dstTyped);
-DWORD           MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-UINT		MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
+                            DWORD_PTR* dwCallback, DWORD_PTR* dwInstance) DECLSPEC_HIDDEN;
+void		MMDRV_Free(HANDLE hndl, LPWINE_MLD mld) DECLSPEC_HIDDEN;
+DWORD		MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD dwParam2) DECLSPEC_HIDDEN;
+DWORD		MMDRV_Close(LPWINE_MLD mld, UINT wMsg) DECLSPEC_HIDDEN;
+LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID) DECLSPEC_HIDDEN;
+LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType, BOOL bSrcCanBeID, UINT dstTyped) DECLSPEC_HIDDEN;
+DWORD           MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2) DECLSPEC_HIDDEN;
+UINT		MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2) DECLSPEC_HIDDEN;
 
-DWORD           MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
+DWORD           MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2) DECLSPEC_HIDDEN;
 
-const char*     WINMM_ErrorToString(MMRESULT error);
+const char*     WINMM_ErrorToString(MMRESULT error) DECLSPEC_HIDDEN;
 
-void		TIME_MMTimeStop(void);
+void		TIME_MMTimeStop(void) DECLSPEC_HIDDEN;
 
 /* Global variables */
-extern CRITICAL_SECTION WINMM_cs;
-extern HINSTANCE hWinMM32Instance;
-extern HANDLE psLastEvent;
-extern HANDLE psStopEvent;
+extern CRITICAL_SECTION WINMM_cs DECLSPEC_HIDDEN;
+extern HINSTANCE hWinMM32Instance DECLSPEC_HIDDEN;
+extern HANDLE psLastEvent DECLSPEC_HIDDEN;
+extern HANDLE psStopEvent DECLSPEC_HIDDEN;
 
 /* GetDriverFlags() returned bits is not documented (nor the call itself)
  * Here are Wine only definitions of the bits
