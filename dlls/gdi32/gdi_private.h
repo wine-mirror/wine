@@ -545,8 +545,8 @@ extern BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width
 extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut ) DECLSPEC_HIDDEN;
 
 /* palette.c */
-extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg);
-extern UINT WINAPI GDIRealizePalette( HDC hdc );
+extern HPALETTE WINAPI GDISelectPalette( HDC hdc, HPALETTE hpal, WORD wBkg) DECLSPEC_HIDDEN;
+extern UINT WINAPI GDIRealizePalette( HDC hdc ) DECLSPEC_HIDDEN;
 extern HPALETTE PALETTE_Init(void) DECLSPEC_HIDDEN;
 
 /* region.c */
