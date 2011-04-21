@@ -840,7 +840,6 @@ static void test_DxDiag_SystemInfo(void)
 
     HRESULT hr;
     IDxDiagContainer *child = NULL;
-    VARIANT var;
 
     if (!create_root_IDxDiagContainer())
     {
@@ -854,6 +853,9 @@ static void test_DxDiag_SystemInfo(void)
     if (hr == S_OK)
     {
         int i;
+        VARIANT var;
+
+        VariantInit(&var);
 
         /* Examine the variant types of obtained property values. */
         for (i = 0; i < sizeof(property_tests)/sizeof(property_tests[0]); i++)
