@@ -377,7 +377,7 @@ static const data_stream_vtbl_t gzip_stream_vtbl = {
 
 static voidpf wininet_zalloc(voidpf opaque, uInt items, uInt size)
 {
-    return HeapAlloc(GetProcessHeap(), 0, items*size);
+    return heap_alloc(items*size);
 }
 
 static void wininet_zfree(voidpf opaque, voidpf address)
@@ -465,7 +465,7 @@ static LPWSTR * HTTP_Tokenize(LPCWSTR string, LPCWSTR token_string)
     }
 
     /* add 1 for terminating NULL */
-    token_array = HeapAlloc(GetProcessHeap(), 0, (tokens+1) * sizeof(*token_array));
+    token_array = heap_alloc((tokens+1) * sizeof(*token_array));
     token_array[tokens] = NULL;
     if (!tokens)
         return token_array;
@@ -475,7 +475,7 @@ static LPWSTR * HTTP_Tokenize(LPCWSTR string, LPCWSTR token_string)
         next_token = strstrW(string, token_string);
         if (!next_token) next_token = string+strlenW(string);
         len = next_token - string;
-        token_array[i] = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+        token_array[i] = heap_alloc((len+1)*sizeof(WCHAR));
         memcpy(token_array[i], string, len*sizeof(WCHAR));
         token_array[i][len] = '\0';
         string = next_token+strlenW(token_string);
@@ -523,8 +523,7 @@ static void HTTP_FixURL(http_request_t *request)
                        request->path, strlenW(request->path), szHttp, strlenW(szHttp) )
        && request->path[0] != '/') /* not an absolute path ?? --> fix it !! */
     {
-        WCHAR *fixurl = HeapAlloc(GetProcessHeap(), 0, 
-                             (strlenW(request->path) + 2)*sizeof(WCHAR));
+        WCHAR *fixurl = heap_alloc((strlenW(request->path) + 2)*sizeof(WCHAR));
         *fixurl = '/';
         strcpyW(fixurl + 1, request->path);
         HeapFree( GetProcessHeap(), 0, request->path );
@@ -546,7 +545,7 @@ static LPWSTR HTTP_BuildHeaderRequestString( http_request_t *request, LPCWSTR ve
 
     /* allocate space for an array of all the string pointers to be added */
     len = (request->nCustHeaders)*4 + 10;
-    req = HeapAlloc( GetProcessHeap(), 0, len*sizeof(LPCWSTR) );
+    req = heap_alloc(len*sizeof(LPCWSTR));
 
     /* add the verb, path and HTTP version string */
     n = 0;
@@ -610,7 +609,7 @@ static void HTTP_ProcessCookies( http_request_t *request )
 
             Host = HTTP_GetHeader(request, hostW);
             len = lstrlenW(Host->lpszValue) + 9 + lstrlenW(request->path);
-            buf_url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+            buf_url = heap_alloc(len*sizeof(WCHAR));
             sprintfW(buf_url, szFmt, Host->lpszValue, request->path);
             InternetSetCookieW(buf_url, NULL, setCookieHeader->lpszValue);
 
@@ -702,7 +701,7 @@ static UINT retrieve_cached_basic_authorization(LPWSTR host, LPWSTR realm, LPSTR
         if (!strcmpiW(host,ad->host) && !strcmpW(realm,ad->realm))
         {
             TRACE("Authorization found in cache\n");
-            *auth_data = HeapAlloc(GetProcessHeap(),0,ad->authorizationLen);
+            *auth_data = heap_alloc(ad->authorizationLen);
             memcpy(*auth_data,ad->authorization,ad->authorizationLen);
             rc = ad->authorizationLen;
             break;
@@ -734,16 +733,16 @@ static void cache_basic_authorization(LPWSTR host, LPWSTR realm, LPSTR auth_data
     {
         TRACE("Found match in cache, replacing\n");
         HeapFree(GetProcessHeap(),0,ad->authorization);
-        ad->authorization = HeapAlloc(GetProcessHeap(),0,auth_data_len);
+        ad->authorization = heap_alloc(auth_data_len);
         memcpy(ad->authorization, auth_data, auth_data_len);
         ad->authorizationLen = auth_data_len;
     }
     else
     {
-        ad = HeapAlloc(GetProcessHeap(),0,sizeof(basicAuthorizationData));
+        ad = heap_alloc(sizeof(basicAuthorizationData));
         ad->host = heap_strdupW(host);
         ad->host = heap_strdupW(realm);
-        ad->authorization = HeapAlloc(GetProcessHeap(),0,auth_data_len);
+        ad->authorization = heap_alloc(auth_data_len);
         memcpy(ad->authorization, auth_data, auth_data_len);
         ad->authorizationLen = auth_data_len;
         list_add_head(&basicAuthorizationCache,&ad->entry);
@@ -766,7 +765,7 @@ static BOOL retrieve_cached_authorization(LPWSTR host, LPWSTR scheme,
 
             nt_auth_identity->User = heap_strdupW(ad->user);
             nt_auth_identity->Password = heap_strdupW(ad->password);
-            nt_auth_identity->Domain = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*ad->domain_len);
+            nt_auth_identity->Domain = heap_alloc(sizeof(WCHAR)*ad->domain_len);
             if(!nt_auth_identity->User || !nt_auth_identity->Password ||
                     (!nt_auth_identity->Domain && ad->domain_len)) {
                 HeapFree(GetProcessHeap(), 0, nt_auth_identity->User);
@@ -809,7 +808,7 @@ static void cache_authorization(LPWSTR host, LPWSTR scheme,
         HeapFree(GetProcessHeap(), 0, ad->password);
         HeapFree(GetProcessHeap(), 0, ad->domain);
     } else {
-        ad = HeapAlloc(GetProcessHeap(), 0, sizeof(authorizationData));
+        ad = heap_alloc(sizeof(authorizationData));
         if(!ad) {
             LeaveCriticalSection(&authcache_cs);
             return;
@@ -858,7 +857,7 @@ static BOOL HTTP_DoAuthorization( http_request_t *request, LPCWSTR pszAuthValue,
         TimeStamp exp;
 
         first = TRUE;
-        pAuthInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*pAuthInfo));
+        pAuthInfo = heap_alloc(sizeof(*pAuthInfo));
         if (!pAuthInfo)
             return FALSE;
 
@@ -993,7 +992,7 @@ static BOOL HTTP_DoAuthorization( http_request_t *request, LPCWSTR pszAuthValue,
             passlen = WideCharToMultiByte(CP_UTF8, 0, password, lstrlenW(password), NULL, 0, NULL, NULL);
 
             /* length includes a nul terminator, which will be re-used for the ':' */
-            auth_data = HeapAlloc(GetProcessHeap(), 0, userlen + 1 + passlen);
+            auth_data = heap_alloc(userlen + 1 + passlen);
             if (!auth_data)
             {
                 HeapFree(GetProcessHeap(),0,szRealm);
@@ -1037,11 +1036,11 @@ static BOOL HTTP_DoAuthorization( http_request_t *request, LPCWSTR pszAuthValue,
         {
             pszAuthData++;
             in.cbBuffer = HTTP_DecodeBase64(pszAuthData, NULL);
-            in.pvBuffer = HeapAlloc(GetProcessHeap(), 0, in.cbBuffer);
+            in.pvBuffer = heap_alloc(in.cbBuffer);
             HTTP_DecodeBase64(pszAuthData, in.pvBuffer);
         }
 
-        buffer = HeapAlloc(GetProcessHeap(), 0, pAuthInfo->max_token);
+        buffer = heap_alloc(pAuthInfo->max_token);
 
         out.BufferType = SECBUFFER_TOKEN;
         out.cbBuffer = pAuthInfo->max_token;
@@ -1101,7 +1100,7 @@ static DWORD HTTP_HttpAddRequestHeadersW(http_request_t *request,
         len = strlenW(lpszHeader);
     else
         len = dwHeaderLength;
-    buffer = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR)*(len+1) );
+    buffer = heap_alloc(sizeof(WCHAR)*(len+1));
     lstrcpynW( buffer, lpszHeader, len + 1);
 
     lpszStart = buffer;
@@ -1211,7 +1210,7 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     TRACE("%p, %s, %i, %i\n", hHttpRequest, debugstr_an(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
 
     len = MultiByteToWideChar( CP_ACP, 0, lpszHeader, dwHeaderLength, NULL, 0 );
-    hdr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+    hdr = heap_alloc(len*sizeof(WCHAR));
     MultiByteToWideChar( CP_ACP, 0, lpszHeader, dwHeaderLength, hdr, len );
     if( dwHeaderLength != ~0U )
         dwHeaderLength = len;
@@ -1299,7 +1298,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
             __ENDTRY;
             types++;
         }
-        szAcceptTypes = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *) * (acceptTypesCount+1));
+        szAcceptTypes = heap_alloc(sizeof(WCHAR *) * (acceptTypesCount+1));
         if (!szAcceptTypes) goto end;
 
         acceptTypesCount = 0;
@@ -1494,7 +1493,7 @@ static BOOL HTTP_InsertAuthorization( http_request_t *request, struct HttpAuthIn
         {
             /* scheme + space + base64 encoded data (3/2/1 bytes data -> 4 bytes of characters) */
             len = strlenW(pAuthInfo->scheme)+1+((pAuthInfo->auth_data_len+2)*4)/3;
-            authorization = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+            authorization = heap_alloc((len+1)*sizeof(WCHAR));
             if (!authorization)
                 return FALSE;
 
@@ -1532,7 +1531,7 @@ static WCHAR *HTTP_BuildProxyRequestUrl(http_request_t *req)
     size = sizeof(new_location);
     if (HTTP_HttpQueryInfoW(req, HTTP_QUERY_LOCATION, new_location, &size, NULL) == ERROR_SUCCESS)
     {
-        if (!(url = HeapAlloc( GetProcessHeap(), 0, size + sizeof(WCHAR) ))) return NULL;
+        if (!(url = heap_alloc(size + sizeof(WCHAR)))) return NULL;
         strcpyW( url, new_location );
     }
     else
@@ -1545,7 +1544,7 @@ static WCHAR *HTTP_BuildProxyRequestUrl(http_request_t *req)
         size = 16; /* "https://" + sizeof(port#) + ":/\0" */
         size += strlenW( session->hostName ) + strlenW( req->path );
 
-        if (!(url = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) ))) return NULL;
+        if (!(url = heap_alloc(size * sizeof(WCHAR)))) return NULL;
 
         if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
             sprintfW( url, formatSSL, session->hostName, session->hostPort );
@@ -1889,7 +1888,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
         error = GetLastError();
         if (!ret && error == ERROR_INSUFFICIENT_BUFFER)
         {
-            if (!(info = HeapAlloc(GetProcessHeap(), 0, nbytes)))
+            if (!(info = heap_alloc(nbytes)))
                 return ERROR_OUTOFMEMORY;
 
             GetUrlCacheEntryInfoW(url, info, &nbytes);
@@ -2822,8 +2821,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->session = session;
     list_add_head( &session->hdr.children, &request->hdr.entry );
 
-    lpszHostName = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) *
-            (strlenW(session->hostName) + 7 /* length of ":65535" + 1 */));
+    lpszHostName = heap_alloc(sizeof(WCHAR) * (strlenW(session->hostName) + 7 /* length of ":65535" + 1 */));
     if (NULL == lpszHostName)
     {
         res = ERROR_OUTOFMEMORY;
@@ -2844,7 +2842,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
         rc = UrlEscapeW(lpszObjectName, NULL, &len, URL_ESCAPE_SPACES_ONLY);
         if (rc != E_POINTER)
             len = strlenW(lpszObjectName)+1;
-        request->path = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        request->path = heap_alloc(len*sizeof(WCHAR));
         rc = UrlEscapeW(lpszObjectName, request->path, &len,
                    URL_ESCAPE_SPACES_ONLY);
         if (rc != S_OK)
@@ -3455,7 +3453,7 @@ BOOL WINAPI HttpQueryInfoA(HINTERNET hHttpRequest, DWORD dwInfoLevel,
         }
         else
             alloclen = len;
-        bufferW = HeapAlloc( GetProcessHeap(), 0, alloclen );
+        bufferW = heap_alloc(alloclen);
         /* buffer is in/out because of HTTP_QUERY_CUSTOM */
         if ((dwInfoLevel & HTTP_QUERY_HEADER_MASK) == HTTP_QUERY_CUSTOM)
             MultiByteToWideChar( CP_ACP, 0, lpBuffer, -1, bufferW, alloclen / sizeof(WCHAR) );
@@ -3518,7 +3516,7 @@ static LPWSTR HTTP_GetRedirectURL(http_request_t *request, LPCWSTR lpszUrl)
         (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
         return NULL;
 
-    orig_url = HeapAlloc(GetProcessHeap(), 0, url_length);
+    orig_url = heap_alloc(url_length);
 
     /* convert from bytes to characters */
     url_length = url_length / sizeof(WCHAR) - 1;
@@ -3535,7 +3533,7 @@ static LPWSTR HTTP_GetRedirectURL(http_request_t *request, LPCWSTR lpszUrl)
         HeapFree(GetProcessHeap(), 0, orig_url);
         return NULL;
     }
-    combined_url = HeapAlloc(GetProcessHeap(), 0, url_length * sizeof(WCHAR));
+    combined_url = heap_alloc(url_length * sizeof(WCHAR));
 
     if (!InternetCombineUrlW(orig_url, lpszUrl, combined_url, &url_length, ICU_ENCODE_SPACES_ONLY))
     {
@@ -3639,7 +3637,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
             static const WCHAR fmt[] = {'%','s',':','%','u',0};
             len = lstrlenW(hostName);
             len += 7; /* 5 for strlen("65535") + 1 for ":" + 1 for '\0' */
-            session->hostName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+            session->hostName = heap_alloc(len*sizeof(WCHAR));
             sprintfW(session->hostName, fmt, hostName, urlComponents.nPort);
         }
         else
@@ -3687,7 +3685,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
         rc = UrlEscapeW(path, NULL, &needed, URL_ESCAPE_SPACES_ONLY);
         if (rc != E_POINTER)
             needed = strlenW(path)+1;
-        request->path = HeapAlloc(GetProcessHeap(), 0, needed*sizeof(WCHAR));
+        request->path = heap_alloc(needed*sizeof(WCHAR));
         rc = UrlEscapeW(path, request->path, &needed,
                         URL_ESCAPE_SPACES_ONLY);
         if (rc != S_OK)
@@ -3722,7 +3720,7 @@ static LPWSTR HTTP_build_req( LPCWSTR *list, int len )
         len += strlenW( *t );
     len++;
 
-    str = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+    str = heap_alloc(len*sizeof(WCHAR));
     *str = 0;
 
     for( t = list; *t ; t++ )
@@ -3746,7 +3744,7 @@ static DWORD HTTP_SecureProxyConnect(http_request_t *request)
 
     TRACE("\n");
 
-    lpszPath = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( session->hostName ) + 13)*sizeof(WCHAR) );
+    lpszPath = heap_alloc((lstrlenW( session->hostName ) + 13)*sizeof(WCHAR));
     sprintfW( lpszPath, szFormat, session->hostName, session->hostPort );
     requestString = HTTP_BuildHeaderRequestString( request, szConnect, lpszPath, g_szHttp1_1 );
     HeapFree( GetProcessHeap(), 0, lpszPath );
@@ -3754,7 +3752,7 @@ static DWORD HTTP_SecureProxyConnect(http_request_t *request)
     len = WideCharToMultiByte( CP_ACP, 0, requestString, -1,
                                 NULL, 0, NULL, NULL );
     len--; /* the nul terminator isn't needed */
-    ascii_req = HeapAlloc( GetProcessHeap(), 0, len );
+    ascii_req = heap_alloc(len);
     WideCharToMultiByte( CP_ACP, 0, requestString, -1,
                             ascii_req, len, NULL, NULL );
     HeapFree( GetProcessHeap(), 0, requestString );
@@ -3781,7 +3779,7 @@ static void HTTP_InsertCookies(http_request_t *request)
     LPHTTPHEADERW Host = HTTP_GetHeader(request, hostW);
 
     size = (strlenW(Host->lpszValue) + strlenW(szUrlForm) + strlenW(request->path)) * sizeof(WCHAR);
-    if (!(lpszUrl = HeapAlloc(GetProcessHeap(), 0, size))) return;
+    if (!(lpszUrl = heap_alloc(size))) return;
     sprintfW( lpszUrl, szUrlForm, Host->lpszValue, request->path);
 
     if (InternetGetCookieW(lpszUrl, NULL, NULL, &nCookieSize))
@@ -3790,7 +3788,7 @@ static void HTTP_InsertCookies(http_request_t *request)
         static const WCHAR szCookie[] = {'C','o','o','k','i','e',':',' ',0};
 
         size = sizeof(szCookie) + nCookieSize * sizeof(WCHAR) + sizeof(szCrLf);
-        if ((lpszCookies = HeapAlloc(GetProcessHeap(), 0, size)))
+        if ((lpszCookies = heap_alloc(size)))
         {
             cnt += sprintfW(lpszCookies, szCookie);
             InternetGetCookieW(lpszUrl, NULL, lpszCookies + cnt, &nCookieSize);
@@ -4264,7 +4262,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         int len;
 
         len = strlenW(request->session->appInfo->agent) + strlenW(user_agent);
-        agent_header = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        agent_header = heap_alloc(len * sizeof(WCHAR));
         sprintfW(agent_header, user_agent, request->session->appInfo->agent);
 
         HTTP_HttpAddRequestHeadersW(request, agent_header, strlenW(agent_header), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
@@ -4348,7 +4346,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
             dwOptionalLength = 0;
         len = WideCharToMultiByte( CP_ACP, 0, requestString, -1,
                                    NULL, 0, NULL, NULL );
-        ascii_req = HeapAlloc( GetProcessHeap(), 0, len + dwOptionalLength );
+        ascii_req = heap_alloc(len + dwOptionalLength);
         WideCharToMultiByte( CP_ACP, 0, requestString, -1,
                              ascii_req, len, NULL, NULL );
         if( lpOptional )
@@ -4735,7 +4733,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
         {
             headerlen = MultiByteToWideChar(CP_ACP,0,lpBuffersIn->lpcszHeader,
                     lpBuffersIn->dwHeadersLength,0,0);
-            header = HeapAlloc(GetProcessHeap(),0,headerlen*sizeof(WCHAR));
+            header = heap_alloc(headerlen*sizeof(WCHAR));
             if (!(BuffersInW.lpcszHeader = header))
             {
                 SetLastError(ERROR_OUTOFMEMORY);
@@ -4816,7 +4814,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
                 else
                     size = lpBuffersIn->dwHeadersLength * sizeof(WCHAR);
 
-                req->lpszHeader = HeapAlloc( GetProcessHeap(), 0, size );
+                req->lpszHeader = heap_alloc(size);
                 memcpy( req->lpszHeader, lpBuffersIn->lpcszHeader, size );
             }
             else req->lpszHeader = NULL;
@@ -4919,7 +4917,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
             if (dwHeaderLength == ~0u) size = (strlenW(lpszHeaders) + 1) * sizeof(WCHAR);
             else size = dwHeaderLength * sizeof(WCHAR);
 
-            req->lpszHeader = HeapAlloc(GetProcessHeap(), 0, size);
+            req->lpszHeader = heap_alloc(size);
             memcpy(req->lpszHeader, lpszHeaders, size);
         }
         else
@@ -4969,7 +4967,7 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     if(lpszHeaders!=NULL)
     {
         nLen=MultiByteToWideChar(CP_ACP,0,lpszHeaders,dwHeaderLength,NULL,0);
-        szHeaders=HeapAlloc(GetProcessHeap(),0,nLen*sizeof(WCHAR));
+        szHeaders = heap_alloc(nLen*sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP,0,lpszHeaders,dwHeaderLength,szHeaders,nLen);
     }
     result=HttpSendRequestW(hHttpRequest, szHeaders, nLen, lpOptional, dwOptionalLength);
@@ -5356,7 +5354,7 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
     *(status_text-1) = ' ';
 
     /* regenerate raw headers */
-    lpszRawHeaders = HeapAlloc(GetProcessHeap(), 0, (cchMaxRawHeaders + 1) * sizeof(WCHAR));
+    lpszRawHeaders = heap_alloc((cchMaxRawHeaders + 1) * sizeof(WCHAR));
     if (!lpszRawHeaders) goto lend;
 
     while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
@@ -5457,7 +5455,7 @@ static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
     LPWSTR pszColon;
     INT len;
 
-    pTokenPair = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pTokenPair)*3);
+    pTokenPair = heap_alloc_zero(sizeof(*pTokenPair)*3);
 
     pszColon = strchrW(buffer, ':');
     /* must have two tokens */
@@ -5469,7 +5467,7 @@ static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
         return NULL;
     }
 
-    pTokenPair[0] = HeapAlloc(GetProcessHeap(), 0, (pszColon - buffer + 1) * sizeof(WCHAR));
+    pTokenPair[0] = heap_alloc((pszColon - buffer + 1) * sizeof(WCHAR));
     if (!pTokenPair[0])
     {
         HTTP_FreeTokens(pTokenPair);
@@ -5481,7 +5479,7 @@ static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
     /* skip colon */
     pszColon++;
     len = strlenW(pszColon);
-    pTokenPair[1] = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    pTokenPair[1] = heap_alloc((len + 1) * sizeof(WCHAR));
     if (!pTokenPair[1])
     {
         HTTP_FreeTokens(pTokenPair);
@@ -5696,7 +5694,7 @@ static DWORD HTTP_InsertCustomHeader(http_request_t *request, LPHTTPHEADERW lpHd
     if (count > 1)
 	lph = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, request->custHeaders, sizeof(HTTPHEADERW) * count);
     else
-	lph = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HTTPHEADERW) * count);
+	lph = heap_alloc_zero(sizeof(HTTPHEADERW) * count);
 
     if (!lph)
         return ERROR_OUTOFMEMORY;

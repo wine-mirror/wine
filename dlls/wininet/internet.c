@@ -543,7 +543,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
             LPWSTR szProxy, p;
             static const WCHAR szHttp[] = {'h','t','t','p','=',0};
 
-            if (!(szProxy = HeapAlloc( GetProcessHeap(), 0, len )))
+            if (!(szProxy = heap_alloc(len)))
             {
                 RegCloseKey( key );
                 return ERROR_OUTOFMEMORY;
@@ -575,7 +575,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
         WCHAR *envproxyW;
 
         len = MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, NULL, 0 );
-        if (!(envproxyW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        if (!(envproxyW = heap_alloc(len * sizeof(WCHAR))))
             return ERROR_OUTOFMEMORY;
         MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, envproxyW, len );
 
@@ -1085,7 +1085,7 @@ BOOL WINAPI InternetGetConnectedStateExA(LPDWORD lpdwStatus, LPSTR lpszConnectio
     TRACE("(%p, %p, %d, 0x%08x)\n", lpdwStatus, lpszConnectionName, dwNameLen, dwReserved);
 
     if (lpszConnectionName && dwNameLen > 0)
-        lpwszConnectionName= HeapAlloc(GetProcessHeap(), 0, dwNameLen * sizeof(WCHAR));
+        lpwszConnectionName = heap_alloc(dwNameLen * sizeof(WCHAR));
 
     rc = InternetGetConnectedStateExW(lpdwStatus,lpwszConnectionName, dwNameLen,
                                       dwReserved);
@@ -1357,7 +1357,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
        InternetCrackUrlW should not include it                  */
   if (dwUrlLength == -1) nLength--;
 
-  lpwszUrl = HeapAlloc(GetProcessHeap(), 0, (nLength + 1) * sizeof(WCHAR));
+  lpwszUrl = heap_alloc((nLength + 1) * sizeof(WCHAR));
   MultiByteToWideChar(CP_ACP,0,lpszUrl,dwUrlLength,lpwszUrl,nLength + 1);
   lpwszUrl[nLength] = '\0';
 
@@ -1368,7 +1368,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     UCW.dwHostNameLength = lpUrlComponents->dwHostNameLength;
     if (lpUrlComponents->lpszHostName)
     {
-      hostname = HeapAlloc(GetProcessHeap(), 0, UCW.dwHostNameLength * sizeof(WCHAR));
+      hostname = heap_alloc(UCW.dwHostNameLength * sizeof(WCHAR));
       UCW.lpszHostName = hostname;
     }
   }
@@ -1377,7 +1377,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     UCW.dwUserNameLength = lpUrlComponents->dwUserNameLength;
     if (lpUrlComponents->lpszUserName)
     {
-      username = HeapAlloc(GetProcessHeap(), 0, UCW.dwUserNameLength * sizeof(WCHAR));
+      username = heap_alloc(UCW.dwUserNameLength * sizeof(WCHAR));
       UCW.lpszUserName = username;
     }
   }
@@ -1386,7 +1386,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     UCW.dwPasswordLength = lpUrlComponents->dwPasswordLength;
     if (lpUrlComponents->lpszPassword)
     {
-      password = HeapAlloc(GetProcessHeap(), 0, UCW.dwPasswordLength * sizeof(WCHAR));
+      password = heap_alloc(UCW.dwPasswordLength * sizeof(WCHAR));
       UCW.lpszPassword = password;
     }
   }
@@ -1395,7 +1395,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     UCW.dwUrlPathLength = lpUrlComponents->dwUrlPathLength;
     if (lpUrlComponents->lpszUrlPath)
     {
-      path = HeapAlloc(GetProcessHeap(), 0, UCW.dwUrlPathLength * sizeof(WCHAR));
+      path = heap_alloc(UCW.dwUrlPathLength * sizeof(WCHAR));
       UCW.lpszUrlPath = path;
     }
   }
@@ -1404,7 +1404,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     UCW.dwSchemeLength = lpUrlComponents->dwSchemeLength;
     if (lpUrlComponents->lpszScheme)
     {
-      scheme = HeapAlloc(GetProcessHeap(), 0, UCW.dwSchemeLength * sizeof(WCHAR));
+      scheme = heap_alloc(UCW.dwSchemeLength * sizeof(WCHAR));
       UCW.lpszScheme = scheme;
     }
   }
@@ -1413,7 +1413,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
     UCW.dwExtraInfoLength = lpUrlComponents->dwExtraInfoLength;
     if (lpUrlComponents->lpszExtraInfo)
     {
-      extra = HeapAlloc(GetProcessHeap(), 0, UCW.dwExtraInfoLength * sizeof(WCHAR));
+      extra = heap_alloc(UCW.dwExtraInfoLength * sizeof(WCHAR));
       UCW.lpszExtraInfo = extra;
     }
   }
@@ -1572,14 +1572,14 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
         WCHAR *url_tmp;
         DWORD len = dwUrlLength + 1;
 
-        if (!(url_tmp = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        if (!(url_tmp = heap_alloc(len * sizeof(WCHAR))))
         {
             INTERNET_SetLastError(ERROR_OUTOFMEMORY);
             return FALSE;
         }
         memcpy(url_tmp, lpszUrl_orig, dwUrlLength * sizeof(WCHAR));
         url_tmp[dwUrlLength] = 0;
-        if (!(lpszUrl_decode = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        if (!(lpszUrl_decode = heap_alloc(len * sizeof(WCHAR))))
         {
             HeapFree(GetProcessHeap(), 0, url_tmp);
             INTERNET_SetLastError(ERROR_OUTOFMEMORY);
@@ -2771,7 +2771,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
         proxlen = MultiByteToWideChar( CP_ACP, 0, pi->lpszProxy, -1, NULL, 0);
         prbylen= MultiByteToWideChar( CP_ACP, 0, pi->lpszProxyBypass, -1, NULL, 0);
         wlen = sizeof(*piw) + proxlen + prbylen;
-        wbuffer = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(WCHAR) );
+        wbuffer = heap_alloc(wlen*sizeof(WCHAR) );
         piw = (LPINTERNET_PROXY_INFOW) wbuffer;
         piw->dwAccessType = pi->dwAccessType;
         prox = (LPWSTR) &piw[1];
@@ -2787,7 +2787,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_PASSWORD:
         wlen = MultiByteToWideChar( CP_ACP, 0, lpBuffer, dwBufferLength,
                                    NULL, 0 );
-        wbuffer = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(WCHAR) );
+        wbuffer = heap_alloc(wlen*sizeof(WCHAR) );
         MultiByteToWideChar( CP_ACP, 0, lpBuffer, dwBufferLength,
                                    wbuffer, wlen );
         break;
@@ -2796,21 +2796,21 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
         INTERNET_PER_CONN_OPTION_LISTW *listW;
         INTERNET_PER_CONN_OPTION_LISTA *listA = lpBuffer;
         wlen = sizeof(INTERNET_PER_CONN_OPTION_LISTW);
-        wbuffer = HeapAlloc( GetProcessHeap(), 0, wlen );
+        wbuffer = heap_alloc(wlen);
         listW = wbuffer;
 
         listW->dwSize = sizeof(INTERNET_PER_CONN_OPTION_LISTW);
         if (listA->pszConnection)
         {
             wlen = MultiByteToWideChar( CP_ACP, 0, listA->pszConnection, -1, NULL, 0 );
-            listW->pszConnection = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(WCHAR) );
+            listW->pszConnection = heap_alloc(wlen*sizeof(WCHAR));
             MultiByteToWideChar( CP_ACP, 0, listA->pszConnection, -1, listW->pszConnection, wlen );
         }
         else
             listW->pszConnection = NULL;
         listW->dwOptionCount = listA->dwOptionCount;
         listW->dwOptionError = listA->dwOptionError;
-        listW->pOptions = HeapAlloc( GetProcessHeap(), 0, sizeof(INTERNET_PER_CONN_OPTIONW) * listA->dwOptionCount );
+        listW->pOptions = heap_alloc(sizeof(INTERNET_PER_CONN_OPTIONW) * listA->dwOptionCount);
 
         for (i = 0; i < listA->dwOptionCount; ++i) {
             INTERNET_PER_CONN_OPTIONA *optA = listA->pOptions + i;
@@ -2827,7 +2827,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
                 if (optA->Value.pszValue)
                 {
                     wlen = MultiByteToWideChar( CP_ACP, 0, optA->Value.pszValue, -1, NULL, 0 );
-                    optW->Value.pszValue = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(WCHAR) );
+                    optW->Value.pszValue = heap_alloc(wlen*sizeof(WCHAR));
                     MultiByteToWideChar( CP_ACP, 0, optA->Value.pszValue, -1, optW->Value.pszValue, wlen );
                 }
                 else
@@ -3162,7 +3162,7 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
        * Build our ping command
        */
       len = WideCharToMultiByte(CP_UNIXCP, 0, hostW, -1, NULL, 0, NULL, NULL);
-      command = HeapAlloc( GetProcessHeap(), 0, strlen(ping)+len+strlen(redirect) );
+      command = heap_alloc(strlen(ping)+len+strlen(redirect));
       strcpy(command,ping);
       WideCharToMultiByte(CP_UNIXCP, 0, hostW, -1, command+strlen(ping), len, NULL, NULL);
       strcat(command,redirect);
@@ -3290,7 +3290,7 @@ static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
 		WCHAR *path_extra;
 		DWORD len = urlComponents.dwUrlPathLength + urlComponents.dwExtraInfoLength + 1;
 
-		if (!(path_extra = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+		if (!(path_extra = heap_alloc(len * sizeof(WCHAR))))
 		{
 			InternetCloseHandle(client);
 			break;
@@ -3430,7 +3430,7 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
 
     if(lpszHeaders) {
         lenHeaders = MultiByteToWideChar(CP_ACP, 0, lpszHeaders, dwHeadersLength, NULL, 0 );
-        szHeaders = HeapAlloc(GetProcessHeap(), 0, lenHeaders*sizeof(WCHAR));
+        szHeaders = heap_alloc(lenHeaders*sizeof(WCHAR));
         if(!szHeaders) {
             HeapFree(GetProcessHeap(), 0, szUrl);
             return NULL;
@@ -3450,7 +3450,7 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
 
 static LPWITHREADERROR INTERNET_AllocThreadError(void)
 {
-    LPWITHREADERROR lpwite = HeapAlloc(GetProcessHeap(), 0, sizeof(*lpwite));
+    LPWITHREADERROR lpwite = heap_alloc(sizeof(*lpwite));
 
     if (lpwite)
     {
@@ -3552,7 +3552,7 @@ DWORD INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
 
     TRACE("\n");
 
-    lpNewRequest = HeapAlloc(GetProcessHeap(), 0, sizeof(WORKREQUEST));
+    lpNewRequest = heap_alloc(sizeof(WORKREQUEST));
     if (!lpNewRequest)
         return ERROR_OUTOFMEMORY;
 
@@ -3946,7 +3946,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
     if (lpUrlComponents->lpszScheme)
     {
         len = URL_GET_COMP_LENGTHA(lpUrlComponents, Scheme) + 1;
-        urlCompW->lpszScheme = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        urlCompW->lpszScheme = heap_alloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszScheme,
                             -1, urlCompW->lpszScheme, len);
     }
@@ -3954,7 +3954,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
     if (lpUrlComponents->lpszHostName)
     {
         len = URL_GET_COMP_LENGTHA(lpUrlComponents, HostName) + 1;
-        urlCompW->lpszHostName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        urlCompW->lpszHostName = heap_alloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszHostName,
                             -1, urlCompW->lpszHostName, len);
     }
@@ -3962,7 +3962,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
     if (lpUrlComponents->lpszUserName)
     {
         len = URL_GET_COMP_LENGTHA(lpUrlComponents, UserName) + 1;
-        urlCompW->lpszUserName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        urlCompW->lpszUserName = heap_alloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszUserName,
                             -1, urlCompW->lpszUserName, len);
     }
@@ -3970,7 +3970,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
     if (lpUrlComponents->lpszPassword)
     {
         len = URL_GET_COMP_LENGTHA(lpUrlComponents, Password) + 1;
-        urlCompW->lpszPassword = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        urlCompW->lpszPassword = heap_alloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszPassword,
                             -1, urlCompW->lpszPassword, len);
     }
@@ -3978,7 +3978,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
     if (lpUrlComponents->lpszUrlPath)
     {
         len = URL_GET_COMP_LENGTHA(lpUrlComponents, UrlPath) + 1;
-        urlCompW->lpszUrlPath = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        urlCompW->lpszUrlPath = heap_alloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszUrlPath,
                             -1, urlCompW->lpszUrlPath, len);
     }
@@ -3986,7 +3986,7 @@ static void convert_urlcomp_atow(LPURL_COMPONENTSA lpUrlComponents, LPURL_COMPON
     if (lpUrlComponents->lpszExtraInfo)
     {
         len = URL_GET_COMP_LENGTHA(lpUrlComponents, ExtraInfo) + 1;
-        urlCompW->lpszExtraInfo = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        urlCompW->lpszExtraInfo = heap_alloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, lpUrlComponents->lpszExtraInfo,
                             -1, urlCompW->lpszExtraInfo, len);
     }
@@ -4015,7 +4015,7 @@ BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
     convert_urlcomp_atow(lpUrlComponents, &urlCompW);
 
     if (lpszUrl)
-        urlW = HeapAlloc(GetProcessHeap(), 0, *lpdwUrlLength * sizeof(WCHAR));
+        urlW = heap_alloc(*lpdwUrlLength * sizeof(WCHAR));
 
     ret = InternetCreateUrlW(&urlCompW, dwFlags, urlW, lpdwUrlLength);
 

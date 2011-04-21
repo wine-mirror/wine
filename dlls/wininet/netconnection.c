@@ -201,7 +201,7 @@ static PCCERT_CONTEXT X509_to_cert_context(X509 *cert)
      */
     if (!p)
     {
-        buffer = HeapAlloc(GetProcessHeap(),0,len);
+        buffer = heap_alloc(len);
         p = buffer;
         len = pi2d_X509(cert,&p);
     }

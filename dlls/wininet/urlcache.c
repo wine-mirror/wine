@@ -454,7 +454,7 @@ static void URLCacheContainer_CloseIndex(URLCACHECONTAINER * pContainer)
 
 static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, LPWSTR mutex_name)
 {
-    URLCACHECONTAINER * pContainer = HeapAlloc(GetProcessHeap(), 0, sizeof(URLCACHECONTAINER));
+    URLCACHECONTAINER * pContainer = heap_alloc(sizeof(URLCACHECONTAINER));
     int cache_prefix_len = strlenW(cache_prefix);
 
     if (!pContainer)
@@ -472,7 +472,7 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, 
         return FALSE;
     }
 
-    pContainer->cache_prefix = HeapAlloc(GetProcessHeap(), 0, (cache_prefix_len + 1) * sizeof(WCHAR));
+    pContainer->cache_prefix = heap_alloc((cache_prefix_len + 1) * sizeof(WCHAR));
     if (!pContainer->cache_prefix)
     {
         HeapFree(GetProcessHeap(), 0, pContainer->path);
@@ -3001,7 +3001,7 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamA(
         return FALSE;
     
     /* allocate handle storage space */
-    pStream = HeapAlloc(GetProcessHeap(), 0, sizeof(STREAM_HANDLE) + strlen(lpszUrlName) * sizeof(CHAR));
+    pStream = heap_alloc(sizeof(STREAM_HANDLE) + strlen(lpszUrlName) * sizeof(CHAR));
     if (!pStream)
     {
         CloseHandle(hFile);
@@ -3062,7 +3062,7 @@ HANDLE WINAPI RetrieveUrlCacheEntryStreamW(
     size = sizeof(STREAM_HANDLE);
     url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, NULL, 0, NULL, NULL);
     size += url_len;
-    pStream = HeapAlloc(GetProcessHeap(), 0, size);
+    pStream = heap_alloc(size);
     if (!pStream)
     {
         CloseHandle(hFile);
@@ -3349,7 +3349,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
 
     TRACE("(%s, %p, %p)\n", debugstr_a(lpszUrlSearchPattern), lpFirstCacheEntryInfo, lpdwFirstCacheEntryInfoBufferSize);
 
-    pEntryHandle = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEntryHandle));
+    pEntryHandle = heap_alloc(sizeof(*pEntryHandle));
     if (!pEntryHandle)
         return NULL;
 
@@ -3388,7 +3388,7 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
 
     TRACE("(%s, %p, %p)\n", debugstr_w(lpszUrlSearchPattern), lpFirstCacheEntryInfo, lpdwFirstCacheEntryInfoBufferSize);
 
-    pEntryHandle = HeapAlloc(GetProcessHeap(), 0, sizeof(*pEntryHandle));
+    pEntryHandle = heap_alloc(sizeof(*pEntryHandle));
     if (!pEntryHandle)
         return NULL;
 

@@ -916,7 +916,7 @@ BOOL WINAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDire
         len = *lpdwCurrentDirectory;
         if(lpszCurrentDirectory)
         {
-            dir = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            dir = heap_alloc(len * sizeof(WCHAR));
             if (NULL == dir)
             {
                 INTERNET_SetLastError(ERROR_OUTOFMEMORY);
@@ -1383,7 +1383,7 @@ static HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
 
         if (!InternetCreateUrlW(&uc, 0, NULL, &len) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         {
-            WCHAR *url = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            WCHAR *url = heap_alloc(len * sizeof(WCHAR));
 
             if (url && InternetCreateUrlW(&uc, 0, url, &len) && CreateUrlCacheEntryW(url, 0, NULL, filename, 0))
             {
@@ -2290,7 +2290,7 @@ BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
     }
 
     len = WideCharToMultiByte(CP_ACP, 0, lpszCommand, -1, NULL, 0, NULL, NULL) + strlen(szCRLF);
-    if ((cmd = HeapAlloc(GetProcessHeap(), 0, len )))
+    if ((cmd = heap_alloc(len)))
         WideCharToMultiByte(CP_ACP, 0, lpszCommand, -1, cmd, len, NULL, NULL);
     else
     {
@@ -2660,7 +2660,7 @@ static BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
 
 	dwParamLen = lpszParam?strlen(lpszParam)+1:0;
 	len = dwParamLen + strlen(szFtpCommands[ftpCmd]) + strlen(szCRLF);
-	if (NULL == (buf = HeapAlloc(GetProcessHeap(), 0, len+1)))
+	if (NULL == (buf = heap_alloc(len+1)))
 	{
 	    INTERNET_SetLastError(ERROR_OUTOFMEMORY);
 	    return FALSE;
@@ -3227,7 +3227,7 @@ static BOOL FTP_SendData(ftp_session_t *lpwfs, INT nDataSocket, HANDLE hFile)
     CHAR *lpszBuffer;
 
     TRACE("\n");
-    lpszBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CHAR)*DATA_PACKET_SIZE);
+    lpszBuffer = heap_alloc_zero(sizeof(CHAR)*DATA_PACKET_SIZE);
 
     /* Get the size of the file. */
     GetFileInformationByHandle(hFile, &fi);
@@ -3349,7 +3349,7 @@ static BOOL FTP_RetrieveFileData(ftp_session_t *lpwfs, INT nDataSocket, HANDLE h
 
     TRACE("\n");
 
-    lpszBuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CHAR)*DATA_PACKET_SIZE);
+    lpszBuffer = heap_alloc_zero(sizeof(CHAR)*DATA_PACKET_SIZE);
     if (NULL == lpszBuffer)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
@@ -3752,7 +3752,7 @@ static BOOL FTP_ParseDirectory(ftp_session_t *lpwfs, INT nSocket, LPCWSTR lpszSe
     TRACE("\n");
 
     /* Allocate initial file properties array */
-    *lpafp = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(FILEPROPERTIESW)*(sizeFilePropArray));
+    *lpafp = heap_alloc_zero(sizeof(FILEPROPERTIESW)*(sizeFilePropArray));
     if (!*lpafp)
         return FALSE;
 

@@ -91,7 +91,7 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
         DWORD size;
 
         size = (strlenW(str)+1)*sizeof(WCHAR);
-        ret = HeapAlloc(GetProcessHeap(), 0, size);
+        ret = heap_alloc(size);
         if(ret)
             memcpy(ret, str, size);
     }
@@ -111,7 +111,7 @@ static inline LPWSTR heap_strndupW(LPCWSTR str, UINT max_len)
         if(str[len] == '\0')
             break;
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(len+1));
+    ret = heap_alloc(sizeof(WCHAR)*(len+1));
     if(ret) {
         memcpy(ret, str, sizeof(WCHAR)*len);
         ret[len] = '\0';
@@ -128,7 +128,7 @@ static inline WCHAR *heap_strdupAtoW(const char *str)
         DWORD len;
 
         len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        ret = heap_alloc(len*sizeof(WCHAR));
         if(ret)
             MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
     }
@@ -142,7 +142,7 @@ static inline char *heap_strdupWtoA(LPCWSTR str)
 
     if(str) {
         DWORD size = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
-        ret = HeapAlloc(GetProcessHeap(), 0, size);
+        ret = heap_alloc(size);
         if(ret)
             WideCharToMultiByte(CP_ACP, 0, str, -1, ret, size, NULL, NULL);
     }

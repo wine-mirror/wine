@@ -89,7 +89,7 @@ static void COOKIE_deleteDomain(cookie_domain *deadDomain);
 /* adds a cookie to the domain */
 static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR data, FILETIME expiry)
 {
-    cookie *newCookie = HeapAlloc(GetProcessHeap(), 0, sizeof(cookie));
+    cookie *newCookie = heap_alloc(sizeof(cookie));
 
     list_init(&newCookie->entry);
     newCookie->lpCookieName = NULL;
@@ -145,7 +145,7 @@ static void COOKIE_deleteCookie(cookie *deadCookie, BOOL deleteDomain)
 /* allocates a domain and adds it to the end */
 static cookie_domain *COOKIE_addDomain(LPCWSTR domain, LPCWSTR path)
 {
-    cookie_domain *newDomain = HeapAlloc(GetProcessHeap(), 0, sizeof(cookie_domain));
+    cookie_domain *newDomain = heap_alloc(sizeof(cookie_domain));
 
     list_init(&newDomain->entry);
     list_init(&newDomain->cookie_list);
@@ -397,7 +397,7 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     r = InternetGetCookieW( url, name, NULL, &len );
     if( r )
     {
-        szCookieData = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        szCookieData = heap_alloc(len * sizeof(WCHAR));
         if( !szCookieData )
         {
             r = FALSE;
@@ -453,7 +453,7 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
 
         if (value != data)
             HeapFree(GetProcessHeap(), 0, value);
-        value = HeapAlloc(GetProcessHeap(), 0, (ptr - data) * sizeof(WCHAR));
+        value = heap_alloc((ptr - data) * sizeof(WCHAR));
         if (value == NULL)
         {
             HeapFree(GetProcessHeap(), 0, data);
