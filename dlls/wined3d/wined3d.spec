@@ -25,7 +25,6 @@
 @ cdecl wined3d_buffer_get_priority(ptr)
 @ cdecl wined3d_buffer_get_private_data(ptr ptr ptr ptr)
 @ cdecl wined3d_buffer_get_resource(ptr)
-@ cdecl wined3d_buffer_get_type(ptr)
 @ cdecl wined3d_buffer_incref(ptr)
 @ cdecl wined3d_buffer_map(ptr long long ptr long)
 @ cdecl wined3d_buffer_preload(ptr)

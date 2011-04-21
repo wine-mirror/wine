@@ -961,11 +961,6 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
     context_release(context);
 }
 
-WINED3DRESOURCETYPE CDECL wined3d_buffer_get_type(const struct wined3d_buffer *buffer)
-{
-    return resource_get_type(&buffer->resource);
-}
-
 static DWORD buffer_sanitize_flags(struct wined3d_buffer *buffer, DWORD flags)
 {
     /* Not all flags make sense together, but Windows never returns an error. Catch the
