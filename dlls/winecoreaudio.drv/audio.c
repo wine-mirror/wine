@@ -50,7 +50,6 @@
 #include "dsound.h"
 #include "dsdriver.h"
 #include "ks.h"
-#include "ksguid.h"
 #include "ksmedia.h"
 #include "coreaudio.h"
 #include "wine/unicode.h"

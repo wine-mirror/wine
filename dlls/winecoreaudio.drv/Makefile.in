@@ -8,6 +8,7 @@ C_SRCS = \
 	coreaudio.c \
 	coremidi.c \
 	midi.c \
-	mixer.c
+	mixer.c \
+	mmdevdrv.c
 
 @MAKE_DLL_RULES@
