@@ -156,7 +156,7 @@ static inline D3DXHANDLE get_pass_handle(struct d3dx_pass *pass)
     return (D3DXHANDLE) pass;
 }
 
-struct d3dx_technique *is_valid_technique(struct ID3DXBaseEffectImpl *base, D3DXHANDLE technique)
+static struct d3dx_technique *is_valid_technique(struct ID3DXBaseEffectImpl *base, D3DXHANDLE technique)
 {
     unsigned int i;
 
@@ -171,7 +171,7 @@ struct d3dx_technique *is_valid_technique(struct ID3DXBaseEffectImpl *base, D3DX
     return NULL;
 }
 
-struct d3dx_pass *is_valid_pass(struct ID3DXBaseEffectImpl *base, D3DXHANDLE pass)
+static struct d3dx_pass *is_valid_pass(struct ID3DXBaseEffectImpl *base, D3DXHANDLE pass)
 {
     unsigned int i, k;
 
@@ -191,7 +191,7 @@ struct d3dx_pass *is_valid_pass(struct ID3DXBaseEffectImpl *base, D3DXHANDLE pas
     return NULL;
 }
 
-struct d3dx_parameter *is_valid_sub_parameter(struct d3dx_parameter *param, D3DXHANDLE parameter)
+static struct d3dx_parameter *is_valid_sub_parameter(struct d3dx_parameter *param, D3DXHANDLE parameter)
 {
     unsigned int i, count;
     struct d3dx_parameter *p;
@@ -224,7 +224,7 @@ struct d3dx_parameter *is_valid_sub_parameter(struct d3dx_parameter *param, D3DX
     return NULL;
 }
 
-struct d3dx_parameter *is_valid_parameter(struct ID3DXBaseEffectImpl *base, D3DXHANDLE parameter)
+static struct d3dx_parameter *is_valid_parameter(struct ID3DXBaseEffectImpl *base, D3DXHANDLE parameter)
 {
     unsigned int i, k, m;
     struct d3dx_parameter *p;
