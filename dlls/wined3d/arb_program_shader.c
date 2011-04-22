@@ -4140,6 +4140,7 @@ static GLuint shader_arb_generate_vshader(struct wined3d_shader *shader,
     }
 
     shader_addline(buffer, "TEMP TA;\n");
+    shader_addline(buffer, "TEMP TB;\n");
 
     /* Base Declarations */
     next_local = shader_generate_arb_declarations(shader, reg_maps, buffer,
