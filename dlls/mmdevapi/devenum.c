@@ -20,14 +20,6 @@
 
 #include <stdarg.h>
 
-#ifdef HAVE_AL_AL_H
-#include <AL/al.h>
-#include <AL/alc.h>
-#elif defined(HAVE_OPENAL_AL_H)
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-#endif
-
 #define NONAMELESSUNION
 #define COBJMACROS
 #include "windef.h"
@@ -267,7 +259,7 @@ static HRESULT MMDevice_SetPropValue(const GUID *devguid, DWORD flow, REFPROPERT
  * If GUID is null, a random guid will be assigned
  * and the device will be created
  */
-static void MMDevice_Create(MMDevice **dev, WCHAR *name, GUID *id, EDataFlow flow, DWORD state, BOOL setdefault)
+static MMDevice *MMDevice_Create(WCHAR *name, void *devkey, GUID *id, EDataFlow flow, DWORD state, BOOL setdefault)
 {
     HKEY key, root;
     MMDevice *cur;
@@ -277,11 +269,12 @@ static void MMDevice_Create(MMDevice **dev, WCHAR *name, GUID *id, EDataFlow flo
     for (i = 0; i < MMDevice_count; ++i)
     {
         cur = MMDevice_head[i];
-        if (cur->flow == flow && !lstrcmpW(cur->alname, name))
+        if (cur->flow == flow && !lstrcmpW(cur->drv_id, name))
         {
             LONG ret;
             /* Same device, update state */
             cur->state = state;
+            cur->key = devkey;
             StringFromGUID2(&cur->devguid, guidstr, sizeof(guidstr)/sizeof(*guidstr));
             ret = RegOpenKeyExW(flow == eRender ? key_render : key_capture, guidstr, 0, KEY_WRITE, &key);
             if (ret == ERROR_SUCCESS)
@@ -295,15 +288,19 @@ static void MMDevice_Create(MMDevice **dev, WCHAR *name, GUID *id, EDataFlow flo
 
     /* No device found, allocate new one */
     cur = HeapAlloc(GetProcessHeap(), 0, sizeof(*cur));
-    if (!cur)
-        return;
-    cur->alname = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name)+1)*sizeof(WCHAR));
-    if (!cur->alname)
+    if (!cur){
+        HeapFree(GetProcessHeap(), 0, devkey);
+        return NULL;
+    }
+    cur->drv_id = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name)+1)*sizeof(WCHAR));
+    if (!cur->drv_id)
     {
         HeapFree(GetProcessHeap(), 0, cur);
-        return;
+        HeapFree(GetProcessHeap(), 0, devkey);
+        return NULL;
     }
-    lstrcpyW(cur->alname, name);
+    lstrcpyW(cur->drv_id, name);
+    cur->key = devkey;
     cur->IMMDevice_iface.lpVtbl = &MMDeviceVtbl;
     cur->IMMEndpoint_iface.lpVtbl = &MMEndpointVtbl;
     cur->ref = 0;
@@ -311,7 +308,6 @@ static void MMDevice_Create(MMDevice **dev, WCHAR *name, GUID *id, EDataFlow flo
     cur->crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MMDevice.crst");
     cur->flow = flow;
     cur->state = state;
-    cur->device = NULL;
     if (!id)
     {
         id = &cur->devguid;
@@ -352,14 +348,125 @@ done:
         else
             MMDevice_def_rec = cur;
     }
-    if (dev)
-        *dev = cur;
+    return cur;
+}
+
+static HRESULT load_devices_from_reg(void)
+{
+    DWORD i = 0;
+    HKEY root, cur;
+    LONG ret;
+    DWORD curflow;
+
+    ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, software_mmdevapi, 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &root, NULL);
+    if (ret == ERROR_SUCCESS)
+        ret = RegCreateKeyExW(root, reg_capture, 0, NULL, 0, KEY_READ|KEY_WRITE, NULL, &key_capture, NULL);
+    if (ret == ERROR_SUCCESS)
+        ret = RegCreateKeyExW(root, reg_render, 0, NULL, 0, KEY_READ|KEY_WRITE, NULL, &key_render, NULL);
+    RegCloseKey(root);
+    cur = key_capture;
+    curflow = eCapture;
+    if (ret != ERROR_SUCCESS)
+    {
+        RegCloseKey(key_capture);
+        key_render = key_capture = NULL;
+        WARN("Couldn't create key: %u\n", ret);
+        return E_FAIL;
+    }
+
+    do {
+        WCHAR guidvalue[39];
+        GUID guid;
+        DWORD len;
+        PROPVARIANT pv = { VT_EMPTY };
+
+        len = sizeof(guidvalue)/sizeof(guidvalue[0]);
+        ret = RegEnumKeyExW(cur, i++, guidvalue, &len, NULL, NULL, NULL, NULL);
+        if (ret == ERROR_NO_MORE_ITEMS)
+        {
+            if (cur == key_capture)
+            {
+                cur = key_render;
+                curflow = eRender;
+                i = 0;
+                continue;
+            }
+            break;
+        }
+        if (ret != ERROR_SUCCESS)
+            continue;
+        if (SUCCEEDED(CLSIDFromString(guidvalue, &guid))
+            && SUCCEEDED(MMDevice_GetPropValue(&guid, curflow, (const PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv))
+            && pv.vt == VT_LPWSTR)
+        {
+            MMDevice_Create(pv.u.pwszVal, NULL, &guid, curflow,
+                    DEVICE_STATE_NOTPRESENT, FALSE);
+            CoTaskMemFree(pv.u.pwszVal);
+        }
+    } while (1);
+
+    return S_OK;
+}
+
+static HRESULT set_format(MMDevice *dev)
+{
+    HRESULT hr;
+    IAudioClient *client;
+    WAVEFORMATEX *fmt;
+    PROPVARIANT pv = { VT_EMPTY };
+
+    hr = drvs.pGetAudioEndpoint(dev->key, &dev->IMMDevice_iface, dev->flow, &client);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IAudioClient_GetMixFormat(client, &fmt);
+    if(FAILED(hr)){
+        IAudioClient_Release(client);
+        return hr;
+    }
+
+    IAudioClient_Release(client);
+
+    pv.vt = VT_BLOB;
+    pv.u.blob.cbSize = sizeof(WAVEFORMATEX) + fmt->cbSize;
+    pv.u.blob.pBlobData = (BYTE*)fmt;
+    MMDevice_SetPropValue(&dev->devguid, dev->flow,
+            &PKEY_AudioEngine_DeviceFormat, &pv);
+    MMDevice_SetPropValue(&dev->devguid, dev->flow,
+            &PKEY_AudioEngine_OEMFormat, &pv);
+
+    return S_OK;
+}
+
+static HRESULT load_driver_devices(EDataFlow flow)
+{
+    WCHAR **ids;
+    void **keys;
+    UINT num, def, i;
+    HRESULT hr;
+
+    hr = drvs.pGetEndpointIDs(flow, &ids, &keys, &num, &def);
+    if(FAILED(hr))
+        return hr;
+
+    for(i = 0; i < num; ++i){
+        MMDevice *dev;
+        dev = MMDevice_Create(ids[i], keys[i], NULL, flow, DEVICE_STATE_ACTIVE,
+                def == i);
+        set_format(dev);
+        HeapFree(GetProcessHeap(), 0, ids[i]);
+    }
+
+    HeapFree(GetProcessHeap(), 0, keys);
+    HeapFree(GetProcessHeap(), 0, ids);
+
+    return S_OK;
 }
 
 static void MMDevice_Destroy(MMDevice *This)
 {
     DWORD i;
-    TRACE("Freeing %s\n", debugstr_w(This->alname));
+    TRACE("Freeing %s\n", debugstr_w(This->drv_id));
     /* Since this function is called at destruction time, reordering of the list is unimportant */
     for (i = 0; i < MMDevice_count; ++i)
     {
@@ -369,13 +476,10 @@ static void MMDevice_Destroy(MMDevice *This)
             break;
         }
     }
-#ifdef HAVE_OPENAL
-    if (This->device)
-        palcCloseDevice(This->device);
-#endif
     This->crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->crst);
-    HeapFree(GetProcessHeap(), 0, This->alname);
+    HeapFree(GetProcessHeap(), 0, This->drv_id);
+    HeapFree(GetProcessHeap(), 0, This->key);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -429,8 +533,6 @@ static ULONG WINAPI MMDevice_Release(IMMDevice *iface)
 static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD clsctx, PROPVARIANT *params, void **ppv)
 {
     HRESULT hr = E_NOINTERFACE;
-
-#ifdef HAVE_OPENAL
     MMDevice *This = impl_from_IMMDevice(iface);
 
     TRACE("(%p)->(%p,%x,%p,%p)\n", iface, riid, clsctx, params, ppv);
@@ -438,14 +540,9 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
     if (!ppv)
         return E_POINTER;
 
-    if (!openal_loaded)
-    {
-        WARN("OpenAL is still not loaded\n");
-        hr = AUDCLNT_E_SERVICE_NOT_RUNNING;
-    }
-    else if (IsEqualIID(riid, &IID_IAudioClient))
-        hr = AudioClient_Create(This, (IAudioClient**)ppv);
-    else if (IsEqualIID(riid, &IID_IAudioEndpointVolume))
+    if (IsEqualIID(riid, &IID_IAudioClient)){
+        hr = drvs.pGetAudioEndpoint(This->key, iface, This->flow, (IAudioClient**)ppv);
+    }else if (IsEqualIID(riid, &IID_IAudioEndpointVolume))
         hr = AudioEndpointVolume_Create(This, (IAudioEndpointVolume**)ppv);
     else if (IsEqualIID(riid, &IID_IAudioSessionManager)
              || IsEqualIID(riid, &IID_IAudioSessionManager2))
@@ -509,10 +606,6 @@ static HRESULT WINAPI MMDevice_Activate(IMMDevice *iface, REFIID riid, DWORD cls
     }
     else
         ERR("Invalid/unknown iid %s\n", debugstr_guid(riid));
-#else
-    if (!ppv) return E_POINTER;
-    hr = AUDCLNT_E_SERVICE_NOT_RUNNING;
-#endif
 
     if (FAILED(hr))
         *ppv = NULL;
@@ -727,205 +820,12 @@ static const IMMDeviceCollectionVtbl MMDevColVtbl =
     MMDevCol_Item
 };
 
-#ifdef HAVE_OPENAL
-
-static void openal_setformat(MMDevice *This, DWORD freq)
-{
-    HRESULT hr;
-    PROPVARIANT pv = { VT_EMPTY };
-
-    hr = MMDevice_GetPropValue(&This->devguid, This->flow, &PKEY_AudioEngine_DeviceFormat, &pv);
-    if (SUCCEEDED(hr) && pv.vt == VT_BLOB)
-    {
-        WAVEFORMATEX *pwfx;
-        pwfx = (WAVEFORMATEX*)pv.u.blob.pBlobData;
-        if (pwfx->nSamplesPerSec != freq)
-        {
-            pwfx->nSamplesPerSec = freq;
-            pwfx->nAvgBytesPerSec = freq * pwfx->nBlockAlign;
-            MMDevice_SetPropValue(&This->devguid, This->flow, &PKEY_AudioEngine_DeviceFormat, &pv);
-        }
-        CoTaskMemFree(pwfx);
-    }
-    else
-    {
-        WAVEFORMATEXTENSIBLE wfxe;
-
-        wfxe.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-        wfxe.Format.nChannels = 2;
-        wfxe.Format.wBitsPerSample = 32;
-        wfxe.Format.nBlockAlign = wfxe.Format.nChannels * wfxe.Format.wBitsPerSample/8;
-        wfxe.Format.nSamplesPerSec = freq;
-        wfxe.Format.nAvgBytesPerSec = wfxe.Format.nSamplesPerSec * wfxe.Format.nBlockAlign;
-        wfxe.Format.cbSize = sizeof(wfxe)-sizeof(WAVEFORMATEX);
-        wfxe.Samples.wValidBitsPerSample = 32;
-        wfxe.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
-        wfxe.dwChannelMask = SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT;
-
-        pv.vt = VT_BLOB;
-        pv.u.blob.cbSize = sizeof(wfxe);
-        pv.u.blob.pBlobData = (BYTE*)&wfxe;
-        MMDevice_SetPropValue(&This->devguid, This->flow, &PKEY_AudioEngine_DeviceFormat, &pv);
-        MMDevice_SetPropValue(&This->devguid, This->flow, &PKEY_AudioEngine_OEMFormat, &pv);
-    }
-}
-
-static int blacklist_pulse;
-
-static int blacklist(const char *dev) {
-#ifdef __linux__
-    if (!strncmp(dev, "OSS ", 4))
-        return 1;
-#endif
-    if (blacklist_pulse && !strncmp(dev, "PulseAudio ", 11))
-        return 1;
-    if (!strncmp(dev, "ALSA ", 5) && strstr(dev, "hw:"))
-        return 1;
-    if (!strncmp(dev, "PortAudio ", 10))
-        return 1;
-    return 0;
-}
-
-static void pulse_fixup(const char *devstr, const char **defstr, int render) {
-    static int warned;
-    int default_pulse;
-
-    if (render && !blacklist_pulse && !local_contexts)
-        blacklist_pulse = 1;
-
-    if (!blacklist_pulse || !devstr || !*devstr)
-        return;
-
-    default_pulse = !strncmp(*defstr, "PulseAudio ", 11);
-
-    while (*devstr && !strncmp(devstr, "PulseAudio ", 11))
-        devstr += strlen(devstr) + 1;
-
-    /* Could still be a newer version, so check for 1.11 if more devices are enabled */
-    if (render && *devstr) {
-        ALCdevice *dev = palcOpenDevice(devstr);
-        ALCcontext *ctx = palcCreateContext(dev, NULL);
-        if (ctx) {
-            const char *ver;
-
-            setALContext(ctx);
-            ver = palGetString(AL_VERSION);
-            popALContext();
-            palcDestroyContext(ctx);
-
-            if (!strcmp(ver, "1.1 ALSOFT 1.11.753")) {
-                blacklist_pulse = 0;
-                palcCloseDevice(dev);
-                return;
-            }
-        }
-        if (dev)
-            palcCloseDevice(dev);
-    }
-
-    if (!warned++) {
-        ERR("Disabling pulseaudio because of old openal version\n");
-        ERR("Please upgrade to openal-soft v1.12 or newer\n");
-    }
-    TRACE("New default: %s\n", devstr);
-    if (default_pulse)
-        *defstr = devstr;
-}
-
-static void openal_scanrender(void)
-{
-    WCHAR name[MAX_PATH];
-    ALCdevice *dev;
-    const ALCchar *devstr, *defaultstr;
-    int defblacklisted;
-    EnterCriticalSection(&openal_crst);
-    if (palcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT")) {
-        defaultstr = palcGetString(NULL, ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
-        devstr = palcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
-    } else {
-        defaultstr = palcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
-        devstr = palcGetString(NULL, ALC_DEVICE_SPECIFIER);
-    }
-    pulse_fixup(devstr, &defaultstr, 1);
-    defblacklisted = blacklist(defaultstr);
-    if (defblacklisted)
-        WARN("Disabling blacklist because %s is blacklisted\n", defaultstr);
-    if (devstr)
-        for (; *devstr; devstr += strlen(devstr)+1) {
-            MMDevice *mmdev;
-            MultiByteToWideChar( CP_UNIXCP, 0, devstr, -1,
-                                 name, sizeof(name)/sizeof(*name)-1 );
-            name[sizeof(name)/sizeof(*name)-1] = 0;
-            /* Only enable blacklist if the default device isn't blacklisted */
-            if (!defblacklisted && blacklist(devstr)) {
-                WARN("Not adding %s: device is blacklisted\n", devstr);
-                continue;
-            }
-            TRACE("Adding %s\n", devstr);
-            dev = palcOpenDevice(devstr);
-            MMDevice_Create(&mmdev, name, NULL, eRender, dev ? DEVICE_STATE_ACTIVE : DEVICE_STATE_NOTPRESENT, !strcmp(devstr, defaultstr));
-            if (dev)
-            {
-                ALint freq = 44100;
-                palcGetIntegerv(dev, ALC_FREQUENCY, 1, &freq);
-                openal_setformat(mmdev, freq);
-                palcCloseDevice(dev);
-            }
-            else
-                WARN("Could not open device: %04x\n", palcGetError(NULL));
-        }
-    LeaveCriticalSection(&openal_crst);
-}
-
-static void openal_scancapture(void)
-{
-    WCHAR name[MAX_PATH];
-    ALCdevice *dev;
-    const ALCchar *devstr, *defaultstr;
-    int defblacklisted;
-
-    EnterCriticalSection(&openal_crst);
-    devstr = palcGetString(NULL, ALC_CAPTURE_DEVICE_SPECIFIER);
-    defaultstr = palcGetString(NULL, ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER);
-    pulse_fixup(devstr, &defaultstr, 0);
-    defblacklisted = blacklist(defaultstr);
-    if (defblacklisted)
-        WARN("Disabling blacklist because %s is blacklisted\n", defaultstr);
-    if (devstr && *devstr)
-        for (; *devstr; devstr += strlen(devstr)+1) {
-            MMDevice *mmdev;
-            ALint freq = 44100;
-            MultiByteToWideChar( CP_UNIXCP, 0, devstr, -1,
-                                 name, sizeof(name)/sizeof(*name)-1 );
-            name[sizeof(name)/sizeof(*name)-1] = 0;
-            if (!defblacklisted && blacklist(devstr)) {
-                WARN("Not adding %s: device is blacklisted\n", devstr);
-                continue;
-            }
-            TRACE("Adding %s\n", devstr);
-            dev = palcCaptureOpenDevice(devstr, freq, AL_FORMAT_MONO16, 65536);
-            MMDevice_Create(&mmdev, name, NULL, eCapture, dev ? DEVICE_STATE_ACTIVE : DEVICE_STATE_NOTPRESENT, !strcmp(devstr, defaultstr));
-            if (dev) {
-                openal_setformat(mmdev, freq);
-                palcCaptureCloseDevice(dev);
-            } else
-                WARN("Could not open device: %04x\n", palcGetError(NULL));
-        }
-    LeaveCriticalSection(&openal_crst);
-}
-#endif /*HAVE_OPENAL*/
-
 HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 {
     MMDevEnumImpl *This = MMDevEnumerator;
 
     if (!This)
     {
-        DWORD i = 0;
-        HKEY root, cur;
-        LONG ret;
-        DWORD curflow;
-
         This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
         *ppv = NULL;
         if (!This)
@@ -934,62 +834,9 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
         This->IMMDeviceEnumerator_iface.lpVtbl = &MMDevEnumVtbl;
         MMDevEnumerator = This;
 
-        ret = RegCreateKeyExW(HKEY_LOCAL_MACHINE, software_mmdevapi, 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &root, NULL);
-        if (ret == ERROR_SUCCESS)
-            ret = RegCreateKeyExW(root, reg_capture, 0, NULL, 0, KEY_READ|KEY_WRITE, NULL, &key_capture, NULL);
-        if (ret == ERROR_SUCCESS)
-            ret = RegCreateKeyExW(root, reg_render, 0, NULL, 0, KEY_READ|KEY_WRITE, NULL, &key_render, NULL);
-        RegCloseKey(root);
-        cur = key_capture;
-        curflow = eCapture;
-        if (ret != ERROR_SUCCESS)
-        {
-            RegCloseKey(key_capture);
-            key_render = key_capture = NULL;
-            WARN("Couldn't create key: %u\n", ret);
-            return E_FAIL;
-        }
-        else do {
-            WCHAR guidvalue[39];
-            GUID guid;
-            DWORD len;
-            PROPVARIANT pv = { VT_EMPTY };
-
-            len = sizeof(guidvalue)/sizeof(guidvalue[0]);
-            ret = RegEnumKeyExW(cur, i++, guidvalue, &len, NULL, NULL, NULL, NULL);
-            if (ret == ERROR_NO_MORE_ITEMS)
-            {
-                if (cur == key_capture)
-                {
-                    cur = key_render;
-                    curflow = eRender;
-                    i = 0;
-                    continue;
-                }
-                break;
-            }
-            if (ret != ERROR_SUCCESS)
-                continue;
-            if (SUCCEEDED(CLSIDFromString(guidvalue, &guid))
-                && SUCCEEDED(MMDevice_GetPropValue(&guid, curflow, (const PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv))
-                && pv.vt == VT_LPWSTR)
-            {
-                MMDevice_Create(NULL, pv.u.pwszVal, &guid, curflow,
-                                DEVICE_STATE_NOTPRESENT, FALSE);
-                CoTaskMemFree(pv.u.pwszVal);
-            }
-        } while (1);
-#ifdef HAVE_OPENAL
-        if (openal_loaded)
-        {
-            openal_scanrender();
-            openal_scancapture();
-        }
-        else
-            FIXME("OpenAL support not enabled, application will not find sound devices\n");
-#else
-        ERR("OpenAL support not compiled in, application will not find sound devices\n");
-#endif /*HAVE_OPENAL*/
+        load_devices_from_reg();
+        load_driver_devices(eRender);
+        load_driver_devices(eCapture);
     }
     return IUnknown_QueryInterface((IUnknown*)This, riid, ppv);
 }

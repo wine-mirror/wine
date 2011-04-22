@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Maarten Lankhorst
+ * Copyright 2011 Andrew Eikum for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,14 +22,6 @@
 
 #include <stdarg.h>
 
-#ifdef HAVE_AL_AL_H
-#include <AL/al.h>
-#include <AL/alc.h>
-#elif defined(HAVE_OPENAL_AL_H)
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-#endif
-
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
@@ -48,274 +41,84 @@
 #include "endpointvolume.h"
 #include "audiopolicy.h"
 #include "devpkey.h"
+#include "winreg.h"
 
 #include "mmdevapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
-#ifdef HAVE_OPENAL
+static HINSTANCE instance;
 
-int local_contexts;
+DriverFuncs drvs;
 
-static CRITICAL_SECTION_DEBUG openal_crst_debug =
+static BOOL load_driver(const WCHAR *name)
 {
-    0, 0, &openal_crst,
-    { &openal_crst_debug.ProcessLocksList,
-      &openal_crst_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": openal_crst_debug") }
-};
-CRITICAL_SECTION openal_crst = { &openal_crst_debug, -1, 0, 0, 0, 0 };
+    WCHAR driver_module[264];
+    static const WCHAR wineW[] = {'w','i','n','e',0};
+    static const WCHAR dotdrvW[] = {'.','d','r','v',0};
 
-static void *openal_handle = RTLD_DEFAULT;
-int openal_loaded;
-#ifdef SONAME_LIBOPENAL
-LPALCCREATECONTEXT palcCreateContext = NULL;
-LPALCMAKECONTEXTCURRENT palcMakeContextCurrent = NULL;
-LPALCPROCESSCONTEXT palcProcessContext = NULL;
-LPALCSUSPENDCONTEXT palcSuspendContext = NULL;
-LPALCDESTROYCONTEXT palcDestroyContext = NULL;
-LPALCGETCURRENTCONTEXT palcGetCurrentContext = NULL;
-LPALCGETCONTEXTSDEVICE palcGetContextsDevice = NULL;
-LPALCOPENDEVICE palcOpenDevice = NULL;
-LPALCCLOSEDEVICE palcCloseDevice = NULL;
-LPALCGETERROR palcGetError = NULL;
-LPALCISEXTENSIONPRESENT palcIsExtensionPresent = NULL;
-LPALCGETPROCADDRESS palcGetProcAddress = NULL;
-LPALCGETENUMVALUE palcGetEnumValue = NULL;
-LPALCGETSTRING palcGetString = NULL;
-LPALCGETINTEGERV palcGetIntegerv = NULL;
-LPALCCAPTUREOPENDEVICE palcCaptureOpenDevice = NULL;
-LPALCCAPTURECLOSEDEVICE palcCaptureCloseDevice = NULL;
-LPALCCAPTURESTART palcCaptureStart = NULL;
-LPALCCAPTURESTOP palcCaptureStop = NULL;
-LPALCCAPTURESAMPLES palcCaptureSamples = NULL;
-LPALENABLE palEnable = NULL;
-LPALDISABLE palDisable = NULL;
-LPALISENABLED palIsEnabled = NULL;
-LPALGETSTRING palGetString = NULL;
-LPALGETBOOLEANV palGetBooleanv = NULL;
-LPALGETINTEGERV palGetIntegerv = NULL;
-LPALGETFLOATV palGetFloatv = NULL;
-LPALGETDOUBLEV palGetDoublev = NULL;
-LPALGETBOOLEAN palGetBoolean = NULL;
-LPALGETINTEGER palGetInteger = NULL;
-LPALGETFLOAT palGetFloat = NULL;
-LPALGETDOUBLE palGetDouble = NULL;
-LPALGETERROR palGetError = NULL;
-LPALISEXTENSIONPRESENT palIsExtensionPresent = NULL;
-LPALGETPROCADDRESS palGetProcAddress = NULL;
-LPALGETENUMVALUE palGetEnumValue = NULL;
-LPALLISTENERF palListenerf = NULL;
-LPALLISTENER3F palListener3f = NULL;
-LPALLISTENERFV palListenerfv = NULL;
-LPALLISTENERI palListeneri = NULL;
-LPALLISTENER3I palListener3i = NULL;
-LPALLISTENERIV palListeneriv = NULL;
-LPALGETLISTENERF palGetListenerf = NULL;
-LPALGETLISTENER3F palGetListener3f = NULL;
-LPALGETLISTENERFV palGetListenerfv = NULL;
-LPALGETLISTENERI palGetListeneri = NULL;
-LPALGETLISTENER3I palGetListener3i = NULL;
-LPALGETLISTENERIV palGetListeneriv = NULL;
-LPALGENSOURCES palGenSources = NULL;
-LPALDELETESOURCES palDeleteSources = NULL;
-LPALISSOURCE palIsSource = NULL;
-LPALSOURCEF palSourcef = NULL;
-LPALSOURCE3F palSource3f = NULL;
-LPALSOURCEFV palSourcefv = NULL;
-LPALSOURCEI palSourcei = NULL;
-LPALSOURCE3I palSource3i = NULL;
-LPALSOURCEIV palSourceiv = NULL;
-LPALGETSOURCEF palGetSourcef = NULL;
-LPALGETSOURCE3F palGetSource3f = NULL;
-LPALGETSOURCEFV palGetSourcefv = NULL;
-LPALGETSOURCEI palGetSourcei = NULL;
-LPALGETSOURCE3I palGetSource3i = NULL;
-LPALGETSOURCEIV palGetSourceiv = NULL;
-LPALSOURCEPLAYV palSourcePlayv = NULL;
-LPALSOURCESTOPV palSourceStopv = NULL;
-LPALSOURCEREWINDV palSourceRewindv = NULL;
-LPALSOURCEPAUSEV palSourcePausev = NULL;
-LPALSOURCEPLAY palSourcePlay = NULL;
-LPALSOURCESTOP palSourceStop = NULL;
-LPALSOURCEREWIND palSourceRewind = NULL;
-LPALSOURCEPAUSE palSourcePause = NULL;
-LPALSOURCEQUEUEBUFFERS palSourceQueueBuffers = NULL;
-LPALSOURCEUNQUEUEBUFFERS palSourceUnqueueBuffers = NULL;
-LPALGENBUFFERS palGenBuffers = NULL;
-LPALDELETEBUFFERS palDeleteBuffers = NULL;
-LPALISBUFFER palIsBuffer = NULL;
-LPALBUFFERF palBufferf = NULL;
-LPALBUFFER3F palBuffer3f = NULL;
-LPALBUFFERFV palBufferfv = NULL;
-LPALBUFFERI palBufferi = NULL;
-LPALBUFFER3I palBuffer3i = NULL;
-LPALBUFFERIV palBufferiv = NULL;
-LPALGETBUFFERF palGetBufferf = NULL;
-LPALGETBUFFER3F palGetBuffer3f = NULL;
-LPALGETBUFFERFV palGetBufferfv = NULL;
-LPALGETBUFFERI palGetBufferi = NULL;
-LPALGETBUFFER3I palGetBuffer3i = NULL;
-LPALGETBUFFERIV palGetBufferiv = NULL;
-LPALBUFFERDATA palBufferData = NULL;
-LPALDOPPLERFACTOR palDopplerFactor = NULL;
-LPALDOPPLERVELOCITY palDopplerVelocity = NULL;
-LPALDISTANCEMODEL palDistanceModel = NULL;
-LPALSPEEDOFSOUND palSpeedOfSound = NULL;
-#endif
+    lstrcpyW(driver_module, wineW);
+    lstrcatW(driver_module, name);
+    lstrcatW(driver_module, dotdrvW);
 
-typeof(alcGetCurrentContext) *get_context;
-typeof(alcMakeContextCurrent) *set_context;
+    TRACE("Attempting to load %s\n", wine_dbgstr_w(driver_module));
 
-static void load_libopenal(void)
-{
-    DWORD failed = 0;
-
-#ifdef SONAME_LIBOPENAL
-    char error[128];
-    openal_handle = wine_dlopen(SONAME_LIBOPENAL, RTLD_NOW, error, sizeof(error));
-    if (!openal_handle)
-    {
-        ERR("Couldn't load " SONAME_LIBOPENAL ": %s\n", error);
-        return;
+    drvs.module = LoadLibraryW(driver_module);
+    if(!drvs.module){
+        TRACE("Unable to load %s: %u\n", wine_dbgstr_w(driver_module),
+                GetLastError());
+        return FALSE;
     }
 
-#define LOAD_FUNCPTR(f) \
-    if((p##f = wine_dlsym(openal_handle, #f, NULL, 0)) == NULL) { \
-        ERR("Couldn't lookup %s in libopenal\n", #f); \
-        failed = 1; \
-    }
+#define LDFC(n) do { drvs.p##n = (void*)GetProcAddress(drvs.module, #n);\
+        if(!drvs.p##n) return FALSE; } while(0);
+    LDFC(GetEndpointIDs);
+    LDFC(GetAudioEndpoint);
+#undef LDFC
 
-    LOAD_FUNCPTR(alcCreateContext);
-    LOAD_FUNCPTR(alcMakeContextCurrent);
-    LOAD_FUNCPTR(alcProcessContext);
-    LOAD_FUNCPTR(alcSuspendContext);
-    LOAD_FUNCPTR(alcDestroyContext);
-    LOAD_FUNCPTR(alcGetCurrentContext);
-    LOAD_FUNCPTR(alcGetContextsDevice);
-    LOAD_FUNCPTR(alcOpenDevice);
-    LOAD_FUNCPTR(alcCloseDevice);
-    LOAD_FUNCPTR(alcGetError);
-    LOAD_FUNCPTR(alcIsExtensionPresent);
-    LOAD_FUNCPTR(alcGetProcAddress);
-    LOAD_FUNCPTR(alcGetEnumValue);
-    LOAD_FUNCPTR(alcGetString);
-    LOAD_FUNCPTR(alcGetIntegerv);
-    LOAD_FUNCPTR(alcCaptureOpenDevice);
-    LOAD_FUNCPTR(alcCaptureCloseDevice);
-    LOAD_FUNCPTR(alcCaptureStart);
-    LOAD_FUNCPTR(alcCaptureStop);
-    LOAD_FUNCPTR(alcCaptureSamples);
-    LOAD_FUNCPTR(alEnable);
-    LOAD_FUNCPTR(alDisable);
-    LOAD_FUNCPTR(alIsEnabled);
-    LOAD_FUNCPTR(alGetString);
-    LOAD_FUNCPTR(alGetBooleanv);
-    LOAD_FUNCPTR(alGetIntegerv);
-    LOAD_FUNCPTR(alGetFloatv);
-    LOAD_FUNCPTR(alGetDoublev);
-    LOAD_FUNCPTR(alGetBoolean);
-    LOAD_FUNCPTR(alGetInteger);
-    LOAD_FUNCPTR(alGetFloat);
-    LOAD_FUNCPTR(alGetDouble);
-    LOAD_FUNCPTR(alGetError);
-    LOAD_FUNCPTR(alIsExtensionPresent);
-    LOAD_FUNCPTR(alGetProcAddress);
-    LOAD_FUNCPTR(alGetEnumValue);
-    LOAD_FUNCPTR(alListenerf);
-    LOAD_FUNCPTR(alListener3f);
-    LOAD_FUNCPTR(alListenerfv);
-    LOAD_FUNCPTR(alListeneri);
-    LOAD_FUNCPTR(alListener3i);
-    LOAD_FUNCPTR(alListeneriv);
-    LOAD_FUNCPTR(alGetListenerf);
-    LOAD_FUNCPTR(alGetListener3f);
-    LOAD_FUNCPTR(alGetListenerfv);
-    LOAD_FUNCPTR(alGetListeneri);
-    LOAD_FUNCPTR(alGetListener3i);
-    LOAD_FUNCPTR(alGetListeneriv);
-    LOAD_FUNCPTR(alGenSources);
-    LOAD_FUNCPTR(alDeleteSources);
-    LOAD_FUNCPTR(alIsSource);
-    LOAD_FUNCPTR(alSourcef);
-    LOAD_FUNCPTR(alSource3f);
-    LOAD_FUNCPTR(alSourcefv);
-    LOAD_FUNCPTR(alSourcei);
-    LOAD_FUNCPTR(alSource3i);
-    LOAD_FUNCPTR(alSourceiv);
-    LOAD_FUNCPTR(alGetSourcef);
-    LOAD_FUNCPTR(alGetSource3f);
-    LOAD_FUNCPTR(alGetSourcefv);
-    LOAD_FUNCPTR(alGetSourcei);
-    LOAD_FUNCPTR(alGetSource3i);
-    LOAD_FUNCPTR(alGetSourceiv);
-    LOAD_FUNCPTR(alSourcePlayv);
-    LOAD_FUNCPTR(alSourceStopv);
-    LOAD_FUNCPTR(alSourceRewindv);
-    LOAD_FUNCPTR(alSourcePausev);
-    LOAD_FUNCPTR(alSourcePlay);
-    LOAD_FUNCPTR(alSourceStop);
-    LOAD_FUNCPTR(alSourceRewind);
-    LOAD_FUNCPTR(alSourcePause);
-    LOAD_FUNCPTR(alSourceQueueBuffers);
-    LOAD_FUNCPTR(alSourceUnqueueBuffers);
-    LOAD_FUNCPTR(alGenBuffers);
-    LOAD_FUNCPTR(alDeleteBuffers);
-    LOAD_FUNCPTR(alIsBuffer);
-    LOAD_FUNCPTR(alBufferf);
-    LOAD_FUNCPTR(alBuffer3f);
-    LOAD_FUNCPTR(alBufferfv);
-    LOAD_FUNCPTR(alBufferi);
-    LOAD_FUNCPTR(alBuffer3i);
-    LOAD_FUNCPTR(alBufferiv);
-    LOAD_FUNCPTR(alGetBufferf);
-    LOAD_FUNCPTR(alGetBuffer3f);
-    LOAD_FUNCPTR(alGetBufferfv);
-    LOAD_FUNCPTR(alGetBufferi);
-    LOAD_FUNCPTR(alGetBuffer3i);
-    LOAD_FUNCPTR(alGetBufferiv);
-    LOAD_FUNCPTR(alBufferData);
-    LOAD_FUNCPTR(alDopplerFactor);
-    LOAD_FUNCPTR(alDopplerVelocity);
-    LOAD_FUNCPTR(alDistanceModel);
-    LOAD_FUNCPTR(alSpeedOfSound);
-#undef LOAD_FUNCPTR
-#endif
+    TRACE("Successfully loaded %s\n", wine_dbgstr_w(driver_module));
 
-    if (failed)
-    {
-        WARN("Unloading openal\n");
-        if (openal_handle != RTLD_DEFAULT)
-            wine_dlclose(openal_handle, NULL, 0);
-        openal_handle = NULL;
-        openal_loaded = 0;
-    }
-    else
-    {
-        openal_loaded = 1;
-        local_contexts = palcIsExtensionPresent(NULL, "ALC_EXT_thread_local_context");
-        if (local_contexts)
-        {
-            set_context = palcGetProcAddress(NULL, "alcSetThreadContext");
-            get_context = palcGetProcAddress(NULL, "alcGetThreadContext");
-            if (!set_context || !get_context)
-            {
-                ERR("TLS advertised but functions not found, disabling thread local context\n");
-                local_contexts = 0;
-            }
-        }
-        if (!local_contexts)
-        {
-            set_context = palcMakeContextCurrent;
-            get_context = palcGetCurrentContext;
-        }
-    }
+    return TRUE;
 }
 
-#endif /*HAVE_OPENAL*/
+static BOOL init_driver(void)
+{
+    static const WCHAR alsaW[] = {'a','l','s','a',0};
+    static const WCHAR ossW[] = {'o','s','s',0};
+    static const WCHAR coreaudioW[] = {'c','o','r','e','a','u','d','i','o',0};
+    static const WCHAR *default_drivers[] = { alsaW, coreaudioW, ossW };
+    static const WCHAR drv_key[] = {'S','o','f','t','w','a','r','e','\\',
+        'W','i','n','e','\\','D','r','i','v','e','r','s',0};
+    static const WCHAR drv_value[] = {'A','u','d','i','o',0};
+    HKEY key;
+    UINT i;
 
-static HINSTANCE instance;
+    if(drvs.module)
+        return TRUE;
+
+    if(RegOpenKeyW(HKEY_CURRENT_USER, drv_key, &key) == ERROR_SUCCESS){
+        WCHAR driver_name[256];
+        DWORD size = sizeof(driver_name);
+
+        if(RegQueryValueExW(key, drv_value, 0, NULL, (BYTE*)driver_name,
+                    &size) == ERROR_SUCCESS){
+            BOOL ret = load_driver(driver_name);
+            RegCloseKey(key);
+            if(!ret)
+                ERR("Failed to load driver: %s\n", wine_dbgstr_w(driver_name));
+            return ret;
+        }
+
+        RegCloseKey(key);
+    }
+
+    for(i = 0; i < sizeof(default_drivers)/sizeof(*default_drivers); ++i)
+        if(load_driver(default_drivers[i]))
+            return TRUE;
+
+    return FALSE;
+}
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -326,9 +129,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
             instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
-#ifdef HAVE_OPENAL
-            load_libopenal();
-#endif /*HAVE_OPENAL*/
             break;
         case DLL_PROCESS_DETACH:
             MMDevEnum_Free();
@@ -428,6 +228,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     int i = 0;
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    if(!init_driver()){
+        ERR("Driver initialization failed\n");
+        return E_FAIL;
+    }
 
     if (ppv == NULL) {
         WARN("invalid parameter\n");

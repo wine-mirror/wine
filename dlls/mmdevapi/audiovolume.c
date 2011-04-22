@@ -22,13 +22,6 @@
 #include "config.h"
 
 #include <stdarg.h>
-#ifdef HAVE_AL_AL_H
-#include <AL/al.h>
-#include <AL/alc.h>
-#elif defined(HAVE_OPENAL_AL_H)
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -48,8 +41,6 @@
 #include "mmdevapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
-
-#ifdef HAVE_OPENAL
 
 static const IAudioEndpointVolumeExVtbl AEVImpl_Vtbl;
 
@@ -297,5 +288,3 @@ static const IAudioEndpointVolumeExVtbl AEVImpl_Vtbl = {
     AEV_GetVolumeRange,
     AEV_GetVolumeRangeChannel
 };
-
-#endif
