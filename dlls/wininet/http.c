@@ -5359,7 +5359,7 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
 
     while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
         cchMaxRawHeaders *= 2;
-    temp = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
+    temp = heap_realloc(lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
     if (temp == NULL) goto lend;
     lpszRawHeaders = temp;
     memcpy(lpszRawHeaders+cchRawHeaders, buffer, (buflen-1)*sizeof(WCHAR));
@@ -5386,7 +5386,7 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
             {
                 while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
                     cchMaxRawHeaders *= 2;
-                temp = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
+                temp = heap_realloc(lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
                 if (temp == NULL) goto lend;
                 lpszRawHeaders = temp;
                 memcpy(lpszRawHeaders+cchRawHeaders, buffer, (buflen-1)*sizeof(WCHAR));
@@ -5415,7 +5415,7 @@ static INT HTTP_GetResponseHeaders(http_request_t *request, BOOL clear)
     if (cchRawHeaders + strlenW(szCrLf) > cchMaxRawHeaders)
     {
         cchMaxRawHeaders = cchRawHeaders + strlenW(szCrLf);
-        temp = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders + 1) * sizeof(WCHAR));
+        temp = heap_realloc(lpszRawHeaders, (cchMaxRawHeaders + 1) * sizeof(WCHAR));
         if (temp == NULL) goto lend;
         lpszRawHeaders = temp;
     }
@@ -5589,7 +5589,7 @@ static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR 
 
         len = origlen + valuelen + ((ch > 0) ? 2 : 0);
 
-        lpsztmp = HeapReAlloc(GetProcessHeap(), 0, lphttpHdr->lpszValue, (len+1)*sizeof(WCHAR));
+        lpsztmp = heap_realloc(lphttpHdr->lpszValue, (len+1)*sizeof(WCHAR));
         if (lpsztmp)
         {
             lphttpHdr->lpszValue = lpsztmp;
@@ -5608,7 +5608,7 @@ static DWORD HTTP_ProcessHeader(http_request_t *request, LPCWSTR field, LPCWSTR 
         }
         else
         {
-            WARN("HeapReAlloc (%d bytes) failed\n",len+1);
+            WARN("heap_realloc (%d bytes) failed\n",len+1);
             res = ERROR_OUTOFMEMORY;
         }
     }
@@ -5692,7 +5692,7 @@ static DWORD HTTP_InsertCustomHeader(http_request_t *request, LPHTTPHEADERW lpHd
     TRACE("--> %s: %s\n", debugstr_w(lpHdr->lpszField), debugstr_w(lpHdr->lpszValue));
     count = request->nCustHeaders + 1;
     if (count > 1)
-	lph = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, request->custHeaders, sizeof(HTTPHEADERW) * count);
+	lph = heap_realloc_zero(request->custHeaders, sizeof(HTTPHEADERW) * count);
     else
 	lph = heap_alloc_zero(sizeof(HTTPHEADERW) * count);
 

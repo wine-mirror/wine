@@ -3762,8 +3762,7 @@ static BOOL FTP_ParseDirectory(ftp_session_t *lpwfs, INT nSocket, LPCWSTR lpszSe
             LPFILEPROPERTIESW tmpafp;
             
             sizeFilePropArray *= 2;
-            tmpafp = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *lpafp,
-                sizeof(FILEPROPERTIESW)*sizeFilePropArray);
+            tmpafp = heap_realloc_zero(*lpafp, sizeof(FILEPROPERTIESW)*sizeFilePropArray);
             if (NULL == tmpafp)
             {
                 bSuccess = FALSE;
@@ -3781,8 +3780,7 @@ static BOOL FTP_ParseDirectory(ftp_session_t *lpwfs, INT nSocket, LPCWSTR lpszSe
         {
             LPFILEPROPERTIESW tmpafp;
 
-            tmpafp = HeapReAlloc(GetProcessHeap(), 0, *lpafp,
-                sizeof(FILEPROPERTIESW)*indexFilePropArray);
+            tmpafp = heap_realloc(*lpafp, sizeof(FILEPROPERTIESW)*indexFilePropArray);
             if (NULL != tmpafp)
                 *lpafp = tmpafp;
         }
