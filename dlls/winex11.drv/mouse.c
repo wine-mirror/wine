@@ -394,6 +394,66 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
 }
 
 /***********************************************************************
+ *		grab_clipping_window
+ *
+ * Start a pointer grab on the clip window.
+ */
+static BOOL grab_clipping_window( const RECT *clip )
+{
+    struct x11drv_thread_data *data = x11drv_init_thread_data();
+    Window clip_window = init_clip_window();
+    HWND msg_hwnd;
+
+    if (!clip_window) return TRUE;
+
+    if (!(msg_hwnd = create_clipping_msg_window())) return TRUE;
+
+    TRACE( "clipping to %s\n", wine_dbgstr_rect(clip) );
+    wine_tsx11_lock();
+    XUnmapWindow( data->display, clip_window );
+    XMoveResizeWindow( data->display, clip_window,
+                       clip->left - virtual_screen_rect.left, clip->top - virtual_screen_rect.top,
+                       clip->right - clip->left, clip->bottom - clip->top );
+    XMapWindow( data->display, clip_window );
+    if (!XGrabPointer( data->display, clip_window, False,
+                       PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
+                       GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
+        clipping_cursor = 1;
+    wine_tsx11_unlock();
+
+    if (!clipping_cursor)
+    {
+        DestroyWindow( msg_hwnd );
+        return FALSE;
+    }
+    enable_xinput2();
+    sync_window_cursor( clip_window );
+    clip_rect = *clip;
+    SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
+    return TRUE;
+}
+
+/***********************************************************************
+ *		ungrab_clipping_window
+ *
+ * Release the pointer grab on the clip window.
+ */
+static void ungrab_clipping_window(void)
+{
+    Display *display = thread_init_display();
+    Window clip_window = init_clip_window();
+
+    if (!clip_window) return;
+
+    TRACE( "no longer clipping\n" );
+    wine_tsx11_lock();
+    XUnmapWindow( display, clip_window );
+    wine_tsx11_unlock();
+    clipping_cursor = 0;
+    SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, 0 );
+}
+
+/***********************************************************************
  *		send_mouse_input
  *
  * Update the various window states on a mouse event.
@@ -1110,11 +1170,6 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
  */
 BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 {
-    Display *display = thread_init_display();
-    Window clip_window = init_clip_window();
-
-    if (!clip_window) return TRUE;
-
     /* we are clipping if the clip rectangle is smaller than the screen */
     if (clip && (clip->left > virtual_screen_rect.left ||
                  clip->right < virtual_screen_rect.right ||
@@ -1124,43 +1179,10 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
         if (GetWindowThreadProcessId( GetDesktopWindow(), NULL ) == GetCurrentThreadId())
             return TRUE;  /* don't clip in the desktop process */
 
-        if (grab_pointer)
-        {
-            HWND msg_hwnd = create_clipping_msg_window();
-
-            if (!msg_hwnd) return TRUE;
-            TRACE( "clipping to %s\n", wine_dbgstr_rect(clip) );
-            wine_tsx11_lock();
-            XUnmapWindow( display, clip_window );
-            XMoveResizeWindow( display, clip_window,
-                               clip->left - virtual_screen_rect.left, clip->top - virtual_screen_rect.top,
-                               clip->right - clip->left, clip->bottom - clip->top );
-            XMapWindow( display, clip_window );
-            if (!XGrabPointer( display, clip_window, False,
-                               PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
-                               GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
-                clipping_cursor = 1;
-            wine_tsx11_unlock();
-
-            if (clipping_cursor)
-            {
-                enable_xinput2();
-                sync_window_cursor( clip_window );
-                clip_rect = *clip;
-                SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
-                return TRUE;
-            }
-            DestroyWindow( msg_hwnd );
-        }
+        if (grab_pointer && grab_clipping_window( clip )) return TRUE;
     }
 
-    /* release the grab if any */
-    TRACE( "no longer clipping\n" );
-    wine_tsx11_lock();
-    XUnmapWindow( display, clip_window );
-    wine_tsx11_unlock();
-    clipping_cursor = 0;
-    SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, 0 );
+    ungrab_clipping_window();
     return TRUE;
 }
 
