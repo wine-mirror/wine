@@ -80,6 +80,7 @@ static ULONG WINAPI InternetExplorer_Release(IWebBrowser2 *iface)
 
     if(!ref) {
         if(This->doc_host) {
+            deactivate_document(&This->doc_host->doc_host);
             DocHost_Release(&This->doc_host->doc_host);
             if(This->doc_host) {
                 This->doc_host->ie = NULL;
