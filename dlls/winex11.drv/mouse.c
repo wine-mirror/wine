@@ -376,6 +376,8 @@ static HWND create_clipping_msg_window(void)
  */
 LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
 {
+    struct x11drv_thread_data *data = x11drv_thread_data();
+
     if (hwnd == GetDesktopWindow())  /* change the clip window stored in the desktop process */
     {
         static HWND clip_hwnd;
@@ -385,8 +387,9 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
         if (prev || new_clip_hwnd) TRACE( "clip hwnd changed from %p to %p\n", prev, new_clip_hwnd );
         if (prev) SendNotifyMessageW( prev, WM_X11DRV_CLIP_CURSOR, 0, 0 );
     }
-    else  /* this is a notification that clipping has been reset */
+    else if (hwnd == data->clip_hwnd)  /* this is a notification that clipping has been reset */
     {
+        data->clip_hwnd = 0;
         disable_xinput2();
         DestroyWindow( hwnd );
     }
@@ -402,19 +405,21 @@ static BOOL grab_clipping_window( const RECT *clip )
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
     Window clip_window = init_clip_window();
-    HWND msg_hwnd;
+    HWND msg_hwnd = 0;
 
     if (!clip_window) return TRUE;
 
-    if (!(msg_hwnd = create_clipping_msg_window())) return TRUE;
+    /* create a clip message window unless we are already clipping */
+    if (!data->clip_hwnd && !(msg_hwnd = create_clipping_msg_window())) return TRUE;
 
     TRACE( "clipping to %s\n", wine_dbgstr_rect(clip) );
+
     wine_tsx11_lock();
-    XUnmapWindow( data->display, clip_window );
+    if (msg_hwnd) XUnmapWindow( data->display, clip_window );
     XMoveResizeWindow( data->display, clip_window,
                        clip->left - virtual_screen_rect.left, clip->top - virtual_screen_rect.top,
                        clip->right - clip->left, clip->bottom - clip->top );
-    XMapWindow( data->display, clip_window );
+    if (msg_hwnd) XMapWindow( data->display, clip_window );
     if (!XGrabPointer( data->display, clip_window, False,
                        PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
                        GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
@@ -423,13 +428,17 @@ static BOOL grab_clipping_window( const RECT *clip )
 
     if (!clipping_cursor)
     {
-        DestroyWindow( msg_hwnd );
+        if (msg_hwnd) DestroyWindow( msg_hwnd );
         return FALSE;
     }
-    enable_xinput2();
-    sync_window_cursor( clip_window );
-    clip_rect = *clip;
-    SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
+    if (msg_hwnd)
+    {
+        data->clip_hwnd = msg_hwnd;
+        enable_xinput2();
+        sync_window_cursor( clip_window );
+        clip_rect = *clip;
+        SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
+    }
     return TRUE;
 }
 

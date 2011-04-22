@@ -551,6 +551,7 @@ struct x11drv_thread_data
     XFontSet font_set;             /* international text drawing font set */
     Window   selection_wnd;        /* window used for selection interactions */
     Window   clip_window;          /* window used for cursor clipping */
+    HWND     clip_hwnd;            /* message window stored in desktop while clipping is active */
     HKL      kbd_layout;           /* active keyboard layout */
     enum { xi_unavailable = -1, xi_unknown, xi_disabled, xi_enabled } xi2_state; /* XInput2 state */
 };
