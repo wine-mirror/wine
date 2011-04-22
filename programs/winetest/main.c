@@ -40,6 +40,9 @@
 /* Don't submit the results if more than SKIP_LIMIT tests have been skipped */
 #define SKIP_LIMIT 10
 
+/* Don't submit the results if more than FAILURES_LIMIT tests have failed */
+#define FAILURES_LIMIT 50
+
 struct wine_test
 {
     char *name;
@@ -62,6 +65,7 @@ static const char whitespace[] = " \t\r\n";
 static const char testexe[] = "_test.exe";
 static char build_id[64];
 static BOOL is_wow64;
+static int failures;
 
 /* filters for running only specific tests */
 static char *filters[64];
@@ -705,6 +709,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         status = run_ex (cmd, out_file, tempdir, 120000);
         heap_free (cmd);
         xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
+        if (status) failures++;
     }
 }
 
@@ -1316,7 +1321,13 @@ int main( int argc, char *argv[] )
                 DeleteFileA(logname);
                 exit (0);
             }
-            if (build_id[0] && nr_of_skips <= SKIP_LIMIT && !nr_native_dlls && !is_win9x &&
+            if (failures > FAILURES_LIMIT)
+                report( R_WARNING,
+                        "%d tests failed, there's probably something broken with your setup.\n"
+                        "You need to address this before submitting results.", failures );
+
+            if (build_id[0] && nr_of_skips <= SKIP_LIMIT && failures <= FAILURES_LIMIT &&
+                !nr_native_dlls && !is_win9x &&
                 report (R_ASK, MB_YESNO, "Do you want to submit the test results?") == IDYES)
                 if (!send_file (logname) && !DeleteFileA(logname))
                     report (R_WARNING, "Can't remove logfile: %u", GetLastError());
