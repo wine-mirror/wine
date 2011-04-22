@@ -42,8 +42,10 @@
 #define NS_OK                     ((nsresult)0x00000000L)
 #define NS_ERROR_FAILURE          ((nsresult)0x80004005L)
 #define NS_ERROR_OUT_OF_MEMORY    ((nsresult)0x8007000EL)
-#define NS_NOINTERFACE            ((nsresult)0x80004002L)
 #define NS_ERROR_NOT_IMPLEMENTED  ((nsresult)0x80004001L)
+#define NS_NOINTERFACE            ((nsresult)0x80004002L)
+#define NS_ERROR_INVALID_POINTER  ((nsresult)0x80004003L)
+#define NS_ERROR_NULL_POINTER     NS_ERROR_INVALID_POINTER
 #define NS_ERROR_NOT_AVAILABLE    ((nsresult)0x80040111L)
 #define NS_ERROR_INVALID_ARG      ((nsresult)0x80070057L) 
 #define NS_ERROR_UNEXPECTED       ((nsresult)0x8000ffffL)
@@ -451,6 +453,8 @@ struct HTMLDocumentObj {
     DWORD update;
 };
 
+typedef struct nsWeakReference nsWeakReference;
+
 struct NSContainer {
     nsIWebBrowserChrome      nsIWebBrowserChrome_iface;
     nsIContextMenuListener   nsIContextMenuListener_iface;
@@ -458,7 +462,6 @@ struct NSContainer {
     nsIEmbeddingSiteWindow   nsIEmbeddingSiteWindow_iface;
     nsITooltipListener       nsITooltipListener_iface;
     nsIInterfaceRequestor    nsIInterfaceRequestor_iface;
-    nsIWeakReference         nsIWeakReference_iface;
     nsISupportsWeakReference nsISupportsWeakReference_iface;
 
     nsIWebBrowser *webbrowser;
@@ -470,6 +473,8 @@ struct NSContainer {
     nsIController *editor_controller;
 
     LONG ref;
+
+    nsWeakReference *weak_reference;
 
     NSContainer *parent;
     HTMLDocumentObj *doc;

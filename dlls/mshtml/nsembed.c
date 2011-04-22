@@ -19,6 +19,7 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -973,6 +974,83 @@ BOOL is_gecko_path(const char *path)
     return ret;
 }
 
+struct nsWeakReference {
+    nsIWeakReference nsIWeakReference_iface;
+
+    LONG ref;
+
+    NSContainer *nscontainer;
+};
+
+static inline nsWeakReference *impl_from_nsIWeakReference(nsIWeakReference *iface)
+{
+    return CONTAINING_RECORD(iface, nsWeakReference, nsIWeakReference_iface);
+}
+
+static nsresult NSAPI nsWeakReference_QueryInterface(nsIWeakReference *iface,
+        nsIIDRef riid, void **result)
+{
+    nsWeakReference *This = impl_from_nsIWeakReference(iface);
+
+    if(IsEqualGUID(&IID_nsISupports, riid)) {
+        TRACE("(%p)->(IID_nsISupports %p)\n", This, result);
+        *result = &This->nsIWeakReference_iface;
+    }else if(IsEqualGUID(&IID_nsIWeakReference, riid)) {
+        TRACE("(%p)->(IID_nsIWeakReference %p)\n", This, result);
+        *result = &This->nsIWeakReference_iface;
+    }else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), result);
+        *result = NULL;
+        return NS_NOINTERFACE;
+    }
+
+    nsISupports_AddRef((nsISupports*)*result);
+    return NS_OK;
+}
+
+static nsrefcnt NSAPI nsWeakReference_AddRef(nsIWeakReference *iface)
+{
+    nsWeakReference *This = impl_from_nsIWeakReference(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static nsrefcnt NSAPI nsWeakReference_Release(nsIWeakReference *iface)
+{
+    nsWeakReference *This = impl_from_nsIWeakReference(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref) {
+        assert(!This->nscontainer);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static nsresult NSAPI nsWeakReference_QueryReferent(nsIWeakReference *iface,
+        const nsIID *riid, void **result)
+{
+    nsWeakReference *This = impl_from_nsIWeakReference(iface);
+
+    if(!This->nscontainer)
+        return NS_ERROR_NULL_POINTER;
+
+    return nsIWebBrowserChrome_QueryInterface(&This->nscontainer->nsIWebBrowserChrome_iface, riid, result);
+}
+
+static const nsIWeakReferenceVtbl nsWeakReferenceVtbl = {
+    nsWeakReference_QueryInterface,
+    nsWeakReference_AddRef,
+    nsWeakReference_Release,
+    nsWeakReference_QueryReferent
+};
+
 /**********************************************************
  *      nsIWebBrowserChrome interface
  */
@@ -1009,9 +1087,6 @@ static nsresult NSAPI nsWebBrowserChrome_QueryInterface(nsIWebBrowserChrome *ifa
     }else if(IsEqualGUID(&IID_nsIInterfaceRequestor, riid)) {
         TRACE("(%p)->(IID_nsIInterfaceRequestor %p)\n", This, result);
         *result = &This->nsIInterfaceRequestor_iface;
-    }else if(IsEqualGUID(&IID_nsIWeakReference, riid)) {
-        TRACE("(%p)->(IID_nsIWeakReference %p)\n", This, result);
-        *result = &This->nsIWeakReference_iface;
     }else if(IsEqualGUID(&IID_nsISupportsWeakReference, riid)) {
         TRACE("(%p)->(IID_nsISupportsWeakReference %p)\n", This, result);
         *result = &This->nsISupportsWeakReference_iface;
@@ -1046,6 +1121,10 @@ static nsrefcnt NSAPI nsWebBrowserChrome_Release(nsIWebBrowserChrome *iface)
     if(!ref) {
         if(This->parent)
             nsIWebBrowserChrome_Release(&This->parent->nsIWebBrowserChrome_iface);
+        if(This->weak_reference) {
+            This->weak_reference->nscontainer = NULL;
+            nsIWeakReference_Release(&This->weak_reference->nsIWeakReference_iface);
+        }
         heap_free(This);
     }
 
@@ -1629,44 +1708,6 @@ static const nsIInterfaceRequestorVtbl nsInterfaceRequestorVtbl = {
     nsInterfaceRequestor_GetInterface
 };
 
-static inline NSContainer *impl_from_nsIWeakReference(nsIWeakReference *iface)
-{
-    return CONTAINING_RECORD(iface, NSContainer, nsIWeakReference_iface);
-}
-
-static nsresult NSAPI nsWeakReference_QueryInterface(nsIWeakReference *iface,
-        nsIIDRef riid, void **result)
-{
-    NSContainer *This = impl_from_nsIWeakReference(iface);
-    return nsIWebBrowserChrome_QueryInterface(&This->nsIWebBrowserChrome_iface, riid, result);
-}
-
-static nsrefcnt NSAPI nsWeakReference_AddRef(nsIWeakReference *iface)
-{
-    NSContainer *This = impl_from_nsIWeakReference(iface);
-    return nsIWebBrowserChrome_AddRef(&This->nsIWebBrowserChrome_iface);
-}
-
-static nsrefcnt NSAPI nsWeakReference_Release(nsIWeakReference *iface)
-{
-    NSContainer *This = impl_from_nsIWeakReference(iface);
-    return nsIWebBrowserChrome_Release(&This->nsIWebBrowserChrome_iface);
-}
-
-static nsresult NSAPI nsWeakReference_QueryReferent(nsIWeakReference *iface,
-        const nsIID *riid, void **result)
-{
-    NSContainer *This = impl_from_nsIWeakReference(iface);
-    return nsIWebBrowserChrome_QueryInterface(&This->nsIWebBrowserChrome_iface, riid, result);
-}
-
-static const nsIWeakReferenceVtbl nsWeakReferenceVtbl = {
-    nsWeakReference_QueryInterface,
-    nsWeakReference_AddRef,
-    nsWeakReference_Release,
-    nsWeakReference_QueryReferent
-};
-
 static inline NSContainer *impl_from_nsISupportsWeakReference(nsISupportsWeakReference *iface)
 {
     return CONTAINING_RECORD(iface, NSContainer, nsISupportsWeakReference_iface);
@@ -1698,8 +1739,18 @@ static nsresult NSAPI nsSupportsWeakReference_GetWeakReference(nsISupportsWeakRe
 
     TRACE("(%p)->(%p)\n", This, _retval);
 
-    nsIWeakReference_AddRef(&This->nsIWeakReference_iface);
-    *_retval = &This->nsIWeakReference_iface;
+    if(!This->weak_reference) {
+        This->weak_reference = heap_alloc(sizeof(nsWeakReference));
+        if(!This->weak_reference)
+            return NS_ERROR_OUT_OF_MEMORY;
+
+        This->weak_reference->nsIWeakReference_iface.lpVtbl = &nsWeakReferenceVtbl;
+        This->weak_reference->ref = 1;
+        This->weak_reference->nscontainer = This;
+    }
+
+    *_retval = &This->weak_reference->nsIWeakReference_iface;
+    nsIWeakReference_AddRef(*_retval);
     return NS_OK;
 }
 
@@ -1740,7 +1791,6 @@ NSContainer *NSContainer_Create(HTMLDocumentObj *doc, NSContainer *parent)
     ret->nsIEmbeddingSiteWindow_iface.lpVtbl = &nsEmbeddingSiteWindowVtbl;
     ret->nsITooltipListener_iface.lpVtbl = &nsTooltipListenerVtbl;
     ret->nsIInterfaceRequestor_iface.lpVtbl = &nsInterfaceRequestorVtbl;
-    ret->nsIWeakReference_iface.lpVtbl = &nsWeakReferenceVtbl;
     ret->nsISupportsWeakReference_iface.lpVtbl = &nsSupportsWeakReferenceVtbl;
 
     ret->doc = doc;
