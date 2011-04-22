@@ -52,11 +52,6 @@
 #include "winreg.h"
 #include "mmddk.h"
 
-/* ksmedia.h defines KSDATAFORMAT_SUBTYPE_PCM and KSDATAFORMAT_SUBTYPE_IEEE_FLOAT
- * However either all files that use it will define it, or no files will
- * The only way to solve this is by adding initguid.h here, and include the guid that way
- */
-#include "initguid.h"
 #include "alsa.h"
 
 #include "wine/library.h"

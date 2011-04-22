@@ -8,6 +8,7 @@ C_SRCS = \
 	dsoutput.c \
 	midi.c \
 	mixer.c \
+	mmdevdrv.c \
 	wavein.c \
 	waveinit.c \
 	waveout.c
