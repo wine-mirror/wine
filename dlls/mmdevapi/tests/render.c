@@ -266,6 +266,8 @@ static void test_references(void)
             0, pwfx, NULL);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
+    CoTaskMemFree(pwfx);
+
     hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&rc);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
 
@@ -293,6 +295,8 @@ static void test_references(void)
             0, pwfx, NULL);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
+    CoTaskMemFree(pwfx);
+
     hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
 
@@ -319,6 +323,8 @@ static void test_references(void)
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000,
             0, pwfx, NULL);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    CoTaskMemFree(pwfx);
 
     hr = IAudioClient_GetService(ac, &IID_IAudioClock, (void**)&acl);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
@@ -357,6 +363,8 @@ static void test_event(void)
             0, pwfx, NULL);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
+    CoTaskMemFree(pwfx);
+
     event = CreateEventW(NULL, FALSE, FALSE, NULL);
     ok(event != NULL, "CreateEvent failed\n");
 
@@ -378,6 +386,94 @@ static void test_event(void)
     IAudioClient_Release(ac);
 
     CloseHandle(event);
+}
+
+static void test_padding(void)
+{
+    HRESULT hr;
+    IAudioClient *ac;
+    IAudioRenderClient *arc;
+    WAVEFORMATEX *pwfx;
+    REFERENCE_TIME minp, defp;
+    BYTE *buf;
+    UINT32 psize, pad, written;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            0, 5000000, 0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IAudioClient_GetDevicePeriod(ac, &defp, &minp);
+    ok(hr == S_OK, "GetDevicePeriod failed: %08x\n", hr);
+    ok(defp != 0, "Default period is 0\n");
+    ok(minp != 0, "Minimum period is 0\n");
+    ok(minp <= defp, "Mininum period is greater than default period\n");
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&arc);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+    psize = (defp / 10000000.) * pwfx->nSamplesPerSec * pwfx->nBlockAlign;
+
+    written = 0;
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+    ok(pad == written, "GetCurrentPadding returned %u, should be %u\n", pad, written);
+
+    hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
+    ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+    ok(buf != NULL, "NULL buffer returned\n");
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, psize,
+            AUDCLNT_BUFFERFLAGS_SILENT);
+    ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
+    written += psize;
+
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+    ok(pad == written, "GetCurrentPadding returned %u, should be %u\n", pad, written);
+
+    psize = (minp / 10000000.) * pwfx->nSamplesPerSec * pwfx->nBlockAlign;
+
+    hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
+    ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+    ok(buf != NULL, "NULL buffer returned\n");
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, psize,
+            AUDCLNT_BUFFERFLAGS_SILENT);
+    ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
+    written += psize;
+
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+    ok(pad == written, "GetCurrentPadding returned %u, should be %u\n", pad, written);
+
+    /* overfull buffer. requested 1/2s buffer size, so try
+     * to get a 1/2s buffer, which should fail */
+    psize = pwfx->nSamplesPerSec / 2.;
+    hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
+    ok(hr == AUDCLNT_E_BUFFER_TOO_LARGE, "GetBuffer gave wrong error: %08x\n", hr);
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, psize, 0);
+    ok(hr == AUDCLNT_E_OUT_OF_ORDER, "ReleaseBuffer gave wrong error: %08x\n", hr);
+
+    hr = IAudioClient_GetCurrentPadding(ac, &pad);
+    ok(hr == S_OK, "GetCurrentPadding failed: %08x\n", hr);
+    ok(pad == written, "GetCurrentPadding returned %u, should be %u\n", pad, written);
+
+    CoTaskMemFree(pwfx);
+
+    IAudioRenderClient_Release(arc);
+    IAudioClient_Release(ac);
 }
 
 START_TEST(render)
@@ -407,6 +503,7 @@ START_TEST(render)
     test_audioclient();
     test_references();
     test_event();
+    test_padding();
 
     IMMDevice_Release(dev);
 
