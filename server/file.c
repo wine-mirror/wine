@@ -162,6 +162,7 @@ struct file *create_file_for_fd_obj( struct fd *fd, unsigned int access, unsigne
             release_object( file );
             return NULL;
         }
+        set_fd_user( file->fd, &file_fd_ops, &file->obj );
     }
     return file;
 }
