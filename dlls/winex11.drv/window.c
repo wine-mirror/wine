@@ -2280,6 +2280,9 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
             escape.drawable = data ? data->whole_window : X11DRV_get_whole_window( hwnd );
         else
             escape.drawable = escape.gl_drawable;
+
+        /* special case: when repainting the root window, clip out top-level windows */
+        if (data && data->whole_window == root_window) escape.mode = ClipByChildren;
     }
     else
     {
