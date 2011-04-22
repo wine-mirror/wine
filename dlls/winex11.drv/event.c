@@ -795,7 +795,7 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
  */
 static void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 {
-    if (event->xany.window == x11drv_thread_data()->clip_window) clipping_window_unmapped();
+    if (event->xany.window == x11drv_thread_data()->clip_window) clipping_cursor = 0;
 }
 
 

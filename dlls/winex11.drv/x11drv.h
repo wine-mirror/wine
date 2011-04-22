@@ -744,7 +744,8 @@ enum x11drv_window_messages
     WM_X11DRV_SET_WIN_FORMAT,
     WM_X11DRV_SET_WIN_REGION,
     WM_X11DRV_RESIZE_DESKTOP,
-    WM_X11DRV_SET_CURSOR
+    WM_X11DRV_SET_CURSOR,
+    WM_X11DRV_CLIP_CURSOR
 };
 
 /* _NET_WM_STATE properties that we keep track of */
@@ -826,7 +827,7 @@ extern void X11DRV_ResetSelectionOwner(void);
 extern void CDECL X11DRV_SetFocus( HWND hwnd );
 extern void set_window_cursor( Window window, HCURSOR handle );
 extern void sync_window_cursor( Window window );
-extern void clipping_window_unmapped(void);
+extern LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd );
 extern BOOL CDECL X11DRV_ClipCursor( LPCRECT clip );
 extern void X11DRV_InitKeyboard( Display *display );
 extern DWORD CDECL X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,

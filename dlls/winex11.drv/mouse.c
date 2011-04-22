@@ -348,24 +348,50 @@ static void disable_xinput2(void)
 }
 
 /***********************************************************************
- *		clipping_window_unmapped
- *
- * Turn off clipping when the window got unmapped.
+ *             create_clipping_msg_window
  */
-void clipping_window_unmapped(void)
+static HWND create_clipping_msg_window(void)
 {
-    struct x11drv_thread_data *data = x11drv_thread_data();
+    static const WCHAR class_name[] = {'_','_','x','1','1','d','r','v','_','c','l','i','p','_','c','l','a','s','s',0};
+    static ATOM clip_class;
 
-    clipping_cursor = 0;
-    if (data->xi2_state == xi_enabled)
+    if (!clip_class)
     {
-        RECT rect;
-        GetClipCursor( &rect );
-        if (EqualRect( &rect, &clip_rect )) return;  /* still clipped */
-        disable_xinput2();
+        WNDCLASSW class;
+        ATOM atom;
+
+        memset( &class, 0, sizeof(class) );
+        class.lpfnWndProc   = DefWindowProcW;
+        class.hInstance     = GetModuleHandleW(0);
+        class.lpszClassName = class_name;
+        if ((atom = RegisterClassW( &class ))) clip_class = atom;
     }
+    return CreateWindowW( class_name, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, GetModuleHandleW(0), NULL );
 }
 
+/***********************************************************************
+ *             clip_cursor_notify
+ *
+ * Notification function called upon receiving a WM_X11DRV_CLIP_CURSOR.
+ */
+LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
+{
+    if (hwnd == GetDesktopWindow())  /* change the clip window stored in the desktop process */
+    {
+        static HWND clip_hwnd;
+
+        HWND prev = clip_hwnd;
+        clip_hwnd = new_clip_hwnd;
+        if (prev || new_clip_hwnd) TRACE( "clip hwnd changed from %p to %p\n", prev, new_clip_hwnd );
+        if (prev) SendNotifyMessageW( prev, WM_X11DRV_CLIP_CURSOR, 0, 0 );
+    }
+    else  /* this is a notification that clipping has been reset */
+    {
+        disable_xinput2();
+        DestroyWindow( hwnd );
+    }
+    return 0;
+}
 
 /***********************************************************************
  *		send_mouse_input
@@ -1100,6 +1126,9 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 
         if (grab_pointer)
         {
+            HWND msg_hwnd = create_clipping_msg_window();
+
+            if (!msg_hwnd) return TRUE;
             TRACE( "clipping to %s\n", wine_dbgstr_rect(clip) );
             wine_tsx11_lock();
             XUnmapWindow( display, clip_window );
@@ -1118,8 +1147,10 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
                 enable_xinput2();
                 sync_window_cursor( clip_window );
                 clip_rect = *clip;
+                SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
                 return TRUE;
             }
+            DestroyWindow( msg_hwnd );
         }
     }
 
@@ -1129,7 +1160,7 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
     XUnmapWindow( display, clip_window );
     wine_tsx11_unlock();
     clipping_cursor = 0;
-    disable_xinput2();
+    SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, 0 );
     return TRUE;
 }
 
