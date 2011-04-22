@@ -44,9 +44,14 @@ extern BOOL WINAPI GUIDFromStringW(LPCWSTR psz, LPGUID pguid);
 /*******************************************************************************
  * GAMEUX_initGameData
  *
- * Internal helper function. Description available in gameux_private.h file
+ * Internal helper function.
+ * Initializes GAME_DATA structure fields with proper values. Should be
+ * called always before first usage of this structure. Implemented in gameexplorer.c
+ *
+ * Parameters:
+ *  GameData                        [I/O]   pointer to structure to initialize
  */
-void GAMEUX_initGameData(struct GAMEUX_GAME_DATA *GameData)
+static void GAMEUX_initGameData(struct GAMEUX_GAME_DATA *GameData)
 {
     GameData->sGDFBinaryPath = NULL;
     GameData->sGameInstallDirectory = NULL;
@@ -56,9 +61,14 @@ void GAMEUX_initGameData(struct GAMEUX_GAME_DATA *GameData)
 /*******************************************************************************
  * GAMEUX_uninitGameData
  *
- * Internal helper function. Description available in gameux_private.h file
+ * Internal helper function.
+ * Properly frees all data stored or pointed by fields of GAME_DATA structure.
+ * Should be called before freeing this structure. Implemented in gameexplorer.c
+ *
+ * Parameters:
+ *  GameData                        [I/O]   pointer to structure to uninitialize
  */
-void GAMEUX_uninitGameData(struct GAMEUX_GAME_DATA *GameData)
+static void GAMEUX_uninitGameData(struct GAMEUX_GAME_DATA *GameData)
 {
     HeapFree(GetProcessHeap(), 0, GameData->sGDFBinaryPath);
     HeapFree(GetProcessHeap(), 0, GameData->sGameInstallDirectory);
@@ -497,11 +507,23 @@ static HRESULT GAMEUX_RemoveRegistryRecord(GUID* pInstanceID)
     return hr;
 }
 /*******************************************************************************
- * GAMEUX_RegisterGame
+ *  GAMEUX_RegisterGame
  *
- * Internal helper function. Description available in gameux_private.h file
+ * Internal helper function. Registers game associated with given GDF binary in
+ * Game Explorer. Implemented in gameexplorer.c
+ *
+ * Parameters:
+ *  sGDFBinaryPath                  [I]     path to binary containing GDF file in
+ *                                          resources
+ *  sGameInstallDirectory           [I]     path to directory, where game installed
+ *                                          it's files.
+ *  installScope                    [I]     scope of game installation
+ *  pInstanceID                     [I/O]   pointer to game instance identifier.
+ *                                          If pointing to GUID_NULL, then new
+ *                                          identifier will be generated automatically
+ *                                          and returned via this parameter
  */
-HRESULT WINAPI GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
+static HRESULT WINAPI GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
         LPCWSTR sGameInstallDirectory,
         GAME_INSTALL_SCOPE installScope,
         GUID *pInstanceID)

@@ -994,7 +994,7 @@ static const struct IGameStatisticsVtbl GameStatisticsImplVtbl =
 };
 
 
-HRESULT create_IGameStatistics(GameStatisticsImpl** ppStats)
+static HRESULT create_IGameStatistics(GameStatisticsImpl** ppStats)
 {
     TRACE("(%p)\n", ppStats);
 
