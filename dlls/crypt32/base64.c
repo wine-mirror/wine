@@ -30,7 +30,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 #define CERT_HEADER          "-----BEGIN CERTIFICATE-----"
+#define CERT_HEADER_START    "-----BEGIN"
+#define CERT_DELIMITER       "-----"
 #define CERT_TRAILER         "-----END CERTIFICATE-----"
+#define CERT_TRAILER_START   "-----END"
 #define CERT_REQUEST_HEADER  "-----BEGIN NEW CERTIFICATE REQUEST-----"
 #define CERT_REQUEST_TRAILER "-----END NEW CERTIFICATE REQUEST-----"
 #define X509_HEADER          "-----BEGIN X509 CRL-----"
@@ -39,7 +42,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 static const WCHAR CERT_HEADER_W[] = {
 '-','-','-','-','-','B','E','G','I','N',' ','C','E','R','T','I','F','I','C',
 'A','T','E','-','-','-','-','-',0 };
+static const WCHAR CERT_HEADER_START_W[] = {
+'-','-','-','-','-','B','E','G','I','N',0 };
+static const WCHAR CERT_DELIMITER_W[] = {
+'-','-','-','-','-',0 };
 static const WCHAR CERT_TRAILER_W[] = {
+'-','-','-','-','-','E','N','D',0 };
+static const WCHAR CERT_TRAILER_START_W[] = {
 '-','-','-','-','-','E','N','D',' ','C','E','R','T','I','F','I','C','A','T',
 'E','-','-','-','-','-',0 };
 static const WCHAR CERT_REQUEST_HEADER_W[] = {
@@ -605,42 +614,73 @@ static LONG Base64ToBinaryA(LPCSTR pszString, DWORD cchString,
 
 static LONG Base64WithHeaderAndTrailerToBinaryA(LPCSTR pszString,
  DWORD cchString, LPCSTR header, LPCSTR trailer, BYTE *pbBinary,
- DWORD *pcbBinary, DWORD *pdwSkip)
+ DWORD *pcbBinary, DWORD *pdwSkip, BOOL exactHeaderAndTrailerMatch)
 {
     LONG ret;
-    LPCSTR ptr;
 
-    if (cchString > strlen(header) + strlen(trailer)
-     && (ptr = strstr(pszString, header)) != NULL)
+    LPCSTR headerBegins;
+    LPCSTR dataBegins;
+    LPCSTR trailerBegins;
+    size_t dataLength;
+
+    if ((strlen(header) + strlen(trailer)) > cchString)
     {
-        LPCSTR trailerSpot = pszString + cchString - strlen(trailer);
+        return ERROR_INVALID_DATA;
+    }
 
-        if (pszString[cchString - 1] == '\n')
+    if (!(headerBegins = strstr(pszString, header)))
+    {
+        TRACE("Can't find %s in %s.\n", header, pszString);
+        return ERROR_INVALID_DATA;
+    }
+
+    dataBegins = headerBegins + strlen(header);
+    if (!exactHeaderAndTrailerMatch)
+    {
+        if ((dataBegins = strstr(dataBegins, CERT_DELIMITER)))
         {
-            cchString--;
-            trailerSpot--;
-        }
-        if (pszString[cchString - 1] == '\r')
-        {
-            cchString--;
-            trailerSpot--;
-        }
-        if (!strncmp(trailerSpot, trailer, strlen(trailer)))
-        {
-            if (pdwSkip)
-                *pdwSkip = ptr - pszString;
-            ptr += strlen(header);
-            if (*ptr == '\r') ptr++;
-            if (*ptr == '\n') ptr++;
-            cchString -= ptr - pszString + strlen(trailer);
-            ret = Base64ToBinaryA(ptr, cchString, pbBinary, pcbBinary, NULL,
-             NULL);
+            dataBegins += strlen(CERT_DELIMITER);
         }
         else
-            ret = ERROR_INVALID_DATA;
+        {
+            return ERROR_INVALID_DATA;
+        }
+    }
+    if (*dataBegins == '\r') dataBegins++;
+    if (*dataBegins == '\n') dataBegins++;
+
+    if (exactHeaderAndTrailerMatch)
+    {
+        trailerBegins = pszString + cchString - strlen(trailer);
+        if (pszString[cchString - 1] == '\n') trailerBegins--;
+        if (pszString[cchString - 2] == '\r') trailerBegins--;
+
+        if (*(trailerBegins-1) == '\n') trailerBegins--;
+        if (*(trailerBegins-1) == '\r') trailerBegins--;
+
+        if (!strncmp(trailerBegins, trailer, strlen(trailer)))
+        {
+            return ERROR_INVALID_DATA;
+        }
     }
     else
-        ret = ERROR_INVALID_DATA;
+    {
+        if (!(trailerBegins = strstr(dataBegins, trailer)))
+        {
+            return ERROR_INVALID_DATA;
+        }
+        if (*(trailerBegins-1) == '\n') trailerBegins--;
+        if (*(trailerBegins-1) == '\r') trailerBegins--;
+    }
+
+    if (pdwSkip)
+       *pdwSkip = headerBegins - pszString;
+
+    dataLength = trailerBegins - dataBegins;
+
+    ret = Base64ToBinaryA(dataBegins, dataLength, pbBinary, pcbBinary, NULL,
+          NULL);
+
     return ret;
 }
 
@@ -648,7 +688,7 @@ static LONG Base64HeaderToBinaryA(LPCSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryA(pszString, cchString,
-     CERT_HEADER, CERT_TRAILER, pbBinary, pcbBinary, pdwSkip);
+     CERT_HEADER_START, CERT_TRAILER_START, pbBinary, pcbBinary, pdwSkip, FALSE);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64HEADER;
@@ -659,7 +699,7 @@ static LONG Base64RequestHeaderToBinaryA(LPCSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryA(pszString, cchString,
-     CERT_REQUEST_HEADER, CERT_REQUEST_TRAILER, pbBinary, pcbBinary, pdwSkip);
+     CERT_REQUEST_HEADER, CERT_REQUEST_TRAILER, pbBinary, pcbBinary, pdwSkip, TRUE);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64REQUESTHEADER;
@@ -670,7 +710,7 @@ static LONG Base64X509HeaderToBinaryA(LPCSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryA(pszString, cchString,
-     X509_HEADER, X509_TRAILER, pbBinary, pcbBinary, pdwSkip);
+     X509_HEADER, X509_TRAILER, pbBinary, pcbBinary, pdwSkip, TRUE);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64X509CRLHEADER;
@@ -904,42 +944,73 @@ static LONG Base64ToBinaryW(LPCWSTR pszString, DWORD cchString,
 
 static LONG Base64WithHeaderAndTrailerToBinaryW(LPCWSTR pszString,
  DWORD cchString, LPCWSTR header, LPCWSTR trailer, BYTE *pbBinary,
- DWORD *pcbBinary, DWORD *pdwSkip)
+ DWORD *pcbBinary, DWORD *pdwSkip, BOOL exactHeaderAndTrailerMatch)
 {
     LONG ret;
-    LPCWSTR ptr;
 
-    if (cchString > strlenW(header) + strlenW(trailer)
-     && (ptr = strstrW(pszString, header)) != NULL)
+    LPCWSTR headerBegins;
+    LPCWSTR dataBegins;
+    LPCWSTR trailerBegins;
+    size_t dataLength;
+
+    if ((strlenW(header) + strlenW(trailer)) > cchString)
     {
-        LPCWSTR trailerSpot = pszString + cchString - strlenW(trailer);
+        return ERROR_INVALID_DATA;
+    }
 
-        if (pszString[cchString - 1] == '\n')
+    if (!(headerBegins = strstrW(pszString, header)))
+    {
+        TRACE("Can't find %s in %s.\n", debugstr_w(header), debugstr_w(pszString));
+        return ERROR_INVALID_DATA;
+    }
+
+    dataBegins = headerBegins + strlenW(header);
+    if (!exactHeaderAndTrailerMatch)
+    {
+        if ((dataBegins = strstrW(dataBegins, CERT_DELIMITER_W)))
         {
-            cchString--;
-            trailerSpot--;
-        }
-        if (pszString[cchString - 1] == '\r')
-        {
-            cchString--;
-            trailerSpot--;
-        }
-        if (!strncmpW(trailerSpot, trailer, strlenW(trailer)))
-        {
-            if (pdwSkip)
-                *pdwSkip = ptr - pszString;
-            ptr += strlenW(header);
-            if (*ptr == '\r') ptr++;
-            if (*ptr == '\n') ptr++;
-            cchString -= ptr - pszString + strlenW(trailer);
-            ret = Base64ToBinaryW(ptr, cchString, pbBinary, pcbBinary, NULL,
-             NULL);
+            dataBegins += strlenW(CERT_DELIMITER_W);
         }
         else
-            ret = ERROR_INVALID_DATA;
+        {
+            return ERROR_INVALID_DATA;
+        }
+    }
+    if (*dataBegins == '\r') dataBegins++;
+    if (*dataBegins == '\n') dataBegins++;
+
+    if (exactHeaderAndTrailerMatch)
+    {
+        trailerBegins = pszString + cchString - strlenW(trailer);
+        if (pszString[cchString - 1] == '\n') trailerBegins--;
+        if (pszString[cchString - 2] == '\r') trailerBegins--;
+
+        if (*(trailerBegins-1) == '\n') trailerBegins--;
+        if (*(trailerBegins-1) == '\r') trailerBegins--;
+
+        if (!strncmpW(trailerBegins, trailer, strlenW(trailer)))
+        {
+            return ERROR_INVALID_DATA;
+        }
     }
     else
-        ret = ERROR_INVALID_DATA;
+    {
+        if (!(trailerBegins = strstrW(dataBegins, trailer)))
+        {
+            return ERROR_INVALID_DATA;
+        }
+        if (*(trailerBegins-1) == '\n') trailerBegins--;
+        if (*(trailerBegins-1) == '\r') trailerBegins--;
+    }
+
+    if (pdwSkip)
+       *pdwSkip = headerBegins - pszString;
+
+    dataLength = trailerBegins - dataBegins;
+
+    ret = Base64ToBinaryW(dataBegins, dataLength, pbBinary, pcbBinary, NULL,
+          NULL);
+
     return ret;
 }
 
@@ -947,7 +1018,8 @@ static LONG Base64HeaderToBinaryW(LPCWSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryW(pszString, cchString,
-     CERT_HEADER_W, CERT_TRAILER_W, pbBinary, pcbBinary, pdwSkip);
+     CERT_HEADER_START_W, CERT_TRAILER_START_W, pbBinary, pcbBinary,
+     pdwSkip, FALSE);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64HEADER;
@@ -959,7 +1031,7 @@ static LONG Base64RequestHeaderToBinaryW(LPCWSTR pszString, DWORD cchString,
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryW(pszString, cchString,
      CERT_REQUEST_HEADER_W, CERT_REQUEST_TRAILER_W, pbBinary, pcbBinary,
-     pdwSkip);
+     pdwSkip, TRUE);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64REQUESTHEADER;
@@ -970,7 +1042,7 @@ static LONG Base64X509HeaderToBinaryW(LPCWSTR pszString, DWORD cchString,
  BYTE *pbBinary, DWORD *pcbBinary, DWORD *pdwSkip, DWORD *pdwFlags)
 {
     LONG ret = Base64WithHeaderAndTrailerToBinaryW(pszString, cchString,
-     X509_HEADER_W, X509_TRAILER_W, pbBinary, pcbBinary, pdwSkip);
+     X509_HEADER_W, X509_TRAILER_W, pbBinary, pcbBinary, pdwSkip, TRUE);
 
     if (!ret && pdwFlags)
         *pdwFlags = CRYPT_STRING_BASE64X509CRLHEADER;
