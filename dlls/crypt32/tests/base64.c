@@ -28,7 +28,9 @@
 #include "wine/test.h"
 
 #define CERT_HEADER               "-----BEGIN CERTIFICATE-----\r\n"
+#define ALT_CERT_HEADER           "-----BEGIN This is some arbitrary text that goes on and on-----\r\n"
 #define CERT_TRAILER              "-----END CERTIFICATE-----\r\n"
+#define ALT_CERT_TRAILER          "-----END More arbitrary text------\r\n"
 #define CERT_REQUEST_HEADER       "-----BEGIN NEW CERTIFICATE REQUEST-----\r\n"
 #define CERT_REQUEST_TRAILER      "-----END NEW CERTIFICATE REQUEST-----\r\n"
 #define X509_HEADER               "-----BEGIN X509 CRL-----\r\n"
@@ -358,6 +360,9 @@ static void testStringToBinaryA(void)
          CRYPT_STRING_BASE64, CRYPT_STRING_BASE64, tests[i].toEncode,
          tests[i].toEncodeLen);
         decodeAndCompareBase64_A(tests[i].base64, CERT_HEADER, CERT_TRAILER,
+         CRYPT_STRING_BASE64HEADER, CRYPT_STRING_BASE64HEADER,
+         tests[i].toEncode, tests[i].toEncodeLen);
+        decodeAndCompareBase64_A(tests[i].base64, ALT_CERT_HEADER, ALT_CERT_TRAILER,
          CRYPT_STRING_BASE64HEADER, CRYPT_STRING_BASE64HEADER,
          tests[i].toEncode, tests[i].toEncodeLen);
         decodeAndCompareBase64_A(tests[i].base64, CERT_REQUEST_HEADER,
