@@ -1281,6 +1281,8 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
     int i, j;
     int start = x;
 
+    if (!lpstr || count == 0) return 0;
+
     if (!lpTabPos)
         cTabStops=0;
 

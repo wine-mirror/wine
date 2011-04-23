@@ -617,6 +617,9 @@ static void test_TabbedText(void)
     ret = GetTextMetricsA( hdc, &tm);
     ok( ret, "GetTextMetrics error %u\n", GetLastError());
 
+    extent = GetTabbedTextExtentA( hdc, "x", 0, 1, tabs);
+    ok( extent == 0, "GetTabbedTextExtentA returned non-zero on nCount == 0\n");
+
     extent = GetTabbedTextExtentA( hdc, "x", 1, 1, tabs);
     cx = LOWORD( extent);
     cy = HIWORD( extent);
