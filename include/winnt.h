@@ -422,6 +422,8 @@ typedef WCHAR          *PWCH,       *LPWCH;
 typedef const WCHAR    *PCWCH,      *LPCWCH;
 typedef WCHAR          *PWSTR,      *LPWSTR,    *NWPSTR;
 typedef const WCHAR    *PCWSTR,     *LPCWSTR;
+typedef WCHAR          *PZZWSTR;
+typedef const WCHAR    *PCZZWSTR;
 
 /* Neutral character and string types */
 /* These are only defined for Winelib, i.e. _not_ defined for

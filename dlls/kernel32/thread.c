@@ -806,3 +806,12 @@ BOOL WINAPI GetThreadIOPendingFlag( HANDLE thread, PBOOL io_pending )
     *io_pending = FALSE;
     return TRUE;
 }
+
+/***********************************************************************
+ *              SetThreadPreferredUILanguages (KERNEL32.@)
+ */
+BOOL WINAPI SetThreadPreferredUILanguages( DWORD flags, PCZZWSTR buffer, PULONG count )
+{
+    FIXME( "%u, %p, %p\n", flags, buffer, count );
+    return TRUE;
+}
