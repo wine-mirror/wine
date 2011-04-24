@@ -140,23 +140,12 @@ static void test_fileops( void )
         ok(feof(file), "feof after ungetc(EOF) did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
         ok((c = fgetc(file)) == EOF, "getc did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
         c = outbuffer[sizeof(outbuffer) - 1];
-        if (bufmodes[bufmode] == _IONBF) todo_wine {
         ok(ungetc(c, file) == c, "ungetc did not return its input for bufmode=%x\n", bufmodes[bufmode]);
         ok(!feof(file), "feof after ungetc returned EOF for bufmode=%x\n", bufmodes[bufmode]);
         ok((c = fgetc(file)) != EOF, "getc after ungetc returned EOF for bufmode=%x\n", bufmodes[bufmode]);
         ok(c == outbuffer[sizeof(outbuffer) - 1],
            "getc did not return ungetc'd data for bufmode=%x\n", bufmodes[bufmode]);
         ok(!feof(file), "feof after getc returned EOF prematurely for bufmode=%x\n", bufmodes[bufmode]);
-        }
-        else
-        {
-        ok(ungetc(c, file) == c, "ungetc did not return its input for bufmode=%x\n", bufmodes[bufmode]);
-        ok(!feof(file), "feof after ungetc returned EOF for bufmode=%x\n", bufmodes[bufmode]);
-        ok((c = fgetc(file)) != EOF, "getc after ungetc returned EOF for bufmode=%x\n", bufmodes[bufmode]);
-        ok(c == outbuffer[sizeof(outbuffer) - 1],
-           "getc did not return ungetc'd data for bufmode=%x\n", bufmodes[bufmode]);
-        ok(!feof(file), "feof after getc returned EOF prematurely for bufmode=%x\n", bufmodes[bufmode]);
-        }
         ok((c = fgetc(file)) == EOF, "getc did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
         ok(feof(file), "feof after getc did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
 

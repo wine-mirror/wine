@@ -3622,7 +3622,7 @@ int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
 {
 	if (c == MSVCRT_EOF)
 		return MSVCRT_EOF;
-	if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF)) {
+	if(file->_bufsiz == 0) {
 		msvcrt_alloc_buffer(file);
 		file->_ptr++;
 	}
