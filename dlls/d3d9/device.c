@@ -183,7 +183,7 @@ static UINT vertex_count_from_primitive_count(D3DPRIMITIVETYPE primitive_type, U
 
 static inline IDirect3DDevice9Impl *impl_from_IDirect3DDevice9Ex(IDirect3DDevice9Ex *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DDevice9Impl, lpVtbl);
+    return CONTAINING_RECORD(iface, IDirect3DDevice9Impl, IDirect3DDevice9Ex_iface);
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_QueryInterface(IDirect3DDevice9Ex *iface, REFIID riid,
@@ -2213,7 +2213,8 @@ static IDirect3DVertexDeclaration9 *getConvertedDecl(IDirect3DDevice9Impl *This,
     hr = vdecl_convert_fvf(fvf, &elements);
     if (hr != S_OK) return NULL;
 
-    hr = IDirect3DDevice9Impl_CreateVertexDeclaration((IDirect3DDevice9Ex *) This, elements, &pDecl);
+    hr = IDirect3DDevice9Impl_CreateVertexDeclaration(&This->IDirect3DDevice9Ex_iface, elements,
+            &pDecl);
     HeapFree(GetProcessHeap(), 0, elements); /* CreateVertexDeclaration makes a copy */
     if (hr != S_OK) return NULL;
 
@@ -3142,22 +3143,23 @@ static inline struct IDirect3DDevice9Impl *device_from_device_parent(IWineD3DDev
             - FIELD_OFFSET(struct IDirect3DDevice9Impl, device_parent_vtbl));
 }
 
-static HRESULT STDMETHODCALLTYPE device_parent_QueryInterface(IWineD3DDeviceParent *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE device_parent_QueryInterface(IWineD3DDeviceParent *iface,
+        REFIID riid, void **object)
 {
     struct IDirect3DDevice9Impl *This = device_from_device_parent(iface);
-    return IDirect3DDevice9Impl_QueryInterface((IDirect3DDevice9Ex *)This, riid, object);
+    return IDirect3DDevice9Impl_QueryInterface(&This->IDirect3DDevice9Ex_iface, riid, object);
 }
 
 static ULONG STDMETHODCALLTYPE device_parent_AddRef(IWineD3DDeviceParent *iface)
 {
     struct IDirect3DDevice9Impl *This = device_from_device_parent(iface);
-    return IDirect3DDevice9Impl_AddRef((IDirect3DDevice9Ex *)This);
+    return IDirect3DDevice9Impl_AddRef(&This->IDirect3DDevice9Ex_iface);
 }
 
 static ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface)
 {
     struct IDirect3DDevice9Impl *This = device_from_device_parent(iface);
-    return IDirect3DDevice9Impl_Release((IDirect3DDevice9Ex *)This);
+    return IDirect3DDevice9Impl_Release(&This->IDirect3DDevice9Ex_iface);
 }
 
 /* IWineD3DDeviceParent methods */
@@ -3218,7 +3220,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
             "\tmultisample_quality %u, lockable %u, surface %p\n",
             iface, container_parent, width, height, format, multisample_type, multisample_quality, lockable, surface);
 
-    hr = IDirect3DDevice9Impl_CreateRenderTarget((IDirect3DDevice9Ex *)This, width, height,
+    hr = IDirect3DDevice9Impl_CreateRenderTarget(&This->IDirect3DDevice9Ex_iface, width, height,
             d3dformat_from_wined3dformat(format), multisample_type, multisample_quality, lockable,
             (IDirect3DSurface9 **)&d3d_surface, NULL);
     if (FAILED(hr))
@@ -3249,9 +3251,9 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
             "\tmultisample_quality %u, discard %u, surface %p\n",
             iface, width, height, format, multisample_type, multisample_quality, discard, surface);
 
-    hr = IDirect3DDevice9Impl_CreateDepthStencilSurface((IDirect3DDevice9Ex *)This, width, height,
-            d3dformat_from_wined3dformat(format), multisample_type, multisample_quality, discard,
-            (IDirect3DSurface9 **)&d3d_surface, NULL);
+    hr = IDirect3DDevice9Impl_CreateDepthStencilSurface(&This->IDirect3DDevice9Ex_iface, width,
+            height, d3dformat_from_wined3dformat(format), multisample_type, multisample_quality,
+            discard, (IDirect3DSurface9 **)&d3d_surface, NULL);
     if (FAILED(hr))
     {
         ERR("(%p) CreateDepthStencilSurface failed, returning %#x\n", iface, hr);
@@ -3260,7 +3262,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
 
     *surface = d3d_surface->wineD3DSurface;
     IWineD3DSurface_AddRef(*surface);
-    d3d_surface->container = (IUnknown *)This;
+    d3d_surface->container = (IUnknown *)&This->IDirect3DDevice9Ex_iface;
     /* Implicit surfaces are created with an refcount of 0 */
     IDirect3DSurface9_Release((IDirect3DSurface9 *)d3d_surface);
 
@@ -3333,7 +3335,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
     local_parameters.FullScreen_RefreshRateInHz = present_parameters->FullScreen_RefreshRateInHz;
     local_parameters.PresentationInterval = present_parameters->PresentationInterval;
 
-    hr = IDirect3DDevice9Impl_CreateAdditionalSwapChain((IDirect3DDevice9Ex *)This,
+    hr = IDirect3DDevice9Impl_CreateAdditionalSwapChain(&This->IDirect3DDevice9Ex_iface,
             &local_parameters, &d3d_swapchain);
     if (FAILED(hr))
     {
@@ -3402,7 +3404,7 @@ HRESULT device_init(IDirect3DDevice9Impl *device, struct wined3d *wined3d, UINT 
     if (mode)
         FIXME("Ignoring display mode.\n");
 
-    device->lpVtbl = &Direct3DDevice9_Vtbl;
+    device->IDirect3DDevice9Ex_iface.lpVtbl = &Direct3DDevice9_Vtbl;
     device->device_parent_vtbl = &d3d9_wined3d_device_parent_vtbl;
     device->ref = 1;
 

@@ -162,14 +162,10 @@ void filter_caps(D3DCAPS9* pCaps) DECLSPEC_HIDDEN;
  */
 typedef struct IDirect3DDevice9Impl
 {
-    /* IUnknown fields */
-    const IDirect3DDevice9ExVtbl   *lpVtbl;
+    IDirect3DDevice9Ex IDirect3DDevice9Ex_iface;
     const IWineD3DDeviceParentVtbl *device_parent_vtbl;
-    LONG                          ref;
-
-    /* IDirect3DDevice9 fields */
-    IWineD3DDevice               *WineD3DDevice;
-
+    LONG ref;
+    IWineD3DDevice *WineD3DDevice;
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                          inDestruction;
 

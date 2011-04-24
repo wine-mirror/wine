@@ -406,7 +406,7 @@ HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declaration,
         return hr;
     }
 
-    declaration->parentDevice = (IDirect3DDevice9Ex *)device;
+    declaration->parentDevice = &device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9Ex_AddRef(declaration->parentDevice);
 
     return D3D_OK;

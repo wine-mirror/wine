@@ -159,7 +159,7 @@ HRESULT stateblock_init(IDirect3DStateBlock9Impl *stateblock, IDirect3DDevice9Im
         }
     }
 
-    stateblock->parentDevice = (IDirect3DDevice9Ex *)device;
+    stateblock->parentDevice = &device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9Ex_AddRef(stateblock->parentDevice);
 
     return D3D_OK;

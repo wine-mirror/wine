@@ -144,7 +144,7 @@ HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader, IDirect3DDevice9Im
         return hr;
     }
 
-    shader->parentDevice = (IDirect3DDevice9Ex *)device;
+    shader->parentDevice = &device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9Ex_AddRef(shader->parentDevice);
 
     return D3D_OK;
@@ -271,7 +271,7 @@ HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader, IDirect3DDevice9Impl
         return hr;
     }
 
-    shader->parentDevice = (IDirect3DDevice9Ex *)device;
+    shader->parentDevice = &device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9Ex_AddRef(shader->parentDevice);
 
     return D3D_OK;

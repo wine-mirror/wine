@@ -179,7 +179,7 @@ HRESULT query_init(IDirect3DQuery9Impl *query, IDirect3DDevice9Impl *device, D3D
         return hr;
     }
 
-    query->parentDevice = (IDirect3DDevice9Ex *)device;
+    query->parentDevice = &device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9Ex_AddRef(query->parentDevice);
 
     return D3D_OK;

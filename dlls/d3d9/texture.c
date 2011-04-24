@@ -467,7 +467,7 @@ HRESULT texture_init(IDirect3DTexture9Impl *texture, IDirect3DDevice9Impl *devic
         return hr;
     }
 
-    texture->parentDevice = (IDirect3DDevice9Ex *)device;
+    texture->parentDevice = &device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9Ex_AddRef(texture->parentDevice);
 
     return D3D_OK;

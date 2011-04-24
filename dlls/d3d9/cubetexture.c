@@ -480,7 +480,7 @@ HRESULT cubetexture_init(IDirect3DCubeTexture9Impl *texture, IDirect3DDevice9Imp
         return hr;
     }
 
-    texture->parentDevice = (IDirect3DDevice9Ex *)device;
+    texture->parentDevice = &device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9Ex_AddRef(texture->parentDevice);
 
     return D3D_OK;
