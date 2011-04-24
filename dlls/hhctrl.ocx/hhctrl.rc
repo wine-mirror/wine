@@ -41,7 +41,7 @@ BEGIN
     IDTB_STOP        "Stop"
     IDTB_REFRESH     "Refresh"
     IDTB_BACK        "Back"
-    IDTB_HOME        "Home"
+    IDTB_HOME        "#msgctxt#table of contents#Home"
     IDTB_SYNC        "Sync"
     IDTB_PRINT       "Print"
     IDTB_OPTIONS     "Options"
@@ -70,7 +70,7 @@ MENU_POPUP MENU
         MENUITEM "S&ync", IDTB_SYNC
         MENUITEM "&Back", IDTB_BACK
         MENUITEM "&Forward", IDTB_FORWARD
-        MENUITEM "&Home", IDTB_HOME
+        MENUITEM "#msgctxt#table of contents#&Home", IDTB_HOME
         MENUITEM "&Stop", IDTB_STOP
         MENUITEM "&Refresh", IDTB_REFRESH
         MENUITEM "&Print...", IDTB_PRINT

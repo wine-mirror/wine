@@ -130,7 +130,9 @@ msgstr "Trwa anulowanie..."
 msgid "Separator"
 msgstr "Odstęp"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
+#: comctl32.rc:44 progman.rc:78
+#, fuzzy
+msgctxt "hotkey"
 msgid "None"
 msgstr "Brak"
 
@@ -1239,6 +1241,12 @@ msgstr "Jednostka końcowa"
 msgid "Path Length Constraint="
 msgstr "Warunki ograniczające długość ścieżki="
 
+#: crypt32.rc:198
+#, fuzzy
+msgctxt "path length"
+msgid "None"
+msgstr "Brak"
+
 #: crypt32.rc:199
 msgid "Information Not Available"
 msgstr "Informacje niedostępne"
@@ -2039,6 +2047,8 @@ msgid "&Forward"
 msgstr "&Dalej"
 
 #: hhctrl.rc:73
+#, fuzzy
+msgctxt "table of contents"
 msgid "&Home"
 msgstr "&Start"
 
@@ -2103,7 +2113,9 @@ msgstr "Odśwież"
 msgid "Back"
 msgstr "Wstecz"
 
-#: hhctrl.rc:44 shdocvw.rc:67
+#: hhctrl.rc:44
+#, fuzzy
+msgctxt "table of contents"
 msgid "Home"
 msgstr "Strona główna"
 
@@ -6302,6 +6314,12 @@ msgstr "Pomo&c"
 msgid "&About Internet Explorer..."
 msgstr "&O Internet Explorer..."
 
+#: shdocvw.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Strona główna"
+
 #: shdocvw.rc:73
 msgid "Address"
 msgstr "Adres"
@@ -10367,6 +10385,12 @@ msgstr "Wybierz plik wykonywalny"
 #: winecfg.rc:75
 msgid "Hardware"
 msgstr "Sprzętowa"
+
+#: winecfg.rc:76
+#, fuzzy
+msgctxt "vertex shader mode"
+msgid "None"
+msgstr "Brak"
 
 #: winecfg.rc:81
 msgid "Autodetect"

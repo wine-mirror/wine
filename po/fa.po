@@ -124,7 +124,8 @@ msgstr ""
 msgid "Separator"
 msgstr ""
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
+#: comctl32.rc:44 progman.rc:78
+msgctxt "hotkey"
 msgid "None"
 msgstr ""
 
@@ -1230,6 +1231,11 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
+#: crypt32.rc:198
+msgctxt "path length"
+msgid "None"
+msgstr ""
+
 #: crypt32.rc:199
 #, fuzzy
 msgid "Information Not Available"
@@ -1993,6 +1999,7 @@ msgid "&Forward"
 msgstr ""
 
 #: hhctrl.rc:73
+msgctxt "table of contents"
 msgid "&Home"
 msgstr ""
 
@@ -2053,7 +2060,8 @@ msgstr ""
 msgid "Back"
 msgstr ""
 
-#: hhctrl.rc:44 shdocvw.rc:67
+#: hhctrl.rc:44
+msgctxt "table of contents"
 msgid "Home"
 msgstr ""
 
@@ -6246,6 +6254,11 @@ msgstr "&کمک"
 msgid "&About Internet Explorer..."
 msgstr "&درباره نت‌پد"
 
+#: shdocvw.rc:67
+msgctxt "home page"
+msgid "Home"
+msgstr ""
+
 #: shdocvw.rc:73
 msgid "Address"
 msgstr ""
@@ -9939,6 +9952,11 @@ msgstr ""
 
 #: winecfg.rc:75
 msgid "Hardware"
+msgstr ""
+
+#: winecfg.rc:76
+msgctxt "vertex shader mode"
+msgid "None"
 msgstr ""
 
 #: winecfg.rc:81

@@ -127,8 +127,9 @@ msgstr "Renunț..."
 msgid "Separator"
 msgstr "Separator"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
+#: comctl32.rc:44 progman.rc:78
 #, fuzzy
+msgctxt "hotkey"
 msgid "None"
 msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
@@ -1375,6 +1376,16 @@ msgstr "Entitate finală"
 msgid "Path Length Constraint="
 msgstr "Constrângere de lungime a căii="
 
+#: crypt32.rc:198
+#, fuzzy
+msgctxt "path length"
+msgid "None"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Fără\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Niciuna"
+
 #: crypt32.rc:199
 msgid "Information Not Available"
 msgstr "Informație indisponibilă"
@@ -2185,6 +2196,7 @@ msgstr "Înainte"
 
 #: hhctrl.rc:73
 #, fuzzy
+msgctxt "table of contents"
 msgid "&Home"
 msgstr "Acasă"
 
@@ -2250,7 +2262,9 @@ msgstr "Actualizează"
 msgid "Back"
 msgstr "Înapoi"
 
-#: hhctrl.rc:44 shdocvw.rc:67
+#: hhctrl.rc:44
+#, fuzzy
+msgctxt "table of contents"
 msgid "Home"
 msgstr "Acasă"
 
@@ -6785,6 +6799,12 @@ msgstr ""
 msgid "&About Internet Explorer..."
 msgstr "Wine Internet Explorer"
 
+#: shdocvw.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Acasă"
+
 #: shdocvw.rc:73
 #, fuzzy
 msgid "Address"
@@ -10965,6 +10985,16 @@ msgstr "Selectează un fișier executabil"
 #: winecfg.rc:75
 msgid "Hardware"
 msgstr "Hardware"
+
+#: winecfg.rc:76
+#, fuzzy
+msgctxt "vertex shader mode"
+msgid "None"
+msgstr ""
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Fără\n"
+"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
+"Niciuna"
 
 #: winecfg.rc:81
 msgid "Autodetect"

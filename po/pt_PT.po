@@ -133,8 +133,9 @@ msgstr "A cancelar..."
 msgid "Separator"
 msgstr "Separador"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
+#: comctl32.rc:44 progman.rc:78
 #, fuzzy
+msgctxt "hotkey"
 msgid "None"
 msgstr ""
 "#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
@@ -1333,6 +1334,16 @@ msgstr "Fim de Entidade"
 msgid "Path Length Constraint="
 msgstr "Restrição de tamanho de caminho="
 
+#: crypt32.rc:198
+#, fuzzy
+msgctxt "path length"
+msgid "None"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Nenhum\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Nenhuma"
+
 #: crypt32.rc:199
 msgid "Information Not Available"
 msgstr "Informação não Disponível"
@@ -2145,6 +2156,7 @@ msgstr "Avançar"
 
 #: hhctrl.rc:73
 #, fuzzy
+msgctxt "table of contents"
 msgid "&Home"
 msgstr "Início"
 
@@ -2224,7 +2236,9 @@ msgstr ""
 msgid "Back"
 msgstr "Retroceder"
 
-#: hhctrl.rc:44 shdocvw.rc:67
+#: hhctrl.rc:44
+#, fuzzy
+msgctxt "table of contents"
 msgid "Home"
 msgstr "Início"
 
@@ -6569,6 +6583,12 @@ msgstr ""
 msgid "&About Internet Explorer..."
 msgstr "Explorador de Internet Wine"
 
+#: shdocvw.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Início"
+
 #: shdocvw.rc:73
 #, fuzzy
 msgid "Address"
@@ -10740,6 +10760,16 @@ msgstr "Seleccionar um ficheiro executável"
 #: winecfg.rc:75
 msgid "Hardware"
 msgstr "Material"
+
+#: winecfg.rc:76
+#, fuzzy
+msgctxt "vertex shader mode"
+msgid "None"
+msgstr ""
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Nenhum\n"
+"#-#-#-#-#  pt_PT.po (Wine)  #-#-#-#-#\n"
+"Nenhuma"
 
 #: winecfg.rc:81
 msgid "Autodetect"

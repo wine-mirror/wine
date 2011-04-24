@@ -139,8 +139,9 @@ msgstr ""
 msgid "Separator"
 msgstr "Oddělovač"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
+#: comctl32.rc:44 progman.rc:78
 #, fuzzy
+msgctxt "hotkey"
 msgid "None"
 msgstr ""
 "#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
@@ -1267,6 +1268,16 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
+#: crypt32.rc:198
+#, fuzzy
+msgctxt "path length"
+msgid "None"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Žádná klávesová zkratka.\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Žádný"
+
 #: crypt32.rc:199
 msgid "Information Not Available"
 msgstr ""
@@ -2050,6 +2061,7 @@ msgstr "Vpřed"
 
 #: hhctrl.rc:73
 #, fuzzy
+msgctxt "table of contents"
 msgid "&Home"
 msgstr "Domů"
 
@@ -2121,7 +2133,9 @@ msgstr ""
 msgid "Back"
 msgstr "Zpět"
 
-#: hhctrl.rc:44 shdocvw.rc:67
+#: hhctrl.rc:44
+#, fuzzy
+msgctxt "table of contents"
 msgid "Home"
 msgstr "Domů"
 
@@ -6505,6 +6519,12 @@ msgstr "&Nápověda"
 msgid "&About Internet Explorer..."
 msgstr "&Informace o Winefile..."
 
+#: shdocvw.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Domů"
+
 #: shdocvw.rc:73
 msgid "Address"
 msgstr ""
@@ -10585,6 +10605,16 @@ msgstr "Zvolte spustitelný soubor"
 #: winecfg.rc:75
 msgid "Hardware"
 msgstr "Hardwarový"
+
+#: winecfg.rc:76
+#, fuzzy
+msgctxt "vertex shader mode"
+msgid "None"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Žádná klávesová zkratka.\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Žádný"
 
 #: winecfg.rc:81
 msgid "Autodetect"

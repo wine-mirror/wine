@@ -133,7 +133,9 @@ msgstr "Atsisakoma..."
 msgid "Separator"
 msgstr "Skirtukas"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
+#: comctl32.rc:44 progman.rc:78
+#, fuzzy
+msgctxt "hotkey"
 msgid "None"
 msgstr "Nėra"
 
@@ -1244,6 +1246,12 @@ msgstr "Esybės pabaiga"
 msgid "Path Length Constraint="
 msgstr "Kelio ilgio ribojimas="
 
+#: crypt32.rc:198
+#, fuzzy
+msgctxt "path length"
+msgid "None"
+msgstr "Nėra"
+
 #: crypt32.rc:199
 msgid "Information Not Available"
 msgstr "Informacija neprieinama"
@@ -2040,6 +2048,8 @@ msgid "&Forward"
 msgstr "&Pirmyn"
 
 #: hhctrl.rc:73
+#, fuzzy
+msgctxt "table of contents"
 msgid "&Home"
 msgstr "Į p&radžią"
 
@@ -2099,7 +2109,9 @@ msgstr "Atnaujinti"
 msgid "Back"
 msgstr "Atgal"
 
-#: hhctrl.rc:44 shdocvw.rc:67
+#: hhctrl.rc:44
+#, fuzzy
+msgctxt "table of contents"
 msgid "Home"
 msgstr "Į pradžią"
 
@@ -6294,6 +6306,12 @@ msgstr "&Žinynas"
 msgid "&About Internet Explorer..."
 msgstr "&Apie interneto naršyklę..."
 
+#: shdocvw.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Į pradžią"
+
 #: shdocvw.rc:73
 msgid "Address"
 msgstr "Adresas"
@@ -10355,6 +10373,12 @@ msgstr "Pasirinkite vykdomąjį failą"
 #: winecfg.rc:75
 msgid "Hardware"
 msgstr "Aparatinis"
+
+#: winecfg.rc:76
+#, fuzzy
+msgctxt "vertex shader mode"
+msgid "None"
+msgstr "Nėra"
 
 #: winecfg.rc:81
 msgid "Autodetect"

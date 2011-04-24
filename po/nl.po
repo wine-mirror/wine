@@ -130,7 +130,9 @@ msgstr "Annuleren..."
 msgid "Separator"
 msgstr "Scheidingsteken"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
+#: comctl32.rc:44 progman.rc:78
+#, fuzzy
+msgctxt "hotkey"
 msgid "None"
 msgstr "Geen"
 
@@ -1238,6 +1240,12 @@ msgstr "Eind Entiteit"
 msgid "Path Length Constraint="
 msgstr "Lengte van pad beperking="
 
+#: crypt32.rc:198
+#, fuzzy
+msgctxt "path length"
+msgid "None"
+msgstr "Geen"
+
 #: crypt32.rc:199
 msgid "Information Not Available"
 msgstr "Informatie niet beschikbaar"
@@ -2044,6 +2052,8 @@ msgid "&Forward"
 msgstr "&Vooruit"
 
 #: hhctrl.rc:73
+#, fuzzy
+msgctxt "table of contents"
 msgid "&Home"
 msgstr "Start&pagina"
 
@@ -2103,7 +2113,9 @@ msgstr "Vernieuwen"
 msgid "Back"
 msgstr "Terug"
 
-#: hhctrl.rc:44 shdocvw.rc:67
+#: hhctrl.rc:44
+#, fuzzy
+msgctxt "table of contents"
 msgid "Home"
 msgstr "Startpagina"
 
@@ -6383,6 +6395,12 @@ msgstr "&Help"
 msgid "&About Internet Explorer..."
 msgstr "&Over Internet Explorer..."
 
+#: shdocvw.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Startpagina"
+
 #: shdocvw.rc:73
 msgid "Address"
 msgstr "Adres"
@@ -10486,6 +10504,12 @@ msgstr "Selecteer een uitvoerbaar bestand"
 #: winecfg.rc:75
 msgid "Hardware"
 msgstr "Hardware"
+
+#: winecfg.rc:76
+#, fuzzy
+msgctxt "vertex shader mode"
+msgid "None"
+msgstr "Geen"
 
 #: winecfg.rc:81
 msgid "Autodetect"

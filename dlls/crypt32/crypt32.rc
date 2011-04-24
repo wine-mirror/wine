@@ -195,7 +195,7 @@ STRINGTABLE
     IDS_SUBJECT_TYPE_CA "CA"
     IDS_SUBJECT_TYPE_END_CERT "End Entity"
     IDS_PATH_LENGTH "Path Length Constraint="
-    IDS_PATH_LENGTH_NONE "None"
+    IDS_PATH_LENGTH_NONE "#msgctxt#path length#None"
     IDS_INFO_NOT_AVAILABLE "Information Not Available"
     IDS_AIA "Authority Info Access"
     IDS_ACCESS_METHOD "Access Method="

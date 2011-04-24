@@ -134,8 +134,9 @@ msgstr "Megszakítás..."
 msgid "Separator"
 msgstr "Elválasztó"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
+#: comctl32.rc:44 progman.rc:78
 #, fuzzy
+msgctxt "hotkey"
 msgid "None"
 msgstr ""
 "#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
@@ -1264,6 +1265,16 @@ msgstr "Vég egyed"
 msgid "Path Length Constraint="
 msgstr "Útvonal hossz megszorítás="
 
+#: crypt32.rc:198
+#, fuzzy
+msgctxt "path length"
+msgid "None"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Nincs\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Semmi"
+
 #: crypt32.rc:199
 msgid "Information Not Available"
 msgstr "Információ nem elérhető"
@@ -2067,6 +2078,7 @@ msgstr "Előre"
 
 #: hhctrl.rc:73
 #, fuzzy
+msgctxt "table of contents"
 msgid "&Home"
 msgstr "Kezdőlap"
 
@@ -2136,7 +2148,9 @@ msgstr "Frissítés"
 msgid "Back"
 msgstr "Vissza"
 
-#: hhctrl.rc:44 shdocvw.rc:67
+#: hhctrl.rc:44
+#, fuzzy
+msgctxt "table of contents"
 msgid "Home"
 msgstr "Kezdőlap"
 
@@ -6657,6 +6671,12 @@ msgstr "&Súgó"
 msgid "&About Internet Explorer..."
 msgstr "Wine Internet Explorer"
 
+#: shdocvw.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Kezdőlap"
+
 #: shdocvw.rc:73
 #, fuzzy
 msgid "Address"
@@ -10479,6 +10499,16 @@ msgstr "Select an executable file"
 #: winecfg.rc:75
 msgid "Hardware"
 msgstr "Hardware"
+
+#: winecfg.rc:76
+#, fuzzy
+msgctxt "vertex shader mode"
+msgid "None"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Nincs\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"Semmi"
 
 #: winecfg.rc:81
 msgid "Autodetect"

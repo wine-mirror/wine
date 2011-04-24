@@ -127,7 +127,9 @@ msgstr "בהליכי ביטול..."
 msgid "Separator"
 msgstr "מפריד"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
+#: comctl32.rc:44 progman.rc:78
+#, fuzzy
+msgctxt "hotkey"
 msgid "None"
 msgstr "ללא"
 
@@ -1240,6 +1242,12 @@ msgstr ""
 msgid "Path Length Constraint="
 msgstr ""
 
+#: crypt32.rc:198
+#, fuzzy
+msgctxt "path length"
+msgid "None"
+msgstr "ללא"
+
 #: crypt32.rc:199
 msgid "Information Not Available"
 msgstr ""
@@ -2002,6 +2010,8 @@ msgid "&Forward"
 msgstr "ק&דימה"
 
 #: hhctrl.rc:73
+#, fuzzy
+msgctxt "table of contents"
 msgid "&Home"
 msgstr "&עמוד הבית"
 
@@ -2061,7 +2071,9 @@ msgstr "רענון"
 msgid "Back"
 msgstr "חזרה"
 
-#: hhctrl.rc:44 shdocvw.rc:67
+#: hhctrl.rc:44
+#, fuzzy
+msgctxt "table of contents"
 msgid "Home"
 msgstr "דף הבית"
 
@@ -6488,6 +6500,12 @@ msgstr "ע&זרה"
 msgid "&About Internet Explorer..."
 msgstr "על &אודות Internet Explorer..."
 
+#: shdocvw.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "דף הבית"
+
 #: shdocvw.rc:73
 msgid "Address"
 msgstr "כתובת"
@@ -10438,6 +10456,12 @@ msgstr "נא לבחור בקובץ הפעלה"
 #, fuzzy
 msgid "Hardware"
 msgstr "חומרה"
+
+#: winecfg.rc:76
+#, fuzzy
+msgctxt "vertex shader mode"
+msgid "None"
+msgstr "ללא"
 
 #: winecfg.rc:81
 #, fuzzy

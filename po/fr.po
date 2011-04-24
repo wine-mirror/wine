@@ -130,14 +130,10 @@ msgstr "Annulation..."
 msgid "Separator"
 msgstr "Séparateur"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
-#, fuzzy
+#: comctl32.rc:44 progman.rc:78
+msgctxt "hotkey"
 msgid "None"
-msgstr ""
-"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"Aucune\n"
-"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"Aucun"
+msgstr "Aucune"
 
 #: comctl32.rc:28 wordpad.rc:169
 msgid "Close"
@@ -1247,6 +1243,11 @@ msgstr "Entité terminale"
 msgid "Path Length Constraint="
 msgstr "Contrainte de longueur de chemin ="
 
+#: crypt32.rc:198
+msgctxt "path length"
+msgid "None"
+msgstr "Nulle"
+
 #: crypt32.rc:199
 msgid "Information Not Available"
 msgstr "Informations non disponibles"
@@ -2047,8 +2048,9 @@ msgid "&Forward"
 msgstr "&Suivant"
 
 #: hhctrl.rc:73
+msgctxt "table of contents"
 msgid "&Home"
-msgstr "&Accueil"
+msgstr "So&mmaire"
 
 #: hhctrl.rc:74
 msgid "&Stop"
@@ -2106,14 +2108,10 @@ msgstr "Recharger"
 msgid "Back"
 msgstr "Précédent"
 
-#: hhctrl.rc:44 shdocvw.rc:67
-#, fuzzy
+#: hhctrl.rc:44
+msgctxt "table of contents"
 msgid "Home"
-msgstr ""
-"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"Sommaire\n"
-"#-#-#-#-#  fr.po (Wine)  #-#-#-#-#\n"
-"Accueil"
+msgstr "Sommaire"
 
 #: hhctrl.rc:45
 msgid "Sync"
@@ -6311,6 +6309,11 @@ msgstr "Aid&e"
 msgid "&About Internet Explorer..."
 msgstr "À &propos d'Internet Explorer..."
 
+#: shdocvw.rc:67
+msgctxt "home page"
+msgid "Home"
+msgstr "Accueil"
+
 #: shdocvw.rc:73
 msgid "Address"
 msgstr "Adresse"
@@ -10446,6 +10449,11 @@ msgstr "Sélectionnez un fichier exécutable"
 #: winecfg.rc:75
 msgid "Hardware"
 msgstr "Matériel"
+
+#: winecfg.rc:76
+msgctxt "vertex shader mode"
+msgid "None"
+msgstr "Aucun"
 
 #: winecfg.rc:81
 msgid "Autodetect"

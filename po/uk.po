@@ -128,7 +128,9 @@ msgstr "Скасування..."
 msgid "Separator"
 msgstr "Роздільник"
 
-#: comctl32.rc:44 crypt32.rc:198 progman.rc:78 winecfg.rc:76
+#: comctl32.rc:44 progman.rc:78
+#, fuzzy
+msgctxt "hotkey"
 msgid "None"
 msgstr "Немає"
 
@@ -1236,6 +1238,12 @@ msgstr "Кінцевий блок"
 msgid "Path Length Constraint="
 msgstr "Обмеження довжини шляху="
 
+#: crypt32.rc:198
+#, fuzzy
+msgctxt "path length"
+msgid "None"
+msgstr "Немає"
+
 #: crypt32.rc:199
 msgid "Information Not Available"
 msgstr "Інформація не доступна"
@@ -2033,6 +2041,8 @@ msgid "&Forward"
 msgstr "В&перед"
 
 #: hhctrl.rc:73
+#, fuzzy
+msgctxt "table of contents"
 msgid "&Home"
 msgstr "&Додому"
 
@@ -2092,7 +2102,9 @@ msgstr "Оновити"
 msgid "Back"
 msgstr "Назад"
 
-#: hhctrl.rc:44 shdocvw.rc:67
+#: hhctrl.rc:44
+#, fuzzy
+msgctxt "table of contents"
 msgid "Home"
 msgstr "Додому"
 
@@ -6296,6 +6308,12 @@ msgstr "&Довідка"
 msgid "&About Internet Explorer..."
 msgstr "&Про Оглядач Інтернету..."
 
+#: shdocvw.rc:67
+#, fuzzy
+msgctxt "home page"
+msgid "Home"
+msgstr "Додому"
+
 #: shdocvw.rc:73
 msgid "Address"
 msgstr "Адреса"
@@ -10338,6 +10356,12 @@ msgstr "Виберіть виконуваний файл"
 #: winecfg.rc:75
 msgid "Hardware"
 msgstr "Апаратні"
+
+#: winecfg.rc:76
+#, fuzzy
+msgctxt "vertex shader mode"
+msgid "None"
+msgstr "Немає"
 
 #: winecfg.rc:81
 msgid "Autodetect"
