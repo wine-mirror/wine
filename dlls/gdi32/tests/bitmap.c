@@ -792,7 +792,7 @@ static void test_dibsections(void)
     DeleteObject(hdib2);
 
     SelectObject(hdcmem, oldbm);
-    SelectObject(hdcmem, oldpal);
+    SelectPalette(hdcmem, oldpal, TRUE);
     DeleteObject(hdib);
     DeleteObject(hpal);
 
