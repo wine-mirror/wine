@@ -574,7 +574,7 @@ TOOLBAR_DrawString (const TOOLBAR_INFO *infoPtr, RECT *rcText, LPCWSTR lpText,
     UINT state = tbcd->nmcd.uItemState;
 
     /* draw text */
-    if (lpText) {
+    if (lpText && infoPtr->nMaxTextRows > 0) {
         TRACE("string=%s rect=(%s)\n", debugstr_w(lpText),
               wine_dbgstr_rect(rcText));
 
