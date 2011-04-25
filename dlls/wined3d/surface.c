@@ -334,6 +334,157 @@ void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, 
     }
 }
 
+static HRESULT surface_create_dib_section(IWineD3DSurfaceImpl *surface)
+{
+    const struct wined3d_format *format = surface->resource.format;
+    SYSTEM_INFO sysInfo;
+    BITMAPINFO *b_info;
+    int extraline = 0;
+    DWORD *masks;
+    UINT usage;
+    HDC dc;
+
+    TRACE("surface %p.\n", surface);
+
+    if (!(format->flags & WINED3DFMT_FLAG_GETDC))
+    {
+        WARN("Cannot use GetDC on a %s surface.\n", debug_d3dformat(format->id));
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    switch (format->byte_count)
+    {
+        case 2:
+        case 4:
+            /* Allocate extra space to store the RGB bit masks. */
+            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD));
+            break;
+
+        case 3:
+            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER));
+            break;
+
+        default:
+            /* Allocate extra space for a palette. */
+            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                    sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * (1 << (format->byte_count * 8)));
+            break;
+    }
+
+    if (!b_info)
+        return E_OUTOFMEMORY;
+
+    /* Some applications access the surface in via DWORDs, and do not take
+     * the necessary care at the end of the surface. So we need at least
+     * 4 extra bytes at the end of the surface. Check against the page size,
+     * if the last page used for the surface has at least 4 spare bytes we're
+     * safe, otherwise add an extra line to the DIB section. */
+    GetSystemInfo(&sysInfo);
+    if( ((surface->resource.size + 3) % sysInfo.dwPageSize) < 4)
+    {
+        extraline = 1;
+        TRACE("Adding an extra line to the DIB section.\n");
+    }
+
+    b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    /* TODO: Is there a nicer way to force a specific alignment? (8 byte for ddraw) */
+    b_info->bmiHeader.biWidth = IWineD3DSurface_GetPitch((IWineD3DSurface *)surface) / format->byte_count;
+    b_info->bmiHeader.biHeight = -surface->resource.height - extraline;
+    b_info->bmiHeader.biSizeImage = (surface->resource.height + extraline)
+            * IWineD3DSurface_GetPitch((IWineD3DSurface *)surface);
+    b_info->bmiHeader.biPlanes = 1;
+    b_info->bmiHeader.biBitCount = format->byte_count * 8;
+
+    b_info->bmiHeader.biXPelsPerMeter = 0;
+    b_info->bmiHeader.biYPelsPerMeter = 0;
+    b_info->bmiHeader.biClrUsed = 0;
+    b_info->bmiHeader.biClrImportant = 0;
+
+    /* Get the bit masks */
+    masks = (DWORD *)b_info->bmiColors;
+    switch (surface->resource.format->id)
+    {
+        case WINED3DFMT_B8G8R8_UNORM:
+            usage = DIB_RGB_COLORS;
+            b_info->bmiHeader.biCompression = BI_RGB;
+            break;
+
+        case WINED3DFMT_B5G5R5X1_UNORM:
+        case WINED3DFMT_B5G5R5A1_UNORM:
+        case WINED3DFMT_B4G4R4A4_UNORM:
+        case WINED3DFMT_B4G4R4X4_UNORM:
+        case WINED3DFMT_B2G3R3_UNORM:
+        case WINED3DFMT_B2G3R3A8_UNORM:
+        case WINED3DFMT_R10G10B10A2_UNORM:
+        case WINED3DFMT_R8G8B8A8_UNORM:
+        case WINED3DFMT_R8G8B8X8_UNORM:
+        case WINED3DFMT_B10G10R10A2_UNORM:
+        case WINED3DFMT_B5G6R5_UNORM:
+        case WINED3DFMT_R16G16B16A16_UNORM:
+            usage = 0;
+            b_info->bmiHeader.biCompression = BI_BITFIELDS;
+            masks[0] = format->red_mask;
+            masks[1] = format->green_mask;
+            masks[2] = format->blue_mask;
+            break;
+
+        default:
+            /* Don't know palette */
+            b_info->bmiHeader.biCompression = BI_RGB;
+            usage = 0;
+            break;
+    }
+
+    if (!(dc = GetDC(0)))
+    {
+        HeapFree(GetProcessHeap(), 0, b_info);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    TRACE("Creating a DIB section with size %dx%dx%d, size=%d.\n",
+            b_info->bmiHeader.biWidth, b_info->bmiHeader.biHeight,
+            b_info->bmiHeader.biBitCount, b_info->bmiHeader.biSizeImage);
+    surface->dib.DIBsection = CreateDIBSection(dc, b_info, usage, &surface->dib.bitmap_data, 0, 0);
+    ReleaseDC(0, dc);
+
+    if (!surface->dib.DIBsection)
+    {
+        ERR("Failed to create DIB section.\n");
+        HeapFree(GetProcessHeap(), 0, b_info);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    TRACE("DIBSection at %p.\n", surface->dib.bitmap_data);
+    /* Copy the existing surface to the dib section. */
+    if (surface->resource.allocatedMemory)
+    {
+        memcpy(surface->dib.bitmap_data, surface->resource.allocatedMemory,
+                surface->resource.height * IWineD3DSurface_GetPitch((IWineD3DSurface *)surface));
+    }
+    else
+    {
+        /* This is to make maps read the GL texture although memory is allocated. */
+        surface->flags &= ~SFLAG_INSYSMEM;
+    }
+    surface->dib.bitmap_size = b_info->bmiHeader.biSizeImage;
+
+    HeapFree(GetProcessHeap(), 0, b_info);
+
+    /* Now allocate a DC. */
+    surface->hDC = CreateCompatibleDC(0);
+    surface->dib.holdbitmap = SelectObject(surface->hDC, surface->dib.DIBsection);
+    TRACE("Using wined3d palette %p.\n", surface->palette);
+    SelectPalette(surface->hDC, surface->palette ? surface->palette->hpal : 0, FALSE);
+
+    surface->flags |= SFLAG_DIBSECTION;
+
+    HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+    surface->resource.heapMemory = NULL;
+
+    return WINED3D_OK;
+}
+
+
 static HRESULT surface_private_setup(struct IWineD3DSurfaceImpl *surface)
 {
     /* TODO: Check against the maximum texture sizes supported by the video card. */
@@ -656,7 +807,7 @@ static HRESULT gdi_surface_private_setup(IWineD3DSurfaceImpl *surface)
 
     /* Sysmem textures have memory already allocated - release it,
      * this avoids an unnecessary memcpy. */
-    hr = IWineD3DBaseSurfaceImpl_CreateDIBSection((IWineD3DSurface *)surface);
+    hr = surface_create_dib_section(surface);
     if (SUCCEEDED(hr))
     {
         HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
@@ -1485,6 +1636,1808 @@ HRESULT surface_load(IWineD3DSurfaceImpl *surface, BOOL srgb)
     return WINED3D_OK;
 }
 
+/* See also float_16_to_32() in wined3d_private.h */
+static inline unsigned short float_32_to_16(const float *in)
+{
+    int exp = 0;
+    float tmp = fabs(*in);
+    unsigned int mantissa;
+    unsigned short ret;
+
+    /* Deal with special numbers */
+    if (*in == 0.0f)
+        return 0x0000;
+    if (isnan(*in))
+        return 0x7c01;
+    if (isinf(*in))
+        return (*in < 0.0f ? 0xfc00 : 0x7c00);
+
+    if (tmp < powf(2, 10))
+    {
+        do
+        {
+            tmp = tmp * 2.0f;
+            exp--;
+        } while (tmp < powf(2, 10));
+    }
+    else if (tmp >= powf(2, 11))
+    {
+        do
+        {
+            tmp /= 2.0f;
+            exp++;
+        } while (tmp >= powf(2, 11));
+    }
+
+    mantissa = (unsigned int)tmp;
+    if (tmp - mantissa >= 0.5f)
+        ++mantissa; /* Round to nearest, away from zero. */
+
+    exp += 10;  /* Normalize the mantissa. */
+    exp += 15;  /* Exponent is encoded with excess 15. */
+
+    if (exp > 30) /* too big */
+    {
+        ret = 0x7c00; /* INF */
+    }
+    else if (exp <= 0)
+    {
+        /* exp == 0: Non-normalized mantissa. Returns 0x0000 (=0.0) for too small numbers. */
+        while (exp <= 0)
+        {
+            mantissa = mantissa >> 1;
+            ++exp;
+        }
+        ret = mantissa & 0x3ff;
+    }
+    else
+    {
+        ret = (exp << 10) | (mantissa & 0x3ff);
+    }
+
+    ret |= ((*in < 0.0f ? 1 : 0) << 15); /* Add the sign */
+    return ret;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_QueryInterface(IWineD3DSurface *iface,
+        REFIID riid, void **object)
+{
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_IWineD3DSurface)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IUnknown_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI IWineD3DBaseSurfaceImpl_AddRef(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    ULONG refcount;
+
+    TRACE("Surface %p, container %p of type %#x.\n",
+            surface, surface->container.u.base, surface->container.type);
+
+    switch (surface->container.type)
+    {
+        case WINED3D_CONTAINER_TEXTURE:
+            return wined3d_texture_incref(surface->container.u.texture);
+
+        case WINED3D_CONTAINER_SWAPCHAIN:
+            return wined3d_swapchain_incref(surface->container.u.swapchain);
+
+        default:
+            ERR("Unhandled container type %#x.\n", surface->container.type);
+        case WINED3D_CONTAINER_NONE:
+            break;
+    }
+
+    refcount = InterlockedIncrement(&surface->resource.ref);
+    TRACE("%p increasing refcount to %u.\n", surface, refcount);
+
+    return refcount;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPrivateData(IWineD3DSurface *iface,
+        REFGUID riid, const void *data, DWORD data_size, DWORD flags)
+{
+    return resource_set_private_data(&((IWineD3DSurfaceImpl *)iface)->resource, riid, data, data_size, flags);
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPrivateData(IWineD3DSurface *iface,
+        REFGUID guid, void *data, DWORD *data_size)
+{
+    return resource_get_private_data(&((IWineD3DSurfaceImpl *)iface)->resource, guid, data, data_size);
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_FreePrivateData(IWineD3DSurface *iface, REFGUID refguid)
+{
+    return resource_free_private_data(&((IWineD3DSurfaceImpl *)iface)->resource, refguid);
+}
+
+static DWORD WINAPI IWineD3DBaseSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD priority)
+{
+    return resource_set_priority(&((IWineD3DSurfaceImpl *)iface)->resource, priority);
+}
+
+static DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPriority(IWineD3DSurface *iface)
+{
+    return resource_get_priority(&((IWineD3DSurfaceImpl *)iface)->resource);
+}
+
+static void * WINAPI IWineD3DBaseSurfaceImpl_GetParent(IWineD3DSurface *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return ((IWineD3DSurfaceImpl *)iface)->resource.parent;
+}
+
+static struct wined3d_resource * WINAPI IWineD3DBaseSurfaceImpl_GetResource(IWineD3DSurface *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return &((IWineD3DSurfaceImpl *)iface)->resource;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD flags)
+{
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    switch (flags)
+    {
+        case WINEDDGBS_CANBLT:
+        case WINEDDGBS_ISBLTDONE:
+            return WINED3D_OK;
+
+        default:
+            return WINED3DERR_INVALIDCALL;
+    }
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD flags)
+{
+    /* XXX: DDERR_INVALIDSURFACETYPE */
+
+    TRACE("iface %p, flags %#x.\n", iface, flags);
+
+    switch (flags)
+    {
+        case WINEDDGFS_CANFLIP:
+        case WINEDDGFS_ISFLIPDONE:
+            return WINED3D_OK;
+
+        default:
+            return WINED3DERR_INVALIDCALL;
+    }
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_IsLost(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p.\n", iface);
+
+    /* D3D8 and 9 loose full devices, ddraw only surfaces. */
+    return surface->flags & SFLAG_LOST ? WINED3DERR_DEVICELOST : WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Restore(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p.\n", iface);
+
+    /* So far we don't lose anything :) */
+    surface->flags &= ~SFLAG_LOST;
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, struct wined3d_palette *palette)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p, palette %p.\n", iface, palette);
+
+    if (surface->palette == palette)
+    {
+        TRACE("Nop palette change.\n");
+        return WINED3D_OK;
+    }
+
+    if (surface->palette && (surface->resource.usage & WINED3DUSAGE_RENDERTARGET))
+        surface->palette->flags &= ~WINEDDPCAPS_PRIMARYSURFACE;
+
+    surface->palette = palette;
+
+    if (palette)
+    {
+        if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
+            palette->flags |= WINEDDPCAPS_PRIMARYSURFACE;
+
+        surface->surface_ops->surface_realize_palette(surface);
+    }
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface,
+        DWORD flags, const WINEDDCOLORKEY *color_key)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p, flags %#x, color_key %p.\n", iface, flags, color_key);
+
+    if (flags & WINEDDCKEY_COLORSPACE)
+    {
+        FIXME(" colorkey value not supported (%08x) !\n", flags);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* Dirtify the surface, but only if a key was changed. */
+    if (color_key)
+    {
+        switch (flags & ~WINEDDCKEY_COLORSPACE)
+        {
+            case WINEDDCKEY_DESTBLT:
+                surface->DestBltCKey = *color_key;
+                surface->CKeyFlags |= WINEDDSD_CKDESTBLT;
+                break;
+
+            case WINEDDCKEY_DESTOVERLAY:
+                surface->DestOverlayCKey = *color_key;
+                surface->CKeyFlags |= WINEDDSD_CKDESTOVERLAY;
+                break;
+
+            case WINEDDCKEY_SRCOVERLAY:
+                surface->SrcOverlayCKey = *color_key;
+                surface->CKeyFlags |= WINEDDSD_CKSRCOVERLAY;
+                break;
+
+            case WINEDDCKEY_SRCBLT:
+                surface->SrcBltCKey = *color_key;
+                surface->CKeyFlags |= WINEDDSD_CKSRCBLT;
+                break;
+        }
+    }
+    else
+    {
+        switch (flags & ~WINEDDCKEY_COLORSPACE)
+        {
+            case WINEDDCKEY_DESTBLT:
+                surface->CKeyFlags &= ~WINEDDSD_CKDESTBLT;
+                break;
+
+            case WINEDDCKEY_DESTOVERLAY:
+                surface->CKeyFlags &= ~WINEDDSD_CKDESTOVERLAY;
+                break;
+
+            case WINEDDCKEY_SRCOVERLAY:
+                surface->CKeyFlags &= ~WINEDDSD_CKSRCOVERLAY;
+                break;
+
+            case WINEDDCKEY_SRCBLT:
+                surface->CKeyFlags &= ~WINEDDSD_CKSRCBLT;
+                break;
+        }
+    }
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface, struct wined3d_palette **palette)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *) iface;
+
+    TRACE("iface %p, palette %p.\n", iface, palette);
+
+    *palette = surface->palette;
+
+    return WINED3D_OK;
+}
+
+static DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    const struct wined3d_format *format = surface->resource.format;
+    DWORD pitch;
+
+    TRACE("iface %p.\n", iface);
+
+    if ((format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
+    {
+        /* Since compressed formats are block based, pitch means the amount of
+         * bytes to the next row of block rather than the next row of pixels. */
+        UINT row_block_count = (surface->resource.width + format->block_width - 1) / format->block_width;
+        pitch = row_block_count * format->block_byte_count;
+    }
+    else
+    {
+        unsigned char alignment = surface->resource.device->surface_alignment;
+        pitch = surface->resource.format->byte_count * surface->resource.width;  /* Bytes / row */
+        pitch = (pitch + alignment - 1) & ~(alignment - 1);
+    }
+
+    TRACE("Returning %u.\n", pitch);
+
+    return pitch;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface, LONG x, LONG y)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    LONG w, h;
+
+    TRACE("iface %p, x %d, y %d.\n", iface, x, y);
+
+    if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
+    {
+        WARN("Not an overlay surface.\n");
+        return WINEDDERR_NOTAOVERLAYSURFACE;
+    }
+
+    w = surface->overlay_destrect.right - surface->overlay_destrect.left;
+    h = surface->overlay_destrect.bottom - surface->overlay_destrect.top;
+    surface->overlay_destrect.left = x;
+    surface->overlay_destrect.top = y;
+    surface->overlay_destrect.right = x + w;
+    surface->overlay_destrect.bottom = y + h;
+
+    surface->surface_ops->surface_draw_overlay(surface);
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface, LONG *x, LONG *y)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p, x %p, y %p.\n", iface, x, y);
+
+    if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
+    {
+        TRACE("Not an overlay surface.\n");
+        return WINEDDERR_NOTAOVERLAYSURFACE;
+    }
+
+    if (!surface->overlay_dest)
+    {
+        TRACE("Overlay not visible.\n");
+        *x = 0;
+        *y = 0;
+        return WINEDDERR_OVERLAYNOTVISIBLE;
+    }
+
+    *x = surface->overlay_destrect.left;
+    *y = surface->overlay_destrect.top;
+
+    TRACE("Returning position %d, %d.\n", *x, *y);
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *iface,
+        DWORD flags, IWineD3DSurface *ref)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    FIXME("iface %p, flags %#x, ref %p stub!\n", iface, flags, ref);
+
+    if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
+    {
+        TRACE("Not an overlay surface.\n");
+        return WINEDDERR_NOTAOVERLAYSURFACE;
+    }
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, const RECT *src_rect,
+        IWineD3DSurface *dst_surface, const RECT *dst_rect, DWORD flags, const WINEDDOVERLAYFX *fx)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DSurfaceImpl *Dst = (IWineD3DSurfaceImpl *)dst_surface;
+
+    TRACE("iface %p, src_rect %s, dst_surface %p, dst_rect %s, flags %#x, fx %p.\n",
+            iface, wine_dbgstr_rect(src_rect), dst_surface, wine_dbgstr_rect(dst_rect), flags, fx);
+
+    if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
+    {
+        WARN("Not an overlay surface.\n");
+        return WINEDDERR_NOTAOVERLAYSURFACE;
+    }
+    else if (!dst_surface)
+    {
+        WARN("Dest surface is NULL.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (src_rect)
+    {
+        surface->overlay_srcrect = *src_rect;
+    }
+    else
+    {
+        surface->overlay_srcrect.left = 0;
+        surface->overlay_srcrect.top = 0;
+        surface->overlay_srcrect.right = surface->resource.width;
+        surface->overlay_srcrect.bottom = surface->resource.height;
+    }
+
+    if (dst_rect)
+    {
+        surface->overlay_destrect = *dst_rect;
+    }
+    else
+    {
+        surface->overlay_destrect.left = 0;
+        surface->overlay_destrect.top = 0;
+        surface->overlay_destrect.right = Dst ? Dst->resource.width : 0;
+        surface->overlay_destrect.bottom = Dst ? Dst->resource.height : 0;
+    }
+
+    if (surface->overlay_dest && (surface->overlay_dest != Dst || flags & WINEDDOVER_HIDE))
+    {
+        list_remove(&surface->overlay_entry);
+    }
+
+    if (flags & WINEDDOVER_SHOW)
+    {
+        if (surface->overlay_dest != Dst)
+        {
+            surface->overlay_dest = Dst;
+            list_add_tail(&Dst->overlays, &surface->overlay_entry);
+        }
+    }
+    else if (flags & WINEDDOVER_HIDE)
+    {
+        /* tests show that the rectangles are erased on hide */
+        surface->overlay_srcrect.left = 0; surface->overlay_srcrect.top = 0;
+        surface->overlay_srcrect.right = 0; surface->overlay_srcrect.bottom = 0;
+        surface->overlay_destrect.left = 0; surface->overlay_destrect.top = 0;
+        surface->overlay_destrect.right = 0; surface->overlay_destrect.bottom = 0;
+        surface->overlay_dest = NULL;
+    }
+
+    surface->surface_ops->surface_draw_overlay(surface);
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetClipper(IWineD3DSurface *iface, struct wined3d_clipper *clipper)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p, clipper %p.\n", iface, clipper);
+
+    surface->clipper = clipper;
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, struct wined3d_clipper **clipper)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p, clipper %p.\n", iface, clipper);
+
+    *clipper = surface->clipper;
+    if (*clipper)
+        wined3d_clipper_incref(*clipper);
+
+    return WINED3D_OK;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum wined3d_format_id format_id)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    const struct wined3d_format *format = wined3d_get_format(&surface->resource.device->adapter->gl_info, format_id);
+
+    TRACE("iface %p, format %s.\n", iface, debug_d3dformat(format_id));
+
+    if (surface->resource.format->id != WINED3DFMT_UNKNOWN)
+    {
+        FIXME("The format of the surface must be WINED3DFORMAT_UNKNOWN.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    surface->resource.size = wined3d_format_calculate_size(format, surface->resource.device->surface_alignment,
+            surface->pow2Width, surface->pow2Height);
+    surface->flags |= (WINED3DFMT_D16_LOCKABLE == format_id) ? SFLAG_LOCKABLE : 0;
+    surface->resource.format = format;
+
+    TRACE("size %u, byte_count %u\n", surface->resource.size, format->byte_count);
+
+    return WINED3D_OK;
+}
+
+static void convert_r32_float_r16_float(const BYTE *src, BYTE *dst,
+        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+{
+    unsigned short *dst_s;
+    const float *src_f;
+    unsigned int x, y;
+
+    TRACE("Converting %ux%u pixels, pitches %u %u.\n", w, h, pitch_in, pitch_out);
+
+    for (y = 0; y < h; ++y)
+    {
+        src_f = (const float *)(src + y * pitch_in);
+        dst_s = (unsigned short *) (dst + y * pitch_out);
+        for (x = 0; x < w; ++x)
+        {
+            dst_s[x] = float_32_to_16(src_f + x);
+        }
+    }
+}
+
+static void convert_r5g6b5_x8r8g8b8(const BYTE *src, BYTE *dst,
+        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+{
+    static const unsigned char convert_5to8[] =
+    {
+        0x00, 0x08, 0x10, 0x19, 0x21, 0x29, 0x31, 0x3a,
+        0x42, 0x4a, 0x52, 0x5a, 0x63, 0x6b, 0x73, 0x7b,
+        0x84, 0x8c, 0x94, 0x9c, 0xa5, 0xad, 0xb5, 0xbd,
+        0xc5, 0xce, 0xd6, 0xde, 0xe6, 0xef, 0xf7, 0xff,
+    };
+    static const unsigned char convert_6to8[] =
+    {
+        0x00, 0x04, 0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c,
+        0x20, 0x24, 0x28, 0x2d, 0x31, 0x35, 0x39, 0x3d,
+        0x41, 0x45, 0x49, 0x4d, 0x51, 0x55, 0x59, 0x5d,
+        0x61, 0x65, 0x69, 0x6d, 0x71, 0x75, 0x79, 0x7d,
+        0x82, 0x86, 0x8a, 0x8e, 0x92, 0x96, 0x9a, 0x9e,
+        0xa2, 0xa6, 0xaa, 0xae, 0xb2, 0xb6, 0xba, 0xbe,
+        0xc2, 0xc6, 0xca, 0xce, 0xd2, 0xd7, 0xdb, 0xdf,
+        0xe3, 0xe7, 0xeb, 0xef, 0xf3, 0xf7, 0xfb, 0xff,
+    };
+    unsigned int x, y;
+
+    TRACE("Converting %ux%u pixels, pitches %u %u.\n", w, h, pitch_in, pitch_out);
+
+    for (y = 0; y < h; ++y)
+    {
+        const WORD *src_line = (const WORD *)(src + y * pitch_in);
+        DWORD *dst_line = (DWORD *)(dst + y * pitch_out);
+        for (x = 0; x < w; ++x)
+        {
+            WORD pixel = src_line[x];
+            dst_line[x] = 0xff000000
+                    | convert_5to8[(pixel & 0xf800) >> 11] << 16
+                    | convert_6to8[(pixel & 0x07e0) >> 5] << 8
+                    | convert_5to8[(pixel & 0x001f)];
+        }
+    }
+}
+
+static void convert_a8r8g8b8_x8r8g8b8(const BYTE *src, BYTE *dst,
+        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+{
+    unsigned int x, y;
+
+    TRACE("Converting %ux%u pixels, pitches %u %u.\n", w, h, pitch_in, pitch_out);
+
+    for (y = 0; y < h; ++y)
+    {
+        const DWORD *src_line = (const DWORD *)(src + y * pitch_in);
+        DWORD *dst_line = (DWORD *)(dst + y * pitch_out);
+
+        for (x = 0; x < w; ++x)
+        {
+            dst_line[x] = 0xff000000 | (src_line[x] & 0xffffff);
+        }
+    }
+}
+
+static inline BYTE cliptobyte(int x)
+{
+    return (BYTE)((x < 0) ? 0 : ((x > 255) ? 255 : x));
+}
+
+static void convert_yuy2_x8r8g8b8(const BYTE *src, BYTE *dst,
+        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+{
+    int c2, d, e, r2 = 0, g2 = 0, b2 = 0;
+    unsigned int x, y;
+
+    TRACE("Converting %ux%u pixels, pitches %u %u.\n", w, h, pitch_in, pitch_out);
+
+    for (y = 0; y < h; ++y)
+    {
+        const BYTE *src_line = src + y * pitch_in;
+        DWORD *dst_line = (DWORD *)(dst + y * pitch_out);
+        for (x = 0; x < w; ++x)
+        {
+            /* YUV to RGB conversion formulas from http://en.wikipedia.org/wiki/YUV:
+             *     C = Y - 16; D = U - 128; E = V - 128;
+             *     R = cliptobyte((298 * C + 409 * E + 128) >> 8);
+             *     G = cliptobyte((298 * C - 100 * D - 208 * E + 128) >> 8);
+             *     B = cliptobyte((298 * C + 516 * D + 128) >> 8);
+             * Two adjacent YUY2 pixels are stored as four bytes: Y0 U Y1 V .
+             * U and V are shared between the pixels. */
+            if (!(x & 1)) /* For every even pixel, read new U and V. */
+            {
+                d = (int) src_line[1] - 128;
+                e = (int) src_line[3] - 128;
+                r2 = 409 * e + 128;
+                g2 = - 100 * d - 208 * e + 128;
+                b2 = 516 * d + 128;
+            }
+            c2 = 298 * ((int) src_line[0] - 16);
+            dst_line[x] = 0xff000000
+                | cliptobyte((c2 + r2) >> 8) << 16    /* red   */
+                | cliptobyte((c2 + g2) >> 8) << 8     /* green */
+                | cliptobyte((c2 + b2) >> 8);         /* blue  */
+                /* Scale RGB values to 0..255 range,
+                 * then clip them if still not in range (may be negative),
+                 * then shift them within DWORD if necessary. */
+            src_line += 2;
+        }
+    }
+}
+
+static void convert_yuy2_r5g6b5(const BYTE *src, BYTE *dst,
+        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+{
+    unsigned int x, y;
+    int c2, d, e, r2 = 0, g2 = 0, b2 = 0;
+
+    TRACE("Converting %ux%u pixels, pitches %u %u\n", w, h, pitch_in, pitch_out);
+
+    for (y = 0; y < h; ++y)
+    {
+        const BYTE *src_line = src + y * pitch_in;
+        WORD *dst_line = (WORD *)(dst + y * pitch_out);
+        for (x = 0; x < w; ++x)
+        {
+            /* YUV to RGB conversion formulas from http://en.wikipedia.org/wiki/YUV:
+             *     C = Y - 16; D = U - 128; E = V - 128;
+             *     R = cliptobyte((298 * C + 409 * E + 128) >> 8);
+             *     G = cliptobyte((298 * C - 100 * D - 208 * E + 128) >> 8);
+             *     B = cliptobyte((298 * C + 516 * D + 128) >> 8);
+             * Two adjacent YUY2 pixels are stored as four bytes: Y0 U Y1 V .
+             * U and V are shared between the pixels. */
+            if (!(x & 1)) /* For every even pixel, read new U and V. */
+            {
+                d = (int) src_line[1] - 128;
+                e = (int) src_line[3] - 128;
+                r2 = 409 * e + 128;
+                g2 = - 100 * d - 208 * e + 128;
+                b2 = 516 * d + 128;
+            }
+            c2 = 298 * ((int) src_line[0] - 16);
+            dst_line[x] = (cliptobyte((c2 + r2) >> 8) >> 3) << 11   /* red   */
+                | (cliptobyte((c2 + g2) >> 8) >> 2) << 5            /* green */
+                | (cliptobyte((c2 + b2) >> 8) >> 3);                /* blue  */
+                /* Scale RGB values to 0..255 range,
+                 * then clip them if still not in range (may be negative),
+                 * then shift them within DWORD if necessary. */
+            src_line += 2;
+        }
+    }
+}
+
+struct d3dfmt_convertor_desc
+{
+    enum wined3d_format_id from, to;
+    void (*convert)(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h);
+};
+
+static const struct d3dfmt_convertor_desc convertors[] =
+{
+    {WINED3DFMT_R32_FLOAT,      WINED3DFMT_R16_FLOAT,       convert_r32_float_r16_float},
+    {WINED3DFMT_B5G6R5_UNORM,   WINED3DFMT_B8G8R8X8_UNORM,  convert_r5g6b5_x8r8g8b8},
+    {WINED3DFMT_B8G8R8A8_UNORM, WINED3DFMT_B8G8R8X8_UNORM,  convert_a8r8g8b8_x8r8g8b8},
+    {WINED3DFMT_YUY2,           WINED3DFMT_B8G8R8X8_UNORM,  convert_yuy2_x8r8g8b8},
+    {WINED3DFMT_YUY2,           WINED3DFMT_B5G6R5_UNORM,    convert_yuy2_r5g6b5},
+};
+
+static inline const struct d3dfmt_convertor_desc *find_convertor(enum wined3d_format_id from,
+        enum wined3d_format_id to)
+{
+    unsigned int i;
+
+    for (i = 0; i < (sizeof(convertors) / sizeof(*convertors)); ++i)
+    {
+        if (convertors[i].from == from && convertors[i].to == to)
+            return &convertors[i];
+    }
+
+    return NULL;
+}
+
+/*****************************************************************************
+ * surface_convert_format
+ *
+ * Creates a duplicate of a surface in a different format. Is used by Blt to
+ * blit between surfaces with different formats.
+ *
+ * Parameters
+ *  source: Source surface
+ *  fmt: Requested destination format
+ *
+ *****************************************************************************/
+static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, enum wined3d_format_id to_fmt)
+{
+    const struct d3dfmt_convertor_desc *conv;
+    WINED3DLOCKED_RECT lock_src, lock_dst;
+    IWineD3DSurface *ret = NULL;
+    HRESULT hr;
+
+    conv = find_convertor(source->resource.format->id, to_fmt);
+    if (!conv)
+    {
+        FIXME("Cannot find a conversion function from format %s to %s.\n",
+                debug_d3dformat(source->resource.format->id), debug_d3dformat(to_fmt));
+        return NULL;
+    }
+
+    IWineD3DDevice_CreateSurface((IWineD3DDevice *)source->resource.device, source->resource.width,
+            source->resource.height, to_fmt, TRUE /* lockable */, TRUE /* discard  */, 0 /* level */,
+            0 /* usage */, WINED3DPOOL_SCRATCH, WINED3DMULTISAMPLE_NONE /* TODO: Multisampled conversion */,
+            0 /* MultiSampleQuality */, source->surface_type, NULL /* parent */, &wined3d_null_parent_ops, &ret);
+    if (!ret)
+    {
+        ERR("Failed to create a destination surface for conversion.\n");
+        return NULL;
+    }
+
+    memset(&lock_src, 0, sizeof(lock_src));
+    memset(&lock_dst, 0, sizeof(lock_dst));
+
+    hr = IWineD3DSurface_Map((IWineD3DSurface *)source, &lock_src, NULL, WINED3DLOCK_READONLY);
+    if (FAILED(hr))
+    {
+        ERR("Failed to lock the source surface.\n");
+        IWineD3DSurface_Release(ret);
+        return NULL;
+    }
+    hr = IWineD3DSurface_Map(ret, &lock_dst, NULL, WINED3DLOCK_READONLY);
+    if (FAILED(hr))
+    {
+        ERR("Failed to lock the destination surface.\n");
+        IWineD3DSurface_Unmap((IWineD3DSurface *)source);
+        IWineD3DSurface_Release(ret);
+        return NULL;
+    }
+
+    conv->convert(lock_src.pBits, lock_dst.pBits, lock_src.Pitch, lock_dst.Pitch,
+            source->resource.width, source->resource.height);
+
+    IWineD3DSurface_Unmap(ret);
+    IWineD3DSurface_Unmap((IWineD3DSurface *)source);
+
+    return (IWineD3DSurfaceImpl *)ret;
+}
+
+static HRESULT _Blt_ColorFill(BYTE *buf, unsigned int width, unsigned int height,
+        unsigned int bpp, UINT pitch, DWORD color)
+{
+    BYTE *first;
+    int x, y;
+
+    /* Do first row */
+
+#define COLORFILL_ROW(type) \
+do { \
+    type *d = (type *)buf; \
+    for (x = 0; x < width; ++x) \
+        d[x] = (type)color; \
+} while(0)
+
+    switch (bpp)
+    {
+        case 1:
+            COLORFILL_ROW(BYTE);
+            break;
+
+        case 2:
+            COLORFILL_ROW(WORD);
+            break;
+
+        case 3:
+        {
+            BYTE *d = buf;
+            for (x = 0; x < width; ++x, d += 3)
+            {
+                d[0] = (color      ) & 0xFF;
+                d[1] = (color >>  8) & 0xFF;
+                d[2] = (color >> 16) & 0xFF;
+            }
+            break;
+        }
+        case 4:
+            COLORFILL_ROW(DWORD);
+            break;
+
+        default:
+            FIXME("Color fill not implemented for bpp %u!\n", bpp * 8);
+            return WINED3DERR_NOTAVAILABLE;
+    }
+
+#undef COLORFILL_ROW
+
+    /* Now copy first row. */
+    first = buf;
+    for (y = 1; y < height; ++y)
+    {
+        buf += pitch;
+        memcpy(buf, first, width * bpp);
+    }
+
+    return WINED3D_OK;
+}
+
+/*****************************************************************************
+ * IWineD3DSurface::Blt, SW emulation version
+ *
+ * Performs a blit to a surface, with or without a source surface.
+ * This is the main functionality of DirectDraw
+ *****************************************************************************/
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface,
+        const RECT *dst_rect, IWineD3DSurface *src_surface, const RECT *src_rect,
+        DWORD flags, const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
+{
+    IWineD3DSurfaceImpl *dst_surface = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DSurfaceImpl *src = (IWineD3DSurfaceImpl *)src_surface;
+    int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
+    const struct wined3d_format *src_format, *dst_format;
+    WINED3DLOCKED_RECT dlock, slock;
+    HRESULT ret = WINED3D_OK;
+    const BYTE *sbuf;
+    RECT xdst,xsrc;
+    BYTE *dbuf;
+    int x, y;
+
+    TRACE("iface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
+            iface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
+            flags, fx, debug_d3dtexturefiltertype(filter));
+
+    if ((dst_surface->flags & SFLAG_LOCKED) || (src && (src->flags & SFLAG_LOCKED)))
+    {
+        WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
+        return WINEDDERR_SURFACEBUSY;
+    }
+
+    /* First check for the validity of source / destination rectangles.
+     * This was verified using a test application and by MSDN. */
+    if (src_rect)
+    {
+        if (src)
+        {
+            if (src_rect->right < src_rect->left || src_rect->bottom < src_rect->top
+                    || src_rect->left > src->resource.width || src_rect->left < 0
+                    || src_rect->top > src->resource.height || src_rect->top < 0
+                    || src_rect->right > src->resource.width || src_rect->right < 0
+                    || src_rect->bottom > src->resource.height || src_rect->bottom < 0)
+            {
+                WARN("Application gave us bad source rectangle for Blt.\n");
+                return WINEDDERR_INVALIDRECT;
+            }
+
+            if (!src_rect->right || !src_rect->bottom
+                    || src_rect->left == (int)src->resource.width
+                    || src_rect->top == (int)src->resource.height)
+            {
+                TRACE("Nothing to be done.\n");
+                return WINED3D_OK;
+            }
+        }
+
+        xsrc = *src_rect;
+    }
+    else if (src)
+    {
+        xsrc.left = 0;
+        xsrc.top = 0;
+        xsrc.right = src->resource.width;
+        xsrc.bottom = src->resource.height;
+    }
+    else
+    {
+        memset(&xsrc, 0, sizeof(xsrc));
+    }
+
+    if (dst_rect)
+    {
+        /* For the Destination rect, it can be out of bounds on the condition
+         * that a clipper is set for the given surface. */
+        if (!dst_surface->clipper && (dst_rect->right < dst_rect->left || dst_rect->bottom < dst_rect->top
+                || dst_rect->left > dst_surface->resource.width || dst_rect->left < 0
+                || dst_rect->top > dst_surface->resource.height || dst_rect->top < 0
+                || dst_rect->right > dst_surface->resource.width || dst_rect->right < 0
+                || dst_rect->bottom > dst_surface->resource.height || dst_rect->bottom < 0))
+        {
+            WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
+            return WINEDDERR_INVALIDRECT;
+        }
+
+        if (dst_rect->right <= 0 || dst_rect->bottom <= 0
+                || dst_rect->left >= (int)dst_surface->resource.width
+                || dst_rect->top >= (int)dst_surface->resource.height)
+        {
+            TRACE("Nothing to be done.\n");
+            return WINED3D_OK;
+        }
+
+        if (!src)
+        {
+            RECT full_rect;
+
+            full_rect.left = 0;
+            full_rect.top = 0;
+            full_rect.right = dst_surface->resource.width;
+            full_rect.bottom = dst_surface->resource.height;
+            IntersectRect(&xdst, &full_rect, dst_rect);
+        }
+        else
+        {
+            BOOL clip_horiz, clip_vert;
+
+            xdst = *dst_rect;
+            clip_horiz = xdst.left < 0 || xdst.right > (int)dst_surface->resource.width;
+            clip_vert = xdst.top < 0 || xdst.bottom > (int)dst_surface->resource.height;
+
+            if (clip_vert || clip_horiz)
+            {
+                /* Now check if this is a special case or not... */
+                if ((flags & WINEDDBLT_DDFX)
+                        || (clip_horiz && xdst.right - xdst.left != xsrc.right - xsrc.left)
+                        || (clip_vert && xdst.bottom - xdst.top != xsrc.bottom - xsrc.top))
+                {
+                    WARN("Out of screen rectangle in special case. Not handled right now.\n");
+                    return WINED3D_OK;
+                }
+
+                if (clip_horiz)
+                {
+                    if (xdst.left < 0)
+                    {
+                        xsrc.left -= xdst.left;
+                        xdst.left = 0;
+                    }
+                    if (xdst.right > dst_surface->resource.width)
+                    {
+                        xsrc.right -= (xdst.right - (int)dst_surface->resource.width);
+                        xdst.right = (int)dst_surface->resource.width;
+                    }
+                }
+
+                if (clip_vert)
+                {
+                    if (xdst.top < 0)
+                    {
+                        xsrc.top -= xdst.top;
+                        xdst.top = 0;
+                    }
+                    if (xdst.bottom > dst_surface->resource.height)
+                    {
+                        xsrc.bottom -= (xdst.bottom - (int)dst_surface->resource.height);
+                        xdst.bottom = (int)dst_surface->resource.height;
+                    }
+                }
+
+                /* And check if after clipping something is still to be done... */
+                if ((xdst.right <= 0) || (xdst.bottom <= 0)
+                        || (xdst.left >= (int)dst_surface->resource.width)
+                        || (xdst.top >= (int)dst_surface->resource.height)
+                        || (xsrc.right <= 0) || (xsrc.bottom <= 0)
+                        || (xsrc.left >= (int)src->resource.width)
+                        || (xsrc.top >= (int)src->resource.height))
+                {
+                    TRACE("Nothing to be done after clipping.\n");
+                    return WINED3D_OK;
+                }
+            }
+        }
+    }
+    else
+    {
+        xdst.left = 0;
+        xdst.top = 0;
+        xdst.right = dst_surface->resource.width;
+        xdst.bottom = dst_surface->resource.height;
+    }
+
+    if (src == dst_surface)
+    {
+        IWineD3DSurface_Map(iface, &dlock, NULL, 0);
+        slock = dlock;
+        src_format = dst_surface->resource.format;
+        dst_format = src_format;
+    }
+    else
+    {
+        dst_format = dst_surface->resource.format;
+        if (src)
+        {
+            if (dst_surface->resource.format->id != src->resource.format->id)
+            {
+                src = surface_convert_format(src, dst_format->id);
+                if (!src)
+                {
+                    /* The conv function writes a FIXME */
+                    WARN("Cannot convert source surface format to dest format\n");
+                    goto release;
+                }
+            }
+            IWineD3DSurface_Map((IWineD3DSurface *)src, &slock, NULL, WINED3DLOCK_READONLY);
+            src_format = src->resource.format;
+        }
+        else
+        {
+            src_format = dst_format;
+        }
+        if (dst_rect)
+            IWineD3DSurface_Map(iface, &dlock, &xdst, 0);
+        else
+            IWineD3DSurface_Map(iface, &dlock, NULL, 0);
+    }
+
+    if (!fx || !(fx->dwDDFX)) flags &= ~WINEDDBLT_DDFX;
+
+    if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_FOURCC)
+    {
+        if (!dst_rect || src == dst_surface)
+        {
+            memcpy(dlock.pBits, slock.pBits, dst_surface->resource.size);
+            goto release;
+        }
+    }
+
+    bpp = dst_surface->resource.format->byte_count;
+    srcheight = xsrc.bottom - xsrc.top;
+    srcwidth = xsrc.right - xsrc.left;
+    dstheight = xdst.bottom - xdst.top;
+    dstwidth = xdst.right - xdst.left;
+    width = (xdst.right - xdst.left) * bpp;
+
+    if (dst_rect && src != dst_surface)
+        dbuf = dlock.pBits;
+    else
+        dbuf = (BYTE*)dlock.pBits+(xdst.top*dlock.Pitch)+(xdst.left*bpp);
+
+    if (flags & WINEDDBLT_WAIT)
+    {
+        flags &= ~WINEDDBLT_WAIT;
+    }
+    if (flags & WINEDDBLT_ASYNC)
+    {
+        static BOOL displayed = FALSE;
+        if (!displayed)
+            FIXME("Can't handle WINEDDBLT_ASYNC flag right now.\n");
+        displayed = TRUE;
+        flags &= ~WINEDDBLT_ASYNC;
+    }
+    if (flags & WINEDDBLT_DONOTWAIT)
+    {
+        /* WINEDDBLT_DONOTWAIT appeared in DX7 */
+        static BOOL displayed = FALSE;
+        if (!displayed)
+            FIXME("Can't handle WINEDDBLT_DONOTWAIT flag right now.\n");
+        displayed = TRUE;
+        flags &= ~WINEDDBLT_DONOTWAIT;
+    }
+
+    /* First, all the 'source-less' blits */
+    if (flags & WINEDDBLT_COLORFILL)
+    {
+        ret = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dlock.Pitch, fx->u5.dwFillColor);
+        flags &= ~WINEDDBLT_COLORFILL;
+    }
+
+    if (flags & WINEDDBLT_DEPTHFILL)
+    {
+        FIXME("DDBLT_DEPTHFILL needs to be implemented!\n");
+    }
+    if (flags & WINEDDBLT_ROP)
+    {
+        /* Catch some degenerate cases here. */
+        switch (fx->dwROP)
+        {
+            case BLACKNESS:
+                ret = _Blt_ColorFill(dbuf,dstwidth,dstheight,bpp,dlock.Pitch,0);
+                break;
+            case 0xAA0029: /* No-op */
+                break;
+            case WHITENESS:
+                ret = _Blt_ColorFill(dbuf,dstwidth,dstheight,bpp,dlock.Pitch,~0);
+                break;
+            case SRCCOPY: /* Well, we do that below? */
+                break;
+            default:
+                FIXME("Unsupported raster op: %08x Pattern: %p\n", fx->dwROP, fx->u5.lpDDSPattern);
+                goto error;
+        }
+        flags &= ~WINEDDBLT_ROP;
+    }
+    if (flags & WINEDDBLT_DDROPS)
+    {
+        FIXME("\tDdraw Raster Ops: %08x Pattern: %p\n", fx->dwDDROP, fx->u5.lpDDSPattern);
+    }
+    /* Now the 'with source' blits. */
+    if (src)
+    {
+        const BYTE *sbase;
+        int sx, xinc, sy, yinc;
+
+        if (!dstwidth || !dstheight) /* Hmm... stupid program? */
+            goto release;
+
+        if (filter != WINED3DTEXF_NONE && filter != WINED3DTEXF_POINT
+                && (srcwidth != dstwidth || srcheight != dstheight))
+        {
+            /* Can happen when d3d9 apps do a StretchRect() call which isn't handled in GL. */
+            FIXME("Filter %s not supported in software blit.\n", debug_d3dtexturefiltertype(filter));
+        }
+
+        sbase = (BYTE*)slock.pBits+(xsrc.top*slock.Pitch)+xsrc.left*bpp;
+        xinc = (srcwidth << 16) / dstwidth;
+        yinc = (srcheight << 16) / dstheight;
+
+        if (!flags)
+        {
+            /* No effects, we can cheat here. */
+            if (dstwidth == srcwidth)
+            {
+                if (dstheight == srcheight)
+                {
+                    /* No stretching in either direction. This needs to be as
+                     * fast as possible. */
+                    sbuf = sbase;
+
+                    /* Check for overlapping surfaces. */
+                    if (src != dst_surface || xdst.top < xsrc.top
+                            || xdst.right <= xsrc.left || xsrc.right <= xdst.left)
+                    {
+                        /* No overlap, or dst above src, so copy from top downwards. */
+                        for (y = 0; y < dstheight; ++y)
+                        {
+                            memcpy(dbuf, sbuf, width);
+                            sbuf += slock.Pitch;
+                            dbuf += dlock.Pitch;
+                        }
+                    }
+                    else if (xdst.top > xsrc.top)
+                    {
+                        /* Copy from bottom upwards. */
+                        sbuf += (slock.Pitch*dstheight);
+                        dbuf += (dlock.Pitch*dstheight);
+                        for (y = 0; y < dstheight; ++y)
+                        {
+                            sbuf -= slock.Pitch;
+                            dbuf -= dlock.Pitch;
+                            memcpy(dbuf, sbuf, width);
+                        }
+                    }
+                    else
+                    {
+                        /* Src and dst overlapping on the same line, use memmove. */
+                        for (y = 0; y < dstheight; ++y)
+                        {
+                            memmove(dbuf, sbuf, width);
+                            sbuf += slock.Pitch;
+                            dbuf += dlock.Pitch;
+                        }
+                    }
+                }
+                else
+                {
+                    /* Stretching in y direction only. */
+                    for (y = sy = 0; y < dstheight; ++y, sy += yinc)
+                    {
+                        sbuf = sbase + (sy >> 16) * slock.Pitch;
+                        memcpy(dbuf, sbuf, width);
+                        dbuf += dlock.Pitch;
+                    }
+                }
+            }
+            else
+            {
+                /* Stretching in X direction. */
+                int last_sy = -1;
+                for (y = sy = 0; y < dstheight; ++y, sy += yinc)
+                {
+                    sbuf = sbase + (sy >> 16) * slock.Pitch;
+
+                    if ((sy >> 16) == (last_sy >> 16))
+                    {
+                        /* This source row is the same as last source row -
+                         * Copy the already stretched row. */
+                        memcpy(dbuf, dbuf - dlock.Pitch, width);
+                    }
+                    else
+                    {
+#define STRETCH_ROW(type) \
+do { \
+    const type *s = (const type *)sbuf; \
+    type *d = (type *)dbuf; \
+    for (x = sx = 0; x < dstwidth; ++x, sx += xinc) \
+        d[x] = s[sx >> 16]; \
+} while(0)
+
+                        switch(bpp)
+                        {
+                            case 1:
+                                STRETCH_ROW(BYTE);
+                                break;
+                            case 2:
+                                STRETCH_ROW(WORD);
+                                break;
+                            case 4:
+                                STRETCH_ROW(DWORD);
+                                break;
+                            case 3:
+                            {
+                                const BYTE *s;
+                                BYTE *d = dbuf;
+                                for (x = sx = 0; x < dstwidth; x++, sx+= xinc)
+                                {
+                                    DWORD pixel;
+
+                                    s = sbuf + 3 * (sx >> 16);
+                                    pixel = s[0] | (s[1] << 8) | (s[2] << 16);
+                                    d[0] = (pixel      ) & 0xff;
+                                    d[1] = (pixel >>  8) & 0xff;
+                                    d[2] = (pixel >> 16) & 0xff;
+                                    d += 3;
+                                }
+                                break;
+                            }
+                            default:
+                                FIXME("Stretched blit not implemented for bpp %u!\n", bpp * 8);
+                                ret = WINED3DERR_NOTAVAILABLE;
+                                goto error;
+                        }
+#undef STRETCH_ROW
+                    }
+                    dbuf += dlock.Pitch;
+                    last_sy = sy;
+                }
+            }
+        }
+        else
+        {
+            LONG dstyinc = dlock.Pitch, dstxinc = bpp;
+            DWORD keylow = 0xFFFFFFFF, keyhigh = 0, keymask = 0xFFFFFFFF;
+            DWORD destkeylow = 0x0, destkeyhigh = 0xFFFFFFFF, destkeymask = 0xFFFFFFFF;
+            if (flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE))
+            {
+                /* The color keying flags are checked for correctness in ddraw */
+                if (flags & WINEDDBLT_KEYSRC)
+                {
+                    keylow  = src->SrcBltCKey.dwColorSpaceLowValue;
+                    keyhigh = src->SrcBltCKey.dwColorSpaceHighValue;
+                }
+                else if (flags & WINEDDBLT_KEYSRCOVERRIDE)
+                {
+                    keylow = fx->ddckSrcColorkey.dwColorSpaceLowValue;
+                    keyhigh = fx->ddckSrcColorkey.dwColorSpaceHighValue;
+                }
+
+                if (flags & WINEDDBLT_KEYDEST)
+                {
+                    /* Destination color keys are taken from the source surface! */
+                    destkeylow = src->DestBltCKey.dwColorSpaceLowValue;
+                    destkeyhigh = src->DestBltCKey.dwColorSpaceHighValue;
+                }
+                else if (flags & WINEDDBLT_KEYDESTOVERRIDE)
+                {
+                    destkeylow = fx->ddckDestColorkey.dwColorSpaceLowValue;
+                    destkeyhigh = fx->ddckDestColorkey.dwColorSpaceHighValue;
+                }
+
+                if (bpp == 1)
+                {
+                    keymask = 0xff;
+                }
+                else
+                {
+                    keymask = src_format->red_mask
+                            | src_format->green_mask
+                            | src_format->blue_mask;
+                }
+                flags &= ~(WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE);
+            }
+
+            if (flags & WINEDDBLT_DDFX)
+            {
+                BYTE *dTopLeft, *dTopRight, *dBottomLeft, *dBottomRight, *tmp;
+                LONG tmpxy;
+                dTopLeft     = dbuf;
+                dTopRight    = dbuf + ((dstwidth - 1) * bpp);
+                dBottomLeft  = dTopLeft + ((dstheight - 1) * dlock.Pitch);
+                dBottomRight = dBottomLeft + ((dstwidth - 1) * bpp);
+
+                if (fx->dwDDFX & WINEDDBLTFX_ARITHSTRETCHY)
+                {
+                    /* I don't think we need to do anything about this flag */
+                    WARN("flags=DDBLT_DDFX nothing done for WINEDDBLTFX_ARITHSTRETCHY\n");
+                }
+                if (fx->dwDDFX & WINEDDBLTFX_MIRRORLEFTRIGHT)
+                {
+                    tmp          = dTopRight;
+                    dTopRight    = dTopLeft;
+                    dTopLeft     = tmp;
+                    tmp          = dBottomRight;
+                    dBottomRight = dBottomLeft;
+                    dBottomLeft  = tmp;
+                    dstxinc = dstxinc * -1;
+                }
+                if (fx->dwDDFX & WINEDDBLTFX_MIRRORUPDOWN)
+                {
+                    tmp          = dTopLeft;
+                    dTopLeft     = dBottomLeft;
+                    dBottomLeft  = tmp;
+                    tmp          = dTopRight;
+                    dTopRight    = dBottomRight;
+                    dBottomRight = tmp;
+                    dstyinc = dstyinc * -1;
+                }
+                if (fx->dwDDFX & WINEDDBLTFX_NOTEARING)
+                {
+                    /* I don't think we need to do anything about this flag */
+                    WARN("flags=DDBLT_DDFX nothing done for WINEDDBLTFX_NOTEARING\n");
+                }
+                if (fx->dwDDFX & WINEDDBLTFX_ROTATE180)
+                {
+                    tmp          = dBottomRight;
+                    dBottomRight = dTopLeft;
+                    dTopLeft     = tmp;
+                    tmp          = dBottomLeft;
+                    dBottomLeft  = dTopRight;
+                    dTopRight    = tmp;
+                    dstxinc = dstxinc * -1;
+                    dstyinc = dstyinc * -1;
+                }
+                if (fx->dwDDFX & WINEDDBLTFX_ROTATE270)
+                {
+                    tmp          = dTopLeft;
+                    dTopLeft     = dBottomLeft;
+                    dBottomLeft  = dBottomRight;
+                    dBottomRight = dTopRight;
+                    dTopRight    = tmp;
+                    tmpxy   = dstxinc;
+                    dstxinc = dstyinc;
+                    dstyinc = tmpxy;
+                    dstxinc = dstxinc * -1;
+                }
+                if (fx->dwDDFX & WINEDDBLTFX_ROTATE90)
+                {
+                    tmp          = dTopLeft;
+                    dTopLeft     = dTopRight;
+                    dTopRight    = dBottomRight;
+                    dBottomRight = dBottomLeft;
+                    dBottomLeft  = tmp;
+                    tmpxy   = dstxinc;
+                    dstxinc = dstyinc;
+                    dstyinc = tmpxy;
+                    dstyinc = dstyinc * -1;
+                }
+                if (fx->dwDDFX & WINEDDBLTFX_ZBUFFERBASEDEST)
+                {
+                    /* I don't think we need to do anything about this flag */
+                    WARN("flags=WINEDDBLT_DDFX nothing done for WINEDDBLTFX_ZBUFFERBASEDEST\n");
+                }
+                dbuf = dTopLeft;
+                flags &= ~(WINEDDBLT_DDFX);
+            }
+
+#define COPY_COLORKEY_FX(type) \
+do { \
+    const type *s; \
+    type *d = (type *)dbuf, *dx, tmp; \
+    for (y = sy = 0; y < dstheight; ++y, sy += yinc) \
+    { \
+        s = (const type *)(sbase + (sy >> 16) * slock.Pitch); \
+        dx = d; \
+        for (x = sx = 0; x < dstwidth; ++x, sx += xinc) \
+        { \
+            tmp = s[sx >> 16]; \
+            if (((tmp & keymask) < keylow || (tmp & keymask) > keyhigh) \
+                    && ((dx[0] & destkeymask) >= destkeylow && (dx[0] & destkeymask) <= destkeyhigh)) \
+            { \
+                dx[0] = tmp; \
+            } \
+            dx = (type *)(((BYTE *)dx) + dstxinc); \
+        } \
+        d = (type *)(((BYTE *)d) + dstyinc); \
+    } \
+} while(0)
+
+            switch (bpp)
+            {
+                case 1:
+                    COPY_COLORKEY_FX(BYTE);
+                    break;
+                case 2:
+                    COPY_COLORKEY_FX(WORD);
+                    break;
+                case 4:
+                    COPY_COLORKEY_FX(DWORD);
+                    break;
+                case 3:
+                {
+                    const BYTE *s;
+                    BYTE *d = dbuf, *dx;
+                    for (y = sy = 0; y < dstheight; ++y, sy += yinc)
+                    {
+                        sbuf = sbase + (sy >> 16) * slock.Pitch;
+                        dx = d;
+                        for (x = sx = 0; x < dstwidth; ++x, sx+= xinc)
+                        {
+                            DWORD pixel, dpixel = 0;
+                            s = sbuf + 3 * (sx>>16);
+                            pixel = s[0] | (s[1] << 8) | (s[2] << 16);
+                            dpixel = dx[0] | (dx[1] << 8 ) | (dx[2] << 16);
+                            if (((pixel & keymask) < keylow || (pixel & keymask) > keyhigh)
+                                    && ((dpixel & keymask) >= destkeylow || (dpixel & keymask) <= keyhigh))
+                            {
+                                dx[0] = (pixel      ) & 0xff;
+                                dx[1] = (pixel >>  8) & 0xff;
+                                dx[2] = (pixel >> 16) & 0xff;
+                            }
+                            dx += dstxinc;
+                        }
+                        d += dstyinc;
+                    }
+                    break;
+                }
+                default:
+                    FIXME("%s color-keyed blit not implemented for bpp %u!\n",
+                          (flags & WINEDDBLT_KEYSRC) ? "Source" : "Destination", bpp * 8);
+                    ret = WINED3DERR_NOTAVAILABLE;
+                    goto error;
+#undef COPY_COLORKEY_FX
+            }
+        }
+    }
+
+error:
+    if (flags && FIXME_ON(d3d_surface))
+    {
+        FIXME("\tUnsupported flags: %#x.\n", flags);
+    }
+
+release:
+    IWineD3DSurface_Unmap(iface);
+    if (src && src != dst_surface)
+        IWineD3DSurface_Unmap((IWineD3DSurface *)src);
+    /* Release the converted surface, if any. */
+    if (src && src_surface != (IWineD3DSurface *)src)
+        IWineD3DSurface_Release((IWineD3DSurface *)src);
+    return ret;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface,
+        DWORD dstx, DWORD dsty, IWineD3DSurface *src_surface, const RECT *rsrc, DWORD trans)
+{
+    IWineD3DSurfaceImpl *dst_surface = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DSurfaceImpl *src = (IWineD3DSurfaceImpl *)src_surface;
+    const struct wined3d_format *src_format, *dst_format;
+    RECT lock_src, lock_dst, lock_union;
+    WINED3DLOCKED_RECT dlock, slock;
+    HRESULT ret = WINED3D_OK;
+    int bpp, w, h, x, y;
+    const BYTE *sbuf;
+    BYTE *dbuf;
+    RECT rsrc2;
+
+    TRACE("iface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
+            iface, dstx, dsty, src_surface, wine_dbgstr_rect(rsrc), trans);
+
+    if ((dst_surface->flags & SFLAG_LOCKED) || (src->flags & SFLAG_LOCKED))
+    {
+        WARN(" Surface is busy, returning DDERR_SURFACEBUSY\n");
+        return WINEDDERR_SURFACEBUSY;
+    }
+
+    if (!rsrc)
+    {
+        WARN("rsrc is NULL!\n");
+        rsrc2.left = 0;
+        rsrc2.top = 0;
+        rsrc2.right = src->resource.width;
+        rsrc2.bottom = src->resource.height;
+        rsrc = &rsrc2;
+    }
+
+    /* Check source rect for validity. Copied from normal Blt. Fixes Baldur's Gate. */
+    if ((rsrc->bottom > src->resource.height) || (rsrc->bottom < 0)
+            || (rsrc->top > src->resource.height) || (rsrc->top < 0)
+            || (rsrc->left > src->resource.width) || (rsrc->left < 0)
+            || (rsrc->right > src->resource.width) || (rsrc->right < 0)
+            || (rsrc->right < rsrc->left) || (rsrc->bottom < rsrc->top))
+    {
+        WARN("Application gave us bad source rectangle for BltFast.\n");
+        return WINEDDERR_INVALIDRECT;
+    }
+
+    h = rsrc->bottom - rsrc->top;
+    if (h > dst_surface->resource.height-dsty)
+        h = dst_surface->resource.height-dsty;
+    if (h > src->resource.height-rsrc->top)
+        h = src->resource.height-rsrc->top;
+    if (h <= 0)
+        return WINEDDERR_INVALIDRECT;
+
+    w = rsrc->right - rsrc->left;
+    if (w > dst_surface->resource.width-dstx)
+        w = dst_surface->resource.width-dstx;
+    if (w > src->resource.width-rsrc->left)
+        w = src->resource.width-rsrc->left;
+    if (w <= 0)
+        return WINEDDERR_INVALIDRECT;
+
+    /* Now compute the locking rectangle... */
+    lock_src.left = rsrc->left;
+    lock_src.top = rsrc->top;
+    lock_src.right = lock_src.left + w;
+    lock_src.bottom = lock_src.top + h;
+
+    lock_dst.left = dstx;
+    lock_dst.top = dsty;
+    lock_dst.right = dstx + w;
+    lock_dst.bottom = dsty + h;
+
+    bpp = dst_surface->resource.format->byte_count;
+
+    /* We need to lock the surfaces, or we won't get refreshes when done. */
+    if (src == dst_surface)
+    {
+        int pitch;
+
+        UnionRect(&lock_union, &lock_src, &lock_dst);
+
+        /* Lock the union of the two rectangles */
+        ret = IWineD3DSurface_Map(iface, &dlock, &lock_union, 0);
+        if (FAILED(ret))
+            goto error;
+
+        pitch = dlock.Pitch;
+        slock.Pitch = dlock.Pitch;
+
+        /* Since slock was originally copied from this surface's description, we can just reuse it. */
+        sbuf = dst_surface->resource.allocatedMemory + lock_src.top * pitch + lock_src.left * bpp;
+        dbuf = dst_surface->resource.allocatedMemory + lock_dst.top * pitch + lock_dst.left * bpp;
+        src_format = src->resource.format;
+        dst_format = src_format;
+    }
+    else
+    {
+        ret = IWineD3DSurface_Map(src_surface, &slock, &lock_src, WINED3DLOCK_READONLY);
+        if (FAILED(ret))
+            goto error;
+        ret = IWineD3DSurface_Map(iface, &dlock, &lock_dst, 0);
+        if (FAILED(ret))
+            goto error;
+
+        sbuf = slock.pBits;
+        dbuf = dlock.pBits;
+        TRACE("Dst is at %p, Src is at %p.\n", dbuf, sbuf);
+
+        src_format = src->resource.format;
+        dst_format = dst_surface->resource.format;
+    }
+
+    /* Handle compressed surfaces first... */
+    if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_COMPRESSED)
+    {
+        UINT row_block_count;
+
+        TRACE("compressed -> compressed copy\n");
+        if (trans)
+            FIXME("trans arg not supported when a compressed surface is involved\n");
+        if (dstx || dsty)
+            FIXME("offset for destination surface is not supported\n");
+        if (src->resource.format->id != dst_surface->resource.format->id)
+        {
+            FIXME("compressed -> compressed copy only supported for the same type of surface\n");
+            ret = WINED3DERR_WRONGTEXTUREFORMAT;
+            goto error;
+        }
+
+        row_block_count = (w + dst_format->block_width - 1) / dst_format->block_width;
+        for (y = 0; y < h; y += dst_format->block_height)
+        {
+            memcpy(dbuf, sbuf, row_block_count * dst_format->block_byte_count);
+            dbuf += dlock.Pitch;
+            sbuf += slock.Pitch;
+        }
+
+        goto error;
+    }
+    if ((src_format->flags & WINED3DFMT_FLAG_COMPRESSED) && !(dst_format->flags & WINED3DFMT_FLAG_COMPRESSED))
+    {
+        /* TODO: Use the libtxc_dxtn.so shared library to do software
+         * decompression. */
+        ERR("Software decompression not supported.\n");
+        goto error;
+    }
+
+    if (trans & (WINEDDBLTFAST_SRCCOLORKEY | WINEDDBLTFAST_DESTCOLORKEY))
+    {
+        DWORD keylow, keyhigh;
+        DWORD mask = src->resource.format->red_mask
+                | src->resource.format->green_mask
+                | src->resource.format->blue_mask;
+
+        /* For some 8-bit formats like L8 and P8 color masks don't make sense */
+        if (!mask && bpp == 1)
+            mask = 0xff;
+
+        TRACE("Color keyed copy.\n");
+        if (trans & WINEDDBLTFAST_SRCCOLORKEY)
+        {
+            keylow = src->SrcBltCKey.dwColorSpaceLowValue;
+            keyhigh = src->SrcBltCKey.dwColorSpaceHighValue;
+        }
+        else
+        {
+            /* I'm not sure if this is correct. */
+            FIXME("WINEDDBLTFAST_DESTCOLORKEY not fully supported yet.\n");
+            keylow = dst_surface->DestBltCKey.dwColorSpaceLowValue;
+            keyhigh = dst_surface->DestBltCKey.dwColorSpaceHighValue;
+        }
+
+#define COPYBOX_COLORKEY(type) \
+do { \
+    const type *s = (const type *)sbuf; \
+    type *d = (type *)dbuf; \
+    type tmp; \
+    for (y = 0; y < h; y++) \
+    { \
+        for (x = 0; x < w; x++) \
+        { \
+            tmp = s[x]; \
+            if ((tmp & mask) < keylow || (tmp & mask) > keyhigh) d[x] = tmp; \
+        } \
+        s = (const type *)((const BYTE *)s + slock.Pitch); \
+        d = (type *)((BYTE *)d + dlock.Pitch); \
+    } \
+} while(0)
+
+        switch (bpp)
+        {
+            case 1:
+                COPYBOX_COLORKEY(BYTE);
+                break;
+            case 2:
+                COPYBOX_COLORKEY(WORD);
+                break;
+            case 4:
+                COPYBOX_COLORKEY(DWORD);
+                break;
+            case 3:
+            {
+                const BYTE *s;
+                DWORD tmp;
+                BYTE *d;
+                s = sbuf;
+                d = dbuf;
+                for (y = 0; y < h; ++y)
+                {
+                    for (x = 0; x < w * 3; x += 3)
+                    {
+                        tmp = (DWORD)s[x] + ((DWORD)s[x + 1] << 8) + ((DWORD)s[x + 2] << 16);
+                        if (tmp < keylow || tmp > keyhigh)
+                        {
+                            d[x + 0] = s[x + 0];
+                            d[x + 1] = s[x + 1];
+                            d[x + 2] = s[x + 2];
+                        }
+                    }
+                    s += slock.Pitch;
+                    d += dlock.Pitch;
+                }
+                break;
+            }
+            default:
+                FIXME("Source color key blitting not supported for bpp %u.\n", bpp * 8);
+                ret = WINED3DERR_NOTAVAILABLE;
+                goto error;
+        }
+#undef COPYBOX_COLORKEY
+        TRACE("Copy done.\n");
+    }
+    else
+    {
+        int width = w * bpp;
+        INT sbufpitch, dbufpitch;
+
+        TRACE("No color key copy.\n");
+        /* Handle overlapping surfaces. */
+        if (sbuf < dbuf)
+        {
+            sbuf += (h - 1) * slock.Pitch;
+            dbuf += (h - 1) * dlock.Pitch;
+            sbufpitch = -slock.Pitch;
+            dbufpitch = -dlock.Pitch;
+        }
+        else
+        {
+            sbufpitch = slock.Pitch;
+            dbufpitch = dlock.Pitch;
+        }
+        for (y = 0; y < h; ++y)
+        {
+            /* This is pretty easy, a line for line memcpy. */
+            memmove(dbuf, sbuf, width);
+            sbuf += sbufpitch;
+            dbuf += dbufpitch;
+        }
+        TRACE("Copy done.\n");
+    }
+
+error:
+    if (src == dst_surface)
+    {
+        IWineD3DSurface_Unmap(iface);
+    }
+    else
+    {
+        IWineD3DSurface_Unmap(iface);
+        IWineD3DSurface_Unmap(src_surface);
+    }
+
+    return ret;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
+        WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
+            iface, locked_rect, wine_dbgstr_rect(rect), flags);
+
+    locked_rect->Pitch = IWineD3DSurface_GetPitch(iface);
+
+    if (!rect)
+    {
+        locked_rect->pBits = surface->resource.allocatedMemory;
+        surface->lockedRect.left = 0;
+        surface->lockedRect.top = 0;
+        surface->lockedRect.right = surface->resource.width;
+        surface->lockedRect.bottom = surface->resource.height;
+    }
+    else
+    {
+        const struct wined3d_format *format = surface->resource.format;
+
+        if ((format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
+        {
+            /* Compressed textures are block based, so calculate the offset of
+             * the block that contains the top-left pixel of the locked rectangle. */
+            locked_rect->pBits = surface->resource.allocatedMemory
+                    + ((rect->top / format->block_height) * locked_rect->Pitch)
+                    + ((rect->left / format->block_width) * format->block_byte_count);
+        }
+        else
+        {
+            locked_rect->pBits = surface->resource.allocatedMemory
+                    + (locked_rect->Pitch * rect->top)
+                    + (rect->left * format->byte_count);
+        }
+        surface->lockedRect.left = rect->left;
+        surface->lockedRect.top = rect->top;
+        surface->lockedRect.right = rect->right;
+        surface->lockedRect.bottom = rect->bottom;
+    }
+
+    TRACE("Locked rect %s.\n", wine_dbgstr_rect(&surface->lockedRect));
+    TRACE("Returning memory %p, pitch %u.\n", locked_rect->pBits, locked_rect->Pitch);
+
+    return WINED3D_OK;
+}
 /* Do not call while under the GL lock. */
 static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
 {
@@ -2356,7 +4309,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
             surface_load_location(This, SFLAG_INSYSMEM, NULL);
             surface_release_client_storage(This);
         }
-        hr = IWineD3DBaseSurfaceImpl_CreateDIBSection(iface);
+        hr = surface_create_dib_section(This);
         if(FAILED(hr)) return WINED3DERR_INVALIDCALL;
 
         /* Use the dib section from now on if we are not using a PBO */
@@ -5313,7 +7266,7 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Map(IWineD3DSurface *iface,
     {
         /* This happens on gdi surfaces if the application set a user pointer
          * and resets it. Recreate the DIB section. */
-        IWineD3DBaseSurfaceImpl_CreateDIBSection(iface);
+        surface_create_dib_section(surface);
         surface->resource.allocatedMemory = surface->dib.bitmap_data;
     }
 
