@@ -254,7 +254,7 @@ static inline TiffFrameDecode *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDe
 static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 {
     uint16 photometric, bps, samples, planar;
-    uint16 extra_sample_count, *extra_samples;
+    uint16 extra_sample_count, extra_sample, *extra_samples;
     int ret;
 
     decode_info->indexed = 0;
@@ -327,8 +327,9 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
             ret = pTIFFGetField(tiff, TIFFTAG_EXTRASAMPLES, &extra_sample_count, &extra_samples);
             if (!ret)
             {
-                WARN("Cannot get extra sample type for RGB data, ret=%i count=%i\n", ret, extra_sample_count);
-                return E_FAIL;
+                extra_sample_count = 1;
+                extra_sample = 0;
+                extra_samples = &extra_sample;
             }
         }
         else if (samples != 3)
