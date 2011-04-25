@@ -1409,7 +1409,7 @@ static void test_depth_stencil_reset(void)
 {
     D3DPRESENT_PARAMETERS present_parameters;
     D3DDISPLAYMODE display_mode;
-    IDirect3DSurface8 *surface;
+    IDirect3DSurface8 *surface, *orig_rt;
     IDirect3DDevice8 *device = NULL;
     IDirect3D8 *d3d8;
     UINT refcount;
@@ -1438,6 +1438,9 @@ static void test_depth_stencil_reset(void)
         goto cleanup;
     }
 
+    hr = IDirect3DDevice8_GetRenderTarget(device, &orig_rt);
+    ok(hr == D3D_OK, "GetRenderTarget failed with 0x%08x\n", hr);
+
     hr = IDirect3DDevice8_TestCooperativeLevel(device);
     ok(SUCCEEDED(hr), "TestCooperativeLevel failed with %#x\n", hr);
 
@@ -1446,8 +1449,9 @@ static void test_depth_stencil_reset(void)
 
     hr = IDirect3DDevice8_GetRenderTarget(device, &surface);
     ok(hr == D3D_OK, "GetRenderTarget failed with 0x%08x\n", hr);
-    ok(surface != NULL, "Render target should not be NULL\n");
+    ok(surface == orig_rt, "Render target is %p, should be %p\n", surface, orig_rt);
     if (surface) IDirect3DSurface8_Release(surface);
+    IDirect3DSurface8_Release(orig_rt);
 
     hr = IDirect3DDevice8_GetDepthStencilSurface(device, &surface);
     ok(hr == D3DERR_NOTFOUND, "GetDepthStencilSurface returned 0x%08x, expected D3DERR_NOTFOUND\n", hr);
@@ -2120,7 +2124,8 @@ cleanup:
 static void test_depth_stencil_size(void)
 {
     IDirect3DDevice8 *device;
-    IDirect3DSurface8 *ds, *rt, *ds_bigger;
+    IDirect3DSurface8 *ds, *rt, *ds_bigger, *ds_bigger2;
+    IDirect3DSurface8 *surf;
     IDirect3D8 *d3d8;
     HRESULT hr;
     HWND hwnd;
@@ -2140,15 +2145,37 @@ static void test_depth_stencil_size(void)
     ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateDepthStencilSurface failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_CreateDepthStencilSurface(device, 128, 128, D3DFMT_D24X8, D3DMULTISAMPLE_NONE, &ds_bigger);
     ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateDepthStencilSurface(device, 128, 128, D3DFMT_D24X8, D3DMULTISAMPLE_NONE, &ds_bigger2);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateDepthStencilSurface failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_SetRenderTarget(device, rt, ds);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_SetRenderTarget returned %#x, expected D3DERR_INVALIDCALL.\n", hr);
     hr = IDirect3DDevice8_SetRenderTarget(device, rt, ds_bigger);
     ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateDepthStencilSurface failed, hr %#x.\n", hr);
 
+    /* try to set the small ds without changing the render target at the same time */
+    hr = IDirect3DDevice8_SetRenderTarget(device, NULL, ds);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_SetRenderTarget returned %#x, expected D3DERR_INVALIDCALL.\n", hr);
+    hr = IDirect3DDevice8_SetRenderTarget(device, NULL, ds_bigger2);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateDepthStencilSurface failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetRenderTarget(device, &surf);
+    ok(surf == rt, "The render target is %p, expected %p\n", surf, rt);
+    IDirect3DSurface8_Release(surf);
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &surf);
+    ok(surf == ds_bigger2, "The depth stencil is %p, expected %p\n", surf, ds_bigger2);
+    IDirect3DSurface8_Release(surf);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, NULL, NULL);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &surf);
+    ok(surf == NULL, "The depth stencil is %p, expected NULL\n", surf);
+    if (surf) IDirect3DSurface8_Release(surf);
+
     IDirect3DSurface8_Release(rt);
     IDirect3DSurface8_Release(ds);
     IDirect3DSurface8_Release(ds_bigger);
+    IDirect3DSurface8_Release(ds_bigger2);
 
 cleanup:
     if (d3d8) IDirect3D8_Release(d3d8);

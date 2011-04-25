@@ -1028,11 +1028,25 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(IDirect3DDevice8 *ifa
     {
         struct wined3d_resource_desc ds_desc, rt_desc;
         struct wined3d_resource *wined3d_resource;
+        IDirect3DSurface8 *orig_rt = NULL;
+
+        /* If no render target is passed in check the size against the current RT */
+        if (!pRenderTarget)
+        {
+            hr = IDirect3DDevice8_GetRenderTarget(iface, &orig_rt);
+            if (FAILED(hr))
+            {
+                wined3d_mutex_unlock();
+                return hr;
+            }
+            pSurface = (IDirect3DSurface8Impl *)orig_rt;
+        }
 
         wined3d_resource = IWineD3DSurface_GetResource(pZSurface->wineD3DSurface);
         wined3d_resource_get_desc(wined3d_resource, &ds_desc);
         wined3d_resource = IWineD3DSurface_GetResource(pSurface->wineD3DSurface);
         wined3d_resource_get_desc(wined3d_resource, &rt_desc);
+        if (orig_rt) IDirect3DSurface8_Release(orig_rt);
 
         if (ds_desc.width < rt_desc.width || ds_desc.height < rt_desc.height)
         {
@@ -1046,7 +1060,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(IDirect3DDevice8 *ifa
     if (hr == WINED3D_OK || hr == WINED3DERR_NOTFOUND)
     {
         hr = IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, pZSurface ? pZSurface->wineD3DSurface : NULL);
-        if (SUCCEEDED(hr) && pSurface)
+        if (SUCCEEDED(hr) && pRenderTarget)
         {
             hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, 0, pSurface->wineD3DSurface, TRUE);
             if (FAILED(hr)) IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, original_ds);
