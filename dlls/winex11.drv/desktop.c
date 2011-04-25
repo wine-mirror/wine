@@ -258,7 +258,7 @@ void X11DRV_resize_desktop( unsigned int width, unsigned int height )
                       virtual_screen_rect.right - virtual_screen_rect.left,
                       virtual_screen_rect.bottom - virtual_screen_rect.top,
                       SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
-        X11DRV_ClipCursor( NULL );
+        ungrab_clipping_window();
         SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp,
                              MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
     }

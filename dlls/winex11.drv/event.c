@@ -672,7 +672,16 @@ static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
     int revert;
     XIC xic;
 
-    if (!hwnd) return;
+    if (!hwnd)
+    {
+        if (event->detail == NotifyPointer && event->window == x11drv_thread_data()->clip_window)
+        {
+            TRACE( "clip window lost focus\n" );
+            ungrab_clipping_window();
+            ClipCursor( NULL );  /* make sure the clip rectangle is reset too */
+        }
+        return;
+    }
 
     TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 

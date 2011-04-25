@@ -829,7 +829,7 @@ extern void CDECL X11DRV_SetFocus( HWND hwnd );
 extern void set_window_cursor( Window window, HCURSOR handle );
 extern void sync_window_cursor( Window window );
 extern LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd );
-extern BOOL CDECL X11DRV_ClipCursor( LPCRECT clip );
+extern void ungrab_clipping_window(void);
 extern void X11DRV_InitKeyboard( Display *display );
 extern DWORD CDECL X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
                                                        DWORD mask, DWORD flags );
