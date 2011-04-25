@@ -334,6 +334,114 @@ void draw_textured_quad(IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, 
     }
 }
 
+static HRESULT surface_private_setup(struct IWineD3DSurfaceImpl *surface)
+{
+    /* TODO: Check against the maximum texture sizes supported by the video card. */
+    const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
+    unsigned int pow2Width, pow2Height;
+
+    TRACE("surface %p.\n", surface);
+
+    surface->texture_name = 0;
+    surface->texture_target = GL_TEXTURE_2D;
+
+    /* Non-power2 support */
+    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
+    {
+        pow2Width = surface->resource.width;
+        pow2Height = surface->resource.height;
+    }
+    else
+    {
+        /* Find the nearest pow2 match */
+        pow2Width = pow2Height = 1;
+        while (pow2Width < surface->resource.width)
+            pow2Width <<= 1;
+        while (pow2Height < surface->resource.height)
+            pow2Height <<= 1;
+    }
+    surface->pow2Width = pow2Width;
+    surface->pow2Height = pow2Height;
+
+    if (pow2Width > surface->resource.width || pow2Height > surface->resource.height)
+    {
+        /* TODO: Add support for non power two compressed textures. */
+        if (surface->resource.format->flags & WINED3DFMT_FLAG_COMPRESSED)
+        {
+            FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d)\n",
+                  surface, surface->resource.width, surface->resource.height);
+            return WINED3DERR_NOTAVAILABLE;
+        }
+    }
+
+    if (pow2Width != surface->resource.width
+            || pow2Height != surface->resource.height)
+    {
+        surface->flags |= SFLAG_NONPOW2;
+    }
+
+    if ((surface->pow2Width > gl_info->limits.texture_size || surface->pow2Height > gl_info->limits.texture_size)
+            && !(surface->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
+    {
+        /* One of three options:
+         * 1: Do the same as we do with NPOT and scale the texture, (any
+         *    texture ops would require the texture to be scaled which is
+         *    potentially slow)
+         * 2: Set the texture to the maximum size (bad idea).
+         * 3: WARN and return WINED3DERR_NOTAVAILABLE;
+         * 4: Create the surface, but allow it to be used only for DirectDraw
+         *    Blts. Some apps (e.g. Swat 3) create textures with a Height of
+         *    16 and a Width > 3000 and blt 16x16 letter areas from them to
+         *    the render target. */
+        if (surface->resource.pool == WINED3DPOOL_DEFAULT || surface->resource.pool == WINED3DPOOL_MANAGED)
+        {
+            WARN("Unable to allocate a surface which exceeds the maximum OpenGL texture size.\n");
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
+        /* We should never use this surface in combination with OpenGL! */
+        TRACE("Creating an oversized surface: %ux%u.\n",
+                surface->pow2Width, surface->pow2Height);
+    }
+    else
+    {
+        /* Don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8
+         * and EXT_PALETTED_TEXTURE is used in combination with texture
+         * uploads (RTL_READTEX/RTL_TEXTEX). The reason is that
+         * EXT_PALETTED_TEXTURE doesn't work in combination with
+         * ARB_TEXTURE_RECTANGLE. */
+        if (surface->flags & SFLAG_NONPOW2 && gl_info->supported[ARB_TEXTURE_RECTANGLE]
+                && !(surface->resource.format->id == WINED3DFMT_P8_UINT
+                && gl_info->supported[EXT_PALETTED_TEXTURE]
+                && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
+        {
+            surface->texture_target = GL_TEXTURE_RECTANGLE_ARB;
+            surface->pow2Width = surface->resource.width;
+            surface->pow2Height = surface->resource.height;
+            surface->flags &= ~(SFLAG_NONPOW2 | SFLAG_NORMCOORD);
+        }
+    }
+
+    switch (wined3d_settings.offscreen_rendering_mode)
+    {
+        case ORM_FBO:
+            surface->get_drawable_size = get_drawable_size_fbo;
+            break;
+
+        case ORM_BACKBUFFER:
+            surface->get_drawable_size = get_drawable_size_backbuffer;
+            break;
+
+        default:
+            ERR("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
+            return WINED3DERR_INVALIDCALL;
+    }
+
+    surface->flags |= SFLAG_INSYSMEM;
+
+    return WINED3D_OK;
+}
+
 static void surface_realize_palette(IWineD3DSurfaceImpl *surface)
 {
     struct wined3d_palette *palette = surface->palette;
@@ -514,9 +622,54 @@ static const struct wined3d_resource_ops surface_resource_ops =
 
 static const struct wined3d_surface_ops surface_ops =
 {
+    surface_private_setup,
     surface_realize_palette,
     surface_draw_overlay,
 };
+
+/*****************************************************************************
+ * Initializes the GDI surface, aka creates the DIB section we render to
+ * The DIB section creation is done by calling GetDC, which will create the
+ * section and releasing the dc to allow the app to use it. The dib section
+ * will stay until the surface is released
+ *
+ * GDI surfaces do not need to be a power of 2 in size, so the pow2 sizes
+ * are set to the real sizes to save memory. The NONPOW2 flag is unset to
+ * avoid confusion in the shared surface code.
+ *
+ * Returns:
+ *  WINED3D_OK on success
+ *  The return values of called methods on failure
+ *
+ *****************************************************************************/
+static HRESULT gdi_surface_private_setup(IWineD3DSurfaceImpl *surface)
+{
+    HRESULT hr;
+
+    TRACE("surface %p.\n", surface);
+
+    if (surface->resource.usage & WINED3DUSAGE_OVERLAY)
+    {
+        ERR("Overlays not yet supported by GDI surfaces.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* Sysmem textures have memory already allocated - release it,
+     * this avoids an unnecessary memcpy. */
+    hr = IWineD3DBaseSurfaceImpl_CreateDIBSection((IWineD3DSurface *)surface);
+    if (SUCCEEDED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+        surface->resource.heapMemory = NULL;
+        surface->resource.allocatedMemory = surface->dib.bitmap_data;
+    }
+
+    /* We don't mind the nonpow2 stuff in GDI. */
+    surface->pow2Width = surface->resource.width;
+    surface->pow2Height = surface->resource.height;
+
+    return WINED3D_OK;
+}
 
 static void surface_gdi_cleanup(IWineD3DSurfaceImpl *surface)
 {
@@ -589,6 +742,7 @@ static HRESULT gdi_surface_draw_overlay(IWineD3DSurfaceImpl *surface)
 
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
+    gdi_surface_private_setup,
     gdi_surface_realize_palette,
     gdi_surface_draw_overlay,
 };
@@ -4172,107 +4326,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD 
     return IWineD3DBaseSurfaceImpl_BltFast(iface, dstx, dsty, src_surface, rsrc, trans);
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
-    /** Check against the maximum texture sizes supported by the video card **/
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    const struct wined3d_gl_info *gl_info = &This->resource.device->adapter->gl_info;
-    unsigned int pow2Width, pow2Height;
-
-    This->surface_ops = &surface_ops;
-
-    This->texture_name = 0;
-    This->texture_target = GL_TEXTURE_2D;
-
-    /* Non-power2 support */
-    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
-    {
-        pow2Width = This->resource.width;
-        pow2Height = This->resource.height;
-    }
-    else
-    {
-        /* Find the nearest pow2 match */
-        pow2Width = pow2Height = 1;
-        while (pow2Width < This->resource.width) pow2Width <<= 1;
-        while (pow2Height < This->resource.height) pow2Height <<= 1;
-    }
-    This->pow2Width  = pow2Width;
-    This->pow2Height = pow2Height;
-
-    if (pow2Width > This->resource.width || pow2Height > This->resource.height)
-    {
-        /* TODO: Add support for non power two compressed textures. */
-        if (This->resource.format->flags & WINED3DFMT_FLAG_COMPRESSED)
-        {
-            FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d)\n",
-                  This, This->resource.width, This->resource.height);
-            return WINED3DERR_NOTAVAILABLE;
-        }
-    }
-
-    if (pow2Width != This->resource.width
-            || pow2Height != This->resource.height)
-    {
-        This->flags |= SFLAG_NONPOW2;
-    }
-
-    TRACE("%p\n", This);
-    if ((This->pow2Width > gl_info->limits.texture_size || This->pow2Height > gl_info->limits.texture_size)
-            && !(This->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
-    {
-        /* one of three options
-        1: Do the same as we do with nonpow 2 and scale the texture, (any texture ops would require the texture to be scaled which is potentially slow)
-        2: Set the texture to the maximum size (bad idea)
-        3:    WARN and return WINED3DERR_NOTAVAILABLE;
-        4: Create the surface, but allow it to be used only for DirectDraw Blts. Some apps(e.g. Swat 3) create textures with a Height of 16 and a Width > 3000 and blt 16x16 letter areas from them to the render target.
-        */
-        if(This->resource.pool == WINED3DPOOL_DEFAULT || This->resource.pool == WINED3DPOOL_MANAGED)
-        {
-            WARN("(%p) Unable to allocate a surface which exceeds the maximum OpenGL texture size\n", This);
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
-        /* We should never use this surface in combination with OpenGL! */
-        TRACE("(%p) Creating an oversized surface: %ux%u\n", This, This->pow2Width, This->pow2Height);
-    }
-    else
-    {
-        /* Don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE
-           is used in combination with texture uploads (RTL_READTEX/RTL_TEXTEX). The reason is that EXT_PALETTED_TEXTURE
-           doesn't work in combination with ARB_TEXTURE_RECTANGLE.
-        */
-        if (This->flags & SFLAG_NONPOW2 && gl_info->supported[ARB_TEXTURE_RECTANGLE]
-                && !(This->resource.format->id == WINED3DFMT_P8_UINT
-                && gl_info->supported[EXT_PALETTED_TEXTURE]
-                && wined3d_settings.rendertargetlock_mode == RTL_READTEX))
-        {
-            This->texture_target = GL_TEXTURE_RECTANGLE_ARB;
-            This->pow2Width  = This->resource.width;
-            This->pow2Height = This->resource.height;
-            This->flags &= ~(SFLAG_NONPOW2 | SFLAG_NORMCOORD);
-        }
-    }
-
-    switch (wined3d_settings.offscreen_rendering_mode)
-    {
-        case ORM_FBO:
-            This->get_drawable_size = get_drawable_size_fbo;
-            break;
-
-        case ORM_BACKBUFFER:
-            This->get_drawable_size = get_drawable_size_backbuffer;
-            break;
-
-        default:
-            ERR("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
-            return WINED3DERR_INVALIDCALL;
-    }
-
-    This->flags |= SFLAG_INSYSMEM;
-
-    return WINED3D_OK;
-}
-
 /* GL locking is done by the caller */
 static void surface_depth_blt(IWineD3DSurfaceImpl *This, const struct wined3d_gl_info *gl_info,
         GLuint texture, GLsizei w, GLsizei h, GLenum target)
@@ -4948,7 +5001,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetClipper,
     /* Internal use: */
     IWineD3DSurfaceImpl_SetFormat,
-    IWineD3DSurfaceImpl_PrivateSetup,
 };
 
 static HRESULT ffp_blit_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
@@ -5435,53 +5487,6 @@ static HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC 
     return WINED3D_OK;
 }
 
-/*****************************************************************************
- * IWineD3DSurface::PrivateSetup, GDI version
- *
- * Initializes the GDI surface, aka creates the DIB section we render to
- * The DIB section creation is done by calling GetDC, which will create the
- * section and releasing the dc to allow the app to use it. The dib section
- * will stay until the surface is released
- *
- * GDI surfaces do not need to be a power of 2 in size, so the pow2 sizes
- * are set to the real sizes to save memory. The NONPOW2 flag is unset to
- * avoid confusion in the shared surface code.
- *
- * Returns:
- *  WINED3D_OK on success
- *  The return values of called methods on failure
- *
- *****************************************************************************/
-static HRESULT WINAPI IWineGDISurfaceImpl_PrivateSetup(IWineD3DSurface *iface)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-    HRESULT hr;
-
-    surface->surface_ops = &gdi_surface_ops;
-
-    if (surface->resource.usage & WINED3DUSAGE_OVERLAY)
-    {
-        ERR("Overlays not yet supported by GDI surfaces.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* Sysmem textures have memory already allocated - release it,
-     * this avoids an unnecessary memcpy. */
-    hr = IWineD3DBaseSurfaceImpl_CreateDIBSection(iface);
-    if (SUCCEEDED(hr))
-    {
-        HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
-        surface->resource.heapMemory = NULL;
-        surface->resource.allocatedMemory = surface->dib.bitmap_data;
-    }
-
-    /* We don't mind the nonpow2 stuff in GDI */
-    surface->pow2Width = surface->resource.width;
-    surface->pow2Height = surface->resource.height;
-
-    return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *mem)
 {
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
@@ -5575,7 +5580,6 @@ static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetClipper,
     /* Internal use: */
     IWineD3DBaseSurfaceImpl_SetFormat,
-    IWineGDISurfaceImpl_PrivateSetup,
 };
 
 HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
@@ -5646,11 +5650,13 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     {
         case SURFACE_OPENGL:
             surface->lpVtbl = &IWineD3DSurface_Vtbl;
+            surface->surface_ops = &surface_ops;
             cleanup = surface_cleanup;
             break;
 
         case SURFACE_GDI:
             surface->lpVtbl = &IWineGDISurface_Vtbl;
+            surface->surface_ops = &gdi_surface_ops;
             cleanup = surface_gdi_cleanup;
             break;
 
@@ -5689,7 +5695,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
             surface, surface->resource.allocatedMemory, surface->resource.size);
 
     /* Call the private setup routine */
-    hr = IWineD3DSurface_PrivateSetup((IWineD3DSurface *)surface);
+    hr = surface->surface_ops->surface_private_setup(surface);
     if (FAILED(hr))
     {
         ERR("Private setup failed, returning %#x\n", hr);
