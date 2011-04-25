@@ -2440,6 +2440,9 @@ static void TAB_EnsureSelectionVisible(
   INT iSelected = infoPtr->iSelected;
   INT iOrigLeftmostVisible = infoPtr->leftmostVisible;
 
+  if (iSelected < 0)
+    return;
+
   /* set the items row to the bottommost row or topmost row depending on
    * style */
   if ((infoPtr->uNumRows > 1) && !(infoPtr->dwStyle & TCS_BUTTONS))
@@ -2504,7 +2507,7 @@ static void TAB_EnsureSelectionVisible(
 
   if (infoPtr->leftmostVisible >= iSelected)
   {
-    if (iSelected >= 0) infoPtr->leftmostVisible = iSelected;
+    infoPtr->leftmostVisible = iSelected;
   }
   else
   {
