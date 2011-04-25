@@ -7282,7 +7282,7 @@ VARIANT_MakeDate_Start:
       switch (iDate)
       {
       case 0:  dwTry = dwAllOrders & ~(ORDER_DMY|ORDER_YDM); break;
-      case 1:  dwTry = dwAllOrders & ~(ORDER_MDY|ORDER_YMD|ORDER_MYD); break;
+      case 1:  dwTry = dwAllOrders & ~(ORDER_MDY|ORDER_YDM|ORDER_MYD); break;
       default: dwTry = dwAllOrders & ~(ORDER_DMY|ORDER_YDM); break;
       }
     }
