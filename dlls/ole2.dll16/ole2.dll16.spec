@@ -29,7 +29,7 @@
 29 stub CREATEGENERICCOMPOSITE
 30 pascal GetRunningObjectTable(long ptr) GetRunningObjectTable16
 31 stub OLEGETMALLOC
-32 stub RELEASESTGMEDIUM
+32 pascal ReleaseStgMedium(ptr) ReleaseStgMedium16
 33 stub READSTRINGSTREAM
 34 stub WRITESTRINGSTREAM
 35 pascal RegisterDragDrop(word segptr) RegisterDragDrop16

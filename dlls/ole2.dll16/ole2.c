@@ -333,7 +333,16 @@ HRESULT WINAPI ReadClassStg16(SEGPTR pstg, CLSID *pclsid)
 /***********************************************************************
  *              GetConvertStg (OLE2.82)
  */
-HRESULT WINAPI GetConvertStg16(LPSTORAGE stg) {
+HRESULT WINAPI GetConvertStg16(LPSTORAGE stg)
+{
     FIXME("unimplemented stub!\n");
     return E_FAIL;
+}
+
+/***********************************************************************
+ *              ReleaseStgMedium (OLE2.32)
+ */
+VOID WINAPI ReleaseStgMedium16(LPSTGMEDIUM medium)
+{
+    FIXME("%p: unimplemented stub!\n", medium);
 }
