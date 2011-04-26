@@ -7193,7 +7193,7 @@ static BOOL get_job_info_2(job_t *job, JOB_INFO_2W *ji2, LPBYTE buf, DWORD cbBuf
     DWORD shift;
     BOOL space = (cbBuf > 0);
     LPBYTE ptr = buf;
-    LPDEVMODEA  dmA;
+    LPDEVMODEA  dmA = NULL;
     LPDEVMODEW  devmode;
 
     *pcbNeeded = 0;
