@@ -427,6 +427,21 @@ static BOOL dinput_window_check(SysMouseImpl* This) {
     return TRUE;
 }
 
+static HRESULT warp_check( SysMouseImpl* This, BOOL force )
+{
+    DWORD now = GetCurrentTime();
+
+    if (force || (This->need_warp && (now - This->last_warped > 10)))
+    {
+        This->last_warped = now;
+        This->need_warp = FALSE;
+        if (!dinput_window_check(This)) return DIERR_GENERIC;
+        TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
+        SetCursorPos( This->mapped_center.x, This->mapped_center.y );
+    }
+    return DI_OK;
+}
+
 
 /******************************************************************************
   *     Acquire : gets exclusive control of the mouse
@@ -434,7 +449,6 @@ static BOOL dinput_window_check(SysMouseImpl* This) {
 static HRESULT WINAPI SysMouseWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
 {
     SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
-    RECT  rect;
     POINT point;
     HRESULT res;
 
@@ -473,23 +487,12 @@ static HRESULT WINAPI SysMouseWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
         ERR("Failed to get RECT: %d\n", GetLastError());
     }
 
-    /* Need a window to warp mouse in. */
-    if (This->warp_override == WARP_FORCE_ON && !This->base.win)
-        This->base.win = GetDesktopWindow();
-
-    /* Get the window dimension and find the center */
-    GetWindowRect(This->base.win, &rect);
-    This->mapped_center.x = (rect.left + rect.right) / 2;
-    This->mapped_center.y = (rect.top + rect.bottom) / 2;
-
     /* Warp the mouse to the center of the window */
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE || This->warp_override == WARP_FORCE_ON)
     {
-      TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
-      SetCursorPos( This->mapped_center.x, This->mapped_center.y );
-      This->last_warped = GetCurrentTime();
-
-      This->need_warp = FALSE;
+        /* Need a window to warp mouse in. */
+        if (!This->base.win) This->base.win = GetDesktopWindow();
+        warp_check( This, TRUE );
     }
 
     return DI_OK;
@@ -563,19 +566,7 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, 
     }
     LeaveCriticalSection(&This->base.crit);
 
-    /* Check if we need to do a mouse warping */
-    if (This->need_warp && (GetCurrentTime() - This->last_warped > 10))
-    {
-        if(!dinput_window_check(This))
-            return DIERR_GENERIC;
-	TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
-	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
-        This->last_warped = GetCurrentTime();
-
-        This->need_warp = FALSE;
-    }
-
-    return DI_OK;
+    return warp_check( This, FALSE );
 }
 
 static HRESULT WINAPI SysMouseAImpl_GetDeviceState(LPDIRECTINPUTDEVICE8A iface, DWORD len, LPVOID ptr)
@@ -594,19 +585,7 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W iface,
     HRESULT res;
 
     res = IDirectInputDevice2WImpl_GetDeviceData(iface, dodsize, dod, entries, flags);
-    if (FAILED(res)) return res;
-
-    /* Check if we need to do a mouse warping */
-    if (This->need_warp && (GetCurrentTime() - This->last_warped > 10))
-    {
-        if(!dinput_window_check(This))
-            return DIERR_GENERIC;
-	TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
-	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
-        This->last_warped = GetCurrentTime();
-
-        This->need_warp = FALSE;
-    }
+    if (SUCCEEDED(res)) res = warp_check( This, FALSE );
     return res;
 }
 
