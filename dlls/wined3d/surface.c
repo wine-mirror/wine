@@ -560,6 +560,17 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *surface)
     }
 }
 
+static void surface_evict_sysmem(IWineD3DSurfaceImpl *surface)
+{
+    if (surface->flags & SFLAG_DONOTFREE)
+        return;
+
+    HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+    surface->resource.allocatedMemory = NULL;
+    surface->resource.heapMemory = NULL;
+    surface_modify_location(surface, SFLAG_INSYSMEM, FALSE);
+}
+
 static HRESULT surface_private_setup(struct IWineD3DSurfaceImpl *surface)
 {
     /* TODO: Check against the maximum texture sizes supported by the video card. */
@@ -820,6 +831,102 @@ static void surface_map(IWineD3DSurfaceImpl *surface, const RECT *rect, DWORD fl
     }
 }
 
+static void surface_unmap(IWineD3DSurfaceImpl *surface)
+{
+    IWineD3DDeviceImpl *device = surface->resource.device;
+    BOOL fullsurface;
+
+    TRACE("surface %p.\n", surface);
+
+    memset(&surface->lockedRect, 0, sizeof(surface->lockedRect));
+
+    if (surface->flags & SFLAG_PBO)
+    {
+        const struct wined3d_gl_info *gl_info;
+        struct wined3d_context *context;
+
+        TRACE("Freeing PBO memory.\n");
+
+        context = context_acquire(device, NULL);
+        gl_info = context->gl_info;
+
+        ENTER_GL();
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
+        GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        checkGLcall("glUnmapBufferARB");
+        LEAVE_GL();
+        context_release(context);
+
+        surface->resource.allocatedMemory = NULL;
+    }
+
+    TRACE("dirtyfied %u.\n", surface->flags & (SFLAG_INDRAWABLE | SFLAG_INTEXTURE) ? 0 : 1);
+
+    if (surface->flags & (SFLAG_INDRAWABLE | SFLAG_INTEXTURE))
+    {
+        TRACE("Not dirtified, nothing to do.\n");
+        goto done;
+    }
+
+    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
+            || (device->render_targets && surface == device->render_targets[0]))
+    {
+        if (wined3d_settings.rendertargetlock_mode == RTL_DISABLE)
+        {
+            static BOOL warned = FALSE;
+            if (!warned)
+            {
+                ERR("The application tries to write to the render target, but render target locking is disabled.\n");
+                warned = TRUE;
+            }
+            goto done;
+        }
+
+        if (!surface->dirtyRect.left && !surface->dirtyRect.top
+                && surface->dirtyRect.right == surface->resource.width
+                && surface->dirtyRect.bottom == surface->resource.height)
+        {
+            fullsurface = TRUE;
+        }
+        else
+        {
+            /* TODO: Proper partial rectangle tracking. */
+            fullsurface = FALSE;
+            surface->flags |= SFLAG_INSYSMEM;
+        }
+
+        surface_load_location(surface, SFLAG_INDRAWABLE, fullsurface ? NULL : &surface->dirtyRect);
+
+        /* Partial rectangle tracking is not commonly implemented, it is only
+         * done for render targets. INSYSMEM was set before to tell
+         * surface_load_location() where to read the rectangle from.
+         * Indrawable is set because all modifications from the partial
+         * sysmem copy are written back to the drawable, thus the surface is
+         * merged again in the drawable. The sysmem copy is not fully up to
+         * date because only a subrectangle was read in Map(). */
+        if (!fullsurface)
+        {
+            surface_modify_location(surface, SFLAG_INDRAWABLE, TRUE);
+            surface_evict_sysmem(surface);
+        }
+
+        surface->dirtyRect.left = surface->resource.width;
+        surface->dirtyRect.top = surface->resource.height;
+        surface->dirtyRect.right = 0;
+        surface->dirtyRect.bottom = 0;
+    }
+    else if (surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+    {
+        FIXME("Depth / stencil buffer locking is not implemented.\n");
+    }
+
+done:
+    /* Overlays have to be redrawn manually after changes with the GL implementation */
+    if (surface->overlay_dest)
+        surface->surface_ops->surface_draw_overlay(surface);
+}
+
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info)
 {
@@ -930,6 +1037,7 @@ static const struct wined3d_surface_ops surface_ops =
     surface_realize_palette,
     surface_draw_overlay,
     surface_map,
+    surface_unmap,
 };
 
 /*****************************************************************************
@@ -1059,6 +1167,23 @@ static void gdi_surface_map(IWineD3DSurfaceImpl *surface, const RECT *rect, DWOR
     }
 }
 
+static void gdi_surface_unmap(IWineD3DSurfaceImpl *surface)
+{
+    TRACE("surface %p.\n", surface);
+
+    /* Tell the swapchain to update the screen. */
+    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
+    {
+        struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
+        if (surface == swapchain->front_buffer)
+        {
+            x11_copy_to_screen(swapchain, &surface->lockedRect);
+        }
+    }
+
+    memset(&surface->lockedRect, 0, sizeof(RECT));
+}
+
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
@@ -1066,6 +1191,7 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_realize_palette,
     gdi_surface_draw_overlay,
     gdi_surface_map,
+    gdi_surface_unmap,
 };
 
 static void surface_force_reload(IWineD3DSurfaceImpl *surface)
@@ -1747,17 +1873,6 @@ static BOOL surface_convert_depth_to_float(IWineD3DSurfaceImpl *surface, DWORD d
     }
 
     return TRUE;
-}
-
-static void surface_evict_sysmem(IWineD3DSurfaceImpl *surface)
-{
-    if (surface->flags & SFLAG_DONOTFREE)
-        return;
-
-    HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
-    surface->resource.allocatedMemory = NULL;
-    surface->resource.heapMemory = NULL;
-    surface_modify_location(surface, SFLAG_INSYSMEM, FALSE);
 }
 
 HRESULT surface_load(IWineD3DSurfaceImpl *surface, BOOL srgb)
@@ -3600,6 +3715,24 @@ error:
     return ret;
 }
 
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Unmap(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p.\n", iface);
+
+    if (!(surface->flags & SFLAG_LOCKED))
+    {
+        WARN("Trying to unmap unmapped surface.\n");
+        return WINEDDERR_NOTLOCKED;
+    }
+    surface->flags &= ~SFLAG_LOCKED;
+
+    surface->surface_ops->surface_unmap(surface);
+
+    return WINED3D_OK;
+}
+
 static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
         WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
@@ -4153,106 +4286,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *surface,
         wglFlush();
 
     context_release(context);
-}
-
-static HRESULT WINAPI IWineD3DSurfaceImpl_Unmap(IWineD3DSurface *iface)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.device;
-    BOOL fullsurface;
-
-    if (!(This->flags & SFLAG_LOCKED))
-    {
-        WARN("trying to Unlock an unlocked surf@%p\n", This);
-        return WINEDDERR_NOTLOCKED;
-    }
-
-    This->flags &= ~SFLAG_LOCKED;
-    memset(&This->lockedRect, 0, sizeof(This->lockedRect));
-
-    if (This->flags & SFLAG_PBO)
-    {
-        const struct wined3d_gl_info *gl_info;
-        struct wined3d_context *context;
-
-        TRACE("Freeing PBO memory\n");
-
-        context = context_acquire(device, NULL);
-        gl_info = context->gl_info;
-
-        ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
-        GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-        checkGLcall("glUnmapBufferARB");
-        LEAVE_GL();
-        context_release(context);
-
-        This->resource.allocatedMemory = NULL;
-    }
-
-    TRACE("(%p) : dirtyfied(%d)\n", This, This->flags & (SFLAG_INDRAWABLE | SFLAG_INTEXTURE) ? 0 : 1);
-
-    if (This->flags & (SFLAG_INDRAWABLE | SFLAG_INTEXTURE))
-    {
-        TRACE("(%p) : Not Dirtified so nothing to do, return now\n", This);
-        goto unlock_end;
-    }
-
-    if (This->container.type == WINED3D_CONTAINER_SWAPCHAIN
-            || (device->render_targets && This == device->render_targets[0]))
-    {
-        if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
-            static BOOL warned = FALSE;
-            if(!warned) {
-                ERR("The application tries to write to the render target, but render target locking is disabled\n");
-                warned = TRUE;
-            }
-            goto unlock_end;
-        }
-
-        if (!This->dirtyRect.left && !This->dirtyRect.top
-                && This->dirtyRect.right == This->resource.width
-                && This->dirtyRect.bottom == This->resource.height)
-        {
-            fullsurface = TRUE;
-        } else {
-            /* TODO: Proper partial rectangle tracking */
-            fullsurface = FALSE;
-            This->flags |= SFLAG_INSYSMEM;
-        }
-
-        surface_load_location(This, SFLAG_INDRAWABLE, fullsurface ? NULL : &This->dirtyRect);
-
-        /* Partial rectangle tracking is not commonly implemented, it is only
-         * done for render targets. INSYSMEM was set before to tell
-         * surface_load_location() where to read the rectangle from.
-         * Indrawable is set because all modifications from the partial
-         * sysmem copy are written back to the drawable, thus the surface is
-         * merged again in the drawable. The sysmem copy is not fully up to
-         * date because only a subrectangle was read in Map(). */
-        if (!fullsurface)
-        {
-            surface_modify_location(This, SFLAG_INDRAWABLE, TRUE);
-            surface_evict_sysmem(This);
-        }
-
-        This->dirtyRect.left   = This->resource.width;
-        This->dirtyRect.top    = This->resource.height;
-        This->dirtyRect.right  = 0;
-        This->dirtyRect.bottom = 0;
-    }
-    else if (This->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
-    {
-        FIXME("Depth Stencil buffer locking is not implemented\n");
-    }
-
-unlock_end:
-    /* Overlays have to be redrawn manually after changes with the GL implementation */
-    if (This->overlay_dest)
-        This->surface_ops->surface_draw_overlay(This);
-
-    return WINED3D_OK;
 }
 
 static void surface_release_client_storage(IWineD3DSurfaceImpl *surface)
@@ -6940,7 +6973,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetResource,
     IWineD3DBaseSurfaceImpl_Map,
-    IWineD3DSurfaceImpl_Unmap,
+    IWineD3DBaseSurfaceImpl_Unmap,
     IWineD3DSurfaceImpl_GetDC,
     IWineD3DSurfaceImpl_ReleaseDC,
     IWineD3DSurfaceImpl_Flip,
@@ -7217,34 +7250,6 @@ static void WINAPI IWineGDISurfaceImpl_PreLoad(IWineD3DSurface *iface)
     ERR("(%p): Please report to wine-devel\n", iface);
 }
 
-static HRESULT WINAPI IWineGDISurfaceImpl_Unmap(IWineD3DSurface *iface)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p.\n", iface);
-
-    if (!(surface->flags & SFLAG_LOCKED))
-    {
-        WARN("Trying to unmap unmapped surface.\n");
-        return WINEDDERR_NOTLOCKED;
-    }
-
-    /* Tell the swapchain to update the screen. */
-    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-    {
-        struct wined3d_swapchain *swapchain = surface->container.u.swapchain;
-        if (surface == swapchain->front_buffer)
-        {
-            x11_copy_to_screen(swapchain, &surface->lockedRect);
-        }
-    }
-
-    surface->flags &= ~SFLAG_LOCKED;
-    memset(&surface->lockedRect, 0, sizeof(RECT));
-
-    return WINED3D_OK;
-}
-
 /*****************************************************************************
  * IWineD3DSurface::Flip, GDI version
  *
@@ -7454,7 +7459,7 @@ static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetResource,
     IWineD3DBaseSurfaceImpl_Map,
-    IWineGDISurfaceImpl_Unmap,
+    IWineD3DBaseSurfaceImpl_Unmap,
     IWineGDISurfaceImpl_GetDC,
     IWineGDISurfaceImpl_ReleaseDC,
     IWineGDISurfaceImpl_Flip,
