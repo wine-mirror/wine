@@ -3074,12 +3074,15 @@ static HRESULT d3dx9_parse_name(char **name, const char *ptr)
     return D3D_OK;
 }
 
-static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const char *data, const char **ptr, struct d3dx_parameter *parent)
+static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const char *data, const char **ptr,
+        struct d3dx_parameter *parent, UINT flags)
 {
     DWORD offset;
     HRESULT hr;
     D3DXHANDLE *member_handles = NULL;
     UINT i;
+
+    param->flags = flags;
 
     if (!parent)
     {
@@ -3157,7 +3160,6 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
         param->annotation_count = 0;
         param->member_count = parent->member_count;
         param->bytes = parent->bytes;
-        param->flags = parent->flags;
         param->rows = parent->rows;
         param->columns = parent->columns;
     }
@@ -3191,7 +3193,7 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
             member_handles[i] = get_parameter_handle(member);
             member->base = param->base;
 
-            hr = d3dx9_parse_effect_typedef(member, data, ptr, param);
+            hr = d3dx9_parse_effect_typedef(member, data, ptr, param, flags);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse member\n");
@@ -3228,7 +3230,7 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
             member_handles[i] = get_parameter_handle(member);
             member->base = param->base;
 
-            hr = d3dx9_parse_effect_typedef(member, data, ptr, NULL);
+            hr = d3dx9_parse_effect_typedef(member, data, ptr, NULL, flags);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse member\n");
@@ -3281,7 +3283,7 @@ static HRESULT d3dx9_parse_effect_annotation(struct d3dx_parameter *anno, const 
     read_dword(ptr, &offset);
     TRACE("Typedef offset: %#x\n", offset);
     ptr2 = data + offset;
-    hr = d3dx9_parse_effect_typedef(anno, data, &ptr2, NULL);
+    hr = d3dx9_parse_effect_typedef(anno, data, &ptr2, NULL, D3DX_PARAMETER_ANNOTATION);
     if (hr != D3D_OK)
     {
         WARN("Failed to parse type definition\n");
@@ -3321,7 +3323,7 @@ static HRESULT d3dx9_parse_effect_parameter(struct d3dx_parameter *param, const 
     read_dword(ptr, &param->annotation_count);
     TRACE("Annotation count: %u\n", param->annotation_count);
 
-    hr = d3dx9_parse_effect_typedef(param, data, &ptr2, NULL);
+    hr = d3dx9_parse_effect_typedef(param, data, &ptr2, NULL, param->flags);
     if (hr != D3D_OK)
     {
         WARN("Failed to parse type definition\n");
