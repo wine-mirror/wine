@@ -479,6 +479,10 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         hr = E_OUTOFMEMORY;
         goto exit;
     }
+    if (fmt->wBitsPerSample == 8)
+        memset(This->local_buffer, 128, This->bufsize_frames * fmt->nBlockAlign);
+    else
+        memset(This->local_buffer, 0, This->bufsize_frames * fmt->nBlockAlign);
 
     if((err = snd_pcm_sw_params_get_boundary(sw_params, &boundary)) < 0){
         WARN("Unable to get boundary: %d (%s)\n", err, snd_strerror(err));
@@ -1110,7 +1114,7 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
 
     EnterCriticalSection(&This->lock);
 
-    if(This->dataflow == eRender)
+    if(This->dataflow == eRender && This->held_frames)
         alsa_write_data(This);
     else if(This->dataflow == eCapture)
         alsa_read_data(This);
