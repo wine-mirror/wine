@@ -35,6 +35,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
+static TW_UINT16 DSM_initialized;	/* whether Source Manager is initialized */
+static TW_UINT32 DSM_sourceId;		/* source id generator */
+static TW_UINT16 DSM_currentDevice;	/* keep track of device during enumeration */
+
 struct all_devices {
 	char 		*modname;
 	TW_IDENTITY	identity;

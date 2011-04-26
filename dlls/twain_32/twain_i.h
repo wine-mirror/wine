@@ -39,32 +39,29 @@ typedef struct tagActiveDS
     DSENTRYPROC		dsEntry;
 } activeDS;
 
-TW_UINT16 DSM_initialized;      /* whether Source Manager is initialized */
-TW_UINT16 DSM_currentState;     /* current state of Source Manager */
-TW_UINT16 DSM_twCC;             /* current condition code of Source Manager */
-TW_UINT32 DSM_sourceId;         /* source id generator */
-TW_UINT16 DSM_currentDevice;    /* keep track of device during enumeration */
+TW_UINT16 DSM_currentState DECLSPEC_HIDDEN;     /* current state of Source Manager */
+TW_UINT16 DSM_twCC DECLSPEC_HIDDEN;             /* current condition code of Source Manager */
 
-activeDS *activeSources;	/* list of active data sources */
+activeDS *activeSources DECLSPEC_HIDDEN;	/* list of active data sources */
 
 /* Implementation of operation triplets (From Application to Source Manager) */
 extern TW_UINT16 TWAIN_CloseDS
-           (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+           (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 extern TW_UINT16 TWAIN_IdentityGetDefault
-           (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+           (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 extern TW_UINT16 TWAIN_IdentityGetFirst
-           (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+           (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 extern TW_UINT16 TWAIN_IdentityGetNext
-           (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+           (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 extern TW_UINT16 TWAIN_OpenDS
-           (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+           (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 extern TW_UINT16 TWAIN_UserSelect
-           (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+           (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 extern TW_UINT16 TWAIN_CloseDSM
-           (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+           (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 extern TW_UINT16 TWAIN_OpenDSM
-           (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+           (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 extern TW_UINT16 TWAIN_GetDSMStatus
-           (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+           (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 
 #endif
