@@ -54,8 +54,17 @@ static BOOL sparc_stack_walk(struct cpu_stack_walk* csw, LPSTACKFRAME64 frame, C
 
 static unsigned sparc_map_dwarf_register(unsigned regno)
 {
-    FIXME("not done for Sparc\n");
-    return 0;
+    if (regno <= 7)
+        return CV_SPARC_G0 + regno;
+    else if (regno >= 8 && regno <= 15)
+        return CV_SPARC_O0 + regno - 8;
+    else if (regno >= 16 && regno <= 23)
+        return CV_SPARC_L0 + regno - 16;
+    else if (regno >= 24 && regno <= 31)
+        return CV_SPARC_I0 + regno - 24;
+
+    FIXME("Don't know how to map register %d\n", regno);
+    return CV_SPARC_NOREG;
 }
 
 static void* sparc_fetch_context_reg(CONTEXT* ctx, unsigned regno, unsigned* size)
