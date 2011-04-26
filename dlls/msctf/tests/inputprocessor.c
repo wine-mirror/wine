@@ -1460,10 +1460,12 @@ static void test_startSession(void)
     ok(g_dm == dmtest,"Expected DocumentMgr not focused\n");
     ITfDocumentMgr_Release(dmtest);
 
-    TextStoreACP_Constructor((IUnknown**)&ts);
-
-    hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, (IUnknown*)ts, &cxt, &editCookie);
-    ok(SUCCEEDED(hr),"CreateContext Failed\n");
+    hr = TextStoreACP_Constructor((IUnknown**)&ts);
+    if (SUCCEEDED(hr))
+    {
+        hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, (IUnknown*)ts, &cxt, &editCookie);
+        ok(SUCCEEDED(hr),"CreateContext Failed\n");
+    }
 
     hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, NULL, &cxt2, &editCookie);
     ok(SUCCEEDED(hr),"CreateContext Failed\n");
