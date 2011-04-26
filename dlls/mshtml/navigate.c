@@ -1424,9 +1424,10 @@ static HRESULT handle_redirect(nsChannelBSC *This, const WCHAR *new_url)
             FIXME("AsyncOnChannelRedirect failed: %08x\n", hres);
         else if(This->nschannel != callback->nschannel)
             FIXME("nschannel not updated\n");
+
+        nsIAsyncVerifyRedirectCallback_Release(&callback->nsIAsyncVerifyRedirectCallback_iface);
     }
 
-    nsIAsyncVerifyRedirectCallback_Release(&callback->nsIAsyncVerifyRedirectCallback_iface);
     nsIChannelEventSink_Release(sink);
     return hres;
 }
