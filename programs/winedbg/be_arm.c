@@ -191,8 +191,21 @@ static int be_arm_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 static int be_arm_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
                                 unsigned ext_sign, LONGLONG* ret)
 {
-    dbg_printf("be_arm_fetch_integer: not done\n");
-    return FALSE;
+    if (size != 1 && size != 2 && size != 4 && size != 8) return FALSE;
+
+    memset(ret, 0, sizeof(*ret)); /* clear unread bytes */
+    /* FIXME: this assumes that debuggee and debugger use the same
+     * integral representation
+     */
+    if (!memory_read_value(lvalue, size, ret)) return FALSE;
+
+    /* propagate sign information */
+    if (ext_sign && size < 8 && (*ret >> (size * 8 - 1)) != 0)
+    {
+        ULONGLONG neg = -1;
+        *ret |= neg << (size * 8);
+    }
+    return TRUE;
 }
 
 static int be_arm_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
