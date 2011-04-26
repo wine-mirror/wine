@@ -410,7 +410,20 @@ static BOOL grab_clipping_window( const RECT *clip )
     if (!clip_window) return TRUE;
 
     /* create a clip message window unless we are already clipping */
-    if (!data->clip_hwnd && !(msg_hwnd = create_clipping_msg_window())) return TRUE;
+    if (!data->clip_hwnd)
+    {
+        if (!(msg_hwnd = create_clipping_msg_window())) return TRUE;
+        enable_xinput2();
+    }
+
+    /* don't clip to 1x1 rectangle if we don't have XInput */
+    if (data->xi2_state != xi_enabled && clip->right - clip->left == 1 && clip->bottom - clip->top == 1)
+    {
+        WARN( "XInput2 not supported, refusing to clip to %s\n", wine_dbgstr_rect(clip) );
+        if (msg_hwnd) DestroyWindow( msg_hwnd );
+        ClipCursor( NULL );
+        return TRUE;
+    }
 
     TRACE( "clipping to %s\n", wine_dbgstr_rect(clip) );
 
@@ -428,13 +441,13 @@ static BOOL grab_clipping_window( const RECT *clip )
 
     if (!clipping_cursor)
     {
+        disable_xinput2();
         if (msg_hwnd) DestroyWindow( msg_hwnd );
         return FALSE;
     }
     if (msg_hwnd)
     {
         data->clip_hwnd = msg_hwnd;
-        enable_xinput2();
         sync_window_cursor( clip_window );
         clip_rect = *clip;
         SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
