@@ -359,9 +359,12 @@ static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
                 wdata = pt1.y;
             }
 
-            This->need_warp = This->warp_override != WARP_DISABLE &&
-                              (pt.x || pt.y) &&
-                              (dwCoop & DISCL_EXCLUSIVE || This->warp_override == WARP_FORCE_ON);
+            if (pt.x || pt.y)
+            {
+                if ((This->warp_override == WARP_FORCE_ON) ||
+                    (This->warp_override != WARP_DISABLE && (This->base.dwCoopLevel & DISCL_EXCLUSIVE)))
+                    This->need_warp = TRUE;
+            }
             break;
         }
         case WM_MOUSEWHEEL:
@@ -416,28 +419,32 @@ static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
     return ret;
 }
 
-static BOOL dinput_window_check(SysMouseImpl* This) {
-    RECT rect;
-
-    /* make sure the window hasn't moved */
-    if(!GetWindowRect(This->base.win, &rect))
-        return FALSE;
-    This->mapped_center.x = (rect.left + rect.right) / 2;
-    This->mapped_center.y = (rect.top + rect.bottom) / 2;
-    return TRUE;
-}
-
 static HRESULT warp_check( SysMouseImpl* This, BOOL force )
 {
     DWORD now = GetCurrentTime();
+    const DWORD interval = (This->base.dwCoopLevel & DISCL_EXCLUSIVE) ? 500 : 10;
 
-    if (force || (This->need_warp && (now - This->last_warped > 10)))
+    if (force || (This->need_warp && (now - This->last_warped > interval)))
     {
+        RECT rect;
+
         This->last_warped = now;
         This->need_warp = FALSE;
-        if (!dinput_window_check(This)) return DIERR_GENERIC;
-        TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
-        SetCursorPos( This->mapped_center.x, This->mapped_center.y );
+        if (!GetWindowRect(This->base.win, &rect)) return DIERR_GENERIC;
+        This->mapped_center.x = (rect.left + rect.right) / 2;
+        This->mapped_center.y = (rect.top + rect.bottom) / 2;
+        if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
+        {
+            SetRect( &rect, This->mapped_center.x, This->mapped_center.y,
+                     This->mapped_center.x + 1, This->mapped_center.y + 1 );
+            TRACE("Clipping mouse to %s\n", wine_dbgstr_rect( &rect ));
+            ClipCursor( &rect );
+        }
+        else
+        {
+            TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
+            SetCursorPos( This->mapped_center.x, This->mapped_center.y );
+        }
     }
     return DI_OK;
 }
@@ -471,24 +478,13 @@ static HRESULT WINAPI SysMouseWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
     This->m_state.rgbButtons[0] = GetKeyState(VK_LBUTTON) & 0x80;
     This->m_state.rgbButtons[1] = GetKeyState(VK_RBUTTON) & 0x80;
     This->m_state.rgbButtons[2] = GetKeyState(VK_MBUTTON) & 0x80;
-    
-    /* Install our mouse hook */
+
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
     {
-      RECT rc;
-
-      ShowCursor(FALSE); /* hide cursor */
-      if (GetWindowRect(This->base.win, &rc))
-      {
-        FIXME("Clipping cursor to %s\n", wine_dbgstr_rect( &rc ));
-        ClipCursor(&rc);
-      }
-      else
-        ERR("Failed to get RECT: %d\n", GetLastError());
+        ShowCursor(FALSE); /* hide cursor */
+        warp_check( This, TRUE );
     }
-
-    /* Warp the mouse to the center of the window */
-    if (This->base.dwCoopLevel & DISCL_EXCLUSIVE || This->warp_override == WARP_FORCE_ON)
+    else if (This->warp_override == WARP_FORCE_ON)
     {
         /* Need a window to warp mouse in. */
         if (!This->base.win) This->base.win = GetDesktopWindow();
