@@ -5645,44 +5645,44 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
 /* Context activation is done by the caller. */
 static void ffp_enable(BOOL enable) {}
 
-static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *pCaps)
+static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
-    pCaps->PrimitiveMiscCaps = 0;
-    pCaps->TextureOpCaps =  WINED3DTEXOPCAPS_ADD         |
-                            WINED3DTEXOPCAPS_ADDSIGNED   |
-                            WINED3DTEXOPCAPS_ADDSIGNED2X |
-                            WINED3DTEXOPCAPS_MODULATE    |
-                            WINED3DTEXOPCAPS_MODULATE2X  |
-                            WINED3DTEXOPCAPS_MODULATE4X  |
-                            WINED3DTEXOPCAPS_SELECTARG1  |
-                            WINED3DTEXOPCAPS_SELECTARG2  |
-                            WINED3DTEXOPCAPS_DISABLE;
+    caps->PrimitiveMiscCaps = 0;
+    caps->TextureOpCaps = WINED3DTEXOPCAPS_ADD
+            | WINED3DTEXOPCAPS_ADDSIGNED
+            | WINED3DTEXOPCAPS_ADDSIGNED2X
+            | WINED3DTEXOPCAPS_MODULATE
+            | WINED3DTEXOPCAPS_MODULATE2X
+            | WINED3DTEXOPCAPS_MODULATE4X
+            | WINED3DTEXOPCAPS_SELECTARG1
+            | WINED3DTEXOPCAPS_SELECTARG2
+            | WINED3DTEXOPCAPS_DISABLE;
 
     if (gl_info->supported[ARB_TEXTURE_ENV_COMBINE]
             || gl_info->supported[EXT_TEXTURE_ENV_COMBINE]
             || gl_info->supported[NV_TEXTURE_ENV_COMBINE4])
     {
-        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BLENDDIFFUSEALPHA  |
-                                WINED3DTEXOPCAPS_BLENDTEXTUREALPHA  |
-                                WINED3DTEXOPCAPS_BLENDFACTORALPHA   |
-                                WINED3DTEXOPCAPS_BLENDCURRENTALPHA  |
-                                WINED3DTEXOPCAPS_LERP               |
-                                WINED3DTEXOPCAPS_SUBTRACT;
+        caps->TextureOpCaps |= WINED3DTEXOPCAPS_BLENDDIFFUSEALPHA
+                | WINED3DTEXOPCAPS_BLENDTEXTUREALPHA
+                | WINED3DTEXOPCAPS_BLENDFACTORALPHA
+                | WINED3DTEXOPCAPS_BLENDCURRENTALPHA
+                | WINED3DTEXOPCAPS_LERP
+                | WINED3DTEXOPCAPS_SUBTRACT;
     }
     if (gl_info->supported[ATI_TEXTURE_ENV_COMBINE3]
             || gl_info->supported[NV_TEXTURE_ENV_COMBINE4])
     {
-        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_ADDSMOOTH              |
-                                WINED3DTEXOPCAPS_MULTIPLYADD            |
-                                WINED3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR |
-                                WINED3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
-                                WINED3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
+        caps->TextureOpCaps |= WINED3DTEXOPCAPS_ADDSMOOTH
+                | WINED3DTEXOPCAPS_MULTIPLYADD
+                | WINED3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR
+                | WINED3DTEXOPCAPS_MODULATECOLOR_ADDALPHA
+                | WINED3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
     }
     if (gl_info->supported[ARB_TEXTURE_ENV_DOT3])
-        pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_DOTPRODUCT3;
+        caps->TextureOpCaps |= WINED3DTEXOPCAPS_DOTPRODUCT3;
 
-    pCaps->MaxTextureBlendStages = gl_info->limits.textures;
-    pCaps->MaxSimultaneousTextures = gl_info->limits.textures;
+    caps->MaxTextureBlendStages = gl_info->limits.textures;
+    caps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
 static HRESULT ffp_fragment_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }

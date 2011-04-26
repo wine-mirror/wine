@@ -4858,7 +4858,7 @@ static BOOL shader_arb_dirty_const(void)
     return TRUE;
 }
 
-static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *pCaps)
+static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
@@ -4875,26 +4875,26 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
 
         if (gl_info->supported[NV_VERTEX_PROGRAM3])
         {
-            pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
+            caps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
             TRACE_(d3d_caps)("Hardware vertex shader version 3.0 enabled (NV_VERTEX_PROGRAM3)\n");
         }
         else if (vs_consts >= 256)
         {
             /* Shader Model 2.0 requires at least 256 vertex shader constants */
-            pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
+            caps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
             TRACE_(d3d_caps)("Hardware vertex shader version 2.0 enabled (ARB_PROGRAM)\n");
         }
         else
         {
-            pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
+            caps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
             TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
         }
-        pCaps->MaxVertexShaderConst = vs_consts;
+        caps->MaxVertexShaderConst = vs_consts;
     }
     else
     {
-        pCaps->VertexShaderVersion = 0;
-        pCaps->MaxVertexShaderConst = 0;
+        caps->VertexShaderVersion = 0;
+        caps->MaxVertexShaderConst = 0;
     }
 
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
@@ -4910,31 +4910,31 @@ static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct sh
 
         if (gl_info->supported[NV_FRAGMENT_PROGRAM2])
         {
-            pCaps->PixelShaderVersion    = WINED3DPS_VERSION(3,0);
+            caps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
             TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (NV_FRAGMENT_PROGRAM2)\n");
         }
         else if (ps_consts >= 32)
         {
             /* Shader Model 2.0 requires at least 32 pixel shader constants */
-            pCaps->PixelShaderVersion    = WINED3DPS_VERSION(2,0);
+            caps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
             TRACE_(d3d_caps)("Hardware pixel shader version 2.0 enabled (ARB_PROGRAM)\n");
         }
         else
         {
-            pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
+            caps->PixelShaderVersion = WINED3DPS_VERSION(1,4);
             TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
         }
-        pCaps->PixelShader1xMaxValue = 8.0f;
-        pCaps->MaxPixelShaderConst = ps_consts;
+        caps->PixelShader1xMaxValue = 8.0f;
+        caps->MaxPixelShaderConst = ps_consts;
     }
     else
     {
-        pCaps->PixelShaderVersion = 0;
-        pCaps->PixelShader1xMaxValue = 0.0f;
-        pCaps->MaxPixelShaderConst = 0;
+        caps->PixelShaderVersion = 0;
+        caps->PixelShader1xMaxValue = 0.0f;
+        caps->MaxPixelShaderConst = 0;
     }
 
-    pCaps->VSClipping = use_nv_clip(gl_info);
+    caps->VSClipping = use_nv_clip(gl_info);
 }
 
 static BOOL shader_arb_color_fixup_supported(struct color_fixup_desc fixup)

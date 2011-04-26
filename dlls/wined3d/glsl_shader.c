@@ -4922,7 +4922,7 @@ static BOOL shader_glsl_dirty_const(void)
     return FALSE;
 }
 
-static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *pCaps)
+static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
     /* NVIDIA GeForce 6 / 7 or ATI R4xx / R5xx cards with GLSL support
      * support SM3, but older NVIDIA / ATI models with GLSL support only
@@ -4944,17 +4944,17 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
             || gl_info->supported[ARB_SHADER_TEXTURE_LOD]
             || gl_info->supported[EXT_GPU_SHADER4])
     {
-        pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
-        pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
+        caps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
+        caps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
     }
     else
     {
-        pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
-        pCaps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
+        caps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
+        caps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
     }
 
-    pCaps->MaxVertexShaderConst = gl_info->limits.glsl_vs_float_constants;
-    pCaps->MaxPixelShaderConst = gl_info->limits.glsl_ps_float_constants;
+    caps->MaxVertexShaderConst = gl_info->limits.glsl_vs_float_constants;
+    caps->MaxPixelShaderConst = gl_info->limits.glsl_ps_float_constants;
 
     /* FIXME: The following line is card dependent. -8.0 to 8.0 is the
      * Direct3D minimum requirement.
@@ -4968,14 +4968,14 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
      * the shader will generate incorrect results too. Unfortunately, GL deliberately doesn't
      * offer a way to query this.
      */
-    pCaps->PixelShader1xMaxValue = 8.0;
+    caps->PixelShader1xMaxValue = 8.0;
 
-    pCaps->VSClipping = TRUE;
+    caps->VSClipping = TRUE;
 
     TRACE_(d3d_caps)("Hardware vertex shader version %u.%u enabled (GLSL).\n",
-            (pCaps->VertexShaderVersion >> 8) & 0xff, pCaps->VertexShaderVersion & 0xff);
+            (caps->VertexShaderVersion >> 8) & 0xff, caps->VertexShaderVersion & 0xff);
     TRACE_(d3d_caps)("Hardware pixel shader version %u.%u enabled (GLSL).\n",
-            (pCaps->PixelShaderVersion >> 8) & 0xff, pCaps->PixelShaderVersion & 0xff);
+            (caps->PixelShaderVersion >> 8) & 0xff, caps->PixelShaderVersion & 0xff);
 }
 
 static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)
