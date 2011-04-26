@@ -975,13 +975,64 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     IDirect3DVertexBuffer9 *vertex_buffer;
     IDirect3DIndexBuffer9 *index_buffer;
     ID3DXMeshImpl *object;
+    DWORD index_usage = 0;
+    D3DPOOL index_pool = D3DPOOL_DEFAULT;
+    D3DFORMAT index_format = D3DFMT_INDEX16;
+    DWORD vertex_usage = 0;
+    D3DPOOL vertex_pool = D3DPOOL_DEFAULT;
 
-    TRACE("(%d, %d, %d, %p, %p, %p)\n", numfaces, numvertices, options, declaration, device, mesh);
+    TRACE("(%d, %d, %x, %p, %p, %p)\n", numfaces, numvertices, options, declaration, device, mesh);
 
-    if (numfaces == 0 || numvertices == 0 || declaration == NULL || device == NULL || mesh == NULL)
+    if (numfaces == 0 || numvertices == 0 || declaration == NULL || device == NULL || mesh == NULL ||
+        /* D3DXMESH_VB_SHARE is for cloning, and D3DXMESH_USEHWONLY is for ConvertToBlendedMesh */
+        (options & (D3DXMESH_VB_SHARE | D3DXMESH_USEHWONLY | 0xfffe0000)))
     {
         return D3DERR_INVALIDCALL;
     }
+
+    if (options & D3DXMESH_32BIT)
+        index_format = D3DFMT_INDEX32;
+
+    if (options & D3DXMESH_DONOTCLIP) {
+        index_usage |= D3DUSAGE_DONOTCLIP;
+        vertex_usage |= D3DUSAGE_DONOTCLIP;
+    }
+    if (options & D3DXMESH_POINTS) {
+        index_usage |= D3DUSAGE_POINTS;
+        vertex_usage |= D3DUSAGE_POINTS;
+    }
+    if (options & D3DXMESH_RTPATCHES) {
+        index_usage |= D3DUSAGE_RTPATCHES;
+        vertex_usage |= D3DUSAGE_RTPATCHES;
+    }
+    if (options & D3DXMESH_NPATCHES) {
+        index_usage |= D3DUSAGE_NPATCHES;
+        vertex_usage |= D3DUSAGE_NPATCHES;
+    }
+
+    if (options & D3DXMESH_VB_SYSTEMMEM)
+        vertex_pool = D3DPOOL_SYSTEMMEM;
+    else if (options & D3DXMESH_VB_MANAGED)
+        vertex_pool = D3DPOOL_MANAGED;
+
+    if (options & D3DXMESH_VB_WRITEONLY)
+        vertex_usage |= D3DUSAGE_WRITEONLY;
+    if (options & D3DXMESH_VB_DYNAMIC)
+        vertex_usage |= D3DUSAGE_DYNAMIC;
+    if (options & D3DXMESH_VB_SOFTWAREPROCESSING)
+        vertex_usage |= D3DUSAGE_SOFTWAREPROCESSING;
+
+    if (options & D3DXMESH_IB_SYSTEMMEM)
+        index_pool = D3DPOOL_SYSTEMMEM;
+    else if (options & D3DXMESH_IB_MANAGED)
+        index_pool = D3DPOOL_MANAGED;
+
+    if (options & D3DXMESH_IB_WRITEONLY)
+        index_usage |= D3DUSAGE_WRITEONLY;
+    if (options & D3DXMESH_IB_DYNAMIC)
+        index_usage |= D3DUSAGE_DYNAMIC;
+    if (options & D3DXMESH_IB_SOFTWAREPROCESSING)
+        index_usage |= D3DUSAGE_SOFTWAREPROCESSING;
 
     hr = D3DXFVFFromDeclarator(declaration, &fvf);
     if (hr != D3D_OK)
@@ -1002,9 +1053,9 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     /* Create vertex buffer */
     hr = IDirect3DDevice9_CreateVertexBuffer(device,
                                              numvertices * D3DXGetDeclVertexSize(declaration, declaration[0].Stream),
-                                             0,
+                                             vertex_usage,
                                              fvf,
-                                             D3DPOOL_MANAGED,
+                                             vertex_pool,
                                              &vertex_buffer,
                                              NULL);
     if (FAILED(hr))
@@ -1016,10 +1067,10 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
 
     /* Create index buffer */
     hr = IDirect3DDevice9_CreateIndexBuffer(device,
-                                            numfaces * 6, /* 3 vertices per triangle, 2 triangles per face */
-                                            0,
-                                            D3DFMT_INDEX16,
-                                            D3DPOOL_MANAGED,
+                                            numfaces * 3 * ((index_format == D3DFMT_INDEX16) ? 2 : 4),
+                                            index_usage,
+                                            index_format,
+                                            index_pool,
                                             &index_buffer,
                                             NULL);
     if (FAILED(hr))
