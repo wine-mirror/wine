@@ -59,7 +59,7 @@
 
 #include "wine/list.h"
 
-extern HINSTANCE GPHOTO2_instance;
+extern HINSTANCE GPHOTO2_instance DECLSPEC_HIDDEN;
 
 struct gphoto2_file  {
     struct list entry;
@@ -104,58 +104,58 @@ struct tagActiveDS
 } activeDS;
 
 /* Helper functions */
-extern TW_UINT16 GPHOTO2_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action);
+extern TW_UINT16 GPHOTO2_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action) DECLSPEC_HIDDEN;
 
 /* Implementation of operation triplets
  * From Application to Source (Image Information) */
 TW_UINT16 GPHOTO2_CIEColorGet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_ExtImageInfoGet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_GrayResponseReset
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_GrayResponseSet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_ImageFileXferGet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_ImageInfoGet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_ImageLayoutGet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_ImageLayoutGetDefault
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_ImageLayoutReset
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_ImageLayoutSet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_ImageMemXferGet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_ImageNativeXferGet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_JPEGCompressionGet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_JPEGCompressionGetDefault
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_JPEGCompressionReset
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_JPEGCompressionSet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_Palette8Get
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_Palette8GetDefault
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_Palette8Reset
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_Palette8Set
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_RGBResponseReset
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 TW_UINT16 GPHOTO2_RGBResponseSet
-    (pTW_IDENTITY pOrigin, TW_MEMREF pData);
+    (pTW_IDENTITY pOrigin, TW_MEMREF pData) DECLSPEC_HIDDEN;
 
 /* UI function */
-BOOL DoCameraUI(void);
-HWND TransferringDialogBox(HWND dialog, LONG progress);
+BOOL DoCameraUI(void) DECLSPEC_HIDDEN;
+HWND TransferringDialogBox(HWND dialog, LONG progress) DECLSPEC_HIDDEN;
 
 #ifdef HAVE_GPHOTO2
 /* Helper function for GUI */
@@ -163,6 +163,6 @@ TW_UINT16
 _get_gphoto2_file_as_DIB(
         const char *folder, const char *filename, CameraFileType type,
         HWND hwnd, HBITMAP *hDIB
-);
+) DECLSPEC_HIDDEN;
 #endif
 #endif
