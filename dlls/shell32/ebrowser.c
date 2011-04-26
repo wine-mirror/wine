@@ -1953,7 +1953,7 @@ static HRESULT WINAPI NSTCEvents_fnOnGetDefaultIconIndex(INameSpaceTreeControlEv
 }
 
 
-const INameSpaceTreeControlEventsVtbl vt_INameSpaceTreeControlEvents =  {
+static const INameSpaceTreeControlEventsVtbl vt_INameSpaceTreeControlEvents =  {
     NSTCEvents_fnQueryInterface,
     NSTCEvents_fnAddRef,
     NSTCEvents_fnRelease,
