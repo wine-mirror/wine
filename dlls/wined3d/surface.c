@@ -775,6 +775,7 @@ static const struct wined3d_resource_ops surface_resource_ops =
 static const struct wined3d_surface_ops surface_ops =
 {
     surface_private_setup,
+    surface_cleanup,
     surface_realize_palette,
     surface_draw_overlay,
 };
@@ -895,6 +896,7 @@ static HRESULT gdi_surface_draw_overlay(IWineD3DSurfaceImpl *surface)
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
+    surface_gdi_cleanup,
     gdi_surface_realize_palette,
     gdi_surface_draw_overlay,
 };
@@ -1743,6 +1745,45 @@ static ULONG WINAPI IWineD3DBaseSurfaceImpl_AddRef(IWineD3DSurface *iface)
 
     refcount = InterlockedIncrement(&surface->resource.ref);
     TRACE("%p increasing refcount to %u.\n", surface, refcount);
+
+    return refcount;
+}
+
+/* Do not call while under the GL lock. */
+static ULONG WINAPI IWineD3DBaseSurfaceImpl_Release(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    ULONG refcount;
+
+    TRACE("Surface %p, container %p of type %#x.\n",
+            surface, surface->container.u.base, surface->container.type);
+
+    switch (surface->container.type)
+    {
+        case WINED3D_CONTAINER_TEXTURE:
+            return wined3d_texture_decref(surface->container.u.texture);
+
+        case WINED3D_CONTAINER_SWAPCHAIN:
+            return wined3d_swapchain_decref(surface->container.u.swapchain);
+
+        default:
+            ERR("Unhandled container type %#x.\n", surface->container.type);
+        case WINED3D_CONTAINER_NONE:
+            break;
+    }
+
+    refcount = InterlockedDecrement(&surface->resource.ref);
+    TRACE("%p decreasing refcount to %u.\n", surface, refcount);
+
+    if (!refcount)
+    {
+        surface_cleanup(surface);
+        surface->surface_ops->surface_cleanup(surface);
+        surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
+
+        TRACE("Destroyed surface %p.\n", surface);
+        HeapFree(GetProcessHeap(), 0, surface);
+    }
 
     return refcount;
 }
@@ -3438,43 +3479,6 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
     TRACE("Returning memory %p, pitch %u.\n", locked_rect->pBits, locked_rect->Pitch);
 
     return WINED3D_OK;
-}
-/* Do not call while under the GL lock. */
-static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-    ULONG refcount;
-
-    TRACE("Surface %p, container %p of type %#x.\n",
-            surface, surface->container.u.base, surface->container.type);
-
-    switch (surface->container.type)
-    {
-        case WINED3D_CONTAINER_TEXTURE:
-            return wined3d_texture_decref(surface->container.u.texture);
-
-        case WINED3D_CONTAINER_SWAPCHAIN:
-            return wined3d_swapchain_decref(surface->container.u.swapchain);
-
-        default:
-            ERR("Unhandled container type %#x.\n", surface->container.type);
-        case WINED3D_CONTAINER_NONE:
-            break;
-    }
-
-    refcount = InterlockedDecrement(&surface->resource.ref);
-    TRACE("%p decreasing refcount to %u.\n", surface, refcount);
-
-    if (!refcount)
-    {
-        surface_cleanup(surface);
-        surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
-
-        TRACE("Destroyed surface %p.\n", surface);
-        HeapFree(GetProcessHeap(), 0, surface);
-    }
-
-    return refcount;
 }
 
 /* ****************************************************
@@ -6920,7 +6924,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     /* IUnknown */
     IWineD3DBaseSurfaceImpl_QueryInterface,
     IWineD3DBaseSurfaceImpl_AddRef,
-    IWineD3DSurfaceImpl_Release,
+    IWineD3DBaseSurfaceImpl_Release,
     /* IWineD3DResource */
     IWineD3DBaseSurfaceImpl_GetParent,
     IWineD3DBaseSurfaceImpl_SetPrivateData,
@@ -7202,43 +7206,6 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     return TRUE;
 }
 
-static ULONG WINAPI IWineGDISurfaceImpl_Release(IWineD3DSurface *iface)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-    ULONG refcount;
-
-    TRACE("Surface %p, container %p of type %#x.\n",
-            surface, surface->container.u.base, surface->container.type);
-
-    switch (surface->container.type)
-    {
-        case WINED3D_CONTAINER_TEXTURE:
-            return wined3d_texture_decref(surface->container.u.texture);
-
-        case WINED3D_CONTAINER_SWAPCHAIN:
-            return wined3d_swapchain_decref(surface->container.u.swapchain);
-
-        default:
-            ERR("Unhandled container type %#x.\n", surface->container.type);
-        case WINED3D_CONTAINER_NONE:
-            break;
-    }
-
-    refcount = InterlockedDecrement(&surface->resource.ref);
-    TRACE("%p decreasing refcount to %u.\n", surface, refcount);
-
-    if (!refcount)
-    {
-        surface_gdi_cleanup(surface);
-        surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
-
-        TRACE("Destroyed surface %p.\n", surface);
-        HeapFree(GetProcessHeap(), 0, surface);
-    }
-
-    return refcount;
-}
-
 static void WINAPI IWineGDISurfaceImpl_PreLoad(IWineD3DSurface *iface)
 {
     ERR("(%p): PreLoad is not supported on X11 surfaces!\n", iface);
@@ -7499,7 +7466,7 @@ static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     /* IUnknown */
     IWineD3DBaseSurfaceImpl_QueryInterface,
     IWineD3DBaseSurfaceImpl_AddRef,
-    IWineGDISurfaceImpl_Release,
+    IWineD3DBaseSurfaceImpl_Release,
     /* IWineD3DResource */
     IWineD3DBaseSurfaceImpl_GetParent,
     IWineD3DBaseSurfaceImpl_SetPrivateData,
@@ -7543,7 +7510,6 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
-    void (*cleanup)(IWineD3DSurfaceImpl *This);
     unsigned int resource_size;
     HRESULT hr;
 
@@ -7605,13 +7571,11 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
         case SURFACE_OPENGL:
             surface->lpVtbl = &IWineD3DSurface_Vtbl;
             surface->surface_ops = &surface_ops;
-            cleanup = surface_cleanup;
             break;
 
         case SURFACE_GDI:
             surface->lpVtbl = &IWineGDISurface_Vtbl;
             surface->surface_ops = &gdi_surface_ops;
-            cleanup = surface_gdi_cleanup;
             break;
 
         default:
@@ -7653,7 +7617,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     if (FAILED(hr))
     {
         ERR("Private setup failed, returning %#x\n", hr);
-        cleanup(surface);
+        surface->surface_ops->surface_cleanup(surface);
         return hr;
     }
 

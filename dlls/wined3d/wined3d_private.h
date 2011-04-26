@@ -2021,6 +2021,7 @@ struct wined3d_subresource_container
 struct wined3d_surface_ops
 {
     HRESULT (*surface_private_setup)(struct IWineD3DSurfaceImpl *surface);
+    void (*surface_cleanup)(struct IWineD3DSurfaceImpl *surface);
     void (*surface_realize_palette)(struct IWineD3DSurfaceImpl *surface);
     HRESULT (*surface_draw_overlay)(struct IWineD3DSurfaceImpl *surface);
 };
