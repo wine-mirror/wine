@@ -122,8 +122,8 @@ typedef enum _XDR_DT {
 } XDR_DT;
 #define DT__N_TYPES  (DT_UUID+1)
 
-extern HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo);
-extern void release_typelib(void);
+extern HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
+extern void release_typelib(void) DECLSPEC_HIDDEN;
 
 typedef struct dispex_data_t dispex_data_t;
 typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
@@ -152,10 +152,10 @@ typedef struct {
     dispex_dynamic_data_t *dynamic_data;
 } DispatchEx;
 
-extern HINSTANCE MSXML_hInstance;
+extern HINSTANCE MSXML_hInstance DECLSPEC_HIDDEN;
 
-void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*);
-BOOL dispex_query_interface(DispatchEx*,REFIID,void**);
+void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*) DECLSPEC_HIDDEN;
+BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
 
 /* memory allocation functions */
 
@@ -196,8 +196,8 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
 
 #ifdef HAVE_LIBXML2
 
-extern void schemasInit(void);
-extern void schemasCleanup(void);
+extern void schemasInit(void) DECLSPEC_HIDDEN;
+extern void schemasCleanup(void) DECLSPEC_HIDDEN;
 
 #ifndef HAVE_XMLFIRSTELEMENTCHILD
 static inline xmlNodePtr wine_xmlFirstElementChild(xmlNodePtr parent)
@@ -213,41 +213,41 @@ static inline xmlNodePtr wine_xmlFirstElementChild(xmlNodePtr parent)
 #endif
 
 /* constructors */
-extern IUnknown         *create_domdoc( xmlNodePtr );
-extern IUnknown         *create_xmldoc( void );
-extern IXMLDOMNode      *create_node( xmlNodePtr );
-extern IUnknown         *create_element( xmlNodePtr );
-extern IUnknown         *create_attribute( xmlNodePtr );
-extern IUnknown         *create_text( xmlNodePtr );
-extern IUnknown         *create_pi( xmlNodePtr );
-extern IUnknown         *create_comment( xmlNodePtr );
-extern IUnknown         *create_cdata( xmlNodePtr );
-extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr );
-extern IXMLDOMNamedNodeMap *create_nodemap( const xmlNodePtr );
-extern IUnknown         *create_doc_Implementation(void);
-extern IUnknown         *create_doc_fragment( xmlNodePtr );
-extern IUnknown         *create_doc_entity_ref( xmlNodePtr );
-extern IUnknown         *create_doc_type( xmlNodePtr );
-extern HRESULT           create_selection( xmlNodePtr, xmlChar*, IXMLDOMNodeList** );
+extern IUnknown         *create_domdoc( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_xmldoc( void ) DECLSPEC_HIDDEN;
+extern IXMLDOMNode      *create_node( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_element( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_attribute( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_text( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_pi( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_comment( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_cdata( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IXMLDOMNamedNodeMap *create_nodemap( const xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_doc_Implementation(void) DECLSPEC_HIDDEN;
+extern IUnknown         *create_doc_fragment( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_doc_entity_ref( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IUnknown         *create_doc_type( xmlNodePtr ) DECLSPEC_HIDDEN;
+extern HRESULT           create_selection( xmlNodePtr, xmlChar*, IXMLDOMNodeList** ) DECLSPEC_HIDDEN;
 
 /* data accessors */
-xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type );
+xmlNodePtr xmlNodePtr_from_domnode( IXMLDOMNode *iface, xmlElementType type ) DECLSPEC_HIDDEN;
 
 /* helpers */
-extern xmlChar *xmlChar_from_wchar( LPCWSTR str );
+extern xmlChar *xmlChar_from_wchar( LPCWSTR str ) DECLSPEC_HIDDEN;
 
-extern void xmldoc_init( xmlDocPtr doc, const GUID *clsid );
-extern LONG xmldoc_add_ref( xmlDocPtr doc );
-extern LONG xmldoc_release( xmlDocPtr doc );
-extern HRESULT xmldoc_add_orphan( xmlDocPtr doc, xmlNodePtr node );
-extern HRESULT xmldoc_remove_orphan( xmlDocPtr doc, xmlNodePtr node );
-extern void xmldoc_link_xmldecl(xmlDocPtr doc, xmlNodePtr node);
-extern xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc);
+extern void xmldoc_init( xmlDocPtr doc, const GUID *clsid ) DECLSPEC_HIDDEN;
+extern LONG xmldoc_add_ref( xmlDocPtr doc ) DECLSPEC_HIDDEN;
+extern LONG xmldoc_release( xmlDocPtr doc ) DECLSPEC_HIDDEN;
+extern HRESULT xmldoc_add_orphan( xmlDocPtr doc, xmlNodePtr node ) DECLSPEC_HIDDEN;
+extern HRESULT xmldoc_remove_orphan( xmlDocPtr doc, xmlNodePtr node ) DECLSPEC_HIDDEN;
+extern void xmldoc_link_xmldecl(xmlDocPtr doc, xmlNodePtr node) DECLSPEC_HIDDEN;
+extern xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc) DECLSPEC_HIDDEN;
 
-extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj, BOOL own );
+extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj, BOOL own ) DECLSPEC_HIDDEN;
 
-extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap);
-extern void wineXmlCallbackError(char const* caller, xmlErrorPtr err);
+extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap) DECLSPEC_HIDDEN;
+extern void wineXmlCallbackError(char const* caller, xmlErrorPtr err) DECLSPEC_HIDDEN;
 
 #define LIBXML2_LOG_CALLBACK __WINE_PRINTF_ATTR(2,3)
 
@@ -262,9 +262,9 @@ extern void wineXmlCallbackError(char const* caller, xmlErrorPtr err);
 
 #define LIBXML2_CALLBACK_SERROR(caller, err) wineXmlCallbackError(#caller, err)
 
-extern BOOL is_preserving_whitespace(xmlNodePtr node);
-extern BOOL is_xpathmode(const xmlDocPtr doc);
-extern void set_xpathmode(xmlDocPtr doc, BOOL xpath);
+extern BOOL is_preserving_whitespace(xmlNodePtr node) DECLSPEC_HIDDEN;
+extern BOOL is_xpathmode(const xmlDocPtr doc) DECLSPEC_HIDDEN;
+extern void set_xpathmode(xmlDocPtr doc, BOOL xpath) DECLSPEC_HIDDEN;
 
 /* IXMLDOMNode Internal Structure */
 typedef struct _xmlnode
@@ -275,53 +275,53 @@ typedef struct _xmlnode
     xmlNodePtr   node;
 } xmlnode;
 
-extern void init_xmlnode(xmlnode*,xmlNodePtr,IXMLDOMNode*,dispex_static_data_t*);
-extern void destroy_xmlnode(xmlnode*);
-extern BOOL node_query_interface(xmlnode*,REFIID,void**);
-extern xmlnode *get_node_obj(IXMLDOMNode*);
+extern void init_xmlnode(xmlnode*,xmlNodePtr,IXMLDOMNode*,dispex_static_data_t*) DECLSPEC_HIDDEN;
+extern void destroy_xmlnode(xmlnode*) DECLSPEC_HIDDEN;
+extern BOOL node_query_interface(xmlnode*,REFIID,void**) DECLSPEC_HIDDEN;
+extern xmlnode *get_node_obj(IXMLDOMNode*) DECLSPEC_HIDDEN;
 
-extern HRESULT node_append_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode**);
-extern HRESULT node_get_nodeName(xmlnode*,BSTR*);
-extern HRESULT node_get_content(xmlnode*,VARIANT*);
-extern HRESULT node_set_content(xmlnode*,LPCWSTR);
-extern HRESULT node_put_value(xmlnode*,VARIANT*);
-extern HRESULT node_put_value_escaped(xmlnode*,VARIANT*);
-extern HRESULT node_get_parent(xmlnode*,IXMLDOMNode**);
-extern HRESULT node_get_child_nodes(xmlnode*,IXMLDOMNodeList**);
-extern HRESULT node_get_first_child(xmlnode*,IXMLDOMNode**);
-extern HRESULT node_get_last_child(xmlnode*,IXMLDOMNode**);
-extern HRESULT node_get_previous_sibling(xmlnode*,IXMLDOMNode**);
-extern HRESULT node_get_next_sibling(xmlnode*,IXMLDOMNode**);
-extern HRESULT node_insert_before(xmlnode*,IXMLDOMNode*,const VARIANT*,IXMLDOMNode**);
-extern HRESULT node_replace_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode*,IXMLDOMNode**);
-extern HRESULT node_put_text(xmlnode*,BSTR);
-extern HRESULT node_get_xml(xmlnode*,BOOL,BOOL,BSTR*);
-extern HRESULT node_clone(xmlnode*,VARIANT_BOOL,IXMLDOMNode**);
-extern HRESULT node_get_prefix(xmlnode*,BSTR*);
-extern HRESULT node_get_base_name(xmlnode*,BSTR*);
-extern HRESULT node_get_namespaceURI(xmlnode*,BSTR*);
-extern HRESULT node_remove_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode**);
-extern HRESULT node_has_childnodes(const xmlnode*,VARIANT_BOOL*);
-extern HRESULT node_get_owner_doc(const xmlnode*,IXMLDOMDocument**);
-extern HRESULT node_get_text(const xmlnode*,BSTR*);
-extern HRESULT node_select_nodes(const xmlnode*,BSTR,IXMLDOMNodeList**);
-extern HRESULT node_select_singlenode(const xmlnode*,BSTR,IXMLDOMNode**);
-extern HRESULT node_transform_node(const xmlnode*,IXMLDOMNode*,BSTR*);
+extern HRESULT node_append_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_get_nodeName(xmlnode*,BSTR*) DECLSPEC_HIDDEN;
+extern HRESULT node_get_content(xmlnode*,VARIANT*) DECLSPEC_HIDDEN;
+extern HRESULT node_set_content(xmlnode*,LPCWSTR) DECLSPEC_HIDDEN;
+extern HRESULT node_put_value(xmlnode*,VARIANT*) DECLSPEC_HIDDEN;
+extern HRESULT node_put_value_escaped(xmlnode*,VARIANT*) DECLSPEC_HIDDEN;
+extern HRESULT node_get_parent(xmlnode*,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_get_child_nodes(xmlnode*,IXMLDOMNodeList**) DECLSPEC_HIDDEN;
+extern HRESULT node_get_first_child(xmlnode*,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_get_last_child(xmlnode*,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_get_previous_sibling(xmlnode*,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_get_next_sibling(xmlnode*,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_insert_before(xmlnode*,IXMLDOMNode*,const VARIANT*,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_replace_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode*,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_put_text(xmlnode*,BSTR) DECLSPEC_HIDDEN;
+extern HRESULT node_get_xml(xmlnode*,BOOL,BOOL,BSTR*) DECLSPEC_HIDDEN;
+extern HRESULT node_clone(xmlnode*,VARIANT_BOOL,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_get_prefix(xmlnode*,BSTR*) DECLSPEC_HIDDEN;
+extern HRESULT node_get_base_name(xmlnode*,BSTR*) DECLSPEC_HIDDEN;
+extern HRESULT node_get_namespaceURI(xmlnode*,BSTR*) DECLSPEC_HIDDEN;
+extern HRESULT node_remove_child(xmlnode*,IXMLDOMNode*,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_has_childnodes(const xmlnode*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
+extern HRESULT node_get_owner_doc(const xmlnode*,IXMLDOMDocument**) DECLSPEC_HIDDEN;
+extern HRESULT node_get_text(const xmlnode*,BSTR*) DECLSPEC_HIDDEN;
+extern HRESULT node_select_nodes(const xmlnode*,BSTR,IXMLDOMNodeList**) DECLSPEC_HIDDEN;
+extern HRESULT node_select_singlenode(const xmlnode*,BSTR,IXMLDOMNode**) DECLSPEC_HIDDEN;
+extern HRESULT node_transform_node(const xmlnode*,IXMLDOMNode*,BSTR*) DECLSPEC_HIDDEN;
 
-extern HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document);
+extern HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document) DECLSPEC_HIDDEN;
 
-extern HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree);
-extern XDR_DT  SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodePtr node);
+extern HRESULT SchemaCache_validate_tree(IXMLDOMSchemaCollection2* iface, xmlNodePtr tree) DECLSPEC_HIDDEN;
+extern XDR_DT  SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodePtr node) DECLSPEC_HIDDEN;
 
-extern XDR_DT str_to_dt(xmlChar const* str, int len /* calculated if -1 */);
-extern XDR_DT bstr_to_dt(OLECHAR const* bstr, int len /* calculated if -1 */);
-extern xmlChar const* dt_to_str(XDR_DT dt);
-extern OLECHAR const* dt_to_bstr(XDR_DT dt);
-extern HRESULT dt_validate(XDR_DT dt, xmlChar const* content);
+extern XDR_DT str_to_dt(xmlChar const* str, int len /* calculated if -1 */) DECLSPEC_HIDDEN;
+extern XDR_DT bstr_to_dt(OLECHAR const* bstr, int len /* calculated if -1 */) DECLSPEC_HIDDEN;
+extern xmlChar const* dt_to_str(XDR_DT dt) DECLSPEC_HIDDEN;
+extern OLECHAR const* dt_to_bstr(XDR_DT dt) DECLSPEC_HIDDEN;
+extern HRESULT dt_validate(XDR_DT dt, xmlChar const* content) DECLSPEC_HIDDEN;
 
-extern BSTR EnsureCorrectEOL(BSTR);
+extern BSTR EnsureCorrectEOL(BSTR) DECLSPEC_HIDDEN;
 
-extern xmlChar* tagName_to_XPath(const BSTR tagName);
+extern xmlChar* tagName_to_XPath(const BSTR tagName) DECLSPEC_HIDDEN;
 
 static inline BSTR bstr_from_xmlChar(const xmlChar *str)
 {
@@ -403,13 +403,13 @@ static inline xmlChar *xmlchar_from_wchar( LPCWSTR str )
 #endif
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
-                                             LONG line, LONG linepos, LONG filepos );
-extern HRESULT DOMDocument_create(const GUID*, IUnknown*, void**);
-extern HRESULT SchemaCache_create(const GUID*, IUnknown*, void**);
-extern HRESULT XMLDocument_create(IUnknown*, void**);
-extern HRESULT SAXXMLReader_create(IUnknown*, void**);
-extern HRESULT XMLHTTPRequest_create(IUnknown*, void **);
-extern HRESULT XSLTemplate_create(IUnknown*, void**);
+                                             LONG line, LONG linepos, LONG filepos ) DECLSPEC_HIDDEN;
+extern HRESULT DOMDocument_create(const GUID*, IUnknown*, void**) DECLSPEC_HIDDEN;
+extern HRESULT SchemaCache_create(const GUID*, IUnknown*, void**) DECLSPEC_HIDDEN;
+extern HRESULT XMLDocument_create(IUnknown*, void**) DECLSPEC_HIDDEN;
+extern HRESULT SAXXMLReader_create(IUnknown*, void**) DECLSPEC_HIDDEN;
+extern HRESULT XMLHTTPRequest_create(IUnknown*, void **) DECLSPEC_HIDDEN;
+extern HRESULT XSLTemplate_create(IUnknown*, void**) DECLSPEC_HIDDEN;
 
 static inline const CLSID* DOMDocument_version(MSXML_VERSION v)
 {
@@ -437,10 +437,10 @@ static inline const CLSID* SchemaCache_version(MSXML_VERSION v)
 
 typedef struct bsc_t bsc_t;
 
-HRESULT bind_url(LPCWSTR, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, bsc_t**);
-void detach_bsc(bsc_t*);
+HRESULT bind_url(LPCWSTR, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, bsc_t**) DECLSPEC_HIDDEN;
+void detach_bsc(bsc_t*) DECLSPEC_HIDDEN;
 
-const char *debugstr_variant(const VARIANT*);
+const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
 
 /* Error Codes - not defined anywhere in the public headers */
 #define E_XML_ELEMENT_UNDECLARED            0xC00CE00D
