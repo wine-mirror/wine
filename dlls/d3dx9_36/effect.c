@@ -107,6 +107,11 @@ struct ID3DXEffectCompilerImpl
     ID3DXBaseEffect *base_effect;
 };
 
+static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *base,
+        struct d3dx_parameter *parameter, LPCSTR name);
+static struct d3dx_parameter *get_parameter_annotation_by_name(struct ID3DXBaseEffectImpl *base,
+        struct d3dx_parameter *parameter, LPCSTR name);
+
 static inline void read_dword(const char **ptr, DWORD *d)
 {
     memcpy(d, *ptr, sizeof(*d));
@@ -436,151 +441,141 @@ static void free_effect_compiler(struct ID3DXEffectCompilerImpl *compiler)
     }
 }
 
-static LPSTR get_partial_string(LPCSTR name, char initial, char final)
+static struct d3dx_parameter *get_parameter_element_by_name(struct ID3DXBaseEffectImpl *base,
+        struct d3dx_parameter *parameter, LPCSTR name)
 {
-    UINT length;
-    LPCSTR begin;
-    LPSTR part;
+    UINT element;
+    struct d3dx_parameter *temp_parameter;
+    LPCSTR part;
 
-    TRACE("name %s, initial %c, final %c\n", debugstr_a(name), initial, final);
+    TRACE("base %p, parameter %p, name %s\n", base, parameter, debugstr_a(name));
 
-    begin = initial ? (strchr(name, initial) + 1) : name;
-    length = strchr(name, final) - begin;
-    if (length < 1)
+    if (!name || !*name) return parameter;
+
+    element = atoi(name);
+    part = strchr(name, ']') + 1;
+
+    if (parameter->element_count > element)
     {
-        WARN("Invalied argument specified.\n");
-        return NULL;
+        temp_parameter = get_parameter_struct(parameter->member_handles[element]);
+
+        switch (*part++)
+        {
+            case '.':
+                return get_parameter_by_name(base, temp_parameter, part);
+
+            case '@':
+                return get_parameter_annotation_by_name(base, temp_parameter, part);
+
+            case '\0':
+                TRACE("Returning parameter %p\n", temp_parameter);
+                return temp_parameter;
+
+            default:
+                FIXME("Unhandled case \"%c\"\n", *--part);
+                break;
+        }
     }
 
-    part = HeapAlloc(GetProcessHeap(), 0, length + 1);
-    if (!part)
-    {
-        ERR("Out of memory\n");
-        return NULL;
-    }
-    memcpy(part, begin, length);
-    part[length] = 0;
-
-    TRACE("part %s\n", debugstr_a(part));
-    return part;
+    TRACE("Parameter not found\n");
+    return NULL;
 }
 
-static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *base, struct d3dx_parameter *parameter, LPCSTR name, BOOL is_annotation)
+static struct d3dx_parameter *get_parameter_annotation_by_name(struct ID3DXBaseEffectImpl *base,
+        struct d3dx_parameter *parameter, LPCSTR name)
 {
-    unsigned int i;
+    UINT i, length;
     struct d3dx_parameter *temp_parameter;
-    LPSTR part;
+    LPCSTR part;
 
-    TRACE("base %p, parameter %p, name %s, is_annotation %s\n", base, parameter, debugstr_a(name), is_annotation ? "YES" : "NO");
+    TRACE("base %p, parameter %p, name %s\n", base, parameter, debugstr_a(name));
 
-    if (!name) return NULL;
+    if (!name || !*name) return parameter;
 
-    /* members */
-    if (strchr(name, '.'))
+    length = strcspn( name, "[.@" );
+    part = name + length;
+
+    for (i = 0; i < parameter->annotation_count; ++i)
     {
-        part = get_partial_string(name, 0, '.');
-        temp_parameter = get_parameter_by_name(base, parameter, part, is_annotation);
-        HeapFree(GetProcessHeap(), 0, part);
+        temp_parameter = get_parameter_struct(parameter->annotation_handles[i]);
 
-        if (temp_parameter)
+        if (!strcmp(temp_parameter->name, name))
         {
-            temp_parameter = get_parameter_by_name(base, temp_parameter, strchr(name, '.') + 1, FALSE);
-            TRACE("Returning sub parameter %p\n", temp_parameter);
+            TRACE("Returning parameter %p\n", temp_parameter);
             return temp_parameter;
         }
-
-        TRACE("Sub parameter not found\n");
-        return NULL;
-    }
-
-    /* annotations */
-    if (strchr(name, '@'))
-    {
-        part = get_partial_string(name, 0, '@');
-        temp_parameter = get_parameter_by_name(base, parameter, part, is_annotation);
-        HeapFree(GetProcessHeap(), 0, part);
-
-        if (temp_parameter)
+        else if (strlen(temp_parameter->name) == length && !strncmp(temp_parameter->name, name, length))
         {
-            temp_parameter = get_parameter_by_name(base, temp_parameter, strchr(name, '@') + 1, TRUE);
-            TRACE("Returning sub parameter %p\n", temp_parameter);
-            return temp_parameter;
-        }
-
-        TRACE("Sub parameter not found\n");
-        return NULL;
-    }
-
-    /* elements */
-    if (strchr(name, '['))
-    {
-        part = get_partial_string(name, 0, '[');
-        temp_parameter = get_parameter_by_name(base, parameter, part, is_annotation);
-        HeapFree(GetProcessHeap(), 0, part);
-
-        if (temp_parameter)
-        {
-            unsigned int index;
-
-            part = get_partial_string(name, '[', ']');
-            index = atoi(part);
-            HeapFree(GetProcessHeap(), 0, part);
-
-            if (index < temp_parameter->element_count)
+            switch (*part++)
             {
-                TRACE("Returning sub parameter %p\n", get_parameter_struct(temp_parameter->member_handles[index]));
-                return get_parameter_struct(temp_parameter->member_handles[index]);
+                case '.':
+                    return get_parameter_by_name(base, temp_parameter, part);
+
+                case '[':
+                    return get_parameter_element_by_name(base, temp_parameter, part);
+
+                default:
+                    FIXME("Unhandled case \"%c\"\n", *--part);
+                    break;
             }
         }
-
-        TRACE("Sub parameter not found\n");
-        return NULL;
     }
+
+    TRACE("Parameter not found\n");
+    return NULL;
+}
+
+static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *base,
+        struct d3dx_parameter *parameter, LPCSTR name)
+{
+    UINT i, count, length;
+    struct d3dx_parameter *temp_parameter;
+    D3DXHANDLE *handles;
+    LPCSTR part;
+
+    TRACE("base %p, parameter %p, name %s\n", base, parameter, debugstr_a(name));
+
+    if (!name || !*name) return parameter;
 
     if (!parameter)
     {
-        for (i=0; i < base->parameter_count; i++)
-        {
-            temp_parameter = get_parameter_struct(base->parameter_handles[i]);
-
-            if (!strcmp(temp_parameter->name, name))
-            {
-                TRACE("Returning parameter %p\n", temp_parameter);
-                return temp_parameter;
-            }
-        }
+        count = base->parameter_count;
+        handles = base->parameter_handles;
     }
     else
     {
-        if (is_annotation)
-        {
-            for (i = 0; i < parameter->annotation_count; i++)
-            {
-                temp_parameter = get_parameter_struct(parameter->annotation_handles[i]);
+        count = parameter->member_count;
+        handles = parameter->member_handles;
+    }
 
-                if (!strcmp(temp_parameter->name, name))
-                {
-                    TRACE("Returning parameter %p\n", temp_parameter);
-                    return temp_parameter;
-                }
-            }
+    length = strcspn( name, "[.@" );
+    part = name + length;
+
+    for (i = 0; i < count; i++)
+    {
+        temp_parameter = get_parameter_struct(handles[i]);
+
+        if (!strcmp(temp_parameter->name, name))
+        {
+            TRACE("Returning parameter %p\n", temp_parameter);
+            return temp_parameter;
         }
-        else
+        else if (strlen(temp_parameter->name) == length && !strncmp(temp_parameter->name, name, length))
         {
-            unsigned int count;
-
-            if (parameter->element_count) count = parameter->element_count;
-            else count = parameter->member_count;
-
-            for (i = 0; i < count; i++)
+            switch (*part++)
             {
-                temp_parameter = get_parameter_struct(parameter->member_handles[i]);
+                case '.':
+                    return get_parameter_by_name(base, temp_parameter, part);
 
-                if (!strcmp(temp_parameter->name, name))
-                {
-                    TRACE("Returning parameter %p\n", temp_parameter);
-                    return temp_parameter;
-                }
+                case '@':
+                    return get_parameter_annotation_by_name(base, temp_parameter, part);
+
+                case '[':
+                    return get_parameter_element_by_name(base, temp_parameter, part);
+
+                default:
+                    FIXME("Unhandled case \"%c\"\n", *--part);
+                    break;
             }
         }
     }
@@ -743,7 +738,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameter(ID3DXBaseEffect *iface
 
     TRACE("iface %p, parameter %p, index %u\n", This, parameter, index);
 
-    if (!param) param = get_parameter_by_name(This, NULL, parameter, FALSE);
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (!parameter)
     {
@@ -775,7 +770,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterByName(ID3DXBaseEffect 
 
     TRACE("iface %p, parameter %p, name %s\n", This, parameter, debugstr_a(name));
 
-    if (!param) param = get_parameter_by_name(This, NULL, parameter, FALSE);
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (!name)
     {
@@ -784,7 +779,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterByName(ID3DXBaseEffect 
         return handle;
     }
 
-    handle = get_parameter_handle(get_parameter_by_name(This, param, name, FALSE));
+    handle = get_parameter_handle(get_parameter_by_name(This, param, name));
     TRACE("Returning parameter %p\n", handle);
 
     return handle;
@@ -806,7 +801,7 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterElement(ID3DXBaseEffect
 
     TRACE("iface %p, parameter %p, index %u\n", This, parameter, index);
 
-    if (!param) param = get_parameter_by_name(This, NULL, parameter, FALSE);
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
 
     if (!param)
     {
