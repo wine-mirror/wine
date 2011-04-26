@@ -94,7 +94,7 @@ typedef struct domdoc domdoc;
 
 struct ConnectionPoint
 {
-    const IConnectionPointVtbl  *lpVtblConnectionPoint;
+    IConnectionPoint IConnectionPoint_iface;
     const IID *iid;
 
     ConnectionPoint *next;
@@ -120,12 +120,12 @@ typedef enum {
 struct domdoc
 {
     xmlnode node;
-    const struct IXMLDOMDocument3Vtbl          *lpVtbl;
-    const struct IPersistStreamInitVtbl        *lpvtblIPersistStreamInit;
-    const struct IObjectWithSiteVtbl           *lpvtblIObjectWithSite;
-    const struct IObjectSafetyVtbl             *lpvtblIObjectSafety;
-    const struct ISupportErrorInfoVtbl         *lpvtblISupportErrorInfo;
-    const struct IConnectionPointContainerVtbl *lpVtblConnectionPointContainer;
+    IXMLDOMDocument3          IXMLDOMDocument3_iface;
+    IPersistStreamInit        IPersistStreamInit_iface;
+    IObjectWithSite           IObjectWithSite_iface;
+    IObjectSafety             IObjectSafety_iface;
+    ISupportErrorInfo         ISupportErrorInfo_iface;
+    IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
     VARIANT_BOOL async;
     VARIANT_BOOL validating;
@@ -181,7 +181,7 @@ static HRESULT set_doc_event(domdoc *doc, eventid_t eid, const VARIANT *v)
 
 static inline ConnectionPoint *impl_from_IConnectionPoint(IConnectionPoint *iface)
 {
-    return (ConnectionPoint *)((char*)iface - FIELD_OFFSET(ConnectionPoint, lpVtblConnectionPoint));
+    return CONTAINING_RECORD(iface, ConnectionPoint, IConnectionPoint_iface);
 }
 
 /*
@@ -655,32 +655,32 @@ static HRESULT attach_xmldoc(domdoc *This, xmlDocPtr xml )
 
 static inline domdoc *impl_from_IXMLDOMDocument3( IXMLDOMDocument3 *iface )
 {
-    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpVtbl));
+    return CONTAINING_RECORD(iface, domdoc, IXMLDOMDocument3_iface);
 }
 
 static inline domdoc *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
 {
-    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIPersistStreamInit));
+    return CONTAINING_RECORD(iface, domdoc, IPersistStreamInit_iface);
 }
 
 static inline domdoc *impl_from_IObjectWithSite(IObjectWithSite *iface)
 {
-    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIObjectWithSite));
+    return CONTAINING_RECORD(iface, domdoc, IObjectWithSite_iface);
 }
 
 static inline domdoc *impl_from_IObjectSafety(IObjectSafety *iface)
 {
-    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblIObjectSafety));
+    return CONTAINING_RECORD(iface, domdoc, IObjectSafety_iface);
 }
 
 static inline domdoc *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
 {
-    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpvtblISupportErrorInfo));
+    return CONTAINING_RECORD(iface, domdoc, ISupportErrorInfo_iface);
 }
 
 static inline domdoc *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
-    return (domdoc *)((char*)iface - FIELD_OFFSET(domdoc, lpVtblConnectionPointContainer));
+    return CONTAINING_RECORD(iface, domdoc, IConnectionPointContainer_iface);
 }
 
 /************************************************************************
@@ -690,21 +690,21 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_QueryInterface(
     IPersistStreamInit *iface, REFIID riid, void **ppvObj)
 {
     domdoc* This = impl_from_IPersistStreamInit(iface);
-    return IXMLDOMDocument3_QueryInterface((IXMLDOMDocument3*)&This->lpVtbl, riid, ppvObj);
+    return IXMLDOMDocument3_QueryInterface(&This->IXMLDOMDocument3_iface, riid, ppvObj);
 }
 
 static ULONG WINAPI domdoc_IPersistStreamInit_AddRef(
     IPersistStreamInit *iface)
 {
     domdoc* This = impl_from_IPersistStreamInit(iface);
-    return IXMLDOMDocument3_AddRef((IXMLDOMDocument3*)&This->lpVtbl);
+    return IXMLDOMDocument3_AddRef(&This->IXMLDOMDocument3_iface);
 }
 
 static ULONG WINAPI domdoc_IPersistStreamInit_Release(
     IPersistStreamInit *iface)
 {
     domdoc* This = impl_from_IPersistStreamInit(iface);
-    return IXMLDOMDocument3_Release((IXMLDOMDocument3*)&This->lpVtbl);
+    return IXMLDOMDocument3_Release(&This->IXMLDOMDocument3_iface);
 }
 
 static HRESULT WINAPI domdoc_IPersistStreamInit_GetClassID(
@@ -791,7 +791,7 @@ static HRESULT WINAPI domdoc_IPersistStreamInit_Save(
 
     TRACE("(%p)->(%p %d)\n", This, stream, clr_dirty);
 
-    hr = IXMLDOMDocument3_get_xml( (IXMLDOMDocument3*)&This->lpVtbl, &xmlString );
+    hr = IXMLDOMDocument3_get_xml(&This->IXMLDOMDocument3_iface, &xmlString);
     if(hr == S_OK)
     {
         DWORD len = SysStringLen(xmlString) * sizeof(WCHAR);
@@ -840,21 +840,21 @@ static HRESULT WINAPI support_error_QueryInterface(
     REFIID riid, void** ppvObj )
 {
     domdoc *This = impl_from_ISupportErrorInfo(iface);
-    return IXMLDOMDocument3_QueryInterface((IXMLDOMDocument3 *)This, riid, ppvObj);
+    return IXMLDOMDocument3_QueryInterface(&This->IXMLDOMDocument3_iface, riid, ppvObj);
 }
 
 static ULONG WINAPI support_error_AddRef(
     ISupportErrorInfo *iface )
 {
     domdoc *This = impl_from_ISupportErrorInfo(iface);
-    return IXMLDOMDocument3_AddRef((IXMLDOMDocument3 *)This);
+    return IXMLDOMDocument3_AddRef(&This->IXMLDOMDocument3_iface);
 }
 
 static ULONG WINAPI support_error_Release(
     ISupportErrorInfo *iface )
 {
     domdoc *This = impl_from_ISupportErrorInfo(iface);
-    return IXMLDOMDocument3_Release((IXMLDOMDocument3 *)This);
+    return IXMLDOMDocument3_Release(&This->IXMLDOMDocument3_iface);
 }
 
 static HRESULT WINAPI support_error_InterfaceSupportsErrorInfo(
@@ -894,19 +894,19 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument3 *iface, REFIID rii
     else if (IsEqualGUID(&IID_IPersistStream, riid) ||
              IsEqualGUID(&IID_IPersistStreamInit, riid))
     {
-        *ppvObject = &(This->lpvtblIPersistStreamInit);
+        *ppvObject = &This->IPersistStreamInit_iface;
     }
     else if (IsEqualGUID(&IID_IObjectWithSite, riid))
     {
-        *ppvObject = &(This->lpvtblIObjectWithSite);
+        *ppvObject = &This->IObjectWithSite_iface;
     }
     else if (IsEqualGUID(&IID_IObjectSafety, riid))
     {
-        *ppvObject = &(This->lpvtblIObjectSafety);
+        *ppvObject = &This->IObjectSafety_iface;
     }
     else if( IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
-        *ppvObject = &This->lpvtblISupportErrorInfo;
+        *ppvObject = &This->ISupportErrorInfo_iface;
     }
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
@@ -914,7 +914,7 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument3 *iface, REFIID rii
     }
     else if (IsEqualGUID( riid, &IID_IConnectionPointContainer ))
     {
-        *ppvObject = &This->lpVtblConnectionPointContainer;
+        *ppvObject = &This->IConnectionPointContainer_iface;
     }
     else
     {
@@ -1043,8 +1043,8 @@ static HRESULT WINAPI domdoc_Invoke(
     hr = get_typeinfo(IXMLDOMDocument2_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMDocument3_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
 
@@ -3129,19 +3129,19 @@ static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointCo
                                                               REFIID riid, void **ppv)
 {
     domdoc *This = impl_from_IConnectionPointContainer(iface);
-    return IXMLDOMDocument3_QueryInterface((IXMLDOMDocument3*)This, riid, ppv);
+    return IXMLDOMDocument3_QueryInterface(&This->IXMLDOMDocument3_iface, riid, ppv);
 }
 
 static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
 {
     domdoc *This = impl_from_IConnectionPointContainer(iface);
-    return IXMLDOMDocument3_AddRef((IXMLDOMDocument3*)This);
+    return IXMLDOMDocument3_AddRef(&This->IXMLDOMDocument3_iface);
 }
 
 static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
 {
     domdoc *This = impl_from_IConnectionPointContainer(iface);
-    return IXMLDOMDocument3_Release((IXMLDOMDocument3*)This);
+    return IXMLDOMDocument3_Release(&This->IXMLDOMDocument3_iface);
 }
 
 static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface,
@@ -3165,7 +3165,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
     for(iter = This->cp_list; iter; iter = iter->next)
     {
         if (IsEqualGUID(iter->iid, riid))
-            *cp = (IConnectionPoint*)&iter->lpVtblConnectionPoint;
+            *cp = &iter->IConnectionPoint_iface;
     }
 
     if (*cp)
@@ -3297,7 +3297,7 @@ static const IConnectionPointVtbl ConnectionPointVtbl =
 
 static void ConnectionPoint_Init(ConnectionPoint *cp, struct domdoc *doc, REFIID riid)
 {
-    cp->lpVtblConnectionPoint = &ConnectionPointVtbl;
+    cp->IConnectionPoint_iface.lpVtbl = &ConnectionPointVtbl;
     cp->doc = doc;
     cp->iid = riid;
     cp->sinks = NULL;
@@ -3306,7 +3306,7 @@ static void ConnectionPoint_Init(ConnectionPoint *cp, struct domdoc *doc, REFIID
     cp->next = doc->cp_list;
     doc->cp_list = cp;
 
-    cp->container = (IConnectionPointContainer*)&doc->lpVtblConnectionPointContainer;
+    cp->container = &doc->IConnectionPointContainer_iface;
 }
 
 /* domdoc implementation of IObjectWithSite */
@@ -3314,19 +3314,19 @@ static HRESULT WINAPI
 domdoc_ObjectWithSite_QueryInterface( IObjectWithSite* iface, REFIID riid, void** ppvObject )
 {
     domdoc *This = impl_from_IObjectWithSite(iface);
-    return IXMLDOMDocument3_QueryInterface( (IXMLDOMDocument3 *)This, riid, ppvObject );
+    return IXMLDOMDocument3_QueryInterface(&This->IXMLDOMDocument3_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI domdoc_ObjectWithSite_AddRef( IObjectWithSite* iface )
 {
     domdoc *This = impl_from_IObjectWithSite(iface);
-    return IXMLDOMDocument3_AddRef((IXMLDOMDocument3 *)This);
+    return IXMLDOMDocument3_AddRef(&This->IXMLDOMDocument3_iface);
 }
 
 static ULONG WINAPI domdoc_ObjectWithSite_Release( IObjectWithSite* iface )
 {
     domdoc *This = impl_from_IObjectWithSite(iface);
-    return IXMLDOMDocument3_Release((IXMLDOMDocument3 *)This);
+    return IXMLDOMDocument3_Release(&This->IXMLDOMDocument3_iface);
 }
 
 static HRESULT WINAPI domdoc_ObjectWithSite_GetSite( IObjectWithSite *iface, REFIID iid, void **ppvSite )
@@ -3380,19 +3380,19 @@ static const IObjectWithSiteVtbl domdocObjectSite =
 static HRESULT WINAPI domdoc_Safety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
 {
     domdoc *This = impl_from_IObjectSafety(iface);
-    return IXMLDOMDocument3_QueryInterface( (IXMLDOMDocument3 *)This, riid, ppv );
+    return IXMLDOMDocument3_QueryInterface(&This->IXMLDOMDocument3_iface, riid, ppv);
 }
 
 static ULONG WINAPI domdoc_Safety_AddRef(IObjectSafety *iface)
 {
     domdoc *This = impl_from_IObjectSafety(iface);
-    return IXMLDOMDocument3_AddRef((IXMLDOMDocument3 *)This);
+    return IXMLDOMDocument3_AddRef(&This->IXMLDOMDocument3_iface);
 }
 
 static ULONG WINAPI domdoc_Safety_Release(IObjectSafety *iface)
 {
     domdoc *This = impl_from_IObjectSafety(iface);
-    return IXMLDOMDocument3_Release((IXMLDOMDocument3 *)This);
+    return IXMLDOMDocument3_Release(&This->IXMLDOMDocument3_iface);
 }
 
 #define SAFETY_SUPPORTED_OPTIONS (INTERFACESAFE_FOR_UNTRUSTED_CALLER|INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_SECURITY_MANAGER)
@@ -3456,12 +3456,12 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     if( !doc )
         return E_OUTOFMEMORY;
 
-    doc->lpVtbl = &domdoc_vtbl;
-    doc->lpvtblIPersistStreamInit = &xmldoc_IPersistStreamInit_VTable;
-    doc->lpvtblIObjectWithSite = &domdocObjectSite;
-    doc->lpvtblIObjectSafety = &domdocObjectSafetyVtbl;
-    doc->lpvtblISupportErrorInfo = &support_error_vtbl;
-    doc->lpVtblConnectionPointContainer = &ConnectionPointContainerVtbl;
+    doc->IXMLDOMDocument3_iface.lpVtbl = &domdoc_vtbl;
+    doc->IPersistStreamInit_iface.lpVtbl = &xmldoc_IPersistStreamInit_VTable;
+    doc->IObjectWithSite_iface.lpVtbl = &domdocObjectSite;
+    doc->IObjectSafety_iface.lpVtbl = &domdocObjectSafetyVtbl;
+    doc->ISupportErrorInfo_iface.lpVtbl = &support_error_vtbl;
+    doc->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     doc->ref = 1;
     doc->async = VARIANT_TRUE;
     doc->validating = 0;
@@ -3480,9 +3480,10 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     ConnectionPoint_Init(&doc->cp_propnotif, doc, &IID_IPropertyNotifySink);
     ConnectionPoint_Init(&doc->cp_domdocevents, doc, &DIID_XMLDOMDocumentEvents);
 
-    init_xmlnode(&doc->node, (xmlNodePtr)xmldoc, (IXMLDOMNode*)&doc->lpVtbl, &domdoc_dispex);
+    init_xmlnode(&doc->node, (xmlNodePtr)xmldoc, (IXMLDOMNode*)&doc->IXMLDOMDocument3_iface,
+            &domdoc_dispex);
 
-    *document = (IXMLDOMDocument3*)&doc->lpVtbl;
+    *document = &doc->IXMLDOMDocument3_iface;
 
     TRACE("returning iface %p\n", *document);
     return S_OK;
