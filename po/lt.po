@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-14 18:18+0300\n"
+"PO-Revision-Date: 2011-04-26 18:24+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -134,10 +134,9 @@ msgid "Separator"
 msgstr "Skirtukas"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
-msgstr "Nėra"
+msgstr "Joks"
 
 #: comctl32.rc:28 wordpad.rc:169
 msgid "Close"
@@ -1247,7 +1246,6 @@ msgid "Path Length Constraint="
 msgstr "Kelio ilgio ribojimas="
 
 #: crypt32.rc:198
-#, fuzzy
 msgctxt "path length"
 msgid "None"
 msgstr "Nėra"
@@ -2048,7 +2046,6 @@ msgid "&Forward"
 msgstr "&Pirmyn"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "Į p&radžią"
@@ -2110,7 +2107,6 @@ msgid "Back"
 msgstr "Atgal"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "Į pradžią"
@@ -6307,7 +6303,6 @@ msgid "&About Internet Explorer..."
 msgstr "&Apie interneto naršyklę..."
 
 #: shdocvw.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
 msgstr "Į pradžią"
@@ -10375,7 +10370,6 @@ msgid "Hardware"
 msgstr "Aparatinis"
 
 #: winecfg.rc:76
-#, fuzzy
 msgctxt "vertex shader mode"
 msgid "None"
 msgstr "Nėra"
