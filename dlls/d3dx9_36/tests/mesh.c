@@ -25,6 +25,8 @@
 
 #define admitted_error 0.0001f
 
+#define ARRAY_SIZE(array) (sizeof(array)/sizeof(*array))
+
 #define compare_vertex_sizes(type, exp) \
     got=D3DXGetFVFVertexSize(type); \
     ok(got==exp, "Expected: %d, Got: %d\n", exp, got);
@@ -3155,6 +3157,141 @@ static void test_get_decl_vertex_size(void)
     }
 }
 
+static void D3DXGenerateAdjacencyTest(void)
+{
+    HRESULT hr;
+    HWND wnd;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    ID3DXMesh *d3dxmesh = NULL;
+    D3DXVECTOR3 *vertices = NULL;
+    WORD *indices = NULL;
+    int i;
+    struct {
+        DWORD num_vertices;
+        D3DXVECTOR3 vertices[6];
+        DWORD num_faces;
+        WORD indices[3 * 3];
+        FLOAT epsilon;
+        DWORD adjacency[3 * 3];
+    } test_data[] = {
+        { /* for epsilon < 0, indices must match for faces to be adjacent */
+            4, {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}},
+            2, {0, 1, 2,  0, 2, 3},
+            -1.0,
+            {-1, -1, 1,  0, -1, -1},
+        },
+        {
+            6, {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}},
+            2, {0, 1, 2,  3, 4, 5},
+            -1.0,
+            {-1, -1, -1,  -1, -1, -1},
+        },
+        { /* for epsilon == 0, indices or vertices must match for faces to be adjacent */
+            6, {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}},
+            2, {0, 1, 2,  3, 4, 5},
+            0.0,
+            {-1, -1, 1,  0, -1, -1},
+        },
+        { /* for epsilon > 0, vertices must be less than (but NOT equal to) epsilon distance away */
+            6, {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 0.0, 0.25}, {1.0, 1.0, 0.25}, {0.0, 1.0, 0.25}},
+            2, {0, 1, 2,  3, 4, 5},
+            0.25,
+            {-1, -1, -1,  -1, -1, -1},
+        },
+        { /* for epsilon > 0, vertices must be less than (but NOT equal to) epsilon distance away */
+            6, {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 0.0, 0.25}, {1.0, 1.0, 0.25}, {0.0, 1.0, 0.25}},
+            2, {0, 1, 2,  3, 4, 5},
+            0.250001,
+            {-1, -1, 1,  0, -1, -1},
+        },
+        { /* length between vertices are compared to epsilon, not the individual dimension deltas */
+            6, {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 0.25, 0.25}, {1.0, 1.25, 0.25}, {0.0, 1.25, 0.25}},
+            2, {0, 1, 2,  3, 4, 5},
+            0.353, /* < sqrt(0.25*0.25 + 0.25*0.25) */
+            {-1, -1, -1,  -1, -1, -1},
+        },
+        {
+            6, {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 0.25, 0.25}, {1.0, 1.25, 0.25}, {0.0, 1.25, 0.25}},
+            2, {0, 1, 2,  3, 4, 5},
+            0.354, /* > sqrt(0.25*0.25 + 0.25*0.25) */
+            {-1, -1, 1,  0, -1, -1},
+        },
+        { /* adjacent faces must have opposite winding orders at the shared edge */
+            4, {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}},
+            2, {0, 1, 2,  0, 3, 2},
+            0.0,
+            {-1, -1, -1,  -1, -1, -1},
+        },
+    };
+
+    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    if (!wnd)
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!d3d)
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_data); i++)
+    {
+        DWORD adjacency[ARRAY_SIZE(test_data[0].adjacency)];
+        int j;
+
+        if (d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
+        d3dxmesh = NULL;
+
+        hr = D3DXCreateMeshFVF(test_data[i].num_faces, test_data[i].num_vertices, 0, D3DFVF_XYZ, device, &d3dxmesh);
+        ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+
+        hr = d3dxmesh->lpVtbl->LockVertexBuffer(d3dxmesh, D3DLOCK_DISCARD, (void**)&vertices);
+        ok(hr == D3D_OK, "test %d: Got result %x, expected %x (D3D_OK)\n", i, hr, D3D_OK);
+        if (FAILED(hr)) continue;
+        CopyMemory(vertices, test_data[i].vertices, test_data[i].num_vertices * sizeof(test_data[0].vertices[0]));
+        d3dxmesh->lpVtbl->UnlockVertexBuffer(d3dxmesh);
+
+        hr = d3dxmesh->lpVtbl->LockIndexBuffer(d3dxmesh, D3DLOCK_DISCARD, (void**)&indices);
+        ok(hr == D3D_OK, "test %d: Got result %x, expected %x (D3D_OK)\n", i, hr, D3D_OK);
+        if (FAILED(hr)) continue;
+        CopyMemory(indices, test_data[i].indices, test_data[i].num_faces * 3 * sizeof(test_data[0].indices[0]));
+        d3dxmesh->lpVtbl->UnlockIndexBuffer(d3dxmesh);
+
+        if (i == 0) {
+            hr = d3dxmesh->lpVtbl->GenerateAdjacency(d3dxmesh, 0.0f, NULL);
+            ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+        }
+
+        hr = d3dxmesh->lpVtbl->GenerateAdjacency(d3dxmesh, test_data[i].epsilon, adjacency);
+        ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+        if (FAILED(hr)) continue;
+
+        for (j = 0; j < test_data[i].num_faces * 3; j++)
+            ok(adjacency[j] == test_data[i].adjacency[j],
+               "Test %d adjacency %d: Got result %u, expected %u\n", i, j,
+               adjacency[j], test_data[i].adjacency[j]);
+    }
+    if (d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -3171,4 +3308,5 @@ START_TEST(mesh)
     test_get_decl_length();
     test_get_decl_vertex_size();
     test_fvf_decl_conversion();
+    D3DXGenerateAdjacencyTest();
 }
