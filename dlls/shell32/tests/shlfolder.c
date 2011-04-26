@@ -2965,7 +2965,7 @@ cleanup:
 /**************************************************************/
 /* IUnknown implementation for counting QueryInterface calls. */
 typedef struct {
-    const IUnknownVtbl *lpVtbl;
+    IUnknown IUnknown_iface;
     struct if_count {
         REFIID id;
         LONG count;
@@ -2973,9 +2973,14 @@ typedef struct {
     LONG unknown;
 } IUnknownImpl;
 
+static inline IUnknownImpl *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, IUnknownImpl, IUnknown_iface);
+}
+
 static HRESULT WINAPI unk_fnQueryInterface(IUnknown *iunk, REFIID riid, void** punk)
 {
-    IUnknownImpl *This = (IUnknownImpl*)iunk;
+    IUnknownImpl *This = impl_from_IUnknown(iunk);
     UINT i, found;
     for(i = found = 0; This->ifaces[i].id != NULL; i++)
     {
@@ -3042,7 +3047,7 @@ static void test_SHGetIDListFromObject(void)
     ok(hres == E_NOINTERFACE, "Got %x\n", hres);
 
     punkimpl = HeapAlloc(GetProcessHeap(), 0, sizeof(IUnknownImpl));
-    punkimpl->lpVtbl = &vt_IUnknown;
+    punkimpl->IUnknown_iface.lpVtbl = &vt_IUnknown;
     punkimpl->ifaces = ifaces;
     punkimpl->unknown = 0;
 
@@ -3213,7 +3218,7 @@ static void test_SHGetItemFromObject(void)
     ok(hres == E_NOINTERFACE, "Got 0x%08x\n", hres);
 
     punkimpl = HeapAlloc(GetProcessHeap(), 0, sizeof(IUnknownImpl));
-    punkimpl->lpVtbl = &vt_IUnknown;
+    punkimpl->IUnknown_iface.lpVtbl = &vt_IUnknown;
     punkimpl->ifaces = ifaces;
     punkimpl->unknown = 0;
 
