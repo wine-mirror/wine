@@ -66,7 +66,6 @@ struct SysMouseImpl
     /* These are used in case of relative -> absolute transitions */
     POINT                           org_coords;
     POINT      			    mapped_center;
-    DWORD			    win_centerX, win_centerY;
     /* warping: whether we need to move mouse back to middle once we
      * reach window borders (for e.g. shooters, "surface movement" games) */
     BOOL                            need_warp;
@@ -419,20 +418,12 @@ static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
 
 static BOOL dinput_window_check(SysMouseImpl* This) {
     RECT rect;
-    DWORD centerX, centerY;
 
     /* make sure the window hasn't moved */
     if(!GetWindowRect(This->base.win, &rect))
         return FALSE;
-    centerX = (rect.right  - rect.left) / 2;
-    centerY = (rect.bottom - rect.top ) / 2;
-    if (This->win_centerX != centerX || This->win_centerY != centerY) {
-	This->win_centerX = centerX;
-	This->win_centerY = centerY;
-    }
-    This->mapped_center.x = This->win_centerX;
-    This->mapped_center.y = This->win_centerY;
-    MapWindowPoints(This->base.win, HWND_DESKTOP, &This->mapped_center, 1);
+    This->mapped_center.x = (rect.left + rect.right) / 2;
+    This->mapped_center.y = (rect.top + rect.bottom) / 2;
     return TRUE;
 }
 
@@ -488,15 +479,12 @@ static HRESULT WINAPI SysMouseWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
 
     /* Get the window dimension and find the center */
     GetWindowRect(This->base.win, &rect);
-    This->win_centerX = (rect.right  - rect.left) / 2;
-    This->win_centerY = (rect.bottom - rect.top ) / 2;
+    This->mapped_center.x = (rect.left + rect.right) / 2;
+    This->mapped_center.y = (rect.top + rect.bottom) / 2;
 
     /* Warp the mouse to the center of the window */
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE || This->warp_override == WARP_FORCE_ON)
     {
-      This->mapped_center.x = This->win_centerX;
-      This->mapped_center.y = This->win_centerY;
-      MapWindowPoints(This->base.win, HWND_DESKTOP, &This->mapped_center, 1);
       TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
       SetCursorPos( This->mapped_center.x, This->mapped_center.y );
       This->last_warped = GetCurrentTime();
