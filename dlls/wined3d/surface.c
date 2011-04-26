@@ -611,7 +611,8 @@ static void surface_realize_palette(IWineD3DSurfaceImpl *surface)
             surface_load_location(surface, SFLAG_INTEXTURE, NULL);
 
             /* We want to force a palette refresh, so mark the drawable as not being up to date */
-            surface_modify_location(surface, SFLAG_INDRAWABLE, FALSE);
+            if (!surface_is_offscreen(surface))
+                surface_modify_location(surface, SFLAG_INDRAWABLE, FALSE);
         }
         else
         {
