@@ -484,6 +484,81 @@ static HRESULT surface_create_dib_section(IWineD3DSurfaceImpl *surface)
     return WINED3D_OK;
 }
 
+static void surface_prepare_system_memory(IWineD3DSurfaceImpl *surface)
+{
+    IWineD3DDeviceImpl *device = surface->resource.device;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+
+    TRACE("surface %p.\n", surface);
+
+    /* Performance optimization: Count how often a surface is locked, if it is
+     * locked regularly do not throw away the system memory copy. This avoids
+     * the need to download the surface from OpenGL all the time. The surface
+     * is still downloaded if the OpenGL texture is changed. */
+    if (!(surface->flags & SFLAG_DYNLOCK))
+    {
+        if (++surface->lockCount > MAXLOCKCOUNT)
+        {
+            TRACE("Surface is locked regularly, not freeing the system memory copy any more.\n");
+            surface->flags |= SFLAG_DYNLOCK;
+        }
+    }
+
+    /* Create a PBO for dynamically locked surfaces but don't do it for
+     * converted or NPOT surfaces. Also don't create a PBO for systemmem
+     * surfaces. */
+    if (gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] && (surface->flags & SFLAG_DYNLOCK)
+            && !(surface->flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2))
+            && (surface->resource.pool != WINED3DPOOL_SYSTEMMEM))
+    {
+        struct wined3d_context *context;
+        GLenum error;
+
+        context = context_acquire(device, NULL);
+        ENTER_GL();
+
+        GL_EXTCALL(glGenBuffersARB(1, &surface->pbo));
+        error = glGetError();
+        if (!surface->pbo || error != GL_NO_ERROR)
+            ERR("Failed to create a PBO with error %s (%#x).\n", debug_glerror(error), error);
+
+        TRACE("Binding PBO %u.\n", surface->pbo);
+
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
+        checkGLcall("glBindBufferARB");
+
+        GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->resource.size + 4,
+                surface->resource.allocatedMemory, GL_STREAM_DRAW_ARB));
+        checkGLcall("glBufferDataARB");
+
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        checkGLcall("glBindBufferARB");
+
+        /* We don't need the system memory anymore and we can't even use it for PBOs. */
+        if (!(surface->flags & SFLAG_CLIENT))
+        {
+            HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+            surface->resource.heapMemory = NULL;
+        }
+        surface->resource.allocatedMemory = NULL;
+        surface->flags |= SFLAG_PBO;
+        LEAVE_GL();
+        context_release(context);
+    }
+    else if (!(surface->resource.allocatedMemory || surface->flags & SFLAG_PBO))
+    {
+        /* Whatever surface we have, make sure that there is memory allocated
+         * for the downloaded copy, or a PBO to map. */
+        if (!surface->resource.heapMemory)
+            surface->resource.heapMemory = HeapAlloc(GetProcessHeap(), 0, surface->resource.size + RESOURCE_ALIGNMENT);
+
+        surface->resource.allocatedMemory = (BYTE *)(((ULONG_PTR)surface->resource.heapMemory
+                + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+
+        if (surface->flags & SFLAG_INSYSMEM)
+            ERR("Surface without memory or PBO has SFLAG_INSYSMEM set.\n");
+    }
+}
 
 static HRESULT surface_private_setup(struct IWineD3DSurfaceImpl *surface)
 {
@@ -669,6 +744,82 @@ static HRESULT surface_draw_overlay(IWineD3DSurfaceImpl *surface)
     return hr;
 }
 
+static void surface_map(IWineD3DSurfaceImpl *surface, const RECT *rect, DWORD flags)
+{
+    IWineD3DDeviceImpl *device = surface->resource.device;
+    const RECT *pass_rect = rect;
+
+    TRACE("surface %p, rect %s, flags %#x.\n",
+            surface, wine_dbgstr_rect(rect), flags);
+
+    if (flags & WINED3DLOCK_DISCARD)
+    {
+        TRACE("WINED3DLOCK_DISCARD flag passed, marking SYSMEM as up to date.\n");
+        surface_prepare_system_memory(surface);
+        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+    }
+    else
+    {
+        /* surface_load_location() does not check if the rectangle specifies
+         * the full surface. Most callers don't need that, so do it here. */
+        if (rect && !rect->top && !rect->left
+                && rect->right == surface->resource.width
+                && rect->bottom == surface->resource.height)
+            pass_rect = NULL;
+
+        if (!(wined3d_settings.rendertargetlock_mode == RTL_DISABLE
+                && ((surface->container.type == WINED3D_CONTAINER_SWAPCHAIN) || surface == device->render_targets[0])))
+            surface_load_location(surface, SFLAG_INSYSMEM, pass_rect);
+    }
+
+    if (surface->flags & SFLAG_PBO)
+    {
+        const struct wined3d_gl_info *gl_info;
+        struct wined3d_context *context;
+
+        context = context_acquire(device, NULL);
+        gl_info = context->gl_info;
+
+        ENTER_GL();
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
+        checkGLcall("glBindBufferARB");
+
+        /* This shouldn't happen but could occur if some other function
+         * didn't handle the PBO properly. */
+        if (surface->resource.allocatedMemory)
+            ERR("The surface already has PBO memory allocated.\n");
+
+        surface->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_READ_WRITE_ARB));
+        checkGLcall("glMapBufferARB");
+
+        /* Make sure the PBO isn't set anymore in order not to break non-PBO
+         * calls. */
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        checkGLcall("glBindBufferARB");
+
+        LEAVE_GL();
+        context_release(context);
+    }
+
+    if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
+    {
+        if (!rect)
+            surface_add_dirty_rect(surface, NULL);
+        else
+        {
+            WINED3DBOX b;
+
+            b.Left = rect->left;
+            b.Top = rect->top;
+            b.Right = rect->right;
+            b.Bottom = rect->bottom;
+            b.Front = 0;
+            b.Back = 1;
+            surface_add_dirty_rect(surface, &b);
+        }
+    }
+}
+
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info)
 {
@@ -778,6 +929,7 @@ static const struct wined3d_surface_ops surface_ops =
     surface_cleanup,
     surface_realize_palette,
     surface_draw_overlay,
+    surface_map,
 };
 
 /*****************************************************************************
@@ -893,12 +1045,27 @@ static HRESULT gdi_surface_draw_overlay(IWineD3DSurfaceImpl *surface)
     return E_FAIL;
 }
 
+static void gdi_surface_map(IWineD3DSurfaceImpl *surface, const RECT *rect, DWORD flags)
+{
+    TRACE("surface %p, rect %s, flags %#x.\n",
+            surface, wine_dbgstr_rect(rect), flags);
+
+    if (!surface->resource.allocatedMemory)
+    {
+        /* This happens on gdi surfaces if the application set a user pointer
+         * and resets it. Recreate the DIB section. */
+        surface_create_dib_section(surface);
+        surface->resource.allocatedMemory = surface->dib.bitmap_data;
+    }
+}
+
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
     surface_gdi_cleanup,
     gdi_surface_realize_palette,
     gdi_surface_draw_overlay,
+    gdi_surface_map,
 };
 
 static void surface_force_reload(IWineD3DSurfaceImpl *surface)
@@ -3441,6 +3608,18 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
     TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
             iface, locked_rect, wine_dbgstr_rect(rect), flags);
 
+    if (surface->flags & SFLAG_LOCKED)
+    {
+        WARN("Surface is already mapped.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    surface->flags |= SFLAG_LOCKED;
+
+    if (!(surface->flags & SFLAG_LOCKABLE))
+        WARN("Trying to lock unlockable surface.\n");
+
+    surface->surface_ops->surface_map(surface, rect, flags);
+
     locked_rect->Pitch = IWineD3DSurface_GetPitch(iface);
 
     if (!rect)
@@ -3899,181 +4078,6 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
     }
 
     surface_prepare_texture_internal(surface, gl_info, srgb);
-}
-
-static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This)
-{
-    IWineD3DDeviceImpl *device = This->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-
-    /* Performance optimization: Count how often a surface is locked, if it is locked regularly do not throw away the system memory copy.
-     * This avoids the need to download the surface from opengl all the time. The surface is still downloaded if the opengl texture is
-     * changed
-     */
-    if (!(This->flags & SFLAG_DYNLOCK))
-    {
-        This->lockCount++;
-        /* MAXLOCKCOUNT is defined in wined3d_private.h */
-        if(This->lockCount > MAXLOCKCOUNT) {
-            TRACE("Surface is locked regularly, not freeing the system memory copy any more\n");
-            This->flags |= SFLAG_DYNLOCK;
-        }
-    }
-
-    /* Create a PBO for dynamically locked surfaces but don't do it for converted or non-pow2 surfaces.
-     * Also don't create a PBO for systemmem surfaces.
-     */
-    if (gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] && (This->flags & SFLAG_DYNLOCK)
-            && !(This->flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2))
-            && (This->resource.pool != WINED3DPOOL_SYSTEMMEM))
-    {
-        GLenum error;
-        struct wined3d_context *context;
-
-        context = context_acquire(device, NULL);
-        ENTER_GL();
-
-        GL_EXTCALL(glGenBuffersARB(1, &This->pbo));
-        error = glGetError();
-        if (!This->pbo || error != GL_NO_ERROR)
-            ERR("Failed to bind the PBO with error %s (%#x)\n", debug_glerror(error), error);
-
-        TRACE("Attaching pbo=%#x to (%p)\n", This->pbo, This);
-
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
-        checkGLcall("glBindBufferARB");
-
-        GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->resource.size + 4, This->resource.allocatedMemory, GL_STREAM_DRAW_ARB));
-        checkGLcall("glBufferDataARB");
-
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB");
-
-        /* We don't need the system memory anymore and we can't even use it for PBOs */
-        if (!(This->flags & SFLAG_CLIENT))
-        {
-            HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
-            This->resource.heapMemory = NULL;
-        }
-        This->resource.allocatedMemory = NULL;
-        This->flags |= SFLAG_PBO;
-        LEAVE_GL();
-        context_release(context);
-    }
-    else if (!(This->resource.allocatedMemory || This->flags & SFLAG_PBO))
-    {
-        /* Whatever surface we have, make sure that there is memory allocated for the downloaded copy,
-         * or a pbo to map
-         */
-        if(!This->resource.heapMemory) {
-            This->resource.heapMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + RESOURCE_ALIGNMENT);
-        }
-        This->resource.allocatedMemory =
-                (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
-        if (This->flags & SFLAG_INSYSMEM)
-        {
-            ERR("Surface without memory or pbo has SFLAG_INSYSMEM set!\n");
-        }
-    }
-}
-
-static HRESULT WINAPI IWineD3DSurfaceImpl_Map(IWineD3DSurface *iface,
-        WINED3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD flags)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    IWineD3DDeviceImpl *device = This->resource.device;
-    const RECT *pass_rect = pRect;
-
-    TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
-            iface, pLockedRect, wine_dbgstr_rect(pRect), flags);
-
-    /* This is also done in the base class, but we have to verify this before loading any data from
-     * gl into the sysmem copy. The PBO may be mapped, a different rectangle locked, the discard flag
-     * may interfere, and all other bad things may happen
-     */
-    if (This->flags & SFLAG_LOCKED)
-    {
-        WARN("Surface is already locked, returning D3DERR_INVALIDCALL\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-    This->flags |= SFLAG_LOCKED;
-
-    if (!(This->flags & SFLAG_LOCKABLE))
-    {
-        TRACE("Warning: trying to lock unlockable surf@%p\n", This);
-    }
-
-    if (flags & WINED3DLOCK_DISCARD)
-    {
-        TRACE("WINED3DLOCK_DISCARD flag passed, marking SYSMEM as up to date.\n");
-        surface_prepare_system_memory(This);
-        surface_modify_location(This, SFLAG_INSYSMEM, TRUE);
-        goto lock_end;
-    }
-
-    /* surface_load_location() does not check if the rectangle specifies
-     * the full surface. Most callers don't need that, so do it here. */
-    if (pRect && !pRect->top && !pRect->left
-            && pRect->right == This->resource.width
-            && pRect->bottom == This->resource.height)
-    {
-        pass_rect = NULL;
-    }
-
-    if (!(wined3d_settings.rendertargetlock_mode == RTL_DISABLE
-            && ((This->container.type == WINED3D_CONTAINER_SWAPCHAIN) || This == device->render_targets[0])))
-    {
-        surface_load_location(This, SFLAG_INSYSMEM, pass_rect);
-    }
-
-lock_end:
-    if (This->flags & SFLAG_PBO)
-    {
-        const struct wined3d_gl_info *gl_info;
-        struct wined3d_context *context;
-
-        context = context_acquire(device, NULL);
-        gl_info = context->gl_info;
-
-        ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
-        checkGLcall("glBindBufferARB");
-
-        /* This shouldn't happen but could occur if some other function didn't handle the PBO properly */
-        if(This->resource.allocatedMemory) {
-            ERR("The surface already has PBO memory allocated!\n");
-        }
-
-        This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_READ_WRITE_ARB));
-        checkGLcall("glMapBufferARB");
-
-        /* Make sure the pbo isn't set anymore in order not to break non-pbo calls */
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB");
-
-        LEAVE_GL();
-        context_release(context);
-    }
-
-    if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
-    {
-        if (!pRect)
-            surface_add_dirty_rect(This, NULL);
-        else
-        {
-            WINED3DBOX b;
-
-            b.Left = pRect->left;
-            b.Top = pRect->top;
-            b.Right = pRect->right;
-            b.Bottom = pRect->bottom;
-            b.Front = 0;
-            b.Back = 1;
-            surface_add_dirty_rect(This, &b);
-        }
-    }
-
-    return IWineD3DBaseSurfaceImpl_Map(iface, pLockedRect, pRect, flags);
 }
 
 static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *surface,
@@ -6935,7 +6939,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_PreLoad,
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetResource,
-    IWineD3DSurfaceImpl_Map,
+    IWineD3DBaseSurfaceImpl_Map,
     IWineD3DSurfaceImpl_Unmap,
     IWineD3DSurfaceImpl_GetDC,
     IWineD3DSurfaceImpl_ReleaseDC,
@@ -7213,34 +7217,6 @@ static void WINAPI IWineGDISurfaceImpl_PreLoad(IWineD3DSurface *iface)
     ERR("(%p): Please report to wine-devel\n", iface);
 }
 
-static HRESULT WINAPI IWineGDISurfaceImpl_Map(IWineD3DSurface *iface,
-        WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
-            iface, locked_rect, wine_dbgstr_rect(rect), flags);
-
-    /* Already locked? */
-    if (surface->flags & SFLAG_LOCKED)
-    {
-        WARN("Surface already mapped.\n");
-        /* What should I return here? */
-        return WINED3DERR_INVALIDCALL;
-    }
-    surface->flags |= SFLAG_LOCKED;
-
-    if (!surface->resource.allocatedMemory)
-    {
-        /* This happens on gdi surfaces if the application set a user pointer
-         * and resets it. Recreate the DIB section. */
-        surface_create_dib_section(surface);
-        surface->resource.allocatedMemory = surface->dib.bitmap_data;
-    }
-
-    return IWineD3DBaseSurfaceImpl_Map(iface, locked_rect, rect, flags);
-}
-
 static HRESULT WINAPI IWineGDISurfaceImpl_Unmap(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
@@ -7477,7 +7453,7 @@ static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineGDISurfaceImpl_PreLoad,
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetResource,
-    IWineGDISurfaceImpl_Map,
+    IWineD3DBaseSurfaceImpl_Map,
     IWineGDISurfaceImpl_Unmap,
     IWineGDISurfaceImpl_GetDC,
     IWineGDISurfaceImpl_ReleaseDC,
