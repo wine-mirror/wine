@@ -739,8 +739,11 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetFunctionDesc(ID3DXBaseEffect *iface
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameter(ID3DXBaseEffect *iface, D3DXHANDLE parameter, UINT index)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
 
     TRACE("iface %p, parameter %p, index %u\n", This, parameter, index);
+
+    if (!param) param = get_parameter_by_name(This, NULL, parameter, FALSE);
 
     if (!parameter)
     {
@@ -752,8 +755,6 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameter(ID3DXBaseEffect *iface
     }
     else
     {
-        struct d3dx_parameter *param = is_valid_parameter(This, parameter);
-
         if (param && !param->element_count && index < param->member_count)
         {
             TRACE("Returning parameter %p\n", param->member_handles[index]);
