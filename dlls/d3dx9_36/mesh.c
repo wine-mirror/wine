@@ -293,13 +293,165 @@ static HRESULT WINAPI ID3DXMeshImpl_ConvertAdjacencyToPointReps(ID3DXMesh *iface
     return E_NOTIMPL;
 }
 
+struct vertex_metadata {
+  float key;
+  DWORD vertex_index;
+  DWORD first_shared_index;
+};
+
+static int compare_vertex_keys(const void *a, const void *b)
+{
+    const struct vertex_metadata *left = a;
+    const struct vertex_metadata *right = b;
+    if (left->key == right->key)
+        return 0;
+    return left->key < right->key ? -1 : 1;
+}
+
 static HRESULT WINAPI ID3DXMeshImpl_GenerateAdjacency(ID3DXMesh *iface, FLOAT epsilon, DWORD *adjacency)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    HRESULT hr;
+    BYTE *vertices = NULL;
+    const DWORD *indices = NULL;
+    DWORD vertex_size;
+    DWORD buffer_size;
+    /* sort the vertices by (x + y + z) to quickly find coincident vertices */
+    struct vertex_metadata *sorted_vertices;
+    /* shared_indices links together identical indices in the index buffer so
+     * that adjacency checks can be limited to faces sharing a vertex */
+    DWORD *shared_indices = NULL;
+    const FLOAT epsilon_sq = epsilon * epsilon;
+    int i;
 
-    FIXME("(%p)->(%f,%p): stub\n", This, epsilon, adjacency);
+    TRACE("(%p)->(%f,%p)\n", This, epsilon, adjacency);
 
-    return E_NOTIMPL;
+    if (!adjacency)
+        return D3DERR_INVALIDCALL;
+
+    buffer_size = This->numfaces * 3 * sizeof(*shared_indices) + This->numvertices * sizeof(*sorted_vertices);
+    if (!(This->options & D3DXMESH_32BIT))
+        buffer_size += This->numfaces * 3 * sizeof(*indices);
+    shared_indices = HeapAlloc(GetProcessHeap(), 0, buffer_size);
+    if (!shared_indices)
+        return E_OUTOFMEMORY;
+    sorted_vertices = (struct vertex_metadata*)(shared_indices + This->numfaces * 3);
+
+    hr = iface->lpVtbl->LockVertexBuffer(iface, D3DLOCK_READONLY, (void**)&vertices);
+    if (FAILED(hr)) goto cleanup;
+    hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, (void**)&indices);
+    if (FAILED(hr)) goto cleanup;
+
+    if (!(This->options & D3DXMESH_32BIT)) {
+        const WORD *word_indices = (const WORD*)indices;
+        DWORD *dword_indices = (DWORD*)(sorted_vertices + This->numvertices);
+        indices = dword_indices;
+        for (i = 0; i < This->numfaces * 3; i++)
+            *dword_indices++ = *word_indices++;
+    }
+
+    vertex_size = iface->lpVtbl->GetNumBytesPerVertex(iface);
+    for (i = 0; i < This->numvertices; i++) {
+        D3DXVECTOR3 *vertex = (D3DXVECTOR3*)(vertices + vertex_size * i);
+        sorted_vertices[i].first_shared_index = -1;
+        sorted_vertices[i].key = vertex->x + vertex->y + vertex->z;
+        sorted_vertices[i].vertex_index = i;
+    }
+    for (i = 0; i < This->numfaces * 3; i++) {
+        DWORD *first_shared_index = &sorted_vertices[indices[i]].first_shared_index;
+        shared_indices[i] = *first_shared_index;
+        *first_shared_index = i;
+        adjacency[i] = -1;
+    }
+    qsort(sorted_vertices, This->numvertices, sizeof(*sorted_vertices), compare_vertex_keys);
+
+    for (i = 0; i < This->numvertices; i++) {
+        struct vertex_metadata *sorted_vertex_a = &sorted_vertices[i];
+        D3DXVECTOR3 *vertex_a = (D3DXVECTOR3*)(vertices + sorted_vertex_a->vertex_index * vertex_size);
+        DWORD shared_index_a = sorted_vertex_a->first_shared_index;
+
+        while (shared_index_a != -1) {
+            int j = i;
+            DWORD shared_index_b = shared_indices[shared_index_a];
+            struct vertex_metadata *sorted_vertex_b = sorted_vertex_a;
+
+            while (TRUE) {
+                while (shared_index_b != -1) {
+                    /* faces are adjacent if they have another coincident vertex */
+                    DWORD base_a = (shared_index_a / 3) * 3;
+                    DWORD base_b = (shared_index_b / 3) * 3;
+                    BOOL adjacent = FALSE;
+                    int k;
+
+                    for (k = 0; k < 3; k++) {
+                        if (adjacency[base_b + k] == shared_index_a / 3) {
+                            adjacent = TRUE;
+                            break;
+                        }
+                    }
+                    if (!adjacent) {
+                        for (k = 1; k <= 2; k++) {
+                            DWORD vertex_index_a = base_a + (shared_index_a + k) % 3;
+                            DWORD vertex_index_b = base_b + (shared_index_b + (3 - k)) % 3;
+                            adjacent = indices[vertex_index_a] == indices[vertex_index_b];
+                            if (!adjacent && epsilon >= 0.0f) {
+                                D3DXVECTOR3 delta = {0.0f, 0.0f, 0.0f};
+                                FLOAT length_sq;
+
+                                D3DXVec3Subtract(&delta,
+                                                 (D3DXVECTOR3*)(vertices + indices[vertex_index_a] * vertex_size),
+                                                 (D3DXVECTOR3*)(vertices + indices[vertex_index_b] * vertex_size));
+                                length_sq = D3DXVec3LengthSq(&delta);
+                                adjacent = epsilon == 0.0f ? length_sq == 0.0f : length_sq < epsilon_sq;
+                            }
+                            if (adjacent) {
+                                DWORD adj_a = base_a + 2 - (vertex_index_a + shared_index_a + 1) % 3;
+                                DWORD adj_b = base_b + 2 - (vertex_index_b + shared_index_b + 1) % 3;
+                                if (adjacency[adj_a] == -1 && adjacency[adj_b] == -1) {
+                                    adjacency[adj_a] = base_b / 3;
+                                    adjacency[adj_b] = base_a / 3;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    shared_index_b = shared_indices[shared_index_b];
+                }
+                while (++j < This->numvertices) {
+                    D3DXVECTOR3 *vertex_b;
+
+                    sorted_vertex_b++;
+                    if (sorted_vertex_b->key - sorted_vertex_a->key > epsilon * 3.0f) {
+                        /* no more coincident vertices to try */
+                        j = This->numvertices;
+                        break;
+                    }
+                    /* check for coincidence */
+                    vertex_b = (D3DXVECTOR3*)(vertices + sorted_vertex_b->vertex_index * vertex_size);
+                    if (fabsf(vertex_a->x - vertex_b->x) <= epsilon &&
+                        fabsf(vertex_a->y - vertex_b->y) <= epsilon &&
+                        fabsf(vertex_a->z - vertex_b->z) <= epsilon)
+                    {
+                        break;
+                    }
+                }
+                if (j >= This->numvertices)
+                    break;
+                shared_index_b = sorted_vertex_b->first_shared_index;
+            }
+
+            sorted_vertex_a->first_shared_index = shared_indices[sorted_vertex_a->first_shared_index];
+            shared_index_a = sorted_vertex_a->first_shared_index;
+        }
+    }
+
+    hr = D3D_OK;
+cleanup:
+    if (indices) iface->lpVtbl->UnlockIndexBuffer(iface);
+    if (vertices) iface->lpVtbl->UnlockVertexBuffer(iface);
+    HeapFree(GetProcessHeap(), 0, shared_indices);
+    return hr;
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_UpdateSemantics(ID3DXMesh *iface, D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE])
