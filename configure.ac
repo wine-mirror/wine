@@ -159,7 +159,7 @@ case $host in
       CC="$CC -m32"
       CXX="$CXX -m32"
       AC_MSG_CHECKING([whether $CC works])
-      AC_LINK_IFELSE(AC_LANG_PROGRAM(),AC_MSG_RESULT([yes]),
+      AC_LINK_IFELSE([AC_LANG_PROGRAM()],AC_MSG_RESULT([yes]),
                      [AC_MSG_RESULT([no])
                       AC_MSG_ERROR([Cannot build a 32-bit program, you need to install 32-bit development libraries.])])
       LD="${LD:-ld} -m elf_i386"
@@ -774,14 +774,14 @@ case $host_os in
     if test "x$enable_win16" = "xyes"
     then
         AC_MSG_CHECKING([whether 16-bit code can be built correctly])
-        AC_RUN_IFELSE(AC_LANG_PROGRAM([[asm(".text\n"
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([[asm(".text\n"
                                             "bad:\tnop;nop\n"
                                             "good:\tnop;nop\n\t"
                                             ".globl _testfunc\n"
                                             "_testfunc:\tcallw good");
                                         extern void testfunc();]],
                                       [[unsigned short *p = (unsigned short *)testfunc;
-                                        return p[[0]] != 0xe866 || p[[1]] != 0xfffa]]),
+                                        return p[0] != 0xe866 || p[1] != 0xfffa]])],
                                       AC_MSG_RESULT(yes),
                                       [AC_MSG_RESULT(no)
                                        AC_MSG_ERROR([Xcode 3.x cannot build 16-bit code correctly. Use --disable-win16 if you don't need 16-bit support.])],
@@ -888,7 +888,7 @@ then
         ac_save_CC="$CC"
         CC="$CROSSCC"
         AC_MSG_CHECKING([whether $CROSSCC works])
-        AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
                           [AC_MSG_RESULT([yes])
                            set x $CROSSCC
                            shift

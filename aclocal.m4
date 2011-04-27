@@ -62,7 +62,7 @@ dnl
 dnl Usage: WINE_TRY_ASM_LINK(asm-code,includes,function,[action-if-found,[action-if-not-found]])
 dnl
 AC_DEFUN([WINE_TRY_ASM_LINK],
-[AC_LINK_IFELSE(AC_LANG_PROGRAM([[$2]],[[asm($1); $3]]),[$4],[$5])])
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[$2]],[[asm($1); $3]])],[$4],[$5])])
 
 dnl **** Check if we can link an empty program with special CFLAGS ****
 dnl
@@ -75,7 +75,7 @@ AC_DEFUN([WINE_TRY_CFLAGS],
 AC_CACHE_CHECK([whether the compiler supports $1], ac_var,
 [ac_wine_try_cflags_saved=$CFLAGS
 CFLAGS="$CFLAGS $1"
-AC_LINK_IFELSE(AC_LANG_SOURCE([[int main(int argc, char **argv) { return 0; }]]),
+AC_LINK_IFELSE([AC_LANG_SOURCE([[int main(int argc, char **argv) { return 0; }]])],
                [AS_VAR_SET(ac_var,yes)], [AS_VAR_SET(ac_var,no)])
 CFLAGS=$ac_wine_try_cflags_saved])
 AS_IF([test AS_VAR_GET(ac_var) = yes],
@@ -89,7 +89,7 @@ dnl
 AC_DEFUN([WINE_TRY_SHLIB_FLAGS],
 [ac_wine_try_cflags_saved=$CFLAGS
 CFLAGS="$CFLAGS $1"
-AC_LINK_IFELSE([void myfunc() {}],[$2],[$3])
+AC_LINK_IFELSE([AC_LANG_SOURCE([void myfunc() {}])],[$2],[$3])
 CFLAGS=$ac_wine_try_cflags_saved])
 
 dnl **** Check whether we need to define a symbol on the compiler command line ****
