@@ -82,6 +82,7 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "17b2c177bdce5e94433574a928bda5c94a8cdfa5",
     "fe6cc678fb13a3ead67839481bf22348adc69f52",
     "d51bd330cec510cdccf5394328bd8e5411901e9e",
+    "df4aebf98d91f11be560dd232123b3ae327303d7",
     "f2af53dd073a09b1031d0032d28da35c82adc566",
     NULL
 };
@@ -179,7 +180,7 @@ static const RECT hline_clips[] =
     { 10, 134, 101, 134}, /* r end on l edgecase */
     { 10, 136, 100, 136}, /* r end on l edgecase clipped */
     {199, 138, 220, 138}, /* l end on r edgecase */
-    {200, 140, 220, 200}  /* l end on r edgecase clipped */
+    {200, 140, 220, 140}  /* l end on r edgecase clipped */
 };
 
 static const RECT vline_clips[] =
@@ -199,6 +200,17 @@ static const RECT vline_clips[] =
     {136,  90, 136, 100}, /* b end on t edgecase clipped */
     {138, 199, 138, 220}, /* t end on b edgecase */
     {140, 200, 140, 220}  /* t end on b edgecase clipped */
+};
+
+static const RECT line_clips[] =
+{
+    { 90, 110, 310, 120},
+    { 90, 120, 295, 130},
+    { 90, 190, 110, 240}, /* totally clipped, moving outcodes */
+    { 90, 130, 100, 135}, /* totally clipped, end pt on l edge */
+    { 90, 132, 101, 137}, /* end pt just inside l edge */
+    {200, 140, 210, 141}, /* totally clipped, start pt on r edge */
+    {199, 142, 210, 143}  /* start pt just inside r edge */
 };
 
 static const RECT patblt_clips[] =
@@ -252,6 +264,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     compare_hash(bmi, bits, sha1, "h and v solid lines");
     memset(bits, 0xcc, dib_size);
 
+    /* diagonal lines */
     SetROP2(hdc, R2_COPYPEN);
     for(i = 0; i < 16; i++)
     {
@@ -320,6 +333,15 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     compare_hash(bmi, bits, sha1, "clipped solid vlines");
     memset(bits, 0xcc, dib_size);
 
+    for(i = 0; i < sizeof(line_clips)/sizeof(line_clips[0]); i++)
+    {
+        MoveToEx(hdc, line_clips[i].left, line_clips[i].top, NULL);
+        LineTo(hdc, line_clips[i].right, line_clips[i].bottom);
+    }
+    compare_hash(bmi, bits, sha1, "clipped solid diagonal lines");
+    memset(bits, 0xcc, dib_size);
+
+    /* clipped PatBlt */
     for(i = 0; i < sizeof(patblt_clips) / sizeof(patblt_clips[0]); i++)
     {
         PatBlt(hdc, patblt_clips[i].left, patblt_clips[i].top,

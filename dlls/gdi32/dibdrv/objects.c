@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdlib.h>
+
 #include "gdi_private.h"
 #include "dibdrv.h"
 
@@ -106,6 +108,31 @@ static inline BOOL pt_in_rect( const RECT *rect, const POINT *pt )
             (pt->y >= rect->top) && (pt->y < rect->bottom));
 }
 
+#define Y_INCREASING_MASK 0x0f
+#define X_INCREASING_MASK 0xc3
+#define X_MAJOR_MASK      0x99
+#define POS_SLOPE_MASK    0x33
+
+static inline BOOL is_xmajor(DWORD octant)
+{
+    return octant & X_MAJOR_MASK;
+}
+
+static inline BOOL is_pos_slope(DWORD octant)
+{
+    return octant & POS_SLOPE_MASK;
+}
+
+static inline BOOL is_x_increasing(DWORD octant)
+{
+    return octant & X_INCREASING_MASK;
+}
+
+static inline BOOL is_y_increasing(DWORD octant)
+{
+    return octant & Y_INCREASING_MASK;
+}
+
 /**********************************************************************
  *                  get_octant_number
  *
@@ -143,65 +170,276 @@ static void solid_pen_line_callback(INT x, INT y, LPARAM lparam)
     return;
 }
 
-static void bres_line_with_bias(INT x1, INT y1, INT x2, INT y2, void (* callback)(INT,INT,LPARAM), LPARAM lParam)
+#define OUT_LEFT    1
+#define OUT_RIGHT   2
+#define OUT_TOP     4
+#define OUT_BOTTOM  8
+
+static inline DWORD calc_outcode(const POINT *pt, const RECT *clip)
 {
-    INT xadd = 1, yadd = 1;
-    INT err, erradd;
-    INT cnt;
-    INT dx = x2 - x1;
-    INT dy = y2 - y1;
-    DWORD octant = get_octant_mask(dx, dy);
-    INT bias = 0;
+    DWORD out = 0;
+    if(pt->x < clip->left)         out |= OUT_LEFT;
+    else if(pt->x >= clip->right)  out |= OUT_RIGHT;
+    if(pt->y < clip->top)          out |= OUT_TOP;
+    else if(pt->y >= clip->bottom) out |= OUT_BOTTOM;
 
-    /* Octants 3, 5, 6 and 8 take a bias */
-    if(octant & 0xb4) bias = 1;
+    return out;
+}
 
-    if (dx < 0)
+typedef struct
+{
+    unsigned int dx, dy;
+    int bias;
+    DWORD octant;
+} bres_params;
+
+/******************************************************************************
+ *                clip_line
+ *
+ * Clips the start and end points to a rectangle.
+ *
+ * Note, this treats the end point like the start point.  If the
+ * caller doesn't want it displayed, it should exclude it.  If the end
+ * point is clipped out, then the likelihood is that the new end point
+ * should be displayed.
+ *
+ * Returns 0 if totally excluded, 1 if partially clipped and 2 if unclipped.
+ *
+ * This derivation is based on the comments in X.org's xserver/mi/mizerclip.c,
+ * however the Bresenham error term is defined differently so the equations
+ * will also differ.
+ *
+ * For x major lines we have 2dy >= err + bias > 2dy - 2dx
+ *                           0   >= err + bias - 2dy > -2dx
+ *
+ * Note dx, dy, m and n are all +ve.
+ *
+ * Moving the start pt from x1 to x1 + m, we need to figure out y1 + n.
+ *                     err = 2dy - dx + 2mdy - 2ndx
+ *                      0 >= 2dy - dx + 2mdy - 2ndx + bias - 2dy > -2dx
+ *                      0 >= 2mdy - 2ndx + bias - dx > -2dx
+ *                      which of course will give exactly one solution for n,
+ *                      so looking at the >= inequality
+ *                      n >= (2mdy + bias - dx) / 2dx
+ *                      n = ceiling((2mdy + bias - dx) / 2dx)
+ *                        = (2mdy + bias + dx - 1) / 2dx (assuming division truncation)
+ *
+ * Moving start pt from y1 to y1 + n we need to figure out x1 + m - there may be several
+ * solutions we pick the one that minimizes m (ie that first unlipped pt). As above:
+ *                     0 >= 2mdy - 2ndx + bias - dx > -2dx
+ *                  2mdy > 2ndx - bias - dx
+ *                     m > (2ndx - bias - dx) / 2dy
+ *                     m = floor((2ndx - bias - dx) / 2dy) + 1
+ *                     m = (2ndx - bias - dx) / 2dy + 1
+ *
+ * Moving end pt from x2 to x2 - m, we need to figure out y2 - n
+ *                  err = 2dy - dx + 2(dx - m)dy - 2(dy - n)dx
+ *                      = 2dy - dx - 2mdy + 2ndx
+ *                   0 >= 2dy - dx - 2mdy + 2ndx + bias - 2dy > -2dx
+ *                   0 >= 2ndx - 2mdy + bias - dx > -2dx
+ *                   again exactly one solution.
+ *                   2ndx <= 2mdy - bias + dx
+ *                   n = floor((2mdy - bias + dx) / 2dx)
+ *                     = (2mdy - bias + dx) / 2dx
+ *
+ * Moving end pt from y2 to y2 - n when need x2 - m this time maximizing x2 - m so
+ * mininizing m to include all of the points at y = y2 - n.  As above:
+ *                  0 >= 2ndx - 2mdy + bias - dx > -2dx
+ *               2mdy >= 2ndx + bias - dx
+ *                   m = ceiling((2ndx + bias - dx) / 2dy)
+ *                     = (2ndx + bias - dx - 1) / 2dy + 1
+ *
+ * For y major lines, symmetry (dx <-> dy and swap the cases over) gives:
+ *
+ * Moving start point from y1 to y1 + n find x1 + m
+ *                     m = (2ndx + bias + dy - 1) / 2dy
+ *
+ * Moving start point from x1 to x1 + m find y1 + n
+ *                     n = (2mdy - bias - dy) / 2ndx + 1
+ *
+ * Moving end point from y2 to y2 - n find x1 - m
+ *                     m = (2ndx - bias + dy) / 2dy
+ *
+ * Moving end point from x2 to x2 - m find y2 - n
+ *                     n = (2mdy + bias - dy - 1) / 2dx + 1
+ */
+static int clip_line(const POINT *start, const POINT *end, const RECT *clip,
+                     const bres_params *params, POINT *pt1, POINT *pt2)
+{
+    unsigned int n, m;
+    BOOL clipped = FALSE;
+    DWORD start_oc, end_oc;
+    const int bias = params->bias;
+    const unsigned int dx = params->dx;
+    const unsigned int dy = params->dy;
+    const unsigned int two_dx = params->dx * 2;
+    const unsigned int two_dy = params->dy * 2;
+    const BOOL xmajor = is_xmajor(params->octant);
+    const BOOL neg_slope = !is_pos_slope(params->octant);
+
+    *pt1 = *start;
+    *pt2 = *end;
+
+    start_oc = calc_outcode(start, clip);
+    end_oc = calc_outcode(end, clip);
+
+    while(1)
     {
-        dx = -dx;
-        xadd = -1;
+        if(start_oc == 0 && end_oc == 0) return clipped ? 1 : 2; /* trivial accept */
+        if(start_oc & end_oc)            return 0; /* trivial reject */
+
+        clipped = TRUE;
+        if(start_oc & OUT_LEFT)
+        {
+            m = clip->left - start->x;
+            if(xmajor)
+                n = (m * two_dy + bias + dx - 1) / two_dx;
+            else
+                n = (m * two_dy - bias - dy) / two_dx + 1;
+
+            pt1->x = clip->left;
+            if(neg_slope) n = -n;
+            pt1->y = start->y + n;
+            start_oc = calc_outcode(pt1, clip);
+        }
+        else if(start_oc & OUT_RIGHT)
+        {
+            m = start->x - clip->right + 1;
+            if(xmajor)
+                n = (m * two_dy + bias + dx - 1) / two_dx;
+            else
+                n = (m * two_dy - bias - dy) / two_dx + 1;
+
+            pt1->x = clip->right - 1;
+            if(neg_slope) n = -n;
+            pt1->y = start->y - n;
+            start_oc = calc_outcode(pt1, clip);
+        }
+        else if(start_oc & OUT_TOP)
+        {
+            n = clip->top - start->y;
+            if(xmajor)
+                m = (n * two_dx - bias - dx) / two_dy + 1;
+            else
+                m = (n * two_dx + bias + dy - 1) / two_dy;
+
+            pt1->y = clip->top;
+            if(neg_slope) m = -m;
+            pt1->x = start->x + m;
+            start_oc = calc_outcode(pt1, clip);
+        }
+        else if(start_oc & OUT_BOTTOM)
+        {
+            n = start->y - clip->bottom + 1;
+            if(xmajor)
+                m = (n * two_dx - bias - dx) / two_dy + 1;
+            else
+                m = (n * two_dx + bias + dy - 1) / two_dy;
+
+            pt1->y = clip->bottom - 1;
+            if(neg_slope) m = -m;
+            pt1->x = start->x - m;
+            start_oc = calc_outcode(pt1, clip);
+        }
+        else if(end_oc & OUT_LEFT)
+        {
+            m = clip->left - end->x;
+            if(xmajor)
+                n = (m * two_dy - bias + dx) / two_dx;
+            else
+                n = (m * two_dy + bias - dy - 1) / two_dx + 1;
+
+            pt2->x = clip->left;
+            if(neg_slope) n = -n;
+            pt2->y = end->y + n;
+            end_oc = calc_outcode(pt2, clip);
+        }
+        else if(end_oc & OUT_RIGHT)
+        {
+            m = end->x - clip->right + 1;
+            if(xmajor)
+                n = (m * two_dy - bias + dx) / two_dx;
+            else
+                n = (m * two_dy + bias - dy - 1) / two_dx + 1;
+
+            pt2->x = clip->right - 1;
+            if(neg_slope) n = -n;
+            pt2->y = end->y - n;
+            end_oc = calc_outcode(pt2, clip);
+        }
+        else if(end_oc & OUT_TOP)
+        {
+            n = clip->top - end->y;
+            if(xmajor)
+                m = (n * two_dx + bias - dx - 1) / two_dy + 1;
+            else
+                m = (n * two_dx - bias + dy) / two_dy;
+
+            pt2->y = clip->top;
+            if(neg_slope) m = -m;
+            pt2->x = end->x + m;
+            end_oc = calc_outcode(pt2, clip);
+        }
+        else if(end_oc & OUT_BOTTOM)
+        {
+            n = end->y - clip->bottom + 1;
+            if(xmajor)
+                m = (n * two_dx + bias - dx - 1) / two_dy + 1;
+            else
+                m = (n * two_dx - bias + dy) / two_dy;
+
+            pt2->y = clip->bottom - 1;
+            if(neg_slope) m = -m;
+            pt2->x = end->x - m;
+            end_oc = calc_outcode(pt2, clip);
+        }
     }
-    if (dy < 0)
+}
+
+static void bres_line_with_bias(INT x1, INT y1, INT x2, INT y2, const bres_params *params, INT err,
+                                BOOL last_pt, void (* callback)(INT,INT,LPARAM), LPARAM lParam)
+{
+    const int xadd = is_x_increasing(params->octant) ? 1 : -1;
+    const int yadd = is_y_increasing(params->octant) ? 1 : -1;
+    INT erradd;
+
+    if (is_xmajor(params->octant))  /* line is "more horizontal" */
     {
-        dy = -dy;
-        yadd = -1;
-    }
-    if (dx > dy)  /* line is "more horizontal" */
-    {
-        err = 2*dy - dx; erradd = 2*dy - 2*dx;
-        for(cnt = 0; cnt < dx; cnt++)
+        erradd = 2*params->dy - 2*params->dx;
+        while(x1 != x2)
         {
             callback(x1, y1, lParam);
-            if (err + bias > 0)
+            if (err + params->bias > 0)
             {
                 y1 += yadd;
                 err += erradd;
             }
-            else err += 2*dy;
+            else err += 2*params->dy;
             x1 += xadd;
         }
+        if(last_pt) callback(x1, y1, lParam);
     }
     else   /* line is "more vertical" */
     {
-        err = 2*dx - dy; erradd = 2*dx - 2*dy;
-        for(cnt = 0; cnt < dy; cnt++)
+        erradd = 2*params->dx - 2*params->dy;
+        while(y1 != y2)
         {
             callback(x1, y1, lParam);
-            if (err + bias > 0)
+            if (err + params->bias > 0)
             {
                 x1 += xadd;
                 err += erradd;
             }
-            else err += 2*dx;
+            else err += 2*params->dx;
             y1 += yadd;
         }
+        if(last_pt) callback(x1, y1, lParam);
     }
 }
 
 static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 {
     const WINEREGION *clip = get_wine_region(pdev->clip);
-    BOOL ret = TRUE;
 
     if(start->y == end->y)
     {
@@ -264,15 +502,47 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     }
     else
     {
-        if(clip->numRects == 1 && pt_in_rect(&clip->extents, start) && pt_in_rect(&clip->extents, end))
-            /* FIXME: Optimize by moving Bresenham algorithm to the primitive functions,
-               or at least cache adjacent points in the callback */
-            bres_line_with_bias(start->x, start->y, end->x, end->y, solid_pen_line_callback, (LPARAM)pdev);
-        else if(clip->numRects >= 1)
-            ret = FALSE;
+        bres_params params;
+        INT dx = end->x - start->x;
+        INT dy = end->y - start->y;
+        INT i;
+
+        params.dx = abs(dx);
+        params.dy = abs(dy);
+        params.octant = get_octant_mask(dx, dy);
+        /* Octants 3, 5, 6 and 8 take a bias */
+        params.bias = (params.octant & 0xb4) ? 1 : 0;
+
+        for(i = 0; i < clip->numRects; i++)
+        {
+            POINT clipped_start, clipped_end;
+            int clip_status;
+            clip_status = clip_line(start, end, clip->rects + i, &params, &clipped_start, &clipped_end);
+
+            if(clip_status)
+            {
+                int m = abs(clipped_start.x - start->x);
+                int n = abs(clipped_start.y - start->y);
+                int err;
+                BOOL last_pt = FALSE;
+
+                if(is_xmajor(params.octant))
+                    err = 2 * params.dy - params.dx + m * 2 * params.dy - n * 2 * params.dx;
+                else
+                    err = 2 * params.dx - params.dy + n * 2 * params.dx - m * 2 * params.dy;
+
+                if(clip_status == 1 && (end->x != clipped_end.x || end->y != clipped_end.y)) last_pt = TRUE;
+
+                bres_line_with_bias(clipped_start.x, clipped_start.y, clipped_end.x, clipped_end.y, &params,
+                                    err, last_pt, solid_pen_line_callback, (LPARAM)pdev);
+
+                if(clip_status == 2) break; /* completely unclipped, so we can finish */
+            }
+        }
+
     }
     release_wine_region(pdev->clip);
-    return ret;
+    return TRUE;
 }
 
 /***********************************************************************
