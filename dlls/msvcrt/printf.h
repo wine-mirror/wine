@@ -478,13 +478,14 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 
             i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx, &ch, 1, &flags, locale);
         } else if(flags.Format == 'p') {
-            void *ptr = pf_args(args_ctx, pos, VT_PTR, &valist).get_ptr;
-
+            flags.Format = 'X';
+            flags.PadZero = '0';
+            i = flags.Precision;
+            flags.Precision = 2*sizeof(void*);
+            FUNC_NAME(pf_integer_conv)(buf, sizeof(buf), &flags,
+                    pf_args(args_ctx, pos, VT_INT, &valist).get_int);
             flags.PadZero = 0;
-            if(flags.Alternate)
-                sprintf(buf, "0X%0*lX", 2*(int)sizeof(ptr), (ULONG_PTR)ptr);
-            else
-                sprintf(buf, "%0*lX", 2*(int)sizeof(ptr), (ULONG_PTR)ptr);
+            flags.Precision = i;
 
             i = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, buf, -1, &flags, locale);
         } else if(flags.Format == 'n') {
