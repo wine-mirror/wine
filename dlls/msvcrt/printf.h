@@ -254,12 +254,9 @@ static inline void FUNC_NAME(pf_integer_conv)(char *buf, int buf_len,
 {
     unsigned int base;
     const char *digits;
+    char tmp;
 
     int i, j, k;
-    char number[40], *tmp = number;
-
-    if(buf_len > sizeof number)
-        tmp = HeapAlloc(GetProcessHeap(), 0, buf_len);
 
     if(flags->Format == 'o')
         base = 8;
@@ -280,35 +277,36 @@ static inline void FUNC_NAME(pf_integer_conv)(char *buf, int buf_len,
 
     i = 0;
     if(x==0 && flags->Precision)
-        tmp[i++] = '0';
+        buf[i++] = '0';
     else {
         while(x != 0) {
             j = (ULONGLONG)x%base;
             x = (ULONGLONG)x/base;
-            tmp[i++] = digits[j];
+            buf[i++] = digits[j];
         }
     }
     k = flags->Precision-i;
     while(k-- > 0)
-        tmp[i++] = '0';
+        buf[i++] = '0';
     if(flags->Alternate) {
         if(base == 16) {
-            tmp[i++] = digits[16];
-            tmp[i++] = '0';
-        } else if(base==8 && tmp[i-1]!='0')
-            tmp[i++] = '0';
+            buf[i++] = digits[16];
+            buf[i++] = '0';
+        } else if(base==8 && buf[i-1]!='0')
+            buf[i++] = '0';
     }
 
+    buf[i] = '\0';
     j = 0;
-    while(i-- > 0)
-        buf[j++] = tmp[i];
-    buf[j] = '\0';
+    while(i-- > j) {
+        tmp = buf[j];
+        buf[j] = buf[i];
+        buf[i] = tmp;
+        j++;
+    }
 
     /* Adjust precision so pf_fill won't truncate the number later */
     flags->Precision = strlen(buf);
-
-    if(tmp != number)
-        HeapFree(GetProcessHeap(), 0, tmp);
 }
 
 static inline void FUNC_NAME(pf_fixup_exponent)(char *buf)
