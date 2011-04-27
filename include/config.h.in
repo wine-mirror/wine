@@ -599,6 +599,9 @@
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #undef HAVE_OPENSSL_SSL_H
 
+/* Define to 1 if the system has the type `oss_sysinfo'. */
+#undef HAVE_OSS_SYSINFO
+
 /* Define to 1 if you have the `pclose' function. */
 #undef HAVE_PCLOSE
 

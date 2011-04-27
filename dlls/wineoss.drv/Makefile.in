@@ -1,5 +1,5 @@
 MODULE    = wineoss.drv
-IMPORTS   = dxguid uuid winmm user32
+IMPORTS   = dxguid uuid winmm ole32 user32
 
 C_SRCS = \
 	audio.c \
@@ -8,6 +8,7 @@ C_SRCS = \
 	midi.c \
 	midipatch.c \
 	mixer.c \
-	mmaux.c
+	mmaux.c \
+	mmdevdrv.c
 
 @MAKE_DLL_RULES@

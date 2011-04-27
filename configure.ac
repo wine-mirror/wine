@@ -1524,6 +1524,24 @@ then
                         [ALSALIBS="-lasound"])])
 fi
 
+dnl **** Check for OSSv4 ****
+if test "$ac_cv_header_sys_soundcard_h" = "yes" -o \
+        "$ac_cv_header_machine_soundcard_h" = "yes" -o \
+        "$ac_cv_header_soundcard_h" = "yes"
+then
+    AC_CHECK_TYPES([oss_sysinfo],,,[#if defined(HAVE_SYS_SOUNDCARD_H)
+#include <sys/soundcard.h>
+#elif defined(HAVE_MACHINE_SOUNDCARD_H)
+#include <machine/soundcard.h>
+#elif defined(HAVE_SOUNDCARD_H)
+#include <soundcard.h>
+#endif])
+    if test "x$ac_cv_type_oss_sysinfo" != xyes
+    then
+        WINE_NOTICE([OSS sound system found but too old (OSSv4 needed), OSS won't be supported.])
+    fi
+fi
+
 dnl **** Check for capi4linux ****
 
 if test "$ac_cv_header_capi20_h" = "yes" -a "$ac_cv_header_linux_capi_h" = "yes"
@@ -1673,16 +1691,12 @@ test -n "$COREAUDIO" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 test -n "$NASLIBS" || enable_winenas_drv=${enable_winenas_drv:-no}
 test -n "$ESDLIBS" || enable_wineesd_drv=${enable_wineesd_drv:-no}
 test -n "$ac_cv_lib_soname_jack" || enable_winejack_drv=${enable_winejack_drv:-no}
-test "$ac_cv_header_sys_soundcard_h" = "yes" -o \
-     "$ac_cv_header_machine_soundcard_h" = "yes" -o \
-     "$ac_cv_header_soundcard_h" = "yes" || enable_wineoss_drv=${enable_wineoss_drv:-no}
+test "x$ac_cv_type_oss_sysinfo" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 dnl **** Check for any sound system ****
 if test "x$ALSALIBS$COREAUDIO$NASLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
-        "$ac_cv_header_sys_soundcard_h" != "yes" -a \
-        "$ac_cv_header_machine_soundcard_h" != "yes" -a \
-        "$ac_cv_header_soundcard_h" != "yes" -a \
+        "x$ac_cv_type_oss_sysinfo" != xyes -a \
         "x$with_alsa$with_coreaudio$with_nas$with_esd$with_jack$with_oss" != xnononononono
 then
     WINE_WARNING([No sound system was found. Windows applications will be silent.])

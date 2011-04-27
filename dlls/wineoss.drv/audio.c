@@ -76,7 +76,6 @@
 #include "mmreg.h"
 #include "dsound.h"
 #include "ks.h"
-#include "ksguid.h"
 #include "ksmedia.h"
 #include "initguid.h"
 #include "dsdriver.h"
