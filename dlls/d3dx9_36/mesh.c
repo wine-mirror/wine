@@ -1132,6 +1132,7 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     D3DFORMAT index_format = D3DFMT_INDEX16;
     DWORD vertex_usage = 0;
     D3DPOOL vertex_pool = D3DPOOL_DEFAULT;
+    int i;
 
     TRACE("(%d, %d, %x, %p, %p, %p)\n", numfaces, numvertices, options, declaration, device, mesh);
 
@@ -1141,6 +1142,9 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     {
         return D3DERR_INVALIDCALL;
     }
+    for (i = 0; declaration[i].Stream != 0xff; i++)
+        if (declaration[i].Stream != 0)
+            return D3DERR_INVALIDCALL;
 
     if (options & D3DXMESH_32BIT)
         index_format = D3DFMT_INDEX32;

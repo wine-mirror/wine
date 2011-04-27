@@ -1036,6 +1036,12 @@ static void D3DXCreateMeshTest(void)
         D3DDECL_END(),
     };
 
+    static const D3DVERTEXELEMENT9 decl3[] = {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {1, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END(),
+    };
+
     hr = D3DXCreateMesh(0, 0, 0, NULL, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
@@ -1212,6 +1218,10 @@ static void D3DXCreateMeshTest(void)
 
         d3dxmesh->lpVtbl->Release(d3dxmesh);
     }
+
+    /* Test a declaration with multiple streams. */
+    hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl3, device, &d3dxmesh);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
