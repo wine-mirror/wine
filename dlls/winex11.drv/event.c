@@ -32,6 +32,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+#include <X11/extensions/XInput2.h>
+#endif
 
 #include <assert.h>
 #include <stdarg.h>
@@ -154,6 +157,8 @@ static const char * event_names[MAX_EVENT_HANDLERS] =
     "SelectionNotify", "ColormapNotify", "ClientMessage", "MappingNotify", "GenericEvent"
 };
 
+int xinput2_opcode = 0;
+
 /* return the name of an X event */
 static const char *dbgstr_event( int type )
 {
@@ -236,7 +241,8 @@ enum event_merge_action
 {
     MERGE_DISCARD,  /* discard the old event */
     MERGE_HANDLE,   /* handle the old event */
-    MERGE_KEEP      /* keep the old event for future merging */
+    MERGE_KEEP,     /* keep the old event for future merging */
+    MERGE_IGNORE    /* ignore the new event, keep the old one */
 };
 
 /***********************************************************************
@@ -270,6 +276,22 @@ static enum event_merge_action merge_events( XEvent *prev, XEvent *next )
             return MERGE_DISCARD;
         }
         break;
+#ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
+    case GenericEvent:
+        if (prev->xcookie.extension != xinput2_opcode) break;
+        if (prev->xcookie.evtype != XI_RawMotion) break;
+        switch (next->type)
+        {
+        case MotionNotify:
+            if (next->xany.window == x11drv_thread_data()->clip_window)
+            {
+                TRACE( "ignoring MotionNotify for clip window\n" );
+                return MERGE_IGNORE;
+            }
+            break;
+        }
+        break;
+#endif
     }
     return MERGE_HANDLE;
 }
@@ -363,6 +385,8 @@ static int process_events( Display *display, Bool (*filter)(Display*, XEvent*,XP
             break;
         case MERGE_KEEP:  /* handle new, keep prev for future merging */
             call_event_handler( display, &event );
+            /* fall through */
+        case MERGE_IGNORE: /* ignore new, keep prev for future merging */
             free_event_data( &event );
             break;
         }
