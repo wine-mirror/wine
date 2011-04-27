@@ -1456,8 +1456,8 @@
 @ cdecl wcsnlen(wstr long) MSVCRT_wcsnlen
 @ cdecl wcspbrk(wstr wstr) MSVCRT_wcspbrk
 @ cdecl wcsrchr(wstr long) ntdll.wcsrchr
-# stub wcsrtombs
-# stub wcsrtombs_s
+@ cdecl wcsrtombs(ptr ptr long ptr) MSVCRT_wcsrtombs
+@ cdecl wcsrtombs_s(ptr ptr long ptr long ptr) MSVCRT_wcsrtombs_s
 @ cdecl wcsspn(wstr wstr) ntdll.wcsspn
 @ cdecl wcsstr(wstr wstr) ntdll.wcsstr
 @ cdecl wcstod(wstr ptr) MSVCRT_wcstod

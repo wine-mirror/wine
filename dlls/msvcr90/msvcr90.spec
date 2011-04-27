@@ -1485,8 +1485,8 @@
 @ cdecl wcsnlen(wstr long) msvcrt.wcsnlen
 @ cdecl wcspbrk(wstr wstr) msvcrt.wcspbrk
 @ cdecl wcsrchr(wstr long) msvcrt.wcsrchr
-@ stub wcsrtombs
-@ stub wcsrtombs_s
+@ cdecl wcsrtombs(ptr ptr long ptr) msvcrt.wcsrtombs
+@ cdecl wcsrtombs_s(ptr ptr long ptr long ptr) msvcrt.wcsrtombs_s
 @ cdecl wcsspn(wstr wstr) msvcrt.wcsspn
 @ cdecl wcsstr(wstr wstr) msvcrt.wcsstr
 @ cdecl wcstod(wstr ptr) msvcrt.wcstod

@@ -74,6 +74,7 @@ typedef int MSVCRT_clock_t;
 typedef int MSVCRT___time32_t;
 typedef __int64 DECLSPEC_ALIGN(8) MSVCRT___time64_t;
 typedef __int64 DECLSPEC_ALIGN(8) MSVCRT_fpos_t;
+typedef int MSVCRT_mbstate_t;
 
 typedef void (*__cdecl MSVCRT_terminate_handler)(void);
 typedef void (*__cdecl MSVCRT_terminate_function)(void);

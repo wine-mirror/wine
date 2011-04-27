@@ -68,6 +68,7 @@ static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
 static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
 static int (__cdecl *pwcstombs_s)(size_t*,char*,size_t,const wchar_t*,size_t);
 static int (__cdecl *pmbstowcs_s)(size_t*,wchar_t*,size_t,const char*,size_t);
+static size_t (__cdecl *pwcsrtombs)(char*, const wchar_t**, size_t, int*);
 static errno_t (__cdecl *p_gcvt_s)(char*,size_t,double,int);
 static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
 static errno_t (__cdecl *p_strlwr_s)(char*,size_t);
@@ -1283,6 +1284,7 @@ static void test_mbstowcs(void)
     static const char mSimple[] = "text";
     static const char mHiragana[] = { 0x82,0xa0,0x82,0xa1,0 };
 
+    const wchar_t *pwstr;
     wchar_t wOut[6];
     char mOut[6];
     size_t ret;
@@ -1355,6 +1357,25 @@ static void test_mbstowcs(void)
     err = pwcstombs_s(&ret, NULL, 0, wHiragana, 1);
     ok(err == 0, "err = %d\n", err);
     ok(ret == 5, "ret = %d\n", (int)ret);
+
+    if(!pwcsrtombs) {
+        win_skip("wcsrtombs not available\n");
+        return;
+    }
+
+    pwstr = wSimple;
+    err = -3;
+    ret = pwcsrtombs(mOut, &pwstr, 4, &err);
+    ok(ret == 4, "ret = %d\n", ret);
+    ok(err == 0, "err = %d\n", err);
+    ok(pwstr == wSimple+4, "pwstr = %p (wszSimple = %p)\n", pwstr, wSimple);
+    ok(!memcmp(mOut, mSimple, ret), "mOut = %s\n", mOut);
+
+    pwstr = wSimple;
+    ret = pwcsrtombs(mOut, &pwstr, 5, NULL);
+    ok(ret == 4, "ret = %d\n", ret);
+    ok(pwstr == NULL, "pwstr != NULL\n");
+    ok(!memcmp(mOut, mSimple, sizeof(mSimple)), "mOut = %s\n", mOut);
 }
 
 static void test_gcvt(void)
@@ -1974,6 +1995,7 @@ START_TEST(string)
     p_strtoui64 = (void *)GetProcAddress(hMsvcrt, "_strtoui64");
     pmbstowcs_s = (void *)GetProcAddress(hMsvcrt, "mbstowcs_s");
     pwcstombs_s = (void *)GetProcAddress(hMsvcrt, "wcstombs_s");
+    pwcsrtombs = (void *)GetProcAddress(hMsvcrt, "wcsrtombs");
     p_gcvt_s = (void *)GetProcAddress(hMsvcrt, "_gcvt_s");
     p_itoa_s = (void *)GetProcAddress(hMsvcrt, "_itoa_s");
     p_strlwr_s = (void *)GetProcAddress(hMsvcrt, "_strlwr_s");
