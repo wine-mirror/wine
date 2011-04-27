@@ -48,6 +48,8 @@ typedef struct ID3DXMeshImpl
     IDirect3DVertexDeclaration9 *vertex_declaration;
     IDirect3DVertexBuffer9 *vertex_buffer;
     IDirect3DIndexBuffer9 *index_buffer;
+    DWORD *attrib_buffer;
+    int attrib_buffer_lock_count;
 } ID3DXMeshImpl;
 
 static inline ID3DXMeshImpl *impl_from_ID3DXMesh(ID3DXMesh *iface)
@@ -97,6 +99,7 @@ static ULONG WINAPI ID3DXMeshImpl_Release(ID3DXMesh *iface)
         IDirect3DVertexBuffer9_Release(This->vertex_buffer);
         IDirect3DVertexDeclaration9_Release(This->vertex_declaration);
         IDirect3DDevice9_Release(This->device);
+        HeapFree(GetProcessHeap(), 0, This->attrib_buffer);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -473,18 +476,30 @@ static HRESULT WINAPI ID3DXMeshImpl_LockAttributeBuffer(ID3DXMesh *iface, DWORD 
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
-    FIXME("(%p)->(%u,%p): stub\n", This, flags, data);
+    TRACE("(%p)->(%u,%p)\n", This, flags, data);
 
-    return E_NOTIMPL;
+    InterlockedIncrement(&This->attrib_buffer_lock_count);
+
+    *data = This->attrib_buffer;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_UnlockAttributeBuffer(ID3DXMesh *iface)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    int lock_count;
 
-    FIXME("(%p): stub\n", This);
+    TRACE("(%p)\n", This);
 
-    return E_NOTIMPL;
+    lock_count = InterlockedDecrement(&This->attrib_buffer_lock_count);
+
+    if (lock_count < 0) {
+        InterlockedIncrement(&This->attrib_buffer_lock_count);
+        return D3DERR_INVALIDCALL;
+    }
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, CONST DWORD *adjacency_in, DWORD *adjacency_out,
@@ -1131,6 +1146,7 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     IDirect3DVertexDeclaration9 *vertex_declaration;
     IDirect3DVertexBuffer9 *vertex_buffer;
     IDirect3DIndexBuffer9 *index_buffer;
+    DWORD *attrib_buffer;
     ID3DXMeshImpl *object;
     DWORD index_usage = 0;
     D3DPOOL index_pool = D3DPOOL_DEFAULT;
@@ -1242,9 +1258,11 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
         return hr;
     }
 
+    attrib_buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, numfaces * sizeof(*attrib_buffer));
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXMeshImpl));
-    if (object == NULL)
+    if (object == NULL || attrib_buffer == NULL)
     {
+        HeapFree(GetProcessHeap(), 0, attrib_buffer);
         IDirect3DIndexBuffer9_Release(index_buffer);
         IDirect3DVertexBuffer9_Release(vertex_buffer);
         IDirect3DVertexDeclaration9_Release(vertex_declaration);
@@ -1264,6 +1282,7 @@ HRESULT WINAPI D3DXCreateMesh(DWORD numfaces, DWORD numvertices, DWORD options, 
     object->vertex_declaration = vertex_declaration;
     object->vertex_buffer = vertex_buffer;
     object->index_buffer = index_buffer;
+    object->attrib_buffer = attrib_buffer;
 
     *mesh = &object->ID3DXMesh_iface;
 
