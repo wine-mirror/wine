@@ -249,13 +249,11 @@ static inline void FUNC_NAME(pf_rebuild_format_string)(char *p, FUNC_NAME(pf_fla
 
 /* pf_integer_conv:  prints x to buf, including alternate formats and
    additional precision digits, but not field characters or the sign */
-static inline void FUNC_NAME(pf_integer_conv)(char *buf, int buf_len,
+static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, int buf_len,
         FUNC_NAME(pf_flags) *flags, LONGLONG x)
 {
     unsigned int base;
     const char *digits;
-    char tmp;
-
     int i, j, k;
 
     if(flags->Format == 'o')
@@ -296,17 +294,17 @@ static inline void FUNC_NAME(pf_integer_conv)(char *buf, int buf_len,
             buf[i++] = '0';
     }
 
+    /* Adjust precision so pf_fill won't truncate the number later */
+    flags->Precision = i;
+
     buf[i] = '\0';
     j = 0;
-    while(i-- > j) {
-        tmp = buf[j];
+    while(--i > j) {
+        APICHAR tmp = buf[j];
         buf[j] = buf[i];
         buf[i] = tmp;
         j++;
     }
-
-    /* Adjust precision so pf_fill won't truncate the number later */
-    flags->Precision = strlen(buf);
 }
 
 static inline void FUNC_NAME(pf_fixup_exponent)(char *buf)
@@ -342,9 +340,9 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
         args_clbk pf_args, void *args_ctx, __ms_va_list valist)
 {
     const APICHAR *q, *p = fmt;
+    APICHAR buf[32];
     int written = 0, pos, i;
     FUNC_NAME(pf_flags) flags;
-    char buf[32];
 
     TRACE("Format is: %s\n", FUNC_NAME(debugstr)(fmt));
 
@@ -482,21 +480,25 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             flags.PadZero = '0';
             i = flags.Precision;
             flags.Precision = 2*sizeof(void*);
-            FUNC_NAME(pf_integer_conv)(buf, sizeof(buf), &flags,
+            FUNC_NAME(pf_integer_conv)(buf, sizeof(buf)/sizeof(APICHAR), &flags,
                     pf_args(args_ctx, pos, VT_INT, &valist).get_int);
             flags.PadZero = 0;
             flags.Precision = i;
 
+#ifdef PRINTF_WIDE
+            i = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, buf, -1, &flags, locale);
+#else
             i = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, buf, -1, &flags, locale);
+#endif
         } else if(flags.Format == 'n') {
             int *used = pf_args(args_ctx, pos, VT_PTR, &valist).get_ptr;
             *used = written;
             i = 0;
         } else if(flags.Format && strchr("diouxX", flags.Format)) {
-            char *tmp = buf;
+            APICHAR *tmp = buf;
             int max_len = (flags.FieldLength>flags.Precision ? flags.FieldLength : flags.Precision) + 10;
 
-            if(max_len > sizeof(buf))
+            if(max_len > sizeof(buf)/sizeof(APICHAR))
                 tmp = HeapAlloc(GetProcessHeap(), 0, max_len);
             if(!tmp)
                 return -1;
@@ -511,14 +513,18 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, (unsigned)pf_args(
                             args_ctx, pos, VT_INT, &valist).get_int);
 
+#ifdef PRINTF_WIDE
+            i = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, tmp, -1, &flags, locale);
+#else
             i = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, tmp, -1, &flags, locale);
+#endif
             if(tmp != buf)
                 HeapFree(GetProcessHeap(), 0, tmp);
         } else if(flags.Format && strchr("aeEfgG", flags.Format)) {
-            char fmt[20], *tmp = buf, *decimal_point;
+            char fmt[20], buf_a[32], *tmp = buf_a, *decimal_point;
             int max_len = (flags.FieldLength>flags.Precision ? flags.FieldLength : flags.Precision) + 10;
 
-            if(max_len > sizeof(buf))
+            if(max_len > sizeof(buf_a))
                 tmp = HeapAlloc(GetProcessHeap(), 0, max_len);
             if(!tmp)
                 return -1;
@@ -534,7 +540,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 *decimal_point = *locale->locinfo->lconv->decimal_point;
 
             i = FUNC_NAME(pf_output_str)(pf_puts, puts_ctx, tmp, strlen(tmp), locale);
-            if(tmp != buf)
+            if(tmp != buf_a)
                 HeapFree(GetProcessHeap(), 0, tmp);
         } else {
             if(invoke_invalid_param_handler) {
