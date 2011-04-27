@@ -271,7 +271,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
         snd_pcm_close(This->pcm_handle);
         HeapFree(GetProcessHeap(), 0, This->local_buffer);
         HeapFree(GetProcessHeap(), 0, This->hw_params);
-        HeapFree(GetProcessHeap(), 0, This->fmt);
+        CoTaskMemFree(This->fmt);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -321,7 +321,7 @@ static WAVEFORMATEX *clone_format(const WAVEFORMATEX *fmt)
     else
         size = sizeof(WAVEFORMATEX);
 
-    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = CoTaskMemAlloc(size);
     if(!ret)
         return NULL;
 
@@ -850,7 +850,7 @@ exit:
     HeapFree(GetProcessHeap(), 0, formats);
 
     if(hr == S_OK || !out){
-        HeapFree(GetProcessHeap(), 0, closest);
+        CoTaskMemFree(closest);
         if(out)
             *out = NULL;
     }else if(closest){

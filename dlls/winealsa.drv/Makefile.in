@@ -1,5 +1,5 @@
 MODULE    = winealsa.drv
-IMPORTS   = dxguid uuid winmm user32 advapi32
+IMPORTS   = dxguid uuid winmm ole32 user32 advapi32
 EXTRALIBS = @ALSALIBS@
 
 C_SRCS = \
