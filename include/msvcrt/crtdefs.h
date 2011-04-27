@@ -97,6 +97,8 @@
 # endif
 #endif
 
+#define _ARGMAX 100
+
 #ifndef _MSVCRT_LONG_DEFINED
 #define _MSVCRT_LONG_DEFINED
 /* we need 32-bit longs even on 64-bit */

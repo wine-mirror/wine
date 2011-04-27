@@ -553,6 +553,79 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
     return written;
 }
 
+#ifndef PRINTF_WIDE
+enum types_clbk_flags {
+    TYPE_CLBK_VA_LIST = 1,
+    TYPE_CLBK_POSITIONAL = 2,
+    TYPE_CLBK_ERROR_POS = 4,
+    TYPE_CLBK_ERROR_TYPE = 8
+};
+
+/* This functions stores types of arguments. It uses args[0] internally */
+static printf_arg arg_clbk_type(void *ctx, int pos, int type, __ms_va_list *valist)
+{
+    static const printf_arg ret;
+    printf_arg *args = ctx;
+
+    if(pos == -1) {
+        args[0].get_int |= TYPE_CLBK_VA_LIST;
+        return ret;
+    } else
+        args[0].get_int |= TYPE_CLBK_POSITIONAL;
+
+    if(pos<1 || pos>MSVCRT__ARGMAX)
+        args[0].get_int |= TYPE_CLBK_ERROR_POS;
+    else if(args[pos].get_int && args[pos].get_int!=type)
+        args[0].get_int |= TYPE_CLBK_ERROR_TYPE;
+    else
+        args[pos].get_int = type;
+
+    return ret;
+}
+#endif
+
+static int FUNC_NAME(create_positional_ctx)(void *args_ctx, const APICHAR *format, __ms_va_list valist)
+{
+    struct FUNC_NAME(_str_ctx) puts_ctx = {INT_MAX, NULL};
+    printf_arg *args = args_ctx;
+    int i, j;
+
+    i = FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk_str), &puts_ctx, format, NULL, TRUE, FALSE,
+            arg_clbk_type, args_ctx, NULL);
+    if(i < 0)
+        return i;
+
+    if(args[0].get_int==0 || args[0].get_int==TYPE_CLBK_VA_LIST)
+        return 0;
+    if(args[0].get_int != TYPE_CLBK_POSITIONAL)
+        return -1;
+
+    for(i=MSVCRT__ARGMAX; i>0; i--)
+        if(args[i].get_int)
+            break;
+
+    for(j=1; j<=i; j++) {
+        switch(args[j].get_int) {
+        case VT_I8:
+            args[j].get_longlong = va_arg(valist, LONGLONG);
+            break;
+        case VT_INT:
+            args[j].get_int = va_arg(valist, int);
+            break;
+        case VT_R8:
+            args[j].get_double = va_arg(valist, double);
+            break;
+        case VT_PTR:
+            args[j].get_ptr = va_arg(valist, void*);
+            break;
+        default:
+            return -1;
+        }
+    }
+
+    return j;
+}
+
 #undef APICHAR
 #undef CONVCHAR
 #undef FUNC_NAME

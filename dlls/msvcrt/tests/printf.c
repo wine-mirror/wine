@@ -44,6 +44,7 @@ static int (__cdecl *p__ecvt_s)(char *buffer, size_t length, double number,
 static int (__cdecl *p__fcvt_s)(char *buffer, size_t length, double number,
                                 int ndigits, int *decpt, int *sign);
 static unsigned int (__cdecl *p__get_output_format)(void);
+static int (__cdecl *p__vsprintf_p)(char*, size_t, const char*, __ms_va_list);
 
 static void init( void )
 {
@@ -55,6 +56,7 @@ static void init( void )
     p__ecvt_s = (void *)GetProcAddress(hmod, "_ecvt_s");
     p__fcvt_s = (void *)GetProcAddress(hmod, "_fcvt_s");
     p__get_output_format = (void *)GetProcAddress(hmod, "_get_output_format");
+    p__vsprintf_p = (void*)GetProcAddress(hmod, "_vsprintf_p");
 }
 
 static void test_sprintf( void )
@@ -1050,6 +1052,47 @@ static void test_vsnwprintf_s(void)
     ok( !wcscmp(out1, buffer), "buffer wrong, got=%s\n", wine_dbgstr_w(buffer));
 }
 
+static int __cdecl _vsprintf_p_wrapper(char *str, size_t sizeOfBuffer,
+                                 const char *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p__vsprintf_p(str, sizeOfBuffer, format, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static void test_vsprintf_p(void)
+{
+    char buf[1024];
+    int ret;
+
+    if(!p__vsprintf_p) {
+        win_skip("vsprintf_p not available\n");
+        return;
+    }
+
+    ret = _vsprintf_p_wrapper(buf, sizeof(buf), "%s %d", "test", 1234);
+    ok(ret == 9, "ret = %d\n", ret);
+    ok(!memcmp(buf, "test 1234", 10), "buf = %s\n", buf);
+
+    ret = _vsprintf_p_wrapper(buf, sizeof(buf), "%1$d", 1234, "additional param");
+    ok(ret == 4, "ret = %d\n", ret);
+    ok(!memcmp(buf, "1234", 5), "buf = %s\n", buf);
+
+    ret = _vsprintf_p_wrapper(buf, sizeof(buf), "%2$s %1$d", 1234, "test");
+    ok(ret == 9, "ret = %d\n", ret);
+    ok(!memcmp(buf, "test 1234", 10), "buf = %s\n", buf);
+
+    ret = _vsprintf_p_wrapper(buf, sizeof(buf), "%2$*3$s %2$.*1$s", 2, "test", 3);
+    ok(ret == 7, "ret = %d\n", ret);
+    ok(!memcmp(buf, "test te", 8), "buf = %s\n", buf);
+
+    /* Following test invokes invalid parameter handler */
+    /* ret = _vsprintf_p_wrapper(buf, sizeof(buf), "%d %1$d", 1234); */
+}
+
 static void test__get_output_format(void)
 {
     unsigned int ret;
@@ -1078,5 +1121,6 @@ START_TEST(printf)
     test_vscprintf();
     test_vscwprintf();
     test_vsnwprintf_s();
+    test_vsprintf_p();
     test__get_output_format();
 }

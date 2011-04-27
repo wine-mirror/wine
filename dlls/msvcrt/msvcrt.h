@@ -916,6 +916,7 @@ void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_
 #define MSVCRT_CHECK_PMT(x)   ((x) || (MSVCRT_INVALID_PMT(0),FALSE))
 #endif
 
+#define MSVCRT__ARGMAX 100
 typedef int (*puts_clbk_a)(void*, int, const char*);
 typedef int (*puts_clbk_w)(void*, int, const MSVCRT_wchar_t*);
 typedef union _printf_arg
@@ -931,6 +932,7 @@ int pf_printf_a(puts_clbk_a, void*, const char*, MSVCRT__locale_t,
 int pf_printf_w(puts_clbk_w, void*, const MSVCRT_wchar_t*, MSVCRT__locale_t,
         BOOL, BOOL, args_clbk, void*, __ms_va_list);
 printf_arg arg_clbk_valist(void*, int, int, __ms_va_list*);
+printf_arg arg_clbk_positional(void*, int, int, __ms_va_list*);
 
 #define MSVCRT__OVERFLOW  3
 #define MSVCRT__UNDERFLOW 4
