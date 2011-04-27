@@ -755,6 +755,13 @@ static HRESULT surface_draw_overlay(IWineD3DSurfaceImpl *surface)
     return hr;
 }
 
+static void surface_preload(IWineD3DSurfaceImpl *surface)
+{
+    TRACE("surface %p.\n", surface);
+
+    surface_internal_preload(surface, SRGB_ANY);
+}
+
 static void surface_map(IWineD3DSurfaceImpl *surface, const RECT *rect, DWORD flags)
 {
     IWineD3DDeviceImpl *device = surface->resource.device;
@@ -1036,6 +1043,7 @@ static const struct wined3d_surface_ops surface_ops =
     surface_cleanup,
     surface_realize_palette,
     surface_draw_overlay,
+    surface_preload,
     surface_map,
     surface_unmap,
 };
@@ -1153,6 +1161,13 @@ static HRESULT gdi_surface_draw_overlay(IWineD3DSurfaceImpl *surface)
     return E_FAIL;
 }
 
+static void gdi_surface_preload(IWineD3DSurfaceImpl *surface)
+{
+    TRACE("surface %p.\n", surface);
+
+    ERR("Preloading GDI surfaces is not supported.\n");
+}
+
 static void gdi_surface_map(IWineD3DSurfaceImpl *surface, const RECT *rect, DWORD flags)
 {
     TRACE("surface %p, rect %s, flags %#x.\n",
@@ -1190,6 +1205,7 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     surface_gdi_cleanup,
     gdi_surface_realize_palette,
     gdi_surface_draw_overlay,
+    gdi_surface_preload,
     gdi_surface_map,
     gdi_surface_unmap,
 };
@@ -2095,6 +2111,15 @@ static DWORD WINAPI IWineD3DBaseSurfaceImpl_SetPriority(IWineD3DSurface *iface, 
 static DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPriority(IWineD3DSurface *iface)
 {
     return resource_get_priority(&((IWineD3DSurfaceImpl *)iface)->resource);
+}
+
+static void WINAPI IWineD3DBaseSurfaceImpl_PreLoad(IWineD3DSurface *iface)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p.\n", iface);
+
+    surface->surface_ops->surface_preload(surface);
 }
 
 static void * WINAPI IWineD3DBaseSurfaceImpl_GetParent(IWineD3DSurface *iface)
@@ -3846,11 +3871,6 @@ void surface_internal_preload(IWineD3DSurfaceImpl *surface, enum WINED3DSRGB srg
 
         if (context) context_release(context);
     }
-}
-
-static void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface)
-{
-    surface_internal_preload((IWineD3DSurfaceImpl *)iface, SRGB_ANY);
 }
 
 BOOL surface_init_sysmem(IWineD3DSurfaceImpl *surface)
@@ -6969,7 +6989,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_FreePrivateData,
     IWineD3DBaseSurfaceImpl_SetPriority,
     IWineD3DBaseSurfaceImpl_GetPriority,
-    IWineD3DSurfaceImpl_PreLoad,
+    IWineD3DBaseSurfaceImpl_PreLoad,
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetResource,
     IWineD3DBaseSurfaceImpl_Map,
@@ -7243,13 +7263,6 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     return TRUE;
 }
 
-static void WINAPI IWineGDISurfaceImpl_PreLoad(IWineD3DSurface *iface)
-{
-    ERR("(%p): PreLoad is not supported on X11 surfaces!\n", iface);
-    ERR("(%p): Most likely the parent library did something wrong.\n", iface);
-    ERR("(%p): Please report to wine-devel\n", iface);
-}
-
 /*****************************************************************************
  * IWineD3DSurface::Flip, GDI version
  *
@@ -7455,7 +7468,7 @@ static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_FreePrivateData,
     IWineD3DBaseSurfaceImpl_SetPriority,
     IWineD3DBaseSurfaceImpl_GetPriority,
-    IWineGDISurfaceImpl_PreLoad,
+    IWineD3DBaseSurfaceImpl_PreLoad,
     /* IWineD3DSurface */
     IWineD3DBaseSurfaceImpl_GetResource,
     IWineD3DBaseSurfaceImpl_Map,

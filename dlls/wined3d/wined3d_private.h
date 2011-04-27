@@ -2024,6 +2024,7 @@ struct wined3d_surface_ops
     void (*surface_cleanup)(struct IWineD3DSurfaceImpl *surface);
     void (*surface_realize_palette)(struct IWineD3DSurfaceImpl *surface);
     HRESULT (*surface_draw_overlay)(struct IWineD3DSurfaceImpl *surface);
+    void (*surface_preload)(struct IWineD3DSurfaceImpl *surface);
     void (*surface_map)(struct IWineD3DSurfaceImpl *surface, const RECT *rect, DWORD flags);
     void (*surface_unmap)(struct IWineD3DSurfaceImpl *surface);
 };
