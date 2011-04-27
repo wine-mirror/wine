@@ -806,7 +806,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
 
     if(fmt->nSamplesPerSec < min || fmt->nSamplesPerSec > max ||
             (fmt->nSamplesPerSec != 48000 &&
-            fmt->nSamplesPerSec != 41100 &&
+            fmt->nSamplesPerSec != 44100 &&
             fmt->nSamplesPerSec != 22050 &&
             fmt->nSamplesPerSec != 11025 &&
             fmt->nSamplesPerSec != 8000)){
@@ -949,8 +949,8 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
 
     if(max_rate >= 48000)
         fmt->Format.nSamplesPerSec = 48000;
-    else if(max_rate >= 41100)
-        fmt->Format.nSamplesPerSec = 41100;
+    else if(max_rate >= 44100)
+        fmt->Format.nSamplesPerSec = 44100;
     else if(max_rate >= 22050)
         fmt->Format.nSamplesPerSec = 22050;
     else if(max_rate >= 11025)
