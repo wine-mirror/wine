@@ -113,10 +113,43 @@ static ULONG WINAPI ID3DXMeshImpl_Release(ID3DXMesh *iface)
 static HRESULT WINAPI ID3DXMeshImpl_DrawSubset(ID3DXMesh *iface, DWORD attrib_id)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    HRESULT hr;
+    DWORD face_start;
+    DWORD face_end = 0;
+    DWORD vertex_size;
 
-    FIXME("(%p)->(%u): stub\n", This, attrib_id);
+    TRACE("(%p)->(%u)\n", This, attrib_id);
 
-    return E_NOTIMPL;
+    vertex_size = iface->lpVtbl->GetNumBytesPerVertex(iface);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(This->device, This->vertex_declaration);
+    if (FAILED(hr)) return hr;
+    hr = IDirect3DDevice9_SetStreamSource(This->device, 0, This->vertex_buffer, 0, vertex_size);
+    if (FAILED(hr)) return hr;
+    hr = IDirect3DDevice9_SetIndices(This->device, This->index_buffer);
+    if (FAILED(hr)) return hr;
+
+    while (face_end < This->numfaces)
+    {
+        for (face_start = face_end; face_start < This->numfaces; face_start++)
+        {
+            if (This->attrib_buffer[face_start] == attrib_id)
+                break;
+        }
+        if (face_start >= This->numfaces)
+            break;
+        for (face_end = face_start + 1; face_end < This->numfaces; face_end++)
+        {
+            if (This->attrib_buffer[face_end] != attrib_id)
+                break;
+        }
+
+        hr = IDirect3DDevice9_DrawIndexedPrimitive(This->device, D3DPT_TRIANGLELIST,
+                0, 0, This->numvertices, face_start * 3, face_end - face_start);
+        if (FAILED(hr)) return hr;
+    }
+
+    return D3D_OK;
 }
 
 static DWORD WINAPI ID3DXMeshImpl_GetNumFaces(ID3DXMesh *iface)
