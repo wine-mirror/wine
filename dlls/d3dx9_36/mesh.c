@@ -50,6 +50,8 @@ typedef struct ID3DXMeshImpl
     IDirect3DIndexBuffer9 *index_buffer;
     DWORD *attrib_buffer;
     int attrib_buffer_lock_count;
+    DWORD attrib_table_size;
+    D3DXATTRIBUTERANGE *attrib_table;
 } ID3DXMeshImpl;
 
 static inline ID3DXMeshImpl *impl_from_ID3DXMesh(ID3DXMesh *iface)
@@ -100,6 +102,7 @@ static ULONG WINAPI ID3DXMeshImpl_Release(ID3DXMesh *iface)
         IDirect3DVertexDeclaration9_Release(This->vertex_declaration);
         IDirect3DDevice9_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This->attrib_buffer);
+        HeapFree(GetProcessHeap(), 0, This->attrib_table);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -278,9 +281,15 @@ static HRESULT WINAPI ID3DXMeshImpl_GetAttributeTable(ID3DXMesh *iface, D3DXATTR
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
 
-    FIXME("(%p)->(%p,%p): stub\n", This, attrib_table, attrib_table_size);
+    TRACE("(%p)->(%p,%p)\n", This, attrib_table, attrib_table_size);
 
-    return E_NOTIMPL;
+    if (attrib_table_size)
+        *attrib_table_size = This->attrib_table_size;
+
+    if (attrib_table)
+        CopyMemory(attrib_table, This->attrib_table, This->attrib_table_size * sizeof(*attrib_table));
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_ConvertPointRepsToAdjacency(ID3DXMesh *iface, CONST DWORD *point_reps, DWORD *adjacency)
@@ -480,6 +489,13 @@ static HRESULT WINAPI ID3DXMeshImpl_LockAttributeBuffer(ID3DXMesh *iface, DWORD 
 
     InterlockedIncrement(&This->attrib_buffer_lock_count);
 
+    if (!(flags & D3DLOCK_READONLY)) {
+        D3DXATTRIBUTERANGE *attrib_table = This->attrib_table;
+        This->attrib_table_size = 0;
+        This->attrib_table = NULL;
+        HeapFree(GetProcessHeap(), 0, attrib_table);
+    }
+
     *data = This->attrib_buffer;
 
     return D3D_OK;
@@ -525,10 +541,26 @@ static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flag
 static HRESULT WINAPI ID3DXMeshImpl_SetAttributeTable(ID3DXMesh *iface, CONST D3DXATTRIBUTERANGE *attrib_table, DWORD attrib_table_size)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    D3DXATTRIBUTERANGE *new_table = NULL;
 
-    FIXME("(%p)->(%p,%u): stub\n", This, attrib_table, attrib_table_size);
+    TRACE("(%p)->(%p,%u)\n", This, attrib_table, attrib_table_size);
 
-    return E_NOTIMPL;
+    if (attrib_table_size) {
+        size_t size = attrib_table_size * sizeof(*attrib_table);
+
+        new_table = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!new_table)
+            return E_OUTOFMEMORY;
+
+        CopyMemory(new_table, attrib_table, size);
+    } else if (attrib_table) {
+        return D3DERR_INVALIDCALL;
+    }
+    HeapFree(GetProcessHeap(), 0, This->attrib_table);
+    This->attrib_table = new_table;
+    This->attrib_table_size = attrib_table_size;
+
+    return D3D_OK;
 }
 
 static const struct ID3DXMeshVtbl D3DXMesh_Vtbl =
