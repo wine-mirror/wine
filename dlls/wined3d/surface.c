@@ -571,6 +571,72 @@ static void surface_evict_sysmem(IWineD3DSurfaceImpl *surface)
     surface_modify_location(surface, SFLAG_INSYSMEM, FALSE);
 }
 
+/* Context activation is done by the caller. */
+static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *surface,
+        const struct wined3d_gl_info *gl_info, BOOL srgb)
+{
+    IWineD3DDeviceImpl *device = surface->resource.device;
+    DWORD active_sampler;
+    GLint active_texture;
+
+    /* We don't need a specific texture unit, but after binding the texture
+     * the current unit is dirty. Read the unit back instead of switching to
+     * 0, this avoids messing around with the state manager's GL states. The
+     * current texture unit should always be a valid one.
+     *
+     * To be more specific, this is tricky because we can implicitly be
+     * called from sampler() in state.c. This means we can't touch anything
+     * other than whatever happens to be the currently active texture, or we
+     * would risk marking already applied sampler states dirty again.
+     *
+     * TODO: Track the current active texture per GL context instead of using
+     * glGet(). */
+
+    ENTER_GL();
+    glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
+    LEAVE_GL();
+    active_sampler = device->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
+
+    if (active_sampler != WINED3D_UNMAPPED_STAGE)
+    {
+        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(active_sampler));
+    }
+    surface_bind(surface, gl_info, srgb);
+}
+
+static void surface_force_reload(IWineD3DSurfaceImpl *surface)
+{
+    surface->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
+}
+
+static void surface_release_client_storage(IWineD3DSurfaceImpl *surface)
+{
+    struct wined3d_context *context = context_acquire(surface->resource.device, NULL);
+
+    ENTER_GL();
+    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+    if (surface->texture_name)
+    {
+        surface_bind_and_dirtify(surface, context->gl_info, FALSE);
+        glTexImage2D(surface->texture_target, surface->texture_level,
+                GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    }
+    if (surface->texture_name_srgb)
+    {
+        surface_bind_and_dirtify(surface, context->gl_info, TRUE);
+        glTexImage2D(surface->texture_target, surface->texture_level,
+                GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    }
+    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+    LEAVE_GL();
+
+    context_release(context);
+
+    surface_modify_location(surface, SFLAG_INSRGBTEX, FALSE);
+    surface_modify_location(surface, SFLAG_INTEXTURE, FALSE);
+    surface_force_reload(surface);
+}
+
 static HRESULT surface_private_setup(struct IWineD3DSurfaceImpl *surface)
 {
     /* TODO: Check against the maximum texture sizes supported by the video card. */
@@ -934,6 +1000,43 @@ done:
         surface->surface_ops->surface_draw_overlay(surface);
 }
 
+static HRESULT surface_getdc(IWineD3DSurfaceImpl *surface)
+{
+    WINED3DLOCKED_RECT lock;
+    HRESULT hr;
+
+    TRACE("surface %p.\n", surface);
+
+    /* Create a DIB section if there isn't a dc yet. */
+    if (!surface->hDC)
+    {
+        if (surface->flags & SFLAG_CLIENT)
+        {
+            surface_load_location(surface, SFLAG_INSYSMEM, NULL);
+            surface_release_client_storage(surface);
+        }
+        hr = surface_create_dib_section(surface);
+        if (FAILED(hr))
+            return WINED3DERR_INVALIDCALL;
+
+        /* Use the DIB section from now on if we are not using a PBO. */
+        if (!(surface->flags & SFLAG_PBO))
+            surface->resource.allocatedMemory = surface->dib.bitmap_data;
+    }
+
+    /* Map the surface. */
+    hr = IWineD3DSurface_Map((IWineD3DSurface *)surface, &lock, NULL, 0);
+    if (FAILED(hr))
+        ERR("Map failed, hr %#x.\n", hr);
+
+    /* Sync the DIB with the PBO. This can't be done earlier because Map()
+     * activates the allocatedMemory. */
+    if (surface->flags & SFLAG_PBO)
+        memcpy(surface->dib.bitmap_data, surface->resource.allocatedMemory, surface->dib.bitmap_size);
+
+    return hr;
+}
+
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info)
 {
@@ -1046,6 +1149,7 @@ static const struct wined3d_surface_ops surface_ops =
     surface_preload,
     surface_map,
     surface_unmap,
+    surface_getdc,
 };
 
 /*****************************************************************************
@@ -1199,6 +1303,28 @@ static void gdi_surface_unmap(IWineD3DSurfaceImpl *surface)
     memset(&surface->lockedRect, 0, sizeof(RECT));
 }
 
+static HRESULT gdi_surface_getdc(IWineD3DSurfaceImpl *surface)
+{
+    WINED3DLOCKED_RECT lock;
+    HRESULT hr;
+
+    TRACE("surface %p.\n", surface);
+
+    /* Should have a DIB section already. */
+    if (!(surface->flags & SFLAG_DIBSECTION))
+    {
+        WARN("DC not supported on this surface\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* Map the surface. */
+    hr = IWineD3DSurface_Map((IWineD3DSurface *)surface, &lock, NULL, 0);
+    if (FAILED(hr))
+        ERR("Map failed, hr %#x.\n", hr);
+
+    return hr;
+}
+
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
@@ -1208,12 +1334,8 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_preload,
     gdi_surface_map,
     gdi_surface_unmap,
+    gdi_surface_getdc,
 };
-
-static void surface_force_reload(IWineD3DSurfaceImpl *surface)
-{
-    surface->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
-}
 
 void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint new_name, BOOL srgb)
 {
@@ -1314,37 +1436,6 @@ void surface_bind(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl
 
         LEAVE_GL();
     }
-}
-
-/* Context activation is done by the caller. */
-static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *surface,
-        const struct wined3d_gl_info *gl_info, BOOL srgb)
-{
-    IWineD3DDeviceImpl *device = surface->resource.device;
-    DWORD active_sampler;
-
-    /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
-     * Read the unit back instead of switching to 0, this avoids messing around with the state manager's
-     * gl states. The current texture unit should always be a valid one.
-     *
-     * To be more specific, this is tricky because we can implicitly be called
-     * from sampler() in state.c. This means we can't touch anything other than
-     * whatever happens to be the currently active texture, or we would risk
-     * marking already applied sampler states dirty again.
-     *
-     * TODO: Track the current active texture per GL context instead of using glGet
-     */
-    GLint active_texture;
-    ENTER_GL();
-    glGetIntegerv(GL_ACTIVE_TEXTURE, &active_texture);
-    LEAVE_GL();
-    active_sampler = device->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
-
-    if (active_sampler != WINED3D_UNMAPPED_STAGE)
-    {
-        IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(active_sampler));
-    }
-    surface_bind(surface, gl_info, srgb);
 }
 
 /* This function checks if the primary render target uses the 8bit paletted format. */
@@ -3818,6 +3909,76 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
     return WINED3D_OK;
 }
 
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *dc)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    HRESULT hr;
+
+    TRACE("iface %p, dc %p.\n", iface, dc);
+
+    if (surface->flags & SFLAG_USERPTR)
+    {
+        ERR("Not supported on surfaces with application-provided memory.\n");
+        return WINEDDERR_NODC;
+    }
+
+    /* Give more detailed info for ddraw. */
+    if (surface->flags & SFLAG_DCINUSE)
+        return WINEDDERR_DCALREADYCREATED;
+
+    /* Can't GetDC if the surface is locked. */
+    if (surface->flags & SFLAG_LOCKED)
+        return WINED3DERR_INVALIDCALL;
+
+    hr = surface->surface_ops->surface_getdc(surface);
+    if (FAILED(hr))
+        return hr;
+
+    if (surface->resource.format->id == WINED3DFMT_P8_UINT
+            || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
+    {
+        /* GetDC on palettized formats is unsupported in D3D9, and the method
+         * is missing in D3D8, so this should only be used for DX <=7
+         * surfaces (with non-device palettes). */
+        const PALETTEENTRY *pal = NULL;
+
+        if (surface->palette)
+        {
+            pal = surface->palette->palents;
+        }
+        else
+        {
+            struct wined3d_swapchain *swapchain = surface->resource.device->swapchains[0];
+            IWineD3DSurfaceImpl *dds_primary = swapchain->front_buffer;
+
+            if (dds_primary && dds_primary->palette)
+                pal = dds_primary->palette->palents;
+        }
+
+        if (pal)
+        {
+            RGBQUAD col[256];
+            unsigned int i;
+
+            for (i = 0; i < 256; ++i)
+            {
+                col[i].rgbRed = pal[i].peRed;
+                col[i].rgbGreen = pal[i].peGreen;
+                col[i].rgbBlue = pal[i].peBlue;
+                col[i].rgbReserved = 0;
+            }
+            SetDIBColorTable(surface->hDC, 0, 256, col);
+        }
+    }
+
+    surface->flags |= SFLAG_DCINUSE;
+
+    *dc = surface->hDC;
+    TRACE("Returning dc %p.\n", *dc);
+
+    return WINED3D_OK;
+}
+
 /* ****************************************************
    IWineD3DSurface IWineD3DResource parts follow
    **************************************************** */
@@ -4306,129 +4467,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *surface,
         wglFlush();
 
     context_release(context);
-}
-
-static void surface_release_client_storage(IWineD3DSurfaceImpl *surface)
-{
-    struct wined3d_context *context;
-
-    context = context_acquire(surface->resource.device, NULL);
-
-    ENTER_GL();
-    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-    if (surface->texture_name)
-    {
-        surface_bind_and_dirtify(surface, context->gl_info, FALSE);
-        glTexImage2D(surface->texture_target, surface->texture_level,
-                GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    }
-    if (surface->texture_name_srgb)
-    {
-        surface_bind_and_dirtify(surface, context->gl_info, TRUE);
-        glTexImage2D(surface->texture_target, surface->texture_level,
-                GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    }
-    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-
-    LEAVE_GL();
-    context_release(context);
-
-    surface_modify_location(surface, SFLAG_INSRGBTEX, FALSE);
-    surface_modify_location(surface, SFLAG_INTEXTURE, FALSE);
-    surface_force_reload(surface);
-}
-
-static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    WINED3DLOCKED_RECT lock;
-    HRESULT hr;
-    RGBQUAD col[256];
-
-    TRACE("(%p)->(%p)\n",This,pHDC);
-
-    if (This->flags & SFLAG_USERPTR)
-    {
-        ERR("Not supported on surfaces with an application-provided surfaces\n");
-        return WINEDDERR_NODC;
-    }
-
-    /* Give more detailed info for ddraw */
-    if (This->flags & SFLAG_DCINUSE)
-        return WINEDDERR_DCALREADYCREATED;
-
-    /* Can't GetDC if the surface is locked */
-    if (This->flags & SFLAG_LOCKED)
-        return WINED3DERR_INVALIDCALL;
-
-    memset(&lock, 0, sizeof(lock)); /* To be sure */
-
-    /* Create a DIB section if there isn't a hdc yet */
-    if (!This->hDC)
-    {
-        if (This->flags & SFLAG_CLIENT)
-        {
-            surface_load_location(This, SFLAG_INSYSMEM, NULL);
-            surface_release_client_storage(This);
-        }
-        hr = surface_create_dib_section(This);
-        if(FAILED(hr)) return WINED3DERR_INVALIDCALL;
-
-        /* Use the dib section from now on if we are not using a PBO */
-        if (!(This->flags & SFLAG_PBO))
-            This->resource.allocatedMemory = This->dib.bitmap_data;
-    }
-
-    /* Map the surface */
-    hr = IWineD3DSurface_Map(iface, &lock, NULL, 0);
-
-    /* Sync the DIB with the PBO. This can't be done earlier because Map()
-     * activates the allocatedMemory. */
-    if (This->flags & SFLAG_PBO)
-        memcpy(This->dib.bitmap_data, This->resource.allocatedMemory, This->dib.bitmap_size);
-
-    if (FAILED(hr))
-    {
-        ERR("IWineD3DSurface_Map failed, hr %#x.\n", hr);
-        /* keep the dib section */
-        return hr;
-    }
-
-    if (This->resource.format->id == WINED3DFMT_P8_UINT
-            || This->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
-    {
-        /* GetDC on palettized formats is unsupported in D3D9, and the method is missing in
-            D3D8, so this should only be used for DX <=7 surfaces (with non-device palettes) */
-        unsigned int n;
-        const PALETTEENTRY *pal = NULL;
-
-        if(This->palette) {
-            pal = This->palette->palents;
-        } else {
-            IWineD3DSurfaceImpl *dds_primary;
-            struct wined3d_swapchain *swapchain;
-            swapchain = This->resource.device->swapchains[0];
-            dds_primary = swapchain->front_buffer;
-            if (dds_primary && dds_primary->palette)
-                pal = dds_primary->palette->palents;
-        }
-
-        if (pal) {
-            for (n=0; n<256; n++) {
-                col[n].rgbRed   = pal[n].peRed;
-                col[n].rgbGreen = pal[n].peGreen;
-                col[n].rgbBlue  = pal[n].peBlue;
-                col[n].rgbReserved = 0;
-            }
-            SetDIBColorTable(This->hDC, 0, 256, col);
-        }
-    }
-
-    *pHDC = This->hDC;
-    TRACE("returning %p\n",*pHDC);
-    This->flags |= SFLAG_DCINUSE;
-
-    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC)
@@ -6994,7 +7032,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetResource,
     IWineD3DBaseSurfaceImpl_Map,
     IWineD3DBaseSurfaceImpl_Unmap,
-    IWineD3DSurfaceImpl_GetDC,
+    IWineD3DBaseSurfaceImpl_GetDC,
     IWineD3DSurfaceImpl_ReleaseDC,
     IWineD3DSurfaceImpl_Flip,
     IWineD3DSurfaceImpl_Blt,
@@ -7295,89 +7333,6 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     return hr;
 }
 
-static HRESULT WINAPI IWineGDISurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *dc)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-    WINED3DLOCKED_RECT lock;
-    HRESULT hr;
-    RGBQUAD col[256];
-
-    TRACE("iface %p, dc %p.\n", iface, dc);
-
-    if (!(surface->flags & SFLAG_DIBSECTION))
-    {
-        WARN("DC not supported on this surface\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (surface->flags & SFLAG_USERPTR)
-    {
-        ERR("Not supported on surfaces with application-provided memory.\n");
-        return WINEDDERR_NODC;
-    }
-
-    /* Give more detailed info for ddraw. */
-    if (surface->flags & SFLAG_DCINUSE)
-        return WINEDDERR_DCALREADYCREATED;
-
-    /* Can't GetDC if the surface is locked. */
-    if (surface->flags & SFLAG_LOCKED)
-        return WINED3DERR_INVALIDCALL;
-
-    memset(&lock, 0, sizeof(lock)); /* To be sure */
-
-    /* Should have a DIB section already. */
-
-    /* Map the surface. */
-    hr = IWineD3DSurface_Map(iface, &lock, NULL, 0);
-    if (FAILED(hr))
-    {
-        ERR("IWineD3DSurface_Map failed, hr %#x.\n", hr);
-        /* keep the dib section */
-        return hr;
-    }
-
-    if (surface->resource.format->id == WINED3DFMT_P8_UINT
-            || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
-    {
-        const PALETTEENTRY *pal = NULL;
-
-        if (surface->palette)
-        {
-            pal = surface->palette->palents;
-        }
-        else
-        {
-            struct wined3d_swapchain *swapchain = surface->resource.device->swapchains[0];
-            IWineD3DSurfaceImpl *dds_primary = swapchain->front_buffer;
-
-            if (dds_primary && dds_primary->palette)
-                pal = dds_primary->palette->palents;
-        }
-
-        if (pal)
-        {
-            unsigned int i;
-
-            for (i = 0; i < 256; ++i)
-            {
-                col[i].rgbRed = pal[i].peRed;
-                col[i].rgbGreen = pal[i].peGreen;
-                col[i].rgbBlue = pal[i].peBlue;
-                col[i].rgbReserved = 0;
-            }
-            SetDIBColorTable(surface->hDC, 0, 256, col);
-        }
-    }
-
-    surface->flags |= SFLAG_DCINUSE;
-
-    *dc = surface->hDC;
-    TRACE("Returning dc %p.\n", *dc);
-
-    return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC dc)
 {
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
@@ -7473,7 +7428,7 @@ static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_GetResource,
     IWineD3DBaseSurfaceImpl_Map,
     IWineD3DBaseSurfaceImpl_Unmap,
-    IWineGDISurfaceImpl_GetDC,
+    IWineD3DBaseSurfaceImpl_GetDC,
     IWineGDISurfaceImpl_ReleaseDC,
     IWineGDISurfaceImpl_Flip,
     IWineD3DBaseSurfaceImpl_Blt,
