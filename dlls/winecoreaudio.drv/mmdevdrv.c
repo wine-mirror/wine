@@ -417,7 +417,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
         if(This->aqueue)
             AudioQueueDispose(This->aqueue, 1);
         HeapFree(GetProcessHeap(), 0, This->public_buffer);
-        HeapFree(GetProcessHeap(), 0, This->fmt);
+        CoTaskMemFree(This->fmt);
         IMMDevice_Release(This->parent);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -498,7 +498,7 @@ static WAVEFORMATEX *clone_format(const WAVEFORMATEX *fmt)
     else
         size = sizeof(WAVEFORMATEX);
 
-    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = CoTaskMemAlloc(size);
     if(!ret)
         return NULL;
 
@@ -700,6 +700,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
             if(!buf){
                 AudioQueueDispose(This->aqueue, 1);
                 This->aqueue = NULL;
+                CoTaskMemFree(This->fmt);
+                This->fmt = NULL;
                 OSSpinLockUnlock(&This->lock);
                 return E_OUTOFMEMORY;
             }
@@ -708,6 +710,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
             if(sc != noErr){
                 AudioQueueDispose(This->aqueue, 1);
                 This->aqueue = NULL;
+                CoTaskMemFree(This->fmt);
+                This->fmt = NULL;
                 OSSpinLockUnlock(&This->lock);
                 WARN("Couldn't allocate buffer: %lx\n", sc);
                 return E_FAIL;
