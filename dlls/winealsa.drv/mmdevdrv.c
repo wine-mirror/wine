@@ -408,12 +408,15 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     }else if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
             (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
              IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
-        if(fmt->wBitsPerSample != 32){
+        if(fmt->wBitsPerSample == 32)
+            format = SND_PCM_FORMAT_FLOAT_LE;
+        else if(fmt->wBitsPerSample == 64)
+            format = SND_PCM_FORMAT_FLOAT64_LE;
+        else{
             WARN("Unsupported float size: %u\n", fmt->wBitsPerSample);
             hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
             goto exit;
         }
-        format = SND_PCM_FORMAT_FLOAT_LE;
     }else{
         WARN("Unknown wave format: %04x\n", fmt->wFormatTag);
         hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
