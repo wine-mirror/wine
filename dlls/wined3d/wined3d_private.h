@@ -760,7 +760,6 @@ typedef struct {
     BOOL (*shader_dirtifyable_constants)(void);
     void (*shader_get_caps)(const struct wined3d_gl_info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
-    void (*shader_add_instruction_modifiers)(const struct wined3d_shader_instruction *ins);
 } shader_backend_t;
 
 extern const shader_backend_t glsl_shader_backend DECLSPEC_HIDDEN;
