@@ -493,7 +493,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             int *used = pf_args(args_ctx, pos, VT_PTR, &valist).get_ptr;
             *used = written;
             i = 0;
-        } else if(flags.IntegerDouble && flags.Format && strchr("diouxX", flags.Format)) {
+        } else if(flags.Format && strchr("diouxX", flags.Format)) {
             char *tmp = buf;
             int max_len = (flags.FieldLength>flags.Precision ? flags.FieldLength : flags.Precision) + 10;
 
@@ -502,13 +502,20 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             if(!tmp)
                 return -1;
 
-            FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags,
-                    pf_args(args_ctx, pos, VT_I8, &valist).get_longlong);
+            if(flags.IntegerDouble)
+                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, pf_args(args_ctx, pos,
+                            VT_I8, &valist).get_longlong);
+            else if(flags.Format=='d' || flags.Format=='i')
+                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, pf_args(args_ctx, pos,
+                            VT_INT, &valist).get_int);
+            else
+                FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, (unsigned)pf_args(
+                            args_ctx, pos, VT_INT, &valist).get_int);
 
             i = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, tmp, -1, &flags, locale);
             if(tmp != buf)
                 HeapFree(GetProcessHeap(), 0, tmp);
-        } else if(flags.Format && strchr("acCdeEfgGinouxX", flags.Format)) {
+        } else if(flags.Format && strchr("aeEfgG", flags.Format)) {
             char fmt[20], *tmp = buf, *decimal_point;
             int max_len = (flags.FieldLength>flags.Precision ? flags.FieldLength : flags.Precision) + 10;
 
@@ -519,13 +526,9 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 
             FUNC_NAME(pf_rebuild_format_string)(fmt, &flags);
 
-            if(flags.Format && strchr("aeEfgG", flags.Format)) {
-                sprintf(tmp, fmt, pf_args(args_ctx, pos, VT_R8, &valist).get_double);
-                if(toupper(flags.Format)=='E' || toupper(flags.Format)=='G')
-                    FUNC_NAME(pf_fixup_exponent)(tmp);
-            }
-            else
-                sprintf(tmp, fmt, pf_args(args_ctx, pos, VT_INT, &valist).get_int);
+            sprintf(tmp, fmt, pf_args(args_ctx, pos, VT_R8, &valist).get_double);
+            if(toupper(flags.Format)=='E' || toupper(flags.Format)=='G')
+                FUNC_NAME(pf_fixup_exponent)(tmp);
 
             decimal_point = strchr(tmp, '.');
             if(decimal_point)
