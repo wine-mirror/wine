@@ -3979,6 +3979,36 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC 
     return WINED3D_OK;
 }
 
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC dc)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p, dc %p.\n", iface, dc);
+
+    if (!(surface->flags & SFLAG_DCINUSE))
+        return WINEDDERR_NODC;
+
+    if (surface->hDC != dc)
+    {
+        WARN("Application tries to release invalid DC %p, surface DC is %p.\n",
+                dc, surface->hDC);
+        return WINEDDERR_NODC;
+    }
+
+    if ((surface->flags & SFLAG_PBO) && surface->resource.allocatedMemory)
+    {
+        /* Copy the contents of the DIB over to the PBO. */
+        memcpy(surface->resource.allocatedMemory, surface->dib.bitmap_data, surface->dib.bitmap_size);
+    }
+
+    /* We locked first, so unlock now. */
+    IWineD3DSurface_Unmap(iface);
+
+    surface->flags &= ~SFLAG_DCINUSE;
+
+    return WINED3D_OK;
+}
+
 /* ****************************************************
    IWineD3DSurface IWineD3DResource parts follow
    **************************************************** */
@@ -4467,34 +4497,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *surface,
         wglFlush();
 
     context_release(context);
-}
-
-static HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("(%p)->(%p)\n",This,hDC);
-
-    if (!(This->flags & SFLAG_DCINUSE))
-        return WINEDDERR_NODC;
-
-    if (This->hDC !=hDC) {
-        WARN("Application tries to release an invalid DC(%p), surface dc is %p\n", hDC, This->hDC);
-        return WINEDDERR_NODC;
-    }
-
-    if ((This->flags & SFLAG_PBO) && This->resource.allocatedMemory)
-    {
-        /* Copy the contents of the DIB over to the PBO */
-        memcpy(This->resource.allocatedMemory, This->dib.bitmap_data, This->dib.bitmap_size);
-    }
-
-    /* we locked first, so unlock now */
-    IWineD3DSurface_Unmap(iface);
-
-    This->flags &= ~SFLAG_DCINUSE;
-
-    return WINED3D_OK;
 }
 
 /* ******************************************************
@@ -7033,7 +7035,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_Map,
     IWineD3DBaseSurfaceImpl_Unmap,
     IWineD3DBaseSurfaceImpl_GetDC,
-    IWineD3DSurfaceImpl_ReleaseDC,
+    IWineD3DBaseSurfaceImpl_ReleaseDC,
     IWineD3DSurfaceImpl_Flip,
     IWineD3DSurfaceImpl_Blt,
     IWineD3DBaseSurfaceImpl_GetBltStatus,
@@ -7333,30 +7335,6 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     return hr;
 }
 
-static HRESULT WINAPI IWineGDISurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC dc)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, dc %p.\n", iface, dc);
-
-    if (!(surface->flags & SFLAG_DCINUSE))
-        return WINEDDERR_NODC;
-
-    if (surface->hDC != dc)
-    {
-        WARN("Application tries to release invalid DC %p, surface DC is %p.\n",
-                dc, surface->hDC);
-        return WINEDDERR_NODC;
-    }
-
-    /* We locked first, so unlock now. */
-    IWineD3DSurface_Unmap(iface);
-
-    surface->flags &= ~SFLAG_DCINUSE;
-
-    return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *mem)
 {
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
@@ -7429,7 +7407,7 @@ static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_Map,
     IWineD3DBaseSurfaceImpl_Unmap,
     IWineD3DBaseSurfaceImpl_GetDC,
-    IWineGDISurfaceImpl_ReleaseDC,
+    IWineD3DBaseSurfaceImpl_ReleaseDC,
     IWineGDISurfaceImpl_Flip,
     IWineD3DBaseSurfaceImpl_Blt,
     IWineD3DBaseSurfaceImpl_GetBltStatus,
