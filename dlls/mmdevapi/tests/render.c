@@ -476,6 +476,134 @@ static void test_padding(void)
     IAudioClient_Release(ac);
 }
 
+static void test_clock(void)
+{
+    HRESULT hr;
+    IAudioClient *ac;
+    IAudioClock *acl;
+    IAudioRenderClient *arc;
+    UINT64 freq, pos, pcpos, last;
+    BYTE *data;
+    WAVEFORMATEX *pwfx;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            0, 5000000, 0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioClock, (void**)&acl);
+    ok(hr == S_OK, "GetService(IAudioClock) failed: %08x\n", hr);
+
+    hr = IAudioClock_GetFrequency(acl, &freq);
+    ok(hr == S_OK, "GetFrequency failed: %08x\n", hr);
+
+    hr = IAudioClock_GetPosition(acl, NULL, NULL);
+    ok(hr == E_POINTER, "GetPosition wrong error: %08x\n", hr);
+
+    pcpos = 0;
+    hr = IAudioClock_GetPosition(acl, &pos, &pcpos);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos == 0, "GetPosition returned non-zero pos before being started\n");
+    ok(pcpos != 0, "GetPosition returned zero pcpos\n");
+    last = pos;
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&arc);
+    ok(hr == S_OK, "GetService(IAudioRenderClient) failed: %08x\n", hr);
+
+    hr = IAudioRenderClient_GetBuffer(arc, pwfx->nSamplesPerSec / 2., &data);
+    ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, pwfx->nSamplesPerSec / 2., AUDCLNT_BUFFERFLAGS_SILENT);
+    ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
+
+    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos == 0, "GetPosition returned non-zero pos before being started\n");
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    Sleep(100);
+
+    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos > 0, "Position should have been further along...\n");
+    last = pos;
+
+    hr = IAudioClient_Stop(ac);
+    ok(hr == S_OK, "Stop failed: %08x\n", hr);
+
+    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos >= last, "Position should have been further along...\n");
+    last = pos;
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    Sleep(100);
+
+    hr = IAudioClient_Stop(ac);
+    ok(hr == S_OK, "Stop failed: %08x\n", hr);
+
+    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos >= last, "Position should have been further along...\n");
+    last = pos;
+
+    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos == last, "Position should have been further along...\n");
+
+    hr = IAudioClient_Reset(ac);
+    ok(hr == S_OK, "Reset failed: %08x\n", hr);
+
+    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos == 0, "GetPosition returned non-zero pos after Reset\n");
+    last = pos;
+
+    hr = IAudioRenderClient_GetBuffer(arc, pwfx->nSamplesPerSec / 2., &data);
+    ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
+
+    hr = IAudioRenderClient_ReleaseBuffer(arc, pwfx->nSamplesPerSec / 2., AUDCLNT_BUFFERFLAGS_SILENT);
+    ok(hr == S_OK, "ReleaseBuffer failed: %08x\n", hr);
+
+    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos == 0, "GetPosition returned non-zero pos after Reset\n");
+    last = pos;
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    Sleep(100);
+
+    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos > last, "Position should have been further along...\n");
+
+    hr = IAudioClient_Stop(ac);
+    ok(hr == S_OK, "Stop failed: %08x\n", hr);
+
+    hr = IAudioClock_GetPosition(acl, &pos, NULL);
+    ok(hr == S_OK, "GetPosition failed: %08x\n", hr);
+    ok(pos >= last, "Position should have been further along...\n");
+
+    IAudioClock_Release(acl);
+    IAudioClient_Release(ac);
+}
+
 START_TEST(render)
 {
     HRESULT hr;
@@ -504,6 +632,7 @@ START_TEST(render)
     test_references();
     test_event();
     test_padding();
+    test_clock();
 
     IMMDevice_Release(dev);
 
