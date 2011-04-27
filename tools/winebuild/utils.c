@@ -362,6 +362,8 @@ struct strarray *get_as_command(void)
             break;
         }
     }
+
+    if (cpu_option) strarray_add_one( args, strmake("-mcpu=%s", cpu_option) );
     return args;
 }
 

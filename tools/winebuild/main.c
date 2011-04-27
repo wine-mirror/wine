@@ -88,6 +88,7 @@ static int fake_module;
 char *as_command = NULL;
 char *ld_command = NULL;
 char *nm_command = NULL;
+char *cpu_option = NULL;
 
 static int nb_res_files;
 static char **res_files;
@@ -379,11 +380,11 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             lib_path[nb_lib_paths++] = xstrdup( optarg );
             break;
         case 'm':
-            if (strcmp( optarg, "16" ) && strcmp( optarg, "32" ) && strcmp( optarg, "64" ))
-                fatal_error( "Invalid -m option '%s', expected -m16, -m32 or -m64\n", optarg );
             if (!strcmp( optarg, "16" )) spec->type = SPEC_WIN16;
             else if (!strcmp( optarg, "32" )) force_pointer_size = 4;
-            else force_pointer_size = 8;
+            else if (!strcmp( optarg, "64" )) force_pointer_size = 8;
+            else if (!strncmp( optarg, "cpu=", 4 )) cpu_option = xstrdup( optarg + 4 );
+            else fatal_error( "Invalid -m option '%s', expected -m16, -m32, -m64 or -mcpu\n", optarg );
             break;
         case 'M':
             spec->main_module = xstrdup( optarg );

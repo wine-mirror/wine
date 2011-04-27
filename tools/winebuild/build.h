@@ -361,5 +361,6 @@ extern char **lib_path;
 extern char *as_command;
 extern char *ld_command;
 extern char *nm_command;
+extern char *cpu_option;
 
 #endif  /* __WINE_BUILD_H */
