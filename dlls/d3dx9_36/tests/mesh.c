@@ -1216,6 +1216,9 @@ static void D3DXCreateMeshTest(void)
             free_mesh(&mesh);
         }
 
+        mesh.vertex_size = d3dxmesh->lpVtbl->GetNumBytesPerVertex(d3dxmesh);
+        ok(mesh.vertex_size == 60, "Got vertex size %u, expected %u\n", mesh.vertex_size, 60);
+
         d3dxmesh->lpVtbl->Release(d3dxmesh);
     }
 

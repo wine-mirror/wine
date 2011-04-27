@@ -157,10 +157,15 @@ static HRESULT WINAPI ID3DXMeshImpl_GetDeclaration(ID3DXMesh *iface, D3DVERTEXEL
 static DWORD WINAPI ID3DXMeshImpl_GetNumBytesPerVertex(ID3DXMesh *iface)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    UINT numelements;
+    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE] = { D3DDECL_END() };
 
     TRACE("iface (%p)\n", This);
 
-    return D3DXGetFVFVertexSize(This->fvf);
+    IDirect3DVertexDeclaration9_GetDeclaration(This->vertex_declaration,
+                                               declaration,
+                                               &numelements);
+    return D3DXGetDeclVertexSize(declaration, 0);
 }
 
 static DWORD WINAPI ID3DXMeshImpl_GetOptions(ID3DXMesh *iface)
