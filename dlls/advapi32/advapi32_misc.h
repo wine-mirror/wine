@@ -20,11 +20,11 @@
 #ifndef __WINE_ADVAPI32MISC_H
 #define __WINE_ADVAPI32MISC_H
 
-const char * debugstr_sid(PSID sid);
-BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName);
-BOOL ADVAPI_GetComputerSid(PSID sid);
+const char * debugstr_sid(PSID sid) DECLSPEC_HIDDEN;
+BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName) DECLSPEC_HIDDEN;
+BOOL ADVAPI_GetComputerSid(PSID sid) DECLSPEC_HIDDEN;
 
-BOOL lookup_local_wellknown_name(const LSA_UNICODE_STRING*, PSID, LPDWORD, LPWSTR, LPDWORD, PSID_NAME_USE, BOOL*);
-BOOL lookup_local_user_name(const LSA_UNICODE_STRING*, PSID, LPDWORD, LPWSTR, LPDWORD, PSID_NAME_USE, BOOL*);
+BOOL lookup_local_wellknown_name(const LSA_UNICODE_STRING*, PSID, LPDWORD, LPWSTR, LPDWORD, PSID_NAME_USE, BOOL*) DECLSPEC_HIDDEN;
+BOOL lookup_local_user_name(const LSA_UNICODE_STRING*, PSID, LPDWORD, LPWSTR, LPDWORD, PSID_NAME_USE, BOOL*) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_ADVAPI32MISC_H */

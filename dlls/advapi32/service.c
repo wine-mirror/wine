@@ -143,7 +143,7 @@ static inline DWORD multisz_cb(LPCWSTR wmultisz)
  * RPC connection with services.exe
  */
 
-handle_t __RPC_USER MACHINE_HANDLEW_bind(MACHINE_HANDLEW MachineName)
+DECLSPEC_HIDDEN handle_t __RPC_USER MACHINE_HANDLEW_bind(MACHINE_HANDLEW MachineName)
 {
     WCHAR transport[] = SVCCTL_TRANSPORT;
     WCHAR endpoint[] = SVCCTL_ENDPOINT;
@@ -170,7 +170,7 @@ handle_t __RPC_USER MACHINE_HANDLEW_bind(MACHINE_HANDLEW MachineName)
     return rpc_handle;
 }
 
-void __RPC_USER MACHINE_HANDLEW_unbind(MACHINE_HANDLEW MachineName, handle_t h)
+DECLSPEC_HIDDEN void __RPC_USER MACHINE_HANDLEW_unbind(MACHINE_HANDLEW MachineName, handle_t h)
 {
     RpcBindingFree(&h);
 }
