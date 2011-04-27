@@ -2712,9 +2712,12 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, 
     surface->resource.size = wined3d_format_calculate_size(format, surface->resource.device->surface_alignment,
             surface->pow2Width, surface->pow2Height);
     surface->flags |= (WINED3DFMT_D16_LOCKABLE == format_id) ? SFLAG_LOCKABLE : 0;
+    surface->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
     surface->resource.format = format;
 
     TRACE("size %u, byte_count %u\n", surface->resource.size, format->byte_count);
+    TRACE("glFormat %#x, glInternal %#x, glType %#x.\n",
+            format->glFormat, format->glInternal, format->glType);
 
     return WINED3D_OK;
 }
@@ -4993,22 +4996,6 @@ BOOL palette9_changed(IWineD3DSurfaceImpl *This)
     return TRUE;
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum wined3d_format_id format)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    HRESULT hr;
-
-    TRACE("(%p) : Calling base function first\n", This);
-    hr = IWineD3DBaseSurfaceImpl_SetFormat(iface, format);
-    if (SUCCEEDED(hr))
-    {
-        This->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
-        TRACE("(%p) : glFormat %d, glFormatInternal %d, glType %d\n", This, This->resource.format->glFormat,
-                This->resource.format->glInternal, This->resource.format->glType);
-    }
-    return hr;
-}
-
 void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) {
 
     /* Flip the surface contents */
@@ -7114,7 +7101,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetClipper,
     IWineD3DBaseSurfaceImpl_GetClipper,
     /* Internal use: */
-    IWineD3DSurfaceImpl_SetFormat,
+    IWineD3DBaseSurfaceImpl_SetFormat,
 };
 
 static HRESULT ffp_blit_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
