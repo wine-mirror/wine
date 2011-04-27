@@ -58,13 +58,6 @@ static inline RegistryPropertyBag *impl_from_IPropertyBag(IPropertyBag *iface)
     return CONTAINING_RECORD(iface, RegistryPropertyBag, IPropertyBag_iface);
 }
 
-static void RegistryPropertyBag_Destroy(RegistryPropertyBag *This) {
-    TRACE("This=%p)\n", This);
-
-    RegCloseKey(This->m_hInitPropertyBagKey);
-    heap_free(This);
-}
-
 static HRESULT WINAPI RegistryPropertyBag_IPropertyBag_QueryInterface(IPropertyBag *iface,
     REFIID riid, void **ppv)
 {
@@ -110,8 +103,10 @@ static ULONG WINAPI RegistryPropertyBag_IPropertyBag_Release(IPropertyBag *iface
 
     cRef = InterlockedDecrement(&This->m_cRef);
 
-    if (cRef == 0) { 
-        RegistryPropertyBag_Destroy(This);
+    if (cRef == 0) {
+        TRACE("Destroying This=%p)\n", This);
+        RegCloseKey(This->m_hInitPropertyBagKey);
+        heap_free(This);
         SHDOCVW_UnlockModule();
     }
 
@@ -214,11 +209,6 @@ static inline InstanceObjectFactory *impl_from_IClassFactory(IClassFactory *ifac
     return CONTAINING_RECORD(iface, InstanceObjectFactory, IClassFactory_iface);
 }
 
-static void InstanceObjectFactory_Destroy(InstanceObjectFactory *This) {
-    IPropertyBag_Release(This->m_pPropertyBag);
-    heap_free(This);
-}
-
 static HRESULT WINAPI InstanceObjectFactory_IClassFactory_QueryInterface(IClassFactory *iface,
     REFIID riid, void **ppv)
 {
@@ -264,9 +254,10 @@ static ULONG WINAPI InstanceObjectFactory_IClassFactory_Release(IClassFactory *i
 
     cRef = InterlockedDecrement(&This->m_cRef);
 
-    if (cRef == 0) { 
+    if (cRef == 0) {
         IClassFactory_LockServer(iface, FALSE);
-        InstanceObjectFactory_Destroy(This);
+        IPropertyBag_Release(This->m_pPropertyBag);
+        heap_free(This);
     }
 
     return cRef;
