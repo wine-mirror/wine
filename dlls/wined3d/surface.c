@@ -1037,6 +1037,63 @@ static HRESULT surface_getdc(IWineD3DSurfaceImpl *surface)
     return hr;
 }
 
+static HRESULT surface_set_mem(IWineD3DSurfaceImpl *surface, void *mem)
+{
+    TRACE("surface %p, mem %p.\n", surface, mem);
+
+    if (mem && mem != surface->resource.allocatedMemory)
+    {
+        void *release = NULL;
+
+        /* Do I have to copy the old surface content? */
+        if (surface->flags & SFLAG_DIBSECTION)
+        {
+            SelectObject(surface->hDC, surface->dib.holdbitmap);
+            DeleteDC(surface->hDC);
+            /* Release the DIB section. */
+            DeleteObject(surface->dib.DIBsection);
+            surface->dib.bitmap_data = NULL;
+            surface->resource.allocatedMemory = NULL;
+            surface->hDC = NULL;
+            surface->flags &= ~SFLAG_DIBSECTION;
+        }
+        else if (!(surface->flags & SFLAG_USERPTR))
+        {
+            release = surface->resource.heapMemory;
+            surface->resource.heapMemory = NULL;
+        }
+        surface->resource.allocatedMemory = mem;
+        surface->flags |= SFLAG_USERPTR;
+
+        /* Now the surface memory is most up do date. Invalidate drawable and texture. */
+        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+
+        /* For client textures OpenGL has to be notified. */
+        if (surface->flags & SFLAG_CLIENT)
+            surface_release_client_storage(surface);
+
+        /* Now free the old memory if any. */
+        HeapFree(GetProcessHeap(), 0, release);
+    }
+    else if (surface->flags & SFLAG_USERPTR)
+    {
+        /* Map and GetDC will re-create the dib section and allocated memory. */
+        surface->resource.allocatedMemory = NULL;
+        /* HeapMemory should be NULL already. */
+        if (surface->resource.heapMemory)
+            ERR("User pointer surface has heap memory allocated.\n");
+        surface->flags &= ~(SFLAG_USERPTR | SFLAG_INSYSMEM);
+
+        if (surface->flags & SFLAG_CLIENT)
+            surface_release_client_storage(surface);
+
+        surface_prepare_system_memory(surface);
+        surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
+    }
+
+    return WINED3D_OK;
+}
+
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(IWineD3DSurfaceImpl *surface, const struct wined3d_gl_info *gl_info)
 {
@@ -1150,6 +1207,7 @@ static const struct wined3d_surface_ops surface_ops =
     surface_map,
     surface_unmap,
     surface_getdc,
+    surface_set_mem,
 };
 
 /*****************************************************************************
@@ -1325,6 +1383,53 @@ static HRESULT gdi_surface_getdc(IWineD3DSurfaceImpl *surface)
     return hr;
 }
 
+static HRESULT gdi_surface_set_mem(IWineD3DSurfaceImpl *surface, void *mem)
+{
+    TRACE("surface %p, mem %p.\n", surface, mem);
+
+    /* Render targets depend on their hdc, and we can't create an hdc on a user pointer. */
+    if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
+    {
+        ERR("Not supported on render targets.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (mem && mem != surface->resource.allocatedMemory)
+    {
+        void *release = NULL;
+
+        /* Do I have to copy the old surface content? */
+        if (surface->flags & SFLAG_DIBSECTION)
+        {
+            SelectObject(surface->hDC, surface->dib.holdbitmap);
+            DeleteDC(surface->hDC);
+            /* Release the DIB section. */
+            DeleteObject(surface->dib.DIBsection);
+            surface->dib.bitmap_data = NULL;
+            surface->resource.allocatedMemory = NULL;
+            surface->hDC = NULL;
+            surface->flags &= ~SFLAG_DIBSECTION;
+        }
+        else if (!(surface->flags & SFLAG_USERPTR))
+        {
+            release = surface->resource.allocatedMemory;
+        }
+        surface->resource.allocatedMemory = mem;
+        surface->flags |= SFLAG_USERPTR | SFLAG_INSYSMEM;
+
+        /* Now free the old memory, if any. */
+        HeapFree(GetProcessHeap(), 0, release);
+    }
+    else if (surface->flags & SFLAG_USERPTR)
+    {
+        /* Map() and GetDC() will re-create the dib section and allocated memory. */
+        surface->resource.allocatedMemory = NULL;
+        surface->flags &= ~SFLAG_USERPTR;
+    }
+
+    return WINED3D_OK;
+}
+
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
@@ -1335,6 +1440,7 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_map,
     gdi_surface_unmap,
     gdi_surface_getdc,
+    gdi_surface_set_mem,
 };
 
 void surface_set_texture_name(IWineD3DSurfaceImpl *surface, GLuint new_name, BOOL srgb)
@@ -2408,6 +2514,21 @@ static DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface)
     TRACE("Returning %u.\n", pitch);
 
     return pitch;
+}
+
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetMem(IWineD3DSurface *iface, void *mem)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+
+    TRACE("iface %p, mem %p.\n", iface, mem);
+
+    if (surface->flags & (SFLAG_LOCKED | SFLAG_DCINUSE))
+    {
+        WARN("Surface is locked or the DC is in use.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    return surface->surface_ops->surface_set_mem(surface, mem);
 }
 
 static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface, LONG x, LONG y)
@@ -4888,68 +5009,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum
     return hr;
 }
 
-static HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-
-    TRACE("iface %p, mem %p.\n", iface, Mem);
-
-    if (This->flags & (SFLAG_LOCKED | SFLAG_DCINUSE))
-    {
-        WARN("Surface is locked or the HDC is in use\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if(Mem && Mem != This->resource.allocatedMemory) {
-        void *release = NULL;
-
-        /* Do I have to copy the old surface content? */
-        if (This->flags & SFLAG_DIBSECTION)
-        {
-            SelectObject(This->hDC, This->dib.holdbitmap);
-            DeleteDC(This->hDC);
-            /* Release the DIB section */
-            DeleteObject(This->dib.DIBsection);
-            This->dib.bitmap_data = NULL;
-            This->resource.allocatedMemory = NULL;
-            This->hDC = NULL;
-            This->flags &= ~SFLAG_DIBSECTION;
-        }
-        else if (!(This->flags & SFLAG_USERPTR))
-        {
-            release = This->resource.heapMemory;
-            This->resource.heapMemory = NULL;
-        }
-        This->resource.allocatedMemory = Mem;
-        This->flags |= SFLAG_USERPTR;
-
-        /* Now the surface memory is most up do date. Invalidate drawable and texture */
-        surface_modify_location(This, SFLAG_INSYSMEM, TRUE);
-
-        /* For client textures opengl has to be notified */
-        if (This->flags & SFLAG_CLIENT)
-            surface_release_client_storage(This);
-
-        /* Now free the old memory if any */
-        HeapFree(GetProcessHeap(), 0, release);
-    }
-    else if (This->flags & SFLAG_USERPTR)
-    {
-        /* Map and GetDC will re-create the dib section and allocated memory. */
-        This->resource.allocatedMemory = NULL;
-        /* HeapMemory should be NULL already */
-        if (This->resource.heapMemory)
-            ERR("User pointer surface has heap memory allocated.\n");
-        This->flags &= ~(SFLAG_USERPTR | SFLAG_INSYSMEM);
-
-        if (This->flags & SFLAG_CLIENT)
-            surface_release_client_storage(This);
-
-        surface_prepare_system_memory(This);
-        surface_modify_location(This, SFLAG_INSYSMEM, TRUE);
-    }
-    return WINED3D_OK;
-}
-
 void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) {
 
     /* Flip the surface contents */
@@ -7047,7 +7106,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetPalette,
     IWineD3DBaseSurfaceImpl_SetColorKey,
     IWineD3DBaseSurfaceImpl_GetPitch,
-    IWineD3DSurfaceImpl_SetMem,
+    IWineD3DBaseSurfaceImpl_SetMem,
     IWineD3DBaseSurfaceImpl_SetOverlayPosition,
     IWineD3DBaseSurfaceImpl_GetOverlayPosition,
     IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder,
@@ -7335,59 +7394,6 @@ static HRESULT WINAPI IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     return hr;
 }
 
-static HRESULT WINAPI IWineGDISurfaceImpl_SetMem(IWineD3DSurface *iface, void *mem)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    /* Render targets depend on their hdc, and we can't create an hdc on a user pointer. */
-    if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
-    {
-        ERR("Not supported on render targets.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (surface->flags & (SFLAG_LOCKED | SFLAG_DCINUSE))
-    {
-        WARN("Surface is locked or the DC is in use.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (mem && mem != surface->resource.allocatedMemory)
-    {
-        void *release = NULL;
-
-        /* Do I have to copy the old surface content? */
-        if (surface->flags & SFLAG_DIBSECTION)
-        {
-            SelectObject(surface->hDC, surface->dib.holdbitmap);
-            DeleteDC(surface->hDC);
-            /* Release the DIB section. */
-            DeleteObject(surface->dib.DIBsection);
-            surface->dib.bitmap_data = NULL;
-            surface->resource.allocatedMemory = NULL;
-            surface->hDC = NULL;
-            surface->flags &= ~SFLAG_DIBSECTION;
-        }
-        else if (!(surface->flags & SFLAG_USERPTR))
-        {
-            release = surface->resource.allocatedMemory;
-        }
-        surface->resource.allocatedMemory = mem;
-        surface->flags |= SFLAG_USERPTR | SFLAG_INSYSMEM;
-
-        /* Now free the old memory, if any. */
-        HeapFree(GetProcessHeap(), 0, release);
-    }
-    else if (surface->flags & SFLAG_USERPTR)
-    {
-        /* Map() and GetDC() will re-create the dib section and allocated memory. */
-        surface->resource.allocatedMemory = NULL;
-        surface->flags &= ~SFLAG_USERPTR;
-    }
-
-    return WINED3D_OK;
-}
-
 static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
 {
     /* IUnknown */
@@ -7419,7 +7425,7 @@ static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_SetPalette,
     IWineD3DBaseSurfaceImpl_SetColorKey,
     IWineD3DBaseSurfaceImpl_GetPitch,
-    IWineGDISurfaceImpl_SetMem,
+    IWineD3DBaseSurfaceImpl_SetMem,
     IWineD3DBaseSurfaceImpl_SetOverlayPosition,
     IWineD3DBaseSurfaceImpl_GetOverlayPosition,
     IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder,
