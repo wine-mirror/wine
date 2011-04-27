@@ -686,7 +686,7 @@
 @ cdecl _get_osfhandle(long) msvcrt._get_osfhandle
 @ cdecl _get_output_format() msvcrt._get_output_format
 @ stub _get_pgmptr
-@ stub _get_printf_count_output
+@ cdecl _get_printf_count_output() msvcrt._get_printf_count_output
 @ stub _get_purecall_handler
 @ cdecl _get_terminate() msvcrt._get_terminate
 @ stub _get_timezone
@@ -1077,7 +1077,7 @@
 @ cdecl _set_invalid_parameter_handler(ptr) msvcrt._set_invalid_parameter_handler
 @ stub _set_malloc_crt_max_wait
 @ stub _set_output_format
-@ stub _set_printf_count_output
+@ cdecl _set_printf_count_output(long) msvcrt._set_printf_count_output
 @ cdecl _set_purecall_handler(ptr) msvcrt._set_purecall_handler
 @ cdecl _seterrormode(long) msvcrt._seterrormode
 @ cdecl -arch=i386,x86_64 -norelay _setjmp(ptr) msvcrt._setjmp

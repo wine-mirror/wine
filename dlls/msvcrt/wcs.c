@@ -33,10 +33,26 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+static BOOL n_format_enabled = TRUE;
+
 #include "printf.h"
 #define PRINTF_WIDE
 #include "printf.h"
 #undef PRINTF_WIDE
+
+/* _get_printf_count_output - not exported in native msvcrt */
+int CDECL _get_printf_count_output( void )
+{
+    return n_format_enabled ? 1 : 0;
+}
+
+/* _set_printf_count_output - not exported in native msvcrt */
+int CDECL _set_printf_count_output( int enable )
+{
+    BOOL old = n_format_enabled;
+    n_format_enabled = (enable ? TRUE : FALSE);
+    return old ? 1 : 0;
+}
 
 /*********************************************************************
  *		_wcsdup (MSVCRT.@)

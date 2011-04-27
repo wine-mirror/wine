@@ -1491,3 +1491,5 @@
 @ cdecl -arch=i386 _statusfp2(ptr ptr)
 @ cdecl _wcstod_l(wstr ptr) MSVCRT__wcstod_l
 @ cdecl _wdupenv_s(ptr ptr str)
+@ cdecl _get_printf_count_output()
+@ cdecl _set_printf_count_output(long)

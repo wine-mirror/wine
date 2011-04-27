@@ -491,7 +491,15 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             i = FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, buf, -1, &flags, locale);
 #endif
         } else if(flags.Format == 'n') {
-            int *used = pf_args(args_ctx, pos, VT_PTR, &valist).get_ptr;
+            int *used;
+
+            if(!n_format_enabled) {
+                MSVCRT_INVALID_PMT("\'n\' format specifier disabled");
+                *MSVCRT__errno() = MSVCRT_EINVAL;
+                return -1;
+            }
+
+            used = pf_args(args_ctx, pos, VT_PTR, &valist).get_ptr;
             *used = written;
             i = 0;
         } else if(flags.Format && strchr("diouxX", flags.Format)) {

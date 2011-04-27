@@ -22,6 +22,7 @@
 #include <stdarg.h>
 
 #include "stdlib.h"
+#include "stdio.h"
 #include "errno.h"
 #include "malloc.h"
 #include "windef.h"
@@ -101,6 +102,7 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hdll);
+        _set_printf_count_output(0);
     }
     return TRUE;
 }
