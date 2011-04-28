@@ -39,6 +39,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
+/* convert points to paper size units (10th of a millimeter) */
+static inline int paper_size_from_points( float size )
+{
+    return size * 254 / 72;
+}
 
 /************************************************************************
  *
@@ -72,10 +77,8 @@ void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 	}
 	if(&page->entry != &pi->ppd->PageSizes ) {
 	    dm1->dmPublic.u1.s1.dmPaperSize = dm2->dmPublic.u1.s1.dmPaperSize;
-	    dm1->dmPublic.u1.s1.dmPaperWidth = page->PaperDimension->x *
-								254.0 / 72.0;
-	    dm1->dmPublic.u1.s1.dmPaperLength = page->PaperDimension->y *
-								254.0 / 72.0;
+	    dm1->dmPublic.u1.s1.dmPaperWidth  = paper_size_from_points( page->PaperDimension->x );
+	    dm1->dmPublic.u1.s1.dmPaperLength = paper_size_from_points( page->PaperDimension->y );
 	    dm1->dmPublic.dmFields &= ~(DM_PAPERLENGTH | DM_PAPERWIDTH);
 	    dm1->dmPublic.dmFields |= DM_PAPERSIZE;
 	    TRACE("Changing page to %s %d x %d\n", page->FullName,
@@ -458,8 +461,8 @@ DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR
         TRACE("DC_PAPERSIZE: %f x %f\n", ps->PaperDimension->x, ps->PaperDimension->y);
         i++;
 	if(lpszOutput != NULL) {
-	  pt->x = ps->PaperDimension->x * 254.0 / 72.0;
-	  pt->y = ps->PaperDimension->y * 254.0 / 72.0;
+          pt->x = paper_size_from_points( ps->PaperDimension->x );
+          pt->y = paper_size_from_points( ps->PaperDimension->y );
 	  pt++;
 	}
       }
@@ -564,33 +567,27 @@ DWORD CDECL PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR
   case DC_MAXEXTENT:
     {
       PAGESIZE *ps;
-      POINT ptMax;
-      ptMax.x = ptMax.y = 0;
+      float x = 0, y = 0;
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
-	if(ps->PaperDimension->x > ptMax.x)
-	  ptMax.x = ps->PaperDimension->x;
-	if(ps->PaperDimension->y > ptMax.y)
-	  ptMax.y = ps->PaperDimension->y;
+          if (ps->PaperDimension->x > x) x = ps->PaperDimension->x;
+          if (ps->PaperDimension->y > y) y = ps->PaperDimension->y;
       }
-      return MAKELONG(ptMax.x * 254.0 / 72.0, ptMax.y * 254.0 / 72.0 );
+      return MAKELONG( paper_size_from_points(x), paper_size_from_points(y) );
     }
 
   case DC_MINEXTENT:
     {
       PAGESIZE *ps;
-      POINT ptMin;
-      ptMin.x = ptMin.y = -1;
+      float x = 1e6, y = 1e6;
 
       LIST_FOR_EACH_ENTRY(ps, &pi->ppd->PageSizes, PAGESIZE, entry)
       {
-	if(ptMin.x == -1 || ps->PaperDimension->x < ptMin.x)
-	  ptMin.x = ps->PaperDimension->x;
-	if(ptMin.y == -1 || ps->PaperDimension->y < ptMin.y)
-	  ptMin.y = ps->PaperDimension->y;
+          if (ps->PaperDimension->x < x) x = ps->PaperDimension->x;
+          if (ps->PaperDimension->y < y) y = ps->PaperDimension->y;
       }
-      return MAKELONG(ptMin.x * 254.0 / 72.0, ptMin.y * 254.0 / 72.0);
+      return MAKELONG( paper_size_from_points(x), paper_size_from_points(y) );
     }
 
   case DC_SIZE:
