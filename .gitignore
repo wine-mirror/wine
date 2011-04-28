@@ -216,6 +216,7 @@ include/propsys.h
 include/pstore.h
 include/qedit.h
 include/richole.h
+include/rmxftmpl.h
 include/sensevts.h
 include/servprov.h
 include/shdeprecated.h
