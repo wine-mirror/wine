@@ -68,12 +68,13 @@ msgstr "Kaikki tiedostot (*.*)"
 
 #: appwiz.rc:42
 #, fuzzy
-msgid "&Remove..."
+msgid "&Remove"
 msgstr "&Huomautus..."
 
 #: appwiz.rc:43
-msgid "&Modify/Remove..."
-msgstr ""
+#, fuzzy
+msgid "&Modify/Remove"
+msgstr "Muokattu"
 
 #: appwiz.rc:48
 msgid "Downloading..."

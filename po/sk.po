@@ -65,12 +65,13 @@ msgstr "Všetky súbory (*.*)"
 
 #: appwiz.rc:42
 #, fuzzy
-msgid "&Remove..."
+msgid "&Remove"
 msgstr "&Skomentovať..."
 
 #: appwiz.rc:43
-msgid "&Modify/Remove..."
-msgstr ""
+#, fuzzy
+msgid "&Modify/Remove"
+msgstr "Modifikovaný"
 
 #: appwiz.rc:48
 msgid "Downloading..."

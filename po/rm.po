@@ -65,11 +65,11 @@ msgstr "Tuot las datotecas (*.*)"
 
 #: appwiz.rc:42
 #, fuzzy
-msgid "&Remove..."
+msgid "&Remove"
 msgstr "&Annotaziun..."
 
 #: appwiz.rc:43
-msgid "&Modify/Remove..."
+msgid "&Modify/Remove"
 msgstr ""
 
 #: appwiz.rc:48

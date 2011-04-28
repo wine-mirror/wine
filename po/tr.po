@@ -74,12 +74,12 @@ msgstr "Tüm dosyalar (*.*)"
 
 #: appwiz.rc:42
 #, fuzzy
-msgid "&Remove..."
+msgid "&Remove"
 msgstr "Paylaşımı S&il..."
 
 #: appwiz.rc:43
 #, fuzzy
-msgid "&Modify/Remove..."
+msgid "&Modify/Remove"
 msgstr "Paylaşımı S&il..."
 
 #: appwiz.rc:48

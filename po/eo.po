@@ -68,12 +68,13 @@ msgstr "Tutaj dosieroj (*.*)"
 
 #: appwiz.rc:42
 #, fuzzy
-msgid "&Remove..."
+msgid "&Remove"
 msgstr "&Notu..."
 
 #: appwiz.rc:43
-msgid "&Modify/Remove..."
-msgstr ""
+#, fuzzy
+msgid "&Modify/Remove"
+msgstr "Modifita"
 
 #: appwiz.rc:48
 msgid "Downloading..."

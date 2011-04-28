@@ -70,11 +70,13 @@ msgid "All files (*.*)"
 msgstr "Све датотеке (*.*)"
 
 #: appwiz.rc:42
-msgid "&Remove..."
+#, fuzzy
+msgid "&Remove"
 msgstr "&Уклони..."
 
 #: appwiz.rc:43
-msgid "&Modify/Remove..."
+#, fuzzy
+msgid "&Modify/Remove"
 msgstr "&Измени/уклони..."
 
 #: appwiz.rc:48

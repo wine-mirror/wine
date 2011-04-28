@@ -39,8 +39,8 @@ STRINGTABLE
    IDS_FILTER_PROGRAMS, "Programs (*.exe)"
    IDS_FILTER_ALL,      "All files (*.*)"
 
-   IDS_REMOVE, "&Remove..."
-   IDS_MODIFY_REMOVE, "&Modify/Remove..."
+   IDS_REMOVE, "&Remove"
+   IDS_MODIFY_REMOVE, "&Modify/Remove"
 }
 
 STRINGTABLE

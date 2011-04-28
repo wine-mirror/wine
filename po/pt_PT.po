@@ -72,11 +72,13 @@ msgstr ""
 "Todos os ficheiros (*.*)"
 
 #: appwiz.rc:42
-msgid "&Remove..."
+#, fuzzy
+msgid "&Remove"
 msgstr "&Remover..."
 
 #: appwiz.rc:43
-msgid "&Modify/Remove..."
+#, fuzzy
+msgid "&Modify/Remove"
 msgstr "&Modificar/Remover..."
 
 #: appwiz.rc:48

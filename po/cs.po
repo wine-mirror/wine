@@ -77,12 +77,12 @@ msgstr "Všechny soubory (*.*)"
 
 #: appwiz.rc:42
 #, fuzzy
-msgid "&Remove..."
+msgid "&Remove"
 msgstr "&Odstranit sdílení..."
 
 #: appwiz.rc:43
 #, fuzzy
-msgid "&Modify/Remove..."
+msgid "&Modify/Remove"
 msgstr "&Odstranit sdílení..."
 
 #: appwiz.rc:48

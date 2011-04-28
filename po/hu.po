@@ -73,11 +73,13 @@ msgstr ""
 "Összes fájl (*.*)"
 
 #: appwiz.rc:42
-msgid "&Remove..."
+#, fuzzy
+msgid "&Remove"
 msgstr "&Eltávolítás..."
 
 #: appwiz.rc:43
-msgid "&Modify/Remove..."
+#, fuzzy
+msgid "&Modify/Remove"
 msgstr "&Módosítás/Eltávolítás..."
 
 #: appwiz.rc:48

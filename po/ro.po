@@ -66,11 +66,13 @@ msgid "All files (*.*)"
 msgstr "Toate fișierele (*.*)"
 
 #: appwiz.rc:42
-msgid "&Remove..."
+#, fuzzy
+msgid "&Remove"
 msgstr "&Sterge..."
 
 #: appwiz.rc:43
-msgid "&Modify/Remove..."
+#, fuzzy
+msgid "&Modify/Remove"
 msgstr "&Modifică/Șterge..."
 
 #: appwiz.rc:48

@@ -68,12 +68,13 @@ msgstr "Всички файлове (*.*)"
 
 #: appwiz.rc:42
 #, fuzzy
-msgid "&Remove..."
+msgid "&Remove"
 msgstr "&Анотирай..."
 
 #: appwiz.rc:43
-msgid "&Modify/Remove..."
-msgstr ""
+#, fuzzy
+msgid "&Modify/Remove"
+msgstr "&Промени"
 
 #: appwiz.rc:48
 msgid "Downloading..."
