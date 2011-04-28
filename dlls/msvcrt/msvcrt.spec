@@ -325,6 +325,7 @@
 @ cdecl _chdir(str) MSVCRT__chdir
 @ cdecl _chdrive(long)
 @ cdecl _chgsign( double )
+# stub -arch=win64 _chgsignf
 @ cdecl -i386 -norelay _chkesp()
 @ cdecl _chmod(str long) MSVCRT__chmod
 @ cdecl _chsize(long long) MSVCRT__chsize
@@ -339,6 +340,7 @@
 @ cdecl _controlfp(long long)
 @ cdecl _controlfp_s(ptr long long)
 @ cdecl _copysign( double double )
+# stub -arch=win64 _copysignf
 @ varargs _cprintf(str)
 # stub _cprintf_l
 # stub _cprintf_p
@@ -421,10 +423,12 @@
 @ cdecl _findnext64i32(long ptr) MSVCRT__findnext64i32
 @ cdecl _findnexti64(long ptr) MSVCRT__findnexti64
 @ cdecl _finite( double )
+# stub -arch=win64 _finitef
 @ cdecl _flsbuf(long ptr) MSVCRT__flsbuf
 @ cdecl _flushall()
 @ extern _fmode MSVCRT__fmode
 @ cdecl _fpclass(double)
+# stub -arch=win64 _fpclassf
 @ stub _fpieee_flt #(long ptr ptr)
 @ cdecl _fpreset()
 # stub _fprintf_l
@@ -595,6 +599,7 @@
 @ cdecl _ismbstrail(ptr ptr)
 # stub _ismbstrail_l
 @ cdecl _isnan( double )
+# stub -arch=win64 _isnanf
 # stub _isprint_l
 # stub _isspace_l
 # stub _isupper_l
@@ -622,6 +627,7 @@
 @ cdecl _lfind(ptr ptr ptr long ptr)
 # stub _lfind_s
 @ cdecl _loaddll(str)
+# stub -arch=x86_64 _local_unwind
 @ cdecl -i386 _local_unwind2(ptr long)
 @ cdecl -i386 _local_unwind4(ptr ptr long)
 @ cdecl _localtime32(ptr) MSVCRT__localtime32
@@ -632,6 +638,7 @@
 @ cdecl _lock_file(ptr) MSVCRT__lock_file
 @ cdecl _locking(long long long) MSVCRT__locking
 @ cdecl _logb( double )
+# stub _logbf
 @ cdecl -i386 _longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long) MSVCRT__lrotl
 @ cdecl _lrotr(long long) MSVCRT__lrotr
@@ -799,7 +806,9 @@
 @ cdecl _mktime64(ptr) MSVCRT__mktime64
 @ cdecl _msize(ptr)
 # stub _msize_debug
+# stub -arch=win64 _msize_dbg
 @ cdecl _nextafter(double double)
+# stub -arch=win64 _nextafterf
 @ cdecl _onexit(ptr) MSVCRT__onexit
 @ varargs _open(str long) MSVCRT__open
 @ cdecl _open_osfhandle(long long)
