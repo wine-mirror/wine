@@ -164,16 +164,16 @@ typedef struct {
     LONG ref;
 } IDirectXFileSaveObjectImpl;
 
-HRESULT IDirectXFileImpl_Create(IUnknown *pUnkOuter, LPVOID *ppObj);
-HRESULT IDirectXFileFileObjectImpl_Create(IDirectXFileObjectImpl** ppObj);
-HRESULT IDirectXFileFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj);
+HRESULT IDirectXFileImpl_Create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT IDirectXFileFileObjectImpl_Create(IDirectXFileObjectImpl** ppObj) DECLSPEC_HIDDEN;
+HRESULT IDirectXFileFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj) DECLSPEC_HIDDEN;
 
-BOOL read_bytes(parse_buffer * buf, LPVOID data, DWORD size);
-BOOL parse_template(parse_buffer * buf);
-void dump_template(xtemplate* templates_array, xtemplate* ptemplate);
-BOOL is_template_available(parse_buffer * buf);
-BOOL parse_object(parse_buffer * buf);
+BOOL read_bytes(parse_buffer * buf, LPVOID data, DWORD size) DECLSPEC_HIDDEN;
+BOOL parse_template(parse_buffer * buf) DECLSPEC_HIDDEN;
+void dump_template(xtemplate* templates_array, xtemplate* ptemplate) DECLSPEC_HIDDEN;
+BOOL is_template_available(parse_buffer * buf) DECLSPEC_HIDDEN;
+BOOL parse_object(parse_buffer * buf) DECLSPEC_HIDDEN;
 
-int mszip_decompress(int inlen, int outlen, char* inbuffer, char* outbuffer);
+int mszip_decompress(int inlen, int outlen, char* inbuffer, char* outbuffer) DECLSPEC_HIDDEN;
 
 #endif /* __D3DXOF_PRIVATE_INCLUDED__ */
