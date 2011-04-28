@@ -249,6 +249,16 @@ HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWST
     return ret;
 }
 
+HRESULT WINAPI GetRequestedRuntimeVersion(LPWSTR pExe, LPWSTR pVersion, DWORD cchBuffer, DWORD *dwlength)
+{
+    TRACE("(%s, %p, %d, %p)\n", debugstr_w(pExe), debugstr_w(pExe), cchBuffer, dwlength);
+
+    if(!dwlength)
+        return E_POINTER;
+
+    return GetRequestedRuntimeInfo(pExe, NULL, NULL, 0, 0, NULL, 0, NULL, pVersion, cchBuffer, dwlength);
+}
+
 HRESULT WINAPI GetRealProcAddress(LPCSTR procname, void **ppv)
 {
     FIXME("(%s, %p)\n", debugstr_a(procname), ppv);

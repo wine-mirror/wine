@@ -59,7 +59,7 @@
 @ stub GetProcessExecutableHeap
 @ stdcall GetRealProcAddress(str ptr)
 @ stdcall GetRequestedRuntimeInfo(wstr wstr wstr long long ptr long ptr ptr long ptr)
-@ stub GetRequestedRuntimeVersion
+@ stdcall GetRequestedRuntimeVersion(wstr ptr long ptr)
 @ stub GetRequestedRuntimeVersionForCLSID
 @ stub GetStartupFlags
 @ stub GetTargetForVTableEntry
