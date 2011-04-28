@@ -318,7 +318,7 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
     BOOL ret = FALSE;
     HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
         CERT_STORE_CREATE_NEW_FLAG, NULL);
-    WININET_NETCONNECTION *conn;
+    netconn_t *conn;
 
     ssl = pX509_STORE_CTX_get_ex_data(ctx,
         pSSL_get_ex_data_X509_STORE_CTX_idx());
@@ -368,7 +368,7 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
 
 #endif
 
-DWORD NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
+DWORD NETCON_init(netconn_t *connection, BOOL useSSL)
 {
     connection->useSSL = useSSL;
     connection->socketFD = -1;
@@ -545,7 +545,7 @@ void NETCON_unload(void)
 #endif
 }
 
-BOOL NETCON_connected(WININET_NETCONNECTION *connection)
+BOOL NETCON_connected(netconn_t *connection)
 {
     return connection->socketFD != -1;
 }
@@ -621,7 +621,7 @@ int sock_get_error( int err )
  * NETCON_create
  * Basically calls 'socket()'
  */
-DWORD NETCON_create(WININET_NETCONNECTION *connection, int domain,
+DWORD NETCON_create(netconn_t *connection, int domain,
 	      int type, int protocol)
 {
 #ifdef SONAME_LIBSSL
@@ -640,7 +640,7 @@ DWORD NETCON_create(WININET_NETCONNECTION *connection, int domain,
  * NETCON_close
  * Basically calls 'close()' unless we should use SSL
  */
-DWORD NETCON_close(WININET_NETCONNECTION *connection)
+DWORD NETCON_close(netconn_t *connection)
 {
     int result;
 
@@ -667,7 +667,7 @@ DWORD NETCON_close(WININET_NETCONNECTION *connection)
  * NETCON_secure_connect
  * Initiates a secure connection over an existing plaintext connection.
  */
-DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname)
+DWORD NETCON_secure_connect(netconn_t *connection, LPWSTR hostname)
 {
     void *ssl_s;
     DWORD res = ERROR_NOT_SUPPORTED;
@@ -736,7 +736,7 @@ fail:
  * NETCON_connect
  * Connects to the specified address.
  */
-DWORD NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
+DWORD NETCON_connect(netconn_t *connection, const struct sockaddr *serv_addr,
 		    unsigned int addrlen)
 {
     int result;
@@ -759,7 +759,7 @@ DWORD NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *s
  * Basically calls 'send()' unless we should use SSL
  * number of chars send is put in *sent
  */
-DWORD NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len, int flags,
+DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
 		int *sent /* out */)
 {
     if (!NETCON_connected(connection)) return ERROR_INTERNET_CONNECTION_ABORTED;
@@ -794,7 +794,7 @@ DWORD NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len
  * Basically calls 'recv()' unless we should use SSL
  * number of chars received is put in *recvd
  */
-DWORD NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
+DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags,
 		int *recvd /* out */)
 {
     *recvd = 0;
@@ -836,7 +836,7 @@ DWORD NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int 
  * Returns the number of bytes of peeked data plus the number of bytes of
  * queued, but unread data.
  */
-BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *available)
+BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
 {
     *available = 0;
     if (!NETCON_connected(connection))
@@ -863,7 +863,7 @@ BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *avail
     return TRUE;
 }
 
-LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection)
+LPCVOID NETCON_GetCert(netconn_t *connection)
 {
 #ifdef SONAME_LIBSSL
     X509* cert;
@@ -880,7 +880,7 @@ LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection)
 #endif
 }
 
-int NETCON_GetCipherStrength(WININET_NETCONNECTION *connection)
+int NETCON_GetCipherStrength(netconn_t *connection)
 {
 #ifdef SONAME_LIBSSL
 #if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x0090707f)
@@ -902,7 +902,7 @@ int NETCON_GetCipherStrength(WININET_NETCONNECTION *connection)
 #endif
 }
 
-DWORD NETCON_set_timeout(WININET_NETCONNECTION *connection, BOOL send, int value)
+DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, int value)
 {
     int result;
     struct timeval tv;

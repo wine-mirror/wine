@@ -56,7 +56,7 @@ typedef struct
     int socketFD;
     void *ssl_s;
     DWORD security_flags;
-} WININET_NETCONNECTION;
+} netconn_t;
 
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
 {
@@ -279,7 +279,7 @@ typedef struct
     LPWSTR path;
     LPWSTR verb;
     LPWSTR rawHeaders;
-    WININET_NETCONNECTION netConnection;
+    netconn_t netConnection;
     LPWSTR version;
     LPWSTR statusText;
     DWORD bytesToWrite;
@@ -487,23 +487,23 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
                            DWORD dwStatusInfoLength) DECLSPEC_HIDDEN;
 BOOL INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto, WCHAR *foundProxy, DWORD *foundProxyLen) DECLSPEC_HIDDEN;
 
-BOOL NETCON_connected(WININET_NETCONNECTION *connection) DECLSPEC_HIDDEN;
-DWORD NETCON_init(WININET_NETCONNECTION *connnection, BOOL useSSL) DECLSPEC_HIDDEN;
+BOOL NETCON_connected(netconn_t *connection) DECLSPEC_HIDDEN;
+DWORD NETCON_init(netconn_t *connnection, BOOL useSSL) DECLSPEC_HIDDEN;
 void NETCON_unload(void) DECLSPEC_HIDDEN;
-DWORD NETCON_create(WININET_NETCONNECTION *connection, int domain,
+DWORD NETCON_create(netconn_t *connection, int domain,
 	      int type, int protocol) DECLSPEC_HIDDEN;
-DWORD NETCON_close(WININET_NETCONNECTION *connection) DECLSPEC_HIDDEN;
-DWORD NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
+DWORD NETCON_close(netconn_t *connection) DECLSPEC_HIDDEN;
+DWORD NETCON_connect(netconn_t *connection, const struct sockaddr *serv_addr,
 		    unsigned int addrlen) DECLSPEC_HIDDEN;
-DWORD NETCON_secure_connect(WININET_NETCONNECTION *connection, LPWSTR hostname) DECLSPEC_HIDDEN;
-DWORD NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len, int flags,
+DWORD NETCON_secure_connect(netconn_t *connection, LPWSTR hostname) DECLSPEC_HIDDEN;
+DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
 		int *sent /* out */) DECLSPEC_HIDDEN;
-DWORD NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
+DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags,
 		int *recvd /* out */) DECLSPEC_HIDDEN;
-BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *available) DECLSPEC_HIDDEN;
-LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection) DECLSPEC_HIDDEN;
-int NETCON_GetCipherStrength(WININET_NETCONNECTION *connection) DECLSPEC_HIDDEN;
-DWORD NETCON_set_timeout(WININET_NETCONNECTION *connection, BOOL send, int value) DECLSPEC_HIDDEN;
+BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available) DECLSPEC_HIDDEN;
+LPCVOID NETCON_GetCert(netconn_t *connection) DECLSPEC_HIDDEN;
+int NETCON_GetCipherStrength(netconn_t*) DECLSPEC_HIDDEN;
+DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, int value) DECLSPEC_HIDDEN;
 int sock_get_error(int) DECLSPEC_HIDDEN;
 
 extern void URLCacheContainers_CreateDefaults(void) DECLSPEC_HIDDEN;
