@@ -369,44 +369,18 @@ static HWND create_clipping_msg_window(void)
 }
 
 /***********************************************************************
- *             clip_cursor_notify
- *
- * Notification function called upon receiving a WM_X11DRV_CLIP_CURSOR.
- */
-LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
-{
-    struct x11drv_thread_data *data = x11drv_thread_data();
-
-    if (hwnd == GetDesktopWindow())  /* change the clip window stored in the desktop process */
-    {
-        static HWND clip_hwnd;
-
-        HWND prev = clip_hwnd;
-        clip_hwnd = new_clip_hwnd;
-        if (prev || new_clip_hwnd) TRACE( "clip hwnd changed from %p to %p\n", prev, new_clip_hwnd );
-        if (prev) SendNotifyMessageW( prev, WM_X11DRV_CLIP_CURSOR, 0, 0 );
-    }
-    else if (hwnd == data->clip_hwnd)  /* this is a notification that clipping has been reset */
-    {
-        data->clip_hwnd = 0;
-        disable_xinput2();
-        DestroyWindow( hwnd );
-    }
-    return 0;
-}
-
-/***********************************************************************
  *		grab_clipping_window
  *
  * Start a pointer grab on the clip window.
  */
 static BOOL grab_clipping_window( const RECT *clip )
 {
-    struct x11drv_thread_data *data = x11drv_init_thread_data();
-    Window clip_window = init_clip_window();
+    struct x11drv_thread_data *data = x11drv_thread_data();
+    Window clip_window;
     HWND msg_hwnd = 0;
 
-    if (!clip_window) return TRUE;
+    if (!data) return FALSE;
+    if (!(clip_window = init_clip_window())) return TRUE;
 
     /* create a clip message window unless we are already clipping */
     if (!data->clip_hwnd)
@@ -472,6 +446,42 @@ void ungrab_clipping_window(void)
     wine_tsx11_unlock();
     clipping_cursor = 0;
     SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, 0 );
+}
+
+/***********************************************************************
+ *             clip_cursor_notify
+ *
+ * Notification function called upon receiving a WM_X11DRV_CLIP_CURSOR.
+ */
+LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
+{
+    struct x11drv_thread_data *data = x11drv_thread_data();
+
+    if (hwnd == GetDesktopWindow())  /* change the clip window stored in the desktop process */
+    {
+        static HWND clip_hwnd;
+
+        HWND prev = clip_hwnd;
+        clip_hwnd = new_clip_hwnd;
+        if (prev || new_clip_hwnd) TRACE( "clip hwnd changed from %p to %p\n", prev, new_clip_hwnd );
+        if (prev) SendNotifyMessageW( prev, WM_X11DRV_CLIP_CURSOR, 0, 0 );
+    }
+    else if (hwnd == data->clip_hwnd)  /* this is a notification that clipping has been reset */
+    {
+        data->clip_hwnd = 0;
+        disable_xinput2();
+        DestroyWindow( hwnd );
+    }
+    else if (hwnd == GetForegroundWindow())  /* request to clip */
+    {
+        RECT clip;
+
+        GetClipCursor( &clip );
+        if (clip.left > virtual_screen_rect.left || clip.right < virtual_screen_rect.right ||
+            clip.top > virtual_screen_rect.top   || clip.bottom < virtual_screen_rect.bottom)
+            return grab_clipping_window( &clip );
+    }
+    return 0;
 }
 
 /***********************************************************************
@@ -1191,16 +1201,31 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
  */
 BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
 {
-    /* we are clipping if the clip rectangle is smaller than the screen */
-    if (clip && (clip->left > virtual_screen_rect.left ||
-                 clip->right < virtual_screen_rect.right ||
-                 clip->top > virtual_screen_rect.top ||
-                 clip->bottom < virtual_screen_rect.bottom))
+    if (!clip)
     {
-        if (GetWindowThreadProcessId( GetDesktopWindow(), NULL ) == GetCurrentThreadId())
-            return TRUE;  /* don't clip in the desktop process */
+        ungrab_clipping_window();
+        return TRUE;
+    }
 
-        if (grab_pointer && grab_clipping_window( clip )) return TRUE;
+    if (X11DRV_get_win_data( GetDesktopWindow() )) return TRUE;  /* don't clip in the desktop process */
+
+    /* we are clipping if the clip rectangle is smaller than the screen */
+    if (grab_pointer && (clip->left > virtual_screen_rect.left ||
+                         clip->right < virtual_screen_rect.right ||
+                         clip->top > virtual_screen_rect.top ||
+                         clip->bottom < virtual_screen_rect.bottom))
+    {
+        DWORD tid, pid;
+        HWND foreground = GetForegroundWindow();
+
+        /* forward request to the foreground window if it's in a different thread */
+        tid = GetWindowThreadProcessId( foreground, &pid );
+        if (tid && tid != GetCurrentThreadId() && pid == GetCurrentProcessId())
+        {
+            TRACE( "forwarding clip request to %p\n", foreground );
+            if (SendMessageW( foreground, WM_X11DRV_CLIP_CURSOR, 0, 0 )) return TRUE;
+        }
+        else if (grab_clipping_window( clip )) return TRUE;
     }
 
     ungrab_clipping_window();
