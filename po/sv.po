@@ -547,7 +547,7 @@ msgstr "Marginaler [millimeter]"
 msgid "mm"
 msgstr "millimeter"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Skriv ut"
 
@@ -5915,7 +5915,7 @@ msgstr "Tecken&kodning"
 msgid "Pr&int"
 msgstr "Skriv &ut"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "&Egenskaper"
 
@@ -6251,13 +6251,10 @@ msgstr "U&tskriftsformat..."
 msgid "Pr&int..."
 msgstr "Skriv &ut..."
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
+#: shdocvw.rc:37
+#, fuzzy
+msgid "Print previe&w"
 msgstr "&Förhandsgranskning..."
-
-#: shdocvw.rc:39
-msgid "&Properties..."
-msgstr "&Egenskaper..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6295,7 +6292,8 @@ msgid "&Help"
 msgstr "&Hjälp"
 
 #: shdocvw.rc:57
-msgid "&About Internet Explorer..."
+#, fuzzy
+msgid "&About Internet Explorer"
 msgstr "&Om Internet Explorer..."
 
 #: shdocvw.rc:67
@@ -6303,6 +6301,10 @@ msgstr "&Om Internet Explorer..."
 msgctxt "home page"
 msgid "Home"
 msgstr "Hem"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Skriv ut..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11008,10 +11010,6 @@ msgstr "Kommentar..."
 msgid "Copy"
 msgstr "Kopiera"
 
-#: winhlp32.rc:66
-msgid "Print..."
-msgstr "Skriv ut..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Hjälp"
@@ -11047,6 +11045,10 @@ msgstr "Hjälprubriker: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nytt...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "&Förhandsgranskning..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

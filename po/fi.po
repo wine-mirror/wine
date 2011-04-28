@@ -546,7 +546,7 @@ msgstr "Marginaalit (mm)"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Tulosta"
 
@@ -6051,7 +6051,7 @@ msgstr "Koo&daus"
 msgid "Pr&int"
 msgstr "Tul&osta"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -6421,19 +6421,10 @@ msgstr "Tulosta"
 msgid "Pr&int..."
 msgstr "Tulosta"
 
-#: shdocvw.rc:37 wordpad.rc:34
+#: shdocvw.rc:37
 #, fuzzy
-msgid "Print previe&w..."
+msgid "Print previe&w"
 msgstr "Tulosta &Kuva..."
-
-#: shdocvw.rc:39
-#, fuzzy
-msgid "&Properties..."
-msgstr ""
-"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
-"&Ominaisuudet\n"
-"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
-"O&minaisuudet"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6479,7 +6470,7 @@ msgstr ""
 
 #: shdocvw.rc:57
 #, fuzzy
-msgid "&About Internet Explorer..."
+msgid "&About Internet Explorer"
 msgstr "&About Notepad"
 
 #: shdocvw.rc:67
@@ -6487,6 +6478,11 @@ msgstr "&About Notepad"
 msgctxt "home page"
 msgid "Home"
 msgstr "Alkuun"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+#, fuzzy
+msgid "Print..."
+msgstr "Tulosta"
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -10930,11 +10926,6 @@ msgstr "&Huomautus..."
 msgid "Copy"
 msgstr "Ko&pioi"
 
-#: winhlp32.rc:66
-#, fuzzy
-msgid "Print..."
-msgstr "Tulosta"
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Ohje"
@@ -10971,6 +10962,11 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Uusi\tCtrl+N"
+
+#: wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr "Tulosta &Kuva..."
 
 #: wordpad.rc:42
 #, fuzzy

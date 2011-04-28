@@ -547,7 +547,7 @@ msgstr "Границы [мм]"
 msgid "mm"
 msgstr "мм"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Печать"
 
@@ -5908,7 +5908,7 @@ msgstr "&Кодировка"
 msgid "Pr&int"
 msgstr "Пе&чать"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "&Свойства"
 
@@ -6244,13 +6244,10 @@ msgstr "Параме&тры страницы..."
 msgid "Pr&int..."
 msgstr "Пе&чать..."
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
+#: shdocvw.rc:37
+#, fuzzy
+msgid "Print previe&w"
 msgstr "Пред&варительный просмотр..."
-
-#: shdocvw.rc:39
-msgid "&Properties..."
-msgstr "Сво&йства"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6288,7 +6285,8 @@ msgid "&Help"
 msgstr "&Справка"
 
 #: shdocvw.rc:57
-msgid "&About Internet Explorer..."
+#, fuzzy
+msgid "&About Internet Explorer"
 msgstr "&О программе..."
 
 #: shdocvw.rc:67
@@ -6296,6 +6294,10 @@ msgstr "&О программе..."
 msgctxt "home page"
 msgid "Home"
 msgstr "В начало"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Печать..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11008,10 +11010,6 @@ msgstr "Заметки..."
 msgid "Copy"
 msgstr "Копировать"
 
-#: winhlp32.rc:66
-msgid "Print..."
-msgstr "Печать..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Справка Wine"
@@ -11047,6 +11045,10 @@ msgstr "Содержание: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "Созд&ать...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Пред&варительный просмотр..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

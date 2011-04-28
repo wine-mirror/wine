@@ -549,7 +549,7 @@ msgstr "余白 [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "印刷"
 
@@ -5910,7 +5910,7 @@ msgstr "エンコード(&E)"
 msgid "Pr&int"
 msgstr "印刷(&I)"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "プロパティ(&P)"
 
@@ -6246,13 +6246,10 @@ msgstr "印刷フォーマット(&F)..."
 msgid "Pr&int..."
 msgstr "印刷(&I)..."
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
+#: shdocvw.rc:37
+#, fuzzy
+msgid "Print previe&w"
 msgstr "印刷プレビュー(&W)..."
-
-#: shdocvw.rc:39
-msgid "&Properties..."
-msgstr "プロパティ(&P)"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6290,7 +6287,8 @@ msgid "&Help"
 msgstr "ヘルプ(&H)"
 
 #: shdocvw.rc:57
-msgid "&About Internet Explorer..."
+#, fuzzy
+msgid "&About Internet Explorer"
 msgstr "バージョン情報(&A)..."
 
 #: shdocvw.rc:67
@@ -6298,6 +6296,10 @@ msgstr "バージョン情報(&A)..."
 msgctxt "home page"
 msgid "Home"
 msgstr "ホーム"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "印刷..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11006,10 +11008,6 @@ msgstr "コメント..."
 msgid "Copy"
 msgstr "コピー"
 
-#: winhlp32.rc:66
-msgid "Print..."
-msgstr "印刷..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine ヘルプ"
@@ -11045,6 +11043,10 @@ msgstr "ヘルプ トピック: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "新規作成(&N)...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "印刷プレビュー(&W)..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

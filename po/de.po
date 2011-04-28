@@ -561,7 +561,7 @@ msgstr "Ränder [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Drucken"
 
@@ -6043,7 +6043,7 @@ msgstr "&Textkodierung"
 msgid "Pr&int"
 msgstr "&Drucken"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "&Eigenschaften"
 
@@ -6399,13 +6399,10 @@ msgstr "Seite &einrichten..."
 msgid "Pr&int..."
 msgstr "&Drucken..."
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
+#: shdocvw.rc:37
+#, fuzzy
+msgid "Print previe&w"
 msgstr "Seitenansi&cht"
-
-#: shdocvw.rc:39
-msgid "&Properties..."
-msgstr "Ei&genschaften..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 #, fuzzy
@@ -6453,7 +6450,8 @@ msgid "&Help"
 msgstr "&Hilfe"
 
 #: shdocvw.rc:57
-msgid "&About Internet Explorer..."
+#, fuzzy
+msgid "&About Internet Explorer"
 msgstr "Über &Internet Explorer..."
 
 #: shdocvw.rc:67
@@ -6461,6 +6459,10 @@ msgstr "Über &Internet Explorer..."
 msgctxt "home page"
 msgid "Home"
 msgstr "Start"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Drucken..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11285,10 +11287,6 @@ msgstr "Anmerken..."
 msgid "Copy"
 msgstr "Kopieren"
 
-#: winhlp32.rc:66
-msgid "Print..."
-msgstr "Drucken..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Hilfe"
@@ -11326,6 +11324,10 @@ msgstr "Hilfethemen: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Neu...\tStrg+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Seitenansi&cht"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

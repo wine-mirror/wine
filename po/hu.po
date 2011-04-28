@@ -572,7 +572,7 @@ msgstr "Margók [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Nyomtatás"
 
@@ -6243,7 +6243,7 @@ msgstr "K&ódolás"
 msgid "Pr&int"
 msgstr "&Nyomtatás"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -6606,18 +6606,10 @@ msgstr "Nyomtatás"
 msgid "Pr&int..."
 msgstr "Nyomtatás"
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Print previe&w..."
-
-#: shdocvw.rc:39
+#: shdocvw.rc:37
 #, fuzzy
-msgid "&Properties..."
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Beállítások\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Tula&jdonságok"
+msgid "Print previe&w"
+msgstr "Print previe&w..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6668,7 +6660,7 @@ msgstr "&Súgó"
 
 #: shdocvw.rc:57
 #, fuzzy
-msgid "&About Internet Explorer..."
+msgid "&About Internet Explorer"
 msgstr "Wine Internet Explorer"
 
 #: shdocvw.rc:67
@@ -6676,6 +6668,11 @@ msgstr "Wine Internet Explorer"
 msgctxt "home page"
 msgid "Home"
 msgstr "Kezdőlap"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+#, fuzzy
+msgid "Print..."
+msgstr "Nyomtatás"
 
 #: shdocvw.rc:73
 #, fuzzy
@@ -11177,11 +11174,6 @@ msgstr "&Jegyzet..."
 msgid "Copy"
 msgstr "&Másolás"
 
-#: winhlp32.rc:66
-#, fuzzy
-msgid "Print..."
-msgstr "Nyomtatás"
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine súgó"
@@ -11217,6 +11209,10 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Új...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Print previe&w..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

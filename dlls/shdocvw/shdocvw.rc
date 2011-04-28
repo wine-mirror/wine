@@ -34,9 +34,9 @@ IDR_BROWSE_MAIN_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "Print &format...",            ID_BROWSE_PRINT_FORMAT
         MENUITEM "Pr&int...",                   ID_BROWSE_PRINT
-        MENUITEM "Print previe&w...",           ID_BROWSE_PRINT_PREVIEW
+        MENUITEM "Print previe&w",              ID_BROWSE_PRINT_PREVIEW
         MENUITEM SEPARATOR
-        MENUITEM "&Properties...",              ID_BROWSE_PROPERTIES
+        MENUITEM "&Properties",                 ID_BROWSE_PROPERTIES
         MENUITEM "&Close",                      ID_BROWSE_QUIT
     }
     POPUP "&View"
@@ -54,7 +54,7 @@ IDR_BROWSE_MAIN_MENU MENU
     }
     POPUP "&Help"
     {
-        MENUITEM "&About Internet Explorer...", ID_BROWSE_ABOUT
+        MENUITEM "&About Internet Explorer", ID_BROWSE_ABOUT
     }
 }
 
@@ -65,7 +65,7 @@ STRINGTABLE
     IDS_TB_STOP             "Stop"
     IDS_TB_REFRESH          "Refresh"
     IDS_TB_HOME             "#msgctxt#home page#Home"
-    IDS_TB_PRINT            "Print"
+    IDS_TB_PRINT            "Print..."
 }
 
 STRINGTABLE

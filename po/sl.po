@@ -556,7 +556,7 @@ msgstr "Robovi [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 #, fuzzy
 msgid "Print"
 msgstr ""
@@ -6197,7 +6197,7 @@ msgstr "N&abor znakov"
 msgid "Pr&int"
 msgstr "Na&tisni"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -6558,18 +6558,14 @@ msgstr "Nastavitve tiskanja ..."
 msgid "Pr&int..."
 msgstr "Na&tisni ..."
 
-#: shdocvw.rc:37 wordpad.rc:34
+#: shdocvw.rc:37
 #, fuzzy
-msgid "Print previe&w..."
+msgid "Print previe&w"
 msgstr ""
 "#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
 "Pre&dogled tiskanja ...\n"
 "#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
 "Predo&gled tiskanja ..."
-
-#: shdocvw.rc:39
-msgid "&Properties..."
-msgstr "&Lastnosti ..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6622,7 +6618,8 @@ msgid "&Help"
 msgstr "&Pomoč"
 
 #: shdocvw.rc:57
-msgid "&About Internet Explorer..."
+#, fuzzy
+msgid "&About Internet Explorer"
 msgstr "O programu Internet Explorer ..."
 
 #: shdocvw.rc:67
@@ -6630,6 +6627,10 @@ msgstr "O programu Internet Explorer ..."
 msgctxt "home page"
 msgid "Home"
 msgstr "Domov"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Natisni ..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11465,10 +11466,6 @@ msgstr "Opomba ..."
 msgid "Copy"
 msgstr "Kopiraj"
 
-#: winhlp32.rc:66
-msgid "Print..."
-msgstr "Natisni ..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Pomoč"
@@ -11504,6 +11501,15 @@ msgstr "Teme pomoči: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nova ...\tCtrl+N"
+
+#: wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr ""
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"Pre&dogled tiskanja ...\n"
+"#-#-#-#-#  sl.po (Wine)  #-#-#-#-#\n"
+"Predo&gled tiskanja ..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

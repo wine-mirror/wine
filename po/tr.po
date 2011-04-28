@@ -559,7 +559,7 @@ msgstr "Kenarlıklar [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Yazdır"
 
@@ -6223,7 +6223,7 @@ msgstr "&Kodlama"
 msgid "Pr&int"
 msgstr "Ya&zdır"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -6588,18 +6588,10 @@ msgstr "Yazdır"
 msgid "Pr&int..."
 msgstr "Yazdır"
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Print previe&w..."
-
-#: shdocvw.rc:39
+#: shdocvw.rc:37
 #, fuzzy
-msgid "&Properties..."
-msgstr ""
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"&Özellikler\n"
-"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
-"Ö&zellikler"
+msgid "Print previe&w"
+msgstr "Print previe&w..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6644,7 +6636,7 @@ msgstr "&Yardım"
 
 #: shdocvw.rc:57
 #, fuzzy
-msgid "&About Internet Explorer..."
+msgid "&About Internet Explorer"
 msgstr "Winefile hakkında &bilgi..."
 
 #: shdocvw.rc:67
@@ -6652,6 +6644,11 @@ msgstr "Winefile hakkında &bilgi..."
 msgctxt "home page"
 msgid "Home"
 msgstr "Ev"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+#, fuzzy
+msgid "Print..."
+msgstr "Yazdır"
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11448,11 +11445,6 @@ msgstr "&Annotate..."
 msgid "Copy"
 msgstr "K&opyala"
 
-#: winhlp32.rc:66
-#, fuzzy
-msgid "Print..."
-msgstr "Yazdır"
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Yardım"
@@ -11488,6 +11480,10 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Yeni...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Print previe&w..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

@@ -528,7 +528,7 @@ msgstr ""
 msgid "mm"
 msgstr ""
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr ""
 
@@ -5801,7 +5801,7 @@ msgstr ""
 msgid "Pr&int"
 msgstr ""
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "ਜਾਣਕਾਰੀ(&o)"
 
@@ -6142,15 +6142,10 @@ msgstr "ਫੌਂਟ(&F)..."
 msgid "Pr&int..."
 msgstr "ਫੌਂਟ(&F)..."
 
-#: shdocvw.rc:37 wordpad.rc:34
+#: shdocvw.rc:37
 #, fuzzy
-msgid "Print previe&w..."
+msgid "Print previe&w"
 msgstr "ਫੌਂਟ(&F)..."
-
-#: shdocvw.rc:39
-#, fuzzy
-msgid "&Properties..."
-msgstr "ਜਾਣਕਾਰੀ(&o)"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6189,13 +6184,18 @@ msgstr ""
 
 #: shdocvw.rc:57
 #, fuzzy
-msgid "&About Internet Explorer..."
+msgid "&About Internet Explorer"
 msgstr "ਘੜੀ ਬਾਰੇ(&A)..."
 
 #: shdocvw.rc:67
 msgctxt "home page"
 msgid "Home"
 msgstr ""
+
+#: shdocvw.rc:68 winhlp32.rc:66
+#, fuzzy
+msgid "Print..."
+msgstr "ਫੌਂਟ(&F)..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -10472,11 +10472,6 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
-#: winhlp32.rc:66
-#, fuzzy
-msgid "Print..."
-msgstr "ਫੌਂਟ(&F)..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr ""
@@ -10512,6 +10507,11 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr ""
+
+#: wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr "ਫੌਂਟ(&F)..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

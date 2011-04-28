@@ -572,7 +572,7 @@ msgstr "Margener [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Udskriv"
 
@@ -6077,7 +6077,7 @@ msgstr "K&oding"
 msgid "Pr&int"
 msgstr "Udskr&iv"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -6455,18 +6455,10 @@ msgstr "Udskriv..."
 msgid "Pr&int..."
 msgstr "Udskriv..."
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "&Forhåndsvisning..."
-
-#: shdocvw.rc:39
+#: shdocvw.rc:37
 #, fuzzy
-msgid "&Properties..."
-msgstr ""
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"&Instillinger\n"
-"#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
-"Egenska&per"
+msgid "Print previe&w"
+msgstr "&Forhåndsvisning..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 #, fuzzy
@@ -6516,7 +6508,7 @@ msgstr "&Hjælp"
 
 #: shdocvw.rc:57
 #, fuzzy
-msgid "&About Internet Explorer..."
+msgid "&About Internet Explorer"
 msgstr "Wine Internet Explorer"
 
 #: shdocvw.rc:67
@@ -6524,6 +6516,10 @@ msgstr "Wine Internet Explorer"
 msgctxt "home page"
 msgid "Home"
 msgstr "Hjem"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Udskriv..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11332,10 +11328,6 @@ msgstr "Notat..."
 msgid "Copy"
 msgstr "Kopier"
 
-#: winhlp32.rc:66
-msgid "Print..."
-msgstr "Udskriv..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Hjælp"
@@ -11371,6 +11363,10 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Ny...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "&Forhåndsvisning..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

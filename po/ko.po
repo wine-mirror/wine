@@ -548,7 +548,7 @@ msgstr "여백 [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "인쇄"
 
@@ -5903,7 +5903,7 @@ msgstr "인코딩(&E)"
 msgid "Pr&int"
 msgstr "인쇄(&I)"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "등록 정보(&P)"
 
@@ -6239,13 +6239,10 @@ msgstr "인쇄 형식(&F)..."
 msgid "Pr&int..."
 msgstr "인쇄(&I)..."
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
+#: shdocvw.rc:37
+#, fuzzy
+msgid "Print previe&w"
 msgstr "인쇄 미리보기(&W)..."
-
-#: shdocvw.rc:39
-msgid "&Properties..."
-msgstr "속성(&P)..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6283,7 +6280,8 @@ msgid "&Help"
 msgstr "도움말(&H)"
 
 #: shdocvw.rc:57
-msgid "&About Internet Explorer..."
+#, fuzzy
+msgid "&About Internet Explorer"
 msgstr "인터넷 익스플로어 에 관하여(&A)..."
 
 #: shdocvw.rc:67
@@ -6291,6 +6289,10 @@ msgstr "인터넷 익스플로어 에 관하여(&A)..."
 msgctxt "home page"
 msgid "Home"
 msgstr "홈"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "인쇄..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -10960,10 +10962,6 @@ msgstr "주석..."
 msgid "Copy"
 msgstr "복사"
 
-#: winhlp32.rc:66
-msgid "Print..."
-msgstr "인쇄..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine 도움말"
@@ -10999,6 +10997,10 @@ msgstr "도움말 목차: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "새 파일(&N)...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "인쇄 미리보기(&W)..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

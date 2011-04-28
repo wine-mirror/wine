@@ -558,7 +558,7 @@ msgstr "Marøenoj [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Presu"
 
@@ -5995,7 +5995,7 @@ msgstr ""
 msgid "Pr&int"
 msgstr ""
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -6358,19 +6358,10 @@ msgstr "&Presu"
 msgid "Pr&int..."
 msgstr "&Presu"
 
-#: shdocvw.rc:37 wordpad.rc:34
+#: shdocvw.rc:37
 #, fuzzy
-msgid "Print previe&w..."
+msgid "Print previe&w"
 msgstr "&Presu"
-
-#: shdocvw.rc:39
-#, fuzzy
-msgid "&Properties..."
-msgstr ""
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"&Ecoj\n"
-"#-#-#-#-#  eo.po (Wine)  #-#-#-#-#\n"
-"E&coj"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6409,13 +6400,18 @@ msgstr "&Helpo"
 
 #: shdocvw.rc:57
 #, fuzzy
-msgid "&About Internet Explorer..."
+msgid "&About Internet Explorer"
 msgstr "Pri Notepad"
 
 #: shdocvw.rc:67
 msgctxt "home page"
 msgid "Home"
 msgstr ""
+
+#: shdocvw.rc:68 winhlp32.rc:66
+#, fuzzy
+msgid "Print..."
+msgstr "&Presu"
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -10806,11 +10802,6 @@ msgstr "&Notu..."
 msgid "Copy"
 msgstr "&Kopiu"
 
-#: winhlp32.rc:66
-#, fuzzy
-msgid "Print..."
-msgstr "&Presu"
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Helpanto"
@@ -10847,6 +10838,11 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Nova\tCtrl+N"
+
+#: wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr "&Presu"
 
 #: wordpad.rc:42
 #, fuzzy

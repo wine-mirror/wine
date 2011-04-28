@@ -544,7 +544,7 @@ msgstr "Okraje [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Tlač"
 
@@ -5926,7 +5926,7 @@ msgstr ""
 msgid "Pr&int"
 msgstr ""
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -6283,15 +6283,10 @@ msgstr "&Tlačiť"
 msgid "Pr&int..."
 msgstr "&Tlačiť"
 
-#: shdocvw.rc:37 wordpad.rc:34
+#: shdocvw.rc:37
 #, fuzzy
-msgid "Print previe&w..."
+msgid "Print previe&w"
 msgstr "&Tlačiť"
-
-#: shdocvw.rc:39
-#, fuzzy
-msgid "&Properties..."
-msgstr "&Vlastnosti"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6330,13 +6325,18 @@ msgstr "&Pomoc"
 
 #: shdocvw.rc:57
 #, fuzzy
-msgid "&About Internet Explorer..."
+msgid "&About Internet Explorer"
 msgstr "&Info..."
 
 #: shdocvw.rc:67
 msgctxt "home page"
 msgid "Home"
 msgstr ""
+
+#: shdocvw.rc:68 winhlp32.rc:66
+#, fuzzy
+msgid "Print..."
+msgstr "&Tlačiť"
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -10784,11 +10784,6 @@ msgstr "&Skomentovať..."
 msgid "Copy"
 msgstr "Kopí&rovať..."
 
-#: winhlp32.rc:66
-#, fuzzy
-msgid "Print..."
-msgstr "&Tlačiť"
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Pomoc"
@@ -10824,6 +10819,11 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr ""
+
+#: wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr "&Tlačiť"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

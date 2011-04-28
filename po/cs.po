@@ -569,7 +569,7 @@ msgstr "Okraje [mm]"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Tisk"
 
@@ -6105,7 +6105,7 @@ msgstr ""
 msgid "Pr&int"
 msgstr ""
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 #, fuzzy
 msgid "&Properties"
 msgstr ""
@@ -6458,19 +6458,10 @@ msgstr "Tisk"
 msgid "Pr&int..."
 msgstr "Tisk"
 
-#: shdocvw.rc:37 wordpad.rc:34
+#: shdocvw.rc:37
 #, fuzzy
-msgid "Print previe&w..."
+msgid "Print previe&w"
 msgstr "Tisk"
-
-#: shdocvw.rc:39
-#, fuzzy
-msgid "&Properties..."
-msgstr ""
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"&Vlastnosti\n"
-"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
-"V&lastnosti"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6516,7 +6507,7 @@ msgstr "&Nápověda"
 
 #: shdocvw.rc:57
 #, fuzzy
-msgid "&About Internet Explorer..."
+msgid "&About Internet Explorer"
 msgstr "&Informace o Winefile..."
 
 #: shdocvw.rc:67
@@ -6524,6 +6515,11 @@ msgstr "&Informace o Winefile..."
 msgctxt "home page"
 msgid "Home"
 msgstr "Domů"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+#, fuzzy
+msgid "Print..."
+msgstr "Tisk"
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11280,11 +11276,6 @@ msgstr "P&oznamenat si..."
 msgid "Copy"
 msgstr "&Kopírovat"
 
-#: winhlp32.rc:66
-#, fuzzy
-msgid "Print..."
-msgstr "Tisk"
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Nápověda Wine"
@@ -11321,6 +11312,11 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Nový\tCtrl+N"
+
+#: wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr "Tisk"
 
 #: wordpad.rc:42
 #, fuzzy

@@ -542,7 +542,7 @@ msgstr ""
 msgid "mm"
 msgstr ""
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr ""
 
@@ -5855,7 +5855,7 @@ msgstr ""
 msgid "Pr&int"
 msgstr ""
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr ""
 
@@ -6203,15 +6203,10 @@ msgstr "ا&طبع...\tCtrl+P"
 msgid "Pr&int..."
 msgstr "ا&طبع...\tCtrl+P"
 
-#: shdocvw.rc:37 wordpad.rc:34
+#: shdocvw.rc:37
 #, fuzzy
-msgid "Print previe&w..."
+msgid "Print previe&w"
 msgstr "ا&طبع...\tCtrl+P"
-
-#: shdocvw.rc:39
-#, fuzzy
-msgid "&Properties..."
-msgstr "اختر ال&كل\tCtrl+A"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6251,13 +6246,18 @@ msgstr "&مساعدة"
 
 #: shdocvw.rc:57
 #, fuzzy
-msgid "&About Internet Explorer..."
+msgid "&About Internet Explorer"
 msgstr "&عن لوح الملاحظات"
 
 #: shdocvw.rc:67
 msgctxt "home page"
 msgid "Home"
 msgstr ""
+
+#: shdocvw.rc:68 winhlp32.rc:66
+#, fuzzy
+msgid "Print..."
+msgstr "ا&طبع...\tCtrl+P"
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -10599,11 +10599,6 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
-#: winhlp32.rc:66
-#, fuzzy
-msgid "Print..."
-msgstr "ا&طبع...\tCtrl+P"
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr ""
@@ -10641,6 +10636,11 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&جديد\tCtrl+N"
+
+#: wordpad.rc:34
+#, fuzzy
+msgid "Print previe&w..."
+msgstr "ا&طبع...\tCtrl+P"
 
 #: wordpad.rc:42
 #, fuzzy

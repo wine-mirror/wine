@@ -546,7 +546,7 @@ msgstr "Межі [мм]"
 msgid "mm"
 msgstr "мм"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "Друк"
 
@@ -5925,7 +5925,7 @@ msgstr "&Кодування"
 msgid "Pr&int"
 msgstr "&Друк"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "В&ластивості"
 
@@ -6261,13 +6261,10 @@ msgstr "&Формат друку..."
 msgid "Pr&int..."
 msgstr "&Друк..."
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
+#: shdocvw.rc:37
+#, fuzzy
+msgid "Print previe&w"
 msgstr "Попередній пе&регляд..."
-
-#: shdocvw.rc:39
-msgid "&Properties..."
-msgstr "В&ластивості..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6305,7 +6302,8 @@ msgid "&Help"
 msgstr "&Довідка"
 
 #: shdocvw.rc:57
-msgid "&About Internet Explorer..."
+#, fuzzy
+msgid "&About Internet Explorer"
 msgstr "&Про Оглядач Інтернету..."
 
 #: shdocvw.rc:67
@@ -6313,6 +6311,10 @@ msgstr "&Про Оглядач Інтернету..."
 msgctxt "home page"
 msgid "Home"
 msgstr "Додому"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Друк..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11022,10 +11024,6 @@ msgstr "Замітки..."
 msgid "Copy"
 msgstr "Копіювати"
 
-#: winhlp32.rc:66
-msgid "Print..."
-msgstr "Друк..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Довідка Wine"
@@ -11061,6 +11059,10 @@ msgstr "Розділи Довідки: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Новий...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "Попередній пе&регляд..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

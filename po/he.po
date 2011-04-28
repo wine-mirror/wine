@@ -550,7 +550,7 @@ msgstr "שוליים [מ״מ]"
 msgid "mm"
 msgstr "מ״מ"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 msgid "Print"
 msgstr "הדפסה"
 
@@ -6117,7 +6117,7 @@ msgstr "&קידוד"
 msgid "Pr&int"
 msgstr "ה&דפסה"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "מ&אפיינים"
 
@@ -6453,13 +6453,10 @@ msgstr "&תצורת ההדפסה..."
 msgid "Pr&int..."
 msgstr "ה&דפסה..."
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
+#: shdocvw.rc:37
+#, fuzzy
+msgid "Print previe&w"
 msgstr "הצגה &לפני הדפסה..."
-
-#: shdocvw.rc:39
-msgid "&Properties..."
-msgstr "מ&אפיינים..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6497,7 +6494,8 @@ msgid "&Help"
 msgstr "ע&זרה"
 
 #: shdocvw.rc:57
-msgid "&About Internet Explorer..."
+#, fuzzy
+msgid "&About Internet Explorer"
 msgstr "על &אודות Internet Explorer..."
 
 #: shdocvw.rc:67
@@ -6505,6 +6503,10 @@ msgstr "על &אודות Internet Explorer..."
 msgctxt "home page"
 msgid "Home"
 msgstr "דף הבית"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "הדפסה..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11184,10 +11186,6 @@ msgstr "הערות..."
 msgid "Copy"
 msgstr "העתקה"
 
-#: winhlp32.rc:66
-msgid "Print..."
-msgstr "הדפסה..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "העזרה של Wine"
@@ -11223,6 +11221,10 @@ msgstr "נושאי העזרה: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&חדש...\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "הצגה &לפני הדפסה..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

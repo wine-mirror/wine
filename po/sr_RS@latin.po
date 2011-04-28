@@ -563,7 +563,7 @@ msgstr "Margine (u milimetrima)"
 msgid "mm"
 msgstr "mm"
 
-#: comdlg32.rc:64 hhctrl.rc:46 shdocvw.rc:68 wordpad.rc:162
+#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
 #, fuzzy
 msgid "Print"
 msgstr ""
@@ -6205,7 +6205,7 @@ msgstr "&Kodni raspored"
 msgid "Pr&int"
 msgstr "&Štampaj"
 
-#: shdoclc.rc:59 shell32.rc:93 clock.rc:28 wineconsole.rc:27
+#: shdoclc.rc:59 shdocvw.rc:39 shell32.rc:93 clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "&Svojstva"
 
@@ -6551,13 +6551,10 @@ msgstr "Format &štampe..."
 msgid "Pr&int..."
 msgstr "&Štampaj..."
 
-#: shdocvw.rc:37 wordpad.rc:34
-msgid "Print previe&w..."
+#: shdocvw.rc:37
+#, fuzzy
+msgid "Print previe&w"
 msgstr "&Pregled štampe..."
-
-#: shdocvw.rc:39
-msgid "&Properties..."
-msgstr "&Svojstva..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6595,7 +6592,8 @@ msgid "&Help"
 msgstr "&Pomoć"
 
 #: shdocvw.rc:57
-msgid "&About Internet Explorer..."
+#, fuzzy
+msgid "&About Internet Explorer"
 msgstr "&O Internet Explorer-u..."
 
 #: shdocvw.rc:67
@@ -6603,6 +6601,10 @@ msgstr "&O Internet Explorer-u..."
 msgctxt "home page"
 msgid "Home"
 msgstr "Početna"
+
+#: shdocvw.rc:68 winhlp32.rc:66
+msgid "Print..."
+msgstr "Štampaj..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -11065,10 +11067,6 @@ msgstr "Beleške..."
 msgid "Copy"
 msgstr "Kopiraj"
 
-#: winhlp32.rc:66
-msgid "Print..."
-msgstr "Štampaj..."
-
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Pomoć"
@@ -11105,6 +11103,10 @@ msgstr "Teme pomoći: "
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Novo\tCtrl+N"
+
+#: wordpad.rc:34
+msgid "Print previe&w..."
+msgstr "&Pregled štampe..."
 
 #: wordpad.rc:42
 #, fuzzy
