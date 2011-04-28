@@ -157,9 +157,8 @@ static inline DWORD get_octant_mask(int dx, int dy)
     return 1 << (get_octant_number(dx, dy) - 1);
 }
 
-static void solid_pen_line_callback(INT x, INT y, LPARAM lparam)
+static void solid_pen_line_callback(dibdrv_physdev *pdev, INT x, INT y)
 {
-    dibdrv_physdev *pdev = (dibdrv_physdev *)lparam;
     RECT rect;
 
     rect.left   = x;
@@ -397,7 +396,7 @@ static int clip_line(const POINT *start, const POINT *end, const RECT *clip,
 }
 
 static void bres_line_with_bias(INT x1, INT y1, INT x2, INT y2, const bres_params *params, INT err,
-                                BOOL last_pt, void (* callback)(INT,INT,LPARAM), LPARAM lParam)
+                                BOOL last_pt, void (* callback)(dibdrv_physdev*,INT,INT), dibdrv_physdev *pdev)
 {
     const int xadd = is_x_increasing(params->octant) ? 1 : -1;
     const int yadd = is_y_increasing(params->octant) ? 1 : -1;
@@ -408,7 +407,7 @@ static void bres_line_with_bias(INT x1, INT y1, INT x2, INT y2, const bres_param
         erradd = 2*params->dy - 2*params->dx;
         while(x1 != x2)
         {
-            callback(x1, y1, lParam);
+            callback(pdev, x1, y1);
             if (err + params->bias > 0)
             {
                 y1 += yadd;
@@ -417,14 +416,14 @@ static void bres_line_with_bias(INT x1, INT y1, INT x2, INT y2, const bres_param
             else err += 2*params->dy;
             x1 += xadd;
         }
-        if(last_pt) callback(x1, y1, lParam);
+        if(last_pt) callback(pdev, x1, y1);
     }
     else   /* line is "more vertical" */
     {
         erradd = 2*params->dx - 2*params->dy;
         while(y1 != y2)
         {
-            callback(x1, y1, lParam);
+            callback(pdev, x1, y1);
             if (err + params->bias > 0)
             {
                 x1 += xadd;
@@ -433,7 +432,7 @@ static void bres_line_with_bias(INT x1, INT y1, INT x2, INT y2, const bres_param
             else err += 2*params->dx;
             y1 += yadd;
         }
-        if(last_pt) callback(x1, y1, lParam);
+        if(last_pt) callback(pdev, x1, y1);
     }
 }
 
@@ -534,7 +533,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
                 if(clip_status == 1 && (end->x != clipped_end.x || end->y != clipped_end.y)) last_pt = TRUE;
 
                 bres_line_with_bias(clipped_start.x, clipped_start.y, clipped_end.x, clipped_end.y, &params,
-                                    err, last_pt, solid_pen_line_callback, (LPARAM)pdev);
+                                    err, last_pt, solid_pen_line_callback, pdev);
 
                 if(clip_status == 2) break; /* completely unclipped, so we can finish */
             }
