@@ -1,0 +1,5 @@
+MODULE = msvcp60.dll
+
+C_SRCS = msvcp60.c
+
+@MAKE_DLL_RULES@
