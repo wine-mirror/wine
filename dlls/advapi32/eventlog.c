@@ -851,3 +851,23 @@ ULONG WINAPI QueryTraceW( TRACEHANDLE handle, LPCWSTR sessionname, PEVENT_TRACE_
     FIXME("%s %s %p: stub\n", wine_dbgstr_longlong(handle), debugstr_w(sessionname), properties);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/******************************************************************************
+ * OpenTraceA [ADVAPI32.@]
+ */
+TRACEHANDLE WINAPI OpenTraceA( PEVENT_TRACE_LOGFILEA logfile )
+{
+    FIXME("%p: stub\n", logfile);
+    SetLastError(ERROR_ACCESS_DENIED);
+    return INVALID_PROCESSTRACE_HANDLE;
+}
+
+/******************************************************************************
+ * OpenTraceW [ADVAPI32.@]
+ */
+TRACEHANDLE WINAPI OpenTraceW( PEVENT_TRACE_LOGFILEW logfile )
+{
+    FIXME("%p: stub\n", logfile);
+    SetLastError(ERROR_ACCESS_DENIED);
+    return INVALID_PROCESSTRACE_HANDLE;
+}

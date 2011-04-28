@@ -441,8 +441,8 @@
 @ stdcall OpenServiceA(long str long)
 @ stdcall OpenServiceW(long wstr long)
 @ stdcall OpenThreadToken(long long long ptr)
-# @ stub OpenTraceA
-# @ stub OpenTraceW
+@ stdcall -ret64 OpenTraceA(ptr)
+@ stdcall -ret64 OpenTraceW(ptr)
 @ stdcall PrivilegeCheck(ptr ptr ptr)
 @ stdcall PrivilegedServiceAuditAlarmA(str str long ptr long)
 @ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
