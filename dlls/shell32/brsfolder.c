@@ -782,6 +782,8 @@ static BOOL BrsFolder_OnSetSelectionW(browse_info *info, LPVOID selection, BOOL 
     HTREEITEM hItem;
     BOOL bResult;
 
+    if (!selection) return FALSE;
+
     bResult = BrsFolder_OnSetExpanded(info, selection, is_str, &hItem);
     if (bResult)
         SendMessageW(info->hwndTreeView, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hItem );
