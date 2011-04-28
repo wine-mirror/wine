@@ -356,7 +356,7 @@ msgstr ""
 "Veuillez indiquer de nouvelles valeurs."
 
 #: comdlg32.rc:74
-msgid "The number of 'Number of copies' value cannot be empty."
+msgid "The 'Number of copies' field cannot be empty."
 msgstr "Le champ « Nombre de copies » ne peut être vide."
 
 #: comdlg32.rc:76
@@ -687,8 +687,8 @@ msgid "Unstructured Address"
 msgstr "Adresse non structurée"
 
 #: crypt32.rc:51
-msgid "SMIME Capabilities"
-msgstr "Aptitudes S/MIME"
+msgid "S/MIME Capabilities"
+msgstr "Capacités S/MIME"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"

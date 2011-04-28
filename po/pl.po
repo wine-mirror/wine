@@ -359,7 +359,8 @@ msgstr ""
 "Wprowadź inną wielkość marginesu."
 
 #: comdlg32.rc:74
-msgid "The number of 'Number of copies' value cannot be empty."
+#, fuzzy
+msgid "The 'Number of copies' field cannot be empty."
 msgstr "Wartość „liczba kopii” nie może być pusta."
 
 #: comdlg32.rc:76
@@ -688,7 +689,8 @@ msgid "Unstructured Address"
 msgstr "Adres bez struktury"
 
 #: crypt32.rc:51
-msgid "SMIME Capabilities"
+#, fuzzy
+msgid "S/MIME Capabilities"
 msgstr "Możliwości edytora SMIME"
 
 #: crypt32.rc:52

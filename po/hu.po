@@ -377,7 +377,8 @@ msgstr ""
 "Kérem adja meg újra a margókat."
 
 #: comdlg32.rc:74
-msgid "The number of 'Number of copies' value cannot be empty."
+#, fuzzy
+msgid "The 'Number of copies' field cannot be empty."
 msgstr "A 'Másolatok száma' mezõ nem lehet üres."
 
 #: comdlg32.rc:76
@@ -712,7 +713,8 @@ msgid "Unstructured Address"
 msgstr "Struktúrálatlan cím"
 
 #: crypt32.rc:51
-msgid "SMIME Capabilities"
+#, fuzzy
+msgid "S/MIME Capabilities"
 msgstr "SMIME képességek"
 
 #: crypt32.rc:52

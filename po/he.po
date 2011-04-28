@@ -356,7 +356,8 @@ msgstr ""
 "נא להזין שוב את ערכי השוליים."
 
 #: comdlg32.rc:74
-msgid "The number of 'Number of copies' value cannot be empty."
+#, fuzzy
+msgid "The 'Number of copies' field cannot be empty."
 msgstr "הערך שצוין ב'מספר העותקים' לא יכול להישאר ריק."
 
 #: comdlg32.rc:76
@@ -689,7 +690,7 @@ msgid "Unstructured Address"
 msgstr ""
 
 #: crypt32.rc:51
-msgid "SMIME Capabilities"
+msgid "S/MIME Capabilities"
 msgstr ""
 
 #: crypt32.rc:52

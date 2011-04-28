@@ -359,7 +359,8 @@ msgstr ""
 "Voer s.v.p. nieuwe marges in."
 
 #: comdlg32.rc:74
-msgid "The number of 'Number of copies' value cannot be empty."
+#, fuzzy
+msgid "The 'Number of copies' field cannot be empty."
 msgstr "Het aantal invoerveld kan niet leeg zijn."
 
 #: comdlg32.rc:76
@@ -687,7 +688,8 @@ msgid "Unstructured Address"
 msgstr "Ongestructureerd Adres"
 
 #: crypt32.rc:51
-msgid "SMIME Capabilities"
+#, fuzzy
+msgid "S/MIME Capabilities"
 msgstr "SMIME Mogelijkheden"
 
 #: crypt32.rc:52

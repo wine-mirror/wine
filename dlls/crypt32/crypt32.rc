@@ -48,7 +48,7 @@ STRINGTABLE
     IDS_COUNTER_SIGN "Counter Sign"
     IDS_CHALLENGE_PASSWORD "Challenge Password"
     IDS_UNSTRUCTURED_ADDRESS "Unstructured Address"
-    IDS_SMIME_CAPABILITIES "SMIME Capabilities"
+    IDS_SMIME_CAPABILITIES "S/MIME Capabilities"
     IDS_PREFER_SIGNED_DATA "Prefer Signed Data"
     IDS_CPS "CPS"
     IDS_USER_NOTICE "User Notice"

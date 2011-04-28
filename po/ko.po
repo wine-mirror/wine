@@ -359,7 +359,8 @@ msgstr ""
 "여백을 다시 입력하시오."
 
 #: comdlg32.rc:74
-msgid "The number of 'Number of copies' value cannot be empty."
+#, fuzzy
+msgid "The 'Number of copies' field cannot be empty."
 msgstr " '복사본 수'의 숫자값은 빈 값이 올 수 없습니다."
 
 #: comdlg32.rc:76
@@ -687,7 +688,8 @@ msgid "Unstructured Address"
 msgstr "비구조화 주소"
 
 #: crypt32.rc:51
-msgid "SMIME Capabilities"
+#, fuzzy
+msgid "S/MIME Capabilities"
 msgstr "SMIME 특성"
 
 #: crypt32.rc:52

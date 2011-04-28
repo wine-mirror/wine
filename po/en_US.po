@@ -356,8 +356,8 @@ msgstr ""
 "Please reenter margins."
 
 #: comdlg32.rc:74
-msgid "The number of 'Number of copies' value cannot be empty."
-msgstr "The number of 'Number of copies' value cannot be empty."
+msgid "The 'Number of copies' field cannot be empty."
+msgstr "The 'Number of copies' field cannot be empty."
 
 #: comdlg32.rc:76
 msgid ""
@@ -684,8 +684,8 @@ msgid "Unstructured Address"
 msgstr "Unstructured Address"
 
 #: crypt32.rc:51
-msgid "SMIME Capabilities"
-msgstr "SMIME Capabilities"
+msgid "S/MIME Capabilities"
+msgstr "S/MIME Capabilities"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"

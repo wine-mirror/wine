@@ -70,8 +70,8 @@ Please enter a value between %d and %d."
 'to' entry."
     PD32_MARGINS_OVERLAP                  "Margins overlap or fall outside \
 Paper boundaries.\nPlease reenter margins."
-    PD32_NR_OF_COPIES_EMPTY               "The number of 'Number of copies' \
-value cannot be empty."
+    PD32_NR_OF_COPIES_EMPTY               "The 'Number of copies' field \
+cannot be empty."
     PD32_TOO_LARGE_COPIES                 "This large number of copies is not \
 supported by your printer.\nPlease enter a value between 1 and %d."
     PD32_PRINT_ERROR                      "A printer error occurred."

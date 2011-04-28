@@ -379,7 +379,8 @@ msgstr ""
 "Per favore ridefinire i margini."
 
 #: comdlg32.rc:74
-msgid "The number of 'Number of copies' value cannot be empty."
+#, fuzzy
+msgid "The 'Number of copies' field cannot be empty."
 msgstr "Il valore del numero 'Numero di copie' non può essere vuoto."
 
 #: comdlg32.rc:76
@@ -719,7 +720,8 @@ msgid "Unstructured Address"
 msgstr "Indirizzo non strutturato"
 
 #: crypt32.rc:51
-msgid "SMIME Capabilities"
+#, fuzzy
+msgid "S/MIME Capabilities"
 msgstr "Capacità SMIME"
 
 #: crypt32.rc:52

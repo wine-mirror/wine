@@ -361,7 +361,8 @@ msgstr ""
 "Prašome įvesti paraštes iš naujo."
 
 #: comdlg32.rc:74
-msgid "The number of 'Number of copies' value cannot be empty."
+#, fuzzy
+msgid "The 'Number of copies' field cannot be empty."
 msgstr "Skaitinė „kopijų skaičius“ reikšmė negali būti tuščia."
 
 #: comdlg32.rc:76
@@ -692,7 +693,8 @@ msgid "Unstructured Address"
 msgstr "Nestruktūrinis adresas"
 
 #: crypt32.rc:51
-msgid "SMIME Capabilities"
+#, fuzzy
+msgid "S/MIME Capabilities"
 msgstr "SMIME gebėjimai"
 
 #: crypt32.rc:52

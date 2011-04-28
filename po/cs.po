@@ -375,7 +375,8 @@ msgstr ""
 "Zadejte prosím jiné okraje."
 
 #: comdlg32.rc:74
-msgid "The number of 'Number of copies' value cannot be empty."
+#, fuzzy
+msgid "The 'Number of copies' field cannot be empty."
 msgstr "Počet kopií musí být' zadán."
 
 #: comdlg32.rc:76
@@ -701,7 +702,7 @@ msgid "Unstructured Address"
 msgstr ""
 
 #: crypt32.rc:51
-msgid "SMIME Capabilities"
+msgid "S/MIME Capabilities"
 msgstr ""
 
 #: crypt32.rc:52
