@@ -884,7 +884,7 @@ __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
   /* The MoleBox protection scheme expects msvcrt to use SetFilePointer only,
    * so a LARGE_INTEGER offset cannot be passed directly via SetFilePointerEx. */
   ofs.QuadPart = offset;
-  if ((ofs.LowPart = SetFilePointer(hand, ofs.LowPart, &ofs.HighPart, whence)) != INVALID_SET_FILE_POINTER ||
+  if ((ofs.u.LowPart = SetFilePointer(hand, ofs.u.LowPart, &ofs.u.HighPart, whence)) != INVALID_SET_FILE_POINTER ||
       GetLastError() == ERROR_SUCCESS)
   {
     MSVCRT_fdesc[fd].wxflag &= ~(WX_ATEOF|WX_READEOF);
