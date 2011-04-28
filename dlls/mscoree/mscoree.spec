@@ -29,7 +29,7 @@
 @ stub CorMarkThreadInThreadPool
 @ stub CorTickleSvc
 @ stdcall CreateConfigStream(wstr ptr)
-@ stub CreateDebuggingInterfaceFromVersion
+@ stdcall CreateDebuggingInterfaceFromVersion(long wstr ptr)
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()

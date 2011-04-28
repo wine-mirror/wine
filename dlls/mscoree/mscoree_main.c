@@ -434,6 +434,12 @@ HRESULT WINAPI CreateConfigStream(LPCWSTR filename, IStream **stream)
     return E_NOTIMPL;
 }
 
+HRESULT WINAPI CreateDebuggingInterfaceFromVersion(int nDebugVersion, LPCWSTR version, IUnknown **ppIUnk)
+{
+    FIXME("(%d %s, %p): stub\n", nDebugVersion, debugstr_w(version), ppIUnk);
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI CLRCreateInstance(REFCLSID clsid, REFIID riid, LPVOID *ppInterface)
 {
     TRACE("(%s,%s,%p)\n", debugstr_guid(clsid), debugstr_guid(riid), ppInterface);
