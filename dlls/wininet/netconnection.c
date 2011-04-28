@@ -101,16 +101,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 #include <openssl/err.h>
 
-static CRITICAL_SECTION init_ssl_cs;
-static CRITICAL_SECTION_DEBUG init_ssl_cs_debug =
-{
-    0, 0, &init_ssl_cs,
-    { &init_ssl_cs_debug.ProcessLocksList,
-      &init_ssl_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": init_ssl_cs") }
-};
-static CRITICAL_SECTION init_ssl_cs = { &init_ssl_cs_debug, -1, 0, 0, 0, 0 };
-
 static void *OpenSSL_ssl_handle;
 static void *OpenSSL_crypto_handle;
 
@@ -368,158 +358,157 @@ static int netconn_secure_verify(int preverify_ok, X509_STORE_CTX *ctx)
 
 #endif
 
-DWORD NETCON_init(netconn_t *connection, BOOL useSSL)
+static CRITICAL_SECTION init_ssl_cs;
+static CRITICAL_SECTION_DEBUG init_ssl_cs_debug =
 {
-    connection->useSSL = useSSL;
-    connection->socketFD = -1;
-    if (useSSL)
-    {
+    0, 0, &init_ssl_cs,
+    { &init_ssl_cs_debug.ProcessLocksList,
+      &init_ssl_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": init_ssl_cs") }
+};
+static CRITICAL_SECTION init_ssl_cs = { &init_ssl_cs_debug, -1, 0, 0, 0, 0 };
+
+static DWORD init_openssl(void)
+{
 #if defined(SONAME_LIBSSL) && defined(SONAME_LIBCRYPTO)
-        int i;
+    int i;
 
-        TRACE("using SSL connection\n");
-        EnterCriticalSection(&init_ssl_cs);
-	if (OpenSSL_ssl_handle) /* already initialized everything */
-        {
-            LeaveCriticalSection(&init_ssl_cs);
-            return ERROR_SUCCESS;
-        }
-	OpenSSL_ssl_handle = wine_dlopen(SONAME_LIBSSL, RTLD_NOW, NULL, 0);
-	if (!OpenSSL_ssl_handle)
-	{
-	    ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n",
-		SONAME_LIBSSL);
-            LeaveCriticalSection(&init_ssl_cs);
-            return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-	}
-	OpenSSL_crypto_handle = wine_dlopen(SONAME_LIBCRYPTO, RTLD_NOW, NULL, 0);
-	if (!OpenSSL_crypto_handle)
-	{
-	    ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n",
-		SONAME_LIBCRYPTO);
-            LeaveCriticalSection(&init_ssl_cs);
-            return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-	}
+    if(OpenSSL_ssl_handle)
+        return ERROR_SUCCESS;
 
-        /* mmm nice ugly macroness */
+    OpenSSL_ssl_handle = wine_dlopen(SONAME_LIBSSL, RTLD_NOW, NULL, 0);
+    if(!OpenSSL_ssl_handle) {
+        ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n", SONAME_LIBSSL);
+        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+    }
+
+    OpenSSL_crypto_handle = wine_dlopen(SONAME_LIBCRYPTO, RTLD_NOW, NULL, 0);
+    if(!OpenSSL_crypto_handle) {
+        ERR("trying to use a SSL connection, but couldn't load %s. Expect trouble.\n", SONAME_LIBCRYPTO);
+        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+    }
+
+    /* mmm nice ugly macroness */
 #define DYNSSL(x) \
     p##x = wine_dlsym(OpenSSL_ssl_handle, #x, NULL, 0); \
-    if (!p##x) \
-    { \
+    if (!p##x) { \
         ERR("failed to load symbol %s\n", #x); \
-        LeaveCriticalSection(&init_ssl_cs); \
         return ERROR_INTERNET_SECURITY_CHANNEL_ERROR; \
     }
 
-	DYNSSL(SSL_library_init);
-	DYNSSL(SSL_load_error_strings);
-	DYNSSL(SSLv23_method);
-	DYNSSL(SSL_CTX_free);
-	DYNSSL(SSL_CTX_new);
-	DYNSSL(SSL_new);
-	DYNSSL(SSL_free);
-	DYNSSL(SSL_set_fd);
-	DYNSSL(SSL_connect);
-	DYNSSL(SSL_shutdown);
-	DYNSSL(SSL_write);
-	DYNSSL(SSL_read);
-	DYNSSL(SSL_pending);
-        DYNSSL(SSL_get_error);
-	DYNSSL(SSL_get_ex_new_index);
-	DYNSSL(SSL_get_ex_data);
-	DYNSSL(SSL_set_ex_data);
-	DYNSSL(SSL_get_ex_data_X509_STORE_CTX_idx);
-	DYNSSL(SSL_get_peer_certificate);
-	DYNSSL(SSL_CTX_get_timeout);
-	DYNSSL(SSL_CTX_set_timeout);
-	DYNSSL(SSL_CTX_set_default_verify_paths);
-	DYNSSL(SSL_CTX_set_verify);
-        DYNSSL(SSL_get_current_cipher);
-        DYNSSL(SSL_CIPHER_get_bits);
+    DYNSSL(SSL_library_init);
+    DYNSSL(SSL_load_error_strings);
+    DYNSSL(SSLv23_method);
+    DYNSSL(SSL_CTX_free);
+    DYNSSL(SSL_CTX_new);
+    DYNSSL(SSL_new);
+    DYNSSL(SSL_free);
+    DYNSSL(SSL_set_fd);
+    DYNSSL(SSL_connect);
+    DYNSSL(SSL_shutdown);
+    DYNSSL(SSL_write);
+    DYNSSL(SSL_read);
+    DYNSSL(SSL_pending);
+    DYNSSL(SSL_get_error);
+    DYNSSL(SSL_get_ex_new_index);
+    DYNSSL(SSL_get_ex_data);
+    DYNSSL(SSL_set_ex_data);
+    DYNSSL(SSL_get_ex_data_X509_STORE_CTX_idx);
+    DYNSSL(SSL_get_peer_certificate);
+    DYNSSL(SSL_CTX_get_timeout);
+    DYNSSL(SSL_CTX_set_timeout);
+    DYNSSL(SSL_CTX_set_default_verify_paths);
+    DYNSSL(SSL_CTX_set_verify);
+    DYNSSL(SSL_get_current_cipher);
+    DYNSSL(SSL_CIPHER_get_bits);
 #undef DYNSSL
 
 #define DYNCRYPTO(x) \
     p##x = wine_dlsym(OpenSSL_crypto_handle, #x, NULL, 0); \
-    if (!p##x) \
-    { \
+    if (!p##x) { \
         ERR("failed to load symbol %s\n", #x); \
-        LeaveCriticalSection(&init_ssl_cs); \
         return ERROR_INTERNET_SECURITY_CHANNEL_ERROR; \
     }
-	DYNCRYPTO(BIO_new_fp);
-	DYNCRYPTO(CRYPTO_num_locks);
-	DYNCRYPTO(CRYPTO_set_id_callback);
-	DYNCRYPTO(CRYPTO_set_locking_callback);
-	DYNCRYPTO(ERR_free_strings);
-	DYNCRYPTO(ERR_get_error);
-	DYNCRYPTO(ERR_error_string);
-	DYNCRYPTO(X509_STORE_CTX_get_ex_data);
-	DYNCRYPTO(X509_STORE_CTX_get_chain);
-	DYNCRYPTO(i2d_X509);
-	DYNCRYPTO(sk_num);
-	DYNCRYPTO(sk_value);
+
+    DYNCRYPTO(BIO_new_fp);
+    DYNCRYPTO(CRYPTO_num_locks);
+    DYNCRYPTO(CRYPTO_set_id_callback);
+    DYNCRYPTO(CRYPTO_set_locking_callback);
+    DYNCRYPTO(ERR_free_strings);
+    DYNCRYPTO(ERR_get_error);
+    DYNCRYPTO(ERR_error_string);
+    DYNCRYPTO(X509_STORE_CTX_get_ex_data);
+    DYNCRYPTO(X509_STORE_CTX_get_chain);
+    DYNCRYPTO(i2d_X509);
+    DYNCRYPTO(sk_num);
+    DYNCRYPTO(sk_value);
 #undef DYNCRYPTO
 
-	pSSL_library_init();
-	pSSL_load_error_strings();
-	pBIO_new_fp(stderr, BIO_NOCLOSE); /* FIXME: should use winedebug stuff */
+    pSSL_library_init();
+    pSSL_load_error_strings();
+    pBIO_new_fp(stderr, BIO_NOCLOSE); /* FIXME: should use winedebug stuff */
 
-	meth = pSSLv23_method();
-        ctx = pSSL_CTX_new(meth);
-        if (!pSSL_CTX_set_default_verify_paths(ctx))
-        {
-            ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
-                pERR_error_string(pERR_get_error(), 0));
-            LeaveCriticalSection(&init_ssl_cs);
-            return ERROR_OUTOFMEMORY;
-        }
-        hostname_idx = pSSL_get_ex_new_index(0, (void *)"hostname index",
-                NULL, NULL, NULL);
-        if (hostname_idx == -1)
-        {
-            ERR("SSL_get_ex_new_index failed; %s\n",
-                pERR_error_string(pERR_get_error(), 0));
-            LeaveCriticalSection(&init_ssl_cs);
-            return ERROR_OUTOFMEMORY;
-        }
-        error_idx = pSSL_get_ex_new_index(0, (void *)"error index",
-                NULL, NULL, NULL);
-        if (error_idx == -1)
-        {
-            ERR("SSL_get_ex_new_index failed; %s\n",
-                pERR_error_string(pERR_get_error(), 0));
-            LeaveCriticalSection(&init_ssl_cs);
-            return ERROR_OUTOFMEMORY;
-        }
-        conn_idx = pSSL_get_ex_new_index(0, (void *)"netconn index",
-                NULL, NULL, NULL);
-        if (conn_idx == -1)
-        {
-            ERR("SSL_get_ex_new_index failed; %s\n",
-                pERR_error_string(pERR_get_error(), 0));
-            LeaveCriticalSection(&init_ssl_cs);
-            return ERROR_OUTOFMEMORY;
-        }
-        pSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, netconn_secure_verify);
-
-        pCRYPTO_set_id_callback(ssl_thread_id);
-        num_ssl_locks = pCRYPTO_num_locks();
-        ssl_locks = HeapAlloc(GetProcessHeap(), 0, num_ssl_locks * sizeof(CRITICAL_SECTION));
-        if (!ssl_locks)
-        {
-            LeaveCriticalSection(&init_ssl_cs);
-            return ERROR_OUTOFMEMORY;
-        }
-        for (i = 0; i < num_ssl_locks; i++)
-            InitializeCriticalSection(&ssl_locks[i]);
-        pCRYPTO_set_locking_callback(ssl_lock_callback);
-        LeaveCriticalSection(&init_ssl_cs);
-#else
-	FIXME("can't use SSL, not compiled in.\n");
-        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
-#endif
+    meth = pSSLv23_method();
+    ctx = pSSL_CTX_new(meth);
+    if(!pSSL_CTX_set_default_verify_paths(ctx)) {
+        ERR("SSL_CTX_set_default_verify_paths failed: %s\n",
+            pERR_error_string(pERR_get_error(), 0));
+        return ERROR_OUTOFMEMORY;
     }
+
+    hostname_idx = pSSL_get_ex_new_index(0, (void *)"hostname index", NULL, NULL, NULL);
+    if(hostname_idx == -1) {
+        ERR("SSL_get_ex_new_index failed; %s\n", pERR_error_string(pERR_get_error(), 0));
+        return ERROR_OUTOFMEMORY;
+    }
+
+    error_idx = pSSL_get_ex_new_index(0, (void *)"error index", NULL, NULL, NULL);
+    if(error_idx == -1) {
+        ERR("SSL_get_ex_new_index failed; %s\n", pERR_error_string(pERR_get_error(), 0));
+        return ERROR_OUTOFMEMORY;
+    }
+
+    conn_idx = pSSL_get_ex_new_index(0, (void *)"netconn index", NULL, NULL, NULL);
+    if(conn_idx == -1) {
+        ERR("SSL_get_ex_new_index failed; %s\n", pERR_error_string(pERR_get_error(), 0));
+        return ERROR_OUTOFMEMORY;
+    }
+
+    pSSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, netconn_secure_verify);
+
+    pCRYPTO_set_id_callback(ssl_thread_id);
+    num_ssl_locks = pCRYPTO_num_locks();
+    ssl_locks = HeapAlloc(GetProcessHeap(), 0, num_ssl_locks * sizeof(CRITICAL_SECTION));
+    if(!ssl_locks)
+        return ERROR_OUTOFMEMORY;
+
+    for(i = 0; i < num_ssl_locks; i++)
+        InitializeCriticalSection(&ssl_locks[i]);
+    pCRYPTO_set_locking_callback(ssl_lock_callback);
+
     return ERROR_SUCCESS;
+#else
+    FIXME("can't use SSL, not compiled in.\n");
+    return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
+#endif
+}
+
+DWORD NETCON_init(netconn_t *connection, BOOL useSSL)
+{
+    DWORD res = ERROR_SUCCESS;
+
+    connection->useSSL = useSSL;
+    connection->socketFD = -1;
+
+    if (useSSL) {
+        TRACE("using SSL connection\n");
+
+        EnterCriticalSection(&init_ssl_cs);
+        res = init_openssl();
+        LeaveCriticalSection(&init_ssl_cs);
+    }
+
+    return res;
 }
 
 void NETCON_unload(void)
