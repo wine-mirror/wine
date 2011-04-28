@@ -6255,7 +6255,7 @@ msgstr "Spaudinio &formatas..."
 msgid "Pr&int..."
 msgstr "S&pausdinti..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "Spaudinio pe&ržiūra..."
@@ -11065,10 +11065,6 @@ msgstr "Žinyno temos: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Naujas...\tVald+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Spaudinio pe&ržiūra..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

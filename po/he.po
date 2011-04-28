@@ -6453,7 +6453,7 @@ msgstr "&תצורת ההדפסה..."
 msgid "Pr&int..."
 msgstr "ה&דפסה..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "הצגה &לפני הדפסה..."
@@ -11221,10 +11221,6 @@ msgstr "נושאי העזרה: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&חדש...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "הצגה &לפני הדפסה..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

@@ -6523,7 +6523,7 @@ msgstr "&Imposta pagina..."
 msgid "Pr&int..."
 msgstr "S&tampa..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr ""
@@ -11457,15 +11457,6 @@ msgstr "Argomenti di aiuto: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nuovo...\tCtrl+N"
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr ""
-"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
-"An&teprima di stampa...\n"
-"#-#-#-#-#  it.po (Wine)  #-#-#-#-#\n"
-"Antepri&ma di stampa..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

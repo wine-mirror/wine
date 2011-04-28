@@ -6260,7 +6260,7 @@ msgstr "พิมพ์\tCtrl+P"
 msgid "Pr&int..."
 msgstr "พิมพ์\tCtrl+P"
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "พิมพ์\tCtrl+P"
@@ -10684,11 +10684,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "สร้างใหม่\tCtrl+N"
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "พิมพ์\tCtrl+P"
 
 #: wordpad.rc:42
 #, fuzzy

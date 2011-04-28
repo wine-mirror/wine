@@ -6458,7 +6458,7 @@ msgstr "Tisk"
 msgid "Pr&int..."
 msgstr "Tisk"
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "Tisk"
@@ -11312,11 +11312,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Nový\tCtrl+N"
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "Tisk"
 
 #: wordpad.rc:42
 #, fuzzy

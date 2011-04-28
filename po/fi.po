@@ -6421,7 +6421,7 @@ msgstr "Tulosta"
 msgid "Pr&int..."
 msgstr "Tulosta"
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "Tulosta &Kuva..."
@@ -10962,11 +10962,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Uusi\tCtrl+N"
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "Tulosta &Kuva..."
 
 #: wordpad.rc:42
 #, fuzzy

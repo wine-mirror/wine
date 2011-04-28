@@ -6742,7 +6742,7 @@ msgstr "&Format tipărire..."
 msgid "Pr&int..."
 msgstr "T&ipărire..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "Pre&vizualizare imprimare..."
@@ -11699,10 +11699,6 @@ msgstr "Subiecte de ajutor:"
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nou...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Pre&vizualizare imprimare..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

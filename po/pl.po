@@ -6262,7 +6262,7 @@ msgstr "Forma&t wydruku..."
 msgid "Pr&int..."
 msgstr "&Drukuj..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr ""
@@ -11088,15 +11088,6 @@ msgstr "Tematy pomocy: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nowy...\tCtrl+N"
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Podgląd wydruku...\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Podg&ląd wydruku..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

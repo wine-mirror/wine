@@ -6551,7 +6551,7 @@ msgstr "Format &štampe..."
 msgid "Pr&int..."
 msgstr "&Štampaj..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "&Pregled štampe..."
@@ -11103,10 +11103,6 @@ msgstr "Teme pomoći: "
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Novo\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "&Pregled štampe..."
 
 #: wordpad.rc:42
 #, fuzzy

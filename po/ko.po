@@ -6239,7 +6239,7 @@ msgstr "인쇄 형식(&F)..."
 msgid "Pr&int..."
 msgstr "인쇄(&I)..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "인쇄 미리보기(&W)..."
@@ -10997,10 +10997,6 @@ msgstr "도움말 목차: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "새 파일(&N)...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "인쇄 미리보기(&W)..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

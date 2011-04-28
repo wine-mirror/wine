@@ -6142,7 +6142,7 @@ msgstr "फ़ॉन्ट (&F)..."
 msgid "Pr&int..."
 msgstr "फ़ॉन्ट (&F)..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "फ़ॉन्ट (&F)..."
@@ -10507,11 +10507,6 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr ""
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "फ़ॉन्ट (&F)..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

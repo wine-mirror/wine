@@ -6126,7 +6126,7 @@ msgstr ""
 msgid "Pr&int..."
 msgstr ""
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 msgid "Print previe&w"
 msgstr ""
 
@@ -10473,10 +10473,6 @@ msgstr ""
 
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
-msgstr ""
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
 msgstr ""
 
 #: wordpad.rc:42

@@ -6246,7 +6246,7 @@ msgstr "印刷フォーマット(&F)..."
 msgid "Pr&int..."
 msgstr "印刷(&I)..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "印刷プレビュー(&W)..."
@@ -11043,10 +11043,6 @@ msgstr "ヘルプ トピック: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "新規作成(&N)...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "印刷プレビュー(&W)..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

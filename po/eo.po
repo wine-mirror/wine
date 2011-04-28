@@ -6358,7 +6358,7 @@ msgstr "&Presu"
 msgid "Pr&int..."
 msgstr "&Presu"
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "&Presu"
@@ -10838,11 +10838,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Nova\tCtrl+N"
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "&Presu"
 
 #: wordpad.rc:42
 #, fuzzy

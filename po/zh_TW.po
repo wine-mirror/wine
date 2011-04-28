@@ -6475,7 +6475,7 @@ msgstr "列印"
 msgid "Pr&int..."
 msgstr "列印"
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "列印預覽(&W)..."
@@ -11062,10 +11062,6 @@ msgstr "幫助內容: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "新建(&N)...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "列印預覽(&W)..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

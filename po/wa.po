@@ -6214,7 +6214,7 @@ msgstr "&Rexhe"
 msgid "Pr&int..."
 msgstr "&Rexhe"
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "&Rexhe"
@@ -10657,11 +10657,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Novea\tCtrl+N"
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "&Rexhe"
 
 #: wordpad.rc:42
 #, fuzzy

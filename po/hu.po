@@ -6606,7 +6606,7 @@ msgstr "Nyomtatás"
 msgid "Pr&int..."
 msgstr "Nyomtatás"
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "Print previe&w..."
@@ -11209,10 +11209,6 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Új...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Print previe&w..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

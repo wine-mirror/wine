@@ -6502,7 +6502,7 @@ msgstr "Формат &штампе..."
 msgid "Pr&int..."
 msgstr "&Штампај..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "&Преглед штампе..."
@@ -11027,10 +11027,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Ново\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "&Преглед штампе..."
 
 #: wordpad.rc:42
 #, fuzzy

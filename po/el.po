@@ -6261,7 +6261,7 @@ msgstr "Εκτύπωση"
 msgid "Pr&int..."
 msgstr "Εκτύπωση"
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "Εκτύπωση"
@@ -10651,11 +10651,6 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr ""
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "Εκτύπωση"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

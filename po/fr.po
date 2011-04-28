@@ -6262,7 +6262,7 @@ msgstr "&Format d'impression..."
 msgid "Pr&int..."
 msgstr "&Imprimer..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "&Aperçu avant impression..."
@@ -11156,10 +11156,6 @@ msgstr "Rubriques d'aide : "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nouveau...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "&Aperçu avant impression..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

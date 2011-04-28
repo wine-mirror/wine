@@ -6142,7 +6142,7 @@ msgstr "_അക്ഷരസഞ്ചയം..."
 msgid "Pr&int..."
 msgstr "_അക്ഷരസഞ്ചയം..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "_അക്ഷരസഞ്ചയം..."
@@ -10507,11 +10507,6 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr ""
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "_അക്ഷരസഞ്ചയം..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

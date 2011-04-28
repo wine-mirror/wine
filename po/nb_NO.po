@@ -6475,7 +6475,7 @@ msgstr "Skriv ut..."
 msgid "Pr&int..."
 msgstr "Skriv ut..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "&Forhåndsvisning..."
@@ -11334,10 +11334,6 @@ msgstr "Emner i Hjelp: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Ny...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "&Forhåndsvisning..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

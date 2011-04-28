@@ -6399,7 +6399,7 @@ msgstr "Seite &einrichten..."
 msgid "Pr&int..."
 msgstr "&Drucken..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "Seitenansi&cht"
@@ -11324,10 +11324,6 @@ msgstr "Hilfethemen: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Neu...\tStrg+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Seitenansi&cht"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

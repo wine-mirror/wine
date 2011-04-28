@@ -6368,7 +6368,7 @@ msgstr "&Печат"
 msgid "Pr&int..."
 msgstr "&Печат"
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "&Разпечатай изображението..."
@@ -10866,11 +10866,6 @@ msgstr ""
 #, fuzzy
 msgid "&New...\tCtrl+N"
 msgstr "&Нов\tCtrl+N"
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "&Разпечатай изображението..."
 
 #: wordpad.rc:42
 #, fuzzy

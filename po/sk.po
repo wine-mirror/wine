@@ -6283,7 +6283,7 @@ msgstr "&Tlačiť"
 msgid "Pr&int..."
 msgstr "&Tlačiť"
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "&Tlačiť"
@@ -10819,11 +10819,6 @@ msgstr ""
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr ""
-
-#: wordpad.rc:34
-#, fuzzy
-msgid "Print previe&w..."
-msgstr "&Tlačiť"
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"

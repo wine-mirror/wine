@@ -6348,7 +6348,7 @@ msgstr "Pa&gina-instellingen..."
 msgid "Pr&int..."
 msgstr "Af&drukken..."
 
-#: shdocvw.rc:37
+#: shdocvw.rc:37 wordpad.rc:34
 #, fuzzy
 msgid "Print previe&w"
 msgstr "Afdruk&voorbeeld..."
@@ -11212,10 +11212,6 @@ msgstr "Help-onderwerpen: "
 #: wordpad.rc:28
 msgid "&New...\tCtrl+N"
 msgstr "&Nieuw...\tCtrl+N"
-
-#: wordpad.rc:34
-msgid "Print previe&w..."
-msgstr "Afdruk&voorbeeld..."
 
 #: wordpad.rc:42
 msgid "R&edo\tCtrl+Y"
