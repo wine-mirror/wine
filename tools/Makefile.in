@@ -6,6 +6,7 @@ PROGRAMS = \
 	fnt2bdf$(EXEEXT) \
 	fnt2fon$(EXEEXT) \
 	make_ctests$(EXEEXT) \
+	make_xftmpl$(EXEEXT) \
 	relpath$(EXEEXT) \
 	sfnt2fnt$(EXEEXT) \
 	wine.inf \
@@ -21,6 +22,7 @@ C_SRCS = \
 	fnt2bdf.c \
 	fnt2fon.c \
 	make_ctests.c \
+	make_xftmpl.c \
 	makedep.c \
 	relpath.c \
 	sfnt2fnt.c
@@ -46,6 +48,9 @@ makedep$(EXEEXT) $(EXEEXT:%=makedep): makedep.o
 
 make_ctests$(EXEEXT): make_ctests.o
 	$(CC) $(CFLAGS) -o $@ make_ctests.o $(LDFLAGS)
+
+make_xftmpl$(EXEEXT): make_xftmpl.o
+	$(CC) $(CFLAGS) -o $@ make_xftmpl.o $(LIBPORT) $(LDFLAGS)
 
 fnt2bdf$(EXEEXT): fnt2bdf.o
 	$(CC) $(CFLAGS) -o $@ fnt2bdf.o $(LIBPORT) $(LDFLAGS)

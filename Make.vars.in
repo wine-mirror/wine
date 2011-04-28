@@ -63,6 +63,7 @@ BUILDIMAGE      = $(top_srcdir)/tools/buildimage
 C2MAN           = $(top_srcdir)/tools/c2man.pl
 RUNTEST         = $(top_srcdir)/tools/runtest
 MAKECTESTS      = $(TOOLSDIR)/tools/make_ctests$(TOOLSEXT)
+MAKEXFTMPL      = $(TOOLSDIR)/tools/make_xftmpl$(TOOLSEXT)
 MAKEDEP         = $(TOOLSDIR)/tools/makedep$(TOOLSEXT)
 RELPATH         = $(TOOLSDIR)/tools/relpath$(TOOLSEXT)
 SFNT2FNT        = $(TOOLSDIR)/tools/sfnt2fnt$(TOOLSEXT)
