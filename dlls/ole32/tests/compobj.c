@@ -190,6 +190,9 @@ static void test_CLSIDFromProgID(void)
 static void test_CLSIDFromString(void)
 {
     CLSID clsid;
+    WCHAR wszCLSID_Broken[50];
+    UINT i;
+
     HRESULT hr = CLSIDFromString(wszCLSID_StdFont, &clsid);
     ok_ole_success(hr, "CLSIDFromString");
     ok(IsEqualCLSID(&clsid, &CLSID_StdFont), "clsid wasn't equal to CLSID_StdFont\n");
@@ -197,6 +200,60 @@ static void test_CLSIDFromString(void)
     hr = CLSIDFromString(NULL, &clsid);
     ok_ole_success(hr, "CLSIDFromString");
     ok(IsEqualCLSID(&clsid, &CLSID_NULL), "clsid wasn't equal to CLSID_NULL\n");
+
+    lstrcpyW(wszCLSID_Broken, wszCLSID_StdFont);
+    for(i = lstrlenW(wszCLSID_StdFont); i < 49; i++)
+        wszCLSID_Broken[i] = 'A';
+    wszCLSID_Broken[i] = '\0';
+
+    memset(&clsid, 0, sizeof(CLSID));
+    hr = CLSIDFromString(wszCLSID_Broken, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Got %08x\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_StdFont), "clsid wasn't equal to CLSID_StdFont\n");
+
+    wszCLSID_Broken[lstrlenW(wszCLSID_StdFont)-1] = 'A';
+    memset(&clsid, 0, sizeof(CLSID));
+    hr = CLSIDFromString(wszCLSID_Broken, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Got %08x\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_StdFont), "clsid wasn't equal to CLSID_StdFont\n");
+
+    wszCLSID_Broken[lstrlenW(wszCLSID_StdFont)] = '\0';
+    memset(&clsid, 0, sizeof(CLSID));
+    hr = CLSIDFromString(wszCLSID_Broken, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Got %08x\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_StdFont), "clsid wasn't equal to CLSID_StdFont\n");
+
+    wszCLSID_Broken[lstrlenW(wszCLSID_StdFont)-1] = '\0';
+    memset(&clsid, 0, sizeof(CLSID));
+    hr = CLSIDFromString(wszCLSID_Broken, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Got %08x\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_StdFont), "clsid wasn't equal to CLSID_StdFont\n");
+
+    memset(&clsid, 0xcc, sizeof(CLSID));
+    hr = CLSIDFromString(wszCLSID_Broken+1, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Got %08x\n", hr);
+    ok(IsEqualCLSID(&clsid, &CLSID_NULL), "clsid wasn't equal to CLSID_NULL\n");
+
+    wszCLSID_Broken[9] = '*';
+    memset(&clsid, 0xcc, sizeof(CLSID));
+    hr = CLSIDFromString(wszCLSID_Broken, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Got %08x\n", hr);
+    ok(clsid.Data1 == CLSID_StdFont.Data1, "Got %08x\n", clsid.Data1);
+    ok(clsid.Data2 == 0xcccc, "Got %04x\n", clsid.Data2);
+
+    wszCLSID_Broken[3] = '*';
+    memset(&clsid, 0xcc, sizeof(CLSID));
+    hr = CLSIDFromString(wszCLSID_Broken, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Got %08x\n", hr);
+    ok(clsid.Data1 == 0xb, "Got %08x\n", clsid.Data1);
+    ok(clsid.Data2 == 0xcccc, "Got %04x\n", clsid.Data2);
+
+    wszCLSID_Broken[3] = '\0';
+    memset(&clsid, 0xcc, sizeof(CLSID));
+    hr = CLSIDFromString(wszCLSID_Broken, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "Got %08x\n", hr);
+    ok(clsid.Data1 == 0xb, "Got %08x\n", clsid.Data1);
+    ok(clsid.Data2 == 0xcccc, "Got %04x\n", clsid.Data2);
 }
 
 static void test_StringFromGUID2(void)

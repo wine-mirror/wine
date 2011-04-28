@@ -1490,6 +1490,15 @@ HRESULT WINAPI CoCreateGuid(GUID *pguid)
     return HRESULT_FROM_WIN32( status );
 }
 
+static inline BOOL is_valid_hex(WCHAR c)
+{
+    if (!(((c >= '0') && (c <= '9'))  ||
+          ((c >= 'a') && (c <= 'f'))  ||
+          ((c >= 'A') && (c <= 'F'))))
+        return FALSE;
+    return TRUE;
+}
+
 /******************************************************************************
  *		CLSIDFromString	[OLE32.@]
  *		IIDFromString   [OLE32.@]
@@ -1513,24 +1522,10 @@ static HRESULT __CLSIDFromString(LPCWSTR s, LPCLSID id)
   int	i;
   BYTE table[256];
 
-  if (!s) {
+  if (!s || s[0]!='{') {
     memset( id, 0, sizeof (CLSID) );
-    return S_OK;
-  }
-
-  /* validate the CLSID string */
-  if (strlenW(s) != 38)
+    if(!s) return S_OK;
     return CO_E_CLASSSTRING;
-
-  if ((s[0]!='{') || (s[9]!='-') || (s[14]!='-') || (s[19]!='-') || (s[24]!='-') || (s[37]!='}'))
-    return CO_E_CLASSSTRING;
-
-  for (i=1; i<37; i++) {
-    if ((i == 9)||(i == 14)||(i == 19)||(i == 24)) continue;
-    if (!(((s[i] >= '0') && (s[i] <= '9'))  ||
-          ((s[i] >= 'a') && (s[i] <= 'f'))  ||
-          ((s[i] >= 'A') && (s[i] <= 'F'))))
-       return CO_E_CLASSSTRING;
   }
 
   TRACE("%s -> %p\n", debugstr_w(s), id);
@@ -1548,22 +1543,40 @@ static HRESULT __CLSIDFromString(LPCWSTR s, LPCLSID id)
 
   /* in form {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} */
 
-  id->Data1 = (table[s[1]] << 28 | table[s[2]] << 24 | table[s[3]] << 20 | table[s[4]] << 16 |
-               table[s[5]] << 12 | table[s[6]] << 8  | table[s[7]] << 4  | table[s[8]]);
-  id->Data2 = table[s[10]] << 12 | table[s[11]] << 8 | table[s[12]] << 4 | table[s[13]];
-  id->Data3 = table[s[15]] << 12 | table[s[16]] << 8 | table[s[17]] << 4 | table[s[18]];
+  id->Data1 = 0;
+  for (i = 1; i < 9; i++) {
+    if (!is_valid_hex(s[i])) return CO_E_CLASSSTRING;
+    id->Data1 = (id->Data1 << 4) | table[s[i]];
+  }
+  if (s[9]!='-') return CO_E_CLASSSTRING;
 
-  /* these are just sequential bytes */
-  id->Data4[0] = table[s[20]] << 4 | table[s[21]];
-  id->Data4[1] = table[s[22]] << 4 | table[s[23]];
-  id->Data4[2] = table[s[25]] << 4 | table[s[26]];
-  id->Data4[3] = table[s[27]] << 4 | table[s[28]];
-  id->Data4[4] = table[s[29]] << 4 | table[s[30]];
-  id->Data4[5] = table[s[31]] << 4 | table[s[32]];
-  id->Data4[6] = table[s[33]] << 4 | table[s[34]];
-  id->Data4[7] = table[s[35]] << 4 | table[s[36]];
+  id->Data2 = 0;
+  for (i = 10; i < 14; i++) {
+    if (!is_valid_hex(s[i])) return CO_E_CLASSSTRING;
+    id->Data2 = (id->Data2 << 4) | table[s[i]];
+  }
+  if (s[14]!='-') return CO_E_CLASSSTRING;
 
-  return S_OK;
+  id->Data3 = 0;
+  for (i = 15; i < 19; i++) {
+    if (!is_valid_hex(s[i])) return CO_E_CLASSSTRING;
+    id->Data3 = (id->Data3 << 4) | table[s[i]];
+  }
+  if (s[19]!='-') return CO_E_CLASSSTRING;
+
+  for (i = 20; i < 37; i+=2) {
+    if (i == 24) {
+      if (s[i]!='-') return CO_E_CLASSSTRING;
+      i++;
+    }
+    if (!is_valid_hex(s[i]) || !is_valid_hex(s[i+1])) return CO_E_CLASSSTRING;
+    id->Data4[(i-20)/2] = table[s[i]] << 4 | table[s[i+1]];
+  }
+
+  if (s[37] == '}' && s[38] == '\0')
+    return S_OK;
+
+  return CO_E_CLASSSTRING;
 }
 
 /*****************************************************************************/
@@ -1577,7 +1590,10 @@ HRESULT WINAPI CLSIDFromString(LPCOLESTR idstr, LPCLSID id )
 
     ret = __CLSIDFromString(idstr, id);
     if(ret != S_OK) { /* It appears a ProgID is also valid */
-        ret = CLSIDFromProgID(idstr, id);
+        CLSID tmp_id;
+        ret = CLSIDFromProgID(idstr, &tmp_id);
+        if(SUCCEEDED(ret))
+            *id = tmp_id;
     }
     return ret;
 }
