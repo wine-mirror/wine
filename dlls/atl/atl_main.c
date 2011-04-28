@@ -466,15 +466,19 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoA(_ATL_MODULEA *pm, _ATL_WNDCLASSINFOA 
 
         if (!wci->m_wc.lpszClassName)
         {
-            sprintf(wci->m_szAutoName, "ATL%08lx", (UINT_PTR)wci);
+            snprintf(wci->m_szAutoName, sizeof(wci->m_szAutoName), "ATL%08lx", (UINT_PTR)wci);
             TRACE("auto-generated class name %s\n", wci->m_szAutoName);
             wci->m_wc.lpszClassName = wci->m_szAutoName;
         }
 
         atom = GetClassInfoExA(pm->m_hInst, wci->m_wc.lpszClassName, &wc);
         if (!atom)
+        {
+            wci->m_wc.hInstance = pm->m_hInst;
+            wci->m_wc.hCursor   = LoadCursorA( wci->m_bSystemCursor ? NULL : pm->m_hInst,
+                                               wci->m_lpszCursorID );
             atom = RegisterClassExA(&wci->m_wc);
-
+        }
         wci->pWndProc = wci->m_wc.lpfnWndProc;
         wci->m_atom = atom;
     }
@@ -518,15 +522,19 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW 
         if (!wci->m_wc.lpszClassName)
         {
             static const WCHAR szFormat[] = {'A','T','L','%','0','8','l','x',0};
-            sprintfW(wci->m_szAutoName, szFormat, (UINT_PTR)wci);
+            snprintfW(wci->m_szAutoName, sizeof(wci->m_szAutoName)/sizeof(WCHAR), szFormat, (UINT_PTR)wci);
             TRACE("auto-generated class name %s\n", debugstr_w(wci->m_szAutoName));
             wci->m_wc.lpszClassName = wci->m_szAutoName;
         }
 
         atom = GetClassInfoExW(pm->m_hInst, wci->m_wc.lpszClassName, &wc);
         if (!atom)
+        {
+            wci->m_wc.hInstance = pm->m_hInst;
+            wci->m_wc.hCursor   = LoadCursorW( wci->m_bSystemCursor ? NULL : pm->m_hInst,
+                                               wci->m_lpszCursorID );
             atom = RegisterClassExW(&wci->m_wc);
-
+        }
         wci->pWndProc = wci->m_wc.lpfnWndProc;
         wci->m_atom = atom;
     }
