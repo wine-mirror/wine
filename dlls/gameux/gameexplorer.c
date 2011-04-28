@@ -523,7 +523,7 @@ static HRESULT GAMEUX_RemoveRegistryRecord(GUID* pInstanceID)
  *                                          identifier will be generated automatically
  *                                          and returned via this parameter
  */
-static HRESULT WINAPI GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
+static HRESULT GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
         LPCWSTR sGameInstallDirectory,
         GAME_INSTALL_SCOPE installScope,
         GUID *pInstanceID)
