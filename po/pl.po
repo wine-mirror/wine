@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-03-18 19:00+0100\n"
+"PO-Revision-Date: 2011-04-28 19:00+0100\n"
 "Last-Translator: Łukasz Wojniłowicz\n"
 "Language-Team: none\n"
 "Language: Polish\n"
@@ -67,12 +67,10 @@ msgid "All files (*.*)"
 msgstr "Wszystkie pliki (*.*)"
 
 #: appwiz.rc:42
-#, fuzzy
 msgid "&Remove"
 msgstr "&Usuń..."
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
 msgstr "&Zmień/Usuń..."
 
@@ -133,7 +131,6 @@ msgid "Separator"
 msgstr "Odstęp"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
 msgstr "Brak"
@@ -152,7 +149,7 @@ msgstr "Idź do dziś"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
-msgstr "&O FolderPicker Test"
+msgstr "FolderPicker Test - i&nformacje"
 
 #: comdlg32.rc:30
 msgid "Document Folders"
@@ -1246,7 +1243,6 @@ msgid "Path Length Constraint="
 msgstr "Warunki ograniczające długość ścieżki="
 
 #: crypt32.rc:198
-#, fuzzy
 msgctxt "path length"
 msgid "None"
 msgstr "Brak"
@@ -2051,7 +2047,6 @@ msgid "&Forward"
 msgstr "&Dalej"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "&Start"
@@ -2077,13 +2072,8 @@ msgid "I&ndex"
 msgstr "&Indeks"
 
 #: hhctrl.rc:30 notepad.rc:52
-#, fuzzy
 msgid "&Search"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Wyszu&kaj\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Znajdź"
+msgstr "&Szukaj"
 
 #: hhctrl.rc:31
 msgid "Favor&ites"
@@ -2118,7 +2108,6 @@ msgid "Back"
 msgstr "Wstecz"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "Strona główna"
@@ -5985,7 +5974,7 @@ msgstr "Ustaw jako &element pulpitu..."
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
 #: user32.rc:44 wordpad.rc:101
 msgid "Cu&t"
-msgstr "Wyt&nij"
+msgstr "Wy&tnij"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
 #: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
@@ -6074,15 +6063,15 @@ msgstr "Otwórz w &nowym oknie"
 
 #: shdoclc.rc:133
 msgid "Cut"
-msgstr "Wyt&nij"
+msgstr "Wy&tnij"
 
 #: shdoclc.rc:144
 msgid "Context Unknown"
-msgstr "Context Unknown"
+msgstr "Kontekst nieznany"
 
 #: shdoclc.rc:149
 msgid "DYNSRC Image"
-msgstr "DYNSRC obrazek"
+msgstr "Obraz DYNSRC"
 
 #: shdoclc.rc:157
 msgid "&Save Video As..."
@@ -6090,11 +6079,11 @@ msgstr "Zapisz &wideo jako..."
 
 #: shdoclc.rc:169 shdoclc.rc:193
 msgid "Play"
-msgstr "Odtwarzaj"
+msgstr "Odtwórz"
 
 #: shdoclc.rc:174
 msgid "ART Image"
-msgstr "ART obrazek"
+msgstr "Obraz ART"
 
 #: shdoclc.rc:195
 msgid "Rewind"
@@ -6102,11 +6091,11 @@ msgstr "Przewiń"
 
 #: shdoclc.rc:201
 msgid "Debug"
-msgstr "Debug"
+msgstr "Debuguj"
 
 #: shdoclc.rc:203
 msgid "Trace Tags"
-msgstr "Znaczniki śledzenia"
+msgstr "Śledzenie znaczników"
 
 #: shdoclc.rc:204
 msgid "Resource Failures"
@@ -6114,11 +6103,11 @@ msgstr "Niepowodzenia zasobów"
 
 #: shdoclc.rc:205
 msgid "Dump Tracking Info"
-msgstr "Zrzuć informację śledzenia"
+msgstr "Zrzuć informacje o śledzeniu"
 
 #: shdoclc.rc:206
 msgid "Debug Break"
-msgstr "Przerwa debugowania"
+msgstr "Przerwanie debugowania"
 
 #: shdoclc.rc:207
 msgid "Debug View"
@@ -6126,23 +6115,23 @@ msgstr "Widok debugowania"
 
 #: shdoclc.rc:208
 msgid "Dump Tree"
-msgstr "Zrzuć drzewa"
+msgstr "Zrzuć drzewo"
 
 #: shdoclc.rc:209
 msgid "Dump Lines"
-msgstr "Zrzuć linie"
+msgstr "Zrzuć wiersze"
 
 #: shdoclc.rc:210
 msgid "Dump DisplayTree"
-msgstr "Zrzuć DisplayTree"
+msgstr "Zrzuć drzewo ekranu"
 
 #: shdoclc.rc:211
 msgid "Dump FormatCaches"
-msgstr "Zrzuć FormatCaches"
+msgstr "Zrzuć pamięć podręczną formatów"
 
 #: shdoclc.rc:212
 msgid "Dump LayoutRects"
-msgstr "Zrzuć LayoutRects"
+msgstr "Zrzuć prostokąty układu"
 
 #: shdoclc.rc:213
 msgid "Memory Monitor"
@@ -6158,15 +6147,15 @@ msgstr "Zapisz HTML"
 
 #: shdoclc.rc:217
 msgid "&Browse View"
-msgstr "Widok &przeglądania"
+msgstr "Przeglą&daj widok"
 
 #: shdoclc.rc:218
 msgid "&Edit View"
-msgstr "Widok &edycji"
+msgstr "&Edytuj widok"
 
 #: shdoclc.rc:221
 msgid "Vertical Scrollbar"
-msgstr "Pionowy suwak"
+msgstr "Pionowy pasek przewijania"
 
 #: shdoclc.rc:223 shdoclc.rc:237
 msgid "Scroll Here"
@@ -6174,11 +6163,11 @@ msgstr "Przewiń tutaj"
 
 #: shdoclc.rc:225
 msgid "Top"
-msgstr "Góra"
+msgstr "Do góry"
 
 #: shdoclc.rc:226
 msgid "Bottom"
-msgstr "Dół"
+msgstr "Do dołu"
 
 #: shdoclc.rc:228
 msgid "Page Up"
@@ -6198,7 +6187,7 @@ msgstr "Przewiń w dół"
 
 #: shdoclc.rc:235
 msgid "Horizontal Scrollbar"
-msgstr "Poziomy suwak"
+msgstr "Poziomy pasek przewijania"
 
 #: shdoclc.rc:239
 msgid "Left Edge"
@@ -6267,13 +6256,8 @@ msgid "Pr&int..."
 msgstr "&Drukuj..."
 
 #: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Podgląd wydruku...\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Podg&ląd wydruku..."
+msgstr "&Podgląd wydruku..."
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6311,12 +6295,10 @@ msgid "&Help"
 msgstr "Pomo&c"
 
 #: shdocvw.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&O Internet Explorer..."
+msgstr "Internet Explorer - i&nformacje"
 
 #: shdocvw.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
 msgstr "Strona główna"
@@ -6414,17 +6396,12 @@ msgstr "Z&mień nazwę"
 
 #: shell32.rc:102 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
-#, fuzzy
 msgid "E&xit"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Zakoń&cz\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Zakończ"
+msgstr "Za&kończ"
 
 #: shell32.rc:115
 msgid "&About Control Panel..."
-msgstr "&O panelu sterowania..."
+msgstr "Panel sterowania - i&nformacje"
 
 #: shell32.rc:123 shell32.rc:127 winefile.rc:113
 msgid "Size"
@@ -6866,7 +6843,7 @@ msgstr "Zam&knij\tAlt-F4"
 
 #: user32.rc:35
 msgid "&About Wine"
-msgstr "&Informacje o Wine"
+msgstr "Wine - i&nformacje"
 
 #: user32.rc:55 regedit.rc:176 winefile.rc:100
 msgid "Error"
@@ -7789,9 +7766,8 @@ msgid "&Always on Top"
 msgstr "&Zawsze na wierzchu"
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&O zegarze..."
+msgstr "Zegar - i&nformacje"
 
 #: clock.rc:48
 msgid "Clock"
@@ -8596,7 +8572,7 @@ msgstr "&Otwórz...\tCtrl+O"
 
 #: notepad.rc:29 wordpad.rc:30
 msgid "&Save\tCtrl+S"
-msgstr "&Zapisz\tCtrl+S"
+msgstr "Zapi&sz\tCtrl+S"
 
 #: notepad.rc:32 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
@@ -8619,13 +8595,8 @@ msgid "&Undo\tCtrl+Z"
 msgstr "&Cofnij\tCtrl+Z"
 
 #: notepad.rc:41 wordpad.rc:44
-#, fuzzy
 msgid "Cu&t\tCtrl+X"
-msgstr ""
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"&Wytnij\tCtrl+X\n"
-"#-#-#-#-#  pl.po (Wine)  #-#-#-#-#\n"
-"Wy&tnij\tCtrl+X"
+msgstr "Wy&tnij\tCtrl+X"
 
 #: notepad.rc:42 wordpad.rc:45
 msgid "&Copy\tCtrl+C"
@@ -8646,7 +8617,7 @@ msgstr "Zaznacz w&szystko\tCtrl+A"
 
 #: notepad.rc:47
 msgid "&Time/Date\tF5"
-msgstr "Godzina/&Data\tF5"
+msgstr "Godzina/&data\tF5"
 
 #: notepad.rc:49
 msgid "&Wrap long lines"
@@ -8665,9 +8636,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "Za&mień...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "&Spis treści"
+msgstr "&Tematy Pomocy\tF1"
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -8699,7 +8669,7 @@ msgstr "Informacja"
 
 #: notepad.rc:73
 msgid "Untitled"
-msgstr "(bez tytułu)"
+msgstr "Bez tytułu"
 
 #: notepad.rc:76
 msgid "Text files (*.txt)"
@@ -8711,7 +8681,7 @@ msgid ""
 "Please use a different editor."
 msgstr ""
 "Plik '%s' jest za duży dla notatnika.\n"
-" Proszę użyć innego edytora."
+"Użyj innego edytora do edycji pliku."
 
 #: notepad.rc:81
 msgid ""
@@ -8727,9 +8697,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Plik '%s' nie istnieje\n"
+"Nie można znaleźć pliku '%s'\n"
 "\n"
-" Czy chcesz utworzyć nowy plik ?"
+"Czy chcesz utworzyć nowy plik ?"
 
 #: notepad.rc:85
 msgid ""
@@ -8737,10 +8707,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Plik '%s'\n"
-"został zmodyfikowany\n"
+"Tekst w pliku '%s' zmienił się\n"
 "\n"
-" Czy chcesz zachować zmiany ?"
+"Czy chcesz zapisać zmiany?"
 
 #: notepad.rc:86
 msgid "'%s' could not be found."
@@ -8751,8 +8720,8 @@ msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
 msgstr ""
-"Za mało pamięci do wykonania tego zadania.\n"
-" Zamknij jedną lub więcej aplikacji aby zwiększyć ilość wolnej pamięci."
+"Za mało pamięci, aby zakończyć tę operację.\n"
+"Zamknij jedną lub więcej aplikacji aby zwiększyć ilość wolnej pamięci."
 
 #: notepad.rc:90
 msgid "Unicode (UTF-16)"
@@ -8872,7 +8841,7 @@ msgstr "&Odśwież\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
-msgstr "&OleView - informacje"
+msgstr "OleView - i&nformacje"
 
 #: oleview.rc:79
 msgid "&Save as..."
@@ -9125,13 +9094,12 @@ msgid "&Arrange Icons"
 msgstr "&Rozmieść ikony"
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "Menedżer programów"
+msgstr "Menedżer zadań - i&nformacje"
 
 #: progman.rc:60
 msgid "Program Manager"
-msgstr "Menedżer programów"
+msgstr "Menedżer zadań"
 
 #: progman.rc:64
 msgid "Delete"
@@ -10392,7 +10360,6 @@ msgid "Hardware"
 msgstr "Sprzętowa"
 
 #: winecfg.rc:76
-#, fuzzy
 msgctxt "vertex shader mode"
 msgid "None"
 msgstr "Brak"
@@ -10885,9 +10852,8 @@ msgid "Arrange &Symbols"
 msgstr "Rozmieść &symbole"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "Menadżer plików Wine - i&nformacje..."
+msgstr "Menadżer plików Wine - i&nformacje"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10978,14 +10944,12 @@ msgid "&Custom..."
 msgstr "Plansza &użytkownika..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
-msgstr "Najlepsze &wyniki"
+msgstr "Najszybsze czasy"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&Informacje o Wine"
+msgstr "Saper Wine - i&nformacje"
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -11045,7 +11009,7 @@ msgstr "&Zawsze na wierzchu"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&O programie..."
+msgstr "Pomoc Wine - i&nformacje"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -11057,7 +11021,7 @@ msgstr "Kopiuj"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
-msgstr "Wine - Pomoc"
+msgstr "Pomoc Wine"
 
 #: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
@@ -11065,7 +11029,7 @@ msgstr "Błąd w trakcie odczytu pliku pomocy `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr "&Znajdź"
+msgstr "Spis treś&ci"
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -11099,7 +11063,7 @@ msgstr "&Powtórz\tCtrl+Y"
 
 #: wordpad.rc:47
 msgid "&Clear\tDEL"
-msgstr "&Usuń\tDel"
+msgstr "&Wyczyść\tDEL"
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
@@ -11111,7 +11075,7 @@ msgstr "Znaj&dź...\tCtrl+F"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"
-msgstr "Z&najdź następny\tF3"
+msgstr "Znajdź &następny\tF3"
 
 #: wordpad.rc:54
 msgid "Read-&only"
@@ -11147,7 +11111,7 @@ msgstr "&Pobierz tekst"
 
 #: wordpad.rc:69
 msgid "&Formatbar"
-msgstr "Pasek &formatu"
+msgstr "P&asek formatu"
 
 #: wordpad.rc:70
 msgid "&Ruler"
@@ -11155,7 +11119,7 @@ msgstr "&Linijka"
 
 #: wordpad.rc:71
 msgid "&Statusbar"
-msgstr "Pasek &stanu"
+msgstr "&Pasek stanu"
 
 #: wordpad.rc:73
 msgid "&Options..."
@@ -11211,7 +11175,7 @@ msgstr "Wszystkie dokumenty (*.*)"
 
 #: wordpad.rc:137
 msgid "Text documents (*.txt)"
-msgstr "Dokument tekstowy (*.txt)"
+msgstr "Dokumenty tekstowe (*.txt)"
 
 #: wordpad.rc:138
 msgid "Unicode text document (*.txt)"
