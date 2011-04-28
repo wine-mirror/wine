@@ -116,18 +116,18 @@ struct image_section_map
 };
 
 extern BOOL         elf_find_section(struct image_file_map* fmap, const char* name,
-                                     unsigned sht, struct image_section_map* ism);
-extern const char*  elf_map_section(struct image_section_map* ism);
-extern void         elf_unmap_section(struct image_section_map* ism);
-extern DWORD_PTR    elf_get_map_rva(const struct image_section_map* ism);
-extern unsigned     elf_get_map_size(const struct image_section_map* ism);
+                                     unsigned sht, struct image_section_map* ism) DECLSPEC_HIDDEN;
+extern const char*  elf_map_section(struct image_section_map* ism) DECLSPEC_HIDDEN;
+extern void         elf_unmap_section(struct image_section_map* ism) DECLSPEC_HIDDEN;
+extern DWORD_PTR    elf_get_map_rva(const struct image_section_map* ism) DECLSPEC_HIDDEN;
+extern unsigned     elf_get_map_size(const struct image_section_map* ism) DECLSPEC_HIDDEN;
 
 extern BOOL         pe_find_section(struct image_file_map* fmap, const char* name,
-                                    struct image_section_map* ism);
-extern const char*  pe_map_section(struct image_section_map* psm);
-extern void         pe_unmap_section(struct image_section_map* psm);
-extern DWORD_PTR    pe_get_map_rva(const struct image_section_map* psm);
-extern unsigned     pe_get_map_size(const struct image_section_map* psm);
+                                    struct image_section_map* ism) DECLSPEC_HIDDEN;
+extern const char*  pe_map_section(struct image_section_map* psm) DECLSPEC_HIDDEN;
+extern void         pe_unmap_section(struct image_section_map* psm) DECLSPEC_HIDDEN;
+extern DWORD_PTR    pe_get_map_rva(const struct image_section_map* psm) DECLSPEC_HIDDEN;
+extern unsigned     pe_get_map_size(const struct image_section_map* psm) DECLSPEC_HIDDEN;
 
 static inline BOOL image_find_section(struct image_file_map* fmap, const char* name,
                                       struct image_section_map* ism)

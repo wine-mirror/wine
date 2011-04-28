@@ -632,7 +632,7 @@ static const char* i386_fetch_regname(unsigned regno)
     return NULL;
 }
 
-struct cpu cpu_i386 = {
+DECLSPEC_HIDDEN struct cpu cpu_i386 = {
     IMAGE_FILE_MACHINE_I386,
     4,
     CV_REG_EBP,

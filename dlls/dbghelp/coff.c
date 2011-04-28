@@ -154,7 +154,7 @@ static void coff_add_symbol(struct CoffFile* coff_file, struct symt* sym)
     coff_file->entries[coff_file->neps++] = sym;
 }
 
-BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
+DECLSPEC_HIDDEN BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
 {
     const IMAGE_AUX_SYMBOL*		aux;
     const IMAGE_COFF_SYMBOLS_HEADER*	coff;

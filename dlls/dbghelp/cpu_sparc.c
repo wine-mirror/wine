@@ -79,7 +79,7 @@ static const char* sparc_fetch_regname(unsigned regno)
     return NULL;
 }
 
-struct cpu cpu_sparc = {
+DECLSPEC_HIDDEN struct cpu cpu_sparc = {
     IMAGE_FILE_MACHINE_SPARC,
     4,
     CV_REG_NONE, /* FIXME */

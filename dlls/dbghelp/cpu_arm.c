@@ -222,7 +222,7 @@ static const char* arm_fetch_regname(unsigned regno)
     return NULL;
 }
 
-struct cpu cpu_arm = {
+DECLSPEC_HIDDEN struct cpu cpu_arm = {
     IMAGE_FILE_MACHINE_ARM,
     4,
     CV_ARM_R0 + 11,

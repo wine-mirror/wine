@@ -72,7 +72,7 @@ static const char* ppc_fetch_regname(unsigned regno)
     return NULL;
 }
 
-struct cpu cpu_ppc = {
+DECLSPEC_HIDDEN struct cpu cpu_ppc = {
     IMAGE_FILE_MACHINE_POWERPC,
     4,
     CV_REG_NONE, /* FIXME */

@@ -796,7 +796,7 @@ static const char* x86_64_fetch_regname(unsigned regno)
     return NULL;
 }
 
-struct cpu cpu_x86_64 = {
+DECLSPEC_HIDDEN struct cpu cpu_x86_64 = {
     IMAGE_FILE_MACHINE_AMD64,
     8,
     CV_AMD64_RSP,
