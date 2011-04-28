@@ -871,3 +871,12 @@ TRACEHANDLE WINAPI OpenTraceW( PEVENT_TRACE_LOGFILEW logfile )
     SetLastError(ERROR_ACCESS_DENIED);
     return INVALID_PROCESSTRACE_HANDLE;
 }
+
+/******************************************************************************
+ * ProcessTrace [ADVAPI32.@]
+ */
+ULONG WINAPI ProcessTrace( PTRACEHANDLE HandleArray, ULONG HandleCount, LPFILETIME StartTime, LPFILETIME EndTime)
+{
+    FIXME("%p %u %p %p: stub\n", HandleArray, HandleCount, StartTime, EndTime);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

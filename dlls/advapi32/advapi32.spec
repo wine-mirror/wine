@@ -447,7 +447,7 @@
 @ stdcall PrivilegedServiceAuditAlarmA(str str long ptr long)
 @ stdcall PrivilegedServiceAuditAlarmW(wstr wstr long ptr long)
 # @ stub ProcessIdleTasks
-# @ stub ProcessTrace
+@ stdcall ProcessTrace(ptr long ptr ptr)
 @ stdcall QueryAllTracesA(ptr long ptr)
 @ stdcall QueryAllTracesW(ptr long ptr)
 # @ stub QueryRecoveryAgentsOnEncryptedFile
