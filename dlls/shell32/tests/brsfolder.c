@@ -2,6 +2,7 @@
  * Unit test of the SHBrowseForFolder function.
  *
  * Copyright 2009-2010 Michael Mc Donnell
+ * Copyright 2011 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +28,7 @@
 #define TIMER_WAIT_MS 50 /* Should be long enough for slow systems */
 
 static const char new_folder_name[] = "foo";
+static LPITEMIDLIST selected_folder_pidl;
 
 /*
  * Returns the number of folders in a folder.
@@ -247,7 +249,98 @@ static void test_click_make_new_folder_button(void)
     CoUninitialize();
 }
 
+
+/*
+ * Callback used by test_selection.
+ */
+static int CALLBACK selection_callback(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
+{
+    DWORD ret;
+
+    switch (uMsg)
+    {
+    case BFFM_INITIALIZED:
+        /* test with zero values */
+        ret = SendMessage(hwnd, BFFM_SETSELECTIONA, 0, 0);
+        ok(!ret, "SendMessage returned: %u\n", ret);
+        ret = SendMessage(hwnd, BFFM_SETSELECTIONW, 0, 0);
+        ok(!ret, "SendMessage returned: %u\n", ret);
+
+        ret = SendMessage(hwnd, BFFM_SETSELECTIONA, 1, 0);
+        ok(!ret, "SendMessage returned: %u\n", ret);
+
+        if(0)
+        {
+            /* Crashes on NT4 */
+            ret = SendMessage(hwnd, BFFM_SETSELECTIONW, 1, 0);
+            ok(!ret, "SendMessage returned: %u\n", ret);
+        }
+
+        ret = SendMessage(hwnd, BFFM_SETSELECTIONA, 0, (LPARAM)selected_folder_pidl);
+        ok(!ret, "SendMessage returned: %u\n", ret);
+        ret = SendMessage(hwnd, BFFM_SETSELECTIONW, 0, (LPARAM)selected_folder_pidl);
+        ok(!ret, "SendMessage returned: %u\n", ret);
+
+        ret = SendMessage(hwnd, BFFM_SETSELECTIONA, 1, (LPARAM)selected_folder_pidl);
+        ok(!ret, "SendMessage returned: %u\n", ret);
+        ret = SendMessage(hwnd, BFFM_SETSELECTIONW, 1, (LPARAM)selected_folder_pidl);
+        ok(!ret, "SendMessage returned: %u\n", ret);
+
+        ret = SendMessage(hwnd, BFFM_SETSELECTIONA, 1, (LPARAM)new_folder_name);
+        ok(!ret, "SendMessage returned: %u\n", ret);
+        ret = SendMessage(hwnd, BFFM_SETSELECTIONW, 1, (LPARAM)new_folder_name);
+        ok(!ret, "SendMessage returned: %u\n", ret);
+
+        SendMessage(hwnd, WM_COMMAND, IDOK, 0);
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static void test_selection(void)
+{
+    HRESULT resCoInit;
+    BROWSEINFO bi;
+    LPITEMIDLIST pidl = NULL;
+    IShellFolder *desktop_object;
+    WCHAR selected_folderW[MAX_PATH];
+    const CHAR title[] = "test_selection";
+
+    resCoInit = CoInitialize(NULL);
+    if(!(resCoInit == S_OK || resCoInit == S_FALSE))
+    {
+        skip("COM could not be initialized %u\n", GetLastError());
+        return;
+    }
+
+    if (!GetCurrentDirectoryW(MAX_PATH, selected_folderW))
+    {
+        skip("GetCurrentDirectoryW failed %u\n", GetLastError());
+    }
+
+    /* Initialize browse info struct for SHBrowseForFolder */
+    bi.hwndOwner = NULL;
+    bi.pszDisplayName = NULL;
+    bi.lpszTitle = (LPTSTR) title;
+    bi.ulFlags = BIF_NEWDIALOGSTYLE;
+    bi.lpfn = selection_callback;
+
+    SHGetDesktopFolder(&desktop_object);
+    desktop_object->lpVtbl->ParseDisplayName(desktop_object, NULL, NULL,
+        selected_folderW, 0UL, &selected_folder_pidl, 0UL);
+    bi.pidlRoot = selected_folder_pidl;
+
+    pidl = SHBrowseForFolder(&bi);
+
+    if (pidl)
+        CoTaskMemFree(pidl);
+
+    CoUninitialize();
+}
+
 START_TEST(brsfolder)
 {
     test_click_make_new_folder_button();
+    test_selection();
 }
