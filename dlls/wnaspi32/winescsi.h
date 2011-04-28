@@ -57,30 +57,30 @@ struct sg_header
 
 /* Function prototypes from dlls/wnaspi32/aspi.c */
 void
-SCSI_Init(void);
+SCSI_Init(void) DECLSPEC_HIDDEN;
 
 int
-ASPI_GetNumControllers(void);
+ASPI_GetNumControllers(void) DECLSPEC_HIDDEN;
 
 int
-SCSI_OpenDevice( int h, int c, int t, int d );
+SCSI_OpenDevice( int h, int c, int t, int d ) DECLSPEC_HIDDEN;
 
 int
-SCSI_LinuxSetTimeout( int fd, int timeout );
+SCSI_LinuxSetTimeout( int fd, int timeout ) DECLSPEC_HIDDEN;
 
 #ifdef linux
 BOOL
 SCSI_LinuxDeviceIo( int fd,
 		struct sg_header * lpvInBuffer, DWORD cbInBuffer,
 		struct sg_header * lpvOutBuffer, DWORD cbOutBuffer,
-		LPDWORD lpcbBytesReturned );
+		LPDWORD lpcbBytesReturned ) DECLSPEC_HIDDEN;
 
 void
-SCSI_Fix_CMD_LEN( int fd, int cmd, int len );
+SCSI_Fix_CMD_LEN( int fd, int cmd, int len ) DECLSPEC_HIDDEN;
 #endif
 
 DWORD
-ASPI_GetHCforController( int controller );
+ASPI_GetHCforController( int controller ) DECLSPEC_HIDDEN;
 
 /*** This is where we throw some miscellaneous crap ***/
 
