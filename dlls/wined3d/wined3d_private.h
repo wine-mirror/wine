@@ -52,8 +52,9 @@
 #define WINED3D_QUIRK_NV_CLIP_BROKEN            0x00000010
 #define WINED3D_QUIRK_FBO_TEX_UPDATE            0x00000020
 
-typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
+typedef struct wined3d_surface IWineD3DSurfaceImpl;
+typedef struct wined3d_surface IWineD3DSurface;
 
 /* Texture format fixups */
 
@@ -2018,33 +2019,26 @@ struct wined3d_subresource_container
 
 struct wined3d_surface_ops
 {
-    HRESULT (*surface_private_setup)(struct IWineD3DSurfaceImpl *surface);
-    void (*surface_cleanup)(struct IWineD3DSurfaceImpl *surface);
-    void (*surface_realize_palette)(struct IWineD3DSurfaceImpl *surface);
-    HRESULT (*surface_draw_overlay)(struct IWineD3DSurfaceImpl *surface);
-    void (*surface_preload)(struct IWineD3DSurfaceImpl *surface);
-    void (*surface_map)(struct IWineD3DSurfaceImpl *surface, const RECT *rect, DWORD flags);
-    void (*surface_unmap)(struct IWineD3DSurfaceImpl *surface);
-    HRESULT (*surface_getdc)(struct IWineD3DSurfaceImpl *surface);
-    HRESULT (*surface_flip)(struct IWineD3DSurfaceImpl *surface, struct IWineD3DSurfaceImpl *override);
-    HRESULT (*surface_blt)(struct IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect,
-            IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, DWORD flags,
+    HRESULT (*surface_private_setup)(struct wined3d_surface *surface);
+    void (*surface_cleanup)(struct wined3d_surface *surface);
+    void (*surface_realize_palette)(struct wined3d_surface *surface);
+    HRESULT (*surface_draw_overlay)(struct wined3d_surface *surface);
+    void (*surface_preload)(struct wined3d_surface *surface);
+    void (*surface_map)(struct wined3d_surface *surface, const RECT *rect, DWORD flags);
+    void (*surface_unmap)(struct wined3d_surface *surface);
+    HRESULT (*surface_getdc)(struct wined3d_surface *surface);
+    HRESULT (*surface_flip)(struct wined3d_surface *surface, struct wined3d_surface *override);
+    HRESULT (*surface_blt)(struct wined3d_surface *dst_surface, const RECT *dst_rect,
+            struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
             const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter);
-    HRESULT (*surface_bltfast)(struct IWineD3DSurfaceImpl *dst_surface, DWORD dst_x, DWORD dst_y,
-            IWineD3DSurfaceImpl *src_surface, const RECT *src_rect, DWORD trans);
-    HRESULT (*surface_set_mem)(struct IWineD3DSurfaceImpl *surface, void *mem);
+    HRESULT (*surface_bltfast)(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
+            struct wined3d_surface *src_surface, const RECT *src_rect, DWORD trans);
+    HRESULT (*surface_set_mem)(struct wined3d_surface *surface, void *mem);
 };
 
-/*****************************************************************************
- * IWineD3DSurface implementation structure
- */
-struct IWineD3DSurfaceImpl
+struct wined3d_surface
 {
-    /* IUnknown & IWineD3DResource Information     */
-    const IWineD3DSurfaceVtbl *lpVtbl;
     struct wined3d_resource resource;
-
-    /* IWineD3DSurface fields */
     const struct wined3d_surface_ops *surface_ops;
     struct wined3d_subresource_container container;
     struct wined3d_palette *palette; /* D3D7 style palette handling */
@@ -2098,8 +2092,6 @@ struct IWineD3DSurfaceImpl
     struct list               overlays;
     struct list               overlay_entry;
 };
-
-extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl DECLSPEC_HIDDEN;
 
 static inline IWineD3DSurfaceImpl *surface_from_resource(struct wined3d_resource *resource)
 {

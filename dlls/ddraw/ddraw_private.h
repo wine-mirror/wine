@@ -180,7 +180,7 @@ struct IDirectDrawSurfaceImpl
 
     /* Connections to other Objects */
     IDirectDrawImpl         *ddraw;
-    IWineD3DSurface         *WineD3DSurface;
+    struct wined3d_surface *wined3d_surface;
     struct wined3d_texture *wined3d_texture;
     struct wined3d_swapchain *wined3d_swapchain;
 

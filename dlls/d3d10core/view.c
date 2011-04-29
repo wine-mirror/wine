@@ -37,7 +37,7 @@ static struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *r
             return wined3d_buffer_get_resource(((struct d3d10_buffer *)resource)->wined3d_buffer);
 
         case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
-            return IWineD3DSurface_GetResource(((struct d3d10_texture2d *)resource)->wined3d_surface);
+            return wined3d_surface_get_resource(((struct d3d10_texture2d *)resource)->wined3d_surface);
 
         default:
             FIXME("Unhandled resource dimension %#x.\n", dimension);

@@ -478,7 +478,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetCursorProperties(IDirect3DDevice8 
     }
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_SetCursorProperties(This->WineD3DDevice,XHotSpot,YHotSpot,pSurface->wineD3DSurface);
+    hr = IWineD3DDevice_SetCursorProperties(This->WineD3DDevice, XHotSpot, YHotSpot, pSurface->wined3d_surface);
     wined3d_mutex_unlock();
 
     return hr;
@@ -611,19 +611,20 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetBackBuffer(IDirect3DDevice8 *iface
         UINT BackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8 **ppBackBuffer)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DSurface *retSurface = NULL;
+    struct wined3d_surface *wined3d_surface = NULL;
     HRESULT hr;
 
     TRACE("iface %p, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",
             iface, BackBuffer, Type, ppBackBuffer);
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_GetBackBuffer(This->WineD3DDevice, 0, BackBuffer, (WINED3DBACKBUFFER_TYPE)Type, &retSurface);
-    if (SUCCEEDED(hr) && retSurface && ppBackBuffer)
+    hr = IWineD3DDevice_GetBackBuffer(This->WineD3DDevice, 0,
+            BackBuffer, (WINED3DBACKBUFFER_TYPE)Type, &wined3d_surface);
+    if (SUCCEEDED(hr) && wined3d_surface && ppBackBuffer)
     {
-        *ppBackBuffer = IWineD3DSurface_GetParent(retSurface);
+        *ppBackBuffer = wined3d_surface_get_parent(wined3d_surface);
         IDirect3DSurface8_AddRef(*ppBackBuffer);
-        IWineD3DSurface_Release(retSurface);
+        wined3d_surface_decref(wined3d_surface);
     }
     wined3d_mutex_unlock();
 
@@ -930,11 +931,11 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
      * destination texture is in WINED3DPOOL_DEFAULT. */
 
     wined3d_mutex_lock();
-    wined3d_resource = IWineD3DSurface_GetResource(Source->wineD3DSurface);
+    wined3d_resource = wined3d_surface_get_resource(Source->wined3d_surface);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     srcFormat = wined3d_desc.format;
 
-    wined3d_resource = IWineD3DSurface_GetResource(Dest->wineD3DSurface);
+    wined3d_resource = wined3d_surface_get_resource(Dest->wined3d_surface);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     destFormat = wined3d_desc.format;
 
@@ -949,22 +950,33 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
     else if (WINED3DFMT_UNKNOWN == destFormat)
     {
         TRACE("(%p) : Converting destination surface from WINED3DFMT_UNKNOWN to the source format\n", iface);
-        IWineD3DSurface_SetFormat(Dest->wineD3DSurface, srcFormat);
+        wined3d_surface_set_format(Dest->wined3d_surface, srcFormat);
     }
 
     /* Quick if complete copy ... */
-    if (cRects == 0 && pSourceRects == NULL && pDestPoints == NULL) {
-        IWineD3DSurface_BltFast(Dest->wineD3DSurface, 0, 0, Source->wineD3DSurface, NULL, WINEDDBLTFAST_NOCOLORKEY);
-    } else {
+    if (!cRects && !pSourceRects && !pDestPoints)
+    {
+        wined3d_surface_bltfast(Dest->wined3d_surface, 0, 0,
+                Source->wined3d_surface, NULL, WINEDDBLTFAST_NOCOLORKEY);
+    }
+    else
+    {
         unsigned int i;
         /* Copy rect by rect */
-        if (NULL != pSourceRects && NULL != pDestPoints) {
-            for (i = 0; i < cRects; ++i) {
-                IWineD3DSurface_BltFast(Dest->wineD3DSurface, pDestPoints[i].x, pDestPoints[i].y, Source->wineD3DSurface, &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
+        if (pSourceRects && pDestPoints)
+        {
+            for (i = 0; i < cRects; ++i)
+            {
+                wined3d_surface_bltfast(Dest->wined3d_surface, pDestPoints[i].x, pDestPoints[i].y,
+                        Source->wined3d_surface, &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
             }
-        } else {
-            for (i = 0; i < cRects; ++i) {
-                IWineD3DSurface_BltFast(Dest->wineD3DSurface, 0, 0, Source->wineD3DSurface, &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
+        }
+        else
+        {
+            for (i = 0; i < cRects; ++i)
+            {
+                wined3d_surface_bltfast(Dest->wined3d_surface, 0, 0,
+                        Source->wined3d_surface, &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
             }
         }
     }
@@ -1005,7 +1017,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetFrontBuffer(IDirect3DDevice8 *ifac
     }
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_GetFrontBufferData(This->WineD3DDevice, 0, destSurface->wineD3DSurface);
+    hr = IWineD3DDevice_GetFrontBufferData(This->WineD3DDevice, 0, destSurface->wined3d_surface);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1017,7 +1029,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(IDirect3DDevice8 *ifa
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     IDirect3DSurface8Impl *pSurface = (IDirect3DSurface8Impl *)pRenderTarget;
     IDirect3DSurface8Impl *pZSurface = (IDirect3DSurface8Impl *)pNewZStencil;
-    IWineD3DSurface *original_ds = NULL;
+    struct wined3d_surface *original_ds = NULL;
     HRESULT hr;
 
     TRACE("iface %p, render_target %p, depth_stencil %p.\n", iface, pRenderTarget, pNewZStencil);
@@ -1042,9 +1054,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(IDirect3DDevice8 *ifa
             pSurface = (IDirect3DSurface8Impl *)orig_rt;
         }
 
-        wined3d_resource = IWineD3DSurface_GetResource(pZSurface->wineD3DSurface);
+        wined3d_resource = wined3d_surface_get_resource(pZSurface->wined3d_surface);
         wined3d_resource_get_desc(wined3d_resource, &ds_desc);
-        wined3d_resource = IWineD3DSurface_GetResource(pSurface->wineD3DSurface);
+        wined3d_resource = wined3d_surface_get_resource(pSurface->wined3d_surface);
         wined3d_resource_get_desc(wined3d_resource, &rt_desc);
         if (orig_rt) IDirect3DSurface8_Release(orig_rt);
 
@@ -1059,14 +1071,15 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderTarget(IDirect3DDevice8 *ifa
     hr = IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice, &original_ds);
     if (hr == WINED3D_OK || hr == WINED3DERR_NOTFOUND)
     {
-        hr = IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, pZSurface ? pZSurface->wineD3DSurface : NULL);
+        hr = IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, pZSurface ? pZSurface->wined3d_surface : NULL);
         if (SUCCEEDED(hr) && pRenderTarget)
         {
-            hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, 0, pSurface->wineD3DSurface, TRUE);
+            hr = IWineD3DDevice_SetRenderTarget(This->WineD3DDevice, 0, pSurface->wined3d_surface, TRUE);
             if (FAILED(hr)) IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice, original_ds);
         }
     }
-    if (original_ds) IWineD3DSurface_Release(original_ds);
+    if (original_ds)
+        wined3d_surface_decref(original_ds);
 
     wined3d_mutex_unlock();
 
@@ -1077,7 +1090,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetRenderTarget(IDirect3DDevice8 *ifa
         IDirect3DSurface8 **ppRenderTarget)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DSurface *pRenderTarget;
+    struct wined3d_surface *wined3d_surface;
     HRESULT hr;
 
     TRACE("iface %p, render_target %p.\n", iface, ppRenderTarget);
@@ -1087,12 +1100,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetRenderTarget(IDirect3DDevice8 *ifa
     }
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_GetRenderTarget(This->WineD3DDevice, 0, &pRenderTarget);
-    if (SUCCEEDED(hr) && pRenderTarget)
+    hr = IWineD3DDevice_GetRenderTarget(This->WineD3DDevice, 0, &wined3d_surface);
+    if (SUCCEEDED(hr) && wined3d_surface)
     {
-        *ppRenderTarget = IWineD3DSurface_GetParent(pRenderTarget);
+        *ppRenderTarget = wined3d_surface_get_parent(wined3d_surface);
         IDirect3DSurface8_AddRef(*ppRenderTarget);
-        IWineD3DSurface_Release(pRenderTarget);
+        wined3d_surface_decref(wined3d_surface);
     }
     else
     {
@@ -1108,7 +1121,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDepthStencilSurface(IDirect3DDevic
         IDirect3DSurface8 **ppZStencilSurface)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    IWineD3DSurface *pZStencilSurface;
+    struct wined3d_surface *wined3d_surface;
     HRESULT hr;
 
     TRACE("iface %p, depth_stencil %p.\n", iface, ppZStencilSurface);
@@ -1118,12 +1131,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDepthStencilSurface(IDirect3DDevic
     }
 
     wined3d_mutex_lock();
-    hr = IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice, &pZStencilSurface);
+    hr = IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice, &wined3d_surface);
     if (SUCCEEDED(hr))
     {
-        *ppZStencilSurface = IWineD3DSurface_GetParent(pZStencilSurface);
+        *ppZStencilSurface = wined3d_surface_get_parent(wined3d_surface);
         IDirect3DSurface8_AddRef(*ppZStencilSurface);
-        IWineD3DSurface_Release(pZStencilSurface);
+        wined3d_surface_decref(wined3d_surface);
     }
     else
     {
@@ -2806,7 +2819,7 @@ static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceP
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
+        WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface)
 {
     IDirect3DDevice8Impl *This = impl_from_IWineD3DDeviceParent(iface);
     IDirect3DSurface8Impl *d3d_surface;
@@ -2829,8 +2842,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
         return hr;
     }
 
-    *surface = d3d_surface->wineD3DSurface;
-    IWineD3DSurface_AddRef(*surface);
+    *surface = d3d_surface->wined3d_surface;
+    wined3d_surface_incref(*surface);
 
     d3d_surface->container = container_parent;
     IUnknown_Release(d3d_surface->parentDevice);
@@ -2845,7 +2858,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
 static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
-        IWineD3DSurface **surface)
+        struct wined3d_surface **surface)
 {
     IDirect3DDevice8Impl *This = impl_from_IWineD3DDeviceParent(iface);
     IDirect3DSurface8Impl *d3d_surface;
@@ -2863,8 +2876,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
         return hr;
     }
 
-    *surface = d3d_surface->wineD3DSurface;
-    IWineD3DSurface_AddRef(*surface);
+    *surface = d3d_surface->wined3d_surface;
+    wined3d_surface_incref(*surface);
 
     d3d_surface->container = (IUnknown *)&This->IDirect3DDevice8_iface;
     /* Implicit surfaces are created with an refcount of 0 */
@@ -2875,7 +2888,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
         UINT width, UINT height, enum wined3d_format_id format, WINED3DMULTISAMPLE_TYPE multisample_type,
-        DWORD multisample_quality, BOOL discard, IWineD3DSurface **surface)
+        DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
     IDirect3DDevice8Impl *This = impl_from_IWineD3DDeviceParent(iface);
     IDirect3DSurface8Impl *d3d_surface;
@@ -2893,8 +2906,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
         return hr;
     }
 
-    *surface = d3d_surface->wineD3DSurface;
-    IWineD3DSurface_AddRef(*surface);
+    *surface = d3d_surface->wined3d_surface;
+    wined3d_surface_incref(*surface);
 
     d3d_surface->container = (IUnknown *)&This->IDirect3DDevice8_iface;
     /* Implicit surfaces are created with an refcount of 0 */

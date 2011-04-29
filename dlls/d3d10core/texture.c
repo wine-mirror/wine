@@ -61,7 +61,8 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_AddRef(ID3D10Texture2D *iface)
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
-    if (refcount == 1 && This->wined3d_surface) IWineD3DSurface_AddRef(This->wined3d_surface);
+    if (refcount == 1 && This->wined3d_surface)
+        wined3d_surface_incref(This->wined3d_surface);
 
     return refcount;
 }
@@ -83,8 +84,10 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
 
     if (!refcount)
     {
-        if (This->wined3d_surface) IWineD3DSurface_Release(This->wined3d_surface);
-        else d3d10_texture2d_wined3d_object_released(This);
+        if (This->wined3d_surface)
+            wined3d_surface_decref(This->wined3d_surface);
+        else
+            d3d10_texture2d_wined3d_object_released(This);
     }
 
     return refcount;

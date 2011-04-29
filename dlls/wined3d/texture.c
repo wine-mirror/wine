@@ -758,7 +758,7 @@ static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource
     surface_set_texture_name(surface, 0, FALSE);
     surface_set_texture_target(surface, 0);
     surface_set_container(surface, WINED3D_CONTAINER_NONE, NULL);
-    IWineD3DSurface_Release((IWineD3DSurface *)surface);
+    wined3d_surface_decref(surface);
 }
 
 /* Do not call while under the GL lock. */

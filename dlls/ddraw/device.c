@@ -298,7 +298,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         /* Set the device up to render to the front buffer since the back
          * buffer will vanish soon. */
         IWineD3DDevice_SetRenderTarget(This->wineD3DDevice, 0,
-                This->ddraw->d3d_target->WineD3DSurface, TRUE);
+                This->ddraw->d3d_target->wined3d_surface, TRUE);
 
         /* Release the WineD3DDevice. This won't destroy it */
         if(IWineD3DDevice_Release(This->wineD3DDevice) <= 0)
@@ -1861,10 +1861,8 @@ IDirect3DDeviceImpl_7_SetRenderTarget(IDirect3DDevice7 *iface,
         return D3D_OK;
     }
 
-    hr = IWineD3DDevice_SetRenderTarget(This->wineD3DDevice,
-                                        0,
-                                        Target ? Target->WineD3DSurface : NULL,
-                                        FALSE);
+    hr = IWineD3DDevice_SetRenderTarget(This->wineD3DDevice, 0,
+            Target ? Target->wined3d_surface : NULL, FALSE);
     if(hr != D3D_OK)
     {
         LeaveCriticalSection(&ddraw_cs);
@@ -5563,7 +5561,7 @@ IDirect3DDeviceImpl_7_PreLoad(IDirect3DDevice7 *iface,
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    IWineD3DSurface_PreLoad(surf->WineD3DSurface);
+    wined3d_surface_preload(surf->wined3d_surface);
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
 }
@@ -5978,15 +5976,14 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
              * Some games like Sacrifice set palette after Load, and it is a waste of effort to try to load texture without palette and generates
              * warnings in wined3d. */
             if (!palette_missing)
-                hr = IWineD3DDevice_UpdateSurface(device->wineD3DDevice, src_level->WineD3DSurface, &rect, dest_level->WineD3DSurface,
-                                &point);
+                hr = IWineD3DDevice_UpdateSurface(device->wineD3DDevice, src_level->wined3d_surface,
+                        &rect, dest_level->wined3d_surface, &point);
 
             if (palette_missing || FAILED(hr))
             {
                 /* UpdateSurface may fail e.g. if dest is in system memory. Fall back to BltFast that is less strict. */
-                IWineD3DSurface_BltFast(dest_level->WineD3DSurface,
-                                        point.x, point.y,
-                                        src_level->WineD3DSurface, &rect, 0);
+                wined3d_surface_bltfast(dest_level->wined3d_surface, point.x, point.y,
+                        src_level->wined3d_surface, &rect, 0);
             }
 
             ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
@@ -6778,9 +6775,8 @@ IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
     }
 
     dsi = (IDirectDrawSurfaceImpl *)depthStencil;
-    TRACE("Setting wined3d depth stencil to %p (wined3d %p)\n", dsi, dsi->WineD3DSurface);
-    IWineD3DDevice_SetDepthStencilSurface(This->wineD3DDevice,
-                                          dsi->WineD3DSurface);
+    TRACE("Setting wined3d depth stencil to %p (wined3d %p)\n", dsi, dsi->wined3d_surface);
+    IWineD3DDevice_SetDepthStencilSurface(This->wineD3DDevice, dsi->wined3d_surface);
 
     IDirectDrawSurface7_Release(depthStencil);
     return WINED3DZB_TRUE;
@@ -6827,7 +6823,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
     IWineD3DDevice_AddRef(ddraw->wineD3DDevice);
 
     /* Render to the back buffer */
-    hr = IWineD3DDevice_SetRenderTarget(ddraw->wineD3DDevice, 0, target->WineD3DSurface, TRUE);
+    hr = IWineD3DDevice_SetRenderTarget(ddraw->wineD3DDevice, 0, target->wined3d_surface, TRUE);
     if (FAILED(hr))
     {
         ERR("Failed to set render target, hr %#x.\n", hr);

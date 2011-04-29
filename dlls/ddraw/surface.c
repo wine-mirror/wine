@@ -183,8 +183,8 @@ static ULONG WINAPI ddraw_surface7_AddRef(IDirectDrawSurface7 *iface)
     if (refCount == 1)
     {
         EnterCriticalSection(&ddraw_cs);
-        if (This->WineD3DSurface)
-            IWineD3DSurface_AddRef(This->WineD3DSurface);
+        if (This->wined3d_surface)
+            wined3d_surface_incref(This->wined3d_surface);
         if (This->wined3d_texture)
             wined3d_texture_incref(This->wined3d_texture);
         LeaveCriticalSection(&ddraw_cs);
@@ -247,8 +247,8 @@ void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
         WARN("(%p): Destroying surface with refount %d\n", This, This->ref);
     }
 
-    if (This->WineD3DSurface)
-        IWineD3DSurface_Release(This->WineD3DSurface);
+    if (This->wined3d_surface)
+        wined3d_surface_decref(This->wined3d_surface);
 }
 
 static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
@@ -633,7 +633,7 @@ static HRESULT WINAPI ddraw_surface7_Lock(IDirectDrawSurface7 *iface,
         }
     }
 
-    hr = IWineD3DSurface_Map(This->WineD3DSurface, &LockedRect, Rect, Flags);
+    hr = wined3d_surface_map(This->wined3d_surface, &LockedRect, Rect, Flags);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&ddraw_cs);
@@ -695,7 +695,7 @@ static HRESULT WINAPI ddraw_surface7_Unlock(IDirectDrawSurface7 *iface, RECT *pR
     TRACE("iface %p, rect %s.\n", iface, wine_dbgstr_rect(pRect));
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_Unmap(This->WineD3DSurface);
+    hr = wined3d_surface_unmap(This->wined3d_surface);
     if (SUCCEEDED(hr))
     {
         This->surface_desc.lpSurface = NULL;
@@ -768,9 +768,7 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
         ddraw_surface7_Release(Override7);
     }
 
-    hr = IWineD3DSurface_Flip(This->WineD3DSurface,
-                              Override->WineD3DSurface,
-                              Flags);
+    hr = wined3d_surface_flip(This->wined3d_surface, Override->wined3d_surface, Flags);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -854,11 +852,11 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
         return DDERR_INVALIDPARAMS;
     }
 
-    /* TODO: Check if the DDBltFx contains any ddraw surface pointers. If it does, copy the struct,
-     * and replace the ddraw surfaces with the wined3d surfaces
-     * So far no blitting operations using surfaces in the bltfx struct are supported anyway.
-     */
-    hr = IWineD3DSurface_Blt(This->WineD3DSurface, DestRect, Src ? Src->WineD3DSurface : NULL,
+    /* TODO: Check if the DDBltFx contains any ddraw surface pointers. If it
+     * does, copy the struct, and replace the ddraw surfaces with the wined3d
+     * surfaces. So far no blitting operations using surfaces in the bltfx
+     * struct are supported anyway. */
+    hr = wined3d_surface_blt(This->wined3d_surface, DestRect, Src ? Src->wined3d_surface : NULL,
             SrcRect, Flags, (WINEDDBLTFX *)DDBltFx, WINED3DTEXF_LINEAR);
 
     LeaveCriticalSection(&ddraw_cs);
@@ -1145,8 +1143,7 @@ static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *hdc)
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_GetDC(This->WineD3DSurface,
-                               hdc);
+    hr = wined3d_surface_getdc(This->wined3d_surface, hdc);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -1189,7 +1186,7 @@ static HRESULT WINAPI ddraw_surface7_ReleaseDC(IDirectDrawSurface7 *iface, HDC h
     TRACE("iface %p, dc %p.\n", iface, hdc);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_ReleaseDC(This->WineD3DSurface, hdc);
+    hr = wined3d_surface_releasedc(This->wined3d_surface, hdc);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -1262,7 +1259,7 @@ static HRESULT WINAPI ddraw_surface7_SetPriority(IDirectDrawSurface7 *iface, DWO
     TRACE("iface %p, priority %u.\n", iface, Priority);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_SetPriority(This->WineD3DSurface, Priority);
+    hr = wined3d_surface_set_priority(This->wined3d_surface, Priority);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -1293,7 +1290,7 @@ static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWO
     }
 
     EnterCriticalSection(&ddraw_cs);
-    *Priority = IWineD3DSurface_GetPriority(This->WineD3DSurface);
+    *Priority = wined3d_surface_get_priority(This->wined3d_surface);
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
@@ -1325,11 +1322,7 @@ static HRESULT WINAPI ddraw_surface7_SetPrivateData(IDirectDrawSurface7 *iface,
             iface, debugstr_guid(tag), Data, Size, Flags);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_SetPrivateData(This->WineD3DSurface,
-                                        tag,
-                                        Data,
-                                        Size,
-                                        Flags);
+    hr = wined3d_surface_set_private_data(This->wined3d_surface, tag, Data, Size, Flags);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -1366,10 +1359,7 @@ static HRESULT WINAPI ddraw_surface7_GetPrivateData(IDirectDrawSurface7 *iface, 
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_GetPrivateData(This->WineD3DSurface,
-                                        tag,
-                                        Data,
-                                        Size);
+    hr = wined3d_surface_get_private_data(This->wined3d_surface, tag, Data, Size);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -1395,7 +1385,7 @@ static HRESULT WINAPI ddraw_surface7_FreePrivateData(IDirectDrawSurface7 *iface,
     TRACE("iface %p, tag %s.\n", iface, debugstr_guid(tag));
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_FreePrivateData(This->WineD3DSurface, tag);
+    hr = wined3d_surface_free_private_data(This->wined3d_surface, tag);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -1626,7 +1616,7 @@ static HRESULT WINAPI ddraw_surface7_GetBltStatus(IDirectDrawSurface7 *iface, DW
     TRACE("iface %p, flags %#x.\n", iface, Flags);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_GetBltStatus(This->WineD3DSurface, Flags);
+    hr = wined3d_surface_get_blt_status(This->wined3d_surface, Flags);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -1741,7 +1731,7 @@ static HRESULT WINAPI ddraw_surface7_GetFlipStatus(IDirectDrawSurface7 *iface, D
     TRACE("iface %p, flags %#x.\n", iface, Flags);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_GetFlipStatus(This->WineD3DSurface, Flags);
+    hr = wined3d_surface_get_flip_status(This->wined3d_surface, Flags);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -1777,9 +1767,7 @@ static HRESULT WINAPI ddraw_surface7_GetOverlayPosition(IDirectDrawSurface7 *ifa
     TRACE("iface %p, x %p, y %p.\n", iface, X, Y);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_GetOverlayPosition(This->WineD3DSurface,
-                                            X,
-                                            Y);
+    hr = wined3d_surface_get_overlay_position(This->wined3d_surface, X, Y);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -1975,7 +1963,7 @@ static HRESULT WINAPI ddraw_surface7_IsLost(IDirectDrawSurface7 *iface)
         return DDERR_SURFACELOST;
     }
 
-    hr = IWineD3DSurface_IsLost(This->WineD3DSurface);
+    hr = wined3d_surface_is_lost(This->wined3d_surface);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -2019,7 +2007,7 @@ static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
         IDirectDrawSurface_AddRef(iface);
         ddraw_recreate_surfaces_cb(iface, &This->surface_desc, NULL /* Not needed */);
     }
-    hr = IWineD3DSurface_Restore(This->WineD3DSurface);
+    hr = wined3d_surface_restore(This->wined3d_surface);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -2051,9 +2039,7 @@ static HRESULT WINAPI ddraw_surface7_SetOverlayPosition(IDirectDrawSurface7 *ifa
     TRACE("iface %p, x %d, y %d.\n", iface, X, Y);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_SetOverlayPosition(This->WineD3DSurface,
-                                            X,
-                                            Y);
+    hr = wined3d_surface_set_overlay_position(This->wined3d_surface, X, Y);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -2091,12 +2077,8 @@ static HRESULT WINAPI ddraw_surface7_UpdateOverlay(IDirectDrawSurface7 *iface, R
             iface, wine_dbgstr_rect(SrcRect), DstSurface, wine_dbgstr_rect(DstRect), Flags, FX);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_UpdateOverlay(This->WineD3DSurface,
-                                       SrcRect,
-                                       Dst ? Dst->WineD3DSurface : NULL,
-                                       DstRect,
-                                       Flags,
-                                       (WINEDDOVERLAYFX *) FX);
+    hr = wined3d_surface_update_overlay(This->wined3d_surface, SrcRect,
+            Dst ? Dst->wined3d_surface : NULL, DstRect, Flags, (WINEDDOVERLAYFX *)FX);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr) {
         case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
@@ -2165,9 +2147,8 @@ static HRESULT WINAPI ddraw_surface7_UpdateOverlayZOrder(IDirectDrawSurface7 *if
     TRACE("iface %p, flags %#x, reference %p.\n", iface, Flags, DDSRef);
 
     EnterCriticalSection(&ddraw_cs);
-    hr =  IWineD3DSurface_UpdateOverlayZOrder(This->WineD3DSurface,
-                                              Flags,
-                                              Ref ? Ref->WineD3DSurface : NULL);
+    hr = wined3d_surface_update_overlay_z_order(This->wined3d_surface,
+            Flags, Ref ? Ref->wined3d_surface : NULL);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -2413,11 +2394,8 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
     }
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_BltFast(This->WineD3DSurface,
-                                 dstx, dsty,
-                                 src ? src->WineD3DSurface : NULL,
-                                 rsrc,
-                                 trans);
+    hr = wined3d_surface_bltfast(This->wined3d_surface, dstx, dsty,
+            src ? src->wined3d_surface : NULL, rsrc, trans);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -2519,7 +2497,8 @@ static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface, IDir
     if(oldClipper)
         IDirectDrawClipper_Release((IDirectDrawClipper *)oldClipper);
 
-    hr = IWineD3DSurface_SetClipper(This->WineD3DSurface, This->clipper ? This->clipper->wineD3DClipper : NULL);
+    hr = wined3d_surface_set_clipper(This->wined3d_surface,
+            This->clipper ? This->clipper->wineD3DClipper : NULL);
 
     if (This->wined3d_swapchain)
     {
@@ -2585,9 +2564,8 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
         }
         if(newFormat != PixelFormat_DD2WineD3D(&This->surface_desc.u4.ddpfPixelFormat) )
         {
-            hr = IWineD3DSurface_SetFormat(This->WineD3DSurface,
-                                           newFormat);
-            if(hr != DD_OK)
+            hr = wined3d_surface_set_format(This->wined3d_surface, newFormat);
+            if (FAILED(hr))
             {
                 LeaveCriticalSection(&ddraw_cs);
                 return hr;
@@ -2596,32 +2574,28 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
     }
     if (DDSD->dwFlags & DDSD_CKDESTOVERLAY)
     {
-        IWineD3DSurface_SetColorKey(This->WineD3DSurface,
-                                    DDCKEY_DESTOVERLAY,
-                                    (WINEDDCOLORKEY *) &DDSD->u3.ddckCKDestOverlay);
+        wined3d_surface_set_color_key(This->wined3d_surface, DDCKEY_DESTOVERLAY,
+                (WINEDDCOLORKEY *)&DDSD->u3.ddckCKDestOverlay);
     }
     if (DDSD->dwFlags & DDSD_CKDESTBLT)
     {
-        IWineD3DSurface_SetColorKey(This->WineD3DSurface,
-                                    DDCKEY_DESTBLT,
-                                    (WINEDDCOLORKEY *) &DDSD->ddckCKDestBlt);
+        wined3d_surface_set_color_key(This->wined3d_surface, DDCKEY_DESTBLT,
+                (WINEDDCOLORKEY *)&DDSD->ddckCKDestBlt);
     }
     if (DDSD->dwFlags & DDSD_CKSRCOVERLAY)
     {
-        IWineD3DSurface_SetColorKey(This->WineD3DSurface,
-                                    DDCKEY_SRCOVERLAY,
-                                    (WINEDDCOLORKEY *) &DDSD->ddckCKSrcOverlay);
+        wined3d_surface_set_color_key(This->wined3d_surface, DDCKEY_SRCOVERLAY,
+                (WINEDDCOLORKEY *)&DDSD->ddckCKSrcOverlay);
     }
     if (DDSD->dwFlags & DDSD_CKSRCBLT)
     {
-        IWineD3DSurface_SetColorKey(This->WineD3DSurface,
-                                    DDCKEY_SRCBLT,
-                                    (WINEDDCOLORKEY *) &DDSD->ddckCKSrcBlt);
+        wined3d_surface_set_color_key(This->wined3d_surface, DDCKEY_SRCBLT,
+                (WINEDDCOLORKEY *)&DDSD->ddckCKSrcBlt);
     }
     if (DDSD->dwFlags & DDSD_LPSURFACE && DDSD->lpSurface)
     {
-        hr = IWineD3DSurface_SetMem(This->WineD3DSurface, DDSD->lpSurface);
-        if(hr != WINED3D_OK)
+        hr = wined3d_surface_set_mem(This->wined3d_surface, DDSD->lpSurface);
+        if (FAILED(hr))
         {
             /* No need for a trace here, wined3d does that for us */
             switch(hr)
@@ -2668,7 +2642,7 @@ static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDir
 {
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     struct wined3d_palette *wined3d_palette;
-    HRESULT hr;
+    HRESULT hr = DD_OK;
 
     TRACE("iface %p, palette %p.\n", iface, Pal);
 
@@ -2676,13 +2650,7 @@ static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDir
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DSurface_GetPalette(This->WineD3DSurface, &wined3d_palette);
-    if (FAILED(hr))
-    {
-        LeaveCriticalSection(&ddraw_cs);
-        return hr;
-    }
-
+    wined3d_palette = wined3d_surface_get_palette(This->wined3d_surface);
     if (wined3d_palette)
     {
         *Pal = wined3d_palette_get_parent(wined3d_palette);
@@ -2728,10 +2696,8 @@ SetColorKeyEnum(IDirectDrawSurface7 *surface,
     struct SCKContext *ctx = context;
     HRESULT hr;
 
-    hr = IWineD3DSurface_SetColorKey(This->WineD3DSurface,
-                                     ctx->Flags,
-                                     ctx->CKey);
-    if(hr != DD_OK)
+    hr = wined3d_surface_set_color_key(This->wined3d_surface, ctx->Flags, ctx->CKey);
+    if (FAILED(hr))
     {
         WARN("IWineD3DSurface_SetColorKey failed, hr = %08x\n", hr);
         ctx->ret = hr;
@@ -2827,7 +2793,7 @@ static HRESULT WINAPI ddraw_surface7_SetColorKey(IDirectDrawSurface7 *iface, DWO
             return DDERR_INVALIDPARAMS;
         }
     }
-    ctx.ret = IWineD3DSurface_SetColorKey(This->WineD3DSurface, Flags, ctx.CKey);
+    ctx.ret = wined3d_surface_set_color_key(This->wined3d_surface, Flags, ctx.CKey);
     ddraw_surface7_EnumAttachedSurfaces(iface, &ctx, SetColorKeyEnum);
     LeaveCriticalSection(&ddraw_cs);
     switch(ctx.ret)
@@ -2882,8 +2848,7 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
     if(oldPal) IDirectDrawPalette_Release(oldPal);  /* For the GetPalette */
 
     /* Set the new Palette */
-    IWineD3DSurface_SetPalette(This->WineD3DSurface,
-                               PalImpl ? PalImpl->wineD3DPalette : NULL);
+    wined3d_surface_set_palette(This->wined3d_surface, PalImpl ? PalImpl->wineD3DPalette : NULL);
     /* AddRef the Palette */
     if(Pal) IDirectDrawPalette_AddRef(Pal);
 
@@ -3188,23 +3153,11 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
         dst_surface->surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
 
         /* Get the palettes */
-        hr = IWineD3DSurface_GetPalette(dst_surface->WineD3DSurface, &wined3d_dst_pal);
-        if (FAILED(hr))
-        {
-            ERR("Failed to get destination palette, hr %#x.\n", hr);
-            LeaveCriticalSection(&ddraw_cs);
-            return D3DERR_TEXTURE_LOAD_FAILED;
-        }
+        wined3d_dst_pal = wined3d_surface_get_palette(dst_surface->wined3d_surface);
         if (wined3d_dst_pal)
             dst_pal = wined3d_palette_get_parent(wined3d_dst_pal);
 
-        hr = IWineD3DSurface_GetPalette(src_surface->WineD3DSurface, &wined3d_src_pal);
-        if (FAILED(hr))
-        {
-            ERR("Failed to get source palette, hr %#x.\n", hr);
-            LeaveCriticalSection(&ddraw_cs);
-            return D3DERR_TEXTURE_LOAD_FAILED;
-        }
+        wined3d_src_pal = wined3d_surface_get_palette(src_surface->wined3d_surface);
         if (wined3d_src_pal)
             src_pal = wined3d_palette_get_parent(wined3d_src_pal);
 
@@ -3247,7 +3200,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             /* Copy the main memory texture into the surface that corresponds
              * to the OpenGL texture object. */
 
-            hr = IWineD3DSurface_Map(src_surface->WineD3DSurface, &src_rect, NULL, 0);
+            hr = wined3d_surface_map(src_surface->wined3d_surface, &src_rect, NULL, 0);
             if (FAILED(hr))
             {
                 ERR("Failed to lock source surface, hr %#x.\n", hr);
@@ -3255,11 +3208,11 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
 
-            hr = IWineD3DSurface_Map(dst_surface->WineD3DSurface, &dst_rect, NULL, 0);
+            hr = wined3d_surface_map(dst_surface->wined3d_surface, &dst_rect, NULL, 0);
             if (FAILED(hr))
             {
                 ERR("Failed to lock destination surface, hr %#x.\n", hr);
-                IWineD3DSurface_Unmap(src_surface->WineD3DSurface);
+                wined3d_surface_unmap(src_surface->wined3d_surface);
                 LeaveCriticalSection(&ddraw_cs);
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
@@ -3269,8 +3222,8 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             else
                 memcpy(dst_rect.pBits, src_rect.pBits, src_rect.Pitch * src_desc->dwHeight);
 
-            IWineD3DSurface_Unmap(src_surface->WineD3DSurface);
-            IWineD3DSurface_Unmap(dst_surface->WineD3DSurface);
+            wined3d_surface_unmap(src_surface->wined3d_surface);
+            wined3d_surface_unmap(dst_surface->wined3d_surface);
         }
 
         if (src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
@@ -3622,7 +3575,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     hr = IWineD3DDevice_CreateSurface(ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight, format,
             TRUE /* Lockable */, FALSE /* Discard */, mip_level, usage, pool,
             WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, surface_type, surface,
-            &ddraw_surface_wined3d_parent_ops, &surface->WineD3DSurface);
+            &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d surface, hr %#x.\n", hr);
@@ -3630,7 +3583,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     }
 
     surface->surface_desc.dwFlags |= DDSD_PIXELFORMAT;
-    wined3d_resource = IWineD3DSurface_GetResource(surface->WineD3DSurface);
+    wined3d_resource = wined3d_surface_get_resource(surface->wined3d_surface);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
 
     format = wined3d_desc.format;
@@ -3658,36 +3611,36 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     else
     {
         surface->surface_desc.dwFlags |= DDSD_PITCH;
-        surface->surface_desc.u1.lPitch = IWineD3DSurface_GetPitch(surface->WineD3DSurface);
+        surface->surface_desc.u1.lPitch = wined3d_surface_get_pitch(surface->wined3d_surface);
     }
 
     if (desc->dwFlags & DDSD_CKDESTOVERLAY)
     {
-        IWineD3DSurface_SetColorKey(surface->WineD3DSurface,
-                DDCKEY_DESTOVERLAY, (WINEDDCOLORKEY *)&desc->u3.ddckCKDestOverlay);
+        wined3d_surface_set_color_key(surface->wined3d_surface, DDCKEY_DESTOVERLAY,
+                (WINEDDCOLORKEY *)&desc->u3.ddckCKDestOverlay);
     }
     if (desc->dwFlags & DDSD_CKDESTBLT)
     {
-        IWineD3DSurface_SetColorKey(surface->WineD3DSurface,
-                DDCKEY_DESTBLT, (WINEDDCOLORKEY *)&desc->ddckCKDestBlt);
+        wined3d_surface_set_color_key(surface->wined3d_surface, DDCKEY_DESTBLT,
+                (WINEDDCOLORKEY *)&desc->ddckCKDestBlt);
     }
     if (desc->dwFlags & DDSD_CKSRCOVERLAY)
     {
-        IWineD3DSurface_SetColorKey(surface->WineD3DSurface,
-                DDCKEY_SRCOVERLAY, (WINEDDCOLORKEY *)&desc->ddckCKSrcOverlay);
+        wined3d_surface_set_color_key(surface->wined3d_surface, DDCKEY_SRCOVERLAY,
+                (WINEDDCOLORKEY *)&desc->ddckCKSrcOverlay);
     }
     if (desc->dwFlags & DDSD_CKSRCBLT)
     {
-        IWineD3DSurface_SetColorKey(surface->WineD3DSurface,
-                DDCKEY_SRCBLT, (WINEDDCOLORKEY *)&desc->ddckCKSrcBlt);
+        wined3d_surface_set_color_key(surface->wined3d_surface, DDCKEY_SRCBLT,
+                (WINEDDCOLORKEY *)&desc->ddckCKSrcBlt);
     }
     if (desc->dwFlags & DDSD_LPSURFACE)
     {
-        hr = IWineD3DSurface_SetMem(surface->WineD3DSurface, desc->lpSurface);
+        hr = wined3d_surface_set_mem(surface->wined3d_surface, desc->lpSurface);
         if (FAILED(hr))
         {
             ERR("Failed to set surface memory, hr %#x.\n", hr);
-            IWineD3DSurface_Release(surface->WineD3DSurface);
+            wined3d_surface_decref(surface->wined3d_surface);
             return hr;
         }
     }

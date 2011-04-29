@@ -1322,7 +1322,7 @@ static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceP
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
+        WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface)
 {
     struct d3d10_device *This = device_from_device_parent(iface);
     struct d3d10_texture2d *texture;
@@ -1355,7 +1355,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     }
 
     *surface = texture->wined3d_surface;
-    IWineD3DSurface_AddRef(*surface);
+    wined3d_surface_incref(*surface);
     ID3D10Texture2D_Release((ID3D10Texture2D *)texture);
 
     return S_OK;
@@ -1364,7 +1364,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
 static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
-        IWineD3DSurface **surface)
+        struct wined3d_surface **surface)
 {
     struct d3d10_device *This = device_from_device_parent(iface);
     struct d3d10_texture2d *texture;
@@ -1397,7 +1397,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
     }
 
     *surface = texture->wined3d_surface;
-    IWineD3DSurface_AddRef(*surface);
+    wined3d_surface_incref(*surface);
     ID3D10Texture2D_Release((ID3D10Texture2D *)texture);
 
     return S_OK;
@@ -1405,7 +1405,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
         UINT width, UINT height, enum wined3d_format_id format, WINED3DMULTISAMPLE_TYPE multisample_type,
-        DWORD multisample_quality, BOOL discard, IWineD3DSurface **surface)
+        DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
     struct d3d10_device *This = device_from_device_parent(iface);
     struct d3d10_texture2d *texture;
@@ -1438,7 +1438,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
     }
 
     *surface = texture->wined3d_surface;
-    IWineD3DSurface_AddRef(*surface);
+    wined3d_surface_incref(*surface);
     ID3D10Texture2D_Release((ID3D10Texture2D *)texture);
 
     return S_OK;

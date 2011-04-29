@@ -41,7 +41,7 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
     if (swapchain->front_buffer)
     {
         surface_set_container(swapchain->front_buffer, WINED3D_CONTAINER_NONE, NULL);
-        if (IWineD3DSurface_Release((IWineD3DSurface *)swapchain->front_buffer))
+        if (wined3d_surface_decref(swapchain->front_buffer))
             WARN("Something's still holding the front buffer (%p).\n", swapchain->front_buffer);
         swapchain->front_buffer = NULL;
     }
@@ -53,7 +53,7 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
         while (i--)
         {
             surface_set_container(swapchain->back_buffers[i], WINED3D_CONTAINER_NONE, NULL);
-            if (IWineD3DSurface_Release((IWineD3DSurface *)swapchain->back_buffers[i]))
+            if (wined3d_surface_decref(swapchain->back_buffers[i]))
                 WARN("Something's still holding back buffer %u (%p).\n", i, swapchain->back_buffers[i]);
         }
         HeapFree(GetProcessHeap(), 0, swapchain->back_buffers);
@@ -161,8 +161,7 @@ HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapc
     if (swapchain->presentParms.Windowed)
         MapWindowPoints(swapchain->win_handle, NULL, &offset, 1);
 
-    IWineD3DSurface_BltFast(dst_surface, offset.x, offset.y,
-            (IWineD3DSurface *)swapchain->front_buffer, NULL, 0);
+    wined3d_surface_bltfast(dst_surface, offset.x, offset.y, swapchain->front_buffer, NULL, 0);
 
     return WINED3D_OK;
 }
@@ -187,8 +186,9 @@ HRESULT CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *
         return WINED3DERR_INVALIDCALL;
     }
 
-    *back_buffer = (IWineD3DSurface *)swapchain->back_buffers[back_buffer_idx];
-    if (*back_buffer) IWineD3DSurface_AddRef(*back_buffer);
+    *back_buffer = swapchain->back_buffers[back_buffer_idx];
+    if (*back_buffer)
+        wined3d_surface_incref(*back_buffer);
 
     TRACE("Returning back buffer %p.\n", *back_buffer);
 
@@ -438,7 +438,6 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
          * allows to use the Blitting engine and avoid copying the whole texture -> render target blitting code.
          */
         memset(&cursor, 0, sizeof(cursor));
-        cursor.lpVtbl = &IWineD3DSurface_Vtbl;
         cursor.resource.ref = 1;
         cursor.resource.device = swapchain->device;
         cursor.resource.pool = WINED3DPOOL_SCRATCH;
@@ -459,14 +458,14 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
          */
         if (swapchain->presentParms.Windowed)
             MapWindowPoints(NULL, swapchain->win_handle, (LPPOINT)&destRect, 2);
-        IWineD3DSurface_Blt((IWineD3DSurface *)swapchain->back_buffers[0], &destRect,
-                (IWineD3DSurface *)&cursor, NULL, WINEDDBLT_KEYSRC, NULL, WINED3DTEXF_POINT);
+        wined3d_surface_blt(swapchain->back_buffers[0], &destRect,
+                &cursor, NULL, WINEDDBLT_KEYSRC, NULL, WINED3DTEXF_POINT);
     }
 
     if (swapchain->device->logo_surface)
     {
         /* Blit the logo into the upper left corner of the drawable. */
-        IWineD3DSurface_BltFast((IWineD3DSurface *)swapchain->back_buffers[0], 0, 0,
+        wined3d_surface_bltfast(swapchain->back_buffers[0], 0, 0,
                 swapchain->device->logo_surface, NULL, WINEDDBLTFAST_SRCCOLORKEY);
     }
 
@@ -624,7 +623,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
                     swapchain->device->depth_stencil->resource.height);
             if (swapchain->device->depth_stencil == swapchain->device->onscreen_depth_stencil)
             {
-                IWineD3DSurface_Release((IWineD3DSurface *)swapchain->device->onscreen_depth_stencil);
+                wined3d_surface_decref(swapchain->device->onscreen_depth_stencil);
                 swapchain->device->onscreen_depth_stencil = NULL;
             }
         }
@@ -1069,7 +1068,8 @@ err:
     {
         for (i = 0; i < swapchain->presentParms.BackBufferCount; ++i)
         {
-            if (swapchain->back_buffers[i]) IWineD3DSurface_Release((IWineD3DSurface *)swapchain->back_buffers[i]);
+            if (swapchain->back_buffers[i])
+                wined3d_surface_decref(swapchain->back_buffers[i]);
         }
         HeapFree(GetProcessHeap(), 0, swapchain->back_buffers);
     }
@@ -1085,7 +1085,8 @@ err:
         HeapFree(GetProcessHeap(), 0, swapchain->context);
     }
 
-    if (swapchain->front_buffer) IWineD3DSurface_Release((IWineD3DSurface *)swapchain->front_buffer);
+    if (swapchain->front_buffer)
+        wined3d_surface_decref(swapchain->front_buffer);
 
     return hr;
 }

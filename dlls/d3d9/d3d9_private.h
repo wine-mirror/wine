@@ -225,12 +225,8 @@ typedef struct IDirect3DSurface9Impl
     /* IUnknown fields */
     const IDirect3DSurface9Vtbl *lpVtbl;
     LONG                    ref;
-
-    /* IDirect3DResource9 fields */
-    IWineD3DSurface        *wineD3DSurface;
-
-    /* Parent reference */
-    LPDIRECT3DDEVICE9EX       parentDevice;
+    struct wined3d_surface *wined3d_surface;
+    IDirect3DDevice9Ex *parentDevice;
 
     /* The surface container */
     IUnknown                    *container;

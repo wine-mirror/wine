@@ -94,7 +94,8 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
         This->resource.allocatedMemory = NULL;
     }
 
-    if (This->flags & SFLAG_USERPTR) IWineD3DSurface_SetMem((IWineD3DSurface *)This, NULL);
+    if (This->flags & SFLAG_USERPTR)
+        wined3d_surface_set_mem(This, NULL);
     if (This->overlay_dest) list_remove(&This->overlay_entry);
 
     HeapFree(GetProcessHeap(), 0, This->palette9);
@@ -397,10 +398,10 @@ static HRESULT surface_create_dib_section(IWineD3DSurfaceImpl *surface)
 
     b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     /* TODO: Is there a nicer way to force a specific alignment? (8 byte for ddraw) */
-    b_info->bmiHeader.biWidth = IWineD3DSurface_GetPitch((IWineD3DSurface *)surface) / format->byte_count;
+    b_info->bmiHeader.biWidth = wined3d_surface_get_pitch(surface) / format->byte_count;
     b_info->bmiHeader.biHeight = -surface->resource.height - extraline;
     b_info->bmiHeader.biSizeImage = (surface->resource.height + extraline)
-            * IWineD3DSurface_GetPitch((IWineD3DSurface *)surface);
+            * wined3d_surface_get_pitch(surface);
     b_info->bmiHeader.biPlanes = 1;
     b_info->bmiHeader.biBitCount = format->byte_count * 8;
 
@@ -468,7 +469,7 @@ static HRESULT surface_create_dib_section(IWineD3DSurfaceImpl *surface)
     if (surface->resource.allocatedMemory)
     {
         memcpy(surface->dib.bitmap_data, surface->resource.allocatedMemory,
-                surface->resource.height * IWineD3DSurface_GetPitch((IWineD3DSurface *)surface));
+                surface->resource.height * wined3d_surface_get_pitch(surface));
     }
     else
     {
@@ -646,7 +647,7 @@ static void surface_release_client_storage(IWineD3DSurfaceImpl *surface)
     surface_force_reload(surface);
 }
 
-static HRESULT surface_private_setup(struct IWineD3DSurfaceImpl *surface)
+static HRESULT surface_private_setup(struct wined3d_surface *surface)
 {
     /* TODO: Check against the maximum texture sizes supported by the video card. */
     const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
@@ -822,9 +823,8 @@ static HRESULT surface_draw_overlay(IWineD3DSurfaceImpl *surface)
         return WINED3D_OK;
 
     surface->overlay_dest->flags |= SFLAG_INOVERLAYDRAW;
-    hr = IWineD3DSurface_Blt((IWineD3DSurface *)surface->overlay_dest,
-            &surface->overlay_destrect, (IWineD3DSurface *)surface, &surface->overlay_srcrect,
-            WINEDDBLT_WAIT, NULL, WINED3DTEXF_LINEAR);
+    hr = wined3d_surface_blt(surface->overlay_dest, &surface->overlay_destrect, surface,
+            &surface->overlay_srcrect, WINEDDBLT_WAIT, NULL, WINED3DTEXF_LINEAR);
     surface->overlay_dest->flags &= ~SFLAG_INOVERLAYDRAW;
 
     return hr;
@@ -1034,7 +1034,7 @@ static HRESULT surface_getdc(IWineD3DSurfaceImpl *surface)
     }
 
     /* Map the surface. */
-    hr = IWineD3DSurface_Map((IWineD3DSurface *)surface, &lock, NULL, 0);
+    hr = wined3d_surface_map(surface, &lock, NULL, 0);
     if (FAILED(hr))
         ERR("Map failed, hr %#x.\n", hr);
 
@@ -1680,7 +1680,7 @@ static void surface_gdi_cleanup(IWineD3DSurfaceImpl *surface)
     }
 
     if (surface->flags & SFLAG_USERPTR)
-        IWineD3DSurface_SetMem((IWineD3DSurface *)surface, NULL);
+        wined3d_surface_set_mem(surface, NULL);
     if (surface->overlay_dest)
         list_remove(&surface->overlay_entry);
 
@@ -1786,7 +1786,7 @@ static HRESULT gdi_surface_getdc(IWineD3DSurfaceImpl *surface)
     }
 
     /* Map the surface. */
-    hr = IWineD3DSurface_Map((IWineD3DSurface *)surface, &lock, NULL, 0);
+    hr = wined3d_surface_map(surface, &lock, NULL, 0);
     if (FAILED(hr))
         ERR("Map failed, hr %#x.\n", hr);
 
@@ -2054,7 +2054,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This, const struct wined3
         {
             unsigned char alignment = This->resource.device->surface_alignment;
             src_pitch = format->byte_count * This->pow2Width;
-            dst_pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);
+            dst_pitch = wined3d_surface_get_pitch(This);
             src_pitch = (src_pitch + alignment - 1) & ~(alignment - 1);
             mem = HeapAlloc(GetProcessHeap(), 0, src_pitch * This->pow2Height);
         } else {
@@ -2606,28 +2606,8 @@ static inline unsigned short float_32_to_16(const float *in)
     return ret;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_QueryInterface(IWineD3DSurface *iface,
-        REFIID riid, void **object)
+ULONG CDECL wined3d_surface_incref(struct wined3d_surface *surface)
 {
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
-
-    if (IsEqualGUID(riid, &IID_IWineD3DSurface)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
-    }
-
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-
-    *object = NULL;
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI IWineD3DBaseSurfaceImpl_AddRef(IWineD3DSurface *iface)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
     ULONG refcount;
 
     TRACE("Surface %p, container %p of type %#x.\n",
@@ -2654,9 +2634,8 @@ static ULONG WINAPI IWineD3DBaseSurfaceImpl_AddRef(IWineD3DSurface *iface)
 }
 
 /* Do not call while under the GL lock. */
-static ULONG WINAPI IWineD3DBaseSurfaceImpl_Release(IWineD3DSurface *iface)
+ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
     ULONG refcount;
 
     TRACE("Surface %p, container %p of type %#x.\n",
@@ -2692,59 +2671,57 @@ static ULONG WINAPI IWineD3DBaseSurfaceImpl_Release(IWineD3DSurface *iface)
     return refcount;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPrivateData(IWineD3DSurface *iface,
+HRESULT CDECL wined3d_surface_set_private_data(struct wined3d_surface *surface,
         REFGUID riid, const void *data, DWORD data_size, DWORD flags)
 {
-    return resource_set_private_data(&((IWineD3DSurfaceImpl *)iface)->resource, riid, data, data_size, flags);
+    return resource_set_private_data(&surface->resource, riid, data, data_size, flags);
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPrivateData(IWineD3DSurface *iface,
+HRESULT CDECL wined3d_surface_get_private_data(const struct wined3d_surface *surface,
         REFGUID guid, void *data, DWORD *data_size)
 {
-    return resource_get_private_data(&((IWineD3DSurfaceImpl *)iface)->resource, guid, data, data_size);
+    return resource_get_private_data(&surface->resource, guid, data, data_size);
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_FreePrivateData(IWineD3DSurface *iface, REFGUID refguid)
+HRESULT CDECL wined3d_surface_free_private_data(struct wined3d_surface *surface, REFGUID refguid)
 {
-    return resource_free_private_data(&((IWineD3DSurfaceImpl *)iface)->resource, refguid);
+    return resource_free_private_data(&surface->resource, refguid);
 }
 
-static DWORD WINAPI IWineD3DBaseSurfaceImpl_SetPriority(IWineD3DSurface *iface, DWORD priority)
+DWORD CDECL wined3d_surface_set_priority(struct wined3d_surface *surface, DWORD priority)
 {
-    return resource_set_priority(&((IWineD3DSurfaceImpl *)iface)->resource, priority);
+    return resource_set_priority(&surface->resource, priority);
 }
 
-static DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPriority(IWineD3DSurface *iface)
+DWORD CDECL wined3d_surface_get_priority(const struct wined3d_surface *surface)
 {
-    return resource_get_priority(&((IWineD3DSurfaceImpl *)iface)->resource);
+    return resource_get_priority(&surface->resource);
 }
 
-static void WINAPI IWineD3DBaseSurfaceImpl_PreLoad(IWineD3DSurface *iface)
+void CDECL wined3d_surface_preload(struct wined3d_surface *surface)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p.\n", iface);
+    TRACE("surface %p.\n", surface);
 
     surface->surface_ops->surface_preload(surface);
 }
 
-static void * WINAPI IWineD3DBaseSurfaceImpl_GetParent(IWineD3DSurface *iface)
+void * CDECL wined3d_surface_get_parent(const struct wined3d_surface *surface)
 {
-    TRACE("iface %p.\n", iface);
+    TRACE("surface %p.\n", surface);
 
-    return ((IWineD3DSurfaceImpl *)iface)->resource.parent;
+    return surface->resource.parent;
 }
 
-static struct wined3d_resource * WINAPI IWineD3DBaseSurfaceImpl_GetResource(IWineD3DSurface *iface)
+struct wined3d_resource * CDECL wined3d_surface_get_resource(struct wined3d_surface *surface)
 {
-    TRACE("iface %p.\n", iface);
+    TRACE("surface %p.\n", surface);
 
-    return &((IWineD3DSurfaceImpl *)iface)->resource;
+    return &surface->resource;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *iface, DWORD flags)
+HRESULT CDECL wined3d_surface_get_blt_status(const struct wined3d_surface *surface, DWORD flags)
 {
-    TRACE("iface %p, flags %#x.\n", iface, flags);
+    TRACE("surface %p, flags %#x.\n", surface, flags);
 
     switch (flags)
     {
@@ -2757,11 +2734,11 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetBltStatus(IWineD3DSurface *ifac
     }
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetFlipStatus(IWineD3DSurface *iface, DWORD flags)
+HRESULT CDECL wined3d_surface_get_flip_status(const struct wined3d_surface *surface, DWORD flags)
 {
-    /* XXX: DDERR_INVALIDSURFACETYPE */
+    TRACE("surface %p, flags %#x.\n", surface, flags);
 
-    TRACE("iface %p, flags %#x.\n", iface, flags);
+    /* XXX: DDERR_INVALIDSURFACETYPE */
 
     switch (flags)
     {
@@ -2774,32 +2751,26 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetFlipStatus(IWineD3DSurface *ifa
     }
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_IsLost(IWineD3DSurface *iface)
+HRESULT CDECL wined3d_surface_is_lost(const struct wined3d_surface *surface)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p.\n", iface);
+    TRACE("surface %p.\n", surface);
 
     /* D3D8 and 9 loose full devices, ddraw only surfaces. */
     return surface->flags & SFLAG_LOST ? WINED3DERR_DEVICELOST : WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Restore(IWineD3DSurface *iface)
+HRESULT CDECL wined3d_surface_restore(struct wined3d_surface *surface)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p.\n", iface);
+    TRACE("surface %p.\n", surface);
 
     /* So far we don't lose anything :) */
     surface->flags &= ~SFLAG_LOST;
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface, struct wined3d_palette *palette)
+HRESULT CDECL wined3d_surface_set_palette(struct wined3d_surface *surface, struct wined3d_palette *palette)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, palette %p.\n", iface, palette);
+    TRACE("surface %p, palette %p.\n", surface, palette);
 
     if (surface->palette == palette)
     {
@@ -2823,12 +2794,10 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetPalette(IWineD3DSurface *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface,
+HRESULT CDECL wined3d_surface_set_color_key(struct wined3d_surface *surface,
         DWORD flags, const WINEDDCOLORKEY *color_key)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, flags %#x, color_key %p.\n", iface, flags, color_key);
+    TRACE("surface %p, flags %#x, color_key %p.\n", surface, flags, color_key);
 
     if (flags & WINEDDCKEY_COLORSPACE)
     {
@@ -2887,24 +2856,19 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetColorKey(IWineD3DSurface *iface
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface, struct wined3d_palette **palette)
+struct wined3d_palette * CDECL wined3d_surface_get_palette(const struct wined3d_surface *surface)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *) iface;
+    TRACE("surface %p.\n", surface);
 
-    TRACE("iface %p, palette %p.\n", iface, palette);
-
-    *palette = surface->palette;
-
-    return WINED3D_OK;
+    return surface->palette;
 }
 
-static DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface)
+DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
     const struct wined3d_format *format = surface->resource.format;
     DWORD pitch;
 
-    TRACE("iface %p.\n", iface);
+    TRACE("surface %p.\n", surface);
 
     if ((format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
     {
@@ -2925,11 +2889,9 @@ static DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface)
     return pitch;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetMem(IWineD3DSurface *iface, void *mem)
+HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, mem %p.\n", iface, mem);
+    TRACE("surface %p, mem %p.\n", surface, mem);
 
     if (surface->flags & (SFLAG_LOCKED | SFLAG_DCINUSE))
     {
@@ -2940,12 +2902,11 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetMem(IWineD3DSurface *iface, voi
     return surface->surface_ops->surface_set_mem(surface, mem);
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetOverlayPosition(IWineD3DSurface *iface, LONG x, LONG y)
+HRESULT CDECL wined3d_surface_set_overlay_position(struct wined3d_surface *surface, LONG x, LONG y)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
     LONG w, h;
 
-    TRACE("iface %p, x %d, y %d.\n", iface, x, y);
+    TRACE("surface %p, x %d, y %d.\n", surface, x, y);
 
     if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
     {
@@ -2965,11 +2926,9 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetOverlayPosition(IWineD3DSurface
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetOverlayPosition(IWineD3DSurface *iface, LONG *x, LONG *y)
+HRESULT CDECL wined3d_surface_get_overlay_position(const struct wined3d_surface *surface, LONG *x, LONG *y)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, x %p, y %p.\n", iface, x, y);
+    TRACE("surface %p, x %p, y %p.\n", surface, x, y);
 
     if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
     {
@@ -2993,12 +2952,10 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetOverlayPosition(IWineD3DSurface
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurface *iface,
-        DWORD flags, IWineD3DSurface *ref)
+HRESULT CDECL wined3d_surface_update_overlay_z_order(struct wined3d_surface *surface,
+        DWORD flags, struct wined3d_surface *ref)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    FIXME("iface %p, flags %#x, ref %p stub!\n", iface, flags, ref);
+    FIXME("surface %p, flags %#x, ref %p stub!\n", surface, flags, ref);
 
     if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
     {
@@ -3009,14 +2966,13 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder(IWineD3DSurfac
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, const RECT *src_rect,
+HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, const RECT *src_rect,
         IWineD3DSurface *dst_surface, const RECT *dst_rect, DWORD flags, const WINEDDOVERLAYFX *fx)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
     IWineD3DSurfaceImpl *Dst = (IWineD3DSurfaceImpl *)dst_surface;
 
-    TRACE("iface %p, src_rect %s, dst_surface %p, dst_rect %s, flags %#x, fx %p.\n",
-            iface, wine_dbgstr_rect(src_rect), dst_surface, wine_dbgstr_rect(dst_rect), flags, fx);
+    TRACE("surface %p, src_rect %s, dst_surface %p, dst_rect %s, flags %#x, fx %p.\n",
+            surface, wine_dbgstr_rect(src_rect), dst_surface, wine_dbgstr_rect(dst_rect), flags, fx);
 
     if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
     {
@@ -3081,36 +3037,27 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_UpdateOverlay(IWineD3DSurface *ifa
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetClipper(IWineD3DSurface *iface, struct wined3d_clipper *clipper)
+HRESULT CDECL wined3d_surface_set_clipper(struct wined3d_surface *surface, struct wined3d_clipper *clipper)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, clipper %p.\n", iface, clipper);
+    TRACE("surface %p, clipper %p.\n", surface, clipper);
 
     surface->clipper = clipper;
 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetClipper(IWineD3DSurface *iface, struct wined3d_clipper **clipper)
+struct wined3d_clipper * CDECL wined3d_surface_get_clipper(const struct wined3d_surface *surface)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    TRACE("surface %p.\n", surface);
 
-    TRACE("iface %p, clipper %p.\n", iface, clipper);
-
-    *clipper = surface->clipper;
-    if (*clipper)
-        wined3d_clipper_incref(*clipper);
-
-    return WINED3D_OK;
+    return surface->clipper;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, enum wined3d_format_id format_id)
+HRESULT CDECL wined3d_surface_set_format(struct wined3d_surface *surface, enum wined3d_format_id format_id)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
     const struct wined3d_format *format = wined3d_get_format(&surface->resource.device->adapter->gl_info, format_id);
 
-    TRACE("iface %p, format %s.\n", iface, debug_d3dformat(format_id));
+    TRACE("surface %p, format %s.\n", surface, debug_d3dformat(format_id));
 
     if (surface->resource.format->id != WINED3DFMT_UNKNOWN)
     {
@@ -3366,29 +3313,29 @@ static IWineD3DSurfaceImpl *surface_convert_format(IWineD3DSurfaceImpl *source, 
     memset(&lock_src, 0, sizeof(lock_src));
     memset(&lock_dst, 0, sizeof(lock_dst));
 
-    hr = IWineD3DSurface_Map((IWineD3DSurface *)source, &lock_src, NULL, WINED3DLOCK_READONLY);
+    hr = wined3d_surface_map(source, &lock_src, NULL, WINED3DLOCK_READONLY);
     if (FAILED(hr))
     {
         ERR("Failed to lock the source surface.\n");
-        IWineD3DSurface_Release(ret);
+        wined3d_surface_decref(ret);
         return NULL;
     }
-    hr = IWineD3DSurface_Map(ret, &lock_dst, NULL, WINED3DLOCK_READONLY);
+    hr = wined3d_surface_map(ret, &lock_dst, NULL, WINED3DLOCK_READONLY);
     if (FAILED(hr))
     {
         ERR("Failed to lock the destination surface.\n");
-        IWineD3DSurface_Unmap((IWineD3DSurface *)source);
-        IWineD3DSurface_Release(ret);
+        wined3d_surface_unmap(source);
+        wined3d_surface_decref(ret);
         return NULL;
     }
 
     conv->convert(lock_src.pBits, lock_dst.pBits, lock_src.Pitch, lock_dst.Pitch,
             source->resource.width, source->resource.height);
 
-    IWineD3DSurface_Unmap(ret);
-    IWineD3DSurface_Unmap((IWineD3DSurface *)source);
+    wined3d_surface_unmap(ret);
+    wined3d_surface_unmap(source);
 
-    return (IWineD3DSurfaceImpl *)ret;
+    return ret;
 }
 
 static HRESULT _Blt_ColorFill(BYTE *buf, unsigned int width, unsigned int height,
@@ -3450,38 +3397,32 @@ do { \
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *dst_rect,
-        IWineD3DSurface *src_surface, const RECT *src_rect, DWORD flags,
+HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
+        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
 {
-    IWineD3DSurfaceImpl *dst_surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
-            iface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
+    TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
+            dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
             flags, fx, debug_d3dtexturefiltertype(filter));
 
-    return dst_surface->surface_ops->surface_blt(dst_surface, dst_rect,
-            (IWineD3DSurfaceImpl *)src_surface, src_rect, flags, fx, filter);
+    return dst_surface->surface_ops->surface_blt(dst_surface,
+            dst_rect, src_surface, src_rect, flags, fx, filter);
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface,
-        DWORD dst_x, DWORD dst_y, IWineD3DSurface *src_surface, const RECT *src_rect, DWORD trans)
+HRESULT CDECL wined3d_surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
+        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD trans)
 {
-    IWineD3DSurfaceImpl *dst_surface = (IWineD3DSurfaceImpl *)iface;
+    TRACE("dst_surface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, trans %#x.\n",
+            dst_surface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect), trans);
 
-    TRACE("iface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, trans %#x.\n",
-            iface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect), trans);
-
-    return dst_surface->surface_ops->surface_bltfast(dst_surface, dst_x, dst_y,
-            (IWineD3DSurfaceImpl *)src_surface, src_rect, trans);
+    return dst_surface->surface_ops->surface_bltfast(dst_surface,
+            dst_x, dst_y, src_surface, src_rect, trans);
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Unmap(IWineD3DSurface *iface)
+HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p.\n", iface);
+    TRACE("surface %p.\n", surface);
 
     if (!(surface->flags & SFLAG_LOCKED))
     {
@@ -3495,13 +3436,11 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Unmap(IWineD3DSurface *iface)
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
+HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
-            iface, locked_rect, wine_dbgstr_rect(rect), flags);
+    TRACE("surface %p, locked_rect %p, rect %s, flags %#x.\n",
+            surface, locked_rect, wine_dbgstr_rect(rect), flags);
 
     if (surface->flags & SFLAG_LOCKED)
     {
@@ -3515,7 +3454,7 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
 
     surface->surface_ops->surface_map(surface, rect, flags);
 
-    locked_rect->Pitch = IWineD3DSurface_GetPitch(iface);
+    locked_rect->Pitch = wined3d_surface_get_pitch(surface);
 
     if (!rect)
     {
@@ -3555,12 +3494,11 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Map(IWineD3DSurface *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *dc)
+HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
     HRESULT hr;
 
-    TRACE("iface %p, dc %p.\n", iface, dc);
+    TRACE("surface %p, dc %p.\n", surface, dc);
 
     if (surface->flags & SFLAG_USERPTR)
     {
@@ -3625,11 +3563,9 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC dc)
+HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-
-    TRACE("iface %p, dc %p.\n", iface, dc);
+    TRACE("surface %p, dc %p.\n", surface, dc);
 
     if (!(surface->flags & SFLAG_DCINUSE))
         return WINEDDERR_NODC;
@@ -3648,20 +3584,19 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, 
     }
 
     /* We locked first, so unlock now. */
-    IWineD3DSurface_Unmap(iface);
+    wined3d_surface_unmap(surface);
 
     surface->flags &= ~SFLAG_DCINUSE;
 
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD flags)
+HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override, DWORD flags)
 {
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
     struct wined3d_swapchain *swapchain;
     HRESULT hr;
 
-    TRACE("iface %p, override %p, flags %#x.\n", iface, override, flags);
+    TRACE("surface %p, override %p, flags %#x.\n", surface, override, flags);
 
     if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN)
     {
@@ -3670,7 +3605,7 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Flip(IWineD3DSurface *iface, IWine
     }
     swapchain = surface->container.u.swapchain;
 
-    hr = surface->surface_ops->surface_flip(surface, (IWineD3DSurfaceImpl *)override);
+    hr = surface->surface_ops->surface_flip(surface, override);
     if (FAILED(hr))
         return hr;
 
@@ -4109,8 +4044,8 @@ void surface_prepare_texture(IWineD3DSurfaceImpl *surface, const struct wined3d_
 static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *surface,
         const RECT *rect, GLenum fmt, GLenum type, UINT bpp, const BYTE *mem)
 {
-    UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *)surface);    /* target is argb, 4 byte */
     IWineD3DDeviceImpl *device = surface->resource.device;
+    UINT pitch = wined3d_surface_get_pitch(surface);
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     RECT local_rect;
@@ -5996,7 +5931,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
         {
             /* Note: It might be faster to download into a texture first. */
             read_from_framebuffer(surface, rect, surface->resource.allocatedMemory,
-                    IWineD3DSurface_GetPitch((IWineD3DSurface *)surface));
+                    wined3d_surface_get_pitch(surface));
         }
     }
     else if (flag == SFLAG_INDRAWABLE)
@@ -6028,7 +5963,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
 
             /* The width is in 'length' not in bytes */
             width = surface->resource.width;
-            pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *)surface);
+            pitch = wined3d_surface_get_pitch(surface);
 
             /* Don't use PBOs for converted surfaces. During PBO conversion we look at SFLAG_CONVERTED
              * but it isn't set (yet) in all cases it is getting called. */
@@ -6144,7 +6079,7 @@ HRESULT surface_load_location(IWineD3DSurfaceImpl *surface, DWORD flag, const RE
 
             /* The width is in 'length' not in bytes */
             width = surface->resource.width;
-            pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *)surface);
+            pitch = wined3d_surface_get_pitch(surface);
 
             /* Don't use PBOs for converted surfaces. During PBO conversion we look at SFLAG_CONVERTED
              * but it isn't set (yet) in all cases it is getting called. */
@@ -6252,48 +6187,6 @@ BOOL surface_is_offscreen(IWineD3DSurfaceImpl *surface)
      * offscreen, otherwise onscreen */
     return swapchain->render_to_fbo;
 }
-
-const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
-{
-    /* IUnknown */
-    IWineD3DBaseSurfaceImpl_QueryInterface,
-    IWineD3DBaseSurfaceImpl_AddRef,
-    IWineD3DBaseSurfaceImpl_Release,
-    /* IWineD3DResource */
-    IWineD3DBaseSurfaceImpl_GetParent,
-    IWineD3DBaseSurfaceImpl_SetPrivateData,
-    IWineD3DBaseSurfaceImpl_GetPrivateData,
-    IWineD3DBaseSurfaceImpl_FreePrivateData,
-    IWineD3DBaseSurfaceImpl_SetPriority,
-    IWineD3DBaseSurfaceImpl_GetPriority,
-    IWineD3DBaseSurfaceImpl_PreLoad,
-    /* IWineD3DSurface */
-    IWineD3DBaseSurfaceImpl_GetResource,
-    IWineD3DBaseSurfaceImpl_Map,
-    IWineD3DBaseSurfaceImpl_Unmap,
-    IWineD3DBaseSurfaceImpl_GetDC,
-    IWineD3DBaseSurfaceImpl_ReleaseDC,
-    IWineD3DBaseSurfaceImpl_Flip,
-    IWineD3DBaseSurfaceImpl_Blt,
-    IWineD3DBaseSurfaceImpl_GetBltStatus,
-    IWineD3DBaseSurfaceImpl_GetFlipStatus,
-    IWineD3DBaseSurfaceImpl_IsLost,
-    IWineD3DBaseSurfaceImpl_Restore,
-    IWineD3DBaseSurfaceImpl_BltFast,
-    IWineD3DBaseSurfaceImpl_GetPalette,
-    IWineD3DBaseSurfaceImpl_SetPalette,
-    IWineD3DBaseSurfaceImpl_SetColorKey,
-    IWineD3DBaseSurfaceImpl_GetPitch,
-    IWineD3DBaseSurfaceImpl_SetMem,
-    IWineD3DBaseSurfaceImpl_SetOverlayPosition,
-    IWineD3DBaseSurfaceImpl_GetOverlayPosition,
-    IWineD3DBaseSurfaceImpl_UpdateOverlayZOrder,
-    IWineD3DBaseSurfaceImpl_UpdateOverlay,
-    IWineD3DBaseSurfaceImpl_SetClipper,
-    IWineD3DBaseSurfaceImpl_GetClipper,
-    /* Internal use: */
-    IWineD3DBaseSurfaceImpl_SetFormat,
-};
 
 static HRESULT ffp_blit_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
 /* Context activation is done by the caller. */
@@ -6636,7 +6529,7 @@ static HRESULT surface_cpu_blt(IWineD3DSurfaceImpl *dst_surface, const RECT *dst
 
     if (src_surface == dst_surface)
     {
-        IWineD3DSurface_Map((IWineD3DSurface *)dst_surface, &dlock, NULL, 0);
+        wined3d_surface_map(dst_surface, &dlock, NULL, 0);
         slock = dlock;
         src_format = dst_surface->resource.format;
         dst_format = src_format;
@@ -6656,7 +6549,7 @@ static HRESULT surface_cpu_blt(IWineD3DSurfaceImpl *dst_surface, const RECT *dst
                     goto release;
                 }
             }
-            IWineD3DSurface_Map((IWineD3DSurface *)src_surface, &slock, NULL, WINED3DLOCK_READONLY);
+            wined3d_surface_map(src_surface, &slock, NULL, WINED3DLOCK_READONLY);
             src_format = src_surface->resource.format;
         }
         else
@@ -6664,9 +6557,9 @@ static HRESULT surface_cpu_blt(IWineD3DSurfaceImpl *dst_surface, const RECT *dst
             src_format = dst_format;
         }
         if (dst_rect)
-            IWineD3DSurface_Map((IWineD3DSurface *)dst_surface, &dlock, &xdst, 0);
+            wined3d_surface_map(dst_surface, &dlock, &xdst, 0);
         else
-            IWineD3DSurface_Map((IWineD3DSurface *)dst_surface, &dlock, NULL, 0);
+            wined3d_surface_map(dst_surface, &dlock, NULL, 0);
     }
 
     if (!fx || !(fx->dwDDFX)) flags &= ~WINEDDBLT_DDFX;
@@ -7095,12 +6988,12 @@ error:
     }
 
 release:
-    IWineD3DSurface_Unmap((IWineD3DSurface *)dst_surface);
+    wined3d_surface_unmap(dst_surface);
     if (src_surface && src_surface != dst_surface)
-        IWineD3DSurface_Unmap((IWineD3DSurface *)src_surface);
+        wined3d_surface_unmap(src_surface);
     /* Release the converted surface, if any. */
     if (src_surface && src_surface != orig_src)
-        IWineD3DSurface_Release((IWineD3DSurface *)src_surface);
+        wined3d_surface_decref(src_surface);
 
     return hr;
 }
@@ -7183,8 +7076,8 @@ static HRESULT surface_cpu_bltfast(IWineD3DSurfaceImpl *dst_surface, DWORD dst_x
 
         UnionRect(&lock_union, &lock_src, &lock_dst);
 
-        /* Lock the union of the two rectangles */
-        hr = IWineD3DSurface_Map((IWineD3DSurface *)dst_surface, &dlock, &lock_union, 0);
+        /* Lock the union of the two rectangles. */
+        hr = wined3d_surface_map(dst_surface, &dlock, &lock_union, 0);
         if (FAILED(hr))
             goto error;
 
@@ -7199,10 +7092,10 @@ static HRESULT surface_cpu_bltfast(IWineD3DSurfaceImpl *dst_surface, DWORD dst_x
     }
     else
     {
-        hr = IWineD3DSurface_Map((IWineD3DSurface *)src_surface, &slock, &lock_src, WINED3DLOCK_READONLY);
+        hr = wined3d_surface_map(src_surface, &slock, &lock_src, WINED3DLOCK_READONLY);
         if (FAILED(hr))
             goto error;
-        hr = IWineD3DSurface_Map((IWineD3DSurface *)dst_surface, &dlock, &lock_dst, 0);
+        hr = wined3d_surface_map(dst_surface, &dlock, &lock_dst, 0);
         if (FAILED(hr))
             goto error;
 
@@ -7366,12 +7259,12 @@ do { \
 error:
     if (src_surface == dst_surface)
     {
-        IWineD3DSurface_Unmap((IWineD3DSurface *)dst_surface);
+        wined3d_surface_unmap(dst_surface);
     }
     else
     {
-        IWineD3DSurface_Unmap((IWineD3DSurface *)dst_surface);
-        IWineD3DSurface_Unmap((IWineD3DSurface *)src_surface);
+        wined3d_surface_unmap(dst_surface);
+        wined3d_surface_unmap(src_surface);
     }
 
     return hr;
@@ -7386,8 +7279,8 @@ static HRESULT cpu_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceIm
     memset(&BltFx, 0, sizeof(BltFx));
     BltFx.dwSize = sizeof(BltFx);
     BltFx.u5.dwFillColor = wined3d_format_convert_from_float(dst_surface->resource.format, color);
-    return IWineD3DBaseSurfaceImpl_Blt((IWineD3DSurface*)dst_surface, dst_rect,
-            NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
+    return wined3d_surface_blt(dst_surface, dst_rect, NULL, NULL,
+            WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
 }
 
 /* Do not call while under the GL lock. */
@@ -7469,7 +7362,6 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
         return WINED3DERR_INVALIDCALL;
 
     surface->surface_type = surface_type;
-    surface->lpVtbl = &IWineD3DSurface_Vtbl;
 
     switch (surface_type)
     {

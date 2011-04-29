@@ -109,7 +109,7 @@ static HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(IDirect3DSwapChain8 
         UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8 **ppBackBuffer)
 {
     IDirect3DSwapChain8Impl *This = impl_from_IDirect3DSwapChain8(iface);
-    IWineD3DSurface *mySurface = NULL;
+    struct wined3d_surface *wined3d_surface = NULL;
     HRESULT hr;
 
     TRACE("iface %p, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",
@@ -117,12 +117,12 @@ static HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(IDirect3DSwapChain8 
 
     wined3d_mutex_lock();
     hr = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain,
-            iBackBuffer, (WINED3DBACKBUFFER_TYPE)Type, &mySurface);
-    if (SUCCEEDED(hr) && mySurface)
+            iBackBuffer, (WINED3DBACKBUFFER_TYPE)Type, &wined3d_surface);
+    if (SUCCEEDED(hr) && wined3d_surface)
     {
-        *ppBackBuffer = IWineD3DSurface_GetParent(mySurface);
+        *ppBackBuffer = wined3d_surface_get_parent(wined3d_surface);
         IDirect3DSurface8_AddRef(*ppBackBuffer);
-        IWineD3DSurface_Release(mySurface);
+        wined3d_surface_decref(wined3d_surface);
     }
     wined3d_mutex_unlock();
 

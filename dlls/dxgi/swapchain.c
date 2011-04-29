@@ -144,7 +144,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
         UINT buffer_idx, REFIID riid, void **surface)
 {
     struct dxgi_swapchain *This = (struct dxgi_swapchain *)iface;
-    IWineD3DSurface *backbuffer;
+    struct wined3d_surface *backbuffer;
     IUnknown *parent;
     HRESULT hr;
 
@@ -161,9 +161,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
         return hr;
     }
 
-    parent = IWineD3DSurface_GetParent(backbuffer);
+    parent = wined3d_surface_get_parent(backbuffer);
     hr = IUnknown_QueryInterface(parent, riid, surface);
-    IWineD3DSurface_Release(backbuffer);
+    wined3d_surface_decref(backbuffer);
     LeaveCriticalSection(&dxgi_cs);
 
     return hr;

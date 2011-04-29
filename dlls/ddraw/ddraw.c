@@ -1957,7 +1957,7 @@ static HRESULT WINAPI ddraw4_TestCooperativeLevel(IDirectDraw4 *iface)
 static HRESULT WINAPI ddraw7_GetGDISurface(IDirectDraw7 *iface, IDirectDrawSurface7 **GDISurface)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
-    IWineD3DSurface *Surf;
+    struct wined3d_surface *wined3d_surface;
     IDirectDrawSurface7 *ddsurf;
     HRESULT hr;
     DDSCAPS2 ddsCaps;
@@ -1969,21 +1969,16 @@ static HRESULT WINAPI ddraw7_GetGDISurface(IDirectDraw7 *iface, IDirectDrawSurfa
      */
     EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DDevice_GetBackBuffer(This->wineD3DDevice,
-                                      0, /* SwapChain */
-                                      0, /* first back buffer*/
-                                      WINED3DBACKBUFFER_TYPE_MONO,
-                                      &Surf);
-
-    if( (hr != D3D_OK) ||
-        (!Surf) )
+            0, 0, WINED3DBACKBUFFER_TYPE_MONO, &wined3d_surface);
+    if (FAILED(hr) || !wined3d_surface)
     {
         ERR("IWineD3DDevice::GetBackBuffer failed\n");
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_NOTFOUND;
     }
 
-    ddsurf = IWineD3DSurface_GetParent(Surf);
-    IWineD3DSurface_Release(Surf);
+    ddsurf = wined3d_surface_get_parent(wined3d_surface);
+    wined3d_surface_decref(wined3d_surface);
 
     /* Find the front buffer */
     ddsCaps.dwCaps = DDSCAPS_FRONTBUFFER;
@@ -2384,7 +2379,7 @@ static HRESULT WINAPI ddraw7_GetSurfaceFromDC(IDirectDraw7 *iface, HDC hdc,
         IDirectDrawSurface7 **Surface)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
-    IWineD3DSurface *wined3d_surface;
+    struct wined3d_surface *wined3d_surface;
     HRESULT hr;
 
     TRACE("iface %p, dc %p, surface %p.\n", iface, hdc, Surface);
@@ -2399,7 +2394,7 @@ static HRESULT WINAPI ddraw7_GetSurfaceFromDC(IDirectDraw7 *iface, HDC hdc,
         return DDERR_NOTFOUND;
     }
 
-    *Surface = IWineD3DSurface_GetParent(wined3d_surface);
+    *Surface = wined3d_surface_get_parent(wined3d_surface);
     IDirectDrawSurface7_AddRef(*Surface);
     TRACE("Returning surface %p.\n", Surface);
     return DD_OK;
@@ -2518,9 +2513,9 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
     IDirectDrawImpl *This = surfImpl->ddraw;
-    struct wined3d_clipper *clipper = NULL;
-    IWineD3DSurface *wineD3DSurface;
+    struct wined3d_surface *wined3d_surface;
     struct wined3d_swapchain *swapchain;
+    struct wined3d_clipper *clipper;
     void *parent;
     HRESULT hr;
 
@@ -2535,27 +2530,27 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     /* Get the objects */
     swapchain = surfImpl->wined3d_swapchain;
     surfImpl->wined3d_swapchain = NULL;
-    wineD3DSurface = surfImpl->WineD3DSurface;
+    wined3d_surface = surfImpl->wined3d_surface;
 
     /* get the clipper */
-    IWineD3DSurface_GetClipper(wineD3DSurface, &clipper);
+    clipper = wined3d_surface_get_clipper(wined3d_surface);
 
     /* Get the surface properties */
-    wined3d_resource = IWineD3DSurface_GetResource(wineD3DSurface);
+    wined3d_resource = wined3d_surface_get_resource(wined3d_surface);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
 
-    parent = IWineD3DSurface_GetParent(wineD3DSurface);
+    parent = wined3d_surface_get_parent(wined3d_surface);
     hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, wined3d_desc.width, wined3d_desc.height,
             wined3d_desc.format, TRUE, FALSE, surfImpl->mipmap_level, wined3d_desc.usage, wined3d_desc.pool,
             wined3d_desc.multisample_type, wined3d_desc.multisample_quality, This->ImplType,
-            parent, &ddraw_surface_wined3d_parent_ops, &surfImpl->WineD3DSurface);
+            parent, &ddraw_surface_wined3d_parent_ops, &surfImpl->wined3d_surface);
     if (FAILED(hr))
     {
-        surfImpl->WineD3DSurface = wineD3DSurface;
+        surfImpl->wined3d_surface = wined3d_surface;
         return hr;
     }
 
-    IWineD3DSurface_SetClipper(surfImpl->WineD3DSurface, clipper);
+    wined3d_surface_set_clipper(surfImpl->wined3d_surface, clipper);
 
     /* TODO: Copy the surface content, except for render targets */
 
@@ -2569,17 +2564,16 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
         if (surfImpl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
             IWineD3DDevice_UninitGDI(This->wineD3DDevice);
         surfImpl->isRenderTarget = FALSE;
-    } else {
-        if(IWineD3DSurface_Release(wineD3DSurface) == 0)
+    }
+    else
+    {
+        if (!wined3d_surface_decref(wined3d_surface))
             TRACE("Surface released successful, next surface\n");
         else
             ERR("Something's still holding the old WineD3DSurface\n");
     }
 
     surfImpl->ImplType = This->ImplType;
-
-    if (clipper)
-        wined3d_clipper_decref(clipper);
 
     return DDENUMRET_OK;
 }
@@ -5660,7 +5654,7 @@ static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceP
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParent *iface,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
-        WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, IWineD3DSurface **surface)
+        WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
     IDirectDrawSurfaceImpl *surf = NULL;
@@ -5720,8 +5714,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
     }
 
     /* Return the surface */
-    *surface = surf->WineD3DSurface;
-    IWineD3DSurface_AddRef(*surface);
+    *surface = surf->wined3d_surface;
+    wined3d_surface_incref(*surface);
 
     TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *surface, surf);
 
@@ -5752,7 +5746,7 @@ static HRESULT WINAPI findRenderTarget(IDirectDrawSurface7 *surface, DDSURFACEDE
 static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDeviceParent *iface,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
-        IWineD3DSurface **surface)
+        struct wined3d_surface **surface)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
     IDirectDrawSurfaceImpl *d3d_surface = This->d3d_target;
@@ -5779,8 +5773,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
 
     /* TODO: Return failure if the dimensions do not match, but this shouldn't happen */
 
-    *surface = target->WineD3DSurface;
-    IWineD3DSurface_AddRef(*surface);
+    *surface = target->wined3d_surface;
+    wined3d_surface_incref(*surface);
     target->isRenderTarget = TRUE;
 
     TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *surface, d3d_surface);
@@ -5790,7 +5784,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateRenderTarget(IWineD3DDevice
 
 static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3DDeviceParent *iface,
         UINT width, UINT height, enum wined3d_format_id format, WINED3DMULTISAMPLE_TYPE multisample_type,
-        DWORD multisample_quality, BOOL discard, IWineD3DSurface **surface)
+        DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
     struct IDirectDrawImpl *This = ddraw_from_device_parent(iface);
     IDirectDrawSurfaceImpl *ddraw_surface;
@@ -5830,8 +5824,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateDepthStencilSurface(IWineD3
         return hr;
     }
 
-    *surface = ddraw_surface->WineD3DSurface;
-    IWineD3DSurface_AddRef(*surface);
+    *surface = ddraw_surface->wined3d_surface;
+    wined3d_surface_incref(*surface);
     IDirectDrawSurface7_Release((IDirectDrawSurface7 *)ddraw_surface);
 
     return D3D_OK;
