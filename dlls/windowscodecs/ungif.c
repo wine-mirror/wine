@@ -49,11 +49,12 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "ungif.h"
 
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+
+#include "ungif.h"
 
 static void *ungif_alloc( size_t sz )
 {
