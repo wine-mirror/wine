@@ -874,6 +874,34 @@ basic_string_char* __thiscall MSVCP_basic_string_char_append_cstr(
             MSVCP_char_traits_char_length(append));
 }
 
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ID@Z */
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_KD@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_append_len_ch, 12)
+basic_string_char* __thiscall MSVCP_basic_string_char_append_len_ch(
+        basic_string_char *this, size_t count, char ch)
+{
+    TRACE("%p %lu %c\n", this, (unsigned long)count, ch);
+
+    if(MSVCP_basic_string_char_npos-this->size <= count)
+        MSVCP__String_base_Xlen();
+
+    if(basic_string_char_grow(this, this->size+count, FALSE)) {
+        MSVCP_char_traits_char_assignn(basic_string_char_ptr(this)+this->size, count, ch);
+        basic_string_char_eos(this, this->size+count);
+    }
+
+    return this;
+}
+
+/* ??Y?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV01@D@Z */
+/* ??Y?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV01@D@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_append_ch, 8)
+basic_string_char* __thiscall MSVCP_basic_string_char_append_ch(
+        basic_string_char *this, char ch)
+{
+    return MSVCP_basic_string_char_append_len_ch(this, 1, ch);
+}
+
 /* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@PBD@Z */
 /* ??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@PEBD@Z */
 basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_bstr_cstr(basic_string_char *ret,
@@ -1435,6 +1463,34 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_cstr(
 {
     return MSVCP_basic_string_wchar_append_cstr_len(this, append,
             MSVCP_char_traits_wchar_length(append));
+}
+
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@I_W@Z */
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@_K_W@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_append_len_ch, 12)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_len_ch(
+        basic_string_wchar *this, size_t count, wchar_t ch)
+{
+    TRACE("%p %lu %c\n", this, (unsigned long)count, ch);
+
+    if(MSVCP_basic_string_wchar_npos-this->size <= count)
+        MSVCP__String_base_Xlen();
+
+    if(basic_string_wchar_grow(this, this->size+count, FALSE)) {
+        MSVCP_char_traits_wchar_assignn(basic_string_wchar_ptr(this)+this->size, count, ch);
+        basic_string_wchar_eos(this, this->size+count);
+    }
+
+    return this;
+}
+
+/* ??Y?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV01@_W@Z */
+/* ??Y?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV01@_W@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_append_ch, 8)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(
+        basic_string_wchar *this, wchar_t ch)
+{
+    return MSVCP_basic_string_wchar_append_len_ch(this, 1, ch);
 }
 
 /* ??$?H_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@ABV10@PB_W@Z */
