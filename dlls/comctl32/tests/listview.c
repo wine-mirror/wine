@@ -3023,7 +3023,7 @@ static void test_hittest(void)
     static CHAR text[] = "1234567890ABCDEFGHIJKLMNOPQRST";
     POINT pos;
     INT x, y, i;
-    WORD horiz, vert;
+    WORD vert;
     HIMAGELIST himl, himl2;
     HBITMAP hbmp;
 
@@ -3053,7 +3053,6 @@ static void test_hittest(void)
     ok(bounds.bottom - bounds.top > 0, "Expected non zero item height\n");
     ok(bounds.right - bounds.left > 0, "Expected non zero item width\n");
     r = SendMessage(hwnd, LVM_GETITEMSPACING, TRUE, 0);
-    horiz = LOWORD(r);
     vert = HIWORD(r);
     ok(bounds.bottom - bounds.top == vert,
         "Vertical spacing inconsistent (%d != %d)\n", bounds.bottom - bounds.top, vert);
