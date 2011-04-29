@@ -90,7 +90,7 @@
 @ cdecl ?unexpected@@YAXXZ() msvcrt.?unexpected@@YAXXZ
 @ thiscall -arch=win32 ?what@exception@@UBEPBDXZ(ptr) msvcrt.?what@exception@@UBEPBDXZ
 @ cdecl -arch=win64 ?what@exception@@UEBAPEBDXZ(ptr) msvcrt.?what@exception@@UEBAPEBDXZ
-@ cdecl $I10_OUTPUT() msvcrt.$I10_OUTPUT
+@ cdecl -norelay $I10_OUTPUT(double long long long ptr) msvcrt.$I10_OUTPUT
 @ cdecl -arch=i386 _CIacos() msvcrt._CIacos
 @ cdecl -arch=i386 _CIasin() msvcrt._CIasin
 @ cdecl -arch=i386 _CIatan() msvcrt._CIatan
@@ -226,7 +226,7 @@
 @ cdecl -arch=i386 _adj_fprem1() msvcrt._adj_fprem1
 @ cdecl -arch=i386 _adj_fptan() msvcrt._adj_fptan
 @ extern -arch=i386 _adjust_fdiv msvcrt._adjust_fdiv
-@ stub _aexit_rtn
+# extern _aexit_rtn
 @ cdecl _aligned_free(ptr) msvcrt._aligned_free
 @ cdecl _aligned_malloc(long long) msvcrt._aligned_malloc
 @ cdecl _aligned_offset_malloc(long long long) msvcrt._aligned_offset_malloc
@@ -267,7 +267,7 @@
 @ cdecl _ctime64(ptr) msvcrt._ctime64
 @ extern _ctype msvcrt._ctype
 @ cdecl _cwait(ptr long long) msvcrt._cwait
-@ varargs _cwprintf(str) msvcrt._cwprintf
+@ varargs _cwprintf(wstr) msvcrt._cwprintf
 @ varargs _cwscanf(wstr) msvcrt._cwscanf
 @ extern _daylight msvcrt._daylight
 @ extern _dstbias msvcrt._dstbias
@@ -297,7 +297,7 @@
 @ cdecl _fgetchar() msvcrt._fgetchar
 @ cdecl _fgetwchar() msvcrt._fgetwchar
 @ cdecl _filbuf(ptr) msvcrt._filbuf
-@ stub _fileinfo
+# extern _fileinfo
 @ cdecl _filelength(long) msvcrt._filelength
 @ cdecl -ret64 _filelengthi64(long) msvcrt._filelengthi64
 @ cdecl _fileno(ptr) msvcrt._fileno
@@ -358,9 +358,9 @@
 @ cdecl _i64toa(int64 ptr long) msvcrt._i64toa
 @ cdecl _i64tow(int64 ptr long) msvcrt._i64tow
 @ cdecl _initterm(ptr ptr) msvcrt._initterm
-@ stub _inp
-@ stub _inpd
-@ stub _inpw
+@ stub -arch=i386 _inp
+@ stub -arch=i386 _inpd
+@ stub -arch=i386 _inpw
 @ extern _iob msvcrt._iob
 @ cdecl _isatty(long) msvcrt._isatty
 @ cdecl _isctype(long long) msvcrt._isctype
@@ -406,7 +406,7 @@
 @ cdecl _localtime64(ptr) msvcrt._localtime64
 @ cdecl _lock(long) msvcrt._lock
 @ cdecl _locking(long long long) msvcrt._locking
-@ cdecl _logb( double ) msvcrt._logb
+@ cdecl _logb(double) msvcrt._logb
 @ cdecl -i386 _longjmpex(ptr long) msvcrt._longjmpex
 @ cdecl _lrotl(long long) msvcrt._lrotl
 @ cdecl _lrotr(long long) msvcrt._lrotr
@@ -483,9 +483,9 @@
 @ cdecl _open_osfhandle(long long) msvcrt._open_osfhandle
 @ extern _osplatform msvcrt._osplatform
 @ extern _osver msvcrt._osver
-@ stub _outp
-@ stub _outpd
-@ stub _outpw
+@ stub -arch=i386 _outp
+@ stub -arch=i386 _outpd
+@ stub -arch=i386 _outpw
 @ cdecl _pclose(ptr) msvcrt._pclose
 @ extern _pctype msvcrt._pctype
 @ extern _pgmptr msvcrt._pgmptr
@@ -497,7 +497,7 @@
 @ cdecl _putw(long ptr) msvcrt._putw
 @ cdecl _putwch(long) msvcrt._putwch
 @ cdecl _putws(wstr) msvcrt._putws
-@ stub _pwctype
+# extern _pwctype
 @ cdecl _read(long ptr long) msvcrt._read
 @ cdecl _resetstkoflw() msvcrt._resetstkoflw
 @ cdecl _rmdir(str) msvcrt._rmdir
@@ -508,7 +508,7 @@
 @ cdecl -arch=i386 _safe_fdivr() msvcrt._safe_fdivr
 @ cdecl -arch=i386 _safe_fprem() msvcrt._safe_fprem
 @ cdecl -arch=i386 _safe_fprem1() msvcrt._safe_fprem1
-@ cdecl _scalb( double long) msvcrt._scalb
+@ cdecl _scalb(double long) msvcrt._scalb
 @ varargs _scprintf(str) msvcrt._scprintf
 @ varargs _scwprintf(wstr) msvcrt._scwprintf
 @ cdecl _searchenv(str str ptr) msvcrt._searchenv
@@ -519,7 +519,7 @@
 @ cdecl _set_security_error_handler(ptr) msvcrt._set_security_error_handler
 @ cdecl _seterrormode(long) msvcrt._seterrormode
 @ cdecl -arch=i386,x86_64 -norelay _setjmp(ptr) msvcrt._setjmp
-@ cdecl -i386 -norelay _setjmp3(ptr long) msvcrt._setjmp3
+@ cdecl -arch=i386 -norelay _setjmp3(ptr long) msvcrt._setjmp3
 @ cdecl _setmaxstdio(long) msvcrt._setmaxstdio
 @ cdecl _setmbcp(long) msvcrt._setmbcp
 @ cdecl _setmode(long long) msvcrt._setmode
@@ -637,7 +637,7 @@
 @ extern _winmajor msvcrt._winmajor
 @ extern _winminor msvcrt._winminor
 @ extern _winver msvcrt._winver
-@ cdecl _wmakepath(wstr wstr wstr wstr wstr) msvcrt._wmakepath
+@ cdecl _wmakepath(ptr wstr wstr wstr wstr) msvcrt._wmakepath
 @ cdecl _wmkdir(wstr) msvcrt._wmkdir
 @ cdecl _wmktemp(wstr) msvcrt._wmktemp
 @ varargs _wopen(wstr long) msvcrt._wopen
@@ -699,7 +699,7 @@
 @ cdecl cosh(double) msvcrt.cosh
 @ cdecl ctime(ptr) msvcrt.ctime
 @ cdecl difftime(long long) msvcrt.difftime
-@ cdecl div(long long) msvcrt.div
+@ cdecl -ret64 div(long long) msvcrt.div
 @ cdecl exit(long) msvcrt.exit
 @ cdecl exp(double) msvcrt.exp
 @ cdecl fabs(double) msvcrt.fabs

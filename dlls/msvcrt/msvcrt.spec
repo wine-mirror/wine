@@ -525,9 +525,9 @@
 @ cdecl _i64tow_s(int64 ptr long long) _i64tow_s
 @ cdecl _initterm(ptr ptr)
 @ cdecl _initterm_e(ptr ptr)
-@ stub _inp #(long) -i386
-@ stub _inpd #(long) -i386
-@ stub _inpw #(long) -i386
+@ stub -arch=i386 _inp #(long)
+@ stub -arch=i386 _inpd #(long)
+@ stub -arch=i386 _inpw #(long)
 @ cdecl _invalid_parameter(wstr wstr wstr long long) MSVCRT__invalid_parameter
 @ extern _iob MSVCRT__iob
 # stub _isalnum_l
@@ -637,7 +637,7 @@
 @ cdecl _lock(long)
 @ cdecl _lock_file(ptr) MSVCRT__lock_file
 @ cdecl _locking(long long long) MSVCRT__locking
-@ cdecl _logb( double )
+@ cdecl _logb(double)
 # stub _logbf
 @ cdecl -i386 _longjmpex(ptr long) MSVCRT_longjmp
 @ cdecl _lrotl(long long) MSVCRT__lrotl
@@ -814,9 +814,9 @@
 @ cdecl _open_osfhandle(long long)
 @ extern _osplatform MSVCRT__osplatform
 @ extern _osver MSVCRT__osver
-@ stub _outp #(long long)
-@ stub _outpd #(long long)
-@ stub _outpw #(long long)
+@ stub -arch=i386 _outp #(long long)
+@ stub -arch=i386 _outpd #(long long)
+@ stub -arch=i386 _outpw #(long long)
 @ cdecl _pclose (ptr) MSVCRT__pclose
 @ extern _pctype MSVCRT__pctype
 @ extern _pgmptr MSVCRT__pgmptr
@@ -1499,6 +1499,6 @@
 @ cdecl _set_security_error_handler(ptr)
 @ cdecl -arch=i386 _statusfp2(ptr ptr)
 @ cdecl _wcstod_l(wstr ptr) MSVCRT__wcstod_l
-@ cdecl _wdupenv_s(ptr ptr str)
+@ cdecl _wdupenv_s(ptr ptr wstr)
 @ cdecl _get_printf_count_output()
 @ cdecl _set_printf_count_output(long)

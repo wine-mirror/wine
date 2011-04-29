@@ -317,7 +317,7 @@
 @ stub ?wait_for_multiple@event@Concurrency@@SAIPAPAV12@I_NI@Z
 @ thiscall -arch=win32 ?what@exception@std@@UBEPBDXZ(ptr) msvcrt.?what@exception@@UBEPBDXZ
 @ cdecl -arch=win64 ?what@exception@std@@UEBAPEBDXZ(ptr) msvcrt.?what@exception@@UEBAPEBDXZ
-@ cdecl $I10_OUTPUT() msvcrt.$I10_OUTPUT
+@ cdecl -norelay $I10_OUTPUT(double long long long ptr) msvcrt.$I10_OUTPUT
 @ cdecl -arch=i386 _CIacos() msvcrt._CIacos
 @ cdecl -arch=i386 _CIasin() msvcrt._CIasin
 @ cdecl -arch=i386 _CIatan() msvcrt._CIatan
@@ -736,10 +736,10 @@
 @ cdecl _i64tow_s(int64 ptr long long) msvcrt._i64tow_s
 @ stub _initptd
 @ cdecl _initterm(ptr ptr) msvcrt._initterm
-@ cdecl _initterm_e(ptr ptr) msvcr90._initterm_e
-@ stub _inp
-@ stub _inpd
-@ stub _inpw
+@ cdecl _initterm_e(ptr ptr) msvcrt._initterm_e
+@ stub -arch=i386 _inp
+@ stub -arch=i386 _inpd
+@ stub -arch=i386 _inpw
 @ cdecl _invalid_parameter(wstr wstr wstr long long) msvcrt._invalid_parameter
 @ cdecl _invalid_parameter_noinfo() msvcr90._invalid_parameter_noinfo
 @ stub _invalid_parameter_noinfo_noreturn
@@ -853,7 +853,7 @@
 @ cdecl _lock(long) msvcrt._lock
 @ cdecl _lock_file(ptr) msvcrt._lock_file
 @ cdecl _locking(long long long) msvcrt._locking
-@ cdecl _logb( double ) msvcrt._logb
+@ cdecl _logb(double) msvcrt._logb
 @ cdecl -i386 _longjmpex(ptr long) msvcrt._longjmpex
 @ cdecl _lrotl(long long) msvcrt._lrotl
 @ cdecl _lrotr(long long) msvcrt._lrotr
@@ -1019,9 +1019,9 @@
 @ cdecl _onexit(ptr) msvcrt._onexit
 @ varargs _open(str long) msvcrt._open
 @ cdecl _open_osfhandle(long long) msvcrt._open_osfhandle
-@ stub _outp
-@ stub _outpd
-@ stub _outpw
+@ stub -arch=i386 _outp
+@ stub -arch=i386 _outpd
+@ stub -arch=i386 _outpw
 @ cdecl _pclose(ptr) msvcrt._pclose
 @ extern _pctype msvcrt._pctype
 @ extern _pgmptr msvcrt._pgmptr
@@ -1040,7 +1040,7 @@
 @ cdecl _putwch(long) msvcrt._putwch
 @ stub _putwch_nolock
 @ cdecl _putws(wstr) msvcrt._putws
-@ stub _pwctype
+# extern _pwctype
 @ cdecl _read(long ptr long) msvcrt._read
 @ cdecl _realloc_crt(ptr long) msvcrt.realloc
 @ cdecl _recalloc(ptr long long) msvcr90._recalloc
@@ -1345,7 +1345,7 @@
 @ stub _wfindnext32
 @ stub _wfindnext32i64
 @ cdecl _wfindnext64(long ptr) msvcrt._wfindnext64
-@ cdecl _wfindnext64i32(wstr ptr) msvcrt._wfindnext64i32
+@ cdecl _wfindnext64i32(long ptr) msvcrt._wfindnext64i32
 @ cdecl _wfopen(wstr wstr) msvcrt._wfopen
 @ cdecl _wfopen_s(ptr wstr wstr) msvcrt._wfopen_s
 @ cdecl _wfreopen(wstr wstr ptr) msvcrt._wfreopen
@@ -1441,7 +1441,7 @@
 @ cdecl clock() msvcrt.clock
 @ cdecl cos(double) msvcrt.cos
 @ cdecl cosh(double) msvcrt.cosh
-@ cdecl div(long long) msvcrt.div
+@ cdecl -ret64 div(long long) msvcrt.div
 @ cdecl exit(long) msvcrt.exit
 @ cdecl exp(double) msvcrt.exp
 @ cdecl fabs(double) msvcrt.fabs
@@ -1476,7 +1476,7 @@
 @ cdecl fsetpos(ptr ptr) msvcrt.fsetpos
 @ cdecl ftell(ptr) msvcrt.ftell
 @ varargs fwprintf(ptr wstr) msvcrt.fwprintf
-@ varargs fwprintf_s(ptr str) msvcrt.fwprintf_s
+@ varargs fwprintf_s(ptr wstr) msvcrt.fwprintf_s
 @ cdecl fwrite(ptr long long ptr) msvcrt.fwrite
 @ varargs fwscanf(ptr wstr) msvcrt.fwscanf
 @ varargs fwscanf_s(ptr wstr) msvcrt.fwscanf_s
