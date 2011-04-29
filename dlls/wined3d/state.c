@@ -242,7 +242,7 @@ static void state_ambient(DWORD state, struct wined3d_stateblock *stateblock, st
 
 static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    IWineD3DSurfaceImpl *target = stateblock->device->render_targets[0];
+    struct wined3d_surface *target = stateblock->device->render_targets[0];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     int srcBlend = GL_ZERO;
     int dstBlend = GL_ZERO;
@@ -503,7 +503,7 @@ static void state_alpha(DWORD state, struct wined3d_stateblock *stateblock, stru
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
         {
-            IWineD3DSurfaceImpl *surf = surface_from_resource(texture->sub_resources[0]);
+            struct wined3d_surface *surf = surface_from_resource(texture->sub_resources[0]);
 
             if (surf->CKeyFlags & WINEDDSD_CKSRCBLT)
             {
@@ -1751,7 +1751,7 @@ static void state_depthbias(DWORD state, struct wined3d_stateblock *stateblock, 
     if (stateblock->state.render_states[WINED3DRS_SLOPESCALEDEPTHBIAS]
             || stateblock->state.render_states[WINED3DRS_DEPTHBIAS])
     {
-        IWineD3DSurfaceImpl *depth = stateblock->device->depth_stencil;
+        struct wined3d_surface *depth = stateblock->device->depth_stencil;
         float scale;
 
         union
@@ -3182,7 +3182,7 @@ void tex_alphaop(DWORD state, struct wined3d_stateblock *stateblock, struct wine
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
         {
-            IWineD3DSurfaceImpl *surf = surface_from_resource(texture->sub_resources[0]);
+            struct wined3d_surface *surf = surface_from_resource(texture->sub_resources[0]);
 
             if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format->alpha_mask)
             {
@@ -4718,7 +4718,7 @@ static void vertexdeclaration(DWORD state_id, struct wined3d_stateblock *statebl
 
 static void viewport_miscpart(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    IWineD3DSurfaceImpl *target = stateblock->device->render_targets[0];
+    struct wined3d_surface *target = stateblock->device->render_targets[0];
     UINT width, height;
     WINED3DVIEWPORT vp = stateblock->state.viewport;
 
@@ -4874,7 +4874,7 @@ static void light(DWORD state, struct wined3d_stateblock *stateblock, struct win
 
 static void scissorrect(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    IWineD3DSurfaceImpl *target = stateblock->device->render_targets[0];
+    struct wined3d_surface *target = stateblock->device->render_targets[0];
     RECT *pRect = &stateblock->state.scissor_rect;
     UINT height;
     UINT width;

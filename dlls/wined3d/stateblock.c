@@ -1092,7 +1092,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     } tmpfloat;
     unsigned int i;
     struct wined3d_swapchain *swapchain;
-    IWineD3DSurface *backbuffer;
+    struct wined3d_surface *backbuffer;
     HRESULT hr;
 
     TRACE("stateblock %p.\n", stateblock);

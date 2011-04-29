@@ -627,7 +627,7 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
 
         for (i = 0; i < sub_count; ++i)
         {
-            IWineD3DSurfaceImpl *surface = surface_from_resource(texture->sub_resources[i]);
+            struct wined3d_surface *surface = surface_from_resource(texture->sub_resources[i]);
             surface_set_texture_name(surface, gl_tex->name, srgb_tex);
         }
 
@@ -709,7 +709,7 @@ static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
     {
         for (i = 0; i < sub_count; ++i)
         {
-            IWineD3DSurfaceImpl *surface = surface_from_resource(texture->sub_resources[i]);
+            struct wined3d_surface *surface = surface_from_resource(texture->sub_resources[i]);
 
             if (palette9_changed(surface))
             {
@@ -750,7 +750,7 @@ static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub
 
 static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource)
 {
-    IWineD3DSurfaceImpl *surface = surface_from_resource(sub_resource);
+    struct wined3d_surface *surface = surface_from_resource(sub_resource);
 
     /* Clean out the texture name we gave to the surface so that the
      * surface doesn't try and release it. */
@@ -773,7 +773,7 @@ static void texture2d_unload(struct wined3d_resource *resource)
     for (i = 0; i < sub_count; ++i)
     {
         struct wined3d_resource *sub_resource = texture->sub_resources[i];
-        IWineD3DSurfaceImpl *surface = surface_from_resource(sub_resource);
+        struct wined3d_surface *surface = surface_from_resource(sub_resource);
 
         sub_resource->resource_ops->resource_unload(sub_resource);
         surface_set_texture_name(surface, 0, FALSE); /* Delete RGB name */
@@ -893,7 +893,7 @@ HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_length, UINT
                 GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,
             };
             UINT idx = j * texture->level_count + i;
-            IWineD3DSurface *surface;
+            struct wined3d_surface *surface;
 
             hr = IWineD3DDeviceParent_CreateSurface(device->device_parent, parent, tmp_w, tmp_w,
                     format_id, usage, pool, i /* Level */, j, &surface);
@@ -904,9 +904,9 @@ HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_length, UINT
                 return hr;
             }
 
-            surface_set_container((IWineD3DSurfaceImpl *)surface, WINED3D_CONTAINER_TEXTURE, texture);
-            surface_set_texture_target((IWineD3DSurfaceImpl *)surface, cube_targets[j]);
-            texture->sub_resources[idx] = &((IWineD3DSurfaceImpl *)surface)->resource;
+            surface_set_container(surface, WINED3D_CONTAINER_TEXTURE, texture);
+            surface_set_texture_target(surface, cube_targets[j]);
+            texture->sub_resources[idx] = &surface->resource;
             TRACE("Created surface level %u @ %p.\n", i, surface);
         }
         tmp_w = max(1, tmp_w >> 1);
@@ -1048,7 +1048,7 @@ HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT height, U
     tmp_h = height;
     for (i = 0; i < texture->level_count; ++i)
     {
-        IWineD3DSurface *surface;
+        struct wined3d_surface *surface;
 
         /* Use the callback to create the texture surface. */
         hr = IWineD3DDeviceParent_CreateSurface(device->device_parent, parent, tmp_w, tmp_h,
@@ -1060,9 +1060,9 @@ HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT height, U
             return hr;
         }
 
-        surface_set_container((IWineD3DSurfaceImpl *)surface, WINED3D_CONTAINER_TEXTURE, texture);
-        surface_set_texture_target((IWineD3DSurfaceImpl *)surface, texture->target);
-        texture->sub_resources[i] = &((IWineD3DSurfaceImpl *)surface)->resource;
+        surface_set_container(surface, WINED3D_CONTAINER_TEXTURE, texture);
+        surface_set_texture_target(surface, texture->target);
+        texture->sub_resources[i] = &surface->resource;
         TRACE("Created surface level %u @ %p.\n", i, surface);
         /* Calculate the next mipmap level. */
         tmp_w = max(1, tmp_w >> 1);

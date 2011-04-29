@@ -571,7 +571,7 @@ void drawPrimitive(IWineD3DDeviceImpl *device, UINT index_count, UINT StartIdx, 
         /* Invalidate the back buffer memory so LockRect will read it the next time */
         for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
         {
-            IWineD3DSurfaceImpl *target = device->render_targets[i];
+            struct wined3d_surface *target = device->render_targets[i];
             if (target)
             {
                 surface_load_location(target, SFLAG_INDRAWABLE, NULL);
@@ -608,7 +608,7 @@ void drawPrimitive(IWineD3DDeviceImpl *device, UINT index_count, UINT StartIdx, 
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
         if (state->render_states[WINED3DRS_ZWRITEENABLE] || state->render_states[WINED3DRS_ZENABLE])
         {
-            IWineD3DSurfaceImpl *ds = device->depth_stencil;
+            struct wined3d_surface *ds = device->depth_stencil;
             RECT current_rect, draw_rect, r;
 
             if (location == SFLAG_DS_ONSCREEN && ds != device->onscreen_depth_stencil)

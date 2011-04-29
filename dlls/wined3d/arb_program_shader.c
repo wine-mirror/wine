@@ -6862,7 +6862,7 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
 }
 
 /* Context activation is done by the caller. */
-static void upload_palette(IWineD3DSurfaceImpl *surface)
+static void upload_palette(struct wined3d_surface *surface)
 {
     BYTE table[256][4];
     IWineD3DDeviceImpl *device = surface->resource.device;
@@ -7051,7 +7051,7 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
 }
 
 /* Context activation is done by the caller. */
-static HRESULT arbfp_blit_set(void *blit_priv, const struct wined3d_gl_info *gl_info, IWineD3DSurfaceImpl *surface)
+static HRESULT arbfp_blit_set(void *blit_priv, const struct wined3d_gl_info *gl_info, struct wined3d_surface *surface)
 {
     GLenum shader;
     float size[4] = {(float) surface->pow2Width, (float) surface->pow2Height, 1.0f, 1.0f};
@@ -7195,9 +7195,8 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum win
     }
 }
 
-HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_surface, const RECT *src_rect,
-                           IWineD3DSurfaceImpl *dst_surface, const RECT *dst_rect_in, enum wined3d_blit_op blit_op,
-                           DWORD Filter)
+HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, struct wined3d_surface *src_surface, const RECT *src_rect,
+        struct wined3d_surface *dst_surface, const RECT *dst_rect_in, enum wined3d_blit_op blit_op, DWORD Filter)
 {
     struct wined3d_context *context;
     RECT dst_rect = *dst_rect_in;
@@ -7236,7 +7235,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *src_
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT arbfp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *dst_surface,
+static HRESULT arbfp_blit_color_fill(IWineD3DDeviceImpl *device, struct wined3d_surface *dst_surface,
         const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {
     FIXME("Color filling not implemented by arbfp_blit\n");
@@ -7245,7 +7244,7 @@ static HRESULT arbfp_blit_color_fill(IWineD3DDeviceImpl *device, IWineD3DSurface
 
 /* Do not call while under the GL lock. */
 static HRESULT arbfp_blit_depth_fill(IWineD3DDeviceImpl *device,
-        IWineD3DSurfaceImpl *surface, const RECT *rect, float depth)
+        struct wined3d_surface *surface, const RECT *rect, float depth)
 {
     FIXME("Depth filling not implemented by arbfp_blit.\n");
     return WINED3DERR_INVALIDCALL;

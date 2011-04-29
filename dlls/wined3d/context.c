@@ -113,7 +113,7 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 
 /* GL locking is done by the caller */
 static void context_apply_attachment_filter_states(const struct wined3d_context *context,
-        IWineD3DSurfaceImpl *surface, DWORD location)
+        struct wined3d_surface *surface, DWORD location)
 {
     /* Update base texture states array */
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
@@ -191,7 +191,7 @@ static void context_apply_attachment_filter_states(const struct wined3d_context 
 
 /* GL locking is done by the caller */
 void context_attach_depth_stencil_fbo(struct wined3d_context *context,
-        GLenum fbo_target, IWineD3DSurfaceImpl *depth_stencil, BOOL use_render_buffer)
+        GLenum fbo_target, struct wined3d_surface *depth_stencil, BOOL use_render_buffer)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -263,7 +263,7 @@ void context_attach_depth_stencil_fbo(struct wined3d_context *context,
 
 /* GL locking is done by the caller */
 static void context_attach_surface_fbo(const struct wined3d_context *context,
-        GLenum fbo_target, DWORD idx, IWineD3DSurfaceImpl *surface, DWORD location)
+        GLenum fbo_target, DWORD idx, struct wined3d_surface *surface, DWORD location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -308,9 +308,12 @@ void context_check_fbo_status(struct wined3d_context *context, GLenum target)
     if (status == GL_FRAMEBUFFER_COMPLETE)
     {
         TRACE("FBO complete\n");
-    } else {
-        IWineD3DSurfaceImpl *attachment;
+    }
+    else
+    {
+        struct wined3d_surface *attachment;
         unsigned int i;
+
         FIXME("FBO status %s (%#x)\n", debug_fbostatus(status), status);
 
         if (!context->current_fbo)
@@ -344,7 +347,7 @@ void context_check_fbo_status(struct wined3d_context *context, GLenum target)
 }
 
 static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *context,
-        IWineD3DSurfaceImpl **render_targets, IWineD3DSurfaceImpl *depth_stencil, DWORD location)
+        struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil, DWORD location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
@@ -362,7 +365,7 @@ static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *contex
 
 /* GL locking is done by the caller */
 static void context_reuse_fbo_entry(struct wined3d_context *context, GLenum target,
-        IWineD3DSurfaceImpl **render_targets, IWineD3DSurfaceImpl *depth_stencil,
+        struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil,
         DWORD location, struct fbo_entry *entry)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -393,7 +396,7 @@ static void context_destroy_fbo_entry(struct wined3d_context *context, struct fb
 
 /* GL locking is done by the caller */
 static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context, GLenum target,
-        IWineD3DSurfaceImpl **render_targets, IWineD3DSurfaceImpl *depth_stencil, DWORD location)
+        struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil, DWORD location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
@@ -474,7 +477,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
 
 /* GL locking is done by the caller */
 static void context_apply_fbo_state(struct wined3d_context *context, GLenum target,
-        IWineD3DSurfaceImpl **render_targets, IWineD3DSurfaceImpl *depth_stencil, DWORD location)
+        struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil, DWORD location)
 {
     struct fbo_entry *entry, *entry2;
 
@@ -503,7 +506,7 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
 
 /* GL locking is done by the caller */
 void context_apply_fbo_state_blit(struct wined3d_context *context, GLenum target,
-        IWineD3DSurfaceImpl *render_target, IWineD3DSurfaceImpl *depth_stencil, DWORD location)
+        struct wined3d_surface *render_target, struct wined3d_surface *depth_stencil, DWORD location)
 {
     if (location != SFLAG_INDRAWABLE || surface_is_offscreen(render_target))
     {
@@ -650,7 +653,7 @@ void context_free_event_query(struct wined3d_event_query *query)
 typedef void (context_fbo_entry_func_t)(struct wined3d_context *context, struct fbo_entry *entry);
 
 static void context_enum_surface_fbo_entries(IWineD3DDeviceImpl *device,
-        IWineD3DSurfaceImpl *surface, context_fbo_entry_func_t *callback)
+        struct wined3d_surface *surface, context_fbo_entry_func_t *callback)
 {
     UINT i;
 
@@ -727,7 +730,7 @@ void context_resource_unloaded(struct IWineD3DDeviceImpl *device,
     }
 }
 
-void context_surface_update(struct wined3d_context *context, IWineD3DSurfaceImpl *surface)
+void context_surface_update(struct wined3d_context *context, struct wined3d_surface *surface)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry = context->current_fbo;
@@ -1326,7 +1329,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
 
 /* Do not call while under the GL lock. */
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
-        IWineD3DSurfaceImpl *target, const struct wined3d_format *ds_format)
+        struct wined3d_surface *target, const struct wined3d_format *ds_format)
 {
     IWineD3DDeviceImpl *device = swapchain->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -1915,7 +1918,7 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
 }
 
 /* Do not call while under the GL lock. */
-static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target)
+static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, struct wined3d_surface *target)
 {
     struct wined3d_context *current_context = context_get_current();
     struct wined3d_context *context;
@@ -1968,7 +1971,7 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSur
 }
 
 /* Context activation is done by the caller. */
-static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_count, IWineD3DSurfaceImpl **rts)
+static void context_apply_draw_buffers(struct wined3d_context *context, UINT rt_count, struct wined3d_surface **rts)
 {
     if (!rt_count)
     {
@@ -2058,9 +2061,10 @@ static BOOL match_depth_stencil_format(const struct wined3d_format *existing,
     if(required_stencil && required_stencil != existing_stencil) return FALSE;
     return TRUE;
 }
+
 /* The caller provides a context */
 static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device,
-        struct wined3d_context *context, IWineD3DSurfaceImpl *depth_stencil)
+        struct wined3d_context *context, struct wined3d_surface *depth_stencil)
 {
     /* Onscreen surfaces are always in a swapchain */
     struct wined3d_swapchain *swapchain = context->current_rt->container.u.swapchain;
@@ -2122,7 +2126,7 @@ void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImp
 }
 
 static BOOL context_validate_rt_config(UINT rt_count,
-        IWineD3DSurfaceImpl **rts, IWineD3DSurfaceImpl *ds)
+        struct wined3d_surface **rts, struct wined3d_surface *ds)
 {
     unsigned int i;
 
@@ -2140,7 +2144,7 @@ static BOOL context_validate_rt_config(UINT rt_count,
 
 /* Context activation is done by the caller. */
 BOOL context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device,
-        UINT rt_count, IWineD3DSurfaceImpl **rts, IWineD3DSurfaceImpl *depth_stencil)
+        UINT rt_count, struct wined3d_surface **rts, struct wined3d_surface *depth_stencil)
 {
     const struct StateEntry *state_table = device->StateTable;
     UINT i;
@@ -2284,7 +2288,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
 }
 
 static void context_setup_target(IWineD3DDeviceImpl *device,
-        struct wined3d_context *context, IWineD3DSurfaceImpl *target)
+        struct wined3d_context *context, struct wined3d_surface *target)
 {
     BOOL old_render_offscreen = context->render_offscreen, render_offscreen;
     const struct StateEntry *StateTable = device->StateTable;
@@ -2349,7 +2353,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
 }
 
 /* Do not call while under the GL lock. */
-struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, IWineD3DSurfaceImpl *target)
+struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, struct wined3d_surface *target)
 {
     struct wined3d_context *current_context = context_get_current();
     struct wined3d_context *context;

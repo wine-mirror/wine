@@ -2771,7 +2771,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
     DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
     IWineD3DDeviceImpl *device = stateblock->device;
-    IWineD3DSurfaceImpl *rt = device->render_targets[0];
+    struct wined3d_surface *rt = device->render_targets[0];
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     for (i = 0; i < gl_info->limits.texture_stages; ++i)
@@ -2866,7 +2866,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
 
             if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
             {
-                IWineD3DSurfaceImpl *surf = surface_from_resource(texture->sub_resources[0]);
+                struct wined3d_surface *surf = surface_from_resource(texture->sub_resources[0]);
 
                 if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format->alpha_mask)
                 {

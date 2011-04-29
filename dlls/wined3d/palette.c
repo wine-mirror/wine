@@ -135,7 +135,7 @@ HRESULT CDECL wined3d_palette_set_entries(struct wined3d_palette *palette,
     {
         if (resource->resourceType == WINED3DRTYPE_SURFACE)
         {
-            IWineD3DSurfaceImpl *surface = surface_from_resource(resource);
+            struct wined3d_surface *surface = surface_from_resource(resource);
             if (surface->palette == palette)
                 surface->surface_ops->surface_realize_palette(surface);
         }

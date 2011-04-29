@@ -574,7 +574,7 @@ void device_get_draw_rect(IWineD3DDeviceImpl *device, RECT *rect)
 
 /* Do not call while under the GL lock. */
 void device_switch_onscreen_ds(IWineD3DDeviceImpl *device,
-        struct wined3d_context *context, IWineD3DSurfaceImpl *depth_stencil)
+        struct wined3d_context *context, struct wined3d_surface *depth_stencil)
 {
     if (device->onscreen_depth_stencil)
     {
@@ -588,7 +588,7 @@ void device_switch_onscreen_ds(IWineD3DDeviceImpl *device,
     wined3d_surface_incref(device->onscreen_depth_stencil);
 }
 
-static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const RECT *draw_rect, const RECT *clear_rect)
+static BOOL is_full_clear(struct wined3d_surface *target, const RECT *draw_rect, const RECT *clear_rect)
 {
     /* partial draw rect */
     if (draw_rect->left || draw_rect->top
@@ -605,7 +605,7 @@ static BOOL is_full_clear(IWineD3DSurfaceImpl *target, const RECT *draw_rect, co
     return TRUE;
 }
 
-static void prepare_ds_clear(IWineD3DSurfaceImpl *ds, struct wined3d_context *context,
+static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context *context,
         DWORD location, const RECT *draw_rect, UINT rect_count, const RECT *clear_rect)
 {
     RECT current_rect, r;
@@ -651,12 +651,12 @@ static void prepare_ds_clear(IWineD3DSurfaceImpl *ds, struct wined3d_context *co
 }
 
 /* Do not call while under the GL lock. */
-HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, IWineD3DSurfaceImpl **rts,
-        IWineD3DSurfaceImpl *depth_stencil, UINT rect_count, const RECT *rects, const RECT *draw_rect,
+HRESULT device_clear_render_targets(IWineD3DDeviceImpl *device, UINT rt_count, struct wined3d_surface **rts,
+        struct wined3d_surface *depth_stencil, UINT rect_count, const RECT *rects, const RECT *draw_rect,
         DWORD flags, const WINED3DCOLORVALUE *color, float depth, DWORD stencil)
 {
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
-    IWineD3DSurfaceImpl *target = rt_count ? rts[0] : NULL;
+    struct wined3d_surface *target = rt_count ? rts[0] : NULL;
     UINT drawable_width, drawable_height;
     struct wined3d_context *context;
     GLbitfield clear_mask = 0;
@@ -1047,10 +1047,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice *iface,
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height,
         enum wined3d_format_id Format, BOOL Lockable, BOOL Discard, UINT Level, DWORD Usage, WINED3DPOOL Pool,
         WINED3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, WINED3DSURFTYPE Impl,
-        void *parent, const struct wined3d_parent_ops *parent_ops, IWineD3DSurface **surface)
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl *object;
+    struct wined3d_surface *object;
     HRESULT hr;
 
     TRACE("iface %p, width %u, height %u, format %s (%#x), lockable %#x, discard %#x, level %u\n",
@@ -1083,7 +1083,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
 
     TRACE("(%p) : Created surface %p\n", This, object);
 
-    *surface = (IWineD3DSurface *)object;
+    *surface = object;
 
     return hr;
 }
@@ -4614,7 +4614,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface,
  * Get Back Buffer
  *****/
 static HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UINT swapchain_idx,
-        UINT backbuffer_idx, WINED3DBACKBUFFER_TYPE backbuffer_type, IWineD3DSurface **backbuffer)
+        UINT backbuffer_idx, WINED3DBACKBUFFER_TYPE backbuffer_type, struct wined3d_surface **backbuffer)
 {
     struct wined3d_swapchain *swapchain;
     HRESULT hr;
@@ -4810,7 +4810,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD rect
 
     if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
     {
-        IWineD3DSurfaceImpl *ds = device->depth_stencil;
+        struct wined3d_surface *ds = device->depth_stencil;
         if (!ds)
         {
             WARN("Clearing depth and/or stencil without a depth stencil buffer attached, returning WINED3DERR_INVALIDCALL\n");
@@ -5159,15 +5159,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
     {
         case WINED3DRTYPE_TEXTURE:
         {
-            IWineD3DSurface *src_surface;
-            IWineD3DSurface *dst_surface;
+            struct wined3d_surface *src_surface;
+            struct wined3d_surface *dst_surface;
 
             for (i = 0; i < level_count; ++i)
             {
-                src_surface = (IWineD3DSurface *)surface_from_resource(wined3d_texture_get_sub_resource(
-                        src_texture, i));
-                dst_surface = (IWineD3DSurface *)surface_from_resource(wined3d_texture_get_sub_resource(
-                        dst_texture, i));
+                src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture, i));
+                dst_surface = surface_from_resource(wined3d_texture_get_sub_resource(dst_texture, i));
                 hr = IWineD3DDevice_UpdateSurface(iface, src_surface, NULL, dst_surface, NULL);
                 if (FAILED(hr))
                 {
@@ -5180,15 +5178,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
 
         case WINED3DRTYPE_CUBETEXTURE:
         {
-            IWineD3DSurface *src_surface;
-            IWineD3DSurface *dst_surface;
+            struct wined3d_surface *src_surface;
+            struct wined3d_surface *dst_surface;
 
             for (i = 0; i < level_count * 6; ++i)
             {
-                src_surface = (IWineD3DSurface *)surface_from_resource(wined3d_texture_get_sub_resource(
-                        src_texture, i));
-                dst_surface = (IWineD3DSurface *)surface_from_resource(wined3d_texture_get_sub_resource(
-                        dst_texture, i));
+                src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture, i));
+                dst_surface = surface_from_resource(wined3d_texture_get_sub_resource(dst_texture, i));
                 hr = IWineD3DDevice_UpdateSurface(iface, src_surface, NULL, dst_surface, NULL);
                 if (FAILED(hr))
                 {
@@ -5224,7 +5220,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture(IWineD3DDevice *iface,
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *iface,
-        UINT swapchain_idx, IWineD3DSurface *dst_surface)
+        UINT swapchain_idx, struct wined3d_surface *dst_surface)
 {
     struct wined3d_swapchain *swapchain;
     HRESULT hr;
@@ -5286,8 +5282,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ValidateDevice(IWineD3DDevice *iface, D
     if (state->render_states[WINED3DRS_ZENABLE] || state->render_states[WINED3DRS_ZWRITEENABLE] ||
         state->render_states[WINED3DRS_STENCILENABLE])
     {
-        IWineD3DSurfaceImpl *ds = This->depth_stencil;
-        IWineD3DSurfaceImpl *target = This->render_targets[0];
+        struct wined3d_surface *ds = This->depth_stencil;
+        struct wined3d_surface *target = This->render_targets[0];
 
         if(ds && target
                 && (ds->resource.width < target->resource.width || ds->resource.height < target->resource.height))
@@ -5503,11 +5499,9 @@ static float WINAPI IWineD3DDeviceImpl_GetNPatchMode(IWineD3DDevice *iface)
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
-        IWineD3DSurface *src_surface, const RECT *src_rect,
-        IWineD3DSurface *dst_surface, const POINT *dst_point)
+        struct wined3d_surface *src_surface, const RECT *src_rect,
+        struct wined3d_surface *dst_surface, const POINT *dst_point)
 {
-    IWineD3DSurfaceImpl *src_impl = (IWineD3DSurfaceImpl *)src_surface;
-    IWineD3DSurfaceImpl *dst_impl = (IWineD3DSurfaceImpl *)dst_surface;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const struct wined3d_format *src_format;
     const struct wined3d_format *dst_format;
@@ -5525,15 +5519,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
             iface, src_surface, wine_dbgstr_rect(src_rect),
             dst_surface, wine_dbgstr_point(dst_point));
 
-    if (src_impl->resource.pool != WINED3DPOOL_SYSTEMMEM || dst_impl->resource.pool != WINED3DPOOL_DEFAULT)
+    if (src_surface->resource.pool != WINED3DPOOL_SYSTEMMEM || dst_surface->resource.pool != WINED3DPOOL_DEFAULT)
     {
         WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n",
                 src_surface, dst_surface);
         return WINED3DERR_INVALIDCALL;
     }
 
-    src_format = src_impl->resource.format;
-    dst_format = dst_impl->resource.format;
+    src_format = src_surface->resource.format;
+    dst_format = dst_surface->resource.format;
 
     if (src_format->id != dst_format->id)
     {
@@ -5548,7 +5542,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
      * surface to the destination's sysmem copy. If surface conversion is
      * needed, use BltFast instead to copy in sysmem and use regular surface
      * loading. */
-    d3dfmt_get_conv(dst_impl, FALSE, TRUE, &format, &convert);
+    d3dfmt_get_conv(dst_surface, FALSE, TRUE, &format, &convert);
     if (convert != NO_CONVERSION || format.convert)
         return wined3d_surface_bltfast(dst_surface, dst_x, dst_y, src_surface, src_rect, 0);
 
@@ -5561,15 +5555,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     LEAVE_GL();
 
     /* Make sure the surface is loaded and up to date */
-    surface_internal_preload(dst_impl, SRGB_RGB);
-    surface_bind(dst_impl, gl_info, FALSE);
+    surface_internal_preload(dst_surface, SRGB_RGB);
+    surface_bind(dst_surface, gl_info, FALSE);
 
-    src_w = src_impl->resource.width;
-    src_h = src_impl->resource.height;
+    src_w = src_surface->resource.width;
+    src_h = src_surface->resource.height;
     update_w = src_rect ? src_rect->right - src_rect->left : src_w;
     update_h = src_rect ? src_rect->bottom - src_rect->top : src_h;
 
-    data = src_impl->resource.allocatedMemory;
+    data = src_surface->resource.allocatedMemory;
     if (!data) ERR("Source surface has no allocated memory, but should be a sysmem surface.\n");
 
     ENTER_GL();
@@ -5587,12 +5581,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
         }
 
         TRACE("glCompressedTexSubImage2DARB, target %#x, level %d, x %d, y %d, w %d, h %d, "
-                "format %#x, image_size %#x, data %p.\n", dst_impl->texture_target, dst_impl->texture_level,
+                "format %#x, image_size %#x, data %p.\n", dst_surface->texture_target, dst_surface->texture_level,
                 dst_x, dst_y, update_w, update_h, dst_format->glFormat, row_count * row_length, data);
 
         if (row_length == src_pitch)
         {
-            GL_EXTCALL(glCompressedTexSubImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
+            GL_EXTCALL(glCompressedTexSubImage2DARB(dst_surface->texture_target, dst_surface->texture_level,
                     dst_x, dst_y, update_w, update_h, dst_format->glInternal, row_count * row_length, data));
         }
         else
@@ -5603,7 +5597,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
              * can't use the unpack row length like below. */
             for (row = 0, y = dst_y; row < row_count; ++row)
             {
-                GL_EXTCALL(glCompressedTexSubImage2DARB(dst_impl->texture_target, dst_impl->texture_level,
+                GL_EXTCALL(glCompressedTexSubImage2DARB(dst_surface->texture_target, dst_surface->texture_level,
                         dst_x, y, update_w, src_format->block_height, dst_format->glInternal, row_length, data));
                 y += src_format->block_height;
                 data += src_pitch;
@@ -5620,11 +5614,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
         }
 
         TRACE("glTexSubImage2D, target %#x, level %d, x %d, y %d, w %d, h %d, format %#x, type %#x, data %p.\n",
-                dst_impl->texture_target, dst_impl->texture_level, dst_x, dst_y,
+                dst_surface->texture_target, dst_surface->texture_level, dst_x, dst_y,
                 update_w, update_h, dst_format->glFormat, dst_format->glType, data);
 
         glPixelStorei(GL_UNPACK_ROW_LENGTH, src_w);
-        glTexSubImage2D(dst_impl->texture_target, dst_impl->texture_level, dst_x, dst_y,
+        glTexSubImage2D(dst_surface->texture_target, dst_surface->texture_level, dst_x, dst_y,
                 update_w, update_h, dst_format->glFormat, dst_format->glType, data);
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
         checkGLcall("glTexSubImage2D");
@@ -5633,7 +5627,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface,
     LEAVE_GL();
     context_release(context);
 
-    surface_modify_location(dst_impl, SFLAG_INTEXTURE, TRUE);
+    surface_modify_location(dst_surface, SFLAG_INTEXTURE, TRUE);
     sampler = This->rev_tex_unit_map[0];
     if (sampler != WINED3D_UNMAPPED_STAGE)
     {
@@ -5766,21 +5760,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DeletePatch(IWineD3DDevice *iface, UINT
 
 /* Do not call while under the GL lock. */
 static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface,
-        IWineD3DSurface *surface, const RECT *rect, const WINED3DCOLORVALUE *color)
+        struct wined3d_surface *surface, const RECT *rect, const WINED3DCOLORVALUE *color)
 {
-    IWineD3DSurfaceImpl *s = (IWineD3DSurfaceImpl *)surface;
-
     TRACE("iface %p, surface %p, rect %s, color {%.8e, %.8e, %.8e, %.8e}.\n",
             iface, surface, wine_dbgstr_rect(rect),
             color->r, color->g, color->b, color->a);
 
-    if (s->resource.pool != WINED3DPOOL_DEFAULT && s->resource.pool != WINED3DPOOL_SYSTEMMEM)
+    if (surface->resource.pool != WINED3DPOOL_DEFAULT && surface->resource.pool != WINED3DPOOL_SYSTEMMEM)
     {
         FIXME("call to colorfill with non WINED3DPOOL_DEFAULT or WINED3DPOOL_SYSTEMMEM surface\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    return surface_color_fill(s, rect, color);
+    return surface_color_fill(surface, rect, color);
 }
 
 /* Do not call while under the GL lock. */
@@ -5803,7 +5795,7 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
 
 /* rendertarget and depth stencil functions */
 static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice *iface,
-        DWORD render_target_idx, IWineD3DSurface **render_target)
+        DWORD render_target_idx, struct wined3d_surface **render_target)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
 
@@ -5816,7 +5808,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice *iface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    *render_target = (IWineD3DSurface *)device->render_targets[render_target_idx];
+    *render_target = device->render_targets[render_target_idx];
     if (*render_target)
         wined3d_surface_incref(*render_target);
 
@@ -5825,13 +5817,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice *iface, IWineD3DSurface **depth_stencil)
+static HRESULT WINAPI IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice *iface,
+        struct wined3d_surface **depth_stencil)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
 
     TRACE("iface %p, depth_stencil %p.\n", iface, depth_stencil);
 
-    *depth_stencil = (IWineD3DSurface *)device->depth_stencil;
+    *depth_stencil = device->depth_stencil;
     TRACE("Returning depth/stencil surface %p.\n", *depth_stencil);
     if (!*depth_stencil) return WINED3DERR_NOTFOUND;
     wined3d_surface_incref(*depth_stencil);
@@ -5840,10 +5833,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice *
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
-        DWORD render_target_idx, IWineD3DSurface *render_target, BOOL set_viewport)
+        DWORD render_target_idx, struct wined3d_surface *render_target, BOOL set_viewport)
 {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl *prev;
+    struct wined3d_surface *prev;
 
     TRACE("iface %p, render_target_idx %u, render_target %p, set_viewport %#x.\n",
             iface, render_target_idx, render_target, set_viewport);
@@ -5855,7 +5848,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
     }
 
     prev = device->render_targets[render_target_idx];
-    if (render_target == (IWineD3DSurface *)prev)
+    if (render_target == prev)
     {
         TRACE("Trying to do a NOP SetRenderTarget operation.\n");
         return WINED3D_OK;
@@ -5868,7 +5861,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (render_target && !(((IWineD3DSurfaceImpl *)render_target)->resource.usage & WINED3DUSAGE_RENDERTARGET))
+    if (render_target && !(render_target->resource.usage & WINED3DUSAGE_RENDERTARGET))
     {
         FIXME("Surface %p doesn't have render target usage.\n", render_target);
         return WINED3DERR_INVALIDCALL;
@@ -5876,7 +5869,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
 
     if (render_target)
         wined3d_surface_incref(render_target);
-    device->render_targets[render_target_idx] = (IWineD3DSurfaceImpl *)render_target;
+    device->render_targets[render_target_idx] = render_target;
     /* Release after the assignment, to prevent device_resource_released()
      * from seeing the surface as still in use. */
     if (prev)
@@ -5906,14 +5899,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, IWineD3DSurface *depth_stencil)
+static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface,
+        struct wined3d_surface *depth_stencil)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl *tmp;
+    struct wined3d_surface *tmp;
 
     TRACE("device %p, depth_stencil %p, old depth_stencil %p.\n", This, depth_stencil, This->depth_stencil);
 
-    if (This->depth_stencil == (IWineD3DSurfaceImpl *)depth_stencil)
+    if (This->depth_stencil == depth_stencil)
     {
         TRACE("Trying to do a NOP SetRenderTarget operation.\n");
         return WINED3D_OK;
@@ -5936,7 +5930,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
     }
 
     tmp = This->depth_stencil;
-    This->depth_stencil = (IWineD3DSurfaceImpl *)depth_stencil;
+    This->depth_stencil = depth_stencil;
     if (This->depth_stencil)
         wined3d_surface_incref(This->depth_stencil);
     if (tmp)
@@ -5959,10 +5953,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *iface,
-        UINT XHotSpot, UINT YHotSpot, IWineD3DSurface *cursor_image)
+        UINT XHotSpot, UINT YHotSpot, struct wined3d_surface *cursor_image)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl *s = (IWineD3DSurfaceImpl *)cursor_image;
     WINED3DLOCKED_RECT lockedRect;
 
     TRACE("iface %p, hotspot_x %u, hotspot_y %u, cursor_image %p.\n",
@@ -5979,7 +5972,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
         This->cursorTexture = 0;
     }
 
-    if (s->resource.width == 32 && s->resource.height == 32)
+    if (cursor_image->resource.width == 32 && cursor_image->resource.height == 32)
         This->haveHardwareCursor = TRUE;
     else
         This->haveHardwareCursor = FALSE;
@@ -5989,18 +5982,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
         WINED3DLOCKED_RECT rect;
 
         /* MSDN: Cursor must be A8R8G8B8 */
-        if (s->resource.format->id != WINED3DFMT_B8G8R8A8_UNORM)
+        if (cursor_image->resource.format->id != WINED3DFMT_B8G8R8A8_UNORM)
         {
             WARN("surface %p has an invalid format.\n", cursor_image);
             return WINED3DERR_INVALIDCALL;
         }
 
         /* MSDN: Cursor must be smaller than the display mode */
-        if (s->resource.width > This->ddraw_width
-                || s->resource.height > This->ddraw_height)
+        if (cursor_image->resource.width > This->ddraw_width
+                || cursor_image->resource.height > This->ddraw_height)
         {
             WARN("Surface %p dimensions are %ux%u, but screen dimensions are %ux%u.\n",
-                    s, s->resource.width, s->resource.height, This->ddraw_width, This->ddraw_height);
+                    cursor_image, cursor_image->resource.width, cursor_image->resource.height,
+                    This->ddraw_width, This->ddraw_height);
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -6011,10 +6005,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
              * release it after setting the cursor image. Windows doesn't
              * addref the set surface, so we can't do this either without
              * creating circular refcount dependencies. Copy out the gl texture
-             * instead.
-             */
-            This->cursorWidth = s->resource.width;
-            This->cursorHeight = s->resource.height;
+             * instead. */
+            This->cursorWidth = cursor_image->resource.width;
+            This->cursorHeight = cursor_image->resource.height;
             if (SUCCEEDED(wined3d_surface_map(cursor_image, &rect, NULL, WINED3DLOCK_READONLY)))
             {
                 const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
@@ -6090,16 +6083,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice *ifa
              * 32-bit cursors.  32x32 bits split into 32-bit chunks == 32
              * chunks. */
             DWORD *maskBits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    (s->resource.width * s->resource.height / 8));
+                    (cursor_image->resource.width * cursor_image->resource.height / 8));
             wined3d_surface_map(cursor_image, &lockedRect, NULL,
                     WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY);
-            TRACE("width: %u height: %u.\n", s->resource.width, s->resource.height);
+            TRACE("width: %u height: %u.\n", cursor_image->resource.width, cursor_image->resource.height);
 
             cursorInfo.fIcon = FALSE;
             cursorInfo.xHotspot = XHotSpot;
             cursorInfo.yHotspot = YHotSpot;
-            cursorInfo.hbmMask = CreateBitmap(s->resource.width, s->resource.height, 1, 1, maskBits);
-            cursorInfo.hbmColor = CreateBitmap(s->resource.width, s->resource.height, 1, 32, lockedRect.pBits);
+            cursorInfo.hbmMask = CreateBitmap(cursor_image->resource.width, cursor_image->resource.height,
+                    1, 1, maskBits);
+            cursorInfo.hbmColor = CreateBitmap(cursor_image->resource.width, cursor_image->resource.height,
+                    1, 32, lockedRect.pBits);
             wined3d_surface_unmap(cursor_image);
             /* Create our cursor and clean up. */
             cursor = CreateIconIndirect(&cursorInfo);
@@ -6185,7 +6180,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EvictManagedResources(IWineD3DDevice *i
     return WINED3D_OK;
 }
 
-static HRESULT updateSurfaceDesc(IWineD3DSurfaceImpl *surface, const WINED3DPRESENT_PARAMETERS* pPresentationParameters)
+static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
+        const WINED3DPRESENT_PARAMETERS *pPresentationParameters)
 {
     IWineD3DDeviceImpl *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -6325,8 +6321,8 @@ static void delete_opengl_contexts(IWineD3DDeviceImpl *device, struct wined3d_sw
 static HRESULT create_primary_opengl_context(IWineD3DDeviceImpl *device, struct wined3d_swapchain *swapchain)
 {
     struct wined3d_context *context;
+    struct wined3d_surface *target;
     HRESULT hr;
-    IWineD3DSurfaceImpl *target;
 
     /* Recreate the primary swapchain's context */
     swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context));
@@ -6466,7 +6462,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
                 pPresentationParameters->MultiSampleType,
                 pPresentationParameters->MultiSampleQuality,
                 FALSE,
-                (IWineD3DSurface **)&This->auto_depth_stencil);
+                &This->auto_depth_stencil);
         if (FAILED(hrc))
         {
             ERR("Failed to create the depth stencil buffer.\n");
@@ -6483,7 +6479,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
 
     /* Reset the depth stencil */
     if (pPresentationParameters->EnableAutoDepthStencil)
-        IWineD3DDevice_SetDepthStencilSurface(iface, (IWineD3DSurface *)This->auto_depth_stencil);
+        IWineD3DDevice_SetDepthStencilSurface(iface, This->auto_depth_stencil);
     else
         IWineD3DDevice_SetDepthStencilSurface(iface, NULL);
 
@@ -6721,7 +6717,7 @@ void device_resource_released(struct IWineD3DDeviceImpl *device, struct wined3d_
     {
         case WINED3DRTYPE_SURFACE:
             {
-                IWineD3DSurfaceImpl *surface = surface_from_resource(resource);
+                struct wined3d_surface *surface = surface_from_resource(resource);
 
                 if (!device->d3d_initialized) break;
 
@@ -6837,7 +6833,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EnumResources(IWineD3DDevice *iface,
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_GetSurfaceFromDC(IWineD3DDevice *iface, HDC dc, IWineD3DSurface **surface)
+static HRESULT WINAPI IWineD3DDeviceImpl_GetSurfaceFromDC(IWineD3DDevice *iface,
+        HDC dc, struct wined3d_surface **surface)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_resource *resource;
@@ -6846,12 +6843,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetSurfaceFromDC(IWineD3DDevice *iface,
     {
         if (resource->resourceType == WINED3DRTYPE_SURFACE)
         {
-            IWineD3DSurfaceImpl *s = surface_from_resource(resource);
+            struct wined3d_surface *s = surface_from_resource(resource);
 
             if (s->hDC == dc)
             {
                 TRACE("Found surface %p for dc %p.\n", s, dc);
-                *surface = (IWineD3DSurface *)s;
+                *surface = s;
                 return WINED3D_OK;
             }
         }

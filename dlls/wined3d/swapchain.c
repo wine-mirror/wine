@@ -152,7 +152,7 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
 }
 
 HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapchain *swapchain,
-        IWineD3DSurface *dst_surface)
+        struct wined3d_surface *dst_surface)
 {
     POINT offset = {0, 0};
 
@@ -167,7 +167,7 @@ HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapc
 }
 
 HRESULT CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
-        UINT back_buffer_idx, WINED3DBACKBUFFER_TYPE type, IWineD3DSurface **back_buffer)
+        UINT back_buffer_idx, WINED3DBACKBUFFER_TYPE type, struct wined3d_surface **back_buffer)
 {
     TRACE("swapchain %p, back_buffer_idx %u, type %#x, back_buffer %p.\n",
             swapchain, back_buffer_idx, type, back_buffer);
@@ -280,7 +280,7 @@ HRESULT CDECL wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *s
 static void swapchain_blit(struct wined3d_swapchain *swapchain,
         struct wined3d_context *context, const RECT *src_rect, const RECT *dst_rect)
 {
-    IWineD3DSurfaceImpl *backbuffer = swapchain->back_buffers[0];
+    struct wined3d_surface *backbuffer = swapchain->back_buffers[0];
     IWineD3DDeviceImpl *device = swapchain->device;
     UINT src_w = src_rect->right - src_rect->left;
     UINT src_h = src_rect->bottom - src_rect->top;
@@ -424,7 +424,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
     /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
     if (swapchain->device->bCursorVisible && swapchain->device->cursorTexture)
     {
-        IWineD3DSurfaceImpl cursor;
+        struct wined3d_surface cursor;
         RECT destRect =
         {
             swapchain->device->xScreenSpace - swapchain->device->xHotSpot,
@@ -581,8 +581,8 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
         /* Both memory copies of the surfaces are ok, flip them around too instead of dirtifying
          * Doesn't work with render_to_fbo because we're not flipping
          */
-        IWineD3DSurfaceImpl *front = swapchain->front_buffer;
-        IWineD3DSurfaceImpl *back = swapchain->back_buffers[0];
+        struct wined3d_surface *front = swapchain->front_buffer;
+        struct wined3d_surface *back = swapchain->back_buffers[0];
 
         if(front->resource.size == back->resource.size) {
             DWORD fbflags;
@@ -643,7 +643,7 @@ static const struct wined3d_swapchain_ops swapchain_gl_ops =
 /* Helper function that blits the front buffer contents to the target window. */
 void x11_copy_to_screen(struct wined3d_swapchain *swapchain, const RECT *rect)
 {
-    IWineD3DSurfaceImpl *front;
+    struct wined3d_surface *front;
     POINT offset = {0, 0};
     HDC src_dc, dst_dc;
     RECT draw_rect;
@@ -720,7 +720,7 @@ void x11_copy_to_screen(struct wined3d_swapchain *swapchain, const RECT *rect)
 static HRESULT swapchain_gdi_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
         const RECT *dst_rect_in, const RGNDATA *dirty_region, DWORD flags)
 {
-    IWineD3DSurfaceImpl *front, *back;
+    struct wined3d_surface *front, *back;
 
     if (!swapchain->back_buffers)
     {
@@ -900,7 +900,7 @@ HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTYPE surf
             swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
             swapchain->presentParms.BackBufferFormat, swapchain->presentParms.MultiSampleType,
             swapchain->presentParms.MultiSampleQuality, TRUE /* Lockable */,
-            (IWineD3DSurface **)&swapchain->front_buffer);
+            &swapchain->front_buffer);
     if (FAILED(hr))
     {
         WARN("Failed to create front buffer, hr %#x.\n", hr);
@@ -1011,7 +1011,7 @@ HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTYPE surf
                     swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
                     swapchain->presentParms.BackBufferFormat, swapchain->presentParms.MultiSampleType,
                     swapchain->presentParms.MultiSampleQuality, TRUE /* Lockable */,
-                    (IWineD3DSurface **)&swapchain->back_buffers[i]);
+                    &swapchain->back_buffers[i]);
             if (FAILED(hr))
             {
                 WARN("Failed to create back buffer %u, hr %#x.\n", i, hr);
@@ -1032,7 +1032,7 @@ HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTYPE surf
                     swapchain->presentParms.BackBufferWidth, swapchain->presentParms.BackBufferHeight,
                     swapchain->presentParms.AutoDepthStencilFormat, swapchain->presentParms.MultiSampleType,
                     swapchain->presentParms.MultiSampleQuality, FALSE /* FIXME: Discard */,
-                    (IWineD3DSurface **)&device->auto_depth_stencil);
+                    &device->auto_depth_stencil);
             if (FAILED(hr))
             {
                 WARN("Failed to create the auto depth stencil, hr %#x.\n", hr);
