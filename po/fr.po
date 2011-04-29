@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-13 23:40+0100\n"
+"PO-Revision-Date: 2011-04-29 09:22+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -67,14 +67,12 @@ msgid "All files (*.*)"
 msgstr "Tous les fichiers (*.*)"
 
 #: appwiz.rc:42
-#, fuzzy
 msgid "&Remove"
-msgstr "&Supprimer..."
+msgstr "&Supprimer"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "&Modifier/Supprimer..."
+msgstr "&Modifier/Supprimer"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -690,7 +688,7 @@ msgstr "Adresse non structurée"
 
 #: crypt32.rc:51
 msgid "SMIME Capabilities"
-msgstr "Aptitudes SMIME"
+msgstr "Aptitudes S/MIME"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
@@ -3193,7 +3191,7 @@ msgstr "Pas assez d'espace disponible pour le journal du registre\n"
 
 #: winerror.mc:1116
 msgid "Registry key has subkeys\n"
-msgstr "La clé de registre a des sous-clés\n"
+msgstr "La clé de registre contient des sous-clés\n"
 
 #: winerror.mc:1121
 msgid "Subkey must be volatile\n"
@@ -4602,7 +4600,7 @@ msgstr "Répertoire temporaire non accessible en écriture\n"
 
 #: winerror.mc:2886
 msgid "Installation platform not supported\n"
-msgstr "Plateforme d'installation non prise en charge\n"
+msgstr "Plate-forme d'installation non prise en charge\n"
 
 #: winerror.mc:2891
 msgid "Installer not used\n"
@@ -5736,7 +5734,7 @@ msgstr "Inactif"
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
-msgstr "Insérer un nouvel object %s dans votre document"
+msgstr "Insérer un nouvel objet %s dans votre document"
 
 #: oledlg.rc:26
 msgid ""
@@ -6265,7 +6263,6 @@ msgid "Pr&int..."
 msgstr "&Imprimer..."
 
 #: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
 msgstr "&Aperçu avant impression..."
 
@@ -6305,7 +6302,6 @@ msgid "&Help"
 msgstr "Aid&e"
 
 #: shdocvw.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
 msgstr "À &propos d'Internet Explorer..."
 
@@ -6316,7 +6312,7 @@ msgstr "Accueil"
 
 #: shdocvw.rc:68 winhlp32.rc:66
 msgid "Print..."
-msgstr "Imprimer la rubrique..."
+msgstr "Imprimer..."
 
 #: shdocvw.rc:73
 msgid "Address"
@@ -7109,7 +7105,7 @@ msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"Le pilote de périphérique présente un problème.Contactez le constructeur du "
+"Le pilote de périphérique présente un problème. Contactez le constructeur du "
 "périphérique pour obtenir un nouveau pilote"
 
 #: winmm.rc:70
@@ -8081,7 +8077,7 @@ msgstr ""
 "\n"
 "Notez qu'entrer la commande PROMPT sans texte d'invite remet l'invite\n"
 "à sa valeur par défaut, à savoir la lettre du lecteur courant suivie de\n"
-"son répertoire courant et d'un signe plus-grand-que (>).\n"
+"son répertoire courant et d'un signe « plus grand que » (>).\n"
 "(c.-à-d. la commande PROMPT $p$g).\n"
 "\n"
 "L'invite peut aussi être adaptée en modifiant la variable d'environnement\n"
@@ -8317,7 +8313,7 @@ msgstr ""
 
 #: cmd.rc:255
 msgid "Are you sure"
-msgstr "Êtes-vous sûr"
+msgstr "Êtes-vous sûr(e)"
 
 #: cmd.rc:256 xcopy.rc:40
 msgctxt "Yes key"
@@ -9331,12 +9327,11 @@ msgstr "Valeur &DWORD"
 
 #: regedit.rc:51 regedit.rc:102
 msgid "&Multi String Value"
-msgstr "Valeur de chaîne &extensible"
+msgstr "Valeur chaîne &multiple"
 
 #: regedit.rc:52 regedit.rc:103
-#, fuzzy
 msgid "&Expandable String Value"
-msgstr "Valeur c&haîne"
+msgstr "Valeur chaîne e&xtensible"
 
 #: regedit.rc:56 regedit.rc:107
 msgid "&Rename\tF2"
@@ -10926,7 +10921,7 @@ msgstr "Trier par dat&e"
 
 #: winefile.rc:60
 msgid "Filter by &..."
-msgstr "Filter &par..."
+msgstr "Filtrer &par..."
 
 #: winefile.rc:67
 msgid "&Drivebar"
@@ -10950,12 +10945,11 @@ msgstr "Arranger &verticalement\tCtrl+F4"
 
 #: winefile.rc:81
 msgid "Arrange &Symbols"
-msgstr "Réorganiser les &icônes"
+msgstr "Réorganiser les &symboles"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File"
-msgstr "À &propos de Winefile"
+msgstr "À &propos de WineFile"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10991,7 +10985,7 @@ msgstr "Pas encore implémenté"
 
 #: winefile.rc:107
 msgid "Wine File"
-msgstr "Wine File"
+msgstr "WineFile"
 
 #: winefile.rc:114
 msgid "CDate"
@@ -11019,15 +11013,15 @@ msgstr "%s libres sur %s"
 
 #: winemine.rc:34
 msgid "&Game"
-msgstr ""
+msgstr "&Partie"
 
 #: winemine.rc:35
 msgid "&New\tF2"
-msgstr "&Nouveau\tF2"
+msgstr "&Nouvelle\tF2"
 
 #: winemine.rc:37
 msgid "Question &Marks"
-msgstr ""
+msgstr "Points d'&interrogation"
 
 #: winemine.rc:39
 msgid "&Beginner"
@@ -11046,18 +11040,16 @@ msgid "&Custom..."
 msgstr "&Personnalisé..."
 
 #: winemine.rc:44
-#, fuzzy
 msgid "&Fastest Times"
 msgstr "Meilleurs &temps"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "À &propos de Wine"
+msgstr "À &propos de WineMine"
 
 #: winemine.rc:27
 msgid "WineMine"
-msgstr "Démineur de Wine"
+msgstr "WineMine"
 
 #: winemine.rc:28
 msgid "Nobody"
@@ -11113,7 +11105,7 @@ msgstr "&Toujours visible"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&A propos de l'Aide de Wine"
+msgstr "À &propos de l'aide de Wine"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
