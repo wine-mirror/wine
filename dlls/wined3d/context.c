@@ -989,7 +989,10 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
 
         if (gl_info->supported[ARB_SYNC])
         {
-            if (event_query->object.sync) GL_EXTCALL(glDeleteSync(event_query->object.sync));
+            for (i = 0; i < context->free_event_query_count; ++i)
+            {
+                GL_EXTCALL(glDeleteSync(context->free_event_queries[i].sync));
+            }
         }
         else if (gl_info->supported[APPLE_FENCE])
         {
