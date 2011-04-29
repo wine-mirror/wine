@@ -68,6 +68,7 @@ static basic_string_char* (WINAPI *p_basic_string_char_append)(basic_string_char
 static basic_string_char* (WINAPI *p_basic_string_char_append_substr)(basic_string_char*, size_t, size_t);
 static int (WINAPI *p_basic_string_char_compare_substr_substr)(size_t, size_t, basic_string_char*, size_t, size_t);
 static int (WINAPI *p_basic_string_char_compare_substr_cstr_len)(size_t, size_t, const char*, size_t);
+static size_t (WINAPI *p_basic_string_char_find_cstr_substr)(const char*, size_t, size_t);
 
 static basic_string_wchar* (WINAPI *p_basic_string_wchar_ctor)(void);
 static basic_string_wchar* (WINAPI *p_basic_string_wchar_copy_ctor)(basic_string_wchar*);
@@ -96,6 +97,7 @@ static basic_string_char* (WINAPI *p_basic_string_char_append)(basic_string_char
 static basic_string_char* (WINAPI *p_basic_string_char_append_substr)(basic_string_char*, basic_string_char*, size_t, size_t);
 static int (WINAPI *p_basic_string_char_compare_substr_substr)(basic_string_char*, size_t, size_t, basic_string_char*, size_t, size_t);
 static int (WINAPI *p_basic_string_char_compare_substr_cstr_len)(basic_string_char*, size_t, size_t, const char*, size_t);
+static size_t (WINAPI *p_basic_string_char_find_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
 
 static basic_string_wchar* (__cdecl *p_basic_string_wchar_ctor)(basic_string_wchar*);
 static basic_string_wchar* (__cdecl *p_basic_string_wchar_copy_ctor)(basic_string_wchar*, basic_string_wchar*);
@@ -381,6 +383,8 @@ static BOOL init(void)
                 "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@0@Z");
         p_basic_string_char_concatenate_cstr = (void*)GetProcAddress(msvcp,
                 "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@PEBD@Z");
+        p_basic_string_char_find_cstr_substr = (void*)GetProcAddress(msvcp,
+                "?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
@@ -439,6 +443,8 @@ static BOOL init(void)
                 "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@0@Z");
         p_basic_string_char_concatenate_cstr = (void*)GetProcAddress(msvcp,
                 "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@PBD@Z");
+        p_basic_string_char_find_cstr_substr = (void*)GetProcAddress(msvcp,
+                "?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z");
 
         p_basic_string_wchar_ctor = (void*)GetProcAddress(msvcp,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
@@ -661,7 +667,7 @@ static void test_basic_string_char_concatenate(void) {
     if(!p_basic_string_char_ctor_cstr || !p_basic_string_char_concatenate
             || !p_basic_string_char_concatenate_cstr || !p_basic_string_char_cstr
             || !p_basic_string_char_dtor) {
-        win_skip("basic_string<wchar> unavailable\n");
+        win_skip("basic_string<char> unavailable\n");
         return;
     }
 
@@ -679,6 +685,28 @@ static void test_basic_string_char_concatenate(void) {
     ok(!strcmp(cstr, "test passed"), "cstr = %s\n", cstr);
     call_func1(p_basic_string_char_dtor, &ret);
 
+    call_func1(p_basic_string_char_dtor, &str);
+}
+
+static void test_basic_string_char_find(void) {
+    static const char tmp[] = {'a','a','a','\0','b','b','b',0};
+    basic_string_char str;
+    size_t ret;
+
+    if(!p_basic_string_char_ctor || !p_basic_string_char_assign_cstr_len
+            || !p_basic_string_char_dtor || !p_basic_string_char_find_cstr_substr) {
+        win_skip("basic_stringr> unavailable\n");
+        return;
+    }
+
+    call_func1(p_basic_string_char_ctor, &str);
+    call_func3(p_basic_string_char_assign_cstr_len, &str, tmp, 7);
+    ret = (size_t)call_func4(p_basic_string_char_find_cstr_substr, &str, "aaa", 0, 3);
+    ok(ret == 0, "ret = %lu\n", (unsigned long)ret);
+    ret = (size_t)call_func4(p_basic_string_char_find_cstr_substr, &str, "aaa", 1, 3);
+    ok(ret == -1, "ret = %lu\n", (unsigned long)ret);
+    ret = (size_t)call_func4(p_basic_string_char_find_cstr_substr, &str, "bbb", 0, 3);
+    ok(ret == 4, "ret = %lu\n", (unsigned long)ret);
     call_func1(p_basic_string_char_dtor, &str);
 }
 
@@ -807,6 +835,7 @@ START_TEST(string)
     test_basic_string_char_append();
     test_basic_string_char_compare();
     test_basic_string_char_concatenate();
+    test_basic_string_char_find();
     test_basic_string_wchar();
     test_basic_string_wchar_swap();
 
