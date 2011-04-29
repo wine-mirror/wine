@@ -1453,6 +1453,8 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
         switch (lt2->header)
         {
         case LT2_LINES_BLOCK:
+            /* Skip blocks that are too small - Intel C Compiler generates these. */
+            if (lt2->size_of_block < sizeof (struct codeview_lt2blk_lines)) break;
             lines_blk = (const struct codeview_lt2blk_lines*)lt2;
             /* FIXME: should check that file_offset is within the LT2_FILES_BLOCK we've seen */
             addr = codeview_get_address(msc_dbg, lines_blk->seg, lines_blk->start);
