@@ -6559,6 +6559,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
                 {
                     ERR("Failed to acquire focus window, hr %#x.\n", hr);
                     wined3d_swapchain_decref(swapchain);
+                    This->filter_messages = filter;
                     return hr;
                 }
 
