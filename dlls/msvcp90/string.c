@@ -1090,6 +1090,8 @@ size_t __thiscall MSVCP_basic_string_char_find_ch(
 
 /* ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADI@Z */
 /* ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAD_K@Z */
+/* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADI@Z */
+/* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_at, 8)
 char* __thiscall MSVCP_basic_string_char_at(
         basic_string_char *this, size_t pos)
@@ -1104,6 +1106,8 @@ char* __thiscall MSVCP_basic_string_char_at(
 
 /* ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEABDI@Z */
 /* ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAAEBD_K@Z */
+/* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEABDI@Z */
+/* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAAEBD_K@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_const_at, 8)
 const char* __thiscall MSVCP_basic_string_char_const_at(
         const basic_string_char *this, size_t pos)
@@ -1710,6 +1714,8 @@ size_t __thiscall MSVCP_basic_string_wchar_find_ch(
 
 /* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAA_WI@Z */
 /* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEA_W_K@Z */
+/* ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAA_WI@Z */
+/* ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEA_W_K@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_at, 8)
 wchar_t* __thiscall MSVCP_basic_string_wchar_at(
         basic_string_wchar *this, size_t pos)
@@ -1724,6 +1730,8 @@ wchar_t* __thiscall MSVCP_basic_string_wchar_at(
 
 /* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEAB_WI@Z */
 /* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAAEB_W_K@Z */
+/* ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEAB_WI@Z */
+/* ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAAEB_W_K@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_const_at, 8)
 const wchar_t* __thiscall MSVCP_basic_string_wchar_const_at(
         const basic_string_wchar *this, size_t pos)
