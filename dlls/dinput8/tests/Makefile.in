@@ -1,0 +1,7 @@
+TESTDLL   = dinput8.dll
+IMPORTS   = dinput ole32 user32
+
+C_SRCS = \
+	device.c
+
+@MAKE_TEST_RULES@

@@ -15106,6 +15106,7 @@ wine_fn_config_dll devenum enable_devenum po
 wine_fn_config_dll dinput enable_dinput implib,staticimplib
 wine_fn_config_test dlls/dinput/tests dinput_test
 wine_fn_config_dll dinput8 enable_dinput8 implib
+wine_fn_config_test dlls/dinput8/tests dinput8_test
 wine_fn_config_dll dispdib.dll16 enable_win16
 wine_fn_config_dll dispex enable_dispex
 wine_fn_config_test dlls/dispex/tests dispex_test
