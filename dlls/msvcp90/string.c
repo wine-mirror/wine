@@ -1156,6 +1156,14 @@ void __thiscall MSVCP_basic_string_char_resize(
     MSVCP_basic_string_char_resize_ch(this, size, '\0');
 }
 
+/* ?clear@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ */
+/* ?clear@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_clear, 4)
+void __thiscall MSVCP_basic_string_char_clear(basic_string_char *this)
+{
+    basic_string_char_eos(this, 0);
+}
+
 
 /* basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t>> */
 /* ?npos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@2IB */
@@ -1814,4 +1822,12 @@ void __thiscall MSVCP_basic_string_wchar_resize(
         basic_string_wchar *this, size_t size)
 {
     MSVCP_basic_string_wchar_resize_ch(this, size, '\0');
+}
+
+/* ?clear@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ */
+/* ?clear@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_clear, 4)
+void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar *this)
+{
+    basic_string_wchar_eos(this, 0);
 }

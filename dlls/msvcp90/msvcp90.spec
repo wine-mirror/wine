@@ -3071,12 +3071,12 @@
 @ stub -arch=win64 ?clear@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAXH_N@Z
 @ stub -arch=win32 ?clear@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXI@Z
 @ stub -arch=win64 ?clear@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAXI@Z
-@ stub -arch=win32 ?clear@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ
-@ stub -arch=win64 ?clear@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ
+@ thiscall -arch=win32 ?clear@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXXZ(ptr) MSVCP_basic_string_char_clear
+@ cdecl -arch=win64 ?clear@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAXXZ(ptr) MSVCP_basic_string_char_clear
 @ stub -arch=win32 ?clear@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXXZ
 @ stub -arch=win64 ?clear@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAXXZ
-@ stub -arch=win32 ?clear@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ
-@ stub -arch=win64 ?clear@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ
+@ thiscall -arch=win32 ?clear@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXXZ(ptr) MSVCP_basic_string_wchar_clear
+@ cdecl -arch=win64 ?clear@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAXXZ(ptr) MSVCP_basic_string_wchar_clear
 @ stub -arch=win32 ?clear@ios_base@std@@QAEXH@Z
 @ stub -arch=win64 ?clear@ios_base@std@@QEAAXH@Z
 @ stub -arch=win32 ?clear@ios_base@std@@QAEXH_N@Z
