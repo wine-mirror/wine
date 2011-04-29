@@ -1037,6 +1037,31 @@ static HRESULT surface_getdc(IWineD3DSurfaceImpl *surface)
     return hr;
 }
 
+static HRESULT surface_flip(IWineD3DSurfaceImpl *surface, IWineD3DSurfaceImpl *override)
+{
+    TRACE("surface %p, override %p.\n", surface, override);
+
+    /* Flipping is only supported on render targets and overlays. */
+    if (!(surface->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_OVERLAY)))
+    {
+        WARN("Tried to flip a non-render target, non-overlay surface.\n");
+        return WINEDDERR_NOTFLIPPABLE;
+    }
+
+    if (surface->resource.usage & WINED3DUSAGE_OVERLAY)
+    {
+        flip_surface(surface, override);
+
+        /* Update the overlay if it is visible */
+        if (surface->overlay_dest)
+            return surface->surface_ops->surface_draw_overlay(surface);
+        else
+            return WINED3D_OK;
+    }
+
+    return WINED3D_OK;
+}
+
 static HRESULT surface_set_mem(IWineD3DSurfaceImpl *surface, void *mem)
 {
     TRACE("surface %p, mem %p.\n", surface, mem);
@@ -1207,6 +1232,7 @@ static const struct wined3d_surface_ops surface_ops =
     surface_map,
     surface_unmap,
     surface_getdc,
+    surface_flip,
     surface_set_mem,
 };
 
@@ -1383,6 +1409,13 @@ static HRESULT gdi_surface_getdc(IWineD3DSurfaceImpl *surface)
     return hr;
 }
 
+static HRESULT gdi_surface_flip(IWineD3DSurfaceImpl *surface, IWineD3DSurfaceImpl *override)
+{
+    TRACE("surface %p, override %p.\n", surface, override);
+
+    return WINED3D_OK;
+}
+
 static HRESULT gdi_surface_set_mem(IWineD3DSurfaceImpl *surface, void *mem)
 {
     TRACE("surface %p, mem %p.\n", surface, mem);
@@ -1440,6 +1473,7 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_map,
     gdi_surface_unmap,
     gdi_surface_getdc,
+    gdi_surface_flip,
     gdi_surface_set_mem,
 };
 
@@ -4133,6 +4167,42 @@ static HRESULT WINAPI IWineD3DBaseSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, 
     return WINED3D_OK;
 }
 
+static HRESULT WINAPI IWineD3DBaseSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD flags)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
+    struct wined3d_swapchain *swapchain;
+    HRESULT hr;
+
+    TRACE("iface %p, override %p, flags %#x.\n", iface, override, flags);
+
+    if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN)
+    {
+        ERR("Flipped surface is not on a swapchain.\n");
+        return WINEDDERR_NOTFLIPPABLE;
+    }
+    swapchain = surface->container.u.swapchain;
+
+    hr = surface->surface_ops->surface_flip(surface, (IWineD3DSurfaceImpl *)override);
+    if (FAILED(hr))
+        return hr;
+
+    /* Just overwrite the swapchain presentation interval. This is ok because
+     * only ddraw apps can call Flip, and only d3d8 and d3d9 applications
+     * specify the presentation interval. */
+    if (!(flags & (WINEDDFLIP_NOVSYNC | WINEDDFLIP_INTERVAL2 | WINEDDFLIP_INTERVAL3 | WINEDDFLIP_INTERVAL4)))
+        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_ONE;
+    else if (flags & WINEDDFLIP_NOVSYNC)
+        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_IMMEDIATE;
+    else if (flags & WINEDDFLIP_INTERVAL2)
+        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_TWO;
+    else if (flags & WINEDDFLIP_INTERVAL3)
+        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_THREE;
+    else
+        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_FOUR;
+
+    return wined3d_swapchain_present(swapchain, NULL, NULL, swapchain->win_handle, NULL, 0);
+}
+
 /* ****************************************************
    IWineD3DSurface IWineD3DResource parts follow
    **************************************************** */
@@ -5074,63 +5144,6 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) {
         back->flags = front->flags;
         front->flags = tmp_flags;
     }
-}
-
-static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD flags)
-{
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    struct wined3d_swapchain *swapchain = NULL;
-
-    TRACE("iface %p, override %p, flags %#x.\n", iface, override, flags);
-
-    /* Flipping is only supported on RenderTargets and overlays*/
-    if( !(This->resource.usage & (WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_OVERLAY)) ) {
-        WARN("Tried to flip a non-render target, non-overlay surface\n");
-        return WINEDDERR_NOTFLIPPABLE;
-    }
-
-    if(This->resource.usage & WINED3DUSAGE_OVERLAY) {
-        flip_surface(This, (IWineD3DSurfaceImpl *) override);
-
-        /* Update the overlay if it is visible */
-        if (This->overlay_dest)
-            return This->surface_ops->surface_draw_overlay(This);
-        else
-            return WINED3D_OK;
-    }
-
-    if(override) {
-        /* DDraw sets this for the X11 surfaces, so don't confuse the user
-         * FIXME("(%p) Target override is not supported by now\n", This);
-         * Additionally, it isn't really possible to support triple-buffering
-         * properly on opengl at all
-         */
-    }
-
-    if (This->container.type != WINED3D_CONTAINER_SWAPCHAIN)
-    {
-        ERR("Flipped surface is not on a swapchain\n");
-        return WINEDDERR_NOTFLIPPABLE;
-    }
-    swapchain = This->container.u.swapchain;
-
-    /* Just overwrite the swapchain presentation interval. This is ok because only ddraw apps can call Flip,
-     * and only d3d8 and d3d9 apps specify the presentation interval
-     */
-    if (!(flags & (WINEDDFLIP_NOVSYNC | WINEDDFLIP_INTERVAL2 | WINEDDFLIP_INTERVAL3 | WINEDDFLIP_INTERVAL4)))
-        /* Most common case first to avoid wasting time on all the other cases */
-        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_ONE;
-    else if (flags & WINEDDFLIP_NOVSYNC)
-        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_IMMEDIATE;
-    else if (flags & WINEDDFLIP_INTERVAL2)
-        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_TWO;
-    else if (flags & WINEDDFLIP_INTERVAL3)
-        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_THREE;
-    else
-        swapchain->presentParms.PresentationInterval = WINED3DPRESENT_INTERVAL_FOUR;
-
-    /* Flipping a OpenGL surface -> present. */
-    return wined3d_swapchain_present(swapchain, NULL, NULL, swapchain->win_handle, NULL, 0);
 }
 
 /* Does a direct frame buffer -> texture copy. Stretching is done
@@ -7082,7 +7095,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DBaseSurfaceImpl_Unmap,
     IWineD3DBaseSurfaceImpl_GetDC,
     IWineD3DBaseSurfaceImpl_ReleaseDC,
-    IWineD3DSurfaceImpl_Flip,
+    IWineD3DBaseSurfaceImpl_Flip,
     IWineD3DSurfaceImpl_Blt,
     IWineD3DBaseSurfaceImpl_GetBltStatus,
     IWineD3DBaseSurfaceImpl_GetFlipStatus,
@@ -7349,38 +7362,6 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
     return TRUE;
 }
 
-/*****************************************************************************
- * IWineD3DSurface::Flip, GDI version
- *
- * Flips 2 flipping enabled surfaces. Determining the 2 targets is done by
- * the parent library. This implementation changes the data pointers of the
- * surfaces and copies the new front buffer content to the screen
- *
- * Params:
- *  override: Flipping target(e.g. back buffer)
- *
- * Returns:
- *  WINED3D_OK on success
- *
- *****************************************************************************/
-static HRESULT WINAPI IWineGDISurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD flags)
-{
-    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)iface;
-    struct wined3d_swapchain *swapchain;
-    HRESULT hr;
-
-    if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN)
-    {
-        ERR("Flipped surface is not on a swapchain\n");
-        return WINEDDERR_NOTFLIPPABLE;
-    }
-
-    swapchain = surface->container.u.swapchain;
-    hr = wined3d_swapchain_present(swapchain, NULL, NULL, swapchain->win_handle, NULL, 0);
-
-    return hr;
-}
-
 static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
 {
     /* IUnknown */
@@ -7401,7 +7382,7 @@ static const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineD3DBaseSurfaceImpl_Unmap,
     IWineD3DBaseSurfaceImpl_GetDC,
     IWineD3DBaseSurfaceImpl_ReleaseDC,
-    IWineGDISurfaceImpl_Flip,
+    IWineD3DBaseSurfaceImpl_Flip,
     IWineD3DBaseSurfaceImpl_Blt,
     IWineD3DBaseSurfaceImpl_GetBltStatus,
     IWineD3DBaseSurfaceImpl_GetFlipStatus,

@@ -2026,6 +2026,7 @@ struct wined3d_surface_ops
     void (*surface_map)(struct IWineD3DSurfaceImpl *surface, const RECT *rect, DWORD flags);
     void (*surface_unmap)(struct IWineD3DSurfaceImpl *surface);
     HRESULT (*surface_getdc)(struct IWineD3DSurfaceImpl *surface);
+    HRESULT (*surface_flip)(struct IWineD3DSurfaceImpl *surface, struct IWineD3DSurfaceImpl *override);
     HRESULT (*surface_set_mem)(struct IWineD3DSurfaceImpl *surface, void *mem);
 };
 
