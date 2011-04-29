@@ -1088,6 +1088,35 @@ size_t __thiscall MSVCP_basic_string_char_find_ch(
     return MSVCP_basic_string_char_find_cstr_substr(this, &ch, pos, 1);
 }
 
+/* ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADI@Z */
+/* ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAD_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_at, 8)
+char* __thiscall MSVCP_basic_string_char_at(
+        basic_string_char *this, size_t pos)
+{
+    TRACE("%p %lu\n", this, (unsigned long)pos);
+
+    if(this->size <= pos)
+        MSVCP__String_base_Xran();
+
+    return basic_string_char_ptr(this)+pos;
+}
+
+/* ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEABDI@Z */
+/* ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAAEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_const_at, 8)
+const char* __thiscall MSVCP_basic_string_char_const_at(
+        const basic_string_char *this, size_t pos)
+{
+    TRACE("%p %lu\n", this, (unsigned long)pos);
+
+    if(this->size <= pos)
+        MSVCP__String_base_Xran();
+
+    return basic_string_char_const_ptr(this)+pos;
+}
+
+
 /* basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t>> */
 /* ?npos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@2IB */
 /* ?npos@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@2_KB */
@@ -1677,4 +1706,32 @@ size_t __thiscall MSVCP_basic_string_wchar_find_ch(
         const basic_string_wchar *this, wchar_t ch, size_t pos)
 {
     return MSVCP_basic_string_wchar_find_cstr_substr(this, &ch, pos, 1);
+}
+
+/* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAA_WI@Z */
+/* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEA_W_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_at, 8)
+wchar_t* __thiscall MSVCP_basic_string_wchar_at(
+        basic_string_wchar *this, size_t pos)
+{
+    TRACE("%p %lu\n", this, (unsigned long)pos);
+
+    if(this->size <= pos)
+        MSVCP__String_base_Xran();
+
+    return basic_string_wchar_ptr(this)+pos;
+}
+
+/* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEAB_WI@Z */
+/* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAAEB_W_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_const_at, 8)
+const wchar_t* __thiscall MSVCP_basic_string_wchar_const_at(
+        const basic_string_wchar *this, size_t pos)
+{
+    TRACE("%p %lu\n", this, (unsigned long)pos);
+
+    if(this->size <= pos)
+        MSVCP__String_base_Xran();
+
+    return basic_string_wchar_const_ptr(this)+pos;
 }

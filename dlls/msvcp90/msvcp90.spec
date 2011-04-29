@@ -3012,18 +3012,18 @@
 @ cdecl -arch=win64 ?assign@?$char_traits@_W@std@@SAPEA_WPEA_W_K_W@Z(ptr long long) MSVCP_char_traits_wchar_assignn
 @ cdecl -arch=win32 ?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z(ptr ptr) MSVCP_char_traits_wchar_assign
 @ cdecl -arch=win64 ?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z(ptr ptr) MSVCP_char_traits_wchar_assign
-@ stub -arch=win32 ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADI@Z
-@ stub -arch=win64 ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAD_K@Z
-@ stub -arch=win32 ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEABDI@Z
-@ stub -arch=win64 ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAAEBD_K@Z
+@ thiscall -arch=win32 ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADI@Z(ptr long) MSVCP_basic_string_char_at
+@ cdecl -arch=win64 ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAD_K@Z(ptr long) MSVCP_basic_string_char_at
+@ thiscall -arch=win32 ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEABDI@Z(ptr long) MSVCP_basic_string_char_const_at
+@ cdecl -arch=win64 ?at@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAAEBD_K@Z(ptr long) MSVCP_basic_string_char_const_at
 @ stub -arch=win32 ?at@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAGI@Z
 @ stub -arch=win64 ?at@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAAEAG_K@Z
 @ stub -arch=win32 ?at@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEABGI@Z
 @ stub -arch=win64 ?at@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBAAEBG_K@Z
-@ stub -arch=win32 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAA_WI@Z
-@ stub -arch=win64 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEA_W_K@Z
-@ stub -arch=win32 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEAB_WI@Z
-@ stub -arch=win64 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAAEB_W_K@Z
+@ thiscall -arch=win32 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAA_WI@Z(ptr long) MSVCP_basic_string_wchar_at
+@ cdecl -arch=win64 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEA_W_K@Z(ptr long) MSVCP_basic_string_wchar_at
+@ thiscall -arch=win32 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEAB_WI@Z(ptr long) MSVCP_basic_string_wchar_const_at
+@ cdecl -arch=win64 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAAEB_W_K@Z(ptr long) MSVCP_basic_string_wchar_const_at
 @ stub ?atan2@?$_Ctraits@M@std@@SAMMM@Z
 @ stub ?atan2@?$_Ctraits@N@std@@SANNN@Z
 @ stub ?atan2@?$_Ctraits@O@std@@SAOOO@Z
