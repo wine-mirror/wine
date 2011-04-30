@@ -1332,31 +1332,31 @@ static void test_mbstowcs(void)
 
     err = pmbstowcs_s(&ret, wOut, 6, mSimple, _TRUNCATE);
     ok(err == 0, "err = %d\n", err);
-    ok(ret == 5, "ret = %d\n", (int)ret);
+    ok(ret == 5, "mbstowcs_s did not return 5\n");
     ok(!memcmp(wOut, wSimple, sizeof(wSimple)), "wOut = %s\n", wine_dbgstr_w(wOut));
 
     err = pmbstowcs_s(&ret, wOut, 6, mHiragana, _TRUNCATE);
     ok(err == 0, "err = %d\n", err);
-    ok(ret == 3, "ret = %d\n", (int)ret);
+    ok(ret == 3, "mbstowcs_s did not return 3\n");
     ok(!memcmp(wOut, wHiragana, sizeof(wHiragana)), "wOut = %s\n", wine_dbgstr_w(wOut));
 
     err = pmbstowcs_s(&ret, NULL, 0, mHiragana, 1);
     ok(err == 0, "err = %d\n", err);
-    ok(ret == 3, "ret = %d\n", (int)ret);
+    ok(ret == 3, "mbstowcs_s did not return 3\n");
 
     err = pwcstombs_s(&ret, mOut, 6, wSimple, _TRUNCATE);
     ok(err == 0, "err = %d\n", err);
-    ok(ret == 5, "ret = %d\n", (int)ret);
+    ok(ret == 5, "wcstombs_s did not return 5\n");
     ok(!memcmp(mOut, mSimple, sizeof(mSimple)), "mOut = %s\n", mOut);
 
     err = pwcstombs_s(&ret, mOut, 6, wHiragana, _TRUNCATE);
     ok(err == 0, "err = %d\n", err);
-    ok(ret == 5, "ret = %d\n", (int)ret);
+    ok(ret == 5, "wcstombs_s did not return 5\n");
     ok(!memcmp(mOut, mHiragana, sizeof(mHiragana)), "mOut = %s\n", mOut);
 
     err = pwcstombs_s(&ret, NULL, 0, wHiragana, 1);
     ok(err == 0, "err = %d\n", err);
-    ok(ret == 5, "ret = %d\n", (int)ret);
+    ok(ret == 5, "wcstombs_s did not return 5\n");
 
     if(!pwcsrtombs) {
         win_skip("wcsrtombs not available\n");
@@ -1366,14 +1366,14 @@ static void test_mbstowcs(void)
     pwstr = wSimple;
     err = -3;
     ret = pwcsrtombs(mOut, &pwstr, 4, &err);
-    ok(ret == 4, "ret = %d\n", ret);
+    ok(ret == 4, "wcsrtombs did not return 4\n");
     ok(err == 0, "err = %d\n", err);
     ok(pwstr == wSimple+4, "pwstr = %p (wszSimple = %p)\n", pwstr, wSimple);
     ok(!memcmp(mOut, mSimple, ret), "mOut = %s\n", mOut);
 
     pwstr = wSimple;
     ret = pwcsrtombs(mOut, &pwstr, 5, NULL);
-    ok(ret == 4, "ret = %d\n", ret);
+    ok(ret == 4, "wcsrtombs did not return 4\n");
     ok(pwstr == NULL, "pwstr != NULL\n");
     ok(!memcmp(mOut, mSimple, sizeof(mSimple)), "mOut = %s\n", mOut);
 }
