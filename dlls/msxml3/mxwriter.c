@@ -44,6 +44,8 @@ typedef struct _mxwriter
     ISAXContentHandler ISAXContentHandler_iface;
 
     LONG ref;
+
+    VARIANT_BOOL standalone;
 } mxwriter;
 
 static inline mxwriter *impl_from_IMXWriter(IMXWriter *iface)
@@ -237,15 +239,24 @@ static HRESULT WINAPI mxwriter_get_indent(IMXWriter *iface, VARIANT_BOOL *indent
 static HRESULT WINAPI mxwriter_put_standalone(IMXWriter *iface, VARIANT_BOOL value)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%d)\n", This, value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, value);
+    This->standalone = value;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_get_standalone(IMXWriter *iface, VARIANT_BOOL *value)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%p)\n", This, value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    if (!value) return E_POINTER;
+
+    *value = This->standalone;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_put_omitXMLDeclaration(IMXWriter *iface, VARIANT_BOOL value)
@@ -498,6 +509,8 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
     This->IMXWriter_iface.lpVtbl = &mxwriter_vtbl;
     This->ISAXContentHandler_iface.lpVtbl = &mxwriter_saxcontent_vtbl;
     This->ref = 1;
+
+    This->standalone = VARIANT_FALSE;
 
     *ppObj = &This->IMXWriter_iface;
 

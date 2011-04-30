@@ -694,6 +694,41 @@ static void test_mxwriter_contenthandler(void)
     IMXWriter_Release(writer);
 }
 
+static void test_mxwriter_properties(void)
+{
+    IMXWriter *writer;
+    VARIANT_BOOL b;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    if (hr != S_OK)
+    {
+        win_skip("MXXMLWriter not supported\n");
+        return;
+    }
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IMXWriter_get_standalone(writer, NULL);
+    ok(hr == E_POINTER, "got %08x\n", hr);
+
+    b = VARIANT_TRUE;
+    hr = IMXWriter_get_standalone(writer, &b);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
+
+    /* set and check */
+    hr = IMXWriter_put_standalone(writer, VARIANT_TRUE);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    b = VARIANT_FALSE;
+    hr = IMXWriter_get_standalone(writer, &b);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    IMXWriter_Release(writer);
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -716,6 +751,7 @@ START_TEST(saxreader)
     test_saxreader();
     test_encoding();
     test_mxwriter_contenthandler();
+    test_mxwriter_properties();
 
     CoUninitialize();
 }
