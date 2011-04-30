@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-26 18:24+0300\n"
+"PO-Revision-Date: 2011-04-30 14:43+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -70,14 +70,12 @@ msgid "All files (*.*)"
 msgstr "Visi failai (*.*)"
 
 #: appwiz.rc:42
-#, fuzzy
 msgid "&Remove"
-msgstr "Pa&šalinti..."
+msgstr "Pa&šalinti"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "Pa&keisti/pašalinti..."
+msgstr "Pa&keisti/pašalinti"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -361,9 +359,8 @@ msgstr ""
 "Prašome įvesti paraštes iš naujo."
 
 #: comdlg32.rc:74
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "Skaitinė „kopijų skaičius“ reikšmė negali būti tuščia."
+msgstr "Laukas „kopijų skaičius“ negali būti tuščias."
 
 #: comdlg32.rc:76
 msgid ""
@@ -693,9 +690,8 @@ msgid "Unstructured Address"
 msgstr "Nestruktūrinis adresas"
 
 #: crypt32.rc:51
-#, fuzzy
 msgid "S/MIME Capabilities"
-msgstr "SMIME gebėjimai"
+msgstr "S/MIME gebėjimai"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
@@ -6260,9 +6256,8 @@ msgid "Pr&int..."
 msgstr "S&pausdinti..."
 
 #: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "Spaudinio pe&ržiūra..."
+msgstr "Spaudinio pe&ržiūra"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6300,9 +6295,8 @@ msgid "&Help"
 msgstr "&Žinynas"
 
 #: shdocvw.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&Apie interneto naršyklę..."
+msgstr "&Apie interneto naršyklę"
 
 #: shdocvw.rc:67
 msgctxt "home page"
