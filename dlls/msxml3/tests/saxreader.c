@@ -29,6 +29,14 @@
 
 #include "wine/test.h"
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc = IUnknown_AddRef(obj);
+    IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
+}
+
 typedef enum _CH {
     CH_ENDTEST,
     CH_PUTDOCUMENTLOCATOR,
@@ -653,6 +661,39 @@ static void test_encoding(void)
     }
 }
 
+static void test_mxwriter_contenthandler(void)
+{
+    ISAXContentHandler *handler;
+    IMXWriter *writer, *writer2;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    if (hr != S_OK)
+    {
+        win_skip("MXXMLWriter not supported\n");
+        return;
+    }
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    EXPECT_REF(writer, 1);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&handler);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_REF(writer, 2);
+    EXPECT_REF(handler, 2);
+
+    hr = ISAXContentHandler_QueryInterface(handler, &IID_IMXWriter, (void**)&writer2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(writer2 == writer, "got %p, expected %p\n", writer2, writer);
+    EXPECT_REF(writer, 3);
+    EXPECT_REF(writer2, 3);
+    IMXWriter_Release(writer2);
+
+    ISAXContentHandler_Release(handler);
+    IMXWriter_Release(writer);
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -674,6 +715,7 @@ START_TEST(saxreader)
 
     test_saxreader();
     test_encoding();
+    test_mxwriter_contenthandler();
 
     CoUninitialize();
 }

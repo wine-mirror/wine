@@ -41,12 +41,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 typedef struct _mxwriter
 {
     IMXWriter IMXWriter_iface;
+    ISAXContentHandler ISAXContentHandler_iface;
+
     LONG ref;
 } mxwriter;
 
 static inline mxwriter *impl_from_IMXWriter(IMXWriter *iface)
 {
     return CONTAINING_RECORD(iface, mxwriter, IMXWriter_iface);
+}
+
+static inline mxwriter *impl_from_ISAXContentHandler(ISAXContentHandler *iface)
+{
+    return CONTAINING_RECORD(iface, mxwriter, ISAXContentHandler_iface);
 }
 
 static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, void **obj)
@@ -60,6 +67,10 @@ static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, voi
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *obj = &This->IMXWriter_iface;
+    }
+    else if ( IsEqualGUID( riid, &IID_ISAXContentHandler ) )
+    {
+        *obj = &This->ISAXContentHandler_iface;
     }
     else
     {
@@ -314,6 +325,164 @@ static const struct IMXWriterVtbl mxwriter_vtbl =
     mxwriter_flush
 };
 
+/*** ISAXContentHandler ***/
+static HRESULT WINAPI mxwriter_saxcontent_QueryInterface(
+    ISAXContentHandler *iface,
+    REFIID riid,
+    void **obj)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    return IMXWriter_QueryInterface(&This->IMXWriter_iface, riid, obj);
+}
+
+static ULONG WINAPI mxwriter_saxcontent_AddRef(ISAXContentHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    return IMXWriter_AddRef(&This->IMXWriter_iface);
+}
+
+static ULONG WINAPI mxwriter_saxcontent_Release(ISAXContentHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    return IMXWriter_Release(&This->IMXWriter_iface);
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_putDocumentLocator(
+    ISAXContentHandler *iface,
+    ISAXLocator *locator)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)->(%p)\n", This, locator);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_startDocument(ISAXContentHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_endDocument(ISAXContentHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_startPrefixMapping(
+    ISAXContentHandler *iface,
+    const WCHAR *prefix,
+    int nprefix,
+    const WCHAR *uri,
+    int nuri)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)->(%s %s)\n", This, debugstr_wn(prefix, nprefix), debugstr_wn(uri, nuri));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_endPrefixMapping(
+    ISAXContentHandler *iface,
+    const WCHAR *prefix,
+    int nprefix)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)->(%s)\n", This, debugstr_wn(prefix, nprefix));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_startElement(
+    ISAXContentHandler *iface,
+    const WCHAR *namespaceUri,
+    int nnamespaceUri,
+    const WCHAR *local_name,
+    int nlocal_name,
+    const WCHAR *QName,
+    int nQName,
+    ISAXAttributes *attr)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)->(%s %s %s %p)\n", This, debugstr_wn(namespaceUri, nnamespaceUri),
+        debugstr_wn(local_name, nlocal_name), debugstr_wn(QName, nQName), attr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_endElement(
+    ISAXContentHandler *iface,
+    const WCHAR *namespaceUri,
+    int nnamespaceUri,
+    const WCHAR * local_name,
+    int nlocal_name,
+    const WCHAR *QName,
+    int nQName)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)->(%s %s %s)\n", This, debugstr_wn(namespaceUri, nnamespaceUri),
+        debugstr_wn(local_name, nlocal_name), debugstr_wn(QName, nQName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_characters(
+    ISAXContentHandler *iface,
+    const WCHAR *chars,
+    int nchars)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)->(%s)\n", This, debugstr_wn(chars, nchars));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_ignorableWhitespace(
+    ISAXContentHandler *iface,
+    const WCHAR *chars,
+    int nchars)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)->(%s)\n", This, debugstr_wn(chars, nchars));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_processingInstruction(
+    ISAXContentHandler *iface,
+    const WCHAR *target,
+    int ntarget,
+    const WCHAR *data,
+    int ndata)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)->(%s %s)\n", This, debugstr_wn(target, ntarget), debugstr_wn(data, ndata));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mxwriter_saxcontent_skippedEntity(
+    ISAXContentHandler *iface,
+    const WCHAR *name,
+    int nname)
+{
+    mxwriter *This = impl_from_ISAXContentHandler( iface );
+    FIXME("(%p)->(%s)\n", This, debugstr_wn(name, nname));
+    return E_NOTIMPL;
+}
+
+static const struct ISAXContentHandlerVtbl mxwriter_saxcontent_vtbl =
+{
+    mxwriter_saxcontent_QueryInterface,
+    mxwriter_saxcontent_AddRef,
+    mxwriter_saxcontent_Release,
+    mxwriter_saxcontent_putDocumentLocator,
+    mxwriter_saxcontent_startDocument,
+    mxwriter_saxcontent_endDocument,
+    mxwriter_saxcontent_startPrefixMapping,
+    mxwriter_saxcontent_endPrefixMapping,
+    mxwriter_saxcontent_startElement,
+    mxwriter_saxcontent_endElement,
+    mxwriter_saxcontent_characters,
+    mxwriter_saxcontent_ignorableWhitespace,
+    mxwriter_saxcontent_processingInstruction,
+    mxwriter_saxcontent_skippedEntity
+};
+
 HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
 {
     mxwriter *This;
@@ -327,6 +496,7 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
         return E_OUTOFMEMORY;
 
     This->IMXWriter_iface.lpVtbl = &mxwriter_vtbl;
+    This->ISAXContentHandler_iface.lpVtbl = &mxwriter_saxcontent_vtbl;
     This->ref = 1;
 
     *ppObj = &This->IMXWriter_iface;
