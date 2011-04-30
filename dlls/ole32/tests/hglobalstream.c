@@ -175,7 +175,7 @@ static void test_streamonhglobal(IStream *pStream)
     ull.u.HighPart = 0xCAFECAFE;
     ull.u.LowPart = 0xCAFECAFE;
     ll.u.HighPart = 0;
-    ll.u.LowPart = -sizeof(data);
+    ll.u.LowPart = -(DWORD)sizeof(data);
     hr = IStream_Seek(pStream, ll, STREAM_SEEK_CUR, &ull);
     ok_ole_success(hr, "IStream_Seek");
     ok(ull.u.LowPart == 0, "LowPart set to %d\n", ull.u.LowPart);
@@ -190,7 +190,7 @@ static void test_streamonhglobal(IStream *pStream)
     ull.u.HighPart = 0xCAFECAFE;
     ull.u.LowPart = 0xCAFECAFE;
     ll.u.HighPart = 0;
-    ll.u.LowPart = -sizeof(data)-1;
+    ll.u.LowPart = -(DWORD)sizeof(data)-1;
     hr = IStream_Seek(pStream, ll, STREAM_SEEK_CUR, &ull);
     ok(hr == STG_E_SEEKERROR, "IStream_Seek should have returned STG_E_SEEKERROR instead of 0x%08x\n", hr);
     ok(ull.u.LowPart == sizeof(data), "LowPart set to %d\n", ull.u.LowPart);
