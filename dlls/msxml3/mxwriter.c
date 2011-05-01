@@ -46,6 +46,8 @@ typedef struct _mxwriter
     LONG ref;
 
     VARIANT_BOOL standalone;
+
+    IStream *dest;
 } mxwriter;
 
 static inline mxwriter *impl_from_IMXWriter(IMXWriter *iface)
@@ -103,7 +105,10 @@ static ULONG WINAPI mxwriter_Release(IMXWriter *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if(!ref)
+    {
+        if (This->dest) IStream_Release(This->dest);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -183,8 +188,39 @@ static HRESULT WINAPI mxwriter_Invoke(
 static HRESULT WINAPI mxwriter_put_output(IMXWriter *iface, VARIANT dest)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&dest));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&dest));
+
+    switch (V_VT(&dest))
+    {
+    case VT_EMPTY:
+    {
+        if (This->dest) IStream_Release(This->dest);
+        This->dest = NULL;
+        break;
+    }
+    case VT_UNKNOWN:
+    {
+        IStream *stream;
+        HRESULT hr;
+
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&dest), &IID_IStream, (void**)&stream);
+        if (hr == S_OK)
+        {
+            if (This->dest) IStream_Release(This->dest);
+            This->dest = stream;
+            break;
+        }
+
+        FIXME("unhandled interface type for VT_UNKNOWN destination\n");
+        return E_NOTIMPL;
+    }
+    default:
+        FIXME("unhandled destination type %s\n", debugstr_variant(&dest));
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
@@ -511,6 +547,7 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
     This->ref = 1;
 
     This->standalone = VARIANT_FALSE;
+    This->dest = NULL;
 
     *ppObj = &This->IMXWriter_iface;
 

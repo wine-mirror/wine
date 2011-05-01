@@ -669,11 +669,6 @@ static void test_mxwriter_contenthandler(void)
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
-    if (hr != S_OK)
-    {
-        win_skip("MXXMLWriter not supported\n");
-        return;
-    }
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     EXPECT_REF(writer, 1);
@@ -702,11 +697,6 @@ static void test_mxwriter_properties(void)
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
-    if (hr != S_OK)
-    {
-        win_skip("MXXMLWriter not supported\n");
-        return;
-    }
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     hr = IMXWriter_get_standalone(writer, NULL);
@@ -729,9 +719,92 @@ static void test_mxwriter_properties(void)
     IMXWriter_Release(writer);
 }
 
+static void test_mxwriter_flush(void)
+{
+    ISAXContentHandler *content;
+    IMXWriter *writer;
+    LARGE_INTEGER pos;
+    ULARGE_INTEGER pos2;
+    IStream *stream;
+    VARIANT dest;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_REF(stream, 1);
+
+    /* detach whe nothing was attached */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    /* attach stream */
+    V_VT(&dest) = VT_UNKNOWN;
+    V_UNKNOWN(&dest) = (IUnknown*)stream;
+    hr = IMXWriter_put_output(writer, dest);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    todo_wine EXPECT_REF(stream, 3);
+
+    /* detach setting VT_EMPTY destination */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_REF(stream, 1);
+
+    V_VT(&dest) = VT_UNKNOWN;
+    V_UNKNOWN(&dest) = (IUnknown*)stream;
+    hr = IMXWriter_put_output(writer, dest);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    /* flush() doesn't detach a stream */
+    hr = IMXWriter_flush(writer);
+todo_wine {
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_REF(stream, 3);
+}
+
+    pos.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(pos2.QuadPart == 0, "expected stream beginning\n");
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_startDocument(content);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    pos.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    todo_wine ok(pos2.QuadPart != 0, "expected stream beginning\n");
+
+    /* already started */
+    hr = ISAXContentHandler_startDocument(content);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_endDocument(content);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    /* flushed on endDocument() */
+    pos.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    todo_wine ok(pos2.QuadPart != 0, "expected stream position moved\n");
+
+    ISAXContentHandler_Release(content);
+    IStream_Release(stream);
+    IMXWriter_Release(writer);
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
+    IMXWriter *writer;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -750,8 +823,19 @@ START_TEST(saxreader)
 
     test_saxreader();
     test_encoding();
-    test_mxwriter_contenthandler();
-    test_mxwriter_properties();
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    if (hr == S_OK)
+    {
+        IMXWriter_Release(writer);
+
+        test_mxwriter_contenthandler();
+        test_mxwriter_properties();
+        test_mxwriter_flush();
+    }
+    else
+        win_skip("MXXMLWriter not supported\n");
 
     CoUninitialize();
 }
