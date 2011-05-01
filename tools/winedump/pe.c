@@ -941,13 +941,11 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
 
 static void	dump_dir_debug(void)
 {
-    const IMAGE_DEBUG_DIRECTORY*debugDir = get_dir(IMAGE_FILE_DEBUG_DIRECTORY);
     unsigned			nb_dbg, i;
+    const IMAGE_DEBUG_DIRECTORY*debugDir = get_dir_and_size(IMAGE_FILE_DEBUG_DIRECTORY, &nb_dbg);
 
-    if (!debugDir) return;
-    nb_dbg = PE_nt_headers->OptionalHeader.DataDirectory[IMAGE_FILE_DEBUG_DIRECTORY].Size /
-	sizeof(*debugDir);
-    if (!nb_dbg) return;
+    nb_dbg /= sizeof(*debugDir);
+    if (!debugDir || !nb_dbg) return;
 
     printf("Debug Table (%u directories)\n", nb_dbg);
 
