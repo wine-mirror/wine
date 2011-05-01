@@ -98,14 +98,14 @@ typedef enum {
     STYLEID_Z_INDEX
 } styleid_t;
 
-void HTMLStyle2_Init(HTMLStyle*);
-void HTMLStyle3_Init(HTMLStyle*);
+void HTMLStyle2_Init(HTMLStyle*) DECLSPEC_HIDDEN;
+void HTMLStyle3_Init(HTMLStyle*) DECLSPEC_HIDDEN;
 
-HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration*,styleid_t,BSTR*);
-HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration*,styleid_t,LPCWSTR,DWORD);
+HRESULT get_nsstyle_attr(nsIDOMCSSStyleDeclaration*,styleid_t,BSTR*) DECLSPEC_HIDDEN;
+HRESULT set_nsstyle_attr(nsIDOMCSSStyleDeclaration*,styleid_t,LPCWSTR,DWORD) DECLSPEC_HIDDEN;
 
-HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *value, DWORD flags);
-HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags);
+HRESULT set_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *value, DWORD flags) DECLSPEC_HIDDEN;
+HRESULT get_nsstyle_attr_var(nsIDOMCSSStyleDeclaration *nsstyle, styleid_t sid, VARIANT *p, DWORD flags) DECLSPEC_HIDDEN;
 
 #define ATTR_FIX_PX      1
 #define ATTR_FIX_URL     2

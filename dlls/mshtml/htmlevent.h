@@ -42,17 +42,17 @@ typedef enum {
     EVENTID_LAST
 } eventid_t;
 
-eventid_t str_to_eid(LPCWSTR);
-void check_event_attr(HTMLDocumentNode*,nsIDOMElement*);
-void release_event_target(event_target_t*);
-void fire_event(HTMLDocumentNode*,eventid_t,BOOL,nsIDOMNode*,nsIDOMEvent*);
-HRESULT set_event_handler(event_target_t**,nsIDOMNode*,HTMLDocumentNode*,eventid_t,VARIANT*);
-HRESULT get_event_handler(event_target_t**,eventid_t,VARIANT*);
-HRESULT attach_event(event_target_t**,nsIDOMNode*,HTMLDocument*,BSTR,IDispatch*,VARIANT_BOOL*);
-HRESULT detach_event(event_target_t*,HTMLDocument*,BSTR,IDispatch*);
-HRESULT dispatch_event(HTMLDOMNode*,const WCHAR*,VARIANT*,VARIANT_BOOL*);
-HRESULT call_event(HTMLDOMNode*,eventid_t);
-void update_cp_events(HTMLWindow*,event_target_t**,cp_static_data_t*,nsIDOMNode*);
+eventid_t str_to_eid(LPCWSTR) DECLSPEC_HIDDEN;
+void check_event_attr(HTMLDocumentNode*,nsIDOMElement*) DECLSPEC_HIDDEN;
+void release_event_target(event_target_t*) DECLSPEC_HIDDEN;
+void fire_event(HTMLDocumentNode*,eventid_t,BOOL,nsIDOMNode*,nsIDOMEvent*) DECLSPEC_HIDDEN;
+HRESULT set_event_handler(event_target_t**,nsIDOMNode*,HTMLDocumentNode*,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT get_event_handler(event_target_t**,eventid_t,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT attach_event(event_target_t**,nsIDOMNode*,HTMLDocument*,BSTR,IDispatch*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
+HRESULT detach_event(event_target_t*,HTMLDocument*,BSTR,IDispatch*) DECLSPEC_HIDDEN;
+HRESULT dispatch_event(HTMLDOMNode*,const WCHAR*,VARIANT*,VARIANT_BOOL*) DECLSPEC_HIDDEN;
+HRESULT call_event(HTMLDOMNode*,eventid_t) DECLSPEC_HIDDEN;
+void update_cp_events(HTMLWindow*,event_target_t**,cp_static_data_t*,nsIDOMNode*) DECLSPEC_HIDDEN;
 
 static inline event_target_t **get_node_event_target(HTMLDOMNode *node)
 {

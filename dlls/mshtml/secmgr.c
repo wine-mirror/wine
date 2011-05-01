@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 
 /* Defined as extern in urlmon.idl, but not exported by uuid.lib */
-const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
+DECLSPEC_HIDDEN const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
     {0x10200490,0xfa38,0x11d0,{0xac,0x0e,0x00,0xa0,0xc9,0xf,0xff,0xc0}};
 
 static inline HTMLDocumentNode *impl_from_IInternetHostSecurityManager(IInternetHostSecurityManager *iface)
