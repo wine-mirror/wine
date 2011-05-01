@@ -1156,8 +1156,9 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         if (details)
         {
             codeview_add_type(curr_type, symt);
-            codeview_add_type_struct_field_list(ctp, (struct symt_udt*)symt, 
-                                                type->struct_v1.fieldlist);
+            if (!(type->struct_v1.property & 0x80)) /* 0x80 = forward declaration */
+                codeview_add_type_struct_field_list(ctp, (struct symt_udt*)symt,
+                                                    type->struct_v1.fieldlist);
         }
         break;
 
@@ -1171,8 +1172,9 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         if (details)
         {
             codeview_add_type(curr_type, symt);
-            codeview_add_type_struct_field_list(ctp, (struct symt_udt*)symt,
-                                                type->struct_v2.fieldlist);
+            if (!(type->struct_v2.property & 0x80)) /* 0x80 = forward declaration */
+                codeview_add_type_struct_field_list(ctp, (struct symt_udt*)symt,
+                                                    type->struct_v2.fieldlist);
         }
         break;
 
@@ -1186,8 +1188,9 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         if (details)
         {
             codeview_add_type(curr_type, symt);
-            codeview_add_type_struct_field_list(ctp, (struct symt_udt*)symt,
-                                                type->struct_v3.fieldlist);
+            if (!(type->struct_v3.property & 0x80)) /* 0x80 = forward declaration */
+                codeview_add_type_struct_field_list(ctp, (struct symt_udt*)symt,
+                                                    type->struct_v3.fieldlist);
         }
         break;
 
