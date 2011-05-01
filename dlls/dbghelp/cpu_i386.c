@@ -541,11 +541,11 @@ static unsigned i386_map_dwarf_register(unsigned regno)
     case 24: reg = CV_REG_CTRL; break;
     case 25: reg = CV_REG_STAT; break;
     case 26: reg = CV_REG_TAG; break;
+    case 27: reg = CV_REG_FPCS; break;
+    case 28: reg = CV_REG_FPIP; break;
+    case 29: reg = CV_REG_FPDS; break;
+    case 30: reg = CV_REG_FPDO; break;
 /*
-reg: fiseg 27
-reg: fioff 28
-reg: foseg 29
-reg: fooff 30
 reg: fop   31
 */
     case 32: case 33: case 34: case 35:
@@ -582,6 +582,14 @@ static void* i386_fetch_context_reg(CONTEXT* ctx, unsigned regno, unsigned* size
     case CV_REG_ST0 + 5: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[5*sizeof(long double)];
     case CV_REG_ST0 + 6: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[6*sizeof(long double)];
     case CV_REG_ST0 + 7: *size = sizeof(long double); return &ctx->FloatSave.RegisterArea[7*sizeof(long double)];
+
+    case CV_REG_CTRL: *size = sizeof(DWORD); return &ctx->FloatSave.ControlWord;
+    case CV_REG_STAT: *size = sizeof(DWORD); return &ctx->FloatSave.StatusWord;
+    case CV_REG_TAG:  *size = sizeof(DWORD); return &ctx->FloatSave.TagWord;
+    case CV_REG_FPCS: *size = sizeof(DWORD); return &ctx->FloatSave.ErrorSelector;
+    case CV_REG_FPIP: *size = sizeof(DWORD); return &ctx->FloatSave.ErrorOffset;
+    case CV_REG_FPDS: *size = sizeof(DWORD); return &ctx->FloatSave.DataSelector;
+    case CV_REG_FPDO: *size = sizeof(DWORD); return &ctx->FloatSave.DataOffset;
 
     case CV_REG_EFLAGS: *size = sizeof(ctx->EFlags); return &ctx->EFlags;
     case CV_REG_ES: *size = sizeof(ctx->SegEs); return &ctx->SegEs;
@@ -627,6 +635,25 @@ static const char* i386_fetch_regname(unsigned regno)
     case CV_REG_DS: return "ds";
     case CV_REG_FS: return "fs";
     case CV_REG_GS: return "gs";
+
+    case CV_REG_CTRL: return "fpControl";
+    case CV_REG_STAT: return "fpStatus";
+    case CV_REG_TAG:  return "fpTag";
+    case CV_REG_FPCS: return "fpCS";
+    case CV_REG_FPIP: return "fpIP";
+    case CV_REG_FPDS: return "fpDS";
+    case CV_REG_FPDO: return "fpData";
+
+    case CV_REG_XMM0 + 0: return "xmm0";
+    case CV_REG_XMM0 + 1: return "xmm1";
+    case CV_REG_XMM0 + 2: return "xmm2";
+    case CV_REG_XMM0 + 3: return "xmm3";
+    case CV_REG_XMM0 + 4: return "xmm4";
+    case CV_REG_XMM0 + 5: return "xmm5";
+    case CV_REG_XMM0 + 6: return "xmm6";
+    case CV_REG_XMM0 + 7: return "xmm7";
+
+    case CV_REG_MXCSR: return "MxCSR";
     }
     FIXME("Unknown register %x\n", regno);
     return NULL;
