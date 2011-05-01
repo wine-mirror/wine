@@ -287,7 +287,7 @@
 @ cdecl -arch=i386 _adj_fprem1()
 @ cdecl -arch=i386 _adj_fptan()
 @ extern -arch=i386 _adjust_fdiv MSVCRT__adjust_fdiv
-# extern _aexit_rtn
+@ extern _aexit_rtn
 @ cdecl _aligned_free(ptr)
 # stub _aligned_free_dbg
 @ cdecl _aligned_malloc(long long)

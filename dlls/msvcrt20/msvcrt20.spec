@@ -526,7 +526,7 @@
 @ cdecl -arch=i386 _adj_fprem1() msvcrt._adj_fprem1
 @ cdecl -arch=i386 _adj_fptan() msvcrt._adj_fptan
 @ extern -arch=i386 _adjust_fdiv msvcrt._adjust_fdiv
-# extern _aexit_rtn
+@ extern _aexit_rtn msvcrt._aexit_rtn
 @ cdecl _amsg_exit(long) msvcrt._amsg_exit
 @ cdecl _assert(str str long) msvcrt._assert
 @ stub _atodbl
