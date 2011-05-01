@@ -312,7 +312,7 @@
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr) msvcrt.__wgetmainargs
 @ extern __winitenv msvcrt.__winitenv
 @ cdecl _abnormal_termination() msvcrt._abnormal_termination
-@ stub _abs64
+@ cdecl -ret64 _abs64(int64) msvcrt._abs64
 @ cdecl _access(str long) msvcrt._access
 @ cdecl _access_s(str long) msvcrt._access_s
 @ extern _acmdln msvcrt._acmdln
@@ -897,9 +897,9 @@
 @ cdecl _rmdir(str) msvcrt._rmdir
 @ cdecl _rmtmp() msvcrt._rmtmp
 @ cdecl _rotl(long long) msvcrt._rotl
-@ stub _rotl64
+@ cdecl -ret64 _rotl64(int64 long) msvcrt._rotl64
 @ cdecl _rotr(long long) msvcrt._rotr
-@ stub _rotr64
+@ cdecl -ret64 _rotr64(int64 long) msvcrt._rotr64
 @ cdecl -arch=i386 _safe_fdiv() msvcrt._safe_fdiv
 @ cdecl -arch=i386 _safe_fdivr() msvcrt._safe_fdivr
 @ cdecl -arch=i386 _safe_fprem() msvcrt._safe_fprem

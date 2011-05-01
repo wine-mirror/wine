@@ -640,15 +640,6 @@ unsigned int CDECL _rotl(unsigned int num, int shift)
 }
 
 /*********************************************************************
- *		_logb (MSVCRT.@)
- */
-double CDECL _logb(double num)
-{
-  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
-  return logb(num);
-}
-
-/*********************************************************************
  *		_lrotl (MSVCRT.@)
  */
 MSVCRT_ulong CDECL MSVCRT__lrotl(MSVCRT_ulong num, int shift)
@@ -673,6 +664,57 @@ unsigned int CDECL _rotr(unsigned int num, int shift)
 {
     shift &= 0x1f;
     return (num >> shift) | (num << (32-shift));
+}
+
+/*********************************************************************
+ *		_rotl64 (MSVCRT.@)
+ */
+unsigned __int64 CDECL _rotl64(unsigned __int64 num, int shift)
+{
+  shift &= 63;
+  return (num << shift) | (num >> (64-shift));
+}
+
+/*********************************************************************
+ *		_rotr64 (MSVCRT.@)
+ */
+unsigned __int64 CDECL _rotr64(unsigned __int64 num, int shift)
+{
+    shift &= 63;
+    return (num >> shift) | (num << (64-shift));
+}
+
+/*********************************************************************
+ *		abs (MSVCRT.@)
+ */
+int CDECL MSVCRT_abs( int n )
+{
+    return n >= 0 ? n : -n;
+}
+
+/*********************************************************************
+ *		labs (MSVCRT.@)
+ */
+MSVCRT_long CDECL MSVCRT_labs( MSVCRT_long n )
+{
+    return n >= 0 ? n : -n;
+}
+
+/*********************************************************************
+ *		_abs64 (MSVCRT.@)
+ */
+__int64 CDECL _abs64( __int64 n )
+{
+    return n >= 0 ? n : -n;
+}
+
+/*********************************************************************
+ *		_logb (MSVCRT.@)
+ */
+double CDECL _logb(double num)
+{
+  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+  return logb(num);
 }
 
 /*********************************************************************

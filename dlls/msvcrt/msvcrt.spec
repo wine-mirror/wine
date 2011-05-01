@@ -269,7 +269,7 @@
 @ cdecl __wgetmainargs(ptr ptr ptr long ptr)
 @ extern __winitenv MSVCRT___winitenv
 @ cdecl _abnormal_termination()
-# stub _abs64
+@ cdecl -ret64 _abs64(int64)
 @ cdecl _access(str long) MSVCRT__access
 @ cdecl _access_s(str long)
 @ extern _acmdln MSVCRT__acmdln
@@ -840,9 +840,9 @@
 @ cdecl _rmdir(str) MSVCRT__rmdir
 @ cdecl _rmtmp()
 @ cdecl _rotl(long long)
-# stub _rotl64
+@ cdecl -ret64 _rotl64(int64 long)
 @ cdecl _rotr(long long)
-# stub _rotr64
+@ cdecl -ret64 _rotr64(int64 long)
 @ cdecl -arch=i386 _safe_fdiv()
 @ cdecl -arch=i386 _safe_fdivr()
 @ cdecl -arch=i386 _safe_fprem()
@@ -1210,7 +1210,7 @@
 @ cdecl _y1(double)
 @ cdecl _yn(long double )
 @ cdecl abort() MSVCRT_abort
-@ cdecl abs(long) ntdll.abs
+@ cdecl abs(long) MSVCRT_abs
 @ cdecl acos(double) MSVCRT_acos
 @ cdecl -arch=x86_64 acosf(float) MSVCRT_acosf
 @ cdecl asctime(ptr) MSVCRT_asctime
@@ -1316,7 +1316,7 @@
 @ cdecl iswupper(long) MSVCRT_iswupper
 @ cdecl iswxdigit(long) MSVCRT_iswxdigit
 @ cdecl isxdigit(long) MSVCRT_isxdigit
-@ cdecl labs(long) ntdll.labs
+@ cdecl labs(long) MSVCRT_labs
 @ cdecl ldexp( double long) MSVCRT_ldexp
 @ cdecl ldiv(long long) MSVCRT_ldiv
 @ cdecl localeconv() MSVCRT_localeconv
