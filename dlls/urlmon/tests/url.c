@@ -1631,8 +1631,11 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
         if(emulate_protocol && (test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST))
             SetEvent(complete_event);
 
-        if(abort_progress)
+        if(abort_progress) {
+            if(filedwl_api)
+                binding_hres = E_ABORT;
             return E_ABORT;
+        }
 
         break;
     case BINDSTATUS_MIMETYPEAVAILABLE:
@@ -1789,11 +1792,14 @@ static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallbackEx *iface, HRES
     if (hresult == HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED))
         return S_OK;
 
-    if(filedwl_api)
-        ok(SUCCEEDED(hresult), "binding failed: %08x\n", hresult);
-    else if(invalid_cn_accepted)
-        ok(hresult == binding_hres, "binding failed: %08x, expected %08x\n", hresult, binding_hres);
-    else
+    if(filedwl_api) {
+        if(!abort_progress && !abort_start)
+            ok(SUCCEEDED(hresult), "binding failed: %08x\n", hresult);
+        else if(abort_start && abort_hres == E_NOTIMPL)
+            todo_wine ok(hresult == S_FALSE, "binding failed: %08x, expected S_FALSE\n", hresult);
+        else
+            ok(hresult == E_ABORT, "binding failed: %08x, expected E_ABORT\n", hresult);
+    } else
         ok(hresult == binding_hres, "binding failed: %08x, expected %08x\n", hresult, binding_hres);
     ok(szError == NULL, "szError should be NULL\n");
 
@@ -3328,6 +3334,113 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
     ok(res, "DeleteFile failed: %u\n", GetLastError());
 }
 
+static void test_URLDownloadToFile_abort(void)
+{
+    HRESULT hres;
+
+    init_bind_test(HTTP_TEST, BINDTEST_FILEDWLAPI|BINDTEST_ABORT_PROGRESS, TYMED_FILE);
+
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(QueryInterface_IInternetProtocol);
+    SET_EXPECT(QueryInterface_IServiceProvider);
+    SET_EXPECT(QueryService_IInternetProtocol);
+    SET_EXPECT(OnStartBinding);
+    SET_EXPECT(QueryInterface_IHttpNegotiate);
+    SET_EXPECT(QueryInterface_IHttpNegotiate2);
+    SET_EXPECT(BeginningTransaction);
+    SET_EXPECT(GetRootSecurityId);
+    SET_EXPECT(QueryInterface_IWindowForBindingUI);
+    SET_EXPECT(OnProgress_CONNECTING);
+    SET_EXPECT(OnProgress_SENDINGREQUEST);
+    SET_EXPECT(OnStopBinding);
+
+    hres = URLDownloadToFileW(NULL, urls[HTTP_TEST], dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
+    ok(hres == E_ABORT, "URLDownloadToFile failed: %08x, expected E_ABORT\n", hres);
+
+    CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(QueryInterface_IInternetProtocol);
+    CHECK_CALLED(QueryInterface_IServiceProvider);
+    CHECK_CALLED(QueryService_IInternetProtocol);
+    CHECK_CALLED(OnStartBinding);
+    CHECK_CALLED(QueryInterface_IHttpNegotiate);
+    CHECK_CALLED(QueryInterface_IHttpNegotiate2);
+    CHECK_CALLED(BeginningTransaction);
+    CHECK_CALLED(GetRootSecurityId);
+    CLEAR_CALLED(QueryInterface_IWindowForBindingUI);
+    CHECK_CALLED(OnProgress_SENDINGREQUEST);
+    CLEAR_CALLED(OnProgress_CONNECTING);
+    CHECK_CALLED(OnStopBinding);
+
+    init_bind_test(HTTP_TEST, BINDTEST_FILEDWLAPI|BINDTEST_ABORT_START, TYMED_FILE);
+
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(QueryInterface_IInternetProtocol);
+    SET_EXPECT(QueryInterface_IServiceProvider);
+    SET_EXPECT(QueryService_IInternetProtocol);
+    SET_EXPECT(OnStartBinding);
+    SET_EXPECT(OnStopBinding);
+
+    abort_hres = E_ABORT;
+    hres = URLDownloadToFileW(NULL, urls[HTTP_TEST], dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
+    ok(hres == E_ABORT, "URLDownloadToFile failed: %08x, expected E_ABORT\n", hres);
+
+    CHECK_CALLED(GetBindInfo);
+    todo_wine CHECK_CALLED(QueryInterface_IInternetProtocol);
+    todo_wine CHECK_CALLED(QueryInterface_IServiceProvider);
+    todo_wine CHECK_CALLED(QueryService_IInternetProtocol);
+    CHECK_CALLED(OnStartBinding);
+    CHECK_CALLED(OnStopBinding);
+
+    init_bind_test(HTTP_TEST, BINDTEST_FILEDWLAPI|BINDTEST_ABORT_START, TYMED_FILE);
+
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(QueryInterface_IInternetProtocol);
+    SET_EXPECT(QueryInterface_IServiceProvider);
+    SET_EXPECT(QueryService_IInternetProtocol);
+    SET_EXPECT(OnStartBinding);
+    SET_EXPECT(QueryInterface_IHttpNegotiate);
+    SET_EXPECT(QueryInterface_IHttpNegotiate2);
+    SET_EXPECT(BeginningTransaction);
+    SET_EXPECT(GetRootSecurityId);
+    SET_EXPECT(QueryInterface_IWindowForBindingUI);
+    SET_EXPECT(OnResponse);
+    SET_EXPECT(OnProgress_CONNECTING);
+    SET_EXPECT(OnProgress_SENDINGREQUEST);
+    SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
+    SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
+    SET_EXPECT(OnProgress_DOWNLOADINGDATA);
+    SET_EXPECT(OnProgress_ENDDOWNLOADDATA);
+    SET_EXPECT(OnStopBinding);
+
+    /* URLDownloadToFile doesn't abort if E_NOTIMPL is returned from the
+     * IBindStatusCallback's OnStartBinding function.
+     */
+    abort_hres = E_NOTIMPL;
+    hres = URLDownloadToFileW(NULL, urls[HTTP_TEST], dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
+    ok(hres == S_OK, "URLDownloadToFile failed: %08x\n", hres);
+
+    CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(QueryInterface_IInternetProtocol);
+    CHECK_CALLED(QueryInterface_IServiceProvider);
+    CHECK_CALLED(QueryService_IInternetProtocol);
+    CHECK_CALLED(OnStartBinding);
+    CHECK_CALLED(QueryInterface_IHttpNegotiate);
+    CHECK_CALLED(QueryInterface_IHttpNegotiate2);
+    CHECK_CALLED(BeginningTransaction);
+    CHECK_CALLED(GetRootSecurityId);
+    CLEAR_CALLED(QueryInterface_IWindowForBindingUI);
+    CHECK_CALLED(OnResponse);
+    CLEAR_CALLED(OnProgress_CONNECTING);
+    CHECK_CALLED(OnProgress_SENDINGREQUEST);
+    CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
+    CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
+    CHECK_CALLED(OnProgress_DOWNLOADINGDATA);
+    CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
+    CHECK_CALLED(OnStopBinding);
+
+    DeleteFileA(dwl_htmlA);
+}
+
 static void set_file_url(char *path)
 {
     CHAR file_urlA[INTERNET_MAX_URL_LENGTH];
@@ -3727,6 +3840,9 @@ START_TEST(url)
 
         trace("test URLDownloadToFile for http protocol...\n");
         test_URLDownloadToFile(HTTP_TEST, FALSE);
+
+        trace("test URLDownloadToFile abort...\n");
+        test_URLDownloadToFile_abort();
 
         trace("test emulated http abort...\n");
         test_BindToStorage(HTTP_TEST, BINDTEST_EMULATE|BINDTEST_ABORT, TYMED_ISTREAM);
