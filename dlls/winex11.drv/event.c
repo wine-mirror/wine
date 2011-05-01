@@ -190,7 +190,7 @@ static inline void free_event_data( XEvent *event )
  */
 void X11DRV_register_event_handler( int type, x11drv_event_handler handler, const char *name )
 {
-    assert( type <= MAX_EVENT_HANDLERS );
+    assert( type < MAX_EVENT_HANDLERS );
     assert( !handlers[type] || handlers[type] == handler );
     handlers[type] = handler;
     event_names[type] = name;
