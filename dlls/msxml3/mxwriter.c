@@ -46,6 +46,7 @@ typedef struct _mxwriter
     LONG ref;
 
     VARIANT_BOOL standalone;
+    BSTR encoding;
 
     IStream *dest;
 } mxwriter;
@@ -107,6 +108,7 @@ static ULONG WINAPI mxwriter_Release(IMXWriter *iface)
     if(!ref)
     {
         if (This->dest) IStream_Release(This->dest);
+        SysFreeString(This->encoding);
         heap_free(This);
     }
 
@@ -232,16 +234,35 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
 
 static HRESULT WINAPI mxwriter_put_encoding(IMXWriter *iface, BSTR encoding)
 {
+    static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
+    static const WCHAR utf8W[]  = {'U','T','F','-','8',0};
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%s)\n", This, debugstr_w(encoding));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(encoding));
+
+    /* FIXME: filter all supported encodings */
+    if (!strcmpW(encoding, utf16W) || !strcmpW(encoding, utf8W))
+    {
+        SysFreeString(This->encoding);
+        This->encoding = SysAllocString(encoding);
+        return S_OK;
+    }
+    else
+    {
+        FIXME("unsupported encoding %s\n", debugstr_w(encoding));
+        return E_INVALIDARG;
+    }
 }
 
 static HRESULT WINAPI mxwriter_get_encoding(IMXWriter *iface, BSTR *encoding)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%p)\n", This, encoding);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, encoding);
+
+    if (!encoding) return E_POINTER;
+
+    return return_bstr(This->encoding, encoding);
 }
 
 static HRESULT WINAPI mxwriter_put_byteOrderMark(IMXWriter *iface, VARIANT_BOOL writeBOM)
@@ -532,6 +553,7 @@ static const struct ISAXContentHandlerVtbl mxwriter_saxcontent_vtbl =
 
 HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
 {
+    static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
     mxwriter *This;
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
@@ -547,6 +569,8 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
     This->ref = 1;
 
     This->standalone = VARIANT_FALSE;
+    This->encoding = SysAllocString(utf16W);
+
     This->dest = NULL;
 
     *ppObj = &This->IMXWriter_iface;

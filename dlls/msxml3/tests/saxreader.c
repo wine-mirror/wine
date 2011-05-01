@@ -691,9 +691,13 @@ static void test_mxwriter_contenthandler(void)
 
 static void test_mxwriter_properties(void)
 {
+    static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
+    static const WCHAR emptyW[] = {0};
+    static const WCHAR testW[] = {'t','e','s','t',0};
     IMXWriter *writer;
     VARIANT_BOOL b;
     HRESULT hr;
+    BSTR str, str2;
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
@@ -715,6 +719,40 @@ static void test_mxwriter_properties(void)
     hr = IMXWriter_get_standalone(writer, &b);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    hr = IMXWriter_get_encoding(writer, NULL);
+    ok(hr == E_POINTER, "got %08x\n", hr);
+
+    /* UTF-16 is a default setting apparently */
+    str = (void*)0xdeadbeef;
+    hr = IMXWriter_get_encoding(writer, &str);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(lstrcmpW(str, utf16W) == 0, "expected empty string, got %s\n", wine_dbgstr_w(str));
+
+    str2 = (void*)0xdeadbeef;
+    hr = IMXWriter_get_encoding(writer, &str2);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(str != str2, "expected newly allocated, got same %p\n", str);
+
+    SysFreeString(str2);
+    SysFreeString(str);
+
+    /* put empty string */
+    str = SysAllocString(emptyW);
+    hr = IMXWriter_put_encoding(writer, str);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    SysFreeString(str);
+
+    str = (void*)0xdeadbeef;
+    hr = IMXWriter_get_encoding(writer, &str);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(lstrcmpW(str, utf16W) == 0, "expected empty string, got %s\n", wine_dbgstr_w(str));
+
+    /* invalid encoding name */
+    str = SysAllocString(testW);
+    hr = IMXWriter_put_encoding(writer, str);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    SysFreeString(str);
 
     IMXWriter_Release(writer);
 }
