@@ -2384,6 +2384,7 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
                                                WINED3DRS_DEPTHBIAS,
                                                &wined3d_value.d);
             if (SUCCEEDED(hr)) *Value = -wined3d_value.f * 16.0f;
+            break;
         }
 
         default:
