@@ -570,12 +570,11 @@ void    dump_coff_symbol_table(const IMAGE_SYMBOL *coff_symbols, unsigned num_sy
     }
 }
 
-void	dump_coff(unsigned long coffbase, unsigned long len, const void* pmt)
+void	dump_coff(unsigned long coffbase, unsigned long len, const IMAGE_SECTION_HEADER* sectHead)
 {
     const IMAGE_COFF_SYMBOLS_HEADER *coff = PRD(coffbase, len);
     const IMAGE_SYMBOL              *coff_symbols =
                                         (const IMAGE_SYMBOL *) ((const char *)coff + coff->LvaToFirstSymbol);
-    const IMAGE_SECTION_HEADER      *sectHead = pmt;
 
     dump_coff_symbol_table(coff_symbols, coff->NumberOfSymbols, sectHead);
 }

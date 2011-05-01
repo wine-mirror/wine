@@ -882,8 +882,8 @@ static	void	dump_dir_debug_dir(const IMAGE_DEBUG_DIRECTORY* idd, int idx)
     case IMAGE_DEBUG_TYPE_UNKNOWN:
 	break;
     case IMAGE_DEBUG_TYPE_COFF:
-	dump_coff(idd->PointerToRawData, idd->SizeOfData, 
-                  (const char*)PE_nt_headers + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader);
+	dump_coff(idd->PointerToRawData, idd->SizeOfData,
+                  IMAGE_FIRST_SECTION(PE_nt_headers));
 	break;
     case IMAGE_DEBUG_TYPE_CODEVIEW:
 	dump_codeview(idd->PointerToRawData, idd->SizeOfData);
@@ -1383,9 +1383,7 @@ static void dump_debug(void)
     unsigned    i;
     const IMAGE_SECTION_HEADER*	sectHead;
 
-    sectHead = (const IMAGE_SECTION_HEADER*)
-        ((const char*)PE_nt_headers + sizeof(DWORD) +
-         sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader);
+    sectHead = IMAGE_FIRST_SECTION(PE_nt_headers);
 
     for (i = 0; i < PE_nt_headers->FileHeader.NumberOfSections; i++, sectHead++)
     {
@@ -1456,8 +1454,7 @@ void pe_dump(void)
     {
 	dump_pe_header();
 	/* FIXME: should check ptr */
-	dump_sections(PRD(0, 1), (const char*)PE_nt_headers + sizeof(DWORD) +
-		      sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader,
+	dump_sections(PRD(0, 1), IMAGE_FIRST_SECTION(PE_nt_headers),
 		      PE_nt_headers->FileHeader.NumberOfSections);
     }
     else if (!globals.dumpsect)

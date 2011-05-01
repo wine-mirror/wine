@@ -260,7 +260,8 @@ void            codeview_dump_linetab2(const char* linetab, DWORD size, const ch
 
 void            dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr);
 void		dump_codeview(unsigned long ptr, unsigned long len);
-void		dump_coff(unsigned long coffbase, unsigned long len, const void* sect_map);
+void		dump_coff(unsigned long coffbase, unsigned long len,
+                          const IMAGE_SECTION_HEADER *sectHead);
 void            dump_coff_symbol_table(const IMAGE_SYMBOL *coff_symbols, unsigned num_sym,
                                        const IMAGE_SECTION_HEADER *sectHead);
 void		dump_frame_pointer_omission(unsigned long base, unsigned long len);
