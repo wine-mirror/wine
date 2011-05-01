@@ -34,9 +34,9 @@
 #include "dshow.h"
 #include "mmstream.h"
 
-HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj);
-HRESULT MediaStreamFilter_create(IUnknown *pUnkOuter, LPVOID *ppObj);
-HRESULT MediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, STREAM_TYPE StreamType, IMediaStream** ppMediaStream);
-HRESULT DirectDrawMediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, STREAM_TYPE StreamType, IMediaStream** ppMediaStream);
+HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT MediaStreamFilter_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT MediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, STREAM_TYPE StreamType, IMediaStream** ppMediaStream) DECLSPEC_HIDDEN;
+HRESULT DirectDrawMediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, STREAM_TYPE StreamType, IMediaStream** ppMediaStream) DECLSPEC_HIDDEN;
 
 #endif /* __AMSTREAM_PRIVATE_INCLUDED__ */
