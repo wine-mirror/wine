@@ -22,6 +22,8 @@
 #define CONST_VTABLE
 
 #include <stdio.h>
+#include <assert.h>
+
 #include "windows.h"
 #include "ole2.h"
 #include "msxml2.h"
@@ -35,6 +37,32 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
     ULONG rc = IUnknown_AddRef(obj);
     IUnknown_Release(obj);
     ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
+}
+
+static BSTR alloc_str_from_narrow(const char *str)
+{
+    int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    BSTR ret = SysAllocStringLen(NULL, len - 1);  /* NUL character added automatically */
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
+static BSTR alloced_bstrs[256];
+static int alloced_bstrs_count;
+
+static BSTR _bstr_(const char *str)
+{
+    assert(alloced_bstrs_count < sizeof(alloced_bstrs)/sizeof(alloced_bstrs[0]));
+    alloced_bstrs[alloced_bstrs_count] = alloc_str_from_narrow(str);
+    return alloced_bstrs[alloced_bstrs_count++];
+}
+
+static void free_bstrs(void)
+{
+    int i;
+    for (i = 0; i < alloced_bstrs_count; i++)
+        SysFreeString(alloced_bstrs[i]);
+    alloced_bstrs_count = 0;
 }
 
 typedef enum _CH {
@@ -754,7 +782,15 @@ static void test_mxwriter_properties(void)
     ok(hr == E_INVALIDARG, "got %08x\n", hr);
     SysFreeString(str);
 
+    hr = IMXWriter_get_version(writer, NULL);
+    ok(hr == E_POINTER, "got %08x\n", hr);
+    /* default version is 'surprisingly' 1.0 */
+    hr = IMXWriter_get_version(writer, &str);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!lstrcmpW(str, _bstr_("1.0")), "got %s\n", wine_dbgstr_w(str));
+
     IMXWriter_Release(writer);
+    free_bstrs();
 }
 
 static void test_mxwriter_flush(void)
@@ -814,7 +850,7 @@ todo_wine {
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ISAXContentHandler_startDocument(content);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     pos.QuadPart = 0;
     hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
@@ -823,7 +859,7 @@ todo_wine {
 
     /* already started */
     hr = ISAXContentHandler_startDocument(content);
-    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ISAXContentHandler_endDocument(content);
     todo_wine ok(hr == S_OK, "got %08x\n", hr);
@@ -837,6 +873,52 @@ todo_wine {
     ISAXContentHandler_Release(content);
     IStream_Release(stream);
     IMXWriter_Release(writer);
+}
+
+static void test_mxwriter_startenddocument(void)
+{
+    ISAXContentHandler *content;
+    IMXWriter *writer;
+    VARIANT dest;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_startDocument(content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_endDocument(content);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
+        "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    /* now try another startDocument */
+    hr = ISAXContentHandler_startDocument(content);
+    ok(hr == S_OK, "got %08x\n", hr);
+    /* and get duplcated prolog */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"
+                        "<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
+        "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
+    free_bstrs();
 }
 
 START_TEST(saxreader)
@@ -869,6 +951,7 @@ START_TEST(saxreader)
         IMXWriter_Release(writer);
 
         test_mxwriter_contenthandler();
+        test_mxwriter_startenddocument();
         test_mxwriter_properties();
         test_mxwriter_flush();
     }

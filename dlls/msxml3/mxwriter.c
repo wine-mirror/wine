@@ -38,6 +38,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
+#ifdef HAVE_LIBXML2
+
+static const char crlfA[] = "\r\n";
+
 typedef struct _mxwriter
 {
     IMXWriter IMXWriter_iface;
@@ -47,8 +51,11 @@ typedef struct _mxwriter
 
     VARIANT_BOOL standalone;
     BSTR encoding;
+    BSTR version;
 
     IStream *dest;
+
+    xmlOutputBufferPtr buffer;
 } mxwriter;
 
 static inline mxwriter *impl_from_IMXWriter(IMXWriter *iface)
@@ -109,6 +116,9 @@ static ULONG WINAPI mxwriter_Release(IMXWriter *iface)
     {
         if (This->dest) IStream_Release(This->dest);
         SysFreeString(This->encoding);
+        SysFreeString(This->version);
+
+        xmlOutputBufferClose(This->buffer);
         heap_free(This);
     }
 
@@ -228,7 +238,19 @@ static HRESULT WINAPI mxwriter_put_output(IMXWriter *iface, VARIANT dest)
 static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%p)\n", This, dest);
+
+    TRACE("(%p)->(%p)\n", This, dest);
+
+    if (!This->dest)
+    {
+        V_VT(dest)   = VT_BSTR;
+        V_BSTR(dest) = bstr_from_xmlChar(This->buffer->buffer->content);
+
+        return S_OK;
+    }
+    else
+        FIXME("not implemented when stream is set up\n");
+
     return E_NOTIMPL;
 }
 
@@ -340,8 +362,12 @@ static HRESULT WINAPI mxwriter_put_version(IMXWriter *iface, BSTR version)
 static HRESULT WINAPI mxwriter_get_version(IMXWriter *iface, BSTR *version)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%p)\n", This, version);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, version);
+
+    if (!version) return E_POINTER;
+
+    return return_bstr(This->version, version);
 }
 
 static HRESULT WINAPI mxwriter_put_disableOutputEscaping(IMXWriter *iface, VARIANT_BOOL value)
@@ -427,8 +453,34 @@ static HRESULT WINAPI mxwriter_saxcontent_putDocumentLocator(
 static HRESULT WINAPI mxwriter_saxcontent_startDocument(ISAXContentHandler *iface)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    xmlChar *s;
+
+    TRACE("(%p)\n", This);
+
+    /* version */
+    xmlOutputBufferWriteString(This->buffer, "<?xml version=\"");
+    s = xmlchar_from_wchar(This->version);
+    xmlOutputBufferWriteString(This->buffer, (char*)s);
+    heap_free(s);
+    xmlOutputBufferWriteString(This->buffer, "\"");
+
+    /* encoding */
+    xmlOutputBufferWriteString(This->buffer, " encoding=\"");
+    s = xmlchar_from_wchar(This->encoding);
+    xmlOutputBufferWriteString(This->buffer, (char*)s);
+    heap_free(s);
+    xmlOutputBufferWriteString(This->buffer, "\"");
+
+    /* standalone */
+    xmlOutputBufferWriteString(This->buffer, " standalone=\"");
+    if (This->standalone == VARIANT_TRUE)
+        xmlOutputBufferWriteString(This->buffer, "yes\"?>");
+    else
+        xmlOutputBufferWriteString(This->buffer, "no\"?>");
+
+    xmlOutputBufferWriteString(This->buffer, crlfA);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_saxcontent_endDocument(ISAXContentHandler *iface)
@@ -554,6 +606,7 @@ static const struct ISAXContentHandlerVtbl mxwriter_saxcontent_vtbl =
 HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
 {
     static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
+    static const WCHAR version10W[] = {'1','.','0',0};
     mxwriter *This;
 
     TRACE("(%p,%p)\n", pUnkOuter, ppObj);
@@ -569,9 +622,13 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
     This->ref = 1;
 
     This->standalone = VARIANT_FALSE;
-    This->encoding = SysAllocString(utf16W);
+    This->encoding   = SysAllocString(utf16W);
+    This->version    = SysAllocString(version10W);
 
     This->dest = NULL;
+
+    /* set up a buffer, default encoding is UTF-16 */
+    This->buffer = xmlAllocOutputBuffer(xmlFindCharEncodingHandler("UTF-16"));
 
     *ppObj = &This->IMXWriter_iface;
 
@@ -579,3 +636,14 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
 
     return S_OK;
 }
+
+#else
+
+HRESULT MXWriter_create(IUnknown *pUnkOuter, void **obj)
+{
+    MESSAGE("This program tried to use a MXXMLWriter object, but\n"
+            "libxml2 support was not present at compile time.\n");
+    return E_NOTIMPL;
+}
+
+#endif /* HAVE_LIBXML2 */
