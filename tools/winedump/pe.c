@@ -756,20 +756,10 @@ static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il, int offset)
 
 static	void	dump_dir_imported_functions(void)
 {
-    const IMAGE_IMPORT_DESCRIPTOR	*importDesc = get_dir(IMAGE_FILE_IMPORT_DIRECTORY);
-    DWORD directorySize;
+    unsigned directorySize;
+    const IMAGE_IMPORT_DESCRIPTOR* importDesc = get_dir_and_size(IMAGE_FILE_IMPORT_DIRECTORY, &directorySize);
 
     if (!importDesc)	return;
-    if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-    {
-        const IMAGE_OPTIONAL_HEADER64 *opt = (const IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader;
-        directorySize = opt->DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size;
-    }
-    else
-    {
-        const IMAGE_OPTIONAL_HEADER32 *opt = (const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader;
-        directorySize = opt->DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size;
-    }
 
     printf("Import Table size: %08x\n", directorySize);/* FIXME */
 
@@ -809,6 +799,7 @@ static	void	dump_dir_imported_functions(void)
 
 static void dump_dir_delay_imported_functions(void)
 {
+    unsigned  directorySize;
     const struct ImgDelayDescr
     {
         DWORD grAttrs;
@@ -819,20 +810,9 @@ static void dump_dir_delay_imported_functions(void)
         DWORD pBoundIAT;
         DWORD pUnloadIAT;
         DWORD dwTimeStamp;
-    } *importDesc = get_dir(IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT);
-    DWORD directorySize;
+    } *importDesc = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT, &directorySize);
 
     if (!importDesc) return;
-    if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-    {
-        const IMAGE_OPTIONAL_HEADER64 *opt = (const IMAGE_OPTIONAL_HEADER64 *)&PE_nt_headers->OptionalHeader;
-        directorySize = opt->DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size;
-    }
-    else
-    {
-        const IMAGE_OPTIONAL_HEADER32 *opt = (const IMAGE_OPTIONAL_HEADER32 *)&PE_nt_headers->OptionalHeader;
-        directorySize = opt->DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size;
-    }
 
     printf("Delay Import Table size: %08x\n", directorySize); /* FIXME */
 
