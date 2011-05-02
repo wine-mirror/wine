@@ -50,12 +50,14 @@
 #include "dsound.h"
 #include "dsdriver.h"
 #include "ks.h"
-#include "ksmedia.h"
 #include "coreaudio.h"
 #include "wine/unicode.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 #include "wine/list.h"
+
+#include "initguid.h"
+#include "ksmedia.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 WINE_DECLARE_DEBUG_CHANNEL(coreaudio);

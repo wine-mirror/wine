@@ -18,7 +18,6 @@
 
 #define NONAMELESSUNION
 #define COBJMACROS
-#define INITGUID
 #include "config.h"
 
 #include <stdarg.h>
@@ -36,8 +35,10 @@
 #include "devpkey.h"
 #include "dshow.h"
 #include "dsound.h"
-#include "audioclient.h"
 #include "endpointvolume.h"
+
+#include "initguid.h"
+#include "audioclient.h"
 #include "audiopolicy.h"
 
 #include <errno.h>
@@ -57,6 +58,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
+#define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
+
 #define CAPTURE_BUFFERS 5
 
 static const REFERENCE_TIME DefaultPeriod = 200000;
@@ -67,11 +70,31 @@ typedef struct _AQBuffer {
     struct list entry;
 } AQBuffer;
 
-typedef struct ACImpl {
+struct ACImpl;
+typedef struct ACImpl ACImpl;
+
+typedef struct _AudioSession {
+    GUID guid;
+    struct list clients;
+
+    EDataFlow dataflow;
+
+    struct list entry;
+} AudioSession;
+
+typedef struct _AudioSessionWrapper {
+    IAudioSessionControl2 IAudioSessionControl2_iface;
+
+    LONG ref;
+
+    ACImpl *client;
+    AudioSession *session;
+} AudioSessionWrapper;
+
+struct ACImpl {
     IAudioClient IAudioClient_iface;
     IAudioRenderClient IAudioRenderClient_iface;
     IAudioCaptureClient IAudioCaptureClient_iface;
-    IAudioSessionControl2 IAudioSessionControl2_iface;
     ISimpleAudioVolume ISimpleAudioVolume_iface;
     IAudioClock IAudioClock_iface;
     IAudioClock2 IAudioClock2_iface;
@@ -96,6 +119,11 @@ typedef struct ACImpl {
     BOOL getbuf_last;
     int playing;
 
+    AudioSession *session;
+    AudioSessionWrapper *session_wrapper;
+
+    struct list entry;
+
     struct list avail_buffers;
 
     /* We can't use debug printing or {Enter,Leave}CriticalSection from
@@ -103,7 +131,7 @@ typedef struct ACImpl {
      * instead. OSSpinLock is not a recursive lock, so don't call
      * synchronized functions while holding the lock. */
     OSSpinLock lock;
-} ACImpl;
+};
 
 enum PlayingStates {
     StateStopped = 0,
@@ -121,8 +149,12 @@ static const IAudioClock2Vtbl AudioClock2_Vtbl;
 
 static HANDLE g_timer_q;
 
+static CRITICAL_SECTION g_sessions_lock;
+static struct list g_sessions = LIST_INIT(g_sessions);
+
 static HRESULT AudioClock_GetPosition_nolock(ACImpl *This, UINT64 *pos,
         UINT64 *qpctime, BOOL raw);
+static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
 
 static inline ACImpl *impl_from_IAudioClient(IAudioClient *iface)
 {
@@ -139,9 +171,9 @@ static inline ACImpl *impl_from_IAudioCaptureClient(IAudioCaptureClient *iface)
     return CONTAINING_RECORD(iface, ACImpl, IAudioCaptureClient_iface);
 }
 
-static inline ACImpl *impl_from_IAudioSessionControl2(IAudioSessionControl2 *iface)
+static inline AudioSessionWrapper *impl_from_IAudioSessionControl2(IAudioSessionControl2 *iface)
 {
-    return CONTAINING_RECORD(iface, ACImpl, IAudioSessionControl2_iface);
+    return CONTAINING_RECORD(iface, AudioSessionWrapper, IAudioSessionControl2_iface);
 }
 
 static inline ACImpl *impl_from_ISimpleAudioVolume(ISimpleAudioVolume *iface)
@@ -165,6 +197,8 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         g_timer_q = CreateTimerQueue();
         if(!g_timer_q)
             return FALSE;
+
+        InitializeCriticalSection(&g_sessions_lock);
     }
 
     return TRUE;
@@ -362,7 +396,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(AudioDeviceID *adevid, IMMDevice *dev,
     This->IAudioClient_iface.lpVtbl = &AudioClient_Vtbl;
     This->IAudioRenderClient_iface.lpVtbl = &AudioRenderClient_Vtbl;
     This->IAudioCaptureClient_iface.lpVtbl = &AudioCaptureClient_Vtbl;
-    This->IAudioSessionControl2_iface.lpVtbl = &AudioSessionControl2_Vtbl;
     This->ISimpleAudioVolume_iface.lpVtbl = &SimpleAudioVolume_Vtbl;
     This->IAudioClock_iface.lpVtbl = &AudioClock_Vtbl;
     This->IAudioClock2_iface.lpVtbl = &AudioClock2_Vtbl;
@@ -421,6 +454,15 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
         IAudioClient_Stop(iface);
         if(This->aqueue)
             AudioQueueDispose(This->aqueue, 1);
+        if(This->session){
+            EnterCriticalSection(&g_sessions_lock);
+            list_remove(&This->entry);
+            if(list_empty(&This->session->clients)){
+                list_remove(&This->session->entry);
+                HeapFree(GetProcessHeap(), 0, This->session);
+            }
+            LeaveCriticalSection(&g_sessions_lock);
+        }
         HeapFree(GetProcessHeap(), 0, This->public_buffer);
         CoTaskMemFree(This->fmt);
         IMMDevice_Release(This->parent);
@@ -632,6 +674,25 @@ static HRESULT ca_setup_aqueue(AudioDeviceID did, EDataFlow flow,
     return S_OK;
 }
 
+static AudioSession *create_session(const GUID *guid, EDataFlow flow)
+{
+    AudioSession *ret;
+
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AudioSession));
+    if(!ret)
+        return NULL;
+
+    memcpy(&ret->guid, guid, sizeof(GUID));
+
+    ret->dataflow = flow;
+
+    list_init(&ret->clients);
+
+    list_add_head(&g_sessions, &ret->entry);
+
+    return ret;
+}
+
 static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         AUDCLNT_SHAREMODE mode, DWORD flags, REFERENCE_TIME duration,
         REFERENCE_TIME period, const WAVEFORMATEX *fmt,
@@ -734,6 +795,45 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     This->share = mode;
     This->flags = flags;
+
+    EnterCriticalSection(&g_sessions_lock);
+
+    if(!sessionguid || IsEqualGUID(sessionguid, &GUID_NULL)){
+        This->session = create_session(&GUID_NULL, This->dataflow);
+        if(!This->session){
+            LeaveCriticalSection(&g_sessions_lock);
+            AudioQueueDispose(This->aqueue, 1);
+            This->aqueue = NULL;
+            CoTaskMemFree(This->fmt);
+            This->fmt = NULL;
+            OSSpinLockUnlock(&This->lock);
+            return E_OUTOFMEMORY;
+        }
+    }else{
+        AudioSession *session;
+
+        LIST_FOR_EACH_ENTRY(session, &g_sessions, AudioSession, entry)
+            if(IsEqualGUID(sessionguid, &session->guid) &&
+                    This->dataflow == session->dataflow)
+                This->session = session;
+
+        if(!This->session){
+            This->session = create_session(sessionguid, This->dataflow);
+            if(!This->session){
+                LeaveCriticalSection(&g_sessions_lock);
+                AudioQueueDispose(This->aqueue, 1);
+                This->aqueue = NULL;
+                CoTaskMemFree(This->fmt);
+                This->fmt = NULL;
+                OSSpinLockUnlock(&This->lock);
+                return E_OUTOFMEMORY;
+            }
+        }
+    }
+
+    list_add_tail(&This->session->clients, &This->entry);
+
+    LeaveCriticalSection(&g_sessions_lock);
 
     OSSpinLockUnlock(&This->lock);
 
@@ -1271,18 +1371,28 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient *iface, REFIID riid,
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    OSSpinLockUnlock(&This->lock);
-
     if(IsEqualIID(riid, &IID_IAudioRenderClient)){
-        if(This->dataflow != eRender)
+        if(This->dataflow != eRender){
+            OSSpinLockUnlock(&This->lock);
             return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+        }
         *ppv = &This->IAudioRenderClient_iface;
     }else if(IsEqualIID(riid, &IID_IAudioCaptureClient)){
-        if(This->dataflow != eCapture)
+        if(This->dataflow != eCapture){
+            OSSpinLockUnlock(&This->lock);
             return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+        }
         *ppv = &This->IAudioCaptureClient_iface;
     }else if(IsEqualIID(riid, &IID_IAudioSessionControl)){
-        *ppv = &This->IAudioSessionControl2_iface;
+        if(!This->session_wrapper){
+            This->session_wrapper = AudioSessionWrapper_Create(This);
+            if(!This->session_wrapper){
+                OSSpinLockUnlock(&This->lock);
+                return E_OUTOFMEMORY;
+            }
+        }
+
+        *ppv = &This->session_wrapper->IAudioSessionControl2_iface;
     }else if(IsEqualIID(riid, &IID_ISimpleAudioVolume)){
         *ppv = &This->ISimpleAudioVolume_iface;
     }else if(IsEqualIID(riid, &IID_IAudioClock)){
@@ -1291,8 +1401,11 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient *iface, REFIID riid,
 
     if(*ppv){
         IUnknown_AddRef((IUnknown*)*ppv);
+        OSSpinLockUnlock(&This->lock);
         return S_OK;
     }
+
+    OSSpinLockUnlock(&This->lock);
 
     FIXME("stub %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
@@ -1643,6 +1756,24 @@ static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
     AudioCaptureClient_GetNextPacketSize
 };
 
+static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client)
+{
+    AudioSessionWrapper *ret;
+
+    ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            sizeof(AudioSessionWrapper));
+    if(!ret)
+        return NULL;
+
+    ret->IAudioSessionControl2_iface.lpVtbl = &AudioSessionControl2_Vtbl;
+
+    ret->client = client;
+    ret->session = client->session;
+    AudioClient_AddRef(&client->IAudioClient_iface);
+
+    return ret;
+}
+
 static HRESULT WINAPI AudioSessionControl_QueryInterface(
         IAudioSessionControl2 *iface, REFIID riid, void **ppv)
 {
@@ -1667,33 +1798,71 @@ static HRESULT WINAPI AudioSessionControl_QueryInterface(
 
 static ULONG WINAPI AudioSessionControl_AddRef(IAudioSessionControl2 *iface)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
-    return IAudioClient_AddRef(&This->IAudioClient_iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
+    ULONG ref;
+    ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p) Refcount now %u\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI AudioSessionControl_Release(IAudioSessionControl2 *iface)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
-    return IAudioClient_Release(&This->IAudioClient_iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
+    ULONG ref;
+    ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p) Refcount now %u\n", This, ref);
+    if(!ref){
+        OSSpinLockLock(&This->client->lock);
+        This->client->session_wrapper = NULL;
+        OSSpinLockUnlock(&This->client->lock);
+        AudioClient_Release(&This->client->IAudioClient_iface);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+    return ref;
 }
 
 static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
         AudioSessionState *state)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
+    ACImpl *client;
 
-    FIXME("(%p)->(%p) - stub\n", This, state);
+    TRACE("(%p)->(%p)\n", This, state);
 
     if(!state)
-        return E_POINTER;
+        return NULL_PTR_ERR;
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&g_sessions_lock);
+
+    if(list_empty(&This->session->clients)){
+        *state = AudioSessionStateExpired;
+        LeaveCriticalSection(&g_sessions_lock);
+        return S_OK;
+    }
+
+    LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry){
+        OSSpinLockLock(&client->lock);
+        if(client->playing == StatePlaying ||
+                client->playing == StateInTransition){
+            *state = AudioSessionStateActive;
+            OSSpinLockUnlock(&client->lock);
+            LeaveCriticalSection(&g_sessions_lock);
+            return S_OK;
+        }
+        OSSpinLockUnlock(&client->lock);
+    }
+
+    LeaveCriticalSection(&g_sessions_lock);
+
+    *state = AudioSessionStateInactive;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioSessionControl_GetDisplayName(
         IAudioSessionControl2 *iface, WCHAR **name)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     FIXME("(%p)->(%p) - stub\n", This, name);
 
@@ -1703,7 +1872,7 @@ static HRESULT WINAPI AudioSessionControl_GetDisplayName(
 static HRESULT WINAPI AudioSessionControl_SetDisplayName(
         IAudioSessionControl2 *iface, const WCHAR *name, const GUID *session)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     FIXME("(%p)->(%p, %s) - stub\n", This, name, debugstr_guid(session));
 
@@ -1713,7 +1882,7 @@ static HRESULT WINAPI AudioSessionControl_SetDisplayName(
 static HRESULT WINAPI AudioSessionControl_GetIconPath(
         IAudioSessionControl2 *iface, WCHAR **path)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     FIXME("(%p)->(%p) - stub\n", This, path);
 
@@ -1723,7 +1892,7 @@ static HRESULT WINAPI AudioSessionControl_GetIconPath(
 static HRESULT WINAPI AudioSessionControl_SetIconPath(
         IAudioSessionControl2 *iface, const WCHAR *path, const GUID *session)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     FIXME("(%p)->(%p, %s) - stub\n", This, path, debugstr_guid(session));
 
@@ -1733,7 +1902,7 @@ static HRESULT WINAPI AudioSessionControl_SetIconPath(
 static HRESULT WINAPI AudioSessionControl_GetGroupingParam(
         IAudioSessionControl2 *iface, GUID *group)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     FIXME("(%p)->(%p) - stub\n", This, group);
 
@@ -1743,7 +1912,7 @@ static HRESULT WINAPI AudioSessionControl_GetGroupingParam(
 static HRESULT WINAPI AudioSessionControl_SetGroupingParam(
         IAudioSessionControl2 *iface, GUID *group, const GUID *session)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     FIXME("(%p)->(%s, %s) - stub\n", This, debugstr_guid(group),
             debugstr_guid(session));
@@ -1754,7 +1923,7 @@ static HRESULT WINAPI AudioSessionControl_SetGroupingParam(
 static HRESULT WINAPI AudioSessionControl_RegisterAudioSessionNotification(
         IAudioSessionControl2 *iface, IAudioSessionEvents *events)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     FIXME("(%p)->(%p) - stub\n", This, events);
 
@@ -1764,7 +1933,7 @@ static HRESULT WINAPI AudioSessionControl_RegisterAudioSessionNotification(
 static HRESULT WINAPI AudioSessionControl_UnregisterAudioSessionNotification(
         IAudioSessionControl2 *iface, IAudioSessionEvents *events)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     FIXME("(%p)->(%p) - stub\n", This, events);
 
@@ -1774,7 +1943,7 @@ static HRESULT WINAPI AudioSessionControl_UnregisterAudioSessionNotification(
 static HRESULT WINAPI AudioSessionControl_GetSessionIdentifier(
         IAudioSessionControl2 *iface, WCHAR **id)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     FIXME("(%p)->(%p) - stub\n", This, id);
 
@@ -1784,7 +1953,7 @@ static HRESULT WINAPI AudioSessionControl_GetSessionIdentifier(
 static HRESULT WINAPI AudioSessionControl_GetSessionInstanceIdentifier(
         IAudioSessionControl2 *iface, WCHAR **id)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     FIXME("(%p)->(%p) - stub\n", This, id);
 
@@ -1794,7 +1963,7 @@ static HRESULT WINAPI AudioSessionControl_GetSessionInstanceIdentifier(
 static HRESULT WINAPI AudioSessionControl_GetProcessId(
         IAudioSessionControl2 *iface, DWORD *pid)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     TRACE("(%p)->(%p)\n", This, pid);
 
@@ -1809,7 +1978,7 @@ static HRESULT WINAPI AudioSessionControl_GetProcessId(
 static HRESULT WINAPI AudioSessionControl_IsSystemSoundsSession(
         IAudioSessionControl2 *iface)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     TRACE("(%p)\n", This);
 
@@ -1819,7 +1988,7 @@ static HRESULT WINAPI AudioSessionControl_IsSystemSoundsSession(
 static HRESULT WINAPI AudioSessionControl_SetDuckingPreference(
         IAudioSessionControl2 *iface, BOOL optout)
 {
-    ACImpl *This = impl_from_IAudioSessionControl2(iface);
+    AudioSessionWrapper *This = impl_from_IAudioSessionControl2(iface);
 
     TRACE("(%p)->(%d)\n", This, optout);
 
