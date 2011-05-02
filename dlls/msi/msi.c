@@ -1864,12 +1864,22 @@ UINT WINAPI MsiEnumComponentCostsW( MSIHANDLE handle, LPCWSTR component, DWORD i
 
     drive[0] = 0;
     *cost = *temp = 0;
+    GetWindowsDirectoryW( path, MAX_PATH );
     if (component && component[0])
     {
-        *cost = max( 8, comp->Cost / 512 );
         if (comp->assembly && !comp->assembly->application) *temp = comp->Cost;
-        if ((file = get_loaded_file( package, comp->KeyPath )))
+        if (!comp->Enabled || !comp->KeyPath)
         {
+            *cost = 0;
+            drive[0] = path[0];
+            drive[1] = ':';
+            drive[2] = 0;
+            *buflen = 2;
+            r = ERROR_SUCCESS;
+        }
+        else if ((file = get_loaded_file( package, comp->KeyPath )))
+        {
+            *cost = max( 8, comp->Cost / 512 );
             drive[0] = file->TargetPath[0];
             drive[1] = ':';
             drive[2] = 0;
@@ -1880,7 +1890,6 @@ UINT WINAPI MsiEnumComponentCostsW( MSIHANDLE handle, LPCWSTR component, DWORD i
     else if (IStorage_Stat( package->db->storage, &stat, STATFLAG_NONAME ) == S_OK)
     {
         *temp = max( 8, stat.cbSize.QuadPart / 512 );
-        GetWindowsDirectoryW( path, MAX_PATH );
         drive[0] = path[0];
         drive[1] = ':';
         drive[2] = 0;

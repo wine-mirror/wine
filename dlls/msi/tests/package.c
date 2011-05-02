@@ -12942,16 +12942,13 @@ static void test_MsiEnumComponentCosts(void)
     r = add_file_entry( hdb, "'one.txt', 'one', 'one.txt', 4096, '', '', 8192, 1" );
     ok( r == ERROR_SUCCESS, "cannot add file %u\n", r );
 
-    r = add_file_entry( hdb, "'two.txt', 'two', 'two.txt', 8192, '', '', 8192, 2" );
-    ok( r == ERROR_SUCCESS, "cannot add file %u\n", r );
-
     r = create_component_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create Component table %u\n", r );
 
     r = add_component_entry( hdb, "'one', '{B2F86B9D-8447-4BC5-8883-750C45AA31CA}', 'TARGETDIR', 0, '', 'one.txt'" );
     ok( r == ERROR_SUCCESS, "cannot add component %u\n", r );
 
-    r = add_component_entry( hdb, "'two', '{62A09F6E-0B74-4829-BDB7-CAB66F42CCE8}', 'TARGETDIR', 0, '', 'two.txt'" );
+    r = add_component_entry( hdb, "'two', '{62A09F6E-0B74-4829-BDB7-CAB66F42CCE8}', 'TARGETDIR', 0, '', ''" );
     ok( r == ERROR_SUCCESS, "cannot add component %u\n", r );
 
     r = create_feature_table( hdb );
@@ -13098,6 +13095,16 @@ static void test_MsiEnumComponentCosts(void)
     ok( len == 2, "expected len == 2, got %u\n", len );
     ok( drive[0], "expected a drive\n" );
     ok( cost && cost != 0xdead, "expected cost > 0, got %d\n", cost );
+    ok( !temp, "expected temp == 0, got %d\n", temp );
+
+    len = sizeof(drive);
+    drive[0] = 0;
+    cost = temp = 0xdead;
+    r = MsiEnumComponentCostsA( hpkg, "two", 0, INSTALLSTATE_LOCAL, drive, &len, &cost, &temp );
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r );
+    ok( len == 2, "expected len == 2, got %u\n", len );
+    ok( drive[0], "expected a drive\n" );
+    ok( !cost, "expected cost == 0, got %d\n", cost );
     ok( !temp, "expected temp == 0, got %d\n", temp );
 
     len = sizeof(drive);
