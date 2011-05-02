@@ -76,10 +76,11 @@
 #include "mmreg.h"
 #include "dsound.h"
 #include "ks.h"
-#include "ksmedia.h"
-#include "initguid.h"
-#include "dsdriver.h"
 #include "wine/debug.h"
+
+#include "initguid.h"
+#include "ksmedia.h"
+#include "dsdriver.h"
 
 #include "audio.h"
 
