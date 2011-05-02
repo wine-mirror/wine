@@ -4558,8 +4558,8 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPCWSTR path)
 	hMenuWindow = GetSubMenu(hMenuFrame, GetMenuItemCount(hMenuFrame)-2);
 
 	Globals.hMenuFrame = hMenuFrame;
-	Globals.hMenuView = GetSubMenu(hMenuFrame, 3);
-	Globals.hMenuOptions = GetSubMenu(hMenuFrame, 4);
+	Globals.hMenuView = GetSubMenu(hMenuFrame, 2);
+	Globals.hMenuOptions = GetSubMenu(hMenuFrame, 3);
 
 	ccs.hWindowMenu  = hMenuWindow;
 	ccs.idFirstChild = IDW_FIRST_CHILD;
