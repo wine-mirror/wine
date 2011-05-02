@@ -2792,8 +2792,6 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 {
     appinfo_t *hIC = NULL;
     http_request_t *request;
-    LPWSTR lpszHostName = NULL;
-    static const WCHAR szHostForm[] = {'%','s',':','%','u',0};
     DWORD len, res;
 
     TRACE("-->\n");
@@ -2818,13 +2816,6 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     WININET_AddRef( &session->hdr );
     request->session = session;
     list_add_head( &session->hdr.children, &request->hdr.entry );
-
-    lpszHostName = heap_alloc(sizeof(WCHAR) * (strlenW(session->hostName) + 7 /* length of ":65535" + 1 */));
-    if (NULL == lpszHostName)
-    {
-        res = ERROR_OUTOFMEMORY;
-        goto lend;
-    }
 
     if ((res = NETCON_init(&request->netConnection, dwFlags & INTERNET_FLAG_SECURE)) != ERROR_SUCCESS)
         goto lend;
@@ -2877,9 +2868,19 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
         session->hostPort != INTERNET_DEFAULT_HTTP_PORT &&
         session->hostPort != INTERNET_DEFAULT_HTTPS_PORT)
     {
-        sprintfW(lpszHostName, szHostForm, session->hostName, session->hostPort);
-        HTTP_ProcessHeader(request, hostW, lpszHostName,
-                HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
+        WCHAR *host_name;
+
+        static const WCHAR host_formatW[] = {'%','s',':','%','u',0};
+
+        host_name = heap_alloc((strlenW(session->hostName) + 7 /* length of ":65535" + 1 */) * sizeof(WCHAR));
+        if (!host_name) {
+            res = ERROR_OUTOFMEMORY;
+            goto lend;
+        }
+
+        sprintfW(host_name, host_formatW, session->hostName, session->hostPort);
+        HTTP_ProcessHeader(request, hostW, host_name, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
+        heap_free(host_name);
     }
     else
         HTTP_ProcessHeader(request, hostW, session->hostName,
@@ -2905,7 +2906,6 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 lend:
     TRACE("<-- %u (%p)\n", res, request);
 
-    HeapFree(GetProcessHeap(), 0, lpszHostName);
     if(res != ERROR_SUCCESS) {
         WININET_Release( &request->hdr );
         *ret = NULL;
