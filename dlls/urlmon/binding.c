@@ -1494,7 +1494,7 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, IUri *uri, IBi
     hres = IBindStatusCallback_OnStartBinding(binding->callback, 0, &binding->IBinding_iface);
     if(FAILED(hres)) {
         WARN("OnStartBinding failed: %08x\n", hres);
-        stop_binding(binding, INET_E_DOWNLOAD_FAILURE, NULL);
+        stop_binding(binding, hres == E_ABORT ? hres : INET_E_DOWNLOAD_FAILURE, NULL);
         IBinding_Release(&binding->IBinding_iface);
         return hres;
     }
