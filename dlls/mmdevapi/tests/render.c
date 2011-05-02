@@ -33,8 +33,24 @@
 #include "uuids.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
+#include "audiopolicy.h"
 
+#include <stdio.h>
+
+#define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
+
+static IMMDeviceEnumerator *mme = NULL;
 static IMMDevice *dev = NULL;
+
+static inline const char *dbgstr_guid( const GUID *id )
+{
+    static char ret[256];
+    sprintf(ret, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                             id->Data1, id->Data2, id->Data3,
+                             id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
+                             id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
+    return ret;
+}
 
 static void test_uninitialized(IAudioClient *ac)
 {
@@ -604,10 +620,188 @@ static void test_clock(void)
     IAudioClient_Release(ac);
 }
 
+static void test_session(void)
+{
+    IAudioClient *ses1_ac1, *ses1_ac2, *cap_ac = NULL;
+    IAudioSessionControl2 *ses1_ctl, *ses1_ctl2, *cap_ctl;
+    IMMDevice *cap_dev;
+    GUID ses1_guid;
+    AudioSessionState state;
+    WAVEFORMATEX *pwfx;
+    ULONG ref;
+    HRESULT hr;
+
+    hr = CoCreateGuid(&ses1_guid);
+    ok(hr == S_OK, "CoCreateGuid failed: %08x\n", hr);
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ses1_ac1);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+
+    hr = IAudioClient_GetMixFormat(ses1_ac1, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ses1_ac1, AUDCLNT_SHAREMODE_SHARED,
+            0, 5000000, 0, pwfx, &ses1_guid);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ses1_ac2);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ses1_ac2, AUDCLNT_SHAREMODE_SHARED,
+            0, 5000000, 0, pwfx, &ses1_guid);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eCapture,
+            eMultimedia, &cap_dev);
+    if(hr == S_OK){
+        WAVEFORMATEX *cap_pwfx;
+
+        hr = IMMDevice_Activate(cap_dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+                NULL, (void**)&cap_ac);
+        ok(hr == S_OK, "Activate failed: %08x\n", hr);
+
+        hr = IAudioClient_GetMixFormat(cap_ac, &cap_pwfx);
+        ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+        hr = IAudioClient_Initialize(cap_ac, AUDCLNT_SHAREMODE_SHARED,
+                0, 5000000, 0, cap_pwfx, &ses1_guid);
+        ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+        hr = IAudioClient_GetService(cap_ac, &IID_IAudioSessionControl, (void**)&cap_ctl);
+        ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+        IMMDevice_Release(cap_dev);
+        CoTaskMemFree(cap_pwfx);
+    }else
+        skip("No capture device available; skipping capture device in render session tests\n");
+
+    hr = IAudioClient_GetService(ses1_ac1, &IID_IAudioSessionControl2, (void**)&ses1_ctl);
+    ok(hr == E_NOINTERFACE, "GetService gave wrong error: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ses1_ac1, &IID_IAudioSessionControl, (void**)&ses1_ctl);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ses1_ac1, &IID_IAudioSessionControl, (void**)&ses1_ctl2);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    ok(ses1_ctl == ses1_ctl2, "Got different controls: %p %p\n", ses1_ctl, ses1_ctl2);
+    ref = IAudioSessionControl_Release(ses1_ctl2);
+    ok(ref != 0, "AudioSessionControl was destroyed\n");
+
+    hr = IAudioClient_GetService(ses1_ac2, &IID_IAudioSessionControl, (void**)&ses1_ctl2);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+    hr = IAudioSessionControl_GetState(ses1_ctl, NULL);
+    ok(hr == NULL_PTR_ERR, "GetState gave wrong error: %08x\n", hr);
+
+    hr = IAudioSessionControl_GetState(ses1_ctl, &state);
+    ok(hr == S_OK, "GetState failed: %08x\n", hr);
+    ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+    hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+    ok(hr == S_OK, "GetState failed: %08x\n", hr);
+    ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+    if(cap_ac){
+        hr = IAudioSessionControl_GetState(cap_ctl, &state);
+        ok(hr == S_OK, "GetState failed: %08x\n", hr);
+        ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+    }
+
+    hr = IAudioClient_Start(ses1_ac1);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    hr = IAudioSessionControl_GetState(ses1_ctl, &state);
+    ok(hr == S_OK, "GetState failed: %08x\n", hr);
+    ok(state == AudioSessionStateActive, "Got wrong state: %d\n", state);
+
+    hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+    ok(hr == S_OK, "GetState failed: %08x\n", hr);
+    ok(state == AudioSessionStateActive, "Got wrong state: %d\n", state);
+
+    if(cap_ac){
+        hr = IAudioSessionControl_GetState(cap_ctl, &state);
+        ok(hr == S_OK, "GetState failed: %08x\n", hr);
+        ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+    }
+
+    hr = IAudioClient_Stop(ses1_ac1);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    hr = IAudioSessionControl_GetState(ses1_ctl, &state);
+    ok(hr == S_OK, "GetState failed: %08x\n", hr);
+    ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+    hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+    ok(hr == S_OK, "GetState failed: %08x\n", hr);
+    ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+    if(cap_ac){
+        hr = IAudioSessionControl_GetState(cap_ctl, &state);
+        ok(hr == S_OK, "GetState failed: %08x\n", hr);
+        ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+        hr = IAudioClient_Start(cap_ac);
+        ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+        hr = IAudioSessionControl_GetState(ses1_ctl, &state);
+        ok(hr == S_OK, "GetState failed: %08x\n", hr);
+        ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+        hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+        ok(hr == S_OK, "GetState failed: %08x\n", hr);
+        ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+        hr = IAudioSessionControl_GetState(cap_ctl, &state);
+        ok(hr == S_OK, "GetState failed: %08x\n", hr);
+        ok(state == AudioSessionStateActive, "Got wrong state: %d\n", state);
+
+        hr = IAudioClient_Stop(cap_ac);
+        ok(hr == S_OK, "Stop failed: %08x\n", hr);
+
+        hr = IAudioSessionControl_GetState(ses1_ctl, &state);
+        ok(hr == S_OK, "GetState failed: %08x\n", hr);
+        ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+        hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+        ok(hr == S_OK, "GetState failed: %08x\n", hr);
+        ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+        hr = IAudioSessionControl_GetState(cap_ctl, &state);
+        ok(hr == S_OK, "GetState failed: %08x\n", hr);
+        ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+        ref = IAudioSessionControl_Release(cap_ctl);
+        ok(ref == 0, "AudioSessionControl wasn't released: %u\n", ref);
+
+        ref = IAudioClient_Release(cap_ac);
+        ok(ref == 0, "AudioClient wasn't released: %u\n", ref);
+    }
+
+    ref = IAudioSessionControl_Release(ses1_ctl);
+    ok(ref == 0, "AudioSessionControl wasn't released: %u\n", ref);
+
+    ref = IAudioClient_Release(ses1_ac1);
+    ok(ref == 0, "AudioClient wasn't released: %u\n", ref);
+
+    ref = IAudioClient_Release(ses1_ac2);
+    ok(ref == 1, "AudioClient had wrong refcount: %u\n", ref);
+
+    /* we've released all of our IAudioClient references, so check GetState */
+    hr = IAudioSessionControl_GetState(ses1_ctl2, &state);
+    ok(hr == S_OK, "GetState failed: %08x\n", hr);
+    ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
+
+    ref = IAudioSessionControl_Release(ses1_ctl2);
+    ok(ref == 0, "AudioSessionControl wasn't released: %u\n", ref);
+
+    CoTaskMemFree(pwfx);
+}
+
 START_TEST(render)
 {
     HRESULT hr;
-    IMMDeviceEnumerator *mme = NULL;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
@@ -633,6 +827,7 @@ START_TEST(render)
     test_event();
     test_padding();
     test_clock();
+    test_session();
 
     IMMDevice_Release(dev);
 

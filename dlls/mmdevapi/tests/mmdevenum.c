@@ -23,6 +23,7 @@
 #include "initguid.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
+#include "audiopolicy.h"
 #include "dshow.h"
 #include "dsound.h"
 #include "devpkey.h"
