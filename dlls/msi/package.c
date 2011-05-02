@@ -2231,7 +2231,7 @@ static UINT MSI_GetProperty( MSIHANDLE handle, LPCWSTR name,
             goto done;
         }
 
-        hr = IWineMsiRemotePackage_GetProperty( remote_package, bname, (BSTR *)value, &len );
+        hr = IWineMsiRemotePackage_GetProperty( remote_package, bname, value, &len );
         if (FAILED(hr))
             goto done;
 
@@ -2383,15 +2383,11 @@ static HRESULT WINAPI mrp_GetActiveDatabase( IWineMsiRemotePackage *iface, MSIHA
     return S_OK;
 }
 
-static HRESULT WINAPI mrp_GetProperty( IWineMsiRemotePackage *iface, BSTR property, BSTR *value, DWORD *size )
+static HRESULT WINAPI mrp_GetProperty( IWineMsiRemotePackage *iface, BSTR property, BSTR value, DWORD *size )
 {
     msi_remote_package_impl* This = impl_from_IWineMsiRemotePackage( iface );
-    UINT r;
-
-    r = MsiGetPropertyW(This->package, (LPWSTR)property, (LPWSTR)value, size);
-    if (r != ERROR_SUCCESS)
-        return HRESULT_FROM_WIN32(r);
-
+    UINT r = MsiGetPropertyW(This->package, property, value, size);
+    if (r != ERROR_SUCCESS) return HRESULT_FROM_WIN32(r);
     return S_OK;
 }
 
@@ -2423,10 +2419,10 @@ static HRESULT WINAPI mrp_Sequence( IWineMsiRemotePackage *iface, BSTR table, in
     return HRESULT_FROM_WIN32(r);
 }
 
-static HRESULT WINAPI mrp_GetTargetPath( IWineMsiRemotePackage *iface, BSTR folder, BSTR *value, DWORD *size )
+static HRESULT WINAPI mrp_GetTargetPath( IWineMsiRemotePackage *iface, BSTR folder, BSTR value, DWORD *size )
 {
     msi_remote_package_impl* This = impl_from_IWineMsiRemotePackage( iface );
-    UINT r = MsiGetTargetPathW(This->package, (LPWSTR)folder, (LPWSTR)value, size);
+    UINT r = MsiGetTargetPathW(This->package, folder, value, size);
     return HRESULT_FROM_WIN32(r);
 }
 
@@ -2437,10 +2433,10 @@ static HRESULT WINAPI mrp_SetTargetPath( IWineMsiRemotePackage *iface, BSTR fold
     return HRESULT_FROM_WIN32(r);
 }
 
-static HRESULT WINAPI mrp_GetSourcePath( IWineMsiRemotePackage *iface, BSTR folder, BSTR *value, DWORD *size )
+static HRESULT WINAPI mrp_GetSourcePath( IWineMsiRemotePackage *iface, BSTR folder, BSTR value, DWORD *size )
 {
     msi_remote_package_impl* This = impl_from_IWineMsiRemotePackage( iface );
-    UINT r = MsiGetSourcePathW(This->package, (LPWSTR)folder, (LPWSTR)value, size);
+    UINT r = MsiGetSourcePathW(This->package, folder, value, size);
     return HRESULT_FROM_WIN32(r);
 }
 

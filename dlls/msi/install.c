@@ -246,8 +246,7 @@ static UINT MSI_GetTargetPath( MSIHANDLE hInstall, LPCWSTR szFolder,
         }
 
         len = 0;
-        hr = IWineMsiRemotePackage_GetTargetPath( remote_package, folder,
-                                                  NULL, &len );
+        hr = IWineMsiRemotePackage_GetTargetPath( remote_package, folder, NULL, &len );
         if (FAILED(hr))
             goto done;
 
@@ -259,8 +258,7 @@ static UINT MSI_GetTargetPath( MSIHANDLE hInstall, LPCWSTR szFolder,
             goto done;
         }
 
-        hr = IWineMsiRemotePackage_GetTargetPath( remote_package, folder,
-                                                  (BSTR *)value, &len);
+        hr = IWineMsiRemotePackage_GetTargetPath( remote_package, folder, value, &len );
         if (FAILED(hr))
             goto done;
 
@@ -371,8 +369,7 @@ static UINT MSI_GetSourcePath( MSIHANDLE hInstall, LPCWSTR szFolder,
         }
 
         len = 0;
-        hr = IWineMsiRemotePackage_GetSourcePath( remote_package, folder,
-                                                  NULL, &len );
+        hr = IWineMsiRemotePackage_GetSourcePath( remote_package, folder, NULL, &len );
         if (FAILED(hr))
             goto done;
 
@@ -384,8 +381,7 @@ static UINT MSI_GetSourcePath( MSIHANDLE hInstall, LPCWSTR szFolder,
             goto done;
         }
 
-        hr = IWineMsiRemotePackage_GetSourcePath( remote_package, folder,
-                                                  (BSTR *)value, &len);
+        hr = IWineMsiRemotePackage_GetSourcePath( remote_package, folder, value, &len );
         if (FAILED(hr))
             goto done;
 
