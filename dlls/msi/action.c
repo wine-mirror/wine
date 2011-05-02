@@ -2056,15 +2056,13 @@ static UINT load_folder( MSIRECORD *row, LPVOID param )
     LPWSTR p, tgt_short, tgt_long, src_short, src_long;
     MSIFOLDER *folder;
 
-    folder = msi_alloc_zero( sizeof (MSIFOLDER) );
-    if (!folder)
-        return ERROR_NOT_ENOUGH_MEMORY;
-
+    if (!(folder = msi_alloc_zero( sizeof(*folder) ))) return ERROR_NOT_ENOUGH_MEMORY;
+    list_init( &folder->children );
     folder->Directory = msi_dup_record_field( row, 1 );
+    folder->Parent = msi_dup_record_field( row, 2 );
+    p = msi_dup_record_field(row, 3);
 
     TRACE("%s\n", debugstr_w(folder->Directory));
-
-    p = msi_dup_record_field(row, 3);
 
     /* split src and target dir */
     tgt_short = p;
@@ -2101,15 +2099,34 @@ static UINT load_folder( MSIRECORD *row, LPVOID param )
     TRACE("SourceLong = %s\n", debugstr_w( folder->SourceLongPath ));
     TRACE("SourceShort = %s\n", debugstr_w( folder->SourceShortPath ));
 
-    folder->Parent = msi_dup_record_field( row, 2 );
-
-    folder->Property = msi_dup_property( package->db, folder->Directory );
-
     list_add_tail( &package->folders, &folder->entry );
-
-    TRACE("returning %p\n", folder);
-
     return ERROR_SUCCESS;
+}
+
+static UINT add_folder_child( MSIFOLDER *parent, MSIFOLDER *child )
+{
+    FolderList *fl;
+
+    if (!(fl = msi_alloc( sizeof(*fl) ))) return ERROR_NOT_ENOUGH_MEMORY;
+    fl->folder = child;
+    list_add_tail( &parent->children, &fl->entry );
+    return ERROR_SUCCESS;
+}
+
+static UINT find_folder_children( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    MSIFOLDER *parent, *child;
+
+    if (!(child = get_loaded_folder( package, MSI_RecordGetString( row, 1 ) )))
+        return ERROR_FUNCTION_FAILED;
+
+    if (!child->Parent) return ERROR_SUCCESS;
+
+    if (!(parent = get_loaded_folder( package, child->Parent )))
+        return ERROR_FUNCTION_FAILED;
+
+    return add_folder_child( parent, child );
 }
 
 static UINT load_all_folders( MSIPACKAGE *package )
@@ -2127,24 +2144,17 @@ static UINT load_all_folders( MSIPACKAGE *package )
     if (r != ERROR_SUCCESS)
         return r;
 
-    r = MSI_IterateRecords(view, NULL, load_folder, package);
-    msiobj_release(&view->hdr);
+    r = MSI_IterateRecords( view, NULL, load_folder, package );
+    if (r != ERROR_SUCCESS)
+    {
+        msiobj_release( &view->hdr );
+        return r;
+    }
+    r = MSI_IterateRecords( view, NULL, find_folder_children, package );
+    msiobj_release( &view->hdr );
     return r;
 }
 
-/*
- * I am not doing any of the costing functionality yet.
- * Mostly looking at doing the Component and Feature loading
- *
- * The native MSI does A LOT of modification to tables here. Mostly adding
- * a lot of temporary columns to the Feature and Component tables.
- *
- *    note: Native msi also tracks the short filename. But I am only going to
- *          track the long ones.  Also looking at this directory table
- *          it appears that the directory table does not get the parents
- *          resolved base on property only based on their entries in the
- *          directory table.
- */
 static UINT ACTION_CostInitialize(MSIPACKAGE *package)
 {
     msi_set_property( package->db, szCostingComplete, szZero );
@@ -2554,30 +2564,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
-static UINT ITERATE_CostFinalizeDirectories(MSIRECORD *row, LPVOID param)
-{
-    MSIPACKAGE *package = param;
-    LPCWSTR name;
-    LPWSTR path;
-    MSIFOLDER *f;
-
-    name = MSI_RecordGetString(row,1);
-
-    f = get_loaded_folder(package, name);
-    if (!f) return ERROR_SUCCESS;
-
-    /* reset the ResolvedTarget */
-    msi_free(f->ResolvedTarget);
-    f->ResolvedTarget = NULL;
-
-    TRACE("directory %s ...\n", debugstr_w(name));
-    path = resolve_target_folder( package, name, TRUE, TRUE, NULL );
-    TRACE("resolves to %s\n", debugstr_w(path));
-    msi_free(path);
-
-    return ERROR_SUCCESS;
-}
-
 static UINT ITERATE_CostFinalizeConditions(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
@@ -2782,20 +2768,78 @@ static UINT calculate_file_cost( MSIPACKAGE *package )
     return ERROR_SUCCESS;
 }
 
-/*
- * A lot is done in this function aside from just the costing.
- * The costing needs to be implemented at some point but for now I am going
- * to focus on the directory building
- *
- */
+void msi_clean_path( WCHAR *p )
+{
+    WCHAR *q = p;
+    int n, len = 0;
+
+    while (1)
+    {
+        /* copy until the end of the string or a space */
+        while (*p != ' ' && (*q = *p))
+        {
+            p++, len++;
+            /* reduce many backslashes to one */
+            if (*p != '\\' || *q != '\\')
+                q++;
+        }
+
+        /* quit at the end of the string */
+        if (!*p)
+            break;
+
+        /* count the number of spaces */
+        n = 0;
+        while (p[n] == ' ')
+            n++;
+
+        /* if it's leading or trailing space, skip it */
+        if ( len == 0 || p[-1] == '\\' || p[n] == '\\' )
+            p += n;
+        else  /* copy n spaces */
+            while (n && (*q++ = *p++)) n--;
+    }
+}
+
+void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL load_prop )
+{
+    FolderList *fl;
+    MSIFOLDER *folder, *parent, *child;
+    WCHAR *path;
+
+    TRACE("resolving %s\n", debugstr_w(name));
+
+    if (!(folder = get_loaded_folder( package, name ))) return;
+
+    if (!strcmpW( folder->Directory, cszTargetDir )) /* special resolving for target root dir */
+    {
+        if (!load_prop || !(path = msi_dup_property( package->db, cszTargetDir )))
+        {
+            path = msi_dup_property( package->db, cszRootDrive );
+        }
+    }
+    else if (!load_prop || !(path = msi_dup_property( package->db, folder->Directory )))
+    {
+        parent = get_loaded_folder( package, folder->Parent );
+        path = build_directory_name( 3, parent->ResolvedTarget, folder->TargetDefault, NULL );
+    }
+    msi_clean_path( path );
+    msi_set_property( package->db, folder->Directory, path );
+    msi_free( folder->ResolvedTarget );
+    folder->ResolvedTarget = path;
+
+    LIST_FOR_EACH_ENTRY( fl, &folder->children, FolderList, entry )
+    {
+        child = fl->folder;
+        msi_resolve_target_folder( package, child->Directory, load_prop );
+    }
+    TRACE("%s resolves to %s\n", debugstr_w(name), debugstr_w(folder->ResolvedTarget));
+}
+
 static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 {
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','D','i','r','e','c','t','o','r','y','`',0};
-    static const WCHAR ConditionQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','C','o','n','d','i','t','i','o','n','`',0};
+    static const WCHAR condition_query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','C','o','n','d','i','t','i','o','n','`',0};
     static const WCHAR szlevel[] =
         {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szOutOfDiskSpace[] =
@@ -2805,15 +2849,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     MSIQUERY * view;
     LPWSTR level;
 
-    TRACE("Building Directory properties\n");
-
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
-    if (rc == ERROR_SUCCESS)
-    {
-        rc = MSI_IterateRecords(view, NULL, ITERATE_CostFinalizeDirectories,
-                        package);
-        msiobj_release(&view->hdr);
-    }
+    TRACE("Building directory properties\n");
+    msi_resolve_target_folder( package, cszTargetDir, TRUE );
 
     TRACE("Evaluating component conditions\n");
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
@@ -2835,7 +2872,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     {
         TRACE("Evaluating feature conditions\n");
 
-        rc = MSI_DatabaseOpenViewW( package->db, ConditionQuery, &view );
+        rc = MSI_DatabaseOpenViewW( package->db, condition_query, &view );
         if (rc == ERROR_SUCCESS)
         {
             rc = MSI_IterateRecords( view, NULL, ITERATE_CostFinalizeConditions, package );

@@ -212,6 +212,13 @@ UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
     return r;
 }
 
+const WCHAR *msi_get_target_folder( MSIPACKAGE *package, const WCHAR *name )
+{
+    MSIFOLDER *folder = get_loaded_folder( package, name );
+    if (folder) return folder->ResolvedTarget;
+    return NULL;
+}
+
 /***********************************************************************
  * MsiGetTargetPath   (internal)
  */
@@ -219,7 +226,7 @@ static UINT MSI_GetTargetPath( MSIHANDLE hInstall, LPCWSTR szFolder,
                                awstring *szPathBuf, LPDWORD pcchPathBuf )
 {
     MSIPACKAGE *package;
-    LPWSTR path;
+    const WCHAR *path;
     UINT r = ERROR_FUNCTION_FAILED;
 
     if (!szFolder)
@@ -280,14 +287,13 @@ done:
         return r;
     }
 
-    path = resolve_target_folder( package, szFolder, FALSE, TRUE, NULL );
+    path = msi_get_target_folder( package, szFolder );
     msiobj_release( &package->hdr );
 
     if (!path)
         return ERROR_DIRECTORY;
 
     r = msi_strcpy_to_awstring( path, szPathBuf, pcchPathBuf );
-    msi_free( path );
     return r;
 }
 
@@ -485,80 +491,63 @@ end:
     return rc;
 }
 
-/*
- * Ok my original interpretation of this was wrong. And it looks like msdn has
- * changed a bit also. The given folder path does not have to actually already
- * exist, it just cannot be read only and must be a legal folder path.
- */
-UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder, 
-                             LPCWSTR szFolderPath)
+static void set_target_path( MSIPACKAGE *package, MSIFOLDER *folder, const WCHAR *path )
 {
-    DWORD attrib;
-    LPWSTR path = NULL;
-    LPWSTR path2 = NULL;
+    FolderList *fl;
+    MSIFOLDER *child;
+
+    msi_free( folder->ResolvedTarget );
+    folder->ResolvedTarget = strdupW( path );
+    msi_clean_path( folder->ResolvedTarget );
+    msi_set_property( package->db, folder->Directory, folder->ResolvedTarget );
+
+    LIST_FOR_EACH_ENTRY( fl, &folder->children, FolderList, entry )
+    {
+        child = fl->folder;
+        msi_resolve_target_folder( package, child->Directory, FALSE );
+    }
+}
+
+UINT MSI_SetTargetPathW( MSIPACKAGE *package, LPCWSTR szFolder, LPCWSTR szFolderPath )
+{
+    DWORD attrib, len;
     MSIFOLDER *folder;
     MSIFILE *file;
 
-    TRACE("%p %s %s\n",package, debugstr_w(szFolder),debugstr_w(szFolderPath));
+    TRACE("%p %s %s\n", package, debugstr_w(szFolder), debugstr_w(szFolderPath));
 
     attrib = GetFileAttributesW(szFolderPath);
     /* native MSI tests writeability by making temporary files at each drive */
-    if ( attrib != INVALID_FILE_ATTRIBUTES &&
-          (attrib & FILE_ATTRIBUTE_OFFLINE ||
-           attrib & FILE_ATTRIBUTE_READONLY))
+    if (attrib != INVALID_FILE_ATTRIBUTES &&
+        (attrib & FILE_ATTRIBUTE_OFFLINE || attrib & FILE_ATTRIBUTE_READONLY))
+    {
         return ERROR_FUNCTION_FAILED;
-
-    path = resolve_target_folder( package, szFolder, FALSE, FALSE, &folder );
-    if (!path)
-        return ERROR_DIRECTORY;
-
-    msi_free(folder->Property);
-    folder->Property = build_directory_name(2, szFolderPath, NULL);
-
-    if (!strcmpiW( path, folder->Property ))
-    {
-        /*
-         *  Resolved Target has not really changed, so just 
-         *  set this folder and do not recalculate everything.
-         */
-        msi_free(folder->ResolvedTarget);
-        folder->ResolvedTarget = NULL;
-        path2 = resolve_target_folder( package, szFolder, TRUE, FALSE, NULL );
-        msi_free(path2);
     }
-    else
+    if (!(folder = get_loaded_folder( package, szFolder ))) return ERROR_DIRECTORY;
+
+    len = strlenW( szFolderPath );
+    if (len && szFolderPath[len - 1] != '\\')
     {
-        MSIFOLDER *f;
-
-        LIST_FOR_EACH_ENTRY( f, &package->folders, MSIFOLDER, entry )
-        {
-            msi_free(f->ResolvedTarget);
-            f->ResolvedTarget=NULL;
-        }
-
-        LIST_FOR_EACH_ENTRY( f, &package->folders, MSIFOLDER, entry )
-        {
-            path2 = resolve_target_folder( package, f->Directory, TRUE, FALSE, NULL );
-            msi_free(path2);
-        }
-
-        LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
-        {
-            MSICOMPONENT *comp = file->Component;
-            LPWSTR dir;
-
-            if (!comp->Enabled || (comp->assembly && !comp->assembly->application))
-                continue;
-
-            dir = resolve_target_folder( package, comp->Directory, FALSE, FALSE, NULL );
-            msi_free(file->TargetPath);
-
-            file->TargetPath = build_directory_name(2, dir, file->FileName);
-            msi_free(dir);
-        }
+        WCHAR *path = msi_alloc( (len + 2) * sizeof(WCHAR) );
+        memcpy( path, szFolderPath, len * sizeof(WCHAR) );
+        path[len] = '\\';
+        path[len + 1] = 0;
+        set_target_path( package, folder, path );
+        msi_free( path );
     }
-    msi_free(path);
+    else set_target_path( package, folder, szFolderPath );
 
+    LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
+    {
+        const WCHAR *dir;
+        MSICOMPONENT *comp = file->Component;
+
+        if (!comp->Enabled || (comp->assembly && !comp->assembly->application)) continue;
+
+        dir = msi_get_target_folder( package, comp->Directory );
+        msi_free( file->TargetPath );
+        file->TargetPath = build_directory_name( 2, dir, file->FileName );
+    }
     return ERROR_SUCCESS;
 }
 

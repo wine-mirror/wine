@@ -34,7 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-static const WCHAR cszTargetDir[] = {'T','A','R','G','E','T','D','I','R',0};
 static const WCHAR cszDatabase[]={'D','A','T','A','B','A','S','E',0};
 
 LPWSTR build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name )
@@ -198,45 +197,6 @@ static LPWSTR get_source_root( MSIPACKAGE *package )
     return path;
 }
 
-/*
- * clean_spaces_from_path()
- *
- * removes spaces from the beginning and end of path segments
- * removes multiple \\ characters
- */
-static void clean_spaces_from_path( LPWSTR p )
-{
-    LPWSTR q = p;
-    int n, len = 0;
-
-    while (1)
-    {
-        /* copy until the end of the string or a space */
-        while (*p != ' ' && (*q = *p))
-        {
-            p++, len++;
-            /* reduce many backslashes to one */
-            if (*p != '\\' || *q != '\\')
-                q++;
-        }
-
-        /* quit at the end of the string */
-        if (!*p)
-            break;
-
-        /* count the number of spaces */
-        n = 0;
-        while (p[n] == ' ')
-            n++;
-
-        /* if it's leading or trailing space, skip it */
-        if ( len == 0 || p[-1] == '\\' || p[n] == '\\' )
-            p += n;
-        else  /* copy n spaces */
-            while (n && (*q++ = *p++)) n--;
-    }
-}
-
 LPWSTR resolve_file_source(MSIPACKAGE *package, MSIFILE *file)
 {
     LPWSTR p, path;
@@ -310,96 +270,6 @@ LPWSTR resolve_source_folder( MSIPACKAGE *package, LPCWSTR name, MSIFOLDER **fol
 
     TRACE("-> %s\n", debugstr_w(path));
     f->ResolvedSource = strdupW( path );
-    msi_free( p );
-
-    return path;
-}
-
-const WCHAR *msi_get_target_folder( MSIPACKAGE *package, const WCHAR *name )
-{
-    MSIFOLDER *folder = get_loaded_folder( package, name );
-    if (folder) return folder->ResolvedTarget;
-    return NULL;
-}
-
-LPWSTR resolve_target_folder( MSIPACKAGE *package, LPCWSTR name, BOOL set_prop, BOOL load_prop,
-                              MSIFOLDER **folder )
-{
-    MSIFOLDER *f;
-    LPWSTR p, path = NULL, parent;
-
-    TRACE("working to resolve %s\n", debugstr_w(name));
-
-    f = get_loaded_folder( package, name );
-    if (!f)
-        return NULL;
-
-    /* special resolving for Target and Source root dir */
-    if (!strcmpW( name, cszTargetDir ))
-    {
-        if (!f->ResolvedTarget && !f->Property)
-        {
-            LPWSTR check_path;
-            check_path = msi_dup_property( package->db, cszTargetDir );
-            if (!check_path)
-            {
-                check_path = msi_dup_property( package->db, cszRootDrive );
-                if (set_prop)
-                    msi_set_property( package->db, cszTargetDir, check_path );
-            }
-
-            /* correct misbuilt target dir */
-            path = build_directory_name(2, check_path, NULL);
-            clean_spaces_from_path( path );
-            if (strcmpiW( path, check_path ))
-                msi_set_property( package->db, cszTargetDir, path );
-            msi_free(check_path);
-
-            f->ResolvedTarget = path;
-        }
-    }
-
-    if (folder)
-        *folder = f;
-
-    if (f->ResolvedTarget)
-    {
-        path = strdupW( f->ResolvedTarget );
-        TRACE("   already resolved to %s\n", debugstr_w(path));
-        return path;
-    }
-
-    if (f->Property)
-    {
-        path = build_directory_name( 2, f->Property, NULL );
-        TRACE("   internally set to %s\n", debugstr_w(path));
-        if (set_prop) msi_set_property( package->db, name, path );
-        return path;
-    }
-
-    if (load_prop && (path = msi_dup_property( package->db, name )))
-    {
-        f->ResolvedTarget = strdupW( path );
-        TRACE("   property set to %s\n", debugstr_w(path));
-        return path;
-    }
-
-    if (!f->Parent)
-        return path;
-
-    parent = f->Parent;
-
-    TRACE(" ! parent is %s\n", debugstr_w(parent));
-
-    p = resolve_target_folder( package, parent, set_prop, load_prop, NULL );
-
-    TRACE("   TargetDefault = %s\n", debugstr_w(f->TargetDefault));
-    path = build_directory_name( 3, p, f->TargetDefault, NULL );
-    clean_spaces_from_path( path );
-    f->ResolvedTarget = strdupW( path );
-
-    TRACE("-> %s\n", debugstr_w(path));
-    if (set_prop) msi_set_property( package->db, name, path );
     msi_free( p );
 
     return path;

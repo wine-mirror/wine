@@ -90,6 +90,26 @@ static void free_feature( MSIFEATURE *feature )
     msi_free( feature );
 }
 
+static void free_folder( MSIFOLDER *folder )
+{
+    struct list *item, *cursor;
+
+    LIST_FOR_EACH_SAFE( item, cursor, &folder->children )
+    {
+        FolderList *fl = LIST_ENTRY( item, FolderList, entry );
+        list_remove( &fl->entry );
+        msi_free( fl );
+    }
+    msi_free( folder->Parent );
+    msi_free( folder->Directory );
+    msi_free( folder->TargetDefault );
+    msi_free( folder->SourceLongPath );
+    msi_free( folder->SourceShortPath );
+    msi_free( folder->ResolvedTarget );
+    msi_free( folder->ResolvedSource );
+    msi_free( folder );
+}
+
 static void free_extension( MSIEXTENSION *ext )
 {
     struct list *item, *cursor;
@@ -140,17 +160,8 @@ static void free_package_structures( MSIPACKAGE *package )
     LIST_FOR_EACH_SAFE( item, cursor, &package->folders )
     {
         MSIFOLDER *folder = LIST_ENTRY( item, MSIFOLDER, entry );
-
         list_remove( &folder->entry );
-        msi_free( folder->Parent );
-        msi_free( folder->Directory );
-        msi_free( folder->TargetDefault );
-        msi_free( folder->SourceLongPath );
-        msi_free( folder->SourceShortPath );
-        msi_free( folder->ResolvedTarget );
-        msi_free( folder->ResolvedSource );
-        msi_free( folder->Property );
-        msi_free( folder );
+        free_folder( folder );
     }
 
     LIST_FOR_EACH_SAFE( item, cursor, &package->components )

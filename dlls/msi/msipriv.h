@@ -489,6 +489,7 @@ typedef struct tagFeatureList
 typedef struct tagMSIFOLDER
 {
     struct list entry;
+    struct list children;
     LPWSTR Directory;
     LPWSTR Parent;
     LPWSTR TargetDefault;
@@ -497,7 +498,6 @@ typedef struct tagMSIFOLDER
 
     LPWSTR ResolvedTarget;
     LPWSTR ResolvedSource;
-    LPWSTR Property;   /* initially set property */
     INT   State;
         /* 0 = uninitialized */
         /* 1 = existing */
@@ -506,6 +506,12 @@ typedef struct tagMSIFOLDER
     INT   Cost;
     INT   Space;
 } MSIFOLDER;
+
+typedef struct tagFolderList
+{
+    struct list entry;
+    MSIFOLDER *folder;
+} FolderList;
 
 typedef enum _msi_file_state {
     msifs_invalid,
@@ -969,7 +975,8 @@ extern UINT msi_set_property( MSIDATABASE *, LPCWSTR, LPCWSTR ) DECLSPEC_HIDDEN;
 extern UINT msi_get_property( MSIDATABASE *, LPCWSTR, LPWSTR, LPDWORD ) DECLSPEC_HIDDEN;
 extern int msi_get_property_int( MSIDATABASE *package, LPCWSTR prop, int def ) DECLSPEC_HIDDEN;
 extern LPWSTR resolve_source_folder(MSIPACKAGE *package, LPCWSTR name, MSIFOLDER **folder) DECLSPEC_HIDDEN;
-extern LPWSTR resolve_target_folder(MSIPACKAGE *package, LPCWSTR name, BOOL set_prop, BOOL load_prop, MSIFOLDER **folder) DECLSPEC_HIDDEN;
+extern void msi_resolve_target_folder(MSIPACKAGE *package, const WCHAR *name, BOOL load_prop) DECLSPEC_HIDDEN;
+extern void msi_clean_path( WCHAR *p ) DECLSPEC_HIDDEN;
 extern LPWSTR resolve_file_source(MSIPACKAGE *package, MSIFILE *file) DECLSPEC_HIDDEN;
 extern const WCHAR *msi_get_target_folder(MSIPACKAGE *package, const WCHAR *name) DECLSPEC_HIDDEN;
 extern void msi_reset_folders( MSIPACKAGE *package, BOOL source ) DECLSPEC_HIDDEN;
@@ -1045,6 +1052,7 @@ extern void ui_actiondata(MSIPACKAGE *, LPCWSTR, MSIRECORD *) DECLSPEC_HIDDEN;
 static const WCHAR cszSourceDir[] = {'S','o','u','r','c','e','D','i','r',0};
 static const WCHAR cszSOURCEDIR[] = {'S','O','U','R','C','E','D','I','R',0};
 static const WCHAR cszRootDrive[] = {'R','O','O','T','D','R','I','V','E',0};
+static const WCHAR cszTargetDir[] = {'T','A','R','G','E','T','D','I','R',0};
 static const WCHAR szLocalSid[] = {'S','-','1','-','5','-','1','8',0};
 static const WCHAR szEmpty[] = {0};
 static const WCHAR szAll[] = {'A','L','L',0};
