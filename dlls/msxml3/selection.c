@@ -500,7 +500,7 @@ static dispex_static_data_t domselection_dispex = {
     }
 
 
-void XSLPattern_index(xmlXPathParserContextPtr pctx, int nargs)
+static void XSLPattern_index(xmlXPathParserContextPtr pctx, int nargs)
 {
     XSLPATTERN_CHECK_ARGS(0);
 
@@ -508,7 +508,7 @@ void XSLPattern_index(xmlXPathParserContextPtr pctx, int nargs)
     xmlXPathReturnNumber(pctx, xmlXPathPopNumber(pctx) - 1.0);
 }
 
-void XSLPattern_end(xmlXPathParserContextPtr pctx, int nargs)
+static void XSLPattern_end(xmlXPathParserContextPtr pctx, int nargs)
 {
     double pos, last;
     XSLPATTERN_CHECK_ARGS(0);
@@ -520,13 +520,13 @@ void XSLPattern_end(xmlXPathParserContextPtr pctx, int nargs)
     xmlXPathReturnBoolean(pctx, pos == last);
 }
 
-void XSLPattern_nodeType(xmlXPathParserContextPtr pctx, int nargs)
+static void XSLPattern_nodeType(xmlXPathParserContextPtr pctx, int nargs)
 {
     XSLPATTERN_CHECK_ARGS(0);
     xmlXPathReturnNumber(pctx, pctx->context->node->type);
 }
 
-void XSLPattern_OP_IEq(xmlXPathParserContextPtr pctx, int nargs)
+static void XSLPattern_OP_IEq(xmlXPathParserContextPtr pctx, int nargs)
 {
     xmlChar *arg1, *arg2;
     XSLPATTERN_CHECK_ARGS(2);
@@ -538,7 +538,7 @@ void XSLPattern_OP_IEq(xmlXPathParserContextPtr pctx, int nargs)
     xmlFree(arg2);
 }
 
-void XSLPattern_OP_INEq(xmlXPathParserContextPtr pctx, int nargs)
+static void XSLPattern_OP_INEq(xmlXPathParserContextPtr pctx, int nargs)
 {
     xmlChar *arg1, *arg2;
     XSLPATTERN_CHECK_ARGS(2);
@@ -550,7 +550,7 @@ void XSLPattern_OP_INEq(xmlXPathParserContextPtr pctx, int nargs)
     xmlFree(arg2);
 }
 
-void XSLPattern_OP_ILt(xmlXPathParserContextPtr pctx, int nargs)
+static void XSLPattern_OP_ILt(xmlXPathParserContextPtr pctx, int nargs)
 {
     xmlChar *arg1, *arg2;
     XSLPATTERN_CHECK_ARGS(2);
@@ -562,7 +562,7 @@ void XSLPattern_OP_ILt(xmlXPathParserContextPtr pctx, int nargs)
     xmlFree(arg2);
 }
 
-void XSLPattern_OP_ILEq(xmlXPathParserContextPtr pctx, int nargs)
+static void XSLPattern_OP_ILEq(xmlXPathParserContextPtr pctx, int nargs)
 {
     xmlChar *arg1, *arg2;
     XSLPATTERN_CHECK_ARGS(2);
@@ -574,7 +574,7 @@ void XSLPattern_OP_ILEq(xmlXPathParserContextPtr pctx, int nargs)
     xmlFree(arg2);
 }
 
-void XSLPattern_OP_IGt(xmlXPathParserContextPtr pctx, int nargs)
+static void XSLPattern_OP_IGt(xmlXPathParserContextPtr pctx, int nargs)
 {
     xmlChar *arg1, *arg2;
     XSLPATTERN_CHECK_ARGS(2);
@@ -586,7 +586,7 @@ void XSLPattern_OP_IGt(xmlXPathParserContextPtr pctx, int nargs)
     xmlFree(arg2);
 }
 
-void XSLPattern_OP_IGEq(xmlXPathParserContextPtr pctx, int nargs)
+static void XSLPattern_OP_IGEq(xmlXPathParserContextPtr pctx, int nargs)
 {
     xmlChar *arg1, *arg2;
     XSLPATTERN_CHECK_ARGS(2);
