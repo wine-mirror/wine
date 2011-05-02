@@ -2052,7 +2052,7 @@ msgstr "Заустави"
 msgid "&Refresh"
 msgstr "&Освежи"
 
-#: hhctrl.rc:76
+#: hhctrl.rc:76 winhlp32.rc:31
 #, fuzzy
 msgid "&Print..."
 msgstr "Штампај"
@@ -6217,7 +6217,8 @@ msgid "Cu&t"
 msgstr "&Исеци"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 winhlp32.rc:37
+#: wordpad.rc:102
 msgid "&Copy"
 msgstr "&Умножи"
 
@@ -6295,7 +6296,7 @@ msgstr "1DSite избор"
 msgid "Paste"
 msgstr "Убаци"
 
-#: shdoclc.rc:122 winhlp32.rc:31
+#: shdoclc.rc:122
 msgid "&Print"
 msgstr "&Штампај"
 
@@ -6303,7 +6304,7 @@ msgstr "&Штампај"
 msgid "Anchor"
 msgstr "Везник"
 
-#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84
 msgid "&Open"
 msgstr "&Отвори"
 
@@ -6489,7 +6490,7 @@ msgstr "&Ново"
 msgid "&Window"
 msgstr "&Прозор"
 
-#: shdocvw.rc:31 view.rc:30
+#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
 msgid "&Open..."
 msgstr "&Отвори..."
 
@@ -10929,11 +10930,6 @@ msgstr ""
 #, fuzzy
 msgid "Printer &setup..."
 msgstr "Поставке &штампе..."
-
-#: winhlp32.rc:37
-#, fuzzy
-msgid "&Copy..."
-msgstr "&Умножи"
 
 #: winhlp32.rc:39
 msgid "&Annotate..."

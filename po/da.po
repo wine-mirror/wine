@@ -2089,7 +2089,7 @@ msgstr "Stop"
 msgid "&Refresh"
 msgstr "Opdate&r"
 
-#: hhctrl.rc:76
+#: hhctrl.rc:76 winhlp32.rc:31
 msgid "&Print..."
 msgstr "&Udskriv..."
 
@@ -6143,7 +6143,8 @@ msgid "Cu&t"
 msgstr "&Klip"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 winhlp32.rc:37
+#: wordpad.rc:102
 #, fuzzy
 msgid "&Copy"
 msgstr ""
@@ -6221,7 +6222,7 @@ msgstr "1DSidevælging"
 msgid "Paste"
 msgstr "Indsæt"
 
-#: shdoclc.rc:122 winhlp32.rc:31
+#: shdoclc.rc:122
 #, fuzzy
 msgid "&Print"
 msgstr ""
@@ -6234,7 +6235,7 @@ msgstr ""
 msgid "Anchor"
 msgstr "Anker"
 
-#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84
 #, fuzzy
 msgid "&Open"
 msgstr ""
@@ -6430,7 +6431,7 @@ msgstr "&Ny"
 msgid "&Window"
 msgstr "Vind&ue"
 
-#: shdocvw.rc:31 view.rc:30
+#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
 #, fuzzy
 msgid "&Open..."
 msgstr ""
@@ -11275,10 +11276,6 @@ msgstr "Ophavsret 2000 tilhører Joshua Thielen"
 #: winhlp32.rc:32
 msgid "Printer &setup..."
 msgstr "&Indstil printer"
-
-#: winhlp32.rc:37
-msgid "&Copy..."
-msgstr "K&opier..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."

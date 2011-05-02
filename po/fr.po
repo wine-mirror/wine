@@ -2060,7 +2060,7 @@ msgstr "A&rrêter"
 msgid "&Refresh"
 msgstr "Actualis&er"
 
-#: hhctrl.rc:76
+#: hhctrl.rc:76 winhlp32.rc:31
 msgid "&Print..."
 msgstr "&Imprimer..."
 
@@ -5983,7 +5983,8 @@ msgid "Cu&t"
 msgstr "&Couper"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 winhlp32.rc:37
+#: wordpad.rc:102
 msgid "&Copy"
 msgstr "C&opier"
 
@@ -6051,7 +6052,7 @@ msgstr "1DSite Select"
 msgid "Paste"
 msgstr "Coller"
 
-#: shdoclc.rc:122 winhlp32.rc:31
+#: shdoclc.rc:122
 msgid "&Print"
 msgstr "&Imprimer"
 
@@ -6059,7 +6060,7 @@ msgstr "&Imprimer"
 msgid "Anchor"
 msgstr "Ancre"
 
-#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84
 msgid "&Open"
 msgstr "&Ouvrir"
 
@@ -6246,7 +6247,7 @@ msgstr "&Nouvelle"
 msgid "&Window"
 msgstr "&Fenêtre"
 
-#: shdocvw.rc:31 view.rc:30
+#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
 msgid "&Open..."
 msgstr "&Ouvrir..."
 
@@ -11060,10 +11061,6 @@ msgstr "Copyright 2000 Joshua Thielen"
 #: winhlp32.rc:32
 msgid "Printer &setup..."
 msgstr "&Configuration de l'imprimante..."
-
-#: winhlp32.rc:37
-msgid "&Copy..."
-msgstr "C&opier..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."

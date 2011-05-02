@@ -2058,7 +2058,7 @@ msgstr "停止"
 msgid "&Refresh"
 msgstr "刷新(&R)"
 
-#: hhctrl.rc:76
+#: hhctrl.rc:76 winhlp32.rc:31
 msgid "&Print..."
 msgstr "列印(&P)..."
 
@@ -6187,7 +6187,8 @@ msgid "Cu&t"
 msgstr "剪下(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 winhlp32.rc:37
+#: wordpad.rc:102
 #, fuzzy
 msgid "&Copy"
 msgstr ""
@@ -6265,7 +6266,7 @@ msgstr "1DSite Select"
 msgid "Paste"
 msgstr "貼上"
 
-#: shdoclc.rc:122 winhlp32.rc:31
+#: shdoclc.rc:122
 msgid "&Print"
 msgstr "列印(&P)"
 
@@ -6273,7 +6274,7 @@ msgstr "列印(&P)"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84
 msgid "&Open"
 msgstr "開啟(&O)"
 
@@ -6459,7 +6460,7 @@ msgstr "新建(&N)"
 msgid "&Window"
 msgstr "窗口(&W)"
 
-#: shdocvw.rc:31 view.rc:30
+#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
 #, fuzzy
 msgid "&Open..."
 msgstr "開啟(&O)"
@@ -10972,10 +10973,6 @@ msgstr "Copyright 2000 Joshua Thielen"
 #: winhlp32.rc:32
 msgid "Printer &setup..."
 msgstr "印表機設定(&S)..."
-
-#: winhlp32.rc:37
-msgid "&Copy..."
-msgstr "複製(&C)..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."

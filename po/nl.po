@@ -2069,7 +2069,7 @@ msgstr "&Stop"
 msgid "&Refresh"
 msgstr "A&ctualiseren"
 
-#: hhctrl.rc:76
+#: hhctrl.rc:76 winhlp32.rc:31
 msgid "&Print..."
 msgstr "Af&drukken..."
 
@@ -6074,7 +6074,8 @@ msgid "Cu&t"
 msgstr "K&nippen"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 winhlp32.rc:37
+#: wordpad.rc:102
 msgid "&Copy"
 msgstr "&Kopiëren"
 
@@ -6142,7 +6143,7 @@ msgstr "1DPaginakeuze"
 msgid "Paste"
 msgstr "Plakken"
 
-#: shdoclc.rc:122 winhlp32.rc:31
+#: shdoclc.rc:122
 msgid "&Print"
 msgstr "Af&drukken"
 
@@ -6150,7 +6151,7 @@ msgstr "Af&drukken"
 msgid "Anchor"
 msgstr "Anker"
 
-#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84
 msgid "&Open"
 msgstr "&Openen"
 
@@ -6336,7 +6337,7 @@ msgstr "&Nieuw"
 msgid "&Window"
 msgstr "&Venster"
 
-#: shdocvw.rc:31 view.rc:30
+#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
 msgid "&Open..."
 msgstr "&Openen..."
 
@@ -11125,10 +11126,6 @@ msgstr "Copyright 2000 Joshua Thielen"
 #: winhlp32.rc:32
 msgid "Printer &setup..."
 msgstr "&Pagina-instellingen..."
-
-#: winhlp32.rc:37
-msgid "&Copy..."
-msgstr "&Kopiëren..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."

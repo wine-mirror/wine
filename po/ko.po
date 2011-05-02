@@ -2050,7 +2050,7 @@ msgstr "멈추기(&S)"
 msgid "&Refresh"
 msgstr "다시 읽기(&R)"
 
-#: hhctrl.rc:76
+#: hhctrl.rc:76 winhlp32.rc:31
 msgid "&Print..."
 msgstr "인쇄(&P)..."
 
@@ -5959,7 +5959,8 @@ msgid "Cu&t"
 msgstr "잘라내기(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 wordpad.rc:102
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 winhlp32.rc:37
+#: wordpad.rc:102
 msgid "&Copy"
 msgstr "복사(&C)"
 
@@ -6027,7 +6028,7 @@ msgstr "1DSite 선택"
 msgid "Paste"
 msgstr "붙여넣기"
 
-#: shdoclc.rc:122 winhlp32.rc:31
+#: shdoclc.rc:122
 msgid "&Print"
 msgstr "인쇄(&P)"
 
@@ -6035,7 +6036,7 @@ msgstr "인쇄(&P)"
 msgid "Anchor"
 msgstr "닻"
 
-#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84
 msgid "&Open"
 msgstr "열기(&O)"
 
@@ -6221,7 +6222,7 @@ msgstr "새로 만들기(&N)"
 msgid "&Window"
 msgstr "창(&W)"
 
-#: shdocvw.rc:31 view.rc:30
+#: shdocvw.rc:31 view.rc:30 winhlp32.rc:29
 msgid "&Open..."
 msgstr "열기(&O)..."
 
@@ -10901,10 +10902,6 @@ msgstr "Copyright 2000 Joshua Thielen"
 #: winhlp32.rc:32
 msgid "Printer &setup..."
 msgstr "프린터 설정(&S)..."
-
-#: winhlp32.rc:37
-msgid "&Copy..."
-msgstr "복사(&C)..."
 
 #: winhlp32.rc:39
 msgid "&Annotate..."
