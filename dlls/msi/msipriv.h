@@ -704,7 +704,6 @@ typedef struct {
 UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz ) DECLSPEC_HIDDEN;
 
 /* msi server interface */
-extern ITypeLib *get_msi_typelib( LPWSTR *path ) DECLSPEC_HIDDEN;
 extern HRESULT create_msi_custom_remote( IUnknown *pOuter, LPVOID *ppObj ) DECLSPEC_HIDDEN;
 extern HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj ) DECLSPEC_HIDDEN;
 extern HRESULT create_msi_remote_database( IUnknown *pOuter, LPVOID *ppObj ) DECLSPEC_HIDDEN;
