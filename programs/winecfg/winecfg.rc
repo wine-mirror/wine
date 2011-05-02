@@ -29,7 +29,7 @@ IDR_WINECFG MENU
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "Configure", IDC_AUDIO_CONFIGURE
+        MENUITEM "Configure...", IDC_AUDIO_CONFIGURE
     END
 END
 
@@ -78,7 +78,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Autodetect"
+    IDS_DRIVE_UNKNOWN           "Autodetect..."
     IDS_DRIVE_FIXED             "Local hard disk"
     IDS_DRIVE_REMOTE            "Network share"
     IDS_DRIVE_REMOVABLE         "Floppy disk"

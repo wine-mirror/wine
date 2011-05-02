@@ -10297,7 +10297,7 @@ msgstr "מציג קובצי על רגיל"
 
 #: winecfg.rc:32
 #, fuzzy
-msgid "Configure"
+msgid "Configure..."
 msgstr "תצורה"
 
 #: winecfg.rc:39
@@ -10469,7 +10469,7 @@ msgstr "ללא"
 
 #: winecfg.rc:81
 #, fuzzy
-msgid "Autodetect"
+msgid "Autodetect..."
 msgstr "זיהוי אוטומטי"
 
 #: winecfg.rc:82

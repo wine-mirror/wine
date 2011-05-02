@@ -10179,7 +10179,7 @@ msgstr ""
 
 #: winecfg.rc:32
 #, fuzzy
-msgid "Configure"
+msgid "Configure..."
 msgstr "Грешка у радњама"
 
 #: winecfg.rc:39
@@ -10324,7 +10324,7 @@ msgid "None"
 msgstr "Ништа"
 
 #: winecfg.rc:81
-msgid "Autodetect"
+msgid "Autodetect..."
 msgstr ""
 
 #: winecfg.rc:82

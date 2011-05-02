@@ -10498,7 +10498,8 @@ msgid "Regular Metafile Viewer"
 msgstr "Vanlig metafil-framviser"
 
 #: winecfg.rc:32
-msgid "Configure"
+#, fuzzy
+msgid "Configure..."
 msgstr "Oppsett"
 
 #: winecfg.rc:39
@@ -10639,7 +10640,8 @@ msgid "None"
 msgstr "Ingen"
 
 #: winecfg.rc:81
-msgid "Autodetect"
+#, fuzzy
+msgid "Autodetect..."
 msgstr "Automatisk"
 
 #: winecfg.rc:82

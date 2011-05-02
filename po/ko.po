@@ -10161,7 +10161,8 @@ msgid "Regular Metafile Viewer"
 msgstr "정규 메타파일 보기"
 
 #: winecfg.rc:32
-msgid "Configure"
+#, fuzzy
+msgid "Configure..."
 msgstr "설정"
 
 #: winecfg.rc:39
@@ -10302,7 +10303,8 @@ msgid "None"
 msgstr "없음"
 
 #: winecfg.rc:81
-msgid "Autodetect"
+#, fuzzy
+msgid "Autodetect..."
 msgstr "자동으로 찾기"
 
 #: winecfg.rc:82

@@ -10263,7 +10263,8 @@ msgid "Regular Metafile Viewer"
 msgstr ""
 
 #: winecfg.rc:32
-msgid "Configure"
+#, fuzzy
+msgid "Configure..."
 msgstr "Podesi"
 
 #: winecfg.rc:39
@@ -10409,7 +10410,8 @@ msgstr ""
 "Nista"
 
 #: winecfg.rc:81
-msgid "Autodetect"
+#, fuzzy
+msgid "Autodetect..."
 msgstr "Automatski"
 
 #: winecfg.rc:82

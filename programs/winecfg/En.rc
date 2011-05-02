@@ -137,7 +137,7 @@ BEGIN
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Add...",IDC_BUTTON_ADD,15,98,37,14
     PUSHBUTTON      "&Remove",IDC_BUTTON_REMOVE,56,98,37,14
-    PUSHBUTTON      "Auto&detect...",IDC_BUTTON_AUTODETECT,197,98,49,14
+    PUSHBUTTON      "Auto&detect",IDC_BUTTON_AUTODETECT,197,98,49,14
 
     /* editing drive details */
     LTEXT           "&Path:",IDC_STATIC_PATH,15,123,20,9

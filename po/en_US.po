@@ -10195,8 +10195,8 @@ msgid "Regular Metafile Viewer"
 msgstr "Regular Metafile Viewer"
 
 #: winecfg.rc:32
-msgid "Configure"
-msgstr "Configure"
+msgid "Configure..."
+msgstr "Configure..."
 
 #: winecfg.rc:39
 msgid "Libraries"
@@ -10336,8 +10336,8 @@ msgid "None"
 msgstr "None"
 
 #: winecfg.rc:81
-msgid "Autodetect"
-msgstr "Autodetect"
+msgid "Autodetect..."
+msgstr "Autodetect..."
 
 #: winecfg.rc:82
 msgid "Local hard disk"

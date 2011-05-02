@@ -10233,7 +10233,8 @@ msgid "Regular Metafile Viewer"
 msgstr "Įprastinė metafailų žiūryklė"
 
 #: winecfg.rc:32
-msgid "Configure"
+#, fuzzy
+msgid "Configure..."
 msgstr "Konfigūruoti"
 
 #: winecfg.rc:39
@@ -10374,7 +10375,8 @@ msgid "None"
 msgstr "Nėra"
 
 #: winecfg.rc:81
-msgid "Autodetect"
+#, fuzzy
+msgid "Autodetect..."
 msgstr "Automatiškai aptikti"
 
 #: winecfg.rc:82

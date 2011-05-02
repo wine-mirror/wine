@@ -10212,7 +10212,8 @@ msgid "Regular Metafile Viewer"
 msgstr "普通 Metafile 閱讀器"
 
 #: winecfg.rc:32
-msgid "Configure"
+#, fuzzy
+msgid "Configure..."
 msgstr "設定"
 
 #: winecfg.rc:39
@@ -10358,7 +10359,8 @@ msgstr ""
 "無"
 
 #: winecfg.rc:81
-msgid "Autodetect"
+#, fuzzy
+msgid "Autodetect..."
 msgstr "自動偵測"
 
 #: winecfg.rc:82

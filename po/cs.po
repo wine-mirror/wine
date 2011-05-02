@@ -10468,7 +10468,8 @@ msgid "Regular Metafile Viewer"
 msgstr "Obyčejný prohlížeč metasouborů"
 
 #: winecfg.rc:32
-msgid "Configure"
+#, fuzzy
+msgid "Configure..."
 msgstr "Upravit"
 
 #: winecfg.rc:39
@@ -10614,7 +10615,8 @@ msgstr ""
 "Žádný"
 
 #: winecfg.rc:81
-msgid "Autodetect"
+#, fuzzy
+msgid "Autodetect..."
 msgstr "Autodetekce"
 
 #: winecfg.rc:82

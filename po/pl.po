@@ -10223,7 +10223,8 @@ msgid "Regular Metafile Viewer"
 msgstr "Podgląd plików WMF (Regular Metafile)"
 
 #: winecfg.rc:32
-msgid "Configure"
+#, fuzzy
+msgid "Configure..."
 msgstr "Konfiguruj"
 
 #: winecfg.rc:39
@@ -10364,7 +10365,8 @@ msgid "None"
 msgstr "Brak"
 
 #: winecfg.rc:81
-msgid "Autodetect"
+#, fuzzy
+msgid "Autodetect..."
 msgstr "Automatyczne wykrywanie"
 
 #: winecfg.rc:82
