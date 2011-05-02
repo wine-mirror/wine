@@ -2667,7 +2667,6 @@ ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
 
     if (!refcount)
     {
-        surface_cleanup(surface);
         surface->surface_ops->surface_cleanup(surface);
         surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
 
