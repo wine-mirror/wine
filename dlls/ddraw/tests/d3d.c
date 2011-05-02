@@ -3251,6 +3251,27 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
     return DefWindowProcA(hwnd, message, wparam, lparam);
 }
 
+/* Set the wndproc back to what ddraw expects it to be, and release the ddraw
+ * interface. This prevents subsequent SetCooperativeLevel() calls on a
+ * different window from failing with DDERR_HWNDALREADYSET. */
+static void fix_wndproc(HWND window, LONG_PTR proc)
+{
+    IDirectDraw7 *ddraw7;
+    HRESULT hr;
+
+    hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
+    ok(SUCCEEDED(hr), "Failed to create IDirectDraw7 object, hr %#x.", hr);
+    if (FAILED(hr)) return;
+
+    SetWindowLongPtrA(window, GWLP_WNDPROC, proc);
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    IDirectDraw7_Release(ddraw7);
+}
+
 static void test_wndproc(void)
 {
     LONG_PTR proc, ddraw_proc;
@@ -3458,6 +3479,7 @@ static void test_wndproc(void)
             (LONG_PTR)DefWindowProcA, proc);
 
 done:
+    fix_wndproc(window, (LONG_PTR)test_proc);
     expect_messages = NULL;
     DestroyWindow(window);
     UnregisterClassA("d3d7_test_wndproc_wc", GetModuleHandleA(NULL));
