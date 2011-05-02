@@ -37,7 +37,7 @@ void wined3d_event_query_destroy(struct wined3d_event_query *query)
     HeapFree(GetProcessHeap(), 0, query);
 }
 
-enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
+static enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
 {
     struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;

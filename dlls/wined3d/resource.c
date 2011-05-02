@@ -272,12 +272,6 @@ DWORD resource_get_priority(const struct wined3d_resource *resource)
     return resource->priority;
 }
 
-WINED3DRESOURCETYPE resource_get_type(const struct wined3d_resource *resource)
-{
-    TRACE("resource %p, returning %#x.\n", resource, resource->resourceType);
-    return resource->resourceType;
-}
-
 void * CDECL wined3d_resource_get_parent(const struct wined3d_resource *resource)
 {
     return resource->parent;
