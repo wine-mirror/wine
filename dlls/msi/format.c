@@ -196,7 +196,7 @@ static LPWSTR deformat_component(FORMAT *format, FORMSTR *str)
     if (comp->Action == INSTALLSTATE_SOURCE)
         ret = resolve_source_folder( format->package, comp->Directory, NULL );
     else
-        ret = resolve_target_folder( format->package, comp->Directory, FALSE, TRUE, NULL );
+        ret = strdupW( msi_get_target_folder( format->package, comp->Directory ) );
 
 done:
     msi_free(key);

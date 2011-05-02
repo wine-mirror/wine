@@ -971,6 +971,7 @@ extern int msi_get_property_int( MSIDATABASE *package, LPCWSTR prop, int def ) D
 extern LPWSTR resolve_source_folder(MSIPACKAGE *package, LPCWSTR name, MSIFOLDER **folder) DECLSPEC_HIDDEN;
 extern LPWSTR resolve_target_folder(MSIPACKAGE *package, LPCWSTR name, BOOL set_prop, BOOL load_prop, MSIFOLDER **folder) DECLSPEC_HIDDEN;
 extern LPWSTR resolve_file_source(MSIPACKAGE *package, MSIFILE *file) DECLSPEC_HIDDEN;
+extern const WCHAR *msi_get_target_folder(MSIPACKAGE *package, const WCHAR *name) DECLSPEC_HIDDEN;
 extern void msi_reset_folders( MSIPACKAGE *package, BOOL source ) DECLSPEC_HIDDEN;
 extern MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Component ) DECLSPEC_HIDDEN;
 extern MSIFEATURE *get_loaded_feature( MSIPACKAGE* package, LPCWSTR Feature ) DECLSPEC_HIDDEN;

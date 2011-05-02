@@ -1140,24 +1140,19 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
 static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
                                 LPCWSTR target, const INT type, LPCWSTR action)
 {
-    LPWSTR workingdir, filename;
+    LPWSTR filename;
+    const WCHAR *workingdir;
     STARTUPINFOW si;
     PROCESS_INFORMATION info;
     BOOL rc;
 
     memset(&si, 0, sizeof(STARTUPINFOW));
 
-    workingdir = resolve_target_folder( package, source, FALSE, TRUE, NULL );
-    if (!workingdir)
-        return ERROR_FUNCTION_FAILED;
+    workingdir = msi_get_target_folder( package, source );
+    if (!workingdir) return ERROR_FUNCTION_FAILED;
 
     deformat_string(package, target, &filename);
-
-    if (!filename)
-    {
-        msi_free(workingdir);
-        return ERROR_FUNCTION_FAILED;
-    }
+    if (!filename) return ERROR_FUNCTION_FAILED;
 
     TRACE("executing exe %s with working directory %s\n",
           debugstr_w(filename), debugstr_w(workingdir));
@@ -1170,13 +1165,9 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
         ERR("Unable to execute command %s with working directory %s\n",
             debugstr_w(filename), debugstr_w(workingdir));
         msi_free(filename);
-        msi_free(workingdir);
         return ERROR_SUCCESS;
     }
-
     msi_free(filename);
-    msi_free(workingdir);
-
     CloseHandle( info.hThread );
 
     return wait_process_handle(package, type, info.hProcess, action);

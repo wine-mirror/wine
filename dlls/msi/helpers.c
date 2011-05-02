@@ -315,6 +315,13 @@ LPWSTR resolve_source_folder( MSIPACKAGE *package, LPCWSTR name, MSIFOLDER **fol
     return path;
 }
 
+const WCHAR *msi_get_target_folder( MSIPACKAGE *package, const WCHAR *name )
+{
+    MSIFOLDER *folder = get_loaded_folder( package, name );
+    if (folder) return folder->ResolvedTarget;
+    return NULL;
+}
+
 LPWSTR resolve_target_folder( MSIPACKAGE *package, LPCWSTR name, BOOL set_prop, BOOL load_prop,
                               MSIFOLDER **folder )
 {

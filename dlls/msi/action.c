@@ -1424,8 +1424,7 @@ static BOOL ACTION_HandleCustomAction( MSIPACKAGE* package, LPCWSTR action,
 static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE *package = param;
-    LPCWSTR dir, component;
-    LPWSTR full_path;
+    LPCWSTR dir, component, full_path;
     MSIRECORD *uirow;
     MSIFOLDER *folder;
     MSICOMPONENT *comp;
@@ -1464,21 +1463,19 @@ static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
     ui_actiondata(package, szCreateFolders, uirow);
     msiobj_release(&uirow->hdr);
 
-    full_path = resolve_target_folder( package, dir, FALSE, TRUE, &folder );
+    full_path = msi_get_target_folder( package, dir );
     if (!full_path)
     {
-        ERR("Unable to resolve folder id %s\n",debugstr_w(dir));
+        ERR("Unable to retrieve folder %s\n", debugstr_w(dir));
         return ERROR_SUCCESS;
     }
+    TRACE("folder is %s\n", debugstr_w(full_path));
 
-    TRACE("Folder is %s\n",debugstr_w(full_path));
-
+    folder = get_loaded_folder( package, dir );
     if (folder->State == 0)
         create_full_pathW(full_path);
 
     folder->State = 3;
-
-    msi_free(full_path);
     return ERROR_SUCCESS;
 }
 
@@ -1504,8 +1501,7 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
 {
     MSIPACKAGE *package = param;
-    LPCWSTR dir, component;
-    LPWSTR full_path;
+    LPCWSTR dir, component, full_path;
     MSIRECORD *uirow;
     MSIFOLDER *folder;
     MSICOMPONENT *comp;
@@ -1539,13 +1535,12 @@ static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
         return ERROR_SUCCESS;
     }
 
-    full_path = resolve_target_folder( package, dir, FALSE, TRUE, &folder );
+    full_path = msi_get_target_folder( package, dir );
     if (!full_path)
     {
-        ERR("Unable to resolve folder id %s\n", debugstr_w(dir));
+        ERR("Unable to resolve folder %s\n", debugstr_w(dir));
         return ERROR_SUCCESS;
     }
-
     TRACE("folder is %s\n", debugstr_w(full_path));
 
     uirow = MSI_CreateRecord( 1 );
@@ -1554,9 +1549,8 @@ static UINT ITERATE_RemoveFolders( MSIRECORD *row, LPVOID param )
     msiobj_release( &uirow->hdr );
 
     RemoveDirectoryW( full_path );
+    folder = get_loaded_folder( package, dir );
     folder->State = 0;
-
-    msi_free( full_path );
     return ERROR_SUCCESS;
 }
 
@@ -2726,9 +2720,8 @@ static void set_target_path( MSIPACKAGE *package, MSIFILE *file )
     }
     else
     {
-        WCHAR *dir = resolve_target_folder( package, file->Component->Directory, FALSE, TRUE, NULL );
+        const WCHAR *dir = msi_get_target_folder( package, file->Component->Directory );
         file->TargetPath = build_directory_name( 2, dir, file->FileName );
-        msi_free( dir );
     }
 
     TRACE("resolves to %s\n", debugstr_w(file->TargetPath));
@@ -3522,7 +3515,7 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, MSICOMPONENT *cmp )
 {
 
     if (!cmp->KeyPath)
-        return resolve_target_folder( package, cmp->Directory, FALSE, TRUE, NULL );
+        return strdupW( msi_get_target_folder( package, cmp->Directory ) );
 
     if (cmp->Attributes & msidbComponentAttributesRegistryKeyPath)
     {
@@ -3939,28 +3932,23 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
 
         if (tl_struct.path)
         {
-            LPWSTR help = NULL;
-            LPCWSTR helpid;
+            LPCWSTR helpid, help_path = NULL;
             HRESULT res;
 
             helpid = MSI_RecordGetString(row,6);
 
-            if (helpid) help = resolve_target_folder( package, helpid, FALSE, TRUE, NULL );
-            res = RegisterTypeLib(tl_struct.ptLib,tl_struct.path,help);
-            msi_free(help);
+            if (helpid) help_path = msi_get_target_folder( package, helpid );
+            res = RegisterTypeLib( tl_struct.ptLib, tl_struct.path, (OLECHAR *)help_path );
 
             if (FAILED(res))
-                ERR("Failed to register type library %s\n",
-                        debugstr_w(tl_struct.path));
+                ERR("Failed to register type library %s\n", debugstr_w(tl_struct.path));
             else
                 TRACE("Registered %s\n", debugstr_w(tl_struct.path));
 
             ITypeLib_Release(tl_struct.ptLib);
             msi_free(tl_struct.path);
         }
-        else
-            ERR("Failed to load type library %s\n",
-                    debugstr_w(tl_struct.source));
+        else ERR("Failed to load type library %s\n", debugstr_w(tl_struct.source));
 
         FreeLibrary(module);
         msi_free(tl_struct.source);
@@ -4075,11 +4063,11 @@ static UINT ACTION_UnregisterTypeLibraries( MSIPACKAGE *package )
 static WCHAR *get_link_file( MSIPACKAGE *package, MSIRECORD *row )
 {
     static const WCHAR szlnk[] = {'.','l','n','k',0};
-    LPCWSTR directory, extension;
-    LPWSTR link_folder, link_file, filename;
+    LPCWSTR directory, extension, link_folder;
+    LPWSTR link_file, filename;
 
     directory = MSI_RecordGetString( row, 2 );
-    link_folder = resolve_target_folder( package, directory, FALSE, TRUE, NULL );
+    link_folder = msi_get_target_folder( package, directory );
 
     /* may be needed because of a bug somewhere else */
     create_full_pathW( link_folder );
@@ -4095,7 +4083,6 @@ static WCHAR *get_link_file( MSIPACKAGE *package, MSIRECORD *row )
         memcpy( filename + len, szlnk, sizeof(szlnk) );
     }
     link_file = build_directory_name( 2, link_folder, filename );
-    msi_free( link_folder );
     msi_free( filename );
 
     return link_file;
@@ -4199,18 +4186,14 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 
     if (!MSI_RecordIsNull(row,12))
     {
-        LPCWSTR wkdir = MSI_RecordGetString(row, 12);
-        path = resolve_target_folder( package, wkdir, FALSE, TRUE, NULL );
-        if (path)
-            IShellLinkW_SetWorkingDirectory(sl, path);
-        msi_free(path);
+        LPCWSTR full_path, wkdir = MSI_RecordGetString( row, 12 );
+        full_path = msi_get_target_folder( package, wkdir );
+        if (full_path) IShellLinkW_SetWorkingDirectory( sl, full_path );
     }
-
     link_file = get_link_file(package, row);
 
     TRACE("Writing shortcut to %s\n", debugstr_w(link_file));
     IPersistFile_Save(pf, link_file, FALSE);
-
     msi_free(link_file);
 
 err:
@@ -4728,9 +4711,8 @@ static WCHAR *get_ini_file_name( MSIPACKAGE *package, MSIRECORD *row )
     dirprop = MSI_RecordGetString( row, 3 );
     if (dirprop)
     {
-        folder = resolve_target_folder( package, dirprop, FALSE, TRUE, NULL );
-        if (!folder)
-            folder = msi_dup_property( package->db, dirprop );
+        folder = strdupW( msi_get_target_folder( package, dirprop ) );
+        if (!folder) folder = msi_dup_property( package->db, dirprop );
     }
     else
         folder = msi_dup_property( package->db, szWindowsFolder );

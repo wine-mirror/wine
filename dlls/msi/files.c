@@ -232,18 +232,17 @@ static UINT copy_install_file(MSIPACKAGE *package, MSIFILE *file, LPWSTR source)
 static UINT msi_create_directory( MSIPACKAGE *package, const WCHAR *dir )
 {
     MSIFOLDER *folder;
-    WCHAR *install_path;
+    const WCHAR *install_path;
 
-    install_path = resolve_target_folder( package, dir, FALSE, TRUE, &folder );
-    if (!install_path)
-        return ERROR_FUNCTION_FAILED;
+    install_path = msi_get_target_folder( package, dir );
+    if (!install_path) return ERROR_FUNCTION_FAILED;
 
+    folder = get_loaded_folder( package, dir );
     if (folder->State == 0)
     {
         create_full_pathW( install_path );
         folder->State = 2;
     }
-    msi_free( install_path );
     return ERROR_SUCCESS;
 }
 
@@ -918,7 +917,7 @@ static WCHAR *get_duplicate_filename( MSIPACKAGE *package, MSIRECORD *row, const
     {
         const WCHAR *dst_key = MSI_RecordGetString( row, 5 );
 
-        dst_path = resolve_target_folder( package, dst_key, FALSE, TRUE, NULL );
+        dst_path = strdupW( msi_get_target_folder( package, dst_key ) );
         if (!dst_path)
         {
             /* try a property */
