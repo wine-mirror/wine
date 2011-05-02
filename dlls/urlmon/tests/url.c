@@ -198,6 +198,7 @@ static IBinding *current_binding;
 static HANDLE complete_event, complete_event2;
 static HRESULT binding_hres;
 static HRESULT onsecurityproblem_hres;
+static HRESULT abort_hres;
 static BOOL have_IHttpNegotiate2, use_bscex, is_async_prot;
 static BOOL test_redirect, use_cache_file, callback_read, no_callback, test_abort;
 static WCHAR cache_file_name[MAX_PATH];
@@ -1562,8 +1563,8 @@ static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallbackEx *iface, DWO
     ok(hres == E_NOINTERFACE, "Could not get IID_IWinInetHttpInfo: %08x\n", hres);
 
     if(abort_start) {
-        binding_hres = E_ABORT;
-        return E_ABORT;
+        binding_hres = abort_hres;
+        return abort_hres;
     }
 
     return S_OK;
@@ -2850,7 +2851,7 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         ok(hres == E_FAIL, "Got %08x\n", hres);
         CHECK_CALLED(OnStopBinding);
     } else if(abort_start)
-        ok(hres == E_ABORT, "IMoniker_BindToStorage failed: %08x, expected E_ABORT\n", hres);
+        ok(hres == abort_hres, "IMoniker_BindToStorage failed: %08x, expected %08x\n", hres, abort_hres);
     else if(abort_progress)
         ok(hres == MK_S_ASYNCHRONOUS, "IMoniker_BindToStorage failed: %08x\n", hres);
     else if(no_callback) {
@@ -3634,7 +3635,12 @@ START_TEST(url)
         trace("http test (short response, to object)...\n");
         test_BindToObject(HTTP_TEST, 0);
 
-        trace("http test (abort start binding)...\n");
+        trace("http test (abort start binding E_NOTIMPL)...\n");
+        abort_hres = E_NOTIMPL;
+        test_BindToStorage(HTTP_TEST, BINDTEST_ABORT_START, TYMED_FILE);
+
+        trace("http test (abort start binding E_ABORT)...\n");
+        abort_hres = E_ABORT;
         test_BindToStorage(HTTP_TEST, BINDTEST_ABORT_START, TYMED_FILE);
 
         trace("http test (abort progress)...\n");
