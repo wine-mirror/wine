@@ -145,7 +145,7 @@ static void be_i386_all_print_context(HANDLE hThread, const CONTEXT* ctx)
                (ctx->FloatSave.StatusWord & 0x00000200) >> 9,
                (ctx->FloatSave.StatusWord & 0x00000100) >> 8);
 
-    /* Now pull out hte 3 bit of the TOP stack pointer */
+    /* Now pull out the 3 bit of the TOP stack pointer */
     dbg_printf(" TOP:%01x", (unsigned int) (ctx->FloatSave.StatusWord & 0x00003800) >> 11);
 
     /* Lets analyse the error bits and indicate the status  
