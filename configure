@@ -15271,6 +15271,7 @@ wine_fn_config_dll msvcirt enable_msvcirt
 wine_fn_config_dll msvcp100 enable_msvcp100
 wine_fn_config_dll msvcp60 enable_msvcp60
 wine_fn_config_dll msvcp70 enable_msvcp70
+wine_fn_config_dll msvcp71 enable_msvcp71
 wine_fn_config_dll msvcp80 enable_msvcp80
 wine_fn_config_dll msvcp90 enable_msvcp90
 wine_fn_config_test dlls/msvcp90/tests msvcp90_test
