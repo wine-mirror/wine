@@ -151,6 +151,17 @@ static inline ACImpl *impl_from_IAudioClock2(IAudioClock2 *iface)
     return CONTAINING_RECORD(iface, ACImpl, IAudioClock2_iface);
 }
 
+BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
+{
+    if(reason == DLL_PROCESS_ATTACH){
+        g_timer_q = CreateTimerQueue();
+        if(!g_timer_q)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, void ***keys,
         UINT *num, UINT *def_index)
 {
@@ -267,12 +278,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(char *devnode, IMMDevice *dev,
     ACImpl *This;
 
     TRACE("%s %p %d %p\n", devnode, dev, dataflow, out);
-
-    if(!g_timer_q){
-        g_timer_q = CreateTimerQueue();
-        if(!g_timer_q)
-            return E_UNEXPECTED;
-    }
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ACImpl));
     if(!This)
