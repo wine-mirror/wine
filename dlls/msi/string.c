@@ -461,11 +461,6 @@ static void string_totalsize( const string_table *st, UINT *datasize, UINT *pool
     TRACE("data %u pool %u codepage %x\n", *datasize, *poolsize, st->codepage );
 }
 
-static const WCHAR szStringData[] = {
-    '_','S','t','r','i','n','g','D','a','t','a',0 };
-static const WCHAR szStringPool[] = {
-    '_','S','t','r','i','n','g','P','o','o','l',0 };
-
 HRESULT msi_init_string_table( IStorage *stg )
 {
     USHORT zero[2] = { 0, 0 };

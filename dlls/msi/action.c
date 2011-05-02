@@ -47,16 +47,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 /*
  * consts and values used
  */
-static const WCHAR c_colon[] = {'C',':','\\',0};
-
 static const WCHAR szCreateFolders[] =
     {'C','r','e','a','t','e','F','o','l','d','e','r','s',0};
 static const WCHAR szCostFinalize[] =
     {'C','o','s','t','F','i','n','a','l','i','z','e',0};
 static const WCHAR szWriteRegistryValues[] =
     {'W','r','i','t','e','R','e','g','i','s','t','r','y','V','a','l','u','e','s',0};
-static const WCHAR szCostInitialize[] =
-    {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
 static const WCHAR szFileCost[] = 
     {'F','i','l','e','C','o','s','t',0};
 static const WCHAR szInstallInitialize[] = 
@@ -362,7 +358,7 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
         TRACE("Found commandline property %s = %s\n", debugstr_w(prop), debugstr_w(val));
 
         r = msi_set_property( package->db, prop, val );
-        if (r == ERROR_SUCCESS && !strcmpW( prop, cszSourceDir ))
+        if (r == ERROR_SUCCESS && !strcmpW( prop, szSourceDir ))
             msi_reset_folders( package, TRUE );
 
         msi_free( val );
@@ -1217,18 +1213,18 @@ UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
         msi_free( db );
     }
 
-    check = msi_dup_property( package->db, cszSourceDir );
+    check = msi_dup_property( package->db, szSourceDir );
     if (!check || replace)
     {
-        UINT r = msi_set_property( package->db, cszSourceDir, source );
+        UINT r = msi_set_property( package->db, szSourceDir, source );
         if (r == ERROR_SUCCESS)
             msi_reset_folders( package, TRUE );
     }
     msi_free( check );
 
-    check = msi_dup_property( package->db, cszSOURCEDIR );
+    check = msi_dup_property( package->db, szSOURCEDIR );
     if (!check || replace)
-        msi_set_property( package->db, cszSOURCEDIR, source );
+        msi_set_property( package->db, szSOURCEDIR, source );
 
     msi_free( check );
     msi_free( source );
@@ -1364,7 +1360,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     {
         TRACE("Running the actions\n");
 
-        msi_set_property(package->db, cszSourceDir, NULL);
+        msi_set_property(package->db, szSourceDir, NULL);
 
         rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, package);
         msiobj_release(&view->hdr);
@@ -2158,7 +2154,7 @@ static UINT load_all_folders( MSIPACKAGE *package )
 static UINT ACTION_CostInitialize(MSIPACKAGE *package)
 {
     msi_set_property( package->db, szCostingComplete, szZero );
-    msi_set_property( package->db, cszRootDrive, c_colon );
+    msi_set_property( package->db, szRootDrive, szCRoot );
 
     load_all_folders( package );
     load_all_components( package );
@@ -2346,14 +2342,12 @@ static BOOL process_overrides( MSIPACKAGE *package, int level )
 UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 {
     int level;
-    static const WCHAR szlevel[] =
-        {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     MSICOMPONENT* component;
     MSIFEATURE *feature;
 
     TRACE("Checking Install Level\n");
 
-    level = msi_get_property_int(package->db, szlevel, 1);
+    level = msi_get_property_int(package->db, szInstallLevel, 1);
 
     if (!msi_get_property_int( package->db, szPreselected, 0 ))
     {
@@ -2811,11 +2805,11 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
 
     if (!(folder = get_loaded_folder( package, name ))) return;
 
-    if (!strcmpW( folder->Directory, cszTargetDir )) /* special resolving for target root dir */
+    if (!strcmpW( folder->Directory, szTargetDir )) /* special resolving for target root dir */
     {
-        if (!load_prop || !(path = msi_dup_property( package->db, cszTargetDir )))
+        if (!load_prop || !(path = msi_dup_property( package->db, szTargetDir )))
         {
-            path = msi_dup_property( package->db, cszRootDrive );
+            path = msi_dup_property( package->db, szRootDrive );
         }
     }
     else if (!load_prop || !(path = msi_dup_property( package->db, folder->Directory )))
@@ -2840,8 +2834,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 {
     static const WCHAR condition_query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','`','C','o','n','d','i','t','i','o','n','`',0};
-    static const WCHAR szlevel[] =
-        {'I','N','S','T','A','L','L','L','E','V','E','L',0};
     static const WCHAR szOutOfDiskSpace[] =
         {'O','u','t','O','f','D','i','s','k','S','p','a','c','e',0};
     MSICOMPONENT *comp;
@@ -2850,7 +2842,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     LPWSTR level;
 
     TRACE("Building directory properties\n");
-    msi_resolve_target_folder( package, cszTargetDir, TRUE );
+    msi_resolve_target_folder( package, szTargetDir, TRUE );
 
     TRACE("Evaluating component conditions\n");
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
@@ -2868,7 +2860,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     ACTION_GetComponentInstallStates(package);
     ACTION_GetFeatureInstallStates(package);
 
-    if (!process_overrides( package, msi_get_property_int( package->db, szlevel, 1 ) ))
+    if (!process_overrides( package, msi_get_property_int( package->db, szInstallLevel, 1 ) ))
     {
         TRACE("Evaluating feature conditions\n");
 
@@ -2885,9 +2877,9 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     msi_set_property( package->db, szCostingComplete, szOne );
     /* set default run level if not set */
-    level = msi_dup_property( package->db, szlevel );
+    level = msi_dup_property( package->db, szInstallLevel );
     if (!level)
-        msi_set_property( package->db, szlevel, szOne );
+        msi_set_property( package->db, szInstallLevel, szOne );
     msi_free(level);
 
     /* FIXME: check volume disk space */
@@ -4460,12 +4452,8 @@ static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
     DWORD size;
     UINT r;
 
-    static const WCHAR szProductLanguage[] =
-        {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
     static const WCHAR szARPProductIcon[] =
         {'A','R','P','P','R','O','D','U','C','T','I','C','O','N',0};
-    static const WCHAR szProductVersion[] =
-        {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
     static const WCHAR szAssignment[] =
         {'A','s','s','i','g','n','m','e','n','t',0};
     static const WCHAR szAdvertiseFlags[] =
@@ -5324,8 +5312,6 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
     const WCHAR *prop, *key;
 
     static const WCHAR date_fmt[] = {'%','i','%','0','2','i','%','0','2','i',0};
-    static const WCHAR szWindowsInstaller[] =
-        {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
     static const WCHAR modpath_fmt[] =
         {'M','s','i','E','x','e','c','.','e','x','e',' ',
          '/','I','[','P','r','o','d','u','c','t','C','o','d','e',']',0};
@@ -5335,10 +5321,6 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
         {'U','n','i','n','s','t','a','l','l','S','t','r','i','n','g',0};
     static const WCHAR szEstimatedSize[] =
         {'E','s','t','i','m','a','t','e','d','S','i','z','e',0};
-    static const WCHAR szProductLanguage[] =
-        {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
-    static const WCHAR szProductVersion[] =
-        {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
     static const WCHAR szDisplayVersion[] =
         {'D','i','s','p','l','a','y','V','e','r','s','i','o','n',0};
     static const WCHAR szInstallSource[] =
@@ -5400,7 +5382,7 @@ static UINT msi_publish_install_properties(MSIPACKAGE *package, HKEY hkey)
         szARPHELPLINK,            szHelpLink,
         szARPHELPTELEPHONE,       szHelpTelephone,
         szARPINSTALLLOCATION,     szInstallLocation,
-        cszSourceDir,             szInstallSource,
+        szSourceDir,              szInstallSource,
         szManufacturer,           szPublisher,
         szARPREADME,              szReadme,
         szARPSIZE,                szSize,

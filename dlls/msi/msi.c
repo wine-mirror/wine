@@ -685,7 +685,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
 
     static const WCHAR szInstalled[] = {
         ' ','I','n','s','t','a','l','l','e','d','=','1',0};
-    static const WCHAR szInstallLevel[] = {
+    static const WCHAR szMaxInstallLevel[] = {
         ' ','I','N','S','T','A','L','L','L','E','V','E','L','=','3','2','7','6','7',0};
     static const WCHAR szRemoveAll[] = {
         ' ','R','E','M','O','V','E','=','A','L','L',0};
@@ -719,7 +719,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
         sz += lstrlenW(szCommandLine);
 
     if (eInstallState != INSTALLSTATE_DEFAULT)
-        sz += lstrlenW(szInstallLevel);
+        sz += lstrlenW(szMaxInstallLevel);
 
     if (eInstallState == INSTALLSTATE_ABSENT)
         sz += lstrlenW(szRemoveAll);
@@ -739,7 +739,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
         lstrcpyW(commandline,szCommandLine);
 
     if (eInstallState != INSTALLSTATE_DEFAULT)
-        lstrcatW(commandline, szInstallLevel);
+        lstrcatW(commandline, szMaxInstallLevel);
 
     if (eInstallState == INSTALLSTATE_ABSENT)
         lstrcatW(commandline, szRemoveAll);
@@ -2097,9 +2097,6 @@ INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
     HKEY prodkey = 0, userdata = 0;
     DWORD val;
     UINT r;
-
-    static const WCHAR szWindowsInstaller[] = {
-        'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
 
     TRACE("%s\n", debugstr_w(szProduct));
 
@@ -3554,7 +3551,6 @@ end:
  */
 UINT WINAPI MsiConfigureFeatureW(LPCWSTR szProduct, LPCWSTR szFeature, INSTALLSTATE eInstallState)
 {
-    static const WCHAR szCostInit[] = { 'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0 };
     MSIPACKAGE *package = NULL;
     UINT r;
     WCHAR sourcepath[MAX_PATH], filename[MAX_PATH];
@@ -3596,7 +3592,7 @@ UINT WINAPI MsiConfigureFeatureW(LPCWSTR szProduct, LPCWSTR szFeature, INSTALLST
 
     MsiSetInternalUI( INSTALLUILEVEL_BASIC, NULL );
 
-    r = ACTION_PerformUIAction( package, szCostInit, -1 );
+    r = ACTION_PerformUIAction( package, szCostInitialize, -1 );
     if (r != ERROR_SUCCESS)
         goto end;
 

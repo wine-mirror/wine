@@ -1053,7 +1053,7 @@ static UINT iterate_appsearch(MSIRECORD *row, LPVOID param)
     if (value)
     {
         r = msi_set_property( package->db, propName, value );
-        if (r == ERROR_SUCCESS && !strcmpW( propName, cszSourceDir ))
+        if (r == ERROR_SUCCESS && !strcmpW( propName, szSourceDir ))
             msi_reset_folders( package, TRUE );
 
         msi_free(value);

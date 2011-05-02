@@ -585,7 +585,7 @@ static void msi_dialog_update_controls( msi_dialog *dialog, LPCWSTR property )
 static void msi_dialog_set_property( MSIPACKAGE *package, LPCWSTR property, LPCWSTR value )
 {
     UINT r = msi_set_property( package->db, property, value );
-    if (r == ERROR_SUCCESS && !strcmpW( property, cszSourceDir ))
+    if (r == ERROR_SUCCESS && !strcmpW( property, szSourceDir ))
         msi_reset_folders( package, TRUE );
 }
 

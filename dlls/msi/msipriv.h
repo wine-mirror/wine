@@ -1049,10 +1049,10 @@ extern void ui_progress(MSIPACKAGE *, int, int, int, int) DECLSPEC_HIDDEN;
 extern void ui_actiondata(MSIPACKAGE *, LPCWSTR, MSIRECORD *) DECLSPEC_HIDDEN;
 
 /* common strings */
-static const WCHAR cszSourceDir[] = {'S','o','u','r','c','e','D','i','r',0};
-static const WCHAR cszSOURCEDIR[] = {'S','O','U','R','C','E','D','I','R',0};
-static const WCHAR cszRootDrive[] = {'R','O','O','T','D','R','I','V','E',0};
-static const WCHAR cszTargetDir[] = {'T','A','R','G','E','T','D','I','R',0};
+static const WCHAR szSourceDir[] = {'S','o','u','r','c','e','D','i','r',0};
+static const WCHAR szSOURCEDIR[] = {'S','O','U','R','C','E','D','I','R',0};
+static const WCHAR szRootDrive[] = {'R','O','O','T','D','R','I','V','E',0};
+static const WCHAR szTargetDir[] = {'T','A','R','G','E','T','D','I','R',0};
 static const WCHAR szLocalSid[] = {'S','-','1','-','5','-','1','8',0};
 static const WCHAR szEmpty[] = {0};
 static const WCHAR szAll[] = {'A','L','L',0};
@@ -1130,6 +1130,16 @@ static const WCHAR szStreams[] = {'_','S','t','r','e','a','m','s',0};
 static const WCHAR szStorages[] = {'_','S','t','o','r','a','g','e','s',0};
 static const WCHAR szMsiPublishAssemblies[] = {'M','s','i','P','u','b','l','i','s','h','A','s','s','e','m','b','l','i','e','s',0};
 static const WCHAR szCostingComplete[] = {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0};
+static const WCHAR szTempFolder[] = {'T','e','m','p','F','o','l','d','e','r',0};
+static const WCHAR szDatabase[] = {'D','A','T','A','B','A','S','E',0};
+static const WCHAR szCRoot[] = {'C',':','\\',0};
+static const WCHAR szProductLanguage[] = {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
+static const WCHAR szProductVersion[] = {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
+static const WCHAR szWindowsInstaller[] = {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
+static const WCHAR szStringData[] = {'_','S','t','r','i','n','g','D','a','t','a',0};
+static const WCHAR szStringPool[] = {'_','S','t','r','i','n','g','P','o','o','l',0};
+static const WCHAR szInstallLevel[] = {'I','N','S','T','A','L','L','L','E','V','E','L',0};
+static const WCHAR szCostInitialize[] = {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);

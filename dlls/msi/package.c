@@ -690,9 +690,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szLocalAppDataFolder[] = {'L','o','c','a','l','A','p','p','D','a','t','a','F','o','l','d','e','r',0};
     static const WCHAR szMyPicturesFolder[] = {'M','y','P','i','c','t','u','r','e','s','F','o','l','d','e','r',0};
     static const WCHAR szPersonalFolder[] = {'P','e','r','s','o','n','a','l','F','o','l','d','e','r',0};
-    static const WCHAR szWindowsFolder[] = {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
     static const WCHAR szWindowsVolume[] = {'W','i','n','d','o','w','s','V','o','l','u','m','e',0};
-    static const WCHAR szTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
     static const WCHAR szPrivileged[] = {'P','r','i','v','i','l','e','g','e','d',0};
     static const WCHAR szVersion9x[] = {'V','e','r','s','i','o','n','9','X',0};
     static const WCHAR szVersionNT[] = {'V','e','r','s','i','o','n','N','T',0};
@@ -1137,7 +1135,6 @@ void msi_adjust_privilege_properties( MSIPACKAGE *package )
 
 MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
 {
-    static const WCHAR szLevel[] = { 'U','I','L','e','v','e','l',0 };
     static const WCHAR szpi[] = {'%','i',0};
     MSIPACKAGE *package;
     WCHAR uilevel[10];
@@ -1166,7 +1163,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         set_installer_properties( package );
 
         sprintfW(uilevel,szpi,gUILevel);
-        msi_set_property(package->db, szLevel, uilevel);
+        msi_set_property(package->db, szUILevel, uilevel);
 
         r = msi_load_summary_properties( package );
         if (r != ERROR_SUCCESS)
@@ -1448,7 +1445,6 @@ static UINT validate_package( MSIPACKAGE *package )
 
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
-    static const WCHAR Database[] = {'D','A','T','A','B','A','S','E',0};
     static const WCHAR dotmsi[] = {'.','m','s','i',0};
     MSIDATABASE *db = NULL;
     MSIPACKAGE *package;
@@ -1581,7 +1577,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         msiobj_release( &package->hdr );
         return r;
     }
-    msi_set_property( package->db, Database, db->path );
+    msi_set_property( package->db, szDatabase, db->path );
 
     if( UrlIsW( szPackage, URLIS_URL ) )
         msi_set_property( package->db, szOriginalDatabase, szPackage );
@@ -2091,7 +2087,7 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
     }
 
     ret = msi_set_property( package->db, szName, szValue );
-    if (ret == ERROR_SUCCESS && !strcmpW( szName, cszSourceDir ))
+    if (ret == ERROR_SUCCESS && !strcmpW( szName, szSourceDir ))
         msi_reset_folders( package, TRUE );
 
     msiobj_release( &package->hdr );

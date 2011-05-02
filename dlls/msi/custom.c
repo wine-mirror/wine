@@ -41,8 +41,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
 #define CUSTOM_ACTION_TYPE_MASK 0x3F
-static const WCHAR c_collen[] = {'C',':','\\',0};
-static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 
 typedef struct tagMSIRUNNINGACTION
 {
@@ -326,7 +324,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
 
             deformat_string(package,target,&deformated);
             rc = msi_set_property( package->db, source, deformated );
-            if (rc == ERROR_SUCCESS && !strcmpW( source, cszSourceDir ))
+            if (rc == ERROR_SUCCESS && !strcmpW( source, szSourceDir ))
                 msi_reset_folders( package, TRUE );
             msi_free(deformated);
             break;
@@ -375,7 +373,7 @@ static MSIBINARY *create_temp_binary( MSIPACKAGE *package, LPCWSTR source, BOOL 
     DWORD sz = MAX_PATH, write;
     UINT r;
 
-    if (msi_get_property(package->db, cszTempFolder, fmt, &sz) != ERROR_SUCCESS)
+    if (msi_get_property(package->db, szTempFolder, fmt, &sz) != ERROR_SUCCESS)
         GetTempPathW(MAX_PATH, fmt);
 
     if (!GetTempFileNameW( fmt, szMsi, 0, tmpfile ))
@@ -892,7 +890,7 @@ static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
     UINT r;
 
     size = MAX_PATH;
-    msi_get_property(package->db, cszSourceDir, package_path, &size);
+    msi_get_property(package->db, szSourceDir, package_path, &size);
     lstrcatW(package_path, szBackSlash);
     lstrcatW(package_path, source);
 
@@ -960,8 +958,7 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
 
     TRACE("executing exe %s\n", debugstr_w(cmd));
 
-    rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL,
-                  c_collen, &si, &info);
+    rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, szCRoot, &si, &info);
     msi_free(cmd);
 
     if ( !rc )
@@ -1037,8 +1034,7 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
 
     TRACE("executing exe %s\n", debugstr_w(cmd));
 
-    rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL,
-                  c_collen, &si, &info);
+    rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, szCRoot, &si, &info);
 
     if ( !rc )
     {
@@ -1121,8 +1117,7 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
 
     TRACE("executing exe %s\n", debugstr_w(cmd));
 
-    rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL,
-                  c_collen, &si, &info);
+    rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL, szCRoot, &si, &info);
 
     if ( !rc )
     {

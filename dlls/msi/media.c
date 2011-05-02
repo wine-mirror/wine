@@ -85,7 +85,7 @@ static UINT msi_change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
 
     error = generate_error_string(package, 1302, 1, mi->disk_prompt);
     error_dialog = msi_dup_property(package->db, error_prop);
-    source_dir = msi_dup_property(package->db, cszSourceDir);
+    source_dir = msi_dup_property(package->db, szSourceDir);
 
     while (r == ERROR_SUCCESS && !source_matches_volume(mi, source_dir))
     {
@@ -702,7 +702,7 @@ UINT msi_load_media_info(MSIPACKAGE *package, UINT Sequence, MSIMEDIAINFO *mi)
         mi->first_volume = strdupW(mi->volume_label);
 
     msi_set_sourcedir_props(package, FALSE);
-    source_dir = msi_dup_property(package->db, cszSourceDir);
+    source_dir = msi_dup_property(package->db, szSourceDir);
     lstrcpyW(mi->sourcedir, source_dir);
     mi->type = get_drive_type(source_dir);
 
@@ -869,7 +869,7 @@ UINT ready_media(MSIPACKAGE *package, UINT Sequence, BOOL IsCompressed, MSIMEDIA
     if (mi->volume_label && mi->disk_id > 1 &&
         strcmpW( mi->first_volume, mi->volume_label ))
     {
-        LPWSTR source = msi_dup_property(package->db, cszSourceDir);
+        LPWSTR source = msi_dup_property(package->db, szSourceDir);
         BOOL matches;
 
         matches = source_matches_volume(mi, source);

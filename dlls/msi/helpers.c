@@ -34,8 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-static const WCHAR cszDatabase[]={'D','A','T','A','B','A','S','E',0};
-
 LPWSTR build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name )
 {
     LPWSTR SystemFolder, dest, FilePath;
@@ -183,11 +181,11 @@ static LPWSTR get_source_root( MSIPACKAGE *package )
 {
     LPWSTR path, p;
 
-    path = msi_dup_property( package->db, cszSourceDir );
+    path = msi_dup_property( package->db, szSourceDir );
     if (path)
         return path;
 
-    path = msi_dup_property( package->db, cszDatabase );
+    path = msi_dup_property( package->db, szDatabase );
     if (path)
     {
         p = strrchrW(path,'\\');
@@ -229,15 +227,15 @@ LPWSTR resolve_source_folder( MSIPACKAGE *package, LPCWSTR name, MSIFOLDER **fol
 
     TRACE("working to resolve %s\n", debugstr_w(name));
 
-    if (!strcmpW( name, cszSourceDir ))
-        name = cszTargetDir;
+    if (!strcmpW( name, szSourceDir ))
+        name = szTargetDir;
 
     f = get_loaded_folder( package, name );
     if (!f)
         return NULL;
 
     /* special resolving for Target and Source root dir */
-    if (!strcmpW( name, cszTargetDir ))
+    if (!strcmpW( name, szTargetDir ))
     {
         if (!f->ResolvedSource)
             f->ResolvedSource = get_source_root( package );

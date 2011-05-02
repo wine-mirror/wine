@@ -89,7 +89,7 @@ static void append_productcode(MSIPACKAGE* package, LPCWSTR action_property,
     strcatW(newprop,productid);
 
     r = msi_set_property( package->db, action_property, newprop );
-    if (r == ERROR_SUCCESS && !strcmpW( action_property, cszSourceDir ))
+    if (r == ERROR_SUCCESS && !strcmpW( action_property, szSourceDir ))
         msi_reset_folders( package, TRUE );
 
     TRACE("Found Related Product... %s now %s\n",

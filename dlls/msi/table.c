@@ -82,11 +82,6 @@ struct tagMSITABLE
     WCHAR name[1];
 };
 
-static const WCHAR szStringData[] = {
-    '_','S','t','r','i','n','g','D','a','t','a',0 };
-static const WCHAR szStringPool[] = {
-    '_','S','t','r','i','n','g','P','o','o','l',0 };
-
 /* information for default tables */
 static WCHAR szTables[]  = { '_','T','a','b','l','e','s',0 };
 static WCHAR szTable[]  = { 'T','a','b','l','e',0 };
