@@ -72,7 +72,9 @@ interface IWineMsiRemotePackage : IUnknown
     HRESULT SetInstallLevel( [in] int level );
     HRESULT FormatRecord( [in] MSIHANDLE record, [out] BSTR *value );
     HRESULT EvaluateCondition( [in] BSTR condition );
-    HRESULT GetFeatureCost( [in] BSTR feature, [in] INT cost_tree, [in] INSTALLSTATE state, [out] INT *cost);
+    HRESULT GetFeatureCost( [in] BSTR feature, [in] INT cost_tree, [in] INSTALLSTATE state, [out] INT *cost );
+    HRESULT EnumComponentCosts( [in] BSTR component, [in] DWORD index, [in] INSTALLSTATE state,
+                                [out, size_is(*buflen)] BSTR drive, [in, out] DWORD *buflen, [out] INT *cost, [out] INT *temp );
 }
 
 [

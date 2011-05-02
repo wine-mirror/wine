@@ -2534,6 +2534,15 @@ static HRESULT WINAPI mrp_GetFeatureCost( IWineMsiRemotePackage *iface, BSTR fea
     return HRESULT_FROM_WIN32(r);
 }
 
+static HRESULT WINAPI mrp_EnumComponentCosts( IWineMsiRemotePackage *iface, BSTR component,
+                                              DWORD index, INSTALLSTATE state, BSTR drive,
+                                              DWORD *buflen, INT *cost, INT *temp )
+{
+    msi_remote_package_impl* This = impl_from_IWineMsiRemotePackage( iface );
+    UINT r = MsiEnumComponentCostsW(This->package, component, index, state, drive, buflen, cost, temp);
+    return HRESULT_FROM_WIN32(r);
+}
+
 static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
 {
     mrp_QueryInterface,
@@ -2560,6 +2569,7 @@ static const IWineMsiRemotePackageVtbl msi_remote_package_vtbl =
     mrp_FormatRecord,
     mrp_EvaluateCondition,
     mrp_GetFeatureCost,
+    mrp_EnumComponentCosts
 };
 
 HRESULT create_msi_remote_package( IUnknown *pOuter, LPVOID *ppObj )
