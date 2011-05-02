@@ -8520,7 +8520,7 @@ msgstr "打开(&O)...\tCtrl+O"
 msgid "&Save\tCtrl+S"
 msgstr "保存(&S)\tCtrl+S"
 
-#: notepad.rc:32 wordpad.rc:33
+#: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "打印(&P)...\tCtrl+P"
 
@@ -9195,12 +9195,9 @@ msgstr "导入注册表文件(&I)..."
 msgid "&Export Registry File..."
 msgstr "导出注册表文件(&E)..."
 
-#: regedit.rc:36
-msgid "&Print\tCtrl+P"
-msgstr "打印(&P)\tCtrl+P"
-
 #: regedit.rc:42 regedit.rc:87
-msgid "&Modify"
+#, fuzzy
+msgid "&Modify..."
 msgstr "修改(&M)"
 
 #: regedit.rc:46 regedit.rc:97
@@ -9236,9 +9233,9 @@ msgstr "改名(&R)\tF2"
 msgid "&Copy Key Name"
 msgstr "复制键名(&C)"
 
-#: regedit.rc:60 regedit.rc:112
-msgid "&Find\tCtrl+F"
-msgstr "查找(&F)\tCtrl+F"
+#: regedit.rc:60 regedit.rc:112 wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "查找(&F)...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -9266,7 +9263,8 @@ msgid "&About Registry Editor"
 msgstr "关于注册表编辑器(&A)"
 
 #: regedit.rc:88
-msgid "Modify Binary Data"
+#, fuzzy
+msgid "Modify Binary Data..."
 msgstr "修改二进制数据"
 
 #: regedit.rc:109
@@ -11013,10 +11011,6 @@ msgstr "删除(&D)\tDEL"
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
 msgstr "全选(&S)\tCtrl+A"
-
-#: wordpad.rc:50
-msgid "&Find...\tCtrl+F"
-msgstr "查找(&F)...\tCtrl+F"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"

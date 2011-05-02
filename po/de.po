@@ -8809,7 +8809,7 @@ msgstr "Ö&ffnen...\tStrg+O"
 msgid "&Save\tCtrl+S"
 msgstr "&Speichern\tStrg+S"
 
-#: notepad.rc:32 wordpad.rc:33
+#: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "&Drucken...\tStrg+P"
 
@@ -9476,12 +9476,9 @@ msgstr "Registry &importieren..."
 msgid "&Export Registry File..."
 msgstr "Registry &exportieren..."
 
-#: regedit.rc:36
-msgid "&Print\tCtrl+P"
-msgstr "&Drucken\tStrg+P"
-
 #: regedit.rc:42 regedit.rc:87
-msgid "&Modify"
+#, fuzzy
+msgid "&Modify..."
 msgstr "&Ändern"
 
 #: regedit.rc:46 regedit.rc:97
@@ -9517,9 +9514,9 @@ msgstr "&Umbenennen"
 msgid "&Copy Key Name"
 msgstr "Schlüsselnamen &kopieren"
 
-#: regedit.rc:60 regedit.rc:112
-msgid "&Find\tCtrl+F"
-msgstr "&Suchen\tStrg+F"
+#: regedit.rc:60 regedit.rc:112 wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "&Suchen...\tStrg+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -9547,7 +9544,8 @@ msgid "&About Registry Editor"
 msgstr "&Über Registry Editor"
 
 #: regedit.rc:88
-msgid "Modify Binary Data"
+#, fuzzy
+msgid "Modify Binary Data..."
 msgstr "Binäre Daten ändern"
 
 #: regedit.rc:109
@@ -11340,10 +11338,6 @@ msgstr "&Löschen\tEntf"
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
 msgstr "Alles &markieren\tStrg+A"
-
-#: wordpad.rc:50
-msgid "&Find...\tCtrl+F"
-msgstr "&Suchen...\tStrg+F"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"

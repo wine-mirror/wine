@@ -8944,7 +8944,7 @@ msgstr "&Odpri ...\tCtrl+O"
 msgid "&Save\tCtrl+S"
 msgstr "&Shrani\tCtrl+S"
 
-#: notepad.rc:32 wordpad.rc:33
+#: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "Na&tisni ...\tCtrl+P"
 
@@ -9672,12 +9672,9 @@ msgstr "&Uvozi registrsko datoteko ..."
 msgid "&Export Registry File..."
 msgstr "&Izvozi registrsko datoteko ..."
 
-#: regedit.rc:36
-msgid "&Print\tCtrl+P"
-msgstr "Na&tisni\tCtrl+P"
-
 #: regedit.rc:42 regedit.rc:87
-msgid "&Modify"
+#, fuzzy
+msgid "&Modify..."
 msgstr "&Spremeni"
 
 #: regedit.rc:46 regedit.rc:97
@@ -9713,9 +9710,9 @@ msgstr "Prei&menuj\tF2"
 msgid "&Copy Key Name"
 msgstr "&Kopiraj ime ključa"
 
-#: regedit.rc:60 regedit.rc:112
-msgid "&Find\tCtrl+F"
-msgstr "&Najdi\tCtrl+F"
+#: regedit.rc:60 regedit.rc:112 wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "Na&jdi ...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -9743,7 +9740,8 @@ msgid "&About Registry Editor"
 msgstr "&O Urejevalniku registra"
 
 #: regedit.rc:88
-msgid "Modify Binary Data"
+#, fuzzy
+msgid "Modify Binary Data..."
 msgstr "Spremeni binarno vrednost"
 
 #: regedit.rc:109
@@ -11516,10 +11514,6 @@ msgstr "Po&briši\tDEL"
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
 msgstr "Izberi &vse\tCtrl+A"
-
-#: wordpad.rc:50
-msgid "&Find...\tCtrl+F"
-msgstr "Na&jdi ...\tCtrl+F"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"

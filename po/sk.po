@@ -8427,7 +8427,7 @@ msgstr ""
 msgid "&Save\tCtrl+S"
 msgstr ""
 
-#: notepad.rc:32 wordpad.rc:33
+#: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr ""
 
@@ -9065,14 +9065,9 @@ msgstr ""
 msgid "&Export Registry File..."
 msgstr ""
 
-#: regedit.rc:36
-#, fuzzy
-msgid "&Print\tCtrl+P"
-msgstr "&Tlačiť"
-
 #: regedit.rc:42 regedit.rc:87
 #, fuzzy
-msgid "&Modify"
+msgid "&Modify..."
 msgstr "Modifikovaný"
 
 #: regedit.rc:46 regedit.rc:97
@@ -9108,8 +9103,8 @@ msgstr "&Rename"
 msgid "&Copy Key Name"
 msgstr ""
 
-#: regedit.rc:60 regedit.rc:112
-msgid "&Find\tCtrl+F"
+#: regedit.rc:60 regedit.rc:112 wordpad.rc:50
+msgid "&Find...\tCtrl+F"
 msgstr ""
 
 #: regedit.rc:61
@@ -9134,7 +9129,7 @@ msgid "&About Registry Editor"
 msgstr ""
 
 #: regedit.rc:88
-msgid "Modify Binary Data"
+msgid "Modify Binary Data..."
 msgstr ""
 
 #: regedit.rc:109
@@ -10832,10 +10827,6 @@ msgstr ""
 
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
-msgstr ""
-
-#: wordpad.rc:50
-msgid "&Find...\tCtrl+F"
 msgstr ""
 
 #: wordpad.rc:51

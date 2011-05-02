@@ -8225,7 +8225,7 @@ msgstr "ا&فتح...\tCtrl+O"
 msgid "&Save\tCtrl+S"
 msgstr "ا&حفظ\tCtrl+S"
 
-#: notepad.rc:32 wordpad.rc:33
+#: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "ا&طبع...\tCtrl+P"
 
@@ -8879,13 +8879,8 @@ msgstr ""
 msgid "&Export Registry File..."
 msgstr ""
 
-#: regedit.rc:36
-#, fuzzy
-msgid "&Print\tCtrl+P"
-msgstr "ا&طبع...\tCtrl+P"
-
 #: regedit.rc:42 regedit.rc:87
-msgid "&Modify"
+msgid "&Modify..."
 msgstr ""
 
 #: regedit.rc:46 regedit.rc:97
@@ -8920,9 +8915,9 @@ msgstr ""
 msgid "&Copy Key Name"
 msgstr ""
 
-#: regedit.rc:60 regedit.rc:112
+#: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 #, fuzzy
-msgid "&Find\tCtrl+F"
+msgid "&Find...\tCtrl+F"
 msgstr "ا&طبع...\tCtrl+P"
 
 #: regedit.rc:61
@@ -8946,7 +8941,7 @@ msgid "&About Registry Editor"
 msgstr ""
 
 #: regedit.rc:88
-msgid "Modify Binary Data"
+msgid "Modify Binary Data..."
 msgstr ""
 
 #: regedit.rc:109
@@ -10650,11 +10645,6 @@ msgstr ""
 #, fuzzy
 msgid "&Select all\tCtrl+A"
 msgstr "اختر ال&كل\tCtrl+A"
-
-#: wordpad.rc:50
-#, fuzzy
-msgid "&Find...\tCtrl+F"
-msgstr "ا&طبع...\tCtrl+P"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"

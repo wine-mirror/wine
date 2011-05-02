@@ -8243,7 +8243,7 @@ msgstr "&Drovî...\tCtrl+O"
 msgid "&Save\tCtrl+S"
 msgstr "&Schaper\tCtrl+S"
 
-#: notepad.rc:32 wordpad.rc:33
+#: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "&Rexhe...\tCtrl+P"
 
@@ -8891,14 +8891,10 @@ msgstr ""
 msgid "&Export Registry File..."
 msgstr ""
 
-#: regedit.rc:36
-#, fuzzy
-msgid "&Print\tCtrl+P"
-msgstr "&Rexhe...\tCtrl+P"
-
 #: regedit.rc:42 regedit.rc:87
-msgid "&Modify"
-msgstr ""
+#, fuzzy
+msgid "&Modify..."
+msgstr "&Copyî..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -8933,9 +8929,9 @@ msgstr "&Rename"
 msgid "&Copy Key Name"
 msgstr ""
 
-#: regedit.rc:60 regedit.rc:112
+#: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 #, fuzzy
-msgid "&Find\tCtrl+F"
+msgid "&Find...\tCtrl+F"
 msgstr "&Rexhe...\tCtrl+P"
 
 #: regedit.rc:61
@@ -8960,7 +8956,7 @@ msgid "&About Registry Editor"
 msgstr ""
 
 #: regedit.rc:88
-msgid "Modify Binary Data"
+msgid "Modify Binary Data..."
 msgstr ""
 
 #: regedit.rc:109
@@ -10671,11 +10667,6 @@ msgstr ""
 #, fuzzy
 msgid "&Select all\tCtrl+A"
 msgstr "&Tchwezi totafwait"
-
-#: wordpad.rc:50
-#, fuzzy
-msgid "&Find...\tCtrl+F"
-msgstr "&Rexhe...\tCtrl+P"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"

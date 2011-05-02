@@ -8570,7 +8570,7 @@ msgstr "&Öppna...\tCtrl+O"
 msgid "&Save\tCtrl+S"
 msgstr "&Spara\tCtrl+S"
 
-#: notepad.rc:32 wordpad.rc:33
+#: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "Skriv &ut...\tCtrl+P"
 
@@ -9226,12 +9226,9 @@ msgstr "&Importera Registerfil..."
 msgid "&Export Registry File..."
 msgstr "&Exportera Registerfil..."
 
-#: regedit.rc:36
-msgid "&Print\tCtrl+P"
-msgstr "Skriv &ut\tCtrl+P"
-
 #: regedit.rc:42 regedit.rc:87
-msgid "&Modify"
+#, fuzzy
+msgid "&Modify..."
 msgstr "&Ändra"
 
 #: regedit.rc:46 regedit.rc:97
@@ -9266,9 +9263,9 @@ msgstr "&Byt namn\tF2"
 msgid "&Copy Key Name"
 msgstr "&Kopiera Nyckelnamn"
 
-#: regedit.rc:60 regedit.rc:112
-msgid "&Find\tCtrl+F"
-msgstr "&Sök\tCtrl+F"
+#: regedit.rc:60 regedit.rc:112 wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "&Sök...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -9291,7 +9288,8 @@ msgid "&About Registry Editor"
 msgstr "&Om Registereditorn"
 
 #: regedit.rc:88
-msgid "Modify Binary Data"
+#, fuzzy
+msgid "Modify Binary Data..."
 msgstr "Ändra binärt data"
 
 #: regedit.rc:109
@@ -11061,10 +11059,6 @@ msgstr "Ta &bort\tDEL"
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
 msgstr "&Markera allt\tCtrl+A"
-
-#: wordpad.rc:50
-msgid "&Find...\tCtrl+F"
-msgstr "&Sök...\tCtrl+F"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"

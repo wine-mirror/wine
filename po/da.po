@@ -8827,7 +8827,7 @@ msgstr ""
 "#-#-#-#-#  da.po (Wine)  #-#-#-#-#\n"
 "&Gemme\tCtrl+S"
 
-#: notepad.rc:32 wordpad.rc:33
+#: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "&Udskriv...\tCtrl+P"
 
@@ -9521,12 +9521,9 @@ msgstr "&Importér registeringsfil..."
 msgid "&Export Registry File..."
 msgstr "&Eksportér registeringsfil..."
 
-#: regedit.rc:36
-msgid "&Print\tCtrl+P"
-msgstr "&Udskriv\tCtrl+P"
-
 #: regedit.rc:42 regedit.rc:87
-msgid "&Modify"
+#, fuzzy
+msgid "&Modify..."
 msgstr "&Ændre"
 
 #: regedit.rc:46 regedit.rc:97
@@ -9562,9 +9559,9 @@ msgstr "&Omdøb\tF2"
 msgid "&Copy Key Name"
 msgstr "&Kopier nøglenavn"
 
-#: regedit.rc:60 regedit.rc:112
-msgid "&Find\tCtrl+F"
-msgstr "&Find\tCtrl+F"
+#: regedit.rc:60 regedit.rc:112 wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "&Søg efter...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -9592,7 +9589,8 @@ msgid "&About Registry Editor"
 msgstr "&Om Registeringsdatabase editor"
 
 #: regedit.rc:88
-msgid "Modify Binary Data"
+#, fuzzy
+msgid "Modify Binary Data..."
 msgstr "Ændre binærdata"
 
 #: regedit.rc:109
@@ -11378,10 +11376,6 @@ msgstr "&Fjern\tDEL"
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
 msgstr "&Marker alt\tCtrl+A"
-
-#: wordpad.rc:50
-msgid "&Find...\tCtrl+F"
-msgstr "&Søg efter...\tCtrl+F"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"

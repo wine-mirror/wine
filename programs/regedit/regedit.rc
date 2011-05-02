@@ -33,13 +33,13 @@ BEGIN
         MENUITEM "&Import Registry File...",    ID_REGISTRY_IMPORTREGISTRYFILE
         MENUITEM "&Export Registry File...",    ID_REGISTRY_EXPORTREGISTRYFILE
         MENUITEM SEPARATOR
-        MENUITEM "&Print\tCtrl+P",              ID_REGISTRY_PRINT
+        MENUITEM "&Print...\tCtrl+P",           ID_REGISTRY_PRINT
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_REGISTRY_EXIT
     END
     POPUP "&Edit"
     BEGIN
-        MENUITEM "&Modify",                     ID_EDIT_MODIFY
+        MENUITEM "&Modify...",                  ID_EDIT_MODIFY
         MENUITEM SEPARATOR
         POPUP "&New"
         BEGIN
@@ -57,7 +57,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Find\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FIND, GRAYED
         MENUITEM "Find Ne&xt\tF3",              ID_EDIT_FINDNEXT, GRAYED
     END
     POPUP "&View"
@@ -84,8 +84,8 @@ IDR_POPUP_MENUS MENU
 BEGIN
   POPUP ""
   BEGIN
-	MENUITEM "&Modify",                     ID_EDIT_MODIFY
-	MENUITEM "Modify Binary Data",          ID_EDIT_MODIFY_BIN
+	MENUITEM "&Modify...",                  ID_EDIT_MODIFY
+	MENUITEM "Modify Binary Data...",       ID_EDIT_MODIFY_BIN
 	MENUITEM SEPARATOR
 	MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
 	MENUITEM "&Rename",                     ID_EDIT_RENAME
@@ -109,7 +109,7 @@ BEGIN
         MENUITEM "&Export...",                  ID_EDIT_EXPORT
         MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
-        MENUITEM "&Find\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FIND, GRAYED
   END
 END
 

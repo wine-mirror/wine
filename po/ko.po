@@ -8527,7 +8527,7 @@ msgstr "열기(&O)...\tCtrl+O"
 msgid "&Save\tCtrl+S"
 msgstr "저장(&S)\tCtrl+S"
 
-#: notepad.rc:32 wordpad.rc:33
+#: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "인쇄(&P)...\tCtrl+P"
 
@@ -9178,12 +9178,9 @@ msgstr "레지스트리 파일 가져오기(&I)..."
 msgid "&Export Registry File..."
 msgstr "레지스트리 파일 내보내기(&E)..."
 
-#: regedit.rc:36
-msgid "&Print\tCtrl+P"
-msgstr "인쇄(&P)\tCtrl+P"
-
 #: regedit.rc:42 regedit.rc:87
-msgid "&Modify"
+#, fuzzy
+msgid "&Modify..."
 msgstr "수정(&M)"
 
 #: regedit.rc:46 regedit.rc:97
@@ -9218,9 +9215,9 @@ msgstr "이름 바꾸기(&R)\tF2"
 msgid "&Copy Key Name"
 msgstr "키 이름 복사(&C)"
 
-#: regedit.rc:60 regedit.rc:112
-msgid "&Find\tCtrl+F"
-msgstr "찾기(&F)\tCtrl+F"
+#: regedit.rc:60 regedit.rc:112 wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "찾기(&F)...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -9243,7 +9240,8 @@ msgid "&About Registry Editor"
 msgstr "레지스트리 편집기 정보(&A)"
 
 #: regedit.rc:88
-msgid "Modify Binary Data"
+#, fuzzy
+msgid "Modify Binary Data..."
 msgstr "이진값 고치기"
 
 #: regedit.rc:109
@@ -11003,10 +11001,6 @@ msgstr "지우기(&C)\tDEL"
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
 msgstr "모두 선택(&S)\tCtrl+A"
-
-#: wordpad.rc:50
-msgid "&Find...\tCtrl+F"
-msgstr "찾기(&F)...\tCtrl+F"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"

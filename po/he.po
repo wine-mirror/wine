@@ -8655,7 +8655,7 @@ msgstr "&פתיחה...\tCtrl+O"
 msgid "&Save\tCtrl+S"
 msgstr "&שמירה\tCtrl+S"
 
-#: notepad.rc:32 wordpad.rc:33
+#: notepad.rc:32 regedit.rc:36 wordpad.rc:33
 msgid "&Print...\tCtrl+P"
 msgstr "ה&דפסה...\tCtrl+P"
 
@@ -9311,12 +9311,9 @@ msgstr "י&בוא קובץ לרישום המערכת..."
 msgid "&Export Registry File..."
 msgstr "י&צוא קובץ מרישום המערכת..."
 
-#: regedit.rc:36
-msgid "&Print\tCtrl+P"
-msgstr "ה&דפסה\tCtrlP"
-
 #: regedit.rc:42 regedit.rc:87
-msgid "&Modify"
+#, fuzzy
+msgid "&Modify..."
 msgstr "&שינוי"
 
 #: regedit.rc:46 regedit.rc:97
@@ -9352,9 +9349,9 @@ msgstr "שי&נוי שם\tF2"
 msgid "&Copy Key Name"
 msgstr "ה&עתקת שם המפתח"
 
-#: regedit.rc:60 regedit.rc:112
-msgid "&Find\tCtrl+F"
-msgstr "&חיפוש\tCtrlF"
+#: regedit.rc:60 regedit.rc:112 wordpad.rc:50
+msgid "&Find...\tCtrl+F"
+msgstr "&חיפוש...\tCtrl+F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -9377,7 +9374,8 @@ msgid "&About Registry Editor"
 msgstr "על &אודות עורך רישום המערכת"
 
 #: regedit.rc:88
-msgid "Modify Binary Data"
+#, fuzzy
+msgid "Modify Binary Data..."
 msgstr "שינוי נתונים בינריים"
 
 #: regedit.rc:109
@@ -11236,10 +11234,6 @@ msgstr "&ניקוי\tDEL"
 #: wordpad.rc:48
 msgid "&Select all\tCtrl+A"
 msgstr "בחי&רת הכול\tCtrl+A"
-
-#: wordpad.rc:50
-msgid "&Find...\tCtrl+F"
-msgstr "&חיפוש...\tCtrl+F"
 
 #: wordpad.rc:51
 msgid "Find &next\tF3"
