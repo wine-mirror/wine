@@ -2144,8 +2144,7 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
         DWORD *read, read_mode_t read_mode)
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
-    DWORD ret_read = 0;
-    int len;
+    int len = 0;
 
     size = min(size, netconn_stream->content_length-netconn_stream->content_read);
 
@@ -2153,13 +2152,12 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
         size = min(size, netconn_get_avail_data(stream, req));
 
     if(size) {
-        if(NETCON_recv(&req->netConnection, buf + ret_read, size,
-                read_mode == READMODE_SYNC ? MSG_WAITALL : 0, &len) == ERROR_SUCCESS)
-            ret_read = len;
+        if(NETCON_recv(&req->netConnection, buf, size, read_mode == READMODE_SYNC ? MSG_WAITALL : 0, &len) != ERROR_SUCCESS)
+            len = 0;
     }
 
-    netconn_stream->content_read += *read = ret_read;
-    TRACE("read %u bytes\n", ret_read);
+    netconn_stream->content_read += *read = len;
+    TRACE("read %u bytes\n", len);
     return ERROR_SUCCESS;
 }
 
