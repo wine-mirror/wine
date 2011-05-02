@@ -4630,6 +4630,38 @@ static void test_sioRoutingInterfaceQuery(void)
     closesocket(sock);
 }
 
+static void test_synchronous_WSAIoctl(void)
+{
+    HANDLE previous_port, io_port;
+    WSAOVERLAPPED overlapped, *olp;
+    SOCKET socket;
+    ULONG on;
+    ULONG_PTR key;
+    DWORD num_bytes;
+    BOOL ret;
+    int res;
+
+    previous_port = CreateIoCompletionPort( INVALID_HANDLE_VALUE, NULL, 0, 0 );
+    ok( previous_port != NULL, "failed to create completion port %u\n", GetLastError() );
+
+    socket = WSASocketW( AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED );
+    ok( socket != INVALID_SOCKET, "failed to create socket %d\n", WSAGetLastError() );
+
+    io_port = CreateIoCompletionPort( (HANDLE)socket, previous_port, 0, 0 );
+    ok( io_port != NULL, "failed to create completion port %u\n", GetLastError() );
+
+    on = 1;
+    memset( &overlapped, 0, sizeof(overlapped) );
+    res = WSAIoctl( socket, FIONBIO, &on, sizeof(on), NULL, 0, &num_bytes, &overlapped, NULL );
+    ok( !res, "WSAIoctl failed %d\n", WSAGetLastError() );
+
+    ret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 10000 );
+    ok( ret, "failed to get completion status %u\n", GetLastError() );
+
+    CloseHandle( io_port );
+    closesocket( socket );
+    CloseHandle( previous_port );
+}
 
 /**************** Main program  ***************/
 
@@ -4693,6 +4725,7 @@ START_TEST( sock )
 
     /* this is a io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
+    test_synchronous_WSAIoctl();
 
     Exit();
 }
