@@ -146,10 +146,10 @@ static const test_data_t test_data[] = {
         TESTF_COMPRESSED|TESTF_ALLOW_COOKIE
     },
     {
-        "http://crossover.codeweavers.com/posttest.php",
-        "http://crossover.codeweavers.com/posttest.php",
-        "crossover.codeweavers.com",
-        "/posttest.php",
+        "http://test.winehq.org/tests/post.php",
+        "http://test.winehq.org/tests/post.php",
+        "test.winehq.org",
+        "/tests/post.php",
         "Content-Type: application/x-www-form-urlencoded",
         0,
         "mode=Test",
