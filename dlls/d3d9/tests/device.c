@@ -1229,6 +1229,7 @@ cleanup:
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
     if (pD3d) IDirect3D9_Release(pD3d);
+    if (hwnd) DestroyWindow(hwnd);
 }
 
 /* Test adapter display modes */
