@@ -649,9 +649,9 @@ INT WINAPI FindMRUStringA (HANDLE hList, LPCSTR lpszString, LPINT lpRegNum)
 }
 
 /*************************************************************************
- *                 CreateMRUListLazy_common (internal)
+ *                 create_mru_list (internal)
  */
-static HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
+static HANDLE create_mru_list(LPWINEMRULIST mp)
 {
     UINT i, err;
     HKEY newkey;
@@ -737,24 +737,22 @@ static HANDLE CreateMRUListLazy_common(LPWINEMRULIST mp)
  *
  * See CreateMRUListLazyA.
  */
-HANDLE WINAPI CreateMRUListLazyW (const MRUINFOW *lpcml, DWORD dwParam2,
+HANDLE WINAPI CreateMRUListLazyW (const MRUINFOW *infoW, DWORD dwParam2,
                                   DWORD dwParam3, DWORD dwParam4)
 {
     LPWINEMRULIST mp;
 
     /* Native does not check for a NULL lpcml */
-
-    if (lpcml->cbSize != sizeof(MRUINFOW) || !lpcml->hKey ||
-        IsBadStringPtrW(lpcml->lpszSubKey, -1))
+    if (!infoW->hKey || IsBadStringPtrW(infoW->lpszSubKey, -1))
 	return NULL;
 
     mp = Alloc(sizeof(WINEMRULIST));
-    memcpy(&mp->extview, lpcml, sizeof(MRUINFOW));
-    mp->extview.lpszSubKey = Alloc((strlenW(lpcml->lpszSubKey) + 1) * sizeof(WCHAR));
-    strcpyW(mp->extview.lpszSubKey, lpcml->lpszSubKey);
+    memcpy(&mp->extview, infoW, sizeof(MRUINFOW));
+    mp->extview.lpszSubKey = Alloc((strlenW(infoW->lpszSubKey) + 1) * sizeof(WCHAR));
+    strcpyW(mp->extview.lpszSubKey, infoW->lpszSubKey);
     mp->isUnicode = TRUE;
 
-    return CreateMRUListLazy_common(mp);
+    return create_mru_list(mp);
 }
 
 /**************************************************************************
@@ -790,7 +788,7 @@ HANDLE WINAPI CreateMRUListLazyA (const MRUINFOA *lpcml, DWORD dwParam2,
     MultiByteToWideChar(CP_ACP, 0, lpcml->lpszSubKey, -1,
 			mp->extview.lpszSubKey, len);
     mp->isUnicode = FALSE;
-    return CreateMRUListLazy_common(mp);
+    return create_mru_list(mp);
 }
 
 /**************************************************************************
@@ -798,9 +796,9 @@ HANDLE WINAPI CreateMRUListLazyA (const MRUINFOA *lpcml, DWORD dwParam2,
  *
  * See CreateMRUListA.
  */
-HANDLE WINAPI CreateMRUListW (const MRUINFOW *lpcml)
+HANDLE WINAPI CreateMRUListW (const MRUINFOW *infoW)
 {
-    return CreateMRUListLazyW(lpcml, 0, 0, 0);
+    return CreateMRUListLazyW(infoW, 0, 0, 0);
 }
 
 /**************************************************************************

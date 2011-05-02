@@ -573,7 +573,7 @@ static void test_CreateMRUListW(void)
     infoW.lpfnCompare = NULL;
 
     hMru = pCreateMRUListW(&infoW);
-    todo_wine ok(hMru != NULL, "got %p\n", hMru);
+    ok(hMru != NULL, "got %p\n", hMru);
     pFreeMRUList(hMru);
 
     /* increased size */
@@ -585,7 +585,7 @@ static void test_CreateMRUListW(void)
     infoW.lpfnCompare = NULL;
 
     hMru = pCreateMRUListW(&infoW);
-    todo_wine ok(hMru != NULL, "got %p\n", hMru);
+    ok(hMru != NULL, "got %p\n", hMru);
     pFreeMRUList(hMru);
 
     /* zero size */
@@ -597,7 +597,7 @@ static void test_CreateMRUListW(void)
     infoW.lpfnCompare = NULL;
 
     hMru = pCreateMRUListW(&infoW);
-    todo_wine ok(hMru != NULL, "got %p\n", hMru);
+    ok(hMru != NULL, "got %p\n", hMru);
     pFreeMRUList(hMru);
 
     /* NULL hKey */
@@ -655,7 +655,7 @@ static void test_CreateMRUListLazyW(void)
     infoW.lpfnCompare = NULL;
 
     hMru = pCreateMRUListLazyW(&infoW, 0, 0, 0);
-    todo_wine ok(hMru != NULL, "got %p\n", hMru);
+    ok(hMru != NULL, "got %p\n", hMru);
     pFreeMRUList(hMru);
 
     /* increased size */
@@ -667,7 +667,7 @@ static void test_CreateMRUListLazyW(void)
     infoW.lpfnCompare = NULL;
 
     hMru = pCreateMRUListLazyW(&infoW, 0, 0, 0);
-    todo_wine ok(hMru != NULL, "got %p\n", hMru);
+    ok(hMru != NULL, "got %p\n", hMru);
     pFreeMRUList(hMru);
 
     /* zero size */
@@ -679,7 +679,7 @@ static void test_CreateMRUListLazyW(void)
     infoW.lpfnCompare = NULL;
 
     hMru = pCreateMRUListLazyW(&infoW, 0, 0, 0);
-    todo_wine ok(hMru != NULL, "got %p\n", hMru);
+    ok(hMru != NULL, "got %p\n", hMru);
     pFreeMRUList(hMru);
 
     /* NULL hKey */
