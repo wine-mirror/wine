@@ -55,16 +55,10 @@
 #ifdef HAVE_SYS_POLL_H
 # include <sys/poll.h>
 #endif
-#if defined(HAVE_SYS_SOUNDCARD_H)
-# include <sys/soundcard.h>
-#elif defined(HAVE_MACHINE_SOUNDCARD_H)
-# include <machine/soundcard.h>
-#elif defined(HAVE_SOUNDCARD_H)
-# include <soundcard.h>
-#endif
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
 #endif
+#include <sys/soundcard.h>
 
 #include "windef.h"
 #include "winbase.h"

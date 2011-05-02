@@ -73,8 +73,7 @@ AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(openssl,   AS_HELP_STRING([--without-openssl],[do not use OpenSSL]),
             [if test "x$withval" = "xno"; then ac_cv_header_openssl_err_h=no; ac_cv_header_openssl_ssl_h=no; fi])
-AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound support]),
-            [if test "x$withval" = "xno"; then ac_cv_header_soundcard_h=no; ac_cv_header_sys_soundcard_h=no; ac_cv_header_machine_soundcard_h=no; fi])
+AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound support]))
 AC_ARG_WITH(png,       AS_HELP_STRING([--without-png],[do not use PNG]),
             [if test "x$withval" = "xno"; then ac_cv_header_png_h=no; fi])
 AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]),
@@ -433,7 +432,6 @@ AC_CHECK_HEADERS(\
 	mach/machine.h \
 	machine/cpu.h \
 	machine/limits.h \
-	machine/soundcard.h \
 	machine/sysarch.h \
 	mntent.h \
 	mpg123.h \
@@ -456,7 +454,6 @@ AC_CHECK_HEADERS(\
 	scsi/scsi.h \
 	scsi/scsi_ioctl.h \
 	scsi/sg.h \
-	soundcard.h \
 	stdbool.h \
 	stdint.h \
 	strings.h \
@@ -491,7 +488,6 @@ AC_CHECK_HEADERS(\
 	sys/socket.h \
 	sys/socketvar.h \
 	sys/sockio.h \
-	sys/soundcard.h \
 	sys/statvfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
@@ -1525,18 +1521,21 @@ then
 fi
 
 dnl **** Check for OSSv4 ****
-if test "$ac_cv_header_sys_soundcard_h" = "yes" -o \
-        "$ac_cv_header_machine_soundcard_h" = "yes" -o \
-        "$ac_cv_header_soundcard_h" = "yes"
+if test "x$with_oss" != xno
 then
-    AC_CHECK_TYPES([oss_sysinfo],,,[#if defined(HAVE_SYS_SOUNDCARD_H)
-#include <sys/soundcard.h>
-#elif defined(HAVE_MACHINE_SOUNDCARD_H)
-#include <machine/soundcard.h>
-#elif defined(HAVE_SOUNDCARD_H)
-#include <soundcard.h>
-#endif])
-    if test "x$ac_cv_type_oss_sysinfo" != xyes
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    if test -f /etc/oss.conf
+    then
+        . /etc/oss.conf
+    fi
+    ac_oss_incl="-I${OSSLIBDIR:-/usr/lib/oss}/include"
+    CPPFLAGS="$CPPFLAGS $ac_oss_incl"
+    AC_CHECK_HEADER([sys/soundcard.h],
+        [AC_CHECK_MEMBERS([oss_sysinfo.numaudioengines],
+                          [AC_SUBST(OSS4INCL,"$ac_oss_incl")],,
+                          [#include <sys/soundcard.h>])])
+    CPPFLAGS="$ac_save_CPPFLAGS"
+    if test "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes
     then
         WINE_NOTICE([OSS sound system found but too old (OSSv4 needed), OSS won't be supported.])
     fi
@@ -1691,12 +1690,12 @@ test -n "$COREAUDIO" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 test -n "$NASLIBS" || enable_winenas_drv=${enable_winenas_drv:-no}
 test -n "$ESDLIBS" || enable_wineesd_drv=${enable_wineesd_drv:-no}
 test -n "$ac_cv_lib_soname_jack" || enable_winejack_drv=${enable_winejack_drv:-no}
-test "x$ac_cv_type_oss_sysinfo" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
+test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 dnl **** Check for any sound system ****
 if test "x$ALSALIBS$COREAUDIO$NASLIBS$ESDLIBS$ac_cv_lib_soname_jack" = "x" -a \
-        "x$ac_cv_type_oss_sysinfo" != xyes -a \
+        "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
         "x$with_alsa$with_coreaudio$with_nas$with_esd$with_jack$with_oss" != xnononononono
 then
     WINE_WARNING([No sound system was found. Windows applications will be silent.])

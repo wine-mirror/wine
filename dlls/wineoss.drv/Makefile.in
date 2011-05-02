@@ -1,5 +1,6 @@
 MODULE    = wineoss.drv
 IMPORTS   = dxguid uuid winmm ole32 user32
+EXTRAINCL = @OSS4INCL@
 
 C_SRCS = \
 	audio.c \

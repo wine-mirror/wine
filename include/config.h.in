@@ -461,9 +461,6 @@
 /* Define to 1 if you have the <machine/limits.h> header file. */
 #undef HAVE_MACHINE_LIMITS_H
 
-/* Define to 1 if you have the <machine/soundcard.h> header file. */
-#undef HAVE_MACHINE_SOUNDCARD_H
-
 /* Define to 1 if you have the <machine/sysarch.h> header file. */
 #undef HAVE_MACHINE_SYSARCH_H
 
@@ -599,8 +596,8 @@
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #undef HAVE_OPENSSL_SSL_H
 
-/* Define to 1 if the system has the type `oss_sysinfo'. */
-#undef HAVE_OSS_SYSINFO
+/* Define to 1 if `numaudioengines' is a member of `oss_sysinfo'. */
+#undef HAVE_OSS_SYSINFO_NUMAUDIOENGINES
 
 /* Define to 1 if you have the `pclose' function. */
 #undef HAVE_PCLOSE
@@ -754,9 +751,6 @@
 
 /* Define to 1 if you have the `socketpair' function. */
 #undef HAVE_SOCKETPAIR
-
-/* Define to 1 if you have the <soundcard.h> header file. */
-#undef HAVE_SOUNDCARD_H
 
 /* Define to 1 if you have the `spawnvp' function. */
 #undef HAVE_SPAWNVP
@@ -976,9 +970,6 @@
 
 /* Define to 1 if you have the <sys/sockio.h> header file. */
 #undef HAVE_SYS_SOCKIO_H
-
-/* Define to 1 if you have the <sys/soundcard.h> header file. */
-#undef HAVE_SYS_SOUNDCARD_H
 
 /* Define to 1 if you have the <sys/statfs.h> header file. */
 #undef HAVE_SYS_STATFS_H

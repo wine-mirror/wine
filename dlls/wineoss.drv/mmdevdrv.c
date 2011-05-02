@@ -21,6 +21,18 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <math.h>
+#include <sys/soundcard.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -40,26 +52,6 @@
 #include "initguid.h"
 #include "audiopolicy.h"
 #include "audioclient.h"
-
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <math.h>
-
-#if defined(HAVE_SYS_SOUNDCARD_H)
-# include <sys/soundcard.h>
-#elif defined(HAVE_MACHINE_SOUNDCARD_H)
-# include <machine/soundcard.h>
-#elif defined(HAVE_SOUNDCARD_H)
-# include <soundcard.h>
-#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(oss);
 
