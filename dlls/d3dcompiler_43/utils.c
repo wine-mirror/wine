@@ -520,7 +520,7 @@ void skip_dword_unknown(const char **ptr, unsigned int count)
     }
 }
 
-void write_dword_unknown(char **ptr, DWORD d)
+static void write_dword_unknown(char **ptr, DWORD d)
 {
     FIXME("Writing unknown DWORD 0x%08x\n", d);
     write_dword(ptr, d);
