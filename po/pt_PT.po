@@ -6300,7 +6300,7 @@ msgstr "&Imprimir"
 msgid "Anchor"
 msgstr "Âncora"
 
-#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
 #, fuzzy
 msgid "&Open"
 msgstr ""
@@ -6491,7 +6491,7 @@ msgstr "&Novo"
 msgid "&Window"
 msgstr "&Janela"
 
-#: shdocvw.rc:31
+#: shdocvw.rc:31 view.rc:30
 #, fuzzy
 msgid "&Open..."
 msgstr ""

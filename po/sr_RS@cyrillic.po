@@ -6303,7 +6303,7 @@ msgstr "&Штампај"
 msgid "Anchor"
 msgstr "Везник"
 
-#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
 msgid "&Open"
 msgstr "&Отвори"
 
@@ -6489,7 +6489,7 @@ msgstr "&Ново"
 msgid "&Window"
 msgstr "&Прозор"
 
-#: shdocvw.rc:31
+#: shdocvw.rc:31 view.rc:30
 msgid "&Open..."
 msgstr "&Отвори..."
 

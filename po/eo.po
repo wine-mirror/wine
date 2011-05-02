@@ -6144,7 +6144,7 @@ msgstr "&Presu"
 msgid "Anchor"
 msgstr ""
 
-#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
 #, fuzzy
 msgid "&Open"
 msgstr ""
@@ -6341,7 +6341,7 @@ msgstr ""
 msgid "&Window"
 msgstr "&Aløustigu la fenestron"
 
-#: shdocvw.rc:31
+#: shdocvw.rc:31 view.rc:30
 #, fuzzy
 msgid "&Open..."
 msgstr "&Malfermu"

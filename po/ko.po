@@ -6035,7 +6035,7 @@ msgstr "인쇄(&P)"
 msgid "Anchor"
 msgstr "닻"
 
-#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
 msgid "&Open"
 msgstr "열기(&O)"
 
@@ -6221,7 +6221,7 @@ msgstr "새로 만들기(&N)"
 msgid "&Window"
 msgstr "창(&W)"
 
-#: shdocvw.rc:31
+#: shdocvw.rc:31 view.rc:30
 msgid "&Open..."
 msgstr "열기(&O)..."
 

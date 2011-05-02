@@ -27,7 +27,7 @@ VIEW MENU
 BEGIN
     POPUP "&File"
     BEGIN
-	MENUITEM "&Open",			IDM_OPEN
+	MENUITEM "&Open...",			IDM_OPEN
         MENUITEM "E&xit",                       IDM_EXIT
     END
     POPUP "&Pan"

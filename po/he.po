@@ -6254,7 +6254,7 @@ msgstr "הדפ&סה"
 msgid "Anchor"
 msgstr "Anchor"
 
-#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
 msgid "&Open"
 msgstr "&פתיחה"
 
@@ -6440,7 +6440,7 @@ msgstr "חד&ש"
 msgid "&Window"
 msgstr "&חלון"
 
-#: shdocvw.rc:31
+#: shdocvw.rc:31 view.rc:30
 msgid "&Open..."
 msgstr "&פתיחה..."
 

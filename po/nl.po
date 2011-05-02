@@ -6150,7 +6150,7 @@ msgstr "Af&drukken"
 msgid "Anchor"
 msgstr "Anker"
 
-#: shdoclc.rc:128 shell32.rc:84 view.rc:30 winhlp32.rc:29
+#: shdoclc.rc:128 shell32.rc:84 winhlp32.rc:29
 msgid "&Open"
 msgstr "&Openen"
 
@@ -6336,7 +6336,7 @@ msgstr "&Nieuw"
 msgid "&Window"
 msgstr "&Venster"
 
-#: shdocvw.rc:31
+#: shdocvw.rc:31 view.rc:30
 msgid "&Open..."
 msgstr "&Openen..."
 
