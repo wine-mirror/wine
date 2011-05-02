@@ -640,8 +640,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     int mask;
     HRESULT hr;
 
-    TRACE("(%p)->(%x, %x, %llu, %llu, %p, %s)\n", This, mode, flags,
-            duration, period, fmt, debugstr_guid(sessionguid));
+    TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,
+          wine_dbgstr_longlong(duration), wine_dbgstr_longlong(period), fmt, debugstr_guid(sessionguid));
 
     if(!fmt)
         return E_POINTER;
