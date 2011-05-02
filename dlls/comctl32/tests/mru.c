@@ -37,26 +37,26 @@
 #define REG_TEST_SUBKEYA "MRUTest"
 #define REG_TEST_FULLKEY REG_TEST_KEYA "\\" REG_TEST_SUBKEYA
 
-/* Undocumented MRU structures & functions */
-typedef struct tagCREATEMRULISTA
+/* Undocumented MRU functions */
+typedef struct tagMRUINFOA
 {
     DWORD   cbSize;
-    DWORD   nMaxItems;
-    DWORD   dwFlags;
+    UINT    uMax;
+    UINT    fFlags;
     HKEY    hKey;
     LPCSTR  lpszSubKey;
     PROC    lpfnCompare;
-} CREATEMRULISTA, *LPCREATEMRULISTA;
+} MRUINFOA;
 
-#define MRUF_STRING_LIST  0
-#define MRUF_BINARY_LIST  1
-#define MRUF_DELAYED_SAVE 2
+#define MRU_STRING     0  /* this one's invented */
+#define MRU_BINARY     1
+#define MRU_CACHEWRITE 2
 
 #define LIST_SIZE 3 /* Max entries for each mru */
 
-static CREATEMRULISTA mruA =
+static MRUINFOA mruA =
 {
-    sizeof(CREATEMRULISTA),
+    sizeof(MRUINFOA),
     LIST_SIZE,
     0,
     NULL,
@@ -65,12 +65,12 @@ static CREATEMRULISTA mruA =
 };
 
 static HMODULE hComctl32;
-static HANDLE (WINAPI *pCreateMRUListA)(LPCREATEMRULISTA);
+static HANDLE (WINAPI *pCreateMRUListA)(MRUINFOA*);
 static void   (WINAPI *pFreeMRUList)(HANDLE);
 static INT    (WINAPI *pAddMRUStringA)(HANDLE,LPCSTR);
 static INT    (WINAPI *pEnumMRUList)(HANDLE,INT,LPVOID,DWORD);
 static INT    (WINAPI *pEnumMRUListW)(HANDLE,INT,LPVOID,DWORD);
-static HANDLE (WINAPI *pCreateMRUListLazyA)(LPCREATEMRULISTA, DWORD, DWORD, DWORD);
+static HANDLE (WINAPI *pCreateMRUListLazyA)(MRUINFOA*, DWORD, DWORD, DWORD);
 static INT    (WINAPI *pFindMRUData)(HANDLE, LPCVOID, DWORD, LPINT);
 static INT    (WINAPI *pAddMRUData)(HANDLE, LPCVOID, DWORD);
 /*
@@ -226,9 +226,9 @@ static INT CALLBACK cmp_mru_strA(LPCVOID data1, LPCVOID data2)
     return lstrcmpiA(data1, data2);
 }
 
-static HANDLE create_mruA(HKEY hKey, DWORD flags, PROC cmp)
+static HANDLE create_mruA(HKEY hKey, UINT flags, PROC cmp)
 {
-    mruA.dwFlags = flags;
+    mruA.fFlags = flags;
     mruA.lpfnCompare = cmp;
     mruA.hKey = hKey;
 
@@ -257,7 +257,7 @@ static void test_MRUListA(void)
 
     /* Create (size too small) */
     mruA.cbSize = sizeof(mruA) - 2;
-    hMRU = create_mruA(NULL, MRUF_STRING_LIST, (PROC)cmp_mru_strA);
+    hMRU = create_mruA(NULL, MRU_STRING, (PROC)cmp_mru_strA);
     ok (!hMRU && !GetLastError(),
         "CreateMRUListA(too small) expected NULL,0 got %p,%d\n",
         hMRU, GetLastError());
@@ -265,21 +265,21 @@ static void test_MRUListA(void)
 
     /* Create (size too big) */
     mruA.cbSize = sizeof(mruA) + 2;
-    hMRU = create_mruA(NULL, MRUF_STRING_LIST, (PROC)cmp_mru_strA);
+    hMRU = create_mruA(NULL, MRU_STRING, (PROC)cmp_mru_strA);
     ok (!hMRU && !GetLastError(),
         "CreateMRUListA(too big) expected NULL,0 got %p,%d\n",
         hMRU, GetLastError());
     mruA.cbSize = sizeof(mruA);
 
     /* Create (NULL hKey) */
-    hMRU = create_mruA(NULL, MRUF_STRING_LIST, (PROC)cmp_mru_strA);
+    hMRU = create_mruA(NULL, MRU_STRING, (PROC)cmp_mru_strA);
     ok (!hMRU && !GetLastError(),
         "CreateMRUListA(NULL key) expected NULL,0 got %p,%d\n",
         hMRU, GetLastError());
 
     /* Create (NULL name) */
     mruA.lpszSubKey = NULL;
-    hMRU = create_mruA(NULL, MRUF_STRING_LIST, (PROC)cmp_mru_strA);
+    hMRU = create_mruA(NULL, MRU_STRING, (PROC)cmp_mru_strA);
     ok (!hMRU && !GetLastError(),
         "CreateMRUListA(NULL name) expected NULL,0 got %p,%d\n",
         hMRU, GetLastError());
@@ -290,7 +290,7 @@ static void test_MRUListA(void)
        "Couldn't create test key \"%s\"\n", REG_TEST_KEYA);
     if (!hKey)
         return;
-    hMRU = create_mruA(hKey, MRUF_STRING_LIST, (PROC)cmp_mru_strA);
+    hMRU = create_mruA(hKey, MRU_STRING, (PROC)cmp_mru_strA);
     ok(hMRU && !GetLastError(),
        "CreateMRUListA(string) expected non-NULL,0 got %p,%d\n",
        hMRU, GetLastError());
@@ -428,7 +428,7 @@ static void test_CreateMRUListLazyA(void)
 {
     HANDLE hMRU;
     HKEY hKey;
-    CREATEMRULISTA listA = { 0 };
+    MRUINFOA listA = { 0 };
 
     if (!pCreateMRUListLazyA || !pFreeMRUList)
     {
