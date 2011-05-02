@@ -10764,7 +10764,8 @@ msgid "Re&name..."
 msgstr "名前の変更(&N)..."
 
 #: winefile.rc:31
-msgid "Propert&ies...\tAlt+Enter"
+#, fuzzy
+msgid "Propert&ies\tAlt+Enter"
 msgstr "プロパティ(&I)...\tAlt+Enter"
 
 #: winefile.rc:33
@@ -10784,7 +10785,8 @@ msgid "&Disk"
 msgstr "ディスク(&D)"
 
 #: winefile.rc:45
-msgid "Connect &Network Drive"
+#, fuzzy
+msgid "Connect &Network Drive..."
 msgstr "ネットワークドライブに接続(&N)"
 
 #: winefile.rc:46
@@ -10816,7 +10818,8 @@ msgid "Sort by &Date"
 msgstr "日付で並べ替え(&D)"
 
 #: winefile.rc:60
-msgid "Filter by &..."
+#, fuzzy
+msgid "Filter by&..."
 msgstr "Filter by &..."
 
 #: winefile.rc:67

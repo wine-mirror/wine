@@ -10526,8 +10526,13 @@ msgid "Re&name..."
 msgstr "&Skomentovať..."
 
 #: winefile.rc:31
-msgid "Propert&ies...\tAlt+Enter"
+#, fuzzy
+msgid "Propert&ies\tAlt+Enter"
 msgstr ""
+"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
+"&Vlastnosti\n"
+"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
+"&Properties"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -10546,7 +10551,7 @@ msgid "&Disk"
 msgstr ""
 
 #: winefile.rc:45
-msgid "Connect &Network Drive"
+msgid "Connect &Network Drive..."
 msgstr ""
 
 #: winefile.rc:46
@@ -10578,8 +10583,9 @@ msgid "Sort by &Date"
 msgstr ""
 
 #: winefile.rc:60
-msgid "Filter by &..."
-msgstr ""
+#, fuzzy
+msgid "Filter by&..."
+msgstr "&Nastavenie tlače..."
 
 #: winefile.rc:67
 msgid "&Drivebar"

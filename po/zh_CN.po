@@ -10704,7 +10704,8 @@ msgid "Re&name..."
 msgstr "改名(&N)..."
 
 #: winefile.rc:31
-msgid "Propert&ies...\tAlt+Enter"
+#, fuzzy
+msgid "Propert&ies\tAlt+Enter"
 msgstr "属性(&I)...\tAlt+Enter"
 
 #: winefile.rc:33
@@ -10724,7 +10725,8 @@ msgid "&Disk"
 msgstr "磁盘(&D)"
 
 #: winefile.rc:45
-msgid "Connect &Network Drive"
+#, fuzzy
+msgid "Connect &Network Drive..."
 msgstr "连接网络驱动器(&N)"
 
 #: winefile.rc:46
@@ -10756,7 +10758,8 @@ msgid "Sort by &Date"
 msgstr "按日期排序(&D)"
 
 #: winefile.rc:60
-msgid "Filter by &..."
+#, fuzzy
+msgid "Filter by&..."
 msgstr "定制排序..."
 
 #: winefile.rc:67

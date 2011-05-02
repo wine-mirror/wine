@@ -11217,7 +11217,8 @@ msgid "Re&name..."
 msgstr "P&reimenuj ..."
 
 #: winefile.rc:31
-msgid "Propert&ies...\tAlt+Enter"
+#, fuzzy
+msgid "Propert&ies\tAlt+Enter"
 msgstr "&Lastnosti ...\tAlt+Enter"
 
 #: winefile.rc:33
@@ -11237,7 +11238,8 @@ msgid "&Disk"
 msgstr "Po&goni"
 
 #: winefile.rc:45
-msgid "Connect &Network Drive"
+#, fuzzy
+msgid "Connect &Network Drive..."
 msgstr "Poveži se z o&mrežnim pogonom"
 
 #: winefile.rc:46
@@ -11269,7 +11271,8 @@ msgid "Sort by &Date"
 msgstr "Razvrsti po datu&mu"
 
 #: winefile.rc:60
-msgid "Filter by &..."
+#, fuzzy
+msgid "Filter by&..."
 msgstr "&Filter ..."
 
 #: winefile.rc:67

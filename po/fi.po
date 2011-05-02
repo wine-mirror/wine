@@ -10664,8 +10664,9 @@ msgid "Re&name..."
 msgstr "&Huomautus..."
 
 #: winefile.rc:31
-msgid "Propert&ies...\tAlt+Enter"
-msgstr ""
+#, fuzzy
+msgid "Propert&ies\tAlt+Enter"
+msgstr "Ominaisuudet"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -10684,7 +10685,7 @@ msgid "&Disk"
 msgstr ""
 
 #: winefile.rc:45
-msgid "Connect &Network Drive"
+msgid "Connect &Network Drive..."
 msgstr ""
 
 #: winefile.rc:46
@@ -10716,8 +10717,9 @@ msgid "Sort by &Date"
 msgstr ""
 
 #: winefile.rc:60
-msgid "Filter by &..."
-msgstr ""
+#, fuzzy
+msgid "Filter by&..."
+msgstr "&Kirjoittimen asetukset..."
 
 #: winefile.rc:67
 msgid "&Drivebar"

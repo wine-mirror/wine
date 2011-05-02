@@ -28,7 +28,7 @@ IDM_WINEFILE MENU
         MENUITEM "&Copy...\tF8",                ID_FILE_COPY
         MENUITEM "&Delete\tDel",                ID_FILE_DELETE
         MENUITEM "Re&name...",                  109
-        MENUITEM "Propert&ies...\tAlt+Enter",   ID_EDIT_PROPERTIES
+        MENUITEM "Propert&ies\tAlt+Enter",   ID_EDIT_PROPERTIES
         MENUITEM SEPARATOR
         MENUITEM "&Run...",                     ID_RUN
         MENUITEM SEPARATOR
@@ -42,7 +42,7 @@ IDM_WINEFILE MENU
     }
 
     POPUP "&Disk"  {
-        MENUITEM "Connect &Network Drive",      ID_CONNECT_NETWORK_DRIVE
+        MENUITEM "Connect &Network Drive...",      ID_CONNECT_NETWORK_DRIVE
         MENUITEM "&Disconnect Network Drive",   ID_DISCONNECT_NETWORK_DRIVE
     }
 
@@ -57,7 +57,7 @@ IDM_WINEFILE MENU
         MENUITEM "Sort by Si&ze",               ID_VIEW_SORT_SIZE
         MENUITEM "Sort by &Date",               ID_VIEW_SORT_DATE
         MENUITEM SEPARATOR
-        MENUITEM "Filter by &...",              ID_VIEW_FILTER
+        MENUITEM "Filter by&...",               ID_VIEW_FILTER
     }
 
     POPUP "&Options"  {

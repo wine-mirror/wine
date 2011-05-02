@@ -11041,7 +11041,8 @@ msgid "Re&name..."
 msgstr "&Umbenennen..."
 
 #: winefile.rc:31
-msgid "Propert&ies...\tAlt+Enter"
+#, fuzzy
+msgid "Propert&ies\tAlt+Enter"
 msgstr "&Eigenschaften...\tAlt+Eingabetaste"
 
 #: winefile.rc:33
@@ -11061,7 +11062,8 @@ msgid "&Disk"
 msgstr "Da&tenträger"
 
 #: winefile.rc:45
-msgid "Connect &Network Drive"
+#, fuzzy
+msgid "Connect &Network Drive..."
 msgstr "Netzwerklaufwerk &verbinden..."
 
 #: winefile.rc:46
@@ -11093,7 +11095,8 @@ msgid "Sort by &Date"
 msgstr "Nach &Datum"
 
 #: winefile.rc:60
-msgid "Filter by &..."
+#, fuzzy
+msgid "Filter by&..."
 msgstr "Angaben ausw&ählen..."
 
 #: winefile.rc:67

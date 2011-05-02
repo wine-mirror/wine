@@ -10917,7 +10917,8 @@ msgid "Re&name..."
 msgstr "Át&nevezés..."
 
 #: winefile.rc:31
-msgid "Propert&ies...\tAlt+Enter"
+#, fuzzy
+msgid "Propert&ies\tAlt+Enter"
 msgstr "T&ulajdonságok...\tAlt+Enter"
 
 #: winefile.rc:33
@@ -10937,7 +10938,8 @@ msgid "&Disk"
 msgstr "&Lemez"
 
 #: winefile.rc:45
-msgid "Connect &Network Drive"
+#, fuzzy
+msgid "Connect &Network Drive..."
 msgstr "&Hálózati meghajtó csatlakoztatása"
 
 #: winefile.rc:46
@@ -10969,7 +10971,8 @@ msgid "Sort by &Date"
 msgstr "Rendezés &dátum szerint"
 
 #: winefile.rc:60
-msgid "Filter by &..."
+#, fuzzy
+msgid "Filter by&..."
 msgstr "Egyedi rendezés &..."
 
 #: winefile.rc:67

@@ -11411,7 +11411,8 @@ msgid "Re&name..."
 msgstr "Rede&numire..."
 
 #: winefile.rc:31
-msgid "Propert&ies...\tAlt+Enter"
+#, fuzzy
+msgid "Propert&ies\tAlt+Enter"
 msgstr "Proprietăț&i...\tAlt+Enter"
 
 #: winefile.rc:33
@@ -11436,7 +11437,8 @@ msgid "&Disk"
 msgstr "&Disc"
 
 #: winefile.rc:45
-msgid "Connect &Network Drive"
+#, fuzzy
+msgid "Connect &Network Drive..."
 msgstr "Co&nectează unitatea de rețea"
 
 #: winefile.rc:46
@@ -11468,7 +11470,8 @@ msgid "Sort by &Date"
 msgstr "Sortează după &dată"
 
 #: winefile.rc:60
-msgid "Filter by &..."
+#, fuzzy
+msgid "Filter by&..."
 msgstr "Filtrare după &..."
 
 #: winefile.rc:67

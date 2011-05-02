@@ -11192,7 +11192,8 @@ msgid "Re&name..."
 msgstr "Ye&niden Adlandır..."
 
 #: winefile.rc:31
-msgid "Propert&ies...\tAlt+Enter"
+#, fuzzy
+msgid "Propert&ies\tAlt+Enter"
 msgstr "&Özellikler...\tAlt+Enter"
 
 #: winefile.rc:33
@@ -11212,7 +11213,8 @@ msgid "&Disk"
 msgstr "&Disk"
 
 #: winefile.rc:45
-msgid "Connect &Network Drive"
+#, fuzzy
+msgid "Connect &Network Drive..."
 msgstr "&Ağ Sürücüsüne Bağlan"
 
 #: winefile.rc:46
@@ -11244,7 +11246,8 @@ msgid "Sort by &Date"
 msgstr "&Tarihe Göre Sırala"
 
 #: winefile.rc:60
-msgid "Filter by &..."
+#, fuzzy
+msgid "Filter by&..."
 msgstr "Süzgeç &..."
 
 #: winefile.rc:67

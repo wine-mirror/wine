@@ -10766,7 +10766,8 @@ msgid "Re&name..."
 msgstr "改名(&N)..."
 
 #: winefile.rc:31
-msgid "Propert&ies...\tAlt+Enter"
+#, fuzzy
+msgid "Propert&ies\tAlt+Enter"
 msgstr "屬性(&I)...\tAlt+Enter"
 
 #: winefile.rc:33
@@ -10786,7 +10787,8 @@ msgid "&Disk"
 msgstr "磁盤(&D)"
 
 #: winefile.rc:45
-msgid "Connect &Network Drive"
+#, fuzzy
+msgid "Connect &Network Drive..."
 msgstr "連接網路儲存槽(&N)"
 
 #: winefile.rc:46
@@ -10818,7 +10820,8 @@ msgid "Sort by &Date"
 msgstr "按日期排列(&D)"
 
 #: winefile.rc:60
-msgid "Filter by &..."
+#, fuzzy
+msgid "Filter by&..."
 msgstr "定製排列..."
 
 #: winefile.rc:67
