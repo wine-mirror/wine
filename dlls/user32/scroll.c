@@ -1919,32 +1919,6 @@ BOOL WINAPI SetScrollRange(HWND hwnd, INT nBar, INT minVal, INT maxVal, BOOL bRe
 
 
 /*************************************************************************
- *	     SCROLL_SetNCSbState
- *
- * Updates both scrollbars at the same time. Used by MDI CalcChildScroll().
- */
-INT SCROLL_SetNCSbState(HWND hwnd, int vMin, int vMax, int vPos,
-                        int hMin, int hMax, int hPos)
-{
-    SCROLLINFO vInfo, hInfo;
-
-    vInfo.cbSize = hInfo.cbSize = sizeof(SCROLLINFO);
-    vInfo.nMin   = vMin;
-    vInfo.nMax   = vMax;
-    vInfo.nPos   = vPos;
-    hInfo.nMin   = hMin;
-    hInfo.nMax   = hMax;
-    hInfo.nPos   = hPos;
-    vInfo.fMask  = hInfo.fMask = SIF_RANGE | SIF_POS;
-
-    SCROLL_SetScrollInfo( hwnd, SB_VERT, &vInfo, TRUE );
-    SCROLL_SetScrollInfo( hwnd, SB_HORZ, &hInfo, TRUE );
-
-    return 0;
-}
-
-
-/*************************************************************************
  *           GetScrollRange   (USER32.@)
  *
  * Gets the range of the scroll bar.
