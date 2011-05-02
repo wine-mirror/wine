@@ -31,17 +31,21 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
+#include "winerror.h"
 #include "mmddk.h"
-
+#include "mmreg.h"
+#include "dsound.h"
+#include "dsdriver.h"
 #include "ks.h"
-#include "guiddef.h"
-#include "ksmedia.h"
-
-#include "alsa.h"
-
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+
+#include "alsa.h"
+
+#include "initguid.h"
+#include "ksmedia.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(alsa);
 /* unless someone makes a wineserver kernel module, Unix pipes are faster than win32 events */

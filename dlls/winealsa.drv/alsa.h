@@ -43,14 +43,6 @@
 #include <sys/errno.h>
 #endif
 
-#include "mmreg.h"
-#include "dsound.h"
-#include "dsdriver.h"
-
-#include "ks.h"
-#include "ksmedia.h"
-#include "ksguid.h"
-
 /* state diagram for waveOut writing:
  *
  * +---------+-------------+---------------+---------------------------------+

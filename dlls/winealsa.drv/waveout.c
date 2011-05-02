@@ -51,6 +51,11 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "mmddk.h"
+#include "mmreg.h"
+#include "dsound.h"
+#include "dsdriver.h"
+#include "ks.h"
+#include "ksmedia.h"
 
 #include "alsa.h"
 

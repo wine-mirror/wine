@@ -51,6 +51,9 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "mmddk.h"
+#include "mmreg.h"
+#include "dsound.h"
+#include "dsdriver.h"
 
 #include "alsa.h"
 
