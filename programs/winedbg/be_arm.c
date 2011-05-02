@@ -57,9 +57,35 @@ static void be_arm_single_step(CONTEXT* ctx, unsigned enable)
 
 static void be_arm_print_context(HANDLE hThread, const CONTEXT* ctx, int all_regs)
 {
+    static const char condflags[] = "NZCV";
+    int i;
+    char        buf[8];
+
+    switch (ctx->Cpsr & 0x1F)
+    {
+    case 0:  strcpy(buf, "User26"); break;
+    case 1:  strcpy(buf, "FIQ26"); break;
+    case 2:  strcpy(buf, "IRQ26"); break;
+    case 3:  strcpy(buf, "SVC26"); break;
+    case 16: strcpy(buf, "User"); break;
+    case 17: strcpy(buf, "FIQ"); break;
+    case 18: strcpy(buf, "IRQ"); break;
+    case 19: strcpy(buf, "SVC"); break;
+    case 23: strcpy(buf, "ABT"); break;
+    case 27: strcpy(buf, "UND"); break;
+    default: strcpy(buf, "UNKNWN"); break;
+    }
+
     dbg_printf("Register dump:\n");
-    dbg_printf(" Pc:%04x Sp:%04x Lr:%04x Cpsr:%04x\n",
-               ctx->Pc, ctx->Sp, ctx->Lr, ctx->Cpsr);
+    dbg_printf("%s %s Mode\n", (ctx->Cpsr & 0x20) ? "Thumb" : "ARM", buf);
+
+    strcpy(buf, condflags);
+    for (i = 0; buf[i]; i++)
+        if (!((ctx->Cpsr >> 26) & (1 << (sizeof(condflags) - i))))
+            buf[i] = '-';
+
+    dbg_printf(" Pc:%04x Sp:%04x Lr:%04x Cpsr:%04x(%s)\n",
+               ctx->Pc, ctx->Sp, ctx->Lr, ctx->Cpsr, buf);
     dbg_printf(" r0:%04x r1:%04x r2:%04x r3:%04x\n",
                ctx->R0, ctx->R1, ctx->R2, ctx->R3);
     dbg_printf(" r4:%04x r5:%04x  r6:%04x  r7:%04x r8:%04x\n",
