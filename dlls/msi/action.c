@@ -5945,33 +5945,39 @@ static UINT ACTION_UnpublishComponents( MSIPACKAGE *package )
 
 static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
 {
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','C','o','m','p','o','n','e','n','t','`',' ','W','H','E','R','E',' ',
+         '`','C','o','m','p','o','n','e','n','t','`',' ','=','\'','%','s','\'',0};
     MSIPACKAGE *package = param;
+    MSICOMPONENT *component;
     MSIRECORD *row;
     MSIFILE *file;
-    SC_HANDLE hscm, service = NULL;
+    SC_HANDLE hscm = NULL, service = NULL;
     LPCWSTR comp, key;
     LPWSTR name = NULL, disp = NULL, load_order = NULL, serv_name = NULL;
     LPWSTR depends = NULL, pass = NULL, args = NULL, image_path = NULL;
     DWORD serv_type, start_type, err_control;
     SERVICE_DESCRIPTIONW sd = {NULL};
 
-    static const WCHAR query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ',
-         '`','C','o','m','p','o','n','e','n','t','`',' ',
-         'W','H','E','R','E',' ',
-         '`','C','o','m','p','o','n','e','n','t','`',' ',
-         '=','\'','%','s','\'',0};
-
+    comp = MSI_RecordGetString( rec, 12 );
+    component = get_loaded_component( package, comp );
+    if (!component)
+    {
+        WARN("service component not found\n");
+        goto done;
+    }
+    if (!component->Enabled)
+    {
+        TRACE("service component disabled\n");
+        goto done;
+    }
     hscm = OpenSCManagerW(NULL, SERVICES_ACTIVE_DATABASEW, GENERIC_WRITE);
     if (!hscm)
     {
         ERR("Failed to open the SC Manager!\n");
         goto done;
     }
-
-    comp = MSI_RecordGetString( rec, 12 );
-    if (!get_loaded_component( package, comp ))
-        goto done;
 
     start_type = MSI_RecordGetInteger(rec, 5);
     if (start_type == SERVICE_BOOT_START || start_type == SERVICE_SYSTEM_START)
@@ -5992,11 +5998,10 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
     row = MSI_QueryGetRecord(package->db, query, comp);
     if (!row)
     {
-        ERR("Control query failed!\n");
+        ERR("Query failed\n");
         goto done;
     }
     key = MSI_RecordGetString(row, 6);
-
     file = get_loaded_file(package, key);
     msiobj_release(&row->hdr);
     if (!file)
