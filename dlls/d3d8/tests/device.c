@@ -868,6 +868,407 @@ static void test_display_modes(void)
     IDirect3D8_Release(pD3d);
 }
 
+static void test_reset(void)
+{
+    UINT width, orig_width = GetSystemMetrics(SM_CXSCREEN);
+    UINT height, orig_height = GetSystemMetrics(SM_CYSCREEN);
+    IDirect3DDevice8 *device1 = NULL;
+    IDirect3DDevice8 *device2 = NULL;
+    D3DDISPLAYMODE d3ddm, d3ddm2;
+    D3DSURFACE_DESC surface_desc;
+    D3DPRESENT_PARAMETERS d3dpp;
+    IDirect3DSurface8 *surface;
+    IDirect3DTexture8 *texture;
+    UINT adapter_mode_count;
+    D3DLOCKED_RECT lockrect;
+    IDirect3D8 *d3d8 = NULL;
+    UINT mode_count = 0;
+    HWND window = NULL;
+    D3DVIEWPORT8 vp;
+    DWORD shader;
+    HRESULT hr;
+    UINT i;
+
+    static const DWORD decl[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_POSITION,  D3DVSDT_FLOAT4),
+        D3DVSD_END(),
+    };
+
+    struct
+    {
+        UINT w;
+        UINT h;
+    } *modes = NULL;
+
+    d3d8 = pDirect3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d8, "Failed to create IDirect3D8 object.\n");
+    window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    ok(!!window, "Failed to create window.\n");
+    if (!d3d8 || !window)
+        goto cleanup;
+
+    hr = IDirect3D8_GetAdapterDisplayMode(d3d8, D3DADAPTER_DEFAULT, &d3ddm);
+    ok(SUCCEEDED(hr), "GetAdapterDisplayMode failed, hr %#x.\n", hr);
+    adapter_mode_count = IDirect3D8_GetAdapterModeCount(d3d8, D3DADAPTER_DEFAULT);
+    modes = HeapAlloc(GetProcessHeap(), 0, sizeof(*modes) * adapter_mode_count);
+    for (i = 0; i < adapter_mode_count; ++i)
+    {
+        UINT j;
+
+        memset(&d3ddm2, 0, sizeof(d3ddm2));
+        hr = IDirect3D8_EnumAdapterModes(d3d8, D3DADAPTER_DEFAULT, i, &d3ddm2);
+        ok(SUCCEEDED(hr), "EnumAdapterModes failed, hr %#x.\n", hr);
+
+        if (d3ddm2.Format != d3ddm.Format)
+            continue;
+
+        for (j = 0; j < mode_count; ++j)
+        {
+            if (modes[j].w == d3ddm2.Width && modes[j].h == d3ddm2.Height)
+                break;
+        }
+        if (j == mode_count)
+        {
+            modes[j].w = d3ddm2.Width;
+            modes[j].h = d3ddm2.Height;
+            ++mode_count;
+        }
+
+        /* We use them as invalid modes. */
+        if ((d3ddm2.Width == 801 && d3ddm2.Height == 600)
+                || (d3ddm2.Width == 32 && d3ddm2.Height == 32))
+        {
+            skip("This system supports a screen resolution of %dx%d, not running mode tests.\n",
+                    d3ddm2.Width, d3ddm2.Height);
+            goto cleanup;
+        }
+    }
+
+    if (mode_count < 2)
+    {
+        skip("Less than 2 modes supported, skipping mode tests.\n");
+        goto cleanup;
+    }
+
+    i = 0;
+    if (modes[i].w == orig_width && modes[i].h == orig_height) ++i;
+
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.Windowed = FALSE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth = modes[i].w;
+    d3dpp.BackBufferHeight = modes[i].h;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            window, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device1);
+    if (FAILED(hr))
+    {
+        skip("Failed to create device, hr %#x.\n", hr);
+        goto cleanup;
+    }
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+
+    width = GetSystemMetrics(SM_CXSCREEN);
+    height = GetSystemMetrics(SM_CYSCREEN);
+    ok(width == modes[i].w, "Screen width is %u, expected %u.\n", width, modes[i].w);
+    ok(height == modes[i].h, "Screen height is %u, expected %u.\n", height, modes[i].h);
+
+    hr = IDirect3DDevice8_GetViewport(device1, &vp);
+    ok(SUCCEEDED(hr), "GetViewport failed, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(vp.X == 0, "D3DVIEWPORT->X = %u, expected 0.\n", vp.X);
+        ok(vp.Y == 0, "D3DVIEWPORT->Y = %u, expected 0.\n", vp.Y);
+        ok(vp.Width == modes[i].w, "D3DVIEWPORT->Width = %u, expected %u.\n", vp.Width, modes[i].w);
+        ok(vp.Height == modes[i].h, "D3DVIEWPORT->Height = %u, expected %u.\n", vp.Height, modes[i].h);
+        ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %.8e, expected 0.\n", vp.MinZ);
+        ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %.8e, expected 1.\n", vp.MaxZ);
+    }
+
+    i = 1;
+    vp.X = 10;
+    vp.Y = 20;
+    vp.Width = modes[i].w  / 2;
+    vp.Height = modes[i].h / 2;
+    vp.MinZ = 0.2f;
+    vp.MaxZ = 0.3f;
+    hr = IDirect3DDevice8_SetViewport(device1, &vp);
+    ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
+
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed = FALSE;
+    d3dpp.BackBufferWidth = modes[i].w;
+    d3dpp.BackBufferHeight = modes[i].h;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+
+    memset(&vp, 0, sizeof(vp));
+    hr = IDirect3DDevice8_GetViewport(device1, &vp);
+    ok(SUCCEEDED(hr), "GetViewport failed, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(vp.X == 0, "D3DVIEWPORT->X = %u, expected 0.\n", vp.X);
+        ok(vp.Y == 0, "D3DVIEWPORT->Y = %u, expected 0.\n", vp.Y);
+        ok(vp.Width == modes[i].w, "D3DVIEWPORT->Width = %u, expected %u.\n", vp.Width, modes[i].w);
+        ok(vp.Height == modes[i].h, "D3DVIEWPORT->Height = %u, expected %u.\n", vp.Height, modes[i].h);
+        ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %.8e, expected 0.\n", vp.MinZ);
+        ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %.8e, expected 1.\n", vp.MaxZ);
+    }
+
+    width = GetSystemMetrics(SM_CXSCREEN);
+    height = GetSystemMetrics(SM_CYSCREEN);
+    ok(width == modes[i].w, "Screen width is %u, expected %u.\n", width, modes[i].w);
+    ok(height == modes[i].h, "Screen height is %u, expected %u.\n", height, modes[i].h);
+
+    hr = IDirect3DDevice8_GetRenderTarget(device1, &surface);
+    ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DSurface8_GetDesc(surface, &surface_desc);
+    ok(surface_desc.Width == modes[i].w, "Back buffer width is %u, expected %u.\n",
+            surface_desc.Width, modes[i].w);
+    ok(surface_desc.Height == modes[i].h, "Back buffer height is %u, expected %u.\n",
+            surface_desc.Height, modes[i].h);
+    IDirect3DSurface8_Release(surface);
+
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed = TRUE;
+    d3dpp.BackBufferWidth = 400;
+    d3dpp.BackBufferHeight = 300;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+
+    memset(&vp, 0, sizeof(vp));
+    hr = IDirect3DDevice8_GetViewport(device1, &vp);
+    ok(SUCCEEDED(hr), "GetViewport failed, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(vp.X == 0, "D3DVIEWPORT->X = %u, expected 0.\n", vp.X);
+        ok(vp.Y == 0, "D3DVIEWPORT->Y = %u, expected 0.\n", vp.Y);
+        ok(vp.Width == 400, "D3DVIEWPORT->Width = %u, expected 400.\n", vp.Width);
+        ok(vp.Height == 300, "D3DVIEWPORT->Height = %u, expected 300.\n", vp.Height);
+        ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %.8e, expected 0.\n", vp.MinZ);
+        ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %.8e, expected 1.\n", vp.MaxZ);
+    }
+
+    width = GetSystemMetrics(SM_CXSCREEN);
+    height = GetSystemMetrics(SM_CYSCREEN);
+    ok(width == orig_width, "Screen width is %u, expected %u.\n", width, orig_width);
+    ok(height == orig_height, "Screen height is %u, expected %u.\n", height, orig_height);
+
+    hr = IDirect3DDevice8_GetRenderTarget(device1, &surface);
+    ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
+    hr = IDirect3DSurface8_GetDesc(surface, &surface_desc);
+    ok(surface_desc.Width == 400, "Back buffer width is %u, expected 400.\n",
+            surface_desc.Width);
+    ok(surface_desc.Height == 300, "Back buffer height is %u, expected 300.\n",
+            surface_desc.Height);
+    IDirect3DSurface8_Release(surface);
+
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed = TRUE;
+    d3dpp.BackBufferWidth = 400;
+    d3dpp.BackBufferHeight = 300;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+
+    /* Reset fails if there is a resource in the default pool. */
+    hr = IDirect3DDevice8_CreateTexture(device1, 16, 16, 1, 0, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &texture);
+    ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    todo_wine ok(hr == D3DERR_DEVICELOST, "Reset returned %#x, expected %#x.\n", hr, D3DERR_DEVICELOST);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    todo_wine ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
+    IDirect3DTexture8_Release(texture);
+    /* Reset again to get the device out of the lost state. */
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+
+    /* Scratch, sysmem and managed pool resources are fine. */
+    hr = IDirect3DDevice8_CreateTexture(device1, 16, 16, 1, 0, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &texture);
+    ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+    IDirect3DTexture8_Release(texture);
+
+    hr = IDirect3DDevice8_CreateTexture(device1, 16, 16, 1, 0, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &texture);
+    ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+    IDirect3DTexture8_Release(texture);
+
+    /* The depth stencil should get reset to the auto depth stencil when present. */
+    hr = IDirect3DDevice8_SetRenderTarget(device1, NULL, NULL);
+    ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device1, &surface);
+    ok(hr == D3DERR_NOTFOUND, "GetDepthStencilSurface returned %#x, expected %#x.\n", hr, D3DERR_NOTFOUND);
+    ok(!surface, "Depth / stencil buffer should be NULL.\n");
+
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device1, &surface);
+    ok(SUCCEEDED(hr), "GetDepthStencilSurface failed, hr %#x.\n", hr);
+    ok(!!surface, "Depth / stencil buffer should not be NULL.\n");
+    if (surface) IDirect3DSurface8_Release(surface);
+
+    d3dpp.EnableAutoDepthStencil = FALSE;
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device1, &surface);
+    ok(hr == D3DERR_NOTFOUND, "GetDepthStencilSurface returned %#x, expected %#x.\n", hr, D3DERR_NOTFOUND);
+    ok(!surface, "Depth / stencil buffer should be NULL.\n");
+
+    /* Will a sysmem or scratch resource survive while locked? */
+    hr = IDirect3DDevice8_CreateTexture(device1, 16, 16, 1, 0, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &texture);
+    ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DTexture8_LockRect(texture, 0, &lockrect, NULL, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "LockRect failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+    IDirect3DTexture8_UnlockRect(texture, 0);
+    IDirect3DTexture8_Release(texture);
+
+    hr = IDirect3DDevice8_CreateTexture(device1, 16, 16, 1, 0, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &texture);
+    ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DTexture8_LockRect(texture, 0, &lockrect, NULL, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "LockRect failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+    IDirect3DTexture8_UnlockRect(texture, 0);
+    IDirect3DTexture8_Release(texture);
+
+    hr = IDirect3DDevice8_CreateTexture(device1, 16, 16, 1, 0, D3DFMT_R5G6B5, D3DPOOL_MANAGED, &texture);
+    ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+    IDirect3DTexture8_Release(texture);
+
+    /* A reference held to an implicit surface causes failures as well. */
+    hr = IDirect3DDevice8_GetBackBuffer(device1, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
+    ok(SUCCEEDED(hr), "GetBackBuffer failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    todo_wine ok(hr == D3DERR_DEVICELOST, "Reset returned %#x, expected %#x.\n", hr, D3DERR_DEVICELOST);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    todo_wine ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
+    IDirect3DSurface8_Release(surface);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+
+    /* Shaders are fine as well. */
+    hr = IDirect3DDevice8_CreateVertexShader(device1, decl, simple_vs, &shader, 0);
+    ok(SUCCEEDED(hr), "CreateVertexShader failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DeleteVertexShader(device1, shader);
+    ok(SUCCEEDED(hr), "DeleteVertexShader failed, hr %#x.\n", hr);
+
+    /* Try setting invalid modes. */
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed = FALSE;
+    d3dpp.BackBufferWidth = 32;
+    d3dpp.BackBufferHeight = 32;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(hr == D3DERR_INVALIDCALL, "Reset returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    todo_wine ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
+
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed = FALSE;
+    d3dpp.BackBufferWidth = 801;
+    d3dpp.BackBufferHeight = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    hr = IDirect3DDevice8_Reset(device1, &d3dpp);
+    ok(hr == D3DERR_INVALIDCALL, "Reset returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    hr = IDirect3DDevice8_TestCooperativeLevel(device1);
+    todo_wine ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
+
+    hr = IDirect3D8_GetAdapterDisplayMode(d3d8, D3DADAPTER_DEFAULT, &d3ddm);
+    ok(SUCCEEDED(hr), "GetAdapterDisplayMode failed, hr %#x.\n", hr);
+
+    memset(&d3dpp, 0, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = FALSE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            window, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device2);
+    if (FAILED(hr))
+    {
+        skip("Failed to create device, hr %#x.\n", hr);
+        goto cleanup;
+    }
+
+    hr = IDirect3DDevice8_TestCooperativeLevel(device2);
+    ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth = 400;
+    d3dpp.BackBufferHeight = 300;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    hr = IDirect3DDevice8_Reset(device2, &d3dpp);
+    ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+        goto cleanup;
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device2, &surface);
+    ok(SUCCEEDED(hr), "GetDepthStencilSurface failed, hr %#x.\n", hr);
+    ok(!!surface, "Depth / stencil buffer should not be NULL.\n");
+    if (surface)
+        IDirect3DSurface8_Release(surface);
+
+cleanup:
+    HeapFree(GetProcessHeap(), 0, modes);
+    if (device2)
+        IDirect3DDevice8_Release(device2);
+    if (device1)
+        IDirect3DDevice8_Release(device1);
+    if (d3d8)
+        IDirect3D8_Release(d3d8);
+    if (window)
+        DestroyWindow(window);
+}
+
 static void test_scene(void)
 {
     HRESULT                      hr;
@@ -2294,6 +2695,7 @@ START_TEST(device)
         test_mipmap_levels();
         test_cursor();
         test_states();
+        test_reset();
         test_scene();
         test_shader();
         test_limits();
