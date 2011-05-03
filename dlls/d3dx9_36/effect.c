@@ -83,9 +83,11 @@ struct ID3DXBaseEffectImpl
 
     UINT parameter_count;
     UINT technique_count;
+    UINT object_count;
 
     D3DXHANDLE *parameter_handles;
     D3DXHANDLE *technique_handles;
+    D3DXHANDLE *objects;
 };
 
 struct ID3DXEffectImpl
@@ -292,11 +294,6 @@ static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
         return;
     }
 
-    if (!child)
-    {
-        HeapFree(GetProcessHeap(), 0, param->data);
-    }
-
     if (param->annotation_handles)
     {
         for (i = 0; i < param->annotation_count; ++i)
@@ -318,6 +315,25 @@ static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
             free_parameter(param->member_handles[i], param->element_count != 0, TRUE);
         }
         HeapFree(GetProcessHeap(), 0, param->member_handles);
+    }
+
+    if (param->class == D3DXPC_OBJECT && !param->element_count)
+    {
+        switch(param->type)
+        {
+            case D3DXPT_STRING:
+                HeapFree(GetProcessHeap(), 0, *(LPSTR *)param->data);
+                break;
+
+            default:
+                FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
+                break;
+        }
+    }
+
+    if (!child)
+    {
+        HeapFree(GetProcessHeap(), 0, param->data);
     }
 
     /* only the parent has to release name and semantic */
@@ -1251,10 +1267,22 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetString(ID3DXBaseEffect *iface, D3DX
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetString(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPCSTR *string)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, string %p stub\n", This, parameter, string);
+    TRACE("iface %p, parameter %p, string %p\n", This, parameter, string);
 
-    return E_NOTIMPL;
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
+
+    if (string && param && !param->element_count && param->type == D3DXPT_STRING)
+    {
+        *string = *(LPCSTR *)param->data;
+        TRACE("Returning %s\n", debugstr_a(*string));
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetTexture(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DBASETEXTURE9 texture)
@@ -2967,11 +2995,12 @@ static const struct ID3DXEffectCompilerVtbl ID3DXEffectCompiler_Vtbl =
     ID3DXEffectCompilerImpl_CompileShader,
 };
 
-static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value)
+static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, const char **ptr)
 {
     unsigned int i;
     HRESULT hr;
     UINT old_size = 0;
+    DWORD id;
 
     if (param->element_count)
     {
@@ -2981,7 +3010,7 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value)
         {
             struct d3dx_parameter *member = get_parameter_struct(param->member_handles[i]);
 
-            hr = d3dx9_parse_value(member, (char *)value + old_size);
+            hr = d3dx9_parse_value(member, (char *)value + old_size, ptr);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse value\n");
@@ -3010,7 +3039,7 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value)
             {
                 struct d3dx_parameter *member = get_parameter_struct(param->member_handles[i]);
 
-                hr = d3dx9_parse_value(member, (char *)value + old_size);
+                hr = d3dx9_parse_value(member, (char *)value + old_size, ptr);
                 if (hr != D3D_OK)
                 {
                     WARN("Failed to parse value\n");
@@ -3018,6 +3047,22 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value)
                 }
 
                 old_size += member->bytes;
+            }
+            break;
+
+        case D3DXPC_OBJECT:
+            switch (param->type)
+            {
+                case D3DXPT_STRING:
+                    read_dword(ptr, &id);
+                    TRACE("Id: %u\n", id);
+                    param->base->objects[id] = get_parameter_handle(param);
+                    param->data = value;
+                    break;
+
+                default:
+                    FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
+                    break;
             }
             break;
 
@@ -3029,12 +3074,11 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value)
     return D3D_OK;
 }
 
-
 static HRESULT d3dx9_parse_init_value(struct d3dx_parameter *param, const char *ptr)
 {
     UINT size = param->bytes;
     HRESULT hr;
-    void *value;
+    void *value = NULL;
 
     TRACE("param size: %u\n", size);
 
@@ -3048,7 +3092,7 @@ static HRESULT d3dx9_parse_init_value(struct d3dx_parameter *param, const char *
     TRACE("Data: %s.\n", debugstr_an(ptr, size));
     memcpy(value, ptr, size);
 
-    hr = d3dx9_parse_value(param, value);
+    hr = d3dx9_parse_value(param, value, &ptr);
     if (hr != D3D_OK)
     {
         WARN("Failed to parse value\n");
@@ -3082,6 +3126,46 @@ static HRESULT d3dx9_parse_name(char **name, const char *ptr)
 
     TRACE("Name: %s.\n", debugstr_an(ptr, size));
     memcpy(*name, ptr, size);
+
+    return D3D_OK;
+}
+
+static HRESULT d3dx9_parse_data(struct d3dx_parameter *param, const char **ptr)
+{
+    DWORD size;
+    HRESULT hr;
+
+    TRACE("Parse data for parameter %s, type %s\n", debugstr_a(param->name), debug_d3dxparameter_type(param->type));
+
+    read_dword(ptr, &size);
+    TRACE("Data size: %#x\n", size);
+
+    if (!size)
+    {
+        TRACE("Size is 0\n");
+        *(void **)param->data = NULL;
+        return D3D_OK;
+    }
+
+    switch (param->type)
+    {
+        case D3DXPT_STRING:
+            /* re-read with size (sizeof(DWORD) = 4) */
+            hr = d3dx9_parse_name((LPSTR *)param->data, *ptr - 4);
+            if (hr != D3D_OK)
+            {
+                WARN("Failed to parse string data\n");
+                return hr;
+            }
+            break;
+
+        default:
+            FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
+            break;
+    }
+
+
+    *ptr += ((size + 3) & ~3);
 
     return D3D_OK;
 }
@@ -3154,6 +3238,19 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
             case D3DXPC_STRUCT:
                 read_dword(ptr, &param->member_count);
                 TRACE("Members: %u\n", param->member_count);
+                break;
+
+            case D3DXPC_OBJECT:
+                switch (param->type)
+                {
+                    case D3DXPT_STRING:
+                        param->bytes = sizeof(LPCSTR);
+                        break;
+
+                    default:
+                        FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
+                        break;
+                }
                 break;
 
             default:
@@ -3615,6 +3712,8 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
     const char *ptr = data + start;
     D3DXHANDLE *parameter_handles = NULL;
     D3DXHANDLE *technique_handles = NULL;
+    D3DXHANDLE *objects = NULL;
+    unsigned int stringcount;
     HRESULT hr;
     unsigned int i;
 
@@ -3624,7 +3723,20 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
     read_dword(&ptr, &base->technique_count);
     TRACE("Technique count: %u\n", base->technique_count);
 
-    skip_dword_unknown(&ptr, 2);
+    skip_dword_unknown(&ptr, 1);
+
+    read_dword(&ptr, &base->object_count);
+    TRACE("Object count: %u\n", base->object_count);
+
+    objects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*objects) * base->object_count);
+    if (!objects)
+    {
+        ERR("Out of memory\n");
+        hr = E_OUTOFMEMORY;
+        goto err_out;
+    }
+
+    base->objects = objects;
 
     if (base->parameter_count)
     {
@@ -3694,6 +3806,32 @@ static HRESULT d3dx9_parse_effect(struct ID3DXBaseEffectImpl *base, const char *
         }
     }
 
+    read_dword(&ptr, &stringcount);
+    TRACE("String count: %u\n", stringcount);
+
+    skip_dword_unknown(&ptr, 1);
+
+    for (i = 0; i < stringcount; ++i)
+    {
+        DWORD id;
+        struct d3dx_parameter *param;
+
+        read_dword(&ptr, &id);
+        TRACE("Id: %u\n", id);
+
+        param = get_parameter_struct(base->objects[id]);
+
+        hr = d3dx9_parse_data(param, &ptr);
+        if (hr != D3D_OK)
+        {
+            WARN("Failed to parse data\n");
+            goto err_out;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, objects);
+    base->objects = NULL;
+
     base->technique_handles = technique_handles;
     base->parameter_handles = parameter_handles;
 
@@ -3718,6 +3856,8 @@ err_out:
         }
         HeapFree(GetProcessHeap(), 0, parameter_handles);
     }
+
+    HeapFree(GetProcessHeap(), 0, objects);
 
     return hr;
 }
