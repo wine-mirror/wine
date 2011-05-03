@@ -1878,9 +1878,6 @@ static nsresult NSAPI nsURI_GetHostPort(nsIURL *iface, nsACString *aHostPort)
 
     TRACE("(%p)->(%p)\n", This, aHostPort);
 
-    if(This->nsuri)
-        return nsIURI_GetHostPort(This->nsuri, aHostPort);
-
     if(!ensure_uri(This))
         return NS_ERROR_UNEXPECTED;
 
