@@ -179,55 +179,6 @@ BOOL WINAPI EnumPageFilesW( PENUM_PAGE_FILE_CALLBACKW callback, LPVOID context )
 }
 
 /***********************************************************************
- *           EnumProcesses (PSAPI.@)
- */
-BOOL WINAPI EnumProcesses(DWORD *lpdwProcessIDs, DWORD cb, DWORD *lpcbUsed)
-{
-    SYSTEM_PROCESS_INFORMATION *spi;
-    NTSTATUS status;
-    PVOID pBuf = NULL;
-    ULONG nAlloc = 0x8000;
-
-    do {
-        if (pBuf != NULL) 
-        {
-            HeapFree(GetProcessHeap(), 0, pBuf);
-            nAlloc *= 2;
-        }
-
-        pBuf = HeapAlloc(GetProcessHeap(), 0, nAlloc);
-        if (pBuf == NULL)
-            return FALSE;
-
-        status = NtQuerySystemInformation(SystemProcessInformation, pBuf,
-                                          nAlloc, NULL);
-    } while (status == STATUS_INFO_LENGTH_MISMATCH);
-
-    if (status != STATUS_SUCCESS)
-    {
-        HeapFree(GetProcessHeap(), 0, pBuf);
-        SetLastError(RtlNtStatusToDosError(status));
-        return FALSE;
-    }
-
-    spi = pBuf;
-
-    for (*lpcbUsed = 0; cb >= sizeof(DWORD); cb -= sizeof(DWORD))
-    {
-        *lpdwProcessIDs++ = HandleToUlong(spi->UniqueProcessId);
-        *lpcbUsed += sizeof(DWORD);
-
-        if (spi->NextEntryOffset == 0)
-            break;
-
-        spi = (SYSTEM_PROCESS_INFORMATION *)(((PCHAR)spi) + spi->NextEntryOffset);
-    }
-
-    HeapFree(GetProcessHeap(), 0, pBuf);
-    return TRUE;
-}
-
-/***********************************************************************
  *           EnumProcessModules (PSAPI.@)
  *
  * NOTES

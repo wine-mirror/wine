@@ -770,6 +770,7 @@
 @ stdcall K32EmptyWorkingSet(long)
 @ stdcall K32GetProcessImageFileNameA(long ptr long)
 @ stdcall K32GetProcessImageFileNameW(long ptr long)
+@ stdcall K32EnumProcesses(ptr long ptr)
 @ stdcall -i386 -private -register K32Thk1632Epilog() krnl386.exe16.K32Thk1632Epilog
 @ stdcall -i386 -private -register K32Thk1632Prolog() krnl386.exe16.K32Thk1632Prolog
 @ stdcall LCIDToLocaleName(long ptr long long)

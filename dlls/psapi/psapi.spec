@@ -3,7 +3,7 @@
 @ stdcall EnumPageFilesA(ptr ptr)
 @ stdcall EnumPageFilesW(ptr ptr)
 @ stdcall EnumProcessModules(long ptr long ptr)
-@ stdcall EnumProcesses(ptr long ptr)
+@ stdcall EnumProcesses(ptr long ptr) kernel32.K32EnumProcesses
 @ stdcall GetDeviceDriverBaseNameA(ptr ptr long)
 @ stdcall GetDeviceDriverBaseNameW(ptr ptr long)
 @ stdcall GetDeviceDriverFileNameA(ptr ptr long)
