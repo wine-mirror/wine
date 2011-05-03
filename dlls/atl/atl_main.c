@@ -464,6 +464,9 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoA(_ATL_MODULEA *pm, _ATL_WNDCLASSINFOA 
 
         TRACE("wci->m_wc.lpszClassName = %s\n", wci->m_wc.lpszClassName);
 
+        if (wci->m_lpszOrigName)
+            FIXME( "subclassing %s not implemented\n", debugstr_a(wci->m_lpszOrigName));
+
         if (!wci->m_wc.lpszClassName)
         {
             snprintf(wci->m_szAutoName, sizeof(wci->m_szAutoName), "ATL%08lx", (UINT_PTR)wci);
@@ -482,7 +485,8 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoA(_ATL_MODULEA *pm, _ATL_WNDCLASSINFOA 
         wci->pWndProc = wci->m_wc.lpfnWndProc;
         wci->m_atom = atom;
     }
-    *pProc = wci->pWndProc;
+
+    if (wci->m_lpszOrigName) *pProc = wci->pWndProc;
 
     TRACE("returning 0x%04x\n", atom);
     return atom;
@@ -519,6 +523,9 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW 
 
         TRACE("wci->m_wc.lpszClassName = %s\n", debugstr_w(wci->m_wc.lpszClassName));
 
+        if (wci->m_lpszOrigName)
+            FIXME( "subclassing %s not implemented\n", debugstr_w(wci->m_lpszOrigName));
+
         if (!wci->m_wc.lpszClassName)
         {
             static const WCHAR szFormat[] = {'A','T','L','%','0','8','l','x',0};
@@ -538,7 +545,8 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW 
         wci->pWndProc = wci->m_wc.lpfnWndProc;
         wci->m_atom = atom;
     }
-    *pProc = wci->pWndProc;
+
+    if (wci->m_lpszOrigName) *pProc = wci->pWndProc;
 
     TRACE("returning 0x%04x\n", atom);
     return atom;
