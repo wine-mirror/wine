@@ -1087,6 +1087,42 @@ error:
     return ret;
 }
 
+static BOOL WINTRUST_PutSignedMsgToPEFile(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEncodingType,
+        DWORD* pdwIndex, DWORD cbSignedDataMsg, BYTE* pbSignedDataMsg)
+{
+    WIN_CERTIFICATE *cert;
+    HANDLE file;
+    DWORD size;
+    BOOL ret;
+
+    if(pSubjectInfo->hFile && pSubjectInfo->hFile!=INVALID_HANDLE_VALUE)
+        file = pSubjectInfo->hFile;
+    else
+    {
+        file = CreateFileW(pSubjectInfo->pwsFileName, GENERIC_READ|GENERIC_WRITE,
+                FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+        if(file == INVALID_HANDLE_VALUE)
+            return FALSE;
+    }
+
+    /* int aligned WIN_CERTIFICATE structure with cbSignedDataMsg+1 bytes of data */
+    size = FIELD_OFFSET(WIN_CERTIFICATE, bCertificate[cbSignedDataMsg+4]) & (~3);
+    cert = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    if(!cert)
+        return FALSE;
+
+    cert->dwLength = size;
+    cert->wRevision = WIN_CERT_REVISION_2_0;
+    cert->wCertificateType = WIN_CERT_TYPE_PKCS_SIGNED_DATA;
+    memcpy(cert->bCertificate, pbSignedDataMsg, cbSignedDataMsg);
+    ret = ImageAddCertificate(file, cert, pdwIndex);
+
+    HeapFree(GetProcessHeap(), 0, cert);
+    if(file != pSubjectInfo->hFile)
+        CloseHandle(file);
+    return ret;
+}
+
 /* structure offsets */
 #define cfhead_Signature         (0x00)
 #define cfhead_CabinetSize       (0x08)
@@ -1296,18 +1332,20 @@ static BOOL WINTRUST_GetSignedMsgFromCatFile(SIP_SUBJECTINFO *pSubjectInfo,
     return ret;
 }
 
+/* GUIDs used by CryptSIPGetSignedDataMsg and CryptSIPPutSignedDataMsg */
+static const GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,
+    0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
+static const GUID cabGUID = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,
+    0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
+static const GUID catGUID = { 0xDE351A43, 0x8E59, 0x11D0, { 0x8C,0x47,
+     0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
+
 /***********************************************************************
  *      CryptSIPGetSignedDataMsg  (WINTRUST.@)
  */
 BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEncodingType,
                                        DWORD dwIndex, DWORD* pcbSignedDataMsg, BYTE* pbSignedDataMsg)
 {
-    static const GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,
-     0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
-    static const GUID cabGUID = { 0xC689AABA, 0x8E78, 0x11D0, { 0x8C,0x47,
-     0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
-    static const GUID catGUID = { 0xDE351A43, 0x8E59, 0x11D0, { 0x8C,0x47,
-     0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
     BOOL ret;
 
     TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
@@ -1337,11 +1375,23 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
  *      CryptSIPPutSignedDataMsg  (WINTRUST.@)
  */
 BOOL WINAPI CryptSIPPutSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD pdwEncodingType,
-                                       DWORD* pdwIndex, DWORD cbSignedDataMsg, BYTE* pbSignedDataMsg)
+        DWORD* pdwIndex, DWORD cbSignedDataMsg, BYTE* pbSignedDataMsg)
 {
-    FIXME("(%p %d %p %d %p) stub\n", pSubjectInfo, pdwEncodingType, pdwIndex,
+    TRACE("(%p %d %p %d %p)\n", pSubjectInfo, pdwEncodingType, pdwIndex,
           cbSignedDataMsg, pbSignedDataMsg);
- 
+
+    if(!pSubjectInfo) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if(!memcmp(pSubjectInfo->pgSubjectType, &unknown, sizeof(unknown)))
+        return WINTRUST_PutSignedMsgToPEFile(pSubjectInfo, pdwEncodingType,
+                pdwIndex, cbSignedDataMsg, pbSignedDataMsg);
+    else
+        FIXME("unimplemented for subject type %s\n",
+                debugstr_guid(pSubjectInfo->pgSubjectType));
+
     return FALSE;
 }
 
