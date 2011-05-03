@@ -334,7 +334,15 @@ static ULONG WINAPI IDirect3DDevice8Impl_Release(IDirect3DDevice8 *iface)
 /* IDirect3DDevice Interface follow: */
 static HRESULT WINAPI IDirect3DDevice8Impl_TestCooperativeLevel(IDirect3DDevice8 *iface)
 {
+    IDirect3DDevice8Impl *device = impl_from_IDirect3DDevice8(iface);
+
     TRACE("iface %p.\n", iface);
+
+    if (device->lost)
+    {
+        TRACE("Device is lost.\n");
+        return D3DERR_DEVICENOTRESET;
+    }
 
     return D3D_OK;
 }
@@ -542,14 +550,70 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateAdditionalSwapChain(IDirect3DDe
     return D3D_OK;
 }
 
+static HRESULT WINAPI reset_enum_callback(struct wined3d_resource *resource, void *data)
+{
+    struct wined3d_resource_desc desc;
+    BOOL *resources_ok = data;
+
+    wined3d_resource_get_desc(resource, &desc);
+    if (desc.pool == WINED3DPOOL_DEFAULT)
+    {
+        IDirect3DSurface8 *surface;
+
+        if (desc.resource_type != WINED3DRTYPE_SURFACE)
+        {
+            WARN("Resource %p in pool D3DPOOL_DEFAULT blocks the Reset call.\n", resource);
+            *resources_ok = FALSE;
+            return S_FALSE;
+        }
+
+        surface = wined3d_resource_get_parent(resource);
+
+        IDirect3DSurface8_AddRef(surface);
+        if (IDirect3DSurface8_Release(surface))
+        {
+            WARN("Surface %p (resource %p) in pool D3DPOOL_DEFAULT blocks the Reset call.\n", surface, resource);
+            *resources_ok = FALSE;
+            return S_FALSE;
+        }
+
+        WARN("Surface %p (resource %p) is an implicit resource with ref 0.\n", surface, resource);
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI IDirect3DDevice8Impl_Reset(IDirect3DDevice8 *iface,
         D3DPRESENT_PARAMETERS *pPresentationParameters)
 {
     IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
     WINED3DPRESENT_PARAMETERS localParameters;
+    BOOL resources_ok = TRUE;
     HRESULT hr;
+    UINT i;
 
     TRACE("iface %p, present_parameters %p.\n", iface, pPresentationParameters);
+
+    wined3d_mutex_lock();
+    IWineD3DDevice_SetIndexBuffer(This->WineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
+    for (i = 0; i < 16; ++i)
+    {
+        IWineD3DDevice_SetStreamSource(This->WineD3DDevice, i, NULL, 0, 0);
+    }
+    for (i = 0; i < 16; ++i)
+    {
+        IWineD3DDevice_SetTexture(This->WineD3DDevice, i, NULL);
+    }
+
+    IWineD3DDevice_EnumResources(This->WineD3DDevice, reset_enum_callback, &resources_ok);
+    if (!resources_ok)
+    {
+        WARN("The application is holding D3DPOOL_DEFAULT resources, rejecting reset.\n");
+        This->lost = TRUE;
+        wined3d_mutex_unlock();
+
+        return D3DERR_DEVICELOST;
+    }
 
     localParameters.BackBufferWidth                             = pPresentationParameters->BackBufferWidth;
     localParameters.BackBufferHeight                            = pPresentationParameters->BackBufferHeight;
@@ -567,10 +631,15 @@ static HRESULT WINAPI IDirect3DDevice8Impl_Reset(IDirect3DDevice8 *iface,
     localParameters.PresentationInterval                        = pPresentationParameters->FullScreen_PresentationInterval;
     localParameters.AutoRestoreDisplayMode                      = TRUE;
 
-    wined3d_mutex_lock();
     hr = IWineD3DDevice_Reset(This->WineD3DDevice, &localParameters);
-    if(SUCCEEDED(hr)) {
+    if (SUCCEEDED(hr))
+    {
         hr = IWineD3DDevice_SetRenderState(This->WineD3DDevice, WINED3DRS_POINTSIZE_MIN, 0);
+        This->lost = FALSE;
+    }
+    else
+    {
+        This->lost = TRUE;
     }
     wined3d_mutex_unlock();
 

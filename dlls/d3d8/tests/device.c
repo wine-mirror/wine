@@ -1089,9 +1089,9 @@ static void test_reset(void)
     hr = IDirect3DDevice8_CreateTexture(device1, 16, 16, 1, 0, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &texture);
     ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_Reset(device1, &d3dpp);
-    todo_wine ok(hr == D3DERR_DEVICELOST, "Reset returned %#x, expected %#x.\n", hr, D3DERR_DEVICELOST);
+    ok(hr == D3DERR_DEVICELOST, "Reset returned %#x, expected %#x.\n", hr, D3DERR_DEVICELOST);
     hr = IDirect3DDevice8_TestCooperativeLevel(device1);
-    todo_wine ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
+    ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
     IDirect3DTexture8_Release(texture);
     /* Reset again to get the device out of the lost state. */
     hr = IDirect3DDevice8_Reset(device1, &d3dpp);
@@ -1177,9 +1177,9 @@ static void test_reset(void)
     hr = IDirect3DDevice8_GetBackBuffer(device1, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
     ok(SUCCEEDED(hr), "GetBackBuffer failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_Reset(device1, &d3dpp);
-    todo_wine ok(hr == D3DERR_DEVICELOST, "Reset returned %#x, expected %#x.\n", hr, D3DERR_DEVICELOST);
+    ok(hr == D3DERR_DEVICELOST, "Reset returned %#x, expected %#x.\n", hr, D3DERR_DEVICELOST);
     hr = IDirect3DDevice8_TestCooperativeLevel(device1);
-    todo_wine ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
+    ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
     IDirect3DSurface8_Release(surface);
     hr = IDirect3DDevice8_Reset(device1, &d3dpp);
     ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
@@ -1204,7 +1204,7 @@ static void test_reset(void)
     hr = IDirect3DDevice8_Reset(device1, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "Reset returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
     hr = IDirect3DDevice8_TestCooperativeLevel(device1);
-    todo_wine ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
+    ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
 
     memset(&d3dpp, 0, sizeof(d3dpp));
     d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
@@ -1215,7 +1215,7 @@ static void test_reset(void)
     hr = IDirect3DDevice8_Reset(device1, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "Reset returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
     hr = IDirect3DDevice8_TestCooperativeLevel(device1);
-    todo_wine ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
+    ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n", hr, D3DERR_DEVICENOTRESET);
 
     hr = IDirect3D8_GetAdapterDisplayMode(d3d8, D3DADAPTER_DEFAULT, &d3ddm);
     ok(SUCCEEDED(hr), "GetAdapterDisplayMode failed, hr %#x.\n", hr);

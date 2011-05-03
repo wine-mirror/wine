@@ -187,6 +187,7 @@ struct IDirect3DDevice8Impl
 
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                    inDestruction;
+    BOOL lost;
 };
 
 HRESULT device_init(IDirect3DDevice8Impl *device, struct wined3d *wined3d, UINT adapter,
