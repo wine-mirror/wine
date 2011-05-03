@@ -48,8 +48,8 @@
 @ stdcall D3DX10CreateTextureFromMemory(ptr ptr long ptr ptr ptr ptr) d3dx10_43.D3DX10CreateTextureFromMemory
 @ stdcall D3DX10CreateTextureFromResourceA(ptr long str ptr ptr ptr ptr) d3dx10_43.D3DX10CreateTextureFromResourceA
 @ stdcall D3DX10CreateTextureFromResourceW(ptr long wstr ptr ptr ptr ptr) d3dx10_43.D3DX10CreateTextureFromResourceW
-@ stub D3DX10DisassembleEffect
-@ stub D3DX10DisassembleShader
+@ stub D3DX10DisassembleEffect(ptr long ptr)
+@ stub D3DX10DisassembleShader(ptr long long str ptr)
 @ stdcall D3DX10FilterTexture(ptr long long) d3dx10_43.D3DX10FilterTexture
 @ stdcall D3DX10GetFeatureLevel1(ptr ptr) d3dx10_43.D3DX10GetFeatureLevel1
 @ stdcall D3DX10GetImageInfoFromFileA(str ptr ptr ptr) d3dx10_43.D3DX10GetImageInfoFromFileA
@@ -63,7 +63,7 @@
 @ stdcall D3DX10PreprocessShaderFromMemory(str long str ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromMemory
 @ stdcall D3DX10PreprocessShaderFromResourceA(long str str ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromResourceA
 @ stdcall D3DX10PreprocessShaderFromResourceW(long wstr wstr ptr ptr ptr ptr ptr) d3dx10_43.D3DX10PreprocessShaderFromResourceW
-@ stub D3DX10ReflectShader
+@ stub D3DX10ReflectShader(ptr long ptr)
 @ stdcall D3DX10SHProjectCubeMap(long ptr ptr ptr ptr) d3dx10_43.D3DX10SHProjectCubeMap
 @ stdcall D3DX10SaveTextureToFileA(ptr ptr str) d3dx10_43.D3DX10SaveTextureToFileA
 @ stdcall D3DX10SaveTextureToFileW(ptr ptr wstr) d3dx10_43.D3DX10SaveTextureToFileW

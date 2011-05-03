@@ -1,6 +1,6 @@
 @ stub D3DX10CreateReduction
 @ stdcall D3DX10CreateThreadPump(long long ptr) d3dx10_43.D3DX10CreateThreadPump
-@ stub D3DX10GetDriverLevel
+@ stub D3DX10GetDriverLevel(ptr)
 @ stdcall D3DX10CheckVersion(long long)
 @ stdcall D3DX10CompileFromFileA(str ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromFileA
 @ stdcall D3DX10CompileFromFileW(wstr ptr ptr str str long long ptr ptr ptr ptr) d3dx10_43.D3DX10CompileFromFileW

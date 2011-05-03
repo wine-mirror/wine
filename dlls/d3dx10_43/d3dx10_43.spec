@@ -1,76 +1,76 @@
-@ stub D3DX10CreateThreadPump
+@ stub D3DX10CreateThreadPump(long long ptr)
 @ stdcall D3DX10CheckVersion(long long)
-@ stub D3DX10CompileFromFileA
-@ stub D3DX10CompileFromFileW
-@ stub D3DX10CompileFromMemory
-@ stub D3DX10CompileFromResourceA
-@ stub D3DX10CompileFromResourceW
-@ stub D3DX10ComputeNormalMap
-@ stub D3DX10CreateAsyncCompilerProcessor
-@ stub D3DX10CreateAsyncEffectCreateProcessor
-@ stub D3DX10CreateAsyncEffectPoolCreateProcessor
-@ stub D3DX10CreateAsyncFileLoaderA
-@ stub D3DX10CreateAsyncFileLoaderW
-@ stub D3DX10CreateAsyncMemoryLoader
-@ stub D3DX10CreateAsyncResourceLoaderA
-@ stub D3DX10CreateAsyncResourceLoaderW
-@ stub D3DX10CreateAsyncShaderPreprocessProcessor
-@ stub D3DX10CreateAsyncShaderResourceViewProcessor
-@ stub D3DX10CreateAsyncTextureInfoProcessor
-@ stub D3DX10CreateAsyncTextureProcessor
-@ stub D3DX10CreateDevice
-@ stub D3DX10CreateDeviceAndSwapChain
-@ stub D3DX10CreateEffectFromFileA
-@ stub D3DX10CreateEffectFromFileW
-@ stub D3DX10CreateEffectFromMemory
-@ stub D3DX10CreateEffectFromResourceA
-@ stub D3DX10CreateEffectFromResourceW
-@ stub D3DX10CreateEffectPoolFromFileA
-@ stub D3DX10CreateEffectPoolFromFileW
-@ stub D3DX10CreateEffectPoolFromMemory
-@ stub D3DX10CreateEffectPoolFromResourceA
-@ stub D3DX10CreateEffectPoolFromResourceW
-@ stub D3DX10CreateFontA
-@ stub D3DX10CreateFontIndirectA
-@ stub D3DX10CreateFontIndirectW
-@ stub D3DX10CreateFontW
-@ stub D3DX10CreateMesh
-@ stub D3DX10CreateShaderResourceViewFromFileA
-@ stub D3DX10CreateShaderResourceViewFromFileW
-@ stub D3DX10CreateShaderResourceViewFromMemory
-@ stub D3DX10CreateShaderResourceViewFromResourceA
-@ stub D3DX10CreateShaderResourceViewFromResourceW
-@ stub D3DX10CreateSkinInfo
-@ stub D3DX10CreateSprite
-@ stub D3DX10CreateTextureFromFileA
-@ stub D3DX10CreateTextureFromFileW
-@ stub D3DX10CreateTextureFromMemory
-@ stub D3DX10CreateTextureFromResourceA
-@ stub D3DX10CreateTextureFromResourceW
-@ stub D3DX10FilterTexture
-@ stub D3DX10GetFeatureLevel1
-@ stub D3DX10GetImageInfoFromFileA
-@ stub D3DX10GetImageInfoFromFileW
-@ stub D3DX10GetImageInfoFromMemory
-@ stub D3DX10GetImageInfoFromResourceA
-@ stub D3DX10GetImageInfoFromResourceW
-@ stub D3DX10LoadTextureFromTexture
-@ stub D3DX10PreprocessShaderFromFileA
-@ stub D3DX10PreprocessShaderFromFileW
-@ stub D3DX10PreprocessShaderFromMemory
-@ stub D3DX10PreprocessShaderFromResourceA
-@ stub D3DX10PreprocessShaderFromResourceW
-@ stub D3DX10SHProjectCubeMap
-@ stub D3DX10SaveTextureToFileA
-@ stub D3DX10SaveTextureToFileW
-@ stub D3DX10SaveTextureToMemory
-@ stub D3DX10UnsetAllDeviceObjects
+@ stub D3DX10CompileFromFileA(str ptr ptr str str long long ptr ptr ptr ptr)
+@ stub D3DX10CompileFromFileW(wstr ptr ptr str str long long ptr ptr ptr ptr)
+@ stub D3DX10CompileFromMemory(str long str ptr ptr str str long long ptr ptr ptr ptr)
+@ stub D3DX10CompileFromResourceA(long str str ptr ptr str str long long ptr ptr ptr ptr)
+@ stub D3DX10CompileFromResourceW(long wstr wstr ptr ptr str str long long ptr ptr ptr ptr)
+@ stub D3DX10ComputeNormalMap(ptr long long long ptr)
+@ stub D3DX10CreateAsyncCompilerProcessor(str ptr ptr str str long long ptr ptr ptr)
+@ stub D3DX10CreateAsyncEffectCreateProcessor(str ptr ptr str long long ptr ptr ptr ptr)
+@ stub D3DX10CreateAsyncEffectPoolCreateProcessor(str ptr ptr str long long ptr ptr ptr)
+@ stub D3DX10CreateAsyncFileLoaderA(str ptr)
+@ stub D3DX10CreateAsyncFileLoaderW(wstr ptr)
+@ stub D3DX10CreateAsyncMemoryLoader(ptr long ptr)
+@ stub D3DX10CreateAsyncResourceLoaderA(long str ptr)
+@ stub D3DX10CreateAsyncResourceLoaderW(long wstr ptr)
+@ stub D3DX10CreateAsyncShaderPreprocessProcessor(str ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateAsyncShaderResourceViewProcessor(ptr ptr ptr)
+@ stub D3DX10CreateAsyncTextureInfoProcessor(ptr ptr)
+@ stub D3DX10CreateAsyncTextureProcessor(ptr ptr ptr)
+@ stub D3DX10CreateDevice(ptr long long long ptr)
+@ stub D3DX10CreateDeviceAndSwapChain(ptr long long long ptr ptr ptr)
+@ stub D3DX10CreateEffectFromFileA(str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateEffectFromFileW(wstr ptr ptr str long long ptr ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateEffectFromMemory(ptr long str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateEffectFromResourceA(long str str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateEffectFromResourceW(long wstr wstr ptr ptr str long long ptr ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateEffectPoolFromFileA(str ptr ptr str long long ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateEffectPoolFromFileW(wstr ptr ptr str long long ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateEffectPoolFromMemory(ptr long str ptr ptr str long long ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateEffectPoolFromResourceA(long str str ptr ptr str long long ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateEffectPoolFromResourceW(long wstr wstr ptr ptr str long long ptr ptr ptr ptr ptr)
+@ stub D3DX10CreateFontA(ptr long long long long long long long long long str ptr)
+@ stub D3DX10CreateFontIndirectA(ptr ptr ptr)
+@ stub D3DX10CreateFontIndirectW(ptr ptr ptr)
+@ stub D3DX10CreateFontW(ptr long long long long long long long long long wstr ptr)
+@ stub D3DX10CreateMesh(ptr ptr long str long long long ptr)
+@ stub D3DX10CreateShaderResourceViewFromFileA(ptr str ptr ptr ptr ptr)
+@ stub D3DX10CreateShaderResourceViewFromFileW(ptr wstr ptr ptr ptr ptr)
+@ stub D3DX10CreateShaderResourceViewFromMemory(ptr ptr long ptr ptr ptr ptr)
+@ stub D3DX10CreateShaderResourceViewFromResourceA(ptr long str ptr ptr ptr ptr)
+@ stub D3DX10CreateShaderResourceViewFromResourceW(ptr long wstr ptr ptr ptr ptr)
+@ stub D3DX10CreateSkinInfo(ptr)
+@ stub D3DX10CreateSprite(ptr long ptr)
+@ stub D3DX10CreateTextureFromFileA(ptr str ptr ptr ptr ptr)
+@ stub D3DX10CreateTextureFromFileW(ptr wstr ptr ptr ptr ptr)
+@ stub D3DX10CreateTextureFromMemory(ptr ptr long ptr ptr ptr ptr)
+@ stub D3DX10CreateTextureFromResourceA(ptr long str ptr ptr ptr ptr)
+@ stub D3DX10CreateTextureFromResourceW(ptr long wstr ptr ptr ptr ptr)
+@ stub D3DX10FilterTexture(ptr long long)
+@ stub D3DX10GetFeatureLevel1(ptr ptr)
+@ stub D3DX10GetImageInfoFromFileA(str ptr ptr ptr)
+@ stub D3DX10GetImageInfoFromFileW(wstr ptr ptr ptr)
+@ stub D3DX10GetImageInfoFromMemory(ptr long ptr ptr ptr)
+@ stub D3DX10GetImageInfoFromResourceA(long str ptr ptr ptr)
+@ stub D3DX10GetImageInfoFromResourceW(long wstr ptr ptr ptr)
+@ stub D3DX10LoadTextureFromTexture(ptr ptr ptr)
+@ stub D3DX10PreprocessShaderFromFileA(str ptr ptr ptr ptr ptr)
+@ stub D3DX10PreprocessShaderFromFileW(wstr ptr ptr ptr ptr ptr)
+@ stub D3DX10PreprocessShaderFromMemory(str long str ptr ptr ptr ptr ptr)
+@ stub D3DX10PreprocessShaderFromResourceA(long str str ptr ptr ptr ptr ptr)
+@ stub D3DX10PreprocessShaderFromResourceW(long wstr wstr ptr ptr ptr ptr ptr)
+@ stub D3DX10SHProjectCubeMap(long ptr ptr ptr ptr)
+@ stub D3DX10SaveTextureToFileA(ptr ptr str)
+@ stub D3DX10SaveTextureToFileW(ptr ptr wstr)
+@ stub D3DX10SaveTextureToMemory(ptr ptr ptr long)
+@ stub D3DX10UnsetAllDeviceObjects(ptr)
 @ stdcall D3DXBoxBoundProbe(ptr ptr ptr ptr) d3dx9_36.D3DXBoxBoundProbe
 @ stdcall D3DXColorAdjustContrast(ptr ptr float) d3dx9_36.D3DXColorAdjustContrast
 @ stdcall D3DXColorAdjustSaturation(ptr ptr float) d3dx9_36.D3DXColorAdjustSaturation
 @ stdcall D3DXComputeBoundingBox(ptr long long ptr ptr) d3dx9_36.D3DXComputeBoundingBox
 @ stdcall D3DXComputeBoundingSphere(ptr long long ptr ptr) d3dx9_36.D3DXComputeBoundingSphere
-@ stub D3DXCpuOptimizations
+@ stub D3DXCpuOptimizations(long)
 @ stdcall D3DXCreateMatrixStack(long ptr) d3dx9_36.D3DXCreateMatrixStack
 @ stdcall D3DXFloat16To32Array(ptr ptr long) d3dx9_36.D3DXFloat16To32Array
 @ stdcall D3DXFloat32To16Array(ptr ptr long) d3dx9_36.D3DXFloat32To16Array
