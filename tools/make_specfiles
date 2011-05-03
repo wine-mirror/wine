@@ -152,7 +152,7 @@ sub update_spec_file($)
 
         my $flags = ($parent{callconv} ne "stub" || $update_flags) ? $parent{flags} : $descr{flags};
 
-        if ($parent{callconv} ne "stub")
+        if ($parent{callconv} ne "stub" || $parent{args})
         {
             my $callconv = $parent{callconv} ne "stub" ? $parent{callconv} :
                            $parent{spec} =~ /msvc/ ? "cdecl" : "stdcall";  # hack

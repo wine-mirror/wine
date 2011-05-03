@@ -52,7 +52,7 @@
 @ cdecl _c_exit() msvcrt._c_exit
 @ cdecl _cabs(long) msvcrt._cabs
 @ cdecl _cexit() msvcrt._cexit
-@ cdecl _cgets(str) msvcrt._cgets
+@ cdecl _cgets(ptr) msvcrt._cgets
 @ cdecl _chdir(str) msvcrt._chdir
 @ cdecl _chdrive(long) msvcrt._chdrive
 @ cdecl _chgsign( double ) msvcrt._chgsign
@@ -180,7 +180,7 @@
 @ cdecl _logb(double) msvcrt._logb
 @ cdecl _lrotl(long long) msvcrt._lrotl
 @ cdecl _lrotr(long long) msvcrt._lrotr
-@ cdecl _lsearch(ptr ptr long long ptr) msvcrt._lsearch
+@ cdecl _lsearch(ptr ptr ptr long ptr) msvcrt._lsearch
 @ cdecl _lseek(long long long) msvcrt._lseek
 @ cdecl _ltoa(long ptr long) msvcrt._ltoa
 @ cdecl _ltow(long ptr long) msvcrt._ltow
@@ -188,7 +188,7 @@
 @ cdecl _matherr(ptr) msvcrt._matherr
 @ cdecl _mbbtombc(long) msvcrt._mbbtombc
 @ cdecl _mbbtype(long long) msvcrt._mbbtype
-@ cdecl _mbccpy(str str) msvcrt._mbccpy
+@ cdecl _mbccpy(ptr str) msvcrt._mbccpy
 @ cdecl _mbcjistojms(long) msvcrt._mbcjistojms
 @ cdecl _mbcjmstojis(long) msvcrt._mbcjmstojis
 @ cdecl _mbclen(ptr) msvcrt._mbclen
@@ -215,19 +215,19 @@
 @ cdecl _mbsnbcnt(ptr long) msvcrt._mbsnbcnt
 @ cdecl _mbsnbcpy(ptr str long) msvcrt._mbsnbcpy
 @ cdecl _mbsnbicmp(str str long) msvcrt._mbsnbicmp
-@ cdecl _mbsnbset(str long long) msvcrt._mbsnbset
+@ cdecl _mbsnbset(ptr long long) msvcrt._mbsnbset
 @ cdecl _mbsncat(str str long) msvcrt._mbsncat
 @ cdecl _mbsnccnt(str long) msvcrt._mbsnccnt
 @ cdecl _mbsncmp(str str long) msvcrt._mbsncmp
-@ cdecl _mbsncpy(str str long) msvcrt._mbsncpy
+@ cdecl _mbsncpy(ptr str long) msvcrt._mbsncpy
 @ cdecl _mbsnextc(str) msvcrt._mbsnextc
 @ cdecl _mbsnicmp(str str long) msvcrt._mbsnicmp
 @ cdecl _mbsninc(str long) msvcrt._mbsninc
-@ cdecl _mbsnset(str long long) msvcrt._mbsnset
+@ cdecl _mbsnset(ptr long long) msvcrt._mbsnset
 @ cdecl _mbspbrk(str str) msvcrt._mbspbrk
 @ cdecl _mbsrchr(str long) msvcrt._mbsrchr
 @ cdecl _mbsrev(str) msvcrt._mbsrev
-@ cdecl _mbsset(str long) msvcrt._mbsset
+@ cdecl _mbsset(ptr long) msvcrt._mbsset
 @ cdecl _mbsspn(str str) msvcrt._mbsspn
 @ cdecl _mbsspnp(str str) msvcrt._mbsspnp
 @ cdecl _mbsstr(str str) msvcrt._mbsstr
@@ -431,7 +431,7 @@
 @ cdecl malloc(long) msvcrt.malloc
 @ cdecl mblen(ptr long) msvcrt.mblen
 @ cdecl mbstowcs(ptr str long) msvcrt.mbstowcs
-@ cdecl mbtowc(wstr str long) msvcrt.mbtowc
+@ cdecl mbtowc(ptr str long) msvcrt.mbtowc
 @ cdecl memchr(ptr long long) msvcrt.memchr
 @ cdecl memcmp(ptr ptr long) msvcrt.memcmp
 @ cdecl memcpy(ptr ptr long) msvcrt.memcpy
