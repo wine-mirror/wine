@@ -1192,7 +1192,7 @@
 @ cdecl _wsystem(wstr)
 @ cdecl _wtempnam(wstr wstr)
 # stub _wtempnam_dbg(wstr wstr long str long)
-@ stub _wtmpnam(ptr)
+@ cdecl _wtmpnam(ptr) MSVCRT_wtmpnam
 # stub _wtmpnam_s(ptr long)
 @ cdecl _wtof(wstr) MSVCRT__wtof
 @ cdecl _wtof_l(wstr ptr) MSVCRT__wtof_l

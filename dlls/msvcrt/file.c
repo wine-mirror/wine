@@ -88,8 +88,10 @@ static int   MSVCRT_stream_idx;
 /* INTERNAL: process umask */
 static int MSVCRT_umask = 0;
 
-/* INTERNAL: Static buffer for temp file name */
+/* INTERNAL: static data for tmpnam and _wtmpname functions */
+static int tmpnam_unique;
 static char MSVCRT_tmpname[MAX_PATH];
+static MSVCRT_wchar_t MSVCRT_wtmpname[MAX_PATH];
 
 static const unsigned int EXE = 'e' << 16 | 'x' << 8 | 'e';
 static const unsigned int BAT = 'b' << 16 | 'a' << 8 | 't';
@@ -455,7 +457,7 @@ static void msvcrt_alloc_buffer(MSVCRT_FILE* file)
 }
 
 /* INTERNAL: Convert integer to base32 string (0-9a-v), 0 becomes "" */
-static void msvcrt_int_to_base32(int num, char *str)
+static int msvcrt_int_to_base32(int num, char *str)
 {
   char *p;
   int n = num;
@@ -475,6 +477,33 @@ static void msvcrt_int_to_base32(int num, char *str)
       *p += ('a' - '0' - 10);
     num >>= 5;
   }
+
+  return digits;
+}
+
+/* INTERNAL: wide character version of msvcrt_int_to_base32 */
+static int msvcrt_int_to_base32_w(int num, MSVCRT_wchar_t *str)
+{
+    MSVCRT_wchar_t *p;
+    int n = num;
+    int digits = 0;
+
+    while (n != 0)
+    {
+        n >>= 5;
+        digits++;
+    }
+    p = str + digits;
+    *p = 0;
+    while (--p >= str)
+    {
+        *p = (num & 31) + '0';
+        if (*p > '9')
+            *p += ('a' - '0' - 10);
+        num >>= 5;
+    }
+
+    return digits;
 }
 
 /*********************************************************************
@@ -3336,23 +3365,46 @@ void CDECL MSVCRT_setbuf(MSVCRT_FILE* file, char *buf)
  */
 char * CDECL MSVCRT_tmpnam(char *s)
 {
-  static int unique;
   char tmpstr[16];
   char *p;
-  int count;
+  int count, size;
   if (s == 0)
     s = MSVCRT_tmpname;
   msvcrt_int_to_base32(GetCurrentProcessId(), tmpstr);
   p = s + sprintf(s, "\\s%s.", tmpstr);
   for (count = 0; count < MSVCRT_TMP_MAX; count++)
   {
-    msvcrt_int_to_base32(unique++, tmpstr);
-    strcpy(p, tmpstr);
+    size = msvcrt_int_to_base32(tmpnam_unique++, tmpstr);
+    memcpy(p, tmpstr, size);
     if (GetFileAttributesA(s) == INVALID_FILE_ATTRIBUTES &&
         GetLastError() == ERROR_FILE_NOT_FOUND)
       break;
   }
   return s;
+}
+
+/*********************************************************************
+ *              _wtmpnam (MSVCRT.@)
+ */
+MSVCRT_wchar_t * MSVCRT_wtmpnam(MSVCRT_wchar_t *s)
+{
+    static const MSVCRT_wchar_t format[] = {'\\','s','%','s','.',0};
+    MSVCRT_wchar_t tmpstr[16];
+    MSVCRT_wchar_t *p;
+    int count, size;
+    if (s == 0)
+        s = MSVCRT_wtmpname;
+    msvcrt_int_to_base32_w(GetCurrentProcessId(), tmpstr);
+    p = s + MSVCRT__snwprintf(s, MAX_PATH, format, tmpstr);
+    for (count = 0; count < MSVCRT_TMP_MAX; count++)
+    {
+        size = msvcrt_int_to_base32_w(tmpnam_unique++, tmpstr);
+        memcpy(p, tmpstr, size*sizeof(MSVCRT_wchar_t));
+        if (GetFileAttributesW(s) == INVALID_FILE_ATTRIBUTES &&
+                GetLastError() == ERROR_FILE_NOT_FOUND)
+            break;
+    }
+    return s;
 }
 
 /*********************************************************************
