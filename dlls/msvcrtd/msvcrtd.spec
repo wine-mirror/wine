@@ -394,7 +394,7 @@
 @ cdecl _malloc_dbg(long) msvcrt.malloc
 @ cdecl _mbbtombc(long) msvcrt._mbbtombc
 @ cdecl _mbbtype(long long) msvcrt._mbbtype
-@ stub _mbcasemap
+# extern _mbcasemap
 @ cdecl _mbccpy(ptr str) msvcrt._mbccpy
 @ cdecl _mbcjistojms(long) msvcrt._mbcjistojms
 @ cdecl _mbcjmstojis(long) msvcrt._mbcjmstojis

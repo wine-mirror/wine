@@ -225,11 +225,11 @@
 @ cdecl __iscsymf(long) msvcrt.__iscsymf
 @ stub __iswcsym
 @ stub __iswcsymf
-@ stub __lc_clike
+# extern __lc_clike
 @ extern __lc_codepage msvcrt.__lc_codepage
 @ extern __lc_collate_cp msvcrt.__lc_collate_cp
 @ extern __lc_handle msvcrt.__lc_handle
-@ stub __lconv
+# extern __lconv
 @ cdecl __lconv_init() msvcrt.__lconv_init
 @ cdecl -arch=i386 __libm_sse2_acos() msvcrt.__libm_sse2_acos
 @ cdecl -arch=i386 __libm_sse2_acosf() msvcrt.__libm_sse2_acosf
@@ -718,7 +718,7 @@
 @ stub _mbbtombc_l
 @ cdecl _mbbtype(long long) msvcrt._mbbtype
 @ stub _mbbtype_l
-@ stub _mbcasemap
+# extern _mbcasemap
 @ cdecl _mbccpy(ptr str) msvcrt._mbccpy
 @ stub _mbccpy_l
 @ stub _mbccpy_s
@@ -1179,7 +1179,7 @@
 @ stub _wctime64_s
 @ stub _wctomb_l
 @ stub _wctomb_s_l
-@ stub _wctype
+# extern _wctype
 @ cdecl _wdupenv_s(ptr ptr wstr) msvcrt._wdupenv_s
 @ extern _wenviron msvcrt._wenviron
 @ varargs _wexecl(wstr wstr) msvcrt._wexecl

@@ -155,7 +155,7 @@
 @ cdecl __isascii(long) msvcrt.__isascii
 @ cdecl __iscsym(long) msvcrt.__iscsym
 @ cdecl __iscsymf(long) msvcrt.__iscsymf
-@ stub __lc_clike
+# extern __lc_clike
 @ extern __lc_codepage msvcrt.__lc_codepage
 @ extern __lc_collate_cp msvcrt.__lc_collate_cp
 @ extern __lc_handle msvcrt.__lc_handle
@@ -418,7 +418,7 @@
 @ cdecl _makepath(ptr str str str str) msvcrt._makepath
 @ cdecl _mbbtombc(long) msvcrt._mbbtombc
 @ cdecl _mbbtype(long long) msvcrt._mbbtype
-@ stub _mbcasemap
+# extern _mbcasemap
 @ cdecl _mbccpy(ptr str) msvcrt._mbccpy
 @ cdecl _mbcjistojms(long) msvcrt._mbcjistojms
 @ cdecl _mbcjmstojis(long) msvcrt._mbcjmstojis
@@ -610,7 +610,7 @@
 @ cdecl _wcsupr(wstr) msvcrt._wcsupr
 @ cdecl _wctime(ptr) msvcrt._wctime
 @ cdecl _wctime64(ptr) msvcrt._wctime64
-@ stub _wctype
+# extern _wctype
 @ extern _wenviron msvcrt._wenviron
 @ varargs _wexecl(wstr wstr) msvcrt._wexecl
 @ varargs _wexecle(wstr wstr) msvcrt._wexecle
