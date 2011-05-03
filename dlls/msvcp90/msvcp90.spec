@@ -4545,7 +4545,7 @@
 @ stub ?min_exponent@?$numeric_limits@N@std@@2HB
 @ stub ?min_exponent@?$numeric_limits@O@std@@2HB
 @ stub ?min_exponent@_Num_base@std@@2HB
-@ cdecl -arch=win32  ?move@?$char_traits@D@std@@SAPADPADPBDI@Z(ptr ptr long) MSVCP_char_traits_char_move
+@ cdecl -arch=win32 ?move@?$char_traits@D@std@@SAPADPADPBDI@Z(ptr ptr long) MSVCP_char_traits_char_move
 @ cdecl -arch=win64 ?move@?$char_traits@D@std@@SAPEADPEADPEBD_K@Z(ptr ptr long) MSVCP_char_traits_char_move
 @ cdecl -arch=win32 ?move@?$char_traits@G@std@@SAPAGPAGPBGI@Z(ptr ptr long) MSVCP_char_traits_short_move
 @ cdecl -arch=win64 ?move@?$char_traits@G@std@@SAPEAGPEAGPEBG_K@Z(ptr ptr long) MSVCP_char_traits_short_move

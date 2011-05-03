@@ -555,8 +555,7 @@
 @ stub -arch=win64 ?lock@streambuf@@QEAAXXZ
 @ stub -arch=win32 ?lockbuf@ios@@QAAXXZ  # void __cdecl ios::lockbuf(void)
 @ stub -arch=win64 ?lockbuf@ios@@QEAAXXZ
-@ stub -arch=win32 ?lockc@ios@@KAXXZ  # static void __cdecl ios::lockc(void)
-@ stub -arch=win64 ?lockc@ios@@KAXXZ
+@ stub ?lockc@ios@@KAXXZ  # static void __cdecl ios::lockc(void)
 @ stub -arch=win32 ?lockptr@ios@@IAEPAU_CRT_CRITICAL_SECTION@@XZ  # struct _CRT_CRITICAL_SECTION * __thiscall ios::lockptr(void)
 @ stub -arch=win64 ?lockptr@ios@@IEAAPEAU_CRT_CRITICAL_SECTION@@XZ
 @ stub -arch=win32 ?lockptr@streambuf@@IAEPAU_CRT_CRITICAL_SECTION@@XZ  # struct _CRT_CRITICAL_SECTION * __thiscall streambuf::lockptr(void)
