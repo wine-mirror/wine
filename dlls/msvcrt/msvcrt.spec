@@ -960,7 +960,7 @@
 # stub _strupr_s_l(str long ptr)
 # stub _strxfrm_l(ptr str long ptr)
 @ cdecl _swab(str str long) MSVCRT__swab
-# stub _swprintf(ptr str)
+@ varargs _swprintf(ptr wstr) MSVCRT_swprintf
 # stub _swprintf_c(ptr long str)
 # stub _swprintf_c_l(ptr long str ptr)
 @ varargs _swprintf_p_l(ptr long wstr ptr) MSVCRT_swprintf_p_l
@@ -1438,7 +1438,7 @@
 @ cdecl vfwprintf_s(ptr wstr ptr) MSVCRT_vfwprintf_s
 @ cdecl vprintf(str ptr) MSVCRT_vprintf
 @ cdecl vprintf_s(str ptr) MSVCRT_vprintf_s
-# stub vsnprintf(ptr long str ptr)
+@ cdecl vsnprintf(ptr long str ptr) MSVCRT_vsnprintf
 @ cdecl vsprintf(ptr str ptr) MSVCRT_vsprintf
 @ cdecl vsprintf_s(ptr long str ptr) MSVCRT_vsprintf_s
 @ cdecl vswprintf(ptr wstr ptr) MSVCRT_vswprintf

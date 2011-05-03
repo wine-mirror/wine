@@ -1010,7 +1010,7 @@
 @ stub _strupr_s_l
 @ stub _strxfrm_l
 @ cdecl _swab(str str long) msvcrt._swab
-@ stub _swprintf
+@ varargs _swprintf(ptr wstr) msvcrt._swprintf
 @ stub _swprintf_c
 @ stub _swprintf_c_l
 @ stub _swprintf_p
