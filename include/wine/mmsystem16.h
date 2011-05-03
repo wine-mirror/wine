@@ -619,7 +619,7 @@ typedef struct {
     WORD	wReserved1;
     UINT16	nCmdShow;
     WORD	wReserved2;
-    LPCSTR	lpstrText;
+    SEGPTR	lpstrText;
 } MCI_OVLY_WINDOW_PARMS16, *LPMCI_OVLY_WINDOW_PARMS16;
 
 typedef struct {
@@ -805,7 +805,7 @@ typedef struct {
     UINT16  wReserved1;
     UINT16  nCmdShow;
     UINT16  wReserved2;
-    LPSTR   lpstrText;
+    SEGPTR  lpstrText;
 } MCI_DGV_WINDOW_PARMS16, *LPMCI_DGV_WINDOW_PARMS16;
 
 #include <poppack.h>
