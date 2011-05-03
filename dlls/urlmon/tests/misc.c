@@ -1477,6 +1477,59 @@ static void test_IsValidURL(void)
     IBindCtx_Release(bctx);
 }
 
+static const struct {
+    INTERNETFEATURELIST feature;
+    DWORD               get_flags;
+    HRESULT             expected;
+    BOOL                todo;
+} default_feature_tests[] = {
+    {FEATURE_OBJECT_CACHING,GET_FEATURE_FROM_PROCESS,S_OK},
+    {FEATURE_ZONE_ELEVATION,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_MIME_HANDLING,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_MIME_SNIFFING,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_WINDOW_RESTRICTIONS,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_WEBOC_POPUPMANAGEMENT,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_BEHAVIORS,GET_FEATURE_FROM_PROCESS,S_OK},
+    {FEATURE_DISABLE_MK_PROTOCOL,GET_FEATURE_FROM_PROCESS,S_OK},
+    {FEATURE_LOCALMACHINE_LOCKDOWN,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_SECURITYBAND,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_RESTRICT_ACTIVEXINSTALL,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_VALIDATE_NAVIGATE_URL,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_RESTRICT_FILEDOWNLOAD,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_ADDON_MANAGEMENT,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_PROTOCOL_LOCKDOWN,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_HTTP_USERNAME_PASSWORD_DISABLE,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_SAFE_BINDTOOBJECT,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_UNC_SAVEDFILECHECK,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_GET_URL_DOM_FILEPATH_UNENCODED,GET_FEATURE_FROM_PROCESS,S_OK},
+    {FEATURE_TABBED_BROWSING,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_SSLUX,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_DISABLE_NAVIGATION_SOUNDS,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_DISABLE_LEGACY_COMPRESSION,GET_FEATURE_FROM_PROCESS,S_OK},
+    {FEATURE_FORCE_ADDR_AND_STATUS,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_XMLHTTP,GET_FEATURE_FROM_PROCESS,S_OK},
+    {FEATURE_DISABLE_TELNET_PROTOCOL,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_FEEDS,GET_FEATURE_FROM_PROCESS,S_FALSE},
+    {FEATURE_BLOCK_INPUT_PROMPTS,GET_FEATURE_FROM_PROCESS,S_FALSE}
+};
+
+static void test_internet_feature_defaults(void) {
+    HRESULT hres;
+    DWORD i;
+
+    for(i = 0; i < sizeof(default_feature_tests)/sizeof(default_feature_tests[0]); ++i) {
+        hres = pCoInternetIsFeatureEnabled(default_feature_tests[i].feature, default_feature_tests[i].get_flags);
+        if(default_feature_tests[i].todo) {
+            todo_wine
+            ok(hres == default_feature_tests[i].expected, "CoInternetIsFeatureEnabled returned %08x, expected %08x on test %d\n",
+                hres, default_feature_tests[i].expected, i);
+        } else {
+            ok(hres == default_feature_tests[i].expected, "CoInternetIsFeatureEnabled returned %08x, expected %08x on test %d\n",
+                hres, default_feature_tests[i].expected, i);
+        }
+    }
+}
+
 /* With older versions of IE (IE 7 and earlier), urlmon caches
  * the FeatureControl values from the registry when it's loaded
  * into memory. Newer versions of IE conditionally cache the
@@ -1577,65 +1630,12 @@ static void test_internet_features_registry(void) {
 
     hres = pCoInternetSetFeatureEnabled(FEATURE_ZONE_ELEVATION, SET_FEATURE_ON_PROCESS, FALSE);
     ok(hres == S_OK, "CoInternetSetFeatureEnabled failed: %08x\n", hres);
-}
 
-static const struct {
-    INTERNETFEATURELIST feature;
-    DWORD               get_flags;
-    HRESULT             expected;
-    BOOL                todo;
-} default_feature_tests[] = {
-    {FEATURE_OBJECT_CACHING,GET_FEATURE_FROM_PROCESS,S_OK},
-    {FEATURE_ZONE_ELEVATION,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_MIME_HANDLING,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_MIME_SNIFFING,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_WINDOW_RESTRICTIONS,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_WEBOC_POPUPMANAGEMENT,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_BEHAVIORS,GET_FEATURE_FROM_PROCESS,S_OK},
-    {FEATURE_DISABLE_MK_PROTOCOL,GET_FEATURE_FROM_PROCESS,S_OK},
-    {FEATURE_LOCALMACHINE_LOCKDOWN,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_SECURITYBAND,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_RESTRICT_ACTIVEXINSTALL,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_VALIDATE_NAVIGATE_URL,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_RESTRICT_FILEDOWNLOAD,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_ADDON_MANAGEMENT,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_PROTOCOL_LOCKDOWN,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_HTTP_USERNAME_PASSWORD_DISABLE,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_SAFE_BINDTOOBJECT,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_UNC_SAVEDFILECHECK,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_GET_URL_DOM_FILEPATH_UNENCODED,GET_FEATURE_FROM_PROCESS,S_OK},
-    {FEATURE_TABBED_BROWSING,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_SSLUX,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_DISABLE_NAVIGATION_SOUNDS,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_DISABLE_LEGACY_COMPRESSION,GET_FEATURE_FROM_PROCESS,S_OK},
-    {FEATURE_FORCE_ADDR_AND_STATUS,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_XMLHTTP,GET_FEATURE_FROM_PROCESS,S_OK},
-    {FEATURE_DISABLE_TELNET_PROTOCOL,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_FEEDS,GET_FEATURE_FROM_PROCESS,S_FALSE},
-    {FEATURE_BLOCK_INPUT_PROMPTS,GET_FEATURE_FROM_PROCESS,S_FALSE}
-};
-
-static void test_internet_feature_defaults(void) {
-    HRESULT hres;
-    DWORD i;
-
-    for(i = 0; i < sizeof(default_feature_tests)/sizeof(default_feature_tests[0]); ++i) {
-        hres = pCoInternetIsFeatureEnabled(default_feature_tests[i].feature, default_feature_tests[i].get_flags);
-        if(default_feature_tests[i].todo) {
-            todo_wine
-            ok(hres == default_feature_tests[i].expected, "CoInternetIsFeatureEnabled returned %08x, expected %08x on test %d\n",
-                hres, default_feature_tests[i].expected, i);
-        } else {
-            ok(hres == default_feature_tests[i].expected, "CoInternetIsFeatureEnabled returned %08x, expected %08x on test %d\n",
-                hres, default_feature_tests[i].expected, i);
-        }
-    }
+    test_internet_feature_defaults();
 }
 
 static void test_CoInternetIsFeatureEnabled(void) {
     HRESULT hres;
-
-    test_internet_feature_defaults();
 
     hres = pCoInternetIsFeatureEnabled(FEATURE_ENTRY_COUNT, GET_FEATURE_FROM_PROCESS);
     ok(hres == E_FAIL, "CoInternetIsFeatureEnabled returned %08x, expected E_FAIL\n", hres);
