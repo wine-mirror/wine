@@ -392,10 +392,6 @@ BOOL WINAPI ImageAddCertificate(
     /* If we've already got a security directory, find the end of it */
     if ((r) && (sd_VirtualAddr != 0))
     {
-        offset = 0;
-        index = 0;
-        count = 0;
-
         /* Check if the security directory is at the end of the file.
            If not, we should probably relocate it. */
         if (GetFileSize(FileHandle, NULL) != sd_VirtualAddr + size)
@@ -479,6 +475,8 @@ BOOL WINAPI ImageAddCertificate(
     if (!IMAGEHLP_RecalculateChecksum(FileHandle))
         return FALSE;
 
+    if(Index)
+        *Index = index;
     return TRUE;
 }
 
