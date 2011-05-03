@@ -1016,16 +1016,27 @@ static BOOL WINTRUST_GetSignedMsgFromPEFile(SIP_SUBJECTINFO *pSubjectInfo,
 {
     BOOL ret;
     WIN_CERTIFICATE *pCert = NULL;
+    HANDLE file;
 
     TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
+
+    if(pSubjectInfo->hFile && pSubjectInfo->hFile!=INVALID_HANDLE_VALUE)
+        file = pSubjectInfo->hFile;
+    else
+    {
+        file = CreateFileW(pSubjectInfo->pwsFileName, GENERIC_READ,
+                FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+        if(file == INVALID_HANDLE_VALUE)
+            return FALSE;
+    }
  
     if (!pbSignedDataMsg)
     {
         WIN_CERTIFICATE cert;
 
         /* app hasn't passed buffer, just get the length */
-        ret = ImageGetCertificateHeader(pSubjectInfo->hFile, dwIndex, &cert);
+        ret = ImageGetCertificateHeader(file, dwIndex, &cert);
         if (ret)
         {
             switch (cert.wCertificateType)
@@ -1044,7 +1055,7 @@ static BOOL WINTRUST_GetSignedMsgFromPEFile(SIP_SUBJECTINFO *pSubjectInfo,
     {
         DWORD len = 0;
 
-        ret = ImageGetCertificateData(pSubjectInfo->hFile, dwIndex, NULL, &len);
+        ret = ImageGetCertificateData(file, dwIndex, NULL, &len);
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
             goto error;
         pCert = HeapAlloc(GetProcessHeap(), 0, len);
@@ -1053,10 +1064,10 @@ static BOOL WINTRUST_GetSignedMsgFromPEFile(SIP_SUBJECTINFO *pSubjectInfo,
             ret = FALSE;
             goto error;
         }
-        ret = ImageGetCertificateData(pSubjectInfo->hFile, dwIndex, pCert,
-         &len);
+        ret = ImageGetCertificateData(file, dwIndex, pCert, &len);
         if (!ret)
             goto error;
+        pCert->dwLength -= FIELD_OFFSET(WIN_CERTIFICATE, bCertificate);
         if (*pcbSignedDataMsg < pCert->dwLength)
         {
             *pcbSignedDataMsg = pCert->dwLength;
@@ -1066,6 +1077,7 @@ static BOOL WINTRUST_GetSignedMsgFromPEFile(SIP_SUBJECTINFO *pSubjectInfo,
         else
         {
             memcpy(pbSignedDataMsg, pCert->bCertificate, pCert->dwLength);
+            *pcbSignedDataMsg = pCert->dwLength;
             switch (pCert->wCertificateType)
             {
             case WIN_CERT_TYPE_X509:
@@ -1083,6 +1095,8 @@ static BOOL WINTRUST_GetSignedMsgFromPEFile(SIP_SUBJECTINFO *pSubjectInfo,
         }
     }
 error:
+    if(pSubjectInfo->hFile != file)
+        CloseHandle(file);
     HeapFree(GetProcessHeap(), 0, pCert);
     return ret;
 }
@@ -1350,6 +1364,12 @@ BOOL WINAPI CryptSIPGetSignedDataMsg(SIP_SUBJECTINFO* pSubjectInfo, DWORD* pdwEn
 
     TRACE("(%p %p %d %p %p)\n", pSubjectInfo, pdwEncodingType, dwIndex,
           pcbSignedDataMsg, pbSignedDataMsg);
+
+    if(!pSubjectInfo)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
     if (!memcmp(pSubjectInfo->pgSubjectType, &unknown, sizeof(unknown)))
         ret = WINTRUST_GetSignedMsgFromPEFile(pSubjectInfo, pdwEncodingType,
