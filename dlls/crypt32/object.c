@@ -672,8 +672,7 @@ static BOOL CRYPT_QueryEmbeddedMessageObject(DWORD dwObjectType,
                              pdwMsgAndCertEncodingType, NULL, NULL,
                              phCertStore, phMsg);
                             if (ret && pdwContentType)
-                                *pdwContentType =
-                                 CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED;
+                                *pdwContentType = CERT_QUERY_CONTENT_PKCS7_SIGNED_EMBED;
                         }
                         CryptMemFree(blob.pbData);
                     }
