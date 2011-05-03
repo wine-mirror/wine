@@ -179,8 +179,8 @@ static HRESULT process_pattern_string(LPCWSTR wszPatternString, IAsyncReader * p
 
         if (!(wszPatternString = strchrW(wszPatternString, ',')))
             hr = E_INVALIDARG;
-    
-        wszPatternString++; /* skip ',' */
+        else
+            wszPatternString++; /* skip ',' */
     }
 
     if (hr == S_OK)
