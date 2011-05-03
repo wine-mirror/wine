@@ -193,12 +193,21 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* l
         }
         return MMSYSTEM_MAP_OKMEM;
     case MCI_WINDOW:
-	/* in fact, I would also need the dwFlags... to see
-	 * which members of lParam are effectively used
-	 */
-	*lParam = (DWORD)MapSL(*lParam);
-	FIXME("Current mapping may be wrong\n");
-	break;
+        {
+            LPMCI_OVLY_WINDOW_PARMSW mowp32w = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MCI_OVLY_WINDOW_PARMSW));
+            LPMCI_OVLY_WINDOW_PARMS16 mowp16 = MapSL(*lParam);
+            if (mowp32w) {
+                mowp32w->dwCallback = mowp16->dwCallback;
+                mowp32w->hWnd = HWND_32(mowp16->hWnd);
+                mowp32w->nCmdShow = mowp16->nCmdShow;
+                if (dwFlags & (MCI_DGV_WINDOW_TEXT | MCI_OVLY_WINDOW_TEXT))
+                    mowp32w->lpstrText = MCI_strdupAtoW(MapSL(mowp16->lpstrText));
+            } else {
+                return MMSYSTEM_MAP_NOMEM;
+            }
+            *lParam = (DWORD)mowp32w;
+        }
+        return MMSYSTEM_MAP_OKMEM;
     case MCI_BREAK:
 	{
             LPMCI_BREAK_PARMS		mbp32 = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_BREAK_PARMS));
@@ -399,8 +408,12 @@ static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR
         }
         return MMSYSTEM_MAP_OK;
     case MCI_WINDOW:
-	/* FIXME ?? see Map function */
-	return MMSYSTEM_MAP_OK;
+        if (lParam) {
+            LPMCI_OVLY_WINDOW_PARMSW mowp32w = (LPMCI_OVLY_WINDOW_PARMSW)lParam;
+            HeapFree(GetProcessHeap(), 0, (LPVOID)mowp32w->lpstrText);
+            HeapFree(GetProcessHeap(), 0, mowp32w);
+        }
+        return MMSYSTEM_MAP_OK;
 
     case MCI_BREAK:
 	HeapFree(GetProcessHeap(), 0, (LPVOID)lParam);
