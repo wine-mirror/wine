@@ -53,7 +53,18 @@ static inline int needs_relay( const ORDDEF *odp )
     /* skip nonexistent entry points */
     if (!odp) return 0;
     /* skip non-functions */
-    if (odp->type != TYPE_STDCALL && odp->type != TYPE_CDECL && odp->type != TYPE_THISCALL) return 0;
+    switch (odp->type)
+    {
+    case TYPE_STDCALL:
+    case TYPE_CDECL:
+    case TYPE_THISCALL:
+        break;
+    case TYPE_STUB:
+        if (odp->u.func.nb_args != -1) break;
+        /* fall through */
+    default:
+        return 0;
+    }
     /* skip norelay and forward entry points */
     if (odp->flags & (FLAG_NORELAY|FLAG_FORWARD)) return 0;
     /* skip register entry points on x86_64 */
