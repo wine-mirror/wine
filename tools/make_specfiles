@@ -1,0 +1,195 @@
+#!/usr/bin/perl -w
+#
+# Update spec files across dlls that share an implementation
+#
+# Copyright 2011 Alexandre Julliard
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+#
+
+use strict;
+
+my %funcs;
+my $group_head;
+
+my @dll_groups =
+(
+ [
+  "msvcrt",
+  "msvcr90",
+  "msvcirt",
+  "msvcr100",
+  "msvcr80",
+  "msvcr71",
+  "msvcr70",
+  "msvcrt40",
+  "msvcrt20",
+  "msvcrtd",
+  "crtdll",
+ ],
+ [
+  "msvcrt",
+  "msvcp90",
+  "msvcp100",
+  "msvcp80",
+  "msvcp71",
+  "msvcp70",
+  "msvcp60",
+ ],
+);
+
+my $update_flags = 0;
+my $show_duplicates = 0;
+
+foreach my $arg (@ARGV)
+{
+    if ($arg eq "-f") { $update_flags = 1; }
+    elsif ($arg eq "-d") { $show_duplicates = 1; }
+}
+
+sub update_file($)
+{
+    my $file = shift;
+    my $ret = !(-f $file) || system "cmp $file $file.new >/dev/null";
+    if (!$ret)
+    {
+        unlink "$file.new";
+    }
+    else
+    {
+        #system "diff -u $file $file.new";
+        rename "$file.new", "$file";
+        print "$file updated\n";
+    }
+    return $ret;
+}
+
+# parse a spec file line
+sub parse_line($$$)
+{
+    my ($name, $line, $_) = @_;
+
+    if (/^\s*(\@|\d+)\s+(stdcall|cdecl|varargs|thiscall|stub|extern)\s+((?:-\S+\s+)*)([A-Za-z0-9_\@\$?]+)(?:\s*(\([^)]*\)))?(?:\s+([A-Za-z0-9_\@\$?.]+))?(\s*\#.*)?/)
+    {
+        return ( "ordinal" => $1, "callconv" => $2, "flags" => $3, "name" => $4, "args" => $5 || "",
+                 "target" => $6 || $4, "comment" => $7, "spec" => $name );
+    }
+    return () if /^\s*$/;
+    return () if /^\s*\#/;
+    printf STDERR "$name.spec:$line: error: Unrecognized line $_\n";
+}
+
+sub read_spec_file($)
+{
+    my $name = shift;
+    my $file = "dlls/$name/$name.spec";
+    my %stubs;
+    open SPEC, "<$file" or die "cannot open $file";
+    while (<SPEC>)
+    {
+        chomp;
+        my %descr = parse_line( $name, $., $_ );
+        next unless %descr;
+
+        my $func = $descr{name};
+        next if defined $funcs{$func};
+        $funcs{$func} = \%descr;
+    }
+    close SPEC;
+}
+
+sub update_spec_file($)
+{
+    my $name = shift;
+    my $file = "dlls/$name/$name.spec";
+    my %stubs;
+
+    open SPEC, "<$file" or die "cannot open $file";
+    open NEW, ">$file.new" or die "cannot create $file.new";
+    while (<SPEC>)
+    {
+        chomp;
+
+        my $commented_out = 0;
+        my %descr = parse_line( $name, $., $_ );
+        if (!%descr)
+        {
+            # check for commented out exports
+            if (/^\s*\#\s*((?:\@|\d+)\s+)?((?:extern|stub|stdcall|cdecl|varargs|thiscall)\s+.*)/)
+            {
+                $commented_out = 1;
+                %descr = parse_line( $name, $., ($1 || "\@ ") . $2 );
+            }
+        }
+        goto done unless %descr;
+
+        my $func = $descr{name};
+        if (!defined $funcs{$func})
+        {
+            $funcs{$func} = \%descr unless $commented_out;
+            goto done;
+        }
+
+        my %parent = %{$funcs{$func}};
+        goto done if $parent{spec} eq $descr{spec};  # the definition is in this spec file
+        if ($descr{callconv} ne "stub" && $descr{target} !~ /\./)
+        {
+            printf "%s:%u: note: %s already defined in %s\n", $file, $., $func, $parent{spec} if $show_duplicates;
+            goto done;
+        }
+
+        my $flags = ($parent{callconv} ne "stub" || $update_flags) ? $parent{flags} : $descr{flags};
+
+        if ($parent{callconv} ne "stub")
+        {
+            my $callconv = $parent{callconv} ne "stub" ? $parent{callconv} :
+                           $parent{spec} =~ /msvc/ ? "cdecl" : "stdcall";  # hack
+            $_ = sprintf "@ %s %s%s", $callconv, $flags, $func;
+
+            if ($parent{target} =~ /$group_head\./)  # use the same forward as parent if possible
+            {
+                $_ .= sprintf "%s %s", $parent{args}, $parent{target};
+            }
+            else
+            {
+                $_ .= sprintf "%s %s.%s", $parent{args}, $parent{spec}, $func;
+            }
+        }
+        else
+        {
+            $_ = sprintf "@ stub %s%s", $flags, $func;
+        }
+        $_ .= $descr{comment} || "";
+
+      done:
+        print NEW "$_\n";
+    }
+    close SPEC;
+    close NEW;
+    update_file( $file );
+}
+
+sub sync_spec_files(@)
+{
+    %funcs = ();
+    $group_head = shift;
+    read_spec_file( $group_head );
+    foreach my $spec (@_) { update_spec_file($spec); }
+}
+
+foreach my $group (@dll_groups)
+{
+    sync_spec_files( @{$group} );
+}
