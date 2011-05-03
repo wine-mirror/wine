@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-30 14:43+0300\n"
+"PO-Revision-Date: 2011-05-03 21:49+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -9231,9 +9231,8 @@ msgid "&Export Registry File..."
 msgstr "E&ksportuoti registro failą..."
 
 #: regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "&Modifikuoti"
+msgstr "&Modifikuoti..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -9297,9 +9296,8 @@ msgid "&About Registry Editor"
 msgstr "&Apie Registro tvarkytuvę"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "Modifikuoti dvejetainius duomenis"
+msgstr "Modifikuoti dvejetainius duomenis..."
 
 #: regedit.rc:109
 msgid "&Export..."
@@ -10233,9 +10231,8 @@ msgid "Regular Metafile Viewer"
 msgstr "Įprastinė metafailų žiūryklė"
 
 #: winecfg.rc:32
-#, fuzzy
 msgid "Configure..."
-msgstr "Konfigūruoti"
+msgstr "Konfigūruoti..."
 
 #: winecfg.rc:39
 msgid "Libraries"
@@ -10375,9 +10372,8 @@ msgid "None"
 msgstr "Nėra"
 
 #: winecfg.rc:81
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Automatiškai aptikti"
+msgstr "Automatiškai aptikti..."
 
 #: winecfg.rc:82
 msgid "Local hard disk"
@@ -10782,9 +10778,8 @@ msgid "Re&name..."
 msgstr "Per&vadinti..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "Savy&bės...\tAlt+Enter"
+msgstr "Savy&bės\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -10803,9 +10798,8 @@ msgid "&Disk"
 msgstr "&Diskas"
 
 #: winefile.rc:45
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "Pri&jungti tinklo diską"
+msgstr "Pri&jungti tinklo diską..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
@@ -10836,9 +10830,8 @@ msgid "Sort by &Date"
 msgstr "Rikiuoti pagal d&atą"
 
 #: winefile.rc:60
-#, fuzzy
 msgid "Filter by&..."
-msgstr "&Filtruoti pagal..."
+msgstr "Filtruoti pagal&..."
 
 #: winefile.rc:67
 msgid "&Drivebar"
