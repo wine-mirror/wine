@@ -558,7 +558,8 @@ static HRESULT BrsFolder_Treeview_Changed( browse_info *info, NMTREEVIEWW *pnmtv
     LPTV_ITEMDATA lptvid = (LPTV_ITEMDATA) pnmtv->itemNew.lParam;
 
     lptvid = (LPTV_ITEMDATA) pnmtv->itemNew.lParam;
-    info->pidlRet = lptvid->lpifq;
+    ILFree(info->pidlRet);
+    info->pidlRet = ILClone(lptvid->lpifq);
     browsefolder_callback( info->lpBrowseInfo, info->hWnd, BFFM_SELCHANGED,
                            (LPARAM)info->pidlRet );
     BrsFolder_CheckValidSelection( info, lptvid );
@@ -676,8 +677,6 @@ static BOOL BrsFolder_OnCommand( browse_info *info, UINT id )
     switch (id)
     {
     case IDOK:
-        /* The original pidl is owned by the treeview and will be free'd. */
-        info->pidlRet = ILClone(info->pidlRet);
         if (info->pidlRet == NULL) /* A null pidl would mean a cancel */
             info->pidlRet = _ILCreateDesktop();
         pdump( info->pidlRet );
@@ -982,7 +981,10 @@ LPITEMIDLIST WINAPI SHBrowseForFolderW (LPBROWSEINFOW lpbi)
     if (SUCCEEDED(hr)) 
         OleUninitialize();
     if (!r)
+    {
+        ILFree(info.pidlRet);
         return NULL;
+    }
 
     return info.pidlRet;
 }
