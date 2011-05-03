@@ -325,6 +325,10 @@ static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
                 HeapFree(GetProcessHeap(), 0, *(LPSTR *)param->data);
                 break;
 
+            case D3DXPT_PIXELSHADER:
+                if (*(IUnknown **)param->data) IUnknown_Release(*(IUnknown **)param->data);
+                break;
+
             default:
                 FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
                 break;
@@ -993,8 +997,22 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetValue(ID3DXBaseEffect *iface, D3DXH
 
     if (data && param && param->data && param->bytes <= bytes)
     {
-        TRACE("Copy %u bytes\n", param->bytes);
-        memcpy(data, param->data, param->bytes);
+        if (param->type == D3DXPT_PIXELSHADER)
+        {
+            UINT i;
+
+            for (i = 0; i < (param->element_count ? param->element_count : 1); ++i)
+            {
+                IUnknown *unk = ((IUnknown **)param->data)[i];
+                if (unk) IUnknown_AddRef(unk);
+                ((IUnknown **)data)[i] = unk;
+            }
+        }
+        else
+        {
+            TRACE("Copy %u bytes\n", param->bytes);
+            memcpy(data, param->data, param->bytes);
+        }
         return D3D_OK;
     }
 
@@ -1306,10 +1324,23 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetTexture(ID3DXBaseEffect *iface, D3D
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetPixelShader(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DPIXELSHADER9 *pshader)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, pshader %p stub\n", This, parameter, pshader);
+    TRACE("iface %p, parameter %p, pshader %p\n", This, parameter, pshader);
 
-    return E_NOTIMPL;
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
+
+    if (pshader && param && !param->element_count && param->type == D3DXPT_PIXELSHADER)
+    {
+        *pshader = *(LPDIRECT3DPIXELSHADER9 *)param->data;
+        if (*pshader) IDirect3DPixelShader9_AddRef(*pshader);
+        TRACE("Returning %p\n", *pshader);
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetVertexShader(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DVERTEXSHADER9 *vshader)
@@ -3054,6 +3085,7 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, cons
             switch (param->type)
             {
                 case D3DXPT_STRING:
+                case D3DXPT_PIXELSHADER:
                     read_dword(ptr, &id);
                     TRACE("Id: %u\n", id);
                     param->base->objects[id] = get_parameter_handle(param);
@@ -3159,6 +3191,15 @@ static HRESULT d3dx9_parse_data(struct d3dx_parameter *param, const char **ptr)
             }
             break;
 
+        case D3DXPT_PIXELSHADER:
+            hr = IDirect3DDevice9_CreatePixelShader(param->base->effect->device, (DWORD *)*ptr, (LPDIRECT3DPIXELSHADER9 *)param->data);
+            if (hr != D3D_OK)
+            {
+                WARN("Failed to create pixel shader\n");
+                return hr;
+            }
+            break;
+
         default:
             FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
             break;
@@ -3245,6 +3286,10 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
                 {
                     case D3DXPT_STRING:
                         param->bytes = sizeof(LPCSTR);
+                        break;
+
+                    case D3DXPT_PIXELSHADER:
+                        param->bytes = sizeof(LPDIRECT3DPIXELSHADER9);
                         break;
 
                     default:
