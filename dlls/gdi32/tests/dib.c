@@ -388,7 +388,9 @@ static void test_simple_graphics(void)
     ok(ds.dsBitfields[0] == 0, "got %08x\n", ds.dsBitfields[0]);
     ok(ds.dsBitfields[1] == 0, "got %08x\n", ds.dsBitfields[1]);
     ok(ds.dsBitfields[2] == 0, "got %08x\n", ds.dsBitfields[2]);
-    ok(ds.dsBmih.biCompression == BI_RGB, "got %x\n", ds.dsBmih.biCompression);
+    ok(ds.dsBmih.biCompression == BI_RGB ||
+       broken(ds.dsBmih.biCompression == BI_BITFIELDS), /* nt4 sp1 and 2 */
+       "got %x\n", ds.dsBmih.biCompression);
 
     orig_bm = SelectObject(mem_dc, dib);
 
