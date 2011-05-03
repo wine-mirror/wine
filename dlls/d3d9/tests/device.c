@@ -848,7 +848,6 @@ static void test_reset(void)
     HRESULT                      hr;
     HWND                         hwnd               = NULL;
     IDirect3D9                  *pD3d               = NULL;
-    IDirect3DDevice9            *pDevice            = NULL;
     D3DPRESENT_PARAMETERS        d3dpp;
     D3DDISPLAYMODE               d3ddm, d3ddm2;
     D3DVIEWPORT9                 vp;
@@ -860,6 +859,8 @@ static void test_reset(void)
     IDirect3DVertexShader9       *shader;
     UINT                         i, adapter_mode_count;
     D3DLOCKED_RECT               lockrect;
+    IDirect3DDevice9 *device1 = NULL;
+    IDirect3DDevice9 *device2 = NULL;
     struct
     {
         UINT w;
@@ -922,15 +923,14 @@ static void test_reset(void)
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
 
-    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
-                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-
-    if(FAILED(hr))
+    hr = IDirect3D9_CreateDevice(pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device1);
+    if (FAILED(hr))
     {
         skip("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
         goto cleanup;
     }
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after creation returned %#x\n", hr);
 
     width = GetSystemMetrics(SM_CXSCREEN);
@@ -938,7 +938,7 @@ static void test_reset(void)
     ok(width == modes[i].w, "Screen width is %u, expected %u\n", width, modes[i].w);
     ok(height == modes[i].h, "Screen height is %u, expected %u\n", height, modes[i].h);
 
-    hr = IDirect3DDevice9_GetViewport(pDevice, &vp);
+    hr = IDirect3DDevice9_GetViewport(device1, &vp);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
@@ -955,7 +955,7 @@ static void test_reset(void)
     vp.Y = 20;
     vp.MinZ = 2;
     vp.MaxZ = 3;
-    hr = IDirect3DDevice9_SetViewport(pDevice, &vp);
+    hr = IDirect3DDevice9_SetViewport(device1, &vp);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %08x\n", hr);
 
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
@@ -964,13 +964,13 @@ static void test_reset(void)
     d3dpp.BackBufferWidth  = modes[i].w;
     d3dpp.BackBufferHeight = modes[i].h;
     d3dpp.BackBufferFormat = d3ddm.Format;
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     ZeroMemory(&vp, sizeof(vp));
-    hr = IDirect3DDevice9_GetViewport(pDevice, &vp);
+    hr = IDirect3DDevice9_GetViewport(device1, &vp);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
@@ -987,7 +987,7 @@ static void test_reset(void)
     ok(width == modes[i].w, "Screen width is %u, expected %u\n", width, modes[i].w);
     ok(height == modes[i].h, "Screen height is %u, expected %u\n", height, modes[i].h);
 
-    hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &pSwapchain);
+    hr = IDirect3DDevice9_GetSwapChain(device1, 0, &pSwapchain);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %08x\n", hr);
     if(SUCCEEDED(hr))
     {
@@ -1009,9 +1009,9 @@ static void test_reset(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.BackBufferWidth  = 400;
     d3dpp.BackBufferHeight = 300;
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     width = GetSystemMetrics(SM_CXSCREEN);
@@ -1020,7 +1020,7 @@ static void test_reset(void)
     ok(height == orig_height, "Screen height is %d\n", height);
 
     ZeroMemory(&vp, sizeof(vp));
-    hr = IDirect3DDevice9_GetViewport(pDevice, &vp);
+    hr = IDirect3DDevice9_GetViewport(device1, &vp);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
@@ -1032,7 +1032,7 @@ static void test_reset(void)
         ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
     }
 
-    hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &pSwapchain);
+    hr = IDirect3DDevice9_GetSwapChain(device1, 0, &pSwapchain);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %08x\n", hr);
     if(SUCCEEDED(hr))
     {
@@ -1054,110 +1054,112 @@ static void test_reset(void)
     d3dpp.BackBufferHeight = 300;
 
     /* _Reset fails if there is a resource in the default pool */
-    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &surface, NULL);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device1, 16, 16, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &surface, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
     /* Reset again to get the device out of the lost state */
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     /* Scratch, sysmem and managed pools are fine */
-    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device1, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
 
-    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device1, 16, 16,
+            D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
 
     /* The depth stencil should get reset to the auto depth stencil when present. */
-    hr = IDirect3DDevice9_SetDepthStencilSurface(pDevice, NULL);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device1, NULL);
     ok(hr == D3D_OK, "SetDepthStencilSurface failed with 0x%08x\n", hr);
 
-    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &surface);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device1, &surface);
     ok(hr == D3DERR_NOTFOUND, "GetDepthStencilSurface returned 0x%08x, expected D3DERR_NOTFOUND\n", hr);
     ok(surface == NULL, "Depth stencil should be NULL\n");
 
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with 0x%08x\n", hr);
 
-    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &surface);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device1, &surface);
     ok(hr == D3D_OK, "GetDepthStencilSurface failed with 0x%08x\n", hr);
     ok(surface != NULL, "Depth stencil should not be NULL\n");
     if (surface) IDirect3DSurface9_Release(surface);
 
     d3dpp.EnableAutoDepthStencil = FALSE;
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with 0x%08x\n", hr);
 
-    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &surface);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device1, &surface);
     ok(hr == D3DERR_NOTFOUND, "GetDepthStencilSurface returned 0x%08x, expected D3DERR_NOTFOUND\n", hr);
     ok(surface == NULL, "Depth stencil should be NULL\n");
 
     /* Will a sysmem or scratch survive while locked */
-    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device1, 16, 16,
+            D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
     hr = IDirect3DSurface9_LockRect(surface, &lockrect, NULL, D3DLOCK_DISCARD);
     ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %08x\n", hr);
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_UnlockRect(surface);
     IDirect3DSurface9_Release(surface);
 
-    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device1, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface returned %08x\n", hr);
     hr = IDirect3DSurface9_LockRect(surface, &lockrect, NULL, D3DLOCK_DISCARD);
     ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %08x\n", hr);
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DSurface9_UnlockRect(surface);
     IDirect3DSurface9_Release(surface);
 
-    hr = IDirect3DDevice9_CreateTexture(pDevice, 16, 16, 0, 0, D3DFMT_R5G6B5, D3DPOOL_MANAGED, &texture, NULL);
+    hr = IDirect3DDevice9_CreateTexture(device1, 16, 16, 0, 0, D3DFMT_R5G6B5, D3DPOOL_MANAGED, &texture, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %08x\n", hr);
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
     IDirect3DTexture9_Release(texture);
 
     /* A reference held to an implicit surface causes failures as well */
-    hr = IDirect3DDevice9_GetBackBuffer(pDevice, 0, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
+    hr = IDirect3DDevice9_GetBackBuffer(device1, 0, 0, D3DBACKBUFFER_TYPE_MONO, &surface);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer returned %08x\n", hr);
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
     IDirect3DSurface9_Release(surface);
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
 
     /* Shaders are fine as well */
-    hr = IDirect3DDevice9_CreateVertexShader(pDevice, simple_vs, &shader);
+    hr = IDirect3DDevice9_CreateVertexShader(device1, simple_vs, &shader);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader returned %08x\n", hr);
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     IDirect3DVertexShader9_Release(shader);
 
@@ -1167,9 +1169,9 @@ static void test_reset(void)
     d3dpp.Windowed         = FALSE;
     d3dpp.BackBufferWidth  = 32;
     d3dpp.BackBufferHeight = 32;
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=32, h=32, windowed=FALSE failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
 
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
@@ -1177,12 +1179,11 @@ static void test_reset(void)
     d3dpp.Windowed         = FALSE;
     d3dpp.BackBufferWidth  = 801;
     d3dpp.BackBufferHeight = 600;
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device1, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=801, h=600, windowed=FALSE failed with %08x\n", hr);
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
 
-    pDevice = NULL;
     IDirect3D9_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
 
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
@@ -1192,16 +1193,15 @@ static void test_reset(void)
     d3dpp.EnableAutoDepthStencil = FALSE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
 
-    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
-                    D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-
-    if(FAILED(hr))
+    hr = IDirect3D9_CreateDevice(pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device2);
+    if (FAILED(hr))
     {
         skip("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
         goto cleanup;
     }
 
-    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    hr = IDirect3DDevice9_TestCooperativeLevel(device2);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after creation returned %#x\n", hr);
 
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
@@ -1211,21 +1211,26 @@ static void test_reset(void)
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
 
-    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    hr = IDirect3DDevice9_Reset(device2, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with 0x%08x\n", hr);
 
     if (FAILED(hr)) goto cleanup;
 
-    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &surface);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device2, &surface);
     ok(hr == D3D_OK, "GetDepthStencilSurface failed with 0x%08x\n", hr);
     ok(surface != NULL, "Depth stencil should not be NULL\n");
     if (surface) IDirect3DSurface9_Release(surface);
 
 cleanup:
     HeapFree(GetProcessHeap(), 0, modes);
-    if (pDevice)
+    if (device2)
     {
-        UINT refcount = IDirect3DDevice9_Release(pDevice);
+        UINT refcount = IDirect3DDevice9_Release(device2);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (device1)
+    {
+        UINT refcount = IDirect3DDevice9_Release(device1);
         ok(!refcount, "Device has %u references left.\n", refcount);
     }
     if (pD3d) IDirect3D9_Release(pD3d);
