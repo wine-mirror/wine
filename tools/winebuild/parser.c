@@ -237,33 +237,17 @@ static int parse_spec_variable( ORDDEF *odp, DLLSPEC *spec )
 
 
 /*******************************************************************
- *         parse_spec_export
+ *         parse_spec_arguments
  *
- * Parse an exported function definition in a .spec file.
+ * Parse the arguments of an entry point.
  */
-static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
+static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
 {
     const char *token;
     unsigned int i, arg;
     int is_win32 = (spec->type == SPEC_WIN32) || (odp->flags & FLAG_EXPORT32);
 
-    if (!is_win32 && odp->type == TYPE_STDCALL)
-    {
-        error( "'stdcall' not supported for Win16\n" );
-        return 0;
-    }
-    if (!is_win32 && odp->type == TYPE_THISCALL)
-    {
-        error( "'thiscall' not supported for Win16\n" );
-        return 0;
-    }
-    if (is_win32 && odp->type == TYPE_PASCAL)
-    {
-        error( "'pascal' not supported for Win32\n" );
-        return 0;
-    }
-
-    if (!(token = GetToken(0))) return 0;
+    if (!(token = GetToken( optional ))) return optional;
     if (*token != '(')
     {
         error( "Expected '(' got '%s'\n", token );
@@ -303,13 +287,45 @@ static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
     }
 
     odp->u.func.nb_args = i;
-    if (odp->type == TYPE_VARARGS)
-        odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
     if (odp->type == TYPE_THISCALL && (!i || odp->u.func.args[0] != ARG_PTR))
     {
         error( "First argument of a thiscall function must be a pointer\n" );
         return 0;
     }
+    return 1;
+}
+
+
+/*******************************************************************
+ *         parse_spec_export
+ *
+ * Parse an exported function definition in a .spec file.
+ */
+static int parse_spec_export( ORDDEF *odp, DLLSPEC *spec )
+{
+    const char *token;
+    int is_win32 = (spec->type == SPEC_WIN32) || (odp->flags & FLAG_EXPORT32);
+
+    if (!is_win32 && odp->type == TYPE_STDCALL)
+    {
+        error( "'stdcall' not supported for Win16\n" );
+        return 0;
+    }
+    if (!is_win32 && odp->type == TYPE_THISCALL)
+    {
+        error( "'thiscall' not supported for Win16\n" );
+        return 0;
+    }
+    if (is_win32 && odp->type == TYPE_PASCAL)
+    {
+        error( "'pascal' not supported for Win32\n" );
+        return 0;
+    }
+
+    if (!parse_spec_arguments( odp, spec, 0 )) return 0;
+
+    if (odp->type == TYPE_VARARGS)
+        odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
 
     if (!(token = GetToken(1)))
     {
@@ -383,14 +399,15 @@ static int parse_spec_equate( ORDDEF *odp, DLLSPEC *spec )
  */
 static int parse_spec_stub( ORDDEF *odp, DLLSPEC *spec )
 {
-    odp->u.func.nb_args = 0;
+    odp->u.func.nb_args = -1;
     odp->link_name = xstrdup("");
     /* don't bother generating stubs for Winelib */
     if (odp->flags & FLAG_CPU_MASK)
         odp->flags &= FLAG_CPU(CPU_x86) | FLAG_CPU(CPU_x86_64);
     else
         odp->flags |= FLAG_CPU(CPU_x86) | FLAG_CPU(CPU_x86_64);
-    return 1;
+
+    return parse_spec_arguments( odp, spec, 1 );
 }
 
 
@@ -808,7 +825,8 @@ void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 )
         odp->ordinal = -1;
         odp->link_name = xstrdup( odp16->link_name );
         odp->u.func.nb_args = odp16->u.func.nb_args;
-        memcpy( odp->u.func.args, odp16->u.func.args, odp->u.func.nb_args * sizeof(odp->u.func.args[0]) );
+        if (odp->u.func.nb_args > 0) memcpy( odp->u.func.args, odp16->u.func.args,
+                                             odp->u.func.nb_args * sizeof(odp->u.func.args[0]) );
     }
 
     assign_names( spec32 );

@@ -245,7 +245,7 @@ syntax is the following:
 .RI [ flags ]\  exportname \ [ symbolname ]
 .br
 .IB ordinal\  stub
-.RI [ flags ]\  exportname
+.RI [ flags ]\  exportname \ [\ \fB( args... \fB)\fR\ ]
 .br
 .IB ordinal\  equate
 .RI [ flags ]\  exportname\ data
@@ -453,7 +453,7 @@ is not specified, it is assumed to be identical to
 Syntax:
 .br
 .IB ordinal\  stub
-.RI [ flags ]\  exportname
+.RI [ flags ]\  exportname \ [\ \fB( args... \fB)\fR\ ]
 .PP
 This declaration defines a stub function. It makes the name and
 ordinal available for dynamic linking, but will terminate execution

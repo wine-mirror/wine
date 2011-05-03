@@ -61,7 +61,7 @@ static inline int needs_relay( const ORDDEF *odp )
     return 1;
 }
 
-static int is_float_arg( const ORDDEF *odp, unsigned int arg )
+static int is_float_arg( const ORDDEF *odp, int arg )
 {
     if (arg >= odp->u.func.nb_args) return 0;
     return (odp->u.func.args[arg] == ARG_FLOAT || odp->u.func.args[arg] == ARG_DOUBLE);
@@ -89,8 +89,8 @@ int has_relays( DLLSPEC *spec )
  */
 static void output_relay_debug( DLLSPEC *spec )
 {
-    int i;
-    unsigned int j, pos, args, flags;
+    int i, j;
+    unsigned int pos, args, flags;
 
     /* first the table of entry point offsets */
 

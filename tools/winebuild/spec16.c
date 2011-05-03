@@ -67,7 +67,7 @@ static inline int is_function( const ORDDEF *odp )
 static const char *get_args_str( const ORDDEF *odp )
 {
     static char buffer[MAX_ARGUMENTS*2+1];
-    unsigned int i;
+    int i;
 
     buffer[0] = 0;
     for (i = 0; i < odp->u.func.nb_args; i++)
@@ -275,7 +275,7 @@ static const char *get_relay_name( const ORDDEF *odp )
  */
 static int get_function_argsize( const ORDDEF *odp )
 {
-    unsigned int i, argsize = 0;
+    int i, argsize = 0;
 
     for (i = 0; i < odp->u.func.nb_args; i++)
     {

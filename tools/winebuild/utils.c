@@ -892,7 +892,7 @@ unsigned int get_ptr_size(void)
 /* return the total size in bytes of the arguments on the stack */
 unsigned int get_args_size( const ORDDEF *odp )
 {
-    unsigned int i, size;
+    int i, size;
 
     for (i = size = 0; i < odp->u.func.nb_args; i++)
     {
