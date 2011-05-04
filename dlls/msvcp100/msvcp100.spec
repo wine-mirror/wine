@@ -767,7 +767,7 @@
 @ stub -arch=win32 ?_Assign@_Concurrent_queue_iterator_base_v4@details@Concurrency@@IAEXABV123@@Z
 @ stub -arch=win64 ?_Assign@_Concurrent_queue_iterator_base_v4@details@Concurrency@@IEAAXAEBV123@@Z
 @ stub ?_Atexit@@YAXP6AXXZ@Z
-# extern -arch=win64 ?_BADOFF@std@@3_JB
+@ extern ?_BADOFF@std@@3_JB std_BADOFF
 @ stub -arch=win32 ?_C_str@?$_Yarn@D@std@@QBEPBDXZ
 @ stub -arch=win64 ?_C_str@?$_Yarn@D@std@@QEBAPEBDXZ
 @ stub -arch=win32 ?_Callfns@ios_base@std@@AAEXW4event@12@@Z

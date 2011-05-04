@@ -23,6 +23,9 @@
 #include "windef.h"
 #include "winbase.h"
 
+/* ?_BADOFF@std@@3_JB -> __int64 const std::_BADOFF */
+const __int64 std_BADOFF = -1;
+
 BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 {
     switch (reason)

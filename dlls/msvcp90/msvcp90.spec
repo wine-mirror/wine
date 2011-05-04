@@ -2106,10 +2106,10 @@
 @ stub -arch=win32 ?_Addstd@ios_base@std@@SAXPAV12@@Z
 @ stub -arch=win64 ?_Addstd@ios_base@std@@SAXPEAV12@@Z
 @ stub ?_Atexit@@YAXP6AXXZ@Z
-# extern -arch=win32 ?_BADOFF@std@@3JB
-# extern -arch=win64 ?_BADOFF@std@@3_JB
-@ stub -arch=win32 ?_BADOFF_func@std@@YAABJXZ
-@ stub -arch=win64 ?_BADOFF_func@std@@YAAEB_JXZ
+@ extern -arch=win32 ?_BADOFF@std@@3JB std_BADOFF
+@ extern -arch=win64 ?_BADOFF@std@@3_JB std_BADOFF
+@ cdecl -arch=win32 ?_BADOFF_func@std@@YAABJXZ() std_BADOFF_func
+@ cdecl -arch=win64 ?_BADOFF_func@std@@YAAEB_JXZ() std_BADOFF_func
 @ stub -arch=win32 ?_Callfns@ios_base@std@@AAEXW4event@12@@Z
 @ stub -arch=win64 ?_Callfns@ios_base@std@@AEAAXW4event@12@@Z
 @ stub -arch=win32 ?_Cerr_func@std@@YAAAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
@@ -2218,9 +2218,9 @@
 @ stub -arch=win64 ?_Fput@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AEAVios_base@2@GPEBD_K333@Z
 @ stub -arch=win32 ?_Fput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPBDIIII@Z
 @ stub -arch=win64 ?_Fput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBD_K444@Z
-# extern ?_Fpz@std@@3_JA
-@ stub -arch=win32 ?_Fpz_func@std@@YAAA_JXZ
-@ stub -arch=win64 ?_Fpz_func@std@@YAAEA_JXZ
+@ extern ?_Fpz@std@@3_JA std_Fpz
+@ cdecl -arch=win32 ?_Fpz_func@std@@YAAA_JXZ() std_Fpz_func
+@ cdecl -arch=win64 ?_Fpz_func@std@@YAAEA_JXZ() std_Fpz_func
 @ stub -arch=win32 ?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
 @ stub -arch=win64 ?_Getcat@?$codecvt@DDH@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
 @ stub -arch=win32 ?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@PBV42@@Z

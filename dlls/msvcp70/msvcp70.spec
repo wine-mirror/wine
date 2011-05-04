@@ -1753,8 +1753,8 @@
 @ stub -arch=win64 ?_Addfac@locale@std@@QEAAAEAV12@PEAVfacet@12@_K1@Z
 @ stub -arch=win32 ?_Addstd@ios_base@std@@QAEXXZ
 @ stub -arch=win64 ?_Addstd@ios_base@std@@QEAAXXZ
-# extern -arch=win32 ?_BADOFF@std@@3JB
-# extern -arch=win64 ?_BADOFF@std@@3_JB
+@ extern -arch=win32 ?_BADOFF@std@@3JB msvcp90.?_BADOFF@std@@3JB
+@ extern -arch=win64 ?_BADOFF@std@@3_JB msvcp90.?_BADOFF@std@@3_JB
 @ stub -arch=win32 ?_Callfns@ios_base@std@@AAEXW4event@12@@Z
 @ stub -arch=win64 ?_Callfns@ios_base@std@@AEAAXW4event@12@@Z
 @ stub -arch=win32 ?_Charalloc@?$allocator@D@std@@QAEPADI@Z
@@ -1814,7 +1814,7 @@
 @ stub -arch=win32 ?_Fput@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBDIIII@Z
 @ stub -arch=win32 ?_Fput@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@AAVios_base@2@GPBDIIII@Z
 @ stub -arch=win32 ?_Fput@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@KA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPBDIIII@Z
-# extern ?_Fpz@std@@3_JA
+@ extern ?_Fpz@std@@3_JA msvcp90.?_Fpz@std@@3_JA
 @ stub -arch=win32 ?_Getcat@?$codecvt@DDH@std@@SAIPAPBVfacet@locale@2@@Z
 @ stub -arch=win64 ?_Getcat@?$codecvt@DDH@std@@SA_KPEAPEBVfacet@locale@2@@Z
 @ stub -arch=win32 ?_Getcat@?$codecvt@GDH@std@@SAIPAPBVfacet@locale@2@@Z
