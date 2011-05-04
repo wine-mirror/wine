@@ -3,7 +3,7 @@
  *
  * Copyright 2005 Mike McCormack for CodeWeavers
  * Copyright 2007-2008 Alistair Leslie-Hughes
- * Copyright 2010 Adam Martinson for CodeWeavers
+ * Copyright 2010-2011 Adam Martinson for CodeWeavers
  * Copyright 2010-2011 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -8972,8 +8972,10 @@ static void test_put_nodeTypedValue(void)
 static void test_get_xml(void)
 {
     static const char xmlA[] = "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\r\n<a>test</a>\r\n";
+    static const char fooA[] = "<foo/>";
     IXMLDOMProcessingInstruction *pi;
     IXMLDOMNode *first;
+    IXMLDOMElement *elem = NULL;
     IXMLDOMDocument *doc;
     VARIANT_BOOL b;
     VARIANT v;
@@ -9012,6 +9014,25 @@ static void test_get_xml(void)
     SysFreeString(xml);
 
     IXMLDOMDocument_Release(doc);
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("foo"), &elem);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_putref_documentElement(doc, elem);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_get_xml(doc, &xml);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ok(memcmp(xml, _bstr_(fooA), (sizeof(fooA)-1)*sizeof(WCHAR)) == 0,
+        "got %s, expected %s\n", wine_dbgstr_w(xml), fooA);
+    SysFreeString(xml);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMDocument_Release(doc);
+
     free_bstrs();
 }
 

@@ -2,7 +2,7 @@
  *    DOM Document implementation
  *
  * Copyright 2005 Mike McCormack
- * Copyright 2010 Adam Martinson for CodeWeavers
+ * Copyright 2010-2011 Adam Martinson for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -368,11 +368,6 @@ static void free_properties(domdoc_properties* properties)
         heap_free((xmlChar*)properties->selectNsStr);
         heap_free(properties);
     }
-}
-
-static BOOL xmldoc_has_decl(xmlDocPtr doc)
-{
-    return doc->children && (xmlStrEqual(doc->children->name, (xmlChar*)"xml") == 1);
 }
 
 /* links a "<?xml" node as a first child */
@@ -1394,8 +1389,7 @@ static HRESULT WINAPI domdoc_get_xml(
     if(!buf)
         return E_OUTOFMEMORY;
 
-    options  = xmldoc_has_decl(get_doc(This)) ? XML_SAVE_NO_DECL : 0;
-    options |= XML_SAVE_FORMAT;
+    options = XML_SAVE_FORMAT | XML_SAVE_NO_DECL;
     ctxt = xmlSaveToIO(domdoc_get_xml_writecallback, NULL, buf, "UTF-8", options);
 
     if(!ctxt)
