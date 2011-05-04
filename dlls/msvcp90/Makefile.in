@@ -5,6 +5,7 @@ EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
 C_SRCS = \
 	exception.c \
+	math.c \
 	memory.c \
 	msvcp90_main.c \
 	string.c

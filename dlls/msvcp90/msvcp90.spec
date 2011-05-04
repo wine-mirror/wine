@@ -3250,40 +3250,40 @@
 @ cdecl -arch=win64 ?destroy@?$allocator@G@std@@QEAAXPEAG@Z(ptr ptr) MSVCP_allocator_short_destroy
 @ thiscall -arch=win32 ?destroy@?$allocator@_W@std@@QAEXPA_W@Z(ptr ptr) MSVCP_allocator_wchar_destroy
 @ cdecl -arch=win64 ?destroy@?$allocator@_W@std@@QEAAXPEA_W@Z(ptr ptr) MSVCP_allocator_wchar_destroy
-# extern ?digits10@?$numeric_limits@C@std@@2HB
-# extern ?digits10@?$numeric_limits@D@std@@2HB
-# extern ?digits10@?$numeric_limits@E@std@@2HB
-# extern ?digits10@?$numeric_limits@F@std@@2HB
-# extern ?digits10@?$numeric_limits@G@std@@2HB
-# extern ?digits10@?$numeric_limits@H@std@@2HB
-# extern ?digits10@?$numeric_limits@I@std@@2HB
-# extern ?digits10@?$numeric_limits@J@std@@2HB
-# extern ?digits10@?$numeric_limits@K@std@@2HB
-# extern ?digits10@?$numeric_limits@M@std@@2HB
-# extern ?digits10@?$numeric_limits@N@std@@2HB
-# extern ?digits10@?$numeric_limits@O@std@@2HB
-# extern ?digits10@?$numeric_limits@_J@std@@2HB
-# extern ?digits10@?$numeric_limits@_K@std@@2HB
-# extern ?digits10@?$numeric_limits@_N@std@@2HB
-# extern ?digits10@?$numeric_limits@_W@std@@2HB
-# extern ?digits10@_Num_base@std@@2HB
-# extern ?digits@?$numeric_limits@C@std@@2HB
-# extern ?digits@?$numeric_limits@D@std@@2HB
-# extern ?digits@?$numeric_limits@E@std@@2HB
-# extern ?digits@?$numeric_limits@F@std@@2HB
-# extern ?digits@?$numeric_limits@G@std@@2HB
-# extern ?digits@?$numeric_limits@H@std@@2HB
-# extern ?digits@?$numeric_limits@I@std@@2HB
-# extern ?digits@?$numeric_limits@J@std@@2HB
-# extern ?digits@?$numeric_limits@K@std@@2HB
-# extern ?digits@?$numeric_limits@M@std@@2HB
-# extern ?digits@?$numeric_limits@N@std@@2HB
-# extern ?digits@?$numeric_limits@O@std@@2HB
-# extern ?digits@?$numeric_limits@_J@std@@2HB
-# extern ?digits@?$numeric_limits@_K@std@@2HB
-# extern ?digits@?$numeric_limits@_N@std@@2HB
-# extern ?digits@?$numeric_limits@_W@std@@2HB
-# extern ?digits@_Num_base@std@@2HB
+@ extern ?digits10@?$numeric_limits@C@std@@2HB std_numeric_limits_signed_char_digits10
+@ extern ?digits10@?$numeric_limits@D@std@@2HB std_numeric_limits_char_digits10
+@ extern ?digits10@?$numeric_limits@E@std@@2HB std_numeric_limits_unsigned_char_digits10
+@ extern ?digits10@?$numeric_limits@F@std@@2HB std_numeric_limits_short_digits10
+@ extern ?digits10@?$numeric_limits@G@std@@2HB std_numeric_limits_unsigned_short_digits10
+@ extern ?digits10@?$numeric_limits@H@std@@2HB std_numeric_limits_int_digits10
+@ extern ?digits10@?$numeric_limits@I@std@@2HB std_numeric_limits_unsigned_int_digits10
+@ extern ?digits10@?$numeric_limits@J@std@@2HB std_numeric_limits_long_digits10
+@ extern ?digits10@?$numeric_limits@K@std@@2HB std_numeric_limits_unsigned_long_digits10
+@ extern ?digits10@?$numeric_limits@M@std@@2HB std_numeric_limits_float_digits10
+@ extern ?digits10@?$numeric_limits@N@std@@2HB std_numeric_limits_double_digits10
+@ extern ?digits10@?$numeric_limits@O@std@@2HB std_numeric_limits_long_double_digits10
+@ extern ?digits10@?$numeric_limits@_J@std@@2HB std_numeric_limits_int64_digits10
+@ extern ?digits10@?$numeric_limits@_K@std@@2HB std_numeric_limits_unsigned_int64_digits10
+@ extern ?digits10@?$numeric_limits@_N@std@@2HB std_numeric_limits_bool_digits10
+@ extern ?digits10@?$numeric_limits@_W@std@@2HB std_numeric_limits_wchar_t_digits10
+@ extern ?digits10@_Num_base@std@@2HB std_Num_base_digits10
+@ extern ?digits@?$numeric_limits@C@std@@2HB std_numeric_limits_signed_char_digits
+@ extern ?digits@?$numeric_limits@D@std@@2HB std_numeric_limits_char_digits
+@ extern ?digits@?$numeric_limits@E@std@@2HB std_numeric_limits_unsigned_char_digits
+@ extern ?digits@?$numeric_limits@F@std@@2HB std_numeric_limits_short_digits
+@ extern ?digits@?$numeric_limits@G@std@@2HB std_numeric_limits_unsigned_short_digits
+@ extern ?digits@?$numeric_limits@H@std@@2HB std_numeric_limits_int_digits
+@ extern ?digits@?$numeric_limits@I@std@@2HB std_numeric_limits_unsigned_int_digits
+@ extern ?digits@?$numeric_limits@J@std@@2HB std_numeric_limits_long_digits
+@ extern ?digits@?$numeric_limits@K@std@@2HB std_numeric_limits_unsigned_long_digits
+@ extern ?digits@?$numeric_limits@M@std@@2HB std_numeric_limits_float_digits
+@ extern ?digits@?$numeric_limits@N@std@@2HB std_numeric_limits_double_digits
+@ extern ?digits@?$numeric_limits@O@std@@2HB std_numeric_limits_long_double_digits
+@ extern ?digits@?$numeric_limits@_J@std@@2HB std_numeric_limits_int64_digits
+@ extern ?digits@?$numeric_limits@_K@std@@2HB std_numeric_limits_unsigned_int64_digits
+@ extern ?digits@?$numeric_limits@_N@std@@2HB std_numeric_limits_bool_digits
+@ extern ?digits@?$numeric_limits@_W@std@@2HB std_numeric_limits_wchar_t_digits
+@ extern ?digits@_Num_base@std@@2HB std_Num_base_digits
 @ stub -arch=win32 ?do_always_noconv@?$codecvt@GDH@std@@MBE_NXZ
 @ stub -arch=win64 ?do_always_noconv@?$codecvt@GDH@std@@MEBA_NXZ
 @ stub -arch=win32 ?do_always_noconv@?$codecvt@_WDH@std@@MBE_NXZ
@@ -4177,16 +4177,16 @@
 @ stub -arch=win64 ?grouping@?$numpunct@G@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?grouping@?$numpunct@_W@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?grouping@?$numpunct@_W@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-# extern ?has_denorm@_Num_base@std@@2W4float_denorm_style@2@B
-# extern ?has_denorm@_Num_float_base@std@@2W4float_denorm_style@2@B
-# extern ?has_denorm_loss@_Num_base@std@@2_NB
-# extern ?has_denorm_loss@_Num_float_base@std@@2_NB
-# extern ?has_infinity@_Num_base@std@@2_NB
-# extern ?has_infinity@_Num_float_base@std@@2_NB
-# extern ?has_quiet_NaN@_Num_base@std@@2_NB
-# extern ?has_quiet_NaN@_Num_float_base@std@@2_NB
-# extern ?has_signaling_NaN@_Num_base@std@@2_NB
-# extern ?has_signaling_NaN@_Num_float_base@std@@2_NB
+@ extern ?has_denorm@_Num_base@std@@2W4float_denorm_style@2@B std_Num_base_has_denorm
+@ extern ?has_denorm@_Num_float_base@std@@2W4float_denorm_style@2@B std_Num_float_base_has_denorm
+@ extern ?has_denorm_loss@_Num_base@std@@2_NB std_Num_base_has_denorm_loss
+@ extern ?has_denorm_loss@_Num_float_base@std@@2_NB std_Num_float_base_has_denorm_loss
+@ extern ?has_infinity@_Num_base@std@@2_NB std_Num_base_has_infinity
+@ extern ?has_infinity@_Num_float_base@std@@2_NB std_Num_float_base_has_infinity
+@ extern ?has_quiet_NaN@_Num_base@std@@2_NB std_Num_base_has_quiet_NaN
+@ extern ?has_quiet_NaN@_Num_float_base@std@@2_NB std_Num_float_base_has_quiet_NaN
+@ extern ?has_signaling_NaN@_Num_base@std@@2_NB std_Num_base_has_signaling_NaN
+@ extern ?has_signaling_NaN@_Num_float_base@std@@2_NB std_Num_float_base_has_signaling_NaN
 @ stub -arch=win32 ?hash@?$collate@D@std@@QBEJPBD0@Z
 @ stub -arch=win64 ?hash@?$collate@D@std@@QEBAJPEBD0@Z
 @ stub -arch=win32 ?hash@?$collate@G@std@@QBEJPBG0@Z
@@ -4388,21 +4388,21 @@
 @ stub -arch=win64 ?is@?$ctype@_W@std@@QEBAPEB_WPEB_W0PEAF@Z
 @ stub -arch=win32 ?is@?$ctype@_W@std@@QBE_NF_W@Z
 @ stub -arch=win64 ?is@?$ctype@_W@std@@QEBA_NF_W@Z
-# extern ?is_bounded@_Num_base@std@@2_NB
-# extern ?is_bounded@_Num_float_base@std@@2_NB
-# extern ?is_bounded@_Num_int_base@std@@2_NB
-# extern ?is_exact@_Num_base@std@@2_NB
-# extern ?is_exact@_Num_float_base@std@@2_NB
-# extern ?is_exact@_Num_int_base@std@@2_NB
-# extern ?is_iec559@_Num_base@std@@2_NB
-# extern ?is_iec559@_Num_float_base@std@@2_NB
-# extern ?is_integer@_Num_base@std@@2_NB
-# extern ?is_integer@_Num_float_base@std@@2_NB
-# extern ?is_integer@_Num_int_base@std@@2_NB
-# extern ?is_modulo@?$numeric_limits@_N@std@@2_NB
-# extern ?is_modulo@_Num_base@std@@2_NB
-# extern ?is_modulo@_Num_float_base@std@@2_NB
-# extern ?is_modulo@_Num_int_base@std@@2_NB
+@ extern ?is_bounded@_Num_base@std@@2_NB std_Num_base_is_bounded
+@ extern ?is_bounded@_Num_float_base@std@@2_NB std_Num_float_base_is_bounded
+@ extern ?is_bounded@_Num_int_base@std@@2_NB std_Num_int_base_is_bounded
+@ extern ?is_exact@_Num_base@std@@2_NB std_Num_base_is_exact
+@ extern ?is_exact@_Num_float_base@std@@2_NB std_Num_float_base_is_exact
+@ extern ?is_exact@_Num_int_base@std@@2_NB std_Num_int_base_is_exact
+@ extern ?is_iec559@_Num_base@std@@2_NB std_Num_base_is_iec559
+@ extern ?is_iec559@_Num_float_base@std@@2_NB std_Num_float_base_is_iec559
+@ extern ?is_integer@_Num_base@std@@2_NB std_Num_base_is_integer
+@ extern ?is_integer@_Num_float_base@std@@2_NB std_Num_float_base_is_integer
+@ extern ?is_integer@_Num_int_base@std@@2_NB std_Num_int_base_is_integer
+@ extern ?is_modulo@?$numeric_limits@_N@std@@2_NB std_numeric_limits_bool_is_modulo
+@ extern ?is_modulo@_Num_base@std@@2_NB std_Num_base_is_modulo
+@ extern ?is_modulo@_Num_float_base@std@@2_NB std_Num_float_base_is_modulo
+@ extern ?is_modulo@_Num_int_base@std@@2_NB std_Num_int_base_is_modulo
 @ stub -arch=win32 ?is_open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QBE_NXZ
 @ stub -arch=win64 ?is_open@?$basic_filebuf@DU?$char_traits@D@std@@@std@@QEBA_NXZ
 @ stub -arch=win32 ?is_open@?$basic_filebuf@GU?$char_traits@G@std@@@std@@QBE_NXZ
@@ -4427,24 +4427,24 @@
 @ stub -arch=win64 ?is_open@?$basic_ofstream@GU?$char_traits@G@std@@@std@@QEBA_NXZ
 @ stub -arch=win32 ?is_open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QBE_NXZ
 @ stub -arch=win64 ?is_open@?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@QEBA_NXZ
-# extern ?is_signed@?$numeric_limits@C@std@@2_NB
-# extern ?is_signed@?$numeric_limits@D@std@@2_NB
-# extern ?is_signed@?$numeric_limits@E@std@@2_NB
-# extern ?is_signed@?$numeric_limits@F@std@@2_NB
-# extern ?is_signed@?$numeric_limits@G@std@@2_NB
-# extern ?is_signed@?$numeric_limits@H@std@@2_NB
-# extern ?is_signed@?$numeric_limits@I@std@@2_NB
-# extern ?is_signed@?$numeric_limits@J@std@@2_NB
-# extern ?is_signed@?$numeric_limits@K@std@@2_NB
-# extern ?is_signed@?$numeric_limits@_J@std@@2_NB
-# extern ?is_signed@?$numeric_limits@_K@std@@2_NB
-# extern ?is_signed@?$numeric_limits@_N@std@@2_NB
-# extern ?is_signed@?$numeric_limits@_W@std@@2_NB
-# extern ?is_signed@_Num_base@std@@2_NB
-# extern ?is_signed@_Num_float_base@std@@2_NB
-# extern ?is_specialized@_Num_base@std@@2_NB
-# extern ?is_specialized@_Num_float_base@std@@2_NB
-# extern ?is_specialized@_Num_int_base@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@C@std@@2_NB std_numeric_limits_signed_char_is_signed
+@ extern ?is_signed@?$numeric_limits@D@std@@2_NB std_numeric_limits_char_is_signed
+@ extern ?is_signed@?$numeric_limits@E@std@@2_NB std_numeric_limits_unsigned_char_is_signed
+@ extern ?is_signed@?$numeric_limits@F@std@@2_NB std_numeric_limits_short_is_signed
+@ extern ?is_signed@?$numeric_limits@G@std@@2_NB std_numeric_limits_unsigned_short_is_signed
+@ extern ?is_signed@?$numeric_limits@H@std@@2_NB std_numeric_limits_int_is_signed
+@ extern ?is_signed@?$numeric_limits@I@std@@2_NB std_numeric_limits_unsigned_int_is_signed
+@ extern ?is_signed@?$numeric_limits@J@std@@2_NB std_numeric_limits_long_is_signed
+@ extern ?is_signed@?$numeric_limits@K@std@@2_NB std_numeric_limits_unsigned_long_is_signed
+@ extern ?is_signed@?$numeric_limits@_J@std@@2_NB std_numeric_limits_int64_is_signed
+@ extern ?is_signed@?$numeric_limits@_K@std@@2_NB std_numeric_limits_unsigned_int64_is_signed
+@ extern ?is_signed@?$numeric_limits@_N@std@@2_NB std_numeric_limits_bool_is_signed
+@ extern ?is_signed@?$numeric_limits@_W@std@@2_NB std_numeric_limits_wchar_t_is_signed
+@ extern ?is_signed@_Num_base@std@@2_NB std_Num_base_is_signed
+@ extern ?is_signed@_Num_float_base@std@@2_NB std_Num_float_base_is_signed
+@ extern ?is_specialized@_Num_base@std@@2_NB std_Num_base_is_specialized
+@ extern ?is_specialized@_Num_float_base@std@@2_NB std_Num_float_base_is_specialized
+@ extern ?is_specialized@_Num_int_base@std@@2_NB std_Num_int_base_is_specialized
 @ stub -arch=win32 ?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEXXZ
 @ stub -arch=win64 ?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ?isfx@?$basic_istream@GU?$char_traits@G@std@@@std@@QAEXXZ
@@ -4499,14 +4499,14 @@
 @ stub ?max@?$numeric_limits@_K@std@@SA_KXZ
 @ stub ?max@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?max@?$numeric_limits@_W@std@@SA_WXZ
-# extern ?max_exponent10@?$numeric_limits@M@std@@2HB
-# extern ?max_exponent10@?$numeric_limits@N@std@@2HB
-# extern ?max_exponent10@?$numeric_limits@O@std@@2HB
-# extern ?max_exponent10@_Num_base@std@@2HB
-# extern ?max_exponent@?$numeric_limits@M@std@@2HB
-# extern ?max_exponent@?$numeric_limits@N@std@@2HB
-# extern ?max_exponent@?$numeric_limits@O@std@@2HB
-# extern ?max_exponent@_Num_base@std@@2HB
+@ extern ?max_exponent10@?$numeric_limits@M@std@@2HB std_numeric_limits_float_max_exponent10
+@ extern ?max_exponent10@?$numeric_limits@N@std@@2HB std_numeric_limits_double_max_exponent10
+@ extern ?max_exponent10@?$numeric_limits@O@std@@2HB std_numeric_limits_long_double_max_exponent10
+@ extern ?max_exponent10@_Num_base@std@@2HB std_Num_base_max_exponent10
+@ extern ?max_exponent@?$numeric_limits@M@std@@2HB std_numeric_limits_float_max_exponent
+@ extern ?max_exponent@?$numeric_limits@N@std@@2HB std_numeric_limits_double_max_exponent
+@ extern ?max_exponent@?$numeric_limits@O@std@@2HB std_numeric_limits_long_double_max_exponent
+@ extern ?max_exponent@_Num_base@std@@2HB std_Num_base_max_exponent
 @ stub -arch=win32 ?max_length@codecvt_base@std@@QBEHXZ
 @ stub -arch=win64 ?max_length@codecvt_base@std@@QEBAHXZ
 @ thiscall -arch=win32 ?max_size@?$allocator@D@std@@QBEIXZ(ptr) MSVCP_allocator_char_max_size
@@ -4537,14 +4537,14 @@
 @ stub ?min@?$numeric_limits@_K@std@@SA_KXZ
 @ stub ?min@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?min@?$numeric_limits@_W@std@@SA_WXZ
-# extern ?min_exponent10@?$numeric_limits@M@std@@2HB
-# extern ?min_exponent10@?$numeric_limits@N@std@@2HB
-# extern ?min_exponent10@?$numeric_limits@O@std@@2HB
-# extern ?min_exponent10@_Num_base@std@@2HB
-# extern ?min_exponent@?$numeric_limits@M@std@@2HB
-# extern ?min_exponent@?$numeric_limits@N@std@@2HB
-# extern ?min_exponent@?$numeric_limits@O@std@@2HB
-# extern ?min_exponent@_Num_base@std@@2HB
+@ extern ?min_exponent10@?$numeric_limits@M@std@@2HB std_numeric_limits_float_min_exponent10
+@ extern ?min_exponent10@?$numeric_limits@N@std@@2HB std_numeric_limits_double_min_exponent10
+@ extern ?min_exponent10@?$numeric_limits@O@std@@2HB std_numeric_limits_long_double_min_exponent10
+@ extern ?min_exponent10@_Num_base@std@@2HB std_Num_base_min_exponent10
+@ extern ?min_exponent@?$numeric_limits@M@std@@2HB std_numeric_limits_float_min_exponent
+@ extern ?min_exponent@?$numeric_limits@N@std@@2HB std_numeric_limits_double_min_exponent
+@ extern ?min_exponent@?$numeric_limits@O@std@@2HB std_numeric_limits_long_double_min_exponent
+@ extern ?min_exponent@_Num_base@std@@2HB std_Num_base_min_exponent
 @ cdecl -arch=win32 ?move@?$char_traits@D@std@@SAPADPADPBDI@Z(ptr ptr long) MSVCP_char_traits_char_move
 @ cdecl -arch=win64 ?move@?$char_traits@D@std@@SAPEADPEADPEBD_K@Z(ptr ptr long) MSVCP_char_traits_char_move
 @ cdecl -arch=win32 ?move@?$char_traits@G@std@@SAPAGPAGPBGI@Z(ptr ptr long) MSVCP_char_traits_short_move
@@ -4998,9 +4998,9 @@
 @ stub ?quiet_NaN@?$numeric_limits@_K@std@@SA_KXZ
 @ stub ?quiet_NaN@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?quiet_NaN@?$numeric_limits@_W@std@@SA_WXZ
-# extern ?radix@_Num_base@std@@2HB
-# extern ?radix@_Num_float_base@std@@2HB
-# extern ?radix@_Num_int_base@std@@2HB
+@ extern ?radix@_Num_base@std@@2HB std_Num_base_radix
+@ extern ?radix@_Num_float_base@std@@2HB std_Num_float_base_radix
+@ extern ?radix@_Num_int_base@std@@2HB std_Num_int_base_radix
 @ stub -arch=win32 ?rbegin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$reverse_iterator@V?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@XZ
 @ stub -arch=win64 ?rbegin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA?AV?$reverse_iterator@V?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@XZ
 @ stub -arch=win32 ?rbegin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$reverse_iterator@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@XZ
@@ -5226,8 +5226,8 @@
 @ stub ?round_error@?$numeric_limits@_K@std@@SA_KXZ
 @ stub ?round_error@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?round_error@?$numeric_limits@_W@std@@SA_WXZ
-# extern ?round_style@_Num_base@std@@2W4float_round_style@2@B
-# extern ?round_style@_Num_float_base@std@@2W4float_round_style@2@B
+@ extern ?round_style@_Num_base@std@@2W4float_round_style@2@B std_Num_base_round_style
+@ extern ?round_style@_Num_float_base@std@@2W4float_round_style@2@B std_Num_float_base_round_style
 @ stub -arch=win32 ?sbumpc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ
 @ stub -arch=win64 ?sbumpc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ
 @ stub -arch=win32 ?sbumpc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGXZ
@@ -5576,8 +5576,8 @@
 @ stub -arch=win64 ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAPEAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@PEAV32@@Z
 @ stub -arch=win32 ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@XZ
 @ stub -arch=win64 ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEBAPEAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@XZ
-# extern ?tinyness_before@_Num_base@std@@2_NB
-# extern ?tinyness_before@_Num_float_base@std@@2_NB
+@ extern ?tinyness_before@_Num_base@std@@2_NB std_Num_base_tinyness_before
+@ extern ?tinyness_before@_Num_float_base@std@@2_NB std_Num_float_base_tinyness_before
 @ cdecl -arch=win32 ?to_char_type@?$char_traits@D@std@@SADABH@Z(ptr) MSVCP_char_traits_char_to_char_type
 @ cdecl -arch=win64 ?to_char_type@?$char_traits@D@std@@SADAEBH@Z(ptr) MSVCP_char_traits_char_to_char_type
 @ cdecl -arch=win32 ?to_char_type@?$char_traits@G@std@@SAGABG@Z(ptr) MSVCP_char_traits_short_to_char_type
@@ -5620,8 +5620,8 @@
 @ stub -arch=win64 ?transform@?$collate@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PEBG0@Z
 @ stub -arch=win32 ?transform@?$collate@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PB_W0@Z
 @ stub -arch=win64 ?transform@?$collate@_W@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PEB_W0@Z
-# extern ?traps@_Num_base@std@@2_NB
-# extern ?traps@_Num_float_base@std@@2_NB
+@ extern ?traps@_Num_base@std@@2_NB std_Num_base_traps
+@ extern ?traps@_Num_float_base@std@@2_NB std_Num_float_base_traps
 @ stub -arch=win32 ?truename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?truename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?truename@?$numpunct@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ

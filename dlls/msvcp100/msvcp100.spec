@@ -1307,40 +1307,40 @@
 @ stub ?denorm_min@?$numeric_limits@_K@std@@SA_KXZ
 @ stub ?denorm_min@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?denorm_min@?$numeric_limits@_W@std@@SA_WXZ
-# extern ?digits10@?$numeric_limits@C@std@@2HB
-# extern ?digits10@?$numeric_limits@D@std@@2HB
-# extern ?digits10@?$numeric_limits@E@std@@2HB
-# extern ?digits10@?$numeric_limits@F@std@@2HB
-# extern ?digits10@?$numeric_limits@G@std@@2HB
-# extern ?digits10@?$numeric_limits@H@std@@2HB
-# extern ?digits10@?$numeric_limits@I@std@@2HB
-# extern ?digits10@?$numeric_limits@J@std@@2HB
-# extern ?digits10@?$numeric_limits@K@std@@2HB
-# extern ?digits10@?$numeric_limits@M@std@@2HB
-# extern ?digits10@?$numeric_limits@N@std@@2HB
-# extern ?digits10@?$numeric_limits@O@std@@2HB
-# extern ?digits10@?$numeric_limits@_J@std@@2HB
-# extern ?digits10@?$numeric_limits@_K@std@@2HB
-# extern ?digits10@?$numeric_limits@_N@std@@2HB
-# extern ?digits10@?$numeric_limits@_W@std@@2HB
-# extern ?digits10@_Num_base@std@@2HB
-# extern ?digits@?$numeric_limits@C@std@@2HB
-# extern ?digits@?$numeric_limits@D@std@@2HB
-# extern ?digits@?$numeric_limits@E@std@@2HB
-# extern ?digits@?$numeric_limits@F@std@@2HB
-# extern ?digits@?$numeric_limits@G@std@@2HB
-# extern ?digits@?$numeric_limits@H@std@@2HB
-# extern ?digits@?$numeric_limits@I@std@@2HB
-# extern ?digits@?$numeric_limits@J@std@@2HB
-# extern ?digits@?$numeric_limits@K@std@@2HB
-# extern ?digits@?$numeric_limits@M@std@@2HB
-# extern ?digits@?$numeric_limits@N@std@@2HB
-# extern ?digits@?$numeric_limits@O@std@@2HB
-# extern ?digits@?$numeric_limits@_J@std@@2HB
-# extern ?digits@?$numeric_limits@_K@std@@2HB
-# extern ?digits@?$numeric_limits@_N@std@@2HB
-# extern ?digits@?$numeric_limits@_W@std@@2HB
-# extern ?digits@_Num_base@std@@2HB
+@ extern ?digits10@?$numeric_limits@C@std@@2HB msvcp90.?digits10@?$numeric_limits@C@std@@2HB
+@ extern ?digits10@?$numeric_limits@D@std@@2HB msvcp90.?digits10@?$numeric_limits@D@std@@2HB
+@ extern ?digits10@?$numeric_limits@E@std@@2HB msvcp90.?digits10@?$numeric_limits@E@std@@2HB
+@ extern ?digits10@?$numeric_limits@F@std@@2HB msvcp90.?digits10@?$numeric_limits@F@std@@2HB
+@ extern ?digits10@?$numeric_limits@G@std@@2HB msvcp90.?digits10@?$numeric_limits@G@std@@2HB
+@ extern ?digits10@?$numeric_limits@H@std@@2HB msvcp90.?digits10@?$numeric_limits@H@std@@2HB
+@ extern ?digits10@?$numeric_limits@I@std@@2HB msvcp90.?digits10@?$numeric_limits@I@std@@2HB
+@ extern ?digits10@?$numeric_limits@J@std@@2HB msvcp90.?digits10@?$numeric_limits@J@std@@2HB
+@ extern ?digits10@?$numeric_limits@K@std@@2HB msvcp90.?digits10@?$numeric_limits@K@std@@2HB
+@ extern ?digits10@?$numeric_limits@M@std@@2HB msvcp90.?digits10@?$numeric_limits@M@std@@2HB
+@ extern ?digits10@?$numeric_limits@N@std@@2HB msvcp90.?digits10@?$numeric_limits@N@std@@2HB
+@ extern ?digits10@?$numeric_limits@O@std@@2HB msvcp90.?digits10@?$numeric_limits@O@std@@2HB
+@ extern ?digits10@?$numeric_limits@_J@std@@2HB msvcp90.?digits10@?$numeric_limits@_J@std@@2HB
+@ extern ?digits10@?$numeric_limits@_K@std@@2HB msvcp90.?digits10@?$numeric_limits@_K@std@@2HB
+@ extern ?digits10@?$numeric_limits@_N@std@@2HB msvcp90.?digits10@?$numeric_limits@_N@std@@2HB
+@ extern ?digits10@?$numeric_limits@_W@std@@2HB msvcp90.?digits10@?$numeric_limits@_W@std@@2HB
+@ extern ?digits10@_Num_base@std@@2HB msvcp90.?digits10@_Num_base@std@@2HB
+@ extern ?digits@?$numeric_limits@C@std@@2HB msvcp90.?digits@?$numeric_limits@C@std@@2HB
+@ extern ?digits@?$numeric_limits@D@std@@2HB msvcp90.?digits@?$numeric_limits@D@std@@2HB
+@ extern ?digits@?$numeric_limits@E@std@@2HB msvcp90.?digits@?$numeric_limits@E@std@@2HB
+@ extern ?digits@?$numeric_limits@F@std@@2HB msvcp90.?digits@?$numeric_limits@F@std@@2HB
+@ extern ?digits@?$numeric_limits@G@std@@2HB msvcp90.?digits@?$numeric_limits@G@std@@2HB
+@ extern ?digits@?$numeric_limits@H@std@@2HB msvcp90.?digits@?$numeric_limits@H@std@@2HB
+@ extern ?digits@?$numeric_limits@I@std@@2HB msvcp90.?digits@?$numeric_limits@I@std@@2HB
+@ extern ?digits@?$numeric_limits@J@std@@2HB msvcp90.?digits@?$numeric_limits@J@std@@2HB
+@ extern ?digits@?$numeric_limits@K@std@@2HB msvcp90.?digits@?$numeric_limits@K@std@@2HB
+@ extern ?digits@?$numeric_limits@M@std@@2HB msvcp90.?digits@?$numeric_limits@M@std@@2HB
+@ extern ?digits@?$numeric_limits@N@std@@2HB msvcp90.?digits@?$numeric_limits@N@std@@2HB
+@ extern ?digits@?$numeric_limits@O@std@@2HB msvcp90.?digits@?$numeric_limits@O@std@@2HB
+@ extern ?digits@?$numeric_limits@_J@std@@2HB msvcp90.?digits@?$numeric_limits@_J@std@@2HB
+@ extern ?digits@?$numeric_limits@_K@std@@2HB msvcp90.?digits@?$numeric_limits@_K@std@@2HB
+@ extern ?digits@?$numeric_limits@_N@std@@2HB msvcp90.?digits@?$numeric_limits@_N@std@@2HB
+@ extern ?digits@?$numeric_limits@_W@std@@2HB msvcp90.?digits@?$numeric_limits@_W@std@@2HB
+@ extern ?digits@_Num_base@std@@2HB msvcp90.?digits@_Num_base@std@@2HB
 @ stub -arch=win32 ?do_always_noconv@?$codecvt@GDH@std@@MBE_NXZ
 @ stub -arch=win64 ?do_always_noconv@?$codecvt@GDH@std@@MEBA_NXZ
 @ stub -arch=win32 ?do_always_noconv@?$codecvt@_WDH@std@@MBE_NXZ
@@ -1884,16 +1884,16 @@
 @ stub -arch=win64 ?gptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ
 @ stub -arch=win32 ?gptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ
 @ stub -arch=win64 ?gptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBAPEA_WXZ
-# extern ?has_denorm@_Num_base@std@@2W4float_denorm_style@2@B
-# extern ?has_denorm@_Num_float_base@std@@2W4float_denorm_style@2@B
-# extern ?has_denorm_loss@_Num_base@std@@2_NB
-# extern ?has_denorm_loss@_Num_float_base@std@@2_NB
-# extern ?has_infinity@_Num_base@std@@2_NB
-# extern ?has_infinity@_Num_float_base@std@@2_NB
-# extern ?has_quiet_NaN@_Num_base@std@@2_NB
-# extern ?has_quiet_NaN@_Num_float_base@std@@2_NB
-# extern ?has_signaling_NaN@_Num_base@std@@2_NB
-# extern ?has_signaling_NaN@_Num_float_base@std@@2_NB
+@ extern ?has_denorm@_Num_base@std@@2W4float_denorm_style@2@B msvcp90.?has_denorm@_Num_base@std@@2W4float_denorm_style@2@B
+@ extern ?has_denorm@_Num_float_base@std@@2W4float_denorm_style@2@B msvcp90.?has_denorm@_Num_float_base@std@@2W4float_denorm_style@2@B
+@ extern ?has_denorm_loss@_Num_base@std@@2_NB msvcp90.?has_denorm_loss@_Num_base@std@@2_NB
+@ extern ?has_denorm_loss@_Num_float_base@std@@2_NB msvcp90.?has_denorm_loss@_Num_float_base@std@@2_NB
+@ extern ?has_infinity@_Num_base@std@@2_NB msvcp90.?has_infinity@_Num_base@std@@2_NB
+@ extern ?has_infinity@_Num_float_base@std@@2_NB msvcp90.?has_infinity@_Num_float_base@std@@2_NB
+@ extern ?has_quiet_NaN@_Num_base@std@@2_NB msvcp90.?has_quiet_NaN@_Num_base@std@@2_NB
+@ extern ?has_quiet_NaN@_Num_float_base@std@@2_NB msvcp90.?has_quiet_NaN@_Num_float_base@std@@2_NB
+@ extern ?has_signaling_NaN@_Num_base@std@@2_NB msvcp90.?has_signaling_NaN@_Num_base@std@@2_NB
+@ extern ?has_signaling_NaN@_Num_float_base@std@@2_NB msvcp90.?has_signaling_NaN@_Num_float_base@std@@2_NB
 # extern ?id@?$codecvt@DDH@std@@2V0locale@2@A
 # extern ?id@?$codecvt@GDH@std@@2V0locale@2@A
 # extern ?id@?$codecvt@_WDH@std@@2V0locale@2@A
@@ -2013,40 +2013,40 @@
 @ stub -arch=win64 ?is@?$ctype@_W@std@@QEBAPEB_WPEB_W0PEAF@Z
 @ stub -arch=win32 ?is@?$ctype@_W@std@@QBE_NF_W@Z
 @ stub -arch=win64 ?is@?$ctype@_W@std@@QEBA_NF_W@Z
-# extern ?is_bounded@_Num_base@std@@2_NB
-# extern ?is_bounded@_Num_float_base@std@@2_NB
-# extern ?is_bounded@_Num_int_base@std@@2_NB
+@ extern ?is_bounded@_Num_base@std@@2_NB msvcp90.?is_bounded@_Num_base@std@@2_NB
+@ extern ?is_bounded@_Num_float_base@std@@2_NB msvcp90.?is_bounded@_Num_float_base@std@@2_NB
+@ extern ?is_bounded@_Num_int_base@std@@2_NB msvcp90.?is_bounded@_Num_int_base@std@@2_NB
 @ stub ?is_current_task_group_canceling@Concurrency@@YA_NXZ
-# extern ?is_exact@_Num_base@std@@2_NB
-# extern ?is_exact@_Num_float_base@std@@2_NB
-# extern ?is_exact@_Num_int_base@std@@2_NB
-# extern ?is_iec559@_Num_base@std@@2_NB
-# extern ?is_iec559@_Num_float_base@std@@2_NB
-# extern ?is_integer@_Num_base@std@@2_NB
-# extern ?is_integer@_Num_float_base@std@@2_NB
-# extern ?is_integer@_Num_int_base@std@@2_NB
-# extern ?is_modulo@?$numeric_limits@_N@std@@2_NB
-# extern ?is_modulo@_Num_base@std@@2_NB
-# extern ?is_modulo@_Num_float_base@std@@2_NB
-# extern ?is_modulo@_Num_int_base@std@@2_NB
-# extern ?is_signed@?$numeric_limits@C@std@@2_NB
-# extern ?is_signed@?$numeric_limits@D@std@@2_NB
-# extern ?is_signed@?$numeric_limits@E@std@@2_NB
-# extern ?is_signed@?$numeric_limits@F@std@@2_NB
-# extern ?is_signed@?$numeric_limits@G@std@@2_NB
-# extern ?is_signed@?$numeric_limits@H@std@@2_NB
-# extern ?is_signed@?$numeric_limits@I@std@@2_NB
-# extern ?is_signed@?$numeric_limits@J@std@@2_NB
-# extern ?is_signed@?$numeric_limits@K@std@@2_NB
-# extern ?is_signed@?$numeric_limits@_J@std@@2_NB
-# extern ?is_signed@?$numeric_limits@_K@std@@2_NB
-# extern ?is_signed@?$numeric_limits@_N@std@@2_NB
-# extern ?is_signed@?$numeric_limits@_W@std@@2_NB
-# extern ?is_signed@_Num_base@std@@2_NB
-# extern ?is_signed@_Num_float_base@std@@2_NB
-# extern ?is_specialized@_Num_base@std@@2_NB
-# extern ?is_specialized@_Num_float_base@std@@2_NB
-# extern ?is_specialized@_Num_int_base@std@@2_NB
+@ extern ?is_exact@_Num_base@std@@2_NB msvcp90.?is_exact@_Num_base@std@@2_NB
+@ extern ?is_exact@_Num_float_base@std@@2_NB msvcp90.?is_exact@_Num_float_base@std@@2_NB
+@ extern ?is_exact@_Num_int_base@std@@2_NB msvcp90.?is_exact@_Num_int_base@std@@2_NB
+@ extern ?is_iec559@_Num_base@std@@2_NB msvcp90.?is_iec559@_Num_base@std@@2_NB
+@ extern ?is_iec559@_Num_float_base@std@@2_NB msvcp90.?is_iec559@_Num_float_base@std@@2_NB
+@ extern ?is_integer@_Num_base@std@@2_NB msvcp90.?is_integer@_Num_base@std@@2_NB
+@ extern ?is_integer@_Num_float_base@std@@2_NB msvcp90.?is_integer@_Num_float_base@std@@2_NB
+@ extern ?is_integer@_Num_int_base@std@@2_NB msvcp90.?is_integer@_Num_int_base@std@@2_NB
+@ extern ?is_modulo@?$numeric_limits@_N@std@@2_NB msvcp90.?is_modulo@?$numeric_limits@_N@std@@2_NB
+@ extern ?is_modulo@_Num_base@std@@2_NB msvcp90.?is_modulo@_Num_base@std@@2_NB
+@ extern ?is_modulo@_Num_float_base@std@@2_NB msvcp90.?is_modulo@_Num_float_base@std@@2_NB
+@ extern ?is_modulo@_Num_int_base@std@@2_NB msvcp90.?is_modulo@_Num_int_base@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@C@std@@2_NB msvcp90.?is_signed@?$numeric_limits@C@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@D@std@@2_NB msvcp90.?is_signed@?$numeric_limits@D@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@E@std@@2_NB msvcp90.?is_signed@?$numeric_limits@E@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@F@std@@2_NB msvcp90.?is_signed@?$numeric_limits@F@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@G@std@@2_NB msvcp90.?is_signed@?$numeric_limits@G@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@H@std@@2_NB msvcp90.?is_signed@?$numeric_limits@H@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@I@std@@2_NB msvcp90.?is_signed@?$numeric_limits@I@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@J@std@@2_NB msvcp90.?is_signed@?$numeric_limits@J@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@K@std@@2_NB msvcp90.?is_signed@?$numeric_limits@K@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@_J@std@@2_NB msvcp90.?is_signed@?$numeric_limits@_J@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@_K@std@@2_NB msvcp90.?is_signed@?$numeric_limits@_K@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@_N@std@@2_NB msvcp90.?is_signed@?$numeric_limits@_N@std@@2_NB
+@ extern ?is_signed@?$numeric_limits@_W@std@@2_NB msvcp90.?is_signed@?$numeric_limits@_W@std@@2_NB
+@ extern ?is_signed@_Num_base@std@@2_NB msvcp90.?is_signed@_Num_base@std@@2_NB
+@ extern ?is_signed@_Num_float_base@std@@2_NB msvcp90.?is_signed@_Num_float_base@std@@2_NB
+@ extern ?is_specialized@_Num_base@std@@2_NB msvcp90.?is_specialized@_Num_base@std@@2_NB
+@ extern ?is_specialized@_Num_float_base@std@@2_NB msvcp90.?is_specialized@_Num_float_base@std@@2_NB
+@ extern ?is_specialized@_Num_int_base@std@@2_NB msvcp90.?is_specialized@_Num_int_base@std@@2_NB
 @ stub -arch=win32 ?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEXXZ
 @ stub -arch=win64 ?isfx@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ?isfx@?$basic_istream@GU?$char_traits@G@std@@@std@@QAEXXZ
@@ -2110,14 +2110,14 @@
 @ stub ?max_digits10@?$numeric_limits@_N@std@@2HB
 @ stub ?max_digits10@?$numeric_limits@_W@std@@2HB
 @ stub ?max_digits10@_Num_base@std@@2HB
-# extern ?max_exponent10@?$numeric_limits@M@std@@2HB
-# extern ?max_exponent10@?$numeric_limits@N@std@@2HB
-# extern ?max_exponent10@?$numeric_limits@O@std@@2HB
-# extern ?max_exponent10@_Num_base@std@@2HB
-# extern ?max_exponent@?$numeric_limits@M@std@@2HB
-# extern ?max_exponent@?$numeric_limits@N@std@@2HB
-# extern ?max_exponent@?$numeric_limits@O@std@@2HB
-# extern ?max_exponent@_Num_base@std@@2HB
+@ extern ?max_exponent10@?$numeric_limits@M@std@@2HB msvcp90.?max_exponent10@?$numeric_limits@M@std@@2HB
+@ extern ?max_exponent10@?$numeric_limits@N@std@@2HB msvcp90.?max_exponent10@?$numeric_limits@N@std@@2HB
+@ extern ?max_exponent10@?$numeric_limits@O@std@@2HB msvcp90.?max_exponent10@?$numeric_limits@O@std@@2HB
+@ extern ?max_exponent10@_Num_base@std@@2HB msvcp90.?max_exponent10@_Num_base@std@@2HB
+@ extern ?max_exponent@?$numeric_limits@M@std@@2HB msvcp90.?max_exponent@?$numeric_limits@M@std@@2HB
+@ extern ?max_exponent@?$numeric_limits@N@std@@2HB msvcp90.?max_exponent@?$numeric_limits@N@std@@2HB
+@ extern ?max_exponent@?$numeric_limits@O@std@@2HB msvcp90.?max_exponent@?$numeric_limits@O@std@@2HB
+@ extern ?max_exponent@_Num_base@std@@2HB msvcp90.?max_exponent@_Num_base@std@@2HB
 @ stub -arch=win32 ?max_length@codecvt_base@std@@QBEHXZ
 @ stub -arch=win64 ?max_length@codecvt_base@std@@QEBAHXZ
 @ stub ?min@?$numeric_limits@C@std@@SACXZ
@@ -2136,14 +2136,14 @@
 @ stub ?min@?$numeric_limits@_K@std@@SA_KXZ
 @ stub ?min@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?min@?$numeric_limits@_W@std@@SA_WXZ
-# extern ?min_exponent10@?$numeric_limits@M@std@@2HB
-# extern ?min_exponent10@?$numeric_limits@N@std@@2HB
-# extern ?min_exponent10@?$numeric_limits@O@std@@2HB
-# extern ?min_exponent10@_Num_base@std@@2HB
-# extern ?min_exponent@?$numeric_limits@M@std@@2HB
-# extern ?min_exponent@?$numeric_limits@N@std@@2HB
-# extern ?min_exponent@?$numeric_limits@O@std@@2HB
-# extern ?min_exponent@_Num_base@std@@2HB
+@ extern ?min_exponent10@?$numeric_limits@M@std@@2HB msvcp90.?min_exponent10@?$numeric_limits@M@std@@2HB
+@ extern ?min_exponent10@?$numeric_limits@N@std@@2HB msvcp90.?min_exponent10@?$numeric_limits@N@std@@2HB
+@ extern ?min_exponent10@?$numeric_limits@O@std@@2HB msvcp90.?min_exponent10@?$numeric_limits@O@std@@2HB
+@ extern ?min_exponent10@_Num_base@std@@2HB msvcp90.?min_exponent10@_Num_base@std@@2HB
+@ extern ?min_exponent@?$numeric_limits@M@std@@2HB msvcp90.?min_exponent@?$numeric_limits@M@std@@2HB
+@ extern ?min_exponent@?$numeric_limits@N@std@@2HB msvcp90.?min_exponent@?$numeric_limits@N@std@@2HB
+@ extern ?min_exponent@?$numeric_limits@O@std@@2HB msvcp90.?min_exponent@?$numeric_limits@O@std@@2HB
+@ extern ?min_exponent@_Num_base@std@@2HB msvcp90.?min_exponent@_Num_base@std@@2HB
 @ stub -arch=win32 ?move@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEX$$QAV12@@Z
 @ stub -arch=win64 ?move@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAX$$QEAV12@@Z
 @ stub -arch=win32 ?move@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEX$$QAV12@@Z
@@ -2358,9 +2358,9 @@
 @ stub ?quiet_NaN@?$numeric_limits@_K@std@@SA_KXZ
 @ stub ?quiet_NaN@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?quiet_NaN@?$numeric_limits@_W@std@@SA_WXZ
-# extern ?radix@_Num_base@std@@2HB
-# extern ?radix@_Num_float_base@std@@2HB
-# extern ?radix@_Num_int_base@std@@2HB
+@ extern ?radix@_Num_base@std@@2HB msvcp90.?radix@_Num_base@std@@2HB
+@ extern ?radix@_Num_float_base@std@@2HB msvcp90.?radix@_Num_float_base@std@@2HB
+@ extern ?radix@_Num_int_base@std@@2HB msvcp90.?radix@_Num_int_base@std@@2HB
 @ stub -arch=win32 ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PAV32@@Z
 @ stub -arch=win64 ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PEAV32@@Z
 @ stub -arch=win32 ?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@XZ
@@ -2406,8 +2406,8 @@
 @ stub ?round_error@?$numeric_limits@_K@std@@SA_KXZ
 @ stub ?round_error@?$numeric_limits@_N@std@@SA_NXZ
 @ stub ?round_error@?$numeric_limits@_W@std@@SA_WXZ
-# extern ?round_style@_Num_base@std@@2W4float_round_style@2@B
-# extern ?round_style@_Num_float_base@std@@2W4float_round_style@2@B
+@ extern ?round_style@_Num_base@std@@2W4float_round_style@2@B msvcp90.?round_style@_Num_base@std@@2W4float_round_style@2@B
+@ extern ?round_style@_Num_float_base@std@@2W4float_round_style@2@B msvcp90.?round_style@_Num_float_base@std@@2W4float_round_style@2@B
 @ stub -arch=win32 ?sbumpc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ
 @ stub -arch=win64 ?sbumpc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ
 @ stub -arch=win32 ?sbumpc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEGXZ
@@ -2671,8 +2671,8 @@
 @ stub -arch=win64 ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAPEAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@PEAV32@@Z
 @ stub -arch=win32 ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QBEPAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@XZ
 @ stub -arch=win64 ?tie@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEBAPEAV?$basic_ostream@_WU?$char_traits@_W@std@@@2@XZ
-# extern ?tinyness_before@_Num_base@std@@2_NB
-# extern ?tinyness_before@_Num_float_base@std@@2_NB
+@ extern ?tinyness_before@_Num_base@std@@2_NB msvcp90.?tinyness_before@_Num_base@std@@2_NB
+@ extern ?tinyness_before@_Num_float_base@std@@2_NB msvcp90.?tinyness_before@_Num_float_base@std@@2_NB
 @ stub -arch=win32 ?tolower@?$ctype@D@std@@QBEDD@Z
 @ stub -arch=win64 ?tolower@?$ctype@D@std@@QEBADD@Z
 @ stub -arch=win32 ?tolower@?$ctype@D@std@@QBEPBDPADPBD@Z
@@ -2697,8 +2697,8 @@
 @ stub -arch=win64 ?toupper@?$ctype@_W@std@@QEBAPEB_WPEA_WPEB_W@Z
 @ stub -arch=win32 ?toupper@?$ctype@_W@std@@QBE_W_W@Z
 @ stub -arch=win64 ?toupper@?$ctype@_W@std@@QEBA_W_W@Z
-# extern ?traps@_Num_base@std@@2_NB
-# extern ?traps@_Num_float_base@std@@2_NB
+@ extern ?traps@_Num_base@std@@2_NB msvcp90.?traps@_Num_base@std@@2_NB
+@ extern ?traps@_Num_float_base@std@@2_NB msvcp90.?traps@_Num_float_base@std@@2_NB
 @ stub -arch=win32 ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ
 @ stub -arch=win64 ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ
 @ stub -arch=win32 ?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGXZ
