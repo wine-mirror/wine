@@ -310,10 +310,10 @@ static void test_VarFormat(void)
   }
 
   /* Named time formats */
-  GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_STIME, buff, sizeof(buff)/sizeof(char));
-  if (buff[0] != ':' || buff[1])
+  GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_STIMEFORMAT, buff, sizeof(buff)/sizeof(char));
+  if (strcmp(buff, "h:mm:ss tt"))
   {
-    skip("Skipping namedtime tests as time separator is '%s'\n", buff);
+    skip("Skipping named time tests as time format is '%s'\n", buff);
   }
   else
   {
