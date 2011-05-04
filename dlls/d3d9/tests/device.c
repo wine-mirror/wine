@@ -2859,7 +2859,7 @@ static void test_reset_fullscreen(void)
     ok(SUCCEEDED(reset_device(device, device_window, FALSE)), "Failed to reset device.\n");
 
     flush_events();
-    todo_wine ok(expect_messages->message == 0, "Expected to receive message %#x.\n", expect_messages->message);
+    ok(expect_messages->message == 0, "Expected to receive message %#x.\n", expect_messages->message);
     expect_messages = NULL;
 
 cleanup:

@@ -6544,9 +6544,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
     if (!pPresentationParameters->Windowed != !swapchain->presentParms.Windowed
             || DisplayModeChanged)
     {
-        BOOL filter = This->filter_messages;
-        This->filter_messages = TRUE;
-
         IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
 
         if (!pPresentationParameters->Windowed)
@@ -6559,7 +6556,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
                 {
                     ERR("Failed to acquire focus window, hr %#x.\n", hr);
                     wined3d_swapchain_decref(swapchain);
-                    This->filter_messages = filter;
                     return hr;
                 }
 
@@ -6583,8 +6579,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice *iface,
             IWineD3DDevice_ReleaseFocusWindow(iface);
         }
         swapchain->presentParms.Windowed = pPresentationParameters->Windowed;
-
-        This->filter_messages = filter;
     }
     else if (!pPresentationParameters->Windowed)
     {
