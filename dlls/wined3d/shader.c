@@ -1528,7 +1528,8 @@ static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)
     return FALSE;
 }
 
-const shader_backend_t none_shader_backend = {
+const struct wined3d_shader_backend_ops none_shader_backend =
+{
     shader_none_handle_instruction,
     shader_none_select,
     shader_none_select_depth_blt,

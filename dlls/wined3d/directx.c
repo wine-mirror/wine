@@ -2071,7 +2071,7 @@ static const struct fragment_pipeline *select_fragment_implementation(struct win
     else return &ffp_fragment_pipeline;
 }
 
-static const shader_backend_t *select_shader_backend(struct wined3d_adapter *adapter)
+static const struct wined3d_shader_backend_ops *select_shader_backend(struct wined3d_adapter *adapter)
 {
     int vs_selected_mode, ps_selected_mode;
 

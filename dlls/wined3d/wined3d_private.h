@@ -742,7 +742,8 @@ struct vs_compile_args {
 struct wined3d_context;
 struct wined3d_state;
 
-typedef struct {
+struct wined3d_shader_backend_ops
+{
     void (*shader_handle_instruction)(const struct wined3d_shader_instruction *);
     void (*shader_select)(const struct wined3d_context *context, BOOL usePS, BOOL useVS);
     void (*shader_select_depth_blt)(void *shader_priv, const struct wined3d_gl_info *gl_info,
@@ -759,11 +760,11 @@ typedef struct {
     BOOL (*shader_dirtifyable_constants)(void);
     void (*shader_get_caps)(const struct wined3d_gl_info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
-} shader_backend_t;
+};
 
-extern const shader_backend_t glsl_shader_backend DECLSPEC_HIDDEN;
-extern const shader_backend_t arb_program_shader_backend DECLSPEC_HIDDEN;
-extern const shader_backend_t none_shader_backend DECLSPEC_HIDDEN;
+extern const struct wined3d_shader_backend_ops glsl_shader_backend DECLSPEC_HIDDEN;
+extern const struct wined3d_shader_backend_ops arb_program_shader_backend DECLSPEC_HIDDEN;
+extern const struct wined3d_shader_backend_ops none_shader_backend DECLSPEC_HIDDEN;
 
 /* X11 locking */
 
@@ -1532,7 +1533,7 @@ struct wined3d_adapter
     LUID luid;
 
     const struct fragment_pipeline *fragment_pipe;
-    const shader_backend_t *shader_backend;
+    const struct wined3d_shader_backend_ops *shader_backend;
     const struct blit_shader *blitter;
 };
 
@@ -1659,7 +1660,7 @@ struct IWineD3DDeviceImpl
     /* Selected capabilities */
     int vs_selected_mode;
     int ps_selected_mode;
-    const shader_backend_t *shader_backend;
+    const struct wined3d_shader_backend_ops *shader_backend;
     void *shader_priv;
     void *fragment_priv;
     void *blit_priv;

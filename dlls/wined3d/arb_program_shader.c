@@ -5465,7 +5465,8 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     shader_arb_add_instruction_modifiers(ins);
 }
 
-const shader_backend_t arb_program_shader_backend = {
+const struct wined3d_shader_backend_ops arb_program_shader_backend =
+{
     shader_arb_handle_instruction,
     shader_arb_select,
     shader_arb_select_depth_blt,

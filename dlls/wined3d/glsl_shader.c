@@ -5119,7 +5119,8 @@ static void shader_glsl_handle_instruction(const struct wined3d_shader_instructi
     shader_glsl_add_instruction_modifiers(ins);
 }
 
-const shader_backend_t glsl_shader_backend = {
+const struct wined3d_shader_backend_ops glsl_shader_backend =
+{
     shader_glsl_handle_instruction,
     shader_glsl_select,
     shader_glsl_select_depth_blt,
