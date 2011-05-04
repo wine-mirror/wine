@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-21 22:22+0900\n"
+"PO-Revision-Date: 2011-05-04 19:31+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -67,14 +67,12 @@ msgid "All files (*.*)"
 msgstr "すべてのファイル (*.*)"
 
 #: appwiz.rc:42
-#, fuzzy
 msgid "&Remove"
-msgstr "削除(&R)..."
+msgstr "削除(&R)"
 
 #: appwiz.rc:43
-#, fuzzy
 msgid "&Modify/Remove"
-msgstr "変更と削除(&M)..."
+msgstr "変更と削除(&M)"
 
 #: appwiz.rc:48
 msgid "Downloading..."
@@ -133,7 +131,6 @@ msgid "Separator"
 msgstr "区切り"
 
 #: comctl32.rc:44 progman.rc:78
-#, fuzzy
 msgctxt "hotkey"
 msgid "None"
 msgstr "なし"
@@ -359,7 +356,6 @@ msgstr ""
 "余白を再入力してください。"
 
 #: comdlg32.rc:74
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "部数は、空にできません。"
 
@@ -689,7 +685,6 @@ msgid "Unstructured Address"
 msgstr "構造化されていない住所"
 
 #: crypt32.rc:51
-#, fuzzy
 msgid "S/MIME Capabilities"
 msgstr "S/MIME機能"
 
@@ -1246,7 +1241,6 @@ msgid "Path Length Constraint="
 msgstr "Path Length Constraint="
 
 #: crypt32.rc:198
-#, fuzzy
 msgctxt "path length"
 msgid "None"
 msgstr "なし"
@@ -2041,7 +2035,6 @@ msgid "&Forward"
 msgstr "進む(&F)"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "ホーム(&H)"
@@ -2103,7 +2096,6 @@ msgid "Back"
 msgstr "戻る"
 
 #: hhctrl.rc:44
-#, fuzzy
 msgctxt "table of contents"
 msgid "Home"
 msgstr "ホーム"
@@ -6252,9 +6244,8 @@ msgid "Pr&int..."
 msgstr "印刷(&I)..."
 
 #: shdocvw.rc:37 wordpad.rc:34
-#, fuzzy
 msgid "Print previe&w"
-msgstr "印刷プレビュー(&W)..."
+msgstr "印刷プレビュー(&W)"
 
 #: shdocvw.rc:40 oleview.rc:80 taskmgr.rc:139
 msgid "&Close"
@@ -6292,12 +6283,10 @@ msgid "&Help"
 msgstr "ヘルプ(&H)"
 
 #: shdocvw.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "バージョン情報(&A)..."
+msgstr "バージョン情報(&A)"
 
 #: shdocvw.rc:67
-#, fuzzy
 msgctxt "home page"
 msgid "Home"
 msgstr "ホーム"
@@ -9220,9 +9209,8 @@ msgid "&Export Registry File..."
 msgstr "レジストリのエクスポート(&E)..."
 
 #: regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "変更(&M)"
+msgstr "変更(&M)..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -9281,9 +9269,8 @@ msgid "&About Registry Editor"
 msgstr "バージョン情報(&A)"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "バイナリデータを変更"
+msgstr "バイナリデータを変更..."
 
 #: regedit.rc:109
 msgid "&Export..."
@@ -10213,9 +10200,8 @@ msgid "Regular Metafile Viewer"
 msgstr "標準メタファイル ビュアー"
 
 #: winecfg.rc:32
-#, fuzzy
 msgid "Configure..."
-msgstr "Configure"
+msgstr "設定..."
 
 #: winecfg.rc:39
 msgid "Libraries"
@@ -10350,15 +10336,13 @@ msgid "Hardware"
 msgstr "ハードウェア"
 
 #: winecfg.rc:76
-#, fuzzy
 msgctxt "vertex shader mode"
 msgid "None"
 msgstr "なし"
 
 #: winecfg.rc:81
-#, fuzzy
 msgid "Autodetect..."
-msgstr "自動検出"
+msgstr "自動検出..."
 
 #: winecfg.rc:82
 msgid "Local hard disk"
@@ -10766,9 +10750,8 @@ msgid "Re&name..."
 msgstr "名前の変更(&N)..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "プロパティ(&I)...\tAlt+Enter"
+msgstr "プロパティ(&I)\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -10787,9 +10770,8 @@ msgid "&Disk"
 msgstr "ディスク(&D)"
 
 #: winefile.rc:45
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "ネットワークドライブに接続(&N)"
+msgstr "ネットワークドライブに接続(&N)..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
@@ -10820,9 +10802,8 @@ msgid "Sort by &Date"
 msgstr "日付で並べ替え(&D)"
 
 #: winefile.rc:60
-#, fuzzy
 msgid "Filter by&..."
-msgstr "Filter by &..."
+msgstr "フィルタ(&.)..."
 
 #: winefile.rc:67
 msgid "&Drivebar"
@@ -10846,7 +10827,7 @@ msgstr "左右に並べて表示(&V)\tCtrl+F4"
 
 #: winefile.rc:81
 msgid "Arrange &Symbols"
-msgstr "Arrange &Symbols"
+msgstr "アイコンを整列(&S)"
 
 #: winefile.rc:87
 msgid "&About Wine File"
@@ -10854,11 +10835,11 @@ msgstr "バージョン情報(&A)"
 
 #: winefile.rc:93
 msgid "Applying font settings"
-msgstr "Applying font settings"
+msgstr "フォント設定の適用"
 
 #: winefile.rc:94
 msgid "Error while selecting new font."
-msgstr "Error while selecting new font."
+msgstr "新しいフォントの選択中にエラーが発生しました。"
 
 #: winefile.rc:99
 msgid "Wine File Manager"
@@ -10890,15 +10871,15 @@ msgstr "Wine File"
 
 #: winefile.rc:114
 msgid "CDate"
-msgstr "CDate"
+msgstr "作成日"
 
 #: winefile.rc:115
 msgid "ADate"
-msgstr "ADate"
+msgstr "アクセス日"
 
 #: winefile.rc:116
 msgid "MDate"
-msgstr "MDate"
+msgstr "変更日"
 
 #: winefile.rc:117
 msgid "Index/Inode"
@@ -10910,7 +10891,7 @@ msgstr "セキュリティ"
 
 #: winefile.rc:122
 msgid "%s of %s free"
-msgstr "%s of %s free"
+msgstr "%s の空き (全容量 %s)"
 
 #: winemine.rc:34
 msgid "&Game"
