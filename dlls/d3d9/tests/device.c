@@ -2814,6 +2814,63 @@ done:
     UnregisterClassA("d3d9_test_wndproc_wc", GetModuleHandleA(NULL));
 }
 
+static void test_reset_fullscreen(void)
+{
+    WNDCLASSEX wc = {0};
+    IDirect3DDevice9 *device = NULL;
+    IDirect3D9 *d3d = NULL;
+    static const struct message messages[] =
+    {
+        {WM_ACTIVATEAPP,    FOCUS_WINDOW},
+        {0,                     0},
+    };
+
+    d3d = pDirect3DCreate9(D3D_SDK_VERSION);
+    ok(d3d != NULL, "Failed to create an IDirect3D object.\n");
+    expect_messages = messages;
+
+    wc.cbSize = sizeof(WNDCLASSEX);
+    wc.lpfnWndProc = test_proc;
+    wc.lpszClassName = "test_reset_fullscreen";
+
+    ok(RegisterClassEx(&wc), "Failed to register a new window class. GetLastError:%d\n", GetLastError());
+
+    device_window = focus_window = CreateWindowEx(0, wc.lpszClassName, "Test Reset Fullscreen", 0, 0, 0, screen_width, screen_height, NULL, NULL, NULL, NULL);
+    ok(device_window != NULL, "Failed to create a window. GetLastError:%d\n", GetLastError());
+
+    /*
+     * Create a device in windowed mode.
+     * Since the device is windowed and we haven't called any methods that
+     * could show the window (such as ShowWindow or SetWindowPos) yet,
+     * WM_ACTIVATEAPP will not have been sent.
+     */
+    device = create_device(d3d, device_window, focus_window, TRUE);
+    if (!device)
+    {
+        skip("Unable to create device.  Skipping test.");
+        goto cleanup;
+    }
+
+    /*
+     * Switch to fullscreen mode.
+     * This will force the window to be shown and will cause the WM_ACTIVATEAPP
+     * message to be sent.
+     */
+    ok(SUCCEEDED(reset_device(device, device_window, FALSE)), "Failed to reset device.\n");
+
+    flush_events();
+    todo_wine ok(expect_messages->message == 0, "Expected to receive message %#x.\n", expect_messages->message);
+    expect_messages = NULL;
+
+cleanup:
+    if (device) IDirect3DDevice9_Release(device);
+    if (d3d) IDirect3D9_Release(d3d);
+    DestroyWindow(device_window);
+    device_window = focus_window = NULL;
+    UnregisterClass(wc.lpszClassName, GetModuleHandle(NULL));
+}
+
+
 static inline void set_fpu_cw(WORD cw)
 {
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
@@ -3007,6 +3064,7 @@ START_TEST(device)
         test_mipmap_levels();
         test_checkdevicemultisampletype();
         test_cursor();
+        test_reset_fullscreen();
         test_reset();
         test_scene();
         test_limits();
