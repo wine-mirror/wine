@@ -957,6 +957,96 @@ static void test_mxwriter_startenddocument(void)
     free_bstrs();
 }
 
+static void test_mxwriter_startendelement(void)
+{
+    static const char winehqA[] = "http://winehq.org";
+    ISAXContentHandler *content;
+    IMXWriter *writer;
+    VARIANT dest;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_startDocument(content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    /* qualified name without defined namespace */
+    hr = ISAXContentHandler_startElement(content, NULL, 0, NULL, 0, _bstr_("a:b"), 3, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_startElement(content, NULL, 0, _bstr_("b"), 1, _bstr_("a:b"), 3, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    /* only local name is an error too */
+    hr = ISAXContentHandler_startElement(content, NULL, 0, _bstr_("b"), 1, NULL, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    /* only local name is an error too */
+    hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_("b"), 1, NULL, 0, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    /* all string pointers should be not null */
+    hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_("b"), 1, _bstr_(""), 0, NULL);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    todo_wine ok(!lstrcmpW(_bstr_("<>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("b"), 1, NULL);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    todo_wine ok(!lstrcmpW(_bstr_("<><b>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    hr = ISAXContentHandler_endElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("b"), 1);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    todo_wine ok(!lstrcmpW(_bstr_("<><b></b>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    /* some with namespace URI */
+    hr = ISAXContentHandler_startElement(content, _bstr_(winehqA), sizeof(winehqA), _bstr_(""), 0, _bstr_("nspace:c"), 8, NULL);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_endElement(content, _bstr_(winehqA), sizeof(winehqA), _bstr_(""), 0, _bstr_("nspace:c"), 8);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    todo_wine ok(!lstrcmpW(_bstr_("<><b></b><nspace:c/>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    hr = ISAXContentHandler_endDocument(content);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
+
+    free_bstrs();
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -988,6 +1078,7 @@ START_TEST(saxreader)
 
         test_mxwriter_contenthandler();
         test_mxwriter_startenddocument();
+        test_mxwriter_startendelement();
         test_mxwriter_properties();
         test_mxwriter_flush();
     }
