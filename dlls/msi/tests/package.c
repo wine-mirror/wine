@@ -7983,10 +7983,7 @@ static void test_appsearch(void)
     size = sizeof(prop);
     r = MsiGetPropertyA( hpkg, "WEBBROWSERPROG", prop, &size );
     ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
-    todo_wine
-    {
-        ok( lstrlenA(prop) != 0, "Expected non-zero length\n");
-    }
+    ok( lstrlenA(prop) != 0, "Expected non-zero length\n");
 
     size = sizeof(prop);
     r = MsiGetPropertyA( hpkg, "NOTEPAD", prop, &size );
