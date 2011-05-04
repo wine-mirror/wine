@@ -326,6 +326,7 @@ static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
                 break;
 
             case D3DXPT_PIXELSHADER:
+            case D3DXPT_VERTEXSHADER:
                 if (*(IUnknown **)param->data) IUnknown_Release(*(IUnknown **)param->data);
                 break;
 
@@ -997,7 +998,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetValue(ID3DXBaseEffect *iface, D3DXH
 
     if (data && param && param->data && param->bytes <= bytes)
     {
-        if (param->type == D3DXPT_PIXELSHADER)
+        if (param->type == D3DXPT_VERTEXSHADER || param->type == D3DXPT_PIXELSHADER)
         {
             UINT i;
 
@@ -1346,10 +1347,23 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetPixelShader(ID3DXBaseEffect *iface,
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetVertexShader(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPDIRECT3DVERTEXSHADER9 *vshader)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, vshader %p stub\n", This, parameter, vshader);
+    TRACE("iface %p, parameter %p, vshader %p\n", This, parameter, vshader);
 
-    return E_NOTIMPL;
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
+
+    if (vshader && param && !param->element_count && param->type == D3DXPT_VERTEXSHADER)
+    {
+        *vshader = *(LPDIRECT3DVERTEXSHADER9 *)param->data;
+        if (*vshader) IDirect3DVertexShader9_AddRef(*vshader);
+        TRACE("Returning %p\n", *vshader);
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetArrayRange(ID3DXBaseEffect *iface, D3DXHANDLE parameter, UINT start, UINT end)
@@ -3086,6 +3100,7 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, cons
             {
                 case D3DXPT_STRING:
                 case D3DXPT_PIXELSHADER:
+                case D3DXPT_VERTEXSHADER:
                     read_dword(ptr, &id);
                     TRACE("Id: %u\n", id);
                     param->base->objects[id] = get_parameter_handle(param);
@@ -3191,6 +3206,15 @@ static HRESULT d3dx9_parse_data(struct d3dx_parameter *param, const char **ptr)
             }
             break;
 
+        case D3DXPT_VERTEXSHADER:
+            hr = IDirect3DDevice9_CreateVertexShader(param->base->effect->device, (DWORD *)*ptr, (LPDIRECT3DVERTEXSHADER9 *)param->data);
+            if (hr != D3D_OK)
+            {
+                WARN("Failed to create vertex shader\n");
+                return hr;
+            }
+            break;
+
         case D3DXPT_PIXELSHADER:
             hr = IDirect3DDevice9_CreatePixelShader(param->base->effect->device, (DWORD *)*ptr, (LPDIRECT3DPIXELSHADER9 *)param->data);
             if (hr != D3D_OK)
@@ -3290,6 +3314,10 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
 
                     case D3DXPT_PIXELSHADER:
                         param->bytes = sizeof(LPDIRECT3DPIXELSHADER9);
+                        break;
+
+                    case D3DXPT_VERTEXSHADER:
+                        param->bytes = sizeof(LPDIRECT3DVERTEXSHADER9);
                         break;
 
                     default:
