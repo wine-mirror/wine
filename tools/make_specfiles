@@ -198,7 +198,7 @@ sub update_spec_file($)
 
         my %parent = %{$funcs{$func}};
         goto done if $parent{spec} eq $descr{spec};  # the definition is in this spec file
-        if ($descr{callconv} ne "stub" && $descr{target} !~ /\./)
+        if ($descr{callconv} ne "stub" && $descr{target} !~ /\./ && !$commented_out)
         {
             printf "%s:%u: note: %s already defined in %s\n", $file, $., $func, $parent{spec} if $show_duplicates;
             goto done;
