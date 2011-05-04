@@ -3241,11 +3241,24 @@ static void test_GetGlyphOutline(void)
 
         old_hfont = SelectObject(hdc, hfont);
 
+        /* expected to ignore superfluous bytes (sigle-byte character) */
         ret = GetGlyphOutlineA(hdc, 0x8041, GGO_BITMAP, &gm, 0, NULL, &mat);
         ret2 = GetGlyphOutlineA(hdc, 0x41, GGO_BITMAP, &gm2, 0, NULL, &mat);
         ok(ret == ret2 && memcmp(&gm, &gm2, sizeof gm) == 0, "%d %d\n", ret, ret2);
 
+        ret = GetGlyphOutlineA(hdc, 0xcc8041, GGO_BITMAP, &gm, 0, NULL, &mat);
+        todo_wine
+        ok(ret == ret2 && memcmp(&gm, &gm2, sizeof gm) == 0,
+           "Expected to ignore superfluous bytes, got %d %d\n", ret, ret2);
+
+        /* expected to ignore superfluous bytes (double-byte character) */
         ret = GetGlyphOutlineA(hdc, c[i].a, GGO_BITMAP, &gm, 0, NULL, &mat);
+        ret2 = GetGlyphOutlineA(hdc, c[i].a | 0xdead0000, GGO_BITMAP, &gm2, 0, NULL, &mat);
+        todo_wine
+        ok(ret == ret2 && memcmp(&gm, &gm2, sizeof gm) == 0,
+           "Expected to ignore superfluous bytes, got %d %d\n", ret, ret2);
+
+        /* expected to match wide-char version results */
         ret2 = GetGlyphOutlineW(hdc, c[i].w, GGO_BITMAP, &gm2, 0, NULL, &mat);
         ok(ret == ret2 && memcmp(&gm, &gm2, sizeof gm) == 0, "%d %d\n", ret, ret2);
 
