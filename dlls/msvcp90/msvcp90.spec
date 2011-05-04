@@ -1356,12 +1356,12 @@
 @ stub -arch=win64 ??4?$_Complex_base@NU_C_double_complex@@@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4?$_Complex_base@OU_C_ldouble_complex@@@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4?$_Complex_base@OU_C_ldouble_complex@@@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$_Ctraits@M@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$_Ctraits@M@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$_Ctraits@N@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$_Ctraits@N@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$_Ctraits@O@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$_Ctraits@O@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$_Ctraits@M@std@@QAEAAV01@ABV01@@Z(ptr) std_Ctraits_op_assign
+@ cdecl -arch=win64 ??4?$_Ctraits@M@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Ctraits_op_assign
+@ thiscall -arch=win32 ??4?$_Ctraits@N@std@@QAEAAV01@ABV01@@Z(ptr) std_Ctraits_op_assign
+@ cdecl -arch=win64 ??4?$_Ctraits@N@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Ctraits_op_assign
+@ thiscall -arch=win32 ??4?$_Ctraits@O@std@@QAEAAV01@ABV01@@Z(ptr) std_Ctraits_op_assign
+@ cdecl -arch=win64 ??4?$_Ctraits@O@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Ctraits_op_assign
 @ stub -arch=win32 ??4?$_Iosb@H@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4?$_Iosb@H@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4?$_Locbase@H@std@@QAEAAV01@ABV01@@Z
@@ -3024,9 +3024,9 @@
 @ cdecl -arch=win64 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEA_W_K@Z(ptr long) MSVCP_basic_string_wchar_at
 @ thiscall -arch=win32 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEAB_WI@Z(ptr long) MSVCP_basic_string_wchar_const_at
 @ cdecl -arch=win64 ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBAAEB_W_K@Z(ptr long) MSVCP_basic_string_wchar_const_at
-@ stub ?atan2@?$_Ctraits@M@std@@SAMMM@Z
-@ stub ?atan2@?$_Ctraits@N@std@@SANNN@Z
-@ stub ?atan2@?$_Ctraits@O@std@@SAOOO@Z
+@ cdecl ?atan2@?$_Ctraits@M@std@@SAMMM@Z(float float) std_Ctraits_float_atan2
+@ cdecl ?atan2@?$_Ctraits@N@std@@SANNN@Z(double double) std_Ctraits_double_atan2
+@ cdecl ?atan2@?$_Ctraits@O@std@@SAOOO@Z(double double) std_Ctraits_long_double_atan2
 @ stub -arch=win32 ?bad@ios_base@std@@QBE_NXZ
 @ stub -arch=win64 ?bad@ios_base@std@@QEBA_NXZ
 @ stub -arch=win32 ?begin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
@@ -3188,9 +3188,9 @@
 @ stub -arch=win64 ?copyfmt@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@AEBV12@@Z
 @ stub -arch=win32 ?copyfmt@ios_base@std@@QAEAAV12@ABV12@@Z
 @ stub -arch=win64 ?copyfmt@ios_base@std@@QEAAAEAV12@AEBV12@@Z
-@ stub ?cos@?$_Ctraits@M@std@@SAMM@Z
-@ stub ?cos@?$_Ctraits@N@std@@SANN@Z
-@ stub ?cos@?$_Ctraits@O@std@@SAOO@Z
+@ cdecl ?cos@?$_Ctraits@M@std@@SAMM@Z(float) std_Ctraits_float_cos
+@ cdecl ?cos@?$_Ctraits@N@std@@SANN@Z(double) std_Ctraits_double_cos
+@ cdecl ?cos@?$_Ctraits@O@std@@SAOO@Z(double) std_Ctraits_long_double_cos
 # extern ?cout@std@@3V?$basic_ostream@DU?$char_traits@D@std@@@1@A
 @ stub -arch=win32 ?curr_symbol@?$_Mpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?curr_symbol@?$_Mpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
@@ -3794,9 +3794,9 @@
 @ stub -arch=win64 ?exceptions@ios_base@std@@QEAAXI@Z
 @ stub -arch=win32 ?exceptions@ios_base@std@@QBEHXZ
 @ stub -arch=win64 ?exceptions@ios_base@std@@QEBAHXZ
-@ stub ?exp@?$_Ctraits@M@std@@SAMM@Z
-@ stub ?exp@?$_Ctraits@N@std@@SANN@Z
-@ stub ?exp@?$_Ctraits@O@std@@SAOO@Z
+@ cdecl ?exp@?$_Ctraits@M@std@@SAMM@Z(float) std_Ctraits_float_exp
+@ cdecl ?exp@?$_Ctraits@N@std@@SANN@Z(double) std_Ctraits_double_exp
+@ cdecl ?exp@?$_Ctraits@O@std@@SAOO@Z(double) std_Ctraits_long_double_exp
 @ stub -arch=win32 ?fail@ios_base@std@@QBE_NXZ
 @ stub -arch=win64 ?fail@ios_base@std@@QEBA_NXZ
 @ stub -arch=win32 ?falsename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
@@ -4453,9 +4453,9 @@
 @ stub -arch=win64 ?isfx@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ?iword@ios_base@std@@QAEAAJH@Z
 @ stub -arch=win64 ?iword@ios_base@std@@QEAAAEAJH@Z
-@ stub ?ldexp@?$_Ctraits@M@std@@SAMMH@Z
-@ stub ?ldexp@?$_Ctraits@N@std@@SANNH@Z
-@ stub ?ldexp@?$_Ctraits@O@std@@SAOOH@Z
+@ cdecl ?ldexp@?$_Ctraits@M@std@@SAMMH@Z(float long) std_Ctraits_float_ldexp
+@ cdecl ?ldexp@?$_Ctraits@N@std@@SANNH@Z(double long) std_Ctraits_double_ldexp
+@ cdecl ?ldexp@?$_Ctraits@O@std@@SAOOH@Z(double long) std_Ctraits_long_double_ldexp
 @ thiscall -arch=win32 ?length@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ(ptr) MSVCP_basic_string_char_length
 @ cdecl -arch=win64 ?length@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_char_length
 @ stub -arch=win32 ?length@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ
@@ -4474,9 +4474,9 @@
 @ stub -arch=win64 ?length@?$codecvt@GDH@std@@QEBAHAEBHPEBD1_K@Z
 @ stub -arch=win32 ?length@?$codecvt@_WDH@std@@QBEHABHPBD1I@Z
 @ stub -arch=win64 ?length@?$codecvt@_WDH@std@@QEBAHAEBHPEBD1_K@Z
-@ stub ?log@?$_Ctraits@M@std@@SAMM@Z
-@ stub ?log@?$_Ctraits@N@std@@SANN@Z
-@ stub ?log@?$_Ctraits@O@std@@SAOO@Z
+@ cdecl ?log@?$_Ctraits@M@std@@SAMM@Z(float) std_Ctraits_float_log
+@ cdecl ?log@?$_Ctraits@N@std@@SANN@Z(double) std_Ctraits_double_log
+@ cdecl ?log@?$_Ctraits@O@std@@SAOO@Z(double) std_Ctraits_long_double_log
 @ cdecl -arch=win32 ?lt@?$char_traits@D@std@@SA_NABD0@Z(ptr ptr) MSVCP_char_traits_lt
 @ cdecl -arch=win64 ?lt@?$char_traits@D@std@@SA_NAEBD0@Z(ptr ptr) MSVCP_char_traits_lt
 @ cdecl -arch=win32 ?lt@?$char_traits@G@std@@SA_NABG0@Z(ptr ptr) MSVCP_char_traits_short_lt
@@ -4835,9 +4835,9 @@
 @ stub -arch=win64 ?positive_sign@?$_Mpunct@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
 @ stub -arch=win32 ?positive_sign@?$_Mpunct@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ
 @ stub -arch=win64 ?positive_sign@?$_Mpunct@_W@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ
-@ stub ?pow@?$_Ctraits@M@std@@SAMMM@Z
-@ stub ?pow@?$_Ctraits@N@std@@SANNN@Z
-@ stub ?pow@?$_Ctraits@O@std@@SAOOO@Z
+@ cdecl ?pow@?$_Ctraits@M@std@@SAMMM@Z(float float) std_Ctraits_float_pow
+@ cdecl ?pow@?$_Ctraits@N@std@@SANNN@Z(double double) std_Ctraits_double_pow
+@ cdecl ?pow@?$_Ctraits@O@std@@SAOOO@Z(double double) std_Ctraits_long_double_pow
 @ stub -arch=win32 ?pptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ
 @ stub -arch=win64 ?pptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEBAPEADXZ
 @ stub -arch=win32 ?pptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IBEPAGXZ
@@ -5404,9 +5404,9 @@
 @ cdecl ?signaling_NaN@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_signaling_NaN
 @ cdecl ?signaling_NaN@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_signaling_NaN
 @ cdecl ?signaling_NaN@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_signaling_NaN
-@ stub ?sin@?$_Ctraits@M@std@@SAMM@Z
-@ stub ?sin@?$_Ctraits@N@std@@SANN@Z
-@ stub ?sin@?$_Ctraits@O@std@@SAOO@Z
+@ cdecl ?sin@?$_Ctraits@M@std@@SAMM@Z(float) std_Ctraits_float_sin
+@ cdecl ?sin@?$_Ctraits@N@std@@SANN@Z(double) std_Ctraits_double_sin
+@ cdecl ?sin@?$_Ctraits@O@std@@SAOO@Z(double) std_Ctraits_long_double_sin
 @ thiscall -arch=win32 ?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ(ptr) MSVCP_basic_string_char_length
 @ cdecl -arch=win64 ?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ(ptr) MSVCP_basic_string_char_length
 @ stub -arch=win32 ?size@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ
@@ -5437,9 +5437,9 @@
 @ stub -arch=win64 ?sputn@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA_JPEBG_J@Z
 @ stub -arch=win32 ?sputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEHPB_WH@Z
 @ stub -arch=win64 ?sputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA_JPEB_W_J@Z
-@ stub ?sqrt@?$_Ctraits@M@std@@SAMM@Z
-@ stub ?sqrt@?$_Ctraits@N@std@@SANN@Z
-@ stub ?sqrt@?$_Ctraits@O@std@@SAOO@Z
+@ cdecl ?sqrt@?$_Ctraits@M@std@@SAMM@Z(float) std_Ctraits_float_sqrt
+@ cdecl ?sqrt@?$_Ctraits@N@std@@SANN@Z(double) std_Ctraits_double_sqrt
+@ cdecl ?sqrt@?$_Ctraits@O@std@@SAOO@Z(double) std_Ctraits_long_double_sqrt
 @ stub -arch=win32 ?stossc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ
 @ stub -arch=win64 ?stossc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ?stossc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QAEXXZ
@@ -5537,9 +5537,9 @@
 @ stub -arch=win64 ?table@?$ctype@D@std@@IEBAPEBFXZ
 # extern -arch=win32 ?table_size@?$ctype@D@std@@2IB
 # extern -arch=win64 ?table_size@?$ctype@D@std@@2_KB
-@ stub ?tan@?$_Ctraits@M@std@@SAMM@Z
-@ stub ?tan@?$_Ctraits@N@std@@SANN@Z
-@ stub ?tan@?$_Ctraits@O@std@@SAOO@Z
+@ cdecl ?tan@?$_Ctraits@M@std@@SAMM@Z(float) std_Ctraits_float_tan
+@ cdecl ?tan@?$_Ctraits@N@std@@SANN@Z(double) std_Ctraits_double_tan
+@ cdecl ?tan@?$_Ctraits@O@std@@SAOO@Z(double) std_Ctraits_long_double_tan
 @ stub -arch=win32 ?tellg@?$basic_istream@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@XZ
 @ stub -arch=win64 ?tellg@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@XZ
 @ stub -arch=win32 ?tellg@?$basic_istream@GU?$char_traits@G@std@@@std@@QAE?AV?$fpos@H@2@XZ

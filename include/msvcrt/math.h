@@ -127,7 +127,7 @@ float __cdecl fmodf(float, float);
 #endif
 
 #define fabsf(x) ((float)fabs((double)(x)))
-#define ldexpf(x) ((float)ldexp((double)(x)))
+#define ldexpf(x,y) ((float)ldexp((double)(x),(y)))
 
 float __cdecl hypotf(float, float);
 
