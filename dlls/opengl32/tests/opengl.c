@@ -26,6 +26,7 @@ void WINAPI glClearColor(float red, float green, float blue, float alpha);
 void WINAPI glClear(unsigned int mask);
 #define GL_COLOR 0x1800
 typedef unsigned int GLenum;
+typedef int GLint;
 void WINAPI glCopyPixels(int x, int y, int width, int height, GLenum type);
 void WINAPI glFinish(void);
 #define GL_NO_ERROR 0x0
@@ -36,6 +37,9 @@ const unsigned char * WINAPI glGetString(unsigned int);
 #define GL_VENDOR 0x1F00
 #define GL_RENDERER 0x1F01
 #define GL_VERSION 0x1F02
+
+#define GL_VIEWPORT 0x0ba2
+void WINAPI glGetIntegerv(GLenum pname, GLint *params);
 
 #define MAX_FORMATS 256
 typedef void* HPBUFFERARB;
@@ -888,6 +892,75 @@ static void test_minimized(void)
     DestroyWindow(window);
 }
 
+static void test_window_dc(void)
+{
+    PIXELFORMATDESCRIPTOR pf_desc =
+    {
+        sizeof(PIXELFORMATDESCRIPTOR),
+        1,                     /* version */
+        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+        PFD_TYPE_RGBA,
+        24,                    /* 24-bit color depth */
+        0, 0, 0, 0, 0, 0,      /* color bits */
+        0,                     /* alpha buffer */
+        0,                     /* shift bit */
+        0,                     /* accumulation buffer */
+        0, 0, 0, 0,            /* accum bits */
+        32,                    /* z-buffer */
+        0,                     /* stencil buffer */
+        0,                     /* auxiliary buffer */
+        PFD_MAIN_PLANE,        /* main layer */
+        0,                     /* reserved */
+        0, 0, 0                /* layer masks */
+    };
+    int pixel_format;
+    HWND window;
+    RECT vp, r;
+    HGLRC ctx;
+    BOOL ret;
+    HDC dc;
+
+    window = CreateWindowA("static", "opengl32_test",
+            WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(!!window, "Failed to create window, last error %#x.\n", GetLastError());
+
+    ShowWindow(window, SW_SHOW);
+
+    dc = GetWindowDC(window);
+    ok(!!dc, "Failed to get DC.\n");
+
+    pixel_format = ChoosePixelFormat(dc, &pf_desc);
+    if (!pixel_format)
+    {
+        win_skip("Failed to find pixel format.\n");
+        ReleaseDC(window, dc);
+        DestroyWindow(window);
+        return;
+    }
+
+    ret = SetPixelFormat(dc, pixel_format, &pf_desc);
+    ok(ret, "Failed to set pixel format, last error %#x.\n", GetLastError());
+
+    ctx = wglCreateContext(dc);
+    ok(!!ctx, "Failed to create GL context, last error %#x.\n", GetLastError());
+
+    ret = wglMakeCurrent(dc, ctx);
+    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+
+    GetClientRect(window, &r);
+    glGetIntegerv(GL_VIEWPORT, (GLint *)&vp);
+    ok(EqualRect(&r, &vp), "Viewport not equal to client rect.\n");
+
+    ret = wglMakeCurrent(NULL, NULL);
+    ok(ret, "Failed to clear current context, last error %#x.\n", GetLastError());
+
+    ret = wglDeleteContext(ctx);
+    ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
+
+    ReleaseDC(window, dc);
+    DestroyWindow(window);
+}
+
 static void test_destroy(HDC oldhdc)
 {
     PIXELFORMATDESCRIPTOR pf_desc =
@@ -1234,6 +1307,7 @@ START_TEST(opengl)
 
         test_bitmap_rendering();
         test_minimized();
+        test_window_dc();
         test_dc(hwnd, hdc);
 
         hglrc = wglCreateContext(hdc);
