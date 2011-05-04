@@ -44,7 +44,8 @@ static const char crlfA[] = "\r\n";
 
 typedef enum
 {
-    MXWriter_Standalone = 0,
+    MXWriter_OmitXmlDecl = 0,
+    MXWriter_Standalone,
     MXWriter_LastProp
 } MXWRITER_PROPS;
 
@@ -347,15 +348,24 @@ static HRESULT WINAPI mxwriter_get_standalone(IMXWriter *iface, VARIANT_BOOL *va
 static HRESULT WINAPI mxwriter_put_omitXMLDeclaration(IMXWriter *iface, VARIANT_BOOL value)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%d)\n", This, value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, value);
+    This->props[MXWriter_OmitXmlDecl] = value;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_get_omitXMLDeclaration(IMXWriter *iface, VARIANT_BOOL *value)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%p)\n", This, value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    if (!value) return E_POINTER;
+
+    *value = This->props[MXWriter_OmitXmlDecl];
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_put_version(IMXWriter *iface, BSTR version)
@@ -462,6 +472,8 @@ static HRESULT WINAPI mxwriter_saxcontent_startDocument(ISAXContentHandler *ifac
     xmlChar *s;
 
     TRACE("(%p)\n", This);
+
+    if (This->props[MXWriter_OmitXmlDecl] == VARIANT_TRUE) return S_OK;
 
     /* version */
     xmlOutputBufferWriteString(This->buffer, "<?xml version=\"");
@@ -627,6 +639,7 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
     This->ISAXContentHandler_iface.lpVtbl = &mxwriter_saxcontent_vtbl;
     This->ref = 1;
 
+    This->props[MXWriter_OmitXmlDecl] = VARIANT_FALSE;
     This->props[MXWriter_Standalone] = VARIANT_FALSE;
     This->encoding   = SysAllocString(utf16W);
     This->version    = SysAllocString(version10W);

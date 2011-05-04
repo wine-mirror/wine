@@ -731,6 +731,14 @@ static void test_mxwriter_properties(void)
             &IID_IMXWriter, (void**)&writer);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
+    hr = IMXWriter_get_omitXMLDeclaration(writer, NULL);
+    ok(hr == E_POINTER, "got %08x\n", hr);
+
+    b = VARIANT_TRUE;
+    hr = IMXWriter_get_omitXMLDeclaration(writer, &b);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
+
     hr = IMXWriter_get_standalone(writer, NULL);
     ok(hr == E_POINTER, "got %08x\n", hr);
 
@@ -918,6 +926,34 @@ static void test_mxwriter_startenddocument(void)
 
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);
+
+    /* now with omitted declaration */
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_startDocument(content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_endDocument(content);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_(""), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
+
     free_bstrs();
 }
 
