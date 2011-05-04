@@ -42,6 +42,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 static const char crlfA[] = "\r\n";
 
+typedef enum
+{
+    MXWriter_Standalone = 0,
+    MXWriter_LastProp
+} MXWRITER_PROPS;
+
 typedef struct _mxwriter
 {
     IMXWriter IMXWriter_iface;
@@ -49,7 +55,7 @@ typedef struct _mxwriter
 
     LONG ref;
 
-    VARIANT_BOOL standalone;
+    VARIANT_BOOL props[MXWriter_LastProp];
     BSTR encoding;
     BSTR version;
 
@@ -320,7 +326,7 @@ static HRESULT WINAPI mxwriter_put_standalone(IMXWriter *iface, VARIANT_BOOL val
     mxwriter *This = impl_from_IMXWriter( iface );
 
     TRACE("(%p)->(%d)\n", This, value);
-    This->standalone = value;
+    This->props[MXWriter_Standalone] = value;
 
     return S_OK;
 }
@@ -333,7 +339,7 @@ static HRESULT WINAPI mxwriter_get_standalone(IMXWriter *iface, VARIANT_BOOL *va
 
     if (!value) return E_POINTER;
 
-    *value = This->standalone;
+    *value = This->props[MXWriter_Standalone];
 
     return S_OK;
 }
@@ -473,7 +479,7 @@ static HRESULT WINAPI mxwriter_saxcontent_startDocument(ISAXContentHandler *ifac
 
     /* standalone */
     xmlOutputBufferWriteString(This->buffer, " standalone=\"");
-    if (This->standalone == VARIANT_TRUE)
+    if (This->props[MXWriter_Standalone] == VARIANT_TRUE)
         xmlOutputBufferWriteString(This->buffer, "yes\"?>");
     else
         xmlOutputBufferWriteString(This->buffer, "no\"?>");
@@ -621,7 +627,7 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
     This->ISAXContentHandler_iface.lpVtbl = &mxwriter_saxcontent_vtbl;
     This->ref = 1;
 
-    This->standalone = VARIANT_FALSE;
+    This->props[MXWriter_Standalone] = VARIANT_FALSE;
     This->encoding   = SysAllocString(utf16W);
     This->version    = SysAllocString(version10W);
 
