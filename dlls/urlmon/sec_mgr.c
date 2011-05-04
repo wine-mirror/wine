@@ -1220,8 +1220,42 @@ static HRESULT WINAPI ZoneMgrImpl_SetZoneAttributes(IInternetZoneManagerEx2* ifa
                                                     DWORD dwZone,
                                                     ZONEATTRIBUTES* pZoneAttributes)
 {
-    FIXME("(%p)->(%08x %p) stub\n", iface, dwZone, pZoneAttributes);
-    return E_NOTIMPL;
+    ZoneMgrImpl* This = impl_from_IInternetZoneManagerEx2(iface);
+    HRESULT hr;
+    HKEY hcu;
+
+    TRACE("(%p)->(%d %p)\n", This, dwZone, pZoneAttributes);
+
+    if (!pZoneAttributes)
+        return E_INVALIDARG;
+
+    hr = open_zone_key(HKEY_CURRENT_USER, dwZone, &hcu);
+    if (FAILED(hr))
+        return S_OK;  /* IE6 returned E_FAIL here */
+
+    /* cbSize is ignored */
+    RegSetValueExW(hcu, displaynameW, 0, REG_SZ, (LPBYTE) pZoneAttributes->szDisplayName,
+                    (lstrlenW(pZoneAttributes->szDisplayName)+1)* sizeof(WCHAR));
+
+    RegSetValueExW(hcu, descriptionW, 0, REG_SZ, (LPBYTE) pZoneAttributes->szDescription,
+                    (lstrlenW(pZoneAttributes->szDescription)+1)* sizeof(WCHAR));
+
+    RegSetValueExW(hcu, iconW, 0, REG_SZ, (LPBYTE) pZoneAttributes->szIconPath,
+                    (lstrlenW(pZoneAttributes->szIconPath)+1)* sizeof(WCHAR));
+
+    RegSetValueExW(hcu, minlevelW, 0, REG_DWORD,
+                    (const BYTE*) &pZoneAttributes->dwTemplateMinLevel, sizeof(DWORD));
+
+    RegSetValueExW(hcu, currentlevelW, 0, REG_DWORD,
+                    (const BYTE*) &pZoneAttributes->dwTemplateCurrentLevel, sizeof(DWORD));
+
+    RegSetValueExW(hcu, recommendedlevelW, 0, REG_DWORD,
+                    (const BYTE*) &pZoneAttributes->dwTemplateRecommended, sizeof(DWORD));
+
+    RegSetValueExW(hcu, flagsW, 0, REG_DWORD, (const BYTE*) &pZoneAttributes->dwFlags, sizeof(DWORD));
+    RegCloseKey(hcu);
+    return S_OK;
+
 }
 
 /********************************************************************
