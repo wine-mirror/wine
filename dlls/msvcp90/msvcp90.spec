@@ -1416,50 +1416,50 @@
 @ stub -arch=win64 ??4?$complex@O@std@@QEAAAEAV01@AEBO@Z
 @ stub -arch=win32 ??4?$complex@O@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4?$complex@O@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@C@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@C@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@D@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@D@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@E@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@E@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@F@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@F@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@G@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@G@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@H@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@H@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@I@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@I@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@J@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@J@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@K@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@K@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@M@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@M@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@N@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@N@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@O@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@O@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@_J@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@_J@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@_K@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@_K@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@_N@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@_N@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4?$numeric_limits@_W@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4?$numeric_limits@_W@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4?$numeric_limits@C@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@C@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@D@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@D@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@E@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@E@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@F@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@F@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@G@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@G@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@H@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@H@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@I@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@I@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@J@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@J@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@K@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@K@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@M@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@M@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@N@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@N@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@O@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@O@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@_J@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@_J@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@_K@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@_K@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@_N@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@_N@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4?$numeric_limits@_W@std@@QAEAAV01@ABV01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4?$numeric_limits@_W@std@@QEAAAEAV01@AEBV01@@Z(ptr) std_Num_base_op_assign
 @ stub -arch=win32 ??4Init@ios_base@std@@QAEAAV012@ABV012@@Z
 @ stub -arch=win64 ??4Init@ios_base@std@@QEAAAEAV012@AEBV012@@Z
 @ stub -arch=win32 ??4_Container_base_secure@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4_Container_base_secure@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4_Init_locks@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4_Init_locks@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4_Num_base@std@@QAEAAU01@ABU01@@Z
-@ stub -arch=win64 ??4_Num_base@std@@QEAAAEAU01@AEBU01@@Z
-@ stub -arch=win32 ??4_Num_float_base@std@@QAEAAU01@ABU01@@Z
-@ stub -arch=win64 ??4_Num_float_base@std@@QEAAAEAU01@AEBU01@@Z
-@ stub -arch=win32 ??4_Num_int_base@std@@QAEAAU01@ABU01@@Z
-@ stub -arch=win64 ??4_Num_int_base@std@@QEAAAEAU01@AEBU01@@Z
+@ thiscall -arch=win32 ??4_Num_base@std@@QAEAAU01@ABU01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4_Num_base@std@@QEAAAEAU01@AEBU01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4_Num_float_base@std@@QAEAAU01@ABU01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4_Num_float_base@std@@QEAAAEAU01@AEBU01@@Z(ptr) std_Num_base_op_assign
+@ thiscall -arch=win32 ??4_Num_int_base@std@@QAEAAU01@ABU01@@Z(ptr) std_Num_base_op_assign
+@ cdecl -arch=win64 ??4_Num_int_base@std@@QEAAAEAU01@AEBU01@@Z(ptr) std_Num_base_op_assign
 @ stub -arch=win32 ??4_String_base@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4_String_base@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4_Timevec@std@@QAEAAV01@ABV01@@Z
@@ -3228,22 +3228,22 @@
 @ stub -arch=win64 ?decimal_point@?$numpunct@G@std@@QEBAGXZ
 @ stub -arch=win32 ?decimal_point@?$numpunct@_W@std@@QBE_WXZ
 @ stub -arch=win64 ?decimal_point@?$numpunct@_W@std@@QEBA_WXZ
-@ stub ?denorm_min@?$numeric_limits@C@std@@SACXZ
-@ stub ?denorm_min@?$numeric_limits@D@std@@SADXZ
-@ stub ?denorm_min@?$numeric_limits@E@std@@SAEXZ
-@ stub ?denorm_min@?$numeric_limits@F@std@@SAFXZ
-@ stub ?denorm_min@?$numeric_limits@G@std@@SAGXZ
-@ stub ?denorm_min@?$numeric_limits@H@std@@SAHXZ
-@ stub ?denorm_min@?$numeric_limits@I@std@@SAIXZ
-@ stub ?denorm_min@?$numeric_limits@J@std@@SAJXZ
-@ stub ?denorm_min@?$numeric_limits@K@std@@SAKXZ
-@ stub ?denorm_min@?$numeric_limits@M@std@@SAMXZ
-@ stub ?denorm_min@?$numeric_limits@N@std@@SANXZ
-@ stub ?denorm_min@?$numeric_limits@O@std@@SAOXZ
-@ stub ?denorm_min@?$numeric_limits@_J@std@@SA_JXZ
-@ stub ?denorm_min@?$numeric_limits@_K@std@@SA_KXZ
-@ stub ?denorm_min@?$numeric_limits@_N@std@@SA_NXZ
-@ stub ?denorm_min@?$numeric_limits@_W@std@@SA_WXZ
+@ cdecl ?denorm_min@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@F@std@@SAFXZ() std_numeric_limits_short_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@G@std@@SAGXZ() std_numeric_limits_unsigned_short_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@H@std@@SAHXZ() std_numeric_limits_int_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@I@std@@SAIXZ() std_numeric_limits_unsigned_int_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@J@std@@SAJXZ() std_numeric_limits_long_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@K@std@@SAKXZ() std_numeric_limits_unsigned_long_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_denorm_min
+@ cdecl ?denorm_min@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_denorm_min
 @ thiscall -arch=win32 ?destroy@?$allocator@D@std@@QAEXPAD@Z(ptr ptr) MSVCP_allocator_char_destroy
 @ cdecl -arch=win64 ?destroy@?$allocator@D@std@@QEAAXPEAD@Z(ptr ptr) MSVCP_allocator_char_destroy
 @ thiscall -arch=win32 ?destroy@?$allocator@G@std@@QAEXPAG@Z(ptr ptr) MSVCP_allocator_short_destroy
@@ -3742,22 +3742,22 @@
 @ stub -arch=win64 ?epptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ
 @ stub -arch=win32 ?epptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ
 @ stub -arch=win64 ?epptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBAPEA_WXZ
-@ stub ?epsilon@?$numeric_limits@C@std@@SACXZ
-@ stub ?epsilon@?$numeric_limits@D@std@@SADXZ
-@ stub ?epsilon@?$numeric_limits@E@std@@SAEXZ
-@ stub ?epsilon@?$numeric_limits@F@std@@SAFXZ
-@ stub ?epsilon@?$numeric_limits@G@std@@SAGXZ
-@ stub ?epsilon@?$numeric_limits@H@std@@SAHXZ
-@ stub ?epsilon@?$numeric_limits@I@std@@SAIXZ
-@ stub ?epsilon@?$numeric_limits@J@std@@SAJXZ
-@ stub ?epsilon@?$numeric_limits@K@std@@SAKXZ
-@ stub ?epsilon@?$numeric_limits@M@std@@SAMXZ
-@ stub ?epsilon@?$numeric_limits@N@std@@SANXZ
-@ stub ?epsilon@?$numeric_limits@O@std@@SAOXZ
-@ stub ?epsilon@?$numeric_limits@_J@std@@SA_JXZ
-@ stub ?epsilon@?$numeric_limits@_K@std@@SA_KXZ
-@ stub ?epsilon@?$numeric_limits@_N@std@@SA_NXZ
-@ stub ?epsilon@?$numeric_limits@_W@std@@SA_WXZ
+@ cdecl ?epsilon@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_epsilon
+@ cdecl ?epsilon@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_epsilon
+@ cdecl ?epsilon@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_epsilon
+@ cdecl ?epsilon@?$numeric_limits@F@std@@SAFXZ() std_numeric_limits_short_epsilon
+@ cdecl ?epsilon@?$numeric_limits@G@std@@SAGXZ() std_numeric_limits_unsigned_short_epsilon
+@ cdecl ?epsilon@?$numeric_limits@H@std@@SAHXZ() std_numeric_limits_int_epsilon
+@ cdecl ?epsilon@?$numeric_limits@I@std@@SAIXZ() std_numeric_limits_unsigned_int_epsilon
+@ cdecl ?epsilon@?$numeric_limits@J@std@@SAJXZ() std_numeric_limits_long_epsilon
+@ cdecl ?epsilon@?$numeric_limits@K@std@@SAKXZ() std_numeric_limits_unsigned_long_epsilon
+@ cdecl ?epsilon@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_epsilon
+@ cdecl ?epsilon@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_epsilon
+@ cdecl ?epsilon@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_epsilon
+@ cdecl ?epsilon@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_epsilon
+@ cdecl ?epsilon@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_epsilon
+@ cdecl ?epsilon@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_epsilon
+@ cdecl ?epsilon@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_epsilon
 @ cdecl -arch=win32 ?eq@?$char_traits@D@std@@SA_NABD0@Z(ptr ptr) MSVCP_char_traits_char_eq
 @ cdecl -arch=win64 ?eq@?$char_traits@D@std@@SA_NAEBD0@Z(ptr ptr) MSVCP_char_traits_char_eq
 @ cdecl -arch=win32 ?eq@?$char_traits@G@std@@SA_NABG0@Z(ptr ptr) MSVCP_char_traits_short_eq
@@ -4282,22 +4282,22 @@
 @ stub -arch=win64 ?in_avail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@QEAA_JXZ
 @ stub -arch=win32 ?in_avail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QAEHXZ
 @ stub -arch=win64 ?in_avail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@QEAA_JXZ
-@ stub ?infinity@?$numeric_limits@C@std@@SACXZ
-@ stub ?infinity@?$numeric_limits@D@std@@SADXZ
-@ stub ?infinity@?$numeric_limits@E@std@@SAEXZ
-@ stub ?infinity@?$numeric_limits@F@std@@SAFXZ
-@ stub ?infinity@?$numeric_limits@G@std@@SAGXZ
-@ stub ?infinity@?$numeric_limits@H@std@@SAHXZ
-@ stub ?infinity@?$numeric_limits@I@std@@SAIXZ
-@ stub ?infinity@?$numeric_limits@J@std@@SAJXZ
-@ stub ?infinity@?$numeric_limits@K@std@@SAKXZ
-@ stub ?infinity@?$numeric_limits@M@std@@SAMXZ
-@ stub ?infinity@?$numeric_limits@N@std@@SANXZ
-@ stub ?infinity@?$numeric_limits@O@std@@SAOXZ
-@ stub ?infinity@?$numeric_limits@_J@std@@SA_JXZ
-@ stub ?infinity@?$numeric_limits@_K@std@@SA_KXZ
-@ stub ?infinity@?$numeric_limits@_N@std@@SA_NXZ
-@ stub ?infinity@?$numeric_limits@_W@std@@SA_WXZ
+@ cdecl ?infinity@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_infinity
+@ cdecl ?infinity@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_infinity
+@ cdecl ?infinity@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_infinity
+@ cdecl ?infinity@?$numeric_limits@F@std@@SAFXZ() std_numeric_limits_short_infinity
+@ cdecl ?infinity@?$numeric_limits@G@std@@SAGXZ() std_numeric_limits_unsigned_short_infinity
+@ cdecl ?infinity@?$numeric_limits@H@std@@SAHXZ() std_numeric_limits_int_infinity
+@ cdecl ?infinity@?$numeric_limits@I@std@@SAIXZ() std_numeric_limits_unsigned_int_infinity
+@ cdecl ?infinity@?$numeric_limits@J@std@@SAJXZ() std_numeric_limits_long_infinity
+@ cdecl ?infinity@?$numeric_limits@K@std@@SAKXZ() std_numeric_limits_unsigned_long_infinity
+@ cdecl ?infinity@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_infinity
+@ cdecl ?infinity@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_infinity
+@ cdecl ?infinity@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_infinity
+@ cdecl ?infinity@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_infinity
+@ cdecl ?infinity@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_infinity
+@ cdecl ?infinity@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_infinity
+@ cdecl ?infinity@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_infinity
 @ stub -arch=win32 ?init@?$basic_ios@DU?$char_traits@D@std@@@std@@IAEXPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@_N@Z
 @ stub -arch=win64 ?init@?$basic_ios@DU?$char_traits@D@std@@@std@@IEAAXPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@_N@Z
 @ stub -arch=win32 ?init@?$basic_ios@GU?$char_traits@G@std@@@std@@IAEXPAV?$basic_streambuf@GU?$char_traits@G@std@@@2@_N@Z
@@ -4483,22 +4483,22 @@
 @ cdecl -arch=win64 ?lt@?$char_traits@G@std@@SA_NAEBG0@Z(ptr ptr) MSVCP_char_traits_short_lt
 @ cdecl -arch=win32 ?lt@?$char_traits@_W@std@@SA_NAB_W0@Z(ptr ptr) MSVCP_char_traits_wchar_lt
 @ cdecl -arch=win64 ?lt@?$char_traits@_W@std@@SA_NAEB_W0@Z(ptr ptr) MSVCP_char_traits_wchar_lt
-@ stub ?max@?$numeric_limits@C@std@@SACXZ
-@ stub ?max@?$numeric_limits@D@std@@SADXZ
-@ stub ?max@?$numeric_limits@E@std@@SAEXZ
-@ stub ?max@?$numeric_limits@F@std@@SAFXZ
-@ stub ?max@?$numeric_limits@G@std@@SAGXZ
-@ stub ?max@?$numeric_limits@H@std@@SAHXZ
-@ stub ?max@?$numeric_limits@I@std@@SAIXZ
-@ stub ?max@?$numeric_limits@J@std@@SAJXZ
-@ stub ?max@?$numeric_limits@K@std@@SAKXZ
-@ stub ?max@?$numeric_limits@M@std@@SAMXZ
-@ stub ?max@?$numeric_limits@N@std@@SANXZ
-@ stub ?max@?$numeric_limits@O@std@@SAOXZ
-@ stub ?max@?$numeric_limits@_J@std@@SA_JXZ
-@ stub ?max@?$numeric_limits@_K@std@@SA_KXZ
-@ stub ?max@?$numeric_limits@_N@std@@SA_NXZ
-@ stub ?max@?$numeric_limits@_W@std@@SA_WXZ
+@ cdecl ?max@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_max
+@ cdecl ?max@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_max
+@ cdecl ?max@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_max
+@ cdecl ?max@?$numeric_limits@F@std@@SAFXZ() std_numeric_limits_short_max
+@ cdecl ?max@?$numeric_limits@G@std@@SAGXZ() std_numeric_limits_unsigned_short_max
+@ cdecl ?max@?$numeric_limits@H@std@@SAHXZ() std_numeric_limits_int_max
+@ cdecl ?max@?$numeric_limits@I@std@@SAIXZ() std_numeric_limits_unsigned_int_max
+@ cdecl ?max@?$numeric_limits@J@std@@SAJXZ() std_numeric_limits_long_max
+@ cdecl ?max@?$numeric_limits@K@std@@SAKXZ() std_numeric_limits_unsigned_long_max
+@ cdecl ?max@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_max
+@ cdecl ?max@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_max
+@ cdecl ?max@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_max
+@ cdecl ?max@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_max
+@ cdecl ?max@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_max
+@ cdecl ?max@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_max
+@ cdecl ?max@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_max
 @ extern ?max_exponent10@?$numeric_limits@M@std@@2HB std_numeric_limits_float_max_exponent10
 @ extern ?max_exponent10@?$numeric_limits@N@std@@2HB std_numeric_limits_double_max_exponent10
 @ extern ?max_exponent10@?$numeric_limits@O@std@@2HB std_numeric_limits_long_double_max_exponent10
@@ -4521,22 +4521,22 @@
 @ stub -arch=win64 ?max_size@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KXZ
 @ stub -arch=win32 ?max_size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ
 @ stub -arch=win64 ?max_size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ
-@ stub ?min@?$numeric_limits@C@std@@SACXZ
-@ stub ?min@?$numeric_limits@D@std@@SADXZ
-@ stub ?min@?$numeric_limits@E@std@@SAEXZ
-@ stub ?min@?$numeric_limits@F@std@@SAFXZ
-@ stub ?min@?$numeric_limits@G@std@@SAGXZ
-@ stub ?min@?$numeric_limits@H@std@@SAHXZ
-@ stub ?min@?$numeric_limits@I@std@@SAIXZ
-@ stub ?min@?$numeric_limits@J@std@@SAJXZ
-@ stub ?min@?$numeric_limits@K@std@@SAKXZ
-@ stub ?min@?$numeric_limits@M@std@@SAMXZ
-@ stub ?min@?$numeric_limits@N@std@@SANXZ
-@ stub ?min@?$numeric_limits@O@std@@SAOXZ
-@ stub ?min@?$numeric_limits@_J@std@@SA_JXZ
-@ stub ?min@?$numeric_limits@_K@std@@SA_KXZ
-@ stub ?min@?$numeric_limits@_N@std@@SA_NXZ
-@ stub ?min@?$numeric_limits@_W@std@@SA_WXZ
+@ cdecl ?min@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_min
+@ cdecl ?min@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_min
+@ cdecl ?min@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_min
+@ cdecl ?min@?$numeric_limits@F@std@@SAFXZ() std_numeric_limits_short_min
+@ cdecl ?min@?$numeric_limits@G@std@@SAGXZ() std_numeric_limits_unsigned_short_min
+@ cdecl ?min@?$numeric_limits@H@std@@SAHXZ() std_numeric_limits_int_min
+@ cdecl ?min@?$numeric_limits@I@std@@SAIXZ() std_numeric_limits_unsigned_int_min
+@ cdecl ?min@?$numeric_limits@J@std@@SAJXZ() std_numeric_limits_long_min
+@ cdecl ?min@?$numeric_limits@K@std@@SAKXZ() std_numeric_limits_unsigned_long_min
+@ cdecl ?min@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_min
+@ cdecl ?min@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_min
+@ cdecl ?min@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_min
+@ cdecl ?min@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_min
+@ cdecl ?min@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_min
+@ cdecl ?min@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_min
+@ cdecl ?min@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_min
 @ extern ?min_exponent10@?$numeric_limits@M@std@@2HB std_numeric_limits_float_min_exponent10
 @ extern ?min_exponent10@?$numeric_limits@N@std@@2HB std_numeric_limits_double_min_exponent10
 @ extern ?min_exponent10@?$numeric_limits@O@std@@2HB std_numeric_limits_long_double_min_exponent10
@@ -4982,22 +4982,22 @@
 @ stub -arch=win64 ?putback@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAAEAV12@_W@Z
 @ stub -arch=win32 ?pword@ios_base@std@@QAEAAPAXH@Z
 @ stub -arch=win64 ?pword@ios_base@std@@QEAAAEAPEAXH@Z
-@ stub ?quiet_NaN@?$numeric_limits@C@std@@SACXZ
-@ stub ?quiet_NaN@?$numeric_limits@D@std@@SADXZ
-@ stub ?quiet_NaN@?$numeric_limits@E@std@@SAEXZ
-@ stub ?quiet_NaN@?$numeric_limits@F@std@@SAFXZ
-@ stub ?quiet_NaN@?$numeric_limits@G@std@@SAGXZ
-@ stub ?quiet_NaN@?$numeric_limits@H@std@@SAHXZ
-@ stub ?quiet_NaN@?$numeric_limits@I@std@@SAIXZ
-@ stub ?quiet_NaN@?$numeric_limits@J@std@@SAJXZ
-@ stub ?quiet_NaN@?$numeric_limits@K@std@@SAKXZ
-@ stub ?quiet_NaN@?$numeric_limits@M@std@@SAMXZ
-@ stub ?quiet_NaN@?$numeric_limits@N@std@@SANXZ
-@ stub ?quiet_NaN@?$numeric_limits@O@std@@SAOXZ
-@ stub ?quiet_NaN@?$numeric_limits@_J@std@@SA_JXZ
-@ stub ?quiet_NaN@?$numeric_limits@_K@std@@SA_KXZ
-@ stub ?quiet_NaN@?$numeric_limits@_N@std@@SA_NXZ
-@ stub ?quiet_NaN@?$numeric_limits@_W@std@@SA_WXZ
+@ cdecl ?quiet_NaN@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@F@std@@SAFXZ() std_numeric_limits_short_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@G@std@@SAGXZ() std_numeric_limits_unsigned_short_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@H@std@@SAHXZ() std_numeric_limits_int_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@I@std@@SAIXZ() std_numeric_limits_unsigned_int_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@J@std@@SAJXZ() std_numeric_limits_long_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@K@std@@SAKXZ() std_numeric_limits_unsigned_long_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_quiet_NaN
+@ cdecl ?quiet_NaN@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_quiet_NaN
 @ extern ?radix@_Num_base@std@@2HB std_Num_base_radix
 @ extern ?radix@_Num_float_base@std@@2HB std_Num_float_base_radix
 @ extern ?radix@_Num_int_base@std@@2HB std_Num_int_base_radix
@@ -5210,22 +5210,22 @@
 @ stub -arch=win64 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z
 @ stub -arch=win32 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z
 @ stub -arch=win64 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z
-@ stub ?round_error@?$numeric_limits@C@std@@SACXZ
-@ stub ?round_error@?$numeric_limits@D@std@@SADXZ
-@ stub ?round_error@?$numeric_limits@E@std@@SAEXZ
-@ stub ?round_error@?$numeric_limits@F@std@@SAFXZ
-@ stub ?round_error@?$numeric_limits@G@std@@SAGXZ
-@ stub ?round_error@?$numeric_limits@H@std@@SAHXZ
-@ stub ?round_error@?$numeric_limits@I@std@@SAIXZ
-@ stub ?round_error@?$numeric_limits@J@std@@SAJXZ
-@ stub ?round_error@?$numeric_limits@K@std@@SAKXZ
-@ stub ?round_error@?$numeric_limits@M@std@@SAMXZ
-@ stub ?round_error@?$numeric_limits@N@std@@SANXZ
-@ stub ?round_error@?$numeric_limits@O@std@@SAOXZ
-@ stub ?round_error@?$numeric_limits@_J@std@@SA_JXZ
-@ stub ?round_error@?$numeric_limits@_K@std@@SA_KXZ
-@ stub ?round_error@?$numeric_limits@_N@std@@SA_NXZ
-@ stub ?round_error@?$numeric_limits@_W@std@@SA_WXZ
+@ cdecl ?round_error@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_round_error
+@ cdecl ?round_error@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_round_error
+@ cdecl ?round_error@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_round_error
+@ cdecl ?round_error@?$numeric_limits@F@std@@SAFXZ() std_numeric_limits_short_round_error
+@ cdecl ?round_error@?$numeric_limits@G@std@@SAGXZ() std_numeric_limits_unsigned_short_round_error
+@ cdecl ?round_error@?$numeric_limits@H@std@@SAHXZ() std_numeric_limits_int_round_error
+@ cdecl ?round_error@?$numeric_limits@I@std@@SAIXZ() std_numeric_limits_unsigned_int_round_error
+@ cdecl ?round_error@?$numeric_limits@J@std@@SAJXZ() std_numeric_limits_long_round_error
+@ cdecl ?round_error@?$numeric_limits@K@std@@SAKXZ() std_numeric_limits_unsigned_long_round_error
+@ cdecl ?round_error@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_round_error
+@ cdecl ?round_error@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_round_error
+@ cdecl ?round_error@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_round_error
+@ cdecl ?round_error@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_round_error
+@ cdecl ?round_error@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_round_error
+@ cdecl ?round_error@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_round_error
+@ cdecl ?round_error@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_round_error
 @ extern ?round_style@_Num_base@std@@2W4float_round_style@2@B std_Num_base_round_style
 @ extern ?round_style@_Num_float_base@std@@2W4float_round_style@2@B std_Num_float_base_round_style
 @ stub -arch=win32 ?sbumpc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ
@@ -5388,22 +5388,22 @@
 @ stub -arch=win64 ?showmanyc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA_JXZ
 @ stub -arch=win32 ?showmanyc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHXZ
 @ stub -arch=win64 ?showmanyc@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JXZ
-@ stub ?signaling_NaN@?$numeric_limits@C@std@@SACXZ
-@ stub ?signaling_NaN@?$numeric_limits@D@std@@SADXZ
-@ stub ?signaling_NaN@?$numeric_limits@E@std@@SAEXZ
-@ stub ?signaling_NaN@?$numeric_limits@F@std@@SAFXZ
-@ stub ?signaling_NaN@?$numeric_limits@G@std@@SAGXZ
-@ stub ?signaling_NaN@?$numeric_limits@H@std@@SAHXZ
-@ stub ?signaling_NaN@?$numeric_limits@I@std@@SAIXZ
-@ stub ?signaling_NaN@?$numeric_limits@J@std@@SAJXZ
-@ stub ?signaling_NaN@?$numeric_limits@K@std@@SAKXZ
-@ stub ?signaling_NaN@?$numeric_limits@M@std@@SAMXZ
-@ stub ?signaling_NaN@?$numeric_limits@N@std@@SANXZ
-@ stub ?signaling_NaN@?$numeric_limits@O@std@@SAOXZ
-@ stub ?signaling_NaN@?$numeric_limits@_J@std@@SA_JXZ
-@ stub ?signaling_NaN@?$numeric_limits@_K@std@@SA_KXZ
-@ stub ?signaling_NaN@?$numeric_limits@_N@std@@SA_NXZ
-@ stub ?signaling_NaN@?$numeric_limits@_W@std@@SA_WXZ
+@ cdecl ?signaling_NaN@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@F@std@@SAFXZ() std_numeric_limits_short_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@G@std@@SAGXZ() std_numeric_limits_unsigned_short_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@H@std@@SAHXZ() std_numeric_limits_int_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@I@std@@SAIXZ() std_numeric_limits_unsigned_int_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@J@std@@SAJXZ() std_numeric_limits_long_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@K@std@@SAKXZ() std_numeric_limits_unsigned_long_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_signaling_NaN
+@ cdecl ?signaling_NaN@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_signaling_NaN
 @ stub ?sin@?$_Ctraits@M@std@@SAMM@Z
 @ stub ?sin@?$_Ctraits@N@std@@SANN@Z
 @ stub ?sin@?$_Ctraits@O@std@@SAOO@Z
