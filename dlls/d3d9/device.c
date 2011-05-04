@@ -540,61 +540,35 @@ static UINT WINAPI IDirect3DDevice9Impl_GetNumberOfSwapChains(IDirect3DDevice9Ex
 
 static HRESULT WINAPI reset_enum_callback(struct wined3d_resource *resource, void *data)
 {
+    struct wined3d_resource_desc desc;
     BOOL *resources_ok = data;
-    D3DRESOURCETYPE type;
-    HRESULT ret = S_OK;
-    D3DSURFACE_DESC surface_desc;
-    D3DVOLUME_DESC volume_desc;
-    D3DINDEXBUFFER_DESC index_desc;
-    D3DVERTEXBUFFER_DESC vertex_desc;
-    WINED3DPOOL pool;
-    IDirect3DResource9 *parent;
 
-    parent = wined3d_resource_get_parent(resource);
-    type = IDirect3DResource9_GetType(parent);
-    switch(type) {
-        case D3DRTYPE_SURFACE:
-            IDirect3DSurface9_GetDesc((IDirect3DSurface9 *)parent, &surface_desc);
-            pool = surface_desc.Pool;
-            break;
-
-        case D3DRTYPE_VOLUME:
-            IDirect3DVolume9_GetDesc((IDirect3DVolume9 *)parent, &volume_desc);
-            pool = volume_desc.Pool;
-            break;
-
-        case D3DRTYPE_INDEXBUFFER:
-            IDirect3DIndexBuffer9_GetDesc((IDirect3DIndexBuffer9 *) parent, &index_desc);
-            pool = index_desc.Pool;
-            break;
-
-        case D3DRTYPE_VERTEXBUFFER:
-            IDirect3DVertexBuffer9_GetDesc((IDirect3DVertexBuffer9 *)parent, &vertex_desc);
-            pool = vertex_desc.Pool;
-            break;
-
-        /* No need to check for textures. If there is a D3DPOOL_DEFAULT texture, there
-         * is a D3DPOOL_DEFAULT surface or volume as well
-         */
-        default:
-            pool = WINED3DPOOL_SCRATCH; /* a harmless pool */
-            break;
-    }
-
-    if (pool == WINED3DPOOL_DEFAULT)
+    wined3d_resource_get_desc(resource, &desc);
+    if (desc.pool == WINED3DPOOL_DEFAULT)
     {
-        IDirect3DResource9_AddRef(parent);
-        if (IUnknown_Release(parent) == 0)
+        IDirect3DSurface9 *surface;
+
+        if (desc.resource_type != WINED3DRTYPE_SURFACE)
         {
-            TRACE("Parent %p is an implicit resource with ref 0\n", parent);
-        } else {
-            WARN("Resource %p(wineD3D %p) with pool D3DPOOL_DEFAULT blocks the Reset call\n", parent, resource);
-            ret = S_FALSE;
+            WARN("Resource %p in pool D3DPOOL_DEFAULT blocks the Reset call.\n", resource);
             *resources_ok = FALSE;
+            return S_FALSE;
         }
+
+        surface = wined3d_resource_get_parent(resource);
+
+        IDirect3DSurface9_AddRef(surface);
+        if (IDirect3DSurface9_Release(surface))
+        {
+            WARN("Surface %p (resource %p) in pool D3DPOOL_DEFAULT blocks the Reset call.\n", surface, resource);
+            *resources_ok = FALSE;
+            return S_FALSE;
+        }
+
+        WARN("Surface %p (resource %p) is an implicit resource with ref 0.\n", surface, resource);
     }
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Reset(IDirect3DDevice9Ex *iface,
