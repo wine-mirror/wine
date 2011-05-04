@@ -356,7 +356,6 @@ msgstr ""
 "여백을 다시 입력하시오."
 
 #: comdlg32.rc:74
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
 msgstr " '복사본 수'의 숫자값은 빈 값이 올 수 없습니다."
 
@@ -685,9 +684,8 @@ msgid "Unstructured Address"
 msgstr "비구조화 주소"
 
 #: crypt32.rc:51
-#, fuzzy
 msgid "S/MIME Capabilities"
-msgstr "SMIME 특성"
+msgstr "S/MIME  능력"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
@@ -9180,9 +9178,8 @@ msgid "&Export Registry File..."
 msgstr "레지스트리 파일 내보내기(&E)..."
 
 #: regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "수정(&M)"
+msgstr "고치기(&M)..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -9241,9 +9238,8 @@ msgid "&About Registry Editor"
 msgstr "레지스트리 편집기 정보(&A)"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "이진값 고치기"
+msgstr "이진값 고치기..."
 
 #: regedit.rc:109
 msgid "&Export..."
@@ -10161,9 +10157,8 @@ msgid "Regular Metafile Viewer"
 msgstr "정규 메타파일 보기"
 
 #: winecfg.rc:32
-#, fuzzy
 msgid "Configure..."
-msgstr "설정"
+msgstr "설정..."
 
 #: winecfg.rc:39
 msgid "Libraries"
@@ -10303,9 +10298,8 @@ msgid "None"
 msgstr "없음"
 
 #: winecfg.rc:81
-#, fuzzy
 msgid "Autodetect..."
-msgstr "자동으로 찾기"
+msgstr "자동으로 찾기..."
 
 #: winecfg.rc:82
 msgid "Local hard disk"
@@ -10710,9 +10704,8 @@ msgid "Re&name..."
 msgstr "이름바꾸기(&N)..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "속성(&I)...\tAlt+Enter"
+msgstr "속성(&I)\tAlt+Enter"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -10731,9 +10724,8 @@ msgid "&Disk"
 msgstr "디스크(&D)"
 
 #: winefile.rc:45
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "네트워크 드라이브 연결(&N)"
+msgstr "네트워크 드라이브 연결(&N)..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
@@ -10764,9 +10756,8 @@ msgid "Sort by &Date"
 msgstr "날짜로 정렬(&D)"
 
 #: winefile.rc:60
-#, fuzzy
 msgid "Filter by&..."
-msgstr "&...로 여과"
+msgstr "&...로 걸려내기"
 
 #: winefile.rc:67
 msgid "&Drivebar"
