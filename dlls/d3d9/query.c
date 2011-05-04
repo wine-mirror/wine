@@ -95,15 +95,15 @@ static HRESULT WINAPI IDirect3DQuery9Impl_GetDevice(IDirect3DQuery9 *iface,
 static D3DQUERYTYPE WINAPI IDirect3DQuery9Impl_GetType(IDirect3DQuery9 *iface)
 {
     IDirect3DQuery9Impl *This = impl_from_IDirect3DQuery9(iface);
-    HRESULT hr;
+    D3DQUERYTYPE type;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = wined3d_query_get_type(This->wineD3DQuery);
+    type = wined3d_query_get_type(This->wineD3DQuery);
     wined3d_mutex_unlock();
 
-    return hr;
+    return type;
 }
 
 static DWORD WINAPI IDirect3DQuery9Impl_GetDataSize(IDirect3DQuery9 *iface)
