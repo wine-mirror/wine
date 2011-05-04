@@ -861,6 +861,7 @@ static void test_reset(void)
     D3DLOCKED_RECT               lockrect;
     IDirect3DDevice9 *device1 = NULL;
     IDirect3DDevice9 *device2 = NULL;
+    D3DCAPS9 caps;
     struct
     {
         UINT w;
@@ -932,6 +933,9 @@ static void test_reset(void)
     }
     hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after creation returned %#x\n", hr);
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device1, &caps);
+    ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
 
     width = GetSystemMetrics(SM_CXSCREEN);
     height = GetSystemMetrics(SM_CYSCREEN);
@@ -1066,6 +1070,29 @@ static void test_reset(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(device1);
     ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after a successful reset returned %#x\n", hr);
+
+    if (caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP)
+    {
+        IDirect3DVolumeTexture9 *volume_texture;
+
+        hr = IDirect3DDevice9_CreateVolumeTexture(device1, 16, 16, 4, 1, 0,
+                D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &volume_texture, NULL);
+        ok(SUCCEEDED(hr), "CreateVolumeTexture failed, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_Reset(device1, &d3dpp);
+        ok(hr == D3DERR_INVALIDCALL, "Reset returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+        hr = IDirect3DDevice9_TestCooperativeLevel(device1);
+        ok(hr == D3DERR_DEVICENOTRESET, "TestCooperativeLevel returned %#x, expected %#x.\n",
+                hr, D3DERR_DEVICENOTRESET);
+        IDirect3DVolumeTexture9_Release(volume_texture);
+        hr = IDirect3DDevice9_Reset(device1, &d3dpp);
+        ok(SUCCEEDED(hr), "Reset failed, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_TestCooperativeLevel(device1);
+        ok(SUCCEEDED(hr), "TestCooperativeLevel failed, hr %#x.\n", hr);
+    }
+    else
+    {
+        skip("Volume textures not supported.\n");
+    }
 
     /* Scratch, sysmem and managed pools are fine */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device1, 16, 16, D3DFMT_R5G6B5, D3DPOOL_SCRATCH, &surface, NULL);
