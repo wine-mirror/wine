@@ -2521,6 +2521,7 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
             len = 1;
             mbchs[0] = (uChar & 0xff);
         }
+        uChar = 0;
         MultiByteToWideChar(cp, 0, mbchs, len, (LPWSTR)&uChar, 1);
     }
 
