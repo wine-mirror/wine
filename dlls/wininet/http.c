@@ -1995,6 +1995,11 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
         if (size != sizeof(DWORD))
             return ERROR_INVALID_PARAMETER;
 
+        if(NETCON_connected(&req->netConnection)) {
+            FIXME("unsupported without active connection\n");
+            return ERROR_SUCCESS;
+        }
+
         return NETCON_set_timeout(&req->netConnection, option == INTERNET_OPTION_SEND_TIMEOUT,
                     *(DWORD*)buffer);
 

@@ -896,11 +896,6 @@ DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, int value)
     int result;
     struct timeval tv;
 
-    /* FIXME: we should probably store the timeout in the connection to set
-     * when we do connect */
-    if (!NETCON_connected(connection))
-        return ERROR_SUCCESS;
-
     /* value is in milliseconds, convert to struct timeval */
     tv.tv_sec = value / 1000;
     tv.tv_usec = (value % 1000) * 1000;
