@@ -1,6 +1,6 @@
 /*
  * Copyright 2005-2006 Jacek Caban for CodeWeavers
- * Copyright 2009-2010 Detlef Riekenberg
+ * Copyright 2009-2011 Detlef Riekenberg
  * Copyright 2011 Thomas Mullaly for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -105,6 +105,7 @@ static const WCHAR security_expectedW[] = {'w','i','n','e','t','e','s','t',':','
 static const WCHAR winetest_to_httpW[] = {'w','i','n','e','t','e','s','t',':','h',0};
 
 static const char *szZoneMapDomainsKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains";
+static const char *szInternetSettingsKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
 
 static const BYTE secid1[] = {'f','i','l','e',':',0,0,0,0};
 static const BYTE secid5[] = {'h','t','t','p',':','w','w','w','.','z','o','n','e','3',
@@ -175,6 +176,74 @@ static inline DWORD strcmp_aw(LPCSTR strA, LPCWSTR strB) {
     heap_free(strAW);
     return ret;
 }
+
+
+/* Based on RegDeleteTreeW from dlls/advapi32/registry.c */
+static LONG myRegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
+{
+    LONG ret;
+    DWORD dwMaxSubkeyLen, dwMaxValueLen;
+    DWORD dwMaxLen, dwSize;
+    CHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
+    HKEY hSubKey = hKey;
+
+    if(lpszSubKey)
+    {
+        ret = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+        if (ret) return ret;
+    }
+
+    /* Get highest length for keys, values */
+    ret = RegQueryInfoKeyA(hSubKey, NULL, NULL, NULL, NULL,
+            &dwMaxSubkeyLen, NULL, NULL, &dwMaxValueLen, NULL, NULL, NULL);
+    if (ret) goto cleanup;
+
+    dwMaxSubkeyLen++;
+    dwMaxValueLen++;
+    dwMaxLen = max(dwMaxSubkeyLen, dwMaxValueLen);
+    if (dwMaxLen > sizeof(szNameBuf)/sizeof(CHAR))
+    {
+        /* Name too big: alloc a buffer for it */
+        if (!(lpszName = HeapAlloc( GetProcessHeap(), 0, dwMaxLen*sizeof(CHAR))))
+        {
+            ret = ERROR_NOT_ENOUGH_MEMORY;
+            goto cleanup;
+        }
+    }
+
+    /* Recursively delete all the subkeys */
+    while (TRUE)
+    {
+        dwSize = dwMaxLen;
+        if (RegEnumKeyExA(hSubKey, 0, lpszName, &dwSize, NULL,
+                          NULL, NULL, NULL)) break;
+
+        ret = myRegDeleteTreeA(hSubKey, lpszName);
+        if (ret) goto cleanup;
+    }
+
+    if (lpszSubKey)
+        ret = RegDeleteKeyA(hKey, lpszSubKey);
+    else
+        while (TRUE)
+        {
+            dwSize = dwMaxLen;
+            if (RegEnumValueA(hKey, 0, lpszName, &dwSize,
+                  NULL, NULL, NULL, NULL)) break;
+
+            ret = RegDeleteValueA(hKey, lpszName);
+            if (ret) goto cleanup;
+        }
+
+cleanup:
+    /* Free buffer if allocated */
+    if (lpszName != szNameBuf)
+        heap_free(lpszName);
+    if(lpszSubKey)
+        RegCloseKey(hSubKey);
+    return ret;
+}
+
 
 static void test_SecurityManager(void)
 {
@@ -1011,6 +1080,83 @@ static void test_GetZoneAttributes(void)
     ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
 }
 
+static void test_SetZoneAttributes(void)
+{
+    IInternetZoneManager *zonemgr = NULL;
+    CHAR buffer [sizeof(ZONEATTRIBUTES) + 16];
+    ZONEATTRIBUTES* pZA = (ZONEATTRIBUTES*) buffer;
+    CHAR regpath[MAX_PATH];
+    HKEY hkey;
+    HRESULT hr;
+    DWORD res;
+
+    trace("testing SetZoneAttributes...\n");
+    hr = pCoInternetCreateZoneManager(NULL, &zonemgr, 0);
+    ok(hr == S_OK, "CoInternetCreateZoneManager result: 0x%x\n", hr);
+    if (FAILED(hr))
+        return;
+
+    memset(buffer, -1, sizeof(buffer));
+    hr = IInternetZoneManager_GetZoneAttributes(zonemgr, URLZONE_LOCAL_MACHINE, pZA);
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+
+    sprintf(regpath, "%s\\Zones\\%d", szInternetSettingsKey, URLZONE_CUSTOM);
+    res = RegCreateKeyA(HKEY_CURRENT_USER, regpath, &hkey);
+    RegCloseKey(hkey);
+
+    ok(res == ERROR_SUCCESS, "got %d (expected ERROR_SUCCESS)\n", res);
+    if (res != ERROR_SUCCESS)
+        goto cleanup;
+
+    pZA->cbSize = sizeof(ZONEATTRIBUTES);
+    hr = IInternetZoneManager_SetZoneAttributes(zonemgr, URLZONE_CUSTOM, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
+
+    /* normal use */
+    hr = IInternetZoneManager_SetZoneAttributes(zonemgr, URLZONE_CUSTOM, pZA);
+    if (hr == E_FAIL) {
+        win_skip("SetZoneAttributes not supported: IE too old\n");
+        goto cleanup;
+    }
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+
+    /* native urlmon ignores cbSize */
+    pZA->cbSize = sizeof(ZONEATTRIBUTES) + sizeof(DWORD);
+    hr = IInternetZoneManager_SetZoneAttributes(zonemgr, URLZONE_CUSTOM, pZA);
+    ok(hr == S_OK, "got 0x%x for sizeof(ZONEATTRIBUTES) + sizeof(DWORD) (expected S_OK)\n", hr);
+
+    pZA->cbSize = sizeof(ZONEATTRIBUTES) - sizeof(DWORD);
+    hr = IInternetZoneManager_SetZoneAttributes(zonemgr, URLZONE_CUSTOM, pZA);
+    ok(hr == S_OK, "got 0x%x for sizeof(ZONEATTRIBUTES) - sizeof(DWORD) (expected S_OK)\n", hr);
+
+    pZA->cbSize = 0;
+    hr = IInternetZoneManager_SetZoneAttributes(zonemgr, URLZONE_CUSTOM, pZA);
+    ok(hr == S_OK, "got 0x%x for size 0 (expected S_OK)\n", hr);
+
+    /* The key for the zone must be present, when calling SetZoneAttributes */
+    myRegDeleteTreeA(HKEY_CURRENT_USER, regpath);
+    /* E_FAIL is returned from IE6 here, which is resonable.
+       All newer IE return S_OK without saving the zone attributes to the registry.
+       This is a Windows bug, but we have to accept that as standard */
+    hr = IInternetZoneManager_SetZoneAttributes(zonemgr, URLZONE_CUSTOM, pZA);
+    ok((hr == S_OK) || broken(hr == E_FAIL), "got 0x%x (expected S_OK)\n", hr);
+
+    /* SetZoneAttributes did not create the directory */
+    res = RegOpenKeyA(HKEY_CURRENT_USER, regpath, &hkey);
+    ok((res == ERROR_FILE_NOT_FOUND) && (hkey == NULL),
+        "got %u with %p (expected ERROR_FILE_NOT_FOUND with NULL)\n", res, hkey);
+
+    if (hkey) RegCloseKey(hkey);
+
+cleanup:
+    /* delete zone settings in the registry */
+    myRegDeleteTreeA(HKEY_CURRENT_USER, regpath);
+
+    hr = IInternetZoneManager_Release(zonemgr);
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+}
+
+
 static void test_InternetSecurityMarshalling(void)
 {
     IInternetSecurityManager *secmgr = NULL;
@@ -1509,6 +1655,7 @@ START_TEST(sec_mgr)
     test_GetZoneActionPolicy();
     test_GetZoneAt();
     test_GetZoneAttributes();
+    test_SetZoneAttributes();
     test_InternetSecurityMarshalling();
 
     unregister_protocols();
