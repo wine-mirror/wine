@@ -141,7 +141,7 @@ BEGIN
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "추가(&A)...",IDC_BUTTON_ADD,15,98,37,14
     PUSHBUTTON      "제거(&R)",IDC_BUTTON_REMOVE,56,98,37,14
-    PUSHBUTTON      "자동찾기(&D)...",IDC_BUTTON_AUTODETECT,197,98,49,14
+    PUSHBUTTON      "자동찾기(&D)",IDC_BUTTON_AUTODETECT,197,98,49,14
 
     /* editing drive details */
     LTEXT           "경로(&P):",IDC_STATIC_PATH,13,123,25,9
