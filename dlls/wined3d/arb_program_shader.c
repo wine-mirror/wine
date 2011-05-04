@@ -340,6 +340,7 @@ static BOOL need_helper_const(const struct arb_vshader_private *shader_data,
     if (gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) return TRUE; /* Have to init texcoords. */
     if (!use_nv_clip(gl_info)) return TRUE; /* Init the clip texcoord */
     if (reg_maps->usesnrm) return TRUE; /* 0.0 */
+    if (reg_maps->usespow) return TRUE; /* EPS, 0.0 and 1.0 */
     return FALSE;
 }
 
@@ -2773,6 +2774,8 @@ static void shader_hw_pow(const struct wined3d_shader_instruction *ins)
     char src0[50], src1[50], dst[50];
     struct wined3d_shader_src_param src0_copy = ins->src[0];
     BOOL need_abs = FALSE;
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    const char *one = arb_get_helper_value(ins->ctx->reg_maps->shader_version.type, ARB_ONE);
 
     /* POW operates on the absolute value of the input */
     src0_copy.modifiers = abs_modifier(src0_copy.modifiers, &need_abs);
@@ -2782,13 +2785,28 @@ static void shader_hw_pow(const struct wined3d_shader_instruction *ins)
     shader_arb_get_src_param(ins, &ins->src[1], 1, src1);
 
     if (need_abs)
-    {
         shader_addline(buffer, "ABS TA.x, %s;\n", src0);
-        shader_addline(buffer, "POW%s %s, TA.x, %s;\n", shader_arb_get_modifier(ins), dst, src1);
+    else
+        shader_addline(buffer, "MOV TA.x, %s;\n", src0);
+
+    if (priv->target_version >= NV2)
+    {
+        shader_addline(buffer, "MOVC TA.y, %s;\n", src1);
+        shader_addline(buffer, "POW%s %s, TA.x, TA.y;\n", shader_arb_get_modifier(ins), dst);
+        shader_addline(buffer, "MOV %s (EQ.y), %s;\n", dst, one);
     }
     else
     {
-        shader_addline(buffer, "POW%s %s, %s, %s;\n", shader_arb_get_modifier(ins), dst, src0, src1);
+        const char *zero = arb_get_helper_value(ins->ctx->reg_maps->shader_version.type, ARB_ZERO);
+        const char *flt_eps = arb_get_helper_value(ins->ctx->reg_maps->shader_version.type, ARB_EPS);
+
+        shader_addline(buffer, "ABS TA.y, %s;\n", src1);
+        shader_addline(buffer, "SGE TA.y, -TA.y, %s;\n", zero);
+        /* Possibly add flt_eps to avoid getting float special values */
+        shader_addline(buffer, "MAD TA.z, TA.y, %s, %s;\n", flt_eps, src1);
+        shader_addline(buffer, "POW%s TA.x, TA.x, TA.z;\n", shader_arb_get_modifier(ins));
+        shader_addline(buffer, "MAD TA.x, -TA.x, TA.y, TA.x;\n");
+        shader_addline(buffer, "MAD %s, TA.y, %s, TA.x;\n", dst, one);
     }
 }
 
