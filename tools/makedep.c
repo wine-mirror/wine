@@ -471,6 +471,28 @@ static FILE *open_include_file( INCL_FILE *pFile )
         free( filename );
     }
 
+    /* check for corresponding .x file in global includes */
+
+    if (strendswith( pFile->name, "tmpl.h" ))
+    {
+        if (top_src_dir)
+            filename = strmake( "%s/include/%.*s.x",
+                                top_src_dir, strlen(pFile->name) - 2, pFile->name );
+        else if (top_obj_dir)
+            filename = strmake( "%s/include/%.*s.x",
+                                top_obj_dir, strlen(pFile->name) - 2, pFile->name );
+        else
+            filename = NULL;
+
+        if (filename && (file = fopen( filename, "r" )))
+        {
+            pFile->sourcename = filename;
+            pFile->filename = strmake( "%s/include/%s", top_obj_dir, pFile->name );
+            return file;
+        }
+        free( filename );
+    }
+
     /* now try in global includes */
     if (top_obj_dir)
     {
@@ -761,9 +783,10 @@ static void parse_file( INCL_FILE *pFile, int src )
         return;
     }
 
-    /* don't try to open .tlb or .res files */
+    /* don't try to open certain types of files */
     if (strendswith( pFile->name, ".tlb" ) ||
-        strendswith( pFile->name, ".res" ))
+        strendswith( pFile->name, ".res" ) ||
+        strendswith( pFile->name, ".x" ))
     {
         pFile->filename = xstrdup( pFile->name );
         return;
