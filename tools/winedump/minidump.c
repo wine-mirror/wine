@@ -267,12 +267,12 @@ void mdmp_dump(void)
                 strcat(tmp, " (");
                 if (msi->ProcessorLevel == 3 || msi->ProcessorLevel == 4)
                 {
-                    if (HIWORD(msi->ProcessorRevision) == 0xFF)
-                        sprintf(tmp + strlen(tmp), "%c%d", 'A' + HIBYTE(LOWORD(msi->ProcessorRevision)), LOBYTE(LOWORD(msi->ProcessorRevision)));
+                    if (HIBYTE(msi->ProcessorRevision) == 0xFF)
+                        sprintf(tmp + strlen(tmp), "%c%d", 'A' + ((msi->ProcessorRevision>>4)&0xf)-0x0a, msi->ProcessorRevision&0xf);
                     else
-                        sprintf(tmp + strlen(tmp), "%c%d", 'A' + HIWORD(msi->ProcessorRevision), LOWORD(msi->ProcessorRevision));
+                        sprintf(tmp + strlen(tmp), "%c%d", 'A' + HIBYTE(msi->ProcessorRevision), LOBYTE(msi->ProcessorRevision));
                 }
-                else sprintf(tmp + strlen(tmp), "%d.%d", HIWORD(msi->ProcessorRevision), LOWORD(msi->ProcessorRevision));
+                else sprintf(tmp + strlen(tmp), "%d.%d", HIBYTE(msi->ProcessorRevision), LOBYTE(msi->ProcessorRevision));
                 str = tmp;
                 break;
             case PROCESSOR_ARCHITECTURE_MIPS:

@@ -238,18 +238,18 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             strcat(tmp, str);
             if (msi->ProcessorLevel == 3 || msi->ProcessorLevel == 4)
             {
-                if (HIWORD(msi->ProcessorRevision) == 0xFF)
+                if (HIBYTE(msi->ProcessorRevision) == 0xFF)
                     sprintf(tmp + strlen(tmp), " (%c%d)",
-                            'A' + HIBYTE(LOWORD(msi->ProcessorRevision)),
-                            LOBYTE(LOWORD(msi->ProcessorRevision)));
+                            'A' + ((msi->ProcessorRevision>>4)&0xf)-0x0a,
+                            ((msi->ProcessorRevision&0xf)));
                 else
                     sprintf(tmp + strlen(tmp), " (%c%d)",
-                            'A' + HIWORD(msi->ProcessorRevision),
-                            LOWORD(msi->ProcessorRevision));
+                            'A' + HIBYTE(msi->ProcessorRevision),
+                            LOBYTE(msi->ProcessorRevision));
             }
             else sprintf(tmp + strlen(tmp), " (%d.%d)",
-                         HIWORD(msi->ProcessorRevision),
-                         LOWORD(msi->ProcessorRevision));
+                         HIBYTE(msi->ProcessorRevision),
+                         LOBYTE(msi->ProcessorRevision));
             str = tmp;
             break;
         case PROCESSOR_ARCHITECTURE_MIPS:
