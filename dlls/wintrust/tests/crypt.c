@@ -1158,7 +1158,9 @@ static IMAGE_NT_HEADERS nt_header =
         0, /* SizeOfUninitializedData */
         0, /* AddressOfEntryPoint */
         0x10, /* BaseOfCode, also serves as e_lfanew in the truncated MZ header */
+#ifndef _WIN64
         0, /* BaseOfData */
+#endif
         0x10000000, /* ImageBase */
         0, /* SectionAlignment */
         0, /* FileAlignment */
