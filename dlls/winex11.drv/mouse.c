@@ -1207,7 +1207,8 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
         return TRUE;
     }
 
-    if (X11DRV_get_win_data( GetDesktopWindow() )) return TRUE;  /* don't clip in the desktop process */
+    if (GetWindowThreadProcessId( GetDesktopWindow(), NULL ) == GetCurrentThreadId())
+        return TRUE;  /* don't clip in the desktop process */
 
     /* we are clipping if the clip rectangle is smaller than the screen */
     if (grab_pointer && (clip->left > virtual_screen_rect.left ||
