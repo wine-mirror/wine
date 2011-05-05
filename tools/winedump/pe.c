@@ -937,7 +937,7 @@ static void	dump_dir_debug(void)
     printf("\n");
 }
 
-static inline void print_clrflags(const char *title, WORD value)
+static inline void print_clrflags(const char *title, DWORD value)
 {
     printf("  %-34s 0x%X\n", title, value);
 #define X(f,s) if (value & f) printf("    %s\n", s)
