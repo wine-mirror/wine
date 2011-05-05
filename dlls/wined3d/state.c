@@ -240,12 +240,54 @@ static void state_ambient(DWORD state, struct wined3d_stateblock *stateblock, st
     checkGLcall("glLightModel for MODEL_AMBIENT");
 }
 
+static GLenum gl_blend_factor(WINED3DBLEND factor, const struct wined3d_format *dst_format)
+{
+    switch (factor)
+    {
+        case WINED3DBLEND_ZERO:
+            return GL_ZERO;
+        case WINED3DBLEND_ONE:
+            return GL_ONE;
+        case WINED3DBLEND_SRCCOLOR:
+            return GL_SRC_COLOR;
+        case WINED3DBLEND_INVSRCCOLOR:
+            return GL_ONE_MINUS_SRC_COLOR;
+        case WINED3DBLEND_SRCALPHA:
+            return GL_SRC_ALPHA;
+        case WINED3DBLEND_INVSRCALPHA:
+            return GL_ONE_MINUS_SRC_ALPHA;
+        case WINED3DBLEND_DESTCOLOR:
+            return GL_DST_COLOR;
+        case WINED3DBLEND_INVDESTCOLOR:
+            return GL_ONE_MINUS_DST_COLOR;
+        /* To compensate for the lack of format switching with backbuffer
+         * offscreen rendering, and with onscreen rendering, we modify the
+         * alpha test parameters for (INV)DESTALPHA if the render target
+         * doesn't support alpha blending. A non-existent alpha channel
+         * returns 1.0, so WINED3DBLEND_DESTALPHA becomes GL_ONE, and
+         * WINED3DBLEND_INVDESTALPHA becomes GL_ZERO. */
+        case WINED3DBLEND_DESTALPHA:
+            return dst_format->alpha_mask ? GL_DST_ALPHA : GL_ONE;
+        case WINED3DBLEND_INVDESTALPHA:
+            return dst_format->alpha_mask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
+        case WINED3DBLEND_SRCALPHASAT:
+            return GL_SRC_ALPHA_SATURATE;
+        case WINED3DBLEND_BLENDFACTOR:
+            return GL_CONSTANT_COLOR_EXT;
+        case WINED3DBLEND_INVBLENDFACTOR:
+            return GL_ONE_MINUS_CONSTANT_COLOR_EXT;
+        default:
+            FIXME("Unhandled blend factor %#x.\n", factor);
+            return GL_NONE;
+    }
+}
+
 static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     struct wined3d_surface *target = stateblock->device->render_targets[0];
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    int srcBlend = GL_ZERO;
-    int dstBlend = GL_ZERO;
+    GLenum srcBlend, dstBlend;
+    WINED3DBLEND d3d_blend;
 
     /* According to the red book, GL_LINE_SMOOTH needs GL_BLEND with specific
      * blending parameters to work. */
@@ -273,86 +315,25 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
         return;
     };
 
-    switch (stateblock->state.render_states[WINED3DRS_DESTBLEND])
+    /* WINED3DBLEND_BOTHSRCALPHA and WINED3DBLEND_BOTHINVSRCALPHA are legacy
+     * source blending values which are still valid up to d3d9. They should
+     * not occur as dest blend values. */
+    d3d_blend = stateblock->state.render_states[WINED3DRS_SRCBLEND];
+    if (d3d_blend == WINED3DBLEND_BOTHSRCALPHA)
     {
-        case WINED3DBLEND_ZERO               : dstBlend = GL_ZERO;  break;
-        case WINED3DBLEND_ONE                : dstBlend = GL_ONE;  break;
-        case WINED3DBLEND_SRCCOLOR           : dstBlend = GL_SRC_COLOR;  break;
-        case WINED3DBLEND_INVSRCCOLOR        : dstBlend = GL_ONE_MINUS_SRC_COLOR;  break;
-        case WINED3DBLEND_SRCALPHA           : dstBlend = GL_SRC_ALPHA;  break;
-        case WINED3DBLEND_INVSRCALPHA        : dstBlend = GL_ONE_MINUS_SRC_ALPHA;  break;
-        case WINED3DBLEND_DESTCOLOR          : dstBlend = GL_DST_COLOR;  break;
-        case WINED3DBLEND_INVDESTCOLOR       : dstBlend = GL_ONE_MINUS_DST_COLOR;  break;
-
-        /* To compensate the lack of format switching with backbuffer offscreen rendering,
-         * and with onscreen rendering, we modify the alpha test parameters for (INV)DESTALPHA
-         * if the render target doesn't support alpha blending. A nonexistent alpha channel
-         * returns 1.0, so D3DBLEND_DESTALPHA is GL_ONE, and D3DBLEND_INVDESTALPHA is GL_ZERO
-         */
-        case WINED3DBLEND_DESTALPHA          :
-            dstBlend = target->resource.format->alpha_mask ? GL_DST_ALPHA : GL_ONE;
-            break;
-        case WINED3DBLEND_INVDESTALPHA       :
-            dstBlend = target->resource.format->alpha_mask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
-            break;
-
-        case WINED3DBLEND_SRCALPHASAT        :
-            dstBlend = GL_SRC_ALPHA_SATURATE;
-            WARN("Application uses SRCALPHASAT as dest blend factor, expect problems\n");
-            break;
-
-        /* WINED3DBLEND_BOTHSRCALPHA and WINED3DBLEND_BOTHINVSRCALPHA are legacy source blending
-         * values which are still valid up to d3d9. They should not occur as dest blend values
-         */
-        case WINED3DBLEND_BOTHSRCALPHA       : dstBlend = GL_SRC_ALPHA;
-            srcBlend = GL_SRC_ALPHA;
-            FIXME("WINED3DRS_DESTBLEND = WINED3DBLEND_BOTHSRCALPHA, what to do?\n");
-            break;
-
-        case WINED3DBLEND_BOTHINVSRCALPHA    : dstBlend = GL_ONE_MINUS_SRC_ALPHA;
-            srcBlend = GL_ONE_MINUS_SRC_ALPHA;
-            FIXME("WINED3DRS_DESTBLEND = WINED3DBLEND_BOTHINVSRCALPHA, what to do?\n");
-            break;
-
-        case WINED3DBLEND_BLENDFACTOR        : dstBlend = GL_CONSTANT_COLOR_EXT;  break;
-        case WINED3DBLEND_INVBLENDFACTOR     : dstBlend = GL_ONE_MINUS_CONSTANT_COLOR_EXT;  break;
-        default:
-            FIXME("Unrecognized dst blend value %#x.\n",
-                    stateblock->state.render_states[WINED3DRS_DESTBLEND]);
+        srcBlend = GL_SRC_ALPHA;
+        dstBlend = GL_ONE_MINUS_SRC_ALPHA;
     }
-
-    switch (stateblock->state.render_states[WINED3DRS_SRCBLEND])
+    else if (d3d_blend == WINED3DBLEND_BOTHINVSRCALPHA)
     {
-        case WINED3DBLEND_ZERO               : srcBlend = GL_ZERO;  break;
-        case WINED3DBLEND_ONE                : srcBlend = GL_ONE;  break;
-        case WINED3DBLEND_SRCCOLOR           : srcBlend = GL_SRC_COLOR;  break;
-        case WINED3DBLEND_INVSRCCOLOR        : srcBlend = GL_ONE_MINUS_SRC_COLOR;  break;
-        case WINED3DBLEND_SRCALPHA           : srcBlend = GL_SRC_ALPHA;  break;
-        case WINED3DBLEND_INVSRCALPHA        : srcBlend = GL_ONE_MINUS_SRC_ALPHA;  break;
-        case WINED3DBLEND_DESTCOLOR          : srcBlend = GL_DST_COLOR;  break;
-        case WINED3DBLEND_INVDESTCOLOR       : srcBlend = GL_ONE_MINUS_DST_COLOR;  break;
-        case WINED3DBLEND_SRCALPHASAT        : srcBlend = GL_SRC_ALPHA_SATURATE;  break;
-
-        case WINED3DBLEND_DESTALPHA          :
-            srcBlend = target->resource.format->alpha_mask ? GL_DST_ALPHA : GL_ONE;
-            break;
-        case WINED3DBLEND_INVDESTALPHA       :
-            srcBlend = target->resource.format->alpha_mask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
-            break;
-
-        case WINED3DBLEND_BOTHSRCALPHA       : srcBlend = GL_SRC_ALPHA;
-            dstBlend = GL_ONE_MINUS_SRC_ALPHA;
-            break;
-
-        case WINED3DBLEND_BOTHINVSRCALPHA    : srcBlend = GL_ONE_MINUS_SRC_ALPHA;
-            dstBlend = GL_SRC_ALPHA;
-            break;
-
-        case WINED3DBLEND_BLENDFACTOR        : srcBlend = GL_CONSTANT_COLOR_EXT;  break;
-        case WINED3DBLEND_INVBLENDFACTOR     : srcBlend = GL_ONE_MINUS_CONSTANT_COLOR_EXT;  break;
-        default:
-            FIXME("Unrecognized src blend value %#x.\n",
-                    stateblock->state.render_states[WINED3DRS_SRCBLEND]);
+        srcBlend = GL_ONE_MINUS_SRC_ALPHA;
+        dstBlend = GL_SRC_ALPHA;
+    }
+    else
+    {
+        srcBlend = gl_blend_factor(d3d_blend, target->resource.format);
+        dstBlend = gl_blend_factor(stateblock->state.render_states[WINED3DRS_DESTBLEND],
+                target->resource.format);
     }
 
     if (stateblock->state.render_states[WINED3DRS_EDGEANTIALIAS]
@@ -378,8 +359,7 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
 
     if (stateblock->state.render_states[WINED3DRS_SEPARATEALPHABLENDENABLE])
     {
-        int srcBlendAlpha = GL_ZERO;
-        int dstBlendAlpha = GL_ZERO;
+        GLenum srcBlendAlpha, dstBlendAlpha;
 
         /* Separate alpha blending requires GL_EXT_blend_function_separate, so make sure it is around */
         if (!context->gl_info->supported[EXT_BLEND_FUNC_SEPARATE])
@@ -388,68 +368,25 @@ static void state_blend(DWORD state, struct wined3d_stateblock *stateblock, stru
             return;
         }
 
-        switch (stateblock->state.render_states[WINED3DRS_DESTBLENDALPHA])
+        /* WINED3DBLEND_BOTHSRCALPHA and WINED3DBLEND_BOTHINVSRCALPHA are legacy
+         * source blending values which are still valid up to d3d9. They should
+         * not occur as dest blend values. */
+        d3d_blend = stateblock->state.render_states[WINED3DRS_SRCBLENDALPHA];
+        if (d3d_blend == WINED3DBLEND_BOTHSRCALPHA)
         {
-            case WINED3DBLEND_ZERO               : dstBlendAlpha = GL_ZERO;  break;
-            case WINED3DBLEND_ONE                : dstBlendAlpha = GL_ONE;  break;
-            case WINED3DBLEND_SRCCOLOR           : dstBlendAlpha = GL_SRC_COLOR;  break;
-            case WINED3DBLEND_INVSRCCOLOR        : dstBlendAlpha = GL_ONE_MINUS_SRC_COLOR;  break;
-            case WINED3DBLEND_SRCALPHA           : dstBlendAlpha = GL_SRC_ALPHA;  break;
-            case WINED3DBLEND_INVSRCALPHA        : dstBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;  break;
-            case WINED3DBLEND_DESTCOLOR          : dstBlendAlpha = GL_DST_COLOR;  break;
-            case WINED3DBLEND_INVDESTCOLOR       : dstBlendAlpha = GL_ONE_MINUS_DST_COLOR;  break;
-            case WINED3DBLEND_DESTALPHA          : dstBlendAlpha = GL_DST_ALPHA;  break;
-            case WINED3DBLEND_INVDESTALPHA       : dstBlendAlpha = GL_DST_ALPHA;  break;
-            case WINED3DBLEND_SRCALPHASAT        :
-                dstBlend = GL_SRC_ALPHA_SATURATE;
-                WARN("Application uses SRCALPHASAT as dest blend factor, expect problems\n");
-                break;
-            /* WINED3DBLEND_BOTHSRCALPHA and WINED3DBLEND_BOTHINVSRCALPHA are legacy source blending
-            * values which are still valid up to d3d9. They should not occur as dest blend values
-            */
-            case WINED3DBLEND_BOTHSRCALPHA       :
-                dstBlendAlpha = GL_SRC_ALPHA;
-                srcBlendAlpha = GL_SRC_ALPHA;
-                FIXME("WINED3DRS_DESTBLENDALPHA = WINED3DBLEND_BOTHSRCALPHA, what to do?\n");
-                break;
-            case WINED3DBLEND_BOTHINVSRCALPHA    :
-                dstBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
-                srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
-                FIXME("WINED3DRS_DESTBLENDALPHA = WINED3DBLEND_BOTHINVSRCALPHA, what to do?\n");
-                break;
-            case WINED3DBLEND_BLENDFACTOR        : dstBlendAlpha = GL_CONSTANT_COLOR_EXT;  break;
-            case WINED3DBLEND_INVBLENDFACTOR     : dstBlendAlpha = GL_ONE_MINUS_CONSTANT_COLOR_EXT;  break;
-            default:
-                FIXME("Unrecognized dst blend alpha value %#x.\n",
-                        stateblock->state.render_states[WINED3DRS_DESTBLENDALPHA]);
+            srcBlendAlpha = GL_SRC_ALPHA;
+            dstBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
         }
-
-        switch (stateblock->state.render_states[WINED3DRS_SRCBLENDALPHA])
+        else if (d3d_blend == WINED3DBLEND_BOTHINVSRCALPHA)
         {
-            case WINED3DBLEND_ZERO               : srcBlendAlpha = GL_ZERO;  break;
-            case WINED3DBLEND_ONE                : srcBlendAlpha = GL_ONE;  break;
-            case WINED3DBLEND_SRCCOLOR           : srcBlendAlpha = GL_SRC_COLOR;  break;
-            case WINED3DBLEND_INVSRCCOLOR        : srcBlendAlpha = GL_ONE_MINUS_SRC_COLOR;  break;
-            case WINED3DBLEND_SRCALPHA           : srcBlendAlpha = GL_SRC_ALPHA;  break;
-            case WINED3DBLEND_INVSRCALPHA        : srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;  break;
-            case WINED3DBLEND_DESTCOLOR          : srcBlendAlpha = GL_DST_COLOR;  break;
-            case WINED3DBLEND_INVDESTCOLOR       : srcBlendAlpha = GL_ONE_MINUS_DST_COLOR;  break;
-            case WINED3DBLEND_SRCALPHASAT        : srcBlendAlpha = GL_SRC_ALPHA_SATURATE;  break;
-            case WINED3DBLEND_DESTALPHA          : srcBlendAlpha = GL_DST_ALPHA;  break;
-            case WINED3DBLEND_INVDESTALPHA       : srcBlendAlpha = GL_DST_ALPHA;  break;
-            case WINED3DBLEND_BOTHSRCALPHA       :
-                srcBlendAlpha = GL_SRC_ALPHA;
-                dstBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
-                break;
-            case WINED3DBLEND_BOTHINVSRCALPHA    :
-                srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
-                dstBlendAlpha = GL_SRC_ALPHA;
-                break;
-            case WINED3DBLEND_BLENDFACTOR        : srcBlendAlpha = GL_CONSTANT_COLOR_EXT;  break;
-            case WINED3DBLEND_INVBLENDFACTOR     : srcBlendAlpha = GL_ONE_MINUS_CONSTANT_COLOR_EXT;  break;
-            default:
-                FIXME("Unrecognized src blend alpha value %#x.\n",
-                        stateblock->state.render_states[WINED3DRS_SRCBLENDALPHA]);
+            srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
+            dstBlendAlpha = GL_SRC_ALPHA;
+        }
+        else
+        {
+            srcBlendAlpha = gl_blend_factor(d3d_blend, target->resource.format);
+            dstBlendAlpha = gl_blend_factor(stateblock->state.render_states[WINED3DRS_DESTBLENDALPHA],
+                    target->resource.format);
         }
 
         GL_EXTCALL(glBlendFuncSeparateEXT(srcBlend, dstBlend, srcBlendAlpha, dstBlendAlpha));
