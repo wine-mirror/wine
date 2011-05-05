@@ -2049,7 +2049,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
 
     /* Clear the screen */
     IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL,
-                          WINED3DCLEAR_TARGET | pPresentationParameters->EnableAutoDepthStencil ? WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL : 0,
+                          WINED3DCLEAR_TARGET | (pPresentationParameters->EnableAutoDepthStencil ? WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL : 0),
                           0x00, 1.0f, 0);
 
     This->d3d_initialized = TRUE;
