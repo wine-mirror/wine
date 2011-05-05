@@ -809,8 +809,62 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterByName(ID3DXBaseEffect 
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetParameterBySemantic(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPCSTR semantic)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
+    struct d3dx_parameter *temp_param;
+    UINT i;
 
-    FIXME("iface %p, parameter %p, semantic %s stub\n", This, parameter, debugstr_a(semantic));
+    TRACE("iface %p, parameter %p, semantic %s\n", This, parameter, debugstr_a(semantic));
+
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
+
+    if (!parameter)
+    {
+        for (i = 0; i < This->parameter_count; ++i)
+        {
+            temp_param = get_parameter_struct(This->parameter_handles[i]);
+
+            if (!temp_param->semantic)
+            {
+                if (!semantic)
+                {
+                    TRACE("Returning parameter %p\n", This->parameter_handles[i]);
+                    return This->parameter_handles[i];
+                }
+                continue;
+            }
+
+            if (!strcasecmp(temp_param->semantic, semantic))
+            {
+                TRACE("Returning parameter %p\n", This->parameter_handles[i]);
+                return This->parameter_handles[i];
+            }
+        }
+    }
+    else if (param)
+    {
+        for (i = 0; i < param->member_count; ++i)
+        {
+            temp_param = get_parameter_struct(param->member_handles[i]);
+
+            if (!temp_param->semantic)
+            {
+                if (!semantic)
+                {
+                    TRACE("Returning parameter %p\n", param->member_handles[i]);
+                    return param->member_handles[i];
+                }
+                continue;
+            }
+
+            if (!strcasecmp(temp_param->semantic, semantic))
+            {
+                TRACE("Returning parameter %p\n", param->member_handles[i]);
+                return param->member_handles[i];
+            }
+        }
+    }
+
+    WARN("Invalid argument specified\n");
 
     return NULL;
 }
