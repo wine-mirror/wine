@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-04-13 19:56+0200\n"
-"Last-Translator: Detlef Riekenberg\n"
+"PO-Revision-Date: 2011-05-05 20:25+0200\n"
+"Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
 "MIME-Version: 1.0\n"
@@ -2046,7 +2046,7 @@ msgstr "Standardeinstellungen"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr ""
+msgstr "%uMB benutzt, %uMB verfügbar"
 
 #: hhctrl.rc:67 hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
@@ -2054,27 +2054,24 @@ msgstr "Einstellungen"
 
 #: hhctrl.rc:70
 msgid "S&ync"
-msgstr ""
+msgstr "S&ync"
 
 #: hhctrl.rc:71 shdoclc.rc:38 winhlp32.rc:86
 msgid "&Back"
 msgstr "&Zurück"
 
 #: hhctrl.rc:72
-#, fuzzy
 msgid "&Forward"
-msgstr "Vorwärts"
+msgstr "&Vorwärts"
 
 #: hhctrl.rc:73
-#, fuzzy
 msgctxt "table of contents"
 msgid "&Home"
-msgstr "Start"
+msgstr "St&art"
 
 #: hhctrl.rc:74
-#, fuzzy
 msgid "&Stop"
-msgstr "Stopp"
+msgstr "&Stopp"
 
 #: hhctrl.rc:75 shdoclc.rc:56
 msgid "&Refresh"
@@ -2102,11 +2099,11 @@ msgstr "&Favoriten"
 
 #: hhctrl.rc:33
 msgid "Hide &Tabs"
-msgstr ""
+msgstr "&Tabs verbergen"
 
 #: hhctrl.rc:34
 msgid "Show &Tabs"
-msgstr ""
+msgstr "&Tabs zeigen"
 
 #: hhctrl.rc:39
 msgid "Show"
@@ -3086,7 +3083,7 @@ msgstr "Read/WriteProcessMemory teilweise abgeschlossen\n"
 
 #: winerror.mc:956
 msgid "The oplock wasn't granted\n"
-msgstr ""
+msgstr "Oplock nicht gestattet\n"
 
 #: winerror.mc:961
 #, fuzzy
@@ -3346,7 +3343,7 @@ msgstr "Anderes Dienst-Konto\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected\n"
-msgstr ""
+msgstr "Treiberfehler nicht gefunden\n"
 
 #: winerror.mc:1281
 #, fuzzy
@@ -3355,7 +3352,7 @@ msgstr "Prozess fehlgeschlagen\n"
 
 #: winerror.mc:1286
 msgid "No recovery program for service\n"
-msgstr ""
+msgstr "Kein Wiederherstellungsprogramm für den Dienst\n"
 
 #: winerror.mc:1291
 #, fuzzy
@@ -3545,11 +3542,11 @@ msgstr "Keine weiteren Such-Handles\n"
 
 #: winerror.mc:1521
 msgid "Message can only be used in synchronous calls\n"
-msgstr ""
+msgstr "Nachricht kann nur in synchronen Aufrufen verwendet werden\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty\n"
-msgstr ""
+msgstr "Das Quellelement is leer\n"
 
 #: winerror.mc:1531
 #, fuzzy
@@ -3563,11 +3560,11 @@ msgstr "Das angegebende Gerätehandle ist ungültig."
 
 #: winerror.mc:1541
 msgid "The magazine is not present\n"
-msgstr ""
+msgstr "Die Ablage ist nicht vorhanden\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
-msgstr ""
+msgstr "Das Gerät muss neu initialisiert werden\n"
 
 #: winerror.mc:1551
 #, fuzzy
@@ -3616,15 +3613,15 @@ msgstr "Kein solcher Benutzer\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced\n"
-msgstr ""
+msgstr "Konnte die zu ersetzende Datei nicht entfernen\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place\n"
-msgstr ""
+msgstr "Konnte die ersetzende Datei nicht zum Ziel bewegen\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed\n"
-msgstr ""
+msgstr "Konnte die ersetzende Datei nicht verschieben\n"
 
 #: winerror.mc:1611
 #, fuzzy
@@ -3638,11 +3635,11 @@ msgstr "Dienst nicht aktiv\n"
 
 #: winerror.mc:1621
 msgid "Potential matching file found\n"
-msgstr ""
+msgstr "Potenziell übereinstimmende Datei gefunden\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted\n"
-msgstr ""
+msgstr "Der Journal Eintrag wurde gelöscht\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name\n"
@@ -3853,7 +3850,7 @@ msgstr "Pipe nicht verbunden\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed\n"
-msgstr ""
+msgstr "Operation durchführen, auch wenn sich nichts ändert\n"
 
 #: winerror.mc:1896
 #, fuzzy
@@ -3862,7 +3859,7 @@ msgstr "Das angegebende Gerätehandle ist ungültig."
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
-msgstr ""
+msgstr "Nicht auf Small Business Servern unterstützt\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned\n"
@@ -4182,7 +4179,7 @@ msgstr "Lokale Gruppe existiert bereits\n"
 
 #: winerror.mc:2301 winerror.mc:2326
 msgid "Logon type not granted\n"
-msgstr "Logon-Typ nicht zugestanden\n"
+msgstr "Logon-Typ nicht gestattet\n"
 
 #: winerror.mc:2306
 msgid "Too many secrets\n"
@@ -4252,7 +4249,7 @@ msgstr "Ungültige Authentifizierungs-Identität\n"
 
 #: winerror.mc:2391
 msgid "Time skew between client and server\n"
-msgstr ""
+msgstr "Zeitversatz zwischen Client und Server\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle\n"
@@ -4500,7 +4497,7 @@ msgstr "Logon-Typ nicht zugestanden\n"
 
 #: winerror.mc:2691
 msgid "Interactive window station required\n"
-msgstr ""
+msgstr "Interaktive Fensterposition nötig\n"
 
 #: winerror.mc:2696
 #, fuzzy
@@ -4580,7 +4577,7 @@ msgstr "Wine-Konfiguration"
 
 #: winerror.mc:2776
 msgid "Index is missing\n"
-msgstr ""
+msgstr "Index fehlt\n"
 
 #: winerror.mc:2781
 #, fuzzy
@@ -4619,7 +4616,7 @@ msgstr "Dienst läuft bereits\n"
 
 #: winerror.mc:2816
 msgid "Installation package failed to open\n"
-msgstr ""
+msgstr "Installationspaket konnte nicht geöffnet werden\n"
 
 #: winerror.mc:2821
 #, fuzzy
@@ -4628,11 +4625,11 @@ msgstr "Setup-Programme"
 
 #: winerror.mc:2826
 msgid "Installer user interface failed\n"
-msgstr ""
+msgstr "Benutzeroberfläche des Installers fehlgeschlagen\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"
-msgstr ""
+msgstr "Konnte Installations Logdatei nicht öffnen\n"
 
 #: winerror.mc:2836
 #, fuzzy
@@ -4641,7 +4638,7 @@ msgstr "Operation nicht unterstützt\n"
 
 #: winerror.mc:2841
 msgid "Installation transform failed to apply\n"
-msgstr ""
+msgstr "Installationsumwandlung konnte nicht angewendet werden\n"
 
 #: winerror.mc:2846
 #, fuzzy
@@ -4719,11 +4716,11 @@ msgstr "Ungültiger GW-Befehl\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
-msgstr ""
+msgstr "Remote Installation nicht erlaubt\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install\n"
-msgstr ""
+msgstr "Neustart nach erfolgreicher Installation initiiert\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding\n"
@@ -5321,7 +5318,7 @@ msgstr "Pipe geschlossen\n"
 
 #: winerror.mc:3671
 msgid "Discipline error on RPC pipe\n"
-msgstr ""
+msgstr "Verfahrensfehler in RPC Pipe\n"
 
 #: winerror.mc:3676
 #, fuzzy
@@ -5335,7 +5332,7 @@ msgstr "Kein Sicherheits-Kontext verfügbar\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed\n"
-msgstr ""
+msgstr "Auf die Datei kann nicht zugegriffen werden\n"
 
 #: winerror.mc:3691
 #, fuzzy
