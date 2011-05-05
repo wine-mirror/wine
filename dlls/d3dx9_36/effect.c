@@ -1017,8 +1017,43 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetFunctionByName(ID3DXBaseEffect *
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *iface, D3DXHANDLE object, UINT index)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, object);
+    struct d3dx_pass *pass = is_valid_pass(This, object);
+    struct d3dx_technique *technique = is_valid_technique(This, object);
+    UINT annotation_count = 0;
+    D3DXHANDLE *annotation_handles = NULL;
 
-    FIXME("iface %p, object %p, index %u stub\n", This, object, index);
+    FIXME("iface %p, object %p, index %u partial stub\n", This, object, index);
+
+    if (pass)
+    {
+        annotation_count = pass->annotation_count;
+        annotation_handles = pass->annotation_handles;
+    }
+    else if (technique)
+    {
+        annotation_count = technique->annotation_count;
+        annotation_handles = technique->annotation_handles;
+    }
+    else
+    {
+        if (!param) param = get_parameter_by_name(This, NULL, object);
+
+        if (param)
+        {
+            annotation_count = param->annotation_count;
+            annotation_handles = param->annotation_handles;
+        }
+    }
+    /* Todo: add funcs */
+
+    if (index < annotation_count)
+    {
+        TRACE("Returning parameter %p\n", annotation_handles[index]);
+        return annotation_handles[index];
+    }
+
+    WARN("Invalid argument specified\n");
 
     return NULL;
 }
