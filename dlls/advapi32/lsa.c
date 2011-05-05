@@ -414,7 +414,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
             (*sids)[i].Sid = sid;
             (*sids)[i].Use = use;
 
-            sid += sid_size;
+            sid = (SID *)((char *)sid + sid_size);
             sid_size_total -= sid_size;
             if (domain_size)
             {
