@@ -1219,10 +1219,12 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
 
     getDepthStencilBits(ds_format, &depthBits, &stencilBits);
 
-    for(matchtry = 0; matchtry < (sizeof(matches) / sizeof(matches[0])) && !iPixelFormat; matchtry++) {
-        for(i=0; i<nCfgs; i++) {
+    for (matchtry = 0; matchtry < (sizeof(matches) / sizeof(*matches)) && !iPixelFormat; ++matchtry)
+    {
+        for (i = 0; i < nCfgs; ++i)
+        {
+            const struct wined3d_pixel_format *cfg = &This->adapter->cfgs[i];
             BOOL exactDepthMatch = TRUE;
-            WineD3D_PixelFormat *cfg = &This->adapter->cfgs[i];
 
             /* For now only accept RGBA formats. Perhaps some day we will
              * allow floating point formats for pbuffers. */

@@ -2932,7 +2932,7 @@ HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
 }
 
 static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined3d_gl_info *gl_info,
-        const WineD3D_PixelFormat *cfg, const struct wined3d_format *format)
+        const struct wined3d_pixel_format *cfg, const struct wined3d_format *format)
 {
     short redSize, greenSize, blueSize, alphaSize, colorBits;
 
@@ -2969,7 +2969,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined
 }
 
 static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const struct wined3d_gl_info *gl_info,
-        const WineD3D_PixelFormat *cfg, const struct wined3d_format *format)
+        const struct wined3d_pixel_format *cfg, const struct wined3d_format *format)
 {
     short depthSize, stencilSize;
     BOOL lockable = FALSE;
@@ -3033,7 +3033,7 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
     }
     else
     {
-        const WineD3D_PixelFormat *cfgs;
+        const struct wined3d_pixel_format *cfgs;
         unsigned int cfg_count;
         unsigned int i;
 
@@ -3094,7 +3094,7 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
 
     if (format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
     {
-        const WineD3D_PixelFormat *cfgs;
+        const struct wined3d_pixel_format *cfgs;
         unsigned int i, cfg_count;
 
         cfgs = adapter->cfgs;
@@ -3118,7 +3118,7 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
     else if (format->flags & WINED3DFMT_FLAG_RENDERTARGET)
     {
         short redSize, greenSize, blueSize, alphaSize, colorBits;
-        const WineD3D_PixelFormat *cfgs;
+        const struct wined3d_pixel_format *cfgs;
         unsigned int i, cfg_count;
 
         if (!getColorBits(format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
@@ -3187,7 +3187,7 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
         /* Walk through all WGL pixel formats to find a match */
         for (it = 0; it < adapter->nCfgs; ++it)
         {
-            WineD3D_PixelFormat *cfg = &adapter->cfgs[it];
+            const struct wined3d_pixel_format *cfg = &adapter->cfgs[it];
             if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, cfg, display_format))
             {
                 if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, cfg, ds_format))
@@ -3217,10 +3217,10 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
     if (!(check_format->flags & WINED3DFMT_FLAG_RENDERTARGET)) return FALSE;
     if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
-        WineD3D_PixelFormat *cfgs = adapter->cfgs;
-        int it;
         short AdapterRed, AdapterGreen, AdapterBlue, AdapterAlpha, AdapterTotalSize;
         short CheckRed, CheckGreen, CheckBlue, CheckAlpha, CheckTotalSize;
+        const struct wined3d_pixel_format *cfgs = adapter->cfgs;
+        int it;
 
         getColorBits(adapter_format, &AdapterRed, &AdapterGreen, &AdapterBlue, &AdapterAlpha, &AdapterTotalSize);
         getColorBits(check_format, &CheckRed, &CheckGreen, &CheckBlue, &CheckAlpha, &CheckTotalSize);
@@ -5140,10 +5140,10 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         struct wined3d_adapter *adapter = &wined3d->adapters[0];
         const struct wined3d_gl_info *gl_info = &adapter->gl_info;
         struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
+        struct wined3d_pixel_format *cfgs;
         int iPixelFormat;
         int res;
         int i;
-        WineD3D_PixelFormat *cfgs;
         DISPLAY_DEVICEW DisplayDevice;
         HDC hdc;
 
@@ -5202,7 +5202,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
             attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
             GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, 0, 0, 1, &attribute, &adapter->nCfgs));
 
-            adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, adapter->nCfgs *sizeof(WineD3D_PixelFormat));
+            adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, adapter->nCfgs * sizeof(*adapter->cfgs));
             cfgs = adapter->cfgs;
             attribs[nAttribs++] = WGL_RED_BITS_ARB;
             attribs[nAttribs++] = WGL_GREEN_BITS_ARB;
@@ -5262,7 +5262,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         else
         {
             int nCfgs = DescribePixelFormat(hdc, 0, 0, 0);
-            adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nCfgs*sizeof(WineD3D_PixelFormat));
+            adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nCfgs * sizeof(*adapter->cfgs));
             adapter->nCfgs = 0; /* We won't accept all formats e.g. software accelerated ones will be skipped */
 
             cfgs = adapter->cfgs;

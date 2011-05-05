@@ -1263,7 +1263,7 @@ struct wined3d_light_info
 /* The default light parameters */
 extern const WINED3DLIGHT WINED3D_default_light DECLSPEC_HIDDEN;
 
-typedef struct WineD3D_PixelFormat
+struct wined3d_pixel_format
 {
     int iPixelFormat; /* WGL pixel format */
     int iPixelType; /* WGL pixel type e.g. WGL_TYPE_RGBA_ARB, WGL_TYPE_RGBA_FLOAT_ARB or WGL_TYPE_COLORINDEX_ARB */
@@ -1273,7 +1273,7 @@ typedef struct WineD3D_PixelFormat
     BOOL doubleBuffer;
     int auxBuffers;
     int numSamples;
-} WineD3D_PixelFormat;
+} wined3d_pixel_format;
 
 /* The driver names reflect the lowest GPU supported
  * by a certain driver, so DRIVER_AMD_R300 supports
@@ -1528,7 +1528,7 @@ struct wined3d_adapter
     struct wined3d_driver_info driver_info;
     WCHAR                   DeviceName[CCHDEVICENAME]; /* DeviceName for use with e.g. ChangeDisplaySettings */
     int                     nCfgs;
-    WineD3D_PixelFormat     *cfgs;
+    struct wined3d_pixel_format *cfgs;
     BOOL                    brokenStencil; /* Set on cards which only offer mixed depth+stencil */
     unsigned int            TextureRam; /* Amount of texture memory both video ram + AGP/TurboCache/HyperMemory/.. */
     unsigned int            UsedTextureRam;
