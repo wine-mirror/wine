@@ -9303,9 +9303,8 @@ msgid "&Export Registry File..."
 msgstr "&Exporter un fichier registre..."
 
 #: regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "&Modifier"
+msgstr "&Modifier..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -9364,9 +9363,8 @@ msgid "&About Registry Editor"
 msgstr "À &propos de l'éditeur du registre"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "Modifier les données &binaires"
+msgstr "Modifier les données &binaires..."
 
 #: regedit.rc:109
 msgid "&Export..."
@@ -9740,12 +9738,10 @@ msgid "E&xit Task Manager"
 msgstr "&Quitter le gestionnaire des tâches"
 
 #: taskmgr.rc:45
-#, fuzzy
 msgid "&Minimize On Use"
 msgstr "Réd&uire à l'exécution"
 
 #: taskmgr.rc:47
-#, fuzzy
 msgid "&Hide When Minimized"
 msgstr "&Masquer l'icône réduite"
 
@@ -10313,9 +10309,8 @@ msgid "Regular Metafile Viewer"
 msgstr "Visionneuse de fichiers Metafile réguliers"
 
 #: winecfg.rc:32
-#, fuzzy
 msgid "Configure..."
-msgstr "Configurer"
+msgstr "Configurer..."
 
 #: winecfg.rc:39
 msgid "Libraries"
@@ -10455,9 +10450,8 @@ msgid "None"
 msgstr "Aucun"
 
 #: winecfg.rc:81
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Détection automatique"
+msgstr "Détection automatique..."
 
 #: winecfg.rc:82
 msgid "Local hard disk"
@@ -10869,9 +10863,8 @@ msgid "Re&name..."
 msgstr "Re&nommer..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
-msgstr "&Propriétés...\tAlt+Entrée"
+msgstr "&Propriétés\tAlt+Entrée"
 
 #: winefile.rc:33
 msgid "&Run..."
@@ -10890,9 +10883,8 @@ msgid "&Disk"
 msgstr "&Disque"
 
 #: winefile.rc:45
-#, fuzzy
 msgid "Connect &Network Drive..."
-msgstr "Connecter un lecteur &réseau"
+msgstr "Connecter un lecteur &réseau..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
@@ -10923,7 +10915,6 @@ msgid "Sort by &Date"
 msgstr "Trier par dat&e"
 
 #: winefile.rc:60
-#, fuzzy
 msgid "Filter by&..."
 msgstr "Filtrer &par..."
 
