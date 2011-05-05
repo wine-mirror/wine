@@ -2927,6 +2927,8 @@ BOOL WINAPI SetSysColors( INT nChanges, const INT *lpSysColor,
 {
     int i;
 
+    if (IS_INTRESOURCE(lpSysColor)) return FALSE; /* stupid app passes a color instead of an array */
+
     for (i = 0; i < nChanges; i++) SYSPARAMS_SetSysColor( lpSysColor[i], lpColorValues[i] );
 
     /* Send WM_SYSCOLORCHANGE message to all windows */
