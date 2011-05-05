@@ -209,7 +209,7 @@ static BOOL CreateWindows (HINSTANCE hinst)
 /* Form the lParam of a WM_KEYDOWN message */
 static DWORD KeyDownData (int repeat, int scancode, int extended, int wasdown)
 {
-    return ((repeat & 0x0000FFFF) | ((scancode & 0x00FF) >> 16) |
+    return ((repeat & 0x0000FFFF) | ((scancode & 0x00FF) << 16) |
             (extended ? 0x01000000 : 0) | (wasdown ? 0x40000000 : 0));
 }
 
