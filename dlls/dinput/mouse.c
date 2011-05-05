@@ -491,6 +491,11 @@ static HRESULT WINAPI SysMouseWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
         if (!This->base.win) This->base.win = GetDesktopWindow();
         warp_check( This, TRUE );
     }
+    else if (This->clipped)
+    {
+        ClipCursor( NULL );
+        This->clipped = FALSE;
+    }
 
     return DI_OK;
 }
@@ -517,6 +522,7 @@ static HRESULT WINAPI SysMouseWImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
     {
         ClipCursor(NULL);
         ShowCursor(TRUE); /* show cursor */
+        This->clipped = FALSE;
     }
 
     /* And put the mouse cursor back where it was at acquire time */
