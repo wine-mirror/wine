@@ -5846,6 +5846,24 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD flag, BOOL p
     }
 }
 
+static DWORD resource_access_from_location(DWORD location)
+{
+    switch (location)
+    {
+        case SFLAG_INSYSMEM:
+            return WINED3D_RESOURCE_ACCESS_CPU;
+
+        case SFLAG_INDRAWABLE:
+        case SFLAG_INSRGBTEX:
+        case SFLAG_INTEXTURE:
+            return WINED3D_RESOURCE_ACCESS_GPU;
+
+        default:
+            FIXME("Unhandled location %#x.\n", location);
+            return 0;
+    }
+}
+
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const RECT *rect)
 {
     IWineD3DDeviceImpl *device = surface->resource.device;
@@ -5900,6 +5918,14 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const
     {
         TRACE("Location already up to date\n");
         return WINED3D_OK;
+    }
+
+    if (WARN_ON(d3d_surface))
+    {
+        DWORD required_access = resource_access_from_location(flag);
+        if ((surface->resource.access_flags & required_access) != required_access)
+            WARN("Operation requires %#x access, but surface only has %#x.\n",
+                    required_access, surface->resource.access_flags);
     }
 
     if (!(surface->flags & SFLAG_LOCATIONS))

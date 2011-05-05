@@ -43,6 +43,28 @@ struct private_data
     DWORD size;
 };
 
+static DWORD resource_access_from_pool(WINED3DPOOL pool)
+{
+    switch (pool)
+    {
+        case WINED3DPOOL_DEFAULT:
+            return WINED3D_RESOURCE_ACCESS_GPU;
+
+        case WINED3DPOOL_MANAGED:
+            return WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_CPU;
+
+        case WINED3DPOOL_SYSTEMMEM:
+            return WINED3D_RESOURCE_ACCESS_CPU;
+
+        case WINED3DPOOL_SCRATCH:
+            return WINED3D_RESOURCE_ACCESS_SCRATCH;
+
+        default:
+            FIXME("Unhandled pool %#x.\n", pool);
+            return 0;
+    }
+}
+
 HRESULT resource_init(struct wined3d_resource *resource, IWineD3DDeviceImpl *device,
         WINED3DRESOURCETYPE resource_type, const struct wined3d_format *format,
         WINED3DMULTISAMPLE_TYPE multisample_type, UINT multisample_quality,
@@ -58,6 +80,9 @@ HRESULT resource_init(struct wined3d_resource *resource, IWineD3DDeviceImpl *dev
     resource->multisample_quality = multisample_quality;
     resource->usage = usage;
     resource->pool = pool;
+    resource->access_flags = resource_access_from_pool(pool);
+    if (usage & WINED3DUSAGE_DYNAMIC)
+        resource->access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
     resource->width = width;
     resource->height = height;
     resource->depth = depth;
