@@ -356,9 +356,8 @@ msgstr ""
 "Wprowadź inną wielkość marginesu."
 
 #: comdlg32.rc:74
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "Wartość „liczba kopii” nie może być pusta."
+msgstr "Pole „liczba kopii” nie może być puste."
 
 #: comdlg32.rc:76
 msgid ""
@@ -686,9 +685,8 @@ msgid "Unstructured Address"
 msgstr "Adres bez struktury"
 
 #: crypt32.rc:51
-#, fuzzy
 msgid "S/MIME Capabilities"
-msgstr "Możliwości edytora SMIME"
+msgstr "Możliwości edytora S/MIME"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
@@ -9228,9 +9226,8 @@ msgid "&Export Registry File..."
 msgstr "&Eksportuj plik rejestru..."
 
 #: regedit.rc:42 regedit.rc:87
-#, fuzzy
 msgid "&Modify..."
-msgstr "&Modyfikuj"
+msgstr "&Modyfikuj..."
 
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
@@ -9289,9 +9286,8 @@ msgid "&About Registry Editor"
 msgstr "Edytor rejestru - i&nformacje"
 
 #: regedit.rc:88
-#, fuzzy
 msgid "Modify Binary Data..."
-msgstr "Modyfikuj dane binarne"
+msgstr "Modyfikuj dane binarne..."
 
 #: regedit.rc:109
 msgid "&Export..."
@@ -10223,9 +10219,8 @@ msgid "Regular Metafile Viewer"
 msgstr "Podgląd plików WMF (Regular Metafile)"
 
 #: winecfg.rc:32
-#, fuzzy
 msgid "Configure..."
-msgstr "Konfiguruj"
+msgstr "Konfiguruj..."
 
 #: winecfg.rc:39
 msgid "Libraries"
@@ -10365,9 +10360,8 @@ msgid "None"
 msgstr "Brak"
 
 #: winecfg.rc:81
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Automatyczne wykrywanie"
+msgstr "Automatyczne wykrywanie..."
 
 #: winecfg.rc:82
 msgid "Local hard disk"
@@ -10773,7 +10767,6 @@ msgid "Re&name..."
 msgstr "Zmień &nazwę..."
 
 #: winefile.rc:31
-#, fuzzy
 msgid "Propert&ies\tAlt+Enter"
 msgstr "&Właściwości...\tAlt+Enter"
 
@@ -10794,7 +10787,6 @@ msgid "&Disk"
 msgstr "&Dysk"
 
 #: winefile.rc:45
-#, fuzzy
 msgid "Connect &Network Drive..."
 msgstr "Podłącz &dysk sieciowy..."
 
@@ -10827,7 +10819,6 @@ msgid "Sort by &Date"
 msgstr "Sortuj według &dat"
 
 #: winefile.rc:60
-#, fuzzy
 msgid "Filter by&..."
 msgstr "Filtruj widok &..."
 
