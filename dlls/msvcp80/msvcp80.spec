@@ -5701,28 +5701,28 @@
 @ stub -arch=win32 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHPB_WH@Z
 @ stub -arch=win64 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEB_W_J@Z
 @ stub _Cosh
-# extern _Denorm
+@ extern _Denorm msvcp90._Denorm
 @ stub _Dnorm
 @ stub _Dscale
 @ stub _Dtentox
 @ stub _Dtest
 @ stub _Dunscale
-# extern _Eps
+@ extern _Eps msvcp90._Eps
 @ stub _Exp
 @ stub _FCosh
-# extern _FDenorm
+@ extern _FDenorm msvcp90._FDenorm
 @ stub _FDnorm
 @ stub _FDscale
 @ stub _FDtentox
 @ stub _FDtest
 @ stub _FDunscale
-# extern _FEps
+@ extern _FEps msvcp90._FEps
 @ stub _FExp
-# extern _FInf
-# extern _FNan
+@ extern _FInf msvcp90._FInf
+@ extern _FNan msvcp90._FNan
 # extern _FRteps
 @ stub _FSinh
-# extern _FSnan
+@ extern _FSnan msvcp90._FSnan
 # extern _FXbig
 @ stub _Getcoll
 @ stub _Getctype
@@ -5730,35 +5730,35 @@
 @ stub _Getdateorder
 @ stub _Getwctype
 @ stub _Getwctypes
-# extern _Hugeval
-# extern _Inf
+@ extern _Hugeval msvcp90._Hugeval
+@ extern _Inf msvcp90._Inf
 @ stub _LCosh
-# extern _LDenorm
+@ extern _LDenorm msvcp90._LDenorm
 @ stub _LDscale
 @ stub _LDtentox
 @ stub _LDtest
 @ stub _LDunscale
-# extern _LEps
+@ extern _LEps msvcp90._LEps
 @ stub _LExp
-# extern _LInf
-# extern _LNan
+@ extern _LInf msvcp90._LInf
+@ extern _LNan msvcp90._LNan
 @ stub _LPoly
 # extern _LRteps
 @ stub _LSinh
-# extern _LSnan
+@ extern _LSnan msvcp90._LSnan
 # extern _LXbig
-# extern _LZero
+@ extern _LZero msvcp90._LZero
 @ stub _Mbrtowc
 @ stub _Mtxdst
 @ stub _Mtxinit
 @ stub _Mtxlock
 @ stub _Mtxunlock
-# extern _Nan
+@ extern _Nan msvcp90._Nan
 @ stub _Once
 @ stub _Poly
 # extern _Rteps
 @ stub _Sinh
-# extern _Snan
+@ extern _Snan msvcp90._Snan
 @ stub _Stod
 @ stub _Stodx
 @ stub _Stof

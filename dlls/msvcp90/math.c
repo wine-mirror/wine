@@ -48,6 +48,26 @@ enum std_float_round_style
     round_toward_neg_infinity = 3
 };
 
+/* these are defined as integers but the bit patterns are then interpreted as floats/doubles */
+const DWORD     _FDenorm = 1;
+const ULONGLONG _Denorm  = 1;
+const ULONGLONG _LDenorm = 1;
+const DWORD     _FInf    = 0x7f800000;
+const ULONGLONG _Inf     = (ULONGLONG)0x7ff00000 << 32;
+const ULONGLONG _LInf    = (ULONGLONG)0x7ff00000 << 32;
+const DWORD     _FNan    = 0x7fc00000;
+const ULONGLONG _Nan     = (ULONGLONG)0x7ff80000 << 32;
+const ULONGLONG _LNan    = (ULONGLONG)0x7ff80000 << 32;
+const DWORD     _FSnan   = 0x7f800001;
+const ULONGLONG _Snan    = ((ULONGLONG)0x7ff00000 << 32) + 1;
+const ULONGLONG _LSnan   = ((ULONGLONG)0x7ff00000 << 32) + 1;
+const ULONGLONG _LZero   = 0;
+const ULONGLONG _Hugeval = (ULONGLONG)0x7ff00000 << 32;
+
+const float   _FEps = FLT_EPSILON;
+const double  _Eps  = DBL_EPSILON;
+const LDOUBLE _LEps = LDBL_EPSILON;
+
 /* ?digits10@?$numeric_limits@C@std@@2HB -> public: static int const std::numeric_limits<signed char>::digits10 */
 const int std_numeric_limits_signed_char_digits10 = 2;
 
@@ -426,13 +446,13 @@ LONG __cdecl std_numeric_limits_long_denorm_min(void) { return 0; }
 ULONG __cdecl std_numeric_limits_unsigned_long_denorm_min(void) { return 0; }
 
 /* ?denorm_min@?$numeric_limits@M@std@@SAMXZ -> public: static float __cdecl std::numeric_limits<float>::denorm_min(void) */
-float __cdecl std_numeric_limits_float_denorm_min(void) { static const DWORD dmin = 1; return *(float *)&dmin; }
+float __cdecl std_numeric_limits_float_denorm_min(void) { return *(float *)&_FDenorm; }
 
 /* ?denorm_min@?$numeric_limits@N@std@@SANXZ -> public: static double __cdecl std::numeric_limits<double>::denorm_min(void) */
-double __cdecl std_numeric_limits_double_denorm_min(void) { static const ULONGLONG dmin = 1; return *(double *)&dmin; }
+double __cdecl std_numeric_limits_double_denorm_min(void) { return *(double *)&_Denorm; }
 
 /* ?denorm_min@?$numeric_limits@O@std@@SAOXZ -> public: static long double __cdecl std::numeric_limits<long double>::denorm_min(void) */
-LDOUBLE __cdecl std_numeric_limits_long_double_denorm_min(void) { static const ULONGLONG dmin = 1; return *(LDOUBLE *)&dmin; }
+LDOUBLE __cdecl std_numeric_limits_long_double_denorm_min(void) { return *(LDOUBLE *)&_LDenorm; }
 
 /* ?denorm_min@?$numeric_limits@_J@std@@SA_JXZ -> public: static __int64 __cdecl std::numeric_limits<__int64>::denorm_min(void) */
 __int64 __cdecl std_numeric_limits_int64_denorm_min(void) { return 0; }
@@ -474,13 +494,13 @@ LONG __cdecl std_numeric_limits_long_epsilon(void) { return 0; }
 ULONG __cdecl std_numeric_limits_unsigned_long_epsilon(void) { return 0; }
 
 /* ?epsilon@?$numeric_limits@M@std@@SAMXZ -> public: static float __cdecl std::numeric_limits<float>::epsilon(void) */
-float __cdecl std_numeric_limits_float_epsilon(void) { return FLT_EPSILON; }
+float __cdecl std_numeric_limits_float_epsilon(void) { return _FEps; }
 
 /* ?epsilon@?$numeric_limits@N@std@@SANXZ -> public: static double __cdecl std::numeric_limits<double>::epsilon(void) */
-double __cdecl std_numeric_limits_double_epsilon(void) { return DBL_EPSILON; }
+double __cdecl std_numeric_limits_double_epsilon(void) { return _Eps; }
 
 /* ?epsilon@?$numeric_limits@O@std@@SAOXZ -> public: static long double __cdecl std::numeric_limits<long double>::epsilon(void) */
-LDOUBLE __cdecl std_numeric_limits_long_double_epsilon(void) { return LDBL_EPSILON; }
+LDOUBLE __cdecl std_numeric_limits_long_double_epsilon(void) { return _LEps; }
 
 /* ?epsilon@?$numeric_limits@_J@std@@SA_JXZ -> public: static __int64 __cdecl std::numeric_limits<__int64>::epsilon(void) */
 __int64 __cdecl std_numeric_limits_int64_epsilon(void) { return 0; }
@@ -522,13 +542,13 @@ LONG __cdecl std_numeric_limits_long_infinity(void) { return 0; }
 ULONG __cdecl std_numeric_limits_unsigned_long_infinity(void) { return 0; }
 
 /* ?infinity@?$numeric_limits@M@std@@SAMXZ -> public: static float __cdecl std::numeric_limits<float>::infinity(void) */
-float __cdecl std_numeric_limits_float_infinity(void) { static const DWORD inf = 0x7f800000; return *(float *)&inf; }
+float __cdecl std_numeric_limits_float_infinity(void) { return *(float *)&_FInf; }
 
 /* ?infinity@?$numeric_limits@N@std@@SANXZ -> public: static double __cdecl std::numeric_limits<double>::infinity(void) */
-double __cdecl std_numeric_limits_double_infinity(void) { static const ULONGLONG inf = (ULONGLONG)0x7ff00000 << 32; return *(double *)&inf; }
+double __cdecl std_numeric_limits_double_infinity(void) { return *(double *)&_Inf; }
 
 /* ?infinity@?$numeric_limits@O@std@@SAOXZ -> public: static long double __cdecl std::numeric_limits<long double>::infinity(void) */
-LDOUBLE __cdecl std_numeric_limits_long_double_infinity(void) { static const ULONGLONG inf = (ULONGLONG)0x7ff00000 << 32; return *(LDOUBLE *)&inf; }
+LDOUBLE __cdecl std_numeric_limits_long_double_infinity(void) { return *(LDOUBLE *)&_LInf; }
 
 /* ?infinity@?$numeric_limits@_J@std@@SA_JXZ -> public: static __int64 __cdecl std::numeric_limits<__int64>::infinity(void) */
 __int64 __cdecl std_numeric_limits_int64_infinity(void) { return 0; }
@@ -666,13 +686,13 @@ LONG __cdecl std_numeric_limits_long_quiet_NaN(void) { return 0; }
 ULONG __cdecl std_numeric_limits_unsigned_long_quiet_NaN(void) { return 0; }
 
 /* ?quiet_NaN@?$numeric_limits@M@std@@SAMXZ -> public: static float __cdecl std::numeric_limits<float>::quiet_NaN(void) */
-float __cdecl std_numeric_limits_float_quiet_NaN(void) { static const DWORD qnan = 0x7fc00000; return *(float *)&qnan; }
+float __cdecl std_numeric_limits_float_quiet_NaN(void) { return *(float *)&_FNan; }
 
 /* ?quiet_NaN@?$numeric_limits@N@std@@SANXZ -> public: static double __cdecl std::numeric_limits<double>::quiet_NaN(void) */
-double __cdecl std_numeric_limits_double_quiet_NaN(void) { static const ULONGLONG qnan = (ULONGLONG)0x7ff80000 << 32; return *(double *)&qnan; }
+double __cdecl std_numeric_limits_double_quiet_NaN(void) { return *(double *)&_Nan; }
 
 /* ?quiet_NaN@?$numeric_limits@O@std@@SAOXZ -> public: static long double __cdecl std::numeric_limits<long double>::quiet_NaN(void) */
-LDOUBLE __cdecl std_numeric_limits_long_double_quiet_NaN(void) { static const ULONGLONG qnan = (ULONGLONG)0x7ff80000 << 32; return *(LDOUBLE *)&qnan; }
+LDOUBLE __cdecl std_numeric_limits_long_double_quiet_NaN(void) { return *(LDOUBLE *)&_LNan; }
 
 /* ?quiet_NaN@?$numeric_limits@_J@std@@SA_JXZ -> public: static __int64 __cdecl std::numeric_limits<__int64>::quiet_NaN(void) */
 __int64 __cdecl std_numeric_limits_int64_quiet_NaN(void) { return 0; }
@@ -762,13 +782,13 @@ LONG __cdecl std_numeric_limits_long_signaling_NaN(void) { return 0; }
 ULONG __cdecl std_numeric_limits_unsigned_long_signaling_NaN(void) { return 0; }
 
 /* ?signaling_NaN@?$numeric_limits@M@std@@SAMXZ -> public: static float __cdecl std::numeric_limits<float>::signaling_NaN(void) */
-float __cdecl std_numeric_limits_float_signaling_NaN(void) { static const DWORD snan = 0x7f800001; return *(float *)&snan; }
+float __cdecl std_numeric_limits_float_signaling_NaN(void) { return *(float *)&_FSnan; }
 
 /* ?signaling_NaN@?$numeric_limits@N@std@@SANXZ -> public: static double __cdecl std::numeric_limits<double>::signaling_NaN(void) */
-double __cdecl std_numeric_limits_double_signaling_NaN(void) { static const ULONGLONG snan = ((ULONGLONG)0x7ff00000 << 32) + 1; return *(double *)&snan; }
+double __cdecl std_numeric_limits_double_signaling_NaN(void) { return *(double *)&_Snan; }
 
 /* ?signaling_NaN@?$numeric_limits@O@std@@SAOXZ -> public: static long double __cdecl std::numeric_limits<long double>::signaling_NaN(void) */
-LDOUBLE __cdecl std_numeric_limits_long_double_signaling_NaN(void) { static const ULONGLONG snan = ((ULONGLONG)0x7ff00000 << 32) + 1; return *(LDOUBLE *)&snan; }
+LDOUBLE __cdecl std_numeric_limits_long_double_signaling_NaN(void) { return *(LDOUBLE *)&_LSnan; }
 
 /* ?signaling_NaN@?$numeric_limits@_J@std@@SA_JXZ -> public: static __int64 __cdecl std::numeric_limits<__int64>::signaling_NaN(void) */
 __int64 __cdecl std_numeric_limits_int64_signaling_NaN(void) { return 0; }
