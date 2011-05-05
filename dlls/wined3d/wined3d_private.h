@@ -254,26 +254,27 @@ static inline float float_24_to_32(DWORD in)
 
 /* NOTE: When adding fields to this structure, make sure to update the default
  * values in wined3d_main.c as well. */
-typedef struct wined3d_settings_s {
-/* vertex and pixel shader modes */
-  int vs_mode;
-  int ps_mode;
-/* Ideally, we don't want the user to have to request GLSL.  If the hardware supports GLSL,
-    we should use it.  However, until it's fully implemented, we'll leave it as a registry
-    setting for developers. */
-  BOOL glslRequested;
-  int offscreen_rendering_mode;
-  int rendertargetlock_mode;
-  unsigned short pci_vendor_id;
-  unsigned short pci_device_id;
-/* Memory tracking and object counting */
-  unsigned int emulated_textureram;
-  char *logo;
-  int allow_multisampling;
-  BOOL strict_draw_ordering;
-} wined3d_settings_t;
+struct wined3d_settings
+{
+    /* vertex and pixel shader modes */
+    int vs_mode;
+    int ps_mode;
+    /* Ideally, we don't want the user to have to request GLSL. If the
+     * hardware supports GLSL, we should use it. However, until it's fully
+     * implemented, we'll leave it as a registry setting for developers. */
+    BOOL glslRequested;
+    int offscreen_rendering_mode;
+    int rendertargetlock_mode;
+    unsigned short pci_vendor_id;
+    unsigned short pci_device_id;
+    /* Memory tracking and object counting. */
+    unsigned int emulated_textureram;
+    char *logo;
+    int allow_multisampling;
+    BOOL strict_draw_ordering;
+};
 
-extern wined3d_settings_t wined3d_settings DECLSPEC_HIDDEN;
+extern struct wined3d_settings wined3d_settings DECLSPEC_HIDDEN;
 
 typedef enum _WINED3DSAMPLER_TEXTURE_TYPE
 {
