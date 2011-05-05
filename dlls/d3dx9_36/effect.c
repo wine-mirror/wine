@@ -1061,8 +1061,54 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotation(ID3DXBaseEffect *ifac
 static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect *iface, D3DXHANDLE object, LPCSTR name)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, object);
+    struct d3dx_pass *pass = is_valid_pass(This, object);
+    struct d3dx_technique *technique = is_valid_technique(This, object);
+    UINT annotation_count = 0, i;
+    D3DXHANDLE *annotation_handles = NULL;
 
-    FIXME("iface %p, object %p, name %s stub\n", This, object, debugstr_a(name));
+    FIXME("iface %p, object %p, name %s partial stub\n", This, object, debugstr_a(name));
+
+    if (!name)
+    {
+        WARN("Invalid argument specified\n");
+        return NULL;
+    }
+
+    if (pass)
+    {
+        annotation_count = pass->annotation_count;
+        annotation_handles = pass->annotation_handles;
+    }
+    else if (technique)
+    {
+        annotation_count = technique->annotation_count;
+        annotation_handles = technique->annotation_handles;
+    }
+    else
+    {
+        if (!param) param = get_parameter_by_name(This, NULL, object);
+
+        if (param)
+        {
+            annotation_count = param->annotation_count;
+            annotation_handles = param->annotation_handles;
+        }
+    }
+    /* Todo: add funcs */
+
+    for (i = 0; i < annotation_count; i++)
+    {
+        struct d3dx_parameter *anno = get_parameter_struct(annotation_handles[i]);
+
+        if (!strcmp(anno->name, name))
+        {
+            TRACE("Returning parameter %p\n", anno);
+            return get_parameter_handle(anno);
+        }
+    }
+
+    WARN("Invalid argument specified\n");
 
     return NULL;
 }
