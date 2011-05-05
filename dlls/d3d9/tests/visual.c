@@ -8893,9 +8893,12 @@ static void pixelshader_blending_test(IDirect3DDevice9 *device)
     for(fmt_index=0; test_formats[fmt_index].textureFormat != 0; fmt_index++)
     {
         D3DFORMAT fmt = test_formats[fmt_index].textureFormat;
-        if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, fmt) != D3D_OK) {
-           skip("%s textures not supported\n", test_formats[fmt_index].fmtName);
-           continue;
+
+        if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+                D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, fmt) != D3D_OK)
+        {
+            skip("%s textures not supported as render targets.\n", test_formats[fmt_index].fmtName);
+            continue;
         }
 
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
