@@ -339,6 +339,7 @@ enum platform
 
 enum clr_version
 {
+    CLR_VERSION_V10,
     CLR_VERSION_V11,
     CLR_VERSION_V20,
     CLR_VERSION_MAX

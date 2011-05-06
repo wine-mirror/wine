@@ -31,25 +31,30 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
+static HRESULT (WINAPI *pCreateAssemblyCacheNet10)( IAssemblyCache **, DWORD );
 static HRESULT (WINAPI *pCreateAssemblyCacheNet11)( IAssemblyCache **, DWORD );
 static HRESULT (WINAPI *pCreateAssemblyCacheNet20)( IAssemblyCache **, DWORD );
 static HRESULT (WINAPI *pCreateAssemblyCacheSxs)( IAssemblyCache **, DWORD );
 static HRESULT (WINAPI *pLoadLibraryShim)( LPCWSTR, LPCWSTR, LPVOID, HMODULE * );
 static HRESULT (WINAPI *pGetFileVersion)( LPCWSTR, LPWSTR, DWORD, DWORD * );
 
-static HMODULE hfusion11, hfusion20, hmscoree, hsxs;
+static HMODULE hfusion10, hfusion11, hfusion20, hmscoree, hsxs;
 
 static BOOL init_function_pointers( void )
 {
     static const WCHAR szFusion[] = {'f','u','s','i','o','n','.','d','l','l',0};
+    static const WCHAR szVersion10[] = {'v','1','.','0','.','3','7','0','5',0};
     static const WCHAR szVersion11[] = {'v','1','.','1','.','4','3','2','2',0};
     static const WCHAR szVersion20[] = {'v','2','.','0','.','5','0','7','2','7',0};
 
-    if (pCreateAssemblyCacheNet11 || pCreateAssemblyCacheNet20) return TRUE;
+    if (pCreateAssemblyCacheNet10 || pCreateAssemblyCacheNet11 || pCreateAssemblyCacheNet20) return TRUE;
 
     if (!(hmscoree = LoadLibraryA( "mscoree.dll" ))) return FALSE;
-    if (!(pGetFileVersion = (void *)GetProcAddress( hmscoree, "GetFileVersion" ))) goto error;
+    pGetFileVersion = (void *)GetProcAddress( hmscoree, "GetFileVersion" ); /* missing from v1.0.3705 */
     if (!(pLoadLibraryShim = (void *)GetProcAddress( hmscoree, "LoadLibraryShim" ))) goto error;
+
+    if (!pLoadLibraryShim( szFusion, szVersion10, NULL, &hfusion10 ))
+        pCreateAssemblyCacheNet10 = (void *)GetProcAddress( hfusion10, "CreateAssemblyCache" );
 
     if (!pLoadLibraryShim( szFusion, szVersion11, NULL, &hfusion11 ))
         pCreateAssemblyCacheNet11 = (void *)GetProcAddress( hfusion11, "CreateAssemblyCache" );
@@ -57,15 +62,17 @@ static BOOL init_function_pointers( void )
     if (!pLoadLibraryShim( szFusion, szVersion20, NULL, &hfusion20 ))
         pCreateAssemblyCacheNet20 = (void *)GetProcAddress( hfusion20, "CreateAssemblyCache" );
 
-    if (!pCreateAssemblyCacheNet11 && !pCreateAssemblyCacheNet20) goto error;
+    if (!pCreateAssemblyCacheNet10 && !pCreateAssemblyCacheNet11 && !pCreateAssemblyCacheNet20) goto error;
 
     if (!(hsxs = LoadLibraryA( "sxs.dll" ))) goto error;
     if (!(pCreateAssemblyCacheSxs = (void *)GetProcAddress( hsxs, "CreateAssemblyCache" ))) goto error;
     return TRUE;
 
 error:
+    pCreateAssemblyCacheNet10 = NULL;
     pCreateAssemblyCacheNet11 = NULL;
     pCreateAssemblyCacheNet20 = NULL;
+    FreeLibrary( hfusion10 );
     FreeLibrary( hfusion11 );
     FreeLibrary( hfusion20 );
     FreeLibrary( hmscoree );
@@ -75,15 +82,25 @@ error:
 BOOL msi_init_assembly_caches( MSIPACKAGE *package )
 {
     if (!init_function_pointers()) return FALSE;
-    if (package->cache_net[CLR_VERSION_V11] || package->cache_net[CLR_VERSION_V20]) return TRUE;
+    if (package->cache_net[CLR_VERSION_V10] ||
+        package->cache_net[CLR_VERSION_V11] ||
+        package->cache_net[CLR_VERSION_V20]) return TRUE;
     if (pCreateAssemblyCacheSxs( &package->cache_sxs, 0 ) != S_OK) return FALSE;
 
+    if (pCreateAssemblyCacheNet10) pCreateAssemblyCacheNet11( &package->cache_net[CLR_VERSION_V10], 0 );
     if (pCreateAssemblyCacheNet11) pCreateAssemblyCacheNet11( &package->cache_net[CLR_VERSION_V11], 0 );
     if (pCreateAssemblyCacheNet20) pCreateAssemblyCacheNet20( &package->cache_net[CLR_VERSION_V20], 0 );
 
-    if (package->cache_net[CLR_VERSION_V11] || package->cache_net[CLR_VERSION_V20])
+    if (package->cache_net[CLR_VERSION_V10] ||
+        package->cache_net[CLR_VERSION_V11] ||
+        package->cache_net[CLR_VERSION_V20])
     {
         return TRUE;
+    }
+    if (package->cache_net[CLR_VERSION_V10])
+    {
+        IAssemblyCache_Release( package->cache_net[CLR_VERSION_V10] );
+        package->cache_net[CLR_VERSION_V10] = NULL;
     }
     if (package->cache_net[CLR_VERSION_V11])
     {
@@ -117,8 +134,10 @@ void msi_destroy_assembly_caches( MSIPACKAGE *package )
         IAssemblyCache_Release( package->cache_sxs );
         package->cache_sxs = NULL;
     }
+    pCreateAssemblyCacheNet10 = NULL;
     pCreateAssemblyCacheNet11 = NULL;
     pCreateAssemblyCacheNet20 = NULL;
+    FreeLibrary( hfusion10 );
     FreeLibrary( hfusion11 );
     FreeLibrary( hfusion20 );
     FreeLibrary( hmscoree );
@@ -249,12 +268,14 @@ static BOOL is_assembly_installed( IAssemblyCache *cache, const WCHAR *display_n
     return (info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED);
 }
 
+static const WCHAR clr_version_v10[] = {'v','1','.','0','.','3','7','0','5',0};
 static const WCHAR clr_version_v11[] = {'v','1','.','1','.','4','3','2','2',0};
 static const WCHAR clr_version_v20[] = {'v','2','.','0','.','5','0','7','2','7',0};
 static const WCHAR clr_version_unknown[] = {'u','n','k','n','o','w','n',0};
 
 static const WCHAR *clr_version[] =
 {
+    clr_version_v10,
     clr_version_v11,
     clr_version_v20
 };
@@ -338,6 +359,8 @@ static enum clr_version get_clr_version( const WCHAR *filename )
     HRESULT hr;
     enum clr_version version = CLR_VERSION_V11;
     WCHAR *strW;
+
+    if (!pGetFileVersion) return CLR_VERSION_V10;
 
     hr = pGetFileVersion( filename, NULL, 0, &len );
     if (hr != HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) return CLR_VERSION_V11;
