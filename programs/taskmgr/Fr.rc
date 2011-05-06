@@ -60,8 +60,8 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_PROCESSLIST,"SysListView32",LVS_REPORT |
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
-                    WS_BORDER | WS_TABSTOP,7,7,233,177
-    PUSHBUTTON      "&Terminer le processus",IDC_ENDPROCESS,161,189,79,14
+                    WS_BORDER | WS_TABSTOP,7,7,235,177
+    PUSHBUTTON      "&Terminer le processus",IDC_ENDPROCESS,167,189,76,14
     CONTROL         "Afficher les processus de &tous les utilisateurs",IDC_SHOWALLPROCESSES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,161,10
 END
