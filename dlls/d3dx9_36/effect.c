@@ -489,6 +489,33 @@ static INT get_int(D3DXPARAMETER_TYPE type, void *data)
     return i;
 }
 
+inline static FLOAT get_float(D3DXPARAMETER_TYPE type, void *data)
+{
+    FLOAT f;
+
+    switch (type)
+    {
+        case D3DXPT_FLOAT:
+            f = *(FLOAT *)data;
+            break;
+
+        case D3DXPT_INT:
+            f = *(INT *)data;
+            break;
+
+        case D3DXPT_BOOL:
+            f = *(BOOL *)data;
+            break;
+
+        default:
+            f = 0.0f;
+            FIXME("Unhandled type %s. This should not happen!\n", debug_d3dxparameter_type(type));
+            break;
+    }
+
+    return f;
+}
+
 static inline BOOL get_bool(void *data)
 {
     return (*(DWORD *)data) ? TRUE : FALSE;
@@ -1309,10 +1336,22 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetFloat(ID3DXBaseEffect *iface, D3DXH
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetFloat(ID3DXBaseEffect *iface, D3DXHANDLE parameter, FLOAT *f)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, f %p stub\n", This, parameter, f);
+    TRACE("iface %p, parameter %p, f %p\n", This, parameter, f);
 
-    return E_NOTIMPL;
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
+
+    if (f && param && !param->element_count && param->class == D3DXPC_SCALAR)
+    {
+        f = param->data;
+        TRACE("Returning %f\n", *f);
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetFloatArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, CONST FLOAT *f, UINT count)
