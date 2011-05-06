@@ -33,6 +33,9 @@
 #include <libxml/xmlstring.h>
 #include <libxml/xpath.h>
 
+#include "windef.h"
+#include "winnt.h"
+
 typedef struct _parser_param {
     void* yyscanner;
     xmlXPathContextPtr ctx;

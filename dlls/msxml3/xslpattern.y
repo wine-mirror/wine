@@ -21,8 +21,6 @@
 %{
 #include "config.h"
 #include "wine/port.h"
-#include "windef.h"
-#include "winnt.h"
 
 #ifdef HAVE_LIBXML2
 #include "xslpattern.h"
