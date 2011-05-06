@@ -462,6 +462,11 @@ static void free_effect_compiler(struct ID3DXEffectCompilerImpl *compiler)
     }
 }
 
+static inline BOOL get_bool(void *data)
+{
+    return (*(DWORD *)data) ? TRUE : FALSE;
+}
+
 static struct d3dx_parameter *get_parameter_element_by_name(struct ID3DXBaseEffectImpl *base,
         struct d3dx_parameter *parameter, LPCSTR name)
 {
@@ -1181,10 +1186,22 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetBool(ID3DXBaseEffect *iface, D3DXHA
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetBool(ID3DXBaseEffect *iface, D3DXHANDLE parameter, BOOL *b)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = is_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, b %p stub\n", This, parameter, b);
+    TRACE("iface %p, parameter %p, b %p\n", This, parameter, b);
 
-    return E_NOTIMPL;
+    if (!param) param = get_parameter_by_name(This, NULL, parameter);
+
+    if (b && param && !param->element_count && param->class == D3DXPC_SCALAR)
+    {
+        *b = get_bool(param->data);
+        TRACE("Returning %s\n", *b ? "TRUE" : "FALSE");
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetBoolArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, CONST BOOL *b, UINT count)
