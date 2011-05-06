@@ -61,10 +61,11 @@ typedef struct tagMSITRANSFORM {
 
 typedef struct tagMSISTREAM {
     struct list entry;
+    IStorage *stg;
     IStream *stm;
 } MSISTREAM;
 
-static UINT find_open_stream( MSIDATABASE *db, LPCWSTR name, IStream **stm )
+static UINT find_open_stream( MSIDATABASE *db, IStorage *stg, LPCWSTR name, IStream **stm )
 {
     MSISTREAM *stream;
 
@@ -72,6 +73,8 @@ static UINT find_open_stream( MSIDATABASE *db, LPCWSTR name, IStream **stm )
     {
         HRESULT r;
         STATSTG stat;
+
+        if (stream->stg != stg) continue;
 
         r = IStream_Stat( stream->stm, &stat, 0 );
         if( FAILED( r ) )
@@ -94,11 +97,11 @@ static UINT find_open_stream( MSIDATABASE *db, LPCWSTR name, IStream **stm )
     return ERROR_FUNCTION_FAILED;
 }
 
-static UINT clone_open_stream( MSIDATABASE *db, LPCWSTR name, IStream **stm )
+UINT msi_clone_open_stream( MSIDATABASE *db, IStorage *stg, LPCWSTR name, IStream **stm )
 {
     IStream *stream;
 
-    if (find_open_stream( db, name, &stream ) == ERROR_SUCCESS)
+    if (find_open_stream( db, stg, name, &stream ) == ERROR_SUCCESS)
     {
         HRESULT r;
         LARGE_INTEGER pos;
@@ -124,15 +127,16 @@ static UINT clone_open_stream( MSIDATABASE *db, LPCWSTR name, IStream **stm )
     return ERROR_FUNCTION_FAILED;
 }
 
-UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
+UINT msi_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
 {
     HRESULT r;
+    IStorage *stg;
     WCHAR decoded[MAX_STREAM_NAME_LEN];
 
     decode_streamname( stname, decoded );
     TRACE("%s -> %s\n", debugstr_w(stname), debugstr_w(decoded));
 
-    if (clone_open_stream( db, stname, stm ) == ERROR_SUCCESS)
+    if (msi_clone_open_stream( db, db->storage, stname, stm ) == ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
     r = IStorage_OpenStream( db->storage, stname, NULL,
@@ -146,18 +150,21 @@ UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm )
             r = IStorage_OpenStream( transform->stg, stname, NULL,
                                      STGM_READ | STGM_SHARE_EXCLUSIVE, 0, stm );
             if (SUCCEEDED(r))
+            {
+                stg = transform->stg;
                 break;
+            }
         }
     }
+    else stg = db->storage;
 
     if( SUCCEEDED(r) )
     {
         MSISTREAM *stream;
 
-        stream = msi_alloc( sizeof(MSISTREAM) );
-        if( !stream )
-            return ERROR_NOT_ENOUGH_MEMORY;
-
+        if (!(stream = msi_alloc( sizeof(MSISTREAM) ))) return ERROR_NOT_ENOUGH_MEMORY;
+        stream->stg = stg;
+        IStream_AddRef( stg );
         stream->stm = *stm;
         IStream_AddRef( *stm );
         list_add_tail( &db->streams, &stream->entry );
@@ -178,7 +185,7 @@ static void free_transforms( MSIDATABASE *db )
     }
 }
 
-void db_destroy_stream( MSIDATABASE *db, LPCWSTR stname )
+void msi_destroy_stream( MSIDATABASE *db, const WCHAR *stname )
 {
     MSISTREAM *stream, *stream2;
 
@@ -200,8 +207,9 @@ void db_destroy_stream( MSIDATABASE *db, LPCWSTR stname )
 
             list_remove( &stream->entry );
             IStream_Release( stream->stm );
+            IStream_Release( stream->stg );
+            IStorage_DestroyElement( stream->stg, stname );
             msi_free( stream );
-            IStorage_DestroyElement( db->storage, stname );
             CoTaskMemFree( stat.pwcsName );
             break;
         }
@@ -213,10 +221,10 @@ static void free_streams( MSIDATABASE *db )
 {
     while( !list_empty( &db->streams ) )
     {
-        MSISTREAM *s = LIST_ENTRY( list_head( &db->streams ),
-                                   MSISTREAM, entry );
+        MSISTREAM *s = LIST_ENTRY(list_head( &db->streams ), MSISTREAM, entry);
         list_remove( &s->entry );
         IStream_Release( s->stm );
+        IStream_Release( s->stg );
         msi_free( s );
     }
 }

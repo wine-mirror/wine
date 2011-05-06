@@ -1221,7 +1221,7 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     }
 
     encname = encode_streamname( FALSE, full_name );
-    r = db_get_raw_stream( tv->db, encname, stm );
+    r = msi_get_raw_stream( tv->db, encname, stm );
     if( r )
         ERR("fetching stream %s, error = %d\n",debugstr_w(full_name), r);
 

@@ -182,7 +182,7 @@ static UINT STREAMS_set_row(struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, U
     }
 
     encname = encode_streamname(FALSE, name);
-    db_destroy_stream(sv->db, encname);
+    msi_destroy_stream(sv->db, encname);
 
     r = write_stream_data(sv->db->storage, name, data, count, FALSE);
     if (r != ERROR_SUCCESS)
@@ -529,12 +529,12 @@ static INT add_streams_to_table(MSISTREAMSVIEW *sv)
         /* these streams appear to be unencoded */
         if (*stat.pwcsName == 0x0005)
         {
-            r = db_get_raw_stream(sv->db, stat.pwcsName, &stream->stream);
+            r = msi_get_raw_stream(sv->db, stat.pwcsName, &stream->stream);
         }
         else
         {
             encname = encode_streamname(FALSE, stat.pwcsName);
-            r = db_get_raw_stream(sv->db, encname, &stream->stream);
+            r = msi_get_raw_stream(sv->db, encname, &stream->stream);
             msi_free(encname);
         }
         CoTaskMemFree(stat.pwcsName);
