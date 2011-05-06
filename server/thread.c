@@ -491,6 +491,12 @@ void stop_thread( struct thread *thread )
     if (is_process_init_done(thread->process)) send_thread_signal( thread, SIGUSR1 );
 }
 
+/* stop a thread if it's supposed to be suspended */
+void stop_thread_if_suspended( struct thread *thread )
+{
+    if (thread->suspend + thread->process->suspend > 0) stop_thread( thread );
+}
+
 /* suspend a thread */
 static int suspend_thread( struct thread *thread )
 {
@@ -1182,7 +1188,7 @@ DECL_HANDLER(init_thread)
         }
         if (process->unix_pid != current->unix_pid)
             process->unix_pid = -1;  /* can happen with linuxthreads */
-        if (current->suspend + process->suspend > 0) stop_thread( current );
+        stop_thread_if_suspended( current );
         generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, &req->entry );
         set_thread_affinity( current, current->affinity );
     }
@@ -1556,7 +1562,11 @@ DECL_HANDLER(get_suspend_context)
     if (current->suspend_context)
     {
         set_reply_data_ptr( current->suspend_context, sizeof(context_t) );
-        if (current->context == current->suspend_context) current->context = NULL;
+        if (current->context == current->suspend_context)
+        {
+            current->context = NULL;
+            stop_thread_if_suspended( current );
+        }
         current->suspend_context = NULL;
     }
     else set_error( STATUS_INVALID_PARAMETER );  /* not suspended, shouldn't happen */

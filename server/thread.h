@@ -106,6 +106,7 @@ extern struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int 
 extern struct thread *get_thread_from_tid( int tid );
 extern struct thread *get_thread_from_pid( int pid );
 extern void stop_thread( struct thread *thread );
+extern void stop_thread_if_suspended( struct thread *thread );
 extern int wake_thread( struct thread *thread );
 extern int add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void remove_queue( struct object *obj, struct wait_queue_entry *entry );

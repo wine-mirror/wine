@@ -308,7 +308,11 @@ static void debug_event_destroy( struct object *obj )
             break;
         }
     }
-    if (event->sender->context == &event->context) event->sender->context = NULL;
+    if (event->sender->context == &event->context)
+    {
+        event->sender->context = NULL;
+        stop_thread_if_suspended( event->sender );
+    }
     release_object( event->sender );
     release_object( event->debugger );
 }
@@ -680,6 +684,7 @@ DECL_HANDLER(get_exception_status)
                 data_size_t size = min( sizeof(context_t), get_reply_max_size() );
                 set_reply_data( &event->context, size );
                 current->context = NULL;
+                stop_thread_if_suspended( current );
             }
             set_error( event->status );
         }

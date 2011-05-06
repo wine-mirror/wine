@@ -1045,7 +1045,7 @@ DECL_HANDLER(init_process_done)
     set_process_startup_state( process, STARTUP_DONE );
 
     if (req->gui) process->idle_event = create_event( NULL, NULL, 0, 1, 0, NULL );
-    if (current->suspend + process->suspend > 0) stop_thread( current );
+    stop_thread_if_suspended( current );
     if (process->debugger) set_process_debug_flag( process, 1 );
 }
 
