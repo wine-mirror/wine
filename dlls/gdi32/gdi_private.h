@@ -99,6 +99,13 @@ typedef struct
     DWORD total_len;  /* total length of the dashes, should be multiplied by 2 if there are an odd number of dash lengths */
 } dash_pattern;
 
+typedef struct
+{
+    int left_in_dash;
+    int cur_dash;
+    BOOL mark;
+} dash_pos;
+
 typedef struct dibdrv_physdev
 {
     struct gdi_physdev dev;
@@ -109,8 +116,9 @@ typedef struct dibdrv_physdev
 
     /* pen */
     DWORD pen_color, pen_and, pen_xor;
-    BOOL   (* pen_line)(struct dibdrv_physdev *pdev, POINT *start, POINT *end);
     dash_pattern pen_pattern;
+    dash_pos dash_pos;
+    BOOL   (* pen_line)(struct dibdrv_physdev *pdev, POINT *start, POINT *end);
 
     /* brush */
     UINT brush_style;

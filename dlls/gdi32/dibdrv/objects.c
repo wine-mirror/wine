@@ -544,9 +544,139 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     return TRUE;
 }
 
+void reset_dash_origin(dibdrv_physdev *pdev)
+{
+    pdev->dash_pos.cur_dash = 0;
+    pdev->dash_pos.left_in_dash = pdev->pen_pattern.dashes[0];
+    pdev->dash_pos.mark = TRUE;
+}
+
+static inline void skip_dash(dibdrv_physdev *pdev, unsigned int skip)
+{
+    skip %= pdev->pen_pattern.total_len;
+    while(skip)
+    {
+        if(pdev->dash_pos.left_in_dash > skip)
+        {
+            pdev->dash_pos.left_in_dash -= skip;
+            return;
+        }
+        skip -= pdev->dash_pos.left_in_dash;
+        pdev->dash_pos.cur_dash++;
+        if(pdev->dash_pos.cur_dash == pdev->pen_pattern.count) pdev->dash_pos.cur_dash = 0;
+        pdev->dash_pos.left_in_dash = pdev->pen_pattern.dashes[pdev->dash_pos.cur_dash];
+        pdev->dash_pos.mark = !pdev->dash_pos.mark;
+    }
+}
+
+static inline void get_dash_colors(const dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
+{
+    if(pdev->dash_pos.mark)
+    {
+        *and = pdev->pen_and;
+        *xor = pdev->pen_xor;
+    }
+    else /* space */
+    {
+        *and = pdev->bkgnd_and;
+        *xor = pdev->bkgnd_xor;
+    }
+}
+
 static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 {
-    return FALSE;
+    const WINEREGION *clip = get_wine_region(pdev->clip);
+    DWORD and, xor;
+    int i, dash_len;
+    RECT rect;
+    const dash_pos start_pos = pdev->dash_pos;
+    BOOL ret = TRUE;
+
+    if(start->y == end->y) /* hline */
+    {
+        BOOL l_to_r;
+        INT left, right, cur_x;
+
+        rect.top = start->y;
+        rect.bottom = start->y + 1;
+
+        if(start->x <= end->x)
+        {
+            left = start->x;
+            right = end->x - 1;
+            l_to_r = TRUE;
+        }
+        else
+        {
+            left = end->x + 1;
+            right = start->x;
+            l_to_r = FALSE;
+        }
+
+        for(i = 0; i < clip->numRects; i++)
+        {
+            if(clip->rects[i].top > start->y) break;
+            if(clip->rects[i].bottom <= start->y) continue;
+
+            if(clip->rects[i].right > left && clip->rects[i].left <= right)
+            {
+                int clipped_left  = max(clip->rects[i].left, left);
+                int clipped_right = min(clip->rects[i].right - 1, right);
+
+                pdev->dash_pos = start_pos;
+
+                if(l_to_r)
+                {
+                    cur_x = clipped_left;
+                    if(cur_x != left)
+                        skip_dash(pdev, clipped_left - left);
+
+                    while(cur_x <= clipped_right)
+                    {
+                        get_dash_colors(pdev, &and, &xor);
+                        dash_len = pdev->dash_pos.left_in_dash;
+                        if(cur_x + dash_len > clipped_right + 1)
+                            dash_len = clipped_right - cur_x + 1;
+                        rect.left = cur_x;
+                        rect.right = cur_x + dash_len;
+
+                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
+                        cur_x += dash_len;
+                        skip_dash(pdev, dash_len);
+                    }
+                }
+                else
+                {
+                    cur_x = clipped_right;
+                    if(cur_x != right)
+                        skip_dash(pdev, right - clipped_right);
+
+                    while(cur_x >= clipped_left)
+                    {
+                        get_dash_colors(pdev, &and, &xor);
+                        dash_len = pdev->dash_pos.left_in_dash;
+                        if(cur_x - dash_len < clipped_left - 1)
+                            dash_len = cur_x - clipped_left + 1;
+                        rect.left = cur_x - dash_len + 1;
+                        rect.right = cur_x + 1;
+
+                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
+                        cur_x -= dash_len;
+                        skip_dash(pdev, dash_len);
+                    }
+                }
+            }
+        }
+        pdev->dash_pos = start_pos;
+        skip_dash(pdev, right - left + 1);
+    }
+    else
+    {
+        ret = FALSE;
+    }
+
+    release_wine_region(pdev->clip);
+    return ret;
 }
 
 static const dash_pattern dash_patterns[4] =

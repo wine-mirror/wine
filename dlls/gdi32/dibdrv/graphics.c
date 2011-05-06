@@ -71,6 +71,8 @@ BOOL CDECL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
 
     LPtoDP(dev->hdc, pts, 2);
 
+    reset_dash_origin(pdev);
+
     if(defer_pen(pdev) || !pdev->pen_line(pdev, pts, pts + 1))
         return next->funcs->pLineTo( next, x, y );
 

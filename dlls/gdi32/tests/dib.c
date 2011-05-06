@@ -84,6 +84,8 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "d51bd330cec510cdccf5394328bd8e5411901e9e",
     "df4aebf98d91f11be560dd232123b3ae327303d7",
     "f2af53dd073a09b1031d0032d28da35c82adc566",
+    "eb5a963a6f7b25533ddfb8915e70865d037bd156",
+    "c387917268455017aa0b28bed73aa6554044bbb3",
     NULL
 };
 
@@ -237,7 +239,7 @@ static const RECT patblt_clips[] =
 static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sha1)
 {
     DWORD dib_size = get_dib_size(bmi);
-    HPEN solid_pen, orig_pen;
+    HPEN solid_pen, dashed_pen, orig_pen;
     HBRUSH solid_brush, orig_brush;
     INT i, y;
     HRGN hrgn, hrgn2;
@@ -349,12 +351,35 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
                patblt_clips[i].bottom - patblt_clips[i].top, PATCOPY);
     }
     compare_hash(bmi, bits, sha1, "clipped patblt");
+    memset(bits, 0xcc, dib_size);
+
+    /* clipped dashed lines */
+    dashed_pen = CreatePen(PS_DASH, 1, RGB(0xff, 0, 0));
+    SelectObject(hdc, dashed_pen);
+    SetBkMode(hdc, TRANSPARENT);
+    SetBkColor(hdc, RGB(0, 0xff, 0));
+
+    for(i = 0; i < sizeof(hline_clips)/sizeof(hline_clips[0]); i++)
+    {
+        MoveToEx(hdc, hline_clips[i].left, hline_clips[i].top, NULL);
+        LineTo(hdc, hline_clips[i].right, hline_clips[i].bottom);
+    }
+    compare_hash(bmi, bits, sha1, "clipped dashed hlines");
+    memset(bits, 0xcc, dib_size);
+
+    for(i = 0; i < sizeof(hline_clips)/sizeof(hline_clips[0]); i++)
+    {
+        MoveToEx(hdc, hline_clips[i].right - 1, hline_clips[i].bottom, NULL);
+        LineTo(hdc, hline_clips[i].left - 1, hline_clips[i].top);
+    }
+    compare_hash(bmi, bits, sha1, "clipped dashed hlines r -> l");
+    memset(bits, 0xcc, dib_size);
 
     ExtSelectClipRgn(hdc, NULL, RGN_COPY);
 
-
     SelectObject(hdc, orig_brush);
     SelectObject(hdc, orig_pen);
+    DeleteObject(dashed_pen);
     DeleteObject(solid_brush);
     DeleteObject(solid_pen);
 }
