@@ -112,6 +112,7 @@ struct ACImpl {
 
     AudioDeviceID adevid;
     AudioQueueRef aqueue;
+    AudioObjectPropertyScope scope;
     HANDLE timer;
     UINT32 period_ms, bufsize_frames, inbuf_frames, written_frames;
     UINT64 last_time;
@@ -401,6 +402,15 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(AudioDeviceID *adevid, IMMDevice *dev,
     This->IAudioClock2_iface.lpVtbl = &AudioClock2_Vtbl;
 
     This->dataflow = dataflow;
+
+    if(dataflow == eRender)
+        This->scope = kAudioDevicePropertyScopeOutput;
+    else if(dataflow == eCapture)
+        This->scope = kAudioDevicePropertyScopeInput;
+    else{
+        HeapFree(GetProcessHeap(), 0, This);
+        return E_INVALIDARG;
+    }
 
     This->lock = 0;
 
@@ -872,12 +882,7 @@ static HRESULT ca_get_max_stream_latency(ACImpl *This, UInt32 *max)
     OSStatus sc;
     int nstreams, i;
 
-    if(This->dataflow == eRender)
-        addr.mScope = kAudioDevicePropertyScopeOutput;
-    else if(This->dataflow == eCapture)
-        addr.mScope = kAudioDevicePropertyScopeInput;
-    else
-        return E_UNEXPECTED;
+    addr.mScope = This->scope;
     addr.mElement = 0;
     addr.mSelector = kAudioDevicePropertyStreams;
 
@@ -944,14 +949,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient *iface,
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    if(This->dataflow == eRender)
-        addr.mScope = kAudioDevicePropertyScopeOutput;
-    else if(This->dataflow == eCapture)
-        addr.mScope = kAudioDevicePropertyScopeInput;
-    else{
-        OSSpinLockUnlock(&This->lock);
-        return E_UNEXPECTED;
-    }
+    addr.mScope = This->scope;
     addr.mSelector = kAudioDevicePropertyLatency;
     addr.mElement = 0;
 
@@ -1077,14 +1075,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
 
     fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
 
-    if(This->dataflow == eRender)
-        addr.mScope = kAudioDevicePropertyScopeOutput;
-    else if(This->dataflow == eCapture)
-        addr.mScope = kAudioDevicePropertyScopeInput;
-    else{
-        OSSpinLockUnlock(&This->lock);
-        return E_UNEXPECTED;
-    }
+    addr.mScope = This->scope;
     addr.mElement = 0;
     addr.mSelector = kAudioDevicePropertyStreamConfiguration;
 
