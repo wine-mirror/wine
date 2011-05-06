@@ -92,6 +92,13 @@ typedef struct
     const struct primitive_funcs *funcs;
 } dib_info;
 
+typedef struct
+{
+    DWORD count;
+    DWORD dashes[16]; /* 16 is the maximium number for a PS_USERSTYLE pen */
+    DWORD total_len;  /* total length of the dashes, should be multiplied by 2 if there are an odd number of dash lengths */
+} dash_pattern;
+
 typedef struct dibdrv_physdev
 {
     struct gdi_physdev dev;
@@ -103,6 +110,7 @@ typedef struct dibdrv_physdev
     /* pen */
     DWORD pen_color, pen_and, pen_xor;
     BOOL   (* pen_line)(struct dibdrv_physdev *pdev, POINT *start, POINT *end);
+    dash_pattern pen_pattern;
 
     /* brush */
     UINT brush_style;

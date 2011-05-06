@@ -544,6 +544,19 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     return TRUE;
 }
 
+static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
+{
+    return FALSE;
+}
+
+static const dash_pattern dash_patterns[4] =
+{
+    {2, {18, 6}, 24},             /* PS_DASH */
+    {2, {3,  3}, 6},              /* PS_DOT */
+    {4, {9, 6, 3, 6}, 24},        /* PS_DASHDOT */
+    {6, {9, 3, 3, 3, 3, 3}, 24}   /* PS_DASHDOTDOT */
+};
+
 /***********************************************************************
  *           dibdrv_SelectPen
  */
@@ -552,6 +565,7 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectPen );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     LOGPEN logpen;
+    DWORD style;
 
     TRACE("(%p, %p)\n", dev, hpen);
 
@@ -583,14 +597,29 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
 
     pdev->defer |= DEFER_PEN;
 
-    switch(logpen.lopnStyle & PS_STYLE_MASK)
+    style = logpen.lopnStyle & PS_STYLE_MASK;
+
+    switch(style)
     {
     case PS_SOLID:
         if(logpen.lopnStyle & PS_GEOMETRIC) break;
         if(logpen.lopnWidth.x > 1) break;
         pdev->pen_line = solid_pen_line;
+        pdev->pen_pattern.count = 0;
         pdev->defer &= ~DEFER_PEN;
         break;
+
+    case PS_DASH:
+    case PS_DOT:
+    case PS_DASHDOT:
+    case PS_DASHDOTDOT:
+        if(logpen.lopnStyle & PS_GEOMETRIC) break;
+        if(logpen.lopnWidth.x > 1) break;
+        pdev->pen_line = dashed_pen_line;
+        pdev->pen_pattern = dash_patterns[style - PS_DASH];
+        pdev->defer &= ~DEFER_PEN;
+        break;
+
     default:
         break;
     }
