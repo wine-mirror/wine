@@ -898,6 +898,7 @@ static HANDLE event;
 static void WINAPI set_test_val( int val )
 {
     test_value += val;
+    ExitThread(0);
 }
 
 static DWORD WINAPI threadFunc6(LPVOID p)
@@ -954,7 +955,7 @@ static void test_SetThreadContext(void)
                          prevcount, GetLastError() );
 
     WaitForSingleObject( thread, INFINITE );
-    ok( test_value == 20, "test_value %d instead of 20\n", test_value );
+    ok( test_value == 10, "test_value %d instead of 20\n", test_value );
 
     ctx.ContextFlags = CONTEXT_FULL;
     SetLastError(0xdeadbeef);
