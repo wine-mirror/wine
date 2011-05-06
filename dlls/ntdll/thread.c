@@ -699,7 +699,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         SERVER_START_REQ( set_thread_context )
         {
             req->handle  = wine_server_obj_handle( handle );
-            req->suspend = 0;
+            req->suspend = 1;
             wine_server_add_data( req, &server_context, sizeof(server_context) );
             ret = wine_server_call( req );
             self = reply->self;
@@ -708,28 +708,25 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
         if (ret == STATUS_PENDING)
         {
-            if (NtSuspendThread( handle, &dummy ) == STATUS_SUCCESS)
+            for (i = 0; i < 100; i++)
             {
-                for (i = 0; i < 100; i++)
+                SERVER_START_REQ( set_thread_context )
                 {
-                    SERVER_START_REQ( set_thread_context )
-                    {
-                        req->handle  = wine_server_obj_handle( handle );
-                        req->suspend = 0;
-                        wine_server_add_data( req, &server_context, sizeof(server_context) );
-                        ret = wine_server_call( req );
-                    }
-                    SERVER_END_REQ;
-                    if (ret == STATUS_PENDING)
-                    {
-                        LARGE_INTEGER timeout;
-                        timeout.QuadPart = -10000;
-                        NtDelayExecution( FALSE, &timeout );
-                    }
-                    else break;
+                    req->handle  = wine_server_obj_handle( handle );
+                    req->suspend = 0;
+                    wine_server_add_data( req, &server_context, sizeof(server_context) );
+                    ret = wine_server_call( req );
                 }
-                NtResumeThread( handle, &dummy );
+                SERVER_END_REQ;
+                if (ret == STATUS_PENDING)
+                {
+                    LARGE_INTEGER timeout;
+                    timeout.QuadPart = -10000;
+                    NtDelayExecution( FALSE, &timeout );
+                }
+                else break;
             }
+            NtResumeThread( handle, &dummy );
             if (ret == STATUS_PENDING) ret = STATUS_ACCESS_DENIED;
         }
 
@@ -789,7 +786,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         {
             req->handle  = wine_server_obj_handle( handle );
             req->flags   = server_flags;
-            req->suspend = 0;
+            req->suspend = 1;
             wine_server_set_reply( req, &server_context, sizeof(server_context) );
             ret = wine_server_call( req );
             self = reply->self;
@@ -798,29 +795,26 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
         if (ret == STATUS_PENDING)
         {
-            if (NtSuspendThread( handle, &dummy ) == STATUS_SUCCESS)
+            for (i = 0; i < 100; i++)
             {
-                for (i = 0; i < 100; i++)
+                SERVER_START_REQ( get_thread_context )
                 {
-                    SERVER_START_REQ( get_thread_context )
-                    {
-                        req->handle  = wine_server_obj_handle( handle );
-                        req->flags   = server_flags;
-                        req->suspend = 0;
-                        wine_server_set_reply( req, &server_context, sizeof(server_context) );
-                        ret = wine_server_call( req );
-                    }
-                    SERVER_END_REQ;
-                    if (ret == STATUS_PENDING)
-                    {
-                        LARGE_INTEGER timeout;
-                        timeout.QuadPart = -10000;
-                        NtDelayExecution( FALSE, &timeout );
-                    }
-                    else break;
+                    req->handle  = wine_server_obj_handle( handle );
+                    req->flags   = server_flags;
+                    req->suspend = 0;
+                    wine_server_set_reply( req, &server_context, sizeof(server_context) );
+                    ret = wine_server_call( req );
                 }
-                NtResumeThread( handle, &dummy );
+                SERVER_END_REQ;
+                if (ret == STATUS_PENDING)
+                {
+                    LARGE_INTEGER timeout;
+                    timeout.QuadPart = -10000;
+                    NtDelayExecution( FALSE, &timeout );
+                }
+                else break;
             }
+            NtResumeThread( handle, &dummy );
             if (ret == STATUS_PENDING) ret = STATUS_ACCESS_DENIED;
         }
         if (!ret) ret = context_from_server( context, &server_context );
