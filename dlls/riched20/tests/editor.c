@@ -4739,7 +4739,7 @@ static void test_WM_PASTE(void)
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     /* Send WM_CHAR to simulates Ctrl-V */
     SendMessage(hwndRichEdit, WM_CHAR, 22,
-                (MapVirtualKey('V', MAPVK_VK_TO_VSC) << 16) & 1);
+                (MapVirtualKey('V', MAPVK_VK_TO_VSC) << 16) | 1);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Shouldn't paste because pasting is handled by WM_KEYDOWN */
     result = strcmp(buffer,"");
@@ -4753,7 +4753,7 @@ static void test_WM_PASTE(void)
     /* Simulates paste (Ctrl-V) */
     hold_key(VK_CONTROL);
     SendMessage(hwndRichEdit, WM_KEYDOWN, 'V',
-                (MapVirtualKey('V', MAPVK_VK_TO_VSC) << 16) & 1);
+                (MapVirtualKey('V', MAPVK_VK_TO_VSC) << 16) | 1);
     release_key(VK_CONTROL);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,"paste");
@@ -4765,7 +4765,7 @@ static void test_WM_PASTE(void)
     /* Simulates copy (Ctrl-C) */
     hold_key(VK_CONTROL);
     SendMessage(hwndRichEdit, WM_KEYDOWN, 'C',
-                (MapVirtualKey('C', MAPVK_VK_TO_VSC) << 16) & 1);
+                (MapVirtualKey('C', MAPVK_VK_TO_VSC) << 16) | 1);
     release_key(VK_CONTROL);
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     SendMessage(hwndRichEdit, WM_PASTE, 0, 0);
@@ -4779,10 +4779,10 @@ static void test_WM_PASTE(void)
     /* Simulates select all (Ctrl-A) */
     hold_key(VK_CONTROL);
     SendMessage(hwndRichEdit, WM_KEYDOWN, 'A',
-                (MapVirtualKey('A', MAPVK_VK_TO_VSC) << 16) & 1);
+                (MapVirtualKey('A', MAPVK_VK_TO_VSC) << 16) | 1);
     /* Simulates select cut (Ctrl-X) */
     SendMessage(hwndRichEdit, WM_KEYDOWN, 'X',
-                (MapVirtualKey('X', MAPVK_VK_TO_VSC) << 16) & 1);
+                (MapVirtualKey('X', MAPVK_VK_TO_VSC) << 16) | 1);
     release_key(VK_CONTROL);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,"");
@@ -4797,14 +4797,14 @@ static void test_WM_PASTE(void)
     /* Simulates undo (Ctrl-Z) */
     hold_key(VK_CONTROL);
     SendMessage(hwndRichEdit, WM_KEYDOWN, 'Z',
-                (MapVirtualKey('Z', MAPVK_VK_TO_VSC) << 16) & 1);
+                (MapVirtualKey('Z', MAPVK_VK_TO_VSC) << 16) | 1);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,"");
     ok(result == 0,
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
     /* Simulates redo (Ctrl-Y) */
     SendMessage(hwndRichEdit, WM_KEYDOWN, 'Y',
-                (MapVirtualKey('Y', MAPVK_VK_TO_VSC) << 16) & 1);
+                (MapVirtualKey('Y', MAPVK_VK_TO_VSC) << 16) | 1);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     result = strcmp(buffer,"cut\r\n");
     todo_wine ok(result == 0,
@@ -6418,7 +6418,7 @@ static void test_WM_GETDLGCODE(void)
 
     msg.message = WM_KEYDOWN;
     msg.wParam = VK_RETURN;
-    msg.lParam = MapVirtualKey(VK_RETURN, MAPVK_VK_TO_VSC) | 0x0001;
+    msg.lParam = (MapVirtualKey(VK_RETURN, MAPVK_VK_TO_VSC) << 16) | 0x0001;
     msg.pt.x = 0;
     msg.pt.y = 0;
     msg.time = GetTickCount();
@@ -6468,7 +6468,7 @@ static void test_WM_GETDLGCODE(void)
     DestroyWindow(hwnd);
 
     msg.wParam = VK_TAB;
-    msg.lParam = MapVirtualKey(VK_TAB, MAPVK_VK_TO_VSC) | 0x0001;
+    msg.lParam = (MapVirtualKey(VK_TAB, MAPVK_VK_TO_VSC) << 16) | 0x0001;
 
     hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
                           ES_MULTILINE|WS_POPUP,
@@ -6519,7 +6519,7 @@ static void test_WM_GETDLGCODE(void)
     release_key(VK_CONTROL);
 
     msg.wParam = 'a';
-    msg.lParam = MapVirtualKey('a', MAPVK_VK_TO_VSC) | 0x0001;
+    msg.lParam = (MapVirtualKey('a', MAPVK_VK_TO_VSC) << 16) | 0x0001;
 
     hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
                           ES_MULTILINE|WS_POPUP,
