@@ -955,7 +955,7 @@ static void test_SetThreadContext(void)
                          prevcount, GetLastError() );
 
     WaitForSingleObject( thread, INFINITE );
-    ok( test_value == 10, "test_value %d instead of 20\n", test_value );
+    ok( test_value == 10, "test_value %d\n", test_value );
 
     ctx.ContextFlags = CONTEXT_FULL;
     SetLastError(0xdeadbeef);
