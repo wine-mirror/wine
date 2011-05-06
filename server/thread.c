@@ -1472,21 +1472,7 @@ DECL_HANDLER(get_thread_context)
     }
     if (!(thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT ))) return;
 
-    if (req->suspend)
-    {
-        if (thread != current || !thread->suspend_context)
-        {
-            /* not suspended, shouldn't happen */
-            set_error( STATUS_INVALID_PARAMETER );
-        }
-        else
-        {
-            if (thread->context == thread->suspend_context) thread->context = NULL;
-            set_reply_data_ptr( thread->suspend_context, sizeof(context_t) );
-            thread->suspend_context = NULL;
-        }
-    }
-    else if (thread != current && !thread->context)
+    if (thread != current && !thread->context)
     {
         /* thread is not suspended, retry (if it's still running) */
         if (thread->state != RUNNING) set_error( STATUS_ACCESS_DENIED );
@@ -1518,21 +1504,7 @@ DECL_HANDLER(set_thread_context)
     }
     if (!(thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT ))) return;
 
-    if (req->suspend)
-    {
-        if (thread != current || thread->context || context->cpu != thread->process->cpu)
-        {
-            /* nested suspend or exception, shouldn't happen */
-            set_error( STATUS_INVALID_PARAMETER );
-        }
-        else if ((thread->suspend_context = mem_alloc( sizeof(context_t) )))
-        {
-            memcpy( thread->suspend_context, get_req_data(), sizeof(context_t) );
-            thread->context = thread->suspend_context;
-            if (thread->debug_break) break_thread( thread );
-        }
-    }
-    else if (thread != current && !thread->context)
+    if (thread != current && !thread->context)
     {
         /* thread is not suspended, retry (if it's still running) */
         if (thread->state != RUNNING) set_error( STATUS_ACCESS_DENIED );
@@ -1550,6 +1522,48 @@ DECL_HANDLER(set_thread_context)
 
     reply->self = (thread == current);
     release_object( thread );
+}
+
+/* retrieve the suspended context of a thread */
+DECL_HANDLER(get_suspend_context)
+{
+    if (get_reply_max_size() < sizeof(context_t))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (current->suspend_context)
+    {
+        set_reply_data_ptr( current->suspend_context, sizeof(context_t) );
+        if (current->context == current->suspend_context) current->context = NULL;
+        current->suspend_context = NULL;
+    }
+    else set_error( STATUS_INVALID_PARAMETER );  /* not suspended, shouldn't happen */
+}
+
+/* store the suspended context of a thread */
+DECL_HANDLER(set_suspend_context)
+{
+    const context_t *context = get_req_data();
+
+    if (get_req_data_size() < sizeof(context_t))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (current->context || context->cpu != current->process->cpu)
+    {
+        /* nested suspend or exception, shouldn't happen */
+        set_error( STATUS_INVALID_PARAMETER );
+    }
+    else if ((current->suspend_context = mem_alloc( sizeof(context_t) )))
+    {
+        memcpy( current->suspend_context, get_req_data(), sizeof(context_t) );
+        current->context = current->suspend_context;
+        if (current->debug_break) break_thread( current );
+    }
 }
 
 /* fetch a selector entry for a thread */

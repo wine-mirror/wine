@@ -3862,6 +3862,20 @@ static void dump_set_cursor_reply( const struct set_cursor_reply *req )
     fprintf( stderr, ", last_change=%08x", req->last_change );
 }
 
+static void dump_get_suspend_context_request( const struct get_suspend_context_request *req )
+{
+}
+
+static void dump_get_suspend_context_reply( const struct get_suspend_context_reply *req )
+{
+    dump_varargs_context( " context=", cur_size );
+}
+
+static void dump_set_suspend_context_request( const struct set_suspend_context_request *req )
+{
+    dump_varargs_context( " context=", cur_size );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -4106,6 +4120,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_user_handle_request,
     (dump_func)dump_free_user_handle_request,
     (dump_func)dump_set_cursor_request,
+    (dump_func)dump_get_suspend_context_request,
+    (dump_func)dump_set_suspend_context_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -4352,6 +4368,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_alloc_user_handle_reply,
     NULL,
     (dump_func)dump_set_cursor_reply,
+    (dump_func)dump_get_suspend_context_reply,
+    NULL,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4598,6 +4616,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "alloc_user_handle",
     "free_user_handle",
     "set_cursor",
+    "get_suspend_context",
+    "set_suspend_context",
 };
 
 static const struct

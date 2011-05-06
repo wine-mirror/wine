@@ -354,6 +354,8 @@ DECL_HANDLER(set_window_layered_info);
 DECL_HANDLER(alloc_user_handle);
 DECL_HANDLER(free_user_handle);
 DECL_HANDLER(set_cursor);
+DECL_HANDLER(get_suspend_context);
+DECL_HANDLER(set_suspend_context);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -603,6 +605,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_alloc_user_handle,
     (req_handler)req_free_user_handle,
     (req_handler)req_set_cursor,
+    (req_handler)req_get_suspend_context,
+    (req_handler)req_set_suspend_context,
 };
 
 C_ASSERT( sizeof(affinity_t) == 8 );
@@ -2108,6 +2112,9 @@ C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_y) == 28 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, new_clip) == 32 );
 C_ASSERT( FIELD_OFFSET(struct set_cursor_reply, last_change) == 48 );
 C_ASSERT( sizeof(struct set_cursor_reply) == 56 );
+C_ASSERT( sizeof(struct get_suspend_context_request) == 16 );
+C_ASSERT( sizeof(struct get_suspend_context_reply) == 8 );
+C_ASSERT( sizeof(struct set_suspend_context_request) == 16 );
 
 #endif  /* WANT_REQUEST_HANDLERS */
 

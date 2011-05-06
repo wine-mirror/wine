@@ -72,10 +72,8 @@ void wait_suspend( CONTEXT *context )
     context_to_server( &server_context, context );
 
     /* store the context we got at suspend time */
-    SERVER_START_REQ( set_thread_context )
+    SERVER_START_REQ( set_suspend_context )
     {
-        req->handle  = wine_server_obj_handle( GetCurrentThread() );
-        req->suspend = 1;
         wine_server_add_data( req, &server_context, sizeof(server_context) );
         wine_server_call( req );
     }
@@ -86,10 +84,8 @@ void wait_suspend( CONTEXT *context )
     NTDLL_wait_for_multiple_objects( 0, NULL, SELECT_INTERRUPTIBLE, &timeout, 0 );
 
     /* retrieve the new context */
-    SERVER_START_REQ( get_thread_context )
+    SERVER_START_REQ( get_suspend_context )
     {
-        req->handle  = wine_server_obj_handle( GetCurrentThread() );
-        req->suspend = 1;
         wine_server_set_reply( req, &server_context, sizeof(server_context) );
         wine_server_call( req );
     }
