@@ -37,12 +37,13 @@ static HRESULT (WINAPI *pCreateAssemblyCacheSxs)( IAssemblyCache **, DWORD );
 static HRESULT (WINAPI *pLoadLibraryShim)( LPCWSTR, LPCWSTR, LPVOID, HMODULE * );
 static HRESULT (WINAPI *pGetFileVersion)( LPCWSTR, LPWSTR, DWORD, DWORD * );
 
+static HMODULE hfusion11, hfusion20, hmscoree, hsxs;
+
 static BOOL init_function_pointers( void )
 {
     static const WCHAR szFusion[] = {'f','u','s','i','o','n','.','d','l','l',0};
     static const WCHAR szVersion11[] = {'v','1','.','1','.','4','3','2','2',0};
     static const WCHAR szVersion20[] = {'v','2','.','0','.','5','0','7','2','7',0};
-    HMODULE hfusion11 = NULL, hfusion20 = NULL, hmscoree, hsxs;
 
     if (pCreateAssemblyCacheNet11 || pCreateAssemblyCacheNet20) return TRUE;
 
@@ -71,7 +72,7 @@ error:
     return FALSE;
 }
 
-static BOOL init_assembly_caches( MSIPACKAGE *package )
+BOOL msi_init_assembly_caches( MSIPACKAGE *package )
 {
     if (!init_function_pointers()) return FALSE;
     if (package->cache_net[CLR_VERSION_V11] || package->cache_net[CLR_VERSION_V20]) return TRUE;
@@ -97,6 +98,31 @@ static BOOL init_assembly_caches( MSIPACKAGE *package )
     IAssemblyCache_Release( package->cache_sxs );
     package->cache_sxs = NULL;
     return FALSE;
+}
+
+void msi_destroy_assembly_caches( MSIPACKAGE *package )
+{
+    UINT i;
+
+    for (i = 0; i < CLR_VERSION_MAX; i++)
+    {
+        if (package->cache_net[i])
+        {
+            IAssemblyCache_Release( package->cache_net[i] );
+            package->cache_net[i] = NULL;
+        }
+    }
+    if (package->cache_sxs)
+    {
+        IAssemblyCache_Release( package->cache_sxs );
+        package->cache_sxs = NULL;
+    }
+    pCreateAssemblyCacheNet11 = NULL;
+    pCreateAssemblyCacheNet20 = NULL;
+    FreeLibrary( hfusion11 );
+    FreeLibrary( hfusion20 );
+    FreeLibrary( hmscoree );
+    FreeLibrary( hsxs );
 }
 
 static MSIRECORD *get_assembly_record( MSIPACKAGE *package, const WCHAR *comp )
@@ -239,18 +265,13 @@ static const WCHAR *get_clr_version_str( enum clr_version version )
     return clr_version[version];
 }
 
-MSIASSEMBLY *load_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
+/* assembly caches must be initialized */
+MSIASSEMBLY *msi_load_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
 {
     MSIRECORD *rec;
     MSIASSEMBLY *a;
 
     if (!(rec = get_assembly_record( package, comp->Component ))) return NULL;
-    if (!init_assembly_caches( package ))
-    {
-        ERR("can't initialize assembly caches\n");
-        msiobj_release( &rec->hdr );
-        return NULL;
-    }
     if (!(a = msi_alloc_zero( sizeof(MSIASSEMBLY) )))
     {
         msiobj_release( &rec->hdr );
@@ -334,7 +355,7 @@ static enum clr_version get_clr_version( const WCHAR *filename )
     return version;
 }
 
-UINT install_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
+UINT msi_install_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
 {
     HRESULT hr;
     const WCHAR *manifest;

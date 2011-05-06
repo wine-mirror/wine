@@ -999,8 +999,10 @@ extern UINT msi_set_last_used_source(LPCWSTR product, LPCWSTR usersid,
                         MSIINSTALLCONTEXT context, DWORD options, LPCWSTR value) DECLSPEC_HIDDEN;
 extern UINT msi_get_local_package_name(LPWSTR path, LPCWSTR suffix) DECLSPEC_HIDDEN;
 extern UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace) DECLSPEC_HIDDEN;
-extern MSIASSEMBLY *load_assembly(MSIPACKAGE *, MSICOMPONENT *) DECLSPEC_HIDDEN;
-extern UINT install_assembly(MSIPACKAGE *, MSICOMPONENT *) DECLSPEC_HIDDEN;
+extern MSIASSEMBLY *msi_load_assembly(MSIPACKAGE *, MSICOMPONENT *) DECLSPEC_HIDDEN;
+extern UINT msi_install_assembly(MSIPACKAGE *, MSICOMPONENT *) DECLSPEC_HIDDEN;
+extern BOOL msi_init_assembly_caches(MSIPACKAGE *) DECLSPEC_HIDDEN;
+extern void msi_destroy_assembly_caches(MSIPACKAGE *) DECLSPEC_HIDDEN;
 extern WCHAR *font_version_from_file(const WCHAR *) DECLSPEC_HIDDEN;
 extern WCHAR **msi_split_string(const WCHAR *, WCHAR) DECLSPEC_HIDDEN;
 

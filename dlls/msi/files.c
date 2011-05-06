@@ -20,7 +20,7 @@
 
 
 /*
- * Actions dealing with files These are
+ * Actions dealing with files:
  *
  * InstallFiles
  * DuplicateFiles
@@ -390,12 +390,13 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             goto done;
         }
     }
+    msi_init_assembly_caches( package );
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
         if (comp->ActionRequest == INSTALLSTATE_LOCAL && comp->Enabled &&
             comp->assembly && !comp->assembly->installed)
         {
-            rc = install_assembly( package, comp );
+            rc = msi_install_assembly( package, comp );
             if (rc != ERROR_SUCCESS)
             {
                 ERR("Failed to install assembly\n");
@@ -404,6 +405,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             }
         }
     }
+    msi_destroy_assembly_caches( package );
 
 done:
     msi_free_media_info(mi);

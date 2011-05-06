@@ -1736,7 +1736,7 @@ static UINT load_component( MSIRECORD *row, LPVOID param )
     comp->Action = INSTALLSTATE_UNKNOWN;
     comp->ActionRequest = INSTALLSTATE_UNKNOWN;
 
-    comp->assembly = load_assembly( package, comp );
+    comp->assembly = msi_load_assembly( package, comp );
     return ERROR_SUCCESS;
 }
 
@@ -1755,8 +1755,17 @@ static UINT load_all_components( MSIPACKAGE *package )
     if (r != ERROR_SUCCESS)
         return r;
 
+    if (!msi_init_assembly_caches( package ))
+    {
+        ERR("can't initialize assembly caches\n");
+        msiobj_release( &view->hdr );
+        return ERROR_FUNCTION_FAILED;
+    }
+
     r = MSI_IterateRecords(view, NULL, load_component, package);
     msiobj_release(&view->hdr);
+
+    msi_destroy_assembly_caches( package );
     return r;
 }
 
