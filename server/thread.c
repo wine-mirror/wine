@@ -1493,7 +1493,7 @@ DECL_HANDLER(get_thread_context)
                 suspend_thread( thread );
             }
         }
-        else set_error( STATUS_ACCESS_DENIED );
+        else set_error( STATUS_UNSUCCESSFUL );
     }
     else if ((context = set_reply_data_size( sizeof(context_t) )))
     {
@@ -1535,7 +1535,7 @@ DECL_HANDLER(set_thread_context)
                 suspend_thread( thread );
             }
         }
-        else set_error( STATUS_ACCESS_DENIED );
+        else set_error( STATUS_UNSUCCESSFUL );
     }
     else if (context->cpu == thread->process->cpu)
     {

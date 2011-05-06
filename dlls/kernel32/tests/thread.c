@@ -955,6 +955,22 @@ static void test_SetThreadContext(void)
 
     WaitForSingleObject( thread, INFINITE );
     ok( test_value == 20, "test_value %d instead of 20\n", test_value );
+
+    ctx.ContextFlags = CONTEXT_FULL;
+    SetLastError(0xdeadbeef);
+    ret = GetThreadContext( thread, &ctx );
+    ok( !ret, "GetThreadContext succeeded\n" );
+    ok( GetLastError() == ERROR_GEN_FAILURE || broken(GetLastError() == ERROR_INVALID_HANDLE), /* win2k */
+        "wrong error %u\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ret = SetThreadContext( thread, &ctx );
+    ok( !ret, "SetThreadContext succeeded\n" );
+    ok( GetLastError() == ERROR_GEN_FAILURE || GetLastError() == ERROR_ACCESS_DENIED ||
+        broken(GetLastError() == ERROR_INVALID_HANDLE), /* win2k */
+        "wrong error %u\n", GetLastError() );
+
+    CloseHandle( thread );
 }
 
 #endif  /* __i386__ */
