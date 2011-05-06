@@ -3,7 +3,7 @@
  *
  * Copyright 2006 Mike McCormack for CodeWeavers
  * Copyright 2007 George Gov
- * Copyright 2009 Nikolay Sivov
+ * Copyright 2009-2011 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1030,10 +1030,11 @@ static void insert_item(HWND hwnd, int idx)
 static void test_items(void)
 {
     const LPARAM lparamTest = 0x42;
+    static CHAR text[] = "Text";
+    char buffA[5];
     HWND hwnd;
     LVITEMA item;
     DWORD r;
-    static CHAR text[] = "Text";
 
     hwnd = CreateWindowEx(0, "SysListView32", "foo", LVS_REPORT,
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
@@ -1139,6 +1140,55 @@ static void test_items(void)
     item.pszText = text;
     r = SendMessage(hwnd, LVM_SETITEMA, 0, (LPARAM) &item);
     ok(r == 1, "ret %d\n", r);
+
+    item.mask = LVIF_TEXT;
+    item.iItem = 0;
+    item.iSubItem = 1;
+    item.pszText = buffA;
+    item.cchTextMax = sizeof(buffA);
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    ok(r == 1, "ret %d\n", r);
+    ok(!memcmp(item.pszText, text, sizeof(text)), "got text %s, expected %s\n", item.pszText, text);
+
+    /* set up with extra flag */
+    /* 1. reset subitem text */
+    item.mask = LVIF_TEXT;
+    item.iItem = 0;
+    item.iSubItem = 1;
+    item.pszText = NULL;
+    r = SendMessage(hwnd, LVM_SETITEMA, 0, (LPARAM) &item);
+    ok(r == 1, "ret %d\n", r);
+
+    item.mask = LVIF_TEXT;
+    item.iItem = 0;
+    item.iSubItem = 1;
+    item.pszText = buffA;
+    buffA[0] = 'a';
+    item.cchTextMax = sizeof(buffA);
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    ok(r == 1, "ret %d\n", r);
+    ok(item.pszText[0] == 0, "got %p\n", item.pszText);
+
+    /* 2. set new text with extra flag specified */
+    item.mask = LVIF_TEXT | LVIF_DI_SETITEM;
+    item.iItem = 0;
+    item.iSubItem = 1;
+    item.pszText = text;
+    r = SendMessage(hwnd, LVM_SETITEMA, 0, (LPARAM) &item);
+    ok(r == 1 || broken(r == 0) /* NT4 */, "ret %d\n", r);
+
+    if (r == 1)
+    {
+        item.mask = LVIF_TEXT;
+        item.iItem = 0;
+        item.iSubItem = 1;
+        item.pszText = buffA;
+        buffA[0] = 'a';
+        item.cchTextMax = sizeof(buffA);
+        r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+        ok(r == 1, "ret %d\n", r);
+        ok(!memcmp(item.pszText, text, sizeof(text)), "got %s, expected %s\n", item.pszText, text);
+    }
 
     /* Query param from subitem: returns main item param */
     memset (&item, 0xcc, sizeof (item));
