@@ -665,9 +665,21 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetDesc(ID3DXBaseEffect *iface, D3DXEF
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
 
-    FIXME("iface %p, desc %p stub\n", This, desc);
+    FIXME("iface %p, desc %p partial stub\n", This, desc);
 
-    return E_NOTIMPL;
+    if (!desc)
+    {
+        WARN("Invalid argument specified.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    /* Todo: add creator and function count */
+    desc->Creator = NULL;
+    desc->Functions = 0;
+    desc->Parameters = This->parameter_count;
+    desc->Techniques = This->technique_count;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetParameterDesc(ID3DXBaseEffect *iface, D3DXHANDLE parameter, D3DXPARAMETER_DESC *desc)
