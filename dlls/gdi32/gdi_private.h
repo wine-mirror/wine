@@ -108,6 +108,9 @@ typedef struct dibdrv_physdev
     UINT brush_style;
     DWORD brush_color, brush_and, brush_xor;
     BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, int num, RECT *rects);
+
+    /* background */
+    DWORD bkgnd_color, bkgnd_and, bkgnd_xor;
 } dibdrv_physdev;
 
 #define DEFER_FORMAT     1

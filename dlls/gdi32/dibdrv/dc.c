@@ -143,6 +143,46 @@ static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 }
 
 /***********************************************************************
+ *           dibdrv_SetBkColor
+ */
+static COLORREF CDECL dibdrv_SetBkColor( PHYSDEV dev, COLORREF color )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetBkColor );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+
+    pdev->bkgnd_color = pdev->dib.funcs->colorref_to_pixel( &pdev->dib, color );
+
+    if( GetBkMode(dev->hdc) == OPAQUE )
+        calc_and_xor_masks( GetROP2(dev->hdc), pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
+    else
+    {
+        pdev->bkgnd_and = ~0u;
+        pdev->bkgnd_xor = 0;
+    }
+
+    return next->funcs->pSetBkColor( next, color );
+}
+
+/***********************************************************************
+ *           dibdrv_SetBkMode
+ */
+static INT CDECL dibdrv_SetBkMode( PHYSDEV dev, INT mode )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetBkMode );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+
+    if( mode == OPAQUE )
+        calc_and_xor_masks( GetROP2(dev->hdc), pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
+    else
+    {
+        pdev->bkgnd_and = ~0u;
+        pdev->bkgnd_xor = 0;
+    }
+
+    return next->funcs->pSetBkMode( next, mode );
+}
+
+/***********************************************************************
  *           dibdrv_SetDeviceClipping
  */
 static void CDECL dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
@@ -165,6 +205,8 @@ static INT CDECL dibdrv_SetROP2( PHYSDEV dev, INT rop )
 
     calc_and_xor_masks(rop, pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
     update_brush_rop(pdev, rop);
+    if( GetBkMode(dev->hdc) == OPAQUE )
+        calc_and_xor_masks(rop, pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor);
 
     return next->funcs->pSetROP2( next, rop );
 }
@@ -254,8 +296,8 @@ const DC_FUNCTIONS dib_driver =
     dibdrv_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBitmapBits */
-    NULL,                               /* pSetBkColor */
-    NULL,                               /* pSetBkMode */
+    dibdrv_SetBkColor,                  /* pSetBkColor */
+    dibdrv_SetBkMode,                   /* pSetBkMode */
     dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */
     dibdrv_SetDCPenColor,               /* pSetDCPenColor */
     NULL,                               /* pSetDIBColorTable */
