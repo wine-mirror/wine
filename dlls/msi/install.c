@@ -214,7 +214,7 @@ UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
 
 const WCHAR *msi_get_target_folder( MSIPACKAGE *package, const WCHAR *name )
 {
-    MSIFOLDER *folder = get_loaded_folder( package, name );
+    MSIFOLDER *folder = msi_get_loaded_folder( package, name );
     if (folder) return folder->ResolvedTarget;
     return NULL;
 }
@@ -339,6 +339,60 @@ UINT WINAPI MsiGetTargetPathW( MSIHANDLE hInstall, LPCWSTR szFolder,
     return MSI_GetTargetPath( hInstall, szFolder, &path, pcchPathBuf );
 }
 
+static WCHAR *get_source_root( MSIDATABASE *db )
+{
+    WCHAR *path, *p;
+
+    if ((path = msi_dup_property( db, szSourceDir ))) return path;
+    if ((path = msi_dup_property( db, szDatabase )))
+    {
+        if ((p = strrchrW( path, '\\' ))) p[1] = 0;
+    }
+    return path;
+}
+
+WCHAR *msi_resolve_source_folder( MSIPACKAGE *package, const WCHAR *name, MSIFOLDER **folder )
+{
+    MSIFOLDER *f;
+    LPWSTR p, path = NULL, parent;
+
+    TRACE("working to resolve %s\n", debugstr_w(name));
+
+    if (!strcmpW( name, szSourceDir )) name = szTargetDir;
+    if (!(f = msi_get_loaded_folder( package, name ))) return NULL;
+
+    /* special resolving for root dir */
+    if (!strcmpW( name, szTargetDir ) && !f->ResolvedSource)
+    {
+        f->ResolvedSource = get_source_root( package->db );
+    }
+    if (folder) *folder = f;
+    if (f->ResolvedSource)
+    {
+        path = strdupW( f->ResolvedSource );
+        TRACE("   already resolved to %s\n", debugstr_w(path));
+        return path;
+    }
+    if (!f->Parent) return path;
+    parent = f->Parent;
+    TRACE(" ! parent is %s\n", debugstr_w(parent));
+
+    p = msi_resolve_source_folder( package, parent, NULL );
+
+    if (package->WordCount & msidbSumInfoSourceTypeCompressed)
+        path = get_source_root( package->db );
+    else if (package->WordCount & msidbSumInfoSourceTypeSFN)
+        path = msi_build_directory_name( 3, p, f->SourceShortPath, NULL );
+    else
+        path = msi_build_directory_name( 3, p, f->SourceLongPath, NULL );
+
+    TRACE("-> %s\n", debugstr_w(path));
+    f->ResolvedSource = strdupW( path );
+    msi_free( p );
+
+    return path;
+}
+
 /***********************************************************************
  * MSI_GetSourcePath   (internal)
  */
@@ -415,7 +469,7 @@ done:
         return ERROR_INVALID_PARAMETER;
     }
 
-    path = resolve_source_folder( package, szFolder, NULL );
+    path = msi_resolve_source_folder( package, szFolder, NULL );
     msiobj_release( &package->hdr );
 
     TRACE("path = %s\n", debugstr_w(path));
@@ -523,7 +577,7 @@ UINT MSI_SetTargetPathW( MSIPACKAGE *package, LPCWSTR szFolder, LPCWSTR szFolder
     {
         return ERROR_FUNCTION_FAILED;
     }
-    if (!(folder = get_loaded_folder( package, szFolder ))) return ERROR_DIRECTORY;
+    if (!(folder = msi_get_loaded_folder( package, szFolder ))) return ERROR_DIRECTORY;
 
     len = strlenW( szFolderPath );
     if (len && szFolderPath[len - 1] != '\\')
@@ -546,7 +600,7 @@ UINT MSI_SetTargetPathW( MSIPACKAGE *package, LPCWSTR szFolder, LPCWSTR szFolder
 
         dir = msi_get_target_folder( package, comp->Directory );
         msi_free( file->TargetPath );
-        file->TargetPath = build_directory_name( 2, dir, file->FileName );
+        file->TargetPath = msi_build_directory_name( 2, dir, file->FileName );
     }
     return ERROR_SUCCESS;
 }
@@ -792,17 +846,97 @@ UINT WINAPI MsiSetFeatureStateA(MSIHANDLE hInstall, LPCSTR szFeature,
     return rc;
 }
 
+/* update component state based on a feature change */
+void ACTION_UpdateComponentStates( MSIPACKAGE *package, MSIFEATURE *feature )
+{
+    INSTALLSTATE newstate;
+    ComponentList *cl;
 
+    newstate = feature->ActionRequest;
+    if (newstate == INSTALLSTATE_ABSENT) newstate = INSTALLSTATE_UNKNOWN;
 
-UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE* package, LPCWSTR szFeature,
-                                INSTALLSTATE iState)
+    LIST_FOR_EACH_ENTRY(cl, &feature->Components, ComponentList, entry)
+    {
+        MSICOMPONENT *component = cl->component;
+
+        if (!component->Enabled) continue;
+
+        TRACE("Modifying (%d): Component %s (Installed %d, Action %d, Request %d)\n",
+            newstate, debugstr_w(component->Component), component->Installed,
+            component->Action, component->ActionRequest);
+
+        if (newstate == INSTALLSTATE_LOCAL)
+        {
+            component->Action = INSTALLSTATE_LOCAL;
+            component->ActionRequest = INSTALLSTATE_LOCAL;
+        }
+        else
+        {
+            ComponentList *clist;
+            MSIFEATURE *f;
+
+            component->hasLocalFeature = FALSE;
+
+            component->Action = newstate;
+            component->ActionRequest = newstate;
+            /* if any other feature wants it local we need to set it local */
+            LIST_FOR_EACH_ENTRY(f, &package->features, MSIFEATURE, entry)
+            {
+                if ( f->ActionRequest != INSTALLSTATE_LOCAL &&
+                     f->ActionRequest != INSTALLSTATE_SOURCE )
+                {
+                    continue;
+                }
+                LIST_FOR_EACH_ENTRY(clist, &f->Components, ComponentList, entry)
+                {
+                    if (clist->component == component &&
+                        (f->ActionRequest == INSTALLSTATE_LOCAL ||
+                         f->ActionRequest == INSTALLSTATE_SOURCE))
+                    {
+                        TRACE("Saved by %s\n", debugstr_w(f->Feature));
+                        component->hasLocalFeature = TRUE;
+
+                        if (component->Attributes & msidbComponentAttributesOptional)
+                        {
+                            if (f->Attributes & msidbFeatureAttributesFavorSource)
+                            {
+                                component->Action = INSTALLSTATE_SOURCE;
+                                component->ActionRequest = INSTALLSTATE_SOURCE;
+                            }
+                            else
+                            {
+                                component->Action = INSTALLSTATE_LOCAL;
+                                component->ActionRequest = INSTALLSTATE_LOCAL;
+                            }
+                        }
+                        else if (component->Attributes & msidbComponentAttributesSourceOnly)
+                        {
+                            component->Action = INSTALLSTATE_SOURCE;
+                            component->ActionRequest = INSTALLSTATE_SOURCE;
+                        }
+                        else
+                        {
+                            component->Action = INSTALLSTATE_LOCAL;
+                            component->ActionRequest = INSTALLSTATE_LOCAL;
+                        }
+                    }
+                }
+            }
+        }
+        TRACE("Result (%d): Component %s (Installed %d, Action %d, Request %d)\n",
+            newstate, debugstr_w(component->Component), component->Installed,
+            component->Action, component->ActionRequest);
+    }
+}
+
+UINT WINAPI MSI_SetFeatureStateW( MSIPACKAGE *package, LPCWSTR szFeature, INSTALLSTATE iState )
 {
     UINT rc = ERROR_SUCCESS;
     MSIFEATURE *feature, *child;
 
     TRACE("%s %i\n", debugstr_w(szFeature), iState);
 
-    feature = get_loaded_feature(package,szFeature);
+    feature = msi_get_loaded_feature( package, szFeature );
     if (!feature)
         return ERROR_UNKNOWN_FEATURE;
 
@@ -898,7 +1032,7 @@ UINT MSI_GetFeatureStateW(MSIPACKAGE *package, LPCWSTR szFeature,
 {
     MSIFEATURE *feature;
 
-    feature = get_loaded_feature(package,szFeature);
+    feature = msi_get_loaded_feature(package,szFeature);
     if (!feature)
         return ERROR_UNKNOWN_FEATURE;
 
@@ -1018,7 +1152,7 @@ UINT MSI_GetFeatureCost( MSIPACKAGE *package, MSIFEATURE *feature, MSICOSTTREE t
         const WCHAR *feature_parent = feature->Feature_Parent;
         for (;;)
         {
-            MSIFEATURE *parent = get_loaded_feature( package, feature_parent );
+            MSIFEATURE *parent = msi_get_loaded_feature( package, feature_parent );
             if (!parent)
                 break;
 
@@ -1091,7 +1225,7 @@ UINT WINAPI MsiGetFeatureCostW(MSIHANDLE hInstall, LPCWSTR szFeature,
         return ERROR_SUCCESS;
     }
 
-    feature = get_loaded_feature(package, szFeature);
+    feature = msi_get_loaded_feature(package, szFeature);
 
     if (feature)
         ret = MSI_GetFeatureCost(package, feature, iCostTree, iState, piCost);
@@ -1143,7 +1277,7 @@ static UINT MSI_SetComponentStateW(MSIPACKAGE *package, LPCWSTR szComponent,
 
     TRACE("%p %s %d\n", package, debugstr_w(szComponent), iState);
 
-    comp = get_loaded_component(package, szComponent);
+    comp = msi_get_loaded_component(package, szComponent);
     if (!comp)
         return ERROR_UNKNOWN_COMPONENT;
 
@@ -1161,7 +1295,7 @@ UINT MSI_GetComponentStateW(MSIPACKAGE *package, LPCWSTR szComponent,
     TRACE("%p %s %p %p\n", package, debugstr_w(szComponent),
            piInstalled, piAction);
 
-    comp = get_loaded_component(package,szComponent);
+    comp = msi_get_loaded_component(package,szComponent);
     if (!comp)
         return ERROR_UNKNOWN_COMPONENT;
 

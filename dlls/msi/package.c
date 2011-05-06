@@ -141,6 +141,17 @@ static void free_assembly( MSIASSEMBLY *assembly )
     msi_free( assembly );
 }
 
+void msi_free_action_script( MSIPACKAGE *package, UINT script )
+{
+    UINT i;
+    for (i = 0; i < package->script->ActionCount[script]; i++)
+        msi_free( package->script->Actions[script][i] );
+
+    msi_free( package->script->Actions[script] );
+    package->script->Actions[script] = NULL;
+    package->script->ActionCount[script] = 0;
+}
+
 static void free_package_structures( MSIPACKAGE *package )
 {
     INT i;
@@ -684,7 +695,6 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szDesktopFolder[] = {'D','e','s','k','t','o','p','F','o','l','d','e','r',0};
     static const WCHAR szProgramMenuFolder[] = {'P','r','o','g','r','a','m','M','e','n','u','F','o','l','d','e','r',0};
     static const WCHAR szAdminToolsFolder[] = {'A','d','m','i','n','T','o','o','l','s','F','o','l','d','e','r',0};
-    static const WCHAR szAppDataFolder[] = {'A','p','p','D','a','t','a','F','o','l','d','e','r',0};
     static const WCHAR szSystemFolder[] = {'S','y','s','t','e','m','F','o','l','d','e','r',0};
     static const WCHAR szSystem16Folder[] = {'S','y','s','t','e','m','1','6','F','o','l','d','e','r',0};
     static const WCHAR szLocalAppDataFolder[] = {'L','o','c','a','l','A','p','p','D','a','t','a','F','o','l','d','e','r',0};
@@ -1443,6 +1453,22 @@ static UINT validate_package( MSIPACKAGE *package )
     return ERROR_INSTALL_LANGUAGE_UNSUPPORTED;
 }
 
+int msi_track_tempfile( MSIPACKAGE *package, const WCHAR *path )
+{
+    MSITEMPFILE *temp;
+
+    TRACE("%s\n", debugstr_w(path));
+
+    LIST_FOR_EACH_ENTRY( temp, &package->tempfiles, MSITEMPFILE, entry )
+    {
+        if (!strcmpW( path, temp->Path )) return 0;
+    }
+    if (!(temp = msi_alloc_zero( sizeof (MSITEMPFILE) ))) return -1;
+    list_add_head( &package->tempfiles, &temp->entry );
+    temp->Path = strdupW( path );
+    return 0;
+}
+
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
     static const WCHAR dotmsi[] = {'.','m','s','i',0};
@@ -1552,7 +1578,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     }
 
     if( file != szPackage )
-        track_tempfile( package, file );
+        msi_track_tempfile( package, file );
 
     si = MSI_GetSummaryInformationW( db->storage, 0 );
     if (!si)

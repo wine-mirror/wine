@@ -1063,7 +1063,7 @@ static UINT iterate_appsearch(MSIRECORD *row, LPVOID param)
     uirow = MSI_CreateRecord( 2 );
     MSI_RecordSetStringW( uirow, 1, propName );
     MSI_RecordSetStringW( uirow, 2, sigName );
-    ui_actiondata( package, szAppSearch, uirow );
+    msi_ui_actiondata( package, szAppSearch, uirow );
     msiobj_release( &uirow->hdr );
 
     return r;
@@ -1078,13 +1078,13 @@ UINT ACTION_AppSearch(MSIPACKAGE *package)
     MSIQUERY *view = NULL;
     UINT r;
 
-    if (check_unique_action(package, szAppSearch))
+    if (msi_action_is_unique(package, szAppSearch))
     {
         TRACE("Skipping AppSearch action: already done in UI sequence\n");
         return ERROR_SUCCESS;
     }
     else
-        register_unique_action(package, szAppSearch);
+        msi_register_unique_action(package, szAppSearch);
 
     r = MSI_OpenQuery( package->db, &view, query );
     if (r != ERROR_SUCCESS)
@@ -1133,13 +1133,13 @@ UINT ACTION_CCPSearch(MSIPACKAGE *package)
     MSIQUERY *view = NULL;
     UINT r;
 
-    if (check_unique_action(package, szCCPSearch))
+    if (msi_action_is_unique(package, szCCPSearch))
     {
         TRACE("Skipping AppSearch action: already done in UI sequence\n");
         return ERROR_SUCCESS;
     }
     else
-        register_unique_action(package, szCCPSearch);
+        msi_register_unique_action(package, szCCPSearch);
 
     r = MSI_OpenQuery(package->db, &view, query);
     if (r != ERROR_SUCCESS)

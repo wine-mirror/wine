@@ -22,7 +22,6 @@ C_SRCS = \
 	font.c \
 	format.c \
 	handle.c \
-	helpers.c \
 	insert.c \
 	install.c \
 	join.c \

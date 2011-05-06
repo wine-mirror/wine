@@ -212,7 +212,7 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     LPWSTR uipath, p;
 
     filename = MSI_RecordGetString( row, 1 );
-    file = get_loaded_file( package, filename );
+    file = msi_get_loaded_file( package, filename );
     if (!file)
     {
         ERR("Unable to load file\n");
@@ -256,10 +256,10 @@ static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
     if (p) p++;
     else p = uipath;
     MSI_RecordSetStringW( uirow, 1, p );
-    ui_actiondata( package, szRegisterFonts, uirow);
+    msi_ui_actiondata( package, szRegisterFonts, uirow );
     msiobj_release( &uirow->hdr );
     msi_free( uipath );
-    /* FIXME: call ui_progress? */
+    /* FIXME: call msi_ui_progress? */
 
     return ERROR_SUCCESS;
 }
@@ -296,7 +296,7 @@ static UINT ITERATE_UnregisterFonts( MSIRECORD *row, LPVOID param )
     LPWSTR uipath, p;
 
     filename = MSI_RecordGetString( row, 1 );
-    file = get_loaded_file( package, filename );
+    file = msi_get_loaded_file( package, filename );
     if (!file)
     {
         ERR("Unable to load file\n");
@@ -340,10 +340,10 @@ static UINT ITERATE_UnregisterFonts( MSIRECORD *row, LPVOID param )
     if (p) p++;
     else p = uipath;
     MSI_RecordSetStringW( uirow, 1, p );
-    ui_actiondata( package, szUnregisterFonts, uirow );
+    msi_ui_actiondata( package, szUnregisterFonts, uirow );
     msiobj_release( &uirow->hdr );
     msi_free( uipath );
-    /* FIXME: call ui_progress? */
+    /* FIXME: call msi_ui_progress? */
 
     return ERROR_SUCCESS;
 }

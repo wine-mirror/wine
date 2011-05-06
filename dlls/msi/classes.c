@@ -142,7 +142,7 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
         LPWSTR FilePath;
         static const WCHAR fmt[] = {'%','s',',','%','i',0};
 
-        FilePath = build_icon_path(package,FileName);
+        FilePath = msi_build_icon_path(package, FileName);
        
         progid->IconPath = msi_alloc( (strlenW(FilePath)+10)* sizeof(WCHAR) );
 
@@ -154,7 +154,7 @@ static MSIPROGID *load_progid( MSIPACKAGE* package, MSIRECORD *row )
     {
         buffer = MSI_RecordGetString(row,5);
         if (buffer)
-            progid->IconPath = build_icon_path(package,buffer);
+            progid->IconPath = msi_build_icon_path(package, buffer);
     }
 
     progid->CurVer = NULL;
@@ -227,7 +227,7 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
     TRACE("loading class %s\n",debugstr_w(cls->clsid));
     cls->Context = msi_dup_record_field( row, 2 );
     buffer = MSI_RecordGetString(row,3);
-    cls->Component = get_loaded_component(package, buffer);
+    cls->Component = msi_get_loaded_component( package, buffer );
 
     cls->ProgIDText = msi_dup_record_field(row,4);
     cls->ProgID = load_given_progid(package, cls->ProgIDText);
@@ -248,7 +248,7 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
         LPWSTR FilePath;
         static const WCHAR fmt[] = {'%','s',',','%','i',0};
 
-        FilePath = build_icon_path(package,FileName);
+        FilePath = msi_build_icon_path(package, FileName);
        
         cls->IconPath = msi_alloc( (strlenW(FilePath)+5)* sizeof(WCHAR) );
 
@@ -260,7 +260,7 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
     {
         buffer = MSI_RecordGetString(row,8);
         if (buffer)
-            cls->IconPath = build_icon_path(package,buffer);
+            cls->IconPath = msi_build_icon_path(package, buffer);
     }
 
     if (!MSI_RecordIsNull(row,10))
@@ -287,15 +287,15 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
         }
         else
         {
-            cls->DefInprocHandler32 = msi_dup_record_field( row, 10);
-            reduce_to_longfilename(cls->DefInprocHandler32);
+            cls->DefInprocHandler32 = msi_dup_record_field( row, 10 );
+            msi_reduce_to_long_filename( cls->DefInprocHandler32 );
         }
     }
     buffer = MSI_RecordGetString(row,11);
     deformat_string(package,buffer,&cls->Argument);
 
     buffer = MSI_RecordGetString(row,12);
-    cls->Feature = get_loaded_feature(package,buffer);
+    cls->Feature = msi_get_loaded_feature(package, buffer);
 
     cls->Attributes = MSI_RecordGetInteger(row,13);
     
@@ -420,7 +420,7 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
     TRACE("loading extension %s\n", debugstr_w(ext->Extension));
 
     buffer = MSI_RecordGetString( row, 2 );
-    ext->Component = get_loaded_component( package,buffer );
+    ext->Component = msi_get_loaded_component( package, buffer );
 
     ext->ProgIDText = msi_dup_record_field( row, 3 );
     ext->ProgID = load_given_progid( package, ext->ProgIDText );
@@ -429,7 +429,7 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
     ext->Mime = load_given_mime( package, buffer );
 
     buffer = MSI_RecordGetString(row,5);
-    ext->Feature = get_loaded_feature( package, buffer );
+    ext->Feature = msi_get_loaded_feature( package, buffer );
 
     return ext;
 }
@@ -525,7 +525,7 @@ static UINT iterate_all_classes(MSIRECORD *rec, LPVOID param)
     clsid = MSI_RecordGetString(rec,1);
     context = MSI_RecordGetString(rec,2);
     buffer = MSI_RecordGetString(rec,3);
-    comp = get_loaded_component(package,buffer);
+    comp = msi_get_loaded_component(package, buffer);
 
     LIST_FOR_EACH_ENTRY( cls, &package->classes, MSICLASS, entry )
     {
@@ -574,7 +574,7 @@ static UINT iterate_all_extensions(MSIRECORD *rec, LPVOID param)
 
     extension = MSI_RecordGetString(rec,1);
     buffer = MSI_RecordGetString(rec,2);
-    comp = get_loaded_component(package,buffer);
+    comp = msi_get_loaded_component(package, buffer);
 
     LIST_FOR_EACH_ENTRY( ext, &package->extensions, MSIEXTENSION, entry )
     {
@@ -850,7 +850,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         }
         feature->Action = feature->ActionRequest;
 
-        if (!comp->KeyPath || !(file = get_loaded_file( package, comp->KeyPath )))
+        if (!comp->KeyPath || !(file = msi_get_loaded_file( package, comp->KeyPath )))
         {
             TRACE("COM server not provided, skipping class %s\n", debugstr_w(cls->clsid));
             continue;
@@ -958,7 +958,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         
         uirow = MSI_CreateRecord(1);
         MSI_RecordSetStringW( uirow, 1, cls->clsid );
-        ui_actiondata(package,szRegisterClassInfo,uirow);
+        msi_ui_actiondata( package, szRegisterClassInfo, uirow );
         msiobj_release(&uirow->hdr);
     }
 
@@ -1050,7 +1050,7 @@ UINT ACTION_UnregisterClassInfo( MSIPACKAGE *package )
 
         uirow = MSI_CreateRecord( 1 );
         MSI_RecordSetStringW( uirow, 1, cls->clsid );
-        ui_actiondata( package, szUnregisterClassInfo, uirow );
+        msi_ui_actiondata( package, szUnregisterClassInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
 
@@ -1131,7 +1131,7 @@ UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
 
         uirow = MSI_CreateRecord( 1 );
         MSI_RecordSetStringW( uirow, 1, progid->ProgID );
-        ui_actiondata( package, szRegisterProgIdInfo, uirow );
+        msi_ui_actiondata( package, szRegisterProgIdInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
 
@@ -1166,7 +1166,7 @@ UINT ACTION_UnregisterProgIdInfo( MSIPACKAGE *package )
 
         uirow = MSI_CreateRecord( 1 );
         MSI_RecordSetStringW( uirow, 1, progid->ProgID );
-        ui_actiondata( package, szUnregisterProgIdInfo, uirow );
+        msi_ui_actiondata( package, szUnregisterProgIdInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
 
@@ -1187,7 +1187,7 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
     DWORD size;
     LPWSTR advertise;
 
-    keyname = build_directory_name(4, progid, szShell, verb->Verb, szCommand);
+    keyname = msi_build_directory_name(4, progid, szShell, verb->Verb, szCommand);
 
     TRACE("Making Key %s\n",debugstr_w(keyname));
     RegCreateKeyW(HKEY_CLASSES_ROOT, keyname, &key);
@@ -1205,9 +1205,8 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
      msi_reg_set_val_str( key, NULL, command );
      msi_free(command);
 
-     advertise = create_component_advertise_string(package, component, 
-                                                   extension->Feature->Feature);
-
+     advertise = msi_create_component_advertise_string(package, component,
+                                                       extension->Feature->Feature);
      size = strlenW(advertise);
 
      if (verb->Argument)
@@ -1232,7 +1231,7 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
 
      if (verb->Command)
      {
-        keyname = build_directory_name(3, progid, szShell, verb->Verb);
+        keyname = msi_build_directory_name( 3, progid, szShell, verb->Verb );
         msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, keyname, NULL, verb->Command );
         msi_free(keyname);
      }
@@ -1242,7 +1241,7 @@ static UINT register_verb(MSIPACKAGE *package, LPCWSTR progid,
         if (*Sequence == MSI_NULL_INTEGER || verb->Sequence < *Sequence)
         {
             *Sequence = verb->Sequence;
-            keyname = build_directory_name(2, progid, szShell);
+            keyname = msi_build_directory_name( 2, progid, szShell );
             msi_reg_set_subkey_val( HKEY_CLASSES_ROOT, keyname, NULL, verb->Verb );
             msi_free(keyname);
         }
@@ -1362,7 +1361,7 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
 
         uirow = MSI_CreateRecord(1);
         MSI_RecordSetStringW( uirow, 1, ext->Extension );
-        ui_actiondata(package,szRegisterExtensionInfo,uirow);
+        msi_ui_actiondata( package, szRegisterExtensionInfo, uirow );
         msiobj_release(&uirow->hdr);
     }
 
@@ -1448,7 +1447,7 @@ UINT ACTION_UnregisterExtensionInfo( MSIPACKAGE *package )
 
         uirow = MSI_CreateRecord( 1 );
         MSI_RecordSetStringW( uirow, 1, ext->Extension );
-        ui_actiondata( package, szUnregisterExtensionInfo, uirow );
+        msi_ui_actiondata( package, szUnregisterExtensionInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
 
@@ -1506,7 +1505,7 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
         uirow = MSI_CreateRecord( 2 );
         MSI_RecordSetStringW( uirow, 1, mt->ContentType );
         MSI_RecordSetStringW( uirow, 2, mt->suffix );
-        ui_actiondata( package, szRegisterMIMEInfo, uirow );
+        msi_ui_actiondata( package, szRegisterMIMEInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
 
@@ -1551,7 +1550,7 @@ UINT ACTION_UnregisterMIMEInfo( MSIPACKAGE *package )
         uirow = MSI_CreateRecord( 2 );
         MSI_RecordSetStringW( uirow, 1, mime->ContentType );
         MSI_RecordSetStringW( uirow, 2, mime->suffix );
-        ui_actiondata( package, szUnregisterMIMEInfo, uirow );
+        msi_ui_actiondata( package, szUnregisterMIMEInfo, uirow );
         msiobj_release( &uirow->hdr );
     }
 

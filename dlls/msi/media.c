@@ -83,7 +83,7 @@ static UINT msi_change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
          INSTALLUILEVEL_NONE && !gUIHandlerA && !gUIHandlerW && !gUIHandlerRecord)
         return ERROR_SUCCESS;
 
-    error = generate_error_string(package, 1302, 1, mi->disk_prompt);
+    error = msi_build_error_string(package, 1302, 1, mi->disk_prompt);
     error_dialog = msi_dup_property(package->db, error_prop);
     source_dir = msi_dup_property(package->db, szSourceDir);
 

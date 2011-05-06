@@ -968,34 +968,33 @@ extern UINT ACTION_MsiUnpublishAssemblies(MSIPACKAGE *package) DECLSPEC_HIDDEN;
 
 /* Helpers */
 extern DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data ) DECLSPEC_HIDDEN;
-extern LPWSTR msi_dup_record_field(MSIRECORD *row, INT index) DECLSPEC_HIDDEN;
+extern WCHAR *msi_dup_record_field(MSIRECORD *row, INT index) DECLSPEC_HIDDEN;
 extern LPWSTR msi_dup_property( MSIDATABASE *db, LPCWSTR prop ) DECLSPEC_HIDDEN;
 extern UINT msi_set_property( MSIDATABASE *, LPCWSTR, LPCWSTR ) DECLSPEC_HIDDEN;
 extern UINT msi_get_property( MSIDATABASE *, LPCWSTR, LPWSTR, LPDWORD ) DECLSPEC_HIDDEN;
 extern int msi_get_property_int( MSIDATABASE *package, LPCWSTR prop, int def ) DECLSPEC_HIDDEN;
-extern LPWSTR resolve_source_folder(MSIPACKAGE *package, LPCWSTR name, MSIFOLDER **folder) DECLSPEC_HIDDEN;
+extern WCHAR *msi_resolve_source_folder(MSIPACKAGE *package, const WCHAR *name, MSIFOLDER **folder) DECLSPEC_HIDDEN;
 extern void msi_resolve_target_folder(MSIPACKAGE *package, const WCHAR *name, BOOL load_prop) DECLSPEC_HIDDEN;
 extern void msi_clean_path( WCHAR *p ) DECLSPEC_HIDDEN;
-extern LPWSTR resolve_file_source(MSIPACKAGE *package, MSIFILE *file) DECLSPEC_HIDDEN;
+extern WCHAR *msi_resolve_file_source(MSIPACKAGE *package, MSIFILE *file) DECLSPEC_HIDDEN;
 extern const WCHAR *msi_get_target_folder(MSIPACKAGE *package, const WCHAR *name) DECLSPEC_HIDDEN;
 extern void msi_reset_folders( MSIPACKAGE *package, BOOL source ) DECLSPEC_HIDDEN;
-extern MSICOMPONENT *get_loaded_component( MSIPACKAGE* package, LPCWSTR Component ) DECLSPEC_HIDDEN;
-extern MSIFEATURE *get_loaded_feature( MSIPACKAGE* package, LPCWSTR Feature ) DECLSPEC_HIDDEN;
-extern MSIFILE *get_loaded_file( MSIPACKAGE* package, LPCWSTR file ) DECLSPEC_HIDDEN;
-extern MSIFILEPATCH *get_loaded_filepatch( MSIPACKAGE* package, LPCWSTR key ) DECLSPEC_HIDDEN;
-extern MSIFOLDER *get_loaded_folder( MSIPACKAGE *package, LPCWSTR dir ) DECLSPEC_HIDDEN;
-extern int track_tempfile(MSIPACKAGE *package, LPCWSTR path) DECLSPEC_HIDDEN;
-extern UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action) DECLSPEC_HIDDEN;
+extern MSICOMPONENT *msi_get_loaded_component(MSIPACKAGE *package, const WCHAR *Component) DECLSPEC_HIDDEN;
+extern MSIFEATURE *msi_get_loaded_feature(MSIPACKAGE *package, const WCHAR *Feature) DECLSPEC_HIDDEN;
+extern MSIFILE *msi_get_loaded_file(MSIPACKAGE *package, const WCHAR *file) DECLSPEC_HIDDEN;
+extern MSIFILEPATCH *msi_get_loaded_filepatch(MSIPACKAGE* package, const WCHAR *key) DECLSPEC_HIDDEN;
+extern MSIFOLDER *msi_get_loaded_folder(MSIPACKAGE *package, const WCHAR *dir) DECLSPEC_HIDDEN;
+extern int msi_track_tempfile(MSIPACKAGE *package, const WCHAR *path) DECLSPEC_HIDDEN;
 extern void msi_free_action_script(MSIPACKAGE *package, UINT script) DECLSPEC_HIDDEN;
-extern LPWSTR build_icon_path(MSIPACKAGE *, LPCWSTR) DECLSPEC_HIDDEN;
-extern LPWSTR build_directory_name(DWORD , ...) DECLSPEC_HIDDEN;
-extern BOOL create_full_pathW(const WCHAR *path) DECLSPEC_HIDDEN;
-extern void reduce_to_longfilename(WCHAR*) DECLSPEC_HIDDEN;
-extern LPWSTR create_component_advertise_string(MSIPACKAGE*, MSICOMPONENT*, LPCWSTR) DECLSPEC_HIDDEN;
+extern WCHAR *msi_build_icon_path(MSIPACKAGE *, const WCHAR *) DECLSPEC_HIDDEN;
+extern WCHAR *msi_build_directory_name(DWORD , ...) DECLSPEC_HIDDEN;
+extern BOOL msi_create_full_path(const WCHAR *path) DECLSPEC_HIDDEN;
+extern void msi_reduce_to_long_filename(WCHAR *) DECLSPEC_HIDDEN;
+extern WCHAR *msi_create_component_advertise_string(MSIPACKAGE *, MSICOMPONENT *, const WCHAR *) DECLSPEC_HIDDEN;
 extern void ACTION_UpdateComponentStates(MSIPACKAGE *package, MSIFEATURE *feature) DECLSPEC_HIDDEN;
-extern UINT register_unique_action(MSIPACKAGE *, LPCWSTR) DECLSPEC_HIDDEN;
-extern BOOL check_unique_action(const MSIPACKAGE *, LPCWSTR) DECLSPEC_HIDDEN;
-extern WCHAR* generate_error_string(MSIPACKAGE *, UINT, DWORD, ... ) DECLSPEC_HIDDEN;
+extern UINT msi_register_unique_action(MSIPACKAGE *, const WCHAR *) DECLSPEC_HIDDEN;
+extern BOOL msi_action_is_unique(const MSIPACKAGE *, const WCHAR *) DECLSPEC_HIDDEN;
+extern WCHAR *msi_build_error_string(MSIPACKAGE *, UINT, DWORD, ...) DECLSPEC_HIDDEN;
 extern UINT msi_set_last_used_source(LPCWSTR product, LPCWSTR usersid,
                         MSIINSTALLCONTEXT context, DWORD options, LPCWSTR value) DECLSPEC_HIDDEN;
 extern UINT msi_get_local_package_name(LPWSTR path, LPCWSTR suffix) DECLSPEC_HIDDEN;
@@ -1043,9 +1042,9 @@ extern HRESULT load_type_info(IDispatch *iface, ITypeInfo **pptinfo, REFIID clsi
 /* Scripting */
 extern DWORD call_script(MSIHANDLE hPackage, INT type, LPCWSTR script, LPCWSTR function, LPCWSTR action) DECLSPEC_HIDDEN;
 
-/* User Interface messages from the actions */
-extern void ui_progress(MSIPACKAGE *, int, int, int, int) DECLSPEC_HIDDEN;
-extern void ui_actiondata(MSIPACKAGE *, LPCWSTR, MSIRECORD *) DECLSPEC_HIDDEN;
+/* User interface messages from the actions */
+extern void msi_ui_progress(MSIPACKAGE *, int, int, int, int) DECLSPEC_HIDDEN;
+extern void msi_ui_actiondata(MSIPACKAGE *, const WCHAR *, MSIRECORD *) DECLSPEC_HIDDEN;
 
 /* common strings */
 static const WCHAR szSourceDir[] = {'S','o','u','r','c','e','D','i','r',0};
@@ -1139,6 +1138,7 @@ static const WCHAR szStringData[] = {'_','S','t','r','i','n','g','D','a','t','a'
 static const WCHAR szStringPool[] = {'_','S','t','r','i','n','g','P','o','o','l',0};
 static const WCHAR szInstallLevel[] = {'I','N','S','T','A','L','L','L','E','V','E','L',0};
 static const WCHAR szCostInitialize[] = {'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0};
+static const WCHAR szAppDataFolder[] = {'A','p','p','D','a','t','a','F','o','l','d','e','r',0};
 
 /* memory allocation macro functions */
 static void *msi_alloc( size_t len ) __WINE_ALLOC_SIZE(1);

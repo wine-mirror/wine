@@ -1870,7 +1870,7 @@ UINT WINAPI MsiEnumComponentCostsW( MSIHANDLE handle, LPCWSTR component, DWORD i
         msiobj_release( &package->hdr );
         return ERROR_FUNCTION_NOT_CALLED;
     }
-    if (component && component[0] && !(comp = get_loaded_component( package, component )))
+    if (component && component[0] && !(comp = msi_get_loaded_component( package, component )))
     {
         msiobj_release( &package->hdr );
         return ERROR_UNKNOWN_COMPONENT;
@@ -1902,7 +1902,7 @@ UINT WINAPI MsiEnumComponentCostsW( MSIHANDLE handle, LPCWSTR component, DWORD i
             *buflen = 2;
             r = ERROR_SUCCESS;
         }
-        else if ((file = get_loaded_file( package, comp->KeyPath )))
+        else if ((file = msi_get_loaded_file( package, comp->KeyPath )))
         {
             *cost = max( 8, comp->Cost / 512 );
             drive[0] = file->TargetPath[0];

@@ -343,7 +343,7 @@ UINT install_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
     MSIFEATURE *feature = NULL;
 
     if (comp->assembly->feature)
-        feature = get_loaded_feature( package, comp->assembly->feature );
+        feature = msi_get_loaded_feature( package, comp->assembly->feature );
 
     if (assembly->application)
     {
@@ -357,12 +357,12 @@ UINT install_assembly( MSIPACKAGE *package, MSICOMPONENT *comp )
             WARN("no manifest\n");
             return ERROR_FUNCTION_FAILED;
         }
-        manifest = get_loaded_file( package, assembly->manifest )->TargetPath;
+        manifest = msi_get_loaded_file( package, assembly->manifest )->TargetPath;
         cache = package->cache_sxs;
     }
     else
     {
-        manifest = get_loaded_file( package, comp->KeyPath )->TargetPath;
+        manifest = msi_get_loaded_file( package, comp->KeyPath )->TargetPath;
         cache = package->cache_net[get_clr_version( manifest )];
     }
     TRACE("installing assembly %s\n", debugstr_w(manifest));
@@ -541,7 +541,7 @@ UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
         win32 = assembly->attributes & msidbAssemblyAttributesWin32;
         if (assembly->application)
         {
-            MSIFILE *file = get_loaded_file( package, assembly->application );
+            MSIFILE *file = msi_get_loaded_file( package, assembly->application );
             if ((res = open_local_assembly_key( package->Context, win32, file->TargetPath, &hkey )))
             {
                 WARN("failed to open local assembly key %d\n", res);
@@ -565,7 +565,7 @@ UINT ACTION_MsiPublishAssemblies( MSIPACKAGE *package )
 
         uirow = MSI_CreateRecord( 2 );
         MSI_RecordSetStringW( uirow, 2, assembly->display_name );
-        ui_actiondata( package, szMsiPublishAssemblies, uirow );
+        msi_ui_actiondata( package, szMsiPublishAssemblies, uirow );
         msiobj_release( &uirow->hdr );
     }
     return ERROR_SUCCESS;
@@ -603,7 +603,7 @@ UINT ACTION_MsiUnpublishAssemblies( MSIPACKAGE *package )
         win32 = assembly->attributes & msidbAssemblyAttributesWin32;
         if (assembly->application)
         {
-            MSIFILE *file = get_loaded_file( package, assembly->application );
+            MSIFILE *file = msi_get_loaded_file( package, assembly->application );
             if ((res = delete_local_assembly_key( package->Context, win32, file->TargetPath )))
                 WARN("failed to delete local assembly key %d\n", res);
         }
@@ -622,7 +622,7 @@ UINT ACTION_MsiUnpublishAssemblies( MSIPACKAGE *package )
 
         uirow = MSI_CreateRecord( 2 );
         MSI_RecordSetStringW( uirow, 2, assembly->display_name );
-        ui_actiondata( package, szMsiPublishAssemblies, uirow );
+        msi_ui_actiondata( package, szMsiPublishAssemblies, uirow );
         msiobj_release( &uirow->hdr );
     }
     return ERROR_SUCCESS;

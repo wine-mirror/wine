@@ -1029,3 +1029,29 @@ BOOL MSI_RecordsAreEqual(MSIRECORD *a, MSIRECORD *b)
 
     return TRUE;
 }
+
+WCHAR *msi_dup_record_field( MSIRECORD *rec, INT field )
+{
+    DWORD sz = 0;
+    WCHAR *str;
+    UINT r;
+
+    if (MSI_RecordIsNull( rec, field )) return NULL;
+
+    r = MSI_RecordGetStringW( rec, field, NULL, &sz );
+    if (r != ERROR_SUCCESS)
+        return NULL;
+
+    sz++;
+    str = msi_alloc( sz * sizeof(WCHAR) );
+    if (!str) return NULL;
+    str[0] = 0;
+    r = MSI_RecordGetStringW( rec, field, str, &sz );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to get string!\n");
+        msi_free( str );
+        return NULL;
+    }
+    return str;
+}

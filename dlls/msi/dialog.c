@@ -2378,7 +2378,7 @@ static UINT msi_dialog_seltree_handler( msi_dialog *dialog,
     dir = MSI_RecordGetString( row, 7 );
     if (dir)
     {
-        folder = get_loaded_folder( dialog->package, dir );
+        folder = msi_get_loaded_folder( dialog->package, dir );
         if (!folder)
         {
             r = ERROR_FUNCTION_FAILED;
