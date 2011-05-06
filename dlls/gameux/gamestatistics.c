@@ -998,7 +998,7 @@ static HRESULT create_IGameStatistics(GameStatisticsImpl** ppStats)
 {
     TRACE("(%p)\n", ppStats);
 
-    *ppStats = HeapAlloc( GetProcessHeap(), 0, sizeof(**ppStats));
+    *ppStats = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**ppStats));
     if(!(*ppStats))
         return E_OUTOFMEMORY;
 
