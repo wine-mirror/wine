@@ -1471,12 +1471,23 @@ DECL_HANDLER(get_thread_context)
         return;
     }
     if (!(thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT ))) return;
+    reply->self = (thread == current);
 
     if (thread != current && !thread->context)
     {
         /* thread is not suspended, retry (if it's still running) */
-        if (thread->state != RUNNING) set_error( STATUS_ACCESS_DENIED );
-        else set_error( STATUS_PENDING );
+        if (thread->state == RUNNING)
+        {
+            set_error( STATUS_PENDING );
+            if (req->suspend)
+            {
+                release_object( thread );
+                /* make sure we have suspend access */
+                if (!(thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME ))) return;
+                suspend_thread( thread );
+            }
+        }
+        else set_error( STATUS_ACCESS_DENIED );
     }
     else if ((context = set_reply_data_size( sizeof(context_t) )))
     {
@@ -1487,7 +1498,6 @@ DECL_HANDLER(get_thread_context)
         if (thread->context) copy_context( context, thread->context, req->flags & ~flags );
         if (flags) get_thread_context( thread, context, flags );
     }
-    reply->self = (thread == current);
     release_object( thread );
 }
 
@@ -1503,12 +1513,23 @@ DECL_HANDLER(set_thread_context)
         return;
     }
     if (!(thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT ))) return;
+    reply->self = (thread == current);
 
     if (thread != current && !thread->context)
     {
         /* thread is not suspended, retry (if it's still running) */
-        if (thread->state != RUNNING) set_error( STATUS_ACCESS_DENIED );
-        else set_error( STATUS_PENDING );
+        if (thread->state == RUNNING)
+        {
+            set_error( STATUS_PENDING );
+            if (req->suspend)
+            {
+                release_object( thread );
+                /* make sure we have suspend access */
+                if (!(thread = get_thread_from_handle( req->handle, THREAD_SUSPEND_RESUME ))) return;
+                suspend_thread( thread );
+            }
+        }
+        else set_error( STATUS_ACCESS_DENIED );
     }
     else if (context->cpu == thread->process->cpu)
     {
@@ -1520,7 +1541,6 @@ DECL_HANDLER(set_thread_context)
     }
     else set_error( STATUS_INVALID_PARAMETER );
 
-    reply->self = (thread == current);
     release_object( thread );
 }
 
