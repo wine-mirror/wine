@@ -583,6 +583,21 @@ static inline void get_dash_colors(const dibdrv_physdev *pdev, DWORD *and, DWORD
     }
 }
 
+static void dashed_pen_line_callback(dibdrv_physdev *pdev, INT x, INT y)
+{
+    RECT rect;
+    DWORD and, xor;
+
+    get_dash_colors(pdev, &and, &xor);
+    skip_dash(pdev, 1);
+    rect.left   = x;
+    rect.right  = x + 1;
+    rect.top    = y;
+    rect.bottom = y + 1;
+    pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
+    return;
+}
+
 static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 {
     const WINEREGION *clip = get_wine_region(pdev->clip);
@@ -590,7 +605,6 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     int i, dash_len;
     RECT rect;
     const dash_pos start_pos = pdev->dash_pos;
-    BOOL ret = TRUE;
 
     if(start->y == end->y) /* hline */
     {
@@ -749,11 +763,59 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     }
     else
     {
-        ret = FALSE;
+        bres_params params;
+        INT dx = end->x - start->x;
+        INT dy = end->y - start->y;
+        INT i;
+
+        params.dx = abs(dx);
+        params.dy = abs(dy);
+        params.octant = get_octant_mask(dx, dy);
+        /* Octants 3, 5, 6 and 8 take a bias */
+        params.bias = (params.octant & 0xb4) ? 1 : 0;
+
+        for(i = 0; i < clip->numRects; i++)
+        {
+            POINT clipped_start, clipped_end;
+            int clip_status;
+            clip_status = clip_line(start, end, clip->rects + i, &params, &clipped_start, &clipped_end);
+
+            if(clip_status)
+            {
+                int m = abs(clipped_start.x - start->x);
+                int n = abs(clipped_start.y - start->y);
+                int err;
+                BOOL last_pt = FALSE;
+
+                pdev->dash_pos = start_pos;
+
+                if(is_xmajor(params.octant))
+                {
+                    err = 2 * params.dy - params.dx + m * 2 * params.dy - n * 2 * params.dx;
+                    skip_dash(pdev, m);
+                }
+                else
+                {
+                    err = 2 * params.dx - params.dy + n * 2 * params.dx - m * 2 * params.dy;
+                    skip_dash(pdev, n);
+                }
+                if(clip_status == 1 && (end->x != clipped_end.x || end->y != clipped_end.y)) last_pt = TRUE;
+
+                bres_line_with_bias(clipped_start.x, clipped_start.y, clipped_end.x, clipped_end.y, &params,
+                                    err, last_pt, dashed_pen_line_callback, pdev);
+
+                if(clip_status == 2) break; /* completely unclipped, so we can finish */
+            }
+        }
+        pdev->dash_pos = start_pos;
+        if(is_xmajor(params.octant))
+            skip_dash(pdev, params.dx);
+        else
+            skip_dash(pdev, params.dy);
     }
 
     release_wine_region(pdev->clip);
-    return ret;
+    return TRUE;
 }
 
 static const dash_pattern dash_patterns[4] =
