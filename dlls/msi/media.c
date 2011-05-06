@@ -235,13 +235,17 @@ static INT_PTR CDECL cabinet_open_stream( char *pszFile, int oflag, int pmode )
         WARN("failed to encode stream name\n");
         return 0;
     }
-    hr = IStorage_OpenStream( cab->storage, encoded, NULL, STGM_READ|STGM_SHARE_EXCLUSIVE, 0, &stream );
-    msi_free( encoded );
-    if (FAILED(hr))
+    if (msi_clone_open_stream( package_disk.package->db, cab->storage, encoded, &stream ) != ERROR_SUCCESS)
     {
-        WARN("failed to open stream 0x%08x\n", hr);
-        return 0;
+        hr = IStorage_OpenStream( cab->storage, encoded, NULL, STGM_READ|STGM_SHARE_EXCLUSIVE, 0, &stream );
+        msi_free( encoded );
+        if (FAILED(hr))
+        {
+            WARN("failed to open stream 0x%08x\n", hr);
+            return 0;
+        }
     }
+    msi_free( encoded );
     return (INT_PTR)stream;
 }
 
