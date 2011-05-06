@@ -34,6 +34,8 @@
 #include "mmdeviceapi.h"
 #include "audioclient.h"
 
+static IMMDevice *dev = NULL;
+
 static void test_uninitialized(IAudioClient *ac)
 {
     HRESULT hr;
@@ -137,15 +139,23 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     IUnknown_Release(acc);
 }
 
-static void test_audioclient(IAudioClient *ac)
+static void test_audioclient(void)
 {
+    IAudioClient *ac;
     IUnknown *unk;
     HRESULT hr;
     ULONG ref;
     WAVEFORMATEX *pwfx, *pwfx2;
     REFERENCE_TIME t1, t2;
+    HANDLE handle;
 
-    HANDLE handle = CreateEventW(NULL, FALSE, FALSE, NULL);
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    handle = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     hr = IAudioClient_QueryInterface(ac, &IID_IUnknown, NULL);
     ok(hr == E_POINTER, "QueryInterface(NULL) returned %08x\n", hr);
@@ -290,6 +300,7 @@ static void test_audioclient(IAudioClient *ac)
 
     test_capture(ac, handle, pwfx);
 
+    IAudioClient_Release(ac);
     CloseHandle(handle);
     CoTaskMemFree(pwfx);
 }
@@ -298,8 +309,6 @@ START_TEST(capture)
 {
     HRESULT hr;
     IMMDeviceEnumerator *mme = NULL;
-    IMMDevice *dev = NULL;
-    IAudioClient *ac = NULL;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
@@ -320,13 +329,8 @@ START_TEST(capture)
         goto cleanup;
     }
 
-    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL, (void**)&ac);
-    ok(hr == S_OK, "Activation failed with %08x\n", hr);
-    if (ac)
-    {
-        test_audioclient(ac);
-        IAudioClient_Release(ac);
-    }
+    test_audioclient();
+
     IMMDevice_Release(dev);
 
 cleanup:
