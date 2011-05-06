@@ -1844,13 +1844,12 @@ UINT WINAPI MsiEnumComponentCostsW( MSIHANDLE handle, LPCWSTR component, DWORD i
     {
         HRESULT hr;
         IWineMsiRemotePackage *remote_package;
-        BSTR bname;
+        BSTR bname = NULL;
 
         if (!(remote_package = (IWineMsiRemotePackage *)msi_get_remote( handle )))
             return ERROR_INVALID_HANDLE;
 
-        bname = SysAllocString( component );
-        if (!bname)
+        if (component && !(bname = SysAllocString( component )))
         {
             IWineMsiRemotePackage_Release( remote_package );
             return ERROR_OUTOFMEMORY;
