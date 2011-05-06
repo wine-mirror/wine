@@ -84,7 +84,7 @@ typedef struct _msft_typelib_t
     typelib_t *typelib;
     MSFT_Header typelib_header;
     MSFT_pSeg typelib_segdir[MSFT_SEG_MAX];
-    char *typelib_segment_data[MSFT_SEG_MAX];
+    unsigned char *typelib_segment_data[MSFT_SEG_MAX];
     int typelib_segment_block_length[MSFT_SEG_MAX];
 
     INT typelib_typeinfo_offsets[0x200]; /* Hope that's enough. */
@@ -399,7 +399,7 @@ static int ctl2_alloc_segment(
     }
 
     while ((typelib->typelib_segdir[segment].length + size) > typelib->typelib_segment_block_length[segment]) {
-	char *block;
+	unsigned char *block;
 
 	block_size = typelib->typelib_segment_block_length[segment];
 	block = xrealloc(typelib->typelib_segment_data[segment], block_size << 1);
@@ -409,7 +409,7 @@ static int ctl2_alloc_segment(
 	    msft_typeinfo_t *typeinfo;
 
 	    for (typeinfo = typelib->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
-		typeinfo->typeinfo = (void *)&block[((char *)typeinfo->typeinfo) - typelib->typelib_segment_data[segment]];
+		typeinfo->typeinfo = (void *)&block[((unsigned char *)typeinfo->typeinfo) - typelib->typelib_segment_data[segment]];
 	    }
 	}
 
@@ -570,14 +570,14 @@ static int ctl2_alloc_string(
 {
     int length;
     int offset;
-    char *string_space;
+    unsigned char *string_space;
     char *encoded_string;
 
     length = ctl2_encode_string(string, &encoded_string);
 
     for (offset = 0; offset < typelib->typelib_segdir[MSFT_SEG_STRING].length;
-	 offset += ((((typelib->typelib_segment_data[MSFT_SEG_STRING][offset + 1] << 8) & 0xff)
-	     | (typelib->typelib_segment_data[MSFT_SEG_STRING][offset + 0] & 0xff)) + 5) & ~3) {
+	 offset += (((typelib->typelib_segment_data[MSFT_SEG_STRING][offset + 1] << 8) |
+	      typelib->typelib_segment_data[MSFT_SEG_STRING][offset + 0]) + 5) & ~3) {
 	if (!memcmp(encoded_string, typelib->typelib_segment_data[MSFT_SEG_STRING] + offset, length)) return offset;
     }
 
@@ -653,8 +653,8 @@ static int alloc_importfile(
     encoded_string[0] |= 1;
 
     for (offset = 0; offset < typelib->typelib_segdir[MSFT_SEG_IMPORTFILES].length;
-	 offset += ((((typelib->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xd] << 8) & 0xff)
-	     | (typelib->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xc] & 0xff)) >> 2) + 0xc) {
+	 offset += (((typelib->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xd] << 8) |
+	              typelib->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xc]) >> 2) + 0xc) {
 	if (!memcmp(encoded_string, typelib->typelib_segment_data[MSFT_SEG_IMPORTFILES] + offset + 0xc, length)) return offset;
     }
 
@@ -1267,7 +1267,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
     int decoded_size, extra_attr = 0;
     int num_params = 0, num_optional = 0, num_defaults = 0;
     var_t *arg;
-    char *namedata;
+    unsigned char *namedata;
     const attr_t *attr;
     unsigned int funcflags = 0, callconv = 4 /* CC_STDCALL */;
     unsigned int funckind, invokekind = 1 /* INVOKE_FUNC */;
@@ -1611,7 +1611,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
     int alignment;
     int varflags = 0;
     const attr_t *attr;
-    char *namedata;
+    unsigned char *namedata;
     int var_num = (typeinfo->typeinfo->cElement >> 16) & 0xffff;
 
     chat("add_var_desc(%d, %s)\n", index, var->name);

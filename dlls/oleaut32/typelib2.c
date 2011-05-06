@@ -173,7 +173,7 @@ typedef struct tagICreateTypeLib2Impl
     MSFT_Header typelib_header;
     INT helpStringDll;
     MSFT_pSeg typelib_segdir[MSFT_SEG_MAX];
-    char *typelib_segment_data[MSFT_SEG_MAX];
+    unsigned char *typelib_segment_data[MSFT_SEG_MAX];
     int typelib_segment_block_length[MSFT_SEG_MAX];
 
     int typelib_guids; /* Number of defined typelib guids */
@@ -520,7 +520,7 @@ static int ctl2_encode_string(
  * Converts string stored in typelib data to unicode.
  */
 static void ctl2_decode_string(
-        char *data,         /* [I] String to be decoded */
+        unsigned char *data,/* [I] String to be decoded */
         WCHAR **string)     /* [O] Decoded string */
 {
     int i, length;
@@ -569,7 +569,7 @@ static int ctl2_alloc_segment(
     }
 
     while ((This->typelib_segdir[segment].length + size) > This->typelib_segment_block_length[segment]) {
-	char *block;
+	unsigned char *block;
 
 	block_size = This->typelib_segment_block_length[segment];
 	block = heap_realloc(This->typelib_segment_data[segment], block_size << 1);
@@ -580,7 +580,7 @@ static int ctl2_alloc_segment(
 	    ICreateTypeInfo2Impl *typeinfo;
 
 	    for (typeinfo = This->typeinfos; typeinfo; typeinfo = typeinfo->next_typeinfo) {
-		typeinfo->typeinfo = (void *)&block[((char *)typeinfo->typeinfo) - This->typelib_segment_data[segment]];
+		typeinfo->typeinfo = (void *)&block[((unsigned char *)typeinfo->typeinfo) - This->typelib_segment_data[segment]];
 	    }
 	}
 
@@ -745,14 +745,14 @@ static int ctl2_alloc_string(
 {
     int length;
     int offset;
-    char *string_space;
+    unsigned char *string_space;
     char *encoded_string;
 
     length = ctl2_encode_string(This, string, &encoded_string);
 
     for (offset = 0; offset < This->typelib_segdir[MSFT_SEG_STRING].length;
-	 offset += ((((This->typelib_segment_data[MSFT_SEG_STRING][offset + 1] << 8) & 0xff)
-	     | (This->typelib_segment_data[MSFT_SEG_STRING][offset + 0] & 0xff)) + 5) & ~3) {
+	 offset += (((This->typelib_segment_data[MSFT_SEG_STRING][offset + 1] << 8) |
+	     This->typelib_segment_data[MSFT_SEG_STRING][offset + 0]) + 5) & ~3) {
 	if (!memcmp(encoded_string, This->typelib_segment_data[MSFT_SEG_STRING] + offset, length)) return offset;
     }
 
@@ -832,8 +832,8 @@ static int ctl2_alloc_importfile(
     encoded_string[0] |= 1;
 
     for (offset = 0; offset < This->typelib_segdir[MSFT_SEG_IMPORTFILES].length;
-	 offset += ((((((This->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xd] << 8) & 0xff00)
-	     | (This->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xc] & 0xff)) >> 2) + 5) & 0xfffc) + 0xc) {
+	 offset += (((((This->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xd] << 8) |
+	     This->typelib_segment_data[MSFT_SEG_IMPORTFILES][offset + 0xc]) >> 2) + 5) & 0xfffc) + 0xc) {
 	if (!memcmp(encoded_string, This->typelib_segment_data[MSFT_SEG_IMPORTFILES] + offset + 0xc, length)) return offset;
     }
 
@@ -1009,7 +1009,7 @@ static HRESULT ctl2_decode_variant(
         int data_offs,             /* [I] Offset within the data array, or the encoded value itself */
         VARIANT *value)            /* [O] Decoded value */
 {
-    char *encoded_data;
+    unsigned char *encoded_data;
     VARTYPE type;
 
     if (data_offs & 0x80000000) {
@@ -2338,7 +2338,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
     CyclicList *iter, *iter2;
     int offset, len, i;
-    char *namedata;
+    unsigned char *namedata;
 
     TRACE("(%p %d %p %d)\n", This, index, names, cNames);
 
@@ -2358,7 +2358,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
         return TYPE_E_ELEMENTNOTFOUND;
 
     TRACE("function name %s\n", debugstr_w(names[0]));
-    len = ctl2_encode_name(This->typelib, names[0], &namedata);
+    len = ctl2_encode_name(This->typelib, names[0], (char**)&namedata);
     for(iter2=This->typedata->next->next; iter2!=This->typedata->next; iter2=iter2->next) {
 
         int cmp = memcmp(namedata, This->typelib->typelib_segment_data[MSFT_SEG_NAME]+iter2->name+8, len);
@@ -2409,7 +2409,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetVarName(
     ICreateTypeInfo2Impl *This = (ICreateTypeInfo2Impl *)iface;
     CyclicList *iter;
     int offset, i;
-    char *namedata;
+    unsigned char *namedata;
 
     TRACE("(%p,%d,%s)\n", This, index, debugstr_w(szName));
 
@@ -3619,7 +3619,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetRefTypeInfo(
         impfile = (MSFT_ImpFile*)&This->typelib->typelib_segment_data[MSFT_SEG_IMPORTFILES][impinfo->oImpFile];
         guid = (MSFT_GuidEntry*)&This->typelib->typelib_segment_data[MSFT_SEG_GUID][impinfo->oGuid];
 
-        ctl2_decode_string(impfile->filename, &filename);
+        ctl2_decode_string((unsigned char*)impfile->filename, &filename);
 
         hres = LoadTypeLib(filename, &tl);
         if(FAILED(hres))
