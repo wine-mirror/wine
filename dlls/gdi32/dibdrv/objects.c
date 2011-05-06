@@ -670,6 +670,83 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
         pdev->dash_pos = start_pos;
         skip_dash(pdev, right - left + 1);
     }
+    else if(start->x == end->x) /* vline */
+    {
+        BOOL t_to_b;
+        INT top, bottom, cur_y;
+
+        rect.left = start->x;
+        rect.right = start->x + 1;
+
+        if(start->y <= end->y)
+        {
+            top = start->y;
+            bottom = end->y - 1;
+            t_to_b = TRUE;
+        }
+        else
+        {
+            top = end->y + 1;
+            bottom = start->y;
+            t_to_b = FALSE;
+        }
+
+        for(i = 0; i < clip->numRects; i++)
+        {
+            if(clip->rects[i].top > bottom) break;
+            if(clip->rects[i].bottom <= top) continue;
+            if(clip->rects[i].right > start->x && clip->rects[i].left <= start->x)
+            {
+                int clipped_top    = max(clip->rects[i].top, top);
+                int clipped_bottom = min(clip->rects[i].bottom - 1, bottom);
+
+                pdev->dash_pos = start_pos;
+
+                if(t_to_b)
+                {
+                    cur_y = clipped_top;
+                    if(cur_y != top)
+                        skip_dash(pdev, clipped_top - top);
+
+                    while(cur_y <= clipped_bottom)
+                    {
+                        get_dash_colors(pdev, &and, &xor);
+                        dash_len = pdev->dash_pos.left_in_dash;
+                        if(cur_y + dash_len > clipped_bottom + 1)
+                            dash_len = clipped_bottom - cur_y + 1;
+                        rect.top = cur_y;
+                        rect.bottom = cur_y + dash_len;
+
+                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
+                        cur_y += dash_len;
+                        skip_dash(pdev, dash_len);
+                    }
+                }
+                else
+                {
+                    cur_y = clipped_bottom;
+                    if(cur_y != bottom)
+                        skip_dash(pdev, bottom - clipped_bottom);
+
+                    while(cur_y >= clipped_top)
+                    {
+                        get_dash_colors(pdev, &and, &xor);
+                        dash_len = pdev->dash_pos.left_in_dash;
+                        if(cur_y - dash_len < clipped_top - 1)
+                            dash_len = cur_y - clipped_top + 1;
+                        rect.top = cur_y - dash_len + 1;
+                        rect.bottom = cur_y + 1;
+
+                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
+                        cur_y -= dash_len;
+                        skip_dash(pdev, dash_len);
+                    }
+                }
+            }
+        }
+        pdev->dash_pos = start_pos;
+        skip_dash(pdev, bottom - top + 1);
+    }
     else
     {
         ret = FALSE;

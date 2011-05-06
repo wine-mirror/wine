@@ -86,6 +86,8 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "f2af53dd073a09b1031d0032d28da35c82adc566",
     "eb5a963a6f7b25533ddfb8915e70865d037bd156",
     "c387917268455017aa0b28bed73aa6554044bbb3",
+    "dcae44fee010dbf7a107797a503923fd8b1abe2e",
+    "6c530622a025d872a642e8f950867884d7b136cb",
     NULL
 };
 
@@ -373,6 +375,22 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         LineTo(hdc, hline_clips[i].left - 1, hline_clips[i].top);
     }
     compare_hash(bmi, bits, sha1, "clipped dashed hlines r -> l");
+    memset(bits, 0xcc, dib_size);
+
+    for(i = 0; i < sizeof(vline_clips)/sizeof(vline_clips[0]); i++)
+    {
+        MoveToEx(hdc, vline_clips[i].left, vline_clips[i].top, NULL);
+        LineTo(hdc, vline_clips[i].right, vline_clips[i].bottom);
+    }
+    compare_hash(bmi, bits, sha1, "clipped dashed vlines");
+    memset(bits, 0xcc, dib_size);
+
+    for(i = 0; i < sizeof(vline_clips)/sizeof(vline_clips[0]); i++)
+    {
+        MoveToEx(hdc, vline_clips[i].right, vline_clips[i].bottom - 1, NULL);
+        LineTo(hdc, vline_clips[i].left, vline_clips[i].top - 1);
+    }
+    compare_hash(bmi, bits, sha1, "clipped dashed vlines b -> t");
     memset(bits, 0xcc, dib_size);
 
     ExtSelectClipRgn(hdc, NULL, RGN_COPY);
