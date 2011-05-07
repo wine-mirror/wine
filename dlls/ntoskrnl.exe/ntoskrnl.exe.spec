@@ -892,7 +892,7 @@
 @ stub PsIsThreadImpersonating
 @ stub PsIsThreadTerminating
 @ stub PsJobType
-@ stub PsLookupProcessByProcessId
+@ stdcall PsLookupProcessByProcessId(ptr ptr)
 @ stub PsLookupProcessThreadByCid
 @ stub PsLookupThreadByThreadId
 @ stub PsProcessType

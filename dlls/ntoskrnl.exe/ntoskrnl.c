@@ -1605,6 +1605,15 @@ NTSTATUS WINAPI PsSetLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE routine)
 }
 
 /*****************************************************
+ *           PsLookupProcessByProcessId  (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsLookupProcessByProcessId(HANDLE processid, PEPROCESS *process)
+{
+    FIXME("(%p %p) stub\n", processid, process);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/*****************************************************
  *           DllMain
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
