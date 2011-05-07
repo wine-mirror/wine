@@ -936,6 +936,14 @@ static void test_mxwriter_properties(void)
             &IID_IMXWriter, (void**)&writer);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
+    hr = IMXWriter_get_disableOutputEscaping(writer, NULL);
+    ok(hr == E_POINTER, "got %08x\n", hr);
+
+    b = VARIANT_TRUE;
+    hr = IMXWriter_get_disableOutputEscaping(writer, &b);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(b == VARIANT_FALSE, "got %d\n", b);
+
     hr = IMXWriter_get_byteOrderMark(writer, NULL);
     ok(hr == E_POINTER, "got %08x\n", hr);
 

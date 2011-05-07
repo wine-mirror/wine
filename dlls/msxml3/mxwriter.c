@@ -45,6 +45,7 @@ static const char crlfA[] = "\r\n";
 typedef enum
 {
     MXWriter_BOM = 0,
+    MXWriter_DisableEscaping,
     MXWriter_Indent,
     MXWriter_OmitXmlDecl,
     MXWriter_Standalone,
@@ -409,15 +410,24 @@ static HRESULT WINAPI mxwriter_get_version(IMXWriter *iface, BSTR *version)
 static HRESULT WINAPI mxwriter_put_disableOutputEscaping(IMXWriter *iface, VARIANT_BOOL value)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%d)\n", This, value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, value);
+    This->props[MXWriter_DisableEscaping] = value;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_get_disableOutputEscaping(IMXWriter *iface, VARIANT_BOOL *value)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%p)\n", This, value);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    if (!value) return E_POINTER;
+
+    *value = This->props[MXWriter_DisableEscaping];
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_flush(IMXWriter *iface)
@@ -730,6 +740,7 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
     This->ref = 1;
 
     This->props[MXWriter_BOM] = VARIANT_TRUE;
+    This->props[MXWriter_DisableEscaping] = VARIANT_FALSE;
     This->props[MXWriter_Indent] = VARIANT_FALSE;
     This->props[MXWriter_OmitXmlDecl] = VARIANT_FALSE;
     This->props[MXWriter_Standalone] = VARIANT_FALSE;
