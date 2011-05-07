@@ -389,15 +389,23 @@ static inline HRESULT return_null_bstr(BSTR *p)
     return S_FALSE;
 }
 
-static inline xmlChar *xmlchar_from_wchar( LPCWSTR str )
+static inline xmlChar *xmlchar_from_wcharn(const WCHAR *str, int nchars)
 {
     xmlChar *xmlstr;
-    DWORD len = WideCharToMultiByte( CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL );
+    DWORD len = WideCharToMultiByte( CP_UTF8, 0, str, nchars, NULL, 0, NULL, NULL );
 
-    xmlstr = heap_alloc( len );
+    xmlstr = heap_alloc( len+1 );
     if ( xmlstr )
-        WideCharToMultiByte( CP_UTF8, 0, str, -1, (LPSTR) xmlstr, len, NULL, NULL );
+    {
+        WideCharToMultiByte( CP_UTF8, 0, str, nchars, (LPSTR) xmlstr, len+1, NULL, NULL );
+        xmlstr[len] = 0;
+    }
     return xmlstr;
+}
+
+static inline xmlChar *xmlchar_from_wchar( const WCHAR *str )
+{
+    return xmlchar_from_wcharn(str, -1);
 }
 
 #endif

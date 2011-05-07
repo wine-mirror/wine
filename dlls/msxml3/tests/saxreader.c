@@ -1285,6 +1285,52 @@ static void test_mxwriter_startendelement(void)
     free_bstrs();
 }
 
+static void test_mxwriter_characters(void)
+{
+    static const WCHAR chardataW[] = {'T','E','S','T','C','H','A','R','D','A','T','A',' ','.',0};
+    ISAXContentHandler *content;
+    IMXWriter *writer;
+    VARIANT dest;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_startDocument(content);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_characters(content, NULL, 0);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_characters(content, chardataW, 0);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ISAXContentHandler_characters(content, chardataW, sizeof(chardataW)/sizeof(WCHAR) - 1);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("TESTCHARDATA ."), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+
+    hr = ISAXContentHandler_endDocument(content);
+    todo_wine ok(hr == S_OK, "got %08x\n", hr);
+
+    ISAXContentHandler_Release(content);
+    IMXWriter_Release(writer);
+
+    free_bstrs();
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -1317,6 +1363,7 @@ START_TEST(saxreader)
         test_mxwriter_contenthandler();
         test_mxwriter_startenddocument();
         test_mxwriter_startendelement();
+        test_mxwriter_characters();
         test_mxwriter_properties();
         test_mxwriter_flush();
     }

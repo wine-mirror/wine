@@ -636,8 +636,19 @@ static HRESULT WINAPI mxwriter_saxcontent_characters(
     int nchars)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
-    FIXME("(%p)->(%s)\n", This, debugstr_wn(chars, nchars));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s:%d)\n", This, debugstr_wn(chars, nchars), nchars);
+
+    if (!chars) return E_INVALIDARG;
+
+    if (nchars)
+    {
+        xmlChar *s = xmlchar_from_wcharn(chars, nchars);
+        xmlOutputBufferWriteString(This->buffer, (char*)s);
+        heap_free(s);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_saxcontent_ignorableWhitespace(
