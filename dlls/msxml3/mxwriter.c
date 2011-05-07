@@ -541,9 +541,22 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
     ISAXAttributes *attr)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
-    FIXME("(%p)->(%s %s %s %p)\n", This, debugstr_wn(namespaceUri, nnamespaceUri),
+    xmlChar *s;
+
+    TRACE("(%p)->(%s %s %s %p)\n", This, debugstr_wn(namespaceUri, nnamespaceUri),
         debugstr_wn(local_name, nlocal_name), debugstr_wn(QName, nQName), attr);
-    return E_NOTIMPL;
+
+    if (!namespaceUri || !local_name || !QName) return E_INVALIDARG;
+
+    if (attr) FIXME("attributes not handled\n");
+
+    xmlOutputBufferWriteString(This->buffer, "<");
+    s = xmlchar_from_wchar(QName);
+    xmlOutputBufferWriteString(This->buffer, (char*)s);
+    heap_free(s);
+    xmlOutputBufferWriteString(This->buffer, ">");
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_saxcontent_endElement(
@@ -556,9 +569,20 @@ static HRESULT WINAPI mxwriter_saxcontent_endElement(
     int nQName)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
-    FIXME("(%p)->(%s %s %s)\n", This, debugstr_wn(namespaceUri, nnamespaceUri),
+    xmlChar *s;
+
+    TRACE("(%p)->(%s %s %s)\n", This, debugstr_wn(namespaceUri, nnamespaceUri),
         debugstr_wn(local_name, nlocal_name), debugstr_wn(QName, nQName));
-    return E_NOTIMPL;
+
+    if (!namespaceUri || !local_name || !QName) return E_INVALIDARG;
+
+    xmlOutputBufferWriteString(This->buffer, "</");
+    s = xmlchar_from_wchar(QName);
+    xmlOutputBufferWriteString(This->buffer, (char*)s);
+    heap_free(s);
+    xmlOutputBufferWriteString(This->buffer, ">");
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_saxcontent_characters(
