@@ -44,7 +44,8 @@ static const char crlfA[] = "\r\n";
 
 typedef enum
 {
-    MXWriter_OmitXmlDecl = 0,
+    MXWriter_Indent = 0,
+    MXWriter_OmitXmlDecl,
     MXWriter_Standalone,
     MXWriter_LastProp
 } MXWRITER_PROPS;
@@ -308,18 +309,27 @@ static HRESULT WINAPI mxwriter_get_byteOrderMark(IMXWriter *iface, VARIANT_BOOL 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mxwriter_put_indent(IMXWriter *iface, VARIANT_BOOL indent)
+static HRESULT WINAPI mxwriter_put_indent(IMXWriter *iface, VARIANT_BOOL value)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%d)\n", This, indent);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, value);
+    This->props[MXWriter_Indent] = value;
+
+    return S_OK;
 }
 
-static HRESULT WINAPI mxwriter_get_indent(IMXWriter *iface, VARIANT_BOOL *indent)
+static HRESULT WINAPI mxwriter_get_indent(IMXWriter *iface, VARIANT_BOOL *value)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    FIXME("(%p)->(%p)\n", This, indent);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    if (!value) return E_POINTER;
+
+    *value = This->props[MXWriter_Indent];
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_put_standalone(IMXWriter *iface, VARIANT_BOOL value)
@@ -698,6 +708,7 @@ HRESULT MXWriter_create(IUnknown *pUnkOuter, void **ppObj)
     This->ISAXContentHandler_iface.lpVtbl = &mxwriter_saxcontent_vtbl;
     This->ref = 1;
 
+    This->props[MXWriter_Indent] = VARIANT_FALSE;
     This->props[MXWriter_OmitXmlDecl] = VARIANT_FALSE;
     This->props[MXWriter_Standalone] = VARIANT_FALSE;
     This->encoding   = SysAllocString(utf16W);
