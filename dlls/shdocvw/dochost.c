@@ -479,7 +479,7 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
             LONG ind;
             HRESULT hres;
 
-            if(V_VT(pvaIn) != VT_ARRAY || !sa)
+            if(V_VT(pvaIn) != VT_ARRAY || !sa || (SafeArrayGetDim(sa) != 1))
                 return E_INVALIDARG;
 
             ind = 0;
