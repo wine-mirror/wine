@@ -548,12 +548,47 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
 
     if (!namespaceUri || !local_name || !QName) return E_INVALIDARG;
 
-    if (attr) FIXME("attributes not handled\n");
-
     xmlOutputBufferWriteString(This->buffer, "<");
     s = xmlchar_from_wchar(QName);
     xmlOutputBufferWriteString(This->buffer, (char*)s);
     heap_free(s);
+
+    if (attr)
+    {
+        HRESULT hr;
+        INT length;
+        INT i;
+
+        hr = ISAXAttributes_getLength(attr, &length);
+        if (FAILED(hr)) return hr;
+
+        if (length) xmlOutputBufferWriteString(This->buffer, " ");
+
+        for (i = 0; i < length; i++)
+        {
+            const WCHAR *str;
+            INT len;
+
+            hr = ISAXAttributes_getQName(attr, i, &str, &len);
+            if (FAILED(hr)) return hr;
+
+            s = xmlchar_from_wchar(str);
+            xmlOutputBufferWriteString(This->buffer, (char*)s);
+            heap_free(s);
+
+            xmlOutputBufferWriteString(This->buffer, "=\"");
+
+            hr = ISAXAttributes_getValue(attr, i, &str, &len);
+            if (FAILED(hr)) return hr;
+
+            s = xmlchar_from_wchar(str);
+            xmlOutputBufferWriteString(This->buffer, (char*)s);
+            heap_free(s);
+
+            xmlOutputBufferWriteString(This->buffer, "\"");
+        }
+    }
+
     xmlOutputBufferWriteString(This->buffer, ">");
 
     return S_OK;

@@ -491,6 +491,211 @@ static const ISAXErrorHandlerVtbl errorHandlerVtbl =
 
 static ISAXErrorHandler errorHandler = { &errorHandlerVtbl };
 
+static HRESULT WINAPI isaxattributes_QueryInterface(
+        ISAXAttributes* iface,
+        REFIID riid,
+        void **ppvObject)
+{
+    *ppvObject = NULL;
+
+    if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ISAXAttributes))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        return E_NOINTERFACE;
+    }
+
+    return S_OK;
+}
+
+static ULONG WINAPI isaxattributes_AddRef(ISAXAttributes* iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI isaxattributes_Release(ISAXAttributes* iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI isaxattributes_getLength(ISAXAttributes* iface, int *length)
+{
+    *length = 2;
+    return S_OK;
+}
+
+static HRESULT WINAPI isaxattributes_getURI(
+    ISAXAttributes* iface,
+    int nIndex,
+    const WCHAR **pUrl,
+    int *pUriSize)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getLocalName(
+    ISAXAttributes* iface,
+    int nIndex,
+    const WCHAR **pLocalName,
+    int *pLocalNameLength)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getQName(
+    ISAXAttributes* iface,
+    int nIndex,
+    const WCHAR **pQName,
+    int *pQNameLength)
+{
+    static const WCHAR attr1W[] = {'a',':','a','t','t','r','1',0};
+    static const WCHAR attr2W[] = {'a','t','t','r','2',0};
+
+    ok(nIndex == 0 || nIndex == 1, "invalid index received %d\n", nIndex);
+
+    *pQName = (nIndex == 0) ? attr1W : attr2W;
+    *pQNameLength = lstrlenW(*pQName);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI isaxattributes_getName(
+    ISAXAttributes* iface,
+    int nIndex,
+    const WCHAR **pUri,
+    int * pUriLength,
+    const WCHAR ** pLocalName,
+    int * pLocalNameSize,
+    const WCHAR ** pQName,
+    int * pQNameLength)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getIndexFromName(
+    ISAXAttributes* iface,
+    const WCHAR * pUri,
+    int cUriLength,
+    const WCHAR * pLocalName,
+    int cocalNameLength,
+    int * index)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getIndexFromQName(
+    ISAXAttributes* iface,
+    const WCHAR * pQName,
+    int nQNameLength,
+    int * index)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getType(
+    ISAXAttributes* iface,
+    int nIndex,
+    const WCHAR ** pType,
+    int * pTypeLength)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getTypeFromName(
+    ISAXAttributes* iface,
+    const WCHAR * pUri,
+    int nUri,
+    const WCHAR * pLocalName,
+    int nLocalName,
+    const WCHAR ** pType,
+    int * nType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getTypeFromQName(
+    ISAXAttributes* iface,
+    const WCHAR * pQName,
+    int nQName,
+    const WCHAR ** pType,
+    int * nType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getValue(
+    ISAXAttributes* iface,
+    int nIndex,
+    const WCHAR ** pValue,
+    int * nValue)
+{
+    static const WCHAR attrval1W[] = {'a','1',0};
+    static const WCHAR attrval2W[] = {'a','2',0};
+
+    ok(nIndex == 0 || nIndex == 1, "invalid index received %d\n", nIndex);
+
+    *pValue = (nIndex == 0) ? attrval1W : attrval2W;
+    *nValue = lstrlenW(*pValue);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI isaxattributes_getValueFromName(
+    ISAXAttributes* iface,
+    const WCHAR * pUri,
+    int nUri,
+    const WCHAR * pLocalName,
+    int nLocalName,
+    const WCHAR ** pValue,
+    int * nValue)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxattributes_getValueFromQName(
+    ISAXAttributes* iface,
+    const WCHAR * pQName,
+    int nQName,
+    const WCHAR ** pValue,
+    int * nValue)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const ISAXAttributesVtbl SAXAttributesVtbl =
+{
+    isaxattributes_QueryInterface,
+    isaxattributes_AddRef,
+    isaxattributes_Release,
+    isaxattributes_getLength,
+    isaxattributes_getURI,
+    isaxattributes_getLocalName,
+    isaxattributes_getQName,
+    isaxattributes_getName,
+    isaxattributes_getIndexFromName,
+    isaxattributes_getIndexFromQName,
+    isaxattributes_getType,
+    isaxattributes_getTypeFromName,
+    isaxattributes_getTypeFromQName,
+    isaxattributes_getValue,
+    isaxattributes_getValueFromName,
+    isaxattributes_getValueFromQName
+};
+
+static ISAXAttributes saxattributes = { &SAXAttributesVtbl };
+
 static void test_saxreader(void)
 {
     HRESULT hr;
@@ -1058,6 +1263,10 @@ static void test_mxwriter_startendelement(void)
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
     todo_wine ok(!lstrcmpW(_bstr_("<><b></b><nspace:c/></a>"), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
+
+    /* try with attributes */
+    hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("b"), 1, &saxattributes);
+    ok(hr == S_OK, "got %08x\n", hr);
 
     hr = ISAXContentHandler_endDocument(content);
     todo_wine ok(hr == S_OK, "got %08x\n", hr);
