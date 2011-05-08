@@ -1835,7 +1835,7 @@ static BOOL receive_response( request_t *request, BOOL async )
 
         if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES)) record_cookies( request );
 
-        if (status == 301 || status == 302)
+        if (status == HTTP_STATUS_MOVED || status == HTTP_STATUS_REDIRECT || status == HTTP_STATUS_REDIRECT_KEEP_VERB)
         {
             if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS) break;
 
