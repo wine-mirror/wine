@@ -80,6 +80,9 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CLEAR_CALLED(func) \
+    expect_ ## func = called_ ## func = FALSE
+
 static IOleDocumentView *view = NULL;
 static HWND container_hwnd = NULL, hwnd = NULL, last_hwnd = NULL;
 
@@ -130,6 +133,9 @@ DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
 DEFINE_EXPECT(Invoke_AMBIENT_SILENT);
 DEFINE_EXPECT(Invoke_AMBIENT_USERAGENT);
 DEFINE_EXPECT(Invoke_AMBIENT_PALETTE);
+DEFINE_EXPECT(Invoke_OnReadyStateChange_Interactive);
+DEFINE_EXPECT(Invoke_OnReadyStateChange_Loading);
+DEFINE_EXPECT(Invoke_OnReadyStateChange_Complete);
 DEFINE_EXPECT(GetDropTarget);
 DEFINE_EXPECT(UpdateUI);
 DEFINE_EXPECT(Navigate);
@@ -182,6 +188,7 @@ static BOOL set_clientsite, container_locked;
 static BOOL readystate_set_loading = FALSE, readystate_set_interactive = FALSE, load_from_stream;
 static BOOL editmode = FALSE;
 static BOOL inplace_deactivated, open_call;
+static BOOL complete = FALSE;
 static DWORD status_code = HTTP_STATUS_OK;
 static BOOL asynchronous_binding = FALSE;
 static int stream_read, protocol_read;
@@ -2923,6 +2930,83 @@ static const IDispatchVtbl DispatchVtbl = {
 
 static IDispatch Dispatch = { &DispatchVtbl };
 
+static HRESULT WINAPI EventDispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "Unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI EventDispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HRESULT hres;
+    IHTMLDocument2 *doc;
+    BSTR state;
+
+    ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
+    ok(pDispParams != NULL, "pDispParams == NULL\n");
+    ok(pExcepInfo != NULL, "pExcepInfo == NULL\n");
+    ok(puArgErr != NULL, "puArgErr == NULL\n");
+    ok(V_VT(pVarResult) == 0, "V_VT(pVarResult) = %d\n", V_VT(pVarResult));
+    ok(wFlags == DISPATCH_METHOD, "wFlags = %d, expected DISPATCH_METHOD\n", wFlags);
+
+    hres = IUnknown_QueryInterface(doc_unk, &IID_IHTMLDocument2, (void**)&doc);
+    ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument2) failed: %08x\n", hres);
+
+    switch(dispIdMember) {
+    case DISPID_HTMLDOCUMENTEVENTS2_ONREADYSTATECHANGE:
+        hres = IHTMLDocument2_get_readyState(doc, &state);
+        ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
+
+        if(!strcmp_wa(state, "interactive"))
+            CHECK_EXPECT(Invoke_OnReadyStateChange_Interactive);
+        else if(!strcmp_wa(state, "loading"))
+            CHECK_EXPECT(Invoke_OnReadyStateChange_Loading);
+        else if(!strcmp_wa(state, "complete")) {
+            CHECK_EXPECT(Invoke_OnReadyStateChange_Complete);
+            complete = TRUE;
+        } else
+            ok(0, "Unexpected readyState: %s\n", wine_dbgstr_w(state));
+
+        SysFreeString(state);
+        break;
+    case DISPID_HTMLDOCUMENTEVENTS2_ONPROPERTYCHANGE:
+    case 1026:
+    case 1027:
+    case 1034:
+    case 1037:
+    case 1047:
+    case 1045:
+    case 1044:
+    case 1048:
+    case 1049:
+        break; /* FIXME: Handle these events. */
+    default:
+        ok(0, "Unexpected DISPID: %d\n", dispIdMember);
+    }
+
+    IHTMLDocument2_Release(doc);
+    return S_OK;
+}
+
+static const IDispatchVtbl EventDispatchVtbl = {
+    EventDispatch_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    EventDispatch_Invoke
+};
+
+static IDispatch EventDispatch = { &EventDispatchVtbl };
+
 static HRESULT  WINAPI DocObjectService_QueryInterface(
         IDocObjectService* This,
         REFIID riid,
@@ -3776,6 +3860,7 @@ static void test_ConnectionPoint(IConnectionPointContainer *container, REFIID ri
     IConnectionPoint *cp;
     IID iid;
     HRESULT hres;
+    DWORD cookie;
 
     hres = IConnectionPointContainer_FindConnectionPoint(container, riid, &cp);
     ok(hres == S_OK, "FindConnectionPoint failed: %08x\n", hres);
@@ -3799,9 +3884,10 @@ static void test_ConnectionPoint(IConnectionPointContainer *container, REFIID ri
     ok(hres == E_POINTER, "GetConnectionPointContainer failed: %08x, expected E_POINTER\n", hres);
 
     if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
-        DWORD cookie;
-
         hres = IConnectionPoint_Advise(cp, (IUnknown*)&PropertyNotifySink, &cookie);
+        ok(hres == S_OK, "Advise failed: %08x\n", hres);
+    } else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        hres = IConnectionPoint_Advise(cp, (IUnknown*)&EventDispatch, &cookie);
         ok(hres == S_OK, "Advise failed: %08x\n", hres);
     }
 
@@ -3881,6 +3967,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         SET_EXPECT(LockContainer);
     }
     SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(Invoke_OnReadyStateChange_Loading);
     SET_EXPECT(Exec_ShellDocView_84);
     SET_EXPECT(IsSystemMoniker);
     if(mon == &Moniker)
@@ -3927,6 +4014,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         container_locked = TRUE;
     }
     CHECK_CALLED(OnChanged_READYSTATE);
+    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     SET_CALLED(IsSystemMoniker); /* IE7 */
     SET_CALLED(Exec_ShellDocView_84);
     if(mon == &Moniker)
@@ -3986,6 +4074,9 @@ static void test_download(DWORD flags)
         SET_EXPECT(Protocol_Read);
         SET_EXPECT(UnlockRequest);
     }
+    if(!(flags & DWL_EMPTY))
+        SET_EXPECT(Invoke_OnReadyStateChange_Interactive);
+    SET_EXPECT(Invoke_OnReadyStateChange_Complete);
     SET_EXPECT(Exec_Explorer_69);
     SET_EXPECT(EnableModeless_TRUE); /* IE7 */
     SET_EXPECT(Frame_EnableModeless_TRUE); /* IE7 */
@@ -4053,6 +4144,9 @@ static void test_download(DWORD flags)
         CHECK_CALLED(Protocol_Read);
         CHECK_CALLED(UnlockRequest);
     }
+    if(!(flags & DWL_EMPTY))
+        todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Interactive);
+    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Complete);
     SET_CALLED(Exec_Explorer_69);
     SET_CALLED(EnableModeless_TRUE); /* IE7 */
     SET_CALLED(Frame_EnableModeless_TRUE); /* IE7 */
@@ -4178,6 +4272,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Exec_ShellDocView_63);
+    SET_EXPECT(Invoke_OnReadyStateChange_Loading);
 
     str2 = a2bstr("");
     V_VT(&vempty) = VT_EMPTY;
@@ -4191,6 +4286,7 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_CALLED(OnChanged_READYSTATE); /* not always called */
     CHECK_CALLED(Exec_ShellDocView_63);
+    CLEAR_CALLED(Invoke_OnReadyStateChange_Loading); /* not always called */
 
     if(doc_mon) {
         test_GetCurMoniker(doc_unk, doc_mon, NULL);
@@ -4202,7 +4298,9 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace)
                 "unexpected address bar url:  %s\n", wine_dbgstr_w(str2));
     SysFreeString(str2);
 
+    SET_EXPECT(Invoke_OnReadyStateChange_Loading);
     test_download(DWL_VERBDONE);
+    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
 
     hres = IHTMLPrivateWindow_GetAddressBarUrl(priv_window, &str2);
     ok(hres == S_OK, "GetAddressBarUrl failed: %08x\n", hres);
@@ -4491,6 +4589,7 @@ static void test_exec_editmode(IUnknown *unk, BOOL loaded)
     SET_EXPECT(Invoke_AMBIENT_SILENT);
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(Invoke_OnReadyStateChange_Loading);
     SET_EXPECT(IsSystemMoniker);
     SET_EXPECT(Exec_ShellDocView_84);
     if(loaded)
@@ -4517,6 +4616,7 @@ static void test_exec_editmode(IUnknown *unk, BOOL loaded)
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(OnChanged_READYSTATE);
+    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     SET_CALLED(IsSystemMoniker); /* IE7 */
     SET_CALLED(Exec_ShellDocView_84);
     if(loaded)
@@ -5197,6 +5297,7 @@ static void test_StreamLoad(IHTMLDocument2 *doc)
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_EXPECT(Exec_ShellDocView_37);
     SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(Invoke_OnReadyStateChange_Loading);
     SET_EXPECT(Read);
     SET_EXPECT(GetPendingUrl);
     readystate_set_loading = TRUE;
@@ -5208,6 +5309,7 @@ static void test_StreamLoad(IHTMLDocument2 *doc)
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(Exec_ShellDocView_37);
     CHECK_CALLED(OnChanged_READYSTATE);
+    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     CHECK_CALLED(Read);
     todo_wine CHECK_CALLED(GetPendingUrl);
 
@@ -5231,6 +5333,7 @@ static void test_StreamInitNew(IHTMLDocument2 *doc)
     SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     SET_EXPECT(Exec_ShellDocView_37);
     SET_EXPECT(OnChanged_READYSTATE);
+    SET_EXPECT(Invoke_OnReadyStateChange_Loading);
     SET_EXPECT(GetPendingUrl);
     readystate_set_loading = TRUE;
 
@@ -5241,6 +5344,7 @@ static void test_StreamInitNew(IHTMLDocument2 *doc)
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(Exec_ShellDocView_37);
     CHECK_CALLED(OnChanged_READYSTATE);
+    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     todo_wine CHECK_CALLED(GetPendingUrl);
 
     test_timer(EXPECT_SETTITLE);
@@ -5316,6 +5420,7 @@ static void init_test(enum load_state_t ls) {
     nav_url = NULL;
     ipsex = FALSE;
     inplace_deactivated = FALSE;
+    complete = FALSE;
     expect_uihandler_iface = &DocHostUIHandler;
 }
 
