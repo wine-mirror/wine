@@ -1466,6 +1466,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetClipPlane(IDirect3DDevice8 *iface,
     return hr;
 }
 
+/* This factor is the result of a trial-and-error search. Both ZBIAS and DEPTHBIAS require
+ * guesswork by design. d3d9 apps usually use a DEPTHBIAS of -0.00002(Mass Effect 2, WoW).
+ * d3d8 apps(Final Fantasy XI) set ZBIAS to 15 and still expect the depth test to sort
+ * objects properly. */
+static const float zbias_factor = -0.000005f;
+
 static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderState(IDirect3DDevice8 *iface,
         D3DRENDERSTATETYPE State, DWORD Value)
 {
@@ -1483,7 +1489,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderState(IDirect3DDevice8 *ifac
     switch (State)
     {
         case D3DRS_ZBIAS:
-            wined3d_value.f = Value / -16.0f;
+            wined3d_value.f = Value * zbias_factor;
             hr = IWineD3DDevice_SetRenderState(This->WineD3DDevice, WINED3DRS_DEPTHBIAS, wined3d_value.d);
             break;
 
@@ -1513,7 +1519,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetRenderState(IDirect3DDevice8 *ifac
     {
         case D3DRS_ZBIAS:
             hr = IWineD3DDevice_GetRenderState(This->WineD3DDevice, WINED3DRS_DEPTHBIAS, &wined3d_value.d);
-            if (SUCCEEDED(hr)) *pValue = -wined3d_value.f * 16.0f;
+            if (SUCCEEDED(hr)) *pValue = wined3d_value.f / zbias_factor;
             break;
 
         default:
