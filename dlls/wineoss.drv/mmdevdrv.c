@@ -532,6 +532,7 @@ static int get_oss_format(const WAVEFORMATEX *fmt)
         return -1;
     }
 
+#ifdef AFMT_FLOAT
     if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
             (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
              IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
@@ -540,6 +541,7 @@ static int get_oss_format(const WAVEFORMATEX *fmt)
 
         return AFMT_FLOAT;
     }
+#endif
 
     return -1;
 }
@@ -1017,9 +1019,11 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     if(formats & AFMT_S16_LE){
         fmt->Format.wBitsPerSample = 16;
         fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+#ifdef AFMT_FLOAT
     }else if(formats & AFMT_FLOAT){
         fmt->Format.wBitsPerSample = 32;
         fmt->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+#endif
     }else if(formats & AFMT_U8){
         fmt->Format.wBitsPerSample = 8;
         fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
