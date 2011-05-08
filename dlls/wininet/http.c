@@ -4415,6 +4415,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                 dwBufferSize=sizeof(szNewLocation);
                 if ((dwStatusCode == HTTP_STATUS_REDIRECT ||
                      dwStatusCode == HTTP_STATUS_MOVED ||
+                     dwStatusCode == HTTP_STATUS_REDIRECT_KEEP_VERB ||
                      dwStatusCode == HTTP_STATUS_REDIRECT_METHOD) &&
                     HTTP_HttpQueryInfoW(request,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL) == ERROR_SUCCESS)
                 {
@@ -4574,7 +4575,10 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
     {
         DWORD dwCode,dwCodeLength = sizeof(DWORD);
         if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE, &dwCode, &dwCodeLength, NULL) == ERROR_SUCCESS
-            && (dwCode == 302 || dwCode == 301 || dwCode == 303))
+            && (dwCode == HTTP_STATUS_REDIRECT ||
+                dwCode == HTTP_STATUS_MOVED ||
+                dwCode == HTTP_STATUS_REDIRECT_METHOD ||
+                dwCode == HTTP_STATUS_REDIRECT_KEEP_VERB))
         {
             WCHAR *new_url, szNewLocation[INTERNET_MAX_URL_LENGTH];
             dwBufferSize=sizeof(szNewLocation);
