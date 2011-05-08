@@ -61,6 +61,8 @@ static BOOL g_is_below_5;
 static LVITEMA g_itema;
 /* alter notification code A->W */
 static BOOL g_disp_A_to_W;
+/* dispinfo data sent with LVN_LVN_ENDLABELEDIT */
+static NMLVDISPINFO g_editbox_disp_info;
 
 static HWND subclass_editbox(HWND hwndListview);
 
@@ -358,9 +360,17 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
           }
           case LVN_ENDLABELEDIT:
               {
+              HWND edit;
+
               /* always accept new item text */
               NMLVDISPINFO *di = (NMLVDISPINFO*)lParam;
+              g_editbox_disp_info = *di;
               trace("LVN_ENDLABELEDIT: text=%s\n", di->item.pszText);
+
+              /* edit control still available from this notification */
+              edit = (HWND)SendMessageA(((NMHDR*)lParam)->hwndFrom, LVM_GETEDITCONTROL, 0, 0);
+              ok(IsWindow(edit), "expected valid edit control handle\n");
+
               return TRUE;
               }
           case LVN_BEGINSCROLL:
@@ -3611,6 +3621,7 @@ static void test_editbox(void)
 {
     static CHAR testitemA[]  = "testitem";
     static CHAR testitem1A[] = "testitem_quitelongname";
+    static CHAR testitem2A[] = "testITEM_quitelongname";
     static CHAR buffer[25];
     HWND hwnd, hwndedit, hwndedit2, header;
     LVITEMA item;
@@ -3707,8 +3718,11 @@ static void test_editbox(void)
     /* modify edit and notify control that it lost focus */
     r = SendMessage(hwndedit, WM_SETTEXT, 0, (LPARAM)testitem1A);
     expect(TRUE, r);
+    g_editbox_disp_info.item.pszText = NULL;
     r = SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)hwndedit);
     expect(0, r);
+    ok(g_editbox_disp_info.item.pszText != NULL, "expected notification with not null text\n");
+
     memset(&item, 0, sizeof(item));
     item.pszText = buffer;
     item.cchTextMax = sizeof(buffer);
@@ -3718,6 +3732,29 @@ static void test_editbox(void)
     expect(lstrlen(item.pszText), r);
     ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
     ok(!IsWindow(hwndedit), "Expected Edit window to be freed\n");
+
+    /* change item name to differ in casing only */
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
+    /* modify edit and notify control that it lost focus */
+    r = SendMessage(hwndedit, WM_SETTEXT, 0, (LPARAM)testitem2A);
+    expect(TRUE, r);
+    g_editbox_disp_info.item.pszText = NULL;
+    r = SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)hwndedit);
+    expect(0, r);
+    ok(g_editbox_disp_info.item.pszText != NULL, "got %p\n", g_editbox_disp_info.item.pszText);
+
+    memset(&item, 0, sizeof(item));
+    item.pszText = buffer;
+    item.cchTextMax = sizeof(buffer);
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
+    expect(lstrlen(item.pszText), r);
+    ok(strcmp(buffer, testitem2A) == 0, "got %s, expected %s\n", buffer, testitem2A);
+    ok(!IsWindow(hwndedit), "Expected Edit window to be freed\n");
+
     /* end edit without saving */
     SetFocus(hwnd);
     hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
@@ -3742,7 +3779,7 @@ static void test_editbox(void)
     item.iSubItem = 0;
     r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
     expect(lstrlen(item.pszText), r);
-    ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
+    ok(strcmp(buffer, testitem2A) == 0, "Expected item text to change\n");
 
     /* LVM_EDITLABEL with -1 destroys current edit */
     hwndedit = (HWND)SendMessage(hwnd, LVM_GETEDITCONTROL, 0, 0);
@@ -3786,7 +3823,7 @@ static void test_editbox(void)
     ok_sequence(sequences, EDITBOX_SEQ_INDEX, editbox_create_pos,
                 "edit box create - sizing", FALSE);
 
-    /* WM_COMMAND with EN_KILLFOCUS isn't forwared to parent */
+    /* WM_COMMAND with EN_KILLFOCUS isn't forwarded to parent */
     SetFocus(hwnd);
     hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
     ok(IsWindow(hwndedit), "Expected Edit window to be created\n");

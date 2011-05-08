@@ -5662,7 +5662,7 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, BOOL storeText, BOOL 
     WCHAR szDispText[DISP_TEXT_SIZE] = { 0 };
     NMLVDISPINFOW dispInfo;
     INT editedItem = infoPtr->nEditLabelItem;
-    BOOL bSame;
+    BOOL same;
     WCHAR *pszText = NULL;
     BOOL res;
 
@@ -5682,9 +5682,6 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, BOOL storeText, BOOL 
 
     TRACE("(pszText=%s, isW=%d)\n", debugtext_t(pszText, isW), isW);
 
-    infoPtr->nEditLabelItem = -1;
-    infoPtr->hwndEdit = 0;
-
     ZeroMemory(&dispInfo, sizeof(dispInfo));
     dispInfo.item.mask = LVIF_PARAM | LVIF_STATE | LVIF_TEXT;
     dispInfo.item.iItem = editedItem;
@@ -5699,32 +5696,34 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, BOOL storeText, BOOL 
     }
 
     if (isW)
-        bSame = (lstrcmpW(dispInfo.item.pszText, pszText) == 0);
+        same = (lstrcmpW(dispInfo.item.pszText, pszText) == 0);
     else
     {
         LPWSTR tmp = textdupTtoW(pszText, FALSE);
-        bSame = (lstrcmpW(dispInfo.item.pszText, tmp) == 0);
+        same = (lstrcmpW(dispInfo.item.pszText, tmp) == 0);
         textfreeT(tmp, FALSE);
     }
 
     /* add the text from the edit in */
     dispInfo.item.mask |= LVIF_TEXT;
-    dispInfo.item.pszText = bSame ? NULL : pszText;
-    dispInfo.item.cchTextMax = bSame ? 0 : textlenT(pszText, isW);
+    dispInfo.item.pszText = same ? NULL : pszText;
+    dispInfo.item.cchTextMax = textlenT(dispInfo.item.pszText, isW);
 
     /* Do we need to update the Item Text */
-    if (!notify_dispinfoT(infoPtr, LVN_ENDLABELEDITW, &dispInfo, isW))
-    {
-        res = FALSE;
-        goto cleanup;
-    }
+    res = notify_dispinfoT(infoPtr, LVN_ENDLABELEDITW, &dispInfo, isW);
+
+    infoPtr->nEditLabelItem = -1;
+    infoPtr->hwndEdit = 0;
+
+    if (!res) goto cleanup;
+
     if (!IsWindow(hwndSelf))
     {
 	res = FALSE;
 	goto cleanup;
     }
     if (!pszText) return TRUE;
-    if (bSame)
+    if (same)
     {
         res = TRUE;
         goto cleanup;
