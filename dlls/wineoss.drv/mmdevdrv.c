@@ -525,7 +525,7 @@ static int get_oss_format(const WAVEFORMATEX *fmt)
         case 16:
             return AFMT_S16_LE;
         case 24:
-            return AFMT_S24_PACKED;
+            return AFMT_S24_LE;
         case 32:
             return AFMT_S32_LE;
         }
@@ -1026,7 +1026,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     }else if(formats & AFMT_S32_LE){
         fmt->Format.wBitsPerSample = 32;
         fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    }else if(formats & AFMT_S24_PACKED){
+    }else if(formats & AFMT_S24_LE){
         fmt->Format.wBitsPerSample = 24;
         fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
     }else{
