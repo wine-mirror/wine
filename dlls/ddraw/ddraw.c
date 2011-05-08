@@ -2088,7 +2088,8 @@ static HRESULT CALLBACK EnumDisplayModesCallbackThunk(DDSURFACEDESC2 *surface_de
  * the DDSD parameter.
  *
  * Params:
- *  Flags: can be DDEDM_REFRESHRATES and DDEDM_STANDARDVGAMODES
+ *  Flags: can be DDEDM_REFRESHRATES and DDEDM_STANDARDVGAMODES. For old ddraw
+ *         versions (3 and older?) this is reserved and must be 0.
  *  DDSD: Surface description to filter the modes
  *  Context: Pointer passed back to the callback function
  *  cb: Application-provided callback function
@@ -2103,11 +2104,11 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
     unsigned int modenum, fmt;
-    enum wined3d_format_id pixelformat = WINED3DFMT_UNKNOWN;
     WINED3DDISPLAYMODE mode;
     DDSURFACEDESC2 callback_sd;
     WINED3DDISPLAYMODE *enum_modes = NULL;
     unsigned enum_mode_count = 0, enum_mode_array_size = 0;
+    DDPIXELFORMAT pixelformat;
 
     static const enum wined3d_format_id checkFormatList[] =
     {
@@ -2127,12 +2128,6 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
         return DDERR_INVALIDPARAMS;
     }
 
-    if(DDSD)
-    {
-        if ((DDSD->dwFlags & DDSD_PIXELFORMAT) && (DDSD->u4.ddpfPixelFormat.dwFlags & DDPF_RGB) )
-            pixelformat = PixelFormat_DD2WineD3D(&DDSD->u4.ddpfPixelFormat);
-    }
-
     if(!(Flags & DDEDM_REFRESHRATES))
     {
         enum_mode_array_size = 16;
@@ -2145,21 +2140,21 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
         }
     }
 
+    pixelformat.dwSize = sizeof(pixelformat);
     for(fmt = 0; fmt < (sizeof(checkFormatList) / sizeof(checkFormatList[0])); fmt++)
     {
-        if(pixelformat != WINED3DFMT_UNKNOWN && checkFormatList[fmt] != pixelformat)
-        {
-            continue;
-        }
-
         modenum = 0;
         while (wined3d_enum_adapter_modes(This->wineD3D, WINED3DADAPTER_DEFAULT,
                 checkFormatList[fmt], modenum++, &mode) == WINED3D_OK)
         {
+            PixelFormat_WineD3DtoDD(&pixelformat, mode.Format);
             if(DDSD)
             {
                 if(DDSD->dwFlags & DDSD_WIDTH && mode.Width != DDSD->dwWidth) continue;
                 if(DDSD->dwFlags & DDSD_HEIGHT && mode.Height != DDSD->dwHeight) continue;
+                if(DDSD->dwFlags & DDSD_REFRESHRATE && mode.RefreshRate != DDSD->u2.dwRefreshRate) continue;
+                if (DDSD->dwFlags & DDSD_PIXELFORMAT &&
+                        pixelformat.u1.dwRGBBitCount != DDSD->u4.ddpfPixelFormat.u1.dwRGBBitCount) continue;
             }
 
             if(!(Flags & DDEDM_REFRESHRATES))
@@ -2188,17 +2183,16 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
             callback_sd.dwSize = sizeof(callback_sd);
             callback_sd.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
 
-            callback_sd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH;
+            callback_sd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH|DDSD_REFRESHRATE;
             if(Flags & DDEDM_REFRESHRATES)
             {
-                callback_sd.dwFlags |= DDSD_REFRESHRATE;
                 callback_sd.u2.dwRefreshRate = mode.RefreshRate;
             }
 
             callback_sd.dwWidth = mode.Width;
             callback_sd.dwHeight = mode.Height;
 
-            PixelFormat_WineD3DtoDD(&callback_sd.u4.ddpfPixelFormat, mode.Format);
+            callback_sd.u4.ddpfPixelFormat=pixelformat;
 
             /* Calc pitch and DWORD align like MSDN says */
             callback_sd.u1.lPitch = (callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount / 8) * mode.Width;
