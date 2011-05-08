@@ -2249,6 +2249,8 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_End(IDirect3DDevice2 *iface, DWORD d
  *  DDERR_INVALIDPARAMS if Value == NULL
  *
  *****************************************************************************/
+static const float zbias_factor = -0.000005f;
+
 static HRESULT
 IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
                                      D3DRENDERSTATETYPE RenderStateType,
@@ -2383,7 +2385,7 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
             hr = IWineD3DDevice_GetRenderState(This->wineD3DDevice,
                                                WINED3DRS_DEPTHBIAS,
                                                &wined3d_value.d);
-            if (SUCCEEDED(hr)) *Value = -wined3d_value.f * 16.0f;
+            if (SUCCEEDED(hr)) *Value = wined3d_value.f / zbias_factor;
             break;
         }
 
@@ -2708,7 +2710,7 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
                 DWORD d;
                 float f;
             } wined3d_value;
-            wined3d_value.f = Value / -16.0;
+            wined3d_value.f = Value * zbias_factor;
             hr = IWineD3DDevice_SetRenderState(This->wineD3DDevice,
                                                WINED3DRS_DEPTHBIAS,
                                                wined3d_value.d);
