@@ -25,7 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 #ifdef __i386__
 
-  /* debugger/db_disasm.c */
+  /* db_disasm.c */
 extern void             be_i386_disasm_one_insn(ADDRESS64* addr, int display);
 
 #define STEP_FLAG 0x00000100 /* single step flag */
