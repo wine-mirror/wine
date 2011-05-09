@@ -323,7 +323,6 @@ static void test_selection(void)
     bi.hwndOwner = NULL;
     bi.pszDisplayName = NULL;
     bi.lpszTitle = (LPTSTR) title;
-    bi.ulFlags = BIF_NEWDIALOGSTYLE;
     bi.lpfn = selection_callback;
 
     SHGetDesktopFolder(&desktop_object);
@@ -331,6 +330,15 @@ static void test_selection(void)
         selected_folderW, 0UL, &selected_folder_pidl, 0UL);
     bi.pidlRoot = selected_folder_pidl;
 
+    /* test without flags */
+    bi.ulFlags = 0;
+    pidl = SHBrowseForFolder(&bi);
+
+    if (pidl)
+        CoTaskMemFree(pidl);
+
+    /* test with flag */
+    bi.ulFlags = BIF_NEWDIALOGSTYLE;
     pidl = SHBrowseForFolder(&bi);
 
     if (pidl)
