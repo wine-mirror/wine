@@ -791,13 +791,13 @@ static HRESULT WINAPI IDirectSoundBufferImpl_AcquireResources(
 	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	DWORD u;
 
-	FIXME("(%p,%08u,%u,%p): stub\n",This,dwFlags,dwEffectsCount,pdwResultCodes);
+	FIXME("(%p,%08u,%u,%p): stub, faking success\n",This,dwFlags,dwEffectsCount,pdwResultCodes);
 
 	if (pdwResultCodes)
 		for (u=0; u<dwEffectsCount; u++) pdwResultCodes[u] = DSFXR_UNKNOWN;
 
 	WARN("control unavailable\n");
-	return DSERR_CONTROLUNAVAIL;
+	return DS_OK;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_GetObjectInPath(
