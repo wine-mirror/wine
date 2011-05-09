@@ -562,7 +562,7 @@ static int ESD_AddRingMessage(ESD_MSG_RING* mr, enum win_wm_message msg, DWORD p
     HANDLE      hEvent = INVALID_HANDLE_VALUE;
 
     EnterCriticalSection(&mr->msg_crst);
-    if ((mr->msg_toget == ((mr->msg_tosave + 1) % mr->ring_buffer_size)))
+    if (mr->msg_toget == ((mr->msg_tosave + 1) % mr->ring_buffer_size))
     {
 	int old_ring_buffer_size = mr->ring_buffer_size;
 	mr->ring_buffer_size += ESD_RING_BUFFER_INCREMENT;
