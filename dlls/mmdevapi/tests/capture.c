@@ -21,6 +21,8 @@
  * - IAudioClient with eCapture and IAudioCaptureClient
  */
 
+#include <math.h>
+
 #include "wine/test.h"
 
 #define COBJMACROS
@@ -33,6 +35,8 @@
 #include "uuids.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
+
+#define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
 static IMMDevice *dev = NULL;
 
@@ -305,6 +309,391 @@ static void test_audioclient(void)
     CoTaskMemFree(pwfx);
 }
 
+static void test_streamvolume(void)
+{
+    IAudioClient *ac;
+    IAudioStreamVolume *asv;
+    WAVEFORMATEX *fmt;
+    UINT32 chans, i;
+    HRESULT hr;
+    float vol, *vols;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &fmt);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000,
+            0, fmt, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioStreamVolume, (void**)&asv);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+    hr = IAudioStreamVolume_GetChannelCount(asv, NULL);
+    ok(hr == E_POINTER, "GetChannelCount gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_GetChannelCount(asv, &chans);
+    ok(hr == S_OK, "GetChannelCount failed: %08x\n", hr);
+    ok(chans == fmt->nChannels, "GetChannelCount gave wrong number of channels: %d\n", chans);
+
+    hr = IAudioStreamVolume_GetChannelVolume(asv, fmt->nChannels, NULL);
+    ok(hr == E_POINTER, "GetChannelCount gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_GetChannelVolume(asv, fmt->nChannels, &vol);
+    ok(hr == E_INVALIDARG, "GetChannelCount gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_GetChannelVolume(asv, 0, NULL);
+    ok(hr == E_POINTER, "GetChannelCount gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_GetChannelVolume(asv, 0, &vol);
+    ok(hr == S_OK, "GetChannelCount failed: %08x\n", hr);
+    ok(vol == 1.f, "Channel volume was not 1: %f\n", vol);
+
+    hr = IAudioStreamVolume_SetChannelVolume(asv, fmt->nChannels, -1.f);
+    ok(hr == E_INVALIDARG, "SetChannelVolume gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_SetChannelVolume(asv, 0, -1.f);
+    ok(hr == E_INVALIDARG, "SetChannelVolume gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_SetChannelVolume(asv, 0, 2.f);
+    ok(hr == E_INVALIDARG, "SetChannelVolume gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_SetChannelVolume(asv, 0, 0.2f);
+    ok(hr == S_OK, "SetChannelVolume failed: %08x\n", hr);
+
+    hr = IAudioStreamVolume_GetChannelVolume(asv, 0, &vol);
+    ok(hr == S_OK, "GetChannelCount failed: %08x\n", hr);
+    ok(fabsf(vol - 0.2f) < 0.05f, "Channel volume wasn't 0.2: %f\n", vol);
+
+    hr = IAudioStreamVolume_GetAllVolumes(asv, 0, NULL);
+    ok(hr == E_POINTER, "GetAllVolumes gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_GetAllVolumes(asv, fmt->nChannels, NULL);
+    ok(hr == E_POINTER, "GetAllVolumes gave wrong error: %08x\n", hr);
+
+    vols = HeapAlloc(GetProcessHeap(), 0, fmt->nChannels * sizeof(float));
+    ok(vols != NULL, "HeapAlloc failed\n");
+
+    hr = IAudioStreamVolume_GetAllVolumes(asv, fmt->nChannels - 1, vols);
+    ok(hr == E_INVALIDARG, "GetAllVolumes gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_GetAllVolumes(asv, fmt->nChannels, vols);
+    ok(hr == S_OK, "GetAllVolumes failed: %08x\n", hr);
+    ok(fabsf(vols[0] - 0.2f) < 0.05f, "Channel 0 volume wasn't 0.2: %f\n", vol);
+    for(i = 1; i < fmt->nChannels; ++i)
+        ok(vols[i] == 1.f, "Channel %d volume is not 1: %f\n", i, vols[i]);
+
+    hr = IAudioStreamVolume_SetAllVolumes(asv, 0, NULL);
+    ok(hr == E_POINTER, "SetAllVolumes gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_SetAllVolumes(asv, fmt->nChannels, NULL);
+    ok(hr == E_POINTER, "SetAllVolumes gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_SetAllVolumes(asv, fmt->nChannels - 1, vols);
+    ok(hr == E_INVALIDARG, "SetAllVolumes gave wrong error: %08x\n", hr);
+
+    hr = IAudioStreamVolume_SetAllVolumes(asv, fmt->nChannels, vols);
+    ok(hr == S_OK, "SetAllVolumes failed: %08x\n", hr);
+
+    HeapFree(GetProcessHeap(), 0, vols);
+    IAudioStreamVolume_Release(asv);
+    IAudioClient_Release(ac);
+    CoTaskMemFree(fmt);
+}
+
+static void test_channelvolume(void)
+{
+    IAudioClient *ac;
+    IChannelAudioVolume *acv;
+    WAVEFORMATEX *fmt;
+    UINT32 chans, i;
+    HRESULT hr;
+    float vol, *vols;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &fmt);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_NOPERSIST, 5000000, 0, fmt, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_IChannelAudioVolume, (void**)&acv);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+    hr = IChannelAudioVolume_GetChannelCount(acv, NULL);
+    ok(hr == NULL_PTR_ERR, "GetChannelCount gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_GetChannelCount(acv, &chans);
+    ok(hr == S_OK, "GetChannelCount failed: %08x\n", hr);
+    ok(chans == fmt->nChannels, "GetChannelCount gave wrong number of channels: %d\n", chans);
+
+    hr = IChannelAudioVolume_GetChannelVolume(acv, fmt->nChannels, NULL);
+    ok(hr == NULL_PTR_ERR, "GetChannelCount gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_GetChannelVolume(acv, fmt->nChannels, &vol);
+    ok(hr == E_INVALIDARG, "GetChannelCount gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_GetChannelVolume(acv, 0, NULL);
+    ok(hr == NULL_PTR_ERR, "GetChannelCount gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_GetChannelVolume(acv, 0, &vol);
+    ok(hr == S_OK, "GetChannelCount failed: %08x\n", hr);
+    ok(vol == 1.f, "Channel volume was not 1: %f\n", vol);
+
+    hr = IChannelAudioVolume_SetChannelVolume(acv, fmt->nChannels, -1.f, NULL);
+    ok(hr == E_INVALIDARG, "SetChannelVolume gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_SetChannelVolume(acv, 0, -1.f, NULL);
+    ok(hr == E_INVALIDARG, "SetChannelVolume gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_SetChannelVolume(acv, 0, 2.f, NULL);
+    ok(hr == E_INVALIDARG, "SetChannelVolume gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_SetChannelVolume(acv, 0, 0.2f, NULL);
+    ok(hr == S_OK, "SetChannelVolume failed: %08x\n", hr);
+
+    hr = IChannelAudioVolume_GetChannelVolume(acv, 0, &vol);
+    ok(hr == S_OK, "GetChannelCount failed: %08x\n", hr);
+    ok(fabsf(vol - 0.2f) < 0.05f, "Channel volume wasn't 0.2: %f\n", vol);
+
+    hr = IChannelAudioVolume_GetAllVolumes(acv, 0, NULL);
+    ok(hr == NULL_PTR_ERR, "GetAllVolumes gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_GetAllVolumes(acv, fmt->nChannels, NULL);
+    ok(hr == NULL_PTR_ERR, "GetAllVolumes gave wrong error: %08x\n", hr);
+
+    vols = HeapAlloc(GetProcessHeap(), 0, fmt->nChannels * sizeof(float));
+    ok(vols != NULL, "HeapAlloc failed\n");
+
+    hr = IChannelAudioVolume_GetAllVolumes(acv, fmt->nChannels - 1, vols);
+    ok(hr == E_INVALIDARG, "GetAllVolumes gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_GetAllVolumes(acv, fmt->nChannels, vols);
+    ok(hr == S_OK, "GetAllVolumes failed: %08x\n", hr);
+    ok(fabsf(vols[0] - 0.2f) < 0.05f, "Channel 0 volume wasn't 0.2: %f\n", vol);
+    for(i = 1; i < fmt->nChannels; ++i)
+        ok(vols[i] == 1.f, "Channel %d volume is not 1: %f\n", i, vols[i]);
+
+    hr = IChannelAudioVolume_SetAllVolumes(acv, 0, NULL, NULL);
+    ok(hr == NULL_PTR_ERR, "SetAllVolumes gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_SetAllVolumes(acv, fmt->nChannels, NULL, NULL);
+    ok(hr == NULL_PTR_ERR, "SetAllVolumes gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_SetAllVolumes(acv, fmt->nChannels - 1, vols, NULL);
+    ok(hr == E_INVALIDARG, "SetAllVolumes gave wrong error: %08x\n", hr);
+
+    hr = IChannelAudioVolume_SetAllVolumes(acv, fmt->nChannels, vols, NULL);
+    ok(hr == S_OK, "SetAllVolumes failed: %08x\n", hr);
+
+    hr = IChannelAudioVolume_SetChannelVolume(acv, 0, 1.0f, NULL);
+    ok(hr == S_OK, "SetChannelVolume failed: %08x\n", hr);
+
+    HeapFree(GetProcessHeap(), 0, vols);
+    IChannelAudioVolume_Release(acv);
+    IAudioClient_Release(ac);
+    CoTaskMemFree(fmt);
+}
+
+static void test_simplevolume(void)
+{
+    IAudioClient *ac;
+    ISimpleAudioVolume *sav;
+    WAVEFORMATEX *fmt;
+    HRESULT hr;
+    float vol;
+    BOOL mute;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &fmt);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_NOPERSIST, 5000000, 0, fmt, NULL);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
+    ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+    hr = ISimpleAudioVolume_GetMasterVolume(sav, NULL);
+    ok(hr == NULL_PTR_ERR, "GetMasterVolume gave wrong error: %08x\n", hr);
+
+    hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
+    ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
+    ok(vol == 1.f, "Master volume wasn't 1: %f\n", vol);
+
+    hr = ISimpleAudioVolume_SetMasterVolume(sav, -1.f, NULL);
+    ok(hr == E_INVALIDARG, "SetMasterVolume gave wrong error: %08x\n", hr);
+
+    hr = ISimpleAudioVolume_SetMasterVolume(sav, 2.f, NULL);
+    ok(hr == E_INVALIDARG, "SetMasterVolume gave wrong error: %08x\n", hr);
+
+    hr = ISimpleAudioVolume_SetMasterVolume(sav, 0.2f, NULL);
+    ok(hr == S_OK, "SetMasterVolume failed: %08x\n", hr);
+
+    hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
+    ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
+    ok(fabsf(vol - 0.2f) < 0.05f, "Master volume wasn't 0.2: %f\n", vol);
+
+    hr = ISimpleAudioVolume_GetMute(sav, NULL);
+    ok(hr == NULL_PTR_ERR, "GetMute gave wrong error: %08x\n", hr);
+
+    mute = TRUE;
+    hr = ISimpleAudioVolume_GetMute(sav, &mute);
+    todo_wine ok(hr == S_OK, "GetMute failed: %08x\n", hr);
+    todo_wine ok(mute == FALSE, "Session is already muted\n");
+
+    hr = ISimpleAudioVolume_SetMute(sav, TRUE, NULL);
+    todo_wine ok(hr == S_OK, "SetMute failed: %08x\n", hr);
+
+    mute = FALSE;
+    hr = ISimpleAudioVolume_GetMute(sav, &mute);
+    todo_wine ok(hr == S_OK, "GetMute failed: %08x\n", hr);
+    todo_wine ok(mute == TRUE, "Session should have been muted\n");
+
+    hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
+    ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
+    ok(fabsf(vol - 0.2f) < 0.05f, "Master volume wasn't 0.2: %f\n", vol);
+
+    hr = ISimpleAudioVolume_SetMasterVolume(sav, 1.f, NULL);
+    ok(hr == S_OK, "SetMasterVolume failed: %08x\n", hr);
+
+    mute = FALSE;
+    hr = ISimpleAudioVolume_GetMute(sav, &mute);
+    todo_wine ok(hr == S_OK, "GetMute failed: %08x\n", hr);
+    todo_wine ok(mute == TRUE, "Session should have been muted\n");
+
+    hr = ISimpleAudioVolume_SetMute(sav, FALSE, NULL);
+    todo_wine ok(hr == S_OK, "SetMute failed: %08x\n", hr);
+
+    ISimpleAudioVolume_Release(sav);
+    IAudioClient_Release(ac);
+    CoTaskMemFree(fmt);
+}
+
+static void test_volume_dependence(void)
+{
+    IAudioClient *ac, *ac2;
+    ISimpleAudioVolume *sav;
+    IChannelAudioVolume *cav;
+    IAudioStreamVolume *asv;
+    WAVEFORMATEX *fmt;
+    HRESULT hr;
+    float vol;
+    GUID session;
+    UINT32 nch;
+
+    hr = CoCreateGuid(&session);
+    ok(hr == S_OK, "CoCreateGuid failed: %08x\n", hr);
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08x\n", hr);
+
+    hr = IAudioClient_GetMixFormat(ac, &fmt);
+    ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_NOPERSIST, 5000000, 0, fmt, &session);
+    ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
+    ok(hr == S_OK, "GetService (SimpleAudioVolume) failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_IChannelAudioVolume, (void**)&cav);
+    ok(hr == S_OK, "GetService (ChannelAudioVolme) failed: %08x\n", hr);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioStreamVolume, (void**)&asv);
+    ok(hr == S_OK, "GetService (AudioStreamVolume) failed: %08x\n", hr);
+
+    hr = IAudioStreamVolume_SetChannelVolume(asv, 0, 0.2f);
+    ok(hr == S_OK, "ASV_SetChannelVolume failed: %08x\n", hr);
+
+    hr = IChannelAudioVolume_SetChannelVolume(cav, 0, 0.4f, NULL);
+    ok(hr == S_OK, "CAV_SetChannelVolume failed: %08x\n", hr);
+
+    hr = ISimpleAudioVolume_SetMasterVolume(sav, 0.6f, NULL);
+    ok(hr == S_OK, "SAV_SetMasterVolume failed: %08x\n", hr);
+
+    hr = IAudioStreamVolume_GetChannelVolume(asv, 0, &vol);
+    ok(hr == S_OK, "ASV_GetChannelVolume failed: %08x\n", hr);
+    ok(fabsf(vol - 0.2) < 0.05f, "ASV_GetChannelVolume gave wrong volume: %f\n", vol);
+
+    hr = IChannelAudioVolume_GetChannelVolume(cav, 0, &vol);
+    ok(hr == S_OK, "CAV_GetChannelVolume failed: %08x\n", hr);
+    ok(fabsf(vol - 0.4) < 0.05f, "CAV_GetChannelVolume gave wrong volume: %f\n", vol);
+
+    hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
+    ok(hr == S_OK, "SAV_GetMasterVolume failed: %08x\n", hr);
+    ok(fabsf(vol - 0.6) < 0.05f, "SAV_GetMasterVolume gave wrong volume: %f\n", vol);
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac2);
+    if(SUCCEEDED(hr)){
+        IChannelAudioVolume *cav2;
+        IAudioStreamVolume *asv2;
+
+        hr = IAudioClient_Initialize(ac2, AUDCLNT_SHAREMODE_SHARED,
+                AUDCLNT_STREAMFLAGS_NOPERSIST, 5000000, 0, fmt, &session);
+        ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+
+        hr = IAudioClient_GetService(ac2, &IID_IChannelAudioVolume, (void**)&cav2);
+        ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+        hr = IAudioClient_GetService(ac2, &IID_IAudioStreamVolume, (void**)&asv2);
+        ok(hr == S_OK, "GetService failed: %08x\n", hr);
+
+        hr = IChannelAudioVolume_GetChannelVolume(cav2, 0, &vol);
+        ok(hr == S_OK, "CAV_GetChannelVolume failed: %08x\n", hr);
+        ok(fabsf(vol - 0.4) < 0.05f, "CAV_GetChannelVolume gave wrong volume: %f\n", vol);
+
+        hr = IAudioStreamVolume_GetChannelVolume(asv2, 0, &vol);
+        ok(hr == S_OK, "ASV_GetChannelVolume failed: %08x\n", hr);
+        ok(vol == 1.f, "ASV_GetChannelVolume gave wrong volume: %f\n", vol);
+
+        hr = IChannelAudioVolume_GetChannelCount(cav2, &nch);
+        ok(hr == S_OK, "GetChannelCount failed: %08x\n", hr);
+        ok(nch == fmt->nChannels, "Got wrong channel count, expected %u: %u\n", fmt->nChannels, nch);
+
+        hr = IAudioStreamVolume_GetChannelCount(asv2, &nch);
+        ok(hr == S_OK, "GetChannelCount failed: %08x\n", hr);
+        ok(nch == fmt->nChannels, "Got wrong channel count, expected %u: %u\n", fmt->nChannels, nch);
+
+        IAudioStreamVolume_Release(asv2);
+        IChannelAudioVolume_Release(cav2);
+        IAudioClient_Release(ac2);
+    }else
+        skip("Unable to open the same device twice. Skipping session volume control tests\n");
+
+    hr = IChannelAudioVolume_SetChannelVolume(cav, 0, 1.f, NULL);
+    ok(hr == S_OK, "CAV_SetChannelVolume failed: %08x\n", hr);
+
+    hr = ISimpleAudioVolume_SetMasterVolume(sav, 1.f, NULL);
+    ok(hr == S_OK, "SAV_SetMasterVolume failed: %08x\n", hr);
+
+    CoTaskMemFree(fmt);
+    ISimpleAudioVolume_Release(sav);
+    IChannelAudioVolume_Release(cav);
+    IAudioStreamVolume_Release(asv);
+    IAudioClient_Release(ac);
+}
+
 START_TEST(capture)
 {
     HRESULT hr;
@@ -330,6 +719,10 @@ START_TEST(capture)
     }
 
     test_audioclient();
+    test_streamvolume();
+    test_channelvolume();
+    test_simplevolume();
+    test_volume_dependence();
 
     IMMDevice_Release(dev);
 
