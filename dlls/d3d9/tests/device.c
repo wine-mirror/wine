@@ -2874,7 +2874,7 @@ static void test_reset_fullscreen(void)
     device = create_device(d3d, device_window, focus_window, TRUE);
     if (!device)
     {
-        skip("Unable to create device.  Skipping test.");
+        skip("Unable to create device.  Skipping test.\n");
         goto cleanup;
     }
 
