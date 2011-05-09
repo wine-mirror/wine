@@ -653,13 +653,159 @@ static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, CONS
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flags, CONST DWORD *adjacency_in, DWORD *adjacency_out,
-                                                    DWORD *face_remap, LPD3DXBUFFER *vertex_remap)
+                                                    DWORD *face_remap_out, LPD3DXBUFFER *vertex_remap_out)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    void *indices = NULL;
+    HRESULT hr;
+    ID3DXBuffer *vertex_remap = NULL;
+    DWORD *dword_indices = NULL;
+    DWORD new_num_vertices = 0;
+    DWORD new_vertex_buffer_size = 0;
+    IDirect3DVertexBuffer9 *vertex_buffer = NULL;
+    DWORD i;
 
-    FIXME("(%p)->(%u,%p,%p,%p,%p): stub\n", This, flags, adjacency_in, adjacency_out, face_remap, vertex_remap);
+    TRACE("(%p)->(%x,%p,%p,%p,%p)\n", This, flags, adjacency_in, adjacency_out, face_remap_out, vertex_remap_out);
 
-    return E_NOTIMPL;
+    if (!flags)
+        return D3DERR_INVALIDCALL;
+    if (!adjacency_in && (flags & (D3DXMESHOPT_VERTEXCACHE | D3DXMESHOPT_STRIPREORDER)))
+        return D3DERR_INVALIDCALL;
+    if ((flags & (D3DXMESHOPT_VERTEXCACHE | D3DXMESHOPT_STRIPREORDER)) == (D3DXMESHOPT_VERTEXCACHE | D3DXMESHOPT_STRIPREORDER))
+        return D3DERR_INVALIDCALL;
+
+    if (flags & (D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_VERTEXCACHE | D3DXMESHOPT_STRIPREORDER))
+    {
+        if (flags & D3DXMESHOPT_ATTRSORT)
+            FIXME("D3DXMESHOPT_ATTRSORT not implemented.\n");
+        if (flags & D3DXMESHOPT_VERTEXCACHE)
+            FIXME("D3DXMESHOPT_VERTEXCACHE not implemented.\n");
+        if (flags & D3DXMESHOPT_STRIPREORDER)
+            FIXME("D3DXMESHOPT_STRIPREORDER not implemented.\n");
+        return E_NOTIMPL;
+    }
+
+    hr = iface->lpVtbl->LockIndexBuffer(iface, 0, (void**)&indices);
+    if (FAILED(hr)) goto cleanup;
+
+    dword_indices = HeapAlloc(GetProcessHeap(), 0, This->numfaces * 3 * sizeof(DWORD));
+    if (!dword_indices) return E_OUTOFMEMORY;
+    if (This->options & D3DXMESH_32BIT) {
+        memcpy(dword_indices, indices, This->numfaces * 3 * sizeof(DWORD));
+    } else {
+        WORD *word_indices = indices;
+        for (i = 0; i < This->numfaces * 3; i++)
+            dword_indices[i] = *word_indices++;
+    }
+
+    if ((flags & (D3DXMESHOPT_COMPACT | D3DXMESHOPT_IGNOREVERTS)) == D3DXMESHOPT_COMPACT)
+    {
+        /* Remove unused vertices. */
+        DWORD *vertex_remap_ptr;
+
+        new_vertex_buffer_size = This->numvertices;
+        hr = D3DXCreateBuffer(This->numvertices * sizeof(DWORD), &vertex_remap);
+        if (FAILED(hr)) goto cleanup;
+        vertex_remap_ptr = ID3DXBuffer_GetBufferPointer(vertex_remap);
+
+        for (i = 0; i < This->numfaces * 3; i++)
+            vertex_remap_ptr[dword_indices[i]] = 1;
+
+        /* create old->new vertex mapping */
+        for (i = 0; i < This->numvertices; i++) {
+            if (vertex_remap_ptr[i])
+                vertex_remap_ptr[i] = new_num_vertices++;
+            else
+                vertex_remap_ptr[i] = -1;
+        }
+        /* convert indices */
+        for (i = 0; i < This->numfaces * 3; i++)
+            dword_indices[i] = vertex_remap_ptr[dword_indices[i]];
+
+        /* create new->old vertex mapping */
+        new_num_vertices = 0;
+        for (i = 0; i < This->numvertices; i++) {
+            if (vertex_remap_ptr[i] != -1)
+                vertex_remap_ptr[new_num_vertices++] = i;
+        }
+        for (i = new_num_vertices; i < This->numvertices; i++)
+            vertex_remap_ptr[i] = -1;
+    }
+
+    if (vertex_remap)
+    {
+        /* reorder the vertices using vertex_remap */
+        D3DVERTEXBUFFER_DESC vertex_desc;
+        DWORD *vertex_remap_ptr = ID3DXBuffer_GetBufferPointer(vertex_remap);
+        DWORD vertex_size = iface->lpVtbl->GetNumBytesPerVertex(iface);
+        BYTE *orig_vertices;
+        BYTE *new_vertices;
+
+        hr = IDirect3DVertexBuffer9_GetDesc(This->vertex_buffer, &vertex_desc);
+        if (FAILED(hr)) goto cleanup;
+
+        new_vertex_buffer_size *= vertex_size;
+        hr = IDirect3DDevice9_CreateVertexBuffer(This->device, new_vertex_buffer_size,
+                vertex_desc.Usage, This->fvf, vertex_desc.Pool, &vertex_buffer, NULL);
+        if (FAILED(hr)) goto cleanup;
+
+        hr = IDirect3DVertexBuffer9_Lock(This->vertex_buffer, 0, 0, (void**)&orig_vertices, D3DLOCK_READONLY);
+        if (FAILED(hr)) goto cleanup;
+
+        hr = IDirect3DVertexBuffer9_Lock(vertex_buffer, 0, 0, (void**)&new_vertices, D3DLOCK_DISCARD);
+        if (FAILED(hr)) {
+            IDirect3DVertexBuffer9_Unlock(This->vertex_buffer);
+            goto cleanup;
+        }
+
+        for (i = 0; i < new_num_vertices; i++)
+            memcpy(new_vertices + i * vertex_size, orig_vertices + vertex_remap_ptr[i] * vertex_size, vertex_size);
+
+        IDirect3DVertexBuffer9_Unlock(This->vertex_buffer);
+        IDirect3DVertexBuffer9_Unlock(vertex_buffer);
+    } else if (vertex_remap_out) {
+        DWORD *vertex_remap_ptr;
+
+        hr = D3DXCreateBuffer(This->numvertices * sizeof(DWORD), &vertex_remap);
+        if (FAILED(hr)) goto cleanup;
+        vertex_remap_ptr = ID3DXBuffer_GetBufferPointer(vertex_remap);
+        for (i = 0; i < This->numvertices; i++)
+            *vertex_remap_ptr++ = i;
+    }
+
+    if (This->options & D3DXMESH_32BIT) {
+        memcpy(indices, dword_indices, This->numfaces * 3 * sizeof(DWORD));
+    } else {
+        WORD *word_indices = indices;
+        for (i = 0; i < This->numfaces * 3; i++)
+            *word_indices++ = dword_indices[i];
+    }
+
+    if (adjacency_out) {
+        memcpy(adjacency_out, adjacency_in, This->numfaces * 3 * sizeof(*adjacency_out));
+    }
+    if (face_remap_out) {
+        for (i = 0; i < This->numfaces; i++)
+            face_remap_out[i] = i;
+    }
+    if (vertex_remap_out)
+        *vertex_remap_out = vertex_remap;
+    vertex_remap = NULL;
+
+    if (vertex_buffer) {
+        IDirect3DVertexBuffer9_Release(This->vertex_buffer);
+        This->vertex_buffer = vertex_buffer;
+        vertex_buffer = NULL;
+        This->numvertices = new_num_vertices;
+    }
+
+    hr = D3D_OK;
+cleanup:
+    HeapFree(GetProcessHeap(), 0, dword_indices);
+    if (vertex_remap) ID3DXBuffer_Release(vertex_remap);
+    if (vertex_buffer) IDirect3DVertexBuffer9_Release(vertex_buffer);
+    if (indices) iface->lpVtbl->UnlockIndexBuffer(iface);
+    return hr;
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_SetAttributeTable(ID3DXMesh *iface, CONST D3DXATTRIBUTERANGE *attrib_table, DWORD attrib_table_size)
