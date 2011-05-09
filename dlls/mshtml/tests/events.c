@@ -66,6 +66,7 @@ DEFINE_EXPECT(timeout);
 DEFINE_EXPECT(doccp_onclick);
 DEFINE_EXPECT(doccp_onclick_cancel);
 DEFINE_EXPECT(div_onclick_disp);
+DEFINE_EXPECT(invoke_onclick);
 DEFINE_EXPECT(iframe_onreadystatechange_loading);
 DEFINE_EXPECT(iframe_onreadystatechange_interactive);
 DEFINE_EXPECT(iframe_onreadystatechange_complete);
@@ -1300,12 +1301,99 @@ static void unregister_cp(IUnknown *unk, REFIID riid, DWORD cookie)
     ok(hres == S_OK, "Unadvise failed: %08x\n", hres);
 }
 
+static HRESULT WINAPI EventDispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IDispatch, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "Unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static DWORD WINAPI EventDispatch_AddRef(IDispatch *iface)
+{
+    return 2;
+}
+
+static DWORD WINAPI EventDispatch_Release(IDispatch *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI EventDispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EventDispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EventDispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "Unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EventDispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
+    ok(pDispParams != NULL, "pDispParams == NULL\n");
+    ok(pExcepInfo != NULL, "pExcepInfo == NULL\n");
+    ok(puArgErr != NULL, "puArgErr == NULL\n");
+    ok(V_VT(pVarResult) == 0, "V_VT(pVarResult) = %d\n", V_VT(pVarResult));
+    ok(wFlags == DISPATCH_METHOD, "wFlags = %d\n", wFlags);
+
+    switch(dispIdMember) {
+    case DISPID_HTMLDOCUMENTEVENTS_ONCLICK:
+        CHECK_EXPECT2(invoke_onclick);
+        break;
+    case DISPID_HTMLDOCUMENTEVENTS2_ONPROPERTYCHANGE:
+    case DISPID_HTMLDOCUMENTEVENTS2_ONREADYSTATECHANGE:
+    case 1027:
+    case 1034:
+    case 1037:
+    case 1044:
+    case 1045:
+    case 1047:
+    case 1048:
+    case 1049:
+        break; /* TODO */
+    default:
+        ok(0, "Unexpected call: %d\n", dispIdMember);
+    }
+
+    return S_OK;
+}
+
+static const IDispatchVtbl EventDispatchVtbl = {
+    EventDispatch_QueryInterface,
+    EventDispatch_AddRef,
+    EventDispatch_Release,
+    EventDispatch_GetTypeInfoCount,
+    EventDispatch_GetTypeInfo,
+    EventDispatch_GetIDsOfNames,
+    EventDispatch_Invoke
+};
+
+static IDispatch EventDispatch = { &EventDispatchVtbl };
+
 static void test_onclick(IHTMLDocument2 *doc)
 {
     IHTMLElement *div, *body;
     DWORD cp_cookie;
     VARIANT v;
     HRESULT hres;
+
+    register_cp((IUnknown*)doc, &IID_IDispatch, (IUnknown*)&EventDispatch);
 
     div = get_elem_id(doc, "clickdiv");
 
@@ -1366,11 +1454,13 @@ static void test_onclick(IHTMLDocument2 *doc)
         SET_EXPECT(div_onclick_attached);
         SET_EXPECT(body_onclick);
         SET_EXPECT(document_onclick);
+        SET_EXPECT(invoke_onclick);
         pump_msgs(&called_document_onclick);
         CHECK_CALLED(div_onclick);
         CHECK_CALLED(div_onclick_attached);
         CHECK_CALLED(body_onclick);
         CHECK_CALLED(document_onclick);
+        todo_wine CHECK_CALLED(invoke_onclick);
     }
 
     xy_todo = TRUE;
@@ -1379,6 +1469,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     SET_EXPECT(div_onclick_attached);
     SET_EXPECT(body_onclick);
     SET_EXPECT(document_onclick);
+    SET_EXPECT(invoke_onclick);
 
     hres = IHTMLElement_click(div);
     ok(hres == S_OK, "click failed: %08x\n", hres);
@@ -1387,11 +1478,13 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(div_onclick_attached);
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
+    todo_wine CHECK_CALLED(invoke_onclick);
 
     SET_EXPECT(div_onclick);
     SET_EXPECT(div_onclick_attached);
     SET_EXPECT(body_onclick);
     SET_EXPECT(document_onclick);
+    SET_EXPECT(invoke_onclick);
 
     V_VT(&v) = VT_EMPTY;
     elem_fire_event((IUnknown*)div, "onclick", &v);
@@ -1400,6 +1493,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(div_onclick_attached);
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
+    todo_wine CHECK_CALLED(invoke_onclick);
 
     cp_cookie = register_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, (IUnknown*)&doccp_obj);
     elem_attach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
@@ -1412,6 +1506,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     SET_EXPECT(document_onclick);
     SET_EXPECT(doc_onclick_attached);
     SET_EXPECT(doccp_onclick);
+    SET_EXPECT(invoke_onclick);
 
     hres = IHTMLElement_click(div);
     ok(hres == S_OK, "click failed: %08x\n", hres);
@@ -1423,6 +1518,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(document_onclick);
     CHECK_CALLED(doc_onclick_attached);
     CHECK_CALLED(doccp_onclick);
+    todo_wine CHECK_CALLED(invoke_onclick);
 
     unregister_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, cp_cookie);
 
@@ -1442,6 +1538,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     SET_EXPECT(div_onclick_attached);
     SET_EXPECT(body_onclick);
     SET_EXPECT(document_onclick);
+    SET_EXPECT(invoke_onclick);
 
     hres = IHTMLElement_click(div);
     ok(hres == S_OK, "click failed: %08x\n", hres);
@@ -1449,6 +1546,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(div_onclick_attached);
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
+    todo_wine CHECK_CALLED(invoke_onclick);
 
     IHTMLElement_Release(div);
     IHTMLElement_Release(body);
