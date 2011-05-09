@@ -25,6 +25,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define COBJMACROS
 #define NONAMELESSUNION
 #include "windef.h"
 #include "wingdi.h"
@@ -232,20 +233,110 @@ static HRESULT WINAPI ID3DXMeshImpl_GetDevice(ID3DXMesh *iface, LPDIRECT3DDEVICE
 static HRESULT WINAPI ID3DXMeshImpl_CloneMeshFVF(ID3DXMesh *iface, DWORD options, DWORD fvf, LPDIRECT3DDEVICE9 device, LPD3DXMESH *clone_mesh)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    HRESULT hr;
+    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE];
 
-    FIXME("(%p)->(%u,%u,%p,%p): stub\n", This, options, fvf, device, clone_mesh);
+    TRACE("(%p)->(%x,%x,%p,%p)\n", This, options, fvf, device, clone_mesh);
 
-    return E_NOTIMPL;
+    hr = D3DXDeclaratorFromFVF(fvf, declaration);
+    if (FAILED(hr)) return hr;
+
+    return iface->lpVtbl->CloneMesh(iface, options, declaration, device, clone_mesh);
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(ID3DXMesh *iface, DWORD options, CONST D3DVERTEXELEMENT9 *declaration, LPDIRECT3DDEVICE9 device,
-                                              LPD3DXMESH *clone_mesh)
+                                              LPD3DXMESH *clone_mesh_out)
 {
     ID3DXMeshImpl *This = impl_from_ID3DXMesh(iface);
+    ID3DXMeshImpl *cloned_this;
+    ID3DXMesh *clone_mesh;
+    D3DVERTEXELEMENT9 orig_declaration[MAX_FVF_DECL_SIZE] = { D3DDECL_END() };
+    void *data_in, *data_out;
+    DWORD vertex_size;
+    HRESULT hr;
+    int i;
 
-    FIXME("(%p)->(%u,%p,%p,%p): stub\n", This, options, declaration, device, clone_mesh);
+    TRACE("(%p)->(%x,%p,%p,%p)\n", This, options, declaration, device, clone_mesh_out);
 
-    return E_NOTIMPL;
+    if (!clone_mesh_out)
+        return D3DERR_INVALIDCALL;
+
+    hr = iface->lpVtbl->GetDeclaration(iface, orig_declaration);
+    if (FAILED(hr)) return hr;
+
+    for (i = 0; orig_declaration[i].Stream != 0xff; i++) {
+        if (memcmp(&orig_declaration[i], &declaration[i], sizeof(*declaration)))
+        {
+            FIXME("Vertex buffer conversion not implemented.\n");
+            return E_NOTIMPL;
+        }
+    }
+
+    hr = D3DXCreateMesh(This->numfaces, This->numvertices, options & ~D3DXMESH_VB_SHARE,
+                        declaration, device, &clone_mesh);
+    if (FAILED(hr)) return hr;
+
+    cloned_this = impl_from_ID3DXMesh(clone_mesh);
+    vertex_size = clone_mesh->lpVtbl->GetNumBytesPerVertex(clone_mesh);
+
+    if (options & D3DXMESH_VB_SHARE) {
+        IDirect3DVertexBuffer9_AddRef(This->vertex_buffer);
+        /* FIXME: refactor to avoid creating a new vertex buffer */
+        IDirect3DVertexBuffer9_Release(cloned_this->vertex_buffer);
+        cloned_this->vertex_buffer = This->vertex_buffer;
+    } else {
+        hr = iface->lpVtbl->LockVertexBuffer(iface, D3DLOCK_READONLY, &data_in);
+        if (FAILED(hr)) goto error;
+        hr = clone_mesh->lpVtbl->LockVertexBuffer(clone_mesh, D3DLOCK_DISCARD, &data_out);
+        if (FAILED(hr)) {
+            iface->lpVtbl->UnlockVertexBuffer(iface);
+            goto error;
+        }
+        memcpy(data_out, data_in, This->numvertices * vertex_size);
+        clone_mesh->lpVtbl->UnlockVertexBuffer(clone_mesh);
+        iface->lpVtbl->UnlockVertexBuffer(iface);
+    }
+
+    hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, &data_in);
+    if (FAILED(hr)) goto error;
+    hr = clone_mesh->lpVtbl->LockIndexBuffer(clone_mesh, D3DLOCK_DISCARD, &data_out);
+    if (FAILED(hr)) {
+        iface->lpVtbl->UnlockIndexBuffer(iface);
+        goto error;
+    }
+    if ((options ^ This->options) & D3DXMESH_32BIT) {
+        if (options & D3DXMESH_32BIT) {
+            for (i = 0; i < This->numfaces * 3; i++)
+                ((DWORD*)data_out)[i] = ((WORD*)data_in)[i];
+        } else {
+            for (i = 0; i < This->numfaces * 3; i++)
+                ((WORD*)data_out)[i] = ((DWORD*)data_in)[i];
+        }
+    } else {
+        memcpy(data_out, data_in, This->numfaces * 3 * (options & D3DXMESH_32BIT ? 4 : 2));
+    }
+    clone_mesh->lpVtbl->UnlockIndexBuffer(clone_mesh);
+    iface->lpVtbl->UnlockIndexBuffer(iface);
+
+    memcpy(cloned_this->attrib_buffer, This->attrib_buffer, This->numfaces * sizeof(*This->attrib_buffer));
+
+    if (This->attrib_table_size)
+    {
+        cloned_this->attrib_table_size = This->attrib_table_size;
+        cloned_this->attrib_table = HeapAlloc(GetProcessHeap(), 0, This->attrib_table_size * sizeof(*This->attrib_table));
+        if (!cloned_this->attrib_table) {
+            hr = E_OUTOFMEMORY;
+            goto error;
+        }
+        memcpy(cloned_this->attrib_table, This->attrib_table, This->attrib_table_size * sizeof(*This->attrib_table));
+    }
+
+    *clone_mesh_out = clone_mesh;
+
+    return D3D_OK;
+error:
+    IUnknown_Release(clone_mesh);
+    return hr;
 }
 
 static HRESULT WINAPI ID3DXMeshImpl_GetVertexBuffer(ID3DXMesh *iface, LPDIRECT3DVERTEXBUFFER9 *vertex_buffer)
