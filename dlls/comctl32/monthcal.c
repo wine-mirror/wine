@@ -465,7 +465,7 @@ int MONTHCAL_CalculateDayOfWeek(SYSTEMTIME *date, BOOL inplace)
   return st.wDayOfWeek;
 }
 
-/* add/substract 'months' from date */
+/* add/subtract 'months' from date */
 static inline void MONTHCAL_GetMonth(SYSTEMTIME *date, INT months)
 {
   INT length, m = date->wMonth + months;
@@ -2560,7 +2560,7 @@ MONTHCAL_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   MONTHCAL_SetFont(infoPtr, GetStockObject(DEFAULT_GUI_FONT), FALSE);
 
   /* initialize info structure */
-  /* FIXME: calculate systemtime ->> localtime(substract timezoneinfo) */
+  /* FIXME: calculate systemtime ->> localtime(subtract timezoneinfo) */
 
   GetLocalTime(&infoPtr->todaysDate);
   MONTHCAL_SetFirstDayOfWeek(infoPtr, -1);

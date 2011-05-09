@@ -905,7 +905,7 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
 
     if (err != noErr)
     {
-        FIXME("Quicktime cannot handle media type(%i)\n",err);
+        FIXME("QuickTime cannot handle media type(%i)\n",err);
         return VFW_E_TYPE_NOT_ACCEPTED;
     }
 

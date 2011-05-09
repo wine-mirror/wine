@@ -1117,7 +1117,7 @@ static nsresult NSAPI nsAsyncVerifyRedirectCallback_QueryInterface(nsIAsyncVerif
         *result = &This->nsIAsyncVerifyRedirectCallback_iface;
     }else {
         *result = NULL;
-        WARN("unimplmented iface %s\n", debugstr_guid(riid));
+        WARN("unimplemented iface %s\n", debugstr_guid(riid));
         return NS_NOINTERFACE;
     }
 

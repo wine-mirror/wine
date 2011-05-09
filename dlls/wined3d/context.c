@@ -1380,7 +1380,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     }
 
     /* DirectDraw supports 8bit paletted render targets and these are used by
-     * old games like Starcraft and C&C. Most modern hardware doesn't support
+     * old games like StarCraft and C&C. Most modern hardware doesn't support
      * 8bit natively so we perform some form of 8bit -> 32bit conversion. The
      * conversion (ab)uses the alpha component for storing the palette index.
      * For this reason we require a format with 8bit alpha, so request

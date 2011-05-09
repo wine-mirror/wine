@@ -2454,7 +2454,7 @@ static HRESULT triangulate(struct triangulation_array *triangulations)
     /* Perform 2D polygon triangulation for complex glyphs.
      * Triangulation is performed using a sweep line concept, from right to left,
      * by processing vertices in sorted order. Complex polygons are split into
-     * monotone polygons which are triangulated seperately. */
+     * monotone polygons which are triangulated separately. */
     /* FIXME: The order of the faces is not consistent with the native implementation. */
 
     /* Reserve space for maximum possible faces from triangulation.

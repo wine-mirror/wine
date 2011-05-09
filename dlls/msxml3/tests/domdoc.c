@@ -7179,7 +7179,7 @@ static void test_nodeTypedValue(void)
         VariantClear(&value);
     }
 
-    hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("[1]*2=3; &gee thats not right!"), &cdata);
+    hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("[1]*2=3; &gee that's not right!"), &cdata);
     ok(hr == S_OK, "ret %08x\n", hr );
     {
         V_VT(&value) = VT_NULL;
@@ -7187,7 +7187,7 @@ static void test_nodeTypedValue(void)
         hr = IXMLDOMCDATASection_get_nodeTypedValue(cdata, &value);
         ok(hr == S_OK, "ret %08x\n", hr );
         ok(V_VT(&value) == VT_BSTR, "got %d\n", V_VT(&value));
-        ok(!lstrcmpW(V_BSTR(&value), _bstr_("[1]*2=3; &gee thats not right!")), "got wrong value\n");
+        ok(!lstrcmpW(V_BSTR(&value), _bstr_("[1]*2=3; &gee that's not right!")), "got wrong value\n");
         IXMLDOMCDATASection_Release(cdata);
         VariantClear(&value);
     }

@@ -1120,7 +1120,7 @@ static void test_ScriptXtoX(void)
         ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
     }
 
-    /* 0,1,2 are actaully fractional offsets meaning that they will not be reporting the same iCP as comes in so dont test those */
+    /* 0,1,2 are actually fractional offsets meaning that they will not be reporting the same iCP as comes in so don't test those */
     for(iCP = 3; iCP < 10; iCP++)
     {
         iX = offsets[iCP];
@@ -1240,7 +1240,7 @@ static void test_ScriptString(HDC hdc)
  *
  * This set of tests are for the string functions of uniscribe.  The ScriptStringAnalyse
  * function allocates memory pointed to by the SCRIPT_STRING_ANALYSIS ssa pointer.  This
- * memory if freed by ScriptStringFree.  There needs to be a valid hdc for this as
+ * memory is freed by ScriptStringFree.  There needs to be a valid hdc for this as
  * ScriptStringAnalyse calls ScriptSItemize, ScriptShape and ScriptPlace which require it.
  *
  */

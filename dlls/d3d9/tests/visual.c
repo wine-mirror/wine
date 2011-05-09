@@ -5179,10 +5179,10 @@ static void cnd_test(IDirect3DDevice9 *device)
      * set by the compiler, it was added manually after compilation. Note that the COISSUE
      * flag on a color(.xyz) operation is only allowed after an alpha operation. DirectX doesn't
      * have proper docs, but GL_ATI_fragment_shader explains the pairing of color and alpha ops
-     * good enough.
+     * well enough.
      *
      * The shader attempts to test the range [-1;1] against coissued cnd, which is a bit tricky.
-     * The input from t0 is [0;1]. 0.5 is substracted, then we have to multiply with 2. Since
+     * The input from t0 is [0;1]. 0.5 is subtracted, then we have to multiply with 2. Since
      * constants are clamped to [-1;1], a 2.0 is constructed by adding c0.r(=1.0) to c0.r into r1.r,
      * then r1(2.0, 0.0, 0.0, 0.0) is passed to dp3(explained above).
      */

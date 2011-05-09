@@ -2530,7 +2530,7 @@ static BOOL compute_text_mesh(struct mesh *mesh, HDC hdc, LPCSTR text, FLOAT dev
         }
 
         /* FIXME: compute expected faces */
-        /* Add placeholder to seperate glyph outlines */
+        /* Add placeholder to separate glyph outlines */
         vertex_ptr->position.x = 0;
         vertex_ptr->position.y = 0;
         vertex_ptr->position.z = 0;

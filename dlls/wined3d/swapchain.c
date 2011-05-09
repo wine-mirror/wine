@@ -207,9 +207,9 @@ HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain
     }
 
     /* Obtaining the raster status is a widely implemented but optional
-     * feature. When this method returns OK Starcraft 2 expects the
+     * feature. When this method returns OK StarCraft 2 expects the
      * raster_status->InVBlank value to actually change over time. To prevent
-     * Starcraft 2 from running in an infinite loop at startup this method
+     * StarCraft 2 from running in an infinite loop at startup this method
      * returns INVALIDCALL. */
     return WINED3DERR_INVALIDCALL;
 }

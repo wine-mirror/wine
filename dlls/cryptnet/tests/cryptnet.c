@@ -721,7 +721,7 @@ static void test_verifyRevocation(void)
     CertCloseStore(revPara.hCrlStore, 0);
     /* Test again with a valid CRL.  This time, the cert should be revoked when
      * the time is after the validity period of the CRL, or considered
-     * "revocation offline" when the the checked time precedes the validity
+     * "revocation offline" when the checked time precedes the validity
      * period of the CRL.
      */
     revPara.hCrlStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,

@@ -1425,7 +1425,7 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
     case CB_GETEDITSEL:
         ret = callback( HWND_16(hwnd), CB_GETEDITSEL16, wParam, lParam, result, arg );
         if (wParam) *((PUINT)(wParam)) = LOWORD(*result);
-        if (lParam) *((PUINT)(lParam)) = HIWORD(*result);  /* FIXME: substract 1? */
+        if (lParam) *((PUINT)(lParam)) = HIWORD(*result);  /* FIXME: subtract 1? */
         break;
     case CB_ADDSTRING:
     case CB_FINDSTRING:

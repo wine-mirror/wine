@@ -263,7 +263,7 @@ static GLenum gl_blend_factor(WINED3DBLEND factor, const struct wined3d_format *
         /* To compensate for the lack of format switching with backbuffer
          * offscreen rendering, and with onscreen rendering, we modify the
          * alpha test parameters for (INV)DESTALPHA if the render target
-         * doesn't support alpha blending. A non-existent alpha channel
+         * doesn't support alpha blending. A nonexistent alpha channel
          * returns 1.0, so WINED3DBLEND_DESTALPHA becomes GL_ONE, and
          * WINED3DBLEND_INVDESTALPHA becomes GL_ZERO. */
         case WINED3DBLEND_DESTALPHA:

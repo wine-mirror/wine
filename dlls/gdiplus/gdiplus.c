@@ -119,7 +119,7 @@ void WINAPI GdiplusNotificationUnhook(ULONG_PTR token)
 ULONG WINAPI GdiplusShutdown_wrapper(ULONG_PTR token)
 {
     /* Notice the slightly different prototype from the official
-     * signature which forces us to use the the _wrapper suffix.
+     * signature which forces us to use the _wrapper suffix.
      */
 
     /* FIXME: no object tracking */

@@ -834,7 +834,7 @@ static void testNotifyAddrChange(void)
     }
     ok(ret == ERROR_IO_PENDING, "NotifyAddrChange returned %d, expected ERROR_IO_PENDING\n", ret);
     ret = GetLastError();
-    todo_wine ok(ret == ERROR_IO_PENDING, "GetLastError returned %d, excepted ERROR_IO_PENDING\n", ret);
+    todo_wine ok(ret == ERROR_IO_PENDING, "GetLastError returned %d, expected ERROR_IO_PENDING\n", ret);
     success = gCancelIPChangeNotify(&overlapped);
     todo_wine ok(success == TRUE, "CancelIPChangeNotify returned FALSE, expected TRUE\n");
 
@@ -849,9 +849,9 @@ static void testNotifyAddrChange(void)
     ok(ret == ERROR_IO_PENDING, "NotifyAddrChange returned %d, expected ERROR_IO_PENDING\n", ret);
     todo_wine ok(handle != INVALID_HANDLE_VALUE, "NotifyAddrChange returned invalid file handle\n");
     success = GetOverlappedResult(handle, &overlapped, &bytes, FALSE);
-    todo_wine ok(success == FALSE, "GetOverlappedResult returned TRUE, excepted FALSE\n");
+    todo_wine ok(success == FALSE, "GetOverlappedResult returned TRUE, expected FALSE\n");
     ret = GetLastError();
-    todo_wine ok(ret == ERROR_IO_INCOMPLETE, "GetLastError returned %d, excepted ERROR_IO_INCOMPLETE\n", ret);
+    todo_wine ok(ret == ERROR_IO_INCOMPLETE, "GetLastError returned %d, expected ERROR_IO_INCOMPLETE\n", ret);
     success = gCancelIPChangeNotify(&overlapped);
     todo_wine ok(success == TRUE, "CancelIPChangeNotify returned FALSE, expected TRUE\n");
 
@@ -860,19 +860,19 @@ static void testNotifyAddrChange(void)
         handle = NULL;
         ZeroMemory(&overlapped, sizeof(overlapped));
         overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-        trace("Testing asyncronous ipv4 address change notification. Please "
-              "change ipv4 address of one of your network interfaces\n");
+        trace("Testing asynchronous ipv4 address change notification. Please "
+              "change the ipv4 address of one of your network interfaces\n");
         ret = gNotifyAddrChange(&handle, &overlapped);
         ok(ret == ERROR_IO_PENDING, "NotifyAddrChange returned %d, expected NO_ERROR\n", ret);
         success = GetOverlappedResult(handle, &overlapped, &bytes, TRUE);
-        ok(success == TRUE, "GetOverlappedResult returned FALSE, excepted TRUE\n");
+        ok(success == TRUE, "GetOverlappedResult returned FALSE, expected TRUE\n");
     }
 
-    /* test syncronous functionality */
+    /* test synchronous functionality */
     if (winetest_interactive)
     {
-        trace("Testing syncronous ipv4 address change notification. Please "
-              "change ipv4 address of one of your network interfaces\n");
+        trace("Testing synchronous ipv4 address change notification. Please "
+              "change the ipv4 address of one of your network interfaces\n");
         ret = gNotifyAddrChange(NULL, NULL);
         todo_wine ok(ret == NO_ERROR, "NotifyAddrChange returned %d, expected NO_ERROR\n", ret);
     }

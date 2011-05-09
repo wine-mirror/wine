@@ -1213,7 +1213,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         /* DirectX apps expect integer values, while OpenGL drivers add approximately 0.5. This causes
          * off-by-one problems as spotted by the vPos d3d9 visual test. Unfortunately the ATI cards do
          * not add exactly 0.5, but rather something like 0.49999999 or 0.50000001, which still causes
-         * precision troubles when we just substract 0.5.
+         * precision troubles when we just subtract 0.5.
          *
          * To deal with that just floor() the position. This will eliminate the fraction on all cards.
          *
