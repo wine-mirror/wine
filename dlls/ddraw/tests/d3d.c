@@ -3260,7 +3260,7 @@ static void fix_wndproc(HWND window, LONG_PTR proc)
     HRESULT hr;
 
     hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
-    ok(SUCCEEDED(hr), "Failed to create IDirectDraw7 object, hr %#x.", hr);
+    ok(SUCCEEDED(hr), "Failed to create IDirectDraw7 object, hr %#x.\n", hr);
     if (FAILED(hr)) return;
 
     SetWindowLongPtrA(window, GWLP_WNDPROC, proc);
