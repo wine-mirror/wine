@@ -145,6 +145,8 @@
 @ stdcall GetPrinterDriverDirectoryW(wstr wstr long ptr long ptr)
 @ stdcall GetPrinterDriverW(long wstr long ptr long ptr)
 @ stdcall GetPrinterW(long long ptr long ptr)
+@ stdcall IsValidDevmodeA(ptr long)
+@ stdcall IsValidDevmodeW(ptr long)
 @ stdcall OpenPrinterA(str ptr ptr)
 @ stdcall OpenPrinterW(wstr ptr ptr)
 @ stub PlayGdiScriptOnPrinterIC

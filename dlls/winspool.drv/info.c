@@ -1775,6 +1775,38 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
     return ret;
 }
 
+/*****************************************************************************
+ *          IsValidDevmodeA            [WINSPOOL.@]
+ *
+ * Validate a DEVMODE structure and fix errors if possible.
+ *
+ */
+BOOL WINAPI IsValidDevmodeA(PDEVMODEA *pDevMode, SIZE_T size)
+{
+    FIXME("(%p,%ld): stub\n", pDevMode, size);
+
+    if(!pDevMode)
+        return FALSE;
+
+    return TRUE;
+}
+
+/*****************************************************************************
+ *          IsValidDevmodeW            [WINSPOOL.@]
+ *
+ * Validate a DEVMODE structure and fix errors if possible.
+ *
+ */
+BOOL WINAPI IsValidDevmodeW(PDEVMODEW *pDevMode, SIZE_T size)
+{
+    FIXME("(%p,%ld): stub\n", pDevMode, size);
+
+    if(!pDevMode)
+        return FALSE;
+
+    return TRUE;
+}
+
 /******************************************************************
  *              OpenPrinterA        [WINSPOOL.@]
  *

@@ -75,6 +75,7 @@ static BOOL  (WINAPI * pGetPrinterDriverW)(HANDLE, LPWSTR, DWORD, LPBYTE, DWORD,
 static BOOL  (WINAPI * pGetPrinterW)(HANDLE, DWORD, LPBYTE, DWORD, LPDWORD);
 static BOOL  (WINAPI * pSetDefaultPrinterA)(LPCSTR);
 static DWORD (WINAPI * pXcvDataW)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD, PDWORD);
+static BOOL  (WINAPI * pIsValidDevmodeW)(PDEVMODEW, SIZE_T);
 
 
 /* ################################ */
@@ -2852,6 +2853,26 @@ static void test_DeviceCapabilities(void)
     GlobalFree(prn_dlg.hDevNames);
 }
 
+static void test_IsValidDevmodeW(void)
+{
+    BOOL br;
+
+    if (!pIsValidDevmodeW)
+    {
+        win_skip("IsValidDevmodeW not implemented.\n");
+        return;
+    }
+
+    br = pIsValidDevmodeW(NULL, 0);
+    ok(br == FALSE, "Got %d\n", br);
+
+    br = pIsValidDevmodeW(NULL, 1);
+    ok(br == FALSE, "Got %d\n", br);
+
+    br = pIsValidDevmodeW(NULL, sizeof(DEVMODEW));
+    ok(br == FALSE, "Got %d\n", br);
+}
+
 START_TEST(info)
 {
     hwinspool = GetModuleHandleA("winspool.drv");
@@ -2863,6 +2884,7 @@ START_TEST(info)
     pGetPrinterW = (void *) GetProcAddress(hwinspool, "GetPrinterW");
     pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
     pXcvDataW = (void *) GetProcAddress(hwinspool, "XcvDataW");
+    pIsValidDevmodeW = (void *) GetProcAddress(hwinspool, "IsValidDevmodeW");
 
     on_win9x = check_win9x();
     if (on_win9x)
@@ -2898,6 +2920,7 @@ START_TEST(info)
     test_SetDefaultPrinter();
     test_XcvDataW_MonitorUI();
     test_XcvDataW_PortIsValid();
+    test_IsValidDevmodeW();
 
     /* Cleanup our temporary file */
     DeleteFileA(tempfileA);
