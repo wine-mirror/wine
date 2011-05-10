@@ -1095,32 +1095,32 @@ static BOOL get_name_table_entry(FT_Face ft_face, FT_SfntName *req)
     return FALSE;
 }
 
-static WCHAR *get_familyname(FT_Face ft_face)
+static WCHAR *get_face_name(FT_Face ft_face, FT_UShort name_id, FT_UShort language_id)
 {
-    WCHAR *family = NULL;
+    WCHAR *ret = NULL;
     FT_SfntName name;
 
     name.platform_id = TT_PLATFORM_MICROSOFT;
     name.encoding_id = TT_MS_ID_UNICODE_CS;
-    name.language_id = GetUserDefaultLCID();
-    name.name_id     = TT_NAME_ID_FONT_FAMILY;
+    name.language_id = language_id;
+    name.name_id     = name_id;
 
     if(get_name_table_entry(ft_face, &name))
     {
         FT_UInt i;
 
         /* String is not nul terminated and string_len is a byte length. */
-        family = HeapAlloc(GetProcessHeap(), 0, name.string_len + 2);
+        ret = HeapAlloc(GetProcessHeap(), 0, name.string_len + 2);
         for(i = 0; i < name.string_len / 2; i++)
         {
             WORD *tmp = (WORD *)&name.string[i * 2];
-            family[i] = GET_BE_WORD(*tmp);
+            ret[i] = GET_BE_WORD(*tmp);
         }
-        family[i] = 0;
-        TRACE("Got localised name %s\n", debugstr_w(family));
+        ret[i] = 0;
+        TRACE("Got localised name %s\n", debugstr_w(ret));
     }
 
-    return family;
+    return ret;
 }
 
 
@@ -1331,7 +1331,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 
         if (target_family)
         {
-            localised_family = get_familyname(ft_face);
+            localised_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, GetUserDefaultLCID());
             if (localised_family && strcmpiW(localised_family,target_family)!=0)
             {
                 TRACE("Skipping Index %i: Incorrect Family name for replacement\n",(INT)face_index);
@@ -1360,7 +1360,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 
             localised_family = NULL;
             if(!fake_family) {
-                localised_family = get_familyname(ft_face);
+                localised_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, GetUserDefaultLCID());
                 if(localised_family && !strcmpiW(localised_family, english_family)) {
                     HeapFree(GetProcessHeap(), 0, localised_family);
                     localised_family = NULL;
