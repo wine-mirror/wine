@@ -2558,7 +2558,7 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
 
     parent = wined3d_surface_get_parent(wined3d_surface);
-    hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, wined3d_desc.width, wined3d_desc.height,
+    hr = wined3d_surface_create(This->wineD3DDevice, wined3d_desc.width, wined3d_desc.height,
             wined3d_desc.format, TRUE, FALSE, surfImpl->mipmap_level, wined3d_desc.usage, wined3d_desc.pool,
             wined3d_desc.multisample_type, wined3d_desc.multisample_quality, This->ImplType,
             parent, &ddraw_surface_wined3d_parent_ops, &surfImpl->wined3d_surface);
@@ -5612,7 +5612,7 @@ struct wined3d_vertex_declaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD 
     }
     TRACE("not found. Creating and inserting at position %d.\n", low);
 
-    hr = IWineD3DDevice_CreateVertexDeclarationFromFVF(This->wineD3DDevice,
+    hr = wined3d_vertex_declaration_create_from_fvf(This->wineD3DDevice,
             fvf, This, &ddraw_null_wined3d_parent_ops, &pDecl);
     if (hr != S_OK) return NULL;
 
@@ -5870,7 +5870,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
 
     TRACE("iface %p, present_parameters %p, swapchain %p\n", iface, present_parameters, swapchain);
 
-    hr = IWineD3DDevice_CreateSwapChain(This->wineD3DDevice, present_parameters,
+    hr = wined3d_swapchain_create(This->wineD3DDevice, present_parameters,
             This->ImplType, NULL, &ddraw_null_wined3d_parent_ops, swapchain);
     if (FAILED(hr))
     {

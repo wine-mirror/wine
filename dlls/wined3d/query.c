@@ -547,7 +547,7 @@ static const struct wined3d_query_ops occlusion_query_ops =
     wined3d_occlusion_query_ops_issue,
 };
 
-HRESULT query_init(struct wined3d_query *query, IWineD3DDeviceImpl *device, WINED3DQUERYTYPE type)
+static HRESULT query_init(struct wined3d_query *query, IWineD3DDeviceImpl *device, WINED3DQUERYTYPE type)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
@@ -612,6 +612,36 @@ HRESULT query_init(struct wined3d_query *query, IWineD3DDeviceImpl *device, WINE
     query->state = QUERY_CREATED;
     query->device = device;
     query->ref = 1;
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_query_create(IWineD3DDevice *iface,
+        WINED3DQUERYTYPE type, struct wined3d_query **query)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_query *object;
+    HRESULT hr;
+
+    TRACE("device %p, type %#x, query %p.\n", device, type, query);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate query memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = query_init(object, device, type);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize query, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created query %p.\n", object);
+    *query = object;
 
     return WINED3D_OK;
 }

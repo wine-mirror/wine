@@ -158,7 +158,7 @@ void * CDECL wined3d_palette_get_parent(const struct wined3d_palette *palette)
     return palette->parent;
 }
 
-HRESULT wined3d_palette_init(struct wined3d_palette *palette, IWineD3DDeviceImpl *device,
+static HRESULT wined3d_palette_init(struct wined3d_palette *palette, IWineD3DDeviceImpl *device,
         DWORD flags, const PALETTEENTRY *entries, void *parent)
 {
     HRESULT hr;
@@ -183,6 +183,37 @@ HRESULT wined3d_palette_init(struct wined3d_palette *palette, IWineD3DDeviceImpl
         DeleteObject(palette->hpal);
         return hr;
     }
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_palette_create(IWineD3DDevice *iface, DWORD flags,
+        const PALETTEENTRY *entries, void *parent, struct wined3d_palette **palette)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_palette *object;
+    HRESULT hr;
+
+    TRACE("device %p, flags %#x, entries %p, palette %p, parent %p.\n",
+            device, flags, entries, palette, parent);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate palette memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = wined3d_palette_init(object, device, flags, entries, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize palette, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created palette %p.\n", object);
+    *palette = object;
 
     return WINED3D_OK;
 }

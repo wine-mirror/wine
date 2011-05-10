@@ -266,7 +266,7 @@ HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
     palette->lpVtbl = &ddraw_palette_vtbl;
     palette->ref = 1;
 
-    hr = IWineD3DDevice_CreatePalette(ddraw->wineD3DDevice, flags,
+    hr = wined3d_palette_create(ddraw->wineD3DDevice, flags,
             entries, palette, &palette->wineD3DPalette);
     if (FAILED(hr))
     {

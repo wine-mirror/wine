@@ -4204,7 +4204,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
         TRACE("Growing index buffer to %u bytes\n", size);
 
-        hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice, size, WINED3DUSAGE_DYNAMIC /* Usage */,
+        hr = wined3d_buffer_create_ib(This->wineD3DDevice, size, WINED3DUSAGE_DYNAMIC /* Usage */,
                 WINED3DPOOL_DEFAULT, NULL, &ddraw_null_wined3d_parent_ops, &buffer);
         if (FAILED(hr))
         {
@@ -5819,7 +5819,7 @@ IDirect3DDeviceImpl_7_CreateStateBlock(IDirect3DDevice7 *iface,
     EnterCriticalSection(&ddraw_cs);
 
     /* The D3DSTATEBLOCKTYPE enum is fine here. */
-    hr = IWineD3DDevice_CreateStateBlock(This->wineD3DDevice, Type, &wined3d_sb);
+    hr = wined3d_stateblock_create(This->wineD3DDevice, Type, &wined3d_sb);
     if (FAILED(hr))
     {
         WARN("Failed to create stateblock, hr %#x.\n", hr);
@@ -6811,7 +6811,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
     device->legacyTextureBlending = FALSE;
 
     /* Create an index buffer, it's needed for indexed drawing */
-    hr = IWineD3DDevice_CreateIndexBuffer(ddraw->wineD3DDevice, 0x40000 /* Length. Don't know how long it should be */,
+    hr = wined3d_buffer_create_ib(ddraw->wineD3DDevice, 0x40000 /* Length. Don't know how long it should be */,
             WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT, NULL,
             &ddraw_null_wined3d_parent_ops, &device->indexbuffer);
     if (FAILED(hr))

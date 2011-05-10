@@ -801,7 +801,7 @@ static const struct wined3d_swapchain_ops swapchain_gdi_ops =
 };
 
 /* Do not call while under the GL lock. */
-HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTYPE surface_type,
+static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTYPE surface_type,
         IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -1089,6 +1089,40 @@ err:
         wined3d_surface_decref(swapchain->front_buffer);
 
     return hr;
+}
+
+/* Do not call while under the GL lock. */
+HRESULT CDECL wined3d_swapchain_create(IWineD3DDevice *iface,
+        WINED3DPRESENT_PARAMETERS *present_parameters, WINED3DSURFTYPE surface_type,
+        void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_swapchain **swapchain)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_swapchain *object;
+    HRESULT hr;
+
+    TRACE("device %p, present_parameters %p, swapchain %p, parent %p, surface_type %#x.\n",
+            device, present_parameters, swapchain, parent, surface_type);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate swapchain memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = swapchain_init(object, surface_type, device, present_parameters, parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize swapchain, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created swapchain %p.\n", object);
+    *swapchain = object;
+
+    return WINED3D_OK;
 }
 
 /* Do not call while under the GL lock. */

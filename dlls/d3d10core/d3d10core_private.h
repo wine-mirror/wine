@@ -138,7 +138,7 @@ struct d3d10_rendertarget_view
     D3D10_RENDER_TARGET_VIEW_DESC desc;
 };
 
-HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d10_device *device,
+HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc) DECLSPEC_HIDDEN;
 
 /* ID3D10ShaderResourceView */

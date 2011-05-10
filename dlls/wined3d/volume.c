@@ -296,7 +296,7 @@ static const struct wined3d_resource_ops volume_resource_ops =
     volume_unload,
 };
 
-HRESULT volume_init(struct wined3d_volume *volume, IWineD3DDeviceImpl *device, UINT width,
+static HRESULT volume_init(struct wined3d_volume *volume, IWineD3DDeviceImpl *device, UINT width,
         UINT height, UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -326,6 +326,40 @@ HRESULT volume_init(struct wined3d_volume *volume, IWineD3DDeviceImpl *device, U
     volume->dirty = TRUE;
 
     volume_add_dirty_box(volume, NULL);
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_volume_create(IWineD3DDevice *iface, UINT width, UINT height,
+        UINT depth, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_volume **volume)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_volume *object;
+    HRESULT hr;
+
+    TRACE("device %p, width %u, height %u, depth %u, usage %#x, format %s, pool %s\n",
+            device, width, height, depth, usage, debug_d3dformat(format_id), debug_d3dpool(pool));
+    TRACE("parent %p, parent_ops %p, volume %p.\n", parent, parent_ops, volume);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *volume = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    hr = volume_init(object, device, width, height, depth, usage, format_id, pool, parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize volume, returning %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created volume %p.\n", object);
+    *volume = object;
 
     return WINED3D_OK;
 }

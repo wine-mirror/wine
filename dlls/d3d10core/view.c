@@ -427,7 +427,7 @@ static const struct ID3D10RenderTargetViewVtbl d3d10_rendertarget_view_vtbl =
     d3d10_rendertarget_view_GetDesc,
 };
 
-HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d10_device *device,
+HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc)
 {
     struct wined3d_resource *wined3d_resource;
@@ -453,8 +453,7 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struc
         return E_FAIL;
     }
 
-    hr = IWineD3DDevice_CreateRendertargetView(device->wined3d_device,
-            wined3d_resource, (IUnknown *)view, &view->wined3d_view);
+    hr = wined3d_rendertarget_view_create(wined3d_resource, view, &view->wined3d_view);
     if (FAILED(hr))
     {
         WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);

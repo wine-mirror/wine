@@ -157,7 +157,7 @@ static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
     }
 }
 
-HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declaration, IWineD3DDeviceImpl *device,
+static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declaration, IWineD3DDeviceImpl *device,
         const WINED3DVERTEXELEMENT *elements, UINT element_count,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -235,4 +235,192 @@ HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declaration, I
     }
 
     return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_vertex_declaration_create(IWineD3DDevice *iface,
+        const WINED3DVERTEXELEMENT *elements, UINT element_count, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_vertex_declaration **declaration)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_vertex_declaration *object;
+    HRESULT hr;
+
+    TRACE("device %p, elements %p, element_count %u, parent %p, parent_ops %p, declaration %p.\n",
+            device, elements, element_count, parent, parent_ops, declaration);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if(!object)
+    {
+        ERR("Failed to allocate vertex declaration memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = vertexdeclaration_init(object, device, elements, element_count, parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created vertex declaration %p.\n", object);
+    *declaration = object;
+
+    return WINED3D_OK;
+}
+
+struct wined3d_fvf_convert_state
+{
+    const struct wined3d_gl_info *gl_info;
+    WINED3DVERTEXELEMENT *elements;
+    UINT offset;
+    UINT idx;
+};
+
+static void append_decl_element(struct wined3d_fvf_convert_state *state,
+        enum wined3d_format_id format_id, WINED3DDECLUSAGE usage, UINT usage_idx)
+{
+    WINED3DVERTEXELEMENT *elements = state->elements;
+    const struct wined3d_format *format;
+    UINT offset = state->offset;
+    UINT idx = state->idx;
+
+    elements[idx].format = format_id;
+    elements[idx].input_slot = 0;
+    elements[idx].offset = offset;
+    elements[idx].output_slot = 0;
+    elements[idx].method = WINED3DDECLMETHOD_DEFAULT;
+    elements[idx].usage = usage;
+    elements[idx].usage_idx = usage_idx;
+
+    format = wined3d_get_format(state->gl_info, format_id);
+    state->offset += format->component_count * format->component_size;
+    ++state->idx;
+}
+
+static unsigned int convert_fvf_to_declaration(const struct wined3d_gl_info *gl_info,
+        DWORD fvf, WINED3DVERTEXELEMENT **elements)
+{
+    BOOL has_pos = !!(fvf & WINED3DFVF_POSITION_MASK);
+    BOOL has_blend = (fvf & WINED3DFVF_XYZB5) > WINED3DFVF_XYZRHW;
+    BOOL has_blend_idx = has_blend &&
+       (((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB5) ||
+        (fvf & WINED3DFVF_LASTBETA_D3DCOLOR) ||
+        (fvf & WINED3DFVF_LASTBETA_UBYTE4));
+    BOOL has_normal = !!(fvf & WINED3DFVF_NORMAL);
+    BOOL has_psize = !!(fvf & WINED3DFVF_PSIZE);
+    BOOL has_diffuse = !!(fvf & WINED3DFVF_DIFFUSE);
+    BOOL has_specular = !!(fvf & WINED3DFVF_SPECULAR);
+
+    DWORD num_textures = (fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
+    DWORD texcoords = (fvf & 0xFFFF0000) >> 16;
+    struct wined3d_fvf_convert_state state;
+    unsigned int size;
+    unsigned int idx;
+    DWORD num_blends = 1 + (((fvf & WINED3DFVF_XYZB5) - WINED3DFVF_XYZB1) >> 1);
+    if (has_blend_idx) num_blends--;
+
+    /* Compute declaration size */
+    size = has_pos + (has_blend && num_blends > 0) + has_blend_idx + has_normal +
+           has_psize + has_diffuse + has_specular + num_textures;
+
+    state.gl_info = gl_info;
+    state.elements = HeapAlloc(GetProcessHeap(), 0, size * sizeof(*state.elements));
+    if (!state.elements) return ~0U;
+    state.offset = 0;
+    state.idx = 0;
+
+    if (has_pos)
+    {
+        if (!has_blend && (fvf & WINED3DFVF_XYZRHW))
+            append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_POSITIONT, 0);
+        else if ((fvf & WINED3DFVF_XYZW) == WINED3DFVF_XYZW)
+            append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_POSITION, 0);
+        else
+            append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_POSITION, 0);
+    }
+
+    if (has_blend && (num_blends > 0))
+    {
+        if ((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2 && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR))
+            append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+        else
+        {
+            switch (num_blends)
+            {
+                case 1:
+                    append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                case 2:
+                    append_decl_element(&state, WINED3DFMT_R32G32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                case 3:
+                    append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                case 4:
+                    append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_BLENDWEIGHT, 0);
+                    break;
+                default:
+                    ERR("Unexpected amount of blend values: %u\n", num_blends);
+            }
+        }
+    }
+
+    if (has_blend_idx)
+    {
+        if ((fvf & WINED3DFVF_LASTBETA_UBYTE4)
+                || ((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2 && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)))
+            append_decl_element(&state, WINED3DFMT_R8G8B8A8_UINT, WINED3DDECLUSAGE_BLENDINDICES, 0);
+        else if (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)
+            append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_BLENDINDICES, 0);
+        else
+            append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_BLENDINDICES, 0);
+    }
+
+    if (has_normal) append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_NORMAL, 0);
+    if (has_psize) append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_PSIZE, 0);
+    if (has_diffuse) append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_COLOR, 0);
+    if (has_specular) append_decl_element(&state, WINED3DFMT_B8G8R8A8_UNORM, WINED3DDECLUSAGE_COLOR, 1);
+
+    for (idx = 0; idx < num_textures; ++idx)
+    {
+        switch ((texcoords >> (idx * 2)) & 0x03)
+        {
+            case WINED3DFVF_TEXTUREFORMAT1:
+                append_decl_element(&state, WINED3DFMT_R32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
+                break;
+            case WINED3DFVF_TEXTUREFORMAT2:
+                append_decl_element(&state, WINED3DFMT_R32G32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
+                break;
+            case WINED3DFVF_TEXTUREFORMAT3:
+                append_decl_element(&state, WINED3DFMT_R32G32B32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
+                break;
+            case WINED3DFVF_TEXTUREFORMAT4:
+                append_decl_element(&state, WINED3DFMT_R32G32B32A32_FLOAT, WINED3DDECLUSAGE_TEXCOORD, idx);
+                break;
+        }
+    }
+
+    *elements = state.elements;
+    return size;
+}
+
+HRESULT CDECL wined3d_vertex_declaration_create_from_fvf(IWineD3DDevice *iface,
+        DWORD fvf, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_vertex_declaration **declaration)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    WINED3DVERTEXELEMENT *elements;
+    unsigned int size;
+    DWORD hr;
+
+    TRACE("device %p, fvf %#x, parent %p, parent_ops %p, declaration %p.\n",
+            device, fvf, parent, parent_ops, declaration);
+
+    size = convert_fvf_to_declaration(&device->adapter->gl_info, fvf, &elements);
+    if (size == ~0U) return E_OUTOFMEMORY;
+
+    hr = wined3d_vertex_declaration_create(iface, elements, size, parent, parent_ops, declaration);
+    HeapFree(GetProcessHeap(), 0, elements);
+    return hr;
 }

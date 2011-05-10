@@ -19,6 +19,9 @@
 @ cdecl wined3d_incref(ptr)
 @ cdecl wined3d_register_software_device(ptr ptr)
 
+@ cdecl wined3d_buffer_create(ptr ptr ptr ptr ptr ptr)
+@ cdecl wined3d_buffer_create_ib(ptr long long long ptr ptr ptr)
+@ cdecl wined3d_buffer_create_vb(ptr long long long ptr ptr ptr)
 @ cdecl wined3d_buffer_decref(ptr)
 @ cdecl wined3d_buffer_free_private_data(ptr ptr)
 @ cdecl wined3d_buffer_get_parent(ptr)
@@ -43,6 +46,7 @@
 
 @ cdecl wined3d_device_create(ptr long long ptr long ptr ptr)
 
+@ cdecl wined3d_palette_create(ptr long ptr ptr ptr)
 @ cdecl wined3d_palette_decref(ptr)
 @ cdecl wined3d_palette_get_entries(ptr long long long ptr)
 @ cdecl wined3d_palette_get_flags(ptr)
@@ -50,6 +54,7 @@
 @ cdecl wined3d_palette_incref(ptr)
 @ cdecl wined3d_palette_set_entries(ptr long long long ptr)
 
+@ cdecl wined3d_query_create(ptr long ptr)
 @ cdecl wined3d_query_decref(ptr)
 @ cdecl wined3d_query_get_data(ptr ptr long long)
 @ cdecl wined3d_query_get_data_size(ptr)
@@ -60,11 +65,15 @@
 @ cdecl wined3d_resource_get_desc(ptr ptr)
 @ cdecl wined3d_resource_get_parent(ptr)
 
+@ cdecl wined3d_rendertarget_view_create(ptr ptr ptr)
 @ cdecl wined3d_rendertarget_view_decref(ptr)
 @ cdecl wined3d_rendertarget_view_get_parent(ptr)
 @ cdecl wined3d_rendertarget_view_get_resource(ptr)
 @ cdecl wined3d_rendertarget_view_incref(ptr)
 
+@ cdecl wined3d_shader_create_gs(ptr ptr ptr ptr ptr ptr)
+@ cdecl wined3d_shader_create_ps(ptr ptr ptr ptr ptr ptr)
+@ cdecl wined3d_shader_create_vs(ptr ptr ptr ptr ptr ptr)
 @ cdecl wined3d_shader_decref(ptr)
 @ cdecl wined3d_shader_get_byte_code(ptr ptr ptr)
 @ cdecl wined3d_shader_get_parent(ptr)
@@ -73,11 +82,13 @@
 
 @ cdecl wined3d_stateblock_apply(ptr)
 @ cdecl wined3d_stateblock_capture(ptr)
+@ cdecl wined3d_stateblock_create(ptr long ptr)
 @ cdecl wined3d_stateblock_decref(ptr)
 @ cdecl wined3d_stateblock_incref(ptr)
 
 @ cdecl wined3d_surface_blt(ptr ptr ptr ptr long ptr long)
 @ cdecl wined3d_surface_bltfast(ptr long long ptr ptr long)
+@ cdecl wined3d_surface_create(ptr long long long long long long long long long long long ptr ptr ptr)
 @ cdecl wined3d_surface_decref(ptr)
 @ cdecl wined3d_surface_flip(ptr ptr long)
 @ cdecl wined3d_surface_free_private_data(ptr ptr)
@@ -110,6 +121,7 @@
 @ cdecl wined3d_surface_update_overlay(ptr ptr ptr ptr long ptr)
 @ cdecl wined3d_surface_update_overlay_z_order(ptr long ptr)
 
+@ cdecl wined3d_swapchain_create(ptr ptr long ptr ptr ptr)
 @ cdecl wined3d_swapchain_decref(ptr)
 @ cdecl wined3d_swapchain_get_back_buffer(ptr long long ptr)
 @ cdecl wined3d_swapchain_get_device(ptr)
@@ -125,6 +137,9 @@
 @ cdecl wined3d_swapchain_set_window(ptr ptr)
 
 @ cdecl wined3d_texture_add_dirty_region(ptr long ptr)
+@ cdecl wined3d_texture_create_2d(ptr long long long long long long ptr ptr ptr)
+@ cdecl wined3d_texture_create_3d(ptr long long long long long long long ptr ptr ptr)
+@ cdecl wined3d_texture_create_cube(ptr long long long long long ptr ptr ptr)
 @ cdecl wined3d_texture_decref(ptr)
 @ cdecl wined3d_texture_free_private_data(ptr ptr)
 @ cdecl wined3d_texture_generate_mipmaps(ptr)
@@ -143,10 +158,13 @@
 @ cdecl wined3d_texture_set_priority(ptr long)
 @ cdecl wined3d_texture_set_private_data(ptr ptr ptr long long)
 
+@ cdecl wined3d_vertex_declaration_create(ptr ptr long ptr ptr ptr)
+@ cdecl wined3d_vertex_declaration_create_from_fvf(ptr long ptr ptr ptr)
 @ cdecl wined3d_vertex_declaration_decref(ptr)
 @ cdecl wined3d_vertex_declaration_get_parent(ptr)
 @ cdecl wined3d_vertex_declaration_incref(ptr)
 
+@ cdecl wined3d_volume_create(ptr long long long long long long ptr ptr ptr)
 @ cdecl wined3d_volume_decref(ptr)
 @ cdecl wined3d_volume_free_private_data(ptr ptr)
 @ cdecl wined3d_volume_from_resource(ptr)

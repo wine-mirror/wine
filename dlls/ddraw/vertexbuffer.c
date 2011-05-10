@@ -572,7 +572,7 @@ HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
 
     EnterCriticalSection(&ddraw_cs);
 
-    hr = IWineD3DDevice_CreateVertexBuffer(ddraw->wineD3DDevice,
+    hr = wined3d_buffer_create_vb(ddraw->wineD3DDevice,
             get_flexible_vertex_size(desc->dwFVF) * desc->dwNumVertices,
             usage, desc->dwCaps & D3DVBCAPS_SYSTEMMEMORY ? WINED3DPOOL_SYSTEMMEM : WINED3DPOOL_DEFAULT,
             buffer, &ddraw_null_wined3d_parent_ops, &buffer->wineD3DVertexBuffer);

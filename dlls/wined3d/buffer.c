@@ -1194,7 +1194,7 @@ static const struct wined3d_resource_ops buffer_resource_ops =
     buffer_unload,
 };
 
-HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
+static HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
         UINT size, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, GLenum bind_hint,
         const char *data, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -1276,6 +1276,117 @@ HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
         return E_OUTOFMEMORY;
     }
     buffer->maps_size = 1;
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_buffer_create(IWineD3DDevice *iface, struct wined3d_buffer_desc *desc, const void *data,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_buffer *object;
+    HRESULT hr;
+
+    TRACE("device %p, desc %p, data %p, parent %p, buffer %p\n", device, desc, data, parent, buffer);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    FIXME("Ignoring access flags (pool)\n");
+
+    hr = buffer_init(object, device, desc->byte_width, desc->usage, WINED3DFMT_UNKNOWN,
+            WINED3DPOOL_MANAGED, GL_ARRAY_BUFFER_ARB, data, parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize buffer, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+    object->desc = *desc;
+
+    TRACE("Created buffer %p.\n", object);
+
+    *buffer = object;
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_buffer_create_vb(IWineD3DDevice *iface, UINT size, DWORD usage, WINED3DPOOL pool,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_buffer *object;
+    HRESULT hr;
+
+    TRACE("device %p, size %u, usage %#x, pool %#x, parent %p, parent_ops %p, buffer %p.\n",
+            device, size, usage, pool, parent, parent_ops, buffer);
+
+    if (pool == WINED3DPOOL_SCRATCH)
+    {
+        /* The d3d9 tests shows that this is not allowed. It doesn't make much
+         * sense anyway, SCRATCH buffers wouldn't be usable anywhere. */
+        WARN("Vertex buffer in WINED3DPOOL_SCRATCH requested, returning WINED3DERR_INVALIDCALL.\n");
+        *buffer = NULL;
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *buffer = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    hr = buffer_init(object, device, size, usage, WINED3DFMT_VERTEXDATA,
+            pool, GL_ARRAY_BUFFER_ARB, NULL, parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize buffer, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created buffer %p.\n", object);
+    *buffer = object;
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_buffer_create_ib(IWineD3DDevice *iface, UINT size, DWORD usage, WINED3DPOOL pool,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_buffer *object;
+    HRESULT hr;
+
+    TRACE("device %p, size %u, usage %#x, pool %#x, parent %p, parent_ops %p, buffer %p.\n",
+            device, size, usage, pool, parent, parent_ops, buffer);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Out of memory\n");
+        *buffer = NULL;
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    hr = buffer_init(object, device, size, usage | WINED3DUSAGE_STATICDECL,
+            WINED3DFMT_UNKNOWN, pool, GL_ELEMENT_ARRAY_BUFFER_ARB, NULL,
+            parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize buffer, hr %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created buffer %p.\n", object);
+    *buffer = object;
 
     return WINED3D_OK;
 }

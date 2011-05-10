@@ -3304,7 +3304,7 @@ static struct wined3d_surface *surface_convert_format(struct wined3d_surface *so
         return NULL;
     }
 
-    IWineD3DDevice_CreateSurface((IWineD3DDevice *)source->resource.device, source->resource.width,
+    wined3d_surface_create((IWineD3DDevice *)source->resource.device, source->resource.width,
             source->resource.height, to_fmt, TRUE /* lockable */, TRUE /* discard  */, 0 /* level */,
             0 /* usage */, WINED3DPOOL_SCRATCH, WINED3DMULTISAMPLE_NONE /* TODO: Multisampled conversion */,
             0 /* MultiSampleQuality */, source->surface_type, NULL /* parent */, &wined3d_null_parent_ops, &ret);
@@ -7325,7 +7325,7 @@ const struct blit_shader cpu_blit =  {
     cpu_blit_depth_fill,
 };
 
-HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE surface_type, UINT alignment,
+static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE surface_type, UINT alignment,
         UINT width, UINT height, UINT level, BOOL lockable, BOOL discard, WINED3DMULTISAMPLE_TYPE multisample_type,
         UINT multisample_quality, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops)
@@ -7448,6 +7448,49 @@ HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE surface_ty
         surface->surface_ops->surface_cleanup(surface);
         return hr;
     }
+
+    return hr;
+}
+
+HRESULT CDECL wined3d_surface_create(IWineD3DDevice *iface, UINT width, UINT height,
+        enum wined3d_format_id format_id, BOOL lockable, BOOL discard, UINT level, DWORD usage, WINED3DPOOL pool,
+        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,
+        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_surface *object;
+    HRESULT hr;
+
+    TRACE("device %p, width %u, height %u, format %s, lockable %#x, discard %#x, level %u\n",
+            device, width, height, debug_d3dformat(format_id), lockable, discard, level);
+    TRACE("surface %p, usage %s (%#x), pool %s, multisample_type %#x, multisample_quality %u\n",
+            surface, debug_d3dusage(usage), usage, debug_d3dpool(pool), multisample_type, multisample_quality);
+    TRACE("surface_type %#x, parent %p, parent_ops %p.\n", surface_type, parent, parent_ops);
+
+    if (surface_type == SURFACE_OPENGL && !device->adapter)
+    {
+        ERR("OpenGL surfaces are not available without OpenGL.\n");
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate surface memory.\n");
+        return WINED3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    hr = surface_init(object, surface_type, device->surface_alignment, width, height, level, lockable,
+            discard, multisample_type, multisample_quality, device, usage, format_id, pool, parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize surface, returning %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created surface %p.\n", object);
+    *surface = object;
 
     return hr;
 }

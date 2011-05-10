@@ -760,7 +760,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
         return E_OUTOFMEMORY;
     }
 
-    hr = d3d10_rendertarget_view_init(object, (struct d3d10_device *)iface, resource, desc);
+    hr = d3d10_rendertarget_view_init(object, resource, desc);
     if (FAILED(hr))
     {
         WARN("Failed to initialize rendertarget view, hr %#x.\n", hr);
@@ -1453,7 +1453,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateVolume(IWineD3DDeviceParent
     TRACE("iface %p, container_parent %p, width %u, height %u, depth %u, format %#x, pool %#x, usage %#x, volume %p.\n",
             iface, container_parent, width, height, depth, format, pool, usage, volume);
 
-    hr = IWineD3DDevice_CreateVolume(device_from_device_parent(iface)->wined3d_device,
+    hr = wined3d_volume_create(device_from_device_parent(iface)->wined3d_device,
             width, height, depth, usage, format, pool, NULL, &d3d10_subresource_parent_ops, volume);
     if (FAILED(hr))
     {

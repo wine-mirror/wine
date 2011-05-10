@@ -274,7 +274,7 @@ HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device
     swapchain->vtbl = &dxgi_swapchain_vtbl;
     swapchain->refcount = 1;
 
-    hr = IWineD3DDevice_CreateSwapChain(device->wined3d_device, present_parameters,
+    hr = wined3d_swapchain_create(device->wined3d_device, present_parameters,
             SURFACE_OPENGL, swapchain, &dxgi_swapchain_wined3d_parent_ops,
             &swapchain->wined3d_swapchain);
     if (FAILED(hr))

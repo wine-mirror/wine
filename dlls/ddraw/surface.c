@@ -3483,10 +3483,10 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
 
     format = PixelFormat_DD2WineD3D(&surface->surface_desc.u4.ddpfPixelFormat);
     if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-        return IWineD3DDevice_CreateCubeTexture(surface->ddraw->wineD3DDevice, desc->dwWidth,
+        return wined3d_texture_create_cube(surface->ddraw->wineD3DDevice, desc->dwWidth,
                 levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
     else
-        return IWineD3DDevice_CreateTexture(surface->ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight,
+        return wined3d_texture_create_2d(surface->ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight,
                 levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
 }
 
@@ -3572,7 +3572,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     surface->first_attached = surface;
     surface->ImplType = surface_type;
 
-    hr = IWineD3DDevice_CreateSurface(ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight, format,
+    hr = wined3d_surface_create(ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight, format,
             TRUE /* Lockable */, FALSE /* Discard */, mip_level, usage, pool,
             WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, surface_type, surface,
             &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface);

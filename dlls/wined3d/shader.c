@@ -1795,7 +1795,7 @@ static void vertexshader_set_limits(struct wined3d_shader *shader)
     }
 }
 
-HRESULT vertexshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
+static HRESULT vertexshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -1844,7 +1844,7 @@ HRESULT vertexshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *dev
     return WINED3D_OK;
 }
 
-HRESULT geometryshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
+static HRESULT geometryshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -2050,7 +2050,7 @@ static void pixelshader_set_limits(struct wined3d_shader *shader)
     }
 }
 
-HRESULT pixelshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
+static HRESULT pixelshader_init(struct wined3d_shader *shader, IWineD3DDeviceImpl *device,
         const DWORD *byte_code, const struct wined3d_shader_signature *output_signature,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -2158,4 +2158,106 @@ void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, struc
                 sampler_type[i] = WINED3DSTT_2D;
         }
     }
+}
+
+HRESULT CDECL wined3d_shader_create_gs(IWineD3DDevice *iface, const DWORD *byte_code,
+        const struct wined3d_shader_signature *output_signature, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_shader *object;
+    HRESULT hr;
+
+    TRACE("device %p, byte_code %p, output_signature %p, parent %p, parent_ops %p, shader %p.\n",
+            device, byte_code, output_signature, parent, parent_ops, shader);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate shader memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = geometryshader_init(object, device, byte_code, output_signature, parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created geometry shader %p.\n", object);
+    *shader = object;
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_shader_create_ps(IWineD3DDevice *iface, const DWORD *byte_code,
+        const struct wined3d_shader_signature *output_signature, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_shader *object;
+    HRESULT hr;
+
+    TRACE("device %p, byte_code %p, output_signature %p, parent %p, parent_ops %p, shader %p.\n",
+            device, byte_code, output_signature, parent, parent_ops, shader);
+
+    if (device->ps_selected_mode == SHADER_NONE)
+        return WINED3DERR_INVALIDCALL;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate shader memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = pixelshader_init(object, device, byte_code, output_signature, parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize pixel shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created pixel shader %p.\n", object);
+    *shader = object;
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_shader_create_vs(IWineD3DDevice *iface, const DWORD *byte_code,
+        const struct wined3d_shader_signature *output_signature, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_shader *object;
+    HRESULT hr;
+
+    TRACE("device %p, byte_code %p, output_signature %p, parent %p, parent_ops %p, shader %p.\n",
+            device, byte_code, output_signature, parent, parent_ops, shader);
+
+    if (device->vs_selected_mode == SHADER_NONE)
+        return WINED3DERR_INVALIDCALL;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate shader memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = vertexshader_init(object, device, byte_code, output_signature, parent, parent_ops);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created vertex shader %p.\n", object);
+    *shader = object;
+
+    return WINED3D_OK;
 }

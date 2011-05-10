@@ -1327,7 +1327,8 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     TRACE("Done.\n");
 }
 
-HRESULT stateblock_init(struct wined3d_stateblock *stateblock, IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type)
+static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
+        IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type)
 {
     unsigned int i;
     HRESULT hr;
@@ -1375,6 +1376,37 @@ HRESULT stateblock_init(struct wined3d_stateblock *stateblock, IWineD3DDeviceImp
 
     stateblock_init_contained_states(stateblock);
     wined3d_stateblock_capture(stateblock);
+
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_create(IWineD3DDevice *iface,
+        WINED3DSTATEBLOCKTYPE type, struct wined3d_stateblock **stateblock)
+{
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
+    struct wined3d_stateblock *object;
+    HRESULT hr;
+
+    TRACE("device %p, type %#x, stateblock %p.\n",
+            device, type, stateblock);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate stateblock memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    hr = stateblock_init(object, device, type);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize stateblock, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created stateblock %p.\n", object);
+    *stateblock = object;
 
     return WINED3D_OK;
 }

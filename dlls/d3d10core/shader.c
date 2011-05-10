@@ -255,7 +255,7 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
         return hr;
     }
 
-    hr = IWineD3DDevice_CreateVertexShader(device->wined3d_device, shader_info.shader_code,
+    hr = wined3d_shader_create_vs(device->wined3d_device, shader_info.shader_code,
             &shader->output_signature, shader, &d3d10_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader);
     if (FAILED(hr))
     {
@@ -387,7 +387,7 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
         return hr;
     }
 
-    hr = IWineD3DDevice_CreateGeometryShader(device->wined3d_device, shader_info.shader_code,
+    hr = wined3d_shader_create_gs(device->wined3d_device, shader_info.shader_code,
             &shader->output_signature, shader, &d3d10_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader);
     if (FAILED(hr))
     {
@@ -522,7 +522,7 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_
         return hr;
     }
 
-    hr = IWineD3DDevice_CreatePixelShader(device->wined3d_device, shader_info.shader_code,
+    hr = wined3d_shader_create_ps(device->wined3d_device, shader_info.shader_code,
             &shader->output_signature, shader, &d3d10_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader);
     if (FAILED(hr))
     {

@@ -59,10 +59,33 @@ struct wined3d_resource * CDECL wined3d_rendertarget_view_get_resource(const str
     return view->resource;
 }
 
-void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
+static void wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *view,
         struct wined3d_resource *resource, void *parent)
 {
     view->refcount = 1;
     view->resource = resource;
     view->parent = parent;
+}
+
+HRESULT CDECL wined3d_rendertarget_view_create(struct wined3d_resource *resource,
+        void *parent, struct wined3d_rendertarget_view **rendertarget_view)
+{
+    struct wined3d_rendertarget_view *object;
+
+    TRACE("resource %p, parent %p, rendertarget_view %p.\n",
+            resource, parent, rendertarget_view);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+    {
+        ERR("Failed to allocate memory\n");
+        return E_OUTOFMEMORY;
+    }
+
+    wined3d_rendertarget_view_init(object, resource, parent);
+
+    TRACE("Created render target view %p.\n", object);
+    *rendertarget_view = object;
+
+    return WINED3D_OK;
 }
