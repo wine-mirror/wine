@@ -48,8 +48,6 @@ include/stamp-h: include/config.h.in config.status
 
 .PHONY: __clean__
 clean:: __clean__
-	$(RM) tools/makedep$(EXEEXT)
-
 distclean:: clean
 	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h Makefile Make.tmp
 	$(RM) -r autom4te.cache
@@ -71,7 +69,7 @@ tools/widl tools/wmc tools/wrc: libs/wpp
 
 dlls/shell32/Makefile dlls/shell32/__depend__: dlls/shell32/AUTHORS
 
-$(MAKEDEP): include/config.h tools/Makefile
+$(MAKEDEP): include/config.h
 	@cd $(TOOLSDIR)/tools && $(MAKE) makedep$(TOOLSEXT)
 
 # Misc rules

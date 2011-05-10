@@ -425,9 +425,11 @@ $ac_dir/__crosstest__: $ac_dir/Makefile __builddeps__ dummy
 wine_fn_config_tool ()
 {
     ac_dir=$[1]
+    AS_VAR_IF([enable_tools],[no],[return 0])
+
     wine_fn_all_dir_rules $ac_dir Make.rules
 
-    AS_VAR_IF([enable_tools],[no],,[case $ac_dir in
+    case $ac_dir in
       dnl tools directory has both install-lib and install-dev
       tools) wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "install:: $ac_dir
@@ -439,17 +441,17 @@ install-dev:: $ac_dir
       *)     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "install install-dev:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install" ;;
-      esac
-      wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+    esac
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "uninstall:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) uninstall
 all __tooldeps__: $ac_dir
 .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile libs/port dummy
 	@cd $ac_dir && \$(MAKE)"
-      case $ac_dir in
-        tools/winebuild) wine_fn_append_rule ALL_MAKEFILE_DEPENDS "\$(WINEBUILD): $ac_dir" ;;
-      esac])
+    case $ac_dir in
+      tools/winebuild) wine_fn_append_rule ALL_MAKEFILE_DEPENDS "\$(WINEBUILD): $ac_dir" ;;
+    esac
 }
 
 wine_fn_config_makerules ()

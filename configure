@@ -14894,12 +14894,13 @@ fi
 wine_fn_config_tool ()
 {
     ac_dir=$1
+    if test "x$enable_tools" = xno; then :
+  return 0
+fi
+
     wine_fn_all_dir_rules $ac_dir Make.rules
 
-    if test "x$enable_tools" = xno; then :
-
-else
-  case $ac_dir in
+    case $ac_dir in
             tools) wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "install:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install
@@ -14910,18 +14911,17 @@ install-dev:: $ac_dir
       *)     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "install install-dev:: $ac_dir
 	@cd $ac_dir && \$(MAKE) install" ;;
-      esac
-      wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+    esac
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "uninstall:: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) uninstall
 all __tooldeps__: $ac_dir
 .PHONY: $ac_dir
 $ac_dir: $ac_dir/Makefile libs/port dummy
 	@cd $ac_dir && \$(MAKE)"
-      case $ac_dir in
-        tools/winebuild) wine_fn_append_rule ALL_MAKEFILE_DEPENDS "\$(WINEBUILD): $ac_dir" ;;
-      esac
-fi
+    case $ac_dir in
+      tools/winebuild) wine_fn_append_rule ALL_MAKEFILE_DEPENDS "\$(WINEBUILD): $ac_dir" ;;
+    esac
 }
 
 wine_fn_config_makerules ()
@@ -14971,8 +14971,10 @@ if test "x$enable_fonts" != xno; then
 ac_config_links="$ac_config_links fonts/tahomabd.ttf:fonts/tahomabd.ttf"
 test "$srcdir" = "." || wine_fn_config_symlink fonts/tahomabd.ttf
 fi
+if test "x$enable_tools" != xno; then
 ac_config_links="$ac_config_links tools/l_intl.nls:tools/l_intl.nls"
 test "$srcdir" = "." || wine_fn_config_symlink tools/l_intl.nls
+fi
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
 
@@ -15711,17 +15713,24 @@ all: \$(ALL_PO_FILES)
 	msgcat -o \$@ \$(ALL_POT_FILES)"
 fi
 
+if test "x$enable_tools" != xno
+then
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "\$(MAKEDEP): tools/Makefile
+clean:: __clean__
+	\$(RM) tools/makedep\$(EXEEXT)"
+fi
+
 if test -n "$with_wine64"
 then
-wine_fn_append_rule ALL_MAKEFILE_DEPENDS "all: fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader
-fonts server:
+wine_fn_append_rule ALL_MAKEFILE_DEPENDS "all: fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader
+fonts server tools:
 	\$(RM) \$@ && \$(LN_S) $with_wine64/\$@ \$@
 $with_wine64/loader/wine:
 	\$(RM) \$@ && \$(LN_S) $ac_pwd/loader/wine \$@
 $with_wine64/loader/wine-preloader:
 	\$(RM) \$@ && \$(LN_S) $ac_pwd/loader/wine-preloader \$@
 clean::
-	\$(RM) fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
+	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
 fi
 
 wine_fn_append_rule ALL_MAKEFILE_DEPENDS "uninstall::

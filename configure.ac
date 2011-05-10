@@ -2369,7 +2369,7 @@ WINE_CONFIG_SYMLINK(fonts/marlett.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/symbol.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/tahoma.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/tahomabd.ttf,,enable_fonts)
-WINE_CONFIG_SYMLINK(tools/l_intl.nls)
+WINE_CONFIG_SYMLINK(tools/l_intl.nls,,enable_tools)
 WINE_CONFIG_SYMLINK(wine,tools/winewrapper)
 
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/dibdrv)
@@ -3092,18 +3092,26 @@ all: \$(ALL_PO_FILES)
 	msgcat -o \$[@] \$(ALL_POT_FILES)])
 fi
 
+if test "x$enable_tools" != xno
+then
+    WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
+[\$(MAKEDEP): tools/Makefile
+clean:: __clean__
+	\$(RM) tools/makedep\$(EXEEXT)])
+fi
+
 if test -n "$with_wine64"
 then
 WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
-[all: fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader
-fonts server:
+[all: fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader
+fonts server tools:
 	\$(RM) \$[@] && \$(LN_S) $with_wine64/\$[@] \$[@]
 $with_wine64/loader/wine:
 	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine \$[@]
 $with_wine64/loader/wine-preloader:
 	\$(RM) \$[@] && \$(LN_S) $ac_pwd/loader/wine-preloader \$[@]
 clean::
-	\$(RM) fonts server $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
+	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 fi
 
 WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
