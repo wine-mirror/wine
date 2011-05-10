@@ -7423,6 +7423,15 @@ HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE surface_ty
         surface->flags |= SFLAG_DISCARD;
     if (lockable || format_id == WINED3DFMT_D16_LOCKABLE)
         surface->flags |= SFLAG_LOCKABLE;
+    /* I'm not sure if this qualifies as a hack or as an optimization. It
+     * seems reasonable to assume that lockable render targets will get
+     * locked, so we might as well set SFLAG_DYNLOCK right at surface
+     * creation. However, the other reason we want to do this is that several
+     * ddraw applications access surface memory while the surface isn't
+     * mapped. The SFLAG_DYNLOCK behaviour of keeping SYSMEM around for
+     * future locks prevents these from crashing. */
+    if (lockable && (usage & WINED3DUSAGE_RENDERTARGET))
+        surface->flags |= SFLAG_DYNLOCK;
 
     /* Mark the texture as dirty so that it gets loaded first time around. */
     surface_add_dirty_rect(surface, NULL);
