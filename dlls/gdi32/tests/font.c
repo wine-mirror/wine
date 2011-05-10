@@ -2347,6 +2347,7 @@ typedef struct
                     ((DWORD)(BYTE)(ch2) << 16) | ((DWORD)(BYTE)(ch3) << 24))
 #define MS_OS2_TAG MS_MAKE_TAG('O','S','/','2')
 #define MS_CMAP_TAG MS_MAKE_TAG('c','m','a','p')
+#define MS_NAME_TAG MS_MAKE_TAG('n','a','m','e')
 
 typedef struct
 {
@@ -2549,6 +2550,101 @@ static BOOL get_first_last_from_cmap(HDC hdc, DWORD *first, DWORD *last, cmap_ty
 
 end:
     HeapFree(GetProcessHeap(), 0, header);
+    return r;
+}
+
+#define TT_PLATFORM_MICROSOFT 3
+#define TT_MS_ID_UNICODE_CS 1
+#define TT_MS_LANGID_ENGLISH_UNITED_STATES 0x0409
+#define TT_NAME_ID_FULL_NAME 4
+
+static BOOL get_ttf_nametable_entry(HDC hdc, WORD name_id, char *out_buf, SIZE_T out_size)
+{
+    struct sfnt_name_header
+    {
+        USHORT format;
+        USHORT number_of_record;
+        USHORT storage_offset;
+    } *header;
+    struct sfnt_name
+    {
+        USHORT platform_id;
+        USHORT encoding_id;
+        USHORT language_id;
+        USHORT name_id;
+        USHORT length;
+        USHORT offset;
+    } *entry;
+    BOOL r = FALSE;
+    LONG size, offset, length;
+    LONG c, ret;
+    WCHAR *name;
+    BYTE *data;
+    USHORT i;
+
+    size = GetFontData(hdc, MS_NAME_TAG, 0, NULL, 0);
+    ok(size != GDI_ERROR, "no name table found\n");
+    if(size == GDI_ERROR) return FALSE;
+
+    data = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = GetFontData(hdc, MS_NAME_TAG, 0, data, size);
+    ok(ret == size, "GetFontData should return %u not %u\n", size, ret);
+
+    header = (void *)data;
+    header->format = GET_BE_WORD(header->format);
+    header->number_of_record = GET_BE_WORD(header->number_of_record);
+    header->storage_offset = GET_BE_WORD(header->storage_offset);
+    if (header->format != 0)
+    {
+        trace("got format %u\n", header->format);
+        goto out;
+    }
+    if (header->number_of_record == 0 || sizeof(*header) + header->number_of_record * sizeof(*entry) > size)
+    {
+        trace("number records out of range: %d\n", header->number_of_record);
+        goto out;
+    }
+    if (header->storage_offset >= size)
+    {
+        trace("storage_offset %u > size %u\n", header->storage_offset, size);
+        goto out;
+    }
+
+    entry = (void *)&header[1];
+    for (i = 0; i < header->number_of_record; i++)
+    {
+        if (GET_BE_WORD(entry[i].platform_id) != TT_PLATFORM_MICROSOFT ||
+            GET_BE_WORD(entry[i].encoding_id) != TT_MS_ID_UNICODE_CS ||
+            GET_BE_WORD(entry[i].language_id) != TT_MS_LANGID_ENGLISH_UNITED_STATES ||
+            GET_BE_WORD(entry[i].name_id) != name_id)
+        {
+            continue;
+        }
+
+        offset = header->storage_offset + GET_BE_WORD(entry[i].offset);
+        length = GET_BE_WORD(entry[i].length);
+        if (offset + length > size)
+        {
+            trace("entry %d is out of range\n", i);
+            break;
+        }
+        if (length >= out_size)
+        {
+            trace("buffer too small for entry %d\n", i);
+            break;
+        }
+
+        name = (WCHAR *)(data + offset);
+        for (c = 0; c < length / 2; c++)
+            out_buf[c] = GET_BE_WORD(name[c]);
+        out_buf[c] = 0;
+
+        r = TRUE;
+        break;
+    }
+
+out:
+    HeapFree(GetProcessHeap(), 0, data);
     return r;
 }
 
@@ -3637,6 +3733,52 @@ static void test_EnumFonts(void)
     DeleteDC(hdc);
 }
 
+static void test_fullname(void)
+{
+    static const char *TestName[] = {"Lucida Sans Demibold Roman", "Lucida Sans Italic"};
+    char buf[LF_FULLFACESIZE];
+    HFONT hfont, of;
+    LOGFONTA lf;
+    HDC hdc;
+    int i;
+
+    /* Lucida Sans comes with XP SP2 or later */
+    if (!is_truetype_font_installed("Lucida Sans"))
+    {
+        skip("Lucida Sans is not installed\n");
+        return;
+    }
+
+    hdc = CreateCompatibleDC(0);
+    ok(hdc != NULL, "CreateCompatibleDC failed\n");
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = ANSI_CHARSET;
+    lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf.lfHeight = 16;
+    lf.lfWidth = 16;
+    lf.lfQuality = DEFAULT_QUALITY;
+    lf.lfItalic = FALSE;
+    lf.lfWeight = FW_DONTCARE;
+
+    for (i = 0; i < sizeof(TestName) / sizeof(TestName[0]); i++)
+    {
+        lstrcpyA(lf.lfFaceName, TestName[i]);
+        hfont = CreateFontIndirectA(&lf);
+        ok(hfont != 0, "CreateFontIndirectA failed\n");
+
+        of = SelectObject(hdc, hfont);
+        buf[0] = 0;
+        ok(get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, buf, sizeof(buf)),
+           "face full name could not be read\n");
+todo_wine
+        ok(!lstrcmpA(buf, TestName[i]), "font full names don't match: %s != %s\n", TestName[i], buf);
+        SelectObject(hdc, of);
+        DeleteObject(hfont);
+    }
+    DeleteDC(hdc);
+}
+
 START_TEST(font)
 {
     init();
@@ -3688,4 +3830,5 @@ START_TEST(font)
     test_CreateFontIndirect();
     test_CreateFontIndirectEx();
     test_oemcharset();
+    test_fullname();
 }
