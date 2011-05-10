@@ -297,7 +297,7 @@ WORD WINAPI SelectorAccessRights16( WORD sel, WORD op, WORD val )
 
     if (op == 0)  /* get */
     {
-        return entry.HighWord.Bytes.Flags1 | ((entry.HighWord.Bytes.Flags2 << 8) & 0xf0);
+        return entry.HighWord.Bytes.Flags1 | ((entry.HighWord.Bytes.Flags2 & 0xf0) << 8);
     }
     else  /* set */
     {
