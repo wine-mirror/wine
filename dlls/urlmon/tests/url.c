@@ -1795,7 +1795,7 @@ static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallbackEx *iface, HRES
     if(filedwl_api)
         ok(SUCCEEDED(hresult), "binding failed: %08x\n", hresult);
     else if(invalid_cn_accepted)
-        todo_wine ok(hresult == binding_hres, "binding failed: %08x, expected %08x\n", hresult, binding_hres);
+        ok(hresult == binding_hres, "binding failed: %08x, expected %08x\n", hresult, binding_hres);
     else
         ok(hresult == binding_hres, "binding failed: %08x, expected %08x\n", hresult, binding_hres);
     ok(szError == NULL, "szError should be NULL\n");
@@ -2876,14 +2876,12 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         ok(hres == binding_hres, "Got %08x\n", hres);
         ok(unk == NULL, "Got %p\n", unk);
     }else if((flags & BINDTEST_INVALID_CN) && invalid_cn_accepted) {
-        todo_wine {
-            ok(hres == S_OK, "IMoniker_BindToStorage failed: %08x\n", hres);
-            ok(unk != NULL, "unk == NULL\n");
-            if(unk == NULL) {
-                ok(0, "Expected security problem to be ignored.\n");
-                invalid_cn_accepted = FALSE;
-                binding_hres = INET_E_INVALID_CERTIFICATE;
-            }
+        ok(hres == S_OK, "IMoniker_BindToStorage failed: %08x\n", hres);
+        ok(unk != NULL, "unk == NULL\n");
+        if(unk == NULL) {
+            ok(0, "Expected security problem to be ignored.\n");
+            invalid_cn_accepted = FALSE;
+            binding_hres = INET_E_INVALID_CERTIFICATE;
         }
     }else {
         ok(hres == S_OK, "IMoniker_BindToStorage failed: %08x\n", hres);
@@ -2958,11 +2956,9 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
                     CLEAR_CALLED(OnProgress_CONNECTING);
                 }
             }else if(!abort_start) {
-                todo_wine {
-                    CHECK_NOT_CALLED(OnProgress_FINDINGRESOURCE);
-                    /* IE7 does call this */
-                    CLEAR_CALLED(OnProgress_CONNECTING);
-                }
+                CHECK_NOT_CALLED(OnProgress_FINDINGRESOURCE);
+                /* IE7 does call this */
+                CLEAR_CALLED(OnProgress_CONNECTING);
             }
             if((flags & BINDTEST_INVALID_CN) && !invalid_cn_accepted)  {
                 CHECK_CALLED(QueryInterface_IHttpSecurity);
@@ -3186,7 +3182,7 @@ static void test_BindToObject(int protocol, DWORD flags)
             if(http_is_first) {
                 CHECK_CALLED(Obj_OnProgress_FINDINGRESOURCE);
                 CHECK_CALLED(Obj_OnProgress_CONNECTING);
-            }else todo_wine {
+            }else {
                 CHECK_NOT_CALLED(Obj_OnProgress_FINDINGRESOURCE);
                 /* IE7 does call this */
                 CLEAR_CALLED(Obj_OnProgress_CONNECTING);

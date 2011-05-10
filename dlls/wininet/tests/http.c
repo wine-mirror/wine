@@ -386,17 +386,8 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     {
         SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
         SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
-        SET_WINE_ALLOW(INTERNET_STATUS_RESOLVING_NAME);
-        SET_WINE_ALLOW(INTERNET_STATUS_NAME_RESOLVED);
     }
-    else
-    {
-        SET_WINE_ALLOW2(INTERNET_STATUS_RESOLVING_NAME,2);
-        SET_WINE_ALLOW2(INTERNET_STATUS_NAME_RESOLVED,2);
-    }
-    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
-    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTED_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
     SET_EXPECT2(INTERNET_STATUS_SENDING_REQUEST, (test->flags & TESTF_REDIRECT) ? 2 : 1);
     SET_EXPECT2(INTERNET_STATUS_REQUEST_SENT, (test->flags & TESTF_REDIRECT) ? 2 : 1);
@@ -461,7 +452,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
             CLEAR_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
         }
     }
-    else todo_wine
+    else
     {
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
@@ -582,8 +573,6 @@ abort:
     trace("aborting\n");
     SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     if (hor != 0x0) {
-        SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
-        SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
         SetLastError(0xdeadbeef);
         trace("closing\n");
         res = InternetCloseHandle(hor);
@@ -608,7 +597,7 @@ abort:
           Sleep(100);
     }
     CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
-    if (hor != 0x0) todo_wine
+    if (hor != 0x0)
     {
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
@@ -791,17 +780,8 @@ static void InternetReadFileExA_test(int flags)
     {
         SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
         SET_EXPECT(INTERNET_STATUS_NAME_RESOLVED);
-        SET_WINE_ALLOW(INTERNET_STATUS_RESOLVING_NAME);
-        SET_WINE_ALLOW(INTERNET_STATUS_NAME_RESOLVED);
     }
-    else
-    {
-        SET_WINE_ALLOW2(INTERNET_STATUS_RESOLVING_NAME,2);
-        SET_WINE_ALLOW2(INTERNET_STATUS_NAME_RESOLVED,2);
-    }
-    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTING_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTING_TO_SERVER);
-    SET_WINE_ALLOW(INTERNET_STATUS_CONNECTED_TO_SERVER);
     SET_EXPECT(INTERNET_STATUS_CONNECTED_TO_SERVER);
     SET_EXPECT2(INTERNET_STATUS_SENDING_REQUEST, 2);
     SET_EXPECT2(INTERNET_STATUS_REQUEST_SENT, 2);
@@ -836,7 +816,7 @@ static void InternetReadFileExA_test(int flags)
         CHECK_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
         CHECK_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
     }
-    else todo_wine
+    else
     {
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
         CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
@@ -975,8 +955,6 @@ static void InternetReadFileExA_test(int flags)
 abort:
     SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     if (hor) {
-        SET_WINE_ALLOW(INTERNET_STATUS_CLOSING_CONNECTION);
-        SET_WINE_ALLOW(INTERNET_STATUS_CONNECTION_CLOSED);
         rc = InternetCloseHandle(hor);
         ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
         rc = InternetCloseHandle(hor);
@@ -2640,7 +2618,7 @@ static void test_url_caching(int port, int *num_retrievals)
     r = HttpSendRequest(hr, NULL, 0, NULL, 0);
     ok(r, "HttpSendRequest failed\n");
 
-    ok(*num_retrievals == 1, "expected 1 retrievals\n");
+    ok(*num_retrievals == 1, "expected 1 retrievals, got %d\n", *num_retrievals);
 
     count = 0;
     memset(buffer, 0, sizeof buffer);
@@ -3406,7 +3384,7 @@ START_TEST(http)
     pInternetSetStatusCallbackA = (void*)GetProcAddress(hdll, "InternetSetStatusCallbackA");
 
     init_status_tests();
-    if(0)test_InternetCloseHandle();
+    test_InternetCloseHandle();
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[0]);
     InternetReadFile_test(INTERNET_FLAG_ASYNC, &test_data[1]);
     InternetReadFile_test(0, &test_data[1]);

@@ -70,6 +70,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "wine/library.h"
 #include "windef.h"
@@ -493,22 +494,64 @@ static DWORD init_openssl(void)
 #endif
 }
 
-DWORD NETCON_init(netconn_t *connection, BOOL useSSL)
+DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, netconn_t **ret)
 {
-    DWORD res = ERROR_SUCCESS;
+    netconn_t *netconn;
+    int result;
 
-    connection->useSSL = useSSL;
-    connection->socketFD = -1;
+    if(useSSL) {
+        DWORD res;
 
-    if (useSSL) {
         TRACE("using SSL connection\n");
 
         EnterCriticalSection(&init_ssl_cs);
         res = init_openssl();
         LeaveCriticalSection(&init_ssl_cs);
+        if(res != ERROR_SUCCESS)
+            return res;
     }
 
-    return res;
+    netconn = heap_alloc_zero(sizeof(*netconn));
+    if(!netconn)
+        return ERROR_OUTOFMEMORY;
+
+    netconn->useSSL = useSSL;
+    netconn->socketFD = -1;
+    netconn->security_flags = security_flags;
+    list_init(&netconn->pool_entry);
+
+    assert(server->addr_len);
+    result = netconn->socketFD = socket(server->addr.ss_family, SOCK_STREAM, 0);
+    if(result != -1) {
+        result = connect(netconn->socketFD, (struct sockaddr*)&server->addr, server->addr_len);
+        if(result == -1)
+            closesocket(netconn->socketFD);
+    }
+    if(result == -1) {
+        heap_free(netconn);
+        return sock_get_error(errno);
+    }
+
+    server_addref(server);
+    netconn->server = server;
+
+    *ret = netconn;
+    return ERROR_SUCCESS;
+}
+
+void free_netconn(netconn_t *netconn)
+{
+    server_release(netconn->server);
+
+#ifdef SONAME_LIBSSL
+    if (netconn->ssl_s) {
+        pSSL_shutdown(netconn->ssl_s);
+        pSSL_free(netconn->ssl_s);
+    }
+#endif
+
+    closesocket(netconn->socketFD);
+    heap_free(netconn);
 }
 
 void NETCON_unload(void)
@@ -532,11 +575,6 @@ void NETCON_unload(void)
         HeapFree(GetProcessHeap(), 0, ssl_locks);
     }
 #endif
-}
-
-BOOL NETCON_connected(netconn_t *connection)
-{
-    return connection->socketFD != -1;
 }
 
 /* translate a unix error code into a winsock one */
@@ -604,52 +642,6 @@ int sock_get_error( int err )
     }
 #endif
     return err;
-}
-
-/******************************************************************************
- * NETCON_create
- * Basically calls 'socket()'
- */
-DWORD NETCON_create(netconn_t *connection, int domain,
-	      int type, int protocol)
-{
-#ifdef SONAME_LIBSSL
-    if (connection->ssl_s)
-        return ERROR_NOT_SUPPORTED;
-#endif
-
-    connection->socketFD = socket(domain, type, protocol);
-    if (connection->socketFD == -1)
-        return sock_get_error(errno);
-
-    return ERROR_SUCCESS;
-}
-
-/******************************************************************************
- * NETCON_close
- * Basically calls 'close()' unless we should use SSL
- */
-DWORD NETCON_close(netconn_t *connection)
-{
-    int result;
-
-    if (!NETCON_connected(connection)) return ERROR_SUCCESS;
-
-#ifdef SONAME_LIBSSL
-    if (connection->ssl_s)
-    {
-        pSSL_shutdown(connection->ssl_s);
-        pSSL_free(connection->ssl_s);
-        connection->ssl_s = NULL;
-    }
-#endif
-
-    result = closesocket(connection->socketFD);
-    connection->socketFD = -1;
-
-    if (result == -1)
-        return sock_get_error(errno);
-    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
@@ -722,28 +714,6 @@ fail:
 }
 
 /******************************************************************************
- * NETCON_connect
- * Connects to the specified address.
- */
-DWORD NETCON_connect(netconn_t *connection, const struct sockaddr *serv_addr,
-		    unsigned int addrlen)
-{
-    int result;
-
-    result = connect(connection->socketFD, serv_addr, addrlen);
-    if (result == -1)
-    {
-        WARN("Unable to connect to host (%s)\n", strerror(errno));
-
-        closesocket(connection->socketFD);
-        connection->socketFD = -1;
-        return sock_get_error(errno);
-    }
-
-    return ERROR_SUCCESS;
-}
-
-/******************************************************************************
  * NETCON_send
  * Basically calls 'send()' unless we should use SSL
  * number of chars send is put in *sent
@@ -751,7 +721,6 @@ DWORD NETCON_connect(netconn_t *connection, const struct sockaddr *serv_addr,
 DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
 		int *sent /* out */)
 {
-    if (!NETCON_connected(connection)) return ERROR_INTERNET_CONNECTION_ABORTED;
     if (!connection->useSSL)
     {
 	*sent = send(connection->socketFD, msg, len, flags);
@@ -787,14 +756,11 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags,
 		int *recvd /* out */)
 {
     *recvd = 0;
-    if (!NETCON_connected(connection)) return ERROR_INTERNET_CONNECTION_ABORTED;
     if (!len)
         return ERROR_SUCCESS;
     if (!connection->useSSL)
     {
 	*recvd = recv(connection->socketFD, buf, len, flags);
-        if(!*recvd)
-            NETCON_close(connection);
 	return *recvd == -1 ? sock_get_error(errno) :  ERROR_SUCCESS;
     }
     else
@@ -808,10 +774,8 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags,
 
         /* Check if EOF was received */
         if(!*recvd && (pSSL_get_error(connection->ssl_s, *recvd)==SSL_ERROR_ZERO_RETURN
-                    || pSSL_get_error(connection->ssl_s, *recvd)==SSL_ERROR_SYSCALL)) {
-            NETCON_close(connection);
+                    || pSSL_get_error(connection->ssl_s, *recvd)==SSL_ERROR_SYSCALL))
             return ERROR_SUCCESS;
-        }
 
         return *recvd > 0 ? ERROR_SUCCESS : ERROR_INTERNET_CONNECTION_ABORTED;
 #else
@@ -828,8 +792,6 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags,
 BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
 {
     *available = 0;
-    if (!NETCON_connected(connection))
-        return FALSE;
 
     if (!connection->useSSL)
     {
@@ -850,6 +812,36 @@ BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available)
 #endif
     }
     return TRUE;
+}
+
+BOOL NETCON_is_alive(netconn_t *netconn)
+{
+#ifdef MSG_DONTWAIT
+    ssize_t len;
+    BYTE b;
+
+    len = recv(netconn->socketFD, &b, 1, MSG_PEEK|MSG_DONTWAIT);
+    return len == 1 || (len == -1 && errno == EWOULDBLOCK);
+#elif defined(__MINGW32__) || defined(_MSC_VER)
+    ULONG mode;
+    int len;
+    char b;
+
+    mode = 1;
+    if(!ioctlsocket(netconn->socketFD, FIONBIO, &mode))
+        return FALSE;
+
+    len = recv(netconn->socketFD, &b, 1, MSG_PEEK);
+
+    mode = 0;
+    if(!ioctlsocket(netconn->socketFD, FIONBIO, &mode))
+        return FALSE;
+
+    return len == 1 || (len == -1 && errno == WSAEWOULDBLOCK);
+#else
+    FIXME("not supported on this platform\n");
+    return TRUE;
+#endif
 }
 
 LPCVOID NETCON_GetCert(netconn_t *connection)

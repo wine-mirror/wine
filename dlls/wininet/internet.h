@@ -49,13 +49,40 @@
 
 extern HMODULE WININET_hModule;
 
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN 46
+#endif
+
+typedef struct {
+    WCHAR *name;
+    INTERNET_PORT port;
+    struct sockaddr_storage addr;
+    socklen_t addr_len;
+    char addr_str[INET6_ADDRSTRLEN];
+
+    LONG ref;
+    DWORD64 keep_until;
+
+    struct list entry;
+    struct list conn_pool;
+} server_t;
+
+void server_addref(server_t*);
+void server_release(server_t*);
+BOOL collect_connections(BOOL);
+
 /* used for netconnection.c stuff */
 typedef struct
 {
     BOOL useSSL;
     int socketFD;
     void *ssl_s;
+    server_t *server;
     DWORD security_flags;
+
+    BOOL keep_alive;
+    DWORD64 keep_until;
+    struct list pool_entry;
 } netconn_t;
 
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
@@ -228,7 +255,6 @@ typedef struct
     DWORD   accessType;
 } appinfo_t;
 
-
 typedef struct
 {
     object_header_t hdr;
@@ -239,8 +265,6 @@ typedef struct
     LPWSTR  password;
     INTERNET_PORT hostPort; /* the final destination port of the request */
     INTERNET_PORT serverPort; /* the port of the server we directly connect to */
-    struct sockaddr_storage socketAddress;
-    socklen_t sa_len;
 } http_session_t;
 
 #define HDR_ISREQUEST		0x0001
@@ -279,7 +303,8 @@ typedef struct
     LPWSTR path;
     LPWSTR verb;
     LPWSTR rawHeaders;
-    netconn_t netConnection;
+    netconn_t *netconn;
+    DWORD security_flags;
     LPWSTR version;
     LPWSTR statusText;
     DWORD bytesToWrite;
@@ -487,20 +512,16 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
                            DWORD dwStatusInfoLength) DECLSPEC_HIDDEN;
 BOOL INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto, WCHAR *foundProxy, DWORD *foundProxyLen) DECLSPEC_HIDDEN;
 
-BOOL NETCON_connected(netconn_t *connection) DECLSPEC_HIDDEN;
-DWORD NETCON_init(netconn_t *connnection, BOOL useSSL) DECLSPEC_HIDDEN;
+DWORD create_netconn(BOOL,server_t*,DWORD,netconn_t**) DECLSPEC_HIDDEN;
+void free_netconn(netconn_t*) DECLSPEC_HIDDEN;
 void NETCON_unload(void) DECLSPEC_HIDDEN;
-DWORD NETCON_create(netconn_t *connection, int domain,
-	      int type, int protocol) DECLSPEC_HIDDEN;
-DWORD NETCON_close(netconn_t *connection) DECLSPEC_HIDDEN;
-DWORD NETCON_connect(netconn_t *connection, const struct sockaddr *serv_addr,
-		    unsigned int addrlen) DECLSPEC_HIDDEN;
 DWORD NETCON_secure_connect(netconn_t *connection, LPWSTR hostname) DECLSPEC_HIDDEN;
 DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
 		int *sent /* out */) DECLSPEC_HIDDEN;
 DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags,
 		int *recvd /* out */) DECLSPEC_HIDDEN;
 BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available) DECLSPEC_HIDDEN;
+BOOL NETCON_is_alive(netconn_t*) DECLSPEC_HIDDEN;
 LPCVOID NETCON_GetCert(netconn_t *connection) DECLSPEC_HIDDEN;
 int NETCON_GetCipherStrength(netconn_t*) DECLSPEC_HIDDEN;
 DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, int value) DECLSPEC_HIDDEN;

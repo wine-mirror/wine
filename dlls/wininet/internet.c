@@ -308,7 +308,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	    break;
 
         case DLL_PROCESS_DETACH:
-
+            collect_connections(TRUE);
             NETCON_unload();
 
 	    URLCacheContainers_DeleteAll();

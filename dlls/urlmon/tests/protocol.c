@@ -574,7 +574,7 @@ static void call_continue(PROTOCOLDATA *protocol_data)
                 CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
                 CLEAR_CALLED(ReportProgress_CONNECTING);
                 CLEAR_CALLED(ReportProgress_PROXYDETECTING);
-            }else todo_wine {
+            }else {
                 CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
                 /* IE7 does call this */
                 CLEAR_CALLED(ReportProgress_CONNECTING);
