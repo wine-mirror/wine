@@ -3501,6 +3501,88 @@ BOOL WINAPI K32EnumProcesses(DWORD *lpdwProcessIDs, DWORD cb, DWORD *lpcbUsed)
     return TRUE;
 }
 
+typedef struct {
+    HANDLE process;
+    PLIST_ENTRY head, current;
+    LDR_MODULE ldr_module;
+} MODULE_ITERATOR;
+
+static BOOL init_module_iterator(MODULE_ITERATOR *iter, HANDLE process)
+{
+    PROCESS_BASIC_INFORMATION pbi;
+    PPEB_LDR_DATA ldr_data;
+    NTSTATUS status;
+
+    /* Get address of PEB */
+    status = NtQueryInformationProcess(process, ProcessBasicInformation,
+                                       &pbi, sizeof(pbi), NULL);
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+
+    /* Read address of LdrData from PEB */
+    if (!ReadProcessMemory(process, &pbi.PebBaseAddress->LdrData,
+                           &ldr_data, sizeof(ldr_data), NULL))
+        return FALSE;
+
+    /* Read address of first module from LdrData */
+    if (!ReadProcessMemory(process,
+                           &ldr_data->InLoadOrderModuleList.Flink,
+                           &iter->current, sizeof(iter->current), NULL))
+        return FALSE;
+
+    iter->head = &ldr_data->InLoadOrderModuleList;
+    iter->process = process;
+
+    return TRUE;
+}
+
+static int module_iterator_next(MODULE_ITERATOR *iter)
+{
+    if (iter->current == iter->head)
+        return 0;
+
+    if (!ReadProcessMemory(iter->process,
+                           CONTAINING_RECORD(iter->current, LDR_MODULE, InLoadOrderModuleList),
+                           &iter->ldr_module, sizeof(iter->ldr_module), NULL))
+         return -1;
+
+    iter->current = iter->ldr_module.InLoadOrderModuleList.Flink;
+    return 1;
+}
+
+/***********************************************************************
+ *           K32EnumProcessModules (KERNEL32.@)
+ *
+ * NOTES
+ *  Returned list is in load order.
+ */
+BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
+                                  DWORD cb, DWORD *needed)
+{
+    MODULE_ITERATOR iter;
+    INT ret;
+
+    if (!init_module_iterator(&iter, process))
+        return FALSE;
+
+    *needed = 0;
+
+    while ((ret = module_iterator_next(&iter)) > 0)
+    {
+        if (cb >= sizeof(HMODULE))
+        {
+            *lphModule++ = iter.ldr_module.BaseAddress;
+            cb -= sizeof(HMODULE);
+        }
+        *needed += sizeof(HMODULE);
+    }
+
+    return ret == 0;
+}
+
 /***********************************************************************
  * ProcessIdToSessionId   (KERNEL32.@)
  * This function is available on Terminal Server 4SP4 and Windows 2000

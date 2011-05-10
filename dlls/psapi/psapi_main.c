@@ -179,36 +179,6 @@ BOOL WINAPI EnumPageFilesW( PENUM_PAGE_FILE_CALLBACKW callback, LPVOID context )
 }
 
 /***********************************************************************
- *           EnumProcessModules (PSAPI.@)
- *
- * NOTES
- *  Returned list is in load order.
- */
-BOOL WINAPI EnumProcessModules(HANDLE hProcess, HMODULE *lphModule,
-                               DWORD cb, LPDWORD lpcbNeeded)
-{
-    MODULE_ITERATOR iter;
-    INT ret;
-
-    if (!PSAPI_ModuleIteratorInit(&iter, hProcess))
-        return FALSE;
-
-    *lpcbNeeded = 0;
-        
-    while ((ret = PSAPI_ModuleIteratorNext(&iter)) > 0)
-    {
-        if (cb >= sizeof(HMODULE))
-        {
-            *lphModule++ = iter.LdrModule.BaseAddress;
-            cb -= sizeof(HMODULE);
-        }
-        *lpcbNeeded += sizeof(HMODULE);
-    }
-
-    return (ret == 0);
-}
-
-/***********************************************************************
  *          GetDeviceDriverBaseNameA (PSAPI.@)
  */
 DWORD WINAPI GetDeviceDriverBaseNameA(LPVOID ImageBase, LPSTR lpBaseName, 
