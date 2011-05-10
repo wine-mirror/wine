@@ -124,58 +124,83 @@ typedef struct _scriptData
 {
     SCRIPT_ANALYSIS a;
     SCRIPT_PROPERTIES props;
+    OPENTYPE_TAG scriptTag;
 } scriptData;
 
 /* the must be in order so that the index matches the Script value */
 static const scriptData scriptInformation[] = {
     {{SCRIPT_UNDEFINED, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     0x00000000},
     {{Script_Latin, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
+     {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     MS_MAKE_TAG('l','a','t','n')},
     {{Script_CR, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     0x00000000},
     {{Script_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_ENGLISH, 1, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_ENGLISH, 1, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     0x00000000},
     {{Script_Control, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_ENGLISH, 0, 1, 0, 0, ANSI_CHARSET, 1, 0, 0, 0, 0, 0, 1, 0, 0}},
+     {LANG_ENGLISH, 0, 1, 0, 0, ANSI_CHARSET, 1, 0, 0, 0, 0, 0, 1, 0, 0},
+     0x00000000},
     {{Script_Punctuation, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     0x00000000},
     {{Script_Arabic, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_ARABIC, 0, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 1, 1, 0}},
+     {LANG_ARABIC, 0, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 1, 1, 0},
+     MS_MAKE_TAG('a','r','a','b')},
     {{Script_Arabic_Numeric, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_ARABIC, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
+     {LANG_ARABIC, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     MS_MAKE_TAG('a','r','a','b')},
     {{Script_Hebrew, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_HEBREW, 0, 1, 0, 1, HEBREW_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_HEBREW, 0, 1, 0, 1, HEBREW_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('h','e','b','r')},
     {{Script_Syriac, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_SYRIAC, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 1, 0}},
+     {LANG_SYRIAC, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 1, 0},
+     MS_MAKE_TAG('s','y','r','c')},
     {{Script_Persian, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_PERSIAN, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_PERSIAN, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('s','y','r','c')},
     {{Script_Thaana, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_DIVEHI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_DIVEHI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('t','h','a','a')},
     {{Script_Greek, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_GREEK, 0, 0, 0, 0, GREEK_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_GREEK, 0, 0, 0, 0, GREEK_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('g','r','e','k')},
     {{Script_Cyrillic, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_RUSSIAN, 0, 0, 0, 0, RUSSIAN_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_RUSSIAN, 0, 0, 0, 0, RUSSIAN_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('c','y','r','l')},
     {{Script_Armenian, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_ARMENIAN, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
+     {LANG_ARMENIAN, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     MS_MAKE_TAG('a','r','m','n')},
     {{Script_Georgian, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_GEORGIAN, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
+     {LANG_GEORGIAN, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     MS_MAKE_TAG('g','e','o','r')},
     {{Script_Sinhala, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_SINHALESE, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_SINHALESE, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('s','i','n','h')},
     {{Script_Tibetan, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_TIBETAN, 0, 1, 1, 1, DEFAULT_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 0}},
+     {LANG_TIBETAN, 0, 1, 1, 1, DEFAULT_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 0},
+     MS_MAKE_TAG('t','i','b','t')},
     {{Script_Tibetan_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_TIBETAN, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_TIBETAN, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('t','i','b','t')},
     {{Script_Phags_pa, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_MONGOLIAN, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_MONGOLIAN, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('p','h','a','g')},
     {{Script_Thai, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_THAI, 0, 1, 1, 1, THAI_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 1}},
+     {LANG_THAI, 0, 1, 1, 1, THAI_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 1},
+     MS_MAKE_TAG('t','h','a','i')},
     {{Script_Thai_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_THAI, 1, 1, 0, 0, THAI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_THAI, 1, 1, 0, 0, THAI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('t','h','a','i')},
     {{Script_Lao, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_LAO, 0, 1, 1, 1, DEFAULT_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 0}},
+     {LANG_LAO, 0, 1, 1, 1, DEFAULT_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 0},
+     MS_MAKE_TAG('l','a','o',' ')},
     {{Script_Lao_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
-     {LANG_LAO, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0}},
+     {LANG_LAO, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('l','a','o',' ')},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -576,26 +601,27 @@ HRESULT WINAPI ScriptApplyDigitSubstitution(const SCRIPT_DIGITSUBSTITUTE *sds,
 }
 
 /***********************************************************************
- *      ScriptItemize (USP10.@)
+ *      ScriptItemizeOpenType (USP10.@)
  *
  * Split a Unicode string into shapeable parts.
  *
  * PARAMS
- *  pwcInChars [I] String to split.
- *  cInChars   [I] Number of characters in pwcInChars.
- *  cMaxItems  [I] Maximum number of items to return.
- *  psControl  [I] Pointer to a SCRIPT_CONTROL structure.
- *  psState    [I] Pointer to a SCRIPT_STATE structure.
- *  pItems     [O] Buffer to receive SCRIPT_ITEM structures.
- *  pcItems    [O] Number of script items returned.
+ *  pwcInChars  [I] String to split.
+ *  cInChars    [I] Number of characters in pwcInChars.
+ *  cMaxItems   [I] Maximum number of items to return.
+ *  psControl   [I] Pointer to a SCRIPT_CONTROL structure.
+ *  psState     [I] Pointer to a SCRIPT_STATE structure.
+ *  pItems      [O] Buffer to receive SCRIPT_ITEM structures.
+ *  pScriptTags [O] Buffer to receive OPENTYPE_TAGs.
+ *  pcItems     [O] Number of script items returned.
  *
  * RETURNS
  *  Success: S_OK
  *  Failure: Non-zero HRESULT value.
  */
-HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItems,
+HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int cMaxItems,
                              const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState,
-                             SCRIPT_ITEM *pItems, int *pcItems)
+                             SCRIPT_ITEM *pItems, OPENTYPE_TAG *pScriptTags, int *pcItems)
 {
 
 #define Numeric_space 0x0020
@@ -650,6 +676,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
 
     pItems[index].iCharPos = 0;
     pItems[index].a = scriptInformation[get_char_script(pwcInChars[cnt])].a;
+    pScriptTags[index] = scriptInformation[get_char_script(pwcInChars[cnt])].scriptTag;
 
     if (strength)
         str = strength[cnt];
@@ -702,6 +729,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
             memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
 
             pItems[index].a = scriptInformation[New_Script].a;
+            pScriptTags[index] = scriptInformation[New_Script].scriptTag;
             if (levels)
             {
                 pItems[index].a.fRTL = odd(levels[cnt]);
@@ -736,6 +764,39 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     heap_free(levels);
     heap_free(strength);
     return S_OK;
+}
+
+/***********************************************************************
+ *      ScriptItemize (USP10.@)
+ *
+ * Split a Unicode string into shapeable parts.
+ *
+ * PARAMS
+ *  pwcInChars [I] String to split.
+ *  cInChars   [I] Number of characters in pwcInChars.
+ *  cMaxItems  [I] Maximum number of items to return.
+ *  psControl  [I] Pointer to a SCRIPT_CONTROL structure.
+ *  psState    [I] Pointer to a SCRIPT_STATE structure.
+ *  pItems     [O] Buffer to receive SCRIPT_ITEM structures.
+ *  pcItems    [O] Number of script items returned.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
+ */
+HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItems,
+                             const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState,
+                             SCRIPT_ITEM *pItems, int *pcItems)
+{
+    OPENTYPE_TAG *discarded_tags;
+    HRESULT res;
+
+    discarded_tags = heap_alloc(cMaxItems * sizeof(OPENTYPE_TAG));
+    if (!discarded_tags)
+        return E_OUTOFMEMORY;
+    res = ScriptItemizeOpenType(pwcInChars, cInChars, cMaxItems, psControl, psState, pItems, discarded_tags, pcItems);
+    heap_free(discarded_tags);
+    return res;
 }
 
 /***********************************************************************

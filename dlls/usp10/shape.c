@@ -74,12 +74,6 @@ enum joined_forms {
 #endif
 
 /* These are all structures needed for the GSUB table */
-#define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
-          ( ( (ULONG)_x4 << 24 ) |     \
-            ( (ULONG)_x3 << 16 ) |     \
-            ( (ULONG)_x2 <<  8 ) |     \
-              (ULONG)_x1         )
-
 #define GSUB_TAG MS_MAKE_TAG('G', 'S', 'U', 'B')
 #define GSUB_E_NOFEATURE -2
 #define GSUB_E_NOGLYPH -1

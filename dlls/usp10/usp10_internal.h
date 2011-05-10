@@ -18,6 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  */
+#define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
+          ( ( (ULONG)_x4 << 24 ) |     \
+            ( (ULONG)_x3 << 16 ) |     \
+            ( (ULONG)_x2 <<  8 ) |     \
+              (ULONG)_x1         )
+
 
 #define Script_Latin   1
 #define Script_CR      2

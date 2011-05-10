@@ -16,7 +16,7 @@
 @ stdcall ScriptGetProperties(ptr long)
 @ stdcall ScriptIsComplex(wstr long long)
 @ stdcall ScriptItemize(wstr long long ptr ptr ptr ptr)
-@ stub ScriptItemizeOpenType
+@ stdcall ScriptItemizeOpenType(wstr long long ptr ptr ptr ptr ptr)
 @ stdcall ScriptJustify(ptr ptr long long long ptr)
 @ stdcall ScriptLayout(long ptr ptr ptr)
 @ stdcall ScriptPlace(ptr ptr ptr long ptr ptr ptr ptr ptr)
