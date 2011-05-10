@@ -1322,10 +1322,10 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
             switch (access & (GENERIC_READ|GENERIC_WRITE))
             {
             case GENERIC_READ:
-                ret = OpenConsoleW(coninW, access, (sa && sa->bInheritHandle), creation);
+                ret = OpenConsoleW(coninW, access, (sa && sa->bInheritHandle), OPEN_EXISTING);
                 goto done;
             case GENERIC_WRITE:
-                ret = OpenConsoleW(conoutW, access, (sa && sa->bInheritHandle), creation);
+                ret = OpenConsoleW(conoutW, access, (sa && sa->bInheritHandle), OPEN_EXISTING);
                 goto done;
             default:
                 SetLastError( ERROR_FILE_NOT_FOUND );

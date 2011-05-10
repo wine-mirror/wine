@@ -1002,7 +1002,6 @@ static void test_OpenCON(void)
 
     for (i = 0; i < sizeof(accesses) / sizeof(accesses[0]); i++)
     {
-        if (accesses[i] != OPEN_EXISTING) todo_wine {
         h = CreateFileW(conW, GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
         ok(h != INVALID_HANDLE_VALUE, "Expected to open the CON device on write (%x)\n", accesses[i]);
         CloseHandle(h);
@@ -1018,23 +1017,6 @@ static void test_OpenCON(void)
             ok(h != INVALID_HANDLE_VALUE, "Expected to open the CON device on read (%x)\n", accesses[i]);
         }
         CloseHandle(h);
-        } else {
-        h = CreateFileW(conW, GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
-        ok(h != INVALID_HANDLE_VALUE, "Expected to open the CON device on write (%x)\n", accesses[i]);
-        CloseHandle(h);
-
-        h = CreateFileW(conW, GENERIC_READ, 0, NULL, accesses[i], 0, NULL);
-        /* Windows versions differ here:
-         * MSDN states in CreateFile that TRUNCATE_EXISTING requires GENERIC_WRITE
-         * NT, XP, Vista comply, but Win7 doesn't and allows to open CON with TRUNCATE_EXISTING
-         * So don't test when disposition is TRUNCATE_EXISTING
-         */
-        if (accesses[i] != TRUNCATE_EXISTING)
-        {
-            ok(h != INVALID_HANDLE_VALUE, "Expected to open the CON device on read (%x)\n", accesses[i]);
-        }
-        CloseHandle(h);
-        }
         h = CreateFileW(conW, GENERIC_READ|GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
         ok(h == INVALID_HANDLE_VALUE, "Expected not to open the CON device on read-write (%x)\n", accesses[i]);
         ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Unexpected error %x\n", GetLastError());
