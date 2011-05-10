@@ -750,10 +750,10 @@ ULONG WINAPI RegisterTraceGuidsW( WMIDPREQUEST RequestAddress,
                 PTRACE_GUID_REGISTRATION TraceGuidReg, LPCWSTR MofImagePath,
                 LPCWSTR MofResourceName, PTRACEHANDLE RegistrationHandle )
 {
-    FIXME("(%p, %p, %s, %u, %p, %s, %s, %p,)\n", RequestAddress, RequestContext,
+    FIXME("(%p, %p, %s, %u, %p, %s, %s, %p,): stub\n", RequestAddress, RequestContext,
           debugstr_guid(ControlGuid), GuidCount, TraceGuidReg, debugstr_w(MofImagePath),
           debugstr_w(MofResourceName), RegistrationHandle);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
@@ -769,10 +769,10 @@ ULONG WINAPI RegisterTraceGuidsA( WMIDPREQUEST RequestAddress,
                 PTRACE_GUID_REGISTRATION TraceGuidReg, LPCSTR MofImagePath,
                 LPCSTR MofResourceName, PTRACEHANDLE RegistrationHandle )
 {
-    FIXME("(%p, %p, %s, %u, %p, %s, %s, %p,)\n", RequestAddress, RequestContext,
+    FIXME("(%p, %p, %s, %u, %p, %s, %s, %p,): stub\n", RequestAddress, RequestContext,
           debugstr_guid(ControlGuid), GuidCount, TraceGuidReg, debugstr_a(MofImagePath),
           debugstr_a(MofResourceName), RegistrationHandle);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
