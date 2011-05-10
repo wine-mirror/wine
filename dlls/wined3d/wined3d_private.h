@@ -2557,7 +2557,8 @@ typedef struct local_constant {
     DWORD value[4];
 } local_constant;
 
-typedef struct SHADER_LIMITS {
+struct wined3d_shader_limits
+{
     unsigned int temporary;
     unsigned int texcoord;
     unsigned int sampler;
@@ -2569,7 +2570,7 @@ typedef struct SHADER_LIMITS {
     unsigned int packed_input;
     unsigned int attributes;
     unsigned int label;
-} SHADER_LIMITS;
+};
 
 #ifdef __GNUC__
 #define PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
@@ -2606,7 +2607,7 @@ struct wined3d_pixel_shader
 struct wined3d_shader
 {
     LONG ref;
-    SHADER_LIMITS limits;
+    struct wined3d_shader_limits limits;
     DWORD *function;
     UINT functionLength;
     BOOL load_local_constsF;
