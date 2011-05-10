@@ -830,6 +830,7 @@ static HRESULT WINAPI ddraw1_SetCooperativeLevel(IDirectDraw *iface, HWND window
 static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD Height,
         DWORD BPP, DWORD RefreshRate, DWORD Flags)
 {
+    enum wined3d_format_id format;
     WINED3DDISPLAYMODE Mode;
     HRESULT hr;
 
@@ -841,6 +842,30 @@ static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD
     {
         ERR("Width %u, Height %u, what to do?\n", Width, Height);
         /* It looks like Need for Speed Porsche Unleashed expects DD_OK here */
+        LeaveCriticalSection(&ddraw_cs);
+        return DD_OK;
+    }
+
+    switch(BPP)
+    {
+        case 8:  format = WINED3DFMT_P8_UINT;          break;
+        case 15: format = WINED3DFMT_B5G5R5X1_UNORM;   break;
+        case 16: format = WINED3DFMT_B5G6R5_UNORM;     break;
+        case 24: format = WINED3DFMT_B8G8R8_UNORM;     break;
+        case 32: format = WINED3DFMT_B8G8R8X8_UNORM;   break;
+        default: format = WINED3DFMT_UNKNOWN;          break;
+    }
+
+    if (FAILED(hr = IWineD3DDevice_GetDisplayMode(ddraw->wineD3DDevice, 0, &Mode)))
+    {
+        ERR("Failed to get current display mode, hr %#x.\n", hr);
+    }
+    else if (Mode.Width == Width
+            && Mode.Height == Height
+            && Mode.Format == format
+            && Mode.RefreshRate == RefreshRate)
+    {
+        TRACE("Skipping redundant mode setting call.\n");
         LeaveCriticalSection(&ddraw_cs);
         return DD_OK;
     }
@@ -857,14 +882,7 @@ static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD
     Mode.Width = Width;
     Mode.Height = Height;
     Mode.RefreshRate = RefreshRate;
-    switch(BPP)
-    {
-        case 8:  Mode.Format = WINED3DFMT_P8_UINT;          break;
-        case 15: Mode.Format = WINED3DFMT_B5G5R5X1_UNORM;   break;
-        case 16: Mode.Format = WINED3DFMT_B5G6R5_UNORM;     break;
-        case 24: Mode.Format = WINED3DFMT_B8G8R8_UNORM;     break;
-        case 32: Mode.Format = WINED3DFMT_B8G8R8X8_UNORM;   break;
-    }
+    Mode.Format = format;
 
     /* TODO: The possible return values from msdn suggest that
      * the screen mode can't be changed if a surface is locked

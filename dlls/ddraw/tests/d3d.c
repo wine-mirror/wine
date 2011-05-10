@@ -3974,7 +3974,7 @@ static void test_redundant_mode_set(void)
     ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
 
     GetWindowRect(window, &s);
-    todo_wine ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+    ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
             r.left, r.top, r.right, r.bottom,
             s.left, s.top, s.right, s.bottom);
 
