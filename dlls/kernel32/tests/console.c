@@ -992,6 +992,55 @@ static void test_GetConsoleProcessList(void)
     HeapFree(GetProcessHeap(), 0, list);
 }
 
+static void test_OpenCON(void)
+{
+    static const WCHAR conW[] = {'C','O','N',0};
+    static const DWORD accesses[] = {CREATE_NEW, CREATE_ALWAYS, OPEN_EXISTING,
+                                     OPEN_ALWAYS, TRUNCATE_EXISTING};
+    unsigned            i;
+    HANDLE              h;
+
+    for (i = 0; i < sizeof(accesses) / sizeof(accesses[0]); i++)
+    {
+        if (accesses[i] != OPEN_EXISTING) todo_wine {
+        h = CreateFileW(conW, GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
+        ok(h != INVALID_HANDLE_VALUE, "Expected to open the CON device on write (%x)\n", accesses[i]);
+        CloseHandle(h);
+
+        h = CreateFileW(conW, GENERIC_READ, 0, NULL, accesses[i], 0, NULL);
+        /* Windows versions differ here:
+         * MSDN states in CreateFile that TRUNCATE_EXISTING requires GENERIC_WRITE
+         * NT, XP, Vista comply, but Win7 doesn't and allows to open CON with TRUNCATE_EXISTING
+         * So don't test when disposition is TRUNCATE_EXISTING
+         */
+        if (accesses[i] != TRUNCATE_EXISTING)
+        {
+            ok(h != INVALID_HANDLE_VALUE, "Expected to open the CON device on read (%x)\n", accesses[i]);
+        }
+        CloseHandle(h);
+        } else {
+        h = CreateFileW(conW, GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
+        ok(h != INVALID_HANDLE_VALUE, "Expected to open the CON device on write (%x)\n", accesses[i]);
+        CloseHandle(h);
+
+        h = CreateFileW(conW, GENERIC_READ, 0, NULL, accesses[i], 0, NULL);
+        /* Windows versions differ here:
+         * MSDN states in CreateFile that TRUNCATE_EXISTING requires GENERIC_WRITE
+         * NT, XP, Vista comply, but Win7 doesn't and allows to open CON with TRUNCATE_EXISTING
+         * So don't test when disposition is TRUNCATE_EXISTING
+         */
+        if (accesses[i] != TRUNCATE_EXISTING)
+        {
+            ok(h != INVALID_HANDLE_VALUE, "Expected to open the CON device on read (%x)\n", accesses[i]);
+        }
+        CloseHandle(h);
+        }
+        h = CreateFileW(conW, GENERIC_READ|GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
+        ok(h == INVALID_HANDLE_VALUE, "Expected not to open the CON device on read-write (%x)\n", accesses[i]);
+        ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Unexpected error %x\n", GetLastError());
+    }
+}
+
 static void test_OpenConsoleW(void)
 {
     static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
@@ -2515,6 +2564,7 @@ START_TEST(console)
 
     test_GetConsoleProcessList();
     test_OpenConsoleW();
+    test_OpenCON();
     test_VerifyConsoleIoHandle(hConOut);
     test_GetSetStdHandle();
     test_GetNumberOfConsoleInputEvents(hConIn);
