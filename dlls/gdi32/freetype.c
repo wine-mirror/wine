@@ -262,6 +262,7 @@ struct enum_data
 typedef struct tagFace {
     struct list entry;
     WCHAR *StyleName;
+    const WCHAR *FullName;
     char *file;
     void *font_data_ptr;
     DWORD font_data_size;
@@ -1461,6 +1462,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
             face->cached_enum_data = NULL;
             face->StyleName = StyleW;
+            face->FullName = get_face_name(ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES);
             if (file)
             {
                 face->file = strdupA(file);
@@ -3610,6 +3612,20 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
             }
 	}
 
+        /* Search by full face name. */
+        LIST_FOR_EACH(family_elem_ptr, &font_list) {
+            family = LIST_ENTRY(family_elem_ptr, Family, entry);
+            LIST_FOR_EACH(face_elem_ptr, &family->faces) {
+                face = LIST_ENTRY(face_elem_ptr, Face, entry);
+                if(face->FullName && !strcmpiW(face->FullName, FaceName) &&
+                   ((csi.fs.fsCsb[0] & (face->fs.fsCsb[0] | face->fs_links.fsCsb[0])) || !csi.fs.fsCsb[0]))
+                {
+                    if(face->scalable || can_use_bitmap)
+                        goto found_face;
+                }
+            }
+        }
+
         /*
 	 * Try check the SystemLink list first for a replacement font.
 	 * We may find good replacements there.
@@ -3762,6 +3778,9 @@ found:
         face = best->scalable ? best : best_bitmap;
     ret->fake_italic = (it && !(face->ntmFlags & NTM_ITALIC));
     ret->fake_bold = (bd && !(face->ntmFlags & NTM_BOLD));
+
+found_face:
+    height = lf.lfHeight;
 
     ret->fs = face->fs;
 

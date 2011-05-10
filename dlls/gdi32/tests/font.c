@@ -3771,7 +3771,6 @@ static void test_fullname(void)
         buf[0] = 0;
         ok(get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, buf, sizeof(buf)),
            "face full name could not be read\n");
-todo_wine
         ok(!lstrcmpA(buf, TestName[i]), "font full names don't match: %s != %s\n", TestName[i], buf);
         SelectObject(hdc, of);
         DeleteObject(hfont);
