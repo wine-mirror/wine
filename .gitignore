@@ -17,6 +17,7 @@
 /configure.lineno
 /tags
 /wine
+/wine64
 Makefile
 dlldata.c
 dlls/*/*.def

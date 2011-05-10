@@ -4157,6 +4157,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 esac
 
 enable_win16=${enable_win16:-no}
+enable_win64=${enable_win64:-no}
 
 enable_winetest=${enable_winetest:-$enable_tests}
 
@@ -14977,6 +14978,10 @@ test "$srcdir" = "." || wine_fn_config_symlink tools/l_intl.nls
 fi
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
+if test "x$enable_win64" != xno; then
+ac_config_links="$ac_config_links wine64:tools/winewrapper"
+wine_fn_config_symlink wine64
+fi
 
 ac_config_commands="$ac_config_commands dlls/gdi32/dibdrv"
 
@@ -16468,6 +16473,7 @@ do
     "fonts/tahomabd.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahomabd.ttf:fonts/tahomabd.ttf" ;;
     "tools/l_intl.nls") CONFIG_LINKS="$CONFIG_LINKS tools/l_intl.nls:tools/l_intl.nls" ;;
     "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
+    "wine64") CONFIG_LINKS="$CONFIG_LINKS wine64:tools/winewrapper" ;;
     "dlls/gdi32/dibdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/dibdrv" ;;
     "dlls/gdi32/enhmfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/enhmfdrv" ;;
     "dlls/gdi32/mfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/mfdrv" ;;

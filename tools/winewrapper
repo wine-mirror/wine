@@ -22,10 +22,13 @@
 # first determine the directory that contains the app itself
 
 appdir=""
+name=$0
+
 case "$0" in
   */*)
     # $0 contains a path, use it
     appdir=`dirname "$0"`
+    name=`basename "$0"`
     ;;
   *)
     # no directory in $0, search in PATH
@@ -34,7 +37,7 @@ case "$0" in
     for d in $PATH
     do
       IFS=$saved_ifs
-      if [ -x "$d/$0" ]
+      if [ -x "$d/$name" ]
       then
         appdir="$d"
         break
@@ -43,7 +46,7 @@ case "$0" in
     ;;
 esac
 
-# now find the top-level directory of the source tree
+# now find the top-level directory of the build tree
 
 if [ -x "$appdir/server/wineserver" ]
 then topdir="$appdir"
@@ -54,7 +57,7 @@ then topdir="$appdir/../.."
 elif [ -x "$appdir/../../../server/wineserver" ]
 then topdir="$appdir/../../.."
 else
-  echo "$0: could not locate Wine source tree"
+  echo "$name: could not locate the Wine build tree"
   exit 1
 fi
 
@@ -81,12 +84,12 @@ else
   export LD_LIBRARY_PATH
 fi
 
-if [ -x "$topdir/loader/wine" ]
+if [ -x "$topdir/loader/$name" ]
+then WINELOADER="$topdir/loader/$name"
+elif [ -x "$topdir/loader/wine" ]
 then WINELOADER="$topdir/loader/wine"
-elif [ -x "$topdir/loader/wine64" ]
-then WINELOADER="$topdir/loader/wine64"
 else
-  echo "$0: could not find the wine loader in $topdir"
+  echo "$name: could not find the Wine loader in $topdir"
   exit 1
 fi
 export WINELOADER

@@ -190,6 +190,7 @@ esac
 
 dnl enable_win16 defaults to yes on x86, to no on other CPUs
 enable_win16=${enable_win16:-no}
+enable_win64=${enable_win64:-no}
 
 dnl Disable winetest too if tests are disabled
 enable_winetest=${enable_winetest:-$enable_tests}
@@ -2371,6 +2372,7 @@ WINE_CONFIG_SYMLINK(fonts/tahoma.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/tahomabd.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(tools/l_intl.nls,,enable_tools)
 WINE_CONFIG_SYMLINK(wine,tools/winewrapper)
+WINE_CONFIG_SYMLINK(wine64,tools/winewrapper,enable_win64)
 
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/dibdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/enhmfdrv)
