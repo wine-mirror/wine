@@ -3924,6 +3924,65 @@ static void test_window_style(void)
     DestroyWindow(window);
 }
 
+static void test_redundant_mode_set(void)
+{
+    DDSURFACEDESC2 surface_desc = {0};
+    IDirectDraw7 *ddraw7;
+    HWND window;
+    HRESULT hr;
+    RECT r, s;
+    ULONG ref;
+
+    hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirectDraw7 object (%#x), skipping tests.\n", hr);
+        return;
+    }
+
+    window = CreateWindowA("static", "d3d7_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 100, 100, 0, 0, 0, 0);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        IDirectDraw7_Release(ddraw7);
+        DestroyWindow(window);
+        return;
+    }
+
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDraw7_GetDisplayMode(ddraw7, &surface_desc);
+    ok(SUCCEEDED(hr), "GetDipslayMode failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw7_SetDisplayMode(ddraw7, surface_desc.dwWidth, surface_desc.dwHeight,
+            U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+
+    GetWindowRect(window, &r);
+    r.right /= 2;
+    r.bottom /= 2;
+    SetWindowPos(window, HWND_TOP, r.left, r.top, r.right, r.bottom, 0);
+    GetWindowRect(window, &s);
+    ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            r.left, r.top, r.right, r.bottom,
+            s.left, s.top, s.right, s.bottom);
+
+    hr = IDirectDraw7_SetDisplayMode(ddraw7, surface_desc.dwWidth, surface_desc.dwHeight,
+            U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount, 0, 0);
+    ok(SUCCEEDED(hr), "SetDipslayMode failed, hr %#x.\n", hr);
+
+    GetWindowRect(window, &s);
+    todo_wine ok(EqualRect(&r, &s), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            r.left, r.top, r.right, r.bottom,
+            s.left, s.top, s.right, s.bottom);
+
+    ref = IDirectDraw7_Release(ddraw7);
+    ok(ref == 0, "The ddraw object was not properly freed: refcount %u.\n", ref);
+
+    DestroyWindow(window);
+}
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -3966,4 +4025,5 @@ START_TEST(d3d)
 
     test_wndproc();
     test_window_style();
+    test_redundant_mode_set();
 }
