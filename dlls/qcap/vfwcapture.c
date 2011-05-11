@@ -726,7 +726,7 @@ VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
     PIN_INFO piOutput;
     HRESULT hr;
 
-    ppPin = NULL;
+    *ppPin = NULL;
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = pBaseFilter;
