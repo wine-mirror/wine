@@ -31,7 +31,7 @@ static inline void do_rop_32(DWORD *ptr, DWORD and, DWORD xor)
     *ptr = (*ptr & and) ^ xor;
 }
 
-static void solid_rects_32(const dib_info *dib, int num, RECT *rc, DWORD and, DWORD xor)
+static void solid_rects_32(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor)
 {
     DWORD *ptr, *start;
     int x, y, i;
@@ -45,7 +45,7 @@ static void solid_rects_32(const dib_info *dib, int num, RECT *rc, DWORD and, DW
     }
 }
 
-static void solid_rects_null(const dib_info *dib, int num, RECT *rc, DWORD and, DWORD xor)
+static void solid_rects_null(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor)
 {
     return;
 }
