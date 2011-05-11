@@ -1592,8 +1592,6 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             CHECK_EXPECT(Obj_OnProgress_FINDINGRESOURCE);
         else if(test_protocol == FTP_TEST)
             todo_wine CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
-        else if(onsecurityproblem_hres == S_OK)
-            CHECK_EXPECT2(OnProgress_FINDINGRESOURCE); /* todo wine */
         else
             CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
         if(emulate_protocol && (test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST))
@@ -1721,10 +1719,8 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
         HRESULT hr;
         if(iface != &objbsc)
             ok(0, "unexpected call\n");
-        else if(1||emulate_protocol)
-            CHECK_EXPECT(Obj_OnProgress_CLASSIDAVAILABLE);
         else
-            todo_wine CHECK_EXPECT(Obj_OnProgress_CLASSIDAVAILABLE);
+            CHECK_EXPECT(Obj_OnProgress_CLASSIDAVAILABLE);
         hr = CLSIDFromString((LPCOLESTR)szStatusText, &clsid);
         ok(hr == S_OK, "CLSIDFromString failed with error 0x%08x\n", hr);
         ok(IsEqualCLSID(&clsid, &CLSID_HTMLDocument),
@@ -2806,7 +2802,8 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
                 SET_EXPECT(BeginningTransaction);
                 SET_EXPECT(QueryInterface_IHttpNegotiate2);
                 SET_EXPECT(GetRootSecurityId);
-                SET_EXPECT(OnProgress_FINDINGRESOURCE);
+                if(http_is_first)
+                    SET_EXPECT(OnProgress_FINDINGRESOURCE);
                 SET_EXPECT(OnProgress_CONNECTING);
             }
             if(flags & BINDTEST_INVALID_CN) {
@@ -2944,7 +2941,7 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
                 CHECK_CALLED(QueryInterface_IHttpNegotiate2);
                 CHECK_CALLED(GetRootSecurityId);
             }
-            if(http_is_first || (test_protocol == HTTPS_TEST && !(flags & BINDTEST_INVALID_CN))) {
+            if(http_is_first) {
                 if (! proxy_active())
                 {
                     CHECK_CALLED(OnProgress_FINDINGRESOURCE);
@@ -2956,7 +2953,6 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
                     CLEAR_CALLED(OnProgress_CONNECTING);
                 }
             }else if(!abort_start) {
-                CHECK_NOT_CALLED(OnProgress_FINDINGRESOURCE);
                 /* IE7 does call this */
                 CLEAR_CALLED(OnProgress_CONNECTING);
             }
@@ -3099,7 +3095,8 @@ static void test_BindToObject(int protocol, DWORD flags)
             SET_EXPECT(BeginningTransaction);
             SET_EXPECT(QueryInterface_IHttpNegotiate2);
             SET_EXPECT(GetRootSecurityId);
-            SET_EXPECT(Obj_OnProgress_FINDINGRESOURCE);
+            if(http_is_first)
+                SET_EXPECT(Obj_OnProgress_FINDINGRESOURCE);
             SET_EXPECT(Obj_OnProgress_CONNECTING);
             SET_EXPECT(QueryInterface_IWindowForBindingUI);
             SET_EXPECT(QueryService_IWindowForBindingUI);
@@ -3183,7 +3180,6 @@ static void test_BindToObject(int protocol, DWORD flags)
                 CHECK_CALLED(Obj_OnProgress_FINDINGRESOURCE);
                 CHECK_CALLED(Obj_OnProgress_CONNECTING);
             }else {
-                CHECK_NOT_CALLED(Obj_OnProgress_FINDINGRESOURCE);
                 /* IE7 does call this */
                 CLEAR_CALLED(Obj_OnProgress_CONNECTING);
             }
@@ -3666,6 +3662,7 @@ START_TEST(url)
         test_BindToStorage(WINETEST_TEST, BINDTEST_EMULATE|BINDTEST_NO_CALLBACK|BINDTEST_USE_CACHE, TYMED_ISTREAM);
 
         trace("asynchronous https test...\n");
+        http_is_first = TRUE;
         test_BindToStorage(HTTPS_TEST, 0, TYMED_ISTREAM);
 
         trace("emulated https test...\n");

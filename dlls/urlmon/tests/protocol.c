@@ -570,15 +570,11 @@ static void call_continue(PROTOCOLDATA *protocol_data)
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST)
             CLEAR_CALLED(ReportProgress_COOKIE_SENT);
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST) {
-            if (http_is_first) {
+            if (http_is_first){
                 CLEAR_CALLED(ReportProgress_FINDINGRESOURCE);
-                CLEAR_CALLED(ReportProgress_CONNECTING);
                 CLEAR_CALLED(ReportProgress_PROXYDETECTING);
-            }else {
-                CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
-                /* IE7 does call this */
-                CLEAR_CALLED(ReportProgress_CONNECTING);
             }
+            CLEAR_CALLED(ReportProgress_CONNECTING);
         }
         if(tested_protocol == FTP_TEST)
             todo_wine CHECK_CALLED(ReportProgress_SENDINGREQUEST);
@@ -926,9 +922,6 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
                 if(http_is_first) {
                     CHECK_CALLED(ReportProgress_FINDINGRESOURCE);
                     CHECK_CALLED(ReportProgress_CONNECTING);
-                } else todo_wine {
-                    CHECK_NOT_CALLED(ReportProgress_FINDINGRESOURCE);
-                    CHECK_NOT_CALLED(ReportProgress_CONNECTING);
                 }
                 CHECK_CALLED(ReportProgress_SENDINGREQUEST);
                 CHECK_CALLED(OnResponse);
@@ -2761,8 +2754,10 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
         test_http_info(async_protocol);
 
         SET_EXPECT(ReportProgress_COOKIE_SENT);
-        SET_EXPECT(ReportProgress_FINDINGRESOURCE);
-        SET_EXPECT(ReportProgress_CONNECTING);
+        if(http_is_first) {
+            SET_EXPECT(ReportProgress_FINDINGRESOURCE);
+            SET_EXPECT(ReportProgress_CONNECTING);
+        }
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
         if(test_redirect)
             SET_EXPECT(ReportProgress_REDIRECTING);
