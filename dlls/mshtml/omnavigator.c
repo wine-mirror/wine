@@ -443,8 +443,18 @@ static HRESULT WINAPI OmNavigator_toString(IOmNavigator *iface, BSTR *String)
 static HRESULT WINAPI OmNavigator_get_cpuClass(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    static const WCHAR cpu_classW[] =
+#ifdef _WIN64
+        {'x','6','4',0};
+#else
+        {'x','8','6',0};
+#endif
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = SysAllocString(cpu_classW);
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI OmNavigator_get_systemLanguage(IOmNavigator *iface, BSTR *p)
