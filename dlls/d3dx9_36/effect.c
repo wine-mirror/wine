@@ -2445,13 +2445,22 @@ static HRESULT WINAPI ID3DXEffectImpl_SetStateManager(ID3DXEffect *iface, LPD3DX
     return D3D_OK;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_GetStateManager(ID3DXEffect* iface, LPD3DXEFFECTSTATEMANAGER* manager)
+static HRESULT WINAPI ID3DXEffectImpl_GetStateManager(ID3DXEffect *iface, LPD3DXEFFECTSTATEMANAGER *manager)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, manager);
+    TRACE("iface %p, manager %p\n", This, manager);
 
-    return E_NOTIMPL;
+    if (!manager)
+    {
+        WARN("Invalid argument supplied.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (This->manager) IUnknown_AddRef(This->manager);
+    *manager = This->manager;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_BeginParameterBlock(ID3DXEffect* iface)
