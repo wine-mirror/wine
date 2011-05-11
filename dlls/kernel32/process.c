@@ -3584,6 +3584,44 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
 }
 
 /***********************************************************************
+ *           K32QueryWorkingSet (KERNEL32.@)
+ */
+BOOL WINAPI K32QueryWorkingSet( HANDLE process, LPVOID buffer, DWORD size )
+{
+    NTSTATUS status;
+
+    TRACE( "(%p, %p, %d)\n", process, buffer, size );
+
+    status = NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer, size, NULL );
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *           K32QueryWorkingSetEx (KERNEL32.@)
+ */
+BOOL WINAPI K32QueryWorkingSetEx( HANDLE process, LPVOID buffer, DWORD size )
+{
+    NTSTATUS status;
+
+    TRACE( "(%p, %p, %d)\n", process, buffer, size );
+
+    status = NtQueryVirtualMemory( process, NULL, MemoryWorkingSetList, buffer,  size, NULL );
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/***********************************************************************
  * ProcessIdToSessionId   (KERNEL32.@)
  * This function is available on Terminal Server 4SP4 and Windows 2000
  */

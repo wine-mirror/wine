@@ -21,5 +21,5 @@
 @ stdcall GetProcessMemoryInfo(long ptr long)
 @ stdcall GetWsChanges(long ptr long)
 @ stdcall InitializeProcessForWsWatch(long)
-@ stdcall QueryWorkingSet(long ptr long)
-@ stdcall QueryWorkingSetEx(long ptr long)
+@ stdcall QueryWorkingSet(long ptr long) kernel32.K32QueryWorkingSet
+@ stdcall QueryWorkingSetEx(long ptr long) kernel32.K32QueryWorkingSetEx
