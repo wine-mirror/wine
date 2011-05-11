@@ -1144,8 +1144,20 @@ static void test_settargetpath(void)
     query_file_path( hpkg, "[#RootFile]", buffer );
     ok( !lstrcmp(buffer, file), "Expected %s, got %s\n", file, buffer);
 
+    sz = sizeof(buffer);
+    r = MsiGetPropertyA( hpkg, "TestParent", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "MsiGetProperty returned %u\n", r );
+    lstrcatA( tempdir, "TestParent\\" );
+    ok( !lstrcmpi(buffer, tempdir), "Expected \"%s\", got \"%s\"\n", tempdir, buffer );
+
     r = MsiSetTargetPath( hpkg, "TestParent", "C:\\one\\two" );
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
+
+    sz = sizeof(buffer);
+    r = MsiGetPropertyA( hpkg, "TestParent", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "MsiGetProperty returned %u\n", r );
+    ok( lstrcmpi(buffer, "C:\\one\\two\\TestDir\\"),
+        "Expected \"C:\\one\\two\\TestDir\\\", got \"%s\"\n", buffer );
 
     query_file_path( hpkg, "[#TestFile]", buffer );
     ok( !lstrcmpi(buffer, "C:\\one\\two\\TestDir\\testfile.txt"),
