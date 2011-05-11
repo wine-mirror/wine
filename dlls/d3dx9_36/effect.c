@@ -95,6 +95,7 @@ struct ID3DXEffectImpl
     ID3DXEffect ID3DXEffect_iface;
     LONG ref;
 
+    LPD3DXEFFECTSTATEMANAGER manager;
     LPDIRECT3DDEVICE9 device;
     LPD3DXEFFECTPOOL pool;
 
@@ -447,6 +448,11 @@ static void free_effect(struct ID3DXEffectImpl *effect)
     if (effect->pool)
     {
         effect->pool->lpVtbl->Release(effect->pool);
+    }
+
+    if (effect->manager)
+    {
+        IUnknown_Release(effect->manager);
     }
 
     IDirect3DDevice9_Release(effect->device);
@@ -2425,13 +2431,18 @@ static HRESULT WINAPI ID3DXEffectImpl_OnResetDevice(ID3DXEffect* iface)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ID3DXEffectImpl_SetStateManager(ID3DXEffect* iface, LPD3DXEFFECTSTATEMANAGER manager)
+static HRESULT WINAPI ID3DXEffectImpl_SetStateManager(ID3DXEffect *iface, LPD3DXEFFECTSTATEMANAGER manager)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
-    FIXME("(%p)->(%p): stub\n", This, manager);
+    TRACE("iface %p, manager %p\n", This, manager);
 
-    return E_NOTIMPL;
+    if (This->manager) IUnknown_Release(This->manager);
+    if (manager) IUnknown_AddRef(manager);
+
+    This->manager = manager;
+
+    return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXEffectImpl_GetStateManager(ID3DXEffect* iface, LPD3DXEFFECTSTATEMANAGER* manager)
