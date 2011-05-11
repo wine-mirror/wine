@@ -652,6 +652,48 @@ static HRESULT WINAPI ID3DXMeshImpl_Optimize(ID3DXMesh *iface, DWORD flags, CONS
     return E_NOTIMPL;
 }
 
+/* Creates a vertex_remap that removes unused vertices.
+ * Indices are updated according to the vertex_remap. */
+static HRESULT compact_mesh(ID3DXMeshImpl *This, DWORD *indices, DWORD *new_num_vertices, ID3DXBuffer **vertex_remap)
+{
+    HRESULT hr;
+    DWORD *vertex_remap_ptr;
+    DWORD num_used_vertices;
+    DWORD i;
+
+    hr = D3DXCreateBuffer(This->numvertices * sizeof(DWORD), vertex_remap);
+    if (FAILED(hr)) return hr;
+    vertex_remap_ptr = ID3DXBuffer_GetBufferPointer(*vertex_remap);
+
+    for (i = 0; i < This->numfaces * 3; i++)
+        vertex_remap_ptr[indices[i]] = 1;
+
+    /* create old->new vertex mapping */
+    num_used_vertices = 0;
+    for (i = 0; i < This->numvertices; i++) {
+        if (vertex_remap_ptr[i])
+            vertex_remap_ptr[i] = num_used_vertices++;
+        else
+            vertex_remap_ptr[i] = -1;
+    }
+    /* convert indices */
+    for (i = 0; i < This->numfaces * 3; i++)
+        indices[i] = vertex_remap_ptr[indices[i]];
+
+    /* create new->old vertex mapping */
+    num_used_vertices = 0;
+    for (i = 0; i < This->numvertices; i++) {
+        if (vertex_remap_ptr[i] != -1)
+            vertex_remap_ptr[num_used_vertices++] = i;
+    }
+    for (i = num_used_vertices; i < This->numvertices; i++)
+        vertex_remap_ptr[i] = -1;
+
+    *new_num_vertices = num_used_vertices;
+
+    return D3D_OK;
+}
+
 static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flags, CONST DWORD *adjacency_in, DWORD *adjacency_out,
                                                     DWORD *face_remap_out, LPD3DXBUFFER *vertex_remap_out)
 {
@@ -661,7 +703,7 @@ static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flag
     ID3DXBuffer *vertex_remap = NULL;
     DWORD *dword_indices = NULL;
     DWORD new_num_vertices = 0;
-    DWORD new_vertex_buffer_size = 0;
+    DWORD new_num_alloc_vertices = 0;
     IDirect3DVertexBuffer9 *vertex_buffer = NULL;
     DWORD i;
 
@@ -700,36 +742,9 @@ static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flag
 
     if ((flags & (D3DXMESHOPT_COMPACT | D3DXMESHOPT_IGNOREVERTS)) == D3DXMESHOPT_COMPACT)
     {
-        /* Remove unused vertices. */
-        DWORD *vertex_remap_ptr;
-
-        new_vertex_buffer_size = This->numvertices;
-        hr = D3DXCreateBuffer(This->numvertices * sizeof(DWORD), &vertex_remap);
+        new_num_alloc_vertices = This->numvertices;
+        hr = compact_mesh(This, dword_indices, &new_num_vertices, &vertex_remap);
         if (FAILED(hr)) goto cleanup;
-        vertex_remap_ptr = ID3DXBuffer_GetBufferPointer(vertex_remap);
-
-        for (i = 0; i < This->numfaces * 3; i++)
-            vertex_remap_ptr[dword_indices[i]] = 1;
-
-        /* create old->new vertex mapping */
-        for (i = 0; i < This->numvertices; i++) {
-            if (vertex_remap_ptr[i])
-                vertex_remap_ptr[i] = new_num_vertices++;
-            else
-                vertex_remap_ptr[i] = -1;
-        }
-        /* convert indices */
-        for (i = 0; i < This->numfaces * 3; i++)
-            dword_indices[i] = vertex_remap_ptr[dword_indices[i]];
-
-        /* create new->old vertex mapping */
-        new_num_vertices = 0;
-        for (i = 0; i < This->numvertices; i++) {
-            if (vertex_remap_ptr[i] != -1)
-                vertex_remap_ptr[new_num_vertices++] = i;
-        }
-        for (i = new_num_vertices; i < This->numvertices; i++)
-            vertex_remap_ptr[i] = -1;
     }
 
     if (vertex_remap)
@@ -744,8 +759,7 @@ static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flag
         hr = IDirect3DVertexBuffer9_GetDesc(This->vertex_buffer, &vertex_desc);
         if (FAILED(hr)) goto cleanup;
 
-        new_vertex_buffer_size *= vertex_size;
-        hr = IDirect3DDevice9_CreateVertexBuffer(This->device, new_vertex_buffer_size,
+        hr = IDirect3DDevice9_CreateVertexBuffer(This->device, new_num_alloc_vertices * vertex_size,
                 vertex_desc.Usage, This->fvf, vertex_desc.Pool, &vertex_buffer, NULL);
         if (FAILED(hr)) goto cleanup;
 
