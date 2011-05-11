@@ -552,6 +552,7 @@ struct x11drv_thread_data
     Window   selection_wnd;        /* window used for selection interactions */
     Window   clip_window;          /* window used for cursor clipping */
     HWND     clip_hwnd;            /* message window stored in desktop while clipping is active */
+    DWORD    clip_reset;           /* time when clipping was last reset */
     HKL      kbd_layout;           /* active keyboard layout */
     enum { xi_unavailable = -1, xi_unknown, xi_disabled, xi_enabled } xi2_state; /* XInput2 state */
 };
@@ -844,6 +845,7 @@ extern void sync_window_cursor( Window window );
 extern LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd );
 extern void ungrab_clipping_window(void);
 extern void reset_clipping_window(void);
+extern BOOL clip_fullscreen_window( HWND hwnd );
 extern void X11DRV_InitKeyboard( Display *display );
 extern DWORD CDECL X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
                                                        DWORD mask, DWORD flags );

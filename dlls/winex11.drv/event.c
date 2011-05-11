@@ -714,7 +714,11 @@ static void X11DRV_FocusIn( HWND hwnd, XEvent *xev )
         XSetICFocus( xic );
         wine_tsx11_unlock();
     }
-    if (use_take_focus) return;  /* ignore FocusIn if we are using take focus */
+    if (use_take_focus)
+    {
+        if (hwnd == GetForegroundWindow()) clip_fullscreen_window( hwnd );
+        return;
+    }
 
     if (!can_activate_window(hwnd))
     {
