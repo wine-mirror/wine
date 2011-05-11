@@ -3018,6 +3018,12 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
         path = msi_build_directory_name( 3, parent->ResolvedTarget, folder->TargetDefault, NULL );
     }
     msi_clean_path( path );
+    if (folder->ResolvedTarget && !strcmpiW( path, folder->ResolvedTarget ))
+    {
+        TRACE("%s already resolved to %s\n", debugstr_w(name), debugstr_w(folder->ResolvedTarget));
+        msi_free( path );
+        return;
+    }
     msi_set_property( package->db, folder->Directory, path );
     msi_free( folder->ResolvedTarget );
     folder->ResolvedTarget = path;
