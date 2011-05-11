@@ -2448,7 +2448,7 @@ sub generate_project_files($)
     print FILEO " \$(SUBDIRS)";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO " \$(DLLS:%=%.so) \$(EXES:%=%.so)";
+    print FILEO " \$(DLLS:%=%.so) \$(EXES)";
   }
   print FILEO "\n\n";
   print FILEO "### Build rules\n";
@@ -2482,7 +2482,7 @@ sub generate_project_files($)
   print FILEO "\n";
   print FILEO "clean:: \$(SUBDIRS:%=%/__clean__) \$(EXTRASUBDIRS:%=%/__clean__)\n";
   print FILEO "\t\$(RM) \$(CLEAN_FILES) \$(RC_SRCS:.rc=.res) \$(C_SRCS:.c=.o) \$(CXX_SRCS:.cpp=.o)\n";
-  print FILEO "\t\$(RM) \$(DLLS:%=%.so) \$(EXES:%=%.so) \$(EXES:%.exe=%)\n";
+  print FILEO "\t\$(RM) \$(DLLS:%=%.so) \$(EXES) \$(EXES:%=%.so)\n";
   print FILEO "\n";
   print FILEO "\$(SUBDIRS:%=%/__clean__): dummy\n";
   print FILEO "\tcd `dirname \$\@` && \$(MAKE) clean\n";
@@ -2503,7 +2503,7 @@ sub generate_project_files($)
       } elsif (@$target[$T_TYPE] == $TT_DLL) {
         print FILEO "\$(${canon}_MODULE).so: \$(${canon}_OBJS) \$(${canon}_MODULE:.dll=.spec)\n";
       } else {
-        print FILEO "\$(${canon}_MODULE).so: \$(${canon}_OBJS)\n";
+        print FILEO "\$(${canon}_MODULE): \$(${canon}_OBJS)\n";
       }
       if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {
         print FILEO "\t\$(CXX)";
