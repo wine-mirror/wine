@@ -3446,7 +3446,7 @@ static int puts_clbk_file_w(void *file, int len, const MSVCRT_wchar_t *str)
  */
 int CDECL MSVCRT_vfprintf(MSVCRT_FILE* file, const char *format, __ms_va_list valist)
 {
-    return pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, valist);
+    return pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
 }
 
 /*********************************************************************
@@ -3459,7 +3459,7 @@ int CDECL MSVCRT_vfprintf_s(MSVCRT_FILE* file, const char *format, __ms_va_list 
         return -1;
     }
 
-    return pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, valist);
+    return pf_printf_a(puts_clbk_file_a, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, &valist);
 }
 
 /*********************************************************************
@@ -3467,7 +3467,7 @@ int CDECL MSVCRT_vfprintf_s(MSVCRT_FILE* file, const char *format, __ms_va_list 
  */
 int CDECL MSVCRT_vfwprintf(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __ms_va_list valist)
 {
-    return pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, valist);
+    return pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
 }
 
 /*********************************************************************
@@ -3480,7 +3480,7 @@ int CDECL MSVCRT_vfwprintf_s(MSVCRT_FILE* file, const MSVCRT_wchar_t *format, __
         return -1;
     }
 
-    return pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, valist);
+    return pf_printf_w(puts_clbk_file_w, file, format, NULL, FALSE, TRUE, arg_clbk_valist, NULL, &valist);
 }
 
 /*********************************************************************

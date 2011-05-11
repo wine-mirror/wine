@@ -518,7 +518,7 @@ int CDECL MSVCRT_vsnprintf( char *str, MSVCRT_size_t len,
     int ret;
 
     ret = pf_printf_a(puts_clbk_str_a, &ctx, format, NULL, FALSE, FALSE,
-            arg_clbk_valist, NULL, valist);
+            arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
     return ret;
 }
@@ -534,7 +534,7 @@ int CDECL MSVCRT_vsnprintf_l( char *str, MSVCRT_size_t len, const char *format,
     int ret;
 
     ret = pf_printf_a(puts_clbk_str_a, &ctx, format, locale, FALSE, FALSE,
-            arg_clbk_valist, NULL, valist);
+            arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
     return ret;
 }
@@ -558,7 +558,7 @@ int CDECL MSVCRT_vsnprintf_s_l( char *str, MSVCRT_size_t sizeOfBuffer,
     ctx.len = len;
     ctx.buf = str;
     ret = pf_printf_a(puts_clbk_str_a, &ctx, format, locale, FALSE, TRUE,
-            arg_clbk_valist, NULL, valist);
+            arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
 
     if(ret<0 || ret==len) {
@@ -659,7 +659,7 @@ int CDECL MSVCRT_vsnwprintf(MSVCRT_wchar_t *str, MSVCRT_size_t len,
     int ret;
 
     ret = pf_printf_w(puts_clbk_str_w, &ctx, format, NULL, FALSE, FALSE,
-            arg_clbk_valist, NULL, valist);
+            arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
     return ret;
 }
@@ -676,7 +676,7 @@ int CDECL MSVCRT_vsnwprintf_l(MSVCRT_wchar_t *str, MSVCRT_size_t len,
     int ret;
 
     ret = pf_printf_w(puts_clbk_str_w, &ctx, format, locale, FALSE, FALSE,
-            arg_clbk_valist, NULL, valist);
+            arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
     return ret;
 }
@@ -699,7 +699,7 @@ int CDECL MSVCRT_vsnwprintf_s_l( MSVCRT_wchar_t *str, MSVCRT_size_t sizeOfBuffer
     ctx.len = len;
     ctx.buf = str;
     ret = pf_printf_w(puts_clbk_str_w, &ctx, format, locale, FALSE, TRUE,
-            arg_clbk_valist, NULL, valist);
+            arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
 
     if(ret<0 || ret==len) {
@@ -880,7 +880,7 @@ int CDECL MSVCRT_vsprintf_p_l(char *buffer, MSVCRT_size_t length, const char *fo
         return ret;
     } else if(ret == 0)
         ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale, FALSE, TRUE,
-                arg_clbk_valist, NULL, args);
+                arg_clbk_valist, NULL, &args);
     else
         ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale, TRUE, TRUE,
                 arg_clbk_positional, args_ctx, NULL);
@@ -934,7 +934,7 @@ int CDECL MSVCRT_vswprintf_p_l(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
         return ret;
     } else if(ret == 0)
         ret = pf_printf_w(puts_clbk_str_w, &puts_ctx, format, locale, TRUE, TRUE,
-                arg_clbk_valist, NULL, args);
+                arg_clbk_valist, NULL, &args);
     else
         ret = pf_printf_w(puts_clbk_str_w, &puts_ctx, format, locale, TRUE, TRUE,
                 arg_clbk_positional, args_ctx, NULL);

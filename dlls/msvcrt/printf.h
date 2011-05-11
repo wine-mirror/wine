@@ -337,7 +337,7 @@ static inline void FUNC_NAME(pf_fixup_exponent)(char *buf)
 
 int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const APICHAR *fmt,
         MSVCRT__locale_t locale, BOOL positional_params, BOOL invoke_invalid_param_handler,
-        args_clbk pf_args, void *args_ctx, __ms_va_list valist)
+        args_clbk pf_args, void *args_ctx, __ms_va_list *valist)
 {
     const APICHAR *q, *p = fmt;
     APICHAR buf[32];
@@ -407,7 +407,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             else
                 i = -1;
 
-            flags.FieldLength = pf_args(args_ctx, i, VT_INT, &valist).get_int;
+            flags.FieldLength = pf_args(args_ctx, i, VT_INT, valist).get_int;
             if(flags.FieldLength < 0) {
                 flags.LeftAlign = '-';
                 flags.FieldLength = -flags.FieldLength;
@@ -429,7 +429,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 else
                     i = -1;
 
-                flags.Precision = pf_args(args_ctx, i, VT_INT, &valist).get_int;
+                flags.Precision = pf_args(args_ctx, i, VT_INT, valist).get_int;
             } else while(isdigit(*p)) {
                 flags.Precision *= 10;
                 flags.Precision += *p++ - '0';
@@ -466,10 +466,10 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 
         if(flags.Format == 's' || flags.Format == 'S') {
             i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx,
-                    pf_args(args_ctx, pos, VT_PTR, &valist).get_ptr,
+                    pf_args(args_ctx, pos, VT_PTR, valist).get_ptr,
                     -1,  &flags, locale);
         } else if(flags.Format == 'c' || flags.Format == 'C') {
-            int ch = pf_args(args_ctx, pos, VT_INT, &valist).get_int;
+            int ch = pf_args(args_ctx, pos, VT_INT, valist).get_int;
 
             if((ch&0xff) != ch)
                 FIXME("multibyte characters printing not supported\n");
@@ -481,7 +481,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             i = flags.Precision;
             flags.Precision = 2*sizeof(void*);
             FUNC_NAME(pf_integer_conv)(buf, sizeof(buf)/sizeof(APICHAR), &flags,
-                    pf_args(args_ctx, pos, VT_INT, &valist).get_int);
+                    pf_args(args_ctx, pos, VT_INT, valist).get_int);
             flags.PadZero = 0;
             flags.Precision = i;
 
@@ -499,7 +499,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 return -1;
             }
 
-            used = pf_args(args_ctx, pos, VT_PTR, &valist).get_ptr;
+            used = pf_args(args_ctx, pos, VT_PTR, valist).get_ptr;
             *used = written;
             i = 0;
         } else if(flags.Format && strchr("diouxX", flags.Format)) {
@@ -513,13 +513,13 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 
             if(flags.IntegerDouble)
                 FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, pf_args(args_ctx, pos,
-                            VT_I8, &valist).get_longlong);
+                            VT_I8, valist).get_longlong);
             else if(flags.Format=='d' || flags.Format=='i')
                 FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, pf_args(args_ctx, pos,
-                            VT_INT, &valist).get_int);
+                            VT_INT, valist).get_int);
             else
                 FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, (unsigned)pf_args(
-                            args_ctx, pos, VT_INT, &valist).get_int);
+                            args_ctx, pos, VT_INT, valist).get_int);
 
 #ifdef PRINTF_WIDE
             i = FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, tmp, -1, &flags, locale);
@@ -539,7 +539,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 
             FUNC_NAME(pf_rebuild_format_string)(fmt, &flags);
 
-            sprintf(tmp, fmt, pf_args(args_ctx, pos, VT_R8, &valist).get_double);
+            sprintf(tmp, fmt, pf_args(args_ctx, pos, VT_R8, valist).get_double);
             if(toupper(flags.Format)=='E' || toupper(flags.Format)=='G')
                 FUNC_NAME(pf_fixup_exponent)(tmp);
 
