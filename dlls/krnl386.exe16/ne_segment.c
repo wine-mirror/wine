@@ -533,7 +533,8 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
 
     if (!pModule->ne_autodata) return;
 
-    if (!(dgroup = SEL(pSegTable[pModule->ne_autodata-1].hSeg))) return;
+    if (!pSegTable[pModule->ne_autodata-1].hSeg) return;
+    dgroup = SEL(pSegTable[pModule->ne_autodata-1].hSeg);
 
     pSeg = MapSL( MAKESEGPTR(sel, 0) );
 
