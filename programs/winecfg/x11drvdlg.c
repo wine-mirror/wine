@@ -135,11 +135,11 @@ static void init_dialog(HWND dialog)
     SendDlgItemMessage(dialog, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
     SendDlgItemMessage(dialog, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
 
-    buf = get_reg_key(config_key, keypath("X11 Driver"), "DXGrab", "N");
+    buf = get_reg_key(config_key, keypath("X11 Driver"), "GrabFullscreen", "N");
     if (IS_OPTION_TRUE(*buf))
-	CheckDlgButton(dialog, IDC_DX_MOUSE_GRAB, BST_CHECKED);
+	CheckDlgButton(dialog, IDC_FULLSCREEN_GRAB, BST_CHECKED);
     else
-	CheckDlgButton(dialog, IDC_DX_MOUSE_GRAB, BST_UNCHECKED);
+	CheckDlgButton(dialog, IDC_FULLSCREEN_GRAB, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
 
     buf = get_reg_key(config_key, keypath("X11 Driver"), "Managed", "Y");
@@ -264,11 +264,12 @@ static void on_enable_decorated_clicked(HWND dialog) {
     }
 }
 
-static void on_dx_mouse_grab_clicked(HWND dialog) {
-    if (IsDlgButtonChecked(dialog, IDC_DX_MOUSE_GRAB) == BST_CHECKED) 
-        set_reg_key(config_key, keypath("X11 Driver"), "DXGrab", "Y");
+static void on_fullscreen_grab_clicked(HWND dialog)
+{
+    if (IsDlgButtonChecked(dialog, IDC_FULLSCREEN_GRAB) == BST_CHECKED)
+        set_reg_key(config_key, keypath("X11 Driver"), "GrabFullscreen", "Y");
     else
-        set_reg_key(config_key, keypath("X11 Driver"), "DXGrab", "N");
+        set_reg_key(config_key, keypath("X11 Driver"), "GrabFullscreen", "N");
 }
 
 static void on_d3d_vshader_mode_changed(HWND dialog) {
@@ -432,7 +433,7 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case IDC_ENABLE_DESKTOP: on_enable_desktop_clicked(hDlg); break;
                         case IDC_ENABLE_MANAGED: on_enable_managed_clicked(hDlg); break;
                         case IDC_ENABLE_DECORATED: on_enable_decorated_clicked(hDlg); break;
-			case IDC_DX_MOUSE_GRAB:  on_dx_mouse_grab_clicked(hDlg); break;
+			case IDC_FULLSCREEN_GRAB:  on_fullscreen_grab_clicked(hDlg); break;
 		        case IDC_D3D_PSHADER_MODE: on_d3d_pshader_mode_clicked(hDlg); break;
 		    }
 		    break;

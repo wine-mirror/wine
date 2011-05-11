@@ -66,7 +66,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Ustawienia okna ",IDC_STATIC,8,4,244,92
-    CONTROL     "Zezwalaj aplikacjom DirectX na zablokowanie opuszczania okna przez kursor &myszki",IDC_DX_MOUSE_GRAB,"Button",BS_MULTILINE|BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,16
+    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,16
     CONTROL     "Pozwól mened¿erowi okien &dekorowaæ okna",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     CONTROL     "Pozwól mened¿erowi okien &zarz¹dzaæ oknami Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,52,230,8
     CONTROL     "Emuluj wirtualny &pulpit",IDC_ENABLE_DESKTOP,"Button",

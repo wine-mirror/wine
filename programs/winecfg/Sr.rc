@@ -65,7 +65,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Podešavanje prozora ",IDC_STATIC,8,4,244,84
-    CONTROL     "Dozvoli DirectX aplikacijama da zaustave  &miša da napuste njihov prozor.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Dozvoli temi da &ukrasi prozor.",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "Dozvoli &menadžeru prozora da upravlja prozorom.",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "&Emulacija veštačkog desktopa.",IDC_ENABLE_DESKTOP,"Button",
