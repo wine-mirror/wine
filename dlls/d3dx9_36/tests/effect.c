@@ -33,6 +33,7 @@ static void test_create_effect_and_pool(IDirect3DDevice9 *device)
     ID3DXBaseEffect *base;
     ULONG count;
     IDirect3DDevice9 *device2;
+    LPD3DXEFFECTSTATEMANAGER manager = (LPD3DXEFFECTSTATEMANAGER)0xdeadbeef;
     ID3DXEffectPool *pool = (ID3DXEffectPool *)0xdeadbeef, *pool2;
 
     hr = D3DXCreateEffect(NULL, effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, NULL, NULL);
@@ -52,6 +53,31 @@ static void test_create_effect_and_pool(IDirect3DDevice9 *device)
 
     hr = effect->lpVtbl->QueryInterface(effect, &IID_ID3DXBaseEffect, (void **)&base);
     ok(hr == E_NOINTERFACE, "QueryInterface failed, got %x, expected %x (E_NOINTERFACE)\n", hr, E_NOINTERFACE);
+
+    hr = effect->lpVtbl->GetStateManager(effect, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "GetStateManager failed, got %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = effect->lpVtbl->GetStateManager(effect, &manager);
+    ok(hr == D3D_OK, "GetStateManager failed, got %x, expected 0 (D3D_OK)\n", hr);
+    ok(!manager, "GetStateManager failed, got %p\n", manager);
+
+    /* this works, but it is not recommended! */
+    hr = effect->lpVtbl->SetStateManager(effect, (LPD3DXEFFECTSTATEMANAGER) device);
+    ok(hr == D3D_OK, "SetStateManager failed, got %x, expected 0 (D3D_OK)\n", hr);
+
+    hr = effect->lpVtbl->GetStateManager(effect, &manager);
+    ok(hr == D3D_OK, "GetStateManager failed, got %x, expected 0 (D3D_OK)\n", hr);
+    ok(manager != NULL, "GetStateManager failed\n");
+
+    IDirect3DDevice9_AddRef(device);
+    count = IDirect3DDevice9_Release(device);
+    ok(count == 4, "Release failed, got %u, expected 4\n", count);
+
+    count = IUnknown_Release(manager);
+    ok(count == 3, "Release failed, got %u, expected 3\n", count);
+
+    hr = effect->lpVtbl->SetStateManager(effect, NULL);
+    ok(hr == D3D_OK, "SetStateManager failed, got %x, expected 0 (D3D_OK)\n", hr);
 
     hr = effect->lpVtbl->GetPool(effect, &pool);
     ok(hr == D3D_OK, "GetPool failed, got %x, expected 0 (D3D_OK)\n", hr);
