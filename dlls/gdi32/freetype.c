@@ -4553,12 +4553,13 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
         return get_GSUB_vert_glyph(font,ret);
     }
 
-    if(font->ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL && glyph < 0x100)
+    if(font->ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL)
     {
+        if (glyph < 0x100) glyph += 0xf000;
         /* there is a number of old pre-Unicode "broken" TTFs, which
            do have symbols at U+00XX instead of U+f0XX */
-        if (!(glyphId = pFT_Get_Char_Index(font->ft_face, glyph + 0xf000)))
-            glyphId = pFT_Get_Char_Index(font->ft_face, glyph);
+        if (!(glyphId = pFT_Get_Char_Index(font->ft_face, glyph)))
+            glyphId = pFT_Get_Char_Index(font->ft_face, glyph-0xf000);
     }
     else glyphId = pFT_Get_Char_Index(font->ft_face, glyph);
 
