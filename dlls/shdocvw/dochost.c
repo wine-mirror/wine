@@ -326,6 +326,8 @@ void deactivate_document(DocHost *This)
     IHlinkTarget *hlink = NULL;
     HRESULT hres;
 
+    if(!This->document) return;
+
     if(This->doc_navigate) {
         IUnknown_Release(This->doc_navigate);
         This->doc_navigate = NULL;
