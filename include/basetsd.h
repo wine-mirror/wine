@@ -27,15 +27,13 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 /*
- * Win32 was easy to implement under Unix since most (all?) 32-bit
- * Unices uses the same type model (ILP32) as Win32, where int, long
- * and pointer are 32-bit.
+ * Win32 was easy to implement under Unix since most 32-bit Unices use the same
+ * type model (ILP32) as Win32, where int, long and pointer are 32-bit.
  *
- * Win64, however, will cause some problems when implemented under Unix.
- * Linux/{Alpha, Sparc64} and most (all?) other 64-bit Unices use
- * the LP64 type model where int is 32-bit and long and pointer are
- * 64-bit. Win64 on the other hand uses the P64 (sometimes called LLP64)
- * type model where int and long are 32 bit and pointer is 64-bit.
+ * Win64, however, can cause some problems. Most 64-bit Unices use the LP64 type
+ * model where int is 32-bit and long and pointer are 64-bit. Win64 on the other
+ * hand uses the LLP64 type model where int and long are 32 bit and pointer is
+ * 64-bit.
  */
 
 #if defined(__x86_64__) && !defined(_WIN64)
