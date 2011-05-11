@@ -58,6 +58,9 @@
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
 #ifdef HAVE_OPENSSL_SSL_H
 # include <openssl/ssl.h>
 # include <openssl/opensslv.h>
@@ -497,7 +500,7 @@ static DWORD init_openssl(void)
 DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, netconn_t **ret)
 {
     netconn_t *netconn;
-    int result;
+    int result, flag;
 
     if(useSSL) {
         DWORD res;
@@ -531,6 +534,13 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, netcon
         heap_free(netconn);
         return sock_get_error(errno);
     }
+
+#ifdef TCP_NODELAY
+    flag = 1;
+    result = setsockopt(netconn->socketFD, IPPROTO_TCP, TCP_NODELAY, (void*)&flag, sizeof(flag));
+    if(result < 0)
+        WARN("setsockopt(TCP_NODELAY) failed\n");
+#endif
 
     server_addref(server);
     netconn->server = server;
