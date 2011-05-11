@@ -66,8 +66,8 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Paramètres des fenêtres ",IDC_STATIC,8,4,244,92
-    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,16,230,16
-    CONTROL     "Permettre au gestionnaire de fenêtres de &décorer les fenêtres",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,36,230,8
+    CONTROL     "Capturer automatiquement la &souris dans les fenêtres plein écran",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,16,230,16
+    CONTROL     "Permettre au gestionnaire de fenêtres de &décorer les fenêtres",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     CONTROL     "Permettre au gestionnaire de fenêtres de &contrôler les fenêtres",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,50,230,8
     CONTROL     "Émuler un bureau virtuel",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,64,230,8
