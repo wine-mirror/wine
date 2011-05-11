@@ -225,24 +225,6 @@ static BOOL is_window_managed( HWND hwnd, UINT swp_flags, const RECT *window_rec
 
 
 /***********************************************************************
- *		is_window_rect_mapped
- *
- * Check if the X whole window should be mapped based on its rectangle
- */
-static BOOL is_window_rect_mapped( const RECT *rect )
-{
-    /* don't map if rect is off-screen */
-    if (rect->left >= virtual_screen_rect.right ||
-        rect->top >= virtual_screen_rect.bottom ||
-        rect->right <= virtual_screen_rect.left ||
-        rect->bottom <= virtual_screen_rect.top)
-        return FALSE;
-
-    return TRUE;
-}
-
-
-/***********************************************************************
  *		is_window_resizable
  *
  * Check if window should be made resizable by the window manager
@@ -251,8 +233,7 @@ static inline BOOL is_window_resizable( struct x11drv_win_data *data, DWORD styl
 {
     if (style & WS_THICKFRAME) return TRUE;
     /* Metacity needs the window to be resizable to make it fullscreen */
-    return (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
-            data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height);
+    return is_window_rect_fullscreen( &data->whole_rect );
 }
 
 
@@ -1271,8 +1252,7 @@ void update_net_wm_states( Display *display, struct x11drv_win_data *data )
     if (data->whole_window == root_window) return;
 
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
-    if (data->whole_rect.left <= 0 && data->whole_rect.right >= screen_width &&
-        data->whole_rect.top <= 0 && data->whole_rect.bottom >= screen_height)
+    if (is_window_rect_fullscreen( &data->whole_rect ))
     {
         if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
             new_state |= (1 << NET_WM_STATE_MAXIMIZED);

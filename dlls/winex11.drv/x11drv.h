@@ -819,6 +819,18 @@ static inline void mirror_rect( const RECT *window_rect, RECT *rect )
     rect->right = width - tmp;
 }
 
+static inline BOOL is_window_rect_mapped( const RECT *rect )
+{
+    return (rect->left < virtual_screen_rect.right && rect->top < virtual_screen_rect.bottom &&
+            rect->right > virtual_screen_rect.left && rect->bottom > virtual_screen_rect.top);
+}
+
+static inline BOOL is_window_rect_fullscreen( const RECT *rect )
+{
+    return (rect->left <= 0 && rect->right >= screen_width &&
+            rect->top <= 0 && rect->bottom >= screen_height);
+}
+
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
 
