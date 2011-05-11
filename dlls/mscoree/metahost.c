@@ -97,6 +97,16 @@ static void CDECL do_nothing(void)
 {
 }
 
+static void missing_runtime_message(const CLRRuntimeInfo *This)
+{
+    if (This->major == 1)
+        MESSAGE("wine: Install Mono 2.6 for Windows to run .NET 1.1 applications.\n");
+    else if (This->major == 2)
+        MESSAGE("wine: Install Mono for Windows to run .NET 2.0 applications.\n");
+    else if (This->major == 4)
+        MESSAGE("wine: Install Mono 2.8 or greater for Windows to run .NET 4.0 applications.\n");
+}
+
 static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
 {
     static const WCHAR bin[] = {'\\','b','i','n',0};
@@ -109,11 +119,11 @@ static HRESULT load_mono(CLRRuntimeInfo *This, loaded_mono **result)
     int trace_size;
     char trace_setting[256];
 
-    if (This->mono_abi_version == -1)
-        MESSAGE("wine: Install the Windows version of Mono to run .NET executables\n");
-
     if (This->mono_abi_version <= 0 || This->mono_abi_version > NUM_ABI_VERSIONS)
+    {
+        missing_runtime_message(This);
         return E_FAIL;
+    }
 
     *result = &loaded_monos[This->mono_abi_version-1];
 
@@ -1015,7 +1025,7 @@ static HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
                 return IUnknown_QueryInterface((IUnknown*)&runtimes[i], iid, ppRuntime);
             else
             {
-                ERR("Mono is missing %s runtime\n", debugstr_w(pwzVersion));
+                missing_runtime_message(&runtimes[i]);
                 return CLR_E_SHIM_RUNTIME;
             }
         }
@@ -1309,7 +1319,10 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
                     &IID_ICLRRuntimeInfo, (void**)result);
         }
 
-        ERR("No %s.NET runtime installed\n", legacy ? "legacy " : "");
+        if (legacy)
+            missing_runtime_message(&runtimes[1]);
+        else
+            missing_runtime_message(&runtimes[NUM_RUNTIMES-1]);
 
         return CLR_E_SHIM_RUNTIME;
     }
