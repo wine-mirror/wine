@@ -74,6 +74,12 @@ DEFINE_OLEGUID(CGID_DocHostCmdPriv, 0x000214D4L, 0, 0);
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define CHECK_NOT_CALLED(func) \
+    do { \
+        ok(!called_ ## func, "unexpected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 #define CHECK_CALLED_BROKEN(func) \
     do { \
         ok(called_ ## func || broken(!called_ ## func), "expected " #func "\n"); \
@@ -4014,7 +4020,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         container_locked = TRUE;
     }
     CHECK_CALLED(OnChanged_READYSTATE);
-    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
+    CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     SET_CALLED(IsSystemMoniker); /* IE7 */
     SET_CALLED(Exec_ShellDocView_84);
     if(mon == &Moniker)
@@ -4145,8 +4151,8 @@ static void test_download(DWORD flags)
         CHECK_CALLED(UnlockRequest);
     }
     if(!(flags & DWL_EMPTY))
-        todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Interactive);
-    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Complete);
+        CHECK_CALLED(Invoke_OnReadyStateChange_Interactive);
+    CHECK_CALLED(Invoke_OnReadyStateChange_Complete);
     SET_CALLED(Exec_Explorer_69);
     SET_CALLED(EnableModeless_TRUE); /* IE7 */
     SET_CALLED(Frame_EnableModeless_TRUE); /* IE7 */
@@ -4616,7 +4622,7 @@ static void test_exec_editmode(IUnknown *unk, BOOL loaded)
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(OnChanged_READYSTATE);
-    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
+    CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     SET_CALLED(IsSystemMoniker); /* IE7 */
     SET_CALLED(Exec_ShellDocView_84);
     if(loaded)
@@ -5309,7 +5315,7 @@ static void test_StreamLoad(IHTMLDocument2 *doc)
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(Exec_ShellDocView_37);
     CHECK_CALLED(OnChanged_READYSTATE);
-    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
+    CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     CHECK_CALLED(Read);
     todo_wine CHECK_CALLED(GetPendingUrl);
 
@@ -5344,7 +5350,7 @@ static void test_StreamInitNew(IHTMLDocument2 *doc)
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(Exec_ShellDocView_37);
     CHECK_CALLED(OnChanged_READYSTATE);
-    todo_wine CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
+    CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
     todo_wine CHECK_CALLED(GetPendingUrl);
 
     test_timer(EXPECT_SETTITLE);
@@ -5805,7 +5811,11 @@ static void test_HTMLDocument_StreamInitNew(void)
 
     test_GetCurMoniker((IUnknown*)doc, NULL, NULL);
     test_StreamInitNew(doc);
+
+    SET_EXPECT(Invoke_OnReadyStateChange_Interactive);
     test_download(DWL_VERBDONE|DWL_TRYCSS|DWL_EMPTY);
+    todo_wine CHECK_NOT_CALLED(Invoke_OnReadyStateChange_Interactive);
+
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
 
     test_UIDeactivate();

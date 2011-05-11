@@ -1460,7 +1460,7 @@ static void test_onclick(IHTMLDocument2 *doc)
         CHECK_CALLED(div_onclick_attached);
         CHECK_CALLED(body_onclick);
         CHECK_CALLED(document_onclick);
-        todo_wine CHECK_CALLED(invoke_onclick);
+        CHECK_CALLED(invoke_onclick);
     }
 
     xy_todo = TRUE;
@@ -1478,7 +1478,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(div_onclick_attached);
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
-    todo_wine CHECK_CALLED(invoke_onclick);
+    CHECK_CALLED(invoke_onclick);
 
     SET_EXPECT(div_onclick);
     SET_EXPECT(div_onclick_attached);
@@ -1493,7 +1493,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(div_onclick_attached);
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
-    todo_wine CHECK_CALLED(invoke_onclick);
+    CHECK_CALLED(invoke_onclick);
 
     cp_cookie = register_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, (IUnknown*)&doccp_obj);
     elem_attach_event((IUnknown*)div, "onclick", (IDispatch*)&div_onclick_disp);
@@ -1518,7 +1518,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(document_onclick);
     CHECK_CALLED(doc_onclick_attached);
     CHECK_CALLED(doccp_onclick);
-    todo_wine CHECK_CALLED(invoke_onclick);
+    CHECK_CALLED(invoke_onclick);
 
     unregister_cp((IUnknown*)doc, &DIID_HTMLDocumentEvents, cp_cookie);
 
@@ -1546,7 +1546,7 @@ static void test_onclick(IHTMLDocument2 *doc)
     CHECK_CALLED(div_onclick_attached);
     CHECK_CALLED(body_onclick);
     CHECK_CALLED(document_onclick);
-    todo_wine CHECK_CALLED(invoke_onclick);
+    CHECK_CALLED(invoke_onclick);
 
     IHTMLElement_Release(div);
     IHTMLElement_Release(body);
