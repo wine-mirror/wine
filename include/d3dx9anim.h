@@ -349,7 +349,7 @@ DECLARE_INTERFACE_(ID3DXAnimationController, IUnknown)
     STDMETHOD_(D3DXEVENTHANDLE, KeyTrackEnable)(THIS_ UINT track, BOOL new_enable, DOUBLE start_time) PURE;
     STDMETHOD_(D3DXEVENTHANDLE, KeyPriorityBlend)(THIS_ FLOAT new_blend_weight,
             DOUBLE start_time, DOUBLE duration, D3DXTRANSITION_TYPE transition) PURE;
-    STDMETHOD(UnkeyEvent)(THIS, D3DXEVENTHANDLE event) PURE;
+    STDMETHOD(UnkeyEvent)(THIS_ D3DXEVENTHANDLE event) PURE;
     STDMETHOD(UnkeyAllTrackEvents)(THIS_ UINT track) PURE;
     STDMETHOD(UnkeyAllPriorityBlends)(THIS) PURE;
     STDMETHOD_(D3DXEVENTHANDLE, GetCurrentTrackEvent)(THIS_ UINT track, D3DXEVENT_TYPE event_type) PURE;
