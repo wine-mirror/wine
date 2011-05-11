@@ -84,6 +84,7 @@ int use_primary_selection = 0;
 int use_system_cursors = 1;
 int show_systray = 1;
 int grab_pointer = 1;
+int grab_fullscreen = 0;
 int managed_mode = 1;
 int decorated_mode = 1;
 int private_color_map = 0;
@@ -425,6 +426,9 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "GrabPointer", buffer, sizeof(buffer) ))
         grab_pointer = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "GrabFullscreen", buffer, sizeof(buffer) ))
+        grab_fullscreen = IS_OPTION_TRUE( buffer[0] );
 
     screen_depth = 0;
     if (!get_config_key( hkey, appkey, "ScreenDepth", buffer, sizeof(buffer) ))

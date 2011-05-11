@@ -601,6 +601,7 @@ extern int use_primary_selection;
 extern int use_system_cursors;
 extern int show_systray;
 extern int grab_pointer;
+extern int grab_fullscreen;
 extern int usexcomposite;
 extern int managed_mode;
 extern int decorated_mode;

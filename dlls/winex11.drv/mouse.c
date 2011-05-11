@@ -518,8 +518,11 @@ BOOL clip_fullscreen_window( HWND hwnd )
     if (!is_window_rect_fullscreen( &data->whole_rect )) return FALSE;
     if (GetTickCount() - x11drv_thread_data()->clip_reset < 1000) return FALSE;
     SetRect( &rect, 0, 0, screen_width, screen_height );
-    if (!EqualRect( &rect, &virtual_screen_rect )) return FALSE;
-    if (root_window != DefaultRootWindow( gdi_display )) return FALSE;
+    if (!grab_fullscreen)
+    {
+        if (!EqualRect( &rect, &virtual_screen_rect )) return FALSE;
+        if (root_window != DefaultRootWindow( gdi_display )) return FALSE;
+    }
     TRACE( "win %p clipping fullscreen\n", hwnd );
     return grab_clipping_window( &rect, TRUE );
 }
