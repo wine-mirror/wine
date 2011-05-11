@@ -10141,7 +10141,6 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
  */
 static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, const NMHDR *lpnmhdr)
 {
-    HWND hwndSelf = infoPtr->hwndSelf;
     const NMHEADERW *lpnmh;
     
     TRACE("(lpnmhdr=%p)\n", lpnmhdr);
@@ -10194,10 +10193,6 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, const NMHDR *lpnmhdr)
             LISTVIEW_InvalidateList(infoPtr);
             notify_forward_header(infoPtr, lpnmh);
             return FALSE;
-
-        case HDN_ITEMCHANGINGW:
-        case HDN_ITEMCHANGINGA:
-            return notify_forward_header(infoPtr, lpnmh);
             
 	case HDN_ITEMCHANGEDW:
 	case HDN_ITEMCHANGEDA:
@@ -10205,10 +10200,6 @@ static LRESULT LISTVIEW_Notify(LISTVIEW_INFO *infoPtr, const NMHDR *lpnmhdr)
 	    COLUMN_INFO *lpColumnInfo;
 	    HDITEMW hdi;
 	    INT dx, cxy;
-	    
-            notify_forward_header(infoPtr, lpnmh);
-	    if (!IsWindow(hwndSelf))
-		break;
 
 	    if (!lpnmh->pitem || !(lpnmh->pitem->mask & HDI_WIDTH))
 	    {

@@ -305,6 +305,13 @@ static const struct message listview_destroy[] = {
     { 0 }
 };
 
+static const struct message listview_header_changed_seq[] = {
+    { LVM_SETCOLUMNA, sent },
+    { WM_NOTIFY, sent|id|defwinproc, 0, 0, LISTVIEW_ID },
+    { WM_NOTIFY, sent|id|defwinproc, 0, 0, LISTVIEW_ID },
+    { 0 }
+};
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -4593,11 +4600,13 @@ static void test_destroynotify(void)
 
 static void test_header_notification(void)
 {
+    static char textA[] = "newtext";
     HWND list, header;
     HDITEMA item;
     NMHEADER nmh;
     LVCOLUMNA col;
     LRESULT ret;
+    BOOL r;
 
     list = create_listview_control(LVS_REPORT);
     ok(list != NULL, "failed to create listview window\n");
@@ -4607,6 +4616,21 @@ static void test_header_notification(void)
     col.cx = 100;
     ret = SendMessage(list, LVM_INSERTCOLUMNA, 0, (LPARAM)&col);
     ok(!ret, "expected 0, got %ld\n", ret);
+
+    /* check list parent notification after header item changed,
+       this test should be placed before header subclassing to avoid
+       Listview -> Header messages to be logged */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    col.mask = LVCF_TEXT;
+    col.pszText = textA;
+    r = SendMessage(list, LVM_SETCOLUMNA, 0, (LPARAM)&col);
+    ok(r == TRUE, "got %d\n", r);
+
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_header_changed_seq,
+                "header notify, listview", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "header notify, parent", FALSE);
 
     header = subclass_header(list);
 
