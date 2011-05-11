@@ -128,21 +128,10 @@ static LPWSTR MCI_strdupAtoW( LPCSTR str )
     return ret;
 }
 
-static DWORD MCI_get_device_type(UINT16 deviceId)
-{
-    MCI_GETDEVCAPS_PARMS parms;
-    MCIERROR err;
-
-    err = mciSendCommandW(deviceId, MCI_GETDEVCAPS, MCI_GETDEVCAPS_DEVICE_TYPE | MCI_WAIT, (DWORD_PTR)&parms);
-    if (err != MMSYSERR_NOERROR)
-        return MCI_DEVTYPE_OTHER;
-    return parms.dwReturn;
-}
-
 /**************************************************************************
  * 			MCI_MapMsg16To32W			[internal]
  */
-static MMSYSTEM_MapType	MCI_MapMsg16To32W(UINT16 wDevID, WORD wMsg, DWORD dwFlags, DWORD_PTR* lParam)
+static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* lParam)
 {
     if (*lParam == 0)
 	return MMSYSTEM_MAP_OK;
@@ -204,7 +193,7 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(UINT16 wDevID, WORD wMsg, DWORD dwFlag
         return MMSYSTEM_MAP_OKMEM;
     case MCI_STATUS:
         {
-            if (MCI_get_device_type(wDevID) == MCI_DEVTYPE_DIGITAL_VIDEO) {
+            if (dwFlags & (MCI_DGV_STATUS_REFERENCE | MCI_DGV_STATUS_DISKSPACE)) {
                 LPMCI_DGV_STATUS_PARMSW mdsp32w = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                     sizeof(LPMCI_DGV_STATUS_PARMS16) + sizeof(MCI_DGV_STATUS_PARMSW));
                 LPMCI_DGV_STATUS_PARMS16 mdsp16 = MapSL(*lParam);
@@ -394,7 +383,7 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(UINT16 wDevID, WORD wMsg, DWORD dwFlag
 /**************************************************************************
  * 			MCI_UnMapMsg16To32W			[internal]
  */
-static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(UINT16 wDevID, WORD wMsg, DWORD dwFlags, DWORD_PTR lParam)
+static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR lParam)
 {
     switch (wMsg) {
 	/* case MCI_CAPTURE */
@@ -443,7 +432,7 @@ static  MMSYSTEM_MapType	MCI_UnMapMsg16To32W(UINT16 wDevID, WORD wMsg, DWORD dwF
         }
         return MMSYSTEM_MAP_OK;
     case MCI_STATUS:
-        if (lParam && MCI_get_device_type(wDevID) == MCI_DEVTYPE_DIGITAL_VIDEO) {
+        if (lParam && (dwFlags & (MCI_DGV_STATUS_REFERENCE | MCI_DGV_STATUS_DISKSPACE))) {
             LPMCI_DGV_STATUS_PARMSW mdsp32w = (LPMCI_DGV_STATUS_PARMSW)lParam;
             char *base = (char*)lParam - sizeof(LPMCI_DGV_STATUS_PARMS16);
             LPMCI_DGV_STATUS_PARMS16 mdsp16 = *(LPMCI_DGV_STATUS_PARMS16*)base;
@@ -759,7 +748,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
 
 	dwRet = MCIERR_INVALID_DEVICE_ID;
 
-        switch (res = MCI_MapMsg16To32W(wDevID, wMsg, dwParam1, &dwParam2)) {
+        switch (res = MCI_MapMsg16To32W(wMsg, dwParam1, &dwParam2)) {
         case MMSYSTEM_MAP_MSGERROR:
             TRACE("%s not handled yet\n", MCI_MessageToString(wMsg));
             dwRet = MCIERR_DRIVER_INTERNAL;
@@ -772,7 +761,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
         case MMSYSTEM_MAP_OKMEM:
             dwRet = mciSendCommandW(wDevID, wMsg, dwParam1, dwParam2);
             if (res == MMSYSTEM_MAP_OKMEM)
-                MCI_UnMapMsg16To32W(wDevID, wMsg, dwParam1, dwParam2);
+                MCI_UnMapMsg16To32W(wMsg, dwParam1, dwParam2);
             break;
         }
     }
