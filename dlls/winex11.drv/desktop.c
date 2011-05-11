@@ -143,7 +143,7 @@ Window CDECL X11DRV_create_desktop( UINT width, UINT height )
 
     /* Create window */
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | EnterWindowMask |
-                          PointerMotionMask | ButtonPressMask | ButtonReleaseMask;
+                          PointerMotionMask | ButtonPressMask | ButtonReleaseMask | FocusChangeMask;
     win_attr.cursor = XCreateFontCursor( display, XC_top_left_arrow );
 
     if (visual != DefaultVisual( display, DefaultScreen(display) ))

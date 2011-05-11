@@ -449,6 +449,17 @@ void ungrab_clipping_window(void)
 }
 
 /***********************************************************************
+ *		reset_clipping_window
+ *
+ * Forcibly reset the window clipping on external events.
+ */
+void reset_clipping_window(void)
+{
+    ungrab_clipping_window();
+    ClipCursor( NULL );  /* make sure the clip rectangle is reset too */
+}
+
+/***********************************************************************
  *             clip_cursor_notify
  *
  * Notification function called upon receiving a WM_X11DRV_CLIP_CURSOR.

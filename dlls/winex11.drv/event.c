@@ -706,6 +706,7 @@ static void X11DRV_FocusIn( HWND hwnd, XEvent *xev )
     TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 
     if (event->detail == NotifyPointer) return;
+    if (hwnd == GetDesktopWindow()) return;
 
     if ((xic = X11DRV_get_ic( hwnd )))
     {
@@ -740,20 +741,13 @@ static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
     int revert;
     XIC xic;
 
-    if (!hwnd)
-    {
-        if (event->detail == NotifyPointer && event->window == x11drv_thread_data()->clip_window)
-        {
-            TRACE( "clip window lost focus\n" );
-            ungrab_clipping_window();
-            ClipCursor( NULL );  /* make sure the clip rectangle is reset too */
-        }
-        return;
-    }
-
     TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 
-    if (event->detail == NotifyPointer) return;
+    if (event->detail == NotifyPointer)
+    {
+        if (!hwnd && event->window == x11drv_thread_data()->clip_window) reset_clipping_window();
+        return;
+    }
     if (ximInComposeMode) return;
 
     x11drv_thread_data()->last_focus = hwnd;
@@ -763,8 +757,12 @@ static void X11DRV_FocusOut( HWND hwnd, XEvent *xev )
         XUnsetICFocus( xic );
         wine_tsx11_unlock();
     }
+    if (root_window != DefaultRootWindow(event->display))
+    {
+        if (hwnd == GetDesktopWindow()) reset_clipping_window();
+        return;
+    }
     if (hwnd != GetForegroundWindow()) return;
-    if (root_window != DefaultRootWindow(event->display)) return;
     SendMessageW( hwnd, WM_CANCELMODE, 0, 0 );
 
     /* don't reset the foreground window, if the window which is
