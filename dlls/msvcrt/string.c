@@ -567,6 +567,25 @@ int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
 }
 
 /*********************************************************************
+ *              _strncoll_l (MSVCRT.@)
+ */
+int CDECL MSVCRT_strncoll_l( const char* str1, const char* str2, MSVCRT_size_t count, MSVCRT__locale_t locale )
+{
+    if(!locale)
+        locale = get_locale();
+
+    return CompareStringA(locale->locinfo->lc_handle[MSVCRT_LC_CTYPE], 0, str1, count, str2, count)-2;
+}
+
+/*********************************************************************
+ *              strncoll (MSVCRT.@)
+ */
+int CDECL MSVCRT_strncoll( const char* str1, const char* str2, MSVCRT_size_t count )
+{
+    return MSVCRT_strncoll_l(str1, str2, count, NULL);
+}
+
+/*********************************************************************
  *      strcpy_s (MSVCRT.@)
  */
 int CDECL MSVCRT_strcpy_s( char* dst, MSVCRT_size_t elem, const char* src )

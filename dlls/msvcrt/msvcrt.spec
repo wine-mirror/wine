@@ -934,8 +934,8 @@
 @ cdecl _strlwr_l(str ptr)
 @ cdecl _strlwr_s(ptr long)
 @ cdecl _strlwr_s_l(ptr long ptr)
-@ stub _strncoll(str str long)
-# stub _strncoll_l(str str long ptr)
+@ cdecl _strncoll(str str long) MSVCRT_strncoll_l
+@ cdecl _strncoll_l(str str long ptr) MSVCRT_strncoll
 @ cdecl _strnicmp(str str long) ntdll._strnicmp
 # stub _strnicmp_l(str str long ptr)
 @ stub _strnicoll(str str long)
