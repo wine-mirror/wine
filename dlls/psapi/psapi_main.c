@@ -263,52 +263,6 @@ DWORD WINAPI GetMappedFileNameW(HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename,
 }
 
 /***********************************************************************
- *           GetModuleBaseNameA (PSAPI.@)
- */
-DWORD WINAPI GetModuleBaseNameA(HANDLE hProcess, HMODULE hModule, 
-                                LPSTR lpBaseName, DWORD nSize)
-{
-    WCHAR *lpBaseNameW;
-    DWORD buflenW, ret = 0;
-
-    if(!lpBaseName || !nSize) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    lpBaseNameW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * nSize);
-    buflenW = GetModuleBaseNameW(hProcess, hModule, lpBaseNameW, nSize);
-    TRACE("%d, %s\n", buflenW, debugstr_w(lpBaseNameW));
-    if (buflenW)
-    {
-        ret = WideCharToMultiByte(CP_ACP, 0, lpBaseNameW, buflenW,
-                                  lpBaseName, nSize, NULL, NULL);
-        if (ret < nSize) lpBaseName[ret] = 0;
-    }
-    HeapFree(GetProcessHeap(), 0, lpBaseNameW);
-    return ret;
-}
-
-/***********************************************************************
- *           GetModuleBaseNameW (PSAPI.@)
- */
-DWORD WINAPI GetModuleBaseNameW(HANDLE hProcess, HMODULE hModule, 
-                                LPWSTR lpBaseName, DWORD nSize)
-{
-    LDR_MODULE LdrModule;
-
-    if (!PSAPI_GetLdrModule(hProcess, hModule, &LdrModule))
-        return 0;
-
-    nSize = min(LdrModule.BaseDllName.Length / sizeof(WCHAR), nSize);
-    if (!ReadProcessMemory(hProcess, LdrModule.BaseDllName.Buffer,
-                           lpBaseName, nSize * sizeof(WCHAR), NULL))
-        return 0;
-
-    lpBaseName[nSize] = 0;
-    return nSize;
-}
-
-/***********************************************************************
  *           GetModuleFileNameExA (PSAPI.@)
  */
 DWORD WINAPI GetModuleFileNameExA(HANDLE hProcess, HMODULE hModule, 

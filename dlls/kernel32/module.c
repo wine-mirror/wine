@@ -1125,6 +1125,29 @@ static int module_iterator_next(MODULE_ITERATOR *iter)
     return 1;
 }
 
+static BOOL get_ldr_module(HANDLE process, HMODULE module, LDR_MODULE *ldr_module)
+{
+    MODULE_ITERATOR iter;
+    INT ret;
+
+    if (!init_module_iterator(&iter, process))
+        return FALSE;
+
+    while ((ret = module_iterator_next(&iter)) > 0)
+        /* When hModule is NULL we return the process image - which will be
+         * the first module since our iterator uses InLoadOrderModuleList */
+        if (!module || module == iter.ldr_module.BaseAddress)
+        {
+            *ldr_module = iter.ldr_module;
+            return TRUE;
+        }
+
+    if (ret == 0)
+        SetLastError(ERROR_INVALID_HANDLE);
+
+    return FALSE;
+}
+
 /***********************************************************************
  *           K32EnumProcessModules (KERNEL32.@)
  *
@@ -1155,6 +1178,55 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
     return ret == 0;
 }
 
+/***********************************************************************
+ *           K32GetModuleBaseNameW (KERNEL32.@)
+ */
+DWORD WINAPI K32GetModuleBaseNameW(HANDLE process, HMODULE module,
+                                   LPWSTR base_name, DWORD size)
+{
+    LDR_MODULE ldr_module;
+
+    if (!get_ldr_module(process, module, &ldr_module))
+        return 0;
+
+    size = min(ldr_module.BaseDllName.Length / sizeof(WCHAR), size);
+    if (!ReadProcessMemory(process, ldr_module.BaseDllName.Buffer,
+                           base_name, size * sizeof(WCHAR), NULL))
+        return 0;
+
+    base_name[size] = 0;
+    return size;
+}
+
+/***********************************************************************
+ *           K32GetModuleBaseNameA (KERNEL32.@)
+ */
+DWORD WINAPI K32GetModuleBaseNameA(HANDLE process, HMODULE module,
+                                   LPSTR base_name, DWORD size)
+{
+    WCHAR *base_name_w;
+    DWORD len, ret = 0;
+
+    if(!base_name || !size) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    base_name_w = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * size);
+    if(!base_name_w)
+        return 0;
+
+    len = K32GetModuleBaseNameW(process, module, base_name_w, size);
+    TRACE("%d, %s\n", len, debugstr_w(base_name_w));
+    if (len)
+    {
+        ret = WideCharToMultiByte(CP_ACP, 0, base_name_w, len,
+                                  base_name, size, NULL, NULL);
+        if (ret < size) base_name[ret] = 0;
+    }
+    HeapFree(GetProcessHeap(), 0, base_name_w);
+    return ret;
+}
 
 #ifdef __i386__
 
