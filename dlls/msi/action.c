@@ -2744,8 +2744,6 @@ VS_FIXEDFILEINFO *msi_get_disk_file_version( LPCWSTR filename )
     DWORD versize, handle;
     UINT sz;
 
-    TRACE("%s\n", debugstr_w(filename));
-
     versize = GetFileVersionInfoSizeW( filename, &handle );
     if (!versize)
         return NULL;
@@ -2799,13 +2797,12 @@ DWORD msi_get_disk_file_size( LPCWSTR filename )
     HANDLE file;
     DWORD size;
 
-    TRACE("%s\n", debugstr_w(filename));
-
     file = CreateFileW( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
     if (file == INVALID_HANDLE_VALUE)
         return INVALID_FILE_SIZE;
 
     size = GetFileSize( file, NULL );
+    TRACE("size is %u\n", size);
     CloseHandle( file );
     return size;
 }
