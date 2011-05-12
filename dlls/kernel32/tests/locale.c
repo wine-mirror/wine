@@ -1348,7 +1348,7 @@ static void test_CompareStringA(void)
 
     /* \xB9 character lies between a and b */
     ret = CompareStringA(lcid, 0, "a", 1, "\xB9", 1);
-    todo_wine ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be grater than \'a\'\n");
+    todo_wine ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be greater than \'a\'\n");
     ret = CompareStringA(lcid, 0, "\xB9", 1, "b", 1);
     ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be smaller than \'b\'\n");
 }
