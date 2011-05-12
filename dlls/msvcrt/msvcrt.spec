@@ -535,7 +535,7 @@
 @ cdecl _isatty(long)
 # stub _iscntrl_l(long ptr)
 @ cdecl _isctype(long long)
-# stub _isctype_l(long long ptr)
+@ cdecl _isctype_l(long long ptr)
 # stub _isdigit_l(long ptr)
 # stub _isgraph_l(long ptr)
 # stub _isleadbyte_l(long ptr)

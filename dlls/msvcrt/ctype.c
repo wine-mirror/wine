@@ -66,11 +66,12 @@ WORD** CDECL MSVCRT___pctype_func(void)
 }
 
 /*********************************************************************
- *		_isctype (MSVCRT.@)
+ *		_isctype_l (MSVCRT.@)
  */
-int CDECL _isctype(int c, int type)
+int CDECL _isctype_l(int c, int type, MSVCRT__locale_t locale)
 {
-  MSVCRT__locale_t locale = get_locale();
+  if(!locale)
+      locale = get_locale();
 
   if (c >= -1 && c <= 255)
     return locale->locinfo->pctype[c] & type;
@@ -91,6 +92,14 @@ int CDECL _isctype(int c, int type)
       return typeInfo & type;
   }
   return 0;
+}
+
+/*********************************************************************
+ *              _isctype (MSVCRT.@)
+ */
+int CDECL _isctype(int c, int type)
+{
+    return _isctype_l(c, type, NULL);
 }
 
 /*********************************************************************
