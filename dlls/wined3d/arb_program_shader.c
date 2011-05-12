@@ -528,7 +528,7 @@ static void shader_arb_load_np2fixup_constants(void *shader_priv,
 
 /* GL locking is done by the caller. */
 static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *gl_shader,
-        const struct wined3d_context *context, const struct wined3d_state *state, float rt_height)
+        const struct wined3d_context *context, const struct wined3d_state *state, UINT rt_height)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned char i;
@@ -564,7 +564,7 @@ static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *g
         * ycorrection.w: 0.0
         */
         float val[4];
-        val[0] = context->render_offscreen ? 0.0f : rt_height;
+        val[0] = context->render_offscreen ? 0.0f : (float) rt_height;
         val[1] = context->render_offscreen ? 1.0f : -1.0f;
         val[2] = 1.0f;
         val[3] = 0.0f;
@@ -649,7 +649,7 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
     {
         struct wined3d_shader *pshader = stateBlock->state.pixel_shader;
         const struct arb_ps_compiled_shader *gl_shader = priv->compiled_fprog;
-        float rt_height = device->render_targets[0]->resource.height;
+        UINT rt_height = device->render_targets[0]->resource.height;
 
         /* Load DirectX 9 float constants for pixel shader */
         device->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
@@ -4627,7 +4627,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         }
         else
         {
-            float rt_height = This->render_targets[0]->resource.height;
+            UINT rt_height = This->render_targets[0]->resource.height;
             shader_arb_ps_local_constants(compiled, context, state, rt_height);
         }
 
