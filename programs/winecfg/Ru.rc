@@ -69,10 +69,10 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Настройки окна ",IDC_STATIC,8,4,244,84
-    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Автоматически &удерживать мышь в полноэкранных окнах",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Разрешить менеджеру окон &декорировать окна",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "Разрешить менеджеру окон управлять окнами Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "Эмулировать виртуальный рабочий стол",IDC_ENABLE_DESKTOP,"Button",
+    CONTROL     "Разрешить менеджеру окон управлять &окнами Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "&Эмулировать виртуальный рабочий стол",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
     LTEXT       "Размер рабочего стола:",IDC_DESKTOP_SIZE,15,70,84,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,149,70,8,8,WS_DISABLED
