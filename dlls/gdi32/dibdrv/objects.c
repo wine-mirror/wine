@@ -819,6 +819,11 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     return TRUE;
 }
 
+static BOOL null_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
+{
+    return TRUE;
+}
+
 static const dash_pattern dash_patterns[5] =
 {
     {0, {0}, 0},                  /* PS_SOLID - a pseudo-pattern used to initialise unpatterned pens. */
@@ -889,6 +894,11 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         if(logpen.lopnWidth.x > 1) break;
         pdev->pen_line = dashed_pen_line;
         pdev->pen_pattern = dash_patterns[style];
+        pdev->defer &= ~DEFER_PEN;
+        break;
+
+    case PS_NULL:
+        pdev->pen_line = null_pen_line;
         pdev->defer &= ~DEFER_PEN;
         break;
 
