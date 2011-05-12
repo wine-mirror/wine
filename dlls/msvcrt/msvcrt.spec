@@ -530,16 +530,16 @@
 @ stub -arch=i386 _inpw(long)
 @ cdecl _invalid_parameter(wstr wstr wstr long long) MSVCRT__invalid_parameter
 @ extern _iob MSVCRT__iob
-# stub _isalnum_l(long ptr)
-# stub _isalpha_l(long ptr)
+@ cdecl _isalnum_l(long ptr) MSVCRT__isalnum_l
+@ cdecl _isalpha_l(long ptr) MSVCRT__isalpha_l
 @ cdecl _isatty(long)
-# stub _iscntrl_l(long ptr)
+@ cdecl _iscntrl_l(long ptr) MSVCRT__iscntrl_l
 @ cdecl _isctype(long long)
 @ cdecl _isctype_l(long long ptr)
-# stub _isdigit_l(long ptr)
-# stub _isgraph_l(long ptr)
-# stub _isleadbyte_l(long ptr)
-# stub _islower_l(long ptr)
+@ cdecl _isdigit_l(long ptr) MSVCRT__isdigit_l
+@ cdecl _isgraph_l(long ptr) MSVCRT__isgraph_l
+@ cdecl _isleadbyte_l(long ptr) MSVCRT__isleadbyte_l
+@ cdecl _islower_l(long ptr) MSVCRT__islower_l
 @ stub _ismbbalnum(long)
 # stub _ismbbalnum_l(long ptr)
 @ stub _ismbbalpha(long)
@@ -600,9 +600,9 @@
 # stub _ismbstrail_l(long ptr)
 @ cdecl _isnan( double )
 # stub -arch=win64 _isnanf(float)
-# stub _isprint_l(long ptr)
-# stub _isspace_l(long ptr)
-# stub _isupper_l(long ptr)
+@ cdecl _isprint_l(long ptr) MSVCRT__isprint_l
+@ cdecl _isspace_l(long ptr) MSVCRT__isspace_l
+@ cdecl _isupper_l(long ptr) MSVCRT__isupper_l
 # stub _iswalnum_l(long ptr)
 @ cdecl _iswalpha_l(long ptr) MSVCRT__iswalpha_l
 # stub _iswcntrl_l(long ptr)
@@ -615,7 +615,7 @@
 # stub _iswspace_l(long ptr)
 # stub _iswupper_l(long ptr)
 # stub _iswxdigit_l(long ptr)
-# stub _isxdigit_l(long ptr)
+@ cdecl _isxdigit_l(long ptr) MSVCRT__isxdigit_l
 @ cdecl _itoa(long ptr long) ntdll._itoa
 @ cdecl _itoa_s(long ptr long long)
 @ cdecl _itow(long ptr long) ntdll._itow
