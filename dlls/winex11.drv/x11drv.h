@@ -846,7 +846,7 @@ extern void sync_window_cursor( Window window );
 extern LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd );
 extern void ungrab_clipping_window(void);
 extern void reset_clipping_window(void);
-extern BOOL clip_fullscreen_window( HWND hwnd );
+extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset );
 extern void X11DRV_InitKeyboard( Display *display );
 extern DWORD CDECL X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
                                                        DWORD mask, DWORD flags );

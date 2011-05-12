@@ -200,7 +200,7 @@ static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam 
                               DefaultScreen(display), mask, &changes );
         wine_tsx11_unlock();
     }
-    if (hwnd == GetForegroundWindow()) clip_fullscreen_window( hwnd );
+    if (hwnd == GetForegroundWindow()) clip_fullscreen_window( hwnd, TRUE );
     return TRUE;
 }
 

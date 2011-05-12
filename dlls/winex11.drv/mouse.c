@@ -419,11 +419,11 @@ static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
         if (msg_hwnd) DestroyWindow( msg_hwnd );
         return FALSE;
     }
+    clip_rect = *clip;
     if (msg_hwnd)
     {
         data->clip_hwnd = msg_hwnd;
         sync_window_cursor( clip_window );
-        clip_rect = *clip;
         SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
     }
     return TRUE;
@@ -502,9 +502,10 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
  *
  * Turn on clipping if the active window is fullscreen.
  */
-BOOL clip_fullscreen_window( HWND hwnd )
+BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
 {
     struct x11drv_win_data *data;
+    struct x11drv_thread_data *thread_data;
     RECT rect;
     DWORD style;
 
@@ -516,7 +517,9 @@ BOOL clip_fullscreen_window( HWND hwnd )
     /* maximized windows don't count as full screen */
     if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION) return FALSE;
     if (!is_window_rect_fullscreen( &data->whole_rect )) return FALSE;
-    if (GetTickCount() - x11drv_thread_data()->clip_reset < 1000) return FALSE;
+    if (!(thread_data = x11drv_thread_data())) return FALSE;
+    if (GetTickCount() - thread_data->clip_reset < 1000) return FALSE;
+    if (!reset && thread_data->clip_hwnd) return FALSE;  /* already clipping */
     SetRect( &rect, 0, 0, screen_width, screen_height );
     if (!grab_fullscreen)
     {
@@ -576,7 +579,7 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
     {
         hwnd = GetAncestor( hwnd, GA_ROOT );
         if ((input->u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN)) && hwnd == GetForegroundWindow())
-            clip_fullscreen_window( hwnd );
+            clip_fullscreen_window( hwnd, FALSE );
     }
 
     /* update the wine server Z-order */
@@ -1280,7 +1283,11 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
         else /* if currently clipping, check if we should switch to fullscreen clipping */
         {
             struct x11drv_thread_data *data = x11drv_thread_data();
-            if (data && data->clip_hwnd && clip_fullscreen_window( foreground )) return TRUE;
+            if (data && data->clip_hwnd)
+            {
+                if (EqualRect( clip, &clip_rect ) || clip_fullscreen_window( foreground, TRUE ))
+                    return TRUE;
+            }
         }
     }
     ungrab_clipping_window();
