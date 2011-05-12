@@ -979,7 +979,7 @@
 @ cdecl _tolower(long) MSVCRT__tolower
 # stub _tolower_l(long ptr)
 @ cdecl _toupper(long) MSVCRT__toupper
-# stub _toupper_l(long ptr)
+@ cdecl _toupper_l(long ptr) MSVCRT__toupper_l
 @ cdecl _towlower_l(long ptr) MSVCRT__towlower_l
 @ cdecl _towupper_l(long ptr) MSVCRT__towupper_l
 @ extern _tzname MSVCRT__tzname
@@ -1426,7 +1426,7 @@
 @ cdecl tmpnam(ptr) MSVCRT_tmpnam
 # stub tmpnam_s(ptr long)
 @ cdecl tolower(long) ntdll.tolower
-@ cdecl toupper(long) ntdll.toupper
+@ cdecl toupper(long) MSVCRT_toupper
 @ cdecl towlower(long) ntdll.towlower
 @ cdecl towupper(long) ntdll.towupper
 @ cdecl ungetc(long ptr) MSVCRT_ungetc
