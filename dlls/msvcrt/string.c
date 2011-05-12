@@ -51,11 +51,14 @@ char* CDECL _strdup(const char* str)
 }
 
 /*********************************************************************
- *		_strlwr_s (MSVCRT.@)
+ *		_strlwr_s_l (MSVCRT.@)
  */
-int CDECL _strlwr_s(char *str, MSVCRT_size_t len)
+int CDECL _strlwr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
 {
     char *ptr = str;
+
+    if(!locale)
+        locale = get_locale();
 
     if (!str || !len)
     {
@@ -78,11 +81,35 @@ int CDECL _strlwr_s(char *str, MSVCRT_size_t len)
 
     while (*str)
     {
-        *str = tolower(*str);
+        *str = MSVCRT__tolower_l(*str, locale);
         str++;
     }
 
     return 0;
+}
+
+/*********************************************************************
+ *		_strlwr_s (MSVCRT.@)
+ */
+int CDECL _strlwr_s(char *str, MSVCRT_size_t len)
+{
+    return _strlwr_s_l(str, len, NULL);
+}
+
+/*********************************************************************
+ *		_strlwr_l (MSVCRT.@)
+ */
+int CDECL _strlwr_l(char *str, MSVCRT__locale_t locale)
+{
+    return _strlwr_s_l(str, -1, locale);
+}
+
+/*********************************************************************
+ *		_strlwr (MSVCRT.@)
+ */
+int CDECL _strlwr(char *str)
+{
+    return _strlwr_s_l(str, -1, NULL);
 }
 
 /*********************************************************************

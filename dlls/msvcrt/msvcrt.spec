@@ -930,10 +930,10 @@
 # stub _stricmp_l(str str ptr)
 @ cdecl _stricoll(str str) MSVCRT__stricoll
 # stub _stricoll_l(str str ptr)
-@ cdecl _strlwr(str) ntdll._strlwr
-# stub _strlwr_l(str ptr)
+@ cdecl _strlwr(str)
+@ cdecl _strlwr_l(str ptr)
 @ cdecl _strlwr_s(ptr long)
-# stub _strlwr_s_l(ptr long ptr)
+@ cdecl _strlwr_s_l(ptr long ptr)
 @ stub _strncoll(str str long)
 # stub _strncoll_l(str str long ptr)
 @ cdecl _strnicmp(str str long) ntdll._strnicmp
