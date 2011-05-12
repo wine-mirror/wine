@@ -1615,7 +1615,11 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
         size = height * (((width * format->byte_count) + alignment - 1) & ~(alignment - 1));
     }
 
-    if (format->heightscale != 0.0f) size *= format->heightscale;
+    if (format->heightscale != 0.0f)
+    {
+        /* The D3D format requirements make sure that the resulting format is an integer again */
+        size = (UINT) (size * format->heightscale);
+    }
 
     return size;
 }
