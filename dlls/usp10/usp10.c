@@ -1662,17 +1662,26 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 }
 
 /***********************************************************************
- *      ScriptPlace (USP10.@)
+ *      ScriptPlaceOpenType (USP10.@)
  *
  * Produce advance widths for a run.
  *
  * PARAMS
  *  hdc       [I]   Device context.
  *  psc       [I/O] Opaque pointer to a script cache.
- *  pwGlyphs  [I]   Array of glyphs.
- *  cGlyphs   [I]   Number of glyphs in pwGlyphs.
- *  psva      [I]   Array of visual attributes.
  *  psa       [I/O] String analysis.
+ *  tagScript   [I]   The OpenType tag for the Script
+ *  tagLangSys  [I]   The OpenType tag for the Language
+ *  rcRangeChars[I]   Array of Character counts in each range
+ *  rpRangeProperties [I] Array of TEXTRANGE_PROPERTIES structures
+ *  cRanges     [I]   Count of ranges
+ *  pwcChars    [I]   Array of characters specifying the run.
+ *  pwLogClust  [I]   Array of logical cluster info
+ *  pCharProps  [I]   Array of character property values
+ *  cChars      [I]   Number of characters in pwcChars.
+ *  pwGlyphs  [I]   Array of glyphs.
+ *  pGlyphProps [I]  Array of attributes for the retrieved glyphs
+ *  cGlyphs [I] Count of Glyphs
  *  piAdvance [O]   Array of advance widths.
  *  pGoffset  [O]   Glyph offsets.
  *  pABC      [O]   Combined ABC width.
@@ -1681,19 +1690,36 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
  *  Success: S_OK
  *  Failure: Non-zero HRESULT value.
  */
-HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs, 
-                           int cGlyphs, const SCRIPT_VISATTR *psva,
-                           SCRIPT_ANALYSIS *psa, int *piAdvance, GOFFSET *pGoffset, ABC *pABC )
+
+HRESULT WINAPI ScriptPlaceOpenType( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa,
+                                    OPENTYPE_TAG tagScript, OPENTYPE_TAG tagLangSys,
+                                    int *rcRangeChars, TEXTRANGE_PROPERTIES **rpRangeProperties,
+                                    int cRanges, const WCHAR *pwcChars, WORD *pwLogClust,
+                                    SCRIPT_CHARPROP *pCharProps, int cChars,
+                                    const WORD *pwGlyphs, const SCRIPT_GLYPHPROP *pGlyphProps,
+                                    int cGlyphs, int *piAdvance,
+                                    GOFFSET *pGoffset, ABC *pABC
+)
 {
     HRESULT hr;
     int i;
 
-    TRACE("(%p, %p, %p, %d, %p, %p, %p, %p, %p)\n",  hdc, psc, pwGlyphs, cGlyphs, psva, psa,
-          piAdvance, pGoffset, pABC);
+    TRACE("(%p, %p, %p, %s, %s, %p, %p, %d, %s, %p, %p, %d, %p, %p, %d, %p %p %p)\n",
+     hdc, psc, psa,
+     debugstr_an((char*)&tagScript,4), debugstr_an((char*)&tagLangSys,4),
+     rcRangeChars, rpRangeProperties, cRanges, debugstr_wn(pwcChars, cChars),
+     pwLogClust, pCharProps, cChars, pwGlyphs, pGlyphProps, cGlyphs, piAdvance,
+     pGoffset, pABC);
 
-    if (!psva) return E_INVALIDARG;
+    if (!pGlyphProps) return E_INVALIDARG;
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
     if (!pGoffset) return E_FAIL;
+
+    if (cRanges)
+        FIXME("Ranges not supported yet\n");
+
+    ((ScriptCache *)*psc)->userScript = tagScript;
+    ((ScriptCache *)*psc)->userLang = tagLangSys;
 
     if (pABC) memset(pABC, 0, sizeof(ABC));
     for (i = 0; i < cGlyphs; i++)
@@ -1728,6 +1754,53 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
 
     if (pABC) TRACE("Total for run: abcA=%d, abcB=%d, abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
     return S_OK;
+}
+
+/***********************************************************************
+ *      ScriptPlace (USP10.@)
+ *
+ * Produce advance widths for a run.
+ *
+ * PARAMS
+ *  hdc       [I]   Device context.
+ *  psc       [I/O] Opaque pointer to a script cache.
+ *  pwGlyphs  [I]   Array of glyphs.
+ *  cGlyphs   [I]   Number of glyphs in pwGlyphs.
+ *  psva      [I]   Array of visual attributes.
+ *  psa       [I/O] String analysis.
+ *  piAdvance [O]   Array of advance widths.
+ *  pGoffset  [O]   Glyph offsets.
+ *  pABC      [O]   Combined ABC width.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
+ */
+HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
+                           int cGlyphs, const SCRIPT_VISATTR *psva,
+                           SCRIPT_ANALYSIS *psa, int *piAdvance, GOFFSET *pGoffset, ABC *pABC )
+{
+    HRESULT hr;
+    SCRIPT_GLYPHPROP *glyphProps;
+    int i;
+
+    TRACE("(%p, %p, %p, %d, %p, %p, %p, %p, %p)\n",  hdc, psc, pwGlyphs, cGlyphs, psva, psa,
+          piAdvance, pGoffset, pABC);
+
+    if (!psva) return E_INVALIDARG;
+    if (!pGoffset) return E_FAIL;
+
+    glyphProps = heap_alloc(sizeof(SCRIPT_GLYPHPROP)*cGlyphs);
+    if (!glyphProps) return E_OUTOFMEMORY;
+
+    for (i = 0; i < cGlyphs; i++)
+        glyphProps[i].sva = psva[i];
+
+    hr = ScriptPlaceOpenType(hdc, psc, psa, scriptInformation[psa->eScript].scriptTag, 0, NULL, NULL, 0, NULL, NULL, NULL, 0, pwGlyphs, glyphProps, cGlyphs, piAdvance, pGoffset, pABC);
+
+    heap_free(glyphProps);
+
+    return hr;
 }
 
 /***********************************************************************
