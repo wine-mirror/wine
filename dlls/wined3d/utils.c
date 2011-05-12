@@ -34,7 +34,7 @@ struct StaticPixelFormatDesc
     enum wined3d_format_id id;
     DWORD alphaMask, redMask, greenMask, blueMask;
     UINT bpp;
-    short depthSize, stencilSize;
+    BYTE depthSize, stencilSize;
 };
 
 /*****************************************************************************
@@ -2535,7 +2535,7 @@ unsigned int count_bits(unsigned int mask)
 /* Helper function for retrieving color info for ChoosePixelFormat and wglChoosePixelFormatARB.
  * The later function requires individual color components. */
 BOOL getColorBits(const struct wined3d_format *format,
-        short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize)
+        BYTE *redSize, BYTE *greenSize, BYTE *blueSize, BYTE *alphaSize, BYTE *totalSize)
 {
     TRACE("format %s.\n", debug_d3dformat(format->id));
 
@@ -2573,7 +2573,7 @@ BOOL getColorBits(const struct wined3d_format *format,
 }
 
 /* Helper function for retrieving depth/stencil info for ChoosePixelFormat and wglChoosePixelFormatARB */
-BOOL getDepthStencilBits(const struct wined3d_format *format, short *depthSize, short *stencilSize)
+BOOL getDepthStencilBits(const struct wined3d_format *format, BYTE *depthSize, BYTE *stencilSize)
 {
     TRACE("format %s.\n", debug_d3dformat(format->id));
 

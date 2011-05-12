@@ -2934,7 +2934,7 @@ HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
 static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined3d_gl_info *gl_info,
         const struct wined3d_pixel_format *cfg, const struct wined3d_format *format)
 {
-    short redSize, greenSize, blueSize, alphaSize, colorBits;
+    BYTE redSize, greenSize, blueSize, alphaSize, colorBits;
 
     if(!cfg)
         return FALSE;
@@ -2971,7 +2971,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined
 static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const struct wined3d_gl_info *gl_info,
         const struct wined3d_pixel_format *cfg, const struct wined3d_format *format)
 {
-    short depthSize, stencilSize;
+    BYTE depthSize, stencilSize;
     BOOL lockable = FALSE;
 
     if(!cfg)
@@ -3117,7 +3117,7 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
     }
     else if (format->flags & WINED3DFMT_FLAG_RENDERTARGET)
     {
-        short redSize, greenSize, blueSize, alphaSize, colorBits;
+        BYTE redSize, greenSize, blueSize, alphaSize, colorBits;
         const struct wined3d_pixel_format *cfgs;
         unsigned int i, cfg_count;
 
@@ -3217,8 +3217,8 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
     if (!(check_format->flags & WINED3DFMT_FLAG_RENDERTARGET)) return FALSE;
     if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
-        short AdapterRed, AdapterGreen, AdapterBlue, AdapterAlpha, AdapterTotalSize;
-        short CheckRed, CheckGreen, CheckBlue, CheckAlpha, CheckTotalSize;
+        BYTE AdapterRed, AdapterGreen, AdapterBlue, AdapterAlpha, AdapterTotalSize;
+        BYTE CheckRed, CheckGreen, CheckBlue, CheckAlpha, CheckTotalSize;
         const struct wined3d_pixel_format *cfgs = adapter->cfgs;
         int it;
 

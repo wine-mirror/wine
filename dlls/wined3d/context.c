@@ -1177,8 +1177,8 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
 {
     int iPixelFormat=0;
     unsigned int matchtry;
-    short redBits, greenBits, blueBits, alphaBits, colorBits;
-    short depthBits=0, stencilBits=0;
+    BYTE redBits, greenBits, blueBits, alphaBits, colorBits;
+    BYTE depthBits=0, stencilBits=0;
 
     static const struct
     {
@@ -2052,7 +2052,7 @@ static inline void context_set_render_offscreen(struct wined3d_context *context,
 static BOOL match_depth_stencil_format(const struct wined3d_format *existing,
         const struct wined3d_format *required)
 {
-    short existing_depth, existing_stencil, required_depth, required_stencil;
+    BYTE existing_depth, existing_stencil, required_depth, required_stencil;
 
     if (existing == required) return TRUE;
     if ((existing->flags & WINED3DFMT_FLAG_FLOAT) != (required->flags & WINED3DFMT_FLAG_FLOAT)) return FALSE;

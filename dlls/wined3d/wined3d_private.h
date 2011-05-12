@@ -2540,9 +2540,9 @@ void state_fog_fragpart(DWORD state, struct wined3d_stateblock *stateblock,
         struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 BOOL getColorBits(const struct wined3d_format *format,
-        short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize) DECLSPEC_HIDDEN;
+        BYTE *redSize, BYTE *greenSize, BYTE *blueSize, BYTE *alphaSize, BYTE *totalSize) DECLSPEC_HIDDEN;
 BOOL getDepthStencilBits(const struct wined3d_format *format,
-        short *depthSize, short *stencilSize) DECLSPEC_HIDDEN;
+        BYTE *depthSize, BYTE *stencilSize) DECLSPEC_HIDDEN;
 
 /* Math utils */
 void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2) DECLSPEC_HIDDEN;
@@ -2812,8 +2812,8 @@ struct wined3d_format
     DWORD blue_mask;
     DWORD alpha_mask;
     UINT byte_count;
-    WORD depth_size;
-    WORD stencil_size;
+    BYTE depth_size;
+    BYTE stencil_size;
 
     UINT block_width;
     UINT block_height;
