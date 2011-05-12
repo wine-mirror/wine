@@ -1521,7 +1521,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetRenderState(IDirect3DDevice8 *ifac
     {
         case D3DRS_ZBIAS:
             hr = wined3d_device_get_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, &wined3d_value.d);
-            if (SUCCEEDED(hr)) *pValue = wined3d_value.f / zbias_factor;
+            if (SUCCEEDED(hr)) *pValue = (DWORD)(wined3d_value.f / zbias_factor);
             break;
 
         default:
