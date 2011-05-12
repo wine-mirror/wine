@@ -509,7 +509,7 @@ end:
     return r;
 }
 
-static LPWSTR msi_read_text_archive(LPCWSTR path)
+static LPWSTR msi_read_text_archive(LPCWSTR path, DWORD *len)
 {
     HANDLE file;
     LPSTR data = NULL;
@@ -521,15 +521,17 @@ static LPWSTR msi_read_text_archive(LPCWSTR path)
         return NULL;
 
     size = GetFileSize( file, NULL );
-    data = msi_alloc( size + 1 );
-    if (!data)
-        goto done;
+    if (!(data = msi_alloc( size ))) goto done;
 
-    if (!ReadFile( file, data, size, &read, NULL ))
-        goto done;
+    if (!ReadFile( file, data, size, &read, NULL ) || read != size) goto done;
 
-    data[size] = '\0';
-    wdata = strdupAtoW( data );
+    while (!data[size - 1]) size--;
+    *len = MultiByteToWideChar( CP_ACP, 0, data, size, NULL, 0 );
+    if ((wdata = msi_alloc( (*len + 1) * sizeof(WCHAR) )))
+    {
+        MultiByteToWideChar( CP_ACP, 0, data, size, wdata, *len );
+        wdata[*len] = 0;
+    }
 
 done:
     CloseHandle( file );
@@ -537,21 +539,22 @@ done:
     return wdata;
 }
 
-static void msi_parse_line(LPWSTR *line, LPWSTR **entries, DWORD *num_entries)
+static void msi_parse_line(LPWSTR *line, LPWSTR **entries, DWORD *num_entries, DWORD *len)
 {
     LPWSTR ptr = *line, save;
-    DWORD i, count = 1;
+    DWORD i, count = 1, chars_left = *len;
 
     *entries = NULL;
 
     /* stay on this line */
-    while (*ptr && *ptr != '\n')
+    while (chars_left && *ptr != '\n')
     {
         /* entries are separated by tabs */
         if (*ptr == '\t')
             count++;
 
         ptr++;
+        chars_left--;
     }
 
     *entries = msi_alloc(count * sizeof(LPWSTR));
@@ -559,28 +562,43 @@ static void msi_parse_line(LPWSTR *line, LPWSTR **entries, DWORD *num_entries)
         return;
 
     /* store pointers into the data */
+    chars_left = *len;
     for (i = 0, ptr = *line; i < count; i++)
     {
-        while (*ptr && *ptr == '\r') ptr++;
+        while (chars_left && *ptr == '\r')
+        {
+            ptr++;
+            chars_left--;
+        }
         save = ptr;
 
-        while (*ptr && *ptr != '\t' && *ptr != '\n' && *ptr != '\r') ptr++;
+        while (chars_left && *ptr != '\t' && *ptr != '\n' && *ptr != '\r')
+        {
+            if (!*ptr) *ptr = '\n'; /* convert embedded nulls to \n */
+            ptr++;
+            chars_left--;
+        }
 
         /* NULL-separate the data */
         if (*ptr == '\n' || *ptr == '\r')
         {
-            while (*ptr == '\n' || *ptr == '\r')
-                *(ptr++) = '\0';
+            while (chars_left && (*ptr == '\n' || *ptr == '\r'))
+            {
+                *(ptr++) = 0;
+                chars_left--;
+            }
         }
         else if (*ptr)
-            *ptr++ = '\0';
-
+        {
+            *(ptr++) = 0;
+            chars_left--;
+        }
         (*entries)[i] = save;
     }
 
     /* move to the next line if there's more, else EOF */
     *line = ptr;
-
+    *len = chars_left;
     if (num_entries)
         *num_entries = count;
 }
@@ -916,12 +934,12 @@ static UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
     lstrcatW( path, szBackSlash );
     lstrcatW( path, file );
 
-    data = msi_read_text_archive( path );
+    data = msi_read_text_archive( path, &len );
 
     ptr = data;
-    msi_parse_line( &ptr, &columns, &num_columns );
-    msi_parse_line( &ptr, &types, &num_types );
-    msi_parse_line( &ptr, &labels, &num_labels );
+    msi_parse_line( &ptr, &columns, &num_columns, &len );
+    msi_parse_line( &ptr, &types, &num_types, &len );
+    msi_parse_line( &ptr, &labels, &num_labels, &len );
 
     if (num_columns == 1 && !columns[0][0] && num_labels == 1 && !labels[0][0] &&
         num_types == 2 && !strcmpW( types[1], forcecodepage ))
@@ -944,9 +962,9 @@ static UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
     }
 
     /* read in the table records */
-    while (*ptr)
+    while (len)
     {
-        msi_parse_line( &ptr, &records[num_records], NULL );
+        msi_parse_line( &ptr, &records[num_records], NULL, &len );
 
         num_records++;
         temp_records = msi_realloc(records, (num_records + 1) * sizeof(LPWSTR *));

@@ -9253,6 +9253,39 @@ static void test_createtable(void)
     DeleteFileA(msifile);
 }
 
+static void test_embedded_nulls(void)
+{
+    static const char control_table[] =
+        "Dialog\tText\n"
+        "s72\tL0\n"
+        "Control\tDialog\n"
+        "LicenseAgreementDlg\ttext\0text";
+    UINT r, sz;
+    MSIHANDLE hdb, hrec;
+    char buffer[32];
+
+    r = MsiOpenDatabaseA( msifile, MSIDBOPEN_CREATE, &hdb );
+    ok( r == ERROR_SUCCESS, "failed to open database %u\n", r );
+
+    GetCurrentDirectoryA( MAX_PATH, CURR_DIR );
+    write_file( "temp_file", control_table, sizeof(control_table) );
+    r = MsiDatabaseImportA( hdb, CURR_DIR, "temp_file" );
+    ok( r == ERROR_SUCCESS, "failed to import table %u\n", r );
+    DeleteFileA( "temp_file" );
+
+    r = do_query( hdb, "SELECT `Text` FROM `Control` WHERE `Dialog` = 'LicenseAgreementDlg'", &hrec );
+    ok( r == ERROR_SUCCESS, "query failed %u\n", r );
+
+    buffer[0] = 0;
+    sz = sizeof(buffer);
+    r = MsiRecordGetStringA( hrec, 1, buffer, &sz );
+    ok( r == ERROR_SUCCESS, "failed to get string %u\n", r );
+    ok( !memcmp( "text\ntext", buffer, sizeof("text\ntext") - 1 ), "wrong buffer contents \"%s\"\n", buffer );
+
+    MsiCloseHandle( hrec );
+    MsiCloseHandle( hdb );
+    DeleteFileA( msifile );
+}
 
 START_TEST(db)
 {
@@ -9307,4 +9340,5 @@ START_TEST(db)
     test_suminfo_import();
     test_createtable();
     test_collation();
+    test_embedded_nulls();
 }
