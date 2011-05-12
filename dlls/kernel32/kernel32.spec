@@ -774,6 +774,8 @@
 @ stdcall K32EnumProcesses(ptr long ptr)
 @ stdcall K32GetModuleBaseNameA(long long ptr long)
 @ stdcall K32GetModuleBaseNameW(long long ptr long)
+@ stdcall K32GetModuleFileNameExA(long long ptr long)
+@ stdcall K32GetModuleFileNameExW(long long ptr long)
 @ stdcall K32GetProcessMemoryInfo(long ptr long)
 @ stdcall K32QueryWorkingSet(long ptr long)
 @ stdcall K32QueryWorkingSetEx(long ptr long)

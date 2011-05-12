@@ -1228,6 +1228,61 @@ DWORD WINAPI K32GetModuleBaseNameA(HANDLE process, HMODULE module,
     return ret;
 }
 
+/***********************************************************************
+ *           K32GetModuleFileNameExW (KERNEL32.@)
+ */
+DWORD WINAPI K32GetModuleFileNameExW(HANDLE process, HMODULE module,
+                                     LPWSTR file_name, DWORD size)
+{
+    LDR_MODULE ldr_module;
+
+    if(!get_ldr_module(process, module, &ldr_module))
+        return 0;
+
+    size = min(ldr_module.FullDllName.Length / sizeof(WCHAR), size);
+    if (!ReadProcessMemory(process, ldr_module.FullDllName.Buffer,
+                           file_name, size * sizeof(WCHAR), NULL))
+        return 0;
+
+    file_name[size] = 0;
+    return size;
+}
+
+/***********************************************************************
+ *           K32GetModuleFileNameExA (KERNEL32.@)
+ */
+DWORD WINAPI K32GetModuleFileNameExA(HANDLE process, HMODULE module,
+                                     LPSTR file_name, DWORD size)
+{
+    WCHAR *ptr;
+
+    TRACE("(hProcess=%p, hModule=%p, %p, %d)\n", process, module, file_name, size);
+
+    if (!file_name || !size) return 0;
+
+    if ( process == GetCurrentProcess() )
+    {
+        DWORD len = GetModuleFileNameA( module, file_name, size );
+        if (size) file_name[size - 1] = '\0';
+        return len;
+    }
+
+    if (!(ptr = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR)))) return 0;
+
+    if (!K32GetModuleFileNameExW(process, module, ptr, size))
+    {
+        file_name[0] = '\0';
+    }
+    else
+    {
+        if (!WideCharToMultiByte( CP_ACP, 0, ptr, -1, file_name, size, NULL, NULL ))
+            file_name[size - 1] = 0;
+    }
+
+    HeapFree(GetProcessHeap(), 0, ptr);
+    return strlen(file_name);
+}
+
 #ifdef __i386__
 
 /***********************************************************************
