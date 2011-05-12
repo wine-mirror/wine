@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include "gdi_private.h"
@@ -956,17 +957,6 @@ static BOOL solid_brush(dibdrv_physdev *pdev, int num, RECT *rects)
     return TRUE;
 }
 
-/**********************************************************************
- *             pattern_brush
- *
- * Fill a number of rectangles with the pattern brush
- * FIXME: Should we insist l < r && t < b?  Currently we assume this.
- */
-static BOOL pattern_brush(dibdrv_physdev *pdev, int num, RECT *rects)
-{
-    return FALSE;
-}
-
 static void free_pattern_brush_bits( dibdrv_physdev *pdev )
 {
     HeapFree(GetProcessHeap(), 0, pdev->brush_and_bits);
@@ -979,6 +969,95 @@ void free_pattern_brush( dibdrv_physdev *pdev )
 {
     free_pattern_brush_bits( pdev );
     free_dib_info( &pdev->brush_dib, TRUE );
+}
+
+static BOOL create_pattern_brush_bits(dibdrv_physdev *pdev)
+{
+    DWORD size = pdev->brush_dib.height * abs(pdev->brush_dib.stride);
+    DWORD *brush_bits = pdev->brush_dib.bits;
+    DWORD *and_bits, *xor_bits;
+
+    assert(pdev->brush_and_bits == NULL);
+    assert(pdev->brush_xor_bits == NULL);
+
+    and_bits = pdev->brush_and_bits = HeapAlloc(GetProcessHeap(), 0, size);
+    xor_bits = pdev->brush_xor_bits = HeapAlloc(GetProcessHeap(), 0, size);
+
+    if(!and_bits || !xor_bits)
+    {
+        ERR("Failed to create pattern brush bits\n");
+        free_pattern_brush_bits( pdev );
+        return FALSE;
+    }
+
+    if(pdev->brush_dib.stride < 0)
+        brush_bits = (DWORD*)((BYTE*)brush_bits + (pdev->brush_dib.height - 1) * pdev->brush_dib.stride);
+
+    while(size)
+    {
+        calc_and_xor_masks(pdev->brush_rop, *brush_bits++, and_bits++, xor_bits++);
+        size -= 4;
+    }
+
+    if(pdev->brush_dib.stride < 0)
+    {
+        /* Update the bits ptrs if the dib is bottom up.  The subtraction is because stride is -ve */
+        pdev->brush_and_bits = (BYTE*)pdev->brush_and_bits - (pdev->brush_dib.height - 1) * pdev->brush_dib.stride;
+        pdev->brush_xor_bits = (BYTE*)pdev->brush_xor_bits - (pdev->brush_dib.height - 1) * pdev->brush_dib.stride;
+    }
+
+    return TRUE;
+}
+
+/**********************************************************************
+ *             pattern_brush
+ *
+ * Fill a number of rectangles with the pattern brush
+ * FIXME: Should we insist l < r && t < b?  Currently we assume this.
+ */
+static BOOL pattern_brush(dibdrv_physdev *pdev, int num, RECT *rects)
+{
+    int i, j;
+    const WINEREGION *clip;
+    POINT origin;
+
+    if(pdev->brush_and_bits == NULL)
+        if(!create_pattern_brush_bits(pdev))
+            return FALSE;
+
+    GetBrushOrgEx(pdev->dev.hdc, &origin);
+
+    clip = get_wine_region(pdev->clip);
+    for(i = 0; i < num; i++)
+    {
+        for(j = 0; j < clip->numRects; j++)
+        {
+            RECT rect = rects[i];
+
+            /* Optimize unclipped case */
+            if(clip->rects[j].top <= rect.top && clip->rects[j].bottom >= rect.bottom &&
+               clip->rects[j].left <= rect.left && clip->rects[j].right >= rect.right)
+            {
+                pdev->dib.funcs->pattern_rects(&pdev->dib, 1, &rect, &origin, &pdev->brush_dib, pdev->brush_and_bits, pdev->brush_xor_bits);
+                break;
+            }
+
+            if(clip->rects[j].top >= rect.bottom) break;
+            if(clip->rects[j].bottom <= rect.top) continue;
+
+            if(clip->rects[j].right > rect.left && clip->rects[j].left < rect.right)
+            {
+                rect.left   = max(rect.left,   clip->rects[j].left);
+                rect.top    = max(rect.top,    clip->rects[j].top);
+                rect.right  = min(rect.right,  clip->rects[j].right);
+                rect.bottom = min(rect.bottom, clip->rects[j].bottom);
+
+                pdev->dib.funcs->pattern_rects(&pdev->dib, 1, &rect, &origin, &pdev->brush_dib, pdev->brush_and_bits, pdev->brush_xor_bits);
+            }
+        }
+    }
+    release_wine_region(pdev->clip);
+    return TRUE;
 }
 
 void update_brush_rop( dibdrv_physdev *pdev, INT rop )

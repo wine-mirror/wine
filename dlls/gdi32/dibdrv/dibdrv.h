@@ -38,6 +38,7 @@ static inline DC *get_dibdrv_dc( PHYSDEV dev )
 typedef struct primitive_funcs
 {
     void        (* solid_rects)(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor);
+    void      (* pattern_rects)(const dib_info *dib, int num, const RECT *rc, const POINT *orign, const dib_info *brush, void *and_bits, void *xor_bits);
     DWORD (* colorref_to_pixel)(const dib_info *dib, COLORREF color);
 } primitive_funcs;
 

@@ -50,6 +50,82 @@ static void solid_rects_null(const dib_info *dib, int num, const RECT *rc, DWORD
     return;
 }
 
+static inline INT calc_offset(INT edge, INT size, INT origin)
+{
+    INT offset;
+
+    if(edge - origin >= 0)
+        offset = (edge - origin) % size;
+    else
+    {
+        offset = (origin - edge) % size;
+        if(offset) offset = size - offset;
+    }
+    return offset;
+}
+
+static inline POINT calc_brush_offset(const RECT *rc, const dib_info *brush, const POINT *origin)
+{
+    POINT offset;
+
+    offset.x = calc_offset(rc->left, brush->width,  origin->x);
+    offset.y = calc_offset(rc->top,  brush->height, origin->y);
+
+    return offset;
+}
+
+static void pattern_rects_32(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
+                             const dib_info *brush, void *and_bits, void *xor_bits)
+{
+    DWORD *ptr, *start, *start_and, *and_ptr, *start_xor, *xor_ptr;
+    int x, y, i;
+    POINT offset;
+
+    for(i = 0; i < num; i++, rc++)
+    {
+        offset = calc_brush_offset(rc, brush, origin);
+
+        start = get_pixel_ptr_32(dib, rc->left, rc->top);
+        start_and = (DWORD*)and_bits + offset.y * brush->stride / 4;
+        start_xor = (DWORD*)xor_bits + offset.y * brush->stride / 4;
+
+        for(y = rc->top; y < rc->bottom; y++, start += dib->stride / 4)
+        {
+            and_ptr = start_and + offset.x;
+            xor_ptr = start_xor + offset.x;
+
+            for(x = rc->left, ptr = start; x < rc->right; x++)
+            {
+                do_rop_32(ptr++, *and_ptr++, *xor_ptr++);
+                if(and_ptr == start_and + brush->width)
+                {
+                    and_ptr = start_and;
+                    xor_ptr = start_xor;
+                }
+            }
+
+            offset.y++;
+            if(offset.y == brush->height)
+            {
+                start_and = and_bits;
+                start_xor = xor_bits;
+                offset.y = 0;
+            }
+            else
+            {
+                start_and += brush->stride / 4;
+                start_xor += brush->stride / 4;
+            }
+        }
+    }
+}
+
+static void pattern_rects_null(const dib_info *dib, int num, const RECT *rc, const POINT *origin,
+                               const dib_info *brush, void *and_bits, void *xor_bits)
+{
+    return;
+}
+
 static DWORD colorref_to_pixel_888(const dib_info *dib, COLORREF color)
 {
     return ( ((color >> 16) & 0xff) | (color & 0xff00) | ((color << 16) & 0xff0000) );
@@ -88,17 +164,20 @@ static DWORD colorref_to_pixel_null(const dib_info *dib, COLORREF color)
 const primitive_funcs funcs_8888 =
 {
     solid_rects_32,
+    pattern_rects_32,
     colorref_to_pixel_888
 };
 
 const primitive_funcs funcs_32 =
 {
     solid_rects_32,
+    pattern_rects_32,
     colorref_to_pixel_masks
 };
 
 const primitive_funcs funcs_null =
 {
     solid_rects_null,
+    pattern_rects_null,
     colorref_to_pixel_null
 };
