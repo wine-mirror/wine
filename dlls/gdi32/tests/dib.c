@@ -90,6 +90,8 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "6c530622a025d872a642e8f950867884d7b136cb",
     "7c07d91b8f68fb31821701b3dcb96de018bf0c66",
     "b2261353decda2712b83538ab434a49ce21f3172",
+    "a8b59f25984b066fc6b91cae6bf983a78028ba7f",
+    "3d95adb85b9673a932ac847a4b5451fa59885f74",
     NULL
 };
 
@@ -240,19 +242,25 @@ static const RECT patblt_clips[] =
     {170, 200, 176, 210}, /* t edge on b edgecase clipped */
 };
 
+static const BITMAPINFOHEADER dib_brush_header_32 = {sizeof(BITMAPINFOHEADER), 16, -16, 1, 32, BI_RGB, 0, 0, 0, 0, 0};
+
 static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sha1)
 {
     DWORD dib_size = get_dib_size(bmi);
     HPEN solid_pen, dashed_pen, orig_pen;
-    HBRUSH solid_brush, orig_brush;
+    HBRUSH solid_brush, dib_brush, orig_brush;
     INT i, y;
     HRGN hrgn, hrgn2;
+    BYTE dib_brush_buf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD) + 16 * 16 * sizeof(DWORD)]; /* Enough for 16 x 16 at 32 bpp */
+    BITMAPINFO *brush_bi = (BITMAPINFO*)dib_brush_buf;
+    BYTE *brush_bits;
 
     memset(bits, 0xcc, dib_size);
     compare_hash(bmi, bits, sha1, "empty");
 
     solid_pen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0xff));
     orig_pen = SelectObject(hdc, solid_pen);
+    SetBrushOrgEx(hdc, 0, 0, NULL);
 
     /* horizontal and vertical lines */
     for(i = 1; i <= 16; i++)
@@ -415,8 +423,66 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     ExtSelectClipRgn(hdc, NULL, RGN_COPY);
 
+    /* DIB pattern brush */
+
+    brush_bi->bmiHeader = dib_brush_header_32;
+    brush_bits = (BYTE*)brush_bi + sizeof(BITMAPINFOHEADER);
+    memset(brush_bits, 0, 16 * 16 * sizeof(DWORD));
+    brush_bits[2] = 0xff;
+    brush_bits[6] = 0xff;
+    brush_bits[65] = 0xff;
+    brush_bits[69] = 0xff;
+
+    dib_brush = CreateDIBPatternBrushPt(brush_bi, DIB_RGB_COLORS);
+
+    SelectObject(hdc, dib_brush);
+    SetBrushOrgEx(hdc, 1, 1, NULL);
+
+    for(i = 0, y = 10; i < 256; i++)
+    {
+        BOOL ret;
+
+        if(!rop_uses_src(rop3[i]))
+        {
+            ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
+            ok(ret, "got FALSE for %x\n", rop3[i]);
+            y += 25;
+        }
+    }
+    compare_hash(bmi, bits, sha1, "top-down dib brush patblt");
+    memset(bits, 0xcc, dib_size);
+
+    SelectObject(hdc, orig_brush);
+    DeleteObject(dib_brush);
+
+    /* Bottom-up DIB pattern brush */
+
+    brush_bi->bmiHeader.biHeight = -brush_bi->bmiHeader.biHeight;
+
+    dib_brush = CreateDIBPatternBrushPt(brush_bi, DIB_RGB_COLORS);
+
+    SelectObject(hdc, dib_brush);
+    SetBrushOrgEx(hdc, 100, 100, NULL);
+
+    for(i = 0, y = 10; i < 256; i++)
+    {
+        BOOL ret;
+
+        if(!rop_uses_src(rop3[i]))
+        {
+            ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
+            ok(ret, "got FALSE for %x\n", rop3[i]);
+            y += 25;
+        }
+    }
+    compare_hash(bmi, bits, sha1, "bottom-up dib brush patblt");
+    memset(bits, 0xcc, dib_size);
+
+    SetBrushOrgEx(hdc, 0, 0, NULL);
+
     SelectObject(hdc, orig_brush);
     SelectObject(hdc, orig_pen);
+    DeleteObject(dib_brush);
     DeleteObject(dashed_pen);
     DeleteObject(solid_brush);
     DeleteObject(solid_pen);
