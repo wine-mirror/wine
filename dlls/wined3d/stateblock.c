@@ -1055,10 +1055,10 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
 
         if (!(map & 1)) continue;
 
-        clip[0] = stateblock->state.clip_planes[i][0];
-        clip[1] = stateblock->state.clip_planes[i][1];
-        clip[2] = stateblock->state.clip_planes[i][2];
-        clip[3] = stateblock->state.clip_planes[i][3];
+        clip[0] = (float) stateblock->state.clip_planes[i][0];
+        clip[1] = (float) stateblock->state.clip_planes[i][1];
+        clip[2] = (float) stateblock->state.clip_planes[i][2];
+        clip[3] = (float) stateblock->state.clip_planes[i][3];
         IWineD3DDevice_SetClipPlane(device, i, clip);
     }
 
