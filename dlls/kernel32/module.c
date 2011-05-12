@@ -37,6 +37,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "kernel_private.h"
+#include "psapi.h"
 
 #include "wine/exception.h"
 #include "wine/debug.h"
@@ -1281,6 +1282,29 @@ DWORD WINAPI K32GetModuleFileNameExA(HANDLE process, HMODULE module,
 
     HeapFree(GetProcessHeap(), 0, ptr);
     return strlen(file_name);
+}
+
+/***********************************************************************
+ *           K32GetModuleInformation (KERNEL32.@)
+ */
+BOOL WINAPI K32GetModuleInformation(HANDLE process, HMODULE module,
+                                    MODULEINFO *modinfo, DWORD cb)
+{
+    LDR_MODULE ldr_module;
+
+    if (cb < sizeof(MODULEINFO))
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    if (!get_ldr_module(process, module, &ldr_module))
+        return FALSE;
+
+    modinfo->lpBaseOfDll = ldr_module.BaseAddress;
+    modinfo->SizeOfImage = ldr_module.SizeOfImage;
+    modinfo->EntryPoint  = ldr_module.EntryPoint;
+    return TRUE;
 }
 
 #ifdef __i386__
