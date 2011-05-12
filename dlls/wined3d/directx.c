@@ -329,7 +329,7 @@ fail:
 }
 
 /* Adjust the amount of used texture memory */
-unsigned int WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *device, unsigned int glram)
+unsigned int WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *device, int glram)
 {
     struct wined3d_adapter *adapter = device->adapter;
 

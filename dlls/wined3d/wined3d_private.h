@@ -1541,7 +1541,7 @@ struct wined3d_adapter
 
 BOOL initPixelFormats(struct wined3d_gl_info *gl_info, enum wined3d_pci_vendor vendor) DECLSPEC_HIDDEN;
 BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-extern unsigned int WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, unsigned int glram) DECLSPEC_HIDDEN;
+extern unsigned int WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, int glram) DECLSPEC_HIDDEN;
 extern void add_gl_compat_wrappers(struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 
 /*****************************************************************************

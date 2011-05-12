@@ -137,7 +137,7 @@ void resource_cleanup(struct wined3d_resource *resource)
     if (resource->pool == WINED3DPOOL_DEFAULT)
     {
         TRACE("Decrementing device memory pool by %u.\n", resource->size);
-        WineD3DAdapterChangeGLRam(resource->device, -resource->size);
+        WineD3DAdapterChangeGLRam(resource->device,  0 - resource->size);
     }
 
     LIST_FOR_EACH_SAFE(e1, e2, &resource->privateData)
