@@ -954,10 +954,10 @@
 @ cdecl -ret64 _strtoui64(str ptr long) MSVCRT_strtoui64
 @ cdecl -ret64 _strtoui64_l(str ptr long ptr) MSVCRT_strtoui64_l
 # stub _strtoul_l(str ptr long ptr)
-@ cdecl _strupr(str) ntdll._strupr
-# stub _strupr_l(str ptr)
-# stub _strupr_s(str long)
-# stub _strupr_s_l(str long ptr)
+@ cdecl _strupr(str)
+@ cdecl _strupr_l(str ptr)
+@ cdecl _strupr_s(str long)
+@ cdecl _strupr_s_l(str long ptr)
 # stub _strxfrm_l(ptr str long ptr)
 @ cdecl _swab(str str long) MSVCRT__swab
 @ varargs _swprintf(ptr wstr) MSVCRT_swprintf

@@ -113,6 +113,68 @@ int CDECL _strlwr(char *str)
 }
 
 /*********************************************************************
+ *              _strupr_s_l (MSVCRT.@)
+ */
+int CDECL _strupr_s_l(char *str, MSVCRT_size_t len, MSVCRT__locale_t locale)
+{
+    char *ptr = str;
+
+    if(!locale)
+        locale = get_locale();
+
+    if (!str || !len)
+    {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    while (len && *ptr)
+    {
+        len--;
+        ptr++;
+    }
+
+    if (!len)
+    {
+        str[0] = '\0';
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    while (*str)
+    {
+        *str = MSVCRT__toupper_l(*str, locale);
+        str++;
+    }
+
+    return 0;
+}
+
+/*********************************************************************
+ *              _strupr_s (MSVCRT.@)
+ */
+int CDECL _strupr_s(char *str, MSVCRT_size_t len)
+{
+    return _strupr_s_l(str, len, NULL);
+}
+
+/*********************************************************************
+ *              _strupr_l (MSVCRT.@)
+ */
+int CDECL _strupr_l(char *str, MSVCRT__locale_t locale)
+{
+    return _strupr_s_l(str, -1, locale);
+}
+
+/*********************************************************************
+ *              _strupr (MSVCRT.@)
+ */
+int CDECL _strupr(char *str)
+{
+    return _strupr_s_l(str, -1, NULL);
+}
+
+/*********************************************************************
  *		_strnset (MSVCRT.@)
  */
 char* CDECL MSVCRT__strnset(char* str, int value, MSVCRT_size_t len)
