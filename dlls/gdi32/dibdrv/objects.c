@@ -1062,6 +1062,11 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, int num, RECT *rects)
     return TRUE;
 }
 
+static BOOL null_brush(dibdrv_physdev *pdev, int num, RECT *rects)
+{
+    return TRUE;
+}
+
 void update_brush_rop( dibdrv_physdev *pdev, INT rop )
 {
     pdev->brush_rop = rop;
@@ -1098,6 +1103,11 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
         pdev->brush_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, logbrush.lbColor);
         calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
         pdev->brush_rects = solid_brush;
+        pdev->defer &= ~DEFER_BRUSH;
+        break;
+
+    case BS_NULL:
+        pdev->brush_rects = null_brush;
         pdev->defer &= ~DEFER_BRUSH;
         break;
 
