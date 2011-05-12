@@ -210,6 +210,18 @@ typedef struct tagOPENTYPE_FEATURE_RECORD
     LONG         lParameter;
 } OPENTYPE_FEATURE_RECORD;
 
+typedef struct tagSCRIPT_GLYPHPROP
+{
+    SCRIPT_VISATTR sva;
+    WORD           reserved;
+} SCRIPT_GLYPHPROP;
+
+typedef struct tagSCRIPT_CHARPROP
+{
+    WORD fCanGlyphAlone  :1;
+    WORD reserved        :15;
+} SCRIPT_CHARPROP;
+
 typedef struct tagTEXTRANGE_PROPERTIES
 {
     OPENTYPE_FEATURE_RECORD *potfRecords;

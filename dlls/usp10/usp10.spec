@@ -24,7 +24,7 @@
 @ stub ScriptPositionSingleGlyph
 @ stdcall ScriptRecordDigitSubstitution(ptr ptr)
 @ stdcall ScriptShape(ptr ptr ptr long long ptr ptr ptr ptr ptr)
-@ stub ScriptShapeOpenType
+@ stdcall ScriptShapeOpenType(ptr ptr ptr long long ptr ptr long wstr long long ptr ptr ptr ptr ptr)
 @ stdcall ScriptStringAnalyse(ptr ptr long long long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall ScriptStringCPtoX(ptr long long ptr)
 @ stdcall ScriptStringFree(ptr)

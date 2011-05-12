@@ -1477,48 +1477,68 @@ HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
 }
 
 /***********************************************************************
- *      ScriptShape (USP10.@)
+ *      ScriptShapeOpenType (USP10.@)
  *
  * Produce glyphs and visual attributes for a run.
  *
  * PARAMS
  *  hdc         [I]   Device context.
  *  psc         [I/O] Opaque pointer to a script cache.
+ *  psa         [I/O] Script analysis.
+ *  tagScript   [I]   The OpenType tag for the Script
+ *  tagLangSys  [I]   The OpenType tag for the Language
+ *  rcRangeChars[I]   Array of Character counts in each range
+ *  rpRangeProperties [I] Array of TEXTRANGE_PROPERTIES structures
+ *  cRanges     [I]   Count of ranges
  *  pwcChars    [I]   Array of characters specifying the run.
  *  cChars      [I]   Number of characters in pwcChars.
  *  cMaxGlyphs  [I]   Length of pwOutGlyphs.
- *  psa         [I/O] Script analysis.
- *  pwOutGlyphs [O]   Array of glyphs.
  *  pwLogClust  [O]   Array of logical cluster info.
- *  psva        [O]   Array of visual attributes.
+ *  pCharProps  [O]   Array of character property values
+ *  pwOutGlyphs [O]   Array of glyphs.
+ *  pOutGlyphProps [O]  Array of attributes for the retrieved glyphs
  *  pcGlyphs    [O]   Number of glyphs returned.
  *
  * RETURNS
  *  Success: S_OK
  *  Failure: Non-zero HRESULT value.
  */
-HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars, 
-                           int cChars, int cMaxGlyphs,
-                           SCRIPT_ANALYSIS *psa, WORD *pwOutGlyphs, WORD *pwLogClust,
-                           SCRIPT_VISATTR *psva, int *pcGlyphs)
+HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
+                                    SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript,
+                                    OPENTYPE_TAG tagLangSys, int *rcRangeChars,
+                                    TEXTRANGE_PROPERTIES **rpRangeProperties,
+                                    int cRanges, const WCHAR *pwcChars, int cChars,
+                                    int cMaxGlyphs, WORD *pwLogClust,
+                                    SCRIPT_CHARPROP *pCharProps, WORD *pwOutGlyphs,
+                                    SCRIPT_GLYPHPROP *pOutGlyphProps, int *pcGlyphs)
 {
     HRESULT hr;
     unsigned int i;
     BOOL rtl;
 
-    TRACE("(%p, %p, %s, %d, %d, %p, %p, %p, %p, %p)\n", hdc, psc, debugstr_wn(pwcChars, cChars),
-          cChars, cMaxGlyphs, psa, pwOutGlyphs, pwLogClust, psva, pcGlyphs);
+    TRACE("(%p, %p, %p, %s, %s, %p, %p, %d, %s, %d, %d, %p, %p, %p, %p, %p )\n",
+     hdc, psc, psa,
+     debugstr_an((char*)&tagScript,4), debugstr_an((char*)&tagLangSys,4),
+     rcRangeChars, rpRangeProperties, cRanges, debugstr_wn(pwcChars, cChars),
+     cChars, cMaxGlyphs, pwLogClust, pCharProps, pwOutGlyphs, pOutGlyphProps, pcGlyphs);
 
     if (psa) TRACE("psa values: %d, %d, %d, %d, %d, %d, %d\n", psa->eScript, psa->fRTL, psa->fLayoutRTL,
                    psa->fLinkBefore, psa->fLinkAfter, psa->fLogicalOrder, psa->fNoGlyphIndex);
 
-    if (!psva || !pcGlyphs) return E_INVALIDARG;
+    if (!pOutGlyphProps || !pcGlyphs || !pCharProps) return E_INVALIDARG;
     if (cChars > cMaxGlyphs) return E_OUTOFMEMORY;
+
+    if (cRanges)
+        FIXME("Ranges not supported yet\n");
+
     rtl = (!psa->fLogicalOrder && psa->fRTL);
 
     *pcGlyphs = cChars;
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
     if (!pwLogClust) return E_FAIL;
+
+    ((ScriptCache *)*psc)->userScript = tagScript;
+    ((ScriptCache *)*psc)->userLang = tagLangSys;
 
     /* Initialize a SCRIPT_VISATTR and LogClust for each char in this run */
     for (i = 0; i < cChars; i++)
@@ -1526,12 +1546,15 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
         int idx = i;
         if (rtl) idx = cChars - 1 - i;
         /* FIXME: set to better values */
-        psva[i].uJustification = (pwcChars[idx] == ' ') ? SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
-        psva[i].fClusterStart  = 1;
-        psva[i].fDiacritic     = 0;
-        psva[i].fZeroWidth     = 0;
-        psva[i].fReserved      = 0;
-        psva[i].fShapeReserved = 0;
+        pOutGlyphProps[i].sva.uJustification = (pwcChars[idx] == ' ') ? SCRIPT_JUSTIFY_BLANK : SCRIPT_JUSTIFY_CHARACTER;
+        pOutGlyphProps[i].sva.fClusterStart  = 1;
+        pOutGlyphProps[i].sva.fDiacritic     = 0;
+        pOutGlyphProps[i].sva.fZeroWidth     = 0;
+        pOutGlyphProps[i].sva.fReserved      = 0;
+        pOutGlyphProps[i].sva.fShapeReserved = 0;
+
+        /* FIXME: have the shaping engine set this */
+        pCharProps[i].fCanGlyphAlone = 1;
 
         pwLogClust[i] = idx;
     }
@@ -1582,6 +1605,60 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
     }
 
     return S_OK;
+}
+
+
+/***********************************************************************
+ *      ScriptShape (USP10.@)
+ *
+ * Produce glyphs and visual attributes for a run.
+ *
+ * PARAMS
+ *  hdc         [I]   Device context.
+ *  psc         [I/O] Opaque pointer to a script cache.
+ *  pwcChars    [I]   Array of characters specifying the run.
+ *  cChars      [I]   Number of characters in pwcChars.
+ *  cMaxGlyphs  [I]   Length of pwOutGlyphs.
+ *  psa         [I/O] Script analysis.
+ *  pwOutGlyphs [O]   Array of glyphs.
+ *  pwLogClust  [O]   Array of logical cluster info.
+ *  psva        [O]   Array of visual attributes.
+ *  pcGlyphs    [O]   Number of glyphs returned.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
+ */
+HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
+                           int cChars, int cMaxGlyphs,
+                           SCRIPT_ANALYSIS *psa, WORD *pwOutGlyphs, WORD *pwLogClust,
+                           SCRIPT_VISATTR *psva, int *pcGlyphs)
+{
+    HRESULT hr;
+    int i;
+    SCRIPT_CHARPROP *charProps;
+    SCRIPT_GLYPHPROP *glyphProps;
+
+    if (!psva || !pcGlyphs) return E_INVALIDARG;
+    if (cChars > cMaxGlyphs) return E_OUTOFMEMORY;
+
+    charProps = heap_alloc_zero(sizeof(SCRIPT_CHARPROP)*cChars);
+    if (!charProps) return E_OUTOFMEMORY;
+    glyphProps = heap_alloc_zero(sizeof(SCRIPT_GLYPHPROP)*cMaxGlyphs);
+    if (!glyphProps) return E_OUTOFMEMORY;
+
+    hr = ScriptShapeOpenType(hdc, psc, psa, scriptInformation[psa->eScript].scriptTag, 0, NULL, NULL, 0, pwcChars, cChars, cMaxGlyphs, pwLogClust, charProps, pwOutGlyphs, glyphProps, pcGlyphs);
+
+    if (SUCCEEDED(hr))
+    {
+        for (i = 0; i < *pcGlyphs; i++)
+            psva[i] = glyphProps[i].sva;
+    }
+
+    heap_free(charProps);
+    heap_free(glyphProps);
+
+    return hr;
 }
 
 /***********************************************************************

@@ -69,6 +69,9 @@ typedef struct {
     LPVOID GSUB_Table;
     INT feature_count;
     LoadedFeature *features;
+
+    OPENTYPE_TAG userScript;
+    OPENTYPE_TAG userLang;
 } ScriptCache;
 
 #define odd(x) ((x) & 1)
