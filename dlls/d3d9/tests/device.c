@@ -1593,7 +1593,7 @@ static void test_depthstenciltest(void)
     D3DDISPLAYMODE               d3ddm;
     IDirect3DSurface9           *pDepthStencil           = NULL;
     IDirect3DSurface9           *pDepthStencil2          = NULL;
-    D3DZBUFFERTYPE               state;
+    DWORD                        state;
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
