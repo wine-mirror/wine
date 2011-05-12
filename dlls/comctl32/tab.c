@@ -707,7 +707,7 @@ TAB_LButtonUp (const TAB_INFO *infoPtr)
 }
 
 static inline LRESULT
-TAB_RButtonDown (const TAB_INFO *infoPtr)
+TAB_RButtonUp (const TAB_INFO *infoPtr)
 {
   TAB_SendSimpleNotify(infoPtr, NM_RCLICK);
   return 0;
@@ -3427,8 +3427,8 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_NOTIFY:
       return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, wParam, lParam);
 
-    case WM_RBUTTONDOWN:
-      return TAB_RButtonDown (infoPtr);
+    case WM_RBUTTONUP:
+      return TAB_RButtonUp (infoPtr);
 
     case WM_MOUSEMOVE:
       return TAB_MouseMove (infoPtr, wParam, lParam);
