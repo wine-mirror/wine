@@ -346,10 +346,10 @@ static void convert_r8g8_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT widt
         Dest = dst + y * outpitch;
         for (x = 0; x < width; x++ )
         {
-            LONG color = (*Source++);
+            const short color = (*Source++);
             /* B */ Dest[0] = 0xff;
             /* G */ Dest[1] = (color >> 8) + 128; /* V */
-            /* R */ Dest[2] = (color) + 128;      /* U */
+            /* R */ Dest[2] = (color & 0xff) + 128;      /* U */
             Dest += 3;
         }
     }
@@ -440,10 +440,10 @@ static void convert_r16g16_snorm(const BYTE *src, BYTE *dst, UINT pitch, UINT wi
         Dest = (unsigned short *) (dst + y * outpitch);
         for (x = 0; x < width; x++ )
         {
-            DWORD color = (*Source++);
+            const DWORD color = (*Source++);
             /* B */ Dest[0] = 0xffff;
             /* G */ Dest[1] = (color >> 16) + 32768; /* V */
-            /* R */ Dest[2] = (color      ) + 32768; /* U */
+            /* R */ Dest[2] = (color & 0xffff) + 32768; /* U */
             Dest += 3;
         }
     }
