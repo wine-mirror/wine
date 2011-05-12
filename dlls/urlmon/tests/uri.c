@@ -6078,6 +6078,87 @@ static const uri_combine_test uri_combine_tests[] = {
             {URL_SCHEME_FILE,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
+    },
+    {   "http://winehq.org/dir/testfile",0,
+        "test?querystring",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"http://winehq.org/dir/test?querystring",S_OK},
+            {"winehq.org",S_OK},
+            {"http://winehq.org/dir/test?querystring",S_OK},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"/dir/test",S_OK},
+            {"/dir/test?querystring",S_OK},
+            {"?querystring",S_OK},
+            {"http://winehq.org/dir/test?querystring",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://winehq.org/dir/test",0,
+        "test?querystring",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"http://winehq.org/dir/test?querystring",S_OK},
+            {"winehq.org",S_OK},
+            {"http://winehq.org/dir/test?querystring",S_OK},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"/dir/test",S_OK},
+            {"/dir/test?querystring",S_OK},
+            {"?querystring",S_OK},
+            {"http://winehq.org/dir/test?querystring",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "http://winehq.org/dir/test?querystring",0,
+        "#hash",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"http://winehq.org/dir/test?querystring#hash",S_OK},
+            {"winehq.org",S_OK},
+            {"http://winehq.org/dir/test?querystring#hash",S_OK},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"#hash",S_OK},
+            {"winehq.org",S_OK},
+            {"",S_FALSE},
+            {"/dir/test",S_OK},
+            {"/dir/test?querystring",S_OK},
+            {"?querystring",S_OK},
+            {"http://winehq.org/dir/test?querystring#hash",S_OK},
+            {"http",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK},
+            {80,S_OK},
+            {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
 };
 

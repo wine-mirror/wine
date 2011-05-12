@@ -6006,6 +6006,11 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
                 }
             }
 
+            if(relative->query_start > -1) {
+                data.query = relative->canon_uri+relative->query_start;
+                data.query_len = relative->query_len;
+            }
+
             /* Make sure the path component is valid. */
             ptr = path;
             pptr = &ptr;
