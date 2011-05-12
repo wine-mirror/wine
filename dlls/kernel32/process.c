@@ -46,6 +46,7 @@
 #define WIN32_NO_STATUS
 #include "winternl.h"
 #include "kernel_private.h"
+#include "psapi.h"
 #include "wine/library.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
@@ -3618,6 +3619,47 @@ BOOL WINAPI K32QueryWorkingSetEx( HANDLE process, LPVOID buffer, DWORD size )
         SetLastError( RtlNtStatusToDosError( status ) );
         return FALSE;
     }
+    return TRUE;
+}
+
+/***********************************************************************
+ *           K32GetProcessMemoryInfo (KERNEL32.@)
+ *
+ * Retrieve memory usage information for a given process
+ *
+ */
+BOOL WINAPI K32GetProcessMemoryInfo(HANDLE process,
+                                    PPROCESS_MEMORY_COUNTERS pmc, DWORD cb)
+{
+    NTSTATUS status;
+    VM_COUNTERS vmc;
+
+    if (cb < sizeof(PROCESS_MEMORY_COUNTERS))
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    status = NtQueryInformationProcess(process, ProcessVmCounters,
+                                       &vmc, sizeof(vmc), NULL);
+
+    if (status)
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+
+    pmc->cb = sizeof(PROCESS_MEMORY_COUNTERS);
+    pmc->PageFaultCount = vmc.PageFaultCount;
+    pmc->PeakWorkingSetSize = vmc.PeakWorkingSetSize;
+    pmc->WorkingSetSize = vmc.WorkingSetSize;
+    pmc->QuotaPeakPagedPoolUsage = vmc.QuotaPeakPagedPoolUsage;
+    pmc->QuotaPagedPoolUsage = vmc.QuotaPagedPoolUsage;
+    pmc->QuotaPeakNonPagedPoolUsage = vmc.QuotaPeakNonPagedPoolUsage;
+    pmc->QuotaNonPagedPoolUsage = vmc.QuotaNonPagedPoolUsage;
+    pmc->PagefileUsage = vmc.PagefileUsage;
+    pmc->PeakPagefileUsage = vmc.PeakPagefileUsage;
+
     return TRUE;
 }
 

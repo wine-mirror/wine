@@ -407,47 +407,6 @@ BOOL WINAPI GetPerformanceInfo( PPERFORMANCE_INFORMATION info, DWORD size )
 }
 
 /***********************************************************************
- *           GetProcessMemoryInfo (PSAPI.@)
- *
- * Retrieve memory usage information for a given process
- *
- */
-BOOL WINAPI GetProcessMemoryInfo(HANDLE hProcess, 
-                                 PPROCESS_MEMORY_COUNTERS pmc, DWORD cb)
-{
-    NTSTATUS status;
-    VM_COUNTERS vmc;
-
-    if (cb < sizeof(PROCESS_MEMORY_COUNTERS))
-    {
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        return FALSE;
-    }
-
-    status = NtQueryInformationProcess(hProcess, ProcessVmCounters, 
-                                       &vmc, sizeof(vmc), NULL);
-
-    if (status)
-    {
-        SetLastError(RtlNtStatusToDosError(status));
-        return FALSE;
-    }
-
-    pmc->cb = sizeof(PROCESS_MEMORY_COUNTERS);
-    pmc->PageFaultCount = vmc.PageFaultCount;
-    pmc->PeakWorkingSetSize = vmc.PeakWorkingSetSize;
-    pmc->WorkingSetSize = vmc.WorkingSetSize;
-    pmc->QuotaPeakPagedPoolUsage = vmc.QuotaPeakPagedPoolUsage;
-    pmc->QuotaPagedPoolUsage = vmc.QuotaPagedPoolUsage;
-    pmc->QuotaPeakNonPagedPoolUsage = vmc.QuotaPeakNonPagedPoolUsage;
-    pmc->QuotaNonPagedPoolUsage = vmc.QuotaNonPagedPoolUsage;
-    pmc->PagefileUsage = vmc.PagefileUsage;
-    pmc->PeakPagefileUsage = vmc.PeakPagefileUsage;
-
-    return TRUE;
-}
-
-/***********************************************************************
  *           GetWsChanges (PSAPI.@)
  */
 BOOL WINAPI GetWsChanges( HANDLE process, PPSAPI_WS_WATCH_INFORMATION watchinfo, DWORD size )

@@ -772,6 +772,7 @@
 @ stdcall K32GetProcessImageFileNameW(long ptr long)
 @ stdcall K32EnumProcessModules(long ptr long ptr)
 @ stdcall K32EnumProcesses(ptr long ptr)
+@ stdcall K32GetProcessMemoryInfo(long ptr long)
 @ stdcall K32QueryWorkingSet(long ptr long)
 @ stdcall K32QueryWorkingSetEx(long ptr long)
 @ stdcall -i386 -private -register K32Thk1632Epilog() krnl386.exe16.K32Thk1632Epilog
