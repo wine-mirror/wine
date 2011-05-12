@@ -980,8 +980,8 @@
 # stub _tolower_l(long ptr)
 @ cdecl _toupper(long) MSVCRT__toupper
 # stub _toupper_l(long ptr)
-# stub _towlower_l(long ptr)
-# stub _towupper_l(long ptr)
+@ cdecl _towlower_l(long ptr) MSVCRT__towlower_l
+@ cdecl _towupper_l(long ptr) MSVCRT__towupper_l
 @ extern _tzname MSVCRT__tzname
 @ cdecl _tzset() MSVCRT__tzset
 @ cdecl _ui64toa(int64 ptr long) ntdll._ui64toa
