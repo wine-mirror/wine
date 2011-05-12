@@ -1343,6 +1343,14 @@ static void test_CompareStringA(void)
 
     ret = lstrcmpi("#", ".");
     todo_wine ok(ret == -1, "\"#\" vs \".\" expected -1, got %d\n", ret);
+
+    lcid = MAKELCID(MAKELANGID(LANG_POLISH, SUBLANG_DEFAULT), SORT_DEFAULT);
+
+    /* \xB9 character lies between a and b */
+    ret = CompareStringA(lcid, 0, "a", 1, "\xB9", 1);
+    todo_wine ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be grater than \'a\'\n");
+    ret = CompareStringA(lcid, 0, "\xB9", 1, "b", 1);
+    ok(ret == CSTR_LESS_THAN, "\'\\xB9\' character should be smaller than \'b\'\n");
 }
 
 static void test_LCMapStringA(void)
