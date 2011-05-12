@@ -27,17 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
-/***********************************************************************
- *           dibdrv_DeleteDC
- */
-static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
-{
-    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    TRACE("(%p)\n", dev);
-    DeleteObject(pdev->clip);
-    return 0;
-}
-
 static void calc_shift_and_len(DWORD mask, int *shift, int *len)
 {
     int s, l;
@@ -74,7 +63,7 @@ static void init_bit_fields(dib_info *dib, const DWORD *bit_fields)
     calc_shift_and_len(dib->blue_mask,  &dib->blue_shift,  &dib->blue_len);
 }
 
-static BOOL init_dib(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields, void *bits)
+static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields, void *bits)
 {
     static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
 
@@ -119,6 +108,37 @@ static BOOL init_dib(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit
     return TRUE;
 }
 
+static void clear_dib_info(dib_info *dib)
+{
+    dib->bits = NULL;
+}
+
+/**********************************************************************
+ *      free_dib_info
+ *
+ * Free the resources associated with a dib and optionally the bits
+ */
+static void free_dib_info(dib_info *dib, BOOL free_bits)
+{
+    if(free_bits)
+    {
+        HeapFree(GetProcessHeap(), 0, dib->bits);
+        dib->bits = NULL;
+    }
+}
+
+/***********************************************************************
+ *           dibdrv_DeleteDC
+ */
+static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    TRACE("(%p)\n", dev);
+    DeleteObject(pdev->clip);
+    free_dib_info(&pdev->dib, FALSE);
+    return 0;
+}
+
 /***********************************************************************
  *           dibdrv_SelectBitmap
  */
@@ -135,7 +155,9 @@ static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     pdev->clip = CreateRectRgn(0, 0, 0, 0);
     pdev->defer = 0;
 
-    if(!init_dib(&pdev->dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields, bmp->dib->dsBm.bmBits))
+    clear_dib_info(&pdev->dib);
+
+    if(!init_dib_info(&pdev->dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields, bmp->dib->dsBm.bmBits))
         pdev->defer |= DEFER_FORMAT;
 
     GDI_ReleaseObj( bitmap );
