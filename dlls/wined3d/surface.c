@@ -2554,7 +2554,7 @@ HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
 static inline unsigned short float_32_to_16(const float *in)
 {
     int exp = 0;
-    float tmp = fabs(*in);
+    float tmp = fabsf(*in);
     unsigned int mantissa;
     unsigned short ret;
 

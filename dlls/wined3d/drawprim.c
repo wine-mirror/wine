@@ -274,7 +274,7 @@ static void drawStridedSlow(IWineD3DDeviceImpl *device, const struct wined3d_con
             if (specular_fog)
             {
                 DWORD specularColor = *(const DWORD *)ptrToCoords;
-                GL_EXTCALL(glFogCoordfEXT(specularColor >> 24));
+                GL_EXTCALL(glFogCoordfEXT((float) (specularColor >> 24)));
             }
         }
 

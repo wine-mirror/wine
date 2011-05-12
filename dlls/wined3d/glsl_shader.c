@@ -829,7 +829,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
                 correction_params[1] = 1.0f;
             } else {
                 /* position is window relative, not viewport relative */
-                correction_params[0] = context->current_rt->resource.height;
+                correction_params[0] = (float) context->current_rt->resource.height;
                 correction_params[1] = -1.0f;
             }
             GL_EXTCALL(glUniform4fvARB(prog->ycorrection_location, 1, correction_params));
