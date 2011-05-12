@@ -958,6 +958,7 @@ static BOOL solid_brush(dibdrv_physdev *pdev, int num, RECT *rects)
 
 void update_brush_rop( dibdrv_physdev *pdev, INT rop )
 {
+    pdev->brush_rop = rop;
     if(pdev->brush_style == BS_SOLID)
         calc_and_xor_masks(rop, pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
 }
