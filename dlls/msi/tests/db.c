@@ -9259,7 +9259,7 @@ static void test_embedded_nulls(void)
         "Dialog\tText\n"
         "s72\tL0\n"
         "Control\tDialog\n"
-        "LicenseAgreementDlg\ttext\0text";
+        "LicenseAgreementDlg\ttext\x11\x19text\0text";
     UINT r, sz;
     MSIHANDLE hdb, hrec;
     char buffer[32];
@@ -9280,7 +9280,7 @@ static void test_embedded_nulls(void)
     sz = sizeof(buffer);
     r = MsiRecordGetStringA( hrec, 1, buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get string %u\n", r );
-    ok( !memcmp( "text\ntext", buffer, sizeof("text\ntext") - 1 ), "wrong buffer contents \"%s\"\n", buffer );
+    ok( !memcmp( "text\r\ntext\ntext", buffer, sizeof("text\r\ntext\ntext") - 1 ), "wrong buffer contents \"%s\"\n", buffer );
 
     MsiCloseHandle( hrec );
     MsiCloseHandle( hdb );

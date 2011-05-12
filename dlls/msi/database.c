@@ -575,6 +575,11 @@ static void msi_parse_line(LPWSTR *line, LPWSTR **entries, DWORD *num_entries, D
         while (chars_left && *ptr != '\t' && *ptr != '\n' && *ptr != '\r')
         {
             if (!*ptr) *ptr = '\n'; /* convert embedded nulls to \n */
+            if (ptr > *line && *ptr == '\x19' && *(ptr - 1) == '\x11')
+            {
+                *ptr = '\n';
+                *(ptr - 1) = '\r';
+            }
             ptr++;
             chars_left--;
         }
