@@ -982,6 +982,7 @@ static void set_size_hints( Display *display, struct x11drv_win_data *data, DWOR
             size_hints->y = data->whole_rect.top;
             size_hints->flags |= PPosition;
         }
+        else size_hints->win_gravity = NorthWestGravity;
 
         if (!is_window_resizable( data, style ))
         {
