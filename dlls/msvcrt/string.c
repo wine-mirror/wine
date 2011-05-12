@@ -31,6 +31,7 @@
 #include <limits.h>
 #include <errno.h>
 #include "msvcrt.h"
+#include "winnls.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
@@ -527,12 +528,22 @@ int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_
 }
 
 /*********************************************************************
+ *		_strcoll_l (MSVCRT.@)
+ */
+int CDECL MSVCRT_strcoll_l( const char* str1, const char* str2, MSVCRT__locale_t locale )
+{
+    if(!locale)
+        locale = get_locale();
+
+    return CompareStringA(locale->locinfo->lc_handle[MSVCRT_LC_CTYPE], 0, str1, -1, str2, -1)-2;
+}
+
+/*********************************************************************
  *		strcoll (MSVCRT.@)
  */
 int CDECL MSVCRT_strcoll( const char* str1, const char* str2 )
 {
-    /* FIXME: handle Windows locale */
-    return strcoll( str1, str2 );
+    return MSVCRT_strcoll_l(str1, str2, NULL);
 }
 
 /*********************************************************************

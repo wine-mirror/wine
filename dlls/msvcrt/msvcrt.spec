@@ -919,7 +919,7 @@
 @ cdecl _stati64(str ptr) MSVCRT_stati64
 @ cdecl _statusfp()
 @ cdecl _strcmpi(str str) ntdll._strcmpi
-# stub _strcoll_l(str str ptr)
+@ cdecl _strcoll_l(str str ptr) MSVCRT_strcoll_l
 @ cdecl _strdate(ptr)
 @ cdecl _strdate_s(ptr long)
 @ cdecl _strdup(str)
