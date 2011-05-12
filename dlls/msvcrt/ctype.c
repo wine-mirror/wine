@@ -380,6 +380,49 @@ int CDECL MSVCRT__toupper(int c)
 }
 
 /*********************************************************************
+ *              _tolower_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__tolower_l(int c, MSVCRT__locale_t locale)
+{
+    if(!locale)
+        locale = get_locale();
+
+    if(c < 256)
+        return locale->locinfo->pclmap[c];
+
+    if(locale->locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
+    {
+        WCHAR wide, upper;
+        char str[2], *p = str;
+        *p++ = (c>>8) & 255;
+        *p++ = c & 255;
+
+        if(!MultiByteToWideChar(locale->locinfo->lc_codepage,
+                    MB_ERR_INVALID_CHARS, str, 2, &wide, 1))
+            return c;
+
+        upper = tolowerW(wide);
+        if(upper == wide)
+            return c;
+
+        WideCharToMultiByte(locale->locinfo->lc_codepage, 0,
+                &upper, 1, str, 2, NULL, NULL);
+
+        return str[0] + (str[1]<<8);
+    }
+
+    return c;
+}
+
+/*********************************************************************
+ *              tolower (MSVCRT.@)
+ */
+int CDECL MSVCRT_tolower(int c)
+{
+        return MSVCRT__tolower_l(c, NULL);
+}
+
+/*********************************************************************
  *		_tolower (MSVCRT.@)
  */
 int CDECL MSVCRT__tolower(int c)

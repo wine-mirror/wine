@@ -977,7 +977,7 @@
 @ cdecl _time64(ptr) MSVCRT__time64
 @ extern _timezone MSVCRT___timezone
 @ cdecl _tolower(long) MSVCRT__tolower
-# stub _tolower_l(long ptr)
+@ cdecl _tolower_l(long ptr) MSVCRT__tolower_l
 @ cdecl _toupper(long) MSVCRT__toupper
 @ cdecl _toupper_l(long ptr) MSVCRT__toupper_l
 @ cdecl _towlower_l(long ptr) MSVCRT__towlower_l
@@ -1425,7 +1425,7 @@
 # stub tmpfile_s(ptr)
 @ cdecl tmpnam(ptr) MSVCRT_tmpnam
 # stub tmpnam_s(ptr long)
-@ cdecl tolower(long) ntdll.tolower
+@ cdecl tolower(long) MSVCRT_tolower
 @ cdecl toupper(long) MSVCRT_toupper
 @ cdecl towlower(long) ntdll.towlower
 @ cdecl towupper(long) ntdll.towupper
