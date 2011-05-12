@@ -628,7 +628,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         else
         {
             BOOL color0_mov = FALSE;
-            int i, limit;
+            unsigned int i, limit;
 
             /* This will loop over all the registers and try to
              * make a bitmask of the ones we're interested in.
