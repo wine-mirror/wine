@@ -956,11 +956,37 @@ static BOOL solid_brush(dibdrv_physdev *pdev, int num, RECT *rects)
     return TRUE;
 }
 
+/**********************************************************************
+ *             pattern_brush
+ *
+ * Fill a number of rectangles with the pattern brush
+ * FIXME: Should we insist l < r && t < b?  Currently we assume this.
+ */
+static BOOL pattern_brush(dibdrv_physdev *pdev, int num, RECT *rects)
+{
+    return FALSE;
+}
+
+static void free_pattern_brush_bits( dibdrv_physdev *pdev )
+{
+    HeapFree(GetProcessHeap(), 0, pdev->brush_and_bits);
+    HeapFree(GetProcessHeap(), 0, pdev->brush_xor_bits);
+    pdev->brush_and_bits = NULL;
+    pdev->brush_xor_bits = NULL;
+}
+
+void free_pattern_brush( dibdrv_physdev *pdev )
+{
+    free_pattern_brush_bits( pdev );
+    free_dib_info( &pdev->brush_dib, TRUE );
+}
+
 void update_brush_rop( dibdrv_physdev *pdev, INT rop )
 {
     pdev->brush_rop = rop;
     if(pdev->brush_style == BS_SOLID)
         calc_and_xor_masks(rop, pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
+    free_pattern_brush_bits( pdev );
 }
 
 /***********************************************************************
@@ -983,6 +1009,8 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 
     pdev->defer |= DEFER_BRUSH;
 
+    free_pattern_brush( pdev );
+
     switch(logbrush.lbStyle)
     {
     case BS_SOLID:
@@ -991,6 +1019,27 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
         pdev->brush_rects = solid_brush;
         pdev->defer &= ~DEFER_BRUSH;
         break;
+
+    case BS_DIBPATTERN:
+    {
+        BITMAPINFOHEADER *bi = GlobalLock((HGLOBAL)logbrush.lbHatch);
+        dib_info orig_dib;
+
+        if(!bi) return NULL;
+        if(init_dib_info_from_packed(&orig_dib, bi, LOWORD(logbrush.lbColor)))
+        {
+            copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
+            if(convert_dib(&pdev->brush_dib, &orig_dib))
+            {
+                pdev->brush_rects = pattern_brush;
+                pdev->defer &= ~DEFER_BRUSH;
+            }
+            free_dib_info(&orig_dib, FALSE);
+        }
+        GlobalUnlock((HGLOBAL)logbrush.lbHatch);
+        break;
+    }
+
     default:
         break;
     }

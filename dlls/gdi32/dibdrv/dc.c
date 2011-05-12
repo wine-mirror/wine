@@ -108,6 +108,29 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
     return TRUE;
 }
 
+BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD usage)
+{
+    DWORD *masks = NULL;
+    RGBQUAD *color_table = NULL;
+    BYTE *ptr = (BYTE*)bi + bi->biSize;
+    int num_colors = bi->biClrUsed;
+
+    if(bi->biCompression == BI_BITFIELDS)
+    {
+        masks = (DWORD *)ptr;
+        ptr += 3 * sizeof(DWORD);
+    }
+
+    if(!num_colors && bi->biBitCount <= 8) num_colors = 1 << bi->biBitCount;
+    if(num_colors) color_table = (RGBQUAD*)ptr;
+    if(usage == DIB_PAL_COLORS)
+        ptr += num_colors * sizeof(WORD);
+    else
+        ptr += num_colors * sizeof(*color_table);
+
+    return init_dib_info(dib, bi, masks, ptr);
+}
+
 static void clear_dib_info(dib_info *dib)
 {
     dib->bits = NULL;
@@ -118,13 +141,87 @@ static void clear_dib_info(dib_info *dib)
  *
  * Free the resources associated with a dib and optionally the bits
  */
-static void free_dib_info(dib_info *dib, BOOL free_bits)
+void free_dib_info(dib_info *dib, BOOL free_bits)
 {
     if(free_bits)
     {
         HeapFree(GetProcessHeap(), 0, dib->bits);
         dib->bits = NULL;
     }
+}
+
+void copy_dib_color_info(dib_info *dst, const dib_info *src)
+{
+    dst->bit_count        = src->bit_count;
+    dst->red_mask         = src->red_mask;
+    dst->green_mask       = src->green_mask;
+    dst->blue_mask        = src->blue_mask;
+    dst->red_len          = src->red_len;
+    dst->green_len        = src->green_len;
+    dst->blue_len         = src->blue_len;
+    dst->red_shift        = src->red_shift;
+    dst->green_shift      = src->green_shift;
+    dst->blue_shift       = src->blue_shift;
+    dst->funcs            = src->funcs;
+}
+
+static BOOL dib_formats_match(const dib_info *d1, const dib_info *d2)
+{
+    if(d1->bit_count != d2->bit_count) return FALSE;
+
+    switch(d1->bit_count)
+    {
+    case 24: return TRUE;
+
+    case 32:
+    case 16:
+        return (d1->red_mask == d2->red_mask) && (d1->green_mask == d2->green_mask) &&
+            (d1->blue_mask == d2->blue_mask);
+
+    default:
+        ERR("Unexpected depth %d\n", d1->bit_count);
+        return FALSE;
+    }
+}
+
+/**************************************************************
+ *            convert_dib
+ *
+ * Converts src into the format specified in dst.
+ *
+ * FIXME: At the moment this always creates a top-down dib,
+ * do we want to give the option of bottom-up?
+ */
+BOOL convert_dib(dib_info *dst, const dib_info *src)
+{
+    INT y;
+
+    dst->height = src->height;
+    dst->width = src->width;
+    dst->stride = ((dst->width * dst->bit_count + 31) >> 3) & ~3;
+    dst->bits = NULL;
+
+    if(dib_formats_match(src, dst))
+    {
+        dst->bits = HeapAlloc(GetProcessHeap(), 0, dst->height * dst->stride);
+
+        if(src->stride > 0)
+            memcpy(dst->bits, src->bits, dst->height * dst->stride);
+        else
+        {
+            BYTE *src_bits = src->bits;
+            BYTE *dst_bits = dst->bits;
+            for(y = 0; y < dst->height; y++)
+            {
+                memcpy(dst_bits, src_bits, dst->stride);
+                dst_bits += dst->stride;
+                src_bits += src->stride;
+            }
+        }
+        return TRUE;
+    }
+    FIXME("Format conversion not implemented\n");
+    return FALSE;
 }
 
 /***********************************************************************
@@ -135,6 +232,7 @@ static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p)\n", dev);
     DeleteObject(pdev->clip);
+    free_pattern_brush(pdev);
     free_dib_info(&pdev->dib, FALSE);
     return 0;
 }
@@ -156,6 +254,8 @@ static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     pdev->defer = 0;
 
     clear_dib_info(&pdev->dib);
+    clear_dib_info(&pdev->brush_dib);
+    pdev->brush_and_bits = pdev->brush_xor_bits = NULL;
 
     if(!init_dib_info(&pdev->dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields, bmp->dib->dsBm.bmBits))
         pdev->defer |= DEFER_FORMAT;

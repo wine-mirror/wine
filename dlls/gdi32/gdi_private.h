@@ -124,6 +124,8 @@ typedef struct dibdrv_physdev
     UINT brush_style;
     INT brush_rop;   /* PatBlt, for example, can override the DC's rop2 */
     DWORD brush_color, brush_and, brush_xor;
+    dib_info brush_dib;
+    void *brush_and_bits, *brush_xor_bits;
     BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, int num, RECT *rects);
 
     /* background */
