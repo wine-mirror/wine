@@ -41,25 +41,40 @@
 
 #define TabWidthPadded(padd_x, num) (DEFAULT_MIN_TAB_WIDTH - (TAB_PADDING_X - (padd_x)) * num)
 
-#define TabCheckSetSize(hwnd, SetWidth, SetHeight, ExpWidth, ExpHeight, Msg)\
-    SendMessage (hwnd, TCM_SETITEMSIZE, 0,\
-	(LPARAM) MAKELPARAM((SetWidth >= 0) ? SetWidth:0, (SetHeight >= 0) ? SetHeight:0));\
-    if (winetest_interactive) RedrawWindow (hwnd, NULL, 0, RDW_UPDATENOW);\
-    CheckSize(hwnd, ExpWidth, ExpHeight, Msg);
+static void CheckSize(HWND hwnd, INT width, INT height, const char *msg, int line)
+{
+    RECT r;
 
-#define CheckSize(hwnd,width,height,msg)\
-    SendMessage (hwnd, TCM_GETITEMRECT, 0, (LPARAM) &rTab);\
-    if ((width  >= 0) && (height < 0))\
-	ok (width  == rTab.right  - rTab.left, "%s: Expected width [%d] got [%d]\n",\
-        msg, (int)width,  rTab.right  - rTab.left);\
-    else if ((height >= 0) && (width  < 0))\
-	ok (height == rTab.bottom - rTab.top,  "%s: Expected height [%d] got [%d]\n",\
-        msg, (int)height, rTab.bottom - rTab.top);\
-    else\
-	ok ((width  == rTab.right  - rTab.left) &&\
-	    (height == rTab.bottom - rTab.top ),\
-	    "%s: Expected [%d,%d] got [%d,%d]\n", msg, (int)width, (int)height,\
-            rTab.right - rTab.left, rTab.bottom - rTab.top);
+    SendMessage(hwnd, TCM_GETITEMRECT, 0, (LPARAM)&r);
+    if (width >= 0 && height < 0)
+    {
+        ok_(__FILE__,line) (width == r.right - r.left, "%s: Expected width [%d] got [%d]\n",\
+        msg, width, r.right - r.left);
+    }
+    else if (height >= 0 && width < 0)
+    {
+        ok_(__FILE__,line) (height == r.bottom - r.top,  "%s: Expected height [%d] got [%d]\n",\
+        msg, height, r.bottom - r.top);
+    }
+    else
+        ok_(__FILE__,line) ((width  == r.right  - r.left) && (height == r.bottom - r.top ),
+	    "%s: Expected [%d,%d] got [%d,%d]\n", msg, width, height,
+            r.right - r.left, r.bottom - r.top);
+}
+
+#define CHECKSIZE(hwnd,width,height,msg) CheckSize(hwnd,width,height,msg,__LINE__)
+
+static void TabCheckSetSize(HWND hwnd, INT set_width, INT set_height, INT exp_width,
+    INT exp_height, const char *msg, int line)
+{
+    SendMessage(hwnd, TCM_SETITEMSIZE, 0,
+	(LPARAM) MAKELPARAM((set_width >= 0) ? set_width : 0, (set_height >= 0) ? set_height : 0));
+    if (winetest_interactive) RedrawWindow (hwnd, NULL, 0, RDW_UPDATENOW);
+    CheckSize(hwnd, exp_width, exp_height, msg, line);
+}
+
+#define TABCHECKSETSIZE(hwnd,set_width,set_height,exp_width,exp_height,msg) \
+    TabCheckSetSize(hwnd,set_width,set_height,exp_width,exp_height,msg,__LINE__)
 
 static HFONT hFont;
 static DRAWITEMSTRUCT g_drawitem;
@@ -523,16 +538,16 @@ static void test_tab(INT nMinTabWidth)
     ReleaseDC(hwTab, hdc);
 
     trace ("  TCS_FIXEDWIDTH tabs no icon...\n");
-    CheckSize(hwTab, dpi, -1, "default width");
-    TabCheckSetSize(hwTab, 50, 20, 50, 20, "set size");
-    TabCheckSetSize(hwTab, 0, 1, 0, 1, "min size");
+    CHECKSIZE(hwTab, dpi, -1, "default width");
+    TABCHECKSETSIZE(hwTab, 50, 20, 50, 20, "set size");
+    TABCHECKSETSIZE(hwTab, 0, 1, 0, 1, "min size");
 
     SendMessage(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
 
     trace ("  TCS_FIXEDWIDTH tabs with icon...\n");
-    TabCheckSetSize(hwTab, 50, 30, 50, 30, "set size > icon");
-    TabCheckSetSize(hwTab, 20, 20, 25, 20, "set size < icon");
-    TabCheckSetSize(hwTab, 0, 1, 25, 1, "min size");
+    TABCHECKSETSIZE(hwTab, 50, 30, 50, 30, "set size > icon");
+    TABCHECKSETSIZE(hwTab, 20, 20, 25, 20, "set size < icon");
+    TABCHECKSETSIZE(hwTab, 0, 1, 25, 1, "min size");
 
     DestroyWindow (hwTab);
 
@@ -543,19 +558,19 @@ static void test_tab(INT nMinTabWidth)
     dpi = GetDeviceCaps(hdc, LOGPIXELSX);
     ReleaseDC(hwTab, hdc);
     trace ("  TCS_FIXEDWIDTH buttons no icon...\n");
-    CheckSize(hwTab, dpi, -1, "default width");
-    TabCheckSetSize(hwTab, 20, 20, 20, 20, "set size 1");
-    TabCheckSetSize(hwTab, 10, 50, 10, 50, "set size 2");
-    TabCheckSetSize(hwTab, 0, 1, 0, 1, "min size");
+    CHECKSIZE(hwTab, dpi, -1, "default width");
+    TABCHECKSETSIZE(hwTab, 20, 20, 20, 20, "set size 1");
+    TABCHECKSETSIZE(hwTab, 10, 50, 10, 50, "set size 2");
+    TABCHECKSETSIZE(hwTab, 0, 1, 0, 1, "min size");
 
     SendMessage(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
 
     trace ("  TCS_FIXEDWIDTH buttons with icon...\n");
-    TabCheckSetSize(hwTab, 50, 30, 50, 30, "set size > icon");
-    TabCheckSetSize(hwTab, 20, 20, 25, 20, "set size < icon");
-    TabCheckSetSize(hwTab, 0, 1, 25, 1, "min size");
+    TABCHECKSETSIZE(hwTab, 50, 30, 50, 30, "set size > icon");
+    TABCHECKSETSIZE(hwTab, 20, 20, 25, 20, "set size < icon");
+    TABCHECKSETSIZE(hwTab, 0, 1, 25, 1, "min size");
     SendMessage(hwTab, TCM_SETPADDING, 0, MAKELPARAM(4,4));
-    TabCheckSetSize(hwTab, 0, 1, 25, 1, "set padding, min size");
+    TABCHECKSETSIZE(hwTab, 0, 1, 25, 1, "set padding, min size");
 
     DestroyWindow (hwTab);
 
@@ -566,19 +581,19 @@ static void test_tab(INT nMinTabWidth)
     dpi = GetDeviceCaps(hdc, LOGPIXELSX);
     ReleaseDC(hwTab, hdc);
     trace ("  TCS_FIXEDWIDTH | TCS_BOTTOM tabs...\n");
-    CheckSize(hwTab, dpi, -1, "no icon, default width");
+    CHECKSIZE(hwTab, dpi, -1, "no icon, default width");
 
-    TabCheckSetSize(hwTab, 20, 20, 20, 20, "no icon, set size 1");
-    TabCheckSetSize(hwTab, 10, 50, 10, 50, "no icon, set size 2");
-    TabCheckSetSize(hwTab, 0, 1, 0, 1, "no icon, min size");
+    TABCHECKSETSIZE(hwTab, 20, 20, 20, 20, "no icon, set size 1");
+    TABCHECKSETSIZE(hwTab, 10, 50, 10, 50, "no icon, set size 2");
+    TABCHECKSETSIZE(hwTab, 0, 1, 0, 1, "no icon, min size");
 
     SendMessage(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
 
-    TabCheckSetSize(hwTab, 50, 30, 50, 30, "with icon, set size > icon");
-    TabCheckSetSize(hwTab, 20, 20, 25, 20, "with icon, set size < icon");
-    TabCheckSetSize(hwTab, 0, 1, 25, 1, "with icon, min size");
+    TABCHECKSETSIZE(hwTab, 50, 30, 50, 30, "with icon, set size > icon");
+    TABCHECKSETSIZE(hwTab, 20, 20, 25, 20, "with icon, set size < icon");
+    TABCHECKSETSIZE(hwTab, 0, 1, 25, 1, "with icon, min size");
     SendMessage(hwTab, TCM_SETPADDING, 0, MAKELPARAM(4,4));
-    TabCheckSetSize(hwTab, 0, 1, 25, 1, "set padding, min size");
+    TABCHECKSETSIZE(hwTab, 0, 1, 25, 1, "set padding, min size");
 
     DestroyWindow (hwTab);
 
@@ -598,15 +613,15 @@ static void test_tab(INT nMinTabWidth)
         SendMessage(hwTab, TCM_SETIMAGELIST, 0, 0);
         SendMessage(hwTab, TCM_SETPADDING, 0, MAKELPARAM(i,i));
 
-        TabCheckSetSize(hwTab, 50, 20, max(size.cx + i*2, nTabWidth), 20, "no icon, set size");
-        TabCheckSetSize(hwTab, 0, 1, max(size.cx + i*2, nTabWidth), 1, "no icon, min size");
+        TABCHECKSETSIZE(hwTab, 50, 20, max(size.cx + i*2, nTabWidth), 20, "no icon, set size");
+        TABCHECKSETSIZE(hwTab, 0, 1, max(size.cx + i*2, nTabWidth), 1, "no icon, min size");
 
         SendMessage(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
         nTabWidth = (nMinTabWidth < 0) ? TabWidthPadded(i, 3) : nMinTabWidth;
 
-        TabCheckSetSize(hwTab, 50, 30, max(size.cx + 21 + i*3, nTabWidth), 30, "with icon, set size > icon");
-        TabCheckSetSize(hwTab, 20, 20, max(size.cx + 21 + i*3, nTabWidth), 20, "with icon, set size < icon");
-        TabCheckSetSize(hwTab, 0, 1, max(size.cx + 21 + i*3, nTabWidth), 1, "with icon, min size");
+        TABCHECKSETSIZE(hwTab, 50, 30, max(size.cx + 21 + i*3, nTabWidth), 30, "with icon, set size > icon");
+        TABCHECKSETSIZE(hwTab, 20, 20, max(size.cx + 21 + i*3, nTabWidth), 20, "with icon, set size < icon");
+        TABCHECKSETSIZE(hwTab, 0, 1, max(size.cx + 21 + i*3, nTabWidth), 1, "with icon, min size");
     }
     DestroyWindow (hwTab);
 
@@ -626,16 +641,16 @@ static void test_tab(INT nMinTabWidth)
         SendMessage(hwTab, TCM_SETIMAGELIST, 0, 0);
         SendMessage(hwTab, TCM_SETPADDING, 0, MAKELPARAM(i,i));
 
-        TabCheckSetSize(hwTab, 50, 20, nTabWidth, 20, "no icon, set size");
-        TabCheckSetSize(hwTab, 0, 1, nTabWidth, 1, "no icon, min size");
+        TABCHECKSETSIZE(hwTab, 50, 20, nTabWidth, 20, "no icon, set size");
+        TABCHECKSETSIZE(hwTab, 0, 1, nTabWidth, 1, "no icon, min size");
 
         SendMessage(hwTab, TCM_SETIMAGELIST, 0, (LPARAM)himl);
         if (i > 1 && nMinTabWidth > 0 && nMinTabWidth < DEFAULT_MIN_TAB_WIDTH)
             nTabWidth += EXTRA_ICON_PADDING *(i-1);
 
-        TabCheckSetSize(hwTab, 50, 30, nTabWidth, 30, "with icon, set size > icon");
-        TabCheckSetSize(hwTab, 20, 20, nTabWidth, 20, "with icon, set size < icon");
-        TabCheckSetSize(hwTab, 0, 1, nTabWidth, 1, "with icon, min size");
+        TABCHECKSETSIZE(hwTab, 50, 30, nTabWidth, 30, "with icon, set size > icon");
+        TABCHECKSETSIZE(hwTab, 20, 20, nTabWidth, 20, "with icon, set size < icon");
+        TABCHECKSETSIZE(hwTab, 0, 1, nTabWidth, 1, "with icon, min size");
     }
 
     DestroyWindow (hwTab);
@@ -1034,7 +1049,7 @@ static void test_misc(void)
     hdc = GetDC(hTab);
     dpi = GetDeviceCaps(hdc, LOGPIXELSX);
     ReleaseDC(hTab, hdc);
-    CheckSize(hTab, dpi, -1 , "Default Width");
+    CHECKSIZE(hTab, dpi, -1 , "Default Width");
     ok_sequence(sequences, TAB_SEQ_INDEX, get_item_rect_seq, "Get itemRect test sequence", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Get itemRect test parent sequence", FALSE);
 
