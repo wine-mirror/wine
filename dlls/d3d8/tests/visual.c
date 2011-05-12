@@ -495,7 +495,7 @@ static void present_test(IDirect3DDevice8 *device)
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear returned %08x\n", hr);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice8_Present returned %#x.\n", hr);
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.4, 0);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.4f, 0);
     ok(SUCCEEDED(hr), "IDirect3DDevice8_Clear returned %#x.\n", hr);
 
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
@@ -930,16 +930,16 @@ static void p8_texture_test(IDirect3DDevice8 *device)
     D3DCAPS8 caps;
     UINT i;
     float quad[] = {
-       -1.0,       0,       0.1,     0.0,    0.0,
-       -1.0,       1.0,     0.1,     0.0,    1.0,
-        1.0,       0,       0.1,     1.0,    0.0,
-        1.0,       1.0,     0.1,     1.0,    1.0,
+       -1.0f,      0.0f,    0.1f,    0.0f,   0.0f,
+       -1.0f,      1.0f,    0.1f,    0.0f,   1.0f,
+        1.0f,      0.0f,    0.1f,    1.0f,   0.0f,
+        1.0f,      1.0f,    0.1f,    1.0f,   1.0f,
     };
     float quad2[] = {
-       -1.0,       -1.0,    0.1,     0.0,    0.0,
-       -1.0,       0,       0.1,     0.0,    1.0,
-        1.0,       -1.0,    0.1,     1.0,    0.0,
-        1.0,       0,       0.1,     1.0,    1.0,
+       -1.0f,      -1.0f,   0.1f,    0.0f,   0.0f,
+       -1.0f,      0.0f,    0.1f,    0.0f,   1.0f,
+        1.0f,      -1.0f,   0.1f,    1.0f,   0.0f,
+        1.0f,      0.0f,    0.1f,    1.0f,   1.0f,
     };
 
     IDirect3DDevice8_GetDirect3D(device, &d3d);
@@ -1316,17 +1316,17 @@ static void depth_clamp_test(IDirect3DDevice8 *device)
     };
     const struct vertex quad3[] =
     {
-        {-0.65, 0.55,  5.0f,      0xffffffff},
-        {-0.35, 0.55,  5.0f,      0xffffffff},
-        {-0.65, 0.15,  5.0f,      0xffffffff},
-        {-0.35, 0.15,  5.0f,      0xffffffff},
+        {-0.65f, 0.55f,  5.0f,      0xffffffff},
+        {-0.35f, 0.55f,  5.0f,      0xffffffff},
+        {-0.65f, 0.15f,  5.0f,      0xffffffff},
+        {-0.35f, 0.15f,  5.0f,      0xffffffff},
     };
     const struct vertex quad4[] =
     {
-        {-0.87, 0.83, 10.0f,      0xffffffff},
-        {-0.65, 0.83, 10.0f,      0xffffffff},
-        {-0.87, 0.55, 10.0f,      0xffffffff},
-        {-0.65, 0.55, 10.0f,      0xffffffff},
+        {-0.87f, 0.83f, 10.0f,      0xffffffff},
+        {-0.65f, 0.83f, 10.0f,      0xffffffff},
+        {-0.87f, 0.55f, 10.0f,      0xffffffff},
+        {-0.65f, 0.55f, 10.0f,      0xffffffff},
     };
     const struct vertex quad5[] =
     {
