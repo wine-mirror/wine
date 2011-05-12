@@ -745,16 +745,16 @@
 @ stub _invalid_parameter_noinfo_noreturn
 @ stub _invoke_watson
 @ extern _iob msvcrt._iob
-@ stub _isalnum_l
-@ stub _isalpha_l
+@ cdecl _isalnum_l(long ptr) msvcrt._isalnum_l
+@ cdecl _isalpha_l(long ptr) msvcrt._isalpha_l
 @ cdecl _isatty(long) msvcrt._isatty
-@ stub _iscntrl_l
+@ cdecl _iscntrl_l(long ptr) msvcrt._iscntrl_l
 @ cdecl _isctype(long long) msvcrt._isctype
-@ stub _isctype_l
-@ stub _isdigit_l
-@ stub _isgraph_l
-@ stub _isleadbyte_l
-@ stub _islower_l
+@ cdecl _isctype_l(long long ptr) msvcrt._isctype_l
+@ cdecl _isdigit_l(long ptr) msvcrt._isdigit_l
+@ cdecl _isgraph_l(long ptr) msvcrt._isgraph_l
+@ cdecl _isleadbyte_l(long ptr) msvcrt._isleadbyte_l
+@ cdecl _islower_l(long ptr) msvcrt._islower_l
 @ cdecl _ismbbalnum(long) msvcrt._ismbbalnum
 @ stub _ismbbalnum_l
 @ cdecl _ismbbalpha(long) msvcrt._ismbbalpha
@@ -814,10 +814,10 @@
 @ cdecl _ismbstrail(ptr ptr) msvcrt._ismbstrail
 @ stub _ismbstrail_l
 @ cdecl _isnan( double ) msvcrt._isnan
-@ stub _isprint_l
+@ cdecl _isprint_l(long ptr) msvcrt._isprint_l
 @ stub _ispunct_l
-@ stub _isspace_l
-@ stub _isupper_l
+@ cdecl _isspace_l(long ptr) msvcrt._isspace_l
+@ cdecl _isupper_l(long ptr) msvcrt._isupper_l
 @ stub _iswalnum_l
 @ cdecl _iswalpha_l(long ptr) msvcrt._iswalpha_l
 @ stub _iswcntrl_l
@@ -832,7 +832,7 @@
 @ stub _iswspace_l
 @ stub _iswupper_l
 @ stub _iswxdigit_l
-@ stub _isxdigit_l
+@ cdecl _isxdigit_l(long ptr) msvcrt._isxdigit_l
 @ cdecl _itoa(long ptr long) msvcrt._itoa
 @ cdecl _itoa_s(long ptr long long) msvcrt._itoa_s
 @ cdecl _itow(long ptr long) msvcrt._itow
@@ -1129,7 +1129,7 @@
 @ cdecl _stat64i32(str ptr) msvcr90._stat64i32
 @ cdecl _statusfp() msvcrt._statusfp
 @ cdecl -arch=i386 _statusfp2(ptr ptr) msvcrt._statusfp2
-@ stub _strcoll_l
+@ cdecl _strcoll_l(str str ptr) msvcrt._strcoll_l
 @ cdecl _strdate(ptr) msvcrt._strdate
 @ cdecl _strdate_s(ptr long) msvcrt._strdate_s
 @ cdecl _strdup(str) msvcrt._strdup
@@ -1139,17 +1139,17 @@
 @ cdecl _stricmp(str str) msvcrt._stricmp
 @ stub _stricmp_l
 @ cdecl _stricoll(str str) msvcrt._stricoll
-@ stub _stricoll_l
+@ cdecl _stricoll_l(str str ptr) msvcrt._stricoll_l
 @ cdecl _strlwr(str) msvcrt._strlwr
-@ stub _strlwr_l
+@ cdecl _strlwr_l(str ptr) msvcrt._strlwr_l
 @ cdecl _strlwr_s(ptr long) msvcrt._strlwr_s
-@ stub _strlwr_s_l
+@ cdecl _strlwr_s_l(ptr long ptr) msvcrt._strlwr_s_l
 @ cdecl _strncoll(str str long) msvcrt._strncoll
-@ stub _strncoll_l
+@ cdecl _strncoll_l(str str long ptr) msvcrt._strncoll_l
 @ cdecl _strnicmp(str str long) msvcrt._strnicmp
 @ stub _strnicmp_l
 @ cdecl _strnicoll(str str long) msvcrt._strnicoll
-@ stub _strnicoll_l
+@ cdecl _strnicoll_l(str str long ptr) msvcrt._strnicoll_l
 @ cdecl _strnset(str long long) msvcrt._strnset
 @ stub _strnset_s
 @ cdecl _strrev(str) msvcrt._strrev
@@ -1165,9 +1165,9 @@
 @ cdecl -ret64 _strtoui64_l(str ptr long ptr) msvcrt._strtoui64_l
 @ stub _strtoul_l
 @ cdecl _strupr(str) msvcrt._strupr
-@ stub _strupr_l
-@ stub _strupr_s
-@ stub _strupr_s_l
+@ cdecl _strupr_l(str ptr) msvcrt._strupr_l
+@ cdecl _strupr_s(str long) msvcrt._strupr_s
+@ cdecl _strupr_s_l(str long ptr) msvcrt._strupr_s_l
 @ stub _strxfrm_l
 @ cdecl _swab(str str long) msvcrt._swab
 @ varargs _swprintf(ptr wstr) msvcrt._swprintf
@@ -1187,11 +1187,11 @@
 @ cdecl _time64(ptr) msvcrt._time64
 @ extern _timezone msvcrt._timezone
 @ cdecl _tolower(long) msvcrt._tolower
-@ stub _tolower_l
+@ cdecl _tolower_l(long ptr) msvcrt._tolower_l
 @ cdecl _toupper(long) msvcrt._toupper
-@ stub _toupper_l
-@ stub _towlower_l
-@ stub _towupper_l
+@ cdecl _toupper_l(long ptr) msvcrt._toupper_l
+@ cdecl _towlower_l(long ptr) msvcrt._towlower_l
+@ cdecl _towupper_l(long ptr) msvcrt._towupper_l
 @ extern _tzname msvcrt._tzname
 @ cdecl _tzset() msvcrt._tzset
 @ cdecl _ui64toa(int64 ptr long) msvcrt._ui64toa
