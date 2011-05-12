@@ -819,8 +819,9 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     return TRUE;
 }
 
-static const dash_pattern dash_patterns[4] =
+static const dash_pattern dash_patterns[5] =
 {
+    {0, {0}, 0},                  /* PS_SOLID - a pseudo-pattern used to initialise unpatterned pens. */
     {2, {18, 6}, 24},             /* PS_DASH */
     {2, {3,  3}, 6},              /* PS_DOT */
     {4, {9, 6, 3, 6}, 24},        /* PS_DASHDOT */
@@ -865,6 +866,8 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     pdev->pen_color = pdev->dib.funcs->colorref_to_pixel(&pdev->dib, logpen.lopnColor);
     calc_and_xor_masks(GetROP2(dev->hdc), pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
 
+    pdev->pen_pattern = dash_patterns[PS_SOLID];
+
     pdev->defer |= DEFER_PEN;
 
     style = logpen.lopnStyle & PS_STYLE_MASK;
@@ -875,7 +878,6 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         if(logpen.lopnStyle & PS_GEOMETRIC) break;
         if(logpen.lopnWidth.x > 1) break;
         pdev->pen_line = solid_pen_line;
-        pdev->pen_pattern.count = 0;
         pdev->defer &= ~DEFER_PEN;
         break;
 
@@ -886,7 +888,7 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         if(logpen.lopnStyle & PS_GEOMETRIC) break;
         if(logpen.lopnWidth.x > 1) break;
         pdev->pen_line = dashed_pen_line;
-        pdev->pen_pattern = dash_patterns[style - PS_DASH];
+        pdev->pen_pattern = dash_patterns[style];
         pdev->defer &= ~DEFER_PEN;
         break;
 
