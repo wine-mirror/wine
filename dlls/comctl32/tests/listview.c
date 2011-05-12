@@ -4710,6 +4710,40 @@ static void test_dispinfo(void)
     DestroyWindow(hwnd);
 }
 
+static void test_LVM_SETITEMTEXT(void)
+{
+    static char testA[] = "TEST";
+    LVITEMA item;
+    HWND hwnd;
+    DWORD ret;
+
+    hwnd = create_listview_control(LVS_ICON);
+    ok(hwnd != NULL, "failed to create listview window\n");
+
+    insert_item(hwnd, 0);
+
+    /* null item pointer */
+    ret = SendMessage(hwnd, LVM_SETITEMTEXTA, 0, 0);
+    expect(FALSE, ret);
+
+    ret = SendMessage(hwnd, LVM_SETITEMTEXTW, 0, 0);
+    expect(FALSE, ret);
+
+    /* index out of bounds */
+    item.pszText = testA;
+    item.cchTextMax = 0; /* ignored */
+    ret = SendMessageA(hwnd, LVM_SETITEMTEXTA, 1, (LPARAM)&item);
+    expect(FALSE, ret);
+
+    ret = SendMessageA(hwnd, LVM_SETITEMTEXTA, -1, (LPARAM)&item);
+    expect(FALSE, ret);
+
+    ret = SendMessageA(hwnd, LVM_SETITEMTEXTA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -4774,6 +4808,7 @@ START_TEST(listview)
     test_destroynotify();
     test_createdragimage();
     test_dispinfo();
+    test_LVM_SETITEMTEXT();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {

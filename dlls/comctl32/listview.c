@@ -8785,8 +8785,8 @@ static BOOL LISTVIEW_SetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, const LVITE
 {
     LVITEMW lvItem;
 
-    if (nItem < 0 && nItem >= infoPtr->nItemCount) return FALSE;
-    
+    if (!lpLVItem || nItem < 0 || nItem >= infoPtr->nItemCount) return FALSE;
+
     lvItem.iItem = nItem;
     lvItem.iSubItem = lpLVItem->iSubItem;
     lvItem.mask = LVIF_TEXT;
