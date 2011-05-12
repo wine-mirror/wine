@@ -724,6 +724,11 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
 
     switch (iRunMode)
     {
+    case MSIRUNMODE_ADMIN:
+        FIXME("no support for administrative installs\n");
+        r = FALSE;
+        break;
+
     case MSIRUNMODE_WINDOWS9X:
         if (GetVersion() & 0x80000000)
             r = TRUE;
