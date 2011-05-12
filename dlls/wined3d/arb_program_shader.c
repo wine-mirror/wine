@@ -3521,7 +3521,7 @@ static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
     const local_constant *lconst;
     GLuint retval;
     char fragcolor[16];
-    DWORD *lconst_map = local_const_mapping(shader), next_local, cur;
+    DWORD *lconst_map = local_const_mapping(shader), next_local;
     struct shader_arb_ctx_priv priv_ctx;
     BOOL dcl_td = FALSE;
     BOOL want_nv_prog = FALSE;
@@ -3684,13 +3684,15 @@ static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
 
     for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
     {
+        unsigned char bump_const;
+
         if (!(map & 1)) continue;
 
-        cur = compiled->numbumpenvmatconsts;
-        compiled->bumpenvmatconst[cur].const_num = WINED3D_CONST_NUM_UNUSED;
-        compiled->bumpenvmatconst[cur].texunit = i;
-        compiled->luminanceconst[cur].const_num = WINED3D_CONST_NUM_UNUSED;
-        compiled->luminanceconst[cur].texunit = i;
+        bump_const = compiled->numbumpenvmatconsts;
+        compiled->bumpenvmatconst[bump_const].const_num = WINED3D_CONST_NUM_UNUSED;
+        compiled->bumpenvmatconst[bump_const].texunit = i;
+        compiled->luminanceconst[bump_const].const_num = WINED3D_CONST_NUM_UNUSED;
+        compiled->luminanceconst[bump_const].texunit = i;
 
         /* We can fit the constants into the constant limit for sure because texbem, texbeml, bem and beml are only supported
          * in 1.x shaders, and GL_ARB_fragment_program has a constant limit of 24 constants. So in the worst case we're loading
@@ -3701,16 +3703,16 @@ static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
          * shaders in newer shader models. Since the bump env parameters have to share their space with NP2 fixup constants,
          * their location is shader dependent anyway and they cannot be loaded globally.
          */
-        compiled->bumpenvmatconst[cur].const_num = next_local++;
+        compiled->bumpenvmatconst[bump_const].const_num = next_local++;
         shader_addline(buffer, "PARAM bumpenvmat%d = program.local[%d];\n",
-                       i, compiled->bumpenvmatconst[cur].const_num);
-        compiled->numbumpenvmatconsts = cur + 1;
+                       i, compiled->bumpenvmatconst[bump_const].const_num);
+        compiled->numbumpenvmatconsts = bump_const + 1;
 
         if (!(reg_maps->luminanceparams & (1 << i))) continue;
 
-        compiled->luminanceconst[cur].const_num = next_local++;
+        compiled->luminanceconst[bump_const].const_num = next_local++;
         shader_addline(buffer, "PARAM luminance%d = program.local[%d];\n",
-                       i, compiled->luminanceconst[cur].const_num);
+                       i, compiled->luminanceconst[bump_const].const_num);
     }
 
     for(i = 0; i < MAX_CONST_I; i++)
@@ -3763,6 +3765,7 @@ static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
      * applied / activated. This will probably result in wrong rendering of the texture, but will save us from
      * shader compilation errors and the subsequent errors when drawing with this shader. */
     if (priv_ctx.cur_ps_args->super.np2_fixup) {
+        unsigned char cur_fixup_sampler = 0;
 
         struct arb_ps_np2fixup_info* const fixup = priv_ctx.cur_np2fixup_info;
         const WORD map = priv_ctx.cur_ps_args->super.np2_fixup;
@@ -3771,13 +3774,12 @@ static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
         fixup->offset = next_local;
         fixup->super.active = 0;
 
-        cur = 0;
         for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
             if (!(map & (1 << i))) continue;
 
-            if (fixup->offset + (cur >> 1) < max_lconsts) {
+            if (fixup->offset + (cur_fixup_sampler >> 1) < max_lconsts) {
                 fixup->super.active |= (1 << i);
-                fixup->super.idx[i] = cur++;
+                fixup->super.idx[i] = cur_fixup_sampler++;
             } else {
                 FIXME("No free constant found to load NP2 fixup data into shader. "
                       "Sampling from this texture will probably look wrong.\n");
@@ -3785,7 +3787,7 @@ static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
             }
         }
 
-        fixup->super.num_consts = (cur + 1) >> 1;
+        fixup->super.num_consts = (cur_fixup_sampler + 1) >> 1;
         if (fixup->super.num_consts) {
             shader_addline(buffer, "PARAM np2fixup[%u] = { program.env[%u..%u] };\n",
                            fixup->super.num_consts, fixup->offset, fixup->super.num_consts + fixup->offset - 1);
