@@ -929,7 +929,7 @@
 @ cdecl _stricmp(str str) ntdll._stricmp
 # stub _stricmp_l(str str ptr)
 @ cdecl _stricoll(str str) MSVCRT__stricoll
-# stub _stricoll_l(str str ptr)
+@ cdecl _stricoll_l(str str ptr) MSVCRT__stricoll_l
 @ cdecl _strlwr(str)
 @ cdecl _strlwr_l(str ptr)
 @ cdecl _strlwr_s(ptr long)

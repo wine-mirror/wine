@@ -547,6 +547,26 @@ int CDECL MSVCRT_strcoll( const char* str1, const char* str2 )
 }
 
 /*********************************************************************
+ *		_stricoll_l (MSVCRT.@)
+ */
+int CDECL MSVCRT__stricoll_l( const char* str1, const char* str2, MSVCRT__locale_t locale )
+{
+    if(!locale)
+        locale = get_locale();
+
+    return CompareStringA(locale->locinfo->lc_handle[MSVCRT_LC_CTYPE], NORM_IGNORECASE,
+            str1, -1, str2, -1)-2;
+}
+
+/*********************************************************************
+ *		_stricoll (MSVCRT.@)
+ */
+int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
+{
+    return MSVCRT__stricoll_l(str1, str2, NULL);
+}
+
+/*********************************************************************
  *      strcpy_s (MSVCRT.@)
  */
 int CDECL MSVCRT_strcpy_s( char* dst, MSVCRT_size_t elem, const char* src )
@@ -642,16 +662,6 @@ MSVCRT_size_t CDECL MSVCRT_strxfrm( char *dest, const char *src, MSVCRT_size_t l
 {
     /* FIXME: handle Windows locale */
     return strxfrm( dest, src, len );
-}
-
-/*********************************************************************
- *		_stricoll (MSVCRT.@)
- */
-int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
-{
-  /* FIXME: handle collates */
-  TRACE("str1 %s str2 %s\n", debugstr_a(str1), debugstr_a(str2));
-  return lstrcmpiA( str1, str2 );
 }
 
 /********************************************************************
