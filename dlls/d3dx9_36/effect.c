@@ -112,8 +112,7 @@ struct ID3DXEffectCompilerImpl
 
 static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *base,
         struct d3dx_parameter *parameter, LPCSTR name);
-static struct d3dx_parameter *get_parameter_annotation_by_name(struct ID3DXBaseEffectImpl *base,
-        struct d3dx_parameter *parameter, LPCSTR name);
+static struct d3dx_parameter *get_parameter_annotation_by_name(struct d3dx_parameter *parameter, LPCSTR name);
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
@@ -527,14 +526,13 @@ static inline BOOL get_bool(void *data)
     return (*(DWORD *)data) ? TRUE : FALSE;
 }
 
-static struct d3dx_parameter *get_parameter_element_by_name(struct ID3DXBaseEffectImpl *base,
-        struct d3dx_parameter *parameter, LPCSTR name)
+static struct d3dx_parameter *get_parameter_element_by_name(struct d3dx_parameter *parameter, LPCSTR name)
 {
     UINT element;
     struct d3dx_parameter *temp_parameter;
     LPCSTR part;
 
-    TRACE("base %p, parameter %p, name %s\n", base, parameter, debugstr_a(name));
+    TRACE("parameter %p, name %s\n", parameter, debugstr_a(name));
 
     if (!name || !*name) return parameter;
 
@@ -548,10 +546,10 @@ static struct d3dx_parameter *get_parameter_element_by_name(struct ID3DXBaseEffe
         switch (*part++)
         {
             case '.':
-                return get_parameter_by_name(base, temp_parameter, part);
+                return get_parameter_by_name(NULL, temp_parameter, part);
 
             case '@':
-                return get_parameter_annotation_by_name(base, temp_parameter, part);
+                return get_parameter_annotation_by_name(temp_parameter, part);
 
             case '\0':
                 TRACE("Returning parameter %p\n", temp_parameter);
@@ -567,14 +565,13 @@ static struct d3dx_parameter *get_parameter_element_by_name(struct ID3DXBaseEffe
     return NULL;
 }
 
-static struct d3dx_parameter *get_parameter_annotation_by_name(struct ID3DXBaseEffectImpl *base,
-        struct d3dx_parameter *parameter, LPCSTR name)
+static struct d3dx_parameter *get_parameter_annotation_by_name(struct d3dx_parameter *parameter, LPCSTR name)
 {
     UINT i, length;
     struct d3dx_parameter *temp_parameter;
     LPCSTR part;
 
-    TRACE("base %p, parameter %p, name %s\n", base, parameter, debugstr_a(name));
+    TRACE("parameter %p, name %s\n", parameter, debugstr_a(name));
 
     if (!name || !*name) return parameter;
 
@@ -595,10 +592,10 @@ static struct d3dx_parameter *get_parameter_annotation_by_name(struct ID3DXBaseE
             switch (*part++)
             {
                 case '.':
-                    return get_parameter_by_name(base, temp_parameter, part);
+                    return get_parameter_by_name(NULL, temp_parameter, part);
 
                 case '[':
-                    return get_parameter_element_by_name(base, temp_parameter, part);
+                    return get_parameter_element_by_name(temp_parameter, part);
 
                 default:
                     FIXME("Unhandled case \"%c\"\n", *--part);
@@ -651,13 +648,13 @@ static struct d3dx_parameter *get_parameter_by_name(struct ID3DXBaseEffectImpl *
             switch (*part++)
             {
                 case '.':
-                    return get_parameter_by_name(base, temp_parameter, part);
+                    return get_parameter_by_name(NULL, temp_parameter, part);
 
                 case '@':
-                    return get_parameter_annotation_by_name(base, temp_parameter, part);
+                    return get_parameter_annotation_by_name(temp_parameter, part);
 
                 case '[':
-                    return get_parameter_element_by_name(base, temp_parameter, part);
+                    return get_parameter_element_by_name(temp_parameter, part);
 
                 default:
                     FIXME("Unhandled case \"%c\"\n", *--part);
