@@ -3082,7 +3082,7 @@ struct selection_list_item
     add_fields_func add;
 };
 
-const struct selection_list_item listItems[] = {
+static const struct selection_list_item listItems[] = {
  { IDS_FIELDS_ALL, add_all_fields },
  { IDS_FIELDS_V1, add_v1_fields },
  { IDS_FIELDS_EXTENSIONS, add_all_extensions },
@@ -4921,7 +4921,7 @@ static const WCHAR filter_cms[] = { '*','.','s','p','c',';','*','.',
  'p','7','b',0 };
 static const WCHAR filter_all[] = { '*','.','*',0 };
 
-struct StringToFilter
+static struct StringToFilter
 {
     int     id;
     DWORD   allowFlags;
