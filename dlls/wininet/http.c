@@ -2681,8 +2681,8 @@ static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *
             WARN("WriteFile failed: %u\n", GetLastError());
     }
 
-    if(end_of_read_data(req))
-        http_release_netconn(req, TRUE);
+    if(size && !ret_read)
+        http_release_netconn(req, res == ERROR_SUCCESS);
 
     return res;
 }
