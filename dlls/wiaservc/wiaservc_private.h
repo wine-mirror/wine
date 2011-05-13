@@ -26,7 +26,7 @@ typedef struct
     IClassFactory IClassFactory_iface;
 } ClassFactoryImpl;
 
-extern ClassFactoryImpl WIASERVC_ClassFactory;
+extern ClassFactoryImpl WIASERVC_ClassFactory DECLSPEC_HIDDEN;
 
 typedef struct
 {
@@ -34,7 +34,7 @@ typedef struct
     LONG ref;
 } wiadevmgr;
 
-HRESULT wiadevmgr_Constructor(IUnknown *pUnkOuter, LPVOID *ppObj);
+HRESULT wiadevmgr_Constructor(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 
 /* Little helper functions */
 static inline char *
