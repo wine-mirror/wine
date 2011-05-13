@@ -27,7 +27,7 @@
 # include <sane/sane.h>
 # include <sane/saneopts.h>
 
-#define MAKE_FUNCPTR(f) typeof(f) * p##f;
+#define MAKE_FUNCPTR(f) typeof(f) * p##f DECLSPEC_HIDDEN;
 MAKE_FUNCPTR(sane_init)
 MAKE_FUNCPTR(sane_exit)
 MAKE_FUNCPTR(sane_get_devices)
@@ -82,7 +82,7 @@ struct tagActiveDS
     TW_FIX32            defaultXResolution;
     BOOL                YResolutionSet;
     TW_FIX32            defaultYResolution;
-} activeDS;
+} activeDS DECLSPEC_HIDDEN;
 
 /* Helper functions */
 extern TW_UINT16 SANE_SaneCapability (pTW_CAPABILITY pCapability, TW_UINT16 action) DECLSPEC_HIDDEN;
