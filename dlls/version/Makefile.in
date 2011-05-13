@@ -2,9 +2,7 @@ MODULE    = version.dll
 IMPORTLIB = version
 
 C_SRCS = \
-	info.c \
-	install.c \
-	resource.c
+	version.c
 
 RC_SRCS = version.rc
 
