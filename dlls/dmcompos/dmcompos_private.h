@@ -53,10 +53,10 @@ typedef struct IDirectMusicSignPostTrack IDirectMusicSignPostTrack;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordMapImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicComposerImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordMapTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSignPostTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordMapImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicComposerImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordMapTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicSignPostTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectMusicChordMapImpl implementation structure
@@ -116,7 +116,7 @@ struct IDirectMusicSignPostTrack {
 /**********************************************************************
  * Dll lifetime tracking declaration for dmcompos.dll
  */
-extern LONG DMCOMPOS_refCount;
+extern LONG DMCOMPOS_refCount DECLSPEC_HIDDEN;
 static inline void DMCOMPOS_LockModule(void) { InterlockedIncrement( &DMCOMPOS_refCount ); }
 static inline void DMCOMPOS_UnlockModule(void) { InterlockedDecrement( &DMCOMPOS_refCount ); }
 
@@ -153,10 +153,10 @@ typedef struct {
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 /* FOURCC to string conversion for debug messages */
-extern const char *debugstr_fourcc (DWORD fourcc);
+extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
 /* returns name of given GUID */
-extern const char *debugstr_dmguid (const GUID *id);
+extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
 /* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
+extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
 
 #endif	/* __WINE_DMCOMPOS_PRIVATE_H */
