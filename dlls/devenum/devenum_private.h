@@ -47,7 +47,7 @@
 /**********************************************************************
  * Dll lifetime tracking declaration for devenum.dll
  */
-extern LONG dll_refs;
+extern LONG dll_refs DECLSPEC_HIDDEN;
 static inline void DEVENUM_LockModule(void) { InterlockedIncrement(&dll_refs); }
 static inline void DEVENUM_UnlockModule(void) { InterlockedDecrement(&dll_refs); }
 
@@ -85,17 +85,17 @@ typedef struct
     HKEY hkey;
 } MediaCatMoniker;
 
-MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct(void);
-HRESULT DEVENUM_IEnumMoniker_Construct(HKEY hkey, IEnumMoniker ** ppEnumMoniker);
+MediaCatMoniker * DEVENUM_IMediaCatMoniker_Construct(void) DECLSPEC_HIDDEN;
+HRESULT DEVENUM_IEnumMoniker_Construct(HKEY hkey, IEnumMoniker ** ppEnumMoniker) DECLSPEC_HIDDEN;
 
-extern ClassFactoryImpl DEVENUM_ClassFactory;
-extern CreateDevEnumImpl DEVENUM_CreateDevEnum;
-extern ParseDisplayNameImpl DEVENUM_ParseDisplayName;
+extern ClassFactoryImpl DEVENUM_ClassFactory DECLSPEC_HIDDEN;
+extern CreateDevEnumImpl DEVENUM_CreateDevEnum DECLSPEC_HIDDEN;
+extern ParseDisplayNameImpl DEVENUM_ParseDisplayName DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * Private helper function to get AM filter category key location
  */
-HRESULT DEVENUM_GetCategoryKey(REFCLSID clsidDeviceClass, HKEY *pBaseKey, WCHAR *wszRegKeyName, UINT maxLen);
+HRESULT DEVENUM_GetCategoryKey(REFCLSID clsidDeviceClass, HKEY *pBaseKey, WCHAR *wszRegKeyName, UINT maxLen) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * Global string constant declarations

@@ -25,8 +25,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
-LONG dll_refs;
-HINSTANCE DEVENUM_hInstance;
+DECLSPEC_HIDDEN LONG dll_refs;
+DECLSPEC_HIDDEN HINSTANCE DEVENUM_hInstance;
 
 typedef struct
 {
