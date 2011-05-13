@@ -61,7 +61,7 @@ __builddeps__: __tooldeps__ include
 
 loader server: libs/port libs/wine tools
 fonts: tools
-include: tools/widl
+include: tools tools/widl
 libs/wine: libs/port
 tools/wmc tools/wrc: tools
 tools tools/wmc tools/wrc: libs/wine
