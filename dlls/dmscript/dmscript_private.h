@@ -52,9 +52,9 @@ typedef struct IDirectMusicScriptTrack IDirectMusicScriptTrack;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicScriptImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicScriptImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicScriptTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicScriptTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectMusicScriptImpl implementation structure
@@ -93,7 +93,7 @@ struct IDirectMusicScriptTrack {
 /**********************************************************************
  * Dll lifetime tracking declaration for dmscript.dll
  */
-extern LONG DMSCRIPT_refCount;
+extern LONG DMSCRIPT_refCount DECLSPEC_HIDDEN;
 static inline void DMSCRIPT_LockModule(void) { InterlockedIncrement( &DMSCRIPT_refCount ); }
 static inline void DMSCRIPT_UnlockModule(void) { InterlockedDecrement( &DMSCRIPT_refCount ); }
 
@@ -130,10 +130,10 @@ typedef struct {
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 /* FOURCC to string conversion for debug messages */
-extern const char *debugstr_fourcc (DWORD fourcc);
+extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
 /* returns name of given GUID */
-extern const char *debugstr_dmguid (const GUID *id);
+extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
 /* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
+extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
 
 #endif	/* __WINE_DMSCRIPT_PRIVATE_H */
