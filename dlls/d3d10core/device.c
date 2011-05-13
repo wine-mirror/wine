@@ -1278,7 +1278,7 @@ static const struct IUnknownVtbl d3d10_device_inner_unknown_vtbl =
 
 static void STDMETHODCALLTYPE d3d10_subresource_destroyed(void *parent) {}
 
-const struct wined3d_parent_ops d3d10_subresource_parent_ops =
+static const struct wined3d_parent_ops d3d10_subresource_parent_ops =
 {
     d3d10_subresource_destroyed,
 };
