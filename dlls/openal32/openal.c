@@ -87,7 +87,7 @@ struct FuncList {
 static const struct FuncList ALCFuncs[];
 static const struct FuncList ALFuncs[];
 
-CRITICAL_SECTION openal_cs;
+static CRITICAL_SECTION openal_cs;
 static CRITICAL_SECTION_DEBUG openal_cs_debug =
 {
     0, 0, &openal_cs,
@@ -95,7 +95,7 @@ static CRITICAL_SECTION_DEBUG openal_cs_debug =
     &openal_cs_debug.ProcessLocksList},
     0, 0, {(DWORD_PTR)(__FILE__ ": openal_cs")}
 };
-CRITICAL_SECTION openal_cs = {&openal_cs_debug, -1, 0, 0, 0, 0};
+static CRITICAL_SECTION openal_cs = {&openal_cs_debug, -1, 0, 0, 0, 0};
 
 /***********************************************************************
  *           OpenAL initialisation routine
