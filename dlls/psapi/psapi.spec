@@ -8,8 +8,8 @@
 @ stdcall GetDeviceDriverBaseNameW(ptr ptr long)
 @ stdcall GetDeviceDriverFileNameA(ptr ptr long)
 @ stdcall GetDeviceDriverFileNameW(ptr ptr long)
-@ stdcall GetMappedFileNameA(long ptr ptr long)
-@ stdcall GetMappedFileNameW(long ptr ptr long)
+@ stdcall GetMappedFileNameA(long ptr ptr long) kernel32.K32GetMappedFileNameA
+@ stdcall GetMappedFileNameW(long ptr ptr long) kernel32.K32GetMappedFileNameW
 @ stdcall GetModuleBaseNameA(long long ptr long) kernel32.K32GetModuleBaseNameA
 @ stdcall GetModuleBaseNameW(long long ptr long) kernel32.K32GetModuleBaseNameW
 @ stdcall GetModuleFileNameExA(long long ptr long) kernel32.K32GetModuleFileNameExA

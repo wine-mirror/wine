@@ -45,6 +45,7 @@
 #include "kernel_private.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(seh);
+WINE_DECLARE_DEBUG_CHANNEL(file);
 
 static unsigned int page_size;
 
@@ -822,4 +823,30 @@ BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
     }
     __ENDTRY
     return FALSE;
+}
+
+/***********************************************************************
+ *           K32GetMappedFileNameA (KERNEL32.@)
+ */
+DWORD WINAPI K32GetMappedFileNameA(HANDLE process, LPVOID lpv, LPSTR file_name, DWORD size)
+{
+    FIXME_(file)("(%p, %p, %p, %d): stub\n", process, lpv, file_name, size);
+
+    if (file_name && size)
+        file_name[0] = '\0';
+
+    return 0;
+}
+
+/***********************************************************************
+ *           K32GetMappedFileNameW (KERNEL32.@)
+ */
+DWORD WINAPI K32GetMappedFileNameW(HANDLE process, LPVOID lpv, LPWSTR file_name, DWORD size)
+{
+    FIXME_(file)("(%p, %p, %p, %d): stub\n", process, lpv, file_name, size);
+
+    if (file_name && size)
+        file_name[0] = '\0';
+
+    return 0;
 }

@@ -122,34 +122,6 @@ DWORD WINAPI GetDeviceDriverFileNameW(LPVOID ImageBase, LPWSTR lpFilename,
 }
 
 /***********************************************************************
- *           GetMappedFileNameA (PSAPI.@)
- */
-DWORD WINAPI GetMappedFileNameA(HANDLE hProcess, LPVOID lpv, LPSTR lpFilename, 
-                                DWORD nSize)
-{
-    FIXME("(%p, %p, %p, %d): stub\n", hProcess, lpv, lpFilename, nSize);
-
-    if (lpFilename && nSize)
-        lpFilename[0] = '\0';
-
-    return 0;
-}
-
-/***********************************************************************
- *           GetMappedFileNameW (PSAPI.@)
- */
-DWORD WINAPI GetMappedFileNameW(HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename, 
-                                DWORD nSize)
-{
-    FIXME("(%p, %p, %p, %d): stub\n", hProcess, lpv, lpFilename, nSize);
-
-    if (lpFilename && nSize)
-        lpFilename[0] = '\0';
-
-    return 0;
-}
-
-/***********************************************************************
  *           GetPerformanceInfo (PSAPI.@)
  */
 BOOL WINAPI GetPerformanceInfo( PPERFORMANCE_INFORMATION info, DWORD size )

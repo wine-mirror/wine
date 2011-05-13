@@ -772,6 +772,8 @@
 @ stdcall K32GetProcessImageFileNameW(long ptr long)
 @ stdcall K32EnumProcessModules(long ptr long ptr)
 @ stdcall K32EnumProcesses(ptr long ptr)
+@ stdcall K32GetMappedFileNameA(long ptr ptr long)
+@ stdcall K32GetMappedFileNameW(long ptr ptr long)
 @ stdcall K32GetModuleBaseNameA(long long ptr long)
 @ stdcall K32GetModuleBaseNameW(long long ptr long)
 @ stdcall K32GetModuleFileNameExA(long long ptr long)
