@@ -1055,7 +1055,7 @@ IDirectDrawSurface4Impl_ChangeUniquenessValue(IDirectDrawSurface4 *iface)
     return IDirectDrawSurface4_ChangeUniquenessValue(This->parent);
 }
 
-const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl =
+static const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl =
 {
     /* IUnknown */
     IDirectDrawSurface3Impl_QueryInterface,
@@ -1103,7 +1103,7 @@ const IDirectDrawSurface3Vtbl IDirectDrawSurface3_Vtbl =
     IDirectDrawSurface3Impl_SetSurfaceDesc
 };
 
-const IDirectDrawSurface4Vtbl IDirectDrawSurface4_Vtbl =
+static const IDirectDrawSurface4Vtbl IDirectDrawSurface4_Vtbl =
 {
     /*** IUnknown ***/
     IDirectDrawSurface4Impl_QueryInterface,

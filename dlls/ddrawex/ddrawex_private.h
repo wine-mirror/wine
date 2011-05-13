@@ -46,10 +46,10 @@ DECLARE_INTERFACE_(IDirectDrawFactory, IUnknown)
 
 HRESULT WINAPI IDirectDrawFactoryImpl_CreateDirectDraw(IDirectDrawFactory* iface,
     GUID * pGUID, HWND hWnd, DWORD dwCoopLevelFlags, DWORD dwReserved, IUnknown *pUnkOuter,
-    IDirectDraw **ppDirectDraw);
+    IDirectDraw **ppDirectDraw) DECLSPEC_HIDDEN;
 
-void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out);
-void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out);
+void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out) DECLSPEC_HIDDEN;
+void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out) DECLSPEC_HIDDEN;
 
 /******************************************************************************
  * IDirectDraw wrapper implementation
@@ -66,8 +66,8 @@ typedef struct
     IDirectDraw4 *parent;
 } IDirectDrawImpl;
 
-IDirectDraw4 *dd_get_outer(IDirectDraw4 *inner);
-IDirectDraw4 *dd_get_inner(IDirectDraw4 *outer);
+IDirectDraw4 *dd_get_outer(IDirectDraw4 *inner) DECLSPEC_HIDDEN;
+IDirectDraw4 *dd_get_inner(IDirectDraw4 *outer) DECLSPEC_HIDDEN;
 
 /******************************************************************************
  * IDirectDrawSurface implementation
@@ -89,8 +89,8 @@ typedef struct
 
 } IDirectDrawSurfaceImpl;
 
-IDirectDrawSurface4 *dds_get_outer(IDirectDrawSurface4 *inner);
-IDirectDrawSurface4 *dds_get_inner(IDirectDrawSurface4 *outer);
-HRESULT prepare_permanent_dc(IDirectDrawSurface4 *iface);
+IDirectDrawSurface4 *dds_get_outer(IDirectDrawSurface4 *inner) DECLSPEC_HIDDEN;
+IDirectDrawSurface4 *dds_get_inner(IDirectDrawSurface4 *outer) DECLSPEC_HIDDEN;
+HRESULT prepare_permanent_dc(IDirectDrawSurface4 *iface) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DLLS_DDRAWEX_DDRAWEX_PRIVATE_H */
