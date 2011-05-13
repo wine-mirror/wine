@@ -16,9 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-BOOL install_wine_gecko(void);
+BOOL install_wine_gecko(void) DECLSPEC_HIDDEN;
 
-extern HINSTANCE hInst;
+extern HINSTANCE hInst DECLSPEC_HIDDEN;
 
 static inline void *heap_alloc(size_t len)
 {
