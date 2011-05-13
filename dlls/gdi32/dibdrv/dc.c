@@ -404,7 +404,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pPolylineTo */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
-    NULL,                               /* pRectangle */
+    dibdrv_Rectangle,                   /* pRectangle */
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
     NULL,                               /* pRoundRect */

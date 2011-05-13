@@ -117,3 +117,45 @@ BOOL CDECL dibdrv_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWOR
 
     return TRUE;
 }
+
+/***********************************************************************
+ *           dibdrv_Rectangle
+ */
+BOOL CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pRectangle );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    RECT rect = get_device_rect( dev->hdc, left, top, right, bottom );
+    POINT pts[4];
+
+    TRACE("(%p, %d, %d, %d, %d)\n", dev, left, top, right, bottom);
+
+    if(rect.left == rect.right || rect.top == rect.bottom) return TRUE;
+
+    if(defer_pen(pdev) || defer_brush(pdev))
+        return next->funcs->pRectangle( next, left, top, right, bottom );
+
+    reset_dash_origin(pdev);
+
+    /* 4 pts going anti-clockwise starting from top-right */
+    pts[0].x = pts[3].x = rect.right - 1;
+    pts[0].y = pts[1].y = rect.top;
+    pts[1].x = pts[2].x = rect.left;
+    pts[2].y = pts[3].y = rect.bottom - 1;
+
+    pdev->pen_line(pdev, pts    , pts + 1);
+    pdev->pen_line(pdev, pts + 1, pts + 2);
+    pdev->pen_line(pdev, pts + 2, pts + 3);
+    pdev->pen_line(pdev, pts + 3, pts    );
+
+    /* FIXME: Will need updating when we support wide pens */
+
+    rect.left   += 1;
+    rect.top    += 1;
+    rect.right  -= 1;
+    rect.bottom -= 1;
+
+    pdev->brush_rects(pdev, 1, &rect);
+
+    return TRUE;
+}
