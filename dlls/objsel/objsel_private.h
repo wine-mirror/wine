@@ -42,7 +42,7 @@
  * Dll lifetime tracking declaration for objsel.dll
  */
 
-extern LONG dll_refs;
+extern LONG dll_refs DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * ClassFactory declaration for objsel.dll
@@ -59,6 +59,6 @@ typedef struct
     LONG ref;
 } IDsObjectPickerImpl;
 
-HRESULT WINAPI OBJSEL_IDsObjectPicker_Create(LPVOID *ppvObj);
+HRESULT WINAPI OBJSEL_IDsObjectPicker_Create(LPVOID *ppvObj) DECLSPEC_HIDDEN;
 
-extern ClassFactoryImpl OBJSEL_ClassFactory;
+extern ClassFactoryImpl OBJSEL_ClassFactory DECLSPEC_HIDDEN;
