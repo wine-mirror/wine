@@ -155,43 +155,43 @@ typedef struct {
 #define WAVEDEV_ALLOC_EXTENT_SIZE       10
 
 /* wavein.c */
-extern WINE_WAVEDEV	*WInDev;
-extern DWORD		ALSA_WidNumMallocedDevs;
-extern DWORD		ALSA_WidNumDevs;
+extern WINE_WAVEDEV	*WInDev DECLSPEC_HIDDEN;
+extern DWORD		ALSA_WidNumMallocedDevs DECLSPEC_HIDDEN;
+extern DWORD		ALSA_WidNumDevs DECLSPEC_HIDDEN;
 
 /* waveout.c */
-extern WINE_WAVEDEV	*WOutDev;
-extern DWORD		ALSA_WodNumMallocedDevs;
-extern DWORD		ALSA_WodNumDevs;
+extern WINE_WAVEDEV	*WOutDev DECLSPEC_HIDDEN;
+extern DWORD		ALSA_WodNumMallocedDevs DECLSPEC_HIDDEN;
+extern DWORD		ALSA_WodNumDevs DECLSPEC_HIDDEN;
 
 /* alsa.c */
-int	ALSA_InitRingMessage(ALSA_MSG_RING* omr);
-int	ALSA_DestroyRingMessage(ALSA_MSG_RING* omr);
-void	ALSA_ResetRingMessage(ALSA_MSG_RING* omr);
-void	ALSA_WaitRingMessage(ALSA_MSG_RING* omr, DWORD sleep);
-int	ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD_PTR param, BOOL wait);
-int	ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg, DWORD_PTR *param, HANDLE *hEvent);
-int	ALSA_CheckSetVolume(snd_hctl_t *hctl, int *out_left, int *out_right, int *out_min, int *out_max, int *out_step, int *new_left, int *new_right);
+int	ALSA_InitRingMessage(ALSA_MSG_RING* omr) DECLSPEC_HIDDEN;
+int	ALSA_DestroyRingMessage(ALSA_MSG_RING* omr) DECLSPEC_HIDDEN;
+void	ALSA_ResetRingMessage(ALSA_MSG_RING* omr) DECLSPEC_HIDDEN;
+void	ALSA_WaitRingMessage(ALSA_MSG_RING* omr, DWORD sleep) DECLSPEC_HIDDEN;
+int	ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD_PTR param, BOOL wait) DECLSPEC_HIDDEN;
+int	ALSA_RetrieveRingMessage(ALSA_MSG_RING* omr, enum win_wm_message *msg, DWORD_PTR *param, HANDLE *hEvent) DECLSPEC_HIDDEN;
+int	ALSA_CheckSetVolume(snd_hctl_t *hctl, int *out_left, int *out_right, int *out_min, int *out_max, int *out_step, int *new_left, int *new_right) DECLSPEC_HIDDEN;
 
-const char * ALSA_getCmdString(enum win_wm_message msg);
-const char * ALSA_getMessage(UINT msg);
-const char * ALSA_getFormat(WORD wFormatTag);
-BOOL	ALSA_NearMatch(int rate1, int rate2);
-DWORD	ALSA_bytes_to_mmtime(LPMMTIME lpTime, DWORD position, WAVEFORMATPCMEX* format);
-void	ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_params_t * sw, int full);
-int	wine_snd_pcm_recover(snd_pcm_t *pcm, int err, int silent);
-void	ALSA_copyFormat(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2);
-BOOL	ALSA_supportedFormat(LPWAVEFORMATEX wf);
+const char * ALSA_getCmdString(enum win_wm_message msg) DECLSPEC_HIDDEN;
+const char * ALSA_getMessage(UINT msg) DECLSPEC_HIDDEN;
+const char * ALSA_getFormat(WORD wFormatTag) DECLSPEC_HIDDEN;
+BOOL	ALSA_NearMatch(int rate1, int rate2) DECLSPEC_HIDDEN;
+DWORD	ALSA_bytes_to_mmtime(LPMMTIME lpTime, DWORD position, WAVEFORMATPCMEX* format) DECLSPEC_HIDDEN;
+void	ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_params_t * sw, int full) DECLSPEC_HIDDEN;
+int	wine_snd_pcm_recover(snd_pcm_t *pcm, int err, int silent) DECLSPEC_HIDDEN;
+void	ALSA_copyFormat(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2) DECLSPEC_HIDDEN;
+BOOL	ALSA_supportedFormat(LPWAVEFORMATEX wf) DECLSPEC_HIDDEN;
 
 /* dscapture.c */
-DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv);
-DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc);
+DWORD widDsCreate(UINT wDevID, PIDSCDRIVER* drv) DECLSPEC_HIDDEN;
+DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc) DECLSPEC_HIDDEN;
 
 /* dsoutput.c */
-DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
-DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
+DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv) DECLSPEC_HIDDEN;
+DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc) DECLSPEC_HIDDEN;
 
 /* waveinit.c */
-extern void ALSA_WaveInit(void);
+extern void ALSA_WaveInit(void) DECLSPEC_HIDDEN;
 
 #endif /* __ALSA_H */
