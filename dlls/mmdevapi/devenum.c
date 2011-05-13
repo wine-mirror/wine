@@ -932,6 +932,9 @@ static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHA
     DWORD i=0;
     IMMDevice *dev = NULL;
 
+    if(!name || !device)
+        return E_POINTER;
+
     TRACE("(%p)->(%s,%p)\n", This, debugstr_w(name), device);
     for (i = 0; i < MMDevice_count; ++i)
     {
@@ -942,18 +945,14 @@ static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHA
         if (str && !lstrcmpW(str, name))
         {
             CoTaskMemFree(str);
-            break;
+            IUnknown_AddRef(dev);
+            *device = dev;
+            return S_OK;
         }
         CoTaskMemFree(str);
     }
-    if (dev)
-    {
-        IUnknown_AddRef(dev);
-        *device = dev;
-        return S_OK;
-    }
-    WARN("Could not find device %s\n", debugstr_w(name));
-    return E_NOTFOUND;
+    TRACE("Could not find device %s\n", debugstr_w(name));
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI MMDevEnum_RegisterEndpointNotificationCallback(IMMDeviceEnumerator *iface, IMMNotificationClient *client)

@@ -98,9 +98,17 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
             WCHAR *id = NULL;
             if (IMMDevice_GetId(dev, &id) == S_OK)
             {
+                IMMDevice *dev2;
+
                 temp[sizeof(temp)-1] = 0;
                 WideCharToMultiByte(CP_ACP, 0, id, -1, temp, sizeof(temp)-1, NULL, NULL);
                 trace("Device found: %s\n", temp);
+
+                hr = IMMDeviceEnumerator_GetDevice(mme, id, &dev2);
+                ok(hr == S_OK, "GetDevice failed: %08x\n", hr);
+
+                IMMDevice_Release(dev2);
+
                 CoTaskMemFree(id);
             }
         }
@@ -113,11 +121,14 @@ static void test_collection(IMMDeviceEnumerator *mme, IMMDeviceCollection *col)
 /* Only do parameter tests here, the actual MMDevice testing should be a separate test */
 START_TEST(mmdevenum)
 {
+    static const WCHAR not_a_deviceW[] = {'n','o','t','a','d','e','v','i','c','e',0};
+
     HRESULT hr;
     IUnknown *unk = NULL;
     IMMDeviceEnumerator *mme, *mme2;
     ULONG ref;
     IMMDeviceCollection *col;
+    IMMDevice *dev;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&mme);
@@ -151,6 +162,15 @@ START_TEST(mmdevenum)
     hr = IUnknown_QueryInterface(mme, &GUID_NULL, (void**)&unk);
     ok(!unk, "Unk not reset to null after invalid QI\n");
     ok(hr == E_NOINTERFACE, "Invalid hr %08x returned on IID_NULL\n", hr);
+
+    hr = IMMDeviceEnumerator_GetDevice(mme, not_a_deviceW, NULL);
+    ok(hr == E_POINTER, "GetDevice gave wrong error: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_GetDevice(mme, NULL, &dev);
+    ok(hr == E_POINTER, "GetDevice gave wrong error: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_GetDevice(mme, not_a_deviceW, &dev);
+    ok(hr == E_INVALIDARG, "GetDevice gave wrong error: %08x\n", hr);
 
     col = (void*)(LONG_PTR)0x12345678;
     hr = IMMDeviceEnumerator_EnumAudioEndpoints(mme, 0xffff, DEVICE_STATEMASK_ALL, &col);
