@@ -93,23 +93,23 @@ typedef struct
     const IClassFactoryVtbl *lpVtbl;
 } ClassFactoryImpl;
 
-extern HANDLE stop_event;
-extern ClassFactoryImpl BITS_ClassFactory;
-extern BackgroundCopyManagerImpl globalMgr;
+extern HANDLE stop_event DECLSPEC_HIDDEN;
+extern ClassFactoryImpl BITS_ClassFactory DECLSPEC_HIDDEN;
+extern BackgroundCopyManagerImpl globalMgr DECLSPEC_HIDDEN;
 
-HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj);
+HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
-                                     GUID *pJobId, LPVOID *ppObj);
+                                     GUID *pJobId, LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT EnumBackgroundCopyJobsConstructor(LPVOID *ppObj,
-                                          IBackgroundCopyManager* copyManager);
+                                          IBackgroundCopyManager* copyManager) DECLSPEC_HIDDEN;
 HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
                                       LPCWSTR remoteName, LPCWSTR localName,
-                                      LPVOID *ppObj);
+                                      LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT EnumBackgroundCopyFilesConstructor(LPVOID *ppObj,
-                                           IBackgroundCopyJob2 *copyJob);
-DWORD WINAPI fileTransfer(void *param);
-void processJob(BackgroundCopyJobImpl *job);
-BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job);
+                                           IBackgroundCopyJob2 *copyJob) DECLSPEC_HIDDEN;
+DWORD WINAPI fileTransfer(void *param) DECLSPEC_HIDDEN;
+void processJob(BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;
+BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job) DECLSPEC_HIDDEN;
 
 /* Little helper functions */
 static inline char *
