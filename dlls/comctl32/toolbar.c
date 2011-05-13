@@ -2305,7 +2305,7 @@ static LRESULT TOOLBAR_Cust_AvailDragListNotification(const CUSTDLG_INFO *custIn
     return 0;
 }
 
-extern UINT uDragListMessage;
+extern UINT uDragListMessage DECLSPEC_HIDDEN;
 
 /***********************************************************************
  * TOOLBAR_CustomizeDialogProc
