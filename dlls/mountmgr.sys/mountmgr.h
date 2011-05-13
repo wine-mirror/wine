@@ -35,8 +35,8 @@
 #define WINE_MOUNTMGR_EXTENSIONS
 #include "ddk/mountmgr.h"
 
-extern void initialize_hal(void);
-extern void initialize_diskarbitration(void);
+extern void initialize_hal(void) DECLSPEC_HIDDEN;
+extern void initialize_diskarbitration(void) DECLSPEC_HIDDEN;
 
 /* device functions */
 
@@ -53,21 +53,21 @@ enum device_type
 };
 
 extern NTSTATUS add_volume( const char *udi, const char *device, const char *mount_point,
-                            enum device_type type, const GUID *guid );
-extern NTSTATUS remove_volume( const char *udi );
+                            enum device_type type, const GUID *guid ) DECLSPEC_HIDDEN;
+extern NTSTATUS remove_volume( const char *udi ) DECLSPEC_HIDDEN;
 extern NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
-                                const char *mount_point, enum device_type type, const GUID *guid );
-extern NTSTATUS remove_dos_device( int letter, const char *udi );
-extern NTSTATUS query_dos_device( int letter, enum device_type *type, char **device, char **mount_point );
-extern NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path );
+                                const char *mount_point, enum device_type type, const GUID *guid ) DECLSPEC_HIDDEN;
+extern NTSTATUS remove_dos_device( int letter, const char *udi ) DECLSPEC_HIDDEN;
+extern NTSTATUS query_dos_device( int letter, enum device_type *type, char **device, char **mount_point ) DECLSPEC_HIDDEN;
+extern NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path ) DECLSPEC_HIDDEN;
 
 /* mount point functions */
 
 struct mount_point;
 
 extern struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
-                                                   int drive );
+                                                   int drive ) DECLSPEC_HIDDEN;
 extern struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
-                                                   const GUID *guid );
-extern void delete_mount_point( struct mount_point *mount );
-extern void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len );
+                                                   const GUID *guid ) DECLSPEC_HIDDEN;
+extern void delete_mount_point( struct mount_point *mount ) DECLSPEC_HIDDEN;
+extern void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len ) DECLSPEC_HIDDEN;
