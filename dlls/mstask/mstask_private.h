@@ -29,13 +29,13 @@
 #include "ole2.h"
 #include "mstask.h"
 
-extern LONG dll_ref;
+extern LONG dll_ref DECLSPEC_HIDDEN;
 
 typedef struct ClassFactoryImpl ClassFactoryImpl;
-extern ClassFactoryImpl MSTASK_ClassFactory;
+extern ClassFactoryImpl MSTASK_ClassFactory DECLSPEC_HIDDEN;
 
-extern HRESULT TaskTriggerConstructor(LPVOID *ppObj);
-extern HRESULT TaskSchedulerConstructor(LPVOID *ppObj);
-extern HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj);
+extern HRESULT TaskTriggerConstructor(LPVOID *ppObj) DECLSPEC_HIDDEN;
+extern HRESULT TaskSchedulerConstructor(LPVOID *ppObj) DECLSPEC_HIDDEN;
+extern HRESULT TaskConstructor(LPCWSTR pwszTaskName, LPVOID *ppObj) DECLSPEC_HIDDEN;
 
 #endif /* __MSTASK_PRIVATE_H__ */
