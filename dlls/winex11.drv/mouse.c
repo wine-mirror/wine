@@ -290,9 +290,6 @@ static void enable_xinput2(void)
     mask.mask     = mask_bits;
     mask.mask_len = sizeof(mask_bits);
     memset( mask_bits, 0, sizeof(mask_bits) );
-
-    XISetMask( mask_bits, XI_RawButtonPress );
-    XISetMask( mask_bits, XI_RawButtonRelease );
     XISetMask( mask_bits, XI_RawMotion );
 
     for (i = 0; i < count; ++i)
@@ -542,11 +539,20 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
 
     input->type = INPUT_MOUSE;
 
-    if (!hwnd && window == x11drv_thread_data()->clip_window)
+    if (!hwnd)
     {
+        struct x11drv_thread_data *thread_data = x11drv_thread_data();
+
+        if (!thread_data->clip_hwnd) return;
+        if (thread_data->clip_window != window) return;
         input->u.mi.dx += clip_rect.left;
         input->u.mi.dy += clip_rect.top;
-        if (x11drv_thread_data()->xi2_state != xi_enabled) __wine_send_input( hwnd, input );
+        if (!(input->u.mi.dwFlags & ~(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE)))
+        {
+            /* motion events are ignored when xinput2 is active */
+            if (thread_data->xi2_state == xi_enabled) return;
+        }
+        __wine_send_input( hwnd, input );
         return;
     }
 
@@ -1391,56 +1397,6 @@ void X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
 
 /***********************************************************************
- *           X11DRV_RawButtonPress
- */
-static void X11DRV_RawButtonPress( XIRawEvent *event )
-{
-    int button = event->detail - 1;
-    INPUT input;
-
-    if (button >= NB_BUTTONS) return;
-
-    TRACE( "button %u\n", button );
-
-    input.type             = INPUT_MOUSE;
-    input.u.mi.dx          = 0;
-    input.u.mi.dy          = 0;
-    input.u.mi.mouseData   = button_down_data[button];
-    input.u.mi.dwFlags     = button_down_flags[button];
-    input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
-    input.u.mi.dwExtraInfo = 0;
-
-    update_user_time( event->time );
-    input.type = INPUT_MOUSE;
-    __wine_send_input( 0, &input );
-}
-
-
-/***********************************************************************
- *           X11DRV_RawButtonRelease
- */
-static void X11DRV_RawButtonRelease( XIRawEvent *event )
-{
-    int button = event->detail - 1;
-    INPUT input;
-
-    if (button >= NB_BUTTONS) return;
-
-    TRACE( "button %u\n", button );
-
-    input.u.mi.dx          = 0;
-    input.u.mi.dy          = 0;
-    input.u.mi.mouseData   = button_up_data[button];
-    input.u.mi.dwFlags     = button_up_flags[button];
-    input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
-    input.u.mi.dwExtraInfo = 0;
-
-    input.type = INPUT_MOUSE;
-    __wine_send_input( 0, &input );
-}
-
-
-/***********************************************************************
  *           X11DRV_RawMotion
  */
 static void X11DRV_RawMotion( XIRawEvent *event )
@@ -1518,14 +1474,6 @@ void X11DRV_GenericEvent( HWND hwnd, XEvent *xev )
 
     switch (event->evtype)
     {
-    case XI_RawButtonPress:
-        X11DRV_RawButtonPress( event->data );
-        break;
-
-    case XI_RawButtonRelease:
-        X11DRV_RawButtonRelease( event->data );
-        break;
-
     case XI_RawMotion:
         X11DRV_RawMotion( event->data );
         break;
