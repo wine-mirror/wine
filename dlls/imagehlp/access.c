@@ -54,7 +54,7 @@ static LOADED_IMAGE IMAGEHLP_EmptyLoadedImage = {
   148,        /* SizeOfImage; */
 };
 
-extern HANDLE IMAGEHLP_hHeap;
+DECLSPEC_HIDDEN extern HANDLE IMAGEHLP_hHeap;
 
 /***********************************************************************
  *		GetImageConfigInformation (IMAGEHLP.@)
