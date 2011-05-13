@@ -812,7 +812,7 @@ static const IActiveIMMAppVtbl ActiveIMMAppVtbl =
     ActiveIMMApp_EnumInputContext
 };
 
-HRESULT ActiveIMMApp_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
+DECLSPEC_HIDDEN HRESULT ActiveIMMApp_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 {
     ActiveIMMApp *This;
     if (pUnkOuter)
