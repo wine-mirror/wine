@@ -58,7 +58,7 @@ typedef struct IDirectMusicStyleTrack IDirectMusicStyleTrack;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicStyleImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicStyleImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * Auxiliary definitions
@@ -92,13 +92,13 @@ typedef struct _DMUS_PRIVATE_STYLE_ITEM {
   IDirectMusicStyle8* pObject;
 } DMUS_PRIVATE_STYLE_ITEM, *LPDMUS_PRIVATE_STYLE_ITEM;
 
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicAuditionTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicCommandTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicMelodyFormulationTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicMotifTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicMuteTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicStyleTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicAuditionTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicCommandTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicMelodyFormulationTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicMotifTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicMuteTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicStyleTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectMusicStyle8Impl implementation structure
@@ -186,12 +186,12 @@ struct IDirectMusicMelodyFormulationTrack {
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicMelodyFormulationTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicMelodyFormulationTrack_IUnknown_AddRef (LPUNKNOWN iface);
+extern HRESULT WINAPI IDirectMusicMelodyFormulationTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) DECLSPEC_HIDDEN;
+extern ULONG WINAPI   IDirectMusicMelodyFormulationTrack_IUnknown_AddRef (LPUNKNOWN iface) DECLSPEC_HIDDEN;
 /* IDirectMusicTrack(8): */
-extern ULONG WINAPI   IDirectMusicMelodyFormulationTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
+extern ULONG WINAPI   IDirectMusicMelodyFormulationTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface) DECLSPEC_HIDDEN;
 /* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicMelodyFormulationTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
+extern ULONG WINAPI   IDirectMusicMelodyFormulationTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectMusicMotifTrack implementation structure
@@ -240,7 +240,7 @@ struct IDirectMusicStyleTrack {
 /**********************************************************************
  * Dll lifetime tracking declaration for dmstyle.dll
  */
-extern LONG DMSTYLE_refCount;
+extern LONG DMSTYLE_refCount DECLSPEC_HIDDEN;
 static inline void DMSTYLE_LockModule(void) { InterlockedIncrement( &DMSTYLE_refCount ); }
 static inline void DMSTYLE_UnlockModule(void) { InterlockedDecrement( &DMSTYLE_refCount ); }
 

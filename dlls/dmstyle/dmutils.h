@@ -32,9 +32,9 @@ typedef struct _DMUS_PRIVATE_CHUNK {
 /**
  * Parsing utilities
  */
-extern HRESULT IDirectMusicUtils_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc);
-extern HRESULT IDirectMusicUtils_IPersistStream_ParseUNFOGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc);
-extern HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicObject** ppObject);
+extern HRESULT IDirectMusicUtils_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
+extern HRESULT IDirectMusicUtils_IPersistStream_ParseUNFOGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
+extern HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, IDirectMusicObject** ppObject) DECLSPEC_HIDDEN;
 
 /**
  * Debug utilities
@@ -61,11 +61,11 @@ typedef struct {
 #define GE(x) { &x, #x }
 
 /* FOURCC to string conversion for debug messages */
-extern const char *debugstr_fourcc (DWORD fourcc);
+extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
 /* returns name of given GUID */
-extern const char *debugstr_dmguid (const GUID *id);
+extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
 
 /* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
+extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DMUTILS_H */
