@@ -155,7 +155,7 @@ static ULONG WINAPI fnTextSrv_Release(ITextServices *iface)
    return ref;
 }
 
-HRESULT WINAPI fnTextSrv_TxSendMessage(ITextServices *iface, UINT msg, WPARAM wparam,
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxSendMessage(ITextServices *iface, UINT msg, WPARAM wparam,
                                        LPARAM lparam, LRESULT *plresult)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
@@ -167,7 +167,7 @@ HRESULT WINAPI fnTextSrv_TxSendMessage(ITextServices *iface, UINT msg, WPARAM wp
    return hresult;
 }
 
-HRESULT WINAPI fnTextSrv_TxDraw(ITextServices *iface, DWORD dwDrawAspect, LONG lindex,
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxDraw(ITextServices *iface, DWORD dwDrawAspect, LONG lindex,
                                 void *pvAspect, DVTARGETDEVICE *ptd, HDC hdcDraw, HDC hdcTargetDev,
                                 LPCRECTL lprcBounds, LPCRECTL lprcWBounds, LPRECT lprcUpdate,
                                 BOOL (CALLBACK * pfnContinue)(DWORD), DWORD dwContinue,
@@ -179,7 +179,7 @@ HRESULT WINAPI fnTextSrv_TxDraw(ITextServices *iface, DWORD dwDrawAspect, LONG l
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_TxGetHScroll(ITextServices *iface, LONG *plMin, LONG *plMax, LONG *plPos,
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxGetHScroll(ITextServices *iface, LONG *plMin, LONG *plMax, LONG *plPos,
                                       LONG *plPage, BOOL *pfEnabled)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
@@ -192,7 +192,7 @@ HRESULT WINAPI fnTextSrv_TxGetHScroll(ITextServices *iface, LONG *plMin, LONG *p
    return S_OK;
 }
 
-HRESULT WINAPI fnTextSrv_TxGetVScroll(ITextServices *iface, LONG *plMin, LONG *plMax, LONG *plPos,
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxGetVScroll(ITextServices *iface, LONG *plMin, LONG *plMax, LONG *plPos,
                                       LONG *plPage, BOOL *pfEnabled)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
@@ -205,7 +205,7 @@ HRESULT WINAPI fnTextSrv_TxGetVScroll(ITextServices *iface, LONG *plMin, LONG *p
    return S_OK;
 }
 
-HRESULT WINAPI fnTextSrv_OnTxSetCursor(ITextServices *iface, DWORD dwDrawAspect, LONG lindex,
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_OnTxSetCursor(ITextServices *iface, DWORD dwDrawAspect, LONG lindex,
                                        void *pvAspect, DVTARGETDEVICE *ptd, HDC hdcDraw,
                                        HDC hicTargetDev, LPCRECT lprcClient, INT x, INT y)
 {
@@ -215,7 +215,7 @@ HRESULT WINAPI fnTextSrv_OnTxSetCursor(ITextServices *iface, DWORD dwDrawAspect,
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_TxQueryHitPoint(ITextServices *iface, DWORD dwDrawAspect, LONG lindex,
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxQueryHitPoint(ITextServices *iface, DWORD dwDrawAspect, LONG lindex,
                                          void *pvAspect, DVTARGETDEVICE *ptd, HDC hdcDraw,
                                          HDC hicTargetDev, LPCRECT lprcClient, INT x, INT y,
                                          DWORD *pHitResult)
@@ -226,7 +226,7 @@ HRESULT WINAPI fnTextSrv_TxQueryHitPoint(ITextServices *iface, DWORD dwDrawAspec
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_OnTxInplaceActivate(ITextServices *iface, LPCRECT prcClient)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_OnTxInplaceActivate(ITextServices *iface, LPCRECT prcClient)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
@@ -234,7 +234,7 @@ HRESULT WINAPI fnTextSrv_OnTxInplaceActivate(ITextServices *iface, LPCRECT prcCl
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_OnTxInplaceDeactivate(ITextServices *iface)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_OnTxInplaceDeactivate(ITextServices *iface)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
@@ -242,7 +242,7 @@ HRESULT WINAPI fnTextSrv_OnTxInplaceDeactivate(ITextServices *iface)
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_OnTxUIActivate(ITextServices *iface)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_OnTxUIActivate(ITextServices *iface)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
@@ -250,7 +250,7 @@ HRESULT WINAPI fnTextSrv_OnTxUIActivate(ITextServices *iface)
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_OnTxUIDeactivate(ITextServices *iface)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_OnTxUIDeactivate(ITextServices *iface)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
@@ -258,7 +258,7 @@ HRESULT WINAPI fnTextSrv_OnTxUIDeactivate(ITextServices *iface)
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_TxGetText(ITextServices *iface, BSTR *pbstrText)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxGetText(ITextServices *iface, BSTR *pbstrText)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
    int length;
@@ -282,7 +282,7 @@ HRESULT WINAPI fnTextSrv_TxGetText(ITextServices *iface, BSTR *pbstrText)
    return S_OK;
 }
 
-HRESULT WINAPI fnTextSrv_TxSetText(ITextServices *iface, LPCWSTR pszText)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxSetText(ITextServices *iface, LPCWSTR pszText)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
    ME_Cursor cursor;
@@ -301,7 +301,7 @@ HRESULT WINAPI fnTextSrv_TxSetText(ITextServices *iface, LPCWSTR pszText)
    return S_OK;
 }
 
-HRESULT WINAPI fnTextSrv_TxGetCurrentTargetX(ITextServices *iface, LONG *x)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxGetCurrentTargetX(ITextServices *iface, LONG *x)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
@@ -309,7 +309,7 @@ HRESULT WINAPI fnTextSrv_TxGetCurrentTargetX(ITextServices *iface, LONG *x)
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_TxGetBaseLinePos(ITextServices *iface, LONG *x)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxGetBaseLinePos(ITextServices *iface, LONG *x)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
@@ -317,7 +317,7 @@ HRESULT WINAPI fnTextSrv_TxGetBaseLinePos(ITextServices *iface, LONG *x)
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_TxGetNaturalSize(ITextServices *iface, DWORD dwAspect, HDC hdcDraw,
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxGetNaturalSize(ITextServices *iface, DWORD dwAspect, HDC hdcDraw,
                                           HDC hicTargetDev, DVTARGETDEVICE *ptd, DWORD dwMode,
                                           const SIZEL *psizelExtent, LONG *pwidth, LONG *pheight)
 {
@@ -327,7 +327,7 @@ HRESULT WINAPI fnTextSrv_TxGetNaturalSize(ITextServices *iface, DWORD dwAspect, 
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_TxGetDropTarget(ITextServices *iface, IDropTarget **ppDropTarget)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxGetDropTarget(ITextServices *iface, IDropTarget **ppDropTarget)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
@@ -335,7 +335,7 @@ HRESULT WINAPI fnTextSrv_TxGetDropTarget(ITextServices *iface, IDropTarget **ppD
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_OnTxPropertyBitsChange(ITextServices *iface, DWORD dwMask, DWORD dwBits)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_OnTxPropertyBitsChange(ITextServices *iface, DWORD dwMask, DWORD dwBits)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
@@ -343,7 +343,7 @@ HRESULT WINAPI fnTextSrv_OnTxPropertyBitsChange(ITextServices *iface, DWORD dwMa
    return E_NOTIMPL;
 }
 
-HRESULT WINAPI fnTextSrv_TxGetCachedSize(ITextServices *iface, DWORD *pdwWidth, DWORD *pdwHeight)
+DECLSPEC_HIDDEN HRESULT WINAPI fnTextSrv_TxGetCachedSize(ITextServices *iface, DWORD *pdwWidth, DWORD *pdwHeight)
 {
    ITextServicesImpl *This = impl_from_ITextServices(iface);
 
