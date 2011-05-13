@@ -44,9 +44,9 @@
 #define MAX_INTERFACE_PHYSADDR    8
 #define MAX_INTERFACE_DESCRIPTION 256
 
-DWORD getNumInterfaces(void);
-DWORD getNumNonLoopbackInterfaces(void);
-BOOL isIfIndexLoopback(ULONG idx);
+DWORD getNumInterfaces(void) DECLSPEC_HIDDEN;
+DWORD getNumNonLoopbackInterfaces(void) DECLSPEC_HIDDEN;
+BOOL isIfIndexLoopback(ULONG idx) DECLSPEC_HIDDEN;
 
 /* A table of interface indexes, see get*InterfaceTable(). */
 typedef struct _InterfaceIndexTable {
@@ -57,10 +57,10 @@ typedef struct _InterfaceIndexTable {
 /* Returns a table with all known interface indexes, or NULL if one could not
  * be allocated.  HeapFree() the returned table.
  */
-InterfaceIndexTable *getInterfaceIndexTable(void);
+InterfaceIndexTable *getInterfaceIndexTable(void) DECLSPEC_HIDDEN;
 
 /* Like getInterfaceIndexTable, but filters out loopback interfaces. */
-InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void);
+InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void) DECLSPEC_HIDDEN;
 
 /* ByName/ByIndex versions of various getter functions. */
 
@@ -68,13 +68,13 @@ InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void);
  * if not.  Overwrites your buffer, which should be at least of size
  * MAX_ADAPTER_NAME.
  */
-char *getInterfaceNameByIndex(DWORD index, char *name);
+char *getInterfaceNameByIndex(DWORD index, char *name) DECLSPEC_HIDDEN;
 
 /* Fills index with the index of name, if found.  Returns
  * ERROR_INVALID_PARAMETER if name or index is NULL, ERROR_INVALID_DATA if name
  * is not found, and NO_ERROR on success.
  */
-DWORD getInterfaceIndexByName(const char *name, PDWORD index);
+DWORD getInterfaceIndexByName(const char *name, PDWORD index) DECLSPEC_HIDDEN;
 
 /* Gets a few physical characteristics of a device:  MAC addr len, MAC addr,
  * and type as one of the MIB_IF_TYPEs.
@@ -90,35 +90,35 @@ DWORD getInterfaceIndexByName(const char *name, PDWORD index);
  * Returns NO_ERROR on success.
  */
 DWORD getInterfacePhysicalByIndex(DWORD index, PDWORD len, PBYTE addr,
- PDWORD type);
+ PDWORD type) DECLSPEC_HIDDEN;
 
 /* Fills in the MIB_IFROW by name.  Doesn't fill in interface statistics,
  * see ipstats.h for that.
  * Returns ERROR_INVALID_PARAMETER if name is NULL, ERROR_INVALID_DATA
  * if name isn't valid, and NO_ERROR otherwise.
  */
-DWORD getInterfaceEntryByName(const char *name, PMIB_IFROW entry);
+DWORD getInterfaceEntryByName(const char *name, PMIB_IFROW entry) DECLSPEC_HIDDEN;
 
-DWORD getNumIPAddresses(void);
+DWORD getNumIPAddresses(void) DECLSPEC_HIDDEN;
 
 /* Gets the configured IP addresses for the system, and sets *ppIpAddrTable to
  * a table of them allocated from heap, or NULL if out of memory.  Returns
  * NO_ERROR on success, something else on failure.  Note there may be more than
  * one IP address may exist per interface.
  */
-DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags);
+DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags) DECLSPEC_HIDDEN;
 
 /* Returns the IPv6 addresses for a particular interface index.
  * Returns NO_ERROR on success, something else on failure.
  */
-ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs);
+ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs) DECLSPEC_HIDDEN;
 
 /* Converts the network-order bytes in addr to a printable string.  Returns
  * string.
  */
-char *toIPAddressString(unsigned int addr, char string[16]);
+char *toIPAddressString(unsigned int addr, char string[16]) DECLSPEC_HIDDEN;
 
-DWORD getInterfaceMtuByName(const char *name, PDWORD mtu);
-DWORD getInterfaceStatusByName(const char *name, PDWORD status);
+DWORD getInterfaceMtuByName(const char *name, PDWORD mtu) DECLSPEC_HIDDEN;
+DWORD getInterfaceStatusByName(const char *name, PDWORD status) DECLSPEC_HIDDEN;
 
 #endif /* ndef WINE_IFENUM_H_ */
