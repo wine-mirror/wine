@@ -547,11 +547,6 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
         if (thread_data->clip_window != window) return;
         input->u.mi.dx += clip_rect.left;
         input->u.mi.dy += clip_rect.top;
-        if (!(input->u.mi.dwFlags & ~(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE)))
-        {
-            /* motion events are ignored when xinput2 is active */
-            if (thread_data->xi2_state == xi_enabled) return;
-        }
         __wine_send_input( hwnd, input );
         return;
     }
@@ -1365,6 +1360,13 @@ void X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
     input.u.mi.dwFlags     = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
     input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
     input.u.mi.dwExtraInfo = 0;
+
+    if (!hwnd)
+    {
+        struct x11drv_thread_data *thread_data = x11drv_thread_data();
+        if (event->time - thread_data->last_motion_notify < 1000) return;
+        thread_data->last_motion_notify = event->time;
+    }
 
     send_mouse_input( hwnd, event->window, event->state, &input );
 }

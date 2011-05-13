@@ -323,10 +323,14 @@ static enum event_merge_action merge_events( XEvent *prev, XEvent *next )
         switch (next->type)
         {
         case MotionNotify:
-            if (next->xany.window == x11drv_thread_data()->clip_window)
             {
-                TRACE( "ignoring MotionNotify for clip window\n" );
-                return MERGE_IGNORE;
+                struct x11drv_thread_data *thread_data = x11drv_thread_data();
+                if (next->xany.window == thread_data->clip_window &&
+                    next->xmotion.time - thread_data->last_motion_notify < 1000)
+                {
+                    TRACE( "ignoring MotionNotify for clip window\n" );
+                    return MERGE_IGNORE;
+                }
             }
             break;
         case GenericEvent:
