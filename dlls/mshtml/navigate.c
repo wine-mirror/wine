@@ -973,9 +973,12 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
     }
 
     if(This->window) {
+        list_remove(&This->bsc.entry);
+        list_init(&This->bsc.entry);
         update_window_doc(This->window);
         if(This->window->doc != This->bsc.doc)
             This->bsc.doc = This->window->doc;
+        list_add_head(&This->bsc.doc->bindings, &This->bsc.entry);
         if(This->window->readystate != READYSTATE_LOADING)
             set_ready_state(This->window, READYSTATE_LOADING);
     }
