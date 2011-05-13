@@ -178,6 +178,8 @@ static BOOL proxy_active(void)
     return proxy_enable != 0;
 }
 
+static int close_handle_cnt;
+
 static VOID WINAPI callback(
      HINTERNET hInternet,
      DWORD_PTR dwContext,
@@ -276,6 +278,8 @@ static VOID WINAPI callback(
             trace("%04x:Callback %p 0x%lx INTERNET_STATUS_HANDLE_CLOSING %p %d\n",
                 GetCurrentThreadId(), hInternet, dwContext,
                 *(HINTERNET *)lpvStatusInformation, dwStatusInformationLength);
+            if(!--close_handle_cnt)
+                SetEvent(hCompleteEvent);
             break;
         case INTERNET_STATUS_REQUEST_COMPLETE:
         {
@@ -307,6 +311,20 @@ static VOID WINAPI callback(
                 GetCurrentThreadId(), hInternet, dwContext, dwInternetStatus,
                 lpvStatusInformation, dwStatusInformationLength);
     }
+}
+
+static void close_async_handle(HINTERNET handle, HANDLE complete_event, int handle_cnt)
+{
+    BOOL res;
+
+    close_handle_cnt = handle_cnt;
+
+    SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, handle_cnt);
+    res = InternetCloseHandle(handle);
+    ok(res, "InternetCloseHandle failed: %u\n", GetLastError());
+    WaitForSingleObject(hCompleteEvent, INFINITE);
+    CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, handle_cnt);
+    SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, handle_cnt);
 }
 
 static void InternetReadFile_test(int flags, const test_data_t *test)
@@ -567,32 +585,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     }
 abort:
     trace("aborting\n");
-    SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
-    if (hor != 0x0) {
-        SetLastError(0xdeadbeef);
-        trace("closing\n");
-        res = InternetCloseHandle(hor);
-        ok (res, "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
-        SetLastError(0xdeadbeef);
-        res = InternetCloseHandle(hor);
-        ok (!res, "Double close of handle opened by HttpOpenRequestA succeeded\n");
-        ok (GetLastError() == ERROR_INVALID_HANDLE,
-            "Double close of handle should have set ERROR_INVALID_HANDLE instead of %u\n",
-            GetLastError());
-    }
-    /* We intentionally do not close the handle opened by InternetConnectA as this
-     * tickles bug #9479: native closes child internet handles when the parent handles
-     * are closed. This is verified below by checking that the number of
-     * INTERNET_STATUS_HANDLE_CLOSING notifications matches the number expected. */
-    if (hi != 0x0) {
-      SET_WINE_ALLOW(INTERNET_STATUS_HANDLE_CLOSING);
-        trace("closing 2\n");
-      res = InternetCloseHandle(hi);
-      ok (res, "InternetCloseHandle of handle opened by InternetOpenA failed\n");
-      if (flags & INTERNET_FLAG_ASYNC)
-          Sleep(100);
-    }
-    CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
+    close_async_handle(hi, hCompleteEvent, 2);
     CloseHandle(hCompleteEvent);
     first_connection_to_test_url = FALSE;
 }
@@ -930,25 +923,7 @@ static void InternetReadFileExA_test(int flags)
     trace("Finished. Read %d bytes\n", length);
 
 abort:
-    SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
-    if (hor) {
-        rc = InternetCloseHandle(hor);
-        ok ((rc != 0), "InternetCloseHandle of handle opened by HttpOpenRequestA failed\n");
-        rc = InternetCloseHandle(hor);
-        ok ((rc == 0), "Double close of handle opened by HttpOpenRequestA succeeded\n");
-    }
-    if (hic) {
-        rc = InternetCloseHandle(hic);
-        ok ((rc != 0), "InternetCloseHandle of handle opened by InternetConnectA failed\n");
-    }
-    if (hi) {
-      SET_WINE_ALLOW(INTERNET_STATUS_HANDLE_CLOSING);
-      rc = InternetCloseHandle(hi);
-      ok ((rc != 0), "InternetCloseHandle of handle opened by InternetOpenA failed\n");
-      if (flags & INTERNET_FLAG_ASYNC)
-          Sleep(100);
-      CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
-    }
+    close_async_handle(hi, hCompleteEvent, 2);
     CloseHandle(hCompleteEvent);
     first_connection_to_test_url = FALSE;
 }
