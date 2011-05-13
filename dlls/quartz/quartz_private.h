@@ -43,34 +43,34 @@
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
-HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj);
-HRESULT FilterGraphNoThread_create(IUnknown *pUnkOuter, LPVOID *ppObj);
-HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj);
-HRESULT FilterMapper_create(IUnknown *pUnkOuter, LPVOID *ppObj);
-HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT StdMemAllocator_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv);
-HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj);
+HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT FilterGraphNoThread_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT FilterMapper_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT StdMemAllocator_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT VideoRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT NullRenderer_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT VideoRendererDefault_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT QUARTZ_CreateSystemClock(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT WAVEParser_create(IUnknown * pUnkOuter, LPVOID * ppv) DECLSPEC_HIDDEN;
+HRESULT SeekingPassThru_create(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
 
-HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum);
+HRESULT EnumMonikerImpl_Create(IMoniker ** ppMoniker, ULONG nMonikerCount, IEnumMoniker ** ppEnum) DECLSPEC_HIDDEN;
 
-HRESULT IEnumRegFiltersImpl_Construct(REGFILTER * pInRegFilters, const ULONG size, IEnumRegFilters ** ppEnum);
-HRESULT IEnumFiltersImpl_Construct(IBaseFilter ** ppFilters, ULONG nFilters, IEnumFilters ** ppEnum);
+HRESULT IEnumRegFiltersImpl_Construct(REGFILTER * pInRegFilters, const ULONG size, IEnumRegFilters ** ppEnum) DECLSPEC_HIDDEN;
+HRESULT IEnumFiltersImpl_Construct(IBaseFilter ** ppFilters, ULONG nFilters, IEnumFilters ** ppEnum) DECLSPEC_HIDDEN;
 
-extern const char * qzdebugstr_guid(const GUID * id);
+extern const char * qzdebugstr_guid(const GUID * id) DECLSPEC_HIDDEN;
 extern void video_unregister_windowclass(void) DECLSPEC_HIDDEN;
 
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards);
-void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
+void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt) DECLSPEC_HIDDEN;
 
 typedef struct StdMediaSample2
 {
