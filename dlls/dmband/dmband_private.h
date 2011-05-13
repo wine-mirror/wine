@@ -52,9 +52,9 @@ typedef struct IDirectMusicBandTrack IDirectMusicBandTrack;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicBandImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicBandImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicBandTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicBandTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
 
 /*****************************************************************************
@@ -121,7 +121,7 @@ struct IDirectMusicBandTrack {
 /**********************************************************************
  * Dll lifetime tracking declaration for dmband.dll
  */
-extern LONG DMBAND_refCount;
+extern LONG DMBAND_refCount DECLSPEC_HIDDEN;
 static inline void DMBAND_LockModule(void) { InterlockedIncrement( &DMBAND_refCount ); }
 static inline void DMBAND_UnlockModule(void) { InterlockedDecrement( &DMBAND_refCount ); }
 
