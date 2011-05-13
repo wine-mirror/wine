@@ -42,23 +42,23 @@ typedef struct {
 #define GE(x) { &x, #x }
 
 /* check whether chunkID is valid dmobject form chunk */
-extern BOOL IS_VALID_DMFORM (FOURCC chunkID);
+extern BOOL IS_VALID_DMFORM (FOURCC chunkID) DECLSPEC_HIDDEN;
 /* translate STREAM_SEEK flag to string */
-extern const char *resolve_STREAM_SEEK (DWORD flag);
+extern const char *resolve_STREAM_SEEK (DWORD flag) DECLSPEC_HIDDEN;
 /* FOURCC to string conversion for debug messages */
-extern const char *debugstr_fourcc (DWORD fourcc);
+extern const char *debugstr_fourcc (DWORD fourcc) DECLSPEC_HIDDEN;
 /* DMUS_VERSION struct to string conversion for debug messages */
-extern const char *debugstr_dmversion (const DMUS_VERSION *version);
+extern const char *debugstr_dmversion (const DMUS_VERSION *version) DECLSPEC_HIDDEN;
 /* FILETIME struct to string conversion for debug messages */
-extern const char *debugstr_filetime (const FILETIME *time);
+extern const char *debugstr_filetime (const FILETIME *time) DECLSPEC_HIDDEN;
 /* returns name of given GUID */
-extern const char *debugstr_dmguid (const GUID *id);
+extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
 /* returns name of given error code */
-extern const char *debugstr_dmreturn (DWORD code);
+extern const char *debugstr_dmreturn (DWORD code) DECLSPEC_HIDDEN;
 
 /* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
-extern const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader);
-extern const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT_HEADER pHeader);
+extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) DECLSPEC_HIDDEN;
+extern const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader) DECLSPEC_HIDDEN;
+extern const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT_HEADER pHeader) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DMLOADER_DEBUG_H */
