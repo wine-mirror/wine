@@ -92,6 +92,7 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "b2261353decda2712b83538ab434a49ce21f3172",
     "a8b59f25984b066fc6b91cae6bf983a78028ba7f",
     "3d95adb85b9673a932ac847a4b5451fa59885f74",
+    "e2a8eef4aeda3a0f6c950075acba38f1f9e0814d",
     NULL
 };
 
@@ -240,6 +241,24 @@ static const RECT patblt_clips[] =
     {170,  90, 176, 101}, /* b edge on t edgecase clipped */
     {160, 199, 166, 210}, /* t edge on b edgecase */
     {170, 200, 176, 210}, /* t edge on b edgecase clipped */
+};
+
+static const RECT rectangles[] =
+{
+    {10,   11, 100, 101},
+    {250, 100, 350,  10},
+    {120,  10, 120,  20}, /* zero width */
+    {120,  10, 130,  10}, /* zero height */
+    {120,  40, 121,  41}, /* 1 x 1 */
+    {130,  50, 132,  52}, /* 2 x 2 */
+    {140,  60, 143,  63}, /* 3 x 3 */
+    {150,  70, 154,  74}, /* 4 x 4 */
+    {120,  20, 121,  30}, /* width == 1 */
+    {130,  20, 132,  30}, /* width == 2 */
+    {140,  20, 143,  30}, /* width == 3 */
+    {200,  20, 210,  21}, /* height == 1 */
+    {200,  30, 210,  32}, /* height == 2 */
+    {200,  40, 210,  43} /* height == 3 */
 };
 
 static const BITMAPINFOHEADER dib_brush_header_32 = {sizeof(BITMAPINFOHEADER), 16, -16, 1, 32, BI_RGB, 0, 0, 0, 0, 0};
@@ -479,6 +498,25 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     memset(bits, 0xcc, dib_size);
 
     SetBrushOrgEx(hdc, 0, 0, NULL);
+
+    /* Rectangle */
+
+    SelectObject(hdc, solid_pen);
+    SelectObject(hdc, solid_brush);
+
+    for(i = 0; i < sizeof(rectangles)/sizeof(rectangles[0]); i++)
+    {
+        Rectangle(hdc, rectangles[i].left, rectangles[i].top, rectangles[i].right, rectangles[i].bottom);
+    }
+
+    SelectObject(hdc, dashed_pen);
+    for(i = 0; i < sizeof(rectangles)/sizeof(rectangles[0]); i++)
+    {
+        Rectangle(hdc, rectangles[i].left, rectangles[i].top + 150, rectangles[i].right, rectangles[i].bottom + 150);
+    }
+
+    compare_hash(bmi, bits, sha1, "rectangles");
+    memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
     SelectObject(hdc, orig_pen);
