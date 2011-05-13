@@ -49,8 +49,8 @@ typedef struct IDirectMusicSynthSinkImpl IDirectMusicSynthSinkImpl;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectMusicSynth8Impl implementation structure
@@ -81,7 +81,7 @@ struct IDirectMusicSynthSinkImpl {
 /**********************************************************************
  * Dll lifetime tracking declaration for dmsynth.dll
  */
-extern LONG DMSYNTH_refCount;
+extern LONG DMSYNTH_refCount DECLSPEC_HIDDEN;
 static inline void DMSYNTH_LockModule(void) { InterlockedIncrement( &DMSYNTH_refCount ); }
 static inline void DMSYNTH_UnlockModule(void) { InterlockedDecrement( &DMSYNTH_refCount ); }
 
@@ -110,6 +110,6 @@ typedef struct {
 #define GE(x) { &x, #x }
 
 /* returns name of given GUID */
-extern const char *debugstr_dmguid (const GUID *id);
+extern const char *debugstr_dmguid (const GUID *id) DECLSPEC_HIDDEN;
 
 #endif	/* __WINE_DMSYNTH_PRIVATE_H */
