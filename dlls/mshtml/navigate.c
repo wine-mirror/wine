@@ -1376,12 +1376,14 @@ static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
-    if(FAILED(result))
-        handle_navigation_error(This, result);
-    else if(This->window) {
-        result = async_stop_request(This);
-        if(SUCCEEDED(result))
-           return S_OK;
+    if(result != E_ABORT) {
+        if(FAILED(result))
+            handle_navigation_error(This, result);
+        else if(This->window) {
+            result = async_stop_request(This);
+            if(SUCCEEDED(result))
+                return S_OK;
+        }
     }
 
     on_stop_nsrequest(This, result);
