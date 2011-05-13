@@ -27,7 +27,7 @@
 #ifdef SONAME_LIBXCOMPOSITE
 
 #include <X11/extensions/Xcomposite.h>
-#define MAKE_FUNCPTR(f) extern typeof(f) * p##f;
+#define MAKE_FUNCPTR(f) extern typeof(f) * p##f DECLSPEC_HIDDEN;
 MAKE_FUNCPTR(XCompositeQueryExtension)
 MAKE_FUNCPTR(XCompositeQueryVersion)
 MAKE_FUNCPTR(XCompositeVersion)

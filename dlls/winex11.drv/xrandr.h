@@ -26,7 +26,7 @@
 
 #ifdef SONAME_LIBXRANDR
 
-void X11DRV_XRandR_Init(void);
+void X11DRV_XRandR_Init(void) DECLSPEC_HIDDEN;
 
 #endif /* SONAME_LIBXRANDR */
 #endif /* __WINE_XRANDR_H */

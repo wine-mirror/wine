@@ -219,8 +219,8 @@ typedef struct
   WORD			internal_charset;
 } fontMatch;
 
-extern fontObject* XFONT_GetFontObject( X_PHYSFONT pFont );
-extern XFontStruct* XFONT_GetFontStruct( X_PHYSFONT pFont );
+extern fontObject* XFONT_GetFontObject( X_PHYSFONT pFont ) DECLSPEC_HIDDEN;
+extern XFontStruct* XFONT_GetFontStruct( X_PHYSFONT pFont ) DECLSPEC_HIDDEN;
 
 /* internal charset(hibyte must be set) */
 /* lobyte is DEFAULT_CHARSET(=0). */
@@ -244,6 +244,6 @@ typedef struct tagX11DRV_CP
     void (*pGetTextMetricsW)( fontObject* pfo, LPTEXTMETRICW pTM );
 } X11DRV_CP;
 
-extern const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT];
+extern const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] DECLSPEC_HIDDEN;
 
 #endif /* __WINE_X11FONT_H */

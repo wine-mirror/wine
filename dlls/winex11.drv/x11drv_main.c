@@ -67,7 +67,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION X11DRV_CritSection = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-Screen *screen;
+static Screen *screen;
 Visual *visual;
 unsigned int screen_width;
 unsigned int screen_height;

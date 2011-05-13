@@ -31,8 +31,8 @@
 #include "wingdi.h"
 #include "ddrawi.h"
 
-void X11DRV_XF86VM_Init(void);
-void X11DRV_XF86VM_Cleanup(void);
+void X11DRV_XF86VM_Init(void) DECLSPEC_HIDDEN;
+void X11DRV_XF86VM_Cleanup(void) DECLSPEC_HIDDEN;
 
 #endif /* SONAME_LIBXXF86VM */
 #endif /* __WINE_XVIDMODE_H */
