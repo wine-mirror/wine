@@ -4733,6 +4733,8 @@ static void test_LVM_SETITEMTEXT(void)
     /* index out of bounds */
     item.pszText = testA;
     item.cchTextMax = 0; /* ignored */
+    item.iSubItem = 0;
+
     ret = SendMessageA(hwnd, LVM_SETITEMTEXTA, 1, (LPARAM)&item);
     expect(FALSE, ret);
 
