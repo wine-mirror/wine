@@ -396,14 +396,14 @@ static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
         return TRUE;
     }
 
-    TRACE( "clipping to %s\n", wine_dbgstr_rect(clip) );
+    TRACE( "clipping to %s win %lx\n", wine_dbgstr_rect(clip), clip_window );
 
     wine_tsx11_lock();
     if (msg_hwnd) XUnmapWindow( data->display, clip_window );
     XMoveResizeWindow( data->display, clip_window,
                        clip->left - virtual_screen_rect.left, clip->top - virtual_screen_rect.top,
                        clip->right - clip->left, clip->bottom - clip->top );
-    if (msg_hwnd) XMapWindow( data->display, clip_window );
+    XMapWindow( data->display, clip_window );
     if (!XGrabPointer( data->display, clip_window, False,
                        PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
                        GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
@@ -516,7 +516,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     if (!is_window_rect_fullscreen( &data->whole_rect )) return FALSE;
     if (!(thread_data = x11drv_thread_data())) return FALSE;
     if (GetTickCount() - thread_data->clip_reset < 1000) return FALSE;
-    if (!reset && thread_data->clip_hwnd) return FALSE;  /* already clipping */
+    if (!reset && clipping_cursor && thread_data->clip_hwnd) return FALSE;  /* already clipping */
     SetRect( &rect, 0, 0, screen_width, screen_height );
     if (!grab_fullscreen)
     {
