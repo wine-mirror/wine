@@ -22,22 +22,22 @@
 
 #include "wine/strmbase.h"
 
-extern DWORD ObjectRefCount(BOOL increment);
+extern DWORD ObjectRefCount(BOOL increment) DECLSPEC_HIDDEN;
 
-extern IUnknown * WINAPI QCAP_createAudioCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createAVICompressor(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createVFWCaptureFilterPropertyPage(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createAVImux(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createAVImuxPropertyPage(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createAVImuxPropertyPage1(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createFileWriter(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createInfinitePinTeeFilter(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createSmartTeeFilter(IUnknown *pUnkOuter, HRESULT *phr);
-extern IUnknown * WINAPI QCAP_createAudioInputMixerPropertyPage(IUnknown *pUnkOuter, HRESULT *phr);
+extern IUnknown * WINAPI QCAP_createAudioCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createAVICompressor(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createVFWCaptureFilterPropertyPage(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createAVImux(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createAVImuxPropertyPage(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createAVImuxPropertyPage1(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createFileWriter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createInfinitePinTeeFilter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createSmartTeeFilter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createAudioInputMixerPropertyPage(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
 
-void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
+void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt) DECLSPEC_HIDDEN;
 
 enum YUV_Format {
     /* Last 2 numbers give the skip info, the smaller they are the better
@@ -55,7 +55,7 @@ enum YUV_Format {
     UYYVYY, /* YUV411 linux style, perhaps YUV420 is YYUYYV? */
 };
 
-void YUV_Init(void);
-void YUV_To_RGB24(enum YUV_Format format, unsigned char *target, const unsigned char *source, int width, int height);
+void YUV_Init(void) DECLSPEC_HIDDEN;
+void YUV_To_RGB24(enum YUV_Format format, unsigned char *target, const unsigned char *source, int width, int height) DECLSPEC_HIDDEN;
 
 #endif /* _QCAP_MAIN_H_DEFINED */
