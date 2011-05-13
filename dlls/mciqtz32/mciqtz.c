@@ -37,7 +37,7 @@ static DWORD MCIQTZ_mciStop(UINT, DWORD, LPMCI_GENERIC_PARMS);
  *                          MCI QTZ implementation                      *
  *======================================================================*/
 
-HINSTANCE MCIQTZ_hInstance = 0;
+static HINSTANCE MCIQTZ_hInstance = 0;
 
 /***********************************************************************
  *              DllMain (MCIQTZ.0)
