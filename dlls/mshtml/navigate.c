@@ -1649,6 +1649,8 @@ void abort_document_bindings(HTMLDocumentNode *doc)
     BSCallback *iter, *next;
 
     LIST_FOR_EACH_ENTRY_SAFE(iter, next, &doc->bindings, BSCallback, entry) {
+        TRACE("Aborting %p\n", iter);
+
         if(iter->doc)
             remove_target_tasks(iter->doc->basedoc.task_magic);
 
@@ -1657,7 +1659,7 @@ void abort_document_bindings(HTMLDocumentNode *doc)
         else {
             list_remove(&iter->entry);
             list_init(&iter->entry);
-            iter->vtbl->stop_binding(iter, S_OK);
+            iter->vtbl->stop_binding(iter, E_ABORT);
         }
 
         iter->doc = NULL;
