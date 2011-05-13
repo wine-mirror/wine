@@ -2568,11 +2568,16 @@ static const data_stream_vtbl_t chunked_stream_vtbl = {
 };
 
 /* set the request content length based on the headers */
-static DWORD set_content_length(http_request_t *request)
+static DWORD set_content_length(http_request_t *request, DWORD status_code)
 {
     static const WCHAR szChunked[] = {'c','h','u','n','k','e','d',0};
     WCHAR encoding[20];
     DWORD size;
+
+    if(status_code == HTTP_STATUS_NO_CONTENT) {
+        request->contentLength = request->netconn_stream.content_length = 0;
+        return ERROR_SUCCESS;
+    }
 
     size = sizeof(request->contentLength);
     if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
@@ -4685,16 +4690,16 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
             HTTP_ProcessExpires(request);
             HTTP_ProcessLastModified(request);
 
-            res = set_content_length(request);
-            if(res != ERROR_SUCCESS)
-                goto lend;
-            if(!request->contentLength)
-                http_release_netconn(request, TRUE);
-
             dwBufferSize = sizeof(dwStatusCode);
             if (HTTP_HttpQueryInfoW(request,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,
                                     &dwStatusCode,&dwBufferSize,NULL) != ERROR_SUCCESS)
                 dwStatusCode = 0;
+
+            res = set_content_length(request, dwStatusCode);
+            if(res != ERROR_SUCCESS)
+                goto lend;
+            if(!request->contentLength)
+                http_release_netconn(request, TRUE);
 
             if (!(request->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && responseLen)
             {
@@ -4795,7 +4800,7 @@ lend:
 
     if (request->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        if (res == ERROR_SUCCESS && request->bytesWritten == request->bytesToWrite)
+        if (res == ERROR_SUCCESS && request->contentLength && request->bytesWritten == request->bytesToWrite)
             HTTP_ReceiveRequestData(request, TRUE);
         else
         {
@@ -4835,6 +4840,7 @@ static void AsyncHttpSendRequestProc(WORKREQUEST *workRequest)
 static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_PTR dwContext)
 {
     INT responseLen;
+    DWORD dwCode, dwCodeLength;
     DWORD dwBufferSize;
     DWORD res = ERROR_SUCCESS;
 
@@ -4854,19 +4860,22 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
     HTTP_ProcessExpires(request);
     HTTP_ProcessLastModified(request);
 
-    if ((res = set_content_length( request )) == ERROR_SUCCESS) {
+    dwCodeLength = sizeof(dwCode);
+    if (HTTP_HttpQueryInfoW(request,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,
+                            &dwCode,&dwCodeLength,NULL) != ERROR_SUCCESS)
+        dwCode = 0;
+
+    if ((res = set_content_length( request, dwCode )) == ERROR_SUCCESS) {
         if(!request->contentLength)
             http_release_netconn(request, TRUE);
     }
 
     if (res == ERROR_SUCCESS && !(request->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT))
     {
-        DWORD dwCode,dwCodeLength = sizeof(DWORD);
-        if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE, &dwCode, &dwCodeLength, NULL) == ERROR_SUCCESS
-            && (dwCode == HTTP_STATUS_REDIRECT ||
+        if (dwCode == HTTP_STATUS_REDIRECT ||
                 dwCode == HTTP_STATUS_MOVED ||
                 dwCode == HTTP_STATUS_REDIRECT_METHOD ||
-                dwCode == HTTP_STATUS_REDIRECT_KEEP_VERB))
+                dwCode == HTTP_STATUS_REDIRECT_KEEP_VERB)
         {
             WCHAR *new_url, szNewLocation[INTERNET_MAX_URL_LENGTH];
             dwBufferSize=sizeof(szNewLocation);
@@ -4891,7 +4900,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
         }
     }
 
-    if (res == ERROR_SUCCESS) {
+    if (res == ERROR_SUCCESS && request->contentLength) {
         HTTP_ReceiveRequestData(request, TRUE);
     }else {
         INTERNET_ASYNC_RESULT iar = {0, res};
