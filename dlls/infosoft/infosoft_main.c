@@ -56,7 +56,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
-extern HRESULT WINAPI wb_Constructor(IUnknown*, REFIID, LPVOID *);
+DECLSPEC_HIDDEN extern HRESULT WINAPI wb_Constructor(IUnknown*, REFIID, LPVOID *);
 
 typedef HRESULT (CALLBACK *LPFNCREATEINSTANCE)(IUnknown*, REFIID, LPVOID*);
 
