@@ -20,7 +20,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(inkobj);
 
 static LONG INKOBJ_refCount;
-HINSTANCE INKOBJ_hInstance;
+static HINSTANCE INKOBJ_hInstance;
 
 /*****************************************************
  *    DllMain (INKOBJ.init)

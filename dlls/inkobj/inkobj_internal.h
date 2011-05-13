@@ -30,6 +30,4 @@
 
 #include "wine/debug.h"
 
-extern HINSTANCE INKOBJ_hInstance;
-
 #endif /* INKOBJ_INTERNAL_H */
