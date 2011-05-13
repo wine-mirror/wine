@@ -39,7 +39,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(inetcpl);
 
-HMODULE hcpl;
+DECLSPEC_HIDDEN HMODULE hcpl;
 
 /*********************************************************************
  *  DllMain (inetcpl.@)
