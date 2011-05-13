@@ -26,12 +26,12 @@
 /* Not declared in commctrl.h ("for internal use (msdn)") */
 #define TVS_EX_NOSINGLECOLLAPSE 0x0001
 
-extern HINSTANCE explorerframe_hinstance;
+extern HINSTANCE explorerframe_hinstance DECLSPEC_HIDDEN;
 
-extern LONG EFRAME_refCount;
+extern LONG EFRAME_refCount DECLSPEC_HIDDEN;
 static inline void EFRAME_LockModule(void) { InterlockedIncrement( &EFRAME_refCount ); }
 static inline void EFRAME_UnlockModule(void) { InterlockedDecrement( &EFRAME_refCount ); }
 
-HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv);
+HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_EXPLORERFRAME_H */
