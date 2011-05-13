@@ -2456,7 +2456,7 @@ struct image_format_dimension
     const GUID *dimension;
 };
 
-struct image_format_dimension image_format_dimensions[] =
+static struct image_format_dimension image_format_dimensions[] =
 {
     {&ImageFormatGIF, &FrameDimensionTime},
     {&ImageFormatIcon, &FrameDimensionResolution},
