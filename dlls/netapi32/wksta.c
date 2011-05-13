@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
  *
  * Checks whether the server name indicates local machine.
  */
-BOOL NETAPI_IsLocalComputer(LMCSTR ServerName)
+DECLSPEC_HIDDEN BOOL NETAPI_IsLocalComputer(LMCSTR ServerName)
 {
     if (!ServerName)
     {
