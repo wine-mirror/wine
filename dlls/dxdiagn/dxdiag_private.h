@@ -89,18 +89,18 @@ struct IDxDiagContainerImpl {
 /**
  * factories
  */
-extern HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
+extern HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj) DECLSPEC_HIDDEN;
 
 /** internal factory */
-extern HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, IDxDiagContainerImpl_Container *cont, IDxDiagProvider *pProv, LPVOID *ppobj);
+extern HRESULT DXDiag_CreateDXDiagContainer(REFIID riid, IDxDiagContainerImpl_Container *cont, IDxDiagProvider *pProv, LPVOID *ppobj) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dxdiagn.dll
  */
-extern LONG DXDIAGN_refCount;
+extern LONG DXDIAGN_refCount DECLSPEC_HIDDEN;
 static inline void DXDIAGN_LockModule(void) { InterlockedIncrement( &DXDIAGN_refCount ); }
 static inline void DXDIAGN_UnlockModule(void) { InterlockedDecrement( &DXDIAGN_refCount ); }
 
-extern HINSTANCE dxdiagn_instance;
+extern HINSTANCE dxdiagn_instance DECLSPEC_HIDDEN;
 
 #endif
