@@ -319,12 +319,17 @@ static void free_parameter(D3DXHANDLE handle, BOOL element, BOOL child)
 
     if (param->class == D3DXPC_OBJECT && !param->element_count)
     {
-        switch(param->type)
+        switch (param->type)
         {
             case D3DXPT_STRING:
                 HeapFree(GetProcessHeap(), 0, *(LPSTR *)param->data);
                 break;
 
+            case D3DXPT_TEXTURE:
+            case D3DXPT_TEXTURE1D:
+            case D3DXPT_TEXTURE2D:
+            case D3DXPT_TEXTURE3D:
+            case D3DXPT_TEXTURECUBE:
             case D3DXPT_PIXELSHADER:
             case D3DXPT_VERTEXSHADER:
                 if (*(IUnknown **)param->data) IUnknown_Release(*(IUnknown **)param->data);
@@ -1207,7 +1212,10 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetValue(ID3DXBaseEffect *iface, D3DXH
 
     if (data && param && param->data && param->bytes <= bytes)
     {
-        if (param->type == D3DXPT_VERTEXSHADER || param->type == D3DXPT_PIXELSHADER)
+        if (param->type == D3DXPT_VERTEXSHADER || param->type == D3DXPT_PIXELSHADER
+                || param->type == D3DXPT_TEXTURE || param->type == D3DXPT_TEXTURE1D
+                || param->type == D3DXPT_TEXTURE2D || param->type ==  D3DXPT_TEXTURE3D
+                || param->type == D3DXPT_TEXTURECUBE)
         {
             UINT i;
 
@@ -3358,6 +3366,11 @@ static HRESULT d3dx9_parse_value(struct d3dx_parameter *param, void *value, cons
             switch (param->type)
             {
                 case D3DXPT_STRING:
+                case D3DXPT_TEXTURE:
+                case D3DXPT_TEXTURE1D:
+                case D3DXPT_TEXTURE2D:
+                case D3DXPT_TEXTURE3D:
+                case D3DXPT_TEXTURECUBE:
                 case D3DXPT_PIXELSHADER:
                 case D3DXPT_VERTEXSHADER:
                     read_dword(ptr, &id);
@@ -3577,6 +3590,14 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
 
                     case D3DXPT_VERTEXSHADER:
                         param->bytes = sizeof(LPDIRECT3DVERTEXSHADER9);
+                        break;
+
+                    case D3DXPT_TEXTURE:
+                    case D3DXPT_TEXTURE1D:
+                    case D3DXPT_TEXTURE2D:
+                    case D3DXPT_TEXTURE3D:
+                    case D3DXPT_TEXTURECUBE:
+                        param->bytes = sizeof(LPDIRECT3DBASETEXTURE9);
                         break;
 
                     default:
