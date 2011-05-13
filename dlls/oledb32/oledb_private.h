@@ -17,4 +17,4 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-HRESULT create_oledb_convert(IUnknown *outer, void **obj);
+HRESULT create_oledb_convert(IUnknown *outer, void **obj) DECLSPEC_HIDDEN;
