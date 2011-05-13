@@ -402,8 +402,6 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     SET_OPTIONAL(INTERNET_STATUS_CONNECTED_TO_SERVER);
     if (flags & INTERNET_FLAG_ASYNC)
         SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
-    else
-        SET_WINE_ALLOW(INTERNET_STATUS_REQUEST_COMPLETE);
 
     if(test->flags & TESTF_COMPRESSED) {
         BOOL b = TRUE;
@@ -465,8 +463,6 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
         CHECK_NOTIFIED(INTERNET_STATUS_REDIRECT);
     if (flags & INTERNET_FLAG_ASYNC)
         CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
-    else
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
     /* Sent on WinXP only if first_connection_to_test_url is TRUE, on Win98 always sent */
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
     CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
@@ -597,16 +593,6 @@ abort:
           Sleep(100);
     }
     CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
-    if (hor != 0x0)
-    {
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
-    }
-    else
-    {
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
-        CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
-    }
     CloseHandle(hCompleteEvent);
     first_connection_to_test_url = FALSE;
 }
@@ -860,8 +846,6 @@ static void InternetReadFileExA_test(int flags)
     inetbuffers.dwOffsetLow = 5678;
     SET_EXPECT(INTERNET_STATUS_RECEIVING_RESPONSE);
     SET_EXPECT(INTERNET_STATUS_RESPONSE_RECEIVED);
-    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
-    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
     rc = InternetReadFileEx(hor, &inetbuffers, 0, 0xdeadcafe);
     ok(rc, "InternetReadFileEx failed with error %u\n", GetLastError());
         trace("read %i bytes\n", inetbuffers.dwBufferLength);
@@ -879,8 +863,6 @@ static void InternetReadFileExA_test(int flags)
     length = 0;
     trace("Entering Query loop\n");
 
-    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
-    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
     while (TRUE)
     {
         inetbuffers.dwStructSize = sizeof(INTERNET_BUFFERS);
@@ -891,8 +873,6 @@ static void InternetReadFileExA_test(int flags)
 
         SET_WINE_ALLOW(INTERNET_STATUS_RECEIVING_RESPONSE);
         SET_WINE_ALLOW(INTERNET_STATUS_RESPONSE_RECEIVED);
-        SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
-        SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
         SET_EXPECT(INTERNET_STATUS_REQUEST_COMPLETE);
         rc = InternetReadFileExA(hor, &inetbuffers, IRF_ASYNC | IRF_USE_CONTEXT, 0xcafebabe);
         if (!rc)
@@ -949,9 +929,6 @@ static void InternetReadFileExA_test(int flags)
     ok(length > 0, "failed to read any of the document\n");
     trace("Finished. Read %d bytes\n", length);
 
-    /* WinXP does not send, but Win98 does */
-    CLEAR_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
-    CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
 abort:
     SET_EXPECT2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     if (hor) {
@@ -972,12 +949,6 @@ abort:
           Sleep(100);
       CHECK_NOTIFIED2(INTERNET_STATUS_HANDLE_CLOSING, (hor != 0x0) + (hic != 0x0));
     }
-    /* to enable once Wine is fixed to never send it
-    CHECK_NOT_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
-    CHECK_NOT_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
-    */
-    CLEAR_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
-    CLEAR_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     CloseHandle(hCompleteEvent);
     first_connection_to_test_url = FALSE;
 }
