@@ -20,18 +20,18 @@
 #ifndef __MSCOREE_PRIVATE__
 #define __MSCOREE_PRIVATE__
 
-extern char *WtoA(LPCWSTR wstr);
+extern char *WtoA(LPCWSTR wstr) DECLSPEC_HIDDEN;
 
-extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj);
+extern HRESULT CLRMetaHost_CreateInstance(REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
 
 extern HRESULT WINAPI CLRMetaHost_GetVersionFromFile(ICLRMetaHost* iface,
-    LPCWSTR pwzFilePath, LPWSTR pwzBuffer, DWORD *pcchBuffer);
+    LPCWSTR pwzFilePath, LPWSTR pwzBuffer, DWORD *pcchBuffer) DECLSPEC_HIDDEN;
 
 typedef struct tagASSEMBLY ASSEMBLY;
 
-HRESULT assembly_create(ASSEMBLY **out, LPCWSTR file);
-HRESULT assembly_release(ASSEMBLY *assembly);
-HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version);
+HRESULT assembly_create(ASSEMBLY **out, LPCWSTR file) DECLSPEC_HIDDEN;
+HRESULT assembly_release(ASSEMBLY *assembly) DECLSPEC_HIDDEN;
+HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version) DECLSPEC_HIDDEN;
 
 typedef struct RuntimeHost RuntimeHost;
 
@@ -49,11 +49,11 @@ typedef struct CLRRuntimeInfo
 } CLRRuntimeInfo;
 
 extern HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
-    DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy, ICLRRuntimeInfo **result);
+    DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy, ICLRRuntimeInfo **result) DECLSPEC_HIDDEN;
 
-extern HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result);
+extern HRESULT ICLRRuntimeInfo_GetRuntimeHost(ICLRRuntimeInfo *iface, RuntimeHost **result) DECLSPEC_HIDDEN;
 
-extern HRESULT MetaDataDispenser_CreateInstance(IUnknown **ppUnk);
+extern HRESULT MetaDataDispenser_CreateInstance(IUnknown **ppUnk) DECLSPEC_HIDDEN;
 
 typedef struct parsed_config_file
 {
@@ -66,9 +66,9 @@ typedef struct supported_runtime
     LPWSTR version;
 } supported_runtime;
 
-extern HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result);
+extern HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result) DECLSPEC_HIDDEN;
 
-extern void free_parsed_config_file(parsed_config_file *file);
+extern void free_parsed_config_file(parsed_config_file *file) DECLSPEC_HIDDEN;
 
 /* Mono embedding */
 typedef struct _MonoDomain MonoDomain;
@@ -129,20 +129,20 @@ typedef struct loaded_mono
 } loaded_mono;
 
 /* loaded runtime interfaces */
-extern void unload_all_runtimes(void);
+extern void unload_all_runtimes(void) DECLSPEC_HIDDEN;
 
-extern void expect_no_runtimes(void);
+extern void expect_no_runtimes(void) DECLSPEC_HIDDEN;
 
 extern HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
-    loaded_mono *loaded_mono, RuntimeHost** result);
+    loaded_mono *loaded_mono, RuntimeHost** result) DECLSPEC_HIDDEN;
 
-extern HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid, void **ppv);
+extern HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid, void **ppv) DECLSPEC_HIDDEN;
 
-extern HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj, IUnknown **ppUnk);
+extern HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj, IUnknown **ppUnk) DECLSPEC_HIDDEN;
 
 extern HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
-    MonoDomain *domain, MonoObject **result);
+    MonoDomain *domain, MonoObject **result) DECLSPEC_HIDDEN;
 
-extern HRESULT RuntimeHost_Destroy(RuntimeHost *This);
+extern HRESULT RuntimeHost_Destroy(RuntimeHost *This) DECLSPEC_HIDDEN;
 
 #endif   /* __MSCOREE_PRIVATE__ */

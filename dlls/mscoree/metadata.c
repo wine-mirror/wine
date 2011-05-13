@@ -169,7 +169,7 @@ static HRESULT WINAPI MetaDataDispenser_FindAssemblyModule(IMetaDataDispenserEx*
     return E_NOTIMPL;
 }
 
-const struct IMetaDataDispenserExVtbl MetaDataDispenserVtbl =
+static const struct IMetaDataDispenserExVtbl MetaDataDispenserVtbl =
 {
     MetaDataDispenser_QueryInterface,
     MetaDataDispenser_AddRef,

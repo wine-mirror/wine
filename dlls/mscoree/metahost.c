@@ -46,7 +46,7 @@ static const WCHAR net_11_subdir[] = {'1','.','0',0};
 static const WCHAR net_20_subdir[] = {'2','.','0',0};
 static const WCHAR net_40_subdir[] = {'4','.','0',0};
 
-const struct ICLRRuntimeInfoVtbl CLRRuntimeInfoVtbl;
+static const struct ICLRRuntimeInfoVtbl CLRRuntimeInfoVtbl;
 
 #define NUM_RUNTIMES 3
 
@@ -528,7 +528,7 @@ static HRESULT WINAPI CLRRuntimeInfo_IsStarted(ICLRRuntimeInfo* iface,
     return E_NOTIMPL;
 }
 
-const struct ICLRRuntimeInfoVtbl CLRRuntimeInfoVtbl = {
+static const struct ICLRRuntimeInfoVtbl CLRRuntimeInfoVtbl = {
     CLRRuntimeInfo_QueryInterface,
     CLRRuntimeInfo_AddRef,
     CLRRuntimeInfo_Release,
@@ -767,7 +767,7 @@ struct InstalledRuntimeEnum
     ULONG pos;
 };
 
-const struct IEnumUnknownVtbl InstalledRuntimeEnum_Vtbl;
+static const struct IEnumUnknownVtbl InstalledRuntimeEnum_Vtbl;
 
 static inline struct InstalledRuntimeEnum *impl_from_IEnumUnknown(IEnumUnknown *iface)
 {
@@ -909,7 +909,7 @@ static HRESULT WINAPI InstalledRuntimeEnum_Clone(IEnumUnknown *iface, IEnumUnkno
     return S_OK;
 }
 
-const struct IEnumUnknownVtbl InstalledRuntimeEnum_Vtbl = {
+static const struct IEnumUnknownVtbl InstalledRuntimeEnum_Vtbl = {
     InstalledRuntimeEnum_QueryInterface,
     InstalledRuntimeEnum_AddRef,
     InstalledRuntimeEnum_Release,
