@@ -26,12 +26,12 @@
 #include "wtypes.h"
 #include "dplay_global.h"
 
-extern HRESULT DP_CreateInterface( REFIID riid, LPVOID* ppvObj );
-extern HRESULT DPL_CreateInterface( REFIID riid, LPVOID* ppvObj );
+extern HRESULT DP_CreateInterface( REFIID riid, LPVOID* ppvObj ) DECLSPEC_HIDDEN;
+extern HRESULT DPL_CreateInterface( REFIID riid, LPVOID* ppvObj ) DECLSPEC_HIDDEN;
 extern HRESULT DPSP_CreateInterface( REFIID riid, LPVOID* ppvObj,
-                                     IDirectPlay2Impl* dp );
+                                     IDirectPlay2Impl* dp ) DECLSPEC_HIDDEN;
 extern HRESULT DPLSP_CreateInterface( REFIID riid, LPVOID* ppvObj,
-                                      IDirectPlay2Impl* dp );
+                                      IDirectPlay2Impl* dp ) DECLSPEC_HIDDEN;
 
 
 #endif

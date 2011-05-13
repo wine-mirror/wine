@@ -458,7 +458,7 @@ typedef struct SPDATA_INIT
 } SPDATA_INIT, *LPSPDATA_INIT;
 
 typedef HRESULT (WINAPI *LPSP_INIT)(LPSPDATA_INIT);
-HRESULT WINAPI DPLSPInit(LPSPDATA_INIT);
+HRESULT WINAPI DPLSPInit(LPSPDATA_INIT) DECLSPEC_HIDDEN;
 
 /* Define the COM interface */
 #define INTERFACE IDPLobbySP
@@ -515,6 +515,6 @@ DECLARE_INTERFACE_(IDPLobbySP,IUnknown)
 /* This variable is exported from the DLL at ordinal 6 to be accessed by the
  * SP directly. This is the same variable that the DP SP will use.
  */
-extern DWORD gdwDPlaySPRefCount;
+extern DWORD gdwDPlaySPRefCount DECLSPEC_HIDDEN;
 
 #endif

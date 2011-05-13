@@ -29,7 +29,7 @@
 
 extern HRESULT DPL_EnumAddress( LPDPENUMADDRESSCALLBACK lpEnumAddressCallback,
                                 LPCVOID lpAddress, DWORD dwAddressSize,
-                                LPVOID lpContext );
+                                LPVOID lpContext ) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * Predeclare the interface implementation structures
@@ -233,13 +233,13 @@ struct IDirectPlay4Impl
 HRESULT DP_HandleMessage( IDirectPlay2Impl* This, LPCVOID lpMessageBody,
                           DWORD  dwMessageBodySize, LPCVOID lpMessageHeader,
                           WORD wCommandId, WORD wVersion,
-                          LPVOID* lplpReply, LPDWORD lpdwMsgSize );
+                          LPVOID* lplpReply, LPDWORD lpdwMsgSize ) DECLSPEC_HIDDEN;
 
 /* DP SP external interfaces into DirectPlay */
-extern HRESULT DP_GetSPPlayerData( IDirectPlay2Impl* lpDP, DPID idPlayer, LPVOID* lplpData );
-extern HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP, DPID idPlayer, LPVOID lpData );
+extern HRESULT DP_GetSPPlayerData( IDirectPlay2Impl* lpDP, DPID idPlayer, LPVOID* lplpData ) DECLSPEC_HIDDEN;
+extern HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP, DPID idPlayer, LPVOID lpData ) DECLSPEC_HIDDEN;
 
 /* DP external interfaces to call into DPSP interface */
-extern LPVOID DPSP_CreateSPPlayerData(void);
+extern LPVOID DPSP_CreateSPPlayerData(void) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DPLAY_GLOBAL_INCLUDED */
