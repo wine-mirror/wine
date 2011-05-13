@@ -76,25 +76,25 @@ typedef struct tagTHEMENAMES
 } THEMENAMES, *PTHEMENAMES;
 
 /* Declarations for undocumented functions for use internally */
-DWORD WINAPI QueryThemeServices(void);
+DWORD WINAPI QueryThemeServices(void) DECLSPEC_HIDDEN;
 HRESULT WINAPI OpenThemeFile(LPCWSTR pszThemeFileName, LPCWSTR pszColorName,
                              LPCWSTR pszSizeName, HTHEMEFILE *hThemeFile,
-                             DWORD unknown);
-HRESULT WINAPI CloseThemeFile(HTHEMEFILE hThemeFile);
-HRESULT WINAPI ApplyTheme(HTHEMEFILE hThemeFile, char *unknown, HWND hWnd);
+                             DWORD unknown) DECLSPEC_HIDDEN;
+HRESULT WINAPI CloseThemeFile(HTHEMEFILE hThemeFile) DECLSPEC_HIDDEN;
+HRESULT WINAPI ApplyTheme(HTHEMEFILE hThemeFile, char *unknown, HWND hWnd) DECLSPEC_HIDDEN;
 HRESULT WINAPI GetThemeDefaults(LPCWSTR pszThemeFileName, LPWSTR pszColorName,
                                 DWORD dwColorNameLen, LPWSTR pszSizeName,
-                                DWORD dwSizeNameLen);
+                                DWORD dwSizeNameLen) DECLSPEC_HIDDEN;
 HRESULT WINAPI EnumThemes(LPCWSTR pszThemePath, EnumThemeProc callback,
-                          LPVOID lpData);
+                          LPVOID lpData) DECLSPEC_HIDDEN;
 HRESULT WINAPI EnumThemeColors(LPWSTR pszThemeFileName, LPWSTR pszSizeName,
-                               DWORD dwColorNum, PTHEMENAMES pszColorNames);
+                               DWORD dwColorNum, PTHEMENAMES pszColorNames) DECLSPEC_HIDDEN;
 HRESULT WINAPI EnumThemeSizes(LPWSTR pszThemeFileName, LPWSTR pszColorName,
-                              DWORD dwSizeNum, PTHEMENAMES pszColorNames);
+                              DWORD dwSizeNum, PTHEMENAMES pszColorNames) DECLSPEC_HIDDEN;
 HRESULT WINAPI ParseThemeIniFile(LPCWSTR pszIniFileName, LPWSTR pszUnknown,
-                                 ParseThemeIniFileProc callback, LPVOID lpData);
+                                 ParseThemeIniFileProc callback, LPVOID lpData) DECLSPEC_HIDDEN;
 
-extern void UXTHEME_InitSystem(HINSTANCE hInst);
+extern void UXTHEME_InitSystem(HINSTANCE hInst) DECLSPEC_HIDDEN;
 
 /* No alpha blending */
 #define ALPHABLEND_NONE             0
