@@ -20,10 +20,10 @@
 # error You must include config.h to use this header
 #endif
 
-extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv);
-extern void MMDevEnum_Free(void);
+extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
+extern void MMDevEnum_Free(void) DECLSPEC_HIDDEN;
 
-extern HRESULT MMDevice_GetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY key, PROPVARIANT *pv);
+extern HRESULT MMDevice_GetPropValue(const GUID *devguid, DWORD flow, REFPROPERTYKEY key, PROPVARIANT *pv) DECLSPEC_HIDDEN;
 
 typedef struct _DriverFuncs {
     HMODULE module;
@@ -39,7 +39,7 @@ typedef struct _DriverFuncs {
             EDataFlow dataflow, IAudioClient **out);
 } DriverFuncs;
 
-extern DriverFuncs drvs;
+extern DriverFuncs drvs DECLSPEC_HIDDEN;
 
 typedef struct MMDevice {
     IMMDevice IMMDevice_iface;
@@ -55,5 +55,5 @@ typedef struct MMDevice {
     void *key;
 } MMDevice;
 
-extern HRESULT AudioClient_Create(MMDevice *parent, IAudioClient **ppv);
-extern HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolume **ppv);
+extern HRESULT AudioClient_Create(MMDevice *parent, IAudioClient **ppv) DECLSPEC_HIDDEN;
+extern HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolume **ppv) DECLSPEC_HIDDEN;
