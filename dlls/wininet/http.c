@@ -4255,9 +4255,15 @@ static BOOL HTTP_ParseRfc1123Date(LPCWSTR value, FILETIME *ft)
  */
 static BOOL HTTP_ParseDate(LPCWSTR value, FILETIME *ft)
 {
+    static const WCHAR zero[] = { '0',0 };
     BOOL ret;
 
-    if (strchrW(value, ','))
+    if (!strcmpW(value, zero))
+    {
+        ft->dwLowDateTime = ft->dwHighDateTime = 0;
+        ret = TRUE;
+    }
+    else if (strchrW(value, ','))
         ret = HTTP_ParseRfc1123Date(value, ft);
     else
     {
