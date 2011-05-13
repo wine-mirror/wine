@@ -44,14 +44,14 @@ typedef struct _PixelFormatDesc {
     FormatType type;
 } PixelFormatDesc;
 
-HRESULT map_view_of_file(LPCWSTR filename, LPVOID *buffer, DWORD *length);
-HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer, DWORD *length);
+HRESULT map_view_of_file(LPCWSTR filename, LPVOID *buffer, DWORD *length) DECLSPEC_HIDDEN;
+HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer, DWORD *length) DECLSPEC_HIDDEN;
 
-const PixelFormatDesc *get_format_info(D3DFORMAT format);
-const PixelFormatDesc *get_format_info_idx(int idx);
+const PixelFormatDesc *get_format_info(D3DFORMAT format) DECLSPEC_HIDDEN;
+const PixelFormatDesc *get_format_info_idx(int idx) DECLSPEC_HIDDEN;
 
 /* debug helpers */
-const char *debug_d3dxparameter_class(D3DXPARAMETER_CLASS c);
-const char *debug_d3dxparameter_type(D3DXPARAMETER_TYPE t);
+const char *debug_d3dxparameter_class(D3DXPARAMETER_CLASS c) DECLSPEC_HIDDEN;
+const char *debug_d3dxparameter_type(D3DXPARAMETER_TYPE t) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3DX9_36_PRIVATE_H */
