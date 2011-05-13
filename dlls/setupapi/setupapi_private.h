@@ -43,7 +43,7 @@
 #define REGPART_RENAME "\\Rename"
 #define REG_VERSIONCONFLICT "Software\\Microsoft\\VersionConflictManager"
 
-extern HINSTANCE SETUPAPI_hInstance;
+extern HINSTANCE SETUPAPI_hInstance DECLSPEC_HIDDEN;
 
 static inline WCHAR *strdupW( const WCHAR *str )
 {
@@ -83,10 +83,10 @@ static inline WCHAR *strdupAtoW( const char *str )
 /* string substitutions */
 
 struct inf_file;
-extern const WCHAR *DIRID_get_string( int dirid );
-extern const WCHAR *PARSER_get_inf_filename( HINF hinf );
-extern WCHAR *PARSER_get_src_root( HINF hinf );
-extern WCHAR *PARSER_get_dest_dir( INFCONTEXT *context );
+extern const WCHAR *DIRID_get_string( int dirid ) DECLSPEC_HIDDEN;
+extern const WCHAR *PARSER_get_inf_filename( HINF hinf ) DECLSPEC_HIDDEN;
+extern WCHAR *PARSER_get_src_root( HINF hinf ) DECLSPEC_HIDDEN;
+extern WCHAR *PARSER_get_dest_dir( INFCONTEXT *context ) DECLSPEC_HIDDEN;
 
 /* support for Ascii queue callback functions */
 
@@ -96,15 +96,15 @@ struct callback_WtoA_context
     PSP_FILE_CALLBACK_A orig_handler;
 };
 
-UINT CALLBACK QUEUE_callback_WtoA( void *context, UINT notification, UINT_PTR, UINT_PTR );
+UINT CALLBACK QUEUE_callback_WtoA( void *context, UINT notification, UINT_PTR, UINT_PTR ) DECLSPEC_HIDDEN;
 
 /* from msvcrt/sys/stat.h */
 #define _S_IWRITE 0x0080
 #define _S_IREAD  0x0100
 
-extern OSVERSIONINFOW OsVersionInfo;
+extern OSVERSIONINFOW OsVersionInfo DECLSPEC_HIDDEN;
 
-extern BOOL create_fake_dll( const WCHAR *name, const WCHAR *source );
-extern void cleanup_fake_dlls(void);
+extern BOOL create_fake_dll( const WCHAR *name, const WCHAR *source ) DECLSPEC_HIDDEN;
+extern void cleanup_fake_dlls(void) DECLSPEC_HIDDEN;
 
 #endif /* __SETUPAPI_PRIVATE_H */

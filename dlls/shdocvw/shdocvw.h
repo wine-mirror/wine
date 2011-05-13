@@ -50,7 +50,7 @@
  * Shell Instance Objects
  */
 extern HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid, 
-    REFIID riid, LPVOID *ppvClassObj);
+    REFIID riid, LPVOID *ppvClassObj) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * WebBrowser declaration for SHDOCVW.DLL
@@ -208,73 +208,73 @@ struct InternetExplorer {
     IEDocHost *doc_host;
 };
 
-void WebBrowser_OleObject_Init(WebBrowser*);
-void WebBrowser_ViewObject_Init(WebBrowser*);
-void WebBrowser_Persist_Init(WebBrowser*);
-void WebBrowser_ClassInfo_Init(WebBrowser*);
+void WebBrowser_OleObject_Init(WebBrowser*) DECLSPEC_HIDDEN;
+void WebBrowser_ViewObject_Init(WebBrowser*) DECLSPEC_HIDDEN;
+void WebBrowser_Persist_Init(WebBrowser*) DECLSPEC_HIDDEN;
+void WebBrowser_ClassInfo_Init(WebBrowser*) DECLSPEC_HIDDEN;
 
-void WebBrowser_OleObject_Destroy(WebBrowser*);
+void WebBrowser_OleObject_Destroy(WebBrowser*) DECLSPEC_HIDDEN;
 
-void DocHost_Init(DocHost*,IDispatch*,const IDocHostContainerVtbl*);
-void DocHost_ClientSite_Init(DocHost*);
-void DocHost_Frame_Init(DocHost*);
-void release_dochost_client(DocHost*);
+void DocHost_Init(DocHost*,IDispatch*,const IDocHostContainerVtbl*) DECLSPEC_HIDDEN;
+void DocHost_ClientSite_Init(DocHost*) DECLSPEC_HIDDEN;
+void DocHost_Frame_Init(DocHost*) DECLSPEC_HIDDEN;
+void release_dochost_client(DocHost*) DECLSPEC_HIDDEN;
 
-void DocHost_Release(DocHost*);
-void DocHost_ClientSite_Release(DocHost*);
+void DocHost_Release(DocHost*) DECLSPEC_HIDDEN;
+void DocHost_ClientSite_Release(DocHost*) DECLSPEC_HIDDEN;
 
-void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*);
-void ConnectionPointContainer_Destroy(ConnectionPointContainer*);
+void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*) DECLSPEC_HIDDEN;
+void ConnectionPointContainer_Destroy(ConnectionPointContainer*) DECLSPEC_HIDDEN;
 
-void HlinkFrame_Init(HlinkFrame*,IUnknown*,DocHost*);
-BOOL HlinkFrame_QI(HlinkFrame*,REFIID,void**);
+void HlinkFrame_Init(HlinkFrame*,IUnknown*,DocHost*) DECLSPEC_HIDDEN;
+BOOL HlinkFrame_QI(HlinkFrame*,REFIID,void**) DECLSPEC_HIDDEN;
 
-HRESULT ShellBrowser_Create(IShellBrowser**);
-HRESULT WebBrowserV1_Create(IUnknown*,REFIID,void**);
-HRESULT WebBrowserV2_Create(IUnknown*,REFIID,void**);
+HRESULT ShellBrowser_Create(IShellBrowser**) DECLSPEC_HIDDEN;
+HRESULT WebBrowserV1_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+HRESULT WebBrowserV2_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
-void create_doc_view_hwnd(DocHost*);
-void deactivate_document(DocHost*);
-HRESULT dochost_object_available(DocHost*,IUnknown*);
-void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
-HRESULT navigate_url(DocHost*,LPCWSTR,const VARIANT*,const VARIANT*,VARIANT*,VARIANT*);
-HRESULT go_home(DocHost*);
-void set_doc_state(DocHost*,READYSTATE);
-HRESULT get_location_url(DocHost*,BSTR*);
-void handle_navigation_error(DocHost*,HRESULT,BSTR,IHTMLWindow2*);
+void create_doc_view_hwnd(DocHost*) DECLSPEC_HIDDEN;
+void deactivate_document(DocHost*) DECLSPEC_HIDDEN;
+HRESULT dochost_object_available(DocHost*,IUnknown*) DECLSPEC_HIDDEN;
+void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*) DECLSPEC_HIDDEN;
+HRESULT navigate_url(DocHost*,LPCWSTR,const VARIANT*,const VARIANT*,VARIANT*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT go_home(DocHost*) DECLSPEC_HIDDEN;
+void set_doc_state(DocHost*,READYSTATE) DECLSPEC_HIDDEN;
+HRESULT get_location_url(DocHost*,BSTR*) DECLSPEC_HIDDEN;
+void handle_navigation_error(DocHost*,HRESULT,BSTR,IHTMLWindow2*) DECLSPEC_HIDDEN;
 
 #define WM_DOCHOSTTASK (WM_USER+0x300)
-void push_dochost_task(DocHost*,task_header_t*,task_proc_t,BOOL);
-LRESULT  process_dochost_task(DocHost*,LPARAM);
+void push_dochost_task(DocHost*,task_header_t*,task_proc_t,BOOL) DECLSPEC_HIDDEN;
+LRESULT  process_dochost_task(DocHost*,LPARAM) DECLSPEC_HIDDEN;
 
-HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**);
-void InternetExplorer_WebBrowser_Init(InternetExplorer*);
+HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+void InternetExplorer_WebBrowser_Init(InternetExplorer*) DECLSPEC_HIDDEN;
 
-void released_obj(void);
+void released_obj(void) DECLSPEC_HIDDEN;
 
-HRESULT CUrlHistory_Create(IUnknown*,REFIID,void**);
+HRESULT CUrlHistory_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
-HRESULT InternetShortcut_Create(IUnknown*,REFIID,void**);
+HRESULT InternetShortcut_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
-HRESULT TaskbarList_Create(IUnknown*,REFIID,void**);
+HRESULT TaskbarList_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * Dll lifetime tracking declaration for shdocvw.dll
  */
-extern LONG SHDOCVW_refCount;
+extern LONG SHDOCVW_refCount DECLSPEC_HIDDEN;
 static inline void SHDOCVW_LockModule(void) { InterlockedIncrement( &SHDOCVW_refCount ); }
 static inline void SHDOCVW_UnlockModule(void) { InterlockedDecrement( &SHDOCVW_refCount ); }
 
-extern HINSTANCE shdocvw_hinstance;
-extern void register_iewindow_class(void);
-extern void unregister_iewindow_class(void);
-extern HRESULT update_ie_statustext(InternetExplorer*, LPCWSTR);
+extern HINSTANCE shdocvw_hinstance DECLSPEC_HIDDEN;
+extern void register_iewindow_class(void) DECLSPEC_HIDDEN;
+extern void unregister_iewindow_class(void) DECLSPEC_HIDDEN;
+extern HRESULT update_ie_statustext(InternetExplorer*, LPCWSTR) DECLSPEC_HIDDEN;
 
-HRESULT register_class_object(BOOL);
-HRESULT get_typeinfo(ITypeInfo**);
-DWORD register_iexplore(BOOL);
+HRESULT register_class_object(BOOL) DECLSPEC_HIDDEN;
+HRESULT get_typeinfo(ITypeInfo**) DECLSPEC_HIDDEN;
+DWORD register_iexplore(BOOL) DECLSPEC_HIDDEN;
 
-const char *debugstr_variant(const VARIANT*);
+const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
 
 /* memory allocation functions */
 
