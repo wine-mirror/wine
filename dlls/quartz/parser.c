@@ -702,6 +702,31 @@ static const IPinVtbl Parser_OutputPin_Vtbl =
     BasePinImpl_NewSegment
 };
 
+static HRESULT WINAPI Parser_PullPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
+{
+    PullPin *This = (PullPin *)iface;
+
+    TRACE("(%p/%p)->(%s, %p)\n", This, iface, qzdebugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    /*
+     * It is important to capture the request for the IMediaSeeking interface before it is passed
+     * on to PullPin_QueryInterface, this is necessary since the Parser filter does not support
+     * querying IMediaSeeking
+     */
+    if (IsEqualIID(riid, &IID_IMediaSeeking))
+        *ppv = &((ParserImpl*)This->pin.pinInfo.pFilter)->sourceSeeking;
+
+    if (*ppv)
+    {
+        IUnknown_AddRef((IUnknown *)(*ppv));
+        return S_OK;
+    }
+
+    return PullPin_QueryInterface(iface, riid, ppv);
+}
+
 static HRESULT WINAPI Parser_PullPin_Disconnect(IPin * iface)
 {
     HRESULT hr;
@@ -770,7 +795,7 @@ static HRESULT WINAPI Parser_PullPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes
 
 static const IPinVtbl Parser_InputPin_Vtbl =
 {
-    PullPin_QueryInterface,
+    Parser_PullPin_QueryInterface,
     BasePinImpl_AddRef,
     PullPin_Release,
     BaseInputPinImpl_Connect,
