@@ -279,13 +279,13 @@ static LRESULT WINAPI TreeviewWndProc(HWND hwnd, UINT message, WPARAM wParam, LP
     return ret;
 }
 
-static HWND create_treeview_control(void)
+static HWND create_treeview_control(DWORD style)
 {
     WNDPROC pOldWndProc;
     HWND hTree;
 
     hTree = CreateWindowExA(WS_EX_CLIENTEDGE, WC_TREEVIEWA, NULL, WS_CHILD|WS_VISIBLE|
-            TVS_LINESATROOT|TVS_HASLINES|TVS_HASBUTTONS|TVS_EDITLABELS,
+            TVS_LINESATROOT|TVS_HASLINES|TVS_HASBUTTONS|TVS_EDITLABELS|style,
             0, 0, 120, 100, hMainWnd, (HMENU)100, GetModuleHandleA(0), 0);
 
     SetFocus(hTree);
@@ -321,7 +321,7 @@ static void test_fillroot(void)
     TVITEMA tvi;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -358,7 +358,7 @@ static void test_callback(void)
     HWND hTree;
     DWORD ret;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
 
     ret = TreeView_DeleteAllItems(hTree);
     expect(TRUE, ret);
@@ -435,7 +435,7 @@ static void test_callback(void)
     tvi.state = TVIS_SELECTED;
     ret = TreeView_GetItem(hTree, &tvi);
     expect(TRUE, ret);
-    todo_wine ok(tvi.state == INDEXTOSTATEIMAGEMASK(1), "got 0x%x\n", tvi.state);
+    ok(tvi.state == INDEXTOSTATEIMAGEMASK(1), "got 0x%x\n", tvi.state);
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                 "no TVN_GETDISPINFO for a state seq", FALSE);
@@ -456,7 +456,7 @@ static void test_callback(void)
     tvi.state = 0;
     ret = TreeView_GetItem(hTree, &tvi);
     expect(TRUE, ret);
-    todo_wine ok(tvi.state == (INDEXTOSTATEIMAGEMASK(1) | TVIS_FOCUSED), "got 0x%x\n", tvi.state);
+    ok(tvi.state == (INDEXTOSTATEIMAGEMASK(1) | TVIS_FOCUSED), "got 0x%x\n", tvi.state);
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_get_dispinfo_seq,
                 "callback for state/overlay image index, noop seq", FALSE);
@@ -486,7 +486,7 @@ static void test_select(void)
     BOOL r;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     /* root-none select tests */
@@ -553,7 +553,7 @@ static void test_getitemtext(void)
     CHAR szBuffer[80] = "Blah";
     int nBufferSize = sizeof(szBuffer)/sizeof(CHAR);
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -590,7 +590,7 @@ static void test_focus(void)
     HWND hTree;
     HWND hEdit;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -627,7 +627,7 @@ static void test_get_set_bkcolor(void)
     COLORREF crColor = RGB(0,0,0);
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -660,7 +660,7 @@ static void test_get_set_imagelist(void)
     HIMAGELIST hImageList = NULL;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -685,7 +685,7 @@ static void test_get_set_indent(void)
     int ulMoreThanTwiceMin = -1;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -711,7 +711,7 @@ static void test_get_set_insertmark(void)
     COLORREF crColor = RGB(0,0,0);
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -734,7 +734,7 @@ static void test_get_set_item(void)
     DWORD ret;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     tviRoot.hItem = hRoot;
@@ -785,7 +785,7 @@ static void test_get_set_itemheight(void)
     int ulNewHeight = 0;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -846,7 +846,7 @@ static void test_get_set_scrolltime(void)
     int ulTime = 0;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -867,7 +867,7 @@ static void test_get_set_textcolor(void)
     COLORREF crColor = RGB(0,0,0);
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -900,7 +900,7 @@ static void test_get_set_tooltips(void)
     HWND hPopupTreeView;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -927,7 +927,7 @@ static void test_get_set_unicodeformat(void)
     BOOL bNewSetting = 0;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1111,7 +1111,7 @@ static void test_expandinvisible(void)
     LRESULT ret;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
 
     /* The test builds the following tree and expands then node 1, while node 0 is collapsed.
      *
@@ -1184,7 +1184,7 @@ static void test_itemedit(void)
     CHAR buff[2];
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     /* try with null item */
@@ -1259,7 +1259,7 @@ static void test_get_linecolor(void)
     COLORREF clr;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
 
     /* newly created control has default color */
     clr = (COLORREF)SendMessage(hTree, TVM_GETLINECOLOR, 0, 0);
@@ -1276,7 +1276,7 @@ static void test_get_insertmarkcolor(void)
     COLORREF clr;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
 
     /* newly created control has default color */
     clr = (COLORREF)SendMessage(hTree, TVM_GETINSERTMARKCOLOR, 0, 0);
@@ -1294,7 +1294,7 @@ static void test_expandnotify(void)
     BOOL ret;
     TVITEMA item;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     item.hItem = hRoot;
@@ -1344,7 +1344,7 @@ static void test_expandnotify(void)
     DestroyWindow(hTree);
 
     /* test TVM_GETITEMRECT inside TVN_ITEMEXPANDED notification */
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
     g_get_rect_in_expand = TRUE;
     ret = TreeView_Select(hTree, hChild, TVGN_CARET);
@@ -1359,7 +1359,7 @@ static void test_expandedimage(void)
     HWND hTree;
     BOOL ret;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     item.mask = TVIF_EXPANDEDIMAGE;
@@ -1397,7 +1397,7 @@ static void test_TVS_SINGLEEXPAND(void)
     HWND hTree;
     BOOL ret;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     SetWindowLongA(hTree, GWL_STYLE, GetWindowLong(hTree, GWL_STYLE) | TVS_SINGLEEXPAND);
     /* to avoid paiting related notifications */
     ShowWindow(hTree, SW_HIDE);
@@ -1426,7 +1426,7 @@ static void test_WM_PAINT(void)
     RECT rc;
     HDC hdc;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
 
     clr = SendMessageA(hTree, TVM_SETBKCOLOR, 0, RGB(255, 0, 0));
     ok(clr == -1, "got %d, expected -1\n", clr);
@@ -1457,7 +1457,7 @@ static void test_delete_items(void)
     HWND hTree;
     INT ret;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     /* check delete order */
@@ -1504,7 +1504,7 @@ static void test_htreeitem_layout(void)
     HTREEITEM item1, item2;
     HWND hTree;
 
-    hTree = create_treeview_control();
+    hTree = create_treeview_control(0);
     fill_tree(hTree);
 
     /* root has some special pointer in parent field */
@@ -1529,6 +1529,75 @@ static void test_htreeitem_layout(void)
 
     /* without children now */
     check_item(hRoot, ((struct _ITEM_DATA*)hRoot)->parent, 0, item2);
+
+    DestroyWindow(hTree);
+}
+
+static void test_TVS_CHECKBOXES(void)
+{
+    TVITEMA item;
+    HWND hTree;
+    DWORD ret;
+
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+
+    item.hItem = hRoot;
+    item.mask = TVIF_STATE;
+    item.state = INDEXTOSTATEIMAGEMASK(1);
+    item.stateMask = TVIS_STATEIMAGEMASK;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok(item.state == 0, "got 0x%x\n", item.state);
+
+    /* set some index for a child */
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    item.state = INDEXTOSTATEIMAGEMASK(4);
+    item.stateMask = TVIS_STATEIMAGEMASK;
+    ret = SendMessageA(hTree, TVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+
+    /* enabling check boxes set all items to 1 state image index */
+    SetWindowLongA(hTree, GWL_STYLE, GetWindowLongA(hTree, GWL_STYLE) | TVS_CHECKBOXES);
+
+    item.hItem = hRoot;
+    item.mask = TVIF_STATE;
+    item.state = 0;
+    item.stateMask = TVIS_STATEIMAGEMASK;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok(item.state == INDEXTOSTATEIMAGEMASK(1), "got 0x%x\n", item.state);
+
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    item.state = 0;
+    item.stateMask = TVIS_STATEIMAGEMASK;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok(item.state == INDEXTOSTATEIMAGEMASK(1), "got 0x%x\n", item.state);
+
+    DestroyWindow(hTree);
+
+    /* the same, but initially created with TVS_CHECKBOXES */
+    hTree = create_treeview_control(TVS_CHECKBOXES);
+    fill_tree(hTree);
+
+    item.hItem = hRoot;
+    item.mask = TVIF_STATE;
+    item.state = 0;
+    item.stateMask = TVIS_STATEIMAGEMASK;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok(item.state == INDEXTOSTATEIMAGEMASK(1), "got 0x%x\n", item.state);
+
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    item.state = 0;
+    item.stateMask = TVIS_STATEIMAGEMASK;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok(item.state == INDEXTOSTATEIMAGEMASK(1), "got 0x%x\n", item.state);
 
     DestroyWindow(hTree);
 }
@@ -1602,6 +1671,7 @@ START_TEST(treeview)
     test_WM_PAINT();
     test_delete_items();
     test_htreeitem_layout();
+    test_TVS_CHECKBOXES();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {

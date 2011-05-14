@@ -5428,6 +5428,21 @@ TREEVIEW_Size(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
+static void TREEVIEW_ResetImageStateIndex(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
+{
+    TREEVIEW_ITEM *child = item->firstChild;
+
+    item->state &= ~TVIS_STATEIMAGEMASK;
+    item->state |= INDEXTOSTATEIMAGEMASK(1);
+
+    while (child)
+    {
+        TREEVIEW_ITEM *next = child->nextSibling;
+        TREEVIEW_ResetImageStateIndex(infoPtr, child);
+        child = next;
+    }
+}
+
 static LRESULT
 TREEVIEW_StyleChanged(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
@@ -5443,6 +5458,9 @@ TREEVIEW_StyleChanged(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
             {
                 initialize_checkboxes(infoPtr);
                 TRACE("checkboxes enabled\n");
+
+                /* set all items to state image index 1 */
+                TREEVIEW_ResetImageStateIndex(infoPtr, infoPtr->root);
             }
             else
             {
