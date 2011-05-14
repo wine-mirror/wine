@@ -85,6 +85,10 @@ static const TEST_URL_APPLY TEST_APPLY[] = {
     {"winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 17, "http://winehq.org"},
     {"winehq.org", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
     {"winehq.org", URL_APPLY_DEFAULT, S_OK, 17, "http://winehq.org"},
+    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME , S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
+    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_FORCEAPPLY, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
+    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_FORCEAPPLY | URL_APPLY_DEFAULT, S_OK, 28, "http://http://www.winehq.org"},
+    {"http://www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
     {"", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 7, "http://"},
     {"", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
     {"", URL_APPLY_DEFAULT, S_OK, 7, "http://"}

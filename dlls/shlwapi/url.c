@@ -1764,20 +1764,6 @@ HRESULT WINAPI UrlApplySchemeW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut, DW
 		return ret;
 	}
     }
-    else {
-	/* we have a scheme, see if valid (known scheme) */
-	if (in_scheme.nScheme) {
-	    /* have valid scheme, so just copy and exit */
-	    if (strlenW(pszIn) + 1 > *pcchOut) {
-		*pcchOut = strlenW(pszIn) + 1;
-		return E_POINTER;
-	    }
-	    strcpyW(pszOut, pszIn);
-	    *pcchOut = strlenW(pszOut);
-	    TRACE("valid scheme, returning copy\n");
-	    return S_OK;
-	}
-    }
 
     /* If we are here, then either invalid scheme,
      * or no scheme and can't/failed guess.
