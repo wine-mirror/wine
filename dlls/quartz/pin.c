@@ -473,10 +473,22 @@ static void PullPin_Thread_Process(PullPin *This)
         }
     } while (This->rtCurrent < This->rtStop && hr == S_OK && !This->stop_playback);
 
-    /* Sample was rejected, and we are asked to terminate */
-    if (pSample)
+    /*
+     * Sample was rejected, and we are asked to terminate.  When there is more than one buffer
+     * it is possible for a filter to have several queued samples, making it necessary to
+     * release all of these pending samples.
+     */
+    if (This->stop_playback || FAILED(hr))
     {
-        IMediaSample_Release(pSample);
+        DWORD_PTR dwUser;
+
+        do
+        {
+            if (pSample)
+                IMediaSample_Release(pSample);
+            pSample = NULL;
+            IAsyncReader_WaitForNext(This->pReader, 0, &pSample, &dwUser);
+        } while(pSample);
     }
 
     /* Can't reset state to Sleepy here because that might race, instead PauseProcessing will do that for us
@@ -625,10 +637,26 @@ HRESULT PullPin_PauseProcessing(PullPin * This)
         assert(This->state == Req_Run|| This->state == Req_Sleepy);
 
         assert(WaitForSingleObject(This->thread_sleepy, 0) == WAIT_TIMEOUT);
+
         This->state = Req_Pause;
         This->stop_playback = 1;
         ResetEvent(This->hEventStateChanged);
         SetEvent(This->thread_sleepy);
+
+        /* Release any outstanding samples */
+        if (This->pReader)
+        {
+            IMediaSample *pSample;
+            DWORD_PTR dwUser;
+
+            do
+            {
+                pSample = NULL;
+                IAsyncReader_WaitForNext(This->pReader, 0, &pSample, &dwUser);
+                if (pSample)
+                    IMediaSample_Release(pSample);
+            } while(pSample);
+        }
 
         LeaveCriticalSection(This->pin.pCritSec);
     }
