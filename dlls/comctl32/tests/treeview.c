@@ -39,6 +39,7 @@ static TVITEMA g_item_expanding, g_item_expanded;
 static BOOL g_get_from_expand;
 static BOOL g_get_rect_in_expand;
 static BOOL g_disp_A_to_W;
+static BOOL g_disp_set_stateimage;
 
 #define NUM_MSG_SEQUENCES   2
 #define TREEVIEW_SEQ_INDEX  0
@@ -211,6 +212,11 @@ static const struct message parent_singleexpand_seq[] = {
     { 0 }
 };
 
+static const struct message parent_get_dispinfo_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, TVN_GETDISPINFOA },
+    { 0 }
+};
+
 static const struct message empty_seq[] = {
     { 0 }
 };
@@ -349,13 +355,13 @@ static void test_callback(void)
     CHAR test_string[] = "Test_string";
     static const CHAR test2A[] = "TEST2";
     CHAR buf[128];
-    LRESULT ret;
     HWND hTree;
+    DWORD ret;
 
     hTree = create_treeview_control();
 
     ret = TreeView_DeleteAllItems(hTree);
-    ok(ret == TRUE, "ret\n");
+    expect(TRUE, ret);
     ins.hParent = TVI_ROOT;
     ins.hInsertAfter = TVI_ROOT;
     U(ins).item.mask = TVIF_TEXT;
@@ -368,7 +374,7 @@ static void test_callback(void)
     tvi.pszText = buf;
     tvi.cchTextMax = sizeof(buf)/sizeof(buf[0]);
     ret = TreeView_GetItem(hTree, &tvi);
-    ok(ret == 1, "ret\n");
+    expect(TRUE, ret);
     ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Callback item text mismatch %s vs %s\n",
         tvi.pszText, TEST_CALLBACK_TEXT);
 
@@ -381,17 +387,17 @@ static void test_callback(void)
 
     tvi.hItem = hItem1;
     ret = TreeView_GetItem(hTree, &tvi);
-    ok(ret == TRUE, "ret\n");
+    expect(TRUE, ret);
     ok(strcmp(tvi.pszText, test_string) == 0, "Item text mismatch %s vs %s\n",
         tvi.pszText, test_string);
 
     /* undocumented: pszText of NULL also means LPSTR_CALLBACK: */
     tvi.pszText = NULL;
     ret = TreeView_SetItem(hTree, &tvi);
-    ok(ret == 1, "Expected SetItem return 1, got %ld\n", ret);
+    expect(TRUE, ret);
     tvi.pszText = buf;
     ret = TreeView_GetItem(hTree, &tvi);
-    ok(ret == TRUE, "Expected GetItem return TRUE, got %ld\n", ret);
+    expect(TRUE, ret);
     ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
         tvi.pszText, TEST_CALLBACK_TEXT);
 
@@ -401,7 +407,7 @@ static void test_callback(void)
     tvi.hItem = hItem2;
     memset(buf, 0, sizeof(buf));
     ret = TreeView_GetItem(hTree, &tvi);
-    ok(ret == TRUE, "Expected GetItem return TRUE, got %ld\n", ret);
+    expect(TRUE, ret);
     ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
         tvi.pszText, TEST_CALLBACK_TEXT);
 
@@ -410,10 +416,66 @@ static void test_callback(void)
     tvi.hItem = hItem2;
     memset(buf, 0, sizeof(buf));
     ret = TreeView_GetItem(hTree, &tvi);
-    ok(ret == TRUE, "got %ld\n", ret);
+    expect(TRUE, ret);
     ok(strcmp(tvi.pszText, test2A) == 0, "got %s, expected %s\n",
         tvi.pszText, test2A);
     g_disp_A_to_W = FALSE;
+
+    /* handler changes state image index */
+    SetWindowLongA(hTree, GWL_STYLE, GetWindowLongA(hTree, GWL_STYLE) | TVS_CHECKBOXES);
+
+    /* clear selection, handler will set selected state */
+    ret = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, 0);
+    expect(TRUE, ret);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    tvi.hItem = hRoot;
+    tvi.mask = TVIF_STATE;
+    tvi.state = TVIS_SELECTED;
+    ret = TreeView_GetItem(hTree, &tvi);
+    expect(TRUE, ret);
+    todo_wine ok(tvi.state == INDEXTOSTATEIMAGEMASK(1), "got 0x%x\n", tvi.state);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "no TVN_GETDISPINFO for a state seq", FALSE);
+
+    tvi.hItem     = hRoot;
+    tvi.mask      = TVIF_IMAGE | TVIF_STATE;
+    tvi.state     = TVIS_FOCUSED;
+    tvi.stateMask = TVIS_FOCUSED;
+    tvi.iImage    = I_IMAGECALLBACK;
+    ret = TreeView_SetItem(hTree, &tvi);
+    expect(TRUE, ret);
+
+    /* ask for item image index through callback - state is also set with state image index */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    tvi.hItem = hRoot;
+    tvi.mask = TVIF_IMAGE;
+    tvi.state = 0;
+    ret = TreeView_GetItem(hTree, &tvi);
+    expect(TRUE, ret);
+    todo_wine ok(tvi.state == (INDEXTOSTATEIMAGEMASK(1) | TVIS_FOCUSED), "got 0x%x\n", tvi.state);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_get_dispinfo_seq,
+                "callback for state/overlay image index, noop seq", FALSE);
+
+    /* ask for image again and overwrite state to some value in handler */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    g_disp_set_stateimage = TRUE;
+    tvi.hItem = hRoot;
+    tvi.mask = TVIF_IMAGE;
+    tvi.state = INDEXTOSTATEIMAGEMASK(1);
+    ret = TreeView_GetItem(hTree, &tvi);
+    expect(TRUE, ret);
+    /* handler sets TVIS_SELECTED as well */
+    todo_wine ok(tvi.state == (TVIS_FOCUSED | TVIS_SELECTED | INDEXTOSTATEIMAGEMASK(2) | INDEXTOOVERLAYMASK(3)), "got 0x%x\n", tvi.state);
+    g_disp_set_stateimage = FALSE;
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_get_dispinfo_seq,
+                "callback for state/overlay image index seq", FALSE);
 
     DestroyWindow(hTree);
 }
@@ -668,32 +730,47 @@ static void test_get_set_item(void)
     TVITEMA tviRoot = {0};
     int nBufferSize = 80;
     char szBuffer[80] = {0};
+    DWORD ret;
     HWND hTree;
 
     hTree = create_treeview_control();
     fill_tree(hTree);
 
+    tviRoot.hItem = hRoot;
+    tviRoot.mask  = TVIF_STATE;
+    tviRoot.state = TVIS_FOCUSED;
+    tviRoot.stateMask = TVIS_FOCUSED;
+    ret = SendMessage( hTree, TVM_SETITEMA, 0, (LPARAM)&tviRoot );
+    expect(TRUE, ret);
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    /* Test the root item */
+    /* Test the root item, state is set even when not requested */
     tviRoot.hItem = hRoot;
     tviRoot.mask = TVIF_TEXT;
+    tviRoot.state = 0;
+    tviRoot.stateMask = 0;
     tviRoot.cchTextMax = nBufferSize;
     tviRoot.pszText = szBuffer;
-    SendMessage( hTree, TVM_GETITEMA, 0, (LPARAM)&tviRoot );
+    ret = SendMessage( hTree, TVM_GETITEMA, 0, (LPARAM)&tviRoot );
+    expect(TRUE, ret);
     ok(!strcmp("Root", szBuffer), "GetItem: szBuffer=\"%s\", expected \"Root\"\n", szBuffer);
+    ok(tviRoot.state == TVIS_FOCUSED, "got 0x%0x\n", tviRoot.state);
 
     /* Change the root text */
     strncpy(szBuffer, "Testing123", nBufferSize);
-    SendMessage( hTree, TVM_SETITEMA, 0, (LPARAM)&tviRoot );
+    ret = SendMessage( hTree, TVM_SETITEMA, 0, (LPARAM)&tviRoot );
+    expect(TRUE, ret);
     memset(szBuffer, 0, nBufferSize);
-    SendMessage( hTree, TVM_GETITEMA, 0, (LPARAM)&tviRoot );
+    ret = SendMessage( hTree, TVM_GETITEMA, 0, (LPARAM)&tviRoot );
+    expect(TRUE, ret);
     ok(!strcmp("Testing123", szBuffer), "GetItem: szBuffer=\"%s\", expected \"Testing123\"\n", szBuffer);
 
     /* Reset the root text */
     memset(szBuffer, 0, nBufferSize);
     strncpy(szBuffer, "Root", nBufferSize);
-    SendMessage( hTree, TVM_SETITEMA, 0, (LPARAM)&tviRoot );
+    ret = SendMessage( hTree, TVM_SETITEMA, 0, (LPARAM)&tviRoot );
+    expect(TRUE, ret);
 
     ok_sequence(sequences, TREEVIEW_SEQ_INDEX, test_get_set_item_seq,
         "test get set item", FALSE);
@@ -934,6 +1011,15 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
 
                     disp->hdr.code = TVN_GETDISPINFOW;
                     memcpy(disp->item.pszText, testW, sizeof(testW));
+                }
+
+                if (g_disp_set_stateimage)
+                {
+                    ok(disp->item.mask == TVIF_IMAGE, "got %x\n", disp->item.mask);
+                    /* both masks set here are necessary to change state bits */
+                    disp->item.mask |= TVIF_STATE;
+                    disp->item.state = TVIS_SELECTED | INDEXTOSTATEIMAGEMASK(2) | INDEXTOOVERLAYMASK(3);
+                    disp->item.stateMask = TVIS_SELECTED | TVIS_OVERLAYMASK | TVIS_STATEIMAGEMASK;
                 }
 
                 break;

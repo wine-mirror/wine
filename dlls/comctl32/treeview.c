@@ -704,7 +704,7 @@ TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     NMTVDISPINFOEXW callback;
     HWND hwnd = infoPtr->hwnd;
 
-    TRACE("mask %x callbackMask %x\n", mask, wineItem->callbackMask);
+    TRACE("mask=0x%x, callbackmask=0x%x\n", mask, wineItem->callbackMask);
     mask &= wineItem->callbackMask;
 
     if (mask == 0) return;
@@ -735,7 +735,7 @@ TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 
     if ((mask & TVIF_TEXT) && callback.item.pszText != wineItem->pszText)
     {
-	/* Instead of copying text into our buffer user specified its own */
+	/* Instead of copying text into our buffer user specified his own */
 	if (!infoPtr->bNtfUnicode && (callback.hdr.code == TVN_GETDISPINFOA)) {
 	    LPWSTR newText;
 	    int buflen;
@@ -2100,9 +2100,7 @@ TREEVIEW_GetItemT(const TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
     if (tvItem->mask & TVIF_INTEGRAL)
 	tvItem->iIntegral = wineItem->iIntegral;
 
-    /* undocumented: windows ignores TVIF_PARAM and
-     * * always sets lParam
-     */
+    /* undocumented: (mask & TVIF_PARAM) ignored and lParam is always set */
     tvItem->lParam = wineItem->lParam;
 
     if (tvItem->mask & TVIF_SELECTEDIMAGE)
@@ -2111,11 +2109,8 @@ TREEVIEW_GetItemT(const TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
     if (tvItem->mask & TVIF_EXPANDEDIMAGE)
 	tvItem->iExpandedImage = wineItem->iExpandedImage;
 
-    if (tvItem->mask & TVIF_STATE)
-        /* Careful here - Windows ignores the stateMask when you get the state
- 	    That contradicts the documentation, but makes more common sense, masking
-	    retrieval in this way seems overkill */
-        tvItem->state = wineItem->state;
+    /* undocumented: stateMask and (state & TVIF_STATE) ignored, so state is always set */
+    tvItem->state = wineItem->state;
 
     if (tvItem->mask & TVIF_TEXT)
     {
@@ -2157,8 +2152,8 @@ TREEVIEW_GetItemT(const TREEVIEW_INFO *infoPtr, LPTVITEMEXW tvItem, BOOL isW)
         tvItem->uStateEx = 0;
     }
 
-    TRACE("item <%p>, txt %p, img %p, mask %x\n",
-	  wineItem, tvItem->pszText, &tvItem->iImage, tvItem->mask);
+    TRACE("item <%p>, txt %p, img %d, mask %x\n",
+	  wineItem, tvItem->pszText, tvItem->iImage, tvItem->mask);
 
     return TRUE;
 }
