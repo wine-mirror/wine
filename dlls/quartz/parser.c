@@ -624,10 +624,9 @@ static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid,
         *ppv = iface;
     else if (IsEqualIID(riid, &IID_IPin))
         *ppv = iface;
+    /* The Parser filter does not support querying IMediaSeeking, return it directly */
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
-    {
-        return IBaseFilter_QueryInterface(This->pin.pin.pinInfo.pFilter, &IID_IMediaSeeking, ppv);
-    }
+        *ppv = &((ParserImpl*)This->pin.pin.pinInfo.pFilter)->sourceSeeking;
 
     if (*ppv)
     {
