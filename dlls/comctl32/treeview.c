@@ -815,6 +815,12 @@ TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     if (mask & TVIF_CHILDREN)
 	wineItem->cChildren = callback.item.cChildren;
 
+    if (callback.item.mask & TVIF_STATE)
+    {
+        wineItem->state &= ~callback.item.stateMask;
+        wineItem->state |= (callback.item.state & callback.item.stateMask);
+    }
+
     /* These members are now permanently set. */
     if (callback.item.mask & TVIF_DI_SETITEM)
 	wineItem->callbackMask &= ~callback.item.mask;

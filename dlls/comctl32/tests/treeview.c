@@ -468,10 +468,11 @@ static void test_callback(void)
     tvi.hItem = hRoot;
     tvi.mask = TVIF_IMAGE;
     tvi.state = INDEXTOSTATEIMAGEMASK(1);
+    tvi.stateMask = 0;
     ret = TreeView_GetItem(hTree, &tvi);
     expect(TRUE, ret);
     /* handler sets TVIS_SELECTED as well */
-    todo_wine ok(tvi.state == (TVIS_FOCUSED | TVIS_SELECTED | INDEXTOSTATEIMAGEMASK(2) | INDEXTOOVERLAYMASK(3)), "got 0x%x\n", tvi.state);
+    ok(tvi.state == (TVIS_FOCUSED | TVIS_SELECTED | INDEXTOSTATEIMAGEMASK(2) | INDEXTOOVERLAYMASK(3)), "got 0x%x\n", tvi.state);
     g_disp_set_stateimage = FALSE;
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_get_dispinfo_seq,
