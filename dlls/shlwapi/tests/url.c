@@ -91,7 +91,12 @@ static const TEST_URL_APPLY TEST_APPLY[] = {
     {"http://www.winehq.org", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
     {"", URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT, S_OK, 7, "http://"},
     {"", URL_APPLY_GUESSSCHEME, S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
-    {"", URL_APPLY_DEFAULT, S_OK, 7, "http://"}
+    {"", URL_APPLY_DEFAULT, S_OK, 7, "http://"},
+    {"u:\\windows", URL_APPLY_GUESSFILE | URL_APPLY_DEFAULT, S_OK, 18, "file:///u:/windows"},
+    {"u:\\windows", URL_APPLY_GUESSFILE, S_OK, 18, "file:///u:/windows"},
+    {"u:\\windows", URL_APPLY_DEFAULT, S_OK, 17, "http://u:\\windows"},
+    {"file:///c:/windows", URL_APPLY_GUESSFILE , S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
+    {"aa:\\windows", URL_APPLY_GUESSFILE , S_FALSE, TEST_APPLY_MAX_LENGTH, untouchedA},
 };
 
 /* ################ */
@@ -379,6 +384,7 @@ static const struct {
     {"c:foo\\bar", "file:///c:foo/bar", S_OK},
     {"c:\\foo/b a%r", "file:///c:/foo/b%20a%25r", S_OK},
     {"c:\\foo\\foo bar", "file:///c:/foo/foo%20bar", S_OK},
+    {"file:///c:/foo/bar", "file:///c:/foo/bar", S_FALSE},
 #if 0
     /* The following test fails on native shlwapi as distributed with Win95/98.
      * Wine matches the behaviour of later versions.
