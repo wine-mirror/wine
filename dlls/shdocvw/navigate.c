@@ -578,21 +578,12 @@ static HRESULT create_moniker(LPCWSTR url, IMoniker **mon)
     if(PathIsURLW(url))
         return CreateURLMoniker(NULL, url, mon);
 
-    if(url[1] == ':') {
-        size = sizeof(new_url);
-        hres = UrlCreateFromPathW(url, new_url, &size, 0);
-        if(FAILED(hres)) {
-            WARN("UrlCreateFromPathW failed: %08x\n", hres);
-            return hres;
-        }
-    }else {
-        size = sizeof(new_url)/sizeof(WCHAR);
-        hres = UrlApplySchemeW(url, new_url, &size, URL_APPLY_GUESSSCHEME);
-        TRACE("got %s\n", debugstr_w(new_url));
-        if(FAILED(hres)) {
-            WARN("UrlApplyScheme failed: %08x\n", hres);
-            return hres;
-        }
+    size = sizeof(new_url)/sizeof(WCHAR);
+    hres = UrlApplySchemeW(url, new_url, &size, URL_APPLY_GUESSSCHEME | URL_APPLY_GUESSFILE);
+    TRACE("was %s got %s\n", debugstr_w(url), debugstr_w(new_url));
+    if(FAILED(hres)) {
+        WARN("UrlApplyScheme failed: %08x\n", hres);
+        return hres;
     }
 
     return CreateURLMoniker(NULL, new_url, mon);
