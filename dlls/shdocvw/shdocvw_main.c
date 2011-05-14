@@ -333,14 +333,8 @@ DWORD WINAPI ParseURLFromOutsideSourceW(LPCWSTR url, LPWSTR out, LPDWORD plen, L
     if (!PathIsURLW(ptr)) {
         len = sizeof(buffer_in) / sizeof(buffer_in[0]);
         buffer_in[0] = 0;
-        hr = UrlApplySchemeW(ptr, buffer_in, &len, URL_APPLY_GUESSSCHEME);
+        hr = UrlApplySchemeW(ptr, buffer_in, &len, URL_APPLY_GUESSSCHEME | URL_APPLY_DEFAULT);
         TRACE("got 0x%x with %s\n", hr, debugstr_w(buffer_in));
-        if (hr != S_OK) {
-            /* when we can't guess the scheme, use the default scheme */
-            len = sizeof(buffer_in) / sizeof(buffer_in[0]);
-            hr = UrlApplySchemeW(ptr, buffer_in, &len, URL_APPLY_DEFAULT);
-        }
-
         if (hr == S_OK) {
             /* we parsed the url to buffer_in */
             ptr = buffer_in;
