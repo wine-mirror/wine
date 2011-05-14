@@ -387,6 +387,9 @@ static void PullPin_Flush(PullPin *This)
 
     if (This->pReader)
     {
+        /* Do not allow state to change while flushing */
+        EnterCriticalSection(This->pin.pCritSec);
+
         /* Flush outstanding samples */
         IAsyncReader_BeginFlush(This->pReader);
 
@@ -405,6 +408,8 @@ static void PullPin_Flush(PullPin *This)
         }
 
         IAsyncReader_EndFlush(This->pReader);
+
+        LeaveCriticalSection(This->pin.pCritSec);
     }
 }
 
