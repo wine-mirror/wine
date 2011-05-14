@@ -1238,9 +1238,15 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
     sym->current++;
 
     /* Then function name or operator code */
-    if (*sym->current == '?' && sym->current[1] != '$')
+    if (*sym->current == '?' && (sym->current[1] != '$' || sym->current[2] == '?'))
     {
         const char* function_name = NULL;
+
+        if (sym->current[1] == '$')
+        {
+            do_after = 6;
+            sym->current += 2;
+        }
 
         /* C++ operator code (one character, or two if the first is '_') */
         switch (*++sym->current)
@@ -1374,6 +1380,17 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
             sym->result = (char*)function_name;
             ret = TRUE;
             goto done;
+        case 6:
+            {
+                char *args;
+                struct array array_pmt;
+
+                str_array_init(&array_pmt);
+                args = get_args(sym, &array_pmt, FALSE, '<', '>');
+                if (args != NULL) function_name = str_printf(sym, "%s%s", function_name, args);
+                sym->names.num = 0;
+            }
+            /* fall through */
         default:
             if (!str_array_push(sym, function_name, -1, &sym->stack))
                 return FALSE;

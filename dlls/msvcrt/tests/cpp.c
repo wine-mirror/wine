@@ -1053,6 +1053,9 @@ static void test_demangle(void)
 /* 118 */ {"?swprintf@@YAHPA_WIPB_WZZ", "int __cdecl swprintf(wchar_t *,unsigned int,wchar_t const *,...)"},
 /* 119 */ {"??Xstd@@YAAEAV?$complex@M@0@AEAV10@AEBV10@@Z", "class std::complex<float> & __ptr64 __cdecl std::operator*=(class std::complex<float> & __ptr64,class std::complex<float> const & __ptr64)"},
 /* 120 */ {"?_Doraise@bad_cast@std@@MEBAXXZ", "protected: virtual void __cdecl std::bad_cast::_Doraise(void)const __ptr64"},
+/* 121 */ {"??$?DM@std@@YA?AV?$complex@M@0@ABMABV10@@Z",
+           "class std::complex<float> __cdecl std::operator*<float>(float const &,class std::complex<float> const &)",
+           "??$?DM@std@@YA?AV?$complex@M@0@ABMABV10@@Z"},
 
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));
