@@ -73,6 +73,7 @@ typedef struct PullPin
 
 	REFERENCE_TIME rtStart, rtCurrent, rtNext, rtStop;
 	IAsyncReader * pReader;
+	IMemAllocator * prefAlloc;
 	IMemAllocator * pAlloc;
 	QUERYACCEPTPROC fnQueryAccept;
 	SAMPLEPROC_PULL fnSampleProc;

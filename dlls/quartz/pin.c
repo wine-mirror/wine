@@ -283,6 +283,7 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
 
         This->pReader = NULL;
         This->pAlloc = NULL;
+        This->prefAlloc = NULL;
         if (SUCCEEDED(hr))
         {
             hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&This->pReader);
@@ -293,9 +294,19 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
             hr = This->fnPreConnect(iface, pReceivePin, &props);
         }
 
+        /*
+         * Some custom filters (such as the one used by Fallout 3
+         * and Fallout: New Vegas) expect to be passed a non-NULL
+         * preferred allocator.
+         */
         if (SUCCEEDED(hr))
         {
-            hr = IAsyncReader_RequestAllocator(This->pReader, NULL, &props, &This->pAlloc);
+            hr = StdMemAllocator_create(NULL, (LPVOID *) &This->prefAlloc);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IAsyncReader_RequestAllocator(This->pReader, This->prefAlloc, &props, &This->pAlloc);
         }
 
         if (SUCCEEDED(hr))
@@ -314,6 +325,9 @@ HRESULT WINAPI PullPin_ReceiveConnection(IPin * iface, IPin * pReceivePin, const
              if (This->pReader)
                  IAsyncReader_Release(This->pReader);
              This->pReader = NULL;
+             if (This->prefAlloc)
+                 IMemAllocator_Release(This->prefAlloc);
+             This->prefAlloc = NULL;
              if (This->pAlloc)
                  IMemAllocator_Release(This->pAlloc);
              This->pAlloc = NULL;
@@ -366,6 +380,8 @@ ULONG WINAPI PullPin_Release(IPin *iface)
         WaitForSingleObject(This->hEventStateChanged, INFINITE);
         assert(!This->hThread);
 
+        if(This->prefAlloc)
+            IMemAllocator_Release(This->prefAlloc);
         if(This->pAlloc)
             IMemAllocator_Release(This->pAlloc);
         if(This->pReader)
