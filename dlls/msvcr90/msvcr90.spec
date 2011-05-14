@@ -145,7 +145,7 @@
 @ cdecl _CRT_RTC_INIT(ptr ptr long long long)
 @ cdecl _CRT_RTC_INITW(ptr ptr long long long)
 @ stub _CreateFrameInfo
-@ cdecl _CxxThrowException(long long) msvcrt._CxxThrowException
+@ stdcall _CxxThrowException(long long) msvcrt._CxxThrowException
 @ cdecl -i386 -norelay _EH_prolog() msvcrt._EH_prolog
 @ stub _FindAndUnlinkFrame
 @ cdecl _Getdays() msvcrt._Getdays

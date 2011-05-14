@@ -116,7 +116,7 @@
 @ stub _CrtSetReportFile
 @ cdecl _CrtSetReportHook(ptr)
 @ cdecl _CrtSetReportMode(long long)
-@ cdecl _CxxThrowException(long long) msvcrt._CxxThrowException
+@ stdcall _CxxThrowException(long long) msvcrt._CxxThrowException
 @ cdecl -i386 -norelay _EH_prolog() msvcrt._EH_prolog
 @ cdecl _Getdays() msvcrt._Getdays
 @ cdecl _Getmonths() msvcrt._Getmonths
