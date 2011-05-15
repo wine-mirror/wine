@@ -580,3 +580,15 @@ HRESULT WINAPI SHCreateLinks( HWND hWnd, LPCSTR lpszDir, LPDATAOBJECT lpDataObje
     FIXME("%p %s %p %08x %p\n",hWnd,lpszDir,lpDataObject,uFlags,lppidlLinks);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *  SHOpenFolderAndSelectItems
+ *
+ *   Added in XP.
+ */
+HRESULT WINAPI SHOpenFolderAndSelectItems( PCIDLIST_ABSOLUTE pidlFolder, UINT cidl,
+                              PCUITEMID_CHILD_ARRAY *apidl, DWORD flags )
+{
+    FIXME("%p %u %p 0x%x: stub\n", pidlFolder, cidl, apidl, flags);
+    return E_NOTIMPL;
+}
