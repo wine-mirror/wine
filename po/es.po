@@ -6700,7 +6700,7 @@ msgstr "&Lista"
 msgid "&Details"
 msgstr "&Detalles"
 
-#: shell32.rc:48
+#: shell32.rc:48 winefile.rc:81
 msgid "Arrange &Icons"
 msgstr "Ordenar &iconos"
 
@@ -11348,10 +11348,6 @@ msgstr "&Cascada\tCtrl+F5"
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Mosaico &vertical\tCtrl+F4"
-
-#: winefile.rc:81
-msgid "Arrange &Symbols"
-msgstr "Alinear &símbolos"
 
 #: winefile.rc:87
 #, fuzzy

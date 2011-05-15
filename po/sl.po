@@ -6356,7 +6356,7 @@ msgstr "&Seznam"
 msgid "&Details"
 msgstr "&Podrobnosti"
 
-#: shell32.rc:48
+#: shell32.rc:48 winefile.rc:81
 msgid "Arrange &Icons"
 msgstr "Razporedi &ikone"
 
@@ -10892,10 +10892,6 @@ msgstr "V kaskado\tCtrl+F5"
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Razpostavi &navpično\tCtrl+F4"
-
-#: winefile.rc:81
-msgid "Arrange &Symbols"
-msgstr "Razporedi &simbole"
 
 #: winefile.rc:87
 #, fuzzy

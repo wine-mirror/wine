@@ -6546,7 +6546,7 @@ msgstr "&Seznam"
 msgid "&Details"
 msgstr "&Podrobnosti"
 
-#: shell32.rc:48
+#: shell32.rc:48 winefile.rc:81
 msgid "Arrange &Icons"
 msgstr "Seřadit &ikony"
 
@@ -11103,10 +11103,6 @@ msgstr "Kaskádování\tCtrl+F5"
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Uspořádat &vertikálně\tCtrl+F4"
-
-#: winefile.rc:81
-msgid "Arrange &Symbols"
-msgstr "Zarovnat &symboly"
 
 #: winefile.rc:87
 #, fuzzy

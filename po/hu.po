@@ -6703,7 +6703,7 @@ msgstr "&Lista"
 msgid "&Details"
 msgstr "&Részletek"
 
-#: shell32.rc:48
+#: shell32.rc:48 winefile.rc:81
 msgid "Arrange &Icons"
 msgstr "&Ikonok elrendezése"
 
@@ -10996,10 +10996,6 @@ msgstr "Lépcsőzetes elrendezés\tCtrl+F5"
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Mozaikszerű elrendezés fü&ggőlegesen\tCtrl+F4"
-
-#: winefile.rc:81
-msgid "Arrange &Symbols"
-msgstr "&Szimbólum elrendezés"
 
 #: winefile.rc:87
 #, fuzzy

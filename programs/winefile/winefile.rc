@@ -78,7 +78,7 @@ IDM_WINEFILE MENU
         MENUITEM "Cascading\tCtrl+F5",          ID_WINDOW_CASCADE
         MENUITEM "Tile &Horizontally",          ID_WINDOW_TILE_HORZ
         MENUITEM "Tile &Vertically\tCtrl+F4",   ID_WINDOW_TILE_VERT
-        MENUITEM "Arrange &Symbols",            ID_WINDOW_ARRANGE
+        MENUITEM "Arrange &Icons",              ID_WINDOW_ARRANGE
         MENUITEM "&Refresh\tF5",                ID_REFRESH
     }
 

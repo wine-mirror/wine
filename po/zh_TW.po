@@ -6579,7 +6579,7 @@ msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
 "詳情(&D)"
 
-#: shell32.rc:48
+#: shell32.rc:48 winefile.rc:81
 #, fuzzy
 msgid "Arrange &Icons"
 msgstr "排列圖標(&A)"
@@ -10845,10 +10845,6 @@ msgstr "層疊\tCtrl+F5"
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "垂直平鋪(&)\tCtrl+F4"
-
-#: winefile.rc:81
-msgid "Arrange &Symbols"
-msgstr "自動排列圖標(&S)"
 
 #: winefile.rc:87
 #, fuzzy

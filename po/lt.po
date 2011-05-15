@@ -6331,7 +6331,7 @@ msgstr "&Sąrašas"
 msgid "&Details"
 msgstr "&Išsamus"
 
-#: shell32.rc:48
+#: shell32.rc:48 winefile.rc:81
 msgid "Arrange &Icons"
 msgstr "Išdėstyti &piktogramas"
 
@@ -10852,10 +10852,6 @@ msgstr "Išdėstyti pa&kopomis\tVald+F5"
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Iškloti &stačiai\tVald+F4"
-
-#: winefile.rc:81
-msgid "Arrange &Symbols"
-msgstr "Išdėstyti si&mbolius"
 
 #: winefile.rc:87
 msgid "&About Wine File"

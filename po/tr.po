@@ -6675,7 +6675,7 @@ msgstr "&Liste"
 msgid "&Details"
 msgstr "&Ayrıntılı"
 
-#: shell32.rc:48
+#: shell32.rc:48 winefile.rc:81
 msgid "Arrange &Icons"
 msgstr "&Simgeleri Düzenle"
 
@@ -11271,10 +11271,6 @@ msgstr "Diz\tCtrl+F5"
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Di&key Döşe\tCtrl+F4"
-
-#: winefile.rc:81
-msgid "Arrange &Symbols"
-msgstr "Simgeleri D&üzenle"
 
 #: winefile.rc:87
 #, fuzzy

@@ -6318,7 +6318,7 @@ msgstr "一覧(&L)"
 msgid "&Details"
 msgstr "詳細(&D)"
 
-#: shell32.rc:48
+#: shell32.rc:48 winefile.rc:81
 msgid "Arrange &Icons"
 msgstr "アイコンの整列(&I)"
 
@@ -10824,10 +10824,6 @@ msgstr "重ねて表示\tCtrl+F5"
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "左右に並べて表示(&V)\tCtrl+F4"
-
-#: winefile.rc:81
-msgid "Arrange &Symbols"
-msgstr "アイコンを整列(&S)"
 
 #: winefile.rc:87
 msgid "&About Wine File"

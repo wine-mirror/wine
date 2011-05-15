@@ -6311,7 +6311,7 @@ msgstr "목록(&L)"
 msgid "&Details"
 msgstr "자세히(&D)"
 
-#: shell32.rc:48
+#: shell32.rc:48 winefile.rc:81
 msgid "Arrange &Icons"
 msgstr "아이콘 정렬(&I)"
 
@@ -10778,10 +10778,6 @@ msgstr "정렬\tCtrl+F5"
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "세로 바둑판식 정렬(&V)\tCtrl+F4"
-
-#: winefile.rc:81
-msgid "Arrange &Symbols"
-msgstr "심벌로 정렬(&S)"
 
 #: winefile.rc:87
 msgid "&About Wine File"

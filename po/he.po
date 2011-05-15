@@ -6535,7 +6535,7 @@ msgstr "&רשימה"
 msgid "&Details"
 msgstr "&פרטים"
 
-#: shell32.rc:48
+#: shell32.rc:48 winefile.rc:81
 msgid "Arrange &Icons"
 msgstr "סי&דור הסמלים"
 
@@ -11014,10 +11014,6 @@ msgstr "דירוג\tCtrl+F5"
 #: winefile.rc:80
 msgid "Tile &Vertically\tCtrl+F4"
 msgstr "פריסה &אופקית\tCtrl+F4"
-
-#: winefile.rc:81
-msgid "Arrange &Symbols"
-msgstr "סידור ה&סמלים"
 
 #: winefile.rc:87
 #, fuzzy
