@@ -1056,6 +1056,9 @@ static void test_demangle(void)
 /* 121 */ {"??$?DM@std@@YA?AV?$complex@M@0@ABMABV10@@Z",
            "class std::complex<float> __cdecl std::operator*<float>(float const &,class std::complex<float> const &)",
            "??$?DM@std@@YA?AV?$complex@M@0@ABMABV10@@Z"},
+/* 122 */ {"?_R2@?BN@???$_Fabs@N@std@@YANAEBV?$complex@N@1@PEAH@Z@4NB",
+           "double const `double __cdecl std::_Fabs<double>(class std::complex<double> const & __ptr64,int * __ptr64)'::`29'::_R2",
+           "?_R2@?BN@???$_Fabs@N@std@@YANAEBV?$complex@N@1@PEAH@Z@4NB"},
 
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));

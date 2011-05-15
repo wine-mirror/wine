@@ -106,6 +106,8 @@ struct datatype_t
     const char*         right;
 };
 
+static BOOL symbol_demangle(struct parsed_symbol* sym);
+
 /******************************************************************
  *		und_alloc
  *
@@ -597,12 +599,31 @@ static BOOL get_class(struct parsed_symbol* sym)
             name = str_array_get_ref(&sym->names, *sym->current++ - '0');
             break;
         case '?':
-            if (*++sym->current == '$') 
+            switch (*++sym->current)
             {
+            case '$':
                 sym->current++;
                 if ((name = get_template_name(sym)) &&
                     !str_array_push(sym, name, -1, &sym->names))
                     return FALSE;
+                break;
+            case '?':
+                {
+                    struct array stack = sym->stack;
+                    unsigned int start = sym->names.start;
+                    unsigned int num = sym->names.num;
+
+                    str_array_init( &sym->stack );
+                    if (symbol_demangle( sym )) name = str_printf( sym, "`%s'", sym->result );
+                    sym->names.start = start;
+                    sym->names.num = num;
+                    sym->stack = stack;
+                }
+                break;
+            default:
+                if (!(name = get_number( sym ))) return FALSE;
+                name = str_printf( sym, "`%s'", name );
+                break;
             }
             break;
         default:
@@ -1233,8 +1254,6 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
 
     /* MS mangled names always begin with '?' */
     if (*sym->current != '?') return FALSE;
-    str_array_init(&sym->names);
-    str_array_init(&sym->stack);
     sym->current++;
 
     /* Then function name or operator code */
@@ -1436,7 +1455,7 @@ static BOOL symbol_demangle(struct parsed_symbol* sym)
         sym->flags &= ~UNDNAME_NO_FUNCTION_RETURNS;
         break;
     case 5:
-        sym->names.start = 1;
+        sym->names.start++;
         break;
     }
 
@@ -1497,6 +1516,8 @@ char* CDECL __unDNameEx(char* buffer, const char* mangled, int buflen,
     sym.mem_alloc_ptr = memget;
     sym.mem_free_ptr  = memfree;
     sym.current       = mangled;
+    str_array_init( &sym.names );
+    str_array_init( &sym.stack );
 
     result = symbol_demangle(&sym) ? sym.result : mangled;
     if (buffer && buflen)
