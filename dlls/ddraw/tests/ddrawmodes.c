@@ -501,7 +501,7 @@ static void enumdisplaymodes(void)
 
     modes16bpp_cnt = 0;
     ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_PITCH;
-    ddsd.lPitch = 123;
+    U1(ddsd).lPitch = 123;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
     ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
@@ -509,7 +509,7 @@ static void enumdisplaymodes(void)
 
     modes16bpp_cnt = 0;
     ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_REFRESHRATE;
-    ddsd.dwRefreshRate = 1;
+    U2(ddsd).dwRefreshRate = 1;
 
     rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
     ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
@@ -531,7 +531,7 @@ static void enumdisplaymodes(void)
     {
         modes16bpp_cnt = 0;
         ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_REFRESHRATE;
-        ddsd.dwRefreshRate = refresh_rate;
+        U2(ddsd).dwRefreshRate = refresh_rate;
 
         rc = IDirectDraw_EnumDisplayModes(lpDD, 0, &ddsd, 0, enummodescallback_16bit);
         ok(rc==DD_OK,"EnumDisplayModes returned: %x\n",rc);
