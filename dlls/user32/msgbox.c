@@ -33,7 +33,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dialog);
 WINE_DECLARE_DEBUG_CHANNEL(msgbox);
 
-#define MSGBOX_IDICON 1088
+#define MSGBOX_IDICON stc1
 #define MSGBOX_IDTEXT 100
 #define IDS_ERROR     2
 
@@ -175,23 +175,23 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     /* Set the icon */
     switch(lpmb->dwStyle & MB_ICONMASK) {
     case MB_ICONEXCLAMATION:
-	SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
+	SendDlgItemMessageW(hwnd, MSGBOX_IDICON, STM_SETICON,
 			    (WPARAM)LoadIconW(0, (LPWSTR)IDI_EXCLAMATION), 0);
 	break;
     case MB_ICONQUESTION:
-	SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
+	SendDlgItemMessageW(hwnd, MSGBOX_IDICON, STM_SETICON,
 			    (WPARAM)LoadIconW(0, (LPWSTR)IDI_QUESTION), 0);
 	break;
     case MB_ICONASTERISK:
-	SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
+	SendDlgItemMessageW(hwnd, MSGBOX_IDICON, STM_SETICON,
 			    (WPARAM)LoadIconW(0, (LPWSTR)IDI_ASTERISK), 0);
 	break;
     case MB_ICONHAND:
-      SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
+      SendDlgItemMessageW(hwnd, MSGBOX_IDICON, STM_SETICON,
 			    (WPARAM)LoadIconW(0, (LPWSTR)IDI_HAND), 0);
       break;
     case MB_USERICON:
-      SendDlgItemMessageW(hwnd, stc1, STM_SETICON,
+      SendDlgItemMessageW(hwnd, MSGBOX_IDICON, STM_SETICON,
 			  (WPARAM)LoadIconW(lpmb->hInstance, lpmb->lpszIcon), 0);
       break;
     default:
