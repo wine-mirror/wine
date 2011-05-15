@@ -202,7 +202,7 @@ static void test_ScriptItemize( void )
     int nItems;
 
     usp10 = LoadLibraryA("usp10.dll");
-    ok (usp10 != 0,"Unable to LoadLibrary on usp10.dll");
+    ok (usp10 != 0,"Unable to LoadLibrary on usp10.dll\n");
     pScriptItemizeOpenType = (void*)GetProcAddress(usp10, "ScriptItemizeOpenType");
 
     memset(&Control, 0, sizeof(Control));
