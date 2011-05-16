@@ -1964,12 +1964,13 @@ typedef struct wineD3DSurface_DIB {
     BOOL client_memory;
 } wineD3DSurface_DIB;
 
-typedef struct {
+struct wined3d_renderbuffer_entry
+{
     struct list entry;
     GLuint id;
     UINT width;
     UINT height;
-} renderbuffer_entry_t;
+};
 
 struct fbo_entry
 {
@@ -2068,7 +2069,7 @@ struct wined3d_surface
     WINEDDCOLORKEY            glCKey;
 
     struct list               renderbuffers;
-    renderbuffer_entry_t      *current_renderbuffer;
+    struct wined3d_renderbuffer_entry *current_renderbuffer;
     SIZE ds_current_size;
 
     /* DirectDraw clippers */

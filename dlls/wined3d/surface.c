@@ -48,8 +48,8 @@ static void surface_cleanup(struct wined3d_surface *surface)
 
     if (surface->texture_name || (surface->flags & SFLAG_PBO) || !list_empty(&surface->renderbuffers))
     {
+        struct wined3d_renderbuffer_entry *entry, *entry2;
         const struct wined3d_gl_info *gl_info;
-        renderbuffer_entry_t *entry, *entry2;
         struct wined3d_context *context;
 
         context = context_acquire(surface->resource.device, NULL);
@@ -69,7 +69,7 @@ static void surface_cleanup(struct wined3d_surface *surface)
             GL_EXTCALL(glDeleteBuffersARB(1, &surface->pbo));
         }
 
-        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, renderbuffer_entry_t, entry)
+        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
         {
             TRACE("Deleting renderbuffer %u.\n", entry->id);
             gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
@@ -1529,9 +1529,9 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
 static void surface_unload(struct wined3d_resource *resource)
 {
     struct wined3d_surface *surface = surface_from_resource(resource);
+    struct wined3d_renderbuffer_entry *entry, *entry2;
     struct wined3d_device *device = resource->device;
     const struct wined3d_gl_info *gl_info;
-    renderbuffer_entry_t *entry, *entry2;
     struct wined3d_context *context;
 
     TRACE("surface %p.\n", surface);
@@ -1571,7 +1571,7 @@ static void surface_unload(struct wined3d_resource *resource)
      * all application-created targets the application has to release the surface
      * before calling _Reset
      */
-    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, renderbuffer_entry_t, entry)
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
     {
         ENTER_GL();
         gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
@@ -2325,7 +2325,7 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, struct wined3d_surface *rt)
 {
     const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
-    renderbuffer_entry_t *entry;
+    struct wined3d_renderbuffer_entry *entry;
     GLuint renderbuffer = 0;
     unsigned int src_width, src_height;
     unsigned int width, height;
@@ -2356,7 +2356,7 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, struct
     }
 
     /* Look if we've already got a renderbuffer of the correct dimensions */
-    LIST_FOR_EACH_ENTRY(entry, &surface->renderbuffers, renderbuffer_entry_t, entry)
+    LIST_FOR_EACH_ENTRY(entry, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
     {
         if (entry->width == width && entry->height == height)
         {
@@ -2373,7 +2373,7 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface, struct
         gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER,
                 surface->resource.format->glInternal, width, height);
 
-        entry = HeapAlloc(GetProcessHeap(), 0, sizeof(renderbuffer_entry_t));
+        entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
         entry->width = width;
         entry->height = height;
         entry->id = renderbuffer;
