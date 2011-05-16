@@ -75,7 +75,7 @@ struct d3d10_device
     IUnknown *outer_unknown;
     LONG refcount;
 
-    IWineD3DDevice *wined3d_device;
+    struct wined3d_device *wined3d_device;
 };
 
 void d3d10_device_init(struct d3d10_device *device, void *outer_unknown) DECLSPEC_HIDDEN;

@@ -52,7 +52,8 @@
 #define WINED3D_QUIRK_NV_CLIP_BROKEN            0x00000010
 #define WINED3D_QUIRK_FBO_TEX_UPDATE            0x00000020
 
-typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
+typedef struct wined3d_device IWineD3DDeviceImpl;
+typedef struct wined3d_device IWineD3DDevice;
 
 /* Texture format fixups */
 
@@ -1225,9 +1226,9 @@ void context_free_occlusion_query(struct wined3d_occlusion_query *query) DECLSPE
 struct wined3d_context *context_get_current(void) DECLSPEC_HIDDEN;
 DWORD context_get_tls_idx(void) DECLSPEC_HIDDEN;
 void context_release(struct wined3d_context *context) DECLSPEC_HIDDEN;
-void context_resource_released(struct IWineD3DDeviceImpl *device,
+void context_resource_released(struct wined3d_device *device,
         struct wined3d_resource *resource, WINED3DRESOURCETYPE type) DECLSPEC_HIDDEN;
-void context_resource_unloaded(struct IWineD3DDeviceImpl *device,
+void context_resource_unloaded(struct wined3d_device *device,
         struct wined3d_resource *resource, WINED3DRESOURCETYPE type) DECLSPEC_HIDDEN;
 BOOL context_set_current(struct wined3d_context *ctx) DECLSPEC_HIDDEN;
 void context_set_draw_buffer(struct wined3d_context *context, GLenum buffer) DECLSPEC_HIDDEN;
@@ -1629,7 +1630,7 @@ struct wined3d
 };
 
 HRESULT wined3d_init(struct wined3d *wined3d, UINT version, void *parent) DECLSPEC_HIDDEN;
-BOOL wined3d_register_window(HWND window, struct IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
+BOOL wined3d_register_window(HWND window, struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
@@ -1640,11 +1641,9 @@ void wined3d_unregister_window(HWND window) DECLSPEC_HIDDEN;
 /* Multithreaded flag. Removed from the public header to signal that IWineD3D::CreateDevice ignores it */
 #define WINED3DCREATE_MULTITHREADED 0x00000004
 
-struct IWineD3DDeviceImpl
+struct wined3d_device
 {
-    /* IUnknown fields      */
-    const IWineD3DDeviceVtbl *lpVtbl;
-    LONG                    ref;     /* Note: Ref counting not required */
+    LONG ref;
 
     /* WineD3D Information  */
     IWineD3DDeviceParent   *device_parent;
@@ -1782,8 +1781,8 @@ HRESULT device_init(IWineD3DDeviceImpl *device, struct wined3d *wined3d,
 void device_preload_textures(IWineD3DDeviceImpl *device) DECLSPEC_HIDDEN;
 LRESULT device_process_message(IWineD3DDeviceImpl *device, HWND window, BOOL unicode,
         UINT message, WPARAM wparam, LPARAM lparam, WNDPROC proc) DECLSPEC_HIDDEN;
-void device_resource_add(struct IWineD3DDeviceImpl *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
-void device_resource_released(struct IWineD3DDeviceImpl *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
+void device_resource_add(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
+void device_resource_released(struct wined3d_device *device, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup) DECLSPEC_HIDDEN;
 void device_switch_onscreen_ds(IWineD3DDeviceImpl *device, struct wined3d_context *context,
@@ -2631,7 +2630,7 @@ struct wined3d_shader
     struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
 
     /* Pointer to the parent device */
-    struct IWineD3DDeviceImpl *device;
+    struct wined3d_device *device;
     struct list shader_list_entry;
 
     union

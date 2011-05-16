@@ -165,7 +165,7 @@ typedef struct IDirect3DDevice9Impl
     IDirect3DDevice9Ex IDirect3DDevice9Ex_iface;
     const IWineD3DDeviceParentVtbl *device_parent_vtbl;
     LONG ref;
-    IWineD3DDevice *WineD3DDevice;
+    struct wined3d_device *wined3d_device;
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                          inDestruction;
 

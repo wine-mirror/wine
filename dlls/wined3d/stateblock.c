@@ -1287,7 +1287,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     }
 
     /* check the return values, because the GetBackBuffer call isn't valid for ddraw */
-    hr = IWineD3DDevice_GetSwapChain((IWineD3DDevice *)device, 0, &swapchain);
+    hr = wined3d_device_get_swapchain(device, 0, &swapchain);
     if (SUCCEEDED(hr) && swapchain)
     {
         hr = wined3d_swapchain_get_back_buffer(swapchain, 0, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);

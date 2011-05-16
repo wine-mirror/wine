@@ -693,7 +693,7 @@ static void context_queue_fbo_entry_destruction(struct wined3d_context *context,
     list_add_head(&context->fbo_destroy_list, &entry->entry);
 }
 
-void context_resource_released(struct IWineD3DDeviceImpl *device,
+void context_resource_released(struct wined3d_device *device,
         struct wined3d_resource *resource, WINED3DRESOURCETYPE type)
 {
     if (!device->d3d_initialized) return;
@@ -715,7 +715,7 @@ static void context_detach_fbo_entry(struct wined3d_context *context, struct fbo
     entry->attached = FALSE;
 }
 
-void context_resource_unloaded(struct IWineD3DDeviceImpl *device,
+void context_resource_unloaded(struct wined3d_device *device,
         struct wined3d_resource *resource, WINED3DRESOURCETYPE type)
 {
     switch (type)

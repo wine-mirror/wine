@@ -78,7 +78,7 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
         mode.Height = swapchain->orig_height;
         mode.RefreshRate = 0;
         mode.Format = swapchain->orig_fmt;
-        IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)swapchain->device, 0, &mode);
+        wined3d_device_set_display_mode(swapchain->device, 0, &mode);
     }
 
     if (swapchain->backup_dc)
@@ -571,7 +571,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
     {
         TRACE("Clearing the color buffer with cyan color\n");
 
-        IWineD3DDevice_Clear((IWineD3DDevice *)swapchain->device, 0, NULL,
+        wined3d_device_clear(swapchain->device, 0, NULL,
                 WINED3DCLEAR_TARGET, 0xff00ffff, 1.0f, 0);
     }
 
@@ -927,7 +927,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
         mode.Format = present_parameters->BackBufferFormat;
         mode.RefreshRate = present_parameters->FullScreen_RefreshRateInHz;
 
-        hr = IWineD3DDevice_SetDisplayMode((IWineD3DDevice *)device, 0, &mode);
+        hr = wined3d_device_set_display_mode(device, 0, &mode);
         if (FAILED(hr))
         {
             WARN("Failed to set display mode, hr %#x.\n", hr);

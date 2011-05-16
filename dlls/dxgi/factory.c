@@ -163,7 +163,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
 {
     WINED3DPRESENT_PARAMETERS present_parameters;
     struct wined3d_swapchain *wined3d_swapchain;
-    IWineD3DDevice *wined3d_device;
+    struct wined3d_device *wined3d_device;
     IWineDXGIDevice *dxgi_device;
     UINT count;
     HRESULT hr;
@@ -180,11 +180,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
     wined3d_device = IWineDXGIDevice_get_wined3d_device(dxgi_device);
     IWineDXGIDevice_Release(dxgi_device);
 
-    count = IWineD3DDevice_GetNumberOfSwapChains(wined3d_device);
+    count = wined3d_device_get_swapchain_count(wined3d_device);
     if (count)
     {
         FIXME("Only a single swapchain supported.\n");
-        IWineD3DDevice_Release(wined3d_device);
+        wined3d_device_decref(wined3d_device);
         return E_FAIL;
     }
 
@@ -219,16 +219,16 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
             desc->BufferDesc.RefreshRate.Numerator / desc->BufferDesc.RefreshRate.Denominator;
     present_parameters.PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
 
-    hr = IWineD3DDevice_Init3D(wined3d_device, &present_parameters);
+    hr = wined3d_device_init_3d(wined3d_device, &present_parameters);
     if (FAILED(hr))
     {
         WARN("Failed to initialize 3D, returning %#x\n", hr);
-        IWineD3DDevice_Release(wined3d_device);
+        wined3d_device_decref(wined3d_device);
         return hr;
     }
 
-    hr = IWineD3DDevice_GetSwapChain(wined3d_device, 0, &wined3d_swapchain);
-    IWineD3DDevice_Release(wined3d_device);
+    hr = wined3d_device_get_swapchain(wined3d_device, 0, &wined3d_swapchain);
+    wined3d_device_decref(wined3d_device);
     if (FAILED(hr))
     {
         WARN("Failed to get swapchain, returning %#x\n", hr);

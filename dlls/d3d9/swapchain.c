@@ -259,7 +259,7 @@ HRESULT swapchain_init(IDirect3DSwapChain9Impl *swapchain, IDirect3DDevice9Impl 
     wined3d_parameters.AutoRestoreDisplayMode = TRUE;
 
     wined3d_mutex_lock();
-    hr = wined3d_swapchain_create(device->WineD3DDevice, &wined3d_parameters,
+    hr = wined3d_swapchain_create(device->wined3d_device, &wined3d_parameters,
             SURFACE_OPENGL, swapchain, &d3d9_swapchain_wined3d_parent_ops,
             &swapchain->wined3d_swapchain);
     wined3d_mutex_unlock();

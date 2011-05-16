@@ -145,10 +145,10 @@ IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
          * as a parameter to drawPrimitiveVB. DrawPrimitiveVB sets them as the
          * stream source in wined3d, and they should get unset there before
          * they are destroyed. */
-        wined3d_device_get_stream_source(This->ddraw->wineD3DDevice,
+        wined3d_device_get_stream_source(This->ddraw->wined3d_device,
                 0, &curVB, &offset, &stride);
         if (curVB == This->wineD3DVertexBuffer)
-            wined3d_device_set_stream_source(This->ddraw->wineD3DDevice, 0, NULL, 0, 0);
+            wined3d_device_set_stream_source(This->ddraw->wined3d_device, 0, NULL, 0, 0);
         if (curVB)
             wined3d_buffer_decref(curVB); /* For the GetStreamSource */
 
@@ -326,25 +326,19 @@ IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
      * the vertex ops
      */
     doClip = VertexOp & D3DVOP_CLIP ? TRUE : FALSE;
-    wined3d_device_get_render_state(D3D->wineD3DDevice, WINED3DRS_CLIPPING, (DWORD *)&oldClip);
+    wined3d_device_get_render_state(D3D->wined3d_device, WINED3DRS_CLIPPING, (DWORD *)&oldClip);
     if (doClip != oldClip)
-        wined3d_device_set_render_state(D3D->wineD3DDevice, WINED3DRS_CLIPPING, doClip);
+        wined3d_device_set_render_state(D3D->wined3d_device, WINED3DRS_CLIPPING, doClip);
 
-    wined3d_device_set_stream_source(D3D->wineD3DDevice,
+    wined3d_device_set_stream_source(D3D->wined3d_device,
             0, Src->wineD3DVertexBuffer, 0, get_flexible_vertex_size(Src->fvf));
-    wined3d_device_set_vertex_declaration(D3D->wineD3DDevice, Src->wineD3DVertexDeclaration);
-    hr = IWineD3DDevice_ProcessVertices(D3D->wineD3DDevice,
-                                        SrcIndex,
-                                        DestIndex,
-                                        Count,
-                                        This->wineD3DVertexBuffer,
-                                        NULL /* Output vdecl */,
-                                        Flags,
-                                        This->fvf);
+    wined3d_device_set_vertex_declaration(D3D->wined3d_device, Src->wineD3DVertexDeclaration);
+    hr = wined3d_device_process_vertices(D3D->wined3d_device, SrcIndex, DestIndex,
+            Count, This->wineD3DVertexBuffer, NULL, Flags, This->fvf);
 
     /* Restore the states if needed */
     if (doClip != oldClip)
-        wined3d_device_set_render_state(D3D->wineD3DDevice, WINED3DRS_CLIPPING, oldClip);
+        wined3d_device_set_render_state(D3D->wined3d_device, WINED3DRS_CLIPPING, oldClip);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -551,7 +545,7 @@ HRESULT d3d_vertex_buffer_init(IDirect3DVertexBufferImpl *buffer,
 
     EnterCriticalSection(&ddraw_cs);
 
-    hr = wined3d_buffer_create_vb(ddraw->wineD3DDevice,
+    hr = wined3d_buffer_create_vb(ddraw->wined3d_device,
             get_flexible_vertex_size(desc->dwFVF) * desc->dwNumVertices,
             usage, desc->dwCaps & D3DVBCAPS_SYSTEMMEMORY ? WINED3DPOOL_SYSTEMMEM : WINED3DPOOL_DEFAULT,
             buffer, &ddraw_null_wined3d_parent_ops, &buffer->wineD3DVertexBuffer);

@@ -443,7 +443,7 @@ HRESULT volumetexture_init(IDirect3DVolumeTexture9Impl *texture, IDirect3DDevice
     texture->ref = 1;
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_create_3d(device->WineD3DDevice, width, height, depth, levels,
+    hr = wined3d_texture_create_3d(device->wined3d_device, width, height, depth, levels,
             usage & WINED3DUSAGE_MASK, wined3dformat_from_d3dformat(format), pool, texture,
             &d3d9_volumetexture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();

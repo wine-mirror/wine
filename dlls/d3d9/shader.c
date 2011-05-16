@@ -135,7 +135,7 @@ HRESULT vertexshader_init(IDirect3DVertexShader9Impl *shader, IDirect3DDevice9Im
     shader->lpVtbl = &d3d9_vertexshader_vtbl;
 
     wined3d_mutex_lock();
-    hr = wined3d_shader_create_vs(device->WineD3DDevice, byte_code, NULL,
+    hr = wined3d_shader_create_vs(device->wined3d_device, byte_code, NULL,
             shader, &d3d9_vertexshader_wined3d_parent_ops, &shader->wined3d_shader);
     wined3d_mutex_unlock();
     if (FAILED(hr))
@@ -262,7 +262,7 @@ HRESULT pixelshader_init(IDirect3DPixelShader9Impl *shader, IDirect3DDevice9Impl
     shader->lpVtbl = &d3d9_pixelshader_vtbl;
 
     wined3d_mutex_lock();
-    hr = wined3d_shader_create_ps(device->WineD3DDevice, byte_code, NULL, shader,
+    hr = wined3d_shader_create_ps(device->wined3d_device, byte_code, NULL, shader,
             &d3d9_pixelshader_wined3d_parent_ops, &shader->wined3d_shader);
     wined3d_mutex_unlock();
     if (FAILED(hr))

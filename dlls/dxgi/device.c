@@ -75,7 +75,7 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
     {
         if (This->child_layer) IUnknown_Release(This->child_layer);
         EnterCriticalSection(&dxgi_cs);
-        IWineD3DDevice_Release(This->wined3d_device);
+        wined3d_device_decref(This->wined3d_device);
         LeaveCriticalSection(&dxgi_cs);
         IWineDXGIFactory_Release(This->factory);
         HeapFree(GetProcessHeap(), 0, This);
@@ -142,7 +142,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IWineDXGIDevice *iface, 
 
     EnterCriticalSection(&dxgi_cs);
 
-    hr = IWineD3DDevice_GetCreationParameters(This->wined3d_device, &create_parameters);
+    hr = wined3d_device_get_creation_parameters(This->wined3d_device, &create_parameters);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&dxgi_cs);
@@ -239,14 +239,14 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetGPUThreadPriority(IWineDXGIDevic
 
 /* IWineDXGIDevice methods */
 
-static IWineD3DDevice * STDMETHODCALLTYPE dxgi_device_get_wined3d_device(IWineDXGIDevice *iface)
+static struct wined3d_device * STDMETHODCALLTYPE dxgi_device_get_wined3d_device(IWineDXGIDevice *iface)
 {
     struct dxgi_device *This = (struct dxgi_device *)iface;
 
     TRACE("iface %p\n", iface);
 
     EnterCriticalSection(&dxgi_cs);
-    IWineD3DDevice_AddRef(This->wined3d_device);
+    wined3d_device_incref(This->wined3d_device);
     LeaveCriticalSection(&dxgi_cs);
     return This->wined3d_device;
 }
@@ -403,7 +403,7 @@ fail:
     if (device->wined3d_device)
     {
         EnterCriticalSection(&dxgi_cs);
-        IWineD3DDevice_Release(device->wined3d_device);
+        wined3d_device_decref(device->wined3d_device);
         LeaveCriticalSection(&dxgi_cs);
     }
     if (device->factory) IWineDXGIFactory_Release(device->factory);

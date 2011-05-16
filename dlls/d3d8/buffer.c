@@ -270,7 +270,7 @@ HRESULT vertexbuffer_init(IDirect3DVertexBuffer8Impl *buffer, IDirect3DDevice8Im
     buffer->fvf = fvf;
 
     wined3d_mutex_lock();
-    hr = wined3d_buffer_create_vb(device->WineD3DDevice, size, usage & WINED3DUSAGE_MASK,
+    hr = wined3d_buffer_create_vb(device->wined3d_device, size, usage & WINED3DUSAGE_MASK,
             (WINED3DPOOL)pool, buffer, &d3d8_vertexbuffer_wined3d_parent_ops, &buffer->wineD3DVertexBuffer);
     wined3d_mutex_unlock();
     if (FAILED(hr))
@@ -533,7 +533,7 @@ HRESULT indexbuffer_init(IDirect3DIndexBuffer8Impl *buffer, IDirect3DDevice8Impl
     buffer->format = wined3dformat_from_d3dformat(format);
 
     wined3d_mutex_lock();
-    hr = wined3d_buffer_create_ib(device->WineD3DDevice, size, usage & WINED3DUSAGE_MASK,
+    hr = wined3d_buffer_create_ib(device->wined3d_device, size, usage & WINED3DUSAGE_MASK,
             (WINED3DPOOL)pool, buffer, &d3d8_indexbuffer_wined3d_parent_ops, &buffer->wineD3DIndexBuffer);
     wined3d_mutex_unlock();
     if (FAILED(hr))

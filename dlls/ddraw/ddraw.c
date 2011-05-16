@@ -453,7 +453,7 @@ static void ddraw_destroy(IDirectDrawImpl *This)
     LeaveCriticalSection(&ddraw_cs);
 
     /* Release the attached WineD3D stuff */
-    IWineD3DDevice_Release(This->wineD3DDevice);
+    wined3d_device_decref(This->wined3d_device);
     wined3d_decref(This->wineD3D);
 
     /* Now free the object */
@@ -702,27 +702,27 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
 
     if ((This->cooperative_level & DDSCL_EXCLUSIVE)
             && (hwnd != window || !(cooplevel & DDSCL_EXCLUSIVE)))
-        IWineD3DDevice_ReleaseFocusWindow(This->wineD3DDevice);
+        wined3d_device_release_focus_window(This->wined3d_device);
 
     if ((cooplevel & DDSCL_FULLSCREEN) != (This->cooperative_level & DDSCL_FULLSCREEN) || hwnd != window)
     {
         if (This->cooperative_level & DDSCL_FULLSCREEN)
-        {
-            IWineD3DDevice_RestoreFullscreenWindow(This->wineD3DDevice, window);
-        }
+            wined3d_device_restore_fullscreen_window(This->wined3d_device, window);
+
         if (cooplevel & DDSCL_FULLSCREEN)
         {
             WINED3DDISPLAYMODE display_mode;
 
             wined3d_get_adapter_display_mode(This->wineD3D, WINED3DADAPTER_DEFAULT, &display_mode);
-            IWineD3DDevice_SetupFullscreenWindow(This->wineD3DDevice, hwnd, display_mode.Width, display_mode.Height);
+            wined3d_device_setup_fullscreen_window(This->wined3d_device, hwnd,
+                    display_mode.Width, display_mode.Height);
         }
     }
 
     if ((cooplevel & DDSCL_EXCLUSIVE)
             && (hwnd != window || !(This->cooperative_level & DDSCL_EXCLUSIVE)))
     {
-        HRESULT hr = IWineD3DDevice_AcquireFocusWindow(This->wineD3DDevice, hwnd);
+        HRESULT hr = wined3d_device_acquire_focus_window(This->wined3d_device, hwnd);
         if (FAILED(hr))
         {
             ERR("Failed to acquire focus window, hr %#x.\n", hr);
@@ -758,11 +758,8 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         }
     }
 
-    if(cooplevel & DDSCL_MULTITHREADED && !(This->cooperative_level & DDSCL_MULTITHREADED))
-    {
-        /* Enable thread safety in wined3d */
-        IWineD3DDevice_SetMultithreaded(This->wineD3DDevice);
-    }
+    if (cooplevel & DDSCL_MULTITHREADED && !(This->cooperative_level & DDSCL_MULTITHREADED))
+        wined3d_device_set_multithreaded(This->wined3d_device);
 
     /* Unhandled flags */
     if(cooplevel & DDSCL_ALLOWREBOOT)
@@ -856,7 +853,7 @@ static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD
         default: format = WINED3DFMT_UNKNOWN;          break;
     }
 
-    if (FAILED(hr = IWineD3DDevice_GetDisplayMode(ddraw->wineD3DDevice, 0, &Mode)))
+    if (FAILED(hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &Mode)))
     {
         ERR("Failed to get current display mode, hr %#x.\n", hr);
     }
@@ -890,9 +887,9 @@ static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD
      */
 
     /* TODO: Lose the primary surface */
-    hr = IWineD3DDevice_SetDisplayMode(ddraw->wineD3DDevice, 0, &Mode);
-    IWineD3DDevice_RestoreFullscreenWindow(ddraw->wineD3DDevice, ddraw->dest_window);
-    IWineD3DDevice_SetupFullscreenWindow(ddraw->wineD3DDevice, ddraw->dest_window, Width, Height);
+    hr = wined3d_device_set_display_mode(ddraw->wined3d_device, 0, &Mode);
+    wined3d_device_restore_fullscreen_window(ddraw->wined3d_device, ddraw->dest_window);
+    wined3d_device_setup_fullscreen_window(ddraw->wined3d_device, ddraw->dest_window, Width, Height);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -1085,8 +1082,9 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     memset(&winecaps, 0, sizeof(winecaps));
     caps.dwSize = sizeof(caps);
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_GetDeviceCaps(This->wineD3DDevice, &winecaps);
-    if(FAILED(hr)) {
+    hr = wined3d_device_get_device_caps(This->wined3d_device, &winecaps);
+    if (FAILED(hr))
+    {
         WARN("IWineD3DDevice::GetDeviceCaps failed\n");
         LeaveCriticalSection(&ddraw_cs);
         return hr;
@@ -1270,12 +1268,9 @@ static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 
     }
 
     /* The necessary members of LPDDSURFACEDESC and LPDDSURFACEDESC2 are equal,
-     * so one method can be used for all versions (Hopefully)
-     */
-    hr = IWineD3DDevice_GetDisplayMode(This->wineD3DDevice,
-                                      0 /* swapchain 0 */,
-                                      &Mode);
-    if( hr != D3D_OK )
+     * so one method can be used for all versions (Hopefully) */
+    hr = wined3d_device_get_display_mode(This->wined3d_device, 0, &Mode);
+    if (FAILED(hr))
     {
         ERR(" (%p) IWineD3DDevice::GetDisplayMode returned %08x\n", This, hr);
         LeaveCriticalSection(&ddraw_cs);
@@ -1374,9 +1369,7 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
 
     TRACE("iface %p, codes_count %p, codes %p.\n", iface, NumCodes, Codes);
 
-    IWineD3DDevice_GetDisplayMode(This->wineD3DDevice,
-                                  0 /* swapchain 0 */,
-                                  &d3ddm);
+    wined3d_device_get_display_mode(This->wined3d_device, 0, &d3ddm);
 
     outsize = NumCodes && Codes ? *NumCodes : 0;
 
@@ -1608,8 +1601,10 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *C
         return DDERR_INVALIDPARAMS;
     }
 
-    if(total) *total = This->total_vidmem;
-    if(free) *free = IWineD3DDevice_GetAvailableTextureMem(This->wineD3DDevice);
+    if (total)
+        *total = This->total_vidmem;
+    if (free)
+        *free = wined3d_device_get_available_texture_mem(This->wined3d_device);
 
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
@@ -1879,9 +1874,7 @@ static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
         hide = TRUE;
     }
 
-    IWineD3DDevice_GetDisplayMode(This->wineD3DDevice,
-                                  0,
-                                  &Mode);
+    wined3d_device_get_display_mode(This->wined3d_device, 0, &Mode);
 
     /* Fake the line sweeping of the monitor */
     /* FIXME: We should synchronize with a source to keep the refresh rate */
@@ -1983,10 +1976,9 @@ static HRESULT WINAPI ddraw7_GetGDISurface(IDirectDraw7 *iface, IDirectDrawSurfa
     TRACE("iface %p, surface %p.\n", iface, GDISurface);
 
     /* Get the back buffer from the wineD3DDevice and search its
-     * attached surfaces for the front buffer
-     */
+     * attached surfaces for the front buffer. */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_GetBackBuffer(This->wineD3DDevice,
+    hr = wined3d_device_get_back_buffer(This->wined3d_device,
             0, 0, WINED3DBACKBUFFER_TYPE_MONO, &wined3d_surface);
     if (FAILED(hr) || !wined3d_surface)
     {
@@ -2398,7 +2390,7 @@ static HRESULT WINAPI ddraw7_GetSurfaceFromDC(IDirectDraw7 *iface, HDC hdc,
 
     if (!Surface) return E_INVALIDARG;
 
-    hr = IWineD3DDevice_GetSurfaceFromDC(This->wineD3DDevice, hdc, &wined3d_surface);
+    hr = wined3d_device_get_surface_from_dc(This->wined3d_device, hdc, &wined3d_surface);
     if (FAILED(hr))
     {
         TRACE("No surface found for dc %p.\n", hdc);
@@ -2552,7 +2544,7 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
 
     parent = wined3d_surface_get_parent(wined3d_surface);
-    hr = wined3d_surface_create(This->wineD3DDevice, wined3d_desc.width, wined3d_desc.height,
+    hr = wined3d_surface_create(This->wined3d_device, wined3d_desc.width, wined3d_desc.height,
             wined3d_desc.format, TRUE, FALSE, surfImpl->mipmap_level, wined3d_desc.usage, wined3d_desc.pool,
             wined3d_desc.multisample_type, wined3d_desc.multisample_quality, This->ImplType,
             parent, &ddraw_surface_wined3d_parent_ops, &surfImpl->wined3d_surface);
@@ -2574,7 +2566,7 @@ HRESULT WINAPI ddraw_recreate_surfaces_cb(IDirectDrawSurface7 *surf, DDSURFACEDE
         /* The backbuffers have the swapchain set as well, but the primary
          * owns it and destroys it. */
         if (surfImpl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-            IWineD3DDevice_UninitGDI(This->wineD3DDevice);
+            wined3d_device_uninit_gdi(This->wined3d_device);
         surfImpl->isRenderTarget = FALSE;
     }
     else
@@ -2608,7 +2600,7 @@ static HRESULT ddraw_recreate_surfaces(IDirectDrawImpl *This)
         /* Should happen almost never */
         FIXME("(%p) Switching to non-opengl surfaces with d3d started. Is this a bug?\n", This);
         /* Shutdown d3d */
-        IWineD3DDevice_Uninit3D(This->wineD3DDevice);
+        wined3d_device_uninit_3d(This->wined3d_device);
     }
     /* Contrary: D3D starting is handled by the caller, because it knows the render target */
 
@@ -2882,7 +2874,7 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
     /* Set this NOW, otherwise creating the depth stencil surface will cause a
      * recursive loop until ram or emulated video memory is full. */
     ddraw->d3d_initialized = TRUE;
-    hr = IWineD3DDevice_Init3D(ddraw->wineD3DDevice, &localParameters);
+    hr = wined3d_device_init_3d(ddraw->wined3d_device, &localParameters);
     if (FAILED(hr))
     {
         ddraw->d3d_target = NULL;
@@ -2896,7 +2888,7 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
     {
         ERR("Error allocating an array for the converted vertex decls.\n");
         ddraw->declArraySize = 0;
-        hr = IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice);
+        hr = wined3d_device_uninit_3d(ddraw->wined3d_device);
         return E_OUTOFMEMORY;
     }
 
@@ -2935,7 +2927,7 @@ static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSur
     presentation_parameters.AutoRestoreDisplayMode = FALSE;
 
     ddraw->d3d_target = primary;
-    hr = IWineD3DDevice_InitGDI(ddraw->wineD3DDevice, &presentation_parameters);
+    hr = wined3d_device_init_gdi(ddraw->wined3d_device, &presentation_parameters);
     ddraw->d3d_target = NULL;
     if (FAILED(hr))
     {
@@ -3140,8 +3132,8 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
     desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT); /* Just to be sure */
 
     /* Get the video mode from WineD3D - we will need it */
-    hr = IWineD3DDevice_GetDisplayMode(ddraw->wineD3DDevice, 0, &Mode);
-    if(FAILED(hr))
+    hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &Mode);
+    if (FAILED(hr))
     {
         ERR("Failed to read display mode from wined3d\n");
         switch(ddraw->orig_bpp)
@@ -4955,7 +4947,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
      * not like that we'll have to find some workaround, like iterating over
      * all imaginable formats and collecting all the depth stencil formats we
      * can get. */
-    hr = IWineD3DDevice_GetDisplayMode(This->wineD3DDevice, 0, &d3ddm);
+    hr = wined3d_device_get_display_mode(This->wined3d_device, 0, &d3ddm);
 
     for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
     {
@@ -5606,7 +5598,7 @@ struct wined3d_vertex_declaration *ddraw_find_decl(IDirectDrawImpl *This, DWORD 
     }
     TRACE("not found. Creating and inserting at position %d.\n", low);
 
-    hr = wined3d_vertex_declaration_create_from_fvf(This->wineD3DDevice,
+    hr = wined3d_vertex_declaration_create_from_fvf(This->wined3d_device,
             fvf, This, &ddraw_null_wined3d_parent_ops, &pDecl);
     if (hr != S_OK) return NULL;
 
@@ -5659,7 +5651,8 @@ static ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface
 
 /* IWineD3DDeviceParent methods */
 
-static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceParent *iface, IWineD3DDevice *device)
+static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceParent *iface,
+        struct wined3d_device *device)
 {
     TRACE("iface %p, device %p\n", iface, device);
 }
@@ -5864,7 +5857,7 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSwapChain(IWineD3DDevicePar
 
     TRACE("iface %p, present_parameters %p, swapchain %p\n", iface, present_parameters, swapchain);
 
-    hr = wined3d_swapchain_create(This->wineD3DDevice, present_parameters,
+    hr = wined3d_swapchain_create(This->wined3d_device, present_parameters,
             This->ImplType, NULL, &ddraw_null_wined3d_parent_ops, swapchain);
     if (FAILED(hr))
     {
@@ -5936,7 +5929,7 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     }
 
     hr = wined3d_device_create(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, device_type, NULL, 0,
-            (IWineD3DDeviceParent *)&ddraw->device_parent_vtbl, &ddraw->wineD3DDevice);
+            (IWineD3DDeviceParent *)&ddraw->device_parent_vtbl, &ddraw->wined3d_device);
     if (FAILED(hr))
     {
         WARN("Failed to create a wined3d device, hr %#x.\n", hr);
@@ -5945,7 +5938,7 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     }
 
     /* Get the amount of video memory */
-    ddraw->total_vidmem = IWineD3DDevice_GetAvailableTextureMem(ddraw->wineD3DDevice);
+    ddraw->total_vidmem = wined3d_device_get_available_texture_mem(ddraw->wined3d_device);
 
     list_init(&ddraw->surface_list);
 

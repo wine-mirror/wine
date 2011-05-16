@@ -177,8 +177,7 @@ struct IDirect3DDevice8Impl
     IDirect3DDevice8        IDirect3DDevice8_iface;
     IWineD3DDeviceParent    IWineD3DDeviceParent_iface;
     LONG                    ref;
-/* But what about baseVertexIndex in state blocks? hmm... it may be a better idea to pass this to wined3d */
-    IWineD3DDevice         *WineD3DDevice;
+    struct wined3d_device *wined3d_device;
     struct                  d3d8_handle_table handle_table;
 
     /* FVF management */

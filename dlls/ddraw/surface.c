@@ -275,7 +275,7 @@ static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
             HeapFree(GetProcessHeap(), 0, ddraw->decls);
             ddraw->numConvertedDecls = 0;
 
-            if (FAILED(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice)))
+            if (FAILED(wined3d_device_uninit_3d(ddraw->wined3d_device)))
             {
                 ERR("Failed to uninit 3D.\n");
             }
@@ -295,7 +295,7 @@ static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
         }
         else
         {
-            IWineD3DDevice_UninitGDI(ddraw->wineD3DDevice);
+            wined3d_device_uninit_gdi(ddraw->wined3d_device);
         }
 
         surface->wined3d_swapchain = NULL;
@@ -2923,7 +2923,7 @@ static HRESULT WINAPI ddraw_gamma_control_GetGammaRamp(IDirectDrawGammaControl *
     if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
         /* Note: DDGAMMARAMP is compatible with WINED3DGAMMARAMP. */
-        wined3d_device_get_gamma_ramp(surface->ddraw->wineD3DDevice, 0, (WINED3DGAMMARAMP *)gamma_ramp);
+        wined3d_device_get_gamma_ramp(surface->ddraw->wined3d_device, 0, (WINED3DGAMMARAMP *)gamma_ramp);
     }
     else
     {
@@ -2965,7 +2965,7 @@ static HRESULT WINAPI ddraw_gamma_control_SetGammaRamp(IDirectDrawGammaControl *
     if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
         /* Note: DDGAMMARAMP is compatible with WINED3DGAMMARAMP */
-        wined3d_device_set_gamma_ramp(surface->ddraw->wineD3DDevice, 0, flags, (WINED3DGAMMARAMP *)gamma_ramp);
+        wined3d_device_set_gamma_ramp(surface->ddraw->wined3d_device, 0, flags, (WINED3DGAMMARAMP *)gamma_ramp);
     }
     else
     {
@@ -3483,10 +3483,10 @@ HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface)
 
     format = PixelFormat_DD2WineD3D(&surface->surface_desc.u4.ddpfPixelFormat);
     if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-        return wined3d_texture_create_cube(surface->ddraw->wineD3DDevice, desc->dwWidth,
+        return wined3d_texture_create_cube(surface->ddraw->wined3d_device, desc->dwWidth,
                 levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
     else
-        return wined3d_texture_create_2d(surface->ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight,
+        return wined3d_texture_create_2d(surface->ddraw->wined3d_device, desc->dwWidth, desc->dwHeight,
                 levels, 0, format, pool, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
 }
 
@@ -3572,7 +3572,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     surface->first_attached = surface;
     surface->ImplType = surface_type;
 
-    hr = wined3d_surface_create(ddraw->wineD3DDevice, desc->dwWidth, desc->dwHeight, format,
+    hr = wined3d_surface_create(ddraw->wined3d_device, desc->dwWidth, desc->dwHeight, format,
             TRUE /* Lockable */, FALSE /* Discard */, mip_level, usage, pool,
             WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, surface_type, surface,
             &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface);

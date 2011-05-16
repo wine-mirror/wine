@@ -470,7 +470,7 @@ HRESULT cubetexture_init(IDirect3DCubeTexture9Impl *texture, IDirect3DDevice9Imp
     texture->ref = 1;
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_create_cube(device->WineD3DDevice, edge_length,
+    hr = wined3d_texture_create_cube(device->wined3d_device, edge_length,
             levels, usage, wined3dformat_from_d3dformat(format), pool, texture,
             &d3d9_cubetexture_wined3d_parent_ops, &texture->wined3d_texture);
     wined3d_mutex_unlock();

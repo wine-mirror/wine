@@ -304,7 +304,7 @@ HRESULT surface_init(IDirect3DSurface8Impl *surface, IDirect3DDevice8Impl *devic
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_create(device->WineD3DDevice, width, height, wined3dformat_from_d3dformat(format),
+    hr = wined3d_surface_create(device->wined3d_device, width, height, wined3dformat_from_d3dformat(format),
             lockable, discard, level, usage & WINED3DUSAGE_MASK, (WINED3DPOOL)pool, multisample_type,
             multisample_quality, SURFACE_OPENGL, surface, &d3d8_surface_wined3d_parent_ops, &surface->wined3d_surface);
     wined3d_mutex_unlock();

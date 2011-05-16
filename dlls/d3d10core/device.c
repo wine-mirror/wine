@@ -77,7 +77,8 @@ static ULONG STDMETHODCALLTYPE d3d10_device_inner_Release(IUnknown *iface)
 
     if (!refcount)
     {
-        if (This->wined3d_device) IWineD3DDevice_Release(This->wined3d_device);
+        if (This->wined3d_device)
+            wined3d_device_decref(This->wined3d_device);
     }
 
     return refcount;
@@ -158,7 +159,7 @@ static void STDMETHODCALLTYPE d3d10_device_DrawIndexed(ID3D10Device *iface,
             iface, index_count, start_index_location, base_vertex_location);
 
     wined3d_device_set_base_vertex_index(This->wined3d_device, base_vertex_location);
-    IWineD3DDevice_DrawIndexedPrimitive(This->wined3d_device, start_index_location, index_count);
+    wined3d_device_draw_indexed_primitive(This->wined3d_device, start_index_location, index_count);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_Draw(ID3D10Device *iface,
@@ -169,7 +170,7 @@ static void STDMETHODCALLTYPE d3d10_device_Draw(ID3D10Device *iface,
     TRACE("iface %p, vertex_count %u, start_vertex_location %u\n",
             iface, vertex_count, start_vertex_location);
 
-    IWineD3DDevice_DrawPrimitive(This->wined3d_device, start_vertex_location, vertex_count);
+    wined3d_device_draw_primitive(This->wined3d_device, start_vertex_location, vertex_count);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_PSSetConstantBuffers(ID3D10Device *iface,
@@ -259,7 +260,7 @@ static void STDMETHODCALLTYPE d3d10_device_IASetPrimitiveTopology(ID3D10Device *
 
     TRACE("iface %p, topology %s\n", iface, debug_d3d10_primitive_topology(topology));
 
-    IWineD3DDevice_SetPrimitiveType(This->wined3d_device, (WINED3DPRIMITIVETYPE)topology);
+    wined3d_device_set_primitive_type(This->wined3d_device, (WINED3DPRIMITIVETYPE)topology);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_VSSetShaderResources(ID3D10Device *iface,
@@ -380,7 +381,7 @@ static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device *i
             iface, render_target_view, color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]);
 
     wined3d_view = ((struct d3d10_rendertarget_view *)render_target_view)->wined3d_view;
-    IWineD3DDevice_ClearRendertargetView(This->wined3d_device, wined3d_view, &color);
+    wined3d_device_clear_rendertarget_view(This->wined3d_device, wined3d_view, &color);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device *iface,
@@ -479,7 +480,7 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetPrimitiveTopology(ID3D10Device *
 
     TRACE("iface %p, topology %p\n", iface, topology);
 
-    IWineD3DDevice_GetPrimitiveType(This->wined3d_device, (WINED3DPRIMITIVETYPE *)topology);
+    wined3d_device_get_primitive_type(This->wined3d_device, (WINED3DPRIMITIVETYPE *)topology);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_VSGetShaderResources(ID3D10Device *iface,
@@ -1311,13 +1312,14 @@ static ULONG STDMETHODCALLTYPE device_parent_Release(IWineD3DDeviceParent *iface
 
 /* IWineD3DDeviceParent methods */
 
-static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceParent *iface, IWineD3DDevice *device)
+static void STDMETHODCALLTYPE device_parent_WineD3DDeviceCreated(IWineD3DDeviceParent *iface,
+        struct wined3d_device *device)
 {
     struct d3d10_device *This = device_from_device_parent(iface);
 
     TRACE("iface %p, device %p\n", iface, device);
 
-    IWineD3DDevice_AddRef(device);
+    wined3d_device_incref(device);
     This->wined3d_device = device;
 }
 

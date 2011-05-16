@@ -85,7 +85,7 @@ struct IDirectDrawImpl
 
     /* WineD3D linkage */
     struct wined3d *wineD3D;
-    IWineD3DDevice          *wineD3DDevice;
+    struct wined3d_device *wined3d_device;
     BOOL                    d3d_initialized;
 
     /* Misc ddraw fields */
@@ -285,7 +285,7 @@ struct IDirect3DDeviceImpl
     LONG                    ref;
 
     /* Other object connections */
-    IWineD3DDevice          *wineD3DDevice;
+    struct wined3d_device *wined3d_device;
     IDirectDrawImpl         *ddraw;
     struct wined3d_buffer *indexbuffer;
     IDirectDrawSurfaceImpl  *target;

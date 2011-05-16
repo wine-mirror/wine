@@ -395,7 +395,7 @@ HRESULT vertexdeclaration_init(IDirect3DVertexDeclaration9Impl *declaration,
     declaration->element_count = element_count;
 
     wined3d_mutex_lock();
-    hr = wined3d_vertex_declaration_create(device->WineD3DDevice, wined3d_elements, wined3d_element_count,
+    hr = wined3d_vertex_declaration_create(device->wined3d_device, wined3d_elements, wined3d_element_count,
             declaration, &d3d9_vertexdeclaration_wined3d_parent_ops, &declaration->wineD3DVertexDeclaration);
     wined3d_mutex_unlock();
     HeapFree(GetProcessHeap(), 0, wined3d_elements);

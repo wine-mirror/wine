@@ -275,7 +275,7 @@ HRESULT volume_init(IDirect3DVolume9Impl *volume, IDirect3DDevice9Impl *device, 
     volume->IDirect3DVolume9_iface.lpVtbl = &Direct3DVolume9_Vtbl;
     volume->ref = 1;
 
-    hr = wined3d_volume_create(device->WineD3DDevice, width, height, depth, usage & WINED3DUSAGE_MASK,
+    hr = wined3d_volume_create(device->wined3d_device, width, height, depth, usage & WINED3DUSAGE_MASK,
             format, pool, volume, &d3d9_volume_wined3d_parent_ops, &volume->wined3d_volume);
     if (FAILED(hr))
     {

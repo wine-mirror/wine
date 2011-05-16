@@ -92,7 +92,7 @@ struct dxgi_device
     const struct IWineDXGIDeviceVtbl *vtbl;
     IUnknown *child_layer;
     LONG refcount;
-    IWineD3DDevice *wined3d_device;
+    struct wined3d_device *wined3d_device;
     IWineDXGIFactory *factory;
 };
 

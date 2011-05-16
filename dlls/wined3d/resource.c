@@ -112,7 +112,7 @@ HRESULT resource_init(struct wined3d_resource *resource, IWineD3DDeviceImpl *dev
     /* Check that we have enough video ram left */
     if (pool == WINED3DPOOL_DEFAULT)
     {
-        if (size > IWineD3DDevice_GetAvailableTextureMem((IWineD3DDevice *)device))
+        if (size > wined3d_device_get_available_texture_mem(device))
         {
             ERR("Out of adapter memory\n");
             HeapFree(GetProcessHeap(), 0, resource->heapMemory);
