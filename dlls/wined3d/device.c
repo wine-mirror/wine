@@ -5352,17 +5352,20 @@ void CDECL wined3d_device_set_cursor_position(struct wined3d_device *device,
 BOOL CDECL wined3d_device_show_cursor(struct wined3d_device *device, BOOL show)
 {
     BOOL oldVisible = device->bCursorVisible;
-    POINT pt;
 
     TRACE("device %p, show %#x.\n", device, show);
 
-    /* When ShowCursor is first called it should make the cursor appear at the
-     * OS's last known cursor position. Because of this, some applications
-     * just repetitively call ShowCursor in order to update the cursor's
-     * position. This behavior is undocumented. */
-    GetCursorPos(&pt);
-    device->xScreenSpace = pt.x;
-    device->yScreenSpace = pt.y;
+    /*
+     * When ShowCursor is first called it should make the cursor appear at the OS's last
+     * known cursor position.
+     */
+    if (show && !oldVisible)
+    {
+        POINT pt;
+        GetCursorPos(&pt);
+        device->xScreenSpace = pt.x;
+        device->yScreenSpace = pt.y;
+    }
 
     if (device->hardwareCursor)
     {
