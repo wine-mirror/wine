@@ -117,12 +117,13 @@ struct glsl_shader_prog_link {
     const struct ps_np2fixup_info *np2Fixup_info;
 };
 
-typedef struct {
+struct glsl_program_key
+{
     const struct wined3d_shader *vshader;
     const struct wined3d_shader *pshader;
     struct ps_compile_args      ps_args;
     struct vs_compile_args      vs_args;
-} glsl_program_key_t;
+};
 
 struct shader_glsl_ctx_priv {
     const struct vs_compile_args    *cur_vs_args;
@@ -3701,8 +3702,9 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
  * Vertex Shader Specific Code begins here
  ********************************************/
 
-static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_shader_prog_link *entry) {
-    glsl_program_key_t key;
+static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_shader_prog_link *entry)
+{
+    struct glsl_program_key key;
 
     key.vshader = entry->vshader;
     key.pshader = entry->pshader;
@@ -3720,7 +3722,7 @@ static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_p
         struct vs_compile_args *vs_args, struct ps_compile_args *ps_args)
 {
     struct wine_rb_entry *entry;
-    glsl_program_key_t key;
+    struct glsl_program_key key;
 
     key.vshader = vshader;
     key.pshader = pshader;
@@ -3735,7 +3737,7 @@ static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_p
 static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const struct wined3d_gl_info *gl_info,
         struct glsl_shader_prog_link *entry)
 {
-    glsl_program_key_t key;
+    struct glsl_program_key key;
 
     key.vshader = entry->vshader;
     key.pshader = entry->pshader;
@@ -4784,7 +4786,7 @@ static void shader_glsl_destroy(struct wined3d_shader *shader)
 
 static int glsl_program_key_compare(const void *key, const struct wine_rb_entry *entry)
 {
-    const glsl_program_key_t *k = key;
+    const struct glsl_program_key *k = key;
     const struct glsl_shader_prog_link *prog = WINE_RB_ENTRY_VALUE(entry,
             const struct glsl_shader_prog_link, program_lookup_entry);
     int cmp;
