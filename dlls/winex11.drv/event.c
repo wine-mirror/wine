@@ -318,25 +318,26 @@ static enum event_merge_action merge_events( XEvent *prev, XEvent *next )
         break;
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
     case GenericEvent:
-        if (prev->xcookie.extension != xinput2_opcode) break;
-        if (prev->xcookie.evtype != XI_RawMotion) break;
-        switch (next->type)
         {
-        case MotionNotify:
+            struct x11drv_thread_data *thread_data = x11drv_thread_data();
+            if (prev->xcookie.extension != xinput2_opcode) break;
+            if (prev->xcookie.evtype != XI_RawMotion) break;
+            if (thread_data->warp_serial) break;
+            switch (next->type)
             {
-                struct x11drv_thread_data *thread_data = x11drv_thread_data();
+            case MotionNotify:
                 if (next->xany.window == thread_data->clip_window &&
                     next->xmotion.time - thread_data->last_motion_notify < 1000)
                 {
                     TRACE( "ignoring MotionNotify for clip window\n" );
                     return MERGE_IGNORE;
                 }
+                break;
+            case GenericEvent:
+                if (next->xcookie.extension != xinput2_opcode) break;
+                if (next->xcookie.evtype != XI_RawMotion) break;
+                return merge_raw_motion_events( prev->xcookie.data, next->xcookie.data );
             }
-            break;
-        case GenericEvent:
-            if (next->xcookie.extension != xinput2_opcode) break;
-            if (next->xcookie.evtype != XI_RawMotion) break;
-            return merge_raw_motion_events( prev->xcookie.data, next->xcookie.data );
         }
         break;
 #endif

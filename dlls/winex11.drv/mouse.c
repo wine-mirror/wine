@@ -1213,15 +1213,13 @@ BOOL CDECL X11DRV_SetCursorPos( INT x, INT y )
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
 
-    if (data->xi2_state == xi_enabled) return TRUE;
-
-    TRACE( "warping to (%d,%d)\n", x, y );
-
     wine_tsx11_lock();
+    data->warp_serial = NextRequest( data->display );
     XWarpPointer( data->display, root_window, root_window, 0, 0, 0, 0,
                   x - virtual_screen_rect.left, y - virtual_screen_rect.top );
     XFlush( data->display ); /* avoids bad mouse lag in games that do their own mouse warping */
     wine_tsx11_unlock();
+    TRACE( "warped to %d,%d serial %lu\n", x, y, data->warp_serial );
     return TRUE;
 }
 
@@ -1240,9 +1238,10 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
     ret = XQueryPointer( display, root_window, &root, &child, &rootX, &rootY, &winX, &winY, &xstate );
     if (ret)
     {
+        POINT old = *pos;
         pos->x = winX + virtual_screen_rect.left;
         pos->y = winY + virtual_screen_rect.top;
-        TRACE("pointer at (%d,%d)\n", pos->x, pos->y );
+        TRACE( "pointer at (%d,%d) server pos %d,%d\n", pos->x, pos->y, old.x, old.y );
     }
     wine_tsx11_unlock();
     return ret;
@@ -1353,7 +1352,8 @@ void X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
     XMotionEvent *event = &xev->xmotion;
     INPUT input;
 
-    TRACE( "hwnd %p/%lx pos %d,%d is_hint %d\n", hwnd, event->window, event->x, event->y, event->is_hint );
+    TRACE( "hwnd %p/%lx pos %d,%d is_hint %d serial %lu\n",
+           hwnd, event->window, event->x, event->y, event->is_hint, event->serial );
 
     input.u.mi.dx          = event->x;
     input.u.mi.dy          = event->y;
@@ -1366,6 +1366,7 @@ void X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
     {
         struct x11drv_thread_data *thread_data = x11drv_thread_data();
         if (event->time - thread_data->last_motion_notify < 1000) return;
+        if (thread_data->warp_serial && (long)(event->serial - thread_data->warp_serial) < 0) return;
         thread_data->last_motion_notify = event->time;
     }
 
@@ -1402,12 +1403,15 @@ void X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
 /***********************************************************************
  *           X11DRV_RawMotion
  */
-static void X11DRV_RawMotion( XIRawEvent *event )
+static void X11DRV_RawMotion( XGenericEventCookie *xev )
 {
+    XIRawEvent *event = xev->data;
     const double *values = event->valuators.values;
     INPUT input;
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
 
     if (!event->valuators.mask_len) return;
+    if (thread_data->xi2_state != xi_enabled) return;
 
     input.u.mi.dx          = 0;
     input.u.mi.dy          = 0;
@@ -1418,6 +1422,18 @@ static void X11DRV_RawMotion( XIRawEvent *event )
 
     if (XIMaskIsSet( event->valuators.mask, 0 )) input.u.mi.dx = *values++;
     if (XIMaskIsSet( event->valuators.mask, 1 )) input.u.mi.dy = *values++;
+
+    if (thread_data->warp_serial)
+    {
+        long diff = xev->serial - thread_data->warp_serial;
+
+        if (diff >= 0) thread_data->warp_serial = 0;  /* we caught up now */
+        if (diff <= 0)  /* <= 0 because we also want to ignore the first event after the warp request */
+        {
+            TRACE( "pos %d,%d old serial %lu, ignoring\n", input.u.mi.dx, input.u.mi.dy, xev->serial );
+            return;
+        }
+    }
 
     TRACE( "pos %d,%d\n", input.u.mi.dx, input.u.mi.dy );
 
@@ -1478,7 +1494,7 @@ void X11DRV_GenericEvent( HWND hwnd, XEvent *xev )
     switch (event->evtype)
     {
     case XI_RawMotion:
-        X11DRV_RawMotion( event->data );
+        X11DRV_RawMotion( event );
         break;
 
     default:
