@@ -31,6 +31,7 @@
 #include "wine/test.h"
 
 static HCRYPTPROV crypt_prov;
+static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 
 static const DWORD rop3[256] =
 {
@@ -93,6 +94,8 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "a8b59f25984b066fc6b91cae6bf983a78028ba7f",
     "3d95adb85b9673a932ac847a4b5451fa59885f74",
     "e2a8eef4aeda3a0f6c950075acba38f1f9e0814d",
+    "8b66f14d51ecdeea12bc993302bb9b7d3ec085a1",
+    "7da9dd3d40d44d92deb9883fb7110443c2d5769a",
     NULL
 };
 
@@ -348,7 +351,6 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     CombineRgn(hrgn, hrgn, hrgn2, RGN_OR);
     ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
     DeleteObject(hrgn2);
-    DeleteObject(hrgn);
 
     for(i = 0; i < sizeof(hline_clips)/sizeof(hline_clips[0]); i++)
     {
@@ -517,9 +519,36 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     compare_hash(bmi, bits, sha1, "rectangles");
     memset(bits, 0xcc, dib_size);
+    SelectObject(hdc, solid_pen);
+
+    /* PaintRgn */
+
+    PaintRgn(hdc, hrgn);
+    compare_hash(bmi, bits, sha1, "PaintRgn");
+    memset(bits, 0xcc, dib_size);
+
+    /* RTL rectangles */
+
+    if( !pSetLayout )
+    {
+        win_skip("Don't have SetLayout\n");
+        (*sha1)++;
+    }
+    else
+    {
+        pSetLayout(hdc, LAYOUT_RTL);
+        PaintRgn(hdc, hrgn);
+        PatBlt(hdc, 10, 250, 10, 10, PATCOPY);
+        Rectangle(hdc, 100, 250, 110, 260);
+        compare_hash(bmi, bits, sha1, "rtl");
+        memset(bits, 0xcc, dib_size);
+
+        pSetLayout(hdc, LAYOUT_LTR);
+    }
 
     SelectObject(hdc, orig_brush);
     SelectObject(hdc, orig_pen);
+    DeleteObject(hrgn);
     DeleteObject(dib_brush);
     DeleteObject(dashed_pen);
     DeleteObject(solid_brush);
@@ -612,6 +641,9 @@ todo_wine
 
 START_TEST(dib)
 {
+    HMODULE mod = GetModuleHandleA("gdi32.dll");
+    pSetLayout = (void *)GetProcAddress( mod, "SetLayout" );
+
     CryptAcquireContextW(&crypt_prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
 
     test_simple_graphics();
