@@ -1680,14 +1680,13 @@ struct wined3d_device
     WORD isRecordingState : 1;
     WORD isInDraw : 1;
     WORD bCursorVisible : 1;
-    WORD haveHardwareCursor : 1;
     WORD d3d_initialized : 1;
     WORD inScene : 1;                   /* A flag to check for proper BeginScene / EndScene call pairs */
     WORD softwareVertexProcessing : 1;  /* process vertex shaders using software or hardware */
     WORD useDrawStridedSlow : 1;
     WORD instancedDraw : 1;
     WORD filter_messages : 1;
-    WORD padding : 3;
+    WORD padding : 4;
 
     BYTE fixed_function_usage_map;      /* MAX_TEXTURES, 8 */
 

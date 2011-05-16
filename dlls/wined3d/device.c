@@ -870,7 +870,7 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
             ERR("Context array not freed!\n");
         if (device->hardwareCursor)
             DestroyCursor(device->hardwareCursor);
-        device->haveHardwareCursor = FALSE;
+        device->hardwareCursor = 0;
 
         wined3d_decref(device->wined3d);
         device->wined3d = NULL;
@@ -5203,11 +5203,6 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         device->cursorTexture = 0;
     }
 
-    if (cursor_image->resource.width == 32 && cursor_image->resource.height == 32)
-        device->haveHardwareCursor = TRUE;
-    else
-        device->haveHardwareCursor = FALSE;
-
     if (cursor_image)
     {
         WINED3DLOCKED_RECT rect;
@@ -5229,7 +5224,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             return WINED3DERR_INVALIDCALL;
         }
 
-        if (!device->haveHardwareCursor)
+        if (cursor_image->resource.width != 32 || cursor_image->resource.height != 32)
         {
             /* TODO: MSDN: Cursor sizes must be a power of 2 */
 
@@ -5369,7 +5364,7 @@ BOOL CDECL wined3d_device_show_cursor(struct wined3d_device *device, BOOL show)
     device->xScreenSpace = pt.x;
     device->yScreenSpace = pt.y;
 
-    if (device->haveHardwareCursor)
+    if (device->hardwareCursor)
     {
         device->bCursorVisible = show;
         if (show)
