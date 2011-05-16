@@ -34,7 +34,7 @@ struct wined3d_wndproc
     HWND window;
     BOOL unicode;
     WNDPROC proc;
-    IWineD3DDeviceImpl *device;
+    struct wined3d_device *device;
 };
 
 struct wined3d_wndproc_table
@@ -399,7 +399,7 @@ static struct wined3d_wndproc *wined3d_find_wndproc(HWND window)
 static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
 {
     struct wined3d_wndproc *entry;
-    IWineD3DDeviceImpl *device;
+    struct wined3d_device *device;
     BOOL unicode;
     WNDPROC proc;
 
@@ -421,7 +421,7 @@ static LRESULT CALLBACK wined3d_wndproc(HWND window, UINT message, WPARAM wparam
     return device_process_message(device, window, unicode, message, wparam, lparam, proc);
 }
 
-BOOL wined3d_register_window(HWND window, IWineD3DDeviceImpl *device)
+BOOL wined3d_register_window(HWND window, struct wined3d_device *device)
 {
     struct wined3d_wndproc *entry;
 

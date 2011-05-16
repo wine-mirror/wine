@@ -692,9 +692,9 @@ static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct
     caps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
-static HRESULT nvrc_fragment_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
+static HRESULT nvrc_fragment_alloc(struct wined3d_device *device) { return WINED3D_OK; }
 /* Context activation is done by the caller. */
-static void nvrc_fragment_free(IWineD3DDeviceImpl *device) {}
+static void nvrc_fragment_free(struct wined3d_device *device) {}
 
 /* Two fixed function pipeline implementations using GL_NV_register_combiners and
  * GL_NV_texture_shader. The nvts_fragment_pipeline assumes that both extensions

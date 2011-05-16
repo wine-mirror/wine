@@ -65,7 +65,7 @@ static DWORD resource_access_from_pool(WINED3DPOOL pool)
     }
 }
 
-HRESULT resource_init(struct wined3d_resource *resource, IWineD3DDeviceImpl *device,
+HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
         WINED3DRESOURCETYPE resource_type, const struct wined3d_format *format,
         WINED3DMULTISAMPLE_TYPE multisample_type, UINT multisample_quality,
         DWORD usage, WINED3DPOOL pool, UINT width, UINT height, UINT depth, UINT size,

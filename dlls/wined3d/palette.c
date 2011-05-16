@@ -158,7 +158,7 @@ void * CDECL wined3d_palette_get_parent(const struct wined3d_palette *palette)
     return palette->parent;
 }
 
-static HRESULT wined3d_palette_init(struct wined3d_palette *palette, IWineD3DDeviceImpl *device,
+static HRESULT wined3d_palette_init(struct wined3d_palette *palette, struct wined3d_device *device,
         DWORD flags, const PALETTEENTRY *entries, void *parent)
 {
     HRESULT hr;
@@ -187,10 +187,9 @@ static HRESULT wined3d_palette_init(struct wined3d_palette *palette, IWineD3DDev
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_palette_create(IWineD3DDevice *iface, DWORD flags,
+HRESULT CDECL wined3d_palette_create(struct wined3d_device *device, DWORD flags,
         const PALETTEENTRY *entries, void *parent, struct wined3d_palette **palette)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_palette *object;
     HRESULT hr;
 

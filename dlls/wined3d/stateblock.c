@@ -193,7 +193,7 @@ static const DWORD vertex_states_sampler[] =
  */
 static HRESULT stateblock_allocate_shader_constants(struct wined3d_stateblock *object)
 {
-    IWineD3DDeviceImpl *device = object->device;
+    struct wined3d_device *device = object->device;
 
     /* Allocate space for floating point constants */
     object->state.ps_consts_f = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -329,7 +329,7 @@ static void stateblock_savedstates_set_vertex(SAVEDSTATES *states, const DWORD n
 
 void stateblock_init_contained_states(struct wined3d_stateblock *stateblock)
 {
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     unsigned int i, j;
 
     for (i = 0; i <= WINEHIGHEST_RENDER_STATE >> 5; ++i)
@@ -885,7 +885,7 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
     return WINED3D_OK;
 }
 
-static void apply_lights(IWineD3DDevice *device, const struct wined3d_state *state)
+static void apply_lights(struct wined3d_device *device, const struct wined3d_state *state)
 {
     UINT i;
 
@@ -905,7 +905,7 @@ static void apply_lights(IWineD3DDevice *device, const struct wined3d_state *sta
 
 HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock)
 {
-    IWineD3DDevice *device = (IWineD3DDevice *)stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     unsigned int i;
     DWORD map;
 
@@ -1071,7 +1071,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
 
 void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
 {
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_state *state = &stateblock->state;
     union {
@@ -1320,7 +1320,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
-        IWineD3DDeviceImpl *device, WINED3DSTATEBLOCKTYPE type)
+        struct wined3d_device *device, WINED3DSTATEBLOCKTYPE type)
 {
     unsigned int i;
     HRESULT hr;
@@ -1372,10 +1372,9 @@ static HRESULT stateblock_init(struct wined3d_stateblock *stateblock,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_stateblock_create(IWineD3DDevice *iface,
+HRESULT CDECL wined3d_stateblock_create(struct wined3d_device *device,
         WINED3DSTATEBLOCKTYPE type, struct wined3d_stateblock **stateblock)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_stateblock *object;
     HRESULT hr;
 

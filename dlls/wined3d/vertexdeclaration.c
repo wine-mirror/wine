@@ -157,8 +157,8 @@ static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
     }
 }
 
-static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declaration, IWineD3DDeviceImpl *device,
-        const WINED3DVERTEXELEMENT *elements, UINT element_count,
+static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declaration,
+        struct wined3d_device *device, const WINED3DVERTEXELEMENT *elements, UINT element_count,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -237,11 +237,10 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_vertex_declaration_create(IWineD3DDevice *iface,
+HRESULT CDECL wined3d_vertex_declaration_create(struct wined3d_device *device,
         const WINED3DVERTEXELEMENT *elements, UINT element_count, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_vertex_declaration **declaration)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_vertex_declaration *object;
     HRESULT hr;
 
@@ -405,11 +404,10 @@ static unsigned int convert_fvf_to_declaration(const struct wined3d_gl_info *gl_
     return size;
 }
 
-HRESULT CDECL wined3d_vertex_declaration_create_from_fvf(IWineD3DDevice *iface,
+HRESULT CDECL wined3d_vertex_declaration_create_from_fvf(struct wined3d_device *device,
         DWORD fvf, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_vertex_declaration **declaration)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     WINED3DVERTEXELEMENT *elements;
     unsigned int size;
     DWORD hr;
@@ -420,7 +418,7 @@ HRESULT CDECL wined3d_vertex_declaration_create_from_fvf(IWineD3DDevice *iface,
     size = convert_fvf_to_declaration(&device->adapter->gl_info, fvf, &elements);
     if (size == ~0U) return E_OUTOFMEMORY;
 
-    hr = wined3d_vertex_declaration_create(iface, elements, size, parent, parent_ops, declaration);
+    hr = wined3d_vertex_declaration_create(device, elements, size, parent, parent_ops, declaration);
     HeapFree(GetProcessHeap(), 0, elements);
     return hr;
 }

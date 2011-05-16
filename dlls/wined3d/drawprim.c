@@ -55,7 +55,7 @@ static void drawStridedFast(GLenum primitive_type, UINT count, UINT idx_size, co
  */
 
 /* GL locking is done by the caller */
-static void drawStridedSlow(IWineD3DDeviceImpl *device, const struct wined3d_context *context,
+static void drawStridedSlow(struct wined3d_device *device, const struct wined3d_context *context,
         const struct wined3d_stream_info *si, UINT NumVertexes, GLenum glPrimType,
         const void *idxData, UINT idxSize, UINT startIdx)
 {
@@ -558,7 +558,7 @@ static void remove_vbos(const struct wined3d_gl_info *gl_info,
 }
 
 /* Routine common to the draw primitive and draw indexed primitive routines */
-void drawPrimitive(IWineD3DDeviceImpl *device, UINT index_count, UINT StartIdx, UINT idxSize, const void *idxData)
+void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartIdx, UINT idxSize, const void *idxData)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
     struct wined3d_context *context;
@@ -768,8 +768,8 @@ static void normalize_normal(float *n) {
  * responsible of taking care that either the gl states are restored, or the context activated
  * for drawing to reset the lastWasBlit flag.
  */
-HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
-                            struct WineD3DRectPatch *patch) {
+HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch *patch)
+{
     unsigned int i, j, num_quads, out_vertex_size, buffer_size, d3d_out_vertex_size;
     float max_x = 0.0f, max_y = 0.0f, max_z = 0.0f, neg_z = 0.0f;
     struct wined3d_stream_info stream_info;

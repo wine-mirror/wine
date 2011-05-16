@@ -737,7 +737,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
         char usePixelShader, char useVertexShader)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    IWineD3DDeviceImpl *device = context->swapchain->device;
+    struct wined3d_device *device = context->swapchain->device;
     struct wined3d_stateblock *stateBlock = device->stateBlock;
     struct shader_glsl_priv *priv = device->shader_priv;
     float position_fixup[4];
@@ -871,7 +871,7 @@ static inline void update_heap_entry(struct constant_heap *heap, unsigned int id
     positions[idx] = heap_idx;
 }
 
-static void shader_glsl_update_float_vertex_constants(IWineD3DDeviceImpl *device, UINT start, UINT count)
+static void shader_glsl_update_float_vertex_constants(struct wined3d_device *device, UINT start, UINT count)
 {
     struct shader_glsl_priv *priv = device->shader_priv;
     struct constant_heap *heap = &priv->vconst_heap;
@@ -886,7 +886,7 @@ static void shader_glsl_update_float_vertex_constants(IWineD3DDeviceImpl *device
     }
 }
 
-static void shader_glsl_update_float_pixel_constants(IWineD3DDeviceImpl *device, UINT start, UINT count)
+static void shader_glsl_update_float_pixel_constants(struct wined3d_device *device, UINT start, UINT count)
 {
     struct shader_glsl_priv *priv = device->shader_priv;
     struct constant_heap *heap = &priv->pconst_heap;
@@ -917,7 +917,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         struct wined3d_shader_buffer *buffer, struct wined3d_shader *shader,
         const struct wined3d_shader_reg_maps *reg_maps, struct shader_glsl_ctx_priv *ctx_priv)
 {
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     const struct wined3d_state *state = &device->stateBlock->state;
     const struct ps_compile_args *ps_args = ctx_priv->cur_ps_args;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -3036,7 +3036,7 @@ static void shader_glsl_ret(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader *shader = ins->ctx->shader;
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
     glsl_sample_function_t sample_function;
@@ -3126,7 +3126,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader *shader = ins->ctx->shader;
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param, dx_param, dy_param;
@@ -3159,7 +3159,7 @@ static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
 static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader *shader = ins->ctx->shader;
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param, lod_param;
@@ -4294,7 +4294,7 @@ static GLhandleARB find_glsl_vshader(const struct wined3d_context *context,
 
 /* GL locking is done by the caller */
 static void set_glsl_shader_program(const struct wined3d_context *context,
-        IWineD3DDeviceImpl *device, BOOL use_ps, BOOL use_vs)
+        struct wined3d_device *device, BOOL use_ps, BOOL use_vs)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
     struct wined3d_shader *vshader = use_vs ? state->vertex_shader : NULL;
@@ -4594,7 +4594,7 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
 static void shader_glsl_select(const struct wined3d_context *context, BOOL usePS, BOOL useVS)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    IWineD3DDeviceImpl *device = context->swapchain->device;
+    struct wined3d_device *device = context->swapchain->device;
     struct shader_glsl_priv *priv = device->shader_priv;
     GLhandleARB program_id = 0;
     GLenum old_vertex_color_clamp, current_vertex_color_clamp;
@@ -4677,10 +4677,10 @@ static void shader_glsl_deselect_depth_blt(void *shader_priv, const struct wined
 
 static void shader_glsl_destroy(struct wined3d_shader *shader)
 {
-    const struct list *linked_programs;
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     struct shader_glsl_priv *priv = device->shader_priv;
     const struct wined3d_gl_info *gl_info;
+    const struct list *linked_programs;
     struct wined3d_context *context;
 
     char pshader = shader_is_pshader_version(shader->reg_maps.shader_version.type);
@@ -4833,7 +4833,7 @@ static const struct wine_rb_functions wined3d_glsl_program_rb_functions =
     glsl_program_key_compare,
 };
 
-static HRESULT shader_glsl_alloc(IWineD3DDeviceImpl *device)
+static HRESULT shader_glsl_alloc(struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
@@ -4886,7 +4886,7 @@ fail:
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_free(IWineD3DDeviceImpl *device)
+static void shader_glsl_free(struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_glsl_priv *priv = device->shader_priv;

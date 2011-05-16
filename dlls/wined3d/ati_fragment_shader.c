@@ -799,10 +799,10 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 static void set_tex_op_atifs(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    IWineD3DDeviceImpl *This = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     const struct atifs_ffp_desc *desc;
-    struct ffp_frag_settings     settings;
-    struct atifs_private_data   *priv = This->fragment_priv;
+    struct ffp_frag_settings settings;
+    struct atifs_private_data *priv = device->fragment_priv;
     DWORD mapped_stage;
     unsigned int i;
 
@@ -832,8 +832,9 @@ static void set_tex_op_atifs(DWORD state, struct wined3d_stateblock *stateblock,
     /* GL_ATI_fragment_shader depends on the GL_TEXTURE_xD enable settings. Update the texture stages
      * used by this shader
      */
-    for(i = 0; i < desc->num_textures_used; i++) {
-        mapped_stage = This->texUnitMap[i];
+    for (i = 0; i < desc->num_textures_used; ++i)
+    {
+        mapped_stage = device->texUnitMap[i];
         if (mapped_stage != WINED3D_UNMAPPED_STAGE)
         {
             GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
@@ -890,7 +891,7 @@ static void atifs_apply_pixelshader(DWORD state_id,
         struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_state *state = &stateblock->state;
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     BOOL use_vshader = use_vs(state);
 
     context->last_was_pshader = use_ps(state);
@@ -1114,7 +1115,7 @@ static void atifs_get_caps(const struct wined3d_gl_info *gl_info, struct fragmen
     caps->MaxSimultaneousTextures = 6;
 }
 
-static HRESULT atifs_alloc(IWineD3DDeviceImpl *device)
+static HRESULT atifs_alloc(struct wined3d_device *device)
 {
     struct atifs_private_data *priv;
 
@@ -1137,8 +1138,8 @@ static HRESULT atifs_alloc(IWineD3DDeviceImpl *device)
 /* Context activation is done by the caller. */
 static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *context)
 {
-    IWineD3DDeviceImpl *This = context;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+    struct wined3d_device *device = context;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct atifs_ffp_desc *entry_ati = WINE_RB_ENTRY_VALUE(entry, struct atifs_ffp_desc, parent.entry);
 
     ENTER_GL();
@@ -1149,7 +1150,7 @@ static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *context)
 }
 
 /* Context activation is done by the caller. */
-static void atifs_free(IWineD3DDeviceImpl *device)
+static void atifs_free(struct wined3d_device *device)
 {
     struct atifs_private_data *priv = device->fragment_priv;
 

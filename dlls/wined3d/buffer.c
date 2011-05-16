@@ -322,7 +322,7 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
 
 static BOOL buffer_find_decl(struct wined3d_buffer *This)
 {
-    IWineD3DDeviceImpl *device = This->resource.device;
+    struct wined3d_device *device = This->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_stream_info *si = &device->strided_streams;
     const struct wined3d_state *state = &device->stateBlock->state;
@@ -535,7 +535,7 @@ static void buffer_unload(struct wined3d_resource *resource)
 
     if (buffer->buffer_object)
     {
-        IWineD3DDeviceImpl *device = resource->device;
+        struct wined3d_device *device = resource->device;
         struct wined3d_context *context;
 
         context = context_acquire(device, NULL);
@@ -765,7 +765,7 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
 void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
 {
     DWORD flags = buffer->flags & (WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
-    IWineD3DDeviceImpl *device = buffer->resource.device;
+    struct wined3d_device *device = buffer->resource.device;
     UINT start = 0, end = 0, len = 0, vertices;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
@@ -1039,7 +1039,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
         {
             if (count == 1)
             {
-                IWineD3DDeviceImpl *device = buffer->resource.device;
+                struct wined3d_device *device = buffer->resource.device;
                 struct wined3d_context *context;
                 const struct wined3d_gl_info *gl_info;
 
@@ -1143,7 +1143,7 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
 
     if (!(buffer->flags & WINED3D_BUFFER_DOUBLEBUFFER) && buffer->buffer_object)
     {
-        IWineD3DDeviceImpl *device = buffer->resource.device;
+        struct wined3d_device *device = buffer->resource.device;
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
@@ -1194,7 +1194,7 @@ static const struct wined3d_resource_ops buffer_resource_ops =
     buffer_unload,
 };
 
-static HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *device,
+static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device *device,
         UINT size, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, GLenum bind_hint,
         const char *data, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -1280,10 +1280,9 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, IWineD3DDeviceImpl *de
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_buffer_create(IWineD3DDevice *iface, struct wined3d_buffer_desc *desc, const void *data,
+HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, struct wined3d_buffer_desc *desc, const void *data,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
     HRESULT hr;
 
@@ -1315,10 +1314,9 @@ HRESULT CDECL wined3d_buffer_create(IWineD3DDevice *iface, struct wined3d_buffer
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_buffer_create_vb(IWineD3DDevice *iface, UINT size, DWORD usage, WINED3DPOOL pool,
+HRESULT CDECL wined3d_buffer_create_vb(struct wined3d_device *device, UINT size, DWORD usage, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
     HRESULT hr;
 
@@ -1357,10 +1355,9 @@ HRESULT CDECL wined3d_buffer_create_vb(IWineD3DDevice *iface, UINT size, DWORD u
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_buffer_create_ib(IWineD3DDevice *iface, UINT size, DWORD usage, WINED3DPOOL pool,
+HRESULT CDECL wined3d_buffer_create_ib(struct wined3d_device *device, UINT size, DWORD usage, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_buffer **buffer)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
     HRESULT hr;
 

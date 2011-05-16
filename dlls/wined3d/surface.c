@@ -496,7 +496,7 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 
 static void surface_prepare_system_memory(struct wined3d_surface *surface)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     TRACE("surface %p.\n", surface);
@@ -585,7 +585,7 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
 static void surface_bind_and_dirtify(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     DWORD active_sampler;
     GLint active_texture;
 
@@ -839,7 +839,7 @@ static void surface_preload(struct wined3d_surface *surface)
 
 static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     const RECT *pass_rect = rect;
 
     TRACE("surface %p, rect %s, flags %#x.\n",
@@ -915,7 +915,7 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
 
 static void surface_unmap(struct wined3d_surface *surface)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     BOOL fullsurface;
 
     TRACE("surface %p.\n", surface);
@@ -1080,7 +1080,7 @@ static BOOL surface_is_full_rect(struct wined3d_surface *surface, const RECT *r)
     return TRUE;
 }
 
-static void wined3d_surface_depth_blt_fbo(IWineD3DDeviceImpl *device, struct wined3d_surface *src_surface,
+static void wined3d_surface_depth_blt_fbo(struct wined3d_device *device, struct wined3d_surface *src_surface,
         const RECT *src_rect, struct wined3d_surface *dst_surface, const RECT *dst_rect)
 {
     const struct wined3d_gl_info *gl_info;
@@ -1248,7 +1248,7 @@ static BOOL surface_convert_depth_to_float(struct wined3d_surface *surface, DWOR
 static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const RECT *rect, float depth)
 {
     const struct wined3d_resource *resource = &surface->resource;
-    IWineD3DDeviceImpl *device = resource->device;
+    struct wined3d_device *device = resource->device;
     const struct blit_shader *blitter;
 
     blitter = wined3d_select_blitter(&device->adapter->gl_info, WINED3D_BLIT_OP_DEPTH_FILL,
@@ -1265,7 +1265,7 @@ static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const
 static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const RECT *dst_rect)
 {
-    IWineD3DDeviceImpl *device = src_surface->resource.device;
+    struct wined3d_device *device = src_surface->resource.device;
 
     if (!fbo_blit_supported(&device->adapter->gl_info, WINED3D_BLIT_OP_DEPTH_BLIT,
             src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
@@ -1286,7 +1286,7 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
         struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD flags,
         const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
 {
-    IWineD3DDeviceImpl *device = dst_surface->resource.device;
+    struct wined3d_device *device = dst_surface->resource.device;
     DWORD src_ds_flags, dst_ds_flags;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
@@ -1393,7 +1393,7 @@ static HRESULT surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_
 static HRESULT surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
         struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD trans)
 {
-    IWineD3DDeviceImpl *device = dst_surface->resource.device;
+    struct wined3d_device *device = dst_surface->resource.device;
 
     TRACE("dst_surface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
             dst_surface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect_in), trans);
@@ -1529,7 +1529,7 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
 static void surface_unload(struct wined3d_resource *resource)
 {
     struct wined3d_surface *surface = surface_from_resource(resource);
-    IWineD3DDeviceImpl *device = resource->device;
+    struct wined3d_device *device = resource->device;
     const struct wined3d_gl_info *gl_info;
     renderbuffer_entry_t *entry, *entry2;
     struct wined3d_context *context;
@@ -1985,7 +1985,7 @@ void surface_bind(struct wined3d_surface *surface, const struct wined3d_gl_info 
 }
 
 /* This function checks if the primary render target uses the 8bit paletted format. */
-static BOOL primary_render_target_is_p8(IWineD3DDeviceImpl *device)
+static BOOL primary_render_target_is_p8(struct wined3d_device *device)
 {
     if (device->render_targets && device->render_targets[0])
     {
@@ -2227,7 +2227,7 @@ static void surface_upload_data(struct wined3d_surface *surface, const struct wi
 
     if (gl_info->quirks & WINED3D_QUIRK_FBO_TEX_UPDATE)
     {
-        IWineD3DDeviceImpl *device = surface->resource.device;
+        struct wined3d_device *device = surface->resource.device;
         unsigned int i;
 
         for (i = 0; i < device->context_count; ++i)
@@ -2454,7 +2454,7 @@ static BOOL surface_convert_color_to_float(struct wined3d_surface *surface,
         DWORD color, WINED3DCOLORVALUE *float_color)
 {
     const struct wined3d_format *format = surface->resource.format;
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
 
     switch (format->id)
     {
@@ -3304,7 +3304,7 @@ static struct wined3d_surface *surface_convert_format(struct wined3d_surface *so
         return NULL;
     }
 
-    wined3d_surface_create((IWineD3DDevice *)source->resource.device, source->resource.width,
+    wined3d_surface_create(source->resource.device, source->resource.width,
             source->resource.height, to_fmt, TRUE /* lockable */, TRUE /* discard  */, 0 /* level */,
             0 /* usage */, WINED3DPOOL_SCRATCH, WINED3DMULTISAMPLE_NONE /* TODO: Multisampled conversion */,
             0 /* MultiSampleQuality */, source->surface_type, NULL /* parent */, &wined3d_null_parent_ops, &ret);
@@ -3633,7 +3633,7 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
 /* Do not call while under the GL lock. */
 void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB srgb)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
 
     TRACE("iface %p, srgb %#x.\n", surface, srgb);
 
@@ -3708,7 +3708,7 @@ BOOL surface_init_sysmem(struct wined3d_surface *surface)
 /* Read the framebuffer back into the surface */
 static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *rect, void *dest, UINT pitch)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     BYTE *mem;
@@ -3965,7 +3965,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
 /* Read the framebuffer contents into a texture */
 static void read_from_framebuffer_texture(struct wined3d_surface *surface, BOOL srgb)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
 
@@ -4049,7 +4049,7 @@ void surface_prepare_texture(struct wined3d_surface *surface, const struct wined
 static void flush_to_framebuffer_drawpixels(struct wined3d_surface *surface,
         const RECT *rect, GLenum fmt, GLenum type, UINT bpp, const BYTE *mem)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     UINT pitch = wined3d_surface_get_pitch(surface);
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
@@ -4125,7 +4125,7 @@ HRESULT d3dfmt_get_conv(struct wined3d_surface *surface, BOOL need_alpha_ck,
         BOOL use_texturing, struct wined3d_format *format, CONVERT_TYPES *convert)
 {
     BOOL colorkey_active = need_alpha_ck && (surface->CKeyFlags & WINEDDSD_CKSRCBLT);
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     BOOL blit_supported = FALSE;
 
@@ -4237,7 +4237,7 @@ HRESULT d3dfmt_get_conv(struct wined3d_surface *surface, BOOL need_alpha_ck,
 
 void d3dfmt_p8_init_palette(struct wined3d_surface *surface, BYTE table[256][4], BOOL colorkey)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     struct wined3d_palette *pal = surface->palette;
     BOOL index_in_alpha = FALSE;
     unsigned int i;
@@ -4461,7 +4461,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
 
 BOOL palette9_changed(struct wined3d_surface *surface)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
 
     if (surface->palette || (surface->resource.format->id != WINED3DFMT_P8_UINT
             && surface->resource.format->id != WINED3DFMT_P8_UINT_A8_UNORM))
@@ -4573,7 +4573,7 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)
 static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struct wined3d_surface *src_surface,
         const RECT *src_rect, const RECT *dst_rect_in, WINED3DTEXTUREFILTERTYPE Filter)
 {
-    IWineD3DDeviceImpl *device = dst_surface->resource.device;
+    struct wined3d_device *device = dst_surface->resource.device;
     float xrel, yrel;
     UINT row;
     struct wined3d_context *context;
@@ -4685,7 +4685,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
 static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, struct wined3d_surface *src_surface,
         const RECT *src_rect, const RECT *dst_rect_in, WINED3DTEXTUREFILTERTYPE Filter)
 {
-    IWineD3DDeviceImpl *device = dst_surface->resource.device;
+    struct wined3d_device *device = dst_surface->resource.device;
     struct wined3d_swapchain *src_swapchain = NULL;
     GLuint src, backup = 0;
     float left, right, top, bottom; /* Texture coordinates */
@@ -4994,7 +4994,7 @@ void surface_translate_drawable_coords(struct wined3d_surface *surface, HWND win
 
 /* blit between surface locations. onscreen on different swapchains is not supported.
  * depth / stencil is not supported. */
-static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILTERTYPE filter,
+static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREFILTERTYPE filter,
         struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect_in)
 {
@@ -5121,7 +5121,7 @@ static void surface_blt_fbo(IWineD3DDeviceImpl *device, const WINED3DTEXTUREFILT
     context_release(context);
 }
 
-static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
+static void surface_blt_to_drawable(struct wined3d_device *device,
         WINED3DTEXTUREFILTERTYPE filter, BOOL color_key,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
@@ -5193,7 +5193,7 @@ static void surface_blt_to_drawable(IWineD3DDeviceImpl *device,
 /* Do not call while under the GL lock. */
 HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const WINED3DCOLORVALUE *color)
 {
-    IWineD3DDeviceImpl *device = s->resource.device;
+    struct wined3d_device *device = s->resource.device;
     const struct blit_shader *blitter;
 
     blitter = wined3d_select_blitter(&device->adapter->gl_info, WINED3D_BLIT_OP_COLOR_FILL,
@@ -5212,7 +5212,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
         struct wined3d_surface *src_surface, const RECT *SrcRect, DWORD flags, const WINEDDBLTFX *DDBltFx,
         WINED3DTEXTUREFILTERTYPE Filter)
 {
-    IWineD3DDeviceImpl *device = dst_surface->resource.device;
+    struct wined3d_device *device = dst_surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_swapchain *srcSwapchain = NULL, *dstSwapchain = NULL;
     RECT dst_rect, src_rect;
@@ -5555,7 +5555,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
 static void surface_depth_blt(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         GLuint texture, GLsizei w, GLsizei h, GLenum target)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     GLint compare_mode = GL_NONE;
     struct blt_info info;
     GLint old_binding = 0;
@@ -5624,7 +5624,7 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 /* Context activation is done by the caller. */
 void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLsizei w, h;
 
@@ -5866,7 +5866,7 @@ static DWORD resource_access_from_location(DWORD location)
 
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD flag, const RECT *rect)
 {
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     BOOL drawable_read_ok = surface_is_offscreen(surface);
     struct wined3d_format format;
@@ -6212,9 +6212,9 @@ BOOL surface_is_offscreen(struct wined3d_surface *surface)
     return swapchain->render_to_fbo;
 }
 
-static HRESULT ffp_blit_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
+static HRESULT ffp_blit_alloc(struct wined3d_device *device) { return WINED3D_OK; }
 /* Context activation is done by the caller. */
-static void ffp_blit_free(IWineD3DDeviceImpl *device) { }
+static void ffp_blit_free(struct wined3d_device *device) { }
 
 /* This function is used in case of 8bit paletted textures using GL_EXT_paletted_texture */
 /* Context activation is done by the caller. */
@@ -6325,7 +6325,7 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device, struct wined3d_surface *dst_surface,
+static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
         const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {
     const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
@@ -6335,7 +6335,7 @@ static HRESULT ffp_blit_color_fill(IWineD3DDeviceImpl *device, struct wined3d_su
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT ffp_blit_depth_fill(IWineD3DDeviceImpl *device,
+static HRESULT ffp_blit_depth_fill(struct wined3d_device *device,
         struct wined3d_surface *surface, const RECT *rect, float depth)
 {
     const RECT draw_rect = {0, 0, surface->resource.width, surface->resource.height};
@@ -6354,13 +6354,13 @@ const struct blit_shader ffp_blit =  {
     ffp_blit_depth_fill,
 };
 
-static HRESULT cpu_blit_alloc(IWineD3DDeviceImpl *device)
+static HRESULT cpu_blit_alloc(struct wined3d_device *device)
 {
     return WINED3D_OK;
 }
 
 /* Context activation is done by the caller. */
-static void cpu_blit_free(IWineD3DDeviceImpl *device)
+static void cpu_blit_free(struct wined3d_device *device)
 {
 }
 
@@ -7295,7 +7295,7 @@ error:
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT cpu_blit_color_fill(IWineD3DDeviceImpl *device, struct wined3d_surface *dst_surface,
+static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
         const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {
     WINEDDBLTFX BltFx;
@@ -7308,7 +7308,7 @@ static HRESULT cpu_blit_color_fill(IWineD3DDeviceImpl *device, struct wined3d_su
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT cpu_blit_depth_fill(IWineD3DDeviceImpl *device,
+static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
         struct wined3d_surface *surface, const RECT *rect, float depth)
 {
     FIXME("Depth filling not implemented by cpu_blit.\n");
@@ -7327,7 +7327,7 @@ const struct blit_shader cpu_blit =  {
 
 static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE surface_type, UINT alignment,
         UINT width, UINT height, UINT level, BOOL lockable, BOOL discard, WINED3DMULTISAMPLE_TYPE multisample_type,
-        UINT multisample_quality, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
+        UINT multisample_quality, struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -7452,12 +7452,11 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
     return hr;
 }
 
-HRESULT CDECL wined3d_surface_create(IWineD3DDevice *iface, UINT width, UINT height,
+HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, UINT height,
         enum wined3d_format_id format_id, BOOL lockable, BOOL discard, UINT level, DWORD usage, WINED3DPOOL pool,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_surface *object;
     HRESULT hr;
 

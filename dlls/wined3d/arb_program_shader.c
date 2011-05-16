@@ -629,7 +629,7 @@ static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *g
 /* GL locking is done by the caller (state handler) */
 static void shader_arb_load_constants(const struct wined3d_context *context, char usePixelShader, char useVertexShader)
 {
-    IWineD3DDeviceImpl *device = context->swapchain->device;
+    struct wined3d_device *device = context->swapchain->device;
     struct wined3d_stateblock *stateBlock = device->stateBlock;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_arb_priv *priv = device->shader_priv;
@@ -658,7 +658,7 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
     }
 }
 
-static void shader_arb_update_float_vertex_constants(IWineD3DDeviceImpl *device, UINT start, UINT count)
+static void shader_arb_update_float_vertex_constants(struct wined3d_device *device, UINT start, UINT count)
 {
     struct wined3d_context *context = context_get_current();
 
@@ -670,7 +670,7 @@ static void shader_arb_update_float_vertex_constants(IWineD3DDeviceImpl *device,
     device->highest_dirty_vs_const = max(device->highest_dirty_vs_const, start + count);
 }
 
-static void shader_arb_update_float_pixel_constants(IWineD3DDeviceImpl *device, UINT start, UINT count)
+static void shader_arb_update_float_pixel_constants(struct wined3d_device *device, UINT start, UINT count)
 {
     struct wined3d_context *context = context_get_current();
 
@@ -1341,7 +1341,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     const char *tex_type;
     BOOL np2_fixup = FALSE;
     struct wined3d_shader *shader = ins->ctx->shader;
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
     const char *mod;
     BOOL pshader = shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type);
@@ -3933,7 +3933,7 @@ static void init_output_registers(struct wined3d_shader *shader, DWORD sig_num,
         "result.texcoord[0]", "result.texcoord[1]", "result.texcoord[2]", "result.texcoord[3]",
         "result.texcoord[4]", "result.texcoord[5]", "result.texcoord[6]", "result.texcoord[7]"
     };
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     const struct wined3d_shader_signature_element *sig;
     const char *semantic_name;
     DWORD semantic_idx, reg_idx;
@@ -4196,7 +4196,7 @@ static GLuint shader_arb_generate_vshader(struct wined3d_shader *shader,
      */
     if (!gl_info->supported[NV_VERTEX_PROGRAM])
     {
-        IWineD3DDeviceImpl *device = shader->device;
+        struct wined3d_device *device = shader->device;
         const char *color_init = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_0001);
         shader_addline(buffer, "MOV result.color.secondary, %s;\n", color_init);
 
@@ -4269,7 +4269,7 @@ static GLuint shader_arb_generate_vshader(struct wined3d_shader *shader,
 static struct arb_ps_compiled_shader *find_arb_pshader(struct wined3d_shader *shader,
         const struct arb_ps_compile_args *args)
 {
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     UINT i;
     DWORD new_size;
@@ -4366,7 +4366,7 @@ static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const
 static struct arb_vs_compiled_shader *find_arb_vshader(struct wined3d_shader *shader,
         const struct arb_vs_compile_args *args)
 {
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     DWORD use_map = device->strided_streams.use_map;
     UINT i;
@@ -4452,7 +4452,7 @@ static struct arb_vs_compiled_shader *find_arb_vshader(struct wined3d_shader *sh
 static void find_arb_ps_compile_args(const struct wined3d_state *state,
         const struct wined3d_shader *shader, struct arb_ps_compile_args *args)
 {
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     int i;
     WORD int_skip;
@@ -4507,7 +4507,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
 static void find_arb_vs_compile_args(const struct wined3d_state *state,
         const struct wined3d_shader *shader, struct arb_vs_compile_args *args)
 {
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     int i;
     WORD int_skip;
@@ -4583,10 +4583,10 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
 /* GL locking is done by the caller */
 static void shader_arb_select(const struct wined3d_context *context, BOOL usePS, BOOL useVS)
 {
-    IWineD3DDeviceImpl *This = context->swapchain->device;
-    struct shader_arb_priv *priv = This->shader_priv;
+    struct wined3d_device *device = context->swapchain->device;
+    struct shader_arb_priv *priv = device->shader_priv;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    const struct wined3d_state *state = &This->stateBlock->state;
+    const struct wined3d_state *state = &device->stateBlock->state;
     int i;
 
     /* Deal with pixel shaders first so the vertex shader arg function has the input signature ready */
@@ -4611,7 +4611,8 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
             glEnable(GL_FRAGMENT_PROGRAM_ARB);
             checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
         }
-        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
+        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n",
+                device, priv->current_fprogram_id);
 
         /* Pixel Shader 1.x constants are clamped to [-1;1], Pixel Shader 2.0 constants are not. If switching between
          * a 1.x and newer shader, reload the first 8 constants
@@ -4619,7 +4620,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         if (priv->last_ps_const_clamped != ((struct arb_pshader_private *)ps->backend_data)->clamp_consts)
         {
             priv->last_ps_const_clamped = ((struct arb_pshader_private *)ps->backend_data)->clamp_consts;
-            This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, 8);
+            device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, 8);
             for(i = 0; i < 8; i++)
             {
                 context->pshader_const_dirty[i] = 1;
@@ -4629,7 +4630,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         }
         else
         {
-            UINT rt_height = This->render_targets[0]->resource.height;
+            UINT rt_height = device->render_targets[0]->resource.height;
             shader_arb_ps_local_constants(compiled, context, state, rt_height);
         }
 
@@ -4667,7 +4668,7 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         /* Enable OpenGL vertex programs */
         glEnable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
-        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
+        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", device, priv->current_vprogram_id);
         shader_arb_vs_local_constants(compiled, context, state);
 
         if(priv->last_vs_color_unclamp != compiled->need_color_unclamp) {
@@ -4742,7 +4743,7 @@ static void shader_arb_deselect_depth_blt(void *shader_priv, const struct wined3
 
 static void shader_arb_destroy(struct wined3d_shader *shader)
 {
-    IWineD3DDeviceImpl *device = shader->device;
+    struct wined3d_device *device = shader->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     if (shader_is_pshader_version(shader->reg_maps.shader_version.type))
@@ -4813,7 +4814,7 @@ static const struct wine_rb_functions sig_tree_functions =
     sig_tree_compare
 };
 
-static HRESULT shader_arb_alloc(IWineD3DDeviceImpl *device)
+static HRESULT shader_arb_alloc(struct wined3d_device *device)
 {
     struct shader_arb_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv));
     if(wine_rb_init(&priv->signature_tree, &sig_tree_functions) == -1)
@@ -4839,7 +4840,7 @@ static void release_signature(struct wine_rb_entry *entry, void *context)
 }
 
 /* Context activation is done by the caller. */
-static void shader_arb_free(IWineD3DDeviceImpl *device)
+static void shader_arb_free(struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct shader_arb_priv *priv = device->shader_priv;
@@ -5531,7 +5532,7 @@ static void arbfp_enable(BOOL enable)
     LEAVE_GL();
 }
 
-static HRESULT arbfp_alloc(IWineD3DDeviceImpl *device)
+static HRESULT arbfp_alloc(struct wined3d_device *device)
 {
     struct shader_arb_priv *priv;
     /* Share private data between the shader backend and the pipeline replacement, if both
@@ -5572,7 +5573,7 @@ static void arbfp_free_ffpshader(struct wine_rb_entry *entry, void *context)
 }
 
 /* Context activation is done by the caller. */
-static void arbfp_free(IWineD3DDeviceImpl *device)
+static void arbfp_free(struct wined3d_device *device)
 {
     struct shader_arb_priv *priv = device->fragment_priv;
 
@@ -5625,7 +5626,7 @@ static void state_texfactor_arbfp(DWORD state_id,
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     float col[4];
 
     /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
@@ -5650,7 +5651,7 @@ static void state_arb_specularenable(DWORD state_id,
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     float col[4];
 
     /* Don't load the parameter if we're using an arbfp pixel shader, otherwise we'll overwrite
@@ -5682,7 +5683,7 @@ static void set_bumpmat_arbfp(DWORD state_id, struct wined3d_stateblock *statebl
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     float mat[2][2];
 
     if (use_ps(state))
@@ -5720,7 +5721,7 @@ static void tex_bumpenvlum_arbfp(DWORD state_id,
     DWORD stage = (state_id - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     float param[4];
 
     if (use_ps(state))
@@ -6252,7 +6253,7 @@ static void fragment_prog_arbfp(DWORD state_id, struct wined3d_stateblock *state
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     struct shader_arb_priv *priv = device->fragment_priv;
     BOOL use_vshader = use_vs(state);
     BOOL use_pshader = use_ps(state);
@@ -6548,7 +6549,7 @@ struct arbfp_blit_priv {
     GLuint palette_texture;
 };
 
-static HRESULT arbfp_blit_alloc(IWineD3DDeviceImpl *device)
+static HRESULT arbfp_blit_alloc(struct wined3d_device *device)
 {
     device->blit_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct arbfp_blit_priv));
     if(!device->blit_priv) {
@@ -6559,7 +6560,7 @@ static HRESULT arbfp_blit_alloc(IWineD3DDeviceImpl *device)
 }
 
 /* Context activation is done by the caller. */
-static void arbfp_blit_free(IWineD3DDeviceImpl *device)
+static void arbfp_blit_free(struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct arbfp_blit_priv *priv = device->blit_priv;
@@ -6886,7 +6887,7 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
 static void upload_palette(struct wined3d_surface *surface)
 {
     BYTE table[256][4];
-    IWineD3DDeviceImpl *device = surface->resource.device;
+    struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct arbfp_blit_priv *priv = device->blit_priv;
     BOOL colorkey = (surface->CKeyFlags & WINEDDSD_CKSRCBLT) ? TRUE : FALSE;
@@ -7216,7 +7217,7 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum win
     }
 }
 
-HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, struct wined3d_surface *src_surface, const RECT *src_rect,
+HRESULT arbfp_blit_surface(struct wined3d_device *device, struct wined3d_surface *src_surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in, enum wined3d_blit_op blit_op, DWORD Filter)
 {
     struct wined3d_context *context;
@@ -7256,7 +7257,7 @@ HRESULT arbfp_blit_surface(IWineD3DDeviceImpl *device, struct wined3d_surface *s
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT arbfp_blit_color_fill(IWineD3DDeviceImpl *device, struct wined3d_surface *dst_surface,
+static HRESULT arbfp_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
         const RECT *dst_rect, const WINED3DCOLORVALUE *color)
 {
     FIXME("Color filling not implemented by arbfp_blit\n");
@@ -7264,7 +7265,7 @@ static HRESULT arbfp_blit_color_fill(IWineD3DDeviceImpl *device, struct wined3d_
 }
 
 /* Do not call while under the GL lock. */
-static HRESULT arbfp_blit_depth_fill(IWineD3DDeviceImpl *device,
+static HRESULT arbfp_blit_depth_fill(struct wined3d_device *device,
         struct wined3d_surface *surface, const RECT *rect, float depth)
 {
     FIXME("Depth filling not implemented by arbfp_blit.\n");

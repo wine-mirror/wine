@@ -1178,7 +1178,7 @@ void state_fogdensity(DWORD state, struct wined3d_stateblock *stateblock, struct
 static void state_colormat(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_state *state = &stateblock->state;
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     GLenum Parm = 0;
 
     /* Depends on the decoded vertex declaration to read the existence of diffuse data.
@@ -3476,7 +3476,7 @@ static void tex_coordindex(DWORD state, struct wined3d_stateblock *stateblock, s
 static void shaderconstant(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_state *state = &stateblock->state;
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
 
     /* Vertex and pixel shader states will call a shader upload, don't do anything as long one of them
      * has an update pending
@@ -3538,7 +3538,7 @@ static void sampler_texmatrix(DWORD state, struct wined3d_stateblock *stateblock
 static void sampler(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     DWORD sampler = state_id - STATE_SAMPLER(0);
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     DWORD mapped_stage = device->texUnitMap[sampler];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
@@ -3618,7 +3618,7 @@ static void sampler(DWORD state_id, struct wined3d_stateblock *stateblock, struc
 void apply_pixelshader(DWORD state_id, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
     const struct wined3d_state *state = &stateblock->state;
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     BOOL use_vshader = use_vs(state);
     BOOL use_pshader = use_ps(state);
     unsigned int i;
@@ -4477,7 +4477,7 @@ static void loadVertexData(const struct wined3d_context *context, struct wined3d
 
 static void streamsrc(DWORD state, struct wined3d_stateblock *stateblock, struct wined3d_context *context)
 {
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     BOOL load_numbered = use_vs(&stateblock->state) && !device->useDrawStridedSlow;
     BOOL load_named = !use_vs(&stateblock->state) && !device->useDrawStridedSlow;
 
@@ -4511,18 +4511,17 @@ static void vertexdeclaration(DWORD state_id, struct wined3d_stateblock *statebl
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_state *state = &stateblock->state;
+    struct wined3d_device *device = stateblock->device;
     BOOL useVertexShaderFunction = use_vs(state);
     BOOL usePixelShaderFunction = use_ps(state);
     BOOL updateFog = FALSE;
-    IWineD3DDeviceImpl *device = stateblock->device;
     BOOL transformed;
     BOOL wasrhw = context->last_was_rhw;
     unsigned int i;
 
     transformed = device->strided_streams.position_transformed;
-    if(transformed != context->last_was_rhw && !useVertexShaderFunction) {
+    if (transformed != context->last_was_rhw && !useVertexShaderFunction)
         updateFog = TRUE;
-    }
 
     if (transformed) {
         context->last_was_rhw = TRUE;
@@ -5622,8 +5621,8 @@ static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct 
     caps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
-static HRESULT ffp_fragment_alloc(IWineD3DDeviceImpl *device) { return WINED3D_OK; }
-static void ffp_fragment_free(IWineD3DDeviceImpl *device) {}
+static HRESULT ffp_fragment_alloc(struct wined3d_device *device) { return WINED3D_OK; }
+static void ffp_fragment_free(struct wined3d_device *device) {}
 static BOOL ffp_color_fixup_supported(struct color_fixup_desc fixup)
 {
     if (TRACE_ON(d3d))

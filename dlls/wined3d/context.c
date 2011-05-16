@@ -119,7 +119,7 @@ static void context_apply_attachment_filter_states(const struct wined3d_context 
     if (surface->container.type == WINED3D_CONTAINER_TEXTURE)
     {
         struct wined3d_texture *texture = surface->container.u.texture;
-        IWineD3DDeviceImpl *device = surface->resource.device;
+        struct wined3d_device *device = surface->resource.device;
         BOOL update_minfilter = FALSE;
         BOOL update_magfilter = FALSE;
         struct gl_texture *gl_tex;
@@ -652,7 +652,7 @@ void context_free_event_query(struct wined3d_event_query *query)
 
 typedef void (context_fbo_entry_func_t)(struct wined3d_context *context, struct fbo_entry *entry);
 
-static void context_enum_surface_fbo_entries(IWineD3DDeviceImpl *device,
+static void context_enum_surface_fbo_entries(struct wined3d_device *device,
         struct wined3d_surface *surface, context_fbo_entry_func_t *callback)
 {
     UINT i;
@@ -1171,7 +1171,7 @@ static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state,
 }
 
 /* This function takes care of WineD3D pixel format selection. */
-static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
+static int WineD3D_ChoosePixelFormat(struct wined3d_device *device, HDC hdc,
         const struct wined3d_format *color_format, const struct wined3d_format *ds_format,
         BOOL auxBuffers, int numSamples, BOOL findCompatible)
 {
@@ -1204,7 +1204,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
     };
 
     int i = 0;
-    int nCfgs = This->adapter->nCfgs;
+    int nCfgs = device->adapter->nCfgs;
 
     TRACE("ColorFormat=%s, DepthStencilFormat=%s, auxBuffers=%d, numSamples=%d, findCompatible=%d\n",
           debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id),
@@ -1223,7 +1223,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
     {
         for (i = 0; i < nCfgs; ++i)
         {
-            const struct wined3d_pixel_format *cfg = &This->adapter->cfgs[i];
+            const struct wined3d_pixel_format *cfg = &device->adapter->cfgs[i];
             BOOL exactDepthMatch = TRUE;
 
             /* For now only accept RGBA formats. Perhaps some day we will
@@ -1273,7 +1273,8 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
              * even when we don't need stencil because it could affect performance EXCEPT
              * on cards which don't offer depth formats without stencil like the i915 drivers
              * on Linux. */
-            if(stencilBits != cfg->stencilSize && !(This->adapter->brokenStencil && stencilBits <= cfg->stencilSize))
+            if (stencilBits != cfg->stencilSize
+                    && !(device->adapter->brokenStencil && stencilBits <= cfg->stencilSize))
                 continue;
 
             /* Check multisampling support */
@@ -1336,7 +1337,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         struct wined3d_surface *target, const struct wined3d_format *ds_format)
 {
-    IWineD3DDeviceImpl *device = swapchain->device;
+    struct wined3d_device *device = swapchain->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *color_format;
     struct wined3d_context *ret;
@@ -1669,7 +1670,7 @@ out:
 }
 
 /* Do not call while under the GL lock. */
-void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context)
+void context_destroy(struct wined3d_device *device, struct wined3d_context *context)
 {
     BOOL destroy;
 
@@ -1691,7 +1692,7 @@ void context_destroy(IWineD3DDeviceImpl *This, struct wined3d_context *context)
     HeapFree(GetProcessHeap(), 0, context->blit_targets);
     HeapFree(GetProcessHeap(), 0, context->vshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, context->pshader_const_dirty);
-    device_context_remove(This, context);
+    device_context_remove(device, context);
     if (destroy) HeapFree(GetProcessHeap(), 0, context);
 }
 
@@ -1724,10 +1725,10 @@ static inline void set_blit_dimension(UINT width, UINT height) {
  *
  *****************************************************************************/
 /* Context activation is done by the caller. */
-static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *context)
+static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *context)
 {
     int i;
-    const struct StateEntry *StateTable = This->StateTable;
+    const struct StateEntry *StateTable = device->StateTable;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     UINT width = context->current_rt->resource.width;
     UINT height = context->current_rt->resource.height;
@@ -1754,7 +1755,7 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
 
     /* Disable shaders */
     ENTER_GL();
-    This->shader_backend->shader_select(context, FALSE, FALSE);
+    device->shader_backend->shader_select(context, FALSE, FALSE);
     LEAVE_GL();
 
     Context_MarkStateDirty(context, STATE_VSHADER, StateTable);
@@ -1775,7 +1776,7 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
      */
     for (i = gl_info->limits.textures - 1; i > 0 ; --i)
     {
-        sampler = This->rev_tex_unit_map[i];
+        sampler = device->rev_tex_unit_map[i];
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
         checkGLcall("glActiveTextureARB");
 
@@ -1808,7 +1809,7 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
     checkGLcall("glActiveTextureARB");
 
-    sampler = This->rev_tex_unit_map[0];
+    sampler = device->rev_tex_unit_map[0];
 
     if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
     {
@@ -1919,11 +1920,11 @@ static void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *conte
     Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
     Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
 
-    This->frag_pipe->enable_extension(FALSE);
+    device->frag_pipe->enable_extension(FALSE);
 }
 
 /* Do not call while under the GL lock. */
-static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, struct wined3d_surface *target)
+static struct wined3d_context *FindContext(struct wined3d_device *device, struct wined3d_surface *target)
 {
     struct wined3d_context *current_context = context_get_current();
     struct wined3d_context *context;
@@ -1934,13 +1935,13 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, struct wine
     {
         if (current_context
                 && current_context->current_rt
-                && current_context->swapchain->device == This)
+                && current_context->swapchain->device == device)
         {
             target = current_context->current_rt;
         }
         else
         {
-            struct wined3d_swapchain *swapchain = This->swapchains[0];
+            struct wined3d_swapchain *swapchain = device->swapchains[0];
             if (swapchain->back_buffers) target = swapchain->back_buffers[0];
             else target = swapchain->front_buffer;
         }
@@ -1964,10 +1965,10 @@ static struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, struct wine
 
         /* Stay with the current context if possible. Otherwise use the
          * context for the primary swapchain. */
-        if (current_context && current_context->swapchain->device == This)
+        if (current_context && current_context->swapchain->device == device)
             context = current_context;
         else
-            context = swapchain_get_context(This->swapchains[0]);
+            context = swapchain_get_context(device->swapchains[0]);
     }
 
     context_update_window(context);
@@ -2068,7 +2069,7 @@ static BOOL match_depth_stencil_format(const struct wined3d_format *existing,
 }
 
 /* The caller provides a context */
-static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device,
+static void context_validate_onscreen_formats(struct wined3d_device *device,
         struct wined3d_context *context, struct wined3d_surface *depth_stencil)
 {
     /* Onscreen surfaces are always in a swapchain */
@@ -2089,7 +2090,7 @@ static void context_validate_onscreen_formats(IWineD3DDeviceImpl *device,
 }
 
 /* Context activation is done by the caller. */
-void context_apply_blit_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
+void context_apply_blit_state(struct wined3d_context *context, struct wined3d_device *device)
 {
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
@@ -2148,7 +2149,7 @@ static BOOL context_validate_rt_config(UINT rt_count,
 }
 
 /* Context activation is done by the caller. */
-BOOL context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceImpl *device,
+BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_device *device,
         UINT rt_count, struct wined3d_surface **rts, struct wined3d_surface *depth_stencil)
 {
     const struct StateEntry *state_table = device->StateTable;
@@ -2220,7 +2221,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, IWineD3DDeviceIm
 }
 
 /* Context activation is done by the caller. */
-BOOL context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImpl *device)
+BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_device *device)
 {
     const struct StateEntry *state_table = device->StateTable;
     unsigned int i;
@@ -2292,7 +2293,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, IWineD3DDeviceImp
     return TRUE;
 }
 
-static void context_setup_target(IWineD3DDeviceImpl *device,
+static void context_setup_target(struct wined3d_device *device,
         struct wined3d_context *context, struct wined3d_surface *target)
 {
     BOOL old_render_offscreen = context->render_offscreen, render_offscreen;
@@ -2358,7 +2359,7 @@ static void context_setup_target(IWineD3DDeviceImpl *device,
 }
 
 /* Do not call while under the GL lock. */
-struct wined3d_context *context_acquire(IWineD3DDeviceImpl *device, struct wined3d_surface *target)
+struct wined3d_context *context_acquire(struct wined3d_device *device, struct wined3d_surface *target)
 {
     struct wined3d_context *current_context = context_get_current();
     struct wined3d_context *context;

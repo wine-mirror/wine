@@ -26,7 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 
 static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_texture_ops *texture_ops,
-        UINT layer_count, UINT level_count, WINED3DRESOURCETYPE resource_type, IWineD3DDeviceImpl *device,
+        UINT layer_count, UINT level_count, WINED3DRESOURCETYPE resource_type, struct wined3d_device *device,
         DWORD usage, const struct wined3d_format *format, WINED3DPOOL pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, const struct wined3d_resource_ops *resource_ops)
 {
@@ -84,7 +84,7 @@ static void gltexture_delete(struct gl_texture *tex)
 
 static void wined3d_texture_unload(struct wined3d_texture *texture)
 {
-    IWineD3DDeviceImpl *device = texture->resource.device;
+    struct wined3d_device *device = texture->resource.device;
     struct wined3d_context *context = NULL;
 
     if (texture->texture_rgb.name || texture->texture_srgb.name)
@@ -668,7 +668,7 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
 static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
     UINT sub_count = texture->level_count * texture->layer_count;
-    IWineD3DDeviceImpl *device = texture->resource.device;
+    struct wined3d_device *device = texture->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_context *context = NULL;
     struct gl_texture *gl_tex;
@@ -797,7 +797,7 @@ static const struct wined3d_resource_ops texture2d_resource_ops =
 };
 
 static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_length, UINT levels,
-        IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
+        struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -916,7 +916,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, UINT edge_lengt
 }
 
 static HRESULT texture_init(struct wined3d_texture *texture, UINT width, UINT height, UINT levels,
-        IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
+        struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -1086,7 +1086,7 @@ static HRESULT texture3d_bind(struct wined3d_texture *texture,
 /* Do not call while under the GL lock. */
 static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
-    IWineD3DDeviceImpl *device = texture->resource.device;
+    struct wined3d_device *device = texture->resource.device;
     struct wined3d_context *context = NULL;
     BOOL srgb_was_toggled = FALSE;
     unsigned int i;
@@ -1187,7 +1187,7 @@ static const struct wined3d_resource_ops texture3d_resource_ops =
 };
 
 static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, UINT height,
-        UINT depth, UINT levels, IWineD3DDeviceImpl *device, DWORD usage, enum wined3d_format_id format_id,
+        UINT depth, UINT levels, struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id,
         WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -1281,11 +1281,10 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, UINT width, U
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_texture_create_2d(IWineD3DDevice *iface, UINT width, UINT height,
+HRESULT CDECL wined3d_texture_create_2d(struct wined3d_device *device, UINT width, UINT height,
         UINT level_count, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_texture *object;
     HRESULT hr;
 
@@ -1318,11 +1317,10 @@ HRESULT CDECL wined3d_texture_create_2d(IWineD3DDevice *iface, UINT width, UINT 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_texture_create_3d(IWineD3DDevice *iface, UINT width, UINT height, UINT depth,
+HRESULT CDECL wined3d_texture_create_3d(struct wined3d_device *device, UINT width, UINT height, UINT depth,
         UINT level_count, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_texture *object;
     HRESULT hr;
 
@@ -1355,11 +1353,10 @@ HRESULT CDECL wined3d_texture_create_3d(IWineD3DDevice *iface, UINT width, UINT 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_texture_create_cube(IWineD3DDevice *iface, UINT edge_length,
+HRESULT CDECL wined3d_texture_create_cube(struct wined3d_device *device, UINT edge_length,
         UINT level_count, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_texture *object;
     HRESULT hr;
 

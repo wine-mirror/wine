@@ -37,7 +37,8 @@ void wined3d_event_query_destroy(struct wined3d_event_query *query)
     HeapFree(GetProcessHeap(), 0, query);
 }
 
-static enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
+static enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_event_query *query,
+        struct wined3d_device *device)
 {
     struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
@@ -111,7 +112,8 @@ static enum wined3d_event_query_result wined3d_event_query_test(struct wined3d_e
     return ret;
 }
 
-enum wined3d_event_query_result wined3d_event_query_finish(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
+enum wined3d_event_query_result wined3d_event_query_finish(struct wined3d_event_query *query,
+        struct wined3d_device *device)
 {
     struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
@@ -179,7 +181,7 @@ enum wined3d_event_query_result wined3d_event_query_finish(struct wined3d_event_
     return ret;
 }
 
-void wined3d_event_query_issue(struct wined3d_event_query *query, IWineD3DDeviceImpl *device)
+void wined3d_event_query_issue(struct wined3d_event_query *query, struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
@@ -297,7 +299,7 @@ static HRESULT wined3d_occlusion_query_ops_get_data(struct wined3d_query *query,
         void *pData, DWORD dwSize, DWORD flags)
 {
     struct wined3d_occlusion_query *oq = query->extendedData;
-    IWineD3DDeviceImpl *device = query->device;
+    struct wined3d_device *device = query->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_context *context;
     DWORD* data = pData;
@@ -449,7 +451,7 @@ static HRESULT wined3d_event_query_ops_issue(struct wined3d_query *query, DWORD 
 
 static HRESULT wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DWORD flags)
 {
-    IWineD3DDeviceImpl *device = query->device;
+    struct wined3d_device *device = query->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
     TRACE("query %p, flags %#x.\n", query, flags);
@@ -547,7 +549,7 @@ static const struct wined3d_query_ops occlusion_query_ops =
     wined3d_occlusion_query_ops_issue,
 };
 
-static HRESULT query_init(struct wined3d_query *query, IWineD3DDeviceImpl *device, WINED3DQUERYTYPE type)
+static HRESULT query_init(struct wined3d_query *query, struct wined3d_device *device, WINED3DQUERYTYPE type)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
@@ -616,10 +618,9 @@ static HRESULT query_init(struct wined3d_query *query, IWineD3DDeviceImpl *devic
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_query_create(IWineD3DDevice *iface,
+HRESULT CDECL wined3d_query_create(struct wined3d_device *device,
         WINED3DQUERYTYPE type, struct wined3d_query **query)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_query *object;
     HRESULT hr;
 

@@ -2774,7 +2774,7 @@ void gen_ffp_frag_op(struct wined3d_stateblock *stateblock, struct ffp_frag_sett
     unsigned int i;
     DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
-    IWineD3DDeviceImpl *device = stateblock->device;
+    struct wined3d_device *device = stateblock->device;
     struct wined3d_surface *rt = device->render_targets[0];
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 

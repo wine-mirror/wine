@@ -228,11 +228,11 @@ HRESULT CDECL wined3d_swapchain_get_display_mode(const struct wined3d_swapchain 
     return hr;
 }
 
-IWineD3DDevice * CDECL wined3d_swapchain_get_device(const struct wined3d_swapchain *swapchain)
+struct wined3d_device * CDECL wined3d_swapchain_get_device(const struct wined3d_swapchain *swapchain)
 {
     TRACE("swapchain %p.\n", swapchain);
 
-    return (IWineD3DDevice *)swapchain->device;
+    return swapchain->device;
 }
 
 HRESULT CDECL wined3d_swapchain_get_present_parameters(const struct wined3d_swapchain *swapchain,
@@ -281,7 +281,7 @@ static void swapchain_blit(struct wined3d_swapchain *swapchain,
         struct wined3d_context *context, const RECT *src_rect, const RECT *dst_rect)
 {
     struct wined3d_surface *backbuffer = swapchain->back_buffers[0];
-    IWineD3DDeviceImpl *device = swapchain->device;
+    struct wined3d_device *device = swapchain->device;
     UINT src_w = src_rect->right - src_rect->left;
     UINT src_h = src_rect->bottom - src_rect->top;
     GLenum gl_filter;
@@ -802,7 +802,7 @@ static const struct wined3d_swapchain_ops swapchain_gdi_ops =
 
 /* Do not call while under the GL lock. */
 static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTYPE surface_type,
-        IWineD3DDeviceImpl *device, WINED3DPRESENT_PARAMETERS *present_parameters,
+        struct wined3d_device *device, WINED3DPRESENT_PARAMETERS *present_parameters,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_adapter *adapter = device->adapter;
@@ -1092,12 +1092,11 @@ err:
 }
 
 /* Do not call while under the GL lock. */
-HRESULT CDECL wined3d_swapchain_create(IWineD3DDevice *iface,
+HRESULT CDECL wined3d_swapchain_create(struct wined3d_device *device,
         WINED3DPRESENT_PARAMETERS *present_parameters, WINED3DSURFTYPE surface_type,
         void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_swapchain **swapchain)
 {
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)iface;
     struct wined3d_swapchain *object;
     HRESULT hr;
 
