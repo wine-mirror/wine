@@ -404,6 +404,12 @@ static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
                        clip->left - virtual_screen_rect.left, clip->top - virtual_screen_rect.top,
                        clip->right - clip->left, clip->bottom - clip->top );
     XMapWindow( data->display, clip_window );
+
+    /* if the rectangle is shrinking we may get a pointer warp */
+    if (msg_hwnd || clip->left > clip_rect.left || clip->top > clip_rect.top ||
+        clip->right < clip_rect.right || clip->bottom < clip_rect.bottom)
+        data->warp_serial = NextRequest( data->display );
+
     if (!XGrabPointer( data->display, clip_window, False,
                        PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
                        GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
