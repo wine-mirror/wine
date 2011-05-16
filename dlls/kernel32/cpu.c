@@ -38,6 +38,7 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "psapi.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ddk/wdm.h"
@@ -206,4 +207,23 @@ BOOL WINAPI IsProcessorFeaturePresent (
     return SHARED_DATA->ProcessorFeatures[feature];
   else
     return FALSE;
+}
+
+/***********************************************************************
+ *           K32GetPerformanceInfo (KERNEL32.@)
+ */
+BOOL WINAPI K32GetPerformanceInfo(PPERFORMANCE_INFORMATION info, DWORD size)
+{
+    NTSTATUS status;
+
+    TRACE( "(%p, %d)\n", info, size );
+
+    status = NtQuerySystemInformation( SystemPerformanceInformation, info, size, NULL );
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    return TRUE;
 }

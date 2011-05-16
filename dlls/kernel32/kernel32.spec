@@ -786,6 +786,7 @@
 @ stdcall K32GetModuleFileNameExA(long long ptr long)
 @ stdcall K32GetModuleFileNameExW(long long ptr long)
 @ stdcall K32GetModuleInformation(long long ptr long)
+@ stdcall K32GetPerformanceInfo(ptr long)
 @ stdcall K32GetProcessMemoryInfo(long ptr long)
 @ stdcall K32GetWsChanges(long ptr long)
 @ stdcall K32InitializeProcessForWsWatch(long)
