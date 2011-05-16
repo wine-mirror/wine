@@ -100,17 +100,19 @@ int CDECL _strlwr_s(char *str, MSVCRT_size_t len)
 /*********************************************************************
  *		_strlwr_l (MSVCRT.@)
  */
-int CDECL _strlwr_l(char *str, MSVCRT__locale_t locale)
+char* CDECL _strlwr_l(char *str, MSVCRT__locale_t locale)
 {
-    return _strlwr_s_l(str, -1, locale);
+    _strlwr_s_l(str, -1, locale);
+    return str;
 }
 
 /*********************************************************************
  *		_strlwr (MSVCRT.@)
  */
-int CDECL _strlwr(char *str)
+char* CDECL _strlwr(char *str)
 {
-    return _strlwr_s_l(str, -1, NULL);
+    _strlwr_s_l(str, -1, NULL);
+    return str;
 }
 
 /*********************************************************************
@@ -162,17 +164,19 @@ int CDECL _strupr_s(char *str, MSVCRT_size_t len)
 /*********************************************************************
  *              _strupr_l (MSVCRT.@)
  */
-int CDECL _strupr_l(char *str, MSVCRT__locale_t locale)
+char* CDECL _strupr_l(char *str, MSVCRT__locale_t locale)
 {
-    return _strupr_s_l(str, -1, locale);
+    _strupr_s_l(str, -1, locale);
+    return str;
 }
 
 /*********************************************************************
  *              _strupr (MSVCRT.@)
  */
-int CDECL _strupr(char *str)
+char* CDECL _strupr(char *str)
 {
-    return _strupr_s_l(str, -1, NULL);
+    _strupr_s_l(str, -1, NULL);
+    return str;
 }
 
 /*********************************************************************
