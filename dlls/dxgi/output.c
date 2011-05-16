@@ -121,24 +121,38 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
     enum wined3d_format_id wined3d_format;
     struct wined3d *wined3d;
     UINT i;
+    UINT max_count;
 
-    TRACE("iface %p, format %s, flags %#x, mode_count %p, desc %p.\n",
+    FIXME("iface %p, format %s, flags %#x, mode_count %p, desc %p partial stub!\n",
             iface, debug_dxgi_format(format), flags, mode_count, desc);
+
+    if (!mode_count)
+    {
+        return S_OK;
+    }
+
+    if (format == DXGI_FORMAT_UNKNOWN)
+    {
+        *mode_count = 0;
+        return S_OK;
+    }
 
     wined3d = IWineDXGIFactory_get_wined3d(This->adapter->parent);
     wined3d_format = wined3dformat_from_dxgi_format(format);
 
+    EnterCriticalSection(&dxgi_cs);
+    max_count = wined3d_get_adapter_mode_count(wined3d, This->adapter->ordinal, wined3d_format);
+
     if (!desc)
     {
-        EnterCriticalSection(&dxgi_cs);
-        *mode_count = wined3d_get_adapter_mode_count(wined3d, This->adapter->ordinal, wined3d_format);
         wined3d_decref(wined3d);
         LeaveCriticalSection(&dxgi_cs);
-
+        *mode_count = max_count;
         return S_OK;
     }
 
-    EnterCriticalSection(&dxgi_cs);
+    *mode_count = min(*mode_count,max_count);
+
     for (i = 0; i < *mode_count; ++i)
     {
         WINED3DDISPLAYMODE mode;
