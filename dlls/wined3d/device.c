@@ -5224,84 +5224,82 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             return WINED3DERR_INVALIDCALL;
         }
 
-        if (cursor_image->resource.width != 32 || cursor_image->resource.height != 32)
+        /* TODO: MSDN: Cursor sizes must be a power of 2 */
+
+        /* Do not store the surface's pointer because the application may
+         * release it after setting the cursor image. Windows doesn't
+         * addref the set surface, so we can't do this either without
+         * creating circular refcount dependencies. Copy out the gl texture
+         * instead. */
+        device->cursorWidth = cursor_image->resource.width;
+        device->cursorHeight = cursor_image->resource.height;
+        if (SUCCEEDED(wined3d_surface_map(cursor_image, &rect, NULL, WINED3DLOCK_READONLY)))
         {
-            /* TODO: MSDN: Cursor sizes must be a power of 2 */
+            const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+            const struct wined3d_format *format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
+            struct wined3d_context *context;
+            char *mem, *bits = rect.pBits;
+            GLint intfmt = format->glInternal;
+            GLint gl_format = format->glFormat;
+            GLint type = format->glType;
+            INT height = device->cursorHeight;
+            INT width = device->cursorWidth;
+            INT bpp = format->byte_count;
+            DWORD sampler;
+            INT i;
 
-            /* Do not store the surface's pointer because the application may
-             * release it after setting the cursor image. Windows doesn't
-             * addref the set surface, so we can't do this either without
-             * creating circular refcount dependencies. Copy out the gl texture
-             * instead. */
-            device->cursorWidth = cursor_image->resource.width;
-            device->cursorHeight = cursor_image->resource.height;
-            if (SUCCEEDED(wined3d_surface_map(cursor_image, &rect, NULL, WINED3DLOCK_READONLY)))
+            /* Reformat the texture memory (pitch and width can be
+             * different) */
+            mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
+            for(i = 0; i < height; i++)
+                memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
+            wined3d_surface_unmap(cursor_image);
+
+            context = context_acquire(device, NULL);
+
+            ENTER_GL();
+
+            if (gl_info->supported[APPLE_CLIENT_STORAGE])
             {
-                const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-                const struct wined3d_format *format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
-                struct wined3d_context *context;
-                char *mem, *bits = rect.pBits;
-                GLint intfmt = format->glInternal;
-                GLint gl_format = format->glFormat;
-                GLint type = format->glType;
-                INT height = device->cursorHeight;
-                INT width = device->cursorWidth;
-                INT bpp = format->byte_count;
-                DWORD sampler;
-                INT i;
-
-                /* Reformat the texture memory (pitch and width can be
-                 * different) */
-                mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
-                for(i = 0; i < height; i++)
-                    memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
-                wined3d_surface_unmap(cursor_image);
-
-                context = context_acquire(device, NULL);
-
-                ENTER_GL();
-
-                if (gl_info->supported[APPLE_CLIENT_STORAGE])
-                {
-                    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-                    checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
-                }
-
-                /* Make sure that a proper texture unit is selected */
-                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-                checkGLcall("glActiveTextureARB");
-                sampler = device->rev_tex_unit_map[0];
-                if (sampler != WINED3D_UNMAPPED_STAGE)
-                {
-                    IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(sampler));
-                }
-                /* Create a new cursor texture */
-                glGenTextures(1, &device->cursorTexture);
-                checkGLcall("glGenTextures");
-                glBindTexture(GL_TEXTURE_2D, device->cursorTexture);
-                checkGLcall("glBindTexture");
-                /* Copy the bitmap memory into the cursor texture */
-                glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, gl_format, type, mem);
-                checkGLcall("glTexImage2D");
-                HeapFree(GetProcessHeap(), 0, mem);
-
-                if (gl_info->supported[APPLE_CLIENT_STORAGE])
-                {
-                    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-                    checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
-                }
-
-                LEAVE_GL();
-
-                context_release(context);
+                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+                checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
             }
-            else
+
+            /* Make sure that a proper texture unit is selected */
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+            checkGLcall("glActiveTextureARB");
+            sampler = device->rev_tex_unit_map[0];
+            if (sampler != WINED3D_UNMAPPED_STAGE)
             {
-                FIXME("A cursor texture was not returned.\n");
-                device->cursorTexture = 0;
+                IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(sampler));
             }
+            /* Create a new cursor texture */
+            glGenTextures(1, &device->cursorTexture);
+            checkGLcall("glGenTextures");
+            glBindTexture(GL_TEXTURE_2D, device->cursorTexture);
+            checkGLcall("glBindTexture");
+            /* Copy the bitmap memory into the cursor texture */
+            glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, gl_format, type, mem);
+            checkGLcall("glTexImage2D");
+            HeapFree(GetProcessHeap(), 0, mem);
+
+            if (gl_info->supported[APPLE_CLIENT_STORAGE])
+            {
+                glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+                checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
+            }
+
+            LEAVE_GL();
+
+            context_release(context);
         }
         else
+        {
+            FIXME("A cursor texture was not returned.\n");
+            device->cursorTexture = 0;
+        }
+
+        if (cursor_image->resource.width == 32 && cursor_image->resource.height == 32)
         {
             /* Draw a hardware cursor */
             ICONINFO cursorInfo;

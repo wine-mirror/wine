@@ -422,7 +422,9 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
     gl_info = context->gl_info;
 
     /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
-    if (swapchain->device->bCursorVisible && swapchain->device->cursorTexture)
+    if (swapchain->device->bCursorVisible &&
+        swapchain->device->cursorTexture &&
+        !swapchain->device->hardwareCursor)
     {
         struct wined3d_surface cursor;
         RECT destRect =
