@@ -262,7 +262,7 @@ struct enum_data
 typedef struct tagFace {
     struct list entry;
     WCHAR *StyleName;
-    const WCHAR *FullName;
+    WCHAR *FullName;
     char *file;
     void *font_data_ptr;
     DWORD font_data_size;
@@ -1454,6 +1454,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                         list_remove(&face->entry);
                         HeapFree(GetProcessHeap(), 0, face->file);
                         HeapFree(GetProcessHeap(), 0, face->StyleName);
+                        HeapFree(GetProcessHeap(), 0, face->FullName);
                         HeapFree(GetProcessHeap(), 0, face);
                         break;
                     }
