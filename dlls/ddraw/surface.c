@@ -2923,7 +2923,7 @@ static HRESULT WINAPI ddraw_gamma_control_GetGammaRamp(IDirectDrawGammaControl *
     if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
         /* Note: DDGAMMARAMP is compatible with WINED3DGAMMARAMP. */
-        IWineD3DDevice_GetGammaRamp(surface->ddraw->wineD3DDevice, 0, (WINED3DGAMMARAMP *)gamma_ramp);
+        wined3d_device_get_gamma_ramp(surface->ddraw->wineD3DDevice, 0, (WINED3DGAMMARAMP *)gamma_ramp);
     }
     else
     {
@@ -2965,7 +2965,7 @@ static HRESULT WINAPI ddraw_gamma_control_SetGammaRamp(IDirectDrawGammaControl *
     if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
         /* Note: DDGAMMARAMP is compatible with WINED3DGAMMARAMP */
-        IWineD3DDevice_SetGammaRamp(surface->ddraw->wineD3DDevice, 0, flags, (WINED3DGAMMARAMP *)gamma_ramp);
+        wined3d_device_set_gamma_ramp(surface->ddraw->wineD3DDevice, 0, flags, (WINED3DGAMMARAMP *)gamma_ramp);
     }
     else
     {

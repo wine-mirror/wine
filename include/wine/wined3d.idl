@@ -2238,255 +2238,6 @@ interface IWineD3DDevice : IUnknown
     BOOL ShowCursor(
         [in] BOOL show
     );
-    HRESULT SetClipPlane(
-        [in] DWORD plane_idx,
-        [in] const float *plane
-    );
-    HRESULT GetClipPlane(
-        [in] DWORD plane_idx,
-        [out] float *plane
-    );
-    HRESULT SetClipStatus(
-        [in] const WINED3DCLIPSTATUS *clip_status
-    );
-    HRESULT GetClipStatus(
-        [out] WINED3DCLIPSTATUS *clip_status
-    );
-    HRESULT SetCurrentTexturePalette(
-        [in] UINT palette_number
-    );
-    HRESULT GetCurrentTexturePalette(
-        [out] UINT *palette_number
-    );
-    HRESULT SetDepthStencilSurface(
-        [in] struct wined3d_surface *depth_stencil
-    );
-    HRESULT GetDepthStencilSurface(
-        [out] struct wined3d_surface **depth_stencil
-    );
-    void SetGammaRamp(
-        [in] UINT swapchain_idx,
-        [in] DWORD flags,
-        [in] const WINED3DGAMMARAMP *ramp
-    );
-    void GetGammaRamp(
-        [in] UINT swapchain_idx,
-        [out] WINED3DGAMMARAMP *ramp
-    );
-    HRESULT SetIndexBuffer(
-        [in] struct wined3d_buffer *index_buffer,
-        [in] enum wined3d_format_id format_id
-    );
-    HRESULT GetIndexBuffer(
-        [out] struct wined3d_buffer **index_buffer
-    );
-    HRESULT SetBaseVertexIndex(
-        [in] INT base_index
-    );
-    HRESULT GetBaseVertexIndex(
-        [out] INT *base_index
-    );
-    HRESULT SetLight(
-        [in] DWORD light_idx,
-        [in] const WINED3DLIGHT *light
-    );
-    HRESULT GetLight(
-        [in] DWORD light_idx,
-        [out] WINED3DLIGHT *light
-    );
-    HRESULT SetLightEnable(
-        [in] DWORD light_idx,
-        [in] BOOL enable
-    );
-    HRESULT GetLightEnable(
-        [in] DWORD light_idx,
-        [out] BOOL *enable
-    );
-    HRESULT SetMaterial(
-        [in] const WINED3DMATERIAL *material
-    );
-    HRESULT GetMaterial(
-        [out] WINED3DMATERIAL *material
-    );
-    HRESULT SetNPatchMode(
-        [in] float segments
-    );
-    float GetNPatchMode(
-    );
-    HRESULT SetPaletteEntries(
-        [in] UINT palette_number,
-        [in] const PALETTEENTRY *entries
-    );
-    HRESULT GetPaletteEntries(
-        [in] UINT palette_number,
-        [out] PALETTEENTRY *entries
-    );
-    HRESULT SetPixelShader(
-        [in] struct wined3d_shader *shader
-    );
-    struct wined3d_shader *GetPixelShader(
-    );
-    HRESULT SetPixelShaderConstantB(
-        [in] UINT start_register,
-        [in] const BOOL *constants,
-        [in] UINT bool_count
-    );
-    HRESULT GetPixelShaderConstantB(
-        [in] UINT start_register,
-        [out] BOOL *constants,
-        [in] UINT bool_count
-    );
-    HRESULT SetPixelShaderConstantI(
-        [in] UINT start_register,
-        [in] const int *constants,
-        [in] UINT vector4i_count
-    );
-    HRESULT GetPixelShaderConstantI(
-        [in] UINT start_register,
-        [out] int *constants,
-        [in] UINT vector4i_count
-    );
-    HRESULT SetPixelShaderConstantF(
-        [in] UINT start_register,
-        [in] const float *constants,
-        [in] UINT vector4f_count
-    );
-    HRESULT GetPixelShaderConstantF(
-        [in] UINT start_register,
-        [out] float *constants,
-        [in] UINT vector4f_count
-    );
-    HRESULT SetRenderState(
-        [in] WINED3DRENDERSTATETYPE state,
-        [in] DWORD value
-    );
-    HRESULT GetRenderState(
-        [in] WINED3DRENDERSTATETYPE state,
-        [out] DWORD *value
-    );
-    HRESULT SetRenderTarget(
-        [in] DWORD render_target_idx,
-        [in] struct wined3d_surface *render_target,
-        [in] BOOL set_viewport
-    );
-    HRESULT GetRenderTarget(
-        [in] DWORD render_target_idx,
-        [out] struct wined3d_surface **render_target
-    );
-    HRESULT SetSamplerState(
-        [in] DWORD sampler_idx,
-        [in] WINED3DSAMPLERSTATETYPE state,
-        [in] DWORD value
-    );
-    HRESULT GetSamplerState(
-        [in] DWORD sampler_idx,
-        [in] WINED3DSAMPLERSTATETYPE state,
-        [out] DWORD *value
-    );
-    HRESULT SetScissorRect(
-        [in] const RECT *rect
-    );
-    HRESULT GetScissorRect(
-        [out] RECT *rect
-    );
-    HRESULT SetSoftwareVertexProcessing(
-        [in] BOOL software
-    );
-    BOOL GetSoftwareVertexProcessing(
-    );
-    HRESULT SetStreamSource(
-        [in] UINT stream_idx,
-        [in] struct wined3d_buffer *buffer,
-        [in] UINT offset,
-        [in] UINT stride
-    );
-    HRESULT GetStreamSource(
-        [in] UINT stream_idx,
-        [out] struct wined3d_buffer **buffer,
-        [out] UINT *offset,
-        [out] UINT *stride
-    );
-    HRESULT SetStreamSourceFreq(
-        [in] UINT stream_idx,
-        [in] UINT divider
-    );
-    HRESULT GetStreamSourceFreq(
-        [in] UINT stream_idx,
-        [out] UINT *divider
-    );
-    HRESULT SetTexture(
-        [in] DWORD stage,
-        [in] struct wined3d_texture *texture
-    );
-    HRESULT GetTexture(
-        [in] DWORD stage,
-        [out] struct wined3d_texture **texture
-    );
-    HRESULT SetTextureStageState(
-        [in] DWORD stage,
-        [in] WINED3DTEXTURESTAGESTATETYPE state,
-        [in] DWORD value
-    );
-    HRESULT GetTextureStageState(
-        [in] DWORD stage,
-        [in] WINED3DTEXTURESTAGESTATETYPE state,
-        [out] DWORD *value
-    );
-    HRESULT SetTransform(
-        [in] WINED3DTRANSFORMSTATETYPE state,
-        [in] const WINED3DMATRIX *matrix
-    );
-    HRESULT GetTransform(
-        [in] WINED3DTRANSFORMSTATETYPE state,
-        [out] WINED3DMATRIX *matrix
-    );
-    HRESULT SetVertexDeclaration(
-        [in] struct wined3d_vertex_declaration *declaration
-    );
-    HRESULT GetVertexDeclaration(
-        [out] struct wined3d_vertex_declaration **declaration
-    );
-    HRESULT SetVertexShader(
-        [in] struct wined3d_shader *shader
-    );
-    struct wined3d_shader *GetVertexShader(
-    );
-    HRESULT SetVertexShaderConstantB(
-        [in] UINT start_register,
-        [in] const BOOL *constants,
-        [in] UINT bool_count
-    );
-    HRESULT GetVertexShaderConstantB(
-        [in] UINT start_register,
-        [out] BOOL *constants,
-        [in] UINT bool_count
-    );
-    HRESULT SetVertexShaderConstantI(
-        [in] UINT start_register,
-        [in] const int *constants,
-        [in] UINT vector4i_count
-    );
-    HRESULT GetVertexShaderConstantI(
-        [in] UINT start_register,
-        [out] int *constants,
-        [in] UINT vector4i_count
-    );
-    HRESULT SetVertexShaderConstantF(
-        [in] UINT start_register,
-        [in] const float *constants,
-        [in] UINT vector4f_count
-    );
-    HRESULT GetVertexShaderConstantF(
-        [in] UINT start_register,
-        [out] float *constants,
-        [in] UINT vector4f_count
-    );
-    HRESULT SetViewport(
-        [in] const WINED3DVIEWPORT *viewport
-    );
-    HRESULT GetViewport(
-        [out] WINED3DVIEWPORT *viewport
-    );
     HRESULT MultiplyTransform(
         [in] WINED3DTRANSFORMSTATETYPE state,
         [in] const WINED3DMATRIX *matrix
@@ -2693,6 +2444,97 @@ HRESULT __cdecl wined3d_clipper_set_window(struct wined3d_clipper *clipper, DWOR
 HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx,
         WINED3DDEVTYPE device_type, HWND focus_window, DWORD behaviour_flags,
         IWineD3DDeviceParent *device_parent, IWineD3DDevice **device);
+INT __cdecl wined3d_device_get_base_vertex_index(IWineD3DDevice *device);
+HRESULT __cdecl wined3d_device_get_clip_plane(IWineD3DDevice *device, UINT plane_idx, float *plane);
+HRESULT __cdecl wined3d_device_get_clip_status(IWineD3DDevice *device, WINED3DCLIPSTATUS *clip_status);
+HRESULT __cdecl wined3d_device_get_current_texture_palette(IWineD3DDevice *device, UINT *palette_idx);
+HRESULT __cdecl wined3d_device_get_depth_stencil(IWineD3DDevice *device, struct wined3d_surface **depth_stencil);
+void __cdecl wined3d_device_get_gamma_ramp(IWineD3DDevice *device, UINT swapchain_idx, WINED3DGAMMARAMP *ramp);
+HRESULT __cdecl wined3d_device_get_index_buffer(IWineD3DDevice *device, struct wined3d_buffer **index_buffer);
+HRESULT __cdecl wined3d_device_get_light(IWineD3DDevice *device, UINT light_idx, WINED3DLIGHT *light);
+HRESULT __cdecl wined3d_device_get_light_enable(IWineD3DDevice *device, UINT light_idx, BOOL *enable);
+HRESULT __cdecl wined3d_device_get_material(IWineD3DDevice *device, WINED3DMATERIAL *material);
+float __cdecl wined3d_device_get_npatch_mode(IWineD3DDevice *device);
+HRESULT __cdecl wined3d_device_get_palette_entries(IWineD3DDevice *device, UINT palette_idx, PALETTEENTRY *entries);
+struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(IWineD3DDevice *device);
+HRESULT __cdecl wined3d_device_get_ps_consts_b(IWineD3DDevice *device,
+        UINT start_register, BOOL *constants, UINT bool_count);
+HRESULT __cdecl wined3d_device_get_ps_consts_f(IWineD3DDevice *device,
+        UINT start_register, float *constants, UINT vector4f_count);
+HRESULT __cdecl wined3d_device_get_ps_consts_i(IWineD3DDevice *device,
+        UINT start_register, int *constants, UINT vector4i_count);
+HRESULT __cdecl wined3d_device_get_render_state(IWineD3DDevice *device, WINED3DRENDERSTATETYPE state, DWORD *value);
+HRESULT __cdecl wined3d_device_get_render_target(IWineD3DDevice *device,
+        UINT render_target_idx, struct wined3d_surface **render_target);
+HRESULT __cdecl wined3d_device_get_sampler_state(IWineD3DDevice *device,
+        UINT sampler_idx, WINED3DSAMPLERSTATETYPE state, DWORD *value);
+HRESULT __cdecl wined3d_device_get_scissor_rect(IWineD3DDevice *device, RECT *rect);
+BOOL __cdecl wined3d_device_get_software_vertex_processing(IWineD3DDevice *device);
+HRESULT __cdecl wined3d_device_get_stream_source(IWineD3DDevice *device,
+        UINT stream_idx, struct wined3d_buffer **buffer, UINT *offset, UINT *stride);
+HRESULT __cdecl wined3d_device_get_stream_source_freq(IWineD3DDevice *device, UINT stream_idx, UINT *divider);
+HRESULT __cdecl wined3d_device_get_texture(IWineD3DDevice *device, UINT stage, struct wined3d_texture **texture);
+HRESULT __cdecl wined3d_device_get_texture_stage_state(IWineD3DDevice *device,
+        UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD *value);
+HRESULT __cdecl wined3d_device_get_transform(IWineD3DDevice *device,
+        WINED3DTRANSFORMSTATETYPE state, WINED3DMATRIX *matrix);
+HRESULT __cdecl wined3d_device_get_vertex_declaration(IWineD3DDevice *device,
+        struct wined3d_vertex_declaration **declaration);
+struct wined3d_shader * __cdecl wined3d_device_get_vertex_shader(IWineD3DDevice *device);
+HRESULT __cdecl wined3d_device_get_viewport(IWineD3DDevice *device, WINED3DVIEWPORT *viewport);
+HRESULT __cdecl wined3d_device_get_vs_consts_b(IWineD3DDevice *device,
+        UINT start_register, BOOL *constants, UINT bool_count);
+HRESULT __cdecl wined3d_device_get_vs_consts_f(IWineD3DDevice *device,
+        UINT start_register, float *constants, UINT vector4f_count);
+HRESULT __cdecl wined3d_device_get_vs_consts_i(IWineD3DDevice *device,
+        UINT start_register, int *constants, UINT vector4i_count);
+HRESULT __cdecl wined3d_device_set_base_vertex_index(IWineD3DDevice *device, INT base_index);
+HRESULT __cdecl wined3d_device_set_clip_plane(IWineD3DDevice *device, UINT plane_idx, const float *plane);
+HRESULT __cdecl wined3d_device_set_clip_status(IWineD3DDevice *device, const WINED3DCLIPSTATUS *clip_status);
+HRESULT __cdecl wined3d_device_set_current_texture_palette(IWineD3DDevice *device, UINT palette_idx);
+HRESULT __cdecl wined3d_device_set_depth_stencil(IWineD3DDevice *device, struct wined3d_surface *depth_stencil);
+void __cdecl wined3d_device_set_gamma_ramp(IWineD3DDevice *device,
+        UINT swapchain_idx, DWORD flags, const WINED3DGAMMARAMP *ramp);
+HRESULT __cdecl wined3d_device_set_index_buffer(IWineD3DDevice *device,
+        struct wined3d_buffer *index_buffer, enum wined3d_format_id format_id);
+HRESULT __cdecl wined3d_device_set_light(IWineD3DDevice *device, UINT light_idx, const WINED3DLIGHT *light);
+HRESULT __cdecl wined3d_device_set_light_enable(IWineD3DDevice *device, UINT light_idx, BOOL enable);
+HRESULT __cdecl wined3d_device_set_material(IWineD3DDevice *device, const WINED3DMATERIAL *material);
+HRESULT __cdecl wined3d_device_set_npatch_mode(IWineD3DDevice *device, float segments);
+HRESULT __cdecl wined3d_device_set_palette_entries(IWineD3DDevice *device,
+        UINT palette_idx, const PALETTEENTRY *entries);
+HRESULT __cdecl wined3d_device_set_pixel_shader(IWineD3DDevice *device, struct wined3d_shader *shader);
+HRESULT __cdecl wined3d_device_set_ps_consts_b(IWineD3DDevice *device,
+        UINT start_register, const BOOL *constants, UINT bool_count);
+HRESULT __cdecl wined3d_device_set_ps_consts_f(IWineD3DDevice *device,
+        UINT start_register, const float *constants, UINT vector4f_count);
+HRESULT __cdecl wined3d_device_set_ps_consts_i(IWineD3DDevice *device,
+        UINT start_register, const int *constants, UINT vector4i_count);
+HRESULT __cdecl wined3d_device_set_render_state(IWineD3DDevice *device, WINED3DRENDERSTATETYPE state, DWORD value);
+HRESULT __cdecl wined3d_device_set_render_target(IWineD3DDevice *device,
+        UINT render_target_idx, struct wined3d_surface *render_target, BOOL set_viewport);
+HRESULT __cdecl wined3d_device_set_sampler_state(IWineD3DDevice *device,
+        UINT sampler_idx, WINED3DSAMPLERSTATETYPE state, DWORD value);
+HRESULT __cdecl wined3d_device_set_scissor_rect(IWineD3DDevice *device, const RECT *rect);
+HRESULT __cdecl wined3d_device_set_software_vertex_processing(IWineD3DDevice *device, BOOL software);
+HRESULT __cdecl wined3d_device_set_stream_source(IWineD3DDevice *device,
+        UINT stream_idx, struct wined3d_buffer *buffer, UINT offset, UINT stride);
+HRESULT __cdecl wined3d_device_set_stream_source_freq(IWineD3DDevice *device, UINT stream_idx, UINT divider);
+HRESULT __cdecl wined3d_device_set_texture(IWineD3DDevice *device, UINT stage, struct wined3d_texture *texture);
+HRESULT __cdecl wined3d_device_set_texture_stage_state(IWineD3DDevice *device,
+        UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD value);
+HRESULT __cdecl wined3d_device_set_transform(IWineD3DDevice *device,
+        WINED3DTRANSFORMSTATETYPE state, const WINED3DMATRIX *matrix);
+HRESULT __cdecl wined3d_device_set_vertex_declaration(IWineD3DDevice *device,
+        struct wined3d_vertex_declaration *declaration);
+HRESULT __cdecl wined3d_device_set_vertex_shader(IWineD3DDevice *device, struct wined3d_shader *shader);
+HRESULT __cdecl wined3d_device_set_viewport(IWineD3DDevice *device, const WINED3DVIEWPORT *viewport);
+HRESULT __cdecl wined3d_device_set_vs_consts_b(IWineD3DDevice *device,
+        UINT start_register, const BOOL *constants, UINT bool_count);
+HRESULT __cdecl wined3d_device_set_vs_consts_f(IWineD3DDevice *device,
+        UINT start_register, const float *constants, UINT vector4f_count);
+HRESULT __cdecl wined3d_device_set_vs_consts_i(IWineD3DDevice *device,
+        UINT start_register, const int *constants, UINT vector4i_count);
 
 HRESULT __cdecl wined3d_palette_create(IWineD3DDevice *device, DWORD flags,
         const PALETTEENTRY *entries, void *parent, struct wined3d_palette **palette);

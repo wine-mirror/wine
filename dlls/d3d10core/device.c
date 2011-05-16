@@ -129,7 +129,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetShader(ID3D10Device *iface, ID3D
 
     TRACE("iface %p, shader %p\n", iface, shader);
 
-    IWineD3DDevice_SetPixelShader(This->wined3d_device, ps ? ps->wined3d_shader : NULL);
+    wined3d_device_set_pixel_shader(This->wined3d_device, ps ? ps->wined3d_shader : NULL);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_PSSetSamplers(ID3D10Device *iface,
@@ -146,7 +146,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetShader(ID3D10Device *iface, ID3D
 
     TRACE("iface %p, shader %p\n", iface, shader);
 
-    IWineD3DDevice_SetVertexShader(This->wined3d_device, vs ? vs->wined3d_shader : NULL);
+    wined3d_device_set_vertex_shader(This->wined3d_device, vs ? vs->wined3d_shader : NULL);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_DrawIndexed(ID3D10Device *iface,
@@ -157,7 +157,7 @@ static void STDMETHODCALLTYPE d3d10_device_DrawIndexed(ID3D10Device *iface,
     TRACE("iface %p, index_count %u, start_index_location %u, base_vertex_location %d.\n",
             iface, index_count, start_index_location, base_vertex_location);
 
-    IWineD3DDevice_SetBaseVertexIndex(This->wined3d_device, base_vertex_location);
+    wined3d_device_set_base_vertex_index(This->wined3d_device, base_vertex_location);
     IWineD3DDevice_DrawIndexedPrimitive(This->wined3d_device, start_index_location, index_count);
 }
 
@@ -185,7 +185,7 @@ static void STDMETHODCALLTYPE d3d10_device_IASetInputLayout(ID3D10Device *iface,
 
     TRACE("iface %p, input_layout %p\n", iface, input_layout);
 
-    IWineD3DDevice_SetVertexDeclaration(This->wined3d_device,
+    wined3d_device_set_vertex_declaration(This->wined3d_device,
             input_layout ? ((struct d3d10_input_layout *)input_layout)->wined3d_decl : NULL);
 }
 
@@ -201,7 +201,7 @@ static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device *ifac
 
     for (i = 0; i < buffer_count; ++i)
     {
-        IWineD3DDevice_SetStreamSource(This->wined3d_device, start_slot,
+        wined3d_device_set_stream_source(This->wined3d_device, start_slot,
                 buffers[i] ? ((struct d3d10_buffer *)buffers[i])->wined3d_buffer : NULL,
                 offsets[i], strides[i]);
     }
@@ -215,7 +215,8 @@ static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device *iface,
     TRACE("iface %p, buffer %p, format %s, offset %u.\n",
             iface, buffer, debug_dxgi_format(format), offset);
 
-    IWineD3DDevice_SetIndexBuffer(This->wined3d_device, buffer ? ((struct d3d10_buffer *)buffer)->wined3d_buffer : NULL,
+    wined3d_device_set_index_buffer(This->wined3d_device,
+            buffer ? ((struct d3d10_buffer *)buffer)->wined3d_buffer : NULL,
             wined3dformat_from_dxgi_format(format));
     if (offset) FIXME("offset %u not supported.\n", offset);
 }

@@ -897,8 +897,8 @@ static void apply_lights(IWineD3DDevice *device, const struct wined3d_state *sta
         {
             const struct wined3d_light_info *light = LIST_ENTRY(e, struct wined3d_light_info, entry);
 
-            IWineD3DDevice_SetLight(device, light->OriginalIndex, &light->OriginalParms);
-            IWineD3DDevice_SetLightEnable(device, light->OriginalIndex, light->glIndex != -1);
+            wined3d_device_set_light(device, light->OriginalIndex, &light->OriginalParms);
+            wined3d_device_set_light_enable(device, light->OriginalIndex, light->glIndex != -1);
         }
     }
 }
@@ -913,51 +913,51 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     TRACE("Blocktype: %#x.\n", stateblock->blockType);
 
     if (stateblock->changed.vertexShader)
-        IWineD3DDevice_SetVertexShader(device, stateblock->state.vertex_shader);
+        wined3d_device_set_vertex_shader(device, stateblock->state.vertex_shader);
 
     /* Vertex Shader Constants. */
     for (i = 0; i < stateblock->num_contained_vs_consts_f; ++i)
     {
-        IWineD3DDevice_SetVertexShaderConstantF(device, stateblock->contained_vs_consts_f[i],
+        wined3d_device_set_vs_consts_f(device, stateblock->contained_vs_consts_f[i],
                 stateblock->state.vs_consts_f + stateblock->contained_vs_consts_f[i] * 4, 1);
     }
     for (i = 0; i < stateblock->num_contained_vs_consts_i; ++i)
     {
-        IWineD3DDevice_SetVertexShaderConstantI(device, stateblock->contained_vs_consts_i[i],
+        wined3d_device_set_vs_consts_i(device, stateblock->contained_vs_consts_i[i],
                 stateblock->state.vs_consts_i + stateblock->contained_vs_consts_i[i] * 4, 1);
     }
     for (i = 0; i < stateblock->num_contained_vs_consts_b; ++i)
     {
-        IWineD3DDevice_SetVertexShaderConstantB(device, stateblock->contained_vs_consts_b[i],
+        wined3d_device_set_vs_consts_b(device, stateblock->contained_vs_consts_b[i],
                 stateblock->state.vs_consts_b + stateblock->contained_vs_consts_b[i], 1);
     }
 
     apply_lights(device, &stateblock->state);
 
     if (stateblock->changed.pixelShader)
-        IWineD3DDevice_SetPixelShader(device, stateblock->state.pixel_shader);
+        wined3d_device_set_pixel_shader(device, stateblock->state.pixel_shader);
 
     /* Pixel Shader Constants. */
     for (i = 0; i < stateblock->num_contained_ps_consts_f; ++i)
     {
-        IWineD3DDevice_SetPixelShaderConstantF(device, stateblock->contained_ps_consts_f[i],
+        wined3d_device_set_ps_consts_f(device, stateblock->contained_ps_consts_f[i],
                 stateblock->state.ps_consts_f + stateblock->contained_ps_consts_f[i] * 4, 1);
     }
     for (i = 0; i < stateblock->num_contained_ps_consts_i; ++i)
     {
-        IWineD3DDevice_SetPixelShaderConstantI(device, stateblock->contained_ps_consts_i[i],
+        wined3d_device_set_ps_consts_i(device, stateblock->contained_ps_consts_i[i],
                 stateblock->state.ps_consts_i + stateblock->contained_ps_consts_i[i] * 4, 1);
     }
     for (i = 0; i < stateblock->num_contained_ps_consts_b; ++i)
     {
-        IWineD3DDevice_SetPixelShaderConstantB(device, stateblock->contained_ps_consts_b[i],
+        wined3d_device_set_ps_consts_b(device, stateblock->contained_ps_consts_b[i],
                 stateblock->state.ps_consts_b + stateblock->contained_ps_consts_b[i], 1);
     }
 
     /* Render states. */
     for (i = 0; i < stateblock->num_contained_render_states; ++i)
     {
-        IWineD3DDevice_SetRenderState(device, stateblock->contained_render_states[i],
+        wined3d_device_set_render_state(device, stateblock->contained_render_states[i],
                 stateblock->state.render_states[stateblock->contained_render_states[i]]);
     }
 
@@ -967,7 +967,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
         DWORD stage = stateblock->contained_tss_states[i].stage;
         DWORD state = stateblock->contained_tss_states[i].state;
 
-        IWineD3DDevice_SetTextureStageState(device, stage, state, stateblock->state.texture_states[stage][state]);
+        wined3d_device_set_texture_stage_state(device, stage, state, stateblock->state.texture_states[stage][state]);
     }
 
     /* Sampler states. */
@@ -978,13 +978,13 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
         DWORD value = stateblock->state.sampler_states[stage][state];
 
         if (stage >= MAX_FRAGMENT_SAMPLERS) stage += WINED3DVERTEXTEXTURESAMPLER0 - MAX_FRAGMENT_SAMPLERS;
-        IWineD3DDevice_SetSamplerState(device, stage, state, value);
+        wined3d_device_set_sampler_state(device, stage, state, value);
     }
 
     /* Transform states. */
     for (i = 0; i < stateblock->num_contained_transform_states; ++i)
     {
-        IWineD3DDevice_SetTransform(device, stateblock->contained_transform_states[i],
+        wined3d_device_set_transform(device, stateblock->contained_transform_states[i],
                 &stateblock->state.transforms[stateblock->contained_transform_states[i]]);
     }
 
@@ -996,35 +996,27 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
 
     if (stateblock->changed.indices)
     {
-        IWineD3DDevice_SetIndexBuffer(device, stateblock->state.index_buffer, stateblock->state.index_format);
-        IWineD3DDevice_SetBaseVertexIndex(device, stateblock->state.base_vertex_index);
+        wined3d_device_set_index_buffer(device, stateblock->state.index_buffer, stateblock->state.index_format);
+        wined3d_device_set_base_vertex_index(device, stateblock->state.base_vertex_index);
     }
 
     if (stateblock->changed.vertexDecl && stateblock->state.vertex_declaration)
-    {
-        IWineD3DDevice_SetVertexDeclaration(device, stateblock->state.vertex_declaration);
-    }
+        wined3d_device_set_vertex_declaration(device, stateblock->state.vertex_declaration);
 
     if (stateblock->changed.material)
-    {
-        IWineD3DDevice_SetMaterial(device, &stateblock->state.material);
-    }
+        wined3d_device_set_material(device, &stateblock->state.material);
 
     if (stateblock->changed.viewport)
-    {
-        IWineD3DDevice_SetViewport(device, &stateblock->state.viewport);
-    }
+        wined3d_device_set_viewport(device, &stateblock->state.viewport);
 
     if (stateblock->changed.scissorRect)
-    {
-        IWineD3DDevice_SetScissorRect(device, &stateblock->state.scissor_rect);
-    }
+        wined3d_device_set_scissor_rect(device, &stateblock->state.scissor_rect);
 
     map = stateblock->changed.streamSource;
     for (i = 0; map; map >>= 1, ++i)
     {
         if (map & 1)
-            IWineD3DDevice_SetStreamSource(device, i,
+            wined3d_device_set_stream_source(device, i,
                     stateblock->state.streams[i].buffer,
                     0, stateblock->state.streams[i].stride);
     }
@@ -1033,7 +1025,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     for (i = 0; map; map >>= 1, ++i)
     {
         if (map & 1)
-            IWineD3DDevice_SetStreamSourceFreq(device, i,
+            wined3d_device_set_stream_source_freq(device, i,
                     stateblock->state.streams[i].frequency | stateblock->state.streams[i].flags);
     }
 
@@ -1045,7 +1037,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
         if (!(map & 1)) continue;
 
         stage = i < MAX_FRAGMENT_SAMPLERS ? i : WINED3DVERTEXTEXTURESAMPLER0 + i - MAX_FRAGMENT_SAMPLERS;
-        IWineD3DDevice_SetTexture(device, stage, stateblock->state.textures[i]);
+        wined3d_device_set_texture(device, stage, stateblock->state.textures[i]);
     }
 
     map = stateblock->changed.clipplane;
@@ -1059,7 +1051,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
         clip[1] = (float) stateblock->state.clip_planes[i][1];
         clip[2] = (float) stateblock->state.clip_planes[i][2];
         clip[3] = (float) stateblock->state.clip_planes[i][3];
-        IWineD3DDevice_SetClipPlane(device, i, clip);
+        wined3d_device_set_clip_plane(device, i, clip);
     }
 
     stateblock->device->stateBlock->state.lowest_disabled_stage = MAX_TEXTURES - 1;

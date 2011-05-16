@@ -297,7 +297,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
 
         /* Set the device up to render to the front buffer since the back
          * buffer will vanish soon. */
-        IWineD3DDevice_SetRenderTarget(This->wineD3DDevice, 0,
+        wined3d_device_set_render_target(This->wineD3DDevice, 0,
                 This->ddraw->d3d_target->wined3d_surface, TRUE);
 
         /* Release the WineD3DDevice. This won't destroy it */
@@ -1373,24 +1373,14 @@ IDirect3DDeviceImpl_1_SetMatrix(IDirect3DDevice *iface,
 
     *m = *D3DMatrix;
 
-    if(This->world == D3DMatHandle)
-    {
-        IWineD3DDevice_SetTransform(This->wineD3DDevice,
-                                    WINED3DTS_WORLDMATRIX(0),
-                                    (WINED3DMATRIX *) D3DMatrix);
-    }
-    if(This->view == D3DMatHandle)
-    {
-        IWineD3DDevice_SetTransform(This->wineD3DDevice,
-                                    WINED3DTS_VIEW,
-                                    (WINED3DMATRIX *) D3DMatrix);
-    }
-    if(This->proj == D3DMatHandle)
-    {
-        IWineD3DDevice_SetTransform(This->wineD3DDevice,
-                                    WINED3DTS_PROJECTION,
-                                    (WINED3DMATRIX *) D3DMatrix);
-    }
+    if (D3DMatHandle == This->world)
+        wined3d_device_set_transform(This->wineD3DDevice, WINED3DTS_WORLDMATRIX(0), (WINED3DMATRIX *)D3DMatrix);
+
+    if (D3DMatHandle == This->view)
+        wined3d_device_set_transform(This->wineD3DDevice, WINED3DTS_VIEW, (WINED3DMATRIX *)D3DMatrix);
+
+    if (D3DMatHandle == This->proj)
+        wined3d_device_set_transform(This->wineD3DDevice, WINED3DTS_PROJECTION, (WINED3DMATRIX *)D3DMatrix);
 
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;
@@ -1861,7 +1851,7 @@ IDirect3DDeviceImpl_7_SetRenderTarget(IDirect3DDevice7 *iface,
         return D3D_OK;
     }
 
-    hr = IWineD3DDevice_SetRenderTarget(This->wineD3DDevice, 0,
+    hr = wined3d_device_set_render_target(This->wineD3DDevice, 0,
             Target ? Target->wined3d_surface : NULL, FALSE);
     if(hr != D3D_OK)
     {
@@ -2271,9 +2261,7 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
         {
             WINED3DTEXTUREFILTERTYPE tex_mag;
 
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
-                                                0, WINED3DSAMP_MAGFILTER,
-                                                &tex_mag);
+            hr = wined3d_device_get_sampler_state(This->wineD3DDevice, 0, WINED3DSAMP_MAGFILTER, &tex_mag);
 
             switch (tex_mag)
             {
@@ -2295,14 +2283,14 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
             WINED3DTEXTUREFILTERTYPE tex_min;
             WINED3DTEXTUREFILTERTYPE tex_mip;
 
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
+            hr = wined3d_device_get_sampler_state(This->wineD3DDevice,
                     0, WINED3DSAMP_MINFILTER, &tex_min);
             if (FAILED(hr))
             {
                 LeaveCriticalSection(&ddraw_cs);
                 return hr;
             }
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
+            hr = wined3d_device_get_sampler_state(This->wineD3DDevice,
                     0, WINED3DSAMP_MIPFILTER, &tex_mip);
 
             switch (tex_min)
@@ -2353,14 +2341,12 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
 
         case D3DRENDERSTATE_TEXTUREADDRESS:
         case D3DRENDERSTATE_TEXTUREADDRESSU:
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
-                                                0, WINED3DSAMP_ADDRESSU,
-                                                Value);
+            hr = wined3d_device_get_sampler_state(This->wineD3DDevice,
+                    0, WINED3DSAMP_ADDRESSU, Value);
             break;
         case D3DRENDERSTATE_TEXTUREADDRESSV:
-            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
-                                                0, WINED3DSAMP_ADDRESSV,
-                                                Value);
+            hr = wined3d_device_get_sampler_state(This->wineD3DDevice,
+                    0, WINED3DSAMP_ADDRESSV, Value);
             break;
 
         case D3DRENDERSTATE_BORDERCOLOR:
@@ -2382,10 +2368,9 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
                 float f;
             } wined3d_value;
 
-            hr = IWineD3DDevice_GetRenderState(This->wineD3DDevice,
-                                               WINED3DRS_DEPTHBIAS,
-                                               &wined3d_value.d);
-            if (SUCCEEDED(hr)) *Value = wined3d_value.f / zbias_factor;
+            hr = wined3d_device_get_render_state(This->wineD3DDevice, WINED3DRS_DEPTHBIAS, &wined3d_value.d);
+            if (SUCCEEDED(hr))
+                *Value = wined3d_value.f / zbias_factor;
             break;
         }
 
@@ -2398,9 +2383,7 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
                 hr = E_NOTIMPL;
                 break;
             }
-            hr = IWineD3DDevice_GetRenderState(This->wineD3DDevice,
-                                               RenderStateType,
-                                               Value);
+            hr = wined3d_device_get_render_state(This->wineD3DDevice, RenderStateType, Value);
     }
     LeaveCriticalSection(&ddraw_cs);
     return hr;
@@ -2450,7 +2433,7 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
 
             EnterCriticalSection(&ddraw_cs);
 
-            hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, 0, &tex);
+            hr = wined3d_device_get_texture(This->wineD3DDevice, 0, &tex);
             if (SUCCEEDED(hr) && tex)
             {
                 /* The parent of the texture is the IDirectDrawSurface7
@@ -2476,12 +2459,12 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
 
             This->legacyTextureBlending = TRUE;
 
-            IWineD3DDevice_GetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, &colorop);
-            IWineD3DDevice_GetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, &colorarg1);
-            IWineD3DDevice_GetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG2, &colorarg2);
-            IWineD3DDevice_GetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, &alphaop);
-            IWineD3DDevice_GetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, &alphaarg1);
-            IWineD3DDevice_GetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG2, &alphaarg2);
+            wined3d_device_get_texture_stage_state(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, &colorop);
+            wined3d_device_get_texture_stage_state(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, &colorarg1);
+            wined3d_device_get_texture_stage_state(This->wineD3DDevice, 0, WINED3DTSS_COLORARG2, &colorarg2);
+            wined3d_device_get_texture_stage_state(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, &alphaop);
+            wined3d_device_get_texture_stage_state(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, &alphaarg1);
+            wined3d_device_get_texture_stage_state(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG2, &alphaarg2);
 
             if (colorop == WINED3DTOP_SELECTARG1 && colorarg1 == WINED3DTA_TEXTURE &&
                 alphaop == WINED3DTOP_SELECTARG1 && alphaarg1 == WINED3DTA_TEXTURE)
@@ -2505,7 +2488,7 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
                 BOOL tex_alpha = FALSE;
                 DDPIXELFORMAT ddfmt;
 
-                hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, 0, &tex);
+                hr = wined3d_device_get_texture(This->wineD3DDevice, 0, &tex);
 
                 if(hr == WINED3D_OK && tex)
                 {
@@ -2621,9 +2604,7 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
                     break;
             }
 
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                0, WINED3DSAMP_MAGFILTER,
-                                                tex_mag);
+            hr = wined3d_device_set_sampler_state(This->wineD3DDevice, 0, WINED3DSAMP_MAGFILTER, tex_mag);
             break;
         }
 
@@ -2666,28 +2647,24 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
                     break;
             }
 
-            IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
+            wined3d_device_set_sampler_state(This->wineD3DDevice,
                     0, WINED3DSAMP_MIPFILTER, tex_mip);
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                0, WINED3DSAMP_MINFILTER,
-                                                tex_min);
+            hr = wined3d_device_set_sampler_state(This->wineD3DDevice,
+                    0, WINED3DSAMP_MINFILTER, tex_min);
             break;
         }
 
         case D3DRENDERSTATE_TEXTUREADDRESS:
-                   IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                  0, WINED3DSAMP_ADDRESSV,
-                                                  Value);
+            wined3d_device_set_sampler_state(This->wineD3DDevice,
+                    0, WINED3DSAMP_ADDRESSV, Value);
             /* Drop through */
         case D3DRENDERSTATE_TEXTUREADDRESSU:
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                0, WINED3DSAMP_ADDRESSU,
-                                                Value);
+            hr = wined3d_device_set_sampler_state(This->wineD3DDevice,
+                    0, WINED3DSAMP_ADDRESSU, Value);
             break;
         case D3DRENDERSTATE_TEXTUREADDRESSV:
-            hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice,
-                                                0, WINED3DSAMP_ADDRESSV,
-                                                Value);
+            hr = wined3d_device_set_sampler_state(This->wineD3DDevice,
+                    0, WINED3DSAMP_ADDRESSV, Value);
             break;
 
         case D3DRENDERSTATE_BORDERCOLOR:
@@ -2711,9 +2688,7 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
                 float f;
             } wined3d_value;
             wined3d_value.f = Value * zbias_factor;
-            hr = IWineD3DDevice_SetRenderState(This->wineD3DDevice,
-                                               WINED3DRS_DEPTHBIAS,
-                                               wined3d_value.d);
+            hr = wined3d_device_set_render_state(This->wineD3DDevice, WINED3DRS_DEPTHBIAS, wined3d_value.d);
             break;
         }
 
@@ -2727,9 +2702,7 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
                 break;
             }
 
-            hr = IWineD3DDevice_SetRenderState(This->wineD3DDevice,
-                                               RenderStateType,
-                                               Value);
+            hr = wined3d_device_set_render_state(This->wineD3DDevice, RenderStateType, Value);
             break;
     }
     LeaveCriticalSection(&ddraw_cs);
@@ -2798,9 +2771,7 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
 
             if(Value == 0)
             {
-                hr = IWineD3DDevice_SetTexture(This->wineD3DDevice,
-                                               0,
-                                               NULL);
+                hr = wined3d_device_set_texture(This->wineD3DDevice, 0, NULL);
                 break;
             }
 
@@ -2828,7 +2799,7 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     BOOL tex_alpha = FALSE;
                     DDPIXELFORMAT ddfmt;
 
-                    hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, 0, &tex);
+                    hr = wined3d_device_get_texture(This->wineD3DDevice, 0, &tex);
 
                     if(hr == WINED3D_OK && tex)
                     {
@@ -2848,49 +2819,75 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     }
 
                     if (tex_alpha)
-                        IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG1);
+                        wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                                0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG1);
                     else
-                        IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, WINED3DTOP_MODULATE);
-
+                        wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                                0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLOROP, WINED3DTOP_MODULATE);
                     break;
                 }
 
                 case D3DTBLEND_ADD:
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, WINED3DTOP_ADD);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLOROP, WINED3DTOP_ADD);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
                     break;
 
                 case D3DTBLEND_MODULATEALPHA:
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, WINED3DTOP_MODULATE);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_MODULATE);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLOROP, WINED3DTOP_MODULATE);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAOP, WINED3DTOP_MODULATE);
                     break;
 
                 case D3DTBLEND_COPY:
                 case D3DTBLEND_DECAL:
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, WINED3DTOP_SELECTARG1);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG1);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLOROP, WINED3DTOP_SELECTARG1);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG1);
                     break;
 
                 case D3DTBLEND_DECALALPHA:
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLOROP, WINED3DTOP_BLENDTEXTUREALPHA);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
-                    IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLOROP, WINED3DTOP_BLENDTEXTUREALPHA);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
+                    wined3d_device_set_texture_stage_state(This->wineD3DDevice,
+                            0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
                     break;
 
                 default:
@@ -3171,14 +3168,12 @@ IDirect3DDeviceImpl_7_SetTransform(IDirect3DDevice7 *iface,
         default:                        type = TransformStateType;
     }
 
-    if(!Matrix)
-       return DDERR_INVALIDPARAMS;
+    if (!Matrix)
+        return DDERR_INVALIDPARAMS;
 
     /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetTransform(This->wineD3DDevice,
-                                     type,
-                                     (WINED3DMATRIX*) Matrix);
+    hr = wined3d_device_set_transform(This->wineD3DDevice, type, (WINED3DMATRIX *)Matrix);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -3268,7 +3263,7 @@ IDirect3DDeviceImpl_7_GetTransform(IDirect3DDevice7 *iface,
 
     /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_GetTransform(This->wineD3DDevice, type, (WINED3DMATRIX*) Matrix);
+    hr = wined3d_device_get_transform(This->wineD3DDevice, type, (WINED3DMATRIX *)Matrix);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -3450,7 +3445,7 @@ IDirect3DDeviceImpl_7_DrawPrimitive(IDirect3DDevice7 *iface,
 
     /* Set the FVF */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice, ddraw_find_decl(This->ddraw, VertexType));
+    hr = wined3d_device_set_vertex_declaration(This->wineD3DDevice, ddraw_find_decl(This->ddraw, VertexType));
     if(hr != D3D_OK)
     {
         LeaveCriticalSection(&ddraw_cs);
@@ -3569,7 +3564,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
 
     /* Set the D3DDevice's FVF */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice, ddraw_find_decl(This->ddraw, VertexType));
+    hr = wined3d_device_set_vertex_declaration(This->wineD3DDevice, ddraw_find_decl(This->ddraw, VertexType));
     if(FAILED(hr))
     {
         ERR(" (%p) Setting the FVF failed, hr = %x!\n", This, hr);
@@ -4065,9 +4060,8 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
     stride = get_flexible_vertex_size(vb->fvf);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice,
-                                             vb->wineD3DVertexDeclaration);
-    if(FAILED(hr))
+    hr = wined3d_device_set_vertex_declaration(This->wineD3DDevice, vb->wineD3DVertexDeclaration);
+    if (FAILED(hr))
     {
         ERR(" (%p) Setting the FVF failed, hr = %x!\n", This, hr);
         LeaveCriticalSection(&ddraw_cs);
@@ -4075,11 +4069,7 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
     }
 
     /* Set the vertex stream source */
-    hr = IWineD3DDevice_SetStreamSource(This->wineD3DDevice,
-                                        0 /* StreamNumber */,
-                                        vb->wineD3DVertexBuffer,
-                                        0 /* StartVertex - we pass this to DrawPrimitive */,
-                                        stride);
+    hr = wined3d_device_set_stream_source(This->wineD3DDevice, 0, vb->wineD3DVertexBuffer, 0, stride);
     if(hr != D3D_OK)
     {
         ERR("(%p) IDirect3DDevice::SetStreamSource failed with hr = %08x\n", This, hr);
@@ -4184,9 +4174,8 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     EnterCriticalSection(&ddraw_cs);
 
-    hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice,
-                                             vb->wineD3DVertexDeclaration);
-    if(FAILED(hr))
+    hr = wined3d_device_set_vertex_declaration(This->wineD3DDevice, vb->wineD3DVertexDeclaration);
+    if (FAILED(hr))
     {
         ERR(" (%p) Setting the FVF failed, hr = %x!\n", This, hr);
         LeaveCriticalSection(&ddraw_cs);
@@ -4233,17 +4222,12 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     wined3d_buffer_unmap(This->indexbuffer);
 
     /* Set the index stream */
-    IWineD3DDevice_SetBaseVertexIndex(This->wineD3DDevice, StartVertex);
-    hr = IWineD3DDevice_SetIndexBuffer(This->wineD3DDevice, This->indexbuffer,
-                                   WINED3DFMT_R16_UINT);
+    wined3d_device_set_base_vertex_index(This->wineD3DDevice, StartVertex);
+    hr = wined3d_device_set_index_buffer(This->wineD3DDevice, This->indexbuffer, WINED3DFMT_R16_UINT);
 
     /* Set the vertex stream source */
-    hr = IWineD3DDevice_SetStreamSource(This->wineD3DDevice,
-                                        0 /* StreamNumber */,
-                                        vb->wineD3DVertexBuffer,
-                                        0 /* offset, we pass this to DrawIndexedPrimitive */,
-                                        stride);
-    if(hr != D3D_OK)
+    hr = wined3d_device_set_stream_source(This->wineD3DDevice, 0, vb->wineD3DVertexBuffer, 0, stride);
+    if (FAILED(hr))
     {
         ERR("(%p) IDirect3DDevice::SetStreamSource failed with hr = %08x\n", This, hr);
         LeaveCriticalSection(&ddraw_cs);
@@ -4462,7 +4446,7 @@ IDirect3DDeviceImpl_7_GetTexture(IDirect3DDevice7 *iface,
     }
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_GetTexture(This->wineD3DDevice, Stage, &wined3d_texture);
+    hr = wined3d_device_get_texture(This->wineD3DDevice, Stage, &wined3d_texture);
     if (FAILED(hr) || !wined3d_texture)
     {
         *Texture = NULL;
@@ -4545,7 +4529,7 @@ IDirect3DDeviceImpl_7_SetTexture(IDirect3DDevice7 *iface,
 
     /* Texture may be NULL here */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetTexture(This->wineD3DDevice,
+    hr = wined3d_device_set_texture(This->wineD3DDevice,
             Stage, surf ? surf->wined3d_texture : NULL);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
@@ -4602,9 +4586,8 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
         DDPIXELFORMAT ddfmt;
         HRESULT result;
 
-        result = IWineD3DDevice_GetTexture(This->wineD3DDevice, 0, &tex);
-
-        if(result == WINED3D_OK && tex)
+        result = wined3d_device_get_texture(This->wineD3DDevice, 0, &tex);
+        if (result == WINED3D_OK && tex)
         {
             struct wined3d_resource *sub_resource;
 
@@ -4623,9 +4606,9 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
 
         /* Arg 1/2 are already set to WINED3DTA_TEXTURE/WINED3DTA_CURRENT in case of D3DTBLEND_MODULATE */
         if (tex_alpha)
-            IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG1);
+            wined3d_device_set_texture_stage_state(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG1);
         else
-            IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
+            wined3d_device_set_texture_stage_state(This->wineD3DDevice, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
     }
 
     LeaveCriticalSection(&ddraw_cs);
@@ -4713,7 +4696,7 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
 
     if (l->sampler_state)
     {
-        hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice, Stage, l->state, State);
+        hr = wined3d_device_get_sampler_state(This->wineD3DDevice, Stage, l->state, State);
 
         switch(TexStageStateType)
         {
@@ -4757,7 +4740,7 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
     }
     else
     {
-        hr = IWineD3DDevice_GetTextureStageState(This->wineD3DDevice, Stage, l->state, State);
+        hr = wined3d_device_get_texture_stage_state(This->wineD3DDevice, Stage, l->state, State);
     }
 
     LeaveCriticalSection(&ddraw_cs);
@@ -4880,18 +4863,18 @@ IDirect3DDeviceImpl_7_SetTextureStageState(IDirect3DDevice7 *iface,
             }
 
             case D3DTSS_ADDRESS:
-                IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, WINED3DSAMP_ADDRESSV, State);
+                wined3d_device_set_sampler_state(This->wineD3DDevice, Stage, WINED3DSAMP_ADDRESSV, State);
                 break;
 
             default:
                 break;
         }
 
-        hr = IWineD3DDevice_SetSamplerState(This->wineD3DDevice, Stage, l->state, State);
+        hr = wined3d_device_set_sampler_state(This->wineD3DDevice, Stage, l->state, State);
     }
     else
     {
-        hr = IWineD3DDevice_SetTextureStageState(This->wineD3DDevice, Stage, l->state, State);
+        hr = wined3d_device_set_texture_stage_state(This->wineD3DDevice, Stage, l->state, State);
     }
 
     LeaveCriticalSection(&ddraw_cs);
@@ -5098,8 +5081,7 @@ IDirect3DDeviceImpl_7_SetViewport(IDirect3DDevice7 *iface,
 
     /* Note: D3DVIEWPORT7 is compatible with WINED3DVIEWPORT */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetViewport(This->wineD3DDevice,
-                                    (WINED3DVIEWPORT*) Data);
+    hr = wined3d_device_set_viewport(This->wineD3DDevice, (WINED3DVIEWPORT *)Data);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -5155,8 +5137,7 @@ IDirect3DDeviceImpl_7_GetViewport(IDirect3DDevice7 *iface,
 
     /* Note: D3DVIEWPORT7 is compatible with WINED3DVIEWPORT */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_GetViewport(This->wineD3DDevice,
-                                    (WINED3DVIEWPORT*) Data);
+    hr = wined3d_device_get_viewport(This->wineD3DDevice, (WINED3DVIEWPORT *)Data);
 
     LeaveCriticalSection(&ddraw_cs);
     return hr_ddraw_from_wined3d(hr);
@@ -5211,8 +5192,7 @@ IDirect3DDeviceImpl_7_SetMaterial(IDirect3DDevice7 *iface,
     if (!Mat) return DDERR_INVALIDPARAMS;
     /* Note: D3DMATERIAL7 is compatible with WINED3DMATERIAL */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetMaterial(This->wineD3DDevice,
-                                    (WINED3DMATERIAL*) Mat);
+    hr = wined3d_device_set_material(This->wineD3DDevice, (WINED3DMATERIAL *)Mat);
     LeaveCriticalSection(&ddraw_cs);
     return hr_ddraw_from_wined3d(hr);
 }
@@ -5265,8 +5245,7 @@ IDirect3DDeviceImpl_7_GetMaterial(IDirect3DDevice7 *iface,
 
     EnterCriticalSection(&ddraw_cs);
     /* Note: D3DMATERIAL7 is compatible with WINED3DMATERIAL */
-    hr = IWineD3DDevice_GetMaterial(This->wineD3DDevice,
-                                    (WINED3DMATERIAL*) Mat);
+    hr = wined3d_device_get_material(This->wineD3DDevice, (WINED3DMATERIAL *)Mat);
     LeaveCriticalSection(&ddraw_cs);
     return hr_ddraw_from_wined3d(hr);
 }
@@ -5320,9 +5299,7 @@ IDirect3DDeviceImpl_7_SetLight(IDirect3DDevice7 *iface,
 
     EnterCriticalSection(&ddraw_cs);
     /* Note: D3DLIGHT7 is compatible with WINED3DLIGHT */
-    hr = IWineD3DDevice_SetLight(This->wineD3DDevice,
-                                 LightIndex,
-                                 (WINED3DLIGHT*) Light);
+    hr = wined3d_device_set_light(This->wineD3DDevice, LightIndex, (WINED3DLIGHT *)Light);
     LeaveCriticalSection(&ddraw_cs);
     return hr_ddraw_from_wined3d(hr);
 }
@@ -5376,9 +5353,7 @@ IDirect3DDeviceImpl_7_GetLight(IDirect3DDevice7 *iface,
 
     EnterCriticalSection(&ddraw_cs);
     /* Note: D3DLIGHT7 is compatible with WINED3DLIGHT */
-    rc =  IWineD3DDevice_GetLight(This->wineD3DDevice,
-                                  LightIndex,
-                                  (WINED3DLIGHT*) Light);
+    rc =  wined3d_device_get_light(This->wineD3DDevice, LightIndex, (WINED3DLIGHT *)Light);
 
     /* Translate the result. WineD3D returns other values than D3D7 */
     LeaveCriticalSection(&ddraw_cs);
@@ -6273,7 +6248,7 @@ IDirect3DDeviceImpl_7_LightEnable(IDirect3DDevice7 *iface,
     TRACE("iface %p, light_idx %u, enabled %#x.\n", iface, LightIndex, Enable);
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetLightEnable(This->wineD3DDevice, LightIndex, Enable);
+    hr = wined3d_device_set_light_enable(This->wineD3DDevice, LightIndex, Enable);
     LeaveCriticalSection(&ddraw_cs);
     return hr_ddraw_from_wined3d(hr);
 }
@@ -6332,7 +6307,7 @@ IDirect3DDeviceImpl_7_GetLightEnable(IDirect3DDevice7 *iface,
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_GetLightEnable(This->wineD3DDevice, LightIndex, Enable);
+    hr = wined3d_device_get_light_enable(This->wineD3DDevice, LightIndex, Enable);
     LeaveCriticalSection(&ddraw_cs);
     return hr_ddraw_from_wined3d(hr);
 }
@@ -6391,7 +6366,7 @@ IDirect3DDeviceImpl_7_SetClipPlane(IDirect3DDevice7 *iface,
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_SetClipPlane(This->wineD3DDevice, Index, PlaneEquation);
+    hr = wined3d_device_set_clip_plane(This->wineD3DDevice, Index, PlaneEquation);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -6448,7 +6423,7 @@ IDirect3DDeviceImpl_7_GetClipPlane(IDirect3DDevice7 *iface,
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DDevice_GetClipPlane(This->wineD3DDevice, Index, PlaneEquation);
+    hr = wined3d_device_get_clip_plane(This->wineD3DDevice, Index, PlaneEquation);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -6772,14 +6747,13 @@ IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
     if(!depthStencil)
     {
         TRACE("Setting wined3d depth stencil to NULL\n");
-        IWineD3DDevice_SetDepthStencilSurface(This->wineD3DDevice,
-                                              NULL);
+        wined3d_device_set_depth_stencil(This->wineD3DDevice, NULL);
         return WINED3DZB_FALSE;
     }
 
     dsi = (IDirectDrawSurfaceImpl *)depthStencil;
     TRACE("Setting wined3d depth stencil to %p (wined3d %p)\n", dsi, dsi->wined3d_surface);
-    IWineD3DDevice_SetDepthStencilSurface(This->wineD3DDevice, dsi->wined3d_surface);
+    wined3d_device_set_depth_stencil(This->wineD3DDevice, dsi->wined3d_surface);
 
     IDirectDrawSurface7_Release(depthStencil);
     return WINED3DZB_TRUE;
@@ -6826,7 +6800,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
     IWineD3DDevice_AddRef(ddraw->wineD3DDevice);
 
     /* Render to the back buffer */
-    hr = IWineD3DDevice_SetRenderTarget(ddraw->wineD3DDevice, 0, target->wined3d_surface, TRUE);
+    hr = wined3d_device_set_render_target(ddraw->wineD3DDevice, 0, target->wined3d_surface, TRUE);
     if (FAILED(hr))
     {
         ERR("Failed to set render target, hr %#x.\n", hr);
@@ -6849,7 +6823,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
 
     ddraw->d3ddevice = device;
 
-    IWineD3DDevice_SetRenderState(ddraw->wineD3DDevice, WINED3DRS_ZENABLE,
+    wined3d_device_set_render_state(ddraw->wineD3DDevice, WINED3DRS_ZENABLE,
             IDirect3DDeviceImpl_UpdateDepthStencil(device));
 
     return D3D_OK;
