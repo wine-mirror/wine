@@ -5323,11 +5323,11 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             wined3d_surface_unmap(cursor_image);
             /* Create our cursor and clean up. */
             cursor = CreateIconIndirect(&cursorInfo);
-            SetCursor(cursor);
             if (cursorInfo.hbmMask) DeleteObject(cursorInfo.hbmMask);
             if (cursorInfo.hbmColor) DeleteObject(cursorInfo.hbmColor);
             if (device->hardwareCursor) DestroyCursor(device->hardwareCursor);
             device->hardwareCursor = cursor;
+            if (device->bCursorVisible) SetCursor( cursor );
             HeapFree(GetProcessHeap(), 0, maskBits);
         }
     }
@@ -5345,6 +5345,19 @@ void CDECL wined3d_device_set_cursor_position(struct wined3d_device *device,
 
     device->xScreenSpace = x_screen_space;
     device->yScreenSpace = y_screen_space;
+
+    /* switch to the software cursor if position diverges from the hardware one */
+    if (device->hardwareCursor)
+    {
+        POINT pt;
+        GetCursorPos( &pt );
+        if (x_screen_space != pt.x || y_screen_space != pt.y)
+        {
+            if (device->bCursorVisible) SetCursor( NULL );
+            DestroyCursor( device->hardwareCursor );
+            device->hardwareCursor = 0;
+        }
+    }
 }
 
 BOOL CDECL wined3d_device_show_cursor(struct wined3d_device *device, BOOL show)
