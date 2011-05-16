@@ -34,24 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psapi);
 
-/***********************************************************************
- *           EnumPageFilesA (PSAPI.@)
- */
-BOOL WINAPI EnumPageFilesA( PENUM_PAGE_FILE_CALLBACKA callback, LPVOID context )
-{
-    FIXME("(%p, %p) stub\n", callback, context );
-    return FALSE;
-}
-
-/***********************************************************************
- *           EnumPageFilesW (PSAPI.@)
- */
-BOOL WINAPI EnumPageFilesW( PENUM_PAGE_FILE_CALLBACKW callback, LPVOID context )
-{
-    FIXME("(%p, %p) stub\n", callback, context );
-    return FALSE;
-}
-
 
 /***********************************************************************
  *           GetPerformanceInfo (PSAPI.@)

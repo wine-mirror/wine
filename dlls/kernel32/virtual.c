@@ -39,6 +39,7 @@
 #include "winnls.h"
 #include "winternl.h"
 #include "winerror.h"
+#include "psapi.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 
@@ -849,4 +850,22 @@ DWORD WINAPI K32GetMappedFileNameW(HANDLE process, LPVOID lpv, LPWSTR file_name,
         file_name[0] = '\0';
 
     return 0;
+}
+
+/***********************************************************************
+ *           K32EnumPageFilesA (KERNEL32.@)
+ */
+BOOL WINAPI K32EnumPageFilesA( PENUM_PAGE_FILE_CALLBACKA callback, LPVOID context )
+{
+    FIXME_(file)("(%p, %p) stub\n", callback, context );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           K32EnumPageFilesW (KERNEL32.@)
+ */
+BOOL WINAPI K32EnumPageFilesW( PENUM_PAGE_FILE_CALLBACKW callback, LPVOID context )
+{
+    FIXME_(file)("(%p, %p) stub\n", callback, context );
+    return FALSE;
 }

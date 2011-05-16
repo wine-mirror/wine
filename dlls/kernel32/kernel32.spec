@@ -771,6 +771,8 @@
 @ stdcall K32GetProcessImageFileNameA(long ptr long)
 @ stdcall K32GetProcessImageFileNameW(long ptr long)
 @ stdcall K32EnumDeviceDrivers(ptr long ptr)
+@ stdcall K32EnumPageFilesA(ptr ptr)
+@ stdcall K32EnumPageFilesW(ptr ptr)
 @ stdcall K32EnumProcessModules(long ptr long ptr)
 @ stdcall K32EnumProcesses(ptr long ptr)
 @ stdcall K32GetDeviceDriverBaseNameA(ptr ptr long)

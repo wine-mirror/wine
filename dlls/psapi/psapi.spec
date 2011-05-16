@@ -1,7 +1,7 @@
 @ stdcall EmptyWorkingSet(long) kernel32.K32EmptyWorkingSet
 @ stdcall EnumDeviceDrivers(ptr long ptr) kernel32.K32EnumDeviceDrivers
-@ stdcall EnumPageFilesA(ptr ptr)
-@ stdcall EnumPageFilesW(ptr ptr)
+@ stdcall EnumPageFilesA(ptr ptr) kernel32.K32EnumPageFilesA
+@ stdcall EnumPageFilesW(ptr ptr) kernel32.K32EnumPageFilesW
 @ stdcall EnumProcessModules(long ptr long ptr) kernel32.K32EnumProcessModules
 @ stdcall EnumProcesses(ptr long ptr) kernel32.K32EnumProcesses
 @ stdcall GetDeviceDriverBaseNameA(ptr ptr long) kernel32.K32GetDeviceDriverBaseNameA
