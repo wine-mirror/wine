@@ -6005,7 +6005,7 @@ msgstr "Hintergrund &kopieren"
 msgid "Set as &Desktop Item"
 msgstr "Als Desktopelement einrichten..."
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:62
 #, fuzzy
 msgid "Select &All"
 msgstr ""
@@ -6015,7 +6015,7 @@ msgstr ""
 "&Alles markieren"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
 #, fuzzy
 msgid "&Paste"
 msgstr ""
@@ -6097,7 +6097,7 @@ msgid "Set as &Desktop Item..."
 msgstr "Als Desktopelement einrichten..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: user32.rc:44 wordpad.rc:101
+#: user32.rc:57 wordpad.rc:101
 #, fuzzy
 msgid "Cu&t"
 msgstr ""
@@ -6107,7 +6107,7 @@ msgstr ""
 "&Ausschneiden"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 winhlp32.rc:37
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
 #: wordpad.rc:102
 msgid "&Copy"
 msgstr "&Kopieren"
@@ -6128,11 +6128,11 @@ msgstr "&Eigenschaften"
 msgid "Control"
 msgstr "Steuerung"
 
-#: shdoclc.rc:90 user32.rc:42
+#: shdoclc.rc:90 user32.rc:55
 msgid "&Undo"
 msgstr "&Rückgängig"
 
-#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:60
 msgid "&Delete"
 msgstr "&Löschen"
 
@@ -6984,23 +6984,23 @@ msgstr " Min"
 msgid " sec"
 msgstr " Sek"
 
-#: user32.rc:27 taskmgr.rc:138
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgid "&Restore"
 msgstr "&Wiederherstellen"
 
-#: user32.rc:28
+#: user32.rc:28 user32.rc:41
 msgid "&Move"
 msgstr "&Verschieben"
 
-#: user32.rc:29
+#: user32.rc:29 user32.rc:42
 msgid "&Size"
 msgstr "&Größe"
 
-#: user32.rc:30
+#: user32.rc:30 user32.rc:43
 msgid "Mi&nimize"
 msgstr "Mi&nimieren"
 
-#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
+#: user32.rc:31 user32.rc:44 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
 msgstr "Ma&ximieren"
 
@@ -7012,11 +7012,20 @@ msgstr "&Schließen\tAlt-F4"
 msgid "&About Wine"
 msgstr "Ü&ber Wine"
 
-#: user32.rc:55 regedit.rc:176 winefile.rc:100
+#: user32.rc:46
+#, fuzzy
+msgid "&Close\tCtrl-F4"
+msgstr "&Schließen\tAlt-F4"
+
+#: user32.rc:48
+msgid "Nex&t\tCtrl-F6"
+msgstr ""
+
+#: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
 msgstr "Fehler"
 
-#: user32.rc:56
+#: user32.rc:69
 msgid "&More Windows..."
 msgstr "&Mehr Fenster..."
 

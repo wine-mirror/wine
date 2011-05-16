@@ -5870,12 +5870,12 @@ msgstr "배경으로 복사(&C)"
 msgid "Set as &Desktop Item"
 msgstr "데스크탑 아이템으로 설정(&D)"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:62
 msgid "Select &All"
 msgstr "모두 선택(&A)"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "붙여넣기(&P)"
 
@@ -5952,12 +5952,12 @@ msgid "Set as &Desktop Item..."
 msgstr "데스크탑 아이템으로 설정(&D)..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: user32.rc:44 wordpad.rc:101
+#: user32.rc:57 wordpad.rc:101
 msgid "Cu&t"
 msgstr "잘라내기(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 winhlp32.rc:37
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
 #: wordpad.rc:102
 msgid "&Copy"
 msgstr "복사(&C)"
@@ -5978,11 +5978,11 @@ msgstr "속성(&R)"
 msgid "Control"
 msgstr "제어"
 
-#: shdoclc.rc:90 user32.rc:42
+#: shdoclc.rc:90 user32.rc:55
 msgid "&Undo"
 msgstr "되돌리기(&U)"
 
-#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:60
 msgid "&Delete"
 msgstr "지우기(&D)"
 
@@ -6791,23 +6791,23 @@ msgstr "분"
 msgid " sec"
 msgstr "초"
 
-#: user32.rc:27 taskmgr.rc:138
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgid "&Restore"
 msgstr "복구(&R)"
 
-#: user32.rc:28
+#: user32.rc:28 user32.rc:41
 msgid "&Move"
 msgstr "이동(&M)"
 
-#: user32.rc:29
+#: user32.rc:29 user32.rc:42
 msgid "&Size"
 msgstr "크기 변경(&S)"
 
-#: user32.rc:30
+#: user32.rc:30 user32.rc:43
 msgid "Mi&nimize"
 msgstr "아이콘 표시(&N)"
 
-#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
+#: user32.rc:31 user32.rc:44 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
 msgstr "최대화(&x)"
 
@@ -6819,11 +6819,20 @@ msgstr "닫기(&C)\tAlt-F4"
 msgid "&About Wine"
 msgstr "WINE 정보(&A)"
 
-#: user32.rc:55 regedit.rc:176 winefile.rc:100
+#: user32.rc:46
+#, fuzzy
+msgid "&Close\tCtrl-F4"
+msgstr "닫기(&C)\tAlt-F4"
+
+#: user32.rc:48
+msgid "Nex&t\tCtrl-F6"
+msgstr ""
+
+#: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
 msgstr "에러"
 
-#: user32.rc:56
+#: user32.rc:69
 msgid "&More Windows..."
 msgstr "더 많은 창들(&M)..."
 

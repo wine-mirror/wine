@@ -6086,12 +6086,12 @@ msgstr "复制背景(&C)"
 msgid "Set as &Desktop Item"
 msgstr "设置到桌面(&D)"
 
-#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:49
+#: shdoclc.rc:46 shdoclc.rc:98 shdoclc.rc:121 user32.rc:62
 msgid "Select &All"
 msgstr "全选(&A)"
 
 #: shdoclc.rc:47 shdoclc.rc:80 shdoclc.rc:94 shdoclc.rc:136 shdoclc.rc:164
-#: shdoclc.rc:189 user32.rc:46 wineconsole.rc:30 wordpad.rc:103
+#: shdoclc.rc:189 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
 msgid "&Paste"
 msgstr "粘贴(&P)"
 
@@ -6168,12 +6168,12 @@ msgid "Set as &Desktop Item..."
 msgstr "设为桌面项目(&D)..."
 
 #: shdoclc.rc:77 shdoclc.rc:92 shdoclc.rc:118 shdoclc.rc:161 shdoclc.rc:186
-#: user32.rc:44 wordpad.rc:101
+#: user32.rc:57 wordpad.rc:101
 msgid "Cu&t"
 msgstr "剪切(&T)"
 
 #: shdoclc.rc:78 shdoclc.rc:93 shdoclc.rc:119 shdoclc.rc:134 shdoclc.rc:162
-#: shdoclc.rc:187 shell32.rc:87 user32.rc:45 wineconsole.rc:29 winhlp32.rc:37
+#: shdoclc.rc:187 shell32.rc:87 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
 #: wordpad.rc:102
 msgid "&Copy"
 msgstr "复制(&C)"
@@ -6194,7 +6194,7 @@ msgstr "属性(&R)"
 msgid "Control"
 msgstr "控制"
 
-#: shdoclc.rc:90 user32.rc:42
+#: shdoclc.rc:90 user32.rc:55
 #, fuzzy
 msgid "&Undo"
 msgstr ""
@@ -6203,7 +6203,7 @@ msgstr ""
 "#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
 "撤消(&U)"
 
-#: shdoclc.rc:95 shell32.rc:90 user32.rc:47
+#: shdoclc.rc:95 shell32.rc:90 user32.rc:60
 msgid "&Delete"
 msgstr "删除(&D)"
 
@@ -7047,23 +7047,23 @@ msgstr " 分"
 msgid " sec"
 msgstr " 秒"
 
-#: user32.rc:27 taskmgr.rc:138
+#: user32.rc:27 user32.rc:40 taskmgr.rc:138
 msgid "&Restore"
 msgstr "恢复(&R)"
 
-#: user32.rc:28
+#: user32.rc:28 user32.rc:41
 msgid "&Move"
 msgstr "移动(&M)"
 
-#: user32.rc:29
+#: user32.rc:29 user32.rc:42
 msgid "&Size"
 msgstr "大小(&S)"
 
-#: user32.rc:30
+#: user32.rc:30 user32.rc:43
 msgid "Mi&nimize"
 msgstr "最小化(&N)"
 
-#: user32.rc:31 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
+#: user32.rc:31 user32.rc:44 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
 msgstr "最大化(&X)"
 
@@ -7075,11 +7075,20 @@ msgstr "关闭(&N)\tAlt-F4"
 msgid "&About Wine"
 msgstr "关于 Wine(&A)"
 
-#: user32.rc:55 regedit.rc:176 winefile.rc:100
+#: user32.rc:46
+#, fuzzy
+msgid "&Close\tCtrl-F4"
+msgstr "关闭(&N)\tAlt-F4"
+
+#: user32.rc:48
+msgid "Nex&t\tCtrl-F6"
+msgstr ""
+
+#: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
 msgstr "错误"
 
-#: user32.rc:56
+#: user32.rc:69
 msgid "&More Windows..."
 msgstr "更多窗口(&M)..."
 

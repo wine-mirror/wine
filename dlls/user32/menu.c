@@ -417,10 +417,11 @@ static HBITMAP get_up_arrow_inactive_bitmap(void)
  *
  * Return the default system menu.
  */
-static HMENU MENU_CopySysPopup(void)
+static HMENU MENU_CopySysPopup(BOOL mdi)
 {
     static const WCHAR sysmenuW[] = {'S','Y','S','M','E','N','U',0};
-    HMENU hMenu = LoadMenuW(user32_module, sysmenuW);
+    static const WCHAR sysmenumdiW[] = {'S','Y','S','M','E','N','U','M','D','I',0};
+    HMENU hMenu = LoadMenuW(user32_module, (mdi ? sysmenumdiW : sysmenuW));
 
     if( hMenu ) {
         MENUINFO minfo;
@@ -447,7 +448,7 @@ static HMENU MENU_CopySysPopup(void)
     else
 	ERR("Unable to load default system menu\n" );
 
-    TRACE("returning %p.\n", hMenu );
+    TRACE("returning %p (mdi=%d).\n", hMenu, mdi );
 
     return hMenu;
 }
@@ -475,7 +476,12 @@ static HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
 	TRACE("hWnd %p (hMenu %p)\n", menu->hWnd, hMenu);
 
 	if (!hPopupMenu)
-	    hPopupMenu = MENU_CopySysPopup();
+        {
+            if (GetWindowLongW(hWnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+	        hPopupMenu = MENU_CopySysPopup(TRUE);
+            else
+	        hPopupMenu = MENU_CopySysPopup(FALSE);
+        }
 
 	if (hPopupMenu)
 	{
