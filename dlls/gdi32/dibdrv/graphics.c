@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);
 
-static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom )
+static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, BOOL rtl_correction )
 {
     RECT rect;
 
@@ -33,7 +33,7 @@ static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom )
     rect.top    = top;
     rect.right  = right;
     rect.bottom = bottom;
-    if (GetLayout( hdc ) & LAYOUT_RTL)
+    if (rtl_correction && GetLayout( hdc ) & LAYOUT_RTL)
     {
         /* shift the rectangle so that the right border is included after mirroring */
         /* it would be more correct to do this after LPtoDP but that's not what Windows does */
@@ -98,7 +98,7 @@ BOOL CDECL dibdrv_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWOR
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPatBlt );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     INT rop2 = get_rop2_from_rop(rop);
-    RECT rect = get_device_rect( dev->hdc, x, y, x + width, y + height );
+    RECT rect = get_device_rect( dev->hdc, x, y, x + width, y + height, TRUE );
     BOOL done;
 
     TRACE("(%p, %d, %d, %d, %d, %06x)\n", dev, x, y, width, height, rop);
@@ -119,13 +119,42 @@ BOOL CDECL dibdrv_PatBlt( PHYSDEV dev, INT x, INT y, INT width, INT height, DWOR
 }
 
 /***********************************************************************
+ *           dibdrv_PaintRgn
+ */
+BOOL CDECL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPaintRgn );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    const WINEREGION *region;
+    int i;
+    RECT rect;
+
+    TRACE("%p, %p\n", dev, rgn);
+
+    if(defer_brush(pdev)) return next->funcs->pPaintRgn( next, rgn );
+
+    region = get_wine_region( rgn );
+    if(!region) return FALSE;
+
+    for(i = 0; i < region->numRects; i++)
+    {
+        rect = get_device_rect( dev->hdc, region->rects[i].left, region->rects[i].top,
+                                region->rects[i].right, region->rects[i].bottom, FALSE );
+        pdev->brush_rects( pdev, 1, &rect );
+    }
+
+    release_wine_region( rgn );
+    return TRUE;
+}
+
+/***********************************************************************
  *           dibdrv_Rectangle
  */
 BOOL CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pRectangle );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    RECT rect = get_device_rect( dev->hdc, left, top, right, bottom );
+    RECT rect = get_device_rect( dev->hdc, left, top, right, bottom, TRUE );
     POINT pts[4];
 
     TRACE("(%p, %d, %d, %d, %d)\n", dev, left, top, right, bottom);

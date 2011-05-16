@@ -391,7 +391,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */
-    NULL,                               /* pPaintRgn */
+    dibdrv_PaintRgn,                    /* pPaintRgn */
     dibdrv_PatBlt,                      /* pPatBlt */
     NULL,                               /* pPie */
     NULL,                               /* pPolyBezier */
