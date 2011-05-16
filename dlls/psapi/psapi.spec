@@ -19,7 +19,7 @@
 @ stdcall GetProcessImageFileNameA(long ptr long) kernel32.K32GetProcessImageFileNameA
 @ stdcall GetProcessImageFileNameW(long ptr long) kernel32.K32GetProcessImageFileNameW
 @ stdcall GetProcessMemoryInfo(long ptr long) kernel32.K32GetProcessMemoryInfo
-@ stdcall GetWsChanges(long ptr long)
-@ stdcall InitializeProcessForWsWatch(long)
+@ stdcall GetWsChanges(long ptr long) kernel32.K32GetWsChanges
+@ stdcall InitializeProcessForWsWatch(long) kernel32.K32InitializeProcessForWsWatch
 @ stdcall QueryWorkingSet(long ptr long) kernel32.K32QueryWorkingSet
 @ stdcall QueryWorkingSetEx(long ptr long) kernel32.K32QueryWorkingSetEx

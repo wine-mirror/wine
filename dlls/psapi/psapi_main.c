@@ -53,32 +53,3 @@ BOOL WINAPI GetPerformanceInfo( PPERFORMANCE_INFORMATION info, DWORD size )
     }
     return TRUE;
 }
-
-/***********************************************************************
- *           GetWsChanges (PSAPI.@)
- */
-BOOL WINAPI GetWsChanges( HANDLE process, PPSAPI_WS_WATCH_INFORMATION watchinfo, DWORD size )
-{
-    NTSTATUS status;
-
-    TRACE( "(%p, %p, %d)\n", process, watchinfo, size );
-
-    status = NtQueryInformationProcess( process, ProcessWorkingSetWatch, watchinfo, size, NULL );
-
-    if (status)
-    {
-        SetLastError( RtlNtStatusToDosError( status ) );
-        return FALSE;
-    }
-    return TRUE;
-}
-
-/***********************************************************************
- *           InitializeProcessForWsWatch (PSAPI.@)
- */
-BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
-{
-    FIXME("(hProcess=%p): stub\n", hProcess);
-
-    return TRUE;
-}

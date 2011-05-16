@@ -869,3 +869,32 @@ BOOL WINAPI K32EnumPageFilesW( PENUM_PAGE_FILE_CALLBACKW callback, LPVOID contex
     FIXME_(file)("(%p, %p) stub\n", callback, context );
     return FALSE;
 }
+
+/***********************************************************************
+ *           K32GetWsChanges (KERNEL32.@)
+ */
+BOOL WINAPI K32GetWsChanges(HANDLE process, PPSAPI_WS_WATCH_INFORMATION watchinfo, DWORD size)
+{
+    NTSTATUS status;
+
+    TRACE_(seh)("(%p, %p, %d)\n", process, watchinfo, size);
+
+    status = NtQueryInformationProcess( process, ProcessWorkingSetWatch, watchinfo, size, NULL );
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/***********************************************************************
+ *           K32InitializeProcessForWsWatch (KERNEL32.@)
+ */
+BOOL WINAPI K32InitializeProcessForWsWatch(HANDLE process)
+{
+    FIXME_(seh)("(process=%p): stub\n", process);
+
+    return TRUE;
+}
