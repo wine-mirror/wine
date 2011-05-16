@@ -1277,7 +1277,8 @@ BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
             if (tid && tid != GetCurrentThreadId() && pid == GetCurrentProcessId())
             {
                 TRACE( "forwarding clip request to %p\n", foreground );
-                if (SendMessageW( foreground, WM_X11DRV_CLIP_CURSOR, 0, 0 )) return TRUE;
+                SendNotifyMessageW( foreground, WM_X11DRV_CLIP_CURSOR, 0, 0 );
+                return TRUE;
             }
             else if (grab_clipping_window( clip, FALSE )) return TRUE;
         }
