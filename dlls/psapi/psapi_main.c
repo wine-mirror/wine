@@ -35,19 +35,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(psapi);
 
 /***********************************************************************
- *           EnumDeviceDrivers (PSAPI.@)
- */
-BOOL WINAPI EnumDeviceDrivers(LPVOID *lpImageBase, DWORD cb, LPDWORD lpcbNeeded)
-{
-    FIXME("(%p, %d, %p): stub\n", lpImageBase, cb, lpcbNeeded);
-
-    if (lpcbNeeded)
-        *lpcbNeeded = 0;
-
-    return TRUE;
-}
-
-/***********************************************************************
  *           EnumPageFilesA (PSAPI.@)
  */
 BOOL WINAPI EnumPageFilesA( PENUM_PAGE_FILE_CALLBACKA callback, LPVOID context )
@@ -65,61 +52,6 @@ BOOL WINAPI EnumPageFilesW( PENUM_PAGE_FILE_CALLBACKW callback, LPVOID context )
     return FALSE;
 }
 
-/***********************************************************************
- *          GetDeviceDriverBaseNameA (PSAPI.@)
- */
-DWORD WINAPI GetDeviceDriverBaseNameA(LPVOID ImageBase, LPSTR lpBaseName, 
-                                      DWORD nSize)
-{
-    FIXME("(%p, %p, %d): stub\n", ImageBase, lpBaseName, nSize);
-
-    if (lpBaseName && nSize)
-        lpBaseName[0] = '\0';
-
-    return 0;
-}
-
-/***********************************************************************
- *           GetDeviceDriverBaseNameW (PSAPI.@)
- */
-DWORD WINAPI GetDeviceDriverBaseNameW(LPVOID ImageBase, LPWSTR lpBaseName, 
-                                      DWORD nSize)
-{
-    FIXME("(%p, %p, %d): stub\n", ImageBase, lpBaseName, nSize);
-
-    if (lpBaseName && nSize)
-        lpBaseName[0] = '\0';
-
-    return 0;
-}
-
-/***********************************************************************
- *           GetDeviceDriverFileNameA (PSAPI.@)
- */
-DWORD WINAPI GetDeviceDriverFileNameA(LPVOID ImageBase, LPSTR lpFilename, 
-                                      DWORD nSize)
-{
-    FIXME("(%p, %p, %d): stub\n", ImageBase, lpFilename, nSize);
-
-    if (lpFilename && nSize)
-        lpFilename[0] = '\0';
-
-    return 0;
-}
-
-/***********************************************************************
- *           GetDeviceDriverFileNameW (PSAPI.@)
- */
-DWORD WINAPI GetDeviceDriverFileNameW(LPVOID ImageBase, LPWSTR lpFilename, 
-                                      DWORD nSize)
-{
-    FIXME("(%p, %p, %d): stub\n", ImageBase, lpFilename, nSize);
-
-    if (lpFilename && nSize)
-        lpFilename[0] = '\0';
-
-    return 0;
-}
 
 /***********************************************************************
  *           GetPerformanceInfo (PSAPI.@)
