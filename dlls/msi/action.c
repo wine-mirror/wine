@@ -2990,6 +2990,25 @@ void msi_clean_path( WCHAR *p )
     }
 }
 
+static WCHAR *get_target_dir_property( MSIDATABASE *db )
+{
+    int len;
+    WCHAR *path, *target_dir = msi_dup_property( db, szTargetDir );
+
+    if (!target_dir) return NULL;
+
+    len = strlenW( target_dir );
+    if (target_dir[len - 1] == '\\') return target_dir;
+    if ((path = msi_alloc( (len + 2) * sizeof(WCHAR) )))
+    {
+        strcpyW( path, target_dir );
+        path[len] = '\\';
+        path[len + 1] = 0;
+    }
+    msi_free( target_dir );
+    return path;
+}
+
 void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL load_prop )
 {
     FolderList *fl;
@@ -3002,7 +3021,7 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
 
     if (!strcmpW( folder->Directory, szTargetDir )) /* special resolving for target root dir */
     {
-        if (!load_prop || !(path = msi_dup_property( package->db, szTargetDir )))
+        if (!load_prop || !(path = get_target_dir_property( package->db )))
         {
             path = msi_dup_property( package->db, szRootDrive );
         }
