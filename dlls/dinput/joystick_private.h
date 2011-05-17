@@ -52,38 +52,38 @@ typedef struct JoystickGenericImpl
     joy_polldev_handler *joy_polldev;
 } JoystickGenericImpl;
 
-LONG joystick_map_axis(ObjProps *props, int val);
-HRESULT setup_dinput_options(JoystickGenericImpl *This, const int *default_axis_map);
+LONG joystick_map_axis(ObjProps *props, int val) DECLSPEC_HIDDEN;
+HRESULT setup_dinput_options(JoystickGenericImpl *This, const int *default_axis_map) DECLSPEC_HIDDEN;
 
-DWORD joystick_map_pov(const POINTL *p);
+DWORD joystick_map_pov(const POINTL *p) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI JoystickWGenericImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
-        LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow);
+        LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI JoystickAGenericImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8A iface,
-        LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow);
+        LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow) DECLSPEC_HIDDEN;
 
-HRESULT WINAPI JoystickAGenericImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph);
-HRESULT WINAPI JoystickWGenericImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPDIPROPHEADER pdiph);
+HRESULT WINAPI JoystickAGenericImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph) DECLSPEC_HIDDEN;
+HRESULT WINAPI JoystickWGenericImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPDIPROPHEADER pdiph) DECLSPEC_HIDDEN;
 
-HRESULT WINAPI JoystickAGenericImpl_GetCapabilities(LPDIRECTINPUTDEVICE8A iface, LPDIDEVCAPS lpDIDevCaps);
-HRESULT WINAPI JoystickWGenericImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface, LPDIDEVCAPS lpDIDevCaps);
+HRESULT WINAPI JoystickAGenericImpl_GetCapabilities(LPDIRECTINPUTDEVICE8A iface, LPDIDEVCAPS lpDIDevCaps) DECLSPEC_HIDDEN;
+HRESULT WINAPI JoystickWGenericImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface, LPDIDEVCAPS lpDIDevCaps) DECLSPEC_HIDDEN;
 
-void _dump_DIDEVCAPS(const DIDEVCAPS *lpDIDevCaps);
+void _dump_DIDEVCAPS(const DIDEVCAPS *lpDIDevCaps) DECLSPEC_HIDDEN;
 
-HRESULT WINAPI JoystickAGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPCDIPROPHEADER ph);
-HRESULT WINAPI JoystickWGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPCDIPROPHEADER ph);
+HRESULT WINAPI JoystickAGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPCDIPROPHEADER ph) DECLSPEC_HIDDEN;
+HRESULT WINAPI JoystickWGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8W iface, REFGUID rguid, LPCDIPROPHEADER ph) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI JoystickAGenericImpl_GetDeviceInfo( LPDIRECTINPUTDEVICE8A iface,
-    LPDIDEVICEINSTANCEA pdidi);
+    LPDIDEVICEINSTANCEA pdidi) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI JoystickWGenericImpl_GetDeviceInfo( LPDIRECTINPUTDEVICE8W iface,
-    LPDIDEVICEINSTANCEW pdidi);
+    LPDIDEVICEINSTANCEW pdidi) DECLSPEC_HIDDEN;
 
-HRESULT WINAPI JoystickAGenericImpl_Poll(LPDIRECTINPUTDEVICE8A iface);
-HRESULT WINAPI JoystickWGenericImpl_Poll(LPDIRECTINPUTDEVICE8W iface);
+HRESULT WINAPI JoystickAGenericImpl_Poll(LPDIRECTINPUTDEVICE8A iface) DECLSPEC_HIDDEN;
+HRESULT WINAPI JoystickWGenericImpl_Poll(LPDIRECTINPUTDEVICE8W iface) DECLSPEC_HIDDEN;
 
-HRESULT WINAPI JoystickAGenericImpl_GetDeviceState(LPDIRECTINPUTDEVICE8A iface, DWORD len, LPVOID ptr);
-HRESULT WINAPI JoystickWGenericImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, DWORD len, LPVOID ptr);
+HRESULT WINAPI JoystickAGenericImpl_GetDeviceState(LPDIRECTINPUTDEVICE8A iface, DWORD len, LPVOID ptr) DECLSPEC_HIDDEN;
+HRESULT WINAPI JoystickWGenericImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, DWORD len, LPVOID ptr) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DLLS_DINPUT_JOYSTICK_PRIVATE_H */

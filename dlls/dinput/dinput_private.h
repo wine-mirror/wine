@@ -53,16 +53,16 @@ struct dinput_device {
     HRESULT (*create_device)(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPVOID *pdev, int unicode);
 };
 
-extern const struct dinput_device mouse_device;
-extern const struct dinput_device keyboard_device;
-extern const struct dinput_device joystick_linux_device;
-extern const struct dinput_device joystick_linuxinput_device;
-extern const struct dinput_device joystick_osx_device;
+extern const struct dinput_device mouse_device DECLSPEC_HIDDEN;
+extern const struct dinput_device keyboard_device DECLSPEC_HIDDEN;
+extern const struct dinput_device joystick_linux_device DECLSPEC_HIDDEN;
+extern const struct dinput_device joystick_linuxinput_device DECLSPEC_HIDDEN;
+extern const struct dinput_device joystick_osx_device DECLSPEC_HIDDEN;
 
-extern void check_dinput_hooks(LPDIRECTINPUTDEVICE8W);
+extern void check_dinput_hooks(LPDIRECTINPUTDEVICE8W) DECLSPEC_HIDDEN;
 typedef int (*DI_EVENT_PROC)(LPDIRECTINPUTDEVICE8A, WPARAM, LPARAM);
 
-extern void _dump_diactionformatA(LPDIACTIONFORMATA);
+extern void _dump_diactionformatA(LPDIACTIONFORMATA) DECLSPEC_HIDDEN;
 
 #define IS_DIPROP(x)    (((ULONG_PTR)(x) >> 16) == 0)
 

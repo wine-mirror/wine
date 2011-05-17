@@ -779,7 +779,7 @@ static ULONG WINAPI LinuxInputEffectImpl_Release(LPDIRECTINPUTEFFECT iface)
  *      LinuxInputEffect
  */
 
-HRESULT linuxinput_create_effect(
+DECLSPEC_HIDDEN HRESULT linuxinput_create_effect(
 	int* fd,
 	REFGUID rguid,
         struct list *parent_list_entry,
@@ -851,7 +851,7 @@ HRESULT linuxinput_create_effect(
     return DI_OK;
 }
 
-HRESULT linuxinput_get_info_A(
+DECLSPEC_HIDDEN HRESULT linuxinput_get_info_A(
 	int fd,
 	REFGUID rguid,
 	LPDIEFFECTINFOA info)
@@ -885,7 +885,7 @@ HRESULT linuxinput_get_info_A(
     return DI_OK;
 }
 
-HRESULT linuxinput_get_info_W(
+DECLSPEC_HIDDEN HRESULT linuxinput_get_info_W(
 	int fd,
 	REFGUID rguid,
 	LPDIEFFECTINFOW info)
