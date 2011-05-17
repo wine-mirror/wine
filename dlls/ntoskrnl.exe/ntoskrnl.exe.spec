@@ -1411,7 +1411,8 @@
 @ cdecl -private -i386 _global_unwind2(ptr) msvcrt._global_unwind2
 @ cdecl -private _itoa(long ptr long) msvcrt._itoa
 @ cdecl -private _itow(long ptr long) msvcrt._itow
-@ cdecl -private _local_unwind2(ptr long) msvcrt._local_unwind2
+@ cdecl -private -arch=x86_64 _local_unwind(ptr ptr) msvcrt._local_unwind
+@ cdecl -private -arch=i386 _local_unwind2(ptr long) msvcrt._local_unwind2
 @ cdecl -private _purecall() msvcrt._purecall
 @ varargs -private _snprintf(str long str) msvcrt._snprintf
 @ varargs -private _snwprintf(wstr long wstr) msvcrt._snwprintf

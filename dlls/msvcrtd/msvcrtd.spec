@@ -378,6 +378,7 @@
 @ cdecl _kbhit() msvcrt._kbhit
 @ cdecl _lfind(ptr ptr ptr long ptr) msvcrt._lfind
 @ cdecl _loaddll(str) msvcrt._loaddll
+@ cdecl -arch=x86_64 _local_unwind(ptr ptr) msvcrt._local_unwind
 @ cdecl -i386 _local_unwind2(ptr long) msvcrt._local_unwind2
 @ cdecl _lock(long) msvcrt._lock
 @ cdecl _locking(long long long) msvcrt._locking

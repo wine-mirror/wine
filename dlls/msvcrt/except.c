@@ -605,6 +605,15 @@ void __cdecl MSVCRT_longjmp( struct MSVCRT___JUMP_BUFFER *jmp, int retval )
     longjmp_set_regs( jmp, retval );
 }
 
+/*******************************************************************
+ *		_local_unwind (MSVCRT.@)
+ */
+void __cdecl _local_unwind( void *frame, void *target )
+{
+    CONTEXT context;
+    RtlUnwindEx( frame, target, NULL, 0, &context, NULL );
+}
+
 #endif /* __x86_64__ */
 
 static MSVCRT___sighandler_t sighandlers[MSVCRT_NSIG] = { MSVCRT_SIG_DFL };
