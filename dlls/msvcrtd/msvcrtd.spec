@@ -485,6 +485,7 @@
 @ cdecl -arch=i386 _safe_fprem1() msvcrt._safe_fprem1
 @ cdecl _scalb(double long) msvcrt._scalb
 @ cdecl _searchenv(str str ptr) msvcrt._searchenv
+@ stdcall -i386 _seh_longjmp_unwind4(ptr) msvcrt._seh_longjmp_unwind4
 @ stdcall -i386 _seh_longjmp_unwind(ptr) msvcrt._seh_longjmp_unwind
 @ cdecl _set_error_mode(long) msvcrt._set_error_mode
 @ cdecl _set_sbh_threshold(long) msvcrt._set_sbh_threshold

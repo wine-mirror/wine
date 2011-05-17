@@ -918,7 +918,7 @@
 @ stub _scwprintf_p_l
 @ cdecl _searchenv(str str ptr) msvcrt._searchenv
 @ cdecl _searchenv_s(str str ptr long) msvcrt._searchenv_s
-@ stub _seh_longjmp_unwind4
+@ stdcall -i386 _seh_longjmp_unwind4(ptr) msvcrt._seh_longjmp_unwind4
 @ stdcall -i386 _seh_longjmp_unwind(ptr) msvcrt._seh_longjmp_unwind
 @ cdecl _set_SSE2_enable(long) msvcrt._set_SSE2_enable
 @ cdecl _set_abort_behavior(long long) msvcrt._set_abort_behavior

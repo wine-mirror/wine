@@ -859,7 +859,7 @@
 # stub _scwprintf_p_l(wstr ptr)
 @ cdecl _searchenv(str str ptr)
 @ cdecl _searchenv_s(str str ptr long)
-# stub _seh_longjmp_unwind4
+@ stdcall -i386 _seh_longjmp_unwind4(ptr)
 @ stdcall -i386 _seh_longjmp_unwind(ptr)
 @ cdecl _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
 @ cdecl _set_controlfp(long long)

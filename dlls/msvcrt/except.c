@@ -519,6 +519,15 @@ void __stdcall _seh_longjmp_unwind(struct MSVCRT___JUMP_BUFFER *jmp)
     msvcrt_local_unwind2( (MSVCRT_EXCEPTION_FRAME *)jmp->Registration, jmp->TryLevel, (void *)jmp->Ebp );
 }
 
+/*********************************************************************
+ *		_seh_longjmp_unwind4 (MSVCRT.@)
+ */
+void __stdcall _seh_longjmp_unwind4(struct MSVCRT___JUMP_BUFFER *jmp)
+{
+    msvcrt_local_unwind4( (void *)jmp->Cookie, (MSVCRT_EXCEPTION_FRAME *)jmp->Registration,
+                          jmp->TryLevel, (void *)jmp->Ebp );
+}
+
 #elif defined(__x86_64__)
 
 /*******************************************************************
