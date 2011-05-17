@@ -321,11 +321,12 @@ AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 void ProcessPage_OnSetAffinity(void)
 {
     LV_ITEMW         lvitem;
-    ULONG            Index;
+    ULONG            Index, Count;
     DWORD            dwProcessId;
     WCHAR            wstrErrorText[256];
 
-    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++) {
+    Count = SendMessageW(hProcessPageListCtrl, LVM_GETITEMCOUNT, 0, 0);
+    for (Index=0; Index<Count; Index++) {
         memset(&lvitem, 0, sizeof(LV_ITEMW));
         lvitem.mask = LVIF_STATE;
         lvitem.stateMask = LVIS_SELECTED;
@@ -334,8 +335,10 @@ void ProcessPage_OnSetAffinity(void)
         if (lvitem.state & LVIS_SELECTED)
             break;
     }
+
+    Count = SendMessageW(hProcessPageListCtrl, LVM_GETSELECTEDCOUNT, 0, 0);
     dwProcessId = PerfDataGetProcessId(Index);
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
+    if ((Count != 1) || (dwProcessId == 0))
         return;
     hProcessAffinityHandle = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_SET_INFORMATION, FALSE, dwProcessId);
     if (!hProcessAffinityHandle) {
