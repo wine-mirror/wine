@@ -52,7 +52,7 @@ void TaskManager_OnFileNew(void)
 {
     HMODULE            hShell32;
     RUNFILEDLG        RunFileDlg;
-    OSVERSIONINFO    versionInfo;
+    OSVERSIONINFOW    versionInfo;
     static const WCHAR wszShell32[] = {'S','H','E','L','L','3','2','.','D','L','L',0};
 
     hShell32 = LoadLibraryW(wszShell32);
@@ -62,8 +62,8 @@ void TaskManager_OnFileNew(void)
     if (RunFileDlg)
     {
         HICON hIcon = LoadIconW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDI_TASKMANAGER));
-        versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-        GetVersionEx(&versionInfo);
+        versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
+        GetVersionExW(&versionInfo);
 
         if (versionInfo.dwPlatformId == VER_PLATFORM_WIN32_NT)
         {
