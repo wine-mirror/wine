@@ -1178,6 +1178,8 @@ word_break_causing(neighbour_char(i,dirL,pwcChars,cChars)))
             context_shape[i] = Afn;
             else if ( (rchar == DALATH || rchar == RISH) && word_break_causing(neighbour_char(i,dirL,pwcChars,cChars)))
             context_shape[i] = Afx;
+            else
+            context_shape[i] = Xn;
         }
         else if (context_type[i] == jtR &&
 right_join_causing(neighbour_joining_type(i,dirR,context_type,cChars,psa)))
@@ -1206,6 +1208,8 @@ right_join_causing(neighbour_joining_type(i,dirR,context_type,cChars,psa)))
             UpdateClusters(nextIndex, *pcGlyphs - prevCount, dirL, cChars, pwLogClust);
             i = nextIndex;
         }
+        else
+            i++;
     }
 
     HeapFree(GetProcessHeap(),0,context_shape);
