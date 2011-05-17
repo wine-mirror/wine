@@ -1012,8 +1012,7 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
 
     for (i = 0; i < numEntries; i++)
     {
-        int bestIndex;
-        int maxBits = -1;
+        int bestIndex = i;
         int j;
         BOOLEAN duplicate = FALSE;
         int w, h;
@@ -1034,14 +1033,13 @@ static HRESULT platform_write_icon(IStream *icoStream, int exeIndex, LPCWSTR ico
         }
         if (duplicate)
             continue;
-        for (j = i; j < numEntries; j++)
+        for (j = i + 1; j < numEntries; j++)
         {
             if (iconDirEntries[j].bWidth == iconDirEntries[i].bWidth &&
                 iconDirEntries[j].bHeight == iconDirEntries[i].bHeight &&
-                iconDirEntries[j].wBitCount >= maxBits)
+                iconDirEntries[j].wBitCount >= iconDirEntries[bestIndex].wBitCount)
             {
                 bestIndex = j;
-                maxBits = iconDirEntries[j].wBitCount;
             }
         }
         WINE_TRACE("Selected: %d\n", bestIndex);
