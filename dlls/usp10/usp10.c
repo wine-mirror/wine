@@ -1554,7 +1554,7 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
         pOutGlyphProps[i].sva.fShapeReserved = 0;
 
         /* FIXME: have the shaping engine set this */
-        pCharProps[i].fCanGlyphAlone = 1;
+        pCharProps[i].fCanGlyphAlone = 0;
 
         pwLogClust[i] = idx;
     }
