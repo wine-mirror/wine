@@ -134,9 +134,9 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
             TRACE("Looking at index %u product %s\n", index, debugstr_w(product));
 
             unsquash_guid(product, productid);
-            rc = MSIREG_OpenProductKey(productid, NULL, package->Context,
-                                       &hukey, FALSE);
-            if (rc != ERROR_SUCCESS)
+            if (MSIREG_OpenProductKey(productid, NULL, MSIINSTALLCONTEXT_USERMANAGED, &hukey, FALSE) &&
+                MSIREG_OpenProductKey(productid, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, &hukey, FALSE) &&
+                MSIREG_OpenProductKey(productid, NULL, MSIINSTALLCONTEXT_MACHINE, &hukey, FALSE))
             {
                 TRACE("product key not found\n");
                 rc = ERROR_SUCCESS;
