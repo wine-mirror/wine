@@ -47,14 +47,15 @@ static void load_message_strings(void)
 void ProcessPage_OnEndProcess(void)
 {
     LVITEMW          lvitem;
-    ULONG            Index;
+    ULONG            Index, Count;
     DWORD            dwProcessId;
     HANDLE           hProcess;
     WCHAR            wstrErrorText[256];
 
     load_message_strings();
 
-    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
+    Count = SendMessageW(hProcessPageListCtrl, LVM_GETITEMCOUNT, 0, 0);
+    for (Index=0; Index<Count; Index++)
     {
         lvitem.mask = LVIF_STATE;
         lvitem.stateMask = LVIS_SELECTED;
@@ -67,9 +68,9 @@ void ProcessPage_OnEndProcess(void)
             break;
     }
 
+    Count = SendMessageW(hProcessPageListCtrl, LVM_GETSELECTEDCOUNT, 0, 0);
     dwProcessId = PerfDataGetProcessId(Index);
-
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
+    if ((Count != 1) || (dwProcessId == 0))
         return;
 
     if (MessageBoxW(hMainWnd, wszWarnMsg, wszWarnTitle, MB_YESNO|MB_ICONWARNING) != IDYES)
@@ -96,14 +97,15 @@ void ProcessPage_OnEndProcess(void)
 void ProcessPage_OnEndProcessTree(void)
 {
     LVITEMW          lvitem;
-    ULONG            Index;
+    ULONG            Index, Count;
     DWORD            dwProcessId;
     HANDLE           hProcess;
     WCHAR            wstrErrorText[256];
 
     load_message_strings();
 
-    for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
+    Count = SendMessageW(hProcessPageListCtrl, LVM_GETITEMCOUNT, 0, 0);
+    for (Index=0; Index<Count; Index++)
     {
         lvitem.mask = LVIF_STATE;
         lvitem.stateMask = LVIS_SELECTED;
@@ -116,9 +118,9 @@ void ProcessPage_OnEndProcessTree(void)
             break;
     }
 
+    Count = SendMessageW(hProcessPageListCtrl, LVM_GETSELECTEDCOUNT, 0, 0);
     dwProcessId = PerfDataGetProcessId(Index);
-
-    if ((ListView_GetSelectedCount(hProcessPageListCtrl) != 1) || (dwProcessId == 0))
+    if ((Count != 1) || (dwProcessId == 0))
         return;
 
     if (MessageBoxW(hMainWnd, wszWarnMsg, wszWarnTitle, MB_YESNO|MB_ICONWARNING) != IDYES)
