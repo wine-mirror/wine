@@ -4554,7 +4554,7 @@ HRESULT WINAPI D3DXCreateEffectFromFileExW(LPDIRECT3DDEVICE9 device, LPCWSTR src
 
     TRACE("(%s): relay\n", debugstr_w(srcfile));
 
-    if (!device || !srcfile || !defines)
+    if (!device || !srcfile)
         return D3DERR_INVALIDCALL;
 
     ret = map_view_of_file(srcfile, &buffer, &size);
@@ -4578,7 +4578,7 @@ HRESULT WINAPI D3DXCreateEffectFromFileExA(LPDIRECT3DDEVICE9 device, LPCSTR srcf
 
     TRACE("(void): relay\n");
 
-    if (!srcfile || !defines)
+    if (!srcfile)
         return D3DERR_INVALIDCALL;
 
     len = MultiByteToWideChar(CP_ACP, 0, srcfile, -1, NULL, 0);
@@ -4615,7 +4615,7 @@ HRESULT WINAPI D3DXCreateEffectFromResourceExW(LPDIRECT3DDEVICE9 device, HMODULE
 
     TRACE("(%p, %s): relay\n", srcmodule, debugstr_w(srcresource));
 
-    if (!device || !defines)
+    if (!device)
         return D3DERR_INVALIDCALL;
 
     resinfo = FindResourceW(srcmodule, srcresource, (LPCWSTR) RT_RCDATA);
@@ -4645,7 +4645,7 @@ HRESULT WINAPI D3DXCreateEffectFromResourceExA(LPDIRECT3DDEVICE9 device, HMODULE
 
     TRACE("(%p, %s): relay\n", srcmodule, debugstr_a(srcresource));
 
-    if (!device || !defines)
+    if (!device)
         return D3DERR_INVALIDCALL;
 
     resinfo = FindResourceA(srcmodule, srcresource, (LPCSTR) RT_RCDATA);
@@ -4692,7 +4692,7 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromFileW(LPCWSTR srcfile, const D3DXMACR
 
     TRACE("(%s): relay\n", debugstr_w(srcfile));
 
-    if (!srcfile || !defines)
+    if (!srcfile)
         return D3DERR_INVALIDCALL;
 
     ret = map_view_of_file(srcfile, &buffer, &size);
@@ -4715,7 +4715,7 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromFileA(LPCSTR srcfile, const D3DXMACRO
 
     TRACE("(void): relay\n");
 
-    if (!srcfile || !defines)
+    if (!srcfile)
         return D3DERR_INVALIDCALL;
 
     len = MultiByteToWideChar(CP_ACP, 0, srcfile, -1, NULL, 0);
