@@ -43,6 +43,7 @@ typedef struct _itemTest {
 /* Uniscribe 1.6 calls */
 static HRESULT (WINAPI *pScriptItemizeOpenType)( const WCHAR *pwcInChars, int cInChars, int cMaxItems, const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState, SCRIPT_ITEM *pItems, ULONG *pScriptTags, int *pcItems);
 
+static HRESULT (WINAPI *pScriptShapeOpenType)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, OPENTYPE_TAG tagLangSys, int *rcRangeChars, TEXTRANGE_PROPERTIES **rpRangeProperties, int cRanges, const WCHAR *pwcChars, int cChars, int cMaxGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProps, WORD *pwOutGlyphs, SCRIPT_GLYPHPROP *pOutGlyphProps, int *pcGlyphs);
 
 static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
                          SCRIPT_CONTROL *Control, SCRIPT_STATE *State,
@@ -204,6 +205,7 @@ static void test_ScriptItemize( void )
     usp10 = LoadLibraryA("usp10.dll");
     ok (usp10 != 0,"Unable to LoadLibrary on usp10.dll\n");
     pScriptItemizeOpenType = (void*)GetProcAddress(usp10, "ScriptItemizeOpenType");
+    pScriptShapeOpenType = (void*)GetProcAddress(usp10, "ScriptShapeOpenType");
 
     memset(&Control, 0, sizeof(Control));
     memset(&State, 0, sizeof(State));
@@ -285,6 +287,147 @@ static void test_ScriptItemize( void )
     test_items_ok(test10,4,&Control,&State,1,t101,FALSE,0);
 }
 
+static void test_ScriptShapeOpenType(HDC hdc)
+{
+    static const WCHAR test1[] = {'w', 'i', 'n', 'e',0};
+    static const WCHAR test2[] = {0x202B, 'i', 'n', 0x202C,0};
+    HRESULT hr;
+    SCRIPT_CACHE sc = NULL;
+    WORD glyphs[4], glyphs2[4], logclust[4];
+    SCRIPT_GLYPHPROP glyphProp[4];
+    SCRIPT_CHARPROP  charProp[4];
+    SCRIPT_ITEM items[2];
+    ULONG tags[2] = {-1,-1};
+    SCRIPT_CONTROL  Control;
+    SCRIPT_STATE    State;
+    int nb, outnItems;
+
+    if (!pScriptItemizeOpenType || !pScriptShapeOpenType)
+    {
+        win_skip("ScriptShapeOpenType not available on this platform\n");
+        return;
+    }
+
+    memset(&Control, 0 , sizeof(Control));
+    memset(&State, 0 , sizeof(State));
+    hr = pScriptItemizeOpenType(test1, 4, 2, &Control, &State, items, tags, &outnItems);
+    ok(!hr, "ScriptItemizeOpenType should return S_OK not %08x\n", hr);
+    ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
+
+    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, NULL, &nb);
+    ok(hr == E_INVALIDARG, "ScriptShapeOpenType should return E_INVALIDARG not %08x\n", hr);
+
+    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, glyphProp, NULL);
+    ok(hr == E_INVALIDARG, "ScriptShapeOpenType should return E_INVALIDARG not %08x\n", hr);
+
+    hr = pScriptShapeOpenType(NULL, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, glyphProp, &nb);
+    ok(hr == E_INVALIDARG, "ScriptShapeOpenType should return E_PENDING not %08x\n", hr);
+
+    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, NULL, NULL, glyphs, glyphProp, &nb);
+    ok( hr == E_INVALIDARG,
+       "ScriptShapeOpenType should return E_FAIL or E_INVALIDARG, not %08x\n", hr);
+    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, logclust, NULL, glyphs, glyphProp, &nb);
+    ok(hr == E_INVALIDARG, "ScriptShapeOpenType should return E_INVALIDARG not %08x\n", hr);
+
+    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, logclust, charProp, glyphs, glyphProp, &nb);
+    ok(!hr, "ScriptShapeOpenType should return S_OK not %08x\n", hr);
+    ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
+
+
+    memset(glyphs,-1,sizeof(glyphs));
+    memset(logclust,-1,sizeof(logclust));
+    memset(glyphProp,-1,sizeof(glyphProp));
+    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, logclust, charProp, glyphs, glyphProp, &nb);
+    ok(!hr, "ScriptShapeOpenType should return S_OK not %08x\n", hr);
+    ok(nb == 4, "Wrong number of items\n");
+    ok(logclust[0] == 0, "clusters out of order\n");
+    ok(logclust[1] == 1, "clusters out of order\n");
+    ok(logclust[2] == 2, "clusters out of order\n");
+    ok(logclust[3] == 3, "clusters out of order\n");
+    ok(glyphProp[0].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[1].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[2].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[3].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[0].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[1].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[2].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[3].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[0].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[1].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[2].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[3].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[0].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(glyphProp[1].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(glyphProp[2].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(glyphProp[3].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+
+    ScriptFreeCache(&sc);
+    sc = NULL;
+
+    memset(glyphs2,-1,sizeof(glyphs2));
+    memset(logclust,-1,sizeof(logclust));
+    memset(glyphProp,-1,sizeof(glyphProp));
+    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test2, 4, 4, logclust, charProp, glyphs2, glyphProp, &nb);
+    ok(hr == S_OK, "ScriptShapeOpenType should return S_OK not %08x\n", hr);
+    ok(nb == 4, "Wrong number of items\n");
+    ok(glyphs2[0] == 0 || broken(glyphs2[0] == 0x80), "Incorrect glyph for 0x202B\n");
+    ok(glyphs2[3] == 0 || broken(glyphs2[3] == 0x80), "Incorrect glyph for 0x202C\n");
+    ok(logclust[0] == 0, "clusters out of order\n");
+    ok(logclust[1] == 1, "clusters out of order\n");
+    ok(logclust[2] == 2, "clusters out of order\n");
+    ok(logclust[3] == 3, "clusters out of order\n");
+    ok(glyphProp[0].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[1].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[2].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[3].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[0].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[1].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[2].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[3].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[0].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[1].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[2].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[3].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[0].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(glyphProp[1].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(glyphProp[2].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(glyphProp[3].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+
+    /* modify LTR to RTL */
+    items[0].a.fRTL = 1;
+    memset(glyphs2,-1,sizeof(glyphs2));
+    memset(logclust,-1,sizeof(logclust));
+    memset(glyphProp,-1,sizeof(glyphProp));
+    hr = pScriptShapeOpenType(hdc, &sc, &items[0].a, tags[0], 0x00000000, NULL, NULL, 0, test1, 4, 4, logclust, charProp, glyphs2, glyphProp, &nb);
+    ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
+    ok(nb == 4, "Wrong number of items\n");
+    ok(glyphs2[0] == glyphs[3], "Glyphs not reordered properly\n");
+    ok(glyphs2[1] == glyphs[2], "Glyphs not reordered properly\n");
+    ok(glyphs2[2] == glyphs[1], "Glyphs not reordered properly\n");
+    ok(glyphs2[3] == glyphs[0], "Glyphs not reordered properly\n");
+    ok(logclust[0] == 3, "clusters out of order\n");
+    ok(logclust[1] == 2, "clusters out of order\n");
+    ok(logclust[2] == 1, "clusters out of order\n");
+    ok(logclust[3] == 0, "clusters out of order\n");
+    ok(glyphProp[0].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[1].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[2].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[3].sva.uJustification == SCRIPT_JUSTIFY_CHARACTER, "uJustification incorrect\n");
+    ok(glyphProp[0].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[1].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[2].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[3].sva.fClusterStart == 1, "fClusterStart incorrect\n");
+    ok(glyphProp[0].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[1].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[2].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[3].sva.fDiacritic == 0, "fDiacritic incorrect\n");
+    ok(glyphProp[0].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(glyphProp[1].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(glyphProp[2].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+    ok(glyphProp[3].sva.fZeroWidth == 0, "fZeroWidth incorrect\n");
+
+    ScriptFreeCache(&sc);
+}
 
 static void test_ScriptShape(HDC hdc)
 {
@@ -1880,6 +2023,7 @@ START_TEST(usp10)
     test_ScriptCacheGetHeight(hdc);
     test_ScriptGetGlyphABCWidth(hdc);
     test_ScriptShape(hdc);
+    test_ScriptShapeOpenType(hdc);
     test_ScriptPlace(hdc);
 
     test_ScriptGetFontProperties(hdc);
