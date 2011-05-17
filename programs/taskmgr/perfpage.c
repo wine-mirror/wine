@@ -146,7 +146,7 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
 	LoadStringW(hInst, IDS_STATUS_BAR_MEMORY_USAGE, wszMemUsage, sizeof(wszMemUsage)/sizeof(WCHAR));
 
 	/*  Create the event */
-	hPerformancePageEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+	hPerformancePageEvent = CreateEventW(NULL, TRUE, TRUE, NULL);
 
 	/*  If we couldn't create the event then exit the thread */
 	if (!hPerformancePageEvent)
@@ -344,11 +344,11 @@ PerformancePageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		/* 
 		 *  Subclass graph buttons
 		 */ 
-        OldGraphWndProc = (WNDPROC)SetWindowLongPtr(hPerformancePageCpuUsageGraph, GWLP_WNDPROC, (LONG_PTR)Graph_WndProc);
-        SetWindowLongPtr(hPerformancePageMemUsageGraph, GWLP_WNDPROC, (LONG_PTR)Graph_WndProc);
-	OldGraphCtrlWndProc = (WNDPROC)SetWindowLongPtr(hPerformancePageMemUsageHistoryGraph, GWLP_WNDPROC, (LONG_PTR)GraphCtrl_WndProc);
-	SetWindowLongPtr(hPerformancePageCpuUsageHistoryGraph, GWLP_WNDPROC, (LONG_PTR)GraphCtrl_WndProc);
-		return TRUE;
+        OldGraphWndProc = (WNDPROC)SetWindowLongPtrW(hPerformancePageCpuUsageGraph, GWLP_WNDPROC, (LONG_PTR)Graph_WndProc);
+        SetWindowLongPtrW(hPerformancePageMemUsageGraph, GWLP_WNDPROC, (LONG_PTR)Graph_WndProc);
+        OldGraphCtrlWndProc = (WNDPROC)SetWindowLongPtrW(hPerformancePageMemUsageHistoryGraph, GWLP_WNDPROC, (LONG_PTR)GraphCtrl_WndProc);
+        SetWindowLongPtrW(hPerformancePageCpuUsageHistoryGraph, GWLP_WNDPROC, (LONG_PTR)GraphCtrl_WndProc);
+        return TRUE;
 
 	case WM_COMMAND:
 		break;
